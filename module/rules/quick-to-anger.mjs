@@ -13,7 +13,7 @@
 
 import { esc } from "../helpers/utils.mjs";
 import { autoTestMods } from "./roll-mods.mjs";
-import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 
 export const QUICK_TO_ANGER_CAPABILITY = "mutation.warpTouched.quickToAnger";
 
@@ -30,8 +30,7 @@ export async function rollQuickToAngerTest(actor) {
 
   await postTestCard(actor, {
     icon: "😠", title: `Вспыльчивость — ${esc(actor.name)}`,
-    threshold: thresholdLine({ label: "W", base: wp, parts: ruleMods.parts, threshold }),
-    rv,
+    threshold: rollStatLine({ label: "W", base: wp, parts: ruleMods.parts, threshold, rv }),
     outcome: success
       ? `<span class="roll-success">Успех — сдержался</span>`
       : `<span class="roll-failure">Провал — впадает в Ярость</span>`

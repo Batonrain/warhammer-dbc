@@ -61,9 +61,9 @@ function inputNode(value) {
   return { value, addEventListener: () => {} };
 }
 
-/** Порог, напечатанный в карточке чата (строка «... → Порог <b>N</b>»). */
+/** Порог, напечатанный в карточке чата (ячейка Порога плашки, wdbc-fyvv). */
 function thresholdInCard() {
-  const m = (captured.chat.at(-1)?.content ?? "").match(/Порог <b>(-?\d+)<\/b>/);
+  const m = (captured.chat.at(-1)?.content ?? "").match(/<label>Порог<\/label><b>(-?\d+)<\/b>/);
   return m ? Number(m[1]) : null;
 }
 

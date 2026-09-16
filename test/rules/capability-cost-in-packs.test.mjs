@@ -65,6 +65,18 @@
 // sundering.mjs — клон/трейты/даунгрейд урона, module/combat/sundering.mjs —
 // спавн/инициатива/откат конца сцены, module/combat/attack.mjs — гейт
 // даунгрейда, module/apps/game-session.mjs — откат конца сцены/сессии).
+//
+// 15.09.2026 (wdbc-1rno.1): Hidden Threat/Сокрытая Угроза — тот же путь, что
+// Eye of Challenge/Akashic Library и соседи: «пометить следующую атаку
+// Незримой» больше не «плати и отыгрывай» — РЕАЛЬНАЯ kind:"script" запись
+// (тратит Очко Бесчестия сама через changeActorInfamy, ставит флаг), и цена
+// переехала на неё; capability-запись предмета больше не несёт
+// capabilityCostPool/Amount (иначе панель «Возможности сейчас» предлагала бы
+// вторую кнопку списания того же Очка без эффекта). reader в
+// capabilities.mjs честно непустой (module/rules/hidden-threat.mjs,
+// module/combat/attack.mjs, module/combat/attack-card.mjs,
+// module/combat/hidden-threat.mjs) — но честно и то, что реализован только
+// узкий срез: детект не гейтит Уклонение (wdbc-1rno.2, общий пробел системы).
 
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
@@ -83,7 +95,6 @@ const ROOT = path.resolve(import.meta.dirname, "../..");
  * даёт ни возможности, ни цены — это правильно, а не поломка.
  */
 const PAID = [
-  { key: "gift.tzeentch.hiddenThreat" },
   { key: "rune.beastmanShaman.boneRuneEtching.slaaneshVariant",
     system: { patronGod: "slaanesh" } }
 ];

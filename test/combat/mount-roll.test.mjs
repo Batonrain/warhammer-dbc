@@ -191,7 +191,7 @@ describe("Уклонение верхом: попадание по скакун�
 
     expect(captured.rolls).toEqual(["1d100"]);
     const card = captured.chat[0].content;
-    expect(card).toContain("Порог <b>20</b>");
+    expect(card).toContain("<label>Порог</label><b>20</b>");
     expect(card).toContain("Уклонение успешно");
   });
 
@@ -208,7 +208,7 @@ describe("Уклонение верхом: попадание по скакун�
 
     expect(captured.rolls).toEqual(["1d100"]);
     const card = captured.chat[0].content;
-    expect(card).toContain("Порог <b>20</b>");
+    expect(card).toContain("<label>Порог</label><b>20</b>");
     expect(card).toContain("Уклонение провалено");
   });
 });

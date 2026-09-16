@@ -12,7 +12,7 @@ import { computeWoundHealing } from "./wounds.mjs";
 import { woundLossUpdates } from "../../rules/wounds.mjs";
 import { conditionLevelField } from "../../constants/conditions.mjs";
 import { maybeGrantEnjoymentPain } from "../../combat/enjoyment.mjs";
-import { postTestCard } from "../../helpers/test-card.mjs";
+import { postTestCard, rollStatLine } from "../../helpers/test-card.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 
 // wdbc-1rno (кластер Дары Богов — Слаанеш): «Владыка Праздности» — «Персонаж
@@ -583,10 +583,11 @@ export async function rollAddictionTest(actor, item, charKey = "t", testMod = 0)
 
   await postTestCard(actor, {
     icon: rollIcon("warn", "#ffb84d"), title: `Тест Зависимости — ${name}`,
-    threshold: `<div class="roll-threshold">
-          ${abbr}: <b>${charTotal}</b>${testMod !== 0 ? ` ${testMod >= 0 ? "+" : ""}${testMod}` : ""}${ruleMods.parts.map(p => ` ${p}`).join("")}
-          → Порог: <b>${eff}</b>
-        </div>`,
-    rv, outcome
+    threshold: rollStatLine({
+      label: abbr, base: charTotal,
+      parts: [...(testMod !== 0 ? [`${testMod >= 0 ? "+" : ""}${testMod}`] : []), ...ruleMods.parts],
+      threshold: eff, rv
+    }),
+    outcome
   }, { rolls: [roll] });
 }

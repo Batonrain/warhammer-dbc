@@ -48,7 +48,7 @@ describe("activateTechMiracle: Электрорвение (wdbc-u0by)", () => {
     await activateTechMiracle(actor, compensatorItem());
     const msg = captured.chat.at(-1);
     expect(msg.content).toContain("Электрорвение: Преимущество, отброшено 80");
-    expect(msg.content).toContain("бросок 20");
+    expect(msg.content).toContain("<label>Бросок</label><b>20</b>");
   });
 
   it("нет Таланта — тест Компенсатора катается один раз", async () => {
@@ -57,6 +57,6 @@ describe("activateTechMiracle: Электрорвение (wdbc-u0by)", () => {
     await activateTechMiracle(actor, compensatorItem());
     const msg = captured.chat.at(-1);
     expect(msg.content).not.toContain("Электрорвение");
-    expect(msg.content).toContain("бросок 20");
+    expect(msg.content).toContain("<label>Бросок</label><b>20</b>");
   });
 });

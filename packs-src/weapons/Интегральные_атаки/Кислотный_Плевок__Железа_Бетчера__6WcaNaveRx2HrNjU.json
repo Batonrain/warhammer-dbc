@@ -23,6 +23,7 @@
     "damageType": "chemical",
     "penetration": 4,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, VIII. ПРОЧЕЕ («Геносемя» стр. 487)",
     "availability": 0,
     "weight": 0,
     "attackBonus": 0,

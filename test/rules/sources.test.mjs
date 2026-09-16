@@ -146,3 +146,47 @@ describe("источник daemonInevitability (Локус Неизбежнос�
     ]);
   });
 });
+
+// Пророк Гэллерпокса (wdbc-1rno.1) — регистрация и wiring через canvas.scene;
+// ядро самого условия (кто попадает под штраф) проверено отдельно, без
+// Foundry, в test/rules/prophet-of-gallerpox.test.mjs.
+describe("источник prophetOfGallerpox (wdbc-1rno.1)", () => {
+  afterEach(() => { delete globalThis.canvas; });
+
+  const withToken = (actorDoc, tokenId) => {
+    actorDoc.getActiveTokens = () => [{ id: tokenId }];
+    return actorDoc;
+  };
+  const vehicleToken = (id, infected) =>
+    ({ id, actor: { type: "vehicle", system: { gallerpoxInfected: infected } } });
+
+  it("зарегистрирован", () => {
+    expect(getRuleSources().some(([k]) => k === "prophetOfGallerpox")).toBe(true);
+  });
+
+  it("нет активного токена/сцены — источник пуст", () => {
+    expect(source("prophetOfGallerpox")({ system: {} })).toEqual([]);
+  });
+
+  it("заражённая Техника на сцене, тестующий не Нурглит — штраф −30 target:poison, auto:true", () => {
+    const me = withToken({ system: { patronGod: "khorne" } }, "me");
+    globalThis.canvas = { scene: { tokens: [{ id: "me" }, vehicleToken("v1", true)] } };
+    const rules = source("prophetOfGallerpox")(me);
+    expect(rules).toHaveLength(1);
+    expect(rules[0].effects).toEqual([
+      { kind: "rollBonus", target: "poison", value: -30, auto: true, label: "Техновирус Гэллерпокса" }
+    ]);
+  });
+
+  it("тестующий сам Нурглит — источник пуст, даже рядом с заражённой машиной", () => {
+    const me = withToken({ system: { patronGod: "nurgle" } }, "me");
+    globalThis.canvas = { scene: { tokens: [{ id: "me" }, vehicleToken("v1", true)] } };
+    expect(source("prophetOfGallerpox")(me)).toEqual([]);
+  });
+
+  it("на сцене нет заражённой машины — источник пуст", () => {
+    const me = withToken({ system: { patronGod: "khorne" } }, "me");
+    globalThis.canvas = { scene: { tokens: [{ id: "me" }, vehicleToken("v1", false)] } };
+    expect(source("prophetOfGallerpox")(me)).toEqual([]);
+  });
+});

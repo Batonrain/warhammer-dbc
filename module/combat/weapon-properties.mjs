@@ -81,17 +81,39 @@ export function resolveWeaponProps(item) {
  *    hooks.mjs::_applyWeaponPropEffect кормят такой rating прямо в
  *    `new Roll(dmgFormula)` (см. `te.damageFromRating`), а не в arithmetic-
  *    парсер — значит дайс-паттерн нужно вернуть КАК СТРОКУ, до прогона через
- *    mechFormulaTotalSafe, не после.
- *    Отдельно (НЕ чинится здесь): module/hooks.mjs — «Дуга»/Arc читает свой
- *    второй рейтинг через `parseInt(ds.arcDamage)`, а не `new Roll` — дайс-
- *    рейтинг Arc («7/2d10+PR») там всё равно обрежется до первого числа
- *    («7»/«2»), это отдельный баг самого Arc-обработчика в hooks.mjs, не
- *    resolvePropRating; заведён отдельным тикетом.
+ *    mechFormulaTotalSafe, не после. Оставшийся внутри строки «PR» (Arc
+ *    «7/2d10+PR», Toxic/Haywire override, wdbc-cy4z) подставляется текстовой
+ *    заменой \bPR\b — тем же приёмом, что и основная формула урона психосилы
+ *    (psychic.mjs::executePsychotest, `atk.damage.replace(/\bPR\b/gi, ...)`),
+ *    а не через rollData: `new Roll()` в buildTargetEffectButtons/hooks.mjs не
+ *    получает rollData вовсе, «PR» без подстановки долетает до `StringTerm` и
+ *    падает исключением `Unresolved StringTerm PR` при `.evaluate()` — не
+ *    тихо занижается, а рвёт бросок целиком (был живым багом у 3 уже
+ *    занесённых психосил Дуги — Lightning Bolt/Chain Lightning/Storm Knight,
+ *    см. wdbc-wv8u: код того тикета чинил только parseInt→Roll, но не эту
+ *    подстановку, поэтому дайс-Дуга с «PR» в рейтинге оставалась битой).
+ *    Раньше здесь же был отдельный баг Arc-обработчика в hooks.mjs
+ *    (`parseInt(ds.arcDamage)` вместо `new Roll`, обрезал «7/2d10+PR» до «7»)
+ *    — он уже почтен в wdbc-wv8u, PR-подстановка выше закрывает тикет
+ *    полностью.
+ * 4. «Х» (wdbc-ufns, Vortex of Doom: «Х = ½Успехи(окр.▲)», используется СРАЗУ
+ *    в damage/penetration/Blast-rating/Linger-rating одного и того же
+ *    предмета) — item-defined derived value, НЕ встроенный концепт вроде
+ *    PR/СУ. Считается ОДИН раз психикой (resolvePropRating от
+ *    sys.xFormula — формула тем же языком, «ceil(СУ/2)»), затем передаётся
+ *    сюда явно через options.x и подставляется бор бесхвостовой заменой
+ *    (тем же приёмом, что «СУ» — кириллица не входит в \w, \b не сработал бы,
+ *    см. п.1) во ВСЕ формулы этого предмета (rating/rating2/pen), прежде чем
+ *    те сами резолвятся. Опционален (undefined → не подставляется вовсе) —
+ *    ни один другой предмет пока «Х» не задаёт, коллизии с книжной «X»-
+ *    нотацией рейтинга в desc/reminder текстах нет: это два разных пути
+ *    (resolvePropRating формулы данных vs. статичный текст подсказки).
  */
-export function resolvePropRating(rating, prValue, { deg, rollData } = {}) {
+export function resolvePropRating(rating, prValue, { deg, rollData, x } = {}) {
   if (typeof rating !== "string") return Number(rating) || 0;
-  const withSuccesses = deg != null ? rating.replace(/СУ/gi, String(deg)) : rating;
-  if (/\d+d\d+/i.test(withSuccesses)) return withSuccesses;
+  let withSuccesses = deg != null ? rating.replace(/СУ/gi, String(deg)) : rating;
+  if (x != null) withSuccesses = withSuccesses.replace(/Х/gi, String(x));
+  if (/\d+d\d+/i.test(withSuccesses)) return withSuccesses.replace(/\bPR\b/gi, String(prValue ?? 0));
   return mechFormulaTotalSafe(withSuccesses, { ...rollData, pr: prValue });
 }
 
@@ -102,6 +124,34 @@ export function resolvePropRatings(list, prValue, extra = {}) {
     rating:  resolvePropRating(p.rating, prValue, extra),
     rating2: resolvePropRating(p.rating2, prValue, extra)
   }));
+}
+
+/**
+ * Отсекает записи weaponProps[], у которых требуемое число Успехов
+ * (p.requiredSuccesses — голое число, не формула) больше, чем реально выпало
+ * на ЭТОМ психотесте (wdbc-zlx7 — Neural Storm «3+ Успеха — Shocking/Haywire»,
+ * Fire Barrage/Bolt/Storm «N+ Успехов — поджигает»): без этого свойство
+ * срабатывало бы на КАЖДОЕ попадание, что сильнее книжного оригинала.
+ *
+ * Вызывается psychic.mjs::executePsychotest СРАЗУ после resolvePropRatings,
+ * ДО aggregateAuto/buildTargetEffectButtons — отфильтрованная запись не
+ * долетает ни до одного потребителя, как будто её не было в weaponProps
+ * вовсе. Для обычного оружия (module/combat/attack.mjs) НЕ подключено: там
+ * aggregateAuto строит диалог атаки ДО броска, Успехи попадания ещё не
+ * известны — гейтить нечем на этом шаге (не тот же код-путь, что у психосил
+ * с их единственным психотестом сразу за исход И урон).
+ *
+ * requiredSuccessesScalesSize (Force Bolt: «требование удваивается за каждый
+ * уровень Размера цели >0») — ЗДЕСЬ не читается: конкретная цель ещё не
+ * выбрана (кнопки эффектов строятся ДО «выберите токен цели»), базовый порог
+ * (Размер 0) — это единственное, что можно проверить на этом шаге. Реальную
+ * проверку с учётом Размера КОНКРЕТНОЙ цели делает hooks.mjs::
+ * _applyWeaponPropEffect в момент клика, когда актор цели уже известен —
+ * см. data-wp-required-successes(-size) в buildTargetEffectButtons ниже.
+ */
+export function filterPropsBySuccesses(props, deg) {
+  const d = Number(deg) || 0;
+  return (props ?? []).filter(p => !p.requiredSuccesses || d >= Number(p.requiredSuccesses));
 }
 
 /**
@@ -137,6 +187,10 @@ export function aggregateAuto(props) {
     // («привязан к цели», книга стр. 168), 0 не должен читаться как «нет
     // свойства», в отличие от Corrosive/Crippling, где рейтинг 0 бессмыслен.
     corrosiveRating: 0, cripplingRating: 0, piercing: false, haywire: false, haywireRating: 0,
+    // haywireDamage2 (wdbc-cy4z) — нестандартный урон Машине на тир «ЭМИ
+    // Шторм» (Death of Machines: rating2 «2d10+5»), вместо дефолтного
+    // «1d5+1» — см. damage.mjs::_applyHaywire. Пусто → дефолт как раньше.
+    haywireDamage2: "",
     // Monofilament: «+2 Экстремальный урон или Крит. эффект» — в этом движке
     // extremeLevel сразу и то, и другое (rollExtremeDamage, combat/attack.mjs).
     extremeLevelBonus: 0
@@ -191,7 +245,11 @@ export function aggregateAuto(props) {
     if (au.corrosive)     a.corrosiveRating = Math.max(a.corrosiveRating, r);
     if (au.crippling)     a.cripplingRating = Math.max(a.cripplingRating, r);
     if (au.piercing)      a.piercing = true;
-    if (au.haywire)     { a.haywire = true; a.haywireRating = Math.max(a.haywireRating, r); }
+    if (au.haywire) {
+      a.haywire = true;
+      a.haywireRating = Math.max(a.haywireRating, r);
+      if (p.rating2) a.haywireDamage2 = String(p.rating2);
+    }
     if (au.extremeLevelBonus) a.extremeLevelBonus = Math.max(a.extremeLevelBonus, au.extremeLevelBonus);
     if (au.forcePR)       a.forcePR = true;
     if (au.deflagrate) { a.deflagrate = true; a.deflagrateRating = Math.max(a.deflagrateRating, r); }
@@ -380,7 +438,7 @@ export function buildPropertyChatBlock(props) {
  * и _applyWeaponPropEffect резолвит актора по uuid вместо requireControlledActor,
  * не спрашивая игрока выцелить токен на сцене заново.
  */
-export function buildTargetEffectButtons(props, { hit, netDamageKnown = false, hadUnsoaked = false, ammoName = "", forceActor = null } = {}) {
+export function buildTargetEffectButtons(props, { hit, netDamageKnown = false, hadUnsoaked = false, ammoName = "", forceActor = null, deg = null } = {}) {
   if (!hit) return "";
   const btns = [];
 
@@ -425,7 +483,7 @@ export function buildTargetEffectButtons(props, { hit, netDamageKnown = false, h
         `data-wp-level-per-dop="${te.levelPerDoP ? 1 : 0}"`,
         `data-wp-rounds="${te.rounds ? 1 : 0}"`,
         `data-wp-fixed-rounds="${te.fixedRounds ?? 0}"`,
-        `data-wp-damage="${te.damageFromRating ? (p.rating || "") : (te.damage ?? "")}"`,
+        `data-wp-damage="${te.damageFromRating ? (p.rating || "") : (te.damageFromRating2 ? (p.rating2 || te.damage || "") : (te.damage ?? ""))}"`,
         `data-wp-rating="${r}"`,
         `data-wp-provaly="${te.provalyDamage ? 1 : 0}"`,
         `data-wp-provaly-mult="${te.provalyDamage?.mult ?? 1}"`,
@@ -434,7 +492,18 @@ export function buildTargetEffectButtons(props, { hit, netDamageKnown = false, h
         `data-wp-vehicle-flat="${te.vehicleFlatDamage ? 1 : 0}"`,
         `data-wp-armor-pen="${te.armorPenDamage ? 1 : 0}"`,
         `data-wp-ammo-name="${ammoName}"`,
-        `data-wp-force-actor-uuid="${forceActor?.uuid ?? ""}"`
+        `data-wp-force-actor-uuid="${forceActor?.uuid ?? ""}"`,
+        // wdbc-zlx7: базовый порог Успехов уже отфильтрован ВЫШЕ этой функции
+        // (filterPropsBySuccesses, psychic.mjs) — сюда доезжают только записи,
+        // прошедшие порог для Размера 0. requiredSuccessesScalesSize (Force
+        // Bolt: порог ×2 за каждый уровень Размера цели >0) требует знать
+        // РЕАЛЬНОГО кликнутого actor — тот известен только в
+        // hooks.mjs::_applyWeaponPropEffect, не здесь (кнопка строится ДО
+        // выбора токена цели), поэтому base-порог и deg едут на кнопке, а
+        // сама проверка — там.
+        `data-wp-required-successes="${p.requiredSuccesses ?? 0}"`,
+        `data-wp-required-successes-size="${p.requiredSuccessesScalesSize ? 1 : 0}"`,
+        `data-wp-deg="${deg ?? 0}"`
       ].join(" ");
 
       const testStr = te.testChar

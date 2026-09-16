@@ -394,3 +394,25 @@ describe("защита от Распыления", () => {
     expect(html).toContain("wh-parry-btn");
   });
 });
+
+// Сокрытая Угроза / Hidden Threat (wdbc-1rno.1) — реактивные кнопки
+// засечения рядом с Уклонением/Парированием, только когда АТАКУЮЩИЙ
+// пометил эту атаку Незримой (module/combat/attack.mjs::hiddenThreat).
+describe("Сокрытая Угроза: кнопки засечения Незримой атаки", () => {
+  it("hiddenThreat=false (по умолчанию) — кнопок засечения нет", () => {
+    const html = card();
+    expect(html).not.toContain("wh-hidden-threat-detect-btn");
+  });
+
+  it("hiddenThreat=true — обе кнопки (Пси-чутьё и Ноосканирование) на месте", () => {
+    const html = card({ hiddenThreat: true });
+    expect(html).toContain("wh-hidden-threat-detect-btn");
+    expect(html).toContain('data-skill="psyniscience"');
+    expect(html).toContain('data-skill="techUse"');
+  });
+
+  it("промах — как и остальная защита, кнопок засечения нет вовсе (весь блок защиты не рендерится)", () => {
+    const html = card({ hiddenThreat: true, hit: false, deg: 2, hits: [], hitsCount: 0 });
+    expect(html).not.toContain("wh-hidden-threat-detect-btn");
+  });
+});

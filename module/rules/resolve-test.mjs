@@ -166,6 +166,12 @@ function effectAppliesTo(target, ctx) {
   // (module/combat/grapple.mjs), и «skill:athletics» подхватил бы оба —
   // разные правила книги под одинаковым навыком.
   if (scope === "climbing") return ctx.climbing === true;
+  // Тест сопротивления яду (wdbc-1rno.1, Пророк Гэллерпокса): единственный
+  // реальный «тест против яда» в системе — сопротивление свойству оружия
+  // Toxic (module/hooks.mjs::_applyWeaponPropEffect, condition==="poisoned").
+  // Болезни своего теста не имеют вовсе (type:"disease" — статичные данные,
+  // без броска), поэтому этот scope покрывает только яд, не болезнь.
+  if (scope === "poison") return ctx.poisonTest === true;
   if (ctx.kind === "attack") return attackScopeApplies(scope, ctx);
   if (ctx.kind === "power")  return powerScopeApplies(scope, ctx);
   if (ctx.skill) return scope === `skill:${String(ctx.skill).toLowerCase()}`;
