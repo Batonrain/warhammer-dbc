@@ -128,7 +128,10 @@
               "weaponPropNewValue2": "0",
               "label": "",
               "code": "",
-              "when": { "negate": false, "conditions": [] },
+              "when": {
+                "negate": false,
+                "conditions": []
+              },
               "capabilityMode": "flag",
               "capabilityAptScope": "skill",
               "capabilityAptMatch": "",
