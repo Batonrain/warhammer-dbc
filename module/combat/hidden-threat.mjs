@@ -5,7 +5,7 @@
 // −50), кнопка в той же карточке, что Уклонение/Парирование
 // (module/combat/attack-card.mjs::defenseSection).
 
-import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 
@@ -28,11 +28,10 @@ export async function _performHiddenThreatDetect(actor, skillKey) {
 
   await postTestCard(actor, {
     icon: rollIcon("target"), title: `Засечь Незримую атаку — ${esc(actor.name)}`,
-    threshold: thresholdLine({
+    threshold: rollStatLine({
       label: def.label, base: skillTotal,
-      parts: [`Сокрытая Угроза ${HIDDEN_THREAT_PENALTY}`], threshold
+      parts: [`Сокрытая Угроза ${HIDDEN_THREAT_PENALTY}`], threshold, rv
     }),
-    rv,
     outcome: success
       ? `<span class="roll-success">Успех — атака засечена.</span>`
       : `<span class="roll-failure">Провал — источник атаки остаётся скрыт.</span>`

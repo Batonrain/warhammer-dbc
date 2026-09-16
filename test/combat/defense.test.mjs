@@ -264,7 +264,7 @@ describe("_performDodge: Повален (wdbc-r5o7.2)", () => {
     await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1 });
 
     const card = captured.chat.at(-1).content;
-    expect(card).toContain("→ Порог: <b>-5</b>");
+    expect(card).toContain("<label>Порог</label><b>-5</b>");
     expect(card).toContain("Повален -20");
   });
 
@@ -274,7 +274,7 @@ describe("_performDodge: Повален (wdbc-r5o7.2)", () => {
     await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1 });
 
     const card = captured.chat.at(-1).content;
-    expect(card).toContain("→ Порог: <b>15</b>");
+    expect(card).toContain("<label>Порог</label><b>15</b>");
     expect(card).not.toContain("Повален");
   });
 });
@@ -326,7 +326,7 @@ describe("_performDodge: Фантомные Копии атакующего (Wra
     await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1, attackerUuid: "Actor.attacker-1", isMelee: true });
 
     const card = captured.chat.at(-1).content;
-    expect(card).toContain("→ Порог: <b>5</b>");
+    expect(card).toContain("<label>Порог</label><b>5</b>");
     expect(card).toContain("Фантомные Копии атакующего -10");
   });
 
@@ -337,7 +337,7 @@ describe("_performDodge: Фантомные Копии атакующего (Wra
     await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1, attackerUuid: "Actor.attacker-1", isMelee: false });
 
     const card = captured.chat.at(-1).content;
-    expect(card).toContain("→ Порог: <b>15</b>");
+    expect(card).toContain("<label>Порог</label><b>15</b>");
     expect(card).not.toContain("Фантомные Копии");
   });
 
@@ -348,7 +348,7 @@ describe("_performDodge: Фантомные Копии атакующего (Wra
     await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1, attackerUuid: "Actor.attacker-1", isMelee: true });
 
     const card = captured.chat.at(-1).content;
-    expect(card).toContain("→ Порог: <b>15</b>");
+    expect(card).toContain("<label>Порог</label><b>15</b>");
     expect(card).not.toContain("Фантомные Копии");
   });
 
@@ -359,7 +359,7 @@ describe("_performDodge: Фантомные Копии атакующего (Wra
     await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1, attackerUuid: "Actor.unknown", isMelee: true });
 
     const card = captured.chat.at(-1).content;
-    expect(card).toContain("→ Порог: <b>15</b>");
+    expect(card).toContain("<label>Порог</label><b>15</b>");
   });
 });
 
@@ -415,7 +415,7 @@ describe("_performSprayCancel: тест на отмену Распыления (
 
     const card = captured.chat.at(-1).content;
     expect(card).toContain("Тест на отмену (Распыление, Acrobatics A+0)");
-    expect(card).toContain("→ Порог: <b>15</b>");
+    expect(card).toContain("<label>Порог</label><b>15</b>");
     expect(card).toContain("Успех");
     expect(card).toContain("Попадание отменено");
     expect(card).toContain("wh-recoil-btn");

@@ -228,13 +228,13 @@ describe("итоговый порог броска", () => {
 
   it("порог складывает цель и модификатор", async () => {
     const card = await rollSkill({}, { modifier: "10" });
-    expect(card).toContain("Порог: <b>55</b>");
+    expect(card).toContain("<label>Порог</label><b>55</b>");
   });
 
   it("Усталость видна в карточке и снижает порог", async () => {
     const card = await rollSkill({ fatigue: { value: 1 } });
     expect(card).toContain("😓 Усталость");
-    expect(card).toContain("Порог: <b>35</b>");
+    expect(card).toContain("<label>Порог</label><b>35</b>");
   });
 
   it("успех и провал считаются от итогового порога", async () => {
@@ -325,7 +325,7 @@ describe("Сложность: единая таблица, отдельная с
 
   it("выбранная Сложность входит в Порог и показана своей строкой", async () => {
     const content = await rollSkillWith({}, { roll: 30, fields: { "#test-difficulty": "-20" } });
-    expect(content).toContain("Порог: <b>25</b>");
+    expect(content).toContain("<label>Порог</label><b>25</b>");
     expect(content).toContain("-20 (📊 Сложность)");
     expect(content).toContain("Провал");
   });
@@ -369,7 +369,7 @@ describe("Кубик: Преимущество/Помеха доступны н�
     }, { ".dice-mode-opt:checked": [{ value: "advantage" }] }));
     await promise;
     expect(captured.rolls).toEqual(["1d100", "1d100"]);
-    expect(captured.chat.at(-1)?.content).toContain("Бросок: <b>20</b>");
+    expect(captured.chat.at(-1)?.content).toContain("<label>Бросок</label><b>20</b>");
   });
 
   it("Помеха берёт больший", async () => {
@@ -380,7 +380,7 @@ describe("Кубик: Преимущество/Помеха доступны н�
       "#skill-target": "45", "#skill-char-select": "int", "#skill-modifier": "0"
     }, { ".dice-mode-opt:checked": [{ value: "disadvantage" }] }));
     await promise;
-    expect(captured.chat.at(-1)?.content).toContain("Бросок: <b>80</b>");
+    expect(captured.chat.at(-1)?.content).toContain("<label>Бросок</label><b>80</b>");
   });
 });
 
@@ -414,7 +414,7 @@ describe("регрессия: тест Характеристики теперь
     }, { ".dice-mode-opt:checked": [{ value: "advantage" }] }));
     await promise;
     expect(captured.rolls).toEqual(["1d100", "1d100"]);
-    expect(captured.chat.at(-1)?.content).toContain("Бросок: <b>10</b>");
+    expect(captured.chat.at(-1)?.content).toContain("<label>Бросок</label><b>10</b>");
   });
 });
 
@@ -770,7 +770,7 @@ describe("Уравнитель / The Equalizer (wdbc-1rno.1): навязанны
     }));
     await promise;
     expect(captured.rolls).toEqual(["1d100", "1d100"]);
-    expect(captured.chat.at(-1)?.content).toContain("Бросок: <b>90</b>");
+    expect(captured.chat.at(-1)?.content).toContain("<label>Бросок</label><b>90</b>");
   });
 
   it("моя базовая WP не выше цели — переброс НЕ навязывается, один бросок", async () => {
@@ -804,7 +804,7 @@ describe("Уравнитель / The Equalizer (wdbc-1rno.1): навязанны
       "#skill-target": "40", "#skill-modifier": "0", "#test-kind": "opposed"
     }, { ".dice-mode-opt:checked": [{ value: "advantage" }] }));
     await promise;
-    expect(captured.chat.at(-1)?.content).toContain("Бросок: <b>90</b>");
+    expect(captured.chat.at(-1)?.content).toContain("<label>Бросок</label><b>90</b>");
   });
 
   it("на сцене нет цели — переброс не навязывается (ctx.targetActor пуст)", async () => {

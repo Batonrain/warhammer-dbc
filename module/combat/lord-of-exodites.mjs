@@ -22,7 +22,7 @@ import { esc, _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
-import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 const DISGRACE_FLAG = "lordOfExoditesDisgraced";
 
@@ -122,12 +122,11 @@ export async function rallyExoditeSquad(actor, { mod = -10 } = {}) {
   // в скобках через запятую, как в боевых карточках, а не через « · ».
   await postTestCard(actor, {
     icon: rollIcon("crown","#4dffa6"), title: "Повелитель Экзодитов — восстановление Судьбы",
-    threshold: thresholdLine({
+    threshold: rollStatLine({
       label: "Command(F)", base,
       parts: [mod ? `${mod >= 0 ? "+" : ""}${mod}` : "", ...ruleMods.parts],
-      threshold
+      threshold, rv
     }),
-    rv,
     outcome: ok
       ? outcomeHtml(true, `Успех — ${sux} ${_degWord(sux)}, +1 Судьбы: ${healedNames.join(", ") || "—"}`)
       : outcomeHtml(false, "Провал")

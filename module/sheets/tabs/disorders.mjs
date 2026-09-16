@@ -19,7 +19,7 @@ import { _degWord, esc } from "../../helpers/utils.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { centerPicker, pickerPos } from "../picker-ui.mjs";
 import { autoTestMods, ruleRollModsHtml, ruleRerollsHtml } from "../../rules/roll-mods.mjs";
-import { postTestCard } from "../../helpers/test-card.mjs";
+import { postTestCard, rollStatLine } from "../../helpers/test-card.mjs";
 import { resolveKindOutcome } from "../../rules/kind-outcome.mjs";
 import { actorInfamyValue } from "../../apps/infamy-points.mjs";
 import { fatiguePenalty } from "./conditions.mjs";
@@ -370,9 +370,17 @@ export async function rollDisorderTest(actor, item) {
   await postTestCard(actor, {
     icon: rollIcon("spark", "#c98bff"),
     title: `${esc(item.name)}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(actor.name)}`,
-    threshold: `<div class="roll-threshold">${meta?.abbr ?? charKey}: <b>${charVal}</b>${system.testMod ? ` ${system.testMod >= 0 ? "+" : ""}${system.testMod}` : ""}${suppressMods.parts.map(p => ` ${p}`).join("")}${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""} → Порог: <b>${eff0}</b></div>`,
+    threshold: rollStatLine({
+      label: meta?.abbr ?? charKey, base: charVal,
+      parts: [
+        ...(system.testMod ? [`${system.testMod >= 0 ? "+" : ""}${system.testMod}`] : []),
+        ...suppressMods.parts,
+        ...(difficulty !== 0 ? [`${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)`] : [])
+      ],
+      threshold: eff0, rv
+    }),
     lines: [outcome.combinedLine],
-    rv, rerollNote, critLine: outcome.critLine,
+    rerollNote, critLine: outcome.critLine,
     outcome: success
       ? `<span class="roll-success">Успех — контроль удержан (${deg} ${_degWord(deg)})</span>`
       : `<span class="roll-failure">Провал — расстройство проявляется (${deg} ${_degWord(deg)})</span>`,

@@ -27,7 +27,7 @@ import { testOutcome } from "../rules/roll-outcome.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
-import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 const FLAG = "avatarOfSlaughter";
 
@@ -72,11 +72,10 @@ export async function applyAvatarOfSlaughter(berserker, target) {
   // не прикладывается (как было), поэтому и звука кубов у карточки нет.
   await postTestCard(berserker, {
     icon: rollIcon("skull", "#ff6b6b"), title: `Аватар Резни — ${esc(berserker.name)}`,
-    threshold: thresholdLine({
+    threshold: rollStatLine({
       prefix: `Цель: ${target.name}`, label: "Воля", base: wp,
-      parts: ["−10", ...ruleMods.parts], threshold
+      parts: ["−10", ...ruleMods.parts], threshold, rv: roll.total
     }),
-    rv: roll.total,
     outcome: success
       ? outcomeHtml(true, "Устояла — эффекта нет")
       : outcomeHtml(false, "Провал — до конца боя −20 на атаки/манёвры не по Берсерку")

@@ -168,7 +168,7 @@ describe("activateTechMiracle", () => {
       "system.energy.value": 2
     });
     expect(captured.rolls).toEqual(["1d100", "1d5"]);
-    expect(captured.chat[0].content).toContain("Порог: <b>50</b>");
+    expect(captured.chat[0].content).toContain("<label>Порог</label><b>50</b>");
     expect(captured.chat[0].content).toContain("Активировано");
     expect(captured.chat[0].content).toContain("Энергия");
   });
@@ -248,7 +248,7 @@ describe("activateTechMiracle", () => {
     await activateTechMiracle(a, miracle);
 
     expect(captured.chat[0].content).toContain("Железо");
-    expect(captured.chat[0].content).toContain("Порог: <b>60</b>");
+    expect(captured.chat[0].content).toContain("<label>Порог</label><b>60</b>");
     expect(captured.chat[0].content).toContain("Активировано");
   });
 });

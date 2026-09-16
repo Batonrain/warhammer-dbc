@@ -13,7 +13,7 @@
 import { degreesOfSuccess } from "../constants/craft.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
-import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 
 export const PACIFISM_ATTACKED_FLAG = "grayManAttacked";
 export const PACIFISM_CAPABILITY = "pacifism.requiresAttackToRage";
@@ -56,8 +56,7 @@ export async function rollPacifismTest(actor) {
 
   await postTestCard(actor, {
     icon: "🕊️", title: `Тест Воли−20 — ${esc(actor.name)}`,
-    threshold: thresholdLine({ label: "W", base: wp, parts: ["миролюбие −20", ...ruleMods.parts], threshold }),
-    rv,
+    threshold: rollStatLine({ label: "W", base: wp, parts: ["миролюбие −20", ...ruleMods.parts], threshold, rv }),
     outcome: success
       ? `<span class="roll-success">Успех — Ярость входит вопреки миролюбию</span>`
       : `<span class="roll-failure">Провал — ${dof} ${_degWord(dof)}, в Ярость войти не удаётся</span>`

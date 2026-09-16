@@ -587,9 +587,9 @@ export function attackCard({
       blocks.quality ?? "",
       blocks.splinter ?? ""
     ],
-    // Место строки Порога здесь занимает статлиния: Порог, Режим и Бросок
-    // читаются в ряд, а приписка про отброшенные перебросом кубы висит на
-    // ячейке Броска.
+    // Место строки Порога здесь занимает статлиния: Бросок, Режим и Порог
+    // читаются в ряд (wdbc-fyvv), приписка про отброшенные перебросом кубы
+    // висит на ячейке Броска.
     threshold: statLine(isSprayAuto
       // У Распыления Порог и Бросок не участвуют в исходе вовсе — на их месте
       // то, что для потока и решает: режим и накрытый конус.
@@ -599,11 +599,11 @@ export function attackCard({
           { label: "Попадание", value: "авто" }
         ]
       : [
-          { label: "Порог", value: threshold },
-          { label: "Режим", value: modeLine },
           { label: "Бросок", value: rv,
             note: rerollDropped.length
-              ? `<em class="roll-reroll-note"> (переброс, отброшено ${rerollDropped.join(", ")})</em>` : "" }
+              ? `<em class="roll-reroll-note"> (переброс, отброшено ${rerollDropped.join(", ")})</em>` : "" },
+          { label: "Режим", value: modeLine },
+          { label: "Порог", value: threshold }
         ]),
     critLine,
     outcome: outcomeLine,

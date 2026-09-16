@@ -7,7 +7,7 @@ import { pickReroll }                       from "../rules/reroll-pick.mjs";
 import { testOutcome }                      from "../rules/roll-outcome.mjs";
 import { hasRuleFlag, ruleFlagLabels }      from "../rules/flags.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
-import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { DANCE_OF_DECEPTION_CAPABILITY, danceOfDeceptionFeintOptions } from "../rules/dance-of-deception.mjs";
 import { phantomCopiesFeintBonus } from "../rules/wrapped-in-chaos.mjs";
 import { spendFromInfamyPool } from "../apps/infamy-points.mjs";
@@ -219,10 +219,10 @@ export async function _showContestDialog(actor, techDef) {
                   : ""}
               </div>`,
             title: techDef.label,
-            threshold: thresholdLine({
-              label: danceOpt ? danceOpt.label : (charMeta?.abbr ?? charKey), base: selfVal, parts: modParts, threshold: eff
+            threshold: rollStatLine({
+              label: danceOpt ? danceOpt.label : (charMeta?.abbr ?? charKey), base: selfVal, parts: modParts, threshold: eff, rv
             }),
-            rv, rerollNote, outcome,
+            rerollNote, outcome,
             sections: [
               hit
                 ? `<div class="roll-location" style="font-size:0.88em;margin-top:3px;">
