@@ -311,7 +311,7 @@ function _hasHardArmorAtBody(actor) {
  * (rollShieldAgainstConditionTick, wdbc-5knb) — перегрузка ведёт себя
  * одинаково независимо от того, что её вызвало.
  */
-async function _applyShieldOverload(shieldItem, actor, s) {
+async function _applyShieldOverload(shieldItem, actor, s, { attackerUuid = "", isRetaliation = false } = {}) {
   await shieldItem.update({
     "system.status":       "overloaded",
     "system.equipped":     false,
@@ -341,10 +341,35 @@ async function _applyShieldOverload(shieldItem, actor, s) {
   if (s.overloadRepairTest) {
     overloadExtraHtml += `<div class="roll-threshold" style="color:#c07000;">Для повторной активации нужен тест: <b>${esc(s.overloadRepairTest)}</b>.</div>`;
   }
+  // Перегрузка-возмездие (Arheotech Refractor, wdbc-1rno.2): «Выстреливает
+  // мощный луч гамма-лазера в атакующего... Незримое» — бьёт того, кто
+  // атаковал НОСИТЕЛЯ щита, обычным конвейером урона (Pen/AP/Поглощение,
+  // не непоглощаемый урон, как overloadDamageFormula выше). isRetaliation
+  // на входе — обрыв цепи: сама эта атака-возмездие не должна породить
+  // вторую перегрузку-возмездие, если у пробитого ответным лучом атакующего
+  // тоже окажется такой щит (зеркальная пара — гипотетический, но дешёвый
+  // в защите край). Тип урона/Незримое зашиты здесь же, не в полях схемы
+  // (см. комментарий у overloadRetaliateFormula, forcefield.mjs) —
+  // единственный текущий потребитель, заводить общность рано.
+  if (s.overloadRetaliateFormula && attackerUuid && !isRetaliation) {
+    const attackerActor = await fromUuid(attackerUuid).catch(() => null);
+    if (attackerActor) {
+      const retRoll = await new Roll(s.overloadRetaliateFormula).evaluate();
+      overloadRolls.push(retRoll);
+      overloadExtraHtml += `<div class="roll-threshold" style="color:#c07000;">Перегрузка бьёт лучом в атакующего (${esc(attackerActor.name)}): <b>${retRoll.total}</b> E, Pen ${s.overloadRetaliatePen}, Незримое.</div>`;
+      await applyDamageToActor(attackerActor, {
+        rawDamage: retRoll.total, penetration: Number(s.overloadRetaliatePen) || 0,
+        damageType: "energy", hitLocation: "Торс",
+        attackerUuid: actor.uuid, attackerName: actor.name,
+        weaponName: `${shieldItem.name}: Перегрузка`, weaponUuid: shieldItem.uuid,
+        isRetaliation: true
+      });
+    }
+  }
   return { overloadRolls, overloadExtraHtml };
 }
 
-async function _rollActiveShield(actor, { skipWarp = false, melee = false, damageSubtype = "", hitLocation = "" } = {}) {
+async function _rollActiveShield(actor, { skipWarp = false, melee = false, damageSubtype = "", hitLocation = "", attackerUuid = "", isRetaliation = false } = {}) {
   // Ищем самый мощный активный щит (по currentRating). Освящённое оружие
   // (skipWarp) пропускает чародейские (варп-природные) щиты. Кровопомазанник
   // (wdbc-1rno, combat/turn-state-shield.mjs) даёт щит ТОЛЬКО от стрелковых
@@ -405,7 +430,7 @@ async function _rollActiveShield(actor, { skipWarp = false, melee = false, damag
   // ── Обновляем статус щита если перегружен ────────────────────────────────
   let overloadRolls = [];
   let overloadExtraHtml = "";
-  if (overloaded) ({ overloadRolls, overloadExtraHtml } = await _applyShieldOverload(shieldItem, actor, s));
+  if (overloaded) ({ overloadRolls, overloadExtraHtml } = await _applyShieldOverload(shieldItem, actor, s, { attackerUuid, isRetaliation }));
 
   // ── Тип щита для отображения ──────────────────────────────────────────────
   const typeLabels = { dome: "Купол", deflector: "Дефлект.", penetrating: "Сквозной" };
@@ -655,7 +680,8 @@ export async function applyDamageToActor(actor, damageData) {
                          // "electrical"/"flame"/"laser"/"toxic"/"" (wdbc-q0q8, DAMAGE_SUBTYPES)
     hitLocation: rawHitLocation, // строка — "Голова", "Торс" и т.д. (до редиректа Bronze Myrmidon ниже)
     attackerName,    // строка
-    attackerUuid = "", // Выстрел Насквозь: нужен токен стрелка для геометрии луча (wdbc-wlwf)
+    attackerUuid = "", // Выстрел Насквозь: нужен токен стрелка для геометрии луча (wdbc-wlwf); также цель Перегрузки-возмездия щита (wdbc-1rno.2)
+    isRetaliation = false, // Перегрузка-возмездие щита (wdbc-1rno.2): true — это САМ ответный удар, обрывает цепь у _rollActiveShield ниже
     weaponName,      // строка
     weaponUuid = "", // Кровавое Пламя (wdbc-1rno): «убил этим оружием» — deathButtonHtml ниже
     felling = 0,     // Разящее (X): −X к Сверхъест. Стойкости цели
@@ -689,7 +715,7 @@ export async function applyDamageToActor(actor, damageData) {
   // ── Бросок щита (если есть активный) ─────────────────────────────────────
   // ignoreShield (Flush/Варп) — щит не катится совсем; sanctified — катится, но
   // варп-природные (чародейские) щиты пропускаются.
-  const shieldResult = ignoreShield ? null : await _rollActiveShield(actor, { skipWarp: sanctified, melee, damageSubtype, hitLocation });
+  const shieldResult = ignoreShield ? null : await _rollActiveShield(actor, { skipWarp: sanctified, melee, damageSubtype, hitLocation, attackerUuid, isRetaliation });
 
   // Если щит заблокировал — урон аннулирован, выходим
   if (shieldResult?.blocked) return;

@@ -395,24 +395,64 @@ describe("защита от Распыления", () => {
   });
 });
 
-// Сокрытая Угроза / Hidden Threat (wdbc-1rno.1) — реактивные кнопки
-// засечения рядом с Уклонением/Парированием, только когда АТАКУЮЩИЙ
-// пометил эту атаку Незримой (module/combat/attack.mjs::hiddenThreat).
-describe("Сокрытая Угроза: кнопки засечения Незримой атаки", () => {
-  it("hiddenThreat=false (по умолчанию) — кнопок засечения нет", () => {
+// Незримое (стр. 32, wdbc-1rno.2) — Уклонение/Парирование гейтятся, пока
+// цель не засекла атаку; реактивные кнопки засечения рядом с ними.
+describe("Незримое: гейт Уклонения/Парирования и кнопки засечения", () => {
+  it("unseen=false (по умолчанию) — Уклонение/Парирование обычные, кнопок засечения нет", () => {
     const html = card();
-    expect(html).not.toContain("wh-hidden-threat-detect-btn");
+    expect(html).not.toContain("wh-unseen-detect-btn");
+    expect(html).not.toContain("wh-unseen-locked");
+    expect(html).toContain('<button class="wh-dodge-btn" type="button"');
   });
 
-  it("hiddenThreat=true — обе кнопки (Пси-чутьё и Ноосканирование) на месте", () => {
-    const html = card({ hiddenThreat: true });
-    expect(html).toContain("wh-hidden-threat-detect-btn");
+  it("unseen=true, unseenDetected=false — Уклонение/Парирование disabled+locked, обе кнопки засечения на месте", () => {
+    const html = card({ unseen: true });
+    expect(html).toContain("wh-unseen-detect-btn");
     expect(html).toContain('data-skill="psyniscience"');
     expect(html).toContain('data-skill="techUse"');
+    expect(html).toContain('class="wh-dodge-btn wh-unseen-locked" type="button" disabled');
+    expect(html).toContain('class="wh-parry-btn wh-unseen-locked" type="button" disabled');
   });
 
-  it("промах — как и остальная защита, кнопок засечения нет вовсе (весь блок защиты не рендерится)", () => {
-    const html = card({ hiddenThreat: true, hit: false, deg: 2, hits: [], hitsCount: 0 });
-    expect(html).not.toContain("wh-hidden-threat-detect-btn");
+  it("unseen=true, unseenDetected=true — Уклонение/Парирование как обычно, кнопок засечения нет", () => {
+    const html = card({ unseen: true, unseenDetected: true });
+    expect(html).not.toContain("wh-unseen-detect-btn");
+    expect(html).not.toContain("wh-unseen-locked");
+    expect(html).toContain('<button class="wh-dodge-btn" type="button"');
+  });
+
+  it("unseenPenalty (Сокрытая Угроза −50) — печатается в подписи кнопок засечения", () => {
+    const html = card({ unseen: true, unseenPenalty: -50 });
+    expect(html).toContain("Пси-чутьё -50");
+    expect(html).toContain("Ноосканирование -50");
+  });
+
+  it("промах — как и остальная защита, блока Незримого нет вовсе (весь блок защиты не рендерится)", () => {
+    const html = card({ unseen: true, hit: false, deg: 2, hits: [], hitsCount: 0 });
+    expect(html).not.toContain("wh-unseen-detect-btn");
+  });
+
+  it("dodgeMod<=-900 (напр. Атака всем телом) сильнее unseen для Уклонения — кнопка навсегда disabled, без данных на разблок; Парирование при этом всё ещё unseen-locked (свой независимый гейт)", () => {
+    const html = card({ unseen: true, defense: { dodgeMod: -900 } });
+    expect(html).toContain('class="wh-dodge-btn wh-dodge-disabled" disabled');
+    expect(html).toContain('class="wh-parry-btn wh-unseen-locked" type="button" disabled');
+  });
+
+  it("sixthSenseBypassAvailable — кнопка «Шестое Чувство» на месте рядом с засечением", () => {
+    const html = card({ unseen: true, sixthSenseBypassAvailable: true });
+    expect(html).toContain('data-bypass="sixthSense"');
+    expect(html).toContain('data-persistent="1"');
+    expect(html).not.toContain('data-bypass="musicOfBattle"');
+  });
+
+  it("musicOfBattleBypassAvailable — кнопка «Музыка Битвы», persistent=0", () => {
+    const html = card({ unseen: true, musicOfBattleBypassAvailable: true });
+    expect(html).toContain('data-bypass="musicOfBattle"');
+    expect(html).toContain('data-persistent="0"');
+  });
+
+  it("unseenDetected=true — кнопки обхода не рендерятся, даже если бы были доступны (не unseenLocked)", () => {
+    const html = card({ unseen: true, unseenDetected: true, sixthSenseBypassAvailable: true, musicOfBattleBypassAvailable: true });
+    expect(html).not.toContain("wh-unseen-bypass-btn");
   });
 });

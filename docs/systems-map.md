@@ -148,6 +148,22 @@ selection}.mjs`, `combat/aim.mjs` (прицеливание кликом по к
 (авто-детект укрытия), `combat/evasion-pool.mjs`, `combat/hand-shield.mjs`,
 `combat/shield.mjs` (силовые щиты, d100 против рейтинга).
 
+**Незримое (wdbc-1rno.2, 16.09.2026):** атака типа Незримое (стр. 32) реально
+блокирует Уклонение/Парирование, пока цель не засекла её — `rules/
+unseen-attack.mjs` (wp.unseen structural-флаг оружия/психосилы/Техночуда,
+`isUnseenDetected` — три канала: реактивный тест, персистентное Ноосферное
+Сканирование, пассивное Варп-Зрение/hasWarpSight, радиационный канал/
+hasRadiationDetection) + `combat/unseen-attack.mjs` (`_performUnseenDetect`
+реактивный тест, `_performUnseenBypass` — Sixth Sense/Music of Battle тратят
+Очко Бесчестия вместо теста) + `attack-card.mjs::defenseSection` gate (кнопки
+disabled+data для клиентского разблока, `hooks.mjs`). Талант-слой (частично) —
+`rules/unseen-talents.mjs`: Blind Fighting (−20 без засечения в рукопашной),
+Backstab (×2 кубика урона), Sniper Assassin (продлённая лестница доп. кубиков),
+Blindside (target-scoped метка), Defensive Rider (редирект НЕ работает против
+Незримого). Честно не смоделировано: Hair Trigger (нужен Караул/Overwatch,
+wdbc-1rno.27), призыв оружия Точным Телекинезом/Клинками Силы + третий класс
+«частичного Незримого» (wdbc-1rno.28).
+
 **Состязания/захват/верхом:** `combat/techniques.mjs` (Повалить/Финт/Давление/
 Напролом), `combat/grapple.mjs` (Борьба), `combat/mount.mjs` + `rules/mount.
 mjs` (верховой бой), `combat/tactical-map.mjs` + `rules/tactical-map.mjs`
@@ -215,6 +231,12 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - Истории комплекта силовой брони: `data/item/armour-history-entry.mjs`,
   `constants/power-armour-lore.mjs`, `apps/armour-history.mjs` +
   `armour-history-trance.mjs`.
+- Перегрузка щита: `combat/damage.mjs::_applyShieldOverload` — общий примитив,
+  не только «выключился, нужен ремонт»: `overloadDamageFormula`/
+  `overloadFatigueFormula` (доп. непоглощ. урон/Усталость НОСИТЕЛЮ, Морозное
+  Сердце) и `overloadRetaliateFormula`/`overloadRetaliatePen` (wdbc-1rno.2,
+  16.09.2026 — бьёт формулой в АТАКУЮЩЕГО обычным конвейером урона,
+  Archeotech Refractor «Перегрузка»; `isRetaliation` обрывает цепь).
 
 ## 8. Пространственные механизмы: Шаблоны, Ауры, Зоны
 
@@ -386,11 +408,13 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - Ещё именные (wdbc-1rno.1, 15-16.09.2026): `prophet-of-gallerpox.mjs`
   (Пророк Гэллерпокса, Нургл — заражение Vehicle/Ship-актора, штраф −30
   против ядов не-Нурглитам на сцене, новый scope "poison" в
-  `resolve-test.mjs`), `hidden-threat.mjs` + `combat/hidden-threat.mjs`
-  (Сокрытая Угроза, Тзинч — флаг «следующая атака Незримая», реактивные
-  кнопки засечения в карточке атаки; полная блокировка Уклонения без
-  засечения осталась общим пробелом всех Незримых атак системы, см.
-  bd wdbc-1rno.2),
+  `resolve-test.mjs`), `hidden-threat.mjs` (Сокрытая Угроза, Тзинч — флаг
+  «следующая атака Незримая», её собственный −50 к засечению) поверх общего
+  примитива «Незримое» (wdbc-1rno.2, 16.09.2026): `rules/unseen-attack.mjs`
+  (wp.unseen, isUnseenDetected/markUnseenDetectedUntilNextTurn/hasWarpSight)
+  + `combat/unseen-attack.mjs` (_performUnseenDetect, реактивный тест) —
+  Уклонение/Парирование ТЕПЕРЬ реально гейтятся, пока цель не засекла атаку
+  (attack-card.mjs::defenseSection, клиентский DOM-разблок в hooks.mjs),
   `bronze-myrmidon.mjs` (Бронзовый Мирмидон, Кхорн — редирект попаданий
   Сочленение/Глаз → Рука/Голова у актора с активным Трейтом Machine),
   `black-eyes.mjs` (Чёрные Глаза, Слаанеш — иммунитет к штрафам

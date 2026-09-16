@@ -170,6 +170,12 @@ export function aggregateAuto(props) {
     maximal: false, ignoreShield: false, lance: false, taintedCorB: false,
     spray: false, forcePR: false, deflagrate: false, deflagrateRating: 0,
     warpSoak: false, sanctified: false,
+    // Незримое (wdbc-1rno.2) — гейт Уклонения/Парирования читает
+    // combat/attack.mjs (нужен защищающийся актор, здесь только флаг).
+    unseen: false,
+    // Радиационная разновидность (wdbc-1rno.2) — вместе с unseen выше,
+    // отдельный альт-канал засечения (rules/unseen-attack.mjs::isUnseenDetected).
+    radiationSourced: false,
     // Свойства, автоматизированные позже (стр. 166-170): раньше были только
     // текстовыми напоминаниями и на расчёты не влияли.
     ordnance: false, otherAttacksMod: 0, doubleDamageRoll: false,
@@ -240,6 +246,8 @@ export function aggregateAuto(props) {
     if (au.lance)         a.lance = true;
     if (au.taintedCorB)   a.taintedCorB = true;
     if (au.spray)         a.spray = true;
+    if (au.unseen)        a.unseen = true;
+    if (au.radiationSourced) a.radiationSourced = true;
     if (au.blast)         a.blastRating = Math.max(a.blastRating, r);
     if (au.flame)         a.flame = true;
     if (au.corrosive)     a.corrosiveRating = Math.max(a.corrosiveRating, r);
@@ -310,11 +318,17 @@ export function applyDamageDiceMods(formula, auto) {
   let f = String(formula || "");
   const m = f.match(/(\d+)d(\d+)/);
   if (!m) return f;
-  if (!auto.tearing && !(auto.provenRating > 0)) return f;
+  if (!auto.tearing && !(auto.provenRating > 0) && !auto.doubleDice) return f;
 
   const n     = parseInt(m[1], 10);
   const faces = parseInt(m[2], 10);
-  const dice  = auto.tearing ? n + 1 : n;
+  let dice  = auto.tearing ? n + 1 : n;
+  // Backstab/Удар в Спину (wdbc-1rno.2, rules/unseen-talents.mjs): «удваивает
+  // базовые кубики урона» — считается ПОСЛЕ Рвущего (если оба разом), keep-
+  // highest от Рвущего (kh) при этом продолжает откидывать ровно один кубик
+  // из удвоенного пула, не из исходного — книга не разбирает такое сочетание
+  // отдельно, это самое естественное прочтение порядка операций.
+  if (auto.doubleDice) dice *= 2;
   let term = `${dice}d${faces}`;
   if (auto.provenRating > 0) term += `min${Math.min(auto.provenRating, faces)}`;
   if (auto.tearing)          term += `kh${n}`;

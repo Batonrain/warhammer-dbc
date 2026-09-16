@@ -23,6 +23,7 @@ import { applyImperative } from "../../rules/imperative.mjs";
 import { isPsalmUnseenFortressItem, psalmUnseenFortressGrant } from "../../rules/psalm-unseen-fortress.mjs";
 import { hasElectrovigour } from "../../rules/electrovigour.mjs";
 import { pickReroll } from "../../rules/reroll-pick.mjs";
+import { markUnseenDetectedUntilNextTurn } from "../../rules/unseen-attack.mjs";
 import { testOutcome } from "../../rules/roll-outcome.mjs";
 
 /** Активация Техночуда: Когниция + Энергия + тест Tech-Use (Ментальное) + урон. */
@@ -374,10 +375,25 @@ export async function techGenResource(actor, item, { res, amount, fromCognition 
   }, game.settings.get("core", "rollMode")));
 }
 
+/**
+ * Ноосферное Сканирование (стр. 367, wdbc-1rno.2): «При Успехе засечь это
+ * Техночудо, в т.ч. позволяя Избегать от него, если это Незримая атака.
+ * Успешное Ноосферное Сканирование остаётся активным до начала следующего
+ * Хода персонажа». Успех — persistent-флаг rules/unseen-attack.mjs,
+ * читаемый ЛЮБОЙ Незримой атакой против этого актора до начала его
+ * следующего Хода (снимается тем же тактом, что и другие временные
+ * состояния — module/hooks.mjs::updateCombat), не только техночудесной:
+ * система не различает источник детекта той же ценой, что уже принята для
+ * реактивного теста (module/combat/unseen-attack.mjs — обе Психонаука и
+ * Техпользование предлагаются против ЛЮБОЙ Незримой атаки, не только
+ * своего типа источника).
+ */
 export function rollTechScan(actor, rollSkill) {
   const def = SKILLS_DEF.techUse;
   const sk  = actor.system.skills?.techUse;
-  return rollSkill("📡 Ноосферное Сканирование (Tech-Use)", sk?.total ?? -20, def?.char ?? "int", { skill: "techUse" });
+  const result = rollSkill("📡 Ноосферное Сканирование (Tech-Use)", sk?.total ?? -20, def?.char ?? "int", { skill: "techUse" });
+  result?.then?.(r => { if (r?.success) markUnseenDetectedUntilNextTurn(actor); });
+  return result;
 }
 
 export function activateTechListeners(html, actor, { rollSkill } = {}) {

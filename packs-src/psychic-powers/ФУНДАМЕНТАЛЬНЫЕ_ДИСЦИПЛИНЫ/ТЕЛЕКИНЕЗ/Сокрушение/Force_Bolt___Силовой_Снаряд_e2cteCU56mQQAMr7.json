@@ -28,6 +28,9 @@
         "key": "knockdown",
         "requiredSuccesses": 3,
         "requiredSuccessesScalesSize": true
+      },
+      {
+        "key": "unseen"
       }
     ],
     "charDamageStat": "",

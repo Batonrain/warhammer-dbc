@@ -614,6 +614,7 @@ const TYPES = {
       quality: "common", availability: 2, weight: 0, drukhari: false,
       coverVsSubtype: "", coverVsSubtypeAP: 0,
       overloadDamageFormula: "", overloadFatigueFormula: "", overloadRepairTest: "",
+      overloadRetaliateFormula: "", overloadRetaliatePen: 0,
       bookSource: ""
     }
   },

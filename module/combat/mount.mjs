@@ -835,13 +835,19 @@ async function resolveMountedDodge(rider, ctx, target, { extraMod = 0, hitsCount
  * Считает, куда пришлось попадание (по броску атаки), и постит карточку —
  * общая логика для ручного диалога и кнопки «Определить» прямо в карточке
  * атаки (wdbc-7as8, бросок уже известен — передаётся, не перепечатывается).
+ *
+ * `unseen` (wdbc-1rno.2) — приходит от кнопки в карточке (data-unseen,
+ * attack-card.mjs), знающей была ли ЭТА атака Незримой; у ручного диалога
+ * (мод.mjs:884, роль вводится руками) такого контекста нет — по умолчанию
+ * false, тот же честный предел, что у остальных источников Незримого без
+ * прямой карточки-источника.
  */
-export async function resolveHitAllocation(rider, rv) {
+export async function resolveHitAllocation(rider, rv, { unseen = false } = {}) {
   const ctx = await mountContext(rider);
   if (!ctx) return;
   const { mount, traits } = ctx;
   rv = parseInt(rv) || 0;
-  const target = hitTarget(rv, mount, { traits, rider });
+  const target = hitTarget(rv, mount, { traits, rider, unseen });
   const toRider = target === "rider";
   // «Бросок атаки» — чужой бросок, разбираемый этой карточкой, а не свой:
   // строка своя, а не общая «Бросок».

@@ -27,6 +27,9 @@
       {
         "key": "felling",
         "rating": "PR"
+      },
+      {
+        "key": "unseen"
       }
     ],
     "charDamageStat": "",

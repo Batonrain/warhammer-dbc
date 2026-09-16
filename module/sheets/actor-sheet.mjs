@@ -2708,6 +2708,13 @@ export class WarhammerCharacterSheet
       });
     }
     await this._maybePostOpposedComparison(opposedRequest, { label, baseEff, rv, outcome, skillKey });
+    // Возврат исхода (wdbc-1rno.2): раньше _runTest ничего не возвращал —
+    // ни один существующий вызывающий код это значение не читал (проверено
+    // grep'ом), поэтому добавление return здесь ничего не ломает. Нужен
+    // Ноосферному Сканированию (module/sheets/tabs/tech.mjs::rollTechScan) —
+    // единственному текущему потребителю, который должен узнать про Успех,
+    // чтобы отметить персистентное засечение Незримых атак.
+    return { success: outcome.success, deg };
   }
 
   // -- Бросок навыка ---------------------------------------------------------

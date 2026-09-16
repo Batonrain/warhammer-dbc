@@ -1,5 +1,5 @@
 import { _performDodge, _performParry, _performSprayCancel, _performCompression, _performExtendBodyPart, _performEtherealSwarm, _performPsychicParry, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
-import { _performHiddenThreatDetect } from "./combat/hidden-threat.mjs";
+import { _performUnseenDetect, _performUnseenBypass } from "./combat/unseen-attack.mjs";
 import { applyCancerousHealingFromButton, APPLY_BTN_CLASS as CH_APPLY_BTN_CLASS } from "./apps/cancerous-healing.mjs";
 import { performPoolSpend, clearEvasionPools } from "./combat/evasion-pool.mjs";
 import { showRecoilDialog, performRecoil, performPoolRecoil } from "./combat/recoil.mjs";
@@ -37,6 +37,8 @@ import { snapshotStanceForRoundStart } from "./rules/determination-to-fight.mjs"
 import { processSnapshotTurnEnd } from "./combat/snapshot.mjs";
 import { processJustTheLightTurnEnd } from "./combat/just-the-light.mjs";
 import { processTurnStateShieldsTurnEnd, clearTurnStateShields } from "./combat/turn-state-shield.mjs";
+import { clearUnseenDetection } from "./rules/unseen-attack.mjs";
+import { clearBlindsideUse } from "./rules/unseen-talents.mjs";
 import { processVultureTurnStart } from "./combat/vulture.mjs";
 import { processIrradiatedTurnStart } from "./combat/irradiated.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "./combat/weapon-mods.mjs";
@@ -474,15 +476,50 @@ export function registerHooks() {
       });
     });
 
-    // Сокрытая Угроза (Дар Тзинч, wdbc-1rno.1) — реактивный тест на засечение
-    // Незримой атаки, не Реакция, не блокирует Уклонение (wdbc-1rno.2).
-    html.querySelectorAll(".wh-hidden-threat-detect-btn").forEach(btn => {
+    // Незримое (стр. 32, wdbc-1rno.2) — реактивный тест на засечение
+    // Незримой атаки, не Реакция. На Успехе снимает disabled с кнопок
+    // Уклонения/Парирования ЭТОЙ ЖЕ карточки (wh-unseen-locked) — они уже
+    // отрендерены с полными данными (attack-card.mjs), сервер здесь не
+    // участвует, это чисто клиентский DOM-разблок.
+    html.querySelectorAll(".wh-unseen-detect-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
+        // ev.currentTarget обнуляется после await (test/hooks-current-target-
+        // after-await.test.mjs) — снимаем всё нужное с него ДО первого await.
+        const section = ev.currentTarget.closest(".roll-defense-section");
+        const skillKey = ev.currentTarget.dataset.skill || "";
+        const penalty = Number(ev.currentTarget.dataset.penalty) || 0;
         const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
         if (!actor) return;
-        const skillKey = ev.currentTarget.dataset.skill || "";
-        await _performHiddenThreatDetect(actor, skillKey);
+        const { success } = await _performUnseenDetect(actor, skillKey, { penalty });
+        if (success) {
+          section?.querySelectorAll(".wh-unseen-locked").forEach(b => {
+            b.disabled = false;
+            b.classList.remove("wh-unseen-locked");
+          });
+        }
+      });
+    });
+
+    // Sixth Sense/Music of Battle (wdbc-1rno.2, rules/unseen-talents.mjs) —
+    // тратят 1 Очко Бесчестия вместо теста засечения, тот же клиентский
+    // DOM-разблок, что и у успешного детекта выше.
+    html.querySelectorAll(".wh-unseen-bypass-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const section = ev.currentTarget.closest(".roll-defense-section");
+        const bypass = ev.currentTarget.dataset.bypass || "";
+        const persistent = ev.currentTarget.dataset.persistent === "1";
+        const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
+        if (!actor) return;
+        const label = bypass === "sixthSense" ? "Sixth Sense/Шестое Чувство" : "Music of Battle/Музыка Битвы";
+        const { spent } = await _performUnseenBypass(actor, { persistent, label });
+        if (spent) {
+          section?.querySelectorAll(".wh-unseen-locked").forEach(b => {
+            b.disabled = false;
+            b.classList.remove("wh-unseen-locked");
+          });
+        }
       });
     });
 
@@ -1006,12 +1043,14 @@ export function registerHooks() {
     html.querySelectorAll(".wh-mount-hit-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
+        const roll = ev.currentTarget.dataset.roll;
+        const unseen = ev.currentTarget.dataset.unseen === "1";
         const actor = requireControlledActor("⚠️ Выберите токен цели верхом на сцене!");
         if (!actor) return;
         if (!actor.system?.mount?.uuid) {
           return ui.notifications.warn("⚠️ Выбранный персонаж не верхом.");
         }
-        await resolveHitAllocation(actor, ev.currentTarget.dataset.roll);
+        await resolveHitAllocation(actor, roll, { unseen });
       });
     });
 
@@ -2524,6 +2563,12 @@ function _attachFateContextMenu(message, html) {
       // Щит по состоянию Хода (combat/turn-state-shield.mjs) живёт ровно
       // «до начала своего следующего Хода» — снимается тем же тактом.
       await clearTurnStateShields(nextCombatant.actor);
+      // Незримое: засечение Ноосферным Сканированием (стр. 32, 367,
+      // wdbc-1rno.2) «остаётся активным до начала следующего Хода» — тот
+      // же такт, что и соседние по этому блоку временные состояния.
+      await clearUnseenDetection(nextCombatant.actor);
+      // Blindside/Из Слепой Зоны (wdbc-1rno.2): «Раз в Ход» — тот же такт.
+      await clearBlindsideUse(nextCombatant.actor);
       // Стервятник/Дар Нургла (wdbc-1rno): временное Очко Бесчестия за три
       // умирающих/трупа в 7 м — начисляется и сгорает тем же тактом, поэтому
       // нужен токен носителя, а не только актор.

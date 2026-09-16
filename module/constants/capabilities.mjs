@@ -1507,8 +1507,9 @@ export const CAPABILITIES = {
   },
   // ── Всадник
   "rider.core.defensiveRider": {
-    label: "Подвергаясь атаке верхом, персонаж может выбрать получать все не-Избирательные попадания в себя вместо распределения между собой и скакуном/…",
-    source: "Defensive Rider / Всадник-Защитник", reader: ""
+    label: "РЕАЛИЗОВАНО (wdbc-1rno.2): подвергаясь атаке верхом (не-Избирательное попадание — 'выбор' форсирован, а не диалог), персонаж забирает все такие попадания на себя вместо разбора по формуле дубль/Stand. Исключение по буке книги — против Незримой атаки (см. wp.unseen, rules/unseen-attack.mjs) редирект НЕ применяется, попадание разбирается как обычно. «Из засады»/«со спины» — честно НЕ исключены: в системе нет отдельного проверяемого флага ни для того, ни для другого (Врасплох — ручная галочка ГМа в диалоге атаки, не состояние).",
+    source: "Defensive Rider / Всадник-Защитник",
+    reader: "module/rules/mount.mjs::hitTarget (redirect + unseen-исключение), module/combat/mount.mjs::resolveHitAllocation (unseen приходит от кнопки), module/combat/attack-card.mjs (data-unseen на .wh-mount-hit-btn), module/hooks.mjs (.wh-mount-hit-btn — снимает data-unseen)"
   },
   "rider.core.dragonKnight": {
     label: "Если персонаж и скакун действуют в одну Инициативу, за полудействие он может пройти Survival−10,",
@@ -1552,16 +1553,18 @@ export const CAPABILITIES = {
   },
   // ── Разбойник
   "rogue.core.backstab": {
-    label: "Нанося попадание незримой Избирательной атакой ножом (например, со спины, проведя весь Ход вне поля зрения цели),",
-    source: "Backstab / Удар в Спину", reader: ""
+    label: "РЕАЛИЗОВАНО (wdbc-1rno.2): попадание Избирательной атакой ножом при unseen=true (wp.unseen/Сокрытая Угроза) удваивает базовые кубики урона. Честная граница: «весь Ход вне поля зрения цели» (общее книжное условие Незримого, стр. 32) в системе не считается геометрией/временем — сработает только когда Незримость атаки пришла ИЗВЕСТНЫМ движку источником, не голой позицией.",
+    source: "Backstab / Удар в Спину",
+    reader: "module/rules/unseen-talents.mjs (hasBackstab/isKnifeWeapon), module/combat/attack.mjs (backstabDoubled → wp.doubleDice), module/combat/weapon-properties.mjs::applyDamageDiceMods (doubleDice), module/combat/attack-card.mjs (Удар в Спину: ×2 кубика — подпись в карточке)"
   },
   "rogue.core.bladeJuggler": {
     label: "Вооружённый ножом с пустой рукой, раз в Ход за ментальное свободное действие персонаж проходит против противника Deceive(WS)+0 vs Awareness(…",
     source: "Blade Juggler / Жонглер Клинком", reader: ""
   },
   "rogue.core.blindside": {
-    label: "Раз в Ход при численном преимуществе персонаж может ментальным свободным действием пройти Stealth(A)+0 vs Awareness(P)+0. При победе,",
-    source: "Blindside / Из Слепой Зоны", reader: ""
+    label: "РЕАЛИЗОВАНО ЧАСТИЧНО (wdbc-1rno.2): кнопка на предмете метит текущую цель (game.user.targets), гейт «раз в Ход». Следующая атака НОЖОМ по помеченной цели получает wp.unseen=true (module/combat/attack.mjs). НЕ проверяются движком: «численное преимущество» (нет примитива подсчёта своих/чужих в радиусе) и сам встречный тест Stealth(A) vs Awareness(P) — ни один диалог не поддерживает встречный тест ПРОТИВ произвольной выбранной цели прямо с листа (opposedAuto — для делегирования СВОЕГО теста, не то же самое). Тот же уровень доверия столу, что у ручной галочки «Врасплох».",
+    source: "Blindside / Из Слепой Зоны",
+    reader: "module/rules/unseen-talents.mjs (isBlindsideMarked/markBlindside/consumeBlindsideMark/blindsideUsedThisTurn/clearBlindsideUse), module/combat/attack.mjs (blindsideActive → wp.unseen, consume), module/hooks.mjs (clearBlindsideUse на начале Хода); пак-предмет: kind:\"script\" blindside-mark"
   },
   "rogue.core.closeQuarters": {
     label: "Если персонаж вооружён ножом, кулаками, когтями и/или пистолетом, противники, начавшие Ход в рукопашной с ним,",
@@ -1685,8 +1688,9 @@ export const CAPABILITIES = {
     source: "Analytical Eye / Аналитический Взгляд", reader: ""
   },
   "awareness.core.blindFighting": {
-    label: "Персонаж уменьшает вдвое штрафы на рукопашные Атаки и Избегания рукопашных атак от слепоты, тьмы и сниженной видимости.",
-    source: "Blind Fighting / Бой Вслепую", reader: ""
+    label: "РЕАЛИЗОВАНО ЧАСТИЧНО (wdbc-1rno.2): вторая половина (не в label выше, полный текст пака) — «может Избегать от Незримых атак в рукопашной со штрафом −20» — реализована: Уклонение/Парирование рендерятся обычными (не disabled), но с доп. −20, без теста засечения. Первая половина — «уменьшает вдвое штрафы на рукопашные Атаки/Избегания от слепоты, тьмы и сниженной видимости» — НЕ реализована (отдельная механика штрафов видимости, вне объёма wdbc-1rno.2).",
+    source: "Blind Fighting / Бой Вслепую",
+    reader: "module/rules/unseen-talents.mjs (hasBlindFighting), module/combat/attack.mjs (blindFightingBypass → −20 в dodgeMod/parryMod, unseenDetected=true)"
   },
   "awareness.core.blindsight": {
     label: "Когда персонаж не носит шлем, он получает Трейт Unnatural Senses (P.b). Когда его глаза закрыты или он ослеплён,",
@@ -1714,8 +1718,9 @@ export const CAPABILITIES = {
     reader: "module/rules/item-rules.mjs (kind:\"reroll\" → опциональный переброс в диалоге теста)"
   },
   "awareness.core.sixthSense": {
-    label: "Получив попадание с типом Незримое, персонаж может потратить Очко Бесчестия, чтобы Избежать от него как обычно и до начала своего следующего…",
-    source: "Sixth Sense / Шестое Чувство", reader: ""
+    label: "РЕАЛИЗОВАНО (wdbc-1rno.2): кнопка «потратить Очко Бесчестия» в карточке атаки, доступна пока Незримая атака заблокирована (unseenLocked) — тратит 1 Очко, снимает блок Уклонения/Парирования ЭТОЙ атаки и ставит персистентный флаг (Избегание Незримых атак до начала следующего Хода).",
+    source: "Sixth Sense / Шестое Чувство",
+    reader: "module/rules/unseen-talents.mjs (hasSixthSense), module/combat/attack.mjs (sixthSenseBypassAvailable), module/combat/attack-card.mjs (кнопка wh-unseen-bypass-btn), module/combat/unseen-attack.mjs (_performUnseenBypass, persistent:true), module/hooks.mjs (обработчик)"
   },
   "awareness.core.taster": {
     label: "Персонаж получает +20 на тесты нюха и +40 на тесты вкуса для распознания ядов. Распознав яд на вкус, он может безопасно его сплюнуть.",
@@ -3108,7 +3113,7 @@ export const CAPABILITIES = {
     source: "Full Fire / Полный Огонь", reader: ""
   },
   "rangedCore.core.hairTrigger": {
-    label: "Раз в Раунд при выстреле из Караула (до броска) персонаж проходит Awareness(P)+0 vs Awareness(P)+0;",
+    label: "ЗАБЛОКИРОВАНО АРХИТЕКТУРНО (разведка 16.09.2026, wdbc-1rno.2): «Раз в Раунд при выстреле из Караула (до броска)... действует первым независимо от Ag, выстрел считается Незримым». Не «стрельба из Караула» (Overwatch/reaction-fire на движение цели) сама по себе — этого ДЕЙСТВИЯ нет вовсе нигде в системе (не хук на движение, не отдельная кнопка/путь атаки — проверено grep'ом по module/combat и module/rules, sheets/attack/dialog.mjs прямо комментирует «Караул в этом диалоге не выбирается»), и «действует первым независимо от инициативы» — тоже нет примитива (initiative.mjs даёт только пересчёт числа Инициативы, не внеочередное действие). Реализация — не вайринг существующего примитива, а проектирование Overwatch с нуля; вне объёма wdbc-1rno.2.",
     source: "Hair Trigger / Палец на Спуске", reader: ""
   },
   "rangedCore.core.hipShooting": {
@@ -3148,8 +3153,9 @@ export const CAPABILITIES = {
     source: "Sharpshooter / Меткий Стрелок", reader: ""
   },
   "rangedCore.core.sniperAssassin": {
-    label: "Одиночный выстрел из оружия со свойством Accurate после Полного Прицеливания получает Незримое и может получать до 4 дополнительных кубиков…",
-    source: "Sniper Assassin / Снайпер-Убийца", reader: ""
+    label: "РЕАЛИЗОВАНО (wdbc-1rno.2): одиночный выстрел (rofMode==='single') из оружия со свойством Accurate при actor.system.aiming==='full' (Полное Прицеливание) получает wp.unseen=true и продлённую лестницу доп. кубиков урона (до 4 на 3/5/7/9 Успехов вместо обычных 2 на 3/5).",
+    source: "Sniper Assassin / Снайпер-Убийца",
+    reader: "module/rules/unseen-talents.mjs (hasSniperAssassin), module/combat/attack.mjs (sniperAssassinActive → wp.unseen/wp.sniperAssassin), module/combat/attack-outcome.mjs::bonusDamageDice (лестница 1/2/3/4 на 3/5/7/9)"
   },
   "rangedCore.core.stormOfLead": {
     label: "Стрелковые атаки персонажа короткими/длинными очередями, а также оружием со свойством Blast или Spray по Ордам наносят дополнительный урон в…",
@@ -5834,8 +5840,9 @@ export const CAPABILITIES = {
     source: "Dance of Pain / Танец Боли", reader: ""
   },
   "trait.elitnyeArhetipy.voinNoty.musicOfBattle": {
-    label: "Когда слышит музыку, получает преимущества (музыканты бросают на исполнение каждый Ход, кроме записи;",
-    source: "Music of Battle / Музыка Битвы", reader: ""
+    label: "РЕАЛИЗОВАН ТОЛЬКО ОДИН ПУНКТ ИЗ МНОГИХ (wdbc-1rno.2): «если получает попадание, от которого не может Уклоняться (незримое...), может потратить Очко Бесчестия, чтобы Уклониться как обычно» — реализована ТОЛЬКО ветка «незримое» (кнопка в карточке атаки, unseenLocked-гейт); «врасплох»/«после Финта»/«от блокирующего Таланта» не гейтятся никак — в системе нет отдельных проверяемых флагов для них (решение 16.09.2026). Остальной текст черты (бонус Успехов от музыки, +1 Реакция на Уклонение, половинение остатка, Парирование=Уклонение для Талантов, Trade(Dancer) вместо BS/WS) — НЕ реализован вовсе, вне объёма этого прохода.",
+    source: "Music of Battle / Музыка Битвы",
+    reader: "module/rules/unseen-talents.mjs (hasMusicOfBattle), module/combat/attack.mjs (musicOfBattleBypassAvailable), module/combat/attack-card.mjs (кнопка wh-unseen-bypass-btn), module/combat/unseen-attack.mjs (_performUnseenBypass, persistent:false)"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Ворон — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.voron.bladesOfFate": {
@@ -6794,9 +6801,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.tzeentch.hiddenThreat": {
-    label: "РЕАЛИЗОВАНО ЧАСТИЧНО (15.09.2026, wdbc-1rno.1): кнопка на предмете тратит 1 Очко Бесчестия, ставит флаг actor.flags.warhammer-dbc.hiddenThreatPending. На следующей атаке этого актора (module/combat/attack.mjs) флаг снимается и карточка атаки получает две реальные реактивные кнопки рядом с Уклонением/Парированием — «Засечь (Пси-чутьё −50)»/«Засечь (Ноосканирование −50)» (module/combat/hidden-threat.mjs) — реальный тест с реальным штрафом −50, не декоративная кнопка. НЕ реализовано (см. wdbc-1rno.2, общий архитектурный пробел для ВСЕХ Незримых атак системы, не только этого Дара): результат детекта не гейтит доступность Уклонения — полная буква базового правила (стр. 32: «Избегание доступно только если засекли») не смоделирована, это отдельная и заметно более крупная задача.",
+    label: "РЕАЛИЗОВАНО (15.09.2026 wdbc-1rno.1 + 16.09.2026 wdbc-1rno.2): кнопка на предмете тратит 1 Очко Бесчестия, ставит флаг actor.flags.warhammer-dbc.hiddenThreatPending. На следующей атаке этого актора (module/combat/attack.mjs) флаг снимается, атака получает общий тип Незримое (module/rules/unseen-attack.mjs) с её собственным −50 к реактивному тесту засечения, и — теперь буквально по книге (стр. 32) — Уклонение/Парирование цели РЕАЛЬНО заблокированы (disabled-кнопки с полными данными, module/combat/attack-card.mjs::defenseSection), пока цель не засечёт атаку Психонаукой/Техпользованием (module/combat/unseen-attack.mjs::_performUnseenDetect) — успех снимает disabled клиентским DOM-разблоком той же карточки (module/hooks.mjs). Общий примитив (wp.unseen, гейт, персистентное засечение Ноосферным Сканированием/Варп-Зрением) — не только под этот Дар, читает любая Незримая атака системы.",
     source: "Дар Тзинч (Hidden Threat)",
-    reader: "module/rules/hidden-threat.mjs (isHiddenThreatPending/markHiddenThreatPending/consumeHiddenThreatPending), module/combat/attack.mjs (снятие флага на следующей атаке), module/combat/attack-card.mjs::defenseSection (кнопки в карточке), module/combat/hidden-threat.mjs (_performHiddenThreatDetect — реальный тест −50), module/hooks.mjs (обработчик .wh-hidden-threat-detect-btn); пак-предмет: kind:\"script\" hiddenThreat-mark"
+    reader: "module/rules/hidden-threat.mjs (isHiddenThreatPending/markHiddenThreatPending/consumeHiddenThreatPending), module/rules/unseen-attack.mjs (общий примитив: isUnseenAttack/isUnseenDetected/markUnseenDetectedUntilNextTurn/hasWarpSight), module/combat/attack.mjs (снятие флага, сборка unseen/unseenDetected/unseenPenalty), module/combat/attack-card.mjs::defenseSection (гейт кнопок + кнопки засечения), module/combat/unseen-attack.mjs (_performUnseenDetect — реальный тест, штраф параметризован), module/hooks.mjs (обработчик .wh-unseen-detect-btn — клиентский разблок Уклонения/Парирования); пак-предмет: kind:\"script\" hiddenThreat-mark"
   },
   // «Infernal Armiger» физически лежит 4 файлами в packs-src/mutations/Дары_Богов/Тзинч/,
   // но system.god у них — khorne/nurgle/slaanesh/tzeentch по отдельности (не все 4 в Тзинче,

@@ -247,9 +247,19 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
  */
 export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, targetIsWalker = false, note = "",
                           forcedDefenceReroll = "", dodgeModRecoil = null }, { wp, attackerUuid = "", itemUuid = "", hitsCount = 1, pool = null,
-                          swarm = null, hiddenThreat = false, isMelee = false, burst = false, attackerIsHorde = false, hitLocLabel = "" }) {
+                          swarm = null, unseen = false, unseenDetected = false, unseenPenalty = 0,
+                          sixthSenseBypassAvailable = false, musicOfBattleBypassAvailable = false,
+                          isMelee = false, burst = false, attackerIsHorde = false, hitLocLabel = "" }) {
   const cannotDodge = dodgeMod <= -900;
   const cannotParry = wp.flexible || parryMod <= -900;
+  // Незримое (стр. 32, wdbc-1rno.2): «Избегание доступно только если
+  // засекли её альтернативными методами». Отдельное состояние от
+  // cannotDodge/cannotParry выше (те — НАВСЕГДА недоступно, например Атака
+  // всем телом): unseenLocked снимается кликом по кнопке засечения в ЭТОЙ
+  // ЖЕ карточке — кнопки Уклонения/Парирования рендерятся полными данными,
+  // но disabled, и hooks.mjs на успехе детекта просто снимает disabled, без
+  // повторного рендера карточки (сервер уже не участвует).
+  const unseenLocked = unseen && !unseenDetected;
   const canCompress = !targetIsVehicle && isCompressibleLocation(hitLocLabel);
   // Избирательная атака называет часть тела без стороны («Рука», «Нога»,
   // «Сочленение / Шея», «Глаз (Голова)») — Сжатие хранит и втягивает
@@ -308,6 +318,11 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
           ? `<button class="wh-dodge-btn wh-dodge-disabled" disabled>
                Уклонение (невозможно)
              </button>`
+          : unseenLocked
+          ? `<button class="wh-dodge-btn wh-unseen-locked" type="button" disabled data-extra-mod="${dodgeMod}" data-extra-mod-recoil="${dodgeModRecoil ?? dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-melee="${isMelee ? 1 : 0}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}"
+               title="Незримая атака (стр. 32): Уклонение недоступно, пока не засечена альтернативными методами — Психонаукой/Техпользованием (кнопки ниже).">
+               Уклонение${dodgeMod !== 0 ? ` (${signed(dodgeMod)})` : ""} — не засечена
+             </button>`
           : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-extra-mod-recoil="${dodgeModRecoil ?? dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-melee="${isMelee ? 1 : 0}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}">
                Уклонение${dodgeMod !== 0 ? ` (${signed(dodgeMod)})` : ""}
              </button>`
@@ -315,6 +330,11 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
         ${cannotParry
           ? `<button class="wh-parry-btn wh-dodge-disabled" disabled>
                Парирование (невозможно${wp.flexible ? " — Гибкое" : ""})
+             </button>`
+          : unseenLocked
+          ? `<button class="wh-parry-btn wh-unseen-locked" type="button" disabled data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-attacker-weapon-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-melee="${isMelee ? 1 : 0}"
+               title="Незримая атака (стр. 32): Парирование недоступно, пока не засечена альтернативными методами — Психонаукой/Техпользованием (кнопки ниже).">
+               Парирование${parryMod !== 0 ? ` (${signed(parryMod)})` : ""} — не засечена
              </button>`
           : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-attacker-weapon-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-melee="${isMelee ? 1 : 0}"${isMelee ? "" : ` title="Стрельбу без Базового контакта со стрелком парирует только Талант «Щит Клинков» оружием с Балансом 1+ (стр. 62) — право проверится при нажатии"`}>
                Парирование${parryMod !== 0 ? ` (${signed(parryMod)})` : ""}
@@ -348,14 +368,26 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
                👻 Эфирная Стая (${swarm.count})
              </button>`
           : ""}
-        ${hiddenThreat
-          ? `<button class="wh-hidden-threat-detect-btn" type="button" data-attacker-uuid="${attackerUuid}" data-skill="psyniscience"
-               title="Дар «Сокрытая Угроза»/Hidden Threat: эта атака Незримая — тест Пси-чутья на засечение получает −50. Не Реакция, не блокирует Уклонение (wdbc-1rno.2).">
-               🔮 Засечь (Пси-чутьё −50)
+        ${unseenLocked
+          ? `<button class="wh-unseen-detect-btn" type="button" data-attacker-uuid="${attackerUuid}" data-skill="psyniscience" data-penalty="${unseenPenalty}"
+               title="Незримая атака (стр. 32): тест Психонауки (Пси-чутьё)${unseenPenalty ? ` ${signed(unseenPenalty)}` : ""} — не Реакция; Успех открывает Уклонение/Парирование от ЭТОЙ атаки выше.">
+               🔮 Засечь (Пси-чутьё${unseenPenalty ? ` ${signed(unseenPenalty)}` : ""})
              </button>
-             <button class="wh-hidden-threat-detect-btn" type="button" data-attacker-uuid="${attackerUuid}" data-skill="techUse"
-               title="Дар «Сокрытая Угроза»/Hidden Threat: эта атака Незримая — тест Ноосканирования на засечение получает −50. Не Реакция, не блокирует Уклонение (wdbc-1rno.2).">
-               🔮 Засечь (Ноосканирование −50)
+             <button class="wh-unseen-detect-btn" type="button" data-attacker-uuid="${attackerUuid}" data-skill="techUse" data-penalty="${unseenPenalty}"
+               title="Незримая атака (стр. 32): тест Техпользования (Ноосканирование)${unseenPenalty ? ` ${signed(unseenPenalty)}` : ""} — не Реакция; Успех открывает Уклонение/Парирование от ЭТОЙ атаки выше.">
+               🔮 Засечь (Ноосканирование${unseenPenalty ? ` ${signed(unseenPenalty)}` : ""})
+             </button>`
+          : ""}
+        ${unseenLocked && sixthSenseBypassAvailable
+          ? `<button class="wh-unseen-bypass-btn" type="button" data-bypass="sixthSense" data-persistent="1"
+               title="Sixth Sense/Шестое Чувство: потратить 1 Очко Бесчестия — Уклонение/Парирование от ЭТОЙ атаки доступны как обычно, и способность Избегать Незримые атаки сохраняется до начала следующего Хода.">
+               💰 Шестое Чувство (1 Очко Бесчестия)
+             </button>`
+          : ""}
+        ${unseenLocked && musicOfBattleBypassAvailable
+          ? `<button class="wh-unseen-bypass-btn" type="button" data-bypass="musicOfBattle" data-persistent="0"
+               title="Music of Battle/Музыка Битвы: потратить 1 Очко Бесчестия — Уклонение/Парирование от ЭТОЙ атаки доступны как обычно (разово, без персистентности).">
+               💰 Музыка Битвы (1 Очко Бесчестия)
              </button>`
           : ""}
       </div>
@@ -477,11 +509,19 @@ export function attackCard({
   // истекла. Считается вызывающей стороной (attack.mjs) — этот модуль,
   // как и для pool выше, документов Foundry не касается.
   swarm = null,
-  // Сокрытая Угроза / Hidden Threat (wdbc-1rno.1, rules/hidden-threat.mjs) —
-  // true, если у АТАКУЮЩЕГО была снята пометка «следующая атака Незримая»
-  // именно на этой атаке (снятие — в attack.mjs, этот модуль документов
-  // Foundry не касается, как и pool/swarm выше).
-  hiddenThreat = false,
+  // Незримое (стр. 32, wdbc-1rno.2) — unseen: эта атака Незримая (свойство
+  // оружия/психосилы/Техночуда ИЛИ разовая метка Сокрытой Угрозы,
+  // wdbc-1rno.1, снятая в attack.mjs). unseenDetected: защищающийся УЖЕ
+  // засёк её персистентно (Ноосферное Сканирование/Варп-Зрение,
+  // rules/unseen-attack.mjs) — тогда Уклонение/Парирование рендерятся как
+  // обычно, без блокировки и без кнопок засечения. unseenPenalty — штраф
+  // на реактивный тест засечения (Сокрытая Угроза даёт −50, иначе 0). Этот
+  // модуль документов Foundry не касается, как и pool/swarm выше.
+  unseen = false, unseenDetected = false, unseenPenalty = 0,
+  // Sixth Sense/Music of Battle (wdbc-1rno.2, rules/unseen-talents.mjs) —
+  // считаются в attack.mjs (Очки Бесчестия защищающегося уже известны там),
+  // рендерят кнопку «потратить Очко Бесчестия» рядом с кнопками засечения.
+  sixthSenseBypassAvailable = false, musicOfBattleBypassAvailable = false,
   defense = {}, notes = {}, blocks = {}
 } = {}) {
   const hitCountNote = hitsCount > 1 ? ` (${hitsCount} попадани${hitsCount < 5 ? "я" : "й"})` : "";
@@ -503,6 +543,9 @@ export function attackCard({
       + (reverseThrustBonus ? `, +${reverseThrustBonus} (Обратный хват: Выпад Полной Атакой)` : "")
     : "";
   const taintedNote = taintedAdd ? `, Порча +${taintedAdd}` : "";
+  // Backstab/Удар в Спину (wdbc-1rno.2): wp.doubleDice ставит attack.mjs
+  // ДО построения dmgFormula — этот модуль его только показывает.
+  const backstabNote = wp.doubleDice ? `, Удар в Спину: ×2 кубика урона` : "";
   // Общее напоминание о свойстве Взрывное едет отдельным блоком (blocks.props/
   // targetEffects — module/combat/weapon-properties.mjs); здесь — только то, что
   // касается именно ЭТОЙ очереди попаданий (несколько шаблонов из одной атаки).
@@ -520,7 +563,7 @@ export function attackCard({
   const damageSection = hits.length ? `
     <div class="roll-damage-section">
       <div class="roll-section-head">Урон</div>
-      <div class="roll-damage-meta">${dtLabel} · Пробитие ${pen}${sbNote}${taintedNote}</div>
+      <div class="roll-damage-meta">${dtLabel} · Пробитие ${pen}${sbNote}${taintedNote}${backstabNote}</div>
       ${blastNote}
       ${throughShotNote}
       ${hitLines(hits, { blastRating: wp.blastRating })}
@@ -660,7 +703,7 @@ export function attackCard({
       ${blocks.dice}
     </details>` : "",
       hit ? `
-    <button class="wh-mount-hit-btn" type="button" data-roll="${rv}" title="Цель верхом: по книжной формуле (дубль/чётность) определяет, попало по всаднику или скакуну — бросок уже в карточке, перепечатывать не нужно">
+    <button class="wh-mount-hit-btn" type="button" data-roll="${rv}" data-unseen="${unseen ? 1 : 0}" title="Цель верхом: по книжной формуле (дубль/чётность) определяет, попало по всаднику или скакуну — бросок уже в карточке, перепечатывать не нужно">
       🐎 Верховое попадание (выберите токен цели)
     </button>` : "",
       // Распыление (стр. 168): книга даёт против потока ОДНУ защиту — тест
@@ -669,7 +712,8 @@ export function attackCard({
       // две кнопки сразу — легко сжечь Реакцию там, где платить не надо
       // (wdbc-09t). У рукопашной Spray не бывает, поэтому гейт по autoHit.
       (hit && !isSprayAuto)
-        ? defenseSection(defense, { wp, attackerUuid, itemUuid, hitsCount, pool, swarm, hiddenThreat, isMelee, burst, attackerIsHorde, hitLocLabel }) : "",
+        ? defenseSection(defense, { wp, attackerUuid, itemUuid, hitsCount, pool, swarm, unseen, unseenDetected, unseenPenalty,
+            sixthSenseBypassAvailable, musicOfBattleBypassAvailable, isMelee, burst, attackerIsHorde, hitLocLabel }) : "",
       applyDamageSection(hit ? hits : [], { wp, pen, damageType, damageSubtype, weaponName, actorName,
                                             vehicleSide, isMelee, burst, weaponRange,
                                             attackerUuid, itemUuid, hordeHits }),

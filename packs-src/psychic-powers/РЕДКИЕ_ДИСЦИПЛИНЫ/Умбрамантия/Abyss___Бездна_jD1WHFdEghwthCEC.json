@@ -30,6 +30,9 @@
       },
       {
         "key": "tearing"
+      },
+      {
+        "key": "unseen"
       }
     ],
     "charDamageStat": "",

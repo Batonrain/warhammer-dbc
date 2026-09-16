@@ -221,8 +221,19 @@ export function damageFormulaFor({ damage, flatBonus = 0, chars = {}, corruption
 export function bonusDamageDice({ wp, rofMode, hit, deg, shortRange = false, maximal = false, band = null, ammoDice = 0 }) {
   let dice = 0;
   if (wp.accurate && rofMode === "single" && hit) {
-    if (deg >= 5)      dice += 2;
-    else if (deg >= 3) dice += 1;
+    // Sniper Assassin/Снайпер-Убийца (wdbc-1rno.2, rules/unseen-talents.mjs):
+    // «до 4-х доп. кубиков вместо обычных 2-х (на 3, 5, 7 и 9 Успехов)» —
+    // тот же Accurate-порог, только продлённая лестница. wp.sniperAssassin
+    // ставит attack.mjs (не пак-свойство — персональная надбавка Таланта).
+    if (wp.sniperAssassin) {
+      if (deg >= 9)      dice += 4;
+      else if (deg >= 7) dice += 3;
+      else if (deg >= 5) dice += 2;
+      else if (deg >= 3) dice += 1;
+    } else {
+      if (deg >= 5)      dice += 2;
+      else if (deg >= 3) dice += 1;
+    }
   }
   if (wp.scatter && shortRange) dice += 1;
   if (maximal)                  dice += 1;

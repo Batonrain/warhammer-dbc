@@ -26,6 +26,9 @@
     "weaponProps": [
       {
         "key": "shocking"
+      },
+      {
+        "key": "unseen"
       }
     ],
     "charDamageStat": "",
