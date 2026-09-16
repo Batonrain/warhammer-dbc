@@ -1,5 +1,5 @@
 {
-  "name": "Дряньбомба",
+  "name": "Gunkbomb / Дряньбомба",
   "type": "weapon",
   "folder": "CiKyTXQv7N6C3J3A",
   "system": {
@@ -26,6 +26,7 @@
     "weight": 0.5,
     "attackBonus": 0,
     "special": "Linger: 2d10. Метание: Rng S.b×3 м, RoF S/–/–; вместо перезарядки — экипировка другой гранаты из инвентаря. При S.b 8+: либо считать S.b до 7 в расчёте Rng, либо бросать 1d5 — на «1» граната ломается от чрезмерной силы и не детонирует.",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Стрелковое оружие», стр. 187)",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [

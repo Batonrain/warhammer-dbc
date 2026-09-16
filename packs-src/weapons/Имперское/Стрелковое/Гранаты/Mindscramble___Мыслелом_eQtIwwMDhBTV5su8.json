@@ -1,46 +1,41 @@
 {
-  "name": "Радиевая Джезайл",
+  "name": "Mindscramble / Мыслелом",
   "type": "weapon",
-  "folder": "41PfRYM48BxJYurB",
+  "folder": "CiKyTXQv7N6C3J3A",
   "system": {
     "description": "",
     "notes": "",
-    "weaponClass": "basic",
-    "weaponType": "exotic",
-    "range": 300,
+    "weaponClass": "thrown",
+    "weaponType": "grenade",
+    "range": 0,
     "balance": 0,
-    "grips": "2р",
+    "grips": "1р",
     "profileLabel": "",
     "profiles": [],
-    "reload": "2",
-    "magazineCur": 16,
-    "magazineMax": 16,
-    "rof_single": 1,
+    "reload": "–",
+    "magazineCur": 1,
+    "magazineMax": 1,
+    "rof_single": 0,
     "rof_semi": 0,
     "rof_full": 0,
-    "damage": "1d10+8",
+    "damage": "2d10",
     "damageType": "energy",
-    "penetration": 4,
+    "penetration": 2,
     "quality": "common",
     "availability": 2,
-    "weight": 18,
+    "weight": 0.5,
     "attackBonus": 0,
-    "special": "Rad: 1d10",
+    "special": "Метание: Rng S.b×3 м, RoF S/–/–; вместо перезарядки — экипировка другой гранаты из инвентаря. При S.b 8+: либо считать S.b до 7 в расчёте Rng, либо бросать 1d5 — на «1» граната ломается от чрезмерной силы и не детонирует.",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Стрелковое оружие», стр. 187)",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "accurate"
+        "key": "blast",
+        "rating": 3
       },
       {
-        "key": "felling",
-        "rating": 4
-      },
-      {
-        "key": "rad"
-      },
-      {
-        "key": "reliable"
+        "key": "shocking"
       }
     ],
     "needsRecharge": false,
@@ -71,8 +66,8 @@
       "reloads": 10
     }
   },
-  "_id": "IhHHfKV8Cfv26n5X",
-  "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",
+  "_id": "eQtIwwMDhBTV5su8",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-thrown.svg",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -81,8 +76,8 @@
   },
   "flags": {
     "autoanimations": {
-      "id": "dc933944-1fb9-452c-8fca-30cfc3e64f9f",
-      "label": "Радиевая Джезайл",
+      "id": "635e40e3-50ef-4d43-b812-c3c9afad90a4",
+      "label": "Мыслелом",
       "levels3d": {
         "type": "explosion",
         "data": {
@@ -111,9 +106,9 @@
         "video": {
           "dbSection": "range",
           "menuType": "weapon",
-          "animation": "sword",
+          "animation": "bomb",
           "variant": "01",
-          "color": "white",
+          "color": "black",
           "enableCustom": false,
           "customPath": ""
         },
@@ -313,5 +308,5 @@
     "modifiedTime": 1784645463257,
     "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
   },
-  "_key": "!items!IhHHfKV8Cfv26n5X"
+  "_key": "!items!eQtIwwMDhBTV5su8"
 }

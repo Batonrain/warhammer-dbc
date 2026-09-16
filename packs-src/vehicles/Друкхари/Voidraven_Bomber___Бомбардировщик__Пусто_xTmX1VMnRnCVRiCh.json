@@ -1,5 +1,5 @@
 {
-  "name": "Бомбардировщик «Пустотный Ворон»",
+  "name": "Voidraven Bomber / Бомбардировщик «Пустотный Ворон»",
   "type": "vehicle",
   "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
   "folder": "jFXbvWNfuKBhDMkk",
@@ -1580,7 +1580,7 @@
   ],
   "_id": "xTmX1VMnRnCVRiCh",
   "prototypeToken": {
-    "name": "Бомбардировщик «Пустотный Ворон»",
+    "name": "Voidraven Bomber / Бомбардировщик «Пустотный Ворон»",
     "displayName": 30,
     "actorLink": false,
     "width": 1,

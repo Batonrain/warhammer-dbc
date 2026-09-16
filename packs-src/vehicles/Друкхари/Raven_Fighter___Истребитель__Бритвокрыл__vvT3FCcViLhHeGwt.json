@@ -1,10 +1,10 @@
 {
-  "name": "Бритвокрылья",
+  "name": "Raven Fighter / Истребитель «Бритвокрыл»",
   "type": "vehicle",
   "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
   "folder": "jFXbvWNfuKBhDMkk",
   "system": {
-    "vehicleClass": "Razorwing",
+    "vehicleClass": "Raven Fighter",
     "vehicleType": "aircraft",
     "origin": "",
     "commander": "",
@@ -1481,7 +1481,7 @@
   ],
   "_id": "vvT3FCcViLhHeGwt",
   "prototypeToken": {
-    "name": "Бритвокрылья",
+    "name": "Raven Fighter / Истребитель «Бритвокрыл»",
     "displayName": 30,
     "actorLink": false,
     "width": 1,
