@@ -1,11 +1,11 @@
 {
-  "name": "Pulse Disintegrators / Импульсные Дезинтеграторы",
+  "name": "Pulse-Disintegration / Импульсный Дезинтегратор",
   "type": "weapon",
   "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
   "folder": "Hx1CHZdNIMF025Ko",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Найдено 16.09.2026 (wdbc-teyu): книга (Книга Эльдар: Техника, II. МАШИНЫ ДРУКХАРИ, «Танталус», стр. 49) даёт носовое орудие Танталуса как «Pulse–Disintegration / Импульсный Дезинтегратор» (ед.ч.) — было ошибочно во мн.ч. «Pulse Disintegrators / Импульсные Дезинтеграторы», дословно в книге не встречается. Профиль совпадает почти во всём (Rng 300, Pen 12, ∞ БК, Storm (3), тип энергия) — только Dmg у книги 2d10+16, а не 2d10+12 как в записи, и RoF книга даёт –/5/8, а не только полный/10; расхождение чисел не трогал (не тема этого тикета), только имя.",
     "weaponClass": "heavy",
     "weaponType": "plasma",
     "range": 300,
@@ -70,7 +70,7 @@
   "flags": {
     "autoanimations": {
       "id": "31fad4f9-7afb-4469-bc76-58a8101020ee",
-      "label": "Pulse Disintegrators / Импульсные Дезинтеграторы",
+      "label": "Pulse-Disintegration / Импульсный Дезинтегратор",
       "levels3d": {
         "type": "explosion",
         "data": {
