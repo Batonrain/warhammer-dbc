@@ -32,6 +32,7 @@
 import { esc, _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
+import { rollStatLine } from "../helpers/test-card.mjs";
 import { spendActionPoints, isEncounterActive } from "./action-economy.mjs";
 import { addFatigue, fatiguePenalty } from "../sheets/tabs/conditions.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
@@ -388,7 +389,7 @@ export function showClimbDialog(actor) {
 }
 
 export async function _resolveClimb(actor, type, ath, acro, mod, spd) {
-  let passed, deg, thresholdLine;
+  let passed, deg, statLineHtml, extraNote = "";
   // Штрафы состояния тела и снаряжения — общим сбором (wdbc-kuun): раньше
   // здесь считалась одна Усталость вручную, а выключенная броня и Перевес
   // инвентаря до Карабканья не доезжали, хотя это физическое действие.
@@ -409,12 +410,20 @@ export async function _resolveClimb(actor, type, ath, acro, mod, spd) {
       ? Math.min(athThreshold - rv, acroThreshold - rv)
       : Math.max(rv - athThreshold, rv - acroThreshold);
     deg = Math.floor(Math.abs(worstDiff) / 10) + 1;
-    thresholdLine = `Athletics−10 <b>${athThreshold}</b>${modsNote(athMods)} и Acrobatics <b>${acroThreshold}</b>${modsNote(acroMods)} (оба) · 1d100: <b>${rv}</b>`;
+    // Два НЕЗАВИСИМЫХ Предела разом (оба должны пройти) — в одну ячейку
+    // Порога (wdbc-fyvv) не сводятся: плашка несёт только Бросок, сама
+    // пара Пределов — строкой под ней, как раньше.
+    statLineHtml = rollStatLine({ rv });
+    extraNote = `<div class="roll-threshold">Athletics−10 <b>${athThreshold}</b>${modsNote(athMods)} и Acrobatics <b>${acroThreshold}</b>${modsNote(acroMods)} (оба)</div>`;
   } else {
     const threshold = ath + mod + athMods.total;
     const r = await _d100(threshold);
     passed = r.passed; deg = r.deg;
-    thresholdLine = `Athletics <b>${ath}</b>${sgn(mod)}${modsNote(athMods)} → Порог <b>${threshold}</b> · 1d100: <b>${r.rv}</b>`;
+    statLineHtml = rollStatLine({
+      label: "Athletics", base: ath,
+      parts: [mod ? sgn(mod) : "", ...athMods.parts],
+      threshold, rv: r.rv
+    });
   }
 
   const dist = (spd / 2 + deg).toFixed(1);
@@ -424,7 +433,8 @@ export async function _resolveClimb(actor, type, ath, acro, mod, spd) {
 
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}Карабканье — ${esc(actor.name)}</div>
-    <div class="roll-threshold">${thresholdLine}</div>
+    ${statLineHtml}
+    ${extraNote}
     <div class="roll-outcome">${outcome}</div>
   </div>`);
 }
@@ -494,7 +504,11 @@ export async function _resolveJump(actor, type, acro, runup, mod, sb) {
 
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}Прыжок — ${esc(actor.name)}</div>
-    <div class="roll-threshold">Acrobatics <b>${acro}</b>${runup ? ` + ${runup} (разбег)` : ""}${sgn(mod)}${bodyMods.parts.map(p => ` ${p}`).join("")} → Порог <b>${threshold}</b> · 1d100: <b>${rv}</b></div>
+    ${rollStatLine({
+      label: "Acrobatics", base: acro,
+      parts: [runup ? `+${runup} (разбег)` : "", mod ? sgn(mod) : "", ...bodyMods.parts],
+      threshold, rv
+    })}
     <div class="roll-outcome">${outcome}</div>
   </div>`);
 }
@@ -546,7 +560,11 @@ export async function _resolveSwim(actor, ath, heavy, ext, mod, sb) {
 
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#6fe6ff")}Плавание — ${esc(actor.name)}</div>
-    <div class="roll-threshold">Athletics <b>${ath}</b>${heavy ? " − 30 (тяж.)" : ""}${sgn(mod)}${bodyMods.parts.map(p => ` ${p}`).join("")}${streak ? ` − ${streak * 10} (кумулятив)` : ""} → Порог <b>${effThreshold}</b> · 1d100: <b>${rv}</b></div>
+    ${rollStatLine({
+      label: "Athletics", base: ath,
+      parts: [heavy ? "− 30 (тяж.)" : "", mod ? sgn(mod) : "", ...bodyMods.parts, streak ? `− ${streak * 10} (кумулятив)` : ""],
+      threshold: effThreshold, rv
+    })}
     <div class="roll-outcome">${outcome}</div>
   </div>`);
 }
@@ -831,7 +849,11 @@ async function _resolveMarchHour(actor, def, t, slow) {
 
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}${def.label} — ${esc(actor.name)}</div>
-    <div class="roll-threshold">T <b>${t}</b>${streak ? ` − ${streak * 10} (кумулятив)` : ""} → Порог <b>${effThreshold}</b> · 1d100: <b>${rv}</b></div>
+    ${rollStatLine({
+      label: "T", base: t,
+      parts: [streak ? `− ${streak * 10} (кумулятив)` : ""],
+      threshold: effThreshold, rv
+    })}
     <div class="roll-outcome">${outcome}</div>
   </div>`);
 }

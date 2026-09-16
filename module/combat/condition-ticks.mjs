@@ -50,7 +50,7 @@ import { completeInfection } from "../apps/parasite-trait.mjs";
 // подметается ниже. Свой декремент остаётся ровно для тех, кому срок
 // проставили старым способом — числом в поле, без эффекта.
 import { sweepConditionDurations, hasConditionDuration } from "./condition-effects.mjs";
-import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 
 /**
  * Строка «срок вышел» для карточки — общая с подметанием по мировому времени
@@ -162,8 +162,8 @@ export async function rollBurningPanicTest(actor) {
 
   await postTestCard(actor, {
     icon: rollIcon("fire","#ff8a3a"), title: `Паника от Горения — ${esc(actor.name)}`,
-    threshold: thresholdLine({ label: "WP", base: wp, parts, threshold: eff }),
-    rv, rerollNote,
+    threshold: rollStatLine({ label: "WP", base: wp, parts, threshold: eff, rv }),
+    rerollNote,
     outcome: success
       ? `<span class="roll-success">Успех — держит себя в руках</span>`
       : `<span class="roll-failure">Провал — Ход потерян в панике (ОД обнулены)</span>`

@@ -76,7 +76,7 @@ import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml, ruleAutoModsHtml, autoModsTotal } from "../rules/roll-mods.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
-import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { isMoraleOpposedSkill, resolveTest } from "../rules/resolve-test.mjs";
 import { applyLordOfExoditesFailPenalty } from "../combat/lord-of-exodites.mjs";
 import { showDelegateTestPicker, activeOwnerOf, requestDelegatedTest } from "../rules/delegate-test.mjs";
@@ -382,8 +382,7 @@ async function onDreadnoughtDailyTest(event) {
     title: "Тест бодрствования — W+0",
     // Порог без слагаемых: тест фиксированный W+0 (см. комментарий выше),
     // поэтому скобок с подписями здесь нет — их нечем наполнить.
-    threshold: thresholdLine({ threshold: wp }),
-    rv: roll.total,
+    threshold: rollStatLine({ label: "W", threshold: wp, rv: roll.total }),
     outcome: success
       ? `<span class="roll-success">Успех — ${degrees} ${_degWord(degrees)}</span>`
       : `<span class="roll-failure">Провал — ${degrees} ${_degWord(degrees)}, `
@@ -2517,7 +2516,7 @@ export class WarhammerCharacterSheet
       if (bonus > 0) {
         theirsEff += bonus;
         personalAdaptationLine = `<div class="roll-threshold">🧠 Персональная Адаптация: +${bonus} против ` +
-          `${esc(initiatorActor.name)} → Порог <b>${theirsEff}</b></div>`;
+          `${esc(initiatorActor.name)}</div>` + rollStatLine({ threshold: theirsEff });
       }
     }
     const theirs = { deg: outcome.deg, success: outcome.success, threshold: theirsEff };
@@ -2600,8 +2599,6 @@ export class WarhammerCharacterSheet
     if (isMoraleOpposedSkill(skillKey)) autoCtx.morale = true;
     const autoResolved = resolveTest({ actor: this.actor, ...autoCtx });
     const autoMods = autoResolved.autoMods;
-    const autoLines = autoMods
-      .map(m => ` ${m.value >= 0 ? "+" : "−"} ${Math.abs(m.value)} (${m.label})`).join("");
 
     // Мод препаратов уже входит в target (через char.total -> итог навыка)
     const baseEff = target + modifier + difficulty + autoModsTotal(autoMods);
@@ -2679,26 +2676,27 @@ export class WarhammerCharacterSheet
     // был здесь руками: шапка, Порог, свои строки, бросок, переброс, крит,
     // исход, свои блоки.
     //
-    // Строка Порога остаётся своей, а не thresholdLine: у общей слагаемые
-    // уходят в скобки подписью «Усталость −10», а здесь они исторически стоят
-    // подряд числом со скобкой-причиной («-20 (📊 Сложность)», «− 10
-    // (😓 Усталость)»), и этот вид дословно закреплён тестами карточки. Это
-    // самый частый бросок за столом — менять ему вид заодно с переездом
-    // разметки не стоит.
+    // Порог — общей плашкой rollStatLine (wdbc-fyvv): это самый частый бросок
+    // за столом, и он же переходит на тот же вид Бросок/Режим/Порог, что и
+    // остальные тесты. Слагаемые (модификатор, Сложность, ситуативные штрафы
+    // состояния тела/снаряжения из autoMods) уходят в подсказку ячейки Порога.
     await postTestCard(this.actor, {
       title: `${shownAbbr ? `${shownAbbr} — ` : ""}${label}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""}${effectTargetActor ? ` — за ${esc(effectTargetActor.name)}` : ""}`,
-      threshold: `<div class="roll-threshold">
-            ${targetLabel ?? charAbbr}: <b>${target}</b>${modStr}
-            ${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""}
-            ${autoLines}
-            → Порог: <b>${baseEff}</b>
-          </div>`,
+      threshold: rollStatLine({
+        label: targetLabel ?? charAbbr, base: target,
+        parts: [
+          modStr.trim(),
+          difficulty !== 0 ? `${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : "",
+          ...autoMods.map(m => `${m.value >= 0 ? "+" : "−"} ${Math.abs(m.value)} (${m.label})`)
+        ].filter(Boolean),
+        threshold: baseEff, rv
+      }),
       lines: [
         outcome.combinedLine,
         outcome.personalAdaptationLine,
         assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${outcome.success ? `, +${assistCount} к степени` : ""})</div>` : ""
       ],
-      rv, rerollNote, critLine: outcome.critLine, outcome: outcomeHtml,
+      rerollNote, critLine: outcome.critLine, outcome: outcomeHtml,
       sections: [outcome.extendedLine, outcome.opposedLine, pendingOpponentNote, onFailNote]
     }, { rolls: [roll] });
 

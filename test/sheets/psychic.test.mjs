@@ -239,7 +239,7 @@ describe("psychic manifestation", () => {
     });
 
     expect(captured.rolls).toEqual(["1d100"]);
-    expect(captured.chat[0].content).toContain("Порог: <b>55</b>");
+    expect(captured.chat[0].content).toContain("<label>Порог</label><b>55</b>");
     expect(captured.chat[0].content).toContain("Манифестация удалась");
   });
 
@@ -659,7 +659,7 @@ describe("psychic manifestation", () => {
     }));
 
     expect(captured.chat[0].content).toContain("mPR <b>3</b> +1 = <b>4</b>");
-    expect(captured.chat[0].content).toContain("Порог: <b>65</b>");
+    expect(captured.chat[0].content).toContain("<label>Порог</label><b>65</b>");
   });
 });
 
@@ -1009,7 +1009,7 @@ describe("правила реестра в психотесте", () => {
       "#psy-pr-range": "0", "#psy-profile": "-1", "#psy-variant": "-1"
     }, { ".rule-mod:checked": [{ dataset: { value: "10" } }] }));
 
-    expect(captured.chat[0].content).toContain("Порог: <b>60</b>");
+    expect(captured.chat[0].content).toContain("<label>Порог</label><b>60</b>");
   });
 
   it("неотмеченная галочка порог не трогает", async () => {
@@ -1024,7 +1024,7 @@ describe("правила реестра в психотесте", () => {
       "#psy-pr-range": "0", "#psy-profile": "-1", "#psy-variant": "-1"
     }));
 
-    expect(captured.chat[0].content).toContain("Порог: <b>50</b>");
+    expect(captured.chat[0].content).toContain("<label>Порог</label><b>50</b>");
   });
 
   it("галочка «ополовинить штраф» делит штрафы, округляя в пользу игрока", async () => {
@@ -1040,7 +1040,7 @@ describe("правила реестра в психотесте", () => {
       "#psy-pr-range": "0", "#psy-profile": "-1", "#psy-variant": "-1"
     }, { ".rule-mod:checked": [{ dataset: { value: "0", halve: "1" } }] }));
 
-    expect(captured.chat[0].content).toContain("Порог: <b>38</b>");
+    expect(captured.chat[0].content).toContain("<label>Порог</label><b>38</b>");
   });
 });
 
@@ -1059,7 +1059,7 @@ describe("psychic roll helpers", () => {
     await rollPsyWpTest(actor(), "Пси-капюшон", "Заметка");
 
     expect(captured.rolls).toEqual(["1d100"]);
-    expect(captured.chat[0].content).toContain("Порог: <b>55</b>");
+    expect(captured.chat[0].content).toContain("<label>Порог</label><b>55</b>");
     expect(captured.chat[0].content).toContain("Успех");
   });
 
@@ -1074,7 +1074,7 @@ describe("psychic roll helpers", () => {
 
     await activateNavigatorPower(a, power);
 
-    expect(captured.chat[0].content).toContain("Порог: <b>30</b>");
+    expect(captured.chat[0].content).toContain("<label>Порог</label><b>30</b>");
     expect(captured.chat[0].content).toContain("Навигатор не бросает");
     expect(captured.chat[0].content).toContain("Провал");
   });

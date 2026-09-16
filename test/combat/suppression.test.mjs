@@ -69,7 +69,7 @@ describe("rollSuppressionTest", () => {
     await rollSuppressionTest(a, { mod: -10, sourceLabel: "Стрельба на подавление" });
     const card = captured.chat.at(-1).content;
     expect(card).toContain("Стрельба на подавление");
-    expect(card).toContain("Порог: <b>30</b>");
+    expect(card).toContain("<label>Порог</label><b>30</b>");
     expect(card).toContain("Успех");
   });
 });

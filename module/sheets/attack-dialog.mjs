@@ -50,7 +50,7 @@ import { isFusedByHandOfDeath } from "../rules/hand-of-death.mjs";
 import { collectTestMods, ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
-import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs";
 import { measureTokens }                      from "../combat/tactical-map.mjs";
 import { rangeBandBoundaries }                from "../rules/tactical-map.mjs";
@@ -1422,8 +1422,8 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
         </div>`,
     icon: rollIcon("sword"),
     title: `${techDef.label} ${techDef.headerSuffix ? `— ${techDef.headerSuffix}` : "(без оружия)"}`,
-    threshold: thresholdLine({ label: "WS", base: ws, parts: thresholdParts, threshold: final }),
-    rv, outcome,
+    threshold: rollStatLine({ label: "WS", base: ws, parts: thresholdParts, threshold: final, rv }),
+    outcome,
     sections: [helplessNote, unarmedDmgSection, defButtons, hitExtraSection]
   }, { rolls: allRolls });
 }

@@ -45,7 +45,7 @@ import { everYouthfulBlocksPower } from "./rules/ever-youthful.mjs";
 import { eaterOfPainBenefitUpdate, eaterOfPainChoiceButtonsHtml } from "./rules/eater-of-pain.mjs";
 import { fateTerm, esc }                 from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
-import { postTestCard, thresholdLine }   from "./helpers/test-card.mjs";
+import { postTestCard, rollStatLine }    from "./helpers/test-card.mjs";
 import { registerActorSetupHook }        from "./apps/actor-setup.mjs";
 import { resolvePendingSusAnHeals }      from "./apps/sus-an-heal.mjs";
 import { decayAblativeApShieldOnNewRound } from "./apps/ablative-ap-shield.mjs";
@@ -1704,7 +1704,7 @@ export async function _applyWeaponPropEffect(ds) {
 
   // Тест сопротивления цели (если задана характеристика)
   let resisted = false, deg = 1;
-  let resistThreshold = "", resistRv = null, resistOutcome = "";
+  let resistThreshold = "", resistOutcome = "";
   if (testChar) {
     const charTotal = actor.system.characteristics?.[testChar]?.total ?? 0;
     // Общий сбор модификаторов (wdbc-ct65.2): тест Сопротивления считался
@@ -1721,14 +1721,13 @@ export async function _applyWeaponPropEffect(ds) {
     const rv        = roll.total;
     resisted        = rv <= threshold;
     deg             = Math.max(1, Math.floor(Math.abs(rv - threshold) / 10) + 1);
-    // Строка Порога — общим сборщиком (wdbc-kuun): слагаемые перечисляются
-    // в скобках через запятую, как в боевых карточках.
-    resistThreshold = thresholdLine({
+    // Плашка Бросок/Режим/Порог — общим сборщиком (wdbc-fyvv): слагаемые
+    // перечисляются в подсказке ячейки Порога, как в боевых карточках.
+    resistThreshold = rollStatLine({
       label: testChar.toUpperCase(), base: charTotal,
       parts: [testMod !== 0 ? `${testMod >= 0 ? "+" : ""}${testMod}` : "", ...resistMods.parts],
-      threshold
+      threshold, rv
     });
-    resistRv = rv;
     resistOutcome = resisted
       ? `<span class="roll-success">Цель сопротивилась — эффект не наложен</span>`
       : `<span class="roll-failure">Провал (${deg} ст.) — эффект наложен</span>`;
@@ -1827,7 +1826,6 @@ export async function _applyWeaponPropEffect(ds) {
   await postTestCard(actor, {
     title: `${label} → ${esc(actor.name)}`,
     threshold: resistThreshold,
-    rv: resistRv,
     outcome: resistOutcome,
     sections: [appliedNote, dmgNote]
   }, { rolls: allRolls, sound: allRolls.length > 0 });
@@ -1909,15 +1907,15 @@ async function _executeSoulBurn(attacker, target) {
   }
 
   // Карточка — общим сборщиком (wdbc-kuun). Тест встречный: у каждой стороны
-  // свой Порог и свой бросок в одной строке, поэтому обе строки идут как свои
-  // (lines), а не через общую строку Порога — вид сохранён как был.
+  // свой Порог и свой бросок — каждая сторона своей плашкой rollStatLine
+  // (wdbc-fyvv), а не общей строкой Порога карточки.
   await postTestCard(attacker, {
     icon: rollIcon("fire","#ff8a3a"), title: `Выжигание Души → ${esc(target.name)}`,
     lines: [
-      `<div class="roll-threshold">Псайкер W+tPR×5 → Порог <b>${pEff}</b> | Бросок <b>${pRv}</b>
-        ${pSucc ? `<span class="roll-success">(успех, ${pDoS} ст.)</span>` : `<span class="roll-failure">(провал)</span>`}</div>`,
-      `<div class="roll-threshold">Цель W+tPR×5 → Порог <b>${tEff}</b> | Бросок <b>${tRv}</b>
-        ${tSucc ? `<span class="roll-success">(успех, ${tDoS} ст.)</span>` : `<span class="roll-failure">(провал)</span>`}</div>`
+      rollStatLine({ label: "Псайкер W+tPR×5", threshold: pEff, rv: pRv }) +
+        (pSucc ? `<span class="roll-success">(успех, ${pDoS} ст.)</span>` : `<span class="roll-failure">(провал)</span>`),
+      rollStatLine({ label: "Цель W+tPR×5", threshold: tEff, rv: tRv }) +
+        (tSucc ? `<span class="roll-success">(успех, ${tDoS} ст.)</span>` : `<span class="roll-failure">(провал)</span>`)
     ],
     outcome: burned
       ? `<span class="roll-failure">Душа выжжена — ${net} чист. Успех(ов)!</span>`
@@ -2098,17 +2096,16 @@ function _attachFateContextMenu(message, html) {
           `если проведёт его в Оглушении полностью, ${ft.one} вернётся сама.</div>`;
       }
 
-      // Карточка — общим сборщиком (wdbc-kuun). Порядок строк сохранён: трата
-      // Очка стоит выше Порога, а сам бросок подписан «Новый бросок», как и
-      // был, поэтому идёт своей строкой, а не общей строкой броска.
+      // Карточка — общим сборщиком (wdbc-fyvv). Порядок строк сохранён: трата
+      // Очка стоит выше плашки Броска/Порога (Режима тут нет — исходный тест
+      // сюда не передаётся); плашка рисуется и без Порога, если его нет.
       await postTestCard(actor, {
         title: `Переброс за ${ft.one}`,
         lines: [
           `<div class="roll-damage-meta">
             ${ft.word} потрачена (осталось: ${reroll1.poolValue})
           </div>`,
-          threshold !== null ? thresholdLine({ threshold }) : "",
-          `<div class="roll-dice">Новый бросок: <b>${rv}</b></div>`,
+          rollStatLine({ threshold, rv }),
           blessedFitsLine
         ],
         outcome: outcomeSpan

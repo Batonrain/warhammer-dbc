@@ -20,7 +20,7 @@ describe("_performHiddenThreatDetect", () => {
     captured.nextRoll = 15;
     await _performHiddenThreatDetect(actor({ psyniscience: { total: 60 } }), "psyniscience");
     const note = captured.chat.at(-1)?.content ?? "";
-    expect(note).toContain("Порог: <b>10</b>"); // 60 − 50
+    expect(note).toContain("<label>Порог</label><b>10</b>"); // 60 − 50
     expect(note).toContain("Провал");
   });
 
@@ -37,7 +37,7 @@ describe("_performHiddenThreatDetect", () => {
     await _performHiddenThreatDetect(actor({ techUse: { total: 40 } }), "techUse");
     const note = captured.chat.at(-1)?.content ?? "";
     expect(note).toContain("Ноосканирование");
-    expect(note).toContain("Порог: <b>-10</b>"); // 40 − 50
+    expect(note).toContain("<label>Порог</label><b>-10</b>"); // 40 − 50
     expect(note).toContain("Провал"); // бросок 5 > Порога -10
   });
 
@@ -45,7 +45,7 @@ describe("_performHiddenThreatDetect", () => {
     captured.nextRoll = 1;
     await _performHiddenThreatDetect(actor({}), "psyniscience");
     const note = captured.chat.at(-1)?.content ?? "";
-    expect(note).toContain("Порог: <b>-70</b>"); // -20 − 50
+    expect(note).toContain("<label>Порог</label><b>-70</b>"); // -20 − 50
   });
 
   it("неизвестный skillKey — тихо ничего не делает, карточка не постится", async () => {

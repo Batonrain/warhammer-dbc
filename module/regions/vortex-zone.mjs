@@ -45,6 +45,7 @@ import { SCATTER_ROSE } from "../combat/scatter.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { spendReaction, canSpendReaction } from "../combat/action-economy.mjs";
+import { rollStatLine } from "../helpers/test-card.mjs";
 
 // Foundry v14: системный тип, без префикса пакета — см. остальные *_ZONE_TYPE.
 export const VORTEX_ZONE_TYPE = "vortexZone";
@@ -152,8 +153,7 @@ function sustainCardHtml(actorName, outcome, { isController } = {}) {
     : `<span class="roll-failure">Провал — ${outcome.deg} ст.</span>`;
   return `<div class="wh-roll-result">
     <div class="roll-header">🌀 ${label} — ${esc(actorName)}</div>
-    <div class="roll-threshold">W ${outcome.w} + 5×тPR ${outcome.tpr} − 5×Х → Порог: <b>${outcome.threshold}</b></div>
-    <div class="roll-dice">Бросок: <b>${outcome.rv}</b></div>
+    ${rollStatLine({ base: `W ${outcome.w} + 5×тPR ${outcome.tpr} − 5×Х`, threshold: outcome.threshold, rv: outcome.rv })}
     <div class="roll-outcome">${outcomeHtml}</div>
   </div>`;
 }

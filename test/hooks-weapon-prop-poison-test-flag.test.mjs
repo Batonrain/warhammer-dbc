@@ -53,7 +53,7 @@ describe("_applyWeaponPropEffect: poisonTest флаг (wdbc-1rno.1)", () => {
     const note = captured.chat.at(-1)?.content ?? "";
     expect(note).toContain("Техновирус Гэллерпокса");
     expect(note).toContain("-30");
-    expect(note).toContain("Порог: <b>20</b>"); // 50 − 30
+    expect(note).toContain("<label>Порог</label><b>20</b>"); // 50 − 30
   });
 
   it("wpCondition=stunned (тот же код, другой эффект) — правило target:poison НЕ применяется", async () => {
@@ -73,6 +73,6 @@ describe("_applyWeaponPropEffect: poisonTest флаг (wdbc-1rno.1)", () => {
 
     const note = captured.chat.at(-1)?.content ?? "";
     expect(note).not.toContain("Техновирус Гэллерпокса");
-    expect(note).toContain("Порог: <b>50</b>"); // без −30
+    expect(note).toContain("<label>Порог</label><b>50</b>"); // без −30
   });
 });

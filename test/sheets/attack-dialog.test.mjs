@@ -1422,7 +1422,7 @@ describe("приём без оружия", () => {
 
     // WS 45 + 10 база − 10 приём + 10 стойка − 10 усталость = 45; бросок 30 → попадание.
     const card = captured.chat.at(-1).content;
-    expect(card).toContain("Порог: <b>45</b>");
+    expect(card).toContain("<label>Порог</label><b>45</b>");
     expect(card).toContain("Попадание");
     expect(card).toContain("wh-dodge-btn");
   });
@@ -1589,7 +1589,7 @@ describe("Локус Сокрушения: раз в Раунд База «По�
 
       // WS 45 + 30 (Полная Атака) − 10 (Пинок) = 65.
       const card = captured.chat.at(-1).content;
-      expect(card).toContain("Порог: <b>65</b>");
+      expect(card).toContain("<label>Порог</label><b>65</b>");
       expect(card).toContain("Локус Сокрушения");
     });
 
@@ -1605,7 +1605,7 @@ describe("Локус Сокрушения: раз в Раунд База «По�
 
       // WS 45 + 10 (обычная База) − 10 (Пинок) = 45 — способность уже потрачена.
       const card = captured.chat.at(-1).content;
-      expect(card).toContain("Порог: <b>45</b>");
+      expect(card).toContain("<label>Порог</label><b>45</b>");
       expect(card).not.toContain("Локус Сокрушения");
     });
 
@@ -1621,7 +1621,7 @@ describe("Локус Сокрушения: раз в Раунд База «По�
       await showAttackDialogNoWeapon(actor, kick);
 
       const card = captured.chat.at(-1).content;
-      expect(card).toContain("Порог: <b>65</b>");
+      expect(card).toContain("<label>Порог</label><b>65</b>");
     });
   });
 });

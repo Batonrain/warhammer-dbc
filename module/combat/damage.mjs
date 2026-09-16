@@ -9,7 +9,7 @@ import { SHIELD_STATUS }  from "../constants/shields.mjs";
 import { applyDamageToVehicle } from "./vehicle.mjs";
 import { applyDamageToHorde }   from "./horde-damage.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
-import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
+import { postTestCard, outcomeHtml, rollStatLine } from "../helpers/test-card.mjs";
 import { ablativeDamage, mountRangedApBonus } from "../rules/mount.mjs";
 import { LAST_DAMAGE_WEAPON_FLAG } from "./blood-flame.mjs";
 import { resolveArmorAbsorptionAP, breachArmorAtLocation } from "./armor-properties.mjs";
@@ -575,8 +575,11 @@ async function _rollRunesOfProtection(actor) {
 
   await postTestCard(actor, {
     icon: rollIcon("shield","#8fd0ff"), title: `Защитные Руны — ${esc(actor.name)}`,
-    threshold: `<div class="roll-threshold">W <b>${wpTotal}</b>${bPR ? ` + бPR×5 (бPR <b>${bPR}</b>)` : ""} → Порог <b>${threshold}</b></div>`,
-    rv,
+    threshold: rollStatLine({
+      label: "W", base: wpTotal,
+      parts: bPR ? [`бPR×5 (бPR ${bPR})`] : [],
+      threshold, rv
+    }),
     outcome: success
       ? outcomeHtml(true,  `Успех (${deg} ст.) — +${apBonus} AP (бPR ${bPR} + Успехи ${deg} + 4)`)
       : outcomeHtml(false, `Провал — +${apBonus} AP (бPR)`)

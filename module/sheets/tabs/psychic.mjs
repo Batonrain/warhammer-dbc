@@ -35,7 +35,7 @@ import { hasRuneMagic, runeMax, runeValue, runeCostForPower, runeCostTotal,
          RUNE_STRIKE_COST, isRuneLearned, hasImprovisedRune,
          runeLearnInfo, improvisedRuneCostUpdates,
          preparedRuneDiscount, markPreparedRuneUsed } from "../../rules/sigillite-runes.mjs";
-import { postTestCard, outcomeHtml } from "../../helpers/test-card.mjs";
+import { postTestCard, rollStatLine, outcomeHtml } from "../../helpers/test-card.mjs";
 import { mechRollData } from "../../rules/mech-formula.mjs";
 import { runForceBladeShop, forceBladeShopClear } from "../../apps/force-blade-choice.mjs";
 
@@ -1125,27 +1125,37 @@ export async function executePsychotest(actor, item, opts) {
   // Применяем накопленные изменения (Раны/Порча)
   if (Object.keys(actorUpdates).length) await actor.update(actorUpdates);
 
-  // Порог у психотеста собирается не как у прочих тестов (база + список
-  // слагаемых через запятую), а книжной формулой «хар-ка + 5×эPR» с
-  // приписками Пути/Вариации — поэтому строка Порога идёт своей строкой в
-  // lines, а не через thresholdLine: общий формат её бы переписал. То же со
-  // строкой броска — она подписана «Психотест», а не «Бросок».
+  // wdbc-fyvv: Порог психотеста — книжная формула «хар-ка + 5×эPR» с
+  // приписками Пути/Вариации, но это те же база+слагаемые, что и у прочих
+  // тестов — просто одно из слагаемых само посчитано (5×эPR). Плашка встаёт
+  // сразу под шапкой (там же, где у любой другой карточки), Природа/Режим/
+  // Путь и разбор mPR→эPR остаются своими строками под ней — это контекст
+  // силы, не слагаемые Порога.
   await postTestCard(actor, {
     icon: rollIcon("spark","#c98bff"), title: esc(item.name),
+    threshold: rollStatLine({
+      label: charAbbr, base: charVal,
+      parts: [
+        `5×${ePR}`,
+        opts.modifier ? `${opts.modifier >= 0 ? "+" : ""}${opts.modifier}` : "",
+        pathTestMod ? `${pathTestMod >= 0 ? "+" : ""}${pathTestMod} (Путь)` : "",
+        variantMod ? `${variantMod >= 0 ? "+" : ""}${variantMod} (Вариация)` : "",
+        ...bodyMods.parts
+      ],
+      threshold, rv
+    }),
     lines: [
       `<div class="roll-threshold">Природа: <b>${NAT.label}</b> | Режим: <b>${MODE.label}</b>${pathLabel ? ` | Путь: <b>${pathLabel}</b>` : ""}</div>`,
       `<div class="roll-threshold">mPR <b>${opts.mPR}</b>${prMod ? ` ${prMod >= 0 ? "+" : ""}${prMod} = <b>${mPR}</b>` : ""} → эPR <b>${ePR}</b>${pushBonus ? ` (Усиление +${pushBonus})` : ""}${(PATH.ePR || subTotals.ePR) ? ` (Путь +${(PATH.ePR || 0) + subTotals.ePR})` : ""}</div>`,
       aspectsDiffer ? `<div class="roll-threshold" style="font-size:0.82em;">эPR по аспектам: тест <b>${ePR}</b>${isDamaging ? ` · урон <b>${damagePR}</b>` : ""} · дальность <b>${rangePR}</b></div>` : "",
       sys.range ? `<div class="roll-threshold" style="font-size:0.82em;">Дальность: ${String(sys.range).replace(/\bPR\b/gi, rangePR)}</div>` : "",
-      `<div class="roll-threshold">${charAbbr}: <b>${charVal}</b> + 5×${ePR}${opts.modifier ? ` ${opts.modifier >= 0 ? "+" : ""}${opts.modifier}` : ""}${pathTestMod ? ` ${pathTestMod >= 0 ? "+" : ""}${pathTestMod} (Путь)` : ""}${variantMod ? ` ${variantMod >= 0 ? "+" : ""}${variantMod} (Вариация)` : ""}${bodyMods.parts.map(p => ` ${p}`).join("")} → Порог: <b>${threshold}</b></div>`,
       variant ? `<div class="roll-threshold" style="font-size:0.82em;">Вариация: <b>${variant.label || "—"}</b>${variant.note ? ` — ${variant.note}` : ""}</div>` : "",
       PATH.note ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Путь: ${PATH.note}${vessel ? ` — <b>${esc(vessel.name)}</b>` : ""}</div>` : "",
       subPathNote ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">${subPathNote}</div>` : "",
       runeNote ? `<div class="roll-threshold" style="font-size:0.82em;color:#7a1010;">${runeNote}</div>` : "",
       runeLine,
       improviseLine,
-      focusNote,
-      `<div class="roll-dice">Психотест: <b>${rv}</b></div>`
+      focusNote
     ],
     outcome: outcomeHtml(success, success
       ? `Манифестация удалась — ${deg} ${_degWord(deg)}`
@@ -1172,12 +1182,9 @@ export async function rollPsyWpTest(actor, label, note) {
   const rv   = roll.total;
   const success = rv <= eff;
   const deg  = Math.floor(Math.abs(rv - eff) / 10) + 1;
-  // Слагаемое здесь книжное и одно («+ 5×PR»), в скобки общего формата оно не
-  // ложится — строка Порога оставлена своей, как была.
   await postTestCard(actor, {
     title: label,
-    threshold: `<div class="roll-threshold">WP: <b>${wp}</b> + 5×PR(${pr}) → Порог: <b>${eff}</b></div>`,
-    rv,
+    threshold: rollStatLine({ label: "WP", base: wp, parts: [`5×PR(${pr})`], threshold: eff, rv }),
     outcome: outcomeHtml(success, `${success ? "Успех" : "Провал"} — ${deg} ${_degWord(deg)}`),
     sections: [`<div class="roll-threshold" style="font-size:0.85em;color:#5a4a30;">${note}</div>`]
   }, { rolls: [roll] });
@@ -1229,16 +1236,18 @@ export async function activateNavigatorPower(actor, item) {
   // успеха на предмете, чтобы номер был виден на листе, пока Сила поддерживается.
   await item.update({ "system.sustainedDegree": success ? deg : null });
 
-  // Строка Порога здесь своя: подпись усталости идёт значком «😓 −10» без
-  // скобок общего формата — перевод на сборщик её не переписывает.
   await postTestCard(actor, {
     icon: rollIcon("spark","#8b78ff"), title: `Сила навигатора: ${esc(item.name)}`,
+    threshold: rollStatLine({
+      label: meta?.abbr ?? charKey, base: charVal,
+      parts: [sys.testMod ? `${sys.testMod >= 0 ? "+" : ""}${sys.testMod}` : "", fatigue ? `😓 ${fatigue}` : ""],
+      threshold: eff, rv
+    }),
     lines: [
       sys.powerKind ? `<div class="roll-threshold" style="font-size:0.85em;">${sys.powerKind}</div>` : "",
-      `<div class="roll-threshold">${meta?.abbr ?? charKey}: <b>${charVal}</b>${sys.testMod ? ` ${sys.testMod >= 0 ? "+" : ""}${sys.testMod}` : ""}${fatigue ? ` 😓 ${fatigue}` : ""} → Порог: <b>${eff}</b>${sys.opposed ? " <span style='font-size:0.85em;'>(встречный — цель бросает свою хар-ку)</span>" : ""}</div>`,
+      sys.opposed ? `<div class="roll-threshold" style="font-size:0.85em;">Встречный — цель бросает свою хар-ку.</div>` : "",
       sys.range ? `<div class="roll-threshold" style="font-size:0.85em;">Дальность: <b>${sys.range}</b></div>` : ""
     ],
-    rv,
     outcome: outcomeHtml(success, `${success ? "Успех" : "Провал"} — ${deg} ${_degWord(deg)}`),
     sections: [
       dmgSection,

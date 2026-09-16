@@ -6,7 +6,7 @@ import { getModEffects, mergeWeaponPropEntries }  from "./weapon-mods.mjs";
 import { rollIcon }       from "../constants/roll-icons.mjs";
 import { pickReroll }     from "../rules/reroll-pick.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
-import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { hasRuleFlag }    from "../rules/flags.mjs";
 import { isRoundCapabilityAvailable } from "../apps/game-session.mjs";
 import { equippedMeleeWeapon } from "./equipped-melee.mjs";
@@ -185,8 +185,8 @@ export async function _performDodge(actor, {
 
     await postTestCard(actor, {
     icon: rollIcon("run"), title: `Уклонение — ${esc(actor.name)}`, actorUuid: actor.uuid,
-    threshold: thresholdLine({ label: "Ag", base: agTotal, parts: modParts, threshold }),
-    rv, outcome: outcomeHtml, sections: [leftoverNote, recoilSection]
+    threshold: rollStatLine({ label: "Ag", base: agTotal, parts: modParts, threshold, rv }),
+    outcome: outcomeHtml, sections: [leftoverNote, recoilSection]
   }, { rolls: [roll] });
 }
 
@@ -232,8 +232,8 @@ export async function _performSprayCancel(actor) {
   await postTestCard(actor, {
     icon: rollIcon("run"),
     title: `Тест на отмену (Распыление, Acrobatics A+0) — ${esc(actor.name)}`, actorUuid: actor.uuid,
-    threshold: thresholdLine({ label: "Ag", base: agTotal, parts: modParts, threshold }),
-    rv, outcome: outcomeHtml, sections: [recoilSection]
+    threshold: rollStatLine({ label: "Ag", base: agTotal, parts: modParts, threshold, rv }),
+    outcome: outcomeHtml, sections: [recoilSection]
   }, { rolls: [roll] });
 }
 
@@ -638,11 +638,11 @@ export async function _performParry(actor, {
 
   await postTestCard(actor, {
     icon: rollIcon("sword"), title: `Парирование — ${esc(actor.name)}`, actorUuid: actor.uuid,
-    threshold: thresholdLine({ label: "WS", base: wsTotal, parts: modParts, threshold }),
+    threshold: rollStatLine({ label: "WS", base: wsTotal, parts: modParts, threshold, rv }),
     lines: [meleeWeapon
       ? `<div style="font-size:0.82em;color:#5a4a30;margin-bottom:2px;">Оружие: ${esc(meleeWeapon.name)} (Баланс ${balance >= 0 ? "+" : ""}${balance})</div>`
       : ""],
-    rv, outcome: outcomeHtml,
+    outcome: outcomeHtml,
     sections: [leftoverNote, powerFieldNote, crossblockNote, counterAttackHtml]
   }, { rolls: [roll] });
 }
@@ -699,9 +699,9 @@ export async function _performPsychicParry(actor, { powerName = "", ePR = 0, ext
     icon: rollIcon("sword"),
     title: `Парирование психосилы${powerName ? ` «${esc(powerName)}»` : ""} — ${esc(actor.name)}`,
     actorUuid: actor.uuid,
-    threshold: thresholdLine({ label: "WS", base: wsTotal, parts: modParts, threshold }),
+    threshold: rollStatLine({ label: "WS", base: wsTotal, parts: modParts, threshold, rv }),
     lines: [`<div style="font-size:0.82em;color:#5a4a30;margin-bottom:2px;">Чем парирует: ${esc(tool.name)} (Баланс ${balance >= 0 ? "+" : ""}${balance})${weakens ? " — Poor.Q: развеивает частично" : ""}</div>`],
-    rv, outcome: outcomeHtml
+    outcome: outcomeHtml
   }, { rolls: [roll] });
 }
 
@@ -821,8 +821,7 @@ export async function _performEtherealSwarm(actor, attackerUuid = "") {
 
   await postTestCard(actor, {
     icon: rollIcon("warp"), title: `Эфирная Стая — ${esc(actor.name)}`,
-    threshold: thresholdLine({ label: "Cor", base: cor, threshold: cor }),
-    rv,
+    threshold: rollStatLine({ label: "Cor", base: cor, threshold: cor, rv }),
     outcome: success
       ? `<span class="roll-success">Успех — Крикун (осталось ${swarm.count - 1}) принимает попадание на себя и изгоняется в Варп. Попадание нивелировано.</span>`
       : `<span class="roll-failure">Провал — ${dof} ${_degWord(dof)}, Крикун не успевает обрести реальность. Попадание проходит как обычно.</span>`
