@@ -1237,3 +1237,4 @@
 {"id":"int-a3f184e2e06a1a0c91ca613ac2452e51","kind":"field_change","created_at":"2026-09-15T10:37:56.7478093Z","actor":"Derbius","issue_id":"wdbc-izef","extra":{"field":"assignee","new_value":"","old_value":"Derbius"}}
 {"id":"int-7227576bec9b3b3b2afc6fe906012703","kind":"field_change","created_at":"2026-09-15T19:28:58.2643223Z","actor":"Derbius","issue_id":"wdbc-izef","extra":{"field":"status","new_value":"open","old_value":"in_progress"}}
 {"id":"int-d2853fcb8916e265f0b6177bb8acf4ff","kind":"field_change","created_at":"2026-09-15T19:28:58.2648702Z","actor":"Derbius","issue_id":"wdbc-izef","extra":{"field":"assignee","new_value":"","old_value":"Derbius"}}
+{"id":"int-882200d428df4fc09a0edc65c070502d","kind":"field_change","created_at":"2026-09-16T00:35:27.8438943Z","actor":"Derbius","issue_id":"wdbc-1rno.1","extra":{"field":"status","new_value":"closed","old_value":"open","reason":"Closed"}}
