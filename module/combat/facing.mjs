@@ -31,8 +31,12 @@ export function tokenCenter(token) {
   };
 }
 
-/** Разворот токена в градусах (0 = «на север», по часовой) — TokenDocument.rotation. */
-function tokenRotation(token) {
+/**
+ * Разворот токена в градусах (0 = «на север», по часовой) — TokenDocument.rotation.
+ * Экспортируется (wdbc-1rno.27, Караул) — модулям, которым нужен разворот
+ * стрелка сам по себе, не только внутри isFrontArcHit/isTargetWithinVehicleArc.
+ */
+export function tokenRotation(token) {
   return Number((token?.document ?? token)?.rotation) || 0;
 }
 

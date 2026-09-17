@@ -27,6 +27,9 @@
       {
         "key": "blast",
         "rating": "5*PR"
+      },
+      {
+        "key": "unseen"
       }
     ],
     "charDamageStat": "",

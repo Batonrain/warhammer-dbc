@@ -34,7 +34,6 @@ export function readAttackForm(form, ammoConds) {
   const attr = (sel, key) => parseInt(el(sel)?.dataset?.[key]) || 0;
 
   const ROF = "input[name='atk-rof']:checked";
-  const AIM = "input[name='atk-aiming']:checked";
 
   // Стойка/База/Приём/Хват/Профиль — undefined, если в форме нет такой
   // группы (стрелковое: только Профиль) или ничего не выбрано (не должно
@@ -112,8 +111,9 @@ export function readAttackForm(form, ammoConds) {
     // рукопашной (стр. Ходовой п.9) считает resolveVehicleSide в attack-dialog.mjs.
     vehicleSide:       el("#atk-vehicle-side")?.value || "",
     vehicleRearCalled: on("#atk-vehicle-rear-called"),
-    aiming:     el(AIM)?.value || "none",
-    aimBonus:   attr(AIM, "bonus"),
+    // Прицеливание (wdbc-1rno.5): больше не поле формы — HUD-действие
+    // ДО открытия этого окна, читатели используют ctx.currentAiming/
+    // ctx.aimingBonus (attack-dialog.mjs), не readAttackForm.
     // Отмеченные ситуативные: сумма — в порог, список — в сводку заголовка.
     sitPicked:  all(".atk-mod-cb:checked"),
     // data-value уже 0 у автоуспеха (см. makeMods выше), поэтому отдельно

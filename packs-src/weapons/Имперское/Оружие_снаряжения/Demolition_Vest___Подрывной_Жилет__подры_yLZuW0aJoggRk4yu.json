@@ -22,6 +22,7 @@
     "damageType": "blast",
     "penetration": 6,
     "quality": "common",
+    "bookSource": "DoomBC — Хаос, II. СМЕРТНЫЕ («Культист Демагог», Исповедник)",
     "availability": 2,
     "weight": 3,
     "attackBonus": 0,

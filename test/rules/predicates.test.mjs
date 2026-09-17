@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { PREDICATES } from "../../module/rules/predicates.mjs";
+import { PREDICATES, wearsGasProtection } from "../../module/rules/predicates.mjs";
 
 /** Подставной актор: обычный литерал, никакого Foundry. */
 const actor = ({ items = [], ...system } = {}) => ({
@@ -128,6 +128,30 @@ describe("wearsSealedArmour (wdbc-1rno)", () => {
 
   it("нет брони вовсе — false", () => {
     expect(wearsSealedArmour(actor())).toBe(false);
+  });
+});
+
+describe("wearsGasProtection (wdbc-1rno)", () => {
+  const gear = (name, equipped = true) => ({ type: "gear", name, system: { equipped, gearCategory: "head" } });
+
+  it("надет Респиратор — true", () => {
+    expect(wearsGasProtection(actor({ items: [gear("Respirator / Респиратор")] }))).toBe(true);
+  });
+
+  it("надет Противогаз — true", () => {
+    expect(wearsGasProtection(actor({ items: [gear("Gas Mask / Противогаз")] }))).toBe(true);
+  });
+
+  it("Респиратор есть, но не надет — false", () => {
+    expect(wearsGasProtection(actor({ items: [gear("Respirator / Респиратор", false)] }))).toBe(false);
+  });
+
+  it("другой головной предмет (не Респиратор/Противогаз) — false", () => {
+    expect(wearsGasProtection(actor({ items: [gear("Helmet / Шлем")] }))).toBe(false);
+  });
+
+  it("нет предметов вовсе — false", () => {
+    expect(wearsGasProtection(actor())).toBe(false);
   });
 });
 

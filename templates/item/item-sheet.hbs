@@ -105,6 +105,9 @@
 {{#if (eq item.type "celestialBody")}}
 {{> "systems/warhammer-dbc/templates/item/parts/celestial-body.hbs"}}
 {{/if}}
+{{#if (eq item.type "warpRoute")}}
+{{> "systems/warhammer-dbc/templates/item/parts/warp-route.hbs"}}
+{{/if}}
 {{#if (eq item.type "faction")}}
 {{> "systems/warhammer-dbc/templates/item/parts/faction.hbs"}}
 {{/if}}

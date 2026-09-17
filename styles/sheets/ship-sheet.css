@@ -918,3 +918,20 @@
   font-size: .78em; color: var(--wh-text-mid); line-height: 1.45; margin-top: 6px;
   padding-top: 5px; border-top: 1px solid rgba(47,158,106,.25);
 }
+
+/* ── Варп-маршруты на листе Звёздной системы (wdbc-r0w9) ── */
+.warhammer-dbc .ss-warproute-zone {
+  display: flex; flex-direction: column; gap: 4px;
+  min-height: 36px; padding: 5px; border: 1px dashed var(--wh-border); border-radius: 4px;
+}
+.warhammer-dbc .ss-warproute-zone.social-drop-hover { border-color: var(--wh-accent); background: rgba(47, 158, 106, 0.08); }
+.warhammer-dbc .ss-warproute-row {
+  display: flex; align-items: center; gap: 6px; padding: 3px 4px;
+  border: 1px solid var(--wh-border-light); border-radius: 4px;
+}
+.warhammer-dbc .ss-warproute-img { flex: 0 0 24px; width: 24px; height: 24px; object-fit: cover; border-radius: 3px; }
+.warhammer-dbc .ss-warproute-name { cursor: pointer; font-weight: bold; }
+.warhammer-dbc .ss-warproute-name:hover { color: var(--wh-accent); }
+.warhammer-dbc .ss-warproute-arrow { opacity: 0.6; }
+.warhammer-dbc .ss-warproute-other.dim { opacity: 0.6; font-style: italic; }
+.warhammer-dbc .ss-warproute-empty { margin: 0; font-size: 0.85em; opacity: 0.65; font-style: italic; }

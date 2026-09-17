@@ -24,7 +24,8 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { parseSubmutations, submutationByRoll, subShiftLimit, subShiftOptions,
-         isSubBlocked, patronSubmutation, needsReroll, SUB_GOD_LABELS }
+         isSubBlocked, patronSubmutation, needsReroll, SUB_GOD_LABELS,
+         multiRollCount, multiRollResults }
   from "../rules/submutations.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
@@ -58,6 +59,10 @@ export function submutationContext(item) {
     label: cur.label || "",
     text:  cur.text || "",
     godLabel: cur.god ? (SUB_GOD_LABELS[cur.god] || cur.god) : "",
+    // «Бросьте N раз» (Тройной Плод/Многокрылый, wdbc-1rno) — до N доп.
+    // результатов сверх строки-заголовка выше (та описывает саму
+    // multi-roll строку, не отдельный playable эффект).
+    multi: Array.isArray(cur.multi) ? cur.multi.map(e => ({ ...e, godLabel: e.god ? (SUB_GOD_LABELS[e.god] || e.god) : "" })) : [],
     rollLine: cur.roll
       ? `d${table.die}: ${cur.roll}${cur.shift ? ` ${cur.shift > 0 ? "+" : "−"}${Math.abs(cur.shift)} → ${cur.total}` : ""}`
       : (cur.name ? "выбрана без броска" : ""),
@@ -68,8 +73,8 @@ export function submutationContext(item) {
   };
 }
 
-/** Записать строку таблицы в мутацию. */
-export async function setSubmutation(item, entry, { roll = 0, shift = 0, total = 0 } = {}) {
+/** Записать строку таблицы в мутацию. multi — доп. результаты «Бросьте N раз» (Тройной Плод/Многокрылый, wdbc-1rno), [] по умолчанию. */
+export async function setSubmutation(item, entry, { roll = 0, shift = 0, total = 0, multi = [] } = {}) {
   if (!entry) return;
   await item.update({
     "system.submutation.name":  entry.name,
@@ -78,7 +83,8 @@ export async function setSubmutation(item, entry, { roll = 0, shift = 0, total =
     "system.submutation.god":   entry.god || "",
     "system.submutation.roll":  roll,
     "system.submutation.shift": shift,
-    "system.submutation.total": total
+    "system.submutation.total": total,
+    "system.submutation.multi": multi.map(e => ({ name: e.name, label: e.label, text: e.text, god: e.god || "" }))
   });
 }
 
@@ -96,12 +102,12 @@ export async function clearSubmutation(item) {
     "system.submutation.name": "", "system.submutation.label": "",
     "system.submutation.text": "", "system.submutation.god": "",
     "system.submutation.roll": 0, "system.submutation.shift": 0,
-    "system.submutation.total": 0
+    "system.submutation.total": 0, "system.submutation.multi": []
   });
 }
 
-/** Карточка результата в чат. */
-async function announce(item, actor, entry, { roll = 0, shift = 0, total = 0, blocked = false, die = 10 }) {
+/** Карточка результата в чат. multi — доп. результаты «Бросьте N раз», если строка такая. */
+async function announce(item, actor, entry, { roll = 0, shift = 0, total = 0, blocked = false, die = 10, multi = [] }) {
   const stat = (label, value) => `<span class="roll-stat"><label>${label}</label><b>${value}</b></span>`;
   const line = roll
     ? `<div class="roll-statline">${stat(`d${die}`, roll)}${
@@ -118,9 +124,33 @@ async function announce(item, actor, entry, { roll = 0, shift = 0, total = 0, bl
     outcome: `<b>${esc(entryLabel(entry))}</b>`,
     sections: [
       entry?.text ? `<div class="ability-detail-text">${esc(entry.text)}</div>` : "",
-      blocked ? `<div class="roll-note">Строка враждебного Бога — по правилу книги её брать нельзя.</div>` : ""
+      blocked ? `<div class="roll-note">Строка враждебного Бога — по правилу книги её брать нельзя.</div>` : "",
+      multi.length ? `<div class="roll-note">Три броска без сдвига Inf.b (дубликаты/самоссылка схлопнулись): ${
+        multi.map(e => esc(entryLabel(e))).join("; ")}</div>` : ""
     ]
   }, { sound: false });
+}
+
+/**
+ * «Бросьте N раз на субмутации без обычных модификаторов от Inf.b» (Тройной
+ * Плод/Многокрылый, wdbc-1rno) — если entry такая строка, честно бросает N
+ * дополнительных d{table.die} (БЕЗ сдвига Inf.b, книга явно это исключает) и
+ * сворачивает их в список результатов. Не такая строка — пустой список, ничего
+ * не меняет в обычном потоке.
+ */
+async function rollMultiExtra(table, entry) {
+  const count = multiRollCount(entry);
+  if (!count) return [];
+  const rolls = [];
+  for (let i = 0; i < count; i++) rolls.push((await new Roll(`1d${table.die}`).evaluate()).total);
+  return multiRollResults(table.entries, rolls, entry.label);
+}
+
+/** Одна точка финализации: доп. броски «N раз» (если строка такая) + запись + карточка. */
+async function finalizeSubmutation(item, actor, table, entry, rollInfo, { blocked = false } = {}) {
+  const multi = await rollMultiExtra(table, entry);
+  await setSubmutation(item, entry, { ...rollInfo, multi });
+  await announce(item, actor, entry, { ...rollInfo, die: table.die, blocked, multi });
 }
 
 /**
@@ -144,10 +174,7 @@ export async function rollSubmutation(item, { actor = null, fromFailure = false 
   // Таблица без бросков («Стальное Сердце», «Тёмная Душа») — строка определяется
   // покровителем. Есть покровитель — записываем без вопросов.
   if (!table.rollable) {
-    if (mine) {
-      await setSubmutation(item, mine);
-      return announce(item, owner, mine, { die: table.die });
-    }
+    if (mine) return finalizeSubmutation(item, owner, table, mine, {});
     return pickDialog(item, owner, table);
   }
 
@@ -173,7 +200,7 @@ function pickDialog(item, actor, table) {
       buttons: {
         ok: { label: "Записать", callback: async (html) => {
           const entry = table.entries.find(e => e.label === String(html.find("#sm-pick").val()));
-          if (entry) { await setSubmutation(item, entry); await announce(item, actor, entry, { die: table.die }); }
+          if (entry) await finalizeSubmutation(item, actor, table, entry, {});
           resolve(entry || null);
         } },
         cancel: { label: "Отмена", callback: () => resolve(null) }
@@ -234,9 +261,7 @@ function shiftDialog(item, actor, table, { roll1, roll2, infB, patron, mine, fro
           const { base, shift, useMine, entry } = readForm(html);
           if (!entry) return resolve(null);
           const rollInfo = useMine ? {} : { roll: base, shift, total: base + shift };
-          await setSubmutation(item, entry, rollInfo);
-          await announce(item, actor, entry,
-            { ...rollInfo, die: table.die, blocked: isSubBlocked(entry, patron) });
+          await finalizeSubmutation(item, actor, table, entry, rollInfo, { blocked: isSubBlocked(entry, patron) });
           resolve(entry);
         } },
         // Переброс — средство книги против закрытого участка таблицы. Признак

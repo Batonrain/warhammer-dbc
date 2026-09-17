@@ -14,7 +14,7 @@ import { rollMoraleTest } from "../rules/morale-test.mjs";
 import { applyLordOfExoditesFailPenalty } from "./lord-of-exodites.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
-import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 
 /** Стрелковая RoF, которой ведётся Стрельба на Подавление, задаёт штраф цели. */
 export function suppressionTestMod(sys) {
@@ -45,8 +45,8 @@ export async function rollSuppressionTest(actor, { mod = 0, sourceLabel = "", so
   await postTestCard(actor, {
     icon: rollIcon("target","#ff9a4d"),
     title: `Тест Подавления${sourceLabel ? ` — ${esc(sourceLabel)}` : ""} → ${esc(actor.name)}`,
-    threshold: thresholdLine({ label: "WP", base: wpTotal, parts: modParts, threshold }),
-    rv, rerollNote,
+    threshold: rollStatLine({ label: "WP", base: wpTotal, parts: modParts, threshold, rv }),
+    rerollNote,
     outcome: success
       ? `<span class="roll-success">Успех — сохраняет самообладание</span>`
       : `<span class="roll-failure">Провал — Подавлен (📌)</span>`
@@ -97,8 +97,8 @@ export async function rollSuppressionRecovery(actor, { bonus = 0 } = {}) {
   const bonusParts = [bonus !== 0 ? `тишина ${bonus >= 0 ? "+" : ""}${bonus}` : "", ...ruleParts];
   await postTestCard(actor, {
     icon: rollIcon("target","#4dffa6"), title: `Преодоление Подавления → ${esc(actor.name)}`,
-    threshold: thresholdLine({ label: "WP", base: wpTotal, parts: bonusParts, threshold }),
-    rv, rerollNote,
+    threshold: rollStatLine({ label: "WP", base: wpTotal, parts: bonusParts, threshold, rv }),
+    rerollNote,
     outcome: success
       ? `<span class="roll-success">Успех — Подавление снято</span>`
       : `<span class="roll-failure">Провал — всё ещё Подавлен</span>`

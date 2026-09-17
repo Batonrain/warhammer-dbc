@@ -49,17 +49,64 @@ export function thresholdLine({ prefix = "", label = "Порог", base = null, 
 
 /**
  * «Статлиния» — строка из ячеек «подпись/значение», которой карточка атаки
- * заменяет строку Порога: Порог, Режим, Бросок стоят в ряд, а не столбиком.
+ * заменяет строку Порога: Бросок, Режим, Порог стоят в ряд, а не столбиком.
  *
  * Заведена не ради атаки одной: любой карточке, где Порог и бросок читаются
  * вместе, эта форма подходит лучше двух отдельных строк.
  *
- * @param {Array<{label: string, value: string|number, note?: string}>} stats
+ * `title` — всплывающая подсказка ячейки (используется rollStatLine для
+ * разбивки базы и модификаторов Порога, чтобы не раздувать саму плашку).
+ *
+ * @param {Array<{label: string, value: string|number, note?: string, title?: string}>} stats
  */
 export function statLine(stats = []) {
-  const cells = (stats ?? []).filter(Boolean).map(st =>
-    `<span class="roll-stat"><label>${esc(st.label)}</label><b>${st.value}</b>${st.note ?? ""}</span>`).join("");
+  const cells = (stats ?? []).filter(Boolean).map(st => {
+    const title = st.title ? ` title="${esc(st.title)}"` : "";
+    return `<span class="roll-stat"${title}><label>${esc(st.label)}</label><b>${st.value}</b>${st.note ?? ""}</span>`;
+  }).join("");
   return cells ? `<div class="roll-statline">${cells}</div>` : "";
+}
+
+/**
+ * Плашка результата теста — общая форма для ВСЕХ тестов, не только боевых
+ * (wdbc-fyvv): один ряд ячеек Бросок / Режим / Порог. До этого треть карточек
+ * (боевые, см. statLine выше) уже была такой, а остальные писали Порог
+ * текстовой строкой (thresholdLine) и Бросок — отдельной строкой под ней;
+ * вид и порядок расходились от подсистемы к подсистеме.
+ *
+ * `label` — то же, что раньше подписывало текстовую строку Порога
+ * (характеристика или навык теста: «Ag», «WS», «Command(F)»…) — здесь это
+ * подпись ячейки Режим. Разбивка базы и модификаторов (раньше стояла текстом
+ * рядом с Порогом: «Ag: 35 (Усталость −10, стойка +10)») переезжает во
+ * всплывающую подсказку ячейки Порога — за столом важно итоговое число,
+ * не то, из чего оно сложилось.
+ *
+ * @param {object} o
+ * @param {string} [o.prefix]    доп. контекст перед label в подсказке («Цель: Имя»)
+ * @param {string} [o.label]     характеристика/навык — подпись ячейки Режим;
+ *   без неё ячейка Режим не рисуется (тесты без label — фиксированные, без
+ *   слагаемых, см. thresholdLine({ threshold }))
+ * @param {?number} [o.base]     базовое значение до модификаторов
+ * @param {string[]} [o.parts]   уже готовые подписи слагаемых
+ * @param {?number} [o.threshold] итоговый Порог; null — ячейки Порога нет
+ *   (переброс без исходного теста под рукой, только новое число)
+ * @param {?number} [o.rv]       выпавшее число; null — ячейки Броска нет
+ * @param {string} [o.rerollNote] подпись переброса ПРЯМО В ячейке Броска
+ *   (инлайновая, как у карточки атаки) — блочный текст о переброске
+ *   (`<div class="roll-defense-note">…</div>`) в статлинию не переезжает и
+ *   остаётся отдельным блоком карточки, как раньше
+ */
+export function rollStatLine({ prefix = "", label = "", base = null, parts = [], threshold = null, rv = null, rerollNote = "" }) {
+  const shown = (parts ?? []).filter(Boolean);
+  const lead = prefix ? `${prefix} | ` : "";
+  const breakdown = base == null
+    ? ""
+    : `${lead}${label ? `${label}: ` : ""}${base}${shown.length ? ` (${shown.join(", ")})` : ""}`;
+  return statLine([
+    rv == null ? null : { label: "Бросок", value: rv, note: rerollNote },
+    label ? { label: "Режим", value: esc(label) } : null,
+    threshold == null ? null : { label: "Порог", value: threshold, title: breakdown }
+  ]);
 }
 
 /**

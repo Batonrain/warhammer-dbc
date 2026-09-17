@@ -313,7 +313,7 @@ export const VEHICLE_WEAPONS = [
   VW(DRU, "Heat Lance / Тепловое Копьё (техн.)", { r:5, type:"darklight", rng:60, rof:"S/–/–", dmg:"5d10+20 X", pen:15, clip:32, rld:"4", props:"Deflagrate (12), Extreme (6), Felling (6), Melta, Lance, Proven (5)", note:"По Size ≤2: T−50 или ×2 урон. Size ≤1 непогл. → крит E 6." }),
   // ── Дезинтеграторы (плазма Друкхари) ──
   VW(DRU, "Disintegrator Cannon / Дезинтегратор", { r:4, type:"plasma", rng:150, rof:"–/5/8", dmg:"1d10+16 E", pen:11, clip:60, rld:"5", props:"Blast (6), Maximal, Reliable", note:"Погибший испаряется на атомы. В Рейдере/Опустошителе — R1 (интегрировано)." }),
-  VW(DRU, "Pulse Disintegrators / Импульсные Дезинтеграторы", { r:4, type:"plasma", rng:300, rof:"–/–/10", dmg:"2d10+12 E", pen:12, clip:"∞", rld:"–", props:"Storm (3)" }),
+  VW(DRU, "Pulse-Disintegration / Импульсный Дезинтегратор", { r:4, type:"plasma", rng:300, rof:"–/–/10", dmg:"2d10+12 E", pen:12, clip:"∞", rld:"–", props:"Storm (3)" }),
   // ── Гранатомёты ──
   VW(DRU, "Horrorfex / Хоррорфекс (техн.)", { r:4, type:"launcher", rng:300, rof:"S/–/–", dmg:"", pen:0, clip:1, rld:"1", props:"Imprecise", note:"Ускоренные гранаты: +2d10+14 I(Cr), Pen 0, Primitive к взрыву." }),
   // ── Рукопашное (лезвия/косы) ──

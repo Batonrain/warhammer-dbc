@@ -28,13 +28,14 @@ const CANON_HINT =
   "packs-src/talents/Общие/Lightning_Reflexes___Молниеносные_Рефлек_D5cYACbielvSDp49.json";
 
 // Акторы Бестиария, у которых лист называет Талант «Молниеносные Рефлексы»
-// (wdbc-yqh — ревью третьей стопки PR нашло минимум эти 8).
+// (wdbc-yqh — ревью третьей стопки PR нашло минимум эти 8; Архонт из списка
+// выбыл 16.09.2026 — перенесён из системного пака в мировой компендиум
+// iz-pepla как нехоумрул-контент, не переведённый из книги).
 const BESTIARY_HINTS = [
   "packs-src/bestiary/Демоны_Хаоса/Слаанеш/Хранитель_Секретов_BgwRB2LlKpRaW8np.json",
   "packs-src/bestiary/Друкхари/Звери_Укротителя/Адский_Паук_NfvFMrLBCYfBO8P5.json",
   "packs-src/bestiary/Друкхари/Звери_Укротителя/Бритвокрыл_W05o5QstWbJPoPge.json",
   "packs-src/bestiary/Друкхари/Кабал/Trueborn___Истиннорожд_нный_Xv0ZkH4WKbRiNxkB.json",
-  "packs-src/bestiary/Друкхари/Кабал/Архонт_VAqJ8PlcRNH1XNtn.json",
   "packs-src/bestiary/Скакуны/Марру___Marru_ZkqNJlPScjwDaTlZ.json",
   "packs-src/bestiary/Скакуны/Раптор___Raptor_LmFzf2A096YvScVM.json",
   "packs-src/bestiary/Смертные_Хаоса/Культисты/Культист_Разведчик_zO7skH15SwIpO5tO.json",

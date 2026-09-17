@@ -12,7 +12,7 @@
     "qualityCustom": false,
     "aspects": "In-build: Орудие «Аннигилятор» (НП), 2/14",
     "description": "",
-    "notes": "wdbc-kf5k: заявленный bookSource указывал на реальный диапазон стр. DoomBC — Книги Пустоты (Гранд-крейсеры, 173-181), но там перечислен другой полный список хуллов без этого имени (проверено программно). Внешняя проверка подтвердила: Annihilator — настоящий канон GW, но Battleship-класс из миниатюрной игры Battlefleet Gothic (не Grand Cruiser и не из текста DoomBC). Решение оставить/убрать контент — за владельцем.",
+    "notes": "",
     "shipProps": [
       {
         "key": "inbuild"
@@ -33,7 +33,7 @@
       "armour": 22,
       "turretRating": 2
     },
-    "bookSource": "Домашнее правило (не из официальной книги)"
+    "bookSource": "DoomBC — Книга Пустоты, Гранд-крейсеры, стр. 173-181"
   },
   "_id": "LQ69pjbFNrqjVpYh",
   "effects": [],

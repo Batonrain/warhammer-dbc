@@ -82,7 +82,7 @@ describe("Runes of Protection: тест W+0+(бPR×5)", () => {
     const actor = characterActor({ armorAP: 0, wounds: 20, wp: 40, bPR: 6, hasRune: true });
     await applyDamageToActor(actor, damage({ rawDamage: 1 }));
     const runesCard = captured.chat.find(c => c.content.includes("Защитные Руны"));
-    expect(runesCard.content).toContain("Порог <b>70</b>");
+    expect(runesCard.content).toContain("<label>Порог</label><b>70</b>");
   });
 
   it("складывается с обычным AP брони этой локации", async () => {

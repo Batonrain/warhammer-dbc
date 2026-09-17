@@ -47,6 +47,54 @@
           <span class="wh-hud-ae-item"><span class="wh-hud-tlabel">РЕАКЦ.</span> {{actionEconomy.reactions.value}}<span class="wh-hud-ae-max">/{{actionEconomy.reactions.max}}</span></span>
         </div>
         {{/if}}
+        {{!-- Прицеливание (wdbc-1rno.5): всегда на виду рядом с ОД/Реакциями,
+              не вкладка — было радио в диалоге атаки без расхода ОД, теперь
+              настоящее HUD-действие. active — уже объявленный уровень, ждёт
+              следующей Атаки. --}}
+        {{#if aiming.items.length}}
+        <div class="wh-hud-aiming">
+          {{#each aiming.items as |a|}}
+          <a class="wh-hud-aim-btn {{#if a.active}}active{{/if}}" data-aim="{{a.key}}"
+             data-tooltip="{{a.label}}{{#if a.cost}} — {{a.cost}}{{/if}}">{{a.label}}<span class="wh-hud-aim-cost">{{a.cost}}</span></a>
+          {{/each}}
+          {{!-- Фокус на Прицеле (wdbc-1rno.5): галочка ДО клика — продлевает
+                следующее объявленное Прицеливание на все стрелковые атаки до
+                конца следующего Хода за 1 Реакцию (aiming-action.mjs). --}}
+          {{#if aiming.focus}}
+          <a class="wh-hud-aim-btn wh-hud-aim-focus {{#if aiming.focus.pending}}active{{/if}} {{#unless aiming.focus.reactionOk}}warn{{/unless}}"
+             data-aim-focus-toggle
+             data-tooltip="Фокус на Прицеле — 1 Реакция, продлевает бонус на все стрелковые атаки до конца следующего Хода{{#unless aiming.focus.reactionOk}} (нет свободной Реакции){{/unless}}">
+            Фокус
+          </a>
+          {{/if}}
+          {{#if aiming.tracking}}
+          <a class="wh-hud-aim-btn wh-hud-aim-focus {{#if aiming.tracking.pending}}active{{/if}}"
+             data-tracking-aim-toggle
+             data-tooltip="Прицел на Упреждение — бесплатный тест P+0, гасит штраф за Бег цели на следующем выстреле">
+            Упреждение
+          </a>
+          {{/if}}
+        </div>
+        {{/if}}
+        {{!-- Караул (wdbc-1rno.27/.37): та же вёрстка, что Прицеливание —
+              список пунктов (aimMenuItems-паттерн, combat/overwatch.mjs), плюс
+              ручная кнопка «Стрелять из Караула» пока Караул активен (для
+              условий огня, которые движок не детектирует автоматически —
+              автодетект сам предлагает выстрел карточкой в чат при движении
+              врага в сектор). --}}
+        {{#if overwatch.items.length}}
+        <div class="wh-hud-aiming">
+          {{#each overwatch.items as |o|}}
+          <a class="wh-hud-aim-btn" data-overwatch="{{o.key}}"
+             data-tooltip="{{o.label}}{{#if o.cost}} — {{o.cost}}{{/if}}">{{o.label}}<span class="wh-hud-aim-cost">{{o.cost}}</span></a>
+          {{/each}}
+        </div>
+        {{/if}}
+        {{#if overwatch.active}}
+        <div class="wh-hud-aiming" data-tooltip="Караул активен: сектор {{overwatch.state.arcWidth}}°, осталось {{overwatch.state.shotsRemaining}}/{{overwatch.state.maxBudget}} Одиночных{{#if overwatch.state.condition}}, условие: «{{overwatch.state.condition}}»{{/if}}">
+          <a class="wh-hud-aim-btn active" data-overwatch-fire>Стрелять из Караула</a>
+        </div>
+        {{/if}}
         {{#if lamps.length}}
         <div class="wh-hud-lamps">
           {{#each lamps as |l|}}<span class="wh-hud-lamp {{#if l.bad}}bad{{/if}}">{{l.label}}</span>{{/each}}

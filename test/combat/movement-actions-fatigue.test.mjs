@@ -19,13 +19,13 @@ beforeEach(resetCaptured);
 describe("_resolveClimb: Усталость в пороге (Athletics — S)", () => {
   it("не уставший — порог без штрафа", async () => {
     await _resolveClimb(makeActor({ fatigue: 0 }), "simple", 40, 30, 0, 8);
-    expect(captured.chat.at(-1).content).toContain("Порог <b>40</b>");
+    expect(captured.chat.at(-1).content).toContain("<label>Порог</label><b>40</b>");
   });
 
   it("уставший — порог падает на 10 и это видно", async () => {
     await _resolveClimb(makeActor({ fatigue: 1 }), "simple", 40, 30, 0, 8);
     const html = captured.chat.at(-1).content;
-    expect(html).toContain("Порог <b>30</b>");
+    expect(html).toContain("<label>Порог</label><b>30</b>");
     expect(html).toContain("😓 Усталость");
   });
 
@@ -42,7 +42,7 @@ describe("_resolveJump: Усталость в пороге (Acrobatics — Ag)",
   it("уставший — штраф применён и виден", async () => {
     await _resolveJump(makeActor({ fatigue: 1 }), "hplace", 40, 0, 0, 4);
     const html = captured.chat.at(-1).content;
-    expect(html).toContain("Порог <b>30</b>");
+    expect(html).toContain("<label>Порог</label><b>30</b>");
     expect(html).toContain("😓 Усталость");
   });
 });
@@ -51,13 +51,13 @@ describe("_resolveSwim: Усталость в пороге (Athletics — S)", (
   it("уставший — штраф применён и виден (не кумулятивный тест)", async () => {
     await _resolveSwim(makeActor({ fatigue: 1 }), 40, false, false, 0, 6);
     const html = captured.chat.at(-1).content;
-    expect(html).toContain("Порог <b>30</b>");
+    expect(html).toContain("<label>Порог</label><b>30</b>");
     expect(html).toContain("😓 Усталость");
   });
 
   it("складывается со штрафом тяжёлого снаряжения", async () => {
     await _resolveSwim(makeActor({ fatigue: 1 }), 40, true, false, 0, 6);
     const html = captured.chat.at(-1).content;
-    expect(html).toContain("Порог <b>0</b>"); // 40 − 30 (тяж.) − 10 (Усталость)
+    expect(html).toContain("<label>Порог</label><b>0</b>"); // 40 − 30 (тяж.) − 10 (Усталость)
   });
 });

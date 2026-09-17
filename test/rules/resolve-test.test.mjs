@@ -127,6 +127,13 @@ describe("галочки из эффектов", () => {
     expect(rollModsFromRules(rules, buildTestContext({ char: "ag" }))).toHaveLength(0);
   });
 
+  it("poison (wdbc-1rno.1, Пророк Гэллерпокса) — только тест с ctx.poisonTest===true, не любой char:t", () => {
+    const rules = [rule([{ kind: "rollBonus", target: "poison", value: -30 }])];
+    expect(rollModsFromRules(rules, buildTestContext({ char: "t", poisonTest: true }))).toHaveLength(1);
+    expect(rollModsFromRules(rules, buildTestContext({ char: "t" }))).toHaveLength(0);
+    expect(rollModsFromRules(rules, buildTestContext({ char: "t", poisonTest: false }))).toHaveLength(0);
+  });
+
   it("penaltyMul 0.5 даёт галочку «ополовинить штраф»", () => {
     const mods = rollModsFromRules(
       [rule([{ kind: "penaltyMul", target: "skill:psyniscience", factor: 0.5 }])],

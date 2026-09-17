@@ -19,7 +19,7 @@ import { readEnvForScene, currentScene } from "../constants/scene-nexus.mjs";
 import { tempHazardIntervalSeconds, BREEZE_CAPABILITY } from "../rules/temperature-hazard.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { addFatigue } from "../sheets/tabs/conditions.mjs";
-import { postTestCard } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 
@@ -67,8 +67,7 @@ export async function rollTempHazardTest(actor) {
   await postTestCard(actor, {
     icon: rollIcon(effect.kind === "cold" ? "shield" : "burst", effect.tone || "#ff8a5a"),
     title: `${effect.kind === "cold" ? "Холод" : "Жара"} — ${esc(actor.name)}`,
-    threshold: `<div class="roll-threshold">T <b>${t}</b>${sign} → Порог <b>${threshold}</b> (${esc(effect.label)})</div>`,
-    rv: roll.total,
+    threshold: rollStatLine({ label: "T", base: t, parts: [sign, esc(effect.label)], threshold, rv: roll.total }),
     outcome: success
       ? `<span class="roll-success">Успех</span>`
       : `<span class="roll-failure">Провал — 😓 Усталость +1</span>`
