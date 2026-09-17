@@ -169,6 +169,29 @@ describe("hudData: вкладка «Движение» (wdbc-zdu4) — те же
   });
 });
 
+describe("hudData: Прицеливание (wdbc-1rno.5) — всегда на виду, не вкладка", () => {
+  it("вне Столкновения — пункты пусты", () => {
+    const data = hudData(hudActor());
+    expect(data.aiming.items).toEqual([]);
+    expect(data.aiming.current).toBe("none");
+  });
+
+  it("в активном Encounter — две кнопки, action не сериализуется в данные", () => {
+    globalThis.game.combat = { started: true };
+    const data = hudData(hudActor({ actionPoints: { value: 2, max: 2 } }));
+    expect(data.aiming.items.map(i => i.key)).toEqual(["aimHalf", "aimFull"]);
+    for (const i of data.aiming.items) expect(i).not.toHaveProperty("action");
+  });
+
+  it("actor.system.aiming='half' — пункт aimHalf помечен active", () => {
+    globalThis.game.combat = { started: true };
+    const data = hudData(hudActor({ actionPoints: { value: 2, max: 2 }, aiming: "half" }));
+    expect(data.aiming.current).toBe("half");
+    expect(data.aiming.items.find(i => i.key === "aimHalf").active).toBe(true);
+    expect(data.aiming.items.find(i => i.key === "aimFull").active).toBe(false);
+  });
+});
+
 describe("hudData: вкладка «Химия» (wdbc-zdu4) — препараты актора для быстрого применения", () => {
   function drugItem({ id = "d1", name = "Стимм", quantity = 1, active = false, roundsRemaining = 0 } = {}) {
     return {

@@ -22,6 +22,7 @@
     "damageType": "energy",
     "penetration": 20,
     "quality": "common",
+    "bookSource": "Книга Аэльдари, V. АРСЕНАЛ ЭЛЬДАР («Лазерное оружие», стр. 76)",
     "availability": 5,
     "weight": 6,
     "attackBonus": 0,

@@ -3,7 +3,7 @@
   "type": "weapon",
   "folder": "cHwiIsG6VZt9ZiIR",
   "system": {
-    "description": "",
+    "description": "Этот техноарканный прибор, обычно монтируемый на доспехи Центурион, значительно усиливает эффективность грав-оружия.",
     "notes": "",
     "weaponClass": "heavy",
     "weaponType": "grav",
@@ -26,7 +26,7 @@
     "availability": 4,
     "weight": 35,
     "attackBonus": 0,
-    "special": "",
+    "special": "Атаки этим оружием имеют тип Незримое. Получившие попадание от него на 1 Раунд получают Помеху на все тесты против свойства Grav, их Провалы на тестах против свойства Grav наносят +1d10 Dmg, а техника удваивает полученный урон (Помеха/+1d10/удвоение технике — не смоделировано, только текстом).",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
@@ -35,6 +35,9 @@
       },
       {
         "key": "legion"
+      },
+      {
+        "key": "unseen"
       }
     ],
     "needsRecharge": false,

@@ -11,7 +11,7 @@ import { captured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, afterEach } from "vitest";
 import {
   hasActionEconomy, isEncounterActive, resetActionEconomy,
-  applyTurnEndStanceEffects, apCostForActionType,
+  applyTurnEndStanceEffects, applyAimFocusTurnEnd, apCostForActionType,
   canSpendActionPoints, spendActionPoints,
   canSpendReaction, spendReaction, effectiveDefenseReactionMax,
   effectiveActionPointsMax,
@@ -463,5 +463,74 @@ describe("postTurnStartCard", () => {
     const actor = actorFor({ type: "horde" });
     await postTurnStartCard(actor);
     expect(captured.chat).toHaveLength(0);
+  });
+});
+
+describe("Прицеливание (wdbc-1rno.5): любое ненулевое действие тратит его впустую", () => {
+  it("spendActionPoints с ненулевой ценой сбрасывает актора-стрелка system.aiming='half'", async () => {
+    globalThis.game.combat = { started: true };
+    const actor = actorFor({ actionPoints: { value: 2, max: 2 }, aiming: "half" });
+    await spendActionPoints(actor, 1);
+    expect(actor.system.aiming).toBe("none");
+  });
+
+  it("spendActionPoints с cost=0 НЕ трогает Прицеливание (формальные вызовы не должны стирать чужое)", async () => {
+    globalThis.game.combat = { started: true };
+    const actor = actorFor({ actionPoints: { value: 2, max: 2 }, aiming: "full" });
+    await spendActionPoints(actor, 0);
+    expect(actor.system.aiming).toBe("full");
+  });
+
+  it("spendReaction (Уклонение/Парирование) тоже сбрасывает Прицеливание", async () => {
+    globalThis.game.combat = { started: true };
+    const actor = actorFor({ reactions: { value: 1, max: 1, defenseValue: 0, defenseMax: 0 }, aiming: "half" });
+    await spendReaction(actor, { forDefense: true });
+    expect(actor.system.aiming).toBe("none");
+  });
+
+  it("не хватило ОД — spendActionPoints вернул false, Прицеливание не тронуто", async () => {
+    globalThis.game.combat = { started: true };
+    const actor = actorFor({ actionPoints: { value: 0, max: 2 }, aiming: "half" });
+    expect(await spendActionPoints(actor, 1)).toBe(false);
+    expect(actor.system.aiming).toBe("half");
+  });
+});
+
+describe("applyAimFocusTurnEnd (wdbc-1rno.5): продление Фокуса на Прицеле — «до конца его следующего Хода»", () => {
+  it("нет флага — no-op", async () => {
+    const actor = actorFor({ aiming: "half" });
+    await applyAimFocusTurnEnd(actor);
+    expect(actor.getFlag("warhammer-dbc", "aimFocusExtended")).toBeUndefined();
+    expect(actor.system.aiming).toBe("half");
+  });
+
+  it("\"pending\" (объявлено только что) — первый конец Хода переводит в \"armed\", aiming не трогает", async () => {
+    const actor = actorFor({ aiming: "half" });
+    await actor.setFlag("warhammer-dbc", "aimFocusExtended", "pending");
+    await applyAimFocusTurnEnd(actor);
+    expect(actor.getFlag("warhammer-dbc", "aimFocusExtended")).toBe("armed");
+    expect(actor.system.aiming).toBe("half");
+  });
+
+  it("\"armed\" (пережило один конец Хода) — второй конец Хода снимает флаг И aiming", async () => {
+    const actor = actorFor({ aiming: "full" });
+    await actor.setFlag("warhammer-dbc", "aimFocusExtended", "armed");
+    await applyAimFocusTurnEnd(actor);
+    expect(actor.getFlag("warhammer-dbc", "aimFocusExtended")).toBeUndefined();
+    expect(actor.system.aiming).toBe("none");
+  });
+
+  it("два конца Хода подряд от \"pending\": первый — armed, второй — снято", async () => {
+    const actor = actorFor({ aiming: "half" });
+    await actor.setFlag("warhammer-dbc", "aimFocusExtended", "pending");
+    await applyAimFocusTurnEnd(actor);
+    expect(actor.getFlag("warhammer-dbc", "aimFocusExtended")).toBe("armed");
+    await applyAimFocusTurnEnd(actor);
+    expect(actor.getFlag("warhammer-dbc", "aimFocusExtended")).toBeUndefined();
+    expect(actor.system.aiming).toBe("none");
+  });
+
+  it("нет актора — не падает", async () => {
+    await expect(applyAimFocusTurnEnd(null)).resolves.toBeUndefined();
   });
 });

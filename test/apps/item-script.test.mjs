@@ -42,6 +42,10 @@ describe("executeItemCode — стандартные помощники в об�
       seen.resolveBurnedSenses = typeof resolveBurnedSenses;
       seen.buildCountenanceFearFlag = typeof buildCountenanceFearFlag;
       seen.purityOfBattleWave = typeof purityOfBattleWave;
+      seen.activateFruitOfFlesh = typeof activateFruitOfFlesh;
+      seen.eatHealFruit = typeof eatHealFruit;
+      seen.useSoulSeer = typeof useSoulSeer;
+      seen.activateWrappedInChaos = typeof activateWrappedInChaos;
     `, null, { seen });
     expect(seen).toEqual({
       woundLossUpdates: "function", isTokenInSight: "function",
@@ -52,7 +56,9 @@ describe("executeItemCode — стандартные помощники в об�
       testOutcome: "function", resolveOpposed: "function", woundDeathThreshold: "function",
       computeWoundHealing: "function", grantExtraTurn: "function", hasExtraTurn: "function",
       endOfOrderInitiative: "function", mergedVictimUuids: "function", grantArmourOfTheGods: "function",
-      resolveBurnedSenses: "function", buildCountenanceFearFlag: "function", purityOfBattleWave: "function"
+      resolveBurnedSenses: "function", buildCountenanceFearFlag: "function", purityOfBattleWave: "function",
+      activateFruitOfFlesh: "function", eatHealFruit: "function", useSoulSeer: "function",
+      activateWrappedInChaos: "function"
     });
   });
 

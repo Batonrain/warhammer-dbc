@@ -168,13 +168,13 @@
       }
     ],
     "damageStates": [],
-    "notes": "<p><b>Друкхари.</b> Тяжёлый штурмовой транспорт-катамаран (16 десанта). Импульсные Дезинтеграторы + Огромные Косы (заряжаются на Налёте). <b>Мерцающие Поля</b>, <b>Укреплённая Броня</b>.</p>",
+    "notes": "<p><b>Друкхари.</b> Тяжёлый штурмовой транспорт-катамаран (16 десанта). Импульсный Дезинтегратор + Огромные Косы (заряжаются на Налёте). <b>Мерцающие Поля</b>, <b>Укреплённая Броня</b>.</p>",
     "gmNotes": "",
     "availability": 4
   },
   "items": [
     {
-      "name": "Pulse Disintegrators / Импульсные Дезинтеграторы",
+      "name": "Pulse-Disintegration / Импульсный Дезинтегратор",
       "type": "weapon",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -248,7 +248,7 @@
           "reloads": 10,
           "slotId": "rK1AyJoofUZeb5IJ",
           "options": [
-            "Pulse Disintegrators / Импульсные Дезинтеграторы"
+            "Pulse-Disintegration / Импульсный Дезинтегратор"
           ]
         },
         "drukhari": false
@@ -275,7 +275,7 @@
       "_key": "!actors.items!yPTXIoNTH8C48Gz4.3zS23xIrpv3jBEcg"
     },
     {
-      "name": "Pulse Disintegrators / Импульсные Дезинтеграторы",
+      "name": "Pulse-Disintegration / Импульсный Дезинтегратор",
       "type": "weapon",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -349,7 +349,7 @@
           "reloads": 10,
           "slotId": "Dzq0RrZjA2vTGaFw",
           "options": [
-            "Pulse Disintegrators / Импульсные Дезинтеграторы"
+            "Pulse-Disintegration / Импульсный Дезинтегратор"
           ]
         },
         "drukhari": false

@@ -27,6 +27,9 @@
       {
         "key": "devastating",
         "rating": 2
+      },
+      {
+        "key": "unseen"
       }
     ],
     "charDamageStat": "",

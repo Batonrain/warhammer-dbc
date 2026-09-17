@@ -50,7 +50,7 @@ import { isFusedByHandOfDeath } from "../rules/hand-of-death.mjs";
 import { collectTestMods, ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
-import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs";
 import { measureTokens }                      from "../combat/tactical-map.mjs";
 import { rangeBandBoundaries }                from "../rules/tactical-map.mjs";
@@ -60,6 +60,8 @@ import { isIntegralAttack }                    from "../combat/equipped-melee.mj
 import { isPathOneHandedWeapon }               from "../rules/library/paths.mjs";
 import { canDualWield, offHandCandidates, dualWieldMods }
   from "../rules/dual-wield.mjs";
+import { targetHasActiveFlies, fliesAttackPenalty, wrathHeatAttackPenalty } from "../rules/wrapped-in-chaos.mjs";
+import { MAGGOT_PARASITE_CAPABILITY } from "../rules/maggot-parasite.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -372,9 +374,25 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // −20, вся Рукопашная +20 (module/combat/movement-actions.mjs, declareRun
   // ставит флаг; снимается resetActionEconomy — action-economy.mjs).
   const targetRunning = !!attackCtx.targetActor?.getFlag?.("warhammer-dbc", "running");
-  const runningMod = targetRunning ? (isMelee ? 20 : -20) : 0;
+  // Tracking Aim/Прицел на Упреждение (wdbc-1rno.5, rules/tracking-aim.mjs):
+  // успешный тест P+0 при объявлении Прицеливания гасит именно этот штраф на
+  // следующем дальнобойном выстреле — рукопашный бонус +20 не задет (Талант
+  // читается как чисто стрелковый по книге).
+  const trackingAimIgnoresRunning = !isMelee && !!actor.getFlag?.("warhammer-dbc", "trackingAimActive");
+  // Предсказатель Движения/Motion Predictor (weapon-mods, wdbc-1rno.5,
+  // находка 12/12, стр. 198, метка «прицеливание»): «Оружие игнорирует
+  // штрафы за скорость... цели» — только скоростная половина реализуема
+  // (высотная блокирована wdbc-1rno.29, честный остаток), только пока
+  // Прицеливание взято (installedMods/modFxOf уже в скоупе, строки 179-187).
+  const motionPredictorIgnoresRunning = !isMelee && (actor.system.aiming || "none") !== "none"
+    && installedMods.some(m => !!modFxOf(m).aimIgnoresRunning);
+  const runningMod = targetRunning
+    ? (isMelee ? 20 : ((trackingAimIgnoresRunning || motionPredictorIgnoresRunning) ? 0 : -20))
+    : 0;
   const runningBadge = targetRunning
-    ? `<span class="atk-training-warn" title="Цель Бежит (стр. 32)">🏃 Цель Бежит (${isMelee ? "+20" : "−20"})</span>`
+    ? ((trackingAimIgnoresRunning || motionPredictorIgnoresRunning)
+        ? `<span class="atk-training-warn" title="Цель Бежит (стр. 32) — погашено">🏃 Цель Бежит (−20, погашено)</span>`
+        : `<span class="atk-training-warn" title="Цель Бежит (стр. 32)">🏃 Цель Бежит (${isMelee ? "+20" : "−20"})</span>`)
     : "";
 
   // Bow to the Audience/Поклон Публике (wdbc-1rno): метка живёт на
@@ -427,11 +445,39 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     ? `<span class="atk-training-warn" title="Цель Оглушена/в Ступоре (стр. 30-31)">💫 Цель Оглушена/в Ступоре (+20)</span>`
     : "";
 
+  // Мухи, субмутация "7" Wrapped in Chaos/Укутанный в Хаос (wdbc-1rno, книга
+  // стр. 440-452): «Все атаки по нему, полагающиеся на зрение, получают
+  // штраф −5, поднимающийся до −10, если они Избирательные... растёт по
+  // тиру Ран». Безусловная часть — тем же приёмом, что Повален/Оглушена
+  // выше; эскалация при Избирательной атаке читает ЖИВОЙ чекбокс
+  // (f.aimPenalty !== 0, sheets/attack/form.mjs) — не сюда, отдельной
+  // строкой внутри thresholdParts ниже, тем же местом, где f.aimPenalty
+  // сам уже участвует в пороге. «Полагающиеся на зрение» не сужается — в
+  // системе нет классификатора «атака вслепую», применяется ко всем.
+  const targetFlies    = targetHasActiveFlies(attackCtx.targetActor);
+  const fliesTier      = attackCtx.targetActor?.system?.wounds?.tier;
+  const fliesMod       = targetFlies ? fliesAttackPenalty(fliesTier, false) : 0;
+  const fliesAimedMod  = targetFlies ? fliesAttackPenalty(fliesTier, true) : 0;
+  const fliesBadge     = targetFlies
+    ? `<span class="atk-training-warn" title="Мухи (Укутанный в Хаос, стр. 440-452): штраф атакам по зрению, растёт по тиру Ран цели">🪰 Мухи цели (${fliesMod})</span>`
+    : "";
+
+  // Жар Гнева (Укутанный в Хаос "8", wdbc-1rno): штраф рукопашной атаке,
+  // если цель сама держит "8" либо в 3м от держателя-союзника цели — тем
+  // же приёмом, что Мухи выше, но не "по зрению" (isMelee только). Гейт
+  // книги «в Ярости ИЛИ связан рукопашной» сведён к «действует всегда при
+  // самой рукопашной атаке» (решение пользователя) — см. rules/wrapped-
+  // in-chaos.mjs::wrathHeatAttackPenalty.
+  const wrathHeatMod   = isMelee ? wrathHeatAttackPenalty(attackCtx.targetActor, true) : 0;
+  const wrathHeatBadge = wrathHeatMod
+    ? `<span class="atk-training-warn" title="Жар Гнева (Укутанный в Хаос, стр. 440-452): штраф рукопашным атакам против держателя/союзников в 3м">🔥 Жар Гнева (${wrathHeatMod})</span>`
+    : "";
+
   // Шаг За Шагом (стр. 73 Книги Аэльдари): +10, пока персонаж инициировал
   // рукопашный бой или продолжает в нём находиться — то есть практически
   // всегда, когда идёт рукопашная атака этим оружием; безусловно, без галочки.
   const stepByStepMod = (isMelee && wp.stepByStep) ? 10 : 0;
-  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + ogrynFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + stepByStepMod + bowMarkedMod + proneMod + stunnedMod;
+  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + ogrynFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + stepByStepMod + bowMarkedMod + proneMod + stunnedMod + fliesMod + wrathHeatMod;
   const meleeCategory = sys.meleeCategory || "";
   // Категория оружия по выбранному Профилю (стр. 14, «Композиция Рукопашной
   // Атаки»): у многопрофильного оружия каждый альт-профиль — фактически
@@ -500,6 +546,16 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const fullAimBonus  = doubleGripActive ? 30 : 20;
   const aimingBonus   = currentAiming === "half" ? halfAimBonus : currentAiming === "full" ? fullAimBonus : 0;
 
+  // Прицеливание (wdbc-1rno.5): раньше выбиралось радиокнопкой прямо тут
+  // (без расхода ОД); теперь это HUD-действие (combat/aiming-action.mjs),
+  // объявленное ДО открытия этого окна — здесь только читаем актора и
+  // показываем итог, без возможности сменить выбор в этом окне.
+  const aimingBadgeHtml = currentAiming === "none" ? "" : `
+    <div class="av-section">
+      <div class="av-sec-lbl">Прицеливание</div>
+      <div class="av-pills"><span class="av-pill av-pill-static">${currentAiming === "half" ? "Полу-прицеливание" : "Полное Прицеливание"} +${aimingBonus}</span></div>
+    </div>`;
+
   const loadedAmmo = sys.loadedAmmoId ? actor.items.get(sys.loadedAmmoId) : null;
   const ammoSys    = loadedAmmo?.system;
   const ammoAtkMod = ammoSys?.attackMod ?? 0;
@@ -566,7 +622,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const blockedBadge = sel.blocked
       ? `<span class="atk-training-warn" title="Защитная Стойка без щита запрещает атаки (стр. 15)">🚫 Защитная Стойка — атака запрещена</span>`
       : "";
-    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${runningBadge}${bowMarkedBadge}${targetHelplessBadge}${proneBadge}${stunnedBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}${handsBadge(sel)}`;
+    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${runningBadge}${bowMarkedBadge}${targetHelplessBadge}${proneBadge}${stunnedBadge}${fliesBadge}${wrathHeatBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}${handsBadge(sel)}`;
   }
 
   // Недоступные варианты (без Рукопашной Тренировки/не подходит категории) не
@@ -676,6 +732,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // зону; ничего сверх aimVal/aimPenalty не требуется.
   if (wp.blastRating > 0) {
     aimTargets.splice(1, 0, { value: "underfoot", label: "Под цель (Взрывное, −20)", penalty: -20 });
+  }
+  // Опарыш-Паразит (wdbc-ux8a): «более не может быть выцелен Избирательной
+  // атакой» — жёсткий запрет (книга говорит «не может», не предупреждение),
+  // по ЦЕЛИ, а не по оружию — первый такой гейт в этом файле.
+  if (attackCtx.targetActor && hasRuleFlag(attackCtx.targetActor, MAGGOT_PARASITE_CAPABILITY)) {
+    aimTargets = aimTargets.filter(t => !t.value);
   }
   const aimHtml = aimTargets.map(t => {
     const pen = (t.precise && csMod) ? Math.min(0, t.penalty + csMod) : t.penalty;
@@ -890,7 +952,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
   // Свойства оружия — напоминание + чекбокс короткой дистанции + перезарядка
   const wpDialogList = wProps.map(p => {
-    const r = p.def.rating ? ` (${p.rating ?? 0}${p.def.rating2 ? "/" + (p.rating2 ?? 0) : ""})` : "";
+    // wdbc-cy4z: показываем «/Y» только когда у ЭТОГО предмета реально задан
+    // rating2 (p.rating2), а не когда свойство лишь СПОСОБНО его нести
+    // (p.def.rating2) — Toxic/Haywire теперь тоже умеют rating2 (нестандартный
+    // книжный урон), но у подавляющего большинства предметов он не задан, и
+    // «Токсичное (1/0)» вместо «Токсичное (1)» было бы шумом для каждого из них.
+    const r = p.def.rating ? ` (${p.rating ?? 0}${p.rating2 ? "/" + p.rating2 : ""})` : "";
     const tip = esc(p.def.desc);
     return `<span class="atk-wprop-badge" title="${tip}">${p.def.label}${r}</span>`;
   }).join("");
@@ -979,10 +1046,6 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const rofPills = rofModes.map((mm, i) =>
     `<label class="av-pill"><input type="radio" name="atk-rof" value="${mm.value}" data-bonus="${mm.bonus}" ${i === 0 ? "checked" : ""}/><span>${mm.label}</span></label>`
   ).join("");
-  const aimingPills = [["none", 0, "Без прицела"], ["half", halfAimBonus, `Полу +${halfAimBonus}`], ["full", fullAimBonus, `Полное +${fullAimBonus}`]].map(([v, bon, lbl]) =>
-    `<label class="av-pill"><input type="radio" name="atk-aiming" value="${v}" data-bonus="${bon}" ${currentAiming === v ? "checked" : ""}/><span>${lbl}</span></label>`
-  ).join("");
-
   // ── Стойка/База/Приём/Хват/Профиль — теперь выбираются прямо в диалоге ───
   // Под пилюлями каждой группы — своя заметка с полным текстом эффекта
   // текущего выбора (id для updateTotal ниже), тем же приёмом, что раньше
@@ -1083,7 +1146,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     actor,
     dualWieldHtml,
     aimHtml,
-    aimingPills,
+    aimingBadgeHtml,
     ammoCondHtml,
     ammoDialogHtml,
     attackerMount,
@@ -1154,6 +1217,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       { label: "Цель бежит",         value: runningMod },
       { label: "Цель Повалена",      value: proneMod },
       { label: "Оглушение/Ступор цели", value: stunnedMod },
+      // Мухи (wdbc-1rno) — эскалация читает ЖИВОЙ f.aimPenalty (чекбокс
+      // «Избирательная атака»), поэтому считается здесь, не в wpAttackMod
+      // выше (тот же принцип, что уже разводит "Избирательная атака" саму
+      // как отдельную живую строку f.aimPenalty ниже в modParts).
+      { label: "Мухи цели",          value: targetFlies ? (f.aimPenalty ? fliesAimedMod : fliesMod) : 0 },
+      { label: "Жар Гнева",          value: wrathHeatMod },
       { label: "Поклон Публике",     value: bowMarkedMod },
       { label: "Шаг за шагом",       value: stepByStepMod },
       { label: "База",               value: sel.baseBon },
@@ -1164,7 +1233,20 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       // Fanning: «без бонусов от Прицеливания» — только в режиме Длинной
       // очереди, которую этот Талант и меняет (stanceKey/база и т.п. живут своей
       // жизнью, тут проверяется именно выбранный rofMode этого броска).
-      { label: "Прицеливание",       value: (fanningActive && f.rofMode === "full") ? 0 : (wp.noAim ? 0 : f.aimBonus) }
+      // Меткое (Accurate, стр. 166): «Одиночные выстрелы этим оружием получают
+      // удвоенный бонус от Прицеливания» — только rofMode==='single', не
+      // задевает Длинную/Короткую очередь.
+      { label: "Прицеливание",       value: (fanningActive && f.rofMode === "full") ? 0
+        : wp.noAim ? 0
+        : (wp.accurate && f.rofMode === "single") ? aimingBonus * 2
+        : aimingBonus },
+      // Прицелы с меткой «прицеливание» (weapon-mods, wdbc-1rno.5, находка
+      // 12/12, стр. 198): «дают эффект только для атаки с использованием
+      // Полу-/Полного Прицеливания» — только Коллиматорный Прицел реально
+      // подключён (aimAttackMod), остальные упираются в отдельные пробелы
+      // (wdbc-1rno.29/.31/.36/.37/.38).
+      { label: "Прицел (пока Прицеливаюсь)", value: currentAiming === "none" ? 0
+        : installedMods.reduce((n, m) => n + (Number(modFxOf(m).aimAttackMod) || 0), 0) }
     ];
     const modParts = [
       { label: "Доп. модификатор",     value: f.modifier },
@@ -1230,6 +1312,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     // наружу шва). rules/eye-of-envy.mjs оборачивает вызов _executeAttackRoll
     // в attack/dialog.mjs этим полем.
     targetActor: attackCtx.targetActor,
+    // wdbc-1rno.5: аттак-диалог больше не выбирает Прицеливание сам (см.
+    // aimingBadgeHtml выше) — attack/dialog.mjs использует их напрямую вместо
+    // f.aiming/f.aimBonus (той радиокнопки в форме больше нет).
+    currentAiming,
+    aimingBonus,
     techniqueOpts,
     isMelee,
     forceMelee,
@@ -1375,8 +1462,8 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
         </div>`,
     icon: rollIcon("sword"),
     title: `${techDef.label} ${techDef.headerSuffix ? `— ${techDef.headerSuffix}` : "(без оружия)"}`,
-    threshold: thresholdLine({ label: "WS", base: ws, parts: thresholdParts, threshold: final }),
-    rv, outcome,
+    threshold: rollStatLine({ label: "WS", base: ws, parts: thresholdParts, threshold: final, rv }),
+    outcome,
     sections: [helplessNote, unarmedDmgSection, defButtons, hitExtraSection]
   }, { rolls: allRolls });
 }

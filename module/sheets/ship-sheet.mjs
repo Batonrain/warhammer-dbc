@@ -18,7 +18,7 @@ import { resolveShipProps, aggregateShipAttackAuto, hitsAfterShields,
          resolveShipAttackDamage, resolveShipCritRoll, lifetakerDamage } from "../combat/ship-attack.mjs";
 import { isCapabilityAvailable, markCapabilityUsed } from "../rules/cooldown.mjs";
 import { esc } from "../helpers/utils.mjs";
-import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { openContextMenu, itemContextEntries } from "./context-menu.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { activateFactionFieldListeners } from "../apps/actor-factions.mjs";
@@ -234,12 +234,18 @@ async function onRollDistortion() {
     }
   }
 
-  // Чат — общий сборщик карточки теста (helpers/test-card.mjs, wdbc-kuun).
-  // Порог здесь — не число, а название порога осквернения с реверсом мода,
-  // поэтому строка собрана вручную, а не thresholdLine.
+  // Чат — общий сборщик карточки теста (helpers/test-card.mjs, wdbc-fyvv).
+  // Это не тест «бросок vs Порог»: Искажение читает СЛУЧАЙНУЮ таблицу по
+  // 1d100 со сдвигом (реверс мода), а «Порог» — название строки таблицы DP,
+  // не число для сравнения. Плашка несёт то, что есть: сам бросок и имя DP
+  // строки; DP/мод/реверс и итог после сдвига — в подсказке и строке ниже.
   await postTestCard(this.actor, {
     title: "Осквернение корабля — Искажение",
-    threshold: `<div class="roll-threshold">Порог: <b>${esc(thr.name)}</b> (${thr.dp} DP, мод ${sgn(thr.mod)} → реверс ${sgn(applied)})</div>`,
+    threshold: rollStatLine({
+      label: "DP", base: thr.dp,
+      parts: [`мод ${sgn(thr.mod)}`, `реверс ${sgn(applied)}`],
+      threshold: thr.name, rv: raw
+    }),
     lines: [`<div class="roll-dice">1d100: <b>${raw}</b>${applied ? ` ${sgn(applied)} → <b>${total}</b>` : ""}</div>`],
     outcome: outcomeHtml(true, `Искажение${range ? ` (${range})` : ""}: ${distName}`),
     sections: [descBlock]
@@ -1135,14 +1141,21 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
 
     const subline = `${WTYPE_LABELS[wt] || wt} · S ${S}${critN ? ` · Крит ${critN}${(wt === "torpedo" || wt === "nova") ? "+" : ""}` : ""}${torp ? ` · ${ICO.torp} ${torp.label} ×${launched}${navTR ? ` (наведение +${navTR})` : ""}` : ""}`;
     // Тело карточки (попадания, урон, криты) собрано выше своей разметкой —
-    // общему сборщику отдаётся блоком, строки шапки/Порога/броска у него общие.
+    // общему сборщику отдаётся блоком, строки шапки/Порога/броска у него общие
+    // (wdbc-fyvv: плашка Бросок/Режим/Порог).
     await postTestCard(this.actor, {
       icon: ICO.torp, title: `${esc(item.name)} — Стрельба`,
-      threshold: `<div class="roll-threshold">${subline}</div>`,
-      lines: [
-        `<div class="roll-threshold">BS ${o.bs}${o.aim ? ` +${o.aim} приц.` : ""}${o.range ? ` ${o.range > 0 ? "+" : ""}${o.range} дальн.` : ""}${o.mod ? ` ${o.mod > 0 ? "+" : ""}${o.mod}` : ""}${novaPenalty ? ` ${novaPenalty} нова` : ""} → Порог <b>${threshold}</b></div>`,
-        `<div class="roll-dice">${ICO.dice} 1d100: <b>${rv}</b></div>`
-      ],
+      head: [`<div class="roll-threshold">${subline}</div>`],
+      threshold: rollStatLine({
+        label: "BS", base: o.bs,
+        parts: [
+          o.aim ? `+${o.aim} приц.` : "",
+          o.range ? `${o.range > 0 ? "+" : ""}${o.range} дальн.` : "",
+          o.mod ? `${o.mod > 0 ? "+" : ""}${o.mod}` : "",
+          novaPenalty ? `${novaPenalty} нова` : ""
+        ],
+        threshold, rv
+      }),
       sections: [body]
     }, { rolls: allRolls });
 
@@ -1263,8 +1276,8 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
         const dos = this._dos(r.total, thr);
         const kills = dos > 0 ? Math.min(inc, 1 + Math.floor((dos-1)/2)) : 0;
         await this._chat(`<div class="roll-header">${ICO.shield} Турели — ${esc(this.actor.name)}</div>
-          <div class="roll-threshold">BS ${bs} + TR×5 ${trv*5}${md?` ${md>=0?"+":""}${md}`:""} → Порог <b>${thr}</b></div>
-          <div class="roll-dice">${ICO.dice} 1d100: <b>${r.total}</b> (${dos} ст.)</div>
+          ${rollStatLine({ label: "BS", base: bs, parts: [`TR×5 ${trv*5}`, md?`${md>=0?"+":""}${md}`:""], threshold: thr, rv: r.total })}
+          <div class="roll-threshold" style="font-size:0.82em;">${dos} ст.</div>
           <div class="roll-outcome">${kills>0?`<span class="roll-success">Сбито: <b>${kills}</b> из ${inc} — уменьшите залп/волну.</span>`:`<span class="roll-failure">Турели промахнулись.</span>`}</div>`, [r]);
       } }, { action: "cancel", label: "Отмена" }]
     });
@@ -1327,8 +1340,8 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
             <div class="roll-threshold" style="font-size:0.85em;">Ведущий абордажа начинает Ударил-отступил (без теста Operate), бонус <b>+${boats*10}</b> (+10 за лодку).</div>`;
         }
         await this._chat(`<div class="roll-header">${isBomber?ICO.dmg:ICO.hit} ${isBomber?"Бомбардировщики":"Штурмовые лодки"} — ${esc(this.actor.name)}${tgt?` → ${esc(tgt.name)}`:""}</div>
-          <div class="roll-threshold">Command ${cmd} + CR ${cr}${wing?` + крыло ${wing}`:""}${md?` ${md>=0?"+":""}${md}`:""} → Порог <b>${thr}</b> (цель защищается турелями!)</div>
-          <div class="roll-dice">${ICO.dice} 1d100: <b>${r.total}</b> (${dos} ст.)</div>${body}`, rolls);
+          ${rollStatLine({ label: "Command", base: cmd, parts: [`CR ${cr}`, wing?`крыло ${wing}`:"", md?`${md>=0?"+":""}${md}`:""], threshold: thr, rv: r.total })}
+          <div class="roll-threshold" style="font-size:0.82em;">${dos} ст. — цель защищается турелями!</div>${body}`, rolls);
       } }, { action: "cancel", label: "Отмена" }]
     });
   }
@@ -1541,8 +1554,11 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
     }
     await postTestCard(this.actor, {
       title: `Таран — ${esc(this.actor.name)}${tgt ? ` → ${esc(tgt.name)}` : ""}`,
-      threshold: `<div class="roll-threshold">Operate+MN−20: <b>${op}</b> +${mn} −20${mod ? ` ${mod>=0?"+":""}${mod}` : ""} → Порог <b>${threshold}</b></div>`,
-      lines: [`<div class="roll-dice">${ICO.dice} 1d100: <b>${roll.total}</b></div>`],
+      threshold: rollStatLine({
+        label: "Operate", base: op,
+        parts: [`MN +${mn}`, "−20", mod ? `${mod>=0?"+":""}${mod}` : ""],
+        threshold, rv: roll.total
+      }),
       sections: [body]
     }, { rolls: allRolls });
   }

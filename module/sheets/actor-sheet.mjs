@@ -18,6 +18,7 @@ import { characterContext, charLabel } from "./character-context.mjs";
 import { showAttackDialog } from "./attack-dialog.mjs";
 import { rollMutationOrGift, openMutationPicker } from "./tabs/mutations.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { applyOnTargetFailConditions } from "../rules/on-target-fail.mjs";
 import { createDisorderItem, activateDisorderListeners,
          openFearDialog, openTraumaDialog, rollDisorder } from "./tabs/disorders.mjs";
 import { activateDiseaseListeners } from "./tabs/diseases.mjs";
@@ -75,7 +76,7 @@ import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml, ruleAutoModsHtml, autoModsTotal } from "../rules/roll-mods.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
-import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { isMoraleOpposedSkill, resolveTest } from "../rules/resolve-test.mjs";
 import { applyLordOfExoditesFailPenalty } from "../combat/lord-of-exodites.mjs";
 import { showDelegateTestPicker, activeOwnerOf, requestDelegatedTest } from "../rules/delegate-test.mjs";
@@ -381,8 +382,7 @@ async function onDreadnoughtDailyTest(event) {
     title: "Тест бодрствования — W+0",
     // Порог без слагаемых: тест фиксированный W+0 (см. комментарий выше),
     // поэтому скобок с подписями здесь нет — их нечем наполнить.
-    threshold: thresholdLine({ threshold: wp }),
-    rv: roll.total,
+    threshold: rollStatLine({ label: "W", threshold: wp, rv: roll.total }),
     outcome: success
       ? `<span class="roll-success">Успех — ${degrees} ${_degWord(degrees)}</span>`
       : `<span class="roll-failure">Провал — ${degrees} ${_degWord(degrees)}, `
@@ -2516,7 +2516,7 @@ export class WarhammerCharacterSheet
       if (bonus > 0) {
         theirsEff += bonus;
         personalAdaptationLine = `<div class="roll-threshold">🧠 Персональная Адаптация: +${bonus} против ` +
-          `${esc(initiatorActor.name)} → Порог <b>${theirsEff}</b></div>`;
+          `${esc(initiatorActor.name)}</div>` + rollStatLine({ threshold: theirsEff });
       }
     }
     const theirs = { deg: outcome.deg, success: outcome.success, threshold: theirsEff };
@@ -2565,6 +2565,12 @@ export class WarhammerCharacterSheet
   async _runTest(label, baseTotal, defaultChar, {
     rollContext = null, hideCharSelect = false, effectTargetActor = null,
     opposedRequest = null, presetModifier = 0,
+    // onFailItemUuid (wdbc-tqfj) — предмет-источник делегированного теста
+    // Сопротивления психосилы (Choir of Poxes и подобные); кладёт ТОЛЬКО
+    // psychic.mjs через genericTest-запрос, см. module/rules/on-target-fail.mjs.
+    // Для ЛЮБОГО обычного теста (не делегированного, или делегированного не
+    // психосилой) это null — applyOnTargetFailConditions тогда не звана вовсе.
+    onFailItemUuid = null,
     headerAbbr = null, targetLabel = null, withSceneTarget = true
   } = {}) {
     const result = await this._showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect,
@@ -2591,16 +2597,32 @@ export class WarhammerCharacterSheet
     // сошёлся бы с брошенным.
     const autoCtx = { kind: "skill", targetActor: sceneTarget, ...(rollContext || {}), char: charKey };
     if (isMoraleOpposedSkill(skillKey)) autoCtx.morale = true;
-    const autoMods = resolveTest({ actor: this.actor, ...autoCtx }).autoMods;
-    const autoLines = autoMods
-      .map(m => ` ${m.value >= 0 ? "+" : "−"} ${Math.abs(m.value)} (${m.label})`).join("");
+    const autoResolved = resolveTest({ actor: this.actor, ...autoCtx });
+    const autoMods = autoResolved.autoMods;
 
     // Мод препаратов уже входит в target (через char.total -> итог навыка)
     const baseEff = target + modifier + difficulty + autoModsTotal(autoMods);
+    // Уравнитель / The Equalizer (wdbc-1rno.1, вторая половина Дара,
+    // rules/item-rules.mjs::opposedTargetRerollRules): «противник выступает
+    // атакующим во встречном тесте, и его базовая Характеристика выше» —
+    // если это Я атакую/оппонирую носителя Дара (targetActor на сцене) и
+    // МОЯ базовая Характеристика этого теста выше его, ОН навязывает МНЕ
+    // переброс на МОЁМ броске, без спроса, старше и выбора игрока, и общего
+    // Кубика. Тот же приоритет «внешнее навязывание важнее своего», что уже
+    // есть в sheets/attack/dialog.mjs — там же лежит единственный прежде
+    // существовавший путь принудительного применения who:"opponent" (общий
+    // ruleRerollsHtml нарочно фильтрует его из галочек диалога, см.
+    // rules/roll-mods.mjs — наказанный сам такую галочку не поставил бы).
+    // Гейт по kind (opposed/opposedSafe) — RAW ограничивает именно встречным
+    // тестом, не любым тестом с целью на сцене.
+    const opposedKind = kind === "opposed" || kind === "opposedSafe";
+    const forcedOpponentReroll = opposedKind
+      ? (autoResolved.rerolls || []).find(r => r.who === "opponent")
+      : null;
     // Переброс: бросаем сколько сказано и оставляем один. Какой именно —
     // решает rules/reroll-pick.mjs: на d100 «лучший» это МЕНЬШИЙ, и это знание
     // держится в одном месте, а не переписывается на каждом месте броска.
-    const { roll, rv, rerollNote } = await rollD100WithReroll(reroll);
+    const { roll, rv, rerollNote } = await rollD100WithReroll(forcedOpponentReroll || reroll);
     const charAbbr = CHARACTERISTICS[charKey]?.abbr ?? charKey;
 
     // Авто-встречный тест (wdbc-j814): ручные поля (opposed) в приоритете —
@@ -2631,6 +2653,20 @@ export class WarhammerCharacterSheet
     const outcomeHtml = outcome.success
       ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
       : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`;
+
+    // onTargetFail (wdbc-tqfj): цель ПРОВАЛИЛА делегированный тест
+    // Сопротивления психосилы — наложить её же Состояние(я), если предмет-
+    // источник несёт такую запись (живьём, см. rules/on-target-fail.mjs).
+    // На успехе цели — не звать вовсе, книга ничего не накладывает.
+    let onFailNote = "";
+    if (!outcome.success && onFailItemUuid) {
+      const applied = await applyOnTargetFailConditions(onFailItemUuid, effectActor);
+      if (applied.length) {
+        onFailNote = `<div class="roll-threshold">${applied.map(a =>
+          a.applied ? `Состояние наложено: <b>${esc(a.label)}</b>` : `Иммунитет — <b>${esc(a.label)}</b> не наложено`
+        ).join("<br/>")}</div>`;
+      }
+    }
     const modStr   = modifier !== 0 ? ` ${modifier >= 0 ? "+" : ""}${modifier}` : "";
     // Подпись характеристики в шапке: если игрок переключил «Бросок с:»,
     // показываем ту, которой бросили, а не ту, с которой открывали диалог.
@@ -2640,27 +2676,28 @@ export class WarhammerCharacterSheet
     // был здесь руками: шапка, Порог, свои строки, бросок, переброс, крит,
     // исход, свои блоки.
     //
-    // Строка Порога остаётся своей, а не thresholdLine: у общей слагаемые
-    // уходят в скобки подписью «Усталость −10», а здесь они исторически стоят
-    // подряд числом со скобкой-причиной («-20 (📊 Сложность)», «− 10
-    // (😓 Усталость)»), и этот вид дословно закреплён тестами карточки. Это
-    // самый частый бросок за столом — менять ему вид заодно с переездом
-    // разметки не стоит.
+    // Порог — общей плашкой rollStatLine (wdbc-fyvv): это самый частый бросок
+    // за столом, и он же переходит на тот же вид Бросок/Режим/Порог, что и
+    // остальные тесты. Слагаемые (модификатор, Сложность, ситуативные штрафы
+    // состояния тела/снаряжения из autoMods) уходят в подсказку ячейки Порога.
     await postTestCard(this.actor, {
       title: `${shownAbbr ? `${shownAbbr} — ` : ""}${label}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""}${effectTargetActor ? ` — за ${esc(effectTargetActor.name)}` : ""}`,
-      threshold: `<div class="roll-threshold">
-            ${targetLabel ?? charAbbr}: <b>${target}</b>${modStr}
-            ${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""}
-            ${autoLines}
-            → Порог: <b>${baseEff}</b>
-          </div>`,
+      threshold: rollStatLine({
+        label: targetLabel ?? charAbbr, base: target,
+        parts: [
+          modStr.trim(),
+          difficulty !== 0 ? `${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : "",
+          ...autoMods.map(m => `${m.value >= 0 ? "+" : "−"} ${Math.abs(m.value)} (${m.label})`)
+        ].filter(Boolean),
+        threshold: baseEff, rv
+      }),
       lines: [
         outcome.combinedLine,
         outcome.personalAdaptationLine,
         assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${outcome.success ? `, +${assistCount} к степени` : ""})</div>` : ""
       ],
-      rv, rerollNote, critLine: outcome.critLine, outcome: outcomeHtml,
-      sections: [outcome.extendedLine, outcome.opposedLine, pendingOpponentNote]
+      rerollNote, critLine: outcome.critLine, outcome: outcomeHtml,
+      sections: [outcome.extendedLine, outcome.opposedLine, pendingOpponentNote, onFailNote]
     }, { rolls: [roll] });
 
     if (opposedOpponent) {
@@ -2671,6 +2708,13 @@ export class WarhammerCharacterSheet
       });
     }
     await this._maybePostOpposedComparison(opposedRequest, { label, baseEff, rv, outcome, skillKey });
+    // Возврат исхода (wdbc-1rno.2): раньше _runTest ничего не возвращал —
+    // ни один существующий вызывающий код это значение не читал (проверено
+    // grep'ом), поэтому добавление return здесь ничего не ломает. Нужен
+    // Ноосферному Сканированию (module/sheets/tabs/tech.mjs::rollTechScan) —
+    // единственному текущему потребителю, который должен узнать про Успех,
+    // чтобы отметить персистентное засечение Незримых атак.
+    return { success: outcome.success, deg };
   }
 
   // -- Бросок навыка ---------------------------------------------------------
@@ -2696,9 +2740,9 @@ export class WarhammerCharacterSheet
    * «Бросок с:», подпись берётся у фактической характеристики броска, а не у
    * той, с которой диалог открывали.
    */
-  async _rollCharacteristic(label, abbr, threshold, charKey, hideCharSelect = false, { effectTargetActor = null, opposedRequest = null, presetModifier = 0 } = {}) {
+  async _rollCharacteristic(label, abbr, threshold, charKey, hideCharSelect = false, { effectTargetActor = null, opposedRequest = null, presetModifier = 0, onFailItemUuid = null } = {}) {
     return this._runTest(label, threshold, charKey, {
-      hideCharSelect, effectTargetActor, opposedRequest, presetModifier,
+      hideCharSelect, effectTargetActor, opposedRequest, presetModifier, onFailItemUuid,
       headerAbbr: abbr, targetLabel: "Цель",
       // Тест Характеристики не клал цель сцены в контекст исхода, тест Навыка
       // клал. Не выравниваем заодно с объединением: правила с условием по цели

@@ -6,7 +6,7 @@
 import { _degWord, _hitWord, _leftoverSuccessPhrase, negatedHits, esc } from "../helpers/utils.mjs";
 import { addEvasionSurplus } from "./evasion-pool.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
-import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { ARMOUR_SIDES, TERRAIN_TABLE, TERRAIN_MANEUVER_MODS,
          getVehicleCrit, LOCATION_LABEL_TO_KEY,
          REPAIR_CONDITIONS, REPAIR_PACE, VEHICLE_BREAKAGES } from "../constants/vehicle.mjs";
@@ -73,8 +73,8 @@ export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attac
 
   await postTestCard(actor, {
     icon: rollIcon("warp","#8fd0ff"), title: `Вираж — ${esc(actor.name)}`,
-    threshold: thresholdLine({ label: "Operate", base: operate, parts: modParts, threshold }),
-    rv, outcome, sections: [leftoverNote]
+    threshold: rollStatLine({ label: "Operate", base: operate, parts: modParts, threshold, rv }),
+    outcome, sections: [leftoverNote]
   }, { rolls: [roll] });
 }
 
@@ -211,8 +211,12 @@ async function _resolveTerrain(actor, operate, terrainMod, manMod, extraMod, amp
 
   await postTestCard(actor, {
     icon: rollIcon("burst","#b0a080"), title: `Трудный Ландшафт — ${esc(actor.name)}`,
-    threshold: `<div class="roll-threshold">Operate <b>${operate}</b> ${sgn(totalMod)} (ландшафт ${sgn(terrainMod)}${manMod ? `, манёвр ${sgn(manMod)}` : ""}${extraMod ? `, мод ${sgn(extraMod)}` : ""}) → Порог <b>${threshold}</b></div>`,
-    rv, sections: [body]
+    threshold: rollStatLine({
+      label: "Operate", base: operate,
+      parts: [`${sgn(totalMod)} (ландшафт ${sgn(terrainMod)}${manMod ? `, манёвр ${sgn(manMod)}` : ""}${extraMod ? `, мод ${sgn(extraMod)}` : ""})`],
+      threshold, rv
+    }),
+    sections: [body]
   }, { rolls: [roll] });
 }
 
@@ -624,8 +628,12 @@ async function _resolveRepair(actor, { skill, cond, pace, mod, per, stateId }) {
 
   await postTestCard(actor, {
     icon: rollIcon("dice","#6fe6ff"), title: `Ремонт — ${esc(actor.name)}`,
-    threshold: `<div class="roll-threshold">Навык <b>${skill}</b> ${sgn(totalMod)} (условия ${sgn(cond)}${pace ? `, темп ${sgn(pace)}` : ""}${mod ? `, мод ${sgn(mod)}` : ""}) → Порог <b>${threshold}</b></div>`,
-    rv, sections: [body]
+    threshold: rollStatLine({
+      label: "Навык", base: skill,
+      parts: [`${sgn(totalMod)} (условия ${sgn(cond)}${pace ? `, темп ${sgn(pace)}` : ""}${mod ? `, мод ${sgn(mod)}` : ""})`],
+      threshold, rv
+    }),
+    sections: [body]
   }, { rolls: [roll] });
 }
 
@@ -705,8 +713,12 @@ async function _resolveVoidShieldRepair(actor, shields, idx, skill, extraMod) {
 
   await postTestCard(actor, {
     icon: rollIcon("shield", "#6fe6ff"), title: `Ремонт Щита №${idx + 1} — ${esc(actor.name)}`,
-    threshold: `<div class="roll-threshold">Tech-Use <b>${skill}</b> ${sgn(totalMod)} (${cfg.label}, ${cfg.action}) → Порог <b>${threshold}</b></div>`,
-    rv, sections: [body]
+    threshold: rollStatLine({
+      label: "Tech-Use", base: skill,
+      parts: [`${sgn(totalMod)} (${cfg.label}, ${cfg.action})`],
+      threshold, rv
+    }),
+    sections: [body]
   }, { rolls: [roll] });
 }
 
