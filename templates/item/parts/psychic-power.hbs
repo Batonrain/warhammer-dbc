@@ -156,9 +156,13 @@
       <option value="half"     {{#if (eq system.sustainAction "half")}}selected{{/if}}>Полудействие</option>
       <option value="full"     {{#if (eq system.sustainAction "full")}}selected{{/if}}>Полное</option>
     </select>
+    <label class="wr-label">Дальность подд. (П)</label>
+    <input type="text" name="system.sustainRange" value="{{system.sustainRange}}"
+           class="wr-input-md" placeholder="пусто = Дальность выше"
+           title="Заполнять, только если книга явно даёт вторую (П)-дальность — отдельную от Дальности манифестации"/>
     {{/if}}
   </div>
-  <div class="drug-stat-hint">Поддерживаются обычно типы: Аура, Вливание, Длительная (X), Изменение (X), Концентрация, Цикл — отметьте «Поддерживаемая».</div>
+  <div class="drug-stat-hint">Поддерживаются обычно типы: Аура, Вливание, Длительная (X), Изменение (X), Концентрация, Цикл — отметьте «Поддерживаемая». Дальность поддержания заполняется отдельно, только если книга даёт свою (П)-дальность (напр. Concentration/Концентрация).</div>
 </div>
 
 {{!-- Урон (для атакующих/психострельбы) --}}
