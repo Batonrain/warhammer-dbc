@@ -40,3 +40,19 @@ export function rangeVerdict(edgeM, rangeMeters) {
   if (!Number.isFinite(edgeM) || !Number.isFinite(rangeMeters)) return null;
   return { inBounds: edgeM <= rangeMeters, edgeM, rangeMeters };
 }
+
+/**
+ * Книжный текст «радиуса поддержания» психосилы (wdbc-efyl) — общее понятие
+ * для любого кода, которому нужно решить, покинула ли цель зону, пока не
+ * снявшую поддержание (напр. будущая проверка Fruit of Flesh/Плод Плоти,
+ * module/apps/fruit-of-flesh.mjs). Отдельная (П)-дальность из `sustainRange`
+ * приоритетнее общей `range` — она задаётся книгой ИМЕННО для поддержания
+ * и не обязана совпадать с дальностью манифестации (Concentration/
+ * Концентрация: PR×1 м манифестации / PR×5 м поддержания). Пусто —
+ * своей (П)-дальности книга не даёт, используется обычная `range`.
+ * @param {{range?: string, sustainRange?: string}} system  system психосилы
+ * @returns {string}
+ */
+export function sustainRangeText(system) {
+  return system?.sustainRange || system?.range || "";
+}

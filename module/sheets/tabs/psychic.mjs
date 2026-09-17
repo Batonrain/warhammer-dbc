@@ -1149,6 +1149,7 @@ export async function executePsychotest(actor, item, opts) {
       `<div class="roll-threshold">mPR <b>${opts.mPR}</b>${prMod ? ` ${prMod >= 0 ? "+" : ""}${prMod} = <b>${mPR}</b>` : ""} → эPR <b>${ePR}</b>${pushBonus ? ` (Усиление +${pushBonus})` : ""}${(PATH.ePR || subTotals.ePR) ? ` (Путь +${(PATH.ePR || 0) + subTotals.ePR})` : ""}</div>`,
       aspectsDiffer ? `<div class="roll-threshold" style="font-size:0.82em;">эPR по аспектам: тест <b>${ePR}</b>${isDamaging ? ` · урон <b>${damagePR}</b>` : ""} · дальность <b>${rangePR}</b></div>` : "",
       sys.range ? `<div class="roll-threshold" style="font-size:0.82em;">Дальность: ${String(sys.range).replace(/\bPR\b/gi, rangePR)}</div>` : "",
+      sys.sustainable && sys.sustainRange ? `<div class="roll-threshold" style="font-size:0.82em;">Дальность поддержания (П): ${String(sys.sustainRange).replace(/\bPR\b/gi, rangePR)}</div>` : "",
       variant ? `<div class="roll-threshold" style="font-size:0.82em;">Вариация: <b>${variant.label || "—"}</b>${variant.note ? ` — ${variant.note}` : ""}</div>` : "",
       PATH.note ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Путь: ${PATH.note}${vessel ? ` — <b>${esc(vessel.name)}</b>` : ""}</div>` : "",
       subPathNote ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">${subPathNote}</div>` : "",

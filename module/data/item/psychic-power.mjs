@@ -62,6 +62,16 @@ export class PsychicPowerData extends foundry.abstract.TypeDataModel {
       action:        new StringField({ initial: "half", label: "Действие" }),
       // Дальность — строка: в книге это и «10 м», и «Бонус Воли × 5 м».
       range:         new StringField({ initial: "", label: "Дальность" }),
+      // wdbc-efyl: книга (core.json, глава ПСИХОСИЛЫ) прямым текстом описывает
+      // силы с ДВУМЯ дальностями — «Некоторые психосилы имеют две дальности,
+      // вторая из которых – дальность поддержания, отмеченная как (П)» —
+      // поэтому это второе книжное число, а не производное от `range` (не
+      // может быть вычислено оверрайдом: у Concentration/Концентрация PR×1м
+      // манифестации и PR×5м поддержания — разные множители, не совпадающие
+      // константы). Пусто (подавляющее большинство сил) — своей отдельной
+      // (П)-дальности книга не даёт, «радиус поддержания» силы = `range`.
+      // Тот же текстовый формат, тот же парсер (module/rules/psy-range.mjs).
+      sustainRange:  new StringField({ initial: "", label: "Дальность поддержания (П)" }),
       sustainable:   new BooleanField({ initial: false, label: "Поддерживаемая" }),
       sustainCost:   num(1, "Стоимость поддержания"),
       sustainAction: new StringField({ initial: "free", label: "Действие поддержания" }),

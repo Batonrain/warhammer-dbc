@@ -449,6 +449,9 @@ const TYPES = {
       // prRequired несёт только PR.
       requirement: "",
       testChar: "wp", testMod: 0, action: "half", range: "",
+      // wdbc-efyl: (П)-дальность поддержания — своя, отдельная от range,
+      // не производная от неё (Concentration/Концентрация: PR×1м/PR×5м).
+      sustainRange: "",
       sustainable: false, sustainCost: 1, sustainAction: "free",
       // wdbc-5kd: penetration — формула строкой (как damage), не число:
       // «Разрушение» Pen=PR, «Сверхъестественный Шторм» Pen=PR×3.
