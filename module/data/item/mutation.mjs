@@ -19,7 +19,7 @@ export class MutationData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { HTMLField, StringField, NumberField, ObjectField, SchemaField, BooleanField } = foundry.data.fields;
+    const { HTMLField, StringField, NumberField, ObjectField, SchemaField, BooleanField, ArrayField } = foundry.data.fields;
     return {
       description: new HTMLField({ initial: "", label: "Описание" }),
       notes:       new HTMLField({ initial: "", label: "Заметки" }),
@@ -51,7 +51,17 @@ export class MutationData extends foundry.abstract.TypeDataModel {
         god:   new StringField({ initial: "", label: "Цвет Бога" }),
         roll:  new NumberField({ initial: 0, integer: true, label: "Бросок d10" }),
         shift: new NumberField({ initial: 0, integer: true, label: "Сдвиг (⅓Inf.b)" }),
-        total: new NumberField({ initial: 0, integer: true, label: "Итог броска" })
+        total: new NumberField({ initial: 0, integer: true, label: "Итог броска" }),
+        // «Бросьте N раз на субмутации без обычных модификаторов от Inf.b»
+        // (Тройной Плод/Fruit of Flesh, Многокрылый/Wings, wdbc-1rno) — до N
+        // доп. результатов сверх строки-заголовка выше (та описывает саму
+        // multi-roll строку как таковую, не отдельный playable эффект).
+        multi: new ArrayField(new SchemaField({
+          name:  new StringField({ initial: "", label: "Субмутация" }),
+          label: new StringField({ initial: "", label: "Строка таблицы" }),
+          text:  new StringField({ initial: "", label: "Описание субмутации" }),
+          god:   new StringField({ initial: "", label: "Цвет Бога" })
+        }), { initial: [], label: "Доп. результаты (Бросьте N раз)" })
       }, { label: "Субмутация" }),
       // Трекер периодической Зависимости (мутация «Addiction», стр. 440-452;
       // wdbc-5inv) — момент последнего утоления по game.time.worldTime и

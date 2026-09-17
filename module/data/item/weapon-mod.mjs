@@ -56,6 +56,13 @@ export class WeaponModData extends foundry.abstract.TypeDataModel {
         hipFireSemiMod:       new NumberField({ initial: 0, nullable: false, label: "От бедра: короткая очередь" }),
         hipFireFullMod:       new NumberField({ initial: 0, nullable: false, label: "От бедра: длинная очередь" }),
         hipFireSuppressionMod: new NumberField({ initial: 0, nullable: false, label: "От бедра: подавление" }),
+        // Прицелы с меткой «прицеливание» (wdbc-1rno.5, находка 12/12, стр.
+        // 198): «дают эффект только для атаки с использованием Полу-/Полного
+        // Прицеливания» — зеркало hipFire* выше (тот бонус ТОЛЬКО БЕЗ
+        // Прицеливания, этот ТОЛЬКО С НИМ), читаются отдельно от безусловных
+        // attackMod и runningMod в attack-dialog.mjs.
+        aimAttackMod:    new NumberField({ initial: 0, nullable: false, label: "Пока Прицеливаюсь: попадание" }),
+        aimIgnoresRunning: new BooleanField({ initial: false, label: "Пока Прицеливаюсь: игнорирует штраф за Бег цели" }),
         // Подстройка под конкретного персонажа (wdbc-1rno, Custom Grip):
         // fittedToId — id актора, под которого подстроена модификация;
         // fittedBonus — ± к Атаке (attackMod) для него, зеркальный штраф всем

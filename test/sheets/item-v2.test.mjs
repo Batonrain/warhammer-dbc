@@ -28,6 +28,7 @@ describeV2Sheet(WarhammerItemSheet, {
     "templates/item/parts/talent.hbs",
     "templates/item/parts/tech-power.hbs",
     "templates/item/parts/torpedo.hbs",
+    "templates/item/parts/warp-route.hbs",
     "templates/item/parts/weapon.hbs",
     "module/apps/mechanics.mjs"
   ]

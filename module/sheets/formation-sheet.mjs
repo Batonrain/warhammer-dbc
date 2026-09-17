@@ -27,7 +27,7 @@ import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 import { WarhammerStructuralSheet } from "./structural-sheet.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
-import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 // ── Действия листа ───────────────────────────────────────────────────────────
 // ApplicationV2 зовёт обработчик [data-action] с this = лист и элементом-
@@ -688,17 +688,15 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
 
     await this.actor.update(update);
 
-    // Строка Порога у Формирования начинается не с числа, а с подписи теста
-    // («Командование (Fel) +10 / Дисциплина (WP) +0») — под общий формат
-    // thresholdLine она не ложится и оставлена своей, как была. Класс fm-chat
-    // на корне сохранён: за него цепляется вёрстка листа (styles/sheets/
-    // formation-sheet.css).
+    // wdbc-fyvv: у Приказа тест иногда «либо/либо» («Командование +10 /
+    // Дисциплина +0») — длиннее короткой ячейки Режим, поэтому остаётся
+    // текстом в base (строка, не число). Класс fm-chat на корне сохранён: за
+    // него цепляется вёрстка листа (styles/sheets/formation-sheet.css).
     await postTestCard(this.actor, {
       classes: "fm-chat",
       icon: rollIcon("shield", "#4dffa6"),
       title: `Приказ: ${esc(o.label)} — ${esc(this.actor.name)}`,
-      threshold: `<div class="roll-threshold">${esc(this._testLabel(o.test))}${ruleMods.parts.map(p => ` · ${p}`).join("")} → Порог <b>${threshold}</b></div>`,
-      rv,
+      threshold: rollStatLine({ base: this._testLabel(o.test), parts: ruleMods.parts, threshold, rv }),
       outcome: outcomeHtml(ok, `${ok ? "Успех" : "Провал"} — ${deg} ${_degWord(deg)}`),
       sections: [extra.length ? `<div class="fm-chat-effect">${extra.join("<br/>")}</div>` : ""]
     }, { rolls });
@@ -969,14 +967,15 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
           const deg = Math.abs(degreesOfSuccess(rv, target));
           if (!ok) await this.actor.update({ "system.status.fled": true });
 
-          // Строка Порога своя (подписи слагаемых идут в строку, без скобок
-          // общего формата) — вид карточки перевод не меняет.
           await postTestCard(this.actor, {
             classes: "fm-chat",
             icon: rollIcon("heart", ok ? "#4dffa6" : "#ff8a8a"),
             title: `Тест боевого духа — ${esc(this.actor.name)}`,
-            threshold: `<div class="roll-threshold">Изначальный дух <b>${base}</b>${rally ? ` +${rally} (сплочение)` : ""}${mod ? ` ${mod > 0 ? "+" : ""}${mod}` : ""} → Порог <b>${target}</b></div>`,
-            rv,
+            threshold: rollStatLine({
+              label: "Дух", base,
+              parts: [rally ? `+${rally} (сплочение)` : "", mod ? `${mod > 0 ? "+" : ""}${mod}` : ""],
+              threshold: target, rv
+            }),
             outcome: outcomeHtml(ok, ok
               ? `Успех — ${deg} ${_degWord(deg)}. Формирование продолжает бой`
               : "Провал — формирование ударяется в бегство"),
@@ -1160,14 +1159,16 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
     }
     if (Object.keys(update).length) await this.actor.update(update);
 
-    // Та же своя строка Порога, что у приказа выше (ярус события + подпись
-    // теста + подписи модификаторов) — общий формат её бы переписал.
     await postTestCard(this.actor, {
       classes: "fm-chat",
       icon: rollIcon("spark", "#4dffa6"),
       title: `${esc(e.label)} — ${esc(this.actor.name)}`,
-      threshold: `<div class="roll-threshold">${esc(EVENT_TIERS[e.tier]?.label || "")} · ${esc(this._testLabel(e.test))}${ruleMods.parts.map(p => ` · ${p}`).join("")} → Порог <b>${threshold}</b></div>`,
-      rv,
+      // Ярус события — тем же приёмом, что и «либо/либо» у Приказа: короче
+      // тестового описания не бывает, поэтому вместе с ним живёт в base.
+      threshold: rollStatLine({
+        base: `${EVENT_TIERS[e.tier]?.label || ""} · ${this._testLabel(e.test)}`,
+        parts: ruleMods.parts, threshold, rv
+      }),
       outcome: outcomeHtml(ok, `${ok ? "Успех" : "Провал"} — ${deg} ${_degWord(deg)}`),
       sections: [extra.length ? `<div class="fm-chat-effect">${extra.join("<br/>")}</div>` : ""]
     }, { rolls });

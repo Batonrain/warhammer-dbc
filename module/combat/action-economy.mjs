@@ -158,6 +158,25 @@ export async function applyTurnEndStanceEffects(actor) {
   }
 }
 
+/**
+ * Aim Focus/Фокус на Прицеле (wdbc-1rno.5, rules/aim-focus.mjs): «до конца
+ * его следующего Хода» — на конце Хода, где было объявлено ("pending"),
+ * взводится на один Ход вперёд ("armed"); на конце СЛЕДУЮЩЕГО Хода (уже
+ * "armed") снимается вместе с самим Прицеливанием. Тот же такт, что
+ * applyTurnEndStanceEffects — hooks.mjs зовёт обе на конце Хода актора.
+ */
+export async function applyAimFocusTurnEnd(actor) {
+  const state = actor?.getFlag?.("warhammer-dbc", "aimFocusExtended");
+  if (state === "pending") {
+    await actor.setFlag("warhammer-dbc", "aimFocusExtended", "armed");
+  } else if (state === "armed") {
+    await actor.unsetFlag("warhammer-dbc", "aimFocusExtended");
+    if (actor.system?.aiming && actor.system.aiming !== "none") {
+      await actor.update({ "system.aiming": "none" });
+    }
+  }
+}
+
 /** ОД костюм действия → стоимость в ОД (Полудействие/Полное действие/Свободное). */
 export function apCostForActionType(actionType) {
   if (actionType === "Полное действие") return 2;
@@ -214,6 +233,26 @@ async function _maybeTriggerCrippling(actor, cost) {
 }
 
 /**
+ * Прицеливание (wdbc-1rno.5, module/rules/aiming.mjs): бонус тратится
+ * впустую любым действием актора, кроме самого объявления Прицеливания
+ * (combat/aiming-action.mjs ставит system.aiming ПОСЛЕ своего же спенда
+ * ниже по стеку — на момент этого вызова оно ещё старое/"none", очистка тут
+ * не задваивает). Условие «cost» — только реальный (ненулевой) расход;
+ * формальные вызовы с cost=0 в других местах кодовой базы не должны молча
+ * стирать чужое активное Прицеливание.
+ */
+async function _maybeClearAiming(actor) {
+  if (actor?.system?.aiming && actor.system.aiming !== "none") {
+    await actor.update({ "system.aiming": "none" });
+  }
+  // Tracking Aim/Прицел на Упреждение (wdbc-1rno.5, rules/tracking-aim.mjs):
+  // тот же «любое действие тратит впустую», что у самого Прицеливания.
+  if (actor?.getFlag?.("warhammer-dbc", "trackingAimActive")) {
+    await actor.unsetFlag("warhammer-dbc", "trackingAimActive");
+  }
+}
+
+/**
  * Списать ОД, если возможно. Возвращает false, если ОД не хватило (действие
  * не проведено). physical:true — это трата ОД на физическое действие (см.
  * _maybeTriggerCrippling выше) — считается к авто-триггеру Калечащего.
@@ -224,6 +263,7 @@ export async function spendActionPoints(actor, cost, { physical = false } = {}) 
     const value = Number(actor.system.actionPoints?.value) || 0;
     await actor.update({ "system.actionPoints.value": Math.max(0, value - cost) });
     if (physical) await _maybeTriggerCrippling(actor, cost);
+    await _maybeClearAiming(actor);
   }
   return true;
 }
@@ -254,6 +294,9 @@ export async function spendReaction(actor, { forDefense = false } = {}) {
     const universal = Number(actor.system.reactions?.value) || 0;
     await actor.update({ "system.reactions.value": Math.max(0, universal - 1) });
   }
+  // Уклонение/Парирование — тоже «действие», тратящее Прицеливание впустую
+  // (wdbc-1rno.5, см. _maybeClearAiming выше).
+  await _maybeClearAiming(actor);
   return true;
 }
 

@@ -43,6 +43,15 @@ export class ForcefieldData extends foundry.abstract.TypeDataModel {
       overloadDamageFormula:  new StringField({ initial: "", label: "Перегрузка: доп. урон (формула)" }),
       overloadFatigueFormula: new StringField({ initial: "", label: "Перегрузка: доп. усталость (формула)" }),
       overloadRepairTest:     new StringField({ initial: "", label: "Ремонт: требуемый тест" }),
+      // Перегрузка-возмездие (Arheotech Refractor, wdbc-1rno.2): «Выстреливает
+      // мощный луч гамма-лазера в атакующего» — в отличие от overloadDamageFormula
+      // выше (бьёт НОСИТЕЛЯ щита), это бьёт того, кто атаковал носителя.
+      // Пусто — нет ответного удара (подавляющее большинство щитов). Тип урона
+      // energy, Незримое — зашиты в combat/damage.mjs::_applyShieldOverload
+      // (единственный текущий пользователь), не отдельные поля схемы — заводить
+      // их про запас под гипотетический второй щит с другим уроном/типом рано.
+      overloadRetaliateFormula: new StringField({ initial: "", label: "Перегрузка: урон в атакующего (формула)" }),
+      overloadRetaliatePen:     new NumberField({ initial: 0, integer: true, nullable: false, label: "Перегрузка: Пробитие удара в атакующего" }),
       bookSource:             new StringField({ initial: "", label: "Книга-источник" })
     };
   }

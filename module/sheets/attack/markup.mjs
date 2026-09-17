@@ -22,7 +22,7 @@ export function buildAttackContent(v) {
   const {
     actor,
     aimHtml,
-    aimingPills,
+    aimingBadgeHtml,
     ammoCondHtml,
     ammoDialogHtml,
     attackerMount,
@@ -141,10 +141,7 @@ return `
              min="2" max="${fanningRofMax}" value="${fanningRofMax}"
              title="2..BS.b (${fanningRofMax}) по выбору — заменяет фиксированный RoF револьвера в режиме Длинной очереди. Без бонуса Прицеливания."/>
     </div>` : ""}
-    <div class="av-section">
-      <div class="av-sec-lbl">Прицеливание</div>
-      <div class="av-pills">${aimingPills}</div>
-    </div>
+    ${aimingBadgeHtml}
 
     <div class="av-row">
       <label>Избирательная атака</label>

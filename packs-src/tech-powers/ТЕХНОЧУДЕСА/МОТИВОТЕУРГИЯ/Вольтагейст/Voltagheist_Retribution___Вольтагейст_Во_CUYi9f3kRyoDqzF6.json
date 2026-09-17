@@ -26,6 +26,14 @@
     "damage": "Xd10+I.b",
     "damageType": "energy",
     "penetration": 0,
+    "weaponProps": [
+      {
+        "key": "unseen"
+      },
+      {
+        "key": "radiationSourced"
+      }
+    ],
     "effect": "[Железо: Ferric Lure Implants, Luminen Capacitors · Цена: 1К · Процесс: Нет · Тип: Незримое, Пассивное, Стрельба] Треб.: T 50, Tech-Use+30, Voltagheist Vestments. Успешное отражение Вольтагейст Щитом (не Капеллой) даёт 1 заряд (до 5). Потратив все заряды (X): авто-стрелковое попадание Xd10+I.b E(Ls), Pen 0, Extreme (11−X), Rad (Xd5). Засекающие радиацию видят луч и Избегают (игнор Незримое).",
     "effects": {
       "charBonusStat": "",

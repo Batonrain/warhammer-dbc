@@ -128,10 +128,12 @@ describe("источники по умолчанию", () => {
     // Ненависти.
     // devourerOfKnowledge (wdbc-1rno, 12.09.2026) — Навыки, украденные
     // ПЕРМАНЕНТНО (9 дней подряд), считаются Дружественными для Продвижения.
+    // prophetOfGallerpox (wdbc-1rno.1, 15.09.2026) — штраф −30 против ядов
+    // не-Нурглитам на сцене заражённого Vehicle/Ship-актора.
     expect([...getRuleSources().map(([key]) => key)].sort())
       .toEqual(["addiction", "adjutant", "beastmanShaman", "conditions", "core",
                 "daemonInevitability", "devourerOfKnowledge", "dreadnought", "hatred", "homeworld", "items",
-                "opposedTarget", "paths", "patron",
+                "opposedTarget", "paths", "patron", "prophetOfGallerpox",
                 "psychicSustainTarget", "race", "situational", "synesthesia"]);
   });
 

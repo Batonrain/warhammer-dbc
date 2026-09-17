@@ -211,7 +211,7 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "Тяжело/критически ранен — Regeneration(1)",
+              "label": "Тяжело/критически ранен ИЛИ лишился части тела — Regeneration(1)",
               "code": "",
               "when": {
                 "negate": false,
@@ -219,7 +219,15 @@
                 "woundTier": [
                   "heavy",
                   "dying"
-                ]
+                ],
+                "condition": [
+                  "lostHands",
+                  "lostArms",
+                  "lostFeet",
+                  "lostLegs",
+                  "lostEyes"
+                ],
+                "anyOf": true
               }
             }
           ]

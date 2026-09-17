@@ -55,6 +55,7 @@ import { addictionItems, isAddictionUnsatisfied, addictionStatusLabel,
          addictionSubstanceLabel }                    from "../rules/addiction.mjs";
 import { raceMatches }                               from "../rules/race.mjs";
 import { ritualsContext }                            from "./tabs/rituals.mjs";
+import { hasNavigationWarp, warpRoutesTabContext }   from "./tabs/warp-routes.mjs";
 import { mergeAbilityItems, mergeAbilityEffects,
          abilityLabel }                              from "../rules/merge-abilities.mjs";
 import { toggleParentId, toggleRows }                from "../rules/toggle-abilities.mjs";
@@ -984,6 +985,10 @@ export function buildGetData(actor) {
 
   // ── Ритуалы (стр. 393-425) ──────────────────────────────────────────────
   context.rituals = ritualsContext(actor);
+
+  // ── Варп-маршруты (Книга Пустоты v.2, wdbc-r0w9) ─────────────────────────
+  context.hasNavigationWarp = hasNavigationWarp(actor);
+  context.knownRoutes = warpRoutesTabContext(actor);
 
   // ── Черты (трейты) ──────────────────────────────────────────────────────
   // Как и Таланты, одинаковые Черты из разных источников склеиваются в одну

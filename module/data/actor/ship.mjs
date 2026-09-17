@@ -28,6 +28,11 @@ export class ShipData extends foundry.abstract.TypeDataModel {
       supplies:         new SchemaField({ value: num(6, "Запас") }, { label: "Припасы" }),
       defilement:       num(0, "Осквернение"),
       crewIsChaos:      new BooleanField({ initial: false, label: "Экипаж служит Хаосу" }),
+      // Пророк Гэллерпокса (wdbc-1rno.1): заражена ли одна из жизнеобеспечивающих
+      // систем корабля техновирусом Гэллерпокса. В системе нет отдельной
+      // сущности «подсистема корабля» — заражение живёт на самом Ship-акторе
+      // целиком (module/rules/prophet-of-gallerpox.mjs).
+      gallerpoxInfected: new BooleanField({ initial: false, label: "Заражена Гэллерпоксом" }),
       distortions:      new ArrayField(new ObjectField(), { label: "Журнал искажений" }),
       hull: new SchemaField({
         spaceMax:       num(0, "Пространство"),

@@ -172,3 +172,48 @@ describe("субмутация на листе мутации", () => {
     expect(submutationContext(item)).toBeNull();
   });
 });
+
+// «Бросьте N раз на субмутации без обычных модификаторов от Inf.b» (Тройной
+// Плод/Fruit of Flesh, wdbc-1rno) — попадание на такую строку бросает N
+// ДОПОЛНИТЕЛЬНЫХ d{table.die} (без сдвига) и пишет их в submutation.multi.
+describe("multi-roll строка («Бросьте N раз»)", () => {
+  beforeEach(() => resetCaptured());
+
+  it("попадание на «Тройной Плод» бросает 3 доп. кубика, пишет их в multi", async () => {
+    // Fruit of Flesh: 1d10=10, сдвиг +1 (Inf.b 6 → предел 2) → итог 11 →
+    // «Тройной Плод». Три доп. броска без сдвига: 1→ЭМИ, 7→Яд и Радиация, 10→Осколки.
+    captured.dice = [10, 1, 7, 10];
+    const item = mutationItem("Плод Плоти");
+    const done = rollSubmutation(item, { actor: owner(6) });
+    await press("ok", { "#sm-shift": "1" });
+    await done;
+
+    expect(captured.rolls).toEqual(["1d10", "1d10", "1d10", "1d10"]);
+    expect(written(item).name).toBe("Тройной Плод");
+    expect(written(item).multi.map(e => e.label)).toEqual(["1", "7", "10"]);
+    expect(captured.chat.at(-1).content).toContain("дубликаты/самоссылка схлопнулись");
+  });
+
+  it("обычная строка (не multi-roll) не трогает multi — остаётся []", async () => {
+    captured.dice = [4];
+    const item = mutationItem("Плод Плоти");
+    const done = rollSubmutation(item, { actor: owner(0) });
+    await press("ok", { "#sm-shift": "0" });
+    await done;
+
+    expect(captured.rolls).toEqual(["1d10"]); // ни одного доп. броска
+    expect(written(item).multi).toEqual([]);
+  });
+
+  it("снятие субмутации очищает и multi", async () => {
+    captured.dice = [10, 1, 7, 10];
+    const item = mutationItem("Плод Плоти");
+    const done = rollSubmutation(item, { actor: owner(6) });
+    await press("ok", { "#sm-shift": "1" });
+    await done;
+    expect(written(item).multi).toHaveLength(3);
+
+    await clearSubmutation(item);
+    expect(written(item).multi).toEqual([]);
+  });
+});

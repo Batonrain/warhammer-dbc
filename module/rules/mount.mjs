@@ -399,11 +399,19 @@ export function isDouble(roll) {
  * Куда пришлось не-Избирательное попадание по всаднику (стр. 478).
  * Обычно по скакуну, и лишь дубль на успешном броске — по всаднику. С Чертой
  * Stand делят иначе: чётные — всадник, нечётные — скакун.
+ *
+ * `unseen` (wdbc-1rno.2) — Defensive Rider/Всадник-Защитник книжно НЕ
+ * работает «против атак, от которых нельзя Избегать (незримые, из засады,
+ * со спины)»: при unseen=true форсированный редирект на всадника не
+ * применяется, атака разбирается обычной формулой (дубль/Stand). «Из
+ * засады»/«со спины» сюда не попадают — не хранятся отдельными флагами
+ * нигде в системе (Врасплох — ручная галочка ГМа, не состояние), честная
+ * граница: исключается только та часть RAW, которую можно проверить.
  * @returns {"rider"|"mount"}
  */
-export function hitTarget(roll, mount, { traits = null, rider = null } = {}) {
+export function hitTarget(roll, mount, { traits = null, rider = null, unseen = false } = {}) {
   // Талант «Всадник-Защитник» позволяет забирать все попадания на себя.
-  if (hasTalent(rider, "Defensive Rider", "Всадник-Защитник")) return "rider";
+  if (!unseen && hasTalent(rider, "Defensive Rider", "Всадник-Защитник")) return "rider";
   const t = traits ?? mountTraits(mount);
   if ("stand" in t) return num(roll) % 2 === 0 ? "rider" : "mount";
   return isDouble(roll) ? "rider" : "mount";

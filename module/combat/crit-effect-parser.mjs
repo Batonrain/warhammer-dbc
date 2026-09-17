@@ -26,6 +26,8 @@ import { CONDITIONS_DEF } from "../constants/conditions.mjs";
 import { addFatigue, conditionAdjustFields, conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { LIMB_LOSS_KEYS } from "../rules/limb-loss.mjs";
+import { scheduleLimbLossGangreneFields } from "./limb-loss.mjs";
 
 // «Стем + на NdX/N Раунд(ов)» — общий костяк для Оглушения/Ослепления.
 function roundPhrase(stem) {
@@ -83,6 +85,27 @@ export function parseCritEffectPills(text) {
 
   // «потерять/теряет сознание» — тоже часто за тестом (Взрывной/таблица Шока).
   if (/потерять\s+сознание|теряет\s+сознание/giu.test(text)) push("unconscious", null);
+
+  // Потеря частей тела (стр. 30-31, wdbc-1rno.6) — за тестом («тест на T+X,
+  // или лишиться/потерять Y», сверено построчно со всей critical-tables.mjs:
+  // book знает только эти пять слов рядом с «лишиться»/«потерять» — не
+  // широкий скан-кандидатов) и как прямая констатация факта («Цель теряет
+  // руку/ногу.» — устойчивая формула всех безусловных строк потери руки/ноги
+  // в этой таблице). Каждая пилюля тянет Кровотечение — книга «Потеря
+  // конечностей ВСЕГДА приводит к Кровотечению» не оговаривает исключений
+  // для строк, которые само слово не упоминают.
+  const LIMB_LOSS_WORDS = { ладони: "lostHands", кисти: "lostHands", кисть: "lostHands", стопу: "lostFeet", ногу: "lostLegs", глаз: "lostEyes" };
+  for (const m of text.matchAll(/(?:лишиться|потерять)\s+(ладони|кисти|кисть|стопу|ногу|глаз)/giu)) {
+    const key = LIMB_LOSS_WORDS[m[1].toLowerCase()];
+    if (key) { push(key, "1"); push("bleeding", null); }
+  }
+  if (/[Цц]ель\s+теря[а-яёА-ЯЁ]*\s+руку/gu.test(text)) { push("lostArms", "1"); push("bleeding", null); }
+  if (/[Цц]ель\s+теря[а-яёА-ЯЁ]*\s+ногу/gu.test(text)) { push("lostLegs", "1"); push("bleeding", null); }
+  // «Цель теряет зрение» — полная слепота как исход удара по лицу, не то же
+  // самое, что физическая потеря глаза (lostEyes) выше; ближайшее книжное
+  // Состояние — перманентное Ослепление (тот же приём, что уже даёт
+  // «перманентно ослеплена» строкой выше).
+  if (/[Цц]ель\s+теря[а-яёА-ЯЁ]*\s+зрение/gu.test(text)) push("blinded", null, { permanent: true });
 
   return pills;
 }
@@ -170,15 +193,24 @@ function formulaIsDice(formula) {
  * УЖЕ на этапе применения урона (applyDamageToActor), поэтому в отличие от
  * пилюль Ритуала (module/apps/ritual-cast.mjs — перетаскиваемые, без
  * фиксированной цели) здесь достаточно кликабельной кнопки.
+ *
+ * hitNetDamage (wdbc-3pv5, опционально) — непоглощённый урон САМОГО удара,
+ * породившего крит-эффект: у пилюли «Загорается» (в отличие от Огня-свойства
+ * оружия) книга не даёт отдельного числа для «пламя наносит не больше 1d10» —
+ * крит-таблица бьёт только фактом. Ближайший осмысленный кандидат — урон
+ * этого же попадания, поэтому кладём его в data-source-damage, только у
+ * пилюли "burning" (остальным он не нужен).
  */
-export function critPillsHtml(pills, actorUuid) {
+export function critPillsHtml(pills, actorUuid, hitNetDamage = null) {
   if (!pills?.length || !actorUuid) return "";
   const btns = pills.map(p => {
     const def = CONDITIONS_DEF[p.key];
     if (!def) return "";
     const durTxt = p.permanent ? " (перм.)" : (p.formula ? ` ${esc(p.formula)}` : "");
+    const srcDmgAttr = (p.key === "burning" && hitNetDamage != null)
+      ? ` data-source-damage="${esc(String(hitNetDamage))}"` : "";
     return `<button type="button" class="wh-crit-apply-btn" data-actor-uuid="${esc(actorUuid)}"
-      data-cond-key="${p.key}" data-formula="${esc(p.formula || "")}" data-permanent="${p.permanent ? "1" : "0"}"
+      data-cond-key="${p.key}" data-formula="${esc(p.formula || "")}" data-permanent="${p.permanent ? "1" : "0"}"${srcDmgAttr}
       title="Наложить на цель карточки">
       ${def.svg || def.icon} ${esc(def.label)}${durTxt}</button>`;
   }).filter(Boolean).join("");
@@ -193,8 +225,14 @@ export function critPillsHtml(pills, actorUuid) {
  * кинутая длительность идёт в карточку текстом: тикающей инфраструктуры для
  * них нет (см. condition-ticks.mjs — только Оглушение/Ослепление/Удушье),
  * снимать их ГМ будет вручную, как и раньше.
+ *
+ * sourceDamage (wdbc-3pv5, только для key==="burning") — непоглощённый урон
+ * попадания, породившего крит-эффект (data-source-damage кнопки,
+ * critPillsHtml). Кладётся в system.conditions.burningSourceDamage той же
+ * записью, что накладывает само Состояние — Cooler/Морозное Сердце сравнивают
+ * его с книжным порогом (condition-ticks.mjs::ensureBurningGrace).
  */
-export async function applyCritEffectPill(actor, { key, formula, permanent } = {}) {
+export async function applyCritEffectPill(actor, { key, formula, permanent, sourceDamage = null } = {}) {
   const def = CONDITIONS_DEF[key];
   if (!actor || !def) return;
 
@@ -211,9 +249,18 @@ export async function applyCritEffectPill(actor, { key, formula, permanent } = {
   if (key === "fatigued") {
     await addFatigue(actor, amount || 1);
   } else if (def.hasLevel && def.levelField && amount != null && !permanent) {
-    await actor.update(conditionAdjustFields(actor, key, amount));
+    const fields = conditionAdjustFields(actor, key, amount);
+    // Потеря части тела от крита (wdbc-1rno.6) — заводит таймер обрубка
+    // (T.b дней, иначе 80% Гангрены) прямо здесь, в момент наложения. Не
+    // трогает Мутацию Loss of Limb — та не проходит через эту пилюлю.
+    if (LIMB_LOSS_KEYS.includes(key)) Object.assign(fields, scheduleLimbLossGangreneFields(actor, key));
+    await actor.update(fields);
   } else {
-    await actor.update(conditionApplyFields(key, null, actor));
+    const fields = conditionApplyFields(key, null, actor);
+    if (key === "burning" && sourceDamage != null && Object.keys(fields).length) {
+      fields["system.conditions.burningSourceDamage"] = sourceDamage;
+    }
+    await actor.update(fields);
   }
 
   const noteParts = [];

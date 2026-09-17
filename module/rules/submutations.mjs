@@ -130,6 +130,38 @@ export function submutationByRoll(entries, value) {
   return v < rows[0].lo ? rows[0] : rows[rows.length - 1];
 }
 
+// «Бросьте N раза на субмутации без обычных модификаторов от Inf.b» —
+// найдено ДВАЖДЫ в книге (Fruit of Flesh/Плод Плоти «11 — Тройной Плод»,
+// Wings/Крылья «12 — Многокрылый», wdbc-1rno) — не одноразовый частный
+// случай одной находки, общий примитив.
+const MULTI_ROLL_RE = /Бросьте\s+(\d+)\s+раза?/i;
+
+/** Сколько раз бросить по этой же таблице для этой строки — 0, если строка обычная. */
+export function multiRollCount(entry) {
+  const m = String(entry?.text ?? "").match(MULTI_ROLL_RE);
+  return m ? Number(m[1]) : 0;
+}
+
+/**
+ * Результаты «бросить N раз без сдвига Inf.b» — dieRolls уже брошены
+ * снаружи (apps/submutations.mjs, живой Roll). Дубликаты схлопываются
+ * («или меньше, если были дубликаты бросков» — прямая цитата книги);
+ * повторное попадание на САМУ multi-roll строку выпадает из списка тем же
+ * способом (тоже «меньше, чем N») — отдельного переброса для этого случая
+ * книга не описывает явно, чистая функция не додумывает его сама.
+ */
+export function multiRollResults(entries, dieRolls, selfLabel) {
+  const seen = new Set();
+  const out = [];
+  for (const roll of dieRolls) {
+    const e = submutationByRoll(entries, roll);
+    if (!e || e.label === selfLabel || seen.has(e.label)) continue;
+    seen.add(e.label);
+    out.push(e);
+  }
+  return out;
+}
+
 /**
  * Закрыта ли строка для персонажа: цвет ВРАЖДЕБНОГО Бога.
  *

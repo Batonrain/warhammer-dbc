@@ -26,6 +26,11 @@
     "damage": "2d10+4",
     "damageType": "energy",
     "penetration": 10,
+    "weaponProps": [
+      {
+        "key": "unseen"
+      }
+    ],
     "effect": "[Железо: Solar Converter, Omnion Shield · Цена: 4К+2Э · Процесс: Нет · Тип: Незримое, Стрельба, Физическое] Треб.: Tech-Use+20. Стрельба: 30м, 2d10+4 E, Pen 10, Felling (4), Rad (2d10), Spray (Незримая, если цель не засекает радиацию/само техночудо). Солнечный Конвертер отключается. Не тип Атака — не мешает др. атакам.",
     "effects": {
       "charBonusStat": "",

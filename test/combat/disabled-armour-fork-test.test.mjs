@@ -89,7 +89,7 @@ describe("useDisabledArmourForkTest", () => {
     const actor = actorWith({ s: 40, athletics: 30, overload: TIER1 });
     await useDisabledArmourForkTest(actor, { skillKey: "athletics" });
     expect(captured.chat[0].content).toContain("Athletics(S)+10");
-    expect(captured.chat[0].content).toContain("Порог: <b>20</b>");
+    expect(captured.chat[0].content).toContain("<label>Порог</label><b>20</b>");
   });
 
   it("тир 2, успех — засчитан как провал тира 1: тоже роняет Max.A до 10", async () => {

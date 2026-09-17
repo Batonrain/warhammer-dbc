@@ -382,6 +382,16 @@
         <label class="wv-rit-cb"><input type="checkbox" name="jEngine" {{#if warpEngineDmg}}checked{{/if}}/> Варп-двигатель повреждён (×2)</label>
         <label class="wv-rit-cb"><input type="checkbox" name="jEmergency" {{#if emergency}}checked{{/if}}/> Экстренный вход (−20)</label>
       </div>
+      {{!-- Варп-маршрут (wdbc-r0w9): выбор существующего предмета «Маршрут»
+            вместо броска «Стабильность» — признаки читаются с самого предмета. --}}
+      <div class="wv-jrow">
+        <label class="wv-rit-lbl">Маршрут</label>
+        <select name="jRoute" class="wv-rit-wide">
+          <option value="" {{#unless routeUuid}}selected{{/unless}}>— не выбран —</option>
+          {{#each routes as |r|}}<option value="{{r.id}}" {{#if r.selected}}selected{{/if}}>{{r.name}}</option>{{/each}}
+        </select>
+        <label class="wv-rit-cb"><input type="checkbox" name="jBadOmens" {{#if omensUnsuppressed}}checked{{/if}}/> Дурные знамения не подавлены (+20 к столкновениям)</label>
+      </div>
       {{!-- Навыки Проводника (выбираются вручную — не фиксированы в системе) --}}
       <div class="wv-jrow">
         <label class="wv-rit-lbl" title="Тест Чтения знамений и Поиска маяка (обычно Psyniscience)">Чутьё</label>
@@ -391,17 +401,40 @@
         <label class="wv-rit-lbl" title="Тест Входа в варп (обычно Operate (Voidship) рулевого)">Руление</label>
         <select name="jHelm" class="wv-jsel">{{#each helmSkills as |s|}}<option value="{{s.value}}" {{#if s.selected}}selected{{/if}}>{{s.label}}</option>{{/each}}</select>
       </div>
+      {{!-- Прокладка/Начертание (wdbc-r0w9.1/.2) --}}
+      <div class="wv-jrow">
+        <label class="wv-rit-lbl" title="Обработка данных (Прокладка новых маршрутов)">Астромантия</label>
+        <select name="jAstro" class="wv-jsel">{{#each astroSkills as |s|}}<option value="{{s.value}}" {{#if s.selected}}selected{{/if}}>{{s.label}}</option>{{/each}}</select>
+        <label class="wv-rit-lbl" title="Начертание маршрута / Запись черновиков">Астрограф</label>
+        <select name="jAstrographer" class="wv-jsel">{{#each astrographerSkills as |s|}}<option value="{{s.value}}" {{#if s.selected}}selected{{/if}}>{{s.label}}</option>{{/each}}</select>
+      </div>
+      {{!-- Проводник не-навигатор (раздел «Проводники», wdbc-r0w9) --}}
+      {{#if hasNav}}
+      <div class="wv-jrow">
+        <span class="wv-rit-lbl">Вид Проводника: <b>{{guideKindLabel}}</b></span>
+        {{#if isPossessedGuide}}
+        <label class="wv-rit-cb"><input type="checkbox" name="jPossessedCoNav" {{#if possessedHumanCoNav}}checked{{/if}}/> Человеческая часть подключилась к навигации</label>
+        {{/if}}
+        {{#if hasDecadeUpkeep}}
+        <button type="button" class="wv-jbtn" data-act="jDecadeUpkeep" title="1 Порча (+1 Усталость психоактивным) за 10 дней навигации — сверх общей Усталости">{{{veilIcon "warning"}}}10 дней (Порча/Усталость)</button>
+        {{/if}}
+        {{#if needsLoyaltyCheck}}
+        <button type="button" class="wv-jbtn danger" data-act="jLoyalty">{{{veilIcon "demon"}}}Лояльность демона</button>
+        {{/if}}
+      </div>
+      {{/if}}
       {{!-- Индикаторы состояния --}}
       <div class="wv-jstate">
-        <span>Маршрут: <b>{{#if stability}}{{stability}} (×{{stabilityMult}}){{else}}—{{/if}}</b></span>
+        <span>Маршрут: <b>{{#if hasRoute}}{{routeName}} — {{routeSummary}} (×{{durationMult}}){{else}}не выбран{{/if}}</b></span>
         <span>Исходная длит.: <b>{{#if baseDuration}}{{baseDuration}} дн.{{else}}—{{/if}}</b></span>
         <span>Мод. навигации: <b>{{navModSigned}}</b></span>
+        <span>Усталость Проводника: <b>{{fatigue}}/{{fatigueThreshold}}</b>{{#if guideUnconscious}} <b class="wv-danger">БЕЗ СОЗНАНИЯ</b>{{/if}}</span>
+        {{#if isPlotting}}<span>Прокладка: <b>{{plottingPoints}}/{{plottingThreshold}}</b> Очков (+{{plottingRejsPoints}} в этом рейсе, не сдано)</span>{{/if}}
       </div>
 
       {{!-- Шаги --}}
       <div class="wv-jsteps">
         <div class="wv-jstep"><span class="wv-jnum">0</span>
-          <button type="button" class="wv-jbtn" data-act="jStability">{{{veilIcon "die"}}}Стабильность</button>
           <button type="button" class="wv-jbtn" data-act="jDuration">{{{veilIcon "hourglass"}}}Длительность</button>
         </div>
         <div class="wv-jstep"><span class="wv-jnum">1</span>
@@ -425,8 +458,19 @@
           <button type="button" class="wv-jbtn" data-act="jExit">{{{veilIcon "door"}}}Выход из варпа</button>
           <button type="button" class="wv-jbtn danger" data-act="jStorm">{{{veilIcon "storm"}}}Варп-шторм</button>
         </div>
+        <div class="wv-jstep"><span class="wv-jnum">·</span>
+          <button type="button" class="wv-jbtn" data-act="jFatigueDay" title="Ручной тик: 30 полных дней странствия, или 10 при разбитом Оккулуме — книга не различает источник Усталости">{{{veilIcon "hourglass"}}}+1 Усталость (30/10 дн.)</button>
+        </div>
+        {{#if isPlotting}}
+        <div class="wv-jstep"><span class="wv-jnum">·</span>
+          <button type="button" class="wv-jbtn" data-act="jPlotProcess" title="Scholastic Lore (Astromancy) — один раз за рейс, кассирует Очки Маршрута этого рейса">{{{veilIcon "eye"}}}Обработка данных</button>
+        </div>
+        {{/if}}
+        <div class="wv-jstep"><span class="wv-jnum">·</span>
+          <button type="button" class="wv-jbtn" data-act="jChart" title="Trade (Astrographer) — записать пройденный маршрут на карту (и завершить прокладку, если Очков хватает)">{{{veilIcon "star"}}}Начертать маршрут</button>
+        </div>
       </div>
-      <div class="wv-hint">МИ ведёт корабль по шагам: определите стабильность и длительность (Шаг 0), затем каждый шаг бросает нужный тест по реальным Навыкам Проводника (Psyniscience/Navigation), а варп-столкновения — каждые 5 дней. Варп-шторм истончает Завесу сцены.</div>
+      <div class="wv-hint">МИ ведёт корабль по шагам: выберите маршрут и бросьте Длительность (Шаг 0), затем каждый шаг бросает нужный тест по реальным Навыкам Проводника (Psyniscience/Navigation) с учётом признаков маршрута, а варп-столкновения — каждые 5 дней. Варп-шторм истончает Завесу сцены.</div>
     </div>
     {{/with}}
   </div>

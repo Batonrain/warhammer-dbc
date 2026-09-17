@@ -48,6 +48,9 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
       ammoReloads:  num(10, "Боекомплект"),
       openTopped:   new BooleanField({ initial: false, label: "Открытый верх" }),
       traits:       str("", "Черты"),
+      // Пророк Гэллерпокса (wdbc-1rno.1) — см. тот же комментарий в
+      // module/data/actor/ship.mjs.
+      gallerpoxInfected: new BooleanField({ initial: false, label: "Заражена Гэллерпоксом" }),
       // Пустотные Щиты (X): по одному числу (текущая Структура щита, 0-20) на
       // каждый щит. Длина массива синхронизируется с рейтингом Черты Void
       // Shields в rules/vehicle.mjs::prepareVehicleDerived — новые щиты

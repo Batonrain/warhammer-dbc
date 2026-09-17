@@ -14,7 +14,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { addFatigue } from "../sheets/tabs/conditions.mjs";
 import { worldTimeRemaining, markWorldTimeCooldownUsed } from "../rules/cooldown.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
-import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 const FLAG = "warhammer-dbc";
 const OVERLOAD_TEST_AT_FLAG = "disabledArmourOverloadTestAt";
@@ -246,14 +246,12 @@ export async function useDisabledArmourPeriodicTest(actor) {
   await markWorldTimeCooldownUsed(actor, OVERLOAD_TEST_AT_FLAG);
 
   const dice = await roll.render();
-  // Карточка — общим сборщиком (wdbc-kuun): подписи модификаторов теперь
-  // перечисляются в скобках через запятую, как в боевых карточках, а не
-  // дописываются к числу через пробел.
+  // Карточка — общим сборщиком (wdbc-fyvv): плашка Бросок/Режим/Порог, а
+  // подписи модификаторов — во всплывающей подсказке ячейки Порога.
   await postTestCard(actor, {
     icon: rollIcon("warn", "#ff6b6b"),
     title: `Перевес выключенной брони — ${esc(actor.name)}`,
-    threshold: thresholdLine({ label: "Т", base: t, parts: ruleMods.parts, threshold }),
-    rv,
+    threshold: rollStatLine({ label: "Т", base: t, parts: ruleMods.parts, threshold, rv }),
     outcome: success ? outcomeHtml(true, "Успех") : outcomeHtml(false, "Провал — +1 Усталость"),
     sections: [
       `<div class="roll-threshold" style="font-size:.85em;opacity:.8;">Раз в T.b часов перевеса (стр. 233).</div>`,
@@ -317,13 +315,12 @@ export async function useDisabledArmourForkTest(actor, { skillKey } = {}) {
 
   const dice = await roll.render();
   const testLabel = isAthletics ? "Athletics(S)+10" : "S+0";
-  // Карточка — общим сборщиком (wdbc-kuun). Слагаемые Порога переехали в общий
-  // формат «База (слагаемые) → Порог»: раньше здесь стоял свой обратный
-  // порядок «Порог: N (база слагаемые)».
+  // Карточка — общим сборщиком (wdbc-fyvv): плашка Бросок/Режим/Порог, а
+  // разбор базы и слагаемых Порога — во всплывающей подсказке её ячейки.
   await postTestCard(actor, {
     icon: rollIcon("warn", "#ff8a5c"),
     title: `Тест-развилка перевеса (${testLabel}) — ${esc(actor.name)}`,
-    threshold: thresholdLine({
+    threshold: rollStatLine({
       label: isAthletics ? "Athletics(S)" : "S",
       base,
       parts: [
@@ -331,9 +328,9 @@ export async function useDisabledArmourForkTest(actor, { skillKey } = {}) {
         ...ruleMods.parts,
         overload.testPenalty ? `${overload.testPenalty}` : ""
       ],
-      threshold: eff
+      threshold: eff,
+      rv
     }),
-    rv,
     outcome: resultNote,
     sections: [
       `<div class="roll-threshold" style="font-size:.85em;opacity:.8;">В начале Хода или при отключении брони (стр. 233).</div>`,

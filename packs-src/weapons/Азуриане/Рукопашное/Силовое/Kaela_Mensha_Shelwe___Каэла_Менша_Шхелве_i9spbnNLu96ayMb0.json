@@ -22,6 +22,7 @@
     "damageType": "energy",
     "penetration": 12,
     "quality": "common",
+    "bookSource": "Книга Аэльдари, V. АРСЕНАЛ ЭЛЬДАР («Силовое оружие», стр. 88). Уникальная реликвия «Kaela Mensha Shelwe / Каэла Менша Шхелве, Песнь Кроваворукого» (2d10+8 E, Pen 12) — совпадает дословно.",
     "availability": 5,
     "weight": 1.5,
     "attackBonus": 0,

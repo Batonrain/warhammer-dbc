@@ -18,6 +18,7 @@ import { veilTotal } from "../constants/veil.mjs";
 import { infamyContext } from "../apps/infamy-points.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { rollStatLine } from "../helpers/test-card.mjs";
 
 // Дары с полной автоматизацией (создают предметы / меняют числа при взятии).
 const DP_AUTO_GIFTS = new Set([
@@ -311,8 +312,8 @@ export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
       content: `
         <div class="wh-dp-card" style="--gc:${g.color};--gc2:${g.gc2};">
           <div class="wh-dp-card-h">🌀 Тест Нестабильности — ${esc(this.actor.name)}</div>
-          <div class="wh-dp-card-r">Сила Воли: <b>${wp}</b>${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог: <b>${threshold}</b> · Warp Instability (${rating})</div>
-          <div class="wh-dp-card-r">Бросок: <b>${roll.total}</b> — ${success
+          <div class="wh-dp-card-r">${rollStatLine({ label: "Сила Воли", base: wp, parts: ruleMods.parts, threshold, rv: roll.total })} · Warp Instability (${rating})</div>
+          <div class="wh-dp-card-r">${success
             ? `<span class="ok">Реальность держится — ${deg} ст.</span>`
             : `<span class="bad">Дестабилизация — ${deg} ст.: варп-урон / изгнание в Варп (по решению ГМа).</span>`}</div>
         </div>`,

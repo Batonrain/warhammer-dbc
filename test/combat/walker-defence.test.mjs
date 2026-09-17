@@ -111,7 +111,7 @@ describe("performWalkerParry", () => {
 
     const card = captured.chat.at(-1).content;
     // 65 − 20 (навык) − 40 (Размер 4) = 5
-    expect(card).toContain("Порог: <b>5</b>");
+    expect(card).toContain("<label>Порог</label><b>5</b>");
     expect(card).toContain("Размер -40");
     expect(card).toContain("Парирование (Шагоход)");
     expect(card).toContain("Парирование успешно");
@@ -128,8 +128,8 @@ describe("performWalkerParry", () => {
     await performWalkerParry(walkerVehicle({ size: 6, weapons: [fist()] }));
     const big = captured.chat.at(-1).content;
 
-    expect(small).toContain("Порог: <b>5</b>");
-    expect(big).toContain("Порог: <b>-15</b>");
+    expect(small).toContain("<label>Порог</label><b>5</b>");
+    expect(big).toContain("<label>Порог</label><b>-15</b>");
   });
 
   it("пустая машина — отказ, а не бросок нулями", async () => {
@@ -190,7 +190,7 @@ describe("performWalkerDodge", () => {
     await performWalkerDodge(walkerVehicle({ size: 4, operate: 90 }));
 
     const card = captured.chat.at(-1).content;
-    expect(card).toContain("Порог <b>15</b>");
+    expect(card).toContain("<label>Порог</label><b>15</b>");
     expect(card).toContain("Operate машины <b>80</b>");
     expect(card).toContain("Уклонение успешно");
   });
@@ -204,7 +204,7 @@ describe("performWalkerDodge", () => {
 
     const card = captured.chat.at(-1).content;
     // Уклонение 95−20−10 = 65, Operate 25−10 = 15 → Порог 15.
-    expect(card).toContain("Порог <b>15</b>");
+    expect(card).toContain("<label>Порог</label><b>15</b>");
     expect(card).toContain("Ниже оказался Operate");
     expect(card).toContain("Уклонение провалено");
   });
@@ -217,7 +217,7 @@ describe("performWalkerDodge", () => {
     await performWalkerDodge(walkerVehicle({ size: 4, operate: 90 }), { extraMod: 20 });
 
     // 75 − 20 + 20 (приём) − 40 = 35, Operate 80 → Порог 35.
-    expect(captured.chat.at(-1).content).toContain("Порог <b>35</b>");
+    expect(captured.chat.at(-1).content).toContain("<label>Порог</label><b>35</b>");
   });
 
   it("пустая машина — отказ", async () => {

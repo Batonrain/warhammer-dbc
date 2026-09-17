@@ -33,6 +33,9 @@
       {
         "key": "deflagrate",
         "rating": 4
+      },
+      {
+        "key": "legion"
       }
     ],
     "needsRecharge": false,
