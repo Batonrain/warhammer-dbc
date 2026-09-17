@@ -235,6 +235,14 @@ const DEVIATIONS = {
     "conditions.lostLegsCount": 0,
     "conditions.lostEyes": false,
     "conditions.lostEyesCount": 0,
+    // Потеря Конечностей (стр. 30-31, wdbc-1rno.6): таймер отложенной
+    // проверки Гангрены обрубка, по одному на часть тела — заведено гораздо
+    // позже template.json (module/rules/limb-loss.mjs).
+    "conditions.lostHandsGangreneAt": 0,
+    "conditions.lostArmsGangreneAt": 0,
+    "conditions.lostFeetGangreneAt": 0,
+    "conditions.lostLegsGangreneAt": 0,
+    "conditions.lostEyesGangreneAt": 0,
     // Стр. 12 («Борьба») — связаны Захватом, заведено гораздо позже template.json.
     "conditions.grappling": false,
     // Собственный вес тела (Записи → Вес, wdbc-oxdn) — нужен для Метания/

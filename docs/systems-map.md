@@ -331,6 +331,21 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   1d5 Ходов без эффектов Горения, автоматика без кнопки, `ensureBurningGrace`
   — wdbc-3pv5). Урон поджигания хранит `system.conditions.burningSourceDamage`
   (выставляется в момент наложения — Flame-свойство/крит-таблица).
+- Потеря Конечностей (стр. 30-31, wdbc-1rno.6) — `lostHands/lostArms/lostFeet/
+  lostLegs/lostEyes` в `constants/conditions.mjs` (counter:"count"), уже
+  влияют на Экономику Рук (`rules/hands.mjs::maxHands`), Движение/Уклонение
+  (`rules/character/movement.mjs`, `combat/defense.mjs`), BS и угол Караула
+  (`sheets/attack/mods.mjs`, `rules/overwatch.mjs::overwatchMaxArc`), Ослепление
+  при потере обоих глаз (`rules/predicates.mjs`). Автоналожение из
+  Критических Эффектов и «Цель теряет руку/ногу» — `combat/crit-effect-
+  parser.mjs`. Отложенная проверка Гангрены обрубка (T.b дней, 1d10 1-8 —
+  80%) — `rules/limb-loss.mjs` (чистая логика) + `combat/limb-loss.mjs`
+  (розыгрыш по тому же `updateWorldTime`, что двигает виджет Календаря).
+  Лечение — три режима диалога `sheets/tabs/healing.mjs`: Ампутация,
+  Пришивание, «Обработка обрубка»; Бионика восстанавливает lostX при выборе
+  части тела. Мутация Loss of Limb/Потеря Конечности — НЕ реализована,
+  вынесена в wdbc-1rno.6.1 (гейт Best.Q сравнением субмутации, субтаблица
+  «Пальцы» — открытые решения).
 - `module/apps/token-conditions.mjs` — синхронизация с Token HUD.
 - `module/sheets/tabs/conditions.mjs` — вкладка Состояния/Усталость.
 - `module/constants/fear-tables.mjs` — Страх/Шок/Ментальная Травма/Расстройства.

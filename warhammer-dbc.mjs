@@ -40,6 +40,7 @@ import { WarhammerItemSheet }         from "./module/sheets/item-sheet.mjs";
 import { WarhammerActiveEffectConfig } from "./module/sheets/active-effect-config.mjs";
 import { refreshCalendarWidget, initTimeFlow, checkCalendarWatchTriggers } from "./module/apps/imperial-calendar.mjs";
 import { sweepSweetMistExpiry } from "./module/apps/wrapped-in-chaos.mjs";
+import { sweepLimbLossGangrene } from "./module/combat/limb-loss.mjs";
 import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
@@ -1243,6 +1244,10 @@ Hooks.on("updateWorldTime", worldTime => {
   // та же точка входа, что уже двигает виджет Календаря выше, по прямому
   // указанию пользователя, не отдельный новый хук.
   sweepSweetMistExpiry(worldTime);
+  // Потеря Конечностей (wdbc-1rno.6): «обрубок нуждается в мед. обработке,
+  // иначе через T.b дней с шансом 80% загноится» — та же точка входа, что
+  // уже двигает виджет Календаря выше, по прямому указанию пользователя.
+  sweepLimbLossGangrene(worldTime);
 });
 
 // ── Нексус Сцен: держать открытое окно в актуальном состоянии ─────────────────

@@ -7,7 +7,7 @@
 import { describe, it, expect } from "vitest";
 import {
   overwatchSingleShotBudget, applyOverwatchShot, overwatchMaxArc,
-  OVERWATCH_DEFAULT_MAX_ARC, OVERWATCH_SCANNING_ADVANCE_MAX_ARC
+  OVERWATCH_DEFAULT_MAX_ARC, OVERWATCH_SCANNING_ADVANCE_MAX_ARC, OVERWATCH_LOST_EYE_MAX_ARC
 } from "../../module/rules/overwatch.mjs";
 
 describe("overwatchSingleShotBudget", () => {
@@ -49,5 +49,11 @@ describe("overwatchMaxArc", () => {
   });
   it("со Scanning Advance — 90°", () => {
     expect(overwatchMaxArc(true)).toBe(OVERWATCH_SCANNING_ADVANCE_MAX_ARC);
+  });
+  it("Потеря глаза (wdbc-1rno.6) — 30°, даже без Scanning Advance", () => {
+    expect(overwatchMaxArc(false, true)).toBe(OVERWATCH_LOST_EYE_MAX_ARC);
+  });
+  it("Потеря глаза перекрывает Scanning Advance — 30°, не 90°", () => {
+    expect(overwatchMaxArc(true, true)).toBe(OVERWATCH_LOST_EYE_MAX_ARC);
   });
 });
