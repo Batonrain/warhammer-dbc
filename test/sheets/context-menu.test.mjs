@@ -3,6 +3,7 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import {
   activateItemContextMenu,
   closeContextMenus,
+  itemContextEntries,
   openContextMenu
 } from "../../module/sheets/context-menu.mjs";
 
@@ -70,6 +71,9 @@ function actor(items = []) {
 beforeEach(() => {
   resetCaptured();
   vi.useRealTimers();
+  // openGearModPicker центрирует диалог по window.inner* (picker-ui.mjs) —
+  // в node-окружении теста его нет, как и в gear-mod-picker.test.mjs.
+  globalThis.window = { innerWidth: 1200, innerHeight: 900 };
 });
 
 describe("openContextMenu", () => {
@@ -268,5 +272,42 @@ describe("activateItemContextMenu", () => {
 
     expect(jq.state.appended).toEqual([]);
     expect(jq.state.removedSelectors).toEqual([".wh-context-menu"]);
+  });
+});
+
+// wdbc-njzt: кнопка «Улучшить» была отдельным элементом в строке таблицы
+// Снаряжения (wdbc-7td8) — теперь это пункт того же меню, что «Редактировать»/
+// «Удалить», чтобы убрать лишний элемент из строки.
+describe("itemContextEntries — «Улучшить»", () => {
+  it("оружию и броне добавляет пункт между «Редактировать» и «Удалить»", () => {
+    const weapon = { ...item("weapon-1"), type: "weapon" };
+    const entries = itemContextEntries(weapon, actor([weapon]));
+
+    expect(entries.map(e => e.cls)).toEqual(["wh-ctx-edit", "wh-ctx-gear-mod", "wh-ctx-delete"]);
+    expect(entries[1].label).toBe("🔧 Улучшить");
+  });
+
+  it("клик по пункту открывает пикер модификаций этого предмета", async () => {
+    const armor = { ...item("armor-1", "Силовая броня"), type: "armor" };
+    const a = actor([armor]);
+    const entries = itemContextEntries(armor, a);
+
+    await entries.find(e => e.cls === "wh-ctx-gear-mod").onClick();
+
+    expect(captured.dialog?.title).toBe("Улучшить: Силовая броня");
+  });
+
+  it("предметам без носителя модов (не оружие/броня) пункт не добавляет", () => {
+    const gear = { ...item("gear-1"), type: "gear" };
+    const entries = itemContextEntries(gear, actor([gear]));
+
+    expect(entries.map(e => e.cls)).toEqual(["wh-ctx-edit", "wh-ctx-delete"]);
+  });
+
+  it("без актора пункт не добавляет, даже оружию/броне", () => {
+    const weapon = { ...item("weapon-1"), type: "weapon" };
+    const entries = itemContextEntries(weapon, undefined);
+
+    expect(entries.map(e => e.cls)).toEqual(["wh-ctx-edit", "wh-ctx-delete"]);
   });
 });
