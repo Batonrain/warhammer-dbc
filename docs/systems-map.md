@@ -401,6 +401,17 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   mjs`), результат пишется в weaponBuff и читается тем же
   `combat/weapon-mods.mjs`, что и статично прописанные баффы — переиспользовать
   этот паттерн, если появится вторая такая сила (флаг `hasWeaponShop`).
+  Радиус поддержания (wdbc-efyl, 17.09.2026) — книга у части сил даёт ВТОРУЮ,
+  отдельную дальность специально для поддержания (маркер `(П)`, не совпадает
+  с дальностью манифестации: Concentration/Концентрация PR×1м/PR×5м и ещё 33
+  силы, найдены и сверены построчно с книгой в wdbc-z9jp). Поле
+  `system.sustainRange` психосилы (пусто — использовать обычный `range`),
+  общая точка входа `rules/psy-range.mjs::sustainRangeText(system)`. Пока
+  только хранится и показывается на карточке манифестации — живой геймплейный
+  гейт (снятие поддержания при выходе цели за этот радиус) не подключён нигде,
+  первый потребитель на очереди — Fruit of Flesh/Плод Плоти (`apps/
+  fruit-of-flesh.mjs`, субмутация «Заточение Силы», см. NOTES в wdbc-efyl,
+  связано с эпиком wdbc-1rno).
 - Техночудеса: `data/item/tech-power.mjs`, `constants/tech.mjs`,
   `tech-imperatives.mjs` + `combat/imperative-bonuses.mjs` + `rules/
   imperative.mjs`, `constants/implant-mechanics.mjs`, `apps/infoguard.mjs`
