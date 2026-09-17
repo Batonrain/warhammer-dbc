@@ -27,6 +27,9 @@ export const OVERWATCH_DEFAULT_MAX_ARC = 45;
 /** Scanning Advance/Сканирующее Продвижение (wdbc-1rno.37) — расширенный сектор. */
 export const OVERWATCH_SCANNING_ADVANCE_MAX_ARC = 90;
 
+/** Потеря глаза (стр. 30-31, wdbc-1rno.6): «максимальный угол Караула уменьшается до 30°». */
+export const OVERWATCH_LOST_EYE_MAX_ARC = 30;
+
 /**
  * Бюджет Одиночных Выстрелов на один Караул: ½BS.b, округлённое ВНИЗ, но не
  * больше наибольшего RoF оружия (rof_full||rof_semi||rof_single, тот же
@@ -68,7 +71,16 @@ export function applyOverwatchShot(rofMode, shotsRemaining) {
  * Ширина сектора, доступная актору при объявлении Караула: 90° со Scanning
  * Advance (capabilities.mjs rangedCore.core.scanningAdvance), иначе 45°.
  * Игрок может объявить и меньше — параметр только про потолок.
+ *
+ * hasLostEye (wdbc-1rno.6, стр. 30-31) — «максимальный угол Караула
+ * уменьшается до 30°» жёстко перекрывает потолок, даже расширенный Scanning
+ * Advance: книга формулирует это как безусловное ограничение персонажа, не
+ * как альтернативу большему сектору. Книжная оговорка «если не использует
+ * авточувства для определения расстояний» здесь не гейтится — в системе нет
+ * проверяемого флага «авточувства подключены», честная заглушка этой
+ * половины условия.
  */
-export function overwatchMaxArc(hasScanningAdvance) {
-  return hasScanningAdvance ? OVERWATCH_SCANNING_ADVANCE_MAX_ARC : OVERWATCH_DEFAULT_MAX_ARC;
+export function overwatchMaxArc(hasScanningAdvance, hasLostEye = false) {
+  const base = hasScanningAdvance ? OVERWATCH_SCANNING_ADVANCE_MAX_ARC : OVERWATCH_DEFAULT_MAX_ARC;
+  return hasLostEye ? Math.min(base, OVERWATCH_LOST_EYE_MAX_ARC) : base;
 }

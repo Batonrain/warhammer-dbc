@@ -23,6 +23,7 @@ import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../../constants/skills.mjs";
 // своего хранимого поля не получают — они целиком производные, считаются из
 // чужого источника на каждом пересчёте (rules/character.mjs::readAllMirrors).
 import { CONDITION_STORED_KEYS, CONDITION_COUNTERS } from "../../constants/conditions.mjs";
+import { LIMB_LOSS_KEYS, limbLossGangreneField } from "../../rules/limb-loss.mjs";
 
 /** Зоны попадания — порядок как в листе. */
 export const HIT_LOCATIONS = ["head", "leftArm", "rightArm", "body", "leftLeg", "rightLeg"];
@@ -156,6 +157,12 @@ export function creatureSchema({ granted = false } = {}) {
   // Состояния (та же форма ручной надстройки, что burningSourceDamage/
   // sweetMistExpiresAt выше) — читает module/sheets/tabs/psychic.mjs.
   conditionFields.mimicWireBlocksPowers = bool(false, "Мононить: блокирует психосилы/техночудеса");
+  // Потеря Конечностей (wdbc-1rno.6, стр. 30-31): «обрубок нуждается в мед.
+  // обработке, иначе через T.b дней с шансом 80% загноится» — по одному
+  // worldTime-таймеру на часть тела (та же форма ручной надстройки, что
+  // burningSourceDamage/sweetMistExpiresAt выше), 0 = таймер не идёт.
+  for (const key of LIMB_LOSS_KEYS)
+    conditionFields[limbLossGangreneField(key)] = num(0, `${key}: worldTime проверки Гангрены`);
 
   return {
     // Книга-источник (wdbc-7pjs). У предметов это поле есть у полутора десятков

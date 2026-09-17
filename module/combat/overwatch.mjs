@@ -123,7 +123,8 @@ export function showOverwatchDialog(actor, { scanningAdvance = false } = {}) {
   const weapons = overwatchWeaponOptions(actor);
   if (!weapons.length) return ui.notifications.warn("⚠️ Нет экипированного дальнобойного оружия для Караула.");
   const hasScanning = scanningAdvance && hasRuleFlag(actor, SCANNING_ADVANCE_CAPABILITY);
-  const maxArc = overwatchMaxArc(hasScanning);
+  // Потеря глаза (wdbc-1rno.6): угол Караула уменьшен до 30° независимо от Scanning Advance.
+  const maxArc = overwatchMaxArc(hasScanning, !!actor.system.conditions?.lostEyes);
 
   new Dialog({
     title: hasScanning ? "Сканирующее Продвижение" : "Караул",

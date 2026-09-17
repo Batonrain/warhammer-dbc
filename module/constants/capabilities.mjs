@@ -6742,9 +6742,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.slaanesh.immortalBeauty": {
-    label: "Тяжело/критически ранен — Трейт Regeneration(1) механизирован отдельной записью kind:\"trait\" под when.woundTier:[\"heavy\",\"dying\"] на этом же предмете (старая пометка «гейт не поддержан entry.when» устарела — wdbc-wyr3 закрыт, woundTier есть, см. Толстокожий/Thick_Skinned). ПРОВЕРЕНО ЗАНОВО (13.09.2026, повторно 16.09.2026): остаток — тот же Трейт ЕЩЁ и при потере части тела вне завязки на тир Ран — в системе нет отдельного триггера «лишился конечности» (потеря конечности — свободный текст Критического Эффекта, тот же вывод, что у Мутации «Потеря Конечности» этого же тикета, вообще без числа), гасить нечего; лёгкое ранение — чисто косметическое заживление без реальных Ран, эффекта не требует. По просьбе пользователя общий пробел «нет состояния учёта потери конечностей» вынесен отдельным тикетом wdbc-1rno.6 — эта находка и mutation.lossOfLimb включены туда кандидатами на автоматизацию.",
+    label: "РЕАЛИЗОВАНО (17.09.2026, wdbc-1rno.6): Трейт Regeneration(1) механизирован записью kind:\"trait\" с when.anyOf — тяжело/критически ранен (woundTier:[\"heavy\",\"dying\"]) ИЛИ лишился части тела (condition: lostHands/lostArms/lostFeet/lostLegs/lostEyes, реестр Состояний потери конечностей той же миграции). Лёгкое ранение — чисто косметическое заживление без реальных Ран, эффекта не требует (без изменений).",
     source: "Дар Слаанеш (Immortal Beauty)",
-    reader: ""
+    reader: "packs-src Immortal_Beauty, запись immortalBeauty-regen (kind:\"trait\", entry.when.anyOf+condition) — module/rules/mech-when.mjs::entryWhenOk (whenCondition/PREDICATES.hasCondition); Состояния — module/constants/conditions.mjs (lostHands/…)"
   },
   "gift.slaanesh.kissOfDeath": {
     label: "Реализовано полностью: кнопка на предмете запускает встречный тест W+Cor.b×5 vs W+Cor.b×5, победа — d10 непогл. R Dmg за Успех (margin) прямо в Раны; убийство — 1d5 Бесчестия/снятие Усталости/лечение 1d10+W.b носителю, кнопка «Констатировать смерть», метка на жертве удваивает цену её Спасения (sheets/tabs/death.mjs)",
