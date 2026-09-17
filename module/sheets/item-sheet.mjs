@@ -58,6 +58,8 @@ import { BODY_TYPES, ZONES, STAR_CLASSES, BODY_SIZES, GRAVITY,
          ATMOSPHERE_PRESENCE, ATMOSPHERE_TYPE, CLIMATE, HABITABILITY, ALLEGIANCE,
          XENOS_SPECIES, RESOURCE_TYPES, RESOURCE_ICONS,
          WORLD_CLASSES, WORLD_ENVIRONMENTS, TITHE_GRADES } from "../constants/star-system.mjs";
+import { setRouteSlot, resolveLinkedSystem, pickStarSystemDialog, generateRouteTraitsDialog }
+  from "../apps/warp-route.mjs";
 import { PSY_POWER_TYPES }                           from "../constants/psyker.mjs";
 import { TECH_MIRACLE_TYPES }                        from "../constants/tech.mjs";
 import { SKILLS_DEF }                                from "../constants/skills.mjs";
@@ -426,6 +428,47 @@ function onPsyVariantRemove(event, target) {
   return this.item.update({ "system.variants": (this.item.system.variants || []).filter((_, idx) => idx !== i) });
 }
 
+// ── Варп-маршрут: два слота Звёздных систем, Особенности (wdbc-r0w9) ─────────
+
+/** Открыть лист системы, привязанной в этом слоте. */
+function onWrpSlotOpen(event, target) {
+  const slot = target.dataset.slot;
+  const uuid = slot === "systemAUuid" ? this.item.system.systemAUuid : this.item.system.systemBUuid;
+  if (!uuid) return;
+  fromUuid(uuid).then(actor => actor?.sheet?.render(true)).catch(() => {});
+}
+
+/** Слот пустеет по кнопке — независимо от того, кто был там привязан. */
+function onWrpSlotClear(event, target) {
+  const slot = target.dataset.slot;
+  if (slot !== "systemAUuid" && slot !== "systemBUuid") return;
+  return setRouteSlot(this.item, slot, null);
+}
+
+/** «+» без drag-n-drop: тот же results, что и дроп, но через диалог выбора. */
+async function onWrpSlotPick(event, target) {
+  const slot = target.dataset.slot;
+  if (slot !== "systemAUuid" && slot !== "systemBUuid") return;
+  const other = slot === "systemAUuid" ? this.item.system.systemBUuid : this.item.system.systemAUuid;
+  const picked = await pickStarSystemDialog({ exclude: [other].filter(Boolean) });
+  if (picked && await this._confirmWrpSlotOverwrite(slot, picked)) await setRouteSlot(this.item, slot, picked);
+}
+
+function onWrpGenerateTraits() {
+  return generateRouteTraitsDialog(this.item);
+}
+
+function onWrpFeatureAdd() {
+  const arr = foundry.utils.deepClone(this.item.system.features || []);
+  arr.push({ roll: 0, name: "", effect: "" });
+  return this.item.update({ "system.features": arr });
+}
+
+function onWrpFeatureRemove(event, target) {
+  const i = Number(target.dataset.index);
+  return this.item.update({ "system.features": (this.item.system.features || []).filter((_, idx) => idx !== i) });
+}
+
 // ── Оружие: доп. профили ББ (Крюк/Посох, стр. 207-221) ──
 /** Номер профиля — на карточке, а не на самой кнопке. */
 const profileIdx = el => Number(el.closest(".wprofile-card")?.dataset.idx);
@@ -555,7 +598,8 @@ export class WarhammerItemSheet
       { icon: "fa-solid fa-film", label: "Automated Animations", action: "openAutoAnimations" }
     ] },
     form: { submitOnChange: true, closeOnSubmit: false },
-    dragDrop: [{ dragSelector: null, dropSelector: ".effects-drop-target, .grant-drop-zone, .wprop-drop-zone" }],
+    dragDrop: [{ dragSelector: null,
+      dropSelector: ".effects-drop-target, .grant-drop-zone, .wprop-drop-zone, .wrp-slot-zone" }],
     actions: {
       tab: onTab,
       fieldMode: onFieldMode,
@@ -605,7 +649,13 @@ export class WarhammerItemSheet
       modpropRemove: whenEditable(onModpropRemove),
       modremRemove: whenEditable(onModremRemove),
       aptRemove: whenEditable(onAptRemove),
-      apropRemove: whenEditable(onApropRemove)
+      apropRemove: whenEditable(onApropRemove),
+      wrpSlotOpen: onWrpSlotOpen,
+      wrpSlotClear: whenEditable(onWrpSlotClear),
+      wrpSlotPick: whenEditable(onWrpSlotPick),
+      wrpGenerateTraits: whenEditable(onWrpGenerateTraits),
+      wrpFeatureAdd: whenEditable(onWrpFeatureAdd),
+      wrpFeatureRemove: whenEditable(onWrpFeatureRemove)
     }
   };
 
@@ -659,7 +709,45 @@ export class WarhammerItemSheet
     if (auraZone && data?.type === "Item") return this._onDropAuraGrant(event, data, auraZone);
     const grantZone = event.target?.closest?.(".grant-drop-zone");
     if (grantZone && data?.type === "Item") return this._onDropGrantItem(event, data, grantZone);
+    // Варп-маршрут (wdbc-r0w9): дроп Звёздной системы в конкретный слот —
+    // явный, не «первый свободный», как со стороны листа Системы (там сама
+    // система не знает заранее, в какой слот её пишут).
+    const wrpZone = event.target?.closest?.(".wrp-slot-zone");
+    if (wrpZone && (data?.type === "Actor" || data?.type === "Token")) return this._onDropWrpSlot(event, data, wrpZone);
     if (data?.type === "ActiveEffect") return this._onDropActiveEffect(event, data);
+  }
+
+  /** Дроп Звёздной системы в слот А/Б Варп-маршрута (wdbc-r0w9). */
+  async _onDropWrpSlot(event, data, zone) {
+    const slot = zone.dataset.slot;
+    if (slot !== "systemAUuid" && slot !== "systemBUuid") return;
+    const doc = await fromUuid(data.uuid
+      || (data.type === "Actor" && data.id ? `Actor.${data.id}` : null)
+      || (data.type === "Token" && data.sceneId && data.tokenId ? `Scene.${data.sceneId}.Token.${data.tokenId}` : null))
+      .catch(() => null);
+    const actor = doc?.actor ?? doc;
+    if (!actor) return;
+    if (actor.type !== "starSystem") {
+      return ui.notifications.warn(`Сюда нужно перетащить Звёздную систему, а перетащено: «${esc(actor.name)}».`);
+    }
+    if (!(await this._confirmWrpSlotOverwrite(slot, actor))) return;
+    await setRouteSlot(this.item, slot, actor);
+  }
+
+  /**
+   * Слот на листе Маршрута занят ДРУГОЙ системой — подтвердить перезапись
+   * перед тем, как рвать существующую связь (найдено живой проверкой: без
+   * подтверждения дроп тихо заменял систему без единого уведомления).
+   * Пустой слот или та же самая система — подтверждать нечего, true сразу.
+   */
+  async _confirmWrpSlotOverwrite(slot, nextActor) {
+    const current = this.item.system[slot];
+    if (!current || current === nextActor.uuid) return true;
+    const currentActor = await fromUuid(current).catch(() => null);
+    return foundry.applications.api.DialogV2.confirm({
+      window: { title: "Заменить систему в слоте?" },
+      content: `<p>Здесь уже привязана «${esc(currentActor?.name ?? "(система недоступна)")}». Заменить на «${esc(nextActor.name)}»?</p>`
+    });
   }
 
   /**
@@ -1494,6 +1582,16 @@ export class WarhammerItemSheet
       context.cbScouted = game.user.isGM || sys.scouted;
       // Секретные данные (оборона / истинная природа) — видит ГМ всегда, игрок — после раскрытия.
       context.cbShowSecret = game.user.isGM || sys.revealed;
+    }
+
+    // ── Варп-маршрут (wdbc-r0w9) ─────────────────────────────────────────────
+    if (this.item.type === "warpRoute") {
+      const sys = context.system;
+      context.wrpGmNotesEnriched = await foundry.applications.ux.TextEditor.implementation.enrichHTML(
+        sys.gmNotes || "", { relativeTo: this.item, secrets: this.item.isOwner });
+      context.wrpSystemA = await resolveLinkedSystem(sys.systemAUuid);
+      context.wrpSystemB = await resolveLinkedSystem(sys.systemBUuid);
+      context.wrpFeatures = (sys.features || []).map((f, idx) => ({ idx, ...f }));
     }
 
     // ── Броня ─────────────────────────────────────────────────────────────────
@@ -3151,6 +3249,24 @@ export class WarhammerItemSheet
       if (!arr[i]) return;
       arr[i][field] = field === "testMod" ? (parseInt(ev.currentTarget.value) || 0) : ev.currentTarget.value;
       await this.item.update({ "system.variants": arr });
+    });
+
+    // ── Варп-маршрут: подсветка слота при наведении дропа (wdbc-r0w9) ─────────
+    // Только визуал — сам дроп штатно разбирает _onDrop (dragDrop-зона выше).
+    el.querySelectorAll(".wrp-slot-zone").forEach(zone => {
+      zone.addEventListener("dragover", ev => { ev.preventDefault(); zone.classList.add("social-drop-hover"); });
+      zone.addEventListener("dragleave", () => zone.classList.remove("social-drop-hover"));
+      zone.addEventListener("drop", () => zone.classList.remove("social-drop-hover"));
+    });
+
+    // ── Варп-маршрут: строки Особенностей (wdbc-r0w9) ────────────────────────
+    on(".wrp-feature-field", "change", async ev => {
+      const i = Number(ev.currentTarget.dataset.index);
+      const field = ev.currentTarget.dataset.field;
+      const arr = foundry.utils.deepClone(this.item.system.features || []);
+      if (!arr[i]) return;
+      arr[i][field] = field === "roll" ? (parseInt(ev.currentTarget.value) || 0) : ev.currentTarget.value;
+      await this.item.update({ "system.features": arr });
     });
 
     // ── Оружие: доп. профили ББ (Крюк/Посох, стр. 207-221) ──────────────────────

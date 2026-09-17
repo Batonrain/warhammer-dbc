@@ -1361,3 +1361,18 @@ prose-mirror.item-textarea button.toggle:enabled { display: block; }
 .warhammer-dbc .implant-bestq-choose { margin-top: 6px; }
 .warhammer-dbc .bestq-choice-row { margin-bottom: 6px; }
 .warhammer-dbc .bestq-count-summary { margin-top: 8px; font-weight: bold; }
+
+/* ── Варп-маршрут: два слота Звёздных систем (wdbc-r0w9) ──────────────────── */
+.warhammer-dbc .wrp-slots { display: flex; gap: 8px; flex-wrap: wrap; }
+.warhammer-dbc .wrp-slot-card {
+  flex: 1 1 220px; min-height: 44px; display: flex; align-items: center; gap: 7px;
+  padding: 5px 6px; border: 1px dashed var(--wh-border); border-radius: 4px;
+}
+.warhammer-dbc .wrp-slot-card.social-drop-hover { border-color: var(--wh-accent); background: rgba(47, 158, 106, 0.08); }
+.warhammer-dbc .wrp-slot-img {
+  flex: 0 0 32px; width: 32px; height: 32px; object-fit: cover;
+  border: 1px solid var(--wh-border); border-radius: 3px;
+}
+.warhammer-dbc .wrp-slot-name { flex: 1 1 auto; min-width: 0; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.warhammer-dbc .wrp-slot-name:hover { color: var(--wh-accent); }
+.warhammer-dbc .wrp-slot-empty { flex: 1 1 auto; font-size: 0.85em; color: var(--wh-text-mid); }

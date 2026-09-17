@@ -292,6 +292,13 @@ export function creatureSchema({ granted = false } = {}) {
     // допустимых, включая Орду и миньона, а что до кого доходит — считает
     // rules/command.mjs.
     followers: objList("Под моим Присутствием"),
+    // Знание варп-маршрутов ЭТИМ Проводником (wdbc-r0w9): {routeUuid, level},
+    // level — один из UNKNOWN/PRESUMED/KNOWN/LEARNED/CHOSEN (module/apps/
+    // warp-route.mjs::ROUTE_KNOWLEDGE_LEVELS). Отдельно от самого предмета
+    // Маршрута (module/data/item/warp-route.mjs) — знание индивидуально у
+    // каждого Проводника, а признаки маршрута общие; тот же приём, что у
+    // `dp.system.dp.gifts` Демона-Принца ({targetUuid, x} на дарителе).
+    knownRoutes: objList("Известные варп-маршруты"),
     // Миньоны (стр. 111-113). Поля общие у всех троих намеренно: миньоном
     // бывает Персонаж и Демон, Хозяином — они же и Принц Демонов, а отдельного
     // типа актора у миньона нет (module/apps/minions.mjs).

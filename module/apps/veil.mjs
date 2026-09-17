@@ -34,9 +34,18 @@ import { DW_GODS, DW_GODS_MAP, DEMON_INF_FORMULAS, VESSEL_RESONANCE, VESSEL_RESO
 import { MOUNT_POSSESSION_COMMON, mountRitualMods, rollMountProperty, possessionFlags }
   from "../constants/mount-possession.mjs";
 import { MOUNT_ACTOR_TYPES, isPossessed } from "../rules/mount.mjs";
-import { ROUTE_STABILITY, JOURNEY_DURATION, GUIDE_ESTIMATE, ENTRY_LOCATIONS, jumpDurationMult,
+import { JOURNEY_DURATION, GUIDE_ESTIMATE, ENTRY_LOCATIONS, jumpDurationMult,
          WARP_ENCOUNTERS, WARP_INVASIONS, INACCURATE_EXIT, WARP_STORMS, lookupTable, degWord }
   from "../constants/warp-travel.mjs";
+import { ROUTE_ILLUMINATION, routeNavigationCap, routeEncounterCap } from "../rules/warp-route-traits.mjs";
+import { routeKnowledgeMod } from "../rules/warp-route.mjs";
+import { resolveRouteRows, routeKnowledgeLevelFor, effectiveIlluminationFor, allWarpRoutes }
+  from "./warp-route.mjs";
+import { GUIDE_KINDS, guideKindFor, guideNavPenalty, guideExitPenalty, guideEncounterBonus,
+         guideRollsEncounterTwice, guideDecadeUpkeep, guideNeedsLoyaltyCheck } from "../rules/warp-guide.mjs";
+import { plottingThresholdFor, routePointsFromTest, astromancyOutcome, chartingModifier,
+         chartingBlocked, chartingOutcome, knowledgeFromCharting, upgradeKnowledge,
+         passIncrement, PASSES_TO_LEARNED } from "../rules/warp-route-charting.mjs";
 import { veilIcon } from "../constants/veil-icons.mjs";
 import { refreshVeilOverlay } from "./veil-overlay.mjs";
 import { resolveVeilContainer, currentScene, veilShift,
@@ -54,9 +63,30 @@ export { veilShift };
 export function _newJourney() {
   return {
     shipId: "", gellar: "ok", occulum: "ok", warpEngineDmg: false, emergency: false,
-    entryLoc: "mandeville", stability: "", stabilityMult: 1, psyMod: 0, beaconHidden: false,
+    entryLoc: "mandeville",
+    // Варп-маршрут (wdbc-r0w9) — выбирается на Шаге 0 вместо броска
+    // «Стабильность»; Категория/Тип/Изученность/Освещённость/Стабильность
+    // читаются с самого предмета (см. _journeyRouteItem/resolveRouteRows),
+    // а не хранятся здесь отдельными полями — иначе они разошлись бы, если
+    // ГМ поменяет маршрут посреди странствия.
+    routeUuid: "", beaconSearched: false, omensUnsuppressed: false,
+    // Проводники не-навигаторы (wdbc-r0w9): человеческая часть одержимого
+    // подключилась к навигации — отменяет демонические штрафы Шага 4/5, но
+    // добавляет свою Порчу (module/rules/warp-guide.mjs::guideDecadeUpkeep).
+    possessedHumanCoNav: false,
+    // Усталость Проводника (раздел «Проводники», wdbc-r0w9): без сознания при
+    // T.b+W.b, дальше каждый бросок Столкновений — накопительный +10. Ключ —
+    // id актора, не журнала: иначе при смене Проводника посреди странствия
+    // статус «без сознания» перешёл бы на следующего вместе с ним (найдено
+    // живой проверкой).
+    guideStateByNav: {},
     baseDuration: null, beaconMod: 0, days: 0,
-    senseSkill: "", navSkill: "", helmSkill: ""   // Навыки Проводника (Psyniscience/Navigation/Operate)
+    senseSkill: "", navSkill: "", helmSkill: "",   // Навыки Проводника (Psyniscience/Navigation/Operate)
+    // Прокладка новых маршрутов и Начертание (wdbc-r0w9.1/.2) — Навыки для
+    // Обработки данных/Записи черновиков, копилка очков ЭТОГО рейса (сами
+    // накопленные Очки Маршрута живут на предмете, не здесь — см.
+    // module/data/item/warp-route.mjs::plotting), точность последнего Выхода.
+    astroSkill: "", astrographerSkill: "", plottingRejsPoints: 0, plottingCanRecord: true, lastExitAccuracy: ""
   };
 }
 
@@ -125,10 +155,18 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   // ── Списки навигаторов сцены/мира ───────────────────────────────────────
+  /**
+   * Кандидаты в Проводники (раздел «Проводники», wdbc-r0w9) — не только
+   * субраса navigator: психоактивные люди/астартес, демоны, одержимые,
+   * принцы демонов тоже годятся, каждый по своим правилам (см.
+   * module/rules/warp-guide.mjs::guideKindFor). Прежний фильтр «только
+   * navigator» брал только character — теперь ещё daemon/demonPrince.
+   */
   _navigators() {
+    const eligibleTypes = ["character", "daemon", "demonPrince"];
     const fromTokens = (canvas?.tokens?.placeables || [])
-      .map(t => t.actor).filter(a => a?.type === "character" && a.system?.subrace === "navigator");
-    const all = game.actors.filter(a => a.type === "character" && a.system?.subrace === "navigator");
+      .map(t => t.actor).filter(a => eligibleTypes.includes(a?.type) && guideKindFor(a));
+    const all = game.actors.filter(a => eligibleTypes.includes(a.type) && guideKindFor(a));
     const map = new Map();
     for (const a of [...fromTokens, ...all]) if (a && !map.has(a.id)) map.set(a.id, a);
     return [...map.values()];
@@ -223,7 +261,6 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     if (!ships.find(s => s.id === J.shipId)) J.shipId = ships[0]?.id || "";
     const ship = game.actors.get(J.shipId) || null;
     const occMod = J.occulum === "damaged" ? -20 : (J.occulum === "destroyed" ? -40 : 0);
-    const navMod = occMod + (J.emergency ? -20 : 0) + (J.beaconMod || 0);
 
     // Навыки Проводника выбираются вручную (знания/навигация — не фиксированы).
     const nav = this._journeyNav();
@@ -236,16 +273,59 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     J.senseSkill = pick(J.senseSkill, ["psynisc", "псио", "психонаук", "чуть"]);
     J.navSkill   = pick(J.navSkill,   ["navig", "навиг"]);
     J.helmSkill  = pick(J.helmSkill,  ["operate", "управл", "void", "пуст", "кораб"]);
+    // Прокладка/Начертание (wdbc-r0w9.1/.2): Scholastic Lore (Astromancy) для
+    // Обработки данных, Trade (Astrographer) для Записи черновиков.
+    J.astroSkill        = pick(J.astroSkill,        ["astromancy", "астроманти"]);
+    J.astrographerSkill = pick(J.astrographerSkill, ["astrograph", "астрограф"]);
     const opts = (cur) => skills.map(s => ({ value: s.value, label: s.label, selected: s.value === cur }));
+
+    // Варп-маршрут (wdbc-r0w9) — выбирается на Шаге 0 вместо броска Стабильности
+    // (сам маршрут — мировой предмет, генерируется на своём листе заранее).
+    const routes = allWarpRoutes().map(r => ({ id: r.uuid, name: r.name }))
+      .sort((x, y) => x.name.localeCompare(y.name, "ru"));
+    if (!routes.find(r => r.id === J.routeUuid)) J.routeUuid = "";
+    const route = this._journeyRouteItem();
+    const rows = resolveRouteRows(route);
+    const illumEff = route ? effectiveIlluminationFor(nav, route, rows) : null;
+    const routeSummary = route
+      ? [rows.category?.label, rows.routeType?.label, rows.lore?.label, illumEff?.label, rows.stability?.label]
+          .filter(Boolean).join(" · ")
+      : "";
+    const navMod = this._occNavMod();
+
+    // Усталость Проводника (wdbc-r0w9) — только для показа; сам счётчик живёт
+    // на акторе (system.fatigue.value), не в journey.
+    const fatigue = Number(nav?.system?.fatigue?.value) || 0;
+    const fatigueThreshold = nav
+      ? (nav.system?.characteristics?.t?.bonus || 0) + (nav.system?.characteristics?.wp?.bonus || 0) : 0;
+
+    // Вид Проводника (раздел «Проводники», wdbc-r0w9) — навигатор, психоактивный,
+    // демон, одержимый или принц демона; каждый по своим правилам.
+    const guideKind = guideKindFor(nav);
+    const decadeUpkeep = guideDecadeUpkeep(guideKind, J.possessedHumanCoNav);
 
     return {
       ships, shipId: J.shipId, shipName: ship?.name || "", hasNav: !!nav,
       gellar: J.gellar, occulum: J.occulum, warpEngineDmg: J.warpEngineDmg, emergency: J.emergency,
       entryLoc: J.entryLoc, entryLocations: ENTRY_LOCATIONS.map(l => ({ ...l, selected: l.key === J.entryLoc })),
-      stability: J.stability, stabilityMult: J.stabilityMult,
+      routes: routes.map(r => ({ ...r, selected: r.id === J.routeUuid })), routeUuid: J.routeUuid,
+      hasRoute: !!route, routeName: route?.name || "", routeSummary,
+      durationMult: rows.category?.durMult || 1,
+      omensUnsuppressed: !!J.omensUnsuppressed,
+      fatigue, fatigueThreshold, guideUnconscious: !!this._guideState(nav?.id).unconscious,
+      guideKind, guideKindLabel: GUIDE_KINDS[guideKind]?.label || "",
+      isPossessedGuide: guideKind === "possessed", possessedHumanCoNav: !!J.possessedHumanCoNav,
+      hasDecadeUpkeep: !!(decadeUpkeep.corruption || decadeUpkeep.fatigue),
+      needsLoyaltyCheck: guideNeedsLoyaltyCheck(guideKind),
       baseDuration: J.baseDuration, beaconMod: J.beaconMod, days: J.days,
       senseSkills: opts(J.senseSkill), navSkills: opts(J.navSkill), helmSkills: opts(J.helmSkill),
-      occMod, navMod, occModSigned: (occMod >= 0 ? "+" : "") + occMod, navModSigned: (navMod >= 0 ? "+" : "") + navMod
+      astroSkills: opts(J.astroSkill), astrographerSkills: opts(J.astrographerSkill),
+      occMod, navMod, occModSigned: (occMod >= 0 ? "+" : "") + occMod, navModSigned: (navMod >= 0 ? "+" : "") + navMod,
+      // Прокладка новых маршрутов (wdbc-r0w9.1) — очки живут на предмете, тут только показ.
+      isPlotting: !!route?.system.plotting?.active,
+      plottingPoints: route?.system.plotting?.points || 0,
+      plottingThreshold: route?.system.plotting?.threshold || 0,
+      plottingRejsPoints: J.plottingRejsPoints || 0
     };
   }
 
@@ -857,16 +937,28 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     el.querySelector("[name=jSense]")?.addEventListener("change", e => { J.senseSkill = e.target.value; rrJ(); });
     el.querySelector("[name=jNav]")?.addEventListener("change", e => { J.navSkill = e.target.value; rrJ(); });
     el.querySelector("[name=jHelm]")?.addEventListener("change", e => { J.helmSkill = e.target.value; rrJ(); });
+    el.querySelector("[name=jAstro]")?.addEventListener("change", e => { J.astroSkill = e.target.value; rrJ(); });
+    el.querySelector("[name=jAstrographer]")?.addEventListener("change", e => { J.astrographerSkill = e.target.value; rrJ(); });
     el.querySelector("[name=jGellar]")?.addEventListener("change", e => { J.gellar = e.target.value; rrJ(); });
     el.querySelector("[name=jOcculum]")?.addEventListener("change", e => { J.occulum = e.target.value; rrJ(); });
     el.querySelector("[name=jEntry]")?.addEventListener("change", e => { J.entryLoc = e.target.value; rrJ(); });
     el.querySelector("[name=jEngine]")?.addEventListener("change", e => { J.warpEngineDmg = e.target.checked; rrJ(); });
     el.querySelector("[name=jEmergency]")?.addEventListener("change", e => { J.emergency = e.target.checked; rrJ(); });
     el.querySelector("[name=jDays]")?.addEventListener("change", e => { J.days = parseInt(e.target.value) || 0; });
+    // Варп-маршрут (wdbc-r0w9) — выбор вместо броска «Стабильность»; сброс
+    // beaconSearched при смене маршрута, иначе повторный поиск маяка на новом
+    // маршруте посчитался бы с колонкой «Повторный» по инерции от старого.
+    el.querySelector("[name=jRoute]")?.addEventListener("change", e => {
+      J.routeUuid = e.target.value; J.beaconSearched = false; rrJ();
+    });
+    el.querySelector("[name=jBadOmens]")?.addEventListener("change", e => { J.omensUnsuppressed = e.target.checked; rrJ(); });
+    el.querySelector("[name=jPossessedCoNav]")?.addEventListener("change", e => { J.possessedHumanCoNav = e.target.checked; rrJ(); });
     const jMap = {
-      jStability: "_rollStability", jDuration: "_rollDuration", jOmens: "_readOmens",
+      jDuration: "_rollDuration", jOmens: "_readOmens",
       jEnter: "_enterWarp", jBeacon: "_findBeacon", jDirect: "_directShip",
-      jEncounter: "_warpEncounter", jInvasion: "_warpInvasion", jExit: "_exitWarp", jStorm: "_warpStorm"
+      jEncounter: "_warpEncounter", jInvasion: "_warpInvasion", jExit: "_exitWarp", jStorm: "_warpStorm",
+      jFatigueDay: "_tickGuideFatigueDay", jDecadeUpkeep: "_tickGuideDecadeUpkeep", jLoyalty: "_daemonLoyaltyReminder",
+      jPlotProcess: "_processPlottingData", jChart: "_chartRoute"
     };
     for (const [act, fn] of Object.entries(jMap))
       el.querySelector(`[data-act=${act}]`)?.addEventListener("click", () => this[fn]());
@@ -1048,10 +1140,34 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const navs = this._navigators();
     return navs.find(a => a.id === (this.uiState.navId || navs[0]?.id)) || null;
   }
+  /** Состояние «без сознания» ЭТОГО Проводника (по id актора, не журнала — см. _newJourney). */
+  _guideState(navId) {
+    const map = (this.journey.guideStateByNav ||= {});
+    return (map[navId || ""] ||= { unconscious: false, stacks: 0 });
+  }
+  /** Варп-маршрут, выбранный на Шаге 0 (wdbc-r0w9) — мировой предмет, не вложен в актора. */
+  _journeyRouteItem() {
+    const uuid = this.journey.routeUuid;
+    if (!uuid) return null;
+    let doc = null;
+    try { doc = fromUuidSync(uuid); } catch { doc = null; }
+    return doc?.type === "warpRoute" ? doc : null;
+  }
   _occNavMod() {
     const J = this.journey;
-    return (J.occulum === "damaged" ? -20 : J.occulum === "destroyed" ? -40 : 0)
-      + (J.emergency ? -20 : 0) + (J.beaconMod || 0);
+    const nav = this._journeyNav();
+    let base = (J.occulum === "damaged" ? -20 : J.occulum === "destroyed" ? -40 : 0)
+      + (J.emergency ? -20 : 0) + (J.beaconMod || 0)
+      // Психоактивный Проводник (не навигатор) — −20 на ВСЕ тесты навигации
+      // в варпе (раздел «Проводники», wdbc-r0w9).
+      + guideNavPenalty(guideKindFor(nav));
+    const route = this._journeyRouteItem();
+    if (!route) return base;
+    // Тип + Изученность + Знание Проводника, капается −60..+40 (Шаги 4-5).
+    const rows = resolveRouteRows(route);
+    const level = routeKnowledgeLevelFor(nav, route, rows.lore);
+    const routeMod = routeNavigationCap(rows.routeType?.mod || 0, rows.lore?.mod || 0, routeKnowledgeMod(level));
+    return base + routeMod;
   }
   _groupTotal(actor, gkey, hints) {
     const arr = actor?.system?.groupSkills?.[gkey] || [];
@@ -1085,19 +1201,13 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     }), { rolls, sound: !!rolls.length, speaker: { alias: "Варп-Навигация" } });
   }
 
-  async _rollStability() {
-    const r = await new Roll("1d10").evaluate();
-    const row = lookupTable(ROUTE_STABILITY, r.total);
-    Object.assign(this.journey, { stability: row.name, stabilityMult: row.durMult, psyMod: row.psyMod || 0, beaconHidden: !!row.beaconHidden });
-    this.render(false);
-    await this._jPost(`${veilIcon("die")} Стабильность маршрута — ${esc(row.name)}`, "stable",
-      `<div class="roll-dice">1d10: <b>${r.total}</b> → длительность ×${row.durMult}</div><div class="roll-threshold">${esc(row.effect)}</div>`, [r]);
-  }
   async _rollDuration() {
     const r = await new Roll("1d10").evaluate();
     const row = lookupTable(JOURNEY_DURATION, r.total);
     const dRoll = await new Roll(row.formula).evaluate();
-    const mult = this.journey.stabilityMult || 1;
+    const route = this._journeyRouteItem();
+    const rows = resolveRouteRows(route);
+    const mult = rows.category?.durMult || 1;
     const base = dRoll.total * mult;
     this.journey.baseDuration = base;
     this.render(false);
@@ -1107,7 +1217,10 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
   async _readOmens() {
     const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника на сцене."); return; }
     const base = this._jSkillTotal(a, this.journey.senseSkill) ?? -20;
-    const mod = this.journey.psyMod || 0;
+    const route = this._journeyRouteItem();
+    const rows = resolveRouteRows(route);
+    // Категория «Трудный маршрут» — −10 на Psyniscience при Чтении знамений.
+    const mod = rows.category?.omenMod || 0;
     // Чтение знамений — тоже тест Псинауки Проводника, и он тоже шёл мимо
     // реестра (wdbc-9jj7): нашлось при правке соседнего _findBeacon.
     const ruleMods = collectTestMods(a, { kind: "skill", skill: "psyniscience", char: "per" });
@@ -1135,16 +1248,27 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
   }
   async _findBeacon() {
     const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника."); return; }
+    const route = this._journeyRouteItem();
+    const rows = resolveRouteRows(route);
+    // Категория «Тропа во тьме» — Освещённость на время странствия считается
+    // Слепой зоной целиком, независимо от того, что выпало отдельным броском.
+    const illumRow = rows.category?.illuminationBlindZone
+      ? ROUTE_ILLUMINATION.find(row => row.label === "Слепая зона")
+      : effectiveIlluminationFor(a, route, rows);
+    const repeat = !!this.journey.beaconSearched;
+    if (repeat && illumRow?.repeatImpossible) {
+      ui.notifications?.warn("Слепая зона: повторный поиск маяка невозможен.");
+      return;
+    }
+    const mod = illumRow ? (repeat ? (illumRow.repeat ?? 0) : illumRow.first) : 0;
     const base = this._jSkillTotal(a, this.journey.senseSkill) ?? -20;
-    let mod = /Стабильн/.test(this.journey.stability) ? 20 : 0;
-    if (this.journey.beaconHidden) mod -= 20;
     // Общий сбор модификаторов (wdbc-9jj7): тест Псинауки Проводника шёл мимо
     // реестра — соседний _directShip уже переведён, этот в тот проход не попал.
     const ruleMods = collectTestMods(a, { kind: "skill", skill: "psyniscience", char: "per" });
     const res = await this._roll(base + mod + ruleMods.total);
     const bm = (res.success ? 1 : -1) * Math.floor(Math.abs(res.deg) / 2) * 10;
-    this.journey.beaconMod = bm; this.render(false);
-    await this._jPost(`${veilIcon("star")} Поиск Астрономикона — ${esc(a.name)}`, "stable",
+    this.journey.beaconMod = bm; this.journey.beaconSearched = true; this.render(false);
+    await this._jPost(`${veilIcon("star")} Поиск Астрономикона${repeat ? " (повторно)" : ""} — ${esc(a.name)}`, "stable",
       `${rollStatLine({
         label: "Psyniscience", base,
         parts: [mod ? `${mod >= 0 ? "+" : ""}${mod}` : "", ...ruleMods.parts],
@@ -1167,15 +1291,194 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
         parts: [mod ? `${mod >= 0 ? "+" : ""}${mod}` : "", ...ruleMods.parts],
         threshold: res.eff, rv: res.rv
       })}<div class="roll-outcome"><span class="${res.success ? "roll-success" : "roll-failure"}">Длительность прыжка (${dosText}): <b>${mult}</b> ${real}</span></div>`, [res.roll]);
+    // Прокладка нового маршрута (wdbc-r0w9.1): «одно очко за каждые две
+    // степени успеха на любом тесте Navigation (Warp)» — только этот и Выход.
+    const plottedRoute = this._journeyRouteItem();
+    if (plottedRoute?.system.plotting?.active && res.success) {
+      this.journey.plottingRejsPoints += routePointsFromTest(res.deg);
+      this.render(false);
+    }
+    await this._applyGuideFatigue(a);
+  }
+  /**
+   * Усталость Проводника (раздел «Проводники», wdbc-r0w9): +1 за каждый тест
+   * Navigation (Warp) в варпе, вне зависимости от успеха. При достижении
+   * T.b+W.b Проводник теряет сознание — с этого момента каждый СЛЕДУЮЩИЙ
+   * бросок по Таблице Варп-столкновений получает накопительный +10
+   * (см. _warpEncounter). Дневной тик (30 дней странствия, 10 при разбитом
+   * Оккулуме) — кнопка jFatigueDay, тот же +1, не отдельная логика: книга не
+   * различает источник Усталости при проверке порога.
+   */
+  async _applyGuideFatigue(actor) {
+    if (!actor) return;
+    const next = (Number(actor.system?.fatigue?.value) || 0) + 1;
+    await actor.update({ "system.fatigue.value": next });
+    const state = this._guideState(actor.id);
+    if (state.unconscious) return;
+    const threshold = (actor.system?.characteristics?.t?.bonus || 0) + (actor.system?.characteristics?.wp?.bonus || 0);
+    if (next < threshold) return;
+    state.unconscious = true;
+    this.render(false);
+    await this._jPost(`${veilIcon("warning")} Проводник без сознания — ${esc(actor.name)}`, "torn",
+      `<div class="roll-threshold">Усталость ${next} ≥ T.b+W.b (${threshold}). Корабль идёт «без Проводника» (см. «Прыжки без проводника»), пока Проводник не очнётся. Каждый следующий бросок Варп-столкновений получает накопительный +10.</div>`);
+  }
+  /** Кнопка «+1 Усталость (30/10 дней)» — та же проверка порога, что и у
+   *  тестов Navigation (Warp): книга не различает источник Усталости. */
+  async _tickGuideFatigueDay() {
+    const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника."); return; }
+    await this._applyGuideFatigue(a);
+  }
+  /**
+   * Доп. надбавка за 10 дней навигации психоактивным/одержимым Проводникам
+   * (раздел «Проводники», wdbc-r0w9) — СВЕРХ общей Усталости за тест
+   * Navigation (Warp): 1 Порча всегда, плюс 1 Усталость для психоактивных.
+   */
+  async _tickGuideDecadeUpkeep() {
+    const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника."); return; }
+    const kind = guideKindFor(a);
+    const upkeep = guideDecadeUpkeep(kind, this.journey.possessedHumanCoNav);
+    if (!upkeep.corruption && !upkeep.fatigue) {
+      ui.notifications?.info("У этого Проводника нет надбавки за 10 дней.");
+      return;
+    }
+    if (upkeep.corruption) {
+      const cor = (Number(a.system?.corruption?.value) || 0) + upkeep.corruption;
+      await a.update({ "system.corruption.value": cor });
+    }
+    if (upkeep.fatigue) await this._applyGuideFatigue(a);
+    await this._jPost(`${veilIcon("warning")} 10 дней навигации — ${esc(a.name)}`, "thin",
+      `<div class="roll-threshold">${GUIDE_KINDS[kind]?.label || kind}: +${upkeep.corruption} Порча${upkeep.fatigue ? `, +${upkeep.fatigue} Усталость` : ""}.</div>`);
+  }
+  /** Напоминание о встречном тесте лояльности демона — МИ ведёт его сам
+   *  вручную (какой именно тест зависит от того, сломлен демон или Миньон),
+   *  здесь только подсказка с точным текстом правила. */
+  async _daemonLoyaltyReminder() {
+    const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника."); return; }
+    await this._jPost(`${veilIcon("demon")} Лояльность демона-Проводника — ${esc(a.name)}`, "torn",
+      `<div class="roll-threshold">Встречный тест на усмотрение МИ: наибольшая <b>Inf</b> персонажей vs <b>Inf</b> демона; <b>W vs W</b>, если демон сломлен и принуждён служить; <b>Лояльность</b>, если демон — Миньон. Победа демона — саботаж варп-перехода на усмотрение МИ.</div>`);
+  }
+  /**
+   * Обработка данных (Scholastic Lore (Astromancy), wdbc-r0w9.1) — один тест
+   * за рейс, «кассирует» очки ЭТОГО рейса (journey.plottingRejsPoints) в
+   * постоянный счётчик на самом предмете (system.plotting.points). Провал —
+   * половина очков, и Начертание (_chartRoute) в этом рейсе недоступно.
+   */
+  async _processPlottingData() {
+    const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника."); return; }
+    const route = this._journeyRouteItem();
+    if (!route?.system.plotting?.active) {
+      ui.notifications?.info("Выбранный маршрут не в процессе прокладки.");
+      return;
+    }
+    const plotting = route.system.plotting;
+    const bonus = (plotting.attempts || 0) * 10; // накопительный +10 за каждый пройденный рейс
+    const base = this._jSkillTotal(a, this.journey.astroSkill) ?? -20;
+    const res = await this._roll(base + bonus);
+    const { points, canRecord } = astromancyOutcome(this.journey.plottingRejsPoints, res.deg);
+    const totalPoints = (plotting.points || 0) + points;
+    await route.update({ "system.plotting.points": totalPoints });
+    this.journey.plottingRejsPoints = 0;
+    this.journey.plottingCanRecord = canRecord;
+    this.render(false);
+    const body = `${rollStatLine({ label: "Scholastic Lore (Astromancy)", base, parts: [bonus ? `+${bonus} (повторные рейсы)` : ""], threshold: res.eff, rv: res.rv })}
+      <div class="roll-outcome"><span class="${res.success ? "roll-success" : "roll-failure"}">${res.success ? "Данные обработаны" : "Записи путаются"} — +${points} Очков Маршрута (всего ${totalPoints}/${plotting.threshold || "?"}).</span></div>
+      ${canRecord ? "" : `<div class="roll-threshold">Записать черновики в этом рейсе не получится.</div>`}`;
+    await this._jPost(`${veilIcon("eye")} Обработка данных — ${esc(a.name)}`, res.success ? "stable" : "thin", body, [res.roll]);
+  }
+  /**
+   * Начертание маршрута (wdbc-r0w9.2) — Trade (Astrographer) по точности
+   * последнего Выхода + признакам маршрута. Работает и для прокладки нового
+   * маршрута (гейт по Очкам/Обработке данных), и для уже известного —
+   * записать/уточнить карту после обычного странствия.
+   */
+  async _chartRoute() {
+    const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника."); return; }
+    const route = this._journeyRouteItem();
+    if (!route) { ui.notifications?.warn("Навигация: маршрут не выбран."); return; }
+    const rows = resolveRouteRows(route);
+    if (chartingBlocked(rows.category?.label)) {
+      ui.notifications?.warn(`«${route.name}»: Категория «Неначертаемый след» — записать невозможно.`);
+      return;
+    }
+    const plotting = route.system.plotting || {};
+    if (plotting.active) {
+      if (!this.journey.plottingCanRecord) {
+        ui.notifications?.warn("Обработка данных провалена в этом рейсе — запись сейчас недоступна.");
+        return;
+      }
+      if ((plotting.points || 0) < (plotting.threshold || 0)) {
+        ui.notifications?.warn(`Очков Маршрута пока ${plotting.points || 0}/${plotting.threshold || "?"} — не хватает для записи.`);
+        return;
+      }
+    }
+    const featureLabels = (route.system.features || []).map(f => f.name);
+    const bonus = plotting.active ? (plotting.attempts || 0) * 10 : 0;
+    const mod = chartingModifier({ exitAccuracy: this.journey.lastExitAccuracy, categoryLabel: rows.category?.label, featureLabels }) + bonus;
+    const base = this._jSkillTotal(a, this.journey.astrographerSkill) ?? -20;
+    const res = await this._roll(base + mod);
+    const outcome = chartingOutcome(res.deg);
+    const knowledge = knowledgeFromCharting(outcome);
+    if (knowledge) {
+      const known = foundry.utils.deepClone(a.system?.knownRoutes || []);
+      const entry = known.find(k => k.routeUuid === route.uuid);
+      if (entry) entry.level = upgradeKnowledge(entry.level, knowledge);
+      else known.push({ routeUuid: route.uuid, level: knowledge, passes: 0 });
+      await a.update({ "system.knownRoutes": known });
+    }
+    if (plotting.active) {
+      const finished = outcome !== "none" && (plotting.points || 0) >= (plotting.threshold || 0);
+      await route.update({
+        "system.plotting.attempts": (plotting.attempts || 0) + 1,
+        ...(finished ? { "system.plotting.complete": true, "system.plotting.active": false } : {})
+      });
+    }
+    const outcomeLabel = { detailed: "Детализированная карта (Известный)", basic: "Базовая карта (Предполагаемый)", none: "Записать не удалось" }[outcome];
+    await this._jPost(`${veilIcon("star")} Начертание маршрута — ${esc(a.name)}`, outcome === "detailed" ? "stable" : (outcome === "none" ? "torn" : "thin"),
+      `${rollStatLine({ label: "Trade (Astrographer)", base, parts: [`${mod >= 0 ? "+" : ""}${mod}`], threshold: res.eff, rv: res.rv })}
+       <div class="roll-outcome"><b>${esc(outcomeLabel)}</b></div>
+       ${plotting.active && outcome !== "none" && (plotting.points || 0) >= (plotting.threshold || 0) ? `<div class="roll-threshold">«${esc(route.name)}» проложен!</div>` : ""}`, [res.roll]);
   }
   async _warpEncounter() {
     // Не тест против порога, а бросок ПО ТАБЛИЦЕ (wdbc-ct65.3): характеристики
-    // и Порога у него нет, модифицировать нечего — реестр правил не нужен.
+    // и Порога у него нет, реестр правил не нужен — но признаки маршрута,
+    // Дурные знамения и вид Проводника (раздел «Проводники») дают
+    // модификатор к самому броску (wdbc-r0w9, книга: «Сумма модификаторов
+    // не может выйти за пределы от −30 до +40»).
+    const a = this._journeyNav();
+    const kind = guideKindFor(a);
+    const route = this._journeyRouteItem();
+    const rows = resolveRouteRows(route);
+    const capped = routeEncounterCap(rows.stability?.encounterMod || 0, rows.category?.encounterMod || 0, !!this.journey.omensUnsuppressed);
+    // Проводник без сознания (Усталость ≥ T.b+W.b) — накопительный +10 за
+    // каждый СЛЕДУЮЩИЙ бросок с этого момента, ВНЕ книжного потолка −30..+40
+    // (это отдельная спираль кризиса, не признак маршрута).
+    const guideState = this._guideState(a?.id);
+    if (guideState.unconscious) { guideState.stacks += 10; this.render(false); }
+    // Психоактивный Проводник (не навигатор) — +10 (правка Н1). Уже входит в
+    // общий книжный потолок −30..+40 наравне со Стабильностью/Категорией.
+    const mod = Math.max(-30, Math.min(40, capped + guideEncounterBonus(kind)))
+      + (guideState.unconscious ? guideState.stacks : 0);
+    // Демон/одержимый-в-демоническом-режиме — бросок ДВАЖДЫ, МИ выбирает
+    // результат сам (книга буквально «выбирает», не «берёт худший») —
+    // показываем оба, не решаем за стол.
+    const twice = guideRollsEncounterTwice(kind, this.journey.possessedHumanCoNav);
     const r = await new Roll("1d100").evaluate();
-    const row = lookupTable(WARP_ENCOUNTERS, r.total);
-    const tier = r.total <= 20 ? "stable" : (r.total >= 71 ? "torn" : "thin");
-    await this._jPost(`${veilIcon("warning")} Варп-столкновение — ${esc(row.name)}`, tier,
-      `<div class="roll-dice">1d100: <b>${r.total}</b></div><div class="roll-threshold">${esc(row.text)}</div>`, [r]);
+    const r2 = twice ? await new Roll("1d100").evaluate() : null;
+    const total = Math.max(1, Math.min(100, r.total + mod));
+    const total2 = r2 ? Math.max(1, Math.min(100, r2.total + mod)) : null;
+    const row = lookupTable(WARP_ENCOUNTERS, total);
+    const tierOf = t => t <= 20 ? "stable" : (t >= 71 ? "torn" : "thin");
+    const dice = `<div class="roll-dice">1d100: <b>${r.total}</b>${mod ? ` ${mod >= 0 ? "+" : ""}${mod} = ${total}` : ""}</div>`;
+    if (!twice) {
+      await this._jPost(`${veilIcon("warning")} Варп-столкновение — ${esc(row.name)}`, tierOf(total),
+        `${dice}<div class="roll-threshold">${esc(row.text)}</div>`, [r]);
+      return;
+    }
+    const rowB = lookupTable(WARP_ENCOUNTERS, total2);
+    await this._jPost(`${veilIcon("warning")} Варп-столкновение (демон бросает дважды, выберите результат)`, tierOf(Math.max(total, total2)),
+      `${dice}<div class="roll-threshold"><b>Вариант А:</b> ${esc(row.name)} — ${esc(row.text)}</div>
+       <div class="roll-dice">1d100 (второй): <b>${r2.total}</b>${mod ? ` ${mod >= 0 ? "+" : ""}${mod} = ${total2}` : ""}</div>
+       <div class="roll-threshold"><b>Вариант Б:</b> ${esc(rowB.name)} — ${esc(rowB.text)}</div>`, [r, r2]);
   }
   async _warpInvasion() {
     const g = this.journey.gellar;
@@ -1189,7 +1492,10 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
   async _exitWarp() {
     const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника."); return; }
     const base = this._jSkillTotal(a, this.journey.navSkill) ?? -20;
-    const mod = this._occNavMod() - 20;
+    // Демон/одержимый-в-демоническом-режиме — доп. −30 к Выходу поверх
+    // обычного −20 Шага 5 (раздел «Проводники», wdbc-r0w9).
+    const guideMod = guideExitPenalty(guideKindFor(a), this.journey.possessedHumanCoNav);
+    const mod = this._occNavMod() - 20 + guideMod;
     // Тот же общий сбор, что у _directShip и _rollNavigation (wdbc-9jj7).
     const ruleMods = collectTestMods(a, { kind: "skill", group: "navigation", char: "int" });
     const res = await this._roll(base + mod + ruleMods.total);
@@ -1198,9 +1504,51 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
       parts: [`${mod >= 0 ? "+" : ""}${mod}`, ...ruleMods.parts],
       threshold: res.eff, rv: res.rv
     });
-    if (res.success) body += `<div class="roll-outcome"><span class="roll-success">Точный выход — ${res.deg} ${degWord(res.deg)}.</span></div>`;
-    else { const er = await new Roll("1d100").evaluate(); const row = lookupTable(INACCURATE_EXIT, er.total); body += `<div class="roll-outcome"><span class="roll-failure">Отклонение от курса.</span></div><div class="roll-threshold">Неаккуратный выход (1d100: ${er.total}): ${esc(row.text)}</div>`; await this._jPost(`${veilIcon("door")} Выход из варпа — ${esc(a.name)}`, "torn", body, [res.roll, er]); return; }
-    await this._jPost(`${veilIcon("door")} Выход из варпа — ${esc(a.name)}`, "stable", body, [res.roll]);
+    if (res.success) {
+      body += `<div class="roll-outcome"><span class="roll-success">Точный выход — ${res.deg} ${degWord(res.deg)}.</span></div>`;
+      await this._jPost(`${veilIcon("door")} Выход из варпа — ${esc(a.name)}`, "stable", body, [res.roll]);
+      // Точность выхода для Начертания маршрута (wdbc-r0w9.2, chartingModifier)
+      // — «Быстрый способ» книги упрощён до исхода ЭТОГО броска, без отдельного
+      // отслеживания качества Оценки Шага 1 (честно не смоделировано).
+      this.journey.lastExitAccuracy = "exact";
+    } else {
+      const er = await new Roll("1d100").evaluate(); const row = lookupTable(INACCURATE_EXIT, er.total);
+      body += `<div class="roll-outcome"><span class="roll-failure">Отклонение от курса.</span></div><div class="roll-threshold">Неаккуратный выход (1d100: ${er.total}): ${esc(row.text)}</div>`;
+      await this._jPost(`${veilIcon("door")} Выход из варпа — ${esc(a.name)}`, "torn", body, [res.roll, er]);
+      this.journey.lastExitAccuracy = er.total <= 75 ? "slight" : "significant";
+    }
+    // Прокладка (wdbc-r0w9.1): +1 гарантированное очко за то, что довёл судно
+    // из точки А в точку Б — вне зависимости от точности выхода.
+    const exitRoute = this._journeyRouteItem();
+    if (exitRoute?.system.plotting?.active) {
+      this.journey.plottingRejsPoints += 1;
+      if (!exitRoute.system.plotting.threshold && this.journey.baseDuration) {
+        await exitRoute.update({ "system.plotting.threshold": plottingThresholdFor(this.journey.baseDuration).threshold });
+      }
+    }
+    // Рост Знания по личным проходам (wdbc-r0w9.2) — только при успешном
+    // выходе («один личный проход без серьёзных происшествий»); работает для
+    // ЛЮБОГО выбранного маршрута, не только прокладываемого нового.
+    if (res.success && exitRoute) await this._trackRoutePass(a, exitRoute);
+    this.render(false);
+    await this._applyGuideFatigue(a);
+  }
+  /**
+   * Рост Знания (wdbc-r0w9.2, «Таблица Роста Знания»): Неизвестный →
+   * Предполагаемый за один чистый проход; Известный → Выученный за 10
+   * личных проходов (Особенность «Интуитивный» считает проход за два).
+   * Не понижает и не трогает Предполагаемый→Известный — тот только через
+   * Начертание/карту (_chartRoute), не через число проходов.
+   */
+  async _trackRoutePass(actor, route) {
+    const known = foundry.utils.deepClone(actor.system?.knownRoutes || []);
+    let entry = known.find(k => k.routeUuid === route.uuid);
+    if (!entry) { entry = { routeUuid: route.uuid, level: "unknown", passes: 0 }; known.push(entry); }
+    const featureLabels = (route.system.features || []).map(f => f.name);
+    entry.passes = (Number(entry.passes) || 0) + passIncrement(featureLabels);
+    if (entry.level === "unknown" || !entry.level) entry.level = "presumed";
+    else if (entry.level === "known" && entry.passes >= PASSES_TO_LEARNED) entry.level = "learned";
+    await actor.update({ "system.knownRoutes": known });
   }
   async _warpStorm() {
     const r = await new Roll("1d5").evaluate();

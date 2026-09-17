@@ -131,6 +131,13 @@ const DEVIATIONS = {
     // Пророк Гэллерпокса (wdbc-1rno.1) — заведено гораздо позже template.json.
     "gallerpoxInfected": false
   },
+  starSystem: {
+    // Свободный HTML-текст ГМа заменён структурными предметами «Маршрут»
+    // (мировыми, не вложенными — module/apps/warp-route.mjs, wdbc-r0w9).
+    // Непустой текст мигрирует в gmNotes (см. migrateWarpRoutesString),
+    // само поле снято тем же приёмом, что shipClass выше.
+    warpRoutes: undefined
+  },
   horde: {
     // Навыки Орды заведены позже template.json (вкладка «ПОКАЗАТЕЛИ»): у Орды
     // нет покупок за опыт, поэтому в записи только ранг и выведенное значение.
@@ -176,6 +183,9 @@ const DEVIATIONS = {
     // группы взять неоткуда. В template.json блока не было вовсе: Команды
     // отдавались только через Отряд.
     followers: [],
+    // Знание варп-маршрутов Проводником (wdbc-r0w9): {routeUuid, level}, пусто
+    // у всех до первого приобретённого/присвоенного маршрута.
+    knownRoutes: [],
     command: {
       presence:      { active: false, benefit: "extreme" },
       shortCommand:  { active: false, key: "inspire", successes: 0, note: "" },

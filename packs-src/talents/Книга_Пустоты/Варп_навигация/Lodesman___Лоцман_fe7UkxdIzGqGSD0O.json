@@ -1,0 +1,55 @@
+{
+  "name": "Lodesman / Лоцман",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "LjsqJMH26Qgo0CQE",
+  "system": {
+    "description": "",
+    "notes": "Не смоделировано: выбор игроком 5 Предполагаемых и 3 Известных варп-маршрутов (с одобрения МИ) при получении Таланта — требует привязки существующих предметов «Маршрут» к листу Проводника, это не безусловный testMod.",
+    "benefit": "Персонаж знает как минимум некоторые варп-маршруты (см. Таблицу Знания маршрута в главе Варп-путешествия). Игрок (с одобрения МИ) выбирает: пять маршрутов уровня Предполагаемый и три маршрута уровня Известный. Маршруты эти принадлежат региону, где персонаж получил Талант.",
+    "tier": 1,
+    "requirement": "Navigation (Warp); при создании персонажа или по решению МИ",
+    "aptitudes": [
+      "int",
+      "knowledge"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Книга Пустоты, Таланты Навигаторов (Варп навигация), стр. 364"
+  },
+  "_id": "fe7UkxdIzGqGSD0O",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1758122400000,
+    "modifiedTime": 1758122400000,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!fe7UkxdIzGqGSD0O"
+}

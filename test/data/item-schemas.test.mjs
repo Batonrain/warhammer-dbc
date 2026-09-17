@@ -565,6 +565,21 @@ const TYPES = {
       }
     }
   },
+  warpRoute: {
+    // Новый тип (wdbc-r0w9), мировых предметов ещё нет в packs-src —
+    // проверяются только умолчания, как у cybernetic.
+    pack: null,
+    defaults: {
+      description: "", gmNotes: "", systemAUuid: "", systemBUuid: "",
+      category:     { rating: 0, label: "" },
+      routeType:    { rating: 0, label: "" },
+      lore:         { rating: 0, label: "" },
+      illumination: { rating: 0, label: "" },
+      stability:    { rating: 0, label: "" },
+      features: [],
+      plotting: { active: false, points: 0, threshold: 0, attempts: 0, complete: false }
+    }
+  },
   vehicleGear: {
     pack: "vehicle-equipment",
     defaults: { description: "", notes: "", availability: 0, quality: "common", active: true,

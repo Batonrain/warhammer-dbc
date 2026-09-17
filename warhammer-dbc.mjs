@@ -238,6 +238,7 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/item/parts/runic-weave.hbs",
     // Звёздная система
     "systems/warhammer-dbc/templates/item/parts/celestial-body.hbs",
+    "systems/warhammer-dbc/templates/item/parts/warp-route.hbs",
     "systems/warhammer-dbc/templates/actor/star-system-sheet.hbs",
     // Техника
     "systems/warhammer-dbc/templates/actor/vehicle-sheet.hbs",

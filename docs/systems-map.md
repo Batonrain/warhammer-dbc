@@ -584,6 +584,16 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - Мистика/Варп: `constants/veil.mjs` (+`veil-icons.mjs`), `apps/veil.mjs`
   (окно ГМа: Завеса/Ритуалы/Навигация/Таро), `apps/veil-overlay.mjs`
   (варп-хоррор при истончённой Завесе).
+- Варп-маршруты (wdbc-r0w9, 17.09.2026): `data/item/warp-route.mjs` (мировой
+  предмет — не вложен в систему, соединяет ровно две через systemAUuid/
+  systemBUuid), `apps/warp-route.mjs` (привязка/отсоединение слотов,
+  генератор признаков), `rules/{warp-route,warp-route-traits,warp-guide,
+  warp-route-charting}.mjs` (шесть таблиц признаков, капы, Проводники —
+  навигатор/психоактивный/демон/одержимый/принц демонов, Усталость,
+  Прокладка/Начертание маршрута), `sheets/tabs/warp-routes.mjs` (блок
+  «ВАРП-МАРШРУТЫ» на вкладке Мистика — Знание Проводника, `knownRoutes` на
+  `data/actor/_creature.mjs`). Подключено в шаги окна «Навигация»
+  (`apps/veil.mjs`) — см. также §19 (привязка к Звёздной системе).
 - Ритуалы: `data/item/ritual.mjs`, `apps/ritual-cast.mjs`,
   `sheets/tabs/rituals.mjs`, `sheets/ritual-cast-dialog.mjs`.
 - Рунические Вязи: `data/item/runic-weave.mjs`, `constants/runic-weaves.mjs`,
@@ -705,7 +715,8 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `data/item/{component,ship-hull,cargo,torpedo,small-craft,celestial-body}.
   mjs`.
 - `data/actor/star-system.mjs`, `constants/star-system.mjs`,
-  `constants/warp-travel.mjs` (варп-переходы).
+  `constants/warp-travel.mjs` (варп-переходы). Блок «ВАРП-МАРШРУТЫ» на листе
+  системы — привязка мировых предметов типа `warpRoute`, см. §14.
 - `apps/{ship-hud,ship-hull,ship-hull-library,systems-overview}.mjs`,
   `sheets/{ship-sheet,hull-picker,star-system-sheet}.mjs`.
 - `combat/{ship-attack,ship-node-damage}.mjs` — движок автоматизации боевых

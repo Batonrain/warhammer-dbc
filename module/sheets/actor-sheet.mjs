@@ -36,6 +36,7 @@ import { betterThanPoorEquipped, UNSEEN_BEGGAR } from "../rules/unseen-beggar.mj
 import { QUALITY_LABELS } from "../constants/ship-quality.mjs";
 import { craftTabContext, activateCraftListeners } from "./tabs/craft.mjs";
 import { activateRitualListeners } from "./tabs/rituals.mjs";
+import { activateWarpRoutesListeners } from "./tabs/warp-routes.mjs";
 import { activateAspirationListeners } from "./tabs/aspirations.mjs";
 import { socialContext, activateSocialListeners } from "./tabs/social.mjs";
 import { activeEffectsTabContext } from "../apps/effects-summary.mjs";
@@ -1799,6 +1800,9 @@ export class WarhammerCharacterSheet
 
     // ── Ритуалы (стр. 393-425): добавление предмета + «Провести ритуал» ────
     activateRitualListeners(html, this.actor);
+
+    // ── Варп-маршруты (wdbc-r0w9): Знание Проводника у себя на листе ───────
+    activateWarpRoutesListeners(html, this.actor);
 
     activateGearListeners(root, this.actor);
 

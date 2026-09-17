@@ -8,6 +8,8 @@ import { esc } from "../helpers/utils.mjs";
 import { openContextMenu } from "./context-menu.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { WarhammerStructuralSheet } from "./structural-sheet.mjs";
+import { linkedWarpRoutes, attachRouteToSystem, detachRouteFromSystem, pickWarpRouteDialog }
+  from "../apps/warp-route.mjs";
 
 // Видно ли улучшение зрителю: secret → после раскрытия, hidden → после разведки, иначе всегда.
 function impVisible(im, isGM, scouted, revealed) {
@@ -158,6 +160,25 @@ function onSystemEncounter() { return this._addEncounter(); }
 function onSystemJournal()   { return this._journalPin(); }
 function onSystemClear()     { return this._clearBodies(); }
 
+// ── Варп-маршруты (wdbc-r0w9): «+» без drag-n-drop, открыть/отсоединить ──────
+// Привязка/отсоединение правит документ МАРШРУТА, а не актора этого листа —
+// Foundry не перерисовывает лист сам на изменение чужого мирового предмета
+// (найдено живой проверкой: без явного render() строка молча не появлялась/
+// не пропадала до следующего открытия листа). this.render() здесь обязателен.
+async function onWarpRoutePick() {
+  const route = await pickWarpRouteDialog({ exclude: linkedWarpRoutes(this.actor).map(r => r.uuid) });
+  if (route && await attachRouteToSystem(route, this.actor)) this.render();
+}
+function onWarpRouteOpen(event, target) {
+  const uuid = target.closest("[data-route-uuid]")?.dataset.routeUuid;
+  if (uuid) fromUuid(uuid).then(item => item?.sheet?.render(true)).catch(() => {});
+}
+async function onWarpRouteDetach(event, target) {
+  const uuid = target.closest("[data-route-uuid]")?.dataset.routeUuid;
+  const route = uuid ? await fromUuid(uuid).catch(() => null) : null;
+  if (route && await detachRouteFromSystem(route, this.actor)) this.render();
+}
+
 export class WarhammerStarSystemSheet extends WarhammerStructuralSheet {
 
   static DEFAULT_OPTIONS = {
@@ -179,7 +200,10 @@ export class WarhammerStarSystemSheet extends WarhammerStructuralSheet {
       systemAnomaly:   whenEditable(onSystemAnomaly),
       systemEncounter: whenEditable(onSystemEncounter),
       systemJournal:   whenEditable(onSystemJournal),
-      systemClear:     whenEditable(onSystemClear)
+      systemClear:     whenEditable(onSystemClear),
+      warpRoutePick:   whenEditable(onWarpRoutePick),
+      warpRouteOpen:   onWarpRouteOpen,
+      warpRouteDetach: whenEditable(onWarpRouteDetach)
     }
   };
 
@@ -203,8 +227,20 @@ export class WarhammerStarSystemSheet extends WarhammerStructuralSheet {
     const isGM = context.isGM;
     // ── Описание/Заметки: prose-mirror с переключаемым режимом (как у Journal Entries).
     context.descriptionEnriched = await this._enrich(sys.description);
-    context.warpRoutesEnriched  = await this._enrich(sys.warpRoutes);
     context.gmNotesEnriched     = await this._enrich(sys.gmNotes);
+    // Варп-маршруты (wdbc-r0w9) — мировые предметы, не вложены в актора:
+    // список всегда собирается запросом по game.items на рендере, не в
+    // prepareDerivedData (см. module/apps/warp-route.mjs).
+    context.warpRoutes = linkedWarpRoutes(this.actor).map(r => {
+      const otherUuid = r.system.systemAUuid === this.actor.uuid ? r.system.systemBUuid : r.system.systemAUuid;
+      return { uuid: r.uuid, id: r.id, name: r.name, img: r.img, otherUuid, otherMissing: false };
+    });
+    for (const row of context.warpRoutes) {
+      if (!row.otherUuid) { row.otherName = "(второй конец не привязан)"; continue; }
+      const other = await fromUuid(row.otherUuid).catch(() => null);
+      row.otherName = other?.name || "(система недоступна)";
+      row.otherMissing = !other;
+    }
 
     const regions = game.settings.get("warhammer-dbc", "regions") || [];
     const currentRegion = (sys.region || "").trim();
@@ -333,12 +369,39 @@ export class WarhammerStarSystemSheet extends WarhammerStructuralSheet {
     return context;
   }
 
+  /**
+   * Дроп мирового предмета «Маршрут» на лист Системы — привязка в первый
+   * свободный слот (module/apps/warp-route.mjs::attachRouteToSystem), не в
+   * конкретный слот: сама Система не знает заранее, какой из двух её концов
+   * это будет (в отличие от листа самого Маршрута, где оба слота видны и
+   * выбираются явно, см. item-sheet.mjs::_onDropWrpSlot).
+   */
+  async _onDrop(event) {
+    let data = null;
+    try { data = JSON.parse(event.dataTransfer.getData("text/plain")); } catch { /* не наш дроп */ }
+    if (data?.type === "Item") {
+      const src = await Item.implementation.fromDropData(data).catch(() => null);
+      if (src?.type === "warpRoute" && await attachRouteToSystem(src, this.actor)) this.render();
+    }
+  }
+
   _onRender(context, options) {
     super._onRender?.(context, options);
     const el = this.element;
     if (!el) return;
+    // root:true у PARTS.body ломает штатное связывание DragDrop ActorSheetV2
+    // (тот же случай, что у Отряда/Формирования/Орды/Техники).
+    this._bindManualDragDrop(el, "Звёздная система");
     // Поле «Фракция» в шапке — общее для всех листов.
     activateFactionFieldListeners(el, this.actor);
+
+    // Подсветка зоны Варп-маршрутов при наведении дропа (визуал; сам дроп
+    // штатно ловит _onDrop выше по всему листу).
+    el.querySelectorAll(".ss-warproute-zone").forEach(zone => {
+      zone.addEventListener("dragover", ev => { ev.preventDefault(); zone.classList.add("social-drop-hover"); });
+      zone.addEventListener("dragleave", () => zone.classList.remove("social-drop-hover"));
+      zone.addEventListener("drop", () => zone.classList.remove("social-drop-hover"));
+    });
 
     // ПКМ по строке тела. Наблюдателю — только «открыть лист»: полное меню
     // правит документы, и до перевода на V2 оно так же гасилось isEditable.
