@@ -44,6 +44,7 @@ import { reformationSongAvailable } from "../../combat/reformation-song.mjs";
 import { showReformationSongDialog } from "../../apps/reformation-song-dialog.mjs";
 import { conjureWraithAvailable, applyConjureWraith } from "../../combat/conjure-wraith.mjs";
 import { useDisabledArmourPeriodicTest, promptDisabledArmourForkTest } from "../../combat/armor-mods.mjs";
+import { useInventoryOverloadPeriodicTest } from "../../combat/encumbrance.mjs";
 import { useGangrenePeriodicTest } from "../../combat/gangrene.mjs";
 import { useRadiationSicknessTest } from "../../combat/radiation.mjs";
 import { repairArmorCorrosion, extractPiercingWound, applyCripplingTrigger } from "../../combat/damage.mjs";
@@ -98,6 +99,9 @@ export function activateCombatListeners(root, actor) {
   // ── Перевес выключенной силовой брони: тест раз в T.b часов (стр. 233) ──
   on(root, ".disabled-armour-periodic-test-btn", "click", () => useDisabledArmourPeriodicTest(actor));
   on(root, ".disabled-armour-fork-test-btn", "click", () => promptDisabledArmourForkTest(actor));
+
+  // ── Перевес общего инвентаря: тест раз в T.b часов (стр. 27) ────────────
+  on(root, ".inventory-overload-periodic-test-btn", "click", () => useInventoryOverloadPeriodicTest(actor));
 
   // ── Гангрена: урон T раз в T.b×2 часов (стр. 30-31, wdbc-r5o7.5) ────────
   on(root, ".gangrene-periodic-test-btn", "click", () => useGangrenePeriodicTest(actor));

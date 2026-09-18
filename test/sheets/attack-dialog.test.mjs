@@ -563,7 +563,14 @@ describe("пересчёт порога в открытом окне", () => {
     const sword = weaponFor({ weaponClass: "melee" });
     showAttackDialog(attacker({ items: [sword] }), sword);
 
-    expect(captured.dialog.content).not.toContain('data-autofail="true"');
+    // Скоуп на саму строку «Ослеплён»: рукопашная теперь легитимно несёт
+    // СВОЙ, не связанный с Ослеплением autofail (цель на Низкой/Высокой
+    // высоте полёта — «рукопашная недосягаема», wdbc-x1nz.2) — проверка на
+    // весь диалог целиком больше не годится, узнаём именно строку Ослепления.
+    const oslLabel = captured.dialog.content
+      .match(/<label class="attack-mod-check[^>]*">[\s\S]*?Ослеплён \(-30\)[\s\S]*?<\/label>/);
+    expect(oslLabel).toBeTruthy();
+    expect(oslLabel[0]).not.toContain('data-autofail="true"');
     expect(captured.dialog.content).toContain("Ослеплён (-30)");
   });
 });

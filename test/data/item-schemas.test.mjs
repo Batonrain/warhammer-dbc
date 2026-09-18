@@ -65,6 +65,10 @@ const TYPES = {
       // Надето ли сейчас (wdbc-9h7g) — носимое снаряжение отдаёт свою Механику
       // только надетым; спрашивается лишь у того, где заполнено «Носится».
       equipped: false,
+      // Включаемая/включена (wdbc-x1nz.2) — та же пара, что у armorMod/
+      // weaponMod: бонус Конструктора, требующий активного применения
+      // (Мучитель и подобные), отдельно от ношения выше.
+      activatable: false, active: false,
       effect: "", reminder: "", qualityEffects: { poor: "", good: "", best: "" },
       isRig: false, rig: { comfort: "normal", backSlot: false, slots: [], magLocks: [] },
       itemSize: "", bonuses: [], drukhari: false, bookSource: "",
@@ -83,7 +87,9 @@ const TYPES = {
       description: "", notes: "", quantity: 1, weight: 0, availability: 0,
       quality: "common", toolCategory: "general", linkedWeapon: "", effect: "",
       reminder: "", qualityEffects: { poor: "", good: "", best: "" },
-      bonuses: [], drukhari: false, bookSource: "", infoguard: 0
+      bonuses: [], drukhari: false, bookSource: "", infoguard: 0,
+      // Включаемая/включена (wdbc-x1nz.2) — см. тот же комментарий у gear выше.
+      activatable: false, active: false
     }
   },
   cybernetic: {

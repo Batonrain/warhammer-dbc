@@ -55,6 +55,8 @@ import { decayAblativeApShieldOnNewRound } from "./apps/ablative-ap-shield.mjs";
 import { resolveTrancesForCombat }       from "./apps/armour-history-trance.mjs";
 import { resolveExpiredImperatives }     from "./rules/imperative.mjs";
 import { syncDisabledArmourOverloadTimer, promptDisabledArmourForkTest } from "./combat/armor-mods.mjs";
+import { syncInventoryOverloadTimer } from "./combat/encumbrance.mjs";
+import { STOWABLE_TYPES } from "./constants/rig.mjs";
 import { blastCircleShape, sprayConeShape, placeAttackTemplate, targetTokens, pxPerMeter } from "./combat/templates.mjs";
 import { triggerBlastAnimation } from "./integrations/autoanimations.mjs";
 import { placeLingerZone, processShooterTurnStart, clearAllLingerZones } from "./regions/linger-zone.mjs";
@@ -1069,7 +1071,8 @@ export function registerHooks() {
         const meters = parseFloat(ds.meters) || 0;
         if (meters <= 0) return ui.notifications.warn("⚠️ У оружия не задан радиус/дальность зоны.");
         const px = pxPerMeter();
-        const shape = ds.shape === "cone" ? sprayConeShape(meters, px) : blastCircleShape(meters, px);
+        const isCone = ds.shape === "cone";
+        const shape = isCone ? sprayConeShape(meters, px) : blastCircleShape(meters, px);
 
         const rounds = parseInt(ds.linger || "0") || 0;
         if (rounds > 0) {
@@ -1105,7 +1108,8 @@ export function registerHooks() {
             throughShot:     ds.throughShot === "1"
           };
           const drift = parseFloat(ds.lingerDrift || "0") || 0;
-          const region = await placeLingerZone(shape, damageData, rounds, drift, ds.weaponName || "Остаётся");
+          const region = await placeLingerZone(shape, damageData, rounds, drift,
+            ds.weaponName || "Остаётся", isCone ? null : meters);
           if (!region) return; // ГМ отменил размещение (ПКМ)
           ui.notifications.info(`Зона «Остаётся» размещена на ${rounds} ход(а/ов) стрелка`
             + `${drift > 0 ? ` — дрейфует на ${drift}м каждый ход` : ""} — попадание применяется автоматически.`);
@@ -1131,7 +1135,10 @@ export function registerHooks() {
           return;
         }
 
-        const result = await placeAttackTemplate(shape, ds.weaponName || "Зона поражения");
+        // Взрывное (не Спрей) — сфера-приближение: вертикальный охват = тот же
+        // радиус, что и горизонтальный (wdbc-x1nz.2). Спрей — конус, охват по
+        // высоте не ограничиваем (см. комментарий у placeAttackTemplate).
+        const result = await placeAttackTemplate(shape, ds.weaponName || "Зона поражения", isCone ? null : meters);
         if (!result) return; // ГМ отменил размещение (ПКМ)
         if (!result.tokens.length) {
           ui.notifications.info("В зоне шаблона никого нет.");
@@ -2647,6 +2654,33 @@ function _attachFateContextMenu(message, html) {
   // (характеристики, снаряжение).
   Hooks.on("updateActor", async actor => {
     await syncDisabledArmourOverloadTimer(actor);
+    await syncInventoryOverloadTimer(actor);
+  });
+
+  // ── Таймер периодического теста Перевеса инвентаря (стр. 27) ────────────
+  // (combat/encumbrance.mjs) — в отличие от Перевеса ВЫКЛЮЧЕННОЙ силовой
+  // брони выше (тот зависит только от веса самой брони и характеристик,
+  // покрытых updateActor/её собственным updateItem), общий Перевес зависит
+  // от суммарного веса ВСЕХ предметов актора (rules/character.mjs, «Вес») —
+  // добавить/снять/переложить любой стоуемый предмет или броню меняет его
+  // так же, как правка характеристики. STOWABLE_TYPES — тот же список, что
+  // constants/rig.mjs держит для самой Разгрузки; armor — отдельно, он не
+  // «стоуится», но его вес и influences итог наравне с прочим (кроме
+  // включённой силовой/aspect/weightless — те несут вес сами, character.mjs).
+  Hooks.on("createItem", async item => {
+    if (item.actor && (STOWABLE_TYPES.includes(item.type) || item.type === "armor")) {
+      await syncInventoryOverloadTimer(item.actor);
+    }
+  });
+  Hooks.on("deleteItem", async item => {
+    if (item.actor && (STOWABLE_TYPES.includes(item.type) || item.type === "armor")) {
+      await syncInventoryOverloadTimer(item.actor);
+    }
+  });
+  Hooks.on("updateItem", async item => {
+    if (item.actor && (STOWABLE_TYPES.includes(item.type) || item.type === "armor")) {
+      await syncInventoryOverloadTimer(item.actor);
+    }
   });
 
   // ── Пересчёт цены Продвижения при смене Покровителя/стереотипа/режима ───

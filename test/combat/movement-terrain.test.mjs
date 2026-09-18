@@ -111,3 +111,39 @@ describe("Ослеплён — Трудный Ландшафт вне насто
     expect(card).toContain("<label>Порог</label><b>5</b>"); // 35 − 30
   });
 });
+
+describe("Полёт — Трудный Ландшафт игнорируется на любой высоте (стр. 30, wdbc-x1nz.2)", () => {
+  it("Приземная — зона под токеном полностью снимается, кнопка не появилась бы (mod 0)", async () => {
+    const actor = actorFor({ movement: { altitude: "ground" } });
+    await showDifficultTerrainDialog(actor, terrainTokenDoc(-10, "Грязь"));
+    expect(captured.dialog.content).toContain("+0");
+    expect(captured.dialog.content).toContain("Игнорирует: Грязь, Полёт");
+  });
+
+  it("Низкая/Высокая — тоже снимается (не только буквально упомянутая Приземная)", async () => {
+    const actor = actorFor({ movement: { altitude: "high" } });
+    await showDifficultTerrainDialog(actor, terrainTokenDoc(-20, "Обломки"));
+    expect(captured.dialog.content).toContain("+0");
+  });
+
+  it("«landed» (не летит) — зона действует как обычно, несмотря на Черту Flyer", async () => {
+    const actor = actorFor({ movement: { altitude: "landed" } });
+    await showDifficultTerrainDialog(actor, terrainTokenDoc(-10, "Грязь"));
+    expect(captured.dialog.content).toContain("-10");
+    expect(captured.dialog.content).toContain("Грязь");
+  });
+
+  it("altitude не выставлена вовсе — то же, что «landed», зона действует", async () => {
+    const actor = actorFor();
+    await showDifficultTerrainDialog(actor, terrainTokenDoc(-10, "Грязь"));
+    expect(captured.dialog.content).toContain("-10");
+  });
+
+  it("реальный тест: летит на Приземной — порог без штрафа зоны доходит до карточки", async () => {
+    const actor = actorFor({ movement: { altitude: "ground" } });
+    await showDifficultTerrainDialog(actor, terrainTokenDoc(-10, "Грязь"));
+    await rollTerrain(35, "0");
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("<label>Порог</label><b>35</b>");
+  });
+});

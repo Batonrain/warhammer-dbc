@@ -144,6 +144,16 @@ export function situationalMods(v) {
   const bandNote = k => (bandKey === k ? `по измеренной дистанции ${measured.edgeM} м` : undefined);
   // «Положение выше» (+10): сравнение elevation токенов атакующего и цели.
   const highGround = (isMelee && measured) ? hasHighGround(attackerToken, targetToken) : null;
+  // Полёт (стр. 30, wdbc-x1nz.2): высота ЦЕЛИ решает разрешён ли контакт —
+  // Низкая недосягаема рукопашной (но не стрелковым, там штраф −10 вместо
+  // блока), Высокая недосягаема стрелковым вовсе без Зенитного, рукопашной —
+  // всегда. Атакующий на ТОЙ ЖЕ высоте снимает оба правила целиком (бой
+  // на равной высоте — книга не даёт для него ни штрафа, ни блока).
+  const targetAltitude   = attackCtx.targetActor?.system?.movement?.altitude;
+  const attackerAltitude = actor?.system?.movement?.altitude;
+  const sameAltitude = attackerAltitude != null && attackerAltitude === targetAltitude;
+  const targetAtLow  = targetAltitude === "low"  && !sameAltitude;
+  const targetAtHigh = targetAltitude === "high" && !sameAltitude;
   // «Трудный ландшафт» в рукопашной: зона Трудного Ландшафта под атакующим.
   // Зона «очень трудный» не различает — автоотмечаем обычный (−10), сильнее руками.
   const meleeTerrain = (isMelee && attackerToken)
@@ -158,6 +168,13 @@ export function situationalMods(v) {
       note: outnumberCount == null ? undefined : `в контакте с целью: ${outnumberCount}` },
     { label: "Положение выше",         value:  10, autoCheck: highGround === true,
       note: highGround === true ? "elevation токена выше цели" : undefined },
+    // Полёт (стр. 30, wdbc-x1nz.2): Низкая/Высокая — «вне досягаемости
+    // рукопашных атак наземных персонажей» — не штраф, а полный блок.
+    // Приземная сюда не попадает (targetAtLow/targetAtHigh уже false) —
+    // книга прямо говорит «без всяких ограничений».
+    { label: "Цель в полёте (Низкая/Высокая) — рукопашная недосягаема",
+      value: 0, autofail: true, autoCheck: targetAtLow || targetAtHigh,
+      note: (targetAtLow || targetAtHigh) ? `цель на высоте «${targetAltitude}» (стр. 30)` : undefined },
     { label: "Более длинное оружие",   value:   5 },
     ...(wp.duelingParry ? [{
       label: "Дуэлянтское: бой 1-на-1 (никто не мешает)", value: 5,
@@ -201,9 +218,11 @@ export function situationalMods(v) {
     // принципе нельзя без Зенитного (не просто штраф, отсюда autofail, как у
     // «Ослеплён» выше), Зенитное снимает оба штрафа целиком.
     { label: "Низкая высота цели",  value: wp.antiAir ? 0 : -10, immune: wp.antiAir,
-      note: wp.antiAir ? "снято: Зенитное" : "цель на Низкой высоте (полёт)" },
+      autoCheck: targetAtLow,
+      note: wp.antiAir ? "снято: Зенитное" : (targetAtLow ? "цель на Низкой высоте (полёт)" : undefined) },
     { label: "Высокая высота цели", value: 0, autofail: !wp.antiAir, immune: wp.antiAir,
-      note: wp.antiAir ? "снято: Зенитное" : "без Зенитного попасть в принципе нельзя" },
+      autoCheck: targetAtHigh,
+      note: wp.antiAir ? "снято: Зенитное" : (targetAtHigh ? "без Зенитного попасть в принципе нельзя" : undefined) },
     // Тяжёлое оружие (стр. 40): –30 без Закрепления, ещё –10 если стрелок
     // Двигался в этот Ход — Гиро-Стабилизированное снижает первое до –10 и
     // полностью снимает второе (стр. 168).

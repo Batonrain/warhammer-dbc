@@ -110,6 +110,7 @@ import { toggleAbility } from "../apps/toggle-abilities.mjs";
 import { resolveArmorProps, aggregateArmorSkillMods } from "../combat/armor-properties.mjs";
 import { actorHasAspectPath } from "../constants/aeldari-paths.mjs";
 import { zeroBlankNumbers } from "../helpers/blank-zero.mjs";
+import { clearHololithBriefing } from "../combat/hololith-briefing.mjs";
 
 /** Книжная пара Склонностей Навыка — [char, apt2] его определения. */
 const bookSkillPair = (key) => {
@@ -3086,6 +3087,12 @@ export class WarhammerCharacterSheet
       rerollNote, critLine: outcome.critLine, outcome: outcomeHtml,
       sections: [outcome.extendedLine, outcome.opposedLine, pendingOpponentNote, onFailNote]
     }, { rolls: [roll] });
+
+    // Гололит (rules/situational.mjs::hololithBriefingBonus): подготовленный
+    // брифинг тратится на СЛЕДУЮЩИЙ тест Command, каким бы он ни вышел —
+    // успех тоже расходует подготовку (тот же принцип, что у прочих
+    // «тратится по факту теста» состояний этого файла).
+    if (skillKey === "command") await clearHololithBriefing(this.actor);
 
     if (opposedOpponent) {
       await this._sendOpposedRequest(opposedOpponent, {

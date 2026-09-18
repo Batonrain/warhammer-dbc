@@ -7,10 +7,16 @@
 import { syncItemEffectsDisabled, syncOrphanedModEffects } from "../../apps/effects.mjs";
 import { _reloadWeapon } from "../../combat/reload.mjs";
 import { _toggleShield, _rollShieldActivation, _repairShield } from "../../combat/shield.mjs";
-import { on } from "../../helpers/utils.mjs";
+import { on, esc } from "../../helpers/utils.mjs";
 import { canEquipInHands, handsOccupied, getHeldHand, setHeldHand } from "../../rules/hands.mjs";
 import { rollInfoguard as _rollInfoguard } from "../../apps/infoguard.mjs";
 import { showDelegateTestPicker as _showDelegateTestPicker } from "../../rules/delegate-test.mjs";
+import { useDetonateGrenadeInRig } from "../../combat/draw-action.mjs";
+import { useHololithBriefing } from "../../combat/hololith-briefing.mjs";
+import { useSwingItem, useThrowItem } from "../../combat/improvised-item.mjs";
+import { spendActionPoints } from "../../combat/action-economy.mjs";
+import { rollIcon } from "../../constants/roll-icons.mjs";
+import { postTestCard } from "../../helpers/test-card.mjs";
 
 const ARMOR_LOCS = ["head", "body", "leftArm", "rightArm", "leftLeg", "rightLeg"];
 
@@ -35,6 +41,14 @@ function _conflictingHardArmor(actor, item) {
  * Экипировка. Надевание оружия/щита (не брони — она рук не занимает)
  * блокируется, если рук не хватает (wdbc-3xqh) — только на ПРИРОСТ занятости,
  * старые «нелегальные» связки на существующих листах не трогает и не рвёт.
+ *
+ * «Взять» (стр. 27, полудействие, физическое действие): здесь моделируется
+ * без отдельной кнопки — оружие СЧИТАЕТСЯ взятым в руки, когда становится
+ * equipped=true. Список инструментов на вкладке уже показывает всё
+ * снаряжение и его состояние, отдельный диалог поверх него был бы лишним.
+ * Списывается ТОЛЬКО на переход false→true (обратное — сложить — книга не
+ * тарифицирует); нет ОД — экипировка откатывается (ранний return, update не
+ * происходит), чекбокс возвращается в фактическое состояние ниже.
  */
 export async function equipItem(item, equipped) {
   if (!item) return;
@@ -54,11 +68,23 @@ export async function equipItem(item, equipped) {
       return;
     }
   }
+  const isDraw = equipped && item.type === "weapon" && !item.system.equipped;
+  if (isDraw && item.parent && !await spendActionPoints(item.parent, 1, { physical: true })) {
+    ui.notifications?.warn("⚠️ Не хватает ОД, чтобы Взять оружие (Полудействие, стр. 27).");
+    return;
+  }
   await item.update({ "system.equipped": equipped });
   await syncItemEffectsDisabled(item, equipped);
   // Эффекты установленных модификаций гаснут вместе с носителем (isItemActive),
   // но update пришёл не им — пересчитываем сами.
   await syncOrphanedModEffects(item.parent, item.id);
+  if (isDraw && item.parent) {
+    await postTestCard(item.parent, {
+      icon: rollIcon("run", "#b0a080"),
+      title: `${esc(item.parent.name)} — Взять`,
+      lines: [`<div class="roll-threshold">Берёт в руки: <b>${esc(item.name)}</b> (Полудействие).</div>`]
+    }, { sound: false });
+  }
 }
 
 export async function setShieldHand(item, hand) {
@@ -118,9 +144,35 @@ export function activateGearListeners(root, actor, {
   showDelegateTestPicker = _showDelegateTestPicker
 } = {}) {
   on(root, ".weapon-equip-cb", "change", async ev => {
-    const itemId   = ev.currentTarget.dataset.itemId;
-    const equipped = ev.currentTarget.checked;
-    await equipItem(actor.items.get(itemId), equipped);
+    const cb       = ev.currentTarget;
+    const item     = actor.items.get(cb.dataset.itemId);
+    await equipItem(item, cb.checked);
+    // Откат при отказе (руки заняты / не хватило ОД на Взять, см. equipItem
+    // выше): update тогда не происходит, чекбокс должен вернуться к
+    // фактическому system.equipped, а не остаться в кликнутом состоянии.
+    if (item) cb.checked = !!item.system.equipped;
+  });
+
+  // ── Граната на разгрузке: сорвать чеку и детонировать на месте (стр. 27) ──
+  on(root, ".weapon-grenade-pin-btn", "click", ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) useDetonateGrenadeInRig(actor, item);
+  });
+
+  // ── Гололит: брифинг Tech-Use+0, час подготовки → +10 Command (стр. 256) ──
+  on(root, ".hololith-briefing-btn", "click", ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) useHololithBriefing(actor, item);
+  });
+
+  // ── Импровизированное Оружие / Метание обычным предметом (стр. 27-28) ────
+  on(root, ".improvised-swing-btn", "click", ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) useSwingItem(actor, item);
+  });
+  on(root, ".improvised-throw-btn", "click", ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) useThrowItem(actor, item);
   });
 
   on(root, ".armor-equip-cb", "change", async ev => {

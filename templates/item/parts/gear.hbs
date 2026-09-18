@@ -20,6 +20,18 @@
     {{/if}}
   </div>
   <div class="weapon-row">
+    <label class="drug-fx-cb-label" title="Бонус этой вещи не пассивен — по книге требует активного применения (осмотр места, поддержание и т.п.), а не просто владения. Включаемая — тумблер на листе персонажа, бонус учитывается только пока включено.">
+      <input type="checkbox" name="system.activatable" {{#if system.activatable}}checked{{/if}}/>
+      Включаемая (бонус требует применения)
+    </label>
+    {{#if system.activatable}}
+    <label class="drug-fx-cb-label">
+      <input type="checkbox" name="system.active" {{#if system.active}}checked{{/if}}/>
+      Включена сейчас
+    </label>
+    {{/if}}
+  </div>
+  <div class="weapon-row">
     <label class="wr-label" title="Мелочь, жёстко закреплённая на другом предмете (визор на шлеме, крепление на броне) — не занимает слот в разгрузке, пока указан носитель.">Надеть на</label>
     <select name="system.wornOn" class="wr-select">
       <option value="" {{#if (eq system.wornOn "")}}selected{{/if}}>— не надето —</option>
@@ -137,6 +149,18 @@
       <option value="4"  {{#if (eq system.availabilityStr "4")}}selected{{/if}}>+4 Почти уникально</option>
       <option value="5"  {{#if (eq system.availabilityStr "5")}}selected{{/if}}>+5 Уникально</option>
     </select>
+  </div>
+  <div class="weapon-row">
+    <label class="drug-fx-cb-label" title="Бонус этого инструмента не пассивен — по книге требует активного применения, а не просто владения. Включаемая — тумблер на листе персонажа, бонус учитывается только пока включено.">
+      <input type="checkbox" name="system.activatable" {{#if system.activatable}}checked{{/if}}/>
+      Включаемая (бонус требует применения)
+    </label>
+    {{#if system.activatable}}
+    <label class="drug-fx-cb-label">
+      <input type="checkbox" name="system.active" {{#if system.active}}checked{{/if}}/>
+      Включена сейчас
+    </label>
+    {{/if}}
   </div>
 </div>
 

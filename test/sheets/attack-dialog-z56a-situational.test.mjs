@@ -92,6 +92,92 @@ describe("Гиро-Стабилизированное — тяжёлое ору�
   });
 });
 
+describe("Полёт — высота ЦЕЛИ решает попадание/досягаемость (стр. 30, wdbc-x1nz.2)", () => {
+  it("стрелковая: цель на Низкой высоте — авто-галочка −10, атакующий на земле", () => {
+    const weapon = weaponFor();
+    const actor  = actorFor({ items: [weapon], fatigue: { value: 0 }, aiming: "none" });
+    const target = actorFor({ movement: { altitude: "low" } });
+    setTargets([target]);
+    showAttackDialog(actor, weapon);
+
+    expect(modLine("Низкая высота цели")).toMatchObject({ value: -10, disabled: false });
+  });
+
+  it("стрелковая: цель на Высокой высоте — авто-галочка autofail, без Зенитного", () => {
+    const weapon = weaponFor();
+    const actor  = actorFor({ items: [weapon], fatigue: { value: 0 }, aiming: "none" });
+    const target = actorFor({ movement: { altitude: "high" } });
+    setTargets([target]);
+    showAttackDialog(actor, weapon);
+
+    expect(modLine("Высокая высота цели")).toMatchObject({ autofail: true, disabled: false });
+  });
+
+  it("стрелковая: цель на Низкой, атакующий ТОЖЕ на Низкой — галочка не ставится (бой на равной высоте)", () => {
+    const weapon = weaponFor();
+    const actor  = actorFor({ items: [weapon], fatigue: { value: 0 }, aiming: "none", movement: { altitude: "low" } });
+    const target = actorFor({ movement: { altitude: "low" } });
+    setTargets([target]);
+    showAttackDialog(actor, weapon);
+
+    const line = modLine("Низкая высота цели");
+    expect(line?.note).toBeNull();
+  });
+
+  it("стрелковая: цель на земле (без altitude) — обе галочки высоты не ставятся", () => {
+    const weapon = weaponFor();
+    const actor  = actorFor({ items: [weapon], fatigue: { value: 0 }, aiming: "none" });
+    const target = actorFor();
+    setTargets([target]);
+    showAttackDialog(actor, weapon);
+
+    expect(modLine("Низкая высота цели")?.note).toBeNull();
+    expect(modLine("Высокая высота цели")?.note).toBeNull();
+  });
+
+  it("рукопашная: цель на Низкой высоте — недосягаема (autofail), атакующий на земле", () => {
+    const weapon = weaponFor({ weaponClass: "melee" });
+    const actor  = actorFor({ items: [weapon], fatigue: { value: 0 }, aiming: "none" });
+    const target = actorFor({ movement: { altitude: "low" } });
+    setTargets([target]);
+    showAttackDialog(actor, weapon);
+
+    expect(modLine("Цель в полёте (Низкая/Высокая) — рукопашная недосягаема"))
+      .toMatchObject({ autofail: true, disabled: false });
+  });
+
+  it("рукопашная: цель на Высокой высоте — недосягаема (autofail)", () => {
+    const weapon = weaponFor({ weaponClass: "melee" });
+    const actor  = actorFor({ items: [weapon], fatigue: { value: 0 }, aiming: "none" });
+    const target = actorFor({ movement: { altitude: "high" } });
+    setTargets([target]);
+    showAttackDialog(actor, weapon);
+
+    expect(modLine("Цель в полёте (Низкая/Высокая) — рукопашная недосягаема"))
+      .toMatchObject({ autofail: true, disabled: false });
+  });
+
+  it("рукопашная: цель на Низкой, атакующий ТОЖЕ на Низкой — досягаема как обычно", () => {
+    const weapon = weaponFor({ weaponClass: "melee" });
+    const actor  = actorFor({ items: [weapon], fatigue: { value: 0 }, aiming: "none", movement: { altitude: "low" } });
+    const target = actorFor({ movement: { altitude: "low" } });
+    setTargets([target]);
+    showAttackDialog(actor, weapon);
+
+    expect(modLine("Цель в полёте (Низкая/Высокая) — рукопашная недосягаема")?.note).toBeNull();
+  });
+
+  it("рукопашная: цель на земле — блок не ставится (Приземная/наземная — без ограничений)", () => {
+    const weapon = weaponFor({ weaponClass: "melee" });
+    const actor  = actorFor({ items: [weapon], fatigue: { value: 0 }, aiming: "none" });
+    const target = actorFor({ movement: { altitude: "ground" } });
+    setTargets([target]);
+    showAttackDialog(actor, weapon);
+
+    expect(modLine("Цель в полёте (Низкая/Высокая) — рукопашная недосягаема")?.note).toBeNull();
+  });
+});
+
 describe("Гиро-Стабилизированное — штраф стрельбы с седла (нестабильная платформа верхом)", () => {
   function mountedRider(speed, over = {}) {
     const a = actorFor({

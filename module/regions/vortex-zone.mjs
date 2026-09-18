@@ -166,12 +166,16 @@ function sustainCardHtml(actorName, outcome, { isController } = {}) {
  */
 export async function placeVortexZone(shape, xValue, ownerUuid, itemUuid, name = "Вихрь Рока") {
   if (!canvas.ready) throw new Error("Нет активной сцены");
+  // elevation:{bottom:0, top:xValue} — та же сфера-приближение, что у
+  // placeAttackTemplate/placeLingerZone/placeGravitonZone (wdbc-x1nz.2):
+  // «Blast (X)» книги — тот же X, что и радиус зоны в метрах.
   const region = await canvas.regions.placeRegion({
     name,
     shapes: [shape],
     color: game.user.color.toString(),
     highlightMode: "coverage",
     displayMeasurements: true,
+    elevation: { bottom: 0, top: Math.max(1, Number(xValue) || 0) },
     behaviors: [{
       name: "Вихрь Рока",
       type: VORTEX_ZONE_TYPE,

@@ -164,9 +164,16 @@ export class LingerZoneBehaviorType extends foundry.data.regionBehaviors.RegionB
  * @param {number} rounds        roundsTotal (X) — сколько ходов стрелка зона держится.
  * @param {number} [driftMeters] Y — на сколько метров зона дрейфует каждый ход стрелка; 0 — не дрейфует.
  * @param {string} [name]
+ * @param {number|null} [elevationTop]  Радиус зоны в МЕТРАХ для ограничения по
+ *   высоте (bottom:0, top:elevationTop) — тот же приём и то же приближение
+ *   («сфера радиусом с саму зону»), что у placeAttackTemplate
+ *   (module/combat/templates.mjs, wdbc-x1nz.2): без него Region по умолчанию
+ *   не ограничен по elevation, и персонаж, летящий НАД зоной на любой
+ *   высоте, засекался бы TOKEN_ENTER/TOKEN_TURN_START наравне со стоящим
+ *   в ней. null/0 — не ограничивать (например, для конуса Распыления).
  * @returns {Promise<RegionDocument|null>}  null — размещение отменено (ПКМ).
  */
-export async function placeLingerZone(shape, damageData, rounds, driftMeters = 0, name = "Остаётся") {
+export async function placeLingerZone(shape, damageData, rounds, driftMeters = 0, name = "Остаётся", elevationTop = null) {
   if (!canvas.ready) throw new Error("Нет активной сцены");
   // create:true (по умолчанию) — в отличие от разового Шаблона, зона должна
   // пережить момент размещения и реагировать на события следующих ходов.
@@ -176,6 +183,7 @@ export async function placeLingerZone(shape, damageData, rounds, driftMeters = 0
     color: game.user.color.toString(),
     highlightMode: "coverage",
     displayMeasurements: true,
+    ...(Number(elevationTop) > 0 ? { elevation: { bottom: 0, top: Number(elevationTop) } } : {}),
     behaviors: [{
       name: "Остаётся",
       type: LINGER_ZONE_TYPE,

@@ -28,7 +28,15 @@ export class ToolData extends foundry.abstract.TypeDataModel {
       reminder:     new StringField({ initial: "", label: "Напоминание" }),
       qualityEffects: qualityEffectsField(),
       bonuses:      new ArrayField(new ObjectField(), { label: "Бонусы" }),
-      drukhari:     new BooleanField({ initial: false, label: "Друкхари" })
+      drukhari:     new BooleanField({ initial: false, label: "Друкхари" }),
+      // Включаемая/включена (wdbc-x1nz.2) — тот же тумблер, что у armorMod/
+      // weaponMod/gear: бонус Конструктора действует, только пока active=true.
+      // Инструмент, в отличие от gear, вообще не имел equipped — без этой
+      // пары isItemActive() (apps/effects.mjs) считал ЛЮБОЙ tool активным
+      // просто по факту владения, даже лежащий в рюкзаке (найдено на
+      // Ауспексе — «занимает руку» по effect-тексту, но код это не проверял).
+      activatable:  new BooleanField({ initial: false, label: "Включаемая" }),
+      active:       new BooleanField({ initial: false, label: "Включена" })
     };
   }
 }

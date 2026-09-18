@@ -121,6 +121,33 @@
 - `module/combat/action-economy.mjs` — 2 ОД + 1 Реакция за Ход.
 - `module/combat/movement-actions.mjs` — Полудвижение/Полное/Натиск/Бег/Выход.
 - `module/combat/movement-terrain.mjs` — Трудный Ландшафт при Беге/Натиске.
+- **Полёт (стр. 30, wdbc-x1nz.2, 18.09.2026):** `combat/movement-actions.mjs`
+  — `actorCanFly`/`actorHasFlyer` (гейт по Черте Flyer/Hoverer — Hoverer БЕЗ
+  Flyer поднимается только на Приземную), `showFlightDialog` (4 тира:
+  `landed`/`ground`/`low`/`high`, флаг `system.movement.altitude`, по
+  умолчанию `landed` — явное «не летит», не молчаливый дефолт на Приземную),
+  `_syncFlightElevation` (синхронизирует нативный `TokenDocument#elevation`
+  — 0 у Приземной НАРОЧНО, не 2 буквальной книги, иначе ложный авто-бонус
+  «Положение выше», `tactical-map.mjs::hasHighGround`; 10/25 у Низкой/
+  Высокой), `_showFlightLocDialog`+`_resolveFallDamage` (Потеря управления —
+  высота падения по таблице, ЗАТЕМ обычная механика Падения: 1d10+высота,
+  Группирование, спецправило «успехов больше высоты — 0 урона гарантированно»).
+  `movement-terrain.mjs::effectiveTerrainInfo` — Трудный Ландшафт полностью
+  снимается на любой высоте полёта (`IN_FLIGHT_ALTITUDES`). Автомодификаторы
+  попадания по высоте цели/атакующего (Низкая −10 стрелковой, Высокая —
+  блок без Зенитного, рукопашная против Низкой/Высокой недосягаема целиком,
+  гасится при равной высоте обеих сторон) — `sheets/attack/mods.mjs`.
+  Шаблоны/зоны, построенные на `canvas.regions.placeRegion` (Взрывное —
+  `combat/templates.mjs::placeAttackTemplate`, Остаётся — `regions/
+  linger-zone.mjs`, Гравитонное — `regions/graviton-zone.mjs`, Вихрь Рока —
+  `regions/vortex-zone.mjs`) получают `elevation:{bottom:0, top:радиус}` —
+  без него Region у Foundry по умолчанию бесконечен по высоте (подтверждено
+  по исходнику `region.mjs`), и персонаж, летящий НАД зоной на любой высоте,
+  засчитывался бы попавшим наравне со стоящим в ней; граница «сфера радиусом
+  с саму зону» — не буква правила, книга её текстом не даёт, это чтение.
+  Трудный Ландшафт (`regions/difficult-terrain.mjs`) сюда НЕ входит — у него
+  свой механизм игнора (флаг высоты полёта, не elevation региона), зона
+  рисуется ГМом вручную и не привязана к конкретному радиусу оружия.
 - Визуализация: `combat/range-cells.mjs`, `range-rings.mjs`,
   `reachable-cells.mjs` (подсветка клеток по Dijkstra).
 - Доп. ходы/действия: `combat/snapshot.mjs`, `assassin-strike.mjs`,

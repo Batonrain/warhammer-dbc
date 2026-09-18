@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { listenerRoot, resetCaptured } from "../support/foundry-stub.mjs";
 import {
   activateGearListeners,
@@ -218,6 +218,79 @@ describe("gear tab helpers", () => {
     mod.system.active = true;                    // документ обновился — читаем новое состояние
     await toggleGearModActive(mod);
     expect(mod.updates[1]).toEqual({ "system.active": false });
+  });
+});
+
+function combatCharacter(items = [], { ap = 2 } = {}) {
+  const sys = { actionPoints: { value: ap, max: 2 }, reactions: { value: 1, max: 1 } };
+  const list = [...items];
+  list.get = id => list.find(i => i.id === id) ?? null;
+  const a = {
+    id: "char-1", name: "Гвардеец", type: "character", system: sys, items: list,
+    getFlag: () => undefined,
+    update: async data => {
+      for (const [path, value] of Object.entries(data)) {
+        const keys = path.split(".");
+        let target = a;
+        for (const key of keys.slice(0, -1)) target = (target[key] ??= {});
+        target[keys.at(-1)] = value;
+      }
+      return data;
+    }
+  };
+  return a;
+}
+
+describe("equipItem — «Взять» списывает ОД в бою (стр. 27)", () => {
+  beforeEach(() => { globalThis.game.combat = { started: true }; });
+  afterEach(() => { delete globalThis.game.combat; });
+
+  it("экипировка оружия (false→true) тратит 1 ОД и ставит equipped", async () => {
+    const weapon = item({ id: "w1", system: { equipped: false } });
+    weapon.type = "weapon";
+    const owner = combatCharacter([weapon]);
+    weapon.parent = owner;
+
+    await equipItem(weapon, true);
+
+    expect(weapon.updates).toEqual([{ "system.equipped": true }]);
+    expect(owner.system.actionPoints.value).toBe(1);
+  });
+
+  it("не хватает ОД — экипировка откатывается, update не происходит", async () => {
+    const weapon = item({ id: "w1", system: { equipped: false } });
+    weapon.type = "weapon";
+    const owner = combatCharacter([weapon], { ap: 0 });
+    weapon.parent = owner;
+
+    await equipItem(weapon, true);
+
+    expect(weapon.updates).toEqual([]);
+    expect(weapon.system.equipped).toBe(false);
+    expect(owner.system.actionPoints.value).toBe(0);
+  });
+
+  it("снятие оружия (true→false) не тратит ОД — книга тарифицирует только взятие", async () => {
+    const weapon = item({ id: "w1", system: { equipped: true } });
+    weapon.type = "weapon";
+    const owner = combatCharacter([weapon], { ap: 2 });
+    weapon.parent = owner;
+
+    await equipItem(weapon, false);
+
+    expect(weapon.updates).toEqual([{ "system.equipped": false }]);
+    expect(owner.system.actionPoints.value).toBe(2);
+  });
+
+  it("уже в руках (true→true, повторный вызов) — второй раз ОД не тратит", async () => {
+    const weapon = item({ id: "w1", system: { equipped: true } });
+    weapon.type = "weapon";
+    const owner = combatCharacter([weapon], { ap: 2 });
+    weapon.parent = owner;
+
+    await equipItem(weapon, true);
+
+    expect(owner.system.actionPoints.value).toBe(2);
   });
 });
 

@@ -422,9 +422,13 @@ export function throwProfile(actor, partner) {
     testBonus: athleticsPenalty + tentacle, tentacleBonus: tentacle, athleticsPenalty };
 }
 
-/** Общий блок «применить урон цели + защита» — тот же HTML-контракт, что и
- *  showAttackDialogNoWeapon (классы читает module/hooks.mjs). */
-function _targetDamageSection(dmgTotal, weaponName, actor) {
+/**
+ * Общий блок «применить урон цели + защита» — тот же HTML-контракт, что и
+ * showAttackDialogNoWeapon (классы читает module/hooks.mjs). Экспортирован
+ * (не только для этого файла) — combat/improvised-item.mjs реюзает его для
+ * обычных предметов-Дубин/снарядов (не партнёров по Захвату), та же разметка.
+ */
+export function _targetDamageSection(dmgTotal, weaponName, actor) {
   return `
     <div class="roll-damage-section">
       <div class="roll-damage-label">Урон цели (Ударный, Проб. 0): <b>${dmgTotal}</b> · Primitive, Баланс −2</div>

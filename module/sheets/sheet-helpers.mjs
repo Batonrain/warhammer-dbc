@@ -792,6 +792,11 @@ export function buildGetData(actor) {
     wearable:    gearRequiresWearing(i.system),
     equipped:    !!i.system.equipped,
     worn:        i.system.worn || "",
+    // Включаемое (wdbc-x1nz.2, apps/effects.mjs::isItemActive) — тумблер на
+    // бонус, требующий активного применения (Мучитель и подобные), отдельно
+    // от ношения выше.
+    activatable: !!i.system.activatable,
+    active:      !!i.system.active,
     infoguard:   supportsInfoguard(i) ? (i.system.infoguard || 0) : null
   }));
 
@@ -799,6 +804,13 @@ export function buildGetData(actor) {
     id: i.id, name: i.name,
     quantity: i.system.quantity,
     weight:   i.system.weight,
+    activatable: !!i.system.activatable,
+    active:      !!i.system.active,
+    // Гололит (стр. 256, wdbc-x1nz.2): «час подготовки → +10 Command» — тест
+    // и флаг подготовки, отдельная кнопка (combat/hololith-briefing.mjs).
+    // По имени, без своего поля схемы — тот же приём, что RECOIL_SUPPRESSOR_RE
+    // (combat/armor-mods.mjs) для предметов без выделенного ключа/флага.
+    isHololith: /hololith|гололит/i.test(i.name || ""),
     infoguard: supportsInfoguard(i) ? (i.system.infoguard || 0) : null
   }));
 

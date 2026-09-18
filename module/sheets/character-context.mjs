@@ -37,6 +37,7 @@ import { actorCanFly, actorHasHalfStep, narrativeSpeed } from "../combat/movemen
 import { isFeatureEnabled, disabledRaceKeys }    from "../constants/features.mjs";
 import { isHelmetMod,
          disabledArmourPeriodicTestRemaining }   from "../combat/armor-mods.mjs";
+import { inventoryOverloadPeriodicRemaining }    from "../combat/encumbrance.mjs";
 import { gangrenePeriodicRemaining }             from "../combat/gangrene.mjs";
 import { radiationSicknessRemaining }            from "../combat/radiation.mjs";
 import { archetypeSheetContext }                 from "../apps/archetypes.mjs";
@@ -284,6 +285,23 @@ export function characterContext(actor) {
   } else {
     context.disabledArmourPeriodicReady = false;
     context.disabledArmourPeriodicRemainingLabel = null;
+  }
+
+  // Перевес ОБЩЕГО инвентаря (стр. 27, wdbc-x1nz.2): та же кнопка-таймер, что
+  // у Перевеса брони выше, свой флаг (inventoryOverloadTestAt, combat/
+  // encumbrance.mjs) и свой источник тира (system.inventoryOverload, rules/
+  // character/movement.mjs).
+  if (system.inventoryOverload) {
+    const tb = Number(system.characteristics?.t?.bonus) || 0;
+    const testAt = actor.getFlag?.("warhammer-dbc", "inventoryOverloadTestAt");
+    const remaining = inventoryOverloadPeriodicRemaining(testAt, game.time?.worldTime ?? 0, tb);
+    context.inventoryOverloadPeriodicReady = remaining <= 0;
+    context.inventoryOverloadPeriodicRemainingLabel = remaining > 0
+      ? `${Math.floor(remaining / 3600)}ч ${String(Math.floor((remaining % 3600) / 60)).padStart(2, "0")}м`
+      : null;
+  } else {
+    context.inventoryOverloadPeriodicReady = false;
+    context.inventoryOverloadPeriodicRemainingLabel = null;
   }
 
   // Гангрена (стр. 30-31, wdbc-r5o7.5): та же кнопка-таймер, что у Перевеса
