@@ -88,6 +88,56 @@
   opacity: 0.75;
 }
 
+/* ── Комбинированный: два столбца (стр. 25, wdbc-y9i8) ──
+   Столбец А — перенесённые сюда JS-ом обычные #normal-test-block/Сложность
+   (те же узлы, не копия), столбец Б — независимая разметка. flex-wrap даёт
+   узкому окну сложить их вертикально вместо сжатия в нечитаемые полоски. */
+.cmb-columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.cmb-col {
+  flex: 1 1 260px;
+  min-width: 220px;
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+  padding: 8px;
+  background: var(--wh-parchment2);
+}
+
+.cmb-col-title {
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--wh-border-light);
+}
+
+/* Внутри перенесённого #normal-test-block отступы дублировались бы с .cmb-col —
+   тут он уже не отдельная форма, а содержимое одного столбца. */
+.cmb-col-a #normal-test-block .roll-dlg-row,
+.cmb-col-a #normal-test-block .roll-dlg-row:last-child { margin-bottom: 6px; }
+
+.cmb-col-threshold {
+  margin-top: 6px;
+  padding: 4px 6px;
+  text-align: center;
+  font-weight: bold;
+  border-radius: 3px;
+  background: var(--wh-panel-mid);
+  color: var(--wh-text);
+}
+
+/* Тот столбец, чей Предел реально используется (min из двух) — «Тут: итоговый
+   Порог» из макета пользователя. */
+.cmb-col-threshold.cmb-threshold-used {
+  background: var(--wh-xp-current);
+  color: var(--wh-parchment);
+}
+
 #auto-outcome-note:not(:empty) {
   margin-bottom: 8px;
   padding: 3px 6px;

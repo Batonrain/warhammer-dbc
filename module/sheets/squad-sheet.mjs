@@ -659,7 +659,7 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
       <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="sq-mod" type="number" value="0"/></div>
       <div class="atk-dlg-row atk-total-row"><label>Итоговый порог:</label><span id="sq-total">0</span></div>
       <div class="sq-cmd-risk">Риск ${eRisk.value}${eRisk.bonus ? ` (${eRisk.base} +1 — шлем снят)` : ""} — максимум Успехов: <b id="sq-cap">${capTxt}</b></div>
-      ${testKindHtml({ defaultKind: "base", label: title })}
+      ${testKindHtml({ label: title })}
       ${diceModeHtml()}
       <div id="auto-outcome-note" class="roll-dlg-note"></div>
     </div>`;
@@ -681,7 +681,8 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
             const isCo  = key === "coordinator";
             const extra = { benefit: form.querySelector("#sq-benefit")?.value,
                             shortKey: form.querySelector("#sq-kind")?.value };
-            const tk = readTestKind(val, { label: title });
+            const checked = sel => !!form.querySelector(sel)?.checked;
+            const tk = readTestKind(val, checked, { label: title });
             const reroll = mergeReroll(null, readDiceChoice(val));
             // mod и Сложность едут ОТДЕЛЬНО от суммы (wdbc-6611): раньше в
             // карточку попадала только Слаженность, и два других слагаемых
@@ -759,7 +760,7 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     const { rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
 
     const outcome = await resolveKindOutcome(this.actor, {
-      kind: tk.kind || "base", baseEff: threshold, rv,
+      baseEff: threshold, rv,
       combined: tk.combined, extended: tk.extended, opposed: tk.opposed,
       ctx: { actor: this.actor, kind: "skill", skill: "command" }
     });

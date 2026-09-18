@@ -5549,8 +5549,9 @@ export const CAPABILITIES = {
     source: "Undying / Неумирающий", reader: ""
   },
   "trait.unnaturalCharacteristic": {
-    label: "+X к Бонусу выбранной Характеристики; дополнительно +½X (окр.▼) степени успеха на ВСЕ успешные тесты по ней (не только встречные).",
-    source: "Unnatural Characteristic / Сверхъестественная Характеристика (X)", reader: ""
+    label: "+X к Бонусу выбранной Характеристики; дополнительно +½X (окр.▼) степени успеха на ВСЕ успешные тесты по ней (не только встречные); в проигранном (по сырым Успехам) встречном тесте против стороны без этого Трейта — исход гасится до ничьей-по-Пределу (margin 1).",
+    source: "Unnatural Characteristic / Сверхъестественная Характеристика (X)",
+    reader: "module/rules/unnatural-characteristic.mjs (unnaturalRating/unnaturalDegreeBonus/hasUnnaturalCharacteristic — по имени трейта «Unnatural …», не по одному факту charBonus), module/rules/kind-outcome.mjs (бонус степени в baseDeg, unnaturalLine; mine.unnatural/theirs.unnatural → module/rules/test-kind.mjs::resolveOpposed тай-брейк), module/sheets/actor-sheet.mjs (_resolveOpposedAuto/_sendOpposedRequest/_maybePostOpposedComparison — соперник известен по документу; ручной ввод Порога/Броска — галочка «Соперник владеет…» в #opposed-block, test-kind-widget.mjs). Не покрыто: собственный бонус степени соперника при ручном вводе его чисел (не его тай-брейк, а его +½X к ЕГО степени) — вводится вручную вместе с его Порогом/Броском, как и раньше."
   },
   "trait.unnaturalSenses": {
     label: "Чувства на дистанции X м, круговой обзор.",

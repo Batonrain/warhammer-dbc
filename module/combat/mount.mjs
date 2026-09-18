@@ -88,6 +88,12 @@ function valOf(html) {
   return sel => { const v = html.find(sel).val(); return v === undefined ? null : v; };
 }
 
+/** Адаптер `checked(selector)` — независимые галочки Вида теста (стр. 25-26,
+ *  wdbc-y9i8), .val() чекбокса даёт статичный "on", не текущее состояние. */
+function checkedOf(html) {
+  return sel => !!html.find(sel).prop("checked");
+}
+
 /**
  * Полный конвейер Вида теста для верховых тестов, куда его раскатали (Поворот,
  * Занос, Ландшафт, Седло, Ремонт байка). Бросок + Комбинированный/Расширенный/
@@ -99,7 +105,7 @@ async function rollWithKind(actor, baseEff, tk, ctx) {
   const reroll = tk.reroll || null;
   const { roll, rv, rerollNote } = await rollD100WithReroll(reroll);
   const outcome = await resolveKindOutcome(actor, {
-    kind: tk.kind, baseEff: baseEff + tk.difficulty, rv,
+    baseEff: baseEff + tk.difficulty, rv,
     combined: tk.combined, extended: tk.extended, opposed: tk.opposed, ctx
   });
   return { roll, rv, rerollNote, outcome };
@@ -172,7 +178,7 @@ export async function showTurnDialog(rider) {
           ${control.label}: <b>${control.value}</b>${control.combined ? " — Навыком не владеет, тест комбинированный" : ""}.
           При неудаче скакун поворачивает только на ${turns.fallbackAngle}°, а всадник проходит тест A.
         </div>
-        ${testKindHtml({ defaultKind: "base", label: "Поворот" })}
+        ${testKindHtml({ label: "Поворот" })}
         ${diceModeHtml()}
         <div id="auto-outcome-note" class="roll-dlg-note"></div>
       </form>`,
@@ -182,7 +188,7 @@ export async function showTurnDialog(rider) {
           const val = valOf(html);
           const idx = parseInt(html.find("#mt-angle").val()) || 0;
           const extra = parseInt(html.find("#mt-mod").val()) || 0;
-          const tk = readTestKind(val, { label: "Поворот" });
+          const tk = readTestKind(val, checkedOf(html), { label: "Поворот" });
           tk.reroll = mergeReroll(null, readDiceChoice(val));
           await resolveTurn(rider, ctx, turns, idx, extra, tk);
         } },
@@ -272,7 +278,7 @@ export async function showSkidDialog(rider) {
       <div class="wh-skill-roll-form">
         <div class="roll-dlg-header"><span>Занос — ${esc(mount.name)}</span></div>
         <div class="roll-dlg-row"><label>${control.label}:</label><span>${control.value} ${sgn(info.mod)} = ${baseEff}</span></div>
-        ${testKindHtml({ defaultKind: "base", label: "Занос" })}
+        ${testKindHtml({ label: "Занос" })}
         ${diceModeHtml()}
         <div id="auto-outcome-note" class="roll-dlg-note"></div>
       </div>`,
@@ -281,7 +287,8 @@ export async function showSkidDialog(rider) {
         action: "roll", icon: "fas fa-dice-d10", label: "Занос!", default: true,
         callback: (event, button) => {
           const val = sel => button.form.querySelector(sel)?.value ?? null;
-          const tk = readTestKind(val, { label: "Занос" });
+          const checked = sel => !!button.form.querySelector(sel)?.checked;
+          const tk = readTestKind(val, checked, { label: "Занос" });
           tk.reroll = mergeReroll(null, readDiceChoice(val));
           return tk;
         }
@@ -365,7 +372,7 @@ export async function showBladesDialog(rider) {
         <div class="roll-dlg-header"><span>Лезвия — ${esc(mount.name)}</span></div>
         <div class="roll-dlg-row"><label>${control.label} −10:</label><span>${sv.value} − 10 = ${baseEff}</span></div>
         <div class="roll-dlg-row"><label>Использований:</label><span>${used} из ${maxUses} в этот Ход</span></div>
-        ${testKindHtml({ defaultKind: "base", label: "Лезвия" })}
+        ${testKindHtml({ label: "Лезвия" })}
         ${diceModeHtml()}
         <div id="auto-outcome-note" class="roll-dlg-note"></div>
       </div>`,
@@ -374,7 +381,8 @@ export async function showBladesDialog(rider) {
         action: "roll", icon: "fas fa-dice-d10", label: "Лезвия!", default: true,
         callback: (event, button) => {
           const val = sel => button.form.querySelector(sel)?.value ?? null;
-          const tk = readTestKind(val, { label: "Лезвия" });
+          const checked = sel => !!button.form.querySelector(sel)?.checked;
+          const tk = readTestKind(val, checked, { label: "Лезвия" });
           tk.reroll = mergeReroll(null, readDiceChoice(val));
           return tk;
         }
@@ -464,7 +472,7 @@ export async function showMountTerrainDialog(rider) {
           Провал: 1 непоглощаемого I(Cr) скакуну и тест ${bike ? "Operate−10" : "Survival+0"} — или выпадение из седла.
           ${trot ? "<br>Талант «Рысь»: двигаясь не более SPD в Ход, скакун игнорирует Трудный Ландшафт вовсе." : ""}
         </div>
-        ${testKindHtml({ defaultKind: "base", label: "Трудный Ландшафт верхом" })}
+        ${testKindHtml({ label: "Трудный Ландшафт верхом" })}
         ${diceModeHtml()}
         <div id="auto-outcome-note" class="roll-dlg-note"></div>
       </form>`,
@@ -475,7 +483,7 @@ export async function showMountTerrainDialog(rider) {
           const skill = parseInt(html.find("#mtt-skill").val()) || 0;
           const zone  = parseInt(html.find("#mtt-zone").val()) || 0;
           const extra = parseInt(html.find("#mtt-mod").val()) || 0;
-          const tk = readTestKind(val, { label: "Трудный Ландшафт верхом" });
+          const tk = readTestKind(val, checkedOf(html), { label: "Трудный Ландшафт верхом" });
           tk.reroll = mergeReroll(null, readDiceChoice(val));
           await resolveMountTerrain(rider, ctx, { skill, zone, extra, terrainMod, tk });
         } },
@@ -598,7 +606,7 @@ export async function saddleTest(rider, { kind = "agility", mod = 0, reason = ""
         <div class="roll-dlg-header"><span>Удержаться в седле</span></div>
         <div class="roll-dlg-row"><label>${label}:</label><span>${baseEff}</span></div>
         ${reason ? `<div class="roll-dlg-note">${esc(reason)}</div>` : ""}
-        ${testKindHtml({ defaultKind: "base", label: "Удержаться в седле" })}
+        ${testKindHtml({ label: "Удержаться в седле" })}
         ${diceModeHtml()}
         <div id="auto-outcome-note" class="roll-dlg-note"></div>
       </div>`,
@@ -607,7 +615,8 @@ export async function saddleTest(rider, { kind = "agility", mod = 0, reason = ""
         action: "roll", icon: "fas fa-dice-d10", label: "Тест!", default: true,
         callback: (event, button) => {
           const val = sel => button.form.querySelector(sel)?.value ?? null;
-          const t = readTestKind(val, { label: "Удержаться в седле" });
+          const checked = sel => !!button.form.querySelector(sel)?.checked;
+          const t = readTestKind(val, checked, { label: "Удержаться в седле" });
           t.reroll = mergeReroll(null, readDiceChoice(val));
           return t;
         }
@@ -923,7 +932,7 @@ export async function showBikeRepairDialog(bikeActor) {
           Требуется смена работы. Каждый Успех — +${mode.perSuccess} Структуры.
           ${broken ? "<b>Провал: остов годится только на лом — новый байк сделать легче, чем починить этот.</b>" : ""}
         </div>
-        ${testKindHtml({ defaultKind: "base", label: "Ремонт байка" })}
+        ${testKindHtml({ label: "Ремонт байка" })}
         ${diceModeHtml()}
         <div id="auto-outcome-note" class="roll-dlg-note"></div>
       </form>`,
@@ -934,7 +943,7 @@ export async function showBikeRepairDialog(bikeActor) {
           const skill = parseInt(html.find("#br-skill").val()) || 0;
           const parts = parseInt(html.find("#br-parts").val()) || 0;
           const extra = parseInt(html.find("#br-mod").val()) || 0;
-          const tk = readTestKind(val, { label: "Ремонт байка" });
+          const tk = readTestKind(val, checkedOf(html), { label: "Ремонт байка" });
           tk.reroll = mergeReroll(null, readDiceChoice(val));
           await resolveBikeRepair(bikeActor, { skill, parts, extra, mode, broken, tk });
         } },

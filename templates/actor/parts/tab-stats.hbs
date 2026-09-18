@@ -53,4 +53,19 @@
     </div>{{!-- /skill-groups-grid --}}
   </div>{{!-- /skills-panel --}}
 
+  {{!-- Расширенные тесты (стр. 25, wdbc-nysl): банки Успехов, копящиеся между
+        отдельными бросками. «Переоткрыть» ведёт в тот же диалог, что и клик
+        по Навыку/Характеристике — уже на Виде «Расширенный», с сохранённым
+        названием/целью; Навык/Характеристику и модификаторы можно сменить
+        там же. Правка банка вручную — под книжное «Критические Провалы
+        отнимают от 5 до 15 по решению ГМа» (число не автоматизировано). --}}
+  <div class="extended-tests-panel" data-collapse-key="stats-extended"> <div class="panel-title" data-action="panelCollapse">РАСШИРЕННЫЕ ТЕСТЫ</div> <div class="panel-body extended-tests-body"> {{#if extendedTests.length}}
+      {{#each extendedTests as |row|}}
+      <div class="extended-test-row" data-key="{{row.key}}"> <span class="extended-test-label" title="{{row.label}}">{{row.label}}</span> <select class="extended-test-target" data-tooltip="Навык/Характеристика для «Переоткрыть» — можно сменить перед броском">{{#each row.targets as |t|}}<option value="{{t.value}}" {{#if t.selected}}selected{{/if}}>{{t.label}}</option>{{/each}}</select> <span class="extended-test-bank {{#if row.done}}extended-test-done{{/if}}">{{row.accumulated}}/{{row.target}}{{#if row.done}} ✓{{/if}}</span> <button type="button" class="extended-test-roll-btn" data-action="extendedTestReroll" data-key="{{row.key}}" title="Переоткрыть бросок этого теста">🎲</button> <input type="number" class="extended-test-delta" placeholder="±" data-tooltip="Ручная правка банка: положительное число прибавляет, отрицательное — вычитает (например, Критический Провал −5..−15 по решению ГМа)"/> <button type="button" class="extended-test-apply-btn" data-action="extendedTestAdjust" data-key="{{row.key}}" title="Применить правку к банку">✓</button> <button type="button" class="extended-test-del-btn" data-action="extendedTestDelete" data-key="{{row.key}}" title="Убрать этот Расширенный тест из списка">✕</button> </div>
+      {{/each}}
+    {{else}}
+      <div class="extended-tests-empty"><em>Нет активных Расширенных тестов — начните через диалог броска (Вид теста → «Расширенный»)</em></div>
+    {{/if}}
+  </div></div>{{!-- /extended-tests-panel --}}
+
 </div>{{!-- /tab-stats --}}

@@ -78,7 +78,7 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
 
   const outcome = await resolveKindOutcome(actor, {
-    kind: tk.kind || "base", baseEff, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed,
+    baseEff, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed,
     ctx: { actor, kind: "skill", char: "wp", morale: true }, autoSuccess: autoPass
   });
   const { eff, success, deg } = outcome;
@@ -170,7 +170,7 @@ export async function _executeTraumaRoll(actor, mod = 0, tk = {}) {
   const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
 
   const outcome = await resolveKindOutcome(actor, {
-    kind: tk.kind || "base", baseEff, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed,
+    baseEff, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed,
     ctx: { actor, kind: "skill", char: "wp" }
   });
   const { eff, success, deg } = outcome;

@@ -26,6 +26,8 @@ import { aspirationOptions, aspirationByKey } from "../apps/aspirations.mjs";
 import { supportsInfoguard } from "../apps/infoguard.mjs";
 import { gearRequiresWearing } from "../apps/effects.mjs";
 import { xpLogEntries } from "../apps/xp-log.mjs";
+import { extendedTestRows } from "../rules/extended-test.mjs";
+import { testTargetList } from "../rules/test-kind.mjs";
 
 // Карта «полное имя таланта → тип (папка корбука)» + порядок типов — строится один
 // раз. Используется для группировки талантов на листе по типам (стр. 62-105).
@@ -422,6 +424,20 @@ export function buildGetData(actor) {
       }))
     });
   }
+
+  // Расширенные тесты (стр. 25, wdbc-nysl) — панель на вкладке ПОКАЗАТЕЛИ.
+  // testTargets — общий список Навык/Характеристика для селекта КАЖДОЙ строки
+  // (какой Навык/Характеристику подставить при «Переоткрыть» — его можно
+  // сменить прямо тут, книга не требует одного и того же Навыка на все
+  // броски Расширенного). Групповые (специализации) сюда намеренно не
+  // входят — их выбор через dataset groupKey/index, отдельный от плоского
+  // testKey "skill:<key>"/"char:<key>", усложнил бы селектор ради редкого
+  // случая (расширенный тест почти всегда на базовом Навыке или Характеристике).
+  const testTargets = testTargetList();
+  context.extendedTests = extendedTestRows(actor.getFlag("warhammer-dbc", "extendedTests")).map(row => ({
+    ...row,
+    targets: testTargets.map(t => ({ ...t, selected: t.value === row.testKey }))
+  }));
 
   const _skApts = charAptitudeSet(system.aptitudes);
   context.skillsAdvance = Object.entries(SKILLS_DEF).map(([key, def]) => {

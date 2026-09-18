@@ -81,9 +81,11 @@ import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { isMoraleOpposedSkill, resolveTest } from "../rules/resolve-test.mjs";
 import { applyLordOfExoditesFailPenalty } from "../combat/lord-of-exodites.mjs";
 import { showDelegateTestPicker, activeOwnerOf, requestDelegatedTest } from "../rules/delegate-test.mjs";
-import { testKindHtml, diceModeHtml, readTestKind, readDiceChoice, mergeReroll,
+import { testKindHtml, diceModeHtml, difficultyHtml, readTestKind, readDiceChoice, mergeReroll,
          wireTestKindLive, rollD100WithReroll, opposedComparisonHtml } from "../rules/test-kind-widget.mjs";
-import { resolveOpposed } from "../rules/test-kind.mjs";
+import { resolveOpposed, testTargetList, parseTestTarget } from "../rules/test-kind.mjs";
+import { applyGain } from "../rules/extended-test.mjs";
+import { hasUnnaturalCharacteristic } from "../rules/unnatural-characteristic.mjs";
 import { egomaniaOverrideResult } from "../rules/egomania.mjs";
 import { PERSONAL_ADAPTATION_CAPABILITY, PERSONAL_ADAPTATION_FLAG,
          personalAdaptationCap, personalAdaptationBonusFor, nextPersonalAdaptationBonuses }
@@ -641,6 +643,58 @@ export function onSkillRoll(event, target) {
   return this._rollSkill(def?.label ?? key, sk?.total ?? -20, def?.char ?? "ag", { skill: key });
 }
 
+// ── Расширенные тесты (стр. 25, wdbc-nysl): панель на вкладке ПОКАЗАТЕЛИ ──
+// «Переоткрыть» — тот же путь, что клик по строке Навыка/Характеристики
+// (onSkillRoll/onCharRoll выше), только с Видом теста, предзаполненным на
+// «Расширенный» с сохранённым названием/целью (extendedPreset). Навык/
+// Характеристику при этом берём из <select> строки, а не из dataset кнопки —
+// пользователь мог поменять его прямо в панели перед нажатием.
+export function onExtendedTestReroll(event, target) {
+  const row = target.closest(".extended-test-row");
+  const key = target.dataset.key;
+  const testKey = row?.querySelector(".extended-test-target")?.value;
+  const bank = this.actor.getFlag("warhammer-dbc", `extendedTests.${key}`);
+  if (!bank || !testKey) return;
+  const [refKind, refKey] = testKey.split(":");
+  const extendedPreset = { label: bank.label ?? key, goal: bank.target ?? 0 };
+  if (refKind === "skill") {
+    const def = SKILLS_DEF[refKey];
+    const sk  = this.actor.system.skills?.[refKey];
+    return this._rollSkill(def?.label ?? refKey, sk?.total ?? -20, def?.char ?? "ag", { skill: refKey },
+      { defaultKind: "extended", extendedPreset });
+  }
+  const meta  = CHARACTERISTICS[refKey];
+  const total = this.actor.system.characteristics[refKey]?.total ?? 0;
+  return this._rollCharacteristic(charLabel(refKey, this.actor.system.alignment), meta?.abbr ?? refKey, total, refKey,
+    false, { defaultKind: "extended", extendedPreset });
+}
+
+/**
+ * Ручная правка банка — свободное число, не +1/-1: книга (стр. 25) отдаёт
+ * величину штрафа Критического Провала на откуп ГМу («от 5 до 15»), а не
+ * фиксирует её, так что диапазон ввода не автоматизирован намеренно (см.
+ * тот же комментарий у applyGain в module/rules/extended-test.mjs).
+ */
+export async function onExtendedTestAdjust(event, target) {
+  const row   = target.closest(".extended-test-row");
+  const key   = target.dataset.key;
+  const input = row?.querySelector(".extended-test-delta");
+  const delta = parseInt(input?.value) || 0;
+  if (!delta || !key) return;
+  const flagPath = `extendedTests.${key}`;
+  const prev = this.actor.getFlag("warhammer-dbc", flagPath) || { accumulated: 0 };
+  const { accumulated } = applyGain(prev.accumulated, delta, prev.target);
+  await this.actor.setFlag("warhammer-dbc", flagPath, { ...prev, accumulated });
+  if (input) input.value = "";
+}
+
+/** Убрать банк из панели — тот же unsetFlag, что уже был у «Сбросить» в диалоге. */
+export function onExtendedTestDelete(event, target) {
+  const key = target.dataset.key;
+  if (!key) return;
+  return this.actor.unsetFlag("warhammer-dbc", `extendedTests.${key}`);
+}
+
 // ── Снаряжение и пикеры ──
 function onItemAdd() { return this._showAddItemDialog(); }
 function onRigOpen()  { return openRigManager(this.actor); }
@@ -770,6 +824,9 @@ export class WarhammerCharacterSheet
       charRoll: whenEditable(onCharRoll),
       insanityMenu: whenEditable(onInsanityMenu),
       skillRoll: whenEditable(onSkillRoll),
+      extendedTestReroll: whenEditable(onExtendedTestReroll),
+      extendedTestAdjust: whenEditable(onExtendedTestAdjust),
+      extendedTestDelete: whenEditable(onExtendedTestDelete),
       itemAdd: whenEditable(onItemAdd),
       rigOpen: whenEditable(onRigOpen),
       xpLogOpen: onXpLogOpen,
@@ -2147,7 +2204,7 @@ export class WarhammerCharacterSheet
     };
   }
 
-  _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null, defaultKind = "base", { effectTargetActor = null, opposedRequest = null, presetModifier = 0 } = {}) {
+  _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null, defaultKind = "base", { effectTargetActor = null, opposedRequest = null, presetModifier = 0, extendedPreset = null } = {}) {
     // targetActor (wdbc-1rno): раньше был только у атак (attack-dialog.mjs) —
     // обычный тест Навыка/Характеристики цель не нёс вовсе, и правила вида
     // «противник ПРОТИВ персонажа получает штраф» (targetHasTrait,
@@ -2219,16 +2276,6 @@ export class WarhammerCharacterSheet
       return `<option value="${key}" ${key === defaultChar ? "selected" : ""}>${meta.abbr} — ${meta.label} (${v})</option>`;
     }).join("");
 
-    // Второй тест Комбинированного — тот же список характеристик с итогами,
-    // что и у основного выбора: у Навыка/Характеристики он всегда есть,
-    // остальные диалоги обходятся текстовым полем по умолчанию (см.
-    // rules/test-kind-widget.mjs::testKindHtml).
-    const combinedSecondHtml = `
-      <div class="roll-dlg-row roll-dlg-subrow">
-        <label>Второй тест:</label>
-        <select id="combined-char-select">${charOptions}</select>
-      </div>`;
-
     // Сумма модификатора: галочки Происхождения/предмета/правила + «ополовинить
     // штраф» + ассистенты. Отдельной функцией, а не только в callback кнопки —
     // её же использует живое предупреждение Автоуспеха/Автопровала ниже, и
@@ -2247,6 +2294,71 @@ export class WarhammerCharacterSheet
       return modifier;
     };
 
+    // ── Комбинированный: два столбца (стр. 25, wdbc-y9i8) ──────────────────
+    // Столбец А фиксирован тем Навыком/Характеристикой, на который кликнули
+    // (решение пользователя: смена Навыка мидовым диалогом потянула бы за
+    // собой смену заголовка карточки и побочных завязок — тест Морали, банк
+    // Расширенного, — а книга такой гибкости от ПЕРВОЙ половины не требует).
+    // Показан статичной подписью для симметрии со столбцом Б, не селектом.
+    // Столбец Б — независимый выбор Навыка/Характеристики (testTargetList —
+    // тот же список, что у панели «Расширенные тесты», wdbc-nysl) со своим
+    // полным стеком модификаторов и своими Ассистентами: правило пользователя
+    // — «свой пул на каждую колонку», а не общий на весь тест.
+    const targetOptions = testTargetList().map(t =>
+      `<option value="${esc(t.value)}">${esc(t.label)}</option>`).join("");
+    const assistantsB = [];   // { uuid, name, beyondCap } — независимо от assistants (столбец А)
+
+    /** Сумма модификатора столбца Б — тот же приём, что modifierSumOf выше,
+     *  но читает #cmb-b-* и чекбоксы из #cmb-b-mods-slot (перестраивается при
+     *  смене Навыка), и свой пул Ассистентов. */
+    const modifierSumOfB = formEl => {
+      let modifier = parseInt(formEl.querySelector("#cmb-b-modifier")?.value) || 0;
+      let halve = false;
+      for (const cb of formEl.querySelectorAll("#cmb-b-mods-slot input[type=checkbox]:checked")) {
+        modifier += parseInt(cb.dataset.value) || 0;
+        if (cb.dataset.halve === "1") halve = true;
+      }
+      if (halve && modifier < 0) modifier = -Math.floor(Math.abs(modifier) / 2);
+      modifier += assistThresholdBonus(assistantsB.length);
+      return modifier;
+    };
+
+    const combinedBlockHtml = `
+      <div class="cmb-columns">
+        <div class="cmb-col cmb-col-a">
+          <div class="cmb-col-title">${esc(label)}</div>
+          <div class="cmb-col-a-slot"></div>
+          <div class="cmb-col-threshold" id="cmb-a-threshold">Порог: —</div>
+        </div>
+        <div class="cmb-col cmb-col-b">
+          <div class="roll-dlg-row roll-dlg-subrow">
+            <label>Второй тест:</label>
+            <select id="cmb-b-target-select"><option value="">— выберите —</option>${targetOptions}</select>
+          </div>
+          ${difficultyHtml({ id: "cmb-b-difficulty" })}
+          <div class="roll-dlg-row roll-dlg-subrow">
+            <label>Бросок с:</label>
+            <select id="cmb-b-char-select">${charOptions}</select>
+          </div>
+          <div class="roll-dlg-row roll-dlg-subrow">
+            <label>Цель:</label>
+            <input id="cmb-b-target" type="number" value="0"/>
+          </div>
+          <div class="roll-dlg-row roll-dlg-subrow">
+            <label>Модификатор:</label>
+            <input id="cmb-b-modifier" type="number" value="0"/>
+          </div>
+          <div class="roll-dlg-row assist-row roll-dlg-subrow">
+            <label>Ассистенты:</label>
+            <span id="cmb-b-assist-count">0/${assistMax}</span>
+          </div>
+          <div id="cmb-b-assist-dropzone" class="assist-dropzone">Перетащите актора-помощника сюда</div>
+          <div id="cmb-b-assist-list" class="assist-list"></div>
+          <div id="cmb-b-mods-slot"></div>
+          <div class="cmb-col-threshold" id="cmb-b-threshold">Порог: —</div>
+        </div>
+      </div>`;
+
     return foundry.applications.api.DialogV2.wait({
       window: { title: `Проверка: ${label}` },
       classes: ["wh-roll-dialog-window"],
@@ -2256,33 +2368,40 @@ export class WarhammerCharacterSheet
             <div class="roll-dlg-header"><span>${label}</span></div>
             ${delegating ? `<div class="roll-dlg-note">📨 За <b>${esc(effectTargetActor.name)}</b> — бросаете листом <b>${esc(this.actor.name)}</b>.</div>` : ""}
             ${recipientNote}
-            ${testKindHtml({ defaultKind, label, combinedSecondHtml, defaultCombinedTarget: defaultCharTotal })}
-            ${hideCharSelect ? "" : `<div class="roll-dlg-row">
-              <label>Бросок с:</label>
-              <select id="skill-char-select">${charOptions}</select>
-            </div>`}
-            <div class="roll-dlg-row">
-              <label>Цель:</label>
-              <input id="skill-target" type="number" value="${baseTotal}"/>
+            ${testKindHtml({ defaultKinds: defaultKind !== "base" ? [defaultKind] : [], label, defaultCombinedTarget: defaultCharTotal,
+              extendedDefaultLabel: extendedPreset?.label, extendedDefaultGoal: extendedPreset?.goal, combinedBlockHtml })}
+            <div id="normal-test-block-anchor"></div>
+            <div id="normal-test-block">
+              ${hideCharSelect ? "" : `<div class="roll-dlg-row">
+                <label>Бросок с:</label>
+                <select id="skill-char-select">${charOptions}</select>
+              </div>`}
+              <div class="roll-dlg-row">
+                <label>Цель:</label>
+                <input id="skill-target" type="number" value="${baseTotal}"/>
+              </div>
+              <div class="roll-dlg-row">
+                <label>Модификатор:</label>
+                <input id="skill-modifier" type="number" value="${presetModifier}"/>
+              </div>
+              <div class="roll-dlg-row assist-row">
+                <label>Ассистенты:</label>
+                <span id="assist-count">0/${assistMax}</span>
+              </div>
+              <div id="assist-dropzone" class="assist-dropzone">Перетащите актора-помощника сюда</div>
+              <div id="assist-list" class="assist-list"></div>
+              ${hw.html}
+              ${im.html}
+              ${rl.html}
+              <div id="rule-auto-mods-slot">${au.html}</div>
+              ${am.html}
+              ${aa.html}
             </div>
-            <div class="roll-dlg-row">
-              <label>Модификатор:</label>
-              <input id="skill-modifier" type="number" value="${presetModifier}"/>
-            </div>
-            <div class="roll-dlg-row assist-row">
-              <label>Ассистенты:</label>
-              <span id="assist-count">0/${assistMax}</span>
-            </div>
-            <div id="assist-dropzone" class="assist-dropzone">Перетащите актора-помощника сюда</div>
-            <div id="assist-list" class="assist-list"></div>
-            ${hw.html}
-            ${im.html}
-            ${rl.html}
-            <div id="rule-auto-mods-slot">${au.html}</div>
-            ${am.html}
-            ${aa.html}
             ${rr.html}
             ${diceModeHtml()}
+            <div class="roll-dlg-row roll-dlg-subrow">
+              <label><input type="checkbox" id="confirm-pick"/> Спросить, если Преимущество/Помеха/Переброс дадут выбор (стр. 26)</label>
+            </div>
             <div id="auto-outcome-note" class="roll-dlg-note"></div>
           </div>`,
       buttons: [
@@ -2302,20 +2421,63 @@ export class WarhammerCharacterSheet
                   label: rerollEl.parentElement?.textContent?.trim() || "Переброс" }
               : null;
             const reroll = mergeReroll(namedReroll, readDiceChoice(val));
-            const { kind, difficulty, combined, extended, opposed } = readTestKind(val, { label });
+            // Виды теста — независимые галочки (стр. 25-26, wdbc-y9i8): любое
+            // подмножение Расширенный/Комбинированный/Встречный(+vss) может
+            // быть отмечено разом, поэтому checked — своя функция, отдельная
+            // от val (чекбокс отдаёт статичный value="on", не текущий checked).
+            // combined отсюда не читаем (readTestKind знает только общий
+            // формат #combined-char-select/#combined-target — этот диалог его
+            // не рисует, свой полный столбец Б собран ниже из #cmb-b-*).
+            const checked = sel => !!form.querySelector(sel)?.checked;
+            const { difficulty, extended, opposed } = readTestKind(val, checked, { label });
+            const isCombined = checked("#kind-combined");
+            const isOpposed  = checked("#kind-opposed");
             // Авто-встречный (wdbc-j814): галочка читается напрямую, тем же
             // приёмом, что и чекбоксы модификаторов в modifierSumOf — val()
             // рассчитан на текстовые поля/select, не на checked.
             const opposedAutoChecked = !!form.querySelector("#opposed-auto")?.checked;
-            const opposedAuto = (opposedAutoChecked && (kind === "opposed" || kind === "opposedSafe") && targetActor)
+            const opposedAuto = (opposedAutoChecked && isOpposed && targetActor)
               ? { targetActorUuid: targetActor.uuid } : null;
+            // Сверхъестественная Характеристика соперника (стр. 26, wdbc-y9i8)
+            // — при РУЧНОМ вводе Порога/Броска соперника его документ неизвестен
+            // системе вовсе, тай-брейк неоткуда взять автоматически, поэтому
+            // галочка. При авто-встречном (opposedAuto) opposed здесь null —
+            // соответствующий тай-брейк посчитает _resolveOpposedAuto сама.
+            if (opposed) opposed.unnatural = !!form.querySelector("#opposed-their-unnatural")?.checked;
+
+            // Столбец Б Комбинированного (стр. 25, wdbc-y9i8): «сырые» слагаемые
+            // (Цель/Модификатор/Сложность), ещё БЕЗ ситуативных авто-штрафов
+            // состояния тела/снаряжения — их (как и у столбца А) досчитывает
+            // _runTest после закрытия диалога через resolveTest(bCtx), одним
+            // и тем же путём для обоих столбцов.
+            let combined = null;
+            if (isCombined) {
+              const bVal = form.querySelector("#cmb-b-target-select")?.value ?? "";
+              const bLabel = testTargetList().find(t => t.value === bVal)?.label || "";
+              const { skillKey: bSkillKey } = parseTestTarget(bVal, defaultChar);
+              combined = {
+                label: bLabel,
+                charKey: form.querySelector("#cmb-b-char-select")?.value ?? null,
+                skillKey: bSkillKey,
+                target: parseInt(form.querySelector("#cmb-b-target")?.value) || 0,
+                modifier: modifierSumOfB(form),
+                difficulty: parseInt(form.querySelector("#cmb-b-difficulty")?.value) || 0,
+                assistCount: assistantsB.length
+              };
+            }
 
             return {
               charKey:  form.querySelector("#skill-char-select")?.value,
               target:   parseInt(form.querySelector("#skill-target").value) || 0,
-              modifier, difficulty, kind, combined, extended, opposed, opposedAuto,
+              modifier, difficulty, combined, extended, opposed, opposedAuto,
+              // isOpposed/isSafe — сама галочка «Встречный», отдельно от opposed
+              // (которое null, пока Порог/Бросок соперника не введены вручную и
+              // авто-резолв ещё не отработал): полтеста без соперника — всё равно
+              // Встречный тест (RAW, «после КАЖДОГО встречного»/Уравнитель), карточка
+              // и принудительный переброс соперника должны это видеть.
+              opposedSelected: isOpposed, opposedSafeSelected: checked("#kind-opposed-safe"),
               assistCount: assistants.length,
-              reroll
+              reroll, confirmPick: !!form.querySelector("#confirm-pick")?.checked
             };
           }
         },
@@ -2362,6 +2524,11 @@ export class WarhammerCharacterSheet
         const { updateAutoOutcomeNote } = wireTestKindLive(root, {
           actor: this.actor, label,
           getBaseEff: () => {
+            // Комбинированный (wdbc-y9i8) считает Порог по ДВУМ столбцам —
+            // совет «можно засчитать Автоуспехом» по одному только столбцу А
+            // был бы неверен, если реальный min(А,Б) ниже 70 (или наоборот).
+            // Своей подсказки на два Предела сразу нет — проще промолчать.
+            if (root.querySelector("#kind-combined")?.checked) return 35;
             const target     = parseInt(root.querySelector("#skill-target")?.value) || 0;
             const modifier    = modifierSumOf(root);
             const difficulty = parseInt(root.querySelector("#test-difficulty")?.value) || 0;
@@ -2403,6 +2570,181 @@ export class WarhammerCharacterSheet
         root.querySelector("#skill-modifier")?.addEventListener("input", updateAutoOutcomeNote);
         root.querySelectorAll(".hw-mod, .item-mod, .rule-mod, .armor-mod, .armor-aspect-mod").forEach(cb =>
           cb.addEventListener("change", updateAutoOutcomeNote));
+
+        // ── Комбинированный: два столбца (стр. 25, wdbc-y9i8) ────────────────
+        // Столбец А — не новая разметка, а ФИЗИЧЕСКИЙ ПЕРЕНОС уже созданных
+        // #test-difficulty/#normal-test-block в слот столбца А и обратно при
+        // смене Вида теста: слушатели на них уже навешаны выше (charSelectEl,
+        // updateAutoOutcomeNote и т.п.), пересоздавать их для второй копии
+        // разметки не нужно и рискованно разъехаться с оригиналом.
+        const cmbColA = root.querySelector(".cmb-col-a");
+        const cmbColB = root.querySelector(".cmb-col-b");
+        if (cmbColA && cmbColB) {
+          const anchor         = root.querySelector("#normal-test-block-anchor");
+          const normalBlockEl  = root.querySelector("#normal-test-block");
+          const difficultyRow  = root.querySelector("#test-difficulty")?.closest(".roll-dlg-row");
+          const colASlot       = cmbColA.querySelector(".cmb-col-a-slot");
+          const thresholdA     = root.querySelector("#cmb-a-threshold");
+          const thresholdB     = root.querySelector("#cmb-b-threshold");
+          const bTargetSelect  = root.querySelector("#cmb-b-target-select");
+          const bCharSelect    = root.querySelector("#cmb-b-char-select");
+          const bDifficulty    = root.querySelector("#cmb-b-difficulty");
+          const bTargetInput   = root.querySelector("#cmb-b-target");
+          const bModifierInput = root.querySelector("#cmb-b-modifier");
+          const bModsSlot      = root.querySelector("#cmb-b-mods-slot");
+          const zoneB  = root.querySelector("#cmb-b-assist-dropzone");
+          const listB  = root.querySelector("#cmb-b-assist-list");
+          const countB = root.querySelector("#cmb-b-assist-count");
+
+          // Порог, реально используемый (min из двух), подсвечивается —
+          // «Тут: итоговый Порог» из макета пользователя. Пока столбец Б не
+          // выбран (пустой Навык), используется только столбец А.
+          const highlightLower = () => {
+            const aVal = Number(thresholdA?.dataset.eff);
+            const bReady = !!thresholdB?.dataset.eff;
+            const bVal = Number(thresholdB?.dataset.eff);
+            thresholdA?.classList.toggle("cmb-threshold-used", !bReady || aVal <= bVal);
+            thresholdB?.classList.toggle("cmb-threshold-used", bReady && bVal < aVal);
+          };
+          const recomputeA = () => {
+            if (!thresholdA) return;
+            const target     = parseInt(root.querySelector("#skill-target")?.value) || 0;
+            const modifier    = modifierSumOf(root);
+            const difficulty = parseInt(root.querySelector("#test-difficulty")?.value) || 0;
+            const eff = target + modifier + difficulty + autoModsFor(currentCharKey()).total;
+            thresholdA.textContent = `Порог: ${eff}`;
+            thresholdA.dataset.eff = eff;
+            highlightLower();
+          };
+          const bRollCtx = () => {
+            const parsed = parseTestTarget(bTargetSelect?.value, defaultChar);
+            const charKey = bCharSelect?.value || parsed.charKey;
+            return { kind: "skill", char: charKey, skill: parsed.skillKey ?? undefined, targetActor };
+          };
+          const refreshBMods = () => {
+            if (!bModsSlot) return;
+            const ctx = bRollCtx();
+            const hwB = this._homeworldModsHtml(ctx);
+            const imB = this._itemRollModsHtml(ctx);
+            const rlB = this._ruleRollModsHtml(ctx);
+            const auB = ruleAutoModsHtml(this.actor, ctx);
+            const amB = this._armorSkillModsHtml(ctx);
+            const aaB = this._armorAspectModHtml();
+            bModsSlot.innerHTML = hwB.html + imB.html + rlB.html + auB.html + amB.html + aaB.html;
+            bModsSlot.querySelectorAll("input[type=checkbox]").forEach(cb => cb.addEventListener("change", recomputeB));
+          };
+          const recomputeB = () => {
+            if (!thresholdB) return;
+            if (!bTargetSelect?.value) {
+              thresholdB.textContent = "Порог: —";
+              delete thresholdB.dataset.eff;
+              highlightLower();
+              return;
+            }
+            const target     = parseInt(bTargetInput?.value) || 0;
+            const modifier    = modifierSumOfB(root);
+            const difficulty = parseInt(bDifficulty?.value) || 0;
+            const eff = target + modifier + difficulty + ruleAutoModsHtml(this.actor, bRollCtx()).total;
+            thresholdB.textContent = `Порог: ${eff}`;
+            thresholdB.dataset.eff = eff;
+            highlightLower();
+          };
+
+          // ── Ассистенты столбца Б — свой пул, тот же приём, что у столбца А
+          // ниже, только на своих #cmb-b-* узлах и своём массиве assistantsB.
+          const renderAssistsB = () => {
+            if (!zoneB || !listB || !countB) return;
+            const beyond = assistantsB.length - countedAssists(assistantsB);
+            countB.textContent = `${countedAssists(assistantsB)}/${assistMax}${beyond ? ` +${beyond} сверх лимита` : ""}`;
+            listB.innerHTML = assistantsB.map(a => `
+              <div class="assist-chip" data-uuid="${esc(a.uuid)}">
+                <span>${esc(a.name)}${a.beyondCap ? ' <em class="assist-chip-beyond">сверх лимита</em>' : ""}</span>
+                <button type="button" class="assist-chip-remove" title="Убрать">✕</button>
+              </div>`).join("");
+            zoneB.classList.toggle("assist-dropzone-full", countedAssists(assistantsB) >= assistMax);
+            listB.querySelectorAll(".assist-chip-remove").forEach(btn => {
+              btn.addEventListener("click", () => {
+                const uuid = btn.closest(".assist-chip").dataset.uuid;
+                const i = assistantsB.findIndex(a => a.uuid === uuid);
+                if (i >= 0) assistantsB.splice(i, 1);
+                renderAssistsB();
+                recomputeB();
+              });
+            });
+            recomputeB();
+          };
+          zoneB?.addEventListener("dragover", ev => { ev.preventDefault(); zoneB.classList.add("assist-dropzone-over"); });
+          zoneB?.addEventListener("dragleave", () => zoneB.classList.remove("assist-dropzone-over"));
+          zoneB?.addEventListener("drop", async ev => {
+            ev.preventDefault();
+            zoneB.classList.remove("assist-dropzone-over");
+            let data = null;
+            try { data = JSON.parse(ev.dataTransfer.getData("text/plain")); } catch { /* не наш дроп */ }
+            if (!data || (data.type !== "Actor" && data.type !== "Token")) return;
+            const uuid = data.uuid
+              || (data.type === "Actor" && data.id ? `Actor.${data.id}` : null)
+              || (data.type === "Token" && data.sceneId && data.tokenId
+                    ? `Scene.${data.sceneId}.Token.${data.tokenId}` : null);
+            if (!uuid) return;
+            const doc = await fromUuid(uuid).catch(() => null);
+            const candidate = doc?.actor ?? doc;
+            const why = assistRejection(candidate, { actor: this.actor, assistants: assistantsB, max: assistMax, ctx: bRollCtx() });
+            if (why) return ui.notifications.warn(why);
+            assistantsB.push({ uuid: candidate.uuid, name: candidate.name, beyondCap: assistsBeyondCap(candidate) });
+            renderAssistsB();
+          });
+
+          bTargetSelect?.addEventListener("change", () => {
+            const parsed = parseTestTarget(bTargetSelect.value, defaultChar);
+            if (bCharSelect) bCharSelect.value = parsed.charKey;
+            const total = parsed.skillKey
+              ? (this.actor.system.skills?.[parsed.skillKey]?.total ?? -20)
+              : (this.actor.system.characteristics?.[parsed.charKey]?.total ?? 0);
+            if (bTargetInput) bTargetInput.value = total;
+            // Ассистенты столбца Б завязаны на конкретный Навык (assistRejection
+            // проверяет, что помощник владеет ИМЕННО им) — смена Навыка делает
+            // прежних помощников неприменимыми, список чистим.
+            assistantsB.length = 0;
+            renderAssistsB();
+            refreshBMods();
+            recomputeB();
+          });
+          bCharSelect?.addEventListener("change", () => { refreshBMods(); recomputeB(); });
+          bDifficulty?.addEventListener("change", recomputeB);
+          bTargetInput?.addEventListener("input", recomputeB);
+          bModifierInput?.addEventListener("input", recomputeB);
+
+          // ── Перенос столбца А туда/обратно при смене Вида теста ────────────
+          const moveToColumnA = () => {
+            if (difficultyRow) colASlot.appendChild(difficultyRow);
+            if (normalBlockEl) { normalBlockEl.hidden = false; colASlot.appendChild(normalBlockEl); }
+            recomputeA();
+          };
+          const restoreFromColumnA = () => {
+            if (!anchor?.parentNode) return;
+            if (difficultyRow) anchor.parentNode.insertBefore(difficultyRow, anchor);
+            if (normalBlockEl) anchor.parentNode.insertBefore(normalBlockEl, anchor);
+          };
+          // Ширина окна (стр. 25, wdbc-y9i8) — два столбца в 340px нечитаемы;
+          // диалог остаётся узким для всех остальных Видов теста (это
+          // подавляющее большинство бросков) и раздвигается только на время
+          // Комбинированного.
+          root.querySelector("#kind-combined")?.addEventListener("change", ev => {
+            if (ev.currentTarget.checked) { moveToColumnA(); dialog.setPosition?.({ width: 620 }); }
+            else { restoreFromColumnA(); dialog.setPosition?.({ width: 340 }); }
+          });
+          if (defaultKind === "combined") { moveToColumnA(); dialog.setPosition?.({ width: 620 }); }
+
+          // Пересчёт столбца А — те же события, что уже двигают
+          // updateAutoOutcomeNote (пересоздавать их не нужно, просто вешаем ещё
+          // один слушатель на те же узлы).
+          root.querySelector("#skill-target")?.addEventListener("input", recomputeA);
+          root.querySelector("#skill-modifier")?.addEventListener("input", recomputeA);
+          root.querySelector("#test-difficulty")?.addEventListener("change", recomputeA);
+          charSelectEl?.addEventListener("change", recomputeA);
+          root.querySelectorAll(".hw-mod, .item-mod, .rule-mod, .armor-mod, .armor-aspect-mod").forEach(cb =>
+            cb.addEventListener("change", recomputeA));
+        }
 
         // ── Ассистенты: зона дропа, чипы, счётчик ──────────────────────────
         const zone  = root.querySelector("#assist-dropzone");
@@ -2481,28 +2823,35 @@ export class WarhammerCharacterSheet
     if (activeOwnerOf(opponentActor)) return { opposed: null, opponentActor };
     const threshold = skillKey ? skillTotal(opponentActor, skillKey) : (opponentActor.system.characteristics?.[charKey]?.total ?? 0);
     const roll = await new Roll("1d100").evaluate();
-    return { opposed: { threshold, roll: roll.total }, opponentActor: null };
+    // unnatural (стр. 26, wdbc-y9i8) — соперник известен по документу здесь,
+    // поэтому тай-брейк Сверхъестественной Характеристики можно проверить
+    // автоматически, а не оставлять на ручную галочку.
+    return { opposed: { threshold, roll: roll.total, unnatural: hasUnnaturalCharacteristic(opponentActor, charKey) }, opponentActor: null };
   }
 
   /** Запрос встречного броска сопернику-игроку — payload несёт УЖЕ готовую
    *  сторону инициатора, опенер "opposedResponse" (hooks.mjs) считает
    *  сравнение сам, сразу после своего броска, без обратной связи. */
-  async _sendOpposedRequest(opponentActor, { label, kind, testKind, skillKey, charKey, hideCharSelect, baseEff, rv, outcome }) {
+  async _sendOpposedRequest(opponentActor, { label, safe, testKind, skillKey, charKey, hideCharSelect, baseEff, rv, outcome }) {
     await requestDelegatedTest({
       requesterActor: this.actor, executorActor: opponentActor, effectTargetActor: opponentActor,
       kind: "opposedResponse", label, buttonLabel: "Бросить встречный",
       extra: {
         testKind, skillKey, charKey, hideCharSelect: !!hideCharSelect,
         initiatorName: this.actor.name, initiatorLabel: label,
-        initiatorSide: { threshold: baseEff, roll: rv, success: outcome.success, deg: outcome.deg },
-        safe: kind === "opposedSafe"
+        // unnatural (стр. 26, wdbc-y9i8) — я инициатор, свой документ и свою
+        // Характеристику знаю сразу; ответчик прочтёт это поле, когда будет
+        // считать сравнение своей стороной (_maybePostOpposedComparison).
+        initiatorSide: { threshold: baseEff, roll: rv, success: outcome.success, deg: outcome.deg,
+                          unnatural: hasUnnaturalCharacteristic(this.actor, charKey) },
+        safe: !!safe
       }
     });
   }
 
   /** Ответ соперника (opposedRequest пришёл через опенер "opposedResponse") —
    *  публикует готовую карточку сравнения, видимую обеим сторонам. */
-  async _maybePostOpposedComparison(opposedRequest, { label, baseEff, rv, outcome, skillKey = null }) {
+  async _maybePostOpposedComparison(opposedRequest, { label, baseEff, rv, outcome, skillKey = null, charKey = null }) {
     if (!opposedRequest) return;
     // Personal Adaptation/Персональная Адаптация (Тзинч, wdbc-1rno): здесь
     // this.actor — ОТВЕЧАЮЩАЯ сторона, initiatorUuid (module/hooks.mjs::
@@ -2523,7 +2872,11 @@ export class WarhammerCharacterSheet
           `${esc(initiatorActor.name)}</div>` + rollStatLine({ threshold: theirsEff });
       }
     }
-    const theirs = { deg: outcome.deg, success: outcome.success, threshold: theirsEff };
+    // unnatural (стр. 26, wdbc-y9i8) — this.actor здесь ОТВЕЧАЮЩАЯ сторона,
+    // её документ известен напрямую; charKey — Характеристика, которой она
+    // реально бросала (пробрасывается вызывающим _runTest).
+    const theirs = { deg: outcome.deg, success: outcome.success, threshold: theirsEff,
+                      unnatural: hasUnnaturalCharacteristic(this.actor, charKey) };
     // Egomania/Эгомания (Слаанеш, wdbc-1rno): та же автопобеда, что уже даёт
     // rules/kind-outcome.mjs NPC-автоброску — здесь this.actor всегда
     // ОТВЕЧАЮЩАЯ сторона («theirs» в терминах этого сравнения), инициатора
@@ -2575,13 +2928,18 @@ export class WarhammerCharacterSheet
     // Для ЛЮБОГО обычного теста (не делегированного, или делегированного не
     // психосилой) это null — applyOnTargetFailConditions тогда не звана вовсе.
     onFailItemUuid = null,
-    headerAbbr = null, targetLabel = null, withSceneTarget = true
+    headerAbbr = null, targetLabel = null, withSceneTarget = true,
+    // defaultKind/extendedPreset (wdbc-nysl) — панель «Расширенные тесты»
+    // открывает этот же диалог сразу на Виде «Расширенный» с сохранённым
+    // названием/целью, а не «Обычный», как при обычном клике по Навыку.
+    defaultKind = "base", extendedPreset = null
   } = {}) {
     const result = await this._showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect,
-      rollContext, "base", { effectTargetActor, opposedRequest, presetModifier });
+      rollContext, defaultKind, { effectTargetActor, opposedRequest, presetModifier, extendedPreset });
     if (!result) return;
-    const { target, modifier, difficulty = 0, kind = "base", combined, extended, opposed, opposedAuto,
-             assistCount = 0, reroll = null } = result;
+    const { target, modifier, difficulty = 0, combined, extended, opposed, opposedAuto,
+             opposedSelected = false, opposedSafeSelected = false,
+             assistCount = 0, reroll = null, confirmPick = false } = result;
     // Делегированный тест (wdbc-uez7): эффект/последствия — на effectTargetActor
     // (тот, за кого просили), сам бросок и его штрафы за состояние тела/снаряжения
     // (Усталость/Марш/Броня/Перевес) — на this.actor (кто физически бросает).
@@ -2617,16 +2975,18 @@ export class WarhammerCharacterSheet
     // существовавший путь принудительного применения who:"opponent" (общий
     // ruleRerollsHtml нарочно фильтрует его из галочек диалога, см.
     // rules/roll-mods.mjs — наказанный сам такую галочку не поставил бы).
-    // Гейт по kind (opposed/opposedSafe) — RAW ограничивает именно встречным
-    // тестом, не любым тестом с целью на сцене.
-    const opposedKind = kind === "opposed" || kind === "opposedSafe";
+    // Гейт по Виду (Встречный, галочка) — RAW ограничивает именно встречным
+    // тестом, не любым тестом с целью на сцене. opposedAuto тоже считается
+    // Встречным — там просто opposed ещё не заполнен (заполнится ниже,
+    // авто-резолвом), но галочка уже стоит.
+    const opposedKind = opposedSelected || !!opposedAuto;
     const forcedOpponentReroll = opposedKind
       ? (autoResolved.rerolls || []).find(r => r.who === "opponent")
       : null;
     // Переброс: бросаем сколько сказано и оставляем один. Какой именно —
     // решает rules/reroll-pick.mjs: на d100 «лучший» это МЕНЬШИЙ, и это знание
     // держится в одном месте, а не переписывается на каждом месте броска.
-    const { roll, rv, rerollNote } = await rollD100WithReroll(forcedOpponentReroll || reroll);
+    const { roll, rv, rerollNote } = await rollD100WithReroll(forcedOpponentReroll || reroll, { confirmPick });
     const charAbbr = CHARACTERISTICS[charKey]?.abbr ?? charKey;
 
     // Авто-встречный тест (wdbc-j814): ручные поля (opposed) в приоритете —
@@ -2641,8 +3001,25 @@ export class WarhammerCharacterSheet
     const pendingOpponentNote = opposedOpponent
       ? `<div class="roll-dlg-note">⏳ Ждём встречный бросок игрока «${esc(opposedOpponent.name)}»…</div>` : "";
 
+    // Столбец Б Комбинированного (стр. 25, wdbc-y9i8): диалог отдаёт «сырые»
+    // Цель/Модификатор/Сложность второго Навыка — ситуативные авто-штрафы
+    // состояния тела/снаряжения (Усталость/Марш/шлем/броня/Перевес) досчитываем
+    // здесь ЖЕ, тем же resolveTest, каким выше посчитан autoMods столбца А:
+    // разойдись эти два пути, показанный «второй Предел» не сошёлся бы с тем,
+    // что реально ушло бы в сравнение min(А,Б).
+    let combinedForOutcome = combined;
+    if (combined) {
+      const bCtx = { kind: "skill", targetActor: sceneTarget, char: combined.charKey || defaultChar,
+                     skill: combined.skillKey ?? undefined };
+      if (isMoraleOpposedSkill(combined.skillKey)) bCtx.morale = true;
+      const bAutoResolved = resolveTest({ actor: this.actor, ...bCtx });
+      const bEff = combined.target + combined.modifier + combined.difficulty + autoModsTotal(bAutoResolved.autoMods);
+      combinedForOutcome = { target: bEff, label: combined.label, charKey: combined.charKey, assistCount: combined.assistCount };
+    }
+
     const outcome = await resolveKindOutcome(effectActor, {
-      kind, baseEff, rv, combined, extended, opposed: finalOpposed,
+      baseEff, rv, combined: combinedForOutcome, extended, opposed: finalOpposed,
+      opposedSelected: opposedKind, opposedSafeSelected,
       ctx: { actor: effectActor, kind: "skill", char: charKey, skill: skillKey ?? undefined,
              morale: isMoraleOpposedSkill(skillKey),
              ...(withSceneTarget ? { targetActor: sceneTarget } : {}) }
@@ -2653,7 +3030,12 @@ export class WarhammerCharacterSheet
       });
     }
     // Ассистенты добавляют степень только к успеху — см. rules/assists.mjs.
-    const deg      = assistDegrees(outcome.deg, assistCount, outcome.success);
+    // combinedAssistCount (wdbc-y9i8) — на Комбинированном у второго столбца
+    // свой пул Ассистентов; степень получает бонус от того столбца, чей
+    // Предел реально используется (см. kind-outcome.mjs), не обоих сразу.
+    const effectiveAssistCount = (combined && outcome.combinedAssistCount != null)
+      ? outcome.combinedAssistCount : assistCount;
+    const deg      = assistDegrees(outcome.deg, effectiveAssistCount, outcome.success);
     const outcomeHtml = outcome.success
       ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
       : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`;
@@ -2697,8 +3079,9 @@ export class WarhammerCharacterSheet
       }),
       lines: [
         outcome.combinedLine,
+        outcome.unnaturalLine,
         outcome.personalAdaptationLine,
-        assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${outcome.success ? `, +${assistCount} к степени` : ""})</div>` : ""
+        assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${(outcome.success && effectiveAssistCount === assistCount) ? `, +${assistCount} к степени` : ""})</div>` : ""
       ],
       rerollNote, critLine: outcome.critLine, outcome: outcomeHtml,
       sections: [outcome.extendedLine, outcome.opposedLine, pendingOpponentNote, onFailNote]
@@ -2706,12 +3089,12 @@ export class WarhammerCharacterSheet
 
     if (opposedOpponent) {
       await this._sendOpposedRequest(opposedOpponent, {
-        label, kind, testKind: skillKey ? "skill" : "characteristic",
+        label, safe: finalOpposed?.safe, testKind: skillKey ? "skill" : "characteristic",
         skillKey, charKey, hideCharSelect,
         baseEff, rv, outcome
       });
     }
-    await this._maybePostOpposedComparison(opposedRequest, { label, baseEff, rv, outcome, skillKey });
+    await this._maybePostOpposedComparison(opposedRequest, { label, baseEff, rv, outcome, skillKey, charKey });
     // Возврат исхода (wdbc-1rno.2): раньше _runTest ничего не возвращал —
     // ни один существующий вызывающий код это значение не читал (проверено
     // grep'ом), поэтому добавление return здесь ничего не ломает. Нужен
@@ -2723,8 +3106,10 @@ export class WarhammerCharacterSheet
 
   // -- Бросок навыка ---------------------------------------------------------
 
-  async _rollSkill(label, baseTotal, defaultChar, rollContext = null, { effectTargetActor = null, opposedRequest = null } = {}) {
-    return this._runTest(label, baseTotal, defaultChar, { rollContext, effectTargetActor, opposedRequest });
+  async _rollSkill(label, baseTotal, defaultChar, rollContext = null, {
+    effectTargetActor = null, opposedRequest = null, defaultKind = "base", extendedPreset = null
+  } = {}) {
+    return this._runTest(label, baseTotal, defaultChar, { rollContext, effectTargetActor, opposedRequest, defaultKind, extendedPreset });
   }
 
   /** Расчёт и применение лечения к пациенту + сообщение в чат. */
@@ -2744,9 +3129,12 @@ export class WarhammerCharacterSheet
    * «Бросок с:», подпись берётся у фактической характеристики броска, а не у
    * той, с которой диалог открывали.
    */
-  async _rollCharacteristic(label, abbr, threshold, charKey, hideCharSelect = false, { effectTargetActor = null, opposedRequest = null, presetModifier = 0, onFailItemUuid = null } = {}) {
+  async _rollCharacteristic(label, abbr, threshold, charKey, hideCharSelect = false, {
+    effectTargetActor = null, opposedRequest = null, presetModifier = 0, onFailItemUuid = null,
+    defaultKind = "base", extendedPreset = null
+  } = {}) {
     return this._runTest(label, threshold, charKey, {
-      hideCharSelect, effectTargetActor, opposedRequest, presetModifier, onFailItemUuid,
+      hideCharSelect, effectTargetActor, opposedRequest, presetModifier, onFailItemUuid, defaultKind, extendedPreset,
       headerAbbr: abbr, targetLabel: "Цель",
       // Тест Характеристики не клал цель сцены в контекст исхода, тест Навыка
       // клал. Не выравниваем заодно с объединением: правила с условием по цели

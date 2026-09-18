@@ -177,13 +177,16 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
         <div class="wh-skill-roll-form">
           <div class="roll-dlg-header"><span>Тест Нестабильности</span></div>
           <div class="roll-dlg-row"><label>Сила Воли:</label><span>${wp}</span></div>
-          ${testKindHtml({ defaultKind: "base", label: "Нестабильность" })}
+          ${testKindHtml({ label: "Нестабильность" })}
           <div id="auto-outcome-note" class="roll-dlg-note"></div>
         </div>`,
       buttons: [
         {
           action: "roll", icon: "fas fa-dice-d10", label: "Бросок", default: true,
-          callback: (event, button) => readTestKind(sel => button.form.querySelector(sel)?.value ?? null, { label: "Нестабильность" })
+          callback: (event, button) => readTestKind(
+            sel => button.form.querySelector(sel)?.value ?? null,
+            sel => !!button.form.querySelector(sel)?.checked,
+            { label: "Нестабильность" })
         },
         { action: "cancel", label: "Отмена", callback: () => false }
       ],
@@ -234,7 +237,7 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
     const { roll, rv, rolls: rolled, rerollNote } = await rollD100WithReroll(rr);
 
     const outcome = await resolveKindOutcome(this.actor, {
-      kind: tk.kind, baseEff: threshold, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed, ctx
+      baseEff: threshold, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed, ctx
     });
     const { success, deg } = outcome;
     // Карточка — общим сборщиком (wdbc-fyvv). classes: без wh-daemon-card
@@ -287,13 +290,16 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
         <div class="wh-skill-roll-form">
           <div class="roll-dlg-header"><span>Против Экзорцизма / Чистой Демонологии</span></div>
           <div class="roll-dlg-row"><label>Сила Воли:</label><span>${wp}</span></div>
-          ${testKindHtml({ defaultKind: "opposed", label: "Против Экзорцизма" })}
+          ${testKindHtml({ defaultKinds: ["opposed"], label: "Против Экзорцизма" })}
           <div id="auto-outcome-note" class="roll-dlg-note"></div>
         </div>`,
       buttons: [
         {
           action: "roll", icon: "fas fa-dice-d10", label: "Бросок", default: true,
-          callback: (event, button) => readTestKind(sel => button.form.querySelector(sel)?.value ?? null, { label: "Против Экзорцизма" })
+          callback: (event, button) => readTestKind(
+            sel => button.form.querySelector(sel)?.value ?? null,
+            sel => !!button.form.querySelector(sel)?.checked,
+            { label: "Против Экзорцизма" })
         },
         { action: "cancel", label: "Отмена", callback: () => false }
       ],
@@ -329,7 +335,7 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
     const { roll, rv, rolls: rolled, rerollNote } = await rollD100WithReroll(rr);
 
     const outcome = await resolveKindOutcome(this.actor, {
-      kind: tk.kind, baseEff: threshold, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed, ctx
+      baseEff: threshold, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed, ctx
     });
     const { success, deg } = outcome;
     // Та же сборка, что у Нестабильности выше (wh-daemon-card, плашка

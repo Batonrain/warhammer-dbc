@@ -7,14 +7,40 @@
 // атака). Здесь — только чистая арифметика по книге, без Foundry: диалог
 // (module/sheets/actor-sheet.mjs) собирает поля формы и вызывает эти функции.
 
-/** Виды теста, доступные из диалога. Порядок — как в самой книге. */
-export const TEST_KINDS = {
-  base:        "Базовый",
-  opposed:     "Встречный",
-  opposedSafe: "Безопасный встречный",
-  combined:    "Комбинированный",
-  extended:    "Расширенный"
-};
+import { SKILLS_DEF } from "../constants/skills.mjs";
+import { CHARACTERISTICS } from "../constants/characteristics.mjs";
+
+/**
+ * Единый список «Навык или голая Характеристика» — тем же значением
+ * (`"skill:<key>"`/`"char:<key>"`) пользуются панель «Расширенные тесты»
+ * (sheets/sheet-helpers.mjs, wdbc-nysl) и второй столбец диалога
+ * Комбинированного теста (sheets/actor-sheet.mjs, wdbc-y9i8) — единственное
+ * место, где список заводится, чтобы не разъезжаться при правке Навыков.
+ *
+ * @returns {Array<{value:string, label:string, charKey:string}>}
+ */
+export function testTargetList() {
+  return [
+    ...Object.entries(SKILLS_DEF).map(([key, def]) => ({ value: `skill:${key}`, label: def.label, charKey: def.char })),
+    ...Object.entries(CHARACTERISTICS).map(([key, meta]) => ({ value: `char:${key}`, label: meta.label, charKey: key }))
+  ];
+}
+
+/**
+ * Разбор значения селекта из {@link testTargetList} на составляющие.
+ * Нераспознанное/пустое значение — Характеристика по умолчанию `fallbackChar`,
+ * без Навыка: диалог не должен падать, если селект ещё не тронут.
+ *
+ * @param {?string} value       `"skill:<key>"`/`"char:<key>"`
+ * @param {string}  fallbackChar
+ * @returns {{skillKey:?string, charKey:string}}
+ */
+export function parseTestTarget(value, fallbackChar = "ag") {
+  const [kind, key] = String(value ?? "").split(":");
+  if (kind === "skill" && SKILLS_DEF[key]) return { skillKey: key, charKey: SKILLS_DEF[key].char };
+  if (kind === "char" && CHARACTERISTICS[key]) return { skillKey: null, charKey: key };
+  return { skillKey: null, charKey: fallbackChar };
+}
 
 /**
  * Комбинированный тест (стр. 25): один Предел — наименьший (наихудший) из
@@ -51,21 +77,36 @@ function signedDeg({ deg, success }) {
  * победитель получает ровно 1 Уровень Успеха. Полная ничья (равны и степень, и
  * Предел) в книге не описана; возвращаем `winner: null` — решает ГМ.
  *
- * @param {{deg:number, success:boolean, threshold:number}} mine
- * @param {{deg:number, success:boolean, threshold:number}} theirs
+ * Сверхъестественная Характеристика (стр. 26, wdbc-y9i8): если сторона,
+ * которая иначе проиграла бы, владеет этим Трейтом для СВОЕЙ тестируемой
+ * Характеристики, а победитель — не владеет им для СВОЕЙ, поражение гасится
+ * до той же ничьей-по-Пределу, что и выше (margin строго 1, а не реальная
+ * разница степеней) — ровно случай Амелии против Трорзака из примера 2.
+ * `mine.unnatural`/`theirs.unnatural` — булев признак, есть ли у СТОРОНЫ
+ * этот Трейт для характеристики, которой ОНА бросала (проверяется вызывающим
+ * кодом через unnatural-characteristic.mjs, здесь только сравнение).
+ *
+ * @param {{deg:number, success:boolean, threshold:number, unnatural?:boolean}} mine
+ * @param {{deg:number, success:boolean, threshold:number, unnatural?:boolean}} theirs
  * @param {{safe?:boolean}} [opts]
- * @returns {{winner: "mine"|"theirs"|null, margin: number}}
+ * @returns {{winner: "mine"|"theirs"|null, margin: number, unnaturalTieBreak?: boolean}}
  */
 export function resolveOpposed(mine, theirs, { safe = false } = {}) {
   const sMine = signedDeg(mine), sTheirs = signedDeg(theirs);
 
-  if (sMine === sTheirs) {
+  const tieByThreshold = () => {
     const tMine = Number(mine?.threshold) || 0, tTheirs = Number(theirs?.threshold) || 0;
     if (tMine === tTheirs) return { winner: null, margin: 0 };
     return { winner: tMine > tTheirs ? "mine" : "theirs", margin: 1 };
-  }
+  };
+
+  if (sMine === sTheirs) return tieByThreshold();
 
   const mineWins = sMine > sTheirs;
+  const loserUnnatural  = mineWins ? !!theirs?.unnatural : !!mine?.unnatural;
+  const winnerUnnatural = mineWins ? !!mine?.unnatural : !!theirs?.unnatural;
+  if (loserUnnatural && !winnerUnnatural) return { ...tieByThreshold(), unnaturalTieBreak: true };
+
   const winnerSigned = mineWins ? sMine : sTheirs;
   const loserSigned  = mineWins ? sTheirs : sMine;
   const winnerSucceeded = mineWins ? !!mine?.success : !!theirs?.success;

@@ -33,6 +33,72 @@ afterEach(() => { clearRuleSources(); for (const [key, fn] of DEFAULT_SOURCES) r
 
 const ctx = a => ({ actor: a, kind: "skill", char: "wp" });
 
+/** Тот же actor(), но с items — фабрика выше не даёт их подменить. */
+const actorWithItems = (items, over = {}) => ({ ...actor(over), items });
+const unnaturalTrait = (name, stat, value) => ({
+  type: "trait", name, system: { effects: { charBonuses: [{ stat, value }] } }
+});
+
+describe("resolveKindOutcome — Сверхъестественная Характеристика (стр. 26, wdbc-y9i8)", () => {
+  it("пример 1 книги: Unnatural S (4), Успех — +2 к степени сверх обычной", async () => {
+    const a = actorWithItems([unnaturalTrait("Unnatural S (4) / Сверхъест. Сила", "s", 4)]);
+    // Предел 75, бросок 54 — «обычно это было бы 3 Успеха» (книга).
+    const o = await resolveKindOutcome(a, { kind: "base", baseEff: 75, rv: 54, ctx: { actor: a, kind: "skill", char: "s" } });
+    expect(o.deg).toBe(5); // 3 обычных + 2 от Unnatural S (4)
+    expect(o.unnaturalLine).toContain("+2");
+  });
+
+  it("Провал — бонус НЕ применяется, даже если рейтинг есть", async () => {
+    const a = actorWithItems([unnaturalTrait("Unnatural S (4) / Сверхъест. Сила", "s", 4)]);
+    const o = await resolveKindOutcome(a, { kind: "base", baseEff: 40, rv: 80, ctx: { actor: a, kind: "skill", char: "s" } });
+    expect(o.success).toBe(false);
+    expect(o.unnaturalLine).toBe("");
+  });
+
+  it("бонус степени применяется к Характеристике рейтинга, не к другой", async () => {
+    const a = actorWithItems([unnaturalTrait("Unnatural S (4) / Сверхъест. Сила", "s", 4)]);
+    const o = await resolveKindOutcome(a, { kind: "base", baseEff: 75, rv: 54, ctx: { actor: a, kind: "skill", char: "t" } });
+    expect(o.unnaturalLine).toBe("");
+  });
+
+  it("без Трейта строка пустая, степень как обычно", async () => {
+    const a = actor();
+    const o = await resolveKindOutcome(a, { kind: "base", baseEff: 75, rv: 54, ctx: { actor: a, kind: "skill", char: "s" } });
+    expect(o.deg).toBe(3);
+    expect(o.unnaturalLine).toBe("");
+  });
+
+  // Пример 2 книги: Трорзак (без Трейта) набирает больше сырых Успехов, чем
+  // Амелия (Unnatural W (2)) — но раз проигрывающая сторона владеет Трейтом,
+  // а победившая — нет, исход гасится до ничьей по Пределу.
+  it("пример 2 книги: сырых Успехов у Трорзака больше (4 против 2), но Предел Амелии выше — она побеждает вопреки этому", async () => {
+    const amelia = actorWithItems([unnaturalTrait("Unnatural W (2) / Сверхъест. Воля", "wp", 2)]);
+    // Амелия (мы): Предел 65, бросок 60 → 1 обычный Успех + 1 от Unnatural W (2) = deg 2.
+    // Трорзак (opposed): Предел 40, бросок 10 → deg 4, без Трейта.
+    // По сырым Успехам Трорзак впереди (4 > 2) — но её Предел (65) выше его
+    // (40), а он не владеет Трейтом для W — тай-брейк отдаёт победу ей.
+    const o = await resolveKindOutcome(amelia, {
+      kind: "opposed", baseEff: 65, rv: 60, ctx: { actor: amelia, kind: "skill", char: "wp" },
+      opposed: { threshold: 40, roll: 10, unnatural: false }
+    });
+    expect(o.opposedLine).toContain("Вы побеждаете");
+    expect(o.opposedLine).toContain("margin <b>1</b>");
+    expect(o.opposedLine).toContain("уравняла исход");
+  });
+
+  it("ни у кого нет Трейта — тай-брейк не срабатывает, поведение как до этой правки", async () => {
+    const noTrait = actor();
+    const o = await resolveKindOutcome(noTrait, {
+      kind: "opposed", baseEff: 65, rv: 60, ctx: { actor: noTrait, kind: "skill", char: "wp" },
+      opposed: { threshold: 40, roll: 10 } // unnatural не передан вовсе — считается false по умолчанию
+    });
+    // Без бонуса степени у «меня» и без Трейта у «них»: побеждает соперник по
+    // сырым Успехам (4 против 1), обычная margin-формула, никакого тай-брейка.
+    expect(o.opposedLine).toContain("Соперник побеждает");
+    expect(o.opposedLine).not.toContain("уравняла исход");
+  });
+});
+
 describe("resolveKindOutcome — base", () => {
   it("успех/степень как у testOutcome, без kindLabel", async () => {
     const out = await resolveKindOutcome(actor(), { kind: "base", baseEff: 45, rv: 40, ctx: ctx(actor()) });
@@ -55,6 +121,55 @@ describe("resolveKindOutcome — combined", () => {
     expect(out.success).toBe(false); // 25 > 20
     expect(out.combinedLine).toContain("итоговый Порог <b>20</b>");
   });
+
+  // wdbc-y9i8: второй столбец диалога теперь называет реальный второй Навык
+  // явно, а не через обратную подстановку по charKey.
+  it("явный label второго столбца перебивает подстановку по charKey", async () => {
+    const out = await resolveKindOutcome(actor(), {
+      kind: "combined", baseEff: 87, rv: 30, ctx: ctx(actor()),
+      combined: { charKey: "int", target: 77, label: "For.Lore (Astartes Implants)" }
+    });
+    expect(out.eff).toBe(77);
+    expect(out.combinedLine).toContain("(For.Lore (Astartes Implants))");
+    expect(out.combinedLine).not.toContain("Интеллект");
+  });
+
+  it("без label подставляет имя Характеристики по charKey — как раньше", async () => {
+    const out = await resolveKindOutcome(actor(), {
+      kind: "combined", baseEff: 45, rv: 25, ctx: ctx(actor()), combined: { charKey: "ag", target: 20 }
+    });
+    expect(out.combinedLine).toContain("Ловкость");
+  });
+
+  it("combinedAssistCount — null, если у второго столбца нет счётчика Ассистентов", async () => {
+    const out = await resolveKindOutcome(actor(), {
+      kind: "combined", baseEff: 45, rv: 25, ctx: ctx(actor()), combined: { charKey: "ag", target: 20 }
+    });
+    expect(out.combinedAssistCount).toBeNull();
+  });
+
+  it("combinedAssistCount — Ассистенты второго столбца, если он реально ниже (используется)", async () => {
+    const out = await resolveKindOutcome(actor(), {
+      kind: "combined", baseEff: 87, rv: 30, ctx: ctx(actor()),
+      combined: { charKey: "int", target: 77, label: "For.Lore", assistCount: 2 }
+    });
+    expect(out.eff).toBe(77); // второй столбец ниже — реально используется
+    expect(out.combinedAssistCount).toBe(2);
+    expect(out.combinedLine).toContain("Ассистенты: <b>2</b>, +2 к степени");
+  });
+
+  it("combinedAssistCount — null, если первый столбец ниже (второй столбец не используется), несмотря на его Ассистентов", async () => {
+    const out = await resolveKindOutcome(actor(), {
+      kind: "combined", baseEff: 50, rv: 30, ctx: ctx(actor()),
+      combined: { charKey: "int", target: 90, label: "For.Lore", assistCount: 2 }
+    });
+    expect(out.eff).toBe(50); // первый столбец ниже — второй не в деле
+    expect(out.combinedAssistCount).toBeNull();
+    // Ассистенты второго столбца упомянуты, но БЕЗ бонуса к степени —
+    // их помощь не тому Навыку, который реально бросался.
+    expect(out.combinedLine).toContain("Ассистенты: <b>2</b>");
+    expect(out.combinedLine).not.toContain("к степени");
+  });
 });
 
 describe("resolveKindOutcome — extended", () => {
@@ -64,13 +179,26 @@ describe("resolveKindOutcome — extended", () => {
       kind: "extended", baseEff: 45, rv: 35, ctx: ctx(a), extended: { label: "Тест", goal: 10 }
     });
     expect(s1.extendedLine).toContain("Банк <b>2</b>/10");
-    expect(a.getFlag("warhammer-dbc", "extendedTests.тест")).toEqual({ accumulated: 2, target: 10 });
+    // label/testKey (wdbc-nysl) — панель «Расширенные тесты» на листе: чем
+    // именно бросали (char:wp — в ctx() ниже нет ctx.skill), и под каким
+    // названием, чтобы «Переоткрыть» мог предзаполнить диалог.
+    expect(a.getFlag("warhammer-dbc", "extendedTests.тест"))
+      .toEqual({ accumulated: 2, target: 10, label: "Тест", testKey: "char:wp" });
 
     const s2 = await resolveKindOutcome(a, {
       kind: "extended", baseEff: 45, rv: 90, ctx: ctx(a), extended: { label: "Тест", goal: 10 }
     });
     expect(s2.extendedLine).toContain("+0");
     expect(a.getFlag("warhammer-dbc", "extendedTests.тест").accumulated).toBe(2);
+  });
+
+  it("testKey различает тест Навыка и Характеристики", async () => {
+    const a = actor();
+    await resolveKindOutcome(a, {
+      kind: "extended", baseEff: 45, rv: 35, ctx: { ...ctx(a), skill: "medicae" },
+      extended: { label: "Лечение", goal: 10 }
+    });
+    expect(a.getFlag("warhammer-dbc", "extendedTests.лечение").testKey).toBe("skill:medicae");
   });
 
   it("достижение цели помечается ГОТОВО", async () => {
@@ -95,6 +223,78 @@ describe("resolveKindOutcome — opposed", () => {
   it("без данных соперника (opposed: null) — строки нет", async () => {
     const out = await resolveKindOutcome(actor(), { kind: "opposed", baseEff: 45, rv: 20, ctx: ctx(actor()), opposed: null });
     expect(out.opposedLine).toBe("");
+  });
+});
+
+// Виды теста не исключают друг друга (стр. 25-26, wdbc-y9i8, «задача со
+// звездочкой» 18.09.2026): Крафт — часто Комбинированный Расширенный, долгое
+// состязание — Встречный Расширенный, и т.д. Раньше это было физически
+// невозможно (единственный select #test-kind), теперь каждый блок гейтится
+// присутствием СВОИХ данных — эти тесты проверяют, что при пересечении
+// комбинация считается СОГЛАСОВАННО: Комбинированный подменяет eff/deg ДО
+// того, как их видят Расширенный и Встречный, а не независимо от них.
+describe("resolveKindOutcome — сочетания видов теста", () => {
+  it("Комбинированный + Расширенный: банк копится от степени, уже посчитанной по Комбинированному Порогу", async () => {
+    const a = actor();
+    const out = await resolveKindOutcome(a, {
+      baseEff: 45, rv: 15, ctx: ctx(a),
+      combined: { charKey: "ag", target: 20 }, extended: { label: "Крафт", goal: 10 }
+    });
+    expect(out.eff).toBe(20); // наименьший из 45/20 — второй Предел ниже
+    expect(out.deg).toBe(1); // floor((20-15)/10)+1, НЕ по исходным 45
+    expect(out.combinedLine).toContain("итоговый Порог <b>20</b>");
+    expect(out.extendedLine).toContain("Банк <b>1</b>/10");
+    expect(out.kindLabel).toBe("Комбинированный, Расширенный");
+  });
+
+  it("Комбинированный + Встречный: соперник сравнивается с уже Комбинированной степенью, свой Комбинированный не получает", async () => {
+    const out = await resolveKindOutcome(actor(), {
+      baseEff: 45, rv: 15, ctx: ctx(actor()),
+      combined: { charKey: "ag", target: 20 }, opposed: { threshold: 30, roll: 50 }
+    });
+    expect(out.eff).toBe(20);
+    expect(out.opposedLine).toContain("Вы побеждаете");
+    expect(out.opposedLine).toContain("margin <b>4</b>"); // mine +1 против their -3
+    expect(out.kindLabel).toBe("Комбинированный, Встречный");
+  });
+
+  it("Расширенный + Встречный: банк копится независимо от исхода встречного сравнения", async () => {
+    const a = actor();
+    const out = await resolveKindOutcome(a, {
+      baseEff: 45, rv: 15, ctx: ctx(a),
+      extended: { label: "Состязание", goal: 10 }, opposed: { threshold: 50, roll: 80 }
+    });
+    expect(out.extendedLine).toContain("Банк <b>4</b>/10"); // floor((45-15)/10)+1
+    expect(out.opposedLine).toContain("Вы побеждаете, margin <b>8</b>");
+    expect(out.kindLabel).toBe("Расширенный, Встречный");
+  });
+
+  it("Комбинированный + Расширенный + Встречный разом — все три блока считаются согласованно", async () => {
+    const a = actor();
+    const out = await resolveKindOutcome(a, {
+      baseEff: 45, rv: 15, ctx: ctx(a),
+      combined: { charKey: "ag", target: 20 },
+      extended: { label: "Крафт под обстрелом", goal: 10 },
+      opposed: { threshold: 30, roll: 50 }
+    });
+    expect(out.eff).toBe(20);
+    expect(out.deg).toBe(1);
+    expect(out.combinedLine).toContain("итоговый Порог <b>20</b>");
+    expect(out.extendedLine).toContain("Банк <b>1</b>/10");
+    expect(out.opposedLine).toContain("Вы побеждаете, margin <b>4</b>");
+    expect(out.kindLabel).toBe("Комбинированный, Расширенный, Встречный");
+  });
+
+  it("Безопасный встречный (vss) в сочетании с Расширенным — оговорка vss не трогает банк", async () => {
+    const a = actor();
+    const out = await resolveKindOutcome(a, {
+      baseEff: 45, rv: 15, ctx: ctx(a),
+      extended: { label: "Погоня", goal: 10 }, opposed: { threshold: 50, roll: 80, safe: true }
+    });
+    // vss: Провалы соперника не идут в margin победителя — margin строго моя степень (4).
+    expect(out.opposedLine).toContain("Вы побеждаете, margin <b>4</b>");
+    expect(out.extendedLine).toContain("Банк <b>4</b>/10");
+    expect(out.kindLabel).toBe("Расширенный, Безопасный встречный");
   });
 });
 

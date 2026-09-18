@@ -256,21 +256,45 @@ describe("Вид теста: любой тест можно переключит
     return { content: captured.chat.at(-1)?.content ?? "", sheet: s };
   }
 
-  it("Комбинированный: Порог — наименьший из двух", async () => {
+  // wdbc-y9i8: диалог Комбинированного теперь строит второй Предел из
+  // полноценного столбца Б (свой Навык/Характеристика, своя Сложность, свой
+  // Модификатор), а не из одной строки «Второй тест» с ручным Пределом.
+  it("Комбинированный: Порог — наименьший из двух (второй столбец — своя Характеристика)", async () => {
     const { content } = await rollSkillWith({}, {
       roll: 25,
-      fields: { "#test-kind": "combined", "#combined-char-select": "ag", "#combined-target": "20" }
+      fields: {
+        "#kind-combined": true,
+        "#cmb-b-target-select": "char:ag", "#cmb-b-char-select": "ag",
+        "#cmb-b-target": "20", "#cmb-b-modifier": "0"
+      }
     });
     // 25 меньше исходного Предела 45 (был бы Успех), но больше второго Предела
     // 20, взятого как итоговый — тест проваливается.
     expect(content).toContain("Комбинированный");
     expect(content).toContain("итоговый Порог <b>20</b>");
     expect(content).toContain("Провал");
+    // Имя второго столбца — реальная Характеристика, а не пустая подпись.
+    expect(content).toContain("Ловкость");
+  });
+
+  it("Комбинированный: второй столбец — Навык (не голая Характеристика), с собственным Модификатором", async () => {
+    const { content } = await rollSkillWith({}, {
+      roll: 60,
+      fields: {
+        "#kind-combined": true,
+        "#cmb-b-target-select": "skill:medicae", "#cmb-b-char-select": "int",
+        "#cmb-b-target": "50", "#cmb-b-modifier": "10"
+      }
+    });
+    // Столбец А: 45. Столбец Б: 50+10=60 → min(45,60)=45, тест успешен на 60.
+    expect(content).toContain("итоговый Порог <b>45</b>");
+    expect(content).toContain("Медика");
+    expect(content).toContain("Провал"); // 60 > 45
   });
 
   it("Расширенный: банк Успехов копится на акторе между бросками", async () => {
     const s = sheet({});
-    const fields = { "#test-kind": "extended", "#extended-label": "Вязь Зарока", "#extended-goal": "10" };
+    const fields = { "#kind-extended": true, "#extended-label": "Вязь Зарока", "#extended-goal": "10" };
     const roll = async rv => {
       const promise = s._rollSkill("Медицина", 45, "int", { skill: "medicae" });
       captured.nextRoll = rv;
@@ -284,20 +308,23 @@ describe("Вид теста: любой тест можно переключит
     const first = await roll(35);
     // Успех: 45-35=10 запаса → 1 полный десяток + 1 = 2 степени = +2 к банку.
     expect(first).toContain("Банк <b>2</b>/10");
+    // label/testKey (wdbc-nysl) — панель «Расширенные тесты» на вкладке
+    // ПОКАЗАТЕЛИ читает их для «Переоткрыть»: skill:medicae — из rollContext
+    // {skill: "medicae"}, с которым позван _rollSkill выше.
     expect(s.actor.getFlag("warhammer-dbc", "extendedTests.вязь_зарока"))
-      .toEqual({ accumulated: 2, target: 10 });
+      .toEqual({ accumulated: 2, target: 10, label: "Вязь Зарока", testKey: "skill:medicae" });
 
     // Тот же лист, тот же актор — второй бросок продолжает банк, а не начинает заново.
     const second = await roll(25);
     expect(second).toContain("Банк <b>5</b>/10");
     expect(s.actor.getFlag("warhammer-dbc", "extendedTests.вязь_зарока"))
-      .toEqual({ accumulated: 5, target: 10 });
+      .toEqual({ accumulated: 5, target: 10, label: "Вязь Зарока", testKey: "skill:medicae" });
   });
 
   it("Встречный: с известным броском соперника карточка сама объявляет победителя", async () => {
     const { content } = await rollSkillWith({}, {
       roll: 30,
-      fields: { "#test-kind": "opposed", "#opposed-threshold": "50", "#opposed-roll": "60" }
+      fields: { "#kind-opposed": true, "#opposed-threshold": "50", "#opposed-roll": "60" }
     });
     // Мои 2 степени успеха против его 2 степеней провала → margin 2-(-2)=4.
     expect(content).toContain("Вы побеждаете");
@@ -305,7 +332,7 @@ describe("Вид теста: любой тест можно переключит
   });
 
   it("Встречный: соперник не указан — карточка помечена как половина теста, сравнения нет", async () => {
-    const { content } = await rollSkillWith({}, { fields: { "#test-kind": "opposed" } });
+    const { content } = await rollSkillWith({}, { fields: { "#kind-opposed": true } });
     expect(content).toContain("Встречный");
     expect(content).not.toContain("побеждает");
   });
@@ -496,7 +523,7 @@ describe("делегированный тест (wdbc-uez7): _rollSkill/_rollCha
     const promise = s._rollSkill("Медицина", 45, "int", { skill: "medicae" }, { effectTargetActor: patient });
     captured.nextRoll = 10; // eff=45, 10<=45 успех
     await captured.press("roll", fakeForm({
-      "#skill-target": "45", "#skill-modifier": "0", "#test-kind": "extended",
+      "#skill-target": "45", "#skill-modifier": "0", "#kind-extended": true,
       "#extended-goal": "5", "#extended-label": "Медицина"
     }));
     await promise;
@@ -621,7 +648,7 @@ describe("авто-встречный тест (wdbc-j814)", () => {
     // соперника (_resolveOpposedAuto), в этом порядке их и зовёт _rollSkill.
     captured.dice = [20, 60]; // мой 20<=45 успех, его 60>40 провал
     await captured.press("roll", fakeForm({
-      "#skill-target": "45", "#skill-modifier": "0", "#test-kind": "opposed"
+      "#skill-target": "45", "#skill-modifier": "0", "#kind-opposed": true
     }, { "#opposed-auto": [{ dataset: {}, checked: true }] }));
     await promise;
 
@@ -637,7 +664,7 @@ describe("авто-встречный тест (wdbc-j814)", () => {
     const promise = s._rollSkill("Запугивание", 45, "wp", { skill: "intimidate" });
     captured.dice = [20, 21]; // мой 20<=45 успех, но соперник при пороге 999 громит степенью
     await captured.press("roll", fakeForm({
-      "#skill-target": "45", "#skill-modifier": "0", "#test-kind": "opposed"
+      "#skill-target": "45", "#skill-modifier": "0", "#kind-opposed": true
     }, { "#opposed-auto": [{ dataset: {}, checked: true }] }));
     await promise;
     // Соперник (Порог 999, почти гарантированный высокий Успех) должен
@@ -651,7 +678,7 @@ describe("авто-встречный тест (wdbc-j814)", () => {
     const promise = s._rollSkill("Запугивание", 45, "wp", { skill: "intimidate" });
     captured.nextRoll = 20;
     await captured.press("roll", fakeForm({
-      "#skill-target": "45", "#skill-modifier": "0", "#test-kind": "opposed"
+      "#skill-target": "45", "#skill-modifier": "0", "#kind-opposed": true
     }, { "#opposed-auto": [{ dataset: {}, checked: true }] }));
     await promise;
 
@@ -679,7 +706,7 @@ describe("авто-встречный тест (wdbc-j814)", () => {
       opposedRequest: { initiatorName: "Иван", initiatorSide: { threshold: 40, roll: 35, success: true, deg: 1 }, safe: false }
     });
     captured.nextRoll = 5; // 5 <= 50 — большой успех, должен побеждать
-    await captured.press("roll", fakeForm({ "#skill-target": "50", "#skill-modifier": "0", "#test-kind": "base" }));
+    await captured.press("roll", fakeForm({ "#skill-target": "50", "#skill-modifier": "0" }));
     await promise;
     const content = captured.chat.at(-1)?.content ?? "";
     expect(content).toContain("⚔");
@@ -711,7 +738,7 @@ describe("авто-встречный тест (wdbc-j814)", () => {
         initiatorSide: { threshold: 40, roll: 35, success: true, deg: 1 }, safe: false }
     });
     captured.nextRoll = 45;
-    await captured.press("roll", fakeForm({ "#skill-target": "40", "#skill-modifier": "0", "#test-kind": "base" }));
+    await captured.press("roll", fakeForm({ "#skill-target": "40", "#skill-modifier": "0" }));
     await promise;
 
     const content = captured.chat.at(-1)?.content ?? "";
@@ -766,7 +793,7 @@ describe("Уравнитель / The Equalizer (wdbc-1rno.1): навязанны
     const promise = s._rollSkill("Запугивание", 40, "wp", { skill: "intimidate" });
     captured.dice = [10, 90]; // keepWorst должен оставить 90, не 10
     await captured.press("roll", fakeForm({
-      "#skill-target": "40", "#skill-modifier": "0", "#test-kind": "opposed"
+      "#skill-target": "40", "#skill-modifier": "0", "#kind-opposed": true
     }));
     await promise;
     expect(captured.rolls).toEqual(["1d100", "1d100"]);
@@ -779,7 +806,7 @@ describe("Уравнитель / The Equalizer (wdbc-1rno.1): навязанны
     const promise = s._rollSkill("Запугивание", 40, "wp", { skill: "intimidate" });
     captured.nextRoll = 33;
     await captured.press("roll", fakeForm({
-      "#skill-target": "40", "#skill-modifier": "0", "#test-kind": "opposed"
+      "#skill-target": "40", "#skill-modifier": "0", "#kind-opposed": true
     }));
     await promise;
     expect(captured.rolls).toEqual(["1d100"]);
@@ -801,7 +828,7 @@ describe("Уравнитель / The Equalizer (wdbc-1rno.1): навязанны
     const promise = s._rollSkill("Запугивание", 40, "wp", { skill: "intimidate" });
     captured.dice = [10, 90]; // keepBest (моё Преимущество) взял бы 10; форсированный keepWorst берёт 90
     await captured.press("roll", fakeForm({
-      "#skill-target": "40", "#skill-modifier": "0", "#test-kind": "opposed"
+      "#skill-target": "40", "#skill-modifier": "0", "#kind-opposed": true
     }, { ".dice-mode-opt:checked": [{ value: "advantage" }] }));
     await promise;
     expect(captured.chat.at(-1)?.content).toContain("<label>Бросок</label><b>90</b>");
@@ -813,7 +840,7 @@ describe("Уравнитель / The Equalizer (wdbc-1rno.1): навязанны
     const promise = s._rollSkill("Запугивание", 40, "wp", { skill: "intimidate" });
     captured.nextRoll = 33;
     await captured.press("roll", fakeForm({
-      "#skill-target": "40", "#skill-modifier": "0", "#test-kind": "opposed"
+      "#skill-target": "40", "#skill-modifier": "0", "#kind-opposed": true
     }));
     await promise;
     expect(captured.rolls).toEqual(["1d100"]);

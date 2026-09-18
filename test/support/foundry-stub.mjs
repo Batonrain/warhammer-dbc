@@ -563,6 +563,7 @@ export function fakeHtml(fields = {}, checks = {}) {
     find: selector => ({
       val:  () => fields[selector],
       is:   () => fields[selector] === true,
+      prop: name => (name === "checked" ? fields[selector] === true : undefined),
       data: key => (typeof fields[selector] === "object" && fields[selector] !== null)
         ? fields[selector][key] : undefined,
       on:   () => {},
