@@ -3,6 +3,7 @@
   "type": "weapon",
   "folder": "I5YnUU7FALBAujS6",
   "system": {
+    "itemSize": "5x1",
     "description": "",
     "notes": "",
     "weaponClass": "melee",

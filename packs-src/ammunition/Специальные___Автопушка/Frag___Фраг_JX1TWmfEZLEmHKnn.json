@@ -4,6 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/ammo-shell.svg",
   "folder": "i0uuZL5dVJmN892X",
   "system": {
+    "itemSize": "2x1",
     "description": "Противопехотный осколочный снаряд, взрывающийся перед целью. Меняет вид урона на X(Fr), убирает 1 кубик урона, даёт −6 урона, −4 Пробитие и свойство Blast (3), убирает свойство Accurate.",
     "notes": "",
     "weaponTypes": [

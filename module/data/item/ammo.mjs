@@ -38,7 +38,12 @@ export class AmmoData extends foundry.abstract.TypeDataModel {
       removeProps:        new ArrayField(new StringField(), { label: "Убирает свойства" }),
       condMods:           new ArrayField(new ObjectField(), { label: "Условные модификаторы" }),
       drukhari:           new BooleanField({ initial: false, label: "Друкхари" }),
-      bookSource:         new StringField({ initial: "", label: "Книга-источник" })
+      bookSource:         new StringField({ initial: "", label: "Книга-источник" }),
+      // Свой размер на разгрузке (стр. 243, «Размеры предметов», wdbc-x1nz.2) —
+      // переопределяет умолчание itemSizeStr() (module/constants/rig.mjs),
+      // которое без этого поля даёт ЛЮБОМУ боеприпасу голое "1x1" — магазин
+      // тяжёлого оружия по книге занимает 2×1.
+      itemSize:           new StringField({ initial: "", label: "Размер (разгрузка)" })
     };
   }
 }

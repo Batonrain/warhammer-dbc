@@ -24,6 +24,11 @@ export class ToolData extends foundry.abstract.TypeDataModel {
       quality:      new StringField({ initial: "common", label: "Качество" }),
       toolCategory: new StringField({ initial: "general", label: "Категория" }),
       linkedWeapon: new StringField({ initial: "", label: "Связанное оружие" }),
+      // Свой размер на разгрузке (стр. 243, «Размеры предметов», wdbc-x1nz.2) —
+      // переопределяет умолчание itemSizeStr() (module/constants/rig.mjs),
+      // которое без этого поля даёт ЛЮБОМУ инструменту голое "1x1" — набор
+      // инструментов/аптечка по книге занимают 3×1.
+      itemSize:     new StringField({ initial: "", label: "Размер (разгрузка)" }),
       effect:       new StringField({ initial: "", label: "Эффект" }),
       reminder:     new StringField({ initial: "", label: "Напоминание" }),
       qualityEffects: qualityEffectsField(),

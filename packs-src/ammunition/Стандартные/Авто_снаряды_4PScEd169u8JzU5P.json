@@ -4,6 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/ammo-shell.svg",
   "folder": "SwXRBhzZXUS635qX",
   "system": {
+    "itemSize": "2x1",
     "description": "Стандартные снаряды для автопушек. 1 единица = полный магазин.",
     "notes": "",
     "weaponTypes": [

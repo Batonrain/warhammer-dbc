@@ -11,6 +11,7 @@
     "availability": -1,
     "quality": "common",
     "toolCategory": "kits",
+    "itemSize": "3x1",
     "effect": "Крафт боеприпасов авто/стаб-оружия и дробовиков в поле (без сложной внутренней структуры).",
     "reminder": "",
     "qualityEffects": {

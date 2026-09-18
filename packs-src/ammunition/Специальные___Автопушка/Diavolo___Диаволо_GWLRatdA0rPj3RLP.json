@@ -4,6 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/ammo-shell.svg",
   "folder": "i0uuZL5dVJmN892X",
   "system": {
+    "itemSize": "2x1",
     "description": "Снаряд с зажигательной смесью вместо взрывчатки. Меняет вид урона на I, убирает 1 кубик урона, даёт −4 Пробитие и свойство Flame; при непоглощённом уроне в корпус или башню машины бросьте 1d10: 10+ начинает Пожар (8+ при попадании в корму).",
     "notes": "",
     "weaponTypes": [

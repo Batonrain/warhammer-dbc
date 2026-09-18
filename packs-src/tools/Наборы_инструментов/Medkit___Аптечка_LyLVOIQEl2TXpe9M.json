@@ -11,6 +11,7 @@
     "availability": -2,
     "quality": "common",
     "toolCategory": "kits",
+    "itemSize": "3x1",
     "effect": "Medicae+0: +20 на лечение и диагностику.",
     "reminder": "",
     "qualityEffects": {

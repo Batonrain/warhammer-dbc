@@ -89,7 +89,9 @@ const TYPES = {
       reminder: "", qualityEffects: { poor: "", good: "", best: "" },
       bonuses: [], drukhari: false, bookSource: "", infoguard: 0,
       // Включаемая/включена (wdbc-x1nz.2) — см. тот же комментарий у gear выше.
-      activatable: false, active: false
+      activatable: false, active: false,
+      // Размер на разгрузке (wdbc-x1nz.2) — см. тот же комментарий у weapon ниже.
+      itemSize: ""
     }
   },
   cybernetic: {
@@ -415,7 +417,10 @@ const TYPES = {
       // Свойства, которые боеприпас у оружия отнимает (Инферно Тзинча — Tearing):
       // поля не было, и замена держалась на одном тексте «Особенностей».
       removeProps: [],
-      drukhari: false, bookSource: ""
+      drukhari: false, bookSource: "",
+      // Размер на разгрузке (wdbc-x1nz.2) — магазин тяжёлого оружия 2×1 против
+      // умолчания 1×1 у обычного боеприпаса (itemSizeStr(), module/constants/rig.mjs).
+      itemSize: ""
     }
   },
   armor: {
