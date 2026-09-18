@@ -14,11 +14,17 @@ import { showFlightDialog, actorHasFlyer, actorCanFly } from "../../module/comba
 
 function traitItem(name) { return { type: "trait", name, system: {} }; }
 
-function actorWith(items, { elevation = 0 } = {}) {
+// system.movement.altitude НИКОГДА не бывает пустым/undefined у настоящего
+// Foundry-актора — DataModel всегда заполняет поле своим initial ("landed",
+// _creature.mjs). Фикстура с пустым movement:{} маскировала wdbc-x1nz.2.16
+// (initial реально был "ground" — || "landed" в showFlightDialog никогда не
+// срабатывал) — найдено живым тестом, не этим файлом. Дефолт фикстуры ниже
+// повторяет реальную форму документа, а не «удобное пустое место».
+function actorWith(items, { elevation = 0, altitude = "landed" } = {}) {
   const tokenDocs = [{ elevation, update: async (d) => Object.assign(tokenDocs[0], d) }];
   return {
     name: "Подставной", items,
-    system: { movement: {} },
+    system: { movement: { altitude } },
     update: async function (data) { Object.assign(this.system, unflatten(data)); },
     getActiveTokens: () => tokenDocs,
     __tokenDocs: tokenDocs
@@ -69,7 +75,7 @@ describe("showFlightDialog: Hoverer без Flyer видит только При�
     showFlightDialog(actor);
     await captured.dialog.buttons.set.callback(fakeHtml({ "#fly-alt": "low" }));
     expect(captured.warnings.at(-1)).toContain("только Hoverer");
-    expect(actor.system.movement.altitude).toBeUndefined();
+    expect(actor.system.movement.altitude).toBe("landed"); // не записалось — осталось прежним
   });
 
   it("Flyer — список содержит все четыре тира", () => {

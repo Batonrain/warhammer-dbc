@@ -394,7 +394,13 @@ export function creatureSchema({ granted = false } = {}) {
       spdBonus: num(0, "Надбавка SPD"),
       // Высота полёта (стр. 30: Приземная/Низкая/Высокая) — состояние Хода,
       // а не свойство персонажа, тот же приём, что system.mount.speed.
-      altitude: str("ground", "Высота полёта (ground/low/high)")
+      // Дефолт "landed" ("не летит"), НЕ "ground" (wdbc-x1nz.2.16, найдено
+      // живым тестом) — DataModel всегда заполняет поле своим initial, так
+      // что `|| "landed"` в showFlightDialog (module/combat/movement-actions.
+      // mjs) никогда не сработал бы, будь тут "ground": свежий Flyer-актор,
+      // ни разу не открывавший диалог Полёта, уже читался бы как «летит на
+      // Приземной высоте» и получал бы дармовой автоигнор Трудного Ландшафта.
+      altitude: str("landed", "Высота полёта (landed/ground/low/high)")
     }, { label: "Перемещение" }),
     initiative: num(0, "Инициатива"),
     size:       num(0, "Размер"),

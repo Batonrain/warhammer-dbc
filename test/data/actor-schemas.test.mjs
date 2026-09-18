@@ -274,8 +274,11 @@ const DEVIATIONS = {
     // эффектов, заведено гораздо позже template.json — см. combat/damage.mjs.
     incomingDamageReduction: 0,
     // Высота полёта (стр. 30, wdbc-n1cy) — состояние Хода, заведено гораздо
-    // позже template.json, тем же приёмом, что mount.speed.
-    "movement.altitude": "ground",
+    // позже template.json, тем же приёмом, что mount.speed. Дефолт "landed"
+    // ("не летит"), не "ground" (wdbc-x1nz.2.16, живой тест) — свежий актор
+    // не должен читаться как «уже летит на Приземной» и получать дармовой
+    // автоигнор Трудного Ландшафта до первого клика по диалогу Полёта.
+    "movement.altitude": "landed",
     // Данные для Limited Vision (текст на Записях, видимый только ГМ) —
     // заведено гораздо позже template.json, тот же приём, что и notes.
     limitedVisionData: "",

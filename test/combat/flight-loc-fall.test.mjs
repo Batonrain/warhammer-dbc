@@ -15,7 +15,7 @@ function actor() {
   return {
     name: "Подставной",
     items: [{ type: "trait", name: "Flyer (2×A.b)", system: {} }],
-    system: { characteristics: { ag: { total: 40 } }, movement: {} },
+    system: { characteristics: { ag: { total: 40 } }, movement: { altitude: "landed" } },
     update: async () => {},
     getActiveTokens: () => [{ elevation: 0, update: async function (d) { Object.assign(this, d); } }]
   };
