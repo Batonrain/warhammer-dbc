@@ -275,6 +275,26 @@ export async function declareDisengage(actor) {
   </div>`);
 }
 
+/**
+ * Глубокий Контакт: переноска раненого/пленного (wdbc-x1nz.2.19, стр. 31) —
+ * тумблер flags.warhammer-dbc.deepContactCarry, который free-attack.mjs::
+ * processTokenMove читает на КАЖДОМ перемещении этого токена, пока флаг
+ * включён (в отличие от disengageActive выше — это НЕ разовый флаг:
+ * переноска обычно занимает несколько перемещений подряд, снимается тем же
+ * пунктом меню, когда ГМ/игрок решает, что она закончена).
+ */
+export async function toggleDeepContactCarry(actor) {
+  if (!actor) return;
+  const active = !!actor.getFlag("warhammer-dbc", "deepContactCarry");
+  await actor.setFlag("warhammer-dbc", "deepContactCarry", !active);
+  await _postCard(actor, `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Глубокий Контакт</div>
+    <div class="roll-threshold">${!active
+      ? "Несёт/держит в Глубоком Контакте — движение не провоцирует Свободную Атаку (стр. 31)."
+      : "Переноска закончена — движение снова провоцирует Свободную Атаку как обычно."}</div>
+  </div>`);
+}
+
 export async function declareRun(actor) {
   if (!actor) return;
   // Повален (стр. 30-31, wdbc-r5o7.2): «нельзя Бег и Натиск».
@@ -1036,6 +1056,13 @@ export function movementMenuItems(actor) {
   items.push({ key: "jump", label: "Прыжок", cost: "", action: () => showJumpDialog(actor) });
   items.push({ key: "swim", label: "Плавание", cost: "", action: () => showSwimDialog(actor) });
   items.push({ key: "fall", label: "Падение", cost: "", action: () => showFallDialog(actor) });
+  items.push({
+    key: "deepContactCarry",
+    label: actor.getFlag("warhammer-dbc", "deepContactCarry")
+      ? "Глубокий Контакт: закончить переноску" : "Глубокий Контакт: несу/держу",
+    cost: "",
+    action: () => toggleDeepContactCarry(actor)
+  });
   if (actorCanFly(actor)) {
     items.push({ key: "fly", label: "Полёт", cost: "", action: () => showFlightDialog(actor) });
   }

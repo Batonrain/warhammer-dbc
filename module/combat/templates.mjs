@@ -11,12 +11,19 @@
 //  (create:false) — в сцену не пишется вообще, нужен только для testPoint(),
 //  и сам исчезает вместе с превью; чистить за собой не нужно.
 //
-//  Кто накрыт — токены, чей ЦЕНТР (testPoint) попал в фигуру. Найденные
-//  токены становятся целями пользователя (canvas.tokens.setTargets), после
-//  чего дальше работает уже готовый showApplyDamageDialog() (module/combat/
-//  damage.mjs) — «один бросок урона на всех попавших», он и раньше умел
-//  применять один и тот же damageData к game.user.targets («Всем»), просто
-//  раньше цели туда ГМ отмечал вручную (см. doombc-blast-scatter).
+//  Кто накрыт — токены, чья База (круг вписанный в токен) хотя бы частично
+//  попадает в фигуру (wdbc-x1nz.2.18, стр. 31: «воздействуют на персонажа,
+//  если они хотя бы частично накрывают его Базу — просто касания
+//  недостаточно»), не только чей ЦЕНТР (testPoint) в ней. Region не даёт
+//  готовой проверки «фигура пересекает круг», поэтому Base приближается
+//  сэмплом точек по её окружности (baseSamplePoints) — если testPoint()
+//  прошёл хотя бы для одной из них (включая центр), токен считается
+//  накрытым. Найденные токены становятся целями пользователя
+//  (canvas.tokens.setTargets), после чего дальше работает уже готовый
+//  showApplyDamageDialog() (module/combat/damage.mjs) — «один бросок урона
+//  на всех попавших», он и раньше умел применять один и тот же damageData
+//  к game.user.targets («Всем»), просто раньше цели туда ГМ отмечал вручную
+//  (см. doombc-blast-scatter).
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
@@ -98,16 +105,37 @@ export async function placeAttackTemplate(shape, name = "Зона поражен
 }
 
 /**
- * Токены сцены, чей центр внутри фигуры Region (testPoint) — переиспользуется
- * и разовым Шаблоном, и дрейфом зоны «Остаётся» (module/regions/linger-zone.mjs).
+ * Точки на окружности Базы токена (плюс центр), в пикселях сцены — приближение
+ * круглой Базы (радиус = половина меньшей стороны токена в клетках) для
+ * проверки «фигура хотя бы частично накрывает Базу» через testPoint(),
+ * раз Region не даёт готового пересечения фигуры с кругом.
+ * @param {Token} token
+ * @param {number} [samples]  точек по окружности, не считая центра
+ */
+function baseSamplePoints(token, samples = 12) {
+  const c = token.center;
+  const size = canvas?.grid?.size || 100;
+  const radiusPx = (Math.min(token.document.width, token.document.height) / 2) * size;
+  const points = [{ x: c.x, y: c.y }];
+  for (let i = 0; i < samples; i++) {
+    const angle = (i / samples) * Math.PI * 2;
+    points.push({ x: c.x + radiusPx * Math.cos(angle), y: c.y + radiusPx * Math.sin(angle) });
+  }
+  return points;
+}
+
+/**
+ * Токены сцены, чья База хотя бы частично внутри фигуры Region (testPoint по
+ * сэмплу точек Базы, см. baseSamplePoints) — переиспользуется и разовым
+ * Шаблоном, и дрейфом зоны «Остаётся» (module/regions/linger-zone.mjs).
  * @param {RegionDocument} region
  * @returns {Token[]}
  */
 export function tokensInRegion(region) {
   return canvas.tokens.placeables.filter(t => {
     if (!t.actor) return false;
-    const c = t.center;
-    return region.testPoint({ x: c.x, y: c.y, elevation: t.document.elevation ?? 0 });
+    const elevation = t.document.elevation ?? 0;
+    return baseSamplePoints(t).some(p => region.testPoint({ x: p.x, y: p.y, elevation }));
   });
 }
 

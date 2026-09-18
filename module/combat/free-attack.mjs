@@ -13,19 +13,29 @@
 //  перемещение этого токена гасит Свободные Атаки по нему и само снимает
 //  флаг (действие разовое, «на одно движение»).
 //
+//  Глубокий Контакт (wdbc-x1nz.2.19, стр. 31): переноска раненого/пленного
+//  «не вызывает никаких игромеханических эффектов, обычно связанных с
+//  движениями, вроде Свободных Атак». Сама переноска (совместное движение
+//  двух токенов) не автоматизирована — но пока на акторе стоит флаг
+//  flags.warhammer-dbc.deepContactCarry (movement-actions.mjs::
+//  toggleDeepContactCarry, пункт меню Движения), ЛЮБОЕ его движение гасит
+//  Свободные Атаки, как disengageActive, но НЕ снимается само — переноска
+//  обычно длится несколько перемещений подряд, снимается тем же тумблером.
+//
 //  Сама атака не автоматизирована целиком (нет единого «оружия реакции») —
 //  клик по кнопке в чате только списывает Реакцию, отмечает Раунд и
 //  назначает цель кликнувшему; сам рукопашный приём +0 наносится как обычно,
 //  щелчком по оружию на листе реагирующего (module/sheets/tabs/combat.mjs).
 //
-//  Ограничено личным масштабом (BASE_SIZE_TYPES из tactical-map.mjs) — тем же
-//  типам, для которых вообще посчитана База/контакт; Орда/Техника/Отряд живут
-//  другими правилами контакта и в эту механику не входят.
+//  Ограничено типами, у которых вообще посчитана База/контакт (isBaseTrackedActor
+//  из tactical-map.mjs — личный масштаб ИЛИ Шагоход, wdbc-x1nz.2.21, стр. 31);
+//  Орда/прочая Техника/Отряд живут другими правилами контакта и в эту
+//  механику не входят.
 // ════════════════════════════════════════════════════════════════════════
 
 import { tokenRect } from "./horde-tokens.mjs";
 import { contactType } from "../rules/tactical-map.mjs";
-import { BASE_SIZE_TYPES } from "./tactical-map.mjs";
+import { isBaseTrackedActor } from "./tactical-map.mjs";
 import { tokenRelationship } from "../regions/auras.mjs";
 import { canSpendReaction, spendReaction, hasActionEconomy } from "./action-economy.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
@@ -40,7 +50,7 @@ function actorOf(tokenDoc) {
 }
 
 function isPersonalScale(tokenDoc) {
-  return BASE_SIZE_TYPES.includes(actorOf(tokenDoc)?.type);
+  return isBaseTrackedActor(actorOf(tokenDoc));
 }
 
 /** Враждебные токены сцены личного масштаба в Базовом/Глубоком контакте с данным документом. */
@@ -132,6 +142,7 @@ export async function processTokenMove(tokenDoc, beforeContactIds) {
     await moverActor.unsetFlag("warhammer-dbc", "disengageActive");
     return [];
   }
+  if (moverActor?.getFlag("warhammer-dbc", "deepContactCarry")) return [];
 
   const after = new Set(enemyContactTokenDocs(tokenDoc).map(d => d.id));
   const broken = [];

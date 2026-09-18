@@ -9,6 +9,7 @@
     "stacks": false,
     "maxAgility": 25,
     "equipped": false,
+    "largeBase": true,
     "head": 16,
     "body": 20,
     "leftArm": 18,

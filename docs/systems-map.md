@@ -334,6 +334,16 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `module/rules/facing.mjs` + `combat/facing.mjs` — геометрия направления
   (Cloak, арки техники/корабля); `rules/vision-target.mjs` (кто меня видит,
   без стен/LoS); `rules/aoe-target.mjs` (разовая выборка токенов в радиусе).
+- `module/rules/tactical-map.mjs` + `combat/tactical-map.mjs` — Тактическая
+  карта (wdbc-8k0i, стр. 31): размер Базы (2×2/3×3, null = Размер 2+, «на
+  откуп ГМу»), дистанции от края/от центра Базы, вид контакта none/base/deep,
+  дефолт диагонали мира (`applyBookDiagonalDefaultOnce`, wdbc-x1nz.2.23).
+  `isBaseTrackedActor` — кто вообще участвует (личный масштаб + Шагоход,
+  wdbc-x1nz.2.21). `combat/free-attack.mjs` — Свободная Атака при разрыве
+  контакта, гасится `disengageActive`/`deepContactCarry` (переноска раненого/
+  пленного, wdbc-x1nz.2.19). `combat/squeeze.mjs` + `rules/squeeze.mjs` —
+  напоминание о тесноте при протискивании через дверь уже половины Базы
+  (wdbc-x1nz.2.24, только формальные Двери Foundry).
 
 ## 9. Состояния, Усталость, Страх, Здравомыслие
 

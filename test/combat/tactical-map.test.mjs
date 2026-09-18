@@ -6,7 +6,8 @@
 
 import "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
-import { meleeContactCount } from "../../module/combat/tactical-map.mjs";
+import { meleeContactCount, actorBaseSizeCells, isBaseTrackedActor, applyBookDiagonalDefaultOnce }
+  from "../../module/combat/tactical-map.mjs";
 
 const HOSTILE = -1, FRIENDLY = 1, NEUTRAL = 0;
 
@@ -69,5 +70,111 @@ describe("meleeContactCount: враги в контакте с атакующи�
     const attacker = token({ x: 0, y: 0, disposition: HOSTILE });
     canvas.tokens.placeables = [attacker];
     expect(meleeContactCount(attacker)).toBe(0);
+  });
+});
+
+// wdbc-x1nz.2.20 (стр. 31): «с существами Размером 2 и больше размер их Баз
+// остаётся на откуп ГМу» — actorBaseSizeCells (и синк токена, который на неё
+// опирается) должны вернуть null и ничего не трогать для такого актора,
+// независимо от расы/брони.
+describe("actorBaseSizeCells: Размер 2+ — на откуп ГМу", () => {
+  it("Огрин (largeBase раса) с обычным system.size — 3×3, как раньше", () => {
+    const actor = { system: { race: "ogryn", size: 1 }, items: [] };
+    expect(actorBaseSizeCells(actor)).toBe(3);
+  });
+
+  it("system.size 2 — null, даже у Огрина (largeBase не переопределяет откуп ГМу)", () => {
+    const actor = { system: { race: "ogryn", size: 2 }, items: [] };
+    expect(actorBaseSizeCells(actor)).toBeNull();
+  });
+
+  it("system.size 3 без крупной расы/брони — тоже null, не 2×2 по умолчанию", () => {
+    const actor = { system: { race: "human", size: 3 }, items: [] };
+    expect(actorBaseSizeCells(actor)).toBeNull();
+  });
+
+  it("обычный персонаж (size 0/1) — 2×2 как раньше", () => {
+    expect(actorBaseSizeCells({ system: { race: "human", size: 0 }, items: [] })).toBe(2);
+    expect(actorBaseSizeCells({ system: { race: "human", size: 1 }, items: [] })).toBe(2);
+  });
+});
+
+// wdbc-x1nz.2.21 (стр. 31): «Машины вроде шагоходов... имеют Базы точно так
+// же, как обычные персонажи» — isBaseTrackedActor допускает Шагоход в систему
+// контакта, но НЕ прочую Технику/Здания (та явно Баз не имеет, см. соседний
+// пункт книги «Техника и Здания»).
+describe("isBaseTrackedActor: личный масштаб + Шагоход (wdbc-x1nz.2.21)", () => {
+  it("персонаж/демон/minion — как раньше", () => {
+    expect(isBaseTrackedActor({ type: "character" })).toBe(true);
+    expect(isBaseTrackedActor({ type: "daemon" })).toBe(true);
+    expect(isBaseTrackedActor({ type: "minion" })).toBe(true);
+  });
+
+  it("Шагоход (vehicle, chassis.type walker) — допущен", () => {
+    const dreadnought = { type: "vehicle", system: { chassis: { type: "walker" } } };
+    expect(isBaseTrackedActor(dreadnought)).toBe(true);
+  });
+
+  it("обычная техника (не Шагоход) — не допущена", () => {
+    const tank = { type: "vehicle", system: { chassis: { type: "tracked" } } };
+    expect(isBaseTrackedActor(tank)).toBe(false);
+  });
+
+  it("Орда/Отряд/без актора — не допущены", () => {
+    expect(isBaseTrackedActor({ type: "horde" })).toBe(false);
+    expect(isBaseTrackedActor({ type: "squad" })).toBe(false);
+    expect(isBaseTrackedActor(null)).toBe(false);
+  });
+
+  it("Шагоход с Размером ≥2 (обычный случай) — actorBaseSizeCells отдаёт null, автосинк его не трогает", () => {
+    const dreadnought = { type: "vehicle", system: { chassis: { type: "walker" }, size: 4 }, items: [] };
+    expect(actorBaseSizeCells(dreadnought)).toBeNull();
+  });
+});
+
+// wdbc-x1nz.2 (стр. 31): дефолт диагонали мира на APPROXIMATE (1,5м/клетку),
+// один раз, только ГМ, не трогая осознанный выбор ГМа впредь.
+describe("applyBookDiagonalDefaultOnce", () => {
+  /** Мини-заглушка game.settings с реальной персистентностью get/set. */
+  function fakeSettings(initial = {}) {
+    const store = new Map(Object.entries(initial));
+    return {
+      get: (scope, key) => store.get(`${scope}.${key}`),
+      set: async (scope, key, value) => { store.set(`${scope}.${key}`, value); },
+      _store: store
+    };
+  }
+
+  it("не ГМ — ничего не делает", async () => {
+    globalThis.game.user = { isGM: false };
+    globalThis.game.settings = fakeSettings({ "core.gridDiagonals": 0 });
+    await applyBookDiagonalDefaultOnce();
+    expect(globalThis.game.settings.get("core", "gridDiagonals")).toBe(0);
+    expect(globalThis.game.settings.get("warhammer-dbc", "diagonalDefaultApplied")).toBeUndefined();
+  });
+
+  it("ГМ, ещё не применялось, стоит дефолт ядра (0) — ставит APPROXIMATE (2) и флаг", async () => {
+    globalThis.game.user = { isGM: true };
+    globalThis.game.settings = fakeSettings({ "core.gridDiagonals": 0 });
+    await applyBookDiagonalDefaultOnce();
+    expect(globalThis.game.settings.get("core", "gridDiagonals")).toBe(2);
+    expect(globalThis.game.settings.get("warhammer-dbc", "diagonalDefaultApplied")).toBe(true);
+  });
+
+  it("ГМ уже выбрал своё значение — не трогает core-настройку, но флаг всё равно ставит (once — значит once)", async () => {
+    globalThis.game.user = { isGM: true };
+    globalThis.game.settings = fakeSettings({ "core.gridDiagonals": 3 }); // RECTILINEAR, например
+    await applyBookDiagonalDefaultOnce();
+    expect(globalThis.game.settings.get("core", "gridDiagonals")).toBe(3);
+    expect(globalThis.game.settings.get("warhammer-dbc", "diagonalDefaultApplied")).toBe(true);
+  });
+
+  it("уже применялось раньше — не трогает core-настройку, даже если она снова 0", async () => {
+    globalThis.game.user = { isGM: true };
+    globalThis.game.settings = fakeSettings({
+      "core.gridDiagonals": 0, "warhammer-dbc.diagonalDefaultApplied": true
+    });
+    await applyBookDiagonalDefaultOnce();
+    expect(globalThis.game.settings.get("core", "gridDiagonals")).toBe(0);
   });
 });

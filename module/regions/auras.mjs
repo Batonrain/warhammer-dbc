@@ -113,6 +113,15 @@ export function targetIsAuraImmune(targetActor, immuneTraitNames) {
   return immuneTraitNames.some(name => items.some(it => itemHasName(it, name)));
 }
 
+/** Плоская (2D) дистанция центров токенов-документов, в метрах сцены. */
+function centerFlatMeters(a, b, grid) {
+  const size = Number(grid?.size) || 100;
+  const unit = Number(grid?.distance) || 1;
+  const ax = a.x + (a.width * size) / 2, ay = a.y + (a.height * size) / 2;
+  const bx = b.x + (b.width * size) / 2, by = b.y + (b.height * size) / 2;
+  return Math.hypot(ax - bx, ay - by) / size * unit;
+}
+
 /**
  * Дистанция между двумя токенами ПО ДОКУМЕНТАМ (x/y/width/height/elevation),
  * в единицах сцены (метрах), центр-к-центру, с учётом высоты. Placeable
@@ -125,13 +134,34 @@ export function targetIsAuraImmune(targetActor, immuneTraitNames) {
  * @param {{size:number, distance:number}} grid  scene.grid
  */
 export function tokenDocDistance(a, b, grid) {
-  const size = Number(grid?.size) || 100;
-  const unit = Number(grid?.distance) || 1;
-  const ax = a.x + (a.width * size) / 2, ay = a.y + (a.height * size) / 2;
-  const bx = b.x + (b.width * size) / 2, by = b.y + (b.height * size) / 2;
-  const flat = Math.hypot(ax - bx, ay - by) / size * unit;
+  const flat = centerFlatMeters(a, b, grid);
   const dz = (Number(a.elevation) || 0) - (Number(b.elevation) || 0);
   return Math.hypot(flat, dz);
+}
+
+/**
+ * Дистанция «от края Базы до края Базы» между токенами-документами (wdbc-x1nz.2.18)
+ * — как rules/tactical-map.mjs::edgeDistanceMeters, но по документам (без
+ * placeable) и с учётом высоты. Именно так книга требует мерить Ауры и
+ * подобные радиусные эффекты (стр. 31: «Ауры и прочие эффекты, что действуют
+ * "в пределах Х м от персонажа", расходятся от краёв его Базы, а не от
+ * центра») — используется sweepAurasOnScene ниже и tokensWithinRadius
+ * (rules/aoe-target.mjs, разовые способности вида «Костяная Песнь»).
+ * tokenDocDistance выше НАРОЧНО не тронута: у её остальных потребителей
+ * (the-hunter/vulture/vision-target/purity-of-battle/runic-weave-zone) своя
+ * книжная основа для центра, править их — вне этого тикета.
+ * @param {{x:number,y:number,width:number,height:number,elevation?:number}} a
+ * @param {{x:number,y:number,width:number,height:number,elevation?:number}} b
+ * @param {{size:number, distance:number}} grid  scene.grid
+ */
+export function tokenDocEdgeDistance(a, b, grid) {
+  const unit = Number(grid?.distance) || 1;
+  const flat = centerFlatMeters(a, b, grid);
+  const rA = (Math.min(Number(a.width) || 1, Number(a.height) || 1) / 2) * unit;
+  const rB = (Math.min(Number(b.width) || 1, Number(b.height) || 1) / 2) * unit;
+  const edgeFlat = Math.max(0, flat - rA - rB);
+  const dz = (Number(a.elevation) || 0) - (Number(b.elevation) || 0);
+  return Math.hypot(edgeFlat, dz);
 }
 
 /* ---------------------------------------- Foundry-обвязка ---------------------------------------- */
@@ -162,7 +192,7 @@ export async function sweepAurasOnScene(scene) {
     if (!descriptors.length) continue;
     for (const target of visible) {
       const isSelf = target === source;
-      const distance = isSelf ? 0 : tokenDocDistance(source, target, scene.grid);
+      const distance = isSelf ? 0 : tokenDocEdgeDistance(source, target, scene.grid);
       const relationship = tokenRelationship(source.disposition, target.disposition);
       for (const d of descriptors) {
         const immune = !isSelf && d.immuneTraitNames.length > 0

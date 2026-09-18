@@ -29,9 +29,14 @@ export const BASE_SIZE_LARGE = 3;
 /**
  * Размер Базы персонажа в клетках — чистое решение по уже резолвленным
  * флагам (раса/броня резолвятся Foundry-обвязкой, здесь только правило).
- * @param {{raceLarge?: boolean, armorLarge?: boolean}} [flags]
+ * null — «на откуп ГМу» (wdbc-x1nz.2.20, стр. 31: «с существами Размером 2
+ * и больше размер их Баз остаётся на откуп ГМу») — автосинк токена должен
+ * оставить размер как есть, а не молча подставлять число вместо ГМа.
+ * @param {{raceLarge?: boolean, armorLarge?: boolean, sizeStat?: number}} [flags]
+ * @returns {number|null}
  */
-export function baseSizeCells({ raceLarge = false, armorLarge = false } = {}) {
+export function baseSizeCells({ raceLarge = false, armorLarge = false, sizeStat = 0 } = {}) {
+  if (Number(sizeStat) >= 2) return null;
   return (raceLarge || armorLarge) ? BASE_SIZE_LARGE : BASE_SIZE_DEFAULT;
 }
 
@@ -83,6 +88,30 @@ export function contactType(rectA, rectB) {
   if (rectsOverlap(rectA, rectB)) return "deep";
   if (rectsInContact(rectA, rectB)) return "base";
   return "none";
+}
+
+// ─── Диагональ (стр. 31): «2 клетки по диагонали = 3м» ──────────────────────
+// Множитель 1,5 на клетку — это ровно CONST.GRID_DIAGONALS.APPROXIMATE (2)
+// в терминах самого Foundry, а не EQUIDISTANT (0, дефолт ядра, диагональ
+// стоит столько же, сколько прямой шаг). Числа продублированы буквально
+// (не читаем глобальный CONST), тем же приёмом, что regions/auras.mjs у
+// TOKEN_DISPOSITIONS — не тащить рантайм-зависимость в чистую логику.
+export const GRID_DIAGONALS_EQUIDISTANT = 0;
+export const GRID_DIAGONALS_APPROXIMATE = 2;
+
+/**
+ * Нужно ли применить книжный дефолт диагонали к настройке мира
+ * (wdbc-x1nz.2, «Тактическая карта») — только если мир ещё ни разу не
+ * применял его САМ (alreadyApplied) И текущее значение всё ещё чистый
+ * дефолт ядра Foundry (EQUIDISTANT). Если ГМ уже когда-либо выбрал
+ * что-то осознанно (включая «вернул EQUIDISTANT обратно руками» уже ПОСЛЕ
+ * нашего применения — тогда alreadyApplied уже true), это не наше дело:
+ * once — значит once, а не «следить за настройкой вечно».
+ * @param {{alreadyApplied: boolean, currentDiagonals: number}} state
+ */
+export function shouldApplyBookDiagonalDefault({ alreadyApplied, currentDiagonals }) {
+  if (alreadyApplied) return false;
+  return currentDiagonals === GRID_DIAGONALS_EQUIDISTANT;
 }
 
 // ─── Полосы дальности стрельбы (стр. 40 корбука, раздел «Дистанция») ────────
