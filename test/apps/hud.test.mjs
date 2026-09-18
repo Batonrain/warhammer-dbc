@@ -24,7 +24,11 @@ function hudActor({ type = "character", items = [], ...system } = {}) {
       characteristics: { ws: { total: 45, bonus: 4 }, ag: { total: 35, bonus: 3 }, t: { total: 40, bonus: 4 } },
       ...system
     },
-    items: list
+    items: list,
+    // wdbc-x1nz.2.19: movementMenuItems (Движение-таб боевого HUD) читает
+    // flags.warhammer-dbc.deepContactCarry на каждом акторе — как у любого
+    // настоящего Actor.
+    getFlag: () => undefined
   };
 }
 

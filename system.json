@@ -905,7 +905,8 @@
   },
   "grid": {
     "distance": 1,
-    "units": "м"
+    "units": "м",
+    "diagonals": 2
   },
   "primaryTokenAttribute": "wounds.value",
   "secondaryTokenAttribute": "fate.value"

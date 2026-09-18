@@ -78,11 +78,21 @@ describe("enemyContactTokenDocs: контакт личного масштаба"
     expect(enemyContactTokenDocs(mover.document).map(d => d.id)).toEqual(["e"]);
   });
 
-  it("враг-техника (не личный масштаб) не считается", () => {
+  it("враг-техника (не личный масштаб, не Шагоход) не считается", () => {
     const mover  = token({ id: "m", x: 0, y: 0, disposition: FRIENDLY, actor: fakeActor({ type: "character" }) });
     const enemyV = token({ id: "v", x: 2, y: 0, disposition: HOSTILE, actor: fakeActor({ type: "vehicle" }) });
     canvas.tokens.placeables = [mover, enemyV];
     expect(enemyContactTokenDocs(mover.document)).toEqual([]);
+  });
+
+  // wdbc-x1nz.2.21 (стр. 31): Шагоход «имеет Базы точно так же, как обычные
+  // персонажи» — в отличие от прочей Техники, участвует в контакте.
+  it("враг-Шагоход (vehicle, chassis walker) — считается, в отличие от прочей техники", () => {
+    const mover   = token({ id: "m", x: 0, y: 0, disposition: FRIENDLY, actor: fakeActor({ type: "character" }) });
+    const walker  = fakeActor({ type: "vehicle", chassis: { type: "walker" } });
+    const enemyW  = token({ id: "w", x: 2, y: 0, disposition: HOSTILE, actor: walker });
+    canvas.tokens.placeables = [mover, enemyW];
+    expect(enemyContactTokenDocs(mover.document).map(d => d.id)).toEqual(["w"]);
   });
 
   it("союзник вплотную не считается", () => {
@@ -137,6 +147,22 @@ describe("processTokenMove: разрыв контакта", () => {
     expect(broken).toEqual([]);
     expect(captured.chat.length).toBe(0);
     expect(moverActor.getFlag("warhammer-dbc", "disengageActive")).toBeUndefined();
+  });
+
+  // wdbc-x1nz.2.19 (стр. 31, Глубокий Контакт): переноска раненого/пленного
+  // не должна провоцировать Свободную Атаку — в отличие от disengageActive
+  // это НЕ разовый флаг (переноска обычно длится несколько перемещений).
+  it("флаг deepContactCarry гасит предложение и НЕ снимается сам (не разовый, в отличие от disengageActive)", async () => {
+    const moverActor = fakeActor({ type: "character", flags: { "warhammer-dbc": { deepContactCarry: true } } });
+    const enemy = token({ id: "e", x: 2, y: 0, disposition: HOSTILE, actor: fakeActor({ type: "character" }) });
+    const mover = token({ id: "m", x: 20, y: 20, disposition: FRIENDLY, actor: moverActor });
+    canvas.tokens.placeables = [mover, enemy];
+
+    const broken = await processTokenMove(mover.document, new Set(["e"]));
+
+    expect(broken).toEqual([]);
+    expect(captured.chat.length).toBe(0);
+    expect(moverActor.getFlag("warhammer-dbc", "deepContactCarry")).toBe(true);
   });
 });
 

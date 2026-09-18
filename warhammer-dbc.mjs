@@ -97,6 +97,7 @@ import { DifficultTerrainBehaviorType, DIFFICULT_TERRAIN_TYPE } from "./module/r
 import { initDifficultTerrainHud } from "./module/combat/movement-terrain.mjs";
 import { initMovementActionsHud, initMovedFlagTracking } from "./module/combat/movement-actions.mjs";
 import { initFreeAttackHooks } from "./module/combat/free-attack.mjs";
+import { initSqueezeHooks } from "./module/combat/squeeze.mjs";
 import { checkAuras, clearAuraGrants } from "./module/regions/auras.mjs";
 import { redrawAuraRings } from "./module/regions/aura-rings.mjs";
 import { LingerZoneBehaviorType, LINGER_ZONE_TYPE } from "./module/regions/linger-zone.mjs";
@@ -105,7 +106,8 @@ import { CoverBehaviorType, COVER_TYPE } from "./module/regions/cover.mjs";
 import { RunicWeaveZoneBehaviorType, RUNIC_WEAVE_ZONE_TYPE,
          checkRunicWeaveZones }        from "./module/regions/runic-weave-zone.mjs";
 import { registerSceneLiveRecalc } from "./module/regions/scene-live-recalc.mjs";
-import { syncTokenBaseSize } from "./module/combat/tactical-map.mjs";
+import { syncTokenBaseSize, registerDiagonalDefaultSetting, applyBookDiagonalDefaultOnce }
+  from "./module/combat/tactical-map.mjs";
 import { migrateWeaponGrips } from "./module/migrations/weapon-grips.mjs";
 import { migrateRemoveGeneSeed } from "./module/migrations/gene-seed-cleanup.mjs";
 import { migrateShipHulls } from "./module/migrations/ship-hulls.mjs";
@@ -155,6 +157,7 @@ Hooks.once("init", () => {
   // Регистрируем первыми: ниже по коду их значения уже могут читаться.
   registerFeatureSettings();
   registerDuplicateGrantSettings();
+  registerDiagonalDefaultSetting();
   registerAdvancePricingSettings();
   registerFontSettings();       // выбор шрифта интерфейса (мир + личный, wdbc-9m83)
   registerSettingsSections();   // подразделы в окне настроек
@@ -611,6 +614,13 @@ function applyHousingMode() {
   } catch (e) { /* до ready настройки может ещё не быть */ }
 }
 Hooks.once("ready", applyHousingMode);
+
+// Диагональ на тактической карте (wdbc-x1nz.2, стр. 31): «2 клетки по
+// диагонали = 3м» — один раз, только ГМ, чинит настройку мира core.
+// gridDiagonals на книжный APPROXIMATE, если она ещё нигде не трогалась и
+// осталась на старом дефолте ядра EQUIDISTANT. Дальше настройку не трогает
+// никогда, см. module/combat/tactical-map.mjs::applyBookDiagonalDefaultOnce.
+Hooks.once("ready", () => applyBookDiagonalDefaultOnce());
 
 // Прямой переход с заметки-пина звёздной системы на лист актёра (минуя журнал).
 // Срабатывает ТОЛЬКО если у журнала заметки выставлен наш флаг systemActorUuid —
@@ -1175,6 +1185,7 @@ Hooks.once("init", () => initDifficultTerrainHud());
 Hooks.once("init", () => initMovementActionsHud());
 Hooks.once("init", () => initMovedFlagTracking());
 Hooks.once("init", () => initFreeAttackHooks());
+Hooks.once("init", () => initSqueezeHooks());
 Hooks.once("init", () => initEquipmentIndex());
 Hooks.once("init", () => registerCalloutHooks());
 Hooks.once("init", () => initSceneControlsGuard());

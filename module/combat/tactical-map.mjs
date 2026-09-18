@@ -5,15 +5,33 @@
 //  перевод пары токенов сцены в измеренную дистанцию/вид контакта.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { baseSizeCells, edgeDistanceMeters, centerDistanceMeters, contactType }
+import { baseSizeCells, edgeDistanceMeters, centerDistanceMeters, contactType,
+         GRID_DIAGONALS_APPROXIMATE, shouldApplyBookDiagonalDefault }
   from "../rules/tactical-map.mjs";
 import { raceDef } from "../apps/race-library.mjs";
 import { tokenRect } from "./horde-tokens.mjs";
 import { tokenRelationship } from "../regions/auras.mjs";
 import { pxPerMeter } from "./templates.mjs";
+import { isWalkerVehicle } from "../rules/walker.mjs";
+
+const SYSTEM_ID = "warhammer-dbc";
 
 /** Типы акторов личного масштаба, которым автоматизируем размер Базы. */
 export const BASE_SIZE_TYPES = ["character", "daemon", "demonPrince", "minion"];
+
+/**
+ * Участвует ли актор в системе Баз/контакта — личный масштаб (BASE_SIZE_TYPES)
+ * ИЛИ Шагоход (wdbc-x1nz.2.21, стр. 31: «Машины вроде шагоходов... имеют Базы
+ * точно так же, как обычные персонажи», в отличие от прочей Техники/Зданий —
+ * те Базы не имеют вовсе, см. isBaseTrackedActor не включает голый "vehicle").
+ * Размер Базы Шагохода при этом система не подбирает сама (actorBaseSizeCells
+ * вернёт null — его system.size почти всегда ≥2, «на откуп ГМу», wdbc-x1nz.2.20)
+ * — здесь только допуск к контакту/Свободной Атаке через уже стоящий на сцене
+ * токен, каким его выставил ГМ.
+ */
+export function isBaseTrackedActor(actor) {
+  return BASE_SIZE_TYPES.includes(actor?.type) || isWalkerVehicle(actor);
+}
 
 /** Крупная ли раса актора (Огрин и т.п.) — по флагу расы, не по `size`/SPD. */
 function raceLargeBase(actor) {
@@ -25,9 +43,17 @@ function armorLargeBase(actor) {
   return !!actor?.items?.some(i => i.type === "armor" && i.system?.equipped && i.system?.largeBase);
 }
 
-/** Размер Базы актора в клетках (2 или 3) — резолвит флаги, зовёт чистое правило. */
+/**
+ * Размер Базы актора в клетках (2 или 3) — резолвит флаги, зовёт чистое
+ * правило. null — Размер 2+ (system.size), на откуп ГМу (см. rules/
+ * tactical-map.mjs::baseSizeCells).
+ */
 export function actorBaseSizeCells(actor) {
-  return baseSizeCells({ raceLarge: raceLargeBase(actor), armorLarge: armorLargeBase(actor) });
+  return baseSizeCells({
+    raceLarge: raceLargeBase(actor),
+    armorLarge: armorLargeBase(actor),
+    sizeStat: actor?.system?.size
+  });
 }
 
 /**
@@ -37,8 +63,9 @@ export function actorBaseSizeCells(actor) {
  * @param {Actor} actor
  */
 export async function syncTokenBaseSize(actor) {
-  if (!actor || !BASE_SIZE_TYPES.includes(actor.type)) return;
+  if (!actor || !isBaseTrackedActor(actor)) return;
   const size = actorBaseSizeCells(actor);
+  if (size == null) return; // Размер 2+ — на откуп ГМу, система размер токена не трогает
   const proto = actor.prototypeToken;
   if (proto && (proto.width !== size || proto.height !== size)) {
     await actor.update({ "prototypeToken.width": size, "prototypeToken.height": size });
@@ -111,4 +138,32 @@ export function meleeContactCount(attackerToken) {
     if (contactType(rectA, rectB) !== "none") count++;
   }
   return count;
+}
+
+// ─── Диагональ: дефолт мира на книжные 1,5м/клетку (стр. 31) ────────────────
+// system.json уже объявляет grid.diagonals=APPROXIMATE как дефолт для НОВЫХ
+// миров (сам Foundry читает game.system.grid.diagonals как initial у
+// настройки core.gridDiagonals, см. client/game.mjs). Но у уже играющего
+// мира (например «Из пепла»), где кто-то мог открыть Настройки Холста ДО
+// этой правки, значение могло сохраниться как EQUIDISTANT (старый дефолт
+// ядра) — этот флаг чинит его ОДИН раз, только ГМ, и дальше настройку мира
+// не трогает никогда, что бы ГМ с ней потом ни делал (в т.ч. вернул бы
+// обратно на EQUIDISTANT осознанно).
+
+/** Скрытый флаг мира — «книжный дефолт диагонали уже применялся». */
+export function registerDiagonalDefaultSetting() {
+  game.settings.register(SYSTEM_ID, "diagonalDefaultApplied", {
+    scope: "world", config: false, type: Boolean, default: false
+  });
+}
+
+export async function applyBookDiagonalDefaultOnce() {
+  if (!game.user?.isGM) return;
+  const alreadyApplied = !!game.settings.get(SYSTEM_ID, "diagonalDefaultApplied");
+  if (alreadyApplied) return;
+  const currentDiagonals = game.settings.get("core", "gridDiagonals");
+  if (shouldApplyBookDiagonalDefault({ alreadyApplied, currentDiagonals })) {
+    await game.settings.set("core", "gridDiagonals", GRID_DIAGONALS_APPROXIMATE);
+  }
+  await game.settings.set(SYSTEM_ID, "diagonalDefaultApplied", true);
 }
