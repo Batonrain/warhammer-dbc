@@ -24,4 +24,8 @@ describe("hasOriginal", () => {
   it("system.originalName перебивает проверку по name", () => {
     expect(hasOriginal({ name: "Русское Имя", system: { originalName: "English Name" } })).toBe(true);
   });
+
+  it("wdbc-o30i: обратный порядок 'Русское / English' тоже считается оригиналом", () => {
+    expect(hasOriginal({ name: "Горный Байк / Mountain Bike" })).toBe(true);
+  });
 });

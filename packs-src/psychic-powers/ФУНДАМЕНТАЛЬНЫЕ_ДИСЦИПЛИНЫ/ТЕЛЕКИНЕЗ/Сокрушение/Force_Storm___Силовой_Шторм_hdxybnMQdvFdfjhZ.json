@@ -23,7 +23,11 @@
     "damage": "1d10+3*PR",
     "damageType": "impact",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "unseen"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],

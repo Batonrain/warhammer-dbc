@@ -17,10 +17,17 @@ import { showAttackDialog, showAttackDialogNoWeapon } from "../../module/sheets/
 const DEFAULT_SOURCES = getRuleSources();
 
 /** Актор-атакующий: диалог сбрасывает ему прицеливание, тест смотрит на запись. */
-function attacker({ items = [], ...system } = {}) {
+function attacker({ items = [], flags: initialFlags = {}, ...system } = {}) {
   const a = actorFor({ items, fatigue: { value: 0 }, aiming: "none", ...system });
   a.updates = [];
   a.update = async data => { a.updates.push(data); };
+  // Флаги актора (wdbc-1rno.5, Aim Focus): не общий стенд для ВСЕХ флагов —
+  // только то, что уже прочитано через actor.getFlag?.(...) (attack-dialog.mjs
+  // всегда опционально цепочит именно из-за таких урезанных акторов).
+  const flagStore = { ...initialFlags };
+  a.getFlag = (scope, key) => flagStore[`${scope}.${key}`];
+  a.setFlag = async (scope, key, value) => { flagStore[`${scope}.${key}`] = value; };
+  a.unsetFlag = async (scope, key) => { delete flagStore[`${scope}.${key}`]; };
   return a;
 }
 
@@ -287,6 +294,35 @@ describe("избирательные попадания", () => {
     showAttackDialog(attacker({ items: [plain] }), plain);
     expect(captured.dialog.content).not.toContain("underfoot");
   });
+
+  // Опарыш-Паразит (wdbc-ux8a): «более не может быть выцелен Избирательной
+  // атакой» — жёсткий запрет ПО ЦЕЛИ (книга говорит «не может»), первый такой
+  // гейт в этом файле — все опции прицела убраны, кроме «Без прицела».
+  it("Опарыш-Паразит у цели — все опции прицела убраны", () => {
+    const weapon = weaponFor();
+    const maggotHost = actorFor({
+      items: [{ type: "mutation", name: "Maggot Parasite / Опарыш-Паразит", system: {},
+        flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+          { id: "e", kind: "capability", capabilityKey: "gift.nurgle.maggotParasite", label: "" }
+        ] }] } } }]
+    });
+    setTargets([maggotHost]);
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+    const html = captured.dialog.content;
+
+    expect(html).toContain("— Без прицела —");
+    expect(html).not.toContain("Торс (");
+    expect(html).not.toContain("Нога (");
+    expect(html).not.toContain("Рука (");
+    expect(html).not.toContain("Голова (");
+  });
+
+  it("обычная цель — опции прицела на месте", () => {
+    const weapon = weaponFor();
+    setTargets([actorFor({})]);
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+    expect(captured.dialog.content).toContain("Торс (−10)");
+  });
 });
 
 describe("свойства оружия и полосы дальности", () => {
@@ -527,7 +563,14 @@ describe("пересчёт порога в открытом окне", () => {
     const sword = weaponFor({ weaponClass: "melee" });
     showAttackDialog(attacker({ items: [sword] }), sword);
 
-    expect(captured.dialog.content).not.toContain('data-autofail="true"');
+    // Скоуп на саму строку «Ослеплён»: рукопашная теперь легитимно несёт
+    // СВОЙ, не связанный с Ослеплением autofail (цель на Низкой/Высокой
+    // высоте полёта — «рукопашная недосягаема», wdbc-x1nz.2) — проверка на
+    // весь диалог целиком больше не годится, узнаём именно строку Ослепления.
+    const oslLabel = captured.dialog.content
+      .match(/<label class="attack-mod-check[^>]*">[\s\S]*?Ослеплён \(-30\)[\s\S]*?<\/label>/);
+    expect(oslLabel).toBeTruthy();
+    expect(oslLabel[0]).not.toContain('data-autofail="true"');
     expect(captured.dialog.content).toContain("Ослеплён (-30)");
   });
 });
@@ -1190,17 +1233,193 @@ describe("Хват дальнобойного: 6 отложенных потре
       expect(captured.dialog.content).not.toMatch(/name="atk-grip"/);
     });
 
-    it("с Талантом — пистолет получает «2р», Прицеливание +15/+30, очереди +5/+10", () => {
+    it("с Талантом — пистолет получает «2р», бейдж Прицеливания +15/+30, очереди +5/+10", () => {
       const pistol = weaponFor({ weaponClass: "pistol", rof_semi: 2, rof_full: 4 });
       const talent = talentWithCapability("Double Grip / Двойной Хват", "weapon.doubleGripPistol");
       pistol.getFlag = (ns, key) => (key === "hudGrip" ? "2р" : undefined);
-      showAttackDialog(attacker({ items: [pistol, talent] }), pistol);
-      const html = captured.dialog.content;
+      showAttackDialog(attacker({ items: [pistol, talent], aiming: "half" }), pistol);
+      let html = captured.dialog.content;
       expect(html).toMatch(/name="atk-grip" value="2р"/);
-      expect(html).toContain("Полу +15");
-      expect(html).toContain("Полное +30");
+      expect(html).toContain("Полу-прицеливание +15");
       expect(html).toContain("Короткая очередь (+5, Double Grip +5, 2 выстр.)");
       expect(html).toContain("Double Grip +10");
+
+      showAttackDialog(attacker({ items: [pistol, talent], aiming: "full" }), pistol);
+      html = captured.dialog.content;
+      expect(html).toContain("Полное Прицеливание +30");
+    });
+  });
+
+  describe("Accurate / Меткое (wdbc-1rno.5): удвоение бонуса Прицеливания на одиночном выстреле", () => {
+    it("одиночный выстрел Метким оружием с Прицеливанием — бонус ×2 в итоговом пороге", async () => {
+      const rifle = weaponFor({ weaponProps: [{ key: "accurate" }] });
+      const p = showAttackDialog(attacker({ items: [rifle], aiming: "half",
+        characteristics: { bs: char(45) } }), rifle);
+      captured.dice = [96];
+      await pressRoll(p, {
+        "input[name='atk-rof']:checked": { value: "single", dataset: { bonus: "10" } }
+      });
+      // 45 BS + 10 (Одиночный выстрел) + 20 (Прицеливание ×2, было бы 10) = 75.
+      expect(thresholdInCard()).toBe(75);
+    });
+
+    it("та же связка, но режим Короткой очереди — бонус обычный, без удвоения", async () => {
+      const rifle = weaponFor({ weaponProps: [{ key: "accurate" }], rof_semi: 2 });
+      const p = showAttackDialog(attacker({ items: [rifle], aiming: "half",
+        characteristics: { bs: char(45) } }), rifle);
+      captured.dice = [96];
+      await pressRoll(p, {
+        "input[name='atk-rof']:checked": { value: "semi", dataset: { bonus: "0" } }
+      });
+      // 45 BS + 0 (Короткая очередь) + 10 (Прицеливание, без удвоения) = 55.
+      expect(thresholdInCard()).toBe(55);
+    });
+
+    it("без Меткого — обычный бонус Прицеливания на одиночном выстреле, без удвоения", async () => {
+      const rifle = weaponFor();
+      const p = showAttackDialog(attacker({ items: [rifle], aiming: "half",
+        characteristics: { bs: char(45) } }), rifle);
+      captured.dice = [96];
+      await pressRoll(p, {
+        "input[name='atk-rof']:checked": { value: "single", dataset: { bonus: "10" } }
+      });
+      // 45 BS + 10 (Одиночный выстрел) + 10 (Прицеливание, без Меткого) = 65.
+      expect(thresholdInCard()).toBe(65);
+    });
+  });
+
+  describe("Aim Focus/Фокус на Прицеле (wdbc-1rno.5): продление не тратится дальнобойной атакой", () => {
+    it("продление активно (\"pending\"), дальнобойная атака — system.aiming НЕ сбрасывается", async () => {
+      const rifle = weaponFor();
+      const actor = attacker({ items: [rifle], aiming: "half",
+        flags: { "warhammer-dbc.aimFocusExtended": "pending" } });
+      const p = showAttackDialog(actor, rifle);
+      captured.dice = [96];
+      await pressRoll(p);
+      expect(actor.updates.some(u => "system.aiming" in u)).toBe(false);
+    });
+
+    it("продление активно (\"armed\"), рукопашная атака — всё равно сбрасывается (только «все его стрелковые атаки»)", async () => {
+      const sword = weaponFor({ weaponClass: "melee" });
+      const actor = attacker({ items: [sword], aiming: "full",
+        flags: { "warhammer-dbc.aimFocusExtended": "armed" } });
+      const p = showAttackDialog(actor, sword);
+      captured.dice = [96];
+      await pressRoll(p);
+      expect(actor.updates).toContainEqual({ "system.aiming": "none" });
+    });
+
+    it("нет продления — обычный сброс на дальнобойной атаке (регресс находки 1)", async () => {
+      const rifle = weaponFor();
+      const actor = attacker({ items: [rifle], aiming: "half" });
+      const p = showAttackDialog(actor, rifle);
+      captured.dice = [96];
+      await pressRoll(p);
+      expect(actor.updates).toContainEqual({ "system.aiming": "none" });
+    });
+  });
+
+  describe("Tracking Aim/Прицел на Упреждение (wdbc-1rno.5): гасит штраф «Цель Бежит»", () => {
+    function runningTarget() {
+      const t = actorFor({});
+      t.getFlag = (ns, key) => (key === "running" ? true : undefined);
+      return t;
+    }
+
+    it("trackingAimActive активен, дальнобойная атака по бегущей цели — штраф погашен", () => {
+      const rifle = weaponFor();
+      setTargets([runningTarget()]);
+      const actor = attacker({ items: [rifle], flags: { "warhammer-dbc.trackingAimActive": true } });
+      showAttackDialog(actor, rifle);
+      expect(captured.dialog.content).toContain("Цель Бежит (−20, погашено)");
+    });
+
+    it("без trackingAimActive — обычный штраф −20", () => {
+      const rifle = weaponFor();
+      setTargets([runningTarget()]);
+      const actor = attacker({ items: [rifle] });
+      showAttackDialog(actor, rifle);
+      expect(captured.dialog.content).toContain("Цель Бежит (−20)");
+      expect(captured.dialog.content).not.toContain("погашено");
+    });
+
+    it("trackingAimActive активен, но рукопашная — бонус +20 не задет (Талант чисто стрелковый)", () => {
+      const sword = weaponFor({ weaponClass: "melee" });
+      setTargets([runningTarget()]);
+      const actor = attacker({ items: [sword], flags: { "warhammer-dbc.trackingAimActive": true } });
+      showAttackDialog(actor, sword);
+      expect(captured.dialog.content).toContain("Цель Бежит (+20)");
+    });
+
+    it("дальнобойная атака по бегущей цели с активным trackingAimActive — снимает флаг после атаки", async () => {
+      const rifle = weaponFor();
+      setTargets([runningTarget()]);
+      const actor = attacker({ items: [rifle], flags: { "warhammer-dbc.trackingAimActive": true } });
+      const p = showAttackDialog(actor, rifle);
+      captured.dice = [96];
+      await pressRoll(p);
+      expect(actor.updates.some(u => u["flags.warhammer-dbc.-=trackingAimActive"] === null)).toBe(true);
+    });
+
+    it("рукопашная атака — trackingAimActive не трогает (гейт !isMelee)", async () => {
+      const sword = weaponFor({ weaponClass: "melee" });
+      const actor = attacker({ items: [sword], flags: { "warhammer-dbc.trackingAimActive": true } });
+      const p = showAttackDialog(actor, sword);
+      captured.dice = [96];
+      await pressRoll(p);
+      expect(actor.updates.some(u => "flags.warhammer-dbc.-=trackingAimActive" in u)).toBe(false);
+    });
+  });
+
+  describe("Прицелы (wdbc-1rno.5, находка 12/12)", () => {
+    it("Коллиматорный Прицел: +5 к порогу, только пока Прицеливание взято", async () => {
+      const rifle = weaponFor();
+      const mod = modOn(rifle.id, { aimAttackMod: 5 });
+      const p = showAttackDialog(attacker({ items: [rifle, mod], aiming: "half",
+        characteristics: { bs: char(45) } }), rifle);
+      captured.dice = [96];
+      await pressRoll(p);
+      // 45 BS + 10 (Прицеливание) + 5 (Коллиматорный) = 60.
+      expect(thresholdInCard()).toBe(60);
+    });
+
+    it("Коллиматорный Прицел: без Прицеливания бонуса нет", () => {
+      const rifle = weaponFor();
+      const mod = modOn(rifle.id, { aimAttackMod: 5 });
+      showAttackDialog(attacker({ items: [rifle, mod], aiming: "none" }), rifle);
+      expect(captured.dialog.content).not.toContain("Прицел (пока Прицеливаюсь)");
+    });
+
+    it("Предсказатель Движения: гасит −20 «Цель Бежит» на дальнобойной, пока Прицеливание взято", () => {
+      const rifle = weaponFor();
+      const mod = modOn(rifle.id, { aimIgnoresRunning: true });
+      const runner = actorFor({});
+      runner.getFlag = (ns, key) => (key === "running" ? true : undefined);
+      setTargets([runner]);
+      showAttackDialog(attacker({ items: [rifle, mod], aiming: "half" }), rifle);
+      expect(captured.dialog.content).toContain("Цель Бежит (−20, погашено)");
+    });
+
+    it("Предсказатель Движения: без Прицеливания штраф остаётся", () => {
+      const rifle = weaponFor();
+      const mod = modOn(rifle.id, { aimIgnoresRunning: true });
+      const runner = actorFor({});
+      runner.getFlag = (ns, key) => (key === "running" ? true : undefined);
+      setTargets([runner]);
+      showAttackDialog(attacker({ items: [rifle, mod], aiming: "none" }), rifle);
+      const html = captured.dialog.content;
+      expect(html).toContain("Цель Бежит (−20)");
+      expect(html).not.toContain("погашено");
+    });
+
+    it("Предсказатель Движения: рукопашная — бонус +20 цели-бегуна не задет", () => {
+      const sword = weaponFor({ weaponClass: "melee" });
+      const mod = modOn(sword.id, { aimIgnoresRunning: true });
+      const runner = actorFor({});
+      runner.getFlag = (ns, key) => (key === "running" ? true : undefined);
+      setTargets([runner]);
+      showAttackDialog(attacker({ items: [sword, mod], aiming: "half" }), sword);
+      expect(captured.dialog.content).toContain("Цель Бежит (+20)");
     });
   });
 
@@ -1297,13 +1516,12 @@ describe("Хват дальнобойного: 6 отложенных потре
       const revolver = weaponFor({ weaponClass: "pistol", rof_full: 4, grips: "1р",
         weaponProps: [{ key: "revolver" }] });
       const talent = talentWithCapability("Fanning / Быстрый Курок", "weapon.fanningRevolver");
-      const p = showAttackDialog(attacker({ items: [revolver, talent],
+      const p = showAttackDialog(attacker({ items: [revolver, talent], aiming: "half",
         characteristics: { bs: char(45) } }), revolver);
 
       captured.dice = [23, 6, 6, 6];   // атака + до 3 попаданий (длинная очередь: 1 за Успех, deg 3)
       await pressRoll(p, {
         "input[name='atk-rof']:checked": { value: "full", dataset: { bonus: "0" } },
-        "input[name='atk-aiming']:checked": { value: "half", dataset: { bonus: "10" } },
         "#atk-fanning-rof": "6"
       });
       // BS 45, без +10 Прицеливания (тот же rofCapOverride:6 уходит в бросок).
@@ -1314,13 +1532,12 @@ describe("Хват дальнобойного: 6 отложенных потре
       const revolver = weaponFor({ weaponClass: "pistol", rof_semi: 2, rof_full: 4, grips: "1р",
         weaponProps: [{ key: "revolver" }] });
       const talent = talentWithCapability("Fanning / Быстрый Курок", "weapon.fanningRevolver");
-      const p = showAttackDialog(attacker({ items: [revolver, talent],
+      const p = showAttackDialog(attacker({ items: [revolver, talent], aiming: "half",
         characteristics: { bs: char(45) } }), revolver);
 
       captured.dice = [23, 6, 6];
       await pressRoll(p, {
-        "input[name='atk-rof']:checked": { value: "semi", dataset: { bonus: "0" } },
-        "input[name='atk-aiming']:checked": { value: "half", dataset: { bonus: "10" } }
+        "input[name='atk-rof']:checked": { value: "semi", dataset: { bonus: "0" } }
       });
       expect(thresholdInCard()).toBe(55);
     });
@@ -1393,7 +1610,7 @@ describe("приём без оружия", () => {
 
     // WS 45 + 10 база − 10 приём + 10 стойка − 10 усталость = 45; бросок 30 → попадание.
     const card = captured.chat.at(-1).content;
-    expect(card).toContain("Порог: <b>45</b>");
+    expect(card).toContain("<label>Порог</label><b>45</b>");
     expect(card).toContain("Попадание");
     expect(card).toContain("wh-dodge-btn");
   });
@@ -1560,7 +1777,7 @@ describe("Локус Сокрушения: раз в Раунд База «По�
 
       // WS 45 + 30 (Полная Атака) − 10 (Пинок) = 65.
       const card = captured.chat.at(-1).content;
-      expect(card).toContain("Порог: <b>65</b>");
+      expect(card).toContain("<label>Порог</label><b>65</b>");
       expect(card).toContain("Локус Сокрушения");
     });
 
@@ -1576,7 +1793,7 @@ describe("Локус Сокрушения: раз в Раунд База «По�
 
       // WS 45 + 10 (обычная База) − 10 (Пинок) = 45 — способность уже потрачена.
       const card = captured.chat.at(-1).content;
-      expect(card).toContain("Порог: <b>45</b>");
+      expect(card).toContain("<label>Порог</label><b>45</b>");
       expect(card).not.toContain("Локус Сокрушения");
     });
 
@@ -1592,7 +1809,7 @@ describe("Локус Сокрушения: раз в Раунд База «По�
       await showAttackDialogNoWeapon(actor, kick);
 
       const card = captured.chat.at(-1).content;
-      expect(card).toContain("Порог: <b>65</b>");
+      expect(card).toContain("<label>Порог</label><b>65</b>");
     });
   });
 });
@@ -1878,6 +2095,137 @@ describe("Оглушение/Ступор (цель): wdbc-r5o7.3", () => {
 
     expect(dialogThreshold()).toBe(55);
     expect(captured.dialog.content).not.toContain("💫 Цель Оглушена/в Ступоре");
+  });
+});
+
+// Мухи, субмутация "7" Wrapped in Chaos/Укутанный в Хаос (стр. 440-452,
+// wdbc-1rno): «Все атаки по нему, полагающиеся на зрение, получают штраф
+// −5... растёт по тиру Ран». Тот же приём проверки, что у Повален/Оглушена
+// (dialogThreshold превью + thresholdInCard реального броска, wdbc-r5o7.2
+// нашёл ровно такой баг расхождения между ними).
+describe("Мухи (цель): wdbc-1rno", () => {
+  function fliesTarget(label, tier) {
+    return actorFor({
+      items: [{ type: "mutation", name: "Wrapped in Chaos / Укутанный в Хаос", system: { submutation: { label } } }],
+      wounds: { tier }
+    });
+  }
+
+  it("здоровая цель с Мухами — −5 к стрелковой, бейдж, реальный бросок", async () => {
+    const weapon = weaponFor();
+    setTargets([fliesTarget("7", "healthy")]);
+    const p = showAttackDialog(attacker({ items: [weapon] }), weapon);
+
+    const baseline = dialogThreshold();
+    expect(captured.dialog.content).toContain("🪰 Мухи цели (-5)");
+
+    await pressRoll(p);
+    expect(thresholdInCard()).toBe(baseline);
+  });
+
+  it("тяжело ранена — −15 вместо −5", () => {
+    const weapon = weaponFor();
+    setTargets([]);
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+    const baseline = dialogThreshold();
+
+    setTargets([fliesTarget("7", "heavy")]);
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+
+    expect(dialogThreshold()).toBe(baseline - 15);
+    expect(captured.dialog.content).toContain("🪰 Мухи цели (-15)");
+  });
+
+  it("критически ранена (displayKey \"dying\") — −20", () => {
+    const weapon = weaponFor();
+    setTargets([]);
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+    const baseline = dialogThreshold();
+
+    setTargets([fliesTarget("7", "dying")]);
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+
+    expect(dialogThreshold()).toBe(baseline - 20);
+  });
+
+  it("другая субмутация той же Мутации (не «7») — не срабатывает", () => {
+    const weapon = weaponFor();
+    setTargets([]);
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+    const baseline = dialogThreshold();
+
+    setTargets([fliesTarget("4-5", "healthy")]);
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+
+    expect(dialogThreshold()).toBe(baseline);
+    expect(captured.dialog.content).not.toContain("Мухи цели");
+  });
+
+  it("реальный бросок с Избирательной атакой по здоровой цели с Мухами — эскалация −10 в карточке", async () => {
+    const weapon = weaponFor();
+    setTargets([fliesTarget("7", "healthy")]);
+    const p = showAttackDialog(attacker({ items: [weapon] }), weapon);
+    const baselineNoAim = dialogThreshold(); // без прицела, −5 уже внутри
+
+    await captured.press("roll", attackForm({ "#atk-aim option:checked": { dataset: { penalty: "-20" } } }));
+    await p;
+
+    // Порог в карточке: базовый (с −5 Мух) минус доп. −5 за эскалацию до −10,
+    // минус −20 самой Избирательной атаки за место попадания.
+    expect(thresholdInCard()).toBe(baselineNoAim - 5 - 20);
+  });
+});
+
+// Жар Гнева, субмутация "8" Wrapped in Chaos/Укутанный в Хаос (стр. 440-452,
+// wdbc-1rno): «...даёт штраф −10 на атаки в рукопашной против него и его
+// союзников в радиусе 3м». Гейт книги «в Ярости ИЛИ связан рукопашной»
+// сведён к «действует всегда при самой рукопашной атаке» (решение
+// пользователя) — тот же приём проверки, что у Мух выше; радиус-скан до
+// союзника-держателя уже покрыт unit-тестами module/rules/wrapped-in-
+// chaos.mjs::wrathHeatAttackPenalty, здесь — только проводка в диалог.
+describe("Жар Гнева (цель): wdbc-1rno", () => {
+  function wrathHeatTarget(label) {
+    return actorFor({
+      items: [{ type: "mutation", name: "Wrapped in Chaos / Укутанный в Хаос", system: { submutation: { label } } }]
+    });
+  }
+
+  it("держатель «8», рукопашная атака — штраф −10, бейдж, реальный бросок", async () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    setTargets([wrathHeatTarget("8")]);
+    const p = showAttackDialog(attacker({ items: [sword] }), sword);
+
+    const baseline = dialogThreshold();
+    expect(captured.dialog.content).toContain("🔥 Жар Гнева (-10)");
+
+    await pressRoll(p);
+    expect(thresholdInCard()).toBe(baseline);
+  });
+
+  it("та же цель, но стрелковая атака — штрафа нет", () => {
+    const gun = weaponFor();
+    setTargets([]);
+    showAttackDialog(attacker({ items: [gun] }), gun);
+    const baseline = dialogThreshold();
+
+    setTargets([wrathHeatTarget("8")]);
+    showAttackDialog(attacker({ items: [gun] }), gun);
+
+    expect(dialogThreshold()).toBe(baseline);
+    expect(captured.dialog.content).not.toContain("Жар Гнева");
+  });
+
+  it("другая субмутация той же Мутации (не «8») — не срабатывает", () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    setTargets([]);
+    showAttackDialog(attacker({ items: [sword] }), sword);
+    const baseline = dialogThreshold();
+
+    setTargets([wrathHeatTarget("2-3")]);
+    showAttackDialog(attacker({ items: [sword] }), sword);
+
+    expect(dialogThreshold()).toBe(baseline);
+    expect(captured.dialog.content).not.toContain("Жар Гнева");
   });
 });
 

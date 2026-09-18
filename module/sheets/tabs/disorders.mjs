@@ -19,7 +19,7 @@ import { _degWord, esc } from "../../helpers/utils.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { centerPicker, pickerPos } from "../picker-ui.mjs";
 import { autoTestMods, ruleRollModsHtml, ruleRerollsHtml } from "../../rules/roll-mods.mjs";
-import { postTestCard } from "../../helpers/test-card.mjs";
+import { postTestCard, rollStatLine } from "../../helpers/test-card.mjs";
 import { resolveKindOutcome } from "../../rules/kind-outcome.mjs";
 import { actorInfamyValue } from "../../apps/infamy-points.mjs";
 import { fatiguePenalty } from "./conditions.mjs";
@@ -50,6 +50,12 @@ function namedReroll(form) {
  */
 function valOf(html) {
   return sel => { const v = html.find(sel).val(); return v === undefined ? null : v; };
+}
+
+/** Адаптер `checked(selector)` — независимые галочки Вида теста (стр. 25-26,
+ *  wdbc-y9i8), .val() чекбокса даёт статичный "on", не текущее состояние. */
+function checkedOf(html) {
+  return sel => !!html.find(sel).prop("checked");
 }
 
 /** Диалог теста Страха: форма живёт рядом с остальными кнопками безумия. */
@@ -84,7 +90,7 @@ export function openFearDialog(actor) {
         <div class="atk-dlg-row"><label><input id="fear-prop-demon" type="checkbox"/> Демон</label></div>
         ${rm.html}
         ${rr.html}
-        ${testKindHtml({ defaultKind: "base", label: "Тест Страха" })}
+        ${testKindHtml({ label: "Тест Страха" })}
         ${diceModeHtml()}
         <div id="auto-outcome-note" class="roll-dlg-note"></div>
       </form>`,
@@ -101,7 +107,7 @@ export function openFearDialog(actor) {
           // Свойства источника Страха — читаются в карточку/флаги сообщения;
           // Демон уже даёт бесплатный переброс при провале (см. fear.mjs).
           const properties = { demon: html.find("#fear-prop-demon").is(":checked") };
-          const tk = readTestKind(val, { label: "Тест Страха" });
+          const tk = readTestKind(val, checkedOf(html), { label: "Тест Страха" });
           tk.reroll = mergeReroll(namedReroll(html[0]), readDiceChoice(val));
           await _executeFearRoll(actor, ratingKey, type, infamy, mod, properties, { tk });
         }
@@ -155,7 +161,7 @@ export function openTraumaDialog(actor) {
       <form class="wh-attack-form" style="padding:6px;">
         <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="trauma-mod" type="number" value="0"/></div>
         ${rm.html}
-        ${testKindHtml({ defaultKind: "base", label: "Ментальная Травма" })}
+        ${testKindHtml({ label: "Ментальная Травма" })}
         ${diceModeHtml()}
         <div id="auto-outcome-note" class="roll-dlg-note"></div>
       </form>`,
@@ -166,7 +172,7 @@ export function openTraumaDialog(actor) {
         callback: async html => {
           const val = valOf(html);
           const mod = (parseInt(html.find("#trauma-mod").val()) || 0) + checkedRuleMods(html[0]);
-          const tk = readTestKind(val, { label: "Ментальная Травма" });
+          const tk = readTestKind(val, checkedOf(html), { label: "Ментальная Травма" });
           tk.reroll = mergeReroll(null, readDiceChoice(val));
           await _executeTraumaRoll(actor, mod, tk);
         }
@@ -330,7 +336,7 @@ export async function rollDisorderTest(actor, item) {
       <div class="wh-skill-roll-form">
         <div class="roll-dlg-header"><span>${esc(item.name)}</span></div>
         <div class="roll-dlg-row"><label>${meta?.abbr ?? charKey}:</label><span>${baseEffNoDiff}</span></div>
-        ${testKindHtml({ defaultKind: "base", label: item.name })}
+        ${testKindHtml({ label: item.name })}
         ${diceModeHtml()}
         <div id="auto-outcome-note" class="roll-dlg-note"></div>
       </div>`,
@@ -340,7 +346,8 @@ export async function rollDisorderTest(actor, item) {
         callback: (event, button) => {
           const form = button.form;
           const val  = sel => form.querySelector(sel)?.value ?? null;
-          const tk = readTestKind(val, { label: item.name });
+          const checked = sel => !!form.querySelector(sel)?.checked;
+          const tk = readTestKind(val, checked, { label: item.name });
           tk.reroll = mergeReroll(null, readDiceChoice(val));
           return tk;
         }
@@ -356,13 +363,13 @@ export async function rollDisorderTest(actor, item) {
     rejectClose: false
   });
   if (!result) return;
-  const { kind, difficulty, combined, extended, opposed, reroll } = result;
+  const { difficulty, combined, extended, opposed, reroll } = result;
 
   const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
 
   const eff0 = baseEffNoDiff + difficulty;
   const outcome = await resolveKindOutcome(actor, {
-    kind, baseEff: eff0, rv, combined, extended, opposed,
+    baseEff: eff0, rv, combined, extended, opposed,
     ctx: { actor, kind: "skill", char: charKey }
   });
   const { success, deg } = outcome;
@@ -370,9 +377,17 @@ export async function rollDisorderTest(actor, item) {
   await postTestCard(actor, {
     icon: rollIcon("spark", "#c98bff"),
     title: `${esc(item.name)}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(actor.name)}`,
-    threshold: `<div class="roll-threshold">${meta?.abbr ?? charKey}: <b>${charVal}</b>${system.testMod ? ` ${system.testMod >= 0 ? "+" : ""}${system.testMod}` : ""}${suppressMods.parts.map(p => ` ${p}`).join("")}${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""} → Порог: <b>${eff0}</b></div>`,
+    threshold: rollStatLine({
+      label: meta?.abbr ?? charKey, base: charVal,
+      parts: [
+        ...(system.testMod ? [`${system.testMod >= 0 ? "+" : ""}${system.testMod}`] : []),
+        ...suppressMods.parts,
+        ...(difficulty !== 0 ? [`${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)`] : [])
+      ],
+      threshold: eff0, rv
+    }),
     lines: [outcome.combinedLine],
-    rv, rerollNote, critLine: outcome.critLine,
+    rerollNote, critLine: outcome.critLine,
     outcome: success
       ? `<span class="roll-success">Успех — контроль удержан (${deg} ${_degWord(deg)})</span>`
       : `<span class="roll-failure">Провал — расстройство проявляется (${deg} ${_degWord(deg)})</span>`,

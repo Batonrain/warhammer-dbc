@@ -8,6 +8,7 @@
 
 import { WarhammerItemSheet } from "./item-sheet.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { hostKindOf, openGearModPicker } from "./gear-mod-picker.mjs";
 
 /** Убрать открытые меню и отвязать одноразовый обработчик закрытия. */
 export function closeContextMenus(jq = globalThis.$) {
@@ -92,8 +93,8 @@ export function openContextMenu(ev, entries, jq = globalThis.$) {
  * вешают contextmenu сами (jQuery у них нет), а меню нужно то же самое —
  * со своей копией лист техники удалял орудие молча (wdbc-ff4.10.4).
  */
-export function itemContextEntries(item) {
-  return [
+export function itemContextEntries(item, actor = item.actor) {
+  const entries = [
     {
       cls: "wh-ctx-edit",
       label: "✏️ Редактировать",
@@ -102,25 +103,40 @@ export function itemContextEntries(item) {
         if (sheet) sheet.render(true);
         else new WarhammerItemSheet(item).render(true);
       }
-    },
-    {
-      cls: "wh-ctx-delete",
-      label: "🗑️ Удалить",
-      // Меню открывается по ПКМ прямо под курсором, и «Удалить» стоит вплотную
-      // к «Редактировать»: без вопроса промах стирал предмет молча, откатить
-      // его нечем (wdbc-9z9).
-      onClick: async () => {
-        // Имя экранируем: его задаёт игрок на своём акторе, а content диалога
-        // разбирается как HTML — «<img src=x onerror=…>» в названии предмета
-        // исполнился бы у того, кто это удаление подтверждает.
-        const ok = await foundry.applications.api.DialogV2.confirm({
-          window: { title: "Удалить предмет" },
-          content: `<p>Удалить «${esc(item.name)}»? Вернуть его будет нечем.</p>`
-        }).catch(() => false);
-        if (ok) await item.delete();
-      }
     }
   ];
+
+  // «Улучшить» (wdbc-njzt): раньше отдельная кнопка в строке таблицы
+  // Снаряжения, теперь пункт этого же меню — оружие/броня получают пикер
+  // совместимых модификаций (gear-mod-picker.mjs), у остальных типов
+  // предметов носителя модов нет, и пункт не добавляется.
+  if (actor && hostKindOf(item)) {
+    entries.push({
+      cls: "wh-ctx-gear-mod",
+      label: "🔧 Улучшить",
+      onClick: () => openGearModPicker(actor, item)
+    });
+  }
+
+  entries.push({
+    cls: "wh-ctx-delete",
+    label: "🗑️ Удалить",
+    // Меню открывается по ПКМ прямо под курсором, и «Удалить» стоит вплотную
+    // к «Редактировать»: без вопроса промах стирал предмет молча, откатить
+    // его нечем (wdbc-9z9).
+    onClick: async () => {
+      // Имя экранируем: его задаёт игрок на своём акторе, а content диалога
+      // разбирается как HTML — «<img src=x onerror=…>» в названии предмета
+      // исполнился бы у того, кто это удаление подтверждает.
+      const ok = await foundry.applications.api.DialogV2.confirm({
+        window: { title: "Удалить предмет" },
+        content: `<p>Удалить «${esc(item.name)}»? Вернуть его будет нечем.</p>`
+      }).catch(() => false);
+      if (ok) await item.delete();
+    }
+  });
+
+  return entries;
 }
 
 /** ПКМ по строке предмета: открыть лист предмета или удалить его. */
@@ -132,6 +148,6 @@ export function activateItemContextMenu(html, actor, jq = globalThis.$) {
     jq(".wh-context-menu").remove();
     const item = actor.items.get(jq(ev.currentTarget).data("item-id"));
     if (!item) return;
-    openContextMenu(ev, itemContextEntries(item), jq);
+    openContextMenu(ev, itemContextEntries(item, actor), jq);
   });
 }

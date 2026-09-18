@@ -21,7 +21,7 @@ import { WarhammerStructuralSheet } from "./structural-sheet.mjs";
 import { convertHordeToActor } from "../apps/horde-convert.mjs";
 import { openContextMenu } from "./context-menu.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
-import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 const CHAR_ORDER = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel"];
 // Общие модификаторы атаки Орды (без Прицеливания и Избирательных — их у Орд нет).
@@ -462,13 +462,11 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
     const roll = await new Roll("1d100").evaluate();
     const rv = roll.total, success = rv <= threshold;
     const deg = Math.floor(Math.abs(rv - threshold) / 10) + 1;
-    // Строка Порога у Орды начинается не с числа, а с подписи вида теста
-    // («Навык» / «Хар-ка»), а подписи модификаторов идут через «·» — под
-    // общий формат thresholdLine она не ложится и оставлена своей.
+    // wdbc-fyvv: `prefix` («Навык», «WP (Ослаблена −10)»…) — то же, что везде
+    // называет ячейку Режим; сама плашка та же, что у остальных тестов.
     await postTestCard(this.actor, {
       title: `${esc(this.actor.name)} — ${esc(label)}`,
-      threshold: `<div class="roll-threshold">${esc(prefix)}${ruleMods.parts.map(p => ` · ${p}`).join("")}: Порог <b>${threshold}</b></div>`,
-      rv,
+      threshold: rollStatLine({ label: prefix, base: baseThreshold, parts: ruleMods.parts, threshold, rv }),
       outcome: outcomeHtml(success, `${success ? "Успех" : "Провал"} (${deg} ст.)`)
     }, { rolls: [roll], sound: false });
   }

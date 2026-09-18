@@ -239,3 +239,7 @@
 }
 .warhammer-dbc .psy-ab-ico { font-size: 1.1em; color: var(--pc); text-shadow: 0 0 8px color-mix(in srgb, var(--pc) 55%, transparent); }
 .warhammer-dbc .psy-action-btn:hover .psy-ab-ico { color: var(--pc2); }
+
+/* ── Варп-маршруты (wdbc-r0w9): Знание Проводника ── */
+.warhammer-dbc .warp-routes-table .item-row.dim { opacity: 0.55; font-style: italic; }
+.warhammer-dbc .warp-route-level-select { width: 100%; }

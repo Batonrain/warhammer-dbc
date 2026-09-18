@@ -65,6 +65,10 @@ const TYPES = {
       // Надето ли сейчас (wdbc-9h7g) — носимое снаряжение отдаёт свою Механику
       // только надетым; спрашивается лишь у того, где заполнено «Носится».
       equipped: false,
+      // Включаемая/включена (wdbc-x1nz.2) — та же пара, что у armorMod/
+      // weaponMod: бонус Конструктора, требующий активного применения
+      // (Мучитель и подобные), отдельно от ношения выше.
+      activatable: false, active: false,
       effect: "", reminder: "", qualityEffects: { poor: "", good: "", best: "" },
       isRig: false, rig: { comfort: "normal", backSlot: false, slots: [], magLocks: [] },
       itemSize: "", bonuses: [], drukhari: false, bookSource: "",
@@ -83,7 +87,11 @@ const TYPES = {
       description: "", notes: "", quantity: 1, weight: 0, availability: 0,
       quality: "common", toolCategory: "general", linkedWeapon: "", effect: "",
       reminder: "", qualityEffects: { poor: "", good: "", best: "" },
-      bonuses: [], drukhari: false, bookSource: "", infoguard: 0
+      bonuses: [], drukhari: false, bookSource: "", infoguard: 0,
+      // Включаемая/включена (wdbc-x1nz.2) — см. тот же комментарий у gear выше.
+      activatable: false, active: false,
+      // Размер на разгрузке (wdbc-x1nz.2) — см. тот же комментарий у weapon ниже.
+      itemSize: ""
     }
   },
   cybernetic: {
@@ -150,6 +158,7 @@ const TYPES = {
         balanceMod: 0, weightPct: 0,
         grantsGrip: "", gripRangeMult: 1,
         hipFireSemiMod: 0, hipFireFullMod: 0, hipFireSuppressionMod: 0,
+        aimAttackMod: 0, aimIgnoresRunning: false,
         fittedToId: "", fittedBonus: 0,
         addProps: [], removeProps: [], mechAddProps: [], mechRemoveProps: []
       },
@@ -335,7 +344,7 @@ const TYPES = {
       },
       // Выпавшая субмутация (стр. 440): в template.json поля не было, в паке
       // его тоже нет — оно заполняется броском уже на листе персонажа.
-      submutation: { name: "", label: "", text: "", god: "", roll: 0, shift: 0, total: 0 },
+      submutation: { name: "", label: "", text: "", god: "", roll: 0, shift: 0, total: 0, multi: [] },
       // Трекер Зависимости (wdbc-5inv) — та же логика, что submutation выше:
       // заполняется на листе (subst./"Удовлетворить"), в паке пусто у всех.
       dependency: { substance: "", lastSatisfied: null }
@@ -408,7 +417,10 @@ const TYPES = {
       // Свойства, которые боеприпас у оружия отнимает (Инферно Тзинча — Tearing):
       // поля не было, и замена держалась на одном тексте «Особенностей».
       removeProps: [],
-      drukhari: false, bookSource: ""
+      drukhari: false, bookSource: "",
+      // Размер на разгрузке (wdbc-x1nz.2) — магазин тяжёлого оружия 2×1 против
+      // умолчания 1×1 у обычного боеприпаса (itemSizeStr(), module/constants/rig.mjs).
+      itemSize: ""
     }
   },
   armor: {
@@ -448,10 +460,13 @@ const TYPES = {
       // prRequired несёт только PR.
       requirement: "",
       testChar: "wp", testMod: 0, action: "half", range: "",
+      // wdbc-efyl: (П)-дальность поддержания — своя, отдельная от range,
+      // не производная от неё (Concentration/Концентрация: PR×1м/PR×5м).
+      sustainRange: "",
       sustainable: false, sustainCost: 1, sustainAction: "free",
       // wdbc-5kd: penetration — формула строкой (как damage), не число:
       // «Разрушение» Pen=PR, «Сверхъестественный Шторм» Pen=PR×3.
-      damage: "", damageType: "energy", penetration: "0", weaponProps: [],
+      damage: "", damageType: "energy", penetration: "0", xFormula: "", vortexPersistent: false, weaponProps: [],
       charDamageStat: "", charDamageFormula: "", profiles: [], variants: [],
       resistChar: "", resistMod: 0,
       effect: "", isSustained: false, sustainedDegree: null, sustainedEpr: null, sustainedTargetUuid: "",
@@ -561,6 +576,21 @@ const TYPES = {
       }
     }
   },
+  warpRoute: {
+    // Новый тип (wdbc-r0w9), мировых предметов ещё нет в packs-src —
+    // проверяются только умолчания, как у cybernetic.
+    pack: null,
+    defaults: {
+      description: "", gmNotes: "", systemAUuid: "", systemBUuid: "",
+      category:     { rating: 0, label: "" },
+      routeType:    { rating: 0, label: "" },
+      lore:         { rating: 0, label: "" },
+      illumination: { rating: 0, label: "" },
+      stability:    { rating: 0, label: "" },
+      features: [],
+      plotting: { active: false, points: 0, threshold: 0, attempts: 0, complete: false }
+    }
+  },
   vehicleGear: {
     pack: "vehicle-equipment",
     defaults: { description: "", notes: "", availability: 0, quality: "common", active: true,
@@ -593,7 +623,10 @@ const TYPES = {
     }
   },
   smallCraft: {
-    pack: "small-craft",
+    // Пак small-craft выведен из системы целиком 16.09.2026 (хоумрул-контент,
+    // не переведённый из книги — перенесён в мировой компендиум iz-pepla) —
+    // сохранять нечего, проверяются только умолчания, как у cybernetic.
+    pack: null,
     defaults: {
       description: "", notes: "", craftKind: "fighter", faction: "", cr: 0,
       crAlt: 0, spd: 0, squadronSize: 0, props: "", rarity: 0, qty: 1,
@@ -611,6 +644,7 @@ const TYPES = {
       quality: "common", availability: 2, weight: 0, drukhari: false,
       coverVsSubtype: "", coverVsSubtypeAP: 0,
       overloadDamageFormula: "", overloadFatigueFormula: "", overloadRepairTest: "",
+      overloadRetaliateFormula: "", overloadRetaliatePen: 0,
       bookSource: ""
     }
   },

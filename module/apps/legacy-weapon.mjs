@@ -26,7 +26,7 @@ import { canAscend, ascensionRows, legacyBonus, qualityAfterLegacy, propsAfterLe
 import { ITEM_QUALITY } from "../constants/quality.mjs";
 import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
-import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const sgn = n => `${n >= 0 ? "+" : ""}${n}`;
@@ -126,12 +126,11 @@ export async function rollAscension(item, { deedBonus = 0, legendary = false } =
   await postTestCard(actor, {
     icon: rollIcon("crown", "#e8c76a"),
     title: `Возвышение — ${esc(item.name)}`,
-    threshold: thresholdLine({
+    threshold: rollStatLine({
       label: rows[0]?.label ?? "Бесчестие (Inf)", base: rows[0]?.val ?? 0,
       parts: [...rows.slice(1).map(r => `${r.label} ${sgn(r.val)}`), ...ruleMods.parts],
-      threshold
+      threshold, rv
     }),
-    rv,
     outcome: outcomeHtml(passed, passed
       ? `Успех — ${deg} ${_degWord(deg)}. Оружие стало Оружием Наследия.`
       : `Провал — ${deg} ${_degWord(deg)}. Попытку можно повторить, подняв Inf.b или совершив деяние, достойное легенды.`),

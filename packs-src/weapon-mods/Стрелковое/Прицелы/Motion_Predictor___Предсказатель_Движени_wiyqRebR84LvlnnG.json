@@ -5,7 +5,7 @@
   "folder": "kbUzIayq4lxfwMlj",
   "system": {
     "description": "(Прицеливание) Игнор штрафов за скорость и высоту цели.",
-    "notes": "Не смоделировано: игнор штрафов скорости/высоты цели работает только при Прицеливании.",
+    "notes": "Реализовано ЧАСТИЧНО (16.09.2026, wdbc-1rno.5, находка 12/12): скоростная половина — aimIgnoresRunning:true (module/data/item/weapon-mod.mjs), гасит именно −20 «Цель Бежит» (module/sheets/attack-dialog.mjs::runningMod), только пока actor.system.aiming не \"none\" и только дальнобойная атака. Высотная половина честно НЕ реализована — штрафа за высоту цели в системе нет вообще (wdbc-1rno.29). «Только один прицел за атаку» из шапки раздела не гейтится (wdbc-1rno.40).",
     "category": "ranged",
     "modGroup": "sights",
     "requirement": "Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -27,7 +27,8 @@
       "balanceMod": 0,
       "weightPct": 0,
       "addProps": [],
-      "removeProps": []
+      "removeProps": [],
+      "aimIgnoresRunning": true
     },
     "drukhari": false,
     "bookSource": "DoomBC — Основная книга, IV. Арсенал («Стрелковое оружие», стр. 199)"

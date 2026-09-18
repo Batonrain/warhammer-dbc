@@ -4,6 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/ammo-shell.svg",
   "folder": "i0uuZL5dVJmN892X",
   "system": {
+    "itemSize": "2x1",
     "description": "Снаряд оставляет ярко светящийся след. Даёт +5 на следующий выстрел по той же цели, но выдаёт стрелка. Более редкие снаряды могут браться в модификации трассеров без увеличения редкости.",
     "notes": "",
     "weaponTypes": [

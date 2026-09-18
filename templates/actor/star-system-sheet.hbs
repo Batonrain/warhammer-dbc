@@ -168,9 +168,24 @@
                     value="{{system.description}}">{{{descriptionEnriched}}}</prose-mirror>
     </div>
     <div class="item-section">
-      <div class="item-section-title">ВАРП-МАРШРУТЫ / ТОЧКА МАНДЕВИЛЯ</div>
-      <prose-mirror name="system.warpRoutes" class="item-textarea" toggled
-                    value="{{system.warpRoutes}}">{{{warpRoutesEnriched}}}</prose-mirror>
+      <div class="item-section-title">ВАРП-МАРШРУТЫ / ТОЧКА МАНДЕВИЛЯ
+        <button type="button" class="btn-add-small" data-action="warpRoutePick" title="Привязать существующий маршрут">＋ маршрут</button>
+      </div>
+      <div class="ss-warproute-zone">
+        {{#if warpRoutes.length}}
+        {{#each warpRoutes as |r|}}
+        <div class="ss-warproute-row" data-route-uuid="{{r.uuid}}">
+          <img class="ss-warproute-img" src="{{r.img}}"/>
+          <span class="ss-warproute-name social-open-item" data-action="warpRouteOpen">{{r.name}}</span>
+          <span class="ss-warproute-arrow">→</span>
+          <span class="ss-warproute-other {{#if r.otherMissing}}dim{{/if}}">{{r.otherName}}</span>
+          <button type="button" class="wprop-remove" data-action="warpRouteDetach" title="Отсоединить от этой системы">✕</button>
+        </div>
+        {{/each}}
+        {{else}}
+        <p class="ss-warproute-empty">Маршрутов не привязано — перетащите предмет «Варп-маршрут» сюда или добавьте «＋ маршрут».</p>
+        {{/if}}
+      </div>
     </div>
     <div class="item-section">
       <div class="item-section-title">ЗАМЕТКИ ГМа</div>

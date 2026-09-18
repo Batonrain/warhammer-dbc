@@ -309,6 +309,15 @@ describe("куда пришлось попадание", () => {
     expect(hitTarget(34, beast(), { rider: def })).toBe("rider");
   });
 
+  // wdbc-1rno.2: «Нельзя против атак, от которых нельзя Избегать (незримые,
+  // из засады, со спины)» — Незримая атака (unseen=true) отменяет форсированный
+  // редирект, попадание разбирается обычной формулой (дубль/Stand), как без Таланта.
+  it("Всадник-Защитник НЕ работает против Незримой атаки — разбор как обычно", () => {
+    const def = rider({ items: [talent("Defensive Rider / Всадник-Защитник")] });
+    expect(hitTarget(34, beast(), { rider: def, unseen: true })).toBe("mount");
+    expect(hitTarget(33, beast(), { rider: def, unseen: true })).toBe("rider");
+  });
+
   it("Избирательная атака по всаднику −10, а под «Укрытием» демона −30", () => {
     expect(selectiveMod("rider")).toBe(-10);
     expect(selectiveMod("rider", { covered: true })).toBe(-30);

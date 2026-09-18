@@ -10,12 +10,13 @@
 
 import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
-import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { getTerrainInfoForToken } from "../regions/difficult-terrain.mjs";
 import { getItemMechanics } from "../apps/mechanics.mjs";
 import { entryWhenOk } from "../rules/mech-when.mjs";
 import { isBlindedActor } from "../rules/predicates.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { IN_FLIGHT_ALTITUDES } from "./movement-actions.mjs";
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -39,34 +40,41 @@ function ignoredTerrainKeysForActor(actor) {
 
 /**
  * Модификатор трудного ландшафта под токеном ПОСЛЕ вычета свойств, которые
- * актор игнорирует (Механика предмета, kind:"terrainIgnore"), и с учётом
+ * актор игнорирует (Механика предмета, kind:"terrainIgnore"), с учётом
+ * Полёта (стр. 30, wdbc-x1nz.2: на любой высоте полёта персонаж не касается
+ * земли — книга явно оговаривает это для Приземной, где высота всего 2м и
+ * не очевидна без оговорки, но Низкая/Высокая тем более выше земли) и
  * Ослепления (стр. 30-31, wdbc-r5o7.4): «весь незнакомый ландшафт — Трудный
  * +0» (тест нужен даже вне реальной зоны, но без доп. штрафа) и «−20 против
  * настоящего Трудного Ландшафта» (доп. штраф ТОЛЬКО когда актор и так уже в
  * зоне — Ослепление не создаёт зону там, где её нет, оно делает трудным то,
- * что уже трудно, ЕЩЁ трудней).
+ * что уже трудно, ЕЩЁ трудней). Полёт снимает зону целиком — Ослепление
+ * незачем штрафовать за то, обо что летящий персонаж физически не спотыкается.
  * @returns {{inTerrain: boolean, mod: number, labels: string[], ignoredLabels: string[]}}
  */
 function effectiveTerrainInfo(tokenDoc, actor) {
   const raw = getTerrainInfoForToken(tokenDoc);
+  const flying = IN_FLIGHT_ALTITUDES.includes(actor?.system?.movement?.altitude);
   const ignored = ignoredTerrainKeysForActor(actor);
-  const active = raw.props.filter(p => !ignored.has(p.key));
-  const skipped = raw.props.filter(p => ignored.has(p.key));
+  const groundProps = flying ? [] : raw.props;
+  const active = groundProps.filter(p => !ignored.has(p.key));
+  const skipped = flying ? raw.props : raw.props.filter(p => ignored.has(p.key));
   const blinded = isBlindedActor(actor);
-  const blindedPenalty = (blinded && raw.inTerrain) ? -20 : 0;
+  const realTerrain = !flying && raw.inTerrain;
+  const blindedPenalty = (blinded && realTerrain) ? -20 : 0;
   return {
-    inTerrain: raw.inTerrain || blinded,
+    inTerrain: realTerrain || blinded,
     // Настоящая зона под токеном (Region), в отличие от Ослепления, которое
     // лишь ОБЯЗЫВАЕТ тестировать — сама по себе SPD не режет (та половина
     // уже посчитана отдельно, rules/character.mjs, для Поваленного; у
     // Ослепления в книге такого пункта нет). Нужно только для текста
     // подсказки ниже (showDifficultTerrainDialog) — не путать игрока, что
     // SPD «уже уменьшена зоной», когда зоны физически нет.
-    realTerrain: raw.inTerrain,
+    realTerrain,
     blinded,
-    mod: active.reduce((s, p) => s + p.mod, 0) + raw.extraMod + blindedPenalty,
+    mod: active.reduce((s, p) => s + p.mod, 0) + (flying ? 0 : raw.extraMod) + blindedPenalty,
     labels: [...active.map(p => p.label), ...(blindedPenalty ? ["Ослеплён (−20)"] : blinded ? ["Ослеплён"] : [])],
-    ignoredLabels: skipped.map(p => p.label)
+    ignoredLabels: [...skipped.map(p => p.label), ...(flying && raw.inTerrain ? ["Полёт — не касается земли"] : [])]
   };
 }
 
@@ -130,8 +138,8 @@ async function _resolveDifficultTerrain(actor, ag, terrainMod, extraMod, labels)
     ? outcomeHtml(true,  `Успех — ${deg} ${_degWord(deg)}. Устоял на ногах.`)
     : outcomeHtml(false, `Провал — ${deg} ${_degWord(deg)}. Персонаж падает!`);
 
-  // Слагаемые Порога — в скобки общего формата (thresholdLine): раньше здесь
-  // рядом стояли и суммарный модификатор, и его разбор, теперь только разбор.
+  // Слагаемые Порога — во всплывающую подсказку ячейки Порога (rollStatLine):
+  // разбор базы и модификаторов, сама плашка несёт только итоговое число.
   const parts = [
     `ландшафт ${sgn(terrainMod)}${labels.length ? `: ${labels.join(", ")}` : ""}`,
     extraMod ? `доп. мод ${sgn(extraMod)}` : ""
@@ -139,8 +147,8 @@ async function _resolveDifficultTerrain(actor, ag, terrainMod, extraMod, labels)
 
   await postTestCard(actor, {
     icon: rollIcon("burst","#b0a080"), title: `Трудный Ландшафт — ${esc(actor.name)}`,
-    threshold: thresholdLine({ label: "Ag", base: ag, parts, threshold }),
-    rv, outcome
+    threshold: rollStatLine({ label: "Ag", base: ag, parts, threshold, rv }),
+    outcome
   }, { rolls: [roll] });
 }
 

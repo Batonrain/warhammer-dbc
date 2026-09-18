@@ -10,7 +10,7 @@ import { testKindHtml, readTestKind, wireTestKindLive, rollD100WithReroll } from
 import { DEMON_ALLEGIANCES, DEMON_RANKS, DEMON_FORMS, DEMON_WEAPON_PROPS, DEMON_KEY_TRAITS,
          allegianceMeta, formDuration } from "../constants/demon-mechanics.mjs";
 import { esc } from "../helpers/utils.mjs";
-import { postTestCard } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { onConvertToHorde } from "../apps/horde-convert.mjs";
 import { onMinionCreate } from "../apps/minion-creator.mjs";
@@ -177,13 +177,16 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
         <div class="wh-skill-roll-form">
           <div class="roll-dlg-header"><span>Тест Нестабильности</span></div>
           <div class="roll-dlg-row"><label>Сила Воли:</label><span>${wp}</span></div>
-          ${testKindHtml({ defaultKind: "base", label: "Нестабильность" })}
+          ${testKindHtml({ label: "Нестабильность" })}
           <div id="auto-outcome-note" class="roll-dlg-note"></div>
         </div>`,
       buttons: [
         {
           action: "roll", icon: "fas fa-dice-d10", label: "Бросок", default: true,
-          callback: (event, button) => readTestKind(sel => button.form.querySelector(sel)?.value ?? null, { label: "Нестабильность" })
+          callback: (event, button) => readTestKind(
+            sel => button.form.querySelector(sel)?.value ?? null,
+            sel => !!button.form.querySelector(sel)?.checked,
+            { label: "Нестабильность" })
         },
         { action: "cancel", label: "Отмена", callback: () => false }
       ],
@@ -234,23 +237,25 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
     const { roll, rv, rolls: rolled, rerollNote } = await rollD100WithReroll(rr);
 
     const outcome = await resolveKindOutcome(this.actor, {
-      kind: tk.kind, baseEff: threshold, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed, ctx
+      baseEff: threshold, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed, ctx
     });
     const { success, deg } = outcome;
-    // Карточка — общим сборщиком (wdbc-kuun). classes: без wh-daemon-card
+    // Карточка — общим сборщиком (wdbc-fyvv). classes: без wh-daemon-card
     // разъезжается вёрстка демонических карточек (daemon-sheet.css цепляется
-    // именно за него). Строка Порога своя, а не thresholdLine: здесь слагаемые
-    // сложены в ОДНО число с перечнем причин («−20 (Усталость, Локус Цепей)»),
-    // и разбивать их подписью на каждое значило бы менять вид карточки.
+    // именно за него).
     await postTestCard(this.actor, {
       classes: "wh-daemon-card",
       title: `🌀 Тест Нестабильности${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(this.actor.name)}`,
-      threshold: `<div class="roll-threshold">Сила Воли: <b>${wp}</b>${
-            bonus ? ` ${bonus > 0 ? "+" : ""}${bonus} (${applied.map(m => m.label).join(", ")})` : ""
-          }${tk.difficulty !== 0 ? ` ${tk.difficulty >= 0 ? "+" : ""}${tk.difficulty} (📊 Сложность)` : ""} → Порог: <b>${threshold}</b>
-            · Warp Instability (${rating})</div>`,
-      lines: [outcome.combinedLine],
-      rv, rerollNote, critLine: outcome.critLine,
+      threshold: rollStatLine({
+        label: "WP", base: wp,
+        parts: [
+          bonus ? `${bonus > 0 ? "+" : ""}${bonus} (${applied.map(m => m.label).join(", ")})` : "",
+          tk.difficulty !== 0 ? `${tk.difficulty >= 0 ? "+" : ""}${tk.difficulty} (📊 Сложность)` : ""
+        ],
+        threshold, rv
+      }),
+      lines: [`<div style="font-size:0.82em;opacity:.8;">Warp Instability (${rating})</div>`, outcome.combinedLine],
+      rerollNote, critLine: outcome.critLine,
       outcome: success
         ? `<span class="roll-success">Удержался — ${deg} ст.</span>`
         : `<span class="roll-failure">Дестабилизация — ${deg} ст.: варп-урон / изгнание в Варп (по решению ГМа).</span>`,
@@ -285,13 +290,16 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
         <div class="wh-skill-roll-form">
           <div class="roll-dlg-header"><span>Против Экзорцизма / Чистой Демонологии</span></div>
           <div class="roll-dlg-row"><label>Сила Воли:</label><span>${wp}</span></div>
-          ${testKindHtml({ defaultKind: "opposed", label: "Против Экзорцизма" })}
+          ${testKindHtml({ defaultKinds: ["opposed"], label: "Против Экзорцизма" })}
           <div id="auto-outcome-note" class="roll-dlg-note"></div>
         </div>`,
       buttons: [
         {
           action: "roll", icon: "fas fa-dice-d10", label: "Бросок", default: true,
-          callback: (event, button) => readTestKind(sel => button.form.querySelector(sel)?.value ?? null, { label: "Против Экзорцизма" })
+          callback: (event, button) => readTestKind(
+            sel => button.form.querySelector(sel)?.value ?? null,
+            sel => !!button.form.querySelector(sel)?.checked,
+            { label: "Против Экзорцизма" })
         },
         { action: "cancel", label: "Отмена", callback: () => false }
       ],
@@ -327,19 +335,24 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
     const { roll, rv, rolls: rolled, rerollNote } = await rollD100WithReroll(rr);
 
     const outcome = await resolveKindOutcome(this.actor, {
-      kind: tk.kind, baseEff: threshold, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed, ctx
+      baseEff: threshold, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed, ctx
     });
     const { success, deg } = outcome;
-    // Та же сборка, что у Нестабильности выше — включая wh-daemon-card и
-    // собственную строку Порога (см. комментарий там же).
+    // Та же сборка, что у Нестабильности выше (wh-daemon-card, плашка
+    // rollStatLine).
     await postTestCard(this.actor, {
       classes: "wh-daemon-card",
       title: `🕯️ Против Экзорцизма / Чистой Демонологии${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(this.actor.name)}`,
-      threshold: `<div class="roll-threshold">Сила Воли: <b>${wp}</b>${
-            bonus ? ` ${bonus > 0 ? "+" : ""}${bonus} (${applied.map(m => m.label).join(", ")})` : ""
-          }${tk.difficulty !== 0 ? ` ${tk.difficulty >= 0 ? "+" : ""}${tk.difficulty} (📊 Сложность)` : ""} → Порог: <b>${threshold}</b></div>`,
+      threshold: rollStatLine({
+        label: "WP", base: wp,
+        parts: [
+          bonus ? `${bonus > 0 ? "+" : ""}${bonus} (${applied.map(m => m.label).join(", ")})` : "",
+          tk.difficulty !== 0 ? `${tk.difficulty >= 0 ? "+" : ""}${tk.difficulty} (📊 Сложность)` : ""
+        ],
+        threshold, rv
+      }),
       lines: [outcome.combinedLine],
-      rv, rerollNote, critLine: outcome.critLine,
+      rerollNote, critLine: outcome.critLine,
       outcome: success
         ? `<span class="roll-success">Устоял — ${deg} ст.</span>`
         : `<span class="roll-failure">Провален — ${deg} ст.</span>`,

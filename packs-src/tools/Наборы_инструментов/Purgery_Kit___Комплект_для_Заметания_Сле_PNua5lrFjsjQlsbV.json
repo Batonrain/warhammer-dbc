@@ -11,6 +11,7 @@
     "availability": 1,
     "quality": "common",
     "toolCategory": "kits",
+    "itemSize": "3x1",
     "effect": "1 минута + Security(I)+20: −10 за каждый Успех на осмотр улик/выслеживание по запаху этого места.",
     "reminder": "",
     "qualityEffects": {

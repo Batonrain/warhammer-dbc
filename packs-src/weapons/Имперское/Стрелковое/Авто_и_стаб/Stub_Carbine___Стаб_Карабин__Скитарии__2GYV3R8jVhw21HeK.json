@@ -3,6 +3,7 @@
   "type": "weapon",
   "folder": "k26nnNHjR0DQDnhj",
   "system": {
+    "itemSize": "3x1",
     "description": "",
     "notes": "",
     "weaponClass": "basic",
@@ -22,6 +23,7 @@
     "damageType": "impact",
     "penetration": 1,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Стрелковое оружие», стр. 171-186)",
     "availability": -1,
     "weight": 2,
     "attackBonus": 0,

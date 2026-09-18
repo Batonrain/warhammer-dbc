@@ -43,6 +43,7 @@ import { ShipHullData }       from "./item/ship-hull.mjs";
 import { CargoData }          from "./item/cargo.mjs";
 import { TorpedoData }        from "./item/torpedo.mjs";
 import { CelestialBodyData }  from "./item/celestial-body.mjs";
+import { WarpRouteData }      from "./item/warp-route.mjs";
 import { VehicleGearData }    from "./item/vehicle-gear.mjs";
 import { VehicleTraitData }   from "./item/vehicle-trait.mjs";
 import { SmallCraftData }     from "./item/small-craft.mjs";
@@ -105,6 +106,9 @@ export const ITEM_DATA_MODELS = {
   cargo:         CargoData,
   torpedo:       TorpedoData,
   celestialBody: CelestialBodyData,
+  // Варп-маршрут (wdbc-r0w9) — мировой предмет, соединяет ДВЕ Звёздные
+  // системы (см. module/data/item/warp-route.mjs), не вложен ни в одну.
+  warpRoute:     WarpRouteData,
   vehicleGear:   VehicleGearData,
   vehicleTrait:  VehicleTraitData,
   smallCraft:    SmallCraftData,

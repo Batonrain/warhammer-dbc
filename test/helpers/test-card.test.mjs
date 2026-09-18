@@ -195,4 +195,41 @@ describe("statLine и head: форма карточки атаки", () => {
     expect(html.indexOf("props")).toBeGreaterThan(html.indexOf("roll-header"));
     expect(html.indexOf("props")).toBeLessThan(html.indexOf("roll-statline"));
   });
+
+  it("ячейка с title рисует подсказку", async () => {
+    const { statLine } = await import("../../module/helpers/test-card.mjs");
+    expect(statLine([{ label: "Порог", value: 35, title: "Ag: 35" }]))
+      .toBe('<div class="roll-statline"><span class="roll-stat" title="Ag: 35"><label>Порог</label><b>35</b></span></div>');
+  });
+});
+
+// rollStatLine — общая плашка Бросок/Режим/Порог для ВСЕХ тестов (wdbc-fyvv),
+// не только боевых. Разбивка базы и модификаторов, которую раньше рисовала
+// thresholdLine текстом, здесь уходит в подсказку ячейки Порога.
+describe("rollStatLine: общая плашка результата теста", () => {
+  it("порядок ячеек — Бросок, Режим, Порог", async () => {
+    const { rollStatLine } = await import("../../module/helpers/test-card.mjs");
+    const html = rollStatLine({ label: "Ag", base: 35, parts: ["😓 Усталость -10", "стойка +10"], threshold: 35, rv: 24 });
+    const order = ["Бросок", "Режим", "Порог"];
+    const positions = order.map(l => html.indexOf(`<label>${l}</label>`));
+    expect(positions).toEqual([...positions].sort((a, b) => a - b));
+    expect(positions.every(p => p >= 0)).toBe(true);
+  });
+
+  it("разбивка базы и модификаторов уходит в подсказку Порога, не в текст плашки", async () => {
+    const { rollStatLine } = await import("../../module/helpers/test-card.mjs");
+    const html = rollStatLine({ label: "Ag", base: 35, parts: ["😓 Усталость -10", "стойка +10"], threshold: 35, rv: 24 });
+    expect(html).toContain('title="Ag: 35 (😓 Усталость -10, стойка +10)"');
+    expect(html).not.toContain("Усталость -10</");
+  });
+
+  it("без label ячейки Режим нет — тест фиксированный, подписывать нечем", async () => {
+    const { rollStatLine } = await import("../../module/helpers/test-card.mjs");
+    expect(rollStatLine({ threshold: 45, rv: 30 })).not.toContain("<label>Режим</label>");
+  });
+
+  it("без rv ячейки Броска нет", async () => {
+    const { rollStatLine } = await import("../../module/helpers/test-card.mjs");
+    expect(rollStatLine({ label: "Ag", threshold: 45 })).not.toContain("<label>Бросок</label>");
+  });
 });

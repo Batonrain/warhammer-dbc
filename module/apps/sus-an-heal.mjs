@@ -36,7 +36,7 @@ import { worldTimeRemaining, markWorldTimeCooldownUsed } from "../rules/cooldown
 import { getChapter } from "../constants/legions.mjs";
 import { isSusAnMembraneItem } from "../rules/predicates.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
-import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 const FLAG = "warhammer-dbc";
 const USED_AT_FLAG = "susAnHealUsedAt";
@@ -139,8 +139,7 @@ export async function useSusAnHeal(actor, item) {
     title: `Сус-ан Мембрана — ${esc(actor.name)}`,
     // Подписи модификаторов теперь едут слагаемыми в скобках общего формата
     // Порога, а не приписками после базы.
-    threshold: thresholdLine({ label: "Т", base: t, parts: ruleMods.parts, threshold }),
-    rv,
+    threshold: rollStatLine({ label: "Т", base: t, parts: ruleMods.parts, threshold, rv }),
     outcome: outcomeHtml(success, success
       ? `Успех (${sl} СУ) — ${delayNote ? `исцелит ${healed} Ран` : `исцелено ${healed} Ран`}`
       : "Провал — Раны не исцелены"),

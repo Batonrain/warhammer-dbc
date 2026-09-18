@@ -1,0 +1,55 @@
+{
+  "name": "Practiced Eye / Наметанный Взгляд",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "LjsqJMH26Qgo0CQE",
+  "system": {
+    "description": "",
+    "notes": "Не смоделировано: бонус зависит от того, какой из шести признаков варп-маршрута выбран Специализацией, и от того, к какому тесту этот признак ведёт по Сводной таблице признаков (Шаг 1/3/4/5 или бросок Варп-столкновений) — единого testMod не хватает, нужен выбор признака и подстановка модификатора именно в тот тест/бросок, где встретится этот признак маршрута.",
+    "benefit": "На маршруте, обладающем признаком из выбранной Специализации, Проводник получает +10 к тому тесту, на который этот признак влияет по Сводной таблице. Для признаков Стабильности — вместо этого −10 к броскам Варп-столкновений; для Особенностей — снятие их штрафа либо +10 там, где штрафа нет. Талант можно брать несколько раз, каждый раз выбирая новый признак; специализации складываются.",
+    "tier": 1,
+    "requirement": "Navigation (Warp) +10",
+    "aptitudes": [
+      "per",
+      "fieldcraft"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Магистральный, Тропа, Задокументированный, Апокрифичный, Неизведанный, Светозарный, Ясный, Тусклый, Слепая зона, Спокойный, Изменчивый, Турбулентный, Штормовой — либо любая Особенность маршрута",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Книга Пустоты, Таланты Навигаторов (Варп навигация), стр. 364"
+  },
+  "_id": "8gWiIYLKpJuBwEL3",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1758122400000,
+    "modifiedTime": 1758122400000,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!8gWiIYLKpJuBwEL3"
+}

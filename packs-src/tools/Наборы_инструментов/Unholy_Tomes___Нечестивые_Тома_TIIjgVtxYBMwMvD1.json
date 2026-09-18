@@ -11,6 +11,7 @@
     "availability": 3,
     "quality": "common",
     "toolCategory": "kits",
+    "itemSize": "3x1",
     "effect": "+20 на тесты ритуалов и исследований по ОДНОМУ Навыку набора: Scholastic Lore (Occult), Forbidden Lore (Daemons / Heresy / Psykers / Warp / Mechanicum / Xenos Occult).",
     "reminder": "+20 на ритуалы и исследования по своему Навыку (один на набор).",
     "qualityEffects": {

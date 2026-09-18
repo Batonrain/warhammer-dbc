@@ -26,6 +26,8 @@ import { aspirationOptions, aspirationByKey } from "../apps/aspirations.mjs";
 import { supportsInfoguard } from "../apps/infoguard.mjs";
 import { gearRequiresWearing } from "../apps/effects.mjs";
 import { xpLogEntries } from "../apps/xp-log.mjs";
+import { extendedTestRows } from "../rules/extended-test.mjs";
+import { testTargetList } from "../rules/test-kind.mjs";
 
 // Карта «полное имя таланта → тип (папка корбука)» + порядок типов — строится один
 // раз. Используется для группировки талантов на листе по типам (стр. 62-105).
@@ -55,6 +57,7 @@ import { addictionItems, isAddictionUnsatisfied, addictionStatusLabel,
          addictionSubstanceLabel }                    from "../rules/addiction.mjs";
 import { raceMatches }                               from "../rules/race.mjs";
 import { ritualsContext }                            from "./tabs/rituals.mjs";
+import { hasNavigationWarp, warpRoutesTabContext }   from "./tabs/warp-routes.mjs";
 import { mergeAbilityItems, mergeAbilityEffects,
          abilityLabel }                              from "../rules/merge-abilities.mjs";
 import { toggleParentId, toggleRows }                from "../rules/toggle-abilities.mjs";
@@ -422,6 +425,20 @@ export function buildGetData(actor) {
     });
   }
 
+  // Расширенные тесты (стр. 25, wdbc-nysl) — панель на вкладке ПОКАЗАТЕЛИ.
+  // testTargets — общий список Навык/Характеристика для селекта КАЖДОЙ строки
+  // (какой Навык/Характеристику подставить при «Переоткрыть» — его можно
+  // сменить прямо тут, книга не требует одного и того же Навыка на все
+  // броски Расширенного). Групповые (специализации) сюда намеренно не
+  // входят — их выбор через dataset groupKey/index, отдельный от плоского
+  // testKey "skill:<key>"/"char:<key>", усложнил бы селектор ради редкого
+  // случая (расширенный тест почти всегда на базовом Навыке или Характеристике).
+  const testTargets = testTargetList();
+  context.extendedTests = extendedTestRows(actor.getFlag("warhammer-dbc", "extendedTests")).map(row => ({
+    ...row,
+    targets: testTargets.map(t => ({ ...t, selected: t.value === row.testKey }))
+  }));
+
   const _skApts = charAptitudeSet(system.aptitudes);
   context.skillsAdvance = Object.entries(SKILLS_DEF).map(([key, def]) => {
     const sk = system.skills?.[key] || {};
@@ -775,6 +792,11 @@ export function buildGetData(actor) {
     wearable:    gearRequiresWearing(i.system),
     equipped:    !!i.system.equipped,
     worn:        i.system.worn || "",
+    // Включаемое (wdbc-x1nz.2, apps/effects.mjs::isItemActive) — тумблер на
+    // бонус, требующий активного применения (Мучитель и подобные), отдельно
+    // от ношения выше.
+    activatable: !!i.system.activatable,
+    active:      !!i.system.active,
     infoguard:   supportsInfoguard(i) ? (i.system.infoguard || 0) : null
   }));
 
@@ -782,6 +804,13 @@ export function buildGetData(actor) {
     id: i.id, name: i.name,
     quantity: i.system.quantity,
     weight:   i.system.weight,
+    activatable: !!i.system.activatable,
+    active:      !!i.system.active,
+    // Гололит (стр. 256, wdbc-x1nz.2): «час подготовки → +10 Command» — тест
+    // и флаг подготовки, отдельная кнопка (combat/hololith-briefing.mjs).
+    // По имени, без своего поля схемы — тот же приём, что RECOIL_SUPPRESSOR_RE
+    // (combat/armor-mods.mjs) для предметов без выделенного ключа/флага.
+    isHololith: /hololith|гололит/i.test(i.name || ""),
     infoguard: supportsInfoguard(i) ? (i.system.infoguard || 0) : null
   }));
 
@@ -984,6 +1013,10 @@ export function buildGetData(actor) {
 
   // ── Ритуалы (стр. 393-425) ──────────────────────────────────────────────
   context.rituals = ritualsContext(actor);
+
+  // ── Варп-маршруты (Книга Пустоты v.2, wdbc-r0w9) ─────────────────────────
+  context.hasNavigationWarp = hasNavigationWarp(actor);
+  context.knownRoutes = warpRoutesTabContext(actor);
 
   // ── Черты (трейты) ──────────────────────────────────────────────────────
   // Как и Таланты, одинаковые Черты из разных источников склеиваются в одну

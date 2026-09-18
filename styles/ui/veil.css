@@ -350,6 +350,7 @@
   font-size: 0.8em; background: rgba(0,0,0,0.25); border-radius: 5px; border: 1px solid var(--wv-line);
 }
 .wv-jstate b { color: var(--wv-violet); }
+.wv-jstate b.wv-danger { color: var(--wv-red); }
 .wv-jsteps { display: flex; flex-direction: column; gap: 4px; }
 .wv-jstep { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
 .wv-jnum {

@@ -1,0 +1,91 @@
+{{#if (eq item.type "warpRoute")}}
+
+<div class="item-section">
+  <div class="item-section-title">СОЕДИНЯЕТ ДВЕ ЗВЁЗДНЫЕ СИСТЕМЫ</div>
+  <div class="wrp-slots">
+    <div class="wrp-slot-zone wrp-slot-card" data-slot="systemAUuid">
+      {{#if wrpSystemA}}
+      <img class="wrp-slot-img" src="{{wrpSystemA.img}}"/>
+      <span class="wrp-slot-name social-open-actor" data-action="wrpSlotOpen" data-slot="systemAUuid">{{wrpSystemA.name}}</span>
+      <button type="button" class="wprop-remove" data-action="wrpSlotClear" data-slot="systemAUuid" title="Отсоединить">✕</button>
+      {{else}}
+      <span class="wrp-slot-empty">Перетащите Звёздную систему сюда</span>
+      <button type="button" class="btn-add-small" data-action="wrpSlotPick" data-slot="systemAUuid" title="Выбрать без перетаскивания">＋</button>
+      {{/if}}
+    </div>
+    <div class="wrp-slot-zone wrp-slot-card" data-slot="systemBUuid">
+      {{#if wrpSystemB}}
+      <img class="wrp-slot-img" src="{{wrpSystemB.img}}"/>
+      <span class="wrp-slot-name social-open-actor" data-action="wrpSlotOpen" data-slot="systemBUuid">{{wrpSystemB.name}}</span>
+      <button type="button" class="wprop-remove" data-action="wrpSlotClear" data-slot="systemBUuid" title="Отсоединить">✕</button>
+      {{else}}
+      <span class="wrp-slot-empty">Перетащите Звёздную систему сюда</span>
+      <button type="button" class="btn-add-small" data-action="wrpSlotPick" data-slot="systemBUuid" title="Выбрать без перетаскивания">＋</button>
+      {{/if}}
+    </div>
+  </div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">ПРИЗНАКИ МАРШРУТА
+    <button type="button" class="btn-add-small" data-action="wrpGenerateTraits" title="Бросить все пять 1d10-признаков и Особенности заново">🎲 Сгенерировать</button>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Категория</label>
+    <input type="number" name="system.category.rating" class="wr-input-xs" value="{{system.category.rating}}"/>
+    <input type="text" name="system.category.label" class="wr-input-md" value="{{system.category.label}}" placeholder="подпись по таблице"/>
+    <label class="wr-label">Тип</label>
+    <input type="number" name="system.routeType.rating" class="wr-input-xs" value="{{system.routeType.rating}}"/>
+    <input type="text" name="system.routeType.label" class="wr-input-md" value="{{system.routeType.label}}" placeholder="подпись по таблице"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Изученность</label>
+    <input type="number" name="system.lore.rating" class="wr-input-xs" value="{{system.lore.rating}}"/>
+    <input type="text" name="system.lore.label" class="wr-input-md" value="{{system.lore.label}}" placeholder="подпись по таблице"/>
+    <label class="wr-label">Освещённость</label>
+    <input type="number" name="system.illumination.rating" class="wr-input-xs" value="{{system.illumination.rating}}"/>
+    <input type="text" name="system.illumination.label" class="wr-input-md" value="{{system.illumination.label}}" placeholder="подпись по таблице"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Стабильность</label>
+    <input type="number" name="system.stability.rating" class="wr-input-xs" value="{{system.stability.rating}}"/>
+    <input type="text" name="system.stability.label" class="wr-input-md" value="{{system.stability.label}}" placeholder="подпись по таблице"/>
+  </div>
+  <p class="ss-gen-hint">Изученность здесь — общее свойство самого маршрута (одно на всех), не путать со Знанием
+    конкретного Проводника (Неизвестный…Избранный) — оно на листе Проводника, вкладка МИСТИКА.</p>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">ОСОБЕННОСТИ (d100)
+    <button type="button" class="btn-add-small" data-action="wrpFeatureAdd" title="Добавить особенность">＋ особенность</button>
+  </div>
+  {{#if wrpFeatures.length}}
+  {{#each wrpFeatures as |f|}}
+  <div class="weapon-row">
+    <input type="number" class="wrp-feature-field wr-input-xs" data-index="{{f.idx}}" data-field="roll" value="{{f.roll}}" placeholder="d100"/>
+    <input type="text" class="wrp-feature-field wr-input-md" data-index="{{f.idx}}" data-field="name" value="{{f.name}}" placeholder="название"/>
+    <input type="text" class="wrp-feature-field wr-input-lg" data-index="{{f.idx}}" data-field="effect" value="{{f.effect}}" placeholder="эффект"/>
+    <button type="button" class="wprop-remove" data-action="wrpFeatureRemove" data-index="{{f.idx}}" title="Удалить">✕</button>
+  </div>
+  {{/each}}
+  {{/if}}
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">ПРОКЛАДКА НОВОГО МАРШРУТА</div>
+  <div class="weapon-row">
+    <label class="wr-label"><input type="checkbox" name="system.plotting.active" {{#if system.plotting.active}}checked{{/if}}/> В процессе прокладки</label>
+    {{#if system.plotting.complete}}<span class="wrp-slot-name">✓ Проложен</span>{{/if}}
+  </div>
+  {{#if system.plotting.active}}
+  <p class="ss-gen-hint">Очков Маршрута: <b>{{system.plotting.points}}/{{system.plotting.threshold}}</b> (порог фиксируется автоматически по Длительности первого рейса, окно «Навигация»). Завершённых рейсов прокладки: {{system.plotting.attempts}}. Копятся и записываются кнопками «Обработка данных»/«Начертать маршрут» в окне «Навигация» — здесь только показ.</p>
+  {{/if}}
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">ЗАМЕТКИ ГМа</div>
+  <prose-mirror name="system.gmNotes" class="item-textarea" toggled
+                value="{{system.gmNotes}}">{{{wrpGmNotesEnriched}}}</prose-mirror>
+</div>
+
+{{/if}}

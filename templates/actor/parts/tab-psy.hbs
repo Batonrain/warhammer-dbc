@@ -220,4 +220,35 @@
       {{else}}
         <tr class="items-empty"> <td colspan="6"><em>Нет ритуалов — перетащите сюда или нажмите ＋</em></td> </tr> {{/if}}
     </tbody> </table> </div>
+
+  {{!-- Варп-маршруты (Книга Пустоты v.2, wdbc-r0w9) — только у Проводника:
+        хотя бы один уровень Navigation (Warp). Признаки самого маршрута —
+        на листе предмета «Маршрут»; здесь только Знание ЭТОГО Проводника. --}}
+  {{#if hasNavigationWarp}}
+  <div class="ability-section-panel" data-collapse-key="psy-warp-routes"> <div class="panel-title" data-action="panelCollapse"> ВАРП-МАРШРУТЫ
+      <button type="button" class="warp-route-add-btn" title="Привязать существующий маршрут">＋</button> </div>
+    <table class="items-table warp-routes-table"> <thead> <tr>
+      <th class="col-wide">Маршрут</th>
+      <th>Знание</th>
+      <th></th>
+    </tr> </thead> <tbody>
+      {{#if knownRoutes.length}}
+        {{#each knownRoutes as |r|}}
+        <tr class="item-row {{#if r.missing}}dim{{/if}}">
+          <td class="warp-route-name-cell"><span class="warp-route-open-link social-open-item" data-uuid="{{r.routeUuid}}">{{r.name}}</span></td>
+          <td>
+            <select class="warp-route-level-select" data-index="{{r.idx}}">
+              {{#each r.levelOptions as |o|}}
+              <option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.label}}</option>
+              {{/each}}
+            </select>
+          </td>
+          <td><button type="button" class="warp-route-remove-btn" data-index="{{r.idx}}" title="Забыть маршрут">✕</button></td>
+        </tr>
+        {{/each}}
+      {{else}}
+        <tr class="items-empty"> <td colspan="3"><em>Проводник пока не знает ни одного маршрута — нажмите ＋</em></td> </tr>
+      {{/if}}
+    </tbody> </table> </div>
+  {{/if}}
 </div>{{!-- /tab psy --}}

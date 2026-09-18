@@ -62,6 +62,16 @@ export class PsychicPowerData extends foundry.abstract.TypeDataModel {
       action:        new StringField({ initial: "half", label: "Действие" }),
       // Дальность — строка: в книге это и «10 м», и «Бонус Воли × 5 м».
       range:         new StringField({ initial: "", label: "Дальность" }),
+      // wdbc-efyl: книга (core.json, глава ПСИХОСИЛЫ) прямым текстом описывает
+      // силы с ДВУМЯ дальностями — «Некоторые психосилы имеют две дальности,
+      // вторая из которых – дальность поддержания, отмеченная как (П)» —
+      // поэтому это второе книжное число, а не производное от `range` (не
+      // может быть вычислено оверрайдом: у Concentration/Концентрация PR×1м
+      // манифестации и PR×5м поддержания — разные множители, не совпадающие
+      // константы). Пусто (подавляющее большинство сил) — своей отдельной
+      // (П)-дальности книга не даёт, «радиус поддержания» силы = `range`.
+      // Тот же текстовый формат, тот же парсер (module/rules/psy-range.mjs).
+      sustainRange:  new StringField({ initial: "", label: "Дальность поддержания (П)" }),
       sustainable:   new BooleanField({ initial: false, label: "Поддерживаемая" }),
       sustainCost:   num(1, "Стоимость поддержания"),
       sustainAction: new StringField({ initial: "free", label: "Действие поддержания" }),
@@ -76,6 +86,20 @@ export class PsychicPowerData extends foundry.abstract.TypeDataModel {
       // остаток считает module/rules/mech-formula.mjs. Голое число — валидная
       // формула из одного терма, старые данные пака (просто "0"/"8"/…) не ломаются.
       penetration:   new StringField({ initial: "0", label: "Пробитие" }),
+      // «Х» (wdbc-ufns, Vortex of Doom: «Х = ½Успехи(окр.▲)», книга использует
+      // ОДНО производное число сразу в damage/penetration/weaponProps-rating).
+      // Формула тем же языком, что rating/penetration («ceil(СУ/2)», «PR» и
+      // т.п.) — считается ОДИН раз в psychic.mjs::executePsychotest
+      // (combat/weapon-properties.mjs::resolvePropRating) и подставляется
+      // текстом («Х») во все формулы этого предмета. Пусто — предмет «Х» не
+      // использует, ничего не подставляется (подавляющее большинство сил).
+      xFormula:      new StringField({ initial: "", label: "Формула «Х» (производное значение психосилы)" }),
+      // Персистентная зона типа «Вихрь Рока» (wdbc-ufns) — раундовый тест
+      // поддержания + Реакции других псайкеров, module/regions/vortex-zone.mjs.
+      // true только у предметов с этой книжной механикой (пока один — Vortex
+      // of Doom); кнопка размещения на карточке манифестации показывается,
+      // только когда этот флаг стоит (не по факту наличия Blast вообще).
+      vortexPersistent: new BooleanField({ initial: false, label: "Персистентная зона (Вихрь Рока)" }),
       weaponProps:   list("Свойства оружия"),
       charDamageStat:    new StringField({ initial: "", label: "Урон по характеристике" }),
       charDamageFormula: new StringField({ initial: "", label: "Формула урона по характеристике" }),

@@ -251,6 +251,52 @@ describe("isItemActive: снаряжение и признак «надето» 
   });
 });
 
+// wdbc-x1nz.2 (аудит инструментов/снаряжения): Мучитель — бонус должен
+// требовать явного включения (полудействие поддержания книга не считает, но
+// хотя бы «включил ли вообще» тумблер проверяет), независимо от ношения.
+describe("isItemActive: gear — включаемое (wdbc-x1nz.2, Мучитель)", () => {
+  const gear = (system) => ({ id: "g", type: "gear", system });
+
+  it("включаемое, не включено — неактивно, даже без требования ношения", () => {
+    expect(isItemActive(gear({ worn: "", activatable: true, active: false }))).toBe(false);
+  });
+
+  it("включаемое и включено — активно", () => {
+    expect(isItemActive(gear({ worn: "", activatable: true, active: true }))).toBe(true);
+  });
+
+  it("не включаемое (activatable:false) — как раньше, активно по факту владения", () => {
+    expect(isItemActive(gear({ worn: "", activatable: false, active: false }))).toBe(true);
+  });
+
+  it("носимое И включаемое — нужны оба условия", () => {
+    expect(isItemActive(gear({ worn: "Кисть", equipped: true, activatable: true, active: false }))).toBe(false);
+    expect(isItemActive(gear({ worn: "Кисть", equipped: false, activatable: true, active: true }))).toBe(false);
+    expect(isItemActive(gear({ worn: "Кисть", equipped: true, activatable: true, active: true }))).toBe(true);
+  });
+});
+
+// wdbc-x1nz.2: tool не имел вовсе «активен ли» — любой инструмент в инвентаре
+// давал свою механику Конструктора, даже лежащий в рюкзаке (найдено на
+// Ауспексе). Не включаемый инструмент по-прежнему активен по факту владения —
+// баг был не в этом, а в отсутствии способа СДЕЛАТЬ инструмент отключаемым.
+describe("isItemActive: tool (wdbc-x1nz.2)", () => {
+  const tool = (system) => ({ id: "t", type: "tool", system });
+
+  it("не включаемый — активен всегда, как раньше", () => {
+    expect(isItemActive(tool({}))).toBe(true);
+    expect(isItemActive(tool({ activatable: false }))).toBe(true);
+  });
+
+  it("включаемый, не включён — неактивен", () => {
+    expect(isItemActive(tool({ activatable: true, active: false }))).toBe(false);
+  });
+
+  it("включаемый и включён — активен", () => {
+    expect(isItemActive(tool({ activatable: true, active: true }))).toBe(true);
+  });
+});
+
 describe("картинка создаваемого эффекта", () => {
   it("createBlankEffect берёт картинку предмета", async () => {
     const created = [];

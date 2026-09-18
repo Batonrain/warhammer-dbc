@@ -6,8 +6,14 @@
 // игрок сам. Проверяется чистая механика тика, без Foundry-хука updateCombat.
 
 import "../support/foundry-stub.mjs";
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
+
+const completeInfection = vi.fn(async () => {});
+vi.mock("../../module/apps/parasite-trait.mjs", () => ({
+  completeInfection: (...args) => completeInfection(...args)
+}));
+
 import { processConditionTurnStart, processConditionTurnEnd, rollBurningPanicTest } from "../../module/combat/condition-ticks.mjs";
 import { clearRuleSources, registerRuleSource, getRuleSources } from "../../module/rules/sources.mjs";
 import { BLESSED_FITS_PENDING_FLAG } from "../../module/rules/blessed-fits.mjs";
@@ -44,7 +50,7 @@ function makeActor(overrides = {}) {
   return actor;
 }
 
-beforeEach(resetCaptured);
+beforeEach(() => { resetCaptured(); completeInfection.mockClear(); });
 
 describe("processConditionTurnStart: декремент длительности", () => {
   it("Оглушение 3 → 2, состояние остаётся, карточка с числами", async () => {
@@ -114,6 +120,27 @@ describe("processConditionTurnStart: декремент длительности
 
       expect(actor.system.fate.value).toBe(5);
       expect(actor.getFlag("warhammer-dbc", BLESSED_FITS_PENDING_FLAG)).toBe(true);
+    });
+  });
+
+  // Parasite/Паразит (Трейт, wdbc-ux8a): контакт дотикал до 0 — completeInfection
+  // зовётся тем же тактом, что возврат Очка Бесчестия у Blessed Fits выше.
+  describe("Parasite/Паразит: parasiticContact → 0 зовёт completeInfection", () => {
+    it("1 → 0 — снимает счётчик и зовёт completeInfection", async () => {
+      const actor = makeActor({ conditions: { parasiticContact: true, parasiticContactRounds: 1 } });
+      await processConditionTurnStart(actor);
+
+      expect(actor.system.conditions.parasiticContactRounds).toBe(0);
+      expect(actor.system.conditions.parasiticContact).toBe(false);
+      expect(completeInfection).toHaveBeenCalledWith(actor);
+    });
+
+    it("3 → 2 — рано, completeInfection не зовётся", async () => {
+      const actor = makeActor({ conditions: { parasiticContact: true, parasiticContactRounds: 3 } });
+      await processConditionTurnStart(actor);
+
+      expect(actor.system.conditions.parasiticContactRounds).toBe(2);
+      expect(completeInfection).not.toHaveBeenCalled();
     });
   });
 

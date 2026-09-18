@@ -30,7 +30,7 @@ import { addEvasionSurplus } from "./evasion-pool.mjs";
 import { spendReaction }  from "./action-economy.mjs";
 import { _noReactionCard } from "./defense.mjs";
 import { rollIcon }      from "../constants/roll-icons.mjs";
-import { postTestCard }  from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { SKILL_RANKS }   from "../constants/characteristics.mjs";
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
@@ -88,6 +88,12 @@ function valOf(html) {
   return sel => { const v = html.find(sel).val(); return v === undefined ? null : v; };
 }
 
+/** Адаптер `checked(selector)` — независимые галочки Вида теста (стр. 25-26,
+ *  wdbc-y9i8), .val() чекбокса даёт статичный "on", не текущее состояние. */
+function checkedOf(html) {
+  return sel => !!html.find(sel).prop("checked");
+}
+
 /**
  * Полный конвейер Вида теста для верховых тестов, куда его раскатали (Поворот,
  * Занос, Ландшафт, Седло, Ремонт байка). Бросок + Комбинированный/Расширенный/
@@ -99,7 +105,7 @@ async function rollWithKind(actor, baseEff, tk, ctx) {
   const reroll = tk.reroll || null;
   const { roll, rv, rerollNote } = await rollD100WithReroll(reroll);
   const outcome = await resolveKindOutcome(actor, {
-    kind: tk.kind, baseEff: baseEff + tk.difficulty, rv,
+    baseEff: baseEff + tk.difficulty, rv,
     combined: tk.combined, extended: tk.extended, opposed: tk.opposed, ctx
   });
   return { roll, rv, rerollNote, outcome };
@@ -172,7 +178,7 @@ export async function showTurnDialog(rider) {
           ${control.label}: <b>${control.value}</b>${control.combined ? " — Навыком не владеет, тест комбинированный" : ""}.
           При неудаче скакун поворачивает только на ${turns.fallbackAngle}°, а всадник проходит тест A.
         </div>
-        ${testKindHtml({ defaultKind: "base", label: "Поворот" })}
+        ${testKindHtml({ label: "Поворот" })}
         ${diceModeHtml()}
         <div id="auto-outcome-note" class="roll-dlg-note"></div>
       </form>`,
@@ -182,7 +188,7 @@ export async function showTurnDialog(rider) {
           const val = valOf(html);
           const idx = parseInt(html.find("#mt-angle").val()) || 0;
           const extra = parseInt(html.find("#mt-mod").val()) || 0;
-          const tk = readTestKind(val, { label: "Поворот" });
+          const tk = readTestKind(val, checkedOf(html), { label: "Поворот" });
           tk.reroll = mergeReroll(null, readDiceChoice(val));
           await resolveTurn(rider, ctx, turns, idx, extra, tk);
         } },
@@ -229,13 +235,16 @@ async function resolveTurn(rider, ctx, turns, idx, extraMod, tk = { kind: "base"
   await postCard(rider, {
     icon: rollIcon("run"),
     title: `Поворот на ${option.angle}°${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(rider.name)}`,
-    threshold: `<div class="roll-threshold">${control.label} <b>${control.value}</b> ${sgn(option.mod + extraMod)}
-      (${MOUNT_SPEEDS[speedKey].label}${turns.manoeuvreParts.length ? `, ${modLine(turns.manoeuvreParts)}` : ""})${tk.difficulty ? ` ${sgn(tk.difficulty)} (📊 Сложность)` : ""} → Порог <b>${baseEff + (tk.difficulty || 0)}</b></div>`,
+    threshold: rollStatLine({
+      label: control.label, base: control.value,
+      parts: [`${sgn(option.mod + extraMod)} (${MOUNT_SPEEDS[speedKey].label}${turns.manoeuvreParts.length ? `, ${modLine(turns.manoeuvreParts)}` : ""})${tk.difficulty ? ` ${sgn(tk.difficulty)} (📊 Сложность)` : ""}`],
+      threshold: baseEff + (tk.difficulty || 0), rv
+    }),
     lines: [
       outcome.combinedLine,
       control.combined ? `<div class="roll-defense-note">Навыком не владеет — по книге это комбинированный тест с основным действием.</div>` : ""
     ],
-    rv, rerollNote, critLine: outcome.critLine,
+    rerollNote, critLine: outcome.critLine,
     sections: [body, outcome.extendedLine, outcome.opposedLine]
   }, [roll]);
 }
@@ -269,7 +278,7 @@ export async function showSkidDialog(rider) {
       <div class="wh-skill-roll-form">
         <div class="roll-dlg-header"><span>Занос — ${esc(mount.name)}</span></div>
         <div class="roll-dlg-row"><label>${control.label}:</label><span>${control.value} ${sgn(info.mod)} = ${baseEff}</span></div>
-        ${testKindHtml({ defaultKind: "base", label: "Занос" })}
+        ${testKindHtml({ label: "Занос" })}
         ${diceModeHtml()}
         <div id="auto-outcome-note" class="roll-dlg-note"></div>
       </div>`,
@@ -278,7 +287,8 @@ export async function showSkidDialog(rider) {
         action: "roll", icon: "fas fa-dice-d10", label: "Занос!", default: true,
         callback: (event, button) => {
           const val = sel => button.form.querySelector(sel)?.value ?? null;
-          const tk = readTestKind(val, { label: "Занос" });
+          const checked = sel => !!button.form.querySelector(sel)?.checked;
+          const tk = readTestKind(val, checked, { label: "Занос" });
           tk.reroll = mergeReroll(null, readDiceChoice(val));
           return tk;
         }
@@ -303,10 +313,13 @@ export async function showSkidDialog(rider) {
   await postCard(rider, {
     icon: rollIcon("burst", "#ff8a3a"),
     title: `Занос${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(rider.name)}`,
-    threshold: `<div class="roll-threshold">${control.label} <b>${control.value}</b> ${sgn(info.mod)}
-      (Занос ${sgn(MOUNT_SKID.mod)}${info.manoeuvreParts.length ? `, ${modLine(info.manoeuvreParts)}` : ""})${result.difficulty ? ` ${sgn(result.difficulty)} (📊 Сложность)` : ""} → Порог <b>${baseEff + (result.difficulty || 0)}</b></div>`,
+    threshold: rollStatLine({
+      label: control.label, base: control.value,
+      parts: [`${sgn(info.mod)} (Занос ${sgn(MOUNT_SKID.mod)}${info.manoeuvreParts.length ? `, ${modLine(info.manoeuvreParts)}` : ""})${result.difficulty ? ` ${sgn(result.difficulty)} (📊 Сложность)` : ""}`],
+      threshold: baseEff + (result.difficulty || 0), rv
+    }),
     lines: [outcome.combinedLine],
-    rv, rerollNote, critLine: outcome.critLine,
+    rerollNote, critLine: outcome.critLine,
     sections: [
       body, outcome.extendedLine, outcome.opposedLine,
       `<div class="roll-allout-note">Независимо от исхода: −10 на все физические действия до начала следующего Хода.</div>`
@@ -359,7 +372,7 @@ export async function showBladesDialog(rider) {
         <div class="roll-dlg-header"><span>Лезвия — ${esc(mount.name)}</span></div>
         <div class="roll-dlg-row"><label>${control.label} −10:</label><span>${sv.value} − 10 = ${baseEff}</span></div>
         <div class="roll-dlg-row"><label>Использований:</label><span>${used} из ${maxUses} в этот Ход</span></div>
-        ${testKindHtml({ defaultKind: "base", label: "Лезвия" })}
+        ${testKindHtml({ label: "Лезвия" })}
         ${diceModeHtml()}
         <div id="auto-outcome-note" class="roll-dlg-note"></div>
       </div>`,
@@ -368,7 +381,8 @@ export async function showBladesDialog(rider) {
         action: "roll", icon: "fas fa-dice-d10", label: "Лезвия!", default: true,
         callback: (event, button) => {
           const val = sel => button.form.querySelector(sel)?.value ?? null;
-          const tk = readTestKind(val, { label: "Лезвия" });
+          const checked = sel => !!button.form.querySelector(sel)?.checked;
+          const tk = readTestKind(val, checked, { label: "Лезвия" });
           tk.reroll = mergeReroll(null, readDiceChoice(val));
           return tk;
         }
@@ -409,8 +423,12 @@ export async function showBladesDialog(rider) {
   await postCard(rider, {
     icon: rollIcon("blood", "#ff6b6b"),
     title: `Лезвия${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(rider.name)}`,
-    threshold: `<div class="roll-threshold">${control.label} <b>${sv.value}</b> −10${result.difficulty ? ` ${sgn(result.difficulty)} (📊 Сложность)` : ""} → Порог <b>${baseEff + (result.difficulty || 0)}</b></div>`,
-    rv, rerollNote, critLine: outcome.critLine,
+    threshold: rollStatLine({
+      label: control.label, base: sv.value,
+      parts: [`−10${result.difficulty ? ` ${sgn(result.difficulty)} (📊 Сложность)` : ""}`],
+      threshold: baseEff + (result.difficulty || 0), rv
+    }),
+    rerollNote, critLine: outcome.critLine,
     sections: [body, outcome.extendedLine, outcome.opposedLine]
   }, [roll]);
 
@@ -454,7 +472,7 @@ export async function showMountTerrainDialog(rider) {
           Провал: 1 непоглощаемого I(Cr) скакуну и тест ${bike ? "Operate−10" : "Survival+0"} — или выпадение из седла.
           ${trot ? "<br>Талант «Рысь»: двигаясь не более SPD в Ход, скакун игнорирует Трудный Ландшафт вовсе." : ""}
         </div>
-        ${testKindHtml({ defaultKind: "base", label: "Трудный Ландшафт верхом" })}
+        ${testKindHtml({ label: "Трудный Ландшафт верхом" })}
         ${diceModeHtml()}
         <div id="auto-outcome-note" class="roll-dlg-note"></div>
       </form>`,
@@ -465,7 +483,7 @@ export async function showMountTerrainDialog(rider) {
           const skill = parseInt(html.find("#mtt-skill").val()) || 0;
           const zone  = parseInt(html.find("#mtt-zone").val()) || 0;
           const extra = parseInt(html.find("#mtt-mod").val()) || 0;
-          const tk = readTestKind(val, { label: "Трудный Ландшафт верхом" });
+          const tk = readTestKind(val, checkedOf(html), { label: "Трудный Ландшафт верхом" });
           tk.reroll = mergeReroll(null, readDiceChoice(val));
           await resolveMountTerrain(rider, ctx, { skill, zone, extra, terrainMod, tk });
         } },
@@ -512,10 +530,13 @@ async function resolveMountTerrain(rider, ctx, { skill, zone, extra, terrainMod,
   await postCard(rider, {
     icon: rollIcon("burst", "#b0a080"),
     title: `Трудный Ландшафт верхом${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(rider.name)}`,
-    threshold: `<div class="roll-threshold">${control.label} <b>${skill}</b> ${sgn(total)}
-      (верхом ${sgn(terrainMod)}${zone ? `, зона ${sgn(zone)}` : ""}${extra ? `, мод ${sgn(extra)}` : ""})${tk.difficulty ? ` ${sgn(tk.difficulty)} (📊 Сложность)` : ""} → Порог <b>${baseEff + (tk.difficulty || 0)}</b></div>`,
+    threshold: rollStatLine({
+      label: control.label, base: skill,
+      parts: [`${sgn(total)} (верхом ${sgn(terrainMod)}${zone ? `, зона ${sgn(zone)}` : ""}${extra ? `, мод ${sgn(extra)}` : ""})${tk.difficulty ? ` ${sgn(tk.difficulty)} (📊 Сложность)` : ""}`],
+      threshold: baseEff + (tk.difficulty || 0), rv
+    }),
     lines: [outcome.combinedLine],
-    rv, rerollNote, critLine: outcome.critLine,
+    rerollNote, critLine: outcome.critLine,
     sections: [body, outcome.extendedLine, outcome.opposedLine]
   }, [roll]);
 }
@@ -585,7 +606,7 @@ export async function saddleTest(rider, { kind = "agility", mod = 0, reason = ""
         <div class="roll-dlg-header"><span>Удержаться в седле</span></div>
         <div class="roll-dlg-row"><label>${label}:</label><span>${baseEff}</span></div>
         ${reason ? `<div class="roll-dlg-note">${esc(reason)}</div>` : ""}
-        ${testKindHtml({ defaultKind: "base", label: "Удержаться в седле" })}
+        ${testKindHtml({ label: "Удержаться в седле" })}
         ${diceModeHtml()}
         <div id="auto-outcome-note" class="roll-dlg-note"></div>
       </div>`,
@@ -594,7 +615,8 @@ export async function saddleTest(rider, { kind = "agility", mod = 0, reason = ""
         action: "roll", icon: "fas fa-dice-d10", label: "Тест!", default: true,
         callback: (event, button) => {
           const val = sel => button.form.querySelector(sel)?.value ?? null;
-          const t = readTestKind(val, { label: "Удержаться в седле" });
+          const checked = sel => !!button.form.querySelector(sel)?.checked;
+          const t = readTestKind(val, checked, { label: "Удержаться в седле" });
           t.reroll = mergeReroll(null, readDiceChoice(val));
           return t;
         }
@@ -628,13 +650,16 @@ export async function saddleTest(rider, { kind = "agility", mod = 0, reason = ""
   await postCard(rider, {
     icon: rollIcon("warn", "#ffb84d"),
     title: `Удержаться в седле${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(rider.name)}`,
-    threshold: `<div class="roll-threshold">${label} <b>${base}</b> ${sgn(Number(mod) + splice)}
-      ${splice ? `(Сращивание +${splice}) ` : ""}${tk.difficulty ? ` ${sgn(tk.difficulty)} (📊 Сложность)` : ""} → Порог <b>${baseEff + (tk.difficulty || 0)}</b></div>`,
+    threshold: rollStatLine({
+      label, base,
+      parts: [`${sgn(Number(mod) + splice)}${splice ? ` (Сращивание +${splice})` : ""}${tk.difficulty ? ` ${sgn(tk.difficulty)} (📊 Сложность)` : ""}`],
+      threshold: baseEff + (tk.difficulty || 0), rv
+    }),
     lines: [
       outcome.combinedLine,
       reason ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Причина: ${esc(reason)}</div>` : ""
     ],
-    rv, rerollNote, critLine: outcome.critLine,
+    rerollNote, critLine: outcome.critLine,
     sections: [body, outcome.extendedLine, outcome.opposedLine]
   }, [roll]);
 }
@@ -796,10 +821,12 @@ async function resolveMountedDodge(rider, ctx, target, { extraMod = 0, hitsCount
     icon: rollIcon("run"), title: `Уклонение верхом — ${esc(rider.name)}`,
     threshold: `<div class="roll-threshold">Цель попадания: <b>${riderHit ? "всадник" : esc(mount.name)}</b></div>`,
     lines: [
-      `<div class="roll-threshold">Уклонение <b>${dodgeBase}</b> ${sgn(dodgeMod + extraMod)} = <b>${dodgeThreshold}</b>${
-        ctrlThreshold !== null ? `, ${control.label} <b>${control.value}</b> ${sgn(testMod(STAY_MOD, mount))} = <b>${ctrlThreshold}</b>` : ""
-      }${ctrlThreshold !== null ? ` — Комбинированный (ниже оказался ${lower})` : ""} → Порог <b>${threshold}</b>
-      · 1d100: <b>${rv}</b> — ${passed ? "успех" : "провал"}</div>`
+      rollStatLine({
+        base: `Уклонение ${dodgeBase} ${sgn(dodgeMod + extraMod)} = ${dodgeThreshold}${
+          ctrlThreshold !== null ? `, ${control.label} ${control.value} ${sgn(testMod(STAY_MOD, mount))} = ${ctrlThreshold} — Комбинированный (ниже оказался ${lower})` : ""
+        }`,
+        threshold, rv
+      })
     ],
     critLine, outcome,
     sections: [leftoverNote]
@@ -817,13 +844,19 @@ async function resolveMountedDodge(rider, ctx, target, { extraMod = 0, hitsCount
  * Считает, куда пришлось попадание (по броску атаки), и постит карточку —
  * общая логика для ручного диалога и кнопки «Определить» прямо в карточке
  * атаки (wdbc-7as8, бросок уже известен — передаётся, не перепечатывается).
+ *
+ * `unseen` (wdbc-1rno.2) — приходит от кнопки в карточке (data-unseen,
+ * attack-card.mjs), знающей была ли ЭТА атака Незримой; у ручного диалога
+ * (мод.mjs:884, роль вводится руками) такого контекста нет — по умолчанию
+ * false, тот же честный предел, что у остальных источников Незримого без
+ * прямой карточки-источника.
  */
-export async function resolveHitAllocation(rider, rv) {
+export async function resolveHitAllocation(rider, rv, { unseen = false } = {}) {
   const ctx = await mountContext(rider);
   if (!ctx) return;
   const { mount, traits } = ctx;
   rv = parseInt(rv) || 0;
-  const target = hitTarget(rv, mount, { traits, rider });
+  const target = hitTarget(rv, mount, { traits, rider, unseen });
   const toRider = target === "rider";
   // «Бросок атаки» — чужой бросок, разбираемый этой карточкой, а не свой:
   // строка своя, а не общая «Бросок».
@@ -899,7 +932,7 @@ export async function showBikeRepairDialog(bikeActor) {
           Требуется смена работы. Каждый Успех — +${mode.perSuccess} Структуры.
           ${broken ? "<b>Провал: остов годится только на лом — новый байк сделать легче, чем починить этот.</b>" : ""}
         </div>
-        ${testKindHtml({ defaultKind: "base", label: "Ремонт байка" })}
+        ${testKindHtml({ label: "Ремонт байка" })}
         ${diceModeHtml()}
         <div id="auto-outcome-note" class="roll-dlg-note"></div>
       </form>`,
@@ -910,7 +943,7 @@ export async function showBikeRepairDialog(bikeActor) {
           const skill = parseInt(html.find("#br-skill").val()) || 0;
           const parts = parseInt(html.find("#br-parts").val()) || 0;
           const extra = parseInt(html.find("#br-mod").val()) || 0;
-          const tk = readTestKind(val, { label: "Ремонт байка" });
+          const tk = readTestKind(val, checkedOf(html), { label: "Ремонт байка" });
           tk.reroll = mergeReroll(null, readDiceChoice(val));
           await resolveBikeRepair(bikeActor, { skill, parts, extra, mode, broken, tk });
         } },
@@ -963,9 +996,13 @@ async function resolveBikeRepair(bikeActor, { skill, parts, extra, mode, broken,
   await postCard(bikeActor, {
     icon: rollIcon("wrench", "#c9b08a"),
     title: `Ремонт байка${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(bikeActor.name)}`,
-    threshold: `<div class="roll-threshold">Tech-Use <b>${skill}</b> ${sgn(total)} (ремонт ${sgn(mode.mod)}${parts ? `, детали +${parts}` : ""}${extra ? `, мод ${sgn(extra)}` : ""})${tk.difficulty ? ` ${sgn(tk.difficulty)} (📊 Сложность)` : ""} → Порог <b>${baseEff + (tk.difficulty || 0)}</b></div>`,
+    threshold: rollStatLine({
+      label: "Tech-Use", base: skill,
+      parts: [`${sgn(total)} (ремонт ${sgn(mode.mod)}${parts ? `, детали +${parts}` : ""}${extra ? `, мод ${sgn(extra)}` : ""})${tk.difficulty ? ` ${sgn(tk.difficulty)} (📊 Сложность)` : ""}`],
+      threshold: baseEff + (tk.difficulty || 0), rv
+    }),
     lines: [outcome.combinedLine],
-    rv, rerollNote, critLine: outcome.critLine,
+    rerollNote, critLine: outcome.critLine,
     sections: [body, outcome.extendedLine, outcome.opposedLine]
   }, [roll]);
 }

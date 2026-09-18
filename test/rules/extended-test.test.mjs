@@ -4,7 +4,7 @@
 // хранение — актор-флаг, дело module/sheets/actor-sheet.mjs).
 
 import { describe, it, expect } from "vitest";
-import { extendedTestKey, applyGain } from "../../module/rules/extended-test.mjs";
+import { extendedTestKey, applyGain, extendedTestRows } from "../../module/rules/extended-test.mjs";
 
 describe("extendedTestKey", () => {
   it("пробелы и знаки препинания схлопываются в подчёркивание", () => {
@@ -41,5 +41,39 @@ describe("applyGain", () => {
 
   it("отрицательный gain (Критический Провал по решению ГМа) не уводит банк ниже нуля", () => {
     expect(applyGain(5, -15, 30)).toEqual({ accumulated: 0, done: false });
+  });
+});
+
+// extendedTestRows — панель «Расширенные тесты» на вкладке ПОКАЗАТЕЛИ
+// (wdbc-nysl): чистое преобразование flags.warhammer-dbc.extendedTests в
+// список для отображения, без Foundry.
+describe("extendedTestRows", () => {
+  it("пустой/отсутствующий объект флагов — пустой список", () => {
+    expect(extendedTestRows(null)).toEqual([]);
+    expect(extendedTestRows({})).toEqual([]);
+  });
+
+  it("читает label/testKey и считает done по цели", () => {
+    const rows = extendedTestRows({
+      вязь_зарока: { accumulated: 5, target: 30, label: "Вязь Зарока", testKey: "skill:scholLore" },
+      готово: { accumulated: 10, target: 10, label: "Готово", testKey: "char:wp" }
+    });
+    expect(rows).toEqual([
+      { key: "вязь_зарока", label: "Вязь Зарока", accumulated: 5, target: 30, testKey: "skill:scholLore", done: false },
+      { key: "готово", label: "Готово", accumulated: 10, target: 10, testKey: "char:wp", done: true }
+    ]);
+  });
+
+  it("без сохранённого label подставляет ключ", () => {
+    const rows = extendedTestRows({ старый: { accumulated: 2, target: 10 } });
+    expect(rows).toEqual([{ key: "старый", label: "старый", accumulated: 2, target: 10, testKey: null, done: false }]);
+  });
+
+  it("сортирует по названию (алфавит)", () => {
+    const rows = extendedTestRows({
+      б: { label: "Бета", accumulated: 0, target: 1 },
+      а: { label: "Альфа", accumulated: 0, target: 1 }
+    });
+    expect(rows.map(r => r.label)).toEqual(["Альфа", "Бета"]);
   });
 });

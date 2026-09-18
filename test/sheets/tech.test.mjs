@@ -87,6 +87,29 @@ describe("activateTechMiracle", () => {
     expect(captured.rolls).toEqual([]);
   });
 
+  // Мононить «Поцелуй Мимика» (Volunteer Actor/Доброволец Актёр, wdbc-ux8a):
+  // доп. блок техночудес — тот же приём, что module/sheets/tabs/psychic.mjs
+  // у психосил.
+  it("mimicWireBlocksPowers — не активирует Техночудо, предупреждает", async () => {
+    const a = actor({ system: { conditions: { mimicWire: true, mimicWireBlocksPowers: true } } });
+    const miracle = item({ system: { cognitionCost: 0, energyCost: 0 } });
+
+    await activateTechMiracle(a, miracle);
+
+    expect(a.updates).toEqual([]);
+    expect(captured.chat).toEqual([]);
+    expect(captured.warnings.some(w => w.includes("мононить блокирует техночудеса"))).toBe(true);
+  });
+
+  it("mimicWire стоит, но без mimicWireBlocksPowers — Техночудо доступно", async () => {
+    const a = actor({ system: { conditions: { mimicWire: true, mimicWireBlocksPowers: false }, cognition: { value: 1, max: 6, regen: 2 } } });
+    const miracle = item({ system: { cognitionCost: 0, energyCost: 0, miracleType: "slavoslovie", compiled: false, rating: 1 } });
+
+    await activateTechMiracle(a, miracle);
+
+    expect(captured.chat[0].content).toContain("Компиляция Славословия");
+  });
+
   it("некомпилированное Славословие пишет карточку компиляции без броска", async () => {
     const miracle = item({ system: { miracleType: "slavoslovie", compiled: false, rating: 3 } });
 
@@ -145,7 +168,7 @@ describe("activateTechMiracle", () => {
       "system.energy.value": 2
     });
     expect(captured.rolls).toEqual(["1d100", "1d5"]);
-    expect(captured.chat[0].content).toContain("Порог: <b>50</b>");
+    expect(captured.chat[0].content).toContain("<label>Порог</label><b>50</b>");
     expect(captured.chat[0].content).toContain("Активировано");
     expect(captured.chat[0].content).toContain("Энергия");
   });
@@ -225,7 +248,7 @@ describe("activateTechMiracle", () => {
     await activateTechMiracle(a, miracle);
 
     expect(captured.chat[0].content).toContain("Железо");
-    expect(captured.chat[0].content).toContain("Порог: <b>60</b>");
+    expect(captured.chat[0].content).toContain("<label>Порог</label><b>60</b>");
     expect(captured.chat[0].content).toContain("Активировано");
   });
 });

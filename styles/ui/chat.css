@@ -550,7 +550,7 @@
   padding-left: 9px; border-left: 3px solid #4dffa6; margin-bottom: 6px;
   text-shadow: 0 0 6px rgba(255,138,138,0.35);
 }
-/* Статлайн: Порог / Режим / Бросок */
+/* Статлайн: Бросок / Режим / Порог */
 .wh-roll-result .roll-statline { display: flex; gap: 6px; margin: 6px 0; }
 .wh-roll-result .roll-stat {
   flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column;
@@ -558,6 +558,7 @@
   padding: 4px 6px; background: rgba(15,58,38,0.5);
   border: 1px solid #1f6f4a; border-radius: 3px;
 }
+.wh-roll-result .roll-stat[title] { cursor: help; }
 .wh-roll-result .roll-stat label {
   font-size: 0.62em; letter-spacing: 0.12em; text-transform: uppercase;
   color: #7fe0a8 !important; margin-bottom: 2px;

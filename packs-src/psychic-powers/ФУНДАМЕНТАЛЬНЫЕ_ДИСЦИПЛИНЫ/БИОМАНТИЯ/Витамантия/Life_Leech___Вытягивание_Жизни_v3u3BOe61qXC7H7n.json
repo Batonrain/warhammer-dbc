@@ -26,6 +26,9 @@
     "weaponProps": [
       {
         "key": "warpWeapon"
+      },
+      {
+        "key": "unseen"
       }
     ],
     "charDamageStat": "",

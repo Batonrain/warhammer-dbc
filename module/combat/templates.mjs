@@ -62,18 +62,33 @@ export function sprayConeShape(meters, pxPerMeter, angleDeg = 30) {
 /**
  * Разместить разовую зону поражения мышью (core-плейсмент Region-документа,
  * не сохраняется в сцену) и вернуть токены, чьи центры внутри неё.
+ *
+ * `elevationTop` (wdbc-x1nz.2, вопрос пользователя «задевает ли шаблон
+ * гранаты летящего НАД этой точкой?») — без него RegionDocument по умолчанию
+ * не ограничен по высоте (`elevation.bottom/top` уходят в ±Infinity,
+ * подтверждено по исходнику Foundry client/documents/region.mjs), поэтому
+ * ЛЮБОЙ токен на любой высоте полёта засчитывался бы попавшим — граната,
+ * взорвавшаяся у земли, доставала бы персонажа на Высокой высоте (elevation
+ * 25) так же, как стоящего рядом. Приближение «сфера радиусом с само
+ * Взрывное» (bottom:0, top:radiusM) книгой не описано текстом — это чтение,
+ * а не буква правила, но без него высота полёта не имела бы значения для
+ * шаблонов вовсе. Спрей (конус) без bottom/top не трогаем — это горизонтальная
+ * струя, не взрыв, вертикальный охват для него книга не подразумевает.
  * @param {object} shape         Данные фигуры (blastCircleShape/sprayConeShape).
  * @param {string} [name]
+ * @param {number|null} [elevationTop]  Радиус зоны В МЕТРАХ для вертикального
+ *   охвата (bottom:0, top:elevationTop) — null/0 оставляет высоту неограниченной.
  * @returns {Promise<{tokens: Token[], region: RegionDocument}|null>}  null — размещение отменено (ПКМ).
  */
-export async function placeAttackTemplate(shape, name = "Зона поражения") {
+export async function placeAttackTemplate(shape, name = "Зона поражения", elevationTop = null) {
   if (!canvas.ready) throw new Error("Нет активной сцены");
   const region = await canvas.regions.placeRegion({
     name,
     shapes: [shape],
     color: game.user.color.toString(),
     highlightMode: "coverage",
-    displayMeasurements: true
+    displayMeasurements: true,
+    ...(Number(elevationTop) > 0 ? { elevation: { bottom: 0, top: Number(elevationTop) } } : {})
   }, { create: false });
   if (!region) return null;
   // region отдаём наружу тоже — эфемерный (create:false), в canvas.scene.regions

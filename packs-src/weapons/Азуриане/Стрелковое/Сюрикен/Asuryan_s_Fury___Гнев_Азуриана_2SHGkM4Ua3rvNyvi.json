@@ -3,6 +3,7 @@
   "type": "weapon",
   "folder": "3dL75Tuvex2X0733",
   "system": {
+    "itemSize": "3x1",
     "description": "",
     "notes": "",
     "weaponClass": "basic",

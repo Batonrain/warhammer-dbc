@@ -26,6 +26,11 @@
     "damage": "",
     "damageType": "energy",
     "penetration": 0,
+    "weaponProps": [
+      {
+        "key": "unseen"
+      }
+    ],
     "effect": "[Железо: Ferric Lure Implants, Maglev Coils · Цена: 2К · Процесс: 2 (У) · Тип: Незримое] Треб.: I 50, Tech-Use+20, Ferric Chains. Пара магнитных «рук» (Multiple Arms +2) для действий (вкл. оружие) в дальности, но только с ≥наполовину металлическими предметами. Используют I вместо WS/BS/S/A; невидимы для незасекающих Ноосферу/магнетизм.",
     "effects": {
       "charBonusStat": "",

@@ -16,6 +16,7 @@ import { meleeContactCount, hasHighGround } from "../../combat/tactical-map.mjs"
 import { rangeBandKey }           from "../../rules/tactical-map.mjs";
 import { getTerrainInfoForToken } from "../../regions/difficult-terrain.mjs";
 import { actorHasAspectPath }     from "../../constants/aeldari-paths.mjs";
+import { hasBlackEyesDarknessImmunity } from "../../rules/black-eyes.mjs";
 /**
  * @param {object} v состояние броска: оружие, токены, замеренная дистанция
  * @returns {{commonMods: object[], specificMods: object[], charSwapWhy: string[], bandKey: string|null}}
@@ -42,9 +43,12 @@ export function situationalMods(v) {
 
   const commonMods = [
     { label: "Усталость",     value: -10, autoCheck: hasFatigue },
-    { label: "Слабый свет",   value: -10 },
-    { label: "Дым / туман",   value: isMelee ? -10 : -20 },
-    { label: "Тьма",          value: isMelee ? -20 : -30 },
+    // visionPenalty (wdbc-1rno.1, Чёрные Глаза/Black Eyes, Cor 60+) — три
+    // галочки ниже гасятся у АТАКУЮЩЕГО (не у цели, поэтому не immuneFlag —
+    // тот гасит только возможности ЦЕЛИ, см. цикл ниже).
+    { label: "Слабый свет",   value: -10, visionPenalty: true },
+    { label: "Дым / туман",   value: isMelee ? -10 : -20, visionPenalty: true },
+    { label: "Тьма",          value: isMelee ? -20 : -30, visionPenalty: true },
     { label: "Ослеплён",      value: isMelee ? -30 : -99, autofail: !isMelee, autoCheck: isBlinded },
     // Потеря глаз (частичная): −10 на BS и «тесты определения расстояний»
     // (последнее не автоматизировано — нет отдельного типа теста «на глаз»)
@@ -79,6 +83,17 @@ export function situationalMods(v) {
     m.value  = 0;
     m.immune = true;
     m.note   = `${attackCtx.targetActor.name}: ${why[0]}`;
+  }
+  // Чёрные Глаза / Black Eyes (wdbc-1rno.1, rules/black-eyes.mjs): Cor 60+ —
+  // АТАКУЮЩИЙ видит сквозь дым/тьму/слабый свет, штрафы гасятся у него
+  // самого (в отличие от immuneFlag выше, который гасит возможности ЦЕЛИ).
+  if (hasBlackEyesDarknessImmunity(actor)) {
+    for (const m of commonMods) {
+      if (!m.visionPenalty) continue;
+      m.value  = 0;
+      m.immune = true;
+      m.note   = "Чёрные Глаза: видит сквозь тьму/дым/слабый свет (Cor 60+)";
+    }
   }
   // Aspect (wdbc-8b5/wdbc-28ld, стр. 168): без соответствующего Пути — −30 на
   // тесты использования. wProps хранит текст рейтинга (не число, см. aspect
@@ -129,6 +144,16 @@ export function situationalMods(v) {
   const bandNote = k => (bandKey === k ? `по измеренной дистанции ${measured.edgeM} м` : undefined);
   // «Положение выше» (+10): сравнение elevation токенов атакующего и цели.
   const highGround = (isMelee && measured) ? hasHighGround(attackerToken, targetToken) : null;
+  // Полёт (стр. 30, wdbc-x1nz.2): высота ЦЕЛИ решает разрешён ли контакт —
+  // Низкая недосягаема рукопашной (но не стрелковым, там штраф −10 вместо
+  // блока), Высокая недосягаема стрелковым вовсе без Зенитного, рукопашной —
+  // всегда. Атакующий на ТОЙ ЖЕ высоте снимает оба правила целиком (бой
+  // на равной высоте — книга не даёт для него ни штрафа, ни блока).
+  const targetAltitude   = attackCtx.targetActor?.system?.movement?.altitude;
+  const attackerAltitude = actor?.system?.movement?.altitude;
+  const sameAltitude = attackerAltitude != null && attackerAltitude === targetAltitude;
+  const targetAtLow  = targetAltitude === "low"  && !sameAltitude;
+  const targetAtHigh = targetAltitude === "high" && !sameAltitude;
   // «Трудный ландшафт» в рукопашной: зона Трудного Ландшафта под атакующим.
   // Зона «очень трудный» не различает — автоотмечаем обычный (−10), сильнее руками.
   const meleeTerrain = (isMelee && attackerToken)
@@ -143,6 +168,13 @@ export function situationalMods(v) {
       note: outnumberCount == null ? undefined : `в контакте с целью: ${outnumberCount}` },
     { label: "Положение выше",         value:  10, autoCheck: highGround === true,
       note: highGround === true ? "elevation токена выше цели" : undefined },
+    // Полёт (стр. 30, wdbc-x1nz.2): Низкая/Высокая — «вне досягаемости
+    // рукопашных атак наземных персонажей» — не штраф, а полный блок.
+    // Приземная сюда не попадает (targetAtLow/targetAtHigh уже false) —
+    // книга прямо говорит «без всяких ограничений».
+    { label: "Цель в полёте (Низкая/Высокая) — рукопашная недосягаема",
+      value: 0, autofail: true, autoCheck: targetAtLow || targetAtHigh,
+      note: (targetAtLow || targetAtHigh) ? `цель на высоте «${targetAltitude}» (стр. 30)` : undefined },
     { label: "Более длинное оружие",   value:   5 },
     ...(wp.duelingParry ? [{
       label: "Дуэлянтское: бой 1-на-1 (никто не мешает)", value: 5,
@@ -186,9 +218,11 @@ export function situationalMods(v) {
     // принципе нельзя без Зенитного (не просто штраф, отсюда autofail, как у
     // «Ослеплён» выше), Зенитное снимает оба штрафа целиком.
     { label: "Низкая высота цели",  value: wp.antiAir ? 0 : -10, immune: wp.antiAir,
-      note: wp.antiAir ? "снято: Зенитное" : "цель на Низкой высоте (полёт)" },
+      autoCheck: targetAtLow,
+      note: wp.antiAir ? "снято: Зенитное" : (targetAtLow ? "цель на Низкой высоте (полёт)" : undefined) },
     { label: "Высокая высота цели", value: 0, autofail: !wp.antiAir, immune: wp.antiAir,
-      note: wp.antiAir ? "снято: Зенитное" : "без Зенитного попасть в принципе нельзя" },
+      autoCheck: targetAtHigh,
+      note: wp.antiAir ? "снято: Зенитное" : (targetAtHigh ? "без Зенитного попасть в принципе нельзя" : undefined) },
     // Тяжёлое оружие (стр. 40): –30 без Закрепления, ещё –10 если стрелок
     // Двигался в этот Ход — Гиро-Стабилизированное снижает первое до –10 и
     // полностью снимает второе (стр. 168).

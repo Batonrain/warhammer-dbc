@@ -11,7 +11,7 @@
 // формулировок книги, а не удобных для регэкспа искусственных примеров.
 
 import "../support/foundry-stub.mjs";
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import {
   parseCritEffectPills, applyCritEffectPill, critPillsHtml,
@@ -68,15 +68,16 @@ describe("parseCritEffectPills — реальные строки крит-таб
   });
 
   // impact.arm[8]
-  it("«Оглушена на 1d10 Раундов, получает 1d5 Усталости и Кровотечение» — три пилюли", () => {
+  it("«Оглушена на 1d10 Раундов, получает 1d5 Усталости и Кровотечение. Цель теряет руку.» — четыре пилюли", () => {
     const text = "Удар отрывает руку от тела, поливая кровью всё вокруг. Цель должна пройти тест на T+0, или умереть от шока. Цель Оглушена на 1d10 Раундов, получает 1d5 Усталости и Кровотечение. Цель теряет руку.";
     const pills = parseCritEffectPills(text);
     expect(pills).toEqual(expect.arrayContaining([
       { key: "stunned", formula: "1d10" },
       { key: "fatigued", formula: "1d5" },
-      { key: "bleeding", formula: null }
+      { key: "bleeding", formula: null },
+      { key: "lostArms", formula: "1" }
     ]));
-    expect(pills).toHaveLength(3);
+    expect(pills).toHaveLength(4);
   });
 
   // rending.head[4] — «Оглушая» (глагольная форма, не «Оглушена»)
@@ -161,6 +162,89 @@ describe("parseCritEffectPills — реальные строки крит-таб
   });
 });
 
+// wdbc-1rno.6 (стр. 30-31): «Потеря конечностей всегда приводит к
+// Кровотечению» — каждая пилюля потери части тела тянет за собой
+// Кровотечение, даже если сама строка книги это слово не пишет.
+describe("parseCritEffectPills — Потеря частей тела (wdbc-1rno.6)", () => {
+  // impact.arm[6]
+  it("«или лишиться ладони» — lostHands + Кровотечение", () => {
+    const text = "Удар приходится на кисть, ломая 1d5 пальцев. Цель получает 1 Усталость и должна пройти тест на T+0, или лишиться ладони.";
+    const pills = parseCritEffectPills(text);
+    expect(pills).toEqual(expect.arrayContaining([
+      { key: "lostHands", formula: "1" },
+      { key: "bleeding", formula: null }
+    ]));
+  });
+
+  // rending.arm[6]
+  it("«или лишиться кисти» — тот же lostHands (синоним «кисть»/«ладонь»)", () => {
+    const text = "Удар приходится на кисть и отсекает 1d5 пальцев. Цель Оглушена на 1 Раунд и должна пройти тест на T+0, или лишиться кисти.";
+    const pills = parseCritEffectPills(text);
+    expect(pills).toEqual(expect.arrayContaining([
+      { key: "lostHands", formula: "1" },
+      { key: "bleeding", formula: null }
+    ]));
+  });
+
+  // rending.leg[6]
+  it("«или потерять стопу» — lostFeet + Кровотечение", () => {
+    const text = "Несколько костей в стопе цели перемалывает ударом. Цель должна пройти тест на T+0, или потерять стопу. Её SPD уменьшена вдвое (окр. ▼) до получения медпомощи, и она Оглушена на 2 Раунда.";
+    const pills = parseCritEffectPills(text);
+    expect(pills).toEqual(expect.arrayContaining([
+      { key: "lostFeet", formula: "1" },
+      { key: "bleeding", formula: null }
+    ]));
+  });
+
+  // fire.leg[6]
+  it("«или потерять ногу» — lostLegs, не lostFeet", () => {
+    const text = "Нога цели получает жуткий ожог. Цель должна пройти тест на T+0, или потерять ногу, пока не получит медицинского ухода. Цель получает 2 Усталости.";
+    const pills = parseCritEffectPills(text);
+    expect(pills).toEqual(expect.arrayContaining([
+      { key: "lostLegs", formula: "1" },
+      { key: "bleeding", formula: null }
+    ]));
+  });
+
+  // rending.head[4]
+  it("«или потерять глаз» — lostEyes + Кровотечение", () => {
+    const text = "Порез задевает глаз, причиняя 1d5 Усталости и Оглушая цель на 1 Раунд. Цель должна пройти тест на T+20, или потерять глаз.";
+    const pills = parseCritEffectPills(text);
+    expect(pills).toEqual(expect.arrayContaining([
+      { key: "lostEyes", formula: "1" },
+      { key: "bleeding", formula: null }
+    ]));
+  });
+
+  // impact.arm[9] — безусловная констатация факта, не тест
+  it("«Цель теряет руку.» — lostArms, без всякого теста", () => {
+    const text = "Удар отрывает руку от тела, поливая кровью всё вокруг. Цель должна пройти тест на T+0, или умереть от шока. Цель Оглушена на 1d10 Раундов, получает 1d5 Усталости и Кровотечение. Цель теряет руку.";
+    const pills = parseCritEffectPills(text);
+    expect(pills).toEqual(expect.arrayContaining([{ key: "lostArms", formula: "1" }]));
+  });
+
+  // impact.leg[8]
+  it("«Цель теряет ногу.» — lostLegs", () => {
+    const text = "Удар отрывает ногу до колена, вызывая фонтан крови. Цель должна пройти тест на T+0, или умереть от шока. Цель Оглушена на 1d10 Раундов, получает 1d5 Усталости и Кровотечение. Цель теряет ногу.";
+    const pills = parseCritEffectPills(text);
+    expect(pills).toEqual(expect.arrayContaining([{ key: "lostLegs", formula: "1" }]));
+  });
+
+  // rending.head[7] — «Цель теряет зрение» — полная слепота, не то же самое, что lostEyes
+  it("«Цель теряет зрение.» — перманентное Ослепление, НЕ lostEyes", () => {
+    const text = "Удар отсекает большую часть лица цели. Цель теряет зрение, ей теперь будет трудно разговаривать, не булькая слюной. Цель получает 1d5 Усталости и Кровотечение. Оставляет Шрам.";
+    const pills = parseCritEffectPills(text);
+    expect(pills).toEqual(expect.arrayContaining([{ key: "blinded", formula: null, permanent: true }]));
+    expect(pills.some(p => p.key === "lostEyes")).toBe(false);
+  });
+
+  it("одна и та же потеря конечности не даёт двух пилюль Кровотечения (дедуп)", () => {
+    const text = "Цель должна пройти тест на T+0, или лишиться ладони. Кровотечение.";
+    const pills = parseCritEffectPills(text).filter(p => p.key === "bleeding");
+    expect(pills).toHaveLength(1);
+  });
+});
+
 describe("parseCritEffectPills — таблица Шока (fear-tables.mjs)", () => {
   it("«Теряет сознание на 1d5 Раундов» → пилюля Без сознания", () => {
     const row = SHOCK_TABLE.find(r => r.text.includes("Теряет сознание"));
@@ -218,6 +302,60 @@ describe("applyCritEffectPill — клик применяет состояние
     expect(actor.system.conditions.unconscious).toBe(true);
     expect(captured.chat[0].content).toContain("без автотика");
   });
+
+  // wdbc-3pv5: «Загорается» крит-таблицы не даёт своего числа урона —
+  // sourceDamage (непоглощённый урон САМОГО попадания, передан кнопкой)
+  // кладётся в burningSourceDamage той же записью, что накладывает Горение,
+  // Cooler/Морозное Сердце сравнивают его с книжным порогом.
+  it("Горение с sourceDamage — burningSourceDamage записан вместе с флагом", async () => {
+    const actor = makeActor();
+    await applyCritEffectPill(actor, { key: "burning", formula: null, sourceDamage: 7 });
+    expect(actor.system.conditions.burning).toBe(true);
+    expect(actor.system.conditions.burningSourceDamage).toBe(7);
+  });
+
+  it("Горение без sourceDamage (напр. старый вызов) — флаг ставится, burningSourceDamage не трогается", async () => {
+    const actor = makeActor();
+    await applyCritEffectPill(actor, { key: "burning", formula: null });
+    expect(actor.system.conditions.burning).toBe(true);
+    expect(actor.system.conditions.burningSourceDamage).toBeUndefined();
+  });
+
+  it("другое Состояние с sourceDamage — поле игнорируется (только у burning)", async () => {
+    const actor = makeActor();
+    await applyCritEffectPill(actor, { key: "bleeding", formula: null, sourceDamage: 7 });
+    expect(actor.system.conditions.bleeding).toBe(true);
+    expect(actor.system.conditions.burningSourceDamage).toBeUndefined();
+  });
+
+  // wdbc-1rno.6: клик по пилюле потери части тела заводит таймер Гангрены
+  // обрубка (T.b дней) — в отличие от Мутации Loss of Limb (wdbc-1rno.6.1,
+  // не через эту функцию), крит-эффект ЗАВОДИТ его всегда.
+  describe("потеря части тела заводит таймер Гангрены (wdbc-1rno.6)", () => {
+    beforeEach(() => { globalThis.game.time = { worldTime: 1000 }; });
+    afterEach(() => { globalThis.game.time = undefined; });
+
+    it("lostHands +1 и таймер = worldTime + T.b дней", async () => {
+      const actor = makeActor({ characteristics: { t: { bonus: 3 } } });
+      await applyCritEffectPill(actor, { key: "lostHands", formula: "1" });
+      expect(actor.system.conditions.lostHands).toBe(true);
+      expect(actor.system.conditions.lostHandsCount).toBe(1);
+      expect(actor.system.conditions.lostHandsGangreneAt).toBe(1000 + 3 * 86400);
+    });
+
+    it("T.b 0 — таймер сразу на текущий worldTime", async () => {
+      const actor = makeActor({ characteristics: { t: { bonus: 0 } } });
+      await applyCritEffectPill(actor, { key: "lostLegs", formula: "1" });
+      expect(actor.system.conditions.lostLegsGangreneAt).toBe(1000);
+    });
+
+    it("Состояние без счётчика (напр. Оглушение) — таймер не заводится", async () => {
+      captured.dice = [4];
+      const actor = makeActor();
+      await applyCritEffectPill(actor, { key: "stunned", formula: "1d10" });
+      expect(actor.system.conditions.lostHandsGangreneAt).toBeUndefined();
+    });
+  });
 });
 
 describe("critPillsHtml — рендер кнопок", () => {
@@ -232,6 +370,22 @@ describe("critPillsHtml — рендер кнопок", () => {
     expect(html).toContain('data-actor-uuid="Actor.stub"');
     expect(html).toContain('data-cond-key="stunned"');
     expect(html).toContain('data-formula="1d10"');
+  });
+
+  // wdbc-3pv5
+  it("пилюля «burning» с hitNetDamage несёт data-source-damage", () => {
+    const html = critPillsHtml([{ key: "burning", formula: null }], "Actor.stub", 6);
+    expect(html).toContain('data-source-damage="6"');
+  });
+
+  it("другая пилюля с тем же hitNetDamage — data-source-damage не ставится", () => {
+    const html = critPillsHtml([{ key: "stunned", formula: "1d10" }], "Actor.stub", 6);
+    expect(html).not.toContain("data-source-damage");
+  });
+
+  it("пилюля «burning» без hitNetDamage — data-source-damage не ставится", () => {
+    const html = critPillsHtml([{ key: "burning", formula: null }], "Actor.stub");
+    expect(html).not.toContain("data-source-damage");
   });
 });
 

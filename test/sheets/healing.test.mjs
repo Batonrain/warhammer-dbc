@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
-import { applyHealing, comaWakeRemaining } from "../../module/sheets/tabs/healing.mjs";
+import { applyHealing, comaWakeRemaining, resolveBionicTest } from "../../module/sheets/tabs/healing.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 
 const DEFAULT_SOURCES = getRuleSources();
@@ -167,6 +167,103 @@ describe("applyHealing: reattach (Пришивание конечности, Med
     expect(patient.system.conditions.lostArmsCount).toBe(1);
     expect(patient.updates.length).toBe(0);
     expect(captured.chat[0].content).toContain("умирает");
+  });
+});
+
+// wdbc-1rno.6 (стр. 30-31): «обрубок нуждается в мед. обработке, иначе через
+// T.b дней с шансом 80% Гангрена» — не привязано к Ампутации, применимо к
+// любому текущему lostX (напр. от крит-эффекта, module/combat/limb-loss.mjs).
+describe("applyHealing: stumpCare (Обработка обрубка, Medicae−10)", () => {
+  it("нет обрубка этой части тела — предупреждение, без обновлений", async () => {
+    const medic = person();
+    const patient = person();
+
+    await applyHealing(medic, patient, { mode: "stumpCare", mod: 0, limb: "hand" });
+
+    expect(captured.warnings.length).toBe(1);
+    expect(patient.updates.length).toBe(0);
+  });
+
+  it("успех — снимает запланированный таймер Гангрены", async () => {
+    const medic = person({ medicae: 40 });
+    const patient = person();
+    patient.system.conditions.lostHands = true;
+    patient.system.conditions.lostHandsCount = 1;
+    patient.system.conditions.lostHandsGangreneAt = 500000;
+    captured.nextRoll = 10; // eff 40-10=30, успех
+
+    await applyHealing(medic, patient, { mode: "stumpCare", mod: 0, limb: "hand" });
+
+    expect(patient.system.conditions.lostHandsGangreneAt).toBe(0);
+    expect(captured.chat[0].content).toContain("угроза Гангрены снята");
+  });
+
+  it("провал — таймер не трогается", async () => {
+    const medic = person({ medicae: 40 });
+    const patient = person();
+    patient.system.conditions.lostLegs = true;
+    patient.system.conditions.lostLegsCount = 1;
+    patient.system.conditions.lostLegsGangreneAt = 500000;
+    captured.nextRoll = 90; // eff 30, провал
+
+    await applyHealing(medic, patient, { mode: "stumpCare", mod: 0, limb: "leg" });
+
+    expect(patient.system.conditions.lostLegsGangreneAt).toBe(500000);
+    expect(captured.chat[0].content).toContain("остаётся");
+  });
+});
+
+// wdbc-1rno.6: успешная бионика раньше молча не восстанавливала lostX вовсе.
+describe("resolveBionicTest: установка бионики (Medicae−30)", () => {
+  it("успех, выбрана часть тела с реальной потерей — снимает lostX и таймер Гангрены", async () => {
+    const medic = person({ medicae: 40 });
+    const patient = person();
+    patient.system.conditions.lostEyes = true;
+    patient.system.conditions.lostEyesCount = 1;
+    patient.system.conditions.lostEyesGangreneAt = 500000;
+    captured.dice = [10, 6]; // тест (eff 40-30=10, успех), 1d10 суток адаптации
+
+    await resolveBionicTest(medic, patient, { mod: 0, limb: "eye" });
+
+    expect(patient.system.conditions.lostEyesCount).toBe(0);
+    expect(patient.system.conditions.lostEyes).toBe(false);
+    expect(patient.system.conditions.lostEyesGangreneAt).toBe(0);
+    expect(captured.chat[0].content).toContain("восстановлена бионикой");
+  });
+
+  it("успех, часть тела не выбрана — обычный имплант, Состояния не трогает", async () => {
+    const medic = person({ medicae: 40 });
+    const patient = person();
+    captured.dice = [10, 6];
+
+    await resolveBionicTest(medic, patient, { mod: 0, limb: "" });
+
+    expect(patient.updates.length).toBe(0);
+    expect(captured.chat[0].content).not.toContain("восстановлена");
+  });
+
+  it("успех, выбрана часть тела, но она не потеряна — предупреждение в карточке, Состояния не трогает", async () => {
+    const medic = person({ medicae: 40 });
+    const patient = person();
+    captured.dice = [10, 6];
+
+    await resolveBionicTest(medic, patient, { mod: 0, limb: "hand" });
+
+    expect(patient.updates.length).toBe(0);
+    expect(captured.chat[0].content).toContain("нет утраченной");
+  });
+
+  it("провал — непогл. урон + Калечение, как раньше (без изменений)", async () => {
+    const medic = person({ medicae: 40 });
+    const patient = person();
+    patient.system.conditions.lostArms = true;
+    patient.system.conditions.lostArmsCount = 1;
+    captured.dice = [90, 7]; // тест провал, 1d10 урона = 7
+
+    await resolveBionicTest(medic, patient, { mod: 0, limb: "arm" });
+
+    expect(patient.system.conditions.lostArmsCount).toBe(1); // не тронуто
+    expect(patient.system.conditions.crippling).toBe(true);
   });
 });
 

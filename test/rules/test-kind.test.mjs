@@ -4,14 +4,7 @@
 // Кубика (Переброс/Преимущество/Помеха), без Foundry.
 
 import { describe, it, expect } from "vitest";
-import { TEST_KINDS, combinedThreshold, resolveOpposed, diceModeFor } from "../../module/rules/test-kind.mjs";
-
-describe("TEST_KINDS", () => {
-  it("пять видов теста с русскими подписями", () => {
-    expect(Object.keys(TEST_KINDS)).toEqual(["base", "opposed", "opposedSafe", "combined", "extended"]);
-    expect(TEST_KINDS.base).toBe("Базовый");
-  });
-});
+import { combinedThreshold, resolveOpposed, diceModeFor } from "../../module/rules/test-kind.mjs";
 
 describe("combinedThreshold", () => {
   it("берёт наименьший из двух Пределов", () => {
@@ -45,6 +38,35 @@ describe("resolveOpposed", () => {
       { winner: "mine", margin: 2 }]
   ])("%s", (_title, mine, theirs, opts, expected) => {
     expect(resolveOpposed(mine, theirs, opts)).toEqual(expected);
+  });
+
+  // Сверхъестественная Характеристика (стр. 26, wdbc-y9i8) — пример 2 книги:
+  // Трорзак (5 Успехов, без Трейта) vs Амелия (3 Успеха, Unnatural W (2)).
+  // По сырым Успехам Трорзак впереди — но раз проигрывающая (по Успехам)
+  // сторона владеет Трейтом, а победившая — нет, исход гасится до ничьей по
+  // Пределу, независимо от того, чей Предел выше.
+  it("пример 2 книги: Предел проигравшей (по сырым Успехам) стороны выше — она побеждает вопреки меньшему числу Успехов", () => {
+    const trorzak = { deg: 5, success: true, threshold: 40, unnatural: false };
+    const amelia  = { deg: 3, success: true, threshold: 55, unnatural: true };
+    expect(resolveOpposed(trorzak, amelia)).toEqual({ winner: "theirs", margin: 1, unnaturalTieBreak: true });
+  });
+
+  it("пример 2 книги (продолжение): Предел «победителя по Успехам» выше — он всё равно побеждает, но margin 1, а не 2", () => {
+    const trorzak = { deg: 5, success: true, threshold: 55, unnatural: false };
+    const amelia  = { deg: 3, success: true, threshold: 40, unnatural: true };
+    expect(resolveOpposed(trorzak, amelia)).toEqual({ winner: "mine", margin: 1, unnaturalTieBreak: true });
+  });
+
+  it("Unnatural есть у ОБЕИХ сторон — тай-брейк не срабатывает, margin обычный", () => {
+    const mine   = { deg: 5, success: true, threshold: 40, unnatural: true };
+    const theirs = { deg: 3, success: true, threshold: 55, unnatural: true };
+    expect(resolveOpposed(mine, theirs)).toEqual({ winner: "mine", margin: 2 });
+  });
+
+  it("Unnatural есть только у ПОБЕДИВШЕЙ (по Успехам) стороны — тай-брейк не для неё, margin обычный", () => {
+    const mine   = { deg: 5, success: true, threshold: 40, unnatural: true };
+    const theirs = { deg: 3, success: true, threshold: 55, unnatural: false };
+    expect(resolveOpposed(mine, theirs)).toEqual({ winner: "mine", margin: 2 });
   });
 });
 
