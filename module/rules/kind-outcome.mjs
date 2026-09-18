@@ -147,6 +147,14 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   // оба сразу. null здесь значит «нет отдельного второго столбца» — тогда
   // снаружи (_runTest) используется обычный assistCount, как раньше.
   let combinedAssistCount = null;
+  // usedCharKey (wdbc-x1nz.2.2): та же логика, что у combinedAssistCount выше
+  // — Характеристика столбца, чей Предел реально используется. По умолчанию
+  // это ctx.char (столбец А/обычный тест); если у Комбинированного реально
+  // бросается столбец Б (его Предел ниже), Сверхъестественная Характеристика
+  // ниже (бонус степени и тай-брейк Встречного) должна смотреть на ЕГО
+  // Характеристику, не на ctx.char — иначе Unnatural столбца Б молча
+  // терялась бы.
+  let usedCharKey = ctx?.char;
   if (combined) {
     // Явный Предел (даже 0 не вводят намеренно — 0 здесь «не задан»), иначе
     // характеристика по ключу; ключ не распознан — второй половины нет, порог
@@ -154,6 +162,7 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
     const otherChar = actor.system.characteristics?.[combined.charKey] ?? null;
     const otherEff = combined.target || (otherChar ? Number(otherChar.total) || 0 : baseEff);
     eff = combinedThreshold(baseEff, otherEff);
+    if (otherEff <= baseEff && combined.charKey) usedCharKey = combined.charKey;
     // label (wdbc-y9i8) — диалог второго столбца теперь знает точное имя
     // второго Навыка/Характеристики и передаёт его явно, вместо обратной
     // подстановки по charKey (та работала только для голой Характеристики —
@@ -174,13 +183,12 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   const critLine = critLineHtml(crit);
   // Сверхъестественная Характеристика (стр. 26, wdbc-y9i8): +1 Успех за
   // каждые полные 2 рейтинга Unnatural — но ТОЛЬКО на Успехе, и только по
-  // Характеристике, которой реально бросали (ctx.char — та же, что уже несёт
-  // «Бросок с:»/testKey Расширенного; у Комбинированного это столбец А, у
-  // второго столбца своего бонуса степени нет — отдельный, ещё не пройденный
-  // случай пересечения двух механик). rating=0 у обычных акторов — Math.floor
-  // даёт 0, unnaturalLine остаётся пустой, для всех остальных тестов это
-  // no-op.
-  const unnaturalRatingHere = success ? unnaturalRating(ctx?.actor, ctx?.char) : 0;
+  // Характеристике, которой реально бросали (usedCharKey — ctx.char, либо
+  // Характеристика столбца Б Комбинированного, если реально используется её
+  // Предел, см. usedCharKey выше, wdbc-x1nz.2.2). rating=0 у обычных
+  // акторов — Math.floor даёт 0, unnaturalLine остаётся пустой, для всех
+  // остальных тестов это no-op.
+  const unnaturalRatingHere = success ? unnaturalRating(ctx?.actor, usedCharKey) : 0;
   const unnaturalBonus = unnaturalDegreeBonus(unnaturalRatingHere);
   const unnaturalLine = unnaturalBonus > 0
     ? `<div class="roll-threshold">🧬 Сверхъестественная Характеристика (${unnaturalRatingHere}): +${unnaturalBonus} ${_degWord(unnaturalBonus)}</div>`
@@ -213,12 +221,14 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   let opposedLine = "";
   if (opposed) {
     // unnatural (стр. 26, wdbc-y9i8): «моя» сторона — свой актор/своя
-    // Характеристика (ctx.char), всегда известны. «Их» сторона — только если
+    // Характеристика (usedCharKey — та же, что и у бонуса степени выше,
+    // wdbc-x1nz.2.2: ctx.char либо столбец Б Комбинированного, если реально
+    // используется его Предел), всегда известны. «Их» сторона — только если
     // opposed.unnatural пришло от вызывающего кода (авто-встречный со
     // знакомым opponentActor, галочка в диалоге при ручном вводе, или ответ
     // соперника-игрока) — без этого поля тай-брейк просто не сработает,
     // как и до этой правки.
-    const mine = { deg: baseDeg, success, threshold: eff, unnatural: hasUnnaturalCharacteristic(actor, ctx?.char) };
+    const mine = { deg: baseDeg, success, threshold: eff, unnatural: hasUnnaturalCharacteristic(actor, usedCharKey) };
     const theirsOutcome = testOutcome(opposed.roll, opposed.threshold);
     const theirs = { ...theirsOutcome, threshold: opposed.threshold, unnatural: !!opposed.unnatural };
     // Egomania/Эгомания (Слаанеш, wdbc-1rno): «автоматически побеждает в

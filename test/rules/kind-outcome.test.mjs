@@ -170,6 +170,48 @@ describe("resolveKindOutcome — combined", () => {
     expect(out.combinedLine).toContain("Ассистенты: <b>2</b>");
     expect(out.combinedLine).not.toContain("к степени");
   });
+
+  // wdbc-x1nz.2.2: бонус степени/тай-брейк Сверхъестественной Характеристики
+  // (стр. 26) должен смотреть на Характеристику РЕАЛЬНО используемого
+  // столбца (чей Предел ниже), а не всегда на ctx.char (столбец А) — раньше
+  // Unnatural столбца Б молча терялась.
+  it("бонус степени применяется по Характеристике столбца Б, когда реально используется именно он", async () => {
+    const a = actorWithItems([unnaturalTrait("Unnatural Ag (4) / Сверхъест. Ловкость", "ag", 4)]);
+    const out = await resolveKindOutcome(a, {
+      kind: "combined", baseEff: 87, rv: 25, ctx: { actor: a, kind: "skill", char: "s" },
+      combined: { charKey: "ag", target: 30 }
+    });
+    expect(out.eff).toBe(30); // столбец Б ниже — используется он
+    expect(out.deg).toBe(3); // 1 обычный + 2 от Unnatural Ag (4)
+    expect(out.unnaturalLine).toContain("+2");
+  });
+
+  it("бонус степени НЕ применяется по Характеристике столбца Б, если реально используется столбец А", async () => {
+    const a = actorWithItems([unnaturalTrait("Unnatural Ag (4) / Сверхъест. Ловкость", "ag", 4)]);
+    const out = await resolveKindOutcome(a, {
+      kind: "combined", baseEff: 20, rv: 15, ctx: { actor: a, kind: "skill", char: "s" },
+      combined: { charKey: "ag", target: 90 }
+    });
+    expect(out.eff).toBe(20); // столбец А ниже — столбец Б (с Unnatural) не в деле
+    expect(out.deg).toBe(1); // без бонуса — Unnatural у ctx.char (s) нет
+    expect(out.unnaturalLine).toBe("");
+  });
+
+  it("Комбинированный + Встречный: тай-брейк Сверхъестественной Характеристики смотрит на реально используемый столбец Б", async () => {
+    const a = actorWithItems([unnaturalTrait("Unnatural Ag (2) / Сверхъест. Ловкость", "ag", 2)]);
+    const out = await resolveKindOutcome(a, {
+      baseEff: 90, rv: 35, ctx: { actor: a, kind: "skill", char: "s" },
+      combined: { charKey: "ag", target: 40 },
+      opposed: { threshold: 30, roll: 10 }
+    });
+    // Столбец Б (ag, Unnatural) реально используется: eff=40, deg 1 обычный + 1 от Unnatural Ag(2) = 2.
+    expect(out.eff).toBe(40);
+    expect(out.deg).toBe(2);
+    // Соперник по сырым Успехам впереди (deg 3 против 2) — но Unnatural стороны-проигравшего
+    // (по Успехам) гасит исход до ничьей по Пределу: мой Предел (40) выше его (30).
+    expect(out.opposedLine).toContain("Вы побеждаете, margin <b>1</b>");
+    expect(out.opposedLine).toContain("уравняла исход");
+  });
 });
 
 describe("resolveKindOutcome — extended", () => {
