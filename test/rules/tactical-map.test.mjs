@@ -5,7 +5,8 @@
 
 import { describe, it, expect } from "vitest";
 import { baseSizeCells, edgeDistanceMeters, centerDistanceMeters, contactType,
-         BASE_SIZE_DEFAULT, BASE_SIZE_LARGE }
+         BASE_SIZE_DEFAULT, BASE_SIZE_LARGE,
+         GRID_DIAGONALS_EQUIDISTANT, GRID_DIAGONALS_APPROXIMATE, shouldApplyBookDiagonalDefault }
   from "../../module/rules/tactical-map.mjs";
 
 describe("размер Базы", () => {
@@ -24,6 +25,19 @@ describe("размер Базы", () => {
 
   it("оба флага сразу — всё равно 3×3, не больше", () => {
     expect(baseSizeCells({ raceLarge: true, armorLarge: true })).toBe(3);
+  });
+
+  // wdbc-x1nz.2.20 (стр. 31): «с существами Размером 2 и больше размер их
+  // Баз остаётся на откуп ГМу» — null сигналит автосинку токена «не трогай».
+  it("Размер (sizeStat) 2+ — на откуп ГМу, null независимо от расы/брони", () => {
+    expect(baseSizeCells({ sizeStat: 2 })).toBeNull();
+    expect(baseSizeCells({ sizeStat: 3, raceLarge: true, armorLarge: true })).toBeNull();
+  });
+
+  it("Размер (sizeStat) 0/1/отрицательный — как раньше, флаги решают", () => {
+    expect(baseSizeCells({ sizeStat: 1 })).toBe(BASE_SIZE_DEFAULT);
+    expect(baseSizeCells({ sizeStat: 1, raceLarge: true })).toBe(BASE_SIZE_LARGE);
+    expect(baseSizeCells({ sizeStat: -1 })).toBe(BASE_SIZE_DEFAULT);
   });
 });
 
@@ -85,5 +99,31 @@ describe("виды контакта", () => {
     const a = { x: 0, y: 0, w: 2, h: 2 };
     const b = { x: 1, y: 1, w: 2, h: 2 };
     expect(contactType(a, b)).toBe("deep");
+  });
+});
+
+// wdbc-x1nz.2 (стр. 31): «2 клетки по диагонали = 3м» — множитель 1,5,
+// т.е. CONST.GRID_DIAGONALS.APPROXIMATE, а не EQUIDISTANT (дефолт ядра
+// Foundry, диагональ стоит столько же, сколько прямой шаг).
+describe("shouldApplyBookDiagonalDefault: разовый дефолт диагонали мира", () => {
+  it("ещё не применялось, стоит дефолт ядра (EQUIDISTANT) — применить", () => {
+    expect(shouldApplyBookDiagonalDefault({
+      alreadyApplied: false, currentDiagonals: GRID_DIAGONALS_EQUIDISTANT
+    })).toBe(true);
+  });
+
+  it("уже применялось раньше — не применять снова, даже если опять EQUIDISTANT", () => {
+    expect(shouldApplyBookDiagonalDefault({
+      alreadyApplied: true, currentDiagonals: GRID_DIAGONALS_EQUIDISTANT
+    })).toBe(false);
+  });
+
+  it("ГМ уже выбрал что-то своё (не EQUIDISTANT) — не трогать", () => {
+    expect(shouldApplyBookDiagonalDefault({
+      alreadyApplied: false, currentDiagonals: GRID_DIAGONALS_APPROXIMATE
+    })).toBe(false);
+    expect(shouldApplyBookDiagonalDefault({
+      alreadyApplied: false, currentDiagonals: 3 // RECTILINEAR, например
+    })).toBe(false);
   });
 });
