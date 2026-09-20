@@ -14,11 +14,15 @@ const actor = ({ items = [], ...system } = {}) => ({
   system: { race: "human", characteristics: {}, ...system }, items
 });
 
-/** Цель с Чертой «Проворный» и заданным Бонусом Ловкости. */
-const nimbleTarget = (agBonus, name = "Nimble / Проворный") => actor({
+/**
+ * Цель с Чертой «Проворный» и заданным Рейтингом X. Бонус Ловкости
+ * намеренно другой и не участвует в штрафе — книга даёт флэт −X от Рейтинга
+ * Черты, а не от Ag.b цели (это и есть баг, который правило чинит).
+ */
+const nimbleTarget = (rating, name = "Nimble / Проворный") => actor({
   race: "astartes",
-  characteristics: { ag: { total: agBonus * 10, bonus: agBonus } },
-  items: [{ type: "trait", name }]
+  characteristics: { ag: { total: 990, bonus: 99 } },
+  items: [{ type: "trait", name, system: { hasRating: true, rating } }]
 });
 
 const attackOn = targetActor => resolveTest({
@@ -30,18 +34,37 @@ describe("правила основной книги", () => {
     expect(CORE_RULES.map(r => r.id)).toContain("core.nimble");
   });
 
-  it("атака по Проворной цели получает минус её Бонус Ловкости", () => {
+  it("атака по Проворной цели получает минус Рейтинга X Черты", () => {
     const { mods } = attackOn(nimbleTarget(4));
     expect(mods).toEqual([expect.objectContaining({ ruleId: "core.nimble", value: -4 })]);
   });
 
-  it("у более ловкой цели штраф больше", () => {
+  it("у цели с большим Рейтингом Черты штраф больше", () => {
     expect(attackOn(nimbleTarget(7)).mods[0].value).toBe(-7);
+  });
+
+  it("штраф не зависит от Бонуса Ловкости цели — только от Рейтинга Черты", () => {
+    // nimbleTarget всегда ставит Ag.b=99: штраф не «−99», а «−rating».
+    expect(attackOn(nimbleTarget(4)).mods[0].value).toBe(-4);
+  });
+
+  it("два грантера одной Черты складывают Рейтинг (как показ на листе, merge-abilities.mjs)", () => {
+    const target = nimbleTarget(10);
+    target.items.push({ type: "trait", name: "Nimble / Проворный", system: { hasRating: true, rating: 10 } });
+    expect(attackOn(target).mods[0].value).toBe(-20);
   });
 
   it("Черта опознаётся у всех рас, как бы ни был записан рейтинг в названии", () => {
     // «Nimble / Проворный» у Астартес и «Nimble (10) / Проворный (10)» у Кроорка.
     expect(attackOn(nimbleTarget(4, "Nimble (10) / Проворный (10)")).mods[0].value).toBe(-4);
+  });
+
+  // wdbc-b079: Рассеивающее поле друкхарийской брони (constants/drukhari-armor-fields.mjs)
+  // поднимает Nimble до фиксированного числа — «растёт до 20/30», не «+20/+30».
+  it("активное Рассеивающее поле поднимает штраф до fieldNimble, если он больше Рейтинга", () => {
+    const target = nimbleTarget(10);
+    target.system.fieldNimble = 20;
+    expect(attackOn(target).mods[0].value).toBe(-20);
   });
 
   it("по обычной цели штрафа нет", () => {

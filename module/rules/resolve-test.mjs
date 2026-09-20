@@ -198,8 +198,12 @@ function effectAppliesTo(target, ctx) {
  * бросающего — wdbc-1rno шаг F: Инфернальный Оруженосец «считает Завесу на
  * Cor.b ПЕРСОНАЖА тоньше» — Черта висит на демоне, число берётся с листа его
  * Хозяина; ctx.masterActor резолвит вызывающий код ДО этого конвейера, тут
- * никаких fromUuid — тот же приём, что и targetActor) и `targetSize`/
- * `selfSize` (Размер цели или бросающего — стр. 30, «Проворный» и таблица
+ * никаких fromUuid — тот же приём, что и targetActor), `targetTraitRating`
+ * (сумма Рейтинга X одноимённых Черт цели — «Проворный» даёт атакующим флэт
+ * −X по книге, стр. «Nimble (X) / Проворный»: не Бонус характеристики, а
+ * именно число в скобках у названия Черты; несколько источников одной Черты
+ * складываются тем же способом, что и показ на листе, merge-abilities.mjs) и
+ * `targetSize`/`selfSize` (Размер цели или бросающего — стр. 30, таблица
  * Размера дают +10/−10 за каждую ступень). Неизвестный источник не
  * превращается молча в ноль, а жалуется: правило, тихо давшее «+0», ищется
  * днями.
@@ -219,7 +223,7 @@ function effectValue(effect, ctx, ruleId) {
   if (effect.formula != null) return mechFormulaTotalSafe(effect.formula, mechRollData(ctx?.actor));
   if (!effect.valueFrom) return Number(effect.value) || 0;
 
-  const { targetCharBonus, selfCharBonus, masterCharBonus, targetSize, selfSize, multiplier = 1 } = effect.valueFrom;
+  const { targetCharBonus, selfCharBonus, masterCharBonus, targetTraitRating, targetSize, selfSize, multiplier = 1 } = effect.valueFrom;
   // Своя характеристика: «+Inf герольда на тесты Нестабильности» (Локус Цепей).
   // Числа в данных быть не может — Бесчестие у каждого своё.
   // "pr" — не характеристика: Психосилы/Техночудеса скалируются собственным
@@ -269,9 +273,36 @@ function effectValue(effect, ctx, ruleId) {
   }
   if (selfSize)   return sizeOf(ctx?.actor) * multiplier || 0;
   if (targetSize) return sizeOf(ctx?.targetActor) * multiplier || 0;
+  if (targetTraitRating) return traitRatingSum(ctx?.targetActor, targetTraitRating) * multiplier || 0;
 
   console.error(`Warhammer DBC | правило «${ruleId ?? "без id"}»: неизвестный источник значения ${JSON.stringify(effect.valueFrom)}`);
   return null;
+}
+
+/**
+ * Сумма Рейтинга X одноимённых Черт актора («Nimble (10)» + «Nimble (10)» от
+ * другого источника → 20 — тот же принцип сложения, что у показа строки на
+ * листе, merge-abilities.mjs). Черта без галочки «Имеет рейтинг» в сумму не
+ * идёт: у неё X попросту не задан книгой (не эта форма трейта).
+ *
+ * Друкхарийская активная броня (Рассеивающее поле генератора,
+ * constants/drukhari-armor-fields.mjs) не прибавляет к этой сумме, а ПОДНИМАЕТ
+ * её до фиксированного числа — книга пишет «Трейт Nimble растёт до 20/30», не
+ * «+20/+30». Поэтому здесь максимум с уже посчитанным входом
+ * `system.fieldNimble` (rules/character/armour.mjs), а не сложение. Читается
+ * только для самой Черты Nimble — у других имён такого поля не бывает, wdbc-b079.
+ */
+function traitRatingSum(actor, name) {
+  const items = [...(actor?.items ?? [])];
+  const sum = items.reduce((total, i) => {
+    if (i?.type !== "trait" || !itemHasName(i, name)) return total;
+    return i?.system?.hasRating ? total + (Number(i.system.rating) || 0) : total;
+  }, 0);
+  if (String(name ?? "").trim().toLowerCase() === "nimble") {
+    const field = Number(actor?.system?.fieldNimble) || 0;
+    return Math.max(sum, field);
+  }
+  return sum;
 }
 
 /**

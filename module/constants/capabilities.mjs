@@ -5345,11 +5345,11 @@ export const CAPABILITIES = {
     source: "New Men / Новые Люди", reader: ""
   },
   "trait.nimble10": {
-    label: "Штраф атакующим по нему (−Ag.b).",
+    label: "Штраф атакующим по нему (−X, Рейтинг Черты).",
     source: "Nimble (10) / Проворный", reader: ""
   },
   "trait.nimble": {
-    label: "Штраф атакующим по нему (−Ag.b).",
+    label: "Штраф атакующим по нему (−X, Рейтинг Черты).",
     source: "Nimble / Проворный", reader: ""
   },
   "trait.nobleEugenics": {
