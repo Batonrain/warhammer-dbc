@@ -108,6 +108,9 @@ const DEVIATIONS = {
   vehicle: {
     // Объявлена не была, но лежит у всех 56 машин пака.
     "availability": 0,
+    // Книга-источник (wdbc-e6vf) — заведена гораздо позже template.json, тем
+    // же приёмом, что и у существ (_creature.mjs).
+    "bookSource": "",
     // Пустотные Щиты (X) — персистентный массив HP щитов, заведён позже
     // template.json (wdbc-y33b).
     "voidShields": [],

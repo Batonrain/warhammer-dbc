@@ -430,6 +430,9 @@
 
   {{!-- ───────────── ЗАПИСИ ───────────── --}}
   <div class="tab veh-tab {{#if (eq tab "notes")}}active{{/if}}" data-tab="notes" data-group="primary">
+    <label class="veh-full-label">Книга-источник
+      <input type="text" name="system.bookSource" value="{{system.bookSource}}" placeholder="напр. Основная книга, стр. 128"/>
+    </label>
     <label class="veh-full-label">Заметки
       <prose-mirror name="system.notes" class="veh-notes-pm" toggled
                     value="{{system.notes}}">{{{notesEnriched}}}</prose-mirror>
