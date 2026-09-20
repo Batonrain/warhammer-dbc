@@ -11,8 +11,53 @@
     "range": 4,
     "balance": 1,
     "grips": "П",
-    "profileLabel": "",
-    "profiles": [],
+    "profileLabel": "Когти",
+    "profiles": [
+      {
+        "label": "Крюк",
+        "range": "1-3",
+        "damage": "1d10",
+        "damageType": "rending",
+        "penetration": 4,
+        "weaponProps": [
+          {
+            "key": "felling",
+            "rating": 2
+          },
+          {
+            "key": "mighty"
+          },
+          {
+            "key": "reinforced"
+          },
+          {
+            "key": "tearing"
+          }
+        ]
+      },
+      {
+        "label": "Нож",
+        "range": "0-1",
+        "damage": "1d10",
+        "damageType": "rending",
+        "penetration": 4,
+        "weaponProps": [
+          {
+            "key": "mighty"
+          },
+          {
+            "key": "precise"
+          },
+          {
+            "key": "reinforced"
+          },
+          {
+            "key": "tearing"
+          }
+        ]
+      }
+    ],
+    "meleeCategory": "Когти",
     "reload": "–",
     "magazineCur": 0,
     "magazineMax": 0,
