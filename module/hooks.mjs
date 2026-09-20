@@ -68,6 +68,7 @@ import { placeSmokeZone } from "./regions/difficult-terrain.mjs";
 import { findArcTarget } from "./combat/arc.mjs";
 import { findThroughShotTarget } from "./combat/through-shot.mjs";
 import { resetActionEconomy, applyTurnEndStanceEffects, applyAimFocusTurnEnd, postTurnStartCard, spendActionPoints } from "./combat/action-economy.mjs";
+import { shouldOfferRapidReaction, postRapidReactionPrompt, rollRapidReactionTest } from "./combat/rapid-reaction.mjs";
 import { isDevourerOfTimeExtraTurn, devourerOfTimeVictimUuids } from "./combat/devourer-of-time.mjs";
 import { BLESSED_FITS_CAPABILITY, BLESSED_FITS_PENDING_FLAG } from "./rules/blessed-fits.mjs";
 import { clearDreadWailWeaponBuff } from "./combat/dread-wail.mjs";
@@ -1592,6 +1593,18 @@ export function registerHooks() {
         await rollShockRecovery(actor);
       });
     });
+    // Быстрая Реакция (wdbc-1rno.3) — тот же приём, что Выход из Шока выше.
+    html.querySelectorAll(".wh-rapid-reaction-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const ds = { ...el.dataset };
+        const actor = ds.actorUuid ? (await fromUuid(ds.actorUuid).catch(() => null)) : null;
+        if (!actor) return ui.notifications.warn("⚠️ Персонаж не найден.");
+        el.disabled = true;
+        await rollRapidReactionTest(actor);
+      });
+    });
 
     // Свободная атака (wdbc-2xku) — уходящий из рукопашной без «Выхода из Боя».
     html.querySelectorAll(".wh-free-attack-btn").forEach(btn => {
@@ -2654,10 +2667,16 @@ function _attachFateContextMenu(message, html) {
       }
     }
     if (nextCombatant?.actor) {
+      // Быстрая Реакция (wdbc-1rno.3): снимок ДО сброса — resetActionEconomy
+      // гасит conditions.surprised как часть своей работы, после вызова
+      // проверять уже нечего (см. combat/rapid-reaction.mjs).
+      const wasSurprised = !!nextCombatant.actor.system?.conditions?.surprised;
       await resetActionEconomy(nextCombatant.actor);
       // Карточка «сколько у меня ОД/Реакций» (wdbc-qjnk) — сразу после сброса,
       // пока значения свежие; сама решает, нести ли этому типу актора экономику.
       await postTurnStartCard(nextCombatant.actor);
+      if (shouldOfferRapidReaction(nextCombatant.actor, wasSurprised))
+        await postRapidReactionPrompt(nextCombatant.actor);
       await processPrismaTurnStart(nextCombatant.actor);
       // Перезарядка (wdbc-ai0o): «нельзя стрелять в следующий Ход» — тот же
       // такт начала Хода носителя, что и заряд Призмы выше.

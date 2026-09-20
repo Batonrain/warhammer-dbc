@@ -371,6 +371,7 @@ export function openAttackDialog(ctx) {
               dmgBonus: f.dmgBonus, changeSoulless: f.changeSoulless,
               meleeShot: f.meleeShot,
               hiddenAttack: f.hiddenAttack,
+              targetSurprised: f.targetSurprised,
               shortRange: f.shortRange, maximal: f.maximal, bandIdx: f.bandIdx,
               // forceMelee идёт в бросок вместе с профилем: окно считает вид
               // теста из ОБОИХ (attack-dialog.mjs: attackIsMelee(sys,

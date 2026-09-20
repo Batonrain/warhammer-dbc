@@ -242,6 +242,10 @@ export function bonusDamageDice({ wp, rofMode, hit, deg, shortRange = false, max
   if (wp.scatter && shortRange) dice += 1;
   if (maximal)                  dice += 1;
   if (wp.prismaAtMax)           dice += 1;
+  // Quiet Elimination / Тихое Устранение (wdbc-1rno.3): «+1 куб урона»
+  // отдельным броском — тот же приём, что у остальных строк этого блока
+  // (не влияет на Экстремальный урон, см. заголовок функции).
+  if (wp.quietEliminationBonus) dice += 1;
   if (band?.dice)               dice += Number(band.dice) || 0;
   // Тесное помещение (стр. 36, wdbc-x1nz.2.63): взрывы, наносящие X Dmg
   // (damageType "blast"), получают +1d10 урона. Радиус ×1.5 — отдельно, в

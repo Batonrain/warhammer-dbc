@@ -19,6 +19,7 @@ import { actorHasAspectPath }     from "../../constants/aeldari-paths.mjs";
 import { hasBlackEyesDarknessImmunity } from "../../rules/black-eyes.mjs";
 import { isBraced } from "../../combat/brace-weapon.mjs";
 import { lockingContactTokenDocs } from "../../combat/free-attack.mjs";
+import { hasQuietElimination, isQuietEliminationWeapon } from "../../rules/quiet-elimination.mjs";
 /**
  * @param {object} v состояние броска: оружие, токены, замеренная дистанция
  * @returns {{commonMods: object[], specificMods: object[], charSwapWhy: string[], bandKey: string|null}}
@@ -63,12 +64,25 @@ export function situationalMods(v) {
     { label: "Цель лежит",    value: isMelee ?  20 : -20 },
     { label: "Цель бежит",    value: isMelee ?  20 : -20 },
     { label: "Цель Оглушена", value: 20 },
-    { label: "Цель Врасплох", value: 30, immuneFlag: "attack.surpriseImmune" },
+    // id нужен readAttackForm (wdbc-1rno.3, стр. 32 «Скрытная Атака»):
+    // «Взятие Врасплох» читается как именованный флаг attack.mjs::
+    // targetSurprised (Quiet Elimination: +1 куб урона/тихая смерть ПО
+    // ЛЮБОЙ атаке, отмеченной Врасплох, не только ножом/пистолетом — см.
+    // rules/quiet-elimination.mjs), а не только суммируется в общий Порог.
+    { id: "atk-mod-surprised", label: "Цель Врасплох", value: 30, immuneFlag: "attack.surpriseImmune" },
     // id нужен readAttackForm (стр. 12, wdbc-x1nz.2.29): «Избегание невозможно
     // от атаки, о которой цель не знает» — атакующий сам объявляет это
     // галочкой (со спины/из засады/невидимый-неслышный снаряд книга не даёт
     // теста на автоопределение), а не только получает +30 к попаданию.
     { id: "atk-mod-hidden", label: "Скрытая атака", value: 30, note: "цель не знает — Избегание невозможно" },
+    // Тихое Устранение / Quiet Elimination (стр. …, wdbc-1rno.3): «нож или
+    // игольчатый/осколочный пистолет — +10 к тестам атаки», независимо от
+    // Врасплох — авто-галочка, вычисляется прямо здесь (actor/weapon уже в
+    // области видимости, тот же приём, что у hasBlackEyesDarknessImmunity
+    // ниже).
+    ...(hasQuietElimination(actor) && weapon && isQuietEliminationWeapon(weapon) ? [{
+      label: "Тихое Устранение (нож/игольчатый/осколочный пистолет)", value: 10, autoCheck: true
+    }] : []),
     // Закрепление (Полудействие, Физическое: оружие ставится на укрытие,
     // лафет, бипод или трипод). Книга свойства Ogrynized: «Закрепление оружия
     // убирает все эти штрафы». Отдельного состояния «закреплено» в системе

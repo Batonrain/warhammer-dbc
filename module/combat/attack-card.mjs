@@ -778,6 +778,7 @@ export function attackCard({
       🗡️ Удар Ассасина — Acrobatics+0
     </button>` : "",
       notes.helpless ? `<div class="roll-allout-note">${notes.helpless}</div>` : "",
+      notes.quietElimination ? `<div class="roll-allout-note">${notes.quietElimination}</div>` : "",
       hit && hitsCount > 0
         ? `<div class="roll-location">Место попадания: <b>${hitLocLabel}</b> (${locRoll})</div>`
         : "",

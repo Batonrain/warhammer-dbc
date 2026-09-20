@@ -140,6 +140,10 @@ export function readAttackForm(form, ammoConds) {
     // Скрытая атака (стр. 12, wdbc-x1nz.2.29): «Избегание невозможно от
     // атаки, о которой цель не знает» — см. #atk-mod-hidden в commonMods выше.
     hiddenAttack: on("#atk-mod-hidden"),
+    // Взятие Врасплох (стр. 32, wdbc-1rno.3) — см. #atk-mod-surprised в
+    // commonMods (sheets/attack/mods.mjs): именованный флаг нужен Quiet
+    // Elimination и подобным находкам, не только сумме в общий Порог.
+    targetSurprised: on("#atk-mod-surprised"),
     // Прицеливание при «Обе руки» (стр. 12, wdbc-x1nz.2.41): «только ОДНА из
     // атак получает бонус» — выбор руки, по умолчанию основная (радио может
     // не быть в форме вовсе, если Прицеливание не активно — тогда "main").

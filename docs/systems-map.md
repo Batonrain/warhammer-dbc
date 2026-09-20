@@ -206,6 +206,26 @@ Blindside (target-scoped метка), Defensive Rider (редирект НЕ р�
 не смоделировано: призыв оружия Точным Телекинезом/Клинками Силы + третий
 класс «частичного Незримого» (wdbc-1rno.28).
 
+**Скрытная Атака/Врасплох (wdbc-1rno.3, 20.09.2026):** facing-детект
+Незримого — `combat/facing.mjs::isOutsideDefenderView` (см. п. 8, «Тактическая
+карта»), исключение для Janus (`rules/janus.mjs`). Per-attack галочка «Цель
+Врасплох» доведена до именованного `attack.mjs::targetSurprised` (id
+`atk-mod-surprised`, `sheets/attack/mods.mjs`→`form.mjs`→`dialog.mjs`, тот
+же приём, что `hiddenAttack`) — читают `rules/quiet-elimination.mjs`
+(+1 куб урона/тихая смерть по ЛЮБОМУ оружию при Врасплох, +10 к атаке
+независимо от Врасплох с ножом/игольчатым/осколочным пистолетом —
+situational авто-мод) и Rapid Reaction (п. 9, «Состояния» — другой,
+несвязанный книжный пункт под тем же словом). Взор Неизбежности/Gaze of
+Inevitability (Дар Нургла, `rules/gaze-of-inevitability.mjs`) — пассивная
+половина: `combat/defense.mjs` комбинирует Порог Уклонения/Парирования с
+W−10 (`rules/test-kind.mjs::combinedThreshold`), если защищающийся видит
+глаза атакующего-носителя (геометрия `vision-target.mjs`), провал снимает
+все Реакции — единственная находка сессии, тронувшая общий конвейер
+защиты напрямую (не через facing-детект выше). Честно не смоделировано:
+слежение за позицией/обзором весь Ход атакующего (только снимок на момент
+атаки), ветка «+30 Врасплох» самой Скрытной Атаки (по-прежнему ручная
+галочка ГМа).
+
 **Караул/Overwatch (wdbc-1rno.27/.37, 16.09.2026):** действие «стрелять вне
 своего Хода по врагу, вошедшему в объявленный сектор», реализовано с нуля —
 `rules/overwatch.mjs` (бюджет Одиночных ½BS.b(окр.▼), капается наибольшим
@@ -376,6 +396,16 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `module/rules/facing.mjs` + `combat/facing.mjs` — геометрия направления
   (Cloak, арки техники/корабля); `rules/vision-target.mjs` (кто меня видит,
   без стен/LoS); `rules/aoe-target.mjs` (разовая выборка токенов в радиусе).
+  `combat/facing.mjs::isOutsideDefenderView` (wdbc-1rno.3) — «Скрытная
+  Атака» (стр. 32): атакующий вне сектора обзора защищающегося на момент
+  атаки → `wp.unseen=true` (`combat/attack.mjs`), снимок, не слежение за
+  всем Ходом; дефолт `sight.angle=210°` всем новым акторам ставит хук
+  `preCreateActor` в том же файле. Исключение — `rules/janus.mjs`
+  (носитель Janus не подхватывает Незримое этим путём вовсе). Пассивная
+  половина Взора Неизбежности (Дар Нургла, `rules/gaze-of-inevitability.mjs`)
+  — отдельный крюк в `combat/defense.mjs` (Уклонение/Парирование
+  Комбинированный с W−10, если защищающийся видит глаза атакующего-
+  носителя; провал снимает все Реакции), не через этот facing-примитив.
 - `module/rules/tactical-map.mjs` + `combat/tactical-map.mjs` — Тактическая
   карта (wdbc-8k0i, стр. 31): размер Базы (2×2/3×3, null = Размер 2+, «на
   откуп ГМу»), дистанции от края/от центра Базы, вид контакта none/base/deep,
@@ -395,6 +425,13 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   `condition-mirrors.mjs` (игровые метки, отображаемые как Состояния),
   `turn-flags.mjs` (флаги «до начала следующего своего Хода»),
   `fatigue-grace.mjs` (порог Усталости).
+- `combat/rapid-reaction.mjs` + `rules/rapid-reaction.mjs` (wdbc-1rno.3) —
+  реакция на `conditions.surprised` (стр. 12, начало боя): карточка-
+  приглашение в начале Хода носителя таланта, тест A+0 отменяет 0 ОД/0
+  Реакций этого Хода (повторный `action-economy.mjs::resetActionEconomy`,
+  уже без снятого флага). НЕ про per-attack галочку «Цель Врасплох» (стр.
+  32) — то отдельное правило, см. `attack.mjs::targetSurprised`
+  (п. 5, конвейер атаки).
 - Конструктор kind:"condition" — пять режимов (не четыре книжных, wdbc-tqfj):
   apply/remove (разовые, момент получения предмета), immunity/mitigate (живые,
   condition-guards.mjs/item-rules.mjs), и **onTargetFail** (живой, новый,

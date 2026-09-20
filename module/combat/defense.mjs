@@ -33,6 +33,9 @@ import { tokenRect } from "./horde-tokens.mjs";
 import { contactType } from "../rules/tactical-map.mjs";
 import { handOfKhorneAttackSizeBonus } from "../rules/hand-of-khorne.mjs";
 import { phantomCopiesDodgePenalty } from "../rules/wrapped-in-chaos.mjs";
+import { hasGazeOfInevitability } from "../rules/gaze-of-inevitability.mjs";
+import { isTokenInSight } from "../rules/vision-target.mjs";
+import { combinedThreshold } from "../rules/test-kind.mjs";
 
 // Контратака (стр. 12, Талант Counter Attack) — «раз в Раунд» ключ учёта,
 // тот же примитив, что у Локуса Сокрушения (constants/capabilities.mjs).
@@ -124,8 +127,13 @@ export async function _performDodge(actor, {
   // attackerUuid — штрафа нет, тот же честный дефолт, что и там).
   const attackerActor = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
   const wicDodgePenalty = phantomCopiesDodgePenalty(attackerActor, isMelee);
-  const threshold = baseThreshold + wicDodgePenalty;
+  const preGazeThreshold = baseThreshold + wicDodgePenalty;
   if (wicDodgePenalty !== 0) modParts.push(`Фантомные Копии атакующего ${wicDodgePenalty}`);
+  // Взор Неизбежности (стр. …, wdbc-1rno.3): защищающийся видит глаза
+  // атакующего-носителя Дара — Комбинированный Порог с W−10, провал снимает
+  // все Реакции (после самого броска ниже).
+  const gazeActive = _gazeOfInevitabilityActive(actor, attackerActor);
+  const threshold = gazeActive ? _combineWithGazeThreshold(actor, preGazeThreshold, modParts) : preGazeThreshold;
 
   // Навязанный переброс (Локус Кровопролития: «заставить цель перебросить тест
   // Избегания»). Режим приходит с кнопки карточки: цель обязана оставить
@@ -148,6 +156,9 @@ export async function _performDodge(actor, {
   // Формула степени успеха/провала — module/rules/roll-outcome.mjs (wdbc-5dvx,
   // раньше дублировалась вручную здесь же).
   const { success: passed, deg } = testOutcome(rv, threshold);
+  // Взор Неизбежности: «проваливают ЭТОТ тест [Комбинированный] — теряют
+  // все свои Реакции» — тот же бросок выше уже решил и Уклонение, и это.
+  if (gazeActive && !passed) await _applyGazeOfInevitabilityFailure(actor);
 
   // Стр. 12: при Успехе персонаж уклоняется от атаки и попадание становится
   // промахом — сравнивать степени успеха со степенью атакующего не нужно (это
@@ -173,7 +184,8 @@ export async function _performDodge(actor, {
   let outcomeHtml;
   if (!passed) {
     outcomeHtml = `<span class="roll-failure">Уклонение провалено — ${deg} ${_degWord(deg)}. ${
-      totalHits > 1 ? `Все ${totalHits} ${_hitWord(totalHits)} проходят.` : "Получает попадание."}</span>`;
+      totalHits > 1 ? `Все ${totalHits} ${_hitWord(totalHits)} проходят.` : "Получает попадание."}${
+      gazeActive ? " Взор Неизбежности: все Реакции потеряны." : ""}</span>`;
   } else if (remaining === 0) {
     outcomeHtml = `<span class="roll-success">Уклонение успешно — ${deg} ${_degWord(deg)}${
       totalHits > 1 ? `, снимает все ${totalHits} ${_hitWord(totalHits)}` : ""}! Атака промахивается.</span>`;
@@ -419,6 +431,46 @@ function _inMeleeContactWithAttacker(actor, attackerActor) {
   return contactType(rectA, rectB) !== "none";
 }
 
+/**
+ * Взор Неизбежности (Дар Нургла, wdbc-1rno.3, rules/gaze-of-inevitability.mjs):
+ * «Противники, что могут видеть глаза персонажа..., должны комбинировать
+ * любой тест на Избегание ОТ ЕГО АТАК с тестом на W−10.» — только когда
+ * носитель Дара сам АТАКУЕТ (attackerActor), не любое Избегание вообще.
+ * Геометрия — та же «кто кого видит» (дальность+сектор, БЕЗ стен), что у
+ * остальных подобных проверок проекта (rules/vision-target.mjs). Без
+ * токена хотя бы у одной стороны — эффект не проверяется (тот же честный
+ * дефолт, что у контакта с стрелком выше).
+ */
+function _gazeOfInevitabilityActive(actor, attackerActor) {
+  if (!attackerActor || !hasGazeOfInevitability(attackerActor)) return false;
+  const myToken = actor?.getActiveTokens?.(false, true)?.[0];
+  const atkToken = attackerActor?.getActiveTokens?.(false, true)?.[0];
+  if (!myToken || !atkToken) return false;
+  const grid = { size: canvas?.grid?.size || 100, distance: canvas?.scene?.grid?.distance ?? canvas?.grid?.distance ?? 1 };
+  return isTokenInSight(myToken, atkToken, grid);
+}
+
+/**
+ * Комбинированный Порог (обычные правила системы — rules/test-kind.mjs::
+ * combinedThreshold, Math.min из двух Порогов на одном броске) — Избегание
+ * с W−10 самого защищающегося. Возвращает итоговый Порог, дописывает
+ * подпись модификатора в modParts для карточки.
+ */
+function _combineWithGazeThreshold(actor, threshold, modParts) {
+  const wpTotal = Number(actor.system.characteristics?.wp?.total) || 0;
+  const gazeThreshold = wpTotal - 10;
+  modParts.push(`Взор Неизбежности: Комбинированный с W−10 (${gazeThreshold})`);
+  return combinedThreshold(threshold, gazeThreshold);
+}
+
+/** «Проваливают этот тест — теряют все свои Реакции» (оба пула, тот же уровень, что у Врасплох/Оглушения). */
+async function _applyGazeOfInevitabilityFailure(actor) {
+  const upd = {};
+  if ((Number(actor.system.reactions?.value) || 0) !== 0) upd["system.reactions.value"] = 0;
+  if ((Number(actor.system.reactions?.defenseValue) || 0) !== 0) upd["system.reactions.defenseValue"] = 0;
+  if (Object.keys(upd).length) await actor.update(upd);
+}
+
 // wdbc-8zi (п.6): тот же объект опций, что у _performDodge выше — раньше
 // hitsCount/attackerUuid стояли в другом порядке, чем там, и перепутать
 // вызов при правке было легко.
@@ -489,8 +541,13 @@ export async function _performParry(actor, {
       `Противник крупнее на ${sizeGate.steps} ${stepWord(sizeGate.steps)} Размера — Парирование ${need} (стр. 12).`);
   }
 
-  const { wsTotal, meleeWeapon, balance, balanceMod, threshold, modParts, pwp, crossblock } =
+  const { wsTotal, meleeWeapon, balance, balanceMod, threshold: baseParryThreshold, modParts, pwp, crossblock } =
     parryProfile(actor, extraMod, null, { useCrossblock });
+  // Взор Неизбежности (стр. …, wdbc-1rno.3) — тот же приём, что у Уклонения
+  // (_performDodge): защищающийся видит глаза атакующего-носителя Дара —
+  // Комбинированный Порог с W−10, провал снимает все Реакции.
+  const gazeActive = _gazeOfInevitabilityActive(actor, attackerActor);
+  const threshold = gazeActive ? _combineWithGazeThreshold(actor, baseParryThreshold, modParts) : baseParryThreshold;
 
   // ── Парирование СТРЕЛЬБЫ ───────────────────────────────────────────────
   // Стр. 12: «работает только от атак в ближнем бою, в т.ч. выстрелов в
@@ -559,6 +616,9 @@ export async function _performParry(actor, {
   const rv       = picked.value;
   // Формула степени успеха/провала — module/rules/roll-outcome.mjs (wdbc-5dvx).
   const { success: passed, deg } = testOutcome(rv, threshold);
+  // Взор Неизбежности: «проваливают ЭТОТ тест [Комбинированный] — теряют
+  // все свои Реакции» — тот же бросок выше уже решил и Парирование, и это.
+  if (gazeActive && !passed) await _applyGazeOfInevitabilityFailure(actor);
 
   // Стр. 12: при Успехе персонаж отбивает или блокирует атаку и попадание
   // становится промахом — сравнивать степени успеха со степенью атакующего не
@@ -594,7 +654,8 @@ export async function _performParry(actor, {
   let outcomeHtml;
   if (!passed) {
     outcomeHtml = `<span class="roll-failure">Парирование провалено — ${deg} ${_degWord(deg)}. ${
-      totalHits > 1 ? `Все ${totalHits} ${_hitWord(totalHits)} проходят.` : "Получает попадание."}</span>`;
+      totalHits > 1 ? `Все ${totalHits} ${_hitWord(totalHits)} проходят.` : "Получает попадание."}${
+      gazeActive ? " Взор Неизбежности: все Реакции потеряны." : ""}</span>`;
   } else if (remaining === 0) {
     outcomeHtml = `<span class="roll-success">Парирование успешно — ${deg} ${_degWord(deg)}${
       totalHits > 1 ? `, снимает все ${totalHits} ${_hitWord(totalHits)}` : ""}! Атака отражена.</span>`;

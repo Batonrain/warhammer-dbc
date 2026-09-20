@@ -1360,8 +1360,9 @@ export const CAPABILITIES = {
     source: "Paranoia / Паранойя", reader: ""
   },
   "general.core.rapidReaction": {
-    label: "Когда персонажа застали Врасплох, он может пройти тест на А+0, чтобы действовать обычным образом.",
-    source: "Rapid Reaction / Быстрая Реакция", reader: ""
+    label: "РЕАЛИЗОВАНО (wdbc-1rno.3): реакция на Состояние conditions.surprised (стр. 12, начало боя) — кнопка-приглашение в начале Хода, тест A+0, успех восстанавливает ОД/Реакции этого Хода. Про per-attack «Цель Врасплох» (стр. 32) эта находка не была — то другой книжный пункт.",
+    source: "Rapid Reaction / Быстрая Реакция",
+    reader: "module/rules/rapid-reaction.mjs (hasRapidReaction), module/combat/rapid-reaction.mjs (подсказка+тест), module/hooks.mjs (updateCombat — снимок wasSurprised до resetActionEconomy, кнопка .wh-rapid-reaction-btn)"
   },
   // ── Смелость (DoomBC — Основная книга, Таланты)
   "courage.core.fearless": {
@@ -5396,8 +5397,9 @@ export const CAPABILITIES = {
     source: "Quadruped / Четвероногий (X)", reader: ""
   },
   "trait.quietElimination": {
-    label: "Атака врасплох: +1 куб урона, цель гибнет беззвучно. Только ножи/игольчатые/осколочные пистолеты — +10 к атаке.",
-    source: "Quiet Elimination / Тихое Устранение", reader: ""
+    label: "РЕАЛИЗОВАНО (wdbc-1rno.3): два независимых пункта. (1) «Атакует Врасплох» — attack.mjs::targetSurprised (per-attack галочка «Цель Врасплох», любое оружие) → +1 куб урона (attack-outcome.mjs::bonusDamageDice) + строка в карточке «цель не издаёт звука» (честно без детектора смерти). (2) «Только ножи/игольчатые/осколочные пистолеты» — +10 к атаке независимо от Врасплох, situational-мод sheets/attack/mods.mjs (isQuietEliminationWeapon). Игольчатое оружие без единого структурного признака в данных (разные фракции — разный weaponType) — распознаётся по имени предмета, честная граница.",
+    source: "Quiet Elimination / Тихое Устранение",
+    reader: "module/rules/quiet-elimination.mjs (hasQuietElimination, isQuietEliminationWeapon), module/sheets/attack/mods.mjs (+10 auto-мод), module/sheets/attack/form.mjs+dialog.mjs (targetSurprised), module/combat/attack.mjs (+1 куб, note), module/combat/attack-outcome.mjs::bonusDamageDice"
   },
   "trait.razorTalons": {
     label: "Естественное оружие: Razor Sharp.",
@@ -6906,9 +6908,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "mutation.janus": {
-    label: "ПОДТВЕРЖДЕНО ЧЕСТНОЙ ЗАГЛУШКОЙ (15.09.2026, wdbc-1rno.1; независимо к тому же выводу пришёл параллельный тикет wdbc-xwhe, закрыт как дубль 16.09.2026): полудействие: доп. глаза/рот перемещаются в любую точку тела; доп. глаза дают обзор сзади/за угол, доп. рот говорит независимо (например одновременно общаться и зачитывать ритуал). В книжном тексте нет НИ ОДНОЙ цифры/теста — чисто описательное действие. Обзор сзади нечему обходить: атака из слепой зоны/со спины в системе явно не проверяется кодом (module/combat/damage.mjs, module/rules/volunteer-actor.mjs, module/rules/wing-shield.mjs — везде прямой комментарий «решает стол»), готовый геометрический примитив module/rules/vision-target.mjs существует, но не подключён к боевой защите нигде — общий пробел, вынесен отдельным тикетом wdbc-1rno.3 (по просьбе пользователя, Janus — один из кандидатов списка). Независимая речь второго рта ни на что в правилах не завязана (нет гейта «речь vs действие»).",
+    label: "РЕАЛИЗОВАНО ЧАСТИЧНО (wdbc-1rno.3, 20.09.2026): «доп. глаза дают обзор сзади/за угол» — с появлением facing-детекта «Скрытной Атаки» (module/combat/attack.mjs::sneakAttackUnseen) носитель Janus исключён из проверки «атакующий вне обзора цели» целиком — она на него никогда не срабатывает. НЕ смоделировано: полудействие «переместить глаза в другую точку тела» (эффект трактуется как постоянный, пока предмет есть на акторе, не привязан к конкретной активации) и независимая речь второго рта (ни на что в правилах не завязана, нет гейта «речь vs действие»).",
     source: "Мутация: Janus (Общие мутации)",
-    reader: ""
+    reader: "module/rules/janus.mjs (hasJanusRearVision), module/combat/attack.mjs (sneakAttackUnseen — исключение)"
   },
   "mutation.pureForm": {
     label: "РЕАЛИЗОВАНО ПОЛНОСТЬЮ (перепроверено 16.09.2026 — reader ошибочно оставался пустым, тот же класс находки, что «Desiccated», wdbc-1rno): двумя записями kind:\"script\" на этом же предмете, поверх примитива rules/mutation-suppression.mjs (wdbc-1rno) — НЕ удаление, отключение: подавленные Мутации/Дары теряют эффекты (isItemActive() в apps/effects.mjs знает про flags.warhammer-dbc.suppressed), но остаются на листе и возвращаются в прежнем виде. Первая кнопка переключает подавление/безопасный возврат (1 час концентрации туда и обратно предполагается отыгранным, не отсчитывается системой), вторая — аварийный разрыв (мгновенный возврат + 1d10 непогл. R Dmg, rules/wounds.mjs::woundLossUpdates). Триггер разрыва (Оглушение/потеря сознания) не детектируется автоматически — кнопка жмётся по факту события. Искажение снаряжения, надетого в Чистой Форме — на усмотрение ГМа, не смоделировано.",

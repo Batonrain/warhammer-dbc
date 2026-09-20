@@ -37,6 +37,9 @@ import { consumeHiddenThreatPending }                 from "../rules/hidden-thre
 import { consumeHairTriggerUnseenPending }            from "../rules/hair-trigger.mjs";
 import { isUnseenDetected }                           from "../rules/unseen-attack.mjs";
 import { hasSixthSense, hasMusicOfBattle, hasBlindFighting, hasBackstab, isKnifeWeapon, hasSniperAssassin, isBlindsideMarked, consumeBlindsideMark } from "../rules/unseen-talents.mjs";
+import { isOutsideDefenderView, resolveAttackerToken } from "./facing.mjs";
+import { hasQuietElimination } from "../rules/quiet-elimination.mjs";
+import { hasJanusRearVision } from "../rules/janus.mjs";
 import { actorInfamyValue }                           from "../apps/infamy-points.mjs";
 import { sunderingDamageFormula, SUNDERING_COPY_FLAG } from "../rules/sundering.mjs";
 import { recoilRemaining as recoilPoolRemaining }     from "./recoil-pool.mjs";
@@ -254,6 +257,22 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const targetToken = [...(game.user?.targets ?? [])][0] ?? null;
   const defenderActor = targetToken?.actor ?? targetToken?.document?.actor ?? null;
 
+  // Скрытная Атака (стр. 32, wdbc-1rno.3): «атакующий весь свой Ход
+  // находился вне обзора цели ... эта атака получает тип Незримое» —
+  // снимок геометрии на момент атаки (combat/facing.mjs::
+  // isOutsideDefenderView, детали приближения и честная граница — там же),
+  // не слежение за позицией по всему Ходу. defenderActor может быть
+  // токеном без владельца или без цели вовсе — тогда геометрии посчитать
+  // не из чего, sneakAttackUnseen остаётся false (не наказываем).
+  // Janus (wdbc-1rno.3, rules/janus.mjs): у защищающегося практически
+  // круговой обзор — эта геометрическая проверка на него не срабатывает
+  // вовсе (structural wp.unseen/Сокрытая Угроза продолжают действовать как
+  // обычно, это исключение только для facing-детекта).
+  const attackerToken = await resolveAttackerToken(actor.uuid);
+  const sneakAttackUnseen = !!(targetToken && attackerToken && !hasJanusRearVision(defenderActor)
+    && isOutsideDefenderView(targetToken, attackerToken));
+  if (sneakAttackUnseen) wp.unseen = true;
+
   // Blindside / Из Слепой Зоны (wdbc-1rno.2, rules/unseen-talents.mjs):
   // «При победе, если его следующее действие — атака ножом по этой цели,
   // эта атака считается Незримой». Метка target-scoped (не как у Hidden
@@ -294,6 +313,18 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const backstabDoubled = unseen && isMelee && !!aimTarget?.value
     && hasBackstab(actor) && isKnifeWeapon(item);
   if (backstabDoubled) wp.doubleDice = true;
+
+  // Quiet Elimination / Тихое Устранение (wdbc-1rno.3, rules/quiet-
+  // elimination.mjs): «Если персонаж атакует противника врасплох — +1 куб
+  // урона, цель не издаёт звука при гибели». Завязано на per-attack галочку
+  // «Цель Врасплох» (opts.targetSurprised, любое оружие) — НЕ на «Незримое»
+  // (unseen выше — другое правило, стр. 32 иначе сформулировано) и не
+  // ограничено ножом/пистолетом (тот отдельный +10 — situational-мод,
+  // sheets/attack/mods.mjs). «Не издаёт звука» — честно только строка в
+  // карточке ниже (formatNotes), детектора смерти на этом такте ещё нет.
+  const targetSurprised = !!opts.targetSurprised;
+  const quietEliminationActive = targetSurprised && hasQuietElimination(actor);
+  if (quietEliminationActive) wp.quietEliminationBonus = true;
   // ── Качество оружия ──────────────────────────────────────────────────────
   //   Стрелковое: ±Надёжность; Рукопашное Best: +1 урон; Best: теряет Primitive.
   //   (Мод теста для рукопашного применяется в _showAttackDialog → threshold.)
@@ -1148,6 +1179,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         attack:    opts.attackNote,
         helpless:  opts.doubleDamage
           ? "🪢 Цель Беспомощна: попадание автоматическое, урон ×2 (до Поглощения)."
+          : "",
+        // Quiet Elimination / Тихое Устранение (wdbc-1rno.3): «цель не издаёт
+        // звука при гибели» — честно только строка, нет детектора смерти на
+        // этом такте (формула урона ещё не разрешена, killstate решается позже).
+        quietElimination: (quietEliminationActive && hit)
+          ? "🔇 Тихое Устранение: +1 куб урона (уже в формуле); при гибели цель не издаёт звука."
           : "",
         technique: { label: techOpts.techniqueLabel, stance: techOpts.stanceLabel, note: techOpts.chatNote },
         aiming:    opts.aimingLabel,
