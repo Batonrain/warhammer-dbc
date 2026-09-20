@@ -1008,6 +1008,43 @@ describe("Арсенал: доступность Стойки/Хвата/Баз�
     await p2;
   });
 
+  // Задержка (стр. 12, wdbc-x1nz.2.42): банкованное ОД нельзя тратить на
+  // Атаку, если персонаж уже атаковал в тот Ход, когда объявил Задержку.
+  it("delayNoAttack — Атака блокируется без броска", async () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    const p = showAttackDialog(attacker({ items: [sword], flags: { "warhammer-dbc.delayNoAttack": true } }), sword);
+    await pressRoll(p, {});
+    expect(captured.chat.at(-1).content).toContain("Задержанное ОД");
+    expect(captured.rolls).toHaveLength(0);
+    await expect(p).resolves.toBeNull();
+  });
+
+  it("без delayNoAttack — Атака проходит как обычно", async () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    const p = showAttackDialog(attacker({ items: [sword] }), sword);
+    await pressRoll(p, {});
+    expect(captured.rolls.length).toBeGreaterThan(0);
+  });
+
+  // Захват (стр. 12, wdbc-x1nz.2.31): «только действия Борьбы или
+  // не-Физические» — обычная Атака недоступна, пока актор в Захвате.
+  it("В Захвате обычная Атака блокируется без броска", async () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    const p = showAttackDialog(attacker({ items: [sword], conditions: { grappling: true } }), sword);
+    await pressRoll(p, {});
+    expect(captured.chat.at(-1).content).toContain("Борьбы");
+    expect(captured.rolls).toHaveLength(0);
+    await expect(p).resolves.toBeNull();
+  });
+
+  it("Без Захвата — та же атака проходит как обычно", async () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    const p = showAttackDialog(attacker({ items: [sword] }), sword);
+    await pressRoll(p, {});
+    expect(captured.chat.at(-1).content).not.toContain("Борьбы");
+    expect(captured.rolls.length).toBeGreaterThan(0);
+  });
+
   it("Стойка цели (Защитная/Прикрывающая) меняет порог атакующего", () => {
     const sword = weaponFor({ weaponClass: "melee" });
     const target = attacker({ meleeStance: "defensive" });
@@ -1074,7 +1111,10 @@ describe("Хват дальнобойного оружия и Отдача (wdbc
 
     expect(html).toMatch(/name="atk-grip" value="2р"/);
     expect(html).toMatch(/name="atk-grip" value="1р"/);
-    expect(html).not.toMatch(/disabled/);
+    // Уточнено под wdbc-x1nz.2.57: «disabled» где-то в диалоге теперь законно
+    // (галочка «Тяжёлое/Длинная Винтовка: нельзя стрелять в рукопашную»
+    // иммунна для обычной Винтовки) — тест здесь именно про пилюли Хвата.
+    expect(html).not.toMatch(/name="atk-grip" value="(1р|2р)"[^>]*disabled/);
   });
 
   it("оружие без второго Хвата (grips пуст) — пилюль Хвата нет вовсе", () => {
@@ -1252,7 +1292,9 @@ describe("Хват дальнобойного: 6 отложенных потре
 
   describe("Accurate / Меткое (wdbc-1rno.5): удвоение бонуса Прицеливания на одиночном выстреле", () => {
     it("одиночный выстрел Метким оружием с Прицеливанием — бонус ×2 в итоговом пороге", async () => {
-      const rifle = weaponFor({ weaponProps: [{ key: "accurate" }] });
+      // reliable (wdbc-x1nz.2.61): без него rv=96 клинит вместо обычного
+      // промаха — здесь важен только Порог в карточке, не сам Клин.
+      const rifle = weaponFor({ weaponProps: [{ key: "accurate" }, { key: "reliable" }] });
       const p = showAttackDialog(attacker({ items: [rifle], aiming: "half",
         characteristics: { bs: char(45) } }), rifle);
       captured.dice = [96];
@@ -1264,7 +1306,7 @@ describe("Хват дальнобойного: 6 отложенных потре
     });
 
     it("та же связка, но режим Короткой очереди — бонус обычный, без удвоения", async () => {
-      const rifle = weaponFor({ weaponProps: [{ key: "accurate" }], rof_semi: 2 });
+      const rifle = weaponFor({ weaponProps: [{ key: "accurate" }, { key: "reliable" }], rof_semi: 2 });
       const p = showAttackDialog(attacker({ items: [rifle], aiming: "half",
         characteristics: { bs: char(45) } }), rifle);
       captured.dice = [96];
@@ -1276,7 +1318,7 @@ describe("Хват дальнобойного: 6 отложенных потре
     });
 
     it("без Меткого — обычный бонус Прицеливания на одиночном выстреле, без удвоения", async () => {
-      const rifle = weaponFor();
+      const rifle = weaponFor({ weaponProps: [{ key: "reliable" }] });
       const p = showAttackDialog(attacker({ items: [rifle], aiming: "half",
         characteristics: { bs: char(45) } }), rifle);
       captured.dice = [96];
@@ -1373,7 +1415,7 @@ describe("Хват дальнобойного: 6 отложенных потре
 
   describe("Прицелы (wdbc-1rno.5, находка 12/12)", () => {
     it("Коллиматорный Прицел: +5 к порогу, только пока Прицеливание взято", async () => {
-      const rifle = weaponFor();
+      const rifle = weaponFor({ weaponProps: [{ key: "reliable" }] });
       const mod = modOn(rifle.id, { aimAttackMod: 5 });
       const p = showAttackDialog(attacker({ items: [rifle, mod], aiming: "half",
         characteristics: { bs: char(45) } }), rifle);

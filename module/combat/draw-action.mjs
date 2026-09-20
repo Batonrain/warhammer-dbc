@@ -16,6 +16,11 @@
 //  вовсе (в отличие от обычного брошенного оружия, где Уклонение — Реакция
 //  ЦЕЛИ на чужой бросок атаки; раз броска атаки нет, предлагать её неоткуда).
 //
+//  Тот же расчёт урона/шаблона/кнопки применения (resolveGrenadeSelfDamage
+//  ниже) переиспользует и Критический Промах рукопашной атаки гранатой
+//  (стр. 40, wdbc-x1nz.2.59, module/combat/attack.mjs) — там гранату роняет
+//  не решение игрока, а сам провал броска, поэтому ОД за это не берётся.
+//
 //  Кнопки чата — «Разместить шаблон» (.wh-place-template-btn) и «Применить
 //  урон» (.wh-apply-dmg-btn) — переиспользуют уже готовые делегированные
 //  обработчики hooks.mjs (те же классы, что у обычной атаки Взрывным оружием,
@@ -33,17 +38,16 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 
 /**
- * Сорвать чеку с гранаты на своей разгрузке и детонировать её на месте
- * (стр. 27): Полудействие, не атака, Уклонения нет. Один бросок урона,
- * дальше — общие кнопки места/применения урона (см. заголовок файла).
- * Граната расходуется как боеприпас (Количество −1, либо удаление предмета).
+ * Общее ядро «граната взрывается прямо на/у стрелка»: один бросок урона,
+ * шаблон/кнопка применения, расход гранаты (Количество −1, либо удаление
+ * предмета). Общее между «Вырвать чеку» (стр. 27, решение игрока, 1 ОД) и
+ * Критическим Промахом рукопашной атаки гранатой (стр. 40, не решение
+ * игрока — ОД не берётся, см. combat/attack.mjs).
+ * @param {Actor} actor
+ * @param {Item}  item
+ * @param {{title:string, warnLine:string, sound?:boolean}} card
  */
-export async function useDetonateGrenadeInRig(actor, item) {
-  if (!actor || !item || item.type !== "weapon" || item.system?.weaponType !== "grenade") return;
-  if (!await spendActionPoints(actor, 1, { physical: true })) {
-    return ui.notifications.warn("⚠️ Не хватает ОД, чтобы вырвать чеку.");
-  }
-
+async function resolveGrenadeSelfDamage(actor, item, { title, warnLine, sound = true }) {
   const wp = aggregateAuto(resolveWeaponProps(item));
   const damageType = item.system.damageType || "impact";
   const damageSubtype = item.system.damageSubtype || "";
@@ -54,7 +58,7 @@ export async function useDetonateGrenadeInRig(actor, item) {
 
   const dmgRoll = await new Roll(item.system.damage || "0").evaluate();
   const { hasExtreme, extremeLevel, critEffect, exRoll } = await rollExtremeDamage(dmgRoll, {
-    wp, damageType, hitLocation
+    wp, damageType, hitLocation, attacker: actor
   });
   const rolls = exRoll ? [dmgRoll, exRoll] : [dmgRoll];
 
@@ -81,7 +85,7 @@ export async function useDetonateGrenadeInRig(actor, item) {
       data-corrosive="${wp.corrosiveRating ?? 0}" data-entropy="0" data-touch-of-pain="0"
       data-crippling="${wp.cripplingRating ?? 0}" data-piercing="${wp.piercing ? 1 : 0}"
       data-haywire="${wp.haywire ? (wp.haywireRating ?? 0) : ""}" data-haywire-dmg2="${wp.haywireDamage2 || ""}"
-      data-through-shot="0">
+      data-through-shot="0" data-has-extreme="${hasExtreme ? 1 : 0}">
       Применить урон: <b>${dmgRoll.total}</b> → ${hitLocation}${wp.blastRating > 0
         ? ` <span class="roll-hit-extra">(отметьте всех в радиусе ${wp.blastRating}м — «Всем»)</span>` : ""}
     </button>`;
@@ -91,9 +95,9 @@ export async function useDetonateGrenadeInRig(actor, item) {
 
   await postTestCard(actor, {
     icon: rollIcon("burst", "#ff8a4d"),
-    title: `${actorName} — Вырвать чеку: ${item.name}`,
+    title,
     lines: [
-      `<div class="roll-threshold" style="color:#ffb86b;">⚠️ Не считается атакой — Уклонение недоступно (стр. 27). Полудействие.</div>`,
+      `<div class="roll-threshold" style="color:#ffb86b;">⚠️ ${warnLine}</div>`,
       `<div class="roll-threshold">Урон ${dmgRoll.total} ${damageType} Pen ${pen}${hasExtreme ? `, Экстремальный d5: ${extremeLevel}` : ""}</div>`,
       critHtml
     ],
@@ -101,9 +105,40 @@ export async function useDetonateGrenadeInRig(actor, item) {
       `<div class="roll-apply-dmg-section">${templateBtn}${dmgBtn}</div>`,
       `<details class="roll-dice-details"><summary>${rollIcon("chart", "#8fd0ff")}Показать кубы</summary>${dice}</details>`
     ]
-  }, { rolls, sound: true });
+  }, { rolls, sound });
 
   const qty = Number(item.system?.quantity) || 1;
   if (qty > 1) await item.update({ "system.quantity": qty - 1 });
   else await item.delete();
+}
+
+/**
+ * Сорвать чеку с гранаты на своей разгрузке и детонировать её на месте
+ * (стр. 27): Полудействие, не атака, Уклонения нет. Один бросок урона,
+ * дальше — общие кнопки места/применения урона (см. заголовок файла).
+ * Граната расходуется как боеприпас (Количество −1, либо удаление предмета).
+ */
+export async function useDetonateGrenadeInRig(actor, item) {
+  if (!actor || !item || item.type !== "weapon" || item.system?.weaponType !== "grenade") return;
+  if (!await spendActionPoints(actor, 1, { physical: true })) {
+    return ui.notifications.warn("⚠️ Не хватает ОД, чтобы вырвать чеку.");
+  }
+  await resolveGrenadeSelfDamage(actor, item, {
+    title: `${esc(actor.name)} — Вырвать чеку: ${item.name}`,
+    warnLine: "Не считается атакой — Уклонение недоступно (стр. 27). Полудействие."
+  });
+}
+
+/**
+ * Критический Промах рукопашной атаки гранатой (стр. 40, wdbc-x1nz.2.59):
+ * «граната падает персонажу под ноги и взрывается» — тот же расчёт урона и
+ * те же кнопки, что у «Вырвать чеку», но без цены ОД (действие уже оплачено
+ * самой атакой) и с другой карточкой. Вызывается из combat/attack.mjs.
+ */
+export async function resolveGrenadeMeleeFumble(actor, item) {
+  if (!actor || !item) return;
+  await resolveGrenadeSelfDamage(actor, item, {
+    title: `${esc(actor.name)} — Критический Промах: граната падает под ноги!`,
+    warnLine: "Граната не долетела до цели — упала под ноги атакующему и взорвалась (стр. 40)."
+  });
 }

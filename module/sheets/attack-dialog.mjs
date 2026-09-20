@@ -819,7 +819,13 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const gripRangeMult = installedMods
     .filter(m => modFxOf(m).grantsGrip && modFxOf(m).grantsGrip === gripKey)
     .reduce((mult, m) => mult * (Number(modFxOf(m).gripRangeMult) || 1), 1);
-  const gripRange = Math.round((Number(sys.range) || 0) * gripRangeMult);
+  // Метательное/Граната (стр. 40, wdbc-x1nz.2.58): «Rng равна S.b×3м» — не
+  // паковое число, а живой расчёт от броска атакующего; Pistol Grip и
+  // подобные моды дальности метательному не полагаются (gripRangeMult не
+  // умножает эту ветку).
+  const gripRange = sys.weaponClass === "thrown"
+    ? sBonus * 3
+    : Math.round((Number(sys.range) || 0) * gripRangeMult);
 
   let rangeInfoHtml = "";
   if (!isMelee && sys.range > 0) {
@@ -884,6 +890,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     measured,
     targetHelpless,
     targetToken,
+    weapon: item,
     wProps,
     wp,
     // Закрепление снимает штрафы ЧУЖОЙ стороны правила Огринов (оружие велико
@@ -1046,6 +1053,24 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const rofPills = rofModes.map((mm, i) =>
     `<label class="av-pill"><input type="radio" name="atk-rof" value="${mm.value}" data-bonus="${mm.bonus}" ${i === 0 ? "checked" : ""}/><span>${mm.label}</span></label>`
   ).join("");
+  // Широкая Очередь (стр. 35, wdbc-x1nz.2.53): «Короткой или Длинной Очередью
+  // ...уменьшая RoF на 2 и накладывая −20 на Уклонение» — гейт мягкий (по
+  // наличию ХОТЯ БЫ ОДНОЙ Очереди с базовым RoF ≥3, а не по текущей пилюле):
+  // настоящая проверка «а её ли выбрали и хватает ли ей 3 RoF» — в
+  // attack.mjs::_executeAttackRoll, там же, где читается rofMode.
+  const wideBurstAvailable = !isMelee && ((sys.rof_semi || 0) >= 3 || (sys.rof_full || 0) >= 3);
+  const wideBurstHtml = wideBurstAvailable ? `
+    <label class="attack-mod-check" title="Стр. 35: у выбранной Очереди (Короткой/Длинной, базовый RoF ≥3) RoF −2, расход патронов — по полному RoF, Уклонению цели от этой атаки −20.">
+      <input type="checkbox" id="atk-wide-burst"/> Широкая Очередь (RoF−2, Уклонение цели −20)
+    </label>` : "";
+  // Тесное помещение (стр. 36, wdbc-x1nz.2.63): комната ≤4×радиус взрыва —
+  // решает ГМ на глаз (система не знает геометрии стен), тем же приёмом, что
+  // «Заведомо безопасно» у Подавления. Показывается только Взрывному —
+  // остальным оружиям книжный бонус не полагается.
+  const confinedSpaceHtml = wp.blastRating > 0 ? `
+    <label class="attack-mod-check" title="Стр. 36: комната не больше 4×радиус взрыва. X Dmg — +1d10 урона и радиус ×1.5 (окр. вверх); E Dmg — Рвущее; Оглушающее — рейтинг +1. Решает ГМ на глаз, геометрия стен системой не считается.">
+      <input type="checkbox" id="atk-confined-space"/> Тесное помещение (≤4×радиус взрыва)
+    </label>` : "";
   // ── Стойка/База/Приём/Хват/Профиль — теперь выбираются прямо в диалоге ───
   // Под пилюлями каждой группы — своя заметка с полным текстом эффекта
   // текущего выбора (id для updateTotal ниже), тем же приёмом, что раньше
@@ -1136,6 +1161,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         ${offRofOptionsFor(dualCandidates[0]).map(o => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join("")}
       </select>
     </div>
+    ${currentAiming !== "none" ? `
+    <div class="av-row" id="atk-aim-hand-row" title="Стр. 12, wdbc-x1nz.2.41: несколько атак одним действием — бонус Прицеливания получает только ОДНА из них, по выбору игрока.">
+      <span class="av-sec-lbl">Прицеливание — какой руке</span>
+      <label class="attack-mod-check"><input type="radio" name="atk-aim-hand" value="main" checked/> Основной</label>
+      <label class="attack-mod-check"><input type="radio" name="atk-aim-hand" value="off"/> Второй</label>
+    </div>` : ""}
     <div class="av-opt-note" id="atk-dual-note"></div>` : "";
 
   // Не <form>: содержимое DialogV2 уже лежит внутри его собственной формы, а
@@ -1181,6 +1212,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     specificMods,
     sys,
     techSectionsHtml,
+    wideBurstHtml,
+    confinedSpaceHtml,
     vehicleSideHtml,
     wp,
     wpDialogHtml,

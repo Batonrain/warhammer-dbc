@@ -238,11 +238,12 @@ export async function _showContestDialog(actor, techDef) {
             ]
           }, { rolls: [roll] });
 
-          // Опциональный колбэк на успех (техника несёт реальный эффект,
-          // не только прозу-заметку — сейчас только «Заломить», grapple.mjs).
-          // Необязателен: у Повалить/Напролом/Финта/Давления его нет, они не
-          // меняют поведение.
-          if (hit && techDef.onSuccess) await techDef.onSuccess(actor, { deg });
+          // Опциональный колбэк на успех (техника несёт реальный эффект, не
+          // только прозу-заметку) — «Заломить» (grapple.mjs), «Финт»/«Давление»
+          // (combat/feint-press.mjs, wdbc-x1nz.2.65). target — уже вычисленная
+          // выше выцеленная цель (см. immune/target), тот же токен, что
+          // получает эффект. Необязателен: у Повалить/Напролом его нет.
+          if (hit && techDef.onSuccess) await techDef.onSuccess(actor, { deg, target });
         }
       },
       cancel: { label: "Отмена" }

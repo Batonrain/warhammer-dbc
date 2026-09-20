@@ -270,7 +270,10 @@ describe("equipItem — «Взять» списывает ОД в бою (стр
     expect(owner.system.actionPoints.value).toBe(0);
   });
 
-  it("снятие оружия (true→false) не тратит ОД — книга тарифицирует только взятие", async () => {
+  // Сложить (wdbc-x1nz.2.44, стр. 27): «Действие: Полудействие, Тип:
+  // Физическое» — та же цена, что у Взять, симметрично (раньше это
+  // направление было бесплатным по ошибке).
+  it("складывание оружия (true→false) тратит 1 ОД — Сложить тоже Полудействие", async () => {
     const weapon = item({ id: "w1", system: { equipped: true } });
     weapon.type = "weapon";
     const owner = combatCharacter([weapon], { ap: 2 });
@@ -279,7 +282,20 @@ describe("equipItem — «Взять» списывает ОД в бою (стр
     await equipItem(weapon, false);
 
     expect(weapon.updates).toEqual([{ "system.equipped": false }]);
-    expect(owner.system.actionPoints.value).toBe(2);
+    expect(owner.system.actionPoints.value).toBe(1);
+  });
+
+  it("не хватает ОД на Сложить — откатывается, update не происходит", async () => {
+    const weapon = item({ id: "w1", system: { equipped: true } });
+    weapon.type = "weapon";
+    const owner = combatCharacter([weapon], { ap: 0 });
+    weapon.parent = owner;
+
+    await equipItem(weapon, false);
+
+    expect(weapon.updates).toEqual([]);
+    expect(weapon.system.equipped).toBe(true);
+    expect(owner.system.actionPoints.value).toBe(0);
   });
 
   it("уже в руках (true→true, повторный вызов) — второй раз ОД не тратит", async () => {

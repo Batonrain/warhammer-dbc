@@ -403,7 +403,7 @@ const TYPES = {
       // поля (`s.shieldAP != null` в sheet-helpers.mjs и isHandShield),
       // и умолчание 0 сделало бы щитом всё оружие подряд.
       shieldAP: null, shieldZones: "", shieldForm: "",
-      destroyed: false, jammed: false, jamLockedRound: 0,
+      destroyed: false, jammed: false, jamLockedRound: 0, jammedAmmo: 0,
       wraithbone: false, wraithboneImmune: false
     }
   },

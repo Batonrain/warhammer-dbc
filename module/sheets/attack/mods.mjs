@@ -17,6 +17,8 @@ import { rangeBandKey }           from "../../rules/tactical-map.mjs";
 import { getTerrainInfoForToken } from "../../regions/difficult-terrain.mjs";
 import { actorHasAspectPath }     from "../../constants/aeldari-paths.mjs";
 import { hasBlackEyesDarknessImmunity } from "../../rules/black-eyes.mjs";
+import { isBraced } from "../../combat/brace-weapon.mjs";
+import { lockingContactTokenDocs } from "../../combat/free-attack.mjs";
 /**
  * @param {object} v состояние броска: оружие, токены, замеренная дистанция
  * @returns {{commonMods: object[], specificMods: object[], charSwapWhy: string[], bandKey: string|null}}
@@ -34,6 +36,7 @@ export function situationalMods(v) {
     measured,
     targetHelpless,
     targetToken,
+    weapon = null,
     wProps,
     wp,
     // Штраф за огринское оружие в чужих руках (rules/ogryn-fit.mjs) — число
@@ -46,7 +49,10 @@ export function situationalMods(v) {
     // visionPenalty (wdbc-1rno.1, Чёрные Глаза/Black Eyes, Cor 60+) — три
     // галочки ниже гасятся у АТАКУЮЩЕГО (не у цели, поэтому не immuneFlag —
     // тот гасит только возможности ЦЕЛИ, см. цикл ниже).
-    { label: "Слабый свет",   value: -10, visionPenalty: true },
+    // Слабый свет (стр. 34, wdbc-x1nz.2.46): штраф только стрелковой — у
+    // рукопашной книжная таблица «Стандартные Модификаторы Атаки» даёт
+    // пустую ячейку (0), в отличие от Дыма/Тьмы ниже, где штраф есть у обеих.
+    { label: "Слабый свет",   value: isMelee ? 0 : -10, visionPenalty: true },
     { label: "Дым / туман",   value: isMelee ? -10 : -20, visionPenalty: true },
     { label: "Тьма",          value: isMelee ? -20 : -30, visionPenalty: true },
     { label: "Ослеплён",      value: isMelee ? -30 : -99, autofail: !isMelee, autoCheck: isBlinded },
@@ -58,7 +64,11 @@ export function situationalMods(v) {
     { label: "Цель бежит",    value: isMelee ?  20 : -20 },
     { label: "Цель Оглушена", value: 20 },
     { label: "Цель Врасплох", value: 30, immuneFlag: "attack.surpriseImmune" },
-    { label: "Скрытая атака", value: 30, note: "цель не знает" },
+    // id нужен readAttackForm (стр. 12, wdbc-x1nz.2.29): «Избегание невозможно
+    // от атаки, о которой цель не знает» — атакующий сам объявляет это
+    // галочкой (со спины/из засады/невидимый-неслышный снаряд книга не даёт
+    // теста на автоопределение), а не только получает +30 к попаданию.
+    { id: "atk-mod-hidden", label: "Скрытая атака", value: 30, note: "цель не знает — Избегание невозможно" },
     // Закрепление (Полудействие, Физическое: оружие ставится на укрытие,
     // лафет, бипод или трипод). Книга свойства Ogrynized: «Закрепление оружия
     // убирает все эти штрафы». Отдельного состояния «закреплено» в системе
@@ -158,6 +168,17 @@ export function situationalMods(v) {
   // Зона «очень трудный» не различает — автоотмечаем обычный (−10), сильнее руками.
   const meleeTerrain = (isMelee && attackerToken)
     ? getTerrainInfoForToken(attackerToken.document ?? attackerToken) : null;
+  // Связан в Рукопашной (стр. 30, wdbc-x1nz.2.64): стрелок сам заперт врагом
+  // с рукопашным оружием/Пистолетом в Базовом/Глубоком контакте — «не может
+  // стрелять в цели ВНЕ рукопашной». Геометрия та же, что у Свободной Атаки.
+  const lockedByEnemies = (!isMelee && attackerToken)
+    ? lockingContactTokenDocs(attackerToken.document ?? attackerToken) : [];
+  const inContactWithTarget = !!measured?.contact && measured.contact !== "none";
+  // Стрельба ПО цели, которая сама Связана в Рукопашной с кем-то ТРЕТЬИМ (не
+  // самим стрелком — тот случай уже покрыт «Стрельба в рукопашную» ниже, со
+  // своим исключением для Пистолета) — отдельный штраф −20 без исключений.
+  const targetLocked = (!isMelee && targetToken && !inContactWithTarget)
+    ? lockingContactTokenDocs(targetToken.document ?? targetToken).length > 0 : false;
   const specificMods = isMelee ? [
     { label: "Трудный ландшафт",       value: -10, autoCheck: !!meleeTerrain?.inTerrain,
       note: meleeTerrain?.inTerrain ? "зона Трудного Ландшафта под атакующим" : undefined },
@@ -196,8 +217,58 @@ export function situationalMods(v) {
     { label: "Подавлен огнём", value: -20, autoCheck: !!actor.system.conditions?.pinned },
     // id нужен readAttackForm — Карабин (wdbc-z56a) читает именно этот флаг,
     // чтобы решить, дать ли цели в рукопашной +30 или +10 на Уклонение.
-    { id: "atk-melee-shot", label: "Стрельба в рукопашную",   value: -20 },
-    { label: "Дистанция в упор",        value:  30, autoCheck: bandKey === "pointBlank", note: bandNote("pointBlank") },
+    // Пистолет (стр. 40, wdbc-x1nz.2.57): «может использоваться для стрельбы
+    // в ближнем бою без каких-либо штрафов» — ни этого штрафа, ни бонуса
+    // Уклонения цели (тот гасится отдельно, attack.mjs::meleeShotDodgeBonus).
+    { id: "atk-melee-shot", label: "Стрельба в рукопашную",
+      value: weapon?.system?.weaponClass === "pistol" ? 0 : -20,
+      note: weapon?.system?.weaponClass === "pistol" ? "Пистолет: без штрафов в рукопашную" : undefined },
+    // Связан в Рукопашной (стр. 30, wdbc-x1nz.2.64): полный запрет стрелять в
+    // цели ВНЕ рукопашной, если стрелок сам заперт врагом с рукопашным
+    // оружием/Пистолетом в контакте. Тот же autofail-приём, что у «Тяжёлое/
+    // Длинная Винтовка» ниже — галочка есть всегда, бьёт (autoCheck) только
+    // когда стрелок реально заперт и целится МИМО своей рукопашной.
+    { label: "Связан в Рукопашной: нельзя стрелять вне рукопашной",
+      value: 0,
+      autofail: lockedByEnemies.length > 0,
+      immune: lockedByEnemies.length === 0,
+      autoCheck: lockedByEnemies.length > 0 && !inContactWithTarget,
+      note: lockedByEnemies.length > 0
+        ? `в контакте с врагом (рукопашное/Пистолет): ${lockedByEnemies.map(d => d.name).join(", ")} (стр. 30)`
+        : undefined },
+    // Стрельба ПО цели в рукопашной с ТРЕТЬИМ лицом (стр. 30) — отдельно от
+    // «Стрельба в рукопашную» выше (та про самого стрелка, с исключением для
+    // Пистолета): здесь исключения нет, стрелок сам не в этой рукопашной.
+    { label: "Цель связана в рукопашной (с другим персонажем)", value: -20,
+      autoCheck: targetLocked,
+      note: targetLocked ? "стр. 30 — штраф без исключений, даже Пистолету" : undefined },
+    // Тяжёлое оружие и Длинная Винтовка (стр. 40, wdbc-x1nz.2.57): «не может
+    // использоваться для стрельбы в ближнем бою» вовсе — в отличие от
+    // Пистолета/Винтовки выше, это не штраф, а полный запрет самого выстрела
+    // по цели, с которой стрелок в контакте Баз. Тот же приём autofail, что
+    // у «Высокая высота цели» ниже: галочка есть всегда, но реально бьёт
+    // (autoCheck) только когда выстрел ДЕЙСТВИТЕЛЬНО идёт в рукопашную —
+    // wp.noMeleeFire — Длинная Винтовка (constants/weapon-properties.mjs),
+    // weaponClass "heavy" гейтится напрямую, без отдельного флага в паке.
+    { label: "Тяжёлое/Длинная Винтовка: нельзя стрелять в рукопашную",
+      value: 0,
+      autofail: weapon?.system?.weaponClass === "heavy" || !!wp.noMeleeFire,
+      immune: !(weapon?.system?.weaponClass === "heavy" || !!wp.noMeleeFire),
+      autoCheck: !!measured?.contact && measured.contact !== "none",
+      note: (weapon?.system?.weaponClass === "heavy" || !!wp.noMeleeFire)
+        ? "класс оружия не допускает стрельбу в ближнем бою (стр. 40)" : undefined },
+    // Стр. 40: «Стрельба в ближнем бою считается дистанцией в упор, но имеет
+    // модификатор на попадание +0, как будто это боевая дистанция» — контакт
+    // Баз (measured.contact, tactical-map.mjs::measureTokens) уже даёт
+    // расстояние в диапазоне «в упор» (0–3м), поэтому геометрия сама
+    // отличает «просто стреляю с 1м, никого не трогая» (честные +30) от
+    // «стреляю в того, с кем сцепился врукопашную» (книжные +0).
+    { label: "Дистанция в упор",
+      value: (!!measured?.contact && measured.contact !== "none") ? 0 : 30,
+      autoCheck: bandKey === "pointBlank",
+      note: (!!measured?.contact && measured.contact !== "none")
+        ? "стрельба в ближнем бою — как боевая дистанция (стр. 40)"
+        : bandNote("pointBlank") },
     { label: "Короткая дистанция",      value:  10, autoCheck: bandKey === "short",      note: bandNote("short") },
     { label: "Боевая дистанция",        value:   0, autoCheck: bandKey === "combat",     note: bandNote("combat") },
     { label: "Дальняя дистанция",       value: -10, autoCheck: bandKey === "long",       note: bandNote("long") },
@@ -225,9 +296,13 @@ export function situationalMods(v) {
       note: wp.antiAir ? "снято: Зенитное" : (targetAtHigh ? "без Зенитного попасть в принципе нельзя" : undefined) },
     // Тяжёлое оружие (стр. 40): –30 без Закрепления, ещё –10 если стрелок
     // Двигался в этот Ход — Гиро-Стабилизированное снижает первое до –10 и
-    // полностью снимает второе (стр. 168).
+    // полностью снимает второе (стр. 168). Закрепление (стр. 35, wdbc-x1nz.2.56)
+    // теперь настоящее Действие с состоянием (combat/brace-weapon.mjs) —
+    // галочка сама снимается, пока оружие реально Закреплено этим же токеном.
     { label: "Тяжёлое оружие: без Закрепления", value: wp.gyroStabilized ? -10 : -30,
-      note: wp.gyroStabilized ? "Гиро-стаб.: –30 снижено до –10" : undefined },
+      autoCheck: weapon?.system?.weaponClass === "heavy" && !isBraced(actor, weapon),
+      note: wp.gyroStabilized ? "Гиро-стаб.: –30 снижено до –10"
+          : (weapon?.system?.weaponClass === "heavy" && isBraced(actor, weapon) ? "Закреплено" : undefined) },
     { label: "Тяжёлое оружие: стрельба на ходу", value: wp.gyroStabilized ? 0 : -10, immune: wp.gyroStabilized,
       note: wp.gyroStabilized ? "снято: Гиро-стаб." : undefined }
   ];

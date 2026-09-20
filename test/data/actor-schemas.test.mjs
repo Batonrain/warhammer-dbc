@@ -265,6 +265,10 @@ const DEVIATIONS = {
     // (module/combat/fear.mjs::rollShockRecovery), заведено гораздо позже
     // template.json.
     "conditions.shocked": false,
+    // Врасплох (стр. 12, wdbc-x1nz.2.26) — заведено гораздо позже template.json.
+    "conditions.surprised": false,
+    // Опьянение (стр. 12, wdbc-x1nz.2.32) — заведено гораздо позже template.json.
+    "conditions.intoxicated": false,
     // Экономика действий (стр. 12, wdbc-qleg/wdbc-fkdd): ОД — новое поле,
     // Реакции раньше были свободным текстовым полем-памяткой (умолчание ""),
     // теперь структурный пул — см. module/combat/action-economy.mjs.

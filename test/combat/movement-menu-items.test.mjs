@@ -36,6 +36,31 @@ describe("movementMenuItems", () => {
     expect(keys).not.toContain("marchA");
   });
 
+  // Стр. 30, wdbc-x1nz.2.36-39: Вольт/Перебежка — боевые пункты; Лечь/Встать
+  // взаимоисключающие по текущему Состоянию «Повален».
+  it("в бою — Вольт и Перебежка есть", () => {
+    globalThis.game.combat = { started: true };
+    const keys = movementMenuItems(fakeActor()).map(i => i.key);
+    expect(keys).toContain("vault");
+    expect(keys).toContain("duckAndCover");
+  });
+
+  it("не Повален — пункт «Лечь» есть, «Встать» нет", () => {
+    globalThis.game.combat = { started: true };
+    const keys = movementMenuItems(fakeActor()).map(i => i.key);
+    expect(keys).toContain("prone");
+    expect(keys).not.toContain("standup");
+  });
+
+  it("Повален — пункт «Встать» есть, «Лечь» нет", () => {
+    globalThis.game.combat = { started: true };
+    const actor = fakeActor();
+    actor.system.conditions = { prone: true };
+    const keys = movementMenuItems(actor).map(i => i.key);
+    expect(keys).toContain("standup");
+    expect(keys).not.toContain("prone");
+  });
+
   it("без Таланта Half-Step — пункта halfstep нет даже в бою", () => {
     globalThis.game.combat = { started: true };
     const items = movementMenuItems(fakeActor());

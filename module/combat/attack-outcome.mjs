@@ -218,7 +218,8 @@ export function damageFormulaFor({ damage, flatBonus = 0, chars = {}, corruption
  *
  * Эти кубы не вызывают Экстремальный урон — их бросает отдельный Roll.
  */
-export function bonusDamageDice({ wp, rofMode, hit, deg, shortRange = false, maximal = false, band = null, ammoDice = 0, aimed = false }) {
+export function bonusDamageDice({ wp, rofMode, hit, deg, shortRange = false, maximal = false, band = null, ammoDice = 0, aimed = false,
+                                   confinedSpace = false, damageType = "" }) {
   let dice = 0;
   // «При одиночных выстрелах С Прицеливанием» (стр. 166) — без Прицеливания
   // (aimed=false) Меткое не даёт этих кубов вовсе, только удвоение бонуса
@@ -242,5 +243,9 @@ export function bonusDamageDice({ wp, rofMode, hit, deg, shortRange = false, max
   if (maximal)                  dice += 1;
   if (wp.prismaAtMax)           dice += 1;
   if (band?.dice)               dice += Number(band.dice) || 0;
+  // Тесное помещение (стр. 36, wdbc-x1nz.2.63): взрывы, наносящие X Dmg
+  // (damageType "blast"), получают +1d10 урона. Радиус ×1.5 — отдельно, в
+  // attack.mjs, там же, где известен реальный blastRating для шаблона.
+  if (confinedSpace && wp.blastRating > 0 && damageType === "blast") dice += 1;
   return dice + (Number(ammoDice) || 0);
 }

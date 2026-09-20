@@ -22,13 +22,17 @@ import { testOutcome } from "./roll-outcome.mjs";
  *   отдельное имя поля. У Выхода из Шока/Паники от Горения источника нет
  *   структурно (состояние уже оторвано от исходной угрозы) — вызывающая
  *   сторона просто не передаёт opts, ведёт себя как раньше.
+ * @param {boolean} [opts.selfAdvantage] — Преимущество ОТ ВЫЗЫВАЮЩЕЙ стороны
+ *   (не из реестра правил), напр. Перебежка/Duck and Cover (стр. 30,
+ *   wdbc-x1nz.2.38) на Подавлении. Именной переброс реестра важнее — тот же
+ *   приоритет «навязанное сильнее своего», что у Уклонения/Парирования.
  * @returns {Promise<{eff:number, bonus:number, roll:Roll, rv:number, rolls:Roll[],
  *   rerollNote:string, success:boolean, dof:number, usedReroll:boolean}>}
  *   dof — степень провала (0 при успехе); usedReroll — был ли доступен и
  *   применён переброс из реестра правил (для applyLordOfExoditesFailPenalty);
  *   parts — подписи применённых модификаторов для карточки.
  */
-export async function rollMoraleTest(actor, baseThreshold, { sourceActor = null } = {}) {
+export async function rollMoraleTest(actor, baseThreshold, { sourceActor = null, selfAdvantage = false, selfAdvantageLabel = "Преимущество" } = {}) {
   const resolved = resolveTest({ actor, kind: "skill", char: "wp", morale: true, targetActor: sourceActor });
   // autoMods наравне с mods (wdbc-ct65.1): Усталость и прочие штрафы состояния
   // тела — такие же правила реестра, просто без галочки. Спрашивать всё равно
@@ -38,7 +42,9 @@ export async function rollMoraleTest(actor, baseThreshold, { sourceActor = null 
   const parts = applied.map(m => `${m.label} ${m.value > 0 ? "+" : ""}${m.value}`);
   const eff = baseThreshold + bonus;
   const ruleReroll = resolved.rerolls.find(r => r.who !== "target");
-  const reroll = ruleReroll ? { mode: ruleReroll.mode, rolls: ruleReroll.rolls, label: ruleReroll.label } : null;
+  const reroll = ruleReroll
+    ? { mode: ruleReroll.mode, rolls: ruleReroll.rolls, label: ruleReroll.label }
+    : (selfAdvantage ? { mode: "keepBest", rolls: 2, label: selfAdvantageLabel } : null);
   const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
   const { success, deg } = testOutcome(rv, eff);
   return { eff, bonus, parts, roll, rv, rolls, rerollNote, success, dof: success ? 0 : deg, usedReroll: !!reroll };

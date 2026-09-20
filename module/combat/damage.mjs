@@ -713,7 +713,8 @@ export async function applyDamageToActor(actor, damageData) {
     throughShot = false, // Выстрел Насквозь: свойство присутствует (wdbc-wlwf)
     ignoreArmour = false, // Заломить (стр. 12, Борьба): урон "игнорирующий броню" — AP=0, T.b всё равно поглощает
     blast = 0,   // Взрывное(X): уже в damageData для доп. попаданий по Орде — Странной Неуязвимости нужен сам факт свойства (wdbc-1rno)
-    spray = false // Распыление: свойство присутствует (wdbc-1rno)
+    spray = false, // Распыление: свойство присутствует (wdbc-1rno)
+    hasExtreme = false // Экстремальный Урон (wdbc-x1nz.2.50): гарантирует 1 непоглощаемого урона ниже
   } = damageData;
 
   // Bronze Myrmidon (wdbc-1rno.1, rules/bronze-myrmidon.mjs): у актора с
@@ -905,9 +906,29 @@ export async function applyDamageToActor(actor, damageData) {
       // Больший из двух, а не сумма: это одна и та же стена, и сложить её с
       // собой значило бы дать двойную защиту тому, кто и стоял за ней, и
       // отскочил в неё.
-      coverBonus = Math.max(coverApForLocation(system.cover, armorKey, recoilCover), manualCover);
-      coverFromRecoil = recoilCover > 0 && coverBonus === recoilCover && manualCover < recoilCover;
+      const combinedCoverBase = Math.max(coverApForLocation(system.cover, armorKey, recoilCover), manualCover);
+      coverFromRecoil = recoilCover > 0 && combinedCoverBase === recoilCover && manualCover < recoilCover;
+      // Взрывы и Окружение (стр. 36, wdbc-x1nz.2.63): укрытие вдвое эффективнее
+      // против любого Взрывного, втрое — против взрывов X Dmg, вчетверо —
+      // против X(Fr) Dmg. К ЛЮБОМУ источнику AP (ручному и разовому Отскоку
+      // разом) — книга описывает физику удара волны/осколков о преграду, а не
+      // персистентность конкретного числа на листе (та отдельно, ниже).
+      const blastCoverMult = blast > 0
+        ? (damageSubtype === "fragmentation" ? 4 : damageType === "blast" ? 3 : 2)
+        : 1;
+      coverBonus = combinedCoverBase * blastCoverMult;
       if (coverBonus > 0) armorAP += coverBonus;
+      // Повреждение Укрытий (стр. 33, wdbc-x1nz.2.62): попадание, ПРОБИВАЮЩЕЕ
+      // укрытие (Pen оружия ≥ его AP), снимает укрытию 1 AP. Только ручное
+      // system.cover.ap (стол сам вписал число из книжной таблицы — это
+      // персистентный объект сцены); сравнение — с настоящим AP материала
+      // укрытия (manualCover), а не с усиленным против Взрыва coverBonus —
+      // множитель Взрыва это эффективность поглощения, не физическая
+      // прочность преграды; разовый бонус Отскока (recoilCover) не портим —
+      // не привязан к конкретному числу на листе.
+      if (manualCover > 0 && (penetration || 0) >= manualCover) {
+        actorUpdate["system.cover.ap"] = Math.max(0, manualCover - 1);
+      }
       // Копьё/Пика (Lance): если AP цели > 20 — снижается до 20 в расчёте
       // поглощения, ДО вычета пробития (стр. 168).
       if (lance && armorAP > 20) armorAP = 20;
@@ -962,8 +983,15 @@ export async function applyDamageToActor(actor, damageData) {
   // Флаш накопленных выше правок актора — один запрос вместо до трёх.
   if (Object.keys(actorUpdate).length) await actor.update(actorUpdate);
 
-  const netDamage = ablativeDamage(rawNet, actor);
+  let netDamage = ablativeDamage(rawNet, actor);
   const ablated = netDamage !== rawNet;
+  // Экстремальный Урон (стр. 34, wdbc-x1nz.2.50): «если после Поглощения
+  // попадание не нанесло никакого реального урона, оно наносит 1
+  // непоглощаемого урона» — последняя проверка, ПОСЛЕ всех слоёв поглощения
+  // (брони, Аблативного бронирования скакуна, Саркофага Дредноута выше), они
+  // этот минимум больше не режут.
+  const extremeFloorApplied = hasExtreme && netDamage === 0;
+  if (extremeFloorApplied) netDamage = 1;
 
   const { currentWounds, newWounds, newCritical, gotCritical } =
     await applyWoundLoss(actor, netDamage);
@@ -1159,7 +1187,8 @@ export async function applyDamageToActor(actor, damageData) {
 
   const woundsLine = netDamage > 0
     ? `Раны: <b>${currentWounds}</b> → <b>${newWounds}</b>${
-        ablated ? ` <span class="dmg-tb-note">(Аблативное Бронирование: ${rawNet} → 1)</span>` : ""}`
+        ablated ? ` <span class="dmg-tb-note">(Аблативное Бронирование: ${rawNet} → 1)</span>` : ""}${
+        extremeFloorApplied ? ` <span class="dmg-tb-note">(Экстремальный Урон: поглощено полностью, но 1 непоглощаемого урона всё равно проходит, стр. 34)</span>` : ""}`
     : `Урон поглощён полностью`;
 
   // wdbc-xql6: типовые фразы крит-строки («Оглушена на NdX Раундов» и т.п.)

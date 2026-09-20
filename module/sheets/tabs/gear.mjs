@@ -42,13 +42,16 @@ function _conflictingHardArmor(actor, item) {
  * блокируется, если рук не хватает (wdbc-3xqh) — только на ПРИРОСТ занятости,
  * старые «нелегальные» связки на существующих листах не трогает и не рвёт.
  *
- * «Взять» (стр. 27, полудействие, физическое действие): здесь моделируется
- * без отдельной кнопки — оружие СЧИТАЕТСЯ взятым в руки, когда становится
- * equipped=true. Список инструментов на вкладке уже показывает всё
- * снаряжение и его состояние, отдельный диалог поверх него был бы лишним.
- * Списывается ТОЛЬКО на переход false→true (обратное — сложить — книга не
- * тарифицирует); нет ОД — экипировка откатывается (ранний return, update не
- * происходит), чекбокс возвращается в фактическое состояние ниже.
+ * «Взять»/«Сложить» (стр. 27, оба — Полудействие, Физическое действие): здесь
+ * моделируются без отдельной кнопки — оружие СЧИТАЕТСЯ взятым/сложенным,
+ * когда меняется system.equipped. Список инструментов на вкладке уже
+ * показывает всё снаряжение и его состояние, отдельный диалог поверх него
+ * был бы лишним. Книга отдельно разрешает «просто выпустить предмет из рук
+ * за свободное действие» вместо формального Сложить — эта развилка не
+ * моделируется (честная урезка): чекбокс всегда берёт дороже правильный
+ * вариант (1 ОД), просто бросить оружие на пол отдельной кнопкой нельзя.
+ * Нет ОД — экипировка откатывается (ранний return, update не происходит),
+ * чекбокс возвращается в фактическое состояние ниже.
  */
 export async function equipItem(item, equipped) {
   if (!item) return;
@@ -69,8 +72,11 @@ export async function equipItem(item, equipped) {
     }
   }
   const isDraw = equipped && item.type === "weapon" && !item.system.equipped;
-  if (isDraw && item.parent && !await spendActionPoints(item.parent, 1, { physical: true })) {
-    ui.notifications?.warn("⚠️ Не хватает ОД, чтобы Взять оружие (Полудействие, стр. 27).");
+  // Сложить (wdbc-x1nz.2.44): та же цена и то же условие «оружие», что у
+  // Взять выше — симметрично, раньше это направление было бесплатным.
+  const isStow = !equipped && item.type === "weapon" && item.system.equipped;
+  if ((isDraw || isStow) && item.parent && !await spendActionPoints(item.parent, 1, { physical: true })) {
+    ui.notifications?.warn(`⚠️ Не хватает ОД, чтобы ${isDraw ? "Взять" : "Сложить"} оружие (Полудействие, стр. 27).`);
     return;
   }
   await item.update({ "system.equipped": equipped });
@@ -78,11 +84,11 @@ export async function equipItem(item, equipped) {
   // Эффекты установленных модификаций гаснут вместе с носителем (isItemActive),
   // но update пришёл не им — пересчитываем сами.
   await syncOrphanedModEffects(item.parent, item.id);
-  if (isDraw && item.parent) {
+  if ((isDraw || isStow) && item.parent) {
     await postTestCard(item.parent, {
       icon: rollIcon("run", "#b0a080"),
-      title: `${esc(item.parent.name)} — Взять`,
-      lines: [`<div class="roll-threshold">Берёт в руки: <b>${esc(item.name)}</b> (Полудействие).</div>`]
+      title: `${esc(item.parent.name)} — ${isDraw ? "Взять" : "Сложить"}`,
+      lines: [`<div class="roll-threshold">${isDraw ? "Берёт в руки" : "Складывает на разгрузку"}: <b>${esc(item.name)}</b> (Полудействие).</div>`]
     }, { sound: false });
   }
 }

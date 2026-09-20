@@ -1,5 +1,6 @@
 import { SKILL_RANKS }    from "../constants/characteristics.mjs";
-import { MELEE_STANCES, BALANCE_PARRY_MOD } from "../constants/combat.mjs";
+import { MELEE_STANCES, BALANCE_PARRY_MOD, gripEffects } from "../constants/combat.mjs";
+import { currentMeleeGrip } from "../rules/hands.mjs";
 import { _degWord, _hitWord, _leftoverSuccessPhrase, negatedHits, esc } from "../helpers/utils.mjs";
 import { resolveWeaponPropsList, aggregateAuto } from "./weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries }  from "./weapon-mods.mjs";
@@ -14,7 +15,9 @@ import { withWitchsEdge } from "./witchs-edge.mjs";
 import { spendReaction }  from "./action-economy.mjs";
 import { addEvasionSurplus } from "./evasion-pool.mjs";
 import { recoilButtonHtml } from "./recoil.mjs";
+import { overpenetrationButtonHtml } from "./overpenetration.mjs";
 import { danceOfFireAdvantage } from "../rules/dodge-advantage.mjs";
+import { duckAndCoverAdvantage } from "../rules/duck-and-cover.mjs";
 import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { retractPart, extendPart, allLimbsCompressed } from "../rules/compression.mjs";
@@ -104,7 +107,7 @@ export function dodgeProfile(actor, extraMod = 0) {
 // правку одного места без остальных. Объект опций делает порядок неважным.
 export async function _performDodge(actor, {
   extraMod = 0, forcedReroll = "", hitsCount = 1, attackerUuid = "",
-  isMelee = false, burst = false, attackerIsHorde = false
+  isMelee = false, burst = false, attackerIsHorde = false, attackId = "", itemUuid = ""
 } = {}) {
   // Потеря ног (стр. 30-31, wdbc-r5o7.5): «нельзя Уклоняться» — хватает одной
   // потерянной ноги (книга не требует «обеих», в отличие от полной
@@ -112,7 +115,7 @@ export async function _performDodge(actor, {
   // тратится — Уклонение физически недоступно, а не просто провалено.
   if ((Number(actor.system.conditions?.lostLegsCount) || 0) > 0)
     return _noReactionCard(actor, "Уклонение (нет ног)");
-  if (!(await spendReaction(actor, { forDefense: true }))) return _noReactionCard(actor, "Уклонение");
+  if (!(await spendReaction(actor, { forDefense: true, attackId }))) return _noReactionCard(actor, "Уклонение");
   const { agTotal, threshold: baseThreshold, modParts } = dodgeProfile(actor, extraMod);
   // Фантомные Копии (Wrapped in Chaos "2-3", wdbc-1rno): штраф Уклонению
   // ЧУЖОЙ рукопашной атаки — направленный модификатор атакующий→защитник,
@@ -133,7 +136,10 @@ export async function _performDodge(actor, {
   // сильнее своего Преимущества).
   const dancerAdvantage = danceOfFireAdvantage(actor, burst);
   const hordeAdvantage  = oneAgainstAHundredAdvantage(actor, attackerIsHorde);
-  const selfAdvantage   = dancerAdvantage || hordeAdvantage;
+  // Перебежка (стр. 30, wdbc-x1nz.2.38): переброс Избегания до конца Раунда —
+  // тот же приём keepBest, что у соседей выше.
+  const duckAdvantage   = duckAndCoverAdvantage(actor);
+  const selfAdvantage   = dancerAdvantage || hordeAdvantage || duckAdvantage;
   const rolled = [];
   for (let i = 0; i < (forcedReroll || selfAdvantage ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
   const picked = pickReroll(rolled.map(r => r.total), forcedReroll || "keepBest");
@@ -158,9 +164,10 @@ export async function _performDodge(actor, {
   const banked = leftover > 0 && await addEvasionSurplus(actor, attackerUuid, leftover, extraMod);
 
   if (picked.dropped.length) {
+    const advLabel = dancerAdvantage ? "Танец Среди Огня" : hordeAdvantage ? "Один Против Сотни" : "Перебежка";
     modParts.push(forcedReroll
       ? `навязанный переброс, отброшено ${picked.dropped.join(", ")}`
-      : `${dancerAdvantage ? "Танец Среди Огня" : "Один Против Сотни"}: Преимущество, отброшено ${picked.dropped.join(", ")}`);
+      : `${advLabel}: Преимущество, отброшено ${picked.dropped.join(", ")}`);
   }
 
   let outcomeHtml;
@@ -182,11 +189,16 @@ export async function _performDodge(actor, {
   // Отскок = Вольт (п.6 правила) — отдельная точка входа, не эта кнопка
   // (см. заголовок module/combat/recoil.mjs).
   const recoilSection = (passed && !isMelee) ? recoilButtonHtml(actor) : "";
+  // Снаряд летит дальше (стр. 12, wdbc-x1nz.2.39): только у дистанционной
+  // атаки с известным оружием (itemUuid) — рукопашный удар «лететь дальше» не
+  // может, а кнопки контратаки/старые вызовы itemUuid не несут (тот же честный
+  // дефолт, что у attackerUuid выше).
+  const overpenSection = (passed && !isMelee) ? overpenetrationButtonHtml(itemUuid) : "";
 
     await postTestCard(actor, {
     icon: rollIcon("run"), title: `Уклонение — ${esc(actor.name)}`, actorUuid: actor.uuid,
     threshold: rollStatLine({ label: "Ag", base: agTotal, parts: modParts, threshold, rv }),
-    outcome: outcomeHtml, sections: [leftoverNote, recoilSection]
+    outcome: outcomeHtml, sections: [leftoverNote, recoilSection, overpenSection]
   }, { rolls: [roll] });
 }
 
@@ -271,7 +283,14 @@ export function parryProfile(actor, extraMod = 0, weaponOverride = null, { useCr
 
   // Эффекты модификаций парирующего оружия (баланс, Защитное/Power Field и т.п.)
   const modFx      = getModEffects(actor, meleeWeapon);
-  const balance    = parseInt(meleeWeapon?.system.balance ?? 0) + (modFx.balanceMod || 0);
+  // Хват (стр. 39, wdbc-x1nz.2.45): «Баланс оружия принудительно ставится в
+  // это значение» (balSet) у Ближнего/Хвостового Хвата — раньше читался только
+  // на АТАКЕ (selection.mjs), Парирование всегда брало «голый» system.balance,
+  // и выбор Хвата в диалоге атаки не менял Порог Парирования тем же оружием.
+  // currentMeleeGrip — тот же сохранённый hudGrip, что диалог атаки пишет по
+  // роллу (module/rules/hands.mjs), с тем же фоллбэком на первый Хват профиля.
+  const gripBalSet = meleeWeapon ? gripEffects(currentMeleeGrip(meleeWeapon)).balSet : null;
+  const balance    = (gripBalSet ?? parseInt(meleeWeapon?.system.balance ?? 0)) + (modFx.balanceMod || 0);
   const balanceMod = BALANCE_PARRY_MOD[String(balance)];
 
   const stance    = actor.system.meleeStance || "standard";
@@ -405,7 +424,7 @@ function _inMeleeContactWithAttacker(actor, attackerActor) {
 // вызов при правке было легко.
 export async function _performParry(actor, {
   extraMod = 0, attackerUuid = "", hitsCount = 1, burst = false,
-  attackerIsHorde = false, isMelee = true, attackerWeaponUuid = ""
+  attackerIsHorde = false, isMelee = true, attackerWeaponUuid = "", attackId = ""
 } = {}) {
   // Резолв атакующего — нужен и для Разницы Размеров (стр. 12, ЛЮБОЙ
   // Парирование), и для контакта при стрельбе ниже. Неизвестный/нерезолвящийся
@@ -518,7 +537,7 @@ export async function _performParry(actor, {
     return;
   }
 
-  if (!(await spendReaction(actor, { forDefense: true }))) return _noReactionCard(actor, "Парирование");
+  if (!(await spendReaction(actor, { forDefense: true, attackId }))) return _noReactionCard(actor, "Парирование");
 
   // Танец Среди Огня и Один Против Сотни (wdbc-u0by) — Преимущество на
   // Парирование против Очереди / против атаки Орды, тот же приём
@@ -530,7 +549,9 @@ export async function _performParry(actor, {
   // же самое, что делают два Преимущества выше, поэтому считается тем же
   // приёмом, а не отдельной веткой.
   const maineGauche     = maineGaucheParryReroll(actor, meleeWeapon, attackedPrevTurn(actor));
-  const selfAdvantage   = dancerAdvantage || hordeAdvantage || maineGauche;
+  // Перебежка (стр. 30, wdbc-x1nz.2.38) — тот же переброс, что у Уклонения выше.
+  const duckAdvantage   = duckAndCoverAdvantage(actor);
+  const selfAdvantage   = dancerAdvantage || hordeAdvantage || maineGauche || duckAdvantage;
   const rolled = [];
   for (let i = 0; i < (selfAdvantage ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
   const picked   = pickReroll(rolled.map(r => r.total), "keepBest");
@@ -566,6 +587,7 @@ export async function _performParry(actor, {
     modParts.push(
       dancerAdvantage ? `Танец Среди Огня: Преимущество, отброшено ${picked.dropped.join(", ")}`
       : hordeAdvantage ? `Один Против Сотни: Преимущество, отброшено ${picked.dropped.join(", ")}`
+      : duckAdvantage ? `Перебежка: Преимущество, отброшено ${picked.dropped.join(", ")}`
       : `Мэн-Гош: переброс ножом, отброшено ${picked.dropped.join(", ")}`);
   }
 
@@ -720,7 +742,7 @@ export async function _performPsychicParry(actor, { powerName = "", ePR = 0, ext
  * втянутой Голове, мобильность при втянутых Ногах, выпуск удерживаемого
  * оружия из втягиваемой Руки — только чат-заметки, без числа/автоснятия.
  */
-export async function _performCompression(actor, location, attackerUuid = "") {
+export async function _performCompression(actor, location, attackerUuid = "", attackId = "") {
   const rollMode = game.settings.get("core", "rollMode");
   if (!hasRuleFlag(actor, COMPRESSION_CAPABILITY)) {
     return ChatMessage.create(ChatMessage.applyRollMode({
@@ -734,7 +756,7 @@ export async function _performCompression(actor, location, attackerUuid = "") {
         </div>`
     }, rollMode));
   }
-  if (!(await spendReaction(actor, { forDefense: true }))) return _noReactionCard(actor, "Сжатие");
+  if (!(await spendReaction(actor, { forDefense: true, attackId }))) return _noReactionCard(actor, "Сжатие");
 
   const current = actor.getFlag("warhammer-dbc", "compressedParts") ?? [];
   const updated = retractPart(current, location);

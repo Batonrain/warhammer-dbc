@@ -105,8 +105,8 @@ describe("showFlightDialog: синхронизация TokenDocument#elevation",
     expect(actor.system.movement.altitude).toBe("ground");
   });
 
-  it("Высокая — elevation 25", async () => {
-    const actor = actorWith([traitItem("Flyer (2×A.b)")]);
+  it("Высокая — elevation 25 (через соседний уровень: landed нельзя прыгнуть сразу в high, wdbc-x1nz.2.34)", async () => {
+    const actor = actorWith([traitItem("Flyer (2×A.b)")], { altitude: "low" });
     showFlightDialog(actor);
     await captured.dialog.buttons.set.callback(fakeHtml({ "#fly-alt": "high" }));
     expect(actor.__tokenDocs[0].elevation).toBe(25);

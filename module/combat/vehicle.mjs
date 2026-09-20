@@ -357,7 +357,8 @@ export async function applyDamageToVehicle(actor, damageData) {
     // wdbc-bxw6: попадание засчитано как «от мины» (Минный Плуг: +20
     // аблативной Структуры против мин) — детектора мин в конвейере урона
     // нет, флаг ставит вызывающая сторона по решению GM.
-    fromMine = false
+    fromMine = false,
+    hasExtreme = false // Экстремальный Урон (wdbc-x1nz.2.50): гарантирует 1 непоглощаемого урона ниже
   } = damageData;
 
   const tf = actor.system.derived?.traitFlags || {};
@@ -417,8 +418,18 @@ export async function applyDamageToVehicle(actor, damageData) {
   // Аблативное Бронирование байка (стр. 478): пока Структура полна, любой
   // непоглощённый урон срезается до 1. У большой техники этой Черты нет, и
   // расчёт для неё не меняется.
-  const net     = ablativeDamage(rawNet, actor);
+  let net       = ablativeDamage(rawNet, actor);
   const ablated = net !== rawNet;
+  // Экстремальный Урон (стр. 34, wdbc-x1nz.2.50): «если после Поглощения
+  // попадание не нанесло никакого реального урона, оно наносит 1
+  // непоглощаемого урона» — последняя проверка, ПОСЛЕ Пустотных Щитов/
+  // Дефлектора (те выше уже либо аннулируют попадание целиком, либо не
+  // трогают net) и Аблативного Бронирования байка.
+  // Дефлектор — категорическая блокировка (как Пустотные Щиты выше, которые
+  // на этот код вообще не доходят), не «Поглощение» в смысле книги — успешный
+  // dodge-бросок дефлектора гасит попадание целиком, минимум ему не положен.
+  const extremeFloorApplied = hasExtreme && net === 0 && !deflected;
+  if (extremeFloorApplied) net = 1;
 
   const curVal  = Number(actor.system.structure?.value) || 0;
   const curCrit = Number(actor.system.structure?.critical) || 0;
@@ -502,7 +513,8 @@ export async function applyDamageToVehicle(actor, damageData) {
           ${net > 0
             ? `<div class="roll-hit-line"><span class="roll-hit-idx">В Структуру</span><span class="roll-hit-dmg roll-hit-dmg-bad">${net}</span></div>
                <div class="roll-damage-meta">Структура: <b>${curVal}</b> → <b>${newVal}</b>${gotCrit ? ` (крит. ${newCrit})` : ""}${
-                 ablated ? ` · <span class="dmg-tb-note">Аблативное Бронирование: ${rawNet} → 1</span>` : ""}</div>`
+                 ablated ? ` · <span class="dmg-tb-note">Аблативное Бронирование: ${rawNet} → 1</span>` : ""}${
+                 extremeFloorApplied ? ` · <span class="dmg-tb-note">Экстремальный Урон: поглощено полностью, но 1 непоглощаемого урона всё равно проходит (стр. 34)</span>` : ""}</div>`
             : `<div class="roll-outcome"><span class="roll-success">Урон поглощён (${rawDamage} ≤ ${effAP})</span></div>`
           }
         </div>`,

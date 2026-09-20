@@ -59,6 +59,8 @@ export function buildAttackContent(v) {
     sys,
     techSectionsHtml,
     vehicleSideHtml,
+    wideBurstHtml,
+    confinedSpaceHtml,
     wp,
     wpDialogHtml,
   } = v;
@@ -133,6 +135,8 @@ return `
     <div class="av-section">
       <div class="av-sec-lbl">Режим атаки</div>
       <div class="av-pills">${rofPills}</div>
+      ${wideBurstHtml}
+      ${confinedSpaceHtml}
     </div>
     ${fanningActive ? `
     <div class="av-row">

@@ -3,6 +3,7 @@ import { _performUnseenDetect, _performUnseenBypass } from "./combat/unseen-atta
 import { applyCancerousHealingFromButton, APPLY_BTN_CLASS as CH_APPLY_BTN_CLASS } from "./apps/cancerous-healing.mjs";
 import { performPoolSpend, clearEvasionPools } from "./combat/evasion-pool.mjs";
 import { showRecoilDialog, performRecoil, performPoolRecoil } from "./combat/recoil.mjs";
+import { rollOverpenetration } from "./combat/overpenetration.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
 import { _executeFearRoll, FAITH_FLAG, rollShockRecovery } from "./combat/fear.mjs";
 import { isRuleUsageUsed, markRuleUsageUsed,
@@ -24,7 +25,8 @@ import { resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity } from
 import { conditionLevelField, CONDITIONS_DEF } from "./constants/conditions.mjs";
 import { conditionApplyFields } from "./sheets/tabs/conditions.mjs";
 import { rollHallucinogenicEffect } from "./combat/hallucinogenic.mjs";
-import { rollSuppressionTest, rollSuppressionRecovery, postSuppressionRecoveryPrompt } from "./combat/suppression.mjs";
+import { rollSuppressionTest, rollSuppressionRecovery, postSuppressionRecoveryPrompt, applySuppressionProne } from "./combat/suppression.mjs";
+import { clearFeintAtTurnEnd } from "./combat/feint-press.mjs";
 import { resolveFreeAttackClick } from "./combat/free-attack.mjs";
 import { clearOverwatch, resolveOverwatchFireClick, resolveOverwatchHairTriggerClick } from "./combat/overwatch.mjs";
 import { resolveAssassinStrikeClick } from "./combat/assassin-strike.mjs";
@@ -111,7 +113,7 @@ import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
 import { WC_CODE } from "./constants/ship.mjs";
 import { registerDelegatedTestOpener, openDelegatedTest, activeOwnerOf, requestDelegatedTest, openDelegatedTestDirect } from "./rules/delegate-test.mjs";
-import { skillTotal } from "./combat/movement-actions.mjs";
+import { skillTotal, resolveVaultContestClick } from "./combat/movement-actions.mjs";
 import { showHealingDialog } from "./sheets/tabs/healing.mjs";
 import { rollInfoguard } from "./apps/infoguard.mjs";
 import { CHARACTERISTICS } from "./constants/characteristics.mjs";
@@ -370,18 +372,20 @@ export function registerHooks() {
         const extraMod = parseInt((planningRecoil ? ds.extraModRecoil : ds.extraMod) || "0");
         const hitsCount = parseInt(ds.hitsCount || "1");
         const attackerUuid = ds.attackerUuid || "";
+        const itemUuid = ds.itemUuid || "";
         const burst = ds.burst === "1";
         const attackerIsHorde = ds.attackerIsHorde === "1";
+        const attackId = ds.attackId || "";
         if (!await confirmHordeDefense(actor, "Уклонение")) return;
         // Верхом Уклонение устроено иначе: за скакуна оно комбинируется с
         // Навыком управления, за себя — идёт с −10 (стр. 478). Кнопка в
         // карточке одна, а знает о седле только сама цель, поэтому развилка
         // здесь: карточка на момент броска ещё не знает, в кого попадут.
         if (actor.system?.mount?.uuid) {
-          const handled = await showMountedDodgeDialog(actor, extraMod, hitsCount, attackerUuid);
+          const handled = await showMountedDodgeDialog(actor, extraMod, hitsCount, attackerUuid, attackId);
           if (handled !== null) return;
         }
-        await _performDodge(actor, { extraMod, forcedReroll: ds.forceReroll || "", hitsCount, attackerUuid, isMelee: ds.melee === "1", burst, attackerIsHorde });
+        await _performDodge(actor, { extraMod, forcedReroll: ds.forceReroll || "", hitsCount, attackerUuid, isMelee: ds.melee === "1", burst, attackerIsHorde, attackId, itemUuid });
       });
     });
 
@@ -399,6 +403,19 @@ export function registerHooks() {
         const choice = await showRecoilDialog(actor);
         if (!choice) return;
         await performRecoil(actor, choice);
+      });
+    });
+
+    // Снаряд летит дальше (стр. 12, wdbc-x1nz.2.39): та же кнопка на карточке
+    // успешного дистанционного Уклонения, что и Отскок выше — оружия достаточно
+    // резолвить по itemUuid, актор-стрелок карточке не нужен (вторую цель
+    // выбирает ГМ на карточке применения урона).
+    html.querySelectorAll(".wh-overpenetration-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const itemUuid = ev.currentTarget.dataset.itemUuid;
+        const item = itemUuid ? (await fromUuid(itemUuid).catch(() => null)) : null;
+        await rollOverpenetration(item);
       });
     });
 
@@ -459,7 +476,8 @@ export function registerHooks() {
         if (!actor) return;
         const location = ev.currentTarget.dataset.location || "";
         const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
-        await _performCompression(actor, location, attackerUuid);
+        const attackId = ev.currentTarget.dataset.attackId || "";
+        await _performCompression(actor, location, attackerUuid, attackId);
       });
     });
 
@@ -573,7 +591,7 @@ export function registerHooks() {
         // момент отрисовки карточки защищающийся ещё не выбран.
         const isMelee = ds.melee !== "0";
         if (!await confirmHordeDefense(actor, "Парирование")) return;
-        await _performParry(actor, { extraMod, attackerUuid: ds.attackerUuid || "", hitsCount, burst, attackerIsHorde, isMelee, attackerWeaponUuid: ds.attackerWeaponUuid || "" });
+        await _performParry(actor, { extraMod, attackerUuid: ds.attackerUuid || "", hitsCount, burst, attackerIsHorde, isMelee, attackerWeaponUuid: ds.attackerWeaponUuid || "", attackId: ds.attackId || "" });
       });
     });
 
@@ -654,7 +672,8 @@ export function registerHooks() {
         const opts = {
           extraMod: parseInt(ds.extraMod || "0"),
           hitsCount: parseInt(ds.hitsCount || "1"),
-          attackerUuid: ds.attackerUuid || ""
+          attackerUuid: ds.attackerUuid || "",
+          attackId: ds.attackId || ""
         };
         await (isParry ? performWalkerParry(actor, opts) : performWalkerDodge(actor, opts));
       });
@@ -905,6 +924,27 @@ export function registerHooks() {
       });
     });
 
+    // Замена кубика на Успехи (стр. 34, wdbc-x1nz.2.49): правит data-damage
+    // и подпись соседней .wh-apply-dmg-btn прямо в DOM, без нового броска —
+    // combat/attack-card.mjs уже посчитал итог с учётом Экстремального/
+    // Выгорания/доп. кубов, здесь только «кубик минус старое, плюс Успехи».
+    html.querySelectorAll(".wh-dmg-swap-btn").forEach(btn => {
+      btn.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const ds = el.dataset;
+        const applyBtn = el.closest(".roll-dmg-hit-group")?.querySelector(".wh-apply-dmg-btn");
+        if (!applyBtn) return;
+        const current = parseInt(applyBtn.dataset.damage) || 0;
+        const next = Math.max(0, current - (parseInt(ds.baseDie) || 0) + (parseInt(ds.successes) || 0));
+        applyBtn.dataset.damage = String(next);
+        const b = applyBtn.querySelector("b");
+        if (b) b.textContent = String(next);
+        el.disabled = true;
+        el.textContent = `🎲 Кубик заменён — новый урон ${next}`;
+      });
+    });
+
     // Применение урона
     html.querySelectorAll(".wh-apply-dmg-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
@@ -965,7 +1005,11 @@ export function registerHooks() {
           // момент броска (карточка Орды применяется позже, кнопкой), поэтому
           // эта часть урона едет отдельным числом: применяется в
           // applyDamageToActor (combat/damage.mjs), где актор-цель уже известен.
-          magDiceBonus:    parseInt(ds.magDiceBonus || "0")
+          magDiceBonus:    parseInt(ds.magDiceBonus || "0"),
+          // Экстремальный Урон (стр. 34, wdbc-x1nz.2.50): «1 непоглощаемого
+          // урона», если после Поглощения реального урона не осталось —
+          // считается в applyDamageToActor/applyDamageToVehicle.
+          hasExtreme:      ds.hasExtreme === "1"
         };
         // «Прячась в Орде»: попадание уже расписано в Орду — цель не выбирается.
         if (ds.forceHorde) {
@@ -1486,11 +1530,17 @@ export function registerHooks() {
     html.querySelectorAll(".wh-suppression-test-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
+        // wdbc-8zi: снято ДО await — ev.currentTarget обнуляется, как только
+        // обработчик отдаёт ход (см. test/hooks-current-target-after-await.test.mjs).
+        const el = ev.currentTarget;
         const actor = requireControlledActor("⚠️ Выберите токен цели на сцене!");
         if (!actor) return;
-        const mod = parseInt(ev.currentTarget.dataset.testMod || "0");
-        const sourceActor = await fromUuid(ev.currentTarget.dataset.attackerUuid || "").catch(() => null);
-        await rollSuppressionTest(actor, { mod, sourceLabel: "Стрельба на подавление", sourceActor });
+        const mod = parseInt(el.dataset.testMod || "0");
+        // «Заведомо безопасно» (стр. 33, wdbc-x1nz.2.62) — галочка рядом с
+        // кнопкой в этой же карточке, решает ГМ на глаз (см. title галочки).
+        const safeOverride = !!el.closest(".roll-suppression")?.querySelector(".wh-suppression-safe-cb")?.checked;
+        const sourceActor = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
+        await rollSuppressionTest(actor, { mod, sourceLabel: "Стрельба на подавление", sourceActor, safeOverride });
       });
     });
     // Огонь из Всех Орудий (стр. 62, wdbc-pb60): обе очереди пары по одной
@@ -1500,11 +1550,13 @@ export function registerHooks() {
     html.querySelectorAll(".wh-all-guns-blazing-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
+        const el = ev.currentTarget;
         const actor = requireControlledActor("⚠️ Выберите токен цели на сцене!");
         if (!actor) return;
-        const mod = parseInt(ev.currentTarget.dataset.testMod || "0");
-        const sourceActor = await fromUuid(ev.currentTarget.dataset.attackerUuid || "").catch(() => null);
-        await rollSuppressionTest(actor, { mod, sourceLabel: "Огонь из Всех Орудий", sourceActor });
+        const mod = parseInt(el.dataset.testMod || "0");
+        const safeOverride = !!el.closest(".roll-suppression")?.querySelector(".wh-suppression-safe-cb")?.checked;
+        const sourceActor = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
+        await rollSuppressionTest(actor, { mod, sourceLabel: "Огонь из Всех Орудий", sourceActor, safeOverride });
       });
     });
     html.querySelectorAll(".wh-suppression-recovery-btn").forEach(btn => {
@@ -1514,6 +1566,16 @@ export function registerHooks() {
         const actor = ds.actorUuid ? (await fromUuid(ds.actorUuid).catch(() => null)) : null;
         if (!actor) return ui.notifications.warn("⚠️ Подавленный персонаж не найден.");
         await rollSuppressionRecovery(actor, { bonus: parseInt(ds.bonus || "0") });
+      });
+    });
+    // «Залечь» (стр. 33, wdbc-x1nz.2.62) — Подавлен(а) не в укрытии, стол
+    // решил, что до укрытия не добраться в этот Ход.
+    html.querySelectorAll(".wh-suppression-prone-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const actor = await fromUuid(ev.currentTarget.dataset.actorUuid || "").catch(() => null);
+        if (!actor) return ui.notifications.warn("⚠️ Актор не найден.");
+        await applySuppressionProne(actor);
       });
     });
     html.querySelectorAll(".wh-shock-recovery-btn").forEach(btn => {
@@ -1537,6 +1599,18 @@ export function registerHooks() {
         ev.preventDefault();
         const ds = ev.currentTarget.dataset;
         await resolveFreeAttackClick(ds.reactorUuid, ds.moverUuid);
+      });
+    });
+
+    // Вольт (стр. 30, wdbc-x1nz.2.37) — каждый враг проверяет WS+0 против уже
+    // готового броска вольтующего своей кнопкой.
+    html.querySelectorAll(".wh-vault-contest-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        el.disabled = true;
+        const ds = el.dataset;
+        await resolveVaultContestClick(ds.moverUuid, Number(ds.moverScore) || 0, ds.enemyUuid);
       });
     });
 
@@ -2557,6 +2631,9 @@ function _attachFateContextMenu(message, html) {
         await applyAimFocusTurnEnd(prevActor);
         // Конец Хода Подавленного (стр. 33) — предложить тест на преодоление.
         if (prevActor.system.conditions?.pinned) await postSuppressionRecoveryPrompt(prevActor);
+        // Финт (стр. 31, wdbc-x1nz.2.65): «до конца ЕГО Хода» — снимается
+        // здесь, на конце Хода атаковавшего, не цели.
+        await clearFeintAtTurnEnd(prevActor);
         // Кровотечение/Горение (wdbc-j3yf) — книга бьёт ими «в конце своего
         // Хода», не в начале следующего.
         await processConditionTurnEnd(prevActor);

@@ -158,6 +158,46 @@ describe("_performParry: интегральные атаки не перехва
   });
 });
 
+// Хват (стр. 39, wdbc-x1nz.2.45): «Баланс оружия принудительно ставится в это
+// значение» у Ближнего/Хвостового Хвата (GRIPS.Бл/Хв.balSet=-2) — раньше эти
+// поля читались только при АТАКЕ (sheets/attack/selection.mjs), Парирование
+// тем же оружием всегда брало «голый» system.balance. hudGrip — флаг, который
+// диалог атаки пишет по роллу (module/rules/hands.mjs::currentMeleeGrip).
+describe("_performParry: Хват меняет эффективный Баланс (wdbc-x1nz.2.45)", () => {
+  it("Ближний Хват (Бл) на мече Баланса 0 — эффективный Баланс -2, парировать нельзя", async () => {
+    const sword = equippedMelee({ balance: 0 }, { flags: { "warhammer-dbc.hudGrip": "Бл" } });
+    const actor = attacker({ items: [sword] });
+
+    await _performParry(actor, { extraMod: 0, attackerUuid: "Actor.attacker-1" });
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("нельзя парировать");
+    expect(card).toContain("Баланс -2");
+  });
+
+  it("тот же меч без сохранённого Хвата — обычный Баланс 0, парирование доступно", async () => {
+    const sword = equippedMelee({ balance: 0 });
+    const actor = attacker({ items: [sword] });
+
+    await _performParry(actor, { extraMod: 0, attackerUuid: "Actor.attacker-1" });
+
+    const card = captured.chat.at(-1).content;
+    expect(card).not.toContain("нельзя парировать");
+    expect(card).toContain("<label>Порог</label><b>25</b>");
+  });
+
+  it("Хват «1р» (balSet не задан) — эффективный Баланс не меняется", async () => {
+    const sword = equippedMelee({ balance: 0 }, { flags: { "warhammer-dbc.hudGrip": "1р" } });
+    const actor = attacker({ items: [sword] });
+
+    await _performParry(actor, { extraMod: 0, attackerUuid: "Actor.attacker-1" });
+
+    const card = captured.chat.at(-1).content;
+    expect(card).not.toContain("нельзя парировать");
+    expect(card).toContain("<label>Порог</label><b>25</b>");
+  });
+});
+
 // Очередь (semi/full-auto), Быстрая и Молниеносная Атака дают больше одного
 // попадания за одну атаку. Стр. 12 «Избегание множественных попаданий»: Успех
 // защиты снимает по одному попаданию за каждую свою степень, не больше их
@@ -495,6 +535,31 @@ describe("_performDodge: Танец Среди Огня (wdbc-u0by)", () => {
   });
 });
 
+// Перебежка/Duck and Cover (стр. 30, wdbc-x1nz.2.38): переброс Избегания
+// до конца Раунда — тот же приём roll×2 + keepBest, что у Танца выше.
+describe("_performDodge: Перебежка (wdbc-x1nz.2.38)", () => {
+  it("флаг duckAndCoverActive — два броска, лучший взят", async () => {
+    const actor = attacker();
+    await actor.setFlag("warhammer-dbc", "duckAndCoverActive", true);
+    captured.dice = [80, 20];
+
+    await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1, attackerUuid: "", isMelee: false, burst: false });
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("Перебежка: Преимущество, отброшено 80");
+    expect(card).toContain("<b>20</b>");
+  });
+
+  it("без флага — один бросок как раньше", async () => {
+    const actor = attacker();
+    captured.nextRoll = 10;
+
+    await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1, attackerUuid: "", isMelee: false, burst: false });
+
+    expect(captured.chat.at(-1).content).not.toContain("Перебежка");
+  });
+});
+
 describe("_performParry: Танец Среди Огня (wdbc-u0by)", () => {
   it("Талант + burst — два броска, лучший взят", async () => {
     const sword = equippedMelee();
@@ -516,6 +581,21 @@ describe("_performParry: Танец Среди Огня (wdbc-u0by)", () => {
     await _performParry(actor, { extraMod: 0, attackerUuid: "", hitsCount: 1, burst: false });
 
     expect(captured.chat.at(-1).content).not.toContain("Танец Среди Огня");
+  });
+});
+
+describe("_performParry: Перебежка (wdbc-x1nz.2.38)", () => {
+  it("флаг duckAndCoverActive — два броска, лучший взят", async () => {
+    const sword = equippedMelee();
+    const actor = attacker({ items: [sword] });
+    await actor.setFlag("warhammer-dbc", "duckAndCoverActive", true);
+    captured.dice = [80, 20];
+
+    await _performParry(actor, { extraMod: 0, attackerUuid: "", hitsCount: 1, burst: false });
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("Перебежка: Преимущество, отброшено 80");
+    expect(card).toContain("<b>20</b>");
   });
 });
 

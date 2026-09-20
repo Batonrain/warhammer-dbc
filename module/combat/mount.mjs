@@ -732,7 +732,7 @@ export async function showMountDamageTest(rider) {
  *  • по всаднику — обычное Уклонение, но со штрафом −10.
  * Поэтому диалог сначала спрашивает, куда пришлось попадание.
  */
-export async function showMountedDodgeDialog(rider, extraMod = 0, hitsCount = 1, attackerUuid = "") {
+export async function showMountedDodgeDialog(rider, extraMod = 0, hitsCount = 1, attackerUuid = "", attackId = "") {
   const ctx = await mountContext(rider);
   if (!ctx) return null;
   const { mount, control } = ctx;
@@ -758,7 +758,7 @@ export async function showMountedDodgeDialog(rider, extraMod = 0, hitsCount = 1,
         roll: { icon: '<i class="fas fa-dice-d10"></i>', label: "Уклонение!",
           callback: async html => {
             const target = html.find("#md-target").val();
-            await resolveMountedDodge(rider, ctx, target, { extraMod, hitsCount, attackerUuid });
+            await resolveMountedDodge(rider, ctx, target, { extraMod, hitsCount, attackerUuid, attackId });
             resolve(true);
           } },
         cancel: { label: "Отмена", callback: () => resolve(false) }
@@ -770,10 +770,10 @@ export async function showMountedDodgeDialog(rider, extraMod = 0, hitsCount = 1,
 
 // wdbc-8zi (п.6): объект опций для extraMod/hitsCount/attackerUuid — тот же
 // приём и порядок полей, что у _performDodge/_performParry/_performSwerve.
-async function resolveMountedDodge(rider, ctx, target, { extraMod = 0, hitsCount = 1, attackerUuid = "" } = {}) {
+async function resolveMountedDodge(rider, ctx, target, { extraMod = 0, hitsCount = 1, attackerUuid = "", attackId = "" } = {}) {
   // Уклонение — Реакция (стр. 12) и верхом тоже: та же трата, что в
   // _performDodge, иначе конный всадник уклонялся бы бесплатно без лимита.
-  if (!(await spendReaction(rider, { forDefense: true }))) return _noReactionCard(rider, "Уклонение");
+  if (!(await spendReaction(rider, { forDefense: true, attackId }))) return _noReactionCard(rider, "Уклонение");
   const { mount, control } = ctx;
   const chars = rider.system.characteristics ?? {};
   const rank = rider.system.skills?.dodge?.rank ?? "untrained";

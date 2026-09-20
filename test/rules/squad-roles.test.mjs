@@ -7,7 +7,7 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect, afterEach } from "vitest";
-import { squadRoleOf, findMemberSquad, commanderOf } from "../../module/rules/squad-roles.mjs";
+import { squadRoleOf, findMemberSquad, commanderOf, minionCanCauseExtremeDamage } from "../../module/rules/squad-roles.mjs";
 
 function squad({ leader, commander, coordinator, members = [] } = {}) {
   return {
@@ -86,5 +86,68 @@ describe("commanderOf", () => {
     const s = squad({ commander: "Actor.cmd1", members: ["Actor.cmd1"] });
     globalThis.game.actors = [s];
     expect(commanderOf(me)).toBeNull();
+  });
+});
+
+// Стр. 34, wdbc-x1nz.2.51: «Маловажные NPC... не могут наносить Экстремальный
+// Урон, но могут получить эту способность от своих командиров через эффекты
+// Командования» — Командное Присутствие, вариант «Экстремальный Урон».
+describe("minionCanCauseExtremeDamage", () => {
+  function minion({ uuid = "Actor.min1", commandedBy = null } = {}) {
+    return {
+      type: "minion", uuid,
+      getFlag: (scope, key) => (scope === "warhammer-dbc" && key === "commandedBy") ? commandedBy : undefined
+    };
+  }
+
+  it("не-миньон (персонаж/техника/демон) — гейт вообще не применяется", () => {
+    expect(minionCanCauseExtremeDamage({ type: "character", uuid: "Actor.c1" })).toBe(true);
+    expect(minionCanCauseExtremeDamage({ type: "vehicle", uuid: "Actor.v1" })).toBe(true);
+  });
+
+  it("миньон вне Отряда и без commandedBy — не может", () => {
+    globalThis.game.actors = [];
+    expect(minionCanCauseExtremeDamage(minion())).toBe(false);
+  });
+
+  it("миньон в Отряде с активным Присутствием «extreme» — может", () => {
+    const s = { type: "squad", system: {
+      posts: {}, members: [{ uuid: "Actor.min1" }],
+      presence: { active: true, benefit: "extreme" }
+    } };
+    globalThis.game.actors = [s];
+    expect(minionCanCauseExtremeDamage(minion())).toBe(true);
+  });
+
+  it("миньон в Отряде, но Присутствие другое (не extreme) — не может", () => {
+    const s = { type: "squad", system: {
+      posts: {}, members: [{ uuid: "Actor.min1" }],
+      presence: { active: true, benefit: "focus" }
+    } };
+    globalThis.game.actors = [s];
+    expect(minionCanCauseExtremeDamage(minion())).toBe(false);
+  });
+
+  it("миньон в Отряде, но Присутствие не активно — не может", () => {
+    const s = { type: "squad", system: {
+      posts: {}, members: [{ uuid: "Actor.min1" }],
+      presence: { active: false, benefit: "extreme" }
+    } };
+    globalThis.game.actors = [s];
+    expect(minionCanCauseExtremeDamage(minion())).toBe(false);
+  });
+
+  it("миньон вне Отряда, но «Под моим Присутствием» командира с extreme — может", () => {
+    globalThis.game.actors = [];
+    const commander = { uuid: "Actor.cmd1",
+      system: { command: { presence: { active: true, benefit: "extreme" } } } };
+    globalThis.fromUuidSync = uuid => uuid === "Actor.cmd1" ? commander : null;
+    expect(minionCanCauseExtremeDamage(minion({ commandedBy: { uuid: "Actor.cmd1", name: "Командир" } }))).toBe(true);
+  });
+
+  it("commandedBy указывает на удалённого командира — не падает, не может", () => {
+    globalThis.game.actors = [];
+    globalThis.fromUuidSync = () => null;
+    expect(minionCanCauseExtremeDamage(minion({ commandedBy: { uuid: "Actor.gone", name: "?" } }))).toBe(false);
   });
 });

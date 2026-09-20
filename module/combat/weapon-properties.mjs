@@ -199,7 +199,11 @@ export function aggregateAuto(props) {
     haywireDamage2: "",
     // Monofilament: «+2 Экстремальный урон или Крит. эффект» — в этом движке
     // extremeLevel сразу и то, и другое (rollExtremeDamage, combat/attack.mjs).
-    extremeLevelBonus: 0
+    extremeLevelBonus: 0,
+    // Длинная Винтовка (стр. 40, wdbc-x1nz.2.57) — нет отдельного weaponClass,
+    // только это булево свойство; Тяжёлое оружие гейтится своим weaponClass
+    // напрямую (canFireInMelee, attack-dialog.mjs), сюда не заходит.
+    noMeleeFire: false
   };
 
   for (const p of props) {
@@ -210,6 +214,7 @@ export function aggregateAuto(props) {
     if (au.attackMod)     a.attackMod += au.attackMod;
     if (au.noAim)         a.noAim = true;
     if (au.noCalledShot)  a.noCalledShot = true;
+    if (au.noMeleeFire)   a.noMeleeFire = true;
     if (au.calledShotMod) a.calledShotMod += au.calledShotMod;
     if (au.accurate)      a.accurate = true;
     if (au.tearing)       a.tearing = true;
@@ -365,12 +370,19 @@ export function sprayJams(face, auto) {
   return from !== null && Number.isFinite(f) && f >= from && f <= 9;
 }
 
-/** Порог заклинивания по числовой Надёжности. null → клина нет. */
+/**
+ * Порог заклинивания по числовой Надёжности (стр. 41, wdbc-x1nz.2.61).
+ * null → клина нет вовсе (Очень Надёжное, +2 и выше). Обычное стрелковое
+ * (Надёжность 0, ни одного свойства) клинит на стандартном пределе
+ * Критического Провала 96+ — раньше здесь ошибочно стоял null («клин не
+ * моделируется»), из-за чего 2/3 стрелкового оружия пака не могли заклинить
+ * вообще.
+ */
 export function jamThreshold(auto) {
   const s = auto.reliabilityScore || 0;
   if (s >=  2) return null;   // Очень надёжное — никогда
   if (s ===  1) return 100;   // Надёжное — только 100
-  if (s ===  0) return null;  // обычное (без свойства) — клин не моделируется
+  if (s ===  0) return 96;    // обычное — стандартный предел Крит. Провала
   if (s === -1) return 91;    // Ненадёжное — 91+
   return 81;                  // Очень ненадёжное и хуже — 81+
 }
@@ -387,19 +399,6 @@ export function canClearJam(item) {
   if (!lockedUntil) return true;
   if (!game.combat) return true;
   return game.combat.round > lockedUntil;
-}
-
-/**
- * «Расклинить» — то же допущение, что combat/damage.mjs::repairArmorCorrosion:
- * доступно всегда без проверки теста/времени (полудействие/действие по
- * книге — за столом), кнопка на листе сама скрыта, пока canClearJam лжив.
- */
-export async function clearWeaponJam(item) {
-  if (!item?.system?.jammed) return;
-  if (!canClearJam(item)) {
-    return ui.notifications?.warn(`${item.name}: заклинивание пока не расклинить — заблокировано до конца этого Раунда.`);
-  }
-  await item.update({ "system.jammed": false, "system.jamLockedRound": 0 });
 }
 
 // ─── Отображение в чате ───────────────────────────────────────────────────────

@@ -1,5 +1,29 @@
 import { _buildAmmoModString, _buildAmmoModDetails, _getAmmoSpent, esc } from "../helpers/utils.mjs";
 import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
+import { spendActionPoints } from "./action-economy.mjs";
+
+/**
+ * Стоимость Перезарядки в ОД по книжному полю system.reload (стр. 35,
+ * wdbc-x1nz.2.54, «Действие: Зависит от оружия»): «½» → Полудействие (1 ОД),
+ * целое N → N Полных действий (2×N ОД за один Ход — если хватает бюджета
+ * Хода, иначе перезарядка блокируется целиком; растянуть её на несколько
+ * Ходов книга не описывает конкретной механикой, и растягивать её самим
+ * значило бы придумывать за неё).
+ *
+ * Прочие форматы этого поля в паках («–»/пусто — не перезаряжается вовсе,
+ * «¼», «N×M» — почти исключительно у оружия техники, «†» — сноска на
+ * особое правило конкретного оружия без числа вовсе) не имеют однозначного
+ * числового смысла для одиночного ОД-бюджета персонажа — перезарядка таким
+ * оружием остаётся бесплатной, как было до этой правки (честный остаток, не
+ * гадаем число за книгу).
+ * @returns {number} 0 — бесплатно
+ */
+export function reloadApCost(reloadField) {
+  const raw = String(reloadField ?? "").trim();
+  if (raw === "½") return 1;
+  if (/^\d+$/.test(raw)) return Number(raw) * 2;
+  return 0;
+}
 
 export function _getCompatibleAmmo(actor, weapon) {
   const sys        = weapon.system;
@@ -110,6 +134,13 @@ export async function _reloadWeapon(actor, weapon) {
   if (ammoQty <= 0) {
     ui.notifications.warn(`${preferredAmmo.name}: нет боеприпасов!`);
     return;
+  }
+
+  // Стр. 35, wdbc-x1nz.2.54: ОД списываются ПОСЛЕ выбора боеприпаса — отмена
+  // диалога выбора выше ничего не стоит, только реально начатая перезарядка.
+  const apCost = reloadApCost(sys.reload);
+  if (apCost > 0 && !await spendActionPoints(actor, apCost, { physical: true })) {
+    return ui.notifications.warn(`⚠️ ${weapon.name}: не хватает ОД на перезарядку (нужно ${apCost}).`);
   }
 
   // По правилам системы: 1 предмет-боеприпас = 1 полный магазин. Перезарядка

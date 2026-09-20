@@ -97,6 +97,50 @@ describe("карточка атаки", () => {
     expect(html).toContain("Применить урон 1: <b>11</b> → Торс");
   });
 
+  // Замена кубика на Успехи (стр. 34, wdbc-x1nz.2.49): кнопка появляется,
+  // только когда попадание несёт baseDieResult/successes (attack.mjs кладёт
+  // их только когда формула урона реально содержала кубик).
+  describe("замена кубика на Успехи", () => {
+    it("попадание с baseDieResult/successes — кнопка со ссылкой на итог", () => {
+      const html = card({ hits: [{ total: 11, loc: "Торс", baseDieResult: 4, successes: 3 }] });
+      expect(html).toContain("wh-dmg-swap-btn");
+      expect(html).toContain('data-base-die="4"');
+      expect(html).toContain('data-successes="3"');
+      expect(html).toContain("Кубик→Успехи: 4→3 (итог станет 10)");
+    });
+
+    it("итог не уходит в минус, даже если Успехов меньше выпавшего кубика", () => {
+      const html = card({ hits: [{ total: 5, loc: "Торс", baseDieResult: 8, successes: 1 }] });
+      expect(html).toContain("итог станет 0");
+    });
+
+    it("без baseDieResult (нет кубика в формуле урона) — кнопки нет", () => {
+      const html = card({ hits: [{ total: 11, loc: "Торс" }] });
+      expect(html).not.toContain("wh-dmg-swap-btn");
+    });
+
+    it("кнопка и обычная «Применить урон» лежат в одной группе для DOM-обработчика", () => {
+      const html = card({ hits: [{ total: 11, loc: "Торс", baseDieResult: 4, successes: 3 }] });
+      expect(html).toMatch(/<span class="roll-dmg-hit-group">\s*<button class="wh-apply-dmg-btn[\s\S]*wh-dmg-swap-btn[\s\S]*<\/span>/);
+    });
+  });
+
+  // Вторичные цели Очереди (стр. 35, wdbc-x1nz.2.55) — attack.mjs уже
+  // замерил дистанции, здесь проверяется только рендер списка.
+  describe("вторичные цели Очереди", () => {
+    it("список подсказывает имена и дистанции", () => {
+      const html = card({ burstSecondaryTargets: [{ name: "Культист", distanceM: 1.2 }, { name: "Еретик", distanceM: 0 }] });
+      expect(html).toContain("Вторичные цели Очереди");
+      expect(html).toContain("Культист (1.2м)");
+      expect(html).toContain("Еретик (0.0м)");
+    });
+
+    it("пустой список — блока нет вовсе", () => {
+      const html = card({ burstSecondaryTargets: [] });
+      expect(html).not.toContain("Вторичные цели Очереди");
+    });
+  });
+
   it("кнопка урона несёт Corrosive/Crippling/Piercing/Haywire (wdbc-plsf)", () => {
     const html = card({
       wp: { corrosiveRating: 3, cripplingRating: 2, piercing: true, haywire: true, haywireRating: 4 }
@@ -291,6 +335,19 @@ describe("карточка атаки", () => {
     expect(html).toContain('wh-all-guns-blazing-btn" type="button" data-test-mod="-10" data-attacker-uuid="Actor.shooter-1"');
   });
 
+  // «Заведомо безопасно» (стр. 33, wdbc-x1nz.2.62): галочка ГМа рядом с обеими
+  // кнопками теста Подавления — auto-pass без броска (hooks.mjs читает её).
+  it("Подавление: галочка «Заведомо безопасно» рядом с кнопкой теста", () => {
+    const html = card({ suppression: { testMod: -20, hits: 2, cap: 4 } });
+    expect(html).toContain("wh-suppression-safe-cb");
+    expect(html).toContain("Заведомо безопасно");
+  });
+
+  it("Огонь из Всех Орудий: та же галочка рядом с его кнопкой теста", () => {
+    const html = card({ allGunsBlazing: { testMod: -10 } });
+    expect(html).toContain("wh-suppression-safe-cb");
+  });
+
   it("Порча печатает только доступные при текущей Cor эффекты", () => {
     const html = card({ corVal: 30, corEffects: [
       { cor: 10, text: "Пьёт кровь" }, { cor: 60, text: "Говорит" }
@@ -336,6 +393,45 @@ describe("карточка атаки", () => {
 
   it("Взрывное: одно попадание не печатает заметку про несколько шаблонов", () => {
     expect(card({ wp: { blastRating: 3 } })).not.toContain("отдельный шаблон");
+  });
+
+  // Стр. 36, wdbc-x1nz.2.63: «каждое попадание, вызывающее взрыв, считается
+  // отдельным шаблоном» — раньше на всю карточку была одна общая кнопка
+  // «Разместить шаблон», даже когда очередь давала несколько попаданий.
+  describe("Взрывное: отдельный шаблон на каждое попадание Очереди (wdbc-x1nz.2.63)", () => {
+    it("одно попадание — одна общая кнопка (как раньше), без нумерации", () => {
+      const html = card({ wp: { blastRating: 3 } });
+      expect(html).toContain("Разместить шаблон и отметить цели");
+      expect(html).not.toContain("Разместить шаблон 1");
+    });
+
+    it("несколько попаданий — своя кнопка на каждое, без общей", () => {
+      const html = card({
+        wp: { blastRating: 3 }, hitsCount: 2,
+        hits: [{ total: 10, loc: "Торс" }, { total: 8, loc: "Торс" }]
+      });
+      expect(html).toContain("Разместить шаблон 1 и отметить цели");
+      expect(html).toContain("Разместить шаблон 2 и отметить цели");
+      expect(html).not.toContain("Разместить шаблон и отметить цели");
+    });
+
+    it("Остаётся (Linger) — по-прежнему одна общая зона, даже при нескольких попаданиях", () => {
+      const html = card({
+        wp: { blastRating: 3, lingerRating: 2 }, hitsCount: 2,
+        hits: [{ total: 10, loc: "Торс" }, { total: 8, loc: "Торс" }]
+      });
+      expect(html).toContain("Разместить зону «Остаётся»");
+      expect(html).not.toContain("Разместить шаблон 1");
+    });
+
+    it("Распыление (Spray) — одна общая кнопка независимо от числа попаданий", () => {
+      const html = card({
+        wp: { spray: true }, hitsCount: 2,
+        hits: [{ total: 10, loc: "Торс" }, { total: 8, loc: "Торс" }]
+      });
+      expect(html).toContain("Разместить шаблон и отметить цели");
+      expect(html).not.toContain("Разместить шаблон 1");
+    });
   });
 
   it("Взрывное: кнопка урона подсказывает отметить всех в радиусе", () => {

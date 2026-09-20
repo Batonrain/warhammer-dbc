@@ -21,6 +21,7 @@ import { implantMech }                               from "../constants/implant-
 import { TALENT_LIBRARY }                            from "../constants/talents-library.mjs";
 import { charAptitudeSet } from "../constants/advancement.mjs";
 import { canClearJam }                                from "../combat/weapon-properties.mjs";
+import { isBraced }                                   from "../combat/brace-weapon.mjs";
 import { ASPIRATION_TABLES } from "../constants/aspirations.mjs";
 import { aspirationOptions, aspirationByKey } from "../apps/aspirations.mjs";
 import { supportsInfoguard } from "../apps/infoguard.mjs";
@@ -588,12 +589,22 @@ export function buildGetData(actor) {
       // combat/weapon-properties.mjs — блокировка Reformation Song на раунд).
       jammed:       !melee && !!s.jammed,
       canClearJam:  !melee && !!s.jammed && canClearJam(i),
+      // Испорченные Клином патроны (стр. 41, wdbc-x1nz.2.61) — кнопка живёт
+      // независимо от jammed выше: сам Клин можно уже снять, а патроны
+      // остаются испорченными до отдельного теста Trade(Weaponsmith)+10.
+      jammedAmmo:   !melee ? (Number(s.jammedAmmo) || 0) : 0,
       // Перезарядка (wdbc-ai0o): тот же гейт кнопки «Атака», что у jammed выше.
       needsRecharge: !melee && !!s.needsRecharge,
       // Уничтожено (wdbc-1rno, Кровавое Пламя — «бесполезно, пока не будет
       // починено»): тот же гейт кнопки «Атака», книга не делает исключения
       // по классу оружия, в отличие от jammed (только дальнобойное).
-      destroyed:    !!s.destroyed
+      destroyed:    !!s.destroyed,
+      // Закрепление (стр. 35, wdbc-x1nz.2.56) — только тяжёлое; canBrace не
+      // проверяет isBraced (кнопка «Закрепить» доступна и повторно —
+      // перезакрепление на новом развороте/позиции разрешено книгой без
+      // явного «сперва снимите старое»).
+      canBrace:     !melee && s.weaponClass === "heavy",
+      braced:       !melee && s.weaponClass === "heavy" && isBraced(actor, i)
     };
   };
 

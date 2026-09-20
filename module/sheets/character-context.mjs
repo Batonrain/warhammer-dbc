@@ -13,6 +13,7 @@
 import { CHARACTERISTICS, APTITUDES }            from "../constants/characteristics.mjs";
 import { CHAR_IMP_STEPS }                        from "./tabs/advance.mjs";
 import { equippedMeleeWeapon } from "../combat/equipped-melee.mjs";
+import { attackedThisTurn } from "../rules/turn-flags.mjs";
 import { charAptitudeSet, CHAR_APTITUDES } from "../constants/advancement.mjs";
 import { aptBindingContext }                    from "../rules/aptitude-binding.mjs";
 import { charAdvanceCat, advanceCatSource }     from "../rules/advance-category.mjs";
@@ -91,6 +92,7 @@ import { hasActionEconomy, isEncounterActive, effectiveDefenseReactionMax,
          effectiveActionPointsMax,
          apSpendGate, reactionSpendGate }         from "../combat/action-economy.mjs";
 import { recoilRemaining, recoilLimit }           from "../combat/recoil-pool.mjs";
+import { sustainedActionRows }                    from "../rules/sustained-action.mjs";
 import { hasSpiritTalk, spiritTalkGate } from "../combat/spirit-talk.mjs";
 import { hasDeadlyEffectiveness, deadlyEffectivenessGate } from "../combat/deadly-effectiveness.mjs";
 import { hasBowToAudience, bowToAudienceGate } from "../combat/bow-to-audience.mjs";
@@ -120,6 +122,14 @@ export function characterContext(actor) {
   // их панель на вкладке БОЙ была и остаётся нужна.
   const meleeBaseKey  = system.meleeBase in MELEE_BASES ? system.meleeBase : "standard";
   const meleeStanceKey = system.meleeStance in MELEE_STANCES ? system.meleeStance : "standard";
+  // Смена Стойки и Хвата (стр. 31, wdbc-x1nz.2.64): «Это действие нельзя
+  // проводить после рукопашной атаки» — тот же флаг attackedThisTurn, что
+  // уже читает Кровопомазанник (combat/turn-state-shield.mjs) для обратного
+  // вопроса «стрелял ли в этом Ходу»; здесь — «атаковал ли рукопашным
+  // оружием». Хват отдельным действием в системе не существует (выбирается
+  // заново при каждой атаке, module/sheets/attack-dialog.mjs) — блокировать
+  // нечего, книжный запрет касается только Стойки.
+  context.stanceLocked = attackedThisTurn(actor).some(id => actor.items.get(id)?.system?.weaponClass === "melee");
   context.combatStanceOptions = Object.entries(MELEE_STANCES)
     .map(([key, s]) => ({ key, label: s.label, desc: s.shortDesc, active: key === meleeStanceKey }));
   context.combatBaseOptions = Object.entries(MELEE_BASES)
@@ -185,6 +195,10 @@ export function characterContext(actor) {
     // Bow to the Audience/Поклон Публике (wdbc-1rno): та же видимость только
     // владельцу Таланта, гейт зависит от game.user.targets/ОД (bow-to-audience.mjs).
     if (hasBowToAudience(actor)) context.bowToAudienceGate = bowToAudienceGate(actor);
+    // Длительное/Расширенное действие (стр. 12, wdbc-x1nz.2.27) — панель на
+    // вкладке БОЙ, тот же приём, что «Расширенные тесты» на ПОКАЗАТЕЛЯХ:
+    // список банков flags.warhammer-dbc.sustainedActions, чистое преобразование.
+    context.sustainedActions = sustainedActionRows(actor.getFlag("warhammer-dbc", "sustainedActions"));
   }
 
   // Кнопка «Полёт» на вкладке БОЙ (module/combat/movement-actions.mjs, стр.

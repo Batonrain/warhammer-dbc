@@ -41,6 +41,7 @@ import { canSpendReaction, spendReaction, hasActionEconomy } from "./action-econ
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { clearPinnedOnMeleeEntry } from "./suppression.mjs";
 
 /** Флаг «раз в Раунд» (module/apps/game-session.mjs). */
 export const FREE_ATTACK_CAPABILITY = "freeAttack";
@@ -63,6 +64,43 @@ export function enemyContactTokenDocs(tokenDoc) {
     if (otherDoc.id === tokenDoc.id) continue;
     if (!isPersonalScale(otherDoc)) continue;
     if (tokenRelationship(tokenDoc.disposition, otherDoc.disposition) !== "enemy") continue;
+    const rectB = tokenRect(otherDoc);
+    if (!rectB) continue;
+    if (contactType(rect, rectB) !== "none") out.push(otherDoc);
+  }
+  return out;
+}
+
+/** Экипировано ли у актора рукопашное оружие или Пистолет (стр. 30 — «Связан в Рукопашной»). */
+function hasLockingWeapon(actor) {
+  return (actor?.items ?? []).some(i =>
+    i.type === "weapon" && i.system?.equipped
+    && (i.system.weaponClass === "melee" || i.system.weaponClass === "pistol"));
+}
+
+/**
+ * Связан в Рукопашной (стр. 30, wdbc-x1nz.2.64): враги личного масштаба в
+ * Базовом/Глубоком контакте с данным документом, вооружённые рукопашным
+ * оружием или Пистолетом — подмножество enemyContactTokenDocs выше.
+ */
+export function lockingContactTokenDocs(tokenDoc) {
+  return enemyContactTokenDocs(tokenDoc).filter(doc => hasLockingWeapon(actorOf(doc)));
+}
+
+/**
+ * ВСЕ токены личного масштаба в Базовом/Глубоком контакте с данным документом,
+ * независимо от отношения (враг ИЛИ союзник) — для рикошета промаха по цели,
+ * Связанной в Рукопашной (стр. 30, wdbc-x1nz.2.64): «случайный персонаж в
+ * контакте с целью — это может быть как враг, так и союзник».
+ */
+export function allContactTokenDocs(tokenDoc) {
+  const rect = tokenRect(tokenDoc);
+  if (!rect) return [];
+  const out = [];
+  for (const other of canvas?.tokens?.placeables ?? []) {
+    const otherDoc = other.document;
+    if (otherDoc.id === tokenDoc.id) continue;
+    if (!isPersonalScale(otherDoc)) continue;
     const rectB = tokenRect(otherDoc);
     if (!rectB) continue;
     if (contactType(rect, rectB) !== "none") out.push(otherDoc);
@@ -144,7 +182,8 @@ export async function processTokenMove(tokenDoc, beforeContactIds) {
   }
   if (moverActor?.getFlag("warhammer-dbc", "deepContactCarry")) return [];
 
-  const after = new Set(enemyContactTokenDocs(tokenDoc).map(d => d.id));
+  const afterDocs = enemyContactTokenDocs(tokenDoc);
+  const after = new Set(afterDocs.map(d => d.id));
   const broken = [];
   for (const enemyId of beforeContactIds) {
     if (after.has(enemyId)) continue; // контакт с этим врагом остался
@@ -152,6 +191,15 @@ export async function processTokenMove(tokenDoc, beforeContactIds) {
     if (!enemyTokenDoc) continue;
     broken.push(enemyTokenDoc);
     await offerFreeAttack(enemyTokenDoc, tokenDoc);
+  }
+
+  // Новый контакт снимает Подавление (стр. 33, wdbc-x1nz.2.62) — у ОБЕИХ
+  // сторон: и у того, кто подошёл, и у того, к кому подошли (тот тоже
+  // «оказался в рукопашной», хотя сам не двигался).
+  const gained = afterDocs.filter(d => !beforeContactIds.has(d.id));
+  if (gained.length) {
+    await clearPinnedOnMeleeEntry(moverActor);
+    for (const enemyDoc of gained) await clearPinnedOnMeleeEntry(actorOf(enemyDoc));
   }
   return broken;
 }

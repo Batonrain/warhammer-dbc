@@ -178,6 +178,30 @@ export function isStunnedOrDazed(actor) {
 }
 
 /**
+ * В Захвате (Борьба, стр. 12, wdbc-x1nz.2.31): «только действия Борьбы или
+ * не-Физические» — читатели, гейтящие ФИЗИЧЕСКИЕ действия (Движение,
+ * обычная Атака вне combat/grapple.mjs), спрашивают именно это, а не
+ * conditions.grappling напрямую — тем же приёмом, что isStunnedOrDazed.
+ */
+export function isGrappled(actor) {
+  return !!actor?.system?.conditions?.grappling;
+}
+
+/**
+ * Разум расфокусирован (стр. 12, wdbc-x1nz.2.32): «Ментальное действие...
+ * не может быть проведено, когда разум персонажа расфокусирован (например
+ * он пьян, галлюцинирует, или в Ярости)». Список — «или», как у
+ * isStunnedOrDazed: любое из трёх достаточно. inRage — system.inRage
+ * (МЕТКА, не system.conditions — см. constants/conditions.mjs), Опьянение —
+ * новое Состояние conditions.intoxicated (та же книжная фраза, без
+ * отдельной формулы длительности).
+ */
+export function isMentalActionBlocked(actor) {
+  const c = actor?.system?.conditions;
+  return !!(actor?.system?.inRage || c?.hallucinogenic || c?.intoxicated);
+}
+
+/**
  * Ослеплён — сам флаг ИЛИ производное от Потери глаз: «Без обоих глаз
  * персонаж Ослеплён» (стр. 30-31, wdbc-r5o7.4). Считается на лету, а не
  * отдельной проставленной галочкой — иначе два поля разъедутся при первой

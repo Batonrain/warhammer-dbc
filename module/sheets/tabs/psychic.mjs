@@ -8,6 +8,7 @@ import { SKILLS_DEF } from "../../constants/skills.mjs";
 import { DAMAGE_TYPES } from "../../constants/items.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { isPossessedByParasite } from "../../rules/parasite-trait.mjs";
+import { isMentalActionBlocked } from "../../rules/predicates.mjs";
 import { requiredMarks, MARK_LABELS } from "../../constants/talent-requirements.mjs";
 import { dreadnoughtOf, hasOsirisMatrix } from "../../rules/dreadnought.mjs";
 import { highSorceryManifestBlocked } from "../../rules/perfect-sorcerer.mjs";
@@ -179,6 +180,13 @@ export function showManifestDialog(actor, item) {
   // паразита «не может использовать психосилы» — тот же гейт-приём.
   if (isPossessedByParasite(actor)) {
     ui.notifications.warn(`«${item.name}»: тело под контролем паразита — собственные психосилы недоступны.`);
+    return;
+  }
+  // Ментальное действие (стр. 12, wdbc-x1nz.2.32): «не может быть проведено,
+  // когда разум расфокусирован (пьян/галлюцинирует/в Ярости)» — тот же
+  // гейт-приём, что у мононити/Паразита выше.
+  if (isMentalActionBlocked(actor)) {
+    ui.notifications.warn(`«${item.name}»: разум расфокусирован (Ярость/Галлюцинации/Опьянение) — манифестация недоступна (стр. 12).`);
     return;
   }
   const sys      = item.system;
@@ -887,7 +895,7 @@ export async function executePsychotest(actor, item, opts) {
         allRolls.push(dmgRoll);
         if (h === 0) firstHitTotal = dmgRoll.total;
         // Экстремальный урон (стр. 166-170) — тот же расчёт, что у оружия.
-        const ext = await rollExtremeDamage(dmgRoll, { wp, damageType: atk.damageType, hitLocation: "Торс" });
+        const ext = await rollExtremeDamage(dmgRoll, { wp, damageType: atk.damageType, hitLocation: "Торс", attacker: actor });
         if (ext.exRoll) allRolls.push(ext.exRoll);
         const extStr = ext.hasExtreme ? `
               <div class="roll-extreme-block">
@@ -906,7 +914,8 @@ export async function executePsychotest(actor, item, opts) {
                 data-ignore-shield="${wp.ignoreShield ? 1 : 0}"
                 data-warp-soak="${wp.warpSoak ? 1 : 0}"
                 data-lance="${wp.lance ? 1 : 0}"
-                data-sanctified="${wp.sanctified ? 1 : 0}">
+                data-sanctified="${wp.sanctified ? 1 : 0}"
+                data-has-extreme="${ext.hasExtreme ? 1 : 0}">
                 ${dmgRoll.total} → Торс
               </button>
             </div>${extStr}`);

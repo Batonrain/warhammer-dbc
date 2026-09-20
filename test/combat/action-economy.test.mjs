@@ -83,6 +83,12 @@ describe("apCostForActionType", () => {
     expect(apCostForActionType("Свободное действие")).toBe(0);
     expect(apCostForActionType(undefined)).toBe(0);
   });
+
+  // Длительное/Расширенное действие (стр. 12, wdbc-x1nz.2.27) — тоже 2 ОД за Ход.
+  it("Длительное и Расширенное действие — тоже 2 ОД", () => {
+    expect(apCostForActionType("Длительное действие")).toBe(2);
+    expect(apCostForActionType("Расширенное действие")).toBe(2);
+  });
 });
 
 describe("resetActionEconomy", () => {
@@ -214,6 +220,48 @@ describe("resetActionEconomy", () => {
     await resetActionEconomy(actor);
     expect(actor.system.actionPoints.value).toBe(0); // update ни разу не вызван
   });
+
+  // Врасплох (стр. 12, wdbc-x1nz.2.26): «пропускает свой первый Ход» — тот же
+  // абсолютный запрет, что у Оглушения/Без сознания, ПЛЮС само Состояние
+  // гасится этим же сбросом (единственный их Ход, пока оно висит).
+  describe("Врасплох", () => {
+    it("0 ОД, 0 Реакций, 0 доп. Реакций на Избегание — как Оглушение", async () => {
+      const actor = actorFor({
+        actionPoints: { value: 0, max: 2 },
+        reactions: { value: 0, max: 1, defenseValue: 0, defenseMax: 1 },
+        conditions: { surprised: true }
+      });
+      await resetActionEconomy(actor);
+      expect(actor.system.actionPoints.value).toBe(0);
+      expect(actor.system.reactions.value).toBe(0);
+      expect(actor.system.reactions.defenseValue).toBe(0);
+    });
+
+    it("снимает Состояние сразу после — это и был пропущенный первый Ход", async () => {
+      const actor = actorFor({ conditions: { surprised: true } });
+      await resetActionEconomy(actor);
+      expect(actor.system.conditions.surprised).toBe(false);
+    });
+
+    it("следующий сброс (следующий Раунд) — снова полный ОД/Реакции", async () => {
+      const actor = actorFor({
+        actionPoints: { value: 0, max: 2 },
+        reactions: { value: 0, max: 1, defenseValue: 0, defenseMax: 0 },
+        conditions: { surprised: true }
+      });
+      await resetActionEconomy(actor); // первый Ход — заблокирован, Состояние снято
+      await actor.update({ "system.actionPoints.value": 0, "system.reactions.value": 0 });
+      await resetActionEconomy(actor); // второй Ход — уже без Врасплоха
+      expect(actor.system.actionPoints.value).toBe(2);
+      expect(actor.system.reactions.value).toBe(1);
+    });
+
+    it("Врасплох и Подавлен разом — Врасплох побеждает (0, не 1)", async () => {
+      const actor = actorFor({ actionPoints: { value: 0, max: 2 }, conditions: { surprised: true, pinned: true } });
+      await resetActionEconomy(actor);
+      expect(actor.system.actionPoints.value).toBe(0);
+    });
+  });
 });
 
 describe("applyTurnEndStanceEffects", () => {
@@ -289,6 +337,46 @@ describe("canSpendReaction / spendReaction", () => {
     const actor = actorFor({ reactions: { value: 0, max: 1, defenseValue: 0, defenseMax: 0 } });
     expect(canSpendReaction(actor, { forDefense: true })).toBe(false);
     expect(await spendReaction(actor, { forDefense: true })).toBe(false);
+  });
+
+  // Стр. 12, wdbc-x1nz.2.28: «Одно Действие может вызвать только одну
+  // Реакцию» — Уклонение (провал), потом Парирование НА ТУ ЖЕ АТАКУ (одна
+  // карточка attack-card.mjs, общий attackId) не должны обе списать Реакцию.
+  describe("attackId — одна Реакция на одно Действие", () => {
+    it("вторая Реакция с тем же attackId блокируется, даже если пул ещё не пуст", async () => {
+      globalThis.game.combat = { started: true };
+      const actor = actorFor({ reactions: { value: 2, max: 2, defenseValue: 0, defenseMax: 0 } });
+      expect(await spendReaction(actor, { forDefense: true, attackId: "atk-1" })).toBe(true);
+      expect(actor.system.reactions.value).toBe(1); // первая реально списалась
+      expect(canSpendReaction(actor, { forDefense: true, attackId: "atk-1" })).toBe(false);
+      expect(await spendReaction(actor, { forDefense: true, attackId: "atk-1" })).toBe(false);
+      expect(actor.system.reactions.value).toBe(1); // вторая — не списалась
+    });
+
+    it("другой attackId (следующая атака) — Реакция снова доступна", async () => {
+      globalThis.game.combat = { started: true };
+      const actor = actorFor({ reactions: { value: 2, max: 2, defenseValue: 0, defenseMax: 0 } });
+      expect(await spendReaction(actor, { forDefense: true, attackId: "atk-1" })).toBe(true);
+      expect(await spendReaction(actor, { forDefense: true, attackId: "atk-2" })).toBe(true);
+      expect(actor.system.reactions.value).toBe(0);
+    });
+
+    it("без attackId (общая ручная трата) гейт не применяется вовсе", async () => {
+      globalThis.game.combat = { started: true };
+      const actor = actorFor({ reactions: { value: 2, max: 2, defenseValue: 0, defenseMax: 0 } });
+      expect(await spendReaction(actor)).toBe(true);
+      expect(await spendReaction(actor)).toBe(true);
+      expect(actor.system.reactions.value).toBe(0);
+    });
+
+    it("список отработавших attackId гасится сбросом экономики (начало следующего своего Хода)", async () => {
+      globalThis.game.combat = { started: true };
+      const actor = actorFor({ reactions: { value: 1, max: 1, defenseValue: 0, defenseMax: 0 } });
+      await spendReaction(actor, { forDefense: true, attackId: "atk-1" });
+      await resetActionEconomy(actor);
+      expect(actor.getFlag("warhammer-dbc", "reactedAttackIds")).toBeUndefined();
+      expect(canSpendReaction(actor, { forDefense: true, attackId: "atk-1" })).toBe(true);
+    });
   });
 });
 

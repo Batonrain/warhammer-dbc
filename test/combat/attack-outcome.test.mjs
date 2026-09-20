@@ -293,4 +293,28 @@ describe("bonusDamageDice", () => {
     const wp = withProps({ sniperAssassin: true });
     expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 9, aimed: true })).toBe(0);
   });
+
+  // Тесное помещение (стр. 36, wdbc-x1nz.2.63): взрывы X Dmg (damageType
+  // "blast") получают +1d10 урона.
+  describe("Тесное помещение: +1d10 для X Dmg (wdbc-x1nz.2.63)", () => {
+    it("confinedSpace + Взрывное + damageType blast — +1 кубик", () => {
+      const wp = withProps({ blastRating: 3 });
+      expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 1, confinedSpace: true, damageType: "blast" })).toBe(1);
+    });
+
+    it("confinedSpace, но damageType не blast — без кубика", () => {
+      const wp = withProps({ blastRating: 3 });
+      expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 1, confinedSpace: true, damageType: "impact" })).toBe(0);
+    });
+
+    it("damageType blast, но confinedSpace выключен — без кубика", () => {
+      const wp = withProps({ blastRating: 3 });
+      expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 1, confinedSpace: false, damageType: "blast" })).toBe(0);
+    });
+
+    it("confinedSpace + damageType blast, но не Взрывное оружие (blastRating=0) — без кубика", () => {
+      const wp = withProps({ blastRating: 0 });
+      expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 1, confinedSpace: true, damageType: "blast" })).toBe(0);
+    });
+  });
 });

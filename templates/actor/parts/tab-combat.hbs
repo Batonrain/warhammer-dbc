@@ -148,6 +148,12 @@
           {{#if spiritTalkGate}}
           <button type="button" class="spirit-talk-btn" {{#if spiritTalkGate.disabled}}disabled{{/if}} title="{{spiritTalkGate.title}}">👻 Духовный Разговор (2 ОД)</button>
           {{/if}}
+          {{#if actionEconomy.encounterActive}}
+          <button type="button" class="delay-action-btn" {{#unless system.actionPoints.value}}disabled{{/unless}}
+            title="Задержка (стр. 12): заканчивает Ход, сохраняет 1 ОД — тратится в любой момент до начала следующего своего Хода на полудействие/свободное действие (не Атаку, если уже атаковал в этот Ход).">
+            ⏸️ Задержка
+          </button>
+          {{/if}}
           {{#if actionEconomy.defense}}
           <div class="ae-pool" title="Доп. Реакции только на Избегание (Защитная Стойка, стр. 15) — тратятся раньше универсальных">
             <span class="ae-pool-label">Реакции (Избегание)</span>
@@ -169,6 +175,45 @@
             <button type="button" class="ae-reset-btn" title="Восполнить ОД и Реакции до максимума вручную">Сброс</button>
           </div>
         </div>
+        {{!-- Длительное/Расширенное действие (стр. 12, wdbc-x1nz.2.27): 2 ОД
+              за Ход, растянутые на несколько Ходов — тот же приём, что
+              «Расширенные тесты» на ПОКАЗАТЕЛЯХ (банк flags.warhammer-dbc.
+              sustainedActions), только копится не Степень Успеха, а сам факт
+              «Ход продолжен». Длительное — тест на последнем Ходу (порог =
+              нужные Ходы), Расширенное — тест на каждой контрольной точке
+              (порог = интервал между ними), прервали — потерян только
+              прогресс с последней точки. --}}
+        <div class="extended-tests-panel sustained-actions-panel" data-collapse-key="combat-sustained">
+          <div class="panel-title" data-action="panelCollapse">ДЛИТЕЛЬНЫЕ / РАСШИРЕННЫЕ ДЕЙСТВИЯ</div>
+          <div class="panel-body extended-tests-body">
+            {{#if sustainedActions.length}}
+            {{#each sustainedActions as |row|}}
+            <div class="extended-test-row sustained-action-row" data-key="{{row.key}}" data-kind="{{row.kind}}">
+              <span class="extended-test-label" title="{{row.label}}">{{row.label}} ({{#if (eq row.kind "extended")}}Расширенное{{else}}Длительное{{/if}})</span>
+              <span class="extended-test-bank {{#if row.ready}}extended-test-done{{/if}}">{{row.turnsSinceCheck}}/{{row.threshold}} Ход{{#if row.ready}} ✓{{/if}}</span>
+              {{#if (eq row.kind "extended")}}<span class="extended-test-bank" title="Пройдено контрольных точек">точек: {{row.checkpointsPassed}}</span>{{/if}}
+              <button type="button" class="sustained-continue-btn" data-key="{{row.key}}" title="Продолжить ещё на один Ход (2 ОД)">▶ 2 ОД</button>
+              {{#if row.ready}}{{#if (eq row.kind "extended")}}
+              <button type="button" class="sustained-checkpoint-btn" data-key="{{row.key}}" title="Контрольный тест сдан своим броском — зафиксировать точку">✓ Точка</button>
+              {{/if}}{{/if}}
+              <button type="button" class="sustained-interrupt-btn" data-key="{{row.key}}" title="{{#if (eq row.kind "extended")}}Прервано: сгорает только прогресс с последней точки{{else}}Прервано: весь банк сгорает{{/if}}">⚠ Прервать</button>
+              <button type="button" class="extended-test-del-btn" data-key="{{row.key}}" title="Убрать (например, финальный тест сдан)">✕</button>
+            </div>
+            {{/each}}
+            {{else}}
+            <div class="extended-tests-empty"><em>Нет активных Длительных/Расширенных действий</em></div>
+            {{/if}}
+            <div class="sustained-action-new">
+              <input type="text" class="sustained-new-label" placeholder="Название действия"/>
+              <select class="sustained-new-kind">
+                <option value="long">Длительное</option>
+                <option value="extended">Расширенное</option>
+              </select>
+              <input type="number" class="sustained-new-threshold" min="1" value="2" title="Длительное — сколько Ходов до теста; Расширенное — Ходов между контрольными точками"/>
+              <button type="button" class="sustained-begin-btn" title="Начать (2 ОД за этот Ход)">Начать (2 ОД)</button>
+            </div>
+          </div>
+        </div>{{!-- /sustained-actions-panel --}}
         {{/if}}
       </div>
     </div>{{!-- /движение --}}
@@ -301,8 +346,8 @@
         Клик пишет то же поле, что и диалог — расхождения не будет. База
         сюда больше не входит — выбирается прямо в диалоге атаки (Натиск
         дополнительно выставляет её кнопкой на панели ДВИЖЕНИЕ). --}}
-  <div class="combat-section-panel" data-collapse-key="combat-stance"> <div class="panel-title" data-action="panelCollapse">СТОЙКА</div> <div class="combat-collapse-body">
-    <div class="technique-grid"> {{#each combatStanceOptions as |s|}}<button type="button" class="technique-btn technique-btn-stance {{#if s.active}}is-on{{/if}}" data-stance="{{s.key}}" title="{{s.desc}}"> <span class="tech-name">{{s.label}}</span> </button> {{/each}}
+  <div class="combat-section-panel" data-collapse-key="combat-stance"> <div class="panel-title" data-action="panelCollapse">СТОЙКА{{#if stanceLocked}} <span class="rwc-recharge-badge" title="Стр. 31: Смену Стойки нельзя проводить после рукопашной атаки — снимется на следующем Ходу">🔒 заблокировано</span>{{/if}}</div> <div class="combat-collapse-body">
+    <div class="technique-grid"> {{#each combatStanceOptions as |s|}}<button type="button" class="technique-btn technique-btn-stance {{#if s.active}}is-on{{/if}}" data-stance="{{s.key}}" title="{{#if ../stanceLocked}}Стр. 31: нельзя менять Стойку после рукопашной атаки в этом Ходу{{else}}{{s.desc}}{{/if}}" {{#if ../stanceLocked}}disabled{{/if}}> <span class="tech-name">{{s.label}}</span> </button> {{/each}}
     </div>
     {{!-- Ярость (wdbc-plsf) — простой тумблер состояния боя, тем же приёмом,
           что helmetOff: сама механика Ярости (+10 WS/S/W, −20 BS/I/F и т.п.,
@@ -508,7 +553,7 @@
       {{#each combatRangedWeapons as |w|}}
       <div class="ranged-weapon-card" data-item-id="{{w.id}}"> <div class="rwc-main-row"> <span class="rwc-name">{{w.name}}{{#if w.hasMods}} <span class="weapon-mod-badge" title="Модификации: {{w.modNames}}"></span>{{/if}}</span> <span class="rwc-stat-inline" title="Класс">{{w.weaponClass}}</span> <span class="rwc-divider">·</span> <span class="rwc-stat-inline" title="Дальность">{{w.range}}м</span> <span class="rwc-divider">·</span> <span class="rwc-stat-inline" title="СКС">{{w.rof}}</span> <span class="rwc-divider">·</span> <span class="rwc-stat-inline" title="Урон">{{w.damage}}</span> <span class="rwc-stat-inline rwc-dmgtype" title="Тип урона">{{w.damageType}}</span> {{#if w.penetration}}
           <span class="rwc-divider">·</span> <span class="rwc-stat-label-inline">Проб.</span> <span class="rwc-stat-inline">{{w.penetration}}</span> {{/if}}
-          <span class="rwc-spacer"></span> <button type="button" class="weapon-hand-btn {{#if (eq w.hand 'left')}}is-on{{/if}}" data-item-id="{{w.id}}" data-hand="left" title="Оружие в левой руке (для HUD)">Л</button> <button type="button" class="weapon-hand-btn {{#if (eq w.hand 'right')}}is-on{{/if}}" data-item-id="{{w.id}}" data-hand="right" title="Оружие в правой руке (для HUD)">П</button> <span class="rwc-threshold-badge">{{w.attackThreshold}}</span> <button type="button" class="weapon-attack-notarget rwc-notarget-btn" data-item-id="{{w.id}}" title="Бросок без цели (тестовый — без авто-расчёта по защите цели)">Без цели</button> <button type="button" class="weapon-attack-roll rwc-atk-btn" data-item-id="{{w.id}}" title="Атака: {{w.name}}" {{#if (or w.magEmpty w.jammed w.needsRecharge w.destroyed)}}disabled{{/if}}>Атака</button> {{#if w.jammed}}<button type="button" class="wh-sheet-clear-jam-btn" data-item-id="{{w.id}}" title="Расклинить (доступно всегда, за столом — полудействие)" {{#unless w.canClearJam}}disabled{{/unless}}>🔧 Заклинило — Расклинить</button>{{/if}} {{#if w.needsRecharge}}<span class="rwc-recharge-badge" title="Перезарядка: нельзя стрелять в следующий Ход — снимется само на Ходе после этого">🔋 На подзарядке</span>{{/if}} {{#if w.destroyed}}<span class="rwc-recharge-badge" title="Уничтожено — бесполезно, пока не будет починено">💥 Уничтожено</span>{{/if}} </div> <div class="rwc-ammo-row"> {{#if w.compatAmmo.length}}
+          <span class="rwc-spacer"></span> <button type="button" class="weapon-hand-btn {{#if (eq w.hand 'left')}}is-on{{/if}}" data-item-id="{{w.id}}" data-hand="left" title="Оружие в левой руке (для HUD)">Л</button> <button type="button" class="weapon-hand-btn {{#if (eq w.hand 'right')}}is-on{{/if}}" data-item-id="{{w.id}}" data-hand="right" title="Оружие в правой руке (для HUD)">П</button> <span class="rwc-threshold-badge">{{w.attackThreshold}}</span> <button type="button" class="weapon-attack-notarget rwc-notarget-btn" data-item-id="{{w.id}}" title="Бросок без цели (тестовый — без авто-расчёта по защите цели)">Без цели</button> <button type="button" class="weapon-attack-roll rwc-atk-btn" data-item-id="{{w.id}}" title="Атака: {{w.name}}" {{#if (or w.magEmpty w.jammed w.needsRecharge w.destroyed)}}disabled{{/if}}>Атака</button> {{#if w.jammed}}<button type="button" class="wh-sheet-clear-jam-btn" data-item-id="{{w.id}}" title="Расклинить: Полное действие, тест Tech-Use+0 или Trade(Weaponsmith)+0" {{#unless w.canClearJam}}disabled{{/unless}}>🔧 Заклинило — Расклинить</button>{{/if}} {{#if w.jammedAmmo}}<button type="button" class="wh-sheet-restore-ammo-btn" data-item-id="{{w.id}}" title="Испорчено Клином: {{w.jammedAmmo}} патр. Восстановить: тест Trade(Weaponsmith)+10, вне боя, без ОД">🛠️ Испорчено {{w.jammedAmmo}} — Восстановить</button>{{/if}} {{#if w.canBrace}}<button type="button" class="wh-sheet-brace-btn {{#if w.braced}}is-on{{/if}}" data-item-id="{{w.id}}" title="Закрепление: Полудействие, снимает штраф тяжёлого оружия, пока не сдвинетесь с места или не довернёте оружие вне сектора ±45° от текущего разворота (стр. 35)">{{#if w.braced}}🔒 Закреплено{{else}}🔓 Закрепить{{/if}}</button>{{/if}} {{#if w.needsRecharge}}<span class="rwc-recharge-badge" title="Перезарядка: нельзя стрелять в следующий Ход — снимется само на Ходе после этого">🔋 На подзарядке</span>{{/if}} {{#if w.destroyed}}<span class="rwc-recharge-badge" title="Уничтожено — бесполезно, пока не будет починено">💥 Уничтожено</span>{{/if}} </div> <div class="rwc-ammo-row"> {{#if w.compatAmmo.length}}
             <select class="weapon-ammo-select rwc-ammo-select" data-item-id="{{w.id}}"> <option value="">— стандартные —</option> {{#each w.compatAmmo as |ammo|}}
               <option value="{{ammo.id}}" {{#if ammo.loaded}}selected{{/if}}
                       {{#if (eq ammo.quantity 0)}}disabled{{/if}}> {{ammo.name}}{{#if ammo.modStr}} [{{ammo.modStr}}]{{/if}}

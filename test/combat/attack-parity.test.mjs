@@ -112,7 +112,7 @@ describe("стрельба", () => {
     expect(card()).toContain("Оружие заклинило!");
     expect(hits()).toEqual([]);
     // wdbc-vwfk: раньше заклинивание было только строкой в чате — теперь
-    // реальное состояние предмета (снимается weapon-properties.mjs::clearWeaponJam).
+    // реальное состояние предмета (снимается combat/clear-jam.mjs::rollClearJam).
     expect(weapon.system.jammed).toBe(true);
   });
 

@@ -14,21 +14,21 @@
 //  тот же honest-compromise): диалог не проверяет геометрию, а просто
 //  спрашивает, куда персонаж отскочил, и списывает метры из пула.
 //
-//  «Отскок из рукопашной считается как Вольт» (п.6 правила, wdbc-zik7):
-//  прочитано (после сверки с пользователем — п.6 идёт СРАЗУ после абзаца про
-//  Blast, полностью накрывающий Базу, и относится к тому же самому Отскоку
-//  выше, не заводит отдельный рукопашный триггер Уклонения) как «если этот
-//  же Отскок выносит персонажа из рукопашного контакта с соседним врагом,
-//  такой выход засчитывается КАК Вольт (module/combat/movement-actions.mjs::
-//  declareDisengage, тот же flags.warhammer-dbc.disengageActive) — но только
-//  если ни один враг, способный на Свободную Атаку, тоже не пытался
-//  Избегать этой же атаки (их попытка отвлекает их — Вольт тогда не нужен,
-//  обычные правила и так работают)». Соседство нескольких противников по
-//  карте код не отслеживает вовсе (тот же honest-compromise, что у geometry
-//  выше) — showRecoilDialog только детектит САМ ФАКТ рукопашного контакта
-//  через free-attack.mjs::enemyContactTokenDocs (как suggestedAp детектит
-//  Укрытие), а решение «пытался ли враг тоже Избегать» — ручной чекбокс,
-//  подтверждаемый игроком/ГМом за столом.
+//  «Отскок из рукопашной считается как Вольт» (п.6 правила, wdbc-zik7,
+//  обновлено wdbc-x1nz.2.40): при первом чтении (wdbc-zik7, PR #339)
+//  отдельного действия «Вольт» со своим тестом в системе ещё не было, и по
+//  сверке с пользователем ближайшим аналогом было выбрано безусловное
+//  flags.warhammer-dbc.disengageActive («Выход из Боя»). Тем же сеансом, где
+//  появился настоящий Вольт с тестом Acrobatics vs WS (movement-actions.mjs::
+//  declareVault, wdbc-x1nz.2.37), пользователь явно решил перевести и это
+//  место на него — см. movement-actions.mjs::rollRecoilVault (тот же тест,
+//  без своей цены ОД, уже оплаченной состоявшимся Уклонением). Соседство
+//  нескольких противников по карте код не отслеживает вовсе (тот же honest-
+//  compromise, что у geometry выше) — showRecoilDialog только детектит САМ
+//  ФАКТ рукопашного контакта через free-attack.mjs::enemyContactTokenDocs
+//  (как suggestedAp детектит Укрытие), а решение «пытался ли враг тоже
+//  Избегать» (книжное исключение, при котором Вольт вообще не нужен) —
+//  ручной чекбокс, подтверждаемый игроком/ГМом за столом.
 // ════════════════════════════════════════════════════════════════════════
 
 import { esc } from "../helpers/utils.mjs";
@@ -39,6 +39,7 @@ import { coverApForToken } from "./cover.mjs";
 import { spendPoolForRecoil } from "./evasion-pool.mjs";
 import { coverApImperativeAdjust } from "./imperative-bonuses.mjs";
 import { enemyContactTokenDocs } from "./free-attack.mjs";
+import { rollRecoilVault } from "./movement-actions.mjs";
 
 /** Цена входа в Отскок из банка Успехов (Voltagheist Blast, wdbc-16ss). */
 export const POOL_RECOIL_COST = 2;
@@ -150,18 +151,17 @@ export async function showRecoilDialog(actor) {
 
 /**
  * Списывает дистанцию из пула, ставит разовый флаг AP Укрытия (если
- * применимо), при volt — тот же flags.warhammer-dbc.disengageActive, что
- * ставит «Выход из Боя» (declareDisengage, movement-actions.mjs), и постит
- * исход в чат. Зовётся из клика по wh-recoil-btn после подтверждения
- * showRecoilDialog.
+ * применимо), при volt — запускает настоящий встречный тест Вольта
+ * (movement-actions.mjs::rollRecoilVault, wdbc-x1nz.2.40: раньше здесь стоял
+ * безусловный flags.warhammer-dbc.disengageActive, тот же исход, что у
+ * «Выхода из Боя», без теста) отдельной карточкой следом, и постит исход
+ * самого Отскока в чат. Зовётся из клика по wh-recoil-btn после
+ * подтверждения showRecoilDialog.
  */
 export async function performRecoil(actor, { meters, intoCover, coverAp, volt = false } = {}) {
   const spent = await spendRecoil(actor, meters);
   if (intoCover && coverAp > 0) {
     await actor.setFlag("warhammer-dbc", "recoilCoverBonus", coverAp);
-  }
-  if (volt) {
-    await actor.setFlag("warhammer-dbc", "disengageActive", true);
   }
   const remaining = recoilRemaining(actor);
   const remLabel = Number.isFinite(remaining) ? `, остаток ${remaining}м в этом Раунде` : "";
@@ -170,7 +170,7 @@ export async function performRecoil(actor, { meters, intoCover, coverAp, volt = 
     ? `Отскочил на ${spent}м в Укрытие — попадания проходят, но со +${coverAp} AP (учтётся при следующем применении урона).`
     : `Отскочил на ${spent}м вне предела атаки — все попадания промахиваются.`);
   const voltNote = volt
-    ? `<div class="roll-defense-note">Засчитан как Вольт (п.6) — гасит Свободную Атаку соседних врагов на этот выход.</div>` : "";
+    ? `<div class="roll-defense-note">Засчитан как Вольт (п.6) — встречный тест против соседних врагов следует отдельной карточкой.</div>` : "";
 
   await postTestCard(actor, {
     icon: rollIcon("run"), title: `Отскок — ${esc(actor.name)}`,
@@ -180,6 +180,8 @@ export async function performRecoil(actor, { meters, intoCover, coverAp, volt = 
       voltNote
     ]
   }, { sound: false });
+
+  if (volt) await rollRecoilVault(actor);
 }
 
 /**

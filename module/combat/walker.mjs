@@ -101,7 +101,7 @@ function requireWalker(vehicle, title) {
  * Крестовой Блок выключен намеренно: он про два клинка в руках персонажа, а
  * не про манипуляторы корпуса.
  */
-export async function performWalkerParry(vehicle, { extraMod = 0, attackerUuid = "", hitsCount = 1 } = {}) {
+export async function performWalkerParry(vehicle, { extraMod = 0, attackerUuid = "", hitsCount = 1, attackId = "" } = {}) {
   if (!requireWalker(vehicle, "Парирование")) return;
   const crew = await walkerCrew(vehicle);
   if (!crew) return refusal(vehicle, "Парирование",
@@ -116,7 +116,7 @@ export async function performWalkerParry(vehicle, { extraMod = 0, attackerUuid =
   if (balanceMod === null) return refusal(vehicle, "Парирование",
     `Орудием «${esc(weapon.name)}» нельзя парировать (Баланс ${sgn(balance)}).`);
 
-  if (!(await spendReaction(crew.actor, { forDefense: true })))
+  if (!(await spendReaction(crew.actor, { forDefense: true, attackId })))
     return _noReactionCard(crew.actor, "Парирование (Шагоход)");
 
   // Подпись −Размер×10 ставится своей строкой: parryProfile сложил его в общий
@@ -154,7 +154,7 @@ export async function performWalkerParry(vehicle, { extraMod = 0, attackerUuid =
  * у самой машины (system.operate — то же поле, которым считается Вираж), а
  * половина Уклонения — у пилота, со всем его стеком модификаторов.
  */
-export async function performWalkerDodge(vehicle, { extraMod = 0, attackerUuid = "", hitsCount = 1 } = {}) {
+export async function performWalkerDodge(vehicle, { extraMod = 0, attackerUuid = "", hitsCount = 1, attackId = "" } = {}) {
   if (!requireWalker(vehicle, "Уклонение")) return;
   const crew = await walkerCrew(vehicle);
   if (!crew) return refusal(vehicle, "Уклонение",
@@ -166,7 +166,7 @@ export async function performWalkerDodge(vehicle, { extraMod = 0, attackerUuid =
   const { dodgePart, operatePart, threshold } =
     walkerDodgeThresholds({ dodgeBase: profile.threshold, size, operate });
 
-  if (!(await spendReaction(crew.actor, { forDefense: true })))
+  if (!(await spendReaction(crew.actor, { forDefense: true, attackId })))
     return _noReactionCard(crew.actor, "Уклонение (Шагоход)");
 
   const roll = await new Roll("1d100").evaluate();

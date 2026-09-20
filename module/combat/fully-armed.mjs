@@ -9,11 +9,12 @@
 // имён — doombc-hand-of-death), не по английской: «Custom Grip» дословно в
 // паке не встречается, только его перевод.
 //
-// −1 ОД к перезарядке (до ½) книжного текста НЕ смоделирован: system.reload
-// (module/data/item/weapon.mjs) — свободная строка («1», «полн.», «2 полн.»),
-// в системе нигде нет числового движка экономии действий, который бы её
-// читал programmatically — тот же честный пробел у общего Таланта с идентичной
-// формулировкой ("вдвое, окр.▼", talents-library.mjs:84/capabilities.mjs:1420).
+// −1 ОД к перезарядке (до ½) книжного текста по-прежнему НЕ смоделирован
+// здесь: с wdbc-x1nz.2.54 у system.reload (module/data/item/weapon.mjs)
+// наконец есть числовой движок — combat/reload.mjs::reloadApCost (½ → 1 ОД,
+// целое N → 2N ОД) — но САМА скидка Fully Armed поверх него ещё не подключена.
+// Тот же остаток у общего Таланта с идентичной формулировкой ("вдвое, окр.▼",
+// talents-library.mjs:84/capabilities.mjs:1420).
 
 import { itemHasName } from "../rules/predicates.mjs";
 import { hasAbility } from "../rules/ability-by-key.mjs";

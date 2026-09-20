@@ -90,6 +90,13 @@ export function canStrikeWithGun(item, { isIntegralAttack } = {}) {
   const sys = item?.system || {};
   if (!sys.equipped) return false;
   if (sys.weaponClass === "melee") return false;
+  // Метательное/Граната (стр. 40, wdbc-x1nz.2.58): «в рукопашной может
+  // использоваться как рукопашное оружие» — своим ЖЕ профилем (нож остаётся
+  // ножом), а не синтетическим «прикладом» IMPROVISED_BY_CLASS ниже (там нет
+  // ключа "thrown", и без этого исключения оно ловило бы фолбэк «как Посох»,
+  // теряя собственные Урон/Тип/Пробитие). Рукопашное использование включает
+  // opts.forceMelee (см. attackIsMelee) — оно уже не трогает этот профиль.
+  if (sys.weaponClass === "thrown") return false;
   const integral = isIntegralAttack ? isIntegralAttack(item) : false;
   if (!integral) return true;
   return !!(item?.getFlag?.(SYSTEM, "allowGunMeleeStrike")

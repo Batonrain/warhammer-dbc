@@ -166,6 +166,54 @@ describe("processTokenMove: разрыв контакта", () => {
   });
 });
 
+// Подавление (стр. 33, wdbc-x1nz.2.62): «персонажи в рукопашной ...
+// автоматически преодолевают Подавление, когда оказываются в рукопашной» —
+// новый (появившийся этим перемещением) контакт снимает conditions.pinned у
+// ОБЕИХ сторон, не только у двигавшегося.
+describe("processTokenMove: новый контакт снимает Подавление у обеих сторон", () => {
+  it("подошедший рукопашник снимает себе Подавление", async () => {
+    const moverActor = fakeActor({ type: "character", conditions: { pinned: true } });
+    const enemy = token({ id: "e", x: 2, y: 0, disposition: HOSTILE, actor: fakeActor({ type: "character" }) });
+    const mover = token({ id: "m", x: 0, y: 0, disposition: FRIENDLY, actor: moverActor });
+    canvas.tokens.placeables = [mover, enemy];
+
+    await processTokenMove(mover.document, new Set()); // контакта не было — теперь появился
+
+    expect(moverActor.system.conditions.pinned).toBe(false);
+  });
+
+  it("тот, к кому подошли (сам не двигался) — тоже теряет Подавление", async () => {
+    const enemyActor = fakeActor({ type: "character", conditions: { pinned: true } });
+    const enemy = token({ id: "e", x: 2, y: 0, disposition: HOSTILE, actor: enemyActor });
+    const mover = token({ id: "m", x: 0, y: 0, disposition: FRIENDLY, actor: fakeActor({ type: "character" }) });
+    canvas.tokens.placeables = [mover, enemy];
+
+    await processTokenMove(mover.document, new Set());
+
+    expect(enemyActor.system.conditions.pinned).toBe(false);
+  });
+
+  it("контакт остался прежним (не новый) — Подавление не трогает", async () => {
+    const moverActor = fakeActor({ type: "character", conditions: { pinned: true } });
+    const enemy = token({ id: "e", x: 2, y: 0, disposition: HOSTILE, actor: fakeActor({ type: "character" }) });
+    const mover = token({ id: "m", x: 0, y: 0, disposition: FRIENDLY, actor: moverActor });
+    canvas.tokens.placeables = [mover, enemy];
+
+    await processTokenMove(mover.document, new Set(["e"])); // контакт с "e" уже был
+
+    expect(moverActor.system.conditions.pinned).toBe(true);
+  });
+
+  it("не Подавлен — новый контакт ничего не меняет (не падает без conditions)", async () => {
+    const moverActor = fakeActor({ type: "character" });
+    const enemy = token({ id: "e", x: 2, y: 0, disposition: HOSTILE, actor: fakeActor({ type: "character" }) });
+    const mover = token({ id: "m", x: 0, y: 0, disposition: FRIENDLY, actor: moverActor });
+    canvas.tokens.placeables = [mover, enemy];
+
+    await expect(processTokenMove(mover.document, new Set())).resolves.toBeDefined();
+  });
+});
+
 describe("offerFreeAttack: экономика действия реагирующего", () => {
   it("тип без экономики действий (Орда/Техника/...) — не предлагает", async () => {
     const reactor = fakeActor({ type: "horde" });

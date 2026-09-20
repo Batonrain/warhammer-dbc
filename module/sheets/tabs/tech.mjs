@@ -202,7 +202,7 @@ export async function activateTechMiracle(actor, item) {
       const dmgRoll = await new Roll(f).evaluate();
       allRolls.push(dmgRoll);
       // Экстремальный урон (стр. 166-170) — тот же расчёт, что у оружия/психосил.
-      const ext = await rollExtremeDamage(dmgRoll, { wp, damageType: sys.damageType, hitLocation: "Торс" });
+      const ext = await rollExtremeDamage(dmgRoll, { wp, damageType: sys.damageType, hitLocation: "Торс", attacker: actor });
       if (ext.exRoll) allRolls.push(ext.exRoll);
       const dt  = DAMAGE_TYPES[sys.damageType] || sys.damageType;
       const pen = sys.penetration || 0;
@@ -223,7 +223,8 @@ export async function activateTechMiracle(actor, item) {
               data-ignore-shield="${wp.ignoreShield ? 1 : 0}"
               data-warp-soak="${wp.warpSoak ? 1 : 0}"
               data-lance="${wp.lance ? 1 : 0}"
-              data-sanctified="${wp.sanctified ? 1 : 0}">
+              data-sanctified="${wp.sanctified ? 1 : 0}"
+              data-has-extreme="${ext.hasExtreme ? 1 : 0}">
               Применить урон: ${dmgRoll.total} → Торс
             </button>
           </div>${extStr}`;

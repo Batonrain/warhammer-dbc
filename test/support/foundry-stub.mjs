@@ -457,6 +457,7 @@ globalThis.Folder = class {};
 globalThis.JournalEntry = class {};
 globalThis.FilePicker = class {};
 globalThis.Combatant = class {};
+globalThis.Combat = class {};
 // Combatant#getInitiativeRoll (client/documents/combatant.mjs) строит бросок
 // именно так — не new Roll(...) напрямую. Заглушка переиспользует globalThis.Roll
 // выше: rollData ей не нужен, formula разбирает parseRollFormula.

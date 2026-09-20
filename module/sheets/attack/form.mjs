@@ -98,6 +98,13 @@ export function readAttackForm(form, ammoConds) {
     // Fanning / Быстрый Курок (wdbc-fy33): RoF Длинной очереди 2..BS.b по
     // выбору — 0 значит «поля в форме нет» (Талант неактивен для этого броска).
     fanningRof: parseInt(el("#atk-fanning-rof")?.value) || 0,
+    // Широкая Очередь (стр. 35, wdbc-x1nz.2.53) — галочка сама решает только
+    // «хочет ли игрок», настоящую проверку (Очередь ли выбрана, хватает ли ей
+    // RoF 3) делает attack.mjs по rofMode/sys, не форма.
+    wideBurst:  el("#atk-wide-burst")?.checked || false,
+    // Тесное помещение (стр. 36, wdbc-x1nz.2.63) — ГМ решает на глаз, галочка
+    // видна только у Взрывного (attack-dialog.mjs::confinedSpaceHtml).
+    confinedSpace: el("#atk-confined-space")?.checked || false,
     aimVal:     el("#atk-aim")?.value,
     aimPenalty: attr("#atk-aim option:checked", "penalty"),
     // Кого выцеливают в паре «всадник + скакун» и во что это обходится. Штраф
@@ -130,6 +137,13 @@ export function readAttackForm(form, ammoConds) {
     // Карабин (wdbc-z56a): нужен на исполнении броска, чтобы дать цели +10
     // вместо +30 на Уклонение — см. #atk-melee-shot в specificMods выше.
     meleeShot:  on("#atk-melee-shot"),
+    // Скрытая атака (стр. 12, wdbc-x1nz.2.29): «Избегание невозможно от
+    // атаки, о которой цель не знает» — см. #atk-mod-hidden в commonMods выше.
+    hiddenAttack: on("#atk-mod-hidden"),
+    // Прицеливание при «Обе руки» (стр. 12, wdbc-x1nz.2.41): «только ОДНА из
+    // атак получает бонус» — выбор руки, по умолчанию основная (радио может
+    // не быть в форме вовсе, если Прицеливание не активно — тогда "main").
+    aimHand: el("input[name='atk-aim-hand']:checked")?.value || "main",
     // Перемены (Change, стр. 74 Книги Аэльдари): цель бездушна/техника → +X Pen.
     changeSoulless: on("#atk-change-soulless"),
     weaponOff:  on("#atk-weaponoff"),
