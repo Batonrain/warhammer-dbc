@@ -76,6 +76,8 @@ import { charStereotypesFor, effectivePricingMode, worldAdvancePricingMode, PRIC
 import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml, ruleAutoModsHtml, autoModsTotal } from "../rules/roll-mods.mjs";
+import { EXCESS_LEGACY_RULE_ID } from "../rules/legacy-weapon.mjs";
+import { rollExcessLegacyRiskTest } from "../combat/legacy-weapon-excess.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { isMoraleOpposedSkill, resolveTest } from "../rules/resolve-test.mjs";
@@ -2295,6 +2297,13 @@ export class WarhammerCharacterSheet
       return modifier;
     };
 
+    // Наследие Излишеств (wdbc-1rno.35): какие ИМЕННО галочки-правила были
+    // отмечены на ЭТОМ броске — обычно это неважно (все складываются в одно
+    // число), но эта находка каскадит W+0/Порчу ТОЛЬКО если риск реально
+    // взят, и без ruleId после броска не с чем сравнивать.
+    const checkedRuleIds = formEl =>
+      [...formEl.querySelectorAll(".rule-mod:checked")].map(cb => cb.dataset.ruleId).filter(Boolean);
+
     // ── Комбинированный: два столбца (стр. 25, wdbc-y9i8) ──────────────────
     // Столбец А фиксирован тем Навыком/Характеристикой, на который кликнули
     // (решение пользователя: смена Навыка мидовым диалогом потянула бы за
@@ -2471,6 +2480,7 @@ export class WarhammerCharacterSheet
               charKey:  form.querySelector("#skill-char-select")?.value,
               target:   parseInt(form.querySelector("#skill-target").value) || 0,
               modifier, difficulty, combined, extended, opposed, opposedAuto,
+              checkedRuleIds: checkedRuleIds(form),
               // isOpposed/isSafe — сама галочка «Встречный», отдельно от opposed
               // (которое null, пока Порог/Бросок соперника не введены вручную и
               // авто-резолв ещё не отработал): полтеста без соперника — всё равно
@@ -2940,7 +2950,7 @@ export class WarhammerCharacterSheet
     if (!result) return;
     const { target, modifier, difficulty = 0, combined, extended, opposed, opposedAuto,
              opposedSelected = false, opposedSafeSelected = false,
-             assistCount = 0, reroll = null, confirmPick = false } = result;
+             assistCount = 0, reroll = null, confirmPick = false, checkedRuleIds = [] } = result;
     // Делегированный тест (wdbc-uez7): эффект/последствия — на effectTargetActor
     // (тот, за кого просили), сам бросок и его штрафы за состояние тела/снаряжения
     // (Усталость/Марш/Броня/Перевес) — на this.actor (кто физически бросает).
@@ -3102,6 +3112,14 @@ export class WarhammerCharacterSheet
       });
     }
     await this._maybePostOpposedComparison(opposedRequest, { label, baseEff, rv, outcome, skillKey, charKey });
+    // Наследие Излишеств, Оружие Наследия (wdbc-1rno.35, стр. 427): риск был
+    // взят ИМЕННО на этом броске (галочка legacyExcess.charBonus среди
+    // отмеченных, см. checkedRuleIds выше) И тест провален → каскад W+0/Порча
+    // (combat/legacy-weapon-excess.mjs). Эффект — на actor'а, что бросал
+    // (effectActor), не обязательно на владельца листа при делегированном тесте.
+    if (!outcome.success && checkedRuleIds.includes(EXCESS_LEGACY_RULE_ID)) {
+      await rollExcessLegacyRiskTest(effectActor);
+    }
     // Возврат исхода (wdbc-1rno.2): раньше _runTest ничего не возвращал —
     // ни один существующий вызывающий код это значение не читал (проверено
     // grep'ом), поэтому добавление return здесь ничего не ломает. Нужен

@@ -310,6 +310,38 @@ function misfireHitsSection(misfireHits, { wp, pen, damageType, damageSubtype = 
 }
 
 /**
+ * Наследие Предательства (wdbc-1rno.35, стр. 427): нат. 100 на попадание —
+ * «оружие попадает по случайному союзнику» ВМЕСТО исходной цели. Случайный
+ * получатель и его дистанция/контакт уже посчитаны в attack.mjs (module/
+ * combat/legacy-weapon-betrayal.mjs) — та же форма и тот же data-force-target
+ * приём, что рикошет промаха выше, но урон один и тот же (не добавочный).
+ */
+function betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype = "", weaponName, actorUuid, itemUuid }) {
+  if (!betrayalHits.length) return "";
+  const buttons = betrayalHits.map((m, i) => `
+    <button class="wh-apply-dmg-btn" type="button"
+      data-damage="${m.total}" data-penetration="${pen}"
+      data-damage-type="${damageType}" data-damage-subtype="${damageSubtype}"
+      data-hit-location="${m.loc}" data-weapon-name="${weaponName}"
+      data-weapon-uuid="${itemUuid}" data-attacker-uuid="${actorUuid}"
+      data-force-target="${m.targetUuid}"
+      data-felling="${wp.fellingRating ?? 0}" data-primitive="${wp.primitive ? 1 : 0}"
+      data-ignore-shield="${wp.ignoreShield ? 1 : 0}" data-warp-soak="${wp.warpSoak ? 1 : 0}"
+      data-lance="${wp.lance ? 1 : 0}" data-sanctified="${wp.sanctified ? 1 : 0}"
+      data-corrosive="${wp.corrosiveRating ?? 0}" data-entropy="${wp.entropyRating ?? 0}"
+      data-touch-of-pain="${wp.touchOfPainIgnoreTb ? 1 : 0}" data-crippling="${wp.cripplingRating ?? 0}"
+      data-piercing="${wp.piercing ? 1 : 0}"
+      data-haywire="${wp.haywire ? (wp.haywireRating ?? 0) : ""}" data-haywire-dmg2="${wp.haywireDamage2 || ""}">
+      Применить попадание ${i + 1}: <b>${m.total}</b> → ${esc(m.targetName)} (${m.loc})
+    </button>`).join("");
+  return `
+  <div class="roll-apply-dmg-section">
+    <div class="roll-wprop-note">🗡️ Наследие Предательства: нат. 100 на попадание — оружие подвело, урон уходит случайному союзнику рядом:</div>
+    ${buttons}
+  </div>`;
+}
+
+/**
  * Кнопки защиты цели. Уклонение и Парирование гасятся приёмом или Гибким.
  *
  * Экспортирована: её же реюзает module/combat/evasion-pool.mjs, чтобы
@@ -600,6 +632,11 @@ export function attackCard({
   // [{total, loc, targetName, targetUuid}] — уже готовые попадания, своя
   // случайная цель посчитана в attack.mjs (не выбор ГМа за столом).
   misfireHits = [],
+  // Наследие Предательства, Оружие Наследия (wdbc-1rno.35, История 4, стр.
+  // 427): нат. 100 на попадание — «оружие попадает по случайному союзнику»
+  // ВМЕСТО исходной цели. Та же форма и тот же data-force-target приём, что
+  // misfireHits — единственная в этой атаке боевая единица (не добавочная).
+  betrayalHits = [],
   // Данные для урона по Орде: Rng нужен Распылению, burst — Таланту «Свинцовый
   // Дождь», uuid — чтобы найти Таланты и Размер стрелка, hordeHits — раскладка
   // попаданий правилом «Прячась в Орде» (combat/horde-tokens.mjs).
@@ -843,6 +880,7 @@ export function attackCard({
                                             vehicleSide, isMelee, burst, weaponRange,
                                             attackerUuid, itemUuid, hordeHits }),
       misfireHitsSection(misfireHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid }),
+      betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid }),
       soulBurnActorId ? `
     <div class="roll-wprop-effects">
       <button class="wh-soulburn-btn" type="button" data-attacker-id="${soulBurnActorId}">

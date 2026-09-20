@@ -320,7 +320,16 @@
         <div class="wms-legacy-sub">История</div>
         {{#if legacy.history}}
         <div class="wms-legacy-entry"><b>{{legacy.history.name}}</b> <span class="wms-legacy-roll">({{legacy.history.roll}})</span>
-          <div class="wms-legacy-text">{{legacy.history.text}}</div></div>
+          <div class="wms-legacy-text">{{legacy.history.text}}</div>
+          {{#if legacy.history.isExcess}}
+          <div class="wms-legacy-pick" title="Пока держит оружие в руке — опциональная +10 на тесты выбранной Характеристики; провал такого теста требует W+0 или 1 Порчи (лист сам предложит эту галочку и тест).">
+            <select class="legacy-excess-char-select">
+              <option value="">— Характеристика Излишеств —</option>
+              {{#each legacy.history.excessCharOptions as |o|}}<option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.label}}</option>{{/each}}
+            </select>
+          </div>
+          {{/if}}
+        </div>
         {{else}}
         <div class="wms-legacy-pick">
           <select class="legacy-history-select">

@@ -53,6 +53,9 @@ import { touchOfPainActive } from "./touch-of-pain.mjs";
 import { withWitchsEdge }                             from "./witchs-edge.mjs";
 import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
 import { bloodFlameDamageBonus }                      from "../rules/blood-flame.mjs";
+import { preciseLegacyDamageBonus, wrathLegacyDamageBonus, legacyWrathEffectiveRof, betrayalLegacyActive, legacyHistoryIs, excessLegacyExtraDeg, bloodLegacyDamageBonus, legacyChangeDamageBonus, takenMutationNames, swiftLegacyRangedDodgePenalty, swiftLegacyMeleeDodgePenalty, dishonorableLegacyActive, distractingLegacyActive, DISTRACTING_LEGACY_FLAG, LEGACY_GUARDIAN_FLAG, earlyDeathLegacyDamageBonus, markEarlyDeathLegacyUsed, adaptiveLegacyMeleeDamageBonus } from "../rules/legacy-weapon.mjs";
+import { meleeContactCount } from "./tactical-map.mjs";
+import { betrayalRandomAllyToken } from "./legacy-weapon-betrayal.mjs";
 import { handOfKhorneStrengthMultiplier, handOfKhorneBlocksRangedAttack } from "../rules/hand-of-khorne.mjs";
 import { triggerAttackAnimation }                     from "../integrations/autoanimations.mjs";
 import { assassinStrikeAvailable }                    from "./assassin-strike.mjs";
@@ -86,6 +89,10 @@ export async function rollExtremeDamage(dmgRoll, { wp, damageType, hitLocation =
         const thr = wp.extremeThreshold < 10 ? wp.extremeThreshold : term.faces;
         for (const r of term.results) {
           if (r.active && r.result >= thr) hasExtreme = true;
+          // Мучитель/merciless 10-10, Оружие Наследия (wdbc-1rno.35, стр.
+          // 428): «Броски в 1 на кубиках урона оружия вызывают Экстремальный
+          // Урон» — отдельное условие ПОВЕРХ обычного порога, не замена.
+          if (wp.legacyExtremeOnOne && r.active && r.result === 1) hasExtreme = true;
         }
       }
     }
@@ -135,7 +142,14 @@ export function brutalChargeDamageBonus(actor) {
 }
 
 export async function _executeAttackRoll(actor, item, charKey, threshold, rofMode, aimTarget, opts = {}) {
-  const sys     = item.system;
+  const rawSys  = item.system;
+  // Наследие Ярости/Rage, ranged-ветка (wdbc-1rno.35, стр. 427): «+1 к
+  // наибольшей RoF, или S/2− вместо S/−/−» — клон sys, реальный предмет не
+  // трогаем, тот же приём, что Fanning (rofOverride) ниже подмешивает клон
+  // поверх клона. С этой точки sys — уже эффективный (с бонусом), все
+  // нижеидущие чтения rof_semi/rof_full (счёт попаданий, расход патронов,
+  // потолок Подавления) видят применённую Историю.
+  const sys     = legacyWrathEffectiveRof(rawSys, item);
   // Метательное (Граната и т.п.) по умолчанию бросается по BS — стр. 40:
   // «В рукопашной оно МОЖЕТ использоваться как рукопашное», это не default.
   // Решение «рукопашная ли это атака» одно на окно и на бросок
@@ -240,6 +254,18 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Touch of Pain: T.b Поглощения этой атаки игнорируется целиком (не
   // сравнимо с Разящим — тот бьёт только Сверхъест. часть, здесь весь T.b).
   wp.touchOfPainIgnoreTb = touchOfPainOn;
+  // Кромсающее/fearsome 10-10, Оружие Наследия (wdbc-1rno.35, стр. 427):
+  // «При Экстремальном Уроне бросает 1d5+1 на Критический Результат» —
+  // тот же примитив, что Monofilament (constants/weapon-properties.mjs,
+  // auto.extremeLevelBonus:2), только +1 и по Мутации, а не по свойству.
+  // Второе предложение («может потратить Очко Бесчестия, чтобы бросить
+  // 1d10−2 (мин.1) вместо») честно НЕ реализовано — тот же общий пробел
+  // «нет кнопки временного эффекта на Мутации», см. bd-комментарий Перебора.
+  if (takenMutationNames(item).has("Кромсающее")) wp.extremeLevelBonus = (wp.extremeLevelBonus || 0) + 1;
+  // Мучитель/merciless 10-10, Оружие Наследия (wdbc-1rno.35, стр. 428):
+  // «Броски в 1 на кубиках урона вызывают Экстремальный Урон» — синтетический
+  // флаг для rollExtremeDamage (см. заголовок выше в этом файле).
+  if (takenMutationNames(item).has("Мучитель")) wp.legacyExtremeOnOne = true;
 
   // Sniper Assassin / Снайпер-Убийца (wdbc-1rno.2, rules/unseen-talents.mjs)
   // — ДО блока unseen ниже: сам ставит wp.unseen, тот читается следующей
@@ -398,7 +424,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // атаке». Прибавляется к СТЕПЕНИ, а не к порогу: от степени зависят и число
   // попаданий (Быстрая/Молниеносная), и остаточные Успехи приёмов.
   const savageBonus = (hit && isMelee) ? savageExtraHits(actor, item) : 0;
-  const deg = rolledDeg + savageBonus;
+  // Наследие Излишеств, Оружие Наследия (wdbc-1rno.35, История 6, стр. 427):
+  // «+1 Успех на все успешные тесты WS и BS с этим оружием» — WS/BS здесь
+  // ровно те же тесты, что вообще проходят через _executeAttackRoll (charKey
+  // атаки всегда ws/bs), отдельного гейта по charKey не нужно.
+  const excessBonus = excessLegacyExtraDeg({ hit, weapon: item });
+  const deg = rolledDeg + savageBonus + excessBonus;
   // Крит-диапазон (натуральные 1-5/96-100, стр. 25) — не путать с «Критическим
   // Результатом/Эффектом» ниже: тот триггерится свойством Extreme оружия по
   // граням урона, этот — только по натуральному броску атаки, независимо от
@@ -730,7 +761,66 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // (не рукопашное использование), в отличие от прочего стрелкового, которое
   // S.b к урону никогда не получает.
   const thrownSbBonus = (!isMelee && sys.weaponClass === "thrown") ? sbEff : 0;
-  const flatBonus = (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus;
+  // aimed читает opts.aiming — actor.system.aiming к этому моменту уже сброшен
+  // в "none" диалогом (attack/dialog.mjs:217, ДО этого вызова), поэтому
+  // значение приходит явным параметром, захваченным до сброса (wdbc-1rno.5).
+  // Считается здесь же (раньше bonusDamageDice ниже), чтобы им же могла
+  // воспользоваться Сверхточное/Legacy Мутация (wdbc-1rno.35) в flatBonus.
+  const aimed = !!opts.aiming && opts.aiming !== "none";
+  // Сверхточное/Оружие Наследия, skilled 9-9 (wdbc-1rno.35, rules/
+  // legacy-weapon.mjs): +1 Dmg за каждый чётный Успех, одиночный выстрел или
+  // рукопашная атака с Прицеливанием.
+  const preciseLegacyBonus = preciseLegacyDamageBonus({ weapon: item, hit, deg, rofMode, isMelee, aimed });
+  // Наследие Гнева/wrath, Оружие Наследия (wdbc-1rno.35, rules/legacy-weapon.mjs):
+  // +2 Dmg против цели Ненависти носителя — переиспользует hatredTargetsOf/
+  // anyTargetMatches (rules/hatred.mjs), defenderActor уже известен выше.
+  const wrathLegacyBonus = wrathLegacyDamageBonus({ weapon: item, actor, hit, targetActor: defenderActor });
+  // Наследие Крови, Оружие Наследия (wdbc-1rno.35, История 8): +1 Dmg, всегда.
+  const bloodLegacyBonus = bloodLegacyDamageBonus({ weapon: item, hit });
+  // Наследие Перемен, Оружие Наследия (wdbc-1rno.35, История 9): дубль на
+  // броске 2d5 старта Хода — результат кубика идёт в урон вместо теста.
+  const changeLegacyBonus = legacyChangeDamageBonus(actor, item, hit);
+  // Наследие Предательства, Оружие Наследия (wdbc-1rno.35, История 4, стр.
+  // 427): +1d5 Dmg против цели, что не видит персонажа, или Застигнута
+  // Врасплох — unseen/targetSurprised уже посчитаны выше (Backstab/Quiet
+  // Elimination). Натуральная 100 на попадание («оружие попадает по
+  // случайному союзнику») — честно НЕ реализована отдельным решением
+  // (wdbc-1rno.35, см. bd comment): переадресация уже разрешённого попадания
+  // на другого актора — примитив, которого в движке нет вообще ни для одной
+  // находки, не точечная правка этого файла.
+  const betrayalActive = betrayalLegacyActive({ weapon: item, hit, unseen, targetSurprised });
+  const betrayalRoll = betrayalActive ? await new Roll("1d5").evaluate() : null;
+  const betrayalBonus = betrayalRoll?.total || 0;
+  // Бесчестное/skilled 10-10, Оружие Наследия (wdbc-1rno.35, стр. 428):
+  // +1d10 Dmg против цели, что не видит персонажа, или Застигнута Врасплох —
+  // те же unseen/targetSurprised, что Наследие Предательства, другая Мутация
+  // и другой куб. Второе +1d10 («если считают персонажа союзником») честно
+  // НЕ реализовано — см. dishonorableLegacyActive.
+  const dishonorableActive = dishonorableLegacyActive({ weapon: item, hit, unseen, targetSurprised });
+  const dishonorableRoll = dishonorableActive ? await new Roll("1d10").evaluate() : null;
+  const dishonorableBonus = dishonorableRoll?.total || 0;
+  // Скорая Кончина/versatile 7-7, Оружие Наследия (wdbc-1rno.35, стр. 428):
+  // +3 Dmg на первое успешное попадание этим оружием за бой.
+  const earlyDeathBonus = earlyDeathLegacyDamageBonus({ weapon: item, actor, hit });
+  // Адаптивное/versatile 8-8, Оружие Наследия, рукопашная ветка (wdbc-1rno.35,
+  // стр. 428): +1 Dmg, когда противник имеет численный перевес в рукопашной
+  // (враги атакующего в контакте с НИМ САМИМ, не с целью).
+  const attackerContactCount = (isMelee && attackerToken) ? meleeContactCount(attackerToken) : null;
+  const adaptiveBonus = adaptiveLegacyMeleeDamageBonus({ weapon: item, hit, attackerContactCount });
+  // Отвлекающее/skilled 3-4, Оружие Наследия, стрелковая ветка (wdbc-1rno.35,
+  // стр. 427-428): попадание метит цель — «все остальные» получают +10 по
+  // ней (sheets/attack/mods.mjs читает флаг обратно).
+  if (hit && defenderActor && distractingLegacyActive(item)) {
+    await defenderActor.setFlag?.("warhammer-dbc", DISTRACTING_LEGACY_FLAG, true);
+  }
+  // Защитник/vigilant 8-8, Оружие Наследия, стрелковая ветка (wdbc-1rno.35,
+  // стр. 428): цель получает метку — атаки ПО СТРЕЛКУ получают −30 до
+  // начала её следующего Хода (predicates.mjs::legacyGuardianMarked).
+  if (hit && !isMelee && defenderActor && takenMutationNames(item).has("Защитник") && item.system?.weaponClass !== "melee") {
+    await defenderActor.setFlag?.("warhammer-dbc", LEGACY_GUARDIAN_FLAG, { shooterUuid: actor.uuid });
+  }
+  const flatBonus = (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus;
+  if (earlyDeathBonus) await markEarlyDeathLegacyUsed(actor, item, hit);
   let dmgFormula = damageFormulaFor({
     damage: effDamage, flatBonus, chars,
     corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee
@@ -747,18 +837,17 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Доп. кубы урона: Меткое (одиночный, по СУ, ТОЛЬКО с Прицеливанием — книга
   // «При одиночных выстрелах С Прицеливанием»), Рассеивание (кор. дист.),
   // Максимальный режим (+1d10). Эти кубы НЕ вызывают Экстремальный урон.
-  // aimed читает opts.aiming — actor.system.aiming к этому моменту уже сброшен
-  // в "none" диалогом (attack/dialog.mjs:217, ДО этого вызова), поэтому
-  // значение приходит явным параметром, захваченным до сброса (wdbc-1rno.5).
   const bonusDice = bonusDamageDice({
     wp, rofMode, hit, deg, shortRange, maximal: maximalOn, band,
     ammoDice: ammoSys?.damageDiceMod,
-    aimed: !!opts.aiming && opts.aiming !== "none",
+    aimed,
     confinedSpace: confinedSpaceOn, damageType: effDmgType
   });
 
   const damageRolls = [];
   const allRolls    = [roll];
+  if (betrayalRoll) allRolls.push(betrayalRoll);
+  if (dishonorableRoll) allRolls.push(dishonorableRoll);
 
   // Клин Распыления (стр. 168): решается ПЕРВЫМ кубиком урона, а не броском
   // атаки — { face, at } первого попадания, либо null, если не заклинило.
@@ -855,6 +944,23 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Место каждого попадания считается один раз: карточка печатает его и в
   // строке урона, и в кнопке применения урона.
   const hits = damageRolls.map((d, i) => ({ ...d, loc: locForHit(i) }));
+
+  // Наследие Предательства, Оружие Наследия (wdbc-1rno.35, История 4, стр.
+  // 427): нат. 100 на попадание — «оружие попадает по случайному союзнику»
+  // ВМЕСТО исходной цели. rv (roll.total) — тот же сырой d100, что дал сам
+  // hit. Союзника и геометрию (контакт в рукопашной / 3м от цели в
+  // стрелковой — разные книжные условия для каждой ветки Истории) считает
+  // combat/legacy-weapon-betrayal.mjs. Нет подходящего союзника рядом —
+  // книга это не разбирает, попадание остаётся по исходной цели как обычно.
+  const betrayalHits = [];
+  if (hit && rv === 100 && legacyHistoryIs(item, "Наследие Предательства")) {
+    const allyToken = betrayalRandomAllyToken({ isMelee, attackerToken, targetToken });
+    const allyActor = allyToken?.actor ?? allyToken?.document?.actor ?? null;
+    if (allyActor) {
+      for (const d of hits) betrayalHits.push({ total: d.total, loc: d.loc, targetName: allyActor.name, targetUuid: allyActor.uuid });
+      hits.length = 0;
+    }
+  }
 
   // Промах по цели, Связанной в Рукопашной (стр. 30, wdbc-x1nz.2.64):
   // одиночный выстрел, промахнувший на 1-2 Провала, попадает в случайного
@@ -1113,6 +1219,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       band, suppression, allGunsBlazing, corVal, corEffects: sys.corEffects || [],
       burstSecondaryTargets,
       misfireHits,
+      betrayalHits,
       // Урон по Орде: Rng нужен Распылению, burst — Таланту «Свинцовый Дождь»,
       // uuid — чтобы найти Таланты и Размер стрелка.
       weaponRange: Number(sys.range) || 0,
@@ -1152,10 +1259,16 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // Широкая Очередь (стр. 35, wdbc-x1nz.2.53): книга штрафует только
         // «попытки Уклонения» — не Парирование, поэтому wideBurstPenalty
         // прибавлен ниже лишь к dodgeMod/dodgeModRecoil.
+        // Быстрое/skilled 8-8, Оружие Наследия (wdbc-1rno.35, стр. 428):
+        // рукопашная −10 (уже имело Flexible при получении), стрелковая −20
+        // (безусловно) — у одного оружия сразу оба быть не могут (разные
+        // weaponClass-ветки самой записи).
         dodgeMod: (hiddenAttack || feintBlocked) ? -999
-          : meleeShotDodgeBonus + evasionImperativeBonus(defenderActor) + (blindFightingBypass ? -20 : 0) + critHitPenalty + wideBurstPenalty,
+          : meleeShotDodgeBonus + evasionImperativeBonus(defenderActor) + (blindFightingBypass ? -20 : 0) + critHitPenalty + wideBurstPenalty
+            + swiftLegacyMeleeDodgePenalty(item) + swiftLegacyRangedDodgePenalty(item),
         dodgeModRecoil: (!hiddenAttack && !feintBlocked && hasEvasionRecoilImperative(defenderActor))
           ? meleeShotDodgeBonus + evasionImperativeBonus(defenderActor, { planningRecoil: true }) + (blindFightingBypass ? -20 : 0) + critHitPenalty + wideBurstPenalty
+            + swiftLegacyMeleeDodgePenalty(item) + swiftLegacyRangedDodgePenalty(item)
           : null,
         parryMod: (hiddenAttack || feintBlocked) ? -999 : (techOpts.targetParryMod ?? 0) + (blindFightingBypass ? -20 : 0) + critHitPenalty,
         // Переброс, НАВЯЗАННЫЙ защищающемуся (Локус Кровопролития): бросает его

@@ -268,7 +268,8 @@ export const CTX_DEPENDENT_PREDICATES = new Set([
   "weaponClass", "charNotIn", "charIn",
   "targetHasTrait", "targetLacksCondition", "targetHasCondition",
   "targetHasSize", "targetKeepsNimbleInArmour", "targetHasFaction",
-  "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus", "hasHatredTarget"
+  "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus", "hasHatredTarget",
+  "legacyGuardianMarked"
 ]);
 
 export const PREDICATES = {
@@ -418,6 +419,20 @@ export const PREDICATES = {
     const mark = actor?.getFlag?.("warhammer-dbc", "avatarOfSlaughterMark");
     if (!mark?.berserkerUuid) return false;
     return ctx?.targetActor?.uuid !== mark.berserkerUuid;
+  },
+
+  // Защитник/vigilant 8-8, Оружие Наследия, стрелковая ветка (wdbc-1rno.35,
+  // стр. 428): «Цель, по которой стреляли из этого оружия, до начала её
+  // следующего Хода получает штраф −30 на атаки по персонажу.» Метка — НА
+  // САМОЙ ЦЕЛИ (тот же приём, что avatarOfSlaughterOffTarget выше, но
+  // направление обратное: штраф срабатывает, когда меченый атакует ИМЕННО
+  // отметившего, не «любого кроме»). Гасится общим реестром turn-flags.mjs
+  // на старте её же следующего Хода — сама метка живёт weaponId стрелка
+  // (не нужен здесь, штраф безусловный, если совпал targetActor).
+  legacyGuardianMarked: (actor, ctx) => {
+    const mark = actor?.getFlag?.("warhammer-dbc", "legacyGuardianMark");
+    if (!mark?.shooterUuid) return false;
+    return ctx?.targetActor?.uuid === mark.shooterUuid;
   },
 
   // Hex-Marked Prey/Проклятая Метка (Талант, Шаман Зверолюдей, wdbc-xxb7):

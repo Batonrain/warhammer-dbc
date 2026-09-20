@@ -20,6 +20,8 @@ import { hasBlackEyesDarknessImmunity } from "../../rules/black-eyes.mjs";
 import { isBraced } from "../../combat/brace-weapon.mjs";
 import { lockingContactTokenDocs } from "../../combat/free-attack.mjs";
 import { hasQuietElimination, isQuietEliminationWeapon } from "../../rules/quiet-elimination.mjs";
+import { legacyHistoryIs, legacyChangeTestBonus, bloodthirstyLegacyMeleeActive, takenMutationNames, DISTRACTING_LEGACY_FLAG, adaptiveLegacyMeleeWsBonus } from "../../rules/legacy-weapon.mjs";
+import { isNearestUndamagedEnemy } from "../../combat/legacy-weapon-mutations.mjs";
 /**
  * @param {object} v состояние броска: оружие, токены, замеренная дистанция
  * @returns {{commonMods: object[], specificMods: object[], charSwapWhy: string[], bandKey: string|null}}
@@ -82,6 +84,62 @@ export function situationalMods(v) {
     // ниже).
     ...(hasQuietElimination(actor) && weapon && isQuietEliminationWeapon(weapon) ? [{
       label: "Тихое Устранение (нож/игольчатый/осколочный пистолет)", value: 10, autoCheck: true
+    }] : []),
+    // Наследие Ярости/Rage, Оружие Наследия, рукопашная ветка (wdbc-1rno.35,
+    // стр. 427): «+10 к атакам ЭТИМ оружием» — весь бой, не только Натиск,
+    // поэтому auto, не отдельная ситуативная галочка.
+    ...(isMelee && weapon && legacyHistoryIs(weapon, "Наследие Ярости") ? [{
+      label: "Наследие Ярости (История): +10 этим оружием", value: 10, autoCheck: true
+    }] : []),
+    // Единство/versatile 3-4, Оружие Наследия (wdbc-1rno.35, стр. 428): «Все
+    // тесты WS и BS этим оружием +5.» Второе предложение («штраф с внешних
+    // факторов не хуже −10») честно НЕ реализовано — нужно клампить итоговую
+    // сумму всех прочих модификаторов диалога, посчитанную ПОСЛЕ этого
+    // списка, не однострочная правка внутри самого списка галочек.
+    ...(weapon && takenMutationNames(weapon).has("Единство") ? [{
+      label: "Единство (Мутация): +5 этим оружием", value: 5, autoCheck: true
+    }] : []),
+    // Адаптивное/versatile 8-8, рукопашная (wdbc-1rno.35, стр. 428): «когда
+    // перевес 2к1 — ещё и +10 на тесты WS». +1 Dmg того же условия — в
+    // combat/attack.mjs::adaptiveLegacyMeleeDamageBonus (flatBonus, не мод
+    // диалога — Dmg туда не попадает).
+    ...(weapon && takenMutationNames(weapon).has("Адаптивное") ? (() => {
+      const wsBonus = adaptiveLegacyMeleeWsBonus({ weapon, attackerContactCount });
+      return wsBonus ? [{
+        label: "Адаптивное (Мутация): +10 WS — перевес 2к1", value: wsBonus, autoCheck: true,
+        note: `врагов у атакующего в контакте: ${attackerContactCount}`
+      }] : [];
+    })() : []),
+    // Наследие Крови, Оружие Наследия (wdbc-1rno.35, История 8, стр. 427):
+    // «+10 на попадание по Псайкерам» — тот же признак system.isPsyker, что
+    // talent-targets.mjs::psyker.test.
+    ...(weapon && legacyHistoryIs(weapon, "Наследие Крови") && attackCtx.targetActor?.system?.isPsyker ? [{
+      label: "Наследие Крови: +10 по Псайкеру", value: 10, autoCheck: true
+    }] : []),
+    // Наследие Перемен, Оружие Наследия (wdbc-1rno.35, История 9, стр. 427):
+    // «2d5 в начале Хода — бонус ко всем тестам WS/BS этим оружием до
+    // следующего Хода» — бросок и хранение уже сделаны на старте Хода
+    // (combat/action-economy.mjs::resetActionEconomy), здесь только чтение
+    // готового флага. 0 не показываем — нечего галочкой подтверждать.
+    ...(weapon ? (() => {
+      const v = legacyChangeTestBonus(actor, weapon);
+      return v ? [{ label: `Наследие Перемен: ${v >= 0 ? "+" : ""}${v} (бросок этого Хода)`, value: v, autoCheck: true }] : [];
+    })() : []),
+    // Отвлекающее/skilled 3-4, Оружие Наследия, стрелковая ветка (wdbc-1rno.35,
+    // стр. 427-428): «Все остальные персонажи +10 по цели, в которую попало
+    // это оружие» — метка живёт на ЦЕЛИ, не привязана к атакующему оружию.
+    ...(attackCtx.targetActor?.getFlag?.("warhammer-dbc", DISTRACTING_LEGACY_FLAG) ? [{
+      label: "Отвлекающее (Мутация): +10 — цель отмечена", value: 10, autoCheck: true
+    }] : []),
+    // Кровожадное/fearsome 1-2, Оружие Наследия (wdbc-1rno.35, стр. 427).
+    // Рукопашная: «+20, когда совершал Натиск» (весь Ход, system.meleeBase).
+    ...(weapon && bloodthirstyLegacyMeleeActive(actor, weapon) ? [{
+      label: "Кровожадное (Мутация): +20 — совершал Натиск", value: 20, autoCheck: true
+    }] : []),
+    // Кровожадное, стрелковая ветка: «+20 по ближайшей неповреждённой цели».
+    ...(!isMelee && weapon && weapon.system?.weaponClass !== "melee" && takenMutationNames(weapon).has("Кровожадное")
+      && attackerToken && isNearestUndamagedEnemy({ attackerToken, targetToken }) ? [{
+      label: "Кровожадное (Мутация): +20 — ближайшая неповреждённая цель", value: 20, autoCheck: true
     }] : []),
     // Закрепление (Полудействие, Физическое: оружие ставится на укрытие,
     // лафет, бипод или трипод). Книга свойства Ogrynized: «Закрепление оружия
@@ -159,6 +217,10 @@ export function situationalMods(v) {
   // считаем не врагов у атакующего, а «врагов цели» (т.е. атакующего и его
   // союзников) в контакте с целью (wdbc-5il7, п.5).
   const outnumberCount = (isMelee && targetToken) ? meleeContactCount(targetToken) : null;
+  // Адаптивное/versatile 8-8, Оружие Наследия (wdbc-1rno.35, стр. 428): та же
+  // meleeContactCount, но от АТАКУЮЩЕГО — «противник имеет численный перевес
+  // [над атакующим]», не над целью (outnumberCount выше — другое направление).
+  const attackerContactCount = (isMelee && attackerToken) ? meleeContactCount(attackerToken) : null;
   // Тактическая карта: полоса дальности из уже измеренной дистанции и Rng
   // оружия (стр. 40: в упор 0,5–3 м / короткая до Rng/2 / боевая до Rng /
   // дальняя до Rng×2 / экстремальная до Rng×3, дальше выстрел невозможен).

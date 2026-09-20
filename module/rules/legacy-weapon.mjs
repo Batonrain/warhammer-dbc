@@ -16,7 +16,10 @@
 import { rarityDiff } from "../constants/craft.mjs";
 import { MUTATION_THRESHOLDS, ASCENSION_HEAVY_MOD, ASCENSION_LEGION_BONUS,
          ASCENSION_DEED_MAX, ASCENSION_HARD_PROPS } from "../constants/legacy-weapon.mjs";
-import { itemHasName } from "./predicates.mjs";
+import { itemHasName, hatredTargetsOf } from "./predicates.mjs";
+import { anyTargetMatches } from "./talent-targets.mjs";
+import { CHARACTERISTICS } from "../constants/characteristics.mjs";
+import { isCapabilityAvailable, markCapabilityUsed } from "./cooldown.mjs";
 
 const num = v => Number(v) || 0;
 
@@ -92,9 +95,17 @@ export function isAstartes(actor) {
 
 // ── Что Наследие делает с профилем ────────────────────────────────────────
 
-/** Бонус Наследия к Dmg и Pen: ½Inf.b, округление вверх (стр. 426). */
-export function legacyBonus(actor) {
+/**
+ * Бонус Наследия к Dmg и Pen: ½Inf.b, округление вверх (стр. 426). Перебор/
+ * fearsome 8-8 (wdbc-1rno.35, стр. 427): «Бонус к урону оружия использует
+ * полный Inf.b вместо половины» — полный, если у ЭТОГО оружия уже записана
+ * Мутация (второй параметр опционален: applyLegacy на самом Возвышении почти
+ * всегда зовёт без него — Мутаций тогда ещё нет; исключение — повторное
+ * Возвышение после разрыва связи, книга сохраняет Мутации, стр. 428).
+ */
+export function legacyBonus(actor, weapon = null) {
   const infBonus = num(actor?.system?.characteristics?.inf?.bonus);
+  if (weapon && takenMutationNames(weapon).has("Перебор")) return infBonus;
   return Math.ceil(infBonus / 2);
 }
 
@@ -149,4 +160,525 @@ export function mutationsAvailable(actor, weapon) {
 /** Броски, которые в этой таблице уже выпадали, — их перебрасывают. */
 export function takenMutationNames(weapon) {
   return new Set((weapon?.system?.legacy?.mutations ?? []).map(m => m?.name).filter(Boolean));
+}
+
+// ── Применение конкретных Мутаций/Историй (wdbc-1rno.35) ──────────────────
+//  Хранилище (weapon.system.legacy.mutations/historyKey) уже достаточно
+//  структурировано (подтверждено на wdbc-1rno.41) — общий реестр по типу
+//  capabilityKey/kind:"script" не нужен, каждая запись читается точечно, в
+//  месте боевого конвейера, которое ей соответствует.
+
+/**
+ * Сверхточное/Skilled 9-9 (стр. 428): «При одиночных выстрелах или рукопашных
+ * атаках с Прицеливанием это оружие получает +1 Dmg за каждый чётный Успех на
+ * попадание.» Прицеливание книга ставит условием для обеих веток (та же
+ * логика, что у общего Меткого — attack-outcome.mjs::bonusDamageDice, «без
+ * Прицеливания Меткое не даёт бонуса вовсе»), поэтому aimed проверяется и для
+ * одиночного выстрела, и для рукопашной.
+ */
+export function preciseLegacyDamageBonus({ weapon, hit, deg, rofMode, isMelee, aimed }) {
+  if (!hit || !aimed) return 0;
+  if (!(isMelee || rofMode === "single")) return 0;
+  if (!takenMutationNames(weapon).has("Сверхточное")) return 0;
+  return Math.floor((Number(deg) || 0) / 2);
+}
+
+/** Название взятой Истории — единственное структурное поле для неё (weapon.system.legacy.historyName). */
+export function legacyHistoryIs(weapon, name) {
+  return String(weapon?.system?.legacy?.historyName || "") === name;
+}
+
+/**
+ * Наследие Боли (История 5, стр. 427): «Оружие получает свойство
+ * Crippling (1) или Shocking, если уже имело его.» Разовое ПОСТОЯННОЕ
+ * изменение свойств оружия — тот же приём, что propsAfterLegacy у самого
+ * Возвышения (новый массив, не мутация); зовётся ОДИН раз при записи
+ * Истории (apps/legacy-weapon.mjs::setHistory), не на каждой атаке, как
+ * остальные находки этого тикета — здесь нечего считать в бою заново.
+ */
+export function painLegacyProps(props = []) {
+  const out = [...props];
+  if (!out.some(p => p?.key === "crippling")) {
+    out.push({ key: "crippling", rating: 1 });
+    return out;
+  }
+  if (!out.some(p => p?.key === "shocking")) out.push({ key: "shocking" });
+  return out;
+}
+
+/**
+ * Наследие Чумы (История 7, стр. 427): «Оружие получает свойство Toxic (0).
+ * Если оно уже имело это свойство, оно повышает рейтинг свойства Toxic на
+ * 1.» Тот же приём разового постоянного изменения, что painLegacyProps.
+ *
+ * Третье предложение книги («Если оно заряжено альтернативным ядом, тесты
+ * против этого яда получают штраф −10») честно НЕ реализовано — у боеприпаса
+ * (module/data/item/ammo.mjs) нет вообще понятия «альтернативный яд»/тип
+ * яда как структурного поля (grep подтвердил: ни одного упоминания вне
+ * текста книг), гейтить нечем.
+ */
+export function plagueLegacyProps(props = []) {
+  const out = [...props];
+  const idx = out.findIndex(p => p?.key === "toxic");
+  if (idx === -1) {
+    out.push({ key: "toxic", rating: 0 });
+    return out;
+  }
+  out[idx] = { ...out[idx], rating: (Number(out[idx].rating) || 0) + 1 };
+  return out;
+}
+
+/**
+ * Наследие Гнева (История 2, стр. 427): «+2 Dmg против врагов, на которых у
+ * персонажа есть Талант Hatred.» Цель Ненависти — та же инфраструктура, что
+ * уже читает сам Талант (rules/hatred.mjs, wdbc-1rno, 12.09.2026):
+ * hatredTargetsOf(actor) + anyTargetMatches по ctx.targetActor.
+ */
+export function wrathLegacyDamageBonus({ weapon, actor, hit, targetActor }) {
+  if (!hit) return 0;
+  if (!legacyHistoryIs(weapon, "Наследие Гнева")) return 0;
+  const targets = hatredTargetsOf(actor);
+  if (!targets.length) return 0;
+  return anyTargetMatches(targets, { targetActor }) ? 2 : 0;
+}
+
+/**
+ * Наследие Крови (История 8, стр. 427): «+1 Dmg. +10 на попадание по
+ * Псайкерам.» (Третья часть — «+10 на встречные тесты против психосил/
+ * выжигания души/демонических даров/одержимости, пока вооружён» — честно НЕ
+ * реализована: все четыре опираются на ОДИН и тот же общий делегированный
+ * тест Сопротивления {label: 'Сопротивление: <имя>'} без единого ctx-тега
+ * «это опасная психическая угроза» — гейтить общим правилом не с чем, метка
+ * четырёх РАЗНЫХ подсистем (sheets/tabs/psychic.mjs и др.) свободный текст,
+ * не категория. Заведён дочерний тикет на общий примитив.)
+ */
+export function bloodLegacyDamageBonus({ weapon, hit }) {
+  if (!hit) return 0;
+  return legacyHistoryIs(weapon, "Наследие Крови") ? 1 : 0;
+}
+
+/**
+ * Кровожадное/fearsome 1-2 (стр. 427), рукопашная ветка: «+20 на все тесты
+ * с оружием в Ход, когда персонаж совершал Натиск.» combat/movement-
+ * actions.mjs::declareCharge пишет system.meleeBase='charge' на ВЕСЬ Ход
+ * (не на одну атаку) — ровно то состояние, что спрашивает книга.
+ */
+export function bloodthirstyLegacyMeleeActive(actor, weapon) {
+  if (weapon?.system?.weaponClass !== "melee") return false;
+  return actor?.system?.meleeBase === "charge" && takenMutationNames(weapon).has("Кровожадное");
+}
+
+/**
+ * Рваное/fearsome 3-4 (стр. 427, both): «Даёт свойство Tearing. Если оно уже
+ * имело это свойство, даёт вместо этого Proven (½Inf.b (окр.▲)).» Разовое
+ * постоянное изменение — тот же приём, что painLegacyProps/plagueLegacyProps,
+ * но зовётся из rollMutation (apps/legacy-weapon.mjs), не setHistory: это
+ * Мутация, не История. infBonus — Inf.b ВЛАДЕЛЬЦА на момент получения
+ * Мутации (число фиксируется тогда же, не пересчитывается каждый раз).
+ */
+export function tearingLegacyProps(props = [], infBonus = 0) {
+  const out = [...props];
+  if (!out.some(p => p?.key === "tearing")) {
+    out.push({ key: "tearing" });
+    return out;
+  }
+  if (!out.some(p => p?.key === "proven")) {
+    out.push({ key: "proven", rating: Math.ceil((Number(infBonus) || 0) / 2) });
+  }
+  return out;
+}
+
+/**
+ * Разбивающее/fearsome 5-6 (стр. 427): «Рукопашная: Даёт Power Field. Если
+ * уже имело — +2 Pen. Стрелковая: Даёт Razor Sharp. Если уже имело — +2
+ * Pen.» Ни у Power Field, ни у Razor Sharp нет рейтинга (булевы свойства) —
+ * «+2 Pen» повторного попадания уходит не в weaponProps, а плоской
+ * прибавкой к system.penetration самого предмета (тот же разряд правки,
+ * что Возвышение уже делает с профилем — permanent, не за столом).
+ * @returns {{props: object[], penDelta: number}}
+ */
+export function shatteringLegacyGrant(weapon) {
+  const propKey = weapon?.system?.weaponClass === "melee" ? "powerField" : "razorSharp";
+  const props = [...(weapon?.system?.weaponProps ?? [])];
+  if (!props.some(p => p?.key === propKey)) return { props: [...props, { key: propKey }], penDelta: 0 };
+  return { props, penDelta: 2 };
+}
+
+/**
+ * Ошеломляющее/fearsome 7-7 (стр. 427). Рукопашная: «Даёт Concussive
+ * (½Inf.b (окр.▲)) или +1 к рейтингу, если оно равно или выше.» Стрелковая:
+ * «Даёт Concussive (1).» — фиксированный рейтинг 1, не масштабируется
+ * Inf.b, но тот же приём «уже есть — +1».
+ *
+ * Второе предложение стрелковой ветки («Если цель Уклонилась, бросьте
+ * 1d10+Inf.b — если пробивает её Поглощение, попадание без урона с
+ * Concussive (0)») честно НЕ реализовано: это отдельная проверка «атака ПОСЛЕ
+ * успешного Уклонения», а не обычный урон-минус-Поглощение — движок уже умеет
+ * это (combat/overpenetration.mjs — кнопка на карточке успешного Уклонения),
+ * но там Поглощение считает СТАНДАРТНАЯ кнопка «Применить урон» по месту
+ * попадания; здесь нужен отдельный, не-урон-чек «1d10+Inf.b против
+ * Поглощения» — требует того же расчёта Поглощения по месту (combat/
+ * armor-properties.mjs::resolveArmorAbsorptionAP), вызванного НЕ из обычного
+ * применения урона, а как самостоятельный тест. Отдельная небольшая
+ * подсистема, не однострочная правка — не тянул её внутрь этой находки.
+ */
+/**
+ * Быстрое/skilled 8-8 (стр. 428). Рукопашная: «Даёт Flexible. Если уже
+ * имело — Уклонения от него получают −10.» Стрелковая: «Избегания от этого
+ * оружия получают −20» (безусловно, не 'если уже имело').
+ *
+ * Рукопашная ветка: если Flexible уже была на оружии ДО этой Мутации, книга
+ * не даёт повторный грант — вместо этого нужен живой −10 к Уклонению при
+ * атаке ИМЕННО этим оружием, но weaponProps после гранта не хранит, «Flexible
+ * появилась от Мутации или была всегда» — поэтому факт «нужен ли −10»
+ * фиксируется отдельным булевым полем на самом предмете (weapon.system.
+ * legacy.swiftDodgePenalty), а не выводится из списка свойств заново.
+ * @returns {{props: object[], swiftDodgePenalty: boolean}}
+ */
+export function swiftLegacyMeleeGrant(weapon) {
+  const props = [...(weapon?.system?.weaponProps ?? [])];
+  if (props.some(p => p?.key === "flexible")) return { props, swiftDodgePenalty: true };
+  return { props: [...props, { key: "flexible" }], swiftDodgePenalty: false };
+}
+
+/** Стрелковая ветка Быстрого: безусловный штраф −20 Уклонению от ЭТОГО оружия. */
+export function swiftLegacyRangedDodgePenalty(weapon) {
+  if (weapon?.system?.weaponClass === "melee") return 0;
+  return takenMutationNames(weapon).has("Быстрое") ? -20 : 0;
+}
+
+/** Рукопашная ветка Быстрого: −10 Уклонению, если уже было Flexible при получении (см. swiftLegacyMeleeGrant). */
+export function swiftLegacyMeleeDodgePenalty(weapon) {
+  if (weapon?.system?.weaponClass !== "melee") return 0;
+  if (!takenMutationNames(weapon).has("Быстрое")) return 0;
+  return weapon?.system?.legacy?.swiftDodgePenalty ? -10 : 0;
+}
+
+/**
+ * Резня/merciless 7-7 (стр. 428): «Даёт свойство Devastating (½Inf.b
+ * (окр.▲)) или +1 к рейтингу, если оно равно или выше.» Тот же приём, что
+ * stunningLegacyGrant (Ошеломляющее) — грант/апгрейд рейтинга при получении
+ * Мутации, разово, apps/legacy-weapon.mjs::rollMutation.
+ */
+export function slaughterLegacyGrant(weapon, infBonus) {
+  const props = [...(weapon?.system?.weaponProps ?? [])];
+  const idx = props.findIndex(p => p?.key === "devastating");
+  const base = Math.ceil((Number(infBonus) || 0) / 2);
+  if (idx === -1) { props.push({ key: "devastating", rating: base }); return props; }
+  props[idx] = { ...props[idx], rating: (Number(props[idx].rating) || 0) + 1 };
+  return props;
+}
+
+/**
+ * Злобное/merciless 9-9 (стр. 428): «Даёт свойство Crippling (½Inf.b
+ * (окр.▲)) или +1 к рейтингу, если оно равно или выше.» Тот же приём.
+ */
+export function viciousLegacyGrant(weapon, infBonus) {
+  const props = [...(weapon?.system?.weaponProps ?? [])];
+  const idx = props.findIndex(p => p?.key === "crippling");
+  const base = Math.ceil((Number(infBonus) || 0) / 2);
+  if (idx === -1) { props.push({ key: "crippling", rating: base }); return props; }
+  props[idx] = { ...props[idx], rating: (Number(props[idx].rating) || 0) + 1 };
+  return props;
+}
+
+export function stunningLegacyGrant(weapon, infBonus) {
+  const isMeleeW = weapon?.system?.weaponClass === "melee";
+  const baseRating = isMeleeW ? Math.ceil((Number(infBonus) || 0) / 2) : 1;
+  const props = [...(weapon?.system?.weaponProps ?? [])];
+  const idx = props.findIndex(p => p?.key === "concussive");
+  if (idx === -1) {
+    props.push({ key: "concussive", rating: baseRating });
+    return props;
+  }
+  props[idx] = { ...props[idx], rating: (Number(props[idx].rating) || 0) + 1 };
+  return props;
+}
+
+/** Экипированное Оружие Наследия с указанной Историей — сам предмет, либо null. */
+function equippedLegacyWeaponWithHistory(actor, historyName) {
+  return [...(actor?.items ?? [])].find(i =>
+    i?.type === "weapon" && i.system?.legacy?.active && i.system?.equipped
+    && legacyHistoryIs(i, historyName)) ?? null;
+}
+
+/**
+ * Наследие Ярости/Rage (История 3, стр. 427). Рукопашная ветка:
+ * «+10 к атакам этим оружием. Пока персонаж вооружён им, он получает штраф
+ * −10 на тесты I и P и может входить в Ярость за свободное действие.»
+ *
+ * «+10 к атакам этим оружием» — sheets/attack/mods.mjs (weapon-scoped
+ * авто-галочка, тот же приём, что Тихое Устранение). «Может входить в
+ * Ярость свободным действием» — честно НЕ реализовано: у самого входа в
+ * Ярость (system.inRage) в движке вообще нет стоимости действия, менять
+ * нечего (combat/frenzy.mjs — единственное реализованное правило про
+ * Ярость — лимит ПОВТОРНОГО входа, к которому эта строка не относится).
+ *
+ * Штраф −10 на I/P — источник правил (sources.mjs), а не прямое чтение в
+ * attack.mjs: он действует ВСЕГДА, пока оружие снаряжено, не только во
+ * время атаки этим оружием (тесты Интеллекта/Восприятия — отдельные
+ * броски). Возвращает записи формата rules-format.md (см. hatred.mjs).
+ */
+/**
+ * Наследие Ярости, ranged-ветка (стр. 427): «+1 к наибольшей RoF оружия или
+ * RoF S/2−, если у него было RoF S/−/−.» «Наибольшая» — semi или full, какая
+ * больше; ничья (обе >0 и равны) решается в пользу full как более «старшей»
+ * очереди книжной таблицы. Возвращает НОВЫЕ rof_semi/rof_full, либо null —
+ * не Наследие Ярости/не эта ветка (рукопашное оружие сюда не попадает,
+ * см. legacyWrathRules выше про ту же Историю).
+ */
+export function legacyWrathRangedRof(weapon) {
+  if (!weapon || weapon.system?.weaponClass === "melee") return null;
+  if (!legacyHistoryIs(weapon, "Наследие Ярости")) return null;
+  const semi = Number(weapon.system?.rof_semi) || 0;
+  const full = Number(weapon.system?.rof_full) || 0;
+  if (semi === 0 && full === 0) return { rof_semi: 2, rof_full: 0 };
+  return full >= semi ? { rof_semi: semi, rof_full: full + 1 } : { rof_semi: semi + 1, rof_full: full };
+}
+
+/**
+ * sys (или клон sys) с уже применённым бонусом legacyWrathRangedRof — тот же
+ * приём клонирования, что Fanning/Быстрый Курок (combat/attack.mjs::
+ * fanningSys): реальный предмет не трогаем, полем rof_semi/rof_full грузится
+ * downstream-код (счёт попаданий, расход патронов, список режимов диалога).
+ */
+export function legacyWrathEffectiveRof(sys, weapon) {
+  const bump = legacyWrathRangedRof(weapon);
+  return bump ? { ...sys, ...bump } : sys;
+}
+
+/**
+ * Наследие Предательства (История 4, стр. 427): «+1d5 Dmg против врагов, что
+ * не видят персонажа, или Застигнуты Врасплох.» Оба условия УЖЕ разведены в
+ * конвейере атаки (combat/attack.mjs) для Backstab/Quiet Elimination — unseen
+ * (Незримое, стр. 32) и targetSurprised (галочка «Цель Врасплох»), здесь
+ * только проверка, сработала ли История; сам d5 катает вызывающий код (нужен
+ * await Roll, здесь — чистая функция без броска).
+ */
+export function betrayalLegacyActive({ weapon, hit, unseen, targetSurprised }) {
+  if (!hit || !(unseen || targetSurprised)) return false;
+  return legacyHistoryIs(weapon, "Наследие Предательства");
+}
+
+/**
+ * Бесчестное/skilled 10-10 (стр. 428): «+1d10 Dmg против врагов, что не
+ * видят персонажа, или Застигнуты Врасплох. Ещё +1d10, если они считают
+ * персонажа союзником.» Первая половина — тот же unseen/targetSurprised, что
+ * Наследие Предательства (betrayalLegacyActive), здесь только другая Мутация
+ * и другой куб (d10, не d5). Вторая половина («считают персонажа союзником»,
+ * т.е. цель заблуждается о принадлежности атакующего) честно НЕ реализована
+ * — в системе нет состояния «цель X ошибочно считает актора Y своим», это
+ * не то же самое, что Незримое/Врасплох (объективные факты сцены), а
+ * субъективное заблуждение цели без структурного следа где-либо ещё в игре.
+ */
+export function dishonorableLegacyActive({ weapon, hit, unseen, targetSurprised }) {
+  if (!hit || !(unseen || targetSurprised)) return false;
+  return takenMutationNames(weapon).has("Бесчестное");
+}
+
+/** Флаг цели — DISTRACTING_LEGACY_FLAG на getFlag/setFlag (warhammer-dbc). */
+export const DISTRACTING_LEGACY_FLAG = "legacyDistractingMark";
+
+/**
+ * Отвлекающее/skilled 3-4 (стр. 427-428), стрелковая: «Все остальные
+ * персонажи получают бонус +10 на стрельбу по цели, в которую попало это
+ * оружие.» Метка живёт на ЦЕЛИ (тот же приём, что Hex-Marked Prey,
+ * rules/predicates.mjs::hexMarkedPreyAllyBonus) и переходит на самого
+ * свежего поражённого — книга не даёт срока действия отдельно, «пока в
+ * цель попадало» читается как «до следующего иного попадания», не «до
+ * конца боя» (более сильная граница, чем большинство других Мутаций).
+ * Без гонки по расе/принадлежности — «все остальные», не только союзники.
+ *
+ * Рукопашная ветка («Финт — тест на Charm(F) или I вместо WS») честно НЕ
+ * реализована — нужен новый выбор Характеристики в самом диалоге атаки для
+ * конкретной Техники (Финт), а не готовый чек-бокс/флаг; не однострочная
+ * правка.
+ */
+export function distractingLegacyActive(weapon) {
+  return weapon?.system?.weaponClass !== "melee" && takenMutationNames(weapon).has("Отвлекающее");
+}
+
+/**
+ * Наследие Излишеств (История 6, стр. 427), первая половина: «Персонаж
+ * получает +1 Успех на все успешные тесты WS и BS с этим оружием.»
+ * Прибавляется к СТЕПЕНИ (deg), не к Порогу — тот же приём, что Дикарь/
+ * Savage (rules/dual-wield-talents.mjs::savageExtraHits), только по
+ * Истории оружия, не по парным клинкам.
+ */
+export function excessLegacyExtraDeg({ hit, weapon }) {
+  if (!hit) return 0;
+  return legacyHistoryIs(weapon, "Наследие Излишеств") ? 1 : 0;
+}
+
+/** Идентификатор правила — общий с actor-sheet.mjs, которая ищет именно ЭТУ
+ * галочку среди отмеченных, чтобы понять, был ли взят риск на КОНКРЕТНОМ
+ * броске (см. каскад W+0/Порча, combat/legacy-weapon-excess.mjs). */
+export const EXCESS_LEGACY_RULE_ID = "legacyExcess.charBonus";
+
+/**
+ * Наследие Излишеств, вторая половина: «...выбирает одну Характеристику,
+ * кроме WS и BS, и пока держит оружие в руке может выбрать бонус +10 на все
+ * тесты по ней, но при провале — тест на W+0 или 1 Порчи.» Выбранная
+ * характеристика — weapon.system.legacy.excessChar (UI выбора — apps/
+ * legacy-weapon.mjs). Сам бонус — ОПЦИОНАЛЬНАЯ галочка (без auto:true), тот
+ * же общий конвейер (rules/roll-mods.mjs::ruleRollModsHtml), что уже
+ * показывает Ненависть/Родной мир и т.п. на ЛЮБОМ тесте Навыка/Характеристики
+ * листа (не только в диалоге атаки) — часть «пока держит оружие в руке»
+ * приближена до «оружие экипировано» (то же допущение, что у Наследия
+ * Ярости выше, — «в руке» вне сцены/боя система не отслеживает).
+ */
+export function legacyExcessRules(actor) {
+  const weapon = equippedLegacyWeaponWithHistory(actor, "Наследие Излишеств");
+  const char = String(weapon?.system?.legacy?.excessChar || "");
+  if (!weapon || !char) return [];
+  const abbr = CHARACTERISTICS[char]?.abbr ?? char.toUpperCase();
+  return [{
+    id: EXCESS_LEGACY_RULE_ID,
+    label: `Наследие Излишеств: +10 на тест ${abbr} (риск — провал: W+0 или 1 Порчи)`,
+    when: { charIn: [char] },
+    effects: [{ kind: "rollBonus", target: "all", value: 10 }]
+  }];
+}
+
+/**
+ * Наследие Перемен (История 9, стр. 427): «В начале каждого Хода бросьте
+ * 2d5 — до начала следующего Хода оружие получает такой бонус ко всем
+ * тестам WS и BS. Если выпал дубль, вместо бонуса к тестам результат
+ * ОДНОГО из кубиков добавляется к урону этого оружия.»
+ *
+ * Живёт флагом flags.warhammer-dbc.legacyChangeBonus ({weaponId, testBonus,
+ * damageBonus}) — НЕ через общий реестр «гасят до начала следующего Хода»
+ * (rules/turn-flags.mjs::TURN_SCOPED_FLAGS): та просто СНИМАЕТ метку, а эта
+ * каждый Ход ЗАМЕНЯЕТСЯ новым броском — записать оба намерения в один
+ * update («−=legacyChangeBonus: null» и «legacyChangeBonus: {…}» разом)
+ * значило бы дать Foundry два противоречащих патча по одному ключу.
+ * combat/action-economy.mjs::resetActionEconomy сама решает — новое
+ * значение или явный снос (нет больше подходящего оружия).
+ *
+ * @returns {{weaponId:string, testBonus:number, damageBonus:number}|null}
+ *   null — нет экипированного Оружия Наследия с этой Историей (флаг тогда
+ *   не пишется вовсе, старое значение снимет общий реестр turn-flags.mjs).
+ */
+export async function rollLegacyChangeBonus(actor) {
+  const weapon = equippedLegacyWeaponWithHistory(actor, "Наследие Перемен");
+  if (!weapon) return null;
+  const d1 = await new Roll("1d5").evaluate();
+  const d2 = await new Roll("1d5").evaluate();
+  const double = d1.total === d2.total;
+  return {
+    weaponId: weapon.id,
+    testBonus: double ? 0 : d1.total + d2.total,
+    damageBonus: double ? d1.total : 0
+  };
+}
+
+/** Бонус Наследия Перемен к тесту WS/BS ИМЕННО этим оружием — 0, если флаг не про него. */
+export function legacyChangeTestBonus(actor, weapon) {
+  const flag = actor?.getFlag?.("warhammer-dbc", "legacyChangeBonus")
+    ?? actor?.flags?.["warhammer-dbc"]?.legacyChangeBonus;
+  if (!flag || String(flag.weaponId) !== String(weapon?.id)) return 0;
+  return Number(flag.testBonus) || 0;
+}
+
+/** Бонус Наследия Перемен к урону ИМЕННО этим оружием (только на дубле) — 0, если флаг не про него. */
+export function legacyChangeDamageBonus(actor, weapon, hit) {
+  if (!hit) return 0;
+  const flag = actor?.getFlag?.("warhammer-dbc", "legacyChangeBonus")
+    ?? actor?.flags?.["warhammer-dbc"]?.legacyChangeBonus;
+  if (!flag || String(flag.weaponId) !== String(weapon?.id)) return 0;
+  return Number(flag.damageBonus) || 0;
+}
+
+/** Флаг цели — LEGACY_GUARDIAN_FLAG на getFlag/setFlag (warhammer-dbc), гасится turn-flags.mjs. */
+export const LEGACY_GUARDIAN_FLAG = "legacyGuardianMark";
+
+/**
+ * Защитник/vigilant 8-8 (стр. 428), стрелковая: «Цель, по которой стреляли
+ * из этого оружия, до начала её следующего Хода получает штраф −30 на атаки
+ * по персонажу.» Правило безусловное (when читает predicates.mjs::
+ * legacyGuardianMarked по ctx.targetActor) — этот источник просто отдаёт
+ * его КАЖДОМУ актору, эффект сработает только тем, у кого метка есть (тот
+ * же приём, что hatredRules — предикат сам решает, применяется ли).
+ *
+ * Рукопашная ветка («перебросить один проваленный тест Парирования в Раунд»)
+ * честно НЕ реализована — Парирование, как и Уклонение, не проходит через
+ * общий resolveTest/rules-конвейер (defense.mjs считает свой Порог и
+ * переброс напрямую), поэтому условный переброс отсюда до него не дотянуть
+ * без отдельной правки defense.mjs — не однострочная.
+ */
+/**
+ * Скорая Кончина/versatile 7-7 (стр. 428): «Первое успешное попадание этого
+ * оружия в бой наносит +3 Dmg. Попадания, блокированные силовыми щитами,
+ * считаются как промахи.» «В бой» — once per battle, тот же примитив, что
+ * лимит повторного входа в Ярость (combat/frenzy.mjs::frenzyEntryBlocked,
+ * isCapabilityAvailable(actor, flag, "battle")).
+ *
+ * Второе предложение («блокированные щитом — промахи») честно НЕ реализовано
+ * — «блокировано силовым щитом» решается позже, при применении урона
+ * (module/combat/damage.mjs), не в момент попадания здесь; там уже поздно
+ * превращать это конкретное попадание в промах постфактум без более широкой
+ * переработки конвейера.
+ */
+export const EARLY_DEATH_LEGACY_FLAG = "legacyEarlyDeath";
+
+/**
+ * Адаптивное/versatile 8-8 (стр. 428), рукопашная: «+1 Dmg, когда противник
+ * имеет численный перевес в рукопашной; когда перевес 2к1 — ещё и +10 на
+ * тесты WS; когда 3к1 — враги получают штраф −10 на рукопашные атаки по
+ * персонажу.» attackerContactCount — число ВРАГОВ АТАКУЮЩЕГО в контакте с
+ * НИМ САМИМ (не с целью — то же combat/tactical-map.mjs::meleeContactCount,
+ * что уже считает Дуэлянтское/«Числ. перевес» цели, но с обратным токеном).
+ *
+ * Третье предложение («враги получают −10 на атаки по персонажу») честно НЕ
+ * реализовано — нужен ещё один направленный предикат вроде
+ * legacyGuardianMarked, но тут условие ЖИВОЕ геометрическое (без метки/
+ * флага), а не срок «до следующего Хода»; оставил как отдельный кандидат.
+ * Стрелковая ветка («+10 попадание и +1 Успех, когда враги превосходят
+ * числом персонажа И его союзников») честно НЕ реализована вовсе — иной
+ * масштаб подсчёта (весь бой, не контакт вплотную), не то же geometry, что
+ * здесь.
+ */
+export function adaptiveLegacyMeleeDamageBonus({ weapon, hit, attackerContactCount }) {
+  if (!hit || weapon?.system?.weaponClass !== "melee" || !takenMutationNames(weapon).has("Адаптивное")) return 0;
+  return (attackerContactCount ?? 0) >= 2 ? 1 : 0;
+}
+
+export function adaptiveLegacyMeleeWsBonus({ weapon, attackerContactCount }) {
+  if (weapon?.system?.weaponClass !== "melee" || !takenMutationNames(weapon).has("Адаптивное")) return 0;
+  return attackerContactCount === 2 ? 10 : 0;
+}
+
+export function earlyDeathLegacyDamageBonus({ weapon, actor, hit }) {
+  if (!hit || !takenMutationNames(weapon).has("Скорая Кончина")) return 0;
+  return isCapabilityAvailable(actor, EARLY_DEATH_LEGACY_FLAG, "battle") ? 3 : 0;
+}
+
+/** Отмечает использование — звать ПОСЛЕ применения бонуса, тем же тактом атаки. */
+export async function markEarlyDeathLegacyUsed(actor, weapon, hit) {
+  if (!hit || !takenMutationNames(weapon).has("Скорая Кончина")) return;
+  await markCapabilityUsed(actor, EARLY_DEATH_LEGACY_FLAG, "battle");
+}
+
+export function legacyGuardianRules() {
+  return [{
+    id: "legacyGuardian.rangedPenalty",
+    label: "Защитник: −30 на атаки по отметившему стрелку",
+    when: { legacyGuardianMarked: true },
+    effects: [{ kind: "rollBonus", target: "attack", value: -30 }]
+  }];
+}
+
+export function legacyWrathRules(actor) {
+  // Штраф I/P — только рукопашная ветка Истории (ranged-ветка вместо него
+  // даёт RoF+принуждение, другой книжный текст, см. заголовок функции).
+  const weapon = equippedLegacyWeaponWithHistory(actor, "Наследие Ярости");
+  if (!weapon || weapon.system?.weaponClass !== "melee") return [];
+  return [
+    {
+      id: "legacyWrath.charPenalty",
+      label: "Наследие Ярости: штраф на I/P, пока вооружён Оружием Наследия",
+      when: { charIn: ["int", "per"] },
+      effects: [{ kind: "rollBonus", target: "all", value: -10, auto: true }]
+    }
+  ];
 }

@@ -91,6 +91,49 @@ describe("apCostForActionType", () => {
   });
 });
 
+// Наследие Перемен, Оружие Наследия (wdbc-1rno.35, История 9, стр. 427):
+// «В начале каждого Хода бросьте 2d5» — свежий флаг каждый вызов
+// resetActionEconomy, если есть экипированное Оружие Наследия с этой
+// Историей; иначе прошлый флаг (если был) явно снимается.
+const legacyChangeWeapon = (id = "lw1") =>
+  ({ id, type: "weapon", system: { equipped: true, legacy: { active: true, historyName: "Наследие Перемен" } } });
+
+describe("resetActionEconomy: Наследие Перемен", () => {
+  it("нет Оружия Наследия — флаг не пишется", async () => {
+    const actor = actorFor();
+    await resetActionEconomy(actor);
+    expect(actor.getFlag("warhammer-dbc", "legacyChangeBonus")).toBeUndefined();
+  });
+
+  it("есть Оружие Наследия, не дубль — testBonus = сумма кубиков", async () => {
+    const actor = actorFor();
+    actor.items = [legacyChangeWeapon("lw1")];
+    captured.dice = [2, 4];
+    await resetActionEconomy(actor);
+    expect(actor.getFlag("warhammer-dbc", "legacyChangeBonus")).toEqual({ weaponId: "lw1", testBonus: 6, damageBonus: 0 });
+  });
+
+  it("есть Оружие Наследия, дубль — damageBonus = значение кубика", async () => {
+    const actor = actorFor();
+    actor.items = [legacyChangeWeapon("lw1")];
+    captured.dice = [5, 5];
+    await resetActionEconomy(actor);
+    expect(actor.getFlag("warhammer-dbc", "legacyChangeBonus")).toEqual({ weaponId: "lw1", testBonus: 0, damageBonus: 5 });
+  });
+
+  it("оружие снято/потеряло Историю на следующем Ходу — старый флаг снимается", async () => {
+    const actor = actorFor();
+    actor.items = [legacyChangeWeapon("lw1")];
+    captured.dice = [1, 2];
+    await resetActionEconomy(actor);
+    expect(actor.getFlag("warhammer-dbc", "legacyChangeBonus")).toBeTruthy();
+
+    actor.items = [];
+    await resetActionEconomy(actor);
+    expect(actor.getFlag("warhammer-dbc", "legacyChangeBonus")).toBeFalsy();
+  });
+});
+
 describe("resetActionEconomy", () => {
   it("восполняет ОД и Реакции до максимума", async () => {
     const actor = actorFor({ actionPoints: { value: 0, max: 2 }, reactions: { value: 0, max: 1, defenseValue: 0, defenseMax: 0 } });

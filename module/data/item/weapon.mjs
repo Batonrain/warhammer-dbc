@@ -104,6 +104,16 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
         historyText: new StringField({ initial: "", label: "Правило Истории" }),
         character:   new StringField({ initial: "", label: "Характер" }),
         mutations:   list("Мутации"),
+        // Наследие Излишеств (История 6, стр. 427): выбранная Характеристика
+        // (кроме WS/BS), по которой доступен опциональный риск +10/W+0-Порча.
+        excessChar:  new StringField({ initial: "", label: "Излишества: Характеристика" }),
+        // Быстрое/skilled 8-8 (стр. 428): рукопашная ветка — если оружие УЖЕ
+        // имело Flexible на момент получения Мутации, вместо повторного
+        // гранта книга даёт «Уклонения от него получают −10». Разово решается
+        // при apps/legacy-weapon.mjs::rollMutation — после этого weaponProps
+        // не хранит различия «Flexible от Мутации» vs «Flexible изначально»,
+        // так что сам факт «нужен ли живой −10» фиксируется здесь.
+        swiftDodgePenalty: new BooleanField({ initial: false, label: "Быстрое: −10 Уклонению (рукопашная)" }),
         bonus:       num(0, "Бонус Наследия к Dmg/Pen"),
         preProps:    list("Свойства до Возвышения"),
         preDamage:   new StringField({ initial: "", label: "Урон до Возвышения" }),

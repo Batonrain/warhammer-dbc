@@ -62,6 +62,7 @@ import { canDualWield, offHandCandidates, dualWieldMods }
   from "../rules/dual-wield.mjs";
 import { targetHasActiveFlies, fliesAttackPenalty, wrathHeatAttackPenalty } from "../rules/wrapped-in-chaos.mjs";
 import { MAGGOT_PARASITE_CAPABILITY } from "../rules/maggot-parasite.mjs";
+import { legacyWrathEffectiveRof } from "../rules/legacy-weapon.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -89,7 +90,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Натиск/Бег (movement-actions.mjs).
   if (isHallucinatingCannotAttack(actor))
     return ui.notifications.warn("⚠️ Галлюцинации («Я маленький...») — не может совершать Атаки.");
-  const sys     = item.system;
+  // Наследие Ярости/Rage, ranged-ветка (wdbc-1rno.35, стр. 427): «+1 к
+  // наибольшей RoF, или S/2− вместо S/−/−» — клон sys с этой точки, реальный
+  // предмет не трогаем (module/rules/legacy-weapon.mjs::legacyWrathEffectiveRof,
+  // тот же приём, что combat/attack.mjs использует на самом броске).
+  const sys     = legacyWrathEffectiveRof(item.system, item);
   // Стартовое значение «Доп. мод» — напр. Контратака (стр. 12, требует Талант
   // Counter Attack): «−10» уже вписаны, когда открывается окно, а не молча
   // сидят в пороге — игрок видит и волен поправить/убрать.
@@ -1140,7 +1145,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // execution всегда бьёт им как рукопашным.
   const offRofOptionsFor = w => {
     if (!w || w.system?.weaponClass === "melee") return [];
-    const s = w.system || {};
+    // Наследие Ярости (wdbc-1rno.35): вторая рука — то же оружие может нести
+    // Историю не хуже первой.
+    const s = legacyWrathEffectiveRof(w.system || {}, w);
     const opts = [{ value: "single", label: "Одиночный" }];
     if ((Number(s.rof_semi) || 0) > 0) opts.push({ value: "semi", label: `Короткая очередь (${s.rof_semi})` });
     if ((Number(s.rof_full) || 0) > 0) opts.push({ value: "full", label: `Длинная очередь (${s.rof_full})` });

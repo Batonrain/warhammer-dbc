@@ -3086,6 +3086,10 @@ export class WarhammerItemSheet
       if (ev.currentTarget.value) setHistory(this.item, ev.currentTarget.value);
     });
     on(".legacy-roll-history", "click", () => rollHistory(this.item));
+    // Наследие Излишеств (wdbc-1rno.35, стр. 427): Характеристика под
+    // опциональный риск +10/W+0-Порча — см. rules/legacy-weapon.mjs::legacyExcessRules.
+    on(".legacy-excess-char-select", "change", ev =>
+      this.item.update({ "system.legacy.excessChar": ev.currentTarget.value }));
     on(".legacy-character-select", "change", ev =>
       this.item.update({ "system.legacy.character": ev.currentTarget.value }));
     on(".legacy-roll-mutation", "click", () => rollMutation(

@@ -389,7 +389,7 @@ const TYPES = {
       // Мутации и снимок профиля до Возвышения — появилась вместе с правилами.
       legacy: {
         active: false, legendary: false, historyKey: 0, historyName: "", historyText: "",
-        character: "", mutations: [], bonus: 0,
+        character: "", mutations: [], excessChar: "", swiftDodgePenalty: false, bonus: 0,
         preProps: [], preDamage: "", prePen: 0, preQuality: ""
       },
       vehicleMount: {

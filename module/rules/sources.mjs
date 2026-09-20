@@ -31,6 +31,7 @@ import { situationalRules } from "./situational.mjs";
 import { psychicSustainTargetRules } from "./psychic-sustain-target.mjs";
 import { pathRulesFor } from "./library/paths.mjs";
 import { hatredRules } from "./hatred.mjs";
+import { legacyWrathRules, legacyExcessRules, legacyGuardianRules } from "./legacy-weapon.mjs";
 import { devourerPermanentRules } from "./devourer-of-knowledge.mjs";
 import { gallerpoxPoisonPenaltyActive } from "./prophet-of-gallerpox.mjs";
 import { registerRuleSource } from "./source-registry.mjs";
@@ -144,6 +145,21 @@ registerRuleSource("synesthesia", () => SYNESTHESIA_RULES);
 // переброс встречного социального теста против цели, которую персонаж
 // выбрал Ненавистной при получении Таланта. См. заголовок rules/hatred.mjs.
 registerRuleSource("hatred", (a, ctx) => hatredRules(a, ctx));
+
+// Наследие Ярости/Rage, Оружие Наследия (wdbc-1rno.35, стр. 427): штраф −10
+// на I/P, пока экипировано Оружие Наследия с этой Историей. См. заголовок
+// rules/legacy-weapon.mjs::legacyWrathRules.
+registerRuleSource("legacyWrath", a => legacyWrathRules(a));
+
+// Наследие Излишеств, Оружие Наследия (wdbc-1rno.35, стр. 427): опциональная
+// +10 на тесты выбранной Характеристики, пока Оружие Наследия экипировано.
+// См. заголовок rules/legacy-weapon.mjs::legacyExcessRules.
+registerRuleSource("legacyExcess", a => legacyExcessRules(a));
+
+// Защитник, Оружие Наследия (wdbc-1rno.35, стр. 428): −30 отмеченному
+// стрелком на атаки по нему до начала его следующего Хода. См. заголовок
+// rules/legacy-weapon.mjs::legacyGuardianRules.
+registerRuleSource("legacyGuardian", () => legacyGuardianRules());
 
 // Devourer of Knowledge/Пожиратель Знаний (wdbc-1rno, Тзинч) — Навыки,
 // украденные ПЕРМАНЕНТНО (9 дней подряд), считаются «Дружественными» для

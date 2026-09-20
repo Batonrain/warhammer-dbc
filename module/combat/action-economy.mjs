@@ -32,6 +32,7 @@ import { postTestCard } from "../helpers/test-card.mjs";
 import { determinationToFightApBonus } from "../rules/determination-to-fight.mjs";
 import { isStunnedOrDazed } from "../rules/predicates.mjs";
 import { turnStartFlagClears, turnStartAttackCarryOver } from "../rules/turn-flags.mjs";
+import { rollLegacyChangeBonus } from "../rules/legacy-weapon.mjs";
 
 /** Типы акторов, несущих экономику действий (общая часть — _creature.mjs). */
 export const ACTION_ECONOMY_ACTOR_TYPES = ["character", "daemon", "demonPrince", "minion"];
@@ -134,6 +135,18 @@ export async function resetActionEconomy(actor) {
   // Врасплох потрачен — это и был тот единственный Ход, который они по книге
   // пропускают (см. комментарий у apLocked выше).
   if (surprised) upd["system.conditions.surprised"] = false;
+  // Наследие Перемен, Оружие Наследия (wdbc-1rno.35, История 9, стр. 427):
+  // «В начале каждого Хода бросьте 2d5» — свежий бросок каждый раз ЗАМЕНЯЕТ
+  // прошлый, поэтому не через общий реестр turn-flags.mjs (та только гасит,
+  // см. rules/legacy-weapon.mjs::rollLegacyChangeBonus).
+  // Обычная запись, не «-=»: значение ЗАМЕНЯЕТСЯ каждый Ход (свежим броском
+  // или null, если подходящего оружия больше нет) — сторож test/rules/
+  // turn-flags.test.mjs запрещает ручное «-=» здесь именно потому, что оно
+  // для флагов, которые только ГАСНУТ, не переписываются заново.
+  const legacyChange = await rollLegacyChangeBonus(actor);
+  if (legacyChange || actor.getFlag?.("warhammer-dbc", "legacyChangeBonus")) {
+    upd["flags.warhammer-dbc.legacyChangeBonus"] = legacyChange;
+  }
   if (Object.keys(upd).length) await actor.update(upd);
 }
 

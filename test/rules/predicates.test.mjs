@@ -455,7 +455,11 @@ describe("общее требование к предикатам", () => {
     // Талантов Ненависти) и ctx.targetActor, значение из `when` не участвует
     // (тот же случай, что hasFaction выше, но без литерала — набор целей
     // разный у каждого владельца).
-    hasHatredTarget: undefined
+    hasHatredTarget: undefined,
+    // Защитник, Оружие Наследия (wdbc-1rno.35) — читает флаг ЦЕЛИ
+    // (ctx.targetActor), значение из `when` не участвует, тот же случай, что
+    // avatarOfSlaughterOffTarget/hexMarkedPreyAllyBonus выше.
+    legacyGuardianMarked: undefined
   };
 
   it("на пустом акторе каждый возвращает строго true или false", () => {
