@@ -9,7 +9,8 @@
     "packs:unpack": "node tools/unpack.mjs",
     "packs:build": "node tools/pack.mjs",
     "icons:build": "node tools/build-condition-icons.mjs",
-    "worktree:check": "node tools/worktree-guard.mjs"
+    "worktree:check": "node tools/worktree-guard.mjs",
+    "git:merge-main": "node tools/merge-main.mjs"
   },
   "devDependencies": {
     "@foundryvtt/foundryvtt-cli": "^3.0.4",
