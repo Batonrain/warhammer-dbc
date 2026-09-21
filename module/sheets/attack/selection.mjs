@@ -11,7 +11,8 @@
 // ══════════════════════════════════════════════════════════════════════════
 
 import { MELEE_STANCES, MELEE_BASES, MELEE_MANEUVERS, GRIPS, gripEffects,
-         RANGED_GRIPS, rangedGripEffects } from "../../constants/combat.mjs";
+         RANGED_GRIPS, rangedGripEffects, meleeEffectiveRange } from "../../constants/combat.mjs";
+import { actorMaxMeleeRange, chargeTargetDodgeBonus } from "../../rules/weapon-length.mjs";
 import { CAPABILITIES }            from "../../constants/capabilities.mjs";
 import { esc }                     from "../../helpers/utils.mjs";
 import { hasRuleFlag }             from "../../rules/flags.mjs";
@@ -44,6 +45,7 @@ export function buildSelection(v) {
     sBonus,
     stance,
     sys,
+    targetActor,
     trainingFor,
     wp,
   } = v;
@@ -77,9 +79,16 @@ export function buildSelection(v) {
   function computeStanceOptions(pIdx) {
     const category = categoryFor(pIdx);
     const trained  = trainingFor(pIdx).trained;
+    // «Только в пешем бою» (стр. 15): из книжного списка исключений (верхом,
+    // за люком техники, в полёте) живьём отслеживаются верхом (isMounted) И
+    // полёт (wdbc-x1nz.2.66.10, system.movement.altitude — low/high не
+    // «приземный», module/data/actor/_creature.mjs). Бой из люка техники не
+    // моделируется вовсе — для него в системе нет состояния, честно как есть.
+    const altitude = actor.system?.movement?.altitude;
+    const isFlying = altitude === "low" || altitude === "high";
     return Object.entries(MELEE_STANCES).map(([key, def]) => {
       const trainingOk = trained || key === "standard";
-      const groundedOk = key === "standard" || !isMounted;
+      const groundedOk = key === "standard" || (!isMounted && !isFlying);
       const fitOk = def.categories
         ? (def.strictCategory ? (!!category && def.categories.includes(category))
                                : (!category || def.categories.includes(category)))
@@ -87,7 +96,7 @@ export function buildSelection(v) {
         : true;
       const reason = !trainingOk
         ? `Нужна Рукопашная Тренировка (${category})`
-        : (!groundedOk ? "Стойки — только в пешем бою (сейчас верхом)"
+        : (!groundedOk ? `Стойки — только в пешем бою (сейчас ${isFlying ? "в полёте" : "верхом"})`
           : (!fitOk ? (def.categories
               ? (category ? `Не подходит категории «${category}»` : `Требуется профиль: ${def.categories.join("/")}`)
               : `Нужен Баланс не ниже ${def.minBalance}`) : ""));
@@ -147,13 +156,18 @@ export function buildSelection(v) {
       const trainingOk = trained || key === "standard" || key === "freeattack";
       const balanceOk  = def.minBalance == null || ((sys.balance ?? 0) >= def.minBalance);
       const capOk      = !def.requiresCapability || hasRuleFlag(actor, def.requiresCapability);
+      // Требование к свойству самого оружия (Пила: Tearing/Power Field, стр.
+      // 14, wdbc-x1nz.2.66.2) — сверяется с уже посчитанным wp (aggregateAuto),
+      // тем же приёмом, что categories/minBalance выше.
+      const propsOk    = !def.requiresWeaponProps || def.requiresWeaponProps.some(k => wp[k]);
       const reason = !trainingOk
         ? `Нужна Рукопашная Тренировка (${category})`
         : (!categoryOk ? `Не подходит категории «${category}»`
           : (!baseOk ? `Только с Базой: ${def.bases.map(b => MELEE_BASES[b]?.label ?? b).join(", ")}`
             : (!balanceOk ? `Нужен Баланс не ниже ${def.minBalance}`
-              : (!capOk ? `Нужно: ${CAPABILITIES[def.requiresCapability]?.source || def.requiresCapability}` : ""))));
-      return { key, label: def.label, allowed: trainingOk && categoryOk && baseOk && balanceOk && capOk, reason };
+              : (!capOk ? `Нужно: ${CAPABILITIES[def.requiresCapability]?.source || def.requiresCapability}`
+                : (!propsOk ? `Нужно свойство: ${def.requiresWeaponProps.join("/")}` : "")))));
+      return { key, label: def.label, allowed: trainingOk && categoryOk && baseOk && balanceOk && capOk && propsOk, reason };
     });
   }
   /**
@@ -176,7 +190,14 @@ export function buildSelection(v) {
         reason = "Запрещённый Приём (Cheap Shot): только Стандартная Атака, тратит Реакцию";
       }
       if (allowed && def.requiresMount && !isMounted) { allowed = false; reason = "Только верхом на байке/скакуне"; }
-      if (allowed && noCharge && key === "charge") { allowed = false; reason = "Недоступно в Стойке «Частокол»"; }
+      // noCharge теперь несут две Стойки (Частокол, стр. 15 — древковое
+      // оружие мешает; Защитная, стр. 15, wdbc-x1nz.2.66.6 — «не даёт
+      // совершать Натиск») — подпись причины берёт лейбл РЕАЛЬНОЙ текущей
+      // Стойки, не захардкожена на одну из них.
+      if (allowed && noCharge && key === "charge") {
+        allowed = false;
+        reason = `Недоступно в Стойке «${MELEE_STANCES[stanceKeyNow]?.label ?? stanceKeyNow}»`;
+      }
       return { key, label: def.label, allowed, reason };
     });
   }
@@ -252,6 +273,11 @@ export function buildSelection(v) {
     const maneuverKey = isMelee ? (sel.maneuverKey ?? maneuverKeyDefault) : "standard";
     const mDef        = MELEE_MANEUVERS[maneuverKey] || MELEE_MANEUVERS.standard;
 
+    // Длина Оружия (wdbc-x1nz.2.67, стр. 39): действующий Rng ЭТОЙ атаки —
+    // база профиля + Хват + Приём (Выпад +1, Пила → 0). Читается диалогом
+    // (Приём Выпад) и ниже, для бонуса Избегания цели при Натиске (правило 2).
+    const effRange = isMelee ? meleeEffectiveRange(sys.range, gKey, maneuverKey) : 0;
+
     // Обратный Хват (Об, стр. 39): приём Выпад «просто не получает штрафа»
     // WS от хвата — в любой Базе, не только на Полной Атаке. А на самой
     // Полной Атаке Выпадом хват вдобавок перестаёт резать S.b пополам и
@@ -288,7 +314,12 @@ export function buildSelection(v) {
     // Поклон Публике (wdbc-1rno): «равный штраф на их физические Избегания» —
     // тот же bowMarkedMod, что уже прибавлен атакующему в wpAttackMod выше
     // (замыкание, bowMark читается один раз на актора-атакующего).
-    const targetDodgeMod = (mDef.targetDodgeMod ?? 0) + (stDef.targetDodgeMod ?? 0) - bowMarkedMod;
+    // Длина Оружия, правило 2 (wdbc-x1nz.2.67, стр. 39): при Натиске на
+    // противника, чьё оружие длиннее атакующего на 3 и более, у цели +5
+    // к тестам Избегания от этой атаки.
+    const chargeLengthBonus = (isMelee && baseKey === "charge" && targetActor
+      && chargeTargetDodgeBonus(effRange, actorMaxMeleeRange(targetActor))) ? 5 : 0;
+    const targetDodgeMod = (mDef.targetDodgeMod ?? 0) + (stDef.targetDodgeMod ?? 0) - bowMarkedMod + chargeLengthBonus;
     const targetParryMod = (mDef.targetParryMod ?? 0) + (stDef.targetParryMod ?? 0) - bowMarkedMod;
 
     // Защитная Стойка без щита (стр. 15) — персонаж не может атаковать вовсе.
@@ -298,13 +329,14 @@ export function buildSelection(v) {
       prof ? `Профиль: ${prof.label || "доп."}${prof.damage ? ` (${prof.damage})` : ""}` : "",
       gDef ? `Хват: ${gDef.label}${gDef.ws ? ` · WS ${gDef.ws >= 0 ? "+" : ""}${gDef.ws}` : ""}${gDef.dmgFlat ? ` · урон ${gDef.dmgFlat >= 0 ? "+" : ""}${gDef.dmgFlat}` : ""}${gDef.sbHalf ? " · ½S.b" : ""} — ${gDef.note}` : "",
       reverseGripThrust ? `Выпад в Обратном хвате: без штрафа WS${reverseThrustFullAtk ? ", Полная Атака — полный S.b + ещё ½S.b (окр.▲) урона сверху" : ""}` : "",
-      maneuverCapBonus ? `Щупальце: +${maneuverCapBonus} на приём Захват` : ""
+      maneuverCapBonus ? `Щупальце: +${maneuverCapBonus} на приём Захват` : "",
+      chargeLengthBonus ? `Длина Оружия: цель длиннее на 3+ — Натиск даёт ей +5 Избегание` : ""
     ].filter(Boolean).join("<br>");
 
     return {
       stanceKey, stDef, stanceBon, baseKey, bDef, baseBon,
       maneuverKey, mDef, maneuverBon, gKey, gDef, gWs, pIdx, prof,
-      cheapShotActive,
+      cheapShotActive, effRange,
       techBon: baseBon + maneuverBon, targetDodgeMod, targetParryMod, blocked, note
     };
   }

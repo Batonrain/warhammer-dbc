@@ -491,6 +491,30 @@ describe("защита от Распыления", () => {
   });
 });
 
+// Захват (стр. 12, wdbc-x1nz.2.66.13): «−30 Парирования (или +3 Успеха от
+// предыдущего Парирования)» — альтернативная кнопка Парирования появляется
+// только когда attack.mjs уже посчитал pool.canWaiveGrappleParry (банк ≥3
+// Успехов от предыдущей атаки того же противника, сама эта атака — Захват).
+describe("Захват: альтернативная кнопка Парирования без штрафа за 3 банковских Успеха", () => {
+  it("pool.canWaiveGrappleParry — кнопка появляется рядом с обычным Парированием", () => {
+    const html = card({ isMelee: true, wp: {},
+      pool: { successes: 5, hits: 0, cost: 0, perHit: 0, canRecoil: false, canWaiveGrappleParry: true } });
+    expect(html).toContain("wh-pool-grapple-parry-btn");
+    expect(html).toContain("wh-parry-btn"); // обычная кнопка остаётся, это альтернатива, не замена
+  });
+
+  it("pool без canWaiveGrappleParry (не Захват / банка недостаточно) — кнопки нет", () => {
+    const html = card({ isMelee: true, wp: {},
+      pool: { successes: 1, hits: 0, cost: 0, perHit: 0, canRecoil: false, canWaiveGrappleParry: false } });
+    expect(html).not.toContain("wh-pool-grapple-parry-btn");
+  });
+
+  it("нет пула вовсе (pool: null) — кнопки нет, не падает", () => {
+    const html = card({ isMelee: true, wp: {}, pool: null });
+    expect(html).not.toContain("wh-pool-grapple-parry-btn");
+  });
+});
+
 // Незримое (стр. 32, wdbc-1rno.2) — Уклонение/Парирование гейтятся, пока
 // цель не засекла атаку; реактивные кнопки засечения рядом с ними.
 describe("Незримое: гейт Уклонения/Парирования и кнопки засечения", () => {

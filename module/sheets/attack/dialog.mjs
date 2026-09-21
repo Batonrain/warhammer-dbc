@@ -233,8 +233,14 @@ export function openAttackDialog(ctx) {
               return false;
             }
           } else {
+            // Защитная Стойка + щит (стр. 15, wdbc-x1nz.2.66.6): атака доп.
+            // оружием — Полное действие вместо Полудействия. Меняет только
+            // цену в ОД здесь, НЕ sel.bDef (тот всё ещё несёт свой честный
+            // wsBonus/note — Натиск/Верховая уже Полное действие сами по себе,
+            // трогать нечего, noCharge выше исключил единственный конфликт).
             const ownActionType = isMelee
-              ? sel.bDef.actionType
+              ? (sel.stDef?.forcesFullAction && sel.bDef.actionType === "Полудействие"
+                  ? "Полное действие" : sel.bDef.actionType)
               : (f.rofMode === "suppression" ? "Полное действие" : "Полудействие");
             // Обе руки одним действием (wdbc-3jlm): пара ударов занимает
             // НАИБОЛЬШЕЕ действие из двух, а не два своих. Ровно в этом смысл
@@ -400,7 +406,9 @@ export function openAttackDialog(ctx) {
               weaponOff: f.weaponOff, gripKey: sel.gKey,
               gripProps: sel.gDef ? sel.gDef.addProps : [],
               gripDmgFlat: sel.gDef ? sel.gDef.dmgFlat : 0,
-              gripSbHalf: sel.gDef ? sel.gDef.sbHalf : false,
+              // Пила (стр. 14, wdbc-x1nz.2.66.2) — тот же слот, что у Обратного
+              // Хвата: sbHalf сюда приходит true либо от Хвата, либо от Приёма.
+              gripSbHalf: !!((sel.gDef && sel.gDef.sbHalf) || (sel.mDef && sel.mDef.sbHalf)),
               // Обратный Хват + Выпад Полной Атакой (стр. 39, module/sheets/
               // attack/selection.mjs): S.b не режется, но получает ещё
               // +½S.b (окр.▲) сверху — сам бонус считает attack.mjs, ему
@@ -520,6 +528,7 @@ export function openAttackDialog(ctx) {
       const stancePillsEl   = form.querySelector("#atk-stance-pills");
       const gripPillsEl     = form.querySelector("#atk-grip-pills");
       const maneuverPillsEl = form.querySelector("#atk-maneuver-pills");
+      const aimEl            = form.querySelector("#atk-aim");
       let lastStanceKey = dyn0.stanceKey;
       let lastBaseKey   = dyn0.baseKey;
       let lastProfIdx   = dyn0.pIdx;
@@ -540,6 +549,16 @@ export function openAttackDialog(ctx) {
         if (stanceNoteEl)   stanceNoteEl.innerHTML   = sel.stDef.note;
         if (baseNoteEl)     baseNoteEl.innerHTML     = sel.bDef.note;
         if (maneuverNoteEl) maneuverNoteEl.innerHTML = sel.mDef.note;
+        // Приём Оглушить (стр. 14, wdbc-x1nz.2.66.3) форсирует «Голову»,
+        // Широкий Взмах (стр. 14, wdbc-x1nz.2.66.1) — «— Без прицела —»; тут
+        // же, если игрок переключил Приём ПОСЛЕ открытия окна — тот же select,
+        // что и при первом рендере (attack-dialog.mjs::aimLocked/forcedAimValue),
+        // просто без перестройки списка опций (обе цели уже есть в нём).
+        const forcedAim = sel.maneuverKey === "stun" ? "head" : sel.maneuverKey === "sweep" ? "" : null;
+        if (aimEl) {
+          aimEl.disabled = forcedAim !== null;
+          if (forcedAim !== null) aimEl.value = forcedAim;
+        }
         // База зависит от выбранной Стойки (Частокол запрещает Натиск, стр. 15)
         // И от Хвата (Хвост временно даёт Cheap Shot, см. computeBaseOptions) —
         // перерисовываем пилюли только когда что-то из этого реально

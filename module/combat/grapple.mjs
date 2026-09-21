@@ -50,6 +50,21 @@ const PARTNER_FLAG = "grapplePartnerUuid";
 /**
  * После попадания Приёмом «Захват» — связать атакующего и цель Борьбой.
  * Вызывается из module/combat/attack.mjs сразу после расчёта попадания.
+ *
+ * Стр. 12: «Этот приём нельзя проводить против целей на 2 и более Размера
+ * больше персонажа» (wdbc-x1nz.2.66.4) — гейт ДО броска, без встречного
+ * теста вовсе: попытка невозможна в принципе, не просто невыгодна. «При
+ * попадании персонаж и цель проходят тест на Athletics(S)+0 vs Athletics(S)+0
+ * и при победе персонаж берёт цель в Захват; при победе цели она успешно
+ * отбивает попытку» — тот же контест-диалог (_showContestDialog), что и
+ * остальные 5 действий Борьбы ниже (Заломить/Пересилить/Вырваться/
+ * Выкрутиться/Перехватить Контроль): цель резолвится тем же способом
+ * (game.user.targets), должна оставаться выцеленной с самой атаки.
+ *
+ * НЕ реализовано здесь (отдельный тикет wdbc-x1nz.2.66.13): «Парируется со
+ * штрафом −30 (или тратит +3 Успеха от предыдущего Парирования)» — это
+ * модификатор ПАРИРОВАНИЯ исходной WS-атаки, разыгрывается ДО этой функции
+ * (на стороне защиты, module/combat/defense.mjs), не встречный тест ниже.
  * @param {Actor} actor       атакующий
  * @param {Token|null} targetToken   первая наведённая цель (как у остального attack.mjs)
  * @param {boolean} hit
@@ -60,6 +75,24 @@ export async function applyGrappleOnHit(actor, targetToken, hit, techOpts) {
   const target = targetToken?.actor;
   if (!actor || !target || target === actor) return;
 
+  if (sizeOf(target) - sizeOf(actor) >= 2) {
+    await postTestCard(actor, {
+      icon: rollIcon("sword","#e08a3a"), title: `Захват — ${esc(actor.name)} → ${esc(target.name)}`,
+      outcome: outcomeHtml(false, `Захват невозможен: ${esc(target.name)} крупнее на 2+ Размера (стр. 12).`)
+    }, { sound: false });
+    return;
+  }
+
+  await _showContestDialog(actor, tentacleTechDef(actor, {
+    label: "Захват", defaultChar: "s",
+    note: "Athletics(S)+0 vs Athletics(S)+0 цели. Победа: оба персонажа связаны Захватом (состояние «Борьба»). Поражение цели: она успешно отбивает попытку Захвата.",
+    chatNote: "🤼 Захват: встречный тест — цель может отбить попытку",
+    onSuccess: resolveGrappleSuccess
+  }));
+}
+
+/** Связывает атакующего и цель Захватом — вызывается onSuccess встречного теста выше при победе атакующего. */
+export async function resolveGrappleSuccess(actor, { target }) {
   // Состояние и флаг партнёра одним update на актора: каждая отдельная
   // запись — это prepareData + re-render листа и токена у всех клиентов.
   await actor.update({ ...conditionApplyFields("grappling", null, actor), [`flags.${NS}.${PARTNER_FLAG}`]: target.uuid });

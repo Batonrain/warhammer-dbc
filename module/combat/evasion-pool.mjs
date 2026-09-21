@@ -148,6 +148,22 @@ export async function spendPoolForRecoil(defender, attackerUuid, cost = 2) {
 }
 
 /**
+ * Списание N банковских Успехов на что угодно ЕЩЁ, кроме готовых двух выше
+ * (негация попаданий/Отскок) — ровно тот же примитив (getEvasionPool +
+ * spendFromPool), названный по своему поводу, а не по имени первого
+ * потребителя. Первый случай — Захват (стр. 12, wdbc-x1nz.2.66.13): «−30
+ * Парирования или +3 Успеха от предыдущего Парирования» — цель тратит 3
+ * вместо обычного штрафа Приёма. Возвращает true, если получилось; false —
+ * банк пуст/устарел/не хватает на cost, вызывающая сторона ничего не тратит.
+ */
+export async function spendPoolSuccesses(defender, attackerUuid, cost) {
+  const entry = getEvasionPool(defender, attackerUuid);
+  if (!entry || entry.successes < cost) return false;
+  await spendFromPool(defender, attackerUuid, cost);
+  return true;
+}
+
+/**
  * Клик по кнопке «Потратить пул»: тратит остаток на попадания ЭТОЙ атаки (не
  * больше hitsCount) и постит карточку исхода. Если попадания остаются —
  * добавляет свежие кнопки Уклонения/Парирования/Виража на ОСТАТОК (не на

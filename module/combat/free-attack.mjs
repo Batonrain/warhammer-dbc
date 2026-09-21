@@ -88,6 +88,37 @@ export function lockingContactTokenDocs(tokenDoc) {
 }
 
 /**
+ * Дружественные (союзные) токены личного масштаба в Базовом/Глубоком
+ * контакте с данным документом — Прикрывающая Стойка (стр. 15,
+ * wdbc-x1nz.2.66.7): «−20 атакам по союзникам рядом» и триггер свободной
+ * атаки читают ровно это подмножество allContactTokenDocs.
+ */
+export function friendlyContactTokenDocs(tokenDoc) {
+  const rect = tokenRect(tokenDoc);
+  if (!rect) return [];
+  const out = [];
+  for (const other of canvas?.tokens?.placeables ?? []) {
+    const otherDoc = other.document;
+    if (otherDoc.id === tokenDoc.id) continue;
+    if (!isPersonalScale(otherDoc)) continue;
+    if (tokenRelationship(tokenDoc.disposition, otherDoc.disposition) !== "ally") continue;
+    const rectB = tokenRect(otherDoc);
+    if (!rectB) continue;
+    if (contactType(rect, rectB) !== "none") out.push(otherDoc);
+  }
+  return out;
+}
+
+/**
+ * Союзники данного документа В Прикрывающей Стойке (стр. 15, wdbc-x1nz.2.66.7),
+ * в Базовом/Глубоком контакте с ним — подмножество friendlyContactTokenDocs,
+ * читает и −20 штраф атакующему, и триггер свободной атаки Прикрывающего.
+ */
+export function coveringDefendersOf(tokenDoc) {
+  return friendlyContactTokenDocs(tokenDoc).filter(d => d.actor?.system?.meleeStance === "covering");
+}
+
+/**
  * ВСЕ токены личного масштаба в Базовом/Глубоком контакте с данным документом,
  * независимо от отношения (враг ИЛИ союзник) — для рикошета промаха по цели,
  * Связанной в Рукопашной (стр. 30, wdbc-x1nz.2.64): «случайный персонаж в
@@ -135,11 +166,20 @@ function pruneStalePreMoveContacts(now = Date.now()) {
   }
 }
 
-export async function offerFreeAttack(reactorTokenDoc, moverTokenDoc) {
+/**
+ * @param {TokenDocument} reactorTokenDoc  кто получает предложение
+ * @param {TokenDocument} moverTokenDoc    кого атакует (кнопка целит именно его)
+ * @param {string} [reasonHtml]  подпись причины — по умолчанию «покидает
+ *   рукопашную с» (движение); Прикрывающая Стойка (wdbc-x1nz.2.66.7) даёт
+ *   свою: «атакует союзника персонажа рядом».
+ */
+export async function offerFreeAttack(reactorTokenDoc, moverTokenDoc, reasonHtml = null) {
   const reactor = actorOf(reactorTokenDoc);
   if (!reactor || !hasActionEconomy(reactor)) return;
   if (!isRoundCapabilityAvailable(reactor, FREE_ATTACK_CAPABILITY)) return;
   if (!canSpendReaction(reactor)) return;
+
+  const reason = reasonHtml ?? `${esc(moverTokenDoc.name)} покидает рукопашную с ${esc(reactor.name)}`;
 
   // Это НЕ карточка теста (wdbc-kuun): ни броска, ни Порога, ни исхода —
   // предложение возможности («хочешь потратить Реакцию?»), как «запрос теста»
@@ -150,8 +190,8 @@ export async function offerFreeAttack(reactorTokenDoc, moverTokenDoc) {
     speaker: ChatMessage.getSpeaker({ actor: reactor }),
     content: `
       <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("sword", "#ff9d4d")}Свободная атака — ${esc(moverTokenDoc.name)} покидает рукопашную с ${esc(reactor.name)}</div>
-        <div class="roll-threshold">Раз в Раунд, ценой Реакции: рукопашный приём +0 по уходящему.</div>
+        <div class="roll-header">${rollIcon("sword", "#ff9d4d")}Свободная атака — ${reason}</div>
+        <div class="roll-threshold">Раз в Раунд, ценой Реакции: рукопашный приём +0 по нему.</div>
         <div class="roll-defense-btns">
           <button class="wh-free-attack-btn" type="button"
             data-reactor-uuid="${reactor.uuid}" data-mover-uuid="${moverTokenDoc.uuid}">

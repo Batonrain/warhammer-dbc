@@ -122,6 +122,8 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
       data-felling="${wp.fellingRating ?? 0}"
       data-primitive="${wp.primitive ? 1 : 0}"
       data-ignore-shield="${wp.ignoreShield ? 1 : 0}"
+      data-ignore-dome-shield="${wp.ignoreDomeShields ? 1 : 0}"
+      data-stun-maneuver="${wp.stunManeuver ? 1 : 0}"
       data-warp-soak="${wp.warpSoak ? 1 : 0}"
       data-lance="${wp.lance ? 1 : 0}"
       data-sanctified="${wp.sanctified ? 1 : 0}"
@@ -237,6 +239,8 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
     data-felling="${wp.fellingRating ?? 0}"
     data-primitive="${wp.primitive ? 1 : 0}"
     data-ignore-shield="${wp.ignoreShield ? 1 : 0}"
+    data-ignore-dome-shield="${wp.ignoreDomeShields ? 1 : 0}"
+    data-stun-maneuver="${wp.stunManeuver ? 1 : 0}"
     data-warp-soak="${wp.warpSoak ? 1 : 0}"
     data-lance="${wp.lance ? 1 : 0}"
     data-sanctified="${wp.sanctified ? 1 : 0}"
@@ -294,7 +298,7 @@ function misfireHitsSection(misfireHits, { wp, pen, damageType, damageSubtype = 
       data-weapon-uuid="${itemUuid}" data-attacker-uuid="${actorUuid}"
       data-force-target="${m.targetUuid}"
       data-felling="${wp.fellingRating ?? 0}" data-primitive="${wp.primitive ? 1 : 0}"
-      data-ignore-shield="${wp.ignoreShield ? 1 : 0}" data-warp-soak="${wp.warpSoak ? 1 : 0}"
+      data-ignore-shield="${wp.ignoreShield ? 1 : 0}" data-ignore-dome-shield="${wp.ignoreDomeShields ? 1 : 0}" data-stun-maneuver="${wp.stunManeuver ? 1 : 0}" data-warp-soak="${wp.warpSoak ? 1 : 0}"
       data-lance="${wp.lance ? 1 : 0}" data-sanctified="${wp.sanctified ? 1 : 0}"
       data-corrosive="${wp.corrosiveRating ?? 0}" data-entropy="${wp.entropyRating ?? 0}"
       data-touch-of-pain="${wp.touchOfPainIgnoreTb ? 1 : 0}" data-crippling="${wp.cripplingRating ?? 0}"
@@ -326,7 +330,7 @@ function betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype 
       data-weapon-uuid="${itemUuid}" data-attacker-uuid="${actorUuid}"
       data-force-target="${m.targetUuid}"
       data-felling="${wp.fellingRating ?? 0}" data-primitive="${wp.primitive ? 1 : 0}"
-      data-ignore-shield="${wp.ignoreShield ? 1 : 0}" data-warp-soak="${wp.warpSoak ? 1 : 0}"
+      data-ignore-shield="${wp.ignoreShield ? 1 : 0}" data-ignore-dome-shield="${wp.ignoreDomeShields ? 1 : 0}" data-stun-maneuver="${wp.stunManeuver ? 1 : 0}" data-warp-soak="${wp.warpSoak ? 1 : 0}"
       data-lance="${wp.lance ? 1 : 0}" data-sanctified="${wp.sanctified ? 1 : 0}"
       data-corrosive="${wp.corrosiveRating ?? 0}" data-entropy="${wp.entropyRating ?? 0}"
       data-touch-of-pain="${wp.touchOfPainIgnoreTb ? 1 : 0}" data-crippling="${wp.cripplingRating ?? 0}"
@@ -425,6 +429,17 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
          🏃 Пул (${pool.successes} Усп.): Отскочить за 2 Усп.
        </button>`
     : "";
+  // Захват (стр. 12, wdbc-x1nz.2.66.13): «−30 Парирования (или +3 Успеха от
+  // предыдущего Парирования)» — альтернатива обычной кнопке Парирования выше,
+  // с той же цепочкой data-атрибутов, но extra-mod без −30 штрафа Приёма.
+  const poolGrappleParryBtn = pool && pool.canWaiveGrappleParry && !cannotParry
+    ? `<button class="wh-pool-grapple-parry-btn" type="button"
+         data-attacker-uuid="${attackerUuid}" data-attacker-weapon-uuid="${itemUuid}"
+         data-hits-count="${hitsCount}" data-force-reroll="${forcedDefenceReroll}"
+         data-melee="${isMelee ? 1 : 0}" data-attack-id="${attackId}">
+         🤼 Пул (${pool.successes} Усп.): Парировать без штрафа за 3 Усп.
+       </button>`
+    : "";
   // Императив Избегания/Крепости (wdbc-hdxj): у обоих книга переворачивает
   // знак бонуса на тесте Избегания СПЕЦИАЛЬНО для Отскока в укрытие — движок
   // не знает заранее, каким выйдет этот бросок, ЕСЛИ игрок не декларирует
@@ -491,6 +506,7 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
           : ""}
         ${poolBtn}
         ${poolRecoilBtn}
+        ${poolGrappleParryBtn}
         ${swarm && swarm.count > 0
           ? `<button class="wh-swarm-btn" type="button" data-attacker-uuid="${attackerUuid}"
                title="Дар «Эфирная Стая»/Ethereal Swarm: тест Cor+0 (не Реакция) — Успех переносит ЭТО попадание на призрачного Крикуна (осталось ${swarm.count}), изгоняя его.">

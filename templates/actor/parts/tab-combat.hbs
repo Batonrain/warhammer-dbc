@@ -440,6 +440,11 @@
   {{!-- Борьба (стр. 12) — только пока актор связан Захватом (conditions.grappling,
         module/combat/grapple.mjs выставляет его после попадания Приёмом «Захват»). --}}
   {{#if system.conditions.grappling}}<button type="button" class="technique-btn technique-btn-contest grapple-btn" style="border-color:#e08a3a;"> <span class="tech-name">🤼 Борьба</span> <span class="tech-mod">связан Захватом</span> </button>{{/if}}
+  {{!-- Стойки (стр. 15, wdbc-x1nz.2.66.11): «Раз в Ход персонаж может пройти
+        тест Awareness(WS)+20, чтобы понять чужие стойки в его поле зрения» —
+        цель берётся из выцеленного на сцене токена (game.user.targets),
+        «поле зрения» не проверяется. --}}
+  <button type="button" class="technique-btn technique-btn-contest recognize-stance-btn"> <span class="tech-name">👁️ Распознать Стойку</span> <span class="tech-mod">Awareness(WS)+20</span> </button>
   </div></div> </div>{{!-- /состязания --}}
 
   {{!-- ═══ ВЕРХОМ (стр. 477-478) ═══

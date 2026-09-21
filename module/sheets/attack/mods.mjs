@@ -18,10 +18,12 @@ import { getTerrainInfoForToken } from "../../regions/difficult-terrain.mjs";
 import { actorHasAspectPath }     from "../../constants/aeldari-paths.mjs";
 import { hasBlackEyesDarknessImmunity } from "../../rules/black-eyes.mjs";
 import { isBraced } from "../../combat/brace-weapon.mjs";
-import { lockingContactTokenDocs } from "../../combat/free-attack.mjs";
+import { lockingContactTokenDocs, coveringDefendersOf } from "../../combat/free-attack.mjs";
 import { hasQuietElimination, isQuietEliminationWeapon } from "../../rules/quiet-elimination.mjs";
 import { legacyHistoryIs, legacyChangeTestBonus, bloodthirstyLegacyMeleeActive, takenMutationNames, DISTRACTING_LEGACY_FLAG, adaptiveLegacyMeleeWsBonus } from "../../rules/legacy-weapon.mjs";
 import { isNearestUndamagedEnemy } from "../../combat/legacy-weapon-mutations.mjs";
+import { meleeEffectiveRange, parseGrips } from "../../constants/combat.mjs";
+import { longerWeaponBonus, closeQuartersPenalty } from "../../rules/weapon-length.mjs";
 /**
  * @param {object} v состояние броска: оружие, токены, замеренная дистанция
  * @returns {{commonMods: object[], specificMods: object[], charSwapWhy: string[], bandKey: string|null}}
@@ -255,7 +257,28 @@ export function situationalMods(v) {
   // своим исключением для Пистолета) — отдельный штраф −20 без исключений.
   const targetLocked = (!isMelee && targetToken && !inContactWithTarget)
     ? lockingContactTokenDocs(targetToken.document ?? targetToken).length > 0 : false;
+  // Длина Оружия (wdbc-x1nz.2.67, стр. 39): действующий Rng атакующего
+  // оружия на основной Хват, Приём «Стандартная» — этот список галочек
+  // считается один раз ДО того, как игрок переключает пилюли Хвата/Приёма
+  // в этом же окне, поэтому автогалочки ниже — подсказка по базовой связке
+  // оружия, а не гарантированно точное число после Выпада/другого Хвата;
+  // как и остальные автогалочки этого файла, их можно поправить руками.
+  const meleeAttackerRange = (isMelee && weapon)
+    ? meleeEffectiveRange(weapon.system?.range, parseGrips(weapon.system?.grips)[0] ?? null, "standard")
+    : 0;
+  const longerWeaponAuto  = isMelee ? longerWeaponBonus(meleeAttackerRange, attackCtx.targetActor) : false;
+  const closeQuartersAuto = (isMelee && inContactWithTarget) ? closeQuartersPenalty(meleeAttackerRange) : 0;
+  // Прикрывающая Стойка (стр. 15, wdbc-x1nz.2.66.7): −20 рукопашным атакам
+  // по союзникам, стоящим в Базовом/Глубоком контакте с персонажем в этой
+  // Стойке — то же соседство, что Свободная Атака/Связан в Рукопашной
+  // (module/combat/free-attack.mjs::coveringDefendersOf).
+  const coveringDefenders = (isMelee && targetToken)
+    ? coveringDefendersOf(targetToken.document ?? targetToken) : [];
   const specificMods = isMelee ? [
+    ...(coveringDefenders.length ? [{
+      label: "Прикрывающая Стойка союзника рядом", value: -20, autoCheck: true,
+      note: `${coveringDefenders.map(d => d.name).join(", ")} прикрывает цель (стр. 15)`
+    }] : []),
     { label: "Трудный ландшафт",       value: -10, autoCheck: !!meleeTerrain?.inTerrain,
       note: meleeTerrain?.inTerrain ? "зона Трудного Ландшафта под атакующим" : undefined },
     { label: "Очень трудный ландшафт", value: -20 },
@@ -272,7 +295,12 @@ export function situationalMods(v) {
     { label: "Цель в полёте (Низкая/Высокая) — рукопашная недосягаема",
       value: 0, autofail: true, autoCheck: targetAtLow || targetAtHigh,
       note: (targetAtLow || targetAtHigh) ? `цель на высоте «${targetAltitude}» (стр. 30)` : undefined },
-    { label: "Более длинное оружие",   value:   5 },
+    { label: "Более длинное оружие",   value:   5, autoCheck: longerWeaponAuto,
+      note: longerWeaponAuto ? `Rng ${meleeAttackerRange} длиннее макс. оружия цели (Длина Оружия, стр. 39)` : undefined },
+    ...(closeQuartersAuto < 0 ? [{
+      label: "Слишком длинное оружие вблизи", value: closeQuartersAuto, autoCheck: true,
+      note: `Rng ${meleeAttackerRange} в Базовом контакте — −5 за каждый пункт выше 5 (Длина Оружия, стр. 39)`
+    }] : []),
     ...(wp.duelingParry ? [{
       label: "Дуэлянтское: бой 1-на-1 (никто не мешает)", value: 5,
       autoCheck: duelContacts === 1,

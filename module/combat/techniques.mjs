@@ -42,13 +42,23 @@ export async function _showContestDialog(actor, techDef) {
                      + (defaultChar === "ws" ? stanceWsBonus : 0)
                      + extraBonus;
 
-  // Строим опции для выбора характеристики
-  const charOptions = Object.entries(CHARACTERISTICS).map(([key, meta]) => {
+  // Строим опции для выбора характеристики. techDef.allowedChars (Повалить,
+  // стр. 14, wdbc-x1nz.2.66.5: «Athletics(S)+0 vs Athletics(S)+0 или
+  // Acrobatics(A)+0» — РОВНО эти два, не любая из 10) сужает список; без
+  // этого поля поведение прежнее (любая характеристика — Финт/Давление/
+  // Напролом/Обезоружить книгой не ограничены конкретным Навыком).
+  // techDef.charLabels — подпись поверх общей (meta.label даёт «Ловкость»,
+  // книге здесь нужно «Acrobatics(A)», не характеристика сама по себе).
+  const charEntries = techDef.allowedChars
+    ? Object.entries(CHARACTERISTICS).filter(([key]) => techDef.allowedChars.includes(key))
+    : Object.entries(CHARACTERISTICS);
+  const charOptions = charEntries.map(([key, meta]) => {
     let val = actor.system.characteristics[key]?.total ?? 0;
     if (key === "ws" && stanceWsBonus) val += stanceWsBonus;
     val += extraBonus;
+    const label = techDef.charLabels?.[key] ?? `${meta.abbr} — ${meta.label}`;
     return `<option value="${key}" ${key === defaultChar ? "selected" : ""}>
-      ${meta.abbr} — ${meta.label} (${val})
+      ${label} (${val})
     </option>`;
   }).join("");
 

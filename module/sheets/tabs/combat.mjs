@@ -16,6 +16,7 @@ import { MELEE_CONTESTS } from "../../constants/combat.mjs";
 import { showAttackDialog } from "../attack-dialog.mjs";
 import { _showContestDialog } from "../../combat/techniques.mjs";
 import { showGrappleDialog } from "../../combat/grapple.mjs";
+import { rollRecognizeStance } from "../../combat/recognize-stance.mjs";
 import { beginTargeting } from "../../combat/aim.mjs";
 import { showHealingDialog } from "./healing.mjs";
 import { showDelegateTestPicker } from "../../rules/delegate-test.mjs";
@@ -54,6 +55,7 @@ import { spendActionPoints, spendReaction, resetActionEconomy } from "../../comb
 import { attackedThisTurn } from "../../rules/turn-flags.mjs";
 import { resolveFeintSuccess, resolvePressSuccess } from "../../combat/feint-press.mjs";
 import { resolveBulldozeSuccess, bulldozeForbidden, bulldozeSizePenalty } from "../../combat/bulldoze.mjs";
+import { resolveKnockdownSuccess, knockdownForbidden, knockdownSizePenalty } from "../../combat/knockdown.mjs";
 import {
   beginSustainedAction, continueSustainedAction, passSustainedCheckpoint,
   interruptSustained, clearSustainedAction
@@ -266,6 +268,22 @@ export function activateCombatListeners(root, actor) {
     if (!base) return;
     if (key === "feint")  return _showContestDialog(actor, { ...base, onSuccess: resolveFeintSuccess });
     if (key === "press")  return _showContestDialog(actor, { ...base, onSuccess: resolvePressSuccess });
+    if (key === "knockdown") {
+      // Повалить (стр. 14, wdbc-x1nz.2.66.5): нельзя против цели на 2+
+      // Размера крупнее — диалог не открывается вовсе (тот же принцип, что
+      // у Напролома/Захвата — книга говорит «нельзя проводить»). Штраф −10×
+      // разница Размера — подсказан в Доп. модификаторе для инициатора,
+      // только когда МЕНЬШЕ он сам (симметричный случай не покрыт, см.
+      // module/combat/knockdown.mjs).
+      const target = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+      if (target && knockdownForbidden(actor, target)) {
+        return ui.notifications.warn(`⚠️ Повалить: нельзя проводить против ${target.name} — цель на 2+ Размера крупнее (стр. 14).`);
+      }
+      const sizePenalty = target ? knockdownSizePenalty(actor, target) : 0;
+      return _showContestDialog(actor, { ...base, onSuccess: resolveKnockdownSuccess,
+        defaultMod: sizePenalty,
+        note: sizePenalty ? `${base.note} Подсказанный штраф за Размер: ${sizePenalty}.` : base.note });
+    }
     if (key === "bulldoze") {
       // Напролом (стр. 31, wdbc-x1nz.2.65): жёсткий запрет против цели на
       // 1+ Размер крупнее — диалог не открывается вовсе (не «бросок пройдёт,
@@ -331,6 +349,10 @@ export function activateCombatListeners(root, actor) {
   // ── Борьба (стр. 12) — кнопка видна, пока активно conditions.grappling
   // (выставляется module/combat/grapple.mjs после попадания Приёмом «Захват»).
   on(root, ".grapple-btn", "click", () => showGrappleDialog(actor));
+
+  // ── Стойки (стр. 15, wdbc-x1nz.2.66.11): «Раз в Ход… тест Awareness(WS)+20,
+  // чтобы понять чужие стойки». Цель — выцеленный токен (game.user.targets).
+  on(root, ".recognize-stance-btn", "click", () => rollRecognizeStance(actor));
 
   // ── Экономика действий (стр. 12): ручная трата для действий без своей
   // кнопки в другом месте листа — Уклонение/Парирование уже тратят Реакцию
