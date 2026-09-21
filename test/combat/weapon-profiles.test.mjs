@@ -54,7 +54,16 @@ describe("improvisedMeleeProfile: таблица книги перенесена
   });
 
   it("класс, не названный в книге, бьёт как винтовка — прежнее умолчание", () => {
-    expect(improvisedMeleeProfile(gun("thrown")).damage).toBe("1d10-3");
+    expect(improvisedMeleeProfile(gun("exotic-future-class")).damage).toBe("1d10-3");
+  });
+
+  // Метательное/Граната (стр. 40, wdbc-x1nz.2.58): «в рукопашной может
+  // использоваться как рукопашное оружие» — СВОИМ профилем (нож остаётся
+  // ножом), а не синтетическим «прикладом» — improvisedMeleeProfile для
+  // этого класса теперь не выводит ничего вовсе.
+  it("метательное/граната — нет улучшенного профиля (своя же строка, не «приклад»)", () => {
+    expect(improvisedMeleeProfile(gun("thrown"))).toBeNull();
+    expect(canStrikeWithGun(gun("thrown"))).toBe(false);
   });
 
   it("всегда ударное, без пробития, Imprecise + Primitive", () => {
@@ -215,7 +224,9 @@ describe("attackIsMelee: окно и бросок обязаны решать о
 // сильнее положенного по бонусу Силы.
 describe("бонус Силы: в строке урона его быть не должно", () => {
   it("ни у одного класса оружия в строке нет S.b", () => {
-    for (const cls of ["pistol", "basic", "heavy", "launcher", "stationary", "thrown"]) {
+    // "thrown" сюда не входит — у него нет улучшенного профиля вовсе
+    // (wdbc-x1nz.2.58, см. describe выше).
+    for (const cls of ["pistol", "basic", "heavy", "launcher", "stationary"]) {
       const p = improvisedMeleeProfile(gun(cls));
       expect(p.damage, cls).not.toMatch(/S\.?b/i);
     }
@@ -262,8 +273,9 @@ describe("удар в упор: категория рукопашного (wdbc-
 
   it("категория — НАСТОЯЩАЯ из списка, а не выдуманная: иначе гейт молча отключится", () => {
     // Категория, которой нет в MELEE_CATEGORIES, схлопывается в пустую, а
-    // пустая означает «владеет». Ровно так дефект и возник.
-    for (const cls of ["pistol", "basic", "heavy", "launcher", "stationary", "thrown"]) {
+    // пустая означает «владеет». Ровно так дефект и возник. "thrown" сюда не
+    // входит — у него нет улучшенного профиля вовсе (wdbc-x1nz.2.58).
+    for (const cls of ["pistol", "basic", "heavy", "launcher", "stationary"]) {
       expect(MELEE_CATEGORIES, cls).toContain(improvisedMeleeProfile(gun(cls)).meleeCategory);
     }
   });

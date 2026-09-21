@@ -11,7 +11,7 @@ import { captured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, afterEach } from "vitest";
 import {
   hasActionEconomy, isEncounterActive, resetActionEconomy,
-  applyTurnEndStanceEffects, apCostForActionType,
+  applyTurnEndStanceEffects, applyAimFocusTurnEnd, apCostForActionType,
   canSpendActionPoints, spendActionPoints,
   canSpendReaction, spendReaction, effectiveDefenseReactionMax,
   effectiveActionPointsMax,
@@ -82,6 +82,55 @@ describe("apCostForActionType", () => {
     expect(apCostForActionType("Полудействие")).toBe(1);
     expect(apCostForActionType("Свободное действие")).toBe(0);
     expect(apCostForActionType(undefined)).toBe(0);
+  });
+
+  // Длительное/Расширенное действие (стр. 12, wdbc-x1nz.2.27) — тоже 2 ОД за Ход.
+  it("Длительное и Расширенное действие — тоже 2 ОД", () => {
+    expect(apCostForActionType("Длительное действие")).toBe(2);
+    expect(apCostForActionType("Расширенное действие")).toBe(2);
+  });
+});
+
+// Наследие Перемен, Оружие Наследия (wdbc-1rno.35, История 9, стр. 427):
+// «В начале каждого Хода бросьте 2d5» — свежий флаг каждый вызов
+// resetActionEconomy, если есть экипированное Оружие Наследия с этой
+// Историей; иначе прошлый флаг (если был) явно снимается.
+const legacyChangeWeapon = (id = "lw1") =>
+  ({ id, type: "weapon", system: { equipped: true, legacy: { active: true, historyName: "Наследие Перемен" } } });
+
+describe("resetActionEconomy: Наследие Перемен", () => {
+  it("нет Оружия Наследия — флаг не пишется", async () => {
+    const actor = actorFor();
+    await resetActionEconomy(actor);
+    expect(actor.getFlag("warhammer-dbc", "legacyChangeBonus")).toBeUndefined();
+  });
+
+  it("есть Оружие Наследия, не дубль — testBonus = сумма кубиков", async () => {
+    const actor = actorFor();
+    actor.items = [legacyChangeWeapon("lw1")];
+    captured.dice = [2, 4];
+    await resetActionEconomy(actor);
+    expect(actor.getFlag("warhammer-dbc", "legacyChangeBonus")).toEqual({ weaponId: "lw1", testBonus: 6, damageBonus: 0 });
+  });
+
+  it("есть Оружие Наследия, дубль — damageBonus = значение кубика", async () => {
+    const actor = actorFor();
+    actor.items = [legacyChangeWeapon("lw1")];
+    captured.dice = [5, 5];
+    await resetActionEconomy(actor);
+    expect(actor.getFlag("warhammer-dbc", "legacyChangeBonus")).toEqual({ weaponId: "lw1", testBonus: 0, damageBonus: 5 });
+  });
+
+  it("оружие снято/потеряло Историю на следующем Ходу — старый флаг снимается", async () => {
+    const actor = actorFor();
+    actor.items = [legacyChangeWeapon("lw1")];
+    captured.dice = [1, 2];
+    await resetActionEconomy(actor);
+    expect(actor.getFlag("warhammer-dbc", "legacyChangeBonus")).toBeTruthy();
+
+    actor.items = [];
+    await resetActionEconomy(actor);
+    expect(actor.getFlag("warhammer-dbc", "legacyChangeBonus")).toBeFalsy();
   });
 });
 
@@ -214,6 +263,48 @@ describe("resetActionEconomy", () => {
     await resetActionEconomy(actor);
     expect(actor.system.actionPoints.value).toBe(0); // update ни разу не вызван
   });
+
+  // Врасплох (стр. 12, wdbc-x1nz.2.26): «пропускает свой первый Ход» — тот же
+  // абсолютный запрет, что у Оглушения/Без сознания, ПЛЮС само Состояние
+  // гасится этим же сбросом (единственный их Ход, пока оно висит).
+  describe("Врасплох", () => {
+    it("0 ОД, 0 Реакций, 0 доп. Реакций на Избегание — как Оглушение", async () => {
+      const actor = actorFor({
+        actionPoints: { value: 0, max: 2 },
+        reactions: { value: 0, max: 1, defenseValue: 0, defenseMax: 1 },
+        conditions: { surprised: true }
+      });
+      await resetActionEconomy(actor);
+      expect(actor.system.actionPoints.value).toBe(0);
+      expect(actor.system.reactions.value).toBe(0);
+      expect(actor.system.reactions.defenseValue).toBe(0);
+    });
+
+    it("снимает Состояние сразу после — это и был пропущенный первый Ход", async () => {
+      const actor = actorFor({ conditions: { surprised: true } });
+      await resetActionEconomy(actor);
+      expect(actor.system.conditions.surprised).toBe(false);
+    });
+
+    it("следующий сброс (следующий Раунд) — снова полный ОД/Реакции", async () => {
+      const actor = actorFor({
+        actionPoints: { value: 0, max: 2 },
+        reactions: { value: 0, max: 1, defenseValue: 0, defenseMax: 0 },
+        conditions: { surprised: true }
+      });
+      await resetActionEconomy(actor); // первый Ход — заблокирован, Состояние снято
+      await actor.update({ "system.actionPoints.value": 0, "system.reactions.value": 0 });
+      await resetActionEconomy(actor); // второй Ход — уже без Врасплоха
+      expect(actor.system.actionPoints.value).toBe(2);
+      expect(actor.system.reactions.value).toBe(1);
+    });
+
+    it("Врасплох и Подавлен разом — Врасплох побеждает (0, не 1)", async () => {
+      const actor = actorFor({ actionPoints: { value: 0, max: 2 }, conditions: { surprised: true, pinned: true } });
+      await resetActionEconomy(actor);
+      expect(actor.system.actionPoints.value).toBe(0);
+    });
+  });
 });
 
 describe("applyTurnEndStanceEffects", () => {
@@ -289,6 +380,46 @@ describe("canSpendReaction / spendReaction", () => {
     const actor = actorFor({ reactions: { value: 0, max: 1, defenseValue: 0, defenseMax: 0 } });
     expect(canSpendReaction(actor, { forDefense: true })).toBe(false);
     expect(await spendReaction(actor, { forDefense: true })).toBe(false);
+  });
+
+  // Стр. 12, wdbc-x1nz.2.28: «Одно Действие может вызвать только одну
+  // Реакцию» — Уклонение (провал), потом Парирование НА ТУ ЖЕ АТАКУ (одна
+  // карточка attack-card.mjs, общий attackId) не должны обе списать Реакцию.
+  describe("attackId — одна Реакция на одно Действие", () => {
+    it("вторая Реакция с тем же attackId блокируется, даже если пул ещё не пуст", async () => {
+      globalThis.game.combat = { started: true };
+      const actor = actorFor({ reactions: { value: 2, max: 2, defenseValue: 0, defenseMax: 0 } });
+      expect(await spendReaction(actor, { forDefense: true, attackId: "atk-1" })).toBe(true);
+      expect(actor.system.reactions.value).toBe(1); // первая реально списалась
+      expect(canSpendReaction(actor, { forDefense: true, attackId: "atk-1" })).toBe(false);
+      expect(await spendReaction(actor, { forDefense: true, attackId: "atk-1" })).toBe(false);
+      expect(actor.system.reactions.value).toBe(1); // вторая — не списалась
+    });
+
+    it("другой attackId (следующая атака) — Реакция снова доступна", async () => {
+      globalThis.game.combat = { started: true };
+      const actor = actorFor({ reactions: { value: 2, max: 2, defenseValue: 0, defenseMax: 0 } });
+      expect(await spendReaction(actor, { forDefense: true, attackId: "atk-1" })).toBe(true);
+      expect(await spendReaction(actor, { forDefense: true, attackId: "atk-2" })).toBe(true);
+      expect(actor.system.reactions.value).toBe(0);
+    });
+
+    it("без attackId (общая ручная трата) гейт не применяется вовсе", async () => {
+      globalThis.game.combat = { started: true };
+      const actor = actorFor({ reactions: { value: 2, max: 2, defenseValue: 0, defenseMax: 0 } });
+      expect(await spendReaction(actor)).toBe(true);
+      expect(await spendReaction(actor)).toBe(true);
+      expect(actor.system.reactions.value).toBe(0);
+    });
+
+    it("список отработавших attackId гасится сбросом экономики (начало следующего своего Хода)", async () => {
+      globalThis.game.combat = { started: true };
+      const actor = actorFor({ reactions: { value: 1, max: 1, defenseValue: 0, defenseMax: 0 } });
+      await spendReaction(actor, { forDefense: true, attackId: "atk-1" });
+      await resetActionEconomy(actor);
+      expect(actor.getFlag("warhammer-dbc", "reactedAttackIds")).toBeUndefined();
+      expect(canSpendReaction(actor, { forDefense: true, attackId: "atk-1" })).toBe(true);
+    });
   });
 });
 
@@ -463,5 +594,74 @@ describe("postTurnStartCard", () => {
     const actor = actorFor({ type: "horde" });
     await postTurnStartCard(actor);
     expect(captured.chat).toHaveLength(0);
+  });
+});
+
+describe("Прицеливание (wdbc-1rno.5): любое ненулевое действие тратит его впустую", () => {
+  it("spendActionPoints с ненулевой ценой сбрасывает актора-стрелка system.aiming='half'", async () => {
+    globalThis.game.combat = { started: true };
+    const actor = actorFor({ actionPoints: { value: 2, max: 2 }, aiming: "half" });
+    await spendActionPoints(actor, 1);
+    expect(actor.system.aiming).toBe("none");
+  });
+
+  it("spendActionPoints с cost=0 НЕ трогает Прицеливание (формальные вызовы не должны стирать чужое)", async () => {
+    globalThis.game.combat = { started: true };
+    const actor = actorFor({ actionPoints: { value: 2, max: 2 }, aiming: "full" });
+    await spendActionPoints(actor, 0);
+    expect(actor.system.aiming).toBe("full");
+  });
+
+  it("spendReaction (Уклонение/Парирование) тоже сбрасывает Прицеливание", async () => {
+    globalThis.game.combat = { started: true };
+    const actor = actorFor({ reactions: { value: 1, max: 1, defenseValue: 0, defenseMax: 0 }, aiming: "half" });
+    await spendReaction(actor, { forDefense: true });
+    expect(actor.system.aiming).toBe("none");
+  });
+
+  it("не хватило ОД — spendActionPoints вернул false, Прицеливание не тронуто", async () => {
+    globalThis.game.combat = { started: true };
+    const actor = actorFor({ actionPoints: { value: 0, max: 2 }, aiming: "half" });
+    expect(await spendActionPoints(actor, 1)).toBe(false);
+    expect(actor.system.aiming).toBe("half");
+  });
+});
+
+describe("applyAimFocusTurnEnd (wdbc-1rno.5): продление Фокуса на Прицеле — «до конца его следующего Хода»", () => {
+  it("нет флага — no-op", async () => {
+    const actor = actorFor({ aiming: "half" });
+    await applyAimFocusTurnEnd(actor);
+    expect(actor.getFlag("warhammer-dbc", "aimFocusExtended")).toBeUndefined();
+    expect(actor.system.aiming).toBe("half");
+  });
+
+  it("\"pending\" (объявлено только что) — первый конец Хода переводит в \"armed\", aiming не трогает", async () => {
+    const actor = actorFor({ aiming: "half" });
+    await actor.setFlag("warhammer-dbc", "aimFocusExtended", "pending");
+    await applyAimFocusTurnEnd(actor);
+    expect(actor.getFlag("warhammer-dbc", "aimFocusExtended")).toBe("armed");
+    expect(actor.system.aiming).toBe("half");
+  });
+
+  it("\"armed\" (пережило один конец Хода) — второй конец Хода снимает флаг И aiming", async () => {
+    const actor = actorFor({ aiming: "full" });
+    await actor.setFlag("warhammer-dbc", "aimFocusExtended", "armed");
+    await applyAimFocusTurnEnd(actor);
+    expect(actor.getFlag("warhammer-dbc", "aimFocusExtended")).toBeUndefined();
+    expect(actor.system.aiming).toBe("none");
+  });
+
+  it("два конца Хода подряд от \"pending\": первый — armed, второй — снято", async () => {
+    const actor = actorFor({ aiming: "half" });
+    await actor.setFlag("warhammer-dbc", "aimFocusExtended", "pending");
+    await applyAimFocusTurnEnd(actor);
+    expect(actor.getFlag("warhammer-dbc", "aimFocusExtended")).toBe("armed");
+    await applyAimFocusTurnEnd(actor);
+    expect(actor.getFlag("warhammer-dbc", "aimFocusExtended")).toBeUndefined();
+    expect(actor.system.aiming).toBe("none");
+  });
+
+  it("нет актора — не падает", async () => {
+    await expect(applyAimFocusTurnEnd(null)).resolves.toBeUndefined();
   });
 });

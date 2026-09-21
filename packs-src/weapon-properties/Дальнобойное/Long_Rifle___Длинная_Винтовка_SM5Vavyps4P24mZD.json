@@ -1,0 +1,35 @@
+{
+  "name": "Long Rifle / Длинная Винтовка",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Не может использоваться для стрельбы в ближнем бою (в отличие от обычной Винтовки).",
+    "reminder": "🎯 Длинная Винтовка: нельзя стрелять в рукопашную",
+    "category": "ranged",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "longRifle",
+    "bookSource": "DoomBC — Основная книга, II. МЕХАНИКА («Действия со стрелковым оружием», стр. 40)"
+  },
+  "_id": "SM5Vavyps4P24mZD",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353821,
+    "modifiedTime": 1786224353826,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!SM5Vavyps4P24mZD"
+}

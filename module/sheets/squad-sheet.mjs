@@ -21,7 +21,7 @@ import { voiceOfGodAvailable, applyVoiceOfGod } from "../combat/voice-of-god.mjs
 import { tempInfamyInfo, clearTempInfamy } from "../rules/temp-infamy.mjs";
 import { degreesOfSuccess } from "../constants/craft.mjs";
 import { _degWord, esc } from "../helpers/utils.mjs";
-import { postTestCard, testCardHtml, outcomeHtml } from "../helpers/test-card.mjs";
+import { postTestCard, testCardHtml, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { MINION_TIERS } from "../constants/minions.mjs";
@@ -659,7 +659,7 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
       <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="sq-mod" type="number" value="0"/></div>
       <div class="atk-dlg-row atk-total-row"><label>Итоговый порог:</label><span id="sq-total">0</span></div>
       <div class="sq-cmd-risk">Риск ${eRisk.value}${eRisk.bonus ? ` (${eRisk.base} +1 — шлем снят)` : ""} — максимум Успехов: <b id="sq-cap">${capTxt}</b></div>
-      ${testKindHtml({ defaultKind: "base", label: title })}
+      ${testKindHtml({ label: title })}
       ${diceModeHtml()}
       <div id="auto-outcome-note" class="roll-dlg-note"></div>
     </div>`;
@@ -681,7 +681,8 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
             const isCo  = key === "coordinator";
             const extra = { benefit: form.querySelector("#sq-benefit")?.value,
                             shortKey: form.querySelector("#sq-kind")?.value };
-            const tk = readTestKind(val, { label: title });
+            const checked = sel => !!form.querySelector(sel)?.checked;
+            const tk = readTestKind(val, checked, { label: title });
             const reroll = mergeReroll(null, readDiceChoice(val));
             // mod и Сложность едут ОТДЕЛЬНО от суммы (wdbc-6611): раньше в
             // карточку попадала только Слаженность, и два других слагаемых
@@ -759,7 +760,7 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     const { rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
 
     const outcome = await resolveKindOutcome(this.actor, {
-      kind: tk.kind || "base", baseEff: threshold, rv,
+      baseEff: threshold, rv,
       combined: tk.combined, extended: tk.extended, opposed: tk.opposed,
       ctx: { actor: this.actor, kind: "skill", skill: "command" }
     });
@@ -834,8 +835,6 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     // книжный термин).
     const plague = (ok && kind !== "presence") ? await this._applyPlagueShepherd(roller.uuid, sux) : "";
 
-    // Строка Порога у Отряда своя («Командир: имя · Слаженность +5 → Порог»),
-    // поэтому передаётся готовой, а не собирается thresholdLine.
     // Класс sq-chat — корневой класс карточек Отряда, за него цепляется вёрстка
     // блоков команды (styles/sheets/squad-sheet.css). В чат идут ВСЕ кубики, а
     // не только зачтённый: при перебросе отброшенный тоже виден (wdbc-e3k9).
@@ -843,12 +842,19 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
       classes: "sq-chat",
       icon: rollIcon("crown", "#4dffa6"),
       title: `${esc(title)}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(this.actor.name)}`,
-      threshold: `<div class="roll-threshold">${esc(roller.label)}: <b>${esc(roller.name)}</b> ·
-          Слаженность ${cohMod >= 0 ? "+" : ""}${cohMod}${isCo ? " (половинный — Координатор)" : ""}${
-            extra.mod ? ` · мод. ${extra.mod >= 0 ? "+" : ""}${extra.mod}` : ""}${
-            extra.difficulty ? ` · 📊 Сложность ${extra.difficulty >= 0 ? "+" : ""}${extra.difficulty}` : ""} → Порог <b>${threshold}</b></div>`,
+      // wdbc-fyvv: плашка несёт итоговый Порог; кто бросает («Командир: Имя») —
+      // роль, не характеристика, и в короткую ячейку Режим не ложится, поэтому
+      // остаётся частью подсказки Порога (base — строка, не число, и это ОК).
+      threshold: rollStatLine({
+        base: `${roller.label}: ${roller.name}`,
+        parts: [
+          `Слаженность ${cohMod >= 0 ? "+" : ""}${cohMod}${isCo ? " (половинный — Координатор)" : ""}`,
+          extra.mod ? `мод. ${extra.mod >= 0 ? "+" : ""}${extra.mod}` : "",
+          extra.difficulty ? `📊 Сложность ${extra.difficulty >= 0 ? "+" : ""}${extra.difficulty}` : ""
+        ],
+        threshold, rv
+      }),
       lines: [outcome.combinedLine],
-      rv,
       rerollNote,
       critLine: outcome.critLine,
       outcome: ok
@@ -1243,14 +1249,15 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
             ? `<span class="roll-failure">Критический провал — самосохранение до конца боя или сцены</span>`
             : `<span class="roll-failure">Провал — в свой Ход действует из мотивов самосохранения (укрытие, отход, сдача)</span>`));
 
-    // Строка Порога своя: слагаемое Слаженности стоит через «·», а не в
-    // скобках общего формата.
     await postTestCard(this.actor, testCardHtml({
       classes: "sq-chat",
       icon: rollIcon(kind === "morale" ? "heart" : "warn", ok ? "#4dffa6" : "#ff8a8a"),
       title: `${kind === "morale" ? "Тест Морали" : "Сломленный Отряд"} — ${esc(m.name)}`,
-      threshold: `<div class="roll-threshold">W <b>${m.wp}</b>${kind === "broken" ? ` · Слаженность ${coh >= 0 ? "+" : ""}${coh}` : ""} → Порог <b>${target}</b></div>`,
-      rv,
+      threshold: rollStatLine({
+        label: "W", base: m.wp,
+        parts: [kind === "broken" ? `Слаженность ${coh >= 0 ? "+" : ""}${coh}` : ""],
+        threshold: target, rv
+      }),
       outcome,
       sections: [kind === "broken" ? `<div class="sq-chat-note">Если боец под Запугиванием своего Лидера или Командира и набрал Провалов не больше, чем тот Успехов на Intimidate, тест считается пройденным.</div>` : ""]
     }), { rolls: [roll] });

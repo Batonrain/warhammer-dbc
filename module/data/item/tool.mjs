@@ -24,11 +24,24 @@ export class ToolData extends foundry.abstract.TypeDataModel {
       quality:      new StringField({ initial: "common", label: "Качество" }),
       toolCategory: new StringField({ initial: "general", label: "Категория" }),
       linkedWeapon: new StringField({ initial: "", label: "Связанное оружие" }),
+      // Свой размер на разгрузке (стр. 243, «Размеры предметов», wdbc-x1nz.2) —
+      // переопределяет умолчание itemSizeStr() (module/constants/rig.mjs),
+      // которое без этого поля даёт ЛЮБОМУ инструменту голое "1x1" — набор
+      // инструментов/аптечка по книге занимают 3×1.
+      itemSize:     new StringField({ initial: "", label: "Размер (разгрузка)" }),
       effect:       new StringField({ initial: "", label: "Эффект" }),
       reminder:     new StringField({ initial: "", label: "Напоминание" }),
       qualityEffects: qualityEffectsField(),
       bonuses:      new ArrayField(new ObjectField(), { label: "Бонусы" }),
-      drukhari:     new BooleanField({ initial: false, label: "Друкхари" })
+      drukhari:     new BooleanField({ initial: false, label: "Друкхари" }),
+      // Включаемая/включена (wdbc-x1nz.2) — тот же тумблер, что у armorMod/
+      // weaponMod/gear: бонус Конструктора действует, только пока active=true.
+      // Инструмент, в отличие от gear, вообще не имел equipped — без этой
+      // пары isItemActive() (apps/effects.mjs) считал ЛЮБОЙ tool активным
+      // просто по факту владения, даже лежащий в рюкзаке (найдено на
+      // Ауспексе — «занимает руку» по effect-тексту, но код это не проверял).
+      activatable:  new BooleanField({ initial: false, label: "Включаемая" }),
+      active:       new BooleanField({ initial: false, label: "Включена" })
     };
   }
 }

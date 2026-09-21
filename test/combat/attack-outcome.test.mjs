@@ -253,12 +253,21 @@ describe("damageFormulaFor", () => {
 });
 
 describe("bonusDamageDice", () => {
-  it("Меткое даёт кубы по степеням успеха только на одиночном выстреле", () => {
+  it("Меткое даёт кубы по степеням успеха только на одиночном выстреле С Прицеливанием (aimed)", () => {
     const wp = withProps({ accurate: true });
-    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 3 })).toBe(1);
-    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 5 })).toBe(2);
-    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 2 })).toBe(0);
-    expect(bonusDamageDice({ wp, rofMode: "semi",   hit: true, deg: 5 })).toBe(0);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 3, aimed: true })).toBe(1);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 5, aimed: true })).toBe(2);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 2, aimed: true })).toBe(0);
+    expect(bonusDamageDice({ wp, rofMode: "semi",   hit: true, deg: 5, aimed: true })).toBe(0);
+  });
+
+  // Книга (стр. 166): «При одиночных выстрелах С Прицеливанием» — без
+  // Прицеливания (wdbc-1rno.5) кубы не начисляются, даже на одиночном
+  // выстреле Метким оружием с высокой степенью успеха.
+  it("без aimed (не прицелился) — кубов нет, даже на 5+ Успехов", () => {
+    const wp = withProps({ accurate: true });
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 9 })).toBe(0);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 9, aimed: false })).toBe(0);
   });
 
   it("Рассеивание, Максимальный режим, полоса и боеприпас складываются", () => {
@@ -266,5 +275,46 @@ describe("bonusDamageDice", () => {
       wp: withProps({ scatter: true }), rofMode: "single", hit: true, deg: 1,
       shortRange: true, maximal: true, band: { dice: 2 }, ammoDice: 1
     })).toBe(5);
+  });
+
+  // Sniper Assassin/Снайпер-Убийца (wdbc-1rno.2): продлённая лестница
+  // Accurate — до 4 кубиков на 3/5/7/9 Успехов вместо обычных 2 на 3/5.
+  it("wp.sniperAssassin продлевает лестницу Меткого до 4 кубиков на 3/5/7/9 (с aimed)", () => {
+    const wp = withProps({ accurate: true, sniperAssassin: true });
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 2, aimed: true })).toBe(0);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 3, aimed: true })).toBe(1);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 5, aimed: true })).toBe(2);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 7, aimed: true })).toBe(3);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 9, aimed: true })).toBe(4);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 20, aimed: true })).toBe(4);
+  });
+
+  it("sniperAssassin без accurate ничего не даёт — свойство Accurate обязательно", () => {
+    const wp = withProps({ sniperAssassin: true });
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 9, aimed: true })).toBe(0);
+  });
+
+  // Тесное помещение (стр. 36, wdbc-x1nz.2.63): взрывы X Dmg (damageType
+  // "blast") получают +1d10 урона.
+  describe("Тесное помещение: +1d10 для X Dmg (wdbc-x1nz.2.63)", () => {
+    it("confinedSpace + Взрывное + damageType blast — +1 кубик", () => {
+      const wp = withProps({ blastRating: 3 });
+      expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 1, confinedSpace: true, damageType: "blast" })).toBe(1);
+    });
+
+    it("confinedSpace, но damageType не blast — без кубика", () => {
+      const wp = withProps({ blastRating: 3 });
+      expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 1, confinedSpace: true, damageType: "impact" })).toBe(0);
+    });
+
+    it("damageType blast, но confinedSpace выключен — без кубика", () => {
+      const wp = withProps({ blastRating: 3 });
+      expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 1, confinedSpace: false, damageType: "blast" })).toBe(0);
+    });
+
+    it("confinedSpace + damageType blast, но не Взрывное оружие (blastRating=0) — без кубика", () => {
+      const wp = withProps({ blastRating: 0 });
+      expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 1, confinedSpace: true, damageType: "blast" })).toBe(0);
+    });
   });
 });

@@ -22,8 +22,8 @@
 //  состоянием (weapon.system.jammed) — combat/attack.mjs пишет его при
 //  срабатывании существующего jamThreshold(), UI блокирует «Атака» тем же
 //  приёмом, что magEmpty, снимается кнопкой «Расклинить»
-//  (combat/weapon-properties.mjs::clearWeaponJam, доступной всегда — тот же
-//  паттерн «без теста/времени», что у Ремонта Разъедания в damage.mjs).
+//  (combat/clear-jam.mjs::rollClearJam — Полное действие, тест Tech-Use+0
+//  или Trade(Weaponsmith)+0, wdbc-x1nz.2.52; было мгновенным без теста).
 //  «Не расклинивается 1 раунд» от Разрушения — jamLockedRound.
 //
 //  «Доп. AP от других модов/талантов» и аблативные раны при Разрушении

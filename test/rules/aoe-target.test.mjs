@@ -66,6 +66,21 @@ describe("tokensWithinRadius", () => {
     expect(tokensWithinRadius(caster, 10, { includeHidden: true }).map(t => t.id)).toEqual(["hidden"]);
   });
 
+  it("wdbc-x1nz.2.18: считает от края Базы — крупный кастер (2×2) дотягивается дальше, чем по центру", () => {
+    // y подобраны так, чтобы центры совпали по вертикали (тот же приём, что
+    // в auras.test.mjs у tokenDocDistance) — дистанция считается чисто по X.
+    const caster = { id: "caster", x: 0, y: 0, width: 2, height: 2, hidden: false, actor: { type: "vehicle" } };
+    const target = { id: "target", x: 550, y: 50, width: 1, height: 1, hidden: false, actor: { type: "vehicle" } };
+    const sc = scene([caster, target]);
+    caster.parent = sc; target.parent = sc;
+
+    // Центр-к-центру: 500px = 5 клеток × 2м = 10м — по старому (центр-only)
+    // поведению радиус 8 цель бы не накрыл. От края Базы: радиус кастера
+    // (2×2 → 1 клетка = 2м) и цели (1×1 → 0,5 клетки = 1м) вычитаются —
+    // 10 − 2 − 1 = 7м ≤ 8 — цель накрыта.
+    expect(tokensWithinRadius(caster, 8).map(t => t.id)).toEqual(["target"]);
+  });
+
   it("токены без актора игнорируются", () => {
     const caster = token("caster");
     const noActor = { id: "noActor", x: 0, y: 0, width: 1, height: 1, hidden: false, actor: null };

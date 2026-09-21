@@ -1,12 +1,13 @@
 import { SKILL_RANKS }    from "../constants/characteristics.mjs";
-import { MELEE_STANCES, BALANCE_PARRY_MOD } from "../constants/combat.mjs";
+import { MELEE_STANCES, BALANCE_PARRY_MOD, gripEffects } from "../constants/combat.mjs";
+import { currentMeleeGrip } from "../rules/hands.mjs";
 import { _degWord, _hitWord, _leftoverSuccessPhrase, negatedHits, esc } from "../helpers/utils.mjs";
 import { resolveWeaponPropsList, aggregateAuto } from "./weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries }  from "./weapon-mods.mjs";
 import { rollIcon }       from "../constants/roll-icons.mjs";
 import { pickReroll }     from "../rules/reroll-pick.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
-import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { hasRuleFlag }    from "../rules/flags.mjs";
 import { isRoundCapabilityAvailable } from "../apps/game-session.mjs";
 import { equippedMeleeWeapon } from "./equipped-melee.mjs";
@@ -14,7 +15,9 @@ import { withWitchsEdge } from "./witchs-edge.mjs";
 import { spendReaction }  from "./action-economy.mjs";
 import { addEvasionSurplus } from "./evasion-pool.mjs";
 import { recoilButtonHtml } from "./recoil.mjs";
+import { overpenetrationButtonHtml } from "./overpenetration.mjs";
 import { danceOfFireAdvantage } from "../rules/dodge-advantage.mjs";
+import { duckAndCoverAdvantage } from "../rules/duck-and-cover.mjs";
 import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { retractPart, extendPart, allLimbsCompressed } from "../rules/compression.mjs";
@@ -29,6 +32,10 @@ import { parrySizeGate } from "../rules/parry-size.mjs";
 import { tokenRect } from "./horde-tokens.mjs";
 import { contactType } from "../rules/tactical-map.mjs";
 import { handOfKhorneAttackSizeBonus } from "../rules/hand-of-khorne.mjs";
+import { phantomCopiesDodgePenalty } from "../rules/wrapped-in-chaos.mjs";
+import { hasGazeOfInevitability } from "../rules/gaze-of-inevitability.mjs";
+import { isTokenInSight } from "../rules/vision-target.mjs";
+import { combinedThreshold } from "../rules/test-kind.mjs";
 
 // Контратака (стр. 12, Талант Counter Attack) — «раз в Раунд» ключ учёта,
 // тот же примитив, что у Локуса Сокрушения (constants/capabilities.mjs).
@@ -103,7 +110,7 @@ export function dodgeProfile(actor, extraMod = 0) {
 // правку одного места без остальных. Объект опций делает порядок неважным.
 export async function _performDodge(actor, {
   extraMod = 0, forcedReroll = "", hitsCount = 1, attackerUuid = "",
-  isMelee = false, burst = false, attackerIsHorde = false
+  isMelee = false, burst = false, attackerIsHorde = false, attackId = "", itemUuid = ""
 } = {}) {
   // Потеря ног (стр. 30-31, wdbc-r5o7.5): «нельзя Уклоняться» — хватает одной
   // потерянной ноги (книга не требует «обеих», в отличие от полной
@@ -111,8 +118,22 @@ export async function _performDodge(actor, {
   // тратится — Уклонение физически недоступно, а не просто провалено.
   if ((Number(actor.system.conditions?.lostLegsCount) || 0) > 0)
     return _noReactionCard(actor, "Уклонение (нет ног)");
-  if (!(await spendReaction(actor, { forDefense: true }))) return _noReactionCard(actor, "Уклонение");
-  const { agTotal, threshold, modParts } = dodgeProfile(actor, extraMod);
+  if (!(await spendReaction(actor, { forDefense: true, attackId }))) return _noReactionCard(actor, "Уклонение");
+  const { agTotal, threshold: baseThreshold, modParts } = dodgeProfile(actor, extraMod);
+  // Фантомные Копии (Wrapped in Chaos "2-3", wdbc-1rno): штраф Уклонению
+  // ЧУЖОЙ рукопашной атаки — направленный модификатор атакующий→защитник,
+  // резолвится тем же путём, что Разница Размеров у Парирования ниже
+  // (attackerUuid → attackerActor ДО построения порога; неизвестный/пустой
+  // attackerUuid — штрафа нет, тот же честный дефолт, что и там).
+  const attackerActor = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
+  const wicDodgePenalty = phantomCopiesDodgePenalty(attackerActor, isMelee);
+  const preGazeThreshold = baseThreshold + wicDodgePenalty;
+  if (wicDodgePenalty !== 0) modParts.push(`Фантомные Копии атакующего ${wicDodgePenalty}`);
+  // Взор Неизбежности (стр. …, wdbc-1rno.3): защищающийся видит глаза
+  // атакующего-носителя Дара — Комбинированный Порог с W−10, провал снимает
+  // все Реакции (после самого броска ниже).
+  const gazeActive = _gazeOfInevitabilityActive(actor, attackerActor);
+  const threshold = gazeActive ? _combineWithGazeThreshold(actor, preGazeThreshold, modParts) : preGazeThreshold;
 
   // Навязанный переброс (Локус Кровопролития: «заставить цель перебросить тест
   // Избегания»). Режим приходит с кнопки карточки: цель обязана оставить
@@ -123,7 +144,10 @@ export async function _performDodge(actor, {
   // сильнее своего Преимущества).
   const dancerAdvantage = danceOfFireAdvantage(actor, burst);
   const hordeAdvantage  = oneAgainstAHundredAdvantage(actor, attackerIsHorde);
-  const selfAdvantage   = dancerAdvantage || hordeAdvantage;
+  // Перебежка (стр. 30, wdbc-x1nz.2.38): переброс Избегания до конца Раунда —
+  // тот же приём keepBest, что у соседей выше.
+  const duckAdvantage   = duckAndCoverAdvantage(actor);
+  const selfAdvantage   = dancerAdvantage || hordeAdvantage || duckAdvantage;
   const rolled = [];
   for (let i = 0; i < (forcedReroll || selfAdvantage ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
   const picked = pickReroll(rolled.map(r => r.total), forcedReroll || "keepBest");
@@ -132,6 +156,9 @@ export async function _performDodge(actor, {
   // Формула степени успеха/провала — module/rules/roll-outcome.mjs (wdbc-5dvx,
   // раньше дублировалась вручную здесь же).
   const { success: passed, deg } = testOutcome(rv, threshold);
+  // Взор Неизбежности: «проваливают ЭТОТ тест [Комбинированный] — теряют
+  // все свои Реакции» — тот же бросок выше уже решил и Уклонение, и это.
+  if (gazeActive && !passed) await _applyGazeOfInevitabilityFailure(actor);
 
   // Стр. 12: при Успехе персонаж уклоняется от атаки и попадание становится
   // промахом — сравнивать степени успеха со степенью атакующего не нужно (это
@@ -148,15 +175,17 @@ export async function _performDodge(actor, {
   const banked = leftover > 0 && await addEvasionSurplus(actor, attackerUuid, leftover, extraMod);
 
   if (picked.dropped.length) {
+    const advLabel = dancerAdvantage ? "Танец Среди Огня" : hordeAdvantage ? "Один Против Сотни" : "Перебежка";
     modParts.push(forcedReroll
       ? `навязанный переброс, отброшено ${picked.dropped.join(", ")}`
-      : `${dancerAdvantage ? "Танец Среди Огня" : "Один Против Сотни"}: Преимущество, отброшено ${picked.dropped.join(", ")}`);
+      : `${advLabel}: Преимущество, отброшено ${picked.dropped.join(", ")}`);
   }
 
   let outcomeHtml;
   if (!passed) {
     outcomeHtml = `<span class="roll-failure">Уклонение провалено — ${deg} ${_degWord(deg)}. ${
-      totalHits > 1 ? `Все ${totalHits} ${_hitWord(totalHits)} проходят.` : "Получает попадание."}</span>`;
+      totalHits > 1 ? `Все ${totalHits} ${_hitWord(totalHits)} проходят.` : "Получает попадание."}${
+      gazeActive ? " Взор Неизбежности: все Реакции потеряны." : ""}</span>`;
   } else if (remaining === 0) {
     outcomeHtml = `<span class="roll-success">Уклонение успешно — ${deg} ${_degWord(deg)}${
       totalHits > 1 ? `, снимает все ${totalHits} ${_hitWord(totalHits)}` : ""}! Атака промахивается.</span>`;
@@ -172,11 +201,16 @@ export async function _performDodge(actor, {
   // Отскок = Вольт (п.6 правила) — отдельная точка входа, не эта кнопка
   // (см. заголовок module/combat/recoil.mjs).
   const recoilSection = (passed && !isMelee) ? recoilButtonHtml(actor) : "";
+  // Снаряд летит дальше (стр. 12, wdbc-x1nz.2.39): только у дистанционной
+  // атаки с известным оружием (itemUuid) — рукопашный удар «лететь дальше» не
+  // может, а кнопки контратаки/старые вызовы itemUuid не несут (тот же честный
+  // дефолт, что у attackerUuid выше).
+  const overpenSection = (passed && !isMelee) ? overpenetrationButtonHtml(itemUuid) : "";
 
     await postTestCard(actor, {
     icon: rollIcon("run"), title: `Уклонение — ${esc(actor.name)}`, actorUuid: actor.uuid,
-    threshold: thresholdLine({ label: "Ag", base: agTotal, parts: modParts, threshold }),
-    rv, outcome: outcomeHtml, sections: [leftoverNote, recoilSection]
+    threshold: rollStatLine({ label: "Ag", base: agTotal, parts: modParts, threshold, rv }),
+    outcome: outcomeHtml, sections: [leftoverNote, recoilSection, overpenSection]
   }, { rolls: [roll] });
 }
 
@@ -222,8 +256,8 @@ export async function _performSprayCancel(actor) {
   await postTestCard(actor, {
     icon: rollIcon("run"),
     title: `Тест на отмену (Распыление, Acrobatics A+0) — ${esc(actor.name)}`, actorUuid: actor.uuid,
-    threshold: thresholdLine({ label: "Ag", base: agTotal, parts: modParts, threshold }),
-    rv, outcome: outcomeHtml, sections: [recoilSection]
+    threshold: rollStatLine({ label: "Ag", base: agTotal, parts: modParts, threshold, rv }),
+    outcome: outcomeHtml, sections: [recoilSection]
   }, { rolls: [roll] });
 }
 
@@ -261,7 +295,14 @@ export function parryProfile(actor, extraMod = 0, weaponOverride = null, { useCr
 
   // Эффекты модификаций парирующего оружия (баланс, Защитное/Power Field и т.п.)
   const modFx      = getModEffects(actor, meleeWeapon);
-  const balance    = parseInt(meleeWeapon?.system.balance ?? 0) + (modFx.balanceMod || 0);
+  // Хват (стр. 39, wdbc-x1nz.2.45): «Баланс оружия принудительно ставится в
+  // это значение» (balSet) у Ближнего/Хвостового Хвата — раньше читался только
+  // на АТАКЕ (selection.mjs), Парирование всегда брало «голый» system.balance,
+  // и выбор Хвата в диалоге атаки не менял Порог Парирования тем же оружием.
+  // currentMeleeGrip — тот же сохранённый hudGrip, что диалог атаки пишет по
+  // роллу (module/rules/hands.mjs), с тем же фоллбэком на первый Хват профиля.
+  const gripBalSet = meleeWeapon ? gripEffects(currentMeleeGrip(meleeWeapon)).balSet : null;
+  const balance    = (gripBalSet ?? parseInt(meleeWeapon?.system.balance ?? 0)) + (modFx.balanceMod || 0);
   const balanceMod = BALANCE_PARRY_MOD[String(balance)];
 
   const stance    = actor.system.meleeStance || "standard";
@@ -390,12 +431,52 @@ function _inMeleeContactWithAttacker(actor, attackerActor) {
   return contactType(rectA, rectB) !== "none";
 }
 
+/**
+ * Взор Неизбежности (Дар Нургла, wdbc-1rno.3, rules/gaze-of-inevitability.mjs):
+ * «Противники, что могут видеть глаза персонажа..., должны комбинировать
+ * любой тест на Избегание ОТ ЕГО АТАК с тестом на W−10.» — только когда
+ * носитель Дара сам АТАКУЕТ (attackerActor), не любое Избегание вообще.
+ * Геометрия — та же «кто кого видит» (дальность+сектор, БЕЗ стен), что у
+ * остальных подобных проверок проекта (rules/vision-target.mjs). Без
+ * токена хотя бы у одной стороны — эффект не проверяется (тот же честный
+ * дефолт, что у контакта с стрелком выше).
+ */
+function _gazeOfInevitabilityActive(actor, attackerActor) {
+  if (!attackerActor || !hasGazeOfInevitability(attackerActor)) return false;
+  const myToken = actor?.getActiveTokens?.(false, true)?.[0];
+  const atkToken = attackerActor?.getActiveTokens?.(false, true)?.[0];
+  if (!myToken || !atkToken) return false;
+  const grid = { size: canvas?.grid?.size || 100, distance: canvas?.scene?.grid?.distance ?? canvas?.grid?.distance ?? 1 };
+  return isTokenInSight(myToken, atkToken, grid);
+}
+
+/**
+ * Комбинированный Порог (обычные правила системы — rules/test-kind.mjs::
+ * combinedThreshold, Math.min из двух Порогов на одном броске) — Избегание
+ * с W−10 самого защищающегося. Возвращает итоговый Порог, дописывает
+ * подпись модификатора в modParts для карточки.
+ */
+function _combineWithGazeThreshold(actor, threshold, modParts) {
+  const wpTotal = Number(actor.system.characteristics?.wp?.total) || 0;
+  const gazeThreshold = wpTotal - 10;
+  modParts.push(`Взор Неизбежности: Комбинированный с W−10 (${gazeThreshold})`);
+  return combinedThreshold(threshold, gazeThreshold);
+}
+
+/** «Проваливают этот тест — теряют все свои Реакции» (оба пула, тот же уровень, что у Врасплох/Оглушения). */
+async function _applyGazeOfInevitabilityFailure(actor) {
+  const upd = {};
+  if ((Number(actor.system.reactions?.value) || 0) !== 0) upd["system.reactions.value"] = 0;
+  if ((Number(actor.system.reactions?.defenseValue) || 0) !== 0) upd["system.reactions.defenseValue"] = 0;
+  if (Object.keys(upd).length) await actor.update(upd);
+}
+
 // wdbc-8zi (п.6): тот же объект опций, что у _performDodge выше — раньше
 // hitsCount/attackerUuid стояли в другом порядке, чем там, и перепутать
 // вызов при правке было легко.
 export async function _performParry(actor, {
   extraMod = 0, attackerUuid = "", hitsCount = 1, burst = false,
-  attackerIsHorde = false, isMelee = true, attackerWeaponUuid = ""
+  attackerIsHorde = false, isMelee = true, attackerWeaponUuid = "", attackId = ""
 } = {}) {
   // Резолв атакующего — нужен и для Разницы Размеров (стр. 12, ЛЮБОЙ
   // Парирование), и для контакта при стрельбе ниже. Неизвестный/нерезолвящийся
@@ -460,8 +541,13 @@ export async function _performParry(actor, {
       `Противник крупнее на ${sizeGate.steps} ${stepWord(sizeGate.steps)} Размера — Парирование ${need} (стр. 12).`);
   }
 
-  const { wsTotal, meleeWeapon, balance, balanceMod, threshold, modParts, pwp, crossblock } =
+  const { wsTotal, meleeWeapon, balance, balanceMod, threshold: baseParryThreshold, modParts, pwp, crossblock } =
     parryProfile(actor, extraMod, null, { useCrossblock });
+  // Взор Неизбежности (стр. …, wdbc-1rno.3) — тот же приём, что у Уклонения
+  // (_performDodge): защищающийся видит глаза атакующего-носителя Дара —
+  // Комбинированный Порог с W−10, провал снимает все Реакции.
+  const gazeActive = _gazeOfInevitabilityActive(actor, attackerActor);
+  const threshold = gazeActive ? _combineWithGazeThreshold(actor, baseParryThreshold, modParts) : baseParryThreshold;
 
   // ── Парирование СТРЕЛЬБЫ ───────────────────────────────────────────────
   // Стр. 12: «работает только от атак в ближнем бою, в т.ч. выстрелов в
@@ -508,7 +594,7 @@ export async function _performParry(actor, {
     return;
   }
 
-  if (!(await spendReaction(actor, { forDefense: true }))) return _noReactionCard(actor, "Парирование");
+  if (!(await spendReaction(actor, { forDefense: true, attackId }))) return _noReactionCard(actor, "Парирование");
 
   // Танец Среди Огня и Один Против Сотни (wdbc-u0by) — Преимущество на
   // Парирование против Очереди / против атаки Орды, тот же приём
@@ -520,7 +606,9 @@ export async function _performParry(actor, {
   // же самое, что делают два Преимущества выше, поэтому считается тем же
   // приёмом, а не отдельной веткой.
   const maineGauche     = maineGaucheParryReroll(actor, meleeWeapon, attackedPrevTurn(actor));
-  const selfAdvantage   = dancerAdvantage || hordeAdvantage || maineGauche;
+  // Перебежка (стр. 30, wdbc-x1nz.2.38) — тот же переброс, что у Уклонения выше.
+  const duckAdvantage   = duckAndCoverAdvantage(actor);
+  const selfAdvantage   = dancerAdvantage || hordeAdvantage || maineGauche || duckAdvantage;
   const rolled = [];
   for (let i = 0; i < (selfAdvantage ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
   const picked   = pickReroll(rolled.map(r => r.total), "keepBest");
@@ -528,6 +616,9 @@ export async function _performParry(actor, {
   const rv       = picked.value;
   // Формула степени успеха/провала — module/rules/roll-outcome.mjs (wdbc-5dvx).
   const { success: passed, deg } = testOutcome(rv, threshold);
+  // Взор Неизбежности: «проваливают ЭТОТ тест [Комбинированный] — теряют
+  // все свои Реакции» — тот же бросок выше уже решил и Парирование, и это.
+  if (gazeActive && !passed) await _applyGazeOfInevitabilityFailure(actor);
 
   // Стр. 12: при Успехе персонаж отбивает или блокирует атаку и попадание
   // становится промахом — сравнивать степени успеха со степенью атакующего не
@@ -556,13 +647,15 @@ export async function _performParry(actor, {
     modParts.push(
       dancerAdvantage ? `Танец Среди Огня: Преимущество, отброшено ${picked.dropped.join(", ")}`
       : hordeAdvantage ? `Один Против Сотни: Преимущество, отброшено ${picked.dropped.join(", ")}`
+      : duckAdvantage ? `Перебежка: Преимущество, отброшено ${picked.dropped.join(", ")}`
       : `Мэн-Гош: переброс ножом, отброшено ${picked.dropped.join(", ")}`);
   }
 
   let outcomeHtml;
   if (!passed) {
     outcomeHtml = `<span class="roll-failure">Парирование провалено — ${deg} ${_degWord(deg)}. ${
-      totalHits > 1 ? `Все ${totalHits} ${_hitWord(totalHits)} проходят.` : "Получает попадание."}</span>`;
+      totalHits > 1 ? `Все ${totalHits} ${_hitWord(totalHits)} проходят.` : "Получает попадание."}${
+      gazeActive ? " Взор Неизбежности: все Реакции потеряны." : ""}</span>`;
   } else if (remaining === 0) {
     outcomeHtml = `<span class="roll-success">Парирование успешно — ${deg} ${_degWord(deg)}${
       totalHits > 1 ? `, снимает все ${totalHits} ${_hitWord(totalHits)}` : ""}! Атака отражена.</span>`;
@@ -628,11 +721,11 @@ export async function _performParry(actor, {
 
   await postTestCard(actor, {
     icon: rollIcon("sword"), title: `Парирование — ${esc(actor.name)}`, actorUuid: actor.uuid,
-    threshold: thresholdLine({ label: "WS", base: wsTotal, parts: modParts, threshold }),
+    threshold: rollStatLine({ label: "WS", base: wsTotal, parts: modParts, threshold, rv }),
     lines: [meleeWeapon
       ? `<div style="font-size:0.82em;color:#5a4a30;margin-bottom:2px;">Оружие: ${esc(meleeWeapon.name)} (Баланс ${balance >= 0 ? "+" : ""}${balance})</div>`
       : ""],
-    rv, outcome: outcomeHtml,
+    outcome: outcomeHtml,
     sections: [leftoverNote, powerFieldNote, crossblockNote, counterAttackHtml]
   }, { rolls: [roll] });
 }
@@ -689,9 +782,9 @@ export async function _performPsychicParry(actor, { powerName = "", ePR = 0, ext
     icon: rollIcon("sword"),
     title: `Парирование психосилы${powerName ? ` «${esc(powerName)}»` : ""} — ${esc(actor.name)}`,
     actorUuid: actor.uuid,
-    threshold: thresholdLine({ label: "WS", base: wsTotal, parts: modParts, threshold }),
+    threshold: rollStatLine({ label: "WS", base: wsTotal, parts: modParts, threshold, rv }),
     lines: [`<div style="font-size:0.82em;color:#5a4a30;margin-bottom:2px;">Чем парирует: ${esc(tool.name)} (Баланс ${balance >= 0 ? "+" : ""}${balance})${weakens ? " — Poor.Q: развеивает частично" : ""}</div>`],
-    rv, outcome: outcomeHtml
+    outcome: outcomeHtml
   }, { rolls: [roll] });
 }
 
@@ -710,7 +803,7 @@ export async function _performPsychicParry(actor, { powerName = "", ePR = 0, ext
  * втянутой Голове, мобильность при втянутых Ногах, выпуск удерживаемого
  * оружия из втягиваемой Руки — только чат-заметки, без числа/автоснятия.
  */
-export async function _performCompression(actor, location, attackerUuid = "") {
+export async function _performCompression(actor, location, attackerUuid = "", attackId = "") {
   const rollMode = game.settings.get("core", "rollMode");
   if (!hasRuleFlag(actor, COMPRESSION_CAPABILITY)) {
     return ChatMessage.create(ChatMessage.applyRollMode({
@@ -724,7 +817,7 @@ export async function _performCompression(actor, location, attackerUuid = "") {
         </div>`
     }, rollMode));
   }
-  if (!(await spendReaction(actor, { forDefense: true }))) return _noReactionCard(actor, "Сжатие");
+  if (!(await spendReaction(actor, { forDefense: true, attackId }))) return _noReactionCard(actor, "Сжатие");
 
   const current = actor.getFlag("warhammer-dbc", "compressedParts") ?? [];
   const updated = retractPart(current, location);
@@ -811,8 +904,7 @@ export async function _performEtherealSwarm(actor, attackerUuid = "") {
 
   await postTestCard(actor, {
     icon: rollIcon("warp"), title: `Эфирная Стая — ${esc(actor.name)}`,
-    threshold: thresholdLine({ label: "Cor", base: cor, threshold: cor }),
-    rv,
+    threshold: rollStatLine({ label: "Cor", base: cor, threshold: cor, rv }),
     outcome: success
       ? `<span class="roll-success">Успех — Крикун (осталось ${swarm.count - 1}) принимает попадание на себя и изгоняется в Варп. Попадание нивелировано.</span>`
       : `<span class="roll-failure">Провал — ${dof} ${_degWord(dof)}, Крикун не успевает обрести реальность. Попадание проходит как обычно.</span>`

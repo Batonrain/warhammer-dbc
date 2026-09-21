@@ -7,8 +7,9 @@ import { pickReroll }                       from "../rules/reroll-pick.mjs";
 import { testOutcome }                      from "../rules/roll-outcome.mjs";
 import { hasRuleFlag, ruleFlagLabels }      from "../rules/flags.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
-import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { DANCE_OF_DECEPTION_CAPABILITY, danceOfDeceptionFeintOptions } from "../rules/dance-of-deception.mjs";
+import { phantomCopiesFeintBonus } from "../rules/wrapped-in-chaos.mjs";
 import { spendFromInfamyPool } from "../apps/infamy-points.mjs";
 import { tempInfamyAmount } from "../rules/temp-infamy.mjs";
 
@@ -26,8 +27,11 @@ export async function _showContestDialog(actor, techDef) {
   // Плоский бонус источника, не зависящего от Стойки/характеристики — напр.
   // Мутация Tentacle/Щупальце даёт +20 на все тесты Борьбы (module/combat/
   // grapple.mjs::tentacleTechDef), независимо от того, какой характеристикой
-  // их сдают.
-  const extraBonus = techDef.extraBonus ?? 0;
+  // их сдают. Фантомные Копии (Wrapped in Chaos "2-3", wdbc-1rno) — тот же
+  // приём для Финта конкретно: гейт по имени техники (как Танец Обмана
+  // ниже), а не запись в статичном MELEE_CONTESTS — там нет актора.
+  const extraBonus = (techDef.extraBonus ?? 0)
+    + (techDef.label === "Финт" ? phantomCopiesFeintBonus(actor) : 0);
 
   // Определяем характеристику по умолчанию. techDef.defaultChar — явное
   // указание (действия Борьбы, стр. 12: Athletics(S) или Acrobatics(A) —
@@ -215,10 +219,10 @@ export async function _showContestDialog(actor, techDef) {
                   : ""}
               </div>`,
             title: techDef.label,
-            threshold: thresholdLine({
-              label: danceOpt ? danceOpt.label : (charMeta?.abbr ?? charKey), base: selfVal, parts: modParts, threshold: eff
+            threshold: rollStatLine({
+              label: danceOpt ? danceOpt.label : (charMeta?.abbr ?? charKey), base: selfVal, parts: modParts, threshold: eff, rv
             }),
-            rv, rerollNote, outcome,
+            rerollNote, outcome,
             sections: [
               hit
                 ? `<div class="roll-location" style="font-size:0.88em;margin-top:3px;">
@@ -234,11 +238,12 @@ export async function _showContestDialog(actor, techDef) {
             ]
           }, { rolls: [roll] });
 
-          // Опциональный колбэк на успех (техника несёт реальный эффект,
-          // не только прозу-заметку — сейчас только «Заломить», grapple.mjs).
-          // Необязателен: у Повалить/Напролом/Финта/Давления его нет, они не
-          // меняют поведение.
-          if (hit && techDef.onSuccess) await techDef.onSuccess(actor, { deg });
+          // Опциональный колбэк на успех (техника несёт реальный эффект, не
+          // только прозу-заметку) — «Заломить» (grapple.mjs), «Финт»/«Давление»
+          // (combat/feint-press.mjs, wdbc-x1nz.2.65). target — уже вычисленная
+          // выше выцеленная цель (см. immune/target), тот же токен, что
+          // получает эффект. Необязателен: у Повалить/Напролом его нет.
+          if (hit && techDef.onSuccess) await techDef.onSuccess(actor, { deg, target });
         }
       },
       cancel: { label: "Отмена" }

@@ -5,11 +5,11 @@
 
 import "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
-import { isFrontArcHit, isTargetWithinVehicleArc, tokenDistance } from "../../module/combat/facing.mjs";
+import { isFrontArcHit, isTargetWithinVehicleArc, tokenDistance, isOutsideDefenderView, applyDefaultSightAngle, DEFAULT_SIGHT_ANGLE_DEGREES } from "../../module/combat/facing.mjs";
 
 /** Токен-заглушка: та же форма, что у tactical-map.test.mjs (document.x/y/width/height). */
-function token({ x = 0, y = 0, width = 1, height = 1, rotation = 0 } = {}) {
-  return { document: { x, y, width, height, rotation } };
+function token({ x = 0, y = 0, width = 1, height = 1, rotation = 0, sight } = {}) {
+  return { document: { x, y, width, height, rotation, ...(sight ? { sight } : {}) } };
 }
 
 beforeEach(() => {
@@ -77,6 +77,79 @@ describe("isTargetWithinVehicleArc (wdbc-m38e)", () => {
     const vehicle = token({ x: 0, y: 0 });
     expect(isTargetWithinVehicleArc(vehicle, "−25°..+25°", null)).toBe(true);
     expect(isTargetWithinVehicleArc(null, "−25°..+25°", vehicle)).toBe(true);
+  });
+});
+
+describe("isOutsideDefenderView (Скрытная Атака, wdbc-1rno.3)", () => {
+  it("атакующий спереди, в дефолтном секторе 210° — не вне обзора", () => {
+    const defender = token({ x: 0, y: 0, rotation: 0 });
+    const attacker = token({ x: 0, y: -300 });
+    expect(isOutsideDefenderView(defender, attacker)).toBe(false);
+  });
+
+  it("атакующий строго сзади — вне обзора даже с широким дефолтным 210°", () => {
+    const defender = token({ x: 0, y: 0, rotation: 0 });
+    const attacker = token({ x: 0, y: 300 });
+    expect(isOutsideDefenderView(defender, attacker)).toBe(true);
+  });
+
+  it("в мёртвой зоне 150° (вне 210°-сектора, но не строго сзади) — вне обзора", () => {
+    const defender = token({ x: 0, y: 0, rotation: 0 }); // смотрит на север, сектор −105°..+105°
+    const attacker = token({ x: -300, y: 260 }); // пеленг ≈ −131° от курса — за пределами половины 105°
+    expect(isOutsideDefenderView(defender, attacker)).toBe(true);
+  });
+
+  it("явно заданный узкий sight.angle защитника сужает сектор относительно дефолта", () => {
+    const defender = token({ x: 0, y: 0, rotation: 0, sight: { angle: 90 } });
+    const sideAttacker = token({ x: 260, y: -150 }); // ≈60° от курса — в 210°, но не в 90°
+    expect(isOutsideDefenderView(defender, sideAttacker)).toBe(true);
+  });
+
+  it("sight.angle ≥360 — истинно круговой обзор, никогда не вне обзора", () => {
+    const defender = token({ x: 0, y: 0, rotation: 0, sight: { angle: 360 } });
+    const rearAttacker = token({ x: 0, y: 300 });
+    expect(isOutsideDefenderView(defender, rearAttacker)).toBe(false);
+  });
+
+  it("нет позиции одного из токенов — безопасный дефолт false (не наказываем)", () => {
+    const defender = token({ x: 0, y: 0 });
+    expect(isOutsideDefenderView(defender, null)).toBe(false);
+    expect(isOutsideDefenderView(null, defender)).toBe(false);
+  });
+});
+
+describe("applyDefaultSightAngle (wdbc-1rno.3, preCreateActor)", () => {
+  function fakeActor(existingAngle) {
+    const calls = [];
+    return {
+      prototypeToken: { sight: { angle: existingAngle } },
+      updateSource: (patch) => calls.push(patch),
+      calls
+    };
+  }
+
+  it("Foundry-дефолт 360 — переписывается на 210", () => {
+    const actor = fakeActor(360);
+    applyDefaultSightAngle(actor, {});
+    expect(actor.calls).toEqual([{ "prototypeToken.sight.angle": DEFAULT_SIGHT_ANGLE_DEGREES }]);
+  });
+
+  it("незаданный угол (0/undefined) — тоже переписывается на 210", () => {
+    const actor = fakeActor(0);
+    applyDefaultSightAngle(actor, {});
+    expect(actor.calls).toEqual([{ "prototypeToken.sight.angle": DEFAULT_SIGHT_ANGLE_DEGREES }]);
+  });
+
+  it("явно заданный нестандартный угол в data (payload создания) — не трогается", () => {
+    const actor = fakeActor(360);
+    applyDefaultSightAngle(actor, { prototypeToken: { sight: { angle: 90 } } });
+    expect(actor.calls).toEqual([]);
+  });
+
+  it("уже настроенный на самом акторе угол, отличный от 360 — не трогается", () => {
+    const actor = fakeActor(120);
+    applyDefaultSightAngle(actor, {});
+    expect(actor.calls).toEqual([]);
   });
 });
 

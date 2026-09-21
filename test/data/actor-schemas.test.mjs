@@ -108,6 +108,9 @@ const DEVIATIONS = {
   vehicle: {
     // Объявлена не была, но лежит у всех 56 машин пака.
     "availability": 0,
+    // Книга-источник (wdbc-e6vf) — заведена гораздо позже template.json, тем
+    // же приёмом, что и у существ (_creature.mjs).
+    "bookSource": "",
     // Пустотные Щиты (X) — персистентный массив HP щитов, заведён позже
     // template.json (wdbc-y33b).
     "voidShields": [],
@@ -117,7 +120,9 @@ const DEVIATIONS = {
     "movedThisTurn": false,
     // Аблативная Структура (Минный Плуг, wdbc-bxw6) — заведена гораздо позже template.json.
     "structure.ablative": 0,
-    "structure.ablativeMax": 0
+    "structure.ablativeMax": 0,
+    // Пророк Гэллерпокса (wdbc-1rno.1) — заведено гораздо позже template.json.
+    "gallerpoxInfected": false
   },
   ship: {
     // Свободная заметка «Класс корпуса» дублировала выбор реального Корпуса
@@ -125,7 +130,16 @@ const DEVIATIONS = {
     // вместе с полем целиком (wdbc-zuf4). undefined убирает ключ из
     // ожидаемого объекта тем же приёмом, что и toEqual прощает отсутствующим
     // полям.
-    shipClass: undefined
+    shipClass: undefined,
+    // Пророк Гэллерпокса (wdbc-1rno.1) — заведено гораздо позже template.json.
+    "gallerpoxInfected": false
+  },
+  starSystem: {
+    // Свободный HTML-текст ГМа заменён структурными предметами «Маршрут»
+    // (мировыми, не вложенными — module/apps/warp-route.mjs, wdbc-r0w9).
+    // Непустой текст мигрирует в gmNotes (см. migrateWarpRoutesString),
+    // само поле снято тем же приёмом, что shipClass выше.
+    warpRoutes: undefined
   },
   horde: {
     // Навыки Орды заведены позже template.json (вкладка «ПОКАЗАТЕЛИ»): у Орды
@@ -172,6 +186,9 @@ const DEVIATIONS = {
     // группы взять неоткуда. В template.json блока не было вовсе: Команды
     // отдавались только через Отряд.
     followers: [],
+    // Знание варп-маршрутов Проводником (wdbc-r0w9): {routeUuid, level}, пусто
+    // у всех до первого приобретённого/присвоенного маршрута.
+    knownRoutes: [],
     command: {
       presence:      { active: false, benefit: "extreme" },
       shortCommand:  { active: false, key: "inspire", successes: 0, note: "" },
@@ -192,6 +209,12 @@ const DEVIATIONS = {
     // Состояние «Беспомощный» заведено гораздо позже template.json (auto-успех
     // и удвоенный урон против него — attack-dialog.mjs/attack.mjs).
     "conditions.helpless": false,
+    // Горение (wdbc-3pv5, Cooler/Охладитель + Морозное Сердце): урон
+    // поджигания и остаток окна «без эффектов Горения» — два бесхозных числа
+    // сверх общего флаг+счётчик (burningLevel), заведены гораздо позже
+    // template.json (module/data/actor/_creature.mjs).
+    "conditions.burningSourceDamage": 0,
+    "conditions.burningGraceRounds": 0,
     // Стр. 30-31 («Раны и Урон», «Статусы») — Ступор/Удушье/Гангрена/Потеря
     // Конечностей (по частям тела) заведены гораздо позже template.json.
     "conditions.dazed": false,
@@ -202,6 +225,19 @@ const DEVIATIONS = {
     // заведён гораздо позже template.json (раньше decay не срабатывал
     // вовсе, поле отсутствовало).
     "conditions.hallucinogenicRounds": 0,
+    // Стазис (wdbc-1rno) — заведено гораздо позже template.json, на основе
+    // находки Fruit of Flesh/Плода Плоти (module/constants/conditions.mjs).
+    "conditions.stasis": false,
+    "conditions.stasisRounds": 0,
+    // Сладкий Туман (wdbc-1rno) — заведено гораздо позже template.json.
+    "conditions.sweetMist": false,
+    "conditions.sweetMistExpiresAt": 0,
+    // Мононить «Поцелуй Мимика» (wdbc-ux8a) — заведено гораздо позже template.json.
+    "conditions.mimicWire": false,
+    "conditions.mimicWireBlocksPowers": false,
+    // Паразитический контакт (Трейт Parasite, wdbc-ux8a) — заведено гораздо позже template.json.
+    "conditions.parasiticContact": false,
+    "conditions.parasiticContactRounds": 0,
     "conditions.lostHands": false,
     "conditions.lostHandsCount": 0,
     "conditions.lostArms": false,
@@ -212,6 +248,14 @@ const DEVIATIONS = {
     "conditions.lostLegsCount": 0,
     "conditions.lostEyes": false,
     "conditions.lostEyesCount": 0,
+    // Потеря Конечностей (стр. 30-31, wdbc-1rno.6): таймер отложенной
+    // проверки Гангрены обрубка, по одному на часть тела — заведено гораздо
+    // позже template.json (module/rules/limb-loss.mjs).
+    "conditions.lostHandsGangreneAt": 0,
+    "conditions.lostArmsGangreneAt": 0,
+    "conditions.lostFeetGangreneAt": 0,
+    "conditions.lostLegsGangreneAt": 0,
+    "conditions.lostEyesGangreneAt": 0,
     // Стр. 12 («Борьба») — связаны Захватом, заведено гораздо позже template.json.
     "conditions.grappling": false,
     // Собственный вес тела (Записи → Вес, wdbc-oxdn) — нужен для Метания/
@@ -224,6 +268,10 @@ const DEVIATIONS = {
     // (module/combat/fear.mjs::rollShockRecovery), заведено гораздо позже
     // template.json.
     "conditions.shocked": false,
+    // Врасплох (стр. 12, wdbc-x1nz.2.26) — заведено гораздо позже template.json.
+    "conditions.surprised": false,
+    // Опьянение (стр. 12, wdbc-x1nz.2.32) — заведено гораздо позже template.json.
+    "conditions.intoxicated": false,
     // Экономика действий (стр. 12, wdbc-qleg/wdbc-fkdd): ОД — новое поле,
     // Реакции раньше были свободным текстовым полем-памяткой (умолчание ""),
     // теперь структурный пул — см. module/combat/action-economy.mjs.
@@ -233,8 +281,11 @@ const DEVIATIONS = {
     // эффектов, заведено гораздо позже template.json — см. combat/damage.mjs.
     incomingDamageReduction: 0,
     // Высота полёта (стр. 30, wdbc-n1cy) — состояние Хода, заведено гораздо
-    // позже template.json, тем же приёмом, что mount.speed.
-    "movement.altitude": "ground",
+    // позже template.json, тем же приёмом, что mount.speed. Дефолт "landed"
+    // ("не летит"), не "ground" (wdbc-x1nz.2.16, живой тест) — свежий актор
+    // не должен читаться как «уже летит на Приземной» и получать дармовой
+    // автоигнор Трудного Ландшафта до первого клика по диалогу Полёта.
+    "movement.altitude": "landed",
     // Данные для Limited Vision (текст на Записях, видимый только ГМ) —
     // заведено гораздо позже template.json, тот же приём, что и notes.
     limitedVisionData: "",

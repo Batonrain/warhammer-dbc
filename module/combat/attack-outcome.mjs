@@ -218,15 +218,38 @@ export function damageFormulaFor({ damage, flatBonus = 0, chars = {}, corruption
  *
  * Эти кубы не вызывают Экстремальный урон — их бросает отдельный Roll.
  */
-export function bonusDamageDice({ wp, rofMode, hit, deg, shortRange = false, maximal = false, band = null, ammoDice = 0 }) {
+export function bonusDamageDice({ wp, rofMode, hit, deg, shortRange = false, maximal = false, band = null, ammoDice = 0, aimed = false,
+                                   confinedSpace = false, damageType = "" }) {
   let dice = 0;
-  if (wp.accurate && rofMode === "single" && hit) {
-    if (deg >= 5)      dice += 2;
-    else if (deg >= 3) dice += 1;
+  // «При одиночных выстрелах С Прицеливанием» (стр. 166) — без Прицеливания
+  // (aimed=false) Меткое не даёт этих кубов вовсе, только удвоение бонуса
+  // Прицеливания к порогу (attack-dialog.mjs) — оно неприменимо без aimed.
+  if (wp.accurate && rofMode === "single" && hit && aimed) {
+    // Sniper Assassin/Снайпер-Убийца (wdbc-1rno.2, rules/unseen-talents.mjs):
+    // «до 4-х доп. кубиков вместо обычных 2-х (на 3, 5, 7 и 9 Успехов)» —
+    // тот же Accurate-порог, только продлённая лестница. wp.sniperAssassin
+    // ставит attack.mjs (не пак-свойство — персональная надбавка Таланта).
+    if (wp.sniperAssassin) {
+      if (deg >= 9)      dice += 4;
+      else if (deg >= 7) dice += 3;
+      else if (deg >= 5) dice += 2;
+      else if (deg >= 3) dice += 1;
+    } else {
+      if (deg >= 5)      dice += 2;
+      else if (deg >= 3) dice += 1;
+    }
   }
   if (wp.scatter && shortRange) dice += 1;
   if (maximal)                  dice += 1;
   if (wp.prismaAtMax)           dice += 1;
+  // Quiet Elimination / Тихое Устранение (wdbc-1rno.3): «+1 куб урона»
+  // отдельным броском — тот же приём, что у остальных строк этого блока
+  // (не влияет на Экстремальный урон, см. заголовок функции).
+  if (wp.quietEliminationBonus) dice += 1;
   if (band?.dice)               dice += Number(band.dice) || 0;
+  // Тесное помещение (стр. 36, wdbc-x1nz.2.63): взрывы, наносящие X Dmg
+  // (damageType "blast"), получают +1d10 урона. Радиус ×1.5 — отдельно, в
+  // attack.mjs, там же, где известен реальный blastRating для шаблона.
+  if (confinedSpace && wp.blastRating > 0 && damageType === "blast") dice += 1;
   return dice + (Number(ammoDice) || 0);
 }

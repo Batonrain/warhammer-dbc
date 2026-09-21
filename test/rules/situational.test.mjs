@@ -65,6 +65,63 @@ describe("situationalRules: упаковка штрафов в записи пр
     // Перевеса инвентаря ставка та же, но путь чтения ключа общий с бронёй.
     expect(idsOf(situationalRules(loaded, { group: "dodge" }))).toEqual(["situational.inventoryOverload"]);
   });
+
+  // wdbc-x1nz.2 (Марш/Бег, стр. 29): «тесты на его отслеживание или
+  // засекание получают бонус» — читает ЦЕЛЬ теста (ctx.targetActor), не
+  // самого actor(бросающего).
+  describe("Марш/Бег цели — бонус наблюдателю (wdbc-x1nz.2)", () => {
+    const marchingTarget = (bonus) => ({
+      getFlag: (_scope, key) => (key === "marchTrackBonus" ? bonus : undefined)
+    });
+    const observer = actor({ fatigue: { value: 0 } });
+
+    it("цель марширует (Ускоренный марш, +10), тест Awareness — бонус применён", () => {
+      const rules = situationalRules(observer, { char: "per", skill: "awareness", targetActor: marchingTarget(10) });
+      expect(idsOf(rules)).toEqual(["situational.marchTrackBonus"]);
+      expect(rules[0].effects[0].value).toBe(10);
+    });
+
+    it("цель бежит (+30), тест Survival — тоже применяется", () => {
+      const rules = situationalRules(observer, { char: "per", skill: "survival", targetActor: marchingTarget(30) });
+      expect(rules[0].effects[0].value).toBe(30);
+    });
+
+    it("цель марширует, но тест НЕ Awareness/Survival — не применяется", () => {
+      expect(situationalRules(observer, { char: "per", skill: "charm", targetActor: marchingTarget(10) })).toEqual([]);
+    });
+
+    it("нет цели теста — не применяется, не падает", () => {
+      expect(situationalRules(observer, { char: "per", skill: "awareness" })).toEqual([]);
+    });
+
+    it("цель не марширует (флага нет) — не применяется", () => {
+      expect(situationalRules(observer, { char: "per", skill: "awareness", targetActor: marchingTarget(undefined) })).toEqual([]);
+    });
+  });
+
+  // wdbc-x1nz.2 (Гололит, стр. 256): бонус разовый, только на тест Command,
+  // читается напрямую флагом актора (combat/hololith-briefing.mjs ставит его).
+  describe("Гололит: подготовленный брифинг (wdbc-x1nz.2)", () => {
+    const briefedActor = (briefed) => ({
+      system: { characteristics: { t: { bonus: 0 } }, fatigue: { value: 0 } },
+      items: [],
+      getFlag: (_scope, key) => (key === "hololithBriefed" && briefed) ? true : undefined
+    });
+
+    it("флаг стоит, тест Command — +10", () => {
+      const rules = situationalRules(briefedActor(true), { char: "fel", skill: "command" });
+      expect(idsOf(rules)).toEqual(["situational.hololithBriefing"]);
+      expect(rules[0].effects[0].value).toBe(10);
+    });
+
+    it("флаг стоит, но тест НЕ Command — ничего", () => {
+      expect(situationalRules(briefedActor(true), { char: "fel", skill: "charm" })).toEqual([]);
+    });
+
+    it("флага нет, тест Command — ничего", () => {
+      expect(situationalRules(briefedActor(false), { char: "fel", skill: "command" })).toEqual([]);
+    });
+  });
 });
 
 describe("helmetlessBonus", () => {

@@ -121,6 +121,33 @@
 - `module/combat/action-economy.mjs` — 2 ОД + 1 Реакция за Ход.
 - `module/combat/movement-actions.mjs` — Полудвижение/Полное/Натиск/Бег/Выход.
 - `module/combat/movement-terrain.mjs` — Трудный Ландшафт при Беге/Натиске.
+- **Полёт (стр. 30, wdbc-x1nz.2, 18.09.2026):** `combat/movement-actions.mjs`
+  — `actorCanFly`/`actorHasFlyer` (гейт по Черте Flyer/Hoverer — Hoverer БЕЗ
+  Flyer поднимается только на Приземную), `showFlightDialog` (4 тира:
+  `landed`/`ground`/`low`/`high`, флаг `system.movement.altitude`, по
+  умолчанию `landed` — явное «не летит», не молчаливый дефолт на Приземную),
+  `_syncFlightElevation` (синхронизирует нативный `TokenDocument#elevation`
+  — 0 у Приземной НАРОЧНО, не 2 буквальной книги, иначе ложный авто-бонус
+  «Положение выше», `tactical-map.mjs::hasHighGround`; 10/25 у Низкой/
+  Высокой), `_showFlightLocDialog`+`_resolveFallDamage` (Потеря управления —
+  высота падения по таблице, ЗАТЕМ обычная механика Падения: 1d10+высота,
+  Группирование, спецправило «успехов больше высоты — 0 урона гарантированно»).
+  `movement-terrain.mjs::effectiveTerrainInfo` — Трудный Ландшафт полностью
+  снимается на любой высоте полёта (`IN_FLIGHT_ALTITUDES`). Автомодификаторы
+  попадания по высоте цели/атакующего (Низкая −10 стрелковой, Высокая —
+  блок без Зенитного, рукопашная против Низкой/Высокой недосягаема целиком,
+  гасится при равной высоте обеих сторон) — `sheets/attack/mods.mjs`.
+  Шаблоны/зоны, построенные на `canvas.regions.placeRegion` (Взрывное —
+  `combat/templates.mjs::placeAttackTemplate`, Остаётся — `regions/
+  linger-zone.mjs`, Гравитонное — `regions/graviton-zone.mjs`, Вихрь Рока —
+  `regions/vortex-zone.mjs`) получают `elevation:{bottom:0, top:радиус}` —
+  без него Region у Foundry по умолчанию бесконечен по высоте (подтверждено
+  по исходнику `region.mjs`), и персонаж, летящий НАД зоной на любой высоте,
+  засчитывался бы попавшим наравне со стоящим в ней; граница «сфера радиусом
+  с саму зону» — не буква правила, книга её текстом не даёт, это чтение.
+  Трудный Ландшафт (`regions/difficult-terrain.mjs`) сюда НЕ входит — у него
+  свой механизм игнора (флаг высоты полёта, не elevation региона), зона
+  рисуется ГМом вручную и не привязана к конкретному радиусу оружия.
 - Визуализация: `combat/range-cells.mjs`, `range-rings.mjs`,
   `reachable-cells.mjs` (подсветка клеток по Dijkstra).
 - Доп. ходы/действия: `combat/snapshot.mjs`, `assassin-strike.mjs`,
@@ -148,10 +175,129 @@ selection}.mjs`, `combat/aim.mjs` (прицеливание кликом по к
 (авто-детект укрытия), `combat/evasion-pool.mjs`, `combat/hand-shield.mjs`,
 `combat/shield.mjs` (силовые щиты, d100 против рейтинга).
 
-**Состязания/захват/верхом:** `combat/techniques.mjs` (Повалить/Финт/Давление/
-Напролом), `combat/grapple.mjs` (Борьба), `combat/mount.mjs` + `rules/mount.
+**Прицеливание (wdbc-1rno.5, 16.09.2026):** Полу-/Полное — настоящие HUD-
+действия (`combat/aiming-action.mjs::aimMenuItems/declareAim`), тратят ОД
+(`rules/aiming.mjs::aimApCost`) вместо бывшей радиокнопки в диалоге атаки без
+расхода вовсе (это был баг основного конвейера, не «не смоделировано»).
+Бонус хранится как `actor.system.aiming` — читает `attack-dialog.mjs`, не
+зная, откуда оно взялось; тратится любым действием актора, кроме следующей
+Атаки (`action-economy.mjs::_maybeClearAiming`, `combat/damage.mjs`).
+Модификаторы цены/бонуса — по одному файлу на источник: `rules/aim-focus.mjs`
+(продление на все стрелковые атаки до конца следующего Хода за Реакцию),
+`rules/tracking-aim.mjs` (бесплатный P+0 гасит штраф «Цель Бежит»),
+`rules/cold-eyes.mjs`/`blessing-of-magnus.mjs`/`psalm-of-guidance.mjs`
+(бесплатное/дешёвое Прицеливание — Холодные Глаза, Благословение Магнуса,
+Псалом Наставления). Не путать с `combat/aim.mjs` — прицеливание КЛИКОМ
+мыши для выбора цели атаки, другая вещь несмотря на созвучное имя.
+
+**Незримое (wdbc-1rno.2, 16.09.2026):** атака типа Незримое (стр. 32) реально
+блокирует Уклонение/Парирование, пока цель не засекла её — `rules/
+unseen-attack.mjs` (wp.unseen structural-флаг оружия/психосилы/Техночуда,
+`isUnseenDetected` — три канала: реактивный тест, персистентное Ноосферное
+Сканирование, пассивное Варп-Зрение/hasWarpSight, радиационный канал/
+hasRadiationDetection) + `combat/unseen-attack.mjs` (`_performUnseenDetect`
+реактивный тест, `_performUnseenBypass` — Sixth Sense/Music of Battle тратят
+Очко Бесчестия вместо теста) + `attack-card.mjs::defenseSection` gate (кнопки
+disabled+data для клиентского разблока, `hooks.mjs`). Талант-слой (частично) —
+`rules/unseen-talents.mjs`: Blind Fighting (−20 без засечения в рукопашной),
+Backstab (×2 кубика урона), Sniper Assassin (продлённая лестница доп. кубиков),
+Blindside (target-scoped метка), Defensive Rider (редирект НЕ работает против
+Незримого), Hair Trigger (см. «Караул» ниже — реализован 16.09.2026). Честно
+не смоделировано: призыв оружия Точным Телекинезом/Клинками Силы + третий
+класс «частичного Незримого» (wdbc-1rno.28).
+
+**Скрытная Атака/Врасплох (wdbc-1rno.3, 20.09.2026):** facing-детект
+Незримого — `combat/facing.mjs::isOutsideDefenderView` (см. п. 8, «Тактическая
+карта»), исключение для Janus (`rules/janus.mjs`). Per-attack галочка «Цель
+Врасплох» доведена до именованного `attack.mjs::targetSurprised` (id
+`atk-mod-surprised`, `sheets/attack/mods.mjs`→`form.mjs`→`dialog.mjs`, тот
+же приём, что `hiddenAttack`) — читают `rules/quiet-elimination.mjs`
+(+1 куб урона/тихая смерть по ЛЮБОМУ оружию при Врасплох, +10 к атаке
+независимо от Врасплох с ножом/игольчатым/осколочным пистолетом —
+situational авто-мод) и Rapid Reaction (п. 9, «Состояния» — другой,
+несвязанный книжный пункт под тем же словом). Взор Неизбежности/Gaze of
+Inevitability (Дар Нургла, `rules/gaze-of-inevitability.mjs`) — пассивная
+половина: `combat/defense.mjs` комбинирует Порог Уклонения/Парирования с
+W−10 (`rules/test-kind.mjs::combinedThreshold`), если защищающийся видит
+глаза атакующего-носителя (геометрия `vision-target.mjs`), провал снимает
+все Реакции — единственная находка сессии, тронувшая общий конвейер
+защиты напрямую (не через facing-детект выше). Честно не смоделировано:
+слежение за позицией/обзором весь Ход атакующего (только снимок на момент
+атаки), ветка «+30 Врасплох» самой Скрытной Атаки (по-прежнему ручная
+галочка ГМа).
+
+**Караул/Overwatch (wdbc-1rno.27/.37, 16.09.2026):** действие «стрелять вне
+своего Хода по врагу, вошедшему в объявленный сектор», реализовано с нуля —
+`rules/overwatch.mjs` (бюджет Одиночных ½BS.b(окр.▼), капается наибольшим
+RoF; правило «Очередь расходует Караул целиком, Одиночный — 1 из бюджета»),
+`rules/simultaneous-action.mjs` («Одновременные Действия», core.json у
+«Задержка» — сравнение Ag/Инициативы, кто действует первым), `rules/
+hair-trigger.mjs` (пометка «следующий выстрел — Незримый», тот же примитив,
+что Hidden Threat) + `combat/overwatch.mjs` (Foundry-обвязка: HUD-пункты
+«Караул»/«Сканирующее Продвижение» по образцу `aiming-action.mjs`, реактивный
+`Hooks.on("updateToken")` на движение врага в сектор — геометрия через уже
+существующий `rules/facing.mjs::isWithinArc`, ручная кнопка «Стрелять из
+Караула» для условий, которые движок не детектирует, тест Подавление+20 —
+`combat/suppression.mjs::rollSuppressionTest`). Три Таланта-потребителя
+подключены тем же проходом: Vigilance/Бдительность (реагирующий сравнивается
+по max(Ag,P)), Hair Trigger/Палец на Спуске (встречный тест — за столом,
+кнопка только фиксирует исход), Scanning Advance/Сканирующее Продвижение
+(Полудвижение+Караул одним полным действием, сектор до 90°). Честно не
+смоделировано: Легаси-Мутация Оружия Наследия «Терпение» (не История —
+это Мутация таблицы характера «Бдительное», `constants/legacy-weapon.
+mjs:154`, «+30/всегда первый в Карауле»; не путать с Мутациями/Дарами
+ПЕРСОНАЖА от Порчи — две разные системы, см. wdbc-1rno.41). Машиночитаемое
+поле у неё есть (`system.legacy.mutations[]` — `{name, text, roll,
+character}`), просто никакой combat-код его пока не читает; стрелковая
+половина вайрится примитивами Караула без новой архитектуры, рукопашная
+ждёт отсутствующего в системе действия «Задержка».
+
+**Состязания/захват/верхом:** `combat/techniques.mjs` (диспетчер опросного
+диалога `_showContestDialog` для Повалить/Финт/Давление/Напролом/Обезоружить/
+Заломить), `combat/grapple.mjs` (Борьба), `combat/mount.mjs` + `rules/mount.
 mjs` (верховой бой), `combat/tactical-map.mjs` + `rules/tactical-map.mjs`
 (база/дистанция/контакт).
+
+**Финт/Давление/Напролом (wdbc-x1nz.2.65, 20.09.2026):** эффект победы в
+состязании раньше нигде не применялся (бросок засчитывался и всё). Теперь —
+`combat/feint-press.mjs` (`feintBlocksEvasion` — Финт реально запрещает
+Уклонение/Парирование цели до конца её следующего Хода через пару флагов
+attacker↔target, снимается `clearFeintAtTurnEnd` в `hooks.mjs`; Давление даёт
+только текстовую подсказку дистанции, авто-толчок не реализован) и
+`combat/bulldoze.mjs` (Напролом — штраф/запрет по Размеру цели, подавление
+Свободных Атак через существующий `disengageActive`, Повален+Пинок на 5+
+успехах). Честно не смоделировано: Напролом против ОЧЕРЕДИ из нескольких
+врагов одним броском — `_showContestDialog` рассчитан на одного оппонента,
+для честной реализации нужна отдельная архитектура (см. заголовок
+`bulldoze.mjs`). Приёмы и Стойки (Взмах/Выпад/Пила/Оглушить/Захват и т.д.) —
+почти все эффекты СВЕРХ WS/Уклонения/Парирования всё ещё не реализованы,
+детальный разбор по каждому — `wdbc-x1nz.2.66`.
+
+**Связан в Рукопашной (wdbc-x1nz.2.64, 20.09.2026):** персонаж в базовом
+контакте с враждебным не мог быть ограничен в стрельбе НЕ по рукопашной, и
+промах по цели в чужой рукопашной не рикошетил. `combat/free-attack.mjs`
+(`lockingContactTokenDocs`/`allContactTokenDocs` — контакт, отфильтрованный
+по классу оружия рукопашное/пистолет) + `sheets/attack/mods.mjs`
+(`lockedByEnemies`/`targetLocked` — автофейл стрельбы вне рукопашной и штраф
+−20 по цели в чужой рукопашной) + `combat/attack.mjs` (`misfireHits` —
+промах по заблокированной цели рикошетит в случайного участника контакта,
+d100, новый бросок урона/локации) + `attack-card.mjs::misfireHitsSection`
+(кнопка применения урона через существующий `data-force-target`, без
+ре-таргета ГМом).
+
+**Клин и Надёжность (wdbc-x1nz.2.61, 20.09.2026):** обычное оружие не
+клинило вовсе. `combat/clear-jam.mjs::rollRestoreJammedAmmo`/
+`clearJamOption` (Расклин — тест на восстановление патронов, не мгновенный),
+`data/item/weapon.mjs` (`jammedAmmo`), Предел −2/Very Unreliable 81+ —
+`combat/weapon-properties.mjs`.
+
+**Подавление/Укрытие/Взрывы (wdbc-x1nz.2.62/.63, 20.09.2026):** рукопашники
+были не подвержены Подавлению, укрытия не деградировали и не давали
+множителя против Blast. `combat/suppression.mjs` (рукопашный охват),
+`combat/damage.mjs` (`combinedCoverBase`/`blastCoverMult` — ×2/×3/×4 против
+Blast по типу урона; деградация укрытия при `penetration >= manualCover`),
+`combat/attack-outcome.mjs` (`bonusDamageDice` — +1d10 X-Dmg Blast в тесном
+помещении).
 
 **Мораль/Страх/Подавление:** `rules/morale-test.mjs`, `combat/suppression.
 mjs`, `combat/intimidate.mjs`, `combat/fear.mjs`.
@@ -196,7 +342,13 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   ветка Талантов сверх базового штрафа; `weapon-training.mjs` (Арсенал);
   `improvised-weapon.mjs` (импровизированное/метание).
 - Оружие Наследия: `constants/legacy-weapon.mjs`, `rules/legacy-weapon.mjs`,
-  `apps/legacy-weapon.mjs` (блок «Наследие» на листе оружия).
+  `apps/legacy-weapon.mjs` (блок «Наследие» на листе оружия). Применение
+  конкретных Историй/Мутаций в бою (wdbc-1rno.35) — точечные хуки в
+  `combat/attack.mjs`/`sheets/attack/mods.mjs`/`sheets/attack-dialog.mjs`,
+  плюс geometry-хелперы `combat/legacy-weapon-betrayal.mjs` (союзник рядом),
+  `combat/legacy-weapon-mutations.mjs` (ближайший неповреждённый враг) и
+  `combat/legacy-weapon-excess.mjs` (каскад W+0/Порча). Прогресс по всей
+  таблице (10 Историй + 35 Мутаций) — bd-комментарии тикета `wdbc-1rno.35`.
 - Дар «Рука-Пушка»: `rules/gun-arm.mjs`, `apps/gun-arm.mjs`, `migrations/
   gun-arm-source.mjs`. «Рука Смерти»: `rules/hand-of-death.mjs` + `apps`.
   «Выстрел не тратит патрон»: `rules/ammo-free.mjs`.
@@ -215,6 +367,12 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - Истории комплекта силовой брони: `data/item/armour-history-entry.mjs`,
   `constants/power-armour-lore.mjs`, `apps/armour-history.mjs` +
   `armour-history-trance.mjs`.
+- Перегрузка щита: `combat/damage.mjs::_applyShieldOverload` — общий примитив,
+  не только «выключился, нужен ремонт»: `overloadDamageFormula`/
+  `overloadFatigueFormula` (доп. непоглощ. урон/Усталость НОСИТЕЛЮ, Морозное
+  Сердце) и `overloadRetaliateFormula`/`overloadRetaliatePen` (wdbc-1rno.2,
+  16.09.2026 — бьёт формулой в АТАКУЮЩЕГО обычным конвейером урона,
+  Archeotech Refractor «Перегрузка»; `isRetaliation` обрывает цепь).
 
 ## 8. Пространственные механизмы: Шаблоны, Ауры, Зоны
 
@@ -224,6 +382,19 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   Укрытия и Трудного Ландшафта (ГМ ставит вручную).
 - `module/regions/graviton-zone.mjs` — свойство «Гравитонное» (уменьшающийся
   Blast).
+- `module/regions/vortex-zone.mjs` — Vortex of Doom/Вихрь Рока (психосила,
+  wdbc-ufns, 14.09.2026): персистентная Region-зона с раундовым тестом
+  поддержания КОНТРОЛЁРА (W+5×тPR−5×Х на начале его Хода, тот же триггер, что
+  и у Гравитонного/Linger — `processVortexTurnStart` из `updateCombat`),
+  приглашением других псайкеров с Mind Over Matter в радиусе Х×10м
+  вмешаться Реакцией и ПЕРЕХВАТИТЬ контроль (попарное состязание «текущий
+  чемпион vs новый реагирующий», тай-брейк Успехи→тPR→W — не N-сторонний
+  одновременный турнир, тот же принцип упрощения асинхронного чата, что у
+  ЛЮБОГО делегированного теста проекта, `rules/delegate-test.mjs`),
+  победитель тратит Успехи на ±1 Х или сдвиг зоны на 1м (`wh-vortex-spend-btn`),
+  провал — случайный дрейф Х (1d10−6) и позиции. Первый прецедент в проекте
+  «несколько кандидатов в радиусе МОГУТ вмешаться, победитель определяется
+  состязанием» — если появится вторая такая сила, этот файл и есть образец.
 - `module/regions/runic-weave-zone.mjs` — Руническая Вязь как Region-документ
   (носитель — стена/помещение, не предмет на акторе).
 - `module/regions/scene-live-recalc.mjs` — общий регистратор «живой пересчёт
@@ -231,6 +402,26 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `module/rules/facing.mjs` + `combat/facing.mjs` — геометрия направления
   (Cloak, арки техники/корабля); `rules/vision-target.mjs` (кто меня видит,
   без стен/LoS); `rules/aoe-target.mjs` (разовая выборка токенов в радиусе).
+  `combat/facing.mjs::isOutsideDefenderView` (wdbc-1rno.3) — «Скрытная
+  Атака» (стр. 32): атакующий вне сектора обзора защищающегося на момент
+  атаки → `wp.unseen=true` (`combat/attack.mjs`), снимок, не слежение за
+  всем Ходом; дефолт `sight.angle=210°` всем новым акторам ставит хук
+  `preCreateActor` в том же файле. Исключение — `rules/janus.mjs`
+  (носитель Janus не подхватывает Незримое этим путём вовсе). Пассивная
+  половина Взора Неизбежности (Дар Нургла, `rules/gaze-of-inevitability.mjs`)
+  — отдельный крюк в `combat/defense.mjs` (Уклонение/Парирование
+  Комбинированный с W−10, если защищающийся видит глаза атакующего-
+  носителя; провал снимает все Реакции), не через этот facing-примитив.
+- `module/rules/tactical-map.mjs` + `combat/tactical-map.mjs` — Тактическая
+  карта (wdbc-8k0i, стр. 31): размер Базы (2×2/3×3, null = Размер 2+, «на
+  откуп ГМу»), дистанции от края/от центра Базы, вид контакта none/base/deep,
+  дефолт диагонали мира (`applyBookDiagonalDefaultOnce`, wdbc-x1nz.2.23).
+  `isBaseTrackedActor` — кто вообще участвует (личный масштаб + Шагоход,
+  wdbc-x1nz.2.21). `combat/free-attack.mjs` — Свободная Атака при разрыве
+  контакта, гасится `disengageActive`/`deepContactCarry` (переноска раненого/
+  пленного, wdbc-x1nz.2.19). `combat/squeeze.mjs` + `rules/squeeze.mjs` —
+  напоминание о тесноте при протискивании через дверь уже половины Базы
+  (wdbc-x1nz.2.24, только формальные Двери Foundry).
 
 ## 9. Состояния, Усталость, Страх, Здравомыслие
 
@@ -240,8 +431,48 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   `condition-mirrors.mjs` (игровые метки, отображаемые как Состояния),
   `turn-flags.mjs` (флаги «до начала следующего своего Хода»),
   `fatigue-grace.mjs` (порог Усталости).
+- `combat/rapid-reaction.mjs` + `rules/rapid-reaction.mjs` (wdbc-1rno.3) —
+  реакция на `conditions.surprised` (стр. 12, начало боя): карточка-
+  приглашение в начале Хода носителя таланта, тест A+0 отменяет 0 ОД/0
+  Реакций этого Хода (повторный `action-economy.mjs::resetActionEconomy`,
+  уже без снятого флага). НЕ про per-attack галочку «Цель Врасплох» (стр.
+  32) — то отдельное правило, см. `attack.mjs::targetSurprised`
+  (п. 5, конвейер атаки).
+- Конструктор kind:"condition" — пять режимов (не четыре книжных, wdbc-tqfj):
+  apply/remove (разовые, момент получения предмета), immunity/mitigate (живые,
+  condition-guards.mjs/item-rules.mjs), и **onTargetFail** (живой, новый,
+  14.09.2026) — «наложить Состояние ЦЕЛИ делегированного теста Сопротивления
+  психосилы при провале» (Choir of Poxes). Читает `rules/on-target-fail.mjs`
+  из ЕДИНОЙ точки финализации ЛЮБОГО делегированного теста Навыка/
+  Характеристики (`actor-sheet.mjs::_runTest`) по новому полю payload
+  `onFailItemUuid` — кладёт ТОЛЬКО psychic.mjs при запросе теста
+  Сопротивления, gate строгий (обычный делегированный тест это поле не несёт).
 - `module/combat/condition-effects.mjs`, `condition-ticks.mjs` (тик по Ходам —
-  Кровотечение/Горение).
+  Кровотечение/Горение). Горение несёт три завязанных на предметы живых
+  проверки — все читают Механику НАПРЯМУЮ с предмета, ничего не пишут при
+  получении (`combat/damage.mjs`): `kind:"shieldVsCondition"` (щит можно
+  бросить против тика, гасит Состояние целиком, wdbc-5knb),
+  `kind:"shieldArmorGate"` (щит не рассматривается без надетой брони,
+  wdbc-giae), `kind:"burningGrace"` (armorMod ИЛИ forcefield — Cooler/
+  Охладитель, Frozen Heart/Морозное Сердце: при уроне поджигания ≤10 даёт
+  1d5 Ходов без эффектов Горения, автоматика без кнопки, `ensureBurningGrace`
+  — wdbc-3pv5). Урон поджигания хранит `system.conditions.burningSourceDamage`
+  (выставляется в момент наложения — Flame-свойство/крит-таблица).
+- Потеря Конечностей (стр. 30-31, wdbc-1rno.6) — `lostHands/lostArms/lostFeet/
+  lostLegs/lostEyes` в `constants/conditions.mjs` (counter:"count"), уже
+  влияют на Экономику Рук (`rules/hands.mjs::maxHands`), Движение/Уклонение
+  (`rules/character/movement.mjs`, `combat/defense.mjs`), BS и угол Караула
+  (`sheets/attack/mods.mjs`, `rules/overwatch.mjs::overwatchMaxArc`), Ослепление
+  при потере обоих глаз (`rules/predicates.mjs`). Автоналожение из
+  Критических Эффектов и «Цель теряет руку/ногу» — `combat/crit-effect-
+  parser.mjs`. Отложенная проверка Гангрены обрубка (T.b дней, 1d10 1-8 —
+  80%) — `rules/limb-loss.mjs` (чистая логика) + `combat/limb-loss.mjs`
+  (розыгрыш по тому же `updateWorldTime`, что двигает виджет Календаря).
+  Лечение — три режима диалога `sheets/tabs/healing.mjs`: Ампутация,
+  Пришивание, «Обработка обрубка»; Бионика восстанавливает lostX при выборе
+  части тела. Мутация Loss of Limb/Потеря Конечности — НЕ реализована,
+  вынесена в wdbc-1rno.6.1 (гейт Best.Q сравнением субмутации, субтаблица
+  «Пальцы» — открытые решения).
 - `module/apps/token-conditions.mjs` — синхронизация с Token HUD.
 - `module/sheets/tabs/conditions.mjs` — вкладка Состояния/Усталость.
 - `module/constants/fear-tables.mjs` — Страх/Шок/Ментальная Травма/Расстройства.
@@ -283,7 +514,19 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   divinations.mjs`.
 - `rules/library/homeworlds.mjs` — машинная часть (Мир-храм/Мир Смерти/
   Промышленный мир).
-- `apps/origin-shared.mjs` — общий диалог выборов/выдачи/отката для обоих.
+- `apps/origin-shared.mjs` — общий диалог выборов/выдачи/отката для обоих;
+  `withOriginLock(actor, tag, fn)` — очередь (не запрет) на actor+tag для
+  ЛЮБОГО «clear носитель, потом grant новый» апплая (applyHomeworld(Picks),
+  applyDivination(Picks), races.mjs::applyLegion) — без неё параллельный/
+  повторный вызов (напр. character-wizard.mjs раньше звал `.then(...)` без
+  `await`) читает «носителя ещё нет» дважды и создаёт два, задваивая бонусы
+  (видно только на вкладке ЭФФЕКТЫ, не на самом листе — там дропдаун/`.find()`
+  показывает только первый) — wdbc-gbpe, 14.09.2026. `clearGrantedBy` там же
+  подчищает «осиротевших» дублей-носителей (только для homeworld/divination —
+  их носитель НЕ самотегируется `originGrant`, в отличие от race/subrace/
+  archetype, которых granted-фильтр уже ловит по тегу без доп. логики).
+  Разовая миграция уже существующих дублей — `migrations/duplicate-origin-
+  cleanup.mjs`, `game.warhammerDBC.migrateDuplicateOrigins()`.
 - Подключаются флагами `homeworlds`/`divinations` в `constants/features.mjs`
   (см. §26).
 
@@ -329,6 +572,34 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   потеря Зрения/Слуха). Общесистемный тест на Жару/Холод (`combat/
   temperature-hazard.mjs` — раньше был только в display-виджете Окружения,
   см. §21) найден и реализован попутно при разборе Бриза (Breeze).
+- Ещё именные (wdbc-1rno/wdbc-ux8a, 15.09.2026): `fruit-of-flesh.mjs`
+  (+`apps`, Плод Плоти), `soul-seer.mjs` (+`apps`, Душевидец),
+  `organ-of-chaos.mjs` (+`apps`, Общие Мутации), `combat/wrapped-in-chaos.mjs`
+  (+`apps`, Укутанный в Хаос — направленные штрафы атакующий↔защитник поверх
+  паттерна из `combat/defense.mjs`, все 10 субмутаций закрыты),
+  `volunteer-actor.mjs` (+`apps`, Доброволец Актёр — Поцелуй Арлекина, полная
+  миграция личности через §22 `actor-control.mjs`), `maggot-parasite.mjs`
+  (+`apps`, Опарыш-Паразит), `parasite-trait.mjs` (+`apps`, общий Трейт
+  «Parasite» — контакт/срыв/слияние характеристик, любой носитель Трейта, не
+  только Опарыш; `constants/conditions.mjs::parasiticContact` тикает
+  generic-циклом `combat/condition-ticks.mjs`).
+- Ещё именные (wdbc-1rno.1, 15-16.09.2026): `prophet-of-gallerpox.mjs`
+  (Пророк Гэллерпокса, Нургл — заражение Vehicle/Ship-актора, штраф −30
+  против ядов не-Нурглитам на сцене, новый scope "poison" в
+  `resolve-test.mjs`), `hidden-threat.mjs` (Сокрытая Угроза, Тзинч — флаг
+  «следующая атака Незримая», её собственный −50 к засечению) поверх общего
+  примитива «Незримое» (wdbc-1rno.2, 16.09.2026): `rules/unseen-attack.mjs`
+  (wp.unseen, isUnseenDetected/markUnseenDetectedUntilNextTurn/hasWarpSight)
+  + `combat/unseen-attack.mjs` (_performUnseenDetect, реактивный тест) —
+  Уклонение/Парирование ТЕПЕРЬ реально гейтятся, пока цель не засекла атаку
+  (attack-card.mjs::defenseSection, клиентский DOM-разблок в hooks.mjs),
+  `bronze-myrmidon.mjs` (Бронзовый Мирмидон, Кхорн — редирект попаданий
+  Сочленение/Глаз → Рука/Голова у актора с активным Трейтом Machine),
+  `black-eyes.mjs` (Чёрные Глаза, Слаанеш — иммунитет к штрафам
+  Тьма/Дым/Слабый свет при Cor 60+). Уравнитель (Нургл, `item-rules.mjs::
+  opposedTargetRerollRules`) дореализован целиком — вторая половина
+  (противник-инициатор встречного теста) теперь тоже форсирует переброс,
+  точка принуждения добавлена в `sheets/actor-sheet.mjs::_runTest`.
 
 ## 13. Демонология: Демоны, Демон-Принц, Одержимость
 
@@ -380,16 +651,36 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   `aggregateAuto`); rating свойства может быть формулой с «PR» (Blast(2×PR) и
   т.п.), «СУ»/книжным «Успехи» (Devastating Rain) или Cor.b/др. бонусом
   характеристики (Infernal Gaze: Felling(Cor.b)) — резолвится
-  `combat/weapon-properties.mjs::resolvePropRating(s, prValue, {deg, rollData})`
-  тем же безопасным парсером, что и Пробитие, плюс `mechRollData(actor)` для
-  X.b-нотации; дайс-рейтинг (Flame «2d10») возвращается строкой для
-  `new Roll()`, не резолвится числом (wdbc-lui3/wdbc-kifa, 13-14.09.2026).
-  Контентом заполнено 66 атакующих психосил из ~93 с непустым уроном (не 847 —
-  остальные ~750 не атаки, weaponProps у них пуст правомерно); деление на
-  под-тикеты по дисциплинам не понадобилось, реальный остаток — тикеты
-  wdbc-cy4z (Toxic/Haywire игнорируют rating2 в реестре) и wdbc-zlx7 (условные
-  свойства по числу Успехов — Neural Storm/Fire Barrage и т.п. — движок не
-  умеет вообще, только безусловное применение на каждое попадание).
+  `combat/weapon-properties.mjs::resolvePropRating(s, prValue, {deg, rollData, x})`
+  тем же безопасным парсером, что и Пробитие психосилы (тот же резолвер, не
+  отдельная копия, wdbc-ufns), плюс `mechRollData(actor)` для X.b-нотации;
+  дайс-рейтинг (Flame «2d10», Arc «7/2d10+PR») возвращается строкой для
+  `new Roll()`, не резолвится числом, «PR» ВНУТРИ дайс-строки тоже
+  подставляется (wdbc-lui3/wdbc-kifa/wdbc-cy4z/wdbc-wv8u, 13-14.09.2026) —
+  раньше не подставлялось и роняло бросок исключением Unresolved StringTerm.
+  «Х» — опциональное item-defined производное значение (`sys.xFormula`, тем
+  же языком формул), когда книга вводит одну переменную сразу для
+  damage+penetration+rating одного предмета (Vortex of Doom: «Х=½Успехи
+  (окр.▲)», wdbc-ufns) — считается один раз в psychic.mjs, подставляется
+  текстом в damage (Roll не понимает функции резолвера) и через options.x
+  во все резолверы rating/pen того же предмета. `requiredSuccesses` — поле
+  НА ЗАПИСИ weaponProps (не в реестре), гейтит применение записи по числу
+  Успехов ЭТОГО психотеста (`filterPropsBySuccesses`, Neural Storm/Fire
+  Barrage-Bolt-Storm/Force Bolt, wdbc-zlx7); `requiredSuccessesScalesSize` —
+  порог ×2 за уровень Размера ЦЕЛИ, проверяется отдельно в
+  `hooks.mjs::_applyWeaponPropEffect` в момент клика (Размер известен только
+  тогда, кнопка строится раньше выбора цели). Toxic/Haywire — нестандартный
+  книжный урон через `rating2` вместо дефолтного «1d10»/табличного значения
+  (`damageFromRating2`, wdbc-cy4z). Дуга (Arc) у психосил — кнопка `.wh-arc-btn`
+  раньше не рисовалась вовсе (только у обычного оружия, attack-card.mjs);
+  теперь строится и в psychic.mjs::executePsychotest тем же гейтом «первое
+  попадание достигло arcRating» (wdbc-86rm).
+  Контентом заполнены практически все атакующие психосилы с непустым уроном
+  (~93 из 847 — остальные не атаки, weaponProps у них пуст правомерно);
+  открытые остатки — wdbc-rhst (Energy Surge: профиль атаки по войдшипу, не
+  по персонажу — реестр WEAPON_PROPERTIES тут неприменим в принципе, другой
+  домен) и Neural Storm (движок не различает «выбрать одно» vs «оба сразу» —
+  договорённость на игроке/ГМ по тексту карточки, не энфорсится).
   Сустейн-баффы к ДРУГИМ тестам (не к своей манифестации, kind:testMod
   modCharBonus:"pr") фиксируют эPR момента каста в `system.sustainedEpr`
   психосилы (по образцу `sustainedDegree`, wdbc-8m0x) — `item-rules.mjs`
@@ -401,6 +692,17 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   mjs`), результат пишется в weaponBuff и читается тем же
   `combat/weapon-mods.mjs`, что и статично прописанные баффы — переиспользовать
   этот паттерн, если появится вторая такая сила (флаг `hasWeaponShop`).
+  Радиус поддержания (wdbc-efyl, 17.09.2026) — книга у части сил даёт ВТОРУЮ,
+  отдельную дальность специально для поддержания (маркер `(П)`, не совпадает
+  с дальностью манифестации: Concentration/Концентрация PR×1м/PR×5м и ещё 33
+  силы, найдены и сверены построчно с книгой в wdbc-z9jp). Поле
+  `system.sustainRange` психосилы (пусто — использовать обычный `range`),
+  общая точка входа `rules/psy-range.mjs::sustainRangeText(system)`. Пока
+  только хранится и показывается на карточке манифестации — живой геймплейный
+  гейт (снятие поддержания при выходе цели за этот радиус) не подключён нигде,
+  первый потребитель на очереди — Fruit of Flesh/Плод Плоти (`apps/
+  fruit-of-flesh.mjs`, субмутация «Заточение Силы», см. NOTES в wdbc-efyl,
+  связано с эпиком wdbc-1rno).
 - Техночудеса: `data/item/tech-power.mjs`, `constants/tech.mjs`,
   `tech-imperatives.mjs` + `combat/imperative-bonuses.mjs` + `rules/
   imperative.mjs`, `constants/implant-mechanics.mjs`, `apps/infoguard.mjs`
@@ -409,6 +711,16 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - Мистика/Варп: `constants/veil.mjs` (+`veil-icons.mjs`), `apps/veil.mjs`
   (окно ГМа: Завеса/Ритуалы/Навигация/Таро), `apps/veil-overlay.mjs`
   (варп-хоррор при истончённой Завесе).
+- Варп-маршруты (wdbc-r0w9, 17.09.2026): `data/item/warp-route.mjs` (мировой
+  предмет — не вложен в систему, соединяет ровно две через systemAUuid/
+  systemBUuid), `apps/warp-route.mjs` (привязка/отсоединение слотов,
+  генератор признаков), `rules/{warp-route,warp-route-traits,warp-guide,
+  warp-route-charting}.mjs` (шесть таблиц признаков, капы, Проводники —
+  навигатор/психоактивный/демон/одержимый/принц демонов, Усталость,
+  Прокладка/Начертание маршрута), `sheets/tabs/warp-routes.mjs` (блок
+  «ВАРП-МАРШРУТЫ» на вкладке Мистика — Знание Проводника, `knownRoutes` на
+  `data/actor/_creature.mjs`). Подключено в шаги окна «Навигация»
+  (`apps/veil.mjs`) — см. также §19 (привязка к Звёздной системе).
 - Ритуалы: `data/item/ritual.mjs`, `apps/ritual-cast.mjs`,
   `sheets/tabs/rituals.mjs`, `sheets/ritual-cast-dialog.mjs`.
 - Рунические Вязи: `data/item/runic-weave.mjs`, `constants/runic-weaves.mjs`,
@@ -421,6 +733,17 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   `just-the-light.mjs`, `conjure-wraith.mjs`, `dread-wail.mjs` (+`apps`),
   `resplendent-raiment.mjs` (+`apps`), `apps/herd-spirits-summon.mjs`,
   `apps/demon-summon.mjs`.
+- **Фокус Дисциплины (wdbc-l6zg, 14.09.2026) — ЧИСТО ДАННЫЕ, без игрового
+  эффекта.** `system.psyker.focusDisciplines` (выбор игрока) +
+  `rules/psy-focus.mjs::effectiveFocusDisciplines/hasFocusDiscipline` (объединяет
+  с дарованным способностями — первый потребитель `rules/perfect-sorcerer.mjs
+  ::PERFECT_SORCERER_FOCUS_DISCIPLINES`), `constants/disciplines.mjs
+  ::NO_FOCUS_DISCIPLINES/canHaveFocusDiscipline` (книжный список дисциплин без
+  Фокуса). Видно на вкладке МИСТИКА (чипы в панели ПСАЙКЕР + бейдж «★ Фокус» на
+  строке психосилы своей дисциплины), но у пометки нет механических
+  последствий: книжный эффект Фокуса (изучение психосилы без «изучения», только
+  за опыт; обучение других) висит на ещё не существующей в системе механике
+  изучения психосил (wdbc-1rno) — когда она появится, читает отсюда же.
 - Руны Сигиллитов: `rules/sigillite-runes.mjs` (пул `system.sigilliteRunes`,
   производный максимум 20 + Библиотека Рун × Бонус Интеллекта + ступени
   Forbidden Lore (Archeotech), цена манифестации бPR×2, Рунный Удар),
@@ -519,7 +842,8 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `data/item/{component,ship-hull,cargo,torpedo,small-craft,celestial-body}.
   mjs`.
 - `data/actor/star-system.mjs`, `constants/star-system.mjs`,
-  `constants/warp-travel.mjs` (варп-переходы).
+  `constants/warp-travel.mjs` (варп-переходы). Блок «ВАРП-МАРШРУТЫ» на листе
+  системы — привязка мировых предметов типа `warpRoute`, см. §14.
 - `apps/{ship-hud,ship-hull,ship-hull-library,systems-overview}.mjs`,
   `sheets/{ship-sheet,hull-picker,star-system-sheet}.mjs`.
 - `combat/{ship-attack,ship-node-damage}.mjs` — движок автоматизации боевых
@@ -572,6 +896,12 @@ mjs`, `mech-formula.mjs` (мини-DSL формул), `effects.mjs` (реест�
 (+`apps`), `cooldown.mjs`, `temp-grant.mjs`, `supply-timer.mjs`, `turn-flags.
 mjs`. Реестр ключей ActiveEffect — `constants/effect-keys.mjs` (уже в
 AGENTS.md).
+- `rules/actor-control.mjs` (+`apps/actor-control.mjs`) — общий примитив
+  «контроль над чужим актором» (флаг `controlledBy`, длительность
+  permanent/round/battle/worldTime, честный контест через синтетический
+  `techDef` в `combat/techniques.mjs::_showContestDialog`, GM-relay смена
+  владения/`User#character`) — заведён под Volunteer Actor (wdbc-ux8a,
+  15.09.2026), переиспользован без изменений для механики Паразита (см. §12).
 
 ## 23. Требования Талантов — текстовый разбор
 

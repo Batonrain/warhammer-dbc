@@ -4,7 +4,7 @@
 //  Foundry-токен: центр в пиксельных координатах сцены + rotation.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { isFrontArcHit as isFrontArcHitPure, bearingDegrees, isWithinMountArc } from "../rules/facing.mjs";
+import { isFrontArcHit as isFrontArcHitPure, bearingDegrees, isWithinMountArc, isWithinArc } from "../rules/facing.mjs";
 // tokenDocDistance (wdbc-shr, находка 3): единственное место, где считается
 // «пиксели → клетки → игровые единицы сцены» — раньше tokenDistance ниже
 // заново реализовывал ТУ ЖЕ формулу (Math.hypot / grid.size × grid.distance)
@@ -31,8 +31,12 @@ export function tokenCenter(token) {
   };
 }
 
-/** Разворот токена в градусах (0 = «на север», по часовой) — TokenDocument.rotation. */
-function tokenRotation(token) {
+/**
+ * Разворот токена в градусах (0 = «на север», по часовой) — TokenDocument.rotation.
+ * Экспортируется (wdbc-1rno.27, Караул) — модулям, которым нужен разворот
+ * стрелка сам по себе, не только внутри isFrontArcHit/isTargetWithinVehicleArc.
+ */
+export function tokenRotation(token) {
   return Number((token?.document ?? token)?.rotation) || 0;
 }
 
@@ -124,3 +128,69 @@ export function isTargetWithinVehicleArc(vehicleToken, arcSpec, targetToken) {
   if (!vehiclePos || !targetPos) return true;
   return isWithinMountArc(tokenRotation(vehicleToken), bearingDegrees(vehiclePos, targetPos), arcSpec);
 }
+
+// ── Скрытная Атака / Sneak Attack (стр. 32, wdbc-1rno.3) ──────────────────────
+//
+// «Если атакующий весь свой Ход находился вне обзора цели, будь то из-за
+// скрытности, невидимости, или просто вне ее поля зрения, эта атака получает
+// тип Незримое [...] Обычный персонаж имеет угол обзора (с учетом
+// периферийного зрения) в 210°».
+//
+// Решение чата (wdbc-1rno.3, 20.09.2026): снимок геометрии на МОМЕНТ атаки,
+// не слежение за позицией/разворотом защищающегося весь Ход атакующего —
+// полная буква правила потребовала бы отдельной подсистемы (буфер пути
+// актора по Ходу + перепроверка сектора на каждом шаге), кратно дороже
+// одной находки. Тот же уровень приближения, что уже даёт isFrontArcHit у
+// Плаща (снимок, не история движения).
+//
+// Ветка «+30 Врасплох» этого же абзаца («цель вообще не знает о
+// возможности атаки») сюда не входит — состояния «знает ли цель о факте
+// существования скрытого атакующего» в системе нет нигде (damage.mjs:
+// 956-957 — Врасплох остаётся ручной галочкой ГМа в диалоге атаки).
+//
+// 210° — TokenDocument.sight.angle защищающегося, тот же источник, что
+// читает vision-target.mjs у Иконы Богохульства/Взора Неотвратимости
+// (ОТДЕЛЬНАЯ функция, не переиспользует isTokenInSight: там незаданный угол
+// трактуется как круговой обзор 360° — менять это задним числом означало бы
+// незаметно сузить обзор уже двум работающим Дарам, которые на это не
+// рассчитаны). Здесь незаданный/дефолтный угол — 210°, через hook ниже,
+// который проставляет его КАЖДОМУ новому актору, если он ещё не был задан
+// явно иначе (0 или 360 — оба читаются как «Foundry-дефолт, не настроено»,
+// тот же принцип, что sightRangeOf в vision-target.mjs). ≥360, заданное
+// явно (существо с реально круговым обзором, например Unnatural Senses,
+// Конструктор) — никогда не «вне обзора».
+export const DEFAULT_SIGHT_ANGLE_DEGREES = 210;
+
+/**
+ * Вне поля зрения ли attackerToken у defenderToken — сектор берётся из
+ * TokenDocument.sight.angle защищающегося (по умолчанию 210°, см. выше),
+ * центрован на его rotation. Любой токен без известной позиции — НЕ вне
+ * обзора (безопасный дефолт: не даём Незримое из недостающей геометрии).
+ * @param {Token} defenderToken
+ * @param {Token} attackerToken
+ */
+export function isOutsideDefenderView(defenderToken, attackerToken) {
+  const defenderPos = tokenCenter(defenderToken);
+  const attackerPos = tokenCenter(attackerToken);
+  if (!defenderPos || !attackerPos) return false;
+  const rawAngle = Number((defenderToken?.document ?? defenderToken)?.sight?.angle);
+  if (rawAngle >= 360) return false;
+  const angle = rawAngle > 0 ? rawAngle : DEFAULT_SIGHT_ANGLE_DEGREES;
+  const bearing = bearingDegrees(defenderPos, attackerPos);
+  return !isWithinArc(tokenRotation(defenderToken), bearing, angle);
+}
+
+// Решение чата (wdbc-1rno.3): «у токенов уже есть угол обзора — задавать
+// всем предзаданный угол 210 системным хуком», а не правкой prototypeToken
+// в каждом из сотен акторов packs-src. Необычные существа с реально другими
+// чувствами получают отличный от 210° угол отдельной правкой (Конструктор/
+// ActiveEffect на самом предмете) в СВОЮ находку — этот хук лишь заполняет
+// пустое место, не трогает уже настроенное. Побочный эффект осознан и
+// желаем (подтверждено в чате): это меняет и настоящий рендер обзора
+// Foundry для акторов, у которых угол раньше не был явно сужен/расширен.
+/** Экспортирован отдельно от регистрации — тестируется напрямую, Hooks.on в тестах заглушка (foundry-stub.mjs). */
+export function applyDefaultSightAngle(actor, data) {
+  const angle = Number(data?.prototypeToken?.sight?.angle ?? actor.prototypeToken?.sight?.angle);
+  if (!angle || angle === 360) actor.updateSource({ "prototypeToken.sight.angle": DEFAULT_SIGHT_ANGLE_DEGREES });
+}
+Hooks.on("preCreateActor", applyDefaultSightAngle);

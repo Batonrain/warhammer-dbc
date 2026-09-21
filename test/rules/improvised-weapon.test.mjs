@@ -1,12 +1,14 @@
 // test/rules/improvised-weapon.test.mjs
 //
 // Импровизированное оружие / Метание (стр. 27-28) — чистая классификация по
-// весу/размеру, без Foundry. module/combat/grapple.mjs — единственный
-// сегодняшний потребитель (партнёр по Захвату как снаряд/дубина), сами
-// функции завязаны только на actor.system.
+// весу/размеру, без Foundry. Два потребителя: module/combat/grapple.mjs
+// (партнёр по Захвату как снаряд/дубина) и module/combat/improvised-item.mjs
+// (обычный предмет из инвентаря, wdbc-x1nz.2, не требует Захвата — книга
+// требует его только для ПЕРСОНАЖЕЙ).
 
 import { describe, it, expect } from "vitest";
-import { bodyWeightOf, totalWeightOf, throwTier, canWieldAsCudgel, footingRequirement }
+import { bodyWeightOf, totalWeightOf, throwTier, canWieldAsCudgel, footingRequirement,
+         itemWeightOf, canWieldItemAsCudgel }
   from "../../module/rules/improvised-weapon.mjs";
 
 function actorFor({ weight = 0, current = 0, carry = 0, size = 0 } = {}) {
@@ -108,5 +110,26 @@ describe("footingRequirement", () => {
 
   it("вес тела бросающего не заполнен — не блокируем бросок (none)", () => {
     expect(footingRequirement(0, 500)).toBe("none");
+  });
+});
+
+describe("itemWeightOf / canWieldItemAsCudgel (wdbc-x1nz.2, обычный предмет)", () => {
+  const item = (weight) => ({ system: { weight } });
+
+  it("itemWeightOf — вес одного экземпляра предмета", () => {
+    expect(itemWeightOf(item(2))).toBe(2);
+    expect(itemWeightOf({})).toBe(0);
+    expect(itemWeightOf(null)).toBe(0);
+  });
+
+  it("годится Дубиной — до ¼ Веса Ношения, Размер не проверяется (у предметов его нет)", () => {
+    const wielder = { system: { encumbrance: { carry: 100 } } };
+    expect(canWieldItemAsCudgel(wielder, item(25))).toBe(true);
+    expect(canWieldItemAsCudgel(wielder, item(26))).toBe(false);
+  });
+
+  it("у владельца нет Ношения — не годится", () => {
+    const wielder = { system: { encumbrance: { carry: 0 } } };
+    expect(canWieldItemAsCudgel(wielder, item(1))).toBe(false);
   });
 });

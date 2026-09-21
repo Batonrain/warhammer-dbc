@@ -322,30 +322,45 @@ describe("showRecoilDialog: чекбокс Вольта (wdbc-zik7, п.6) тол
   });
 });
 
-describe("performRecoil: volt (wdbc-zik7) ставит disengageActive и заметку п.6 в карточке", () => {
+// wdbc-x1nz.2.40: volt=true запускает настоящий встречный тест Вольта
+// (movement-actions.mjs::rollRecoilVault) отдельной карточкой следом, без
+// своей цены ОД — вместо прежнего «безусловный disengageActive и никакого
+// теста». По решению пользователя (перевод решения wdbc-zik7 на появившийся
+// в этой же сессии настоящий Вольт).
+//
+// Глушитель обычной Свободной Атаки при этом ОСТАЛСЯ и ставится самим
+// rollRecoilVault (приёмка стопки #482-#504): встречный тест книги (стр. 30)
+// ЗАМЕНЯЕТ Свободную Атаку, а не добавляется к ней. Без флага
+// free-attack.mjs::processTokenMove выдавал тем же врагам ещё и обычную
+// Свободную Атаку на первом же перемещении — одно движение наказывалось
+// дважды, вопреки тексту собственной карточки Вольта.
+describe("performRecoil: volt (wdbc-x1nz.2.40) запускает настоящий Вольт и гасит обычную Свободную Атаку", () => {
   beforeEach(() => {
     globalThis.game.combat = { started: true, id: "c1", combatant: { id: "cbt-1" } };
   });
 
-  it("volt не передан (по умолчанию false) — флаг не ставится, заметки нет", async () => {
+  it("volt не передан (по умолчанию false) — Вольт не запускается, заметки нет", async () => {
     const d = defender();
     await performRecoil(d, { meters: 3, intoCover: false, coverAp: 0 });
     expect(d.getFlag("warhammer-dbc", "disengageActive")).toBeUndefined();
+    expect(captured.chat).toHaveLength(1);
     expect(card()).not.toContain("Засчитан как Вольт");
   });
 
-  it("volt=true — ставит flags.warhammer-dbc.disengageActive, постит заметку п.6", async () => {
+  it("volt=true — ставит disengageActive, постит карточку Отскока с заметкой п.6, затем отдельную карточку Вольта", async () => {
     const d = defender();
+    captured.dice = [10, 10]; // первый — Уклонение внутри Отскока не катится тут, второй — Acrobatics Вольта
     await performRecoil(d, { meters: 3, intoCover: false, coverAp: 0, volt: true });
     expect(d.getFlag("warhammer-dbc", "disengageActive")).toBe(true);
-    expect(card()).toContain("Засчитан как Вольт");
-    expect(card()).toContain("Свободную Атаку");
+    expect(captured.chat).toHaveLength(2);
+    expect(captured.chat[0].content).toContain("Засчитан как Вольт");
+    expect(captured.chat[0].content).toContain("отдельной карточкой");
+    expect(captured.chat[1].content).toContain("Вольт (через Отскок)");
   });
 
-  it("volt=true вместе с intoCover — оба разовых флага независимы", async () => {
+  it("volt=true вместе с intoCover — AP Укрытия ставится независимо", async () => {
     const d = defender();
     await performRecoil(d, { meters: 2, intoCover: true, coverAp: 6, volt: true });
-    expect(d.getFlag("warhammer-dbc", "disengageActive")).toBe(true);
     expect(d.getFlag("warhammer-dbc", "recoilCoverBonus")).toBe(6);
   });
 

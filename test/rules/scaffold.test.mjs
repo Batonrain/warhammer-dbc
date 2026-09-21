@@ -27,8 +27,9 @@ describe("каркас module/rules", () => {
     // charNotIn (характеристика теста вне списка, wdbc-r5o7.1), charIn
     // (характеристика теста в списке, Гангрена, wdbc-r5o7.5), charBonusMin
     // (порог по Бонусу характеристики, «S.b 5+» у Poor.Q Откатной Перчатки,
-    // wdbc-vsma) и hasHatredTarget (цель Таланта Ненависти, wdbc-1rno).
-    expect(Object.keys(predicates.PREDICATES)).toHaveLength(28);
+    // wdbc-vsma), hasHatredTarget (цель Таланта Ненависти, wdbc-1rno) и
+    // legacyGuardianMarked (метка Защитника, Оружие Наследия, wdbc-1rno.35).
+    expect(Object.keys(predicates.PREDICATES)).toHaveLength(29);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);
     expect(typeof sources.registerRuleSource).toBe("function");

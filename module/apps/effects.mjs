@@ -53,7 +53,21 @@ export function isItemActive(item) {
     case "weapon": case "armor": return !!sys.equipped;
     // Снаряжение (wdbc-9h7g): носимое — по своему тумблеру «надето», прочее —
     // как раньше, активно фактом владения. См. gearRequiresWearing выше.
-    case "gear": return gearRequiresWearing(sys) ? !!sys.equipped : true;
+    // Включаемое (wdbc-x1nz.2, тот же тумблер, что у armorMod/weaponMod ниже) —
+    // отдельная ось от ношения: Мучитель не носится (worn пусто), но бонус
+    // должен требовать явного включения, а не просто лежать в разгрузке.
+    // «Носится» и «включаемое» проверяются независимо — предмет может быть
+    // и тем, и другим сразу, тогда нужны оба условия.
+    case "gear":
+      if (gearRequiresWearing(sys) && !sys.equipped) return false;
+      if (sys.activatable && !sys.active) return false;
+      return true;
+    // Инструмент (wdbc-x1nz.2): раньше не имел вовсе состояния «активен ли» —
+    // любой tool в инвентаре давал свою механику Конструктора, даже лежащий в
+    // рюкзаке (найдено на Ауспексе — effect-текст требует «занимает руку»,
+    // код это не проверял). Включаемое — тот же тумблер, что у gear выше;
+    // не включаемый инструмент по-прежнему активен фактом владения.
+    case "tool": return sys.activatable ? !!sys.active : true;
     case "armorMod": case "weaponMod": {
       if (!sys.installedOn || (sys.activatable && !sys.active)) return false;
       // Носитель в рюкзаке механику не даёт: так считал старый расчёт

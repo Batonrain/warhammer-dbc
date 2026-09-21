@@ -7,11 +7,16 @@
 import { syncItemEffectsDisabled, syncOrphanedModEffects } from "../../apps/effects.mjs";
 import { _reloadWeapon } from "../../combat/reload.mjs";
 import { _toggleShield, _rollShieldActivation, _repairShield } from "../../combat/shield.mjs";
-import { on } from "../../helpers/utils.mjs";
+import { on, esc } from "../../helpers/utils.mjs";
 import { canEquipInHands, handsOccupied, getHeldHand, setHeldHand } from "../../rules/hands.mjs";
 import { rollInfoguard as _rollInfoguard } from "../../apps/infoguard.mjs";
 import { showDelegateTestPicker as _showDelegateTestPicker } from "../../rules/delegate-test.mjs";
-import { openGearModPicker as _openGearModPicker } from "../gear-mod-picker.mjs";
+import { useDetonateGrenadeInRig } from "../../combat/draw-action.mjs";
+import { useHololithBriefing } from "../../combat/hololith-briefing.mjs";
+import { useSwingItem, useThrowItem } from "../../combat/improvised-item.mjs";
+import { spendActionPoints } from "../../combat/action-economy.mjs";
+import { rollIcon } from "../../constants/roll-icons.mjs";
+import { postTestCard } from "../../helpers/test-card.mjs";
 
 const ARMOR_LOCS = ["head", "body", "leftArm", "rightArm", "leftLeg", "rightLeg"];
 
@@ -36,6 +41,17 @@ function _conflictingHardArmor(actor, item) {
  * Экипировка. Надевание оружия/щита (не брони — она рук не занимает)
  * блокируется, если рук не хватает (wdbc-3xqh) — только на ПРИРОСТ занятости,
  * старые «нелегальные» связки на существующих листах не трогает и не рвёт.
+ *
+ * «Взять»/«Сложить» (стр. 27, оба — Полудействие, Физическое действие): здесь
+ * моделируются без отдельной кнопки — оружие СЧИТАЕТСЯ взятым/сложенным,
+ * когда меняется system.equipped. Список инструментов на вкладке уже
+ * показывает всё снаряжение и его состояние, отдельный диалог поверх него
+ * был бы лишним. Книга отдельно разрешает «просто выпустить предмет из рук
+ * за свободное действие» вместо формального Сложить — эта развилка не
+ * моделируется (честная урезка): чекбокс всегда берёт дороже правильный
+ * вариант (1 ОД), просто бросить оружие на пол отдельной кнопкой нельзя.
+ * Нет ОД — экипировка откатывается (ранний return, update не происходит),
+ * чекбокс возвращается в фактическое состояние ниже.
  */
 export async function equipItem(item, equipped) {
   if (!item) return;
@@ -55,11 +71,26 @@ export async function equipItem(item, equipped) {
       return;
     }
   }
+  const isDraw = equipped && item.type === "weapon" && !item.system.equipped;
+  // Сложить (wdbc-x1nz.2.44): та же цена и то же условие «оружие», что у
+  // Взять выше — симметрично, раньше это направление было бесплатным.
+  const isStow = !equipped && item.type === "weapon" && item.system.equipped;
+  if ((isDraw || isStow) && item.parent && !await spendActionPoints(item.parent, 1, { physical: true })) {
+    ui.notifications?.warn(`⚠️ Не хватает ОД, чтобы ${isDraw ? "Взять" : "Сложить"} оружие (Полудействие, стр. 27).`);
+    return;
+  }
   await item.update({ "system.equipped": equipped });
   await syncItemEffectsDisabled(item, equipped);
   // Эффекты установленных модификаций гаснут вместе с носителем (isItemActive),
   // но update пришёл не им — пересчитываем сами.
   await syncOrphanedModEffects(item.parent, item.id);
+  if ((isDraw || isStow) && item.parent) {
+    await postTestCard(item.parent, {
+      icon: rollIcon("run", "#b0a080"),
+      title: `${esc(item.parent.name)} — ${isDraw ? "Взять" : "Сложить"}`,
+      lines: [`<div class="roll-threshold">${isDraw ? "Берёт в руки" : "Складывает на разгрузку"}: <b>${esc(item.name)}</b> (Полудействие).</div>`]
+    }, { sound: false });
+  }
 }
 
 export async function setShieldHand(item, hand) {
@@ -116,13 +147,38 @@ export function activateGearListeners(root, actor, {
   rollShieldActivation = _rollShieldActivation,
   repairShield = _repairShield,
   rollInfoguard = _rollInfoguard,
-  showDelegateTestPicker = _showDelegateTestPicker,
-  openGearModPicker = _openGearModPicker
+  showDelegateTestPicker = _showDelegateTestPicker
 } = {}) {
   on(root, ".weapon-equip-cb", "change", async ev => {
-    const itemId   = ev.currentTarget.dataset.itemId;
-    const equipped = ev.currentTarget.checked;
-    await equipItem(actor.items.get(itemId), equipped);
+    const cb       = ev.currentTarget;
+    const item     = actor.items.get(cb.dataset.itemId);
+    await equipItem(item, cb.checked);
+    // Откат при отказе (руки заняты / не хватило ОД на Взять, см. equipItem
+    // выше): update тогда не происходит, чекбокс должен вернуться к
+    // фактическому system.equipped, а не остаться в кликнутом состоянии.
+    if (item) cb.checked = !!item.system.equipped;
+  });
+
+  // ── Граната на разгрузке: сорвать чеку и детонировать на месте (стр. 27) ──
+  on(root, ".weapon-grenade-pin-btn", "click", ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) useDetonateGrenadeInRig(actor, item);
+  });
+
+  // ── Гололит: брифинг Tech-Use+0, час подготовки → +10 Command (стр. 256) ──
+  on(root, ".hololith-briefing-btn", "click", ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) useHololithBriefing(actor, item);
+  });
+
+  // ── Импровизированное Оружие / Метание обычным предметом (стр. 27-28) ────
+  on(root, ".improvised-swing-btn", "click", ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) useSwingItem(actor, item);
+  });
+  on(root, ".improvised-throw-btn", "click", ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) useThrowItem(actor, item);
   });
 
   on(root, ".armor-equip-cb", "change", async ev => {
@@ -236,13 +292,5 @@ export function activateGearListeners(root, actor, {
       label: `Инфограждение: ${item.name}`, buttonLabel: "Наложить Инфограждение",
       extra: { itemId: item.id }
     });
-  });
-
-  // «Улучшить» (wdbc-7td8): кнопка на строке оружия/брони открывает пикер
-  // уже имеющихся у актора модификаций, совместимых с этим предметом.
-  on(root, ".gear-mod-picker-btn", "click", ev => {
-    ev.preventDefault(); ev.stopPropagation();
-    const item = actor.items.get(ev.currentTarget.dataset.itemId);
-    if (item) openGearModPicker(actor, item);
   });
 }

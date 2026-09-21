@@ -31,6 +31,9 @@
       {
         "key": "concussive",
         "rating": "ceil(PR/2)"
+      },
+      {
+        "key": "unseen"
       }
     ],
     "charDamageStat": "",

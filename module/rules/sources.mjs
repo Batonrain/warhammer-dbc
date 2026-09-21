@@ -31,7 +31,9 @@ import { situationalRules } from "./situational.mjs";
 import { psychicSustainTargetRules } from "./psychic-sustain-target.mjs";
 import { pathRulesFor } from "./library/paths.mjs";
 import { hatredRules } from "./hatred.mjs";
+import { legacyWrathRules, legacyExcessRules, legacyGuardianRules } from "./legacy-weapon.mjs";
 import { devourerPermanentRules } from "./devourer-of-knowledge.mjs";
+import { gallerpoxPoisonPenaltyActive } from "./prophet-of-gallerpox.mjs";
 import { registerRuleSource } from "./source-registry.mjs";
 
 export { registerRuleSource, getRuleSources, clearRuleSources } from "./source-registry.mjs";
@@ -144,6 +146,21 @@ registerRuleSource("synesthesia", () => SYNESTHESIA_RULES);
 // выбрал Ненавистной при получении Таланта. См. заголовок rules/hatred.mjs.
 registerRuleSource("hatred", (a, ctx) => hatredRules(a, ctx));
 
+// Наследие Ярости/Rage, Оружие Наследия (wdbc-1rno.35, стр. 427): штраф −10
+// на I/P, пока экипировано Оружие Наследия с этой Историей. См. заголовок
+// rules/legacy-weapon.mjs::legacyWrathRules.
+registerRuleSource("legacyWrath", a => legacyWrathRules(a));
+
+// Наследие Излишеств, Оружие Наследия (wdbc-1rno.35, стр. 427): опциональная
+// +10 на тесты выбранной Характеристики, пока Оружие Наследия экипировано.
+// См. заголовок rules/legacy-weapon.mjs::legacyExcessRules.
+registerRuleSource("legacyExcess", a => legacyExcessRules(a));
+
+// Защитник, Оружие Наследия (wdbc-1rno.35, стр. 428): −30 отмеченному
+// стрелком на атаки по нему до начала его следующего Хода. См. заголовок
+// rules/legacy-weapon.mjs::legacyGuardianRules.
+registerRuleSource("legacyGuardian", () => legacyGuardianRules());
+
 // Devourer of Knowledge/Пожиратель Знаний (wdbc-1rno, Тзинч) — Навыки,
 // украденные ПЕРМАНЕНТНО (9 дней подряд), считаются «Дружественными» для
 // цены Продвижения — динамический список по флагу, не статичная запись.
@@ -220,5 +237,19 @@ registerRuleSource("daemonInevitability", a => {
   return [{
     id: "daemon.inevitabilityPenalty", label: "Локус Неизбежности: штраф после авто-попадания", when: {},
     effects: [{ kind: "rollBonus", target: "all", value: -10, label: "Локус Неизбежности: штраф после авто-попадания" }]
+  }];
+});
+
+// Пророк Гэллерпокса (wdbc-1rno.1) — см. module/rules/prophet-of-gallerpox.mjs
+// про приближение «зоны обслуживания машины» к «текущей сцене актора».
+// auto:true — это не галочка на усмотрение игрока, а состояние окружения,
+// тот же принцип, что у ситуативных штрафов (wdbc-n17t).
+registerRuleSource("prophetOfGallerpox", a => {
+  if (!gallerpoxPoisonPenaltyActive(a)) return [];
+  return [{
+    id: "gift.nurgle.prophetOfGallerpox.poisonPenalty",
+    label: "Гэллерпокс: заражённая машина на сцене", when: {},
+    effects: [{ kind: "rollBonus", target: "poison", value: -30, auto: true,
+                label: "Техновирус Гэллерпокса" }]
   }];
 });

@@ -38,3 +38,27 @@ export function applyGain(accumulated, gain, target) {
   const next = Math.max(0, (Number(accumulated) || 0) + (Number(gain) || 0));
   return { accumulated: next, done: next >= (Number(target) || 0) };
 }
+
+/**
+ * Список банков актора для панели «Расширенные тесты» (вкладка ПОКАЗАТЕЛИ).
+ * Чистое преобразование объекта флагов в отображаемые строки — сама панель
+ * (module/sheets/sheet-helpers.mjs) добавляет к каждой строке список
+ * Навыков/Характеристик для селекта повторного броска.
+ *
+ * @param {?object} flagsObj  `actor.getFlag("warhammer-dbc", "extendedTests")`
+ * @returns {Array<{key:string, label:string, accumulated:number, target:number,
+ *   testKey:?string, done:boolean}>} по алфавиту названия
+ */
+export function extendedTestRows(flagsObj) {
+  return Object.entries(flagsObj || {})
+    .map(([key, v]) => {
+      const accumulated = Number(v?.accumulated) || 0;
+      const target = Number(v?.target) || 0;
+      return {
+        key, label: v?.label || key, accumulated, target,
+        testKey: v?.testKey || null,
+        done: target > 0 && accumulated >= target
+      };
+    })
+    .sort((a, b) => a.label.localeCompare(b.label, "ru"));
+}

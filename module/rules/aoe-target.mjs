@@ -8,12 +8,13 @@
 //  живёт и никак не подписан на движение токенов.
 //
 //  Переиспользует ЧИСТУЮ функцию замера module/regions/auras.mjs::
-//  tokenDocDistance (документная дистанция, центр-к-центру, с учётом
-//  высоты) — второй копии той же формулы в проекте по возможности быть не
-//  должно.
+//  tokenDocEdgeDistance (документная дистанция от края Базы до края Базы,
+//  с учётом высоты, wdbc-x1nz.2.18 — книга требует мерить радиусные эффекты
+//  «от краёв Базы, а не от центра», стр. 31) — второй копии той же формулы
+//  в проекте по возможности быть не должно.
 // ════════════════════════════════════════════════════════════════════════
 
-import { tokenDocDistance } from "../regions/auras.mjs";
+import { tokenDocEdgeDistance } from "../regions/auras.mjs";
 
 /**
  * Токены сцены каст-токена в радиусе N метров, с актором.
@@ -37,7 +38,7 @@ export function tokensWithinRadius(casterToken, radiusMeters, opts = {}) {
     const isSelf = t.id === casterToken.id;
     if (isSelf && !includeSelf) return false;
     if (actorType && t.actor.type !== actorType) return false;
-    const distance = isSelf ? 0 : tokenDocDistance(casterToken, t, scene.grid);
+    const distance = isSelf ? 0 : tokenDocEdgeDistance(casterToken, t, scene.grid);
     return distance <= (Number(radiusMeters) || 0);
   });
 }

@@ -18,6 +18,9 @@ import { rollIcon } from "../../constants/roll-icons.mjs";
 import { esc } from "../../helpers/utils.mjs";
 import { _executeAttackRoll } from "../../combat/attack.mjs";
 import { spendActionPoints, apCostForActionType, spendReaction } from "../../combat/action-economy.mjs";
+import { canTakeAttackAction, takeAttackAction } from "../../combat/attack-limit.mjs";
+import { isGrappled } from "../../rules/predicates.mjs";
+import { delayBlocksAttack } from "../../combat/delay-action.mjs";
 import { deathDanceNextCost, markDeathDanceUsed } from "../../combat/death-dance.mjs";
 import { markRoundCapabilityUsed } from "../../apps/game-session.mjs";
 import { AUTO_HIT_CAPABILITY, FULL_ATTACK_CAPABILITY, readAttackForm } from "./form.mjs";
@@ -28,6 +31,7 @@ import { measureTokens } from "../../combat/tactical-map.mjs";
 import { attackIsMelee } from "../../combat/weapon-profiles.mjs";
 import { weaponThresholdPart } from "../../combat/attack-threshold.mjs";
 import { withEyeOfEnvy } from "../../rules/eye-of-envy.mjs";
+import { AIM_FOCUS_EXTENDED_FLAG } from "../../rules/aim-focus.mjs";
 
 /**
  * Два условия книги на парную атаку (стр. 62, wdbc-3jlm), которые до этого
@@ -65,6 +69,8 @@ export function openAttackDialog(ctx) {
     actor,
     item,
     content,
+    currentAiming,
+    aimingBonus,
     techniqueOpts,
     isMelee,
     forceMelee,
@@ -151,10 +157,61 @@ export function openAttackDialog(ctx) {
             return false;
           }
 
+          // Захват (стр. 12, wdbc-x1nz.2.31): «только действия Борьбы или
+          // не-Физические» — обычная Атака (эта, стандартная, не действия
+          // Борьбы из combat/grapple.mjs) недоступна, пока актор в Захвате.
+          if (isGrappled(actor)) {
+            await ChatMessage.create({
+              speaker: ChatMessage.getSpeaker({ actor: actor }),
+              content: `<div class="wh-roll-result">
+                <div class="roll-header">${rollIcon("sword")}${esc(item.name)}</div>
+                <div class="roll-outcome">
+                  <span class="roll-failure">${rollIcon("ban","#ff6b6b")}В Захвате доступны только действия Борьбы (стр. 12).</span>
+                </div></div>`
+            });
+            return false;
+          }
+
+          // Задержка (стр. 12, wdbc-x1nz.2.42): «если он атаковал в свой
+          // Ход, действие Задержки не может быть Атакой» — банкованное ОД
+          // нельзя потратить на эту атаку.
+          if (delayBlocksAttack(actor)) {
+            await ChatMessage.create({
+              speaker: ChatMessage.getSpeaker({ actor: actor }),
+              content: `<div class="wh-roll-result">
+                <div class="roll-header">${rollIcon("sword")}${esc(item.name)}</div>
+                <div class="roll-outcome">
+                  <span class="roll-failure">${rollIcon("ban","#ff6b6b")}Задержанное ОД нельзя потратить на Атаку — уже атаковал в свой Ход (стр. 12).</span>
+                </div></div>`
+            });
+            return false;
+          }
+
+          // Лимит Атак за Ход (стр. 12, wdbc-x1nz.2.30): «Персонаж может
+          // совершать только одну Атаку в свой Ход» — проверяется ДО списания
+          // ОД, чтобы заблокированная попытка не тратила ресурс впустую.
+          if (!canTakeAttackAction(actor)) {
+            await ChatMessage.create({
+              speaker: ChatMessage.getSpeaker({ actor: actor }),
+              content: `<div class="wh-roll-result">
+                <div class="roll-header">${rollIcon("sword")}${esc(item.name)}</div>
+                <div class="roll-outcome">
+                  <span class="roll-failure">${rollIcon("ban","#ff6b6b")}Лимит Атак за этот Ход исчерпан (стр. 12).</span>
+                </div></div>`
+            });
+            return false;
+          }
+
           // Вторая рука (wdbc-3jlm): предмет, отмеченный в окне галочкой
           // «Обе руки». Берётся ДО списания ОД — от него зависит, каким
           // действием считать пару.
           const dualOff = f.dualWield ? (actor.items.get(f.offHandId) ?? null) : null;
+          // Прицеливание при «Обе руки» (стр. 12, wdbc-x1nz.2.41): «только
+          // ОДНА атака получает бонус» — thresholdOf(f) несёт его в основной
+          // руке по построению (thresholdParts включает aimingBonus), вторая
+          // рука иначе наследовала бы его бесплатно из той же суммы. Гасим
+          // его там, куда игрок НЕ выбрал положить бонус.
+          const aimAdjust = (dualOff && currentAiming !== "none" && !wp.noAim) ? aimingBonus : 0;
           // Вторая рука бьёт Стандартной Атакой / одиночным выстрелом, то есть
           // Полудействием: приём, база и режим огня из окна относятся к
           // основному оружию и на неё не переносятся.
@@ -192,6 +249,9 @@ export function openAttackDialog(ctx) {
               return false;
             }
           }
+          // Ресурс (ОД или Реакция Запрещённого Приёма) списан — атака состоялась,
+          // засчитываем её в лимит Хода (стр. 12, wdbc-x1nz.2.30).
+          await takeAttackAction(actor);
 
           // Death Dance / Смертельный Танец (wdbc-shr, находка 2): списание
           // ОС и отметка использования — только теперь, при подтверждённой
@@ -211,10 +271,37 @@ export function openAttackDialog(ctx) {
             await markDeathDanceUsed(actor);
           }
 
+          // Прицеливание (wdbc-1rno.5): обычно сбрасывается любой Атакой —
+          // Aim Focus/Фокус на Прицеле (rules/aim-focus.mjs), если активно
+          // продление ("pending"/"armed") И атака дальнобойная («все его
+          // стрелковые атаки» — рукопашную книга не продлевает), не тратит
+          // его на этой атаке вовсе — переживает до конца следующего Хода
+          // (снимается action-economy.mjs::applyAimFocusTurnEnd) или до
+          // следующего объявления Прицеливания (aiming-action.mjs::declareAim
+          // перезаписывает флаг заново).
+          const aimFocusKeepsAiming = !isMelee && !!actor.getFlag?.("warhammer-dbc", AIM_FOCUS_EXTENDED_FLAG);
+
           // Стойка/База — персистентны на акторе (как радио на вкладке БОЙ),
           // Хват/Профиль — во флагах предмета (как раньше в HUD): выбор в этом
           // диалоге должен остаться в силе и после закрытия окна, а не сбрасываться.
-          const actorUpdates = { "system.aiming": "none" };
+          // Продление ВОССТАНАВЛИВАЕТ прицел, а не «не трогает»: ОД за саму
+          // атаку списаны выше (spendActionPoints), а тот на любой ненулевой
+          // расход зовёт _maybeClearAiming — к этой строке system.aiming уже
+          // "none". Пустой патч оставлял бы Талант без эффекта со второго
+          // выстрела: первая атака берёт бонус из захваченного currentAiming,
+          // а дальше брать неоткуда (приёмка стопки #482-#504). Гасить
+          // очистку внутри spendActionPoints нельзя — Движение/Уклонение/
+          // Парирование прицел по-прежнему съедают (rules/aim-focus.mjs).
+          const actorUpdates = aimFocusKeepsAiming
+            ? { "system.aiming": currentAiming }
+            : { "system.aiming": "none" };
+          // Tracking Aim/Прицел на Упреждение (wdbc-1rno.5, rules/tracking-aim.mjs):
+          // «его следующий выстрел» — тратится ПЕРВЫМ ЖЕ дальнобойным выстрелом
+          // независимо от Aim Focus (тот продлевает сам бонус Прицеливания на
+          // несколько атак, это — отдельный один раз использованный тест).
+          if (!isMelee && actor.getFlag?.("warhammer-dbc", "trackingAimActive")) {
+            actorUpdates["flags.warhammer-dbc.-=trackingAimActive"] = null;
+          }
           if (isMelee && sel.stanceKey !== stance) actorUpdates["system.meleeStance"] = sel.stanceKey;
           if (isMelee && !fullAttackForced && sel.baseKey !== meleeBaseKey) actorUpdates["system.meleeBase"] = sel.baseKey;
           await actor.update(actorUpdates);
@@ -258,12 +345,16 @@ export function openAttackDialog(ctx) {
           // envy.mjs). Без Дара/без совпадения — no-op, поведение то же, что
           // раньше.
           await withEyeOfEnvy(actor, targetActor, f.char, () => _executeAttackRoll(
-            actor, item, f.char, thresholdOf(f),
+            actor, item, f.char, thresholdOf(f) - (f.aimHand === "off" ? aimAdjust : 0),
             f.rofMode || rofModes[0]?.value,
             aimTargets.find(t => t.value === f.aimVal),
             {
               forceHit: helplessAutoHit, doubleDamage: helplessAutoHit,
               fixedSuccessDeg: autoHitUsed ? 1 : undefined,
+              // Прицеливание (wdbc-1rno.5): actor.system.aiming уже сброшен в
+              // "none" выше (actorUpdates), значение для Меткого/bonusDamageDice
+              // нужно явным параметром, захваченным ДО сброса.
+              aiming: currentAiming,
               // Быстрая/Молниеносная — теперь Приём (стр. 14), а не отдельная
               // галочка: множитель попаданий включается выбором пилюли.
               isSwift: sel.maneuverKey === "swift", isLightning: sel.maneuverKey === "lightning",
@@ -289,6 +380,8 @@ export function openAttackDialog(ctx) {
               techniqueOpts: finalTechniqueOpts,
               dmgBonus: f.dmgBonus, changeSoulless: f.changeSoulless,
               meleeShot: f.meleeShot,
+              hiddenAttack: f.hiddenAttack,
+              targetSurprised: f.targetSurprised,
               shortRange: f.shortRange, maximal: f.maximal, bandIdx: f.bandIdx,
               // forceMelee идёт в бросок вместе с профилем: окно считает вид
               // теста из ОБОИХ (attack-dialog.mjs: attackIsMelee(sys,
@@ -316,6 +409,13 @@ export function openAttackDialog(ctx) {
               // Fanning / Быстрый Курок (wdbc-fy33): RoF 2..BS.b по выбору
               // заменяет фиксированный sys.rof_full только в режиме "full".
               rofCapOverride: (fanningActive && f.rofMode === "full") ? f.fanningRof : 0,
+              // Широкая Очередь (стр. 35, wdbc-x1nz.2.53) — галочка диалога;
+              // применимость к текущему rofMode/RoF проверяет сам attack.mjs.
+              wideBurst: f.wideBurst,
+              // Тесное помещение (стр. 36, wdbc-x1nz.2.63) — галочка диалога,
+              // видна только у Взрывного; применимость по damageType/Concussive
+              // разбирает сам attack.mjs.
+              confinedSpace: f.confinedSpace,
               // Условные эффекты боеприпаса, отмеченные игроком (стр. 203).
               ammoCondProps:  f.ammoSel.flatMap(c => c.wp || []),
               ammoCondDmg:    f.ammoSel.reduce((n, c) => n + (c.dmg || 0), 0),
@@ -323,8 +423,8 @@ export function openAttackDialog(ctx) {
               // Свойства оружия от правила (wdbc-w8z4) — уже отобраны по `when`
               // выше (resolvedAttack), attack.mjs только доливает их в _entries.
               ruleProps: resolvedAttack.weaponProps,
-              aimingLabel: (f.aiming !== "none" && !wp.noAim)
-                ? (f.aiming === "half" ? `Полу-прицеливание (+${f.aimBonus})` : `Полное прицеливание (+${f.aimBonus})`)
+              aimingLabel: (currentAiming !== "none" && !wp.noAim && f.aimHand !== "off")
+                ? (currentAiming === "half" ? `Полу-прицеливание (+${aimingBonus})` : `Полное прицеливание (+${aimingBonus})`)
                 : "",
               // Кого выцелили в паре: урон применяют к листу, а на сцене у пары
               // обычно один токен — без этой строки попадание во всадника ушло
@@ -345,8 +445,11 @@ export function openAttackDialog(ctx) {
 
           // Вторая рука — тем же действием, отдельным броском (wdbc-3jlm).
           // Своих ОД не тратит: они уже списаны наибольшим действием выше.
-          // Модификаторы окна к ней НЕ переносятся: прицеливание, режим огня,
-          // приём и хват относятся к оружию основной руки. Своё получает
+          // Модификаторы окна к ней НЕ переносятся: режим огня, приём и хват
+          // относятся к оружию основной руки. Прицеливание тоже не должно —
+          // но thresholdOf(f) несёт его по построению (thresholdParts общий
+          // на обе руки), поэтому гасим aimAdjust явно (wdbc-x1nz.2.41),
+          // иначе бонус доставался бы обеим атакам сразу. Своё получает
           // только парный штраф и штраф неосновной руки.
           if (dualOff) {
             const dw = dualWieldMods(actor, item, dualOff);
@@ -374,7 +477,7 @@ export function openAttackDialog(ctx) {
             // Характеристика (offChar), свой независимый бросок.
             await withEyeOfEnvy(actor, targetActor, offChar, () => _executeAttackRoll(
               actor, dualOff, offMelee ? "ws" : "bs",
-              thresholdOf(f) + dw.offHand + offPart,
+              thresholdOf(f) + dw.offHand + offPart - (f.aimHand === "off" ? 0 : aimAdjust),
               offRofMode,
               undefined,
               {
@@ -383,7 +486,11 @@ export function openAttackDialog(ctx) {
                   + (dw.offHand ? `, ${dw.offHand} за неосновную руку` : ", неосновная рука без штрафа")
                   + (dw.reductions.length ? `; убавили: ${dw.reductions.map(r => r.label).join(", ")}` : "")
                   + ")",
-                allGunsBlazingMod: agbMod
+                allGunsBlazingMod: agbMod,
+                // Прицеливание положено на вторую руку (wdbc-x1nz.2.41) — метка едет сюда, не основной.
+                aimingLabel: (currentAiming !== "none" && !wp.noAim && f.aimHand === "off")
+                  ? (currentAiming === "half" ? `Полу-прицеливание (+${aimingBonus})` : `Полное прицеливание (+${aimingBonus})`)
+                  : ""
               }
             ));
           }

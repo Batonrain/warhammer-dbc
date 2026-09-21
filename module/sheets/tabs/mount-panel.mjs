@@ -20,6 +20,7 @@ import { MOUNT_SPEEDS, MOUNT_ROLES, MOUNT_TRAIT_DEFS, RIDER_ACTOR_TYPES,
          handsNeeded, bonusHalfAction, sizeFits, pairInitiative, passengerCount,
          maneuverMods, skidInfo, mountRangedPenalty, isBroken,
          possessionOf, isPossessed, mountControlSkill, skillValue, BLADES_TIER_USES} from "../../rules/mount.mjs";
+import { spendActionPoints } from "../../combat/action-economy.mjs";
 
 /** Лимит атак Лезвиями в Ход по рангу Навыка управления (стр. 478). */
 
@@ -131,7 +132,11 @@ const roleOptions = current => Object.entries(MOUNT_ROLES).map(([key, def]) => (
 
 // ── Правка связи ──────────────────────────────────────────────────────────
 
-/** Сесть в седло. Размер проверяется, но не запрещает: решение за столом. */
+/**
+ * Сесть в седло (стр. 477, wdbc-x1nz.2.35: Полудействие) — Размер проверяется,
+ * но не запрещает: решение за столом. ОД проверяется ДО связи, чтобы
+ * заблокированная попытка не оставляла актора наполовину «оседлавшим».
+ */
 export async function setMount(actor, target) {
   if (!target) return;
   if (!MOUNT_ACTOR_TYPES.includes(target.type)) {
@@ -140,6 +145,9 @@ export async function setMount(actor, target) {
   if (target.uuid === actor.uuid) {
     return ui.notifications?.warn("Сесть верхом на самого себя нельзя.");
   }
+  if (!await spendActionPoints(actor, 1, { physical: true })) {
+    return ui.notifications?.warn("⚠️ Не хватает ОД (Оседлать — полудействие, стр. 477).");
+  }
   if (!sizeFits(actor, target)) {
     ui.notifications?.warn(
       `«${target.name}» не крупнее седока на Размер — по книге он такого не понесёт (стр. 477). Связь всё равно заведена.`);
@@ -147,8 +155,11 @@ export async function setMount(actor, target) {
   await actor.update({ "system.mount.uuid": target.uuid, "system.mount.skidUsed": false, "system.mount.bladesUsed": 0 });
 }
 
-/** Спешиться: связь снимается, скорость возвращается к стоянке. */
+/** Спешиться (стр. 477, wdbc-x1nz.2.35: Полудействие): связь снимается, скорость возвращается к стоянке. */
 export async function clearMount(actor) {
+  if (!await spendActionPoints(actor, 1, { physical: true })) {
+    return ui.notifications?.warn("⚠️ Не хватает ОД (Спешиться — полудействие, стр. 477).");
+  }
   await actor.update({
     "system.mount.uuid": "", "system.mount.speed": "still", "system.mount.skidUsed": false,
     "system.mount.bladesUsed": 0

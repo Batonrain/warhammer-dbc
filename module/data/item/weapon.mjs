@@ -104,6 +104,16 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
         historyText: new StringField({ initial: "", label: "Правило Истории" }),
         character:   new StringField({ initial: "", label: "Характер" }),
         mutations:   list("Мутации"),
+        // Наследие Излишеств (История 6, стр. 427): выбранная Характеристика
+        // (кроме WS/BS), по которой доступен опциональный риск +10/W+0-Порча.
+        excessChar:  new StringField({ initial: "", label: "Излишества: Характеристика" }),
+        // Быстрое/skilled 8-8 (стр. 428): рукопашная ветка — если оружие УЖЕ
+        // имело Flexible на момент получения Мутации, вместо повторного
+        // гранта книга даёт «Уклонения от него получают −10». Разово решается
+        // при apps/legacy-weapon.mjs::rollMutation — после этого weaponProps
+        // не хранит различия «Flexible от Мутации» vs «Flexible изначально»,
+        // так что сам факт «нужен ли живой −10» фиксируется здесь.
+        swiftDodgePenalty: new BooleanField({ initial: false, label: "Быстрое: −10 Уклонению (рукопашная)" }),
         bonus:       num(0, "Бонус Наследия к Dmg/Pen"),
         preProps:    list("Свойства до Возвышения"),
         preDamage:   new StringField({ initial: "", label: "Урон до Возвышения" }),
@@ -152,15 +162,21 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
       // разовой строкой в чате: combat/attack.mjs пишет true при срабатывании
       // существующего jamThreshold(), UI (sheet-helpers.mjs::weaponView,
       // tab-combat.hbs) блокирует кнопку «Атака» тем же приёмом, что magEmpty.
-      // Снимается кнопкой «Расклинить» (combat/weapon-properties.mjs::
-      // clearWeaponJam) — тот же паттерн «доступно всегда, без теста/времени»,
-      // что у Ремонта Разъедания (combat/damage.mjs::repairArmorCorrosion).
+      // Снимается кнопкой «Расклинить» (combat/clear-jam.mjs::rollClearJam,
+      // wdbc-x1nz.2.52) — Полное действие, тест Tech-Use+0 или
+      // Trade(Weaponsmith)+0 (стр. 35), не мгновенно.
       jammed:       new BooleanField({ initial: false, label: "Заклинило" }),
       // Номер Раунда, до конца которого «Расклинить» заблокировано (0 — не
       // заблокировано). Ставит Reformation Song/Разрушение (стрелковое —
       // «не расклинивается 1 раунд»); обычное заклинивание в бою эту
       // блокировку не трогает.
       jamLockedRound: new NumberField({ initial: 0, integer: true, nullable: false, label: "Расклин заблокирован до раунда" }),
+      // Испорченные Клином патроны (стр. 41, wdbc-x1nz.2.61): при заклинивании
+      // 2×RoF патронов из магазина уходят СЮДА (не пропадают насовсем) —
+      // «Расклин» их не трогает, снимает только jammed выше; вернуть их в
+      // magazineCur умеет отдельный тест Trade(Weaponsmith)+10 вне боя
+      // (combat/clear-jam.mjs::rollRestoreJammedAmmo).
+      jammedAmmo:   new NumberField({ initial: 0, integer: true, min: 0, nullable: false, label: "Испорчено Клином" }),
       // Психокостяное (wdbc-vwfk) — реальный флаг «валидная цель Reformation
       // Song», а не текстовая договорённость: reformation-song-dialog.mjs
       // фильтрует кандидатов по нему. Заведено по тому же прецеденту, что

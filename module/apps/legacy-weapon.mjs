@@ -22,11 +22,14 @@ import { LEGACY_COMMON, LEGACY_HISTORIES, LEGACY_CHARACTERS, CHARACTER_ORDER,
          entryText, rangeLabel } from "../constants/legacy-weapon.mjs";
 import { canAscend, ascensionRows, legacyBonus, qualityAfterLegacy, propsAfterLegacy,
          mutationSlots, nextMutationAt, mutationsAvailable, takenMutationNames,
-         isHeavyWeapon, hardProps } from "../rules/legacy-weapon.mjs";
+         isHeavyWeapon, hardProps, painLegacyProps, plagueLegacyProps,
+         tearingLegacyProps, shatteringLegacyGrant, stunningLegacyGrant,
+         swiftLegacyMeleeGrant, slaughterLegacyGrant, viciousLegacyGrant } from "../rules/legacy-weapon.mjs";
 import { ITEM_QUALITY } from "../constants/quality.mjs";
+import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
-import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const sgn = n => `${n >= 0 ? "+" : ""}${n}`;
@@ -67,7 +70,19 @@ export function legacyContext(item) {
     },
 
     history: L.historyName
-      ? { name: L.historyName, text: L.historyText, roll: L.historyKey }
+      ? {
+          name: L.historyName, text: L.historyText, roll: L.historyKey,
+          // Наследие Излишеств (wdbc-1rno.35, стр. 427): выбор Характеристики
+          // (кроме WS/BS) под опциональный риск +10/W+0-Порча — см.
+          // rules/legacy-weapon.mjs::legacyExcessRules.
+          isExcess: L.historyName === "Наследие Излишеств",
+          excessChar: L.excessChar || "",
+          excessCharOptions: L.historyName === "Наследие Излишеств"
+            ? Object.entries(CHARACTERISTICS)
+                .filter(([k]) => k !== "ws" && k !== "bs")
+                .map(([k, meta]) => ({ key: k, label: `${meta.abbr} — ${meta.label}`, selected: k === L.excessChar }))
+            : []
+        }
       : null,
     histories: LEGACY_HISTORIES.map(h => ({
       roll: h.roll, name: h.name, text: entryText(h, melee),
@@ -126,12 +141,11 @@ export async function rollAscension(item, { deedBonus = 0, legendary = false } =
   await postTestCard(actor, {
     icon: rollIcon("crown", "#e8c76a"),
     title: `Возвышение — ${esc(item.name)}`,
-    threshold: thresholdLine({
+    threshold: rollStatLine({
       label: rows[0]?.label ?? "Бесчестие (Inf)", base: rows[0]?.val ?? 0,
       parts: [...rows.slice(1).map(r => `${r.label} ${sgn(r.val)}`), ...ruleMods.parts],
-      threshold
+      threshold, rv
     }),
-    rv,
     outcome: outcomeHtml(passed, passed
       ? `Успех — ${deg} ${_degWord(deg)}. Оружие стало Оружием Наследия.`
       : `Провал — ${deg} ${_degWord(deg)}. Попытку можно повторить, подняв Inf.b или совершив деяние, достойное легенды.`),
@@ -142,7 +156,7 @@ export async function rollAscension(item, { deedBonus = 0, legendary = false } =
 /** Применить общие свойства Наследия к профилю, сняв снимок прежнего. */
 export async function applyLegacy(item, { legendary = false } = {}) {
   const sys = item.system ?? {};
-  const bonus = legacyBonus(item.actor);
+  const bonus = legacyBonus(item.actor, item);
   const preProps = foundry.utils.deepClone(sys.weaponProps || []);
 
   await item.update({
@@ -203,11 +217,24 @@ function addFlatDamage(dmg, n) {
 export async function setHistory(item, roll) {
   const entry = historyByRoll(roll);
   if (!entry) return;
-  await item.update({
+  const update = {
     "system.legacy.historyKey": entry.roll,
     "system.legacy.historyName": entry.name,
     "system.legacy.historyText": entryText(entry, isMeleeWeapon(item))
-  });
+  };
+  // Наследие Боли (wdbc-1rno.35, стр. 427): «Даёт Crippling(1), или Shocking,
+  // если уже имело Crippling» — разовое постоянное свойство, применяется
+  // здесь же, вместе с записью самой Истории, а не на каждой атаке.
+  if (entry.name === "Наследие Боли") {
+    update["system.weaponProps"] = painLegacyProps(item.system?.weaponProps ?? []);
+  }
+  // Наследие Чумы (wdbc-1rno.35, стр. 427): Toxic(0), или +1 к рейтингу,
+  // если уже был. Третье предложение книги (альтернативный яд) честно НЕ
+  // реализовано — см. заголовок plagueLegacyProps.
+  if (entry.name === "Наследие Чумы") {
+    update["system.weaponProps"] = plagueLegacyProps(item.system?.weaponProps ?? []);
+  }
+  await item.update(update);
 }
 
 export async function rollHistory(item) {
@@ -260,7 +287,68 @@ export async function rollMutation(item, characterKey) {
   const melee = isMeleeWeapon(item);
   const list = [...(item.system.legacy.mutations ?? []),
     { name: entry.name, text: entryText(entry, melee), roll: roll.total, character: key }];
-  await item.update({ "system.legacy.character": key, "system.legacy.mutations": list });
+  const update = { "system.legacy.character": key, "system.legacy.mutations": list };
+  // Рваное/fearsome 3-4 (wdbc-1rno.35, стр. 427): разовое постоянное
+  // свойство, как у Наследия Боли/Чумы — только у Мутации, не Истории.
+  if (entry.name === "Рваное") {
+    const infBonus = Number(actor.system?.characteristics?.inf?.bonus) || 0;
+    update["system.weaponProps"] = tearingLegacyProps(item.system?.weaponProps ?? [], infBonus);
+  }
+  // Разбивающее/fearsome 5-6 (wdbc-1rno.35, стр. 427): Power Field/Razor
+  // Sharp по классу оружия, «+2 Pen» повтора — плоская правка system.penetration.
+  if (entry.name === "Разбивающее") {
+    const grant = shatteringLegacyGrant(item);
+    update["system.weaponProps"] = grant.props;
+    if (grant.penDelta) update["system.penetration"] = (Number(item.system?.penetration) || 0) + grant.penDelta;
+  }
+  // Ошеломляющее/fearsome 7-7 (wdbc-1rno.35, стр. 427): Concussive, рейтинг
+  // по классу оружия. Второе предложение стрелковой ветки (пробитие
+  // Поглощения на Уклонении) честно НЕ реализовано — см. stunningLegacyGrant.
+  if (entry.name === "Ошеломляющее") {
+    const infBonus = Number(actor.system?.characteristics?.inf?.bonus) || 0;
+    update["system.weaponProps"] = stunningLegacyGrant(item, infBonus);
+  }
+  // Быстрое/skilled 8-8 (wdbc-1rno.35, стр. 428), рукопашная ветка: Flexible,
+  // или −10 живой Уклонению, если Flexible уже была (решается сейчас, раз и
+  // навсегда — см. swiftLegacyMeleeGrant).
+  if (entry.name === "Быстрое" && melee) {
+    const grant = swiftLegacyMeleeGrant(item);
+    update["system.weaponProps"] = grant.props;
+    update["system.legacy.swiftDodgePenalty"] = grant.swiftDodgePenalty;
+  }
+  // Резня/merciless 7-7 и Злобное/merciless 9-9 (wdbc-1rno.35, стр. 428):
+  // тот же приём грант/апгрейд рейтинга, что Ошеломляющее выше.
+  if (entry.name === "Резня") {
+    const infBonus = Number(actor.system?.characteristics?.inf?.bonus) || 0;
+    update["system.weaponProps"] = slaughterLegacyGrant(item, infBonus);
+  }
+  if (entry.name === "Злобное") {
+    const infBonus = Number(actor.system?.characteristics?.inf?.bonus) || 0;
+    update["system.weaponProps"] = viciousLegacyGrant(item, infBonus);
+  }
+  // Перебор/fearsome 8-8 (wdbc-1rno.35, стр. 427): «Бонус к урону оружия
+  // использует полный Inf.b вместо половины» — уже применённый бонус
+  // Возвышения (½Inf.b) ДОПЛАЧИВАЕТСЯ до полного прямо сейчас, не ждёт
+  // следующего Возвышения (weaponUpdated с item.system.legacy.mutations уже
+  // содержит эту запись — legacyBonus(actor, item) её увидит через list
+  // выше, но item.system.legacy ещё старый — считаем явно от list).
+  // Второе предложение (Очко Бесчестия → временный 2×Inf.b на ½Inf.b(окр▲)
+  // Ходов) честно НЕ реализовано: нужна общая кнопка «потратить Очко
+  // Бесчестия на временный эффект Мутации», которой в системе ещё нет —
+  // повторяющийся паттерн (≥5 записей таблиц), общая инфраструктура для
+  // отдельного тикета, не для этой находки в одиночку.
+  if (entry.name === "Перебор" && item.system.legacy?.active) {
+    const oldBonus = Number(item.system.legacy?.bonus) || 0;
+    const infBonus = Number(actor.system?.characteristics?.inf?.bonus) || 0;
+    const newBonus = infBonus; // Перебор всегда даёт ПОЛНЫЙ Inf.b
+    const delta = newBonus - oldBonus;
+    if (delta !== 0) {
+      update["system.legacy.bonus"] = newBonus;
+      update["system.penetration"] = (Number(item.system?.penetration) || 0) + delta;
+      update["system.damage"] = addFlatDamage(item.system?.damage || "", delta);
+    }
+  }
+  await item.update(update);
 
   // Тоже бросок по таблице (см. rollHistory): «Порога» здесь нет — строка
   // roll-threshold несёт условия выбора таблицы, а не число, с которым

@@ -21,7 +21,7 @@
 
 import { _degWord, _hitWord, _leftoverSuccessPhrase, negatedHits, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
-import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { parryProfile, dodgeProfile, _noReactionCard } from "./defense.mjs";
 import { spendReaction, apCostForActionType, canSpendActionPoints, spendActionPoints }
   from "./action-economy.mjs";
@@ -101,7 +101,7 @@ function requireWalker(vehicle, title) {
  * Крестовой Блок выключен намеренно: он про два клинка в руках персонажа, а
  * не про манипуляторы корпуса.
  */
-export async function performWalkerParry(vehicle, { extraMod = 0, attackerUuid = "", hitsCount = 1 } = {}) {
+export async function performWalkerParry(vehicle, { extraMod = 0, attackerUuid = "", hitsCount = 1, attackId = "" } = {}) {
   if (!requireWalker(vehicle, "Парирование")) return;
   const crew = await walkerCrew(vehicle);
   if (!crew) return refusal(vehicle, "Парирование",
@@ -116,7 +116,7 @@ export async function performWalkerParry(vehicle, { extraMod = 0, attackerUuid =
   if (balanceMod === null) return refusal(vehicle, "Парирование",
     `Орудием «${esc(weapon.name)}» нельзя парировать (Баланс ${sgn(balance)}).`);
 
-  if (!(await spendReaction(crew.actor, { forDefense: true })))
+  if (!(await spendReaction(crew.actor, { forDefense: true, attackId })))
     return _noReactionCard(crew.actor, "Парирование (Шагоход)");
 
   // Подпись −Размер×10 ставится своей строкой: parryProfile сложил его в общий
@@ -135,10 +135,10 @@ export async function performWalkerParry(vehicle, { extraMod = 0, attackerUuid =
   await postTestCard(vehicle, {
     icon: rollIcon("sword"), title: `Парирование (Шагоход) — ${esc(vehicle.name)}`,
     actorUuid: vehicle.uuid,
-    // Без esc: thresholdLine экранирует label и parts сам (helpers/test-card.mjs).
-    threshold: thresholdLine({ label: `WS ${crew.actor.name}`, base: wsTotal, parts, threshold }),
+    // Без esc: rollStatLine экранирует label и parts сам (helpers/test-card.mjs).
+    threshold: rollStatLine({ label: `WS ${crew.actor.name}`, base: wsTotal, parts, threshold, rv }),
     lines: [`<div style="font-size:0.82em;color:#5a4a30;margin-bottom:2px;">Орудие: ${esc(weapon.name)} (Баланс ${sgn(balance)}) · Реакцию тратит пилот</div>`],
-    rv, outcome: defenceOutcome("Парирование", passed, deg, totalHits, negated, remaining, "Атака отражена."),
+    outcome: defenceOutcome("Парирование", passed, deg, totalHits, negated, remaining, "Атака отражена."),
     sections: [leftoverNote(banked, leftover)]
   }, { rolls: [roll] });
 }
@@ -154,7 +154,7 @@ export async function performWalkerParry(vehicle, { extraMod = 0, attackerUuid =
  * у самой машины (system.operate — то же поле, которым считается Вираж), а
  * половина Уклонения — у пилота, со всем его стеком модификаторов.
  */
-export async function performWalkerDodge(vehicle, { extraMod = 0, attackerUuid = "", hitsCount = 1 } = {}) {
+export async function performWalkerDodge(vehicle, { extraMod = 0, attackerUuid = "", hitsCount = 1, attackId = "" } = {}) {
   if (!requireWalker(vehicle, "Уклонение")) return;
   const crew = await walkerCrew(vehicle);
   if (!crew) return refusal(vehicle, "Уклонение",
@@ -166,7 +166,7 @@ export async function performWalkerDodge(vehicle, { extraMod = 0, attackerUuid =
   const { dodgePart, operatePart, threshold } =
     walkerDodgeThresholds({ dodgeBase: profile.threshold, size, operate });
 
-  if (!(await spendReaction(crew.actor, { forDefense: true })))
+  if (!(await spendReaction(crew.actor, { forDefense: true, attackId })))
     return _noReactionCard(crew.actor, "Уклонение (Шагоход)");
 
   const roll = await new Roll("1d100").evaluate();
@@ -178,14 +178,20 @@ export async function performWalkerDodge(vehicle, { extraMod = 0, attackerUuid =
 
   const lower = threshold === operatePart && operatePart < dodgePart ? "Operate" : "Уклонение";
 
+  // Плашка Бросок/Режим/Порог (wdbc-fyvv) несёт ИТОГОВЫЙ Порог — комбинированный
+  // тест сравнивает ДВА разных Предела (Уклонение пилота и Operate машины) и
+  // берёт меньший, поэтому в rollStatLine (один base на тест) эта пара не
+  // ложится; сравнение обоих Пределов остаётся читаемой строкой ниже плашки.
   await postTestCard(vehicle, {
     icon: rollIcon("run"), title: `Уклонение (Шагоход) — ${esc(vehicle.name)}`,
     actorUuid: vehicle.uuid,
-    threshold: `<div class="roll-threshold">Комбинированный тест (наименьший Предел): Уклонение ${esc(crew.actor.name)} <b>${dodgePart}</b>${
-      profile.modParts.length ? ` (${profile.modParts.map(esc).join(", ")}, Размер ${sgn(walkerDefenceMod(size))})` : ` (Размер ${sgn(walkerDefenceMod(size))})`
-    } · Operate машины <b>${operatePart}</b> (${operate} −10) → Порог <b>${threshold}</b></div>`,
-    lines: [`<div style="font-size:0.82em;color:#5a4a30;margin-bottom:2px;">Ниже оказался ${lower} — по нему и бросок. Реакцию тратит пилот.</div>`],
-    rv, outcome: defenceOutcome("Уклонение", passed, deg, totalHits, negated, remaining, "Атака промахивается."),
+    threshold: rollStatLine({ label: lower, threshold, rv }),
+    lines: [
+      `<div style="font-size:0.82em;color:#5a4a30;margin-bottom:2px;">Комбинированный тест (наименьший Предел): Уклонение ${esc(crew.actor.name)} <b>${dodgePart}</b>${
+        profile.modParts.length ? ` (${profile.modParts.map(esc).join(", ")}, Размер ${sgn(walkerDefenceMod(size))})` : ` (Размер ${sgn(walkerDefenceMod(size))})`
+      } · Operate машины <b>${operatePart}</b> (${operate} −10). Ниже оказался ${lower} — по нему и бросок. Реакцию тратит пилот.</div>`
+    ],
+    outcome: defenceOutcome("Уклонение", passed, deg, totalHits, negated, remaining, "Атака промахивается."),
     sections: [leftoverNote(banked, leftover)]
   }, { rolls: [roll] });
 }

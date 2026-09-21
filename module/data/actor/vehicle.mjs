@@ -16,6 +16,11 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
     const num = (initial, label) => new NumberField({ initial, nullable: false, label });
     const str = (initial, label) => new StringField({ initial, label });
     return {
+      // Книга-источник (wdbc-e6vf) — того же поля не было вовсе, в отличие от
+      // _creature.mjs (см. там же комментарий): технику с книгой (не только
+      // созданную GM-ом с нуля) было негде записать даже после того, как
+      // оригинал найден (wdbc-o30i).
+      bookSource:      str("", "Книга-источник"),
       vehicleClass:    str("", "Класс"),
       vehicleType:     str("tank", "Тип"),
       origin:          str("", "Происхождение"),
@@ -48,6 +53,9 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
       ammoReloads:  num(10, "Боекомплект"),
       openTopped:   new BooleanField({ initial: false, label: "Открытый верх" }),
       traits:       str("", "Черты"),
+      // Пророк Гэллерпокса (wdbc-1rno.1) — см. тот же комментарий в
+      // module/data/actor/ship.mjs.
+      gallerpoxInfected: new BooleanField({ initial: false, label: "Заражена Гэллерпоксом" }),
       // Пустотные Щиты (X): по одному числу (текущая Структура щита, 0-20) на
       // каждый щит. Длина массива синхронизируется с рейтингом Черты Void
       // Shields в rules/vehicle.mjs::prepareVehicleDerived — новые щиты

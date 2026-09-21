@@ -321,6 +321,26 @@ body.wh-hud-on.wh-hotbar-on #hotbar { display: flex; }
 .wh-hud-move-btn:hover { color: var(--cg); border-color: var(--cg); background: rgba(77,255,166,.1); }
 .wh-hud-move-cost { font-size: 10px; color: #5aa37e; }
 
+/* ── Прицеливание (wdbc-1rno.5) — всегда на виду рядом с ОД/Реакциями, не
+     вкладка: было радио в диалоге атаки без расхода ОД, теперь настоящее
+     HUD-действие (combat/aiming-action.mjs, aimMenuItems). ── */
+.wh-hud-aiming { display: flex; gap: 4px; margin-top: 2px; }
+.wh-hud-aim-btn {
+  display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
+  font-size: 11px; font-weight: 700; letter-spacing: .02em; color: #d8ffe8;
+  border: 1px solid var(--cg-line); border-radius: 3px; padding: 3px 8px;
+  background: rgba(0,0,0,.2); white-space: nowrap;
+}
+.wh-hud-aim-btn:hover { color: var(--cg); border-color: var(--cg); background: rgba(77,255,166,.1); }
+.wh-hud-aim-btn.active { color: #1a1006; border-color: #ffb84d; background: #ffb84d; }
+.wh-hud-aim-cost { font-size: 10px; color: #5aa37e; }
+.wh-hud-aim-btn.active .wh-hud-aim-cost { color: #6a4a10; }
+/* Фокус на Прицеле (wdbc-1rno.5) — галочка ДО клика, не тратящая ничего сама
+   по себе (см. aiming-action.mjs::toggleAimFocusPending). warn — нет Реакции
+   прямо сейчас, клик всё равно доступен (расход проверяется при declareAim). */
+.wh-hud-aim-focus.warn { border-color: #ff8a5c; color: #ffb89a; }
+.wh-hud-aim-focus.active.warn { background: #ff8a5c; border-color: #ff8a5c; color: #1a1006; }
+
 /* ── Вкладка «Химия» (wdbc-zdu4) — применить/снять эффект, та же
      applyDrug/deactivateDrugEffect, что вкладка «Химия» листа. ── */
 .wh-hud-chem { flex: 1 1 0; min-width: 220px; max-width: 480px; }

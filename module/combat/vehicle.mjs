@@ -6,7 +6,7 @@
 import { _degWord, _hitWord, _leftoverSuccessPhrase, negatedHits, esc } from "../helpers/utils.mjs";
 import { addEvasionSurplus } from "./evasion-pool.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
-import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { ARMOUR_SIDES, TERRAIN_TABLE, TERRAIN_MANEUVER_MODS,
          getVehicleCrit, LOCATION_LABEL_TO_KEY,
          REPAIR_CONDITIONS, REPAIR_PACE, VEHICLE_BREAKAGES } from "../constants/vehicle.mjs";
@@ -73,8 +73,8 @@ export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attac
 
   await postTestCard(actor, {
     icon: rollIcon("warp","#8fd0ff"), title: `Вираж — ${esc(actor.name)}`,
-    threshold: thresholdLine({ label: "Operate", base: operate, parts: modParts, threshold }),
-    rv, outcome, sections: [leftoverNote]
+    threshold: rollStatLine({ label: "Operate", base: operate, parts: modParts, threshold, rv }),
+    outcome, sections: [leftoverNote]
   }, { rolls: [roll] });
 }
 
@@ -211,8 +211,12 @@ async function _resolveTerrain(actor, operate, terrainMod, manMod, extraMod, amp
 
   await postTestCard(actor, {
     icon: rollIcon("burst","#b0a080"), title: `Трудный Ландшафт — ${esc(actor.name)}`,
-    threshold: `<div class="roll-threshold">Operate <b>${operate}</b> ${sgn(totalMod)} (ландшафт ${sgn(terrainMod)}${manMod ? `, манёвр ${sgn(manMod)}` : ""}${extraMod ? `, мод ${sgn(extraMod)}` : ""}) → Порог <b>${threshold}</b></div>`,
-    rv, sections: [body]
+    threshold: rollStatLine({
+      label: "Operate", base: operate,
+      parts: [`${sgn(totalMod)} (ландшафт ${sgn(terrainMod)}${manMod ? `, манёвр ${sgn(manMod)}` : ""}${extraMod ? `, мод ${sgn(extraMod)}` : ""})`],
+      threshold, rv
+    }),
+    sections: [body]
   }, { rolls: [roll] });
 }
 
@@ -353,7 +357,8 @@ export async function applyDamageToVehicle(actor, damageData) {
     // wdbc-bxw6: попадание засчитано как «от мины» (Минный Плуг: +20
     // аблативной Структуры против мин) — детектора мин в конвейере урона
     // нет, флаг ставит вызывающая сторона по решению GM.
-    fromMine = false
+    fromMine = false,
+    hasExtreme = false // Экстремальный Урон (wdbc-x1nz.2.50): гарантирует 1 непоглощаемого урона ниже
   } = damageData;
 
   const tf = actor.system.derived?.traitFlags || {};
@@ -413,8 +418,18 @@ export async function applyDamageToVehicle(actor, damageData) {
   // Аблативное Бронирование байка (стр. 478): пока Структура полна, любой
   // непоглощённый урон срезается до 1. У большой техники этой Черты нет, и
   // расчёт для неё не меняется.
-  const net     = ablativeDamage(rawNet, actor);
+  let net       = ablativeDamage(rawNet, actor);
   const ablated = net !== rawNet;
+  // Экстремальный Урон (стр. 34, wdbc-x1nz.2.50): «если после Поглощения
+  // попадание не нанесло никакого реального урона, оно наносит 1
+  // непоглощаемого урона» — последняя проверка, ПОСЛЕ Пустотных Щитов/
+  // Дефлектора (те выше уже либо аннулируют попадание целиком, либо не
+  // трогают net) и Аблативного Бронирования байка.
+  // Дефлектор — категорическая блокировка (как Пустотные Щиты выше, которые
+  // на этот код вообще не доходят), не «Поглощение» в смысле книги — успешный
+  // dodge-бросок дефлектора гасит попадание целиком, минимум ему не положен.
+  const extremeFloorApplied = hasExtreme && net === 0 && !deflected;
+  if (extremeFloorApplied) net = 1;
 
   const curVal  = Number(actor.system.structure?.value) || 0;
   const curCrit = Number(actor.system.structure?.critical) || 0;
@@ -498,7 +513,8 @@ export async function applyDamageToVehicle(actor, damageData) {
           ${net > 0
             ? `<div class="roll-hit-line"><span class="roll-hit-idx">В Структуру</span><span class="roll-hit-dmg roll-hit-dmg-bad">${net}</span></div>
                <div class="roll-damage-meta">Структура: <b>${curVal}</b> → <b>${newVal}</b>${gotCrit ? ` (крит. ${newCrit})` : ""}${
-                 ablated ? ` · <span class="dmg-tb-note">Аблативное Бронирование: ${rawNet} → 1</span>` : ""}</div>`
+                 ablated ? ` · <span class="dmg-tb-note">Аблативное Бронирование: ${rawNet} → 1</span>` : ""}${
+                 extremeFloorApplied ? ` · <span class="dmg-tb-note">Экстремальный Урон: поглощено полностью, но 1 непоглощаемого урона всё равно проходит (стр. 34)</span>` : ""}</div>`
             : `<div class="roll-outcome"><span class="roll-success">Урон поглощён (${rawDamage} ≤ ${effAP})</span></div>`
           }
         </div>`,
@@ -624,8 +640,12 @@ async function _resolveRepair(actor, { skill, cond, pace, mod, per, stateId }) {
 
   await postTestCard(actor, {
     icon: rollIcon("dice","#6fe6ff"), title: `Ремонт — ${esc(actor.name)}`,
-    threshold: `<div class="roll-threshold">Навык <b>${skill}</b> ${sgn(totalMod)} (условия ${sgn(cond)}${pace ? `, темп ${sgn(pace)}` : ""}${mod ? `, мод ${sgn(mod)}` : ""}) → Порог <b>${threshold}</b></div>`,
-    rv, sections: [body]
+    threshold: rollStatLine({
+      label: "Навык", base: skill,
+      parts: [`${sgn(totalMod)} (условия ${sgn(cond)}${pace ? `, темп ${sgn(pace)}` : ""}${mod ? `, мод ${sgn(mod)}` : ""})`],
+      threshold, rv
+    }),
+    sections: [body]
   }, { rolls: [roll] });
 }
 
@@ -705,8 +725,12 @@ async function _resolveVoidShieldRepair(actor, shields, idx, skill, extraMod) {
 
   await postTestCard(actor, {
     icon: rollIcon("shield", "#6fe6ff"), title: `Ремонт Щита №${idx + 1} — ${esc(actor.name)}`,
-    threshold: `<div class="roll-threshold">Tech-Use <b>${skill}</b> ${sgn(totalMod)} (${cfg.label}, ${cfg.action}) → Порог <b>${threshold}</b></div>`,
-    rv, sections: [body]
+    threshold: rollStatLine({
+      label: "Tech-Use", base: skill,
+      parts: [`${sgn(totalMod)} (${cfg.label}, ${cfg.action})`],
+      threshold, rv
+    }),
+    sections: [body]
   }, { rolls: [roll] });
 }
 

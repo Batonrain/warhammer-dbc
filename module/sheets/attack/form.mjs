@@ -34,7 +34,6 @@ export function readAttackForm(form, ammoConds) {
   const attr = (sel, key) => parseInt(el(sel)?.dataset?.[key]) || 0;
 
   const ROF = "input[name='atk-rof']:checked";
-  const AIM = "input[name='atk-aiming']:checked";
 
   // Стойка/База/Приём/Хват/Профиль — undefined, если в форме нет такой
   // группы (стрелковое: только Профиль) или ничего не выбрано (не должно
@@ -99,6 +98,13 @@ export function readAttackForm(form, ammoConds) {
     // Fanning / Быстрый Курок (wdbc-fy33): RoF Длинной очереди 2..BS.b по
     // выбору — 0 значит «поля в форме нет» (Талант неактивен для этого броска).
     fanningRof: parseInt(el("#atk-fanning-rof")?.value) || 0,
+    // Широкая Очередь (стр. 35, wdbc-x1nz.2.53) — галочка сама решает только
+    // «хочет ли игрок», настоящую проверку (Очередь ли выбрана, хватает ли ей
+    // RoF 3) делает attack.mjs по rofMode/sys, не форма.
+    wideBurst:  el("#atk-wide-burst")?.checked || false,
+    // Тесное помещение (стр. 36, wdbc-x1nz.2.63) — ГМ решает на глаз, галочка
+    // видна только у Взрывного (attack-dialog.mjs::confinedSpaceHtml).
+    confinedSpace: el("#atk-confined-space")?.checked || false,
     aimVal:     el("#atk-aim")?.value,
     aimPenalty: attr("#atk-aim option:checked", "penalty"),
     // Кого выцеливают в паре «всадник + скакун» и во что это обходится. Штраф
@@ -112,8 +118,9 @@ export function readAttackForm(form, ammoConds) {
     // рукопашной (стр. Ходовой п.9) считает resolveVehicleSide в attack-dialog.mjs.
     vehicleSide:       el("#atk-vehicle-side")?.value || "",
     vehicleRearCalled: on("#atk-vehicle-rear-called"),
-    aiming:     el(AIM)?.value || "none",
-    aimBonus:   attr(AIM, "bonus"),
+    // Прицеливание (wdbc-1rno.5): больше не поле формы — HUD-действие
+    // ДО открытия этого окна, читатели используют ctx.currentAiming/
+    // ctx.aimingBonus (attack-dialog.mjs), не readAttackForm.
     // Отмеченные ситуативные: сумма — в порог, список — в сводку заголовка.
     sitPicked:  all(".atk-mod-cb:checked"),
     // data-value уже 0 у автоуспеха (см. makeMods выше), поэтому отдельно
@@ -130,6 +137,17 @@ export function readAttackForm(form, ammoConds) {
     // Карабин (wdbc-z56a): нужен на исполнении броска, чтобы дать цели +10
     // вместо +30 на Уклонение — см. #atk-melee-shot в specificMods выше.
     meleeShot:  on("#atk-melee-shot"),
+    // Скрытая атака (стр. 12, wdbc-x1nz.2.29): «Избегание невозможно от
+    // атаки, о которой цель не знает» — см. #atk-mod-hidden в commonMods выше.
+    hiddenAttack: on("#atk-mod-hidden"),
+    // Взятие Врасплох (стр. 32, wdbc-1rno.3) — см. #atk-mod-surprised в
+    // commonMods (sheets/attack/mods.mjs): именованный флаг нужен Quiet
+    // Elimination и подобным находкам, не только сумме в общий Порог.
+    targetSurprised: on("#atk-mod-surprised"),
+    // Прицеливание при «Обе руки» (стр. 12, wdbc-x1nz.2.41): «только ОДНА из
+    // атак получает бонус» — выбор руки, по умолчанию основная (радио может
+    // не быть в форме вовсе, если Прицеливание не активно — тогда "main").
+    aimHand: el("input[name='atk-aim-hand']:checked")?.value || "main",
     // Перемены (Change, стр. 74 Книги Аэльдари): цель бездушна/техника → +X Pen.
     changeSoulless: on("#atk-change-soulless"),
     weaponOff:  on("#atk-weaponoff"),

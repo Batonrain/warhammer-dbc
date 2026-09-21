@@ -232,6 +232,15 @@ export function conditionApplyFields(key, level = null, actor = null) {
   if (def.hasLevel && def.levelField && level != null) {
     fields[`system.conditions.${def.levelField}`] = Number(level) || 0;
   }
+  // Врасплох (стр. 12, wdbc-x1nz.2.26): «не получает Реакции в этот Раунд» —
+  // не только на СВОЁМ Ходу (там 0 Реакций даёт resetActionEconomy), но и
+  // ДО него, если по порядку Инициативы враги действуют раньше. Обнулить
+  // нужно сразу здесь — в единственной точке, через которую проходит любое
+  // наложение Состояния (диалог, драг карточки ритуала, скрипт эффекта).
+  if (key === "surprised" && actor) {
+    fields["system.reactions.value"] = 0;
+    fields["system.reactions.defenseValue"] = 0;
+  }
   return fields;
 }
 
@@ -246,6 +255,13 @@ export function conditionRemoveFields(key) {
   const def    = CONDITIONS_DEF[key];
   const fields = { [`system.conditions.${key}`]: false };
   if (def?.hasLevel && def.levelField) fields[`system.conditions.${def.levelField}`] = 0;
+  // Горение (wdbc-3pv5): снятие тушит и запомненные числа Cooler/Морозного
+  // Сердца — иначе следующее загорание унаследовало бы чужие урон поджигания
+  // и остаток окна от предыдущего пожара.
+  if (key === "burning") {
+    fields["system.conditions.burningSourceDamage"] = 0;
+    fields["system.conditions.burningGraceRounds"]  = 0;
+  }
   return fields;
 }
 

@@ -46,7 +46,7 @@ export const RACES = {
     // Расовые Черты с авто-эффектами (создаются на акторе при применении расы)
     traits: [
       { name: "Amphibious / Амфибия", benefit: "Дышит под водой; перебрасывает Плавание.", effects: {} },
-      { name: "Nimble / Проворный", benefit: "Атакующим по нему −Ag.b к попаданию.", rating: 10, hasRating: true, effects: {} },
+      { name: "Nimble / Проворный", benefit: "Штраф атакующим по нему (−X, Рейтинг Черты).", rating: 10, hasRating: true, effects: {} },
       { name: "Size (1) / Размер (1)", benefit: "Размер +1 к SPD.", rating: 1, hasRating: true, effects: { sizeMod: 1 } },
       { name: "Unnatural Strength (4) / Сверхъестественная Сила (4)", benefit: "+4 к Бонусу Силы.", rating: 4, hasRating: true, effects: { charBonusStat: "s", charBonusValue: 4 } },
       { name: "Unnatural Toughness (4) / Сверхъестественная Стойкость (4)", benefit: "+4 к Бонусу Стойкости.", rating: 4, hasRating: true, effects: { charBonusStat: "t", charBonusValue: 4 } },
@@ -64,7 +64,7 @@ export const RACES = {
     chars: { ws:30, bs:30, s:25, t:25, ag:35, int:35, per:35, wp:30, fel:30 },
     bonusRolls: 2, bonusPoints: 7, charShift: 1,
     traits: [
-      { name: "Nimble / Проворный", benefit: "Атакующим по нему −A.b к попаданию.", rating: 10, hasRating: true, effects: {} },
+      { name: "Nimble / Проворный", benefit: "Штраф атакующим по нему (−X, Рейтинг Черты).", rating: 10, hasRating: true, effects: {} },
       { name: "Psyker / Псайкер", benefit: "PR 0. Древнее Мастерство (см. вкладку ПСИ). Отметьте «Пси-Пробуждение».", rating: 0, hasRating: true, effects: {} },
       { name: "Unnatural Agility (4) / Сверхъест. Ловкость (4)", benefit: "+4 к Бонусу Ловкости.", rating: 4, hasRating: true, effects: { charBonusStat: "ag", charBonusValue: 4 } },
       { name: "Unnatural Perception (4) / Сверхъест. Восприятие (4)", benefit: "+4 к Бонусу Восприятия.", rating: 4, hasRating: true, effects: { charBonusStat: "per", charBonusValue: 4 } },
@@ -89,7 +89,7 @@ export const RACES = {
     bonusRolls: 2, bonusPoints: 7, charShift: 1,
     traits: [
       { name: "Dark Sight / Тёмное Зрение", benefit: "Видит в темноте без штрафов.", effects: {} },
-      { name: "Nimble / Проворный", benefit: "Атакующим по нему −A.b к попаданию.", rating: 10, hasRating: true, effects: {} },
+      { name: "Nimble / Проворный", benefit: "Штраф атакующим по нему (−X, Рейтинг Черты).", rating: 10, hasRating: true, effects: {} },
       { name: "Psyker / Псайкер", benefit: "PR 0, Связанный. Не может развивать дар без обучения у эльдарского варлока/провидца (см. «Тёмная Душа»). Парии действуют на него как на псайкера.", rating: 0, hasRating: true, effects: {} },
       { name: "Unnatural Agility (4) / Сверхъест. Ловкость (4)", benefit: "+4 к Бонусу Ловкости.", rating: 4, hasRating: true, effects: { charBonusStat: "ag", charBonusValue: 4 } },
       { name: "Unnatural Perception (4) / Сверхъест. Восприятие (4)", benefit: "+4 к Бонусу Восприятия.", rating: 4, hasRating: true, effects: { charBonusStat: "per", charBonusValue: 4 } },
@@ -171,7 +171,7 @@ export const RACES = {
       { name: "Dark Sight / Тёмное Зрение", benefit: "Видит в темноте без штрафов.", effects: {} },
       { name: "Multiple Arms (4) / Множество Рук (4)", benefit: "Четыре руки; все считаются основными, штрафов за множество рук нет.", rating: 4, hasRating: true, effects: {} },
       { name: "Natural Armour (3) / Природная Броня (3)", benefit: "AP 3 по всем локациям.", rating: 3, hasRating: true, effects: { naturalArmour: 3 } },
-      { name: "Nimble (10) / Проворный (10)", benefit: "Атакующим по нему −A.b к попаданию.", rating: 10, hasRating: true, effects: {} },
+      { name: "Nimble (10) / Проворный (10)", benefit: "Штраф атакующим по нему (−X, Рейтинг Черты).", rating: 10, hasRating: true, effects: {} },
       { name: "Size (1) / Размер (1)", benefit: "Размер +1 к SPD.", rating: 1, hasRating: true, effects: { sizeMod: 1 } },
       { name: "Sturdy / Кряжистый", benefit: "Устойчив к сбиванию с ног и отбрасыванию.", effects: {} },
       { name: "Toxic (3) / Токсичный (3)", benefit: "Естественные атаки ядовиты.", rating: 3, hasRating: true, effects: {} },
@@ -324,7 +324,7 @@ export const RACES = {
       { name:"Dark Sight / Ночное Зрение", benefit:"Видит в темноте." },
       { name:"Multiple Arms / Многорукий", benefit:"Дополнительные руки → доп. атаки/манипуляции." },
       { name:"Natural Armour (1) / Естественная Броня (1)", benefit:"+1 AP на все локации.", rating:1, hasRating:true, effects:{ armourAll:1 } },
-      { name:"Nimble / Проворный", benefit:"Штраф атакующим (−Ag.b).", rating:10, hasRating:true },
+      { name:"Nimble / Проворный", benefit:"Штраф атакующим по нему (−X, Рейтинг Черты).", rating:10, hasRating:true },
       { name:"Size (1) / Размер (1)", benefit:"Размер +1.", rating:1, hasRating:true, effects:{ sizeMod:1 } },
       { name:"Sturdy / Надёжный", benefit:"+20 vs Захват/Оглушение." },
       { name:"Toxic / Токсичный", benefit:"Естественное оружие Toxic.", rating:1, hasRating:true },

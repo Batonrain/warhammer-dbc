@@ -32,8 +32,9 @@
 import { esc, _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
+import { rollStatLine } from "../helpers/test-card.mjs";
 import { spendActionPoints, isEncounterActive } from "./action-economy.mjs";
-import { addFatigue, fatiguePenalty } from "../sheets/tabs/conditions.mjs";
+import { addFatigue, fatiguePenalty, conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { hasAbility } from "../rules/ability-by-key.mjs";
@@ -46,6 +47,21 @@ import { testOutcome } from "../rules/roll-outcome.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
+import { raceMatches } from "../rules/race.mjs";
+import { isGrappled } from "../rules/predicates.mjs";
+import { pickReroll } from "../rules/reroll-pick.mjs";
+import { enemyContactTokenDocs, offerFreeAttack } from "./free-attack.mjs";
+
+// Захват (стр. 12, wdbc-x1nz.2.31): «только действия Борьбы или не-Физические»
+// — Движение Физическое (см. тип действия «Физическое», стр. 12), поэтому
+// каждое боевое объявление движения ниже сначала спрашивает isGrappled.
+// Действия Борьбы (Оторваться и т.п.) живут в combat/grapple.mjs и этот гейт
+// не проходят — им сюда не заходить.
+function _blockedByGrapple(actor) {
+  if (!isGrappled(actor)) return false;
+  ui.notifications.warn("⚠️ В Захвате: доступны только действия Борьбы или не-Физические (стр. 12).");
+  return true;
+}
 
 // Локус Стремительности (стр. 29, wdbc-smc): бонусное полудействие, которое
 // можно потратить ТОЛЬКО на Движение (не на атаку/что-либо ещё) — раз в
@@ -127,12 +143,23 @@ export async function markMoveDegreeThisTurn(actor, degree) {
 // mount.mjs держит тот же список для скакунов/байков — здесь та же проверка,
 // но по Чертам самого актора, а не его скакуна).
 const FLIGHT_TRAIT_NAMES = ["Flyer", "Летун", "Летающий", "Hoverer", "Парящий"];
+const FLYER_TRAIT_NAMES  = ["Flyer", "Летун", "Летающий"];
 const FLIGHT_TRAIT_ITEM_TYPES = new Set(["trait", "vehicleTrait"]);
 
 export function actorCanFly(actor) {
   return (actor?.items ?? []).some(item =>
     FLIGHT_TRAIT_ITEM_TYPES.has(item?.type)
     && FLIGHT_TRAIT_NAMES.some(name => itemHasName(item, name)));
+}
+
+// Hoverer БЕЗ Flyer поднимается только на Приземную (стр. 30: «Персонажи с
+// Трейтом Flyer или Hoverer могут подниматься на Приземную... а Персонажи с
+// Трейтом Flyer — перемещаться... на Низкую» и выше) — Низкая/Высокая требуют
+// именно Flyer, отдельно от общего гейта actorCanFly выше.
+export function actorHasFlyer(actor) {
+  return (actor?.items ?? []).some(item =>
+    FLIGHT_TRAIT_ITEM_TYPES.has(item?.type)
+    && FLYER_TRAIT_NAMES.some(name => itemHasName(item, name)));
 }
 
 // Half-Step/Полушаг (Талант, стр. 12, wdbc-9wvm): доступен только с этим
@@ -152,10 +179,25 @@ export function skillTotal(actor, key) {
   return actor.system.characteristics?.[charKey]?.total ?? 0;
 }
 
-/** 1d100 против порога — степень считает общее ядро module/rules/roll-outcome.mjs (wdbc-5dvx). */
-async function _d100(threshold) {
-  const roll = await new Roll("1d100").evaluate();
-  const rv = roll.total;
+/**
+ * 1d100 против порога — степень считает общее ядро module/rules/roll-outcome.mjs
+ * (wdbc-5dvx). `actor` — необязателен: если задан и на нём висит
+ * fullMoveDisadvantage (стр. 28, wdbc-x1nz.2.34 — «после Полного Движения
+ * можно ещё полудействие, не Атаку, но его тесты с Помехой»), бросок берёт
+ * ХУДШИЙ из двух d100 (та же общая Помеха, что и «Кубик» диалога атаки —
+ * rules/reroll-pick.mjs::pickReroll("keepWorst")) и гасит флаг — на большее,
+ * чем один следующий тест, книжная Помеха не рассчитана. Прочие вызыватели
+ * _d100 (Падение, Марш) actor не передают — их Полное Движение не касается.
+ */
+async function _d100(threshold, actor = null) {
+  let roll = await new Roll("1d100").evaluate();
+  let rv = roll.total;
+  if (actor?.getFlag?.("warhammer-dbc", "fullMoveDisadvantage")) {
+    const roll2 = await new Roll("1d100").evaluate();
+    const picked = pickReroll([rv, roll2.total], "keepWorst");
+    if (picked.index === 1) { roll = roll2; rv = picked.value; }
+    await actor.unsetFlag("warhammer-dbc", "fullMoveDisadvantage");
+  }
   const { success: passed, deg } = testOutcome(rv, threshold);
   return { roll, rv, passed, deg };
 }
@@ -174,6 +216,7 @@ async function _postCard(actor, content) {
 
 export async function declareHalfMove(actor) {
   if (!actor) return;
+  if (_blockedByGrapple(actor)) return;
   // Потеря обеих ног (стр. 30-31, wdbc-r5o7.5): «не может ходить» вообще.
   if (_bothLegsLost(actor))
     return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
@@ -198,22 +241,32 @@ export async function declareHalfMove(actor) {
 
 export async function declareFullMove(actor) {
   if (!actor) return;
+  if (_blockedByGrapple(actor)) return;
   if (_bothLegsLost(actor))
     return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
   if (_bothFeetLost(actor) && !await _confirmAcrobaticsToWalk(actor)) return;
   if (!await spendActionPoints(actor, 2, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
+  // Стр. 28, wdbc-x1nz.2.34: доп. полудействие после Полного Движения (не
+  // Атака) — его тест с Помехой. По решению пользователя автоматизировано
+  // только для следующего Карабканья/Прыжка/Плавания этого же Хода (они уже
+  // проходят через общий _d100(threshold, actor)) — остальные возможные
+  // полудействия разбросаны по десяткам разных диалогов, подключать некуда.
+  // Флаг гасится первым же использованием _d100 с actor, а на случай, если
+  // не потратится вовсе, есть и turn-scoped safety-net (TURN_SCOPED_FLAGS).
+  await actor.setFlag("warhammer-dbc", "fullMoveDisadvantage", true);
   _showReachRing(actor, actor.system.movement?.move);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Полное Движение</div>
     <div class="roll-threshold">Полное действие (2 ОД). Перемещение до SPD×2.</div>
-    <div class="roll-threshold" style="font-size:0.85em;">Можно ещё полудействие (не атаку) — но его тесты, если есть, получают Помеху (стр. 32).</div>
+    <div class="roll-threshold" style="font-size:0.85em;">Можно ещё полудействие (не атаку) — но его тесты, если есть, получают Помеху (стр. 32). Для следующего Карабканья/Прыжка/Плавания в этом Ходу — уже автоматически.</div>
   </div>`);
 }
 
 export async function declareCharge(actor) {
   if (!actor) return;
+  if (_blockedByGrapple(actor)) return;
   // Повален (стр. 30-31, wdbc-r5o7.2): «нельзя Бег и Натиск».
   if (actor.system.conditions?.prone)
     return ui.notifications.warn("⚠️ Повален — нельзя объявить Натиск. Сначала встать (Полудействие).");
@@ -241,6 +294,7 @@ export async function declareCharge(actor) {
  */
 export async function declareDisengage(actor) {
   if (!actor) return;
+  if (_blockedByGrapple(actor)) return;
   if (_bothLegsLost(actor))
     return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
   if (_bothFeetLost(actor) && !await _confirmAcrobaticsToWalk(actor)) return;
@@ -262,8 +316,29 @@ export async function declareDisengage(actor) {
   </div>`);
 }
 
+/**
+ * Глубокий Контакт: переноска раненого/пленного (wdbc-x1nz.2.19, стр. 31) —
+ * тумблер flags.warhammer-dbc.deepContactCarry, который free-attack.mjs::
+ * processTokenMove читает на КАЖДОМ перемещении этого токена, пока флаг
+ * включён (в отличие от disengageActive выше — это НЕ разовый флаг:
+ * переноска обычно занимает несколько перемещений подряд, снимается тем же
+ * пунктом меню, когда ГМ/игрок решает, что она закончена).
+ */
+export async function toggleDeepContactCarry(actor) {
+  if (!actor) return;
+  const active = !!actor.getFlag("warhammer-dbc", "deepContactCarry");
+  await actor.setFlag("warhammer-dbc", "deepContactCarry", !active);
+  await _postCard(actor, `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Глубокий Контакт</div>
+    <div class="roll-threshold">${!active
+      ? "Несёт/держит в Глубоком Контакте — движение не провоцирует Свободную Атаку (стр. 31)."
+      : "Переноска закончена — движение снова провоцирует Свободную Атаку как обычно."}</div>
+  </div>`);
+}
+
 export async function declareRun(actor) {
   if (!actor) return;
+  if (_blockedByGrapple(actor)) return;
   // Повален (стр. 30-31, wdbc-r5o7.2): «нельзя Бег и Натиск».
   if (actor.system.conditions?.prone)
     return ui.notifications.warn("⚠️ Повален — нельзя объявить Бег. Сначала встать (Полудействие).");
@@ -293,6 +368,7 @@ const HALF_STEP_FLAG = "movement.halfStep";
  */
 export async function declareHalfStep(actor) {
   if (!actor) return;
+  if (_blockedByGrapple(actor)) return;
   if (!actorHasHalfStep(actor)) return ui.notifications.warn("⚠️ Нужен Талант Half-Step/Полушаг.");
   if (!isThrottleReady(actor, HALF_STEP_FLAG, "round")) {
     return ui.notifications.warn("⚠️ Полушаг уже использован в этом Ходу.");
@@ -333,6 +409,250 @@ export async function declareHalfStep(actor) {
   </div>`);
 }
 
+// ── Лечь (стр. 30, wdbc-x1nz.2.36) ─────────────────────────────────────────
+/**
+ * Лечь: Свободное действие — накладывает Состояние «Повален» (стр. 30-31,
+ * все его штрафы уже описаны там же, module/constants/conditions.mjs).
+ * conditionApplyFields сама спрашивает иммунитет — пустой патч означает
+ * «не наложено», предупреждаем честно, а не молча ничего не делаем.
+ */
+export async function declareProne(actor) {
+  if (!actor) return;
+  if (_blockedByGrapple(actor)) return;
+  if (actor.system.conditions?.prone) return ui.notifications.warn("⚠️ Уже Повален.");
+  const fields = conditionApplyFields("prone", null, actor);
+  if (!Object.keys(fields).length) return ui.notifications.warn("⚠️ Иммунитет — Состояние «Повален» не наложено.");
+  await actor.update(fields);
+  await _postCard(actor, `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("run","#9fb4ff")}${esc(actor.name)} — Лечь</div>
+    <div class="roll-threshold">Свободное действие. Состояние «Повален» (стр. 30-31).</div>
+  </div>`);
+}
+
+// ── Встать (стр. 30, wdbc-x1nz.2.36) ────────────────────────────────────────
+/**
+ * Встать даёт выбор (стр. 30): обычным способом (Полудействие, безусловно)
+ * или прыжком (тест Acrobatics(A)+0 — Успех встаёт Свободным действием,
+ * Провал даёт всем врагам в рукопашной с ним Свободную Атаку, после чего он
+ * всё равно встаёт Полудействием). Диалог здесь только предлагает выбор —
+ * сама логика в _standUpPlain/_standUpJump ниже, чтобы обе ветки были
+ * проверяемы тестом по отдельности без поднятия настоящего Dialog.
+ */
+export async function declareStandUp(actor) {
+  if (!actor) return;
+  if (_blockedByGrapple(actor)) return;
+  if (!actor.system.conditions?.prone) return ui.notifications.warn("⚠️ Персонаж не Повален — вставать не с чего.");
+  return new Promise(resolve => {
+    new Dialog({
+      title: `Встать — ${actor.name}`,
+      content: `<div class="atk-range-info" style="font-size:0.85em;padding:4px 2px;">
+        Обычным способом — Полудействие, всегда удаётся.<br/>
+        Прыжком — тест Acrobatics(A)+0: Успех встаёт Свободным действием;
+        Провал даёт всем врагам в рукопашной с ним Свободную Атаку, но он
+        всё равно встаёт (Полудействием), стр. 30.
+      </div>`,
+      buttons: {
+        plain: { label: "Обычным способом (1 ОД)", callback: () => resolve(_standUpPlain(actor)) },
+        jump:  { label: "Прыжком (тест Acrobatics)", callback: () => resolve(_standUpJump(actor)) },
+        cancel: { label: "Отмена", callback: () => resolve(null) }
+      },
+      default: "plain"
+    }, { classes: ["dialog", "wh-attack-dialog"], width: 420 }).render(true);
+  });
+}
+
+export async function _standUpPlain(actor) {
+  if (!await spendActionPoints(actor, 1, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  await actor.update(conditionRemoveFields("prone"));
+  await _postCard(actor, `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("run","#9fb4ff")}${esc(actor.name)} — Встать</div>
+    <div class="roll-threshold">Полудействие (1 ОД). Встал обычным способом.</div>
+  </div>`);
+}
+
+export async function _standUpJump(actor) {
+  const acro = skillTotal(actor, "acrobatics");
+  const { rv, passed, deg } = await _d100(acro, actor);
+  const statLineHtml = rollStatLine({ label: "Acrobatics", base: acro, threshold: acro, rv });
+
+  if (passed) {
+    await actor.update(conditionRemoveFields("prone"));
+    return _postCard(actor, `<div class="wh-roll-result">
+      <div class="roll-header">${rollIcon("run","#9fb4ff")}${esc(actor.name)} — Встать (прыжком)</div>
+      ${statLineHtml}
+      <div class="roll-outcome"><span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Вскочил Свободным действием.</span></div>
+    </div>`);
+  }
+
+  // Провал (стр. 30): все враги в рукопашной с ним получают Свободную Атаку —
+  // тот же примитив, что уже даёт «Выход из Боя» (combat/free-attack.mjs),
+  // здесь вызван проактивно (не по перемещению токена, а по факту провала).
+  const tokenDoc = actor.getActiveTokens?.(false, true)?.[0] ?? null;
+  if (tokenDoc) {
+    for (const enemyDoc of enemyContactTokenDocs(tokenDoc)) {
+      await offerFreeAttack(enemyDoc, tokenDoc);
+    }
+  }
+  if (!await spendActionPoints(actor, 1, { physical: true })) {
+    return _postCard(actor, `<div class="wh-roll-result">
+      <div class="roll-header">${rollIcon("run","#9fb4ff")}${esc(actor.name)} — Встать (прыжком)</div>
+      ${statLineHtml}
+      <div class="roll-outcome"><span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Враги в рукопашной получают Свободную Атаку. ⚠️ Не хватает ОД встать Полудействием — остаётся Повален.</span></div>
+    </div>`);
+  }
+  await actor.update(conditionRemoveFields("prone"));
+  await _postCard(actor, `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("run","#9fb4ff")}${esc(actor.name)} — Встать (прыжком)</div>
+    ${statLineHtml}
+    <div class="roll-outcome"><span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Враги в рукопашной получают Свободную Атаку — но встал Полудействием.</span></div>
+  </div>`);
+}
+
+// ── Вольт (стр. 30, wdbc-x1nz.2.37) ─────────────────────────────────────────
+/**
+ * Вольт: Полудействие — выходит из Рукопашной без провоцирования обычной
+ * Свободной Атаки, испытывая один встречный тест Acrobatics(A)+0 vs WS+0
+ * против всех врагов, что иначе получили бы Свободную Атаку. Книга: «он
+ * делает один бросок против всех врагов сразу» — читается как «его сторона
+ * теста не перебрасывается на каждого врага заново», а не «враги вовсе не
+ * бросают»: у каждого своя Степень WS, поэтому карточка даёт каждому врагу
+ * СВОЮ кнопку теста WS+0, сравниваемую с уже готовым (фиксированным) броском
+ * вольтующего — hooks.mjs::"wh-vault-contest-btn" сравнивает степени.
+ */
+/**
+ * Ядро Вольта — сам встречный тест и кнопки контеста по врагам в контакте.
+ * Общее между самостоятельным Вольтом (declareVault, платит 1 ОД сам) и
+ * Отскоком из рукопашной (combat/recoil.mjs::rollRecoilVault — «считается
+ * Вольтом», wdbc-zik7/wdbc-x1nz.2.40, но БЕЗ своей цены: уже оплачен
+ * состоявшимся Уклонением-Реакцией, второй раз не берём).
+ */
+async function _rollVaultContest(actor) {
+  const acro = skillTotal(actor, "acrobatics");
+  const { rv, passed, deg } = await _d100(acro, actor);
+  const moverScore = passed ? deg : -deg;
+  const tokenDoc = actor.getActiveTokens?.(false, true)?.[0] ?? null;
+  const contacts = tokenDoc ? enemyContactTokenDocs(tokenDoc) : [];
+  const contestBtns = contacts.map(en => {
+    const enemyActor = en.actor;
+    if (!enemyActor) return "";
+    return `<button class="wh-vault-contest-btn" type="button"
+      data-mover-uuid="${actor.uuid}" data-mover-score="${moverScore}"
+      data-enemy-uuid="${enemyActor.uuid}">
+      Проверить WS: ${esc(enemyActor.name)}
+    </button>`;
+  }).join("");
+  const statLineHtml = rollStatLine({ label: "Acrobatics", base: acro, threshold: acro, rv });
+  const contestSection = contestBtns
+    ? `<div class="roll-defense-btns">${contestBtns}</div>`
+    : `<div class="roll-threshold" style="font-size:0.85em;">Нет врагов в рукопашной с ним.</div>`;
+  return { statLineHtml, contestSection };
+}
+
+export async function declareVault(actor) {
+  if (!actor) return;
+  if (_blockedByGrapple(actor)) return;
+  if (!await spendActionPoints(actor, 1, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  await markMovedThisTurn(actor);
+  // Вольт ЗАМЕНЯЕТ Свободную Атаку встречным тестом WS (стр. 30), а не
+  // добавляется к ней — тот же разовый глушитель, что ставит «Выход из Боя»
+  // (declareDisengage выше) и Натиск-сбивание (bulldoze.mjs). Без него
+  // combat/free-attack.mjs::processTokenMove выдаёт тем же врагам ещё и
+  // обычную Свободную Атаку, и одно движение наказывается дважды.
+  await actor.setFlag("warhammer-dbc", "disengageActive", true);
+  _showReachRing(actor, actor.system.movement?.halfMove);
+  const { statLineHtml, contestSection } = await _rollVaultContest(actor);
+
+  await _postCard(actor, `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("run","#8fd0ff")}${esc(actor.name)} — Вольт</div>
+    ${statLineHtml}
+    <div class="roll-threshold">Полудействие (1 ОД). Выходит из Рукопашной, перемещение до SPD×1 — без обычной Свободной Атаки.</div>
+    <div class="roll-threshold" style="font-size:0.85em;">Каждый враг, что мог бы дать Свободную Атаку, проверяет WS+0 против этого броска: Провал — промахивается, Успех — попадает (стр. 30).</div>
+    ${contestSection}
+  </div>`);
+}
+
+/**
+ * Отскок из рукопашной «считается Вольтом» (стр. 12, wdbc-zik7, обновлено
+ * wdbc-x1nz.2.40 — раньше это было безусловное disengageActive, до того, как
+ * появился настоящий Вольт с тестом): та же механика, что у declareVault,
+ * но БЕЗ своей цены ОД (уже оплачена состоявшимся Уклонением-Реакцией от
+ * стрелковой атаки, вызвавшим сам Отскок) и без Полудвижения/reach-ring —
+ * персонаж и так уже переместился Отскоком. Зовётся из combat/recoil.mjs::
+ * performRecoil при volt=true.
+ */
+export async function rollRecoilVault(actor) {
+  // Тот же глушитель обычной Свободной Атаки, что в declareVault: до
+  // wdbc-x1nz.2.40 его ставил сам performRecoil безусловно, и при переводе
+  // Отскока на Вольт он потерялся — Отскок из рукопашной снова стал
+  // провоцировать Свободную Атаку сверх встречного теста.
+  await actor.setFlag("warhammer-dbc", "disengageActive", true);
+  const { statLineHtml, contestSection } = await _rollVaultContest(actor);
+  await _postCard(actor, `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("run","#8fd0ff")}${esc(actor.name)} — Вольт (через Отскок)</div>
+    ${statLineHtml}
+    <div class="roll-threshold" style="font-size:0.85em;">Отскок из рукопашной засчитан как Вольт (стр. 12) — свой ОД не берёт, уже оплачен Уклонением.</div>
+    <div class="roll-threshold" style="font-size:0.85em;">Каждый враг, что мог бы дать Свободную Атаку, проверяет WS+0 против этого броска: Провал — промахивается, Успех — попадает (стр. 30).</div>
+    ${contestSection}
+  </div>`);
+}
+
+/**
+ * Клик врага по кнопке «Проверить WS» карточки Вольта — бросает WS+0 этого
+ * врага и сравнивает Степень со СВОЕЙ (уже готовой) Степенью вольтующего.
+ * Строго больше — попадает; ничья или меньше — вольтующий уходит.
+ */
+export async function resolveVaultContestClick(moverUuid, moverScore, enemyUuid) {
+  const enemyActor = enemyUuid ? await fromUuid(enemyUuid).catch(() => null) : null;
+  if (!enemyActor) return ui.notifications.warn("⚠️ Проверяющий враг не найден.");
+  const moverActor = moverUuid ? await fromUuid(moverUuid).catch(() => null) : null;
+  const ws = Number(enemyActor.system?.characteristics?.ws?.total) || 0;
+  const roll = await new Roll("1d100").evaluate();
+  const rv = roll.total;
+  const { success: passed, deg } = testOutcome(rv, ws);
+  const enemyScore = passed ? deg : -deg;
+  const hits = enemyScore > moverScore;
+  await _postCard(enemyActor, `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("sword","#ff9d4d")}Вольт — WS ${esc(enemyActor.name)} vs ${esc(moverActor?.name ?? "?")}</div>
+    ${rollStatLine({ label: "WS", base: ws, threshold: ws, rv })}
+    <div class="roll-outcome">${hits
+      ? `<span class="roll-failure">Попадает по вольтующему — Степень ${enemyScore} против ${moverScore}.</span>`
+      : `<span class="roll-success">Промахивается — Степень ${enemyScore} против ${moverScore}.</span>`}</div>
+  </div>`);
+}
+
+// ── Перебежка (стр. 30, wdbc-x1nz.2.38) ─────────────────────────────────────
+/**
+ * Перебежка: Полное действие, SPD×2, «начинать и заканчивать в укрытии» —
+ * в системе нет автоматического определения укрытия/LOS (см. находки
+ * wdbc-x1nz «Стрельба требует линии обзора» — то же честное ограничение),
+ * поэтому легальность объявляет сам игрок (тот же приём, что «Скрытая
+ * атака»/«Цель Врасплох» — галочка на слово, не автоопределение). Даёт
+ * бонус укрытия и переброс Избеганий/Подавления до конца Раунда флагом
+ * duckAndCoverActive — читают defense.mjs (Уклонение/Парирование) и
+ * suppression.mjs, ОБА через один и тот же турн-скоуп флаг ниже.
+ */
+export async function declareDuckAndCover(actor) {
+  if (!actor) return;
+  if (_blockedByGrapple(actor)) return;
+  if (_bothLegsLost(actor)) return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
+  const confirmed = await Dialog.confirm({
+    title: "Перебежка",
+    content: `<p>Персонаж начинает и заканчивает движение в укрытии (стр. 30) — подтвердите: это действительно так?</p>
+      <p style="font-size:0.85em;color:#888;">Система не считает укрытие/линию обзора автоматически — решает стол.</p>`
+  });
+  if (!confirmed) return;
+  if (!await spendActionPoints(actor, 2, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  await markMovedThisTurn(actor);
+  await markMoveDegreeThisTurn(actor, "full");
+  await actor.setFlag("warhammer-dbc", "duckAndCoverActive", true);
+  _showReachRing(actor, actor.system.movement?.move);
+  await _postCard(actor, `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("run","#9fe8b0")}${esc(actor.name)} — Перебежка</div>
+    <div class="roll-threshold">Полное действие (2 ОД). Перемещение до SPD×2, старт/финиш в укрытии.</div>
+    <div class="roll-threshold" style="font-size:0.85em;">До конца Раунда: бонус укрытия, с которого начал, и переброс тестов Избегания/Подавления.</div>
+  </div>`);
+}
+
 // ════════════════════════════════════════════════════════════════════════
 // B. Отдельные механики — кнопками (стр. 29-30)
 // ════════════════════════════════════════════════════════════════════════
@@ -362,6 +682,7 @@ export function showClimbDialog(actor) {
           <select id="cl-type">
             <option value="simple">Простой (Athletics+0)</option>
             <option value="sheer">Отвесный (Athletics−10 и Acrobatics+0, оба)</option>
+            <option value="rope">Спуск на верёвке (Athletics+10, только вниз)</option>
           </select>
         </div>
         <div class="atk-dlg-row"><label>Athletics (S):</label><input id="cl-ath" type="number" value="${ath}"/></div>
@@ -369,7 +690,8 @@ export function showClimbDialog(actor) {
         <div class="atk-dlg-row"><label>Доп. мод:</label><input id="cl-mod" type="number" value="${climbBonus}"/></div>
         ${climbNote}
         <div class="atk-range-info" style="font-size:0.82em;">
-          Дистанция: SPD/2 (${(spd / 2).toFixed(1)}) + Успехи, м. Провал — падение (стр. 29).
+          Простой/Отвесный: SPD/2 (${(spd / 2).toFixed(1)}) + Успехи, м. Провал — падение (стр. 29).
+          Верёвка: только спуск, 10+3×Успехи м. Нужны верёвка, костыли и молоток (или надёжная опора).
         </div>
       </form>`,
     buttons: {
@@ -388,7 +710,10 @@ export function showClimbDialog(actor) {
 }
 
 export async function _resolveClimb(actor, type, ath, acro, mod, spd) {
-  let passed, deg, thresholdLine;
+  // Стр. 29, wdbc-x1nz.2.34: «Карабканье и Прыжки — Полное действие» — раньше
+  // тест катился, а ОД не списывались вовсе (действие было фактически бесплатным).
+  if (!await spendActionPoints(actor, 2, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  let passed, deg, statLineHtml, extraNote = "";
   // Штрафы состояния тела и снаряжения — общим сбором (wdbc-kuun): раньше
   // здесь считалась одна Усталость вручную, а выключенная броня и Перевес
   // инвентаря до Карабканья не доезжали, хотя это физическое действие.
@@ -396,6 +721,44 @@ export async function _resolveClimb(actor, type, ath, acro, mod, spd) {
   const athMods  = collectTestMods(actor, { kind: "skill", skill: "athletics",  char: "s"  });
   const acroMods = collectTestMods(actor, { kind: "skill", skill: "acrobatics", char: "ag" });
   const modsNote = m => (m.parts.length ? ` (${m.parts.join(", ")})` : "");
+
+  if (type === "rope") {
+    // Спуск на верёвке (стр. 29): Athletics+10, 10+3×Усп. м. На 1 Провал —
+    // спускается только на 5м (без падения). На 2+ Провала — отдельный тест
+    // на S+0 (сырая Сила, не навык — тот же приём, что тест T у Марша) или
+    // падение со стартовой позиции.
+    const threshold = ath + 10 + mod + athMods.total;
+    const r = await _d100(threshold, actor);
+    statLineHtml = rollStatLine({
+      label: "Athletics", base: ath,
+      parts: ["+10 (верёвка)", mod ? sgn(mod) : "", ...athMods.parts],
+      threshold, rv: r.rv
+    });
+    passed = r.passed; deg = r.deg;
+    let dist, outcomeText;
+    if (passed) {
+      dist = 10 + 3 * deg;
+      outcomeText = `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Спустился на ${dist}м.</span>`;
+    } else if (deg === 1) {
+      dist = 5;
+      outcomeText = `<span class="roll-failure">Провал (1 ст.) — спустился только на ${dist}м, не падает.</span>`;
+    } else {
+      const sTotal = Number(actor.system.characteristics?.s?.total) || 0;
+      const sRoll = await new Roll("1d100").evaluate();
+      const sHeld = sRoll.total <= sTotal;
+      extraNote = `<div class="roll-threshold">S+0 <b>${sTotal}</b> · 1d100: <b>${sRoll.total}</b> — ${sHeld ? "удержался" : "падает со стартовой позиции!"}</div>`;
+      outcomeText = sHeld
+        ? `<span class="roll-failure">Провал (${deg} ст.) — не продвинулся, но удержался.</span>`
+        : `<span class="roll-failure">Провал (${deg} ст.) — падает со стартовой позиции!</span>`;
+    }
+    await _postCard(actor, `<div class="wh-roll-result">
+      <div class="roll-header">${rollIcon("run","#b0a080")}Карабканье (верёвка) — ${esc(actor.name)}</div>
+      ${statLineHtml}
+      ${extraNote}
+      <div class="roll-outcome">${outcomeText}</div>
+    </div>`);
+    return;
+  }
 
   if (type === "sheer") {
     const athThreshold  = ath - 10 + mod + athMods.total;
@@ -409,12 +772,20 @@ export async function _resolveClimb(actor, type, ath, acro, mod, spd) {
       ? Math.min(athThreshold - rv, acroThreshold - rv)
       : Math.max(rv - athThreshold, rv - acroThreshold);
     deg = Math.floor(Math.abs(worstDiff) / 10) + 1;
-    thresholdLine = `Athletics−10 <b>${athThreshold}</b>${modsNote(athMods)} и Acrobatics <b>${acroThreshold}</b>${modsNote(acroMods)} (оба) · 1d100: <b>${rv}</b>`;
+    // Два НЕЗАВИСИМЫХ Предела разом (оба должны пройти) — в одну ячейку
+    // Порога (wdbc-fyvv) не сводятся: плашка несёт только Бросок, сама
+    // пара Пределов — строкой под ней, как раньше.
+    statLineHtml = rollStatLine({ rv });
+    extraNote = `<div class="roll-threshold">Athletics−10 <b>${athThreshold}</b>${modsNote(athMods)} и Acrobatics <b>${acroThreshold}</b>${modsNote(acroMods)} (оба)</div>`;
   } else {
     const threshold = ath + mod + athMods.total;
-    const r = await _d100(threshold);
+    const r = await _d100(threshold, actor);
     passed = r.passed; deg = r.deg;
-    thresholdLine = `Athletics <b>${ath}</b>${sgn(mod)}${modsNote(athMods)} → Порог <b>${threshold}</b> · 1d100: <b>${r.rv}</b>`;
+    statLineHtml = rollStatLine({
+      label: "Athletics", base: ath,
+      parts: [mod ? sgn(mod) : "", ...athMods.parts],
+      threshold, rv: r.rv
+    });
   }
 
   const dist = (spd / 2 + deg).toFixed(1);
@@ -424,7 +795,8 @@ export async function _resolveClimb(actor, type, ath, acro, mod, spd) {
 
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}Карабканье — ${esc(actor.name)}</div>
-    <div class="roll-threshold">${thresholdLine}</div>
+    ${statLineHtml}
+    ${extraNote}
     <div class="roll-outcome">${outcome}</div>
   </div>`);
 }
@@ -482,10 +854,12 @@ export function showJumpDialog(actor) {
 }
 
 export async function _resolveJump(actor, type, acro, runup, mod, sb) {
+  // Стр. 29, wdbc-x1nz.2.34: то же самое — Полное действие, ОД раньше не списывались.
+  if (!await spendActionPoints(actor, 2, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
   // Штрафы состояния тела — общим сбором, как у Карабканья выше (wdbc-kuun).
   const bodyMods = collectTestMods(actor, { kind: "skill", skill: "acrobatics", char: "ag" });
   const threshold = acro + runup + mod + bodyMods.total;
-  const { rv, passed, deg } = await _d100(threshold);
+  const { rv, passed, deg } = await _d100(threshold, actor);
   const f = JUMP_FORMULAS[type];
   const dist = passed ? f.dist(sb, deg).toFixed(1) : 0;
   const outcome = passed
@@ -494,7 +868,11 @@ export async function _resolveJump(actor, type, acro, runup, mod, sb) {
 
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}Прыжок — ${esc(actor.name)}</div>
-    <div class="roll-threshold">Acrobatics <b>${acro}</b>${runup ? ` + ${runup} (разбег)` : ""}${sgn(mod)}${bodyMods.parts.map(p => ` ${p}`).join("")} → Порог <b>${threshold}</b> · 1d100: <b>${rv}</b></div>
+    ${rollStatLine({
+      label: "Acrobatics", base: acro,
+      parts: [runup ? `+${runup} (разбег)` : "", mod ? sgn(mod) : "", ...bodyMods.parts],
+      threshold, rv
+    })}
     <div class="roll-outcome">${outcome}</div>
   </div>`);
 }
@@ -533,20 +911,38 @@ export function showSwimDialog(actor) {
 }
 
 export async function _resolveSwim(actor, ath, heavy, ext, mod, sb) {
-  // Штрафы состояния тела — общим сбором, как у Карабканья/Прыжка (wdbc-kuun).
+  // Плавание НЕ каталогизировано книгой как отдельное действие со своей
+  // ценой ОД (стр. 30 говорит только «требует тест», в отличие от явного
+  // «Действие: Полное действие» у Карабканья/Прыжка) — ОД здесь намеренно
+  // не списываются, это не тот же пробел. Помеха после Полного Движения
+  // (wdbc-x1nz.2.34) применяется — пользователь явно включил Плавание в её
+  // список, это не требует своей цены действия.
   const bodyMods = collectTestMods(actor, { kind: "skill", skill: "athletics", char: "s" });
   const threshold = ath + (heavy ? -30 : 0) + mod + bodyMods.total;
-  const r = ext ? await _hourlyTest(actor, { threshold, slow: false })
-                : { ...(await _d100(threshold)), effThreshold: threshold, streak: 0 };
-  const { rv, passed, deg, effThreshold, streak } = r;
+  const { rv, passed, deg } = await _d100(threshold, actor);
   const dist = passed ? (sb / 2).toFixed(1) : 0;
   const outcome = passed
     ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Плывёт, SPD ${dist}м.</span>`
-    : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Не может двигаться.${ext ? " +1 Усталость." : ""}</span>`;
+    : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Не может двигаться.</span>`;
+
+  // Свыше T.b часов (стр. 30): отдельный кумулятивный тест на сырую Т
+  // (не Athletics) — не решает, движется ли персонаж (это выше, по
+  // Athletics), только копит Усталость за час, как у Марша (_hourlyTest).
+  let staminaLine = "";
+  if (ext) {
+    const t = Number(actor.system.characteristics?.t?.total) || 0;
+    const s = await _hourlyTest(actor, { threshold: t, slow: false });
+    staminaLine = `<div class="roll-threshold">Выносливость (T${s.streak ? `, −${s.streak * 10} кумулятив` : ""}) <b>${s.effThreshold}</b> · 1d100: <b>${s.rv}</b> — ${s.passed ? "Успех" : "Провал, +1 Усталость"}</div>`;
+  }
 
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#6fe6ff")}Плавание — ${esc(actor.name)}</div>
-    <div class="roll-threshold">Athletics <b>${ath}</b>${heavy ? " − 30 (тяж.)" : ""}${sgn(mod)}${bodyMods.parts.map(p => ` ${p}`).join("")}${streak ? ` − ${streak * 10} (кумулятив)` : ""} → Порог <b>${effThreshold}</b> · 1d100: <b>${rv}</b></div>
+    ${rollStatLine({
+      label: "Athletics", base: ath,
+      parts: [heavy ? "− 30 (тяж.)" : "", mod ? sgn(mod) : "", ...bodyMods.parts],
+      threshold, rv
+    })}
+    ${staminaLine}
     <div class="roll-outcome">${outcome}</div>
   </div>`);
 }
@@ -561,24 +957,36 @@ export async function _resolveSwim(actor, ath, heavy, ext, mod, sb) {
  * ОЧЕНЬ большой высоты становится БОЛЬШЕ, не меньше — Мутация, не только
  * благо.
  */
-async function _resolveFallDamage(actor, height, { tuck = false } = {}) {
+export async function _resolveFallDamage(actor, height, { tuck = false } = {}) {
   const capped = !hasRuleFlag(actor, "mutation.breeze");
   const cappedHeight = capped ? Math.min(height, 25) : height;
   const dmgRoll = await new Roll(`1d10 + ${cappedHeight}`).evaluate();
-  let reduction = 0, tuckLine = "";
+  let reduction = 0, tuckLine = "", perfectLanding = false;
   if (tuck) {
     const acro = skillTotal(actor, "acrobatics");
     const { rv, passed, deg } = await _d100(acro);
     reduction = passed ? deg : 0;
-    tuckLine = `<div class="roll-threshold">Группирование (Acrobatics ${acro}) · 1d100: <b>${rv}</b> — ${passed ? `Успех, −${deg} урона` : "Провал, без смягчения"}</div>`;
+    // Стр. 30: «Если на Группировании набрано больше Успехов, чем высота
+    // падения, персонаж приземляется на ноги и не получает никакого урона» —
+    // отдельная гарантия СВЕРХ обычного «−1 урона за успех» чуть выше: не
+    // просто вычесть deg из 1d10+высоты (бросок мог бы всё равно дать урон),
+    // а обнулить его целиком.
+    perfectLanding = passed && deg > height;
+    tuckLine = `<div class="roll-threshold">Группирование (Acrobatics ${acro}) · 1d100: <b>${rv}</b> — ${
+      passed
+        ? (perfectLanding ? `Успех, ${deg} усп. > высоты — приземлился на ноги без урона!` : `Успех, −${deg} урона`)
+        : "Провал, без смягчения"}</div>`;
   }
-  const finalDmg = Math.max(0, dmgRoll.total - reduction);
+  const finalDmg = perfectLanding ? 0 : Math.max(0, dmgRoll.total - reduction);
+  const outcomeText = perfectLanding
+    ? `Приземлился на ноги — урон: <b>0</b> I.`
+    : `Урон: <b>${finalDmg}</b> I (Impact), броня не учитывается.`;
 
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("skull","#ff6b6b")}Падение — ${esc(actor.name)}</div>
     <div class="roll-threshold">Высота <b>${height}</b>м${(capped && height > 25) ? " (ограничено терминальной скоростью 25)" : ""}${(!capped && height > 25) ? " (Бриз: терминальная скорость не ограничена)" : ""} · 1d10+${cappedHeight}: <b>${dmgRoll.total}</b></div>
     ${tuckLine}
-    <div class="roll-outcome"><span class="${finalDmg > 0 ? "roll-failure" : "roll-success"}">Урон: <b>${finalDmg}</b> I (Impact), броня не учитывается.</span></div>
+    <div class="roll-outcome"><span class="${finalDmg > 0 ? "roll-failure" : "roll-success"}">${outcomeText}</span></div>
   </div>`);
 }
 
@@ -618,13 +1026,74 @@ export function showFallDialog(actor) {
 }
 
 // ── Полёт ───────────────────────────────────────────────────────────────
+// «landed» — явное «не летит, стоит на земле», а не отсутствие значения:
+// раньше диалог подставлял `|| "ground"` только для UI, но нигде не было
+// состояния, отличимого от «летит на Приземной высоте» (это давало бы
+// автоигнор Трудного Ландшафта пешему персонажу с Чертой Flyer/Hoverer,
+// который прямо сейчас не летит вовсе). wdbc-x1nz.2.
 const FLIGHT_ALTITUDES = {
+  landed: { label: "Не летит (на земле)" },
   ground: { label: "Приземная (до 2м)" },
   low:    { label: "Низкая" },
   high:   { label: "Высокая" }
 };
 
-// Урон при потере управления (стр. 30): высота × тип движения.
+// Высоты, при которых персонаж реально находится в полёте (не «landed») —
+// читает и showFlightDialog (гейт Hoverer/Flyer, синхронизация elevation),
+// и movement-terrain.mjs (автоигнор Трудного Ландшафта, стр. 30).
+export const IN_FLIGHT_ALTITUDES = ["ground", "low", "high"];
+
+// Порядок уровней Высоты (стр. 30) — соседние индексы дают книжную цену
+// перехода. landed↔ground — свободное действие, ground↔low — полудействие,
+// low↔high — полное действие. «Низкая↔Приземная — также частью Натиска»
+// (без доп. цены сверх самого Натиска) НЕ смоделировано — определять «это
+// сейчас часть Натиска» негде (Натиск считается на совсем другом пути,
+// combat/movement-actions.mjs::declareCharge, момент клика «Установить
+// высоту» с ним никак не связан).
+const ALTITUDE_ORDER = ["landed", "ground", "low", "high"];
+const ALTITUDE_STEP_COST = [0, 1, 2]; // цена шага landed→ground, ground→low, low→high
+
+/**
+ * Цена Смены Высоты (стр. 30, wdbc-x1nz.2.34) между соседними уровнями.
+ * Прыжок через уровень (landed→low и т.п.) за одно действие книга не даёт —
+ * null означает «недопустимо одним действием».
+ */
+export function _altitudeChangeCost(from, to) {
+  const a = ALTITUDE_ORDER.indexOf(from);
+  const b = ALTITUDE_ORDER.indexOf(to);
+  if (a < 0 || b < 0 || Math.abs(a - b) !== 1) return null;
+  return ALTITUDE_STEP_COST[Math.min(a, b)];
+}
+
+// TokenDocument#elevation (нативное поле Foundry, метры сцены) синхронизируется
+// с игровым тиром высоты — не заменяет сам тир (боевые правила завязаны на
+// категорию, не на метраж — книга не даёт числа для границы Низкая/Высокая),
+// а даёт честную видимую высоту токена на канвасе своими средствами Foundry.
+// НЕ путать с «уровнями» (отдельные этажи/подземелья) — то модуль Levels,
+// здесь только Z-координата самого токена, ничего больше.
+//
+// Приземная — 0, не 2 (хотя книга буквально даёт «до высоты 2м»): в проекте
+// УЖЕ есть механика «Положение выше» (module/combat/tactical-map.mjs::
+// hasHighGround, +10 в рукопашной) — она сравнивает elevation атакующего и
+// цели БЕЗ разбора источника разницы. Книга явно говорит про Приземную «без
+// всяких ограничений» — ненулевая elevation тут дала бы летящему на 2м
+// незаслуженный авто-бонус «Положение выше» против наземного противника,
+// которого книга не обещает. Низкая/Высокая ненулевые (10/25, те же числа,
+// что в FLIGHT_LOC_TABLE) — там рукопашная и так блокируется отдельно
+// (sheets/attack/mods.mjs), hasHighGround до них не доходит вовсе.
+const FLIGHT_ELEVATION_BY_TIER = { landed: 0, ground: 0, low: 10, high: 25 };
+
+async function _syncFlightElevation(actor, alt) {
+  const elevation = FLIGHT_ELEVATION_BY_TIER[alt] ?? 0;
+  const tokens = actor.getActiveTokens?.(false, true) ?? [];
+  for (const tokenDoc of tokens) await tokenDoc.update?.({ elevation });
+}
+
+// Высота падения при потере управления (стр. 30) — по высоте полёта и типу
+// движения. Это ВЫСОТА (тот же вход, что у обычного Падения), а не готовый
+// урон — раньше здесь дублировался укороченный расчёт «Урон: N» напрямую
+// из таблицы, без броска 1d10, без потолка терминальной скорости и без
+// Группирования. wdbc-x1nz.2.
 const FLIGHT_LOC_TABLE = {
   ground: { none: 0,  half: 0,  full: 3,  charge: 6,  run: 9  },
   low:    { none: 10, half: 12, full: 15, charge: 20, run: 25 },
@@ -640,7 +1109,13 @@ export function showFlightDialog(actor) {
   if (!actorCanFly(actor)) {
     return ui.notifications.warn(`${actor.name}: нет Черты Flyer/Hoverer — полёт недоступен.`);
   }
-  const current = actor.system.movement?.altitude || "ground";
+  const hasFlyer = actorHasFlyer(actor);
+  const current = actor.system.movement?.altitude || "landed";
+  // Hoverer БЕЗ Flyer (стр. 30) — только Приземная/Не летит, Низкая и
+  // Высокая из выбора убираются целиком, не просто дизейблятся.
+  const availableAlts = hasFlyer
+    ? FLIGHT_ALTITUDES
+    : { landed: FLIGHT_ALTITUDES.landed, ground: FLIGHT_ALTITUDES.ground };
 
   new Dialog({
     title: "Полёт",
@@ -648,27 +1123,57 @@ export function showFlightDialog(actor) {
       <form class="wh-vehicle-dialog" style="padding:6px;">
         <div class="atk-dlg-row"><label>Высота:</label>
           <select id="fly-alt">
-            ${Object.entries(FLIGHT_ALTITUDES).map(([k, v]) =>
+            ${Object.entries(availableAlts).map(([k, v]) =>
               `<option value="${k}" ${k === current ? "selected" : ""}>${v.label}</option>`).join("")}
           </select>
         </div>
+        ${!hasFlyer
+          ? `<div class="atk-range-info" style="font-size:0.82em;color:#e0a030;">Только Hoverer — доступна лишь Приземная высота, Низкая/Высокая требуют Flyer (стр. 30).</div>`
+          : ""}
         <div class="atk-range-info" style="font-size:0.82em;">
-          Flyer/Hoverer: Приземная — свободное действие. Flyer: Приземная↔Низкая — полудействие,
-          Низкая↔Высокая — полное действие. На Низкой — недосягаема рукопашной, стрелковое −10,
-          недоступна в помещениях с потолком &lt;5м. Все тесты Acrobatics/Dodge на любой высоте —
-          комбинированные с Operate (Aeronautica)(A), теми же модификаторами (стр. 30).
+          Flyer/Hoverer: Приземная — свободное действие, на ней игнорирует Трудный Ландшафт.
+          ${hasFlyer
+            ? `Flyer: Приземная↔Низкая — полудействие, Низкая↔Высокая — полное действие,
+               Низкая↔Приземная — также частью Натиска. На Низкой — недосягаема рукопашной,
+               стрелковое −10, недоступна в помещениях с потолком &lt;5м.`
+            : ""}
+          Все тесты Acrobatics/Dodge на любой высоте — комбинированные с Operate (Aeronautica)(A),
+          теми же модификаторами (стр. 30).
         </div>
         <div class="atk-range-info" style="font-size:0.82em;">
-          Потеря управления — урон по типу движения (Неподвиж./Полу/Полное/Натиск/Бег):<br/>
-          Приземная 0/0/3/6/9 · Низкая 10/12/15/20/25 · Высокая 25/25/25/25/25.
+          Потеря управления — высота падения по типу движения (Неподвиж./Полу/Полное/Натиск/Бег),
+          дальше как обычное Падение (1d10+высота, Группирование):<br/>
+          Приземная 0/0/3/6/9${hasFlyer ? " · Низкая 10/12/15/20/25 · Высокая 25/25/25/25/25" : ""}.
         </div>
       </form>`,
     buttons: {
       set: { icon: '<i class="fas fa-check"></i>', label: "Установить высоту",
         callback: async html => {
           const alt = html.find("#fly-alt").val();
+          if ((alt === "low" || alt === "high") && !actorHasFlyer(actor)) {
+            return ui.notifications.warn(`${actor.name}: только Hoverer — доступна лишь Приземная высота (стр. 30).`);
+          }
+          if (alt === current) {
+            // Тот же уровень — не Смена Высоты (нет ни ОД, ни движения),
+            // только пересинхронизация TokenDocument#elevation на случай рассхождения.
+            await actor.update({ "system.movement.altitude": alt });
+            return _syncFlightElevation(actor, alt);
+          }
+          const cost = _altitudeChangeCost(current, alt);
+          if (cost === null) {
+            return ui.notifications.warn(
+              `${actor.name}: за одно действие можно сменить Высоту только на один уровень (стр. 30) — ` +
+              "выберите соседний со «" + FLIGHT_ALTITUDES[current].label + "».");
+          }
+          if (!await spendActionPoints(actor, cost, { physical: true })) {
+            return ui.notifications.warn("⚠️ Не хватает ОД.");
+          }
           await actor.update({ "system.movement.altitude": alt });
-          ui.notifications.info(`${actor.name}: высота полёта — ${FLIGHT_ALTITUDES[alt].label}.`);
+          await _syncFlightElevation(actor, alt);
+          _showReachRing(actor, actor.system.movement?.halfMove);
+          ui.notifications.info(
+            `${actor.name}: высота полёта — ${FLIGHT_ALTITUDES[alt].label} ` +
+            `(${cost === 0 ? "свободное действие" : cost === 1 ? "полудействие" : "полное действие"}). Перемещение до SPD×1.`);
         } },
       loc: { icon: '<i class="fas fa-dice-d10"></i>', label: "Потеря управления",
         callback: html => {
@@ -691,15 +1196,14 @@ function _showFlightLocDialog(actor, alt) {
             ${Object.entries(FLIGHT_MOVE_LABELS).map(([k, l]) => `<option value="${k}">${l}</option>`).join("")}
           </select>
         </div>
+        <div class="atk-dlg-row"><label><input id="loc-tuck" type="checkbox" checked/> Группирование (Acrobatics+0)</label></div>
       </form>`,
     buttons: {
-      ok: { label: "Урон!", callback: async html => {
+      ok: { icon: '<i class="fas fa-dice-d10"></i>', label: "Падение!", callback: async html => {
         const move = html.find("#loc-move").val();
-        const dmg = FLIGHT_LOC_TABLE[alt]?.[move] ?? 0;
-        await _postCard(actor, `<div class="wh-roll-result">
-          <div class="roll-header">${rollIcon("warn","#ff6b6b")}Потеря управления — ${esc(actor.name)}</div>
-          <div class="roll-outcome"><span class="roll-failure">Урон: <b>${dmg}</b> (высота: ${FLIGHT_ALTITUDES[alt].label}, движение: ${FLIGHT_MOVE_LABELS[move]}).</span></div>
-        </div>`);
+        const tuck = html.find("#loc-tuck").is(":checked");
+        const height = FLIGHT_LOC_TABLE[alt]?.[move] ?? 0;
+        await _resolveFallDamage(actor, height, { tuck });
       } },
       cancel: { label: "Отмена" }
     },
@@ -788,6 +1292,7 @@ export function showMarchDialog(actor, kind) {
   const t = Number(actor.system.characteristics?.t?.total) || 0;
   const streak = Number(actor.getFlag("warhammer-dbc", "marchFailStreak")) || 0;
   const active = actor.getFlag("warhammer-dbc", "marchKind") === kind;
+  const astartesExempt = kind === "forced" && raceMatches(actor.system, "astartes");
 
   new Dialog({
     title: def.label,
@@ -799,6 +1304,7 @@ export function showMarchDialog(actor, kind) {
         <div class="atk-range-info" style="font-size:0.82em;">
           Скорость ${def.mult}. Побочно: P ${def.pPenalty !== 0 ? sgn(def.pPenalty) : "+0"}${def.trackBonus ? `, тестам обнаружения персонажа +${def.trackBonus}` : ""}.
         </div>
+        ${astartesExempt ? `<div class="atk-range-info" style="font-size:0.82em;color:#4dffa6;">Космодесантник: без теста и без Усталости (стр. 29).</div>` : ""}
       </form>`,
     buttons: {
       test: { icon: '<i class="fas fa-dice-d10"></i>', label: "Тест часа",
@@ -807,6 +1313,11 @@ export function showMarchDialog(actor, kind) {
           if (!active) {
             await actor.setFlag("warhammer-dbc", "marchKind", kind);
             await actor.setFlag("warhammer-dbc", "marchPPenalty", def.pPenalty);
+            // Стр. 29: «тесты на его отслеживание или засекание получают
+            // бонус» — читает НАБЛЮДАТЕЛЬ через ctx.targetActor (флаг стоит
+            // на этом же акторе, целься в него — rules/situational.mjs::
+            // marchTrackBonus), не сам маршируюший.
+            await actor.setFlag("warhammer-dbc", "marchTrackBonus", def.trackBonus);
           }
           await _resolveMarchHour(actor, def, tv, kind === "forced");
         } },
@@ -815,6 +1326,7 @@ export function showMarchDialog(actor, kind) {
           await actor.unsetFlag("warhammer-dbc", "marchKind");
           await actor.unsetFlag("warhammer-dbc", "marchFailStreak");
           await actor.unsetFlag("warhammer-dbc", "marchPPenalty");
+          await actor.unsetFlag("warhammer-dbc", "marchTrackBonus");
           ui.notifications.info(`${actor.name}: марш закончен.`);
         } },
       cancel: { label: "Отмена" }
@@ -823,7 +1335,21 @@ export function showMarchDialog(actor, kind) {
   }, { classes: ["dialog", "wh-attack-dialog"], width: 420 }).render(true);
 }
 
-async function _resolveMarchHour(actor, def, t, slow) {
+export async function _resolveMarchHour(actor, def, t, slow) {
+  // Космодесантники (стр. 29): «в силу своей физиологии не имеют этого
+  // ограничения и могут маршировать сутки напролёт без каких-либо негативных
+  // последствий» — исключение только у Форсированного марша (slow=true,
+  // единственный вызывающий с этим флагом, см. showMarchDialog), не у
+  // Ускоренного марша/Бега — те штрафуют P и требуют теста ВСЕМ расам одинаково,
+  // книга освобождает Астартес именно от «обычный марш длится 8 часов, дальше
+  // форсировать», а не от temp/бега вовсе.
+  if (slow && raceMatches(actor.system, "astartes")) {
+    await _postCard(actor, `<div class="wh-roll-result">
+      <div class="roll-header">${rollIcon("run","#b0a080")}${def.label} — ${esc(actor.name)}</div>
+      <div class="roll-outcome"><span class="roll-success">Космодесантник — маршируют сутки напролёт без теста и последствий (стр. 29).</span></div>
+    </div>`);
+    return;
+  }
   const { rv, passed, deg, effThreshold, streak } = await _hourlyTest(actor, { threshold: t, slow });
   const outcome = passed
     ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}.</span>`
@@ -831,7 +1357,11 @@ async function _resolveMarchHour(actor, def, t, slow) {
 
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}${def.label} — ${esc(actor.name)}</div>
-    <div class="roll-threshold">T <b>${t}</b>${streak ? ` − ${streak * 10} (кумулятив)` : ""} → Порог <b>${effThreshold}</b> · 1d100: <b>${rv}</b></div>
+    ${rollStatLine({
+      label: "T", base: t,
+      parts: [streak ? `− ${streak * 10} (кумулятив)` : ""],
+      threshold: effThreshold, rv
+    })}
     <div class="roll-outcome">${outcome}</div>
   </div>`);
 }
@@ -855,14 +1385,32 @@ export function movementMenuItems(actor) {
     items.push({ key: "charge", label: "Натиск", cost: "", action: () => declareCharge(actor) });
     items.push({ key: "run", label: "Бег", cost: "2 ОД", action: () => declareRun(actor) });
     items.push({ key: "disengage", label: "Выход из Боя", cost: "2 ОД", action: () => declareDisengage(actor) });
+    items.push({ key: "vault", label: "Вольт", cost: "1 ОД", action: () => declareVault(actor) });
+    items.push({ key: "duckAndCover", label: "Перебежка", cost: "2 ОД", action: () => declareDuckAndCover(actor) });
     if (actorHasHalfStep(actor)) {
       items.push({ key: "halfstep", label: "Полушаг", cost: "Талант", action: () => declareHalfStep(actor) });
+    }
+    // Лечь/Встать (стр. 30, wdbc-x1nz.2.36) — взаимоисключающие по текущему
+    // Состоянию «Повален»: лежачему нет смысла предлагать «Лечь», стоящему —
+    // «Встать» (тот же приём, что actorHasHalfStep выше — пункт меню виден,
+    // только когда применим).
+    if (actor.system.conditions?.prone) {
+      items.push({ key: "standup", label: "Встать", cost: "", action: () => declareStandUp(actor) });
+    } else {
+      items.push({ key: "prone", label: "Лечь", cost: "Своб.", action: () => declareProne(actor) });
     }
   }
   items.push({ key: "climb", label: "Карабканье", cost: "", action: () => showClimbDialog(actor) });
   items.push({ key: "jump", label: "Прыжок", cost: "", action: () => showJumpDialog(actor) });
   items.push({ key: "swim", label: "Плавание", cost: "", action: () => showSwimDialog(actor) });
   items.push({ key: "fall", label: "Падение", cost: "", action: () => showFallDialog(actor) });
+  items.push({
+    key: "deepContactCarry",
+    label: actor.getFlag("warhammer-dbc", "deepContactCarry")
+      ? "Глубокий Контакт: закончить переноску" : "Глубокий Контакт: несу/держу",
+    cost: "",
+    action: () => toggleDeepContactCarry(actor)
+  });
   if (actorCanFly(actor)) {
     items.push({ key: "fly", label: "Полёт", cost: "", action: () => showFlightDialog(actor) });
   }

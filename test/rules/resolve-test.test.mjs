@@ -127,6 +127,13 @@ describe("галочки из эффектов", () => {
     expect(rollModsFromRules(rules, buildTestContext({ char: "ag" }))).toHaveLength(0);
   });
 
+  it("poison (wdbc-1rno.1, Пророк Гэллерпокса) — только тест с ctx.poisonTest===true, не любой char:t", () => {
+    const rules = [rule([{ kind: "rollBonus", target: "poison", value: -30 }])];
+    expect(rollModsFromRules(rules, buildTestContext({ char: "t", poisonTest: true }))).toHaveLength(1);
+    expect(rollModsFromRules(rules, buildTestContext({ char: "t" }))).toHaveLength(0);
+    expect(rollModsFromRules(rules, buildTestContext({ char: "t", poisonTest: false }))).toHaveLength(0);
+  });
+
   it("penaltyMul 0.5 даёт галочку «ополовинить штраф»", () => {
     const mods = rollModsFromRules(
       [rule([{ kind: "penaltyMul", target: "skill:psyniscience", factor: 0.5 }])],
@@ -536,6 +543,79 @@ describe("значение эффекта от цели", () => {
     const rule = { id: "r", effects: [{ kind: "rollBonus", target: "attack", value: 99, valueFrom: { targetCharBonus: "ag" } }] };
     const ctx  = buildTestContext({ kind: "attack", isMelee: true, targetActor: target(3) });
     expect(rollModsFromRules([rule], ctx)[0].value).toBe(3);
+  });
+});
+
+describe("значение эффекта: targetTraitRating (Рейтинг X одноимённой Черты цели)", () => {
+  const traitTarget = (ratings, name = "Nimble / Проворный") => ({
+    system: { characteristics: {} },
+    items: ratings.map(rating => ({ type: "trait", name, system: { hasRating: true, rating } }))
+  });
+  const nimble = {
+    id: "r", label: "Проворный",
+    effects: [{ kind: "rollBonus", target: "attack", valueFrom: { targetTraitRating: "Nimble", multiplier: -1 } }]
+  };
+
+  it("значение берётся из Рейтинга X Черты цели, а не из Бонуса характеристики", () => {
+    const ctx = buildTestContext({ kind: "attack", isMelee: true, targetActor: traitTarget([10]) });
+    expect(rollModsFromRules([nimble], ctx)).toEqual([
+      { ruleId: "r", label: "Проворный", value: -10, halvePenalty: false }
+    ]);
+  });
+
+  it("два грантера одной Черты — Рейтинг складывается", () => {
+    const ctx = buildTestContext({ kind: "attack", isMelee: true, targetActor: traitTarget([10, 10]) });
+    expect(rollModsFromRules([nimble], ctx)[0].value).toBe(-20);
+  });
+
+  it("Черта без галочки «Имеет рейтинг» в сумму не идёт", () => {
+    const noRating = { system: {}, items: [{ type: "trait", name: "Nimble / Проворный", system: { hasRating: false, rating: 0 } }] };
+    const ctx = buildTestContext({ kind: "attack", isMelee: true, targetActor: noRating });
+    expect(rollModsFromRules([nimble], ctx)[0].value).toBe(0);
+  });
+
+  it("без цели значение ноль, а не ошибка", () => {
+    const ctx = buildTestContext({ kind: "attack", isMelee: true });
+    expect(rollModsFromRules([nimble], ctx)[0].value).toBe(0);
+  });
+
+  it("имя без рейтинга в скобках («Nimble (10)») опознаётся тем же способом, что и targetHasTrait", () => {
+    const ctx = buildTestContext({ kind: "attack", isMelee: true, targetActor: traitTarget([10], "Nimble (10) / Проворный (10)") });
+    expect(rollModsFromRules([nimble], ctx)[0].value).toBe(-10);
+  });
+
+  // wdbc-b079: Рассеивающее поле друкхарийской брони поднимает Nimble до
+  // фиксированного числа («растёт до 20/30»), не прибавляет к нему.
+  describe("system.fieldNimble (Рассеивающее поле друкхарийской брони, wdbc-b079)", () => {
+    it("поле поднимает штраф выше базового Рейтинга X", () => {
+      const target = traitTarget([10]);
+      target.system.fieldNimble = 20;
+      const ctx = buildTestContext({ kind: "attack", isMelee: true, targetActor: target });
+      expect(rollModsFromRules([nimble], ctx)[0].value).toBe(-20);
+    });
+
+    it("базовый Рейтинг выше поля — поле не понижает штраф", () => {
+      const target = traitTarget([40]);
+      target.system.fieldNimble = 20;
+      const ctx = buildTestContext({ kind: "attack", isMelee: true, targetActor: target });
+      expect(rollModsFromRules([nimble], ctx)[0].value).toBe(-40);
+    });
+
+    it("поле не складывается с Рейтингом — берётся максимум, а не сумма", () => {
+      const target = traitTarget([10]);
+      target.system.fieldNimble = 30;
+      const ctx = buildTestContext({ kind: "attack", isMelee: true, targetActor: target });
+      expect(rollModsFromRules([nimble], ctx)[0].value).toBe(-30);
+    });
+
+    it("поле у другой Черты (не Nimble) не подмешивается", () => {
+      const target = { system: { fieldNimble: 30 }, items: [] };
+      const ctx = buildTestContext({
+        kind: "attack", isMelee: true, targetActor: target
+      });
+      const rule = { id: "r", effects: [{ kind: "rollBonus", target: "attack", valueFrom: { targetTraitRating: "Sturdy", multiplier: -1 } }] };
+      expect(rollModsFromRules([rule], ctx)[0].value).toBe(0);
+    });
   });
 });
 

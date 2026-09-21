@@ -38,16 +38,13 @@
 //  что effectiveDefenseReactionMax у Стойки: динамический бонус СВЕРХ
 //  хранимой надбавки ActiveEffect, не запекается в поле).
 //
-//  НЕ смоделировано: «лимит атак за Ход увеличивается до двух» — стр. 32
-//  книги («Персонаж может совершать только одну Атаку в свой Ход») этот
-//  базовый лимит в системе НИГДЕ не проверяется вовсе (не только для этого
-//  Таланта — attack-dialog.mjs пускает вторую отдельную Атаку за тот же Ход,
-//  если хватает ОД, любому актору). Заводить счётчик атак и включать
-//  проверку «раз в Ход» СРАЗУ для ВСЕХ акторов системы — отдельная и
-//  гораздо более рискованная правка (меняет наблюдаемое поведение боя
-//  живых столов, а не только этого одного Таланта), не делается молча в
-//  рамках находки одного Таланта — см. bd wdbc-1rno, обсуждение с
-//  пользователем.
+//  «Лимит атак за Ход увеличивается до двух» (wdbc-x1nz.2.30) — базовый
+//  лимит «только одна Атака в свой Ход» (стр. 12) теперь считает
+//  combat/attack-limit.mjs::canTakeAttackAction/takeAttackAction, вызванные
+//  из диалога атаки (sheets/attack/dialog.mjs) на подтверждённый клик
+//  «Бросок!». determinationToFightExtraAttack ниже — точка расширения
+//  лимита сверх базовой 1, тот же динамический приём (СВЕРХ хранимого, без
+//  запекания в поле), что у determinationToFightApBonus выше.
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "./predicates.mjs";
@@ -100,4 +97,10 @@ export function determinationToFightParryBonus(actor) {
 export function determinationToFightApBonus(actor) {
   if (actor?.system?.wounds?.tier !== "dying") return 0;
   return hasDeterminationToFight(actor) ? 1 : 0;
+}
+
+/** «Лимит атак за Ход увеличивается до двух» при отрицательных Ранах (wdbc-x1nz.2.30). */
+export function determinationToFightExtraAttack(actor) {
+  if (actor?.system?.wounds?.tier !== "dying") return false;
+  return hasDeterminationToFight(actor);
 }

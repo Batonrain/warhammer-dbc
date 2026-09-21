@@ -16,6 +16,7 @@ import { openSurgeon } from "../../apps/surgeon.mjs";
 import { addFatigue, conditionAdjustFields, conditionApplyFields } from "./conditions.mjs";
 import { worldTimeRemaining } from "../../rules/cooldown.mjs";
 import { showDelegateTestPicker } from "../../rules/delegate-test.mjs";
+import { clearLimbLossGangreneFields } from "../../combat/limb-loss.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -93,6 +94,7 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
         <b>Физиология Астартес</b>: всегда считается отдыхающим; реальный отдых = постельный режим; полный постельный режим не ускоряет сверх этого.<br/>
         <b>Прижигание</b>: раскалённым предметом — 1d5 Усталости и 1d10 урон в Т, цель фиксируют или тест W−20; иногда останавливает заражение через рану.<br/>
         <b>Бесполезные конечности/Ампутация</b>: лечение перелома — 5 мин + Medicae+0 (конечность бесполезна 2d10−T.b сут.). Без помощи 2×T.b ч — перманентно; ампутация Medicae−10 (провал → Кровотечение, обрубок Medicae−10 или Гангрена).<br/>
+        <b>Потеря конечности (крит/бой)</b>: всегда Кровотечение; обрубок не обработан за T.b дней → 80% Гангрены (розыгрыш сам по виджету Календаря). «Обработка обрубка» — Medicae−10, 5 мин, снимает угрозу.<br/>
         <b>Пришивание конечностей</b>: Medicae−30 (нужно качественное снаряжение); успех — восстановление 1d10+3−T.b сут.<br/>
         <b>Бионика/Кибернетика</b>: установка Medicae−30; провал — 1d10 непогл. R; успех — 1d10+3−T.b сут. адаптации.<br/>
         <b>Кома</b>: вывод раз в 10−T.b дней тестом Medicae−40 (нужен уход и питание).<br/>
@@ -119,14 +121,16 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
           <option value="cauterize">Прижигание</option>
           <option value="amputate">Ампутация (Medicae−10)</option>
           <option value="reattach">Пришивание конечности (Medicae−30)</option>
+          <option value="stumpCare">Обработка обрубка (Medicae−10, 5 мин)</option>
           <option value="bionic">Бионика/Кибернетика (Medicae−30)</option>
           <option value="coma">Вывод из комы (Medicae−40)</option>
           <option value="disease">Лечение болезни</option>
         </select>
       </div>
       <div class="atk-dlg-row" data-mode="firstAid,rest,bedRest,passive"><label title="Medicae: критический лечится как тяжёлый; период до 8 часов"><input type="checkbox" id="heal-care"/> Мед. уход</label></div>
-      <div class="atk-dlg-row" data-mode="amputate,reattach"><label>Часть тела:</label>
+      <div class="atk-dlg-row" data-mode="amputate,reattach,stumpCare,bionic"><label>Часть тела:</label>
         <select id="heal-limb">
+          <option value="">— (для Бионики, если не восстанавливает утраченную часть) —</option>
           ${Object.entries(LIMB_TYPES).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join("")}
         </select>
       </div>
@@ -377,6 +381,41 @@ async function applyReattach(medic, patient, { mod, limb }) {
   await sendHealChatMsg(medic, patient, rollIcon("wrench","#8fd0ff"), "Пришивание конечности", lines, rolls);
 }
 
+/**
+ * Обработка обрубка (стр. 30-31, wdbc-1rno.6): Medicae−10, 5 минут — снимает
+ * запланированную проверку Гангрены (module/combat/limb-loss.mjs), заведённую
+ * в момент потери части тела от крит-эффекта. Не привязана к Ампутации —
+ * применима к любому текущему lostX, независимо от причины (кроме Мутации
+ * Loss of Limb, которая эту угрозу вообще не заводит, см. rules/limb-loss.mjs).
+ */
+async function applyStumpCare(medic, patient, { mod, limb }) {
+  const def = LIMB_TYPES[limb];
+  if (!def) { ui.notifications.warn("Выберите часть тела для обработки обрубка."); return; }
+  const curCount = patient.system.conditions?.[def.count] ?? 0;
+  if (curCount <= 0) {
+    ui.notifications.warn(`У пациента нет обрубка «${def.label}» для обработки.`);
+    return;
+  }
+
+  const pMod = patientHealingMod(patient);
+  const eff = medicaeEff(medic, patient, mod - 10);
+  const roll = await new Roll("1d100").evaluate();
+  const success = roll.total <= eff;
+  const lines = [
+    ...pMod.lines,
+    `${rollIcon("blood","#ff6b6b")}<b>Обработка обрубка</b> (${def.label}): Медика−10${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`
+  ];
+  if (success) {
+    lines.push("Обрубок обработан — угроза Гангрены снята.");
+    try { await patient.update(clearLimbLossGangreneFields(def.flag)); } catch {
+      lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — снимите таймер вручную.`);
+    }
+  } else {
+    lines.push("Провал — угроза Гангрены остаётся, обрубок можно попробовать обработать снова.");
+  }
+  await sendHealChatMsg(medic, patient, rollIcon("blood","#ff6b6b"), "Обработка обрубка", lines, [roll]);
+}
+
 /** Вывод из комы (стр. 232): Medicae−40, раз в 10−T.b дней. */
 async function applyComaWake(medic, patient, { mod }) {
   const tb = patient.system.characteristics?.t?.bonus ?? 0;
@@ -426,15 +465,23 @@ async function applyDiseaseCure(medic, patient, { mod, diseaseCare, diseaseId })
  * из своего close() — ждём этот хук вместо переопределения close() на
  * инстансе, чтобы не трогать чужой класс.
  */
-export function runBionicInstall(medic, patient, { mod }) {
+export function runBionicInstall(medic, patient, { mod, limb }) {
   const app = openSurgeon(patient);
   if (!app) return;
   Hooks.once(`close${app.constructor.name}`, () => {
-    resolveBionicTest(medic, patient, { mod });
+    resolveBionicTest(medic, patient, { mod, limb });
   });
 }
 
-async function resolveBionicTest(medic, patient, { mod }) {
+/**
+ * limb (wdbc-1rno.6, необязательный) — раньше успешная установка ничего не
+ * делала с lostX вовсе (бионика молча не восстанавливала утраченную часть
+ * тела). Пустое значение — обычный имплант не по месту потери конечности
+ * (напр. чисто когнитивный), тогда ветка ниже не трогает Состояния вообще.
+ */
+export async function resolveBionicTest(medic, patient, { mod, limb }) {
+  const def = LIMB_TYPES[limb];
+  const curCount = def ? (patient.system.conditions?.[def.count] ?? 0) : 0;
   const pMod = patientHealingMod(patient);
   const eff = medicaeEff(medic, patient, mod - 30);
   const roll = await new Roll("1d100").evaluate();
@@ -451,6 +498,14 @@ async function resolveBionicTest(medic, patient, { mod }) {
     rolls.push(daysRoll);
     const days = Math.max(1, daysRoll.total + 3 - tb);
     lines.push(`Адаптация: <b>${days}</b> сут. (1d10+3−T.b, мин. 1).`);
+    if (def && curCount > 0) {
+      const updates = { ...conditionAdjustFields(patient, def.flag, -1), ...clearLimbLossGangreneFields(def.flag) };
+      try { await patient.update(updates); lines.push(`Часть тела (${def.label}) восстановлена бионикой.`); } catch {
+        lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — снимите «${def.label}» вручную.`);
+      }
+    } else if (def) {
+      lines.push(`${rollIcon("warn","#ffb84d")}У пациента нет утраченной «${def.label}» — установлено как обычный имплант.`);
+    }
   } else {
     const dmgRoll = await new Roll("1d10").evaluate();
     rolls.push(dmgRoll);
@@ -471,6 +526,7 @@ export async function applyHealing(medic, patient, opts) {
   if (mode === "cauterize") return applyCauterize(medic, patient, opts);
   if (mode === "amputate")  return applyAmputate(medic, patient, opts);
   if (mode === "reattach")  return applyReattach(medic, patient, opts);
+  if (mode === "stumpCare") return applyStumpCare(medic, patient, opts);
   if (mode === "coma")      return applyComaWake(medic, patient, opts);
   if (mode === "disease")   return applyDiseaseCure(medic, patient, opts);
 

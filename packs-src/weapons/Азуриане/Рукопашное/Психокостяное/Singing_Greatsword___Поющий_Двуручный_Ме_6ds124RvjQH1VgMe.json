@@ -3,6 +3,7 @@
   "type": "weapon",
   "folder": "YwpKwjEs1NBtEKyn",
   "system": {
+    "itemSize": "5x1",
     "description": "",
     "notes": "",
     "weaponClass": "melee",
@@ -22,6 +23,7 @@
     "damageType": "rending",
     "penetration": 8,
     "quality": "common",
+    "bookSource": "Книга Аэльдари, V. АРСЕНАЛ ЭЛЬДАР («Психокостяное оружие», стр. 89)",
     "availability": 4,
     "weight": 1.4,
     "attackBonus": 0,

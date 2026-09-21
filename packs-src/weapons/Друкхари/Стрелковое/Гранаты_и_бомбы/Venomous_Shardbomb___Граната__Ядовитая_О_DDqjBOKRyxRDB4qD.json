@@ -19,9 +19,10 @@
     "rof_semi": 0,
     "rof_full": 0,
     "damage": "4d10+1",
-    "damageType": "rending",
+    "damageType": "blast",
     "penetration": 2,
     "quality": "common",
+    "bookSource": "Книга Аэльдари: Ответвления, АРСЕНАЛ ДРУКХАРИ («Гранаты», стр. 117)",
     "availability": 2,
     "weight": 0.2,
     "attackBonus": 0,
@@ -64,7 +65,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "fragmentation"
   },
   "_id": "DDqjBOKRyxRDB4qD",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-thrown.svg",

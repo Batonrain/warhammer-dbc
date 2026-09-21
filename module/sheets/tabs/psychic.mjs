@@ -7,6 +7,8 @@ import { CHARACTERISTICS } from "../../constants/characteristics.mjs";
 import { SKILLS_DEF } from "../../constants/skills.mjs";
 import { DAMAGE_TYPES } from "../../constants/items.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
+import { isPossessedByParasite } from "../../rules/parasite-trait.mjs";
+import { isMentalActionBlocked } from "../../rules/predicates.mjs";
 import { requiredMarks, MARK_LABELS } from "../../constants/talent-requirements.mjs";
 import { dreadnoughtOf, hasOsirisMatrix } from "../../rules/dreadnought.mjs";
 import { highSorceryManifestBlocked } from "../../rules/perfect-sorcerer.mjs";
@@ -17,7 +19,8 @@ import { WEAPON_PROPERTIES } from "../../constants/weapon-properties.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { _degWord, resolveCharFormula, esc } from "../../helpers/utils.mjs";
 import { resolveWeaponPropsList, buildTargetEffectButtons, buildPropertyChatBlock,
-         aggregateAuto, applyDamageDiceMods, resolvePropRatings } from "../../combat/weapon-properties.mjs";
+         aggregateAuto, applyDamageDiceMods, resolvePropRatings, resolvePropRating,
+         filterPropsBySuccesses } from "../../combat/weapon-properties.mjs";
 import { attackThreshold } from "../../combat/attack-threshold.mjs";
 import { psychicHitCount } from "../../combat/attack-outcome.mjs";
 import { rollExtremeDamage } from "../../combat/attack.mjs";
@@ -33,8 +36,8 @@ import { hasRuneMagic, runeMax, runeValue, runeCostForPower, runeCostTotal,
          RUNE_STRIKE_COST, isRuneLearned, hasImprovisedRune,
          runeLearnInfo, improvisedRuneCostUpdates,
          preparedRuneDiscount, markPreparedRuneUsed } from "../../rules/sigillite-runes.mjs";
-import { postTestCard, outcomeHtml } from "../../helpers/test-card.mjs";
-import { mechFormulaTotalSafe, mechRollData } from "../../rules/mech-formula.mjs";
+import { postTestCard, rollStatLine, outcomeHtml } from "../../helpers/test-card.mjs";
+import { mechRollData } from "../../rules/mech-formula.mjs";
 import { runForceBladeShop, forceBladeShopClear } from "../../apps/force-blade-choice.mjs";
 
 /**
@@ -164,6 +167,26 @@ export function showManifestDialog(actor, item) {
     ui.notifications.warn(
       `«${item.name}»: психосилы Высшего Колдовства манифестируют только псайкеры-хаоситы ` +
       "(корбук, запись дисциплины).");
+    return;
+  }
+  // Мононить «Поцелуй Мимика» (Volunteer Actor/Доброволец Актёр, wdbc-ux8a):
+  // за доп. 10 сек/1м мононити персонаж лишается возможности манифестировать
+  // психосилы/техночудеса — тот же гейт-приём, что Высшее Колдовство выше.
+  if (actor.system.conditions?.mimicWireBlocksPowers) {
+    ui.notifications.warn(`«${item.name}»: мононить блокирует манифестацию психосил.`);
+    return;
+  }
+  // Parasite/Паразит (Трейт — общий, wdbc-ux8a): хост под полным контролем
+  // паразита «не может использовать психосилы» — тот же гейт-приём.
+  if (isPossessedByParasite(actor)) {
+    ui.notifications.warn(`«${item.name}»: тело под контролем паразита — собственные психосилы недоступны.`);
+    return;
+  }
+  // Ментальное действие (стр. 12, wdbc-x1nz.2.32): «не может быть проведено,
+  // когда разум расфокусирован (пьян/галлюцинирует/в Ярости)» — тот же
+  // гейт-приём, что у мононити/Паразита выше.
+  if (isMentalActionBlocked(actor)) {
+    ui.notifications.warn(`«${item.name}»: разум расфокусирован (Ярость/Галлюцинации/Опьянение) — манифестация недоступна (стр. 12).`);
     return;
   }
   const sys      = item.system;
@@ -660,17 +683,21 @@ export async function executePsychotest(actor, item, opts) {
   const rangePR  = clampPR(opts.rangePR  || 0);
   const aspectsDiffer = damagePR !== ePR || rangePR !== ePR;
 
-  // wdbc-5kd: Пробитие основного профиля — формула, не константа («Разрушение»
-  // Pen=PR, «Сверхъестественный Шторм» Pen=PR×3, в данных — «PR*3»). «PR»
-  // подставляется тем же эПР урона, что и damage чуть ниже (damagePR — тот же
-  // аспект, который игрок мог снизить независимо от психотеста): Пробитие
-  // профиля атаки обязано падать вместе с уроном, а не считаться от «сырого»
-  // текущего ПР персонажа. Остаток (число, +, *, скобки) считает тот же
-  // безопасный парсер, что и Рейтинг записи Конструктора (mech-formula.mjs) —
-  // дайсы Пробитию не нужны, поэтому не через Roll, как damage.
-  const resolvePen = formula =>
-    mechFormulaTotalSafe(String(formula ?? "0").replace(/\bPR\b/gi, damagePR));
-
+  // wdbc-5kd/wdbc-ufns: Пробитие основного профиля — формула, не константа
+  // («Разрушение» Pen=PR, «Сверхъестественный Шторм» Pen=PR×3, «Вихрь Рока»
+  // Pen=2×Х где Х=½Успехи(окр.▲) — в данных «2*ceil(СУ/2)»). Раньше здесь был
+  // собственный резолвер (голый \bPR\b-replace + mechFormulaTotalSafe) —
+  // теперь то же самое место, что читает rating свойств оружия психосилы
+  // (combat/weapon-properties.mjs::resolvePropRating): один резолвер формул на
+  // damage/pen/rating, а не три независимых копии одной и той же подстановки
+  // (та же причина, что у PR-подстановки в дайс-строках, wdbc-cy4z/wdbc-wv8u —
+  // разошедшиеся копии рано или поздно расходятся МЕЖДУ собой, не только с
+  // документацией). Раньше «PR» подставлялся, «СУ»/Cor.b — нет; теперь Пробитие
+  // психосилы умеет то же самое, что Рейтинг записи Конструктора. Формула не
+  // резолвится здесь СРАЗУ (deg ещё не известна, психотест ещё не брошен) —
+  // atk.pen хранит СЫРУЮ формулу/число, реальное число считается ниже, вместе
+  // с atkProps (там же уже есть {deg, rollData}).
+  //
   // ── Профиль атаки и вариация броска ────────────────────────────────────────
   // Если выбран доп. профиль — берём его урон/тип/пробитие/свойства/урон-в-хар-ку,
   // иначе основной. Вариация добавляет свой модификатор к психотесту.
@@ -686,7 +713,7 @@ export async function executePsychotest(actor, item, opts) {
     label:     profile.label || "профиль"
   } : {
     damage:    sys.damage, damageType: sys.damageType || "energy",
-    pen:       resolvePen(sys.penetration),
+    pen:       sys.penetration,
     props:     sys.weaponProps || [],
     charStat:  sys.charDamageStat || "",
     charForm:  sys.charDamageFormula || "",
@@ -804,8 +831,32 @@ export async function executePsychotest(actor, item, opts) {
   // wdbc-kifa: плюс «СУ» книжного «Успехи» (deg этого психотеста, известна
   // только сейчас, после броска) и Cor.b/др. бонусы характеристик через
   // общий mechRollData(actor) — Felling(Cor.b) у Infernal Gaze.
-  const atkProps   = resolvePropRatings(resolveWeaponPropsList(atk.props), damagePR,
-    { deg, rollData: mechRollData(actor) });
+  // wdbc-zlx7: свойства с requiredSuccesses (Neural Storm «3+ Успеха —
+  // Shocking/Haywire», Fire Barrage/Bolt/Storm «N+ Успехов — поджигает»)
+  // отсекаются здесь по deg ЭТОГО психотеста — ниже aggregateAuto/
+  // buildTargetEffectButtons их уже не видят вовсе, как будто не было в
+  // weaponProps.
+  //
+  // wdbc-ufns: «Х» (Vortex of Doom: Х=½Успехи(окр.▲), используется сразу в
+  // damage/pen/Blast-rating/Linger-rating) — считается ОДИН раз здесь (та же
+  // resolvePropRating, что и rating ниже — sys.xFormula пишется тем же
+  // языком формул, «ceil(СУ/2)») и передаётся дальше через rollOpts.x во ВСЕ
+  // резолверы этого предмета. Пусто у sys.xFormula → xValue=null → «Х» нигде
+  // не подставляется, поведение любого другого предмета не меняется.
+  const xValue = sys.xFormula
+    ? Number(resolvePropRating(sys.xFormula, damagePR, { deg, rollData: mechRollData(actor) })) || 0
+    : null;
+  const rollOpts = { deg, rollData: mechRollData(actor), ...(xValue != null ? { x: xValue } : {}) };
+  const atkProps   = filterPropsBySuccesses(
+    resolvePropRatings(resolveWeaponPropsList(atk.props), damagePR, rollOpts),
+    deg
+  );
+  // wdbc-5kd/wdbc-ufns: тот же резолвер, что у rating выше — Пробитие никогда
+  // не дайс (см. комментарий у atk.pen), поэтому дайс-ветка resolvePropRating
+  // (вернула бы строку) здесь отбрасывается Number(...)||0, как и раньше
+  // отбрасывала mechFormulaTotalSafe молчаливым 0 на «d» вне SAFE_REST — не
+  // регрессия.
+  const atkPen = Number(resolvePropRating(atk.pen, damagePR, rollOpts)) || 0;
   // Тот же движок, что читает system.weaponProps у обычного оружия
   // (module/combat/attack.mjs): без него Рвущее/Проверенное/Экстремальный урон
   // и подобные свойства атаки психосилы были только текстовой памяткой ниже,
@@ -814,8 +865,13 @@ export async function executePsychotest(actor, item, opts) {
   let damageSection = "";
   if (success && isDamaging && atk.damage) {
     const chars = actor.system.characteristics;
+    // wdbc-ufns: «Х» подставляется той же текстовой заменой, что и «PR» —
+    // damage остаётся дайс-капабельной строкой для Roll() ниже, через
+    // resolvePropRating/mechFormulaTotalSafe (нет дайсов) её не провести.
+    let dmgRaw = String(atk.damage).replace(/\bPR\b/gi, damagePR);
+    if (xValue != null) dmgRaw = dmgRaw.replace(/Х/gi, String(xValue));
     const dmgFormula = applyDamageDiceMods(
-      resolveCharFormula(String(atk.damage).replace(/\bPR\b/gi, damagePR), chars, actor.system.corruptionBonus ?? 0),
+      resolveCharFormula(dmgRaw, chars, actor.system.corruptionBonus ?? 0),
       wp
     );
     // Число попаданий по подтипу Психострельбы (стр. 290). Считается по самому
@@ -831,13 +887,15 @@ export async function executePsychotest(actor, item, opts) {
       : "";
     try {
       const dtLabel = DAMAGE_TYPES[atk.damageType] || atk.damageType;
-      const pen     = atk.pen;
+      const pen     = atkPen;
       const hitLines = [];
+      let firstHitTotal = null;
       for (let h = 0; h < hits; h++) {
         const dmgRoll = await new Roll(dmgFormula).evaluate();
         allRolls.push(dmgRoll);
+        if (h === 0) firstHitTotal = dmgRoll.total;
         // Экстремальный урон (стр. 166-170) — тот же расчёт, что у оружия.
-        const ext = await rollExtremeDamage(dmgRoll, { wp, damageType: atk.damageType, hitLocation: "Торс" });
+        const ext = await rollExtremeDamage(dmgRoll, { wp, damageType: atk.damageType, hitLocation: "Торс", attacker: actor });
         if (ext.exRoll) allRolls.push(ext.exRoll);
         const extStr = ext.hasExtreme ? `
               <div class="roll-extreme-block">
@@ -856,15 +914,30 @@ export async function executePsychotest(actor, item, opts) {
                 data-ignore-shield="${wp.ignoreShield ? 1 : 0}"
                 data-warp-soak="${wp.warpSoak ? 1 : 0}"
                 data-lance="${wp.lance ? 1 : 0}"
-                data-sanctified="${wp.sanctified ? 1 : 0}">
+                data-sanctified="${wp.sanctified ? 1 : 0}"
+                data-has-extreme="${ext.hasExtreme ? 1 : 0}">
                 ${dmgRoll.total} → Торс
               </button>
             </div>${extStr}`);
       }
+      // wdbc-86rm: Дуга (wp.arcRating/arcDamage, module/combat/weapon-
+      // properties.mjs::aggregateAuto) у психосил не рисовала кнопку вовсе —
+      // buildTargetEffectButtons её не строит (arc: {auto:{arc:null}}, без
+      // targetEffect), настоящая кнопка .wh-arc-btn до сих пор жила только в
+      // attack-card.mjs (обычное оружие). Тот же гейт «первое попадание
+      // очереди достигло порога X» и та же разметка — обработчик в hooks.mjs
+      // (.wh-arc-btn) общий, ничего своего заводить не пришлось.
+      const arcBtn = (wp.arcRating > 0 && firstHitTotal != null && firstHitTotal >= wp.arcRating) ? `
+        <button class="wh-arc-btn" type="button"
+          data-arc-damage="${wp.arcDamage}" data-weapon-name="${item.name}"
+          data-attacker="${actor.name}" data-attacker-uuid="${actor.uuid}">
+          ⚡ Дуга: выберите поражённую цель → ближайшая вторая в 5м (${wp.arcDamage}(El) Pen ${wp.arcDamage})
+        </button>` : "";
       damageSection = `
           <div class="roll-damage-section">
             ${hitsNote ? `<div class="roll-threshold" style="font-size:0.82em;">${hitsNote}${profile ? ` Профиль «${atk.label}».` : ""} Вторичные цели (в 2м) — попадания в Торс.</div>` : (profile ? `<div class="roll-threshold" style="font-size:0.82em;">Профиль «${atk.label}».</div>` : "")}
             ${hitLines.join("")}
+            ${arcBtn}
           </div>`;
     } catch(e) {
       ui.notifications.warn(`Не удалось бросить урон психосилы: ${atk.damage}`);
@@ -893,8 +966,23 @@ export async function executePsychotest(actor, item, opts) {
   let attackPropsSection = "";
   if (success && isDamaging && atkProps.length) {
     const propBlock  = buildPropertyChatBlock(atkProps);
-    const effectBtns = buildTargetEffectButtons(atkProps, { hit: true, netDamageKnown: false });
+    const effectBtns = buildTargetEffectButtons(atkProps, { hit: true, netDamageKnown: false, deg });
     attackPropsSection = (propBlock || "") + (effectBtns || "");
+  }
+
+  // wdbc-ufns: «Разместить Вихрь» — персистентная зона (module/regions/
+  // vortex-zone.mjs) для предметов с sys.vortexPersistent (сейчас только
+  // Vortex of Doom). xValue уже посчитан выше (sys.xFormula), тот же, что
+  // ушёл в damage/pen/Blast-rating этого попадания.
+  if (success && sys.vortexPersistent && xValue != null && xValue > 0) {
+    attackPropsSection += `
+      <div class="roll-threshold" style="margin-top:4px;">
+        <button type="button" class="wh-vortex-place-btn"
+          data-x-value="${xValue}" data-owner-uuid="${esc(actor.uuid)}"
+          data-item-uuid="${esc(item.uuid)}" data-item-name="${esc(item.name)}">
+          🌀 Разместить Вихрь (Х=${xValue})
+        </button>
+      </div>`;
   }
 
   // ── Феномен / Прорыв ──────────────────────────────────────────────────────
@@ -1008,6 +1096,7 @@ export async function executePsychotest(actor, item, opts) {
            data-char-key="${esc(sys.resistChar)}" data-mod="${resistMod}"
            data-discipline="${esc(sys.discipline || "")}"
            data-target-token-uuid="${esc(targetToken?.document?.uuid || "")}"
+           data-item-uuid="${esc(item.uuid)}"
            data-label="${esc(`Сопротивление: ${item.name}`)}">
            📨 Запросить тест Сопротивления у ${esc(targetActor.name)}
          </button>`
@@ -1045,27 +1134,38 @@ export async function executePsychotest(actor, item, opts) {
   // Применяем накопленные изменения (Раны/Порча)
   if (Object.keys(actorUpdates).length) await actor.update(actorUpdates);
 
-  // Порог у психотеста собирается не как у прочих тестов (база + список
-  // слагаемых через запятую), а книжной формулой «хар-ка + 5×эPR» с
-  // приписками Пути/Вариации — поэтому строка Порога идёт своей строкой в
-  // lines, а не через thresholdLine: общий формат её бы переписал. То же со
-  // строкой броска — она подписана «Психотест», а не «Бросок».
+  // wdbc-fyvv: Порог психотеста — книжная формула «хар-ка + 5×эPR» с
+  // приписками Пути/Вариации, но это те же база+слагаемые, что и у прочих
+  // тестов — просто одно из слагаемых само посчитано (5×эPR). Плашка встаёт
+  // сразу под шапкой (там же, где у любой другой карточки), Природа/Режим/
+  // Путь и разбор mPR→эPR остаются своими строками под ней — это контекст
+  // силы, не слагаемые Порога.
   await postTestCard(actor, {
     icon: rollIcon("spark","#c98bff"), title: esc(item.name),
+    threshold: rollStatLine({
+      label: charAbbr, base: charVal,
+      parts: [
+        `5×${ePR}`,
+        opts.modifier ? `${opts.modifier >= 0 ? "+" : ""}${opts.modifier}` : "",
+        pathTestMod ? `${pathTestMod >= 0 ? "+" : ""}${pathTestMod} (Путь)` : "",
+        variantMod ? `${variantMod >= 0 ? "+" : ""}${variantMod} (Вариация)` : "",
+        ...bodyMods.parts
+      ],
+      threshold, rv
+    }),
     lines: [
       `<div class="roll-threshold">Природа: <b>${NAT.label}</b> | Режим: <b>${MODE.label}</b>${pathLabel ? ` | Путь: <b>${pathLabel}</b>` : ""}</div>`,
       `<div class="roll-threshold">mPR <b>${opts.mPR}</b>${prMod ? ` ${prMod >= 0 ? "+" : ""}${prMod} = <b>${mPR}</b>` : ""} → эPR <b>${ePR}</b>${pushBonus ? ` (Усиление +${pushBonus})` : ""}${(PATH.ePR || subTotals.ePR) ? ` (Путь +${(PATH.ePR || 0) + subTotals.ePR})` : ""}</div>`,
       aspectsDiffer ? `<div class="roll-threshold" style="font-size:0.82em;">эPR по аспектам: тест <b>${ePR}</b>${isDamaging ? ` · урон <b>${damagePR}</b>` : ""} · дальность <b>${rangePR}</b></div>` : "",
       sys.range ? `<div class="roll-threshold" style="font-size:0.82em;">Дальность: ${String(sys.range).replace(/\bPR\b/gi, rangePR)}</div>` : "",
-      `<div class="roll-threshold">${charAbbr}: <b>${charVal}</b> + 5×${ePR}${opts.modifier ? ` ${opts.modifier >= 0 ? "+" : ""}${opts.modifier}` : ""}${pathTestMod ? ` ${pathTestMod >= 0 ? "+" : ""}${pathTestMod} (Путь)` : ""}${variantMod ? ` ${variantMod >= 0 ? "+" : ""}${variantMod} (Вариация)` : ""}${bodyMods.parts.map(p => ` ${p}`).join("")} → Порог: <b>${threshold}</b></div>`,
+      sys.sustainable && sys.sustainRange ? `<div class="roll-threshold" style="font-size:0.82em;">Дальность поддержания (П): ${String(sys.sustainRange).replace(/\bPR\b/gi, rangePR)}</div>` : "",
       variant ? `<div class="roll-threshold" style="font-size:0.82em;">Вариация: <b>${variant.label || "—"}</b>${variant.note ? ` — ${variant.note}` : ""}</div>` : "",
       PATH.note ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Путь: ${PATH.note}${vessel ? ` — <b>${esc(vessel.name)}</b>` : ""}</div>` : "",
       subPathNote ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">${subPathNote}</div>` : "",
       runeNote ? `<div class="roll-threshold" style="font-size:0.82em;color:#7a1010;">${runeNote}</div>` : "",
       runeLine,
       improviseLine,
-      focusNote,
-      `<div class="roll-dice">Психотест: <b>${rv}</b></div>`
+      focusNote
     ],
     outcome: outcomeHtml(success, success
       ? `Манифестация удалась — ${deg} ${_degWord(deg)}`
@@ -1092,12 +1192,9 @@ export async function rollPsyWpTest(actor, label, note) {
   const rv   = roll.total;
   const success = rv <= eff;
   const deg  = Math.floor(Math.abs(rv - eff) / 10) + 1;
-  // Слагаемое здесь книжное и одно («+ 5×PR»), в скобки общего формата оно не
-  // ложится — строка Порога оставлена своей, как была.
   await postTestCard(actor, {
     title: label,
-    threshold: `<div class="roll-threshold">WP: <b>${wp}</b> + 5×PR(${pr}) → Порог: <b>${eff}</b></div>`,
-    rv,
+    threshold: rollStatLine({ label: "WP", base: wp, parts: [`5×PR(${pr})`], threshold: eff, rv }),
     outcome: outcomeHtml(success, `${success ? "Успех" : "Провал"} — ${deg} ${_degWord(deg)}`),
     sections: [`<div class="roll-threshold" style="font-size:0.85em;color:#5a4a30;">${note}</div>`]
   }, { rolls: [roll] });
@@ -1149,16 +1246,18 @@ export async function activateNavigatorPower(actor, item) {
   // успеха на предмете, чтобы номер был виден на листе, пока Сила поддерживается.
   await item.update({ "system.sustainedDegree": success ? deg : null });
 
-  // Строка Порога здесь своя: подпись усталости идёт значком «😓 −10» без
-  // скобок общего формата — перевод на сборщик её не переписывает.
   await postTestCard(actor, {
     icon: rollIcon("spark","#8b78ff"), title: `Сила навигатора: ${esc(item.name)}`,
+    threshold: rollStatLine({
+      label: meta?.abbr ?? charKey, base: charVal,
+      parts: [sys.testMod ? `${sys.testMod >= 0 ? "+" : ""}${sys.testMod}` : "", fatigue ? `😓 ${fatigue}` : ""],
+      threshold: eff, rv
+    }),
     lines: [
       sys.powerKind ? `<div class="roll-threshold" style="font-size:0.85em;">${sys.powerKind}</div>` : "",
-      `<div class="roll-threshold">${meta?.abbr ?? charKey}: <b>${charVal}</b>${sys.testMod ? ` ${sys.testMod >= 0 ? "+" : ""}${sys.testMod}` : ""}${fatigue ? ` 😓 ${fatigue}` : ""} → Порог: <b>${eff}</b>${sys.opposed ? " <span style='font-size:0.85em;'>(встречный — цель бросает свою хар-ку)</span>" : ""}</div>`,
+      sys.opposed ? `<div class="roll-threshold" style="font-size:0.85em;">Встречный — цель бросает свою хар-ку.</div>` : "",
       sys.range ? `<div class="roll-threshold" style="font-size:0.85em;">Дальность: <b>${sys.range}</b></div>` : ""
     ],
-    rv,
     outcome: outcomeHtml(success, `${success ? "Успех" : "Провал"} — ${deg} ${_degWord(deg)}`),
     sections: [
       dmgSection,
@@ -1239,6 +1338,20 @@ export function activatePsychicListeners(html, actor, { rollSkill, resolveSoulBu
       ev.currentTarget.checked = false;
       ui.notifications.warn("Саркофаг Дредноута: поддержание психосил заблокировано (нужна Матрица Осирис).");
       return;
+    }
+    // Заточение Силы (Fruit of Flesh/Плод Плоти, Тзинч, wdbc-1rno,
+    // apps/fruit-of-flesh.mjs::activateSpellLockFruit): цель психосилы
+    // выбрала провалить встречный тест на W и заточить атаку в плод — снять
+    // поддержание нельзя, пока плод (fromUuid по сохранённому uuid) ещё
+    // существует. Уничтоженный/удалённый плод просто не резолвится —
+    // отдельного хука на его удаление не нужно.
+    if (!turningOn) {
+      const lockUuid = item.getFlag?.("warhammer-dbc", "fruitOfFleshLockUuid");
+      if (lockUuid && await fromUuid(lockUuid)) {
+        ev.currentTarget.checked = true;
+        ui.notifications.warn("Заточена в Плоде Плоти — нельзя развеять, пока плод не уничтожен.");
+        return;
+      }
     }
     // wdbc-8m0x: снятие поддержания сбрасывает сохранённую степень успеха —
     // иначе на листе осталось бы висеть устаревшее число от прошлого каста.

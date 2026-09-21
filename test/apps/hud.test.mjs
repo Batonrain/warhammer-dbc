@@ -24,7 +24,11 @@ function hudActor({ type = "character", items = [], ...system } = {}) {
       characteristics: { ws: { total: 45, bonus: 4 }, ag: { total: 35, bonus: 3 }, t: { total: 40, bonus: 4 } },
       ...system
     },
-    items: list
+    items: list,
+    // wdbc-x1nz.2.19: movementMenuItems (Движение-таб боевого HUD) читает
+    // flags.warhammer-dbc.deepContactCarry на каждом акторе — как у любого
+    // настоящего Actor.
+    getFlag: () => undefined
   };
 }
 
@@ -166,6 +170,29 @@ describe("hudData: вкладка «Движение» (wdbc-zdu4) — те же
     globalThis.game.combat = { started: true };
     const data = hudData(hudActor());
     expect(data.movement.map(m => m.key)).toContain("halfmove");
+  });
+});
+
+describe("hudData: Прицеливание (wdbc-1rno.5) — всегда на виду, не вкладка", () => {
+  it("вне Столкновения — пункты пусты", () => {
+    const data = hudData(hudActor());
+    expect(data.aiming.items).toEqual([]);
+    expect(data.aiming.current).toBe("none");
+  });
+
+  it("в активном Encounter — две кнопки, action не сериализуется в данные", () => {
+    globalThis.game.combat = { started: true };
+    const data = hudData(hudActor({ actionPoints: { value: 2, max: 2 } }));
+    expect(data.aiming.items.map(i => i.key)).toEqual(["aimHalf", "aimFull"]);
+    for (const i of data.aiming.items) expect(i).not.toHaveProperty("action");
+  });
+
+  it("actor.system.aiming='half' — пункт aimHalf помечен active", () => {
+    globalThis.game.combat = { started: true };
+    const data = hudData(hudActor({ actionPoints: { value: 2, max: 2 }, aiming: "half" }));
+    expect(data.aiming.current).toBe("half");
+    expect(data.aiming.items.find(i => i.key === "aimHalf").active).toBe(true);
+    expect(data.aiming.items.find(i => i.key === "aimFull").active).toBe(false);
   });
 });
 

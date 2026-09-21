@@ -66,6 +66,20 @@ import { isItemActive } from "../apps/effects.mjs";
 /** Характеристики, которых Усталость не касается (стр. 26). */
 const FATIGUE_EXEMPT = ["t", "inf", "cog", "pf"];
 
+// Гололит (стр. 256, wdbc-x1nz.2): «час подготовки → +10 Command» — бонус
+// разовый, на СЛЕДУЮЩИЙ тест Command после успешного брифинга (combat/
+// hololith-briefing.mjs::useHololithBriefing ставит флаг, actor-sheet.mjs::
+// _runTest гасит его через clearHololithBriefing сразу после теста Command,
+// независимо от исхода). Флаг читается напрямую (getFlag), не через
+// hasRuleFlag/capability — тот же приём, что у остальных ситуативных здесь,
+// не завязан на предмет-источник (гололит мог уже убрать в рюкзак к моменту
+// самой речи, подготовка это не отменяет).
+const HOLOLITH_BRIEFED_FLAG = "hololithBriefed";
+function hololithBriefingBonus(actor, skillKey) {
+  if (skillKey !== "command") return 0;
+  return actor?.getFlag?.("warhammer-dbc", HOLOLITH_BRIEFED_FLAG) ? 10 : 0;
+}
+
 const actorHomeworldKey = actor =>
   actor?.items?.find(i => i.type === "homeworld")?.system?.key || "";
 
@@ -123,6 +137,21 @@ export function marchPenalty(actor, charKey) {
 }
 
 /**
+ * Бонус НАБЛЮДАТЕЛЮ на тесты Awareness/Survival, если он пытается
+ * засечь/выследить ЦЕЛЬ (ctx.targetActor), которая сейчас марширует/бежит
+ * (стр. 29: «тесты на его отслеживание или засекание получают бонус»).
+ * Cross-actor чтение через ctx.targetActor — тот же приём, что
+ * hexMarkedPreyAllyBonus (rules/predicates.mjs). Флаг marchTrackBonus стоит
+ * на ЦЕЛИ (movement-actions.mjs::showMarchDialog), не на наблюдателе — этой
+ * функции сам actor (наблюдатель) не нужен вовсе, только ctx.
+ */
+function marchTrackBonus(ctx) {
+  const skillKey = skillKeyOf(ctx);
+  if (skillKey !== "awareness" && skillKey !== "survival") return 0;
+  return Number(ctx?.targetActor?.getFlag?.("warhammer-dbc", "marchTrackBonus")) || 0;
+}
+
+/**
  * Снятый шлем силовой брони: +5 ко всем тестам на основе Товарищества.
  * Раньше жил методом листа (`_getHelmetlessBonus`) — единственный из пяти,
  * у кого своей функции вне листа не было вовсе.
@@ -166,6 +195,10 @@ export function situationalRules(actor, ctx = {}) {
       disabledArmourPenalty(actor, { charKey, skillKey }));
   add("situational.inventoryOverload", "◈ Перевес инвентаря",
       inventoryOverloadPenalty(actor, { charKey, skillKey }));
+  add("situational.hololithBriefing", "📽️ Гололит: подготовленный брифинг",
+      hololithBriefingBonus(actor, skillKey));
+  add("situational.marchTrackBonus", "🏃 Цель марширует/бежит — легче засечь",
+      marchTrackBonus(ctx));
 
   return rules;
 }

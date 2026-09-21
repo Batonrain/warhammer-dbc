@@ -135,6 +135,20 @@ function wearsSealedArmour(actor) {
     (i?.system?.properties ?? []).includes("sealed"));
 }
 
+// Респиратор/Противогаз (wdbc-1rno, Sweet Mist/Сладкий Туман) — предметы
+// gear в Головном слоте (system.gearCategory:"head"), НЕ armor и не несут
+// свойства "sealed" (проверено по packs-src — оба JSON без system.properties
+// вовсе, только testMod T+30 и текст "считается шлемом со свойством Sealed",
+// не реальное поле). Название — единственный надёжный признак: gearCategory
+// "head" сам по себе слишком широк (шлемы/наушники/визоры и т.п.).
+const GAS_PROTECTION_NAMES = ["Respirator", "Gas Mask"];
+
+/** Носит ли актор надетый Респиратор/Противогаз (иммунитет к вдыхаемому газу). */
+export function wearsGasProtection(actor) {
+  return (actor?.items ?? []).some(i =>
+    i?.type === "gear" && i?.system?.equipped && GAS_PROTECTION_NAMES.some(n => itemHasName(i, n)));
+}
+
 /**
  * Сус-ан Мембрана — орган Геносемени Гвардии Ворона/Призраков Смерти
  * (wdbc-l07y, дубль был в rules/death-save.mjs и apps/sus-an-heal.mjs).
@@ -161,6 +175,30 @@ export function isSusAnMembraneItem(item) {
 export function isStunnedOrDazed(actor) {
   const c = actor?.system?.conditions;
   return !!(c?.stunned || c?.dazed);
+}
+
+/**
+ * В Захвате (Борьба, стр. 12, wdbc-x1nz.2.31): «только действия Борьбы или
+ * не-Физические» — читатели, гейтящие ФИЗИЧЕСКИЕ действия (Движение,
+ * обычная Атака вне combat/grapple.mjs), спрашивают именно это, а не
+ * conditions.grappling напрямую — тем же приёмом, что isStunnedOrDazed.
+ */
+export function isGrappled(actor) {
+  return !!actor?.system?.conditions?.grappling;
+}
+
+/**
+ * Разум расфокусирован (стр. 12, wdbc-x1nz.2.32): «Ментальное действие...
+ * не может быть проведено, когда разум персонажа расфокусирован (например
+ * он пьян, галлюцинирует, или в Ярости)». Список — «или», как у
+ * isStunnedOrDazed: любое из трёх достаточно. inRage — system.inRage
+ * (МЕТКА, не system.conditions — см. constants/conditions.mjs), Опьянение —
+ * новое Состояние conditions.intoxicated (та же книжная фраза, без
+ * отдельной формулы длительности).
+ */
+export function isMentalActionBlocked(actor) {
+  const c = actor?.system?.conditions;
+  return !!(actor?.system?.inRage || c?.hallucinogenic || c?.intoxicated);
 }
 
 /**
@@ -230,7 +268,8 @@ export const CTX_DEPENDENT_PREDICATES = new Set([
   "weaponClass", "charNotIn", "charIn",
   "targetHasTrait", "targetLacksCondition", "targetHasCondition",
   "targetHasSize", "targetKeepsNimbleInArmour", "targetHasFaction",
-  "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus", "hasHatredTarget"
+  "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus", "hasHatredTarget",
+  "legacyGuardianMarked"
 ]);
 
 export const PREDICATES = {
@@ -380,6 +419,20 @@ export const PREDICATES = {
     const mark = actor?.getFlag?.("warhammer-dbc", "avatarOfSlaughterMark");
     if (!mark?.berserkerUuid) return false;
     return ctx?.targetActor?.uuid !== mark.berserkerUuid;
+  },
+
+  // Защитник/vigilant 8-8, Оружие Наследия, стрелковая ветка (wdbc-1rno.35,
+  // стр. 428): «Цель, по которой стреляли из этого оружия, до начала её
+  // следующего Хода получает штраф −30 на атаки по персонажу.» Метка — НА
+  // САМОЙ ЦЕЛИ (тот же приём, что avatarOfSlaughterOffTarget выше, но
+  // направление обратное: штраф срабатывает, когда меченый атакует ИМЕННО
+  // отметившего, не «любого кроме»). Гасится общим реестром turn-flags.mjs
+  // на старте её же следующего Хода — сама метка живёт weaponId стрелка
+  // (не нужен здесь, штраф безусловный, если совпал targetActor).
+  legacyGuardianMarked: (actor, ctx) => {
+    const mark = actor?.getFlag?.("warhammer-dbc", "legacyGuardianMark");
+    if (!mark?.shooterUuid) return false;
+    return ctx?.targetActor?.uuid === mark.shooterUuid;
   },
 
   // Hex-Marked Prey/Проклятая Метка (Талант, Шаман Зверолюдей, wdbc-xxb7):

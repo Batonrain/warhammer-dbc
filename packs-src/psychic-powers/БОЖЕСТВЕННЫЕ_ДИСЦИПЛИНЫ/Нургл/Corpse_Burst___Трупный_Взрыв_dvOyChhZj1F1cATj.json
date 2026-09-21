@@ -31,6 +31,9 @@
       {
         "key": "toxic",
         "rating": 2
+      },
+      {
+        "key": "unseen"
       }
     ],
     "charDamageStat": "",

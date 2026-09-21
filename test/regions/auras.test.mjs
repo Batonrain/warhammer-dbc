@@ -209,3 +209,37 @@ describe("tokenDocDistance — замер по документам, без plac
     expect(tokenDocDistance(a, b, undefined)).toBe(1);
   });
 });
+
+// wdbc-x1nz.2.18: «Ауры и прочие эффекты... расходятся от краёв его Базы,
+// а не от центра» (стр. 31) — tokenDocEdgeDistance вычитает радиусы обеих
+// Баз из центр-к-центру дистанции, tokenDocDistance выше остаётся нетронутой
+// (её другие потребители не входят в эту сверку).
+import { tokenDocEdgeDistance } from "../../module/regions/auras.mjs";
+
+describe("tokenDocEdgeDistance — от края Базы до края Базы (wdbc-x1nz.2.18)", () => {
+  const grid = { size: 100, distance: 2 }; // клетка 100px = 2 метра
+
+  it("оба токена 1×1 — вычитается по 1 клетке (0,5 радиуса × 2м) с каждой стороны", () => {
+    const a = { x: 0,   y: 0, width: 1, height: 1 };
+    const b = { x: 300, y: 0, width: 1, height: 1 }; // центр-к-центру 3 клетки = 6м
+    expect(tokenDocEdgeDistance(a, b, grid)).toBe(4); // 6 − 1 − 1
+  });
+
+  it("крупная База (2×2) «дотягивается» раньше — её радиус больше", () => {
+    const big   = { x: 0,   y: 0,  width: 2, height: 2 }; // центр (100,100), радиус 1 клетка = 2м
+    const small = { x: 400, y: 50, width: 1, height: 1 }; // центр (450,100) — выровнен по Y с big
+    expect(tokenDocEdgeDistance(big, small, grid)).toBe(4); // центр-к-центру 3,5кл×2м=7м, минус 2 минус 1
+  });
+
+  it("Базы касаются или налегают — дистанция 0, не уходит в минус", () => {
+    const a = { x: 0, y: 0, width: 1, height: 1 };
+    const b = { x: 50, y: 0, width: 1, height: 1 }; // центры в 0,5 клетки — Базы налегают
+    expect(tokenDocEdgeDistance(a, b, grid)).toBe(0);
+  });
+
+  it("высота участвует так же, как у tokenDocDistance", () => {
+    const a = { x: 0, y: 0, width: 1, height: 1, elevation: 0 };
+    const b = { x: 0, y: 0, width: 1, height: 1, elevation: 10 };
+    expect(tokenDocEdgeDistance(a, b, grid)).toBe(10);
+  });
+});

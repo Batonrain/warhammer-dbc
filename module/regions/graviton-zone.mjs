@@ -66,12 +66,16 @@ export class GravitonZoneBehaviorType extends foundry.data.regionBehaviors.Regio
  */
 export async function placeGravitonZone(shape, meters, attackerUuid, name = "Гравитонное") {
   if (!canvas.ready) throw new Error("Нет активной сцены");
+  // elevation:{bottom:0, top:meters} — та же сфера-приближение, что у
+  // placeAttackTemplate/placeLingerZone (wdbc-x1nz.2): без неё Region не
+  // ограничен по высоте, и летящий над зоной персонаж усыхал бы вместе с ней.
   const region = await canvas.regions.placeRegion({
     name,
     shapes: [shape],
     color: game.user.color.toString(),
     highlightMode: "coverage",
     displayMeasurements: true,
+    elevation: { bottom: 0, top: Number(meters) || 0 },
     behaviors: [
       {
         name: "Гравитонное (усыхание)",

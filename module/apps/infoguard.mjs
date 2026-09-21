@@ -13,7 +13,7 @@ import { SKILLS_DEF } from "../constants/skills.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { autoModsTotal } from "../rules/roll-mods.mjs";
-import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { esc, relayItemUpdate } from "../helpers/utils.mjs";
 
 /** Есть ли смысл показывать блок Инфограждения у этого предмета. */
@@ -181,15 +181,14 @@ export async function rollInfoguard(item, { executorActor = null } = {}) {
   await postTestCard(actor, {
     icon: rollIcon("shield", "#8fd0ff"),
     title: `Инфограждение: ${esc(item.name)}${delegating ? ` — за ${esc(ownerActor.name)}` : ""}`,
-    threshold: thresholdLine({
-      prefix: "Tech-Use+0", label: "Порог", base: null,
+    threshold: rollStatLine({
+      label: "Tech-Use+0", base,
       parts: situational.map(m => `${m.label} ${m.value >= 0 ? "+" : ""}${m.value}`),
-      threshold: eff
+      threshold: eff, rv
     }),
     lines: [
       ownerMod.lines.length ? `<div class="roll-threshold">${ownerMod.lines.join("<br/>")}</div>` : ""
     ],
-    rv,
     outcome: success
       ? `<span class="roll-success">Успех — ${deg} Усп. → ½ (окр.▲) = <b>${successes}</b> Успехов Инфограждения</span>`
       : `<span class="roll-failure">Провал — Инфограждение снято (0 Успехов)</span>`,

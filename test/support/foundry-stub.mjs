@@ -378,6 +378,12 @@ function parseRollFormula(formula, takeDie) {
   return { total, terms };
 }
 
+// Foundry расширяет глобальный Math этими двумя (client/utils/helpers.mjs) —
+// геометрия дрейфа зон (module/regions/linger-zone.mjs/vortex-zone.mjs)
+// вызывает их напрямую, без своей обёртки.
+Math.toRadians ??= degrees => degrees * (Math.PI / 180);
+Math.toDegrees ??= radians => radians * (180 / Math.PI);
+
 /**
  * Бросок без случайности.
  *
@@ -451,6 +457,7 @@ globalThis.Folder = class {};
 globalThis.JournalEntry = class {};
 globalThis.FilePicker = class {};
 globalThis.Combatant = class {};
+globalThis.Combat = class {};
 // Combatant#getInitiativeRoll (client/documents/combatant.mjs) строит бросок
 // именно так — не new Roll(...) напрямую. Заглушка переиспользует globalThis.Roll
 // выше: rollData ей не нужен, formula разбирает parseRollFormula.
@@ -557,6 +564,7 @@ export function fakeHtml(fields = {}, checks = {}) {
     find: selector => ({
       val:  () => fields[selector],
       is:   () => fields[selector] === true,
+      prop: name => (name === "checked" ? fields[selector] === true : undefined),
       data: key => (typeof fields[selector] === "object" && fields[selector] !== null)
         ? fields[selector][key] : undefined,
       on:   () => {},

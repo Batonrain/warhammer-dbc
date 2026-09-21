@@ -3,6 +3,7 @@
   "type": "weapon",
   "folder": "TQQsWi6Gc81MFTKy",
   "system": {
+    "itemSize": "3x1",
     "description": "",
     "notes": "",
     "rangeBands": [],

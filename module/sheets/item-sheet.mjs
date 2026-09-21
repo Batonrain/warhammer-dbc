@@ -25,6 +25,10 @@ import { tranceButtonHtml, useTrance }               from "../apps/armour-histor
 import { handOfDeathButtonHtml, useHandOfDeath }     from "../apps/hand-of-death.mjs";
 import { bloodFlameButtonHtml, useBloodFlame }       from "../apps/blood-flame.mjs";
 import { handOfKhorneButtonHtml, useHandOfKhorne }   from "../apps/hand-of-khorne.mjs";
+import { organOfChaosButtonHtml, useOrganOfChaos }   from "../apps/organ-of-chaos.mjs";
+import { becomeParasiteHostButtonHtml, becomeParasiteHost } from "../apps/maggot-parasite.mjs";
+import { beginParasiticContactButtonHtml, beginParasiticContact } from "../apps/parasite-trait.mjs";
+import { stabilizeRealityRendingButtonHtml, useStabilizeRealityRending } from "../apps/wrapped-in-chaos.mjs";
 import { gunArmButtonHtml, useGunArm }              from "../apps/gun-arm.mjs";
 import { illusionOfNormalityHtml, attemptNoticeIllusion, attemptSeeThroughIllusion, setIllusionMaintained }
   from "../apps/illusion-of-normality.mjs";
@@ -54,6 +58,8 @@ import { BODY_TYPES, ZONES, STAR_CLASSES, BODY_SIZES, GRAVITY,
          ATMOSPHERE_PRESENCE, ATMOSPHERE_TYPE, CLIMATE, HABITABILITY, ALLEGIANCE,
          XENOS_SPECIES, RESOURCE_TYPES, RESOURCE_ICONS,
          WORLD_CLASSES, WORLD_ENVIRONMENTS, TITHE_GRADES } from "../constants/star-system.mjs";
+import { setRouteSlot, resolveLinkedSystem, pickStarSystemDialog, generateRouteTraitsDialog }
+  from "../apps/warp-route.mjs";
 import { PSY_POWER_TYPES }                           from "../constants/psyker.mjs";
 import { TECH_MIRACLE_TYPES }                        from "../constants/tech.mjs";
 import { SKILLS_DEF }                                from "../constants/skills.mjs";
@@ -422,6 +428,47 @@ function onPsyVariantRemove(event, target) {
   return this.item.update({ "system.variants": (this.item.system.variants || []).filter((_, idx) => idx !== i) });
 }
 
+// ── Варп-маршрут: два слота Звёздных систем, Особенности (wdbc-r0w9) ─────────
+
+/** Открыть лист системы, привязанной в этом слоте. */
+function onWrpSlotOpen(event, target) {
+  const slot = target.dataset.slot;
+  const uuid = slot === "systemAUuid" ? this.item.system.systemAUuid : this.item.system.systemBUuid;
+  if (!uuid) return;
+  fromUuid(uuid).then(actor => actor?.sheet?.render(true)).catch(() => {});
+}
+
+/** Слот пустеет по кнопке — независимо от того, кто был там привязан. */
+function onWrpSlotClear(event, target) {
+  const slot = target.dataset.slot;
+  if (slot !== "systemAUuid" && slot !== "systemBUuid") return;
+  return setRouteSlot(this.item, slot, null);
+}
+
+/** «+» без drag-n-drop: тот же results, что и дроп, но через диалог выбора. */
+async function onWrpSlotPick(event, target) {
+  const slot = target.dataset.slot;
+  if (slot !== "systemAUuid" && slot !== "systemBUuid") return;
+  const other = slot === "systemAUuid" ? this.item.system.systemBUuid : this.item.system.systemAUuid;
+  const picked = await pickStarSystemDialog({ exclude: [other].filter(Boolean) });
+  if (picked && await this._confirmWrpSlotOverwrite(slot, picked)) await setRouteSlot(this.item, slot, picked);
+}
+
+function onWrpGenerateTraits() {
+  return generateRouteTraitsDialog(this.item);
+}
+
+function onWrpFeatureAdd() {
+  const arr = foundry.utils.deepClone(this.item.system.features || []);
+  arr.push({ roll: 0, name: "", effect: "" });
+  return this.item.update({ "system.features": arr });
+}
+
+function onWrpFeatureRemove(event, target) {
+  const i = Number(target.dataset.index);
+  return this.item.update({ "system.features": (this.item.system.features || []).filter((_, idx) => idx !== i) });
+}
+
 // ── Оружие: доп. профили ББ (Крюк/Посох, стр. 207-221) ──
 /** Номер профиля — на карточке, а не на самой кнопке. */
 const profileIdx = el => Number(el.closest(".wprofile-card")?.dataset.idx);
@@ -551,7 +598,8 @@ export class WarhammerItemSheet
       { icon: "fa-solid fa-film", label: "Automated Animations", action: "openAutoAnimations" }
     ] },
     form: { submitOnChange: true, closeOnSubmit: false },
-    dragDrop: [{ dragSelector: null, dropSelector: ".effects-drop-target, .grant-drop-zone, .wprop-drop-zone" }],
+    dragDrop: [{ dragSelector: null,
+      dropSelector: ".effects-drop-target, .grant-drop-zone, .wprop-drop-zone, .wrp-slot-zone" }],
     actions: {
       tab: onTab,
       fieldMode: onFieldMode,
@@ -601,7 +649,13 @@ export class WarhammerItemSheet
       modpropRemove: whenEditable(onModpropRemove),
       modremRemove: whenEditable(onModremRemove),
       aptRemove: whenEditable(onAptRemove),
-      apropRemove: whenEditable(onApropRemove)
+      apropRemove: whenEditable(onApropRemove),
+      wrpSlotOpen: onWrpSlotOpen,
+      wrpSlotClear: whenEditable(onWrpSlotClear),
+      wrpSlotPick: whenEditable(onWrpSlotPick),
+      wrpGenerateTraits: whenEditable(onWrpGenerateTraits),
+      wrpFeatureAdd: whenEditable(onWrpFeatureAdd),
+      wrpFeatureRemove: whenEditable(onWrpFeatureRemove)
     }
   };
 
@@ -655,7 +709,45 @@ export class WarhammerItemSheet
     if (auraZone && data?.type === "Item") return this._onDropAuraGrant(event, data, auraZone);
     const grantZone = event.target?.closest?.(".grant-drop-zone");
     if (grantZone && data?.type === "Item") return this._onDropGrantItem(event, data, grantZone);
+    // Варп-маршрут (wdbc-r0w9): дроп Звёздной системы в конкретный слот —
+    // явный, не «первый свободный», как со стороны листа Системы (там сама
+    // система не знает заранее, в какой слот её пишут).
+    const wrpZone = event.target?.closest?.(".wrp-slot-zone");
+    if (wrpZone && (data?.type === "Actor" || data?.type === "Token")) return this._onDropWrpSlot(event, data, wrpZone);
     if (data?.type === "ActiveEffect") return this._onDropActiveEffect(event, data);
+  }
+
+  /** Дроп Звёздной системы в слот А/Б Варп-маршрута (wdbc-r0w9). */
+  async _onDropWrpSlot(event, data, zone) {
+    const slot = zone.dataset.slot;
+    if (slot !== "systemAUuid" && slot !== "systemBUuid") return;
+    const doc = await fromUuid(data.uuid
+      || (data.type === "Actor" && data.id ? `Actor.${data.id}` : null)
+      || (data.type === "Token" && data.sceneId && data.tokenId ? `Scene.${data.sceneId}.Token.${data.tokenId}` : null))
+      .catch(() => null);
+    const actor = doc?.actor ?? doc;
+    if (!actor) return;
+    if (actor.type !== "starSystem") {
+      return ui.notifications.warn(`Сюда нужно перетащить Звёздную систему, а перетащено: «${esc(actor.name)}».`);
+    }
+    if (!(await this._confirmWrpSlotOverwrite(slot, actor))) return;
+    await setRouteSlot(this.item, slot, actor);
+  }
+
+  /**
+   * Слот на листе Маршрута занят ДРУГОЙ системой — подтвердить перезапись
+   * перед тем, как рвать существующую связь (найдено живой проверкой: без
+   * подтверждения дроп тихо заменял систему без единого уведомления).
+   * Пустой слот или та же самая система — подтверждать нечего, true сразу.
+   */
+  async _confirmWrpSlotOverwrite(slot, nextActor) {
+    const current = this.item.system[slot];
+    if (!current || current === nextActor.uuid) return true;
+    const currentActor = await fromUuid(current).catch(() => null);
+    return foundry.applications.api.DialogV2.confirm({
+      window: { title: "Заменить систему в слоте?" },
+      content: `<p>Здесь уже привязана «${esc(currentActor?.name ?? "(система недоступна)")}». Заменить на «${esc(nextActor.name)}»?</p>`
+    });
   }
 
   /**
@@ -1024,7 +1116,15 @@ export class WarhammerItemSheet
           def:     WEAPON_PROPERTIES[p.key],
           // Призма: текущий накопленный заряд (не рейтинг-максимум X, а живое
           // состояние на предмете) — своя мини-панель в чипе, не общий rating2.
-          prismaCharge: p.key === "prisma" ? (context.system.prismaCharge ?? 0) : null
+          prismaCharge: p.key === "prisma" ? (context.system.prismaCharge ?? 0) : null,
+          // requiredSuccesses/requiredSuccessesScalesSize (wdbc-zlx7) — поле
+          // читает только psychic.mjs (combat/weapon-properties.mjs::
+          // filterPropsBySuccesses, deg известна лишь у психотеста, у обычной
+          // атаки — нет до броска), поэтому вход для них есть только в
+          // templates/item/parts/psychic-power.hbs, не в weapon.hbs/tech-power.hbs
+          // (те делят этот же контекст-билдер, но поле у них молча не сработает).
+          requiredSuccesses: p.requiredSuccesses ?? 0,
+          requiredSuccessesScalesSize: !!p.requiredSuccessesScalesSize
         }))
         .filter(p => p.def);
       context.weaponPropsAvailable = WEAPON_PROPERTIES_LIST.filter(d => !activeKeys.has(d.key));
@@ -1117,6 +1217,14 @@ export class WarhammerItemSheet
       context.bloodFlameHtml = bloodFlameButtonHtml(this.item, this.item.parent);
       // Длань Кхорна (wdbc-1rno) — выбор руки, тот же принцип, что выше.
       context.handOfKhorneHtml = handOfKhorneButtonHtml(this.item, this.item.parent);
+      // Орган Хаоса (wdbc-1rno) — выбор Характеристики/малой способности ГМом на месте выдачи.
+      context.organOfChaosHtml = organOfChaosButtonHtml(this.item, this.item.parent);
+      // Опарыш-Паразит (wdbc-ux8a) — превращение исходного тела в носителя.
+      context.maggotParasiteHtml = becomeParasiteHostButtonHtml(this.item);
+      // Parasite/Паразит (Трейт — общий, wdbc-ux8a) — начать заражение цели.
+      context.parasiteBeginContactHtml = beginParasiticContactButtonHtml(this.item, this.item.parent);
+      // Рассечение Реальности/Wrapped in Chaos (wdbc-1rno) — выбор исключённых союзников.
+      context.stabilizeRealityRendingHtml = stabilizeRealityRendingButtonHtml(this.item);
       // Щупальце, субмутация 9 «Изменчивое» (wdbc-2ynk) — пусто у остальных.
       context.tentacleHandFormHtml = tentacleHandFormButtonHtml(this.item, this.item.parent);
       // «Иллюзия Нормальности» (wdbc-zbc0) — пусто у остальных Мутаций.
@@ -1474,6 +1582,16 @@ export class WarhammerItemSheet
       context.cbScouted = game.user.isGM || sys.scouted;
       // Секретные данные (оборона / истинная природа) — видит ГМ всегда, игрок — после раскрытия.
       context.cbShowSecret = game.user.isGM || sys.revealed;
+    }
+
+    // ── Варп-маршрут (wdbc-r0w9) ─────────────────────────────────────────────
+    if (this.item.type === "warpRoute") {
+      const sys = context.system;
+      context.wrpGmNotesEnriched = await foundry.applications.ux.TextEditor.implementation.enrichHTML(
+        sys.gmNotes || "", { relativeTo: this.item, secrets: this.item.isOwner });
+      context.wrpSystemA = await resolveLinkedSystem(sys.systemAUuid);
+      context.wrpSystemB = await resolveLinkedSystem(sys.systemBUuid);
+      context.wrpFeatures = (sys.features || []).map((f, idx) => ({ idx, ...f }));
     }
 
     // ── Броня ─────────────────────────────────────────────────────────────────
@@ -1930,6 +2048,34 @@ export class WarhammerItemSheet
       ev.preventDefault();
       const actor = this.item.parent;
       if (actor) await useHandOfKhorne(actor, this.item);
+    });
+
+    // ── Мутация «Орган Хаоса»: выбор Характеристики/способности (wdbc-1rno) ──
+    on(".organ-of-chaos-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useOrganOfChaos(actor, this.item);
+    });
+
+    // ── Мутация «Опарыш-Паразит»: превращение тела в носителя (wdbc-ux8a) ──
+    on(".maggot-parasite-become-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await becomeParasiteHost(actor, this.item);
+    });
+
+    // ── Трейт «Parasite»: начать заражение цели (wdbc-ux8a) ──
+    on(".parasite-begin-contact-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await beginParasiticContact(actor);
+    });
+
+    // ── Мутация «Укутанный в Хаос», субмутация «Рассечение Реальности» (wdbc-1rno) ──
+    on(".stabilize-reality-rending-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useStabilizeRealityRending(actor, this.item);
     });
 
     // ── Мутация «Щупальце», субмутация 9 «Изменчивое» (wdbc-2ynk) ───────────
@@ -2940,6 +3086,10 @@ export class WarhammerItemSheet
       if (ev.currentTarget.value) setHistory(this.item, ev.currentTarget.value);
     });
     on(".legacy-roll-history", "click", () => rollHistory(this.item));
+    // Наследие Излишеств (wdbc-1rno.35, стр. 427): Характеристика под
+    // опциональный риск +10/W+0-Порча — см. rules/legacy-weapon.mjs::legacyExcessRules.
+    on(".legacy-excess-char-select", "change", ev =>
+      this.item.update({ "system.legacy.excessChar": ev.currentTarget.value }));
     on(".legacy-character-select", "change", ev =>
       this.item.update({ "system.legacy.character": ev.currentTarget.value }));
     on(".legacy-roll-mutation", "click", () => rollMutation(
@@ -3052,6 +3202,24 @@ export class WarhammerItemSheet
       const p     = props.find(x => x.key === key);
       if (p) { p[field] = val; await this.item.update({ "system.weaponProps": props }); }
     });
+    // wdbc-zlx7: порог Успехов, при котором свойство вообще срабатывает
+    // (Neural Storm/Fire Barrage/Bolt/Storm), и опциональный масштаб порога
+    // Размером цели (Force Bolt) — читает только module/sheets/tabs/psychic.mjs,
+    // см. комментарий в контекст-билдере выше (this.item.type === "psychicPower").
+    on(".wprop-required-successes", "change", async ev => {
+      const key   = ev.currentTarget.dataset.key;
+      const val   = Math.max(0, parseInt(ev.currentTarget.value) || 0);
+      const props = foundry.utils.deepClone(this.item.system.weaponProps || []);
+      const p     = props.find(x => x.key === key);
+      if (p) { p.requiredSuccesses = val; await this.item.update({ "system.weaponProps": props }); }
+    });
+    on(".wprop-required-successes-size", "change", async ev => {
+      const key   = ev.currentTarget.dataset.key;
+      const val   = !!ev.currentTarget.checked;
+      const props = foundry.utils.deepClone(this.item.system.weaponProps || []);
+      const p     = props.find(x => x.key === key);
+      if (p) { p.requiredSuccessesScalesSize = val; await this.item.update({ "system.weaponProps": props }); }
+    });
     // Призма: живой заряд на предмете (не weaponProps[].rating — тот X-максимум).
     on(".wprop-prisma-charge", "change", async ev => {
       const val = Math.max(0, parseInt(ev.currentTarget.value) || 0);
@@ -3085,6 +3253,24 @@ export class WarhammerItemSheet
       if (!arr[i]) return;
       arr[i][field] = field === "testMod" ? (parseInt(ev.currentTarget.value) || 0) : ev.currentTarget.value;
       await this.item.update({ "system.variants": arr });
+    });
+
+    // ── Варп-маршрут: подсветка слота при наведении дропа (wdbc-r0w9) ─────────
+    // Только визуал — сам дроп штатно разбирает _onDrop (dragDrop-зона выше).
+    el.querySelectorAll(".wrp-slot-zone").forEach(zone => {
+      zone.addEventListener("dragover", ev => { ev.preventDefault(); zone.classList.add("social-drop-hover"); });
+      zone.addEventListener("dragleave", () => zone.classList.remove("social-drop-hover"));
+      zone.addEventListener("drop", () => zone.classList.remove("social-drop-hover"));
+    });
+
+    // ── Варп-маршрут: строки Особенностей (wdbc-r0w9) ────────────────────────
+    on(".wrp-feature-field", "change", async ev => {
+      const i = Number(ev.currentTarget.dataset.index);
+      const field = ev.currentTarget.dataset.field;
+      const arr = foundry.utils.deepClone(this.item.system.features || []);
+      if (!arr[i]) return;
+      arr[i][field] = field === "roll" ? (parseInt(ev.currentTarget.value) || 0) : ev.currentTarget.value;
+      await this.item.update({ "system.features": arr });
     });
 
     // ── Оружие: доп. профили ББ (Крюк/Посох, стр. 207-221) ──────────────────────

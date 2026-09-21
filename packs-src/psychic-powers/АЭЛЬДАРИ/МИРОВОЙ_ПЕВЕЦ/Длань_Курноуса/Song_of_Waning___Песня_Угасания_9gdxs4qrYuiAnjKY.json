@@ -5,7 +5,7 @@
   "folder": "GwOyx7wJLrgLTX8b",
   "system": {
     "description": "",
-    "notes": "Pen (PR×2) и рейтинги Extreme(10−PR)/Haywire(0, PR) зависят от текущего ПР манифестации — числовое поле penetration оставлено 0, реальное значение и свойства считать по тексту effect. Тип урона не указан явно в книге.",
+    "notes": "Тип урона не указан явно в книге (оставлен «энергия» по умолчанию). Бонус против техники/обездушенных предметов, несмотря на Warp Weapon (+1d10 Dmg, Pen до PR×3) — не автоматизирован, только текстом.",
     "cost": 500,
     "discipline": "worldSinger",
     "subtype": "Длань Курноуса",
@@ -22,8 +22,21 @@
     "sustainAction": "free",
     "damage": "1d10+PR×2",
     "damageType": "energy",
-    "penetration": 0,
-    "weaponProps": [],
+    "penetration": "PR*2",
+    "weaponProps": [
+      {
+        "key": "extreme",
+        "rating": "10-PR"
+      },
+      {
+        "key": "haywire",
+        "rating": 0,
+        "rating2": "PR"
+      },
+      {
+        "key": "warpWeapon"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],

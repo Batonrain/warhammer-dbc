@@ -32,6 +32,7 @@ import { postTestCard } from "../helpers/test-card.mjs";
 import { determinationToFightApBonus } from "../rules/determination-to-fight.mjs";
 import { isStunnedOrDazed } from "../rules/predicates.mjs";
 import { turnStartFlagClears, turnStartAttackCarryOver } from "../rules/turn-flags.mjs";
+import { rollLegacyChangeBonus } from "../rules/legacy-weapon.mjs";
 
 /** Типы акторов, несущих экономику действий (общая часть — _creature.mjs). */
 export const ACTION_ECONOMY_ACTOR_TYPES = ["character", "daemon", "demonPrince", "minion"];
@@ -86,12 +87,20 @@ export function effectiveActionPointsMax(actor) {
 export async function resetActionEconomy(actor) {
   if (!hasActionEconomy(actor)) return;
   const sys = actor.system;
+  // Стр. 12, wdbc-x1nz.2.26: Врасплох — «пропускает свой первый Раунд боя и
+  // не получает Реакции в этот Раунд». Реакции на этот момент уже обнулены
+  // (conditionApplyFields — на случай, если враги действуют раньше носителя в
+  // порядке Инициативы), а здесь — тот же абсолютный запрет (0 ОД и 0
+  // Реакций), что у Оглушения/Без сознания ниже, ПЛЮС одноразовое снятие
+  // самого Состояния: единственный их Ход, пока оно висит, — как раз тот
+  // «первый Раунд», который они пропускают.
+  const surprised       = !!sys.conditions?.surprised;
   // Стр. 30-31: Оглушение/Ступор и Без сознания (wdbc-r5o7.7: «не может
   // совершать Действия и Реакции», тот же абсолютный запрет, что и у
   // Оглушения — не через isStunnedOrDazed, у Без сознания это СВОЙ пункт
   // книги, не производный от Беспомощности выше) — абсолютный запрет (0),
   // сильнее ограничения Подавленного ниже (min 1).
-  const apLocked       = isStunnedOrDazed(actor) || !!sys.conditions?.unconscious;
+  const apLocked       = isStunnedOrDazed(actor) || !!sys.conditions?.unconscious || surprised;
   // Стр. 33: Подавленный персонаж в укрытии имеет только 1 ОД в свой Ход
   // («в укрытии» не проверяем — тот же приём, что у штрафа BS в диалоге
   // атаки: считаем по самому факту Подавления).
@@ -123,6 +132,21 @@ export async function resetActionEconomy(actor) {
   // Список «чем атаковал» не гасится, а переезжает на Ход назад: Мэн-Гош
   // спрашивает про ПРЕДЫДУЩИЙ Ход (rules/turn-flags.mjs).
   Object.assign(upd, turnStartAttackCarryOver(actor));
+  // Врасплох потрачен — это и был тот единственный Ход, который они по книге
+  // пропускают (см. комментарий у apLocked выше).
+  if (surprised) upd["system.conditions.surprised"] = false;
+  // Наследие Перемен, Оружие Наследия (wdbc-1rno.35, История 9, стр. 427):
+  // «В начале каждого Хода бросьте 2d5» — свежий бросок каждый раз ЗАМЕНЯЕТ
+  // прошлый, поэтому не через общий реестр turn-flags.mjs (та только гасит,
+  // см. rules/legacy-weapon.mjs::rollLegacyChangeBonus).
+  // Обычная запись, не «-=»: значение ЗАМЕНЯЕТСЯ каждый Ход (свежим броском
+  // или null, если подходящего оружия больше нет) — сторож test/rules/
+  // turn-flags.test.mjs запрещает ручное «-=» здесь именно потому, что оно
+  // для флагов, которые только ГАСНУТ, не переписываются заново.
+  const legacyChange = await rollLegacyChangeBonus(actor);
+  if (legacyChange || actor.getFlag?.("warhammer-dbc", "legacyChangeBonus")) {
+    upd["flags.warhammer-dbc.legacyChangeBonus"] = legacyChange;
+  }
   if (Object.keys(upd).length) await actor.update(upd);
 }
 
@@ -158,10 +182,35 @@ export async function applyTurnEndStanceEffects(actor) {
   }
 }
 
-/** ОД костюм действия → стоимость в ОД (Полудействие/Полное действие/Свободное). */
+/**
+ * Aim Focus/Фокус на Прицеле (wdbc-1rno.5, rules/aim-focus.mjs): «до конца
+ * его следующего Хода» — на конце Хода, где было объявлено ("pending"),
+ * взводится на один Ход вперёд ("armed"); на конце СЛЕДУЮЩЕГО Хода (уже
+ * "armed") снимается вместе с самим Прицеливанием. Тот же такт, что
+ * applyTurnEndStanceEffects — hooks.mjs зовёт обе на конце Хода актора.
+ */
+export async function applyAimFocusTurnEnd(actor) {
+  const state = actor?.getFlag?.("warhammer-dbc", "aimFocusExtended");
+  if (state === "pending") {
+    await actor.setFlag("warhammer-dbc", "aimFocusExtended", "armed");
+  } else if (state === "armed") {
+    await actor.unsetFlag("warhammer-dbc", "aimFocusExtended");
+    if (actor.system?.aiming && actor.system.aiming !== "none") {
+      await actor.update({ "system.aiming": "none" });
+    }
+  }
+}
+
+/**
+ * ОД костюм действия → стоимость в ОД (стр. 12: Полудействие/Полное
+ * действие/Свободное — и Длительное/Расширенное, книжно тоже 2 ОД за Ход,
+ * см. combat/sustained-action.mjs).
+ */
 export function apCostForActionType(actionType) {
-  if (actionType === "Полное действие") return 2;
-  if (actionType === "Полудействие")    return 1;
+  if (actionType === "Полное действие")      return 2;
+  if (actionType === "Полудействие")         return 1;
+  if (actionType === "Длительное действие")  return 2;
+  if (actionType === "Расширенное действие") return 2;
   return 0; // Свободное действие и всё непризнанное — бесплатно
 }
 
@@ -214,6 +263,26 @@ async function _maybeTriggerCrippling(actor, cost) {
 }
 
 /**
+ * Прицеливание (wdbc-1rno.5, module/rules/aiming.mjs): бонус тратится
+ * впустую любым действием актора, кроме самого объявления Прицеливания
+ * (combat/aiming-action.mjs ставит system.aiming ПОСЛЕ своего же спенда
+ * ниже по стеку — на момент этого вызова оно ещё старое/"none", очистка тут
+ * не задваивает). Условие «cost» — только реальный (ненулевой) расход;
+ * формальные вызовы с cost=0 в других местах кодовой базы не должны молча
+ * стирать чужое активное Прицеливание.
+ */
+async function _maybeClearAiming(actor) {
+  if (actor?.system?.aiming && actor.system.aiming !== "none") {
+    await actor.update({ "system.aiming": "none" });
+  }
+  // Tracking Aim/Прицел на Упреждение (wdbc-1rno.5, rules/tracking-aim.mjs):
+  // тот же «любое действие тратит впустую», что у самого Прицеливания.
+  if (actor?.getFlag?.("warhammer-dbc", "trackingAimActive")) {
+    await actor.unsetFlag("warhammer-dbc", "trackingAimActive");
+  }
+}
+
+/**
  * Списать ОД, если возможно. Возвращает false, если ОД не хватило (действие
  * не проведено). physical:true — это трата ОД на физическое действие (см.
  * _maybeTriggerCrippling выше) — считается к авто-триггеру Калечащего.
@@ -224,27 +293,52 @@ export async function spendActionPoints(actor, cost, { physical = false } = {}) 
     const value = Number(actor.system.actionPoints?.value) || 0;
     await actor.update({ "system.actionPoints.value": Math.max(0, value - cost) });
     if (physical) await _maybeTriggerCrippling(actor, cost);
+    await _maybeClearAiming(actor);
   }
   return true;
 }
 
 /**
+ * Стр. 12, wdbc-x1nz.2.28: «Одно Действие может вызвать только одну
+ * Реакцию» — уже отвечали Реакцией на ЭТО конкретное Действие (attackId,
+ * общий у всех кнопок Избегания одной карточки — attack-card.mjs::
+ * defenseSection генерирует его один раз на карточку)? Без attackId (вызов
+ * не относится к конкретной атаке — например общая кнопка «потратить
+ * Реакцию» на листе) гейт не применяется вовсе.
+ */
+function hasReactedToAttack(actor, attackId) {
+  if (!attackId) return false;
+  const ids = actor.getFlag("warhammer-dbc", "reactedAttackIds");
+  return Array.isArray(ids) && ids.includes(attackId);
+}
+
+/** Пометить attackId как «уже обслужен» — список гасится turn-flags.mjs на начале следующего своего Хода. */
+async function markReactedToAttack(actor, attackId) {
+  if (!attackId) return;
+  const ids = actor.getFlag("warhammer-dbc", "reactedAttackIds");
+  const list = Array.isArray(ids) ? ids : [];
+  if (!list.includes(attackId)) await actor.setFlag("warhammer-dbc", "reactedAttackIds", [...list, attackId]);
+}
+
+/**
  * Хватит ли Реакции. forDefense — эта Реакция тратится на Избегание
  * (Уклонение/Парирование), поэтому в первую очередь считается доп. пул
- * defenseValue Защитной Стойки, а не только универсальный.
+ * defenseValue Защитной Стойки, а не только универсальный. attackId — см.
+ * hasReactedToAttack выше.
  */
-export function canSpendReaction(actor, { forDefense = false } = {}) {
+export function canSpendReaction(actor, { forDefense = false, attackId = "" } = {}) {
   if (!isEncounterActive() || !hasActionEconomy(actor)) return true;
   // Бег (стр. 32): до начала следующего Хода бегущий не может Реакции.
   if (actor.getFlag("warhammer-dbc", "running")) return false;
+  if (hasReactedToAttack(actor, attackId)) return false;
   const universal = Number(actor.system.reactions?.value) || 0;
   const defense    = forDefense ? (Number(actor.system.reactions?.defenseValue) || 0) : 0;
   return (universal + defense) > 0;
 }
 
 /** Списать Реакцию: сперва ограниченный пул на Избегание (если applicable), потом универсальный. */
-export async function spendReaction(actor, { forDefense = false } = {}) {
-  if (!canSpendReaction(actor, { forDefense })) return false;
+export async function spendReaction(actor, { forDefense = false, attackId = "" } = {}) {
+  if (!canSpendReaction(actor, { forDefense, attackId })) return false;
   if (!isEncounterActive() || !hasActionEconomy(actor)) return true;
 
   const defenseValue  = Number(actor.system.reactions?.defenseValue) || 0;
@@ -254,6 +348,10 @@ export async function spendReaction(actor, { forDefense = false } = {}) {
     const universal = Number(actor.system.reactions?.value) || 0;
     await actor.update({ "system.reactions.value": Math.max(0, universal - 1) });
   }
+  if (attackId) await markReactedToAttack(actor, attackId);
+  // Уклонение/Парирование — тоже «действие», тратящее Прицеливание впустую
+  // (wdbc-1rno.5, см. _maybeClearAiming выше).
+  await _maybeClearAiming(actor);
   return true;
 }
 

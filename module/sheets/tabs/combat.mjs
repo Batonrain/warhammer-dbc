@@ -44,11 +44,21 @@ import { reformationSongAvailable } from "../../combat/reformation-song.mjs";
 import { showReformationSongDialog } from "../../apps/reformation-song-dialog.mjs";
 import { conjureWraithAvailable, applyConjureWraith } from "../../combat/conjure-wraith.mjs";
 import { useDisabledArmourPeriodicTest, promptDisabledArmourForkTest } from "../../combat/armor-mods.mjs";
+import { useInventoryOverloadPeriodicTest } from "../../combat/encumbrance.mjs";
 import { useGangrenePeriodicTest } from "../../combat/gangrene.mjs";
 import { useRadiationSicknessTest } from "../../combat/radiation.mjs";
 import { repairArmorCorrosion, extractPiercingWound, applyCripplingTrigger } from "../../combat/damage.mjs";
-import { clearWeaponJam } from "../../combat/weapon-properties.mjs";
+import { rollClearJam, rollRestoreJammedAmmo } from "../../combat/clear-jam.mjs";
+import { declareBrace } from "../../combat/brace-weapon.mjs";
 import { spendActionPoints, spendReaction, resetActionEconomy } from "../../combat/action-economy.mjs";
+import { attackedThisTurn } from "../../rules/turn-flags.mjs";
+import { resolveFeintSuccess, resolvePressSuccess } from "../../combat/feint-press.mjs";
+import { resolveBulldozeSuccess, bulldozeForbidden, bulldozeSizePenalty } from "../../combat/bulldoze.mjs";
+import {
+  beginSustainedAction, continueSustainedAction, passSustainedCheckpoint,
+  interruptSustained, clearSustainedAction
+} from "../../combat/sustained-action.mjs";
+import { declareDelay } from "../../combat/delay-action.mjs";
 import { grantRecoilBonus } from "../../combat/recoil-pool.mjs";
 import { triggerSpiritTalk } from "../../combat/spirit-talk.mjs";
 import { triggerDeadlyEffectiveness } from "../../combat/deadly-effectiveness.mjs";
@@ -98,6 +108,9 @@ export function activateCombatListeners(root, actor) {
   // ── Перевес выключенной силовой брони: тест раз в T.b часов (стр. 233) ──
   on(root, ".disabled-armour-periodic-test-btn", "click", () => useDisabledArmourPeriodicTest(actor));
   on(root, ".disabled-armour-fork-test-btn", "click", () => promptDisabledArmourForkTest(actor));
+
+  // ── Перевес общего инвентаря: тест раз в T.b часов (стр. 27) ────────────
+  on(root, ".inventory-overload-periodic-test-btn", "click", () => useInventoryOverloadPeriodicTest(actor));
 
   // ── Гангрена: урон T раз в T.b×2 часов (стр. 30-31, wdbc-r5o7.5) ────────
   on(root, ".gangrene-periodic-test-btn", "click", () => useGangrenePeriodicTest(actor));
@@ -243,17 +256,47 @@ export function activateCombatListeners(root, actor) {
   });
 
   // ── Состязания (Повалить/Финт/Давление/Напролом) ─────────────────────────
+  // Эффект победы Финта/Давления (стр. 31, wdbc-x1nz.2.65) подмешивается
+  // здесь, не в constants/combat.mjs — та запись чистые данные, как и все
+  // остальные MELEE_CONTESTS, функция ей не место (тот же приём, что
+  // grapple.mjs делает своим отдельным ALL_TESTS для «Заломить»).
   on(root, ".technique-btn", "click", ev => {
-    const techDef = MELEE_CONTESTS[ev.currentTarget.dataset.technique];
-    if (techDef) _showContestDialog(actor, techDef);
+    const key = ev.currentTarget.dataset.technique;
+    const base = MELEE_CONTESTS[key];
+    if (!base) return;
+    if (key === "feint")  return _showContestDialog(actor, { ...base, onSuccess: resolveFeintSuccess });
+    if (key === "press")  return _showContestDialog(actor, { ...base, onSuccess: resolvePressSuccess });
+    if (key === "bulldoze") {
+      // Напролом (стр. 31, wdbc-x1nz.2.65): жёсткий запрет против цели на
+      // 1+ Размер крупнее — диалог не открывается вовсе (не «бросок пройдёт,
+      // эффект спишется вручную», как у Обезоружить — книга говорит именно
+      // «нельзя ПРОВОДИТЬ»). Штраф −10×разница Размера у МЕНЬШИХ целей —
+      // подсказан в Доп. модификаторе, поле остаётся редактируемым.
+      const target = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+      if (target && bulldozeForbidden(actor, target)) {
+        return ui.notifications.warn(`⚠️ Напролом: нельзя проводить против ${target.name} — цель на 1+ Размер крупнее (стр. 31).`);
+      }
+      const sizePenalty = target ? bulldozeSizePenalty(actor, target) : 0;
+      return _showContestDialog(actor, { ...base, onSuccess: resolveBulldozeSuccess,
+        defaultMod: sizePenalty,
+        note: sizePenalty ? `${base.note} Подсказанный штраф за Размер против ${target.name}: ${sizePenalty}.` : base.note });
+    }
+    _showContestDialog(actor, base);
   });
 
   // ── Стойка/База — то же actor.update, что читает как стартовое значение
   // и умеет сменить на разовый бросок диалог атаки (attack-dialog.mjs):
   // клик здесь виден и там, и наоборот, без отдельной синхронизации.
+  // Стр. 31, wdbc-x1nz.2.64: «нельзя после рукопашной атаки» — кнопка уже
+  // disabled в разметке (character-context.mjs::stanceLocked), это второй
+  // рубеж на случай устаревшего рендера листа у другого клиента.
   on(root, ".technique-btn-stance", "click", ev => {
     const key = ev.currentTarget.dataset.stance;
-    if (key) actor.update({ "system.meleeStance": key });
+    if (!key) return;
+    if (attackedThisTurn(actor).some(id => actor.items.get(id)?.system?.weaponClass === "melee")) {
+      return ui.notifications.warn("⚠️ Стр. 31: Смену Стойки нельзя проводить после рукопашной атаки в этом Ходу.");
+    }
+    actor.update({ "system.meleeStance": key });
   });
   on(root, ".technique-btn-base", "click", ev => {
     const key = ev.currentTarget.dataset.base;
@@ -267,7 +310,15 @@ export function activateCombatListeners(root, actor) {
   });
   on(root, ".wh-sheet-clear-jam-btn", "click", ev => {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);
-    if (item) clearWeaponJam(item);
+    if (item) rollClearJam(actor, item);
+  });
+  on(root, ".wh-sheet-restore-ammo-btn", "click", ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) rollRestoreJammedAmmo(actor, item);
+  });
+  on(root, ".wh-sheet-brace-btn", "click", ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) declareBrace(actor, item);
   });
   on(root, ".wh-sheet-piercing-extract-btn", "click", ev => {
     extractPiercingWound(actor, ev.currentTarget.dataset.loc);
@@ -296,6 +347,37 @@ export function activateCombatListeners(root, actor) {
     }
   });
   on(root, ".ae-reset-btn", "click", () => resetActionEconomy(actor));
+  on(root, ".delay-action-btn", "click", () => declareDelay(actor));
+
+  // ── Длительное/Расширенное действие (стр. 12, wdbc-x1nz.2.27) ───────────
+  on(root, ".sustained-begin-btn", "click", async ev => {
+    const row   = ev.currentTarget.closest(".sustained-action-new");
+    const label = row?.querySelector(".sustained-new-label")?.value?.trim();
+    const kind  = row?.querySelector(".sustained-new-kind")?.value || "long";
+    const threshold = parseInt(row?.querySelector(".sustained-new-threshold")?.value) || 1;
+    if (!label) return ui.notifications.warn("⚠️ Название действия не может быть пустым.");
+    const started = await beginSustainedAction(actor, { label, kind, threshold, physical: true });
+    if (!started) ui.notifications.warn("⚠️ Не хватает ОД.");
+    else if (row?.querySelector(".sustained-new-label")) row.querySelector(".sustained-new-label").value = "";
+  });
+  on(root, ".sustained-continue-btn", "click", async ev => {
+    const key = ev.currentTarget.dataset.key;
+    if (!key) return;
+    if (!(await continueSustainedAction(actor, key, { physical: true })))
+      ui.notifications.warn("⚠️ Не хватает ОД.");
+  });
+  on(root, ".sustained-checkpoint-btn", "click", ev => {
+    const key = ev.currentTarget.dataset.key;
+    if (key) passSustainedCheckpoint(actor, key);
+  });
+  on(root, ".sustained-interrupt-btn", "click", ev => {
+    const key = ev.currentTarget.dataset.key;
+    if (key) interruptSustained(actor, key);
+  });
+  on(root, ".sustained-action-row .extended-test-del-btn", "click", ev => {
+    const key = ev.currentTarget.dataset.key;
+    if (key) clearSustainedAction(actor, key);
+  });
 
   // Отскок (стр. 12, wdbc-9wvm, п.7): непотраченное ОД повышает предел
   // Отскока в текущем Раунде на SPD м — тот же паттерн «−1 ОД за клик», что

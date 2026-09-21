@@ -40,7 +40,7 @@ import { MELEE_STANCES, MELEE_BASES } from "../constants/combat.mjs";
 import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
-import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
+import { postTestCard, outcomeHtml, rollStatLine } from "../helpers/test-card.mjs";
 import { bodyWeightOf, totalWeightOf, throwTier, canWieldAsCudgel, footingRequirement }
   from "../rules/improvised-weapon.mjs";
 
@@ -422,9 +422,13 @@ export function throwProfile(actor, partner) {
     testBonus: athleticsPenalty + tentacle, tentacleBonus: tentacle, athleticsPenalty };
 }
 
-/** Общий блок «применить урон цели + защита» — тот же HTML-контракт, что и
- *  showAttackDialogNoWeapon (классы читает module/hooks.mjs). */
-function _targetDamageSection(dmgTotal, weaponName, actor) {
+/**
+ * Общий блок «применить урон цели + защита» — тот же HTML-контракт, что и
+ * showAttackDialogNoWeapon (классы читает module/hooks.mjs). Экспортирован
+ * (не только для этого файла) — combat/improvised-item.mjs реюзает его для
+ * обычных предметов-Дубин/снарядов (не партнёров по Захвату), та же разметка.
+ */
+export function _targetDamageSection(dmgTotal, weaponName, actor) {
   return `
     <div class="roll-damage-section">
       <div class="roll-damage-label">Урон цели (Ударный, Проб. 0): <b>${dmgTotal}</b> · Primitive, Баланс −2</div>
@@ -496,22 +500,24 @@ async function _doSwing(actor) {
 
   // Блок «Приём: …» стоит ВЫШЕ шапки карточки — тот же вид, что у остальных
   // Приёмов (combat/techniques.mjs, карточка атаки); в общем сборщике под это
-  // есть prelude. Строка Порога здесь своего формата (слагаемые без скобок,
-  // как сложилось у Приёмов), поэтому передаётся готовой строкой.
+  // есть prelude.
   await postTestCard(actor, {
     prelude: `<div class="roll-technique-block">${rollIcon("sword")}Приём: <b>Замахнуться (Дубина)</b>
         <div class="roll-technique-note">🤼 Борьба: ${esc(partner.name)} используется как импровизированная Дубина против ${esc(target.name)} (стр. 27).${profile.tentacleBonus ? ` Щупальце: +${profile.tentacleBonus} учтено.` : ""}</div>
       </div>`,
     icon: rollIcon("sword"),
     title: `Замахнуться — удар Дубиной (${profile.diceCount}d10 I(Cr))`,
-    threshold: `<div class="roll-threshold">
-        WS: <b>${ws}</b> база ${baseBon >= 0 ? "+" : ""}${baseBon}
-        ${stBon !== 0 ? ` стойка ${stBon >= 0 ? "+" : ""}${stBon}` : ""}
-        Дубина −20${profile.tentacleBonus ? ` Щупальце +${profile.tentacleBonus}` : ""}
-        ${ruleMods.parts.map(p => ` ${p}`).join("")}
-        → Порог: <b>${final}</b>
-      </div>`,
-    rv: roll.total,
+    threshold: rollStatLine({
+      label: "WS", base: ws,
+      parts: [
+        `база ${baseBon >= 0 ? "+" : ""}${baseBon}`,
+        ...(stBon !== 0 ? [`стойка ${stBon >= 0 ? "+" : ""}${stBon}`] : []),
+        "Дубина −20",
+        ...(profile.tentacleBonus ? [`Щупальце +${profile.tentacleBonus}`] : []),
+        ...ruleMods.parts
+      ],
+      threshold: final, rv: roll.total
+    }),
     outcome: outcomeHtml(hit, hit
       ? `Попадание по ${esc(target.name)} — ${deg} степеней`
       : `Промах мимо ${esc(target.name)} — ${deg} степеней`),
@@ -613,14 +619,15 @@ async function _doThrow(actor) {
         </div>`,
       icon: rollIcon("sword"),
       title: `Метнуть — ${profile.testLabel}${profile.rangeM ? `, дальность до ${profile.rangeM} м` : ""}`,
-      threshold: `<div class="roll-threshold">
-          ${profile.testLabel}: <b>${charVal}</b>
-          ${profile.athleticsPenalty ? ` тир ${profile.athleticsPenalty}` : ""}
-          ${profile.tentacleBonus ? ` Щупальце +${profile.tentacleBonus}` : ""}
-          ${throwMods.parts.map(p => ` ${p}`).join("")}
-          → Порог: <b>${final}</b>
-        </div>`,
-      rv: roll.total,
+      threshold: rollStatLine({
+        label: profile.testLabel, base: charVal,
+        parts: [
+          ...(profile.athleticsPenalty ? [`тир ${profile.athleticsPenalty}`] : []),
+          ...(profile.tentacleBonus ? [`Щупальце +${profile.tentacleBonus}`] : []),
+          ...throwMods.parts
+        ],
+        threshold: final, rv: roll.total
+      }),
       outcome: outcomeHtml(false, `Промах — ${esc(partner.name)} улетает мимо ${esc(target.name)}, ${deg} степеней`),
       sections: [knockNote]
     }, { rolls: [roll] });
@@ -645,14 +652,15 @@ async function _doThrow(actor) {
       </div>`,
     icon: rollIcon("sword"),
     title: `Метнуть — ${profile.testLabel}${profile.rangeM ? `, дальность до ${profile.rangeM} м` : ""}`,
-    threshold: `<div class="roll-threshold">
-        ${profile.testLabel}: <b>${charVal}</b>
-        ${profile.athleticsPenalty ? ` тир ${profile.athleticsPenalty}` : ""}
-        ${profile.tentacleBonus ? ` Щупальце +${profile.tentacleBonus}` : ""}
-        ${throwMods.parts.map(p => ` ${p}`).join("")}
-        → Порог: <b>${final}</b>
-      </div>`,
-    rv: roll.total,
+    threshold: rollStatLine({
+      label: profile.testLabel, base: charVal,
+      parts: [
+        ...(profile.athleticsPenalty ? [`тир ${profile.athleticsPenalty}`] : []),
+        ...(profile.tentacleBonus ? [`Щупальце +${profile.tentacleBonus}`] : []),
+        ...throwMods.parts
+      ],
+      threshold: final, rv: roll.total
+    }),
     outcome: outcomeHtml(true, `Попадание — ${deg} степеней`),
     sections: [
       knockNote,

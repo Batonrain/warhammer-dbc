@@ -3,6 +3,7 @@
   "type": "weapon",
   "folder": "750k41X38TJ8qmh2",
   "system": {
+    "itemSize": "3x1",
     "description": "",
     "notes": "",
     "weaponClass": "basic",

@@ -57,7 +57,7 @@ describe("_rollInstability: Вид теста/Сложность без Куби
     await captured.press("roll", fakeForm());
     await promise;
 
-    expect(captured.chat[0].content).toContain("Порог: <b>40</b>");
+    expect(captured.chat[0].content).toContain("<label>Порог</label><b>40</b>");
     expect(captured.chat[0].content).toContain("Удержался");
   });
 
@@ -68,7 +68,7 @@ describe("_rollInstability: Вид теста/Сложность без Куби
     await captured.press("roll", fakeForm({ "#test-difficulty": "-20" }));
     await promise;
 
-    expect(captured.chat[0].content).toContain("Порог: <b>20</b>");
+    expect(captured.chat[0].content).toContain("<label>Порог</label><b>20</b>");
     expect(captured.chat[0].content).toContain("Дестабилизация");
   });
 
@@ -77,7 +77,7 @@ describe("_rollInstability: Вид теста/Сложность без Куби
     const promise = sheet._rollInstability();
     captured.nextRoll = 30;
     await captured.press("roll", fakeForm({
-      "#test-kind": "combined", "#combined-char-select": "ag", "#combined-target": "25"
+      "#kind-combined": true, "#combined-char-select": "ag", "#combined-target": "25"
     }));
     await promise;
 

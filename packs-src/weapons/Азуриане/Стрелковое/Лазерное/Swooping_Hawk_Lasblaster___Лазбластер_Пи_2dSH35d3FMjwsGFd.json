@@ -3,6 +3,7 @@
   "type": "weapon",
   "folder": "cvcvosgODOfOmXUT",
   "system": {
+    "itemSize": "3x1",
     "description": "",
     "notes": "",
     "weaponClass": "basic",

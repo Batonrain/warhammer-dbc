@@ -22,6 +22,7 @@
     "damageType": "rending",
     "penetration": 2,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, БИОНИКА И КИБЕРНЕТИКА (стр. 263-275)",
     "availability": 1,
     "weight": 0,
     "attackBonus": 0,

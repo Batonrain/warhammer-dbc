@@ -49,3 +49,44 @@ export function commanderOf(actor) {
     return null;
   }
 }
+
+/** Присутствие с выбранным ключом активно у этого командного узла (Отряд/сбродный Командир). */
+function presenceGrants(commandNode, key) {
+  return !!commandNode?.active && commandNode?.benefit === key;
+}
+
+/**
+ * Маловажные NPC (стр. 34, wdbc-x1nz.2.51): «не могут наносить Экстремальный
+ * Урон, но могут получить эту способность от своих командиров через эффекты
+ * Командования» — Командное Присутствие, вариант «Экстремальный Урон»
+ * (constants/squad.mjs::PRESENCE_BENEFITS, key "extreme").
+ *
+ * Два независимых источника Присутствия, ветка не эксклюзивна:
+ *   1. Отряд (squad), в котором состоит миньон — system.presence
+ *      (module/sheets/squad-sheet.mjs).
+ *   2. «Под моим Присутствием» — сбродная команда без сведения в Отряд
+ *      (module/sheets/tabs/command.mjs) — commandedBy на самом миньоне
+ *      указывает на командира, у него — system.command.presence.
+ *
+ * Не-миньонам (характерам, демонам, технике...) правило не адресовано вовсе —
+ * функция сразу отдаёт true.
+ */
+export function minionCanCauseExtremeDamage(actor) {
+  if (actor?.type !== "minion") return true;
+  const squad = findMemberSquad(actor.uuid);
+  if (presenceGrants(squad?.system?.presence, "extreme")) return true;
+
+  // "commandedBy" — тот же флаг/скоуп, что module/sheets/tabs/command.mjs::
+  // COMMANDED_BY_FLAG пишет на подчинённого при добавлении в «Под моим
+  // Присутствием» (rules/ намеренно не импортирует sheets/, поэтому строка
+  // ключа продублирована литералом, а не константой оттуда).
+  const commandedBy = actor.getFlag?.("warhammer-dbc", "commandedBy");
+  if (commandedBy?.uuid) {
+    try {
+      const doc = fromUuidSync(commandedBy.uuid);
+      const commander = doc?.actor ?? doc ?? null;
+      if (presenceGrants(commander?.system?.command?.presence, "extreme")) return true;
+    } catch { /* командир недоступен/удалён */ }
+  }
+  return false;
+}

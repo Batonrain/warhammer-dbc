@@ -9,6 +9,7 @@
 // навыка (на листе), и диалог атаки — поэтому она живёт отдельно от обоих.
 
 import { resolveTest } from "./resolve-test.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 /** Знак перед числом модификатора: «+10», «−10», пустая строка у нуля. */
 const sgn = v => (v > 0 ? `+${v}` : (v < 0 ? `${v}` : ""));
@@ -88,8 +89,15 @@ export function ruleRollModsHtml(actor, context, resolved = null) {
   if (!mods.length) return { html: "", mods };
   const rows = mods.map((m, i) => {
     const sign = m.value > 0 ? `+${m.value}` : (m.value < 0 ? `${m.value}` : "");
+    // data-rule-id (wdbc-1rno.35): все прочие потребители этой разметки
+    // складывают галочки в одно число ДО броска и не спрашивают, какая
+    // именно сработала — Наследие Излишеств первым потребовало узнать это
+    // ПОСЛЕ броска (каскад W+0/Порча только если риск реально был взят).
+    // ruleId уже лежит в каждой записи mods (resolve-test.mjs::rollModsFromRules),
+    // здесь только проброшен в разметку.
     return `<label class="attack-mod-check rule-roll-mod">
       <input type="checkbox" class="rule-mod" data-idx="${i}" data-value="${m.value || 0}"
+             data-rule-id="${esc(m.ruleId || "")}"
              ${m.halvePenalty ? 'data-halve="1"' : ""}/>
       <span>${m.label}${sign ? ` <b>(${sign})</b>` : ""}</span></label>`;
   }).join("");

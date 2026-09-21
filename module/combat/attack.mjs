@@ -23,11 +23,24 @@ import { qualityEffects, buildQualityChatBlock }    from "../constants/quality.m
 import { splinterFullAutoTearing, isSplinter, splinterReminders } from "../constants/drukhari-splinter.mjs";
 import { vehicleHitLocation }                        from "../constants/vehicle.mjs";
 import { isWalkerVehicle }                            from "../rules/walker.mjs";
+import { minionCanCauseExtremeDamage }                from "../rules/squad-roles.mjs";
+import { measureTokens }                              from "./tactical-map.mjs";
+import { lockingContactTokenDocs, allContactTokenDocs } from "./free-attack.mjs";
+import { feintBlocksEvasion } from "./feint-press.mjs";
+import { resolveGrenadeMeleeFumble }                  from "./draw-action.mjs";
 import { hidingInHordeSplit }                        from "./horde-tokens.mjs";
 import { applyGrappleOnHit }                          from "./grapple.mjs";
 import { rollOgrynWeaponBreak, ogrynBreakNote }      from "./ogryn-weapon-break.mjs";
 import { getEvasionPool, poolAffordableHits }         from "./evasion-pool.mjs";
 import { activeSwarm }                                from "../rules/ethereal-swarm.mjs";
+import { consumeHiddenThreatPending }                 from "../rules/hidden-threat.mjs";
+import { consumeHairTriggerUnseenPending }            from "../rules/hair-trigger.mjs";
+import { isUnseenDetected }                           from "../rules/unseen-attack.mjs";
+import { hasSixthSense, hasMusicOfBattle, hasBlindFighting, hasBackstab, isKnifeWeapon, hasSniperAssassin, isBlindsideMarked, consumeBlindsideMark } from "../rules/unseen-talents.mjs";
+import { isOutsideDefenderView, resolveAttackerToken } from "./facing.mjs";
+import { hasQuietElimination } from "../rules/quiet-elimination.mjs";
+import { hasJanusRearVision } from "../rules/janus.mjs";
+import { actorInfamyValue }                           from "../apps/infamy-points.mjs";
 import { sunderingDamageFormula, SUNDERING_COPY_FLAG } from "../rules/sundering.mjs";
 import { recoilRemaining as recoilPoolRemaining }     from "./recoil-pool.mjs";
 import { suppressionTestMod }                         from "./suppression.mjs";
@@ -40,6 +53,9 @@ import { touchOfPainActive } from "./touch-of-pain.mjs";
 import { withWitchsEdge }                             from "./witchs-edge.mjs";
 import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
 import { bloodFlameDamageBonus }                      from "../rules/blood-flame.mjs";
+import { preciseLegacyDamageBonus, wrathLegacyDamageBonus, legacyWrathEffectiveRof, betrayalLegacyActive, legacyHistoryIs, excessLegacyExtraDeg, bloodLegacyDamageBonus, legacyChangeDamageBonus, takenMutationNames, swiftLegacyRangedDodgePenalty, swiftLegacyMeleeDodgePenalty, dishonorableLegacyActive, distractingLegacyActive, DISTRACTING_LEGACY_FLAG, LEGACY_GUARDIAN_FLAG, earlyDeathLegacyDamageBonus, markEarlyDeathLegacyUsed, adaptiveLegacyMeleeDamageBonus } from "../rules/legacy-weapon.mjs";
+import { meleeContactCount } from "./tactical-map.mjs";
+import { betrayalRandomAllyToken } from "./legacy-weapon-betrayal.mjs";
 import { handOfKhorneStrengthMultiplier, handOfKhorneBlocksRangedAttack } from "../rules/hand-of-khorne.mjs";
 import { triggerAttackAnimation }                     from "../integrations/autoanimations.mjs";
 import { assassinStrikeAvailable }                    from "./assassin-strike.mjs";
@@ -61,8 +77,11 @@ import { counterAttackTriggers, counterAttackSectionHtml } from "./counter-attac
  *
  * @param {Roll}    dmgRoll  уже брошенный урон — проверяются его кубы
  * @param {object}  wp       агрегат aggregateAuto(...) для этой атаки
+ * @param {?Actor}  [attacker] стрелок/боец, нанёсший этот урон — нужен только
+ *   для гейта Маловажных NPC ниже (wdbc-x1nz.2.51); null у путей, где стрелок
+ *   не актор Foundry (карточки без атакующего) — тогда гейт не применяется.
  */
-export async function rollExtremeDamage(dmgRoll, { wp, damageType, hitLocation = "Торс", targetIsVehicle = false }) {
+export async function rollExtremeDamage(dmgRoll, { wp, damageType, hitLocation = "Торс", targetIsVehicle = false, attacker = null }) {
   let hasExtreme = false;
   if (dmgRoll.terms) {
     for (const term of dmgRoll.terms) {
@@ -70,10 +89,20 @@ export async function rollExtremeDamage(dmgRoll, { wp, damageType, hitLocation =
         const thr = wp.extremeThreshold < 10 ? wp.extremeThreshold : term.faces;
         for (const r of term.results) {
           if (r.active && r.result >= thr) hasExtreme = true;
+          // Мучитель/merciless 10-10, Оружие Наследия (wdbc-1rno.35, стр.
+          // 428): «Броски в 1 на кубиках урона оружия вызывают Экстремальный
+          // Урон» — отдельное условие ПОВЕРХ обычного порога, не замена.
+          if (wp.legacyExtremeOnOne && r.active && r.result === 1) hasExtreme = true;
         }
       }
     }
   }
+  // Маловажные NPC (стр. 34, wdbc-x1nz.2.51): «не могут наносить Экстремальный
+  // Урон» без Командного Присутствия «Экстремальный Урон» от своего Отряда/
+  // Командира (rules/squad-roles.mjs::minionCanCauseExtremeDamage). Гасится
+  // ДО броска d5 — не получивший способность миньон вообще не откатывает
+  // Крит. Эффект, не только прячет его в карточке.
+  if (hasExtreme && attacker && !minionCanCauseExtremeDamage(attacker)) hasExtreme = false;
   let extremeLevel = 0, critEffect = null, exRoll = null;
   if (hasExtreme) {
     exRoll = await new Roll("1d5").evaluate();
@@ -113,7 +142,14 @@ export function brutalChargeDamageBonus(actor) {
 }
 
 export async function _executeAttackRoll(actor, item, charKey, threshold, rofMode, aimTarget, opts = {}) {
-  const sys     = item.system;
+  const rawSys  = item.system;
+  // Наследие Ярости/Rage, ranged-ветка (wdbc-1rno.35, стр. 427): «+1 к
+  // наибольшей RoF, или S/2− вместо S/−/−» — клон sys, реальный предмет не
+  // трогаем, тот же приём, что Fanning (rofOverride) ниже подмешивает клон
+  // поверх клона. С этой точки sys — уже эффективный (с бонусом), все
+  // нижеидущие чтения rof_semi/rof_full (счёт попаданий, расход патронов,
+  // потолок Подавления) видят применённую Историю.
+  const sys     = legacyWrathEffectiveRof(rawSys, item);
   // Метательное (Граната и т.п.) по умолчанию бросается по BS — стр. 40:
   // «В рукопашной оно МОЖЕТ использоваться как рукопашное», это не default.
   // Решение «рукопашная ли это атака» одно на окно и на бросок
@@ -177,9 +213,33 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     _mergedEntries.push({ key: "shocking" });
   }
 
+  // Тесное помещение (стр. 36, wdbc-x1nz.2.63): галочка ГМа в диалоге атаки
+  // (attack-dialog.mjs::confinedSpaceHtml, видна только Взрывному) — «взрывы,
+  // наносящие E Dmg, получают Рвущее, а Оглушающие повышают рейтинг Concussive
+  // на 1». Тот же приём добавления/правки _mergedEntries ДО сборки wProps, что
+  // Осколочное/Touch of Pain выше — попадает и в карточку, и в расчёт урона.
+  // +1d10 и ×1.5 радиуса для X Dmg — отдельно, ниже по функции (bonusDamageDice/
+  // шаблон), они не выражаются добавкой свойства.
+  const confinedSpaceOn = !!opts.confinedSpace && _mergedEntries.some(x => x.key === "blast");
+  if (confinedSpaceOn && effDmgType === "energy" && !_mergedEntries.some(x => x.key === "tearing")) {
+    _mergedEntries.push({ key: "tearing" });
+  }
+  if (confinedSpaceOn) {
+    const concussiveEntry = _mergedEntries.find(x => x.key === "concussive");
+    if (concussiveEntry) concussiveEntry.rating = (Number(concussiveEntry.rating) || 0) + 1;
+  }
+
   const wProps    = resolveWeaponPropsList(_mergedEntries);
   const wp         = aggregateAuto(wProps);
   wp.reliabilityScore += modFx.reliabilityMod || 0;
+  // Тесное помещение, продолжение (стр. 36, wdbc-x1nz.2.63): X Dmg — радиус
+  // ×1.5 (окр.▲). Правится прямо в wp.blastRating — единая точка, откуда
+  // берут радиус и шаблон (attack-card.mjs), и рассеивание (blastScatter
+  // ниже), и счёт лишних попаданий по Орде (тот же рейтинг, книга не отделяет
+  // «увеличенный радиус» от обычного для этих целей).
+  if (confinedSpaceOn && effDmgType === "blast" && wp.blastRating > 0) {
+    wp.blastRating = Math.ceil(wp.blastRating * 1.5);
+  }
   // Призма (стр. 74 Книги Аэльдари): текущий заряд живёт на предмете, не в
   // реестре — обогащаем wp здесь же, до того как его читают downstream
   // (bonusDamageDice/attackPenetration/расход патронов).
@@ -194,6 +254,106 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Touch of Pain: T.b Поглощения этой атаки игнорируется целиком (не
   // сравнимо с Разящим — тот бьёт только Сверхъест. часть, здесь весь T.b).
   wp.touchOfPainIgnoreTb = touchOfPainOn;
+  // Кромсающее/fearsome 10-10, Оружие Наследия (wdbc-1rno.35, стр. 427):
+  // «При Экстремальном Уроне бросает 1d5+1 на Критический Результат» —
+  // тот же примитив, что Monofilament (constants/weapon-properties.mjs,
+  // auto.extremeLevelBonus:2), только +1 и по Мутации, а не по свойству.
+  // Второе предложение («может потратить Очко Бесчестия, чтобы бросить
+  // 1d10−2 (мин.1) вместо») честно НЕ реализовано — тот же общий пробел
+  // «нет кнопки временного эффекта на Мутации», см. bd-комментарий Перебора.
+  if (takenMutationNames(item).has("Кромсающее")) wp.extremeLevelBonus = (wp.extremeLevelBonus || 0) + 1;
+  // Мучитель/merciless 10-10, Оружие Наследия (wdbc-1rno.35, стр. 428):
+  // «Броски в 1 на кубиках урона вызывают Экстремальный Урон» — синтетический
+  // флаг для rollExtremeDamage (см. заголовок выше в этом файле).
+  if (takenMutationNames(item).has("Мучитель")) wp.legacyExtremeOnOne = true;
+
+  // Sniper Assassin / Снайпер-Убийца (wdbc-1rno.2, rules/unseen-talents.mjs)
+  // — ДО блока unseen ниже: сам ставит wp.unseen, тот читается следующей
+  // строкой. Прицеливание читается из opts.aiming, а НЕ из actor.system.
+  // aiming: к моменту броска диалог его уже сбросил в "none" (sheets/attack/
+  // dialog.mjs::actorUpdates, плюс _maybeClearAiming на списании ОД) — тот же
+  // захваченный до сброса снимок, которым ниже пользуются Меткое и
+  // bonusDamageDice. По живому полю условие не выполнялось никогда, и Талант
+  // не срабатывал вовсе (приёмка стопки #482-#504).
+  const sniperAssassinActive = wp.accurate && rofMode === "single"
+    && opts.aiming === "full" && hasSniperAssassin(actor);
+  if (sniperAssassinActive) { wp.unseen = true; wp.sniperAssassin = true; }
+
+  // targetToken/defenderActor (wdbc-1rno.2): вынесены СЮДА, раньше, чем были
+  // (изначально считались только у секции Орды/пула Уклонения, ниже) — нужны
+  // Blindside следующим блоком, до формулы урона. game.user.targets не
+  // зависит от hit/остального состояния атаки, переносить безопасно.
+  const targetToken = [...(game.user?.targets ?? [])][0] ?? null;
+  const defenderActor = targetToken?.actor ?? targetToken?.document?.actor ?? null;
+
+  // Скрытная Атака (стр. 32, wdbc-1rno.3): «атакующий весь свой Ход
+  // находился вне обзора цели ... эта атака получает тип Незримое» —
+  // снимок геометрии на момент атаки (combat/facing.mjs::
+  // isOutsideDefenderView, детали приближения и честная граница — там же),
+  // не слежение за позицией по всему Ходу. defenderActor может быть
+  // токеном без владельца или без цели вовсе — тогда геометрии посчитать
+  // не из чего, sneakAttackUnseen остаётся false (не наказываем).
+  // Janus (wdbc-1rno.3, rules/janus.mjs): у защищающегося практически
+  // круговой обзор — эта геометрическая проверка на него не срабатывает
+  // вовсе (structural wp.unseen/Сокрытая Угроза продолжают действовать как
+  // обычно, это исключение только для facing-детекта).
+  const attackerToken = await resolveAttackerToken(actor.uuid);
+  const sneakAttackUnseen = !!(targetToken && attackerToken && !hasJanusRearVision(defenderActor)
+    && isOutsideDefenderView(targetToken, attackerToken));
+  if (sneakAttackUnseen) wp.unseen = true;
+
+  // Blindside / Из Слепой Зоны (wdbc-1rno.2, rules/unseen-talents.mjs):
+  // «При победе, если его следующее действие — атака ножом по этой цели,
+  // эта атака считается Незримой». Метка target-scoped (не как у Hidden
+  // Threat — «следующая атака ЛЮБЫМ оружием по ЛЮБОЙ цели»), ставится
+  // кнопкой на предмете (пак: kind:"script"). «Раз в Ход»/«численное
+  // преимущество»/сам встречный тест Stealth vs Awareness — НЕ проверяются
+  // движком (см. текст кнопки) — честная граница, см. capabilities.mjs.
+  // Отклонение от буквы книги (задокументировано, не скрыто): «его СЛЕДУЮЩЕЕ
+  // действие» строго значит consume-на-любом-следующем-действии; здесь метка
+  // переживает промежуточные НЕ-ножевые/не-по-этой-цели действия и ждёт
+  // первую подходящую атаку — нет общего хука «актор совершил действие» вне
+  // атак, чтобы честно снять метку раньше.
+  const blindsideActive = defenderActor && isKnifeWeapon(item)
+    && isBlindsideMarked(actor, defenderActor.uuid);
+  if (blindsideActive) { wp.unseen = true; await consumeBlindsideMark(actor); }
+
+  // Незримое (стр. 32, wdbc-1rno.2): считается ЗДЕСЬ, до формулы урона —
+  // Backstab (rules/unseen-talents.mjs, ниже) должен знать unseen раньше,
+  // чем damageFormulaFor построит dmgFormula. Сокрытая Угроза / Hidden
+  // Threat (wdbc-1rno.1, rules/hidden-threat.mjs) снимается РОВНО здесь, на
+  // самой следующей атаке АТАКУЮЩЕГО, независимо от hit/засечения (RAW даёт
+  // тип ОДНОЙ следующей атаке, не длящемуся эффекту) — раньше эта строка
+  // стояла ближе к концу функции, смысл переноса не изменился, только такт.
+  const hiddenThreatFlag = await consumeHiddenThreatPending(actor);
+  // Hair Trigger/Палец на Спуске (wdbc-1rno.27/.37, rules/hair-trigger.mjs):
+  // «выигранный встречный тест — выстрел из Караула считается Незримым».
+  // Та же одноразовая пометка, снятая тем же тактом, что Hidden Threat выше.
+  const hairTriggerFlag = await consumeHairTriggerUnseenPending(actor);
+  const unseen = !!(wp.unseen || hiddenThreatFlag || hairTriggerFlag);
+  // Сокрытая Угроза добавляет реактивному тесту засечения её собственный
+  // −50 (её книжный текст, не общее правило стр. 32 — там штрафа нет).
+  const unseenPenalty = hiddenThreatFlag ? -50 : 0;
+
+  // Backstab / Удар в Спину (wdbc-1rno.2, rules/unseen-talents.mjs):
+  // «Незримой Избирательной атакой ножом — удваивает базовые кубики урона».
+  // Избирательная — aimTarget.value непусто (то же условие, что читает
+  // notes.aim ниже); нож — meleeCategory "Нож" на самом предмете.
+  const backstabDoubled = unseen && isMelee && !!aimTarget?.value
+    && hasBackstab(actor) && isKnifeWeapon(item);
+  if (backstabDoubled) wp.doubleDice = true;
+
+  // Quiet Elimination / Тихое Устранение (wdbc-1rno.3, rules/quiet-
+  // elimination.mjs): «Если персонаж атакует противника врасплох — +1 куб
+  // урона, цель не издаёт звука при гибели». Завязано на per-attack галочку
+  // «Цель Врасплох» (opts.targetSurprised, любое оружие) — НЕ на «Незримое»
+  // (unseen выше — другое правило, стр. 32 иначе сформулировано) и не
+  // ограничено ножом/пистолетом (тот отдельный +10 — situational-мод,
+  // sheets/attack/mods.mjs). «Не издаёт звука» — честно только строка в
+  // карточке ниже (formatNotes), детектора смерти на этом такте ещё нет.
+  const targetSurprised = !!opts.targetSurprised;
+  const quietEliminationActive = targetSurprised && hasQuietElimination(actor);
+  if (quietEliminationActive) wp.quietEliminationBonus = true;
   // ── Качество оружия ──────────────────────────────────────────────────────
   //   Стрелковое: ±Надёжность; Рукопашное Best: +1 урон; Best: теряет Primitive.
   //   (Мод теста для рукопашного применяется в _showAttackDialog → threshold.)
@@ -267,7 +427,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // атаке». Прибавляется к СТЕПЕНИ, а не к порогу: от степени зависят и число
   // попаданий (Быстрая/Молниеносная), и остаточные Успехи приёмов.
   const savageBonus = (hit && isMelee) ? savageExtraHits(actor, item) : 0;
-  const deg = rolledDeg + savageBonus;
+  // Наследие Излишеств, Оружие Наследия (wdbc-1rno.35, История 6, стр. 427):
+  // «+1 Успех на все успешные тесты WS и BS с этим оружием» — WS/BS здесь
+  // ровно те же тесты, что вообще проходят через _executeAttackRoll (charKey
+  // атаки всегда ws/bs), отдельного гейта по charKey не нужно.
+  const excessBonus = excessLegacyExtraDeg({ hit, weapon: item });
+  const deg = rolledDeg + savageBonus + excessBonus;
   // Крит-диапазон (натуральные 1-5/96-100, стр. 25) — не путать с «Критическим
   // Результатом/Эффектом» ниже: тот триггерится свойством Extreme оружия по
   // граням урона, этот — только по натуральному броску атаки, независимо от
@@ -275,24 +440,58 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Крит-диапазон читается по броску АТАКИ — у Распыления его нет (d100 всё
   // равно катается: он нужен ChatMessage и анимации кубов), поэтому строка
   // Критического Успеха/Провала для Spray не печатается вовсе.
-  const critLine = autoHitKind === "spray" ? "" : critLineHtml(criticalOutcome(rv, opts.crit));
+  const critOutcome = autoHitKind === "spray" ? null : criticalOutcome(rv, opts.crit);
+  const critLine = critOutcome ? critLineHtml(critOutcome) : "";
+  // Критический Успех на попадание (стр. 34, wdbc-x1nz.2.47): «накладывает
+  // штраф −30 на Избегания от этого попадания» — считается один раз здесь и
+  // прибавляется к dodgeMod/dodgeModRecoil/parryMod ниже, которые уже
+  // одинаково читают Уклонение/Парирование/Вираж/Уклонение верхом. Скрытая
+  // атака (hiddenAttack, -999) Избегание уже блокирует целиком — прибавлять
+  // сюда нечего, поэтому там веток нет.
+  const critHitPenalty = (hit && critOutcome?.success) ? -30 : 0;
+
+  // Граната, Критический Промах (стр. 40, wdbc-x1nz.2.59): «граната падает
+  // персонажу под ноги и взрывается» — весь остаток обычного разбора атаки
+  // (попадание по намеченной цели, урон по ней, Уклонение) для этого броска
+  // не нужен вовсе, поэтому короткое замыкание здесь же, как у Клина ниже.
+  // Формулировка книги не привязывает эту строку к рукопашному «нацепить»
+  // отдельно от обычного броска — стоит последним предложением всего абзаца
+  // «Граната», поэтому применяется к любому броску этим оружием.
+  if (sys.weaponType === "grenade" && critOutcome?.failure) {
+    await resolveGrenadeMeleeFumble(actor, item);
+    return;
+  }
 
   // ── Заклинивание (только для дальнобойного оружия со свойством надёжности) ──
   // Распыление клинит не по броску атаки, а по первому кубику урона (стр. 168,
   // sprayJamFace) — общий порог по d100 к нему неприменим, см. sprayJam ниже.
   const jamAt    = jamThreshold(wp);
-  const jammed   = !isMelee && !wp.spray && jamAt !== null && rv >= jamAt;
+  // Метательное (стр. 40, wdbc-x1nz.2.58): «При Критическом Промахе,
+  // метательное оружие не Заклинивает» — исключено из общего механизма
+  // Заклинивания по Надёжности целиком, не только на натуральном крите.
+  const jammed   = !isMelee && !wp.spray && sys.weaponClass !== "thrown" && jamAt !== null && rv >= jamAt;
   if (jammed) {
     // wdbc-vwfk: раньше заклинивание было только строкой в чате, без
     // последствий — теперь пишет реальное состояние предмета (weaponClass
     // проверен isMelee выше), которое блокирует кнопку «Атака» на листе
     // (sheet-helpers.mjs::weaponView) до «Расклинить»
     // (weapon-properties.mjs::clearWeaponJam).
-    await item.update({ "system.jammed": true });
+    // Клин портит 2×RoF патронов из магазина (стр. 41, wdbc-x1nz.2.61) — не
+    // пропадают насовсем, а уходят в jammedAmmo: «Расклин» их не трогает,
+    // возвращает в magazineCur отдельный тест Trade(Weaponsmith)+10 вне боя
+    // (combat/clear-jam.mjs::rollRestoreJammedAmmo).
+    const curMag = sys.magazineCur || 0;
+    const spoiled = Math.min(2 * (_getAmmoSpent({ system: sys }, rofMode) || 0), curMag);
+    await item.update({
+      "system.jammed": true,
+      "system.magazineCur": curMag - spoiled,
+      "system.jammedAmmo": (sys.jammedAmmo || 0) + spoiled
+    });
     const jamData = ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: jamCard({
-        weaponName: item.name, rv, blocks: { props: buildPropertyChatBlock(wProps) }
+        weaponName: item.name, rv, blocks: { props: buildPropertyChatBlock(wProps) },
+        spoiled
       }),
       rolls: [roll],
       sound: CONFIG.sounds.dice
@@ -338,6 +537,17 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   if (targetIsVehicle) {
     vehPart = aimTarget?.vehiclePart || vehicleHitLocation(locRoll).label;
     hitLocLabel = vehPart;
+  }
+
+  // Атаки по площади (стр. 34, wdbc-x1nz.2.48): «Атаки по площади всегда
+  // попадают в торс» — Взрывное и Распыление (шаблон/облако накрывает
+  // область, а не целится точно) перезаписывают и обычную реверс-таблицу, и
+  // прицел/таблицу техники выше. У техники своей «части тела» нет — ближайший
+  // книжный аналог «центра масс» это Корпус (locationForHit уже посылает туда
+  // третье и далее попадание по технике тем же смыслом).
+  if (hit && (wp.blastRating > 0 || wp.spray)) {
+    if (targetIsVehicle) vehPart = "Корпус";
+    hitLocLabel = targetIsVehicle ? "Корпус" : "Торс";
   }
 
   // Керамит (wdbc-nquc, DoomBC IV. Арсенал, стр. 231): иммунитет к
@@ -396,8 +606,20 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // потолка попаданий и расхода патронов этого броска, реальный предмет не
   // трогаем (клон, не мутация sys).
   const rofOverride = Number(opts.rofCapOverride) || 0;
-  const hitCountSys = (rofMode === "full" && rofOverride > 0)
+  const fanningSys = (rofMode === "full" && rofOverride > 0)
     ? { ...sys, rof_full: rofOverride } : sys;
+  // Широкая Очередь (стр. 35, wdbc-x1nz.2.53): «уменьшая RoF (но не расход
+  // боеприпасов) на 2» — режет ТОЛЬКО потолок попаданий (hitCountSys ниже),
+  // расход патронов (_getAmmoSpent) намеренно читает fanningSys БЕЗ этого
+  // урезания. Доступна только при базовом RoF выбранного режима ≥3
+  // (attack-dialog.mjs гейтит галочку тем же условием, здесь — своя честная
+  // проверка на случай прямого вызова с opts.wideBurst).
+  const wideBurstKey = rofMode === "semi" ? "rof_semi" : rofMode === "full" ? "rof_full" : null;
+  const wideBurst = !!opts.wideBurst && !!wideBurstKey && (Number(sys[wideBurstKey]) || 0) >= 3;
+  const hitCountSys = wideBurst
+    ? { ...fanningSys, [wideBurstKey]: Math.max(0, (Number(fanningSys[wideBurstKey]) || 0) - 2) }
+    : fanningSys;
+  const wideBurstPenalty = wideBurst ? -20 : 0;
 
   // Попадания и расход патронов
   const { count: hitsCount, label: rofLabel } = hitCount({
@@ -438,7 +660,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // «Рука-Пушка» — живут в rules/ammo-free.mjs, см. его шапку.
   const infiniteAmmo = ammoIsFree(item, actor);
   if (!isMelee && rofMode !== "melee" && !infiniteAmmo) {
-    ammoSpent = _getAmmoSpent({ system: hitCountSys }, rofMode) * (wp.ammoMult || 1) * (maximalOn ? 2 : 1) + prisma.extraAmmo;
+    ammoSpent = _getAmmoSpent({ system: fanningSys }, rofMode) * (wp.ammoMult || 1) * (maximalOn ? 2 : 1) + prisma.extraAmmo;
     // При перебросе/+10 за Очко Судьбы это тот же выстрел — патроны не тратятся повторно.
     if (!opts.skipAmmo) {
       if (ammoSpent > 0) {
@@ -465,6 +687,17 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     }
   }
 
+  // Граната в рукопашной (стр. 40, wdbc-x1nz.2.60): «...то граната не
+  // тратится» сказано ТОЛЬКО про промах — читаем это как обратное для
+  // попадания. Не через ammoSpent/magazineCur выше (это не магазин) — тот же
+  // счётчик quantity и та же логика «>1 — decrement, иначе удалить предмет»,
+  // что у «Вырвать чеку»/детонации на Крит-Промахе (draw-action.mjs).
+  if (isMelee && hit && sys.weaponType === "grenade" && !opts.skipAmmo) {
+    const qty = Number(sys.quantity) || 1;
+    if (qty > 1) await item.update({ "system.quantity": qty - 1 });
+    else await item.delete();
+  }
+
   // Урон
   const chars     = actor.system.characteristics || {};   // у техники нет характеристик
   const isPsyker  = !!actor.system.isPsyker;
@@ -485,8 +718,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // (bonusDamageDice ниже по-прежнему видит настоящий wp.meltaShort — оно
   // делит поле shortRange с Рассеиванием/Scatter, которое Керамит не гасит).
   const penWp = meltaImmune ? { ...wp, meltaShort: false } : wp;
+  // Смертоносное Природное Оружие (Cor.b)/Deadly Natural Weapons (wdbc-ux8a):
+  // +Cor.b владельца И к Пробитию (здесь), И к урону (flatBonus ниже) —
+  // живой пересчёт на каждой атаке, отдельный флаг от tainted (другая находка).
+  const deadlyNaturalCorBAdd = wp.deadlyNaturalCorB ? (actor.system.corruptionBonus ?? 0) : 0;
   const pen = attackPenetration({
-    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen,
+    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen + deadlyNaturalCorBAdd,
     wp: penWp, hit, deg, shortRange, maximal: maximalOn, band, forceBonus
   });
 
@@ -523,7 +760,70 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // начала усиления, до +8 — читается заново на каждый бросок с самого
   // оружия (module/rules/blood-flame.mjs), не хранится отдельным числом.
   const bloodFlameBonus = bloodFlameDamageBonus(item);
-  const flatBonus = (isMelee ? sbEff : 0) + reverseThrustBonus + taintedAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus;
+  // Метательное (стр. 40, wdbc-x1nz.2.58): «+S.b к урону» — даже брошенное
+  // (не рукопашное использование), в отличие от прочего стрелкового, которое
+  // S.b к урону никогда не получает.
+  const thrownSbBonus = (!isMelee && sys.weaponClass === "thrown") ? sbEff : 0;
+  // aimed читает opts.aiming — actor.system.aiming к этому моменту уже сброшен
+  // в "none" диалогом (attack/dialog.mjs:217, ДО этого вызова), поэтому
+  // значение приходит явным параметром, захваченным до сброса (wdbc-1rno.5).
+  // Считается здесь же (раньше bonusDamageDice ниже), чтобы им же могла
+  // воспользоваться Сверхточное/Legacy Мутация (wdbc-1rno.35) в flatBonus.
+  const aimed = !!opts.aiming && opts.aiming !== "none";
+  // Сверхточное/Оружие Наследия, skilled 9-9 (wdbc-1rno.35, rules/
+  // legacy-weapon.mjs): +1 Dmg за каждый чётный Успех, одиночный выстрел или
+  // рукопашная атака с Прицеливанием.
+  const preciseLegacyBonus = preciseLegacyDamageBonus({ weapon: item, hit, deg, rofMode, isMelee, aimed });
+  // Наследие Гнева/wrath, Оружие Наследия (wdbc-1rno.35, rules/legacy-weapon.mjs):
+  // +2 Dmg против цели Ненависти носителя — переиспользует hatredTargetsOf/
+  // anyTargetMatches (rules/hatred.mjs), defenderActor уже известен выше.
+  const wrathLegacyBonus = wrathLegacyDamageBonus({ weapon: item, actor, hit, targetActor: defenderActor });
+  // Наследие Крови, Оружие Наследия (wdbc-1rno.35, История 8): +1 Dmg, всегда.
+  const bloodLegacyBonus = bloodLegacyDamageBonus({ weapon: item, hit });
+  // Наследие Перемен, Оружие Наследия (wdbc-1rno.35, История 9): дубль на
+  // броске 2d5 старта Хода — результат кубика идёт в урон вместо теста.
+  const changeLegacyBonus = legacyChangeDamageBonus(actor, item, hit);
+  // Наследие Предательства, Оружие Наследия (wdbc-1rno.35, История 4, стр.
+  // 427): +1d5 Dmg против цели, что не видит персонажа, или Застигнута
+  // Врасплох — unseen/targetSurprised уже посчитаны выше (Backstab/Quiet
+  // Elimination). Натуральная 100 на попадание («оружие попадает по
+  // случайному союзнику») — честно НЕ реализована отдельным решением
+  // (wdbc-1rno.35, см. bd comment): переадресация уже разрешённого попадания
+  // на другого актора — примитив, которого в движке нет вообще ни для одной
+  // находки, не точечная правка этого файла.
+  const betrayalActive = betrayalLegacyActive({ weapon: item, hit, unseen, targetSurprised });
+  const betrayalRoll = betrayalActive ? await new Roll("1d5").evaluate() : null;
+  const betrayalBonus = betrayalRoll?.total || 0;
+  // Бесчестное/skilled 10-10, Оружие Наследия (wdbc-1rno.35, стр. 428):
+  // +1d10 Dmg против цели, что не видит персонажа, или Застигнута Врасплох —
+  // те же unseen/targetSurprised, что Наследие Предательства, другая Мутация
+  // и другой куб. Второе +1d10 («если считают персонажа союзником») честно
+  // НЕ реализовано — см. dishonorableLegacyActive.
+  const dishonorableActive = dishonorableLegacyActive({ weapon: item, hit, unseen, targetSurprised });
+  const dishonorableRoll = dishonorableActive ? await new Roll("1d10").evaluate() : null;
+  const dishonorableBonus = dishonorableRoll?.total || 0;
+  // Скорая Кончина/versatile 7-7, Оружие Наследия (wdbc-1rno.35, стр. 428):
+  // +3 Dmg на первое успешное попадание этим оружием за бой.
+  const earlyDeathBonus = earlyDeathLegacyDamageBonus({ weapon: item, actor, hit });
+  // Адаптивное/versatile 8-8, Оружие Наследия, рукопашная ветка (wdbc-1rno.35,
+  // стр. 428): +1 Dmg, когда противник имеет численный перевес в рукопашной
+  // (враги атакующего в контакте с НИМ САМИМ, не с целью).
+  const attackerContactCount = (isMelee && attackerToken) ? meleeContactCount(attackerToken) : null;
+  const adaptiveBonus = adaptiveLegacyMeleeDamageBonus({ weapon: item, hit, attackerContactCount });
+  // Отвлекающее/skilled 3-4, Оружие Наследия, стрелковая ветка (wdbc-1rno.35,
+  // стр. 427-428): попадание метит цель — «все остальные» получают +10 по
+  // ней (sheets/attack/mods.mjs читает флаг обратно).
+  if (hit && defenderActor && distractingLegacyActive(item)) {
+    await defenderActor.setFlag?.("warhammer-dbc", DISTRACTING_LEGACY_FLAG, true);
+  }
+  // Защитник/vigilant 8-8, Оружие Наследия, стрелковая ветка (wdbc-1rno.35,
+  // стр. 428): цель получает метку — атаки ПО СТРЕЛКУ получают −30 до
+  // начала её следующего Хода (predicates.mjs::legacyGuardianMarked).
+  if (hit && !isMelee && defenderActor && takenMutationNames(item).has("Защитник") && item.system?.weaponClass !== "melee") {
+    await defenderActor.setFlag?.("warhammer-dbc", LEGACY_GUARDIAN_FLAG, { shooterUuid: actor.uuid });
+  }
+  const flatBonus = (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus;
+  if (earlyDeathBonus) await markEarlyDeathLegacyUsed(actor, item, hit);
   let dmgFormula = damageFormulaFor({
     damage: effDamage, flatBonus, chars,
     corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee
@@ -537,15 +837,20 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // (тоже зовут applyDamageDiceMods, но отдельными формулами вне attack.mjs).
   if (actor.getFlag?.("warhammer-dbc", SUNDERING_COPY_FLAG)) dmgFormula = sunderingDamageFormula(dmgFormula);
 
-  // Доп. кубы урона: Меткое (одиночный, по СУ), Рассеивание (кор. дист.),
+  // Доп. кубы урона: Меткое (одиночный, по СУ, ТОЛЬКО с Прицеливанием — книга
+  // «При одиночных выстрелах С Прицеливанием»), Рассеивание (кор. дист.),
   // Максимальный режим (+1d10). Эти кубы НЕ вызывают Экстремальный урон.
   const bonusDice = bonusDamageDice({
     wp, rofMode, hit, deg, shortRange, maximal: maximalOn, band,
-    ammoDice: ammoSys?.damageDiceMod
+    ammoDice: ammoSys?.damageDiceMod,
+    aimed,
+    confinedSpace: confinedSpaceOn, damageType: effDmgType
   });
 
   const damageRolls = [];
   const allRolls    = [roll];
+  if (betrayalRoll) allRolls.push(betrayalRoll);
+  if (dishonorableRoll) allRolls.push(dishonorableRoll);
 
   // Клин Распыления (стр. 168): решается ПЕРВЫМ кубиком урона, а не броском
   // атаки — { face, at } первого попадания, либо null, если не заклинило.
@@ -574,13 +879,20 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         allRolls.push(second);
         if (second.total > dmgRoll.total) dmgRoll = second;
       }
+      // Замена кубика на Успехи (стр. 34, wdbc-x1nz.2.49): «атакующий может
+      // выбрать заменить результат броска ОДНОГО кубика в броске на урон... на
+      // количество Успехов в тесте на атаку» — первый кубик формулы урона,
+      // тот же приём извлечения, что и у Клина Распыления ниже. Сама подмена —
+      // кнопка на карточке (attack-card.mjs), сюда попадает только число для
+      // неё; выбор «на какой из нескольких попаданий тратить» и «только один
+      // из целей площадной атаки» — решение игрока/ГМа за столом, не гейт кода.
+      const baseDieResult = (dmgRoll.terms ?? [])
+        .find(t => t.faces && Array.isArray(t.results) && t.results.length)?.results?.[0]?.result ?? null;
       // Клин Распыления (стр. 168): 9 у обычного, 8-9 у Ненадёжного и хуже,
       // никогда у Надёжного и лучше — по ПЕРВОМУ кубику на урон (первому
       // брошенному, а не оставленному Рвущим), и только у первого попадания.
       if (i === 0 && !isMelee && wp.spray && sprayJamFace(wp) !== null) {
-        const firstDie = (dmgRoll.terms ?? [])
-          .find(t => t.faces && Array.isArray(t.results) && t.results.length)?.results?.[0]?.result ?? null;
-        if (sprayJams(firstDie, wp)) sprayJam = { face: firstDie, at: sprayJamFace(wp) };
+        if (sprayJams(baseDieResult, wp)) sprayJam = { face: baseDieResult, at: sprayJamFace(wp) };
       }
       let deflagrateHit = false;
       if (dmgRoll.terms) {
@@ -624,16 +936,93 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       // У техники Экстремальный урон переводится в её Критический Эффект через
       // отрицательную Структуру (при применении урона), а не по таблице существ.
       const { hasExtreme, extremeLevel, critEffect, exRoll } = await rollExtremeDamage(dmgRoll, {
-        wp, damageType: effDmgType, hitLocation: locForHit(i), targetIsVehicle
+        wp, damageType: effDmgType, hitLocation: locForHit(i), targetIsVehicle, attacker: actor
       });
       if (exRoll) allRolls.push(exRoll);
-      damageRolls.push({ total, extremeLevel, hasExtreme, critEffect, bonusNote, deflagrateNote, msPenalty });
+      damageRolls.push({ total, extremeLevel, hasExtreme, critEffect, bonusNote, deflagrateNote, msPenalty,
+        baseDieResult, successes: deg });
     }
   }
 
   // Место каждого попадания считается один раз: карточка печатает его и в
   // строке урона, и в кнопке применения урона.
   const hits = damageRolls.map((d, i) => ({ ...d, loc: locForHit(i) }));
+
+  // Наследие Предательства, Оружие Наследия (wdbc-1rno.35, История 4, стр.
+  // 427): нат. 100 на попадание — «оружие попадает по случайному союзнику»
+  // ВМЕСТО исходной цели. rv (roll.total) — тот же сырой d100, что дал сам
+  // hit. Союзника и геометрию (контакт в рукопашной / 3м от цели в
+  // стрелковой — разные книжные условия для каждой ветки Истории) считает
+  // combat/legacy-weapon-betrayal.mjs. Нет подходящего союзника рядом —
+  // книга это не разбирает, попадание остаётся по исходной цели как обычно.
+  const betrayalHits = [];
+  if (hit && rv === 100 && legacyHistoryIs(item, "Наследие Предательства")) {
+    const allyToken = betrayalRandomAllyToken({ isMelee, attackerToken, targetToken });
+    const allyActor = allyToken?.actor ?? allyToken?.document?.actor ?? null;
+    if (allyActor) {
+      for (const d of hits) betrayalHits.push({ total: d.total, loc: d.loc, targetName: allyActor.name, targetUuid: allyActor.uuid });
+      hits.length = 0;
+    }
+  }
+
+  // Промах по цели, Связанной в Рукопашной (стр. 30, wdbc-x1nz.2.64):
+  // одиночный выстрел, промахнувший на 1-2 Провала, попадает в случайного
+  // персонажа в контакте с целью (враг или союзник); Короткая/Длинная
+  // Очередь — половина ПОТЕНЦИАЛЬНЫХ выстрелов (RoF), что не стали
+  // попаданиями (окр.▼), туда же. Получателя выбирает бросок d100 (не ГМ) —
+  // тот же принцип, что у остальных «случайных целей» книги (Стрельба на
+  // Подавление и т.п.), только здесь без ручного распределения за столом.
+  const misfireHits = [];
+  if (!isMelee && !wp.spray && rofMode !== "suppression") {
+    const primaryToken = [...(game.user?.targets ?? [])][0] ?? null;
+    const targetTokenDoc = primaryToken?.document ?? primaryToken;
+    const targetLockedForMisfire = targetTokenDoc ? lockingContactTokenDocs(targetTokenDoc).length > 0 : false;
+    if (targetLockedForMisfire) {
+      const contactPool = allContactTokenDocs(targetTokenDoc).map(d => d.actor).filter(Boolean);
+      let scatterCount = 0;
+      if (rofMode === "single") {
+        scatterCount = (!hit && deg <= 2) ? 1 : 0;
+      } else if (rofMode === "semi" || rofMode === "full") {
+        const potentialShots = rofMode === "semi" ? (Number(hitCountSys.rof_semi) || 0) : (Number(hitCountSys.rof_full) || 0);
+        scatterCount = Math.floor(Math.max(0, potentialShots - hitsCount) / 2);
+      }
+      for (let i = 0; i < scatterCount && contactPool.length > 0; i++) {
+        const pickRoll = await new Roll("1d100").evaluate();
+        allRolls.push(pickRoll);
+        const idx = Math.min(contactPool.length - 1, Math.floor((pickRoll.total - 1) * contactPool.length / 100));
+        const misfireActor = contactPool[idx];
+        const locRoll = await new Roll("1d100").evaluate();
+        allRolls.push(locRoll);
+        const { label: loc } = hitLocation({ rv: locRoll.total, hit: true });
+        const dmgRoll = await new Roll(dmgFormula).evaluate();
+        allRolls.push(dmgRoll);
+        misfireHits.push({ total: dmgRoll.total, loc, targetName: misfireActor.name, targetUuid: misfireActor.uuid });
+      }
+    }
+  }
+
+  // Вторичные цели Короткой/Длинной Очереди (стр. 35, wdbc-x1nz.2.55): «может
+  // распределить попадания по другим целям не более чем в 2м от основной
+  // (с разрешения ГМа — цели дальше, если угловое расстояние небольшое)... но
+  // ни одна из вторичных целей не может получить больше попаданий, чем
+  // основная. Вторичные цели всегда получают попадания в торс.» Дистанция —
+  // настоящий замер (tactical-map.mjs::measureTokens), не на глаз. САМО
+  // распределение (какому токену сколько из уже готовых попаданий) и лимит
+  // «не больше основной» остаются за столом — карточка только подсказывает
+  // список и дистанции, тем же честным приёмом, что у Стрельбы на Подавление
+  // чуть ниже (ГМ применяет готовые кнопки «Применить урон N» на выбранный
+  // токен — эта же machinery, без второй копии).
+  const burstSecondaryTargets = (hit && !isMelee && hitsCount > 1 && (rofMode === "semi" || rofMode === "full"))
+    ? (() => {
+        const primaryToken = [...(game.user?.targets ?? [])][0] ?? null;
+        if (!primaryToken) return [];
+        return (canvas?.tokens?.placeables ?? [])
+          .filter(t => t !== primaryToken && (t.actor ?? t.document?.actor))
+          .map(t => ({ name: (t.actor ?? t.document?.actor)?.name ?? "?", measured: measureTokens(primaryToken, t) }))
+          .filter(e => e.measured && e.measured.edgeM <= 2)
+          .map(e => ({ name: e.name, distanceM: e.measured.edgeM }));
+      })()
+    : [];
 
   // Стр. 35: ГМ распределяет одно попадание в торс за каждый нечётный Успех
   // (1, 3, 5…) до максимума в выбранный RoF, по СЛУЧАЙНЫМ целям в секторе —
@@ -660,7 +1049,6 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Цель стоит внутри союзной Орды (токены наложены), и не-Избирательный
   // выстрел половиной попаданий уходит в толпу: одиночный — по чётности броска,
   // очередь — каждым нечётным попаданием.
-  const targetToken = [...(game.user?.targets ?? [])][0] ?? null;
   const shelter = hit && targetToken
     ? hidingInHordeSplit(targetToken, {
         hitsCount, rv, isMelee,
@@ -679,7 +1067,6 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // попаданий и атак» — вторая половина правила, module/combat/evasion-pool.mjs).
   // Считается здесь: этот модуль один касается документов Foundry (актор цели),
   // attack-card.mjs только рисует уже готовое число.
-  const defenderActor = targetToken?.actor ?? targetToken?.document?.actor ?? null;
   const evasionPoolEntry = hit && defenderActor
     ? getEvasionPool(defenderActor, actor.uuid || "") : null;
   // canRecoil (wdbc-16ss, Voltagheist Blast): банк можно пустить в Отскок
@@ -697,6 +1084,32 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // цели уже под рукой), attack-card.mjs только рисует готовое число.
   const etherealSwarm = hit && defenderActor
     ? activeSwarm(defenderActor, game.time?.worldTime) : null;
+
+  // Незримое (стр. 32, wdbc-1rno.2): unseen/hiddenThreatFlag уже посчитаны
+  // выше (до формулы урона — нужны Backstab'у, rules/unseen-talents.mjs).
+  // Гейт Уклонения/Парирования и кнопки засечения в карточке рендерятся
+  // только при hit — тот же гейт, что у Уклонения/Парирования ниже
+  // (defenderActor неизвестен раньше).
+  const unseenRolledDetected = unseen && defenderActor
+    ? isUnseenDetected(defenderActor, { isPsychic: item?.type === "psychicPower", isRadiation: !!wp.radiationSourced })
+    : false;
+  // Blind Fighting / Бой Вслепую (wdbc-1rno.2, rules/unseen-talents.mjs):
+  // «Может Избегать от Незримых атак в рукопашной со штрафом −20» — НЕ
+  // тест засечения, альтернативный канал доступности, только в рукопашной.
+  // Пока эта бонус-скидка активна, дальше карточка ведёт себя так, как
+  // если бы атака уже была засечена (unseenDetected=true) — только с
+  // прибавленным штрафом в самом dodgeMod/parryMod ниже.
+  const blindFightingBypass = unseen && !unseenRolledDetected && isMelee
+    && defenderActor && hasBlindFighting(defenderActor);
+  const unseenDetected = unseenRolledDetected || blindFightingBypass;
+  // Sixth Sense/Music of Battle (wdbc-1rno.2): кнопки «потратить Очко
+  // Бесчестия» в карточке — доступны при locked-состоянии (unseen ещё не
+  // detected НИКАК, включая Bлind Fighting выше) и наличии хотя бы 1 Очка.
+  const unseenLockedForBypass = unseen && !unseenDetected;
+  const sixthSenseBypassAvailable = unseenLockedForBypass && defenderActor
+    && hasSixthSense(defenderActor) && actorInfamyValue(defenderActor) >= 1;
+  const musicOfBattleBypassAvailable = unseenLockedForBypass && defenderActor
+    && hasMusicOfBattle(defenderActor) && actorInfamyValue(defenderActor) >= 1;
 
   // Стр. 12: успешный Приём «Захват» связывает обоих Борьбой (module/combat/
   // grapple.mjs) — состояние conditions.grappling, как у Оглушения/Беспомощного.
@@ -728,12 +1141,30 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // старте следующего Хода носителя: тот Ход остаётся заблокирован, снимается
   // только на Ходе ПОСЛЕ него.
   // Бонус цели на Уклонение от выстрела в рукопашной (стр. 40): Винтовка +30,
-  // Карабин +10. Талант «Винтовочная Гарда» (стр. 62, wdbc-pb60) гасит его
-  // целиком, если в другой руке рукопашное оружие с Балансом не ниже −1 —
-  // считается один раз здесь, потому что ниже тот же бонус нужен и обычной
-  // кнопке Уклонения, и её recoil-варианту.
+  // Карабин +10. Пистолет (стр. 40, wdbc-x1nz.2.57) стреляет в рукопашную
+  // «без каких-либо штрафов» вовсе — ни бонуса цели, ни штрафа стрелку (тот
+  // гасится рядом, в mods.mjs::situationalMods). Талант «Винтовочная Гарда»
+  // (стр. 62, wdbc-pb60) гасит бонус Винтовки/Карабина целиком, если в другой
+  // руке рукопашное оружие с Балансом не ниже −1 — считается один раз здесь,
+  // потому что ниже тот же бонус нужен и обычной кнопке Уклонения, и её
+  // recoil-варианту.
   const meleeShotDodgeBonus = techOpts.targetDodgeMod
-    ?? ((opts.meleeShot && !gunGuardCancelsDodgeBonus(actor, item)) ? (wp.carbine ? 10 : 30) : 0);
+    ?? ((opts.meleeShot && sys.weaponClass !== "pistol" && !gunGuardCancelsDodgeBonus(actor, item)) ? (wp.carbine ? 10 : 30) : 0);
+
+  // Скрытая атака (стр. 12, wdbc-x1nz.2.29): «Избегание невозможно от атаки,
+  // о которой цель не знает» — атакующий сам объявляет это галочкой в окне
+  // (attack/mods.mjs, #atk-mod-hidden), книга не даёт теста на автоопределение
+  // (то же честное решение, что уже у «Застал Врасплох», combat/devourer-of-
+  // time.mjs). ≤ -900 — тот же порог, что attack-card.mjs::defenseSection
+  // читает как cannotDodge/cannotParry у Атаки Всем Телом и подобных.
+  const hiddenAttack = !!opts.hiddenAttack;
+
+  // Финт (стр. 31, wdbc-x1nz.2.65): «цель не может совершать Избегание от
+  // его атак до конца его Хода» — тот же порог −999, что «Скрытая атака»
+  // выше, но проверка не одноразовая галочка, а персистентный флаг ЦЕЛИ
+  // (module/combat/feint-press.mjs), снимается в конце Хода АТАКУЮЩЕГО,
+  // а не этим выстрелом.
+  const feintBlocked = !hiddenAttack && feintBlocksEvasion(defenderActor, actor);
 
   // Молотильщик (стр. 62, wdbc-pb60): пара топоров/булав/молотов — успешно
   // Парировавший теряет все неиспользованные Успехи и парирует второе оружие
@@ -789,6 +1220,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         condLabels: opts.ammoCondLabels || [], warning: ammoWarning
       },
       band, suppression, allGunsBlazing, corVal, corEffects: sys.corEffects || [],
+      burstSecondaryTargets,
+      misfireHits,
+      betrayalHits,
       // Урон по Орде: Rng нужен Распылению, burst — Таланту «Свинцовый Дождь»,
       // uuid — чтобы найти Таланты и Размер стрелка.
       weaponRange: Number(sys.range) || 0,
@@ -804,6 +1238,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       hordeHits,
       pool: evasionPool,
       swarm: etherealSwarm,
+      unseen, unseenDetected, unseenPenalty,
+      sixthSenseBypassAvailable, musicOfBattleBypassAvailable,
       // Выжигание Души: Психосиловое оружие в руках псайкера при попадании.
       soulBurnActorId: (hit && wp.forcePR && isPsyker) ? actor.id : null,
       defense: {
@@ -823,11 +1259,21 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // Винтовочная Гарда (стр. 62, wdbc-pb60): с рукопашным оружием Баланса
         // не ниже −1 в другой руке выстрел в рукопашной НЕ даёт цели бонуса
         // вовсе — ни +30 винтовки, ни +10 Карабина.
-        dodgeMod: meleeShotDodgeBonus + evasionImperativeBonus(defenderActor),
-        dodgeModRecoil: hasEvasionRecoilImperative(defenderActor)
-          ? meleeShotDodgeBonus + evasionImperativeBonus(defenderActor, { planningRecoil: true })
+        // Широкая Очередь (стр. 35, wdbc-x1nz.2.53): книга штрафует только
+        // «попытки Уклонения» — не Парирование, поэтому wideBurstPenalty
+        // прибавлен ниже лишь к dodgeMod/dodgeModRecoil.
+        // Быстрое/skilled 8-8, Оружие Наследия (wdbc-1rno.35, стр. 428):
+        // рукопашная −10 (уже имело Flexible при получении), стрелковая −20
+        // (безусловно) — у одного оружия сразу оба быть не могут (разные
+        // weaponClass-ветки самой записи).
+        dodgeMod: (hiddenAttack || feintBlocked) ? -999
+          : meleeShotDodgeBonus + evasionImperativeBonus(defenderActor) + (blindFightingBypass ? -20 : 0) + critHitPenalty + wideBurstPenalty
+            + swiftLegacyMeleeDodgePenalty(item) + swiftLegacyRangedDodgePenalty(item),
+        dodgeModRecoil: (!hiddenAttack && !feintBlocked && hasEvasionRecoilImperative(defenderActor))
+          ? meleeShotDodgeBonus + evasionImperativeBonus(defenderActor, { planningRecoil: true }) + (blindFightingBypass ? -20 : 0) + critHitPenalty + wideBurstPenalty
+            + swiftLegacyMeleeDodgePenalty(item) + swiftLegacyRangedDodgePenalty(item)
           : null,
-        parryMod: techOpts.targetParryMod ?? 0,
+        parryMod: (hiddenAttack || feintBlocked) ? -999 : (techOpts.targetParryMod ?? 0) + (blindFightingBypass ? -20 : 0) + critHitPenalty,
         // Переброс, НАВЯЗАННЫЙ защищающемуся (Локус Кровопролития): бросает его
         // цель у себя, а знает о нём атакующий — поэтому он едет атрибутом на
         // кнопках защиты в карточке.
@@ -835,7 +1281,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // Шагоход (wdbc-6wzt, п.5): у него, в отличие от прочей техники, есть
         // не только Вираж, но и настоящие Парирование/Уклонение — свои кнопки
         // на карточке, потому что считает их ПИЛОТ, а не машина.
-        targetIsVehicle, targetIsWalker, note: techOpts.chatNote
+        targetIsVehicle, targetIsWalker,
+        // Бой Вслепую (wdbc-1rno.2): −20 выше уже применён — здесь только
+        // подпись, откуда он взялся, чтобы не выглядеть немотивированным штрафом.
+        note: [techOpts.chatNote, blindFightingBypass ? "Бой Вслепую: Незримая атака, Уклонение/Парирование в рукопашной −20 без засечения." : ""]
+          .filter(Boolean).join(" ")
       },
       notes: {
         shelter: shelter
@@ -845,6 +1295,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         attack:    opts.attackNote,
         helpless:  opts.doubleDamage
           ? "🪢 Цель Беспомощна: попадание автоматическое, урон ×2 (до Поглощения)."
+          : "",
+        // Quiet Elimination / Тихое Устранение (wdbc-1rno.3): «цель не издаёт
+        // звука при гибели» — честно только строка, нет детектора смерти на
+        // этом такте (формула урона ещё не разрешена, killstate решается позже).
+        quietElimination: (quietEliminationActive && hit)
+          ? "🔇 Тихое Устранение: +1 куб урона (уже в формуле); при гибели цель не издаёт звука."
           : "",
         technique: { label: techOpts.techniqueLabel, stance: techOpts.stanceLabel, note: techOpts.chatNote },
         aiming:    opts.aimingLabel,
@@ -862,6 +1318,13 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // Клин Распыления (стр. 168) — попадания в силе, оружие заклинило.
         sprayJam: sprayJam
           ? `⚙️ Оружие заклинило: первый кубик урона — <b>${sprayJam.face}</b> (клин на ${sprayJam.at}${sprayJam.at === 8 ? "-9" : ""}). Требуется действие на устранение Клина.`
+          : "",
+        // Граната как рукопашное оружие, 3+ Успеха (стр. 40, wdbc-x1nz.2.60):
+        // «...то он не задет собственным взрывом» — только информационная
+        // строка (GM решает, кого ещё накрыло Взрывом), как у Вторичных целей
+        // Очереди выше — вторая машинерия разметки области здесь не нужна.
+        grenadeSelfImmune: (isMelee && sys.weaponType === "grenade" && wp.blastRating > 0 && hit && deg >= 3)
+          ? `Атакующий нанёс удар с ${deg}+ Успехами — он не задет собственным Взрывом (стр. 40).`
           : ""
       },
       blocks: {

@@ -23,6 +23,7 @@ import { WEAPON_PROPERTIES }          from "./module/constants/weapon-properties
 import { WarhammerActor }             from "./module/documents/actor.mjs";
 import { WarhammerItem }              from "./module/documents/item.mjs";
 import { WarhammerCombatant }         from "./module/documents/combatant.mjs";
+import { WarhammerCombat }            from "./module/documents/combat.mjs";
 import { ITEM_DATA_MODELS,
          ACTOR_DATA_MODELS }          from "./module/data/index.mjs";
 
@@ -39,6 +40,8 @@ import { WarhammerFormationSheet }    from "./module/sheets/formation-sheet.mjs"
 import { WarhammerItemSheet }         from "./module/sheets/item-sheet.mjs";
 import { WarhammerActiveEffectConfig } from "./module/sheets/active-effect-config.mjs";
 import { refreshCalendarWidget, initTimeFlow, checkCalendarWatchTriggers } from "./module/apps/imperial-calendar.mjs";
+import { sweepSweetMistExpiry } from "./module/apps/wrapped-in-chaos.mjs";
+import { sweepLimbLossGangrene } from "./module/combat/limb-loss.mjs";
 import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
@@ -88,6 +91,7 @@ import { spawnHunterHound } from "./module/combat/the-hunter.mjs";
 import { spawnSunderingCopies } from "./module/combat/sundering.mjs";
 import { bindArmigerWeapon } from "./module/apps/armiger-weapon.mjs";
 import { bindDemonMount } from "./module/apps/demon-mount.mjs";
+import { grantControlOwnership, revokeControlOwnership } from "./module/apps/actor-control.mjs";
 import { refreshEnvWidget } from "./module/apps/environment.mjs";
 import { initHUD, refreshHUD } from "./module/apps/hud.mjs";
 import { initConditionStatusEffects } from "./module/apps/token-conditions.mjs";
@@ -96,18 +100,26 @@ import { initTokenVariants } from "./module/apps/token-variants.mjs";
 import { DifficultTerrainBehaviorType, DIFFICULT_TERRAIN_TYPE } from "./module/regions/difficult-terrain.mjs";
 import { initDifficultTerrainHud } from "./module/combat/movement-terrain.mjs";
 import { initMovementActionsHud, initMovedFlagTracking } from "./module/combat/movement-actions.mjs";
+import { initRigStealHud } from "./module/combat/rig-steal.mjs";
+import { initForceMoveHud } from "./module/combat/force-move-menu.mjs";
+import { initTearOpenHud } from "./module/combat/tear-open.mjs";
 import { initFreeAttackHooks } from "./module/combat/free-attack.mjs";
+import { initSqueezeHooks } from "./module/combat/squeeze.mjs";
+import { initOverwatchHooks } from "./module/combat/overwatch.mjs";
 import { checkAuras, clearAuraGrants } from "./module/regions/auras.mjs";
 import { redrawAuraRings } from "./module/regions/aura-rings.mjs";
 import { LingerZoneBehaviorType, LINGER_ZONE_TYPE } from "./module/regions/linger-zone.mjs";
 import { GravitonZoneBehaviorType, GRAVITON_ZONE_TYPE } from "./module/regions/graviton-zone.mjs";
+import { VortexZoneBehaviorType, VORTEX_ZONE_TYPE } from "./module/regions/vortex-zone.mjs";
 import { CoverBehaviorType, COVER_TYPE } from "./module/regions/cover.mjs";
 import { RunicWeaveZoneBehaviorType, RUNIC_WEAVE_ZONE_TYPE,
          checkRunicWeaveZones }        from "./module/regions/runic-weave-zone.mjs";
 import { registerSceneLiveRecalc } from "./module/regions/scene-live-recalc.mjs";
-import { syncTokenBaseSize } from "./module/combat/tactical-map.mjs";
+import { syncTokenBaseSize, registerDiagonalDefaultSetting, applyBookDiagonalDefaultOnce }
+  from "./module/combat/tactical-map.mjs";
 import { migrateWeaponGrips } from "./module/migrations/weapon-grips.mjs";
 import { migrateRemoveGeneSeed } from "./module/migrations/gene-seed-cleanup.mjs";
+import { migrateDuplicateOrigins } from "./module/migrations/duplicate-origin-cleanup.mjs";
 import { migrateShipHulls } from "./module/migrations/ship-hulls.mjs";
 import { migrateVehicleTraitEffects } from "./module/migrations/vehicle-trait-effects.mjs";
 import { migrateCharDamageSign } from "./module/migrations/char-damage-sign.mjs";
@@ -118,6 +130,7 @@ import { migrateImplantAvailability } from "./module/migrations/implant-availabi
 import { migrateLegionGeneSeedSize } from "./module/migrations/legion-geneseed-size-fix.mjs";
 import { migrateBornForWarDivination } from "./module/migrations/born-for-war-fix.mjs";
 import { migrateWarpforgedPlate } from "./module/migrations/warpforged-plate-fix.mjs";
+import { migrateNimbleRating } from "./module/migrations/nimble-rating.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
 import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
 import { SessionRewardsApp, openSessionRewards } from "./module/apps/session-rewards-app.mjs";
@@ -155,6 +168,7 @@ Hooks.once("init", () => {
   // Регистрируем первыми: ниже по коду их значения уже могут читаться.
   registerFeatureSettings();
   registerDuplicateGrantSettings();
+  registerDiagonalDefaultSetting();
   registerAdvancePricingSettings();
   registerFontSettings();       // выбор шрифта интерфейса (мир + личный, wdbc-9m83)
   registerSettingsSections();   // подразделы в окне настроек
@@ -232,6 +246,7 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/item/parts/runic-weave.hbs",
     // Звёздная система
     "systems/warhammer-dbc/templates/item/parts/celestial-body.hbs",
+    "systems/warhammer-dbc/templates/item/parts/warp-route.hbs",
     "systems/warhammer-dbc/templates/actor/star-system-sheet.hbs",
     // Техника
     "systems/warhammer-dbc/templates/actor/vehicle-sheet.hbs",
@@ -266,6 +281,8 @@ Hooks.once("init", () => {
   // Серый Человек/Oteshii (wdbc-0tzr, capability combat.initiativeAdvantage) —
   // Инициатива кидается трижды, берётся лучший результат.
   CONFIG.Combatant.documentClass = WarhammerCombatant;
+  // Тай-брейк равной Инициативы по Ловкости (стр. 12, wdbc-x1nz.2).
+  CONFIG.Combat.documentClass = WarhammerCombat;
 
   CONFIG.WARHAMMER = {
     RACES, SUBRACES, CHARACTERISTICS, IMPROVEMENTS,
@@ -303,6 +320,13 @@ Hooks.once("init", () => {
   CONFIG.RegionBehavior.dataModels[RUNIC_WEAVE_ZONE_TYPE] = RunicWeaveZoneBehaviorType;
   CONFIG.RegionBehavior.typeLabels[RUNIC_WEAVE_ZONE_TYPE] = "Руническая Вязь (помещение)";
   CONFIG.RegionBehavior.typeIcons[RUNIC_WEAVE_ZONE_TYPE]  = "fa-solid fa-rug";
+
+  // Зона «Вихрь Рока» (Vortex of Doom, wdbc-ufns, стр. 313) — программно
+  // создаётся при манифестации, персистентная, с раундовым тестом
+  // поддержания и Реакциями других псайкеров (module/regions/vortex-zone.mjs).
+  CONFIG.RegionBehavior.dataModels[VORTEX_ZONE_TYPE] = VortexZoneBehaviorType;
+  CONFIG.RegionBehavior.typeLabels[VORTEX_ZONE_TYPE] = "Вихрь Рока (Vortex of Doom)";
+  CONFIG.RegionBehavior.typeIcons[VORTEX_ZONE_TYPE]  = "fa-solid fa-hurricane";
 
   // ── Регистрация листов (только новый API v13) ─────────────────────────────
 
@@ -454,6 +478,11 @@ Hooks.once("init", () => {
     scope: "world", config: false, type: Number, default: 0
   });
 
+  // Версия чистки задвоенных носителей Родного мира/Предсказания (wdbc-gbpe, одноразовая)
+  game.settings.register("warhammer-dbc", "duplicateOriginCleanupVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
   // Версия перевода Корпусов кораблей на тип shipHull (одноразовая)
   game.settings.register("warhammer-dbc", "shipHullsVersion", {
     scope: "world", config: false, type: Number, default: 0
@@ -515,6 +544,13 @@ Hooks.once("init", () => {
   // «Закалённые Варпом Латы» — теперь это броня-замена, пол держит код
   // (одноразовая, приём стопки #478-#481)
   game.settings.register("warhammer-dbc", "warpforgedPlateFixVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия проставления Рейтинга у уже выданных копий Черты «Проворный» —
+  // штраф атакующим теперь считается от Рейтинга Черты, а не от Ag.b цели
+  // (одноразовая, приёмка стопки #482-#504, wdbc-b079)
+  game.settings.register("warhammer-dbc", "nimbleRatingVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -611,6 +647,13 @@ function applyHousingMode() {
   } catch (e) { /* до ready настройки может ещё не быть */ }
 }
 Hooks.once("ready", applyHousingMode);
+
+// Диагональ на тактической карте (wdbc-x1nz.2, стр. 31): «2 клетки по
+// диагонали = 3м» — один раз, только ГМ, чинит настройку мира core.
+// gridDiagonals на книжный APPROXIMATE, если она ещё нигде не трогалась и
+// осталась на старом дефолте ядра EQUIDISTANT. Дальше настройку не трогает
+// никогда, см. module/combat/tactical-map.mjs::applyBookDiagonalDefaultOnce.
+Hooks.once("ready", () => applyBookDiagonalDefaultOnce());
 
 // Прямой переход с заметки-пина звёздной системы на лист актёра (минуя журнал).
 // Срабатывает ТОЛЬКО если у журнала заметки выставлен наш флаг systemActorUuid —
@@ -826,6 +869,19 @@ Hooks.once("ready", () => {
         if (!res.ok) console.warn("Warhammer DBC | Демон-скакун Рыцаря Бога в скакуна/технику:", res.reason);
         return;
       }
+      if (data.action === "grantActorControlOwnership") {
+        // Контроль чужого токена (wdbc-ux8a) — реальная передача Foundry-
+        // владения, тот же relay-приём, что bindDemonMount выше. Владение —
+        // GM-only поле на сервере, поэтому исполняет только активный ГМ.
+        const target = await fromUuid(data.targetUuid).catch(() => null);
+        if (target) await grantControlOwnership(target, data.controllerUserId);
+        return;
+      }
+      if (data.action === "revokeActorControlOwnership") {
+        const target = await fromUuid(data.targetUuid).catch(() => null);
+        if (target) await revokeControlOwnership(target, data.controllerUserId);
+        return;
+      }
       if (data.action === "vehicleStations") {
         const veh = (await fromUuid(data.vehicleUuid))?.actor ?? await fromUuid(data.vehicleUuid);
         if (veh?.type !== "vehicle") return;
@@ -931,7 +987,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -961,6 +1017,19 @@ Hooks.once("ready", async () => {
     if (!result?.failed) await game.settings.set("warhammer-dbc", "geneSeedCleanupVersion", VERSION);
     else console.warn("Warhammer DBC | Чистка Геносемени: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
   } catch (e) { console.error("Warhammer DBC | Чистка Геносемени:", e); }
+});
+
+// ── Одноразовая чистка: задвоенные носители Родного мира/Предсказания (wdbc-gbpe) ──
+// Ручной перезапуск: game.warhammerDBC.migrateDuplicateOrigins()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "duplicateOriginCleanupVersion") || 0) >= VERSION) return;
+  try {
+    const result = await migrateDuplicateOrigins();
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "duplicateOriginCleanupVersion", VERSION);
+    else console.warn("Warhammer DBC | Чистка дублей Происхождения: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
+  } catch (e) { console.error("Warhammer DBC | Чистка дублей Происхождения:", e); }
 });
 
 // ── Одноразовый перевод: Корпуса кораблей со старых узлов на тип shipHull ─────
@@ -1106,6 +1175,23 @@ Hooks.once("ready", async () => {
   } catch (e) { console.error("Warhammer DBC | «Закалённые Варпом Латы»:", e); }
 });
 
+// ── Одноразовая правка: Рейтинг у уже выданных копий Черты «Проворный» —
+// правило теперь берёт штраф из system.rating, а снимки на живых акторах
+// пришли без него и давали молчаливый −0 (wdbc-b079) ──
+// Ручной перезапуск: game.warhammerDBC.migrateNimbleRating()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "nimbleRatingVersion") || 0) >= VERSION) return;
+  try {
+    const result = await migrateNimbleRating();
+    // wdbc-059h: версия штампуется только при полном успехе — иначе
+    // недомигрированные акторы остались бы с −0 навсегда.
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "nimbleRatingVersion", VERSION);
+    else console.warn("Warhammer DBC | «Проворный»: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
+  } catch (e) { console.error("Warhammer DBC | «Проворный»:", e); }
+});
+
 // ── Одноразовая доливка: биоимпланты, выданные до появления Доступности ──────
 // Ручной перезапуск: game.warhammerDBC.migrateImplantAvailability()
 Hooks.once("ready", async () => {
@@ -1173,8 +1259,13 @@ Hooks.once("ready", () => initHUD());
 Hooks.once("init", () => initTokenVariants());
 Hooks.once("init", () => initDifficultTerrainHud());
 Hooks.once("init", () => initMovementActionsHud());
+Hooks.once("init", () => initRigStealHud());
+Hooks.once("init", () => initForceMoveHud());
+Hooks.once("init", () => initTearOpenHud());
 Hooks.once("init", () => initMovedFlagTracking());
 Hooks.once("init", () => initFreeAttackHooks());
+Hooks.once("init", () => initSqueezeHooks());
+Hooks.once("init", () => initOverwatchHooks());
 Hooks.once("init", () => initEquipmentIndex());
 Hooks.once("init", () => registerCalloutHooks());
 Hooks.once("init", () => initSceneControlsGuard());
@@ -1192,7 +1283,18 @@ Hooks.on("updateScene", (scene) => {
 //    поэтому Duration (Seconds) у эффектов синхронна с прокруткой без доп. кода) ──
 Hooks.once("ready", () => refreshCalendarWidget());
 Hooks.once("ready", () => initTimeFlow());
-Hooks.on("updateWorldTime", worldTime => { checkCalendarWatchTriggers(worldTime); refreshCalendarWidget(); });
+Hooks.on("updateWorldTime", worldTime => {
+  checkCalendarWatchTriggers(worldTime);
+  refreshCalendarWidget();
+  // Сладкий Туман/Wrapped in Chaos (wdbc-1rno): «3 часа после вдыхания» —
+  // та же точка входа, что уже двигает виджет Календаря выше, по прямому
+  // указанию пользователя, не отдельный новый хук.
+  sweepSweetMistExpiry(worldTime);
+  // Потеря Конечностей (wdbc-1rno.6): «обрубок нуждается в мед. обработке,
+  // иначе через T.b дней с шансом 80% загноится» — та же точка входа, что
+  // уже двигает виджет Календаря выше, по прямому указанию пользователя.
+  sweepLimbLossGangrene(worldTime);
+});
 
 // ── Нексус Сцен: держать открытое окно в актуальном состоянии ─────────────────
 // Сцены (имя/превью/флаг-переход/активна) и выбор токенов влияют на галерею.

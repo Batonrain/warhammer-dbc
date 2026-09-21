@@ -43,6 +43,12 @@ export class GearData extends foundry.abstract.TypeDataModel {
       // см. gearRequiresWearing): хим-лаборатории и анализатору «надеть» не
       // предлагается — они работают фактом применения, а не ношением.
       equipped:     new BooleanField({ initial: false, label: "Надето" }),
+      // Включаемая/включена (wdbc-x1nz.2) — тот же тумблер, что у armorMod/
+      // weaponMod: бонус Конструктора действует, только пока active=true.
+      // Отдельная ось от equipped выше — «активировал прямо сейчас»
+      // (Мучитель, поддерживаемый полудействием), не «носит на теле».
+      activatable:  new BooleanField({ initial: false, label: "Включаемая" }),
+      active:       new BooleanField({ initial: false, label: "Включена" }),
       // Мелочь, жёстко закреплённая на другом предмете (визор на шлеме,
       // крепление на броне, штык-нож на цевье) — не лежит в разгрузке сама
       // по себе и не занимает в ней слот, пока указан носитель. Та же форма

@@ -117,7 +117,7 @@ describe("Удержаться в седле: новый DialogV2", () => {
 
     captured.nextRoll = 25;
     await captured.press("roll", fakeForm({
-      "#test-kind": "combined", "#combined-char-select": "ag", "#combined-target": "20"
+      "#kind-combined": true, "#combined-char-select": "ag", "#combined-target": "20"
     }));
     await promise;
 
@@ -147,7 +147,7 @@ describe("Ремонт байка: полный Вид теста через с�
     captured.nextRoll = 10;
     await captured.dialog.buttons.roll.callback(fakeHtml({
       "#br-skill": "50", "#br-parts": "0", "#br-mod": "0",
-      "#test-kind": "extended", "#extended-label": "Ремонт", "#extended-goal": "10"
+      "#kind-extended": true, "#extended-label": "Ремонт", "#extended-goal": "10"
     }));
 
     expect(captured.chat[0].content).toContain("Расширенный");
@@ -191,7 +191,7 @@ describe("Уклонение верхом: попадание по скакун�
 
     expect(captured.rolls).toEqual(["1d100"]);
     const card = captured.chat[0].content;
-    expect(card).toContain("Порог <b>20</b>");
+    expect(card).toContain("<label>Порог</label><b>20</b>");
     expect(card).toContain("Уклонение успешно");
   });
 
@@ -208,7 +208,7 @@ describe("Уклонение верхом: попадание по скакун�
 
     expect(captured.rolls).toEqual(["1d100"]);
     const card = captured.chat[0].content;
-    expect(card).toContain("Порог <b>20</b>");
+    expect(card).toContain("<label>Порог</label><b>20</b>");
     expect(card).toContain("Уклонение провалено");
   });
 });
