@@ -19,7 +19,7 @@
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
-import { actorInfamyValue, spendFromInfamyPool } from "../apps/infamy-points.mjs";
+import { actorInfamyValue, actorInfamyPath, spendFromInfamyPool } from "../apps/infamy-points.mjs";
 import { markUnseenDetectedUntilNextTurn } from "../rules/unseen-attack.mjs";
 
 const SKILLS = {
@@ -77,8 +77,13 @@ export async function _performUnseenDetect(actor, skillKey, { penalty = 0 } = {}
  */
 export async function _performUnseenBypass(actor, { persistent = false, label = "" } = {}) {
   if (actorInfamyValue(actor) < 1) return { spent: false };
-  const spend = await spendFromInfamyPool(actor, 1, "system.fate.value");
-  await actor.update({ "system.fate.value": spend.poolValue });
+  // Где лежит пул — спрашиваем у actorInfamyPath, а не подставляем
+  // system.fate.value: у Демон-Принца Очки Бесчестия живут в system.dp.ip,
+  // и гейт выше читал именно их, а списание уходило в чужое поле — обход
+  // Незримого получался бесплатным (приёмка стопки #482-#504).
+  const poolPath = actorInfamyPath(actor);
+  const spend = await spendFromInfamyPool(actor, 1, poolPath);
+  await actor.update({ [poolPath]: spend.poolValue });
   if (persistent) await markUnseenDetectedUntilNextTurn(actor);
 
   await postTestCard(actor, {

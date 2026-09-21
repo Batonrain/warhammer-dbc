@@ -269,11 +269,14 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
 
   // Sniper Assassin / Снайпер-Убийца (wdbc-1rno.2, rules/unseen-talents.mjs)
   // — ДО блока unseen ниже: сам ставит wp.unseen, тот читается следующей
-  // строкой. actor.system.aiming — персистентное поле актора (то же самое,
-  // что sheets/attack-dialog.mjs::currentAiming читает для бонуса
-  // Прицеливания), не диалоговая опция.
+  // строкой. Прицеливание читается из opts.aiming, а НЕ из actor.system.
+  // aiming: к моменту броска диалог его уже сбросил в "none" (sheets/attack/
+  // dialog.mjs::actorUpdates, плюс _maybeClearAiming на списании ОД) — тот же
+  // захваченный до сброса снимок, которым ниже пользуются Меткое и
+  // bonusDamageDice. По живому полю условие не выполнялось никогда, и Талант
+  // не срабатывал вовсе (приёмка стопки #482-#504).
   const sniperAssassinActive = wp.accurate && rofMode === "single"
-    && actor.system?.aiming === "full" && hasSniperAssassin(actor);
+    && opts.aiming === "full" && hasSniperAssassin(actor);
   if (sniperAssassinActive) { wp.unseen = true; wp.sniperAssassin = true; }
 
   // targetToken/defenderActor (wdbc-1rno.2): вынесены СЮДА, раньше, чем были

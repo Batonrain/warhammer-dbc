@@ -435,9 +435,15 @@ export function buildGetData(actor) {
   // testKey "skill:<key>"/"char:<key>", усложнил бы селектор ради редкого
   // случая (расширенный тест почти всегда на базовом Навыке или Характеристике).
   const testTargets = testTargetList();
+  // Банк, набитый ДО появления testKey (wdbc-nysl), своей цели не помнит.
+  // Без плашки-заглушки браузер пометил бы первый <option> списка, и
+  // «Переоткрыть» молча бросило бы чужой Навык; с пустым значением
+  // onExtendedTestReroll честно выходит и ждёт выбора игрока.
   context.extendedTests = extendedTestRows(actor.getFlag("warhammer-dbc", "extendedTests")).map(row => ({
     ...row,
-    targets: testTargets.map(t => ({ ...t, selected: t.value === row.testKey }))
+    targets: row.testKey
+      ? testTargets.map(t => ({ ...t, selected: t.value === row.testKey }))
+      : [{ value: "", label: "— выберите тест —", selected: true }, ...testTargets]
   }));
 
   const _skApts = charAptitudeSet(system.aptitudes);

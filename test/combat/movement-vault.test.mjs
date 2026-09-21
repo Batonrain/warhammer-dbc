@@ -57,6 +57,24 @@ describe("declareVault", () => {
     expect(captured.chat[0].content).toContain("Вольт");
   });
 
+  it("гасит обычную Свободную Атаку: встречный тест книги её ЗАМЕНЯЕТ, а не дополняет", async () => {
+    // Без этого флага free-attack.mjs::processTokenMove выдаёт тем же врагам
+    // ещё и Свободную Атаку на первом же перемещении — а карточка Вольта
+    // прямо обещает «без обычной Свободной Атаки» (стр. 30).
+    globalThis.game.combat = { started: true };
+    captured.dice = [30];
+    const actor = actorFor();
+    await declareVault(actor);
+    expect(actor.getFlag("warhammer-dbc", "disengageActive")).toBe(true);
+  });
+
+  it("ОД не хватило — флаг не ставится (действие не состоялось)", async () => {
+    globalThis.game.combat = { started: true };
+    const actor = actorFor({ actionPoints: { value: 0, max: 2 } });
+    await declareVault(actor);
+    expect(actor.getFlag("warhammer-dbc", "disengageActive")).toBeUndefined();
+  });
+
   it("без ОД — блокируется, карточка не постится", async () => {
     globalThis.game.combat = { started: true };
     const actor = actorFor({ actionPoints: { value: 0, max: 2 } });

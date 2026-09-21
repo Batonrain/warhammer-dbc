@@ -119,6 +119,26 @@ describe("_performUnseenBypass", () => {
     expect(note).toContain("следующего Хода");
   });
 
+  // У Демон-Принца пул Очков Бесчестия живёт в system.dp.ip (apps/
+  // infamy-points.mjs::actorInfamyPath) — гейт «хватает ли» читал именно его,
+  // а списание било в system.fate.value, которого лист Демон-Принца не
+  // показывает: обход Незримого выходил бесплатным (приёмка стопки
+  // #482-#504).
+  it("Демон-Принц: списывается его собственный пул system.dp.ip, а не Судьба", async () => {
+    const a = fateActor({ fate: 0 });
+    a.type = "demonPrince";
+    a.system.dp = { ip: 3 };
+    a.update = async function (data) {
+      this.updates.push(data);
+      if (data["system.dp.ip"] !== undefined) this.system.dp.ip = data["system.dp.ip"];
+    };
+    const { spent, poolValue } = await _performUnseenBypass(a, { label: "Sixth Sense/Шестое Чувство" });
+    expect(spent).toBe(true);
+    expect(poolValue).toBe(2);
+    expect(a.system.dp.ip).toBe(2);
+    expect(a.updates).toContainEqual({ "system.dp.ip": 2 });
+  });
+
   it("0 Очков — не тратит, не постит карточку", async () => {
     const a = fateActor({ fate: 0 });
     const { spent } = await _performUnseenBypass(a, { label: "x" });
