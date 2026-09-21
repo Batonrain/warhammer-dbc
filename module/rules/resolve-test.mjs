@@ -172,6 +172,11 @@ function effectAppliesTo(target, ctx) {
   // Болезни своего теста не имеют вовсе (type:"disease" — статичные данные,
   // без броска), поэтому этот scope покрывает только яд, не болезнь.
   if (scope === "poison") return ctx.poisonTest === true;
+  // Наследие Крови, Оружие Наследия (wdbc-1rno.35, стр. 427, wdbc-1rno.46):
+  // «+10 на встречные тесты против психосил/выжигания души» — общий тег
+  // «это тест против опасной психической угрозы», протащенный явно через
+  // делегированные тесты Сопротивления (psy-resist-request-btn, Soul Burn).
+  if (scope === "psychicthreat") return ctx.psychicThreat === true;
   if (ctx.kind === "attack") return attackScopeApplies(scope, ctx);
   if (ctx.kind === "power")  return powerScopeApplies(scope, ctx);
   if (ctx.skill) return scope === `skill:${String(ctx.skill).toLowerCase()}`;

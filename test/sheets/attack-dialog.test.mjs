@@ -729,6 +729,120 @@ describe("Перемены: галочка «цель бездушна»", () =>
   });
 });
 
+// Кромсающее, Оружие Наследия (wdbc-1rno.35, стр. 427): «...может потратить
+// Очко Бесчестия, чтобы бросить 1d10−2(мин.1) вместо 1d5+1» — галочка видна,
+// только если есть и Мутация, и хотя бы 1 Очко Бесчестия (иначе бесполезна).
+describe("Кромсающее: галочка «1d10−2 вместо 1d5+1»", () => {
+  it("нет Мутации — галочки нет, даже если Очки Бесчестия есть", () => {
+    const gun = weaponFor({ legacy: { active: true, mutations: [] } });
+    showAttackDialog(attacker({ items: [gun], fate: { value: 2 } }), gun);
+    expect(captured.dialog.content).not.toContain("atk-legacy-cleaving");
+  });
+
+  it("есть Мутация, но нет Очков Бесчестия — галочки нет", () => {
+    const gun = weaponFor({ legacy: { active: true, mutations: [{ name: "Кромсающее" }] } });
+    showAttackDialog(attacker({ items: [gun], fate: { value: 0 } }), gun);
+    expect(captured.dialog.content).not.toContain("atk-legacy-cleaving");
+  });
+
+  it("есть и Мутация, и Очко Бесчестия — галочка показана", () => {
+    const gun = weaponFor({ legacy: { active: true, mutations: [{ name: "Кромсающее" }] } });
+    showAttackDialog(attacker({ items: [gun], fate: { value: 1 } }), gun);
+    expect(captured.dialog.content).toContain("atk-legacy-cleaving");
+  });
+});
+
+// Отвлекающее, Оружие Наследия (wdbc-1rno.35, skilled 3-4, стр. 427),
+// рукопашная ветка: «Charm(F) или Int вместо WS при Финте» — та же форма
+// подписи, что у Локуса Мутации (charSwap.wp.forWsS), только на fel/int.
+describe("Отвлекающее: Charm/Int вместо WS в списке характеристик (рукопашная)", () => {
+  it("рукопашное оружие с Мутацией — подпись у Fel и у Int", () => {
+    const sword = weaponFor({ weaponClass: "melee", equipped: true, legacy: { active: true, mutations: [{ name: "Отвлекающее" }] } });
+    showAttackDialog(attacker({ items: [sword] }), sword);
+    const html = captured.dialog.content;
+    expect(html).toContain("вместо WS (Финт)");
+  });
+
+  it("стрелковое оружие с той же Мутацией — подписи нет (только рукопашная ветка)", () => {
+    const gun = weaponFor({ weaponClass: "basic", equipped: true, legacy: { active: true, mutations: [{ name: "Отвлекающее" }] } });
+    showAttackDialog(attacker({ items: [gun] }), gun);
+    expect(captured.dialog.content).not.toContain("вместо WS (Финт)");
+  });
+
+  it("нет Мутации — подписи нет", () => {
+    const sword = weaponFor({ weaponClass: "melee", equipped: true, legacy: { active: true, mutations: [] } });
+    showAttackDialog(attacker({ items: [sword] }), sword);
+    expect(captured.dialog.content).not.toContain("вместо WS (Финт)");
+  });
+});
+
+// Без Предупреждения, Оружие Наследия (wdbc-1rno.35, versatile 9-9, стр.
+// 428), второе предложение: авто-отметка «Цель Врасплох» в 1-м Раунде,
+// когда Инициатива цели вдвое ниже (или меньше) Инициативы атакующего.
+describe("Без Предупреждения: авто-Врасплох по сравнению Инициатив (1-й Раунд)", () => {
+  const forewarnedWeapon = () => weaponFor({ equipped: true, legacy: { active: true, mutations: [{ name: "Без Предупреждения" }] } });
+
+  function setup({ round = 1, attackerInit = 20, targetInit = 10, targetId = "target-1" } = {}) {
+    const weapon = forewarnedWeapon();
+    const a = attacker({ items: [weapon] }); // actor.id по умолчанию "actor-1" (actorFor)
+    const target = { id: targetId, name: "Цель", system: {} };
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set([{ actor: target }]) };
+    globalThis.game.combat = {
+      round,
+      combatants: [
+        { actorId: a.id, initiative: attackerInit },
+        { actorId: targetId, initiative: targetInit }
+      ]
+    };
+    return { a, weapon };
+  }
+
+  afterEach(() => { globalThis.game.combat = undefined; });
+
+  it("1-й Раунд, Инициатива цели ровно вдвое ниже — автоотметка («вдвое ниже ИЛИ меньше»)", () => {
+    const { a, weapon } = setup({ round: 1, attackerInit: 20, targetInit: 10 });
+    showAttackDialog(a, weapon);
+    expect(captured.dialog.content).toContain("Без Предупреждения: Инициатива цели вдвое ниже");
+  });
+
+  it("Инициатива цели МЕНЬШЕ, чем вдвое ниже — тоже считается", () => {
+    const { a, weapon } = setup({ round: 1, attackerInit: 30, targetInit: 10 });
+    showAttackDialog(a, weapon);
+    expect(captured.dialog.content).toContain("Без Предупреждения: Инициатива цели вдвое ниже");
+  });
+
+  it("2-й Раунд — не срабатывает", () => {
+    const { a, weapon } = setup({ round: 2, attackerInit: 20, targetInit: 10 });
+    showAttackDialog(a, weapon);
+    expect(captured.dialog.content).not.toContain("Без Предупреждения: Инициатива цели вдвое ниже");
+  });
+
+  it("Инициатива цели НЕ вдвое ниже — не срабатывает", () => {
+    const { a, weapon } = setup({ round: 1, attackerInit: 15, targetInit: 10 });
+    showAttackDialog(a, weapon);
+    expect(captured.dialog.content).not.toContain("Без Предупреждения: Инициатива цели вдвое ниже");
+  });
+
+  it("вне боя (нет game.combat) — не срабатывает, не падает", () => {
+    const weapon = forewarnedWeapon();
+    const a = attacker({ items: [weapon] });
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set([{ actor: { id: "t1", name: "Цель", system: {} } }]) };
+    globalThis.game.combat = undefined;
+    expect(() => showAttackDialog(a, weapon)).not.toThrow();
+    expect(captured.dialog.content).not.toContain("Без Предупреждения: Инициатива цели вдвое ниже");
+  });
+
+  it("оружие без Мутации — не срабатывает, даже при подходящих Инициативах", () => {
+    const weapon = weaponFor({ equipped: true, legacy: { active: true, mutations: [] } });
+    const a = attacker({ items: [weapon] });
+    const target = { id: "target-1", name: "Цель", system: {} };
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set([{ actor: target }]) };
+    globalThis.game.combat = { round: 1, combatants: [{ actorId: a.id, initiative: 20 }, { actorId: "target-1", initiative: 10 }] };
+    showAttackDialog(a, weapon);
+    expect(captured.dialog.content).not.toContain("Без Предупреждения: Инициатива цели вдвое ниже");
+  });
+});
+
 describe("правила реестра в диалоге", () => {
   it("галочка правила меняет порог броска", async () => {
     clearRuleSources();

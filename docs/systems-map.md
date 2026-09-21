@@ -342,13 +342,24 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   ветка Талантов сверх базового штрафа; `weapon-training.mjs` (Арсенал);
   `improvised-weapon.mjs` (импровизированное/метание).
 - Оружие Наследия: `constants/legacy-weapon.mjs`, `rules/legacy-weapon.mjs`,
-  `apps/legacy-weapon.mjs` (блок «Наследие» на листе оружия). Применение
-  конкретных Историй/Мутаций в бою (wdbc-1rno.35) — точечные хуки в
-  `combat/attack.mjs`/`sheets/attack/mods.mjs`/`sheets/attack-dialog.mjs`,
-  плюс geometry-хелперы `combat/legacy-weapon-betrayal.mjs` (союзник рядом),
-  `combat/legacy-weapon-mutations.mjs` (ближайший неповреждённый враг) и
-  `combat/legacy-weapon-excess.mjs` (каскад W+0/Порча). Прогресс по всей
-  таблице (10 Историй + 35 Мутаций) — bd-комментарии тикета `wdbc-1rno.35`.
+  `apps/legacy-weapon.mjs` (блок «Наследие» на листе оружия, включая кнопки
+  «потратить Очко Бесчестия» Убийцы/Перебора/Душесвязанного/Щита Ненависти).
+  Применение конкретных Историй/Мутаций в бою (wdbc-1rno.35, закрыт
+  21.09.2026 — 44/45 с механикой) — точечные хуки в `combat/attack.mjs`/
+  `sheets/attack/mods.mjs`/`sheets/attack-dialog.mjs`/`combat/defense.mjs`/
+  `combat/damage.mjs`/`combat/action-economy.mjs`/`hooks.mjs` (клики карточек,
+  очистка на конец боя/смену Раунда), плюс geometry- и карточные хелперы:
+  `combat/legacy-weapon-betrayal.mjs` (союзник рядом), `combat/legacy-weapon-
+  mutations.mjs` (ближайший неповреждённый враг), `combat/legacy-weapon-
+  excess.mjs` (каскад W+0/Порча), `combat/legacy-weapon-killer.mjs` (очистка
+  Felling на конец боя), `combat/legacy-weapon-kill-credit.mjs` (Ужасающее/
+  Злорадство — реагируют на смерть/трату Судьбы), `combat/legacy-weapon-
+  reaper.mjs`/`legacy-weapon-stunning.mjs` (кнопки на карточке урона/
+  Уклонения), `combat/legacy-weapon-brave-heart.mjs` + `combat/movement-
+  actions.mjs::declareLegacyBraveHeartMove/declareLegacyBraveDisengage`
+  (свободное Полудвижение/Выход из Боя), `combat/legacy-weapon-regroup.mjs`
+  (отложенный переброс Инициативы на смену Раунда). Прогресс по всей таблице
+  (10 Историй + 35 Мутаций) — bd-комментарии тикета `wdbc-1rno.35`.
 - Дар «Рука-Пушка»: `rules/gun-arm.mjs`, `apps/gun-arm.mjs`, `migrations/
   gun-arm-source.mjs`. «Рука Смерти»: `rules/hand-of-death.mjs` + `apps`.
   «Выстрел не тратит патрон»: `rules/ammo-free.mjs`.

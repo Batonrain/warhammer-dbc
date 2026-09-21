@@ -16,7 +16,7 @@ vi.mock("../../module/combat/suppression.mjs", () => ({
 
 import {
   declareOverwatch, overwatchMenuItems, overwatchState, isOverwatchActive, clearOverwatch,
-  initOverwatchHooks, resolveOverwatchFireClick, resolveOverwatchHairTriggerClick
+  initOverwatchHooks, resolveOverwatchFireClick, resolveOverwatchHairTriggerClick, offerOverwatchShot
 } from "../../module/combat/overwatch.mjs";
 
 const HOSTILE = -1, FRIENDLY = 1;
@@ -272,6 +272,80 @@ describe("resolveOverwatchFireClick", () => {
     await resolveOverwatchFireClick(shooter.uuid, moverDoc.uuid, "semi");
 
     expect(isOverwatchActive(shooter)).toBe(false);
+  });
+
+  // Терпение/vigilant 3-4, Оружие Наследия, стрелковая ветка (wdbc-1rno.35/
+  // wdbc-1rno.41, стр. 427-428): «+30 на выстрелы в Карауле» — заряжается
+  // здесь, тратится в attack.mjs на фактическом броске.
+  it("Терпение на оружии Караула — заряжает pending-флаг +30", async () => {
+    const weapon = weaponItem({ rof_semi: 6 });
+    weapon.system.legacy = { active: true, mutations: [{ name: "Терпение" }] };
+    const shooter = fakeActor({ characteristics: { bs: { bonus: 5 } }, actionPoints: { value: 2, max: 2 }, items: [weapon], uuid: "Actor.shooter" });
+    place(token({ id: "s", actor: shooter }));
+    await declareOverwatch(shooter, { weaponId: "w1", arcWidth: 45 });
+
+    const moverDoc = token({ id: "m", actor: fakeActor({ uuid: "Actor.mover" }) }).document;
+    globalThis.fromUuid = async uuid => (uuid === shooter.uuid ? shooter : (uuid === moverDoc.uuid ? moverDoc : null));
+
+    await resolveOverwatchFireClick(shooter.uuid, moverDoc.uuid, "single");
+
+    expect(shooter.getFlag("warhammer-dbc", "legacyPatienceOverwatchPending")).toBe(true);
+  });
+
+  it("оружие без Терпения — pending-флаг не ставится", async () => {
+    const weapon = weaponItem({ rof_semi: 6 });
+    const shooter = fakeActor({ characteristics: { bs: { bonus: 5 } }, actionPoints: { value: 2, max: 2 }, items: [weapon], uuid: "Actor.shooter" });
+    place(token({ id: "s", actor: shooter }));
+    await declareOverwatch(shooter, { weaponId: "w1", arcWidth: 45 });
+
+    const moverDoc = token({ id: "m", actor: fakeActor({ uuid: "Actor.mover" }) }).document;
+    globalThis.fromUuid = async uuid => (uuid === shooter.uuid ? shooter : (uuid === moverDoc.uuid ? moverDoc : null));
+
+    await resolveOverwatchFireClick(shooter.uuid, moverDoc.uuid, "single");
+
+    expect(shooter.getFlag("warhammer-dbc", "legacyPatienceOverwatchPending")).toBeUndefined();
+  });
+});
+
+describe("offerOverwatchShot: Терпение — всегда стреляет первым", () => {
+  it("оружие с Терпением — очерёдность безусловно 'reacting' (стрелок), независимо от Ag/Инициативы", async () => {
+    const weapon = weaponItem({ rof_semi: 6 });
+    weapon.system.legacy = { active: true, mutations: [{ name: "Терпение" }] };
+    // Инициатива/Ловкость специально в пользу движущегося — без Терпения
+    // победил бы он.
+    const shooter = fakeActor({
+      characteristics: { bs: { bonus: 5 }, ag: { total: 20 } },
+      actionPoints: { value: 2, max: 2 }, items: [weapon], uuid: "Actor.shooter", name: "Стрелок"
+    });
+    place(token({ id: "s", actor: shooter }));
+    await declareOverwatch(shooter, { weaponId: "w1", arcWidth: 45 });
+
+    const moverActor = fakeActor({ characteristics: { ag: { total: 80 } }, uuid: "Actor.mover", name: "Бегущий" });
+    const moverDoc = token({ id: "m", actor: moverActor }).document;
+
+    await offerOverwatchShot(shooter, moverDoc, { auto: true });
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain(`первым действует <b>${shooter.name}</b>`);
+    expect(card).toContain("Терпение");
+  });
+
+  it("оружие без Терпения, та же расстановка Ag — побеждает движущийся", async () => {
+    const weapon = weaponItem({ rof_semi: 6 });
+    const shooter = fakeActor({
+      characteristics: { bs: { bonus: 5 }, ag: { total: 20 } },
+      actionPoints: { value: 2, max: 2 }, items: [weapon], uuid: "Actor.shooter", name: "Стрелок"
+    });
+    place(token({ id: "s", actor: shooter }));
+    await declareOverwatch(shooter, { weaponId: "w1", arcWidth: 45 });
+
+    const moverActor = fakeActor({ characteristics: { ag: { total: 80 } }, uuid: "Actor.mover", name: "Бегущий" });
+    const moverDoc = token({ id: "m", actor: moverActor, name: "Бегущий" }).document;
+
+    await offerOverwatchShot(shooter, moverDoc, { auto: true });
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain(`первым действует <b>${moverDoc.name}</b>`);
   });
 });
 

@@ -40,7 +40,6 @@ import { hasSixthSense, hasMusicOfBattle, hasBlindFighting, hasBackstab, isKnife
 import { isOutsideDefenderView, resolveAttackerToken } from "./facing.mjs";
 import { hasQuietElimination } from "../rules/quiet-elimination.mjs";
 import { hasJanusRearVision } from "../rules/janus.mjs";
-import { actorInfamyValue }                           from "../apps/infamy-points.mjs";
 import { sunderingDamageFormula, SUNDERING_COPY_FLAG } from "../rules/sundering.mjs";
 import { recoilRemaining as recoilPoolRemaining }     from "./recoil-pool.mjs";
 import { suppressionTestMod }                         from "./suppression.mjs";
@@ -53,9 +52,11 @@ import { touchOfPainActive } from "./touch-of-pain.mjs";
 import { withWitchsEdge }                             from "./witchs-edge.mjs";
 import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
 import { bloodFlameDamageBonus }                      from "../rules/blood-flame.mjs";
-import { preciseLegacyDamageBonus, wrathLegacyDamageBonus, legacyWrathEffectiveRof, betrayalLegacyActive, legacyHistoryIs, excessLegacyExtraDeg, bloodLegacyDamageBonus, legacyChangeDamageBonus, takenMutationNames, swiftLegacyRangedDodgePenalty, swiftLegacyMeleeDodgePenalty, dishonorableLegacyActive, distractingLegacyActive, DISTRACTING_LEGACY_FLAG, LEGACY_GUARDIAN_FLAG, earlyDeathLegacyDamageBonus, markEarlyDeathLegacyUsed, adaptiveLegacyMeleeDamageBonus } from "../rules/legacy-weapon.mjs";
+import { preciseLegacyDamageBonus, wrathLegacyDamageBonus, legacyWrathEffectiveRof, betrayalLegacyActive, legacyHistoryIs, excessLegacyExtraDeg, bloodLegacyDamageBonus, legacyChangeDamageBonus, takenMutationNames, swiftLegacyRangedDodgePenalty, swiftLegacyMeleeDodgePenalty, dishonorableLegacyActive, distractingLegacyActive, DISTRACTING_LEGACY_FLAG, LEGACY_GUARDIAN_FLAG, earlyDeathLegacyDamageBonus, markEarlyDeathLegacyUsed, adaptiveLegacyMeleeDamageBonus, pendulumLegacyFlagValue, incrementPunisherLegacyStack, soulboundLegacyDamageBonus, consumeSoulboundLegacyBonus, legacyDeadlyTrapEligible, legacyDeadlyTrapDamageDelta, consumeLegacySlaughterBonus, legacySlaughterAmmoReliability, patienceLegacyOverwatchWeapon, consumePatienceLegacyOverwatchPending } from "../rules/legacy-weapon.mjs";
+import { isActorsOwnTurn } from "./delay-action.mjs";
 import { meleeContactCount } from "./tactical-map.mjs";
 import { betrayalRandomAllyToken } from "./legacy-weapon-betrayal.mjs";
+import { actorInfamyValue, actorInfamyPath, spendFromInfamyPool } from "../apps/infamy-points.mjs";
 import { handOfKhorneStrengthMultiplier, handOfKhorneBlocksRangedAttack } from "../rules/hand-of-khorne.mjs";
 import { triggerAttackAnimation }                     from "../integrations/autoanimations.mjs";
 import { assassinStrikeAvailable }                    from "./assassin-strike.mjs";
@@ -105,10 +106,32 @@ export async function rollExtremeDamage(dmgRoll, { wp, damageType, hitLocation =
   if (hasExtreme && attacker && !minionCanCauseExtremeDamage(attacker)) hasExtreme = false;
   let extremeLevel = 0, critEffect = null, exRoll = null;
   if (hasExtreme) {
-    exRoll = await new Roll("1d5").evaluate();
-    // Monofilament (X): «+2 Экстремальный урон ИЛИ Крит. эффект» — здесь
-    // extremeLevel сразу задаёт оба (getCriticalEffect читает его же).
-    extremeLevel = exRoll.total + (wp.extremeLevelBonus || 0);
+    // Кромсающее, второе предложение (wdbc-1rno.35, стр. 427): «...может
+    // потратить Очко Бесчестия, чтобы бросить ВМЕСТО ЭТОГО 1d10−2(мин.1)» —
+    // замена всего обычного «1d5+1» целиком, включая extremeLevelBonus,
+    // которым как раз и представлен книжный «+1» самой Мутации выше.
+    if (wp.legacyCleavingRollActive) {
+      exRoll = await new Roll("1d10").evaluate();
+      extremeLevel = Math.max(1, exRoll.total - 2);
+    } else {
+      exRoll = await new Roll("1d5").evaluate();
+      // Monofilament (X): «+2 Экстремальный урон ИЛИ Крит. эффект» — здесь
+      // extremeLevel сразу задаёт оба (getCriticalEffect читает его же).
+      extremeLevel = exRoll.total + (wp.extremeLevelBonus || 0);
+    }
+    // Оппортунист/versatile 10-10, Оружие Наследия (wdbc-1rno.35, стр. 427):
+    // «Оружие бросает на Экстремальный Урон два раза и выбирает больший
+    // результат» — второй независимый бросок ТОЙ ЖЕ формулой, что и первый
+    // (Кромсающее выше не встречается на одном оружии — Мутации берутся с
+    // разных таблиц Характера, но если бы встретились, второй бросок тоже
+    // пошёл бы по активной формуле, как и первый).
+    if (wp.legacyOpportunistDoubleRoll) {
+      const exRoll2 = await new Roll(wp.legacyCleavingRollActive ? "1d10" : "1d5").evaluate();
+      const extremeLevel2 = wp.legacyCleavingRollActive
+        ? Math.max(1, exRoll2.total - 2)
+        : exRoll2.total + (wp.extremeLevelBonus || 0);
+      if (extremeLevel2 > extremeLevel) { exRoll = exRoll2; extremeLevel = extremeLevel2; }
+    }
     if (!targetIsVehicle) critEffect = getCriticalEffect(damageType, hitLocation, extremeLevel);
   }
   return { hasExtreme, extremeLevel, critEffect, exRoll };
@@ -259,13 +282,36 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // тот же примитив, что Monofilament (constants/weapon-properties.mjs,
   // auto.extremeLevelBonus:2), только +1 и по Мутации, а не по свойству.
   // Второе предложение («может потратить Очко Бесчестия, чтобы бросить
-  // 1d10−2 (мин.1) вместо») честно НЕ реализовано — тот же общий пробел
-  // «нет кнопки временного эффекта на Мутации», см. bd-комментарий Перебора.
+  // 1d10−2 (мин.1) вместо») — галочка attack-dialog.mjs (видна только при
+  // наличии Мутации и ≥1 Очка Бесчестия), opts.legacyCleavingRoll долетает
+  // сюда тем же приёмом, что confinedSpace. Трата — ниже, ОДНА на всю атаку
+  // (не за каждое попадание Очереди с Экстремальным Уроном по отдельности:
+  // книга не разбирает многократное срабатывание, субъективное упрощение).
   if (takenMutationNames(item).has("Кромсающее")) wp.extremeLevelBonus = (wp.extremeLevelBonus || 0) + 1;
+  wp.legacyCleavingRollRequested = takenMutationNames(item).has("Кромсающее") && !!opts.legacyCleavingRoll;
+  if (wp.legacyCleavingRollRequested) {
+    if (actorInfamyValue(actor) >= 1) {
+      const path = actorInfamyPath(actor);
+      const spend = await spendFromInfamyPool(actor, 1, path);
+      await actor.update({ [path]: spend.poolValue });
+      wp.legacyCleavingRollActive = true;
+    } else {
+      ui.notifications?.warn("Кромсающее: нет Очков Бесчестия — обычный бросок 1d5+1.");
+    }
+  }
   // Мучитель/merciless 10-10, Оружие Наследия (wdbc-1rno.35, стр. 428):
   // «Броски в 1 на кубиках урона вызывают Экстремальный Урон» — синтетический
   // флаг для rollExtremeDamage (см. заголовок выше в этом файле).
   if (takenMutationNames(item).has("Мучитель")) wp.legacyExtremeOnOne = true;
+  // Оппортунист/versatile 10-10, Оружие Наследия (wdbc-1rno.35, стр. 427):
+  // двойной бросок Экстремального Урона (см. rollExtremeDamage) — второй
+  // синтетический флаг тем же приёмом, что и Мучитель выше. legacyOpportunistFloor
+  // читается ниже по цепочке (attack-card.mjs → hooks.mjs → damage.mjs) для
+  // «1d10−2(мин.1) вместо 1» на непробитом Экстремальном.
+  if (takenMutationNames(item).has("Оппортунист")) {
+    wp.legacyOpportunistDoubleRoll = true;
+    wp.legacyOpportunistFloor = true;
+  }
 
   // Sniper Assassin / Снайпер-Убийца (wdbc-1rno.2, rules/unseen-talents.mjs)
   // — ДО блока unseen ниже: сам ставит wp.unseen, тот читается следующей
@@ -360,6 +406,15 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const qAuto = qualityEffects(item).auto;
   if (!isMelee) wp.reliabilityScore += qAuto.reliabilityMod || 0;
   if (qAuto.losesPrimitive) wp.primitive = false;
+  // Наследие Бойни (H1, стр. 426), стрелковая ветка: «Понижает СВОЮ Надёжность
+  // ДО −2 при стрельбе нелетальными боеприпасами» — абсолютное значение, не
+  // дельта, поэтому присваивание, а не += (rules/legacy-weapon.mjs::
+  // legacySlaughterAmmoReliability, закрытый список нелетальных боеприпасов
+  // по имени — структурного поля «нелетальный» в системе нет).
+  if (!isMelee) {
+    const slaughterReliability = legacySlaughterAmmoReliability(item, loadedAmmo);
+    if (slaughterReliability != null) wp.reliabilityScore = slaughterReliability;
+  }
   // Мельта/Рассеивание зависят от дистанции — флаг приходит из диалога
   const shortRange = !!opts.shortRange;
   // Выбранная полоса дальности (у оружия со своими бонусами по дистанции).
@@ -423,6 +478,27 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     rv, threshold, isMelee, wp,
     forceHit: opts.forceHit, forceFail: handOfKhorneForceFail, fixedSuccessDeg: opts.fixedSuccessDeg
   });
+  // Наследие Бойни (H1, стр. 426): +20/−30 уже сложены в порог ДО этого
+  // броска (sheets/attack/selection.mjs для рукопашной ветки, sheets/attack/
+  // mods.mjs для стрелковой) — здесь только гасим флаг, «следующая атака»
+  // состоялась независимо от того, попала она или нет.
+  if (legacyHistoryIs(item, "Наследие Бойни")) await consumeLegacySlaughterBonus(actor, item);
+  // Терпение/vigilant 3-4, стрелковая ветка (wdbc-1rno.35/wdbc-1rno.41):
+  // +30 уже сложены в порог ДО этого броска (sheets/attack/mods.mjs) — здесь
+  // только гасим пометку «выстрел из Караула состоялся».
+  if (!isMelee && patienceLegacyOverwatchWeapon(item)) await consumePatienceLegacyOverwatchPending(actor);
+  // Перегруппировка/vigilant 1-2, Оружие Наследия (wdbc-1rno.35, стр. 427):
+  // «После успешной атаки этим оружием (даже если цель Избежала её)» — тот
+  // же «hit», что здесь, ДО любого разбора Уклонения/Парирования ниже.
+  // Кнопка карточки — combat/legacy-weapon-regroup.mjs::activateLegacyRegroup.
+  const regroupLegacyActive = hit && takenMutationNames(item).has("Перегруппировка");
+  // Маятник, Оружие Наследия (wdbc-1rno.35, vigilant 7-7, стр. 427): «Если
+  // персонаж атаковал этим оружием в свой Ход...» — не гейтится попаданием
+  // (книга говорит «атаковал», не «попал»), поэтому пишется тут же, до
+  // разбора Уклонения/Парирования цели. Модификатор атаки = порог теста
+  // МИНУС голая характеристика — ровно то, что диалог атаки насчитал сверху.
+  const pendulumFlag = pendulumLegacyFlagValue(item, threshold - (Number(actor.system?.characteristics?.[charKey]?.total) || 0));
+  if (pendulumFlag) await actor.setFlag("warhammer-dbc", "legacyPendulumBonus", pendulumFlag);
   // Дикарь (стр. 62, wdbc-pb60): парными когтями — «+2 Успеха при успешной
   // атаке». Прибавляется к СТЕПЕНИ, а не к порогу: от степени зависят и число
   // попаданий (Быстрая/Молниеносная), и остаточные Успехи приёмов.
@@ -822,8 +898,31 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   if (hit && !isMelee && defenderActor && takenMutationNames(item).has("Защитник") && item.system?.weaponClass !== "melee") {
     await defenderActor.setFlag?.("warhammer-dbc", LEGACY_GUARDIAN_FLAG, { shooterUuid: actor.uuid });
   }
-  const flatBonus = (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus;
+  // Каратель/merciless 8-8, Оружие Наследия (wdbc-1rno.35, стр. 428): «За
+  // каждое успешное попадание оружие получает накапливающийся +3 на
+  // попадание по НЕМУ до конца боя. Атаки с множественными попаданиями
+  // считаются как одно» — инкремент здесь, ОДИН раз за вызов
+  // _executeAttackRoll, независимо от числа готовых попаданий (hits) ниже
+  // по функции. Счётчик — на ЦЕЛИ, ключ id ЭТОГО оружия (несколько разных
+  // Карателей по одной цели копят независимо).
+  if (hit && defenderActor && takenMutationNames(item).has("Каратель")) {
+    await incrementPunisherLegacyStack(defenderActor, item);
+  }
+  // Душесвязанное/skilled 7-7, Оружие Наследия (wdbc-1rno.35, стр. 427):
+  // заряженный кнопкой листа оружия (apps/legacy-weapon.mjs::
+  // activateSoulboundLegacyBonus) бонус к урону следующего попадания.
+  const soulboundLegacyBonus = soulboundLegacyDamageBonus(actor, item, hit);
+  // Смертельная Ловушка/vigilant 10-10, Оружие Наследия (wdbc-1rno.35, стр.
+  // 427): доступность необязательной кнопки на карточке урона (боевой
+  // конвейер не решает Уклонение/Парирование здесь — см. wdbc-1rno.44,
+  // поэтому кнопка, а не автоприбавка, читает решение стола постфактум).
+  const deadlyTrapLegacyEligible = legacyDeadlyTrapEligible({
+    weapon: item, actor, hit, isOwnTurn: isActorsOwnTurn(actor)
+  });
+  const deadlyTrapLegacyDelta = deadlyTrapLegacyEligible ? legacyDeadlyTrapDamageDelta(actor) : 0;
+  const flatBonus = (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus;
   if (earlyDeathBonus) await markEarlyDeathLegacyUsed(actor, item, hit);
+  if (soulboundLegacyBonus) await consumeSoulboundLegacyBonus(actor, item, hit);
   let dmgFormula = damageFormulaFor({
     damage: effDamage, flatBonus, chars,
     corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee
@@ -939,8 +1038,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         wp, damageType: effDmgType, hitLocation: locForHit(i), targetIsVehicle, attacker: actor
       });
       if (exRoll) allRolls.push(exRoll);
+      // Кромсающее, второе предложение (wdbc-1rno.35, стр. 427): карточка
+      // должна называть РЕАЛЬНО брошенный куб (1d10−2), не «d5» по умолчанию —
+      // иначе игрок видит подпись «d5: 7», хотя катался d10.
       damageRolls.push({ total, extremeLevel, hasExtreme, critEffect, bonusNote, deflagrateNote, msPenalty,
-        baseDieResult, successes: deg });
+        baseDieResult, successes: deg, cleavingRoll: !!wp.legacyCleavingRollActive,
+        opportunistFloor: !!wp.legacyOpportunistFloor });
     }
   }
 
@@ -1223,6 +1326,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       burstSecondaryTargets,
       misfireHits,
       betrayalHits,
+      regroupLegacyActive,
+      deadlyTrapLegacyDelta,
       // Урон по Орде: Rng нужен Распылению, burst — Таланту «Свинцовый Дождь»,
       // uuid — чтобы найти Таланты и Размер стрелка.
       weaponRange: Number(sys.range) || 0,

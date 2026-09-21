@@ -24,13 +24,20 @@ import { canAscend, ascensionRows, legacyBonus, qualityAfterLegacy, propsAfterLe
          mutationSlots, nextMutationAt, mutationsAvailable, takenMutationNames,
          isHeavyWeapon, hardProps, painLegacyProps, plagueLegacyProps,
          tearingLegacyProps, shatteringLegacyGrant, stunningLegacyGrant,
-         swiftLegacyMeleeGrant, slaughterLegacyGrant, viciousLegacyGrant } from "../rules/legacy-weapon.mjs";
+         swiftLegacyMeleeGrant, slaughterLegacyGrant, viciousLegacyGrant,
+         killerLegacyFellingProps, legacyExcessBoostActive,
+         LEGACY_EXCESS_BOOST_FLAG, LEGACY_KILLER_FELLING_FLAG,
+         LEGACY_SOULBOUND_FLAG, LEGACY_HATRED_SHIELD_FLAG } from "../rules/legacy-weapon.mjs";
 import { ITEM_QUALITY } from "../constants/quality.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { actorInfamyValue, actorInfamyPath, spendFromInfamyPool } from "./infamy-points.mjs";
+import { canSpendReaction, spendReaction } from "../combat/action-economy.mjs";
+import { isActorsOwnTurn } from "../combat/delay-action.mjs";
+import { weaponHandsRequired, getHeldHand } from "../rules/hands.mjs";
 
 const sgn = n => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -99,7 +106,40 @@ export function legacyContext(item) {
       }))
     })),
 
-    mutations: (L.mutations ?? []).map(m => ({ ...m })),
+    // Убийца/Перебор (wdbc-1rno.35, стр. 427): опциональная кнопка «потратить
+    // Очко Бесчестия» на этой конкретной Мутации — canActivate* гейтит и по
+    // наличию актора-владельца, и по тому, что эффект уже не активен прямо
+    // сейчас (нельзя запустить второй раз поверх первого).
+    mutations: (L.mutations ?? []).map(m => {
+      const entry = { ...m };
+      if (m.name === "Убийца") {
+        entry.killerActive = !!item.getFlag?.("warhammer-dbc", LEGACY_KILLER_FELLING_FLAG);
+        entry.canActivateKiller = !!actor && !entry.killerActive;
+      }
+      if (m.name === "Перебор") {
+        const boost = actor?.getFlag?.("warhammer-dbc", LEGACY_EXCESS_BOOST_FLAG);
+        entry.excessBoostActive = legacyExcessBoostActive(actor, item);
+        entry.excessBoostTurnsLeft = entry.excessBoostActive ? Number(boost.turnsLeft) || 0 : 0;
+        entry.canActivateExcessBoost = !!actor && !entry.excessBoostActive;
+      }
+      // Душесвязанное/skilled 7-7 (wdbc-1rno.35, стр. 427): свободное
+      // действие, доступно всегда (не «уже активно» — можно перезарядить
+      // поверх непотраченного заряда, он всё равно один в поле). Психотест —
+      // только псайкеру.
+      if (m.name === "Душесвязанное") {
+        entry.canActivateSoulbound = !!actor;
+        entry.canActivateSoulboundPsychic = !!actor && (Number(actor.system?.psyker?.currentRating) || 0) > 0;
+      }
+      // Щит Ненависти/vigilant 9-9 (wdbc-1rno.35, стр. 427): только в свой
+      // Ход и при наличии Реакции — вне их условия смысла нет, показывать
+      // кнопку неактивной кнопкой без объяснения хуже, чем просто прятать.
+      if (m.name === "Щит Ненависти") {
+        entry.hatredShieldActive = !!actor?.getFlag?.("warhammer-dbc", LEGACY_HATRED_SHIELD_FLAG);
+        entry.canActivateHatredShield = !!actor && !entry.hatredShieldActive
+          && isActorsOwnTurn(actor) && canSpendReaction(actor);
+      }
+      return entry;
+    }),
     mutationSlots: mutationSlots(cor),
     mutationsAvailable: mutationsAvailable(actor, item),
     nextAt: nextMutationAt(cor),
@@ -399,6 +439,170 @@ export async function removeMutation(item, index) {
   if (!list[index]) return;
   list.splice(index, 1);
   await item.update({ "system.legacy.mutations": list });
+}
+
+/** Списать 1 Очко Бесчестия — переиспользует готовый spendFromInfamyPool/actorInfamyPath, не изобретает заново. */
+async function spendOneLegacyInfamyPoint(actor) {
+  if (actorInfamyValue(actor) < 1) {
+    ui.notifications?.warn("Нет Очков Бесчестия.");
+    return false;
+  }
+  const path = actorInfamyPath(actor);
+  const spend = await spendFromInfamyPool(actor, 1, path);
+  await actor.update({ [path]: spend.poolValue });
+  return true;
+}
+
+/**
+ * Убийца/fearsome 9-9 (wdbc-1rno.35, стр. 427): «Может потратить Очко
+ * Бесчестия, чтобы до конца боя дать оружию Felling(Inf.b) или +1 к
+ * рейтингу, если оно уже было.»
+ */
+export async function activateKillerLegacyFelling(item) {
+  const actor = item.actor;
+  if (!actor) return ui.notifications?.warn("Активировать может только владелец оружия.");
+  if (item.getFlag?.("warhammer-dbc", LEGACY_KILLER_FELLING_FLAG))
+    return ui.notifications?.warn("Убийца уже активирован до конца этого боя.");
+  if (!(await spendOneLegacyInfamyPoint(actor))) return;
+
+  const infBonus = Number(actor.system?.characteristics?.inf?.bonus) || 0;
+  const { props, originalRating } = killerLegacyFellingProps(item, infBonus);
+  await item.update({ "system.weaponProps": props });
+  await item.setFlag("warhammer-dbc", LEGACY_KILLER_FELLING_FLAG, { originalRating });
+
+  await postTestCard(actor, {
+    icon: rollIcon("crown", "#e8c76a"),
+    title: `${esc(item.name)} — Убийца`,
+    lines: [`<div>Оружие получает <b>Felling(${originalRating == null ? infBonus : originalRating + 1})</b> до конца боя.</div>`]
+  }, { sound: false });
+}
+
+/**
+ * Перебор/fearsome 8-8 (wdbc-1rno.35, стр. 427): кнопка на листе оружия —
+ * тратит 1 Очко Бесчестия, поднимает бонус урона Наследия с Inf.b до 2×Inf.b
+ * на ½Inf.b(окр.▲) Ходов владельца. Тикает и гаснет в module/combat/
+ * action-economy.mjs::resetActionEconomy (rules/legacy-weapon.mjs::
+ * tickLegacyExcessBoost), читается legacyBonus().
+ */
+export async function activateExcessBoost(item) {
+  const actor = item.actor;
+  if (!actor) return ui.notifications?.warn("Активировать может только владелец оружия.");
+  if (legacyExcessBoostActive(actor, item))
+    return ui.notifications?.warn("Буст Перебора уже активен на этом оружии.");
+  if (!(await spendOneLegacyInfamyPoint(actor))) return;
+
+  const infBonus = Number(actor.system?.characteristics?.inf?.bonus) || 0;
+  const turnsLeft = Math.max(1, Math.ceil(infBonus / 2));
+  await actor.setFlag("warhammer-dbc", LEGACY_EXCESS_BOOST_FLAG, { weaponId: item.id, turnsLeft });
+
+  await postTestCard(actor, {
+    icon: rollIcon("crown", "#e8c76a"),
+    title: `${esc(item.name)} — Перебор`,
+    lines: [`<div>Бонус к урону увеличен до <b>2×Inf.b</b> на <b>${turnsLeft}</b> Ход(ов) владельца.</div>`]
+  }, { sound: false });
+}
+
+/**
+ * Душесвязанное/skilled 7-7 (wdbc-1rno.35, стр. 427): свободное действие —
+ * тест W+0 (мирная ветка) или, для псайкера, Психотест через W+0 (psychic:
+ * true) — заряжает следующее попадание этим оружием бонусом урона
+ * (½W.b(окр.▲), либо эPR у психической ветки). Свой бросок вместо
+ * _rollCharacteristic: та требует диалог актор-листа и объект листа-актора
+ * (this), здесь — независимая кнопка предмета, тот же уровень, что и
+ * rollAscension выше в этом файле.
+ *
+ * Феномен психической ветки определяется тем же условием, что и основной
+ * конвейер манифестации (sheets/tabs/psychic.mjs::executePsychotest, режим
+ * по умолчанию phenomena==="double"): дубль (11/22/…/100) на УСПЕШНОМ тесте,
+ * или голая 99 независимо от исхода. Полный конвейер Феноменов/Прорывов
+ * (таблицы psyker-tables.mjs) здесь не разыгрывается — только сам факт
+ * «оружие заклинит», что и просит книга.
+ */
+export async function activateSoulboundLegacyBonus(item, { psychic = false } = {}) {
+  const actor = item?.actor;
+  if (!actor) return ui.notifications?.warn("Активировать может только владелец оружия.");
+  if (!takenMutationNames(item).has("Душесвязанное")) return;
+
+  const wpTotal = Number(actor.system?.characteristics?.wp?.total) || 0;
+  const wpBonus = Number(actor.system?.characteristics?.wp?.bonus) || 0;
+  const pr = Number(actor.system?.psyker?.currentRating) || 0;
+  if (psychic && pr <= 0) return ui.notifications?.warn("Душесвязанное: нет Рейтинга Психосил — Психотест недоступен.");
+
+  const threshold = psychic ? wpTotal + 5 * pr : wpTotal;
+  const roll = await new Roll("1d100").evaluate();
+  const rv = roll.total;
+  const success = rv <= threshold;
+
+  let willJam = false;
+  let jamNote = "";
+  if (psychic) {
+    const isDouble = (rv % 11 === 0) || rv === 100;
+    if ((success && isDouble) || rv === 99) {
+      willJam = true;
+      jamNote = " Вызван Феномен — оружие Заклинит сразу после того, как этот заряд будет потрачен.";
+    }
+  }
+
+  const bonus = psychic ? pr : Math.ceil(wpBonus / 2);
+  if (success) {
+    await actor.setFlag("warhammer-dbc", LEGACY_SOULBOUND_FLAG, { weaponId: item.id, bonus, willJam });
+  }
+
+  await postTestCard(actor, {
+    icon: rollIcon("crown", "#e8c76a"),
+    title: `${esc(item.name)} — Душесвязанное${psychic ? " (Психотест)" : ""}`,
+    threshold: rollStatLine(psychic
+      ? { label: "W+5×ПС", base: wpTotal, parts: [`5×ПС(${pr})`], threshold, rv }
+      : { label: "W", base: wpTotal, threshold, rv }),
+    outcome: outcomeHtml(success,
+      success
+        ? `Успех — следующее попадание этим оружием до начала следующего Хода: +${bonus} урона.${jamNote}`
+        : `Провал — заряда нет.${jamNote}`)
+  }, { rolls: [roll] });
+}
+
+/**
+ * Щит Ненависти/vigilant 9-9 (wdbc-1rno.35, стр. 427): руке(ам), держащей
+ * это оружие (обеим — если оно двуручное), и торсу — бонус к AP. Какая
+ * именно рука держит одноручное оружие — читается через getHeldHand
+ * (rules/hands.mjs, флаг heldHand с HUD листа персонажа); если не
+ * выставлено ни разу — честный дефолт «правая» (то же допущение о
+ * «непровязанной» руке, что и везде в системе вне момента самой атаки, где
+ * хват выбирается диалогом заново).
+ *
+ * Живёт здесь, а не в rules/legacy-weapon.mjs: rules/hands.mjs транзитивно
+ * тянет rules/sources.mjs (через flags.mjs → collect.mjs), а sources.mjs сам
+ * импортирует rules/legacy-weapon.mjs — импорт hands.mjs ОТТУДА замкнул бы
+ * цикл, на котором зависает vitest (test/rules/scaffold.test.mjs). apps/ —
+ * вне этого графа.
+ */
+export function legacyHatredShieldArms(weapon) {
+  const hands = weaponHandsRequired(weapon);
+  if (hands >= 2) return ["leftArm", "rightArm"];
+  const held = getHeldHand(weapon);
+  return [held === "left" ? "leftArm" : "rightArm"];
+}
+
+export async function activateLegacyHatredShield(item) {
+  const actor = item?.actor;
+  if (!actor) return ui.notifications?.warn("Активировать может только владелец оружия.");
+  if (!takenMutationNames(item).has("Щит Ненависти")) return;
+  if (!isActorsOwnTurn(actor)) return ui.notifications?.warn("Щит Ненависти: только в свой Ход.");
+  if (actor.getFlag?.("warhammer-dbc", LEGACY_HATRED_SHIELD_FLAG))
+    return ui.notifications?.warn("Щит Ненависти уже поднят.");
+  if (!(await spendReaction(actor))) return ui.notifications?.warn("Нет доступной Реакции.");
+
+  const infBonus = Number(actor.system?.characteristics?.inf?.bonus) || 0;
+  const bonus = Math.ceil(infBonus / 2);
+  const arms = legacyHatredShieldArms(item);
+  await actor.setFlag("warhammer-dbc", LEGACY_HATRED_SHIELD_FLAG, { weaponId: item.id, bonus, arms });
+
+  const armLabel = arms.length > 1 ? "обеим Рукам" : (arms[0] === "leftArm" ? "Левой Руке" : "Правой Руке");
+  await postTestCard(actor, {
+    icon: rollIcon("crown", "#e8c76a"),
+    title: `${esc(item.name)} — Щит Ненависти`,
+    lines: [`<div>${armLabel} и Торсу: <b>+${bonus} AP</b> до начала следующего Хода.</div>`]
+  }, { sound: false });
 }
 
 /** Качество словами — подпись в блоке. */

@@ -13,6 +13,8 @@ import { showDeathSaveDialog, doResurrect } from "./death.mjs";
 import { VITAL_TIME_FIELD } from "../../constants/vitals.mjs";
 import { satisfyAddiction, setAddictionSubstance } from "../../rules/addiction.mjs";
 import { registerBloodFlameKill, LAST_DAMAGE_WEAPON_FLAG } from "../../combat/blood-flame.mjs";
+import { registerLegacyDreadfulKill } from "../../combat/legacy-weapon-kill-credit.mjs";
+import { registerLegacySlaughterKill } from "../../rules/legacy-weapon.mjs";
 
 /** Переключить фигуру муж./жен. Значение приходит из data-атрибута кнопки. */
 export async function toggleBodyType(actor, current) {
@@ -64,7 +66,14 @@ export async function setDeceased(actor, deceased) {
   if (!deceased || was) return;
   const uuid = actor.getFlag("warhammer-dbc", LAST_DAMAGE_WEAPON_FLAG);
   const weapon = uuid ? await fromUuid(uuid).catch(() => null) : null;
-  if (weapon) await registerBloodFlameKill(weapon);
+  if (weapon) {
+    await registerBloodFlameKill(weapon);
+    // Ужасающее, Оружие Наследия (wdbc-1rno.35, merciless 1-2, стр. 428) —
+    // тот же такт «признана смерть», что Кровавое Пламя выше.
+    await registerLegacyDreadfulKill(weapon);
+    // Наследие Бойни (H1, стр. 426) — тот же такт.
+    await registerLegacySlaughterKill(weapon);
+  }
 }
 
 // wdbc-ycgk.1: полный ре-рендер листа вставляет .bc-death-actions уже в

@@ -62,7 +62,8 @@ import { canDualWield, offHandCandidates, dualWieldMods }
   from "../rules/dual-wield.mjs";
 import { targetHasActiveFlies, fliesAttackPenalty, wrathHeatAttackPenalty } from "../rules/wrapped-in-chaos.mjs";
 import { MAGGOT_PARASITE_CAPABILITY } from "../rules/maggot-parasite.mjs";
-import { legacyWrathEffectiveRof } from "../rules/legacy-weapon.mjs";
+import { legacyWrathEffectiveRof, takenMutationNames } from "../rules/legacy-weapon.mjs";
+import { actorInfamyValue } from "../apps/infamy-points.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -883,7 +884,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
   // Ситуативные модификаторы вынесены в sheets/attack/mods.mjs (wdbc-uh56):
   // данные без вёрстки, шов замерен (12 внутрь, 4 наружу).
-  const { bandKey, charSwapWhy, commonMods, specificMods } = situationalMods({
+  const { bandKey, charSwapWhy, charSwapWhyFel, charSwapWhyInt, commonMods, specificMods } = situationalMods({
     actor,
     attackCtx,
     attackerToken,
@@ -1076,6 +1077,15 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     <label class="attack-mod-check" title="Стр. 36: комната не больше 4×радиус взрыва. X Dmg — +1d10 урона и радиус ×1.5 (окр. вверх); E Dmg — Рвущее; Оглушающее — рейтинг +1. Решает ГМ на глаз, геометрия стен системой не считается.">
       <input type="checkbox" id="atk-confined-space"/> Тесное помещение (≤4×радиус взрыва)
     </label>` : "";
+  // Кромсающее/fearsome 10-10, Оружие Наследия (wdbc-1rno.35, стр. 427),
+  // второе предложение: «...может потратить Очко Бесчестия, чтобы бросить
+  // ВМЕСТО ЭТОГО 1d10−2(мин.1)» вместо обычного 1d5+1 на Экстремальном Уроне.
+  // Видна только при наличии Мутации и ≥1 Очка Бесчестия — трата случается
+  // в attack.mjs, ОДНА на всю атаку, не за каждое попадание Очереди.
+  const legacyCleavingHtml = (takenMutationNames(item).has("Кромсающее") && actorInfamyValue(actor) >= 1) ? `
+    <label class="attack-mod-check" title="Кромсающее: при Экстремальном Уроне бросить 1d10−2(мин.1) вместо обычного 1d5+1, потратив 1 Очко Бесчестия.">
+      <input type="checkbox" id="atk-legacy-cleaving"/> Кромсающее: 1d10−2(мин.1) вместо 1d5+1 (−1 Очко Бесчестия)
+    </label>` : "";
   // ── Стойка/База/Приём/Хват/Профиль — теперь выбираются прямо в диалоге ───
   // Под пилюлями каждой группы — своя заметка с полным текстом эффекта
   // текущего выбора (id для updateTotal ниже), тем же приёмом, что раньше
@@ -1195,6 +1205,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     bandHtml,
     charKey,
     charSwapWhy,
+    charSwapWhyFel,
+    charSwapWhyInt,
     charVal,
     commonMods,
     distanceHintHtml,
@@ -1221,6 +1233,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     techSectionsHtml,
     wideBurstHtml,
     confinedSpaceHtml,
+    legacyCleavingHtml,
     vehicleSideHtml,
     wp,
     wpDialogHtml,

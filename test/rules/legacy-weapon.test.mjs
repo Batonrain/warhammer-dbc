@@ -30,7 +30,13 @@ import {
   legacyGuardianRules, LEGACY_GUARDIAN_FLAG,
   earlyDeathLegacyDamageBonus, markEarlyDeathLegacyUsed,
   adaptiveLegacyMeleeDamageBonus, adaptiveLegacyMeleeWsBonus,
-  slaughterLegacyGrant, viciousLegacyGrant
+  slaughterLegacyGrant, viciousLegacyGrant,
+  legacyInstinctiveInitiativeBonus, legacyForewarnedInitiativeBonus,
+  legacyBloodPsychicRules, legacyInstinctiveDisarmRules, legacyDistractingCharSwapRules,
+  guardianLegacyMeleeActive, guardianLegacyBalanceFloor,
+  unassailableLegacyDodgeAdvantage,
+  unbreakableLegacyActive, unbreakableLegacyBalanceFloor,
+  clearLegacyPunisherStacks
 } from "../../module/rules/legacy-weapon.mjs";
 import { PREDICATES } from "../../module/rules/predicates.mjs";
 
@@ -803,5 +809,251 @@ describe("viciousLegacyGrant — Злобное/merciless 9-9 (стр. 428)", ()
   it("уже есть Crippling — +1 к рейтингу", () => {
     const w = { system: { weaponProps: [{ key: "crippling", rating: 1 }] } };
     expect(viciousLegacyGrant(w, 4)).toEqual([{ key: "crippling", rating: 2 }]);
+  });
+});
+
+describe("legacyInstinctiveInitiativeBonus — Инстинктивное/versatile 1-2 (стр. 428)", () => {
+  const instinctiveWeapon = ({ equipped = true } = {}) => {
+    const w = weapon({ legacy: { active: true, mutations: [{ name: "Инстинктивное" }] } });
+    w.system.equipped = equipped;
+    return w;
+  };
+
+  it("экипировано — +2 к Инициативе", () => {
+    const actor = { items: [instinctiveWeapon()] };
+    expect(legacyInstinctiveInitiativeBonus(actor)).toBe(2);
+  });
+
+  it("не экипировано — 0 (книга требует именно ношения)", () => {
+    const actor = { items: [instinctiveWeapon({ equipped: false })] };
+    expect(legacyInstinctiveInitiativeBonus(actor)).toBe(0);
+  });
+
+  it("нет такого оружия/Мутации — 0", () => {
+    expect(legacyInstinctiveInitiativeBonus({ items: [] })).toBe(0);
+  });
+});
+
+describe("legacyForewarnedInitiativeBonus — Без Предупреждения/versatile 9-9 (стр. 428)", () => {
+  const forewarnedWeapon = ({ equipped = true } = {}) => {
+    const w = weapon({ legacy: { active: true, mutations: [{ name: "Без Предупреждения" }] } });
+    w.system.equipped = equipped;
+    return w;
+  };
+
+  it("экипировано (даже сложено — гейт только по ношению) — +½Inf.b(окр.▲)", () => {
+    const actor = { items: [forewarnedWeapon()] };
+    expect(legacyForewarnedInitiativeBonus(actor, 5)).toBe(3); // ½×5=2.5→3
+  });
+
+  it("не экипировано — 0", () => {
+    const actor = { items: [forewarnedWeapon({ equipped: false })] };
+    expect(legacyForewarnedInitiativeBonus(actor, 5)).toBe(0);
+  });
+
+  it("нет такого оружия/Мутации — 0", () => {
+    expect(legacyForewarnedInitiativeBonus({ items: [] }, 5)).toBe(0);
+  });
+});
+
+describe("legacyBloodPsychicRules — Наследие Крови (История 8, стр. 427)", () => {
+  const bloodWeapon = ({ equipped = true } = {}) => {
+    const w = weapon({ legacy: { active: true, historyName: "Наследие Крови" } });
+    w.system.equipped = equipped;
+    return w;
+  };
+
+  it("экипировано — +10 на встречный тест против психической угрозы, авто", () => {
+    const actor = { items: [bloodWeapon()] };
+    const rules = legacyBloodPsychicRules(actor);
+    expect(rules).toHaveLength(1);
+    expect(rules[0].effects).toEqual([{ kind: "rollBonus", target: "psychicthreat", value: 10, auto: true }]);
+  });
+
+  it("не экипировано — правил нет", () => {
+    const actor = { items: [bloodWeapon({ equipped: false })] };
+    expect(legacyBloodPsychicRules(actor)).toEqual([]);
+  });
+
+  it("нет такой Истории — правил нет", () => {
+    expect(legacyBloodPsychicRules({ items: [] })).toEqual([]);
+  });
+});
+
+describe("legacyInstinctiveDisarmRules — Инстинктивное/versatile 1-2 (стр. 428)", () => {
+  const instinctiveWeapon = ({ equipped = true } = {}) => {
+    const w = weapon({ legacy: { active: true, mutations: [{ name: "Инстинктивное" }] } });
+    w.system.equipped = equipped;
+    return w;
+  };
+
+  it("экипировано — грантует combat.cannotBeDisarmed", () => {
+    const actor = { items: [instinctiveWeapon()] };
+    expect(legacyInstinctiveDisarmRules(actor)).toEqual([{
+      id: "legacyInstinctive.disarmImmune",
+      label: "Инстинктивное: нельзя быть обезоруженным",
+      when: {},
+      effects: [{ kind: "grantFlag", target: "combat.cannotBeDisarmed" }]
+    }]);
+  });
+
+  it("не экипировано — правил нет", () => {
+    const actor = { items: [instinctiveWeapon({ equipped: false })] };
+    expect(legacyInstinctiveDisarmRules(actor)).toEqual([]);
+  });
+
+  it("нет такой Мутации — правил нет", () => {
+    expect(legacyInstinctiveDisarmRules({ items: [] })).toEqual([]);
+  });
+});
+
+describe("legacyDistractingCharSwapRules — Отвлекающее/skilled 3-4, рукопашная ветка (стр. 427-428)", () => {
+  const distractingWeapon = ({ cls = "melee", equipped = true } = {}) => {
+    const w = weapon({ cls, legacy: { active: true, mutations: [{ name: "Отвлекающее" }] } });
+    w.system.equipped = equipped;
+    return w;
+  };
+
+  it("экипировано рукопашное — грантует оба charSwap на Финт", () => {
+    const actor = { items: [distractingWeapon()] };
+    const rules = legacyDistractingCharSwapRules(actor);
+    expect(rules).toHaveLength(1);
+    expect(rules[0].effects).toEqual([
+      { kind: "grantFlag", target: "charSwap.fel.forWs" },
+      { kind: "grantFlag", target: "charSwap.int.forWs" }
+    ]);
+  });
+
+  it("стрелковая ветка той же Мутации (другой weaponClass) — правил нет", () => {
+    const actor = { items: [distractingWeapon({ cls: "basic" })] };
+    expect(legacyDistractingCharSwapRules(actor)).toEqual([]);
+  });
+
+  it("не экипировано — правил нет", () => {
+    const actor = { items: [distractingWeapon({ equipped: false })] };
+    expect(legacyDistractingCharSwapRules(actor)).toEqual([]);
+  });
+
+  it("нет такой Мутации — правил нет", () => {
+    expect(legacyDistractingCharSwapRules({ items: [] })).toEqual([]);
+  });
+});
+
+describe("guardianLegacyMeleeActive / guardianLegacyBalanceFloor — Защитник/vigilant 8-8, рукопашная (стр. 428)", () => {
+  it("рукопашное оружие с Мутацией — активно", () => {
+    const w = weapon({ cls: "melee", legacy: { mutations: [{ name: "Защитник" }] } });
+    expect(guardianLegacyMeleeActive(w)).toBe(true);
+  });
+
+  it("стрелковое оружие с той же Мутацией — не активно (другая ветка книги)", () => {
+    const w = weapon({ cls: "basic", legacy: { mutations: [{ name: "Защитник" }] } });
+    expect(guardianLegacyMeleeActive(w)).toBe(false);
+  });
+
+  it("активно и Баланс отрицательный — поднимается до 0", () => {
+    const w = weapon({ cls: "melee", legacy: { mutations: [{ name: "Защитник" }] } });
+    expect(guardianLegacyBalanceFloor(w, -3)).toBe(0);
+  });
+
+  it("активно и Баланс уже неотрицательный — не трогает", () => {
+    const w = weapon({ cls: "melee", legacy: { mutations: [{ name: "Защитник" }] } });
+    expect(guardianLegacyBalanceFloor(w, 2)).toBe(2);
+  });
+
+  it("не активно — Баланс проходит как есть, даже отрицательный", () => {
+    const w = weapon({ cls: "basic", legacy: { mutations: [{ name: "Защитник" }] } });
+    expect(guardianLegacyBalanceFloor(w, -3)).toBe(-3);
+  });
+});
+
+describe("unassailableLegacyDodgeAdvantage — Неприкасаемый/vigilant 5-6 (стр. 428)", () => {
+  const unassailableWeapon = ({ cls = "melee", equipped = true } = {}) => {
+    const w = weapon({ cls, legacy: { active: true, mutations: [{ name: "Неприкасаемый" }] } });
+    w.system.equipped = equipped;
+    return w;
+  };
+
+  it("рукопашное, Защитная Стойка — переброс Избегания доступен", () => {
+    const actor = { items: [unassailableWeapon()], system: { meleeStance: "defensive" } };
+    expect(unassailableLegacyDodgeAdvantage(actor, false)).toBe(true);
+  });
+
+  it("рукопашное, не Защитная Стойка — недоступен, даже если inCover=true", () => {
+    const actor = { items: [unassailableWeapon()], system: { meleeStance: "standard" } };
+    expect(unassailableLegacyDodgeAdvantage(actor, true)).toBe(false);
+  });
+
+  it("метательное — та же (рукопашная) ветка условия, что и melee", () => {
+    const actor = { items: [unassailableWeapon({ cls: "thrown" })], system: { meleeStance: "defensive" } };
+    expect(unassailableLegacyDodgeAdvantage(actor, false)).toBe(true);
+  });
+
+  it("стрелковое, в Укрытии — переброс доступен", () => {
+    const actor = { items: [unassailableWeapon({ cls: "basic" })], system: {} };
+    expect(unassailableLegacyDodgeAdvantage(actor, true)).toBe(true);
+  });
+
+  it("стрелковое, не в Укрытии — недоступен", () => {
+    const actor = { items: [unassailableWeapon({ cls: "basic" })], system: {} };
+    expect(unassailableLegacyDodgeAdvantage(actor, false)).toBe(false);
+  });
+
+  it("не экипировано — недоступен", () => {
+    const actor = { items: [unassailableWeapon({ equipped: false })], system: { meleeStance: "defensive" } };
+    expect(unassailableLegacyDodgeAdvantage(actor, false)).toBe(false);
+  });
+
+  it("нет такой Мутации — недоступен", () => {
+    expect(unassailableLegacyDodgeAdvantage({ items: [], system: {} }, true)).toBe(false);
+  });
+});
+
+describe("unbreakableLegacyActive / unbreakableLegacyBalanceFloor — Неприступное/versatile 5-6 (стр. 428)", () => {
+  it("есть Мутация — активно (не важно, экипировано ли — переброс завязан на само оружие)", () => {
+    const w = weapon({ legacy: { mutations: [{ name: "Неприступное" }] } });
+    expect(unbreakableLegacyActive(w)).toBe(true);
+  });
+
+  it("нет Мутации — не активно", () => {
+    const w = weapon({ legacy: { mutations: [{ name: "Единство" }] } });
+    expect(unbreakableLegacyActive(w)).toBe(false);
+  });
+
+  it("активно и Баланс отрицательный — поднимается до 0", () => {
+    const w = weapon({ legacy: { mutations: [{ name: "Неприступное" }] } });
+    expect(unbreakableLegacyBalanceFloor(w, -2)).toBe(0);
+  });
+
+  it("не активно — Баланс проходит как есть", () => {
+    const w = weapon({ legacy: { mutations: [{ name: "Единство" }] } });
+    expect(unbreakableLegacyBalanceFloor(w, -2)).toBe(-2);
+  });
+});
+
+describe("clearLegacyPunisherStacks — Каратель, снятие на конец боя (module/hooks.mjs::deleteCombat)", () => {
+  function actorWithPunisherFlag(flagValue) {
+    const store = { flag: flagValue, unsetCalls: 0 };
+    return {
+      store,
+      getFlag: (_scope, key) => (key === "legacyPunisherStacks" ? store.flag : undefined),
+      async unsetFlag() { store.unsetCalls++; store.flag = undefined; }
+    };
+  }
+
+  it("флаг есть — снимает его", async () => {
+    const a = actorWithPunisherFlag({ w1: 6 });
+    await clearLegacyPunisherStacks(a);
+    expect(a.store.unsetCalls).toBe(1);
+    expect(a.getFlag("warhammer-dbc", "legacyPunisherStacks")).toBeUndefined();
+  });
+
+  it("флага нет — не трогает (не падает, не зовёт unsetFlag)", async () => {
+    const a = actorWithPunisherFlag(undefined);
+    await clearLegacyPunisherStacks(a);
+    expect(a.store.unsetCalls).toBe(0);
+  });
+
+  it("нет актора — не падает", async () => {
+    await expect(clearLegacyPunisherStacks(null)).resolves.toBeUndefined();
   });
 });

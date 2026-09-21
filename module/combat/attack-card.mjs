@@ -95,7 +95,7 @@ function hitLines(hits, { blastRating = 0 } = {}) {
  */
 function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", weaponName, actorName, vehicleSide,
                                     isMelee = false, burst = false, weaponRange = 0,
-                                    attackerUuid = "", itemUuid = "", hordeHits = null }) {
+                                    attackerUuid = "", itemUuid = "", hordeHits = null, deadlyTrapLegacyDelta = 0 }) {
   if (!hits.length) return "";
   // Взрывное/Распыление — разовый Шаблон (Region-плейсмент, module/combat/
   // templates.mjs): круг радиусом blastRating или конус 30° длиной Rng.
@@ -134,7 +134,8 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
       data-haywire="${wp.haywire ? (wp.haywireRating ?? 0) : ""}"
       data-haywire-dmg2="${wp.haywireDamage2 || ""}"
       data-through-shot="${wp.throughShot ? 1 : 0}"
-      data-has-extreme="${hits[0]?.hasExtreme ? 1 : 0}"` : "";
+      data-has-extreme="${hits[0]?.hasExtreme ? 1 : 0}"
+      data-opportunist-floor="${hits[0]?.opportunistFloor ? 1 : 0}"` : "";
   // Гравитонное (wdbc-wlwf): только на Blast/Spray-шаблоне, взаимоисключимо с
   // Остаётся (Linger) — если у оружия почему-то есть оба, приоритет у Linger
   // (она размещается веткой выше по data-linger, здесь graviton просто не
@@ -211,6 +212,17 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
       title="Один кубик этого попадания → число своих Успехов вместо выпавшего значения (стр. 34). Только одно попадание за атаку; у площадной — только одна цель.">
       🎲 Кубик→Успехи: ${d.baseDieResult}→${d.successes} (итог станет ${swappedTotal})
     </button>` : "";
+    // Смертельная Ловушка (wdbc-1rno.35, vigilant 10-10, стр. 427): правит
+    // data-damage соседней .wh-apply-dmg-btn прямо в DOM, тем же приёмом,
+    // что и Кубик→Успехи выше — раз за бой, отмечается по клику
+    // (hooks.mjs::markLegacyDeadlyTrapUsed). Честно НЕ заперто от клика на
+    // второе попадание той же Очереди — раз-в-бой держит только сервер-флаг,
+    // не сам DOM карточки.
+    const deadlyTrapBtn = (deadlyTrapLegacyDelta > 0) ? `
+    <button class="wh-legacy-deadly-trap-btn" type="button" data-delta="${deadlyTrapLegacyDelta}" data-attacker-uuid="${attackerUuid}"
+      title="Смертельная Ловушка: раз за бой, попадая вне своего Хода — поднять бонус Оружия Наследия с ½Inf.b до 2×Inf.b на этом попадании.">
+      🪤 Смертельная Ловушка: +${deadlyTrapLegacyDelta} урона (раз за бой)
+    </button>` : "";
     // Стр. 36, wdbc-x1nz.2.63: своё место взрыва на каждое попадание очереди —
     // размещается ДО Избегания (кнопка стоит рядом с самим попаданием, а не
     // после «Применить урон», чтобы ГМ ставил шаблон прежде, чем цель решит,
@@ -257,13 +269,14 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
     data-haywire-dmg2="${wp.haywireDamage2 || ""}"
     data-through-shot="${wp.throughShot ? 1 : 0}"
     data-has-extreme="${d.hasExtreme ? 1 : 0}"
+    data-opportunist-floor="${d.opportunistFloor ? 1 : 0}"
     ${toHorde ? `data-force-horde="${toHorde}"` : ""}>
     Применить урон ${i + 1}: <b>${d.total}</b> → ${toHorde ? "Орду (прикрыла цель)" : d.loc}${
       wp.blastRating > 0 ? ` <span class="roll-hit-extra">(отметьте всех в радиусе ${wp.blastRating}м — «Всем»)</span>` : ""}
   </button>${wp.warpSoak ? `
   <button class="wh-pain-absorb-btn" type="button" data-damage="${d.total}" title="Друкхари с Очками Боли: выбранный токен цели поглощает урон Болью вместо Ран (3 урона за 1 Боль)">
     🔥 Поглотить Болью ${i + 1}: <b>${d.total}</b>
-  </button>` : ""}${swapBtn}</span>`;
+  </button>` : ""}${swapBtn}${deadlyTrapBtn}</span>`;
   }).join("");
   return `
   <div class="roll-apply-dmg-section">
@@ -338,6 +351,24 @@ function betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype 
   <div class="roll-apply-dmg-section">
     <div class="roll-wprop-note">🗡️ Наследие Предательства: нат. 100 на попадание — оружие подвело, урон уходит случайному союзнику рядом:</div>
     ${buttons}
+  </div>`;
+}
+
+/**
+ * Перегруппировка/vigilant 1-2, Оружие Наследия (wdbc-1rno.35, стр. 427):
+ * «После успешной атаки этим оружием (даже если цель Избежала её) персонаж
+ * может потратить Очко Бесчестия, чтобы перебросить свою Инициативу начиная
+ * со следующего Раунда.» Доступность (hit && Мутация) уже посчитана
+ * attack.mjs — эта функция только рисует кнопку. Клик —
+ * combat/legacy-weapon-regroup.mjs::activateLegacyRegroup (hooks.mjs).
+ */
+function regroupLegacySection(active, { actorUuid }) {
+  if (!active) return "";
+  return `
+  <div class="roll-wprop-effects">
+    <button class="wh-legacy-regroup-btn" type="button" data-attacker-uuid="${actorUuid}">
+      ⚜ Перегруппировка: потратить Очко Бесчестия — переброс Инициативы со следующего Раунда
+    </button>
   </div>`;
 }
 
@@ -637,6 +668,15 @@ export function attackCard({
   // ВМЕСТО исходной цели. Та же форма и тот же data-force-target приём, что
   // misfireHits — единственная в этой атаке боевая единица (не добавочная).
   betrayalHits = [],
+  // Перегруппировка, Оружие Наследия (wdbc-1rno.35, стр. 427): доступность
+  // кнопки «потратить Очко Бесчестия» уже посчитана attack.mjs (hit &&
+  // Мутация на оружии) — см. regroupLegacySection ниже.
+  regroupLegacyActive = false,
+  // Смертельная Ловушка, Оружие Наследия (wdbc-1rno.35, vigilant 10-10, стр.
+  // 427): доступность и величина необязательной надбавки уже посчитаны
+  // attack.mjs (актор/своя-очередь-Хода/раз-в-бой там, не здесь) — карточка
+  // только рисует кнопку рядом с «Применить урон» (applyDamageSection ниже).
+  deadlyTrapLegacyDelta = 0,
   // Данные для урона по Орде: Rng нужен Распылению, burst — Таланту «Свинцовый
   // Дождь», uuid — чтобы найти Таланты и Размер стрелка, hordeHits — раскладка
   // попаданий правилом «Прячась в Орде» (combat/horde-tokens.mjs).
@@ -878,9 +918,10 @@ export function attackCard({
             sixthSenseBypassAvailable, musicOfBattleBypassAvailable, isMelee, burst, attackerIsHorde, hitLocLabel }) : "",
       applyDamageSection(hit ? hits : [], { wp, pen, damageType, damageSubtype, weaponName, actorName,
                                             vehicleSide, isMelee, burst, weaponRange,
-                                            attackerUuid, itemUuid, hordeHits }),
+                                            attackerUuid, itemUuid, hordeHits, deadlyTrapLegacyDelta }),
       misfireHitsSection(misfireHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid }),
       betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid }),
+      regroupLegacySection(regroupLegacyActive, { actorUuid: attackerUuid }),
       soulBurnActorId ? `
     <div class="roll-wprop-effects">
       <button class="wh-soulburn-btn" type="button" data-attacker-id="${soulBurnActorId}">

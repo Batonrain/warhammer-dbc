@@ -6,7 +6,8 @@ import { submutationContext, rollSubmutation,
          pickSubmutation, clearSubmutation }                   from "../apps/submutations.mjs";
 import { legacyContext, rollAscension, breakLegacy, setHistory, rollHistory,
          rollMutation, addCustomMutation, removeMutation,
-         legacyPrompt }                                        from "../apps/legacy-weapon.mjs";
+         legacyPrompt, activateKillerLegacyFelling, activateExcessBoost,
+         activateSoulboundLegacyBonus, activateLegacyHatredShield }        from "../apps/legacy-weapon.mjs";
 import { shipQualityMods, qualityOptionsFor, effectiveWeapon, clampQuality, QUALITY_LABELS }
   from "../constants/ship-quality.mjs";
 import { availableFieldModes, fieldSuitFor } from "../constants/drukhari-armor-fields.mjs";
@@ -3103,6 +3104,13 @@ export class WarhammerItemSheet
       if (text === null) return;
       await addCustomMutation(this.item, name, text);
     });
+    // Мутации-кнопки со стр. 427 (wdbc-1rno.35): Убийца/Перебор (Очко
+    // Бесчестия), Душесвязанное (свободное действие), Щит Ненависти (Реакция).
+    on(".legacy-killer-activate", "click", () => activateKillerLegacyFelling(this.item));
+    on(".legacy-excess-boost-activate", "click", () => activateExcessBoost(this.item));
+    on(".legacy-soulbound-activate", "click", () => activateSoulboundLegacyBonus(this.item));
+    on(".legacy-soulbound-activate-psychic", "click", () => activateSoulboundLegacyBonus(this.item, { psychic: true }));
+    on(".legacy-hatred-shield-activate", "click", () => activateLegacyHatredShield(this.item));
 
     // ── Особенность комплекта силовой брони ──
     // relayItemUpdate, а не this.item.update напрямую: комплект силовой брони

@@ -133,7 +133,9 @@ describe("источники по умолчанию", () => {
     expect([...getRuleSources().map(([key]) => key)].sort())
       .toEqual(["addiction", "adjutant", "beastmanShaman", "conditions", "core",
                 "daemonInevitability", "devourerOfKnowledge", "dreadnought", "hatred", "homeworld", "items",
-                "legacyExcess", "legacyGuardian", "legacyWrath", "opposedTarget", "paths", "patron", "prophetOfGallerpox",
+                "legacyBloodPsychic", "legacyDistractingCharSwap", "legacyExcess", "legacyGuardian",
+                "legacyInstinctiveDisarm", "legacyQuietAwareness", "legacyWrath",
+                "opposedTarget", "paths", "patron", "prophetOfGallerpox",
                 "psychicSustainTarget", "race", "situational", "synesthesia"]);
   });
 

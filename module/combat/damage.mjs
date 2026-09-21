@@ -37,6 +37,9 @@ import { justTheLightReduction } from "./just-the-light.mjs";
 import { coverApForLocation } from "../rules/cover-locations.mjs";
 import { addFatigue, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { CONDITIONS_DEF } from "../constants/conditions.mjs";
+import { reaperLegacyButtonHtml } from "./legacy-weapon-reaper.mjs";
+import { braveHeartLegacyButtonHtml } from "./legacy-weapon-brave-heart.mjs";
+import { legacyHatredShieldApForLocation } from "../rules/legacy-weapon.mjs";
 
 // ─── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling/Haywire ──────────
 // Применяются здесь (не в attack.mjs/hooks.mjs), потому что только тут разом
@@ -185,7 +188,7 @@ async function _applyHaywire(actor, rating, damage2 = "") {
 }
 
 // ─── Маппинг места попадания → поле брони актора ──────────────────────────────
-const LOCATION_TO_ARMOR = {
+export const LOCATION_TO_ARMOR = {
   "Голова":           "head",
   "Торс":             "body",
   "П. Рука":          "rightArm",
@@ -714,7 +717,8 @@ export async function applyDamageToActor(actor, damageData) {
     ignoreArmour = false, // Заломить (стр. 12, Борьба): урон "игнорирующий броню" — AP=0, T.b всё равно поглощает
     blast = 0,   // Взрывное(X): уже в damageData для доп. попаданий по Орде — Странной Неуязвимости нужен сам факт свойства (wdbc-1rno)
     spray = false, // Распыление: свойство присутствует (wdbc-1rno)
-    hasExtreme = false // Экстремальный Урон (wdbc-x1nz.2.50): гарантирует 1 непоглощаемого урона ниже
+    hasExtreme = false, // Экстремальный Урон (wdbc-x1nz.2.50): гарантирует 1 непоглощаемого урона ниже
+    opportunistFloor = false // Оппортунист/versatile 10-10 (wdbc-1rno.35): минимум 1d10−2(мин.1) вместо флэт-1
   } = damageData;
 
   // Bronze Myrmidon (wdbc-1rno.1, rules/bronze-myrmidon.mjs): у актора с
@@ -918,6 +922,12 @@ export async function applyDamageToActor(actor, damageData) {
         : 1;
       coverBonus = combinedCoverBase * blastCoverMult;
       if (coverBonus > 0) armorAP += coverBonus;
+      // Щит Ненависти/vigilant 9-9, Оружие Наследия (wdbc-1rno.35, стр. 427):
+      // временный +½Inf.b(окр.▲) AP на руке(ах), держащей оружие с этой
+      // Мутацией, и на Торсе — до начала следующего своего Хода
+      // (turn-flags.mjs гасит, если не сброшено активацией новой защиты).
+      const hatredShieldBonus = legacyHatredShieldApForLocation(actor, armorKey);
+      if (hatredShieldBonus > 0) armorAP += hatredShieldBonus;
       // Повреждение Укрытий (стр. 33, wdbc-x1nz.2.62): попадание, ПРОБИВАЮЩЕЕ
       // укрытие (Pen оружия ≥ его AP), снимает укрытию 1 AP. Только ручное
       // system.cover.ap (стол сам вписал число из книжной таблицы — это
@@ -991,7 +1001,19 @@ export async function applyDamageToActor(actor, damageData) {
   // (брони, Аблативного бронирования скакуна, Саркофага Дредноута выше), они
   // этот минимум больше не режут.
   const extremeFloorApplied = hasExtreme && netDamage === 0;
-  if (extremeFloorApplied) netDamage = 1;
+  let opportunistFloorRoll = null;
+  if (extremeFloorApplied) {
+    // Оппортунист/versatile 10-10, Оружие Наследия (wdbc-1rno.35, стр. 427):
+    // «...оно наносит 1d10−2 (минимум 1) непоглощаемого урона вместо 1, как
+    // обычно» — тот же момент, что и обычный флэт-минимум выше, просто иначе
+    // считает величину.
+    if (opportunistFloor) {
+      opportunistFloorRoll = await new Roll("1d10-2").evaluate();
+      netDamage = Math.max(1, opportunistFloorRoll.total);
+    } else {
+      netDamage = 1;
+    }
+  }
 
   const { currentWounds, newWounds, newCritical, gotCritical } =
     await applyWoundLoss(actor, netDamage);
@@ -1004,6 +1026,18 @@ export async function applyDamageToActor(actor, damageData) {
   if (weaponUuid && netDamage > 0) {
     await actor.setFlag("warhammer-dbc", LAST_DAMAGE_WEAPON_FLAG, weaponUuid);
   }
+
+  // Жнец/merciless 5-6 (wdbc-1rno.35, стр. 428): кнопка теста Т цели на
+  // Кровотечение — виден только при непоглощённом уроне и Мутации на оружии.
+  const reaperWeaponItem = (weaponUuid && netDamage > 0) ? await fromUuid(weaponUuid).catch(() => null) : null;
+  const reaperSection = reaperWeaponItem ? reaperLegacyButtonHtml(reaperWeaponItem, actor.uuid) : "";
+
+  // Лучшая Часть Отваги/skilled 5-6, стрелковая ветка (wdbc-1rno.35, стр.
+  // 427): кнопка «цель жива и не обезврежена» — не гейтится netDamage,
+  // показывается на любом попадании этим оружием (стол сам решает, кликать
+  // ли: тот же уровень доверия, что Kiss of Mimic/Silent Elimination выше).
+  const braveHeartWeaponItem = weaponUuid ? (reaperWeaponItem ?? await fromUuid(weaponUuid).catch(() => null)) : null;
+  const braveHeartSection = braveHeartWeaponItem ? braveHeartLegacyButtonHtml(braveHeartWeaponItem, attackerUuid) : "";
 
   // Критический эффект по таблице — только при уходе в Критические.
   const critEffect = gotCritical ? getCriticalEffect(damageType, hitLocation, newCritical) : null;
@@ -1188,7 +1222,9 @@ export async function applyDamageToActor(actor, damageData) {
   const woundsLine = netDamage > 0
     ? `Раны: <b>${currentWounds}</b> → <b>${newWounds}</b>${
         ablated ? ` <span class="dmg-tb-note">(Аблативное Бронирование: ${rawNet} → 1)</span>` : ""}${
-        extremeFloorApplied ? ` <span class="dmg-tb-note">(Экстремальный Урон: поглощено полностью, но 1 непоглощаемого урона всё равно проходит, стр. 34)</span>` : ""}`
+        extremeFloorApplied ? ` <span class="dmg-tb-note">(Экстремальный Урон: поглощено полностью, но ${
+          opportunistFloorRoll ? `Оппортунист — 1d10−2: ${opportunistFloorRoll.total} (мин.1)` : "1 непоглощаемого урона всё равно проходит, стр. 34"
+        })</span>` : ""}`
     : `Урон поглощён полностью`;
 
   // wdbc-xql6: типовые фразы крит-строки («Оглушена на NdX Раундов» и т.п.)
@@ -1254,7 +1290,9 @@ export async function applyDamageToActor(actor, damageData) {
         </div>`,
       critLine,
       propEffectNotes.join(""),
-      throughShotBtn
+      throughShotBtn,
+      reaperSection,
+      braveHeartSection
     ]
   }, { speaker: { alias: "Система" }, sound: false });
 }
