@@ -207,9 +207,14 @@ function isMoverInSector(shooterToken, state, moverTokenDoc) {
 }
 
 export function initOverwatchHooks() {
-  Hooks.on("updateToken", async (tokenDoc, changes) => {
+  Hooks.on("updateToken", async (tokenDoc, changes, options, userId) => {
     if (!game.combat?.started) return;
     if (!("x" in changes) && !("y" in changes)) return;
+    // Только клиент, вызвавший перемещение, предлагает выстрел Караула —
+    // тот же гейт, что у Свободной Атаки (combat/free-attack.mjs): иначе
+    // карточка уходит в чат с каждого подключённого клиента разом, и каждый
+    // из них лезет в setFlag стрелка (у не-владельца это ещё и ошибка прав).
+    if (userId !== game.user.id) return;
     for (const combatant of game.combat.combatants) {
       const shooter = combatant.actor;
       const state = overwatchState(shooter);
@@ -293,6 +298,10 @@ export async function resolveOverwatchHairTriggerClick(shooterUuid) {
 export async function resolveOverwatchFireClick(shooterUuid, moverUuid, mode) {
   const shooter = await fromUuid(shooterUuid).catch(() => null);
   if (!shooter) return ui.notifications.warn("⚠️ Актор стрелка не найден.");
+  // Стрелять из чужого Караула нельзя — тот же гейт, что у кнопки Свободной
+  // Атаки (combat/free-attack.mjs) и у кнопок карточек в hooks.mjs: карточка
+  // видна всем за столом, а бюджет очереди принадлежит владельцу стрелка.
+  if (!shooter.isOwner) return ui.notifications.warn(`⚠️ ${shooter.name}: это чужой Караул.`);
   const state = overwatchState(shooter);
   if (!state) return ui.notifications.warn(`⚠️ ${shooter.name}: Караул уже не активен.`);
 

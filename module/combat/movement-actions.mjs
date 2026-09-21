@@ -553,6 +553,12 @@ export async function declareVault(actor) {
   if (_blockedByGrapple(actor)) return;
   if (!await spendActionPoints(actor, 1, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
   await markMovedThisTurn(actor);
+  // Вольт ЗАМЕНЯЕТ Свободную Атаку встречным тестом WS (стр. 30), а не
+  // добавляется к ней — тот же разовый глушитель, что ставит «Выход из Боя»
+  // (declareDisengage выше) и Натиск-сбивание (bulldoze.mjs). Без него
+  // combat/free-attack.mjs::processTokenMove выдаёт тем же врагам ещё и
+  // обычную Свободную Атаку, и одно движение наказывается дважды.
+  await actor.setFlag("warhammer-dbc", "disengageActive", true);
   _showReachRing(actor, actor.system.movement?.halfMove);
   const { statLineHtml, contestSection } = await _rollVaultContest(actor);
 
@@ -575,6 +581,11 @@ export async function declareVault(actor) {
  * performRecoil при volt=true.
  */
 export async function rollRecoilVault(actor) {
+  // Тот же глушитель обычной Свободной Атаки, что в declareVault: до
+  // wdbc-x1nz.2.40 его ставил сам performRecoil безусловно, и при переводе
+  // Отскока на Вольт он потерялся — Отскок из рукопашной снова стал
+  // провоцировать Свободную Атаку сверх встречного теста.
+  await actor.setFlag("warhammer-dbc", "disengageActive", true);
   const { statLineHtml, contestSection } = await _rollVaultContest(actor);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#8fd0ff")}${esc(actor.name)} — Вольт (через Отскок)</div>

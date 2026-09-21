@@ -130,6 +130,7 @@ import { migrateImplantAvailability } from "./module/migrations/implant-availabi
 import { migrateLegionGeneSeedSize } from "./module/migrations/legion-geneseed-size-fix.mjs";
 import { migrateBornForWarDivination } from "./module/migrations/born-for-war-fix.mjs";
 import { migrateWarpforgedPlate } from "./module/migrations/warpforged-plate-fix.mjs";
+import { migrateNimbleRating } from "./module/migrations/nimble-rating.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
 import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
 import { SessionRewardsApp, openSessionRewards } from "./module/apps/session-rewards-app.mjs";
@@ -544,6 +545,13 @@ Hooks.once("init", () => {
   // «Закалённые Варпом Латы» — теперь это броня-замена, пол держит код
   // (одноразовая, приём стопки #478-#481)
   game.settings.register("warhammer-dbc", "warpforgedPlateFixVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия проставления Рейтинга у уже выданных копий Черты «Проворный» —
+  // штраф атакующим теперь считается от Рейтинга Черты, а не от Ag.b цели
+  // (одноразовая, приёмка стопки #482-#504, wdbc-b079)
+  game.settings.register("warhammer-dbc", "nimbleRatingVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -984,7 +992,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -1170,6 +1178,23 @@ Hooks.once("ready", async () => {
     if (!result?.failed) await game.settings.set("warhammer-dbc", "warpforgedPlateFixVersion", VERSION);
     else console.warn("Warhammer DBC | «Закалённые Варпом Латы»: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
   } catch (e) { console.error("Warhammer DBC | «Закалённые Варпом Латы»:", e); }
+});
+
+// ── Одноразовая правка: Рейтинг у уже выданных копий Черты «Проворный» —
+// правило теперь берёт штраф из system.rating, а снимки на живых акторах
+// пришли без него и давали молчаливый −0 (wdbc-b079) ──
+// Ручной перезапуск: game.warhammerDBC.migrateNimbleRating()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "nimbleRatingVersion") || 0) >= VERSION) return;
+  try {
+    const result = await migrateNimbleRating();
+    // wdbc-059h: версия штампуется только при полном успехе — иначе
+    // недомигрированные акторы остались бы с −0 навсегда.
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "nimbleRatingVersion", VERSION);
+    else console.warn("Warhammer DBC | «Проворный»: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
+  } catch (e) { console.error("Warhammer DBC | «Проворный»:", e); }
 });
 
 // ── Одноразовая доливка: биоимпланты, выданные до появления Доступности ──────

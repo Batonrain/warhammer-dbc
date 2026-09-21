@@ -663,7 +663,15 @@ export function prepareCharacterDerived(actor, system) {
       // _source перед каждым update(), — но контракт "idempotent per
       // initialization" из client-document.mjs требует явного сброса, а не
       // молчаливой опоры на то, что снаружи всегда есть полная пересборка.
-      system.fate.max = 0;
+      //
+      // Сброс идёт к ХРАНИМОМУ значению, а не к нулю (приёмка стопки
+      // #482-#504): у не-друкхари fate.max — их собственная Судьба, которую
+      // игрок вводит руками в шапке листа (templates/actor/parts/header.hbs,
+      // ветка без fateMaxAuto; apps/infamy-points.mjs::actorInfamyMax). Лист
+      // шлёт форму на каждое изменение поля (submitOnChange), поэтому
+      // обнуление здесь не просто прятало число — оно записывало 0 в _source
+      // первой же правкой любого поля листа.
+      system.fate.max = Number(actor?._source?.system?.fate?.max) || 0;
     }
 
     // ── Здравомыслие пилота Дредноута (Книга Машин, стр. 57) ────────────────

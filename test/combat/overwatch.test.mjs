@@ -143,6 +143,12 @@ describe("overwatchMenuItems", () => {
   });
 });
 
+// Хук updateToken в Foundry всегда получает (doc, changes, options, userId),
+// и обработчик Караула выходит, если перемещение вызвал не этот клиент, —
+// тот же гейт, что у Свободной Атаки (combat/free-attack.mjs). Раньше тест
+// звал обработчик без userId, и гейта в коде не было: карточка Караула
+// уходила в чат с каждого подключённого клиента разом (приёмка стопки
+// #482-#504).
 describe("реактивный триггер: враг входит в сектор", () => {
   it("враг спереди в секторе 45° — предлагает карточку с кнопками режима", async () => {
     const weapon = weaponItem({ rof_semi: 6 });
@@ -161,11 +167,33 @@ describe("реактивный триггер: враг входит в сект
     initOverwatchHooks();
 
     enemyToken.document.x = 0; enemyToken.document.y = -1;
-    await Promise.all((handlers.updateToken || []).map(fn => fn(enemyToken.document, { x: 0, y: -1 })));
+    await Promise.all((handlers.updateToken || []).map(fn => fn(enemyToken.document, { x: 0, y: -1 }, {}, game.user.id)));
 
     expect(captured.chat.length).toBe(1);
     expect(captured.chat[0].content).toContain("Культист");
     expect(captured.chat[0].content).toContain("wh-overwatch-fire-btn");
+  });
+
+  it("перемещение вызвал другой клиент — карточку не постим (иначе она уйдёт с каждого)", async () => {
+    const weapon = weaponItem({ rof_semi: 6 });
+    const shooter = fakeActor({ characteristics: { bs: { bonus: 5 } }, actionPoints: { value: 2, max: 2 }, items: [weapon], uuid: "Actor.shooter" });
+    const shooterToken = token({ id: "s", x: 0, y: 0, rotation: 0, disposition: FRIENDLY, actor: shooter });
+    const enemyActor = fakeActor({ characteristics: { ag: { total: 30 } }, uuid: "Actor.enemy", name: "Культист" });
+    const enemyToken = token({ id: "e", x: 0, y: -5, rotation: 0, disposition: HOSTILE, actor: enemyActor, name: "Культист" });
+    place(shooterToken, enemyToken);
+    globalThis.game.combat = { started: true, combatants: [{ actor: shooter }] };
+
+    await declareOverwatch(shooter, { weaponId: "w1", arcWidth: 45 });
+    resetCaptured();
+
+    const handlers = {};
+    globalThis.Hooks.on = (name, fn) => { (handlers[name] ??= []).push(fn); };
+    initOverwatchHooks();
+
+    enemyToken.document.x = 0; enemyToken.document.y = -1;
+    await Promise.all((handlers.updateToken || []).map(fn => fn(enemyToken.document, { x: 0, y: -1 }, {}, "чужой-клиент")));
+
+    expect(captured.chat.length).toBe(0);
   });
 
   it("союзник входит в сектор — не предлагает", async () => {
@@ -184,7 +212,7 @@ describe("реактивный триггер: враг входит в сект
     initOverwatchHooks();
 
     allyToken.document.y = -1;
-    await Promise.all((handlers.updateToken || []).map(fn => fn(allyToken.document, { x: 0, y: -1 })));
+    await Promise.all((handlers.updateToken || []).map(fn => fn(allyToken.document, { x: 0, y: -1 }, {}, game.user.id)));
 
     expect(captured.chat.length).toBe(0);
   });
@@ -205,7 +233,7 @@ describe("реактивный триггер: враг входит в сект
     initOverwatchHooks();
 
     enemyToken.document.y = -1;
-    await Promise.all((handlers.updateToken || []).map(fn => fn(enemyToken.document, { x: 0, y: -1 })));
+    await Promise.all((handlers.updateToken || []).map(fn => fn(enemyToken.document, { x: 0, y: -1 }, {}, game.user.id)));
     enemyToken.document.y = -2;
     await Promise.all((handlers.updateToken || []).map(fn => fn(enemyToken.document, { x: 0, y: -2 })));
 

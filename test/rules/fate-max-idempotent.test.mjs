@@ -17,21 +17,27 @@ import { describe, it, expect } from "vitest";
 import { WarhammerActor } from "../../module/documents/actor.mjs";
 import { ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
 
-function characterWith({ race = "", fateMax = 0 } = {}) {
+function characterWith({ race = "", fateMax = 0, storedMax = fateMax } = {}) {
   const system = new ACTOR_DATA_MODELS.character({}).toObject();
   system.race = race;
   system.fate.max = fateMax;
   const list = [];
   list.get = () => null;
   WarhammerActor.prototype.prepareDerivedData.call({
-    type: "character", name: "Подставной", system, items: list, getFlag: () => undefined
+    type: "character", name: "Подставной", system, items: list, getFlag: () => undefined,
+    _source: { system: { fate: { max: storedMax } } }
   });
   return system;
 }
 
 describe("fate.max не копится между прогонами (wdbc-zzz2)", () => {
-  it("не-друкхари: унаследованное из прошлого прогона значение сбрасывается к 0", () => {
-    expect(characterWith({ fateMax: 3 }).fate.max).toBe(0);
+  it("не-друкхари: накопленное сверх хранимого сбрасывается к хранимому", () => {
+    // 5 на входе = 3 своих + 2 от final-эффекта прошлого прогона.
+    expect(characterWith({ fateMax: 5, storedMax: 3 }).fate.max).toBe(3);
+  });
+
+  it("не-друкхари: ручной максимум из шапки листа не обнуляется", () => {
+    expect(characterWith({ fateMax: 3 }).fate.max).toBe(3);
   });
 
   it("друкхари: формула W.b×(1+Бездонная Душа) не задета фиксом", () => {
@@ -47,7 +53,8 @@ describe("fate.max не копится между прогонами (wdbc-zzz2)
     const list = [];
     list.get = () => null;
     WarhammerActor.prototype.prepareDerivedData.call({
-      type: "character", name: "Подставной", system, items: list, getFlag: () => undefined
+      type: "character", name: "Подставной", system, items: list, getFlag: () => undefined,
+      _source: { system: { fate: { max: 0 } } }
     });
     system.fate.max += 1; // final-эффект отработал ещё раз на том же экземпляре
 

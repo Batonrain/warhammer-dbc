@@ -75,6 +75,20 @@ describe("onExtendedTestReroll", () => {
     expect(captured.dialog).toBeNull();
   });
 
+  // Банк, набитый ДО появления testKey, цели не помнит: строка панели
+  // подставляет плашку «— выберите тест —» с пустым value (sheets/
+  // sheet-helpers.mjs), и «Переоткрыть» обязано молча выйти. Иначе браузер
+  // пометил бы первый <option> списка и панель бросала бы ЧУЖОЙ Навык
+  // (приёмка стопки #482-#504).
+  it("старый банк без testKey — с плашкой-заглушкой ничего не бросает", async () => {
+    const s = sheet({});
+    await s.actor.setFlag("warhammer-dbc", "extendedTests.старый_банк",
+      { accumulated: 12, target: 30, label: "Старый банк" });
+    const row = rowWith({ ".extended-test-target": { value: "" } });
+    onExtendedTestReroll.call(s, {}, rowButton("старый_банк", row));
+    expect(captured.dialog).toBeNull();
+  });
+
   it("продолжает тот же банк — бросок через панель копит в тот же ключ", async () => {
     const s = sheet({});
     await s.actor.setFlag("warhammer-dbc", "extendedTests.вязь_зарока",

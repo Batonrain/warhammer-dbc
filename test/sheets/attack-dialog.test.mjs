@@ -1331,14 +1331,21 @@ describe("Хват дальнобойного: 6 отложенных потре
   });
 
   describe("Aim Focus/Фокус на Прицеле (wdbc-1rno.5): продление не тратится дальнобойной атакой", () => {
-    it("продление активно (\"pending\"), дальнобойная атака — system.aiming НЕ сбрасывается", async () => {
+    // Проверяем ВОССТАНОВЛЕНИЕ, а не «отсутствие записи»: прежний assert
+    // («ни одного update с system.aiming») проходил только потому, что в
+    // стенде нет активного Encounter — в бою ОД за саму атаку списывает
+    // spendActionPoints, а он зовёт _maybeClearAiming и уже сбросил прицел в
+    // "none" до этой строки. Пустой патч оставлял Талант без эффекта со
+    // второго выстрела (приёмка стопки #482-#504).
+    it("продление активно (\"pending\"), дальнобойная атака — system.aiming остаётся прежним", async () => {
       const rifle = weaponFor();
       const actor = attacker({ items: [rifle], aiming: "half",
         flags: { "warhammer-dbc.aimFocusExtended": "pending" } });
       const p = showAttackDialog(actor, rifle);
       captured.dice = [96];
       await pressRoll(p);
-      expect(actor.updates.some(u => "system.aiming" in u)).toBe(false);
+      expect(actor.updates).toContainEqual({ "system.aiming": "half" });
+      expect(actor.updates.some(u => u["system.aiming"] === "none")).toBe(false);
     });
 
     it("продление активно (\"armed\"), рукопашная атака — всё равно сбрасывается (только «все его стрелковые атаки»)", async () => {
@@ -1358,6 +1365,49 @@ describe("Хват дальнобойного: 6 отложенных потре
       captured.dice = [96];
       await pressRoll(p);
       expect(actor.updates).toContainEqual({ "system.aiming": "none" });
+    });
+  });
+
+  describe("Sniper Assassin/Снайпер-Убийца (wdbc-1rno.2): Полное Прицеливание + Меткое + Одиночный", () => {
+    // Прицеливание читается из снимка, переданного в бросок (opts.aiming), а
+    // не из actor.system.aiming: к моменту броска диалог уже записал туда
+    // "none" (а в бою это делает ещё и списание ОД). По живому полю условие
+    // не выполнялось никогда, и Талант не срабатывал вовсе — атака не
+    // становилась Незримой (приёмка стопки #482-#504).
+    function sniper(items) {
+      const talent = { id: "t-sa", type: "talent", name: "Sniper Assassin / Снайпер-Убийца",
+        system: {}, getFlag: () => undefined };
+      const a = attacker({ items: [...items, talent], aiming: "full" });
+      // Живой Foundry ПРИМЕНЯЕТ патч к актору, а базовый стенд только копит
+      // его в a.updates — именно поэтому «читаем actor.system.aiming» и
+      // выглядело рабочим на стенде, не работая за столом. Здесь применяем,
+      // чтобы тест ловил мутацию «вернуть чтение живого поля».
+      const push = a.update;
+      a.update = async data => {
+        await push(data);
+        if ("system.aiming" in data) a.system.aiming = data["system.aiming"];
+      };
+      return a;
+    }
+
+    it("Талант есть, Полное Прицеливание — атака Незримая (Уклонение заблокировано)", async () => {
+      const rifle = weaponFor({ weaponProps: [{ key: "accurate" }] });
+      setTargets([actorFor({})]);
+      const actor = sniper([rifle]);
+      const p = showAttackDialog(actor, rifle);
+      captured.dice = Array(32).fill(5);
+      await pressRoll(p, { "input[name='atk-rof']:checked": { value: "single", dataset: { bonus: "10" } } });
+      expect(captured.chat.at(-1).content).toContain("wh-unseen-locked");
+    });
+
+    it("того же Таланта нет — атака обычная, Уклонение доступно", async () => {
+      const rifle = weaponFor({ weaponProps: [{ key: "accurate" }] });
+      setTargets([actorFor({})]);
+      const actor = attacker({ items: [rifle], aiming: "full" });
+      const p = showAttackDialog(actor, rifle);
+      captured.dice = Array(32).fill(5);
+      await pressRoll(p, { "input[name='atk-rof']:checked": { value: "single", dataset: { bonus: "10" } } });
+      expect(captured.chat.at(-1).content).not.toContain("wh-unseen-locked");
     });
   });
 

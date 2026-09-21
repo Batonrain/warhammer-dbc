@@ -29,7 +29,15 @@ export const ROUTE_KNOWLEDGE_LEVEL_OPTIONS = Object.entries(ROUTE_KNOWLEDGE_LEVE
 export function hasNavigationWarp(actor) {
   const entries = actor?.system?.groupSkills?.navigation;
   if (!Array.isArray(entries)) return false;
-  return entries.some(e => e?.specialty === "warp" && e?.rank && e.rank !== "untrained");
+  // specialty хранит ПОДПИСЬ («Warp» из каталога, «Варп» у Родного мира,
+  // свободный текст после переименования), ключ каталога лежит отдельным
+  // полем specKey (constants/skill-specializations.mjs, apps/origin-shared.
+  // mjs). Сравнение подписи с ключом «warp» не совпадало никогда, и раздел
+  // не видел ни один Проводник. Запасной нечёткий матч по подписи — тем же
+  // приёмом, что apps/veil.mjs: специализация могла приехать без specKey
+  // (ручное добавление «Своя», старые листы).
+  return entries.some(e => (e?.specKey === "warp" || /warp|варп/i.test(String(e?.specialty ?? "")))
+    && e?.rank && e.rank !== "untrained");
 }
 
 /** Строки раздела: по известному маршруту на строку. Синхронно — fromUuidSync,

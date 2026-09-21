@@ -19,17 +19,28 @@ describe("hasNavigationWarp: гейт раздела", () => {
   });
 
   it("есть Navigation (Surface), но не (Warp) — false", () => {
-    const actor = { system: { groupSkills: { navigation: [{ specialty: "surface", rank: "trained" }] } } };
+    const actor = { system: { groupSkills: { navigation: [{ specialty: "Surface", specKey: "surface", rank: "trained" }] } } };
     expect(hasNavigationWarp(actor)).toBe(false);
   });
 
-  it("Navigation (Warp) тренирован — true", () => {
-    const actor = { system: { groupSkills: { navigation: [{ specialty: "warp", rank: "trained" }] } } };
+  // Записи приходят в той форме, в какой их кладут настоящие источники:
+  // specialty — ПОДПИСЬ («Warp» из каталога, «Варп» у Родного мира,
+  // свободный текст после переименования), ключ каталога — в specKey.
+  // Прежняя фикстура писала specialty:"warp" (ключ в поле подписи) — такой
+  // записи в живых данных не бывает, и гейт, сравнивавший подпись с ключом,
+  // проходил тест, не работая ни у одного Проводника.
+  it("Navigation (Warp) из каталога — true", () => {
+    const actor = { system: { groupSkills: { navigation: [{ specialty: "Warp", specKey: "warp", rank: "trained" }] } } };
+    expect(hasNavigationWarp(actor)).toBe(true);
+  });
+
+  it("русская подпись «Варп» от Родного мира, без specKey — true", () => {
+    const actor = { system: { groupSkills: { navigation: [{ specialty: "Варп", rank: "known" }] } } };
     expect(hasNavigationWarp(actor)).toBe(true);
   });
 
   it("запись есть, но rank явно untrained — false", () => {
-    const actor = { system: { groupSkills: { navigation: [{ specialty: "warp", rank: "untrained" }] } } };
+    const actor = { system: { groupSkills: { navigation: [{ specialty: "Warp", specKey: "warp", rank: "untrained" }] } } };
     expect(hasNavigationWarp(actor)).toBe(false);
   });
 });
