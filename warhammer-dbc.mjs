@@ -168,6 +168,7 @@ Hooks.once("init", () => {
   registerFeatureSettings();
   registerDuplicateGrantSettings();
   registerDiagonalDefaultSetting();
+  registerTokenAutoRotateDefaultSetting();
   registerAdvancePricingSettings();
   registerFontSettings();       // выбор шрифта интерфейса (мир + личный, wdbc-9m83)
   registerSettingsSections();   // подразделы в окне настроек
@@ -646,6 +647,10 @@ Hooks.once("ready", applyHousingMode);
 // осталась на старом дефолте ядра EQUIDISTANT. Дальше настройку не трогает
 // никогда, см. module/combat/tactical-map.mjs::applyBookDiagonalDefaultOnce.
 Hooks.once("ready", () => applyBookDiagonalDefaultOnce());
+
+// core.tokenAutoRotate — см. warhammer-dbc.mjs::applyTokenAutoRotateDefaultOnce
+// чуть ниже по файлу (тот же once-только-ГМ принцип, что и у диагонали выше).
+Hooks.once("ready", () => applyTokenAutoRotateDefaultOnce());
 
 // Прямой переход с заметки-пина звёздной системы на лист актёра (минуя журнал).
 // Срабатывает ТОЛЬКО если у журнала заметки выставлен наш флаг systemActorUuid —
@@ -1698,6 +1703,58 @@ Hooks.on("updateItem", (item, ch) => { if (item.parent?.type === "ship" && _isHu
 Hooks.on("updateActor", (doc, ch) => {
   if (doc.type === "ship" && (ch.system?.shipRelation !== undefined || ch.system?.shipType !== undefined)) applyShipIdentity(doc);
 });
+
+// ── Корабль/Техника не доворачивают «перед» от простого перетаскивания токена ─
+// Foundry v13 (core.tokenAutoRotate, мировая настройка, по умолчанию включена)
+// сам разворачивает ЛЮБОЙ токен по направлению перемещения при обычном drag/
+// клавиатурном движении. Для этих двух типов «перед» несёт игровой смысл:
+//   - ship    — сектора орудий/щитов корабля, меняются манёвром Поворота
+//               (часть Скорости хода), не простым перетаскиванием по карте;
+//   - vehicle — vehicleMount.hArc/vArc (module/rules/facing.mjs::isWithinMountArc,
+//               живой код — sheets/vehicle-sheet.mjs таргетинг орудий техники)
+//               считаются от rotation токена; случайный доворот молча меняет,
+//               какие цели фронтальное/бортовое орудие вообще может достать.
+// preMoveToken — единственная точка, где Foundry разрешает системе погасить
+// автоповорот ДО того, как он посчитает и запишет новый rotation (см.
+// TokenDocument#_preUpdateMovement/#rotateInMovementDirection): movement —
+// заморожен, но autoRotate/showRuler остаются перезаписываемыми полями.
+const FIXED_FACING_ACTOR_TYPES = new Set(["ship", "vehicle"]);
+export function disableFixedFacingAutoRotate(tokenDoc, movement) {
+  if (FIXED_FACING_ACTOR_TYPES.has(tokenDoc?.actor?.type)) movement.autoRotate = false;
+}
+Hooks.on("preMoveToken", disableFixedFacingAutoRotate);
+
+// ── core.tokenAutoRotate — системный дефолт: выключен ─────────────────────────
+// Хук выше защищает ship/vehicle НЕЗАВИСИМО от этой настройки — но она же
+// касается и остальных типов: Cloak (combat/facing.mjs::isFrontArcHit) и
+// Скрытная Атака (isOutsideDefenderView) тоже читают rotation защищающегося.
+// В системе, где «перед» персонажа — явный сектор обзора/защиты (не просто
+// картинка), автоповорот от простого перетаскивания — тот же класс бага,
+// что был у Корабля, только шире. Пишем дефолт ОДИН раз, только ГМ, и только
+// если настройка мира ещё нигде не трогалась осознанно — тот же принцип, что
+// у applyBookDiagonalDefaultOnce (module/combat/tactical-map.mjs, стр. 31):
+// once — значит once, вернул ГМ настройку обратно руками (в т.ч. на true) —
+// это уже не наше дело.
+export function shouldApplyTokenAutoRotateDefault({ alreadyApplied, currentAutoRotate }) {
+  if (alreadyApplied) return false;
+  return currentAutoRotate === true;   // всё ещё нетронутый дефолт ядра Foundry
+}
+
+export function registerTokenAutoRotateDefaultSetting() {
+  game.settings.register("warhammer-dbc", "tokenAutoRotateDefaultApplied", {
+    scope: "world", config: false, type: Boolean, default: false
+  });
+}
+
+export async function applyTokenAutoRotateDefaultOnce() {
+  if (!game.user?.isGM) return;
+  const alreadyApplied = !!game.settings.get("warhammer-dbc", "tokenAutoRotateDefaultApplied");
+  const currentAutoRotate = game.settings.get("core", "tokenAutoRotate");
+  if (shouldApplyTokenAutoRotateDefault({ alreadyApplied, currentAutoRotate })) {
+    await game.settings.set("core", "tokenAutoRotate", false);
+  }
+  await game.settings.set("warhammer-dbc", "tokenAutoRotateDefaultApplied", true);
+}
 
 // ── Имя актора → имя токена; арт актора → текстура токена ────────────────────
 // В preUpdate дописываем изменения в прототип-токен той же операции.

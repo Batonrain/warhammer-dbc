@@ -412,6 +412,11 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   — отдельный крюк в `combat/defense.mjs` (Уклонение/Парирование
   Комбинированный с W−10, если защищающийся видит глаза атакующего-
   носителя; провал снимает все Реакции), не через этот facing-примитив.
+  `warhammer-dbc.mjs::disableFixedFacingAutoRotate` (хук `preMoveToken`) —
+  гасит автоповорот ядра Foundry v13 (`core.tokenAutoRotate`) для акторов
+  ship/vehicle: у них `rotation` токена — источник арок орудий/щитов
+  (`isWithinMountArc`), а не просто визуальный разворот, и не должен молча
+  съезжать от обычного перетаскивания токена по карте.
 - `module/rules/tactical-map.mjs` + `combat/tactical-map.mjs` — Тактическая
   карта (wdbc-8k0i, стр. 31): размер Базы (2×2/3×3, null = Размер 2+, «на
   откуп ГМу»), дистанции от края/от центра Базы, вид контакта none/base/deep,
