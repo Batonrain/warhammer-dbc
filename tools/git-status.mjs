@@ -35,3 +35,17 @@ export function uncommittedPacksSrc(roots) {
   });
   return parseDirtyPaths(out);
 }
+
+/**
+ * Незакоммиченные пути по ВСЕМУ репозиторию — сторож tools/merge-main.mjs
+ * (wdbc-cwq2f): в общей рабочей копии `main` merge/checkout origin/main
+ * может стереть несохранённую работу параллельной сессии, а не только
+ * packs-src (инцидент 21.09.2026, сессия «Оружие Наследия»).
+ */
+export function uncommittedRepoPaths() {
+  const out = execFileSync("git", ["status", "--porcelain"], {
+    cwd: ROOT,
+    encoding: "utf8"
+  });
+  return parseDirtyPaths(out);
+}
