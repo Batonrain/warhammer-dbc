@@ -31,7 +31,7 @@ import { situationalRules } from "./situational.mjs";
 import { psychicSustainTargetRules } from "./psychic-sustain-target.mjs";
 import { pathRulesFor } from "./library/paths.mjs";
 import { hatredRules } from "./hatred.mjs";
-import { legacyWrathRules, legacyExcessRules, legacyGuardianRules } from "./legacy-weapon.mjs";
+import { legacyWrathRules, legacyExcessRules, legacyGuardianRules, legacyBloodPsychicRules, legacyInstinctiveDisarmRules, legacyDistractingCharSwapRules, legacyQuietAwarenessRules } from "./legacy-weapon.mjs";
 import { devourerPermanentRules } from "./devourer-of-knowledge.mjs";
 import { gallerpoxPoisonPenaltyActive } from "./prophet-of-gallerpox.mjs";
 import { registerRuleSource } from "./source-registry.mjs";
@@ -160,6 +160,27 @@ registerRuleSource("legacyExcess", a => legacyExcessRules(a));
 // стрелком на атаки по нему до начала его следующего Хода. См. заголовок
 // rules/legacy-weapon.mjs::legacyGuardianRules.
 registerRuleSource("legacyGuardian", () => legacyGuardianRules());
+
+// Наследие Крови, Оружие Наследия (wdbc-1rno.35, стр. 427): +10 на встречный
+// тест против психической угрозы (психосилы/выжигание души — 2 из 4
+// категорий). См. заголовок rules/legacy-weapon.mjs::legacyBloodPsychicRules.
+registerRuleSource("legacyBloodPsychic", a => legacyBloodPsychicRules(a));
+
+// Инстинктивное, Оружие Наследия (wdbc-1rno.35/versatile 1-2, стр. 428):
+// нельзя быть обезоруженным, пока экипировано. См. заголовок rules/
+// legacy-weapon.mjs::legacyInstinctiveDisarmRules.
+registerRuleSource("legacyInstinctiveDisarm", a => legacyInstinctiveDisarmRules(a));
+
+// Отвлекающее, Оружие Наследия (wdbc-1rno.35/skilled 3-4, стр. 427),
+// рукопашная ветка: Charm(Fel)/Int вместо WS при Финте. См. заголовок
+// rules/legacy-weapon.mjs::legacyDistractingCharSwapRules.
+registerRuleSource("legacyDistractingCharSwap", a => legacyDistractingCharSwapRules(a));
+
+// Тихое, Оружие Наследия (wdbc-1rno.35/skilled 1-2, стр. 427): тест на
+// Бдительность с целью — носителем этого оружия — получает −30. Обратное
+// направление (проверяет СНАРЯЖЕНИЕ ЦЕЛИ, не роллящего), см. заголовок
+// rules/legacy-weapon.mjs::legacyQuietAwarenessRules.
+registerRuleSource("legacyQuietAwareness", (a, ctx) => legacyQuietAwarenessRules(a, ctx));
 
 // Devourer of Knowledge/Пожиратель Знаний (wdbc-1rno, Тзинч) — Навыки,
 // украденные ПЕРМАНЕНТНО (9 дней подряд), считаются «Дружественными» для

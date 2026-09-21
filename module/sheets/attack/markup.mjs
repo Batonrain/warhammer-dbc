@@ -34,6 +34,8 @@ export function buildAttackContent(v) {
     bandHtml,
     charKey,
     charSwapWhy,
+    charSwapWhyFel,
+    charSwapWhyInt,
     charVal,
     commonMods,
     distanceHintHtml,
@@ -61,6 +63,7 @@ export function buildAttackContent(v) {
     vehicleSideHtml,
     wideBurstHtml,
     confinedSpaceHtml,
+    legacyCleavingHtml,
     wp,
     wpDialogHtml,
   } = v;
@@ -91,7 +94,11 @@ return `
           // законным, и это подписывается прямо в пункте: иначе игрок не
           // отличит разрешённую книгой подмену от самоуправства.
           const swap = (k === "wp" && charSwapWhy.length)
-            ? ` — вместо ${isMelee ? "WS" : "BS"}: ${charSwapWhy.join(", ")}` : "";
+            ? ` — вместо ${isMelee ? "WS" : "BS"}: ${charSwapWhy.join(", ")}`
+            : (k === "fel" && isMelee && charSwapWhyFel.length)
+              ? ` — вместо WS (Финт): ${charSwapWhyFel.join(", ")}`
+              : (k === "int" && isMelee && charSwapWhyInt.length)
+                ? ` — вместо WS (Финт): ${charSwapWhyInt.join(", ")}` : "";
           return `<option value="${k}" ${k === charKey ? "selected" : ""}>${m.abbr} (${v})${swap}</option>`;
         }).join("")}
       </select>
@@ -137,6 +144,7 @@ return `
       <div class="av-pills">${rofPills}</div>
       ${wideBurstHtml}
       ${confinedSpaceHtml}
+      ${legacyCleavingHtml}
     </div>
     ${fanningActive ? `
     <div class="av-row">

@@ -20,8 +20,9 @@ import { hasBlackEyesDarknessImmunity } from "../../rules/black-eyes.mjs";
 import { isBraced } from "../../combat/brace-weapon.mjs";
 import { lockingContactTokenDocs } from "../../combat/free-attack.mjs";
 import { hasQuietElimination, isQuietEliminationWeapon } from "../../rules/quiet-elimination.mjs";
-import { legacyHistoryIs, legacyChangeTestBonus, bloodthirstyLegacyMeleeActive, takenMutationNames, DISTRACTING_LEGACY_FLAG, adaptiveLegacyMeleeWsBonus } from "../../rules/legacy-weapon.mjs";
+import { legacyHistoryIs, legacyChangeTestBonus, bloodthirstyLegacyMeleeActive, takenMutationNames, DISTRACTING_LEGACY_FLAG, adaptiveLegacyMeleeWsBonus, punisherLegacyBonus, legacySlaughterThresholdDelta, patienceLegacyOverwatchBonus, patienceLegacyMeleeChargeInterruptActive } from "../../rules/legacy-weapon.mjs";
 import { isNearestUndamagedEnemy } from "../../combat/legacy-weapon-mutations.mjs";
+import { isActorsOwnTurn } from "../../combat/delay-action.mjs";
 /**
  * @param {object} v состояние броска: оружие, токены, замеренная дистанция
  * @returns {{commonMods: object[], specificMods: object[], charSwapWhy: string[], bandKey: string|null}}
@@ -47,6 +48,20 @@ export function situationalMods(v) {
     ogrynBracePenalty = 0,
   } = v;
 
+  // Без Предупреждения, Оружие Наследия (wdbc-1rno.35, versatile 9-9, стр.
+  // 428), второе предложение: «В первый Раунд боя оружие может атаковать
+  // врагов, чья Инициатива вдвое ниже или меньше, как если бы они были
+  // Застигнуты Врасплох» — синтетически ставит autoCheck на УЖЕ
+  // существующую галочку «Цель Врасплох» (id: atk-mod-surprised, читается
+  // ниже как opts.targetSurprised), а не заводит отдельный путь.
+  const legacyForewarnedSurprise = (weapon && game.combat?.round === 1 && attackCtx.targetActor) ? (() => {
+    if (!takenMutationNames(weapon).has("Без Предупреждения")) return false;
+    const attackerCombatant = game.combat.combatants?.find(c => c.actorId === actor.id);
+    const targetCombatant   = game.combat.combatants?.find(c => c.actorId === attackCtx.targetActor.id);
+    const ai = attackerCombatant?.initiative, ti = targetCombatant?.initiative;
+    return ai != null && ti != null && ai >= ti * 2;
+  })() : false;
+
   const commonMods = [
     { label: "Усталость",     value: -10, autoCheck: hasFatigue },
     // visionPenalty (wdbc-1rno.1, Чёрные Глаза/Black Eyes, Cor 60+) — три
@@ -71,7 +86,9 @@ export function situationalMods(v) {
     // targetSurprised (Quiet Elimination: +1 куб урона/тихая смерть ПО
     // ЛЮБОЙ атаке, отмеченной Врасплох, не только ножом/пистолетом — см.
     // rules/quiet-elimination.mjs), а не только суммируется в общий Порог.
-    { id: "atk-mod-surprised", label: "Цель Врасплох", value: 30, immuneFlag: "attack.surpriseImmune" },
+    { id: "atk-mod-surprised", label: "Цель Врасплох", value: 30, immuneFlag: "attack.surpriseImmune",
+      autoCheck: legacyForewarnedSurprise,
+      ...(legacyForewarnedSurprise ? { note: "Без Предупреждения: Инициатива цели вдвое ниже, 1-й Раунд" } : {}) },
     // id нужен readAttackForm (стр. 12, wdbc-x1nz.2.29): «Избегание невозможно
     // от атаки, о которой цель не знает» — атакующий сам объявляет это
     // галочкой (со спины/из засады/невидимый-неслышный снаряд книга не даёт
@@ -124,6 +141,39 @@ export function situationalMods(v) {
     ...(weapon ? (() => {
       const v = legacyChangeTestBonus(actor, weapon);
       return v ? [{ label: `Наследие Перемен: ${v >= 0 ? "+" : ""}${v} (бросок этого Хода)`, value: v, autoCheck: true }] : [];
+    })() : []),
+    // Наследие Бойни (H1, стр. 426), стрелковая ветка: +20 к следующей атаке
+    // после убийства этим оружием — флэт, без Приёмов (те — только
+    // рукопашные). Рукопашная ветка (включая −30 на Оглушить) уже сложена в
+    // sheets/attack/selection.mjs::maneuverBon, здесь она бы задвоилась.
+    ...(!isMelee && weapon ? (() => {
+      const v = legacySlaughterThresholdDelta(actor, weapon);
+      return v ? [{ label: `Наследие Бойни (История): +${v} — заряжено убийством этим оружием`, value: v, autoCheck: true }] : [];
+    })() : []),
+    // Терпение/vigilant 3-4, Оружие Наследия, стрелковая ветка (wdbc-1rno.35/
+    // wdbc-1rno.41, стр. 427-428): «+30 на выстрелы в Карауле» — заряжено
+    // combat/overwatch.mjs при клике режима огня, гасится в attack.mjs на
+    // фактическом броске (тот же приём, что hairTriggerUnseenPending).
+    ...(!isMelee && weapon ? (() => {
+      const v = patienceLegacyOverwatchBonus(actor);
+      return v ? [{ label: `Терпение (Мутация): +${v} — выстрел из Караула`, value: v, autoCheck: true }] : [];
+    })() : []),
+    // Терпение, рукопашная половина (wdbc-1rno.41, стр. 427): «атакует
+    // Задержкой идущего в Натиск противника — всегда первым, +30». Детект —
+    // решение пользователя 21.09.2026: банкованное 1 ОД (Задержка) + цель в
+    // Натиске (rules/legacy-weapon.mjs::patienceLegacyMeleeChargeInterruptActive,
+    // не может сама проверить «не свой Ход» — цикл через action-economy.mjs,
+    // см. комментарий там), плюс !isActorsOwnTurn здесь.
+    ...(isMelee && weapon && attackCtx.targetActor && !isActorsOwnTurn(actor)
+      && patienceLegacyMeleeChargeInterruptActive({ actor, weapon, defenderActor: attackCtx.targetActor })
+      ? [{ label: "Терпение (Мутация): +30 — атака Задержкой по идущему в Натиск, действует первым", value: 30, autoCheck: true }]
+      : []),
+    // Каратель/merciless 8-8, Оружие Наследия (wdbc-1rno.35, стр. 428): «+3
+    // накопительно на попадание по НЕЙ до конца боя» — счётчик живёт на
+    // цели, ключ id ЭТОГО оружия (rules/legacy-weapon.mjs::punisherLegacyBonus).
+    ...(weapon && attackCtx.targetActor ? (() => {
+      const v = punisherLegacyBonus(attackCtx.targetActor, weapon);
+      return v ? [{ label: `Каратель (Мутация): +${v} — накоплено по этой цели`, value: v, autoCheck: true }] : [];
     })() : []),
     // Отвлекающее/skilled 3-4, Оружие Наследия, стрелковая ветка (wdbc-1rno.35,
     // стр. 427-428): «Все остальные персонажи +10 по цели, в которую попало
@@ -206,6 +256,10 @@ export function situationalMods(v) {
     }
   }
   const charSwapWhy  = ruleFlagLabels(actor, "charSwap.wp.forWsS", attackCtx);
+  // Отвлекающее/skilled 3-4, Оружие Наследия, рукопашная ветка (wdbc-1rno.35,
+  // стр. 427-428): «При Финте — тест на Charm(Fel) или Int вместо WS.»
+  const charSwapWhyFel = ruleFlagLabels(actor, "charSwap.fel.forWs", attackCtx);
+  const charSwapWhyInt = ruleFlagLabels(actor, "charSwap.int.forWs", attackCtx);
   const twoWeaponWhy = ruleFlagLabels(actor, "penalty.twoWeapon.off", attackCtx);
   const twoWeaponOff  = twoWeaponWhy.length > 0;
   // Дуэлянтское (стр. 73 Книги Аэльдари): бой 1-на-1, когда никто не мешает,
@@ -383,5 +437,5 @@ export function situationalMods(v) {
       note: wp.gyroStabilized ? "снято: Гиро-стаб." : undefined }
   ];
 
-  return { bandKey, charSwapWhy, commonMods, specificMods };
+  return { bandKey, charSwapWhy, charSwapWhyFel, charSwapWhyInt, commonMods, specificMods };
 }

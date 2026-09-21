@@ -32,7 +32,7 @@ import { postTestCard } from "../helpers/test-card.mjs";
 import { determinationToFightApBonus } from "../rules/determination-to-fight.mjs";
 import { isStunnedOrDazed } from "../rules/predicates.mjs";
 import { turnStartFlagClears, turnStartAttackCarryOver } from "../rules/turn-flags.mjs";
-import { rollLegacyChangeBonus } from "../rules/legacy-weapon.mjs";
+import { rollLegacyChangeBonus, tickLegacyExcessBoost } from "../rules/legacy-weapon.mjs";
 
 /** Типы акторов, несущих экономику действий (общая часть — _creature.mjs). */
 export const ACTION_ECONOMY_ACTOR_TYPES = ["character", "daemon", "demonPrince", "minion"];
@@ -148,6 +148,11 @@ export async function resetActionEconomy(actor) {
     upd["flags.warhammer-dbc.legacyChangeBonus"] = legacyChange;
   }
   if (Object.keys(upd).length) await actor.update(upd);
+  // Перебор, Оружие Наследия (wdbc-1rno.35, стр. 427): буст держится
+  // ½Inf.b(окр.▲) Ходов ВЛАДЕЛЬЦА — тикает своим отдельным update (флаг
+  // ставится/гасится setFlag/unsetFlag сам), не через общий upd/реестр
+  // turn-flags.mjs (тот гасит «до следующего Хода», этот считает Ходы).
+  await tickLegacyExcessBoost(actor);
 }
 
 /**

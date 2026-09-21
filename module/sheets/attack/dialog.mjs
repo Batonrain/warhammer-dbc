@@ -416,6 +416,7 @@ export function openAttackDialog(ctx) {
               // видна только у Взрывного; применимость по damageType/Concussive
               // разбирает сам attack.mjs.
               confinedSpace: f.confinedSpace,
+              legacyCleavingRoll: f.legacyCleavingRoll,
               // Условные эффекты боеприпаса, отмеченные игроком (стр. 203).
               ammoCondProps:  f.ammoSel.flatMap(c => c.wp || []),
               ammoCondDmg:    f.ammoSel.reduce((n, c) => n + (c.dmg || 0), 0),

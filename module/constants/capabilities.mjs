@@ -414,6 +414,16 @@ export const CAPABILITIES = {
     source: "Локус Мутации (стр. 28, 32)",
     reader: "module/sheets/attack-dialog.mjs — подпись у пункта «W» в выборе характеристики"
   },
+  "charSwap.fel.forWs": {
+    label: "При Финте можно бросать Charm(Fel) вместо WS",
+    source: "Отвлекающее, Оружие Наследия (wdbc-1rno.35, стр. 427-428)",
+    reader: "module/sheets/attack/mods.mjs (charSwapWhyFel), module/sheets/attack-dialog.mjs, module/sheets/attack/markup.mjs — подпись у пункта «Fel» в выборе характеристики"
+  },
+  "charSwap.int.forWs": {
+    label: "При Финте можно бросать Int вместо WS",
+    source: "Отвлекающее, Оружие Наследия (wdbc-1rno.35, стр. 427-428)",
+    reader: "module/sheets/attack/mods.mjs (charSwapWhyInt), module/sheets/attack-dialog.mjs, module/sheets/attack/markup.mjs — подпись у пункта «Int» в выборе характеристики"
+  },
 
   // ── Действия и приёмы ─────────────────────────────────────────────────────
   "autoHit.melee.oncePerRound": {

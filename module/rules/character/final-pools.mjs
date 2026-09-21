@@ -19,6 +19,7 @@ import { psyRatingFromTalents } from "../psyker.mjs";
 import { hasRuleFlag } from "../flags.mjs";
 import { initiativeCharKey, fastestHandBonus, initiativeHint,
          INITIATIVE_DEFAULT_CHAR } from "../initiative.mjs";
+import { legacyInstinctiveInitiativeBonus, legacyForewarnedInitiativeBonus } from "../legacy-weapon.mjs";
 
 /**
  * @param {object} actor            актор — для возможностей (hasRuleFlag) и предметов
@@ -55,7 +56,13 @@ export function prepareFinalPools(actor, system, { chars, agBonus, traitInitMod,
   // напрямую (так делает боевой трекер, documents/combatant.mjs), а поле,
   // которое никто не читает, со временем начинает врать молча.
   system.initiativeHint  = initiativeHint(actor, chars);
-  system.initiative = initBonus + fastestHandBonus(actor, chars)
+  // Инстинктивное/Без Предупреждения, Оружие Наследия (wdbc-1rno.35,
+  // versatile 1-2/9-9, wdbc-1rno.47): те же плоские надбавки, что fastestHandBonus
+  // выше — не ActiveEffect, пересчитываются каждый цикл (см. заголовок
+  // rules/legacy-weapon.mjs::legacyInstinctiveInitiativeBonus).
+  const legacyInitBonus = legacyInstinctiveInitiativeBonus(actor)
+                        + legacyForewarnedInitiativeBonus(actor, chars.inf?.bonus);
+  system.initiative = initBonus + fastestHandBonus(actor, chars) + legacyInitBonus
                     + (traitInitMod || 0) + (Number(system.initiative) || 0);
 
   // ── Когниция (Техножрец) ───────────────────────────────────────────────

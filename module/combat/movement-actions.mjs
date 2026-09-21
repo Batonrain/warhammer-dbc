@@ -51,6 +51,8 @@ import { raceMatches } from "../rules/race.mjs";
 import { isGrappled } from "../rules/predicates.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
 import { enemyContactTokenDocs, offerFreeAttack } from "./free-attack.mjs";
+import { equippedLegacyWeaponWithMutation } from "../rules/legacy-weapon.mjs";
+import { resolveOpposed } from "../rules/test-kind.mjs";
 
 // Захват (стр. 12, wdbc-x1nz.2.31): «только действия Борьбы или не-Физические»
 // — Движение Физическое (см. тип действия «Физическое», стр. 12), поэтому
@@ -239,6 +241,30 @@ export async function declareHalfMove(actor) {
   </div>`);
 }
 
+/**
+ * Лучшая Часть Отваги/skilled 5-6, Оружие Наследия, стрелковая ветка
+ * (wdbc-1rno.35, стр. 427): «Если выстрел этого оружия не убил и не
+ * обезвредил цель, персонаж может совершить Полудвижение за свободное
+ * действие.» Кнопка живёт на карточке урона (combat/legacy-weapon-brave-
+ * heart.mjs) — «жива и не обезврежена» стол подтверждает самим кликом, тот
+ * же честный уровень, что Kiss of Mimic/Silent Elimination (damage.mjs).
+ * Без spendActionPoints вовсе — свободное действие, 0 ОД.
+ */
+export async function declareLegacyBraveHeartMove(actor) {
+  if (!actor) return;
+  if (_blockedByGrapple(actor)) return;
+  if (_bothLegsLost(actor))
+    return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
+  if (_bothFeetLost(actor) && !await _confirmAcrobaticsToWalk(actor)) return;
+  await markMovedThisTurn(actor);
+  await markMoveDegreeThisTurn(actor, "half");
+  _showReachRing(actor, actor.system.movement?.halfMove);
+  await _postCard(actor, `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Лучшая Часть Отваги</div>
+    <div class="roll-threshold">Свободное действие (0 ОД) — выстрел не убил и не обезвредил цель. Перемещение до SPD×1.</div>
+  </div>`);
+}
+
 export async function declareFullMove(actor) {
   if (!actor) return;
   if (_blockedByGrapple(actor)) return;
@@ -313,6 +339,94 @@ export async function declareDisengage(actor) {
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Выход из Боя</div>
     <div class="roll-threshold">Полное действие (2 ОД). Перемещение до SPD×1, не провоцирует Свободную Атаку.</div>
+  </div>`);
+}
+
+/**
+ * Лучшая Часть Отваги/skilled 5-6, Оружие Наследия, рукопашная ветка
+ * (wdbc-1rno.35, стр. 427): «Персонаж может пройти тест на Charm+0 vs P+0
+ * или Inf+0 vs P+0, чтобы Выйти из Боя за полудействие.» Тот же эффект, что
+ * declareDisengage, но 1 ОД вместо 2 — по выигранному встречному тесту
+ * против ОДНОГО выбранного противника из контакта (enemyContactTokenDocs,
+ * combat/free-attack.mjs — тот же список, что дал бы Свободную Атаку).
+ * Тот же двухшаговый приём, что Вольт (_rollVaultContest/wh-vault-contest-
+ * btn): свой бросок катается сразу, кнопка на каждого врага в контакте
+ * ждёт клика — второй бросок (их Per) и решение случаются по клику
+ * (resolveLegacyBraveDisengageContest, hooks.mjs). Charm или Inf — какая
+ * выше у актора СЕЙЧАС, книжное «или» не создаёт стратегической разницы,
+ * которую стоило бы отдавать отдельным диалогом. Буквально «+0»: без
+ * ситуативных модификаторов — книга не просит больше.
+ */
+export async function declareLegacyBraveDisengage(actor) {
+  if (!actor) return;
+  if (_blockedByGrapple(actor)) return;
+  if (_bothLegsLost(actor))
+    return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
+  if (_bothFeetLost(actor) && !await _confirmAcrobaticsToWalk(actor)) return;
+  if (actor.system.conditions?.challenged) {
+    const confirmed = await Dialog.confirm({
+      title: "Вызов (Challenge)",
+      content: `<p>${esc(actor.name)} под эффектом Вызова: нельзя добровольно выходить из рукопашной, кроме как чтобы увернуться от атаки по площади.</p><p>Это тот самый случай?</p>`
+    });
+    if (!confirmed) return;
+  }
+
+  const felTotal = Number(actor.system?.characteristics?.fel?.total) || 0;
+  const infTotal = Number(actor.system?.characteristics?.inf?.total) || 0;
+  const charKey = infTotal > felTotal ? "inf" : "fel";
+  const charLabel = charKey === "fel" ? "Charm(Fel)" : "Inf";
+  const myTotal = Math.max(felTotal, infTotal);
+  const myRoll = await new Roll("1d100").evaluate();
+
+  const tokenDoc = actor.getActiveTokens?.(false, true)?.[0] ?? null;
+  const contacts = tokenDoc ? enemyContactTokenDocs(tokenDoc) : [];
+  const contestBtns = contacts.map(en => {
+    const enemyActor = en.actor;
+    if (!enemyActor) return "";
+    return `<button class="wh-legacy-brave-contest-btn" type="button"
+      data-actor-uuid="${actor.uuid}" data-enemy-uuid="${enemyActor.uuid}"
+      data-char-key="${charKey}" data-my-roll="${myRoll.total}" data-my-total="${myTotal}">
+      Встречный тест: ${esc(enemyActor.name)}
+    </button>`;
+  }).join("");
+
+  await _postCard(actor, `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Лучшая Часть Отваги</div>
+    ${rollStatLine({ label: charLabel, base: myTotal, threshold: myTotal, rv: myRoll.total })}
+    <div class="roll-threshold" style="font-size:0.85em;">Выход из Боя за полудействие (1 ОД вместо 2) — выберите противника для встречного теста Per+0.</div>
+    ${contestBtns ? `<div class="roll-defense-btns">${contestBtns}</div>`
+      : `<div class="roll-threshold" style="font-size:0.85em;">Нет врагов в рукопашной с ним.</div>`}
+  </div>`);
+}
+
+/** Клик по кнопке встречного теста выше — их бросок Per+0, решение, применение эффекта. */
+export async function resolveLegacyBraveDisengageContest(actorUuid, enemyUuid, charKey, myRollTotal, myTotal) {
+  const actor = await fromUuid(actorUuid).catch(() => null);
+  const enemyActor = await fromUuid(enemyUuid).catch(() => null);
+  if (!actor) return ui.notifications.warn("⚠️ Актор не найден.");
+  if (!enemyActor) return ui.notifications.warn("⚠️ Противник не найден.");
+
+  const charLabel = charKey === "fel" ? "Charm(Fel)" : "Inf";
+  const theirTotal = Number(enemyActor.system?.characteristics?.per?.total) || 0;
+  const theirRoll = await new Roll("1d100").evaluate();
+  const mine = { ...testOutcome(Number(myRollTotal) || 0, Number(myTotal) || 0), threshold: Number(myTotal) || 0 };
+  const theirs = { ...testOutcome(theirRoll.total, theirTotal), threshold: theirTotal };
+  const { winner } = resolveOpposed(mine, theirs);
+
+  if (winner !== "mine") {
+    return _postCard(actor, `<div class="wh-roll-result">
+      <div class="roll-header">${rollIcon("run","#c0392b")}${esc(actor.name)} — Лучшая Часть Отваги (провал)</div>
+      <div class="roll-threshold">Против Per+0 ${esc(enemyActor.name)}: <b>${theirRoll.total}</b> vs <b>${theirTotal}</b> — не вышло. Обычный Выход из Боя (2 ОД) всё ещё доступен.</div>
+    </div>`);
+  }
+  if (!await spendActionPoints(actor, 1, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  await actor.setFlag("warhammer-dbc", "disengageActive", true);
+  await markMovedThisTurn(actor);
+  await markMoveDegreeThisTurn(actor, "half");
+  _showReachRing(actor, actor.system.movement?.halfMove);
+  await _postCard(actor, `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Лучшая Часть Отваги: Выход из Боя</div>
+    <div class="roll-threshold">${charLabel}+0 выигран против Per+0 ${esc(enemyActor.name)}: <b>${theirRoll.total}</b> vs <b>${theirTotal}</b>. Полудействие (1 ОД). Перемещение до SPD×1, не провоцирует Свободную Атаку.</div>
   </div>`);
 }
 
@@ -1385,6 +1499,13 @@ export function movementMenuItems(actor) {
     items.push({ key: "charge", label: "Натиск", cost: "", action: () => declareCharge(actor) });
     items.push({ key: "run", label: "Бег", cost: "2 ОД", action: () => declareRun(actor) });
     items.push({ key: "disengage", label: "Выход из Боя", cost: "2 ОД", action: () => declareDisengage(actor) });
+    // Лучшая Часть Отваги/skilled 5-6, Оружие Наследия, рукопашная ветка
+    // (wdbc-1rno.35, стр. 427) — только при наличии Мутации на экипированном
+    // оружии, тот же приём, что actorHasHalfStep ниже.
+    if (equippedLegacyWeaponWithMutation(actor, "Лучшая Часть Отваги")) {
+      items.push({ key: "legacyBraveDisengage", label: "Выход из Боя (Лучшая Часть Отваги)", cost: "1 ОД, тест",
+        action: () => declareLegacyBraveDisengage(actor) });
+    }
     items.push({ key: "vault", label: "Вольт", cost: "1 ОД", action: () => declareVault(actor) });
     items.push({ key: "duckAndCover", label: "Перебежка", cost: "2 ОД", action: () => declareDuckAndCover(actor) });
     if (actorHasHalfStep(actor)) {

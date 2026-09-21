@@ -19,6 +19,7 @@ import { hasRecoilSuppressor }     from "../../combat/armor-mods.mjs";
 import { isFusedByHandOfDeath }    from "../../rules/hand-of-death.mjs";
 import { attackIsMelee }           from "../../combat/weapon-profiles.mjs";
 import { tentacleBonusSuppressed } from "../../rules/tentacle-hand-form.mjs";
+import { legacySlaughterThresholdDelta } from "../../rules/legacy-weapon.mjs";
 
 /**
  * @param {object} v оружие, профиль, состояние актора и уже посчитанные бонусы
@@ -278,7 +279,13 @@ export function buildSelection(v) {
     // руки — бонусу нечем помогать приёму Захват.
     const maneuverCapBonus = (isMelee && maneuverKey === "grapple"
       && hasRuleFlag(actor, "mutation.tentacle") && !tentacleBonusSuppressed(actor)) ? 20 : 0;
-    const maneuverBon = isMelee ? (mDef.wsBonus ?? 0) + maneuverCapBonus : 0;
+    // Наследие Бойни (H1, стр. 426): +20 к следующей атаке этим оружием после
+    // убийства им, −30 вместо того же +20, если следующая атака — Оглушить
+    // (нелетальный Приём). Чистое чтение — сам флаг гасится в attack.mjs
+    // при фактическом броске, не здесь (эта функция зовётся многократно на
+    // каждую перерисовку диалога, до самого броска).
+    const slaughterBon = isMelee ? legacySlaughterThresholdDelta(actor, item, maneuverKey) : 0;
+    const maneuverBon = isMelee ? (mDef.wsBonus ?? 0) + maneuverCapBonus + slaughterBon : 0;
 
     const pIdx = sel.profIdx ?? profIdx;
     const prof = (pIdx >= 0) ? (atkProfiles[pIdx] || null) : null;
@@ -298,7 +305,8 @@ export function buildSelection(v) {
       prof ? `Профиль: ${prof.label || "доп."}${prof.damage ? ` (${prof.damage})` : ""}` : "",
       gDef ? `Хват: ${gDef.label}${gDef.ws ? ` · WS ${gDef.ws >= 0 ? "+" : ""}${gDef.ws}` : ""}${gDef.dmgFlat ? ` · урон ${gDef.dmgFlat >= 0 ? "+" : ""}${gDef.dmgFlat}` : ""}${gDef.sbHalf ? " · ½S.b" : ""} — ${gDef.note}` : "",
       reverseGripThrust ? `Выпад в Обратном хвате: без штрафа WS${reverseThrustFullAtk ? ", Полная Атака — полный S.b + ещё ½S.b (окр.▲) урона сверху" : ""}` : "",
-      maneuverCapBonus ? `Щупальце: +${maneuverCapBonus} на приём Захват` : ""
+      maneuverCapBonus ? `Щупальце: +${maneuverCapBonus} на приём Захват` : "",
+      slaughterBon ? `Наследие Бойни: ${slaughterBon > 0 ? "+" : ""}${slaughterBon} — заряжено убийством этим оружием` : ""
     ].filter(Boolean).join("<br>");
 
     return {

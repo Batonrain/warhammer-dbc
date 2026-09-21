@@ -16,6 +16,7 @@ import { spendReaction }  from "./action-economy.mjs";
 import { addEvasionSurplus } from "./evasion-pool.mjs";
 import { recoilButtonHtml } from "./recoil.mjs";
 import { overpenetrationButtonHtml } from "./overpenetration.mjs";
+import { stunningLegacyButtonHtml } from "./legacy-weapon-stunning.mjs";
 import { danceOfFireAdvantage } from "../rules/dodge-advantage.mjs";
 import { duckAndCoverAdvantage } from "../rules/duck-and-cover.mjs";
 import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs";
@@ -206,11 +207,17 @@ export async function _performDodge(actor, {
   // может, а кнопки контратаки/старые вызовы itemUuid не несут (тот же честный
   // дефолт, что у attackerUuid выше).
   const overpenSection = (passed && !isMelee) ? overpenetrationButtonHtml(itemUuid) : "";
+  // Ошеломляющее, Оружие Наследия, стрелковая ветка (wdbc-1rno.35, стр.
+  // 427): «Если цель Уклонилась» — кнопка на карточке этого самого
+  // Уклонения, только для стрелкового оружия с этой Мутацией (сам гейт —
+  // внутри stunningLegacyButtonHtml, ей нужен резолвленный предмет, не UUID).
+  const stunningItem = (passed && !isMelee && itemUuid) ? await fromUuid(itemUuid).catch(() => null) : null;
+  const stunningSection = stunningItem ? stunningLegacyButtonHtml(stunningItem, actor.uuid) : "";
 
     await postTestCard(actor, {
     icon: rollIcon("run"), title: `Уклонение — ${esc(actor.name)}`, actorUuid: actor.uuid,
     threshold: rollStatLine({ label: "Ag", base: agTotal, parts: modParts, threshold, rv }),
-    outcome: outcomeHtml, sections: [leftoverNote, recoilSection, overpenSection]
+    outcome: outcomeHtml, sections: [leftoverNote, recoilSection, overpenSection, stunningSection]
   }, { rolls: [roll] });
 }
 

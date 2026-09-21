@@ -21,6 +21,19 @@ import { anyTargetMatches } from "./talent-targets.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { isCapabilityAvailable, markCapabilityUsed } from "./cooldown.mjs";
 
+// ВОССТАНОВЛЕНО 21.09.2026 после потери незакоммиченных правок (параллельная
+// сессия влила origin/main в эту же рабочую копию и откатила отслеживаемые
+// файлы до коммита 9f0f65fa6 "15/35 Мутаций"). Все находки ниже — от
+// «4 системных пробелов» до Тихого/Наследия Бойни/Терпения/Лучшей Части
+// Отваги — переписаны заново по памяти этого разговора, не восстановлены
+// байт-в-байт. НЕ импортировать rules/hands.mjs (weaponHandsRequired/
+// getHeldHand) отсюда — тот транзитивно тянет rules/flags.mjs →
+// rules/collect.mjs → rules/sources.mjs, а sources.mjs сам импортирует ЭТОТ
+// модуль (registerRuleSource на legacyWrathRules и т.д. ниже) — замкнёт
+// цикл, на котором зависает vitest (test/rules/scaffold.test.mjs, не падает
+// в обычном Node). legacyHatredShieldArms поэтому живёт в apps/legacy-
+// weapon.mjs, не здесь.
+
 const num = v => Number(v) || 0;
 
 /** Свойства оружия ключами — они лежат записями {key, rating}. */
@@ -105,6 +118,7 @@ export function isAstartes(actor) {
  */
 export function legacyBonus(actor, weapon = null) {
   const infBonus = num(actor?.system?.characteristics?.inf?.bonus);
+  if (weapon && legacyExcessBoostActive(actor, weapon)) return infBonus * 2;
   if (weapon && takenMutationNames(weapon).has("Перебор")) return infBonus;
   return Math.ceil(infBonus / 2);
 }
@@ -244,13 +258,14 @@ export function wrathLegacyDamageBonus({ weapon, actor, hit, targetActor }) {
 
 /**
  * Наследие Крови (История 8, стр. 427): «+1 Dmg. +10 на попадание по
- * Псайкерам.» (Третья часть — «+10 на встречные тесты против психосил/
- * выжигания души/демонических даров/одержимости, пока вооружён» — честно НЕ
- * реализована: все четыре опираются на ОДИН и тот же общий делегированный
- * тест Сопротивления {label: 'Сопротивление: <имя>'} без единого ctx-тега
- * «это опасная психическая угроза» — гейтить общим правилом не с чем, метка
- * четырёх РАЗНЫХ подсистем (sheets/tabs/psychic.mjs и др.) свободный текст,
- * не категория. Заведён дочерний тикет на общий примитив.)
+ * Псайкерам.» Третья часть («+10 на встречные тесты против психосил/
+ * выжигания души/демонических даров/одержимости, пока вооружён») — 2 из 4
+ * категорий реализованы через новый общий тег ctx.psychicThreat
+ * (rules/resolve-test.mjs::effectAppliesTo, scope "psychicthreat") —
+ * см. legacyBloodPsychicRules ниже; Одержимость и добровольная выдача Дара
+ * Демон-Принцем честно НЕ реализованы — в коде нет самого теста
+ * сопротивления для этих двух категорий вовсе (нечего гейтить, не пробел
+ * в архитектуре), см. wdbc-1rno.46.
  */
 export function bloodLegacyDamageBonus({ weapon, hit }) {
   if (!hit) return 0;
@@ -312,15 +327,10 @@ export function shatteringLegacyGrant(weapon) {
  *
  * Второе предложение стрелковой ветки («Если цель Уклонилась, бросьте
  * 1d10+Inf.b — если пробивает её Поглощение, попадание без урона с
- * Concussive (0)») честно НЕ реализовано: это отдельная проверка «атака ПОСЛЕ
- * успешного Уклонения», а не обычный урон-минус-Поглощение — движок уже умеет
- * это (combat/overpenetration.mjs — кнопка на карточке успешного Уклонения),
- * но там Поглощение считает СТАНДАРТНАЯ кнопка «Применить урон» по месту
- * попадания; здесь нужен отдельный, не-урон-чек «1d10+Inf.b против
- * Поглощения» — требует того же расчёта Поглощения по месту (combat/
- * armor-properties.mjs::resolveArmorAbsorptionAP), вызванного НЕ из обычного
- * применения урона, а как самостоятельный тест. Отдельная небольшая
- * подсистема, не однострочная правка — не тянул её внутрь этой находки.
+ * Concussive (0)») реализовано отдельным модулем — combat/legacy-weapon-
+ * stunning.mjs (кнопка на карточке успешного дистанционного Уклонения,
+ * честно упрощённый расчёт Поглощения без Ртути/Адаптации/Аблативного
+ * AP-щита/Felling-редукции — см. заголовок того файла).
  */
 /**
  * Быстрое/skilled 8-8 (стр. 428). Рукопашная: «Даёт Flexible. Если уже
@@ -396,10 +406,17 @@ export function stunningLegacyGrant(weapon, infBonus) {
 }
 
 /** Экипированное Оружие Наследия с указанной Историей — сам предмет, либо null. */
-function equippedLegacyWeaponWithHistory(actor, historyName) {
+export function equippedLegacyWeaponWithHistory(actor, historyName) {
   return [...(actor?.items ?? [])].find(i =>
     i?.type === "weapon" && i.system?.legacy?.active && i.system?.equipped
     && legacyHistoryIs(i, historyName)) ?? null;
+}
+
+/** Экипированное Оружие Наследия с указанной Мутацией — сам предмет, либо null. */
+export function equippedLegacyWeaponWithMutation(actor, mutationName) {
+  return [...(actor?.items ?? [])].find(i =>
+    i?.type === "weapon" && i.system?.legacy?.active && i.system?.equipped
+    && takenMutationNames(i).has(mutationName)) ?? null;
 }
 
 /**
@@ -489,10 +506,9 @@ export const DISTRACTING_LEGACY_FLAG = "legacyDistractingMark";
  * конца боя» (более сильная граница, чем большинство других Мутаций).
  * Без гонки по расе/принадлежности — «все остальные», не только союзники.
  *
- * Рукопашная ветка («Финт — тест на Charm(F) или I вместо WS») честно НЕ
- * реализована — нужен новый выбор Характеристики в самом диалоге атаки для
- * конкретной Техники (Финт), а не готовый чек-бокс/флаг; не однострочная
- * правка.
+ * Рукопашная ветка («Финт — тест на Charm(F) или I вместо WS») реализована
+ * через legacyDistractingCharSwapRules ниже — grantFlag capability
+ * charSwap.fel.forWs/charSwap.int.forWs, читается sheets/attack/mods.mjs.
  */
 export function distractingLegacyActive(weapon) {
   return weapon?.system?.weaponClass !== "melee" && takenMutationNames(weapon).has("Отвлекающее");
@@ -600,11 +616,12 @@ export const LEGACY_GUARDIAN_FLAG = "legacyGuardianMark";
  * его КАЖДОМУ актору, эффект сработает только тем, у кого метка есть (тот
  * же приём, что hatredRules — предикат сам решает, применяется ли).
  *
- * Рукопашная ветка («перебросить один проваленный тест Парирования в Раунд»)
- * честно НЕ реализована — Парирование, как и Уклонение, не проходит через
- * общий resolveTest/rules-конвейер (defense.mjs считает свой Порог и
- * переброс напрямую), поэтому условный переброс отсюда до него не дотянуть
- * без отдельной правки defense.mjs — не однострочная.
+ * Рукопашная ветка («перебросить один проваленный тест Парирования в Раунд,
+ * Баланс поднимается до 0») реализована напрямую в combat/defense.mjs —
+ * НЕ через общий resolveTest-конвейер (Парирование, как и Уклонение, считает
+ * свой Порог/переброс напрямую), а через локальный примитив этого файла же
+ * (guardianLegacyMeleeActive/guardianLegacyBalanceFloor/
+ * LEGACY_GUARDIAN_PARRY_REROLL_CAPABILITY, раз-в-Раунд, ниже).
  */
 /**
  * Скорая Кончина/versatile 7-7 (стр. 428): «Первое успешное попадание этого
@@ -681,4 +698,501 @@ export function legacyWrathRules(actor) {
       effects: [{ kind: "rollBonus", target: "all", value: -10, auto: true }]
     }
   ];
+}
+
+// ════════════════════════════════════════════════════════════════════════
+//  «4 СИСТЕМНЫХ ПРОБЕЛА» (после 15/35 baseline)
+// ════════════════════════════════════════════════════════════════════════
+
+/**
+ * Наследие Крови, третья часть (стр. 427): «+10 на встречные тесты против
+ * психосил и выжигания души, пока вооружён» — 2 из 4 книжных категорий
+ * (психосилы, выжигание души; демонические дары как психосила Хаос-NAT
+ * покрыты тем же путём автоматически). Одержимость и добровольная выдача
+ * Дара Демон-Принцем честно НЕ реализованы — тестов сопротивления для них в
+ * коде нет вовсе (wdbc-1rno.46). Общий тег ctx.psychicThreat
+ * (rules/resolve-test.mjs, scope "psychicthreat") протащен через ВСЮ цепочку
+ * делегированных тестов (psy-resist-request-btn/hooks.mjs/_rollCharacteristic
+ * и напрямую в hooks.mjs::_executeSoulBurn). auto:true — книга не даёт
+ * выбора, эффект идёт в autoMods, не в список опциональных галочек (без
+ * auto:true бонус молча не применялся бы — поймано end-to-end тестом).
+ */
+export function legacyBloodPsychicRules(actor) {
+  const weapon = equippedLegacyWeaponWithHistory(actor, "Наследие Крови");
+  if (!weapon) return [];
+  return [{
+    id: "legacyBloodPsychic.resistBonus",
+    label: "Наследие Крови: +10 на встречный тест против психической угрозы",
+    when: {},
+    effects: [{ kind: "rollBonus", target: "psychicthreat", value: 10, auto: true }]
+  }];
+}
+
+/**
+ * Инстинктивное/versatile 1-2 (стр. 428): «...и оно не может быть вырвано
+ * или выбито у него из рук.» — переиспользует уже готовую capability
+ * combat.cannotBeDisarmed (тот же ключ, что Присоски/Tentacle, wdbc-egll),
+ * тем же приёмом grantFlag, что legacyWrathRules/legacyGuardianRules.
+ *
+ * Первое предложение той же записи («достаёт/складывает за свободное
+ * действие, независимо от разгрузки») честно НЕ реализовано — стоимость
+ * Достать/Сложить (module/sheets/tabs/gear.mjs::equipItem) сейчас фиксирована
+ * (1 ОД на любой предмет), не параметризована по конкретному оружию, а
+ * «независимо от разгрузки» ссылается на Quick Draw/Quick Store — сами
+ * незаведённые capability-заглушки (constants/capabilities.mjs) — сначала
+ * нужна была бы их собственная реализация, это не однострочная правка внутри
+ * этой находки.
+ */
+export function legacyInstinctiveDisarmRules(actor) {
+  if (!equippedLegacyWeaponWithMutation(actor, "Инстинктивное")) return [];
+  return [{
+    id: "legacyInstinctive.disarmImmune",
+    label: "Инстинктивное: нельзя быть обезоруженным",
+    when: {},
+    effects: [{ kind: "grantFlag", target: "combat.cannotBeDisarmed" }]
+  }];
+}
+
+/**
+ * Отвлекающее/skilled 3-4, Оружие Наследия, рукопашная ветка (wdbc-1rno.35,
+ * стр. 427-428): «При проведении Финта персонаж может проходить тест на
+ * Charm(Fel) или Int вместо WS.» Ответ на уточняющий вопрос пользователя —
+ * «I» книги читается как «Int»/Интеллект, не Initiative. grantFlag —
+ * capability charSwap.wp.forWsS (module/sheets/attack/mods.mjs::
+ * charSwapWhy) — только на fel/int вместо wp, и только рукопашная ветка
+ * (мутация одна на все виды атаки, а книга разрешает подмену именно для
+ * рукопашного WS-теста Финта).
+ *
+ * Честно: подпись у пункта выбора характеристики в диалоге атаки — это
+ * РАЗРЕШЕНИЕ («книга это допускает»), не автоматическое ГЕЙТИРОВАНИЕ по
+ * тому, выбран ли СЕЙЧАС именно Приём «Финт» — тот же уровень проверки,
+ * что уже принят для Локуса Мутации (attack-dialog.mjs не знает, какой
+ * Приём выбран, на момент построения списка характеристик; выбор Финта
+ * и корректность применения — на игроке/ГМ, как и там).
+ */
+export function legacyDistractingCharSwapRules(actor) {
+  const weapon = equippedLegacyWeaponWithMutation(actor, "Отвлекающее");
+  if (!weapon || weapon.system?.weaponClass !== "melee") return [];
+  return [{
+    id: "legacyDistracting.charSwap",
+    label: "Отвлекающее: Charm(Fel) или Int вместо WS при Финте",
+    when: {},
+    effects: [
+      { kind: "grantFlag", target: "charSwap.fel.forWs" },
+      { kind: "grantFlag", target: "charSwap.int.forWs" }
+    ]
+  }];
+}
+
+/** Флаг «модификатор последней атаки этим оружием» — гасится turn-flags.mjs, тратится defense.mjs. */
+export const LEGACY_PENDULUM_FLAG = "legacyPendulumBonus";
+
+/**
+ * Маятник/vigilant 7-7 (стр. 427): «Если персонаж атаковал этим оружием в
+ * свой Ход, один раз до начала следующего Хода он может получить бонус к
+ * тесту Избегания, равный модификатору к последней атаке этим оружием.»
+ * Не гейтится попаданием — книга говорит «атаковал», не «попал». Модификатор
+ * атаки — это порог теста МИНУС голая характеристика (WS/BS.total), то есть
+ * ровно то, что сверх нее насчитал диалог атаки; считает вызывающая сторона
+ * (attack.mjs, там уже есть и threshold, и charKey).
+ * @returns {?{weaponId:string, bonus:number}} что положить во флаг, или null (не Маятник — флаг не трогаем).
+ */
+export function pendulumLegacyFlagValue(weapon, attackModifier) {
+  if (!takenMutationNames(weapon).has("Маятник")) return null;
+  return { weaponId: weapon.id, bonus: Number(attackModifier) || 0 };
+}
+
+/** Бонус к текущему тесту Избегания от Маятника — 0, если флага нет (defense.mjs гасит его после чтения, «один раз»). */
+export function pendulumLegacyBonus(actor) {
+  return Number(actor?.getFlag?.("warhammer-dbc", LEGACY_PENDULUM_FLAG)?.bonus) || 0;
+}
+
+/** Раз-в-Раунд ключ переброса Парирования (module/rules/cooldown.mjs, unit:"round"). */
+export const LEGACY_GUARDIAN_PARRY_REROLL_CAPABILITY = "mutation.legacyGuardianParryReroll";
+
+/**
+ * Защитник/vigilant 8-8, рукопашная ветка (wdbc-1rno.35, стр. 428): «Может
+ * перебросить один проваленный тест Парирования в Раунд. Если его Баланс
+ * ниже 0, он поднимается до 0.» Реализовано напрямую в combat/defense.mjs —
+ * тест Парирования не проходит через общий resolveTest-конвейер.
+ */
+export function guardianLegacyMeleeActive(weapon) {
+  return weapon?.system?.weaponClass === "melee" && takenMutationNames(weapon).has("Защитник");
+}
+
+/** Баланс не ниже 0 при активном Защитнике на этом оружии — 0 подставляется вместо отрицательного. */
+export function guardianLegacyBalanceFloor(weapon, rawBalance) {
+  if (!guardianLegacyMeleeActive(weapon)) return rawBalance;
+  return Math.max(0, Number(rawBalance) || 0);
+}
+
+/**
+ * Неприкасаемый/vigilant 5-6 (стр. 428): «Рукопашная: в Защитной Стойке
+ * персонаж может перебрасывать тесты Избегания. Стрелковая: находясь в
+ * Укрытии — то же.» Книга не говорит «этим оружием» (в отличие от
+ * Защитника выше) — это личная способность от факта ношения ЛЮБОГО
+ * экипированного Оружия Наследия с этой Мутацией, не только того, которым
+ * защищаются (то же чтение, что Наследие Ярости/Крови — «пока вооружён»).
+ * Мелкий/стрелковый класс оружия С ЭТОЙ Мутацией решает, какое условие
+ * действует (Стойка или Укрытие) — оружие только одно, обе ветки книги не
+ * бывают активны разом у одного персонажа.
+ *
+ * `inCover` вычисляет вызывающая сторона (defense.mjs, через уже готовый
+ * combat/cover.mjs::coverBonusForShot) — этот модуль документов Foundry не
+ * касается.
+ */
+export function unassailableLegacyDodgeAdvantage(actor, inCover) {
+  const weapon = equippedLegacyWeaponWithMutation(actor, "Неприкасаемый");
+  if (!weapon) return false;
+  const melee = weapon.system?.weaponClass === "melee" || weapon.system?.weaponClass === "thrown";
+  return melee ? actor?.system?.meleeStance === "defensive" : !!inCover;
+}
+
+/** Раз-в-Раунд ключ переброса (module/rules/cooldown.mjs, unit:"round"). */
+export const LEGACY_UNBREAKABLE_REROLL_CAPABILITY = "mutation.legacyUnbreakableReroll";
+
+/**
+ * Неприступное/versatile 5-6 (стр. 428): «Раз в Раунд может перебросить
+ * тест на Избегание, игнорируя негативные модификаторы этого оружия.»
+ * Реализовано напрямую в defense.mjs, тем же приёмом, что Защитник выше.
+ */
+export function unbreakableLegacyActive(weapon) {
+  return takenMutationNames(weapon).has("Неприступное");
+}
+
+/** Игнорирует отрицательный Баланс этого оружия — используется вместе с переброс-капабилити выше. */
+export function unbreakableLegacyBalanceFloor(weapon, rawBalance) {
+  if (!unbreakableLegacyActive(weapon)) return rawBalance;
+  return Math.max(0, Number(rawBalance) || 0);
+}
+
+/** Флаг «накопленный штраф Карателя» на ЦЕЛИ, ключ — id оружия. */
+export const LEGACY_PUNISHER_FLAG = "legacyPunisherStacks";
+
+/**
+ * Каратель/merciless 8-8 (стр. 428): «За каждое успешное попадание оружие
+ * получает накапливающийся +3 на попадание по НЕМУ до конца боя. Атаки с
+ * множественными попаданиями считаются как одно.» Счётчик — на ЦЕЛИ
+ * (actor, тот кого атаковали ЭТИМ оружием), ключ id самого оружия —
+ * несколько разных Карателей по одной цели копят независимо.
+ */
+export function punisherLegacyBonus(targetActor, weapon) {
+  const stacks = targetActor?.getFlag?.("warhammer-dbc", LEGACY_PUNISHER_FLAG) ?? {};
+  return Number(stacks[weapon?.id]) || 0;
+}
+
+/** Инкремент на +3 — звать ОДИН раз за успешную атаку (не за попадание Очереди), attack.mjs. */
+export async function incrementPunisherLegacyStack(targetActor, weapon) {
+  if (!targetActor || !weapon) return;
+  const stacks = { ...(targetActor.getFlag?.("warhammer-dbc", LEGACY_PUNISHER_FLAG) ?? {}) };
+  stacks[weapon.id] = (Number(stacks[weapon.id]) || 0) + 3;
+  await targetActor.setFlag("warhammer-dbc", LEGACY_PUNISHER_FLAG, stacks);
+}
+
+/** Снять накопленное — конец боя (module/hooks.mjs::deleteCombat). */
+export async function clearLegacyPunisherStacks(actor) {
+  if (actor?.getFlag?.("warhammer-dbc", LEGACY_PUNISHER_FLAG)) {
+    await actor.unsetFlag("warhammer-dbc", LEGACY_PUNISHER_FLAG);
+  }
+}
+
+/**
+ * Инстинктивное/versatile 1-2 (стр. 428): «+2 к Инициативе, когда носит
+ * его» — решение НЕ через ActiveEffect (wdbc-1rno.47): в rules/
+ * initiative.mjs уже есть прецедент ровно такой формы — Талант «Самая
+ * Быстрая Рука» (fastestHandBonus), «надбавка, которую эффектом не
+ * выразить, пересчитывается каждый цикл». Слагаемое в rules/character/
+ * final-pools.mjs::prepareFinalPools, та же строка, что fastestHandBonus.
+ */
+export function legacyInstinctiveInitiativeBonus(actor) {
+  return equippedLegacyWeaponWithMutation(actor, "Инстинктивное") ? 2 : 0;
+}
+
+/**
+ * Без Предупреждения/versatile 9-9 (стр. 428): «Даёт +½Inf.b(окр.▲) к
+ * Инициативе, даже если оружие сложено» — «даже сложено» прочитано
+ * буквально: гейт только по equipped, не по занятости рук (в отличие от
+ * Самой Быстрой Руки, которая именно про занятость рук).
+ *
+ * Второе предложение той же записи («в первый Раунд боя атакует врагов с
+ * меньшей/равной вдвое Инициативой как Застигнутых Врасплох») — см.
+ * sheets/attack/mods.mjs::legacyForewarnedSurprise (auto-check существующей
+ * галочки «Цель Врасплох»), не здесь.
+ */
+export function legacyForewarnedInitiativeBonus(actor, infBonus) {
+  if (!equippedLegacyWeaponWithMutation(actor, "Без Предупреждения")) return 0;
+  return Math.ceil((Number(infBonus) || 0) / 2);
+}
+
+// ════════════════════════════════════════════════════════════════════════
+//  «9 РЕАЛИЗУЕМЫХ + 3 БОЛЬШИХ» (после компакции)
+// ════════════════════════════════════════════════════════════════════════
+
+/** Ревёрт-флаг на самом оружии — originalRating Felling до активации Убийцы. */
+export const LEGACY_KILLER_FELLING_FLAG = "legacyKillerFellingRevert";
+
+/**
+ * Убийца/fearsome 9-9 (стр. 427): «Может потратить Очко Бесчестия, чтобы до
+ * конца боя дать оружию Felling(Inf.b) или +1 к рейтингу, если оно уже
+ * было.» Кнопка — apps/legacy-weapon.mjs::activateKillerLegacyFelling.
+ * @returns {{props: object[], originalRating: ?number}}
+ */
+export function killerLegacyFellingProps(weapon, infBonus) {
+  const props = [...(weapon?.system?.weaponProps ?? [])];
+  const idx = props.findIndex(p => p?.key === "felling");
+  if (idx === -1) return { props: [...props, { key: "felling", rating: infBonus }], originalRating: null };
+  const originalRating = Number(props[idx].rating) || 0;
+  const next = [...props];
+  next[idx] = { ...next[idx], rating: originalRating + 1 };
+  return { props: next, originalRating };
+}
+
+/** Флаг буста Перебора на АКТОРЕ — {weaponId, turnsLeft}. */
+export const LEGACY_EXCESS_BOOST_FLAG = "legacyExcessBoost";
+
+/** Активен ли буст Перебора именно для этого оружия. */
+export function legacyExcessBoostActive(actor, weapon) {
+  const boost = actor?.getFlag?.("warhammer-dbc", LEGACY_EXCESS_BOOST_FLAG);
+  return !!(boost && String(boost.weaponId) === String(weapon?.id) && (Number(boost.turnsLeft) || 0) > 0);
+}
+
+/** Тик буста — звать из combat/action-economy.mjs::resetActionEconomy на старте Хода носителя; гасит флаг по исчерпании. */
+export async function tickLegacyExcessBoost(actor) {
+  const boost = actor?.getFlag?.("warhammer-dbc", LEGACY_EXCESS_BOOST_FLAG);
+  if (!boost) return;
+  const left = (Number(boost.turnsLeft) || 0) - 1;
+  if (left <= 0) await actor.unsetFlag("warhammer-dbc", LEGACY_EXCESS_BOOST_FLAG);
+  else await actor.setFlag("warhammer-dbc", LEGACY_EXCESS_BOOST_FLAG, { ...boost, turnsLeft: left });
+}
+
+/** Флаг «заряженный бонус урона Душесвязанного» — гасится turn-flags.mjs (не потрачен к началу след. Хода), тратится attack.mjs на первом попадании этим оружием. */
+export const LEGACY_SOULBOUND_FLAG = "legacySoulboundBonus";
+
+/**
+ * Душесвязанное/skilled 7-7 (wdbc-1rno.35, стр. 427): «Персонаж может за
+ * свободное действие пройти тест на W+0, чтобы увеличить урон следующего
+ * попадания оружия до начала следующего Хода на (½W.b (окр.▲)). Если он
+ * псайкер, он может вместо этого пройти Психотест через W+0, чтобы
+ * увеличить урон на его эPR, но если он вызовет Феномен, оружие Заклинивает
+ * сразу после выстрела.» Заряжается кнопкой на листе оружия
+ * (apps/legacy-weapon.mjs::activateSoulboundLegacyBonus), читается здесь.
+ */
+export function soulboundLegacyDamageBonus(actor, weapon, hit) {
+  if (!hit) return 0;
+  const flag = actor?.getFlag?.("warhammer-dbc", LEGACY_SOULBOUND_FLAG);
+  if (!flag || flag.weaponId !== weapon?.id) return 0;
+  return Number(flag.bonus) || 0;
+}
+
+/**
+ * Гасит флаг после применения (звать ПОСЛЕ учёта бонуса в уроне, тем же
+ * тактом атаки). «Заклинивает сразу после выстрела» книга привязывает к
+ * самому выстрелу/удару, не к моменту Психотеста — поэтому Заклинивание
+ * (если Феномен сорвался при зарядке) применяется здесь, на попадании,
+ * которое как раз потратило заряженный бонус, а не сразу при активации
+ * кнопки. Бонус, так и не потраченный до начала следующего Хода, гасится
+ * turn-flags.mjs без Заклинивания — книга обуславливает его «выстрелом»,
+ * которого в этом случае не было.
+ */
+export async function consumeSoulboundLegacyBonus(actor, weapon, hit) {
+  if (!hit) return;
+  const flag = actor?.getFlag?.("warhammer-dbc", LEGACY_SOULBOUND_FLAG);
+  if (!flag || flag.weaponId !== weapon?.id) return;
+  await actor.unsetFlag("warhammer-dbc", LEGACY_SOULBOUND_FLAG);
+  if (flag.willJam) await weapon.update({ "system.jammed": true });
+}
+
+/** Флаг «временный AP-щит Щита Ненависти» — гасится turn-flags.mjs к началу следующего своего Хода; не «тратится» отдельным чтением — щит держится весь этот срок, сколько бы попаданий ни пришло. */
+export const LEGACY_HATRED_SHIELD_FLAG = "legacyHatredShield";
+
+// legacyHatredShieldArms («какая рука держит оружие») намеренно живёт в
+// apps/legacy-weapon.mjs, не здесь: ей нужен rules/hands.mjs
+// (weaponHandsRequired/getHeldHand), а тот транзитивно тянет rules/flags.mjs
+// → rules/collect.mjs → rules/sources.mjs — тот самый файл, что уже
+// импортирует ЭТОТ модуль (registerRuleSource на legacyWrathRules и т.д.
+// выше). Импорт hands.mjs отсюда замкнул бы sources.mjs → legacy-weapon.mjs →
+// hands.mjs → … → sources.mjs в цикл, на котором зависает vitest (не Node
+// напрямую — молча вешает test/rules/scaffold.test.mjs). apps/ — не часть
+// этого графа, там тот же импорт безопасен.
+
+/** AP-бонус Щита Ненависти для этой зоны поглощения — 0, если флага нет или зона им не покрыта. */
+export function legacyHatredShieldApForLocation(actor, armorKey) {
+  const flag = actor?.getFlag?.("warhammer-dbc", LEGACY_HATRED_SHIELD_FLAG);
+  if (!flag) return 0;
+  if (armorKey === "body" || (Array.isArray(flag.arms) && flag.arms.includes(armorKey))) {
+    return Number(flag.bonus) || 0;
+  }
+  return 0;
+}
+
+/** Раз-в-бой ключ (module/rules/cooldown.mjs, unit:"battle") — та же замена «боя или сцены», что у Скорой Кончины выше. */
+export const LEGACY_DEADLY_TRAP_FLAG = "legacyDeadlyTrap";
+
+/**
+ * Смертельная Ловушка/vigilant 10-10 (wdbc-1rno.35, стр. 427): «Один раз за
+ * бой или сцену, попадая по противнику вне своего Хода (после Избеганий, но
+ * до броска на урон и щиты), персонаж может увеличить бонус к урону с
+ * ½Inf.b до 2×Inf.b.» Общий бонус Оружия Наследия «+½Inf.b(окр.▲) к Dmg»
+ * (стр. 426) запечён в system.damage при Возвышении, а не читается заново
+ * каждой атакой (legacyBonus выше — только инструмент запекания) — поэтому
+ * эта функция возвращает РАЗНИЦУ (2×Inf.b − ½Inf.b(окр.▲) от ТЕКУЩЕГО
+ * Inf.b), которую вызывающая сторона (attack.mjs) добавляет ПОВЕРХ уже
+ * запечённого числа для этого одного попадания. Если Inf.b изменился после
+ * Возвышения оружия — запечённая часть могла отстать от текущего Inf.b, это
+ * старый пробел самого запекания, не новый от этой Мутации.
+ */
+export function legacyDeadlyTrapDamageDelta(actor) {
+  const infBonus = num(actor?.system?.characteristics?.inf?.bonus);
+  return 2 * infBonus - Math.ceil(infBonus / 2);
+}
+
+/** Доступна ли кнопка «Смертельная Ловушка» на этом попадании — считает attack.mjs (там уже есть actor/hit/своя-очередь-Хода). */
+export function legacyDeadlyTrapEligible({ weapon, actor, hit, isOwnTurn }) {
+  return !!(hit && !isOwnTurn && takenMutationNames(weapon).has("Смертельная Ловушка")
+    && isCapabilityAvailable(actor, LEGACY_DEADLY_TRAP_FLAG, "battle"));
+}
+
+/** Отмечает использование — звать по клику кнопки на карточке урона (hooks.mjs), не автоматически. */
+export async function markLegacyDeadlyTrapUsed(actor) {
+  await markCapabilityUsed(actor, LEGACY_DEADLY_TRAP_FLAG, "battle");
+}
+
+// ════════════════════════════════════════════════════════════════════════
+//  СВЕЖАЯ СВЕРКА 21.09.2026: Тихое, Наследие Бойни, Терпение
+// ════════════════════════════════════════════════════════════════════════
+
+/**
+ * Тихое/skilled 1-2 (wdbc-1rno.35, стр. 427): «Тесты на нахождение персонажа,
+ * базированные на звуке оружия и криках раненных и убитых им, получают штраф
+ * −30.» Область действия (решение пользователя 21.09.2026): тесты на
+ * Бдительность/Awareness с выбранной целью — носителем этого оружия. Читает
+ * ЦЕЛЬ теста (ctx.targetActor), не самого бросающего — обратное направление,
+ * тот же примитив, что «Уравнитель» (rules/item-rules.mjs::
+ * opposedTargetRerollRules): правило регистрируется на роллящего, но
+ * проверяет снаряжение цели.
+ */
+export function legacyQuietAwarenessRules(actor, ctx = {}) {
+  const target = ctx?.targetActor;
+  if (!target) return [];
+  if (!equippedLegacyWeaponWithMutation(target, "Тихое")) return [];
+  return [{
+    id: "legacyQuiet.awarenessPenalty",
+    label: "Тихое: цель труднее найти по звуку её оружия — Бдительность −30",
+    when: { skill: "awareness" },
+    effects: [{ kind: "rollBonus", target: "all", value: -30, auto: true }]
+  }];
+}
+
+/** Флаг «заряженный бонус/штраф Наследия Бойни» — весь срок жизни книга не ограничивает Ходом (в отличие от Маятника/Душесвязанного), поэтому НЕ в TURN_SCOPED_FLAGS: держится до фактически следующей атаки этим оружием, сколько бы Раундов это ни заняло. */
+export const LEGACY_SLAUGHTER_FLAG = "legacySlaughterBonus";
+
+/**
+ * Наследие Бойни (H1, стр. 426): «После убийства врага этим оружием персонаж
+ * получает +20 на следующую атаку им. Получает штраф −30 на нелетальные
+ * Приёмы, вроде Оглушить или Обезоружить.» Регистрирует убийство — звать из
+ * setDeceased (sheets/tabs/body.mjs), тем же тактом, что
+ * registerLegacyDreadfulKill/triggerLegacyGleeOnFateSave.
+ */
+export async function registerLegacySlaughterKill(weapon) {
+  if (!weapon?.actor || !legacyHistoryIs(weapon, "Наследие Бойни")) return;
+  await weapon.actor.setFlag("warhammer-dbc", LEGACY_SLAUGHTER_FLAG, { weaponId: weapon.id });
+}
+
+/**
+ * Дельта к порогу СЛЕДУЮЩЕЙ атаки этим оружием (решение пользователя
+ * 21.09.2026 — одно окно возможностей, не два параллельных эффекта): +20
+ * обычно, −30 вместо него, если это Оглушить (Приём с известным оружием —
+ * sheets/attack/selection.mjs). Обезоружить/Grapple-контест
+ * (combat/techniques.mjs::_showContestDialog) честно НЕ покрыт: та точка
+ * входа не несёт Item оружия вовсе (см. combat/grapple.mjs:387), различить
+ * «этим оружием» там нечем.
+ */
+export function legacySlaughterThresholdDelta(actor, weapon, maneuverKey = null) {
+  const flag = actor?.getFlag?.("warhammer-dbc", LEGACY_SLAUGHTER_FLAG);
+  if (!flag || flag.weaponId !== weapon?.id) return 0;
+  return maneuverKey === "stun" ? -30 : 20;
+}
+
+/** Гасит флаг — звать ПОСЛЕ фактического броска атаки этим оружием (attack.mjs), независимо от исхода: книга даёт ОДНУ следующую атаку, не длящийся эффект. */
+export async function consumeLegacySlaughterBonus(actor, weapon) {
+  const flag = actor?.getFlag?.("warhammer-dbc", LEGACY_SLAUGHTER_FLAG);
+  if (!flag || flag.weaponId !== weapon?.id) return;
+  await actor.unsetFlag("warhammer-dbc", LEGACY_SLAUGHTER_FLAG);
+}
+
+/**
+ * «Нелетальный боеприпас» (Наследие Бойни, стрелковая ветка) не существует
+ * структурно в системе — ни поля, ни свойства (проверено, wdbc-1rno.35,
+ * сверка 21.09.2026). Закрытый список по имени — решение пользователя
+ * 21.09.2026, а не «0 урона»: собственный первый пример пользователя
+ * (Pellet/Капсула) сам наносит урон (1d5, −2), просто книжно считается
+ * нелетальным патроном — критерий «0 урона» отсеял бы его же пример.
+ * Rope/Верёвка (тоже названа пользователем) в паке не найдена ни под этим,
+ * ни под похожим именем — не включена, не выдумываю несуществующий предмет.
+ */
+const NON_LETHAL_AMMO_NAMES = [
+  // itemHasName сравнивает по ОДНОЙ половине двуязычного имени — сюда
+  // английская половина каждого предмета, как в packs-src.
+  "Pellet", "Net", "Shardsong", "Hypergrowth", "Morpheus", "Ulysses", "Foam", "Containment Foam"
+];
+
+/** Заряженный боеприпас — из закрытого списка «нелетальных» выше. */
+export function isNonLethalLegacyAmmo(ammoItem) {
+  return NON_LETHAL_AMMO_NAMES.some(n => itemHasName(ammoItem, n));
+}
+
+/**
+ * Наследие Бойни, стрелковая ветка: «Понижает свою Надёжность до −2 при
+ * стрельбе нелетальными боеприпасами.» Не «−2 к Надёжности», а «Надёжность
+ * СТАНОВИТСЯ −2» — книга задаёт абсолютное значение, не дельту; вызывающая
+ * сторона (attack.mjs) обязана присвоить это возвращённое число напрямую
+ * (wp.reliabilityScore = ...), не прибавить.
+ */
+export function legacySlaughterAmmoReliability(weapon, ammoItem) {
+  if (!legacyHistoryIs(weapon, "Наследие Бойни") || !isNonLethalLegacyAmmo(ammoItem)) return null;
+  return -2;
+}
+
+/** Флаг «следующий выстрел из Караула этим Терпением заряжен +30» — тот же приём, что hairTriggerUnseenPending (rules/hair-trigger.mjs), но не встречный тест, а безусловно от Мутации. */
+export const LEGACY_PATIENCE_OVERWATCH_FLAG = "legacyPatienceOverwatchPending";
+
+/** Терпение/vigilant 3-4, стрелковая ветка (wdbc-1rno.35/wdbc-1rno.41, стр. 427-428). */
+export function patienceLegacyOverwatchWeapon(weapon) {
+  return !!weapon && takenMutationNames(weapon).has("Терпение");
+}
+
+/** Пометить следующий выстрел из Караула — звать из combat/overwatch.mjs::resolveOverwatchFireClick, когда оружие несёт Терпение. */
+export async function markPatienceLegacyOverwatchPending(actor) {
+  await actor.setFlag("warhammer-dbc", LEGACY_PATIENCE_OVERWATCH_FLAG, true);
+}
+
+/** Величина заряженного бонуса — 30, если помечен, иначе 0 (для авто-галочки sheets/attack/mods.mjs). */
+export function patienceLegacyOverwatchBonus(actor) {
+  return actor?.getFlag?.("warhammer-dbc", LEGACY_PATIENCE_OVERWATCH_FLAG) ? 30 : 0;
+}
+
+/** Гасит пометку — звать ПОСЛЕ фактического броска атаки (attack.mjs), независимо от исхода: книга даёт ОДНОМУ выстрелу, не длящийся эффект. */
+export async function consumePatienceLegacyOverwatchPending(actor) {
+  if (!actor?.getFlag?.("warhammer-dbc", LEGACY_PATIENCE_OVERWATCH_FLAG)) return;
+  await actor.unsetFlag("warhammer-dbc", LEGACY_PATIENCE_OVERWATCH_FLAG);
+}
+
+/**
+ * Терпение, рукопашная половина (wdbc-1rno.41, стр. 427): «Если этим
+ * оружием атакуют совершающего Натиск противника, используя Задержку, оно
+ * всегда действует первым и получает +30 на попадание.» Детект «атакует
+ * Задержкой» — решение пользователя 21.09.2026: банкованное 1 ОД
+ * (combat/delay-action.mjs — «банк это буквально system.actionPoints.value,
+ * урезанное до 1») плюс цель в Натиске. «Не свой Ход» — отдельная проверка
+ * НЕ здесь: isActorsOwnTurn живёт в combat/delay-action.mjs, который
+ * транзитивно тянет combat/action-economy.mjs, а тот уже импортирует ЭТОТ
+ * файл (rollLegacyChangeBonus/tickLegacyExcessBoost) — импорт назад замкнул
+ * бы цикл. Вызывающая сторона (sheets/attack/mods.mjs) обязана добавить
+ * !isActorsOwnTurn(actor) сама.
+ */
+export function patienceLegacyMeleeChargeInterruptActive({ actor, weapon, defenderActor }) {
+  if (!actor || !weapon || !defenderActor) return false;
+  if (!takenMutationNames(weapon).has("Терпение")) return false;
+  if (defenderActor.system?.meleeBase !== "charge") return false;
+  return (Number(actor.system?.actionPoints?.value) || 0) === 1;
 }

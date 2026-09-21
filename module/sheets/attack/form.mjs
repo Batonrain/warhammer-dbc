@@ -105,6 +105,10 @@ export function readAttackForm(form, ammoConds) {
     // Тесное помещение (стр. 36, wdbc-x1nz.2.63) — ГМ решает на глаз, галочка
     // видна только у Взрывного (attack-dialog.mjs::confinedSpaceHtml).
     confinedSpace: el("#atk-confined-space")?.checked || false,
+    // Кромсающее, Оружие Наследия (wdbc-1rno.35, стр. 427), второе
+    // предложение — галочка видна только при наличии Мутации и Очков
+    // Бесчестия (attack-dialog.mjs::legacyCleavingHtml).
+    legacyCleavingRoll: el("#atk-legacy-cleaving")?.checked || false,
     aimVal:     el("#atk-aim")?.value,
     aimPenalty: attr("#atk-aim option:checked", "penalty"),
     // Кого выцеливают в паре «всадник + скакун» и во что это обходится. Штраф

@@ -104,6 +104,11 @@ import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart,
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
 import { setDeceased } from "./sheets/tabs/body.mjs";
 import { clearBloodFlameBuffs } from "./combat/blood-flame.mjs";
+import { clearLegacyKillerBuffs } from "./combat/legacy-weapon-killer.mjs";
+import { clearLegacyPunisherStacks, markLegacyDeadlyTrapUsed } from "./rules/legacy-weapon.mjs";
+import { activateLegacyRegroup, processLegacyRegroupRoundStart } from "./combat/legacy-weapon-regroup.mjs";
+import { rollStunningLegacyCheck } from "./combat/legacy-weapon-stunning.mjs";
+import { rollLegacyReaperTest } from "./combat/legacy-weapon-reaper.mjs";
 import { clearTaintedBladeBuffs } from "./combat/wrapped-in-chaos.mjs";
 import { huntReturnToWarpButtonHtml } from "./combat/the-hunter.mjs";
 import { isHunterHoundActor } from "./rules/the-hunter.mjs";
@@ -114,7 +119,7 @@ import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
 import { WC_CODE } from "./constants/ship.mjs";
 import { registerDelegatedTestOpener, openDelegatedTest, activeOwnerOf, requestDelegatedTest, openDelegatedTestDirect } from "./rules/delegate-test.mjs";
-import { skillTotal, resolveVaultContestClick } from "./combat/movement-actions.mjs";
+import { skillTotal, resolveVaultContestClick, declareLegacyBraveHeartMove, resolveLegacyBraveDisengageContest } from "./combat/movement-actions.mjs";
 import { showHealingDialog } from "./sheets/tabs/healing.mjs";
 import { rollInfoguard } from "./apps/infoguard.mjs";
 import { CHARACTERISTICS } from "./constants/characteristics.mjs";
@@ -1627,6 +1632,86 @@ export function registerHooks() {
       });
     });
 
+    // Перегруппировка, Оружие Наследия (wdbc-1rno.35, стр. 427) — кнопка на
+    // карточке атаки, тратит Очко Бесчестия сразу, сам переброс — на смене
+    // Раунда (combat/legacy-weapon-regroup.mjs::processLegacyRegroupRoundStart).
+    html.querySelectorAll(".wh-legacy-regroup-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        await activateLegacyRegroup(ev.currentTarget.dataset.attackerUuid);
+      });
+    });
+
+    // Ошеломляющее, Оружие Наследия, стрелковая ветка (wdbc-1rno.35, стр.
+    // 427) — кнопка на карточке успешного дистанционного Уклонения.
+    html.querySelectorAll(".wh-legacy-stunning-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        const item = ds.itemUuid ? await fromUuid(ds.itemUuid).catch(() => null) : null;
+        const defenderActor = ds.defenderUuid ? await fromUuid(ds.defenderUuid).catch(() => null) : null;
+        await rollStunningLegacyCheck(item, defenderActor);
+      });
+    });
+
+    // Жнец, Оружие Наследия (wdbc-1rno.35, стр. 428) — кнопка на карточке
+    // непоглощённого урона от оружия с этой Мутацией.
+    html.querySelectorAll(".wh-legacy-reaper-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        const item = ds.itemUuid ? await fromUuid(ds.itemUuid).catch(() => null) : null;
+        const defenderActor = ds.defenderUuid ? await fromUuid(ds.defenderUuid).catch(() => null) : null;
+        await rollLegacyReaperTest(item, defenderActor);
+      });
+    });
+
+    // Лучшая Часть Отваги, Оружие Наследия, стрелковая ветка (wdbc-1rno.35,
+    // стр. 427) — кнопка на карточке урона АТАКУЮЩЕЙ стороны: свободное
+    // Полудвижение (module/combat/movement-actions.mjs).
+    html.querySelectorAll(".wh-legacy-brave-heart-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const actor = await fromUuid(ev.currentTarget.dataset.actorUuid).catch(() => null);
+        await declareLegacyBraveHeartMove(actor);
+      });
+    });
+
+    // Лучшая Часть Отваги, рукопашная ветка — второй шаг встречного теста
+    // (Charm/Inf vs Per), тот же двухшаговый приём, что Вольт выше.
+    html.querySelectorAll(".wh-legacy-brave-contest-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        el.disabled = true;
+        const ds = el.dataset;
+        await resolveLegacyBraveDisengageContest(ds.actorUuid, ds.enemyUuid, ds.charKey, Number(ds.myRoll) || 0, Number(ds.myTotal) || 0);
+      });
+    });
+
+    // Смертельная Ловушка, Оружие Наследия (wdbc-1rno.35, стр. 427) — правит
+    // data-damage соседней .wh-apply-dmg-btn прямо в DOM, тем же приёмом,
+    // что Кубик→Успехи (.wh-dmg-swap-btn) выше; раз-в-бой — сервер-флаг.
+    html.querySelectorAll(".wh-legacy-deadly-trap-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const ds = el.dataset;
+        const applyBtn = el.closest(".roll-dmg-hit-group")?.querySelector(".wh-apply-dmg-btn");
+        if (applyBtn) {
+          const current = parseInt(applyBtn.dataset.damage) || 0;
+          const next = current + (parseInt(ds.delta) || 0);
+          applyBtn.dataset.damage = String(next);
+          const b = applyBtn.querySelector("b");
+          if (b) b.textContent = String(next);
+        }
+        el.disabled = true;
+        el.textContent = "🪤 Смертельная Ловушка применена";
+        const actor = ds.attackerUuid ? await fromUuid(ds.attackerUuid).catch(() => null) : null;
+        if (actor) await markLegacyDeadlyTrapUsed(actor);
+      });
+    });
+
     // Караул (wdbc-1rno.27) — выбор режима очереди списывает бюджет,
     // назначает цель и катает Подавление+20 у обстрелянного.
     html.querySelectorAll(".wh-overwatch-fire-btn").forEach(btn => {
@@ -2008,7 +2093,7 @@ export async function _resolveSoulBurn(attackerId) {
 
 // Опозный тест W+tPR×5 vs W+tPR×5. При победе псайкера — d10 непоглощаемого
 // E Dmg за каждый чистый Успех, напрямую в Раны цели (минуя броню и T.b).
-async function _executeSoulBurn(attacker, target) {
+export async function _executeSoulBurn(attacker, target) {
   const allRolls = [];
 
   // Встречные тесты Воли обеих сторон — оба через общий сбор (wdbc-ct65.2):
@@ -2021,7 +2106,11 @@ async function _executeSoulBurn(attacker, target) {
 
   const tWp = target.system.characteristics?.wp?.total ?? 0;
   const tPr = target.system.psyker?.currentRating ?? 0;
-  const tMods = collectTestMods(target, { kind: "skill", char: "wp" });
+  // Наследие Крови, Оружие Наследия (wdbc-1rno.35/.46, стр. 427): «+10 на
+  // все встречные тесты против выжигания души» — только у ЦЕЛИ этого
+  // конкретного встречного теста (эффекты target:"psychicThreat" в реестре
+  // правил), не у самого псайкера — pMods выше нарочно без этого флага.
+  const tMods = collectTestMods(target, { kind: "skill", char: "wp", psychicThreat: true });
   const tEff = tWp + 5 * tPr + tMods.total;
 
   // Бросок псайкера
@@ -2383,6 +2472,10 @@ function _attachFateContextMenu(message, html) {
     // fight.mjs::determinationToFightWsReduction/ParryBonus до следующей
     // смены Раунда.
     await snapshotStanceForRoundStart(combat);
+    // Перегруппировка, Оружие Наследия (wdbc-1rno.35, стр. 427): переброс
+    // Инициативы, отложенный кнопкой карточки атаки до этой самой смены
+    // Раунда (combat/legacy-weapon-regroup.mjs).
+    await processLegacyRegroupRoundStart(combat);
   });
 
   // Бой кончился раньше, чем подошёл отложенный Раунд Сус-ан Мембраны —
@@ -2438,10 +2531,17 @@ function _attachFateContextMenu(message, html) {
     // Очко «Ока Зависти» — та же уборка по концу боя, что у меток Ртути и
     // бонусов Адаптации: временный запас не должен переживать бой.
     await clearEyeOfEnvyOnCombatEnd(combat);
+    // Убийца, Оружие Наследия (wdbc-1rno.35, стр. 427): временный Felling
+    // возвращается к исходному рейтингу по концу боя (combat/legacy-weapon-
+    // killer.mjs — сканирует предметы всех комбатантов сама).
+    await clearLegacyKillerBuffs(combat);
     // Щит по состоянию Хода — предмет, а не флаг: «забытый» после боя
     // щит-дефлектор видно в инвентаре и он выглядел бы настоящим.
     for (const combatant of combat.combatants ?? []) {
       if (combatant.actor) await clearTurnStateShields(combatant.actor);
+      // Каратель, Оружие Наследия (wdbc-1rno.35, стр. 428): накопленный
+      // штраф на цели — та же логика «до конца боя», что у щита выше.
+      if (combatant.actor) await clearLegacyPunisherStacks(combatant.actor);
     }
   });
 

@@ -34,6 +34,7 @@ import {
 } from "../../combat/eternal-warrior.mjs";
 import { collectTestMods } from "../../rules/roll-mods.mjs";
 import { KISS_OF_DEATH_FLAG } from "../../rules/kiss-of-death.mjs";
+import { triggerLegacyGleeOnFateSave } from "../../combat/legacy-weapon-kill-credit.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -76,6 +77,10 @@ async function _resolveFateSave(actor, kind, cfg, { restoreToZero, resurrectNote
   const loss = kissOfDeathDoubled ? rolledLoss * 2 : rolledLoss;
   // Временный запас (wdbc-e728, Voice of God и т.п.) гасит цену Спасения первым.
   const spend = await spendFromInfamyPool(actor, loss, "system.fate.value");
+  // Злорадство, Оружие Наследия (wdbc-1rno.35, merciless 3-4, стр. 428) —
+  // на сам факт траты пула, не на исход (eternalWarrior === "free": Вечный
+  // Воин, реальной траты нет — "flat" тратит фиксированное Очко Бесчестия).
+  if (eternalWarrior !== "free") await triggerLegacyGleeOnFateSave(actor);
   const failed = fateSaveFails(current, spend.poolSpent);
   const tempNote = spend.tempSpent ? `, из них ${spend.tempSpent} из временного запаса` : "";
   const kissNote = kissOfDeathDoubled ? ", ×2 Поцелуй Смерти" : "";
