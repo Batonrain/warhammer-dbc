@@ -7,7 +7,7 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { applyGrappleOnHit, grapplePartner, endGrapple, isBiteWeapon, crunchWeapon, tentacleTechDef, tentacleBonus, detachableTentacle, isDetachedGrapple, swingProfile, throwProfile } from "../../module/combat/grapple.mjs";
+import { applyGrappleOnHit, resolveGrappleSuccess, grapplePartner, endGrapple, isBiteWeapon, crunchWeapon, tentacleTechDef, tentacleBonus, detachableTentacle, isDetachedGrapple, swingProfile, throwProfile } from "../../module/combat/grapple.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 import { actorFor } from "../support/combat-fixtures.mjs";
 
@@ -18,7 +18,7 @@ function actorWith(name, uuid) {
   const updates = [];
   return {
     id: uuid, name, uuid,
-    system: { conditions: { grappling: false } },
+    system: { conditions: { grappling: false }, characteristics: {}, meleeStance: "standard" },
     getFlag: (_s, k) => flags[k],
     setFlag: async (_s, k, v) => { flags[k] = v; return v; },
     unsetFlag: async (_s, k) => { delete flags[k]; },
@@ -49,17 +49,35 @@ beforeEach(() => {
 });
 
 describe("applyGrappleOnHit", () => {
-  it("связывает атакующего и цель Борьбой при попадании Приёмом «Захват»", async () => {
+  // wdbc-x1nz.2.66.4: попадание больше НЕ связывает Захватом синхронно —
+  // сперва встречный тест Athletics(S) vs Athletics(S) (_showContestDialog),
+  // цель может «отбить попытку». Реальную связку по победе проверяет
+  // resolveGrappleSuccess напрямую (см. ниже), тем же приёмом, что
+  // resolveFeintSuccess/resolvePressSuccess в feint-press.test.mjs.
+  it("попадание Приёмом «Захват» открывает встречный тест, а не связывает сразу", async () => {
     const attacker = actorWith("Атакующий", "Actor.a1");
     const target = actorWith("Цель", "Actor.t1");
     const targetToken = { actor: target };
 
     await applyGrappleOnHit(attacker, targetToken, true, { technique: "grapple" });
 
-    expect(attacker._updates).toContainEqual(expect.objectContaining({ "system.conditions.grappling": true }));
-    expect(target._updates).toContainEqual(expect.objectContaining({ "system.conditions.grappling": true }));
-    expect(attacker._flags.grapplePartnerUuid).toBe("Actor.t1");
-    expect(target._flags.grapplePartnerUuid).toBe("Actor.a1");
+    expect(captured.dialog?.content ?? "").toContain("Захват");
+    expect(attacker._updates).toHaveLength(0); // ещё не связаны — ждёт исхода теста
+    expect(target._updates).toHaveLength(0);
+  });
+
+  it("запрет против целей на 2+ Размера крупнее — попытка невозможна, тест не открывается вовсе", async () => {
+    const attacker = actorWith("Атакующий", "Actor.a1");
+    attacker.system.size = 0;
+    const target = actorWith("Цель", "Actor.t1");
+    target.system.size = 2;
+    resetCaptured();
+
+    await applyGrappleOnHit(attacker, { actor: target }, true, { technique: "grapple" });
+
+    expect(captured.dialog).toBeFalsy(); // диалог теста не открылся
+    expect(attacker._updates).toHaveLength(0);
+    expect(target._updates).toHaveLength(0);
   });
 
   it("не связывает при промахе", async () => {
@@ -82,6 +100,20 @@ describe("applyGrappleOnHit", () => {
     const attacker = actorWith("Атакующий", "Actor.a1");
     await applyGrappleOnHit(attacker, { actor: attacker }, true, { technique: "grapple" });
     expect(attacker._updates).toHaveLength(0);
+  });
+});
+
+describe("resolveGrappleSuccess — победа атакующего во встречном тесте", () => {
+  it("связывает атакующего и цель Борьбой (conditions.grappling + взаимный флаг партнёра)", async () => {
+    const attacker = actorWith("Атакующий", "Actor.a1");
+    const target = actorWith("Цель", "Actor.t1");
+
+    await resolveGrappleSuccess(attacker, { target });
+
+    expect(attacker._updates).toContainEqual(expect.objectContaining({ "system.conditions.grappling": true }));
+    expect(target._updates).toContainEqual(expect.objectContaining({ "system.conditions.grappling": true }));
+    expect(attacker._flags.grapplePartnerUuid).toBe("Actor.t1");
+    expect(target._flags.grapplePartnerUuid).toBe("Actor.a1");
   });
 });
 

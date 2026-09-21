@@ -48,6 +48,29 @@ describe("_showContestDialog — бонус Стойки", () => {
   });
 });
 
+// wdbc-x1nz.2.66.5: Повалить книгой ограничен ровно двумя Навыками
+// (Athletics(S)/Acrobatics(A)) — общий дропдаун характеристик должен
+// сужаться до них с правильными подписями, а не предлагать все 10.
+describe("_showContestDialog — Повалить сужает выбор характеристики (allowedChars/charLabels)", () => {
+  it("список опций — ровно Athletics(S) и Acrobatics(A), с книжными подписями", async () => {
+    const actor = actorFor({});
+    await _showContestDialog(actor, MELEE_CONTESTS.knockdown);
+    const html = captured.dialog.content;
+    expect(html).toContain("Athletics(S)");
+    expect(html).toContain("Acrobatics(A)");
+    expect(html).not.toContain("Int —");
+    expect(html).not.toContain("Fel —");
+  });
+
+  it("Финт/Давление без allowedChars — дропдаун по-прежнему полный (регресс)", async () => {
+    const actor = actorFor({});
+    await _showContestDialog(actor, MELEE_CONTESTS.feint);
+    const html = captured.dialog.content;
+    expect(html).toContain("Int —");
+    expect(html).toContain("Fel —");
+  });
+});
+
 // wdbc-u0by (Truth-Seer/Defiance): диалог Состязаний раньше вообще не читал
 // реестр правил (та же дыра, что была у Парирования, module/combat/defense.mjs
 // до фикса) — опциональный переброс не мог появиться, даже если у актора был

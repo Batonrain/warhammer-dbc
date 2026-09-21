@@ -4,7 +4,7 @@ import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { critLineHtml } from "../rules/test-kind-widget.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES }            from "../constants/items.mjs";
 import { MELEE_STANCES }                           from "../constants/combat.mjs";
-import { _getAmmoSpent, _buildAmmoModString }       from "../helpers/utils.mjs";
+import { _getAmmoSpent, _buildAmmoModString, esc }  from "../helpers/utils.mjs";
 import { getCriticalEffect }                        from "../../critical-tables.mjs";
 import { resolveWeaponProps, resolveWeaponPropsList, aggregateAuto,
          jamThreshold, sprayJamFace, sprayJams, buildPropertyChatBlock,
@@ -30,6 +30,7 @@ import { feintBlocksEvasion } from "./feint-press.mjs";
 import { resolveGrenadeMeleeFumble }                  from "./draw-action.mjs";
 import { hidingInHordeSplit }                        from "./horde-tokens.mjs";
 import { applyGrappleOnHit }                          from "./grapple.mjs";
+import { coveringDefendersOf, offerFreeAttack }        from "./free-attack.mjs";
 import { rollOgrynWeaponBreak, ogrynBreakNote }      from "./ogryn-weapon-break.mjs";
 import { getEvasionPool, poolAffordableHits }         from "./evasion-pool.mjs";
 import { activeSwarm }                                from "../rules/ethereal-swarm.mjs";
@@ -1179,7 +1180,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const evasionPool = evasionPoolEntry
     ? { successes: evasionPoolEntry.successes,
         ...poolAffordableHits(evasionPoolEntry, techOpts.targetDodgeMod ?? 0, hitsCount, defenderActor),
-        canRecoil: !isMelee && evasionPoolEntry.successes >= 2 && recoilPoolRemaining(defenderActor) > 0 }
+        canRecoil: !isMelee && evasionPoolEntry.successes >= 2 && recoilPoolRemaining(defenderActor) > 0,
+        // Захват (стр. 12, wdbc-x1nz.2.66.13): «Парируется со штрафом −30
+        // (или тратит +3 Успеха от предыдущего Парирования)» — цель может
+        // потратить 3 банковских Успеха ВМЕСТО обычного −30 этого Приёма.
+        canWaiveGrappleParry: isMelee && techOpts.technique === "grapple" && evasionPoolEntry.successes >= 3 }
     : null;
 
   // Ethereal Swarm / Эфирная Стая (wdbc-1rno, rules/ethereal-swarm.mjs) —
@@ -1219,6 +1224,21 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Не блокирует построение карточки: чат-сообщение о связывании уходит своим,
   // отдельным сообщением следом.
   if (hit && techOpts.technique === "grapple") applyGrappleOnHit(actor, targetToken, hit, techOpts);
+
+  // Прикрывающая Стойка (стр. 15, wdbc-x1nz.2.66.7): «Когда противник в
+  // контакте атакует союзника персонажа, персонаж может совершить по нему
+  // свободную атаку» — предлагается независимо от исхода (попадание/промах),
+  // тот же принцип «момент триггера на усмотрение стола», что у обычной
+  // Свободной Атаки выше по файлу; очерёдность («первым действует тот, у
+  // кого выше Ag») не автоматизирована — решает стол, как и там.
+  if (isMelee && targetToken && attackerToken) {
+    const targetTokenDoc = targetToken.document ?? targetToken;
+    const attackerTokenDoc = attackerToken.document ?? attackerToken;
+    for (const defenderDoc of coveringDefendersOf(targetTokenDoc)) {
+      offerFreeAttack(defenderDoc, attackerTokenDoc,
+        `${esc(actor.name)} атакует ${esc(defenderActor?.name ?? "союзника")} рядом с ${esc(defenderDoc.name)}`);
+    }
+  }
 
   // Встречная атака (wdbc-2wy7, Шипы/Цепные Бандольеры, module/combat/
   // counter-attack.mjs, kind:"counterAttack" Конструктора): defenderActor
@@ -1303,7 +1323,19 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const messageData = ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: attackCard({
-      actorName: actor.name, weaponName: item.name, wp,
+      actorName: actor.name, weaponName: item.name,
+      // Пила/Оглушить (стр. 14, wdbc-x1nz.2.67/.66.3) — свойства самого Приёма,
+      // не оружия, поэтому не в aggregateAuto(wProps) — домешиваются сюда же,
+      // откуда карточка уже читает wp.* для data-атрибутов кнопки «Применить
+      // урон» (combat/damage.mjs::_rollActiveShield читает ignoreDomeShields;
+      // applyDamageToActor читает stunManeuver; wp.primitive=false для Оглушить
+      // переиспользует уже существующий data-primitive без нового атрибута).
+      wp: {
+        ...wp,
+        ignoreDomeShields: isMelee && techOpts.technique === "saw",
+        stunManeuver: isMelee && techOpts.technique === "stun",
+        primitive: (isMelee && techOpts.technique === "stun") ? false : wp.primitive
+      },
       threshold, rv, hit, deg, hitsCount, hits, rerollDropped, critLine,
       // Почему исход не от броска: "spray" — авто-попадание Распыления.
       autoHit: autoHitKind,

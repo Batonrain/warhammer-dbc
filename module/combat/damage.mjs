@@ -18,6 +18,8 @@ import { CAST_OUT_OF_DEATH_CAPABILITY, CAST_OUT_OF_DEATH_FLAG, scheduleCastOutOf
 import { eaterOfPainHoldersNear } from "../rules/eater-of-pain.mjs";
 import { VOLUNTEER_ACTOR_CAPABILITY, isHarlequinsKissItem } from "../rules/volunteer-actor.mjs";
 import { MAGGOT_PARASITE_CAPABILITY } from "../rules/maggot-parasite.mjs";
+import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
+import { conditionLevelField } from "../constants/conditions.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { redirectHitLocationForMachine } from "../rules/bronze-myrmidon.mjs";
@@ -372,7 +374,7 @@ async function _applyShieldOverload(shieldItem, actor, s, { attackerUuid = "", i
   return { overloadRolls, overloadExtraHtml };
 }
 
-async function _rollActiveShield(actor, { skipWarp = false, melee = false, damageSubtype = "", hitLocation = "", attackerUuid = "", isRetaliation = false } = {}) {
+async function _rollActiveShield(actor, { skipWarp = false, melee = false, damageSubtype = "", hitLocation = "", attackerUuid = "", isRetaliation = false, ignoreDomeShields = false } = {}) {
   // Ищем самый мощный активный щит (по currentRating). Освящённое оружие
   // (skipWarp) пропускает чародейские (варп-природные) щиты. Кровопомазанник
   // (wdbc-1rno, combat/turn-state-shield.mjs) даёт щит ТОЛЬКО от стрелковых
@@ -399,7 +401,10 @@ async function _rollActiveShield(actor, { skipWarp = false, melee = false, damag
       !(skipWarp && (i.system.shieldNature || "technological") === "warp") &&
       !(melee && i.getFlag?.("warhammer-dbc", "turnStateShieldRangedOnly")) &&
       !(damageSubtype && _shieldSubtypeEntries(i).some(e => e.shieldSubtypeMode === "exclude" && e.shieldSubtypeKey === damageSubtype)) &&
-      !(_hasShieldArmorGate(i) && (!_hasHardArmorAtBody(actor) || Number(wornOnly[hitArmorKey]) <= 0))
+      !(_hasShieldArmorGate(i) && (!_hasHardArmorAtBody(actor) || Number(wornOnly[hitArmorKey]) <= 0)) &&
+      // Приём Пила (стр. 14, wdbc-x1nz.2.67): «игнорирует силовые щиты-купола»
+      // — только shieldType "dome" (по умолчанию), не Дефлекторный/Сквозной.
+      !(ignoreDomeShields && (i.system.shieldType || "dome") === "dome")
     )
     .sort((a, b) => (b.system.currentRating ?? 0) - (a.system.currentRating ?? 0))[0];
 
@@ -700,6 +705,8 @@ export async function applyDamageToActor(actor, damageData) {
     felling = 0,     // Разящее (X): −X к Сверхъест. Стойкости цели
     primitive = false, // Примитивное: броня цели ×2 (макс +6)
     ignoreShield = false, // Омывание (Flush) / Варп-Оружие: игнор щита
+    ignoreDomeShields = false, // Приём Пила (стр. 14, wdbc-x1nz.2.67): игнор щитов-куполов
+    stunManeuver = false, // Приём Оглушить (стр. 14, wdbc-x1nz.2.66.3): непоглощённый урон → Оглушение вместо Ран
     warpSoak = false,  // Варп-Оружие: поглощение по W.b вместо AP+T.b
     lance = false,     // Копьё/Пика: AP цели капается до 20 (до вычета Pen)
     sanctified = false, // Освящённое: игнорирует чародейские (варп) щиты
@@ -730,7 +737,7 @@ export async function applyDamageToActor(actor, damageData) {
   // ── Бросок щита (если есть активный) ─────────────────────────────────────
   // ignoreShield (Flush/Варп) — щит не катится совсем; sanctified — катится, но
   // варп-природные (чародейские) щиты пропускаются.
-  const shieldResult = ignoreShield ? null : await _rollActiveShield(actor, { skipWarp: sanctified, melee, damageSubtype, hitLocation, attackerUuid, isRetaliation });
+  const shieldResult = ignoreShield ? null : await _rollActiveShield(actor, { skipWarp: sanctified, melee, damageSubtype, hitLocation, attackerUuid, isRetaliation, ignoreDomeShields });
 
   // Если щит заблокировал — урон аннулирован, выходим
   if (shieldResult?.blocked) return;
@@ -1015,6 +1022,23 @@ export async function applyDamageToActor(actor, damageData) {
     }
   }
 
+  // Приём Оглушить (стр. 14, wdbc-x1nz.2.66.3): «непоглощённый урон
+  // игнорируется, вместо этого цель Оглушается на 1 Ход за каждый нечётный
+  // урон» — читается как ⌈netDamage/2⌉ Раундов Оглушения. Урон дальше НЕ
+  // применяется как Раны — netDamage обнуляется, и все нижестоящие ветки,
+  // завязанные на «netDamage > 0» (Раны, Крит, Piercing/Crippling, Нурглинги
+  // и т.п.), естественно отключаются сами, без отдельного гейта на каждой.
+  let stunRoundsApplied = 0;
+  if (stunManeuver && netDamage > 0) {
+    stunRoundsApplied = Math.ceil(netDamage / 2);
+    const stunLevelField = conditionLevelField("stunned");
+    const curStunRounds = stunLevelField ? (actor.system.conditions?.[stunLevelField] ?? 0) : 0;
+    const stunFields = conditionApplyFields("stunned", Math.max(curStunRounds, stunRoundsApplied), actor);
+    if (Object.keys(stunFields).length) await actor.update(stunFields);
+    else stunRoundsApplied = 0; // иммунитет к Оглушению — не наложилось, note ниже не врёт
+    netDamage = 0;
+  }
+
   const { currentWounds, newWounds, newCritical, gotCritical } =
     await applyWoundLoss(actor, netDamage);
 
@@ -1219,7 +1243,9 @@ export async function applyDamageToActor(actor, damageData) {
         ${ablativeShieldNote}
       </div>`;
 
-  const woundsLine = netDamage > 0
+  const woundsLine = stunManeuver && stunRoundsApplied > 0
+    ? `Приём Оглушить: урон проигнорирован — цель Оглушена на <b>${stunRoundsApplied}</b> Ход(ов)`
+    : netDamage > 0
     ? `Раны: <b>${currentWounds}</b> → <b>${newWounds}</b>${
         ablated ? ` <span class="dmg-tb-note">(Аблативное Бронирование: ${rawNet} → 1)</span>` : ""}${
         extremeFloorApplied ? ` <span class="dmg-tb-note">(Экстремальный Урон: поглощено полностью, но ${

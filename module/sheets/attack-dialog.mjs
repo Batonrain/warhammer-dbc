@@ -591,6 +591,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     sBonus,
     stance,
     sys,
+    targetActor: attackCtx.targetActor,
     trainingFor,
     wp,
   });
@@ -745,12 +746,27 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   if (attackCtx.targetActor && hasRuleFlag(attackCtx.targetActor, MAGGOT_PARASITE_CAPABILITY)) {
     aimTargets = aimTargets.filter(t => !t.value);
   }
+  // Приём Оглушить (стр. 14, wdbc-x1nz.2.66.3): «базовая рукопашная
+  // Избирательная атака в голову» — не подсказка, форсированный выбор.
+  // Широкий Взмах (стр. 14, wdbc-x1nz.2.66.1): «не может быть Избирательной
+  // атакой» — форсирован на «— Без прицела —». Список целей не режем (та же
+  // геометрия disabled+checked, что у пилюль Приёма/Стойки/Базы) — нужное
+  // значение отмечается selected и весь select дисейблится, чтобы игрок не
+  // мог выбрать другую часть тела; readAttackForm по-прежнему читает :value
+  // независимо от disabled (тот же приём, что у пилюль). Live-переключение
+  // Приёма ПОСЛЕ открытия окна — то же самое делает dialog.mjs::updateTotal
+  // (aimEl.value/.disabled), этот select строится только при первом рендере.
+  const forcedAimValue = dyn0.maneuverKey === "stun" ? "head"
+    : dyn0.maneuverKey === "sweep" ? ""
+    : null;
+  const aimLocked = forcedAimValue !== null;
   const aimHtml = aimTargets.map(t => {
     const pen = (t.precise && csMod) ? Math.min(0, t.penalty + csMod) : t.penalty;
     const lbl = t.value && !t.label.includes("(")
       ? `${t.label} (${pen})`
       : t.label;
-    return `<option value="${t.value}" data-penalty="${pen}">${lbl}</option>`;
+    const selected = (aimLocked && t.value === forcedAimValue) ? " selected" : "";
+    return `<option value="${t.value}" data-penalty="${pen}"${selected}>${lbl}</option>`;
   }).join("");
 
   // ── Цель верхом (стр. 478) ──────────────────────────────────────────────
@@ -1194,6 +1210,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     actor,
     dualWieldHtml,
     aimHtml,
+    aimLocked,
     aimingBadgeHtml,
     ammoCondHtml,
     ammoDialogHtml,
