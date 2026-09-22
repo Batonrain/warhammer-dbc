@@ -137,6 +137,19 @@ export function buildSelection(v) {
       allowed: trained || key === primGrip
     }));
   }
+
+  // Длина Оружия, правило 5 (стр. 39, wdbc-x1nz.2.67.2): книга даёт Rng
+  // диапазоном у части рукопашного оружия (Гладий 1-3, Меч 2-4 и т.п.) —
+  // rangeMin > 0 и меньше range означает выбор доступен, иначе (0, обычный
+  // случай — большинство оружия ещё не размечено content-проходом) пикер не
+  // показывается вовсе, effRange считается по прежнему range без изменений.
+  const hasVariableLength = isMelee && sys.rangeMin > 0 && sys.rangeMin < sys.range;
+  /** Пилюли длины — по целому числу на каждое значение диапазона. */
+  function computeLengthOptions() {
+    const out = [];
+    for (let n = sys.rangeMin; n <= sys.range; n++) out.push({ key: String(n), label: String(n), allowed: true });
+    return out;
+  }
   // "freeattack" (Свободная Атака, стр. 12) — Реакция доступная всем, как и
   // Обычная Атака: книга не требует Тренировки для неё отдельно.
   // Приём дополнительно завязан на текущую выбранную Базу (стр. 14: у каждого
@@ -274,9 +287,16 @@ export function buildSelection(v) {
     const mDef        = MELEE_MANEUVERS[maneuverKey] || MELEE_MANEUVERS.standard;
 
     // Длина Оружия (wdbc-x1nz.2.67, стр. 39): действующий Rng ЭТОЙ атаки —
-    // база профиля + Хват + Приём (Выпад +1, Пила → 0). Читается диалогом
+    // длина + Хват + Приём (Выпад +1, Пила → 0). Читается диалогом
     // (Приём Выпад) и ниже, для бонуса Избегания цели при Натиске (правило 2).
-    const effRange = isMelee ? meleeEffectiveRange(sys.range, gKey, maneuverKey) : 0;
+    // Правило 5 (wdbc-x1nz.2.67.2): у оружия с диапазоном длины (rangeMin>0)
+    // персонаж выбирает длину этой атаки пилюлями «Длина» в окне — sel.length
+    // приходит строкой из формы, по умолчанию (пилюли не показаны либо ещё
+    // не тронуты) — верхняя граница range, как и раньше.
+    const length = hasVariableLength
+      ? Math.min(sys.range, Math.max(sys.rangeMin, Number(sel.length ?? sys.range) || sys.range))
+      : sys.range;
+    const effRange = isMelee ? meleeEffectiveRange(length, gKey, maneuverKey) : 0;
 
     // Обратный Хват (Об, стр. 39): приём Выпад «просто не получает штрафа»
     // WS от хвата — в любой Базе, не только на Полной Атаке. А на самой
@@ -330,13 +350,14 @@ export function buildSelection(v) {
       gDef ? `Хват: ${gDef.label}${gDef.ws ? ` · WS ${gDef.ws >= 0 ? "+" : ""}${gDef.ws}` : ""}${gDef.dmgFlat ? ` · урон ${gDef.dmgFlat >= 0 ? "+" : ""}${gDef.dmgFlat}` : ""}${gDef.sbHalf ? " · ½S.b" : ""} — ${gDef.note}` : "",
       reverseGripThrust ? `Выпад в Обратном хвате: без штрафа WS${reverseThrustFullAtk ? ", Полная Атака — полный S.b + ещё ½S.b (окр.▲) урона сверху" : ""}` : "",
       maneuverCapBonus ? `Щупальце: +${maneuverCapBonus} на приём Захват` : "",
-      chargeLengthBonus ? `Длина Оружия: цель длиннее на 3+ — Натиск даёт ей +5 Избегание` : ""
+      chargeLengthBonus ? `Длина Оружия: цель длиннее на 3+ — Натиск даёт ей +5 Избегание` : "",
+      (hasVariableLength && length !== sys.range) ? `Длина Оружия: выбрана ${length} вместо максимума ${sys.range} — влияет на правила 1/2/4 Длины Оружия (стр. 39)` : ""
     ].filter(Boolean).join("<br>");
 
     return {
       stanceKey, stDef, stanceBon, baseKey, bDef, baseBon,
       maneuverKey, mDef, maneuverBon, gKey, gDef, gWs, pIdx, prof,
-      cheapShotActive, effRange,
+      cheapShotActive, effRange, length, hasVariableLength,
       techBon: baseBon + maneuverBon, targetDodgeMod, targetParryMod, blocked, note
     };
   }
@@ -376,7 +397,7 @@ export function buildSelection(v) {
 
   return {
     profileOptions, computeStanceOptions, computeGripOptions, computeBaseOptions,
-    computeManeuverOptions, computeLockNoteHtml,
+    computeManeuverOptions, computeLockNoteHtml, computeLengthOptions, hasVariableLength,
     resolveSelectionSafe, dyn0
   };
 }

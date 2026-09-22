@@ -45,6 +45,12 @@ export function readAttackForm(form, ammoConds) {
   const gripKeySel   = el("input[name='atk-grip']:checked")?.value;
   const profIdxRaw   = el("input[name='atk-profile']:checked")?.value;
   const profIdxSel   = profIdxRaw === undefined ? undefined : Number(profIdxRaw);
+  // Длина Оружия, правило 5 (wdbc-x1nz.2.67.2) — пилюли «Длина» есть только у
+  // оружия с диапазоном Rng (attack-dialog.mjs::lengthBlockHtml); undefined,
+  // если группы в форме нет вовсе — resolveSelection тогда берёт верхнюю
+  // границу range, как раньше.
+  const lengthRaw    = el("input[name='atk-length']:checked")?.value;
+  const lengthSel    = lengthRaw === undefined ? undefined : Number(lengthRaw);
 
   const ammoSel = all(".atk-ammo-cond:checked")
     .map(cb => ammoConds[parseInt(cb.dataset.idx)]).filter(Boolean);
@@ -153,6 +159,6 @@ export function readAttackForm(form, ammoConds) {
     weaponOff:  on("#atk-weaponoff"),
     maximal:    on("#atk-maximal"),
     bandIdx:    Number(el("#atk-band")?.value ?? -1),
-    stanceKey, baseKey, maneuverKey, gripKey: gripKeySel, profIdx: profIdxSel
+    stanceKey, baseKey, maneuverKey, gripKey: gripKeySel, profIdx: profIdxSel, length: lengthSel
   };
 }

@@ -17,7 +17,7 @@
 
 import { CHARACTERISTICS }                    from "../constants/characteristics.mjs";
 import { DAMAGE_TYPES }                       from "../constants/items.mjs";
-import { MELEE_STANCES, MELEE_BASES, parseGrips } from "../constants/combat.mjs";
+import { MELEE_STANCES, MELEE_BASES, parseGrips, meleeEffectiveRange } from "../constants/combat.mjs";
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { rollIcon }                           from "../constants/roll-icons.mjs";
 import { openAttackDialog } from "./attack/dialog.mjs";
@@ -43,6 +43,7 @@ import { isWalkerVehicle } from "../rules/walker.mjs";
 import { legionAttackPenalty, LEGION_FIT_FLAG, OVERSIZED_FIT_FLAG } from "../rules/legion-fit.mjs";
 import { ogrynAttackPenalty, OGRYN_FIT_FLAG } from "../rules/ogryn-fit.mjs";
 import { meleeTrainingStatus, weaponTrainingPenalty } from "../rules/weapon-training.mjs";
+import { extendedReachCells, meleeContactDisplay } from "../rules/weapon-length.mjs";
 import { MELEE_CATEGORIES, sameCategory } from "../constants/weapon-categories.mjs";
 import { isHandShield } from "../combat/hand-shield.mjs";
 import { weaponHandsRequired, handsOccupied } from "../rules/hands.mjs";
@@ -570,7 +571,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // выбранная связка — в sheets/attack/selection.mjs (wdbc-uh56).
   const {
     profileOptions, computeStanceOptions, computeGripOptions, computeBaseOptions,
-    computeManeuverOptions, computeLockNoteHtml, resolveSelectionSafe, dyn0
+    computeManeuverOptions, computeLockNoteHtml, computeLengthOptions, hasVariableLength,
+    resolveSelectionSafe, dyn0
   } = buildSelection({
     actor,
     atkProfiles,
@@ -1099,12 +1101,25 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Тактическая карта (wdbc-8k0i): вид контакта — чисто информационно (нет
   // автоматических триггеров «Свободной Атаки», это ручная Реакция, стр. 12),
   // подсказывает игроку/ГМ, легален ли рукопашный Приём вообще.
+  // Длина Оружия, правило 3 (wdbc-x1nz.2.67.1, стр. 39): Rng 8/9 создаёт
+  // Базовый контакт «через клетку» — meleeAttackerRange здесь на основной
+  // Хват + Приём «Стандартная» (не пересчитывается живьём при смене пилюль
+  // в этом же окне), та же оговорка неточности, что у автогалочек правил 1/4
+  // (sheets/attack/mods.mjs) — подсказка, не гарантированное число после
+  // смены Приёма/Хвата.
+  const meleeAttackerRange = isMelee
+    ? meleeEffectiveRange(sys.range, parseGrips(sys.grips)[0] ?? null, "standard")
+    : 0;
+  const reachCells = isMelee ? extendedReachCells(meleeAttackerRange) : 0;
+  const contactDisplay = (isMelee && measured)
+    ? meleeContactDisplay(measured.contact, measured.edgeM, meleeAttackerRange) : null;
   const CONTACT_BADGE = {
     deep: `<span class="atk-training-warn" title="Базы налагаются — как при переносе раненого">🔶 Глубокий контакт</span>`,
     base: `<span class="atk-training-warn" title="Грани Баз соприкасаются">⚔ Базовый контакт</span>`,
+    reach: `<span class="atk-training-warn" title="Rng ${meleeAttackerRange}: Базовый контакт через ${reachCells === 2 ? "две клетки" : "клетку"} (Длина Оружия, стр. 39)">🗡 Контакт через оружие (${reachCells} кл.)</span>`,
     none: `<span class="atk-training-warn" title="Базы не касаются — рукопашная может быть недоступна">⚠ Нет контакта</span>`
   };
-  const contactBadgeHtml = (isMelee && measured) ? CONTACT_BADGE[measured.contact] : "";
+  const contactBadgeHtml = contactDisplay ? CONTACT_BADGE[contactDisplay] : "";
   const maneuverBlockHtml = isMelee ? `
     <div class="av-section">
       ${contactBadgeHtml}
@@ -1132,6 +1147,16 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       <div class="av-sec-lbl">Хват</div>
       <div class="av-pills" id="atk-grip-pills">${pillsHtml("atk-grip", computeGripOptions(dyn0.pIdx), dyn0.gKey)}</div>
     </div>` : "";
+  // Длина Оружия, правило 5 (стр. 39, wdbc-x1nz.2.67.2): у оружия с
+  // диапазоном Rng (rangeMin>0, из книги — Гладий 1-3, Меч 2-4 и т.п.)
+  // персонаж выбирает длину атаки на каждую атаку; у обычного оружия
+  // (rangeMin=0 — большинство, пока не размечено content-проходом) пилюли
+  // не показываются вовсе, effRange считается как раньше по range.
+  const lengthBlockHtml = hasVariableLength ? `
+    <div class="av-section" title="Стр. 39: у оружия с диапазоном Rng длина атаки выбирается заново каждый раз">
+      <div class="av-sec-lbl">Длина</div>
+      <div class="av-pills" id="atk-length-pills">${pillsHtml("atk-length", computeLengthOptions(), String(dyn0.length))}</div>
+    </div>` : "";
   // "Основной" тоже вариант выбора — поэтому порог "больше одного" по общему
   // числу опций (главный + доп. профили), а не только по числу доп. профилей.
   const profileBlockHtml = profileOptions.length > 1 ? `
@@ -1139,7 +1164,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       <div class="av-sec-lbl">Профиль</div>
       <div class="av-pills">${pillsHtml("atk-profile", profileOptions, dyn0.pIdx, "idx")}</div>
     </div>` : "";
-  const techSectionsHtml = `${maneuverBlockHtml}${stanceBlockHtml}${baseBlockHtml}${gripBlockHtml}${profileBlockHtml}`;
+  const techSectionsHtml = `${maneuverBlockHtml}${stanceBlockHtml}${baseBlockHtml}${gripBlockHtml}${lengthBlockHtml}${profileBlockHtml}`;
 
   // ── Обе руки одним действием (wdbc-3jlm, Талант «Два Оружия») ───────────
   // Строка появляется только у того, кто это умеет И у кого есть что взять во

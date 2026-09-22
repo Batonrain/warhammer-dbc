@@ -6,7 +6,7 @@
 import { describe, it, expect } from "vitest";
 import { meleeEffectiveRange } from "../../module/constants/combat.mjs";
 import { actorMaxMeleeRange, longerWeaponBonus, chargeTargetDodgeBonus,
-         closeQuartersPenalty } from "../../module/rules/weapon-length.mjs";
+         closeQuartersPenalty, extendedReachCells, meleeContactDisplay } from "../../module/rules/weapon-length.mjs";
 
 function meleeWeapon({ range = 0, grips = "1р", equipped = true } = {}) {
   return { type: "weapon", system: { weaponClass: "melee", range, grips, equipped } };
@@ -117,5 +117,48 @@ describe("closeQuartersPenalty — правило 4 (стр. 39): штраф в�
 
   it("Rng 9 — −20 (4 пункта выше 5)", () => {
     expect(closeQuartersPenalty(9)).toBe(-20);
+  });
+});
+
+describe("extendedReachCells — правило 3 (стр. 39, wdbc-x1nz.2.67.1): зазор длинного оружия", () => {
+  it("Rng 7 и ниже — 0 (обычный Базовый контакт)", () => {
+    expect(extendedReachCells(7)).toBe(0);
+    expect(extendedReachCells(0)).toBe(0);
+  });
+
+  it("Rng 8 — 1 клетка", () => {
+    expect(extendedReachCells(8)).toBe(1);
+  });
+
+  it("Rng 9 и выше — 2 клетки", () => {
+    expect(extendedReachCells(9)).toBe(2);
+    expect(extendedReachCells(12)).toBe(2);
+  });
+});
+
+describe("meleeContactDisplay — контакт с поправкой на правило 3", () => {
+  it("Базовый/Глубокий контакт не трогается независимо от Rng", () => {
+    expect(meleeContactDisplay("base", 0, 8)).toBe("base");
+    expect(meleeContactDisplay("deep", 0, 0)).toBe("deep");
+  });
+
+  it("нет контакта, обычное оружие (Rng < 8) — остаётся none", () => {
+    expect(meleeContactDisplay("none", 1, 7)).toBe("none");
+  });
+
+  it("нет контакта, Rng 8, зазор ровно 1 клетка — reach", () => {
+    expect(meleeContactDisplay("none", 1, 8)).toBe("reach");
+  });
+
+  it("нет контакта, Rng 8, зазор 2 клетки — вне досягаемости, none", () => {
+    expect(meleeContactDisplay("none", 2, 8)).toBe("none");
+  });
+
+  it("нет контакта, Rng 9, зазор 2 клетки — reach", () => {
+    expect(meleeContactDisplay("none", 2, 9)).toBe("reach");
+  });
+
+  it("нет контакта, Rng 9, зазор 3 клетки — вне досягаемости, none", () => {
+    expect(meleeContactDisplay("none", 3, 9)).toBe("none");
   });
 });
