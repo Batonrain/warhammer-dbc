@@ -9,6 +9,7 @@
     "weaponClass": "melee",
     "weaponType": "psychic",
     "range": 4,
+    "rangeMin": 2,
     "balance": 1,
     "grips": "2р (1р)",
     "profileLabel": "Посох",

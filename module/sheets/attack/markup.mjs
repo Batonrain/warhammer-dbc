@@ -22,6 +22,7 @@ export function buildAttackContent(v) {
   const {
     actor,
     aimHtml,
+    aimLocked,
     aimingBadgeHtml,
     ammoCondHtml,
     ammoDialogHtml,
@@ -157,7 +158,7 @@ return `
 
     <div class="av-row">
       <label>Избирательная атака</label>
-      <select id="atk-aim" class="av-input av-wide">${aimHtml}</select>
+      <select id="atk-aim" class="av-input av-wide"${aimLocked ? " disabled" : ""}>${aimHtml}</select>
     </div>
     ${mountHtml}
     ${vehicleSideHtml}

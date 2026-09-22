@@ -8,6 +8,7 @@
     "weaponClass": "melee",
     "weaponType": "chain",
     "range": 3,
+    "rangeMin": 2,
     "balance": 1,
     "grips": "1р (2р, Об)",
     "profileLabel": "Сабля",

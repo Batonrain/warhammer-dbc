@@ -8,6 +8,7 @@
     "weaponClass": "melee",
     "weaponType": "power",
     "range": 7,
+    "rangeMin": 5,
     "balance": -1,
     "grips": "1р (2р)",
     "profileLabel": "Копьё",

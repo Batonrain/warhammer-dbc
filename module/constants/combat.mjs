@@ -49,6 +49,12 @@ export const MELEE_STANCES = {
   defensive: {
     label: "Защитная", wsBonus: 0, dodgeBonus: 0, parryBonus: 0,
     attackerMod: -20, noAttackWithoutShield: true,
+    // wdbc-x1nz.2.66.6 (стр. 15): «Полное действие вместо Полудействия» для
+    // атаки доп. оружием при щите — noAttackWithoutShield выше уже гарантирует,
+    // что если атака вообще разрешена, щит экипирован; noCharge — тот же флаг,
+    // что у Частокола ниже (module/sheets/attack/selection.mjs::computeBaseOptions),
+    // «не даёт совершать Натиск» без отдельного механизма.
+    noCharge: true, forcesFullAction: true,
     reactionRule: { grantDefenseReaction: true },
     shortDesc: "Нельзя атаковать (кроме доп. оружия при щите — Полное действие, без Натиска). Атаки по персонажу −20. +1 Реакция на рукопашные Избегания.",
     note: "Оружие: любое. Персонаж не может атаковать — кроме как другим оружием при экипированном щите (тогда Полное действие вместо Полудействия, без Натиска). Рукопашные атаки по персонажу −20 (уже в пороге атакующего). +1 Реакция только на рукопашные Избегания."
@@ -57,7 +63,15 @@ export const MELEE_STANCES = {
     label: "Прикрывающая", wsBonus: 0, dodgeBonus: 0, parryBonus: 0,
     attackerMod: 20,
     shortDesc: "Все атаки по персонажу +20. Атаки по союзникам рядом −20.",
-    note: "Оружие: любое. Рукопашные атаки по персонажу +20 (уже в пороге атакующего), по его союзникам в контакте с ним −20 — это не считается: нет данных о соседстве на карте. Когда противник в контакте атакует союзника персонажа, персонаж может совершить по нему свободную атаку (первым действует тот, у кого выше Ag) — ручной триггер, диалог атаки его не подсказывает."
+    // «−20 союзникам рядом» и триггер свободной атаки автоматизированы
+    // через module/combat/free-attack.mjs::coveringDefendersOf (Базовый/
+    // Глубокий контакт — tactical-map.mjs::contactType). Решением стола
+    // (не книга) «союзник» здесь расширен до Friendly/Neutral: и Friendly-
+    // прикрывающий защищает нейтрального компаньона рядом, и наоборот —
+    // но не пересекает лагеря (враждебный не прикроет Friendly просто по
+    // факту его диспозиции, и наоборот), см. комментарий у
+    // friendlyContactTokenDocs.
+    note: "Оружие: любое. Рукопашные атаки по персонажу +20 (уже в пороге атакующего), по его союзникам (Friendly/Neutral) в контакте с ним −20 (автогалочка в окне атаки). Когда противник в контакте атакует союзника персонажа, персонаж может совершить по нему свободную атаку (первым действует тот, у кого выше Ag) — предлагается автоматически карточкой в чат при попадании по прикрытой цели."
   },
   springing: {
     label: "Пружинящая", wsBonus: 0, dodgeBonus: 10, parryBonus: -10,
@@ -71,7 +85,7 @@ export const MELEE_STANCES = {
     // Тренировке — в отличие от Приёмов и остальных Стоек, неизвестная
     // категория (пак ещё не пересобран) не должна пропускать Частокол
     // «на всякий случай»: module/sheets/attack-dialog.mjs, stanceOptions.
-    categories: ["Глефа", "Копьё", "Штык"], strictCategory: true, noCharge: true,
+    categories: ["Глефа", "Копьё", "Штык"], strictCategory: true, noCharge: true, noRun: true,
     shortDesc: "Нельзя Натиск и Бег. Раз до след. Хода — свободная атака на атакующего с меньшим Rng, до его удара.",
     note: "Оружие: Глефа, Копьё, Штык. Персонаж не может совершать Натиск и Бег — База «Натиск» недоступна в этой Стойке. Раз до начала следующего Хода, когда персонаж или союзник в контакте с ним атакован оружием с меньшим Rng, персонаж может совершить одну свободную атаку по атакующему до его удара — ручной триггер, не отслеживается автоматически."
   }
@@ -148,9 +162,14 @@ export const MELEE_MANEUVERS = {
   saw: {
     label: "Пила", wsBonus: -10, bases: ["standard", "charge"],
     categories: ["Глефа", "Когти", "Копьё", "Меч", "Нож", "Топор", "Штык"],
-    note: "WS −10. Только со свойством оружия Tearing/Power Field. Игнорирует силовые щиты.",
+    // Требование к самому оружию (свойство, не категория) — тот же принцип
+    // гейта, что categories/minBalance у других Приёмов/Стоек (wdbc-x1nz.2.66.2,
+    // module/sheets/attack/selection.mjs::computeManeuverOptions, requiresWeaponProps).
+    requiresWeaponProps: ["tearing", "powerField"],
+    sbHalf: true, // ½S.b (окр.▲) в уроне — тот же слот, что у Хвата (module/combat/attack.mjs::sbHalf)
+    note: "WS −10. Только со свойством оружия Tearing/Power Field. S.b в уроне вдвое (окр.▲). Rng этой атаки падает до 0. Игнорирует силовые щиты-купола.",
     targetDodgeMod: 0, targetParryMod: 0,
-    chatNote: "⚡ Игнорирует силовые щиты"
+    chatNote: "⚡ Игнорирует силовые щиты-купола, урон ½S.b (окр.▲), Rng атаки 0"
   },
   stun: {
     label: "Оглушить", wsBonus: -20, bases: ["standard", "charge", "fullatk"],
@@ -218,9 +237,15 @@ export const MELEE_CONTESTS = {
     label: "Повалить", wsBonus: 0, bases: ["charge", "fullatk"],
     categories: ["Когти", "Крюк", "Кулаки", "Посох", "Топор", "Щит"],
     modLabel: "Ath vs Ath",
-    note: "Состязание: Athletics S+0 vs Athletics S+0.",
+    // Стр. 14, wdbc-x1nz.2.66.5: «Athletics(S)+0 vs Athletics(S)+0 или
+    // Acrobatics(A)+0» — ровно эти два (не любая характеристика из общего
+    // дропдауна _showContestDialog). Победа: цель Ничком; 5+ Успехов —
+    // доп. урон/Усталость (module/combat/knockdown.mjs::resolveKnockdownSuccess).
+    allowedChars: ["s", "ag"],
+    charLabels: { s: "Athletics(S)", ag: "Acrobatics(A)" },
+    note: "Состязание: Athletics(S)+0 vs Athletics(S)+0 или Acrobatics(A)+0. Победа: цель Ничком. 5+ Успехов: доп. урон/Усталость на выбор.",
     targetDodgeMod: 0, targetParryMod: 0,
-    chatNote: "⚡ Состязательный бросок Athletics"
+    chatNote: "⚡ Состязательный бросок Athletics/Acrobatics"
   },
   feint: {
     label: "Финт", wsBonus: 0,
@@ -335,6 +360,29 @@ export function parseGrips(str) {
   const raw = String(str).match(/П\+Л|Л\+П|1р|2р|Об|Бл|Кл|Мх|Ног|Гол|Хв|Зуб|Кист|Щуп|П|Л/g) || [];
   const keys = raw.map(k => GRIP_ALIASES[k] ?? k);
   return [...new Set(keys)].filter(k => GRIPS[k]);
+}
+
+// ── Длина Оружия (wdbc-x1nz.2.67, стр. 39) ──────────────────────────────────
+// Действующий Rng рукопашного оружия для конкретной атаки: база профиля
+// (system.range) + Хват (GRIPS[*].rngMod/rngSet, уже заведены в реестре выше,
+// но раньше нигде не читались) + Приём (Выпад +1, Пила → 0, стр. 14).
+// Минимум 0 — книга не даёт отрицательный Rng ни при каком сочетании.
+// Сравнения/бонусы, которые используют это число (длиннее оружие цели → +5,
+// Натиск на оружие короче на 3+ → цель +5 Избегание, штраф вблизи при Rng≥6)
+// — module/rules/weapon-length.mjs. Расширенный Базовый контакт для Rng 8/9
+// и выбор переменной длины за атаку (книга допускает диапазон) сознательно
+// НЕ автоматизированы этим тикетом — геометрия карты и новая модель диапазона
+// длины оружия остаются на потом (см. wdbc-x1nz.2.67).
+export function meleeEffectiveRange(baseRange, gripKey, maneuverKey = "standard") {
+  let rng = Number(baseRange) || 0;
+  const g = GRIPS[gripKey];
+  if (g) {
+    if (g.rngSet != null) rng = g.rngSet;
+    else if (g.rngMod) rng += g.rngMod;
+  }
+  if (maneuverKey === "thrust") rng += 1;
+  else if (maneuverKey === "saw") rng = 0;
+  return Math.max(0, rng);
 }
 
 // Сводит эффекты выбранного хвата с учётом, основной он или вторичный.

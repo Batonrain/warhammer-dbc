@@ -152,6 +152,16 @@ function marchTrackBonus(ctx) {
 }
 
 /**
+ * Пружинящая Стойка (стр. 15, wdbc-x1nz.2.66.8): «тесты S −10» — читается
+ * широко, как остальные четыре штрафа этого файла (любой тест характеристикой
+ * Силы, не только Athletics), пока Стойка активна.
+ */
+export function springingStrengthPenalty(actor, charKey) {
+  if (String(charKey ?? "").toLowerCase() !== "s") return 0;
+  return actor?.system?.meleeStance === "springing" ? -10 : 0;
+}
+
+/**
  * Снятый шлем силовой брони: +5 ко всем тестам на основе Товарищества.
  * Раньше жил методом листа (`_getHelmetlessBonus`) — единственный из пяти,
  * у кого своей функции вне листа не было вовсе.
@@ -199,6 +209,8 @@ export function situationalRules(actor, ctx = {}) {
       hololithBriefingBonus(actor, skillKey));
   add("situational.marchTrackBonus", "🏃 Цель марширует/бежит — легче засечь",
       marchTrackBonus(ctx));
+  add("situational.springingStance", "🐸 Пружинящая Стойка",
+      springingStrengthPenalty(actor, charKey));
 
   return rules;
 }

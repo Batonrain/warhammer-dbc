@@ -53,6 +53,7 @@ import { pickReroll } from "../rules/reroll-pick.mjs";
 import { enemyContactTokenDocs, offerFreeAttack } from "./free-attack.mjs";
 import { equippedLegacyWeaponWithMutation } from "../rules/legacy-weapon.mjs";
 import { resolveOpposed } from "../rules/test-kind.mjs";
+import { MELEE_STANCES } from "../constants/combat.mjs";
 
 // Захват (стр. 12, wdbc-x1nz.2.31): «только действия Борьбы или не-Физические»
 // — Движение Физическое (см. тип действия «Физическое», стр. 12), поэтому
@@ -298,6 +299,14 @@ export async function declareCharge(actor) {
     return ui.notifications.warn("⚠️ Повален — нельзя объявить Натиск. Сначала встать (Полудействие).");
   if (_bothLegsLost(actor))
     return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
+  // Стойки с noCharge (стр. 15: Частокол — древковое оружие мешает Натиску;
+  // Защитная, wdbc-x1nz.2.66.6 — «не даёт совершать Натиск») — тот же флаг,
+  // что уже гейтит пилюлю Базы «Натиск» в диалоге атаки (module/sheets/
+  // attack/selection.mjs::computeBaseOptions), здесь для отдельной HUD-кнопки.
+  const stanceKey = actor.system?.meleeStance || "standard";
+  if (MELEE_STANCES[stanceKey]?.noCharge) {
+    return ui.notifications.warn(`⚠️ Недоступно в Стойке «${MELEE_STANCES[stanceKey].label}».`);
+  }
   await actor.update({ "system.meleeBase": "charge" });
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
@@ -458,6 +467,12 @@ export async function declareRun(actor) {
     return ui.notifications.warn("⚠️ Повален — нельзя объявить Бег. Сначала встать (Полудействие).");
   if (_bothLegsLost(actor))
     return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
+  // Частокол (стр. 15, wdbc-x1nz.2.66.9): «нельзя Натиск и Бег» — noRun несёт
+  // только эта Стойка (Защитная запрещает лишь Натиск, см. noCharge выше).
+  const runStanceKey = actor.system?.meleeStance || "standard";
+  if (MELEE_STANCES[runStanceKey]?.noRun) {
+    return ui.notifications.warn(`⚠️ Недоступно в Стойке «${MELEE_STANCES[runStanceKey].label}».`);
+  }
   if (!await spendActionPoints(actor, 2, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
   await actor.setFlag("warhammer-dbc", "running", true);
   await markMovedThisTurn(actor);
@@ -662,6 +677,18 @@ async function _rollVaultContest(actor) {
   return { statLineHtml, contestSection };
 }
 
+/**
+ * Дальность Вольта (Отскока) в клетках — Пружинящая Стойка (стр. 15,
+ * wdbc-x1nz.2.66.8) даёт ей SPD+2 вместо обычного SPD−2 движения. halfMove
+ * уже несёт готовый −2 (module/rules/character/movement.mjs — общий для
+ * ЛЮБОГО движения), поэтому здесь нужно снять этот минус и прибавить свою
+ * книжную +2 — то есть +4 к уже посчитанному halfMove, только для Вольта.
+ */
+export function vaultHalfMove(actor) {
+  const halfMove = actor.system.movement?.halfMove;
+  return actor.system?.meleeStance === "springing" ? (Number(halfMove) || 0) + 4 : halfMove;
+}
+
 export async function declareVault(actor) {
   if (!actor) return;
   if (_blockedByGrapple(actor)) return;
@@ -673,7 +700,7 @@ export async function declareVault(actor) {
   // combat/free-attack.mjs::processTokenMove выдаёт тем же врагам ещё и
   // обычную Свободную Атаку, и одно движение наказывается дважды.
   await actor.setFlag("warhammer-dbc", "disengageActive", true);
-  _showReachRing(actor, actor.system.movement?.halfMove);
+  _showReachRing(actor, vaultHalfMove(actor));
   const { statLineHtml, contestSection } = await _rollVaultContest(actor);
 
   await _postCard(actor, `<div class="wh-roll-result">
