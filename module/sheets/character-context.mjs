@@ -14,6 +14,7 @@ import { CHARACTERISTICS, APTITUDES }            from "../constants/characterist
 import { CHAR_IMP_STEPS }                        from "./tabs/advance.mjs";
 import { equippedMeleeWeapon } from "../combat/equipped-melee.mjs";
 import { attackedThisTurn } from "../rules/turn-flags.mjs";
+import { meleeStanceAllowed } from "../rules/melee-stance-gate.mjs";
 import { charAptitudeSet, CHAR_APTITUDES } from "../constants/advancement.mjs";
 import { aptBindingContext }                    from "../rules/aptitude-binding.mjs";
 import { charAdvanceCat, advanceCatSource }     from "../rules/advance-category.mjs";
@@ -110,16 +111,20 @@ export function characterContext(actor) {
   // ── Архетип (шапка): селектор из компендиума, только доступные текущей расе ──
   context.archetype = archetypeSheetContext(actor);
 
-  // ── Бой: Стойка/База — постоянное состояние актора (system.meleeStance/
-  // meleeBase), диалог атаки лишь ЧИТАЕТ его как стартовое значение и умеет
-  // сменить на разовый бросок (module/sheets/attack-dialog.mjs) — но нигде,
-  // кроме диалога, было не посмотреть и не сменить текущий выбор без начала
-  // атаки. Панель на БОЙ восстановлена — та же пара полей, что пишет диалог,
-  // так что оба места остаются в силе автоматически, простой read/write
-  // одного и того же actor.update. Состязания (Повалить/Финт/Давление/
-  // Напролом) в диалог атаки не переехали — это отдельный встречный тест без
-  // диалога атаки вовсе (module/combat/techniques.mjs, _showContestDialog),
-  // их панель на вкладке БОЙ была и остаётся нужна.
+  // ── Бой: Стойка — постоянное состояние актора (system.meleeStance),
+  // диалог атаки лишь ЧИТАЕТ его как стартовое значение и умеет сменить на
+  // разовый бросок (module/sheets/attack-dialog.mjs) — но нигде, кроме
+  // диалога, было не посмотреть и не сменить текущий выбор без начала атаки.
+  // Панель на БОЙ восстановлена — то же поле, что пишет диалог, так что оба
+  // места остаются в силе автоматически, простой read/write одного и того же
+  // actor.update. База своей панели на БОЙ больше не имеет (убрана —
+  // выбирается прямо в диалоге атаки; у Базы «Натиск» есть быстрая кнопка на
+  // панели ДВИЖЕНИЕ, module/combat/movement-actions.mjs::declareCharge) —
+  // meleeBaseKey здесь остаётся только ради фильтра combatContestOptions
+  // ниже (Повалить ограничен Базой, стр. 14). Состязания (Повалить/Финт/
+  // Давление/Напролом) в диалог атаки не переехали — это отдельный встречный
+  // тест без диалога атаки вовсе (module/combat/techniques.mjs,
+  // _showContestDialog), их панель на вкладке БОЙ была и остаётся нужна.
   const meleeBaseKey  = system.meleeBase in MELEE_BASES ? system.meleeBase : "standard";
   const meleeStanceKey = system.meleeStance in MELEE_STANCES ? system.meleeStance : "standard";
   // Смена Стойки и Хвата (стр. 31, wdbc-x1nz.2.64): «Это действие нельзя
@@ -130,10 +135,15 @@ export function characterContext(actor) {
   // заново при каждой атаке, module/sheets/attack-dialog.mjs) — блокировать
   // нечего, книжный запрет касается только Стойки.
   context.stanceLocked = attackedThisTurn(actor).some(id => actor.items.get(id)?.system?.weaponClass === "melee");
+  // Недоступные Стойки (не та категория оружия/Баланс, нет Тренировки, не
+  // пешком) сюда не попадают вовсе — та же логика и тот же принцип
+  // «убрать из списка, не дизейблить», что у Приёма/Стойки в диалоге атаки
+  // (module/sheets/attack-dialog.mjs::pillsHtml). Уже выбранная Стойка
+  // остаётся видна, даже если внезапно перестала быть доступной (сменилось
+  // оружие) — иначе игрок не увидит и не сможет вернуть Стандартную сам.
   context.combatStanceOptions = Object.entries(MELEE_STANCES)
+    .filter(([key]) => key === meleeStanceKey || meleeStanceAllowed(actor, key))
     .map(([key, s]) => ({ key, label: s.label, desc: s.shortDesc, active: key === meleeStanceKey }));
-  context.combatBaseOptions = Object.entries(MELEE_BASES)
-    .map(([key, b]) => ({ key, label: b.label, desc: b.shortDesc, active: key === meleeBaseKey }));
   // Тот же экипированный рукопашный/метательный предмет, что берёт клик по
   // кнопке Состязания (module/sheets/tabs/combat.mjs) — его категория решает,
   // какие кнопки показывать (Повалить книгой ограничен Оружием и Базой, стр.
