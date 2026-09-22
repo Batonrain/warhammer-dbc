@@ -1,0 +1,35 @@
+{
+  "name": "Invocation Bite / Укус Проявления",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "i0yML1SKgQAz2uIn",
+  "system": {
+    "description": "Укус Дара «Пасть». +рейтинг Deadly Natural Weapon от Проявления (по Порче: 1-35 → 0, 36-70 → 1, 71+ → 2) к урону.",
+    "reminder": "👹 Проявление: +рейтинг DNW по Порче к урону",
+    "category": "melee",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "invocationNaturalDamage",
+    "bookSource": "DoomBC — книга Хаоса, Одержимость: таблица Invocation / Проявление (Deadly Nat. Weap.), Дары «Пасть», «Огромная Пасть», «Рога», «Звериные Ноги»"
+  },
+  "_id": "xklkU8ZbyxsX9bz5",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!xklkU8ZbyxsX9bz5"
+}

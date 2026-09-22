@@ -64,6 +64,7 @@ import { assassinStrikeAvailable }                    from "./assassin-strike.mj
 import { evasionImperativeBonus, hasEvasionRecoilImperative } from "./imperative-bonuses.mjs";
 import { isFusedByHandOfDeath }                       from "../rules/hand-of-death.mjs";
 import { counterAttackTriggers, counterAttackSectionHtml } from "./counter-attack.mjs";
+import { invocationNaturalAdd } from "../rules/invocation-natural.mjs";
 
 /**
  * Экстремальный урон (стр. 166-170): куб урона выбросил Х+ — порог берётся из
@@ -873,8 +874,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // +Cor.b владельца И к Пробитию (здесь), И к урону (flatBonus ниже) —
   // живой пересчёт на каждой атаке, отдельный флаг от tainted (другая находка).
   const deadlyNaturalCorBAdd = wp.deadlyNaturalCorB ? (actor.system.corruptionBonus ?? 0) : 0;
+  // Естественное оружие Даров Одержимости (wdbc-o368c): рейтинг DNW от
+  // Проявления по Порче — rules/invocation-natural.mjs.
+  const invocationAdd = invocationNaturalAdd(wp, actor);
   const pen = attackPenetration({
-    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen + deadlyNaturalCorBAdd,
+    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen + deadlyNaturalCorBAdd + invocationAdd.pen,
     wp: penWp, hit, deg, shortRange, maximal: maximalOn, band, forceBonus
   });
 
@@ -1006,7 +1010,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     weapon: item, actor, hit, isOwnTurn: isActorsOwnTurn(actor)
   });
   const deadlyTrapLegacyDelta = deadlyTrapLegacyEligible ? legacyDeadlyTrapDamageDelta(actor) : 0;
-  const flatBonus = (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus;
+  const flatBonus = (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + invocationAdd.dmg + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus;
   if (earlyDeathBonus) await markEarlyDeathLegacyUsed(actor, item, hit);
   if (soulboundLegacyBonus) await consumeSoulboundLegacyBonus(actor, item, hit);
   let dmgFormula = damageFormulaFor({

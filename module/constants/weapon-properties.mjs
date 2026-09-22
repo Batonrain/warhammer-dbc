@@ -670,6 +670,26 @@ export const WEAPON_PROPERTIES = {
     auto: { deadlyNaturalCorB: true }
   },
 
+  // Дары Одержимости «Рога», «Звериные Ноги», «Огромная Пасть» (wdbc-o368c):
+  // Deadly Natural Weapon «с рейтингом как от Проявления» — рейтинг по таблице
+  // Invocation (0/1/1/2/2 по Порче), rules/invocation-natural.mjs.
+  invocationNaturalWeapon: {
+    key: "invocationNaturalWeapon", label: "Естественное оружие Проявления", en: "Invocation Natural Weapon",
+    rating: false, cat: "melee",
+    desc: "Естественное оружие Дара Одержимости. +рейтинг Deadly Natural Weapon от Проявления (по Порче: 1-35 → 0, 36-70 → 1, 71+ → 2) к урону и Пробитию.",
+    reminder: "👹 Проявление: +рейтинг DNW по Порче к урону и Пробитию",
+    auto: { invocationNaturalWeapon: true }
+  },
+  // Дар «Пасть»: «Bite с рейтингом Deadly Natural Weapon от Проявления» — у
+  // Bite (X) Пробитие 0, поэтому прибавка только к урону.
+  invocationNaturalDamage: {
+    key: "invocationNaturalDamage", label: "Укус Проявления", en: "Invocation Bite",
+    rating: false, cat: "melee",
+    desc: "Укус Дара «Пасть». +рейтинг Deadly Natural Weapon от Проявления (по Порче: 1-35 → 0, 36-70 → 1, 71+ → 2) к урону.",
+    reminder: "👹 Проявление: +рейтинг DNW по Порче к урону",
+    auto: { invocationNaturalDamage: true }
+  },
+
   twinLinked: {
     key: "twinLinked", label: "Спаренное", en: "Twin-Linked", rating: false, cat: "ranged",
     desc: "Стреляет 2 раза. +1 попадание, если оба ствола попали (удвоенный расход боеприпасов).",
