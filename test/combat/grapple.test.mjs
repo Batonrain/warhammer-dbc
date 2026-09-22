@@ -201,18 +201,22 @@ describe("crunchWeapon", () => {
 // см. ALL_TESTS в grapple.mjs) — здесь, через tentacleTechDef перед вызовом
 // _showContestDialog. Сжать/Хруст броска не делают вовсе (см. шапку файла) —
 // бонусу там нечего усиливать, поэтому в дело не идут.
-// tentacleBonus — общий расчёт под tentacleTechDef (5 контестов) И _doBite/
-// _doThrow (wdbc-oxdn: Укус/Метнуть/Замахнуться — три «безролловых» на вид
-// действия Борьбы, которые на деле идут полным тестом WS/BS через
-// attack-dialog.mjs — тоже «тесты в Борьбе» по тексту мутации, просто со
-// своим бонусом techDef.wsBonus/bsBonus вместо tentacleTechDef/extraBonus).
-// _doBite/_doThrow сами не экспортированы и не тестируются изолированно
-// здесь: showGrappleDialog рендерит кастомные кнопки внутри DialogV2.wait и
-// зовёт dialog.close() у результата рендера — этого пути текущая заглушка
-// (test/support/foundry-stub.mjs) не поддерживает вовсе (не только для этой
-// правки — showGrappleDialog не был протестирован и до неё). Проверяется
-// чистая логика бонуса здесь и приём techDef.ranged/forceTargetActor,
-// который _doThrow задействует, в test/sheets/attack-dialog.test.mjs.
+// tentacleBonus — общий расчёт под tentacleTechDef (5 контестов) И _doThrow
+// (wdbc-oxdn: Метнуть/Замахнуться — «безролловые» на вид действия Борьбы,
+// которые на деле идут полным тестом WS/BS через attack-dialog.mjs — тоже
+// «тесты в Борьбе» по тексту мутации, просто со своим бонусом techDef.
+// wsBonus/bsBonus вместо tentacleTechDef/extraBonus). Укус (_doBite) сюда
+// больше не входит — с core.json, «Типы Рукопашного Оружия» («может
+// автоматически наносить попадание в Борьбе») он тоже стал безролловым
+// НА ДЕЛЕ, не только на вид, и tentacleBonus ему нечего усиливать (тот же
+// случай, что Сжать/Хруст, см. шапку файла). _doThrow сам не экспортирован
+// и не тестируется изолированно здесь: showGrappleDialog рендерит кастомные
+// кнопки внутри DialogV2.wait и зовёт dialog.close() у результата рендера —
+// этого пути текущая заглушка (test/support/foundry-stub.mjs) не
+// поддерживает вовсе (не только для этой правки — showGrappleDialog не был
+// протестирован и до неё). Проверяется чистая логика бонуса здесь и приём
+// techDef.ranged/forceTargetActor, который _doThrow задействует, в
+// test/sheets/attack-dialog.test.mjs.
 describe("tentacleBonus", () => {
   const DEFAULT_SOURCES = getRuleSources();
   afterEach(() => {
@@ -231,8 +235,7 @@ describe("tentacleBonus", () => {
   });
 
   // Субмутация 9 «Изменчивое» (wdbc-2ynk): пока предмет-Щупальце временно в
-  // форме руки — бонусу нечем помогать ни приёму Захват, ни этим тестам, ни
-  // Укусу (все три читают один и тот же tentacleBonus).
+  // форме руки — бонусу нечем помогать ни приёму Захват, ни этим тестам.
   it("с mutation.tentacle, но предмет-Щупальце в форме руки — 0", () => {
     registerRuleSource("test", () => [{ id: "tentacle", label: "Щупальце",
       effects: [{ kind: "grantFlag", target: "mutation.tentacle" }] }]);
@@ -366,7 +369,7 @@ describe("isDetachedGrapple", () => {
 // партнёра относительно бросающего, module/rules/improvised-weapon.mjs.
 // Сами _doSwing/_doThrow (реальные броски/чат) не экспортированы и не
 // тестируются изолированно здесь — тот же путь через DialogV2.wait, что и у
-// _doBite (см. комментарий у tentacleBonus выше).
+// _doWrench (см. комментарий у tentacleBonus выше).
 describe("swingProfile", () => {
   const DEFAULT_SOURCES = getRuleSources();
   afterEach(() => {

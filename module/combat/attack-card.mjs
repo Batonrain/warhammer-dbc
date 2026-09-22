@@ -235,8 +235,18 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
       data-weapon-name="${weaponName}" data-attacker-uuid="${attackerUuid}" data-item-uuid="${itemUuid}">
       🎯 Разместить шаблон ${i + 1} и отметить цели
     </button>` : "";
+    // Щит вне арки (core.json, «Типы Рукопашного Оружия», разд. «Щит») —
+    // геометрию системой не считает никто (нет отслеживания угла атаки на
+    // сцене), галочка рядом с кнопкой применения урона решает за ГМа на
+    // глаз; hooks.mjs читает её состояние по клику из того же .roll-dmg-hit-group
+    // (тот же приём, что уже читает соседний .wh-dmg-swap-btn/DOM-правку).
+    const shieldArcCheckbox = !toHorde ? `
+    <label class="attack-mod-check" style="display:block;font-size:0.82em;">
+      <input type="checkbox" class="wh-shield-out-of-arc-checkbox"/> Цель вне арки щита (АР щита не считается)
+    </label>` : "";
     return `<span class="roll-dmg-hit-group">
     ${perHitTemplateBtn}
+    ${shieldArcCheckbox}
     <button class="wh-apply-dmg-btn${toHorde ? " wh-apply-dmg-horde" : ""}" type="button"
     data-damage="${d.total}"
     data-penetration="${pen}"
@@ -372,6 +382,27 @@ function regroupLegacySection(active, { actorUuid }) {
   <div class="roll-wprop-effects">
     <button class="wh-legacy-regroup-btn" type="button" data-attacker-uuid="${actorUuid}">
       ⚜ Перегруппировка: потратить Очко Бесчестия — переброс Инициативы со следующего Раунда
+    </button>
+  </div>`;
+}
+
+/**
+ * Посох/Крюк (core.json, «Типы Рукопашного Оружия»): «При Избирательном
+ * попадании в Ногу [Посохом] персонаж может потратить Реакцию, чтобы
+ * провести против цели прием Повалить» / «На 3+ Успеха на попадание [Крюком]
+ * ... персонаж может потратить Реакцию, чтобы провести против цели прием
+ * Повалить». Это Реакция АТАКУЮЩЕГО (не защиты цели, потому не в
+ * defenseSection — тот делит attackId с Уклонением/Парированием защищающегося,
+ * общий гейт «одно чужое Действие → одна Реакция», к своей Реакции
+ * атакующего отношения не имеющий), доступность уже посчитана attack.mjs.
+ */
+function reactionKnockdownSection(reason, { actorUuid }) {
+  if (!reason) return "";
+  return `
+  <div class="roll-wprop-effects">
+    <button class="wh-reaction-knockdown-btn" type="button" data-attacker-uuid="${actorUuid}"
+      title="${esc(reason)} — тратит Реакцию атакующего, открывает обычный встречный тест «Повалить».">
+      🦯 Реакция: Повалить
     </button>
   </div>`;
 }
@@ -693,6 +724,14 @@ export function attackCard({
   // attack.mjs (актор/своя-очередь-Хода/раз-в-бой там, не здесь) — карточка
   // только рисует кнопку рядом с «Применить урон» (applyDamageSection ниже).
   deadlyTrapLegacyDelta = 0,
+  // Посох/Крюк (core.json, «Типы Рукопашного Оружия»): непустая строка —
+  // Реакция «Повалить» доступна, её текст объясняет почему (уже посчитано
+  // attack.mjs — Избирательное попадание Посохом в Ногу / 3+ Успеха Крюком).
+  reactionKnockdownReason = "",
+  // Сабля, Верховая Атака (core.json, «Типы Рукопашного Оружия») — непустая
+  // строка, уже готовый текст напоминания (attack.mjs уже решил, показывать
+  // ли его — по opts.sabreSecondAttack).
+  sabreSecondAttackNote = "",
   // Данные для урона по Орде: Rng нужен Распылению, burst — Таланту «Свинцовый
   // Дождь», uuid — чтобы найти Таланты и Размер стрелка, hordeHits — раскладка
   // попаданий правилом «Прячась в Орде» (combat/horde-tokens.mjs).
@@ -938,6 +977,8 @@ export function attackCard({
       misfireHitsSection(misfireHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid }),
       betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid }),
       regroupLegacySection(regroupLegacyActive, { actorUuid: attackerUuid }),
+      reactionKnockdownSection(reactionKnockdownReason, { actorUuid: attackerUuid }),
+      sabreSecondAttackNote ? `<div class="roll-wprop-effects"><div class="roll-defense-note">${esc(sabreSecondAttackNote)}</div></div>` : "",
       soulBurnActorId ? `
     <div class="roll-wprop-effects">
       <button class="wh-soulburn-btn" type="button" data-attacker-id="${soulBurnActorId}">

@@ -111,6 +111,20 @@ export function readAttackForm(form, ammoConds) {
     // Тесное помещение (стр. 36, wdbc-x1nz.2.63) — ГМ решает на глаз, галочка
     // видна только у Взрывного (attack-dialog.mjs::confinedSpaceHtml).
     confinedSpace: el("#atk-confined-space")?.checked || false,
+    // Молот/Топор по цели у стены (core.json, «Типы Рукопашного Оружия») —
+    // ГМ решает на глаз, галочка видна только этим двум типам
+    // (attack-dialog.mjs::targetAgainstWallHtml); «лежащая» цель определяется
+    // автоматически, эта галочка нужна только для «прижата к стене».
+    targetAgainstWall: el("#atk-target-against-wall")?.checked || false,
+    // Рапира, Выпад (core.json, «Типы Рукопашного Оружия») — галочка видна
+    // только этому подтипу (attack-dialog.mjs::rapierIgnoreRngHtml); эффект
+    // (−10 к штрафу Избирательной атаки) считается в thresholdParts живьём
+    // по f.maneuverKey/f.aimVal, здесь только читается сырой чекбокс.
+    rapierIgnoreRng: el("#atk-rapier-ignore-rng")?.checked || false,
+    // Сабля, Верховая Атака (core.json, «Типы Рукопашного Оружия») — галочка
+    // видна только этому подтипу и только верхом (attack-dialog.mjs::
+    // sabreSecondAttackHtml); отменяет +20 Базы в thresholdParts живьём.
+    sabreSecondAttack: el("#atk-sabre-second-attack")?.checked || false,
     // Кромсающее, Оружие Наследия (wdbc-1rno.35, стр. 427), второе
     // предложение — галочка видна только при наличии Мутации и Очков
     // Бесчестия (attack-dialog.mjs::legacyCleavingHtml).

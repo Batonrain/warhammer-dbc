@@ -64,6 +64,9 @@ export function buildAttackContent(v) {
     vehicleSideHtml,
     wideBurstHtml,
     confinedSpaceHtml,
+    targetAgainstWallHtml,
+    rapierIgnoreRngHtml,
+    sabreSecondAttackHtml,
     legacyCleavingHtml,
     wp,
     wpDialogHtml,
@@ -145,6 +148,9 @@ return `
       <div class="av-pills">${rofPills}</div>
       ${wideBurstHtml}
       ${confinedSpaceHtml}
+      ${targetAgainstWallHtml}
+      ${rapierIgnoreRngHtml}
+      ${sabreSecondAttackHtml}
       ${legacyCleavingHtml}
     </div>
     ${fanningActive ? `

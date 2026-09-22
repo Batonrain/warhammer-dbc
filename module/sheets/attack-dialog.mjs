@@ -33,6 +33,7 @@ import { mergeExtraProps } from "../combat/attack-weapon.mjs";
 import { getModEffects, mergeWeaponPropEntries, getInstalledMods } from "../combat/weapon-mods.mjs";
 import { hasRuleFlag }                        from "../rules/flags.mjs";
 import { isStunnedOrDazed, isBlindedActor }    from "../rules/predicates.mjs";
+import { shieldArmorByLocation } from "../combat/hand-shield.mjs";
 import { isHallucinatingCannotAttack }         from "../combat/hallucinogenic.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
 import { mountPairFor, mountSelectiveMod, SELECTIVE_MODS,
@@ -484,7 +485,20 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // рукопашный бой или продолжает в нём находиться — то есть практически
   // всегда, когда идёт рукопашная атака этим оружием; безусловно, без галочки.
   const stepByStepMod = (isMelee && wp.stepByStep) ? 10 : 0;
-  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + ogrynFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + stepByStepMod + bowMarkedMod + proneMod + stunnedMod + fliesMod + wrathHeatMod;
+  // Булава (core.json, «Типы Рукопашного Оружия»): +10 на не-Избирательные
+  // атаки. Здесь — «холодное» окно ОТКРЫТИЯ (аим ещё не выбран, по умолчанию
+  // "" — не-Избирательная, см. attackForm/thresholdParts), поэтому применяется
+  // безусловно; живой пересчёт при смене аима — своя строка в thresholdParts
+  // ниже (та же схема, что уже развела proneMod/wpAttackMod от «Цель
+  // Повалена»/baseParts, wdbc-r5o7.2).
+  const meleeMaceMod = (isMelee && sys.meleeCategory === "Булава") ? 10 : 0;
+  // Крюк (core.json, «Типы Рукопашного Оружия»): «Дает –10 на не-Избирательные
+  // атаки и –15 на Избирательные» — зеркало Булавы выше, только штраф и с
+  // двумя разными величинами по Избирательности вместо одной безусловной.
+  // «Холодное» значение здесь тоже по умолчанию не-Избирательное (−10) — тем
+  // же приёмом, что meleeMaceMod.
+  const meleeHookMod = (isMelee && sys.meleeCategory === "Крюк") ? -10 : 0;
+  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + ogrynFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + stepByStepMod + bowMarkedMod + proneMod + stunnedMod + fliesMod + wrathHeatMod + meleeMaceMod + meleeHookMod;
   const meleeCategory = sys.meleeCategory || "";
   // Категория оружия по выбранному Профилю (стр. 14, «Композиция Рукопашной
   // Атаки»): у многопрофильного оружия каждый альт-профиль — фактически
@@ -660,7 +674,15 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // остаётся ручной для случаев, которые система не отследит сама, напр.
   // ослепление вспышкой без хранимого флага). isBlindedActor — свой флаг
   // ИЛИ Потеря обоих глаз (rules/predicates.mjs).
-  const isBlinded = isBlindedActor(actor);
+  // Щит на голове (core.json, «Типы Рукопашного Оружия», разд. «Щит»):
+  // «При прикрытии головы щитом, персонаж перекрывает себе обзор... персонаж
+  // считается слепым с углов прикрытия щита» — упрощение: не различаем
+  // «слеп только в направлении, что закрывает щит» (та же геометрия, которой
+  // в системе нет, что у арки/«прижата к стене») — трактуем как обычное
+  // Ослепление ВСЕГДА, пока голова прикрыта (shieldArmorByLocation уже сама
+  // учитывает shieldRaised для частичных зон вроде «(Г)»).
+  const shieldBlindsSelf = (shieldArmorByLocation(actor).head || 0) > 0;
+  const isBlinded = isBlindedActor(actor) || shieldBlindsSelf;
   // Потеря глаз (частичная, book: «−10 на BS», независимо от полной
   // слепоты) — читает флаг напрямую, не через isBlindedActor: тут именно
   // «хоть один глаз потерян», а не производное «оба потеряны = Ослеплён».
@@ -1095,6 +1117,45 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     <label class="attack-mod-check" title="Стр. 36: комната не больше 4×радиус взрыва. X Dmg — +1d10 урона и радиус ×1.5 (окр. вверх); E Dmg — Рвущее; Оглушающее — рейтинг +1. Решает ГМ на глаз, геометрия стен системой не считается.">
       <input type="checkbox" id="atk-confined-space"/> Тесное помещение (≤4×радиус взрыва)
     </label>` : "";
+  // Молот/Топор по лежащей или прижатой к стене цели (core.json, «Типы
+  // Рукопашного Оружия»): «+1d10 Dmg и получает свойство Concussive(–1)/
+  // Felling(2), или +1 к рейтингу, если оно уже имело это свойство».
+  // «Лежащая» — статус Повержен цели, читается автоматически (см. proneMod
+  // выше); «прижата к стене» система не отслеживает (нет геометрии стен, тот
+  // же принцип, что у Тесного помещения выше) — решает ГМ галочкой.
+  const meleeTypeBonusWeapon = isMelee && (sys.meleeCategory === "Молот" || sys.meleeCategory === "Топор");
+  const targetAgainstWallHtml = meleeTypeBonusWeapon ? `
+    <label class="attack-mod-check" title="Типы Рукопашного Оружия: по лежащей или прижатой к стене цели Молот/Топор наносят +1d10 Dmg и получают Concussive/Felling (или +1 к рейтингу, если уже было). «Лежащая» цель определяется автоматически (Повержен); эта галочка — только для «прижата к стене», решает ГМ на глаз.">
+      <input type="checkbox" id="atk-target-against-wall"/> Цель прижата к стене (+1d10, ${sys.meleeCategory === "Молот" ? "Concussive" : "Felling"} +1)
+    </label>` : "";
+  // Рапира (core.json, «Типы Рукопашного Оружия»): «при проведении Выпада
+  // может проигнорировать +1 к Rng, чтобы уменьшить штраф на Избирательные
+  // атаки на 10» — категория-гейт (не по текущему выбранному Приёму: тот
+  // меняется живьём в этом же окне, а остальные категорийные галочки этой
+  // сессии тоже не следят за живым Приёмом, см. targetAgainstWallHtml выше).
+  // Эффект — своя строка в thresholdParts ниже, гейтится f.aimVal (есть ли
+  // вообще штраф, который уменьшать) и живым выбором Приёма f.maneuverKey.
+  // Побочный эффект на саму Длину (+1 Rng Выпада, весовое сравнение с
+  // оружием цели) этой галочкой не тронут — отдельный, более глубокий пробел.
+  const rapierIgnoreRngAvailable = isMelee && sys.meleeCategory === "Меч" && sys.meleeSubtype === "Рапира";
+  const rapierIgnoreRngHtml = rapierIgnoreRngAvailable ? `
+    <label class="attack-mod-check" title="Рапира, приём Выпад: игнорирует +1 к Rng этого приёма, вместо этого штраф Избирательной атаки этим Выпадом снижается на 10.">
+      <input type="checkbox" id="atk-rapier-ignore-rng"/> Рапира: игнорировать +1 Rng Выпада (−10 к штрафу Избирательной атаки)
+    </label>` : "";
+  // Сабля (core.json, «Типы Рукопашного Оружия»): «при совершении Верховой
+  // Атаки может проигнорировать бонус +20, чтобы совершить две атаки вместо
+  // одной, но по разным целям на пути». Геометрии «пути Натиска» и второго
+  // НЕЗАВИСИМОГО броска попадания в системе нет (честный предел — тот же,
+  // что у «Вторичных целей Очереди», attack.mjs::burstSecondaryTargets:
+  // только подсказка, реальное распределение/вторая атака — за столом).
+  // Здесь — галочка отменяет сам +20 (своя строка в thresholdParts, гейт по
+  // живому f.baseKey==="mounted"), карточка отдельно напоминает про вторую
+  // атаку (см. attack.mjs::sabreSecondAttackNote).
+  const sabreSecondAttackAvailable = isMounted && sys.meleeCategory === "Меч" && sys.meleeSubtype === "Сабля";
+  const sabreSecondAttackHtml = sabreSecondAttackAvailable ? `
+    <label class="attack-mod-check" title="Сабля, Верховая Атака: игнорирует бонус +20 этой Базы — взамен книга даёт вторую атаку этим оружием по другой цели на пути (распределение/второй бросок — за столом, системой не автоматизировано).">
+      <input type="checkbox" id="atk-sabre-second-attack"/> Сабля: вторая атака вместо +20 Верховой Атаки
+    </label>` : "";
   // Кромсающее/fearsome 10-10, Оружие Наследия (wdbc-1rno.35, стр. 427),
   // второе предложение: «...может потратить Очко Бесчестия, чтобы бросить
   // ВМЕСТО ЭТОГО 1d10−2(мин.1)» вместо обычного 1d5+1 на Экстремальном Уроне.
@@ -1276,6 +1337,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     techSectionsHtml,
     wideBurstHtml,
     confinedSpaceHtml,
+    targetAgainstWallHtml,
+    rapierIgnoreRngHtml,
+    sabreSecondAttackHtml,
     legacyCleavingHtml,
     vehicleSideHtml,
     wp,
@@ -1307,6 +1371,30 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       { label: "Легион",             value: legionFit.total },
       { label: "Огрины",             value: ogrynFit.total },
       { label: "Тренировка",         value: weaponTraining.total },
+      // Булава (core.json, «Типы Рукопашного Оружия»): «Дает бонус +10 на
+      // любые не-Избирательные атаки» — живой чекбокс f.aimVal (та же
+      // «Избирательность», что ниже строкой modParts) определяет и это.
+      { label: "Булава (не-Избирательная атака)",
+        value: (isMelee && sys.meleeCategory === "Булава" && !f.aimVal) ? 10 : 0 },
+      // Крюк (core.json, «Типы Рукопашного Оружия»): −10 не-Избирательная / −15
+      // Избирательная — тот же живой f.aimVal, что у Булавы, только знак и
+      // величина другие для двух исходов вместо одного.
+      { label: "Крюк (Избирательная/не-Избирательная атака)",
+        value: (isMelee && sys.meleeCategory === "Крюк") ? (f.aimVal ? -15 : -10) : 0 },
+      // Рапира (core.json, «Типы Рукопашного Оружия»): «при проведении
+      // Выпада может проигнорировать +1 к Rng, чтобы уменьшить штраф на
+      // Избирательные атаки на 10» — только пока реально выбран Выпад И
+      // отмечена галочка И есть сам штраф, который уменьшать (f.aimVal).
+      { label: "Рапира: игнорирует +1 Rng Выпада",
+        value: (isMelee && sys.meleeCategory === "Меч" && sys.meleeSubtype === "Рапира"
+          && f.maneuverKey === "thrust" && f.rapierIgnoreRng && f.aimVal) ? 10 : 0 },
+      // Сабля (core.json, «Типы Рукопашного Оружия»): отменяет +20 Верховой
+      // Атаки (уже сидит в sel.baseBon этой Базы) взамен на вторую атаку —
+      // своя строка компенсирует ровно тот бонус, а не жёстко «-20» (если
+      // книжный бонус когда-то изменится, компенсация не разъедется).
+      { label: "Сабля: вторая атака вместо +20",
+        value: (isMelee && sys.meleeCategory === "Меч" && sys.meleeSubtype === "Сабля"
+          && f.baseKey === "mounted" && f.sabreSecondAttack) ? -sel.baseBon : 0 },
       { label: "Стойка цели",        value: targetStanceMod },
       { label: "Цель раскрыта",      value: exposedMod },
       { label: "Беспомощная цель",   value: helplessRangedMod },

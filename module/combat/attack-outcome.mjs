@@ -219,7 +219,7 @@ export function damageFormulaFor({ damage, flatBonus = 0, chars = {}, corruption
  * Эти кубы не вызывают Экстремальный урон — их бросает отдельный Roll.
  */
 export function bonusDamageDice({ wp, rofMode, hit, deg, shortRange = false, maximal = false, band = null, ammoDice = 0, aimed = false,
-                                   confinedSpace = false, damageType = "" }) {
+                                   confinedSpace = false, damageType = "", meleeTypeBonusDie = false }) {
   let dice = 0;
   // «При одиночных выстрелах С Прицеливанием» (стр. 166) — без Прицеливания
   // (aimed=false) Меткое не даёт этих кубов вовсе, только удвоение бонуса
@@ -251,5 +251,9 @@ export function bonusDamageDice({ wp, rofMode, hit, deg, shortRange = false, max
   // (damageType "blast"), получают +1d10 урона. Радиус ×1.5 — отдельно, в
   // attack.mjs, там же, где известен реальный blastRating для шаблона.
   if (confinedSpace && wp.blastRating > 0 && damageType === "blast") dice += 1;
+  // Молот/Топор по лежащей/у стены цели (core.json, «Типы Рукопашного
+  // Оружия») — считает attack.mjs (нужны meleeCategory и статус цели), сюда
+  // приходит уже готовым булевым флагом, тем же приёмом, что confinedSpace.
+  if (meleeTypeBonusDie) dice += 1;
   return dice + (Number(ammoDice) || 0);
 }

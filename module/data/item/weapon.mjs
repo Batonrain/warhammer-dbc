@@ -52,6 +52,13 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
       // роль — ярлык профиля хвата для HUD) — заполняется отдельно, из
       // profileLabel как источника, но своим полем, чтобы не путать смыслы.
       meleeCategory: new StringField({ initial: "", label: "Категория (Арсенал)" }),
+      // Книжные подтипы ВНУТРИ категории (core.json, «Типы Рукопашного
+      // Оружия»): Рапира/Сабля у «Меч», Кулак.Б у «Кулаки» (meleeCategory у
+      // всех троих остаётся базовым — «Меч»/«Кулаки», иначе разошлось бы с
+      // Melee Training/MELEE_CATEGORIES/MELEE_MANEUVERS.categories,
+      // завязанными на буквальное значение категории). Пусто — без подтипа;
+      // "Рапира"/"Сабля"/"Кулак.Б" — единственные ожидаемые значения на сейчас.
+      meleeSubtype: new StringField({ initial: "", label: "Подтип (Меч: Рапира/Сабля; Кулаки: Кулак.Б)" }),
       profiles:     list("Профили"),
       // Перезарядка — строка: в книге это и «1», и «полн.», и «2 полн.».
       reload:       new StringField({ initial: "1", label: "Перезарядка" }),

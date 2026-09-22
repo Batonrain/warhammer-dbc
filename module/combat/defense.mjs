@@ -2,7 +2,7 @@ import { SKILL_RANKS }    from "../constants/characteristics.mjs";
 import { MELEE_STANCES, BALANCE_PARRY_MOD, gripEffects, parseGrips } from "../constants/combat.mjs";
 import { currentMeleeGrip } from "../rules/hands.mjs";
 import { _degWord, _hitWord, _leftoverSuccessPhrase, negatedHits, esc } from "../helpers/utils.mjs";
-import { resolveWeaponPropsList, aggregateAuto } from "./weapon-properties.mjs";
+import { resolveWeaponPropsList, resolveWeaponProps, aggregateAuto } from "./weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries }  from "./weapon-mods.mjs";
 import { rollIcon }       from "../constants/roll-icons.mjs";
 import { pickReroll }     from "../rules/reroll-pick.mjs";
@@ -10,7 +10,8 @@ import { collectTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { hasRuleFlag }    from "../rules/flags.mjs";
 import { isRoundCapabilityAvailable } from "../apps/game-session.mjs";
-import { equippedMeleeWeapon } from "./equipped-melee.mjs";
+import { equippedMeleeWeapon, isIntegralAttack } from "./equipped-melee.mjs";
+import { damageFormulaFor, meleeStrengthBonus } from "./attack-outcome.mjs";
 import { withWitchsEdge } from "./witchs-edge.mjs";
 import { spendReaction }  from "./action-economy.mjs";
 import { addEvasionSurplus } from "./evasion-pool.mjs";
@@ -558,8 +559,27 @@ export async function _performParry(actor, {
       `Противник крупнее на ${sizeGate.steps} ${stepWord(sizeGate.steps)} Размера — Парирование ${need} (стр. 12).`);
   }
 
-  const { wsTotal, meleeWeapon, balance, balanceMod, threshold: baseParryThreshold, modParts, pwp, crossblock } =
+  const { wsTotal, meleeWeapon, balance, balanceMod, threshold: parryProfileThreshold, modParts, pwp, crossblock } =
     parryProfile(actor, extraMod, null, { useCrossblock });
+
+  // Безоружное Парирование / Кулак.Б (core.json, раздел «Безоружный Бой»):
+  // «Невооруженный персонаж получает штраф –20 на Парирование полноценного
+  // рукопашного оружия.» «Кулак.Б... может Парировать рукопашное оружие,
+  // наносящее R Dmg (со свойством Power Field – также оружие, наносящее E
+  // Dmg), считаясь полноценным оружием» — экземпция от этого штрафа, но
+  // ТОЛЬКО против R/E-атак (иначе Кулак.Б получает тот же −20, что голый
+  // кулак). attackerWp нужен и здесь (тип урона/Power Field атакующего), и
+  // ниже — Power Field против безоружной защиты.
+  const attackerWp = attackerWeapon ? aggregateAuto(resolveWeaponProps(attackerWeapon)) : null;
+  const attackerIsUnarmed = !attackerWeapon || isIntegralAttack(attackerWeapon);
+  const defenderUnarmed = !meleeWeapon || isIntegralAttack(meleeWeapon);
+  const attackerDmgType = attackerWeapon?.system?.damageType || "";
+  const armoredFistExempt = defenderUnarmed && meleeWeapon?.system?.meleeSubtype === "Кулак.Б"
+    && (attackerDmgType === "rending" || (attackerDmgType === "energy" && !!attackerWp?.powerField));
+  const unarmedParryPenalty = (defenderUnarmed && !attackerIsUnarmed && !armoredFistExempt) ? -20 : 0;
+  if (unarmedParryPenalty) modParts.push(`безоружное Парирование ${unarmedParryPenalty}`);
+  const baseParryThreshold = parryProfileThreshold + unarmedParryPenalty;
+
   // Взор Неизбежности (стр. …, wdbc-1rno.3) — тот же приём, что у Уклонения
   // (_performDodge): защищающийся видит глаза атакующего-носителя Дара —
   // Комбинированный Порог с W−10, провал снимает все Реакции.
@@ -700,6 +720,50 @@ export async function _performParry(actor, {
       </div>`;
   }
 
+  // Безоружное Парирование / Кулак.Б, продолжение (core.json, «Безоружный
+  // Бой»): «Если силовое оружие «уничтожает» безоружную атаку, это считается
+  // попаданием этим оружием в атакующую часть тела с 1 Успехом (используя
+  // S.b. атакующего при парировании безоружной атаки силовым оружием), но
+  // сама безоружная атака остается доступной.» Тот же бросок 1–75, что у
+  // обычного Силового поля выше, но по СВОЙСТВАМ АТАКУЮЩЕГО оружия (не pwp
+  // защитника) — и вместо «оружие уничтожено» защитник получает попадание
+  // (формула/S.b атакующего, deg=1 — «1 Успех», без доп. кубиков). Книга не
+  // исключает Кулак.Б из этой угрозы («если только оно не привело к
+  // разрушению кулака свойством Power Field») — гейт по defenderUnarmed, не
+  // по armoredFistExempt.
+  let unarmedPowerFieldNote = "";
+  if (parried && defenderUnarmed && attackerWp?.powerField && attackerActor) {
+    const pfRoll2 = await new Roll("1d100").evaluate();
+    allRolls.push(pfRoll2);
+    const destroyed = pfRoll2.total <= 75;
+    if (destroyed) {
+      const attackerSb = Number(attackerActor.system?.characteristics?.s?.bonus) || 0;
+      const sbEff = meleeStrengthBonus({ sb: attackerSb, wp: attackerWp });
+      const dmgFormula = damageFormulaFor({
+        damage: attackerWeapon.system.damage, flatBonus: sbEff, chars: attackerActor.system.characteristics,
+        corruptionBonus: attackerActor.system.corruptionBonus ?? 0, wp: attackerWp, isMelee: true
+      });
+      const dmgRoll = await new Roll(dmgFormula).evaluate();
+      allRolls.push(dmgRoll);
+      const { applyDamageToActor } = await import("./damage.mjs");
+      await applyDamageToActor(actor, {
+        rawDamage: dmgRoll.total, penetration: Number(attackerWeapon.system?.penetration) || 0,
+        damageType: attackerWeapon.system?.damageType || "impact", hitLocation: "Рука", melee: true,
+        attackerName: attackerActor.name, attackerUuid, weaponName: attackerWeapon.name
+      });
+      unarmedPowerFieldNote = `
+      <div class="roll-defense-note">
+        ${rollIcon("bolt","#6fe6ff")}Силовое поле противника — бросок: <b>${pfRoll2.total}</b> →
+        <span class="roll-failure">безоружная защита не выдержала: попадание ${esc(attackerWeapon.name)} в Руку — <b>${dmgRoll.total}</b> Dmg (S.b атакующего, 1 Успех).</span>
+      </div>`;
+    } else {
+      unarmedPowerFieldNote = `
+      <div class="roll-defense-note">
+        ${rollIcon("bolt","#6fe6ff")}Силовое поле противника — бросок: <b>${pfRoll2.total}</b> → <span class="roll-success">безоружная защита выдержала (76+).</span>
+      </div>`;
+    }
+  }
+
   // Контратака (стр. 12, Талант Counter Attack): «успешно Парировав, персонаж
   // может тут же атаковать этим же оружием со штрафом −10, раз в Раунд» — по
   // выбору игрока, поэтому кнопка, а не авто-атака. Без активного Combat
@@ -743,8 +807,8 @@ export async function _performParry(actor, {
       ? `<div style="font-size:0.82em;color:#5a4a30;margin-bottom:2px;">Оружие: ${esc(meleeWeapon.name)} (Баланс ${balance >= 0 ? "+" : ""}${balance})</div>`
       : ""],
     outcome: outcomeHtml,
-    sections: [leftoverNote, powerFieldNote, crossblockNote, counterAttackHtml]
-  }, { rolls: [roll] });
+    sections: [leftoverNote, powerFieldNote, unarmedPowerFieldNote, crossblockNote, counterAttackHtml]
+  }, { rolls: allRolls });
 }
 
 /**

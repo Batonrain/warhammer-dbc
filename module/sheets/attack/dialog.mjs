@@ -424,6 +424,15 @@ export function openAttackDialog(ctx) {
               // видна только у Взрывного; применимость по damageType/Concussive
               // разбирает сам attack.mjs.
               confinedSpace: f.confinedSpace,
+              // Молот/Топор по цели у стены (core.json, «Типы Рукопашного
+              // Оружия») — галочка диалога, «лежащую» цель attack.mjs
+              // определяет сам по статусу Повержен.
+              targetAgainstWall: f.targetAgainstWall,
+              // Сабля, Верховая Атака (core.json, «Типы Рукопашного Оружия») —
+              // галочка диалога отменяет +20 Базы (уже в threshold), сюда
+              // едет только чтобы attack.mjs мог напомнить про вторую атаку
+              // в карточке (само распределение — за столом).
+              sabreSecondAttack: f.sabreSecondAttack,
               legacyCleavingRoll: f.legacyCleavingRoll,
               // Условные эффекты боеприпаса, отмеченные игроком (стр. 203).
               ammoCondProps:  f.ammoSel.flatMap(c => c.wp || []),

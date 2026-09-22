@@ -33,6 +33,7 @@
 import { spendActionPoints } from "./action-economy.mjs";
 import { resolveWeaponProps, aggregateAuto } from "./weapon-properties.mjs";
 import { rollExtremeDamage } from "./attack.mjs";
+import { meleeStrengthBonus, damageFormulaFor, hitLocation } from "./attack-outcome.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
@@ -141,4 +142,71 @@ export async function resolveGrenadeMeleeFumble(actor, item) {
     title: `${esc(actor.name)} — Критический Промах: граната падает под ноги!`,
     warnLine: "Граната не долетела до цели — упала под ноги атакующему и взорвалась (стр. 40)."
   });
+}
+
+/**
+ * Кистень/Кнут, Критический Промах рукопашной атаки (core.json, «Типы
+ * Рукопашного Оружия»): «При Критическом Промахе наносит попадание по себе в
+ * случайную часть тела» — отдельный 1d100 определяет локацию тем же приёмом,
+ * что hitLocation уже используют другие «самостоятельные» случайные
+ * попадания вне обычного броска атаки (module/combat/overpenetration.mjs).
+ * Урон — формула самого оружия, как у обычного попадания.
+ *
+ * Кнут дополнительно «не получает бонус к урону от S.b, и попадание
+ * получает свойство Snare (0)» (noStrengthBonus) — Snare(0) не даёт
+ * числового эффекта (рейтинг 0 × −10 = тест Ag−0, обычный тест без штрафа),
+ * поэтому не смоделирован отдельной кнопкой/состоянием — только упомянут в
+ * карточке, ГМ решает на словах.
+ */
+export async function resolveFlailMeleeFumble(actor, item, { noStrengthBonus = false } = {}) {
+  if (!actor || !item) return;
+  const wp = aggregateAuto(resolveWeaponProps(item));
+  const sb = Number(actor.system?.characteristics?.s?.bonus) || 0;
+  const sbEff = noStrengthBonus ? 0 : meleeStrengthBonus({ sb, wp });
+
+  const locRoll = await new Roll("1d100").evaluate();
+  const { label: hitLoc } = hitLocation({ rv: locRoll.total, hit: true });
+
+  const dmgFormula = damageFormulaFor({
+    damage: item.system.damage, flatBonus: sbEff, chars: actor.system.characteristics,
+    corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee: true
+  });
+  const dmgRoll = await new Roll(dmgFormula).evaluate();
+  const damageType = item.system.damageType || "impact";
+  const pen = Number(item.system.penetration) || 0;
+  const weaponName = esc(item.name);
+  const actorName = esc(actor.name);
+
+  const dmgBtn = `
+    <button class="wh-apply-dmg-btn" type="button"
+      data-damage="${dmgRoll.total}" data-penetration="${pen}"
+      data-damage-type="${damageType}" data-damage-subtype="${item.system.damageSubtype || ""}"
+      data-hit-location="${hitLoc}" data-weapon-name="${weaponName}"
+      data-weapon-uuid="${item.uuid}" data-attacker="${actorName}" data-attacker-uuid="${actor.uuid}"
+      data-felling="${wp.fellingRating ?? 0}" data-primitive="${wp.primitive ? 1 : 0}"
+      data-ignore-shield="0" data-warp-soak="${wp.warpSoak ? 1 : 0}"
+      data-lance="0" data-sanctified="${wp.sanctified ? 1 : 0}"
+      data-blast="0" data-flame="${wp.flame ? 1 : 0}"
+      data-power-field="${wp.powerField ? 1 : 0}" data-spray="0"
+      data-devastating="0" data-weapon-range="0"
+      data-melee="1" data-burst="0"
+      data-corrosive="${wp.corrosiveRating ?? 0}" data-entropy="0" data-touch-of-pain="0"
+      data-crippling="${wp.cripplingRating ?? 0}" data-piercing="${wp.piercing ? 1 : 0}"
+      data-haywire="" data-haywire-dmg2=""
+      data-through-shot="0" data-has-extreme="0">
+      Применить урон: <b>${dmgRoll.total}</b> → ${hitLoc}
+    </button>`;
+
+  await postTestCard(actor, {
+    icon: rollIcon("sword", "#e08a3a"),
+    title: `${actorName} — Критический Промах: ${weaponName} бьёт по себе!`,
+    lines: [
+      `<div class="roll-threshold" style="color:#ffb86b;">⚠️ Оружие соскальзывает и попадает по владельцу в случайную часть тела (Типы Рукопашного Оружия).</div>`,
+      noStrengthBonus
+        ? `<div class="roll-threshold">Без бонуса Силы к урону; кнут обвивает владельца — попадание получает Snare (0).</div>`
+        : "",
+      `<div class="roll-threshold">Место попадания: <b>${hitLoc}</b></div>`
+    ].filter(Boolean),
+    sections: [`<div class="roll-apply-dmg-section">${dmgBtn}</div>`]
+  }, { rolls: [locRoll, dmgRoll] });
 }

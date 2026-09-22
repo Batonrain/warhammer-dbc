@@ -39,11 +39,15 @@ describe("parseGrips — токены Хвата из строки профил�
   });
 });
 
-describe("weaponHandsRequired — парный Хват рук не занимает (обе записи)", () => {
+// Когти.Р (core.json, «Типы Рукопашного Оружия»): «не дают пользоваться этой
+// рукой для использования другого оружия» — «П+Л» (Силовой Кулак/Молниевые
+// Когти, оба хвата разом) покрывает всю ладонь тем же следствием, что «Л»
+// (module/rules/hands.mjs::MELEE_GRIP_HANDS).
+describe("weaponHandsRequired — парный Хват («П+Л»/«Л+П») занимает 1 руку", () => {
   const claws = grips => ({ type: "weapon", system: { weaponClass: "melee", grips } });
 
-  it("«Л+П» даёт 0 занятых рук, как и «П+Л»", () => {
-    expect(weaponHandsRequired(claws("П+Л"))).toBe(0);
-    expect(weaponHandsRequired(claws("Л+П"))).toBe(0);
+  it("«Л+П» даёт 1 занятую руку, как и «П+Л» — обе формы записи одного Хвата", () => {
+    expect(weaponHandsRequired(claws("П+Л"))).toBe(1);
+    expect(weaponHandsRequired(claws("Л+П"))).toBe(1);
   });
 });
