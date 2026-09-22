@@ -206,9 +206,14 @@ export function analyze(capabilities) {
     // половинками, иначе не совпадёт ничего: у одной стороны бывает уточнение
     // в скобках, у другой — нет.
     const names = sourceNames(def?.source);
-    const carrier = names.length
-      ? items.find(it => nameHalves(it).some(h => names.some(n => normName(h) === normName(n))))
-      : null;
+    // Половинка бывает общей у нескольких предметов («Horns» — Дар Рога и
+    // образцы оружия «Horns (Natural Weapons)» и т.п., wdbc-o368c): первым
+    // найденным не должен оказаться однофамилец без записей, когда носитель
+    // с записями тоже есть.
+    const matches = names.length
+      ? items.filter(it => nameHalves(it).some(h => names.some(n => normName(h) === normName(n))))
+      : [];
+    const carrier = matches.find(it => it.kinds.length) ?? matches[0] ?? null;
 
     if (carrier && carrier.kinds.length) {
       byWay.item.push(key);

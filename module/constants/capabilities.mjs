@@ -3505,7 +3505,7 @@ export const CAPABILITIES = {
   // ── Таланты_одержимых\Дары___Движение — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyOderzhimyh.daryDvizhenie.beastLegs": {
     label: "Digitigrade (4) + Deadly Natural Weapon (Копыта) от Проявления; если руки — когти, ещё Quadruped (1).",
-    source: "Beast Legs / Дар: Звериные Ноги", reader: ""
+    source: "Beast Legs / Дар: Звериные Ноги", reader: "module/apps/mechanics.mjs (kind:\"integralAttack\") + module/rules/invocation-natural.mjs invocationNaturalAdd() — рейтинг DNW от Проявления по Порче (wdbc-o368c); Digitigrade (4) — kind:\"trait\"; Quadruped при когтях — не механизировано"
   },
   "elite.talantyOderzhimyh.daryDvizhenie.fluidForm": {
     label: "Amorphous + Crawler: просачивается через узкие проходы, облепляет врага.",
@@ -3577,7 +3577,7 @@ export const CAPABILITIES = {
   // ── Таланты_одержимых\Дары___Трансформация — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyOderzhimyh.daryTransformatsiya.horns": {
     label: "Deadly Natural Weapon (Рога) от Проявления.",
-    source: "Horns / Дар: Рога", reader: ""
+    source: "Horns / Дар: Рога", reader: "module/apps/mechanics.mjs (kind:\"integralAttack\") + module/rules/invocation-natural.mjs invocationNaturalAdd() — рейтинг DNW от Проявления по Порче (wdbc-o368c)"
   },
   "elite.talantyOderzhimyh.daryTransformatsiya.manyEyed": {
     label: "Круговое зрение; выглядывает из укрытия рукой/ногой вместо головы.",
@@ -3585,11 +3585,11 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.daryTransformatsiya.massiveMaw": {
     label: "Bite + Deadly Natural Weapon (Укус) от Проявления; при попадании укусом — Захват; может не наносить урон.",
-    source: "Massive Maw / Дар: Огромная Пасть", reader: ""
+    source: "Massive Maw / Дар: Огромная Пасть", reader: "module/apps/mechanics.mjs (kind:\"integralAttack\") + module/rules/invocation-natural.mjs invocationNaturalAdd() — рейтинг DNW от Проявления по Порче (wdbc-o368c); Захват при попадании и отказ от урона — не механизированы"
   },
   "elite.talantyOderzhimyh.daryTransformatsiya.maw": {
     label: "Bite с рейтингом Deadly Natural Weapon от Проявления.",
-    source: "Maw / Дар: Пасть", reader: ""
+    source: "Maw / Дар: Пасть", reader: "module/apps/mechanics.mjs (kind:\"integralAttack\") + module/rules/invocation-natural.mjs invocationNaturalAdd() — рейтинг DNW от Проявления по Порче (wdbc-o368c); укус только в Борьбе — combat/grapple.mjs"
   },
   // ── Таланты_одержимых\Дары___Усилители — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyOderzhimyh.daryUsiliteli.bladesOfTheSoul": {
@@ -5093,8 +5093,8 @@ export const CAPABILITIES = {
     source: "Bestial / Зверь", reader: ""
   },
   "trait.bite": {
-    label: "Естественное оружие: Укус (профиль).",
-    source: "Bite / Укус (X)", reader: ""
+    label: "Естественное оружие: Укус 1d5+X R, Reinforced, Tearing — только в Борьбе (при втором источнике укуса — и обычной атакой).",
+    source: "Bite / Укус (X)", reader: "module/apps/mechanics.mjs (kind:\"integralAttack\" → buildIntegralAttackData, X из рейтинга — module/rules/integral-rating.mjs, wdbc-o368c); скрытие из HUD/БОЙ — grappleOnlyHidden()"
   },
   "trait.bladesX": {
     label: "Свободным действием — попадание с профилем X по врагу на пути.",
@@ -5190,12 +5190,12 @@ export const CAPABILITIES = {
     reader: "module/rules/item-rules.mjs (kind:\"reroll\" → rollMode-правило общего реестра)"
   },
   "trait.deadlyNaturalWeapons4": {
-    label: "Естественное оружие (когти) теряет свойство Primitive.",
-    source: "Deadly Natural Weapons (4, когти) / Смертельное Естественное Оружие", reader: ""
+    label: "Когти 1d10+4 R, Pen 4, Reinforced (Тех-Ассасин).",
+    source: "Deadly Natural Weapons (4, когти) / Смертельное Естественное Оружие", reader: "module/apps/mechanics.mjs (kind:\"integralAttack\" → buildIntegralAttackData, X из рейтинга — module/rules/integral-rating.mjs, wdbc-o368c)"
   },
   "trait.deadlyNaturalWeapons": {
-    label: "Естественное оружие теряет Primitive.",
-    source: "Deadly Natural Weapons / Смертельное Естественное Оружие", reader: ""
+    label: "Смертельное естественное оружие: 7 профилей с уроном и Pen X, Reinforced вместо Primitive — выбор галочками при получении.",
+    source: "Deadly Natural Weapons / Смертельное Естественное Оружие", reader: "module/apps/mechanics.mjs (kind:\"integralAttack\" → buildIntegralAttackData, X из рейтинга — module/rules/integral-rating.mjs, wdbc-o368c); выбор — equipOptional"
   },
   "trait.dedicationToTheShrine": {
     label: "В начале сессии избирает один Путь Воина и одну Характеристику (кроме Inf/Cor): все успешные тесты на неё +1 Успех.",
@@ -5347,8 +5347,8 @@ export const CAPABILITIES = {
     source: "Mutant / Мутант", reader: ""
   },
   "trait.naturalWeapons": {
-    label: "Естественное оружие (профиль).",
-    source: "Natural Weapons / Естественное Оружие", reader: ""
+    label: "Естественное оружие: профили Кулаки/Когти/Косы/Щупальца/Рога/Укус/Копыта с X рейтинга — выбор галочками при получении.",
+    source: "Natural Weapons / Естественное Оружие", reader: "module/apps/mechanics.mjs (kind:\"integralAttack\" → buildIntegralAttackData, X из рейтинга — module/rules/integral-rating.mjs, wdbc-o368c); выбор — equipOptional"
   },
   "trait.newMen": {
     label: "Регенерация и иммунитеты Нового Человека.",
@@ -6063,7 +6063,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.kogotVarpa.vorpalClaws": {
     label: "Руки и ноги искажаются в длинные когти, потрескивающие энергией Варпа. Считаются Когтями с профилем: Когти.P, Rng 1, Dmg 1d10+4 R, Pen 7,",
-    source: "Vorpal Claws / Стрижающие Когти", reader: ""
+    source: "Vorpal Claws / Стрижающие Когти", reader: "module/apps/mechanics.mjs (kind:\"integralAttack\" → buildIntegralAttackData, X из рейтинга — module/rules/integral-rating.mjs, wdbc-o368c)"
   },
   "trait.elitnyeArhetipy.kogotVarpa.warpTalonSuit": {
     label: "Броня и прыжковый ранец сливаются с телом. Не способен снимать броню и прыжковый ранец,",
@@ -6176,7 +6176,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Медуза — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.meduza.deadlyNaturalWeapon2Tentacles7Bite": {
     label: "Естественное оружие медузы.",
-    source: "Deadly Natural Weapon (2, Tentacles; 7, Bite) / Deadly Natural Weapon (2, Щупальца; 7, Укус)", reader: ""
+    source: "Deadly Natural Weapon (2, Tentacles; 7, Bite) / Deadly Natural Weapon (2, Щупальца; 7, Укус)", reader: "module/apps/mechanics.mjs (kind:\"integralAttack\" → buildIntegralAttackData, X из рейтинга — module/rules/integral-rating.mjs, wdbc-o368c)"
   },
   "trait.elitnyeArhetipy.meduza.empath": {
     label: "Медуза получает дополнительные профили атак, совершаемые через тест W: Eyeburst (Глазная Вспышка), Empathy (Эмпатия), Coma (Кома),",
