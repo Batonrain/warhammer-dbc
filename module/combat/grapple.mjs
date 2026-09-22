@@ -32,6 +32,7 @@ import { _showContestDialog } from "./techniques.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { itemHasName, sizeOf } from "../rules/predicates.mjs";
+import { invocationNaturalAdd } from "../rules/invocation-natural.mjs";
 import { resolveWeaponProps, aggregateAuto } from "./weapon-properties.mjs";
 import { damageFormulaFor, meleeStrengthBonus } from "./attack-outcome.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
@@ -320,14 +321,16 @@ async function _doBite(actor) {
   const wp = aggregateAuto(resolveWeaponProps(biteWeapon));
   const sb = Number(actor.system?.characteristics?.s?.bonus) || 0;
   const sbEff = meleeStrengthBonus({ sb, wp });
+  // Укус Дара «Пасть» (wdbc-o368c) — +рейтинг DNW от Проявления, как в attack.mjs.
+  const invocationAdd = invocationNaturalAdd(wp, actor);
   const dmgFormula = damageFormulaFor({
-    damage: biteWeapon.system.damage, flatBonus: sbEff, chars: actor.system.characteristics,
+    damage: biteWeapon.system.damage, flatBonus: sbEff + invocationAdd.dmg, chars: actor.system.characteristics,
     corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee: true
   });
   const dmgRoll = await new Roll(dmgFormula).evaluate();
   const { applyDamageToActor } = await import("./damage.mjs");
   await applyDamageToActor(partner, {
-    rawDamage: dmgRoll.total, penetration: Number(biteWeapon.system?.penetration) || 0,
+    rawDamage: dmgRoll.total, penetration: (Number(biteWeapon.system?.penetration) || 0) + invocationAdd.pen,
     damageType: biteWeapon.system?.damageType || "impact", hitLocation: "Торс", melee: true,
     attackerName: actor.name, attackerUuid: actor.uuid, weaponName: biteWeapon.name
   });
