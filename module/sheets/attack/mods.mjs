@@ -318,7 +318,8 @@ export function situationalMods(v) {
   // оружия, а не гарантированно точное число после Выпада/другого Хвата;
   // как и остальные автогалочки этого файла, их можно поправить руками.
   const meleeAttackerRange = (isMelee && weapon)
-    ? meleeEffectiveRange(weapon.system?.range, parseGrips(weapon.system?.grips)[0] ?? null, "standard")
+    ? meleeEffectiveRange(weapon.system?.range, parseGrips(weapon.system?.grips)[0] ?? null, "standard", false,
+        Math.max(0, Number(actor?.system?.size) || 0))
     : 0;
   const longerWeaponAuto  = isMelee ? longerWeaponBonus(meleeAttackerRange, attackCtx.targetActor) : false;
   const closeQuartersAuto = (isMelee && inContactWithTarget) ? closeQuartersPenalty(meleeAttackerRange) : 0;

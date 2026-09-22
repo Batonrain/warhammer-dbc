@@ -27,10 +27,12 @@ import { parseGrips, meleeEffectiveRange } from "../constants/combat.mjs";
 export function actorMaxMeleeRange(actor) {
   const weapons = (actor?.items ?? []).filter(i =>
     i.type === "weapon" && i.system?.equipped && i.system?.weaponClass === "melee");
+  // Длинные Руки (wdbc-x1nz.2.68, стр. 39): Размер 1+ актора-владельца.
+  const sizeBonus = Math.max(0, Number(actor?.system?.size) || 0);
   let max = 0;
   for (const w of weapons) {
     const primary = parseGrips(w.system?.grips)[0] ?? null;
-    const rng = meleeEffectiveRange(w.system?.range, primary, "standard");
+    const rng = meleeEffectiveRange(w.system?.range, primary, "standard", false, sizeBonus);
     if (rng > max) max = rng;
   }
   return max;

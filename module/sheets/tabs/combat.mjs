@@ -14,7 +14,9 @@
 // Функции принимают актора, а не лист. Свёртка «Состязаний» осталась на листе:
 // это состояние окна, а не актора.
 
-import { MELEE_CONTESTS } from "../../constants/combat.mjs";
+import { MELEE_CONTESTS, parseGrips, gripManeuverBonus } from "../../constants/combat.mjs";
+import { equippedMeleeWeapon } from "../../combat/equipped-melee.mjs";
+import { currentMeleeGrip } from "../../rules/hands.mjs";
 import { showAttackDialog } from "../attack-dialog.mjs";
 import { _showContestDialog } from "../../combat/techniques.mjs";
 import { showGrappleDialog } from "../../combat/grapple.mjs";
@@ -260,6 +262,24 @@ export function activateCombatListeners(root, actor) {
     await applyConjureWraith(actor, "weapon");
   });
 
+  // Хват текущего надетого рукопашного к Приёму этого Состязания (стр. 39,
+  // wdbc-x1nz.2.68): Об → Финт +10 (хват сам по себе), 2р как вторичный хват
+  // одноручного → Повалить +10. Тот же реестр (GRIPS.maneuverBonus/
+  // secManeuverBonus), что читает Оглушить в обычном диалоге атаки
+  // (sheets/attack/selection.mjs) — Финт/Повалить идут отдельным Состязанием
+  // без диалога атаки вовсе, поэтому бонус подсказывается сюда, в
+  // defaultMod (редактируемое поле, как штраф за Размер ниже).
+  function contestGripBonus(maneuverKey) {
+    const weapon = equippedMeleeWeapon(actor);
+    if (!weapon || weapon.system?.weaponClass !== "melee") return 0;
+    // Фоллбэк «1р» на пустой sys.grips — тот же, что у currentMeleeGrip
+    // (module/rules/hands.mjs), иначе оружие без заполненного grips ложно
+    // считалось бы вторичным хватом (wdbc-x1nz.2.68, см. defense.mjs).
+    const primary = parseGrips(weapon.system?.grips)[0] || "1р";
+    const current = currentMeleeGrip(weapon);
+    return gripManeuverBonus(current, maneuverKey, current !== primary);
+  }
+
   // ── Состязания (Повалить/Финт/Давление/Напролом) ─────────────────────────
   // Эффект победы Финта/Давления (стр. 31, wdbc-x1nz.2.65) подмешивается
   // здесь, не в constants/combat.mjs — та запись чистые данные, как и все
@@ -269,7 +289,12 @@ export function activateCombatListeners(root, actor) {
     const key = ev.currentTarget.dataset.technique;
     const base = MELEE_CONTESTS[key];
     if (!base) return;
-    if (key === "feint")  return _showContestDialog(actor, { ...base, onSuccess: resolveFeintSuccess });
+    if (key === "feint") {
+      const gripBonus = contestGripBonus("feint");
+      return _showContestDialog(actor, { ...base, onSuccess: resolveFeintSuccess,
+        defaultMod: gripBonus,
+        note: gripBonus ? `${base.note} Обратный Хват: +${gripBonus}.` : base.note });
+    }
     if (key === "press")  return _showContestDialog(actor, { ...base, onSuccess: resolvePressSuccess });
     if (key === "knockdown") {
       // Повалить (стр. 14, wdbc-x1nz.2.66.5): нельзя против цели на 2+
@@ -283,9 +308,13 @@ export function activateCombatListeners(root, actor) {
         return ui.notifications.warn(`⚠️ Повалить: нельзя проводить против ${target.name} — цель на 2+ Размера крупнее (стр. 14).`);
       }
       const sizePenalty = target ? knockdownSizePenalty(actor, target) : 0;
+      const gripBonus = contestGripBonus("knockdown");
+      const noteParts = [base.note];
+      if (sizePenalty) noteParts.push(`Подсказанный штраф за Размер: ${sizePenalty}.`);
+      if (gripBonus) noteParts.push(`Двуручный Хват вторичный: +${gripBonus}.`);
       return _showContestDialog(actor, { ...base, onSuccess: resolveKnockdownSuccess,
-        defaultMod: sizePenalty,
-        note: sizePenalty ? `${base.note} Подсказанный штраф за Размер: ${sizePenalty}.` : base.note });
+        defaultMod: sizePenalty + gripBonus,
+        note: noteParts.join(" ") });
     }
     if (key === "bulldoze") {
       // Напролом (стр. 31, wdbc-x1nz.2.65): жёсткий запрет против цели на

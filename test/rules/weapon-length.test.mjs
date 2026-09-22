@@ -17,8 +17,12 @@ describe("meleeEffectiveRange — действующий Rng атаки", () => 
     expect(meleeEffectiveRange(4, null, "standard")).toBe(4);
   });
 
-  it("Одноручный (1р) хват прибавляет +1 (GRIPS['1р'].rngMod)", () => {
-    expect(meleeEffectiveRange(4, "1р", "standard")).toBe(5);
+  it("Одноручный (1р) как ОСНОВНОЙ хват — без бонуса (книга даёт +1 только вторичному)", () => {
+    expect(meleeEffectiveRange(4, "1р", "standard", false)).toBe(4);
+  });
+
+  it("Одноручный (1р) как ВТОРИЧНЫЙ хват (двуручное перехвачено одной рукой) — +1 (wdbc-x1nz.2.68)", () => {
+    expect(meleeEffectiveRange(4, "1р", "standard", true)).toBe(5);
   });
 
   it("Обратный (Об) хват −2, до минимума 0", () => {
@@ -38,12 +42,22 @@ describe("meleeEffectiveRange — действующий Rng атаки", () => 
     expect(meleeEffectiveRange(6, "1р", "saw")).toBe(0);
   });
 
-  it("Выпад и Хват складываются", () => {
-    expect(meleeEffectiveRange(4, "1р", "thrust")).toBe(6);
+  it("Выпад и вторичный Хват складываются", () => {
+    expect(meleeEffectiveRange(4, "1р", "thrust", true)).toBe(6);
   });
 
   it("итог никогда не уходит в минус", () => {
     expect(meleeEffectiveRange(0, "Об", "standard")).toBe(0);
+  });
+
+  it("Длинные Руки (Размер 1+, wdbc-x1nz.2.68): добавляется к максимальной дальности", () => {
+    expect(meleeEffectiveRange(4, "1р", "standard", false, 2)).toBe(6);
+  });
+
+  it("Длинные Руки не работают на атаках головой/ногой/укусом/хвостом/щупальцем", () => {
+    expect(meleeEffectiveRange(0, "Ног", "standard", false, 2)).toBe(0);
+    expect(meleeEffectiveRange(0, "Гол", "standard", false, 2)).toBe(0);
+    expect(meleeEffectiveRange(0, "Зуб", "standard", false, 2)).toBe(0);
   });
 });
 
@@ -53,14 +67,14 @@ describe("actorMaxMeleeRange — максимальная длина экипи�
     expect(actorMaxMeleeRange(null)).toBe(0);
   });
 
-  it("берёт максимум среди нескольких экипированных (grips по умолчанию «1р», rngMod +1)", () => {
+  it("берёт максимум среди нескольких экипированных (grips по умолчанию «1р», основной хват — без бонуса)", () => {
     const actor = { items: [meleeWeapon({ range: 2 }), meleeWeapon({ range: 4 })] };
-    expect(actorMaxMeleeRange(actor)).toBe(5); // range 4 + rngMod("1р") +1
+    expect(actorMaxMeleeRange(actor)).toBe(4);
   });
 
   it("неэкипированное оружие не считается", () => {
     const actor = { items: [meleeWeapon({ range: 9, equipped: false }), meleeWeapon({ range: 2 })] };
-    expect(actorMaxMeleeRange(actor)).toBe(3); // только range 2 + rngMod("1р") +1
+    expect(actorMaxMeleeRange(actor)).toBe(2);
   });
 
   it("дальнобойное оружие в инвентаре не участвует", () => {
@@ -68,20 +82,30 @@ describe("actorMaxMeleeRange — максимальная длина экипи�
       { type: "weapon", system: { weaponClass: "basic", range: 100, equipped: true, grips: "2р" } },
       meleeWeapon({ range: 2 }),
     ] };
-    expect(actorMaxMeleeRange(actor)).toBe(3);
+    expect(actorMaxMeleeRange(actor)).toBe(2);
+  });
+
+  it("Длинные Руки (wdbc-x1nz.2.68, стр. 39): Размер 1+ владельца добавляется к максимуму", () => {
+    const actor = { items: [meleeWeapon({ range: 2 })], system: { size: 2 } };
+    expect(actorMaxMeleeRange(actor)).toBe(4);
+  });
+
+  it("Длинные Руки не работают на хвате-теле (Ног/Гол/Зуб/Хв/Щуп)", () => {
+    const actor = { items: [meleeWeapon({ range: 0, grips: "Зуб" })], system: { size: 3 } };
+    expect(actorMaxMeleeRange(actor)).toBe(0);
   });
 });
 
 describe("longerWeaponBonus — правило 1 (стр. 39): длиннее оружия цели → +5", () => {
   it("атакующий длиннее максимума цели — бонус есть", () => {
-    const target = { items: [meleeWeapon({ range: 2 })] }; // эфф. 3
+    const target = { items: [meleeWeapon({ range: 2 })] }; // эфф. 2 (основной хват — без бонуса)
     expect(longerWeaponBonus(5, target)).toBe(true);
   });
 
   it("равная или меньшая длина — бонуса нет", () => {
-    const target = { items: [meleeWeapon({ range: 4 })] }; // эфф. 5
-    expect(longerWeaponBonus(5, target)).toBe(false);
+    const target = { items: [meleeWeapon({ range: 4 })] }; // эфф. 4 (основной хват — без бонуса)
     expect(longerWeaponBonus(4, target)).toBe(false);
+    expect(longerWeaponBonus(3, target)).toBe(false);
   });
 
   it("нет цели — бонуса нет", () => {

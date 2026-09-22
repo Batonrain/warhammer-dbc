@@ -81,7 +81,8 @@ describe("Длина Оружия (стр. 39): бонус Избегания ц
   it("Приём Выпад (+1 Rng атакующему) сокращает разницу — бонус, который был бы без Выпада, пропадает", async () => {
     const weapon = weaponFor({ weaponClass: "melee", range: 0, grips: "Кл" }, { name: "Кастет" }); // Кл: rngSet 0
     const target = actorFor({
-      items: [weaponFor({ weaponClass: "melee", range: 2, grips: "1р", equipped: true }, { name: "Копьё" })] // 2+1=3
+      // «1р» — основной хват Копья, книга не даёт ему +1 (только вторичному, wdbc-x1nz.2.68) — range сразу 3.
+      items: [weaponFor({ weaponClass: "melee", range: 3, grips: "1р", equipped: true }, { name: "Копьё" })]
     });
     setTargets([target]);
     captured.dice = [10, 5];
