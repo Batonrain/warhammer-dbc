@@ -121,7 +121,10 @@ describe("карточка атаки", () => {
 
     it("кнопка и обычная «Применить урон» лежат в одной группе для DOM-обработчика", () => {
       const html = card({ hits: [{ total: 11, loc: "Торс", baseDieResult: 4, successes: 3 }] });
-      expect(html).toMatch(/<span class="roll-dmg-hit-group">\s*<button class="wh-apply-dmg-btn[\s\S]*wh-dmg-swap-btn[\s\S]*<\/span>/);
+      // Между открытием группы и .wh-apply-dmg-btn может стоять что-то ещё
+      // (напр. галочка «Цель вне арки щита», attack-card.mjs::shieldArcCheckbox)
+      // — важна не строгая смежность, а то, что обе кнопки внутри ОДНОГО span.
+      expect(html).toMatch(/<span class="roll-dmg-hit-group">[\s\S]*?<button class="wh-apply-dmg-btn[\s\S]*wh-dmg-swap-btn[\s\S]*<\/span>/);
     });
   });
 

@@ -339,7 +339,20 @@ export function buildSelection(v) {
     // отдельное Состязание (module/combat/knockdown.mjs), тот же бонус
     // подсказывается там же, где Финт для Обратного Хвата (sheets/tabs/combat.mjs).
     const gripManeuverBon = isMelee ? gripManeuverBonus(gKey, maneuverKey, gKey !== primGrip) : 0;
-    const maneuverBon = isMelee ? (mDef.wsBonus ?? 0) + maneuverCapBonus + slaughterBon + gripManeuverBon : 0;
+    // Рапира/Сабля (core.json, «Типы Рукопашного Оружия»): «Рапира
+    // использует тип Меч, но получает +10 на прием Выпад, –10 на прием
+    // Широкий Взмах» / «Сабля... +10 на прием Широкий Взмах, –10 на прием
+    // Выпад» — тот же приём добавочного слагаемого maneuverBon, что
+    // gripManeuverBon/slaughterBon выше, а не правка самой константы
+    // MELEE_MANEUVERS (та общая для ВСЕХ Мечей, не только этого подтипа).
+    const swordSubtypeBon = (isMelee && sys.meleeCategory === "Меч")
+      ? (sys.meleeSubtype === "Рапира"
+          ? (maneuverKey === "thrust" ? 10 : maneuverKey === "sweep" ? -10 : 0)
+          : sys.meleeSubtype === "Сабля"
+            ? (maneuverKey === "sweep" ? 10 : maneuverKey === "thrust" ? -10 : 0)
+            : 0)
+      : 0;
+    const maneuverBon = isMelee ? (mDef.wsBonus ?? 0) + maneuverCapBonus + slaughterBon + gripManeuverBon + swordSubtypeBon : 0;
 
     const pIdx = sel.profIdx ?? profIdx;
     const prof = (pIdx >= 0) ? (atkProfiles[pIdx] || null) : null;

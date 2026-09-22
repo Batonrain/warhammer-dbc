@@ -712,6 +712,7 @@ export async function applyDamageToActor(actor, damageData) {
     sanctified = false, // Освящённое: игнорирует чародейские (варп) щиты
     melee = false,      // Рукопашная атака — нужно свойству брони Rods (Стержни)
     frontArcHit = false, // Атака из передней дуги защищающегося — Cloak/Плащ (wdbc-p5el)
+    shieldOutOfArc = false, // Щит: атака вне арки 180° щита (core.json, «Типы Рукопашного Оружия») — геометрия не считается, решает ГМ
     corrosiveRating = 0, // Разъедающее (X): −X AP в месте попадания (wdbc-plsf)
     entropyRating = 0,   // Касание Энтропии: −X AP места попадания ДО поглощения (wdbc-1rno)
     touchOfPainIgnoreTb = false, // Касание Боли: T.b Поглощения этой атаки игнорируется целиком (wdbc-1rno)
@@ -856,12 +857,31 @@ export async function applyDamageToActor(actor, damageData) {
       // не через vsType/vsSubtype листа), добавляется к бонусу нужной
       // гранулярности: подвид, если атака его называет, иначе широкий тип.
       const adaptBonus = adaptationBonusFor(actor, damageType, damageSubtype);
+      // Щит вне арки (core.json, «Типы Рукопашного Оружия», разд. «Щит»):
+      // «...от атак спереди и с того боку, который прикрывает рука со щитом
+      // (в арке 180°)» — геометрию системой не считает никто (нет
+      // отслеживания угла атаки на сцене), решает ГМ галочкой на кнопке
+      // «Применить урон» (attack-card.mjs/hooks.mjs). Срабатывает, только
+      // если щит реально дал максимум этой локации (shieldSourceLoc) —
+      // иначе выключать нечего, победила обычная броня.
+      const shieldExcluded = shieldOutOfArc && !!absorption.shieldSourceLoc?.[armorKey];
+      const baseArmorAP = shieldExcluded
+        ? (absorption.noShield?.[armorKey] ?? 0) - (absorption.toughnessBonus ?? 0)
+        : (absorption[armorKey] ?? 0) - (absorption.toughnessBonus ?? 0);
+      // Primitive-броня щита (там же): «Если щит имеет свойство Primitive,
+      // АР от него считается примитивной бронёй, кроме как от атак от
+      // примитивного стрелкового оружия» — блокирует удвоение AP атакующим
+      // Primitive-оружием (blocksPrimitiveDouble), но ТОЛЬКО от рукопашных
+      // атак; стрелковый Primitive по-прежнему получает удвоение как от
+      // обычной высокотех. брони. Не действует, если щит уже исключён выше.
+      const shieldPrimitiveHere = !shieldExcluded && melee && !!absorption.shieldPrimitiveLoc?.[armorKey];
+      const effLocFlags = shieldPrimitiveHere ? { ...(locFlags || {}), blocksPrimitiveDouble: true } : locFlags;
       armorAP = resolveArmorAbsorptionAP({
-        baseArmorAP: (absorption[armorKey] ?? 0) - (absorption.toughnessBonus ?? 0),
+        baseArmorAP,
         vsTypeBonus: (absorption.vsType?.[damageType] ?? 0) + (damageSubtype ? 0 : adaptBonus),
         subtypeBonus: (absorption.vsSubtype?.[damageSubtype] ?? 0) + (damageSubtype ? adaptBonus : 0),
         damageType, damageSubtype, melee, hitLocation, primitive, frontArcHit,
-        flags: locFlags,
+        flags: effLocFlags,
         wornAP: absorption.wornOnly?.[armorKey]
       });
       // Рыцарь Кхорна (wdbc-1rno): демон-скакун, вселённый в технику/скакуна,

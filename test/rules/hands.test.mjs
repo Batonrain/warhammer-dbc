@@ -43,9 +43,17 @@ describe("weaponHandsRequired — рукопашное (GRIPS)", () => {
   it("2р — 2 руки", () => {
     expect(weaponHandsRequired(weapon({ system: { grips: "2р (1р)" } }))).toBe(2);
   });
-  it("П (запястье) и Л (ладонь) — 0 рук, как книжные Independent/Wrist", () => {
+  it("П (предплечье, Когти.П) — 0 рук, как книжные Independent/Wrist: ладонь свободна", () => {
     expect(weaponHandsRequired(weapon({ system: { grips: "П" } }))).toBe(0);
-    expect(weaponHandsRequired(weapon({ system: { grips: "Л" } }))).toBe(0);
+  });
+  // Когти.Р (core.json, «Типы Рукопашного Оружия»): «не дают пользоваться
+  // этой рукой для использования другого оружия и тонкой работы с
+  // устройствами» — в отличие от Когти.П, занимает ладонь как обычное
+  // держимое оружие. "П+Л" (Силовой Кулак/Молниевые Когти — оба хвата разом)
+  // тоже покрывает всю ладонь.
+  it("Л (ладонь, Когти.Р) и П+Л — 1 рука: ладонь занята, не свободна для другого оружия", () => {
+    expect(weaponHandsRequired(weapon({ system: { grips: "Л" } }))).toBe(1);
+    expect(weaponHandsRequired(weapon({ system: { grips: "П+Л" } }))).toBe(1);
   });
   it("специальный хват (Об/Бл/Кл/Мх) без явного 1р/2р — 1 рука по умолчанию", () => {
     expect(weaponHandsRequired(weapon({ system: { grips: "Об" } }))).toBe(1);

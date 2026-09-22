@@ -20,7 +20,7 @@ import { carryRow }                        from "../helpers/utils.mjs";
 import { getArmorModEffects, armorModApForLocation, armorAgilityCap,
          disabledArmourOverloadTier, disabledArmourWeight } from "../combat/armor-mods.mjs";
 import { inventoryOverloadTier } from "./encumbrance.mjs";
-import { shieldArmorByLocation } from "../combat/hand-shield.mjs";
+import { shieldCoverageByLocation } from "../combat/hand-shield.mjs";
 import { resolveArmorProps, aggregateArmorAuto, mergeArmorLocFlags, emptyArmorLocFlags } from "../combat/armor-properties.mjs";
 import { qualityEffects } from "../constants/quality.mjs";
 import { fieldModeEffects } from "../constants/drukhari-armor-fields.mjs";
@@ -759,11 +759,26 @@ export function prepareCharacterDerived(actor, system) {
     const armorManual = system.armor || {};
     // Ручные щиты (стр. 215): прикрывают зоны своим AP. Щит держат ПОВЕРХ брони,
     // поэтому не суммируем, а берём лучшее по каждой зоне — как и прочие AP.
-    const shieldAP = shieldArmorByLocation(actor);
+    const shieldCoverage = shieldCoverageByLocation(actor);
+    const shieldAP = Object.fromEntries(Object.entries(shieldCoverage).map(([l, v]) => [l, v.ap]));
     system.shieldArmor = shieldAP;
-    const best = (k) => Math.max(
-      armorFromItems[k], armorManual[k] || 0, shieldAP[k] || 0, armorFloorLoc[k] || 0
-    );
+    // bestNoShield/shieldIsSource (core.json, «Типы Рукопашного Оружия»):
+    // «...от атак спереди и с того боку, который прикрывает рука со щитом
+    // (в арке 180°)» — геометрия арки системой не считается (нет отслеживания
+    // угла атаки), поэтому решает ГМ галочкой «Цель вне арки щита» на кнопке
+    // применения урона (attack-card.mjs/hooks.mjs); чтобы эту галочку вообще
+    // было чем подкрепить, здесь держим АП БЕЗ щита рядом с обычным —
+    // без этого «выключить щит на одном попадании» было бы нечем считать
+    // (АР щита уже слит с остальной бронёй через Math.max, отдельно недоступен).
+    const bestNoShield = (k) => Math.max(armorFromItems[k], armorManual[k] || 0, armorFloorLoc[k] || 0);
+    const best = (k) => Math.max(bestNoShield(k), shieldAP[k] || 0);
+    // shieldSourceLoc: щит реально дал максимум этой локации (а не был
+    // перебит обычной бронёй) — только тогда «вне арки» вообще что-то меняет.
+    const shieldSourceLoc = Object.fromEntries(Object.keys(AP_LOCATIONS).map(k =>
+      [k, (shieldAP[k] || 0) > 0 && (shieldAP[k] || 0) >= bestNoShield(k)]));
+    // shieldPrimitiveLoc: тот же победивший щит имеет свойство Primitive.
+    const shieldPrimitiveLoc = Object.fromEntries(Object.keys(AP_LOCATIONS).map(k =>
+      [k, !!(shieldSourceLoc[k] && shieldCoverage[k]?.primitive)]));
     // Складываемая надбавка AP от эффектов (естественная броня Черт, броня
     // имплантов, что угодно ещё). Хранимое поле схемы — эффекты целятся в него
     // в фазе "initial", то есть ДО этого расчёта, тем же приёмом, что и
@@ -781,6 +796,12 @@ export function prepareCharacterDerived(actor, system) {
     // сразу в шести местах.
     const armorAP = Object.fromEntries(Object.keys(AP_LOCATIONS).map(k => [k,
       Math.max(0, best(k) + traitArmourAll + traitArmorLoc[k] + (fxArmor[k] || 0) - corroded(k))
+    ]));
+    // Та же формула, но без вклада щита (bestNoShield вместо best) — только
+    // для локаций, где щит реально победил (shieldSourceLoc); нужна кнопке
+    // «Цель вне арки щита» (см. комментарий у bestNoShield выше).
+    const armorAPNoShield = Object.fromEntries(Object.keys(AP_LOCATIONS).map(k => [k,
+      Math.max(0, bestNoShield(k) + traitArmourAll + traitArmorLoc[k] + (fxArmor[k] || 0) - corroded(k))
     ]));
 
     // Только носимое/ручное/щит, без естественной брони Черт и имплантов:
@@ -800,7 +821,13 @@ export function prepareCharacterDerived(actor, system) {
       wornOnly,
       vsType:         armorVsType,
       vsSubtype:      armorVsSubtype,
-      propFlags:      propFlagsByLoc
+      propFlags:      propFlagsByLoc,
+      // Щит: АР без него (для «вне арки»), какие локации он реально даёт, и
+      // какие из них — от Primitive-щита (core.json, «Типы Рукопашного
+      // Оружия», разд. «Щит») — читает module/combat/damage.mjs.
+      noShield:         Object.fromEntries(Object.keys(AP_LOCATIONS).map(k => [k, armorAPNoShield[k] + tb])),
+      shieldSourceLoc,
+      shieldPrimitiveLoc
     };
 
     // ── Навыки ────────────────────────────────────────────────────────────

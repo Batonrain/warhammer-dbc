@@ -67,7 +67,10 @@ import { placeVortexZone, processVortexTurnStart, clearAllVortexZones, reactToVo
 import { placeSmokeZone } from "./regions/difficult-terrain.mjs";
 import { findArcTarget } from "./combat/arc.mjs";
 import { findThroughShotTarget } from "./combat/through-shot.mjs";
-import { resetActionEconomy, applyTurnEndStanceEffects, applyAimFocusTurnEnd, postTurnStartCard, spendActionPoints } from "./combat/action-economy.mjs";
+import { resetActionEconomy, applyTurnEndStanceEffects, applyAimFocusTurnEnd, postTurnStartCard, spendActionPoints, spendReaction } from "./combat/action-economy.mjs";
+import { MELEE_CONTESTS } from "./constants/combat.mjs";
+import { _showContestDialog } from "./combat/techniques.mjs";
+import { resolveKnockdownSuccess, knockdownForbidden, knockdownSizePenalty } from "./combat/knockdown.mjs";
 import { shouldOfferRapidReaction, postRapidReactionPrompt, rollRapidReactionTest } from "./combat/rapid-reaction.mjs";
 import { isDevourerOfTimeExtraTurn, devourerOfTimeVictimUuids } from "./combat/devourer-of-time.mjs";
 import { BLESSED_FITS_CAPABILITY, BLESSED_FITS_PENDING_FLAG } from "./rules/blessed-fits.mjs";
@@ -484,6 +487,30 @@ export function registerHooks() {
         const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
         const attackId = ev.currentTarget.dataset.attackId || "";
         await _performCompression(actor, location, attackerUuid, attackId);
+      });
+    });
+
+    // Посох/Крюк, Реакция «Повалить» (core.json, «Типы Рукопашного Оружия») —
+    // это Реакция АТАКУЮЩЕГО, поэтому актор резолвится по data-attacker-uuid
+    // карточки (тот же приём, что .wh-recoil-btn/.wh-soulburn-btn), а не через
+    // requireControlledActor (тот выбирает ЗАЩИЩАЮЩЕГОСЯ). Обычный
+    // spendReaction без forDefense/attackId — свой отдельный пул Реакций
+    // атакующего, не гейт «одна Реакция на одно чужое Действие».
+    html.querySelectorAll(".wh-reaction-knockdown-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
+        const actor = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
+        if (!actor) return ui.notifications.warn("⚠️ Атакующий персонаж карточки не найден.");
+        if (!await spendReaction(actor)) return ui.notifications.warn("⚠️ Не хватает Реакций.");
+        const target = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+        if (target && knockdownForbidden(actor, target)) {
+          return ui.notifications.warn(`⚠️ Повалить: нельзя проводить против ${target.name} — цель на 2+ Размера крупнее (стр. 14).`);
+        }
+        const sizePenalty = target ? knockdownSizePenalty(actor, target) : 0;
+        await _showContestDialog(actor, { ...MELEE_CONTESTS.knockdown, onSuccess: resolveKnockdownSuccess,
+          defaultMod: sizePenalty,
+          note: sizePenalty ? `${MELEE_CONTESTS.knockdown.note} Подсказанный штраф за Размер: ${sizePenalty}.` : MELEE_CONTESTS.knockdown.note });
       });
     });
 
@@ -977,8 +1004,14 @@ export function registerHooks() {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
         const ds = ev.currentTarget.dataset;
+        // Щит вне арки (core.json, «Типы Рукопашного Оружия») — галочка
+        // рядом с кнопкой (attack-card.mjs::shieldArcCheckbox), тот же приём
+        // чтения соседнего DOM, что у .wh-dmg-swap-btn выше в этом файле.
+        const shieldOutOfArc = !!ev.currentTarget.closest(".roll-dmg-hit-group")
+          ?.querySelector(".wh-shield-out-of-arc-checkbox")?.checked;
         const damageData = {
           rawDamage:    parseInt(ds.damage      || "0"),
+          shieldOutOfArc,
           penetration:  parseInt(ds.penetration || "0"),
           damageType:   ds.damageType  || "impact",
           damageSubtype: ds.damageSubtype || "",

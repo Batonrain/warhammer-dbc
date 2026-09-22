@@ -33,6 +33,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { itemHasName, sizeOf } from "../rules/predicates.mjs";
 import { resolveWeaponProps, aggregateAuto } from "./weapon-properties.mjs";
+import { damageFormulaFor, meleeStrengthBonus } from "./attack-outcome.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { worldTimeRemaining, markWorldTimeCooldownUsed } from "../rules/cooldown.mjs";
 import { tentacleBonusSuppressed } from "../rules/tentacle-hand-form.mjs";
@@ -121,12 +122,20 @@ export async function endGrapple(actor) {
   }
 }
 
+/** Когти (meleeCategory) на актора — первое экипированное, для замены урона Заломить (см. ниже). */
+function _wrenchClawsWeapon(actor) {
+  return (actor?.items ?? []).find(i => i.type === "weapon" && i.system?.equipped && i.system?.meleeCategory === "Когти") ?? null;
+}
+
 /**
- * Заломить (стр. 12) — успех даёт выбор: 1d5+S.b I(Cr) Dmg (игнорирует
- * броню) и/или 1 Усталости партнёру. «И/или» из книги — оба чекбокса
- * независимы, можно снять оба (пропустить эффект, взять только чистый успех
- * теста) или отметить один/оба сразу. Вызывается _showContestDialog
- * (techniques.mjs) как techDef.onSuccess только при выигранном тесте.
+ * Заломить (стр. 12) — успех даёт выбор: урон (1d5+S.b I(Cr), игнорирует
+ * броню — или, при экипированных Когтях, урон САМОГО оружия, core.json,
+ * «Типы Рукопашного Оружия»: «Позволяют наносить урон оружия приёмом...
+ * Заломить в Борьбе (считается как с 1 Успехом)») и/или 1 Усталости
+ * партнёру. «И/или» из книги — оба чекбокса независимы, можно снять оба
+ * (пропустить эффект, взять только чистый успех теста) или отметить один/оба
+ * сразу. Вызывается _showContestDialog (techniques.mjs) как techDef.onSuccess
+ * только при выигранном тесте.
  */
 async function _resolveWrenchSuccess(actor) {
   const partner = grapplePartner(actor);
@@ -135,10 +144,14 @@ async function _resolveWrenchSuccess(actor) {
     return;
   }
   const sb = Number(actor.system?.characteristics?.s?.bonus) || 0;
+  const claws = _wrenchClawsWeapon(actor);
+  const dmgLabel = claws
+    ? `Нанести урон Когтей (${esc(claws.name)}), считается как с 1 Успехом`
+    : `Нанести урон 1d5+S.b (S.b ${sb}) I(Cr), игнорирует броню`;
   const content = `
     <form style="padding:4px 6px;">
       <label class="atk-dlg-row" style="display:flex;gap:6px;align-items:center;margin:4px 0;">
-        <input type="checkbox" name="dmg" checked/> Нанести урон 1d5+S.b (S.b ${sb}) I(Cr), игнорирует броню
+        <input type="checkbox" name="dmg" checked/> ${dmgLabel}
       </label>
       <label class="atk-dlg-row" style="display:flex;gap:6px;align-items:center;margin:4px 0;">
         <input type="checkbox" name="fat"/> Нанести 1 Усталость
@@ -160,7 +173,28 @@ async function _resolveWrenchSuccess(actor) {
   });
   if (!choice || (!choice.dmg && !choice.fat)) return;
 
-  if (choice.dmg) {
+  if (choice.dmg && claws) {
+    // Урон оружия Когтей, deg зафиксирован в 1 (книга: «считается как с 1
+    // Успехом») — Когти.Р «+1 Dmg за нечётный Успех, кроме первого» на
+    // deg=1 не подключается (первый Успех книгой прямо исключён).
+    const wp = aggregateAuto(resolveWeaponProps(claws));
+    const sbEff = meleeStrengthBonus({ sb, wp });
+    const dmgFormula = damageFormulaFor({
+      damage: claws.system.damage, flatBonus: sbEff, chars: actor.system.characteristics,
+      corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee: true
+    });
+    const roll = await new Roll(dmgFormula).evaluate();
+    const { applyDamageToActor } = await import("./damage.mjs");
+    await applyDamageToActor(partner, {
+      rawDamage: roll.total, penetration: Number(claws.system?.penetration) || 0,
+      damageType: claws.system?.damageType || "impact", hitLocation: "Торс", melee: true,
+      attackerName: actor.name, attackerUuid: actor.uuid, weaponName: claws.name
+    });
+    await postTestCard(actor, {
+      icon: rollIcon("sword","#e08a3a"), title: `Заломить: урон ${esc(partner.name)}`,
+      lines: [`<div class="roll-dice">Когти (${esc(claws.name)}): <b>${roll.total}</b> Dmg</div>`]
+    }, { rolls: [roll] });
+  } else if (choice.dmg) {
     const roll = await new Roll("1d5").evaluate();
     const dmg = roll.total + sb;
     const { applyDamageToActor } = await import("./damage.mjs");
@@ -224,16 +258,15 @@ const ALL_TESTS = { ...ATTACKER_TESTS, ...TARGET_TESTS };
 // Борьбе». Приём Захват читается отдельно, в module/sheets/attack-dialog.mjs
 // (resolveSelection) — здесь только 5 РОЛЕВЫХ тестов раздела (Заломить/
 // Пересилить/Вырваться/Выкрутиться/Перехватить Контроль, см. ALL_TESTS выше).
-// Укус — тоже настоящий тест (WS/BS через attack-dialog.mjs, у него есть
-// Item-оружие), получает бонус через techniqueOpts.modifier — см. _doBite
-// ниже. Метнуть/Замахнуться — свои бесповодочные тесты (см. блок ниже, после
-// _doCrunch), бонус закладывается прямо в порог. Сжать и Хруст броска не
-// делают вовсе (первое — накопительный штраф без теста, второе —
-// автоматическое попадание по книге), бонусу там нечего усиливать.
+// Укус (core.json, «Типы Рукопашного Оружия»: «может автоматически наносить
+// попадание в Борьбе») броска не делает вовсе — тентакль-бонусу там
+// нечего усиливать (тот же случай, что Сжать/Хруст, см. _doBite ниже).
+// Метнуть/Замахнуться — свои бесповодочные тесты (см. блок ниже, после
+// _doCrunch), бонус закладывается прямо в порог.
 /**
  * +20, если у актора есть Щупальце (mutation.tentacle) — иначе 0. Субмутация
  * 9 «Изменчивое» (wdbc-2ynk): пока предмет временно в форме руки, бонусу
- * нечем помогать ни приёму Захват, ни этим тестам, ни Укусу.
+ * нечем помогать ни приёму Захват, ни этим тестам.
  */
 export function tentacleBonus(actor) {
   return (hasRuleFlag(actor, "mutation.tentacle") && !tentacleBonusSuppressed(actor)) ? 20 : 0;
@@ -263,27 +296,46 @@ export function isBiteWeapon(item) {
     && (item.system?.weaponClass === "melee" || !item.system?.weaponClass);
 }
 
-/** Укусы — свободное действие, автоматический бой в торс (или Избирательно). */
+/**
+ * Укус — автоматическое попадание в Борьбе (core.json, «Типы Рукопашного
+ * Оружия»: «Может автоматически наносить попадание в Борьбе»), урон —
+ * формула самого оружия Укус. Раньше этот приём ошибочно шёл полным тестом
+ * WS/BS через attack-dialog.mjs (с шансом промаха) — единственное из
+ * «безролловых» действий Борьбы, не совпадавшее с книгой; теперь устроен
+ * так же, как Хруст (_doCrunch ниже) — свободное действие, попадание в Торс,
+ * без броска на попадание. tentacleBonus (щупальце, +20 «на все тесты в
+ * Борьбе») тут больше не участвует: тестов на попадание не осталось.
+ */
 async function _doBite(actor) {
   const biteWeapon = actor.items.find(isBiteWeapon);
   if (!biteWeapon) {
     ui.notifications.warn(`${actor.name}: не найдено оружие «Укус» в снаряжении — Укус доступен только персонажам, способным кусаться.`);
     return;
   }
-  // Укус — единственное из четырёх «безролловых» действий Борьбы (см. шапку
-  // файла), которое на деле идёт полным тестом WS/BS через attack-dialog.mjs
-  // — а не автоматическим попаданием, как Хруст. Значит, это тоже «тест в
-  // Борьбе» из текста мутации Tentacle (wdbc-vkwe) — тот же +20, что и у
-  // остальных пяти, только через presetModifier диалога атаки (виден и
-  // редактируем игроком, как и любой другой её пресет вроде Контратаки).
-  const { showAttackDialog } = await import("../sheets/attack-dialog.mjs");
-  const bonus = tentacleBonus(actor);
-  return showAttackDialog(actor, biteWeapon, {
-    techniqueLabel: "Укус (Борьба)",
-    modifier: bonus,
-    chatNote: "🤼 Борьба: автоматический Укус — свободное действие, попадает в торс, если не выбрана Избирательная атака."
-      + (bonus ? ` Щупальце: +${bonus} учтено в Доп. мод.` : "")
+  const partner = grapplePartner(actor);
+  if (!partner) {
+    ui.notifications.warn(`${actor.name}: партнёр по Борьбе не найден (Захват уже разорван?).`);
+    return;
+  }
+  const wp = aggregateAuto(resolveWeaponProps(biteWeapon));
+  const sb = Number(actor.system?.characteristics?.s?.bonus) || 0;
+  const sbEff = meleeStrengthBonus({ sb, wp });
+  const dmgFormula = damageFormulaFor({
+    damage: biteWeapon.system.damage, flatBonus: sbEff, chars: actor.system.characteristics,
+    corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee: true
   });
+  const dmgRoll = await new Roll(dmgFormula).evaluate();
+  const { applyDamageToActor } = await import("./damage.mjs");
+  await applyDamageToActor(partner, {
+    rawDamage: dmgRoll.total, penetration: Number(biteWeapon.system?.penetration) || 0,
+    damageType: biteWeapon.system?.damageType || "impact", hitLocation: "Торс", melee: true,
+    attackerName: actor.name, attackerUuid: actor.uuid, weaponName: biteWeapon.name
+  });
+  await postTestCard(actor, {
+    icon: rollIcon("sword","#e08a3a"), title: `Борьба: Укус (${esc(biteWeapon.name)})`,
+    outcome: `${esc(actor.name)} автоматически наносит ${esc(partner.name)}: <b>${dmgRoll.total}</b> Dmg.`,
+    sections: [`<div class="roll-threshold" style="font-size:0.85em;">Свободное действие. Автоматическое попадание в Торс (Типы Рукопашного Оружия) — доступно только пока цель удержана Захватом.</div>`]
+  }, { rolls: [dmgRoll], sound: false });
 }
 
 // Оружие со свойством Crunch (стр. 168): «Когда удерживаете цель в Борьбе,
