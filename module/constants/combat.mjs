@@ -304,11 +304,16 @@ export const MELEE_CONTESTS = {
 //     addProp  — добавляемое особое свойство (precise / cheapShot).
 //     sbHalf   — S.b в расчёте урона считается как ½ (▲).
 //     balSet   — Баланс оружия принудительно ставится в это значение (для парирования).
+//     secBal   — доп. МОД (не override) Баланса, только как вторичный хват (1р −1).
 //     rngSet/rngMod — изменение досягаемости (в основном справочно).
+//     secRngMod — доп. мод Rng, только как вторичный хват (1р +1).
+//     maneuverBonus/secManeuverBonus — {приём: бонус WS}, хват сам по себе
+//       (Об → Финт) либо только как вторичный (2р → Оглушить/Повалить),
+//       читает gripManeuverBonus() ниже (wdbc-x1nz.2.68).
 export const GRIPS = {
-  "1р":  { label: "Одноручный (1р)",  ws: 0,   secWs: -5, rngMod: +1, secBal: -1, note: "Занимает 1 руку. Как вторичный хват двуручного: −1 кубик урона (или −4, если кубик один), Баланс −1, WS −5, +1 Rng." },
-  "2р":  { label: "Двуручный (2р)",   ws: 0,   secDmg: +3, note: "Занимает 2 руки. Как вторичный хват одноручного: +3 урона, +10 к приёмам Оглушить/Повалить." },
-  "Об":  { label: "Обратный (Об)",    ws: -10, sbHalf: true, rngMod: -2, note: "−10 WS (Финт +10, Выпад — без штрафа), урон ½S.b (▲), −2 Rng (мин 0). Можно метать оружие (Rng S.b×1, BS −10)." },
+  "1р":  { label: "Одноручный (1р)",  ws: 0,   secWs: -5, secRngMod: +1, secBal: -1, note: "Занимает 1 руку. Как вторичный хват двуручного: −1 кубик урона (или −4, если кубик один), Баланс −1, WS −5, +1 Rng." },
+  "2р":  { label: "Двуручный (2р)",   ws: 0,   secDmg: +3, secManeuverBonus: { stun: 10, knockdown: 10 }, note: "Занимает 2 руки. Как вторичный хват одноручного: +3 урона, +10 к приёмам Оглушить/Повалить." },
+  "Об":  { label: "Обратный (Об)",    ws: -10, sbHalf: true, rngMod: -2, maneuverBonus: { feint: 10 }, note: "−10 WS (Финт +10, Выпад — без штрафа), урон ½S.b (▲), −2 Rng (мин 0). Можно метать оружие (Rng S.b×1, BS −10)." },
   "Бл":  { label: "Ближний (Бл)",     ws: 0,   addProp: "precise", balSet: -2, rngMod: -2, note: "Свойство Precise, −2 Rng (мин 0), Баланс −2, нельзя в Борьбе." },
   "Кл":  { label: "Кулачный (Кл)",    ws: 0,   dmgFlat: -2, rngSet: 0, note: "Rng 0, −2 урона, считается кулаком (только профили топора/крюка/молота)." },
   "Мх":  { label: "Мордхау (Мх)",     ws: -5,  note: "−5 WS, профиль одноручной булавы в двуручном хвате (удар яблоком/гардой)." },
@@ -373,13 +378,36 @@ export function parseGrips(str) {
 // и выбор переменной длины за атаку (книга допускает диапазон) сознательно
 // НЕ автоматизированы этим тикетом — геометрия карты и новая модель диапазона
 // длины оружия остаются на потом (см. wdbc-x1nz.2.67).
-export function meleeEffectiveRange(baseRange, gripKey, maneuverKey = "standard") {
+//
+// isSecondary (wdbc-x1nz.2.68): «+1 Rng» у «1р» книга даёт ТОЛЬКО как
+// вторичному хвату (перехват двуручного одной рукой) — как и WS−5/Баланс−1
+// у того же хвата. rngSet (Кл/Бл/Хв — абсолютное значение) и «безусловный»
+// rngMod (Об/Бл — хват сам по себе) применяются независимо от isSecondary.
+//
+// «Длинные Руки» (стр. 39, wdbc-x1nz.2.68): персонажи Размером 1+ увеличивают
+// МАКСИМАЛЬНУЮ дальность рукопашного оружия на свой Размер — «это правило не
+// применимо к атакам головой и ногами... укуса, удара рогами, или атаки, для
+// которой нужно наступить на врага». Книга явно исключает только Гол/Ног и
+// укус (Зуб); Хв/Щуп — не рука в принципе, книга их не описывает вовсе
+// (щупальце/хвост — расширение этой системы), исключены тем же принципом «не
+// удлиняет руку, потому что не рука». Держащая оружие рука/предплечье
+// (1р/2р/Об/Бл/Кл/Мх/П/Л/П+Л/Кист) получает бонус всегда. sizeBonus передаёт
+// вызывающая сторона (Math.max(0, actor.system.size)) — функция здесь решает
+// только ПРИМЕНИМ ли он к этому Хвату, число берёт снаружи, чтобы остаться
+// чистой (без обращения к actor).
+export const LONG_ARMS_EXCLUDED_GRIPS = new Set(["Ног", "Гол", "Зуб", "Хв", "Щуп"]);
+
+export function meleeEffectiveRange(baseRange, gripKey, maneuverKey = "standard", isSecondary = false, sizeBonus = 0) {
   let rng = Number(baseRange) || 0;
   const g = GRIPS[gripKey];
   if (g) {
     if (g.rngSet != null) rng = g.rngSet;
-    else if (g.rngMod) rng += g.rngMod;
+    else {
+      const mod = (g.rngMod || 0) + (isSecondary ? (g.secRngMod || 0) : 0);
+      if (mod) rng += mod;
+    }
   }
+  if (sizeBonus > 0 && !LONG_ARMS_EXCLUDED_GRIPS.has(gripKey)) rng += sizeBonus;
   if (maneuverKey === "thrust") rng += 1;
   else if (maneuverKey === "saw") rng = 0;
   return Math.max(0, rng);
@@ -389,15 +417,32 @@ export function meleeEffectiveRange(baseRange, gripKey, maneuverKey = "standard"
 // isSecondary — хват отличается от основного (первого в профиле оружия).
 export function gripEffects(key, isSecondary = false) {
   const g = GRIPS[key];
-  if (!g) return { ws: 0, dmgFlat: 0, addProps: [], sbHalf: false, label: "", note: "", balSet: null };
+  if (!g) return { ws: 0, dmgFlat: 0, addProps: [], sbHalf: false, label: "", note: "", balSet: null, balMod: 0 };
   const ws      = (g.ws || 0) + (isSecondary ? (g.secWs || 0) : 0);
   const dmgFlat = (g.dmgFlat || 0) + (isSecondary ? (g.secDmg || 0) : 0);
+  // balMod (wdbc-x1nz.2.68) — относительный мод поверх system.balance оружия
+  // (1р вторичный: −1), в отличие от balSet — абсолютной подмены (Бл/Хв).
+  const balMod  = isSecondary ? (g.secBal || 0) : 0;
   return {
     ws, dmgFlat,
     addProps: g.addProp ? [g.addProp] : [],
     sbHalf: !!g.sbHalf,
     balSet: (g.balSet ?? null),
+    balMod,
     label: g.label,
     note: g.note
   };
+}
+
+// Бонус текущего Хвата к конкретному Приёму/Состязанию (стр. 39,
+// wdbc-x1nz.2.68): maneuverBonus — хват сам по себе (Об → Финт +10, вне
+// зависимости от того, основной он у оружия или альтернативный), secManeuverBonus
+// — только когда хват ВТОРИЧНЫЙ относительно первого хвата в профиле оружия
+// (2р у одноручного → Оглушить/Повалить +10). Читают: selection.mjs (Оглушить
+// — обычный WS-манёвр атаки) и sheets/tabs/combat.mjs (Финт/Повалить —
+// отдельные Состязания, свой встречный бросок).
+export function gripManeuverBonus(gripKey, maneuverKey, isSecondary = false) {
+  const g = GRIPS[gripKey];
+  if (!g) return 0;
+  return (g.maneuverBonus?.[maneuverKey] || 0) + (isSecondary ? (g.secManeuverBonus?.[maneuverKey] || 0) : 0);
 }

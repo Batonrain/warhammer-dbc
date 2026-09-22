@@ -39,14 +39,14 @@ function actorWithMelee(range, grips = "1р") {
 describe("situationalMods: «Более длинное оружие» — автогалочка по реальному Rng", () => {
   it("оружие атакующего длиннее максимума цели — автоотмечена, с числом в note", () => {
     const { specificMods } = situationalMods(baseArgs({
-      weapon: meleeWeapon(4), // "1р" +1 → эфф. 5
-      attackCtx: { targetActor: actorWithMelee(2) } // "1р" +1 → эфф. 3
+      weapon: meleeWeapon(4), // "1р" — основной хват, без бонуса → эфф. 4
+      attackCtx: { targetActor: actorWithMelee(2) } // эфф. 2
     }));
     const mod = specificMods.find(m => m.label === "Более длинное оружие");
     expect(mod).toBeTruthy();
     expect(mod.value).toBe(5);
     expect(mod.autoCheck).toBe(true);
-    expect(mod.note).toMatch(/Rng 5/);
+    expect(mod.note).toMatch(/Rng 4/);
   });
 
   it("оружие цели не короче — галочка есть, но не отмечена", () => {
@@ -69,7 +69,7 @@ describe("situationalMods: «Более длинное оружие» — авт
 describe("situationalMods: «Слишком длинное оружие вблизи» — штраф Rng≥6 в Базовом контакте", () => {
   it("Rng 6+ и Базовый контакт с целью — галочка появляется, автоотмечена, штраф верный", () => {
     const { specificMods } = situationalMods(baseArgs({
-      weapon: meleeWeapon(5, "1р"), // 5+1=6 → −5
+      weapon: meleeWeapon(6, "1р"), // "1р" — основной хват, без бонуса → эфф. 6
       measured: { contact: "base" }
     }));
     const mod = specificMods.find(m => m.label === "Слишком длинное оружие вблизи");
@@ -80,7 +80,7 @@ describe("situationalMods: «Слишком длинное оружие вбли
 
   it("Rng ниже 6 — галочка не появляется вовсе", () => {
     const { specificMods } = situationalMods(baseArgs({
-      weapon: meleeWeapon(3, "1р"), // 3+1=4
+      weapon: meleeWeapon(3, "1р"), // эфф. 3
       measured: { contact: "base" }
     }));
     expect(specificMods.find(m => m.label === "Слишком длинное оружие вблизи")).toBeUndefined();
@@ -88,7 +88,7 @@ describe("situationalMods: «Слишком длинное оружие вбли
 
   it("Rng 6+, но НЕ в контакте с целью — галочка не появляется", () => {
     const { specificMods } = situationalMods(baseArgs({
-      weapon: meleeWeapon(5, "1р"),
+      weapon: meleeWeapon(6, "1р"),
       measured: { contact: "none" }
     }));
     expect(specificMods.find(m => m.label === "Слишком длинное оружие вблизи")).toBeUndefined();

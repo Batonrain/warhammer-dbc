@@ -11,7 +11,8 @@
 // ══════════════════════════════════════════════════════════════════════════
 
 import { MELEE_STANCES, MELEE_BASES, MELEE_MANEUVERS, GRIPS, gripEffects,
-         RANGED_GRIPS, rangedGripEffects, meleeEffectiveRange } from "../../constants/combat.mjs";
+         RANGED_GRIPS, rangedGripEffects, meleeEffectiveRange, gripManeuverBonus,
+         LONG_ARMS_EXCLUDED_GRIPS } from "../../constants/combat.mjs";
 import { actorMaxMeleeRange, chargeTargetDodgeBonus } from "../../rules/weapon-length.mjs";
 import { CAPABILITIES }            from "../../constants/capabilities.mjs";
 import { esc }                     from "../../helpers/utils.mjs";
@@ -297,7 +298,9 @@ export function buildSelection(v) {
     const length = hasVariableLength
       ? Math.min(sys.range, Math.max(sys.rangeMin, Number(sel.length ?? sys.range) || sys.range))
       : sys.range;
-    const effRange = isMelee ? meleeEffectiveRange(length, gKey, maneuverKey) : 0;
+    // Длинные Руки (wdbc-x1nz.2.68, стр. 39): Размер 1+ атакующего.
+    const sizeBonus = Math.max(0, Number(actor?.system?.size) || 0);
+    const effRange = isMelee ? meleeEffectiveRange(length, gKey, maneuverKey, gKey !== primGrip, sizeBonus) : 0;
 
     // Обратный Хват (Об, стр. 39): приём Выпад «просто не получает штрафа»
     // WS от хвата — в любой Базе, не только на Полной Атаке. А на самой
@@ -331,7 +334,12 @@ export function buildSelection(v) {
     // при фактическом броске, не здесь (эта функция зовётся многократно на
     // каждую перерисовку диалога, до самого броска).
     const slaughterBon = isMelee ? legacySlaughterThresholdDelta(actor, item, maneuverKey) : 0;
-    const maneuverBon = isMelee ? (mDef.wsBonus ?? 0) + maneuverCapBonus + slaughterBon : 0;
+    // Хват, стр. 39 (wdbc-x1nz.2.68): «2р» как вторичный хват одноручного
+    // даёт +10 к Приёму Оглушить (обычный WS-манёвр этого файла). Повалить —
+    // отдельное Состязание (module/combat/knockdown.mjs), тот же бонус
+    // подсказывается там же, где Финт для Обратного Хвата (sheets/tabs/combat.mjs).
+    const gripManeuverBon = isMelee ? gripManeuverBonus(gKey, maneuverKey, gKey !== primGrip) : 0;
+    const maneuverBon = isMelee ? (mDef.wsBonus ?? 0) + maneuverCapBonus + slaughterBon + gripManeuverBon : 0;
 
     const pIdx = sel.profIdx ?? profIdx;
     const prof = (pIdx >= 0) ? (atkProfiles[pIdx] || null) : null;
@@ -357,9 +365,11 @@ export function buildSelection(v) {
       gDef ? `Хват: ${gDef.label}${gDef.ws ? ` · WS ${gDef.ws >= 0 ? "+" : ""}${gDef.ws}` : ""}${gDef.dmgFlat ? ` · урон ${gDef.dmgFlat >= 0 ? "+" : ""}${gDef.dmgFlat}` : ""}${gDef.sbHalf ? " · ½S.b" : ""} — ${gDef.note}` : "",
       reverseGripThrust ? `Выпад в Обратном хвате: без штрафа WS${reverseThrustFullAtk ? ", Полная Атака — полный S.b + ещё ½S.b (окр.▲) урона сверху" : ""}` : "",
       maneuverCapBonus ? `Щупальце: +${maneuverCapBonus} на приём Захват` : "",
+      gripManeuverBon ? `Хват: +${gripManeuverBon} на приём «${mDef.label}»` : "",
       slaughterBon ? `Наследие Бойни: ${slaughterBon > 0 ? "+" : ""}${slaughterBon} — заряжено убийством этим оружием` : "",
       chargeLengthBonus ? `Длина Оружия: цель длиннее на 3+ — Натиск даёт ей +5 Избегание` : "",
-      (hasVariableLength && length !== sys.range) ? `Длина Оружия: выбрана ${length} вместо максимума ${sys.range} — влияет на правила 1/2/4 Длины Оружия (стр. 39)` : ""
+      (hasVariableLength && length !== sys.range) ? `Длина Оружия: выбрана ${length} вместо максимума ${sys.range} — влияет на правила 1/2/4 Длины Оружия (стр. 39)` : "",
+      (sizeBonus > 0 && isMelee && !LONG_ARMS_EXCLUDED_GRIPS.has(gKey)) ? `Длинные Руки: Размер +${sizeBonus} к досягаемости (эфф. Rng ${effRange})` : ""
     ].filter(Boolean).join("<br>");
 
     return {

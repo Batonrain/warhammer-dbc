@@ -1118,7 +1118,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // (sheets/attack/mods.mjs) — подсказка, не гарантированное число после
   // смены Приёма/Хвата.
   const meleeAttackerRange = isMelee
-    ? meleeEffectiveRange(sys.range, parseGrips(sys.grips)[0] ?? null, "standard")
+    ? meleeEffectiveRange(sys.range, parseGrips(sys.grips)[0] ?? null, "standard", false,
+        Math.max(0, Number(actor?.system?.size) || 0))
     : 0;
   const reachCells = isMelee ? extendedReachCells(meleeAttackerRange) : 0;
   const contactDisplay = (isMelee && measured)

@@ -1,5 +1,5 @@
 import { SKILL_RANKS }    from "../constants/characteristics.mjs";
-import { MELEE_STANCES, BALANCE_PARRY_MOD, gripEffects } from "../constants/combat.mjs";
+import { MELEE_STANCES, BALANCE_PARRY_MOD, gripEffects, parseGrips } from "../constants/combat.mjs";
 import { currentMeleeGrip } from "../rules/hands.mjs";
 import { _degWord, _hitWord, _leftoverSuccessPhrase, negatedHits, esc } from "../helpers/utils.mjs";
 import { resolveWeaponPropsList, aggregateAuto } from "./weapon-properties.mjs";
@@ -302,14 +302,24 @@ export function parryProfile(actor, extraMod = 0, weaponOverride = null, { useCr
 
   // Эффекты модификаций парирующего оружия (баланс, Защитное/Power Field и т.п.)
   const modFx      = getModEffects(actor, meleeWeapon);
-  // Хват (стр. 39, wdbc-x1nz.2.45): «Баланс оружия принудительно ставится в
-  // это значение» (balSet) у Ближнего/Хвостового Хвата — раньше читался только
-  // на АТАКЕ (selection.mjs), Парирование всегда брало «голый» system.balance,
-  // и выбор Хвата в диалоге атаки не менял Порог Парирования тем же оружием.
+  // Хват (стр. 39, wdbc-x1nz.2.45 + wdbc-x1nz.2.68): «Баланс оружия
+  // принудительно ставится в это значение» (balSet) у Ближнего/Хвостового
+  // Хвата, «Баланс −1» (balMod, ОТНОСИТЕЛЬНО system.balance) у Одноручного
+  // как вторичного хвата двуручного оружия — раньше читался только на АТАКЕ
+  // (selection.mjs), Парирование всегда брало «голый» system.balance, и
+  // выбор Хвата в диалоге атаки не менял Порог Парирования тем же оружием.
   // currentMeleeGrip — тот же сохранённый hudGrip, что диалог атаки пишет по
-  // роллу (module/rules/hands.mjs), с тем же фоллбэком на первый Хват профиля.
-  const gripBalSet = meleeWeapon ? gripEffects(currentMeleeGrip(meleeWeapon)).balSet : null;
-  const balance    = (gripBalSet ?? parseInt(meleeWeapon?.system.balance ?? 0)) + (modFx.balanceMod || 0);
+  // роллу (module/rules/hands.mjs), с тем же фоллбэком на первый Хват
+  // профиля; «вторичный» — этот хват отличается от первого в строке grips.
+  // Фоллбэк «1р» на пустой sys.grips — ТОТ ЖЕ, что у currentMeleeGrip (а не
+  // null): иначе у оружия без заполненного grips (пак ещё не бэкфиллен)
+  // gripKeyNow="1р" (фоллбэк currentMeleeGrip) сравнивался бы с primary=null
+  // и ложно считался вторичным хватом на любом обычном мече.
+  const gripKeyNow  = meleeWeapon ? currentMeleeGrip(meleeWeapon) : null;
+  const gripPrimary = meleeWeapon ? (parseGrips(meleeWeapon.system?.grips)[0] || "1р") : null;
+  const gripFx      = gripKeyNow ? gripEffects(gripKeyNow, gripKeyNow !== gripPrimary) : null;
+  const baseBalance = parseInt(meleeWeapon?.system.balance ?? 0) + (gripFx?.balMod || 0);
+  const balance    = (gripFx?.balSet ?? baseBalance) + (modFx.balanceMod || 0);
   const balanceMod = BALANCE_PARRY_MOD[String(balance)];
 
   const stance    = actor.system.meleeStance || "standard";
