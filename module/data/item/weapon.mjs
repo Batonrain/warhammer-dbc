@@ -36,6 +36,14 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
       // с общим правилом (напр. карабин 3×1 против винтовки 4×1).
       itemSize:     new StringField({ initial: "", label: "Размер (разгрузка)" }),
       range:        num(0, "Дальность"),
+      // Длина Оружия, правило 5 (стр. 39, wdbc-x1nz.2.67.2): у части
+      // рукопашного оружия книга даёт Rng диапазоном («мин-макс», напр.
+      // Гладий 1-3, Меч 2-4) — персонаж выбирает длину атаки из него на
+      // каждую атаку (module/sheets/attack/selection.mjs). range несёт
+      // верхнюю границу, как и раньше; rangeMin — нижнюю, когда книга её
+      // даёт. 0 (по умолчанию) — оружие без выбора длины, обычный случай,
+      // диалог атаки пикер не показывает вовсе.
+      rangeMin:     num(0, "Дальность (мин.)"),
       balance:      num(0, "Баланс"),
       grips:        new StringField({ initial: "", label: "Хват" }),
       profileLabel: new StringField({ initial: "", label: "Название профиля" }),
