@@ -9,6 +9,7 @@
     "itemSize": "2x1",
     "weaponType": "lowtech",
     "range": 5,
+    "rangeMin": 3,
     "balance": 1,
     "grips": "1р (Об, Бл)",
     "profileLabel": "Рапира",

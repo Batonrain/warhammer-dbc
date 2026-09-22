@@ -9,6 +9,7 @@
     "itemSize": "2x1",
     "weaponType": "exotic",
     "range": 5,
+    "rangeMin": 3,
     "balance": 2,
     "grips": "1р (Об, Бл)",
     "profileLabel": "Рапира",

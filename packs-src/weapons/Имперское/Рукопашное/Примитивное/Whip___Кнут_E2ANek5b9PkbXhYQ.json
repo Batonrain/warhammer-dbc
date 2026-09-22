@@ -8,6 +8,7 @@
     "weaponClass": "melee",
     "weaponType": "lowtech",
     "range": 7,
+    "rangeMin": 5,
     "balance": -2,
     "grips": "1р",
     "profileLabel": "Кнут",

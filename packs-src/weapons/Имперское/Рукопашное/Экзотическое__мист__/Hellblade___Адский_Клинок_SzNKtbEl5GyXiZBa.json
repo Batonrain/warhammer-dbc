@@ -9,6 +9,7 @@
     "weaponClass": "melee",
     "weaponType": "exotic",
     "range": 5,
+    "rangeMin": 2,
     "balance": 2,
     "grips": "2р (1р, Бл, Мх)",
     "profileLabel": "Меч",

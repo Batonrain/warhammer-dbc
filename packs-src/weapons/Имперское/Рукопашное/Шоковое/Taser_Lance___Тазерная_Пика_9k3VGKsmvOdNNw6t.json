@@ -8,6 +8,7 @@
     "weaponClass": "melee",
     "weaponType": "shock",
     "range": 8,
+    "rangeMin": 5,
     "balance": -1,
     "grips": "1р (2р)",
     "profileLabel": "Копьё",
