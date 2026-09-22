@@ -32,6 +32,7 @@ import { attackIsMelee } from "../../combat/weapon-profiles.mjs";
 import { weaponThresholdPart } from "../../combat/attack-threshold.mjs";
 import { withEyeOfEnvy } from "../../rules/eye-of-envy.mjs";
 import { AIM_FOCUS_EXTENDED_FLAG } from "../../rules/aim-focus.mjs";
+import { isSabre, sabreSecondAttackBlockFor, armSabreSecondAttack, consumeSabreSecondAttack } from "../../combat/sabre-second-attack.mjs";
 
 /**
  * Два условия книги на парную атаку (стр. 62, wdbc-3jlm), которые до этого
@@ -190,7 +191,19 @@ export function openAttackDialog(ctx) {
           // Лимит Атак за Ход (стр. 12, wdbc-x1nz.2.30): «Персонаж может
           // совершать только одну Атаку в свой Ход» — проверяется ДО списания
           // ОД, чтобы заблокированная попытка не тратила ресурс впустую.
-          if (!canTakeAttackAction(actor)) {
+          // Вторая атака Сабли (wdbc-f6j9y, combat/sabre-second-attack.mjs):
+          // входит в ту же Верховую Атаку — ни ОД, ни Лимита Атак за Ход не
+          // тратит. Условия перепроверяются на броске, а не только на кнопке:
+          // пока окно было открыто, Ход мог смениться, а цель — остаться той же.
+          const sabreSecond = !!techniqueOpts?.sabreSecondAttack;
+          if (sabreSecond) {
+            const reason = sabreSecondAttackBlockFor(actor, item);
+            if (reason) {
+              ui.notifications.warn(`⚠️ Сабля: ${reason}.`);
+              return false;
+            }
+          }
+          if (!sabreSecond && !canTakeAttackAction(actor)) {
             await ChatMessage.create({
               speaker: ChatMessage.getSpeaker({ actor: actor }),
               content: `<div class="wh-roll-result">
@@ -227,7 +240,9 @@ export function openAttackDialog(ctx) {
           // тратит Реакцию — sel.cheapShotActive уже вынудил Базу быть
           // "standard" (resolveSelection), здесь остаётся только сменить
           // ресурс списания на тот же spendReaction, что у Уклонения/Парирования.
-          if (isMelee && sel.cheapShotActive) {
+          if (sabreSecond) {
+            // ничего не списывается — см. выше
+          } else if (isMelee && sel.cheapShotActive) {
             if (!await spendReaction(actor)) {
               ui.notifications.warn("⚠️ Не хватает Реакций (Запрещённый Приём).");
               return false;
@@ -257,7 +272,12 @@ export function openAttackDialog(ctx) {
           }
           // Ресурс (ОД или Реакция Запрещённого Приёма) списан — атака состоялась,
           // засчитываем её в лимит Хода (стр. 12, wdbc-x1nz.2.30).
-          await takeAttackAction(actor);
+          if (!sabreSecond) await takeAttackAction(actor);
+          // Сабля: вторая атака расходуется, первая (Верховая с отказом от +20)
+          // взводит её до конца Хода — ДО броска, чтобы карточка уже нашла метку.
+          if (sabreSecond) await consumeSabreSecondAttack(actor);
+          else if (isMelee && f.sabreSecondAttack && sel.baseKey === "mounted" && isSabre(item.system))
+            await armSabreSecondAttack(actor, item);
 
           // Death Dance / Смертельный Танец (wdbc-shr, находка 2): списание
           // ОС и отметка использования — только теперь, при подтверждённой
@@ -309,7 +329,7 @@ export function openAttackDialog(ctx) {
             actorUpdates["flags.warhammer-dbc.-=trackingAimActive"] = null;
           }
           if (isMelee && sel.stanceKey !== stance) actorUpdates["system.meleeStance"] = sel.stanceKey;
-          if (isMelee && !fullAttackForced && sel.baseKey !== meleeBaseKey) actorUpdates["system.meleeBase"] = sel.baseKey;
+          if (isMelee && !fullAttackForced && !sabreSecond && sel.baseKey !== meleeBaseKey) actorUpdates["system.meleeBase"] = sel.baseKey;
           await actor.update(actorUpdates);
           if (sel.gKey !== gripKey) await item.setFlag?.("warhammer-dbc", "hudGrip", sel.gKey);
           if (sel.pIdx !== profIdx) await item.setFlag?.("warhammer-dbc", "hudProfile", sel.pIdx);
@@ -433,6 +453,7 @@ export function openAttackDialog(ctx) {
               // едет только чтобы attack.mjs мог напомнить про вторую атаку
               // в карточке (само распределение — за столом).
               sabreSecondAttack: f.sabreSecondAttack,
+              sabreSecondAttackIsSecond: sabreSecond,
               legacyCleavingRoll: f.legacyCleavingRoll,
               // Условные эффекты боеприпаса, отмеченные игроком (стр. 203).
               ammoCondProps:  f.ammoSel.flatMap(c => c.wp || []),

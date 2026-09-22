@@ -66,6 +66,7 @@ import { targetHasActiveFlies, fliesAttackPenalty, wrathHeatAttackPenalty } from
 import { MAGGOT_PARASITE_CAPABILITY } from "../rules/maggot-parasite.mjs";
 import { legacyWrathEffectiveRof, takenMutationNames } from "../rules/legacy-weapon.mjs";
 import { actorInfamyValue } from "../apps/infamy-points.mjs";
+import { isSabre, NS as SABRE_NS, SABRE_PENDING_FLAG } from "../combat/sabre-second-attack.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -610,6 +611,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     targetActor: attackCtx.targetActor,
     trainingFor,
     wp,
+    // Вторая атака Сабли (wdbc-f6j9y): База зафиксирована «Верховая Атака».
+    forcedBaseKey: techniqueOpts.sabreSecondAttack ? "mounted" : null,
   });
 
   /**
@@ -1151,11 +1154,24 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Здесь — галочка отменяет сам +20 (своя строка в thresholdParts, гейт по
   // живому f.baseKey==="mounted"), карточка отдельно напоминает про вторую
   // атаку (см. attack.mjs::sabreSecondAttackNote).
-  const sabreSecondAttackAvailable = isMounted && sys.meleeCategory === "Меч" && sys.meleeSubtype === "Сабля";
-  const sabreSecondAttackHtml = sabreSecondAttackAvailable ? `
-    <label class="attack-mod-check" title="Сабля, Верховая Атака: игнорирует бонус +20 этой Базы — взамен книга даёт вторую атаку этим оружием по другой цели на пути (распределение/второй бросок — за столом, системой не автоматизировано).">
+  //
+  // wdbc-f6j9y: галочка первой атаки взводит вторую (combat/sabre-second-
+  // attack.mjs) — кнопка на карточке открывает это же окно с
+  // techniqueOpts.sabreSecondAttack: галочка там стоит намертво (без +20),
+  // База зафиксирована «Верховая Атака», ОД и Лимит Атак не тратятся.
+  // Пока вторая атака взведена, первую повторно не предлагаем.
+  const sabreSecondMode = !!techniqueOpts.sabreSecondAttack;
+  const sabreSecondAttackAvailable = isMounted && isSabre(sys)
+    && (sabreSecondMode || !actor.getFlag?.(SABRE_NS, SABRE_PENDING_FLAG));
+  const sabreSecondAttackHtml = !sabreSecondAttackAvailable ? ""
+    : sabreSecondMode ? `
+    <label class="attack-mod-check" title="Вторая атака Сабли после Верховой Атаки: без ОД и вне Лимита Атак, бонус +20 не действует, цель — другая.">
+      <input type="checkbox" id="atk-sabre-second-attack" checked disabled/> Сабля: вторая атака (без ОД, без +20)
+    </label>`
+    : `
+    <label class="attack-mod-check" title="Сабля, Верховая Атака: отказаться от +20 этой Базы — взамен до конца Хода доступна вторая атака этой Саблей по другой цели, без ОД (кнопка на карточке атаки).">
       <input type="checkbox" id="atk-sabre-second-attack"/> Сабля: вторая атака вместо +20 Верховой Атаки
-    </label>` : "";
+    </label>`;
   // Кромсающее/fearsome 10-10, Оружие Наследия (wdbc-1rno.35, стр. 427),
   // второе предложение: «...может потратить Очко Бесчестия, чтобы бросить
   // ВМЕСТО ЭТОГО 1d10−2(мин.1)» вместо обычного 1d5+1 на Экстремальном Уроне.
@@ -1394,7 +1410,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       // книжный бонус когда-то изменится, компенсация не разъедется).
       { label: "Сабля: вторая атака вместо +20",
         value: (isMelee && sys.meleeCategory === "Меч" && sys.meleeSubtype === "Сабля"
-          && f.baseKey === "mounted" && f.sabreSecondAttack) ? -sel.baseBon : 0 },
+          && sel.baseKey === "mounted" && f.sabreSecondAttack) ? -sel.baseBon : 0 },
       { label: "Стойка цели",        value: targetStanceMod },
       { label: "Цель раскрыта",      value: exposedMod },
       { label: "Беспомощная цель",   value: helplessRangedMod },
