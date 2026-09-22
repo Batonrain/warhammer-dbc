@@ -16,12 +16,15 @@
 //  Живой пересчёт на каждой атаке — Порча растёт, растёт и оружие.
 // ════════════════════════════════════════════════════════════════════════
 
-/** Рейтинг Deadly Natural Weapon от Проявления по Порче (таблица Invocation). */
+import { manifestProfile } from "../constants/possession.mjs";
+
+/**
+ * Рейтинг Deadly Natural Weapon от Проявления по Порче — поле claws той же
+ * таблицы Проявления, что уже даёт Unnatural S/Daemonic/Fear
+ * (constants/possession.mjs::MANIFEST_TABLE, rules/character.mjs).
+ */
 export function invocationDnwRating(cor) {
-  const c = Number(cor) || 0;
-  if (c >= 71) return 2;
-  if (c >= 36) return 1;
-  return 0;
+  return manifestProfile(cor).claws;
 }
 
 /** Прибавка к урону и Пробитию оружия с этими свойствами. */
