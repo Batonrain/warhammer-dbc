@@ -87,21 +87,48 @@ export function lockingContactTokenDocs(tokenDoc) {
   return enemyContactTokenDocs(tokenDoc).filter(doc => hasLockingWeapon(actorOf(doc)));
 }
 
+// CONST.TOKEN_DISPOSITIONS.FRIENDLY/NEUTRAL — тот же приём, что у
+// regions/auras.mjs (числа продублированы буквально, не тащим
+// рантайм-зависимость в чистую логику).
+const DISPOSITION_NEUTRAL = 0, DISPOSITION_FRIENDLY = 1;
+
+/** И tokenDoc, и otherDoc — Friendly или Neutral (ни один не Hostile/Secret). */
+function bothInNonHostileCamp(dispA, dispB) {
+  const inCamp = d => d === DISPOSITION_FRIENDLY || d === DISPOSITION_NEUTRAL;
+  return inCamp(dispA) && inCamp(dispB);
+}
+
 /**
  * Дружественные (союзные) токены личного масштаба в Базовом/Глубоком
  * контакте с данным документом — Прикрывающая Стойка (стр. 15,
  * wdbc-x1nz.2.66.7): «−20 атакам по союзникам рядом» и триггер свободной
  * атаки читают ровно это подмножество allContactTokenDocs.
+ *
+ * Решение стола (не книга — книга говорит только «союзники»): помимо точной
+ * «ally» (tokenRelationship, оба Hostile ИЛИ оба Friendly) сюда попадает
+ * любая пара Friendly/Neutral — прикрывающий-Friendly защищает нейтрального
+ * компаньона рядом, и наоборот, нейтральный защищает Friendly. Нельзя просто
+ * проверить disposition каждого кандидата отдельно: если оставить только
+ * «otherDoc Friendly/Neutral», враждебный NPC в этой Стойке прикрывал бы
+ * игровых персонажей просто по факту их Friendly-диспозиции — того самого
+ * Friendly, который для него как раз ВРАГ. Поэтому обе диспозиции (данного
+ * документа И кандидата) должны лежать по одну сторону: либо обе в
+ * Friendly/Neutral, либо обе Hostile (второе — старое поведение, симметрия
+ * для враждебных NPC, прикрывающих друг друга).
  */
 export function friendlyContactTokenDocs(tokenDoc) {
   const rect = tokenRect(tokenDoc);
   if (!rect) return [];
+  const dispA = Number(tokenDoc.disposition) || 0;
   const out = [];
   for (const other of canvas?.tokens?.placeables ?? []) {
     const otherDoc = other.document;
     if (otherDoc.id === tokenDoc.id) continue;
     if (!isPersonalScale(otherDoc)) continue;
-    if (tokenRelationship(tokenDoc.disposition, otherDoc.disposition) !== "ally") continue;
+    const dispB = Number(otherDoc.disposition) || 0;
+    const covered = bothInNonHostileCamp(dispA, dispB)
+      || tokenRelationship(dispA, dispB) === "ally";
+    if (!covered) continue;
     const rectB = tokenRect(otherDoc);
     if (!rectB) continue;
     if (contactType(rect, rectB) !== "none") out.push(otherDoc);
