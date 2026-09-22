@@ -34,6 +34,7 @@ export function buildSelection(v) {
     bowMarkedMod,
     categoryFor,
     fullAttackForced,
+    forcedBaseKey = null,
     gripKey,
     gripList,
     hasShieldEquipped,
@@ -198,7 +199,7 @@ export function buildSelection(v) {
     const gDefNow = GRIPS[gKeyNow] ? gripEffects(gKeyNow, gKeyNow !== primGrip) : null;
     const cheapShotActive = !!(wp.cheapShot || gDefNow?.addProps?.includes("cheapShot"));
     return Object.entries(MELEE_BASES).map(([key, def]) => {
-      let allowed = !fullAttackForced || key === "fullatk";
+      let allowed = (!fullAttackForced || key === "fullatk") && (!forcedBaseKey || key === forcedBaseKey);
       let reason = "";
       if (allowed && cheapShotActive && key !== "standard") {
         allowed = false;
@@ -281,7 +282,9 @@ export function buildSelection(v) {
     // становится standard, как fullAttackForced принудительно ставит fullatk.
     const cheapShotActive = isMelee && !!(wp.cheapShot || gDefRaw?.addProps?.includes("cheapShot"));
 
-    const baseKey = fullAttackForced ? "fullatk" : (cheapShotActive ? "standard" : (sel.baseKey ?? meleeBaseKey));
+    // forcedBaseKey — вторая атака Сабли (wdbc-f6j9y): «Верховая Атака» без
+    // выбора, как Локус Сокрушения фиксирует «Полную Атаку».
+    const baseKey = fullAttackForced ? "fullatk" : (forcedBaseKey ?? (cheapShotActive ? "standard" : (sel.baseKey ?? meleeBaseKey)));
     const bDef    = MELEE_BASES[baseKey] || MELEE_BASES.standard;
     const baseBon = isMelee ? (bDef.wsBonus ?? 0) : 0;
 

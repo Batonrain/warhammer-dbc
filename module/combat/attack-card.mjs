@@ -732,6 +732,9 @@ export function attackCard({
   // строка, уже готовый текст напоминания (attack.mjs уже решил, показывать
   // ли его — по opts.sabreSecondAttack).
   sabreSecondAttackNote = "",
+  // Непустой — карточка первой атаки Сабли рисует кнопку второй
+  // (combat/sabre-second-attack.mjs::activateSabreSecondAttack, hooks.mjs).
+  sabreSecondAttackItemId = "",
   // Данные для урона по Орде: Rng нужен Распылению, burst — Таланту «Свинцовый
   // Дождь», uuid — чтобы найти Таланты и Размер стрелка, hordeHits — раскладка
   // попаданий правилом «Прячась в Орде» (combat/horde-tokens.mjs).
@@ -978,7 +981,9 @@ export function attackCard({
       betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid }),
       regroupLegacySection(regroupLegacyActive, { actorUuid: attackerUuid }),
       reactionKnockdownSection(reactionKnockdownReason, { actorUuid: attackerUuid }),
-      sabreSecondAttackNote ? `<div class="roll-wprop-effects"><div class="roll-defense-note">${esc(sabreSecondAttackNote)}</div></div>` : "",
+      sabreSecondAttackNote ? `<div class="roll-wprop-effects"><div class="roll-defense-note">${esc(sabreSecondAttackNote)}</div>${sabreSecondAttackItemId
+        ? `<button class="wh-sabre-second-attack-btn" type="button" data-attacker-uuid="${attackerUuid}" data-item-id="${esc(sabreSecondAttackItemId)}">⚔ Сабля: вторая атака (без ОД)</button>`
+        : ""}</div>` : "",
       soulBurnActorId ? `
     <div class="roll-wprop-effects">
       <button class="wh-soulburn-btn" type="button" data-attacker-id="${soulBurnActorId}">

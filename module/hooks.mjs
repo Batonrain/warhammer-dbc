@@ -110,6 +110,7 @@ import { clearBloodFlameBuffs } from "./combat/blood-flame.mjs";
 import { clearLegacyKillerBuffs } from "./combat/legacy-weapon-killer.mjs";
 import { clearLegacyPunisherStacks, markLegacyDeadlyTrapUsed } from "./rules/legacy-weapon.mjs";
 import { activateLegacyRegroup, processLegacyRegroupRoundStart } from "./combat/legacy-weapon-regroup.mjs";
+import { activateSabreSecondAttack, clearSabreSecondAttackAtTurnEnd } from "./combat/sabre-second-attack.mjs";
 import { rollStunningLegacyCheck } from "./combat/legacy-weapon-stunning.mjs";
 import { rollLegacyReaperTest } from "./combat/legacy-weapon-reaper.mjs";
 import { clearTaintedBladeBuffs } from "./combat/wrapped-in-chaos.mjs";
@@ -1700,6 +1701,17 @@ export function registerHooks() {
       });
     });
 
+    // Сабля, вторая атака Верховой Атаки (wdbc-f6j9y) — кнопка на карточке
+    // первой атаки; все условия (метка, свой Ход, другая цель) проверяет
+    // combat/sabre-second-attack.mjs, окно атаки — обычное, в режиме второй.
+    html.querySelectorAll(".wh-sabre-second-attack-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        await activateSabreSecondAttack(ds.attackerUuid, ds.itemId);
+      });
+    });
+
     // Ошеломляющее, Оружие Наследия, стрелковая ветка (wdbc-1rno.35, стр.
     // 427) — кнопка на карточке успешного дистанционного Уклонения.
     html.querySelectorAll(".wh-legacy-stunning-btn").forEach(btn => {
@@ -2805,6 +2817,9 @@ function _attachFateContextMenu(message, html) {
         // Финт (стр. 31, wdbc-x1nz.2.65): «до конца ЕГО Хода» — снимается
         // здесь, на конце Хода атаковавшего, не цели.
         await clearFeintAtTurnEnd(prevActor);
+        // Сабля (wdbc-f6j9y): несовершённая вторая атака Верховой Атаки
+        // сгорает с концом Хода всадника.
+        await clearSabreSecondAttackAtTurnEnd(prevActor);
         // Кровотечение/Горение (wdbc-j3yf) — книга бьёт ими «в конце своего
         // Хода», не в начале следующего.
         await processConditionTurnEnd(prevActor);

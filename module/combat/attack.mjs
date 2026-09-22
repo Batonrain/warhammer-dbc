@@ -518,12 +518,16 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Сабля, Верховая Атака (core.json, «Типы Рукопашного Оружия»): «может
   // проигнорировать бонус +20, чтобы совершить две атаки вместо одной, но по
   // разным целям на пути» — +20 уже отменён в самом threshold (галочка
-  // диалога, attack-dialog.mjs), здесь только напоминание в карточке: пути
-  // Натиска/второго независимого броска система не знает (честный предел,
-  // тот же, что у burstSecondaryTargets ниже).
-  const sabreSecondAttackNote = opts.sabreSecondAttack
-    ? "Сабля: +20 Верховой Атаки проигнорирован — вторая атака этим оружием по другой цели на пути (кто это, решает стол)."
-    : "";
+  // диалога, attack-dialog.mjs), вторая атака взведена диалогом до конца Хода
+  // (combat/sabre-second-attack.mjs, wdbc-f6j9y). Карточка первой атаки
+  // несёт кнопку второй; карточка второй — только подпись. «На пути» система
+  // не проверяет (геометрии пути нет) — кто это, решает стол.
+  const sabreSecondAttackNote = opts.sabreSecondAttackIsSecond
+    ? "Сабля: вторая атака Верховой Атаки — без ОД, без +20."
+    : (opts.sabreSecondAttack
+      ? "Сабля: +20 Верховой Атаки проигнорирован — до конца Хода доступна вторая атака этим оружием по другой цели на пути, без ОД. Выберите цель и нажмите кнопку."
+      : "");
+  const sabreSecondAttackItemId = (opts.sabreSecondAttack && !opts.sabreSecondAttackIsSecond) ? String(item.id ?? "") : "";
   // Маятник, Оружие Наследия (wdbc-1rno.35, vigilant 7-7, стр. 427): «Если
   // персонаж атаковал этим оружием в свой Ход...» — не гейтится попаданием
   // (книга говорит «атаковал», не «попал»), поэтому пишется тут же, до
@@ -1444,6 +1448,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       deadlyTrapLegacyDelta,
       reactionKnockdownReason,
       sabreSecondAttackNote,
+      sabreSecondAttackItemId,
       // Урон по Орде: Rng нужен Распылению, burst — Таланту «Свинцовый Дождь»,
       // uuid — чтобы найти Таланты и Размер стрелка.
       weaponRange: Number(sys.range) || 0,
