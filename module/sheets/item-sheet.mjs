@@ -2628,6 +2628,12 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.auraAffects = ev.currentTarget.value; saveMech(arr); }
     });
+    // Интегральная атака «по выбору» (wdbc-o368c, rules/integral-rating.mjs).
+    on(".mech-integral-optional", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.equipOptional = !!ev.currentTarget.checked; saveMech(arr); }
+    });
     on(".mech-aura-self", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);

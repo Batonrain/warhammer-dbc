@@ -253,6 +253,12 @@
 //      которое игрок волен отложить.
 //      Живёт и снимается тем же syncGrantedEquipment, что и equipment "direct":
 //      сняли имплант в Хирургиконе — атака ушла вместе с ним.
+//      equipOptional: true (wdbc-o368c) — «по выбору»: такие записи предмета
+//      собираются в ОДНО окно с галочками при получении (Естественное
+//      Оружие — у существа могут быть и Когти, и Рога), выбор помнится флагом
+//      источника integralChosen. «X» в уроне оружия-образца (и Пробитие при
+//      флаге penetrationFromRating) берётся из рейтинга источника и
+//      пересчитывается при его смене — rules/integral-rating.mjs.
 //    loyalty: { loyaltyMinionType:""|"human"|"beast"|"machine"|"daemon",
 //               loyaltyOp:"add"|"subtract", loyaltyValue }
 //      → ОДНОРАЗОВАЯ ПЕРМАНЕНТНАЯ правка system.loyalty.value у ВСЕХ Миньонов
@@ -420,6 +426,8 @@ import { DURATION_UNITS, durationLabel, conditionEntryTerm, conditionHasLevelInp
 import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "../constants/legions.mjs";
 import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod, whenCondition, whenQuality, whenChosenEffect } from "../rules/mech-when.mjs";
 import { TIER_LABELS as WOUND_TIER_LABELS } from "../rules/wound-tier.mjs";
+import { INTEGRAL_CHOSEN_FLAG, RATING_TEMPLATE_FLAG, sourceRating, ratingTemplateOf, applyRatingTemplate,
+         optionalIntegralEntries, integralEntrySelected } from "../rules/integral-rating.mjs";
 import { parseSubmutations } from "../rules/submutations.mjs";
 import { mechFormulaTotal, mechFormulaTotalSafe, mechRollData } from "../rules/mech-formula.mjs";
 import { hasEliteArchetype }                  from "../rules/predicates.mjs";
@@ -1234,6 +1242,7 @@ export function describeMechEntry(entry) {
     }
     case "integralAttack": {
       if (!entry.equipSourceUuid) return "Интегральная атака: (выберите оружие)";
+      if (entry.equipOptional) return `Интегральная атака по выбору: ${entry.equipSourceName || "?"} — предлагается галочкой при получении`;
       return `Интегральная атака: ${entry.equipSourceName || "?"} — надета всегда, снять и удалить нельзя`;
     }
     case "loyalty": {
@@ -2097,6 +2106,9 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
   }
 
   if (entry.kind === "integralAttack") {
+    // «По выбору» выдаёт не эта запись, а общее окно с галочками
+    // (resolveOptionalIntegralChoice) и затем syncGrantedEquipment.
+    if (entry.equipOptional) return;
     const data = await buildIntegralAttackData(entry, sourceItem);
     if (data) await actor.createEmbeddedDocuments("Item", [data]);
     return;
@@ -2431,12 +2443,19 @@ async function buildIntegralAttackData(entry, sourceItem) {
   // Надета всегда: и HUD, и вкладка БОЙ отбирают оружие по system.equipped,
   // а снять её игрок не сможет — см. preUpdateItem в warhammer-dbc.mjs.
   data.system = { ...(data.system || {}), equipped: true };
+  // Профиль от рейтинга источника (Укус (X) и т.п., wdbc-o368c): «X» в уроне
+  // образца подставляется, образец помнится для пересчёта при смене X.
+  const template = ratingTemplateOf(data.system, data.flags?.[FLAG]);
+  const rating = sourceRating(sourceItem.system);
+  const rated = !!template && rating !== null;
+  if (rated) Object.assign(data.system, applyRatingTemplate(template, rating));
   // equipSourceUuid — устойчивый идентификатор вида удара (кулак/пинок/…):
   // кнопки HUD ищут предмет по нему, и переименование предмета игроком не
   // должно убивать кнопку (см. apps/hud.mjs, UNARMED_SOURCE_IDS).
   data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}),
     grantedByItem: sourceItem.id, equipEntryId: entry.id, integralAttack: true,
-    equipSourceUuid: entry.equipSourceUuid } };
+    equipSourceUuid: entry.equipSourceUuid,
+    ...(rated ? { [RATING_TEMPLATE_FLAG]: template } : {}) } };
   return data;
 }
 
@@ -2451,7 +2470,9 @@ function collectDirectEquipmentEntries(groups, actor = null, item = null) {
   const walk = (entries, operator) => {
     if (operator === "OR") return;
     for (const e of entries) {
-      if (e.kind === "integralAttack" && isEntryComplete(e)) out.push(e);
+      if (e.kind === "integralAttack" && isEntryComplete(e)) {
+        if (integralEntrySelected(e, item?.getFlag?.(FLAG, INTEGRAL_CHOSEN_FLAG))) out.push(e);
+      }
       else if (e.kind === "equipment" && e.equipMode !== "choice" && isEntryComplete(e)) out.push(e);
       else if (e.kind === "group" && e.group) walk(e.group.entries || [], e.group.operator);
     }
@@ -2590,6 +2611,69 @@ export async function syncGrantedEquipment(sourceItem) {
     toCreate.push(data);
   }
   if (toCreate.length) await actor.createEmbeddedDocuments("Item", toCreate);
+  await syncIntegralRatings(sourceItem, grantedNow);
+}
+
+/**
+ * Рейтинг источника сменили на листе (Укус (1) → Укус (3)) — выданные им
+ * интегральные атаки с образцом профиля пересчитываются (wdbc-o368c).
+ * Зовётся из syncGrantedEquipment; тот — из хука updateItem на смену
+ * system.rating (warhammer-dbc.mjs).
+ */
+async function syncIntegralRatings(sourceItem, granted) {
+  const rating = sourceRating(sourceItem.system);
+  if (rating === null) return;
+  const updates = [];
+  for (const w of granted) {
+    const template = w.getFlag?.(FLAG, RATING_TEMPLATE_FLAG);
+    if (!template) continue;
+    const want = applyRatingTemplate(template, rating);
+    const patch = {};
+    if (want.damage !== w.system?.damage) patch["system.damage"] = want.damage;
+    if ("penetration" in want && Number(want.penetration) !== Number(w.system?.penetration))
+      patch["system.penetration"] = want.penetration;
+    if (Object.keys(patch).length) updates.push({ _id: w.id, ...patch });
+  }
+  if (updates.length) await sourceItem.parent.updateEmbeddedDocuments("Item", updates);
+}
+
+/**
+ * Окно «по выбору» для интегральных атак (wdbc-o368c): все записи
+ * integralAttack с equipOptional одного предмета — галочками в одном окне.
+ * Спрашивается один раз: ответ (даже пустой) пишется флагом integralChosen,
+ * дальше его читает collectDirectEquipmentEntries.
+ */
+async function resolveOptionalIntegralChoice(item) {
+  if (item.getFlag(FLAG, INTEGRAL_CHOSEN_FLAG) !== undefined) return;
+  const entries = optionalIntegralEntries(getItemMechanics(item));
+  if (!entries.length) return;
+  const chosen = await showIntegralChoiceDialog(item, entries);
+  await item.setFlag(FLAG, INTEGRAL_CHOSEN_FLAG, chosen);
+}
+
+/** Галочки «какие естественные атаки есть у существа» — массив id записей. */
+function showIntegralChoiceDialog(item, entries) {
+  return new Promise(resolve => {
+    let resolved = false;
+    const done = v => { if (!resolved) { resolved = true; resolve(v); } };
+    const rows = entries.map(e => `<label class="grant-choice-row">
+      <input type="checkbox" name="integral-choice" value="${esc(e.id)}"/>
+      <span>${esc(e.equipSourceName || "?")}</span></label>`).join("");
+    new Dialog({
+      title: `Выбор — ${item.name}`,
+      content: `<div class="wh-grant-choice">
+        <p>Какие атаки «${esc(item.name)}» есть у существа? Отметьте все подходящие.</p>${rows}</div>`,
+      buttons: {
+        pick: {
+          icon: '<i class="fas fa-check"></i>', label: "Применить",
+          callback: html => done(html.find('input[name="integral-choice"]:checked').map((_, el) => el.value).get())
+        },
+        skip: { label: "Ничего", callback: () => done([]) }
+      },
+      default: "pick",
+      close: () => done([])
+    }, { classes: ["dialog", "warhammer-dbc", "wh-holo"], width: 420 }).render(true);
+  });
 }
 
 // Записи, выдающие Черту или Талант, из тех же АНД-цепочек. ИЛИ-ветки
@@ -3006,6 +3090,9 @@ async function _applyItemMechanics(item) {
   await syncMechanicsEffects(item);
   await syncWeaponPropItemEffects(item);
   await syncAuraFlag(item);
+  // Интегральные атаки «по выбору» (wdbc-o368c) — окно с галочками один раз,
+  // сами предметы выдаёт syncGrantedEquipment ниже по записанному выбору.
+  await resolveOptionalIntegralChoice(item);
   // Источник мог родиться неактивным (напр. Имплант создан ещё не
   // установленным) — откатывает то, что applyMechEntry(equipment) уже
   // успел выдать выше, чтобы конечное состояние сразу было верным.
@@ -3428,7 +3515,8 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     return `<select class="mech-equip-source" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
       <option value="">— выберите оружие —</option>
       ${equipmentOptionsHtml(ent.equipSourceUuid, ["weapons"])}
-    </select>`;
+    </select>
+    <label class="mech-cc-check" title="Все такие записи предмета предлагаются галочками в одном окне при получении (напр. Естественное Оружие: Когти, Рога, Укус...)"><input type="checkbox" class="mech-integral-optional" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.equipOptional ? "checked" : ""} ${dis}/> по выбору</label>`;
   }
 
   if (ent.kind === "equipment") {

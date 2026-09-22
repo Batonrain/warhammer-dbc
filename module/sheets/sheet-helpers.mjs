@@ -70,6 +70,7 @@ import { scriptAbilityRow }                          from "../apps/mechanics.mjs
 import { parseRangeMeters, rangeVerdict }            from "../rules/psy-range.mjs";
 import { measureTokens }                             from "../combat/tactical-map.mjs";
 import { mechFormulaTotalSafe }                      from "../rules/mech-formula.mjs";
+import { grappleOnlyHidden, isBiteName } from "../rules/integral-rating.mjs";
 
 // Определение всех Состояний листа — реестр constants/conditions.mjs
 // (wdbc-w88h): label/desc/иконка/счётчик собраны там, здесь только реэкспорт
@@ -518,7 +519,9 @@ export function buildGetData(actor) {
   });
 
   // ── Боевые оружия ─────────────────────────────────────────────────────────
-  const equippedWeapons = allItems.filter(i => i.type === "weapon" && i.system.equipped);
+  // Укус (X) — только приём Борьбы, пока нет второго укуса (wdbc-o368c).
+  const equippedWeapons = allItems.filter(i => i.type === "weapon" && i.system.equipped
+    && !grappleOnlyHidden(i, allItems, isBiteName));
 
   const makeCombatWeapon = (i) => {
     const s     = i.system;

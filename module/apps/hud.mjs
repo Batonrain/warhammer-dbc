@@ -21,6 +21,7 @@ import { movementMenuItems } from "../combat/movement-actions.mjs";
 import { aimMenuItems, aimFocusToggleState, toggleAimFocusPending, trackingAimToggleState, toggleTrackingAimPending } from "../combat/aiming-action.mjs";
 import { overwatchMenuItems, overwatchManualFireItem, isOverwatchActive, overwatchState } from "../combat/overwatch.mjs";
 import { applyDrug, deactivateDrugEffect } from "../sheets/tabs/drugs.mjs";
+import { grappleOnlyHidden, isBiteName } from "../rules/integral-rating.mjs";
 
 const SYSTEM = "warhammer-dbc";
 const TPL = `systems/${SYSTEM}/templates/apps/hud.hbs`;
@@ -112,7 +113,9 @@ export function hudActor() {
 /* ── Активное оружие ───────────────────────────────────────────────────── */
 
 function equippedWeapons(actor) {
-  return actor.items.filter(i => i.type === "weapon" && i.system.equipped);
+  // Укус (X) — только приём Борьбы, пока нет второго укуса (wdbc-o368c).
+  return actor.items.filter(i => i.type === "weapon" && i.system.equipped
+    && !grappleOnlyHidden(i, actor.items, isBiteName));
 }
 
 // Две руки: правая (основная) и левая (вторая). Источник истины — предметный

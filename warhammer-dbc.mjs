@@ -45,7 +45,7 @@ import { sweepLimbLossGangrene } from "./module/combat/limb-loss.mjs";
 import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
-         saveItemMechanics, mechanicsRelevantChange } from "./module/apps/mechanics.mjs";
+         saveItemMechanics, mechanicsRelevantChange, syncGrantedEquipment } from "./module/apps/mechanics.mjs";
 import { isItemActive, syncOrphanedModEffects } from "./module/apps/effects.mjs";
 import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
 import { applyRace, applySubrace, SKIP_MECHANICS_HOOK } from "./module/apps/races.mjs";
@@ -1998,6 +1998,10 @@ Hooks.on("createItem", handleItemCreated);
 // нет.
 Hooks.on("updateItem", async (item, changed, options, userId) => {
   if (game.user.id !== userId) return;
+  // Рейтинг Черты сменили (Укус (1) → (3)) — пересчитать урон выданных ею
+  // интегральных атак (wdbc-o368c); полное применение Механики тут не нужно.
+  if (changed?.system?.rating !== undefined && item.parent instanceof Actor
+      && !mechanicsRelevantChange(changed)) return syncGrantedEquipment(item);
   if (!mechanicsRelevantChange(changed)) return;
   if (item.parent instanceof Actor) await applyItemMechanics(item);
   else await syncMechanicsEffects(item);
