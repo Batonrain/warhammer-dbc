@@ -8,6 +8,7 @@
     "weaponClass": "melee",
     "weaponType": "lowtech",
     "range": 4,
+    "rangeMin": 2,
     "balance": 1,
     "grips": "1р (2р, Об, Бл, Мх)",
     "profileLabel": "Меч",

@@ -8,6 +8,7 @@
     "weaponClass": "melee",
     "weaponType": "exotic",
     "range": 4,
+    "rangeMin": 2,
     "balance": 2,
     "grips": "1р (2р, Об)",
     "profileLabel": "Сабля",
