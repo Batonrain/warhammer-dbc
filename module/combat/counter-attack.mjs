@@ -87,17 +87,19 @@ export function activeCounterAttackEntries(actor, { onMiss = false, onUnarmedOrG
 /**
  * Триггеры этой конкретной атаки против владельца (чистая функция — как
  * hitCount/attackPenetration в attack-outcome.mjs, без документов Foundry).
- * @param {{isMelee:boolean, hit:boolean, technique?:string, meleeCategory?:string}} p
+ * @param {{isMelee:boolean, hit:boolean, technique?:string, meleeCategory?:string, unarmed?:boolean}} p
  */
-export function counterAttackTriggers({ isMelee, hit, technique = "", meleeCategory = "" } = {}) {
+export function counterAttackTriggers({ isMelee, hit, technique = "", meleeCategory = "", unarmed = false } = {}) {
   return {
     onMiss: !!isMelee && !hit,
-    // «Безоружная атака» — категория «Кулаки» (Fist/Kick/Headbutt, см.
-    // module/constants/weapon-categories.mjs, MELEE_TRAINING_EXEMPT — тот же
-    // ярлык, которым книга отличает голые руки от держимого оружия);
-    // «Захват» — сам Приём (module/sheets/attack-dialog.mjs), любой исход,
-    // не только попадание — контакт с шипами уже случился.
-    onUnarmedOrGrapple: !!isMelee && (technique === "grapple" || meleeCategory === "Кулаки")
+    // «Безоружная атака» — интегральная атака (unarmed: Кулак/Пинок/Удар
+    // головой/естественное оружие — тот же признак, что у Безоружного Боя,
+    // combat/unarmed-combat.mjs) или категория «Кулаки». Одной категории мало
+    // (wdbc-x1nz.2.72): у Пинка и Удара головой по книге тип «–», не «Кулак»,
+    // и шипы на них молчали. «Захват» — сам Приём
+    // (module/sheets/attack-dialog.mjs), любой исход, не только попадание —
+    // контакт с шипами уже случился.
+    onUnarmedOrGrapple: !!isMelee && (technique === "grapple" || !!unarmed || meleeCategory === "Кулаки")
   };
 }
 

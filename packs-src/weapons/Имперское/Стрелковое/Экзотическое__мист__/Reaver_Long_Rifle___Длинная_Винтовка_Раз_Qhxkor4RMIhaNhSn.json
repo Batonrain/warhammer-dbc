@@ -41,6 +41,9 @@
       {
         "key": "hallucinogenic",
         "rating": 0
+      },
+      {
+        "key": "longRifle"
       }
     ],
     "needsRecharge": false,

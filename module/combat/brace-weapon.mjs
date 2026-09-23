@@ -26,6 +26,7 @@ import { normalizeAngle180 } from "../rules/facing.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
+import { registerBraceCheck } from "./weapon-profiles.mjs";
 
 const NS = "warhammer-dbc";
 const FLAG_KEY = "braceState";
@@ -55,6 +56,10 @@ export function isBraced(actor, weapon) {
   const rotationDrift = Math.abs(normalizeAngle180(tokenRotation(token) - state.rotation));
   return rotationDrift <= BRACE_ARC_WIDTH / 2;
 }
+
+// Профиль «Ударить оружием» гасится у Закреплённого тяжёлого (Безоружный Бой,
+// wdbc-x1nz.2.71) — отдаём ему эту проверку, см. weapon-profiles.mjs.
+registerBraceCheck(isBraced);
 
 /** Снять Закрепление явно (например, когда игрок сам решает его прекратить). */
 export async function clearBrace(actor) {

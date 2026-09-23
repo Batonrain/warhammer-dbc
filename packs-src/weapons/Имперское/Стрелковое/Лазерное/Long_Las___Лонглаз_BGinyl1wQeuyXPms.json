@@ -44,6 +44,9 @@
       {
         "key": "surge",
         "rating": 2
+      },
+      {
+        "key": "longRifle"
       }
     ],
     "needsRecharge": false,

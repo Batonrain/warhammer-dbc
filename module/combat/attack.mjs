@@ -14,7 +14,9 @@ import { hitCount, hitLocation, locationForHit, meleeStrengthBonus,
          attackPenetration, damageFormulaFor, bonusDamageDice,
          attackHitOutcome }                          from "./attack-outcome.mjs";
 import { effectiveDamage, mergeExtraProps, weaponOffEffects } from "./attack-weapon.mjs";
-import { attackIsMelee } from "./weapon-profiles.mjs";
+import { attackIsMelee, FIRED_BRACED_FLAG, firedBracedHeavyIds } from "./weapon-profiles.mjs";
+import { isBraced } from "./brace-weapon.mjs";
+import { isIntegralAttack } from "./equipped-melee.mjs";
 import { ammoIsFree } from "../rules/ammo-free.mjs";
 import { attackCard, jamCard }                      from "./attack-card.mjs";
 import { rollScatter }                               from "./scatter.mjs";
@@ -1340,7 +1342,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   let counterAttackBlock = "";
   if (defenderActor) {
     const ccTriggers = counterAttackTriggers({
-      isMelee, hit, technique: techOpts.technique || "", meleeCategory: sys.meleeCategory || ""
+      isMelee, hit, technique: techOpts.technique || "", meleeCategory: sys.meleeCategory || "",
+      unarmed: isIntegralAttack(item)
     });
     if (ccTriggers.onMiss || ccTriggers.onUnarmedOrGrapple) {
       const cc = await counterAttackSectionHtml(defenderActor, actor, ccTriggers);
@@ -1397,6 +1400,16 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     const already = attackedThisTurn(actor);
     if (!already.includes(String(item.id)))
       await actor.setFlag("warhammer-dbc", "attackedThisTurn", [...already, String(item.id)]);
+  }
+
+  // Закреплённое тяжёлое (core.json, «Безоружный Бой»): «персонаж с таким
+  // оружием считается безоружным до начала своего следующего Хода, если он
+  // стрелял из него» — метка на Ход (rules/turn-flags.mjs), её читают профиль
+  // «Ударить оружием» и Парирование (combat/weapon-profiles.mjs::braceBlocksMelee).
+  if (!isMelee && item?.id && typeof actor.setFlag === "function" && isBraced(actor, item)) {
+    const fired = firedBracedHeavyIds(actor);
+    if (!fired.includes(String(item.id)))
+      await actor.setFlag("warhammer-dbc", FIRED_BRACED_FLAG, [...fired, String(item.id)]);
   }
 
   const needsRecharge = !isMelee && (wp.recharge || maximalOn);

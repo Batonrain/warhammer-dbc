@@ -98,7 +98,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // наибольшей RoF, или S/2− вместо S/−/−» — клон sys с этой точки, реальный
   // предмет не трогаем (module/rules/legacy-weapon.mjs::legacyWrathEffectiveRof,
   // тот же приём, что combat/attack.mjs использует на самом броске).
-  const sys     = legacyWrathEffectiveRof(item.system, item);
+  let   sys     = legacyWrathEffectiveRof(item.system, item);
   // Стартовое значение «Доп. мод» — напр. Контратака (стр. 12, требует Талант
   // Counter Attack): «−10» уже вписаны, когда открывается окно, а не молча
   // сидят в пороге — игрок видит и волен поправить/убрать.
@@ -119,6 +119,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   if (profIdx === undefined || profIdx === null) profIdx = item.getFlag?.("warhammer-dbc", "hudProfile");
   profIdx = Number.isFinite(Number(profIdx)) ? Number(profIdx) : -1;
   const startProfile = profIdx >= 0 ? (atkProfiles[profIdx] || null) : null;
+  // «Ударить оружием» (core.json, «Безоружный Бой»): Баланс приклада — из
+  // таблицы книги (−1/−2), а не system.balance ствола. Стойки/Приёмы с
+  // минимумом Баланса (attack/selection.mjs) читают sys.balance. Внутри окна
+  // профиль меняется только на профиль того же вида (profileOptions), а у
+  // стрелкового рукопашный профиль один — подмена на входе не разъедется.
+  if (startProfile?.generated && startProfile.balance != null) sys = { ...sys, balance: startProfile.balance };
 
   // Вид теста фиксируется на ВХОДЕ в окно и внутри него не меняется: от него
   // зависит около восьмидесяти мест расчёта (см. wdbc-uh56 — окно атаки это
@@ -1383,6 +1389,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const baseParts = [
       { label: CHARACTERISTICS[f.char]?.abbr || f.char, value: actor.system.characteristics[f.char]?.total ?? 0 },
       { label: "Бонус оружия",       value: sys.attackBonus || 0 },
+      // «Все атаки стрелковым оружием, использующим эти профили, получают
+      // штраф –10, который увеличивается до –20 для тяжелого оружия»
+      // (core.json, «Безоружный Бой») — поле attackMod профиля «Ударить оружием».
+      { label: "Стрелковое в рукопашной", value: Number(sel.prof?.attackMod) || 0 },
       { label: "Свойства оружия",    value: wp.attackMod || 0 },
       { label: "Модификации",        value: modFx.attackMod || 0 },
       { label: "Качество",           value: qTestMod },

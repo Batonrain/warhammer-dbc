@@ -132,6 +132,9 @@ import { showHealingDialog } from "./sheets/tabs/healing.mjs";
 import { rollInfoguard } from "./apps/infoguard.mjs";
 import { CHARACTERISTICS } from "./constants/characteristics.mjs";
 import { SKILLS_DEF } from "./constants/skills.mjs";
+import { performUnarmedRiposte } from "./combat/unarmed-combat.mjs";
+import { weaponProfiles } from "./combat/weapon-profiles.mjs";
+import { isIntegralAttack } from "./combat/equipped-melee.mjs";
 import { collectTestMods } from "./rules/roll-mods.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
@@ -713,7 +716,34 @@ export function registerHooks() {
         // снимает этот штраф целиком.
         const cwProps    = resolveWeaponPropsList(mergeWeaponPropEntries(weapon, getModEffects(actor, weapon)));
         const counterMod = aggregateAuto(cwProps).duelingParry ? 0 : -10;
-        await actor.sheet._showAttackDialog?.(weapon, { modifier: counterMod, forceBase: "standard" });
+        // Парировал стрелковым как рукопашным (Безоружный Бой, wdbc-x1nz.2.71) —
+        // контратакует им же «Ударить оружием», а не выстрелом.
+        const improvisedIdx = el.dataset.improvised === "1"
+          ? weaponProfiles(weapon, { isIntegralAttack }).findIndex(p => p.generated && p.melee) : -1;
+        await actor.sheet._showAttackDialog?.(weapon, {
+          modifier: counterMod, forceBase: "standard",
+          ...(improvisedIdx >= 0 ? { profileIdx: improvisedIdx } : {})
+        });
+      });
+    });
+
+    // Ответный удар по безоружной атаке (core.json, «Безоружный Бой»,
+    // wdbc-x1nz.2.69): 2 Успеха Парирования → урон своего оружия с S.b
+    // атакующего в его атакующую конечность. Бьёт тот, кто парировал.
+    html.querySelectorAll(".wh-unarmed-riposte-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const cardUuid = el.closest(".wh-roll-result")?.dataset.actorUuid;
+        const actor = cardUuid ? (await fromUuid(cardUuid).catch(() => null)) : null;
+        if (!actor) return ui.notifications.warn("⚠️ Парировавший персонаж карточки не найден.");
+        el.disabled = true;
+        const ds = el.dataset;
+        await performUnarmedRiposte(actor, {
+          weaponId: ds.weaponId, improvised: ds.improvised === "1",
+          attackerUuid: ds.attackerUuid || "", attackerWeaponUuid: ds.attackerWeaponUuid || "",
+          banked: ds.banked === "1"
+        });
       });
     });
 

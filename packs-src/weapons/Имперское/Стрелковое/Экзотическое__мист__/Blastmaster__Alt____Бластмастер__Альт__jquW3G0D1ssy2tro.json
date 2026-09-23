@@ -40,6 +40,9 @@
       {
         "key": "storm",
         "rating": 2
+      },
+      {
+        "key": "longRifle"
       }
     ],
     "needsRecharge": false,

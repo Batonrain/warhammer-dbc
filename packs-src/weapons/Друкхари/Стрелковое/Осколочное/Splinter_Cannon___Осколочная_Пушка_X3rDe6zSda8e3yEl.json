@@ -46,6 +46,9 @@
       },
       {
         "key": "veryReliable"
+      },
+      {
+        "key": "longRifle"
       }
     ],
     "needsRecharge": false,

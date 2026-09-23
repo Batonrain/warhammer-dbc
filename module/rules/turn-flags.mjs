@@ -65,6 +65,7 @@ export const TURN_SCOPED_FLAGS = {
   sabreSecondAttackPending: "Сабля, Верховая Атака (core.json, wdbc-f6j9y): взведённая вторая атака — снимается концом Хода (hooks.mjs), здесь страховка на случай пропущенного конца Хода",
   devourerOfTimeApDebt: "Пожиратель Времени (wdbc-xzfp): долг ОД жертвы — вычитается из ОД этого Хода (resetActionEconomy читает до сброса) и гаснет",
   countenanceOfGods: "Лик <Бога> (Дары Богов, wdbc-1rno; снятие — wdbc-4umq): рейтинг Страха 3 «до начала своего следующего Хода» (rules/countenance-of-gods.mjs::COUNTENANCE_FLAG)",
+  firedBracedHeavy: "Безоружный Бой (core.json, wdbc-x1nz.2.71): стрелял из Закреплённого тяжёлого — им «безоружен до начала своего следующего Хода» (combat/weapon-profiles.mjs::braceBlocksMelee)",
   legacyHatredShield: "Щит Ненависти, Оружие Наследия (wdbc-1rno.35, vigilant 9-9, стр. 427): временный AP-щит руки(рук) и торса — держится до начала следующего своего Хода, не тратится отдельным попаданием"
 };
 
