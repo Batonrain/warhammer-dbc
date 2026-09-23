@@ -25,7 +25,7 @@ import { maybeGrantEnjoymentPain }       from "./combat/enjoyment.mjs";
 import { saddleTest, applyFall, showMountedDodgeDialog, resolveHitAllocation } from "./combat/mount.mjs";
 import { resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity } from "./combat/weapon-properties.mjs";
 import { conditionLevelField, CONDITIONS_DEF } from "./constants/conditions.mjs";
-import { conditionApplyFields } from "./sheets/tabs/conditions.mjs";
+import { conditionApplyFields, setFatigue } from "./sheets/tabs/conditions.mjs";
 import { rollHallucinogenicEffect } from "./combat/hallucinogenic.mjs";
 import { rollSuppressionTest, rollSuppressionRecovery, postSuppressionRecoveryPrompt, applySuppressionProne } from "./combat/suppression.mjs";
 import { clearFeintAtTurnEnd } from "./combat/feint-press.mjs";
@@ -104,7 +104,7 @@ import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { processConditionTurnStart, processConditionTurnEnd } from "./combat/condition-ticks.mjs";
 import { sweepConditionDurations } from "./combat/condition-effects.mjs";
-import { conditionExpiryLine, postConditionCard } from "./combat/condition-ticks.mjs";
+import { conditionExpiryLine, postConditionCard, setBurningDamageFormula } from "./combat/condition-ticks.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart,
          processPreparedRuneCombatStart } from "./rules/sigillite-runes-combat.mjs";
@@ -134,7 +134,7 @@ import { CHARACTERISTICS } from "./constants/characteristics.mjs";
 import { SKILLS_DEF } from "./constants/skills.mjs";
 import { performUnarmedRiposte } from "./combat/unarmed-combat.mjs";
 import { resolveResistClick } from "./combat/opposed-contest.mjs";
-import { maybeAutoReleaseGrapple } from "./combat/grapple.mjs";
+import { maybeAutoReleaseGrapple, grappleReleaseTriggered } from "./combat/grapple.mjs";
 import { weaponProfiles } from "./combat/weapon-profiles.mjs";
 import { isIntegralAttack } from "./combat/equipped-melee.mjs";
 import { collectTestMods } from "./rules/roll-mods.mjs";
@@ -1616,8 +1616,16 @@ export function registerHooks() {
         el.disabled = true;
         const choice = el.dataset.choice;
         const roll = await new Roll(el.dataset.dice || "1d5").evaluate();
-        const update = eaterOfPainBenefitUpdate(eater.system, choice, roll.total);
-        if (Object.keys(update).length) await eater.update(update);
+        if (choice === "fatigue") {
+          // Единый путь смены Усталости (wdbc-x1nz.2.95): setFatigue сам
+          // выводит из обморока от Усталости и пишет карточку «приходит в
+          // себя» — чистая eaterOfPainBenefitUpdate карточку дать не может.
+          const cur = Number(eater.system?.fatigue?.value) || 0;
+          await setFatigue(eater, Math.max(0, cur - (Number(roll.total) || 0)));
+        } else {
+          const update = eaterOfPainBenefitUpdate(eater.system, choice, roll.total);
+          if (Object.keys(update).length) await eater.update(update);
+        }
         const labels = { fatigue: "Усталость снята", wounds: "Раны исцелены", char: "Характеристики восстановлены" };
         await postTestCard(eater, {
           icon: rollIcon("heart", "#ff6bd6"), title: `Пожиратель Боли — ${esc(eater.name)}`,
@@ -2203,6 +2211,9 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
     // наложилось (не погашено иммунитетом цели в блоке выше).
     if (condition === "burning" && actor.system.conditions?.burning) {
       await actor.update({ "system.conditions.burningSourceDamage": dmg });
+      // «Некоторые источники пламени наносят больше урона» (Статусы, «Огонь»,
+      // wdbc-x1nz.2.93): тик Горения бьёт формулой источника, а не 1d10.
+      await setBurningDamageFormula(actor, dmgFormula);
     }
     // Гиперрост (wdbc-utaw): этот же тик яда, если он от боеприпаса
     // «Гиперрост» именно — цель получает столько же аблативных Ран.
@@ -3068,11 +3079,12 @@ function _attachFateContextMenu(message, html) {
   // doombc-foundry-v13-gotchas, «Multi-client hook duplication»).
   // Борьба (стр. 12, wdbc-x1nz.2.74): Атакующий «автоматически выпускает, когда
   // он Оглушен, в Ступоре, или Беспомощен». Тот же userId-гвард: снимает
-  // Захват только клиент, поставивший Состояние.
+  // Захват только клиент, поставивший Состояние. Повод — grappleReleaseTriggered:
+  // там же Без сознания, чья Беспомощность производная и в changes не приходит
+  // (wdbc-x1nz.2.88 п.3).
   Hooks.on("updateActor", async (actor, changes, options, userId) => {
     if (game.user.id !== userId) return;
-    const c = changes.system?.conditions;
-    if (!c || !(c.stunned || c.dazed || c.helpless)) return;
+    if (!grappleReleaseTriggered(changes)) return;
     await maybeAutoReleaseGrapple(actor);
   });
   Hooks.on("updateActor", async (actor, changes, options, userId) => {

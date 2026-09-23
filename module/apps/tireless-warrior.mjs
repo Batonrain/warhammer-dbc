@@ -10,6 +10,7 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
+import { fatigueChangeFields, announceFatigueChange } from "../sheets/tabs/conditions.mjs";
 
 export { isTirelessWarriorItem };
 
@@ -53,9 +54,12 @@ export async function useTirelessWarriorKill(actor, item) {
 
   const roll = await new Roll("1d5-1").evaluate();
   const healAmount = Math.max(0, roll.total);
-  const newFatigue = tirelessWarriorFatigueRelief(actor.system);
+  // −1 Усталости — через единый путь (wdbc-x1nz.2.95): снижение ниже порога
+  // выводит из обморока от Усталости и гасит его таймер.
+  const fatRes = fatigueChangeFields(actor, tirelessWarriorFatigueRelief(actor.system));
+  const newFatigue = fatRes.effective;
 
-  const update = { "system.fatigue.value": newFatigue };
+  const update = { ...fatRes.fields };
   let healLine;
   if (target === "wounds") {
     const newWounds = tirelessWarriorHealWounds(actor.system, healAmount);
@@ -69,6 +73,7 @@ export async function useTirelessWarriorKill(actor, item) {
   }
 
   await actor.update(update);
+  await announceFatigueChange(actor, fatRes);
   // Бросок есть (1d5−1 — размер восстановления), но Порога нет: это не тест,
   // сравнивать не с чем. Общая строка «Бросок: N» карточке не нужна — число
   // уже стоит в строке восстановления.

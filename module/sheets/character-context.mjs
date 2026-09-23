@@ -270,8 +270,10 @@ export function characterContext(actor) {
   // Очки Судьбы — пипсы
   const _fVal = Number(system.fate?.value) || 0, _fMax = Number(system.fate?.max) || 0;
   context.fatePips = Array.from({ length: Math.min(10, Math.max(0, _fMax)) }, (_, i) => ({ on: (i + 1) <= _fVal }));
-  // Усталость — шкала
-  const _fatVal = Number(system.fatigue?.value) || 0, _fatMax = Number(system.fatigue?.max) || 0;
+  // Усталость — шкала близости к обмороку: по ДЕЙСТВУЮЩЕЙ Усталости (+1
+  // Гангрены, wdbc-x1nz.2.96) — порог T.b+W.b считается по ней же. Поле
+  // ввода рядом (fatigueValue ниже) — хранимое число, его не трогаем.
+  const _fatVal = Number(system.fatigue?.effective ?? system.fatigue?.value) || 0, _fatMax = Number(system.fatigue?.max) || 0;
   const _fatPct = _fatMax ? Math.round((_fatVal / _fatMax) * 100) : 0;
   context.fatiguePct = Math.max(0, Math.min(100, _fatPct));
   context.fatigueLevel = _fatPct >= 100 ? "over" : _fatPct >= 66 ? "heavy" : "ok";

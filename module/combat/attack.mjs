@@ -68,6 +68,7 @@ import { evasionImperativeBonus, hasEvasionRecoilImperative } from "./imperative
 import { isFusedByHandOfDeath }                       from "../rules/hand-of-death.mjs";
 import { counterAttackTriggers, counterAttackSectionHtml } from "./counter-attack.mjs";
 import { invocationNaturalAdd } from "../rules/invocation-natural.mjs";
+import { suffersBlindness } from "../rules/blindness.mjs";
 
 /**
  * Экстремальный урон (стр. 166-170): куб урона выбросил Х+ — порог берётся из
@@ -403,7 +404,14 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // «выигранный встречный тест — выстрел из Караула считается Незримым».
   // Та же одноразовая пометка, снятая тем же тактом, что Hidden Threat выше.
   const hairTriggerFlag = await consumeHairTriggerUnseenPending(actor);
-  const unseen = !!(wp.unseen || hiddenThreatFlag || hairTriggerFlag);
+  // Ослеплённая цель (wdbc-x1nz.2.89, «Раны и Урон», «Статусы»):
+  // «Ослепленный персонаж считает все атаки Незримыми» — со всеми
+  // последствиями Незримого ниже: Уклонение/Парирование заперты, пока атаку
+  // не засекли (Психонаука/Ноосфера/Варп-Зрение), Бой Вслепую (−20 в
+  // рукопашной), Шестое Чувство и т.п. Sonar Sense/Unnatural Senses цели
+  // снимают это вместе с остальными штрафами слепоты (rules/blindness.mjs).
+  const targetBlindedUnseen = !!defenderActor && suffersBlindness(defenderActor);
+  const unseen = !!(wp.unseen || hiddenThreatFlag || hairTriggerFlag || targetBlindedUnseen);
   // Сокрытая Угроза добавляет реактивному тесту засечения её собственный
   // −50 (её книжный текст, не общее правило стр. 32 — там штрафа нет).
   const unseenPenalty = hiddenThreatFlag ? -50 : 0;
@@ -1551,9 +1559,15 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
             + `${shelter.count} из ${hitsCount} попадан${shelter.count === 1 ? "ия уходит" : "ий уходят"} в толпу.`
           : "",
         attack:    opts.attackNote,
-        helpless:  opts.doubleDamage
+        // Строки о Состоянии цели. Ослеплённая (wdbc-x1nz.2.89) — сюда же:
+        // defense.note карточка не рисует, а игрок должен видеть, ПОЧЕМУ
+        // кнопки защиты заперты «не засечена».
+        helpless:  [opts.doubleDamage
           ? "🪢 Цель Беспомощна: попадание автоматическое, урон ×2 (до Поглощения)."
           : "",
+          (targetBlindedUnseen && hit)
+          ? "🙈 Цель Ослеплена: для неё все атаки Незримые — Уклонение/Парирование только после засечения."
+          : ""].filter(Boolean).join("<br>"),
         // Quiet Elimination / Тихое Устранение (wdbc-1rno.3): «цель не издаёт
         // звука при гибели» — честно только строка, нет детектора смерти на
         // этом такте (формула урона ещё не разрешена, killstate решается позже).

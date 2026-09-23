@@ -10,25 +10,32 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { gangrenePeriodicRemaining, useGangrenePeriodicTest } from "../../module/combat/gangrene.mjs";
+import { gangrenePeriodicRemaining, useGangrenePeriodicTest, gangreneTick } from "../../module/combat/gangrene.mjs";
 
 const FLAG = "warhammer-dbc";
 const TEST_AT_FLAG = "gangreneTestAt";
 
-function actorWith({ tb = 4, gangrene = true, charDamageT = 0, testAt } = {}) {
+function actorWith({ tb = 4, tTotal = 40, gangrene = true, charDamageT = 0, testAt, race = "human" } = {}) {
   const flags = {};
   if (testAt !== undefined) flags[TEST_AT_FLAG] = testAt;
   const actor = {
-    id: "actor-1", name: "Тестовый",
+    id: "actor-1", name: "Тестовый", flags, items: [],
     system: {
-      characteristics: { t: { bonus: tb } },
+      race,
+      characteristics: { t: { bonus: tb, total: tTotal } },
       conditions: { gangrene },
       charDamage: { t: charDamageT }
     },
     getFlag: (_s, k) => flags[k],
+    setFlag: async (_s, k, v) => { flags[k] = v; return v; },
     update: async data => {
       captured.updates.push(data);
-      if ("system.charDamage.t" in data) actor.system.charDamage.t = data["system.charDamage.t"];
+      if ("system.charDamage.t" in data) {
+        const delta = data["system.charDamage.t"] - actor.system.charDamage.t;
+        actor.system.charDamage.t = data["system.charDamage.t"];
+        actor.system.characteristics.t.total += delta;
+      }
+      if ("system.conditions.gangrene" in data) actor.system.conditions.gangrene = data["system.conditions.gangrene"];
       for (const [path, value] of Object.entries(data)) {
         const m = path.match(/^flags\.warhammer-dbc\.(-=)?(.+)$/);
         if (!m) continue;
@@ -49,8 +56,10 @@ describe("gangrenePeriodicRemaining", () => {
     expect(gangrenePeriodicRemaining(null, 100000, 4)).toBe(0);
   });
 
-  it("tb=0 — интервал делить не на что, всегда доступно", () => {
+  // wdbc-x1nz.2.96: при T.b=0 книга вырождается («каждые 0 часов») — пол 1 час.
+  it("tb=0 — интервал 1 час, а не ноль", () => {
     expect(gangrenePeriodicRemaining(100000, 200000, 0)).toBe(0);
+    expect(gangrenePeriodicRemaining(100000, 100000 + 1800, 0)).toBe(1800);
   });
 
   it("началось только что — в запасе полный интервал T.b×2 часов", () => {
@@ -107,5 +116,53 @@ describe("useGangrenePeriodicTest", () => {
     expect(captured.warnings.length).toBe(0);
     expect(actor.getFlag(FLAG, TEST_AT_FLAG)).toBe(100000);
     expect(actor.system.charDamage.t).toBe(-4);
+  });
+});
+
+// Сверка «Статусы» (wdbc-x1nz.2.96): «Каждый раз перед броском на урон в Т от
+// Гангрены космодесантник проходит тест на Т+0, и при Успехе исцеляется»;
+// «…получает 1d10 урона в Т, пока это не убьёт его».
+describe("gangreneTick — космодесантник и смерть", () => {
+  it("космодесантник: тест Т+0 успешен — Гангрена снята, урона нет", async () => {
+    captured.dice = [30]; // 1d100 = 30 ≤ T 40
+    const actor = actorWith({ race: "astartes", tTotal: 40 });
+    const res = await gangreneTick(actor, { at: 100000 });
+    expect(res.healed).toBe(true);
+    expect(actor.system.conditions.gangrene).toBe(false);
+    expect(actor.system.charDamage.t).toBe(0);
+    expect(captured.chat[0].content).toContain("побеждает Гангрену");
+  });
+
+  it("космодесантник: тест провален — урон 1d10 как обычно", async () => {
+    captured.dice = [90, 5]; // тест 90 > 40, урон 5
+    const actor = actorWith({ race: "astartes", tTotal: 40 });
+    const res = await gangreneTick(actor, { at: 100000 });
+    expect(res.damage).toBe(5);
+    expect(actor.system.conditions.gangrene).toBe(true);
+    expect(actor.system.charDamage.t).toBe(-5);
+  });
+
+  it("человек теста не проходит — сразу урон", async () => {
+    captured.dice = [7];
+    const actor = actorWith({ tTotal: 40 });
+    const res = await gangreneTick(actor, { at: 100000 });
+    expect(res.damage).toBe(7);
+  });
+
+  it("итоговая T падает до 0 и ниже — смерть (флаг deceased)", async () => {
+    captured.dice = [8];
+    const actor = actorWith({ tTotal: 6 });
+    const res = await gangreneTick(actor, { at: 100000 });
+    expect(res.died).toBe(true);
+    expect(actor.flags.deceased).toBe(true);
+    expect(captured.chat[0].content).toContain("умирает от Гангрены");
+  });
+
+  it("T остаётся выше 0 — жив", async () => {
+    captured.dice = [3];
+    const actor = actorWith({ tTotal: 6 });
+    const res = await gangreneTick(actor, { at: 100000 });
+    expect(res.died).toBe(false);
+    expect(actor.flags.deceased).toBeUndefined();
   });
 });

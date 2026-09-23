@@ -40,8 +40,32 @@ export function presenceBenefitsFor(actorType) {
   return [...PRESENCE_ORDER];
 }
 
-/** Доходит ли конкретное преимущество Присутствия до этого актора. */
-export function receivesPresence(actorType, benefitKey) {
+/**
+ * Почему до КОНКРЕТНОГО подчинённого не доходит ничего из Командования —
+ * ни Команды, ни Присутствие («Раны и Урон», «Статусы», wdbc-x1nz.2.90):
+ *  - Без сознания — «не может видеть и слышать других»: не слышит приказа и
+ *    не видит жеста, исключений книга не даёт;
+ *  - Оглох — «не может получать эффектов Командования, если только его
+ *    командир не отдаёт приказы языком жестов, телепатически, или через
+ *    Ноосферу». Исключение — возможность communication.deafExempt (grantFlag
+ *    на самом подчинённом, как и было, wdbc-r5o7.6).
+ *
+ * @returns {string} подпись причины («Оглох»/«Без сознания») или "" — доходит
+ */
+export function commandBlockReason(actor) {
+  const c = actor?.system?.conditions;
+  if (c?.unconscious) return "Без сознания";
+  if (c?.deafened && !hasRuleFlag(actor, "communication.deafExempt")) return "Оглох";
+  return "";
+}
+
+/**
+ * Доходит ли конкретное преимущество Присутствия до этого актора. `actor`
+ * необязателен (старые вызовы по одному типу): с ним учитываются Оглох/Без
+ * сознания (commandBlockReason) — Присутствие тоже эффект Командования.
+ */
+export function receivesPresence(actorType, benefitKey, actor = null) {
+  if (commandBlockReason(actor)) return false;
   return presenceBenefitsFor(actorType).includes(benefitKey);
 }
 
@@ -63,7 +87,8 @@ export function receivesPresence(actorType, benefitKey) {
  */
 export function receivesCommands(actorType, actor = null) {
   if (actorType === "horde") return false;
-  if (actor?.system?.conditions?.deafened && !hasRuleFlag(actor, "communication.deafExempt")) return false;
+  // Оглох/Без сознания (wdbc-x1nz.2.90) — см. commandBlockReason.
+  if (commandBlockReason(actor)) return false;
   return true;
 }
 
@@ -95,14 +120,17 @@ export function suppressionBonus(actor) {
  *
  * @param {string} actorType
  * @param {string} [benefitKey] выбранное сейчас преимущество Присутствия
- * @param {object} [actor] сам подчинённый — нужен только для per-актор
- *   исключений (Оглох, wdbc-r5o7.6); необязателен, Отряд как список типов
- *   его не передаёт вовсе.
+ * @param {object} [actor] сам подчинённый — нужен для per-актор
+ *   исключений (Оглох, Без сознания — commandBlockReason); без него
+ *   учитывается только тип.
  * @returns {{presence:string[], presenceApplies:boolean, commands:boolean,
- *            healsPsych:boolean, forcedMove:boolean, notes:string[]}}
+ *            blockedBy:string, healsPsych:boolean, forcedMove:boolean, notes:string[]}}
  */
 export function commandReachFor(actorType, benefitKey = "", actor = null) {
-  const presence = presenceBenefitsFor(actorType);
+  // Оглох/Без сознания (wdbc-x1nz.2.90): не доходит ВСЁ — и Команды, и
+  // Присутствие. Раньше Присутствие глухоту не проверяло вовсе.
+  const blockedBy = commandBlockReason(actor);
+  const presence = blockedBy ? [] : presenceBenefitsFor(actorType);
   const notes = [];
 
   if (actorType === "horde") {
@@ -116,12 +144,17 @@ export function commandReachFor(actorType, benefitKey = "", actor = null) {
   }
 
   const commands = receivesCommands(actorType, actor);
-  if (actorType !== "horde" && !commands)
-    notes.push("Оглох: не получает Короткие и Детальные Команды (кроме жестов/телепатии/Ноосферы).");
+  if (blockedBy === "Оглох")
+    notes.push("Оглох: не получает Команды и Присутствие (кроме жестов/телепатии/Ноосферы).");
+  if (blockedBy === "Без сознания")
+    notes.push("Без сознания: не видит и не слышит — ни Команды, ни Присутствие не доходят.");
 
   return {
     presence,
-    presenceApplies: !benefitKey || presence.includes(benefitKey),
+    // Без выбранного преимущества «доходит ли Присутствие вообще» — у
+    // Оглохшего/Без сознания нет (раньше !benefitKey давал true всем).
+    presenceApplies: blockedBy ? false : (!benefitKey || presence.includes(benefitKey)),
+    blockedBy,
     commands,
     healsPsych: commandHealsPsych(actorType),
     forcedMove: canBeForcedToMove(actorType),

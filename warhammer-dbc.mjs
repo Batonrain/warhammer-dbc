@@ -42,6 +42,7 @@ import { WarhammerActiveEffectConfig } from "./module/sheets/active-effect-confi
 import { refreshCalendarWidget, initTimeFlow, checkCalendarWatchTriggers } from "./module/apps/imperial-calendar.mjs";
 import { sweepSweetMistExpiry } from "./module/apps/wrapped-in-chaos.mjs";
 import { sweepLimbLossGangrene } from "./module/combat/limb-loss.mjs";
+import { sweepAllConditionClocks } from "./module/combat/condition-clock.mjs";
 import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
@@ -1306,7 +1307,7 @@ Hooks.on("updateScene", (scene) => {
 //    поэтому Duration (Seconds) у эффектов синхронна с прокруткой без доп. кода) ──
 Hooks.once("ready", () => refreshCalendarWidget());
 Hooks.once("ready", () => initTimeFlow());
-Hooks.on("updateWorldTime", worldTime => {
+Hooks.on("updateWorldTime", (worldTime, dt) => {
   checkCalendarWatchTriggers(worldTime);
   refreshCalendarWidget();
   // Сладкий Туман/Wrapped in Chaos (wdbc-1rno): «3 часа после вдыхания» —
@@ -1317,6 +1318,11 @@ Hooks.on("updateWorldTime", worldTime => {
   // иначе через T.b дней с шансом 80% загноится» — та же точка входа, что
   // уже двигает виджет Календаря выше, по прямому указанию пользователя.
   sweepLimbLossGangrene(worldTime);
+  // Часы Состояний (wdbc-x1nz.2.95/.96): пробуждение из обморока от
+  // Усталости, урон Гангрены T.b×2 часов — и место для остальных часовых
+  // правил Состояний (combat/condition-clock.mjs, CONDITION_CLOCK_HANDLERS).
+  // dt — сколько секунд прошло этим сдвигом (Foundry: helpers/time.mjs).
+  sweepAllConditionClocks(worldTime, dt);
 });
 
 // ── Нексус Сцен: держать открытое окно в актуальном состоянии ─────────────────

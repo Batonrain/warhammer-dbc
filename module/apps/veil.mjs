@@ -51,6 +51,7 @@ import { refreshVeilOverlay } from "./veil-overlay.mjs";
 import { resolveVeilContainer, currentScene, veilShift,
          readVeilForScene as readVeil, writeVeilForScene as writeVeil } from "../constants/scene-nexus.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { addFatigue } from "../sheets/tabs/conditions.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard, testCardHtml, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 
@@ -1311,8 +1312,13 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   async _applyGuideFatigue(actor) {
     if (!actor) return;
-    const next = (Number(actor.system?.fatigue?.value) || 0) + 1;
-    await actor.update({ "system.fatigue.value": next });
+    // Через addFatigue (wdbc-x1nz.2.95): порог T.b+W.b роняет Проводника без
+    // сознания и на ЛИСТЕ (с таймером пробуждения), а не только в состоянии
+    // странствия ниже; Саркофаг держит иммунитет. Порог — по действующей
+    // Усталости (+1 Гангрены).
+    const res = await addFatigue(actor, 1);
+    if (!res) return;
+    const next = res.effective;
     const state = this._guideState(actor.id);
     if (state.unconscious) return;
     const threshold = (actor.system?.characteristics?.t?.bonus || 0) + (actor.system?.characteristics?.wp?.bonus || 0);

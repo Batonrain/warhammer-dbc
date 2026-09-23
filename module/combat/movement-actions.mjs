@@ -55,6 +55,7 @@ import { enemyContactTokenDocs, offerFreeAttack } from "./free-attack.mjs";
 import { equippedLegacyWeaponWithMutation } from "../rules/legacy-weapon.mjs";
 import { resolveOpposed } from "../rules/test-kind.mjs";
 import { MELEE_STANCES } from "../constants/combat.mjs";
+import { twoHandedTestPenalty, TWO_HANDED_PENALTY_LABEL } from "../rules/hands.mjs";
 
 // Захват (стр. 12, wdbc-x1nz.2.31): «только действия Борьбы или не-Физические»
 // — Движение Физическое (см. тип действия «Физическое», стр. 12), поэтому
@@ -92,6 +93,17 @@ function _showReachRing(actor, meters) {
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
+/** Добавляет к сбору collectTestMods штраф «тест двумя руками» (rules/hands.mjs), если он есть. */
+function _withTwoHandedPenalty(mods, actor) {
+  const value = twoHandedTestPenalty(actor);
+  if (!value) return mods;
+  return {
+    list:  [...mods.list, { label: TWO_HANDED_PENALTY_LABEL, value }],
+    total: mods.total + value,
+    parts: [...mods.parts, `${TWO_HANDED_PENALTY_LABEL} ${sgn(value)}`]
+  };
+}
+
 /** Потеря ОБЕИХ ног (стр. 30-31, wdbc-r5o7.5): «не может ходить» — жёсткий запрет, не тест. */
 function _bothLegsLost(actor) {
   return (Number(actor.system.conditions?.lostLegsCount) || 0) >= 2;
@@ -103,18 +115,36 @@ function _bothFeetLost(actor) {
 }
 
 /**
- * Подтверждение Acrobatics−10 «без обеих стоп» (стр. 30-31, wdbc-r5o7.5) —
- * тот же приём, что Вызов/Challenge выше (Dialog.confirm, а не форсированный
- * бросок): движок здесь не гоняет тесты навыков за игрока, кнопка навыка
- * «Акробатика» на листе уже даёт нужный штраф (rules/library/conditions.mjs,
- * conditions.lostFeetOrLegs) — этот диалог только не даёт забыть, что бросок
- * вообще нужен, и не позволяет объявить движение без него.
+ * Без обеих стоп «персонаж требует броска на Acrobatics–10 просто чтобы
+ * ходить, балансируя на обрубках» («Раны и Урон», стр. 43; wdbc-x1nz.2.97
+ * п.4). Раньше это был Dialog.confirm «бросок сделан?» и только у части
+ * движений — теперь настоящий бросок на КАЖДОМ боевом движении (Полу/Полное/
+ * Натиск/Бег/Выход из Боя/Полушаг/свободное Полудвижение Наследия).
+ *
+ * Порог — тем же приёмом, что Прыжок (_resolveJump): Навык + общий сбор
+ * collectTestMods, поэтому штрафы тела доезжают сами — в том числе −20
+ * «на все тесты Движения» той же потери стоп (conditions.lostFeetOrLegs,
+ * rules/library/conditions.mjs), итого Acrobatics−30 по книге (−10 броска
+ * + −20 Движения). _d100 с actor — Помеха после Полного Движения тоже
+ * доезжает. Карточка броска — в чат всегда; вызыватель решает, что значит
+ * провал для ОД (см. каждое движение ниже).
+ *
+ * @returns {Promise<boolean>} true — пошёл, false — не удержался
  */
-async function _confirmAcrobaticsToWalk(actor) {
-  return Dialog.confirm({
-    title: "Потеря обеих стоп",
-    content: `<p>${esc(actor.name)} без обеих стоп: чтобы просто идти, нужен успешный бросок Акробатики−10.</p><p>Бросок сделан и успешен?</p>`
-  });
+async function _rollWalkOnStumps(actor, moveLabel) {
+  const acro = skillTotal(actor, "acrobatics");
+  const bodyMods = collectTestMods(actor, { kind: "skill", skill: "acrobatics", char: "ag" });
+  const threshold = acro - 10 + bodyMods.total;
+  const { rv, passed, deg } = await _d100(threshold, actor);
+  const outcome = passed
+    ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Удержался на обрубках: ${esc(moveLabel)}.</span>`
+    : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Не удержал равновесие: ${esc(moveLabel)} не совершено.</span>`;
+  await _postCard(actor, `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("run", passed ? "#b0a080" : "#c0392b")}${esc(actor.name)} — Ходьба без обеих стоп</div>
+    ${rollStatLine({ label: "Acrobatics", base: acro, parts: ["−10 (без обеих стоп)", ...bodyMods.parts], threshold, rv })}
+    <div class="roll-outcome">${outcome}</div>
+  </div>`);
+  return passed;
 }
 
 /**
@@ -227,7 +257,6 @@ export async function declareHalfMove(actor) {
   // Потеря обеих ног (стр. 30-31, wdbc-r5o7.5): «не может ходить» вообще.
   if (_bothLegsLost(actor))
     return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
-  if (_bothFeetLost(actor) && !await _confirmAcrobaticsToWalk(actor)) return;
   const useBonus = hasRuleFlag(actor, BONUS_HALF_MOVE_CAPABILITY)
     && isRoundCapabilityAvailable(actor, BONUS_HALF_MOVE_CAPABILITY);
   if (useBonus) {
@@ -235,6 +264,9 @@ export async function declareHalfMove(actor) {
   } else if (!await spendActionPoints(actor, 1, { physical: true })) {
     return ui.notifications.warn("⚠️ Не хватает ОД.");
   }
+  // wdbc-x1nz.2.97 п.4: бросок ПОСЛЕ оплаты — провал съедает действие, как
+  // проваленный Прыжок/Карабканье ниже (попытка была, движения нет).
+  if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Полудвижение")) return;
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "half");
   _showReachRing(actor, actor.system.movement?.halfMove);
@@ -260,7 +292,8 @@ export async function declareLegacyBraveHeartMove(actor) {
   if (_blockedByGrapple(actor)) return;
   if (_bothLegsLost(actor))
     return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
-  if (_bothFeetLost(actor) && !await _confirmAcrobaticsToWalk(actor)) return;
+  // Свободное действие — провал броска просто отменяет шаг, ОД не было.
+  if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Полудвижение")) return;
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "half");
   _showReachRing(actor, actor.system.movement?.halfMove);
@@ -275,8 +308,8 @@ export async function declareFullMove(actor) {
   if (_blockedByGrapple(actor, { move: true })) return;
   if (_bothLegsLost(actor))
     return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
-  if (_bothFeetLost(actor) && !await _confirmAcrobaticsToWalk(actor)) return;
   if (!await spendActionPoints(actor, 2, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Полное Движение")) return;
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
   // Стр. 28, wdbc-x1nz.2.34: доп. полудействие после Полного Движения (не
@@ -311,6 +344,14 @@ export async function declareCharge(actor) {
   if (MELEE_STANCES[stanceKey]?.noCharge) {
     return ui.notifications.warn(`⚠️ Недоступно в Стойке «${MELEE_STANCES[stanceKey].label}».`);
   }
+  // wdbc-x1nz.2.97 п.4: без обеих стоп — тот же бросок, что у ходьбы. ОД
+  // Натиска обычно списываются на броске атаки; раз до атаки дело не дошло,
+  // провал списывает их здесь (Полное действие потрачено на попытку — тот же
+  // исход, что у проваленных Полудвижения/Бега). База «Натиск» не ставится.
+  if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Натиск")) {
+    await spendActionPoints(actor, 2, { physical: true });
+    return;
+  }
   await actor.update({ "system.meleeBase": "charge" });
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
@@ -336,7 +377,6 @@ export async function declareDisengage(actor) {
   if (_blockedByGrapple(actor)) return;
   if (_bothLegsLost(actor))
     return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
-  if (_bothFeetLost(actor) && !await _confirmAcrobaticsToWalk(actor)) return;
   if (actor.system.conditions?.challenged) {
     const confirmed = await Dialog.confirm({
       title: "Вызов (Challenge)",
@@ -345,6 +385,7 @@ export async function declareDisengage(actor) {
     if (!confirmed) return;
   }
   if (!await spendActionPoints(actor, 2, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Выход из Боя")) return;
   await actor.setFlag("warhammer-dbc", "disengageActive", true);
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "half");
@@ -375,7 +416,6 @@ export async function declareLegacyBraveDisengage(actor) {
   if (_blockedByGrapple(actor)) return;
   if (_bothLegsLost(actor))
     return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
-  if (_bothFeetLost(actor) && !await _confirmAcrobaticsToWalk(actor)) return;
   if (actor.system.conditions?.challenged) {
     const confirmed = await Dialog.confirm({
       title: "Вызов (Challenge)",
@@ -383,6 +423,11 @@ export async function declareLegacyBraveDisengage(actor) {
     });
     if (!confirmed) return;
   }
+  // wdbc-x1nz.2.97 п.4: бросок на обрубках — до встречного теста. ОД здесь
+  // списываются только при выигранном встречном (resolveLegacyBraveDisengage-
+  // Contest), поэтому и провал ходьбы их не трогает — тот же исход, что у
+  // проигранного встречного.
+  if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Выход из Боя")) return;
 
   const felTotal = Number(actor.system?.characteristics?.fel?.total) || 0;
   const infTotal = Number(actor.system?.characteristics?.inf?.total) || 0;
@@ -478,6 +523,8 @@ export async function declareRun(actor) {
     return ui.notifications.warn(`⚠️ Недоступно в Стойке «${MELEE_STANCES[runStanceKey].label}».`);
   }
   if (!await spendActionPoints(actor, 2, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  // wdbc-x1nz.2.97 п.4: Бег без обеих стоп — тот же бросок (раньше не было).
+  if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Бег")) return;
   await actor.setFlag("warhammer-dbc", "running", true);
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
@@ -503,6 +550,9 @@ export async function declareHalfStep(actor) {
   if (!actor) return;
   if (_blockedByGrapple(actor)) return;
   if (!actorHasHalfStep(actor)) return ui.notifications.warn("⚠️ Нужен Талант Half-Step/Полушаг.");
+  // Без обеих ног «не может ходить» — Полушаг тоже ходьба (wdbc-x1nz.2.97 п.4,
+  // заодно с броском на обрубках ниже: раньше Полушаг не проверял ни то, ни другое).
+  if (_bothLegsLost(actor)) return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
   if (!isThrottleReady(actor, HALF_STEP_FLAG, "round")) {
     return ui.notifications.warn("⚠️ Полушаг уже использован в этом Ходу.");
   }
@@ -532,6 +582,12 @@ export async function declareHalfStep(actor) {
   });
   if (result == null) return;
 
+  // wdbc-x1nz.2.97 п.4: без обеих стоп — бросок на обрубках. Провал тратит
+  // раз-в-Ход Полушага (попытка была), но не дистанцию Отскока (не пошёл).
+  if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Полушаг")) {
+    await markThrottleUsed(actor, HALF_STEP_FLAG, "round");
+    return;
+  }
   const spent = await spendRecoil(actor, Math.min(result, maxMeters));
   await markThrottleUsed(actor, HALF_STEP_FLAG, "round");
   await markMovedThisTurn(actor);
@@ -787,6 +843,7 @@ export async function declareDuckAndCover(actor) {
   });
   if (!confirmed) return;
   if (!await spendActionPoints(actor, 2, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Перебежка")) return; // wdbc-x1nz.2.97 п.4
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
   await actor.setFlag("warhammer-dbc", "duckAndCoverActive", true);
@@ -863,8 +920,10 @@ export async function _resolveClimb(actor, type, ath, acro, mod, spd) {
   // здесь считалась одна Усталость вручную, а выключенная броня и Перевес
   // инвентаря до Карабканья не доезжали, хотя это физическое действие.
   // Athletics идёт по S, Acrobatics по Ag — сборы разные.
-  const athMods  = collectTestMods(actor, { kind: "skill", skill: "athletics",  char: "s"  });
-  const acroMods = collectTestMods(actor, { kind: "skill", skill: "acrobatics", char: "ag" });
+  // wdbc-x1nz.2.97 п.3: Карабканье — тест двумя руками; без кисти/руки −20
+  // («Раны и Урон», стр. 43), обоим Пределам отвесного склона тоже.
+  const athMods  = _withTwoHandedPenalty(collectTestMods(actor, { kind: "skill", skill: "athletics",  char: "s"  }), actor);
+  const acroMods = _withTwoHandedPenalty(collectTestMods(actor, { kind: "skill", skill: "acrobatics", char: "ag" }), actor);
   const modsNote = m => (m.parts.length ? ` (${m.parts.join(", ")})` : "");
 
   if (type === "rope") {

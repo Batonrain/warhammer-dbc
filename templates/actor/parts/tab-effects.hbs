@@ -43,10 +43,14 @@
            «system.fatigue.value: must be a number» — правки не сохранялись. --}}
       {{#unless fatigueInHeader}}
       <div class="stat-panel panel-side bc-fatigue-compact stats-cog"> <div class="panel-body side-body bc-fatigue-body"> <div class="header-cell fate-cell fatigue-cell"> <label class="fatigue-label"> Усталость
-          {{#if system.fatigue.value}}
-          <span class="fatigue-penalty-badge" title="Штраф −10 на все тесты (кроме T, Inf, Cog)">−10</span> {{/if}}
-        </label> <div class="fate-values fatigue-values"> <input type="number" name="system.fatigue.value" value="{{system.fatigue.value}}" min="0" class="fatigue-value-input
-                   {{#if system.fatigue.value}}fatigue-nonzero{{/if}}"/> <span>/</span> <input type="number" value="{{system.fatigue.max}}" readonly title="Порог Усталости — авторасчёт: T.b + W.b"/> </div> <div class="fatigue-step-btns"> <button type="button" class="fatigue-btn fatigue-add-btn" title="Добавить 1 Усталость">+1</button> <button type="button" class="fatigue-btn fatigue-remove-btn" title="Снять 1 Усталость">−1</button> </div> <div class="fatigue-bar" title="Усталость {{fatiguePct}}%"><div class="fatigue-fill load-{{fatigueLevel}}" style="width:{{fatiguePct}}%;"></div></div> <div class="fatigue-btns"> <button type="button" class="fatigue-btn fatigue-rest-btn" title="Час отдыха (−1 Усталость)">Отдых</button> <button type="button" class="fatigue-btn fatigue-btn-sleep fatigue-sleep-btn" title="Полноценный сон (снять всю Усталость)">Сон</button> </div> </div> </div> </div>
+          {{#if system.fatigue.effective}}
+          <span class="fatigue-penalty-badge" title="Штраф −10 на все тесты (кроме T, Inf, Cor)">−10</span> {{/if}}
+          {{#if system.fatigue.gangrene}}<span class="fatigue-penalty-badge" title="Гангрена: +1 Усталости сверх этого числа — не снимается, пока Гангрена не вылечена">+1</span>{{/if}}
+        </label> {{!-- Без name (wdbc-x1nz.2.95): число идёт не отправкой формы, а
+             обработчиком .fatigue-value-input (sheets/tabs/conditions.mjs) —
+             тем же путём, что кнопки, с порогом обморока и Саркофагом. --}}
+        <div class="fate-values fatigue-values"> <input type="number" value="{{system.fatigue.value}}" min="0" class="fatigue-value-input
+                   {{#if system.fatigue.value}}fatigue-nonzero{{/if}}"/> <span>/</span> <input type="number" value="{{system.fatigue.max}}" readonly title="Порог Усталости — авторасчёт: T.b + W.b"/> </div> <div class="fatigue-step-btns"> <button type="button" class="fatigue-btn fatigue-add-btn" title="Добавить 1 Усталость">+1</button> <button type="button" class="fatigue-btn fatigue-remove-btn" title="Снять 1 Усталость">−1</button> </div> <div class="fatigue-bar" title="Усталость {{fatiguePct}}%"><div class="fatigue-fill load-{{fatigueLevel}}" style="width:{{fatiguePct}}%;"></div></div> <div class="fatigue-btns"> <button type="button" class="fatigue-btn fatigue-rest-btn" title="Час отдыха (−1 Усталость; ГМ — сдвигает Календарь на 1 ч.)">Отдых</button> <button type="button" class="fatigue-btn fatigue-btn-sleep fatigue-sleep-btn" title="Полноценный сон: снять всю Усталость (8 ч., космодесантнику 3 ч.; ГМ — сдвигает Календарь)">Сон</button> </div> </div> </div> </div>
       {{/unless}}
       </div>{{!-- /bc-ecg-row --}}
 

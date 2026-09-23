@@ -232,6 +232,9 @@ const DEVIATIONS = {
     // Сладкий Туман (wdbc-1rno) — заведено гораздо позже template.json.
     "conditions.sweetMist": false,
     "conditions.sweetMistExpiresAt": 0,
+    // Обморок от Усталости (wdbc-x1nz.2.95) — момент пробуждения, заведено
+    // гораздо позже template.json (combat/condition-clock.mjs).
+    "conditions.fatigueFaintWakeAt": 0,
     // Мононить «Поцелуй Мимика» (wdbc-ux8a) — заведено гораздо позже template.json.
     "conditions.mimicWire": false,
     "conditions.mimicWireBlocksPowers": false,

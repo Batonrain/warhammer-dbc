@@ -213,7 +213,9 @@ export async function processSpiritTalkRoundStart(combat) {
 
 /** Списывает 2 ОД (Полное действие) и счётчик «до 3 раз за сессию». */
 async function _spendAndCount(actor) {
-  if (!await spendActionPoints(actor, apCostForActionType("Полное действие"))) return false;
+  // Психический ритуал (W+0/F+10 против W+0), не телесное усилие —
+  // Беспомощному доступен («Статусы», wdbc-x1nz.2.88: запрет только Физических).
+  if (!await spendActionPoints(actor, apCostForActionType("Полное действие"), { physical: false })) return false;
   await incrementThrottleCount(actor, COOLDOWN_FLAG, "session", MAX_USES);
   return true;
 }

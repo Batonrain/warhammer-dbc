@@ -53,3 +53,43 @@ describe("бонус Силы в атаке Орды", () => {
     expect(card()).toContain("S.b +0");
   });
 });
+
+// Ослеплённая Орда (wdbc-x1nz.2.89, хвост сверки «Статусы»): у Орды свой
+// бросок, мимо общего исхода теста — автопровал читается на листе.
+describe("Ослеплённая Орда", () => {
+  const gun = () => weaponFor({ weaponClass: "basic", damage: "1d10", penetration: 0, weaponProps: [] },
+    { name: "Лазган" });
+
+  it("стрельба с автопровалом — промах даже на броске ниже Порога", async () => {
+    captured.dice = [5, 5];
+    await WarhammerHordeSheet.prototype._executeHordeAttack.call(
+      { actor: hordeFor() }, gun(), "bs", 50, false, 3, { autoFail: true });
+    expect(card()).toContain("Автопровал: Орда Ослеплена");
+    expect(card()).toContain("Промах");
+  });
+
+  it("без автопровала тот же бросок — попадание", async () => {
+    captured.dice = [5, 5];
+    await WarhammerHordeSheet.prototype._executeHordeAttack.call(
+      { actor: hordeFor() }, gun(), "bs", 50, false, 3);
+    expect(card()).not.toContain("Автопровал");
+    expect(card()).toContain("Попадание");
+  });
+
+  it("тест BS Ослеплённой Орды — автопровал в карточке", async () => {
+    captured.dice = [5];
+    const actor = actorFor({ conditions: { blinded: true } });
+    await WarhammerHordeSheet.prototype._rollTest.call(
+      { actor }, { label: "BS", threshold: 50, prefix: "BS", ctx: { kind: "skill", char: "bs" } });
+    expect(card()).toContain("Автопровал");
+    expect(card()).toContain("Провал");
+  });
+
+  it("тест BS зрячей Орды на том же броске — успех", async () => {
+    captured.dice = [5];
+    await WarhammerHordeSheet.prototype._rollTest.call(
+      { actor: actorFor({ conditions: {} }) }, { label: "BS", threshold: 50, prefix: "BS", ctx: { kind: "skill", char: "bs" } });
+    expect(card()).not.toContain("Автопровал");
+    expect(card()).toContain("Успех");
+  });
+});

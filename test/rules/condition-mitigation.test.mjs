@@ -70,6 +70,8 @@ describe("mitigate: «половина штрафа»", () => {
     expect(half.when).toEqual({ hasCondition: ["prone"] });
     expect(half.effects).toEqual([
       { kind: "rollBonus", target: "weapon:melee", value: -10 },
+      // −20 на прочие тесты WS (Парирование), wdbc-x1nz.2.97 п.5 — ополовинен тоже.
+      { kind: "rollBonus", target: "basedon:ws", value: -10, label: "🧎 Повален", auto: true },
       { kind: "rollBonus", target: "skill:dodge",  value: -10 },
       { kind: "rollBonus", target: "skill:stealth", value: 10 }
     ]);
@@ -114,6 +116,8 @@ describe("mitigate: несколько источников на один клю
     expect(applied).toHaveLength(1);
     expect(applied[0].effects).toEqual([
       { kind: "rollBonus", target: "weapon:melee", value: -10 },
+      // −20 на прочие тесты WS (Парирование), wdbc-x1nz.2.97 п.5 — ополовинен тоже.
+      { kind: "rollBonus", target: "basedon:ws", value: -10, label: "🧎 Повален", auto: true },
       { kind: "rollBonus", target: "skill:dodge",  value: -10 },
       { kind: "rollBonus", target: "skill:stealth", value: 10 }
     ]);
@@ -154,5 +158,21 @@ describe("mitigate: что правилом НЕ становится", () => {
 
   it("пустой ключ Состояния — записи нет", () => {
     expect(rulesFromItemMechanics([item("Х", [cond({ condKey: "" })])])).toEqual([]);
+  });
+});
+
+// Штраф из источника значения (уровень Состояния, wdbc-x1nz.2.92): числа в
+// правиле нет — «половина» раньше писала ошибку в консоль и оставляла полный
+// штраф. Теперь ополовинивает расчёт теста, округлением к нулю.
+describe("mitigate half: штраф по уровню Обескровливания", () => {
+  it("уровень 3 — вместо −15 даётся −7, без ошибки в консоли", async () => {
+    const { rollModsFromRules } = await import("../../module/rules/resolve-test.mjs");
+    const rules = rulesFromItemMechanics([item("Гемостат", [cond({ condKey: "haemorrhaging", condMitigate: "half" })])]);
+    const half = rules.find(r => r.id.includes(".half.conditions.haemorrhaging"));
+    expect(half.effects[0].halved).toBe(true);
+    const actor = { system: { conditions: { haemorrhaging: true, haemorrhagingLevel: 3 } } };
+    const mods = rollModsFromRules([half], { actor, kind: "skill", char: "t" }, { auto: true });
+    expect(mods.map(m => m.value)).toEqual([-7]);
+    expect(errors).not.toHaveBeenCalled();
   });
 });

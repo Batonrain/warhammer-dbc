@@ -32,7 +32,7 @@ import { hasRuleFlag } from "../rules/flags.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
-import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
+import { conditionApplyFields, addFatigue } from "../sheets/tabs/conditions.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const FLAG = "dreadWail";
@@ -108,8 +108,10 @@ export async function clearDreadWailWeaponBuff(actor) {
 async function applyWaveEffect(targetActor, effectKey) {
   if (effectKey === "fatigue") {
     const roll = await new Roll("1d5").evaluate();
-    const cur = Number(targetActor.system.fatigue?.value) || 0;
-    await targetActor.update({ "system.fatigue.value": cur + roll.total });
+    // Через addFatigue (wdbc-x1nz.2.95): 1d5 легко перекидывает порог T.b+W.b —
+    // раньше прямой записью цель оставалась на ногах, а пилот Саркофага
+    // получал Усталость, к которой иммунен.
+    await addFatigue(targetActor, roll.total);
     return `+${roll.total} Усталости`;
   }
   if (effectKey === "stunned") {

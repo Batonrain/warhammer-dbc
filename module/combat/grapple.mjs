@@ -47,7 +47,7 @@ import { bodyWeightOf, totalWeightOf, throwTier, canWieldAsCudgel, footingRequir
   from "../rules/improvised-weapon.mjs";
 import { spendActionPoints, isEncounterActive, hasActionEconomy } from "./action-economy.mjs";
 import { spdMeters } from "./recoil-pool.mjs";
-import { maxHands, handsOccupied, weaponHandsRequired } from "../rules/hands.mjs";
+import { maxHands, handsOccupied, weaponHandsRequired, twoHandedTestPenalty, TWO_HANDED_PENALTY_LABEL } from "../rules/hands.mjs";
 import { bearingDegrees, relativeBearing } from "../rules/facing.mjs";
 import { canTakeAttackAction, takeAttackAction } from "./attack-limit.mjs";
 
@@ -215,6 +215,19 @@ export async function endGrapple(actor) {
 }
 
 /**
+ * Повод для хука updateActor (hooks.mjs) проверить авто-выпуск: в диффе
+ * `changes` приходят только ХРАНИМЫЕ поля. Беспомощность у Без сознания —
+ * производная (rules/character.mjs: unconscious ⇒ helpless), в changes её нет,
+ * поэтому потеря сознания раньше Захват не разрывала (wdbc-x1nz.2.88 п.3).
+ * Других производных источников helpless в системе нет (Саркофаг Дредноута
+ * только подсвечивает флаг для ГМа, conditions.helpless не ставит).
+ */
+export function grappleReleaseTriggered(changes) {
+  const c = changes?.system?.conditions;
+  return !!(c && (c.stunned || c.dazed || c.helpless || c.unconscious));
+}
+
+/**
  * «...и автоматически выпускает, когда он Оглушен, в Ступоре, или Беспомощен»
  * (wdbc-x1nz.2.74). Зовётся из hooks.mjs на updateActor.
  * @returns {Promise<boolean>} был ли выпуск
@@ -222,7 +235,10 @@ export async function endGrapple(actor) {
 export async function maybeAutoReleaseGrapple(actor) {
   if (!isGrappleAttacker(actor)) return false;
   const c = actor.system?.conditions ?? {};
-  const why = c.stunned ? "Оглушён" : c.dazed ? "в Ступоре" : c.helpless ? "Беспомощен" : "";
+  // Без сознания — раньше Беспомощного: helpless у него производный
+  // (rules/character.mjs), и в карточке честнее назвать саму причину.
+  const why = c.stunned ? "Оглушён" : c.dazed ? "в Ступоре" : c.unconscious ? "без сознания"
+    : c.helpless ? "Беспомощен" : "";
   if (!why) return false;
   const partner = grapplePartner(actor);
   await endGrapple(actor);
@@ -837,6 +853,21 @@ function _requireThirdPartyTarget(actor, partner, verb) {
  * полудействием». Тип — Атака: входит в Лимит Атак за Ход.
  * @returns {Promise<boolean>} оплачено ли
  */
+/**
+ * wdbc-x1nz.2.97 п.3 («Раны и Урон», стр. 43): «Ладонь/Рука: −20 на все
+ * тесты, что требуют двух рук» — у Метнуть/Замахнуться это случай «держит
+ * цель двумя руками». Сборщик — та же форма, что collectTestMods.
+ */
+export function _withTwoHandedGrapplePenalty(mods, actor) {
+  const value = grappleHands(actor) >= 2 ? twoHandedTestPenalty(actor) : 0;
+  if (!value) return mods;
+  return {
+    ...mods,
+    total: mods.total + value,
+    parts: [...mods.parts, `${TWO_HANDED_PENALTY_LABEL} ${value}`]
+  };
+}
+
 async function _payThrowOrSwing(actor, label) {
   if (!canTakeAttackAction(actor)) {
     ui.notifications.warn(`⚠️ ${label}: Атака в этом Ходу уже была (стр. 12).`);
@@ -873,7 +904,7 @@ async function _doSwing(actor) {
   // Общий сбор модификаторов (wdbc-ct65.1): раньше здесь стояла одна
   // Усталость, а Черты/Таланты на Оружейное Мастерство в приёмы Борьбы не
   // попадали вовсе — этот путь шёл мимо реестра правил.
-  const ruleMods = collectTestMods(actor, { kind: "skill", char: "ws" });
+  const ruleMods = _withTwoHandedGrapplePenalty(collectTestMods(actor, { kind: "skill", char: "ws" }), actor);
   const ws      = actor.system.characteristics.ws?.total ?? 0;
   const final   = ws + profile.wsBonus + baseBon + stBon + ruleMods.total;
 
@@ -994,7 +1025,7 @@ async function _doThrow(actor) {
 
   const charVal = actor.system.characteristics[profile.testChar]?.total ?? 0;
   // Тот же общий сбор, что у «Замахнуться» выше (wdbc-ct65.1).
-  const throwMods = collectTestMods(actor, { kind: "skill", char: profile.testChar });
+  const throwMods = _withTwoHandedGrapplePenalty(collectTestMods(actor, { kind: "skill", char: profile.testChar }), actor);
   const final   = charVal + profile.testBonus + throwMods.total;
   const roll = await new Roll("1d100").evaluate();
   const { success: hit, deg } = testOutcome(roll.total, final);

@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
-import { applyHealing, comaWakeRemaining, resolveBionicTest } from "../../module/sheets/tabs/healing.mjs";
+import { applyHealing, comaWakeRemaining, resolveBionicTest, stopBleedingMod, patientActedLastTurn } from "../../module/sheets/tabs/healing.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 
 const DEFAULT_SOURCES = getRuleSources();
@@ -124,7 +124,9 @@ describe("applyHealing: amputate (Ампутация, Medicae−10)", () => {
     expect(patient.system.conditions.lostLegs).toBe(true);
     expect(patient.system.conditions.lostLegsCount).toBe(1);
     expect(patient.system.conditions.bleeding).toBe(true);
-    expect(patient.system.conditions.bleedingLevel).toBe(1);
+    // wdbc-x1nz.2.92: «уровень Кровотечения» книжного смысла не имеет — провал
+    // накладывает Кровотечение, счётчик не трогает.
+    expect(patient.system.conditions.bleedingLevel).toBeUndefined();
     expect(patient.system.conditions.gangrene).toBe(true);
   });
 });
@@ -343,5 +345,109 @@ describe("applyHealing: disease (Лечение болезней)", () => {
     expect(captured.chat[0].content).toContain("Лёгочная чума");
     expect(captured.chat[0].content).toContain("Постельный режим");
     expect(captured.chat[0].content).toContain("Успех");
+  });
+});
+
+// wdbc-x1nz.2.92 (книга, «Кровотечение»): «Кровотечение можно за полудействие
+// убрать тестом Medicae −10, который становится −30, если пациент активно
+// действовал в свой прошлый Ход, или для попытки остановить Кровотечение на
+// себе. Используя жгут… полное действие, но бонус +40».
+describe("applyHealing: stopBleeding (Остановить Кровотечение)", () => {
+  it("модификатор книги: −10; −30 при активности/на себе (не сумма); жгут +40", () => {
+    expect(stopBleedingMod({})).toBe(-10);
+    expect(stopBleedingMod({ patientActive: true })).toBe(-30);
+    expect(stopBleedingMod({ selfTreat: true, patientActive: true })).toBe(-30);
+    expect(stopBleedingMod({ selfTreat: true, tourniquet: true })).toBe(10);
+  });
+
+  it("успех снимает Кровотечение, Обескровливание остаётся", async () => {
+    const medic = person({ medicae: 40 });
+    const patient = person();
+    patient.system.conditions = { bleeding: true, haemorrhaging: true, haemorrhagingLevel: 2 };
+    captured.nextRoll = 25; // 40−10 = 30
+
+    await applyHealing(medic, patient, { mode: "stopBleeding", mod: 0 });
+
+    expect(patient.system.conditions.bleeding).toBe(false);
+    expect(patient.system.conditions.haemorrhagingLevel).toBe(2);
+    expect(captured.chat[0].content).toContain("порог <b>30</b>");
+  });
+
+  it("на себе — −30: тот же бросок 25 уже провал", async () => {
+    const medic = person({ medicae: 40 });
+    medic.system.conditions = { bleeding: true };
+    captured.nextRoll = 25; // 40−30 = 10
+
+    await applyHealing(medic, medic, { mode: "stopBleeding", mod: 0 });
+
+    expect(medic.system.conditions.bleeding).toBe(true);
+    expect(captured.chat[0].content).toContain("порог <b>10</b>");
+  });
+
+  it("жгут: +40", async () => {
+    const medic = person({ medicae: 40 });
+    const patient = person();
+    patient.system.conditions = { bleeding: true };
+    captured.nextRoll = 60; // порог 40−30+40 = 50; исход здесь не важен
+    await applyHealing(medic, patient, { mode: "stopBleeding", mod: 0, patientActive: true, tourniquet: true });
+    expect(captured.chat[0].content).toContain("порог <b>50</b>");
+  });
+
+  it("нет Кровотечения — предупреждение, без броска", async () => {
+    const medic = person();
+    const patient = person();
+    await applyHealing(medic, patient, { mode: "stopBleeding", mod: 0 });
+    expect(captured.warnings.length).toBe(1);
+    expect(captured.rolls).toHaveLength(0);
+  });
+
+  it("«активно действовал в прошлый Ход» — по меткам прошлого Хода пациента", async () => {
+    const p = person();
+    expect(patientActedLastTurn(p)).toBe(false);
+    await p.setFlag("warhammer-dbc", "movedThisTurn", true);
+    expect(patientActedLastTurn(p)).toBe(true);
+  });
+});
+
+// wdbc-x1nz.2.96 (книга, «Гангрена»): «Лечение Гангрены требует сложной
+// операции в хотя бы операционной комнате, занимающей смену работы и тест
+// Medicae–30. Даже в случае Успеха персонаж теряет гангренозную конечность
+// полностью».
+describe("applyHealing: gangreneSurgery (Лечение Гангрены)", () => {
+  function gangrenous(conds = {}) {
+    const p = person();
+    p.system.conditions = { gangrene: true, ...conds };
+    return p;
+  }
+
+  it("без операционной — предупреждение, без броска", async () => {
+    const patient = gangrenous();
+    await applyHealing(person(), patient, { mode: "gangreneSurgery", mod: 0, limb: "arm", theatre: false });
+    expect(captured.rolls).toHaveLength(0);
+    expect(patient.system.conditions.gangrene).toBe(true);
+  });
+
+  it("успех, часть тела цела — Гангрена снята, +1 к её потере", async () => {
+    const patient = gangrenous();
+    captured.nextRoll = 5; // 40−30 = 10
+    await applyHealing(person({ medicae: 40 }), patient, { mode: "gangreneSurgery", mod: 0, limb: "leg", theatre: true });
+    expect(patient.system.conditions.gangrene).toBe(false);
+    expect(patient.system.conditions.lostLegsCount).toBe(1);
+  });
+
+  it("успех, Гангрена обрубка кисти — теряется вся рука", async () => {
+    const patient = gangrenous({ lostHands: true, lostHandsCount: 1 });
+    captured.nextRoll = 5;
+    await applyHealing(person({ medicae: 40 }), patient, { mode: "gangreneSurgery", mod: 0, limb: "hand", theatre: true });
+    expect(patient.system.conditions.lostHandsCount).toBe(0);
+    expect(patient.system.conditions.lostArmsCount).toBe(1);
+  });
+
+  it("провал — Гангрена остаётся, конечность цела", async () => {
+    const patient = gangrenous();
+    captured.nextRoll = 90;
+    await applyHealing(person({ medicae: 40 }), patient, { mode: "gangreneSurgery", mod: 0, limb: "leg", theatre: true });
+    expect(patient.system.conditions.gangrene).toBe(true);
+    expect(patient.system.conditions.lostLegsCount).toBeUndefined();
   });
 });

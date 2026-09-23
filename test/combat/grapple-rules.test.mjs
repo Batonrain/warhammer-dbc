@@ -12,7 +12,7 @@ import { resistButtonData } from "../support/contest.mjs";
 import {
   resolveGrappleSuccess, endGrapple, grappleRole, grappleHands, grappleFreeHands,
   grappleTechDef, grappleSizePenalty, grappleAttackBlockReason, grappleMoveAllowed,
-  grappleDodgeBlockReason, inGrappleCoverArc, grappleCoverPartner, maybeAutoReleaseGrapple,
+  grappleDodgeBlockReason, inGrappleCoverArc, grappleCoverPartner, maybeAutoReleaseGrapple, grappleReleaseTriggered,
   _doSqueeze, _resolveTakeoverSuccess, setGrappleHands, SQUEEZE_PENDING_FLAG
 } from "../../module/combat/grapple.mjs";
 import { _showContestDialog } from "../../module/combat/techniques.mjs";
@@ -243,6 +243,27 @@ describe("Движение и Уклонение в Захвате", () => {
     holder.system.conditions.stunned = true;
     expect(await maybeAutoReleaseGrapple(holder)).toBe(true);
     expect(held.system.conditions.grappling).toBe(false);
+  });
+
+  // wdbc-x1nz.2.88 п.3: при потере сознания в changes приходит только
+  // unconscious — производный helpless (rules/character.mjs) в диффе не виден,
+  // и хук updateActor раньше молча пропускал это событие.
+  it("хук: потеря сознания (в changes только unconscious) — повод проверить выпуск", () => {
+    expect(grappleReleaseTriggered({ system: { conditions: { unconscious: true } } })).toBe(true);
+    for (const key of ["stunned", "dazed", "helpless"])
+      expect(grappleReleaseTriggered({ system: { conditions: { [key]: true } } })).toBe(true);
+    expect(grappleReleaseTriggered({ system: { conditions: { prone: true } } })).toBe(false);
+    expect(grappleReleaseTriggered({ system: { conditions: { unconscious: false } } })).toBe(false);
+    expect(grappleReleaseTriggered({ name: "x" })).toBe(false);
+  });
+
+  it("держащий потерял сознание — Захват разорван, в карточке «без сознания»", async () => {
+    const { holder, held } = await grappled();
+    holder.system.conditions.unconscious = true;
+    holder.system.conditions.helpless = true; // производное, как в prepareDerivedData
+    expect(await maybeAutoReleaseGrapple(holder)).toBe(true);
+    expect(held.system.conditions.grappling).toBe(false);
+    expect(captured.chat.at(-1)?.content ?? "").toMatch(/без сознания/);
   });
 
   it("Оглушили удерживаемого — Захват остаётся", async () => {

@@ -554,14 +554,18 @@ export function prepareCharacterDerived(actor, system) {
       system.fatigue.max = (chars.t?.bonus ?? 0) + (chars.wp?.bonus ?? 0);
     }
 
-    // Гангрена (стр. 30-31, wdbc-r5o7.5): «+1 неснимаемой Усталости» — не
-    // разовое начисление (легло бы в хранимое поле и ушло бы при следующем
-    // отдыхе, как обычная Усталость), а пол на КАЖДЫЙ пересчёт: пока
-    // Состояние стоит, fatigue.value здесь не опускается ниже 1, чем бы его
-    // ни обнулили (кнопка отдыха и любой другой писатель поля не в курсе
-    // Гангрены и не обязаны быть). Тег ниже читает уже клампнутое значение.
-    if (system.conditions?.gangrene && system.fatigue) {
-      system.fatigue.value = Math.max(1, Number(system.fatigue.value) || 0);
+    // Гангрена («Раны и Урон» → «Статусы», wdbc-x1nz.2.96): «получает 1
+    // Усталости, которую нельзя снять, пока не вылечена Гангрена» — это +1
+    // ПОВЕРХ хранимой, а не пол (было Math.max(1, value): Усталость 3 с
+    // Гангреной оставалась 3, должна быть 4). fatigue.value не трогается —
+    // его читают писатели (отдых, препараты, Пожиратель Боли…), и надбавка,
+    // записанная в него, запеклась бы в хранимое при первой же записи.
+    // Действующее число — fatigue.effective; по нему считаются штраф −10
+    // (rules/situational.mjs::effectiveFatigue), порог обморока
+    // (sheets/tabs/conditions.mjs) и тег СОСТОЯНИЙ ниже.
+    if (system.fatigue) {
+      system.fatigue.gangrene  = system.conditions?.gangrene ? 1 : 0;
+      system.fatigue.effective = Math.max(0, Number(system.fatigue.value) || 0) + system.fatigue.gangrene;
     }
 
     // Тег «Усталость» в СОСТОЯНИЯХ — не отдельное поле, а зеркало настоящего
@@ -571,7 +575,7 @@ export function prepareCharacterDerived(actor, system) {
     // давно снята. Считаем здесь заново на каждый прогон — источник истины
     // один, отдельно писать в conditions.fatigued/-Level больше не нужно.
     if (system.conditions && system.fatigue) {
-      const fatVal = Math.max(0, Number(system.fatigue.value) || 0);
+      const fatVal = Math.max(0, Number(system.fatigue.effective ?? system.fatigue.value) || 0);
       system.conditions.fatiguedLevel = fatVal;
       system.conditions.fatigued = fatVal > 0;
     }

@@ -686,6 +686,22 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   части тела. Мутация Loss of Limb/Потеря Конечности — НЕ реализована,
   вынесена в wdbc-1rno.6.1 (гейт Best.Q сравнением субмутации, субтаблица
   «Пальцы» — открытые решения).
+- Сверка раздела «Статусы» с книгой (wdbc-x1nz.2.87–.97, 23.09.2026):
+  - `combat/condition-clock.mjs` — часы Состояний по игровому времени
+    (`updateWorldTime`, список `CONDITION_CLOCK_HANDLERS`): пробуждение из
+    обморока от Усталости, урон Гангрены раз в T.b×2 ч, −1 Обескровливания в
+    час, Удушье «в покое» по минутам.
+  - `combat/condition-death.mjs::killByCondition` — смерть от Состояния
+    (Кровотечение/Удушье/Гангрена): флаг deceased + «Повержен» + defeated.
+  - Единый путь смены Усталости — `sheets/tabs/conditions.mjs::
+    setFatigue/fatigueChangeFields` (порог T.b+W.b, Саркофаг, пробуждение);
+    действующее значение с +1 Гангрены — `system.fatigue.effective`.
+  - Запрет действий Состояниями в любой момент Раунда и метка «Физическое»
+    (Беспомощный) — `combat/action-economy.mjs::actionBlockReason`.
+  - Остановка Кровотечения и операция от Гангрены — режимы диалога Лечения;
+    тушение Горения — `combat/extinguish.mjs` (кнопка на вкладке БОЙ).
+  - Ослепление и его снятие сонаром — `rules/blindness.mjs`; атаки по
+    Ослеплённому Незримые (`combat/attack.mjs`).
 - `module/apps/token-conditions.mjs` — синхронизация с Token HUD.
 - `module/sheets/tabs/conditions.mjs` — вкладка Состояния/Усталость.
 - `module/constants/fear-tables.mjs` — Страх/Шок/Ментальная Травма/Расстройства.

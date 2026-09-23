@@ -5457,7 +5457,8 @@ export const CAPABILITIES = {
   },
   "trait.sonarSense": {
     label: "Сонар (круговой обзор) на 30 м.",
-    source: "Sonar Sense / Сонарное Чувство", reader: ""
+    source: "Sonar Sense / Сонарное Чувство",
+    reader: "module/rules/item-rules.mjs (CAPABILITY_OVERRIDES — вытесняет conditions.blinded, rules/library/conditions.mjs), module/rules/blindness.mjs (hasAlternativeSenses/suffersBlindness — окно атаки, Трудный Ландшафт, «атаки по Ослеплённому Незримые» в combat/attack.mjs). Читается только «все штрафы Ослепления игнорируются» (wdbc-x1nz.2.89); дальность/круговой обзор — на столе"
   },
   "trait.sophisticatedCombat": {
     label: "+1 успех на WS/A при числ. превосходстве врага; переброс WS/A в бою 1-на-1. Если WS противника ниже — Unnatural WS (+1).",
@@ -5567,7 +5568,8 @@ export const CAPABILITIES = {
   },
   "trait.unnaturalSenses": {
     label: "Чувства на дистанции X м, круговой обзор.",
-    source: "Unnatural Senses / Сверхъестественные Чувства (X)", reader: ""
+    source: "Unnatural Senses / Сверхъестественные Чувства (X)",
+    reader: "module/rules/item-rules.mjs (CAPABILITY_OVERRIDES — вытесняет conditions.blinded, rules/library/conditions.mjs), module/rules/blindness.mjs (hasAlternativeSenses/suffersBlindness — окно атаки, Трудный Ландшафт, «атаки по Ослеплённому Незримые» в combat/attack.mjs). Читается только «все штрафы Ослепления игнорируются» (wdbc-x1nz.2.89); дальность/круговой обзор — на столе"
   },
   "trait.unruly": {
     label: "Непоглощённый урон скакуну — тест Акробатики или выпадение из седла.",

@@ -438,6 +438,8 @@ describe("общее требование к предикатам", () => {
     hasTalent: "Frenzy", hasTrait: "Gene-Seed", weaponClass: ["melee"],
     targetHasTrait: "Daemonic", targetLacksCondition: "stunned",
     hasCondition: "prone", targetHasCondition: "prone",
+    // Ослеплён по-настоящему (wdbc-x1nz.2.89): свой флаг ИЛИ оба глаза.
+    isBlinded: true,
     charNotIn: ["t", "inf", "cor"],
     charIn: ["int", "per", "wp", "fel", "inf"],
     hasSize: undefined, targetHasSize: undefined, targetKeepsNimbleInArmour: undefined,

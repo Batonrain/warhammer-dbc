@@ -11,7 +11,7 @@
 
 import { DP_INFAMY_ABILITIES, DP_PATRON_ABILITIES, DP_PATRONAGE, DP_GODS_MAP } from "../constants/demon-prince.mjs";
 import { esc } from "../helpers/utils.mjs";
-import { conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
+import { conditionRemoveFields, fatigueChangeFields, announceFatigueChange } from "../sheets/tabs/conditions.mjs";
 import { tempInfamyInfo, tempInfamyAmount, spendTempInfamy } from "../rules/temp-infamy.mjs";
 
 /**
@@ -160,8 +160,12 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta 
   const lines = [];
   const rolls = [];
 
+  let fatRes = null;
   if (key === "surge") {
-    upd["system.fatigue.value"] = 0;
+    // Единый путь смены Усталости (wdbc-x1nz.2.95): обнуление выводит из
+    // обморока от Усталости и гасит его таймер (карточка — после update).
+    fatRes = fatigueChangeFields(actor, 0);
+    Object.assign(upd, fatRes.fields);
     lines.push("Прилив Сил: вся Усталость снята.");
   } else if (key === "heal") {
     if (patron.healBlockedByBleeding && s.conditions?.bleeding)
@@ -189,6 +193,7 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta 
   }
 
   await actor.update(upd);
+  if (fatRes) await announceFatigueChange(actor, fatRes);
   const rollMode = game.settings.get("core", "rollMode");
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),

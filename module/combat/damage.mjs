@@ -1104,6 +1104,15 @@ export async function applyDamageToActor(actor, damageData) {
     await actor.setFlag("warhammer-dbc", LAST_DAMAGE_WEAPON_FLAG, weaponUuid);
   }
 
+  // Обескровливание (wdbc-x1nz.2.92): без сознания от него — «пока он не
+  // получит непоглощенный урон». Динамический импорт: condition-ticks.mjs
+  // сам импортирует этот файл (тот же приём, что action-economy.mjs →
+  // damage.mjs).
+  if (netDamage > 0 && actor.getFlag?.("warhammer-dbc", "haemorrhageFaint")) {
+    const { wakeFromHaemorrhageOnDamage } = await import("./condition-ticks.mjs");
+    await wakeFromHaemorrhageOnDamage(actor);
+  }
+
   // Жнец/merciless 5-6 (wdbc-1rno.35, стр. 428): кнопка теста Т цели на
   // Кровотечение — виден только при непоглощённом уроне и Мутации на оружии.
   const reaperWeaponItem = (weaponUuid && netDamage > 0) ? await fromUuid(weaponUuid).catch(() => null) : null;

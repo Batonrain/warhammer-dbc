@@ -63,8 +63,35 @@ import { disabledArmourPenalty } from "./armour-penalty.mjs";
 import { inventoryOverloadPenalty } from "./encumbrance.mjs";
 import { isItemActive } from "../apps/effects.mjs";
 
-/** Характеристики, которых Усталость не касается (стр. 26). */
-const FATIGUE_EXEMPT = ["t", "inf", "cog", "pf"];
+/**
+ * Тесты, которых Усталость не касается. Книга («Раны и Урон» → «Статусы»,
+ * wdbc-x1nz.2.95): «штраф −10 на все тесты, кроме тестов T, Inf и Cor».
+ *
+ * Было ["t","inf","cog","pf"] со времён первого коммита: "cog" — опечатка
+ * вместо "cor" (характеристики/теста с ключом "cog" в системе нет вовсе,
+ * а тест Проявления Порчи — sheets/tabs/possession.mjs, char:"cor" — зря
+ * получал −10). "pf" — тест Фактора Прибыли (actor-sheet.mjs::_rollCharacteristic,
+ * «не характеристика»): в книге его нет, но это тот же род теста, что Inf
+ * (богатство/положение династии, а не тело персонажа) — оставлен как
+ * аналог Inf, а не как отступление от книги.
+ */
+const FATIGUE_EXEMPT = ["t", "inf", "cor", "pf"];
+
+/**
+ * Действующая Усталость: хранимая + 1 от Гангрены (wdbc-x1nz.2.96, книга:
+ * «получает 1 Усталости, которую нельзя снять, пока не вылечена Гангрена»).
+ * +1 — производная надбавка, а не запись в fatigue.value: хранимое число
+ * снимается отдыхом/сном как обычно, а эта единица держится, пока стоит
+ * Состояние. Считается заново из value + флага, а не читается из
+ * fatigue.effective (rules/character.mjs): между actor.update и пересчётом
+ * производных fatigue.effective ещё старое.
+ */
+export function gangreneFatigueExtra(actor) {
+  return actor?.system?.conditions?.gangrene ? 1 : 0;
+}
+export function effectiveFatigue(actor) {
+  return Math.max(0, Number(actor?.system?.fatigue?.value) || 0) + gangreneFatigueExtra(actor);
+}
 
 // Гололит (стр. 256, wdbc-x1nz.2): «час подготовки → +10 Command» — бонус
 // разовый, на СЛЕДУЮЩИЙ тест Command после успешного брифинга (combat/
@@ -114,7 +141,8 @@ export function fatiguePenalty(actor, charKey) {
   // поэтому берётся максимум. Прежний захардкоженный путь оставлен работать
   // рядом: Происхождения на новую запись не переводились.
   const grace = Math.max(hwGrace, fatigueGraceForActor(actor));
-  if ((actor?.system?.fatigue?.value ?? 0) < 1 + grace) return 0;
+  // Действующая, а не хранимая: +1 Гангрены тоже даёт штраф (wdbc-x1nz.2.96).
+  if (effectiveFatigue(actor) < 1 + grace) return 0;
   if (FATIGUE_EXEMPT.includes(String(charKey ?? "").toLowerCase())) return 0;
 
   // Feels No Pain / Не Чувствует Боли (wdbc-1rno): «не получает штраф −10 от

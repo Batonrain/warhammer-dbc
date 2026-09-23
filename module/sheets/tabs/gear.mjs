@@ -8,7 +8,7 @@ import { syncItemEffectsDisabled, syncOrphanedModEffects } from "../../apps/effe
 import { _reloadWeapon } from "../../combat/reload.mjs";
 import { _toggleShield, _rollShieldActivation, _repairShield } from "../../combat/shield.mjs";
 import { on, esc } from "../../helpers/utils.mjs";
-import { canEquipInHands, handsOccupied, getHeldHand, setHeldHand } from "../../rules/hands.mjs";
+import { canEquipInHands, handsOccupied, getHeldHand, setHeldHand, isWristMounted } from "../../rules/hands.mjs";
 import { rollInfoguard as _rollInfoguard } from "../../apps/infoguard.mjs";
 import { showDelegateTestPicker as _showDelegateTestPicker } from "../../rules/delegate-test.mjs";
 import { useDetonateGrenadeInRig } from "../../combat/draw-action.mjs";
@@ -56,7 +56,16 @@ function _conflictingHardArmor(actor, item) {
 export async function equipItem(item, equipped) {
   if (!item) return;
   if (equipped && item.type === "weapon" && item.parent && !canEquipInHands(item.parent, item)) {
-    const { free, max } = handsOccupied(item.parent, { exclude: item.id });
+    const { free, max, wrists, wristUsed } = handsOccupied(item.parent, { exclude: item.id });
+    // wdbc-x1nz.2.97 п.2: наручному предмету нужна не ладонь, а запястье —
+    // без руки его нет вовсе («Раны и Урон», стр. 43), и «не хватает рук
+    // (свободно 1 из 1)» тогда звучало бы бессмыслицей.
+    if (isWristMounted(item, item.parent)) {
+      ui.notifications?.warn(wrists <= 0
+        ? `${item.name}: крепится к запястью, а без руки запястья нет.`
+        : `${item.name}: нет свободного запястья (занято ${wristUsed} из ${wrists}) — сначала снимите что-то с запястья.`);
+      return;
+    }
     ui.notifications?.warn(`${item.name}: не хватает рук (свободно ${free} из ${max}) — сначала снимите что-то с рук.`);
     return;
   }

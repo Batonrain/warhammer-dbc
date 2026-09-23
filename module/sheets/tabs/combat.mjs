@@ -24,6 +24,8 @@ import { rollRecognizeStance } from "../../combat/recognize-stance.mjs";
 import { beginTargeting } from "../../combat/aim.mjs";
 import { meleeStanceAllowed } from "../../rules/melee-stance-gate.mjs";
 import { showHealingDialog } from "./healing.mjs";
+import { showExtinguishDialog } from "../../combat/extinguish.mjs";
+import { toggleSuffocationMode } from "../../combat/condition-ticks.mjs";
 import { showDelegateTestPicker } from "../../rules/delegate-test.mjs";
 import { painChange, openPainSoulBurnDialog } from "./pain.mjs";
 import { showSkillfulTortureDialog } from "../../apps/skillful-torture.mjs";
@@ -111,6 +113,12 @@ export function activateCombatListeners(root, actor) {
   // не исполнитель — тот выбирается уже в самом пикере.
   on(root, ".wounds-request-heal-btn", "click", () =>
     showDelegateTestPicker(actor, { title: "Попросить лечение", kind: "healing", label: "Лечение", buttonLabel: "Открыть Лечение" }));
+
+  // Тушение Горения (wdbc-x1nz.2.93) и режим Удушья (wdbc-x1nz.2.94) — рядом
+  // с Лечением: тег Состояния свою кнопку действия не несёт (вкладка Тело —
+  // только снять/уровень).
+  on(root, ".wounds-extinguish-btn", "click", () => showExtinguishDialog(actor));
+  on(root, ".wounds-suffocation-mode-btn", "click", () => toggleSuffocationMode(actor));
 
   // ── Перевес выключенной силовой брони: тест раз в T.b часов (стр. 233) ──
   on(root, ".disabled-armour-periodic-test-btn", "click", () => useDisabledArmourPeriodicTest(actor));

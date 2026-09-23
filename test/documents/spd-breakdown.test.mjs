@@ -103,12 +103,14 @@ describe("system.movement.spdBreakdown", () => {
   // Потеря стоп/ног (стр. 30-31, wdbc-r5o7.5): «SPD уменьшена вдвое (окр.
   // вниз)» — в отличие от Поваленного, здесь настоящий Math.floor, а не
   // клампится к минимуму 0.5; одной потерянной стопы/ноги уже достаточно.
-  it("Потеря одной стопы — halfMove/move/charge/run делятся на 2 с округлением вниз", () => {
+  // wdbc-x1nz.2.91: книга режет вдвое сам SPD, производные — ×2/×3/×6 от
+  // уже урезанного. Прежний тест закреплял floor от каждого числа (1/3/4/9).
+  it("Потеря одной стопы — SPD floor(÷2), Полное/Натиск/Бег от него ×2/×3/×6", () => {
     const system = characterWith({ conditions: { lostFeet: true, lostFeetCount: 1 } });
     expect(system.movement.halfMove).toBe(1); // floor(3/2)
-    expect(system.movement.move).toBe(3);     // floor(6/2)
-    expect(system.movement.charge).toBe(4);   // floor(9/2)
-    expect(system.movement.run).toBe(9);      // floor(18/2)
+    expect(system.movement.move).toBe(2);     // 1 × 2
+    expect(system.movement.charge).toBe(3);   // 1 × 3
+    expect(system.movement.run).toBe(6);      // 1 × 6
     expect(system.movement.spdBreakdown).toEqual([
       { label: "База", value: 3, note: "Ag.b + Размер" },
       { label: "Потеря стопы/ноги", value: null, halvedFloor: true }
@@ -143,6 +145,7 @@ describe("system.movement.spdBreakdown", () => {
     const system = characterWith({ movement: { spdBonus: 3 }, conditions: { prone: true, lostFeet: true, lostFeetCount: 1 } });
     // (3 + 3) = 6 → Повален: 6/2 = 3 → Потеря стопы: floor(3/2) = 1
     expect(system.movement.halfMove).toBe(1);
+    expect(system.movement.run).toBe(6); // wdbc-x1nz.2.91: 1 × 6, не floor(9/2)
     expect(system.movement.spdBreakdown.map(b => b.label)).toEqual(
       ["База", "Механика (Конструктор)", "Повален", "Потеря стопы/ноги"]);
   });

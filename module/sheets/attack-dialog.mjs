@@ -32,7 +32,8 @@ import { resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properti
 import { mergeExtraProps } from "../combat/attack-weapon.mjs";
 import { getModEffects, mergeWeaponPropEntries, getInstalledMods } from "../combat/weapon-mods.mjs";
 import { hasRuleFlag }                        from "../rules/flags.mjs";
-import { isStunnedOrDazed, isBlindedActor }    from "../rules/predicates.mjs";
+import { isStunnedOrDazed }    from "../rules/predicates.mjs";
+import { suffersBlindness } from "../rules/blindness.mjs";
 import { shieldArmorByLocation } from "../combat/hand-shield.mjs";
 import { isHallucinatingCannotAttack }         from "../combat/hallucinogenic.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
@@ -442,8 +443,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // +20» — та же форма, что у Бега (runningMod) чуть выше, тем же приёмом,
   // что уже сделан для Беспомощной цели (badge, не «Спецправила»/rollBonus:
   // безусловное книжное правило, не галочка на усмотрение игрока).
-  const targetProne    = !!attackCtx.targetActor?.system?.conditions?.prone;
-  const proneMod       = targetProne ? (isMelee ? 20 : -20) : 0;
+  const { targetProne, proneMod, targetStunned, stunnedMod } =
+    targetConditionAttackMods(attackCtx.targetActor, isMelee);
   const proneBadge     = targetProne
     ? `<span class="atk-training-warn" title="Цель Повалена (стр. 30-31)">🧎 Цель Повалена (${isMelee ? "+20" : "−20"})</span>`
     : "";
@@ -455,9 +456,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Оглушена» буквально — эта фраза уже занята независимым ручным
   // чекбоксом «Ситуативные» (commonMods ниже, для случаев, которые система
   // не отследит сама), тот же приём, что различают «Цель лежит»
-  // (ручной)/«Цель Повалена» (авто) и «Цель бежит» (тот и другой).
-  const targetStunned  = isStunnedOrDazed(attackCtx.targetActor);
-  const stunnedMod     = targetStunned ? 20 : 0;
+  // (ручной)/«Цель Повалена» (авто) и «Цель бежит» (тот и другой). Когда
+  // Состояние распознано, ручная галочка отмечена, заперта и стоит 0
+  // (sheets/attack/mods.mjs, wdbc-x1nz.2.97 п.6) — бонус только отсюда.
   const stunnedBadge   = targetStunned
     ? `<span class="atk-training-warn" title="Цель Оглушена/в Ступоре (стр. 30-31)">💫 Цель Оглушена/в Ступоре (+20)</span>`
     : "";
@@ -679,12 +680,14 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     + wpAttackMod + dyn0.techBon + dyn0.stanceBon + dyn0.gWs + (wp.noAim ? 0 : aimingBonus) + ammoAtkMod;
 
   // Штраф усталости (мод препаратов уже учтён в char.total)
-  const hasFatigue = (actor.system.fatigue?.value ?? 0) >= 1;
-  // Ослеплён (стр. 30-31, wdbc-r5o7.4): автопровал BS, −30 WS — тот же
-  // приём, что Усталость выше (autoCheck на реальном состоянии, галочка
+  // fatigue.effective — с +1 неснимаемой от Гангрены (wdbc-x1nz.2.96).
+  const hasFatigue = (actor.system.fatigue?.effective ?? actor.system.fatigue?.value ?? 0) >= 1;
+  // Ослеплён (стр. 30-31, wdbc-r5o7.4): автопровал BS, −30 WS. При
+  // реальном Ослеплении галочка отмечена и заперта (wdbc-x1nz.2.89, решение
+  // владельца 4 — снять руками нельзя, sheets/attack/mods.mjs); без него
   // остаётся ручной для случаев, которые система не отследит сама, напр.
-  // ослепление вспышкой без хранимого флага). isBlindedActor — свой флаг
-  // ИЛИ Потеря обоих глаз (rules/predicates.mjs).
+  // ослепление вспышкой без хранимого флага. Ослеплён — свой флаг ИЛИ
+  // Потеря обоих глаз (rules/predicates.mjs::isBlindedActor).
   // Щит на голове (core.json, «Типы Рукопашного Оружия», разд. «Щит»):
   // «При прикрытии головы щитом, персонаж перекрывает себе обзор... персонаж
   // считается слепым с углов прикрытия щита» — упрощение: не различаем
@@ -693,7 +696,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Ослепление ВСЕГДА, пока голова прикрыта (shieldArmorByLocation уже сама
   // учитывает shieldRaised для частичных зон вроде «(Г)»).
   const shieldBlindsSelf = (shieldArmorByLocation(actor).head || 0) > 0;
-  const isBlinded = isBlindedActor(actor) || shieldBlindsSelf;
+  // Sonar Sense / Unnatural Senses снимают «все штрафы Ослепления» — и от
+  // Состояния, и от щита (wdbc-x1nz.2.89, rules/blindness.mjs).
+  const isBlinded = suffersBlindness(actor, { extraBlind: shieldBlindsSelf });
   // Потеря глаз (частичная, book: «−10 на BS», независимо от полной
   // слепоты) — читает флаг напрямую, не через isBlindedActor: тут именно
   // «хоть один глаз потерян», а не производное «оба потеряны = Ослеплён».
@@ -959,19 +964,24 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const makeMods = arr => arr.map(m => {
     const isAF      = m.autofail === true;
     const isAS      = m.autosuccess === true;
-    const isChecked = m.autoCheck === true;
+    // locked (wdbc-x1nz.2.89/.97): отмечено и не снимается — состояние
+    // распознано системой (Ослеплён; «Цель лежит»/«Цель Оглушена» при
+    // авто-бонусе). disabled-галочка всё равно видна селектору :checked
+    // (sheets/attack/form.mjs), поэтому в сумму и автопровал она идёт.
+    const isLocked  = m.locked === true;
+    const isChecked = m.autoCheck === true || isLocked;
     // Погашенный правилом цели модификатор не прячем: игрок должен видеть,
     // ПОЧЕМУ бонуса нет, а не гадать, куда делся пункт списка.
     const dispVal   = m.immune ? "иммунитет"
                     : (isAF ? "провал" : (isAS ? "авто-успех, ×2" : (m.value >= 0 ? `+${m.value}` : `${m.value}`)));
     const note      = m.note ? ` [${m.note}]` : "";
-    return `<label class="attack-mod-check${isChecked ? " atk-mod-auto" : ""}${m.immune ? " atk-mod-immune" : ""}">
+    return `<label class="attack-mod-check${isChecked ? " atk-mod-auto" : ""}${m.immune ? " atk-mod-immune" : ""}"${isLocked ? ' title="Распознано автоматически — снять нельзя"' : ""}>
       <input type="checkbox" class="atk-mod-cb"
              ${m.id ? `id="${m.id}"` : ""}
              data-value="${(isAF || isAS) ? 0 : m.value}"
              ${isAF    ? 'data-autofail="true"' : ""}
              ${isAS    ? 'data-autosuccess="true"' : ""}
-             ${m.immune ? "disabled" : ""}
+             ${(m.immune || isLocked) ? "disabled" : ""}
              ${isChecked ? "checked" : ""}/>
       <span>${m.label} (${dispVal})${note}${isChecked ? " 😓" : ""}</span>
     </label>`;
@@ -1563,6 +1573,24 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   });
 }
 
+/**
+ * Бонусы атаке от Состояния ЦЕЛИ, которые книга даёт безусловно: Повален
+ * («Стрельба по нему −20, рукопашная +20») и Оглушён/Ступор («все атаки по
+ * нему +20»), «Раны и Урон», «Статусы». Одна функция на оба пути атаки —
+ * окно (showAttackDialog) и безусловный приём без оружия
+ * (showAttackDialogNoWeapon), где этих бонусов раньше не было вовсе
+ * (wdbc-x1nz.2.97 п.6).
+ */
+export function targetConditionAttackMods(targetActor, isMelee) {
+  const targetProne   = !!targetActor?.system?.conditions?.prone;
+  const targetStunned = isStunnedOrDazed(targetActor);
+  return {
+    targetProne, targetStunned,
+    proneMod:   targetProne ? (isMelee ? 20 : -20) : 0,
+    stunnedMod: targetStunned ? 20 : 0
+  };
+}
+
 export async function showAttackDialogNoWeapon(actor, techDef) {
   if (isHallucinatingCannotAttack(actor))
     return ui.notifications.warn("⚠️ Галлюцинации («Я маленький...») — не может совершать Атаки.");
@@ -1592,12 +1620,18 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
   // ни в сумму, ни в карточку).
   const bodyMods = collectTestMods(actor, { kind: "attack", isMelee: true, char: "ws" });
   const fatigue  = bodyMods.total;
+  const targetActor = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+  // Повалена/Оглушена цель — +20, тем же кодом, что окно атаки
+  // (wdbc-x1nz.2.97 п.6); Ослеплённый бьёт с −30 WS, как строка «Ослеплён»
+  // окна (wdbc-x1nz.2.89) — здесь галочек нет, поэтому сразу в Порог.
+  const { proneMod, stunnedMod } = targetConditionAttackMods(targetActor, true);
+  const blindMod = suffersBlindness(actor) ? -30 : 0;
   // WS уже включает мод препаратов (см. prepareDerivedData)
-  const final    = ws + techDef.wsBonus + baseBon + stBon + fatigue;
+  const final    = ws + techDef.wsBonus + baseBon + stBon + fatigue + proneMod + stunnedMod + blindMod;
 
   // Беспомощная цель, рукопашная (в т.ч. безоружная) — авто-успех и ×2 урона,
   // как и в showAttackDialog (см. helplessAutoMelee там же).
-  const targetHelpless = !!([...(game.user?.targets ?? [])][0]?.actor)?.system?.conditions?.helpless;
+  const targetHelpless = !!targetActor?.system?.conditions?.helpless;
 
   const roll     = await new Roll("1d100").evaluate();
   const rv       = roll.total;
@@ -1663,6 +1697,9 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
     `база ${baseBon >= 0 ? "+" : ""}${baseBon}${fullAttackForced ? " (Локус Сокрушения)" : ""}`,
     stBon !== 0 ? `стойка ${stBon >= 0 ? "+" : ""}${stBon}` : "",
     techDef.wsBonus !== 0 ? `${techDef.wsBonus >= 0 ? "+" : ""}${techDef.wsBonus}` : "",
+    proneMod   ? `Цель Повалена +${proneMod}` : "",
+    stunnedMod ? `Цель Оглушена/в Ступоре +${stunnedMod}` : "",
+    blindMod   ? `Ослеплён ${blindMod}` : "",
     ...bodyMods.parts
   ];
 

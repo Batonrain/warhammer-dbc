@@ -12,6 +12,7 @@
 // ══════════════════════════════════════════════════════════════════════════
 
 import { ruleFlagLabels }         from "../../rules/flags.mjs";
+import { isStunnedOrDazed }       from "../../rules/predicates.mjs";
 import { meleeContactCount, hasHighGround } from "../../combat/tactical-map.mjs";
 import { rangeBandKey }           from "../../rules/tactical-map.mjs";
 import { getTerrainInfoForToken } from "../../regions/difficult-terrain.mjs";
@@ -70,6 +71,10 @@ export function situationalMods(v) {
   const tgtGrappled = !!tgt?.system?.conditions?.grappling;
   const tgtPartnerUuid = tgt?.getFlag?.("warhammer-dbc", "grapplePartnerUuid") ?? tgt?.flags?.["warhammer-dbc"]?.grapplePartnerUuid;
   const vsGrappled = tgtGrappled && tgtPartnerUuid !== actor?.uuid;
+  // Те же условия, по которым окно атаки само даёт ±20 (attack-dialog.mjs,
+  // proneMod/stunnedMod) — wdbc-x1nz.2.97 п.6.
+  const tgtProneAuto   = !!tgt?.system?.conditions?.prone;
+  const tgtStunnedAuto = isStunnedOrDazed(tgt);
   const commonMods = [
     { label: "Усталость",     value: -10, autoCheck: hasFatigue },
     { label: "Цель в Борьбе (не ваш Захват)", value: 20, autoCheck: vsGrappled,
@@ -83,14 +88,29 @@ export function situationalMods(v) {
     { label: "Слабый свет",   value: isMelee ? 0 : -10, visionPenalty: true },
     { label: "Дым / туман",   value: isMelee ? -10 : -20, visionPenalty: true },
     { label: "Тьма",          value: isMelee ? -20 : -30, visionPenalty: true },
-    { label: "Ослеплён",      value: isMelee ? -30 : -99, autofail: !isMelee, autoCheck: isBlinded },
+    // Ослеплён (wdbc-x1nz.2.89, решение владельца 4): при распознанном
+    // Ослеплении (свой флаг/оба глаза/щит на голове, без Sonar Sense и
+    // Unnatural Senses — rules/blindness.mjs) галочка заперта — автопровал BS
+    // и −30 WS руками не снимаются. Без него — ручная, как раньше.
+    { label: "Ослеплён",      value: isMelee ? -30 : -99, autofail: !isMelee, autoCheck: isBlinded, locked: isBlinded },
     // Потеря глаз (частичная): −10 на BS и «тесты определения расстояний»
     // (последнее не автоматизировано — нет отдельного типа теста «на глаз»)
     // — только стрелковая, книга не даёт штрафа рукопашной от неё отдельно.
     ...(isMelee ? [] : [{ label: "Потеря глаз", value: -10, autoCheck: hasLostEyes }]),
-    { label: "Цель лежит",    value: isMelee ?  20 : -20 },
+    // «Цель лежит»/«Цель Оглушена» (wdbc-x1nz.2.97 п.6): распознанное
+    // Состояние цели уже дало свои ±20 автоматически (attack-dialog.mjs,
+    // proneMod/stunnedMod). Тогда ручная галочка отмечена, заперта и стоит
+    // 0 — один источник бонуса, а не два; без распознанного Состояния она
+    // ручная, как раньше (цель без листа, лежит «по сюжету»).
+    tgtProneAuto
+      ? { label: "Цель лежит", value: 0, autoCheck: true, locked: true,
+          note: `Цель Повалена — ${isMelee ? "+20" : "−20"} учтено автоматически` }
+      : { label: "Цель лежит", value: isMelee ?  20 : -20 },
     { label: "Цель бежит",    value: isMelee ?  20 : -20 },
-    { label: "Цель Оглушена", value: 20 },
+    tgtStunnedAuto
+      ? { label: "Цель Оглушена", value: 0, autoCheck: true, locked: true,
+          note: "Оглушение/Ступор цели — +20 учтено автоматически" }
+      : { label: "Цель Оглушена", value: 20 },
     // id нужен readAttackForm (wdbc-1rno.3, стр. 32 «Скрытная Атака»):
     // «Взятие Врасплох» читается как именованный флаг attack.mjs::
     // targetSurprised (Quiet Elimination: +1 куб урона/тихая смерть ПО
@@ -447,14 +467,20 @@ export function situationalMods(v) {
     { label: "Дальняя дистанция",       value: -10, autoCheck: bandKey === "long",       note: bandNote("long") },
     { label: "Экстремальная дистанция", value: -30, autoCheck: bandKey === "extreme",    note: bandNote("extreme") },
     // Беспомощная цель, выстрел в упор/в рукопашной: как рукопашная — авто-
-    // успех и удвоенный урон, а не просто +30 (см. targetHelpless выше). Это
-    // ситуативный факт про конкретный выстрел (дистанция), а не хранимое
-    // состояние — поэтому галочка, а не автоматика, ровно как «Дистанция в упор».
-    ...(targetHelpless ? [{
-      id: "atk-helpless-close", label: "Беспомощная цель: в упор / в рукопашной",
-      value: 0, autosuccess: true,
-      note: "заменяет +30 на авто-успех и ×2 урона"
-    }] : []),
+    // успех и удвоенный урон, а не просто +30 (см. targetHelpless выше).
+    // wdbc-x1nz.2.88 п.2: отмечается сама по той же замеренной дистанции, что
+    // «Дистанция в упор» (bandKey pointBlank), и по контакту Баз — стрельба
+    // в рукопашной. Без токенов/замера — ручная, как раньше.
+    ...(targetHelpless ? (() => {
+      const closeAuto = bandKey === "pointBlank" || (!!measured?.contact && measured.contact !== "none");
+      return [{
+        id: "atk-helpless-close", label: "Беспомощная цель: в упор / в рукопашной",
+        value: 0, autosuccess: true, autoCheck: closeAuto,
+        note: closeAuto
+          ? "дистанция в упор / в рукопашной — авто-успех и ×2 урона вместо +30"
+          : "заменяет +30 на авто-успех и ×2 урона"
+      }];
+    })() : []),
     // ── Ситуативные штрафы боя (wdbc-z56a, стр. 32/166): теснота/высота-
     // скорость цели/нестабильная платформа — раньше в диалоге не существовали
     // вовсе, поэтому Anti-Air/Gyro-Stabilized нечего было гасить. ──────────

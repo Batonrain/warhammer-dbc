@@ -132,32 +132,56 @@ describe("Потеря обеих ног блокирует всё Движен�
   });
 });
 
-// Потеря обеих стоп (стр. 30-31, wdbc-r5o7.5): не запрет, а обязательный
-// Acrobatics−10 «просто чтобы идти» — Dialog.confirm тем же приёмом, что и
-// Вызов/Challenge (declareDisengage выше), captured.confirmAnswer в тесте
-// играет роль «бросок сделан и успешен».
-describe("Потеря обеих стоп требует подтверждения Acrobatics−10", () => {
-  const footless = () => fakeActor({ conditions: { lostFeet: true, lostFeetCount: 2 } });
+// Потеря обеих стоп («Раны и Урон», стр. 43; wdbc-x1nz.2.97 п.4): «требует
+// броска на Acrobatics–10 просто чтобы ходить». Раньше — Dialog.confirm
+// «бросок сделан?» и только у Полу/Полного/Выхода из Боя; теперь настоящий
+// бросок на всех боевых движениях, включая Натиск и Бег. Акробатика 50 −10
+// (бросок) −20 (тесты Движения той же потери стоп) = порог 20.
+describe("Потеря обеих стоп — бросок Acrobatics−10 на каждом движении", () => {
+  const footless = () => fakeActor({
+    conditions: { lostFeet: true, lostFeetCount: 2 },
+    skills: { acrobatics: { total: 50 } }
+  });
+  const moves = [
+    ["Полудвижение", declareHalfMove, "movedThisTurn"],
+    ["Полное Движение", declareFullMove, "movedThisTurn"],
+    ["Натиск", declareCharge, "meleeBase"],
+    ["Бег", declareRun, "running"],
+    ["Выход из Боя", declareDisengage, "disengageActive"]
+  ];
 
-  it("отказ в диалоге — Движение не происходит", async () => {
-    captured.confirmAnswer = false;
+  it.each(moves)("%s — провал броска: движения нет, карточка провала в чате", async (_l, fn, side) => {
+    captured.nextRoll = 90;
+    const actor = footless();
+    await fn(actor);
+    expect(actor.getFlag("warhammer-dbc", "movedThisTurn")).toBeUndefined();
+    if (side === "meleeBase") expect(actor.system.meleeBase).toBeUndefined();
+    else expect(actor.getFlag("warhammer-dbc", side)).toBeUndefined();
+    expect(captured.rolls).toContain("1d100");
+    expect(captured.chat.some(m => String(m.content).includes("Не удержал равновесие"))).toBe(true);
+  });
+
+  it.each(moves)("%s — успех броска: движение проходит", async (_l, fn) => {
+    captured.nextRoll = 10;
+    const actor = footless();
+    await fn(actor);
+    expect(actor.getFlag("warhammer-dbc", "movedThisTurn")).toBe(true);
+    expect(captured.chat.some(m => String(m.content).includes("Удержался на обрубках"))).toBe(true);
+  });
+
+  it("порог — Акробатика −10 и −20 тестов Движения от потери стоп (итог 20)", async () => {
+    captured.nextRoll = 21; // при пороге 40 (без −20) был бы успех
     const actor = footless();
     await declareHalfMove(actor);
     expect(actor.getFlag("warhammer-dbc", "movedThisTurn")).toBeUndefined();
   });
 
-  it("подтверждение — Движение проходит как обычно", async () => {
-    captured.confirmAnswer = true;
-    const actor = footless();
-    await declareFullMove(actor);
-    expect(actor.getFlag("warhammer-dbc", "movedThisTurn")).toBe(true);
-  });
-
-  it("одна потерянная стопа (не обе) — диалог не нужен вовсе", async () => {
-    captured.confirmAnswer = false; // если бы диалог всё же спросили — блокировало бы
+  it("одна потерянная стопа (не обе) — броска нет вовсе", async () => {
+    captured.nextRoll = 99;
     const actor = fakeActor({ conditions: { lostFeet: true, lostFeetCount: 1 } });
     await declareHalfMove(actor);
     expect(actor.getFlag("warhammer-dbc", "movedThisTurn")).toBe(true);
+    expect(captured.rolls).toEqual([]);
   });
 });
 

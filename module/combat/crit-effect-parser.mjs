@@ -70,7 +70,9 @@ export function parseCritEffectPills(text) {
   for (const m of text.matchAll(/(\d+)\s+Обескровливани[а-яёА-ЯЁ]*/giu))
     push("haemorrhaging", m[1]);
 
-  // Удушье — булево, книга не даёт длительности для крит-варианта.
+  // Удушье — крит-таблица числа не даёт; запас задержки дыхания при наложении
+  // — книжные T.b×2 Раундов активного режима (applyCritEffectPill ниже,
+  // wdbc-x1nz.2.94), а не 0: с нулём персонаж сразу терял бы сознание.
   if (/Удушь[а-яёА-ЯЁ]*/gu.test(text)) push("suffocating", null);
 
   // Загорание — почти всегда за проваленным тестом («тест A+0, или Загореться»),
@@ -256,9 +258,23 @@ export async function applyCritEffectPill(actor, { key, formula, permanent, sour
     if (LIMB_LOSS_KEYS.includes(key)) Object.assign(fields, scheduleLimbLossGangreneFields(actor, key));
     await actor.update(fields);
   } else {
-    const fields = conditionApplyFields(key, null, actor);
+    // Удушье без числа (wdbc-x1nz.2.94): полный запас активного режима,
+    // T.b×2 Раундов (condition-ticks.mjs::suffocationHoldUnits — не
+    // импортируется отсюда: condition-ticks тянет damage.mjs, а тот — этот файл).
+    const level = (key === "suffocating" && !permanent)
+      ? Math.max(1, (Number(actor.system?.characteristics?.t?.bonus) || 0) * 2)
+      : null;
+    const fields = conditionApplyFields(key, level, actor);
     if (key === "burning" && sourceDamage != null && Object.keys(fields).length) {
       fields["system.conditions.burningSourceDamage"] = sourceDamage;
+    }
+    // Крит «Загорается» книга числом не усиливает — обычный 1d10; формула
+    // ПРОШЛОГО, уже погасшего источника пламени (condition-ticks.mjs::
+    // BURNING_FORMULA_FLAG) сюда не переносится. Если персонаж ещё горит от
+    // того источника, его пламя никуда не делось — формула остаётся.
+    if (key === "burning" && Object.keys(fields).length && !actor.system?.conditions?.burning
+        && actor.getFlag?.("warhammer-dbc", "burningDamageFormula")) {
+      fields["flags.warhammer-dbc.-=burningDamageFormula"] = null;
     }
     await actor.update(fields);
   }

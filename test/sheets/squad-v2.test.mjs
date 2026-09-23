@@ -113,6 +113,33 @@ describe("_prepareContext: живучесть участника по его т�
   });
 });
 
+// wdbc-x1nz.2.90 («Раны и Урон», «Статусы»): лист Отряда звал commandReachFor
+// без самого бойца — Оглохший и потерявший сознание получали Команды и
+// Присутствие. Путь Отряда до этого тестами покрыт не был.
+describe("_prepareContext: до кого Командование не доходит", () => {
+  it("Оглохший и Без сознания — ни Команд, ни Присутствия; слышащий — всё", async () => {
+    resolveAs({
+      "Actor.d": pers("Глухой", { conditions: { deafened: true } }),
+      "Actor.u": pers("Павший", { conditions: { unconscious: true } }),
+      "Actor.c": pers("Крейн")
+    });
+    const members = [{ id: "m1", uuid: "Actor.d" }, { id: "m2", uuid: "Actor.u" }, { id: "m3", uuid: "Actor.c" }];
+    const ctx = await WarhammerSquadSheet.prototype._prepareContext.call(sheetLike(squadActor({ members })), {});
+
+    expect(ctx.members.map(m => m.reach.commands)).toEqual([false, false, true]);
+    expect(ctx.members.map(m => m.reach.presenceApplies)).toEqual([false, false, true]);
+    expect(ctx.members.map(m => m.reach.blockedBy)).toEqual(["Оглох", "Без сознания", ""]);
+  });
+
+  it("сводка «Не получают» называет бойца и причину", () => {
+    resolveAs({ "Actor.d": pers("Глухой", { conditions: { deafened: true } }), "Actor.c": pers("Крейн") });
+    const sheet = sheetLike(squadActor({ members: [{ id: "m1", uuid: "Actor.d" }, { id: "m2", uuid: "Actor.c" }] }));
+    const html = WarhammerSquadSheet.prototype._notReachedBy.call(sheet, "short");
+    expect(html).toContain("Глухой (Оглох)");
+    expect(html).not.toContain("Крейн");
+  });
+});
+
 // Кнопки «События миссии» несли класс sq-event, а обработчик искал
 // .sq-coh-event — до перевода на V2 ни одна из них не срабатывала.
 describe("события миссии", () => {

@@ -227,9 +227,58 @@ export function apCostForActionType(actionType) {
   return 0; // Свободное действие и всё непризнанное — бесплатно
 }
 
-/** Хватит ли ОД на действие — вне Encounter экономика не проверяется вовсе. */
-export function canSpendActionPoints(actor, cost) {
+/**
+ * Состояние, запрещающее это Действие/Реакцию ПРЯМО СЕЙЧАС, — подпись
+ * причины («Оглушён»), либо "" (не запрещено).
+ *
+ * wdbc-x1nz.2.87 («Раны и Урон» → «Статусы»): Оглушённый/в Ступоре/Без
+ * сознания «не может совершать Действия и Реакции». resetActionEconomy
+ * ставит им 0 ОД/Реакций только в начале СВОЕГО Хода — Состояние,
+ * наложенное критом в чужой Ход (или в собственный, с остатком ОД), до
+ * этого момента ничего не отнимало: оглушённый тут же Уклонялся. Здесь —
+ * запрет в любой момент, по самому Состоянию, а не по пустому пулу.
+ *
+ * wdbc-x1nz.2.88 («Статусы»): «Беспомощный персонаж не может совершать
+ * Физические действия» — решение владельца: метка physical у точки траты.
+ * Трёхзначная, а не булева:
+ *   physical:true  — явно телесное (Движение, атака, Борьба...);
+ *   physical:false — явно не-физическое (Командование голосом, психический
+ *                    ритуал, тест Восприятия) — Беспомощному разрешено;
+ *   не указано     — для ЗАПРЕТА Беспомощному считается физическим (по книге
+ *                    телесно почти всё: атаки, Избегания, встречные тесты —
+ *                    core.json, Сжать/Проклятие Удачи называют их прямо).
+ * Калечащее (_maybeTriggerCrippling) при этом по-прежнему считает ТОЛЬКО
+ * явное physical:true: там ошибка наносит урон, и решение «не угадывать
+ * природу безымянной траты» (см. комментарий у _maybeTriggerCrippling)
+ * остаётся в силе. Асимметрия намеренная: лишний запрет связанному паутиной
+ * снимает сам ГМ (выключив Encounter/Состояние), лишний урон — уже нанесён.
+ *
+ * Без сознания даёт производное helpless (rules/character.mjs), но проверяется
+ * первым — у него полный запрет, physical:false его не обходит.
+ */
+export function actionBlockReason(actor, { physical } = {}) {
+  const c = actor?.system?.conditions ?? {};
+  if (c.unconscious) return "Без сознания";
+  if (c.stunned)     return "Оглушён";
+  if (c.dazed)       return "в Ступоре";
+  if (c.helpless && physical !== false) return "Беспомощен (не может совершать Физические действия)";
+  return "";
+}
+
+/** Уведомление об отказе по Состоянию — одна строка для ОД и Реакций. */
+function warnBlocked(actor, reason, what) {
+  globalThis.ui?.notifications?.warn?.(`⚠️ ${actor?.name ?? "Персонаж"}: ${reason} — ${what} невозможно (стр. 43, «Статусы»).`);
+}
+
+/**
+ * Хватит ли ОД на действие — вне Encounter экономика не проверяется вовсе.
+ * physical — см. actionBlockReason выше. cost 0 (Свободное действие и
+ * формальные нулевые вызовы, напр. Натиск до броска) Состояниями не гейтится:
+ * эти вызовы ничего не списывают, а ОД на действие потом спишет настоящая трата.
+ */
+export function canSpendActionPoints(actor, cost, { physical } = {}) {
   if (!cost || !isEncounterActive() || !hasActionEconomy(actor)) return true;
+  if (actionBlockReason(actor, { physical })) return false;
   return (Number(actor.system.actionPoints?.value) || 0) >= cost;
 }
 
@@ -298,14 +347,21 @@ async function _maybeClearAiming(actor) {
 /**
  * Списать ОД, если возможно. Возвращает false, если ОД не хватило (действие
  * не проведено). physical:true — это трата ОД на физическое действие (см.
- * _maybeTriggerCrippling выше) — считается к авто-триггеру Калечащего.
+ * _maybeTriggerCrippling выше) — считается к авто-триггеру Калечащего;
+ * physical:false — явно не-физическое (Беспомощному разрешено); не указано —
+ * см. actionBlockReason. Отказ по Состоянию сам пишет уведомление с причиной
+ * (wdbc-x1nz.2.87/.88) — «не хватает ОД» вызывающей стороны тогда лишь вторит.
  */
-export async function spendActionPoints(actor, cost, { physical = false } = {}) {
-  if (!canSpendActionPoints(actor, cost)) return false;
+export async function spendActionPoints(actor, cost, { physical } = {}) {
+  if (!canSpendActionPoints(actor, cost, { physical })) {
+    const reason = cost && isEncounterActive() && hasActionEconomy(actor) ? actionBlockReason(actor, { physical }) : "";
+    if (reason) warnBlocked(actor, reason, "Действие");
+    return false;
+  }
   if (cost && isEncounterActive() && hasActionEconomy(actor)) {
     const value = Number(actor.system.actionPoints?.value) || 0;
     await actor.update({ "system.actionPoints.value": Math.max(0, value - cost) });
-    if (physical) await _maybeTriggerCrippling(actor, cost);
+    if (physical === true) await _maybeTriggerCrippling(actor, cost);
     await _maybeClearAiming(actor);
   }
   return true;
@@ -337,10 +393,14 @@ async function markReactedToAttack(actor, attackId) {
  * Хватит ли Реакции. forDefense — эта Реакция тратится на Избегание
  * (Уклонение/Парирование), поэтому в первую очередь считается доп. пул
  * defenseValue Защитной Стойки, а не только универсальный. attackId — см.
- * hasReactedToAttack выше.
+ * hasReactedToAttack выше. physical — как у ОД (actionBlockReason): Реакции
+ * по умолчанию телесные (Уклонение/Парирование, Повалить...).
  */
-export function canSpendReaction(actor, { forDefense = false, attackId = "" } = {}) {
+export function canSpendReaction(actor, { forDefense = false, attackId = "", physical } = {}) {
   if (!isEncounterActive() || !hasActionEconomy(actor)) return true;
+  // Оглушение/Ступор/Без сознания/Беспомощный (wdbc-x1nz.2.87/.88): запрет по
+  // самому Состоянию в любой момент Раунда, а не только с начала своего Хода.
+  if (actionBlockReason(actor, { physical })) return false;
   // Бег (стр. 32): до начала следующего Хода бегущий не может Реакции.
   if (actor.getFlag("warhammer-dbc", "running")) return false;
   if (hasReactedToAttack(actor, attackId)) return false;
@@ -350,8 +410,12 @@ export function canSpendReaction(actor, { forDefense = false, attackId = "" } = 
 }
 
 /** Списать Реакцию: сперва ограниченный пул на Избегание (если applicable), потом универсальный. */
-export async function spendReaction(actor, { forDefense = false, attackId = "" } = {}) {
-  if (!canSpendReaction(actor, { forDefense, attackId })) return false;
+export async function spendReaction(actor, { forDefense = false, attackId = "", physical } = {}) {
+  if (!canSpendReaction(actor, { forDefense, attackId, physical })) {
+    const reason = isEncounterActive() && hasActionEconomy(actor) ? actionBlockReason(actor, { physical }) : "";
+    if (reason) warnBlocked(actor, reason, "Реакция");
+    return false;
+  }
   if (!isEncounterActive() || !hasActionEconomy(actor)) return true;
 
   const defenseValue  = Number(actor.system.reactions?.defenseValue) || 0;
@@ -376,19 +440,20 @@ export async function spendReaction(actor, { forDefense = false, attackId = "" }
  * раньше; cost 0 (напр. Натиск, ОД которого списываются позже, на броске
  * атаки) тоже всегда проходит.
  */
-export function apSpendGate(actor, cost) {
-  const ok = canSpendActionPoints(actor, cost);
+export function apSpendGate(actor, cost, { physical } = {}) {
+  const ok = canSpendActionPoints(actor, cost, { physical });
+  if (ok) return { disabled: false, title: "" };
+  // Запрет по Состоянию (wdbc-x1nz.2.87/.88) — называем его, а не «не хватает».
+  const reason = actionBlockReason(actor, { physical });
   return {
-    disabled: !ok,
-    title: ok ? "" : `Не хватает ОД: нужно ${cost}, есть ${Number(actor.system.actionPoints?.value) || 0}`
+    disabled: true,
+    title: reason || `Не хватает ОД: нужно ${cost}, есть ${Number(actor.system.actionPoints?.value) || 0}`
   };
 }
 
 /** То же для Реакции (forDefense не гейтится здесь — Уклонение/Парирование сами проверяют свой доп. пул). */
-export function reactionSpendGate(actor) {
-  const ok = canSpendReaction(actor);
-  return {
-    disabled: !ok,
-    title: ok ? "" : "Не хватает Реакций"
-  };
+export function reactionSpendGate(actor, { physical } = {}) {
+  const ok = canSpendReaction(actor, { physical });
+  if (ok) return { disabled: false, title: "" };
+  return { disabled: true, title: actionBlockReason(actor, { physical }) || "Не хватает Реакций" };
 }

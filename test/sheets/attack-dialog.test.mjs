@@ -377,6 +377,21 @@ describe("усталость и условные эффекты боеприпа
     expect(captured.dialog.content).toMatch(/data-autofail="true"[^>]*checked/);
   });
 
+  // wdbc-x1nz.2.89 (решение владельца 4): при реальном Ослеплении галочка
+  // заперта — автопровал BS руками не снимается; Sonar Sense снимает её.
+  it("Ослеплён — автопровал заперт (disabled), снять нельзя", () => {
+    const gun = weaponFor();
+    showAttackDialog(attacker({ items: [gun], conditions: { blinded: true } }), gun);
+    expect(captured.dialog.content).toMatch(/data-autofail="true"[^>]*disabled[^>]*checked/);
+  });
+
+  it("Ослеплён, но с Sonar Sense — строка не отмечена", () => {
+    const gun = weaponFor();
+    const sonar = traitFor("Sonar Sense / Сонарное Чувство");
+    showAttackDialog(attacker({ items: [gun, sonar], conditions: { blinded: true } }), gun);
+    expect(captured.dialog.content).not.toMatch(/atk-mod-auto[\s\S]*?Ослеплён/);
+  });
+
   it("Потеря ОБОИХ глаз — то же самое, что Ослеплён (производное, wdbc-r5o7.4)", () => {
     const gun = weaponFor();
     showAttackDialog(attacker({ items: [gun], conditions: { lostEyesCount: 2 } }), gun);
@@ -1819,6 +1834,24 @@ describe("приём без оружия", () => {
     expect(card).toContain("<label>Порог</label><b>45</b>");
     expect(card).toContain("Попадание");
     expect(card).toContain("wh-dodge-btn");
+  });
+
+  // wdbc-x1nz.2.97 п.6: по Поваленной/Оглушённой цели +20 — тем же кодом,
+  // что окно атаки (targetConditionAttackMods); раньше этот путь их терял.
+  it.each([["Повалена", { prone: true }], ["Оглушена", { stunned: true }]])(
+    "цель %s — +20 к порогу", async (_, conditions) => {
+      captured.dice = [96];
+      setTargets([actorFor({ conditions })]);
+      await showAttackDialogNoWeapon(attacker(), kick);
+      // WS 45 + 10 база − 10 приём + 20 = 65.
+      expect(captured.chat.at(-1).content).toContain("<label>Порог</label><b>65</b>");
+    });
+
+  it("Ослеплённый бьёт без оружия с −30 WS (wdbc-x1nz.2.89)", async () => {
+    captured.dice = [96];
+    await showAttackDialogNoWeapon(attacker({ conditions: { blinded: true } }), kick);
+    // WS 45 + 10 база − 10 приём − 30 = 15.
+    expect(captured.chat.at(-1).content).toContain("<label>Порог</label><b>15</b>");
   });
 
   it("промах не предлагает защищаться", async () => {

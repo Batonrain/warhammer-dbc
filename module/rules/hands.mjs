@@ -218,6 +218,65 @@ export function maxHands(actor) {
   return Math.max(0, baseHandsFromTraits(actor) - lost);
 }
 
+// ── Кисть и рука (wdbc-x1nz.2.97 п.2, «Раны и Урон», стр. 43) ─────────────
+// «Ладонь: персонаж не может пользоваться оружием и предметами этой рукой,
+// кроме предметов, что цепляются к запястью (щит, когти, нартеций). Рука:
+// также как ладонь, но персонаж больше не имеет запястья, чтобы нацепить
+// щит, когти, или другой предмет.» Раньше lostHands и lostArms вычитались из
+// бюджета одинаково, щит всегда брал здоровую руку, а предметы на запястье
+// (0 рук) оставались доступны даже без единой руки. Теперь:
+//   • запястий = Трейт − потерянные руки (кисть запястье оставляет);
+//   • обрубков кисти = потерянные кисти (не больше, чем запястий) — на
+//     каждый можно пристегнуть один щит, и он НЕ занимает здоровую руку;
+//   • предмет на запястье/предплечье требует запястья — без руки нельзя.
+
+/**
+ * «Ладонь: Штраф –20 на все тесты, что требуют двух рук» (рука — «также как
+ * ладонь»; «Раны и Урон», стр. 43; wdbc-x1nz.2.97 п.3). Решение владельца:
+ * тесты «двумя руками» — Карабканье (combat/movement-actions.mjs) и приёмы
+ * Борьбы, когда цель держат двумя руками (combat/grapple.mjs). Многорукому
+ * штраф — по бюджету рук: потерял кисть, но рук осталось две и больше —
+ * двумя руками он всё ещё действует, штрафа нет.
+ * @returns {number} −20 или 0
+ */
+export function twoHandedTestPenalty(actor) {
+  const cond = actor?.system?.conditions || {};
+  const lost = (Number(cond.lostHandsCount) || 0) + (Number(cond.lostArmsCount) || 0);
+  return lost >= 1 && maxHands(actor) < 2 ? -20 : 0;
+}
+
+/** Подпись штрафа выше — одна на все места, где он применяется. */
+export const TWO_HANDED_PENALTY_LABEL = "Без кисти/руки (тест двумя руками)";
+
+/** Сколько у актора запястий: базовые руки минус потерянные РУКИ (не кисти). */
+export function maxWrists(actor) {
+  const lostArms = Number(actor?.system?.conditions?.lostArmsCount) || 0;
+  return Math.max(0, baseHandsFromTraits(actor) - lostArms);
+}
+
+/** Обрубки кисти — запястья без ладони, к которым можно пристегнуть щит. */
+export function handStumps(actor) {
+  const lostHands = Number(actor?.system?.conditions?.lostHandsCount) || 0;
+  return Math.max(0, Math.min(lostHands, maxWrists(actor)));
+}
+
+/**
+ * Предмет крепится на запястье/предплечье и ладони не занимает: свойство
+ * Wrist или хват рукопашного «П» (Когти.П — на предплечье). Щит сюда не
+ * входит: на здоровой руке его держат ладонью (1 рука), на обрубок —
+ * пристёгивают (см. handsOccupied).
+ */
+export function isWristMounted(item, actor = item?.parent) {
+  if (!item || item.type !== "weapon" || isHandShield(item)) return false;
+  if (item.system?.weaponClass === "melee" && currentMeleeGrip(item) === "П") return true;
+  return !!effectiveAuto(item, actor).wrist;
+}
+
+function equippedWristMounted(actor, exclude = null) {
+  return (actor?.items ? [...actor.items] : [])
+    .filter(i => i.type === "weapon" && i.system?.equipped && i.id !== exclude && isWristMounted(i, actor));
+}
+
 /**
  * Экипированные предметы, реально занимающие руки (щиты — тоже type:"weapon").
  *
@@ -252,18 +311,40 @@ export function handsOccupied(actor, { exclude = null } = {}) {
   // Захватом» (или больше, если держит несколькими), а у Цели каждая рука
   // Атакующего обездвиживает две. Флаги ставит combat/grapple.mjs; читаем
   // напрямую, без импорта Борьбы (она сама импортирует этот файл).
-  const used  = items.reduce((sum, i) => sum + weaponHandsRequired(i, actor), 0) + grappleHandsUsed(actor);
+  // wdbc-x1nz.2.97 п.2: щиты сперва садятся на обрубки кисти (пристёгнуты к
+  // запястью, здоровую руку не занимают), остальные — по руке, как раньше.
+  const stumps = handStumps(actor);
+  const shieldCount = items.filter(i => isHandShield(i)).length;
+  const stumpShields = Math.min(shieldCount, stumps);
+  const used  = items.reduce((sum, i) => sum + weaponHandsRequired(i, actor), 0)
+              - stumpShields + grappleHandsUsed(actor);
   const max   = maxHands(actor);
-  return { max, used, free: Math.max(0, max - used), over: used > max, items };
+  // Запястья: предметы на запястье плюс щиты на обрубках. Без руки запястья нет.
+  const wrists = maxWrists(actor);
+  const wristUsed = equippedWristMounted(actor, exclude).length + stumpShields;
+  return {
+    max, used, free: Math.max(0, max - used), over: used > max || wristUsed > wrists, items,
+    wrists, wristUsed, stumps, stumpShields, freeStumps: stumps - stumpShields
+  };
 }
 
 /**
  * Хватит ли рук, чтобы ДОПОЛНИТЕЛЬНО экипировать предмет. Проверяет только
  * прирост от этого конкретного действия — уже существующие «нелегальные»
  * связки на старых листах персонажей этим не блокируются и не трогаются.
+ *
+ * wdbc-x1nz.2.97 п.2: предмет на запястье требует свободного запястья (без
+ * руки — нельзя); щит встаёт на свободный обрубок кисти, если он есть, и
+ * тогда здоровая рука не нужна.
  */
 export function canEquipInHands(actor, item) {
+  if (isWristMounted(item, actor)) {
+    const occ = handsOccupied(actor, { exclude: item.id });
+    return occ.wristUsed + 1 <= occ.wrists;
+  }
   const need = weaponHandsRequired(item, actor);
   if (need <= 0) return true;
-  return need <= handsOccupied(actor, { exclude: item.id }).free;
+  const occ = handsOccupied(actor, { exclude: item.id });
+  if (isHandShield(item) && occ.freeStumps > 0 && occ.wristUsed + 1 <= occ.wrists) return true;
+  return need <= occ.free;
 }

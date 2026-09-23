@@ -321,6 +321,25 @@ describe("applyCritEffectPill — клик применяет состояние
     expect(actor.system.conditions.burningSourceDamage).toBeUndefined();
   });
 
+  // wdbc-x1nz.2.94: крит «страдает от Удушья» числа не даёт — запас задержки
+  // дыхания книжный, T.b×2 Раундов (раньше 0 → сразу тесты без конца).
+  it("Удушье без числа — запас T.b×2 Раундов", async () => {
+    const actor = makeActor({ characteristics: { t: { bonus: 4 } } });
+    await applyCritEffectPill(actor, { key: "suffocating", formula: null });
+    expect(actor.system.conditions.suffocating).toBe(true);
+    expect(actor.system.conditions.suffocatingRounds).toBe(8);
+  });
+
+  // wdbc-x1nz.2.93: новое загорание от крита — обычный 1d10, формула
+  // погасшего источника (Flame (2d10)) не наследуется.
+  it("Горение от крита снимает формулу погасшего источника пламени", async () => {
+    const actor = makeActor();
+    const flags = { burningDamageFormula: "2d10" };
+    actor.getFlag = (_s, k) => flags[k];
+    await applyCritEffectPill(actor, { key: "burning", formula: null });
+    expect(actor.flags?.["warhammer-dbc"]?.["-=burningDamageFormula"]).toBeNull();
+  });
+
   it("другое Состояние с sourceDamage — поле игнорируется (только у burning)", async () => {
     const actor = makeActor();
     await applyCritEffectPill(actor, { key: "bleeding", formula: null, sourceDamage: 7 });

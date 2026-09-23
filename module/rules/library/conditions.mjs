@@ -14,18 +14,35 @@
 //  комментарий у каждого Состояния, где просто числа не хватило).
 // ════════════════════════════════════════════════════════════════════════════
 
+/**
+ * Черты «альтернативных чувств» (wdbc-x1nz.2.89): их носитель игнорирует все
+ * штрафы Ослепления. Имена — обе половины книжных записей пака (traits/
+ * Sonar_Sense, traits/Unnatural_Senses) плюс «Sonar Senses» (так Черта
+ * названа у Гемункулов, constants/haemonculus.mjs); специализацию в скобках
+ * («Unnatural Senses (30)») сравнение имён отбрасывает само.
+ */
+export const ALT_SENSES_TRAITS = [
+  "Sonar Sense", "Sonar Senses", "Сонарное Чувство",
+  "Unnatural Senses", "Сверхъестественные Чувства"
+];
+/** Те же чувства, выданные Возможностью Конструктора (constants/capabilities.mjs). */
+export const ALT_SENSES_CAPABILITIES = ["trait.sonarSense", "trait.unnaturalSenses"];
+
 export const CONDITION_RULES = [
   {
     // Стр. 30-31: «−20 на WS и Dodge(A), +20 на Stealth(A), SPD вдвое, нельзя
     // Бег и Натиск. Стрельба по нему −20, рукопашная — +20. Встать —
     // Полудействие.» Шесть последствий, четыре места:
-    //  - WS (эта запись, weapon:melee — свои рукопашные атаки хуже);
+    //  - WS (эта запись, weapon:melee — свои рукопашные атаки хуже;
+    //    basedon:ws — все прочие тесты WS, включая Парирование, wdbc-x1nz.2.97
+    //    п.5: «штраф –20 на броски WS», «Раны и Урон», «Статусы». Атаку
+    //    basedon не подхватывает — задвоения с weapon:melee нет);
     //  - Stealth (эта запись, +20 — трудно целиться в лежащего);
     //  - Dodge(A) (эта запись, wdbc-ct65.1): Уклонение-Реакция
     //    (combat/defense.mjs::_performDodge) с переводом боевых тестов на
     //    общий сбор пошло через конвейер, и штраф переехал сюда из
-    //    захардкоженного слагаемого. Парирование книга здесь не называет —
-    //    записи на skill:parry нет намеренно;
+    //    захардкоженного слагаемого. Парирование — через basedon:ws выше
+    //    (навык от WS), отдельной записи skill:parry не нужно;
     //  - SPD вдвое / нельзя Бег и Натиск — Движение считается не тестом, а
     //    отдельно (rules/character.mjs::prepareDerivedData — halfMove/move/
     //    charge/run; combat/movement-actions.mjs::declareCharge/declareRun —
@@ -40,6 +57,10 @@ export const CONDITION_RULES = [
     when: { hasCondition: "prone" },
     effects: [
       { kind: "rollBonus", target: "weapon:melee",  value: -20 },
+      // auto — состояние тела, не выбор игрока (как Усталость): Парирование
+      // Реакцией его и так получало бы (collectTestMods складывает всё), а в
+      // диалоге Навыка/Характеристики галочку забывали бы.
+      { kind: "rollBonus", target: "basedon:ws",    value: -20, label: "🧎 Повален", auto: true },
       { kind: "rollBonus", target: "skill:dodge",   value: -20 },
       { kind: "rollBonus", target: "skill:stealth",  value: 20 }
     ]
@@ -128,6 +149,63 @@ export const CONDITION_RULES = [
     label: "Оглох",
     when: { hasCondition: "deafened" },
     effects: [{ kind: "rollBonus", target: "social", value: -30 }]
+  },
+  {
+    // «Раны и Урон», «Статусы», wdbc-x1nz.2.89: «Ослепленный персонаж …
+    // автоматически проваливает тесты на BS и получает штраф –30 на тесты WS
+    // и прочие тесты, что требуют зрения». Решение владельца (4): «прочие
+    // тесты со зрением» — Бдительность, Проницательность, Выживание
+    // (навыки от Per; Психонаука — не зрение, не затронута).
+    //
+    // Тут — только тесты Навыков/Характеристик. Атаку считает окно атаки своей
+    // строкой «Ослеплён» (sheets/attack/mods.mjs: автопровал BS, −30 WS), и
+    // basedon:* атаку намеренно не подхватывает — иначе задвоилось бы.
+    // Трудный Ландшафт — combat/movement-terrain.mjs; «все атаки по нему
+    // Незримые» — combat/attack.mjs. Все три места спрашивают
+    // rules/blindness.mjs::suffersBlindness — тот же ответ, что эта запись.
+    //
+    // when: hasCondition перечисляет ОБА пути к Ослеплению (свой флаг и
+    // Потеря глаз) — по нему «Смягчение» Конструктора находит это правило
+    // (conditionRulesFor); isBlinded сужает «Потерю глаз» до обоих глаз.
+    //
+    // Один эффект на список областей, а не четыре эффекта: Бдительность
+    // бывает и на WS (Распознать Стойку) — иначе −60.
+    id: "conditions.blinded",
+    label: "Ослеплён",
+    when: { hasCondition: ["blinded", "lostEyes"], isBlinded: true },
+    effects: [
+      { kind: "autoFail", target: "basedon:bs", label: "🙈 Ослеплён — тест BS" },
+      { kind: "rollBonus", target: ["basedon:ws", "skill:awareness", "skill:scrutiny", "skill:survival"],
+        value: -30, label: "🙈 Ослеплён", auto: true }
+    ]
+  },
+  {
+    // «Если персонаж способен ориентироваться и определять цели
+    // альтернативными чувствами (обычно через Трейты Sonar Sense и Unnatural
+    // Senses), все штрафы Ослепления игнорируются» — вытеснение, а не
+    // отрицание в when: Черту по имени видит предикат, а ту же способность,
+    // выданную Возможностью Конструктора (trait.sonarSense/
+    // trait.unnaturalSenses), изнутри отбора спросить нельзя (рекурсия) —
+    // та вытесняет это же правило сама (rules/item-rules.mjs,
+    // CAPABILITY_OVERRIDES).
+    id: "conditions.blinded.altSenses",
+    label: "Альтернативные чувства (Sonar Sense / Unnatural Senses)",
+    when: { anyOf: ALT_SENSES_TRAITS.map(name => ({ hasTrait: name })) },
+    effects: [],
+    overrides: ["conditions.blinded"]
+  },
+  {
+    // «Раны и Урон», «Статусы», wdbc-x1nz.2.92: «За каждый уровень
+    // Обескровливания персонаж получает –1 на все тесты на смерть от
+    // Кровотечения и –5 на все тесты Т». Вторая половина — здесь, по уровню
+    // (valueFrom.selfConditionLevel). Первая — не тест T, а бросок d10 в
+    // конце Хода (combat/condition-ticks.mjs, там уровень уже вычитается):
+    // basedon:t его не касается, задвоения нет.
+    id: "conditions.haemorrhaging",
+    label: "Обескровливание",
+    when: { hasCondition: "haemorrhaging" },
+    effects: [{ kind: "rollBonus", target: "basedon:t", label: "💔 Обескровливание",
+                valueFrom: { selfConditionLevel: "haemorrhaging", multiplier: -5 }, auto: true }]
   }
 ];
 

@@ -14,7 +14,10 @@ vi.mock("../../module/apps/parasite-trait.mjs", () => ({
   completeInfection: (...args) => completeInfection(...args)
 }));
 
-import { processConditionTurnStart, processConditionTurnEnd, rollBurningPanicTest } from "../../module/combat/condition-ticks.mjs";
+import {
+  processConditionTurnStart, processConditionTurnEnd, rollBurningPanicTest,
+  suffocationRestClock, setSuffocationRestMode, haemorrhageHourly, wakeFromHaemorrhageOnDamage
+} from "../../module/combat/condition-ticks.mjs";
 import { clearRuleSources, registerRuleSource, getRuleSources } from "../../module/rules/sources.mjs";
 import { BLESSED_FITS_PENDING_FLAG } from "../../module/rules/blessed-fits.mjs";
 
@@ -209,46 +212,149 @@ describe("processConditionTurnStart: декремент длительности
   });
 });
 
-// Удушье (стр. 30-31, wdbc-r5o7.6): особый случай среди «N раундов» — запас
-// (suffocatingRounds) кончается 0, а не «состояние снято» (в отличие от
-// Оглушения/Ослепления выше): на нуле начинаются тесты T+0, тег остаётся.
-describe("processConditionTurnStart: Удушье — особый случай (не снимается на 0)", () => {
-  it("запас 1 → 0 — тег НЕ снимается, дальше сразу тест (не общий приём цикла)", async () => {
-    const actor = makeActor({ conditions: { suffocating: true, suffocatingRounds: 1 } });
-    actor.system.characteristics.t.total = 60;
-    captured.dice = [20]; // тест T+0: 20 <= 60 → успех
-    await processConditionTurnStart(actor);
-
-    expect(actor.system.conditions.suffocatingRounds).toBe(0);
-    expect(actor.system.conditions.suffocating).toBe(true); // НЕ false, в отличие от Оглушения
-    expect(captured.chat[0].content).toContain("запас кончился");
-  });
-
-  it("запас уже 0 — тест T+0 каждый Ход, провал даёт +1 Усталости", async () => {
-    const actor = makeActor({ conditions: { suffocating: true, suffocatingRounds: 0 } });
+// Удушье (книга, «Раны и Урон» → «Удушье», wdbc-x1nz.2.94). Прежние тесты
+// здесь закрепляли неверное толкование (wdbc-r5o7.6): пока запас есть — без
+// тестов, после — тесты бесконечно, ни потери сознания, ни смерти. Книга:
+// «При задерживании дыхания персонаж должен проходить тест на Т+0 каждую
+// минуту или каждый Ход… Если персонаж не получил свежего вздоха за
+// отведенное время, он теряет сознание. Потерявший сознание персонаж умирает
+// от удушья через T.b Раундов».
+describe("processConditionTurnStart: Удушье по книге (wdbc-x1nz.2.94)", () => {
+  it("во время задержки — тест T+0 каждый Ход, провал даёт +1 Усталости, запас тает", async () => {
+    const actor = makeActor({ conditions: { suffocating: true, suffocatingRounds: 5 } });
     actor.system.characteristics.t.total = 30;
     captured.dice = [50]; // 50 > 30 → провал
     await processConditionTurnStart(actor);
 
+    expect(actor.system.conditions.suffocatingRounds).toBe(4);
     expect(actor.system.fatigue.value).toBe(1);
-    expect(actor.system.conditions.suffocating).toBe(true);
+    expect(actor.system.conditions.unconscious).toBeFalsy();
     expect(captured.chat[0].content).toContain("провал");
   });
 
-  it("запас уже 0, тест пройден — Усталость не растёт", async () => {
-    const actor = makeActor({ conditions: { suffocating: true, suffocatingRounds: 0 } });
+  it("во время задержки тест пройден — Усталость не растёт", async () => {
+    const actor = makeActor({ conditions: { suffocating: true, suffocatingRounds: 5 } });
     actor.system.characteristics.t.total = 60;
-    captured.dice = [20]; // успех
+    captured.dice = [20];
     await processConditionTurnStart(actor);
 
     expect(actor.system.fatigue.value).toBe(0);
     expect(captured.chat[0].content).toContain("успех");
   });
 
+  it("запас 1 → 0 — теряет сознание, тег остаётся, запускается отсчёт T.b Раундов", async () => {
+    const actor = makeActor({ conditions: { suffocating: true, suffocatingRounds: 1 } });
+    actor.system.characteristics.t = { bonus: 3, total: 60 };
+    captured.dice = [20];
+    await processConditionTurnStart(actor);
+
+    expect(actor.system.conditions.suffocatingRounds).toBe(0);
+    expect(actor.system.conditions.suffocating).toBe(true); // НЕ false, в отличие от Оглушения
+    expect(actor.system.conditions.unconscious).toBe(true);
+    expect(actor.getFlag("warhammer-dbc", "suffocation")).toEqual({ phase: "unconscious", left: 3, faintAt: null });
+    expect(captured.chat[0].content).toContain("Без сознания");
+  });
+
+  it("без сознания — T.b Раундов до смерти, затем killByCondition", async () => {
+    const actor = makeActor({ conditions: { suffocating: true, suffocatingRounds: 0, unconscious: true } });
+    await actor.setFlag("warhammer-dbc", "suffocation", { phase: "unconscious", left: 2 });
+
+    await processConditionTurnStart(actor);
+    expect(actor.getFlag("warhammer-dbc", "suffocation").left).toBe(1);
+    expect(actor.getFlag("warhammer-dbc", "deceased")).toBeFalsy();
+
+    await processConditionTurnStart(actor);
+    expect(actor.getFlag("warhammer-dbc", "deceased")).toBe(true);
+    expect(captured.chat.at(-1).content).toContain("СМЕРТЬ");
+    expect(captured.rolls).toHaveLength(0); // без сознания тестов T+0 нет
+  });
+
+  it("наложено без числа (запас 0, задержка не начата) — полный запас T.b×2, а не сразу тесты без конца", async () => {
+    const actor = makeActor({ conditions: { suffocating: true, suffocatingRounds: 0 } });
+    actor.system.characteristics.t = { bonus: 4, total: 60 };
+    captured.dice = [20];
+    await processConditionTurnStart(actor);
+
+    expect(actor.system.conditions.suffocatingRounds).toBe(7); // 4×2 − 1 за этот Ход
+    expect(actor.system.conditions.unconscious).toBeFalsy();
+    expect(captured.chat[0].content).toContain("запас <b>8</b>");
+  });
+
+  it("тег снят (вздохнул) — отсчёт смерти сбрасывается", async () => {
+    const actor = makeActor({ conditions: { suffocating: false, unconscious: true } });
+    await actor.setFlag("warhammer-dbc", "suffocation", { phase: "unconscious", left: 2 });
+    await processConditionTurnStart(actor);
+
+    expect(actor.getFlag("warhammer-dbc", "suffocation")).toBeUndefined();
+    expect(captured.chat[0].content).toContain("вздохнул");
+  });
+
+  it("режим «в покое» — Ходы задержку не трогают (её ведут минуты игрового времени)", async () => {
+    const actor = makeActor({ conditions: { suffocating: true, suffocatingRounds: 3 } });
+    await actor.setFlag("warhammer-dbc", "suffocationRest", true);
+    await processConditionTurnStart(actor);
+
+    expect(actor.system.conditions.suffocatingRounds).toBe(3);
+    expect(captured.rolls).toHaveLength(0);
+  });
+
+  it("тест T+0 — с модификаторами персонажа из реестра правил", async () => {
+    const saved = getRuleSources();
+    clearRuleSources();
+    registerRuleSource("test", () => [{ id: "test.tpen", when: {},
+      effects: [{ kind: "rollBonus", target: "all", value: -15, label: "Обескровливание", auto: true }] }]);
+    try {
+      const actor = makeActor({ conditions: { suffocating: true, suffocatingRounds: 5 } });
+      actor.system.characteristics.t.total = 40;
+      captured.dice = [30]; // 30 ≤ 40, но > 40−15=25 → провал
+      await processConditionTurnStart(actor);
+      expect(actor.system.fatigue.value).toBe(1);
+      expect(captured.chat[0].content).toContain(">25</b>");
+    } finally {
+      clearRuleSources();
+      for (const [key, fn] of saved) registerRuleSource(key, fn);
+    }
+  });
+
   it("не Задыхается — тишина (не запускает тест просто так)", async () => {
     const actor = makeActor();
     await processConditionTurnStart(actor);
     expect(captured.chat).toHaveLength(0);
+  });
+});
+
+describe("Удушье в покое: минуты игрового времени (suffocationRestClock)", () => {
+  it("тест T+0 каждую полную минуту, запас в минутах; кончился — Без сознания, T.b Раундов спустя — смерть", async () => {
+    const actor = makeActor({ conditions: { suffocating: true, suffocatingRounds: 2 } });
+    actor.system.characteristics.t = { bonus: 2, total: 60 };
+    await actor.setFlag("warhammer-dbc", "suffocationRest", true);
+    await actor.setFlag("warhammer-dbc", "suffocationClockAt", 1000);
+    captured.dice = [10, 10];
+
+    await suffocationRestClock(actor, { from: 1000, to: 1000 + 60 * 2 + 30 });
+
+    expect(captured.rolls).toEqual(["1d100", "1d100"]);
+    expect(actor.system.conditions.unconscious).toBe(true);
+    // Без сознания на 1120 с; T.b 2 Раунда = 10 с — к 1150 уже прошло.
+    expect(actor.getFlag("warhammer-dbc", "deceased")).toBe(true);
+  });
+
+  it("меньше минуты — ничего не бросается", async () => {
+    const actor = makeActor({ conditions: { suffocating: true, suffocatingRounds: 2 } });
+    await actor.setFlag("warhammer-dbc", "suffocationRest", true);
+    await actor.setFlag("warhammer-dbc", "suffocationClockAt", 1000);
+    await suffocationRestClock(actor, { from: 1000, to: 1030 });
+    expect(captured.rolls).toHaveLength(0);
+    expect(actor.system.conditions.suffocatingRounds).toBe(2);
+  });
+
+  it("переключение режима пересчитывает остаток той же долей запаса", async () => {
+    const actor = makeActor({ conditions: { suffocating: true, suffocatingRounds: 4 } });
+    actor.system.characteristics.t.bonus = 4; // активный запас 8 Раундов, в покое 4 минуты
+    globalThis.game.time = { worldTime: 500 };
+    await setSuffocationRestMode(actor, true);
+    expect(actor.system.conditions.suffocatingRounds).toBe(2); // половина из 4 минут
+    expect(actor.getFlag("warhammer-dbc", "suffocationClockAt")).toBe(500);
   });
 });
 
@@ -282,6 +388,8 @@ describe("processConditionTurnEnd: Кровотечение", () => {
 
     expect(actor.updates).toHaveLength(0);
     expect(captured.chat[0].content).toContain("СМЕРТЬ");
+    // wdbc-x1nz.2.92: не только строка в чате — смерть констатирована.
+    expect(actor.getFlag("warhammer-dbc", "deceased")).toBe(true);
   });
 
   it("бросок 6-10 после вычета — обошлось, без изменений", async () => {
@@ -305,6 +413,123 @@ describe("processConditionTurnEnd: Кровотечение", () => {
     const actor = makeActor();
     await processConditionTurnEnd(actor);
     expect(captured.chat).toHaveLength(0);
+  });
+});
+
+// Обескровливание выше предела (wdbc-x1nz.2.92): «больше 5 (10 для
+// десантников), раз в минуту (12 Ходов), начиная с Хода, когда он пересек
+// этот предел — тест W+0, или теряет сознание, пока его Обескровливание не
+// опустится ниже, или пока он не получит непоглощенный урон».
+describe("processConditionTurnEnd: предел Обескровливания", () => {
+  function bled(level, wpTotal = 30) {
+    const actor = makeActor({ conditions: { haemorrhaging: true, haemorrhagingLevel: level } });
+    actor.system.characteristics.wp = { bonus: 3, total: wpTotal };
+    return actor;
+  }
+
+  it("Ход пересечения предела — тест W+0, провал: Без сознания с меткой «от Обескровливания»", async () => {
+    const actor = bled(6);
+    captured.dice = [80]; // 80 > 30
+    await processConditionTurnEnd(actor);
+
+    expect(actor.system.conditions.unconscious).toBe(true);
+    expect(actor.getFlag("warhammer-dbc", "haemorrhageFaint")).toBe(true);
+    expect(captured.chat[0].content).toContain("от Обескровливания");
+  });
+
+  it("следующий тест — только через 12 Ходов", async () => {
+    const actor = bled(6);
+    captured.dice = [10]; // успех на Ходу пересечения
+    await processConditionTurnEnd(actor);
+    for (let i = 1; i < 12; i++) await processConditionTurnEnd(actor);
+    expect(captured.rolls).toHaveLength(1);
+    captured.dice = [10];
+    await processConditionTurnEnd(actor); // 12-й Ход после пересечения
+    expect(captured.rolls).toHaveLength(2);
+  });
+
+  it("уровень 5 — не больше предела, теста нет", async () => {
+    const actor = bled(5);
+    await processConditionTurnEnd(actor);
+    expect(captured.rolls).toHaveLength(0);
+  });
+
+  it("десантнику предел 10: уровень 8 теста не требует", async () => {
+    const actor = bled(8);
+    actor.system.race = "astartes";
+    await processConditionTurnEnd(actor);
+    expect(captured.rolls).toHaveLength(0);
+  });
+
+  it("уровень опустился до предела — очнулся, метка снята", async () => {
+    const actor = bled(5);
+    actor.system.conditions.unconscious = true;
+    await actor.setFlag("warhammer-dbc", "haemorrhageFaint", true);
+    await processConditionTurnEnd(actor);
+    expect(actor.system.conditions.unconscious).toBe(false);
+    expect(actor.getFlag("warhammer-dbc", "haemorrhageFaint")).toBeUndefined();
+  });
+
+  it("непоглощённый урон будит (зовётся из конвейера урона)", async () => {
+    const actor = bled(7);
+    actor.system.conditions.unconscious = true;
+    await actor.setFlag("warhammer-dbc", "haemorrhageFaint", true);
+    expect(await wakeFromHaemorrhageOnDamage(actor)).toBe(true);
+    expect(actor.system.conditions.unconscious).toBe(false);
+  });
+
+  it("не будит того, кого держит Усталость на пороге", async () => {
+    const actor = bled(7);
+    actor.system.characteristics.t.bonus = 2; // порог T.b+W.b = 5
+    actor.system.fatigue.value = 5;
+    actor.system.conditions.unconscious = true;
+    await actor.setFlag("warhammer-dbc", "haemorrhageFaint", true);
+    await wakeFromHaemorrhageOnDamage(actor);
+    expect(actor.system.conditions.unconscious).toBe(true);
+    expect(actor.getFlag("warhammer-dbc", "haemorrhageFaint")).toBeUndefined();
+  });
+
+  it("чужое Без сознания (без метки) урон от Обескровливания не снимает", async () => {
+    const actor = bled(7);
+    actor.system.conditions.unconscious = true;
+    expect(await wakeFromHaemorrhageOnDamage(actor)).toBe(false);
+    expect(actor.system.conditions.unconscious).toBe(true);
+  });
+});
+
+describe("haemorrhageHourly: −1 Обескровливания в час игрового времени", () => {
+  it("прошло 3 часа — уровень −3, отсчёт сдвинут на целые часы, ниже предела — очнулся", async () => {
+    const actor = makeActor({ conditions: { haemorrhaging: true, haemorrhagingLevel: 7, unconscious: true } });
+    await actor.setFlag("warhammer-dbc", "haemorrhageHourAt", 1000);
+    await actor.setFlag("warhammer-dbc", "haemorrhageFaint", true);
+    await haemorrhageHourly(actor, { from: 1000, to: 1000 + 3 * 3600 + 100 });
+
+    expect(actor.system.conditions.haemorrhagingLevel).toBe(4);
+    expect(actor.getFlag("warhammer-dbc", "haemorrhageHourAt")).toBe(1000 + 3 * 3600);
+    expect(actor.system.conditions.unconscious).toBe(false);
+  });
+
+  it("меньше часа — уровень не меняется", async () => {
+    const actor = makeActor({ conditions: { haemorrhaging: true, haemorrhagingLevel: 2 } });
+    await actor.setFlag("warhammer-dbc", "haemorrhageHourAt", 1000);
+    await haemorrhageHourly(actor, { from: 1000, to: 1000 + 3000 });
+    expect(actor.system.conditions.haemorrhagingLevel).toBe(2);
+  });
+
+  it("сошло до 0 — Состояние снято, отсчёт убран", async () => {
+    const actor = makeActor({ conditions: { haemorrhaging: true, haemorrhagingLevel: 1 } });
+    await haemorrhageHourly(actor, { from: 0, to: 7200 });
+    expect(actor.system.conditions.haemorrhagingLevel).toBe(0);
+    expect(actor.system.conditions.haemorrhaging).toBe(false);
+    expect(actor.getFlag("warhammer-dbc", "haemorrhageHourAt")).toBeUndefined();
+  });
+
+  it("тик Кровотечения с 0 до 1 ставит начало часового отсчёта", async () => {
+    globalThis.game.time = { worldTime: 4242 };
+    const actor = makeActor({ conditions: { bleeding: true, haemorrhagingLevel: 0 } });
+    captured.dice = [3];
+    await processConditionTurnEnd(actor);
+    expect(actor.getFlag("warhammer-dbc", "haemorrhageHourAt")).toBe(4242);
   });
 });
 
@@ -435,6 +660,33 @@ describe("processConditionTurnEnd: Горение", () => {
     expect(actor.system.wounds.value).toBe(0);
     expect(actor.system.wounds.critical).toBe(1);
     expect(captured.chat[0].content).toContain("игнор брони");
+  });
+
+  // wdbc-x1nz.2.93: «некоторые источники пламени наносят больше урона» —
+  // формула источника (Flame (2d10)) вместо жёсткого 1d10.
+  it("формула источника пламени заменяет 1d10", async () => {
+    const actor = makeActor({ conditions: { burning: true } });
+    await actor.setFlag("warhammer-dbc", "burningDamageFormula", "2d10");
+    captured.dice = [6, 5]; // 2d10 = 11, T.b 0
+    await processConditionTurnEnd(actor);
+
+    expect(captured.rolls[0]).toBe("2d10");
+    expect(captured.chat[0].content).toContain("11</b> урона");
+  });
+
+  it("погасшее Горение сбрасывает формулу источника", async () => {
+    const actor = makeActor({ conditions: { burning: false } });
+    await actor.setFlag("warhammer-dbc", "burningDamageFormula", "2d10");
+    await processConditionTurnEnd(actor);
+    expect(actor.getFlag("warhammer-dbc", "burningDamageFormula")).toBeUndefined();
+  });
+
+  it("непоглощённый урон Горения будит лишившегося сознания от Обескровливания", async () => {
+    const actor = makeActor({ conditions: { burning: true, unconscious: true } });
+    await actor.setFlag("warhammer-dbc", "haemorrhageFaint", true);
+    captured.dice = [3];
+    await processConditionTurnEnd(actor);
+    expect(actor.system.conditions.unconscious).toBe(false);
   });
 
   it("нет Горения — тишина", async () => {

@@ -665,3 +665,111 @@ describe("applyAimFocusTurnEnd (wdbc-1rno.5): продление Фокуса н
     await expect(applyAimFocusTurnEnd(null)).resolves.toBeUndefined();
   });
 });
+
+// wdbc-x1nz.2.87 («Раны и Урон» → «Статусы»): Оглушённый/в Ступоре/Без
+// сознания «не может совершать Действия и Реакции» — В ЛЮБОЙ момент, а не
+// только с начала своего следующего Хода (resetActionEconomy). Состояние,
+// наложенное посреди Раунда, должно сразу гасить остаток ОД и Реакцию.
+describe("Оглушение/Ступор/Без сознания посреди Раунда (wdbc-x1nz.2.87)", () => {
+  for (const [key, label] of [["stunned", "Оглушён"], ["dazed", "в Ступоре"], ["unconscious", "Без сознания"]]) {
+    it(`${label}: Реакция (Уклонение/Парирование) запрещена, хотя пул не пуст`, async () => {
+      globalThis.game.combat = { started: true };
+      const actor = actorFor({ conditions: { [key]: true }, reactions: { value: 1, max: 1, defenseValue: 1, defenseMax: 1 } });
+      expect(canSpendReaction(actor, { forDefense: true, attackId: "a1" })).toBe(false);
+      expect(await spendReaction(actor, { forDefense: true, attackId: "a1" })).toBe(false);
+      expect(actor.system.reactions.value).toBe(1);
+      expect(actor.system.reactions.defenseValue).toBe(1);
+    });
+
+    it(`${label}: остаток ОД в собственном Ходу не тратится`, async () => {
+      globalThis.game.combat = { started: true };
+      const actor = actorFor({ conditions: { [key]: true }, actionPoints: { value: 2, max: 2 } });
+      expect(canSpendActionPoints(actor, 1)).toBe(false);
+      expect(await spendActionPoints(actor, 1)).toBe(false);
+      // И не-физическое действие тоже: запрет на ВСЕ Действия, не только Физические.
+      expect(await spendActionPoints(actor, 1, { physical: false })).toBe(false);
+      expect(actor.system.actionPoints.value).toBe(2);
+    });
+  }
+
+  it("отказ — с понятной причиной в уведомлении и в подсказке кнопки", async () => {
+    globalThis.game.combat = { started: true };
+    captured.warnings = [];
+    const actor = actorFor({ conditions: { stunned: true } });
+    actor.name = "Громила";
+    await spendReaction(actor);
+    expect(captured.warnings.join(" ")).toMatch(/Громила.*Оглушён/);
+    expect(apSpendGate(actor, 1)).toEqual({ disabled: true, title: expect.stringMatching(/Оглушён/) });
+    expect(reactionSpendGate(actor)).toEqual({ disabled: true, title: expect.stringMatching(/Оглушён/) });
+  });
+
+  it("вне Encounter (экономика выключена) — не гейтится, как и раньше", async () => {
+    globalThis.game.combat = { started: false };
+    const actor = actorFor({ conditions: { stunned: true, unconscious: true } });
+    expect(canSpendActionPoints(actor, 2)).toBe(true);
+    expect(canSpendReaction(actor)).toBe(true);
+  });
+
+  it("Сбитый с ног/Подавленный — не запрещают (запрет только у трёх Состояний книги)", () => {
+    globalThis.game.combat = { started: true };
+    const actor = actorFor({ conditions: { prone: true, pinned: true } });
+    expect(canSpendActionPoints(actor, 1)).toBe(true);
+    expect(canSpendReaction(actor)).toBe(true);
+  });
+});
+
+// wdbc-x1nz.2.88 п.1 («Статусы»): «Беспомощный персонаж не может совершать
+// Физические действия». Метка physical у точки траты: true — телесное, false —
+// явно не-физическое (психосила, Командование, психический ритуал), не
+// указано — считается физическим (по книге телесное почти всё).
+describe("Беспомощный: только не-Физические действия (wdbc-x1nz.2.88)", () => {
+  const helpless = (over = {}) => actorFor({ conditions: { helpless: true }, ...over });
+
+  it("физическая трата ОД запрещена — явная и по умолчанию", async () => {
+    globalThis.game.combat = { started: true };
+    const actor = helpless();
+    expect(canSpendActionPoints(actor, 1, { physical: true })).toBe(false);
+    expect(canSpendActionPoints(actor, 1)).toBe(false);
+    expect(await spendActionPoints(actor, 1, { physical: true })).toBe(false);
+    expect(await spendActionPoints(actor, 1)).toBe(false);
+    expect(actor.system.actionPoints.value).toBe(2);
+  });
+
+  it("не-физическое действие (physical:false) — разрешено и списывает ОД", async () => {
+    globalThis.game.combat = { started: true };
+    const actor = helpless();
+    expect(canSpendActionPoints(actor, 2, { physical: false })).toBe(true);
+    expect(await spendActionPoints(actor, 2, { physical: false })).toBe(true);
+    expect(actor.system.actionPoints.value).toBe(0);
+  });
+
+  it("Реакция (Уклонение/Парирование — телесные) запрещена; не-физическая — разрешена", async () => {
+    globalThis.game.combat = { started: true };
+    const actor = helpless();
+    expect(canSpendReaction(actor, { forDefense: true })).toBe(false);
+    expect(await spendReaction(actor, { forDefense: true })).toBe(false);
+    expect(actor.system.reactions.value).toBe(1);
+    expect(canSpendReaction(actor, { physical: false })).toBe(true);
+  });
+
+  it("гейт кнопки говорит «Беспомощен» до клика; не-физическая кнопка не гейтится", () => {
+    globalThis.game.combat = { started: true };
+    const actor = helpless();
+    expect(apSpendGate(actor, 1).title).toMatch(/Беспомощ/);
+    expect(apSpendGate(actor, 1, { physical: false })).toEqual({ disabled: false, title: "" });
+    expect(reactionSpendGate(actor).title).toMatch(/Беспомощ/);
+  });
+
+  it("Без сознания (даёт производное helpless) — запрещено даже не-физическое", () => {
+    globalThis.game.combat = { started: true };
+    const actor = actorFor({ conditions: { unconscious: true, helpless: true } });
+    expect(canSpendActionPoints(actor, 1, { physical: false })).toBe(false);
+  });
+
+  it("не-физическая трата без helpless не считается в Калечащее (метка тройная)", async () => {
+    globalThis.game.combat = { started: true };
+    const actor = actorFor({ actionPoints: { value: 2, max: 2 } });
+    await spendActionPoints(actor, 1);
+    expect(actor.getFlag("warhammer-dbc", "physicalApSpentThisTurn")).toBeUndefined();
+  });
+});

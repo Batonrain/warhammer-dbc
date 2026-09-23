@@ -80,7 +80,16 @@ const ALLOWED = {
   // — их ~40+ в packs-src/traits (Unnatural S (4), Unnatural WP (+2) и т.д.,
   // плюс шаблонные «Unnatural Strength (X)» под ручной рейтинг), включатель
   // просто другого вида, чем ищет анализатор.
-  "trait.unnaturalCharacteristic": "включается по имени предмета (Unnatural …), не по target-ключу — анализатор такой вид выдачи не распознаёт, хотя предметов-выдачи ~40+"
+  "trait.unnaturalCharacteristic": "включается по имени предмета (Unnatural …), не по target-ключу — анализатор такой вид выдачи не распознаёт, хотя предметов-выдачи ~40+",
+
+  // Альтернативные чувства против Ослепления (wdbc-x1nz.2.89): тот же случай,
+  // что trait.unnaturalCharacteristic выше — главный включатель ИМЯ Черты
+  // (rules/library/conditions.mjs::ALT_SENSES_TRAITS; packs-src/traits/
+  // Sonar_Sense, Unnatural_Senses, бестиарий). Ключ Конструктора — второй,
+  // запасной путь для предметов «даёт Трейт Sonar Sense» (Sonar Visor,
+  // импланты), которые его пока не несут.
+  "trait.sonarSense":      "включается по имени Черты (Sonar Sense / Сонарное Чувство), ключ Конструктора — запасной путь",
+  "trait.unnaturalSenses": "включается по имени Черты (Unnatural Senses (X)), ключ Конструктора — запасной путь"
 };
 
 describe("возможности с читателем должны быть достижимы из игры", () => {

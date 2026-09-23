@@ -6,7 +6,7 @@
 
 import { describe, it, expect, afterEach } from "vitest";
 import { PRESENCE_ORDER, presenceNumber, presenceBenefitsFor, receivesPresence,
-         receivesCommands, commandHealsPsych, canBeForcedToMove,
+         receivesCommands, commandBlockReason, commandHealsPsych, canBeForcedToMove,
          suppressionBonus, commandReachFor } from "../../module/rules/command.mjs";
 import { PRESENCE_BENEFITS } from "../../module/constants/squad.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
@@ -134,5 +134,47 @@ describe("Оглох блокирует Короткие и Детальные �
     registerRuleSource("test", () => [{ id: "a", label: "Тест",
       effects: [{ kind: "grantFlag", target: "communication.deafExempt" }] }]);
     expect(receivesCommands("character", deaf)).toBe(true);
+  });
+});
+
+// wdbc-x1nz.2.90 («Раны и Урон», «Статусы»): «не может получать эффектов
+// Командования» — Присутствие тоже эффект Командования (раньше глухоту не
+// проверяло); Без сознания «не может видеть и слышать других» — не получает
+// ничего и без исключений.
+describe("Оглох/Без сознания — Присутствие и потеря сознания", () => {
+  const deaf = { type: "character", system: { conditions: { deafened: true } }, items: [] };
+  const out  = { type: "character", system: { conditions: { unconscious: true } }, items: [] };
+  const ok   = { type: "character", system: { conditions: {} }, items: [] };
+
+  it("Оглохшему не доходит ни одно преимущество Присутствия", () => {
+    expect(receivesPresence("character", "extreme", deaf)).toBe(false);
+    const reach = commandReachFor("character", "focus", deaf);
+    expect(reach.presence).toEqual([]);
+    expect(reach.presenceApplies).toBe(false);
+  });
+
+  it("Присутствие без выбранного преимущества — тоже не доходит до Оглохшего", () => {
+    expect(commandReachFor("character", "", deaf).presenceApplies).toBe(false);
+  });
+
+  it("Без сознания — ни Команд, ни Присутствия, с объясняющей заметкой", () => {
+    const reach = commandReachFor("character", "extreme", out);
+    expect(reach.commands).toBe(false);
+    expect(reach.presenceApplies).toBe(false);
+    expect(reach.blockedBy).toBe("Без сознания");
+    expect(reach.notes.join(" ")).toContain("Без сознания");
+  });
+
+  it("Без сознания не снимается возможностью жестов/телепатии (она — про глухоту)", () => {
+    registerRuleSource("test", () => [{ id: "a", label: "Тест",
+      effects: [{ kind: "grantFlag", target: "communication.deafExempt" }] }]);
+    expect(commandBlockReason(out)).toBe("Без сознания");
+    expect(commandBlockReason(deaf)).toBe("");
+    expect(receivesPresence("character", "extreme", deaf)).toBe(true);
+  });
+
+  it("без актора (старые вызовы по типу) и у здорового — всё доходит", () => {
+    expect(receivesPresence("character", "focus")).toBe(true);
+    expect(commandReachFor("character", "focus", ok)).toMatchObject({ commands: true, presenceApplies: true, blockedBy: "" });
   });
 });

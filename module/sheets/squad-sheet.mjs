@@ -270,7 +270,9 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
       // Что до него вообще доходит от Командования: Орде — лишь эффекты 1 и 3
       // Присутствия. Правило общее с панелью «Под моим Присутствием»
       // (rules/command.mjs), чтобы Орда читалась одинаково на обоих путях.
-      reach: commandReachFor(type, this.actor.system.presence?.benefit || "")
+      // Сам документ бойца (wdbc-x1nz.2.90): без него Оглохший или
+      // потерявший сознание боец Отряда получал Команды и Присутствие.
+      reach: commandReachFor(type, this.actor.system.presence?.benefit || "", doc)
     };
   }
 
@@ -342,8 +344,11 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     // Пастырь-скидка на реальном исполнении (_executeCommand) пересчитаются
     // под ФАКТИЧЕСКИ выбранного, а не под этот предварительный превью.
     const previewCommander = this._resolve(context.activeCommander?.uuid);
-    context.shortApGate  = apSpendGate(previewCommander, this._commandApCost("short",  previewCommander).cost);
-    context.detailApGate = apSpendGate(previewCommander, this._commandApCost("detail", previewCommander).cost);
+    // Команда отдаётся голосом — не Физическое действие: Беспомощный командир
+    // (связанный, но в сознании) по-прежнему командует («Статусы»,
+    // wdbc-x1nz.2.88). Оглушение/Без сознания запрещают и её — это Действие.
+    context.shortApGate  = apSpendGate(previewCommander, this._commandApCost("short",  previewCommander).cost, { physical: false });
+    context.detailApGate = apSpendGate(previewCommander, this._commandApCost("detail", previewCommander).cost, { physical: false });
 
     const shortKey = sys.shortCommand?.key || "inspire";
     const shortDef = SHORT_COMMANDS.find(c => c.key === shortKey) || SHORT_COMMANDS[0];
@@ -749,7 +754,8 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     if (kind !== "presence") {
       const rollerDoc = this._resolve(roller.uuid);
       const { actionType, cost } = this._commandApCost(kind, rollerDoc);
-      if (!await spendActionPoints(rollerDoc, cost)) {
+      // physical:false — приказ голосом, см. shortApGate выше (wdbc-x1nz.2.88).
+      if (!await spendActionPoints(rollerDoc, cost, { physical: false })) {
         ui.notifications.warn(`${roller.name || "Отдающий"}: не хватает ОД на ${actionType} (нужно ${cost}).`);
         return;
       }
@@ -877,10 +883,12 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
       .filter(m => !m.missing && (kind === "presence" ? !m.reach.presenceApplies : !m.reach.commands));
     if (!missed.length) return "";
 
-    const names = missed.map(m => esc(m.name)).join(", ");
+    // Причина у бойца (Оглох/Без сознания, wdbc-x1nz.2.90) — в скобках у
+    // имени: общий «why» ниже написан про Орду и глухому бойцу не подходит.
+    const names = missed.map(m => esc(m.name) + (m.reach.blockedBy ? ` (${m.reach.blockedBy})` : "")).join(", ");
     const why = kind === "presence"
       ? `выбранное преимущество (эффект ${presenceNumber(benefit)}) до них не доходит`
-      : "Команды на них не действуют — только эффекты 1 и 3 Присутствия";
+      : "Команды на них не действуют (Орде доходят лишь эффекты 1 и 3 Присутствия)";
     return `<div class="sq-chat-note sq-chat-missed">Не получают: <b>${names}</b> — ${why}.</div>`;
   }
 

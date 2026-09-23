@@ -336,7 +336,8 @@ export function hudData(actor) {
     { on: c.burning,      label: "ГОРИТ", bad: true },
     { on: c.helpless,     label: "БЕСПОМОЩЕН", bad: true },
     { on: c.unconscious,  label: "БЕЗ СОЗН.", bad: true },
-    { on: (Number(sys.fatigue?.value) || 0) > 0, label: "УСТАЛ" }
+    // fatigue.effective — с +1 неснимаемой от Гангрены (wdbc-x1nz.2.96).
+    { on: (Number(sys.fatigue?.effective ?? sys.fatigue?.value) || 0) > 0, label: "УСТАЛ" }
   ].filter(l => l.on);
 
   const woundPct = pctOf(ws.value, ws.max);

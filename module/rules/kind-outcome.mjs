@@ -177,10 +177,23 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
     combinedLine = `<div class="roll-threshold">🔗 Комбинированный: второй Предел <b>${otherEff}</b> (${esc(otherLabel)})${unresolved} → итоговый Порог <b>${eff}</b>${bAssistNote}</div>`;
   }
 
-  const { success, deg: rawDeg } = testOutcome(rv, eff, { autoSuccess });
   const resolved = resolveTest(ctx);
+  // Автопровал от правила (wdbc-x1nz.2.89, эффект autoFail — Ослеплённый
+  // «автоматически проваливает тесты на BS», «Раны и Урон», «Статусы»).
+  // Сильнее autoSuccess: тот — про цель/обстоятельство, а этот — про то, что
+  // бросающий физически не может выполнить тест. Степень провала — обычная,
+  // если бросок и так выше Порога, иначе 1.
+  const autoFail = (resolved.autoFail ?? []).length > 0;
+  const outcome0 = testOutcome(rv, eff, { autoSuccess: autoSuccess && !autoFail });
+  const success = autoFail ? false : outcome0.success;
+  const rawDeg = (autoFail && outcome0.success) ? 1 : outcome0.deg;
   const crit = criticalOutcome(rv, resolved.crit);
-  const critLine = critLineHtml(crit);
+  const autoFailLine = autoFail
+    ? `<div class="roll-threshold">⛔ Автопровал: ${resolved.autoFail.map(a => esc(a.label)).join(", ")}</div>`
+    : "";
+  // Строка автопровала едет вместе с critLine: её рисуют ВСЕ вызывающие
+  // карточки (лист, Страх, Верховая езда), отдельного поля они не знают.
+  const critLine = autoFailLine + critLineHtml(crit);
   // Сверхъестественная Характеристика (стр. 26, wdbc-y9i8): +1 Успех за
   // каждые полные 2 рейтинга Unnatural — но ТОЛЬКО на Успехе, и только по
   // Характеристике, которой реально бросали (usedCharKey — ctx.char, либо
