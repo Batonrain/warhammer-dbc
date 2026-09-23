@@ -42,8 +42,7 @@ import { hasRuleFlag } from "./flags.mjs";
 import { invalidateRulesCacheFor } from "./collect.mjs";
 import { runeMax } from "./sigillite-runes.mjs";
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
-import { realityRendingPenalty } from "./wrapped-in-chaos.mjs";
-import { applyParasiteFusion } from "./parasite-trait.mjs";
+import { applyParasiteFusion, fusedParasite, fuseParasiteCharacteristic } from "./parasite-trait.mjs";
 import { woundLevel } from "./wound-tier.mjs";
 import { prepareFinalPools } from "./character/final-pools.mjs";
 import { prepareMovementDerived } from "./character/movement.mjs";
@@ -165,17 +164,9 @@ export function prepareCharacterDerived(actor, system) {
     }
     system.drugCharMods = drugCharMods;
 
-    // Рассечение Реальности/Reality Rending (Wrapped in Chaos/Укутанный в
-    // Хаос, субмутация "9", wdbc-1rno): «+3 ко всему входящему урону» всем
-    // в радиусе 3м владельца, кроме исключённых до W.b союзников — ВТОРОЙ
-    // независимый источник того же поля, что наркотики выше (по прямому
-    // запросу пользователя обобщить incomingDamageReduction, не только под
-    // наркотики). Живой cross-actor источник (module/rules/wrapped-in-
-    // chaos.mjs::realityRendingPenalty), тот же приём, что уже даёт
-    // rules/psychic-sustain-target.mjs — считается заново каждый раз,
-    // ничего не хранится на цели.
-    system.incomingDamageReduction =
-      (Number(system.incomingDamageReduction) || 0) + realityRendingPenalty(actor);
+    // Рассечение Реальности (Wrapped in Chaos, субмутация "9") сюда НЕ
+    // пишется: зависит от позиций токенов и считается живьём в момент урона
+    // (combat/damage.mjs, wdbc-bjy1.3).
 
     // ── Эффекты от черт (трейтов) ──────────────────────────────────────────
     // Ядро автоматизации: +X к бонусу характеристики (Unnatural), естественная
@@ -482,6 +473,9 @@ export function prepareCharacterDerived(actor, system) {
       if (hasRuleFlag(actor, "sarcophagus.noFoodWaterAir")) { eff.hunger = 0; eff.thirst = 0; }
       return eff;
     })()) : {};
+    // Слияние с Паразитом (wdbc-bjy1.4): его Характеристики — в этом же
+    // проходе, до всего, что считается от .total/.bonus ниже.
+    const parasiteChars = fusedParasite(actor)?.system?.characteristics ?? null;
     for (const [key, char] of Object.entries(chars)) {
       const impBonus  = IMPROVEMENT_BONUS[char.improvement] || 0;
       const drugMod   = drugCharMods[key]   || 0;
@@ -529,6 +523,9 @@ export function prepareCharacterDerived(actor, system) {
       // и перемещений, которые считаются ниже по этому же проходу.
       char.bonus   = Math.floor(char.total / 10) + (char.supernatural || 0) + (char.bonusFx || 0)
                    + traitMod + pathMod;
+      if (parasiteChars && fuseParasiteCharacteristic(key, char, parasiteChars[key])) {
+        char.totalBreakdown = [{ label: "Паразит (слияние)", value: char.total }];
+      }
     }
 
     // Гемункул, Стадия 1 (Идеал Плоти): +I.b к максимуму Ран и Regeneration
@@ -1018,7 +1015,8 @@ export function prepareCharacterDerived(actor, system) {
     // считается из уже готовых чисел, поэтому выносится без риска для порядка.
     prepareFinalPools(actor, system, { chars, agBonus, traitInitMod, implantEnergyMax,
                                        sustainedCost, implantCompBonus, techFocusInstalled });
-    // Parasite/Паразит (Трейт — общий, wdbc-ux8a): числовая часть слияния —
-    // ПОСЛЕ Инициативы/Характеристик выше, иначе нечего перезаписывать.
-    applyParasiteFusion(actor, system, chars);
+    // Parasite/Паразит (Трейт — общий, wdbc-ux8a): Инициатива паразита —
+    // после prepareFinalPools, иначе её перезапишут. Характеристики
+    // подставлены раньше, в цикле характеристик (wdbc-bjy1.4).
+    applyParasiteFusion(actor, system);
 }

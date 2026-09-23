@@ -90,7 +90,7 @@ import { applyGain } from "../rules/extended-test.mjs";
 import { hasUnnaturalCharacteristic } from "../rules/unnatural-characteristic.mjs";
 import { egomaniaOverrideResult } from "../rules/egomania.mjs";
 import { PERSONAL_ADAPTATION_CAPABILITY, PERSONAL_ADAPTATION_FLAG,
-         personalAdaptationCap, personalAdaptationBonusFor, nextPersonalAdaptationBonuses }
+         personalAdaptationCap, personalAdaptationBonusFor, nextPersonalAdaptationBonuses, personalAdaptationKey }
   from "../rules/personal-adaptation.mjs";
 import { skillTotal } from "../combat/movement-actions.mjs";
 import { assistRejection, assistThresholdBonus, assistDegrees, DEFAULT_ASSIST_MAX,
@@ -2876,7 +2876,7 @@ export class WarhammerCharacterSheet
     let personalAdaptationLine = "";
     if (initiatorActor && hasRuleFlag(this.actor, PERSONAL_ADAPTATION_CAPABILITY)) {
       const bonus = personalAdaptationBonusFor(
-        this.actor.getFlag("warhammer-dbc", PERSONAL_ADAPTATION_FLAG) ?? [], initiatorActor.uuid, game.time?.worldTime ?? 0);
+        this.actor.getFlag("warhammer-dbc", PERSONAL_ADAPTATION_FLAG) ?? [], personalAdaptationKey(initiatorActor), game.time?.worldTime ?? 0);
       if (bonus > 0) {
         theirsEff += bonus;
         personalAdaptationLine = `<div class="roll-threshold">🧠 Персональная Адаптация: +${bonus} против ` +
@@ -2899,7 +2899,7 @@ export class WarhammerCharacterSheet
     if (initiatorActor && hasRuleFlag(this.actor, PERSONAL_ADAPTATION_CAPABILITY)) {
       const cap = personalAdaptationCap(this.actor.system?.corruptionBonus);
       const nextList = nextPersonalAdaptationBonuses(
-        this.actor.getFlag("warhammer-dbc", PERSONAL_ADAPTATION_FLAG) ?? [], initiatorActor.uuid,
+        this.actor.getFlag("warhammer-dbc", PERSONAL_ADAPTATION_FLAG) ?? [], personalAdaptationKey(initiatorActor),
         game.time?.worldTime ?? 0, cap);
       await this.actor.setFlag("warhammer-dbc", PERSONAL_ADAPTATION_FLAG, nextList);
     }

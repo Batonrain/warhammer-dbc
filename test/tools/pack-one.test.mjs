@@ -1,6 +1,6 @@
 // test/tools/pack-one.test.mjs
 //
-// tools/_pack-one.mjs пересобирает ОДИН пак и после этого дописывает в
+// tools/pack-one.mjs пересобирает ОДИН пак и после этого дописывает в
 // отметку синхронизации (tools/pack-stamp.mjs) свежий отпечаток именно этого
 // пака, не трогая записи остальных (wdbc-tn92). Без этого следующая общая
 // сборка (tools/pack.mjs) сравнивала бы свежепересобранную базу со старым
@@ -12,7 +12,7 @@
 // настоящая LevelDB не участвуют.
 
 import { describe, it, expect } from "vitest";
-import { stampAfterPackBuild } from "../../tools/_pack-one.mjs";
+import { stampAfterPackBuild } from "../../tools/pack-one.mjs";
 import { FINGERPRINT_VERSION } from "../../tools/pack-fingerprint.mjs";
 
 /** Готовый отпечаток после успешной пересборки — обычный случай. */

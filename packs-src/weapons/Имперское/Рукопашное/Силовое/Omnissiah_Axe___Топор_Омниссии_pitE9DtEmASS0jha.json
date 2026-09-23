@@ -16,7 +16,7 @@
       {
         "label": "Копьё",
         "range": "5-6",
-        "damage": "1d10+6",
+        "damage": "1d10+5",
         "damageType": "energy",
         "penetration": 5,
         "weaponProps": [
@@ -49,7 +49,8 @@
             "rating": 0,
             "rating2": 0
           }
-        ]
+        ],
+        "damageSubtype": "crushing"
       }
     ],
     "reload": "–",

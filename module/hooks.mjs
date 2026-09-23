@@ -1,4 +1,6 @@
 import { _performDodge, _performParry, _performSprayCancel, _performCompression, _performExtendBodyPart, _performEtherealSwarm, _performPsychicParry, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
+import { refreshParasiteHosts } from "./rules/parasite-trait.mjs";
+import { repickBornForWar } from "./migrations/born-for-war-fix.mjs";
 import { _performUnseenDetect, _performUnseenBypass } from "./combat/unseen-attack.mjs";
 import { applyCancerousHealingFromButton, APPLY_BTN_CLASS as CH_APPLY_BTN_CLASS } from "./apps/cancerous-healing.mjs";
 import { performPoolSpend, clearEvasionPools, spendPoolSuccesses } from "./combat/evasion-pool.mjs";
@@ -68,12 +70,13 @@ import { placeVortexZone, processVortexTurnStart, clearAllVortexZones, reactToVo
 import { placeSmokeZone } from "./regions/difficult-terrain.mjs";
 import { findArcTarget } from "./combat/arc.mjs";
 import { findThroughShotTarget } from "./combat/through-shot.mjs";
-import { resetActionEconomy, applyTurnEndStanceEffects, applyAimFocusTurnEnd, postTurnStartCard, spendActionPoints, spendReaction } from "./combat/action-economy.mjs";
+import { resetActionEconomy, applyTurnEndStanceEffects, applyAimFocusTurnEnd, postTurnStartCard, spendReaction } from "./combat/action-economy.mjs";
 import { MELEE_CONTESTS } from "./constants/combat.mjs";
 import { _showContestDialog } from "./combat/techniques.mjs";
 import { resolveKnockdownSuccess, knockdownForbidden, knockdownSizePenalty } from "./combat/knockdown.mjs";
 import { shouldOfferRapidReaction, postRapidReactionPrompt, rollRapidReactionTest } from "./combat/rapid-reaction.mjs";
-import { isDevourerOfTimeExtraTurn, devourerOfTimeVictimUuids } from "./combat/devourer-of-time.mjs";
+import { isDevourerOfTimeExtraTurn, processDevourerOfTimeExtraTurn, processDevourerOfTimeRoundChange,
+         clearDevourerOfTimeAtCombatEnd } from "./combat/devourer-of-time.mjs";
 import { BLESSED_FITS_CAPABILITY, BLESSED_FITS_PENDING_FLAG } from "./rules/blessed-fits.mjs";
 import { clearDreadWailWeaponBuff } from "./combat/dread-wail.mjs";
 import { clearBowToAudienceMark } from "./combat/bow-to-audience.mjs";
@@ -425,6 +428,17 @@ export function registerHooks() {
     // успешного дистанционного Уклонения, что и Отскок выше — оружия достаточно
     // резолвить по itemUuid, актор-стрелок карточке не нужен (вторую цель
     // выбирает ГМ на карточке применения урона).
+    // «Ты рождён для войны» (wdbc-o28t): переспросить выбор вместо снятой
+    // «+3 Стойкости» — патч предмета, диалог задаёт штатный applyItemMechanics.
+    html.querySelectorAll(".wh-bfw-repick-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const b = ev.currentTarget;
+        b.disabled = true;
+        await repickBornForWar(b.dataset.itemUuid);
+      });
+    });
+
     html.querySelectorAll(".wh-overpenetration-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
@@ -712,7 +726,7 @@ export function registerHooks() {
         const extraMod = parseInt(ev.currentTarget.dataset.extraMod || "0");
         const hitsCount = parseInt(ev.currentTarget.dataset.hitsCount || "1");
         const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
-        await _performSwerve(actor, { extraMod, hitsCount, attackerUuid });
+        await _performSwerve(actor, { extraMod, hitsCount, attackerUuid, attackId: ev.currentTarget.dataset.attackId || "" });
       });
     });
 
@@ -2534,6 +2548,9 @@ function _attachFateContextMenu(message, html) {
         await actor.unsetFlag("warhammer-dbc", ROUND_DAMAGE_FLAG);
     }
     await resolvePendingSusAnHeals(combat);
+    // Пожиратель Времени (wdbc-xzfp): доп. Ход — только «первый Ход в бою»,
+    // отыгранный снимается сменой Раунда.
+    await processDevourerOfTimeRoundChange(combat);
     // Spirit Talk/Духовный Разговор (wdbc-q30d): захваченный конструкт
     // держит инициативу сразу за кастером каждый Раунд, пока не истекут
     // F.b — та же смена Раунда, ГМ пишет.
@@ -2608,6 +2625,9 @@ function _attachFateContextMenu(message, html) {
     // Адаптация (wdbc-q0q8, Панцирь) — накопленные за бой бонусы AP по видам
     // урона живут строго «до конца боя», та же логика, что у Ртути выше.
     await clearAdaptationBonuses(combat);
+    // Пожиратель Времени (wdbc-xzfp): жертвы, отметка Раунда и неиспользованный
+    // долг ОД — строго «до конца боя».
+    await clearDevourerOfTimeAtCombatEnd(combat);
     // Очко «Ока Зависти» — та же уборка по концу боя, что у меток Ртути и
     // бонусов Адаптации: временный запас не должен переживать бой.
     await clearEyeOfEnvyOnCombatEnd(combat);
@@ -2888,18 +2908,12 @@ function _attachFateContextMenu(message, html) {
       // тот же такт и та же геометрия, что у Стервятника выше.
       await processIrradiatedTurnStart(nextCombatant.actor, nextCombatant.token);
       // Пожиратель Времени/Devourer of Time (Тзинч, wdbc-1rno): «застигнутые
-      // Врасплох теряют полудействие в [обладателя дара] второй Ход» — этот
-      // такт срабатывает именно тогда, когда начинается доп. Ход самой
-      // находки (isDevourerOfTimeExtraTurn), а не обычный Ход чемпиона —
-      // доп. Combatant повторяется каждый раунд сам (combat/extra-turn.mjs),
-      // так что потеря ОД у жертв повторяется вместе с ним без отдельного
-      // счётчика раундов. Жертвы могут не иметь токена в этой сцене/уже
-      // выйти из боя — fromUuid тогда просто не находит актора, пропуск.
+      // Врасплох теряют полудействие в [обладателя дара] второй Ход» — такт
+      // начала именно доп. Хода находки. Жертвы свой Ход к этому моменту
+      // уже отыграли, поэтому это ДОЛГ на их следующий Ход, а не списание
+      // сейчас (wdbc-xzfp, combat/devourer-of-time.mjs).
       if (isDevourerOfTimeExtraTurn(nextCombatant)) {
-        for (const uuid of devourerOfTimeVictimUuids(nextCombatant.actor)) {
-          const victim = await fromUuid(uuid).catch(() => null);
-          if (victim) await spendActionPoints(victim, 1);
-        }
+        await processDevourerOfTimeExtraTurn(combat, nextCombatant);
       }
       // Временные эффекты Шамана Зверолюдей (wdbc-xxb7) — «до начала
       // следующего Хода ШАМАНА» (не получателя), тем же тактом.
@@ -2935,6 +2949,18 @@ function _attachFateContextMenu(message, html) {
     await syncDisabledArmourOverloadTimer(actor);
     await syncInventoryOverloadTimer(actor);
   });
+
+  // Слияние с Паразитом (wdbc-bjy1.14): хост берёт числа паразита в своём
+  // prepareDerivedData — любое изменение паразита (сам актор, его предметы и
+  // эффекты) пересчитывает хостов. На каждом клиенте: пересчёт локальный.
+  Hooks.on("updateActor", actor => { refreshParasiteHosts(actor); });
+  for (const hook of ["createItem", "updateItem", "deleteItem", "createActiveEffect", "updateActiveEffect", "deleteActiveEffect"]) {
+    Hooks.on(hook, doc => {
+      const owner = doc?.parent?.documentName === "Actor" ? doc.parent
+        : doc?.parent?.parent?.documentName === "Actor" ? doc.parent.parent : null;
+      if (owner) refreshParasiteHosts(owner);
+    });
+  }
 
   // ── Таймер периодического теста Перевеса инвентаря (стр. 27) ────────────
   // (combat/encumbrance.mjs) — в отличие от Перевеса ВЫКЛЮЧЕННОЙ силовой

@@ -64,7 +64,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "electrical"
   },
   "_id": "eQtIwwMDhBTV5su8",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-thrown.svg",

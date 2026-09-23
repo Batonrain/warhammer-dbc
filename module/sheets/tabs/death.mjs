@@ -73,7 +73,11 @@ async function _resolveFateSave(actor, kind, cfg, { restoreToZero, resurrectNote
   // Вечный Воин (free/flat) книга не упоминает — обе фиксированные цены не
   // трогаем, удваивать «0» и «1 без кубика» смысла нет. rolledLoss остаётся
   // «как выпало» для подписи брейкдауна, loss — уже удвоенная сумма списания.
-  const kissOfDeathDoubled = !free && !!actor.getFlag?.("warhammer-dbc", KISS_OF_DEATH_FLAG);
+  // Метка снимается при ЛЮБОЙ попытке, если стоит, — не только когда удвоила
+  // цену: иначе после бесплатного Спасения Вечного Воина она доживала до
+  // следующей, уже не связанной с Поцелуем смерти (wdbc-zye1).
+  const hadKissOfDeath = !!actor.getFlag?.("warhammer-dbc", KISS_OF_DEATH_FLAG);
+  const kissOfDeathDoubled = !free && hadKissOfDeath;
   const loss = kissOfDeathDoubled ? rolledLoss * 2 : rolledLoss;
   // Временный запас (wdbc-e728, Voice of God и т.п.) гасит цену Спасения первым.
   const spend = await spendFromInfamyPool(actor, loss, "system.fate.value");
@@ -88,7 +92,7 @@ async function _resolveFateSave(actor, kind, cfg, { restoreToZero, resurrectNote
 
   if (failed) {
     const upd = { "system.fate.value": spend.poolValue };
-    if (kissOfDeathDoubled) upd["flags.warhammer-dbc.-=" + KISS_OF_DEATH_FLAG] = null;
+    if (hadKissOfDeath) upd["flags.warhammer-dbc.-=" + KISS_OF_DEATH_FLAG] = null;
     await actor.update(upd);
     await _postCard(actor, kind, [
       `Пул ${pool}: <b>${current}</b> − ${lossLabel} → опустился бы до 0 и ниже.`,
@@ -108,7 +112,7 @@ async function _resolveFateSave(actor, kind, cfg, { restoreToZero, resurrectNote
     "system.corruption.value": Math.min(100, newCor)
   };
   updates[`flags.${NS}.deceased`] = false;
-  if (kissOfDeathDoubled) updates[`flags.${NS}.-=${KISS_OF_DEATH_FLAG}`] = null;
+  if (hadKissOfDeath) updates[`flags.${NS}.-=${KISS_OF_DEATH_FLAG}`] = null;
   if (restoreToZero) {
     Object.assign(updates, computeWoundHealing(actor.system, Math.max(0, -(Number(actor.system.wounds?.value) || 0)) + (Number(actor.system.wounds?.critical) || 0)));
   }
@@ -166,7 +170,9 @@ export async function doSusAnimation(actor) {
     // разойтись, если кто-то снимал один флаг и забывал другой.
     await actor.update({
       [`flags.${NS}.deceased`]: false,
-      ...conditionApplyFields("unconscious", null, actor)
+      ...conditionApplyFields("unconscious", null, actor),
+      // Смерть разрешилась — метка Поцелуя Смерти не переживает её (wdbc-zye1).
+      ...(actor.getFlag?.(NS, KISS_OF_DEATH_FLAG) ? { [`flags.${NS}.-=${KISS_OF_DEATH_FLAG}`]: null } : {})
     });
     lines.push(`<span class="roll-success">Успех — десантник входит в Замедленную Анимацию вместо смерти.</span>`);
     lines.push("Без сознания и Беспомощен. Диагностика −60 (For.Lore (Astartes Implants) снимает штраф). "
@@ -198,7 +204,12 @@ export async function doSundering(actor) {
 }
 
 export async function doResurrect(actor) {
-  await actor.setFlag(NS, "deceased", false);
+  // Одним update и снятие метки Поцелуя Смерти: воскрешённый не должен платить
+  // вдвое при следующей, уже не связанной с Поцелуем смерти (wdbc-zye1).
+  await actor.update({
+    [`flags.${NS}.deceased`]: false,
+    ...(actor.getFlag?.(NS, KISS_OF_DEATH_FLAG) ? { [`flags.${NS}.-=${KISS_OF_DEATH_FLAG}`]: null } : {})
+  });
   await _postCard(actor, "Воскрешение", [
     "Кардиомонитор перезапущен вручную — персонаж воскрешён.",
     "Формулы в книге для этого нет (стр. 233 — чистый нарратив): что, как и какой ценой его вернуло, решают ГМ и игроки."

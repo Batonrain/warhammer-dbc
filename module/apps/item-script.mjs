@@ -46,7 +46,7 @@ import { resolveBurnedSenses } from "./burned-senses.mjs";
 import { buildCountenanceFearFlag } from "../rules/countenance-of-gods.mjs";
 // Арифметика Ступеней при краже Навыка «Пожирателем Знаний» живёт в модуле,
 // а не внутри скрипта пака: внутри скрипта её не видит ни один тест.
-import { devouredSkillRank } from "../rules/devourer-of-knowledge.mjs";
+import { devouredSkillRank, nextDevourerStreak, pruneDevourerStreaks } from "../rules/devourer-of-knowledge.mjs";
 import { purityOfBattleWave } from "../combat/purity-of-battle.mjs";
 import { activateFruitOfFlesh, eatHealFruit } from "./fruit-of-flesh.mjs";
 import { useSoulSeer } from "./soul-seer.mjs";
@@ -174,6 +174,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "nearestVisibleHatredTarget", "testOutcome", "resolveOpposed", "woundDeathThreshold", "computeWoundHealing",
     "grantExtraTurn", "hasExtraTurn", "endOfOrderInitiative", "mergedVictimUuids", "grantArmourOfTheGods",
     "resolveBurnedSenses", "buildCountenanceFearFlag", "purityOfBattleWave", "devouredSkillRank",
+    "nextDevourerStreak", "pruneDevourerStreaks",
     "activateFruitOfFlesh", "eatHealFruit", "useSoulSeer", "activateWrappedInChaos",
     ...extraNames,
     code
@@ -189,6 +190,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     nearestVisibleHatredTarget, testOutcome, resolveOpposed, woundDeathThreshold, computeWoundHealing,
     grantExtraTurn, hasExtraTurn, endOfOrderInitiative, mergedVictimUuids, grantArmourOfTheGods,
     resolveBurnedSenses, buildCountenanceFearFlag, purityOfBattleWave, devouredSkillRank,
+    nextDevourerStreak, pruneDevourerStreaks,
     activateFruitOfFlesh, eatHealFruit, useSoulSeer, activateWrappedInChaos,
     ...extraNames.map(k => extra[k])
   );

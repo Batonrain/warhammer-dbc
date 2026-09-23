@@ -9,7 +9,7 @@ import { describe, it, expect } from "vitest";
 import "../support/foundry-stub.mjs";
 import { listenerRoot } from "../support/foundry-stub.mjs";
 import { describeV2Sheet } from "../support/v2-sheet-contract.mjs";
-import { EnvironmentApp } from "../../module/apps/environment.mjs";
+import { EnvironmentApp, envTestActors } from "../../module/apps/environment.mjs";
 import { defaultEnv } from "../../module/constants/environment.mjs";
 
 describeV2Sheet(EnvironmentApp, {
@@ -114,5 +114,20 @@ describe("_onRender: разводка кнопок", () => {
     EnvironmentApp.prototype._onRender.call(app, {}, {});
     app.element.handlers[`${SEL}:click`]();
     expect(calls).toEqual([defaultEnv()]);
+  });
+});
+
+// wdbc-4umq (15): у ГМа назначенного персонажа обычно нет — тест на
+// Жару/Холод катается за выделенные токены.
+describe("envTestActors — за кого катать тест на Жару/Холод", () => {
+  const a = { id: "a" }, b = { id: "b" }, pc = { id: "pc" };
+  it("выделенные токены важнее назначенного персонажа, без повторов", () => {
+    expect(envTestActors([{ actor: a }, { actor: b }, { actor: a }], pc)).toEqual([a, b]);
+  });
+  it("ничего не выделено — назначенный персонаж", () => {
+    expect(envTestActors([], pc)).toEqual([pc]);
+  });
+  it("ни токенов, ни персонажа — пусто", () => {
+    expect(envTestActors(undefined, null)).toEqual([]);
   });
 });

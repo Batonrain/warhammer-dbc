@@ -16,6 +16,7 @@ import { resolveArmorAbsorptionAP, breachArmorAtLocation } from "./armor-propert
 import { applyWoundLoss, ablativeAbsorb } from "../rules/wounds.mjs";
 import { CAST_OUT_OF_DEATH_CAPABILITY, CAST_OUT_OF_DEATH_FLAG, scheduleCastOutOfDeathRegen } from "../rules/cast-out-of-death.mjs";
 import { eaterOfPainHoldersNear } from "../rules/eater-of-pain.mjs";
+import { realityRendingPenalty } from "../rules/wrapped-in-chaos.mjs";
 import { VOLUNTEER_ACTOR_CAPABILITY, isHarlequinsKissItem } from "../rules/volunteer-actor.mjs";
 import { MAGGOT_PARASITE_CAPABILITY } from "../rules/maggot-parasite.mjs";
 import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
@@ -526,7 +527,12 @@ export async function rollShieldAgainstConditionTick(actor, condKey, { damageSub
       i.type === "forcefield" &&
       i.system.equipped &&
       i.system.status === "active" &&
-      _shieldVsConditionEntries(i).some(e => e.shieldVsConditionKey === condKey)
+      _shieldVsConditionEntries(i).some(e => e.shieldVsConditionKey === condKey) &&
+      // Морозное Сердце (shieldArmorGate): без Жёсткого нагрудника «весь щит
+      // обесточен» — тот же гейт, что в обычном броске щита выше (wdbc-7wn7).
+      // Проверка «попадание пришло в бронированную локацию» к тику не
+      // относится: у тика Состояния нет места попадания.
+      !(_hasShieldArmorGate(i) && !_hasHardArmorAtBody(actor))
     )
     .sort((a, b) => (b.system.currentRating ?? 0) - (a.system.currentRating ?? 0))[0];
   if (!shieldItem) return false;
@@ -797,6 +803,12 @@ export async function applyDamageToActor(actor, damageData) {
   const actorUpdate = {};
 
   let tb, armorAP, effArmorAP, totalAbsorption;
+  // Адаптация (wdbc-q0q8): бонус, накопленный ПРЕДЫДУЩИМИ попаданиями этого
+  // же вида урона — читается напрямую (см. adaptation.mjs, почему не через
+  // vsType/vsSubtype листа). Книга: «+1 к Поглощению», а не к AP брони —
+  // поэтому идёт в итог рядом с T.b (wdbc-4umq): Пробитием не срезается, в
+  // Сочленении на 3 не делится, вместе с бронёй не обнуляется.
+  const adaptBonus = adaptationBonusFor(actor, damageType, damageSubtype);
   let runesBonus = 0;
   let coverBonus = 0;
   // Касание Энтропии: сколько AP съедено этим попаданием — для подписи в карточке.
@@ -824,7 +836,7 @@ export async function applyDamageToActor(actor, damageData) {
         ? Math.floor(warpArmorAP / 2)
         : 0;
     effArmorAP = armorAP;
-    totalAbsorption = (system.characteristics?.wp?.bonus ?? 0) + armorAP + ablativeShieldBefore;
+    totalAbsorption = (system.characteristics?.wp?.bonus ?? 0) + armorAP + ablativeShieldBefore + adaptBonus;
   } else {
     // T.b — не игнорируется пробитием. Разящее снижает Сверхъест. часть Стойкости.
     tb = absorption.toughnessBonus ?? 0;
@@ -848,17 +860,14 @@ export async function applyDamageToActor(actor, damageData) {
       // (Conductive/Flak/Soft/Rods/Open/Primitive) — см. armor-properties.mjs и
       // сбор флагов по локациям в documents/actor.mjs.
       // Ртуть (wdbc-q0q8): отмеченная локация «электропроводна» — тот же
-      // эффект, что свойство брони Conductive (noEnergy), только на ОДНУ
-      // часть тела и временно, поэтому накладывается сверху пропFlags этой
-      // локации, а не хранится на предмете брони.
+      // эффект, что свойство брони Conductive (нет AP от E(El): «E(El) —
+      // игнорирует электропроводящую броню», wdbc-7wn7 — раньше гасился AP
+      // от ЛЮБОЙ энергии, включая огонь), только на ОДНУ часть тела и
+      // временно, поэтому накладывается сверху пропFlags этой локации.
+      const baseLocFlags = absorption.propFlags?.[armorKey] || {};
       const locFlags = mercuryMarked
-        ? { ...(absorption.propFlags?.[armorKey] || {}), noEnergy: true }
+        ? { ...baseLocFlags, noApVsSubtype: { ...(baseLocFlags.noApVsSubtype || {}), electrical: true } }
         : absorption.propFlags?.[armorKey];
-      // Адаптация (wdbc-q0q8): бонус, накопленный ПРЕДЫДУЩИМИ попаданиями
-      // этого же вида урона — читается напрямую (см. adaptation.mjs почему
-      // не через vsType/vsSubtype листа), добавляется к бонусу нужной
-      // гранулярности: подвид, если атака его называет, иначе широкий тип.
-      const adaptBonus = adaptationBonusFor(actor, damageType, damageSubtype);
       // Щит вне арки (core.json, «Типы Рукопашного Оружия», разд. «Щит»):
       // «...от атак спереди и с того боку, который прикрывает рука со щитом
       // (в арке 180°)» — геометрию системой не считает никто (нет
@@ -880,8 +889,8 @@ export async function applyDamageToActor(actor, damageData) {
       const effLocFlags = shieldPrimitiveHere ? { ...(locFlags || {}), blocksPrimitiveDouble: true } : locFlags;
       armorAP = resolveArmorAbsorptionAP({
         baseArmorAP,
-        vsTypeBonus: (absorption.vsType?.[damageType] ?? 0) + (damageSubtype ? 0 : adaptBonus),
-        subtypeBonus: (absorption.vsSubtype?.[damageSubtype] ?? 0) + (damageSubtype ? adaptBonus : 0),
+        vsTypeBonus: absorption.vsType?.[damageType] ?? 0,
+        subtypeBonus: absorption.vsSubtype?.[damageSubtype] ?? 0,
         damageType, damageSubtype, melee, hitLocation, primitive, frontArcHit,
         flags: effLocFlags,
         wornAP: absorption.wornOnly?.[armorKey]
@@ -976,15 +985,20 @@ export async function applyDamageToActor(actor, damageData) {
     }
     // Итоговое поглощение = эффективный AP + T.b (всегда) + аблативный AP-щит
     // (не подчиняется Пробитию/Копью — отдельный слой, не физическая броня).
-    totalAbsorption = effArmorAP + tb + ablativeShieldBefore;
+    totalAbsorption = effArmorAP + tb + ablativeShieldBefore + adaptBonus;
   }
   // Точка расширения (wdbc-ls9d): плоское снижение входящего урона от эффектов
   // (system.incomingDamageReduction, суммируется — см. _creature.mjs) —
   // отдельно от AP/T.b, пробитием не уменьшается.
-  const incomingReduction = (Number(system.incomingDamageReduction) || 0)
+  const otherReduction = (Number(system.incomingDamageReduction) || 0)
     + determinationToFightReduction(actor)
     + determinationToFightWsReduction(actor)
     + justTheLightReduction(actor);
+  // Рассечение Реальности (wdbc-bjy1.3): зависит от позиций токенов, поэтому
+  // живьём здесь, а не в prepareDerivedData — сосед подошёл/отошёл, пересчёта
+  // цели не бывает. Отрицательное: −3 поглощения = +3 урона.
+  const realityRending = realityRendingPenalty(actor);
+  const incomingReduction = otherReduction + realityRending;
 
   // Непоглощённый урон. Аблативное Бронирование скакуна (стр. 478) срезает
   // его до 1, пока запас Ран полон, — первый же удар снимает слой, и дальше
@@ -1212,12 +1226,17 @@ export async function applyDamageToActor(actor, damageData) {
   if (primitive)   propNotes.push("Примитивное: броня ×2");
   if (felling > 0) propNotes.push(`Разящее ${felling}: −Сверхъест. T`);
   if (touchOfPainIgnoreTb) propNotes.push("Касание Боли: T.b Поглощения проигнорирован");
+  if (adaptBonus > 0) propNotes.push(`Адаптация: +${adaptBonus} Поглощения`);
   if (ignoreShield && !warpSoak) propNotes.push("Омывание: щит проигнорирован");
   if (ignoreArmour && !warpSoak) propNotes.push("Приём Борьбы: броня проигнорирована");
   if (!warpSoak) {
     const pfNote = absorption.propFlags?.[armorKey] || {};
-    if (pfNote.noEnergy && damageType === "energy")  propNotes.push("Проводящая: без AP от Энергии");
-    if (pfNote.noImpact && damageType === "impact")  propNotes.push("Мягкая: без AP от Удара");
+    // Флаги уровня ТИПА (noApVsType) — общий механизм; Проводящая и Мягкая
+    // давно на подвидах (строка noApVsSubtype ниже), поэтому подпись не
+    // называет свойство, а только тип (wdbc-7wn7).
+    if (pfNote.noEnergy && damageType === "energy")  propNotes.push(`Без AP от ${DAMAGE_TYPES.energy?.label || "Энергии"}`);
+    if (pfNote.noImpact && damageType === "impact")  propNotes.push(`Без AP от ${DAMAGE_TYPES.impact?.label || "Удара"}`);
+    if (mercuryMarked && damageSubtype === "electrical") propNotes.push("Ртуть: броня этой части тела электропроводна");
     if (pfNote.doubleBlast && damageType === "blast") propNotes.push("Флак: AP брони ×2");
     if (damageSubtype && pfNote.noApVsSubtype?.[damageSubtype])
       propNotes.push(`Без AP от ${DAMAGE_SUBTYPES[damageSubtype]?.label || damageSubtype}`);
@@ -1237,9 +1256,11 @@ export async function applyDamageToActor(actor, damageData) {
     if (coverBonus > 0) propNotes.push(`${coverFromRecoil ? "Отскок в Укрытие" : "Укрытие"}: +${coverBonus} AP`);
   }
 
-  const reductionNote = incomingReduction > 0
-    ? `<div class="dmg-tb-note">Доп. снижение входящего урона: <b>−${incomingReduction}</b></div>`
-    : "";
+  const reductionNote = (otherReduction > 0
+    ? `<div class="dmg-tb-note">Доп. снижение входящего урона: <b>−${otherReduction}</b></div>`
+    : "") + (realityRending < 0
+    ? `<div class="dmg-tb-note">Рассечение Реальности: <b>+${-realityRending}</b> к входящему урону</div>`
+    : "");
   const ablativeShieldNote = ablativeShieldBefore > 0
     ? `<div class="dmg-tb-note">Аблативный AP-щит: +${ablativeShieldBefore} (остаток после попадания: ${ablativeApAfterHit(ablativeShieldBefore)})</div>`
     : "";

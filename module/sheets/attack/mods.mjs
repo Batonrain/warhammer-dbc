@@ -6,7 +6,7 @@
 //  свёрнутом блоке диалога. Ничего не рисует: отдаёт данные, вёрстку из них
 //  собирает markup.mjs.
 //
-//  Шов узкий по замеру (tools/_uh56-seam.mjs): 12 значений внутрь, 4 наружу
+//  Шов узкий по замеру (tools/seam-measure.mjs): 12 значений внутрь, 4 наружу
 //  на 117 строк. Поперёк функции такого места больше нет — в середине через
 //  границу идёт 90–106 значений.
 // ══════════════════════════════════════════════════════════════════════════
@@ -20,7 +20,7 @@ import { hasBlackEyesDarknessImmunity } from "../../rules/black-eyes.mjs";
 import { isBraced } from "../../combat/brace-weapon.mjs";
 import { lockingContactTokenDocs, coveringDefendersOf } from "../../combat/free-attack.mjs";
 import { hasQuietElimination, isQuietEliminationWeapon } from "../../rules/quiet-elimination.mjs";
-import { legacyHistoryIs, legacyChangeTestBonus, bloodthirstyLegacyMeleeActive, takenMutationNames, DISTRACTING_LEGACY_FLAG, adaptiveLegacyMeleeWsBonus, punisherLegacyBonus, legacySlaughterThresholdDelta, patienceLegacyOverwatchBonus, patienceLegacyMeleeChargeInterruptActive } from "../../rules/legacy-weapon.mjs";
+import { legacyHistoryIs, legacyChangeTestBonus, bloodthirstyLegacyMeleeActive, takenMutationNames, DISTRACTING_LEGACY_FLAG, adaptiveLegacyMeleeWsBonus, adaptiveLegacyDefenderPenalty, punisherLegacyBonus, legacySlaughterThresholdDelta, patienceLegacyOverwatchBonus, patienceLegacyMeleeChargeInterruptActive } from "../../rules/legacy-weapon.mjs";
 import { isNearestUndamagedEnemy } from "../../combat/legacy-weapon-mutations.mjs";
 import { isActorsOwnTurn } from "../../combat/delay-action.mjs";
 import { meleeEffectiveRange, parseGrips } from "../../constants/combat.mjs";
@@ -341,6 +341,12 @@ export function situationalMods(v) {
       note: outnumberCount == null ? undefined : `в контакте с целью: ${outnumberCount}` },
     { label: "Числ. перевес 3к1",      value:  20, autoCheck: outnumberCount != null && outnumberCount >= 3,
       note: outnumberCount == null ? undefined : `в контакте с целью: ${outnumberCount}` },
+    // Адаптивное у ЦЕЛИ, третья ступень (стр. 428, wdbc-bjy1.13): «когда 3к1 —
+    // враги получают −10 на рукопашные атаки по персонажу».
+    ...(adaptiveLegacyDefenderPenalty({ targetActor: attackCtx.targetActor, targetContactCount: outnumberCount, isMelee }) ? [{
+      label: "Адаптивное у цели: −10 — перевес 3к1", value: -10, autoCheck: true,
+      note: `в контакте с целью: ${outnumberCount}`
+    }] : []),
     { label: "Положение выше",         value:  10, autoCheck: highGround === true,
       note: highGround === true ? "elevation токена выше цели" : undefined },
     // Полёт (стр. 30, wdbc-x1nz.2): Низкая/Высокая — «вне досягаемости

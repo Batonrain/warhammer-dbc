@@ -25,7 +25,8 @@
           {
             "key": "primitive"
           }
-        ]
+        ],
+        "damageSubtype": "crushing"
       }
     ],
     "reload": "–",

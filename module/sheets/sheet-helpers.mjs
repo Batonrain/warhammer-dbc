@@ -1,6 +1,7 @@
 // module/sheets/sheet-helpers.mjs
 
 import { CHARACTERISTICS, APTITUDES }   from "../constants/characteristics.mjs";
+import { withRulesCache } from "../rules/collect.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }              from "../constants/skills.mjs";
 import { SKILL_DESCRIPTIONS }                        from "../constants/skill-descriptions.mjs";
 import { SKILL_SPECIALTY_DESCRIPTIONS }               from "../constants/skill-specialty-descriptions.mjs";
@@ -381,7 +382,18 @@ function _buildAddictions(allItems) {
 
 // ── Основные данные листа персонажа ──────────────────────────────────────────
 
+/**
+ * Контекст листа. Одна сборка правил на весь рендер (wdbc-4a92): по ходу
+ * сборки hasRuneMagic, Фокусы и прочие читатели спрашивают collectRules у
+ * того же актора по нескольку раз — без кэша каждый раз заново (замер: 0,65
+ * мс против 0,18 мс даже у пустого персонажа). Кэш живёт ровно этот вызов;
+ * контекст листа актора не меняет, поэтому устареть ему не на чем.
+ */
 export function buildGetData(actor) {
+  return withRulesCache(() => buildGetDataUncached(actor));
+}
+
+function buildGetDataUncached(actor) {
   const system   = actor.system;
   const allItems = actor.items.contents;
 
@@ -1335,8 +1347,17 @@ export function buildGetData(actor) {
     // одной из редких») — Регулярные и Аэльдари/Божественные дисциплины
     // Фокуса при обычном выборе не имеют (canHaveFocusDiscipline).
     const pickerGroups = ["Фундаментальные", "Редкие"];
+    // Исключение — Ревенант (wdbc-4umq): «Персонаж, ставший Ревенантом,
+    // получает Фокус Дисциплины Ревенанта» (constants/disciplines.mjs, desc).
+    // Пробуждение — на усмотрение ГМа, предмета «Иннари-Ревенант» в системе
+    // нет (элитный архетип «Ревенант» — другой, мстительный дух), поэтому
+    // выбор в пикере, но только эльдарам: книга называет и бывших друкхари,
+    // экзодитов, корсаров.
+    const REVENANT_RACES = ["azuriane", "halfEldar", "harlequin", "exodite", "ynnari", "drukhari"];
+    const pickerExtra = REVENANT_RACES.includes(actor.system?.race) ? ["revenant"] : [];
     const chips = Object.entries(PSY_DISCIPLINES)
-      .filter(([key, d]) => granted.includes(key) || (pickerGroups.includes(d.group) && canHaveFocusDiscipline(key)))
+      .filter(([key, d]) => granted.includes(key) || pickerExtra.includes(key)
+        || (pickerGroups.includes(d.group) && canHaveFocusDiscipline(key)))
       .map(([key, d]) => ({
         key, label: d.label,
         active: own.includes(key) || granted.includes(key),

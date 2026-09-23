@@ -44,6 +44,23 @@
   color: var(--wh-text);
 }
 
+/* «Вид теста» (rules/test-kind-widget.mjs, wdbc-bjy1.12): четыре галочки в
+   одну строку, обычным шрифтом — общее правило label выше делает подписи
+   жирными с min-width и переносит их в 2-3 строки. */
+.roll-dlg-row .test-kind-checks {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+}
+.roll-dlg-row .test-kind-opt {
+  font-weight: normal;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
 .roll-dlg-row select {
   flex: 1;
   background: var(--wh-input-bg);
@@ -846,6 +863,13 @@ body.wh-aiming #board, body.wh-aiming canvas {
   border-color: #3a3a3a; color: #7a7a7a; background: rgba(60,60,60,.15);
 }
 .wh-atk-v2 .av-pill.av-pill-disabled:hover span { border-color: #3a3a3a; color: #7a7a7a; }
+/* Статичная плашка-состояние (attack-dialog.mjs, «Полное Прицеливание +20»):
+   текст прямо в span, без вложенного — рисуется пунктирной рамкой и без
+   курсора-руки, чтобы не выглядеть кнопкой (wdbc-bjy1.12). */
+.wh-atk-v2 .av-pill.av-pill-static {
+  cursor: default; display: inline-block; font-size: .8em; font-weight: 600;
+  padding: 3px 10px; border: 1px dashed #1f6f4a; border-radius: 12px; color: #8fcfae;
+}
 
 /* Ситуативные модификаторы — сворачиваемо */
 .wh-atk-v2 .av-adv { border-top: 1px dashed #1f6f4a; padding-top: 4px; }

@@ -18,7 +18,7 @@ import { raceTarget } from "../../module/rules/talent-targets.mjs";
 import {
   canAscend, ascensionRows, isAstartes, isHeavyWeapon, hardProps,
   legacyBonus, qualityAfterLegacy, propsAfterLegacy,
-  mutationSlots, nextMutationAt, mutationsAvailable, takenMutationNames,
+  mutationSlots, nextMutationAt, mutationsAvailable, takenMutationNames, legacyHistoryIs,
   preciseLegacyDamageBonus, wrathLegacyDamageBonus, legacyWrathRules,
   legacyWrathRangedRof, legacyWrathEffectiveRof, betrayalLegacyActive,
   painLegacyProps, excessLegacyExtraDeg, legacyExcessRules, EXCESS_LEGACY_RULE_ID,
@@ -29,7 +29,7 @@ import {
   swiftLegacyMeleeDodgePenalty, dishonorableLegacyActive, distractingLegacyActive,
   legacyGuardianRules, LEGACY_GUARDIAN_FLAG,
   earlyDeathLegacyDamageBonus, markEarlyDeathLegacyUsed,
-  adaptiveLegacyMeleeDamageBonus, adaptiveLegacyMeleeWsBonus,
+  adaptiveLegacyMeleeDamageBonus, adaptiveLegacyMeleeWsBonus, adaptiveLegacyDefenderPenalty,
   slaughterLegacyGrant, viciousLegacyGrant,
   legacyInstinctiveInitiativeBonus, legacyForewarnedInitiativeBonus,
   legacyBloodPsychicRules, legacyInstinctiveDisarmRules, legacyDistractingCharSwapRules,
@@ -233,6 +233,23 @@ describe("Мутации по Порче", () => {
   it("уже выпавшее помнится — по нему идёт переброс", () => {
     const w = weapon({ legacy: { mutations: [{ name: "Рваное" }, { name: "Убийца" }] } });
     expect([...takenMutationNames(w)].sort()).toEqual(["Рваное", "Убийца"]);
+  });
+
+  // wdbc-bjy1.5: сохранённое имя — подпись; механика ищется по броску, иначе
+  // правка названия в таблице тихо выключает её у уже созданного оружия.
+  it("Мутация узнаётся по Характеру и броску, а не по сохранённому имени", () => {
+    const w = weapon({ legacy: { mutations: [{ name: "Адаптивн. (старое имя)", character: "versatile", roll: 8 }] } });
+    expect(takenMutationNames(w).has("Адаптивное")).toBe(true);
+  });
+
+  it("своя Мутация (без броска) узнаётся по имени, как и раньше", () => {
+    const w = weapon({ legacy: { mutations: [{ name: "Клык Бездны", roll: 0, custom: true }] } });
+    expect([...takenMutationNames(w)]).toEqual(["Клык Бездны"]);
+  });
+
+  it("История узнаётся по ключу броска, а не по сохранённому имени", () => {
+    const w = weapon({ legacy: { historyKey: 2, historyName: "Насл. Гнева (старое имя)" } });
+    expect(legacyHistoryIs(w, "Наследие Гнева")).toBe(true);
   });
 });
 
@@ -787,6 +804,29 @@ describe("adaptiveLegacyMeleeDamageBonus/adaptiveLegacyMeleeWsBonus — Адап
   it("стрелковое оружие с той же Мутацией — 0 (другая ветка книги)", () => {
     const w = weapon({ cls: "basic", legacy: { mutations: [{ name: "Адаптивное" }] } });
     expect(adaptiveLegacyMeleeDamageBonus({ weapon: w, hit: true, attackerContactCount: 3 })).toBe(0);
+  });
+
+  // wdbc-bjy1.13: третья ступень — «когда 3к1, враги получают штраф −10 на
+  // рукопашные атаки по персонажу». Ступени отдельны (решение wdbc-bjy1.2):
+  // при 3к1 она заменяет +10 WS. Считается со стороны атакующего по ЦЕЛИ,
+  // держащей Адаптивное рукопашное оружие.
+  describe("adaptiveLegacyDefenderPenalty — третья ступень, 3к1", () => {
+    const holder = (w, equipped = true) => ({ items: [{ ...w, system: { ...w.system, equipped } }] });
+
+    it("у цели в руках Адаптивное, врагов в контакте с ней 3 — −10 рукопашной атаке", () => {
+      expect(adaptiveLegacyDefenderPenalty({ targetActor: holder(adaptiveWeapon()), targetContactCount: 3, isMelee: true })).toBe(-10);
+      expect(adaptiveLegacyDefenderPenalty({ targetActor: holder(adaptiveWeapon()), targetContactCount: 5, isMelee: true })).toBe(-10);
+    });
+
+    it("2 врага (2к1) — штрафа нет, работает вторая ступень", () => {
+      expect(adaptiveLegacyDefenderPenalty({ targetActor: holder(adaptiveWeapon()), targetContactCount: 2, isMelee: true })).toBe(0);
+    });
+
+    it("стрелковая атака, оружие не в руках или без Мутации — 0", () => {
+      expect(adaptiveLegacyDefenderPenalty({ targetActor: holder(adaptiveWeapon()), targetContactCount: 3, isMelee: false })).toBe(0);
+      expect(adaptiveLegacyDefenderPenalty({ targetActor: holder(adaptiveWeapon(), false), targetContactCount: 3, isMelee: true })).toBe(0);
+      expect(adaptiveLegacyDefenderPenalty({ targetActor: holder(weapon({ cls: "melee" })), targetContactCount: 3, isMelee: true })).toBe(0);
+    });
   });
 });
 

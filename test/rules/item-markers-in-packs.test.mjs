@@ -14,7 +14,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { itemHasKey, itemIs } from "../../module/rules/item-marker.mjs";
 import { CAPABILITIES } from "../../module/constants/capabilities.mjs";
-import { ITEM_MARKERS } from "../../tools/_wdlw-table.mjs";
+import { ITEM_MARKERS } from "../../tools/item-markers-table.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "../..");
 

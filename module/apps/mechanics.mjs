@@ -641,6 +641,8 @@ const KIND_LABELS = {
   group: "Вложенная группа",
   script: "Код"
 };
+/** Виды записи, которые читаются ТОЛЬКО у силового поля (type:"forcefield"). */
+const FORCEFIELD_ONLY_KINDS = new Set(["shieldSubtype", "shieldVsCondition", "shieldArmorGate"]);
 // Максимальная глубина вложенности подгрупп (kind:"group") — верхняя группа
 // вкладки МЕХАНИКА уже уровень 1, поэтому подгрупп-в-подгруппах допускается 4.
 const MAX_GROUP_DEPTH = 5;
@@ -971,6 +973,9 @@ export function blankMechEntry(kind = "characteristic") {
     // testMod — «Модификатор теста»: тот же живой запрос, области общие
     // с «Перебросом» (rerollChar/skillKey переиспользуются как уточнение).
     modScope: "all", modValueMode: "flat", modCharBonus: "inf",
+    // Область «power» у reroll/testMod: пусто — любая манифестация, имя —
+    // только эта психосила (wdbc-4umq: поле объявлено, как у сохранённых записей).
+    powerName: "",
     // reroll: чей бросок перебрасывается — свой или навязанный цели.
     rerollWho: "self",
     // capability — имя возможности из constants/capabilities.mjs
@@ -4133,8 +4138,12 @@ function buildScriptRunHtml(groupId, ent, canEdit, item) {
 }
 
 function buildEntryHtml(groupId, ent, canEdit, depth = 1, item = null) {
+  // Виды «Щит: …» читаются только у type:"forcefield" (wdbc-4umq) — у прочих
+  // предметов в списке их нет; уже выбранный не прячется, чтобы не пропасть
+  // молча. item неизвестен (null) — список полный, как раньше.
   const kindEntries = Object.entries(KIND_LABELS)
-    .filter(([k]) => k !== "group" || ent.kind === "group" || depth < MAX_GROUP_DEPTH);
+    .filter(([k]) => k !== "group" || ent.kind === "group" || depth < MAX_GROUP_DEPTH)
+    .filter(([k]) => !FORCEFIELD_ONLY_KINDS.has(k) || ent.kind === k || !item || item.type === "forcefield");
   const kindOpts = kindEntries.map(([k, l]) => optHtml(k, l, ent.kind === k)).join("");
   const isScript = ent.kind === "script";
   const isGroup  = ent.kind === "group";

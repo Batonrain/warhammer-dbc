@@ -69,10 +69,14 @@ export async function processSigilliteRunesTurnStart(actor) {
   // «Первый ход псайкера в бою» — именно первый ХОД, а не старт боя: в
   // системе бой начинается кнопкой «Begin Combat», и до своего Хода псайкер
   // может не дожить. Поэтому метка ставится здесь, а не в combatStart.
+  // Метка — только когда бонус реально выдан (wdbc-4umq): без Таланта ставить
+  // её незачем, а Талант, взятый посреди боя, иначе не сработал бы до конца боя.
   if (isCapabilityAvailable(actor, RUNE_CALCULATOR_FLAG, "battle")) {
     const bonus = runeCalculatorBonus(actor);
-    if (bonus > 0) gain += bonus;
-    await markCapabilityUsed(actor, RUNE_CALCULATOR_FLAG, "battle");
+    if (bonus > 0) {
+      gain += bonus;
+      await markCapabilityUsed(actor, RUNE_CALCULATOR_FLAG, "battle");
+    }
   }
   if (gain <= 0) return 0;
   const patch = runeUpdate(actor, gain);

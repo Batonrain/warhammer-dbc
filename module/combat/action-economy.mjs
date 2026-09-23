@@ -26,6 +26,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { MELEE_STANCES } from "../constants/combat.mjs";
+import { DEVOURER_OF_TIME_AP_DEBT_FLAG, apAfterDevourerDebt } from "./devourer-of-time.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
@@ -104,9 +105,14 @@ export async function resetActionEconomy(actor) {
   // Стр. 33: Подавленный персонаж в укрытии имеет только 1 ОД в свой Ход
   // («в укрытии» не проверяем — тот же приём, что у штрафа BS в диалоге
   // атаки: считаем по самому факту Подавления).
-  const apMax          = apLocked ? 0 : sys.conditions?.pinned
+  const apMaxBase      = apLocked ? 0 : sys.conditions?.pinned
     ? Math.min(1, effectiveActionPointsMax(actor))
     : effectiveActionPointsMax(actor);
+  // Пожиратель Времени (wdbc-xzfp): «теряют полудействие» — долг, записанный
+  // на доп. Ходе чемпиона, снимается с ЭТОГО Хода жертвы; сам флаг гасит
+  // реестр rules/turn-flags.mjs ниже, в том же update.
+  const devourerDebt   = Number(actor.getFlag?.("warhammer-dbc", DEVOURER_OF_TIME_AP_DEBT_FLAG)) || 0;
+  const apMax          = apAfterDevourerDebt(apMaxBase, devourerDebt);
   const reactMax       = apLocked ? 0 : (Number(sys.reactions?.max) || 0);
   const defenseMaxBase = Number(sys.reactions?.defenseMax) || 0;
   const defenseBonus   = stanceDefenseReactionBonus(actor);

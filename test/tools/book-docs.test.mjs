@@ -212,3 +212,27 @@ describe("bookDocIds + docsMissingInDb: что пропало бы при изв
     expect(dbDocs().map(d => d.name)).toEqual(["II. МЕХАНИКА"]);
   });
 });
+
+// wdbc-bjy1.10: _id главы/раздела раньше вычислялся из ПОРЯДКОВОГО номера и
+// имени — вставка раздела в середину главы сдвигала id всех следующих, и
+// ссылки миров на них сиротели (в v0.1.227 так ушли 86 разделов Книги
+// Пустоты). Теперь id хранится в исходнике и берётся оттуда.
+describe("замороженные _id книг (wdbc-bjy1.10)", () => {
+  it("сохранённый _id главы и раздела важнее вычисленного по позиции", () => {
+    const data = { entries: [{ _id: "ChapterFrozenId1", name: "Глава", pages: [
+      { _id: "PageFrozenIdAAAA", name: "Новая вставка", html: "" },
+      { _id: "PageFrozenIdBBBB", name: "Старый раздел", html: "" }
+    ] }] };
+    const [doc] = bookDocuments({ slug: "x" }, data, new Map());
+    expect(doc._id).toBe("ChapterFrozenId1");
+    expect(doc.pages.map(p => p._id)).toEqual(["PageFrozenIdAAAA", "PageFrozenIdBBBB"]);
+    expect(doc.pages[1]._key).toBe("!journal.pages!ChapterFrozenId1.PageFrozenIdBBBB");
+  });
+
+  it("без сохранённого _id — прежний вычисленный (обратная совместимость)", () => {
+    const data = { entries: [{ name: "Глава", pages: [{ name: "Раздел", html: "" }] }] };
+    const [doc] = bookDocuments({ slug: "x" }, data, new Map());
+    expect(doc._id).toBe(stableId("x", "entry", "0", "Глава"));
+    expect(doc.pages[0]._id).toBe(stableId("x", "page", "0", "0", "Раздел"));
+  });
+});

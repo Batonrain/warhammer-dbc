@@ -157,8 +157,9 @@
   `reachable-cells.mjs` (подсветка клеток по Dijkstra).
 - Доп. ходы/действия: `combat/snapshot.mjs`, `assassin-strike.mjs`,
   `extra-turn.mjs`, `last-actor.mjs`, `middle-of-the-hunt.mjs`,
-  `devourer-of-time.mjs` (Пожиратель Времени — доп. Ход в конец инициативы
-  после захвата Врасплох, полудействие жертв каждый раунд).
+  `devourer-of-time.mjs` (Пожиратель Времени — один доп. Ход в конец
+  инициативы после захвата Врасплох, снимается сменой Раунда; полудействие
+  жертв — долг ОД на их следующий Ход, гасится в resetActionEconomy).
 
 ## 5. Бой: конвейер атаки/защиты, состязания
 
@@ -1004,7 +1005,8 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `data/item/{vehicle-gear,vehicle-trait}.mjs`, `migrations/
   vehicle-trait-effects.mjs`.
 - `constants/vehicle-weapons-library.mjs` — библиотека Орудий Техники.
-- `combat/vehicle.mjs` — Вираж/Таран/Трудный Ландшафт/урон по стороне брони.
+- `combat/vehicle.mjs` — Вираж (Реакция водителя: driver→pilot→commander;
+  экипажа нет — без траты)/Таран/Трудный Ландшафт/урон по стороне брони.
 - `sheets/vehicle-sheet.mjs`.
 - Пилот Дредноута — см. §9 (`rules/dreadnought.mjs`).
 - **Шагоход (Walker)** — `rules/walker.mjs` (арифметика без Foundry) +

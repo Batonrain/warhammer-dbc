@@ -1,19 +1,19 @@
 // test/tools/unpack-one.test.mjs
 //
-// tools/_unpack-one.mjs снимает правки ОДНОГО пака из LevelDB в packs-src.
+// tools/unpack-one.mjs снимает правки ОДНОГО пака из LevelDB в packs-src.
 // Извлечение не меняет саму базу, поэтому её отпечаток остаётся прежним — но
 // именно ЭТИМ отпечатком нужно обновить отметку синхронизации
 // (tools/pack-stamp.mjs), иначе следующая общая сборка сравнит базу со
 // СТАРЫМ отпечатком (записанным до правок, которые здесь как раз сняли в
 // исходники) и снова потребует unpack — хотя он уже сделан (wdbc-tn92,
-// симметрично tools/_pack-one.mjs).
+// симметрично tools/pack-one.mjs).
 //
 // Здесь проверяется только чистая часть решения — stampAfterPackUnpack: что
 // именно писать в отметку и когда писать нельзя вовсе. Файловая система и
 // настоящая LevelDB не участвуют.
 
 import { describe, it, expect } from "vitest";
-import { stampAfterPackUnpack } from "../../tools/_unpack-one.mjs";
+import { stampAfterPackUnpack } from "../../tools/unpack-one.mjs";
 import { FINGERPRINT_VERSION } from "../../tools/pack-fingerprint.mjs";
 
 const okFp = (fingerprint = "abc123") => ({ fingerprint, busy: false, missing: false });

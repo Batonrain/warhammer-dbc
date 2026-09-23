@@ -68,6 +68,8 @@ export function linkIndexFrom(packs) {
  * вычислены ИМЕННО с этим байтом — смена разделителя на что угодно другое
  * поменяет их ВСЕ при следующей npm run packs:build и осиротит любые ссылки
  * на страницы книг, сохранённые в живых мирах (закладки, заметки на сценах).
+ * С wdbc-bjy1.10 этот id вычисляется только для ещё не проштампованных
+ * глав/разделов: остальные несут свой _id в исходнике (tools/book-stamp-ids.mjs).
  * Проверено по факту: stableId(...) с этим байтом воспроизводит реальные
  * _id из packs/book-core бит-в-бит (bd wdbc-gap5). Байт защищён от случайной
  * порчи явным escape-литералом `\x00` ниже — не переписывать на `" "`.
@@ -88,7 +90,10 @@ export function stableId(...parts) {
  */
 export function bookDocuments(book, data, index) {
   return data.entries.map((chapter, i) => {
-    const entryId = stableId(book.slug, "entry", String(i), chapter.name);
+    // Замороженный _id из исходника (wdbc-bjy1.10) — вычисленный по позиции
+    // только для ещё не проштампованных (node tools/book-stamp-ids.mjs): иначе
+    // вставка раздела в середину главы сдвигала id всех следующих.
+    const entryId = chapter._id || stableId(book.slug, "entry", String(i), chapter.name);
     return {
       _id: entryId,
       _key: `!journal!${entryId}`,
@@ -98,7 +103,7 @@ export function bookDocuments(book, data, index) {
       ownership: { default: 0 },
       flags: { "warhammer-dbc": { book: book.slug, pdfPage: chapter.pdfPage, source: data.file } },
       pages: chapter.pages.map((page, j) => {
-        const pageId = stableId(book.slug, "page", String(i), String(j), page.name);
+        const pageId = page._id || stableId(book.slug, "page", String(i), String(j), page.name);
         return {
           _id: pageId,
           _key: `!journal.pages!${entryId}.${pageId}`,

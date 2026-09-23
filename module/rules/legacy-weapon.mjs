@@ -15,7 +15,8 @@
 
 import { rarityDiff } from "../constants/craft.mjs";
 import { MUTATION_THRESHOLDS, ASCENSION_HEAVY_MOD, ASCENSION_LEGION_BONUS,
-         ASCENSION_DEED_MAX, ASCENSION_HARD_PROPS } from "../constants/legacy-weapon.mjs";
+         ASCENSION_DEED_MAX, ASCENSION_HARD_PROPS,
+         historyByRoll, mutationByRoll } from "../constants/legacy-weapon.mjs";
 import { itemHasName, hatredTargetsOf } from "./predicates.mjs";
 import { anyTargetMatches } from "./talent-targets.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
@@ -171,9 +172,19 @@ export function mutationsAvailable(actor, weapon) {
   return Math.max(0, slots - taken);
 }
 
+/**
+ * Табличное имя Мутации: по Характеру и броску, если они записаны. Сохранённое
+ * m.name — лишь подпись: правка названия в таблице не должна тихо выключать
+ * механику у уже созданного оружия (wdbc-bjy1.5). Своя Мутация (roll 0) и
+ * записи без Характера узнаются по имени, как раньше.
+ */
+export function legacyMutationName(m) {
+  return (m?.character && mutationByRoll(m.character, m.roll)?.name) || m?.name || "";
+}
+
 /** Броски, которые в этой таблице уже выпадали, — их перебрасывают. */
 export function takenMutationNames(weapon) {
-  return new Set((weapon?.system?.legacy?.mutations ?? []).map(m => m?.name).filter(Boolean));
+  return new Set((weapon?.system?.legacy?.mutations ?? []).map(legacyMutationName).filter(Boolean));
 }
 
 // ── Применение конкретных Мутаций/Историй (wdbc-1rno.35) ──────────────────
@@ -197,9 +208,14 @@ export function preciseLegacyDamageBonus({ weapon, hit, deg, rofMode, isMelee, a
   return Math.floor((Number(deg) || 0) / 2);
 }
 
-/** Название взятой Истории — единственное структурное поле для неё (weapon.system.legacy.historyName). */
+/** Табличное имя взятой Истории: по historyKey, сохранённое historyName — подпись (wdbc-bjy1.5). */
+export function legacyHistoryName(weapon) {
+  const L = weapon?.system?.legacy;
+  return historyByRoll(L?.historyKey)?.name || String(L?.historyName || "");
+}
+
 export function legacyHistoryIs(weapon, name) {
-  return String(weapon?.system?.legacy?.historyName || "") === name;
+  return legacyHistoryName(weapon) === name;
 }
 
 /**
@@ -646,10 +662,9 @@ export const EARLY_DEATH_LEGACY_FLAG = "legacyEarlyDeath";
  * НИМ САМИМ (не с целью — то же combat/tactical-map.mjs::meleeContactCount,
  * что уже считает Дуэлянтское/«Числ. перевес» цели, но с обратным токеном).
  *
- * Третье предложение («враги получают −10 на атаки по персонажу») честно НЕ
- * реализовано — нужен ещё один направленный предикат вроде
- * legacyGuardianMarked, но тут условие ЖИВОЕ геометрическое (без метки/
- * флага), а не срок «до следующего Хода»; оставил как отдельный кандидат.
+ * Третье предложение («враги получают −10 на атаки по персонажу») —
+ * adaptiveLegacyDefenderPenalty ниже (wdbc-bjy1.13): считается в диалоге
+ * атаки со стороны атакующего по цели, живой геометрией контакта.
  * Стрелковая ветка («+10 попадание и +1 Успех, когда враги превосходят
  * числом персонажа И его союзников») честно НЕ реализована вовсе — иной
  * масштаб подсчёта (весь бой, не контакт вплотную), не то же geometry, что
@@ -660,9 +675,27 @@ export function adaptiveLegacyMeleeDamageBonus({ weapon, hit, attackerContactCou
   return (attackerContactCount ?? 0) >= 2 ? 1 : 0;
 }
 
+// Ступени отдельны, не нарастают (решение владельца, wdbc-bjy1.2): +10 WS
+// только при 2к1 ровно; при 3к1 его место занимает третья ступень — как
+// строки «Численный перевес 2к1 +10 / 3к1 +20» общей таблицы модификаторов.
 export function adaptiveLegacyMeleeWsBonus({ weapon, attackerContactCount }) {
   if (weapon?.system?.weaponClass !== "melee" || !takenMutationNames(weapon).has("Адаптивное")) return 0;
   return attackerContactCount === 2 ? 10 : 0;
+}
+
+/**
+ * Третья ступень Адаптивного (стр. 428, wdbc-bjy1.13): «когда 3к1 — враги
+ * получают штраф −10 на рукопашные атаки по персонажу». Ступени отдельны
+ * (wdbc-bjy1.2): при 3к1 эта заменяет +10 WS второй. Считается со стороны
+ * АТАКУЮЩЕГО по цели, у которой в руках Адаптивное рукопашное оружие;
+ * targetContactCount — врагов цели в контакте с ней (та же meleeContactCount
+ * от токена цели, что у «Числ. перевес 3к1» в диалоге атаки).
+ */
+export function adaptiveLegacyDefenderPenalty({ targetActor, targetContactCount, isMelee }) {
+  if (!isMelee || (Number(targetContactCount) || 0) < 3) return 0;
+  const wields = [...(targetActor?.items ?? [])].some(i => i?.type === "weapon" && i.system?.equipped
+    && i.system?.weaponClass === "melee" && takenMutationNames(i).has("Адаптивное"));
+  return wields ? -10 : 0;
 }
 
 export function earlyDeathLegacyDamageBonus({ weapon, actor, hit }) {

@@ -19,7 +19,7 @@
     "rof_semi": 0,
     "rof_full": 0,
     "damage": "2d10+9",
-    "damageType": "impact",
+    "damageType": "blast",
     "penetration": 7,
     "quality": "common",
     "bookSource": "Книга Аэльдари, V. АРСЕНАЛ ЭЛЬДАР («Ракетные установки», стр. 84)",

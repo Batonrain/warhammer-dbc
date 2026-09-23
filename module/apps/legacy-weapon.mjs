@@ -22,6 +22,7 @@ import { LEGACY_COMMON, LEGACY_HISTORIES, LEGACY_CHARACTERS, CHARACTER_ORDER,
          entryText, rangeLabel } from "../constants/legacy-weapon.mjs";
 import { canAscend, ascensionRows, legacyBonus, qualityAfterLegacy, propsAfterLegacy,
          mutationSlots, nextMutationAt, mutationsAvailable, takenMutationNames,
+         legacyHistoryIs, legacyMutationName,
          isHeavyWeapon, hardProps, painLegacyProps, plagueLegacyProps,
          tearingLegacyProps, shatteringLegacyGrant, stunningLegacyGrant,
          swiftLegacyMeleeGrant, slaughterLegacyGrant, viciousLegacyGrant,
@@ -82,9 +83,9 @@ export function legacyContext(item) {
           // Наследие Излишеств (wdbc-1rno.35, стр. 427): выбор Характеристики
           // (кроме WS/BS) под опциональный риск +10/W+0-Порча — см.
           // rules/legacy-weapon.mjs::legacyExcessRules.
-          isExcess: L.historyName === "Наследие Излишеств",
+          isExcess: legacyHistoryIs(item, "Наследие Излишеств"),
           excessChar: L.excessChar || "",
-          excessCharOptions: L.historyName === "Наследие Излишеств"
+          excessCharOptions: legacyHistoryIs(item, "Наследие Излишеств")
             ? Object.entries(CHARACTERISTICS)
                 .filter(([k]) => k !== "ws" && k !== "bs")
                 .map(([k, meta]) => ({ key: k, label: `${meta.abbr} — ${meta.label}`, selected: k === L.excessChar }))
@@ -112,11 +113,11 @@ export function legacyContext(item) {
     // сейчас (нельзя запустить второй раз поверх первого).
     mutations: (L.mutations ?? []).map(m => {
       const entry = { ...m };
-      if (m.name === "Убийца") {
+      if (legacyMutationName(m) === "Убийца") {
         entry.killerActive = !!item.getFlag?.("warhammer-dbc", LEGACY_KILLER_FELLING_FLAG);
         entry.canActivateKiller = !!actor && !entry.killerActive;
       }
-      if (m.name === "Перебор") {
+      if (legacyMutationName(m) === "Перебор") {
         const boost = actor?.getFlag?.("warhammer-dbc", LEGACY_EXCESS_BOOST_FLAG);
         entry.excessBoostActive = legacyExcessBoostActive(actor, item);
         entry.excessBoostTurnsLeft = entry.excessBoostActive ? Number(boost.turnsLeft) || 0 : 0;
@@ -126,14 +127,14 @@ export function legacyContext(item) {
       // действие, доступно всегда (не «уже активно» — можно перезарядить
       // поверх непотраченного заряда, он всё равно один в поле). Психотест —
       // только псайкеру.
-      if (m.name === "Душесвязанное") {
+      if (legacyMutationName(m) === "Душесвязанное") {
         entry.canActivateSoulbound = !!actor;
         entry.canActivateSoulboundPsychic = !!actor && (Number(actor.system?.psyker?.currentRating) || 0) > 0;
       }
       // Щит Ненависти/vigilant 9-9 (wdbc-1rno.35, стр. 427): только в свой
       // Ход и при наличии Реакции — вне их условия смысла нет, показывать
       // кнопку неактивной кнопкой без объяснения хуже, чем просто прятать.
-      if (m.name === "Щит Ненависти") {
+      if (legacyMutationName(m) === "Щит Ненависти") {
         entry.hatredShieldActive = !!actor?.getFlag?.("warhammer-dbc", LEGACY_HATRED_SHIELD_FLAG);
         entry.canActivateHatredShield = !!actor && !entry.hatredShieldActive
           && isActorsOwnTurn(actor) && canSpendReaction(actor);

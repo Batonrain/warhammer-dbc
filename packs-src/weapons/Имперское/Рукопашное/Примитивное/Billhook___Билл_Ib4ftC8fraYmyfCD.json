@@ -35,11 +35,13 @@
         "penetration": 0,
         "weaponProps": [
           {
-            "key": "imprecise",
-            "rating": 0,
-            "rating2": 0
+            "key": "imprecise"
+          },
+          {
+            "key": "primitive"
           }
-        ]
+        ],
+        "damageSubtype": "crushing"
       }
     ],
     "reload": "–",

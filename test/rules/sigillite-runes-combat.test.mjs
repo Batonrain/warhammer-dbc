@@ -124,6 +124,14 @@ describe("Руны Сигиллитов — начало Хода", () => {
     expect(a.getFlag("warhammer-dbc", `usageLimits.${RUNE_CALCULATOR_FLAG.replace(/\./g, "-")}`))
       .toMatchObject({ scope: "battle", battle: "c9" });
   });
+
+  // wdbc-4umq (9): без Таланта (бонус 0) метка не ставится — иначе Талант,
+  // взятый посреди боя, уже не сработал бы в этом бою.
+  it("без «Вычислителя» метка «раз за бой» не ставится", async () => {
+    const a = actorOf({ calculators: 0 });
+    await withCombat("c9", () => processSigilliteRunesTurnStart(a));
+    expect(a.getFlag("warhammer-dbc", `usageLimits.${RUNE_CALCULATOR_FLAG.replace(/\./g, "-")}`)).toBeUndefined();
+  });
 });
 
 // ── wdbc-p2it: Заготовленная Руна — диалог выбора в начале Encounter-а ──────

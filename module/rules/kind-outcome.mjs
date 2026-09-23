@@ -27,7 +27,7 @@ import { executeItemCode } from "../apps/item-script.mjs";
 import { egomaniaOverrideResult } from "./egomania.mjs";
 import { hasRuleFlag } from "./flags.mjs";
 import { PERSONAL_ADAPTATION_CAPABILITY, PERSONAL_ADAPTATION_FLAG,
-         personalAdaptationCap, personalAdaptationBonusFor, nextPersonalAdaptationBonuses }
+         personalAdaptationCap, personalAdaptationBonusFor, nextPersonalAdaptationBonuses, personalAdaptationKey }
   from "./personal-adaptation.mjs";
 
 /**
@@ -130,7 +130,7 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   if (oppSelected && ctx?.targetActor
       && hasRuleFlag(actor, PERSONAL_ADAPTATION_CAPABILITY)) {
     const bonus = personalAdaptationBonusFor(
-      actor.getFlag("warhammer-dbc", PERSONAL_ADAPTATION_FLAG) ?? [], ctx.targetActor.uuid, game.time?.worldTime ?? 0);
+      actor.getFlag("warhammer-dbc", PERSONAL_ADAPTATION_FLAG) ?? [], personalAdaptationKey(ctx.targetActor), game.time?.worldTime ?? 0);
     if (bonus > 0) {
       eff += bonus;
       // wdbc-fyvv: НЕ через rollStatLine — эта строка не тест-плашка, а важная
@@ -249,7 +249,7 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
     if (ctx?.targetActor && hasRuleFlag(actor, PERSONAL_ADAPTATION_CAPABILITY)) {
       const cap = personalAdaptationCap(actor.system?.corruptionBonus);
       const nextList = nextPersonalAdaptationBonuses(
-        actor.getFlag("warhammer-dbc", PERSONAL_ADAPTATION_FLAG) ?? [], ctx.targetActor.uuid,
+        actor.getFlag("warhammer-dbc", PERSONAL_ADAPTATION_FLAG) ?? [], personalAdaptationKey(ctx.targetActor),
         game.time?.worldTime ?? 0, cap);
       await actor.setFlag("warhammer-dbc", PERSONAL_ADAPTATION_FLAG, nextList);
     }

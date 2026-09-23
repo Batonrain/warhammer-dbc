@@ -57,6 +57,23 @@ describe("migrateDuplicateOrigins", () => {
     expect(actor.items.map(i => i.id).sort()).toEqual(["hw-1", "trait-from-1"]);
   });
 
+  // wdbc-bjy1.8: соглашение соседних миграций — второй прогон ничего не находит.
+  it("повторный прогон идемпотентен — второй раз чистить нечего", async () => {
+    const actor = actorWith("a1", [
+      fakeItem("hw-1", "homeworld"),
+      fakeItem("hw-2", "homeworld"),
+      fakeItem("trait-from-2", "trait", "homeworld", "hw-2")
+    ]);
+    globalThis.game = { user: { isGM: true }, actors: [actor], scenes: [] };
+    globalThis.ui = { notifications: { info: () => {}, warn: () => {} } };
+
+    expect((await migrateDuplicateOrigins()).actorCount).toBe(1);
+    const after = actor.items.map(i => i.id);
+    const again = await migrateDuplicateOrigins();
+    expect(again).toEqual({ actorCount: 0, failed: 0 });
+    expect(actor.items.map(i => i.id)).toEqual(after);
+  });
+
   it("ровно один носитель каждого вида — не трогает ничего", async () => {
     const actor = actorWith("a2", [fakeItem("hw-1", "homeworld"), fakeItem("dv-1", "divination")]);
     globalThis.game = { user: { isGM: true }, actors: [actor], scenes: [] };

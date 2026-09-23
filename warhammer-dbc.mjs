@@ -128,9 +128,10 @@ import { migrateGearEquipped } from "./module/migrations/gear-equipped.mjs";
 import { migrateGunArmSource } from "./module/migrations/gun-arm-source.mjs";
 import { migrateImplantAvailability } from "./module/migrations/implant-availability.mjs";
 import { migrateLegionGeneSeedSize } from "./module/migrations/legion-geneseed-size-fix.mjs";
-import { migrateBornForWarDivination } from "./module/migrations/born-for-war-fix.mjs";
+import { migrateBornForWarDivination, announceBornForWarRepicks } from "./module/migrations/born-for-war-fix.mjs";
 import { migrateWarpforgedPlate } from "./module/migrations/warpforged-plate-fix.mjs";
 import { migrateNimbleRating } from "./module/migrations/nimble-rating.mjs";
+import { migrateSightAngle } from "./module/migrations/sight-angle.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
 import { runMigrationGate } from "./module/migrations/unlinked-tokens.mjs";
 import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
@@ -574,6 +575,12 @@ Hooks.once("init", () => {
     scope: "world", config: false, type: Number, default: 0
   });
 
+  // Версия проставления угла обзора 210° старым акторам и токенам сцен —
+  // хук preCreateActor ставит его только новым (одноразовая, wdbc-bjy1.6)
+  game.settings.register("warhammer-dbc", "sightAngleVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
   // Столица протектората Вольного Торговца (id актёра-системы)
   game.settings.register("warhammer-dbc", "protectorateCapital", {
     scope: "world", config: false, type: String, default: ""
@@ -1011,7 +1018,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -1151,6 +1158,16 @@ Hooks.once("ready", async () => {
   } catch (e) { console.error("Warhammer DBC | «Ты рождён для войны»:", e); }
 });
 
+// ── «Ты рождён для войны», второй проход (wdbc-o28t): кто выбирал снятую «Т» —
+// назвать и дать ГМу кнопку «Выбрать замену». Каждую загрузку, пока такие
+// есть: список пустеет сам по мере выбора, вопрос не теряется. Ничего не
+// меняет без клика. ──
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  try { await announceBornForWarRepicks(); }
+  catch (e) { console.error("Warhammer DBC | «Ты рождён для войны», переспрос:", e); }
+});
+
 // ── Одноразовая правка: снятие запечённого ActiveEffect у уже выданных копий
 // Черты «Закалённые Варпом Латы» — иначе пол в коде складывается со старой
 // надбавкой и даёт 24 AP вместо книжных 12 ──
@@ -1181,6 +1198,21 @@ Hooks.once("ready", async () => {
     if (!result?.failed) await game.settings.set("warhammer-dbc", "nimbleRatingVersion", VERSION);
     else console.warn("Warhammer DBC | «Проворный»: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
   } catch (e) { console.error("Warhammer DBC | «Проворный»:", e); }
+});
+
+// ── Одноразовая правка: угол обзора 210° у акторов и токенов, созданных до
+// хука preCreateActor — иначе атака со слепой стороны по ним не срабатывает
+// (wdbc-bjy1.6) ──
+// Ручной перезапуск: game.warhammerDBC.migrateSightAngle()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "sightAngleVersion") || 0) >= VERSION) return;
+  try {
+    const result = await migrateSightAngle();
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "sightAngleVersion", VERSION);
+    else console.warn("Warhammer DBC | Угол обзора: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
+  } catch (e) { console.error("Warhammer DBC | Угол обзора:", e); }
 });
 
 // ── Одноразовая доливка: биоимпланты, выданные до появления Доступности ──────
@@ -1322,7 +1354,7 @@ Hooks.once("ready", async () => {
     ["Продвижение", ["traits", "talents"]],
     ["Псайкана и Мистика", ["psychic-powers", "tech-powers"]],
     ["Порча и Хаос", ["diseases"]],
-    ["Корабли и техника", ["ship-components", "vehicle-equipment", "vehicle-traits", "vehicle-weapons", "vehicles", "small-craft"]],
+    ["Корабли и техника", ["ship-components", "vehicle-equipment", "vehicle-traits", "vehicle-weapons", "vehicles"]],
     ["Другое", ["bestiary"]]
   ];
   try {

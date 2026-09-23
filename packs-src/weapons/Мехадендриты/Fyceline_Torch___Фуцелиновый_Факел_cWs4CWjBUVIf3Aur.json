@@ -11,7 +11,24 @@
     "balance": 0,
     "grips": "1р",
     "profileLabel": "Мехадендрит",
-    "profiles": [],
+    "profiles": [
+      {
+        "label": "Удар",
+        "range": "0-6",
+        "damage": "1d10+3",
+        "damageType": "impact",
+        "damageSubtype": "crushing",
+        "penetration": 0,
+        "weaponProps": [
+          {
+            "key": "imprecise"
+          },
+          {
+            "key": "primitive"
+          }
+        ]
+      }
+    ],
     "reload": "–",
     "magazineCur": 0,
     "magazineMax": 0,

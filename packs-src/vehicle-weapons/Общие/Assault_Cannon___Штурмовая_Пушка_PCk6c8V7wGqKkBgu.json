@@ -17,7 +17,7 @@
     "rof_semi": 0,
     "rof_full": 6,
     "damage": "2d10+6",
-    "damageType": "blast",
+    "damageType": "rending",
     "penetration": 4,
     "quality": "common",
     "availability": 3,

@@ -52,3 +52,32 @@ describe("кнопки защиты Шагохода на карточке ат�
     expect(html.match(/<button class="wh-walker-dodge-btn[^>]*>/)[0]).toContain('data-hits-count="4"');
   });
 });
+
+// wdbc-2ny6: кнопки Шагохода подчиняются тем же запретам, что обычные
+// Парирование/Уклонение этой карточки — а не одному признаку targetIsWalker.
+describe("кнопки Шагохода и запреты карточки (wdbc-2ny6)", () => {
+  const walker = (over = {}, ctx = {}) => defenseSection(
+    { dodgeMod: -10, parryMod: 0, targetIsVehicle: true, targetIsWalker: true, ...over },
+    { wp, attackerUuid: "Actor.attacker", hitsCount: 1, isMelee: true, ...ctx });
+
+  it("Гибкое оружие (цеп, хлыст) — Парирования Шагохода нет, Уклонение есть", () => {
+    const html = walker({}, { wp: { ...wp, flexible: true } });
+    expect(html).not.toContain("wh-walker-parry-btn");
+    expect(html).toContain("wh-walker-dodge-btn");
+  });
+
+  it("стрелковая атака — Парирования Шагохода нет: машина парирует рукопашным орудием", () => {
+    const html = walker({}, { isMelee: false });
+    expect(html).not.toContain("wh-walker-parry-btn");
+    expect(html).toContain("wh-walker-dodge-btn");
+  });
+
+  it("Уклонение запрещено карточкой (Атака всем телом и т.п.) — Уклонения Шагохода нет", () => {
+    expect(walker({ dodgeMod: -999 })).not.toContain("wh-walker-dodge-btn");
+  });
+
+  it("Незримая атака не засечена — кнопки Шагохода заблокированы, как и обычные", () => {
+    const html = walker({}, { unseen: true, unseenDetected: false });
+    expect(html).toMatch(/wh-walker-dodge-btn wh-unseen-locked"[^>]*disabled/);
+  });
+});

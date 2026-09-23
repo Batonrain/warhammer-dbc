@@ -17,7 +17,7 @@
     "rof_semi": 4,
     "rof_full": 0,
     "damage": "3d10+8",
-    "damageType": "impact",
+    "damageType": "blast",
     "penetration": 6,
     "quality": "common",
     "availability": 2,

@@ -40,10 +40,14 @@ export function bookSource(existing, docs) {
     title: existing.title,
     file: existing.file,
     pdfPages: existing.pdfPages,
+    // _id — замороженный идентификатор (wdbc-bjy1.10): едет обратно в исходник,
+    // иначе первое же извлечение вернуло бы id «по позиции».
     entries: [...docs].sort(bySort).map(doc => ({
+      _id: doc._id,
       name: doc.name,
       pdfPage: doc.flags?.[NS]?.pdfPage,
       pages: [...(doc.pages ?? [])].sort(bySort).map(page => ({
+        _id: page._id,
         name: page.name,
         pdfPage: page.flags?.[NS]?.pdfPage,
         // Разметка разбора закладок (см. outlineFlags в tools/book-docs.mjs).

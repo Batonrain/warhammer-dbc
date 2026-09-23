@@ -124,8 +124,19 @@ export class VortexZoneBehaviorType extends foundry.data.regionBehaviors.RegionB
   }
 }
 
-/** Кто владеет предметом «Mind Over Matter» среди токенов сцены в радиусе (метры) от точки региона. */
-function eligibleReactors(region, xValue, excludeActorUuid) {
+/** Знает ли актор Mind Over Matter — по любой половине имени (ищется и копия, переименованная по-русски). */
+function knowsMindOverMatter(actor) {
+  return actor.items.some(i => i.type === "psychicPower"
+    && (itemHasName(i, "Mind Over Matter") || itemHasName(i, "Разум Превыше Материи")));
+}
+
+/**
+ * Кто может вмешаться: псайкеры с Mind Over Matter в Х×10 м от центра — и
+ * создатель Вихря (ownerUuid), если контроль сейчас не у него: книга
+ * сохраняет ему право перехвата до конца силы, без условия про Mind Over
+ * Matter и радиус (wdbc-bjy1.7).
+ */
+function eligibleReactors(region, xValue, excludeActorUuid, ownerUuid = "") {
   const scene = region?.parent;
   if (!scene) return [];
   const px = pxPerMeter();
@@ -136,11 +147,11 @@ function eligibleReactors(region, xValue, excludeActorUuid) {
   for (const token of scene.tokens.contents) {
     const actor = token.actor;
     if (!actor || actor.uuid === excludeActorUuid) continue;
+    if (ownerUuid && actor.uuid === ownerUuid) { out.push(token); continue; }
     const dx = (token.x + (token.width * scene.grid.size) / 2) - cx;
     const dy = (token.y + (token.height * scene.grid.size) / 2) - cy;
     if (Math.hypot(dx, dy) > radiusPx) continue;
-    const knows = actor.items.some(i => i.type === "psychicPower" && itemHasName(i, "Mind Over Matter"));
-    if (knows) out.push(token);
+    if (knowsMindOverMatter(actor)) out.push(token);
   }
   return out;
 }
@@ -221,7 +232,7 @@ async function _resolveTurnStart(region, behavior) {
   if (!controllerActor) return;
 
   const outcome = await rollSustainTest(controllerActor, sys.xValue);
-  await ChatMessage.create({ speaker: { alias: "Система" }, content: sustainCardHtml(controllerActor.name, outcome, { isController: true }) });
+  await ChatMessage.create({ speaker: { alias: "Система" }, content: sustainCardHtml(controllerActor.name, outcome, { isController: true }), rolls: [outcome.roll] });
 
   if (outcome.success) {
     await behavior.update({
@@ -239,13 +250,14 @@ async function _resolveTurnStart(region, behavior) {
       "system.championRv": outcome.rv, "system.championThreshold": outcome.threshold, "system.championDeg": outcome.deg,
       "system.championTpr": outcome.tpr, "system.championW": outcome.w, "system.championSuccess": false, "system.spendLeft": 0
     });
-    await _applyRandomDrift(region, behavior);
+    // Дрейф мог развеять Вихрь (Х≤0) — тогда и приглашать не на что.
+    if (await _applyRandomDrift(region, behavior)) return;
   }
 
   await _inviteReactors(region, behavior, controllerActor);
 }
 
-/** Х +1d10−6 (диапазон −5..+4) — «никто не прошёл» (книга, стр. 313), плюс случайный дрейф по розе. */
+/** Х +1d10−6 (диапазон −5..+4) — «никто не прошёл» (книга, стр. 313), плюс случайный дрейф по розе. true — Вихрь развеялся. */
 async function _applyRandomDrift(region, behavior) {
   const deltaRoll = await new Roll("1d10").evaluate();
   const delta = deltaRoll.total - 6;
@@ -263,8 +275,9 @@ async function _applyRandomDrift(region, behavior) {
     </div>`
   });
 
-  if (newX <= 0) return _dissipate(region, behavior);
+  if (newX <= 0) { await _dissipate(region, behavior); return true; }
   await behavior.update({ "system.xValue": newX });
+  return false;
 }
 
 async function _driftRegion(region, behavior, rose) {
@@ -288,7 +301,7 @@ async function _dissipate(region, behavior) {
 
 /** Пригласить владельцев других псайкеров-кандидатов вмешаться Реакцией. */
 async function _inviteReactors(region, behavior, controllerActor) {
-  const reactors = eligibleReactors(region, behavior.system.xValue, controllerActor.uuid);
+  const reactors = eligibleReactors(region, behavior.system.xValue, controllerActor.uuid, behavior.system.ownerUuid);
   if (!reactors.length) return;
 
   const payload = {
@@ -299,16 +312,19 @@ async function _inviteReactors(region, behavior, controllerActor) {
     const actor = token.actor;
     const owner = game.users?.players?.find(u => u.active && actor.testUserPermission?.(u, "OWNER"));
     const recipients = owner ? [owner.id] : (game.users?.filter(u => u.isGM).map(u => u.id) ?? []);
+    const isCreator = actor.uuid === behavior.system.ownerUuid;
+    const why = isCreator
+      ? `«${esc(actor.name)}» — создатель Вихря: может перехватить контроль без траты Реакции`
+      : `«${esc(actor.name)}» знает Mind Over Matter и в радиусе Вихря — можно вмешаться Реакцией`;
     await ChatMessage.create({
       whisper: recipients.length ? recipients : undefined,
       speaker: { alias: "Система" },
       content: `<div class="wh-roll-result">
         <div class="roll-header">🌀 Вихрь Рока: перехватить контроль?</div>
-        <div class="roll-threshold">«${esc(actor.name)}» знает Mind Over Matter и в радиусе Вихря — можно вмешаться
-        Реакцией (встречный тест на тех же условиях, что у контролёра).</div>
+        <div class="roll-threshold">${why} (встречный тест на тех же условиях, что у контролёра).</div>
         <button type="button" class="wh-vortex-react-btn"
           data-actor-uuid="${esc(actor.uuid)}" data-payload="${esc(JSON.stringify(payload))}">
-          🔮 Вмешаться Реакцией
+          🔮 ${isCreator ? "Перехватить контроль" : "Вмешаться Реакцией"}
         </button>
       </div>`
     });
@@ -327,7 +343,10 @@ export async function reactToVortex(reactingActor, { regionId, sceneId, behavior
   if (!region || !behavior || behavior.type !== VORTEX_ZONE_TYPE) {
     return ui.notifications?.warn("Вихрь уже не существует (развеялся/удалён).");
   }
-  if (!(await spendReactionOrWarn(reactingActor))) return;
+  // Создатель Вихря перехватывает контроль без Реакции до конца силы (книга,
+  // стр. 313; wdbc-bjy1.7). Прочие — за Реакцию.
+  const isCreator = reactingActor.uuid === behavior.system.ownerUuid;
+  if (!isCreator && !(await spendReactionOrWarn(reactingActor))) return;
 
   const outcome = await rollSustainTest(reactingActor, behavior.system.xValue);
   const champion = behavior.system.championRv == null ? null : {
@@ -336,7 +355,7 @@ export async function reactToVortex(reactingActor, { regionId, sceneId, behavior
   };
 
   const won = beatsChampion(outcome, champion);
-  await ChatMessage.create({ speaker: { alias: "Система" }, content: sustainCardHtml(reactingActor.name, outcome) });
+  await ChatMessage.create({ speaker: { alias: "Система" }, content: sustainCardHtml(reactingActor.name, outcome), rolls: [outcome.roll] });
 
   if (!won) {
     return ChatMessage.create({

@@ -27,14 +27,20 @@ const signed = n => `${n >= 0 ? "+" : ""}${n}`;
 
 /**
  * Идентификатор атаки для гейта «одна Реакция на одно Действие» (стр. 12,
- * wdbc-x1nz.2.28, см. attackId в defenseSection ниже). Свой счётчик, а не
+ * wdbc-x1nz.2.28, см. attackId в defenseSection ниже). Свой генератор, а не
  * foundry.utils.randomID() — модуль намеренно не трогает Foundry API (см.
  * шапку файла), только строит HTML из уже посчитанных чисел.
+ *
+ * Время + счётчик уникальны только в пределах ОДНОГО клиента: у каждого свой
+ * счётчик, и две атаки в одну миллисекунду с разных компьютеров совпадали —
+ * гейт съедал Реакцию защитника на второй (wdbc-bjy1.11). Отсюда случайный
+ * хвост клиента, выбранный один раз на загрузку модуля (чистый JS).
  */
+const _clientTag = Math.random().toString(36).slice(2, 10);
 let _attackIdSeq = 0;
 function _newAttackId() {
   _attackIdSeq += 1;
-  return `atk-${Date.now().toString(36)}-${_attackIdSeq}`;
+  return `atk-${Date.now().toString(36)}-${_clientTag}-${_attackIdSeq}`;
 }
 
 /**
@@ -547,15 +553,17 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
              </button>`
         }
         ${targetIsVehicle
-          ? `<button class="wh-swerve-btn" type="button" data-extra-mod="0" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}"
-               title="Техника: Operate − Размер×10">Вираж</button>`
+          ? `<button class="wh-swerve-btn" type="button" data-extra-mod="0" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-attack-id="${attackId}"
+               title="Техника: Operate − Размер×10. Реакция водителя (Книга Машин).">Вираж</button>`
           : ""}
-        ${targetIsWalker
-          ? `<button class="wh-walker-parry-btn" type="button" data-extra-mod="${parryMod}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-attack-id="${attackId}"
+        ${targetIsWalker && !cannotParry && isMelee
+          ? `<button class="wh-walker-parry-btn${unseenLocked ? " wh-unseen-locked" : ""}" type="button"${unseenLocked ? " disabled" : ""} data-extra-mod="${parryMod}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-attack-id="${attackId}"
                title="Шагоход (Книга Машин): Парирует рукопашным орудием машины тестом WS ПИЛОТА со штрафом −Размер×10. Реакцию тратит пилот.">
                Парирование (Шагоход)
-             </button>
-             <button class="wh-walker-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-attack-id="${attackId}"
+             </button>`
+          : ""}
+        ${targetIsWalker && !cannotDodge
+          ? `<button class="wh-walker-dodge-btn${unseenLocked ? " wh-unseen-locked" : ""}" type="button"${unseenLocked ? " disabled" : ""} data-extra-mod="${dodgeMod}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-attack-id="${attackId}"
                title="Шагоход (Книга Машин): Уклонение пилота со штрафом −Размер×10, ВСЕГДА комбинированное с Operate−10 машины — один бросок против наименьшего Предела.">
                Уклонение (Шагоход)
              </button>`

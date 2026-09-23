@@ -1,11 +1,11 @@
-// tools/_roundtrip-check.mjs
+// tools/roundtrip-check.mjs
 //
 // Круговорот «сборка → извлечение» для ОДНОГО пака во временную папку, не
 // трогая ни packs/, ни packs-src/. Нужен, когда мир запущен и штатный
 // npm run packs:build недоступен, а проверить правку исходников надо сейчас:
 // CI гоняет ровно этот круговорот и краснеет от расхождения в байт.
 //
-//   node tools/_roundtrip-check.mjs talents traits
+//   node tools/roundtrip-check.mjs talents traits
 
 import { compilePack, extractPack } from "@foundryvtt/foundryvtt-cli";
 import { mkdtempSync, rmSync, readFileSync, existsSync } from "node:fs";
@@ -15,7 +15,7 @@ import { abs, PACKS } from "./packs.mjs";
 import { docIdsIn } from "./pack-drift.mjs";
 
 const names = process.argv.slice(2);
-if (!names.length) throw new Error("укажите паки: node tools/_roundtrip-check.mjs talents traits");
+if (!names.length) throw new Error("укажите паки: node tools/roundtrip-check.mjs talents traits");
 
 let bad = 0;
 for (const name of names) {

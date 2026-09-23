@@ -56,3 +56,40 @@ describe("_performSwerve: несколько попаданий (Очередь)
     expect(card).toContain("Все 4 попадания проходят");
   });
 });
+
+// wdbc-2ny6 (решение владельца 23.09.2026): по книге Вираж — «Действие:
+// Реакция», бросает водитель. Раньше Реакция не тратилась вовсе, и
+// бесплатный Вираж был всегда выгоднее платного Уклонения Шагохода.
+describe("_performSwerve тратит Реакцию водителя (wdbc-2ny6)", () => {
+  const driver = (reactions) => {
+    const a = { uuid: "Actor.driver", name: "Мехвод", type: "character",
+      system: { reactions: { value: reactions, max: 1 }, conditions: {} },
+      getFlag: () => undefined, updates: [] };
+    a.update = async u => { a.updates.push(u); if (u["system.reactions.value"] !== undefined) a.system.reactions.value = u["system.reactions.value"]; };
+    return a;
+  };
+  const crewed = () => vehicle({ stations: [{ id: "s1", role: "driver", uuid: "Actor.driver", name: "Мехвод" }] });
+  let realFromUuid;
+  beforeEach(() => { realFromUuid = globalThis.fromUuid; globalThis.game.combat = { started: true }; });
+  const restore = () => { globalThis.fromUuid = realFromUuid; globalThis.game.combat = undefined; };
+
+  it("водитель с Реакцией — Реакция списана, бросок идёт", async () => {
+    const d = driver(1);
+    globalThis.fromUuid = async u => (u === "Actor.driver" ? d : null);
+    try { await _performSwerve(crewed()); } finally { restore(); }
+    expect(d.system.reactions.value).toBe(0);
+    expect(captured.chat.at(-1).content).toContain("Вираж");
+  });
+
+  it("у водителя нет Реакций — Виража нет, броска нет", async () => {
+    const d = driver(0);
+    globalThis.fromUuid = async u => (u === "Actor.driver" ? d : null);
+    try { await _performSwerve(crewed()); } finally { restore(); }
+    expect(captured.rolls).toEqual([]);
+  });
+
+  it("экипаж не назначен — Вираж по Operate машины, с пометкой, что Реакция не списана", async () => {
+    try { await _performSwerve(vehicle()); } finally { restore(); }
+    expect(captured.chat.at(-1).content).toContain("Реакция не списана");
+  });
+});

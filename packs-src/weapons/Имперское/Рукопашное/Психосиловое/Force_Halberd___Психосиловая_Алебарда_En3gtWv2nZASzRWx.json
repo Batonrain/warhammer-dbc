@@ -16,9 +16,9 @@
       {
         "label": "Крюк",
         "range": "5",
-        "damage": "2d10+1",
+        "damage": "2d10+2",
         "damageType": "rending",
-        "penetration": 0,
+        "penetration": 5,
         "weaponProps": [
           {
             "key": "force",
@@ -63,7 +63,8 @@
             "rating": 0,
             "rating2": 0
           }
-        ]
+        ],
+        "damageSubtype": "crushing"
       }
     ],
     "reload": "–",
@@ -72,7 +73,7 @@
     "rof_single": 0,
     "rof_semi": 0,
     "rof_full": 0,
-    "damage": "2d10+2",
+    "damage": "2d10+3",
     "damageType": "rending",
     "penetration": 4,
     "quality": "common",

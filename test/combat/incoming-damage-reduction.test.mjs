@@ -134,3 +134,45 @@ describe("Just the Light: щит A.b×3 пока активен флаг (wdbc-1
     expect(actor.system.wounds.value).toBe(0);
   });
 });
+
+// wdbc-bjy1.3: Рассечение Реальности зависит от того, где стоят токены, —
+// поэтому считается в момент урона (как Решимость сражаться/Лишь Свет), а не
+// запекается в system.incomingDamageReduction при пересчёте актора: сосед
+// подошёл/отошёл — пересчёта цели не происходит, и штраф врал.
+describe("Рассечение Реальности — живьём в момент урона", () => {
+  const scene = { grid: { size: 100, distance: 1 } };
+  const token = (x) => ({ x, y: 0, width: 1, height: 1, elevation: 0, parent: scene });
+  const rendingOwner = (x) => ({
+    uuid: "Actor.owner", name: "Укутанный",
+    system: { characteristics: { wp: { bonus: 3 } } },
+    items: [{ type: "mutation", name: "Wrapped in Chaos", system: { submutation: { label: "9" } }, getFlag: () => [] }],
+    getActiveTokens: () => [token(x)]
+  });
+  const victim = () => Object.assign(characterActor({ wounds: 10 }), {
+    uuid: "Actor.victim", getActiveTokens: () => [token(0)]
+  });
+  let savedGame;
+  beforeEach(() => { savedGame = globalThis.game; });
+  const withOwnerAt = (x) => { globalThis.game = { ...savedGame, actors: [rendingOwner(x)] }; };
+  const restore = () => { globalThis.game = savedGame; };
+
+  it("владелец в 2 м — +3 к урону и строка в карточке", async () => {
+    withOwnerAt(200);
+    try {
+      const actor = victim();
+      await applyDamageToActor(actor, damage({ rawDamage: 5 }));
+      expect(actor.system.wounds.value).toBe(2);
+      expect(captured.chat.at(-1).content).toContain("Рассечение Реальности");
+    } finally { restore(); }
+  });
+
+  it("владелец отошёл на 5 м — штрафа нет, без пересчёта актора", async () => {
+    withOwnerAt(500);
+    try {
+      const actor = victim();
+      await applyDamageToActor(actor, damage({ rawDamage: 5 }));
+      expect(actor.system.wounds.value).toBe(5);
+      expect(captured.chat.at(-1).content).not.toContain("Рассечение Реальности");
+    } finally { restore(); }
+  });
+});

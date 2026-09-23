@@ -46,6 +46,24 @@ describe("Фокус Дисциплины — чипы на вкладке МИ�
     }
   });
 
+  // wdbc-4umq (2): «Персонаж, ставший Ревенантом, получает Фокус Дисциплины
+  // Ревенанта» (constants/disciplines.mjs, desc) — пробуждение на усмотрение
+  // ГМа, предмета «Иннари-Ревенант» в системе нет, поэтому выбор в пикере — но
+  // только эльдарам (книга: в том числе бывшим друкхари, экзодитам, корсарам).
+  it("Ревенант предлагается эльдару и друкхари, но не человеку", () => {
+    const keysFor = race => {
+      const sheet = sheetOf(WarhammerCharacterSheet, {
+        items: [], characteristics: {}, skills: {}, groupSkills: {}, race,
+        psyker: { rating: 3, currentRating: 3 }
+      });
+      sheet.actor.items.contents = sheet.actor.items;
+      return buildGetData(sheet.actor).psyFocus.chips.map(c => c.key);
+    };
+    expect(keysFor("ynnari")).toContain("revenant");
+    expect(keysFor("drukhari")).toContain("revenant");
+    expect(keysFor("human")).not.toContain("revenant");
+  });
+
   it("свой выбор игрока отмечен активным чипом", () => {
     const sheet = sheetOf(WarhammerCharacterSheet, {
       items: [], characteristics: {}, skills: {}, groupSkills: {},

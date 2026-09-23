@@ -8,6 +8,7 @@
 // обратно первым же новым флагом, и ровно так и было бы, потому что дописать
 // одну строку в сброс дешевле, чем найти реестр.
 
+import { COUNTENANCE_FLAG } from "../../module/rules/countenance-of-gods.mjs";
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
@@ -77,5 +78,15 @@ describe("сторож: сброс Хода не гасит флаги по им
       "файле — и следующую забудут туда дописать. Добавьте строку в",
       "TURN_SCOPED_FLAGS, гашение подхватится само."
     ].join("\n")).toEqual([]);
+  });
+});
+
+// wdbc-4umq (4): «Лик <Бога>» — рейтинг Страха 3 «до начала своего следующего
+// Хода» (книга), а метка не снималась никогда.
+describe("Лик Бога: метка Страха гаснет в начале следующего своего Хода", () => {
+  it("countenanceOfGods — в реестре и гасится сбросом", () => {
+    expect(TURN_SCOPED_FLAG_KEYS).toContain(COUNTENANCE_FLAG);
+    const upd = turnStartFlagClears(actorWithFlags([COUNTENANCE_FLAG]));
+    expect(Object.keys(upd)).toEqual([`flags.warhammer-dbc.-=${COUNTENANCE_FLAG}`]);
   });
 });

@@ -12,10 +12,11 @@
 //  записями Конструктора.
 //
 //  Реализованы пункты 1, 2, 5, 6, 8. Пункт 9 («рукопашные атаки по Шагоходу
-//  не могут Избирательной атакой −20 попадать в Кормовую броню») сознательно
-//  НЕ начат: общего выбора стороны брони при атаке ПЕРСОНАЖА по технике в
-//  системе нет вовсе (combat/attack.mjs всегда шлёт side:"side"), запрет
-//  оказался бы кодом, который никогда не выполняется. Пункты 3/4/7 (Бег 4×SPD,
+//  не могут Избирательной атакой −20 попадать в Кормовую броню») — выбор
+//  стороны брони при атаке персонажа по технике есть в окне атаки
+//  (sheets/attack-dialog.mjs, #atk-vehicle-side, «Избирательная в Корму»);
+//  сверять запрет для Шагохода — там (wdbc-4umq: прежняя пометка «не начат,
+//  attack.mjs всегда шлёт side» устарела в той же стопке). Пункты 3/4/7 (Бег 4×SPD,
 //  Трудный Ландшафт, S/Un.S) живут в rules/vehicle.mjs и combat/vehicle.mjs.
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -160,7 +161,13 @@ export async function performWalkerDodge(vehicle, { extraMod = 0, attackerUuid =
   if (!crew) return refusal(vehicle, "Уклонение",
     "В машине нет пилота/мехвода — Уклоняться некому (посадите экипаж на вкладке «Экипаж»).");
 
-  const profile = dodgeProfile(crew.actor, extraMod);
+  // Опрокинутый Шагоход «сбит с ног» (Книга Машин, Опрокидывание) — как
+  // Повален у персонажа: −20 к Уклонению (rules/library/conditions.mjs,
+  // conditions.prone). Состояние лежит на МАШИНЕ, а профиль считается по
+  // пилоту, поэтому общий реестр правил его не видит — штраф здесь (wdbc-2ny6).
+  const tippedMod = isTippedOver(vehicle) ? -20 : 0;
+  const profile = dodgeProfile(crew.actor, extraMod + tippedMod);
+  if (tippedMod) profile.modParts.push("Опрокинут −20");
   const operate = Number(vehicle.system?.operate) || 0;
   const size    = Number(vehicle.system?.size) || 0;
   const { dodgePart, operatePart, threshold } =

@@ -22,7 +22,7 @@
     "sustainCost": 1,
     "sustainAction": "free",
     "damage": "",
-    "damageType": "energy",
+    "damageType": "rending",
     "penetration": 0,
     "weaponProps": [],
     "charDamageStat": "",

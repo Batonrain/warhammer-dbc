@@ -36,7 +36,7 @@ export const STAMP_FILE = "packs/.pack-stamp";
  *
  * `sources` — отпечатки ИСХОДНИКОВ на тот же момент (wdbc-6dps, sourcesChangedSince
  * ниже). Не передано — переносятся из текущей отметки как есть: точечные
- * сборка и извлечение (tools/_pack-one.mjs, _unpack-one.mjs) переписывают
+ * сборка и извлечение (tools/pack-one.mjs, unpack-one.mjs) переписывают
  * отметку ради одного пака и не должны молча стирать сверку остальных.
  */
 export function writeStamp(when = Date.now(), fingerprints = null, sources = undefined) {
@@ -100,7 +100,7 @@ export function currentSourceFingerprints(packs) {
  * Дописать в отметку отпечатки исходников нескольких паков, ничего больше в
  * ней не трогая: ни время, ни отпечатки баз, ни версию их алгоритма.
  *
- * Для точечных операций (--pack, _pack-one, _unpack-one): после них исходник
+ * Для точечных операций (--pack, pack-one, unpack-one): после них исходник
  * и база ИМЕННО ЭТИХ паков сведены, а о прочих сказать нечего. Отметки нет
  * или она старого формата — писать некуда, возвращается false.
  */

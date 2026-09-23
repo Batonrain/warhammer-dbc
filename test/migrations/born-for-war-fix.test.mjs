@@ -12,6 +12,7 @@ import { describe, it, expect, afterEach } from "vitest";
 import {
   isBornForWarItem, bornForWarHasStaleEffects, fixBornForWarItem, migrateBornForWarDivination
 } from "../../module/migrations/born-for-war-fix.mjs";
+import { bornForWarStaleTChoice, bornForWarRepickPatch } from "../../module/migrations/born-for-war-fix.mjs";
 
 const T_KEY   = "system.characteristics.t.totalFx";
 const INT_KEY = "system.characteristics.int.totalFx";
@@ -261,5 +262,44 @@ describe("migrateBornForWarDivination: изоляция сбоя одного а
     expect(res.failed).toBe(1);
     expect(good.effects[0].system.changes[0].type).toBe("subtract");
     expect(bad.effects).toHaveLength(1); // не тронут, попробуется заново
+  });
+});
+
+// wdbc-o28t: первый проход снимал эффект «+3 Стойкости», но переспросить не
+// мог — предмет на акторе несёт СВОЙ снимок механики с записью «Т», и
+// applyGroupEntries видел её id в mechanicsApplied и молча выходил.
+// Второй проход находит таких и готовит патч: запись «Т» убрать из ИЛИ-группы,
+// её id — из mechanicsApplied; одно item.update → хук updateItem →
+// applyItemMechanics переспросит выбор диалогом.
+describe("«Ты рождён для войны»: переспросить выбравших снятую «Т» (wdbc-o28t)", () => {
+  const entry = (id, charKey) => ({ id, kind: "characteristic", charKey, field: "total", op: "add", value: 3 });
+  const bfwItem = (applied, extraEntries = []) => {
+    const flags = {
+      mechanics: [
+        { id: "g1", operator: "OR", entries: [entry("ws1", "ws"), entry("bs1", "bs"), entry("t1", "t"), ...extraEntries] },
+        { id: "g2", operator: "OR", entries: [{ id: "int1", kind: "characteristic", charKey: "int", op: "subtract", value: 3 }] }
+      ],
+      mechanicsApplied: applied
+    };
+    return { type: "divination", name: "Ты рождён для войны", system: { key: "bornwar" },
+      getFlag: (_s, k) => flags[k] };
+  };
+
+  it("выбравший «Т» найден, выбравший WS — нет", () => {
+    expect(bornForWarStaleTChoice(bfwItem(["t1", "int1"]))).toBe("t1");
+    expect(bornForWarStaleTChoice(bfwItem(["ws1", "int1"]))).toBe(null);
+  });
+
+  it("патч убирает запись «Т» и её отметку, остальное не трогает", () => {
+    const patch = bornForWarRepickPatch(bfwItem(["t1", "int1"]));
+    const [g1, g2] = patch["flags.warhammer-dbc.mechanics"];
+    expect(g1.entries.map(e => e.id)).toEqual(["ws1", "bs1"]);
+    expect(g2.entries.map(e => e.id)).toEqual(["int1"]);
+    expect(patch["flags.warhammer-dbc.mechanicsApplied"]).toEqual(["int1"]);
+  });
+
+  it("не тот предмет или выбора «Т» нет — патча нет", () => {
+    expect(bornForWarRepickPatch(bfwItem(["ws1"]))).toBe(null);
+    expect(bornForWarRepickPatch({ type: "talent", name: "Другое", getFlag: () => undefined })).toBe(null);
   });
 });

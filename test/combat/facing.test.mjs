@@ -116,6 +116,38 @@ describe("isOutsideDefenderView (Скрытная Атака, wdbc-1rno.3)", () 
     expect(isOutsideDefenderView(defender, null)).toBe(false);
     expect(isOutsideDefenderView(null, defender)).toBe(false);
   });
+
+  // wdbc-bjy1.8: граница сектора и крайние углы — источник правды под две
+  // поверхности (Скрытная Атака и обзор токена), класс wdbc-g45x.
+  // Пеленг от курса 0 (север): x = R·sin, y = −R·cos.
+  const at = (deg, R = 300) => token({
+    x: Math.round(R * Math.sin(deg * Math.PI / 180)),
+    y: Math.round(-R * Math.cos(deg * Math.PI / 180))
+  });
+
+  it("граница дефолтных 210°: ±104° в обзоре, ±106° — вне", () => {
+    const defender = token({ x: 0, y: 0, rotation: 0 });
+    for (const d of [104, -104]) expect(isOutsideDefenderView(defender, at(d))).toBe(false);
+    for (const d of [106, -106]) expect(isOutsideDefenderView(defender, at(d))).toBe(true);
+  });
+
+  it("sight.angle 0 — не настроен, работает как дефолтные 210°", () => {
+    const defender = token({ x: 0, y: 0, rotation: 0, sight: { angle: 0 } });
+    expect(isOutsideDefenderView(defender, at(104))).toBe(false);
+    expect(isOutsideDefenderView(defender, at(106))).toBe(true);
+  });
+
+  it("sight.angle 1 — видит только прямо по курсу", () => {
+    const defender = token({ x: 0, y: 0, rotation: 0, sight: { angle: 1 } });
+    expect(isOutsideDefenderView(defender, at(0))).toBe(false);
+    expect(isOutsideDefenderView(defender, at(10))).toBe(true);
+  });
+
+  it("sight.angle 359 — слепое пятно только строго сзади", () => {
+    const defender = token({ x: 0, y: 0, rotation: 0, sight: { angle: 359 } });
+    expect(isOutsideDefenderView(defender, at(178))).toBe(false);
+    expect(isOutsideDefenderView(defender, at(180))).toBe(true);
+  });
 });
 
 describe("applyDefaultSightAngle (wdbc-1rno.3, preCreateActor)", () => {
