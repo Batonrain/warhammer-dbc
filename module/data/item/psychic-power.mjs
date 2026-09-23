@@ -77,6 +77,10 @@ export class PsychicPowerData extends foundry.abstract.TypeDataModel {
       sustainAction: new StringField({ initial: "free", label: "Действие поддержания" }),
       damage:        new StringField({ initial: "", label: "Урон" }),
       damageType:    new StringField({ initial: "energy", label: "Тип урона" }),
+      // Подвид из скобок книги («1d10+PR E(Fl)», wdbc-9zpt) — ключ
+      // DAMAGE_SUBTYPES или "" (книга не называет). Та же роль, что у
+      // weapon.damageSubtype: едет на кнопку «Применить урон».
+      damageSubtype: new StringField({ initial: "", label: "Подвид урона" }),
       // Формула, не число (wdbc-5kd): книга местами задаёт Пробитие через ПР
       // самого псайкера — «Разрушение» Pen=PR, «Сверхъестественный Шторм»
       // Pen=PR×3 (записывается как «PR*3»). Прежнее NumberField умело хранить

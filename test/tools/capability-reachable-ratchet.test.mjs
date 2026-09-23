@@ -47,7 +47,6 @@ const ALLOWED = {
   // они заведены про запас — ГМ ставит эффектом (см. их же `source`).
   "weaponPropertyImmunity.piercing": "иммунитет про запас, ставится эффектом ГМа",
   "weaponPropertyImmunity.haywire":  "иммунитет про запас, ставится эффектом ГМа",
-  "weaponPropertyImmunity.shocking": "иммунитет про запас, ставится эффектом ГМа",
   "weaponPropertyImmunity.snare":    "иммунитет про запас, ставится эффектом ГМа",
 
   // Иммунитет по подвиду урона (wdbc-q0q8): инфраструктура заведена раньше

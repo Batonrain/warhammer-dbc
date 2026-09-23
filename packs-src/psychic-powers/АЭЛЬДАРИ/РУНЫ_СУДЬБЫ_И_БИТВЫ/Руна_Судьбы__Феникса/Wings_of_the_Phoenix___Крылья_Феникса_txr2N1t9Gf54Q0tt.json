@@ -23,6 +23,7 @@
     "sustainAction": "half",
     "damage": "",
     "damageType": "energy",
+    "damageSubtype": "flame",
     "penetration": 0,
     "weaponProps": [],
     "charDamageStat": "",

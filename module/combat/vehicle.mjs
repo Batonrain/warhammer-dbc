@@ -276,7 +276,7 @@ export async function _resolveRam(actor, fast, targetBigger) {
     <div class="roll-apply-dmg-section">
       <div class="roll-section-head">Применить к цели <span class="roll-head-hint">— выберите токен</span></div>
       <button class="wh-apply-dmg-btn" type="button"
-        data-damage="${dmg}" data-penetration="0" data-damage-type="impact"
+        data-damage="${dmg}" data-penetration="0" data-damage-type="impact" data-damage-subtype="crushing"
         data-hit-location="Торс" data-weapon-name="Таран" data-attacker="${actor.name}"
         data-felling="0" data-primitive="0" data-ignore-shield="0" data-warp-soak="0">
         Применить урон Тарана: <b>${dmg}</b>

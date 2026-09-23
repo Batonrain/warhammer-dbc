@@ -600,6 +600,7 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
     // обычный случай, и Взрывное с Распылением там работают так же.
     const applyBtn = `<button class="wh-apply-dmg-btn" type="button"
       data-damage="${totalDamage}" data-penetration="${pen}" data-damage-type="${dtype}"
+      data-damage-subtype="${sys.damageSubtype || ""}"
       data-hit-location="${hitLoc}" data-weapon-name="${w.name}" data-attacker="${actor.name}"
       data-attacker-uuid="${actor.uuid || ""}"
       data-felling="${wp.fellingRating || 0}" data-primitive="${wp.primitive ? 1 : 0}"

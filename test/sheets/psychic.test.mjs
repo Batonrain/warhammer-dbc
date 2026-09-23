@@ -317,6 +317,57 @@ describe("psychic manifestation", () => {
     expect(captured.chat[0].content).toContain("d5: 4");
   });
 
+  // wdbc-9zpt: подвид урона из скобок книги («1d10+PR E(Fl)») должен доехать
+  // до кнопки «Применить урон» — иначе Проводящая/Флак/иммунитеты к подвиду
+  // на уроне психосил молча не работали.
+  it("подвид основного профиля едет на кнопку урона", async () => {
+    const power = item({ system: {
+      testChar: "wp", powerType: "attack", testMod: 0,
+      damage: "1d10", damageType: "energy", damageSubtype: "flame"
+    } });
+    captured.dice = [5, 6];
+    await executePsychotest(actor(), power, {
+      mPR: 1, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+    expect(captured.chat[0].content).toContain('data-damage-subtype="flame"');
+  });
+
+  it("подвид доп. профиля берётся из профиля, не из основного", async () => {
+    const power = item({ system: {
+      testChar: "wp", powerType: "attack", testMod: 0,
+      damage: "1d10", damageType: "energy", damageSubtype: "flame",
+      profiles: [{ label: "Яд", damage: "1d10", damageType: "chemical", damageSubtype: "toxic", penetration: 0, propsText: "" }]
+    } });
+    captured.dice = [5, 6];
+    await executePsychotest(actor(), power, {
+      mPR: 1, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: 0, variantIdx: -1
+    });
+    expect(captured.chat[0].content).toContain('data-damage-subtype="toxic"');
+  });
+
+  // wdbc-1mwm9: доп. профиль умеет то же, что основной — Пробитие формулой
+  // («PR», Devastating Rain: Pen PR) и формульные рейтинги свойств в
+  // propsText («Felling (PR)»). Раньше Пробитие профиля шло Number() → 0,
+  // а рейтинг свойства parseInt() → 0.
+  it("доп. профиль: Пробитие и рейтинг свойства формулой от PR", async () => {
+    const power = item({ system: {
+      testChar: "wp", powerType: "attack", testMod: 0,
+      damage: "1d10", damageType: "energy",
+      profiles: [{ label: "Яд", damage: "1d10", damageType: "chemical", damageSubtype: "toxic",
+        penetration: "PR", propsText: "Felling (PR*2)" }]
+    } });
+    captured.dice = [5, 6];
+    await executePsychotest(actor(), power, {
+      mPR: 3, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 3, rangePR: 3, profileIdx: 0, variantIdx: -1
+    });
+    const html = captured.chat[0].content;
+    expect(html).toContain('data-penetration="3"');
+    expect(html).toContain('data-felling="6"');
+  });
+
   // wdbc-luca: сила без прямого урона (Death of Machines — книжная таблица
   // Dmg/Pen «–», весь эффект через Haywire) должна оставлять damage ПУСТЫМ,
   // не «–»: непустая строка уходила в new Roll() и падала исключением

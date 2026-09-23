@@ -48,9 +48,10 @@ import { getModEffects, mergeWeaponPropEntries } from "./combat/weapon-mods.mjs"
 import { fatalismBlocksPower } from "./rules/fatalism.mjs";
 import { everYouthfulBlocksPower } from "./rules/ever-youthful.mjs";
 import { eaterOfPainBenefitUpdate, eaterOfPainChoiceButtonsHtml } from "./rules/eater-of-pain.mjs";
-import { fateTerm, esc }                 from "./helpers/utils.mjs";
+import { fateTerm, esc, resolveCharFormula } from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
 import { postTestCard, rollStatLine }    from "./helpers/test-card.mjs";
+import { injectSoulfireButtons }          from "./combat/soulfire.mjs";
 import { registerActorSetupHook }        from "./apps/actor-setup.mjs";
 import { resolvePendingSusAnHeals }      from "./apps/sus-an-heal.mjs";
 import { decayAblativeApShieldOnNewRound } from "./apps/ablative-ap-shield.mjs";
@@ -232,6 +233,10 @@ export function registerHooks() {
 
   // ── Обработчики кнопок в чате ────────────────────────────────────────────
   Hooks.on("renderChatMessageHTML", (message, html, data) => {
+
+    // Огонь Души (module/combat/soulfire.mjs) — кнопка силы рядом с каждой
+    // кнопкой урона E(Fl), если атакующий — свой псайкер с этой силой.
+    injectSoulfireButtons(html);
 
     // Состояние, наложенное Ритуалом (module/apps/ritual-cast.mjs) — пилюля
     // в карточке успешного проведения; ГМ тащит её на лист актора, которому
@@ -1029,6 +1034,8 @@ export function registerHooks() {
           primitive:    ds.primitive    === "1",
           ignoreShield: ds.ignoreShield === "1",
           ignoreDomeShields: ds.ignoreDomeShield === "1",
+          // Огонь Души (combat/soulfire.mjs) ставит атрибут, усилив попадание.
+          ignoreSubtypeImmunity: ds.ignoreSubtypeImmunity === "1",
           stunManeuver: ds.stunManeuver === "1",
           warpSoak:     ds.warpSoak     === "1",
           lance:        ds.lance        === "1",
@@ -1286,8 +1293,8 @@ export function registerHooks() {
         const ds = ev.currentTarget.dataset;
         const primaryToken = canvas.tokens?.controlled?.[0];
         if (!primaryToken?.actor) return ui.notifications.warn("⚠️ Выберите токен поражённой цели на сцене!");
-        const attackerToken = ds.attackerUuid
-          ? (await fromUuid(ds.attackerUuid).catch(() => null))?.getActiveTokens?.(false)?.[0] : null;
+        const attackerActor = ds.attackerUuid ? await fromUuid(ds.attackerUuid).catch(() => null) : null;
+        const attackerToken = attackerActor?.getActiveTokens?.(false)?.[0] ?? null;
         const candidates = canvas.tokens.placeables.filter(t => t !== primaryToken && t !== attackerToken);
         const target = findArcTarget(primaryToken, candidates, 5);
         if (!target?.actor) return ui.notifications.info("⚡ В радиусе 5м от цели никого нет — Дуга не сработала.");
@@ -1295,12 +1302,15 @@ export function registerHooks() {
         // «Arc(6/2d10)») — раньше parseInt() тихо обрезал её до первой цифры
         // («2d10» → 2), теперь дайс-паттерн бросается по-честному; голое
         // число (подавляющее большинство существующего оружия) — как раньше.
-        const arcFormula = ds.arcDamage || "0";
-        const isDiceArc  = /\d+d\d+/i.test(arcFormula);
+        // Бонус характеристики стрелка в Y (Электродуга: «Arc (7/2d10+T.b)»,
+        // wdbc-rmrm9) — подставляется до броска, Roll() «T.b» не понимает.
+        const arcFormula = resolveCharFormula(ds.arcDamage || "0",
+          attackerActor?.system?.characteristics, attackerActor?.system?.corruptionBonus ?? 0);
+        const isDiceArc  = !/^\s*\d+\s*$/.test(arcFormula);
         const arcRoll    = isDiceArc ? await new Roll(arcFormula).evaluate() : null;
         const arcDamage  = isDiceArc ? arcRoll.total : (parseInt(arcFormula) || 0);
         await applyDamageToActor(target.actor, {
-          rawDamage: arcDamage, penetration: arcDamage, damageType: "energy", hitLocation: "Торс",
+          rawDamage: arcDamage, penetration: arcDamage, damageType: "energy", damageSubtype: "electrical", hitLocation: "Торс",
           weaponName: ds.weaponName || "", attackerName: ds.attacker || "", attackerUuid: ds.attackerUuid || ""
         });
         if (isDiceArc) {

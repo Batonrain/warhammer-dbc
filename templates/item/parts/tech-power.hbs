@@ -143,6 +143,12 @@
       <option value="blast"    {{#if (eq system.damageType "blast")}}selected{{/if}}>Взрывной</option>
       <option value="chemical" {{#if (eq system.damageType "chemical")}}selected{{/if}}>Химический</option>
     </select>
+    <select name="system.damageSubtype" class="wr-select-sm" title="Подвид урона из скобок книги (I(Cr)/X(Fr)/E(El)/E(Fl)/E(Ls)/C(Tx))">
+      <option value="" {{#if (eq system.damageSubtype "")}}selected{{/if}}>— подвид —</option>
+      {{#each damageSubtypeOptions as |lbl k|}}
+      <option value="{{k}}" {{#if (eq @root.system.damageSubtype k)}}selected{{/if}}>{{lbl}}</option>
+      {{/each}}
+    </select>
     <label class="wr-label">Проб.</label>
     <input type="number" name="system.penetration" value="{{system.penetration}}" min="0" class="wr-input-xs"/>
   </div>

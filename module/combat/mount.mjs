@@ -519,7 +519,7 @@ async function resolveMountTerrain(rider, ctx, { skill, zone, extra, terrainMod,
        <div class="roll-damage-section">
          <div class="roll-damage-label">${rollIcon("blood", "#ff6b6b")}Скакуну: <b>1</b> непоглощаемого I(Cr)</div>
          <button class="wh-apply-dmg-btn" type="button"
-           data-damage="1" data-penetration="999" data-damage-type="impact"
+           data-damage="1" data-penetration="999" data-damage-type="impact" data-damage-subtype="crushing"
            data-hit-location="Торс" data-weapon-name="Трудный ландшафт" data-attacker="${esc(rider.name)}"
            data-felling="0" data-primitive="0" data-ignore-shield="1" data-warp-soak="0">
            Применить 1 урона скакуну — выберите его токен

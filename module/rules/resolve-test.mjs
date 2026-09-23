@@ -87,6 +87,9 @@ function attackScopeApplies(scope, ctx) {
   const want = scope.slice("weapon:".length);
   if (want === "melee")  return ctx.isMelee === true;
   if (want === "ranged") return ctx.isMelee === false;
+  // Безоружная атака — интегральная (Кулак/Пинок/…, combat/equipped-melee.mjs::
+  // isIntegralAttack); ставит attack-dialog.mjs (wdbc-rmrm9, Электродуга).
+  if (want === "unarmed") return ctx.unarmed === true;
   return want === String(ctx.weaponClass ?? "").toLowerCase();
 }
 
@@ -465,6 +468,17 @@ export function critModsFromRules(rules, ctx = {}) {
  *
  * @returns {{ruleId:string, label:string, key:string, rating:number, rating2:number}[]}
  */
+/**
+ * Рейтинг выданного свойства: число — числом, формула («PR», «2d10+T.b» —
+ * Дуга Электродуги, wdbc-rmrm9) — строкой, её дальше считает тот же движок,
+ * что и рейтинги свойств самого оружия. Раньше Number() молча давал 0.
+ */
+function propRatingValue(v) {
+  const s = String(v ?? "").trim();
+  if (!s) return 0;
+  return Number.isFinite(Number(s)) ? Number(s) : s;
+}
+
 export function weaponPropsFromRules(rules, ctx = {}) {
   const out = [];
   for (const rule of rules ?? []) {
@@ -479,7 +493,7 @@ export function weaponPropsFromRules(rules, ctx = {}) {
       }
       out.push({
         ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id,
-        key, rating: Number(effect.rating) || 0, rating2: Number(effect.rating2) || 0
+        key, rating: propRatingValue(effect.rating), rating2: propRatingValue(effect.rating2)
       });
     }
   }

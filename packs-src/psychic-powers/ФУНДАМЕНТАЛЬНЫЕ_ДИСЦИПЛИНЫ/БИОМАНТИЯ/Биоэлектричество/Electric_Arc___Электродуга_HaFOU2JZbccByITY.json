@@ -22,6 +22,7 @@
     "sustainAction": "free",
     "damage": "2d10+2*T.b",
     "damageType": "energy",
+    "damageSubtype": "electrical",
     "penetration": 0,
     "weaponProps": [],
     "charDamageStat": "",

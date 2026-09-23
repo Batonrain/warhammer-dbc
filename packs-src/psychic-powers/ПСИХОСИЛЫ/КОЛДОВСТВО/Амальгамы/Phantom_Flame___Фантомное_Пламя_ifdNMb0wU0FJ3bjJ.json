@@ -22,6 +22,7 @@
     "sustainAction": "free",
     "damage": "",
     "damageType": "energy",
+    "damageSubtype": "flame",
     "penetration": 0,
     "weaponProps": [
       {

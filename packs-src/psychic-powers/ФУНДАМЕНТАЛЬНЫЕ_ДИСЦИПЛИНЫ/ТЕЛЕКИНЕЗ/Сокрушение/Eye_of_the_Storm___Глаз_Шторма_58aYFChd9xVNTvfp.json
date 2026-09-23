@@ -22,6 +22,7 @@
     "sustainAction": "free",
     "damage": "2d10+3*PR",
     "damageType": "impact",
+    "damageSubtype": "crushing",
     "penetration": 0,
     "weaponProps": [
       {

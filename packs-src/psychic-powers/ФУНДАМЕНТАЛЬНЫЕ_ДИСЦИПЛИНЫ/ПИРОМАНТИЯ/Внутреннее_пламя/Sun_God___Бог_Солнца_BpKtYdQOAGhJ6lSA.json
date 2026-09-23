@@ -22,6 +22,7 @@
     "sustainAction": "free",
     "damage": "3d10+2*PR",
     "damageType": "energy",
+    "damageSubtype": "laser",
     "penetration": 0,
     "weaponProps": [
       {
