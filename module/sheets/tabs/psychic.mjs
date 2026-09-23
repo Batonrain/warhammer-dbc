@@ -147,7 +147,11 @@ export async function learnSigilliteRune(actor, item) {
   });
 }
 
-export function showManifestDialog(actor, item) {
+/**
+ * @param {object} [extraOpts]  доливается в opts executePsychotest — напр.
+ *   onResult({success, deg, ePR}) у Огня Души (module/combat/soulfire.mjs).
+ */
+export function showManifestDialog(actor, item, extraOpts = {}) {
   if (sarcophagusBlocksPsychicPowers(actor)) {
     ui.notifications.warn("Саркофаг Дредноута: манифестация психосил заблокирована (нужна Матрица Осирис).");
     return;
@@ -451,6 +455,7 @@ export function showManifestDialog(actor, item) {
             }
           }
           await executePsychotest(actor, item, {
+            ...extraOpts,
             ruleMod, halveRulePenalty, runeStrike, improvisedRune: needsImprovise, sigilliteSubs,
             mPR:      parseInt(html.find("#psy-pr").val())     || minPR,
             prMod:    parseInt(html.find("#psy-pr-mod").val()) || 0,
@@ -704,15 +709,17 @@ export async function executePsychotest(actor, item, opts) {
   const profile = (opts.profileIdx >= 0) ? (sys.profiles || [])[opts.profileIdx] : null;
   const atk = profile ? {
     damage:    profile.damage, damageType: profile.damageType || "energy",
-    // Пробитие доп. профиля — вне wdbc-5kd (не названо в тикете), оставлено
-    // числом как было; свести к формуле — отдельная задача при находке.
-    pen:       Number(profile.penetration) || 0,
+    damageSubtype: profile.damageSubtype || "",
+    // Пробитие доп. профиля — формула, как у основного (wdbc-1mwm9:
+    // Devastating Rain, профиль C(Tx) — Pen PR); голое число по-прежнему валидно.
+    pen:       profile.penetration ?? 0,
     props:     parsePsyPropsText(profile.propsText),
     charStat:  profile.charDamageStat || "",
     charForm:  profile.charDamageFormula || "",
     label:     profile.label || "профиль"
   } : {
     damage:    sys.damage, damageType: sys.damageType || "energy",
+    damageSubtype: sys.damageSubtype || "",
     pen:       sys.penetration,
     props:     sys.weaponProps || [],
     charStat:  sys.charDamageStat || "",
@@ -907,8 +914,9 @@ export async function executePsychotest(actor, item, opts) {
               <span>${hits > 1 ? `Попадание #${h + 1}` : "Урон"} (${dtLabel}, Проб. ${pen}): <b>${dmgRoll.total}</b></span>
               <button class="wh-apply-dmg-btn" type="button"
                 data-damage="${dmgRoll.total}" data-penetration="${pen}"
-                data-damage-type="${atk.damageType}" data-hit-location="Торс"
-                data-weapon-name="${item.name}" data-attacker="${actor.name}"
+                data-damage-type="${atk.damageType}" data-damage-subtype="${atk.damageSubtype}"
+                data-hit-location="Торс"
+                data-weapon-name="${item.name}" data-attacker="${actor.name}" data-attacker-uuid="${actor.uuid}"
                 data-felling="${wp.fellingRating ?? 0}"
                 data-primitive="${wp.primitive ? 1 : 0}"
                 data-ignore-shield="${wp.ignoreShield ? 1 : 0}"
@@ -1175,6 +1183,9 @@ export async function executePsychotest(actor, item, opts) {
   }, { rolls: allRolls });
   // Automated Animations (если установлен и включён) — module/integrations/autoanimations.mjs.
   triggerAttackAnimation({ actor, item, hit: success });
+  // Кто открыл манифестацию с контекстом (Огонь Души с карточки урона,
+  // module/combat/soulfire.mjs) — узнаёт исход; обычный каст с листа его не передаёт.
+  await opts.onResult?.({ success, deg, ePR });
 }
 
 export function rollPsyniscience(actor, rollSkill) {
@@ -1426,9 +1437,13 @@ function parsePsyPropsText(text) {
     if (!key) continue;
     const entry = { key, rating: 0, rating2: 0 };
     if (rating != null) {
+      // Число — числом, формула («PR*2», «(PR+СУ)*3») — строкой: её считает
+      // resolvePropRatings так же, как рейтинги system.weaponProps основного
+      // профиля (wdbc-1mwm9; раньше parseInt давал 0 или обрезал формулу).
+      const asRating = s => (/^-?\d+$/.test(s) ? Number(s) : s);
       const parts = rating.split(",").map(s => s.trim());
-      const r1 = parseInt(parts[0]); if (!isNaN(r1)) entry.rating = r1;
-      if (parts[1] != null) { const r2 = parseInt(parts[1]); if (!isNaN(r2)) entry.rating2 = r2; }
+      if (parts[0]) entry.rating = asRating(parts[0]);
+      if (parts[1]) entry.rating2 = asRating(parts[1]);
     }
     out.push(entry);
   }

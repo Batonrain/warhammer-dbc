@@ -25,6 +25,7 @@
     "range": "I×1м",
     "damage": "1d10+I.b",
     "damageType": "impact",
+    "damageSubtype": "crushing",
     "penetration": 0,
     "weaponProps": [
       {

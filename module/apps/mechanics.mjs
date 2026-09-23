@@ -336,8 +336,10 @@
 //      (flags.warhammer-dbc.cohesionApplied={squadUuid,amount} на предмете).
 //      Откат при УДАЛЕНИИ предмета — отдельно, в Hooks.on("deleteItem",...),
 //      т.к. предмета уже не будет к моменту, когда reconcile мог бы его найти.
-//    counterAttack: { ccDamage, ccPen, ccDamageType, ccTearing, ccShocking,
-//                      ccOnMiss, ccOnUnarmedOrGrapple, ccLabel }
+//    counterAttack: { ccDamage, ccPen, ccDamageType, ccDamageSubtype, ccTearing,
+//                      ccShocking, ccOnMiss, ccOnUnarmedOrGrapple, ccLabel }
+//      (ccDamageSubtype — подвид из скобок книги, ключ DAMAGE_SUBTYPES или ""
+//      — едет на кнопку «Применить урон», wdbc-9zpt)
 //      → ВСТРЕЧНАЯ АТАКА (wdbc-2wy7, Шипы/Цепные Бандольеры, стр. брони): пока
 //      предмет на акторе и активен (armorMod — установлен и, если включаемый,
 //      включён), противник, который промахнулся рукопашной по владельцу ИЛИ
@@ -372,6 +374,19 @@
 //      именно эту пару предметов брони с этим тестом означало бы re-архитектуру
 //      общего диалога встречных тестов ради одной строки правила, честный
 //      диагноз зафиксирован тикетом, не форсировался обходной путь.
+//    attackProp: { apScope:"unarmed"|"melee"|"ranged"|"attack", apKey,
+//                  apRating, apRating2 }
+//      → СВОЙСТВО АТАКИ (wdbc-rmrm9, Electric Arc/Электродуга): атаки
+//      владельца выбранной области получают Особое Свойство Оружия из
+//      constants/weapon-properties.mjs::WEAPON_PROPERTIES (apKey — ключ
+//      записи, apRating/apRating2 — её X/Y, число или формула с кубами вроде
+//      «2d10+T.b»). ЖИВОЙ ЗАПРОС, как counterAttack/reroll выше: ничего не
+//      пишет и не создаёт при получении предмета — module/rules/
+//      item-rules.mjs собирает из него правило grantWeaponProp с target
+//      "weapon:<apScope>" (или "attack" при apScope:"attack") в момент самой
+//      атаки, ровно как test/reroll-модификаторы собираются из
+//      testMod/reroll. apScope:"unarmed" — интегральные безоружные атаки
+//      (Кулак/Пинок/…, isIntegralAttack), не обычное оружие в руке.
 //
 //  Идемпотентность: flags.warhammer-dbc.mechanicsApplied — один раз при
 //  createItem (см. Hooks.on("createItem", ...) в warhammer-dbc.mjs).
@@ -618,6 +633,7 @@ const KIND_LABELS = {
   shieldArmorGate: "Щит: только по бронированным участкам",
   burningGrace: "Горение: окно без эффектов (Cooler)",
   counterAttack: "Встречная атака",
+  attackProp: "Свойство атаки",
   equipment: "Снаряжение",
   integralAttack: "Интегральная атака",
   loyalty: "Лояльность миньонов",
@@ -629,6 +645,14 @@ const KIND_LABELS = {
 // вкладки МЕХАНИКА уже уровень 1, поэтому подгрупп-в-подгруппах допускается 4.
 const MAX_GROUP_DEPTH = 5;
 const WEIGHT_SCOPE_LABELS = { all: "Общее", carry: "Ношение", lift: "Подъём", push: "Толкание" };
+// Области «Свойства атаки» (kind:"attackProp", wdbc-rmrm9) — какие атаки
+// владельца получают Особое Свойство Оружия из WEAPON_PROPERTIES.
+const AP_SCOPE_LABELS = {
+  unarmed: "Безоружные атаки (Кулак/Пинок/…, интегральные)",
+  melee: "Рукопашные атаки",
+  ranged: "Стрелковые атаки",
+  attack: "Любые атаки",
+};
 // Область override склонности (capability, capabilityMode:"aptOverride", wdbc-zk69).
 const CAPABILITY_APT_SCOPE_LABELS = { skill: "Навык", talent: "Талант", characteristic: "Характеристика" };
 // Области «Переброса» (kind:"reroll"). Совпадают с областями `target` в
@@ -934,8 +958,13 @@ export function blankMechEntry(kind = "characteristic") {
     // момент атаки против владельца (module/combat/counter-attack.mjs), при
     // получении предмета ничего не делает. ccDamage — формула урона (кубы +
     // S.b/T.b/…, тот же парсер, что у оружия — см. CC_DAMAGE_HINT).
-    ccDamage: "1d5", ccPen: 0, ccDamageType: "rending", ccTearing: false, ccShocking: false,
+    ccDamage: "1d5", ccPen: 0, ccDamageType: "rending", ccDamageSubtype: "", ccTearing: false, ccShocking: false,
     ccOnMiss: true, ccOnUnarmedOrGrapple: true, ccLabel: "",
+    // attackProp — «Свойство атаки» (wdbc-rmrm9): живой запрос, читается в
+    // момент атаки владельца (module/rules/item-rules.mjs), при получении
+    // предмета ничего не делает. apRating/apRating2 — число или формула
+    // (та же нотация, что у ccDamage — MECH_FORMULA_HINT/CC_DAMAGE_HINT).
+    apScope: "unarmed", apKey: "", apRating: "", apRating2: "",
     // reroll — «Переброс»: живой запрос, читается в момент броска
     // (module/rules/item-rules.mjs), при получении предмета ничего не делает.
     rerollScope: "all", rerollChar: "ag", rerollMode: "keepBest",
@@ -1139,12 +1168,22 @@ export function describeMechEntry(entry) {
       const triggers = [];
       if (entry.ccOnMiss) triggers.push("промах противника в рукопашной");
       if (entry.ccOnUnarmedOrGrapple) triggers.push("безоружная атака/Захват против владельца");
-      const dt = DAMAGE_TYPES[entry.ccDamageType] || entry.ccDamageType;
+      const sub = DAMAGE_SUBTYPES[entry.ccDamageSubtype]?.book;
+      const dt = (DAMAGE_TYPES[entry.ccDamageType] || entry.ccDamageType) + (sub ? ` ${sub}` : "");
       const tear = entry.ccTearing ? ", Рвущее" : "";
       const shock = entry.ccShocking ? ", Шокирующее" : "";
       const label = entry.ccLabel ? `«${entry.ccLabel}» ` : "";
       return `Встречная атака: ${label}${entry.ccDamage} ${dt}, Проб. ${entry.ccPen ?? 0}${tear}${shock} — ${
         triggers.length ? triggers.join(" / ") : "(триггер не выбран)"}`;
+    }
+    case "attackProp": {
+      const scopeLabel = AP_SCOPE_LABELS[entry.apScope] || entry.apScope;
+      if (!scopeLabel) return "Свойство атаки: (область не выбрана)";
+      const def = WEAPON_PROPERTIES[entry.apKey];
+      if (!def) return `Свойство атаки: ${scopeLabel} — (свойство не выбрано)`;
+      const ratings = [entry.apRating, entry.apRating2].filter(v => String(v ?? "").trim() !== "");
+      const ratingStr = ratings.length ? ` (${ratings.join("/")})` : "";
+      return `Свойство атаки: ${scopeLabel} — ${def.label}${ratingStr}`;
     }
     case "capability": {
       if (entry.capabilityMode === "aptOverride") {
@@ -1378,6 +1417,8 @@ function isEntryComplete(e) {
       return Array.isArray(e.ignoreTerrainProps) && e.ignoreTerrainProps.length > 0;
     case "counterAttack":
       return !!String(e.ccDamage ?? "").trim() && !!(e.ccOnMiss || e.ccOnUnarmedOrGrapple);
+    case "attackProp":
+      return !!e.apScope && !!e.apKey && !!WEAPON_PROPERTIES[e.apKey];
     case "fatigue":
       return e.fatigueAction === "threshold" && !!e.fatigueThresholdChar;
     case "condition":
@@ -1962,6 +2003,14 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
     // Живой запрос, как terrainIgnore выше: module/combat/counter-attack.mjs
     // читает Механику предмета прямо в момент атаки против владельца — писать
     // и откатывать нечего.
+    return;
+  }
+
+  if (entry.kind === "attackProp") {
+    // Живой запрос (wdbc-rmrm9): правила атаки собираются в момент самой
+    // атаки — module/rules/item-rules.mjs превращает запись в правило
+    // grantWeaponProp (target "weapon:<apScope>" / "attack") — писать и
+    // откатывать нечего, ровно как у reroll/testMod ниже.
     return;
   }
 
@@ -3276,6 +3325,10 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       <input type="text" class="mech-cc-damage" data-group-id="${groupId}" data-entry-id="${ent.id}"
              value="${esc(ent.ccDamage ?? "")}" placeholder="напр. 1d5+S.b" title="${esc(CC_DAMAGE_HINT)}" ${dis}/>
       <select class="mech-cc-damage-type" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${dtOpts}</select>
+      <select class="mech-cc-damage-subtype" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Подвид урона из скобок книги" ${dis}>
+        <option value="" ${ent.ccDamageSubtype ? "" : "selected"}>— подвид —</option>${Object.entries(DAMAGE_SUBTYPES)
+          .map(([k, d]) => optHtml(k, d.label, ent.ccDamageSubtype === k)).join("")}
+      </select>
       <input type="number" class="mech-cc-pen" min="0" value="${esc(ent.ccPen ?? 0)}"
              title="Пробитие" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>
       <label class="mech-cc-check"><input type="checkbox" class="mech-cc-tearing" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.ccTearing ? "checked" : ""} ${dis}/> Рвущее</label>
@@ -3284,6 +3337,32 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       <label class="mech-cc-check"><input type="checkbox" class="mech-cc-on-unarmed" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.ccOnUnarmedOrGrapple ? "checked" : ""} ${dis}/> при безоружной атаке/Захвате против владельца</label>
       <input type="text" class="mech-cc-label" placeholder="подпись в карточке (по умолчанию — имя предмета)" value="${esc(ent.ccLabel || "")}"
              data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
+  }
+
+  if (ent.kind === "attackProp") {
+    // Свойство атаки (kind:"attackProp", wdbc-rmrm9): выбор области атак
+    // владельца + свойство из WEAPON_PROPERTIES + его рейтинг(и). Смена
+    // области/свойства сохраняет запись и даёт листу перерисоваться (тот же
+    // приём, что у .mech-fatigue-action выше) — так поля рейтинга
+    // появляются/прячутся по факту def.rating/def.rating2 выбранного свойства.
+    const scopeOpts = Object.entries(AP_SCOPE_LABELS)
+      .map(([v, l]) => optHtml(v, l, (ent.apScope || "unarmed") === v)).join("");
+    const propOpts = Object.values(WEAPON_PROPERTIES)
+      .map(p => optHtml(p.key, `${p.label} (${p.en})`, ent.apKey === p.key)).join("");
+    const def = WEAPON_PROPERTIES[ent.apKey];
+    const ratingHtml = (!def || def.rating) ? `
+      <input type="text" class="mech-ap-rating" value="${esc(ent.apRating ?? "")}"
+             placeholder="X, напр. 7 или PR" title="${esc(CC_DAMAGE_HINT)}"
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>` : "";
+    const rating2Html = (!def || def.rating2) ? `
+      <input type="text" class="mech-ap-rating2" value="${esc(ent.apRating2 ?? "")}"
+             placeholder="Y, напр. 2d10+T.b" title="${esc(CC_DAMAGE_HINT)}"
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>` : "";
+    return `
+      <select class="mech-ap-scope" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${scopeOpts}</select>
+      <select class="mech-ap-key" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+        <option value="" ${ent.apKey ? "" : "selected"}>— свойство —</option>${propOpts}
+      </select>${ratingHtml}${rating2Html}`;
   }
 
   if (ent.kind === "capability") {

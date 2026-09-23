@@ -166,7 +166,8 @@ export async function counterAttackSectionHtml(defenderActor, attackerActor, tri
         <button class="wh-apply-dmg-btn" type="button"
           data-force-target="${attackerActor?.uuid ?? ""}"
           data-damage="${dmgTotal}" data-penetration="${entry.ccPen || 0}"
-          data-damage-type="${entry.ccDamageType || "impact"}" data-hit-location="Торс"
+          data-damage-type="${entry.ccDamageType || "impact"}" data-damage-subtype="${entry.ccDamageSubtype || ""}"
+          data-hit-location="Торс"
           data-weapon-name="${esc(label)}" data-attacker="${esc(defenderActor.name)}" data-attacker-uuid="${defenderActor.uuid ?? ""}">
           Применить урон: ${dmgTotal} → ${esc(attackerActor?.name ?? "атакующему")}
         </button>

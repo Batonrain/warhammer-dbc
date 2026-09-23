@@ -330,6 +330,21 @@ function ruleFromEntry(item, entry, groupId = null) {
     return { id, label: entry.label || item.name, when: {}, effects: [{ kind: "failDegMod", target, value: Number(entry.value) || 0 }] };
   }
 
+  if (entry?.kind === "attackProp") {
+    // «Свойство атаки» (wdbc-rmrm9, Электродуга: «Все безоружные атаки
+    // получают свойства Arc (7/2d10+T.b) и Shocking») — атаки владельца
+    // выбранной области получают Особое Свойство Оружия. Тот же эффект
+    // grantWeaponProp, что у правил библиотеки (beastman-shaman.mjs):
+    // attack-dialog.mjs доливает его в свойства атаки до расчёта урона.
+    const key = String(entry.apKey || "").trim();
+    if (!key) return null;
+    const scope = String(entry.apScope || "attack").trim();
+    const target = scope === "attack" ? "attack" : `weapon:${scope}`;
+    return { id, label: entry.label || item.name, when: {},
+             effects: [{ kind: "grantWeaponProp", target, propKey: key,
+                         rating: entry.apRating ?? 0, rating2: entry.apRating2 ?? 0 }] };
+  }
+
   // entry?.kind === "condition" сюда не доходит: «Смягчение» собирается не
   // по одной записи, а по ключу Состояния СРАЗУ со всех предметов
   // (collectMitigations + mitigationRules ниже, вызывается из

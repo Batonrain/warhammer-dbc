@@ -188,7 +188,8 @@ async function _resolveWrenchSuccess(actor) {
     const { applyDamageToActor } = await import("./damage.mjs");
     await applyDamageToActor(partner, {
       rawDamage: roll.total, penetration: Number(claws.system?.penetration) || 0,
-      damageType: claws.system?.damageType || "impact", hitLocation: "Торс", melee: true,
+      damageType: claws.system?.damageType || "impact", damageSubtype: claws.system?.damageSubtype || "",
+      hitLocation: "Торс", melee: true,
       attackerName: actor.name, attackerUuid: actor.uuid, weaponName: claws.name
     });
     await postTestCard(actor, {
@@ -200,7 +201,7 @@ async function _resolveWrenchSuccess(actor) {
     const dmg = roll.total + sb;
     const { applyDamageToActor } = await import("./damage.mjs");
     await applyDamageToActor(partner, {
-      rawDamage: dmg, penetration: 0, damageType: "impact", ignoreArmour: true,
+      rawDamage: dmg, penetration: 0, damageType: "impact", damageSubtype: "crushing", ignoreArmour: true,
       hitLocation: "Торс", melee: true,
       attackerName: actor.name, attackerUuid: actor.uuid, weaponName: "Заломить"
     });
@@ -331,7 +332,8 @@ async function _doBite(actor) {
   const { applyDamageToActor } = await import("./damage.mjs");
   await applyDamageToActor(partner, {
     rawDamage: dmgRoll.total, penetration: (Number(biteWeapon.system?.penetration) || 0) + invocationAdd.pen,
-    damageType: biteWeapon.system?.damageType || "impact", hitLocation: "Торс", melee: true,
+    damageType: biteWeapon.system?.damageType || "impact", damageSubtype: biteWeapon.system?.damageSubtype || "",
+    hitLocation: "Торс", melee: true,
     attackerName: actor.name, attackerUuid: actor.uuid, weaponName: biteWeapon.name
   });
   await postTestCard(actor, {
@@ -367,7 +369,7 @@ async function _doCrunch(actor) {
   const { applyDamageToActor } = await import("./damage.mjs");
   await applyDamageToActor(partner, {
     rawDamage: dmg, penetration: 0, damageType: weapon.system?.damageType || "impact",
-    hitLocation: "Торс", melee: true,
+    damageSubtype: weapon.system?.damageSubtype || "", hitLocation: "Торс", melee: true,
     attackerName: actor.name, attackerUuid: actor.uuid, weaponName: weapon.name
   });
   await postTestCard(actor, {
@@ -840,3 +842,10 @@ export function showGrappleDialog(actor) {
     }
   });
 }
+
+// Экспорт ТОЛЬКО ради теста (test/combat/damage-subtype-sources.test.mjs —
+// подвид урона в прямых попаданиях Борьбы, wdbc-9zpt): внутри системы их зовёт
+// лишь этот файл. showGrappleDialog, через который они идут в игре, заглушка
+// тестов не проходит (см. шапку test/combat/grapple.test.mjs). Тот же приём,
+// что у vehicle.mjs::_resolveRam.
+export { _resolveWrenchSuccess, _doBite, _doCrunch };

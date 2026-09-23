@@ -20,10 +20,11 @@
     "sustainRange": "PR×10м",
     "sustainable": true,
     "sustainCost": 1,
-    "sustainAction": "free",
+    "sustainAction": "half",
     "damage": "3d10+3*PR",
     "damageType": "energy",
-    "penetration": 0,
+    "damageSubtype": "",
+    "penetration": "3*PR",
     "weaponProps": [
       {
         "key": "deflagrate",
@@ -32,7 +33,18 @@
     ],
     "charDamageStat": "",
     "charDamageFormula": "",
-    "profiles": [],
+    "profiles": [
+      {
+        "label": "Аура жара E(Fl)",
+        "damage": "1d10+2*PR",
+        "damageType": "energy",
+        "damageSubtype": "flame",
+        "penetration": "0",
+        "propsText": "Blast",
+        "charDamageStat": "",
+        "charDamageFormula": ""
+      }
+    ],
     "variants": [],
     "effect": "Атака · Открытое Пламя · Призыв. Поддержание: Полудействие. Треб.: Fire Storm. Сфера плазмы Ø1м из источника пламени (псайкер иммунен). Своб. действием двигать на PR×2м — на пути 3d10+3×PR E, Pen 3×PR, Deflagrate (PR) (Избегание +20). Аура жара PR×1м: 1d10+2×PR E(Fl) (Blast).",
     "isSustained": false,

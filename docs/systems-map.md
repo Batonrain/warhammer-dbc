@@ -92,7 +92,12 @@
   поглощение, локация, критический эффект — центральный расчёт.
 - Подвиды урона в скобках книги (I(Cr)/X(Fr)/E(El)/E(Fl)/E(Ls)/C(Tx), wdbc-q0q8,
   12.09.2026) — на уровень точнее широкого `damageType`: `system.damageSubtype`
-  у оружия (`data/item/weapon.mjs`), `damageImmunity.subtype.*` (иммунитет),
+  у оружия (`data/item/weapon.mjs`), психосилы и её `profiles[]`, техночуда,
+  `ccDamageSubtype` встречной атаки Конструктора (wdbc-9zpt); до урона едет
+  атрибутом `data-damage-subtype` кнопки «Применить урон» — его кладут все
+  окна урона (атака, Орда, Таран/Скакун — I(Cr), Борьба, Дуга — E(El),
+  психосила, техночудо, встречная атака; тест
+  `test/combat/damage-subtype-sources.test.mjs`), `damageImmunity.subtype.*` (иммунитет),
   `system.absorption.vsSubtype.<подвид>` (AP-бонус, читает
   `combat/armor-properties.mjs::resolveArmorAbsorptionAP`), `ARMOR_PROPERTIES`
   auto-директивы `noApVsSubtype`/`doubleApVsSubtype`/`tripleApVsSubtype`/
@@ -517,6 +522,14 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   gun-arm-source.mjs`. «Рука Смерти»: `rules/hand-of-death.mjs` + `apps`.
   «Выстрел не тратит патрон»: `rules/ammo-free.mjs`.
 - `migrations/weapon-grips.mjs` — разовое заполнение Хватов/Профилей из текста.
+- «Свойство атаки» Конструктора (`kind:"attackProp"`, wdbc-rmrm9) — предмет
+  выдаёт Особое Свойство Оружия атакам владельца области unarmed/melee/
+  ranged/attack: `rules/item-rules.mjs` → эффект `grantWeaponProp`
+  (`rules/resolve-test.mjs::weaponPropsFromRules`, рейтинги-формулы строкой),
+  область `weapon:unarmed` = интегральные атаки (`ctx.unarmed`, ставит
+  `sheets/attack-dialog.mjs`). Первый пользователь — Электродуга (Arc + Shocking
+  безоружным). Урон Дуги с бонусом характеристики («2d10+T.b») подставляет
+  `hooks.mjs` (.wh-arc-btn) по характеристикам стрелка.
 
 ## 7. Броня, щиты, защитные поля
 
@@ -924,6 +937,16 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   Руна), wdbc-exjp (Импровизированная Руна, Прометеев Огонь — обоим нужен
   список изученных Рун), wdbc-qd6w (сочетание механик Пути, Тауматургия,
   −30 обнаружению манифестации).
+- Огонь Души / Soulfire (`combat/soulfire.mjs`, 23.09.2026) — кнопка силы
+  рядом с каждой кнопкой урона E(Fl) своего псайкера (впрыскивается в
+  `hooks.mjs` renderChatMessageHTML); открывает обычное окно манифестации
+  (`showManifestDialog(actor, item, {onResult})` — executePsychotest отдаёт
+  исход через `opts.onResult`), при Успехе: +PRd5 к попаданию, флаг
+  `ignoreSubtypeImmunity` (combat/damage.mjs пропускает
+  `damageImmunity.subtype.*`), псайкеру PR+1d5 в `system.charDamage.wp`.
+- Доп. профиль психосилы (`system.profiles[]`) понимает Пробитие формулой и
+  формульные рейтинги в `propsText` (wdbc-1mwm9) — выбор типа урона силой
+  (Опустошительный Дождь: огонь/яд) делается профилем.
 
 ## 15. Крафт, Мастерская, Качество, Разгрузка
 

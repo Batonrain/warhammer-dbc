@@ -70,7 +70,7 @@ export const CAPABILITIES = {
   },
   "weaponPropertyImmunity.shocking": {
     label: "Иммунитет к свойству оружия Shocking (не оглушается)",
-    source: "не выдана ни одним предметом пака на 30.08.2026 — заведена про запас (Дар Кхорна Purity of Wrath даёт похожий эффект, но только в Ярости — см. weaponPropertyImmunityInRage.shocking)",
+    source: "Electric Arc / Электродуга (биоимплант Друкхари, wdbc-rmrm9). Дар Кхорна Purity of Wrath даёт похожий эффект, но только в Ярости — см. weaponPropertyImmunityInRage.shocking",
     reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — hooks.mjs _applyWeaponPropEffect (кнопка condition:\"stunned\")"
   },
   "weaponPropertyImmunity.snare": {

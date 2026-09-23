@@ -22,6 +22,7 @@
     "sustainAction": "free",
     "damage": "3d10+Х",
     "damageType": "impact",
+    "damageSubtype": "crushing",
     "penetration": "2*Х",
     "xFormula": "ceil(СУ/2)",
     "vortexPersistent": true,

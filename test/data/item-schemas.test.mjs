@@ -466,7 +466,7 @@ const TYPES = {
       sustainable: false, sustainCost: 1, sustainAction: "free",
       // wdbc-5kd: penetration — формула строкой (как damage), не число:
       // «Разрушение» Pen=PR, «Сверхъестественный Шторм» Pen=PR×3.
-      damage: "", damageType: "energy", penetration: "0", xFormula: "", vortexPersistent: false, weaponProps: [],
+      damage: "", damageType: "energy", damageSubtype: "", penetration: "0", xFormula: "", vortexPersistent: false, weaponProps: [],
       charDamageStat: "", charDamageFormula: "", profiles: [], variants: [],
       resistChar: "", resistMod: 0,
       effect: "", isSustained: false, sustainedDegree: null, sustainedEpr: null, sustainedTargetUuid: "",
@@ -494,7 +494,7 @@ const TYPES = {
       miracleType: "imperative", extraTypes: [], iron: "", cost: 0, rating: 1,
       cognitionCost: 1, energyCost: 0, sustainCost: 0, sustainAction: "free",
       testSkill: "techUse", testMod: 0, action: "full", sustained: false,
-      compiled: false, range: "", damage: "", damageType: "energy",
+      compiled: false, range: "", damage: "", damageType: "energy", damageSubtype: "",
       penetration: 0, weaponProps: [], effect: "",
       effects: { charBonusStat: "", charBonusValue: 0, charBonuses: [] },
       bookSource: ""

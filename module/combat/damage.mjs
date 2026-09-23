@@ -726,7 +726,8 @@ export async function applyDamageToActor(actor, damageData) {
     blast = 0,   // Взрывное(X): уже в damageData для доп. попаданий по Орде — Странной Неуязвимости нужен сам факт свойства (wdbc-1rno)
     spray = false, // Распыление: свойство присутствует (wdbc-1rno)
     hasExtreme = false, // Экстремальный Урон (wdbc-x1nz.2.50): гарантирует 1 непоглощаемого урона ниже
-    opportunistFloor = false // Оппортунист/versatile 10-10 (wdbc-1rno.35): минимум 1d10−2(мин.1) вместо флэт-1
+    opportunistFloor = false, // Оппортунист/versatile 10-10 (wdbc-1rno.35): минимум 1d10−2(мин.1) вместо флэт-1
+    ignoreSubtypeImmunity = false // Огонь Души (combat/soulfire.mjs): иммунитет к подвиду этого попадания не действует
   } = damageData;
 
   // Bronze Myrmidon (wdbc-1rno.1, rules/bronze-myrmidon.mjs): у актора с
@@ -768,7 +769,8 @@ export async function applyDamageToActor(actor, damageData) {
   // не только побочного эффекта. Единое пространство имён на все 6 подвидов
   // (не по одному capability-ключу на подвид, как выше) — источник сам
   // называет подвид, а не жёстко на нём завязан код.
-  if (damageSubtype && hasRuleFlag(actor, `damageImmunity.subtype.${damageSubtype}`)) return;
+  if (damageSubtype && !ignoreSubtypeImmunity
+      && hasRuleFlag(actor, `damageImmunity.subtype.${damageSubtype}`)) return;
 
   const absorption = system.absorption || {};
   const armorKey  = LOCATION_TO_ARMOR[hitLocation] || "body";
