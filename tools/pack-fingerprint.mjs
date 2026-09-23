@@ -21,7 +21,8 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { createHash } from "node:crypto";
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { join, relative } from "node:path";
 
 /**
  * Версия АЛГОРИТМА отпечатка (wdbc-7qjg).
@@ -256,6 +257,59 @@ export async function allFingerprints(packs, toAbs) {
   const out = {};
   for (const p of packs) {
     const fp = await packFingerprint(toAbs(p.dir));
+    if (fp) out[p.name] = fp;
+  }
+  return out;
+}
+
+/**
+ * Отпечаток ИСХОДНИКА пака — папки packs-src/<пак> или файла книги (wdbc-6dps).
+ *
+ * Отпечаток базы выше отвечает на вопрос «правили ли в игре после сверки».
+ * Этот — на обратный: «менялись ли исходники после сверки» (пулл, правка,
+ * переключение ветки). Если да, а база не пересобрана, база старше исходников,
+ * и извлечение молча вернуло бы в packs-src её старое содержимое — даже когда
+ * состав документов совпадает и сторож дрейфа (tools/pack-drift.mjs) молчит.
+ * Так выглядела вторая половина инцидента 14.09.2026.
+ *
+ * Считается по байтам файлов, а не по документам: исходники и есть то, что
+ * пишут инструменты, и лишних полей от Foundry в них нет. Переводы строк
+ * сводятся к \n — иначе core.autocrlf на Windows менял бы отпечаток без правки.
+ * Путь внутри папки входит в отпечаток: переезд документа в другую папку —
+ * тоже правка.
+ *
+ * @param {string} absPath абсолютный путь к папке пака или файлу книги
+ * @returns {?string} отпечаток; null — исходника нет
+ */
+export function sourceFingerprint(absPath) {
+  if (!existsSync(absPath)) return null;
+  const h = createHash("sha1");
+  const add = (file, rel) => h.update(`${rel}\x00${readFileSync(file, "utf8").replace(/\r\n/g, "\n")}\x01`);
+  if (!statSync(absPath).isDirectory()) {
+    add(absPath, "");
+    return h.digest("hex");
+  }
+  const files = readdirSync(absPath, { withFileTypes: true, recursive: true })
+    .filter(e => !e.isDirectory() && e.name.endsWith(".json"))
+    .map(e => join(e.parentPath ?? e.path, e.name))
+    .map(file => ({ file, rel: relative(absPath, file).replace(/\\/g, "/") }))
+    .sort((a, b) => (a.rel < b.rel ? -1 : a.rel > b.rel ? 1 : 0));
+  h.update(`${files.length}\x01`);
+  for (const { file, rel } of files) add(file, rel);
+  return h.digest("hex");
+}
+
+/**
+ * Отпечатки исходников набора паков: имя пака → отпечаток. Паки без
+ * исходника в набор не попадают — как и в allFingerprints выше.
+ *
+ * @param {Array<{name: string, source: string}>} packs source — абсолютный путь
+ * @returns {Object<string,string>}
+ */
+export function allSourceFingerprints(packs) {
+  const out = {};
+  for (const p of packs) {
+    const fp = sourceFingerprint(p.source);
     if (fp) out[p.name] = fp;
   }
   return out;

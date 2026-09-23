@@ -20,8 +20,8 @@
 
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, dirname } from "node:path";
-import { abs } from "./packs.mjs";
-import { FINGERPRINT_VERSION } from "./pack-fingerprint.mjs";
+import { SRC_ROOT, abs } from "./packs.mjs";
+import { FINGERPRINT_VERSION, allSourceFingerprints } from "./pack-fingerprint.mjs";
 
 /** Файл отметки. Имя с точки — рядом с базами паков он не мешает. */
 export const STAMP_FILE = "packs/.pack-stamp";
@@ -33,13 +33,23 @@ export const STAMP_FILE = "packs/.pack-stamp";
  * tools/pack-fingerprint.mjs). Именно по ним следующая сборка отличит правку в
  * игре от того, что мир просто открывали и LevelDB переписал файлы (wdbc-1c10).
  * Без них отметка остаётся прежней — одно время.
+ *
+ * `sources` — отпечатки ИСХОДНИКОВ на тот же момент (wdbc-6dps, sourcesChangedSince
+ * ниже). Не передано — переносятся из текущей отметки как есть: точечные
+ * сборка и извлечение (tools/_pack-one.mjs, _unpack-one.mjs) переписывают
+ * отметку ради одного пака и не должны молча стирать сверку остальных.
  */
-export function writeStamp(when = Date.now(), fingerprints = null) {
+export function writeStamp(when = Date.now(), fingerprints = null, sources = undefined) {
   const path = abs(STAMP_FILE);
   mkdirSync(dirname(path), { recursive: true });
+  if (sources === undefined) {
+    const prev = readStamp();
+    sources = prev && typeof prev === "object" ? prev.sources : null;
+  }
   const body = fingerprints
     ? JSON.stringify({ when: new Date(when).toISOString(),
-                       fpVersion: FINGERPRINT_VERSION, packs: fingerprints }, null, 2)
+                       fpVersion: FINGERPRINT_VERSION, packs: fingerprints,
+                       ...(sources ? { sources } : {}) }, null, 2)
     : new Date(when).toISOString();
   writeFileSync(path, `${body}\n`);
   return when;
@@ -66,13 +76,65 @@ export function readStamp() {
       const when = Date.parse(doc.when);
       if (Number.isNaN(when)) return null;
       return { when, fpVersion: Number(doc.fpVersion) || 1,
-               packs: doc.packs && typeof doc.packs === "object" ? doc.packs : {} };
+               packs: doc.packs && typeof doc.packs === "object" ? doc.packs : {},
+               sources: doc.sources && typeof doc.sources === "object" ? doc.sources : null };
     } catch {
       return null; // испорченная отметка читается как отсутствующая
     }
   }
   const ms = Date.parse(raw);
   return Number.isNaN(ms) ? null : ms;
+}
+
+/** Где лежит исходник пака: у книги — один файл, у библиотеки — папка. */
+export function sourcePathOf(p) {
+  return p.slug ? abs(`${SRC_ROOT}/books/${p.slug}.json`) : abs(p.src);
+}
+
+/** Текущие отпечатки исходников перечисленных паков. */
+export function currentSourceFingerprints(packs) {
+  return allSourceFingerprints(packs.map(p => ({ name: p.name, source: sourcePathOf(p) })));
+}
+
+/**
+ * Дописать в отметку отпечатки исходников нескольких паков, ничего больше в
+ * ней не трогая: ни время, ни отпечатки баз, ни версию их алгоритма.
+ *
+ * Для точечных операций (--pack, _pack-one, _unpack-one): после них исходник
+ * и база ИМЕННО ЭТИХ паков сведены, а о прочих сказать нечего. Отметки нет
+ * или она старого формата — писать некуда, возвращается false.
+ */
+export function recordSources(fresh) {
+  const stamp = readStamp();
+  if (!stamp || typeof stamp !== "object") return false;
+  const path = abs(STAMP_FILE);
+  const doc = JSON.parse(readFileSync(path, "utf8"));
+  doc.sources = { ...(doc.sources ?? {}), ...fresh };
+  writeFileSync(path, `${JSON.stringify(doc, null, 2)}\n`);
+  return true;
+}
+
+/**
+ * Исходники каких паков изменились после последней сверки (wdbc-6dps).
+ *
+ * Это обратная сторона packsChangedSince: там «в игре правили, а исходники не
+ * сняты» и под угрозой сборка, здесь «исходники правили, а база не
+ * пересобрана» и под угрозой извлечение. Сторож дрейфа (tools/pack-drift.mjs)
+ * этот случай видит, только если из исходников пропал бы ДОКУМЕНТ; устаревшие
+ * поля у тех же документов он пропускал молча.
+ *
+ * Чистая функция.
+ *
+ * @param {?(number|{sources: ?Object<string,string>})} stamp отметка (readStamp)
+ * @param {Object<string,string>} current имя пака → отпечаток исходника сейчас
+ * @returns {?string[]} изменившиеся паки по возрастанию; null — сверять не с
+ *   чем (отметки нет, старый формат или она записана до wdbc-6dps). Судить
+ *   тогда нечем, и вызывающий должен ошибиться в безопасную сторону.
+ */
+export function sourcesChangedSince(stamp, current) {
+  const known = stamp && typeof stamp === "object" ? stamp.sources : null;
+  if (!known) return null;
+  return Object.keys(current).filter(name => known[name] !== current[name]).sort();
 }
 
 /**

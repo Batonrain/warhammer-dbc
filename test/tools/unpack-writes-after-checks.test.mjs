@@ -71,3 +71,20 @@ describe("unpack.mjs пишет в packs-src только после всех п
     expect(SRC).toContain("shouldStopOnDrift(lost.length, FORCE_DRIFT)");
   });
 });
+
+// wdbc-6dps: база, устаревшая по СОДЕРЖИМОМУ при том же составе, проходила
+// сторож дрейфа молча. Сверка отпечатков исходников обязана стоять до первого
+// извлечения и слушать то же согласие, что и дрейф.
+describe("unpack.mjs сверяет исходники с отметкой до извлечения", () => {
+  it("сторож устаревшей базы стоит раньше первого extractPack", () => {
+    const guard = lineOf("sourcesChangedSince(readStamp()");
+    const firstExtract = lineOf("await extractPack(");
+    expect(guard).toBeLessThan(firstExtract);
+    expect(SRC).toMatch(/sourceDrift[^\n]*!FORCE_DRIFT/);
+  });
+
+  it("отметка после извлечения несёт отпечатки исходников", () => {
+    expect(SRC).toContain("currentSourceFingerprints([...libraryPacks, ...journalPacks]));");
+    expect(SRC).toContain("recordSources(currentSourceFingerprints(");
+  });
+});

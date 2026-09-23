@@ -19,7 +19,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { JOURNAL_PACKS, LIBRARY_PACKS, SRC_ROOT, abs, isPacksBusy, reportBusy } from "./packs.mjs";
-import { latestDbChange, packsChangedSince, readStamp, writeStamp } from "./pack-stamp.mjs";
+import { currentSourceFingerprints, latestDbChange, packsChangedSince, readStamp, writeStamp } from "./pack-stamp.mjs";
 import { packFingerprintInfo, allFingerprints, FINGERPRINT_VERSION } from "./pack-fingerprint.mjs";
 import { bookDocuments, linkIndexFrom } from "./book-docs.mjs";
 
@@ -146,7 +146,9 @@ try {
 }
 
 // Базы и исходники сведены — отметка сдвигается, иначе следующая же сборка
-// приняла бы собственную запись за чужую правку.
-await writeStamp(Date.now(), await allFingerprints([...LIBRARY_PACKS, ...JOURNAL_PACKS], abs));
+// приняла бы собственную запись за чужую правку. Отпечатки исходников — для
+// извлечения: по ним оно узнает, что packs-src ушёл вперёд базы (wdbc-6dps).
+await writeStamp(Date.now(), await allFingerprints([...LIBRARY_PACKS, ...JOURNAL_PACKS], abs),
+  currentSourceFingerprints([...LIBRARY_PACKS, ...JOURNAL_PACKS]));
 
 console.log(`Готово: ${LIBRARY_PACKS.length} библиотек, ${JOURNAL_PACKS.length} книг.`);

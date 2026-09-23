@@ -41,7 +41,7 @@ import { NAME_LIMIT, safe } from "./pack-file-name.mjs";
 import { JOURNAL_PACKS, LIBRARY_PACKS, ROOT, SRC_ROOT, abs, isPacksBusy, reportBusy } from "./packs.mjs";
 import { bookSource } from "./book-source.mjs";
 import { bookDocIds } from "./book-docs.mjs";
-import { writeStamp } from "./pack-stamp.mjs";
+import { currentSourceFingerprints, readStamp, recordSources, sourcesChangedSince, writeStamp } from "./pack-stamp.mjs";
 import { allFingerprints } from "./pack-fingerprint.mjs";
 import { uncommittedPacksSrc } from "./git-status.mjs";
 import { docIdsIn, docsMissingInDb, shouldStopOnDrift } from "./pack-drift.mjs";
@@ -80,6 +80,34 @@ if (dirty.length && !FORCE) {
   console.error("");
   console.error("Сохраните их первым делом: git add -- packs-src && git commit");
   console.error("Если эти правки не нужны — снимите поверх них: npm run packs:unpack -- --force");
+  process.exit(1);
+}
+
+// ── Сторож устаревшей базы: исходники менялись после последней сверки ──
+// (wdbc-6dps). Сторож дрейфа ниже сравнивает только СОСТАВ документов и
+// молчит, если база устарела по содержимому, а состав тот же: извлечение
+// тогда тихо возвращает в packs-src старые значения полей. Так прошла вторая
+// половина инцидента 14.09.2026. Здесь сверяются отпечатки исходников с теми,
+// что сборка/извлечение записали в отметку: не совпали — packs-src ушёл
+// вперёд (пулл, правка, другая ветка), а база не пересобрана.
+//
+// Согласие то же, что у сторожа дрейфа, --force-drift: оба про одно —
+// «перепиши закоммиченные исходники тем, что лежит в базе».
+const stalePacks = [...libraryPacks, ...journalPacks].filter(p => existsSync(abs(p.dir, "CURRENT")));
+const sourceDrift = sourcesChangedSince(readStamp(), currentSourceFingerprints(stalePacks));
+if ((sourceDrift === null || sourceDrift.length) && stalePacks.length && !FORCE_DRIFT) {
+  if (sourceDrift === null) {
+    console.error("Не с чем сверить исходники: отметка синхронизации записана до того, как в неё");
+    console.error("стали класть отпечатки packs-src (или её нет вовсе). Устарела ли база — не видно.");
+  } else {
+    console.error("Исходники менялись после последней сверки с базой — база, похоже, УСТАРЕЛА:");
+    console.error(`  ${sourceDrift.join(", ")}`);
+    console.error("Извлечение вернуло бы в packs-src её старое содержимое, даже там, где состав документов совпадает.");
+  }
+  console.error("");
+  console.error("Правок в игре не было — соберите базу из исходников: npm run packs:build");
+  console.error("Правки в игре были, а исходники в этих паках не нужны — снимите поверх: npm run packs:unpack -- --force-drift");
+  console.error("Правки есть с обеих сторон — снимите с --force-drift и верните нужное из git: git diff -- packs-src");
   process.exit(1);
 }
 
@@ -257,10 +285,16 @@ if (bookBehind.length) {
 // потребовать --force именно для только что снятых паков (их база не старше
 // новой отметки не станет), это не опасно: --force там примет ровно то, что
 // мы только что записали в исходники.
+//
+// Отпечатки исходников считаются ПОСЛЕ записи: это то, что теперь лежит в
+// packs-src и совпадает с базой. При --pack сверка обновляется только у снятых
+// паков — время и отпечатки баз остаются прежними (wdbc-6dps).
 if (packFilter) {
+  recordSources(currentSourceFingerprints([...libraryPacks, ...journalPacks]));
   console.log("--pack задан: отметка синхронизации не сдвинута (сдвигает только полный запуск).");
 } else {
-  await writeStamp(Date.now(), await allFingerprints([...libraryPacks, ...journalPacks], abs));
+  await writeStamp(Date.now(), await allFingerprints([...libraryPacks, ...journalPacks], abs),
+    currentSourceFingerprints([...libraryPacks, ...journalPacks]));
 }
 
 console.log(`Готово: ${done} из ${libraryPacks.length + journalPacks.length}.`);

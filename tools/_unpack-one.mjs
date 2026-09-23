@@ -22,7 +22,7 @@ import { existsSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { NAME_LIMIT, safe } from "./pack-file-name.mjs";
 import { LIBRARY_PACKS, abs, isPacksBusy, reportBusy } from "./packs.mjs";
-import { readStamp, writeStamp } from "./pack-stamp.mjs";
+import { currentSourceFingerprints, readStamp, recordSources, writeStamp } from "./pack-stamp.mjs";
 import { FINGERPRINT_VERSION, packFingerprintInfo } from "./pack-fingerprint.mjs";
 import { join } from "node:path";
 
@@ -110,6 +110,9 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
       console.log(`отметка синхронизации НЕ обновлена: ${decision.reason}`);
       console.log("следующая общая сборка (npm run packs:build) может ложно решить, что в компендиумах есть правки.");
     }
+    // После извлечения исходник и база этого пака сведены — это знает и сторож
+    // устаревшей базы в tools/unpack.mjs (wdbc-6dps).
+    recordSources(currentSourceFingerprints([p]));
   } catch (e) {
     if (isPacksBusy(e)) { reportBusy(e, "снять"); process.exit(1); }
     throw e;
