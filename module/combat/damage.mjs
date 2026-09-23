@@ -12,7 +12,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, outcomeHtml, rollStatLine } from "../helpers/test-card.mjs";
 import { ablativeDamage, mountRangedApBonus } from "../rules/mount.mjs";
 import { LAST_DAMAGE_WEAPON_FLAG } from "./blood-flame.mjs";
-import { resolveArmorAbsorptionAP, breachArmorAtLocation } from "./armor-properties.mjs";
+import { resolveArmorAbsorptionAP, breachArmorAtLocation, armorBreachOutcome } from "./armor-properties.mjs";
 import { applyWoundLoss, ablativeAbsorb } from "../rules/wounds.mjs";
 import { CAST_OUT_OF_DEATH_CAPABILITY, CAST_OUT_OF_DEATH_FLAG, scheduleCastOutOfDeathRegen } from "../rules/cast-out-of-death.mjs";
 import { eaterOfPainHoldersNear } from "../rules/eater-of-pain.mjs";
@@ -733,7 +733,8 @@ export async function applyDamageToActor(actor, damageData) {
     spray = false, // Распыление: свойство присутствует (wdbc-1rno)
     hasExtreme = false, // Экстремальный Урон (wdbc-x1nz.2.50): гарантирует 1 непоглощаемого урона ниже
     opportunistFloor = false, // Оппортунист/versatile 10-10 (wdbc-1rno.35): минимум 1d10−2(мин.1) вместо флэт-1
-    ignoreSubtypeImmunity = false // Огонь Души (combat/soulfire.mjs): иммунитет к подвиду этого попадания не действует
+    ignoreSubtypeImmunity = false, // Огонь Души (combat/soulfire.mjs): иммунитет к подвиду этого попадания не действует
+    sourceMessageId = "" // карточка атаки, с которой пришёл урон — к ней привязан итог пробития (wdbc-x1nz.2.79)
   } = damageData;
 
   // Bronze Myrmidon (wdbc-1rno.1, rules/bronze-myrmidon.mjs): у актора с
@@ -1004,10 +1005,26 @@ export async function applyDamageToActor(actor, damageData) {
   // его до 1, пока запас Ран полон, — первый же удар снимает слой, и дальше
   // Черта молчит до полного восстановления.
   let rawNet = Math.max(0, rawDamage - totalAbsorption - incomingReduction);
-  // Пробитие (wdbc-k0ff): непоглощённый урон дошёл до цели — броня этой
-  // локации скомпрометирована. warpSoak не считается: варп-оружие обходит
-  // броню целиком, а не проламывает её физически.
-  if (rawNet > 0 && !warpSoak) await breachArmorAtLocation(actor, armorKey);
+  // Пробитие (wdbc-k0ff): броня этой локации скомпрометирована. Считается
+  // своим расчётом книги (стр. 42, wdbc-x1nz.2.78: AP ×2, ×3 против I(Cr),
+  // без T.b — armorBreachOutcome), а не «любой непоглощённый урон»: удар,
+  // оставивший ушиб сквозь броню, её не пробивает. warpSoak не считается:
+  // варп-оружие обходит броню целиком, а не проламывает её физически.
+  const { breached, breachAbsorption } = warpSoak
+    ? { breached: false, breachAbsorption: 0 }
+    : armorBreachOutcome({
+        rawDamage, effArmorAP, damageSubtype,
+        otherAbsorption: ablativeShieldBefore + adaptBonus + incomingReduction
+      });
+  if (breached) await breachArmorAtLocation(actor, armorKey);
+  // Итог пробития для кнопок Rad/Toxic/… той же карточки (wdbc-x1nz.2.79):
+  // эффект «при пробитии брони» проверяет его в hooks.mjs::_applyWeaponPropEffect.
+  // Очередь из одной карточки — пробило хоть одним попаданием, значит пробито.
+  if (sourceMessageId) {
+    const prev = actor.getFlag?.("warhammer-dbc", "lastBreach");
+    const already = prev?.messageId === sourceMessageId && prev.breached;
+    actorUpdate["flags.warhammer-dbc.lastBreach"] = { messageId: sourceMessageId, breached: breached || !!already };
+  }
 
   // wdbc-bxw6: аблативные AP-моды брони и аблативный AP-щит теряют ровно 1
   // заряд с ЭТОГО попадания — независимо от нанесённого урона (rules/ablative-ap.mjs).
@@ -1282,6 +1299,9 @@ export async function applyDamageToActor(actor, damageData) {
           ? `<span class="dmg-tb-note">(T.b не игнорируется пробитием)</span>`
           : ""}
         ${propNotes.length ? `<div class="dmg-tb-note">${propNotes.join(" · ")}</div>` : ""}
+        ${armorAP > 0 ? `<div class="dmg-tb-note">${breached
+          ? "Броня пробита"
+          : "Броня не пробита"} (AP ×${damageSubtype === "crushing" ? 3 : 2} без T.b: ${breachAbsorption})</div>` : ""}
         ${reductionNote}
         ${ablativeShieldNote}
       </div>`;

@@ -236,7 +236,7 @@ export async function activateTechMiracle(actor, item) {
   let attackPropsSection = "";
   if (success && atkProps.length) {
     const propBlock  = buildPropertyChatBlock(atkProps);
-    const effectBtns = buildTargetEffectButtons(atkProps, { hit: true, netDamageKnown: false });
+    const effectBtns = buildTargetEffectButtons(atkProps, { hit: true });
     attackPropsSection = (propBlock || "") + (effectBtns || "");
   }
 

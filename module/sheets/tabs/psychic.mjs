@@ -974,7 +974,7 @@ export async function executePsychotest(actor, item, opts) {
   let attackPropsSection = "";
   if (success && isDamaging && atkProps.length) {
     const propBlock  = buildPropertyChatBlock(atkProps);
-    const effectBtns = buildTargetEffectButtons(atkProps, { hit: true, netDamageKnown: false, deg });
+    const effectBtns = buildTargetEffectButtons(atkProps, { hit: true, deg });
     attackPropsSection = (propBlock || "") + (effectBtns || "");
   }
 

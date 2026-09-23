@@ -49,7 +49,7 @@
 //    haywire     : true      — ЭМИ: бросок по таблице при попадании (damage.mjs)
 //    targetEffect: {...}      — эффект на цель (кнопка в чате), см. движок
 //      condition, testChar, testMod/testPerRating, rounds/fixedRounds,
-//      damage (формула кубика), damageFromRating, onUnsoaked — как раньше;
+//      damage (формула кубика), damageFromRating — как раньше; onBreach — только при пробитии брони (стр. 42, hooks.mjs::_applyWeaponPropEffect);
 //      damageFromRating2: true — доп. урон = rating2 предмета, если он задан
 //        (число или дайс-строка вроде «2d10+PR», PR резолвится в
 //        resolvePropRating до сюда), иначе — обычный `damage` как дефолт
@@ -510,7 +510,7 @@ export const WEAPON_PROPERTIES = {
     key: "rad", label: "Рад", en: "Rad", rating: true, cat: "ranged",
     desc: "Облучает цель ионизирующей радиацией. Если непоглощённый урон ≥ X — цель проходит тест T. Живые существа получают эффект Радиации.",
     reminder: "☢️ Рад (X): при непоглощ. уроне ≥X — тест T или Радиация",
-    auto: { targetEffect: { condition: "radiation", testChar: "t", testMod: 0, onUnsoaked: true } }
+    auto: { targetEffect: { condition: "radiation", testChar: "t", testMod: 0, onBreach: true } }
   },
 
   razorSharp: {
@@ -647,7 +647,7 @@ export const WEAPON_PROPERTIES = {
     key: "toxic", label: "Токсичное", en: "Toxic", rating: true, rating2: true, rating2Dice: true, cat: "both",
     desc: "При непоглощённом уроне цель проходит тест T−10×X, иначе получает Отравление и 1d10 (или книжный нестандартный урон, если указан) непоглощаемого урона (по правилам ядов).",
     reminder: "☠️ Токсичное (X): при непоглощ. уроне — тест T−10×X или Отравление + урон яда",
-    auto: { targetEffect: { condition: "poisoned", testChar: "t", testPerRating: -10, onUnsoaked: true, damage: "1d10", damageFromRating2: true } }
+    auto: { targetEffect: { condition: "poisoned", testChar: "t", testPerRating: -10, onBreach: true, damage: "1d10", damageFromRating2: true } }
   },
 
   tainted: {
@@ -922,7 +922,7 @@ export const WEAPON_PROPERTIES = {
     // Повторный тест на выход из Ступора в конце Хода цели — не автоматизирован
     // (движок targetEffect не умеет «повторить тест на снятие» сам, только
     // фиксированную/по СУ длительность) — ГМ снимает состояние вручную.
-    auto: { targetEffect: { condition: "dazed", testChar: "wp", testPerRating: -10, onUnsoaked: true } }
+    auto: { targetEffect: { condition: "dazed", testChar: "wp", testPerRating: -10, onBreach: true } }
   },
   bane: {
     key: "bane", label: "Погибель", en: "Bane (X)", rating: true, cat: "both",
@@ -931,7 +931,7 @@ export const WEAPON_PROPERTIES = {
     // vehicleFlatDamage: цель-Техника получает X непоглощаемого урона в
     // Структуру без теста вовсе (движок ветвит по actor.type в _applyWeaponPropEffect,
     // hooks.mjs) — тест Т−10×X/provalyDamage действует только на не-Технику.
-    auto: { targetEffect: { testChar: "t", testPerRating: -10, onUnsoaked: true, provalyDamage: { mult: 0, add: 0 }, vehicleFlatDamage: true } }
+    auto: { targetEffect: { testChar: "t", testPerRating: -10, onBreach: true, provalyDamage: { mult: 0, add: 0 }, vehicleFlatDamage: true } }
   },
   challenge: {
     key: "challenge", label: "Вызов", en: "Challenge (X)", rating: true, cat: "melee",

@@ -1592,7 +1592,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // ammoName (wdbc-utaw) — какой боеприпас заряжен на ЭТОТ выстрел, для
         // спец-боеприпасов, чей эффект зависит от собственной идентичности
         // (Гиперрост), не только от ключа свойства Toxic.
-        targetEffects: buildTargetEffectButtons(wProps, { hit, netDamageKnown: false, ammoName: loadedAmmo?.name || "" }),
+        targetEffects: buildTargetEffectButtons(wProps, { hit, ammoName: loadedAmmo?.name || "" }),
         counterAttack: counterAttackBlock,
         dice:          renderedDice
       }

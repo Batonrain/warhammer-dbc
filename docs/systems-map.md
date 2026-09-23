@@ -90,6 +90,12 @@
 - `module/combat/ablative-wounds.mjs` — авторегенерация аблатива по Ходу.
 - `module/combat/damage.mjs` — применение урона (`showApplyDamageDialog`):
   поглощение, локация, критический эффект — центральный расчёт.
+- Пробитие Брони (стр. 42, wdbc-x1nz.2.78/.79) — `combat/armor-properties.mjs::
+  armorBreachOutcome` (AP после Pen ×2, ×3 против I(Cr), без T.b); помечает
+  броню `system.breached` (Sealed, пустотная броня) и пишет итог в
+  `flags.warhammer-dbc.lastBreach` цели с id карточки атаки. Эффекты свойств с
+  `targetEffect.onBreach` (Rad, Toxic, Сновидение, Погибель) проверяют его в
+  `hooks.mjs::_applyWeaponPropEffect`; Shift-клик — наложить вручную.
 - Подвиды урона в скобках книги (I(Cr)/X(Fr)/E(El)/E(Fl)/E(Ls)/C(Tx), wdbc-q0q8,
   12.09.2026) — на уровень точнее широкого `damageType`: `system.damageSubtype`
   у оружия (`data/item/weapon.mjs`), психосилы и её `profiles[]`, техночуда,

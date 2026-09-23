@@ -1126,7 +1126,10 @@ export function registerHooks() {
           // Экстремальный Урон (стр. 34, wdbc-x1nz.2.50): «1 непоглощаемого
           // урона», если после Поглощения реального урона не осталось —
           // считается в applyDamageToActor/applyDamageToVehicle.
-          hasExtreme:      ds.hasExtreme === "1"
+          hasExtreme:      ds.hasExtreme === "1",
+          // Карточка, с которой пришёл урон: к ней привязывается итог
+          // пробития брони для кнопок Rad/Toxic той же карточки (wdbc-x1nz.2.79).
+          sourceMessageId: message?.id ?? ""
         };
         // «Прячась в Орде»: попадание уже расписано в Орду — цель не выбирается.
         if (ds.forceHorde) {
@@ -1416,7 +1419,9 @@ export function registerHooks() {
     html.querySelectorAll(".wh-wprop-apply-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
-        await _applyWeaponPropEffect(ev.currentTarget.dataset);
+        // Shift — ГМ накладывает эффект «при пробитии» вручную, минуя
+        // проверку пробития (wdbc-x1nz.2.79): урон применён мимо системы и т.п.
+        await _applyWeaponPropEffect(ev.currentTarget.dataset, { messageId: message?.id ?? "", force: ev.shiftKey });
       });
     });
 
@@ -1969,7 +1974,7 @@ async function _applyShipHullDamage(dmg) {
 // Экспорт с подчёркиванием — тот же приём, что _resolveSoulBurn выше:
 // внутренняя функция обработчика клика, но тестируемая напрямую (wdbc-5tz),
 // без симуляции самого клика по карточке чата.
-export async function _applyWeaponPropEffect(ds) {
+export async function _applyWeaponPropEffect(ds, { messageId = "", force = false } = {}) {
   // forceActorUuid (wdbc-z5mn) — цель уже известна на 100% (Встречная атака:
   // Shocking у Электродуги бьёт по нападающему, не по выбранному на сцене
   // токену) — тот же приём, что data-force-target у кнопки урона выше:
@@ -2073,6 +2078,27 @@ export async function _applyWeaponPropEffect(ds) {
       rolls: [],
       sound: null
     }, rollMode));
+  }
+
+  // «При пробитии брони» (Rad/Toxic/Сновидение/Погибель; стр. 42,
+  // wdbc-x1nz.2.79): эффект срабатывает, только если урон ЭТОЙ карточки,
+  // применённый к цели, пробил её броню (combat/damage.mjs пишет итог во
+  // flags.lastBreach). Технику и Орду не проверяем — у них свой учёт брони,
+  // пробитие там не считается. Shift-клик — ГМ накладывает вручную.
+  if (ds.wpOnBreach === "1" && !force && messageId && actor.type !== "vehicle" && actor.type !== "horde") {
+    const rec = actor.getFlag?.("warhammer-dbc", "lastBreach");
+    if (rec?.messageId !== messageId) {
+      return ui.notifications.warn(`⚠️ ${label}: сначала примените урон этой атаки к ${actor.name} — эффект срабатывает только при пробитии брони (Shift — наложить вручную).`);
+    }
+    if (!rec.breached) {
+      return ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor }),
+        content: `<div class="wh-roll-result">
+          <div class="roll-header">${label} → ${esc(actor.name)}</div>
+          <div class="roll-outcome"><span class="roll-success">Броня не пробита — эффект не применён</span></div>
+        </div>`
+      });
+    }
   }
 
   const allRolls = [];

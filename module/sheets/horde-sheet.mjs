@@ -617,7 +617,7 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
            ${isMelee && !wp.flexible ? `<button class="wh-parry-btn" type="button" data-extra-mod="0" data-attack-deg="${deg}">Парирование</button>` : ""}</div></div>`
       : `<div class="roll-defense-note">Попадание Орды нельзя Избегать (шквал / навал).</div>`;
 
-    const targetEffectBtns = buildTargetEffectButtons(wProps, { hit, netDamageKnown: false });
+    const targetEffectBtns = buildTargetEffectButtons(wProps, { hit });
     const magNote = magDice ? ` · <span class="horde-chip">Магнитуда +${magDice}d10</span>` : "";
     const meta = CHARACTERISTICS[key];
 

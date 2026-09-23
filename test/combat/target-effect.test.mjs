@@ -37,10 +37,9 @@ describe("buildTargetEffectButtons: базовое поведение (не до
     expect(html).toBe("");
   });
 
-  it("onUnsoaked без непоглощённого урона — кнопки нет", () => {
-    const html = buildTargetEffectButtons(props([{ key: "toxic", rating: 2 }]),
-      { hit: true, netDamageKnown: true, hadUnsoaked: false });
-    expect(html).toBe("");
+  it("эффект «при пробитии брони» — кнопка есть, но помечена data-wp-on-breach (проверка в hooks.mjs, wdbc-x1nz.2.79)", () => {
+    const html = buildTargetEffectButtons(props([{ key: "toxic", rating: 2 }]), { hit: true });
+    expect(html).toContain('data-wp-on-breach="1"');
   });
 });
 
@@ -194,25 +193,23 @@ describe("Monofilament — Связана+Беспомощна (helpless) и у�
   });
 });
 
-describe("Dreaming — Ступор (dazed) через ту же гейтящую onUnsoaked-логику, что Toxic/Rad", () => {
-  it("без непоглощённого урона кнопки нет", () => {
-    const html = buildTargetEffectButtons(props([{ key: "dreaming", rating: 1 }]),
-      { hit: true, netDamageKnown: true, hadUnsoaked: false });
-    expect(html).toBe("");
+describe("Dreaming — Ступор (dazed) через ту же проверку пробития, что Toxic/Rad", () => {
+  it("кнопка помечена data-wp-on-breach", () => {
+    const html = buildTargetEffectButtons(props([{ key: "dreaming", rating: 1 }]), { hit: true });
+    expect(html).toContain('data-wp-on-breach="1"');
   });
 
-  it("с непоглощённым уроном — кнопка на condition dazed, тест по wp", () => {
-    const html = buildTargetEffectButtons(props([{ key: "dreaming", rating: 1 }]),
-      { hit: true, netDamageKnown: true, hadUnsoaked: true });
+  it("кнопка на condition dazed, тест по wp", () => {
+    const html = buildTargetEffectButtons(props([{ key: "dreaming", rating: 1 }]), { hit: true });
     expect(html).toContain('data-wp-condition="dazed"');
     expect(html).toContain("тест WP");
   });
 });
 
-describe("Challenge — Вызван (challenged) сразу на попадании, без onUnsoaked", () => {
-  it("кнопка есть уже на простом попадании (Погибель/Сновидение требуют непоглощённый урон, Вызов — нет)", () => {
-    const html = buildTargetEffectButtons(props([{ key: "challenge", rating: 2 }]),
-      { hit: true, netDamageKnown: true, hadUnsoaked: false });
+describe("Challenge — Вызван (challenged) сразу на попадании, без проверки пробития", () => {
+  it("кнопка без пометки пробития (Погибель/Сновидение требуют пробития, Вызов — нет)", () => {
+    const html = buildTargetEffectButtons(props([{ key: "challenge", rating: 2 }]), { hit: true });
+    expect(html).toContain('data-wp-on-breach="0"');
     expect(html).toContain('data-wp-condition="challenged"');
     expect(html).toContain("тест WP");
   });
