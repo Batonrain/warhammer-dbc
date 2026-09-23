@@ -16,6 +16,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { buildPackIndex, matchPackSource, allItemPackDocs } from "../apps/content-sync.mjs";
+import { deltaOwnedItems, unlinkedTokens } from "./unlinked-tokens.mjs";
 
 /** Предметы без сохранённой опоры, у которых нашлось соответствие в паке. */
 export function itemsNeedingBaseline(items = [], index) {
@@ -31,8 +32,8 @@ export function itemsNeedingBaseline(items = [], index) {
  * вызывающий код в stampContentSyncBaseline (тот же приём, что и в
  * module/migrations/gear-equipped.mjs).
  */
-async function stampOneActorContentSyncBaseline(actor, index) {
-  const updates = itemsNeedingBaseline(actor.items, index).map(({ item }) => ({
+async function stampOneActorContentSyncBaseline(actor, index, items = actor.items) {
+  const updates = itemsNeedingBaseline(items, index).map(({ item }) => ({
     _id: item.id,
     "flags.warhammer-dbc.contentSync.baseline": foundry.utils.deepClone(item.system)
   }));
@@ -50,7 +51,7 @@ async function stampOneActorContentSyncBaseline(actor, index) {
  * Ошибка на одном акторе/токене логируется и пропускается, не прерывая
  * обработку следующих: опоры разных персонажей друг от друга не зависят.
  */
-export async function stampContentSyncBaseline() {
+export async function stampContentSyncBaseline({ tokensOnly = false } = {}) {
   if (!game.user?.isGM) { ui.notifications?.warn("Опора синхронизации контента: только для ГМа."); return; }
 
   const index = buildPackIndex(await allItemPackDocs());
@@ -59,7 +60,7 @@ export async function stampContentSyncBaseline() {
 
   // Мировые акторы. Связанные токены (actorLink:true) используют тот же
   // документ Actor — им отдельный проход не нужен.
-  for (const actor of game.actors) {
+  for (const actor of tokensOnly ? [] : (game.actors ?? [])) {
     try {
       stamped += await stampOneActorContentSyncBaseline(actor, index);
     } catch (e) {
@@ -70,17 +71,14 @@ export async function stampContentSyncBaseline() {
 
   // Несвязанные токены сцен: их синтетический актор (tokenDoc.actor) пишет
   // прямо в ActorDelta токена.
-  for (const scene of game.scenes ?? []) {
-    for (const tokenDoc of scene.tokens?.contents ?? []) {
-      if (tokenDoc.actorLink) continue;
-      const actor = tokenDoc.actor;
-      if (!actor) continue;
-      try {
-        stamped += await stampOneActorContentSyncBaseline(actor, index);
-      } catch (e) {
-        failed++;
-        console.error(`Warhammer DBC | Опора синхронизации контента: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
-      }
+  // Только предметы из дельты токена: унаследованные от базового актора уже
+  // прошли вместе с ним (wdbc-gbd3, module/migrations/unlinked-tokens.mjs).
+  for (const { scene, tokenDoc, actor } of unlinkedTokens()) {
+    try {
+      stamped += await stampOneActorContentSyncBaseline(actor, index, deltaOwnedItems(tokenDoc));
+    } catch (e) {
+      failed++;
+      console.error(`Warhammer DBC | Опора синхронизации контента: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
     }
   }
 

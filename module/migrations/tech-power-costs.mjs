@@ -12,6 +12,8 @@
 //  на листе (tab-tech.hbs, tech-cost-input), и ручное значение — решение ГМа.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { deltaOwnedItems, unlinkedTokens } from "./unlinked-tokens.mjs";
+
 /** Вложенные Техночудеса с непроставленной ценой. */
 export function zeroCostTechPowers(items = []) {
   return [...items].filter(i => i.type === "techPower" && !(Number(i.system?.cost) || 0));
@@ -35,9 +37,9 @@ export function costFromCompendium(item, byUuid, byName) {
  * код в migrateTechPowerCosts, у этой функции нет доступа к «сколько акторов
  * ещё впереди» (тот же приём, что и в module/migrations/gear-equipped.mjs).
  */
-async function migrateOneActorTechPowerCosts(actor, byUuid, byName) {
+async function migrateOneActorTechPowerCosts(actor, byUuid, byName, items = actor.items) {
   const updates = [];
-  for (const item of zeroCostTechPowers(actor.items)) {
+  for (const item of zeroCostTechPowers(items)) {
     const cost = costFromCompendium(item, byUuid, byName);
     if (cost !== null) updates.push({ _id: item.id, "system.cost": cost });
   }
@@ -56,7 +58,7 @@ async function migrateOneActorTechPowerCosts(actor, byUuid, byName) {
  * обработку следующих: копии Техночудес разных персонажей друг от друга не
  * зависят.
  */
-export async function migrateTechPowerCosts() {
+export async function migrateTechPowerCosts({ tokensOnly = false } = {}) {
   if (!game.user?.isGM) { ui.notifications?.warn("Цены Техночудес: только для ГМа."); return; }
 
   const pack = game.packs?.get("warhammer-dbc.tech-powers");
@@ -68,7 +70,7 @@ export async function migrateTechPowerCosts() {
 
   // Мировые акторы. Связанные токены (actorLink:true) используют тот же
   // документ Actor — им отдельный проход не нужен.
-  for (const actor of game.actors) {
+  for (const actor of tokensOnly ? [] : (game.actors ?? [])) {
     try {
       updated += await migrateOneActorTechPowerCosts(actor, byUuid, byName);
     } catch (e) {
@@ -79,17 +81,14 @@ export async function migrateTechPowerCosts() {
 
   // Несвязанные токены сцен: их синтетический актор (tokenDoc.actor) пишет
   // прямо в ActorDelta токена.
-  for (const scene of game.scenes ?? []) {
-    for (const tokenDoc of scene.tokens?.contents ?? []) {
-      if (tokenDoc.actorLink) continue;
-      const actor = tokenDoc.actor;
-      if (!actor) continue;
-      try {
-        updated += await migrateOneActorTechPowerCosts(actor, byUuid, byName);
-      } catch (e) {
-        failed++;
-        console.error(`Warhammer DBC | Цены Техночудес: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
-      }
+  // Только предметы из дельты токена: унаследованные от базового актора уже
+  // прошли вместе с ним (wdbc-gbd3, module/migrations/unlinked-tokens.mjs).
+  for (const { scene, tokenDoc, actor } of unlinkedTokens()) {
+    try {
+      updated += await migrateOneActorTechPowerCosts(actor, byUuid, byName, deltaOwnedItems(tokenDoc));
+    } catch (e) {
+      failed++;
+      console.error(`Warhammer DBC | Цены Техночудес: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
     }
   }
 
