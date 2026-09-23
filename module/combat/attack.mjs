@@ -17,6 +17,7 @@ import { effectiveDamage, mergeExtraProps, weaponOffEffects } from "./attack-wea
 import { attackIsMelee, FIRED_BRACED_FLAG, firedBracedHeavyIds } from "./weapon-profiles.mjs";
 import { isBraced } from "./brace-weapon.mjs";
 import { isIntegralAttack } from "./equipped-melee.mjs";
+import { grappleCoverPartner } from "./grapple.mjs";
 import { ammoIsFree } from "../rules/ammo-free.mjs";
 import { attackCard, jamCard }                      from "./attack-card.mjs";
 import { rollScatter }                               from "./scatter.mjs";
@@ -1161,6 +1162,19 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     }
   }
 
+  // Борьба как укрытие (стр. 12, wdbc-x1nz.2.77): не-Избирательная атака по
+  // сцепившемуся с той стороны, где его прикрывает партнёр, «попадает вместо
+  // этого по другому» (а меньшего за большим и Избирательной не выцелить).
+  // Та же форма перенаправления, что у Наследия Предательства выше.
+  const grappleCoverHits = [];
+  if (hits.length) {
+    const coverPartner = grappleCoverPartner({ attackerToken, targetToken, targetActor: defenderActor, aimed: !!aimTarget?.value });
+    if (coverPartner) {
+      for (const d of hits) grappleCoverHits.push({ total: d.total, loc: d.loc, targetName: coverPartner.name, targetUuid: coverPartner.uuid });
+      hits.length = 0;
+    }
+  }
+
   // Промах по цели, Связанной в Рукопашной (стр. 30, wdbc-x1nz.2.64):
   // одиночный выстрел, промахнувший на 1-2 Провала, попадает в случайного
   // персонажа в контакте с целью (враг или союзник); Короткая/Длинная
@@ -1461,6 +1475,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       burstSecondaryTargets,
       misfireHits,
       betrayalHits,
+      grappleCoverHits,
       regroupLegacyActive,
       deadlyTrapLegacyDelta,
       reactionKnockdownReason,

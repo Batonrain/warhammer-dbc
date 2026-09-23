@@ -243,6 +243,10 @@ export const MELEE_CONTESTS = {
     // доп. урон/Усталость (module/combat/knockdown.mjs::resolveKnockdownSuccess).
     allowedChars: ["s", "ag"],
     charLabels: { s: "Athletics(S)", ag: "Acrobatics(A)" },
+    // Встречный тест Навыков (wdbc-x1nz.2.73): Ранг входит в порог, цель
+    // сопротивляется Athletics или Acrobatics на выбор.
+    skills: { s: "athletics", ag: "acrobatics" },
+    resist: [{ skill: "athletics" }, { skill: "acrobatics" }],
     note: "Состязание: Athletics(S)+0 vs Athletics(S)+0 или Acrobatics(A)+0. Победа: цель Ничком. 5+ Успехов: доп. урон/Усталость на выбор.",
     targetDodgeMod: 0, targetParryMod: 0,
     chatNote: "⚡ Состязательный бросок Athletics/Acrobatics"
@@ -269,6 +273,9 @@ export const MELEE_CONTESTS = {
   bulldoze: {
     label: "Напролом", wsBonus: 0,
     modLabel: "Ath vs Ath",
+    defaultChar: "s",
+    skills: { s: "athletics" },
+    resist: [{ skill: "athletics" }],
     note: "Athletics(S)+0 vs Athletics(S)+0 против всех врагов на пути персонажа по очереди (один бросок против всех сразу). Противники меньшего Размера — штраф −10 за уровень разницы. Успех — персонаж проходит путь, игнорируя противников и не получая Свободных Атак. Провал — останавливается перед первым победившим противником. Победа на 5+ Успехов — цель сбивается с ног и получает Пинок. Нельзя против противников на 1+ Размер больше персонажа. Этот диалог считает только сам встречный тест — прохождение дистанции и разбор попаданий по нескольким целям остаются на ГМ.",
     targetDodgeMod: 0, targetParryMod: 0,
     chatNote: "⚡ Состязательный бросок Athletics — против каждого врага на пути отдельно"

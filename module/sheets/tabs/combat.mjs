@@ -60,7 +60,7 @@ import { spendActionPoints, spendReaction, resetActionEconomy } from "../../comb
 import { attackedThisTurn } from "../../rules/turn-flags.mjs";
 import { resolveFeintSuccess, resolvePressSuccess } from "../../combat/feint-press.mjs";
 import { resolveBulldozeSuccess, bulldozeForbidden, bulldozeSizePenalty } from "../../combat/bulldoze.mjs";
-import { resolveKnockdownSuccess, knockdownForbidden, knockdownSizePenalty } from "../../combat/knockdown.mjs";
+import { resolveKnockdownSuccess, knockdownForbidden, knockdownSizePenalty, knockdownResistMods } from "../../combat/knockdown.mjs";
 import {
   beginSustainedAction, continueSustainedAction, passSustainedCheckpoint,
   interruptSustained, clearSustainedAction
@@ -313,6 +313,7 @@ export function activateCombatListeners(root, actor) {
       if (sizePenalty) noteParts.push(`Подсказанный штраф за Размер: ${sizePenalty}.`);
       if (gripBonus) noteParts.push(`Двуручный Хват вторичный: +${gripBonus}.`);
       return _showContestDialog(actor, { ...base, onSuccess: resolveKnockdownSuccess,
+        resistMods: (opp, me) => knockdownResistMods(me, opp),
         defaultMod: sizePenalty + gripBonus,
         note: noteParts.join(" ") });
     }
@@ -322,14 +323,19 @@ export function activateCombatListeners(root, actor) {
       // эффект спишется вручную», как у Обезоружить — книга говорит именно
       // «нельзя ПРОВОДИТЬ»). Штраф −10×разница Размера у МЕНЬШИХ целей —
       // подсказан в Доп. модификаторе, поле остаётся редактируемым.
-      const target = [...(game.user?.targets ?? [])][0]?.actor ?? null;
-      if (target && bulldozeForbidden(actor, target)) {
-        return ui.notifications.warn(`⚠️ Напролом: нельзя проводить против ${target.name} — цель на 1+ Размер крупнее (стр. 31).`);
+      // Встречный тест против КАЖДОГО врага на пути (все цели под прицелом,
+      // wdbc-x1nz.2.73); меньшие получают −10 за уровень разницы на свой
+      // бросок сопротивления, а не инициатор.
+      const foes = [...(game.user?.targets ?? [])].map(t => t.actor).filter(Boolean);
+      const bigger = foes.find(t => bulldozeForbidden(actor, t));
+      if (bigger) {
+        return ui.notifications.warn(`⚠️ Напролом: нельзя проводить против ${bigger.name} — цель на 1+ Размер крупнее (стр. 31).`);
       }
-      const sizePenalty = target ? bulldozeSizePenalty(actor, target) : 0;
       return _showContestDialog(actor, { ...base, onSuccess: resolveBulldozeSuccess,
-        defaultMod: sizePenalty,
-        note: sizePenalty ? `${base.note} Подсказанный штраф за Размер против ${target.name}: ${sizePenalty}.` : base.note });
+        resistMods: (opp, me) => {
+          const p = bulldozeSizePenalty(me, opp);
+          return p ? [{ label: "меньше Размером", value: p }] : [];
+        } });
     }
     _showContestDialog(actor, base);
   });

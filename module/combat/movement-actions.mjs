@@ -49,6 +49,7 @@ import { hasRuleFlag } from "../rules/flags.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
 import { raceMatches } from "../rules/race.mjs";
 import { isGrappled } from "../rules/predicates.mjs";
+import { grappleMoveAllowed } from "./grapple.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
 import { enemyContactTokenDocs, offerFreeAttack } from "./free-attack.mjs";
 import { equippedLegacyWeaponWithMutation } from "../rules/legacy-weapon.mjs";
@@ -60,8 +61,11 @@ import { MELEE_STANCES } from "../constants/combat.mjs";
 // каждое боевое объявление движения ниже сначала спрашивает isGrappled.
 // Действия Борьбы (Оторваться и т.п.) живут в combat/grapple.mjs и этот гейт
 // не проходят — им сюда не заходить.
-function _blockedByGrapple(actor) {
+function _blockedByGrapple(actor, { move = false } = {}) {
   if (!isGrappled(actor)) return false;
+  // «Полудвижение и Движение, если его Размер больше цели» — держащему
+  // (wdbc-x1nz.2.75); Бег/Натиск/Вольт и прочее — нет.
+  if (move && grappleMoveAllowed(actor)) return false;
   ui.notifications.warn("⚠️ В Захвате: доступны только действия Борьбы или не-Физические (стр. 12).");
   return true;
 }
@@ -219,7 +223,7 @@ async function _postCard(actor, content) {
 
 export async function declareHalfMove(actor) {
   if (!actor) return;
-  if (_blockedByGrapple(actor)) return;
+  if (_blockedByGrapple(actor, { move: true })) return;
   // Потеря обеих ног (стр. 30-31, wdbc-r5o7.5): «не может ходить» вообще.
   if (_bothLegsLost(actor))
     return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
@@ -268,7 +272,7 @@ export async function declareLegacyBraveHeartMove(actor) {
 
 export async function declareFullMove(actor) {
   if (!actor) return;
-  if (_blockedByGrapple(actor)) return;
+  if (_blockedByGrapple(actor, { move: true })) return;
   if (_bothLegsLost(actor))
     return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
   if (_bothFeetLost(actor) && !await _confirmAcrobaticsToWalk(actor)) return;

@@ -79,7 +79,7 @@ describe("Борьба: прямые попадания несут подвид"
   it("Укус — подвид самого оружия Укус", async () => {
     const bite = weaponFor({ weaponClass: "melee", damage: "1d10", damageType: "rending", damageSubtype: "toxic" }, { name: "Bite / Укус" });
     captured.dice = [4];
-    await _doBite(grappler([bite]));
+    await _doBite(grappler([bite]), { aim: "torso" });
     expect(lastDamage()).toMatchObject({ damageType: "rending", damageSubtype: "toxic" });
   });
 

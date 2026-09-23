@@ -232,13 +232,27 @@ export function handHeldItems(actor) {
     .filter(i => i.type === "weapon" && i.system?.equipped && weaponHandsRequired(i, actor) > 0);
 }
 
+/** Руки, занятые Захватом: у Атакующего — сколько держит, у Цели — обездвиженные. */
+export function grappleHandsUsed(actor) {
+  if (!actor?.system?.conditions?.grappling) return 0;
+  const f = key => actor?.getFlag?.("warhammer-dbc", key) ?? actor?.flags?.["warhammer-dbc"]?.[key];
+  const role = f("grappleRole");
+  if (role === "attacker") return Math.max(1, Number(f("grappleHands")) || 1);
+  if (role === "target") return Number(f("grappleHeldHands")) || 2;
+  return 0;
+}
+
 /**
  * Сводка занятости рук актора. exclude — id предмета, который не учитывать
  * (проверка «хватит ли рук, если снять/не считая вот этот»).
  */
 export function handsOccupied(actor, { exclude = null } = {}) {
   const items = handHeldItems(actor).filter(i => i.id !== exclude);
-  const used  = items.reduce((sum, i) => sum + weaponHandsRequired(i, actor), 0);
+  // Борьба (стр. 12, wdbc-x1nz.2.77): «Одна из рук Атакующего занята
+  // Захватом» (или больше, если держит несколькими), а у Цели каждая рука
+  // Атакующего обездвиживает две. Флаги ставит combat/grapple.mjs; читаем
+  // напрямую, без импорта Борьбы (она сама импортирует этот файл).
+  const used  = items.reduce((sum, i) => sum + weaponHandsRequired(i, actor), 0) + grappleHandsUsed(actor);
   const max   = maxHands(actor);
   return { max, used, free: Math.max(0, max - used), over: used > max, items };
 }

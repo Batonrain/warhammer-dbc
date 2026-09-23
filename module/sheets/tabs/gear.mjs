@@ -75,6 +75,14 @@ export async function equipItem(item, equipped) {
   // Сложить (wdbc-x1nz.2.44): та же цена и то же условие «оружие», что у
   // Взять выше — симметрично, раньше это направление было бесплатным.
   const isStow = !equipped && item.type === "weapon" && item.system.equipped;
+  // Борьба (стр. 12, wdbc-x1nz.2.75): Взять/Сложить — Физическое действие;
+  // удерживаемому оно недоступно (держащему — можно, «не используя руки,
+  // которыми он держит цель», это считает handsOccupied).
+  if ((isDraw || isStow) && item.parent?.system?.conditions?.grappling
+      && (item.parent.getFlag?.("warhammer-dbc", "grappleRole") ?? "target") === "target") {
+    ui.notifications?.warn(`⚠️ В Захвате: ${isDraw ? "Взять" : "Сложить"} недоступно — только действия Цели (стр. 12).`);
+    return;
+  }
   if ((isDraw || isStow) && item.parent && !await spendActionPoints(item.parent, 1, { physical: true })) {
     ui.notifications?.warn(`⚠️ Не хватает ОД, чтобы ${isDraw ? "Взять" : "Сложить"} оружие (Полудействие, стр. 27).`);
     return;

@@ -38,7 +38,15 @@ describe("_showContestDialog — бонус Стойки", () => {
   it("Повалить/Напролом — тесты Athletics, Стойка на них не влияет", async () => {
     const actor = actorFor({ meleeStance: "aggressive" });
     await _showContestDialog(actor, MELEE_CONTESTS.knockdown);
-    expect(selfValue()).toBe(40); // s 40, без бонуса WS
+    // Athletics(S) — тест НАВЫКА (wdbc-x1nz.2.73): у стенда Навыка нет,
+    // нетренированный S 40 − 20 = 20; бонуса WS нет.
+    expect(selfValue()).toBe(20);
+  });
+
+  it("тренированная Атлетика входит в порог Повалить (Ранг Навыка, не голая Сила)", async () => {
+    const actor = actorFor({ skills: { athletics: { total: 60 } } });
+    await _showContestDialog(actor, MELEE_CONTESTS.knockdown);
+    expect(selfValue()).toBe(60);
   });
 
   it("Стандартная Стойка не даёт бонуса Давлению", async () => {
@@ -103,13 +111,13 @@ describe("_showContestDialog — extraBonus (плоский бонус исто�
   it("складывается с базой характеристики и виден в поле «Ваш бросок с»", async () => {
     const actor = actorFor({});
     await _showContestDialog(actor, { ...MELEE_CONTESTS.knockdown, extraBonus: 20, extraBonusLabel: "Щупальце" });
-    expect(selfValue()).toBe(60); // s 40 + 20
+    expect(selfValue()).toBe(40); // нетренированный Athletics 20 + 20
   });
 
   it("без extraBonus — поведение не меняется (0 по умолчанию)", async () => {
     const actor = actorFor({});
     await _showContestDialog(actor, MELEE_CONTESTS.knockdown);
-    expect(selfValue()).toBe(40);
+    expect(selfValue()).toBe(20); // нетренированный Athletics
   });
 
   it("складывается со Стойкой, если оба присутствуют", async () => {
@@ -127,7 +135,7 @@ describe("_showContestDialog — extraBonus (плоский бонус исто�
   it("отрицательный extraBonus вычитается", async () => {
     const actor = actorFor({});
     await _showContestDialog(actor, { ...MELEE_CONTESTS.knockdown, extraBonus: -10, extraBonusLabel: "Штраф" });
-    expect(selfValue()).toBe(30); // s 40 - 10
+    expect(selfValue()).toBe(10); // нетренированный Athletics 20 − 10
     expect(captured.dialog.content).toContain("Штраф: -10");
   });
 });

@@ -73,7 +73,7 @@ import { findThroughShotTarget } from "./combat/through-shot.mjs";
 import { resetActionEconomy, applyTurnEndStanceEffects, applyAimFocusTurnEnd, postTurnStartCard, spendReaction } from "./combat/action-economy.mjs";
 import { MELEE_CONTESTS } from "./constants/combat.mjs";
 import { _showContestDialog } from "./combat/techniques.mjs";
-import { resolveKnockdownSuccess, knockdownForbidden, knockdownSizePenalty } from "./combat/knockdown.mjs";
+import { resolveKnockdownSuccess, knockdownForbidden, knockdownSizePenalty, knockdownResistMods } from "./combat/knockdown.mjs";
 import { shouldOfferRapidReaction, postRapidReactionPrompt, rollRapidReactionTest } from "./combat/rapid-reaction.mjs";
 import { isDevourerOfTimeExtraTurn, processDevourerOfTimeExtraTurn, processDevourerOfTimeRoundChange,
          clearDevourerOfTimeAtCombatEnd } from "./combat/devourer-of-time.mjs";
@@ -133,6 +133,8 @@ import { rollInfoguard } from "./apps/infoguard.mjs";
 import { CHARACTERISTICS } from "./constants/characteristics.mjs";
 import { SKILLS_DEF } from "./constants/skills.mjs";
 import { performUnarmedRiposte } from "./combat/unarmed-combat.mjs";
+import { resolveResistClick } from "./combat/opposed-contest.mjs";
+import { maybeAutoReleaseGrapple } from "./combat/grapple.mjs";
 import { weaponProfiles } from "./combat/weapon-profiles.mjs";
 import { isIntegralAttack } from "./combat/equipped-melee.mjs";
 import { collectTestMods } from "./rules/roll-mods.mjs";
@@ -532,6 +534,7 @@ export function registerHooks() {
         }
         const sizePenalty = target ? knockdownSizePenalty(actor, target) : 0;
         await _showContestDialog(actor, { ...MELEE_CONTESTS.knockdown, onSuccess: resolveKnockdownSuccess,
+          resistMods: (opp, me) => knockdownResistMods(me, opp),
           defaultMod: sizePenalty,
           note: sizePenalty ? `${MELEE_CONTESTS.knockdown.note} Подсказанный штраф за Размер: ${sizePenalty}.` : MELEE_CONTESTS.knockdown.note });
       });
@@ -1730,6 +1733,17 @@ export function registerHooks() {
         ev.preventDefault();
         const ds = ev.currentTarget.dataset;
         await resolveFreeAttackClick(ds.reactorUuid, ds.moverUuid);
+      });
+    });
+
+    // Встречный тест приёма (wdbc-x1nz.2.73): противник бросает сам по
+    // кнопке в карточке инициатора — combat/opposed-contest.mjs.
+    html.querySelectorAll(".wh-contest-resist-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        el.disabled = true;
+        await resolveResistClick({ ...el.dataset });
       });
     });
 
@@ -3026,6 +3040,15 @@ function _attachFateContextMenu(message, html) {
   // а не обработчик на каждом месте. userId-гвард — иначе каждый подключённый
   // клиент запустил бы свой пересчёт и свою запись поверх других (см.
   // doombc-foundry-v13-gotchas, «Multi-client hook duplication»).
+  // Борьба (стр. 12, wdbc-x1nz.2.74): Атакующий «автоматически выпускает, когда
+  // он Оглушен, в Ступоре, или Беспомощен». Тот же userId-гвард: снимает
+  // Захват только клиент, поставивший Состояние.
+  Hooks.on("updateActor", async (actor, changes, options, userId) => {
+    if (game.user.id !== userId) return;
+    const c = changes.system?.conditions;
+    if (!c || !(c.stunned || c.dazed || c.helpless)) return;
+    await maybeAutoReleaseGrapple(actor);
+  });
   Hooks.on("updateActor", async (actor, changes, options, userId) => {
     if (game.user.id !== userId) return;
     if (actor.type !== "character") return;

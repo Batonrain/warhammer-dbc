@@ -262,7 +262,21 @@ character}`), просто никакой combat-код его пока не ч�
 диалога `_showContestDialog` для Повалить/Финт/Давление/Напролом/Обезоружить/
 Заломить), `combat/grapple.mjs` (Борьба), `combat/mount.mjs` + `rules/mount.
 mjs` (верховой бой), `combat/tactical-map.mjs` + `rules/tactical-map.mjs`
-(база/дистанция/контакт).
+(база/дистанция/контакт). Встречный тест всех Состязаний (wdbc-x1nz.2.73) —
+`combat/opposed-contest.mjs`: инициатор бросает Навык (Ранг в пороге,
+`techDef.skills`), противник жмёт «Сопротивляться» в его карточке
+(`techDef.resist`, `resistMods`, `resistRolls`), сравнение
+`rules/test-kind.mjs::resolveOpposed`, эффект (`onSuccess`) исполняется у
+клиента инициатора (сокет `contestResolved`). Борьба (wdbc-x1nz.2.74-.77):
+роли Атакующий/Цель (`grappleRole`), руки в Захвате (`grappleHands`,
+занимают руки в `rules/hands.mjs::handsOccupied`), Сжать — штраф в Ход Цели
+(`rules/turn-flags.mjs::turnStartSqueezeCarryOver` → `rules/situational.mjs`),
+гейты атаки/Движения/Уклонения по роли (`grappleAttackBlockReason`,
+`grappleMoveAllowed`, `grappleDodgeBlockReason`), +20 чужим атакам по
+сцепившимся (`sheets/attack/mods.mjs`), авто-выпуск при Оглушении/Ступоре/
+Беспомощности (`maybeAutoReleaseGrapple`, hooks.mjs), укрытие друг другом
+±45° с перенаправлением попаданий (`grappleCoverPartner` → attack.mjs
+`grappleCoverHits`).
 
 **Финт/Давление/Напролом (wdbc-x1nz.2.65, 20.09.2026):** эффект победы в
 состязании раньше нигде не применялся (бросок засчитывался и всё). Теперь —

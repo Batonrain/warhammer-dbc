@@ -11,6 +11,7 @@ import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { hasRuleFlag }    from "../rules/flags.mjs";
 import { isRoundCapabilityAvailable } from "../apps/game-session.mjs";
 import { equippedMeleeWeapon, isIntegralAttack } from "./equipped-melee.mjs";
+import { grappleDodgeBlockReason } from "./grapple.mjs";
 import { parryWeaponFor, strikeLocation, locationAcc, rollStrikeOn, ARMED_VS_UNARMED_PARRY_BONUS, UNARMED_RIPOSTE_COST } from "./unarmed-combat.mjs";
 import { withWitchsEdge } from "./witchs-edge.mjs";
 import { spendReaction }  from "./action-economy.mjs";
@@ -120,6 +121,10 @@ export async function _performDodge(actor, {
   // тратится — Уклонение физически недоступно, а не просто провалено.
   if ((Number(actor.system.conditions?.lostLegsCount) || 0) > 0)
     return _noReactionCard(actor, "Уклонение (нет ног)");
+  // Борьба (стр. 12, wdbc-x1nz.2.74): Цель не Уклоняется вовсе, держащий — лишь
+  // тяжелее и не меньше цели. Реакция не тратится — как и без ног выше.
+  const grappleNoDodge = grappleDodgeBlockReason(actor);
+  if (grappleNoDodge) return _bladeShieldRefusal(actor, grappleNoDodge, "Уклонение");
   if (!(await spendReaction(actor, { forDefense: true, attackId }))) return _noReactionCard(actor, "Уклонение");
   const { agTotal, threshold: baseThreshold, modParts } = dodgeProfile(actor, extraMod);
   // Фантомные Копии (Wrapped in Chaos "2-3", wdbc-1rno): штраф Уклонению
@@ -398,10 +403,10 @@ export function weaponParryPropBonus(actor, weapon) {
   return parryPropBonuses(props).total;
 }
 
-/** Отказ Парирования: почему нельзя. Реакция при этом не тратится. */
-function _bladeShieldRefusal(actor, why) {
+/** Отказ Парирования (или Уклонения): почему нельзя. Реакция при этом не тратится. */
+function _bladeShieldRefusal(actor, why, what = "Парирование") {
   return postTestCard(actor, {
-    icon: rollIcon("sword"), title: `Парирование — ${esc(actor.name)}`, actorUuid: actor.uuid,
+    icon: rollIcon("sword"), title: `${what} — ${esc(actor.name)}`, actorUuid: actor.uuid,
     outcome: `<span class="roll-failure">${rollIcon("ban","#ff6b6b")}${why}</span>`
   });
 }

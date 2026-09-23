@@ -32,7 +32,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { determinationToFightApBonus } from "../rules/determination-to-fight.mjs";
 import { isStunnedOrDazed } from "../rules/predicates.mjs";
-import { turnStartFlagClears, turnStartAttackCarryOver } from "../rules/turn-flags.mjs";
+import { turnStartFlagClears, turnStartAttackCarryOver, turnStartSqueezeCarryOver } from "../rules/turn-flags.mjs";
 import { rollLegacyChangeBonus, tickLegacyExcessBoost } from "../rules/legacy-weapon.mjs";
 
 /** Типы акторов, несущих экономику действий (общая часть — _creature.mjs). */
@@ -138,6 +138,8 @@ export async function resetActionEconomy(actor) {
   // Список «чем атаковал» не гасится, а переезжает на Ход назад: Мэн-Гош
   // спрашивает про ПРЕДЫДУЩИЙ Ход (rules/turn-flags.mjs).
   Object.assign(upd, turnStartAttackCarryOver(actor));
+  // Сжать в Борьбе (стр. 12): накопленное за Ход Атакующего — штраф на этот Ход.
+  Object.assign(upd, turnStartSqueezeCarryOver(actor));
   // Врасплох потрачен — это и был тот единственный Ход, который они по книге
   // пропускают (см. комментарий у apLocked выше).
   if (surprised) upd["system.conditions.surprised"] = false;

@@ -20,6 +20,7 @@ import { _executeAttackRoll } from "../../combat/attack.mjs";
 import { spendActionPoints, apCostForActionType, spendReaction } from "../../combat/action-economy.mjs";
 import { canTakeAttackAction, takeAttackAction } from "../../combat/attack-limit.mjs";
 import { isGrappled } from "../../rules/predicates.mjs";
+import { grappleAttackBlockReason } from "../../combat/grapple.mjs";
 import { delayBlocksAttack } from "../../combat/delay-action.mjs";
 import { deathDanceNextCost, markDeathDanceUsed } from "../../combat/death-dance.mjs";
 import { markRoundCapabilityUsed } from "../../apps/game-session.mjs";
@@ -161,13 +162,18 @@ export function openAttackDialog(ctx) {
           // Захват (стр. 12, wdbc-x1nz.2.31): «только действия Борьбы или
           // не-Физические» — обычная Атака (эта, стандартная, не действия
           // Борьбы из combat/grapple.mjs) недоступна, пока актор в Захвате.
-          if (isGrappled(actor)) {
+          // С wdbc-x1nz.2.75 — по роли: держащий бьёт третьих свободно, цель —
+          // ножом/пистолетом; удерживаемый — только свободными руками.
+          const grappleWhy = isGrappled(actor)
+            ? grappleAttackBlockReason(actor, item, targetActor, { isMelee, baseKey: sel.baseKey })
+            : "";
+          if (grappleWhy) {
             await ChatMessage.create({
               speaker: ChatMessage.getSpeaker({ actor: actor }),
               content: `<div class="wh-roll-result">
                 <div class="roll-header">${rollIcon("sword")}${esc(item.name)}</div>
                 <div class="roll-outcome">
-                  <span class="roll-failure">${rollIcon("ban","#ff6b6b")}В Захвате доступны только действия Борьбы (стр. 12).</span>
+                  <span class="roll-failure">${rollIcon("ban","#ff6b6b")}Борьба: ${esc(grappleWhy)} (стр. 12).</span>
                 </div></div>`
             });
             return false;

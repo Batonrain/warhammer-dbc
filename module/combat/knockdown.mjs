@@ -18,10 +18,25 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
+import { sizeOf } from "../rules/predicates.mjs";
 
-/** Разница в Размере (инициатор − цель). */
+/**
+ * Разница в Размере (инициатор − цель). Итоговый Размер (sizeTotal, с
+ * Чертами Size/Hulking), не база system.size — иначе Астартес и Огрины
+ * читались бы людьми (тот же дефект, что разобран в defense.mjs у Парирования).
+ */
 export function knockdownSizeDiff(actor, target) {
-  return (Number(actor?.system?.size) || 0) - (Number(target?.system?.size) || 0);
+  return sizeOf(actor) - sizeOf(target);
+}
+
+/**
+ * Симметричная половина штрафа за Размер (wdbc-x1nz.2.73): меньшая ЦЕЛЬ
+ * получает −10 за уровень разницы на свой бросок сопротивления — раньше его
+ * было некуда положить, цель не бросала вовсе.
+ */
+export function knockdownResistMods(actor, target) {
+  const diff = knockdownSizeDiff(actor, target);
+  return diff > 0 ? [{ label: "меньше Размером", value: -10 * diff }] : [];
 }
 
 /** «Нельзя против целей на 2+ Размера больше персонажа» — жёсткий запрет. */

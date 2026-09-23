@@ -64,8 +64,16 @@ export function situationalMods(v) {
     return ai != null && ti != null && ai >= ti * 2;
   })() : false;
 
+  // Борьба (стр. 12, wdbc-x1nz.2.74): «другие персонажи получают бонус +20 на
+  // атаки по ним» — по любому из сцепившихся, кроме его же партнёра.
+  const tgt = attackCtx?.targetActor ?? null;
+  const tgtGrappled = !!tgt?.system?.conditions?.grappling;
+  const tgtPartnerUuid = tgt?.getFlag?.("warhammer-dbc", "grapplePartnerUuid") ?? tgt?.flags?.["warhammer-dbc"]?.grapplePartnerUuid;
+  const vsGrappled = tgtGrappled && tgtPartnerUuid !== actor?.uuid;
   const commonMods = [
     { label: "Усталость",     value: -10, autoCheck: hasFatigue },
+    { label: "Цель в Борьбе (не ваш Захват)", value: 20, autoCheck: vsGrappled,
+      note: vsGrappled ? "стр. 12: +20 на атаки по сцепившимся" : undefined },
     // visionPenalty (wdbc-1rno.1, Чёрные Глаза/Black Eyes, Cor 60+) — три
     // галочки ниже гасятся у АТАКУЮЩЕГО (не у цели, поэтому не immuneFlag —
     // тот гасит только возможности ЦЕЛИ, см. цикл ниже).

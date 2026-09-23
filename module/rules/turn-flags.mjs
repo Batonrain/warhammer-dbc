@@ -112,6 +112,29 @@ export function turnStartFlagClears(actor) {
 //  ответ на вопрос Таланта до того, как его успели задать.
 // ════════════════════════════════════════════════════════════════════════════
 
+// ════════════════════════════════════════════════════════════════════════════
+//  СЖАТЬ В БОРЬБЕ (стр. 12, wdbc-x1nz.2.76) — тоже перекладывается, не гасится
+//
+//  «В свой Ход цель получит штраф –10 на любые Физические действия, за каждое
+//  полудействие, потраченное на Сжатие, если она все еще в Захвате». Сжатия
+//  копятся во время Хода Атакующего (grappleSqueezePending на Цели); в начале
+//  Хода Цели они становятся действующим штрафом (grappleSqueezeActive) — если
+//  она всё ещё в Захвате — и держатся весь её Ход. Следующее начало её Хода
+//  без новых Сжатий штраф снимает. Читает rules/situational.mjs.
+// ════════════════════════════════════════════════════════════════════════════
+
+/** Патч для actor.update: Сжатия Атакующего → штраф на этот Ход Цели. */
+export function turnStartSqueezeCarryOver(actor) {
+  const pending = Number(flagValue(actor, "grappleSqueezePending")) || 0;
+  const active  = Number(flagValue(actor, "grappleSqueezeActive")) || 0;
+  const grappled = !!actor?.system?.conditions?.grappling;
+  const upd = {};
+  if (pending && grappled) upd[`flags.${FLAG_SCOPE}.grappleSqueezeActive`] = pending;
+  else if (active) upd[`flags.${FLAG_SCOPE}.-=grappleSqueezeActive`] = null;
+  if (pending) upd[`flags.${FLAG_SCOPE}.-=grappleSqueezePending`] = null;
+  return upd;
+}
+
 /** Оружие, которым актор атаковал в свой ПРЕДЫДУЩИЙ Ход. */
 export function attackedPrevTurn(actor) {
   const v = flagValue(actor, "attackedPrevTurn");

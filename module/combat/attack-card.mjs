@@ -349,7 +349,8 @@ function misfireHitsSection(misfireHits, { wp, pen, damageType, damageSubtype = 
  * combat/legacy-weapon-betrayal.mjs) — та же форма и тот же data-force-target
  * приём, что рикошет промаха выше, но урон один и тот же (не добавочный).
  */
-function betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype = "", weaponName, actorUuid, itemUuid }) {
+function betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype = "", weaponName, actorUuid, itemUuid },
+  note = "🗡️ Наследие Предательства: нат. 100 на попадание — оружие подвело, урон уходит случайному союзнику рядом:") {
   if (!betrayalHits.length) return "";
   const buttons = betrayalHits.map((m, i) => `
     <button class="wh-apply-dmg-btn" type="button"
@@ -369,7 +370,7 @@ function betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype 
     </button>`).join("");
   return `
   <div class="roll-apply-dmg-section">
-    <div class="roll-wprop-note">🗡️ Наследие Предательства: нат. 100 на попадание — оружие подвело, урон уходит случайному союзнику рядом:</div>
+    <div class="roll-wprop-note">${note}</div>
     ${buttons}
   </div>`;
 }
@@ -723,6 +724,9 @@ export function attackCard({
   // ВМЕСТО исходной цели. Та же форма и тот же data-force-target приём, что
   // misfireHits — единственная в этой атаке боевая единица (не добавочная).
   betrayalHits = [],
+  // Борьба как укрытие (стр. 12, wdbc-x1nz.2.77): попадания по сцепившемуся,
+  // перехваченные партнёром, — та же форма, что betrayalHits.
+  grappleCoverHits = [],
   // Перегруппировка, Оружие Наследия (wdbc-1rno.35, стр. 427): доступность
   // кнопки «потратить Очко Бесчестия» уже посчитана attack.mjs (hit &&
   // Мутация на оружии) — см. regroupLegacySection ниже.
@@ -987,6 +991,8 @@ export function attackCard({
                                             attackerUuid, itemUuid, hordeHits, deadlyTrapLegacyDelta }),
       misfireHitsSection(misfireHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid }),
       betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid }),
+      betrayalHitsSection(grappleCoverHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid },
+        "🤼 Борьба: партнёр по Захвату прикрывает цель с этой стороны — попадание уходит в него (стр. 12):"),
       regroupLegacySection(regroupLegacyActive, { actorUuid: attackerUuid }),
       reactionKnockdownSection(reactionKnockdownReason, { actorUuid: attackerUuid }),
       sabreSecondAttackNote ? `<div class="roll-wprop-effects"><div class="roll-defense-note">${esc(sabreSecondAttackNote)}</div>${sabreSecondAttackItemId

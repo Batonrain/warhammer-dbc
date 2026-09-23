@@ -184,6 +184,24 @@ const skillKeyOf = ctx => ctx?.skill ?? ctx?.group ?? undefined;
  * штраф. Ноль записи не даёт вовсе — иначе игрок видел бы в окне броска
  * строку «Усталость (+0)» у отдохнувшего персонажа.
  */
+/**
+ * Сжать (стр. 12, wdbc-x1nz.2.76): «штраф –10 на любые Физические действия, за
+ * каждое полудействие, потраченное на Сжатие, если она все еще в Захвате».
+ * Физические тесты здесь — атаки и Навыки тела (Атлетика — все тесты Борьбы,
+ * Акробатика, Уклонение, Парирование); социальные/ментальные не задеты.
+ * Счётчик ставит combat/grapple.mjs::_doSqueeze, в действующий переводит начало
+ * Хода Цели (rules/turn-flags.mjs::turnStartSqueezeCarryOver).
+ */
+const PHYSICAL_SKILLS = ["athletics", "acrobatics", "dodge", "parry"];
+function grappleSqueezePenalty(actor, ctx, skillKey) {
+  if (!actor?.system?.conditions?.grappling) return 0;
+  const n = Number(actor?.getFlag?.("warhammer-dbc", "grappleSqueezeActive")
+    ?? actor?.flags?.["warhammer-dbc"]?.grappleSqueezeActive) || 0;
+  if (!n) return 0;
+  const physical = ctx.kind === "attack" || PHYSICAL_SKILLS.includes(skillKey);
+  return physical ? -10 * n : 0;
+}
+
 export function situationalRules(actor, ctx = {}) {
   if (!actor) return [];
   const charKey  = ctx.char;
@@ -211,6 +229,8 @@ export function situationalRules(actor, ctx = {}) {
       marchTrackBonus(ctx));
   add("situational.springingStance", "🐸 Пружинящая Стойка",
       springingStrengthPenalty(actor, charKey));
+  add("situational.grappleSqueeze", "🤼 Сжат в Захвате",
+      grappleSqueezePenalty(actor, ctx, skillKey));
 
   return rules;
 }

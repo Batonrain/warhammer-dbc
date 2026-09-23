@@ -844,6 +844,14 @@ Hooks.once("ready", () => {
         if (actor) await openStartedCharacter(actor);
         return;
       }
+      // Встречный тест приёма (wdbc-x1nz.2.73): противник бросил — эффект
+      // исполняет клиент того, кто бросал приём (там живёт его onSuccess).
+      if (data.action === "contestResolved") {
+        if (data.userId !== game.user.id) return;
+        const { runContestOutcome } = await import("./module/combat/opposed-contest.mjs");
+        await runContestOutcome(data);
+        return;
+      }
       if (game.user !== game.users.activeGM) return;      // применяет ровно один ГМ
       const requester = game.users.get(data?.userId);
       if (!requester) return;
