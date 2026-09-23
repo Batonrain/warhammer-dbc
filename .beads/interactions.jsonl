@@ -1564,3 +1564,5 @@
 {"id":"int-53732981b7edaa2a3412b6945ade798a","kind":"field_change","created_at":"2026-09-23T17:29:24.4046316Z","actor":"Derbius","issue_id":"wdbc-a4l","extra":{"field":"assignee","new_value":"","old_value":"Derbius"}}
 {"id":"int-4ec239f798509c1c052f52b8daa4a23b","kind":"field_change","created_at":"2026-09-23T17:39:08.7685474Z","actor":"Derbius","issue_id":"wdbc-a4l","extra":{"field":"status","new_value":"open","old_value":"in_progress"}}
 {"id":"int-839bed70632007b7a3038c2e2a2c70d4","kind":"field_change","created_at":"2026-09-23T17:39:08.7691741Z","actor":"Derbius","issue_id":"wdbc-a4l","extra":{"field":"assignee","new_value":"","old_value":"Derbius"}}
+{"id":"int-08267a4fcada934515e52f3446f38536","kind":"field_change","created_at":"2026-09-23T17:48:17.5948496Z","actor":"Derbius","issue_id":"wdbc-izef","extra":{"field":"status","new_value":"open","old_value":"in_progress"}}
+{"id":"int-ec0e72a097be12a0a8e1f1587e7e483a","kind":"field_change","created_at":"2026-09-23T17:48:17.5961261Z","actor":"Derbius","issue_id":"wdbc-izef","extra":{"field":"assignee","new_value":"","old_value":"Derbius"}}
