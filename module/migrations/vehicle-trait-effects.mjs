@@ -14,6 +14,8 @@
 //  ship-hulls.mjs).
 // ════════════════════════════════════════════════════════════════════════════
 
+import { deltaOwnedItems, unlinkedTokens } from "./unlinked-tokens.mjs";
+
 const PACK = "warhammer-dbc.vehicle-traits";
 
 // Ключи, у которых третья стопка сменила СЕМАНТИКУ (число → флаг): старое
@@ -62,11 +64,11 @@ export function matchTraitDoc(name, docs = []) {
  * в module/migrations/gear-equipped.mjs). Возвращает число дополненных Черт
  * (0, если актор не техника или дополнять нечего).
  */
-async function migrateOneActorVehicleTraitEffects(actor, docs) {
+async function migrateOneActorVehicleTraitEffects(actor, docs, items = actor.items) {
   if (actor.type !== "vehicle") return 0;
   const updates = [];
   let patchedTraits = 0;
-  for (const item of actor.items) {
+  for (const item of items) {
     if (item.type !== "vehicleTrait") continue;
     const canon = matchTraitDoc(item.name, docs)?.system?.effects;
     if (!canon) continue;
@@ -95,7 +97,7 @@ async function migrateOneActorVehicleTraitEffects(actor, docs) {
  * на одном акторе/токене логируется и пропускается, не прерывая обработку
  * следующих: Черты разных машин друг от друга не зависят.
  */
-export async function migrateVehicleTraitEffects() {
+export async function migrateVehicleTraitEffects({ tokensOnly = false } = {}) {
   if (!game.user?.isGM) { ui.notifications?.warn("Черты техники: только для ГМа."); return; }
   const pack = game.packs?.get(PACK);
   if (!pack) { console.warn("Warhammer DBC | Черты техники: пак недоступен, проход пропущен"); return { patchedActors: 0, patchedTraits: 0, failed: 0 }; }
@@ -105,7 +107,7 @@ export async function migrateVehicleTraitEffects() {
 
   // Мировые акторы. Связанные токены (actorLink:true) используют тот же
   // документ Actor — им отдельный проход не нужен.
-  for (const actor of game.actors ?? []) {
+  for (const actor of tokensOnly ? [] : (game.actors ?? [])) {
     try {
       const n = await migrateOneActorVehicleTraitEffects(actor, docs);
       if (n) { patchedTraits += n; patchedActors++; }
@@ -117,18 +119,15 @@ export async function migrateVehicleTraitEffects() {
 
   // Несвязанные токены сцен: их синтетический актор (tokenDoc.actor) пишет
   // прямо в ActorDelta токена.
-  for (const scene of game.scenes ?? []) {
-    for (const tokenDoc of scene.tokens?.contents ?? []) {
-      if (tokenDoc.actorLink) continue;
-      const actor = tokenDoc.actor;
-      if (!actor) continue;
-      try {
-        const n = await migrateOneActorVehicleTraitEffects(actor, docs);
-        if (n) { patchedTraits += n; patchedActors++; }
-      } catch (e) {
-        failed++;
-        console.error(`Warhammer DBC | Черты техники: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
-      }
+  // Только предметы из дельты токена: унаследованные от базового актора уже
+  // прошли вместе с ним (wdbc-gbd3, module/migrations/unlinked-tokens.mjs).
+  for (const { scene, tokenDoc, actor } of unlinkedTokens()) {
+    try {
+      const n = await migrateOneActorVehicleTraitEffects(actor, docs, deltaOwnedItems(tokenDoc));
+      if (n) { patchedTraits += n; patchedActors++; }
+    } catch (e) {
+      failed++;
+      console.error(`Warhammer DBC | Черты техники: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
     }
   }
 

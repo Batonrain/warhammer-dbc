@@ -18,6 +18,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { LEGIONS } from "../constants/legions.mjs";
+import { deltaOwnedItems, unlinkedTokens } from "./unlinked-tokens.mjs";
 
 const PREFIX = "Геносемя: ";
 // Ключ ActiveEffect, которым миграция эффектов переносит sizeMod с Черты
@@ -108,9 +109,9 @@ async function fixGeneSeedEffects(item, correct) {
  * принимает вызывающий код в migrateLegionGeneSeedSize (тот же приём, что и в
  * module/migrations/gear-equipped.mjs).
  */
-async function migrateOneActorLegionGeneSeedSize(actor, sizeModByEffName) {
+async function migrateOneActorLegionGeneSeedSize(actor, sizeModByEffName, items = actor.items) {
   let fixed = 0;
-  for (const item of actor.items) {
+  for (const item of items) {
     const mismatch = geneSeedSizeMismatch(item, sizeModByEffName);
     if (!mismatch) continue;
     // Правятся ОБА хранилища: легаси-поле — чтобы hasLegacyEffects не завёл
@@ -134,7 +135,7 @@ async function migrateOneActorLegionGeneSeedSize(actor, sizeModByEffName) {
  * обработку следующих: Черты «Геносемя» разных персонажей друг от друга не
  * зависят.
  */
-export async function migrateLegionGeneSeedSize() {
+export async function migrateLegionGeneSeedSize({ tokensOnly = false } = {}) {
   if (!game.user?.isGM) { ui.notifications?.warn("Правка Размера Геносемени: только для ГМа."); return; }
   const sizeModByEffName = currentSizeModByEffName();
   let fixed = 0;
@@ -142,7 +143,7 @@ export async function migrateLegionGeneSeedSize() {
 
   // Мировые акторы. Связанные токены (actorLink:true) используют тот же
   // документ Actor — им отдельный проход не нужен.
-  for (const actor of game.actors) {
+  for (const actor of tokensOnly ? [] : (game.actors ?? [])) {
     try {
       fixed += await migrateOneActorLegionGeneSeedSize(actor, sizeModByEffName);
     } catch (e) {
@@ -153,17 +154,14 @@ export async function migrateLegionGeneSeedSize() {
 
   // Несвязанные токены сцен: их синтетический актор (tokenDoc.actor) пишет
   // прямо в ActorDelta токена.
-  for (const scene of game.scenes ?? []) {
-    for (const tokenDoc of scene.tokens?.contents ?? []) {
-      if (tokenDoc.actorLink) continue;
-      const actor = tokenDoc.actor;
-      if (!actor) continue;
-      try {
-        fixed += await migrateOneActorLegionGeneSeedSize(actor, sizeModByEffName);
-      } catch (e) {
-        failed++;
-        console.error(`Warhammer DBC | Размер Геносемени легиона: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
-      }
+  // Только предметы из дельты токена: унаследованные от базового актора уже
+  // прошли вместе с ним (wdbc-gbd3, module/migrations/unlinked-tokens.mjs).
+  for (const { scene, tokenDoc, actor } of unlinkedTokens()) {
+    try {
+      fixed += await migrateOneActorLegionGeneSeedSize(actor, sizeModByEffName, deltaOwnedItems(tokenDoc));
+    } catch (e) {
+      failed++;
+      console.error(`Warhammer DBC | Размер Геносемени легиона: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
     }
   }
 

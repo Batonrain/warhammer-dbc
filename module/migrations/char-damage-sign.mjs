@@ -12,6 +12,8 @@
 //  проходом по актёрам мира.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { deltaSystem, unlinkedTokens } from "./unlinked-tokens.mjs";
+
 /** Обновление для одного актора: пары путь→значение с обращённым знаком. */
 export function charDamageSignUpdate(system = {}) {
   const upd = {};
@@ -29,8 +31,8 @@ export function charDamageSignUpdate(system = {}) {
  * module/migrations/gear-equipped.mjs). Возвращает 1, если актора реально
  * обновили, иначе 0.
  */
-async function migrateOneActorCharDamageSign(actor) {
-  const upd = charDamageSignUpdate(actor.system);
+async function migrateOneActorCharDamageSign(actor, system = actor.system) {
+  const upd = charDamageSignUpdate(system);
   if (!Object.keys(upd).length) return 0;
   await actor.update(upd);
   return 1;
@@ -45,15 +47,22 @@ async function migrateOneActorCharDamageSign(actor) {
  *
  * Ошибка на одном акторе/токене логируется и пропускается, не прерывая
  * обработку следующих: charDamage разных персонажей друг от друга не зависит.
+ *
+ * У токена обращается ТОЛЬКО то, что записано в его дельте (wdbc-gbd3):
+ * синтетический актор отдаёт унаследованное от базового, а базовый к этому
+ * моменту уже обращён — по tokenDoc.actor.system знак перевернулся бы обратно.
+ *
+ * `tokensOnly` — пропустить мировых акторов: они уже пройдены прошлой версией
+ * миграции, без прохода по токенам (см. runMigrationGate).
  */
-export async function migrateCharDamageSign() {
+export async function migrateCharDamageSign({ tokensOnly = false } = {}) {
   if (!game.user?.isGM) { ui.notifications?.warn("Знак Мод. характеристик: только для ГМа."); return; }
   let actorCount = 0;
   let failed = 0;
 
   // Мировые акторы. Связанные токены (actorLink:true) используют тот же
   // документ Actor — им отдельный проход не нужен.
-  for (const actor of game.actors) {
+  for (const actor of tokensOnly ? [] : game.actors) {
     try {
       actorCount += await migrateOneActorCharDamageSign(actor);
     } catch (e) {
@@ -64,17 +73,12 @@ export async function migrateCharDamageSign() {
 
   // Несвязанные токены сцен: их синтетический актор (tokenDoc.actor) пишет
   // прямо в ActorDelta токена.
-  for (const scene of game.scenes ?? []) {
-    for (const tokenDoc of scene.tokens?.contents ?? []) {
-      if (tokenDoc.actorLink) continue;
-      const actor = tokenDoc.actor;
-      if (!actor) continue;
-      try {
-        actorCount += await migrateOneActorCharDamageSign(actor);
-      } catch (e) {
-        failed++;
-        console.error(`Warhammer DBC | Знак Мод. характеристик: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
-      }
+  for (const { scene, tokenDoc, actor } of unlinkedTokens()) {
+    try {
+      actorCount += await migrateOneActorCharDamageSign(actor, deltaSystem(tokenDoc));
+    } catch (e) {
+      failed++;
+      console.error(`Warhammer DBC | Знак Мод. характеристик: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
     }
   }
 

@@ -132,6 +132,7 @@ import { migrateBornForWarDivination } from "./module/migrations/born-for-war-fi
 import { migrateWarpforgedPlate } from "./module/migrations/warpforged-plate-fix.mjs";
 import { migrateNimbleRating } from "./module/migrations/nimble-rating.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
+import { runMigrationGate } from "./module/migrations/unlinked-tokens.mjs";
 import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
 import { SessionRewardsApp, openSessionRewards } from "./module/apps/session-rewards-app.mjs";
 import { runActorSetup } from "./module/apps/actor-setup.mjs";
@@ -444,6 +445,24 @@ Hooks.once("init", () => {
   game.settings.register("warhammer-dbc", "contentSyncBaselineVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
+
+  // Версии прохода миграций по несвязанным токенам — отдельно от версий самих
+  // миграций: в мирах, где миграция уже прошла, повторять её целиком нельзя
+  // (wdbc-gbd3, module/migrations/unlinked-tokens.mjs).
+  for (const key of [
+    "geneSeedCleanupTokensVersion",
+    "shipHullsTokensVersion",
+    "vehicleTraitEffectsTokensVersion",
+    "charDamageSignTokensVersion",
+    "techPowerCostsTokensVersion",
+    "gearEquippedTokensVersion",
+    "gunArmSourceTokensVersion",
+    "legionGeneSeedSizeTokensVersion",
+    "implantAvailabilityTokensVersion",
+    "contentSyncBaselineTokensVersion"
+  ]) {
+    game.settings.register("warhammer-dbc", key, { scope: "world", config: false, type: Number, default: 0 });
+  }
 
   // Настройка: убрать серую рамку у заметок-пинов на сцене.
   game.settings.register("warhammer-dbc", "hideNoteFrame", {
@@ -1011,17 +1030,12 @@ Hooks.once("ready", async () => {
 // Ручной перезапуск: game.warhammerDBC.migrateRemoveGeneSeed()
 Hooks.once("ready", async () => {
   if (!game.user.isGM) return;
-  const VERSION = 1;
-  if ((game.settings.get("warhammer-dbc", "geneSeedCleanupVersion") || 0) >= VERSION) return;
-  try {
-    const result = await migrateRemoveGeneSeed();
-    // wdbc-059h: версия штампуется, только когда ВСЕ акторы/токены/группы
-    // прошли без ошибок — иначе недомигрированное молча осталось бы таким
-    // навсегда: повторный запуск больше не подхватил бы его, гейт по версии
-    // уже пройден.
-    if (!result?.failed) await game.settings.set("warhammer-dbc", "geneSeedCleanupVersion", VERSION);
-    else console.warn("Warhammer DBC | Чистка Геносемени: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
-  } catch (e) { console.error("Warhammer DBC | Чистка Геносемени:", e); }
+  // wdbc-059h + wdbc-gbd3: версии ставятся только при полном успехе; проход
+  // по несвязанным токенам — под своим ключом (module/migrations/unlinked-tokens.mjs).
+  await runMigrationGate({
+    key: "geneSeedCleanupVersion", tokensKey: "geneSeedCleanupTokensVersion", label: "Чистка Геносемени",
+    full: () => migrateRemoveGeneSeed(), tokensOnly: () => migrateRemoveGeneSeed({ tokensOnly: true })
+  });
 });
 
 // ── Одноразовая чистка: задвоенные носители Родного мира/Предсказания (wdbc-gbpe) ──
@@ -1041,111 +1055,83 @@ Hooks.once("ready", async () => {
 // Ручной перезапуск: game.warhammerDBC.migrateShipHulls()
 Hooks.once("ready", async () => {
   if (!game.user.isGM) return;
-  const VERSION = 1;
-  if ((game.settings.get("warhammer-dbc", "shipHullsVersion") || 0) >= VERSION) return;
-  try {
-    const result = await migrateShipHulls();
-    // wdbc-059h: версия штампуется, только когда ВСЕ акторы/токены прошли без
-    // ошибок — иначе недомигрированные молча остались бы такими навсегда:
-    // повторный запуск больше не подхватил бы их, гейт по версии уже пройден.
-    if (!result?.failed) await game.settings.set("warhammer-dbc", "shipHullsVersion", VERSION);
-    else console.warn("Warhammer DBC | Корпуса кораблей: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
-  } catch (e) { console.error("Warhammer DBC | Корпуса кораблей:", e); }
+  // wdbc-059h + wdbc-gbd3: версии ставятся только при полном успехе; проход
+  // по несвязанным токенам — под своим ключом (module/migrations/unlinked-tokens.mjs).
+  await runMigrationGate({
+    key: "shipHullsVersion", tokensKey: "shipHullsTokensVersion", label: "Корпуса кораблей",
+    full: () => migrateShipHulls(), tokensOnly: () => migrateShipHulls({ tokensOnly: true })
+  });
 });
 
 // Черты техники: дополнить effects встроенных копий из компендиума (wdbc-y33b)
 Hooks.once("ready", async () => {
   if (!game.user.isGM) return;
-  const VERSION = 1;
-  if ((game.settings.get("warhammer-dbc", "vehicleTraitEffectsVersion") || 0) >= VERSION) return;
-  try {
-    const result = await migrateVehicleTraitEffects();
-    // wdbc-059h: версия штампуется, только когда ВСЕ акторы/токены прошли без
-    // ошибок — иначе недомигрированные молча остались бы такими навсегда:
-    // повторный запуск больше не подхватил бы их, гейт по версии уже пройден.
-    if (!result?.failed) await game.settings.set("warhammer-dbc", "vehicleTraitEffectsVersion", VERSION);
-    else console.warn("Warhammer DBC | Черты техники: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
-  } catch (e) { console.error("Warhammer DBC | Черты техники:", e); }
+  // wdbc-059h + wdbc-gbd3: версии ставятся только при полном успехе; проход
+  // по несвязанным токенам — под своим ключом (module/migrations/unlinked-tokens.mjs).
+  await runMigrationGate({
+    key: "vehicleTraitEffectsVersion", tokensKey: "vehicleTraitEffectsTokensVersion", label: "Черты техники",
+    full: () => migrateVehicleTraitEffects(), tokensOnly: () => migrateVehicleTraitEffects({ tokensOnly: true })
+  });
 });
 
 // ── Одноразовая инверсия: знак Мод. характеристик (бывший «Урон в характеристику»)
 // Ручной перезапуск: game.warhammerDBC.migrateCharDamageSign()
 Hooks.once("ready", async () => {
   if (!game.user.isGM) return;
-  const VERSION = 1;
-  if ((game.settings.get("warhammer-dbc", "charDamageSignVersion") || 0) >= VERSION) return;
-  try {
-    const result = await migrateCharDamageSign();
-    // wdbc-059h: версия штампуется, только когда ВСЕ акторы/токены прошли без
-    // ошибок — иначе недомигрированные молча остались бы такими навсегда:
-    // повторный запуск больше не подхватил бы их, гейт по версии уже пройден.
-    if (!result?.failed) await game.settings.set("warhammer-dbc", "charDamageSignVersion", VERSION);
-    else console.warn("Warhammer DBC | Знак Мод. характеристик: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
-  } catch (e) { console.error("Warhammer DBC | Знак Мод. характеристик:", e); }
+  // wdbc-059h + wdbc-gbd3: версии ставятся только при полном успехе; проход
+  // по несвязанным токенам — под своим ключом (module/migrations/unlinked-tokens.mjs).
+  await runMigrationGate({
+    key: "charDamageSignVersion", tokensKey: "charDamageSignTokensVersion", label: "Знак Мод. характеристик",
+    full: () => migrateCharDamageSign(), tokensOnly: () => migrateCharDamageSign({ tokensOnly: true })
+  });
 });
 
 // ── Одноразовая довыдача: цены Техночудес вложенным копиям старых актёров ─────
 // Ручной перезапуск: game.warhammerDBC.migrateTechPowerCosts()
 Hooks.once("ready", async () => {
   if (!game.user.isGM) return;
-  const VERSION = 1;
-  if ((game.settings.get("warhammer-dbc", "techPowerCostsVersion") || 0) >= VERSION) return;
-  try {
-    const result = await migrateTechPowerCosts();
-    // wdbc-059h: версия штампуется, только когда ВСЕ акторы/токены прошли без
-    // ошибок — иначе недомигрированные молча остались бы такими навсегда:
-    // повторный запуск больше не подхватил бы их, гейт по версии уже пройден.
-    if (!result?.failed) await game.settings.set("warhammer-dbc", "techPowerCostsVersion", VERSION);
-    else console.warn("Warhammer DBC | Цены Техночудес: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
-  } catch (e) { console.error("Warhammer DBC | Цены Техночудес:", e); }
+  // wdbc-059h + wdbc-gbd3: версии ставятся только при полном успехе; проход
+  // по несвязанным токенам — под своим ключом (module/migrations/unlinked-tokens.mjs).
+  await runMigrationGate({
+    key: "techPowerCostsVersion", tokensKey: "techPowerCostsTokensVersion", label: "Цены Техночудес",
+    full: () => migrateTechPowerCosts(), tokensOnly: () => migrateTechPowerCosts({ tokensOnly: true })
+  });
 });
 
 // ── Одноразовая простановка: «надето» носимому снаряжению (wdbc-9h7g) ────────
 // Ручной перезапуск («надеть всё носимое заново»): game.warhammerDBC.migrateGearEquipped()
 Hooks.once("ready", async () => {
   if (!game.user.isGM) return;
-  const VERSION = 1;
-  if ((game.settings.get("warhammer-dbc", "gearEquippedVersion") || 0) >= VERSION) return;
-  try {
-    const result = await migrateGearEquipped();
-    // wdbc-dyi: версия штампуется, только когда ВСЕ акторы/токены прошли без
-    // ошибок — иначе недомигрированные молча остались бы такими навсегда:
-    // повторный запуск больше не подхватил бы их, гейт по версии уже пройден.
-    if (!result?.failed) await game.settings.set("warhammer-dbc", "gearEquippedVersion", VERSION);
-    else console.warn("Warhammer DBC | Надетое снаряжение: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
-  } catch (e) { console.error("Warhammer DBC | Надетое снаряжение:", e); }
+  // wdbc-059h + wdbc-gbd3: версии ставятся только при полном успехе; проход
+  // по несвязанным токенам — под своим ключом (module/migrations/unlinked-tokens.mjs).
+  await runMigrationGate({
+    key: "gearEquippedVersion", tokensKey: "gearEquippedTokensVersion", label: "Надетое снаряжение",
+    full: () => migrateGearEquipped(), tokensOnly: () => migrateGearEquipped({ tokensOnly: true })
+  });
 });
 
 // ── Одноразовая простановка: вросшее оружие Дара «Рука-Пушка» (wdbc-vkt) ─────
 // Ручной перезапуск: game.warhammerDBC.migrateGunArmSource()
 Hooks.once("ready", async () => {
   if (!game.user.isGM) return;
-  const VERSION = 1;
-  if ((game.settings.get("warhammer-dbc", "gunArmSourceVersion") || 0) >= VERSION) return;
-  try {
-    const result = await migrateGunArmSource();
-    // wdbc-059h: версия штампуется, только когда ВСЕ акторы/токены прошли без
-    // ошибок — иначе недомигрированные молча остались бы такими навсегда:
-    // повторный запуск больше не подхватил бы их, гейт по версии уже пройден.
-    if (!result?.failed) await game.settings.set("warhammer-dbc", "gunArmSourceVersion", VERSION);
-    else console.warn("Warhammer DBC | Рука-Пушка: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
-  } catch (e) { console.error("Warhammer DBC | Рука-Пушка:", e); }
+  // wdbc-059h + wdbc-gbd3: версии ставятся только при полном успехе; проход
+  // по несвязанным токенам — под своим ключом (module/migrations/unlinked-tokens.mjs).
+  await runMigrationGate({
+    key: "gunArmSourceVersion", tokensKey: "gunArmSourceTokensVersion", label: "Рука-Пушка",
+    full: () => migrateGunArmSource(), tokensOnly: () => migrateGunArmSource({ tokensOnly: true })
+  });
 });
 
 // ── Одноразовая правка: Размер Геносемени легиона у уже созданных Черт (wdbc-nesq) ──
 // Ручной перезапуск: game.warhammerDBC.migrateLegionGeneSeedSize()
 Hooks.once("ready", async () => {
   if (!game.user.isGM) return;
-  const VERSION = 1;
-  if ((game.settings.get("warhammer-dbc", "legionGeneSeedSizeVersion") || 0) >= VERSION) return;
-  try {
-    const result = await migrateLegionGeneSeedSize();
-    // wdbc-059h: версия штампуется, только когда ВСЕ акторы/токены прошли без
-    // ошибок — иначе недомигрированные молча остались бы такими навсегда:
-    // повторный запуск больше не подхватил бы их, гейт по версии уже пройден.
-    if (!result?.failed) await game.settings.set("warhammer-dbc", "legionGeneSeedSizeVersion", VERSION);
-    else console.warn("Warhammer DBC | Размер Геносемени легиона: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
-  } catch (e) { console.error("Warhammer DBC | Размер Геносемени легиона:", e); }
+  // wdbc-059h + wdbc-gbd3: версии ставятся только при полном успехе; проход
+  // по несвязанным токенам — под своим ключом (module/migrations/unlinked-tokens.mjs).
+  await runMigrationGate({
+    key: "legionGeneSeedSizeVersion", tokensKey: "legionGeneSeedSizeTokensVersion", label: "Размер Геносемени легиона",
+    full: () => migrateLegionGeneSeedSize(), tokensOnly: () => migrateLegionGeneSeedSize({ tokensOnly: true })
+  });
 });
 
 // ── Одноразовая правка: ActiveEffect Предсказания «Ты рождён для войны» у
@@ -1201,16 +1187,12 @@ Hooks.once("ready", async () => {
 // Ручной перезапуск: game.warhammerDBC.migrateImplantAvailability()
 Hooks.once("ready", async () => {
   if (!game.user.isGM) return;
-  const VERSION = 1;
-  if ((game.settings.get("warhammer-dbc", "implantAvailabilityVersion") || 0) >= VERSION) return;
-  try {
-    const result = await migrateImplantAvailability();
-    // wdbc-059h: версия штампуется, только когда ВСЕ акторы/токены прошли без
-    // ошибок — иначе недомигрированные молча остались бы такими навсегда:
-    // повторный запуск больше не подхватил бы их, гейт по версии уже пройден.
-    if (!result?.failed) await game.settings.set("warhammer-dbc", "implantAvailabilityVersion", VERSION);
-    else console.warn("Warhammer DBC | Доливка полей биоимплантов: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
-  } catch (e) { console.error("Warhammer DBC | Доливка полей биоимплантов:", e); }
+  // wdbc-059h + wdbc-gbd3: версии ставятся только при полном успехе; проход
+  // по несвязанным токенам — под своим ключом (module/migrations/unlinked-tokens.mjs).
+  await runMigrationGate({
+    key: "implantAvailabilityVersion", tokensKey: "implantAvailabilityTokensVersion", label: "Доливка полей биоимплантов",
+    full: () => migrateImplantAvailability(), tokensOnly: () => migrateImplantAvailability({ tokensOnly: true })
+  });
 });
 
 // ── Одноразовая довыдача: Стремления, выбранные до автоматизации бонусов ──────
@@ -1229,16 +1211,12 @@ Hooks.once("ready", async () => {
 // Ручной перезапуск: game.warhammerDBC.stampContentSyncBaseline()
 Hooks.once("ready", async () => {
   if (!game.user.isGM) return;
-  const VERSION = 1;
-  if ((game.settings.get("warhammer-dbc", "contentSyncBaselineVersion") || 0) >= VERSION) return;
-  try {
-    const result = await stampContentSyncBaseline();
-    // wdbc-059h: версия штампуется, только когда ВСЕ акторы/токены прошли без
-    // ошибок — иначе недомигрированные молча остались бы такими навсегда:
-    // повторный запуск больше не подхватил бы их, гейт по версии уже пройден.
-    if (!result?.failed) await game.settings.set("warhammer-dbc", "contentSyncBaselineVersion", VERSION);
-    else console.warn("Warhammer DBC | Опора синхронизации контента: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
-  } catch (e) { console.error("Warhammer DBC | Опора синхронизации контента:", e); }
+  // wdbc-059h + wdbc-gbd3: версии ставятся только при полном успехе; проход
+  // по несвязанным токенам — под своим ключом (module/migrations/unlinked-tokens.mjs).
+  await runMigrationGate({
+    key: "contentSyncBaselineVersion", tokensKey: "contentSyncBaselineTokensVersion", label: "Опора синхронизации контента",
+    full: () => stampContentSyncBaseline(), tokensOnly: () => stampContentSyncBaseline({ tokensOnly: true })
+  });
 });
 
 // ── Одноразовая довыдача: aptSource Миньонам Хаоса, купленным до фикса цены ───

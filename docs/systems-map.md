@@ -1148,6 +1148,13 @@ AGENTS.md).
   `rules/{merge-abilities,name-generator,name-generator-helpers}.mjs`,
   `constants/{item-icons,craft-icons,roll-icons,tech-icons,veil-icons,fonts,
   name-lists,name-gen,library-packs,items}.mjs`.
+- Мировые миграции: `module/migrations/*.mjs`, гейты — в `warhammer-dbc.mjs`
+  (`Hooks.once("ready")`). Проход по несвязанным токенам и гейт с отдельным
+  ключом версии под него — `migrations/unlinked-tokens.mjs`
+  (`runMigrationGate`, `deltaOwnedItems`, wdbc-gbd3).
+- Сборка/извлечение компендиумов: `tools/pack.mjs`, `tools/unpack.mjs`;
+  отметка сверки с отпечатками баз и исходников — `tools/pack-stamp.mjs`,
+  `tools/pack-fingerprint.mjs` (wdbc-1c10, wdbc-6dps).
 - `module/data/item/infoguard.mjs`, `_legacy-char-bonus.mjs` — не
   TypeDataModel, общие миксины схем (счётчик Инфограждения; миграция пары
   `charBonusStat/charBonusValue`).
