@@ -141,4 +141,25 @@ describe("формат исходников паков", () => {
     }
     expect(wrong).toEqual([]);
   });
+
+  // Foundry принимает только 16 букв/цифр: иной _id проходит все гейты и
+  // роняет живой мир на DataModelValidationFailure (wdbc-1b96 — 18 символов
+  // у «Тоньше Завесы»). Проверяются и вложенные документы: эффекты, страницы.
+  it("каждый _id — 16 латинских букв и цифр, включая вложенные документы", () => {
+    const wrong = [];
+    const visit = (node, file, trail) => {
+      if (Array.isArray(node)) return node.forEach((x, i) => visit(x, file, `${trail}[${i}]`));
+      if (!node || typeof node !== "object") return;
+      if ("_id" in node && node._id !== null && !/^[a-zA-Z0-9]{16}$/.test(String(node._id))) {
+        wrong.push(`${file} ${trail || "(корень)"}: ${JSON.stringify(node._id)}`);
+      }
+      for (const [k, v] of Object.entries(node)) if (k !== "_id") visit(v, file, `${trail}.${k}`);
+    };
+    for (const f of FILES) visit(JSON.parse(f.text), f.file, "");
+    for (const b of JOURNAL_PACKS) {
+      const file = abs(`${SRC_ROOT}/books/${b.slug}.json`);
+      if (existsSync(file)) visit(JSON.parse(readFileSync(file, "utf8")), file, "");
+    }
+    expect(wrong).toEqual([]);
+  });
 });
