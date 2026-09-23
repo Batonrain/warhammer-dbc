@@ -175,8 +175,8 @@ describe("поиск и создание демона на сцене (spawnDemo
     it("asMinion — актор получает Черту «Тоньше Завесы» из пака traits", async () => {
       globalThis.game.packs.set("warhammer-dbc.bestiary", bestiaryPack([{ _id: "d1", name: "Кровопускатель" }]));
       globalThis.game.packs.set("warhammer-dbc.traits", {
-        getDocument: async id => (id === "ArmigerVeilThinX1a"
-          ? { toObject: () => ({ _id: "ArmigerVeilThinX1a", type: "trait", name: "Thinner Veil" }) } : null)
+        getDocument: async id => (id === "ArmigerVeilThin1"
+          ? { toObject: () => ({ _id: "ArmigerVeilThin1", type: "trait", name: "Thinner Veil" }) } : null)
       });
       globalThis.canvas.scene = stubScene();
 
@@ -191,8 +191,8 @@ describe("поиск и создание демона на сцене (spawnDemo
     it("asMinion:true БЕЗ veilThinner — Черта НЕ выдаётся, хотя пак traits доступен", async () => {
       globalThis.game.packs.set("warhammer-dbc.bestiary", bestiaryPack([{ _id: "d1", name: "Джаггернаут" }]));
       globalThis.game.packs.set("warhammer-dbc.traits", {
-        getDocument: async id => (id === "ArmigerVeilThinX1a"
-          ? { toObject: () => ({ _id: "ArmigerVeilThinX1a", type: "trait", name: "Thinner Veil" }) } : null)
+        getDocument: async id => (id === "ArmigerVeilThin1"
+          ? { toObject: () => ({ _id: "ArmigerVeilThin1", type: "trait", name: "Thinner Veil" }) } : null)
       });
       globalThis.canvas.scene = stubScene();
 
@@ -216,8 +216,8 @@ describe("поиск и создание демона на сцене (spawnDemo
       globalThis.game.packs.set("warhammer-dbc.bestiary",
         bestiaryPack([{ _id: "d1", name: "Кровопускатель", items: [{ type: "weapon", name: "Адский Клинок" }] }]));
       globalThis.game.packs.set("warhammer-dbc.traits", {
-        getDocument: async id => (id === "ArmigerVeilThinX1a"
-          ? { toObject: () => ({ _id: "ArmigerVeilThinX1a", type: "trait", name: "Thinner Veil" }) } : null)
+        getDocument: async id => (id === "ArmigerVeilThin1"
+          ? { toObject: () => ({ _id: "ArmigerVeilThin1", type: "trait", name: "Thinner Veil" }) } : null)
       });
       globalThis.canvas.scene = stubScene();
 

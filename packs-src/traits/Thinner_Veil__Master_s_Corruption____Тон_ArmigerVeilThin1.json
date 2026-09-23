@@ -25,7 +25,7 @@
     },
     "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
   },
-  "_id": "ArmigerVeilThinX1a",
+  "_id": "ArmigerVeilThin1",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -134,5 +134,5 @@
     "modifiedTime": 1786285534944,
     "lastModifiedBy": "4Q6l1C4FQOMQVofr"
   },
-  "_key": "!items!ArmigerVeilThinX1a"
+  "_key": "!items!ArmigerVeilThin1"
 }

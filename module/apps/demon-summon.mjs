@@ -27,7 +27,7 @@ const TRAITS_PACK = "warhammer-dbc.traits";
 // (wdbc-1rno, шаг F): «...считает Завесу на Cor.b персонажа тоньше». Отдана
 // демону автоматически при призыве, а не покупается — искать по точному id,
 // не по имени (в отличие от Бестиария, здесь неоднозначности быть не должно).
-const VEIL_THINNER_TRAIT_ID = "ArmigerVeilThinX1a";
+const VEIL_THINNER_TRAIT_ID = "ArmigerVeilThin1";
 
 /** Данные Черты «Тоньше Завесы» для вставки в data.items нового Актора. */
 async function veilThinnerTraitData() {
