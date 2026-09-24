@@ -6,7 +6,7 @@
 import { describe, it, expect } from "vitest";
 import { meleeEffectiveRange } from "../../module/constants/combat.mjs";
 import { actorMaxMeleeRange, longerWeaponBonus, chargeTargetDodgeBonus,
-         closeQuartersPenalty, extendedReachCells, meleeContactDisplay } from "../../module/rules/weapon-length.mjs";
+         closeQuartersPenalty, closeQuartersRange, extendedReachCells, meleeContactDisplay } from "../../module/rules/weapon-length.mjs";
 
 function meleeWeapon({ range = 0, grips = "1р", equipped = true } = {}) {
   return { type: "weapon", system: { weaponClass: "melee", range, grips, equipped } };
@@ -141,6 +141,16 @@ describe("closeQuartersPenalty — правило 4 (стр. 39): штраф в�
 
   it("Rng 9 — −20 (4 пункта выше 5)", () => {
     expect(closeQuartersPenalty(9)).toBe(-20);
+  });
+});
+
+describe("closeQuartersRange — правило 4 считается по МИНИМАЛЬНОМУ Rng (wdbc-t3c3t.2)", () => {
+  it("rangeMin задан — берётся он, а не верхняя граница (Кнут 5-7 → 5, без штрафа); Длинные Руки минимум не растят — Размер сюда не передаётся", () => {
+    expect(closeQuartersRange({ range: 7, rangeMin: 5, grips: "1р" })).toBe(5);
+  });
+
+  it("rangeMin не задан (0) — берётся range", () => {
+    expect(closeQuartersRange({ range: 6, rangeMin: 0, grips: "2р" })).toBe(6);
   });
 });
 
