@@ -10,18 +10,20 @@
 // от которых зависит, какие цели фронтальное/бортовое орудие может достать
 // (sheets/vehicle-sheet.mjs) — см. warhammer-dbc.mjs::disableFixedFacingAutoRotate.
 //
-// Второй слой (по просьбе пользователя, тот же вечер): сама настройка мира
-// core.tokenAutoRotate тоже сама больше не должна давать повод для этого
-// бага у остальных типов (Cloak/Скрытная Атака читают rotation защищающегося
-// не только у Корабля/Техники) — applyTokenAutoRotateDefaultOnce выключает
-// её ОДИН раз, только ГМ, по тому же принципу, что applyBookDiagonalDefaultOnce
-// (module/combat/tactical-map.mjs, стр. 31): once — значит once.
+// Второй слой был ошибкой (wdbc-t3c3t.12): applyTokenAutoRotateDefaultOnce
+// выключал core.tokenAutoRotate на весь мир, а конус обзора 210°
+// (migrations/sight-angle.mjs) смотрит туда же, куда rotation — персонажи
+// переставали поворачиваться при движении и видели только «вперёд» от
+// исходного положения. Теперь существа поворачиваются по ходу движения (их
+// «перед» — куда идут), Корабль/Техника по-прежнему нет — это держит хук
+// preMoveToken выше независимо от настройки мира. restoreTokenAutoRotateOnce
+// один раз возвращает настройку в мирах, где её выключила система.
 
 import "./support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
 
-const { disableFixedFacingAutoRotate, shouldApplyTokenAutoRotateDefault, applyTokenAutoRotateDefaultOnce } =
+const { disableFixedFacingAutoRotate, shouldRestoreTokenAutoRotate, restoreTokenAutoRotateOnce } =
   await import("../warhammer-dbc.mjs");
 
 describe("disableFixedFacingAutoRotate — preMoveToken гасит автоповорот у Корабля/Техники", () => {
@@ -52,17 +54,21 @@ describe("disableFixedFacingAutoRotate — preMoveToken гасит автопо�
   });
 });
 
-describe("shouldApplyTokenAutoRotateDefault — разовый системный дефолт core.tokenAutoRotate", () => {
-  it("ещё не применялось, стоит дефолт ядра (true) — применить (выключить)", () => {
-    expect(shouldApplyTokenAutoRotateDefault({ alreadyApplied: false, currentAutoRotate: true })).toBe(true);
+describe("shouldRestoreTokenAutoRotate — разовый возврат core.tokenAutoRotate", () => {
+  it("система выключала, ещё не возвращали, стоит false — вернуть", () => {
+    expect(shouldRestoreTokenAutoRotate({ restored: false, systemDisabled: true, currentAutoRotate: false })).toBe(true);
   });
 
-  it("уже применялось раньше — не применять снова, даже если опять true", () => {
-    expect(shouldApplyTokenAutoRotateDefault({ alreadyApplied: true, currentAutoRotate: true })).toBe(false);
+  it("уже возвращали — не трогать, даже если ГМ снова выключил", () => {
+    expect(shouldRestoreTokenAutoRotate({ restored: true, systemDisabled: true, currentAutoRotate: false })).toBe(false);
   });
 
-  it("ГМ уже выключил сам (false) — не наше дело, уже так, как надо", () => {
-    expect(shouldApplyTokenAutoRotateDefault({ alreadyApplied: false, currentAutoRotate: false })).toBe(false);
+  it("система не выключала (новый мир) — не трогать", () => {
+    expect(shouldRestoreTokenAutoRotate({ restored: false, systemDisabled: false, currentAutoRotate: false })).toBe(false);
+  });
+
+  it("уже включено — нечего возвращать", () => {
+    expect(shouldRestoreTokenAutoRotate({ restored: false, systemDisabled: true, currentAutoRotate: true })).toBe(false);
   });
 });
 
@@ -79,54 +85,44 @@ function settingsStub(initial) {
   };
 }
 
-describe("applyTokenAutoRotateDefaultOnce — Foundry-обвязка (только ГМ, только once)", () => {
+describe("restoreTokenAutoRotateOnce — Foundry-обвязка (только ГМ, только once)", () => {
   it("не ГМ — ничего не трогает", async () => {
     const { sets, api } = settingsStub({
-      "warhammer-dbc.tokenAutoRotateDefaultApplied": false, "core.tokenAutoRotate": true
+      "warhammer-dbc.tokenAutoRotateDefaultApplied": true, "warhammer-dbc.tokenAutoRotateRestored": false,
+      "core.tokenAutoRotate": false
     });
     globalThis.game.user = { isGM: false };
     globalThis.game.settings = api;
 
-    await applyTokenAutoRotateDefaultOnce();
+    await restoreTokenAutoRotateOnce();
 
     expect(sets).toEqual([]);
   });
 
-  it("ГМ, дефолт ядра ещё не тронут — выключает core.tokenAutoRotate и помечает применённым", async () => {
+  it("ГМ, система выключала автоповорот — включает обратно и помечает", async () => {
     const { sets, api } = settingsStub({
-      "warhammer-dbc.tokenAutoRotateDefaultApplied": false, "core.tokenAutoRotate": true
+      "warhammer-dbc.tokenAutoRotateDefaultApplied": true, "warhammer-dbc.tokenAutoRotateRestored": false,
+      "core.tokenAutoRotate": false
     });
     globalThis.game.user = { isGM: true };
     globalThis.game.settings = api;
 
-    await applyTokenAutoRotateDefaultOnce();
+    await restoreTokenAutoRotateOnce();
 
-    expect(sets).toContainEqual(["core", "tokenAutoRotate", false]);
-    expect(sets).toContainEqual(["warhammer-dbc", "tokenAutoRotateDefaultApplied", true]);
+    expect(sets).toContainEqual(["core", "tokenAutoRotate", true]);
+    expect(sets).toContainEqual(["warhammer-dbc", "tokenAutoRotateRestored", true]);
   });
 
-  it("ГМ, уже применялось раньше — core.tokenAutoRotate не трогает", async () => {
+  it("ГМ, уже возвращали — core.tokenAutoRotate не трогает", async () => {
     const { sets, api } = settingsStub({
-      "warhammer-dbc.tokenAutoRotateDefaultApplied": true, "core.tokenAutoRotate": true
+      "warhammer-dbc.tokenAutoRotateDefaultApplied": true, "warhammer-dbc.tokenAutoRotateRestored": true,
+      "core.tokenAutoRotate": false
     });
     globalThis.game.user = { isGM: true };
     globalThis.game.settings = api;
 
-    await applyTokenAutoRotateDefaultOnce();
+    await restoreTokenAutoRotateOnce();
 
     expect(sets.some(([scope, key]) => scope === "core" && key === "tokenAutoRotate")).toBe(false);
-  });
-
-  it("ГМ, настройка мира уже false (ГМ сам выключил) — не трогает, но метку once всё равно ставит", async () => {
-    const { sets, api } = settingsStub({
-      "warhammer-dbc.tokenAutoRotateDefaultApplied": false, "core.tokenAutoRotate": false
-    });
-    globalThis.game.user = { isGM: true };
-    globalThis.game.settings = api;
-
-    await applyTokenAutoRotateDefaultOnce();
-
-    expect(sets.some(([scope, key]) => scope === "core" && key === "tokenAutoRotate")).toBe(false);
-    expect(sets).toContainEqual(["warhammer-dbc", "tokenAutoRotateDefaultApplied", true]);
   });
 });
