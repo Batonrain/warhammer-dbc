@@ -940,7 +940,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
   // Ситуативные модификаторы вынесены в sheets/attack/mods.mjs (wdbc-uh56):
   // данные без вёрстки, шов замерен (12 внутрь, 4 наружу).
-  const { bandKey, charSwapWhy, charSwapWhyFel, charSwapWhyInt, commonMods, specificMods } = situationalMods({
+  const { bandKey, charSwapWhy, commonMods, specificMods } = situationalMods({
     actor,
     attackCtx,
     attackerToken,
@@ -1343,8 +1343,6 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     bandHtml,
     charKey,
     charSwapWhy,
-    charSwapWhyFel,
-    charSwapWhyInt,
     charVal,
     commonMods,
     distanceHintHtml,

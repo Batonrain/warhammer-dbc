@@ -524,7 +524,8 @@ export const DISTRACTING_LEGACY_FLAG = "legacyDistractingMark";
  *
  * Рукопашная ветка («Финт — тест на Charm(F) или I вместо WS») реализована
  * через legacyDistractingCharSwapRules ниже — grantFlag capability
- * charSwap.fel.forWs/charSwap.int.forWs, читается sheets/attack/mods.mjs.
+ * charSwap.fel.forWs/charSwap.int.forWs, читается окном Финта
+ * (combat/techniques.mjs::_showContestDialog, wdbc-t3c3t.3).
  */
 export function distractingLegacyActive(weapon) {
   return weapon?.system?.weaponClass !== "melee" && takenMutationNames(weapon).has("Отвлекающее");
@@ -796,12 +797,9 @@ export function legacyInstinctiveDisarmRules(actor) {
  * (мутация одна на все виды атаки, а книга разрешает подмену именно для
  * рукопашного WS-теста Финта).
  *
- * Честно: подпись у пункта выбора характеристики в диалоге атаки — это
- * РАЗРЕШЕНИЕ («книга это допускает»), не автоматическое ГЕЙТИРОВАНИЕ по
- * тому, выбран ли СЕЙЧАС именно Приём «Финт» — тот же уровень проверки,
- * что уже принят для Локуса Мутации (attack-dialog.mjs не знает, какой
- * Приём выбран, на момент построения списка характеристик; выбор Финта
- * и корректность применения — на игроке/ГМ, как и там).
+ * Подпись — у пунктов Fel/Int в окне Финта (combat/techniques.mjs::
+ * _showContestDialog, wdbc-t3c3t.3): это РАЗРЕШЕНИЕ («книга это
+ * допускает»), выбор характеристики остаётся за игроком.
  */
 export function legacyDistractingCharSwapRules(actor) {
   const weapon = equippedLegacyWeaponWithMutation(actor, "Отвлекающее");

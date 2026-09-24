@@ -11,7 +11,7 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { actorFor, weaponFor, char } from "../support/combat-fixtures.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 import { _performParry } from "../../module/combat/defense.mjs";
-import { strikeLocation, parryWeaponFor, gunAsParryWeapon, strikeDamageFormula }
+import { strikeLocation, parryWeaponFor, gunAsParryWeapon, strikeDamageFormula, performUnarmedRiposte }
   from "../../module/combat/unarmed-combat.mjs";
 import { improvisedMeleeProfile, canStrikeWithGun, registerBraceCheck, FIRED_BRACED_FLAG }
   from "../../module/combat/weapon-profiles.mjs";
@@ -283,5 +283,52 @@ describe("Контратака (шипы): Пинок и Удар головой
   });
   it("обычное оружие без категории — нет", () => {
     expect(counterAttackTriggers({ isMelee: true, hit: true, meleeCategory: "" }).onUnarmedOrGrapple).toBe(false);
+  });
+});
+
+// wdbc-t3c3t.8: кнопку жал любой клиент, а «использовано» жило только в
+// локальном disabled — вне боя (пула нет) ГМ и игрок давали два удара.
+describe("performUnarmedRiposte: только владелец, один удар на карточку (wdbc-t3c3t.8)", () => {
+  function setup({ owner = true } = {}) {
+    const fist = unarmed();
+    const atk = fighter([fist], { uuid: "Actor.atk" });
+    const def = fighter([sword()]);
+    def.isOwner = owner;
+    resolver(atk, fist);
+    const flags = {};
+    const message = {
+      getFlag: (scope, key) => flags[`${scope}.${key}`],
+      setFlag: async (scope, key, value) => { flags[`${scope}.${key}`] = value; },
+      canUserModify: () => true
+    };
+    const opts = { weaponId: "sword", attackerUuid: atk.uuid, attackerWeaponUuid: fist.uuid, message };
+    const strikes = () => captured.chat.filter(m => String(m.content).includes("Ответный удар —")).length;
+    return { def, opts, strikes };
+  }
+
+  it("владелец, первый клик — удар проходит", async () => {
+    const { def, opts, strikes } = setup();
+    await performUnarmedRiposte(def, opts);
+    expect(strikes()).toBe(1);
+  });
+
+  it("не владелец парировавшего — удара нет", async () => {
+    const { def, opts, strikes } = setup({ owner: false });
+    await performUnarmedRiposte(def, opts);
+    expect(strikes()).toBe(0);
+  });
+
+  it("второй клик по той же карточке (другой клиент) — удара нет", async () => {
+    const { def, opts, strikes } = setup();
+    await performUnarmedRiposte(def, opts);
+    await performUnarmedRiposte(def, opts);
+    expect(strikes()).toBe(1);
+  });
+
+  it("карточку бросал ГМ, игрок не может её отметить — удара нет (иначе ГМ ударит второй раз)", async () => {
+    const { def, opts, strikes } = setup();
+    opts.message.canUserModify = () => false;
+    await performUnarmedRiposte(def, opts);
+    expect(strikes()).toBe(0);
   });
 });

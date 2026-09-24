@@ -768,24 +768,12 @@ describe("Кромсающее: галочка «1d10−2 вместо 1d5+1»",
 });
 
 // Отвлекающее, Оружие Наследия (wdbc-1rno.35, skilled 3-4, стр. 427),
-// рукопашная ветка: «Charm(F) или Int вместо WS при Финте» — та же форма
-// подписи, что у Локуса Мутации (charSwap.wp.forWsS), только на fel/int.
-describe("Отвлекающее: Charm/Int вместо WS в списке характеристик (рукопашная)", () => {
-  it("рукопашное оружие с Мутацией — подпись у Fel и у Int", () => {
+// рукопашная ветка: «Charm(F) или Int вместо WS при Финте». Финт идёт через
+// окно Состязания (test/combat/techniques-contest.test.mjs), в окне обычной
+// атаки подписи быть не должно — там это не Финт (wdbc-t3c3t.3).
+describe("Отвлекающее: в окне обычной атаки подмены WS на Fel/Int нет", () => {
+  it("рукопашное оружие с Мутацией — подписи «Финт» нет", () => {
     const sword = weaponFor({ weaponClass: "melee", equipped: true, legacy: { active: true, mutations: [{ name: "Отвлекающее" }] } });
-    showAttackDialog(attacker({ items: [sword] }), sword);
-    const html = captured.dialog.content;
-    expect(html).toContain("вместо WS (Финт)");
-  });
-
-  it("стрелковое оружие с той же Мутацией — подписи нет (только рукопашная ветка)", () => {
-    const gun = weaponFor({ weaponClass: "basic", equipped: true, legacy: { active: true, mutations: [{ name: "Отвлекающее" }] } });
-    showAttackDialog(attacker({ items: [gun] }), gun);
-    expect(captured.dialog.content).not.toContain("вместо WS (Финт)");
-  });
-
-  it("нет Мутации — подписи нет", () => {
-    const sword = weaponFor({ weaponClass: "melee", equipped: true, legacy: { active: true, mutations: [] } });
     showAttackDialog(attacker({ items: [sword] }), sword);
     expect(captured.dialog.content).not.toContain("вместо WS (Финт)");
   });

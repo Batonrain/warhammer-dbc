@@ -1311,5 +1311,6 @@ export function showGrappleDialog(actor) {
 // подвид урона в прямых попаданиях Борьбы, wdbc-9zpt): внутри системы их зовёт
 // лишь этот файл. showGrappleDialog, через который они идут в игре, заглушка
 // тестов не проходит (см. шапку test/combat/grapple.test.mjs). Тот же приём,
-// что у vehicle.mjs::_resolveRam.
-export { _resolveWrenchSuccess, _doBite, _doCrunch };
+// что у vehicle.mjs::_resolveRam. TARGET_TESTS — ради grapple-rules.test.mjs:
+// «Вырваться» настоящей записью, не подставным onSuccess (wdbc-t3c3t.15).
+export { _resolveWrenchSuccess, _doBite, _doCrunch, TARGET_TESTS };

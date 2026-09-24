@@ -286,10 +286,6 @@ export function situationalMods(v) {
     }
   }
   const charSwapWhy  = ruleFlagLabels(actor, "charSwap.wp.forWsS", attackCtx);
-  // Отвлекающее/skilled 3-4, Оружие Наследия, рукопашная ветка (wdbc-1rno.35,
-  // стр. 427-428): «При Финте — тест на Charm(Fel) или Int вместо WS.»
-  const charSwapWhyFel = ruleFlagLabels(actor, "charSwap.fel.forWs", attackCtx);
-  const charSwapWhyInt = ruleFlagLabels(actor, "charSwap.int.forWs", attackCtx);
   const twoWeaponWhy = ruleFlagLabels(actor, "penalty.twoWeapon.off", attackCtx);
   const twoWeaponOff  = twoWeaponWhy.length > 0;
   // Дуэлянтское (стр. 73 Книги Аэльдари): бой 1-на-1, когда никто не мешает,
@@ -506,5 +502,5 @@ export function situationalMods(v) {
       note: wp.gyroStabilized ? "снято: Гиро-стаб." : undefined }
   ];
 
-  return { bandKey, charSwapWhy, charSwapWhyFel, charSwapWhyInt, commonMods, specificMods };
+  return { bandKey, charSwapWhy, commonMods, specificMods };
 }
