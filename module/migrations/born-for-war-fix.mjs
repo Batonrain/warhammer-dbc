@@ -49,6 +49,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { esc } from "../helpers/utils.mjs";
+import { unlinkedTokens, deltaOwnedItems } from "./unlinked-tokens.mjs";
 
 const BORN_FOR_WAR_KEY  = "bornwar";
 const BORN_FOR_WAR_NAME = "Ты рождён для войны";
@@ -232,14 +233,14 @@ export async function repickBornForWar(itemUuid) {
 /** Все, кого надо переспросить: мировые акторы и несвязанные токены сцен. */
 function bornForWarRepickTargets() {
   const out = [];
-  const scan = (actor, label) => {
-    for (const item of actor?.items ?? []) if (bornForWarStaleTChoice(item)) out.push({ name: label, uuid: item.uuid });
+  const scan = (items, label) => {
+    for (const item of items ?? []) if (bornForWarStaleTChoice(item)) out.push({ name: label, uuid: item.uuid });
   };
-  for (const actor of game.actors ?? []) scan(actor, actor.name);
-  for (const scene of game.scenes ?? []) {
-    for (const tokenDoc of scene.tokens?.contents ?? []) {
-      if (!tokenDoc.actorLink) scan(tokenDoc.actor, `${tokenDoc.name} (сцена «${scene.name}»)`);
-    }
+  for (const actor of game.actors ?? []) scan(actor.items, actor.name);
+  // У токена — только предметы его дельты: унаследованные уже названы за
+  // мирового актора (wdbc-t3c3t.14).
+  for (const { scene, tokenDoc } of unlinkedTokens()) {
+    scan(deltaOwnedItems(tokenDoc), `${tokenDoc.name} (сцена «${scene.name}»)`);
   }
   return out;
 }
