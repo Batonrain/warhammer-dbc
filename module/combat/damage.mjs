@@ -13,6 +13,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, outcomeHtml, rollStatLine } from "../helpers/test-card.mjs";
 import { ablativeDamage, mountRangedApBonus } from "../rules/mount.mjs";
 import { LAST_DAMAGE_WEAPON_FLAG } from "./blood-flame.mjs";
+import { divineProtectionActive } from "../rules/death-save.mjs";
 import { resolveArmorAbsorptionAP, breachArmorAtLocation, armorBreachOutcome } from "./armor-properties.mjs";
 import { applyWoundLoss, ablativeAbsorb } from "../rules/wounds.mjs";
 import { CAST_OUT_OF_DEATH_CAPABILITY, CAST_OUT_OF_DEATH_FLAG, scheduleCastOutOfDeathRegen } from "../rules/cast-out-of-death.mjs";
@@ -680,6 +681,20 @@ export async function applyDamageToActor(actor, damageData) {
       content: `<div class="wh-roll-result">
         <div class="roll-header">${rollIcon("warp", "#8fd0ff")}Стазис — ${esc(actor.name)}</div>
         <div class="roll-outcome"><span class="roll-success">Заморожен во времени — попадание не наносит никакого урона.</span></div>
+      </div>`
+    }, game.settings.get("core", "rollMode")));
+  }
+
+  // Божественная Защита (стр. 232-233): «до конца сессии он не может быть
+  // ранен или убит никаким образом, чудесно спасаясь от любого возможного
+  // вреда» — тот же полный гейт, что Стазис. Исключение «остался во власти
+  // врагов без союзников» решает ГМ кнопкой снятия (sheets/tabs/death.mjs).
+  if (divineProtectionActive(actor)) {
+    return ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: { alias: "Система" },
+      content: `<div class="wh-roll-result">
+        <div class="roll-header">${rollIcon("skull", "#e0c060")}Божественная Защита — ${esc(actor.name)}</div>
+        <div class="roll-outcome"><span class="roll-success">Боги хранят его до конца сессии — попадание чудом не причиняет вреда.</span></div>
       </div>`
     }, game.settings.get("core", "rollMode")));
   }

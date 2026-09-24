@@ -1498,7 +1498,7 @@ export const CAPABILITIES = {
   },
   "geneseed.core.heroSSleep": {
     label: "Десантник может перебрасывать неудачные тесты на активацию Сус-ан мембраны и может активировать её до порога −(10+T.",
-    source: "Hero's Sleep / Сон Героя", reader: ""
+    source: "Hero's Sleep / Сон Героя", reader: "rules/death-save.mjs::susAnCriticalLimit/hasHeroSleep + sheets/tabs/death.mjs::doSusAnimation — порог −(10+T.b) и переброс провала"
   },
   "geneseed.core.letItFlow": {
     label: "Когда десантник умирает от Кровотечения, вместо этого он только получает 1 Усталости.",

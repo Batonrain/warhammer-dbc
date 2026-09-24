@@ -299,7 +299,7 @@ async function stepSuffocationHold(actor, { rest = false, faintAt = null } = {})
 /** Смерть от удушья: метка отсчёта снимается, смерть — общим путём. */
 async function suffocationDeath(actor) {
   await actor.update({ [`flags.${NS}.-=${SUFFOCATION_FLAG}`]: null });
-  await killByCondition(actor);
+  await killByCondition(actor, "suffocating");
   return `<div class="roll-threshold">${SUFF_ICON()}Удушье: <span class="roll-failure"><b>СМЕРТЬ</b> от удушья</span></div>`;
 }
 
@@ -664,7 +664,7 @@ export async function processConditionTurnEnd(actor) {
     const eff = roll.total - level;
     if (eff <= 0) {
       lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: 1d10 <b>${roll.total}</b> − Обескровливание ${level} = <b>${eff}</b> → <span class="roll-failure"><b>СМЕРТЬ</b> (независимо от количества Ран)</span></div>`);
-      await killByCondition(actor);
+      await killByCondition(actor, "bleeding");
     } else if (eff <= 5) {
       const newLevel = level + 1;
       const upd = conditionAdjustFields(actor, "haemorrhaging", 1);

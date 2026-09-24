@@ -40,6 +40,8 @@ import { actorInfamyMax } from "./infamy-points.mjs";
 import { breakBloodFlameOnSceneEnd } from "../combat/blood-flame.mjs";
 import { revertSunderingOnSceneEnd } from "../combat/sundering.mjs";
 import { revertLegacyKillerOnSceneEnd } from "../combat/legacy-weapon-killer.mjs";
+import { DIVINE_PROTECTION_FLAG } from "../rules/death-save.mjs";
+import { wakeDivineProtected } from "../sheets/tabs/death.mjs";
 
 const BANNER_TEXT = {
   scene:   "Поворот судьбы",
@@ -182,6 +184,18 @@ export async function refillFatePools() {
   }
 }
 
+/**
+ * Божественная Защита (rules/death-save.mjs) держится «до конца сессии» —
+ * неуязвимость и только полудвижения снимаются здесь у всех актёров мира.
+ */
+async function endDivineProtection() {
+  for (const actor of game.actors ?? []) {
+    if (actor.getFlag?.("warhammer-dbc", DIVINE_PROTECTION_FLAG)) {
+      await actor.unsetFlag("warhammer-dbc", DIVINE_PROTECTION_FLAG);
+    }
+  }
+}
+
 export async function triggerNewScene() {
   if (!game.user.isGM) return;
   await resetUsageLimit("scene");
@@ -193,6 +207,8 @@ export async function triggerNewScene() {
   await revertSunderingOnSceneEnd();
   // Убийца, Оружие Наследия (wdbc-t3c3t.4): Felling «до конца боя или сцены».
   await revertLegacyKillerOnSceneEnd();
+  // Божественная Защита: без сознания «до конца сцены или боя».
+  await wakeDivineProtected(game.actors ?? []);
   await ChatMessage.create({
     speaker: { alias: "Мастер Игры" },
     content: bannerCard("🎬 Новая сцена", BANNER_TEXT.scene)
@@ -213,6 +229,7 @@ export async function triggerSessionEnd() {
   await revertSunderingOnSceneEnd();
   // Убийца, Оружие Наследия (wdbc-t3c3t.4): Felling «до конца боя или сцены».
   await revertLegacyKillerOnSceneEnd();
+  await endDivineProtection();
   await refillFatePools();
   await ChatMessage.create({
     speaker: { alias: "Мастер Игры" },

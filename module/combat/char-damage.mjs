@@ -21,14 +21,15 @@ import { killByCondition } from "./condition-death.mjs";
  * @param {object} [opts]
  * @param {object} [opts.extra]  доп. поля в тот же actor.update (флаги таймеров источника)
  * @param {number} [opts.at]     момент (worldTime) для отсчёта восстановления
+ * @param {string} [opts.cause]  причина смерти при T ≤ 0 (rules/death-save.mjs::DEATH_CAUSE_FLAG)
  * @returns {Promise<{applied: number, before: number, after: number, died: boolean}>}
  */
-export async function applyCharDamage(actor, key, amount, { extra = {}, at = globalThis.game?.time?.worldTime ?? 0 } = {}) {
+export async function applyCharDamage(actor, key, amount, { extra = {}, at = globalThis.game?.time?.worldTime ?? 0, cause = "toughness" } = {}) {
   const { patch, applied, before, after } = charLossAddFields(actor.system, key, amount, at);
   const upd = { ...patch, ...extra };
   if (Object.keys(upd).length) await actor.update(upd);
   let died = false;
-  if (key === "t" && applied > 0 && after <= 0) died = await killByCondition(actor);
+  if (key === "t" && applied > 0 && after <= 0) died = await killByCondition(actor, cause);
   return { applied, before, after, died };
 }
 
