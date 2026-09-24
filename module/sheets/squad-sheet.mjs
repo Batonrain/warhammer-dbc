@@ -14,7 +14,11 @@ import { SQUAD_LEAD_TYPES, SQUAD_MEMBER_TYPES, SQUAD_TYPE_LABEL,
          DETAIL_COMMANDS, TACTICS_TALENTS, COMMAND_REFERENCE,
          MORALE_RULES, BROKEN_SQUAD_RULE,
          cohesionBonus, riskCap } from "../constants/squad.mjs";
-import { commandReachFor, presenceNumber } from "../rules/command.mjs";
+import { commandReachFor, presenceNumber, moraleLostReach } from "../rules/command.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
+import { rollMoraleTest } from "../rules/morale-test.mjs";
+import { GENERAL_COMMAND_KINDS, generalKindLabel, detailSpentOf } from "../rules/command-effects.mjs";
+import { issueStamp, declareFocusFire, applyBraveryNow, grantTacticTalent, removeTacticGrants, TACTIC_TALENTS } from "../combat/command-state.mjs";
 import { hasPlagueShepherd, plagueShepherdGrant, plagueShepherdFreeCommandActive } from "../rules/plague-shepherd.mjs";
 import { hasActionEconomy, apCostForActionType, spendActionPoints, apSpendGate } from "../combat/action-economy.mjs";
 import { voiceOfGodAvailable, applyVoiceOfGod } from "../combat/voice-of-god.mjs";
@@ -40,6 +44,22 @@ import { criticalOutcome } from "../rules/roll-outcome.mjs";
 // [data-action] с this = лист и элементом-источником вторым аргументом. Обычные
 // функции — чтобы карта действий сверялась с шаблоном тестом. Общая обвязка
 // (whenEditable, onTab, filePicker) — в v2-helpers.mjs.
+
+/** Поля отметки «кем и когда отдано» под префиксом shortCommand./detailCommand. */
+const stampFields = (prefix, st) => ({
+  [`${prefix}giverUuid`]: st.giverUuid, [`${prefix}combatId`]: st.combatId, [`${prefix}round`]: st.round
+});
+
+/** Выбор Таланта «Особой Тактики» (по выбору Командира). */
+export async function pickTacticDialog() {
+  const opts = TACTIC_TALENTS.map(t => `<option value="${t.key}">${esc(t.label)}</option>`).join("");
+  return foundry.applications.api.DialogV2.prompt({
+    window: { title: "Особая Тактика" },
+    classes: ["warhammer-dbc", "wh-holo"],
+    content: `<div class="wh-attack-form"><div class="atk-dlg-row"><label>Талант:</label><select id="sq-tactic">${opts}</select></div></div>`,
+    ok: { label: "Выдать", callback: (event, button) => button.form.querySelector("#sq-tactic")?.value || "" }
+  }).catch(() => null);
+}
 
 const memberIdOf = target => target.closest("[data-member-id]")?.dataset.memberId;
 
@@ -104,6 +124,9 @@ function onDetailRoll()   { return this._commandRoll("detail"); }
 function onBriefingRoll() { return this._briefingRoll(); }
 function onOrderRoll()    { return this._orderRoll(); }
 function onHeroicRoll()   { return this._heroicRoll(); }
+function onFeatRoll()     { return this._featRoll(); }
+function onFocusFire()    { return declareFocusFire(); }
+function onBriefingUse()  { return this._briefingUse(); }
 
 /**
  * Voice of God/Глас Божий (wdbc-e728): «теряется в конце действия [Личной]
@@ -176,6 +199,9 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
       briefingRoll: whenEditable(onBriefingRoll),
       orderRoll:    whenEditable(onOrderRoll),
       heroicRoll:   whenEditable(onHeroicRoll),
+      featRoll:     whenEditable(onFeatRoll),
+      focusFire:    whenEditable(onFocusFire),
+      briefingUse:  whenEditable(onBriefingUse),
       memberMorale: whenEditable(onMemberMorale),
       memberBroken: whenEditable(onMemberBroken),
       memberFlag:   whenEditable(onMemberFlag),
@@ -227,6 +253,10 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
       fel, felBonus: felB,
       wp:      sys.characteristics?.wp?.total ?? null,
       int:     sys.characteristics?.int?.total ?? null,
+      // I.b — настоящий бонус Характеристики (со Сверхъестественной I), а не
+      // десятки её значения: на нём стоит сила Брифинга.
+      intBonus: sys.characteristics?.int?.bonus
+        ?? (sys.characteristics?.int?.total != null ? Math.floor(sys.characteristics.int.total / 10) : null),
       command: sys.skills?.command?.total ?? null,
       logic:   sys.skills?.logic?.total ?? null,
       // Command может воздействовать одновременно на F.b × 2 подчинённых.
@@ -272,7 +302,8 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
       // (rules/command.mjs), чтобы Орда читалась одинаково на обоих путях.
       // Сам документ бойца (wdbc-x1nz.2.90): без него Оглохший или
       // потерявший сознание боец Отряда получал Команды и Присутствие.
-      reach: commandReachFor(type, this.actor.system.presence?.benefit || "", doc)
+      reach: commandReachFor(type, this.actor.system.presence?.benefit || "", doc,
+        { moraleLost: !!m.moraleLost })
     };
   }
 
@@ -355,6 +386,8 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     const shortSux = Number(sys.shortCommand?.successes) || 0;
     context.presenceBenefits = PRESENCE_BENEFITS.map(b => ({ ...b, selected: b.key === (sys.presence?.benefit || "extreme") }));
     context.presenceActive   = !!sys.presence?.active;
+    // «Тройка» — Концентрация огня (эффект 2) при активном Присутствии.
+    context.focusActive      = context.presenceActive && sys.presence?.benefit === "focus";
     // Координатор не раздаёт Командное Присутствие — предупреждаем, если он один.
     context.presenceBlocked  = !commander.filled && !leader.filled && coordinator.filled;
 
@@ -372,22 +405,30 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     // God/Глас Божий: «получатель тоже получает Очко Бесчестия»), не только
     // текст в note. Список — те же подчинённые, что и роспись Слаженности.
     context.showPersonalRecipient = shortKey === "personal";
+    // Вид тестов Общей Команды — бонус сам доезжает до бросков этого вида.
+    context.showGeneralKind = shortKey === "general";
+    context.generalKindOptions = GENERAL_COMMAND_KINDS.map(k => ({
+      ...k, selected: k.key === (sys.shortCommand?.testKind || "attack") }));
     context.personalRecipientUuid = sys.shortCommand?.recipientUuid || "";
     context.personalRecipientOptions = context.members.map(m => ({
       uuid: m.uuid, name: m.name, selected: m.uuid === context.personalRecipientUuid
     }));
 
     const detailSux   = Number(sys.detailCommand?.successes) || 0;
-    const detailPicks = Array.isArray(sys.detailCommand?.picks) ? sys.detailCommand.picks : [];
-    const detailSpent = DETAIL_COMMANDS.filter(c => detailPicks.includes(c.key))
-      .reduce((s, c) => s + c.cost, 0);
+    const detailPicks = (Array.isArray(sys.detailCommand?.picks) ? sys.detailCommand.picks : []).filter(k => typeof k === "string");
+    const detailSpent = detailSpentOf({ ...sys.detailCommand, picks: detailPicks }, DETAIL_COMMANDS);
+    const tacticKey   = sys.detailCommand?.tactic || "";
     context.detailCommands = DETAIL_COMMANDS.map(c => ({
       ...c,
       picked: detailPicks.includes(c.key),
       // Купить можно, если хватает нерастраченных Успехов.
       affordable: detailPicks.includes(c.key) || (detailSux - detailSpent) >= c.cost,
       // «Сплочение» работает только если Слаженность просела ниже стартовой.
-      disabled: c.key === "rally" && !context.derived.belowStart
+      disabled: c.key === "rally" && !context.derived.belowStart,
+      // Вложено в «Прикрытие» и выбранный Талант «Особой Тактики» — подпись на листе.
+      extra: c.key === "cover" && detailPicks.includes("cover")
+        ? `вложено ${Math.max(3, Number(sys.detailCommand?.coverSuccesses) || 0)} → Избегание +${Math.max(3, Number(sys.detailCommand?.coverSuccesses) || 0) * 3}`
+        : (c.key === "tactics" && tacticKey ? (TACTIC_TALENTS.find(t => t.key === tacticKey)?.label || "") : "")
     }));
     context.detailActive = !!sys.detailCommand?.active;
     context.detailSux    = detailSux;
@@ -399,8 +440,8 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     const briefSux = Number(sys.briefing?.successes) || 0;
     context.briefingSux = briefSux;
     // Каждый Ход из Брифинга даёт Короткую Команду с ½ I.b (окр.▼) Успехов.
-    context.briefingPower = context.activeCommander?.int != null
-      ? Math.floor(Math.floor(context.activeCommander.int / 10) / 2) : null;
+    context.briefingPower = context.activeCommander?.intBonus != null
+      ? Math.floor(context.activeCommander.intBonus / 2) : null;
 
     // ── Справочные блоки ──
     context.commandReference = COMMAND_REFERENCE;
@@ -607,6 +648,23 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     return { base, bonus, value, cap: riskCap(value), who: who?.name || "" };
   }
 
+  /**
+   * Модификаторы реестра правил на тест Командования конкретного отдающего
+   * (Command — социальный навык: сюда доезжают Усталость, «−30 на устные
+   * социальные тесты» Оглохшего, Черты на само Командование). Недоступный
+   * пост — без модификаторов.
+   */
+  _commandRuleMods(uuid) {
+    const doc = this._resolve(uuid);
+    if (!doc) return { total: 0, parts: [] };
+    try {
+      return collectTestMods(doc, { kind: "skill", skill: "command", char: "fel" });
+    } catch (e) {
+      console.warn("Warhammer DBC | модификаторы Команды:", e);
+      return { total: 0, parts: [] };
+    }
+  }
+
   /** Посты, способные отдавать Команды (для выбора в диалоге). */
   _availableRollers() {
     return SQUAD_POST_ORDER.map(k => this._postData(k)).filter(p => p.filled && !p.missing);
@@ -637,13 +695,20 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     const coh = Number(sys.derived?.cohesion) || 0;
     const title = { presence: "Командное Присутствие", short: "Короткая Команда", detail: "Детальная Команда" }[kind];
 
+    // Модификаторы правил у каждого возможного отдающего свои (Усталость,
+    // «−30 на устные социальные тесты» Оглохшего…) — в превью Порога тоже.
+    const ruleTotalOf = p => this._commandRuleMods(p.uuid).total;
     const rollerOpts = pool.map((p, i) =>
-      `<option value="${p.key}" ${i === 0 ? "selected" : ""} data-base="${p.command ?? -20}" data-coord="${p.key === "coordinator" ? 1 : 0}" data-risk-free="${p.key === "coordinator" ? 1 : 0}">
+      `<option value="${p.key}" ${i === 0 ? "selected" : ""} data-base="${p.command ?? -20}" data-rule="${ruleTotalOf(p)}" data-coord="${p.key === "coordinator" ? 1 : 0}">
         ${p.label}: ${esc(p.name)} — Command ${p.command ?? "—"}
       </option>`).join("");
 
     const shortOpts = SHORT_COMMANDS.map(c =>
       `<option value="${c.key}" ${c.key === (sys.shortCommand?.key || "inspire") ? "selected" : ""}>${c.label} (Успехи×${c.mult})</option>`).join("");
+    // Вид тестов Общей Команды — «по выбору Командира» при отдаче; бонус
+    // потом сам доезжает до бросков подчинённых этого вида (command-effects).
+    const generalOpts = GENERAL_COMMAND_KINDS.map(k =>
+      `<option value="${k.key}" ${k.key === (sys.shortCommand?.testKind || "attack") ? "selected" : ""}>${esc(k.label)}</option>`).join("");
     const presenceOpts = PRESENCE_BENEFITS.map(b =>
       `<option value="${b.key}" ${b.key === (sys.presence?.benefit || "extreme") ? "selected" : ""}>${b.label}</option>`).join("");
 
@@ -657,10 +722,12 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
       <div class="atk-dlg-header"><span class="atk-weapon-name">${esc(title)}</span><span class="atk-weapon-class">${esc(this.actor.name)}</span></div>
       <div class="atk-dlg-row"><label>Отдаёт:</label>
         <select id="sq-roller">${rollerOpts}</select></div>
-      ${kind === "short" ? `<div class="atk-dlg-row"><label>Команда:</label><select id="sq-kind">${shortOpts}</select></div>` : ""}
+      ${kind === "short" ? `<div class="atk-dlg-row"><label>Команда:</label><select id="sq-kind">${shortOpts}</select></div>
+      <div class="atk-dlg-row sq-general-row"><label>Вид тестов (Общая):</label><select id="sq-general">${generalOpts}</select></div>` : ""}
       ${kind === "presence" ? `<div class="atk-dlg-row"><label>Преимущество:</label><select id="sq-benefit">${presenceOpts}</select></div>` : ""}
       <div class="atk-dlg-row"><label>Command(F):</label><input id="sq-base" type="number" value="${pool[0].command ?? -20}"/></div>
       <div class="atk-dlg-row"><label>Слаженность:</label><span id="sq-coh" class="sq-cmd-coh">${cohesionBonus(coh, pool[0].key === "coordinator") >= 0 ? "+" : ""}${cohesionBonus(coh, pool[0].key === "coordinator")}</span></div>
+      <div class="atk-dlg-row"><label>Правила:</label><span id="sq-rule" class="sq-cmd-coh">0</span></div>
       <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="sq-mod" type="number" value="0"/></div>
       <div class="atk-dlg-row atk-total-row"><label>Итоговый порог:</label><span id="sq-total">0</span></div>
       <div class="sq-cmd-risk">Риск ${eRisk.value}${eRisk.bonus ? ` (${eRisk.base} +1 — шлем снят)` : ""} — максимум Успехов: <b id="sq-cap">${capTxt}</b></div>
@@ -685,7 +752,8 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
             const mod   = parseInt(form.querySelector("#sq-mod").value) || 0;
             const isCo  = key === "coordinator";
             const extra = { benefit: form.querySelector("#sq-benefit")?.value,
-                            shortKey: form.querySelector("#sq-kind")?.value };
+                            shortKey: form.querySelector("#sq-kind")?.value,
+                            testKind: form.querySelector("#sq-general")?.value };
             const checked = sel => !!form.querySelector(sel)?.checked;
             const tk = readTestKind(val, checked, { label: title });
             const reroll = mergeReroll(null, readDiceChoice(val));
@@ -703,6 +771,7 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
         const roller = form.querySelector("#sq-roller");
         const baseIn = form.querySelector("#sq-base");
         const modIn  = form.querySelector("#sq-mod");
+        const ruleOf = () => parseInt(roller?.selectedOptions?.[0]?.dataset.rule) || 0;
         const { updateAutoOutcomeNote } = wireTestKindLive(dialog.element, {
           actor: this.actor, label: title,
           getBaseEff: () => {
@@ -711,16 +780,18 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
             const base = parseInt(baseIn.value) || 0;
             const mod  = parseInt(modIn.value) || 0;
             const difficulty = parseInt(form.querySelector("#test-difficulty")?.value) || 0;
-            return base + cb + mod + difficulty;
+            return base + cb + ruleOf() + mod + difficulty;
           }
         });
         const upd = () => {
           const isCo = String(roller?.value || "commander") === "coordinator";
           const cb   = cohesionBonus(coh, isCo);
           form.querySelector("#sq-coh").textContent = `${cb >= 0 ? "+" : ""}${cb}`;
+          const rule = ruleOf();
+          form.querySelector("#sq-rule").textContent = `${rule >= 0 ? "+" : ""}${rule}`;
           const base = parseInt(baseIn.value) || 0;
           const mod  = parseInt(modIn.value) || 0;
-          form.querySelector("#sq-total").textContent = base + cb + mod;
+          form.querySelector("#sq-total").textContent = base + cb + rule + mod;
           updateAutoOutcomeNote();
         };
         roller?.addEventListener("change", ev => {
@@ -728,6 +799,12 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
           upd();
         });
         [baseIn, modIn].forEach(i => i.addEventListener("input", upd));
+        // Вид тестов нужен только Общей Команде.
+        const kindSel = form.querySelector("#sq-kind");
+        const genRow  = form.querySelector(".sq-general-row");
+        const showGen = () => { if (genRow) genRow.style.display = kindSel?.value === "general" ? "" : "none"; };
+        kindSel?.addEventListener("change", showGen);
+        showGen();
         upd();
       }
     });
@@ -743,6 +820,17 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     const sys    = this.actor.system;
     const roller = this._postData(rollerKey);
     const isCo   = rollerKey === "coordinator";
+    const rollerActor = this._resolve(roller.uuid);
+
+    // Немота — Общительность 0 от урона (wdbc-x1nz.2.83): приказ голосом не
+    // отдать. Панель «Под моим Присутствием» это проверяла, Отряд — нет.
+    if (rollerActor?.system?.conditions?.mute)
+      return ui.notifications.warn(`${roller.name}: Немота (Общительность 0 от урона) — не может отдавать Команды.`);
+
+    // Модификаторы правил самого отдающего (wdbc-ct65.2, как у панели «Под
+    // моим Присутствием»): диалог и старые вызовы передают Порог без них.
+    const ruleMods = this._commandRuleMods(roller.uuid);
+    threshold += ruleMods.total;
 
     // Экономика действий (wdbc-w8ws): Короткая/Детальная Команда списывают ОД
     // ФАКТИЧЕСКИ выбранного отдающего по-настоящему — Присутствие свободно
@@ -751,7 +839,7 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     // triggerBowToAudience (combat/bow-to-audience.mjs). hasActionEconomy/
     // isEncounterActive внутри spendActionPoints сами не спишут ничего у
     // Орды/вне боя — здесь достаточно звать безусловно.
-    if (kind !== "presence") {
+    if (kind !== "presence" && !extra.free) {
       const rollerDoc = this._resolve(roller.uuid);
       const { actionType, cost } = this._commandApCost(kind, rollerDoc);
       // physical:false — приказ голосом, см. shortApGate выше (wdbc-x1nz.2.88).
@@ -765,18 +853,22 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     const reroll = tk.reroll || null;
     const { rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
 
-    const outcome = await resolveKindOutcome(this.actor, {
+    // Бросает командир, а не Отряд: его Критические диапазоны, автопровалы и
+    // Сверхъестественная F. Отряд — запасной вариант для недоступного поста.
+    const testActor = rollerActor ?? this.actor;
+    const outcome = await resolveKindOutcome(testActor, {
       baseEff: threshold, rv,
       combined: tk.combined, extended: tk.extended, opposed: tk.opposed,
-      ctx: { actor: this.actor, kind: "skill", skill: "command" }
+      ctx: { actor: testActor, kind: "skill", skill: "command", char: "fel" }
     });
     const ok  = outcome.success;
     const deg = outcome.deg;
 
-    // Потолок Успехов от Риска — на Координатора не распространяется: он не
-    // вдохновляет личным примером, а лишь советует.
+    // Потолок Успехов от Риска — и у Координатора: книга освобождения не
+    // даёт, а «Несколько Командиров» сравнивает Успехи командиров И
+    // координаторов «с учётом Риска» (было исключение, wdbc-x1nz.2).
     const eRisk  = this._effectiveRisk(rollerKey);
-    const cap    = isCo ? null : eRisk.cap;
+    const cap    = eRisk.cap;
     const capped = ok && cap != null && deg > cap;
     const sux    = ok ? (capped ? cap : deg) : 0;
 
@@ -796,11 +888,15 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
       if (ok) update = {
         "system.shortCommand.active": true, "system.shortCommand.key": cKey,
         "system.shortCommand.successes": sux,
+        ...(cKey === "general" ? { "system.shortCommand.testKind": extra.testKind || sys.shortCommand?.testKind || "attack" } : {}),
+        ...stampFields("system.shortCommand.", issueStamp(roller.uuid)),
         // Короткая Команда даёт и все преимущества Командного Присутствия.
         ...(isCo ? {} : { "system.presence.active": true })
       };
-      effect = `<div class="sq-chat-effect"><b>${esc(c.label)}</b> — бонус <b class="sq-chat-big">+${bonus}</b> (${sux}×${c.mult})
-        <div class="sq-chat-desc">${esc(c.desc)}</div></div>`;
+      const kindLabel = cKey === "general" ? generalKindLabel(extra.testKind || sys.shortCommand?.testKind || "attack") : "";
+      effect = `<div class="sq-chat-effect"><b>${esc(c.label)}</b>${kindLabel ? ` (${esc(kindLabel)})` : ""} — бонус <b class="sq-chat-big">+${bonus}</b> (${sux}×${c.mult})
+        <div class="sq-chat-desc">${esc(c.desc)}</div>
+        ${ok ? `<div class="sq-chat-note">Бонус сам учитывается в бросках подчинённых до начала следующего Хода отдающего.</div>` : ""}</div>`;
 
       // Voice of God/Глас Божий (wdbc-sk8s): успешная Личная Команда,
       // отдана Командиром (не Координатором — тот лишь советует, см.
@@ -821,7 +917,9 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     else if (kind === "detail") {
       if (ok) update = {
         "system.detailCommand.active": true, "system.detailCommand.successes": sux,
-        "system.detailCommand.picks": [],
+        "system.detailCommand.picks": [], "system.detailCommand.coverSuccesses": 0,
+        "system.detailCommand.tactic": "",
+        ...stampFields("system.detailCommand.", issueStamp(roller.uuid)),
         ...(isCo ? {} : { "system.presence.active": true })
       };
       const list = DETAIL_COMMANDS.map(c =>
@@ -855,6 +953,7 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
         base: `${roller.label}: ${roller.name}`,
         parts: [
           `Слаженность ${cohMod >= 0 ? "+" : ""}${cohMod}${isCo ? " (половинный — Координатор)" : ""}`,
+          ...ruleMods.parts,
           extra.mod ? `мод. ${extra.mod >= 0 ? "+" : ""}${extra.mod}` : "",
           extra.difficulty ? `📊 Сложность ${extra.difficulty >= 0 ? "+" : ""}${extra.difficulty}` : ""
         ],
@@ -878,18 +977,29 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
   _notReachedBy(kind, extra = {}) {
     const benefit = kind === "presence"
       ? (extra.benefit || this.actor.system.presence?.benefit || "extreme") : "";
-    const missed = (this.actor.system.members || [])
+    const shortKey = kind === "short" ? (extra.shortKey || this.actor.system.shortCommand?.key || "inspire") : "";
+    const rows = (this.actor.system.members || [])
       .map(m => this._memberData(m))
-      .filter(m => !m.missing && (kind === "presence" ? !m.reach.presenceApplies : !m.reach.commands));
-    if (!missed.length) return "";
+      .filter(m => !m.missing);
+    // Проваливший Мораль (не Оглох/не без сознания и не Орда) всё же слышит
+    // «Укрепление Морали» целиком, а из Детальной — только «Храбрость».
+    const moraleReach = m => (m.reach.moraleLost && !m.reach.blockedBy && !m.isHorde)
+      ? moraleLostReach(kind, shortKey) : "";
+    const missed = rows.filter(m =>
+      (kind === "presence" ? !m.reach.presenceApplies : !m.reach.commands) && !moraleReach(m));
+    const partial = rows.filter(m => !m.reach.commands && moraleReach(m) === "bravery");
 
-    // Причина у бойца (Оглох/Без сознания, wdbc-x1nz.2.90) — в скобках у
-    // имени: общий «why» ниже написан про Орду и глухому бойцу не подходит.
-    const names = missed.map(m => esc(m.name) + (m.reach.blockedBy ? ` (${m.reach.blockedBy})` : "")).join(", ");
+    // Причина у каждого бойца своя — в скобках у имени (Оглох/Без сознания,
+    // wdbc-x1nz.2.90; Орда; проваленная Мораль).
+    const reason = m => m.reach.blockedBy || (m.isHorde ? "Орда" : (m.reach.moraleLost ? "провалил Мораль" : ""));
+    const named = list => list.map(m => esc(m.name) + (reason(m) ? ` (${reason(m)})` : "")).join(", ");
     const why = kind === "presence"
       ? `выбранное преимущество (эффект ${presenceNumber(benefit)}) до них не доходит`
-      : "Команды на них не действуют (Орде доходят лишь эффекты 1 и 3 Присутствия)";
-    return `<div class="sq-chat-note sq-chat-missed">Не получают: <b>${names}</b> — ${why}.</div>`;
+      : "Команды до них не доходят (Орде — лишь эффекты 1 и 3 Присутствия)";
+    return [
+      missed.length ? `<div class="sq-chat-note sq-chat-missed">Не получают: <b>${named(missed)}</b> — ${why}.</div>` : "",
+      partial.length ? `<div class="sq-chat-note sq-chat-missed">Только «Храбрость»: <b>${named(partial)}</b> — провалили тест Морали.</div>` : ""
+    ].join("");
   }
 
   /**
@@ -959,31 +1069,59 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
   async _toggleDetailPick(key) {
     const def = DETAIL_COMMANDS.find(c => c.key === key); if (!def) return;
     const dc    = this.actor.system.detailCommand || {};
-    const picks = Array.isArray(dc.picks) ? [...dc.picks] : [];
+    const picks = (Array.isArray(dc.picks) ? dc.picks : []).filter(k => typeof k === "string");
     const sux   = Number(dc.successes) || 0;
 
     if (picks.includes(key)) {
-      await this.actor.update({ "system.detailCommand.picks": picks.filter(k => k !== key) });
+      const undo = { "system.detailCommand.picks": picks.filter(k => k !== key) };
+      // Отмена «Сплочения» забирает и выданные +5: иначе снять-и-купить заново
+      // поднимало Слаженность на +5 за каждый круг из тех же Успехов.
+      if (key === "rally") {
+        const cur = Number(this.actor.system.cohesion?.value) || 0;
+        undo["system.cohesion.value"] = Math.max(-COHESION_LIMIT, cur - 5);
+      }
+      if (key === "cover") undo["system.detailCommand.coverSuccesses"] = 0;
+      if (key === "tactics") {
+        undo["system.detailCommand.tactic"] = "";
+        await removeTacticGrants(this.actor.uuid);
+      }
+      await this.actor.update(undo);
       return;
     }
     if (key === "rally" && !this.actor.system.derived?.belowStart)
       return ui.notifications.warn("«Сплочение» работает, только если Слаженность ниже стартовой на миссию.");
 
-    const spent = DETAIL_COMMANDS.filter(c => picks.includes(c.key)).reduce((s, c) => s + c.cost, 0);
-    if (sux - spent < def.cost)
-      return ui.notifications.warn(`Не хватает Успехов: нужно ${def.cost}, осталось ${Math.max(0, sux - spent)}.`);
+    const left = sux - detailSpentOf({ ...dc, picks }, DETAIL_COMMANDS);
+    if (left < def.cost)
+      return ui.notifications.warn(`Не хватает Успехов: нужно ${def.costLabel || def.cost}, осталось ${Math.max(0, left)}.`);
 
-    picks.push(key);
-    const update = { "system.detailCommand.picks": picks };
+    const update = { "system.detailCommand.picks": [...picks, key] };
     // «Сплочение» немедленно поднимает Слаженность на +5.
     if (key === "rally") {
       const cur = Number(this.actor.system.cohesion?.value) || 0;
       update["system.cohesion.value"] = Math.min(COHESION_LIMIT, cur + 5);
     }
+    // «Прикрытие (3+ Успеха)»: в него уходят все оставшиеся Успехи.
+    if (key === "cover") update["system.detailCommand.coverSuccesses"] = left;
+    let tactic = null;
+    if (key === "tactics") {
+      tactic = await pickTacticDialog();
+      if (!tactic) return;
+      update["system.detailCommand.tactic"] = tactic;
+    }
     await this.actor.update(update);
 
-    if (key === "tactics") {
-      ui.notifications.info(`Особая Тактика: выберите Талант — ${TACTICS_TALENTS.join(", ")}.`);
+    // «Храбрость»: подчинённые сразу выходят из Подавления и Шока.
+    if (key === "bravery") {
+      const freed = await applyBraveryNow(this.actor);
+      if (freed.length) ui.notifications.info(`Храбрость: сняты Подавление/Шок — ${freed.join(", ")}.`);
+    }
+    if (tactic) {
+      const given = await grantTacticTalent(this.actor, tactic);
+      const label = TACTIC_TALENTS.find(t => t.key === tactic)?.label || tactic;
+      ui.notifications.info(given.length
+        ? `Особая Тактика: «${label}» — ${given.join(", ")}.`
+        : `Особая Тактика: «${label}» — выдать некому (нет прав на листы подчинённых или Талант уже есть).`);
     }
   }
 
@@ -1035,7 +1173,7 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
             const worst = Math.min(t1, t2);
             const deg   = Math.abs(degreesOfSuccess(rv, worst));
             const sux   = ok ? deg : 0;
-            const power = Math.floor(Math.floor((cmd.int ?? 0) / 10) / 2);
+            const power = Math.floor((cmd.intBonus ?? 0) / 2);
             const critLine = critLineHtml(criticalOutcome(rv,
               resolveTest({ actor: this.actor, kind: "skill", skill: "command" }).crit));
 
@@ -1075,6 +1213,8 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
   async _orderRoll() {
     const cmd = this._postData("commander").filled ? this._postData("commander") : this._postData("leader");
     if (!cmd.filled) return ui.notifications.warn("Приказы отдаёт Командир (или Лидер) — назначьте пост.");
+    if (this._resolve(cmd.uuid)?.system?.conditions?.mute)
+      return ui.notifications.warn(`${cmd.name}: Немота (Общительность 0 от урона) — не может отдавать приказы.`);
     const members = (this.actor.system.members || []).map(m => this._memberData(m)).filter(m => !m.missing);
     if (!members.length) return ui.notifications.warn("В отряде нет доступных участников.");
 
@@ -1152,10 +1292,100 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     });
   }
 
+  /**
+   * Ход по Брифингу: «за каждый Успех … подчинённые могут на один Ход получить
+   * преимущества Короткой Команды с ½I.b командира Успехов (по выбору их
+   * Лидера)». Без броска; гаснет на смене Раунда (giverUuid "briefing").
+   */
+  async _briefingUse() {
+    const left = Number(this.actor.system.briefing?.successes) || 0;
+    if (left <= 0) return ui.notifications.warn("Ходов Брифинга не осталось.");
+    const cmd = this._postData("commander").filled ? this._postData("commander") : this._postData("leader");
+    const power = Math.floor((cmd.intBonus ?? 0) / 2);
+    if (power <= 0) return ui.notifications.warn("½ I.b командира — 0 Успехов: Брифинг ничего не даёт.");
+    const sys = this.actor.system;
+    const opts = SHORT_COMMANDS.map(c => `<option value="${c.key}">${esc(c.label)} (+${power * c.mult})</option>`).join("");
+    const gen = GENERAL_COMMAND_KINDS.map(k =>
+      `<option value="${k.key}" ${k.key === (sys.shortCommand?.testKind || "attack") ? "selected" : ""}>${esc(k.label)}</option>`).join("");
+    const pick = await foundry.applications.api.DialogV2.prompt({
+      window: { title: `Ход по Брифингу — ${this.actor.name}` },
+      classes: ["warhammer-dbc", "wh-holo"],
+      content: `<div class="wh-attack-form sq-cmd-form">
+        <div class="sq-cmd-hint">Короткая Команда силой <b>${power}</b> Успехов до конца Раунда. Осталось Ходов: ${left}.</div>
+        <div class="atk-dlg-row"><label>Команда:</label><select id="sq-kind">${opts}</select></div>
+        <div class="atk-dlg-row"><label>Вид тестов (Общая):</label><select id="sq-general">${gen}</select></div>
+        <div class="sq-cmd-hint">Получатель Личной Команды — поле «Получатель» на листе.</div></div>`,
+      ok: { label: "Применить", callback: (event, button) => ({
+        key: button.form.querySelector("#sq-kind")?.value || "inspire",
+        testKind: button.form.querySelector("#sq-general")?.value || "attack" }) }
+    }).catch(() => null);
+    if (!pick) return;
+    await this.actor.update({
+      "system.briefing.successes": left - 1,
+      "system.shortCommand.active": true, "system.shortCommand.key": pick.key,
+      "system.shortCommand.successes": power,
+      ...(pick.key === "general" ? { "system.shortCommand.testKind": pick.testKind } : {}),
+      ...stampFields("system.shortCommand.", issueStamp("briefing"))
+    });
+    const c = SHORT_COMMANDS.find(x => x.key === pick.key) || SHORT_COMMANDS[0];
+    await ChatMessage.create({
+      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+      content: `<div class="wh-roll-result sq-chat"><div class="roll-header">${rollIcon("chart", "#4dffa6")}Ход по Брифингу — ${esc(this.actor.name)}</div>
+        <div class="sq-chat-effect"><b>${esc(c.label)}</b>${pick.key === "general" ? ` (${esc(generalKindLabel(pick.testKind))})` : ""} — бонус <b class="sq-chat-big">+${power * c.mult}</b> (${power}×${c.mult})</div>
+        <div class="sq-chat-note">До конца Раунда; бонус сам учитывается в бросках подчинённых. Осталось Ходов Брифинга: ${left - 1}.</div></div>`
+    });
+  }
+
+  /**
+   * Подвиг: после подвига Лидера (решает ГМ) — Присутствие активируется само,
+   * Короткая Команда свободным действием. Command+0, если не изучен, и вместо
+   * F — W или Характеристика подвига. forceChar — Героический Конец на 5+
+   * Успехов («только через W»).
+   */
+  async _featRoll({ forceChar = "", rollerKey = "" } = {}) {
+    const key = rollerKey || (this._postData("leader").filled ? "leader" : "commander");
+    const p = this._postData(key);
+    if (!p.filled || p.missing) return ui.notifications.warn("Подвиг совершает Лидер (или Командир) — назначьте пост.");
+    const doc = this._resolve(p.uuid);
+    const ch = doc?.system?.characteristics ?? {};
+    // Ранг Command поверх F; неизученный считается +0.
+    const rank = Math.max(0, (Number(p.command) || 0) - (Number(p.fel) || 0));
+    const CHARS = [["fel", "F"], ["wp", "W"], ["ws", "WS"], ["bs", "BS"], ["s", "S"], ["t", "T"], ["ag", "A"], ["per", "P"], ["int", "I"]];
+    const list = forceChar ? CHARS.filter(([k]) => k === forceChar) : CHARS;
+    const charOpts = list.map(([k, l]) => `<option value="${k}">${l} ${ch[k]?.total ?? 0}</option>`).join("");
+    const shortOpts = SHORT_COMMANDS.map(c => `<option value="${c.key}">${esc(c.label)} (Успехи×${c.mult})</option>`).join("");
+    const gen = GENERAL_COMMAND_KINDS.map(k => `<option value="${k.key}">${esc(k.label)}</option>`).join("");
+    const coh = Number(this.actor.system.derived?.cohesion) || 0;
+    const pick = await foundry.applications.api.DialogV2.prompt({
+      window: { title: `Подвиг — ${p.name}` },
+      classes: ["warhammer-dbc", "wh-holo"],
+      content: `<div class="wh-attack-form sq-cmd-form">
+        <div class="sq-cmd-hint">Присутствие активируется само; Короткая Команда — свободным действием. Ранг Command: +${rank}.</div>
+        <div class="atk-dlg-row"><label>Характеристика:</label><select id="sq-char">${charOpts}</select></div>
+        <div class="atk-dlg-row"><label>Команда:</label><select id="sq-kind">${shortOpts}</select></div>
+        <div class="atk-dlg-row"><label>Вид тестов (Общая):</label><select id="sq-general">${gen}</select></div>
+        <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="sq-mod" type="number" value="0"/></div></div>`,
+      ok: { label: "Бросок!", icon: "fas fa-dice-d10", callback: (event, button) => ({
+        char: button.form.querySelector("#sq-char")?.value || "fel",
+        shortKey: button.form.querySelector("#sq-kind")?.value || "inspire",
+        testKind: button.form.querySelector("#sq-general")?.value || "attack",
+        mod: parseInt(button.form.querySelector("#sq-mod")?.value) || 0 }) }
+    }).catch(() => null);
+    if (!pick) return;
+    if (key !== "coordinator") await this.actor.update({ "system.presence.active": true });
+    const base = Number(ch[pick.char]?.total) || 0;
+    const threshold = base + rank + cohesionBonus(coh, key === "coordinator") + pick.mod;
+    return this._executeCommand("short", key, threshold,
+      { shortKey: pick.shortKey, testKind: pick.testKind, mod: pick.mod, free: true });
+  }
+
   /** Героический Конец: Command(W)+0 vs Intimidate(W)+0 того, кто вывел из боя. */
   async _heroicRoll() {
     const cmd = this._postData("commander").filled ? this._postData("commander") : this._postData("leader");
     if (!cmd.filled) return ui.notifications.warn("Героический Конец совершает Командир или Лидер — Координатору он недоступен.");
+    // «Когда Командир или Лидер умирает… все ещё раздавая Командное Присутствие».
+    if (!this.actor.system.presence?.active)
+      return ui.notifications.warn("Героический Конец — только если командир ещё раздаёт Командное Присутствие: сейчас оно не активно.");
 
     // Command(W): ранговый бонус навыка ложится на Волю вместо Товарищества.
     const cmdW = (cmd.wp ?? 0) + ((cmd.command ?? -20) - (cmd.fel ?? 0));
@@ -1188,6 +1418,8 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
             const critLine = critLineHtml(criticalOutcome(r1.total,
               resolveTest({ actor: this.actor, kind: "skill", skill: "command" }).crit));
 
+            // 5+ Успехов — «ещё и Короткая Команда как Подвигом (только через W)».
+            if (wins && d1 >= 5) setTimeout(() => this._featRoll({ forceChar: "wp", rollerKey: cmd.key }), 0);
             if (!wins) await this.actor.update({
               "system.presence.active": false, "system.shortCommand.active": false,
               "system.detailCommand.active": false
@@ -1218,8 +1450,10 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
   // ── Мораль участников ─────────────────────────────────────────────────────
 
   /**
-   * Тест участника: Морали (W+0) или Сломленного Отряда (W+0 с модификатором
-   * Слаженности как теста Морали).
+   * Тест участника: Морали (W+0) или Сломленного Отряда (W+0, «считающийся
+   * как тест Морали»). Оба — через общий бросок Морали (rules/morale-test.mjs):
+   * бонусы и перебросы правил с областью «morale» доходят и сюда. Слаженность
+   * в Сломленный Отряд НЕ входит — книга даёт ровно W+0 (раньше прибавлялась).
    */
   async _memberTest(id, kind) {
     const raw = (this.actor.system.members || []).find(m => m.id === id);
@@ -1230,18 +1464,14 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     if (kind === "broken" && !this.actor.system.derived?.broken)
       return ui.notifications.warn("Тест Сломленного Отряда проходят только при отрицательной Слаженности.");
 
-    const coh = Number(this.actor.system.derived?.cohesion) || 0;
-    // Тест Морали идёт от чистой Воли; Сломленный Отряд — с модификатором Слаженности.
-    const target = kind === "broken" ? m.wp + coh : m.wp;
+    const doc = this._resolve(raw.uuid);
+    const { eff: target, parts, rv, rolls, rerollNote, success: ok, deg } = await rollMoraleTest(doc, m.wp);
+    const crit = criticalOutcome(rv, resolveTest({ actor: doc, kind: "skill", char: "wp", morale: true }).crit);
+    const critHit = ok ? crit.success : crit.failure;
 
-    const roll = await new Roll("1d100").evaluate();
-    const rv  = roll.total;
-    const ok  = rv <= target;
-    const deg = Math.abs(degreesOfSuccess(rv, target));
-    const crit = ok ? rv <= 5 : rv >= 96;
-
-    // Провал теста Морали снимает с подчинённого все преимущества Командования.
-    if (kind === "morale" && !ok) {
+    // Провал теста Морали — а Сломленный Отряд тоже тест Морали — снимает с
+    // подчинённого все преимущества Командования.
+    if (!ok) {
       const members = foundry.utils.deepClone(this.actor.system.members || []);
       const t = members.find(x => x.id === id); if (t) t.moraleLost = true;
       await this.actor.update({ "system.members": members });
@@ -1250,25 +1480,22 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     const outcome = kind === "morale"
       ? (ok ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}, Командование сохранено</span>`
             : `<span class="roll-failure">Провал — теряет все преимущества Командования; следующий Раунд доступны только «Укрепление Морали» и «Храбрость»</span>`)
-      : (ok ? (deg >= 5 || crit
+      : (ok ? (deg >= 5 || critHit
             ? `<span class="roll-success">Успех на ${deg} ${_degWord(deg)} — до конца боя эти тесты проходятся автоматически</span>`
             : `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}, боец держит строй</span>`)
-            : (crit
-            ? `<span class="roll-failure">Критический провал — самосохранение до конца боя или сцены</span>`
-            : `<span class="roll-failure">Провал — в свой Ход действует из мотивов самосохранения (укрытие, отход, сдача)</span>`));
+            : (critHit
+            ? `<span class="roll-failure">Критический провал — самосохранение до конца боя или сцены; преимущества Командования потеряны</span>`
+            : `<span class="roll-failure">Провал — в свой Ход действует из мотивов самосохранения (укрытие, отход, сдача); преимущества Командования потеряны</span>`));
 
     await postTestCard(this.actor, testCardHtml({
       classes: "sq-chat",
       icon: rollIcon(kind === "morale" ? "heart" : "warn", ok ? "#4dffa6" : "#ff8a8a"),
       title: `${kind === "morale" ? "Тест Морали" : "Сломленный Отряд"} — ${esc(m.name)}`,
-      threshold: rollStatLine({
-        label: "W", base: m.wp,
-        parts: [kind === "broken" ? `Слаженность ${coh >= 0 ? "+" : ""}${coh}` : ""],
-        threshold: target, rv
-      }),
+      threshold: rollStatLine({ label: "W", base: m.wp, parts, threshold: target, rv }),
+      rerollNote,
       outcome,
       sections: [kind === "broken" ? `<div class="sq-chat-note">Если боец под Запугиванием своего Лидера или Командира и набрал Провалов не больше, чем тот Успехов на Intimidate, тест считается пройденным.</div>` : ""]
-    }), { rolls: [roll] });
+    }), { rolls });
   }
 
   /** Ручная отметка «потерял Командование» у участника. */

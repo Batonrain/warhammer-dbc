@@ -13,6 +13,8 @@
 //  mechanics.mjs).
 // ════════════════════════════════════════════════════════════════════════
 
+import { commandBlockReason } from "./command.mjs";
+
 /** Роль актора (по uuid) в конкретном Отряде — null, если не состоит вовсе. */
 export function squadRoleOf(squad, actorUuid) {
   if (!squad || !actorUuid) return null;
@@ -73,8 +75,12 @@ function presenceGrants(commandNode, key) {
  */
 export function minionCanCauseExtremeDamage(actor) {
   if (actor?.type !== "minion") return true;
+  // Оглох/Без сознания — Присутствие не доходит вовсе (rules/command.mjs).
+  if (commandBlockReason(actor)) return false;
   const squad = findMemberSquad(actor.uuid);
-  if (presenceGrants(squad?.system?.presence, "extreme")) return true;
+  // Проваливший Мораль боец Отряда теряет все преимущества Командования.
+  const entry = (squad?.system?.members || []).find(m => m.uuid === actor.uuid);
+  if (presenceGrants(squad?.system?.presence, "extreme") && !entry?.moraleLost) return true;
 
   // "commandedBy" — тот же флаг/скоуп, что module/sheets/tabs/command.mjs::
   // COMMANDED_BY_FLAG пишет на подчинённого при добавлении в «Под моим

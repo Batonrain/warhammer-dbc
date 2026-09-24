@@ -129,3 +129,15 @@ describe("_briefingRoll: своя математика не тронута, Сл
     expect(captured.chat[0].content).toContain("Сложность -50");
   });
 });
+
+// «Несколько Командиров» сравнивает Успехи командиров И координаторов «с
+// учётом Риска» — Координатор под тем же потолком (раньше был освобождён).
+describe("_executeCommand: Риск и Координатор", () => {
+  it("Успехи Координатора срезаются потолком Риска", async () => {
+    resolveAs({ "Actor.k": pers("Советник") });
+    const actor = squadActor({ risk: 1, posts: { coordinator: { uuid: "Actor.k" } } });
+    captured.nextRoll = 5;                        // Порог 90 → 9 Успехов, Риск 1 → потолок 3
+    await WarhammerSquadSheet.prototype._executeCommand.call(sheetLike(actor), "short", "coordinator", 90);
+    expect(captured.chat[0].content).toContain("срезано Риском 1 до 3");
+  });
+});

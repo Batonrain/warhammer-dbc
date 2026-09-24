@@ -589,6 +589,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // атака (hiddenAttack, -999) Избегание уже блокирует целиком — прибавлять
   // сюда нечего, поэтому там веток нет.
   const critHitPenalty = (hit && critOutcome?.success) ? -30 : 0;
+  // Концентрация огня (Командное Присутствие, эффект 2; combat/command-state.mjs
+  // ::declareFocusFire): атака за тройку подчинённых — попадания получают −20
+  // на все тесты Избегания и +2 куба урона. Метка на атакующем, одна атака.
+  const focusFire = actor.getFlag?.("warhammer-dbc", "focusFire");
+  const focusFireOn = !!focusFire && focusFire.weaponName === item.name;
+  const focusEvasion = focusFireOn ? -20 : 0;
 
   // Граната, Критический Промах (стр. 40, wdbc-x1nz.2.59): «граната падает
   // персонажу под ноги и взрывается» — весь остаток обычного разбора атаки
@@ -1045,7 +1051,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Доп. кубы урона: Меткое (одиночный, по СУ, ТОЛЬКО с Прицеливанием — книга
   // «При одиночных выстрелах С Прицеливанием»), Рассеивание (кор. дист.),
   // Максимальный режим (+1d10). Эти кубы НЕ вызывают Экстремальный урон.
-  const bonusDice = bonusDamageDice({
+  const bonusDice = (focusFireOn && hit ? 2 : 0) + bonusDamageDice({
     wp, rofMode, hit, deg, shortRange, maximal: maximalOn, band,
     ammoDice: ammoSys?.damageDiceMod,
     aimed,
@@ -1539,13 +1545,13 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // (безусловно) — у одного оружия сразу оба быть не могут (разные
         // weaponClass-ветки самой записи).
         dodgeMod: (hiddenAttack || feintBlocked) ? -999
-          : meleeShotDodgeBonus + evasionImperativeBonus(defenderActor) + (blindFightingBypass ? -20 : 0) + critHitPenalty + wideBurstPenalty
+          : meleeShotDodgeBonus + evasionImperativeBonus(defenderActor) + (blindFightingBypass ? -20 : 0) + critHitPenalty + wideBurstPenalty + focusEvasion
             + swiftLegacyMeleeDodgePenalty(item) + swiftLegacyRangedDodgePenalty(item),
         dodgeModRecoil: (!hiddenAttack && !feintBlocked && hasEvasionRecoilImperative(defenderActor))
-          ? meleeShotDodgeBonus + evasionImperativeBonus(defenderActor, { planningRecoil: true }) + (blindFightingBypass ? -20 : 0) + critHitPenalty + wideBurstPenalty
+          ? meleeShotDodgeBonus + evasionImperativeBonus(defenderActor, { planningRecoil: true }) + (blindFightingBypass ? -20 : 0) + critHitPenalty + wideBurstPenalty + focusEvasion
             + swiftLegacyMeleeDodgePenalty(item) + swiftLegacyRangedDodgePenalty(item)
           : null,
-        parryMod: (hiddenAttack || feintBlocked) ? -999 : (techOpts.targetParryMod ?? 0) + (blindFightingBypass ? -20 : 0) + critHitPenalty,
+        parryMod: (hiddenAttack || feintBlocked) ? -999 : (techOpts.targetParryMod ?? 0) + (blindFightingBypass ? -20 : 0) + critHitPenalty + focusEvasion,
         // Переброс, НАВЯЗАННЫЙ защищающемуся (Локус Кровопролития): бросает его
         // цель у себя, а знает о нём атакующий — поэтому он едет атрибутом на
         // кнопках защиты в карточке.
@@ -1641,6 +1647,17 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     if (existing) { await existing.update(messageData); return; }
   }
   await ChatMessage.create(messageData);
+  // Командование (глава «Командование»): метка Концентрации огня гасится
+  // атакой; Синхронный Натиск и счётчик Залпового Огня — после атаки
+  // подчинённого (combat/command-state.mjs). Переброс (forcedRoll) — та же
+  // атака, второй раз не считается.
+  if (!forcedRoll) {
+    try {
+      const cs = await import("./command-state.mjs");
+      if (focusFireOn) await cs.updateOrRelay(actor, { "flags.warhammer-dbc.-=focusFire": null });
+      await cs.afterSubordinateAttack(actor, { isMelee, isThrown: sys.weaponClass === "thrown", defenderActor });
+    } catch (e) { console.warn("Warhammer DBC | Командование после атаки:", e); }
+  }
   // Automated Animations (если установлен и включён) — см. module/integrations/autoanimations.mjs.
   triggerAttackAnimation({ actor, item, hit });
 }

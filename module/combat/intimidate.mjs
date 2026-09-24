@@ -67,6 +67,12 @@ export async function rollIntimidateContest(attacker, target, { attackerMod = 0,
   const mine   = { ...atkOutcome, threshold: atkThreshold };
   const theirs = { ...tgtOutcome, threshold: tgtThreshold };
   const { winner, margin } = resolveOpposed(mine, theirs);
+  // Проигранный встречный против Запугивания — проваленный тест Морали:
+  // снимает Командование (глава «Командование», combat/command-state.mjs).
+  if (winner === "mine") {
+    const { handleMoraleFailure } = await import("./command-state.mjs");
+    await handleMoraleFailure(target);
+  }
 
   await _postIntimidateMsg(attacker, target, {
     atkThreshold, tgtThreshold, atkRv, tgtRv, atkOutcome, tgtOutcome,

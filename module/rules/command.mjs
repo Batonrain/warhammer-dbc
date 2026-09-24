@@ -92,6 +92,18 @@ export function receivesCommands(actorType, actor = null) {
   return true;
 }
 
+/**
+ * Доходит ли отданное до бойца, провалившего тест Морали (moraleLost): только
+ * Короткая «Укрепление Морали» и из Детальной — лишь «Храбрость» (поэтому
+ * Детальная доходит частично, и сводка называет это отдельно).
+ * @returns {"full"|"bravery"|""}
+ */
+export function moraleLostReach(kind, shortKey = "") {
+  if (kind === "short" && shortKey === "morale") return "full";
+  if (kind === "detail") return "bravery";
+  return "";
+}
+
 /** Лечит ли успешный тест Командования психологический урон этому актору. */
 export function commandHealsPsych(actorType) {
   return actorType === "horde";
@@ -123,14 +135,24 @@ export function suppressionBonus(actor) {
  * @param {object} [actor] сам подчинённый — нужен для per-актор
  *   исключений (Оглох, Без сознания — commandBlockReason); без него
  *   учитывается только тип.
+ * @param {object} [opts]
+ * @param {boolean} [opts.moraleLost] провалил тест Морали («Мораль и Потеря
+ *   Командования», wdbc-x1nz.2): «теряет все преимущества Командования, и в
+ *   течение следующего Раунда не может получать Команд, кроме Короткой
+ *   Команды „Укрепление Морали“ и Детальной Команды „Храбрость“». Метка живёт
+ *   на записи Отряда (members[].moraleLost), не на самом акторе.
  * @returns {{presence:string[], presenceApplies:boolean, commands:boolean,
- *            blockedBy:string, healsPsych:boolean, forcedMove:boolean, notes:string[]}}
+ *            blockedBy:string, moraleLost:boolean, healsPsych:boolean,
+ *            forcedMove:boolean, notes:string[]}}
+ *   commands:false у moraleLost — «Укрепление Морали»/«Храбрость» до него
+ *   всё же доходят, это отдельно проверяет вызывающая сводка.
  */
-export function commandReachFor(actorType, benefitKey = "", actor = null) {
+export function commandReachFor(actorType, benefitKey = "", actor = null, { moraleLost = false } = {}) {
   // Оглох/Без сознания (wdbc-x1nz.2.90): не доходит ВСЁ — и Команды, и
   // Присутствие. Раньше Присутствие глухоту не проверяло вовсе.
   const blockedBy = commandBlockReason(actor);
-  const presence = blockedBy ? [] : presenceBenefitsFor(actorType);
+  const lost = !!moraleLost;
+  const presence = (blockedBy || lost) ? [] : presenceBenefitsFor(actorType);
   const notes = [];
 
   if (actorType === "horde") {
@@ -143,18 +165,21 @@ export function commandReachFor(actorType, benefitKey = "", actor = null) {
       notes.push(`Выбранное преимущество (эффект ${presenceNumber(benefitKey)}) до Орды не доходит.`);
   }
 
-  const commands = receivesCommands(actorType, actor);
+  const commands = receivesCommands(actorType, actor) && !lost;
   if (blockedBy === "Оглох")
     notes.push("Оглох: не получает Команды и Присутствие (кроме жестов/телепатии/Ноосферы).");
   if (blockedBy === "Без сознания")
     notes.push("Без сознания: не видит и не слышит — ни Команды, ни Присутствие не доходят.");
+  if (lost && !blockedBy)
+    notes.push("Провалил тест Морали: преимущества Командования потеряны; в следующий Раунд доходят только «Укрепление Морали» и «Храбрость».");
 
   return {
     presence,
     // Без выбранного преимущества «доходит ли Присутствие вообще» — у
     // Оглохшего/Без сознания нет (раньше !benefitKey давал true всем).
-    presenceApplies: blockedBy ? false : (!benefitKey || presence.includes(benefitKey)),
+    presenceApplies: (blockedBy || lost) ? false : (!benefitKey || presence.includes(benefitKey)),
     blockedBy,
+    moraleLost: lost,
     commands,
     healsPsych: commandHealsPsych(actorType),
     forcedMove: canBeForcedToMove(actorType),

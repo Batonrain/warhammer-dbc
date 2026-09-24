@@ -303,6 +303,9 @@ export function creatureSchema({ granted = false } = {}) {
     // подчинённые читают карточку в чате: на них ничего не пишется, кроме
     // обратной метки (flags.warhammer-dbc.commandedBy).
     command: new SchemaField({
+      // Дрессировка (глава «Командование»): Survival(P) вместо Command(F),
+      // до P.b животных, лимит Успехов 2 + продвижения Awareness/Survival.
+      training: bool(false, "Дрессировка"),
       presence: new SchemaField({
         active:  bool(false, "Присутствие"),
         benefit: str("extreme", "Преимущество")
@@ -311,12 +314,24 @@ export function creatureSchema({ granted = false } = {}) {
         active:    bool(false, "Отдан"),
         key:       str("inspire", "Приказ"),
         successes: num(0, "Успехи"),
-        note:      str("", "Пометка")
+        note:      str("", "Пометка"),
+        // Вид тестов Общей Команды и получатель Личной — rules/command-effects.mjs.
+        testKind:      str("", "Вид тестов"),
+        recipientUuid: str("", "Получатель"),
+        // Когда отдано — Команда гаснет в начале следующего Хода отдающего
+        // (combat/command-state.mjs::expireCommandsAtTurnStart).
+        combatId:  str("", "Бой"),
+        round:     num(0, "Раунд")
       }, { label: "Короткая Команда" }),
       detailCommand: new SchemaField({
         active:    bool(false, "Отдан"),
         successes: num(0, "Успехи"),
-        picks:     objList("Выбранное")
+        // Ключи купленных эффектов — строки (ObjectField превращал их в {}).
+        picks:     strList("Выбранное"),
+        coverSuccesses: num(0, "Успехи в Прикрытии"),
+        tactic:    str("", "Особая Тактика"),
+        combatId:  str("", "Бой"),
+        round:     num(0, "Раунд")
       }, { label: "Детальная Команда" })
     }, { label: "Командование" }),
     // Подчинённые вне Отряда: ссылка на актора плюс заметка. Тип любой из

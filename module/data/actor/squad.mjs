@@ -45,12 +45,30 @@ export class SquadData extends foundry.abstract.TypeDataModel {
         // не только текст в note. Нужна Voice of God/Глас Божий (wdbc-sk8s):
         // «получатель Личной Команды тоже получает Очко Бесчестия» — раньше
         // получателя нигде не хранили, выбор был устным.
-        recipientUuid: str("Получатель")
+        recipientUuid: str("Получатель"),
+        // Вид тестов Общей Команды (rules/command-effects.mjs::GENERAL_COMMAND_KINDS).
+        testKind:  str("Вид тестов"),
+        // Кто и когда отдал: Команда гаснет в начале следующего Хода отдающего,
+        // Брифинг (giverUuid "briefing") — на смене Раунда
+        // (combat/command-state.mjs::expireCommandsAtTurnStart).
+        giverUuid: str("Отдал"),
+        combatId:  str("Бой"),
+        round:     num(0, "Раунд")
       }, { label: "Короткий приказ" }),
       detailCommand: new SchemaField({
         active:    new BooleanField({ initial: false, label: "Отдан" }),
         successes: num(0, "Успехи"),
-        picks:     new ArrayField(new ObjectField(), { label: "Выбранное" })
+        // Ключи купленных эффектов («bravery», «cover»…) — строки. Было
+        // ArrayField(ObjectField): Foundry приводил строку к {}, и выбор в
+        // живой игре не сохранялся вовсе (тесты на подставных акторах схему
+        // не применяют и этого не видели).
+        picks:     new ArrayField(new StringField(), { label: "Выбранное" }),
+        // «Прикрытие (3+ Успеха)»: вложенные Успехи, бонус Избегания = ×3.
+        coverSuccesses: num(0, "Успехи в Прикрытии"),
+        tactic:    str("Особая Тактика"),
+        giverUuid: str("Отдал"),
+        combatId:  str("Бой"),
+        round:     num(0, "Раунд")
       }, { label: "Подробный приказ" }),
       briefing: new SchemaField({ successes: num(0, "Успехи") }, { label: "Инструктаж" }),
       notes:   new HTMLField({ initial: "", label: "Заметки" }),

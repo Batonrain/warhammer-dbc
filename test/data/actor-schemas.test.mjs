@@ -103,7 +103,14 @@ const DEVIATIONS = {
     // же поле лежало и ниже вторым ключом `squad` (объект перекрывал сам
     // себя, вторая копия без эффекта), слито в одну запись при введении
     // no-dupe-keys (wdbc-swzz).
-    "shortCommand.recipientUuid": ""
+    "shortCommand.recipientUuid": "",
+    // Командование в бросках подчинённых (глава «Командование», wdbc-x1nz.2):
+    // вид тестов Общей Команды, кто и когда отдал (срок до следующего Хода
+    // отдающего), Успехи в «Прикрытии» и Талант «Особой Тактики».
+    "shortCommand.testKind": "", "shortCommand.giverUuid": "",
+    "shortCommand.combatId": "", "shortCommand.round": 0,
+    "detailCommand.coverSuccesses": 0, "detailCommand.tactic": "",
+    "detailCommand.giverUuid": "", "detailCommand.combatId": "", "detailCommand.round": 0
   },
   vehicle: {
     // Объявлена не была, но лежит у всех 56 машин пака.
@@ -190,9 +197,15 @@ const DEVIATIONS = {
     // у всех до первого приобретённого/присвоенного маршрута.
     knownRoutes: [],
     command: {
+      // Дрессировка — Survival(P) вместо Command(F) (глава «Командование»).
+      training: false,
       presence:      { active: false, benefit: "extreme" },
-      shortCommand:  { active: false, key: "inspire", successes: 0, note: "" },
-      detailCommand: { active: false, successes: 0, picks: [] }
+      // testKind…round, coverSuccesses, tactic — бонусы Команд в бросках
+      // подчинённых и их срок (wdbc-x1nz.2, rules/command-effects.mjs).
+      shortCommand:  { active: false, key: "inspire", successes: 0, note: "",
+                       testKind: "", recipientUuid: "", combatId: "", round: 0 },
+      detailCommand: { active: false, successes: 0, picks: [],
+                       coverSuccesses: 0, tactic: "", combatId: "", round: 0 }
     },
     // Журнал опыта: откуда взялся опыт помимо ручной правки «Всего». Первым
     // его наполняет возврат за совпавшую выдачу Навыка или Таланта.

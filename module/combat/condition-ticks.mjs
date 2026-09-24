@@ -514,6 +514,16 @@ export async function ensureBurningGrace(actor) {
  */
 export async function rollBurningPanicTest(actor) {
   const wp = actor.system.characteristics.wp?.total ?? 0;
+  // Детальная Команда «Храбрость»: подчинённые «автоматически выходят из
+  // … паники от Горения» — теста нет (глава «Командование»).
+  const { commandBraveryOn } = await import("./command-state.mjs");
+  if (commandBraveryOn(actor)) {
+    await postTestCard(actor, {
+      icon: rollIcon("fire","#8fd0ff"), title: `Паника от Горения — ${esc(actor.name)}`,
+      outcome: `<span class="roll-success">Храбрость: командир держит строй — паники нет</span>`
+    });
+    return { success: true, rv: null, eff: wp };
+  }
   const { eff, parts, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wp);
   if (!success) await actor.update({ "system.actionPoints.value": 0 });
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });

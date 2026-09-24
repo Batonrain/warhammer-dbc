@@ -88,11 +88,17 @@ function declareAim(actor, level) {
     const paidWithCognition = cogCost != null && canSpendCognition(actor, cogCost)
       && await spendCognition(actor, cogCost);
     if (!paidWithCognition) {
-      const cost = aimApCost(actor, level, { seesTarget: actorSeesAnyTarget(actor) });
+      let cost = aimApCost(actor, level, { seesTarget: actorSeesAnyTarget(actor) });
+      // Детальная Команда «Залповый Огонь»: доп. полудействие в Ход — только на
+      // Прицеливание из стрелкового оружия (combat/command-state.mjs).
+      const cs = await import("./command-state.mjs");
+      const volley = cost > 0 && cs.volleyAimAvailable(actor);
+      if (volley) cost -= 1;
       if (!await spendActionPoints(actor, cost)) {
         ui.notifications?.warn(`⚠️ Не хватает ОД (нужно ${cost}).`);
         return false;
       }
+      if (volley) await cs.markVolleyAimUsed(actor);
     }
     const wantsFocus = hasAimFocus(actor) && !!actor.getFlag?.("warhammer-dbc", AIM_FOCUS_PENDING_FLAG);
     let focusApplied = false;
