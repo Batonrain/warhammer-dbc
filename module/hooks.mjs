@@ -16,8 +16,9 @@ import { tempInfamyAmount }              from "./rules/temp-infamy.mjs";
 import { applyWoundLoss, woundDeathThreshold } from "./rules/wounds.mjs";
 import { fateBonusOutcome, FATE_BONUS }  from "./rules/fate-bonus.mjs";
 import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger, applyMonofilamentHit } from "./combat/damage.mjs";
+import { isFrontArcHit, resolveAttackerToken } from "./combat/facing.mjs";
 import { rollPacifismTest } from "./combat/pacifism.mjs";
-import { rollHordePsychTest }            from "./combat/horde-psych.mjs";
+import { rollHordePsychTest, rollHordeFlameTest } from "./combat/horde-psych.mjs";
 import { ROUND_DAMAGE_FLAG }             from "./combat/horde-damage.mjs";
 import { _performSwerve, applyStructureLoss } from "./combat/vehicle.mjs";
 import { performWalkerParry, performWalkerDodge, standUpFromTipOver, showTipOverDialog } from "./combat/walker.mjs";
@@ -1157,6 +1158,12 @@ export function registerHooks() {
           const doc = await fromUuid(ds.forceTarget);
           const actor = doc?.actor ?? doc ?? null;
           if (!actor) return ui.notifications.warn("⚠️ Цель для применения урона не найдена (возможно, удалена).");
+          // Цель — токен (атака Орды по нескольким целям): передняя дуга
+          // (Плащ) считается так же, как в showApplyDamageDialog.
+          if (doc?.documentName === "Token" && doc.object) {
+            const attackerToken = await resolveAttackerToken(damageData.attackerUuid);
+            damageData.frontArcHit = attackerToken ? isFrontArcHit(doc.object, attackerToken) : false;
+          }
           return applyDamageToActor(actor, damageData);
         }
         await showApplyDamageDialog(damageData);
@@ -2203,6 +2210,14 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
         </div>`
       });
     }
+  }
+
+  // Огонь по Орде («Орды», Психологический урон): Горения у толпы нет —
+  // провал теста вместо него стоит психологического урона, равного урону в
+  // Магнитуду от этого попадания. Раньше ветка ниже писала Орде несуществующие
+  // Горение и Раны — кнопка молча ничего не делала.
+  if (actor.type === "horde" && condition === "burning") {
+    return rollHordeFlameTest(actor, { testChar: testChar || "ag", testMod, messageId, force, label });
   }
 
   const allRolls = [];

@@ -22,7 +22,7 @@ import { gatherRules, selectRules } from "./collect.mjs";
 import { isKnownEffectKind } from "./effects.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
 import { conditionLevelField } from "../constants/conditions.mjs";
-import { itemHasName, sizeOf } from "./predicates.mjs";
+import { itemHasName, hitSizeOf } from "./predicates.mjs";
 import { WEAPON_PROPERTIES } from "../constants/weapon-properties.mjs";
 import { mechFormulaTotalSafe, mechRollData } from "./mech-formula.mjs";
 
@@ -325,8 +325,8 @@ function rawEffectValue(effect, ctx, ruleId) {
     const bonus = ctx?.masterActor?.system?.characteristics?.[masterCharBonus]?.bonus ?? 0;
     return bonus * multiplier || 0;
   }
-  if (selfSize)   return sizeOf(ctx?.actor) * multiplier || 0;
-  if (targetSize) return sizeOf(ctx?.targetActor) * multiplier || 0;
+  if (selfSize)   return hitSizeOf(ctx?.actor) * multiplier || 0;
+  if (targetSize) return hitSizeOf(ctx?.targetActor) * multiplier || 0;
   if (targetTraitRating) return traitRatingSum(ctx?.targetActor, targetTraitRating) * multiplier || 0;
 
   console.error(`Warhammer DBC | правило «${ruleId ?? "без id"}»: неизвестный источник значения ${JSON.stringify(effect.valueFrom)}`);

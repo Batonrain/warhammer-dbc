@@ -127,8 +127,8 @@ describe("processTurnStateShieldsTurnEnd", () => {
     expect(actor.created).toEqual([]);
   });
 
-  it("тип актора без экономики действий (Орда) — пропускается", async () => {
-    const actor = actorWith({ ap: 2, apMax: 2, type: "horde" });
+  it("тип актора без экономики действий (Техника) — пропускается", async () => {
+    const actor = actorWith({ ap: 2, apMax: 2, type: "vehicle" });
     await processTurnStateShieldsTurnEnd(actor);
     expect(actor.created).toEqual([]);
   });

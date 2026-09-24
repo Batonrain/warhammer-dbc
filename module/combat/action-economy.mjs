@@ -37,7 +37,20 @@ import { turnStartFlagClears, turnStartAttackCarryOver, turnStartSqueezeCarryOve
 import { rollLegacyChangeBonus, tickLegacyExcessBoost } from "../rules/legacy-weapon.mjs";
 
 /** Типы акторов, несущих экономику действий (общая часть — _creature.mjs). */
-export const ACTION_ECONOMY_ACTOR_TYPES = ["character", "daemon", "demonPrince", "minion"];
+export const ACTION_ECONOMY_ACTOR_TYPES = ["character", "daemon", "demonPrince", "minion", "horde"];
+
+/**
+ * Идёт ли сейчас Ход этого актора. Сравнение по документу, по uuid и — для
+ * связанного токена — по id мирового актора: в Encounter лежит токен-актор,
+ * а вызывающая сторона может держать мирового (и наоборот).
+ */
+export function isOwnTurn(actor) {
+  const cur = game.combat?.combatant;
+  const other = cur?.actor;
+  if (!actor || !other) return false;
+  if (other === actor || (other.uuid && other.uuid === actor.uuid)) return true;
+  return !!actor.id && !actor.isToken && !other.isToken && cur.actorId === actor.id;
+}
 
 export function hasActionEconomy(actor) {
   return ACTION_ECONOMY_ACTOR_TYPES.includes(actor?.type);
@@ -410,6 +423,10 @@ export function canSpendReaction(actor, { forDefense = false, attackId = "", phy
   if (actionBlockReason(actor, { physical })) return false;
   // Бег (стр. 32): до начала следующего Хода бегущий не может Реакции.
   if (actor.getFlag("warhammer-dbc", "running")) return false;
+  // Орда («Орды», Действия): Реакции есть, но тратить их она может «только в
+  // свой Ход» — на особые действия вроде атаки мехадендритами или Furious
+  // Assault. Свободные Атаки, Избегания и прочие ответы в чужой Ход ей закрыты.
+  if (actor.type === "horde" && !isOwnTurn(actor)) return false;
   if (hasReactedToAttack(actor, attackId)) return false;
   const universal = Number(actor.system.reactions?.value) || 0;
   const defense    = forDefense ? (Number(actor.system.reactions?.defenseValue) || 0) : 0;

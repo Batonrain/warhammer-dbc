@@ -37,6 +37,24 @@ import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { duckAndCoverAdvantage } from "../rules/duck-and-cover.mjs";
 import { enemyContactTokenDocs } from "./free-attack.mjs";
 import { coverApForToken } from "./cover.mjs";
+import { suppressionBonus } from "../rules/command.mjs";
+import { WEAKENED_WP_PENALTY } from "../rules/horde-damage.mjs";
+
+/**
+ * Надбавки Орды к любому тесту Подавления — и к самому тесту, и к его
+ * преодолению («Контроль Орды»): бонус, равный Магнитуде, а Ослабленная
+ * (потеряла больше половины) — ещё −10 на все тесты W. Не-Орде — ноль.
+ * @returns {{total:number, parts:string[]}}
+ */
+export function hordeSuppressionMods(actor) {
+  if (actor?.type !== "horde") return { total: 0, parts: [] };
+  const bonus = suppressionBonus(actor);
+  const weak  = actor.system?.derived?.state === "weakened" ? WEAKENED_WP_PENALTY : 0;
+  return {
+    total: bonus + weak,
+    parts: [bonus ? `Магнитуда Орды +${bonus}` : "", weak ? `Ослаблена ${weak}` : ""].filter(Boolean)
+  };
+}
 
 /** Стрелковая RoF, которой ведётся Стрельба на Подавление, задаёт штраф цели. */
 export function suppressionTestMod(sys) {
@@ -89,8 +107,10 @@ export async function rollSuppressionTest(actor, { mod = 0, sourceLabel = "", so
   }
 
   const wpTotal   = actor.system.characteristics?.wp?.total ?? 0;
+  // Орда («Контроль Орды»): Подавление работает, но с бонусом Магнитуды.
+  const horde = hordeSuppressionMods(actor);
   // Перебежка (стр. 30, wdbc-x1nz.2.38): переброс Подавления до конца Раунда.
-  const { eff: threshold, parts, roll, rv, rerollNote, success: rolledSuccess, dof, usedReroll } = await rollMoraleTest(actor, wpTotal + mod, {
+  const { eff: threshold, parts, roll, rv, rerollNote, success: rolledSuccess, dof, usedReroll } = await rollMoraleTest(actor, wpTotal + mod + horde.total, {
     sourceActor, selfAdvantage: duckAndCoverAdvantage(actor), selfAdvantageLabel: "Перебежка"
   });
   // Саркофаг Дредноута (стр. 57, wdbc-drn): автоматически проходит тесты
@@ -103,15 +123,16 @@ export async function rollSuppressionTest(actor, { mod = 0, sourceLabel = "", so
   // Подписи, а не голая сумма (wdbc-kuun): раньше здесь стояло « +30 -10»
   // без объяснения, откуда −10 — тот же дефект, что живая проверка нашла в
   // Командовании и Ударе Ассасина.
-  const modParts = [mod !== 0 ? `модификатор ${mod >= 0 ? "+" : ""}${mod}` : "", ...parts];
+  const modParts = [mod !== 0 ? `модификатор ${mod >= 0 ? "+" : ""}${mod}` : "",
+    ...horde.parts, ...parts];
   // Не в укрытии (стр. 33, wdbc-x1nz.2.62): книга требует потратить все
   // действия, чтобы добраться до укрытия, или Залечь, если не вышло — само
   // движение к укрытию не автоматизировано (нет разметки путей на сцене),
   // но факт «уже стоит в зоне Укрытия» проверить можно, и напомнить/дать
   // кнопку Залечь, если нет.
   const notInCoverNote = (!success && !actorInCoverNow(actor))
-    ? `<div class="roll-allout-note">Не в укрытии относительно источника — потратьте все действия, чтобы добраться до укрытия, или Залягте, если не выйдет.
-        <button class="wh-suppression-prone-btn" type="button" data-actor-uuid="${actor.uuid}">Залечь (Ничком)</button>
+    ? `<div class="roll-allout-note">Не в укрытии относительно источника — потратьте все действия, чтобы добраться до укрытия${actor.type === "horde" ? "." : ", или Залягте, если не выйдет."}
+        ${actor.type === "horde" ? "" : `<button class="wh-suppression-prone-btn" type="button" data-actor-uuid="${actor.uuid}">Залечь (Ничком)</button>`}
       </div>`
     : "";
   await postTestCard(actor, {
@@ -166,7 +187,8 @@ export async function postSuppressionRecoveryPrompt(actor) {
  */
 export async function rollSuppressionRecovery(actor, { bonus = 0 } = {}) {
   const wpTotal   = actor.system.characteristics?.wp?.total ?? 0;
-  const { eff: threshold, parts: ruleParts, roll, rv, rerollNote, success: rolledSuccess, dof, usedReroll } = await rollMoraleTest(actor, wpTotal + bonus);
+  const horde     = hordeSuppressionMods(actor);
+  const { eff: threshold, parts: ruleParts, roll, rv, rerollNote, success: rolledSuccess, dof, usedReroll } = await rollMoraleTest(actor, wpTotal + bonus + horde.total);
   // Саркофаг Дредноута (стр. 57, wdbc-drn): та же возможность, что и на самом
   // тесте Подавления выше — практически недостижимо (auto-pass не даёт
   // Подавлению вообще наступить), но на случай ручного наложения ГМом.
@@ -175,7 +197,7 @@ export async function rollSuppressionRecovery(actor, { bonus = 0 } = {}) {
   if (success) await actor.update(conditionRemoveFields("pinned"));
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });
 
-  const bonusParts = [bonus !== 0 ? `тишина ${bonus >= 0 ? "+" : ""}${bonus}` : "", ...ruleParts];
+  const bonusParts = [bonus !== 0 ? `тишина ${bonus >= 0 ? "+" : ""}${bonus}` : "", ...horde.parts, ...ruleParts];
   await postTestCard(actor, {
     icon: rollIcon("target","#4dffa6"), title: `Преодоление Подавления → ${esc(actor.name)}`,
     threshold: rollStatLine({ label: "WP", base: wpTotal, parts: bonusParts, threshold, rv }),
