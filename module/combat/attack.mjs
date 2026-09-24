@@ -1300,9 +1300,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         ...poolAffordableHits(evasionPoolEntry, techOpts.targetDodgeMod ?? 0, hitsCount, defenderActor),
         canRecoil: !isMelee && evasionPoolEntry.successes >= 2 && recoilPoolRemaining(defenderActor) > 0,
         // Захват (стр. 12, wdbc-x1nz.2.66.13): «Парируется со штрафом −30
-        // (или тратит +3 Успеха от предыдущего Парирования)» — цель может
-        // потратить 3 банковских Успеха ВМЕСТО обычного −30 этого Приёма.
-        canWaiveGrappleParry: isMelee && techOpts.technique === "grapple" && evasionPoolEntry.successes >= 3 }
+        // (или тратит +3 Успеха от предыдущего Парирования)» — по правилу
+        // пула −30 = +3 к цене снятия: 2+3=5 Успехов без броска (wdbc-t3c3t.6).
+        canWaiveGrappleParry: isMelee && techOpts.technique === "grapple"
+          && poolAffordableHits(evasionPoolEntry, techOpts.targetParryMod ?? 0, 1, defenderActor).hits > 0 }
     : null;
 
   // Ethereal Swarm / Эфирная Стая (wdbc-1rno, rules/ethereal-swarm.mjs) —

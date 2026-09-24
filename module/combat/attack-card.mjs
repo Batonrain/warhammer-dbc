@@ -499,14 +499,16 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
        </button>`
     : "";
   // Захват (стр. 12, wdbc-x1nz.2.66.13): «−30 Парирования (или +3 Успеха от
-  // предыдущего Парирования)» — альтернатива обычной кнопке Парирования выше,
-  // с той же цепочкой data-атрибутов, но extra-mod без −30 штрафа Приёма.
+  // предыдущего Парирования)» — снятие из пула, как poolBtn, но цена по
+  // parryMod (все модификаторы Парирования, −30 = +3 Успеха): тот же
+  // обработчик .wh-pool-spend-btn, data-cost-by-parry (wdbc-t3c3t.6).
   const poolGrappleParryBtn = pool && pool.canWaiveGrappleParry && !cannotParry
-    ? `<button class="wh-pool-grapple-parry-btn" type="button"
-         data-attacker-uuid="${attackerUuid}" data-attacker-weapon-uuid="${itemUuid}"
-         data-hits-count="${hitsCount}" data-force-reroll="${forcedDefenceReroll}"
-         data-melee="${isMelee ? 1 : 0}" data-attack-id="${attackId}">
-         🤼 Пул (${pool.successes} Усп.): Парировать без штрафа за 3 Усп.
+    ? `<button class="wh-pool-spend-btn wh-pool-grapple-parry-btn" type="button" data-cost-by-parry="1"
+         data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}"
+         data-dodge-mod="${dodgeMod}" data-dodge-mod-recoil="${dodgeModRecoil ?? ""}" data-parry-mod="${parryMod}"
+         data-target-vehicle="${targetIsVehicle ? 1 : 0}" data-flexible="${wp.flexible ? 1 : 0}"
+         data-force-reroll="${forcedDefenceReroll}" data-melee="${isMelee ? 1 : 0}">
+         🤼 Пул (${pool.successes} Усп.): снять Парированием (+3 Усп. за Захват)
        </button>`
     : "";
   // Императив Избегания/Крепости (wdbc-hdxj): у обоих книга переворачивает

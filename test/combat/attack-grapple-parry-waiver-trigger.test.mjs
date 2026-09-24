@@ -1,8 +1,8 @@
 // test/combat/attack-grapple-parry-waiver-trigger.test.mjs
 //
 // Захват (стр. 12, wdbc-x1nz.2.66.13): attack.mjs должен вычислить
-// pool.canWaiveGrappleParry (isMelee && technique==="grapple" && банк ≥3)
-// и довезти его до карточки — сквозная проверка через настоящий
+// pool.canWaiveGrappleParry (isMelee && technique==="grapple" && банка хватает
+// на снятие Парированием: 2 + 3 за −30 = 5, wdbc-t3c3t.6) и довезти его до карточки — сквозная проверка через настоящий
 // _executeAttackRoll, банк проставлен заранее (тот же банк, что оставила бы
 // предыдущая атака этого же противника в этом Ходу).
 
@@ -20,7 +20,7 @@ beforeEach(() => {
 });
 
 describe("Захват: банк ≥3 у цели — карточка несёт альтернативную кнопку Парирования", () => {
-  it("цель уже накопила 3+ Успехов против этого атакующего — кнопка есть", async () => {
+  async function grappleWithBank(successes) {
     const weapon = weaponFor({ weaponClass: "melee", meleeCategory: "Кулаки" });
     const attacker = actorFor({ items: [weapon] });
     attacker.uuid = "Actor.attacker";
@@ -28,13 +28,22 @@ describe("Захват: банк ≥3 у цели — карточка несё�
     target.uuid = "Actor.target";
     target.getFlag = function (scope, key) { return this._flags?.[key]; };
     target.setFlag = async function (scope, key, value) { (this._flags ??= {})[key] = value; };
-    await addEvasionSurplus(target, attacker.uuid, 3, 0);
+    await addEvasionSurplus(target, attacker.uuid, successes, 0);
     setTargets([target]);
-
     captured.dice = [10, 5];
-    await _executeAttackRoll(attacker, weapon, "ws", 45, "melee", null, { techniqueOpts: { technique: "grapple" } });
+    await _executeAttackRoll(attacker, weapon, "ws", 45, "melee", null,
+      { techniqueOpts: { technique: "grapple", targetDodgeMod: 0, targetParryMod: -30 } });
+  }
 
+  it("цель накопила 5 Успехов против этого атакующего — кнопка есть, цена по Парированию", async () => {
+    await grappleWithBank(5);
     expect(card()).toContain("wh-pool-grapple-parry-btn");
+    expect(card()).toContain('data-cost-by-parry="1"');
+  });
+
+  it("3 Успеха — на снятие Захвата Парированием (5) не хватает, кнопки нет", async () => {
+    await grappleWithBank(3);
+    expect(card()).not.toContain("wh-pool-grapple-parry-btn");
   });
 
   it("цель не накопила банка (0 Успехов) — кнопки нет", async () => {
