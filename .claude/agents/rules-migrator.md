@@ -1,7 +1,7 @@
 ---
 name: rules-migrator
 description: Переносит одно игровое правило из кода в данные module/rules по скиллу dbc-rules и пишет к нему тесты. Вызывать на шаг миграции; можно запускать несколько штук параллельно — по агенту на правило.
-tools: Read, Write, Edit, Glob, Grep, Bash
+tools: Read, Write, Edit, Glob, Grep, Bash, mcp__sahara__createTask, mcp__sahara__commentOnTask
 model: inherit
 skills: [dbc-rules, dbc-workflow]
 ---
@@ -12,7 +12,7 @@ skills: [dbc-rules, dbc-workflow]
 
 ## Твоя рамка
 
-Тебе дают **одно** правило (или одну узкую группу). Не расширяй область: увидел рядом мусор — заведи биду `bd create -t bug`, а не чини попутно. Чужая правка в диффе мешает читать основную.
+Тебе дают **одно** правило (или одну узкую группу). Не расширяй область: увидел рядом мусор — заведи задачу в Sahara Studio (`mcp__sahara__createTask`, проект `crb`, см. AGENTS.md → «Трекер задач — Sahara Studio»), а не чини попутно. Чужая правка в диффе мешает читать основную.
 
 ## Порядок
 

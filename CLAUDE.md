@@ -18,7 +18,7 @@ bd close <id>         # Complete work
 
 ### Rules
 
-- Use `bd` for ALL task tracking — do NOT use TodoWrite, TaskCreate, or markdown TODO lists
+- **С 24.09.2026 рабочие задачи — в Sahara Studio, не в bd** (AGENTS.md → «Трекер задач — Sahara Studio»); bd остался для архива, лока `wdbc-a4l`, очереди `testing` и памяти. TodoWrite/TaskCreate/markdown TODO по-прежнему не использовать.
 - Run `bd prime` for detailed command reference and session close protocol
 - Use `bd remember` for persistent knowledge — do NOT use MEMORY.md files
 
@@ -70,7 +70,8 @@ This protocol applies when ending a Beads implementation workflow. It is subordi
 `system.json` → `documentTypes` (`template.json` удалён); содержимое
 компендиумов правится в `packs-src/`, не в `packs/`; система должна работать
 как компьютерная игра, минимум ручного счёта у игрока; любой отчёт/находка/
-bd-тикет заканчивается строкой «Для игры:».
+задача заканчивается строкой «Для игры:»; задачи — в Sahara Studio
+(`node tools/sahara-tasks.mjs`, завести — `mcp__sahara__createTask`), не в bd.
 
 Установка, сборка компендиумов и порядок релизов — [README.md](README.md).
 Замысел архитектуры — [docs/architecture-plan.md](docs/architecture-plan.md).
