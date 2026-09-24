@@ -6,6 +6,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import "../support/foundry-stub.mjs";
+import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describeV2Sheet } from "../support/v2-sheet-contract.mjs";
 import { WarhammerSquadSheet } from "../../module/sheets/squad-sheet.mjs";
 
@@ -50,7 +51,7 @@ function pers(name, over = {}) {
 const realFromUuidSync = globalThis.fromUuidSync;
 const resolveAs = map => { globalThis.fromUuidSync = uuid => map[uuid] ?? null; };
 
-beforeEach(() => { globalThis.game.user.isGM = true; });
+beforeEach(() => { resetCaptured(); globalThis.game.user.isGM = true; });
 afterEach(() => { globalThis.fromUuidSync = realFromUuidSync; });
 
 describe("_prepareContext: командная вертикаль", () => {
@@ -137,6 +138,76 @@ describe("_prepareContext: до кого Командование не дохо�
     const html = WarhammerSquadSheet.prototype._notReachedBy.call(sheet, "short");
     expect(html).toContain("Глухой (Оглох)");
     expect(html).not.toContain("Крейн");
+  });
+});
+
+// «Мораль и Потеря Командования» (wdbc-x1nz.2): проваливший тест Морали
+// теряет все преимущества Командования и в следующий Раунд слышит только
+// «Укрепление Морали» и «Храбрость». Раньше отметка moraleLost была на листе
+// только картинкой — сводки и Присутствие её не читали.
+describe("проваливший Мораль боец", () => {
+  const setup = () => {
+    resolveAs({ "Actor.f": pers("Трус"), "Actor.c": pers("Крейн") });
+    return sheetLike(squadActor({ members: [
+      { id: "m1", uuid: "Actor.f", moraleLost: true }, { id: "m2", uuid: "Actor.c" }
+    ] }));
+  };
+
+  it("ни Присутствия, ни Команд", async () => {
+    const ctx = await WarhammerSquadSheet.prototype._prepareContext.call(setup(), {});
+    expect(ctx.members.map(m => m.reach.presenceApplies)).toEqual([false, true]);
+    expect(ctx.members.map(m => m.reach.commands)).toEqual([false, true]);
+  });
+
+  it("Воодушевление до него не доходит, «Укрепление Морали» — доходит", () => {
+    const sheet = setup();
+    const inspire = WarhammerSquadSheet.prototype._notReachedBy.call(sheet, "short", { shortKey: "inspire" });
+    expect(inspire).toContain("Трус (провалил Мораль)");
+    const morale = WarhammerSquadSheet.prototype._notReachedBy.call(sheet, "short", { shortKey: "morale" });
+    expect(morale).toBe("");
+  });
+
+  it("из Детальной Команды — только «Храбрость»", () => {
+    const html = WarhammerSquadSheet.prototype._notReachedBy.call(setup(), "detail");
+    expect(html).toContain("Только «Храбрость»: <b>Трус");
+    expect(html).not.toContain("Не получают");
+  });
+});
+
+describe("Сломленный Отряд: W+0, тест Морали", () => {
+  it("Слаженность в Порог не входит, провал снимает Командование", async () => {
+    resolveAs({ "Actor.f": pers("Трус") });
+    const upd = [];
+    const actor = squadActor({ members: [{ id: "m1", uuid: "Actor.f" }], derived: { cohesion: -20, broken: true } });
+    actor.update = async u => upd.push(u);
+    captured.nextRoll = 45;                 // W 40 → провал
+    await WarhammerSquadSheet.prototype._memberTest.call(sheetLike(actor), "m1", "broken");
+
+    expect(captured.chat[0].content).toContain("<label>Порог</label><b>40</b>");
+    expect(upd[0]["system.members"][0].moraleLost).toBe(true);
+  });
+});
+
+describe("«Сплочение»: отмена забирает свои +5", () => {
+  it("купить → снять → Слаженность вернулась", async () => {
+    const upd = [];
+    const actor = squadActor({
+      cohesion: { value: -10, base: 0, start: 0 }, derived: { cohesion: -10, belowStart: true },
+      detailCommand: { active: true, successes: 4, picks: ["rally"] }
+    });
+    actor.update = async u => upd.push(u);
+    await WarhammerSquadSheet.prototype._toggleDetailPick.call(sheetLike(actor), "rally");
+    expect(upd[0]).toEqual({ "system.detailCommand.picks": [], "system.cohesion.value": -15 });
+  });
+});
+
+describe("Команда Отряда: отдающий — сам командир", () => {
+  it("Немота не даёт отдать Команду", async () => {
+    resolveAs({ "Actor.a": pers("Крейн", { conditions: { mute: true } }) });
+    const actor = squadActor({ posts: { commander: { uuid: "Actor.a" } } });
+    await WarhammerSquadSheet.prototype._executeCommand.call(sheetLike(actor), "short", "commander", 50);
+    expect(captured.chat).toHaveLength(0);
+    expect(captured.warnings.join(" ")).toContain("Немота");
   });
 });
 

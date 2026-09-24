@@ -114,6 +114,11 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
     }
   }
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll: !!reroll });
+  // Страх — тест Морали: провал снимает Командование (combat/command-state.mjs).
+  if (!success) {
+    const { handleMoraleFailure } = await import("./command-state.mjs");
+    await handleMoraleFailure(actor);
+  }
   // 5+ степеней провала Страха → Ментальная Травма (в конце сцены)
   if (!success && dof >= 5) {
     shockHtml += `<div class="roll-threshold" style="margin-top:4px;color:#9a0000;font-weight:bold;">5+ степеней провала — в конце сцены пройдите тест Ментальной Травмы (кнопка «Травма»).</div>`;
@@ -225,7 +230,7 @@ export async function postShockRecoveryPrompt(actor) {
 /** Тест выхода из Шока (стр. 53): W+0, тест Морали. Успех снимает conditions.shocked. */
 export async function rollShockRecovery(actor) {
   const wp = actor.system.characteristics.wp?.total ?? 0;
-  const { eff, parts, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wp);
+  const { eff, parts, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wp, { affectsCommand: false });
   if (success) await actor.update(conditionRemoveFields("shocked"));
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });
 

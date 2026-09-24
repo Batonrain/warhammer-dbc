@@ -128,7 +128,8 @@ async function _resolveDifficultTerrain(actor, ag, terrainMod, extraMod, labels)
   // Общий сбор модификаторов (wdbc-1xtl): Порог складывался из Ловкости,
   // модификатора ландшафта и ручной поправки — ни Усталости, ни Перевеса,
   // ни Черт. Диалога с галочками у броска нет, поэтому collectTestMods.
-  const ruleMods  = collectTestMods(actor, { kind: "skill", char: "ag" });
+  // terrain:true — Общая Команда «Трудный ландшафт» (rules/command-effects.mjs).
+  const ruleMods  = collectTestMods(actor, { kind: "skill", char: "ag", terrain: true });
   const threshold = ag + totalMod + ruleMods.total;
 
   const roll   = await new Roll("1d100").evaluate();

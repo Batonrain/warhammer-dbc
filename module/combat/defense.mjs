@@ -53,6 +53,16 @@ export const COMPRESSION_CAPABILITY = "mutation.compression";
 // Уклонение/Парирование — Реакция (стр. 12): вне активного Encounter
 // spendReaction ничего не считает и всегда отдаёт true, поэтому вне боя
 // кнопки продолжают работать как раньше, без ограничений.
+/** Командование («Прикрытие») — ленивый импорт: command-state тянет источники правил. */
+async function borrowCoverReaction(actor) {
+  try { return await (await import("./command-state.mjs")).borrowCoverReaction(actor); }
+  catch (e) { console.warn("Warhammer DBC | Прикрытие:", e); return null; }
+}
+async function coverParrySteps(actor) {
+  try { return (await import("./command-state.mjs")).coverParrySizeSteps(actor); }
+  catch { return 0; }
+}
+
 export async function _noReactionCard(actor, label) {
   const rollMode = game.settings.get("core", "rollMode");
   await ChatMessage.create(ChatMessage.applyRollMode({
@@ -129,7 +139,9 @@ export async function _performDodge(actor, {
   // тяжелее и не меньше цели. Реакция не тратится — как и без ног выше.
   const grappleNoDodge = grappleDodgeBlockReason(actor);
   if (grappleNoDodge) return _bladeShieldRefusal(actor, grappleNoDodge, "Уклонение");
-  if (!(await spendReaction(actor, { forDefense: true, attackId }))) return _noReactionCard(actor, "Уклонение");
+  // «Прикрытие» (Детальная Команда): нет своей Реакции — одолжить у соратника в 3 м.
+  if (!(await spendReaction(actor, { forDefense: true, attackId }))
+      && !(await borrowCoverReaction(actor))) return _noReactionCard(actor, "Уклонение");
   const { agTotal, threshold: baseThreshold, modParts } = dodgeProfile(actor, extraMod);
   // Фантомные Копии (Wrapped in Chaos "2-3", wdbc-1rno): штраф Уклонению
   // ЧУЖОЙ рукопашной атаки — направленный модификатор атакующий→защитник,
@@ -529,7 +541,9 @@ export async function _performParry(actor, {
   // ни разу. У техники своего sizeTotal нет — там size и есть итог, отсюда ??.
   const sizeOf = a => Number(a?.system?.sizeTotal ?? a?.system?.size) || 0;
   const attackerSize = sizeOf(attackerActor) + handOfKhorneAttackSizeBonus(attackerWeapon);
-  const defenderSize  = sizeOf(actor);
+  // «Прикрытие» (Детальная Команда): Парировать можно врага на 1 Размер
+  // крупнее, чем обычно — защищающийся считается на ступень крупнее.
+  const defenderSize  = sizeOf(actor) + (await coverParrySteps(actor));
   // Крестовой Блок поднимает предел «невозможно» на ступень (стр. 62) — та же
   // РЕАЛЬНАЯ (после вопроса игроку) готовность биться обоими, что идёт в
   // parryProfile ниже, не повторный независимый вопрос "есть ли пара".
@@ -653,7 +667,8 @@ export async function _performParry(actor, {
     return;
   }
 
-  if (!(await spendReaction(actor, { forDefense: true, attackId }))) return _noReactionCard(actor, "Парирование");
+  if (!(await spendReaction(actor, { forDefense: true, attackId }))
+      && !(await borrowCoverReaction(actor))) return _noReactionCard(actor, "Парирование");
 
   // Танец Среди Огня и Один Против Сотни (wdbc-u0by) — Преимущество на
   // Парирование против Очереди / против атаки Орды, тот же приём

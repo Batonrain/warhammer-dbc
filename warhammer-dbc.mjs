@@ -5,6 +5,9 @@ import { getCriticalEffect }          from "./critical-tables.mjs";
 // единственный, кого rules/sources.mjs не импортирует (цикл импортов,
 // wdbc-795h). Без этой строки Талант просто не даст Командиру переброс.
 import "./module/rules/adjutant.mjs";
+// Источник правил «command» (бонусы Команд к броскам подчинённых, глава
+// «Командование») — тоже саморегистрация, по той же причине, что Адъютант.
+import { applyRelayedCommandUpdate } from "./module/combat/command-state.mjs";
 import { RACES, SUBRACES }            from "./module/constants/races.mjs";
 import { CHARACTERISTICS, IMPROVEMENTS,
          IMPROVEMENT_BONUS,
@@ -857,6 +860,12 @@ Hooks.once("ready", () => {
       const requester = game.users.get(data?.userId);
       if (!requester) return;
 
+      // Правка командования чужого документа (Отряд, подчинённый) — с клиента
+      // без прав; module/combat/command-state.mjs::updateOrRelay.
+      if (data.action === "commandUpdate") {
+        await applyRelayedCommandUpdate(data);
+        return;
+      }
       if (data.action === "veilShift") {
         // Отвращение Варпа от игрока (module/apps/ritual-cast.mjs,
         // defaultVeilShiftFn) — у не-ГМ veilShift() тихо не срабатывает,

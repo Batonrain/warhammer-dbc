@@ -26,13 +26,16 @@ import { testOutcome } from "./roll-outcome.mjs";
  *   (не из реестра правил), напр. Перебежка/Duck and Cover (стр. 30,
  *   wdbc-x1nz.2.38) на Подавлении. Именной переброс реестра важнее — тот же
  *   приоритет «навязанное сильнее своего», что у Уклонения/Парирования.
+ * @param {boolean} [opts.affectsCommand=true] — провал снимает Командование.
+ *   false — выход из Шока: книга оговаривает, что его провал Команд не снимает.
  * @returns {Promise<{eff:number, bonus:number, roll:Roll, rv:number, rolls:Roll[],
  *   rerollNote:string, success:boolean, dof:number, usedReroll:boolean}>}
+ *   deg — степень исхода (Успехов при успехе, Провалов при провале);
  *   dof — степень провала (0 при успехе); usedReroll — был ли доступен и
  *   применён переброс из реестра правил (для applyLordOfExoditesFailPenalty);
  *   parts — подписи применённых модификаторов для карточки.
  */
-export async function rollMoraleTest(actor, baseThreshold, { sourceActor = null, selfAdvantage = false, selfAdvantageLabel = "Преимущество" } = {}) {
+export async function rollMoraleTest(actor, baseThreshold, { sourceActor = null, selfAdvantage = false, selfAdvantageLabel = "Преимущество", affectsCommand = true } = {}) {
   const resolved = resolveTest({ actor, kind: "skill", char: "wp", morale: true, targetActor: sourceActor });
   // autoMods наравне с mods (wdbc-ct65.1): Усталость и прочие штрафы состояния
   // тела — такие же правила реестра, просто без галочки. Спрашивать всё равно
@@ -47,5 +50,15 @@ export async function rollMoraleTest(actor, baseThreshold, { sourceActor = null,
     : (selfAdvantage ? { mode: "keepBest", rolls: 2, label: selfAdvantageLabel } : null);
   const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
   const { success, deg } = testOutcome(rv, eff);
-  return { eff, bonus, parts, roll, rv, rolls, rerollNote, success, dof: success ? 0 : deg, usedReroll: !!reroll };
+  // Провал теста Морали снимает Командование («Мораль и Потеря Командования»):
+  // с подчинённого — его преимущества, с Командира — все отданные Команды.
+  // Импорт ленивый: command-state тянет источники правил, а этот модуль
+  // сам лежит в их графе (тот же круг, что у Адъютанта, wdbc-795h).
+  if (!success && affectsCommand && typeof game !== "undefined") {
+    try {
+      const { handleMoraleFailure } = await import("../combat/command-state.mjs");
+      await handleMoraleFailure(actor);
+    } catch (e) { console.warn("Warhammer DBC | потеря Командования:", e); }
+  }
+  return { eff, bonus, parts, roll, rv, rolls, rerollNote, success, deg, dof: success ? 0 : deg, usedReroll: !!reroll };
 }

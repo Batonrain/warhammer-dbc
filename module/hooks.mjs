@@ -7,7 +7,7 @@ import { performPoolSpend, clearEvasionPools } from "./combat/evasion-pool.mjs";
 import { showRecoilDialog, performRecoil, performPoolRecoil } from "./combat/recoil.mjs";
 import { rollOverpenetration } from "./combat/overpenetration.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
-import { _executeFearRoll, FAITH_FLAG, rollShockRecovery } from "./combat/fear.mjs";
+import { _executeFearRoll, FAITH_FLAG, rollShockRecovery, postShockRecoveryPrompt } from "./combat/fear.mjs";
 import { isRuleUsageUsed, markRuleUsageUsed,
          isRoundCapabilityAvailable, markRoundCapabilityUsed } from "./apps/game-session.mjs";
 import { fatePoolLabel }                 from "./rules/fate-save.mjs";
@@ -140,6 +140,7 @@ import { maybeAutoReleaseGrapple, grappleReleaseTriggered } from "./combat/grapp
 import { weaponProfiles } from "./combat/weapon-profiles.mjs";
 import { isIntegralAttack } from "./combat/equipped-melee.mjs";
 import { collectTestMods } from "./rules/roll-mods.mjs";
+import { expireCommandsAtTurnStart, clearCommandsOnCombatEnd, commandMoraleOn } from "./combat/command-state.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
 // updateCombat ниже) сама отслеживает, чей Ход только что закончился.
@@ -1752,6 +1753,48 @@ export function registerHooks() {
         await rollShockRecovery(actor);
       });
     });
+    // «Командир дрогнул» (глава «Командование», wdbc-x1nz.2): Charm/Deceive(F)+0
+    // скрыть трусость — успех возвращает снятые Команды.
+    html.querySelectorAll(".wh-cmd-conceal").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const skill = el.dataset.skill;
+        el.disabled = true;
+        const { concealCowardice } = await import("./combat/command-state.mjs");
+        await concealCowardice(message, skill);
+      });
+    });
+    // Синхронный Натиск: Давление свободным действием, +10 за соратника в контакте.
+    html.querySelectorAll(".wh-cmd-sync-press").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const ds = { ...el.dataset };
+        const actor = await fromUuid(ds.actorUuid || "").catch(() => null);
+        if (!actor?.isOwner) return ui.notifications.warn("Давление проводит владелец атаковавшего.");
+        el.disabled = true;
+        const { _showContestDialog } = await import("./combat/techniques.mjs");
+        const { MELEE_CONTESTS } = await import("./constants/combat.mjs");
+        const { resolvePressSuccess } = await import("./combat/feint-press.mjs");
+        await _showContestDialog(actor, { ...MELEE_CONTESTS.press, onSuccess: resolvePressSuccess,
+          extraBonus: (MELEE_CONTESTS.press.extraBonus ?? 0) + (parseInt(ds.bonus) || 0) });
+      });
+    });
+    // Контроль разума в отряде: тест W ± Слаженность (combat/command-state.mjs).
+    html.querySelectorAll(".wh-cmd-mindcontrol").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const ds = { ...el.dataset };
+        const actor = await fromUuid(ds.actorUuid || "").catch(() => null);
+        const squad = await fromUuid(ds.squadUuid || "").catch(() => null);
+        if (!actor?.isOwner) return ui.notifications.warn("Тест проходит владелец персонажа.");
+        el.disabled = true;
+        const { rollMindControlTest } = await import("./combat/command-state.mjs");
+        await rollMindControlTest(actor, squad);
+      });
+    });
     // Быстрая Реакция (wdbc-1rno.3) — тот же приём, что Выход из Шока выше.
     html.querySelectorAll(".wh-rapid-reaction-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
@@ -2700,6 +2743,8 @@ function _attachFateContextMenu(message, html) {
   Hooks.on("deleteCombat", async combat => {
     if (!game.user.isGM) return;
     await resolveTrancesForCombat(combat);
+    // Командное Присутствие — «до конца боя»; Команды и метки Морали тоже.
+    await clearCommandsOnCombatEnd(combat);
     // Божественная Защита: без сознания «до конца сцены или боя».
     await wakeDivineProtected(combat.combatants?.map?.(c => c.actor) ?? []);
     // Метка Аватара Резни живёт «до конца боя» — снять со всех комбатантов.
@@ -2954,6 +2999,9 @@ function _attachFateContextMenu(message, html) {
         await applyAimFocusTurnEnd(prevActor);
         // Конец Хода Подавленного (стр. 33) — предложить тест на преодоление.
         if (prevActor.system.conditions?.pinned) await postSuppressionRecoveryPrompt(prevActor);
+        // «Укрепление Морали» (глава «Командование»): сбросить Шок можно и в
+        // конце Хода, не только в начале.
+        if (prevActor.system.conditions?.shocked && commandMoraleOn(prevActor)) await postShockRecoveryPrompt(prevActor);
         // Финт (стр. 31, wdbc-x1nz.2.65): «до конца ЕГО Хода» — снимается
         // здесь, на конце Хода атаковавшего, не цели.
         await clearFeintAtTurnEnd(prevActor);
@@ -2985,6 +3033,12 @@ function _attachFateContextMenu(message, html) {
       // проверять уже нечего (см. combat/rapid-reaction.mjs).
       const wasSurprised = !!nextCombatant.actor.system?.conditions?.surprised;
       await resetActionEconomy(nextCombatant.actor);
+      // Короткая/Детальная Команда отдающего гаснут «до начала следующего
+      // Хода Командира»; Брифинг — на новом Раунде (combat/command-state.mjs).
+      await expireCommandsAtTurnStart(combat);
+      // «Укрепление Морали»: Подавление сбрасывается и в начале Хода.
+      if (nextCombatant.actor.system?.conditions?.pinned && commandMoraleOn(nextCombatant.actor))
+        await postSuppressionRecoveryPrompt(nextCombatant.actor);
       // Карточка «сколько у меня ОД/Реакций» (wdbc-qjnk) — сразу после сброса,
       // пока значения свежие; сама решает, нести ли этому типу актора экономику.
       await postTurnStartCard(nextCombatant.actor);
