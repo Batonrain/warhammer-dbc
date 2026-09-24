@@ -463,7 +463,7 @@ export async function activateKillerLegacyFelling(item) {
   const actor = item.actor;
   if (!actor) return ui.notifications?.warn("Активировать может только владелец оружия.");
   if (item.getFlag?.("warhammer-dbc", LEGACY_KILLER_FELLING_FLAG))
-    return ui.notifications?.warn("Убийца уже активирован до конца этого боя.");
+    return ui.notifications?.warn("Убийца уже активирован до конца этого боя или сцены.");
   if (!(await spendOneLegacyInfamyPoint(actor))) return;
 
   const infBonus = Number(actor.system?.characteristics?.inf?.bonus) || 0;
@@ -474,7 +474,7 @@ export async function activateKillerLegacyFelling(item) {
   await postTestCard(actor, {
     icon: rollIcon("crown", "#e8c76a"),
     title: `${esc(item.name)} — Убийца`,
-    lines: [`<div>Оружие получает <b>Felling(${originalRating == null ? infBonus : originalRating + 1})</b> до конца боя.</div>`]
+    lines: [`<div>Оружие получает <b>Felling(${originalRating == null ? infBonus : originalRating + 1})</b> до конца боя или сцены.</div>`]
   }, { sound: false });
 }
 
