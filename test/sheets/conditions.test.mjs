@@ -541,10 +541,16 @@ describe("Усталость по книге («Раны и Урон» → «С�
     await fatiguePeriodRest(b);
     await fatiguePeriodRest(b);
     expect(advanced).toEqual([8 * 3600, 3600, 3600]);
-    // Время двинули руками — следующий сон отряда снова двигает Календарь.
-    time.worldTime += 60;
-    await fatigueSleep(squad[0]);
+    // Новый сон (окно 8 ч) и 40 с авто-течения — сон другого всё ещё параллелен.
+    await fatigueSleep(squad[1]);
     expect(advanced).toEqual([8 * 3600, 3600, 3600, 8 * 3600]);
+    time.worldTime += 40;
+    await fatigueSleep(makeActor({ fatigue: 1 }));
+    expect(advanced).toEqual([8 * 3600, 3600, 3600, 8 * 3600]);
+    // Время двинули руками на час — следующий сон отряда снова двигает Календарь.
+    time.worldTime += 3600;
+    await fatigueSleep(squad[0]);
+    expect(advanced).toEqual([8 * 3600, 3600, 3600, 8 * 3600, 8 * 3600]);
   });
 
   it("Сон гасит таймер обморока до сдвига времени — Календарь не разбудит второй раз", async () => {

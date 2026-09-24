@@ -240,15 +240,18 @@ export function sleepHours(actor) {
 // Окно последнего сдвига отдыха в клиенте ГМа (wdbc-t3c3t.10): отдых разных
 // персонажей за один и тот же период идёт параллельно — ГМ укладывает отряд
 // из 5, Календарь сдвигается один раз, а не на 40 ч.
-// ponytail: окно живо, пока worldTime === end — при включённом авто-течении
-// Календаря тик между кликами закрывает окно и следующий отдых сдвинет снова.
+// Окно живо REST_WINDOW_DRIFT после сдвига: авто-течение Календаря (тик раз в
+// 2 с) за время кликов ГМа набегает секунды-минуты и не должно его закрывать.
+// ponytail: сдвиг руками меньше 5 мин тоже не закроет окно — для отдыха в часы
+// это шум; точнее — различать источник сдвига в imperial-calendar.mjs.
+const REST_WINDOW_DRIFT = 5 * 60;
 let restWindow = null;   // {hours, end, actors: Set}
 
 async function advanceRestClock(hours, actor) {
   const time = globalThis.game?.time;
   if (globalThis.game?.user?.isGM && typeof time?.advance === "function") {
     const key = actor?.uuid ?? actor;
-    if (restWindow?.hours === hours && restWindow.end === worldNow() && !restWindow.actors.has(key)) {
+    if (restWindow?.hours === hours && worldNow() >= restWindow.end && worldNow() - restWindow.end <= REST_WINDOW_DRIFT && !restWindow.actors.has(key)) {
       restWindow.actors.add(key);
       return `Отдых идёт одновременно с остальными — Календарь уже сдвинут на ${hours} ч.`;
     }
