@@ -102,6 +102,7 @@ import { planFleshmetalRegen, FLESHMETAL_CAPABILITY, FLESHMETAL_FLAG }
 import { hasRuleFlag as hasFleshmetalFlag } from "./rules/flags.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
+import { liftDivineProtection, wakeDivineProtected } from "./sheets/tabs/death.mjs";
 import { processConditionTurnStart, processConditionTurnEnd } from "./combat/condition-ticks.mjs";
 import { sweepConditionDurations } from "./combat/condition-effects.mjs";
 import { conditionExpiryLine, postConditionCard, setBurningDamageFormula } from "./combat/condition-ticks.mjs";
@@ -1459,6 +1460,21 @@ export function registerHooks() {
       });
     });
 
+    // Божественная Защита (sheets/tabs/death.mjs): исключение «остался во
+    // власти врагов без единого боеспособного союзника» решает ГМ — кнопка
+    // снимает неуязвимость и ограничение полудвижениями досрочно.
+    html.querySelectorAll(".wh-divine-protection-lift").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        if (!game.user.isGM) return ui.notifications.warn("Снять Божественную Защиту может только ГМ.");
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor) return;
+        el.disabled = true;
+        if (!await liftDivineProtection(actor)) ui.notifications.info(`${actor.name}: Защита уже снята.`);
+      });
+    });
+
     html.querySelectorAll(".wh-crit-death-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
@@ -2684,6 +2700,8 @@ function _attachFateContextMenu(message, html) {
   Hooks.on("deleteCombat", async combat => {
     if (!game.user.isGM) return;
     await resolveTrancesForCombat(combat);
+    // Божественная Защита: без сознания «до конца сцены или боя».
+    await wakeDivineProtected(combat.combatants?.map?.(c => c.actor) ?? []);
     // Метка Аватара Резни живёт «до конца боя» — снять со всех комбатантов.
     await clearAvatarOfSlaughterMarks(combat);
     // Бонусы Песни Стремительности (wdbc-sk8s) — та же логика «до конца боя».

@@ -98,7 +98,7 @@ export async function gangreneTick(actor, { at = game.time?.worldTime ?? 0 } = {
   // Единый конвейер урона в Характеристики (wdbc-x1nz.2.83): пол 0, смерть
   // при нулевой T — combat/char-damage.mjs.
   const { before: tBefore, after: tAfter, died } = await applyCharDamage(actor, "t", roll.total,
-    { extra: { [`flags.${FLAG}.${TEST_AT_FLAG}`]: at }, at });
+    { extra: { [`flags.${FLAG}.${TEST_AT_FLAG}`]: at }, at, cause: "gangrene" });
   if (died) {
     sections.push(`<div class="roll-outcome">${outcomeHtml(false, `Стойкость упала до ${tAfter} — ${esc(actor.name)} умирает от Гангрены.`)}</div>`);
   }

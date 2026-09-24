@@ -97,6 +97,16 @@ export async function applyWoundLoss(actor, amount) {
   const maxWounds        = Number(actor.system?.wounds?.effectiveMax ?? actor.system?.wounds?.max) || 0;
   const ablativeMax      = Number(actor.system?.wounds?.ablativeMax) || 0;
 
+  // Божественная Защита (rules/death-save.mjs): «не может быть ранен никаким
+  // образом» до конца сессии — общий пол для всех путей потери Ран, не
+  // только для конвейера атаки (Горение, непоглощаемый остаток и т.п.).
+  if (actor.getFlag?.("warhammer-dbc", "divineProtection")) {
+    return {
+      applied: false, currentWounds, currentCritical, newWounds: currentWounds, newCritical: currentCritical,
+      maxWounds, overflow: false, gotCritical: false, ablativeAbsorbed: 0
+    };
+  }
+
   const { ablative: newAblative, absorbed: ablativeAbsorbed, remaining } =
     ablativeAbsorb(actor.system?.wounds?.ablative, amount);
   const { value: newWounds, critical: newCritical, overflow } =
@@ -117,6 +127,15 @@ export async function applyWoundLoss(actor, amount) {
       "system.wounds.firstAidUsed": false
     };
     if (hasAblativePool) upd["system.wounds.ablative"] = newAblative;
+    // Снимок «до попадания» — Чудесное Спасение откатывает урон смертельного
+    // удара (rules/death-save.mjs::rollbackWounds). Тем же запросом, без
+    // лишнего обращения к базе; у мёртвого не перезаписывается — добивание
+    // трупа не должно сдвигать точку отката. Новая потеря Ран — смерть уже
+    // не от Состояния, прежняя причина снимается.
+    if (!actor.getFlag?.("warhammer-dbc", "deceased")) {
+      upd["flags.warhammer-dbc.preHitWounds"] = { value: currentWounds, critical: currentCritical };
+      if (actor.getFlag?.("warhammer-dbc", "deathCause")) upd["flags.warhammer-dbc.-=deathCause"] = null;
+    }
     await actor.update(upd);
   }
 

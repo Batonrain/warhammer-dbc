@@ -57,6 +57,7 @@ import { resolveOpposed } from "../rules/test-kind.mjs";
 import { MELEE_STANCES } from "../constants/combat.mjs";
 import { twoHandedTestPenalty, TWO_HANDED_PENALTY_LABEL } from "../rules/hands.mjs";
 import { uselessCount } from "../rules/useless-limbs.mjs";
+import { divineProtectionActive } from "../rules/death-save.mjs";
 
 // Захват (стр. 12, wdbc-x1nz.2.31): «только действия Борьбы или не-Физические»
 // — Движение Физическое (см. тип действия «Физическое», стр. 12), поэтому
@@ -109,6 +110,17 @@ function _withTwoHandedPenalty(mods, actor) {
 function _bothLegsLost(actor) {
   // Бесполезная нога (wdbc-x1nz.2.99) считается как потерянная.
   return (Number(actor.system.conditions?.lostLegsCount) || 0) + uselessCount(actor.system, "leg") >= 2;
+}
+
+/**
+ * Божественная Защита (стр. 233, rules/death-save.mjs): «в любом бою до конца
+ * сессии он может совершать только полудвижения» — Полное Движение, Натиск и
+ * Бег запрещены. true — запрещено, предупреждение уже показано.
+ */
+function _blockedByDivineProtection(actor, label) {
+  if (!divineProtectionActive(actor)) return false;
+  ui.notifications.warn(`⚠️ Божественная Защита: до конца сессии — только полудвижения (${label} недоступен).`);
+  return true;
 }
 
 /** Потеря ОБЕИХ стоп: сам факт не блокирует движение, но требует Acrobatics−10 «просто чтобы идти». */
@@ -307,6 +319,7 @@ export async function declareLegacyBraveHeartMove(actor) {
 
 export async function declareFullMove(actor) {
   if (!actor) return;
+  if (_blockedByDivineProtection(actor, "Полное Движение")) return;
   if (_blockedByGrapple(actor, { move: true })) return;
   if (_bothLegsLost(actor))
     return ui.notifications.warn("⚠️ Нет обеих ног (или они бесполезны) — Движение недоступно.");
@@ -332,6 +345,7 @@ export async function declareFullMove(actor) {
 
 export async function declareCharge(actor) {
   if (!actor) return;
+  if (_blockedByDivineProtection(actor, "Натиск")) return;
   if (_blockedByGrapple(actor)) return;
   // Повален (стр. 30-31, wdbc-r5o7.2): «нельзя Бег и Натиск».
   if (actor.system.conditions?.prone)
@@ -512,6 +526,7 @@ export async function toggleDeepContactCarry(actor) {
 
 export async function declareRun(actor) {
   if (!actor) return;
+  if (_blockedByDivineProtection(actor, "Бег")) return;
   if (_blockedByGrapple(actor)) return;
   // Повален (стр. 30-31, wdbc-r5o7.2): «нельзя Бег и Натиск».
   if (actor.system.conditions?.prone)
