@@ -524,6 +524,29 @@ describe("Усталость по книге («Раны и Урон» → «С�
     expect(advanced).toEqual([8 * 3600, 3 * 3600]);
   });
 
+  // wdbc-t3c3t.10: ГМ укладывает отряд — отдых идёт параллельно, Календарь
+  // сдвигается один раз, а не на каждого персонажа.
+  it("Сон отряда у ГМа сдвигает Календарь один раз; повторный отдых того же персонажа — снова", async () => {
+    const advanced = [];
+    const time = { worldTime: 1000, advance: async s => { advanced.push(s); time.worldTime += s; } };
+    globalThis.game.time = time;
+    globalThis.game.user = { isGM: true };
+    const squad = [1, 2, 3].map(() => makeActor({ fatigue: 3 }));
+    for (const a of squad) await fatigueSleep(a);
+    expect(advanced).toEqual([8 * 3600]);
+    expect(squad.every(a => a.system.fatigue.value === 0)).toBe(true);
+    expect(captured.chat.at(-1).content).toContain("одновременно");
+    // Тот же персонаж отдыхает следующий час — это уже новый час.
+    const b = makeActor({ fatigue: 2 });
+    await fatiguePeriodRest(b);
+    await fatiguePeriodRest(b);
+    expect(advanced).toEqual([8 * 3600, 3600, 3600]);
+    // Время двинули руками — следующий сон отряда снова двигает Календарь.
+    time.worldTime += 60;
+    await fatigueSleep(squad[0]);
+    expect(advanced).toEqual([8 * 3600, 3600, 3600, 8 * 3600]);
+  });
+
   it("Сон гасит таймер обморока до сдвига времени — Календарь не разбудит второй раз", async () => {
     globalThis.game.time = { worldTime: 0, advance: async () => {} };
     globalThis.game.user = { isGM: true };

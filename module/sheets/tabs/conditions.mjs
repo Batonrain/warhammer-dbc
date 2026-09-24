@@ -237,10 +237,23 @@ export function sleepHours(actor) {
  * Усталость дважды).
  * @returns {Promise<string>} строка для карточки
  */
-async function advanceRestClock(hours) {
+// Окно последнего сдвига отдыха в клиенте ГМа (wdbc-t3c3t.10): отдых разных
+// персонажей за один и тот же период идёт параллельно — ГМ укладывает отряд
+// из 5, Календарь сдвигается один раз, а не на 40 ч.
+// ponytail: окно живо, пока worldTime === end — при включённом авто-течении
+// Календаря тик между кликами закрывает окно и следующий отдых сдвинет снова.
+let restWindow = null;   // {hours, end, actors: Set}
+
+async function advanceRestClock(hours, actor) {
   const time = globalThis.game?.time;
   if (globalThis.game?.user?.isGM && typeof time?.advance === "function") {
+    const key = actor?.uuid ?? actor;
+    if (restWindow?.hours === hours && restWindow.end === worldNow() && !restWindow.actors.has(key)) {
+      restWindow.actors.add(key);
+      return `Отдых идёт одновременно с остальными — Календарь уже сдвинут на ${hours} ч.`;
+    }
     await time.advance(hours * SECONDS_PER_HOUR);
+    restWindow = { hours, end: worldNow(), actors: new Set([key]) };
     return `Календарь сдвинут на ${hours} ч.`;
   }
   return `Время двигает ГМ — сдвиньте Календарь на ${hours} ч.`;
@@ -267,7 +280,7 @@ export async function fatiguePeriodRest(actor) {
     if (!parity) {
       await actor.setFlag("warhammer-dbc", "slowFatigueParity", true);
       // Час всё равно прошёл — Календарь двигается и здесь.
-      const clockLine = await advanceRestClock(1);
+      const clockLine = await advanceRestClock(1, actor);
       const rollMode = game.settings.get("core", "rollMode");
       // Уведомление о состоянии, а не карточка теста (ни броска, ни Порога) —
       // на общий сборщик helpers/test-card.mjs не переводится (wdbc-kuun).
@@ -289,7 +302,7 @@ export async function fatiguePeriodRest(actor) {
   }
 
   const res = await removeFatigue(actor, 1);
-  const clockLine = await advanceRestClock(1);
+  const clockLine = await advanceRestClock(1, actor);
 
   const rollMode = game.settings.get("core", "rollMode");
   // Уведомление о состоянии, а не карточка теста (ни броска, ни Порога) —
@@ -321,7 +334,7 @@ export async function fatigueSleep(actor) {
   });
   if (actor.getFlag?.("warhammer-dbc", "slowFatigue")) await actor.unsetFlag?.("warhammer-dbc", "slowFatigue");
   if (actor.getFlag?.("warhammer-dbc", "slowFatigueParity")) await actor.unsetFlag?.("warhammer-dbc", "slowFatigueParity");
-  const clockLine = await advanceRestClock(hours);
+  const clockLine = await advanceRestClock(hours, actor);
 
   const rollMode = game.settings.get("core", "rollMode");
   const gangreneNote = gangreneFatigueExtra(actor)
