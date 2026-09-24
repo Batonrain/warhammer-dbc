@@ -178,4 +178,22 @@ describe("sweepAllConditionClocks", () => {
     expect(captured.chat.length).toBe(2);
   });
 
+  // wdbc-t3c3t.13: авто-течение Календаря и ручной сдвиг параллельно — прогоны
+  // идут по очереди, второй отрезок не теряется.
+  it("два прогона подряд не перекрываются и идут по порядку", async () => {
+    const log = [];
+    const probe = { id: "probe", run: async (_a, { from, to }) => {
+      log.push(`in ${from}-${to}`);
+      await new Promise(r => setTimeout(r, 5));
+      log.push(`out ${from}-${to}`);
+    } };
+    CONDITION_CLOCK_HANDLERS.push(probe);
+    try {
+      Object.assign(globalThis.game, { actors: [makeActor()], users: { activeGM: { id: "gm1" } }, user: { id: "gm1" } });
+      await Promise.all([sweepAllConditionClocks(1100, 100), sweepAllConditionClocks(1200, 100)]);
+    } finally {
+      CONDITION_CLOCK_HANDLERS.splice(CONDITION_CLOCK_HANDLERS.indexOf(probe), 1);
+    }
+    expect(log).toEqual(["in 1000-1100", "out 1000-1100", "in 1100-1200", "out 1100-1200"]);
+  });
 });

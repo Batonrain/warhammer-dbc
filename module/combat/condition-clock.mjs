@@ -133,7 +133,19 @@ export async function sweepConditionClock(actor, { from, to } = {}) {
  * же приём, что apps/wrapped-in-chaos.mjs::sweepSweetMistExpiry: считает
  * только основной активный ГМ, не каждый подключённый клиент.
  */
-export async function sweepAllConditionClocks(worldTime, dt) {
+export function sweepAllConditionClocks(worldTime, dt) {
+  // Прогоны по очереди (wdbc-t3c3t.13): авто-течение Календаря и ручной сдвиг
+  // могут прийти, пока предыдущий ещё идёт, — иначе оба увидели бы одну и ту
+  // же метку Гангрены и ударили дважды. Отрезок не теряется, а ждёт своей
+  // очереди; сбой одного прогона не рвёт цепочку.
+  const run = sweepChain.then(() => sweepAllOnce(worldTime, dt));
+  sweepChain = run.catch(() => {});
+  return run;
+}
+
+let sweepChain = Promise.resolve();
+
+async function sweepAllOnce(worldTime, dt) {
   if (!game.users?.activeGM || game.user?.id !== game.users.activeGM.id) return;
   const to = Number(worldTime);
   const from = to - (Number(dt) || 0);
