@@ -28,6 +28,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { gangreneTick, gangreneIntervalSeconds } from "./gangrene.mjs";
 import { haemorrhageHourly, suffocationRestClock } from "./condition-ticks.mjs";
+import { unlinkedTokens } from "../migrations/unlinked-tokens.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -78,6 +79,10 @@ async function gangreneClock(actor, { from, to }) {
     testAt = from;
     await actor.update({ [`flags.${NS}.gangreneTestAt`]: from });
   }
+  // Метка старше отрезка больше чем на интервал — осталась от ручной кнопки до
+  // появления часов (приёмка #516): догонять пропущенное не берёмся, иначе
+  // первый же тик Календаря выдал бы разом 1d10×N и убил. Отсчёт — с отрезка.
+  if (testAt + gangreneIntervalSeconds(actor.system?.characteristics?.t?.bonus) < from) testAt = from;
   for (let i = 0; i < MAX_TICKS; i++) {
     if (!actor.system?.conditions?.gangrene || actor.getFlag?.(NS, "deceased")) return;
     const due = testAt + gangreneIntervalSeconds(actor.system?.characteristics?.t?.bonus);
@@ -173,9 +178,25 @@ export async function sweepConditionClock(actor, { from, to } = {}) {
  * же приём, что apps/wrapped-in-chaos.mjs::sweepSweetMistExpiry: считает
  * только основной активный ГМ, не каждый подключённый клиент.
  */
-export async function sweepAllConditionClocks(worldTime, dt) {
+export function sweepAllConditionClocks(worldTime, dt) {
+  // Прогоны по очереди (wdbc-t3c3t.13): авто-течение Календаря и ручной сдвиг
+  // могут прийти, пока предыдущий ещё идёт, — иначе оба увидели бы одну и ту
+  // же метку Гангрены и ударили дважды. Отрезок не теряется, а ждёт своей
+  // очереди; сбой одного прогона не рвёт цепочку.
+  const run = sweepChain.then(() => sweepAllOnce(worldTime, dt));
+  sweepChain = run.catch(() => {});
+  return run;
+}
+
+let sweepChain = Promise.resolve();
+
+async function sweepAllOnce(worldTime, dt) {
   if (!game.users?.activeGM || game.user?.id !== game.users.activeGM.id) return;
   const to = Number(worldTime);
   const from = to - (Number(dt) || 0);
   for (const actor of game.actors ?? []) await sweepConditionClock(actor, { from, to });
+  // Несвязанные токены (статисты, wdbc-t3c3t.11): их синтетических акторов в
+  // game.actors нет. Мёртвые и без Состояний отсекаются в sweepConditionClock
+  // и первыми строками обработчиков — без записей.
+  for (const { actor } of unlinkedTokens()) await sweepConditionClock(actor, { from, to });
 }

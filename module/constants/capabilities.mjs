@@ -417,12 +417,12 @@ export const CAPABILITIES = {
   "charSwap.fel.forWs": {
     label: "При Финте можно бросать Charm(Fel) вместо WS",
     source: "Отвлекающее, Оружие Наследия (wdbc-1rno.35, стр. 427-428)",
-    reader: "module/sheets/attack/mods.mjs (charSwapWhyFel), module/sheets/attack-dialog.mjs, module/sheets/attack/markup.mjs — подпись у пункта «Fel» в выборе характеристики"
+    reader: "module/combat/techniques.mjs::_showContestDialog (feintSwapWhy) — подпись у пункта «Fel» в окне Финта"
   },
   "charSwap.int.forWs": {
     label: "При Финте можно бросать Int вместо WS",
     source: "Отвлекающее, Оружие Наследия (wdbc-1rno.35, стр. 427-428)",
-    reader: "module/sheets/attack/mods.mjs (charSwapWhyInt), module/sheets/attack-dialog.mjs, module/sheets/attack/markup.mjs — подпись у пункта «Int» в выборе характеристики"
+    reader: "module/combat/techniques.mjs::_showContestDialog (feintSwapWhy) — подпись у пункта «Int» в окне Финта"
   },
 
   // ── Действия и приёмы ─────────────────────────────────────────────────────

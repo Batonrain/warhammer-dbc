@@ -13,7 +13,7 @@ import {
   resolveGrappleSuccess, endGrapple, grappleRole, grappleHands, grappleFreeHands,
   grappleTechDef, grappleSizePenalty, grappleAttackBlockReason, grappleMoveAllowed,
   grappleDodgeBlockReason, inGrappleCoverArc, grappleCoverPartner, maybeAutoReleaseGrapple, grappleReleaseTriggered,
-  _doSqueeze, _resolveTakeoverSuccess, setGrappleHands, SQUEEZE_PENDING_FLAG
+  _doSqueeze, _resolveTakeoverSuccess, setGrappleHands, SQUEEZE_PENDING_FLAG, TARGET_TESTS
 } from "../../module/combat/grapple.mjs";
 import { _showContestDialog } from "../../module/combat/techniques.mjs";
 import { resolveResistClick, _resetPendingContests } from "../../module/combat/opposed-contest.mjs";
@@ -146,6 +146,21 @@ describe("встречный тест Борьбы: Навык, бросок п�
     await resolveResistClick(ds);
     expect(held.system.conditions.grappling).toBe(false);
     expect(holder.system.conditions.grappling).toBe(false);
+  });
+
+  // wdbc-t3c3t.15: тест выше подставляет свой onSuccess — поломка настоящей
+  // записи TARGET_TESTS.breakFree (_resolveEscapeSuccess) прошла бы мимо него.
+  it("Вырваться настоящей записью TARGET_TESTS.breakFree — Захват снят, карточка «вырывается»", async () => {
+    const { holder, held } = await grappled({ skills: { athletics: { total: 30 } } }, { skills: { athletics: { total: 60 } } });
+    captured.nextRoll = 10;
+    await _showContestDialog(held, grappleTechDef(held, TARGET_TESTS.breakFree));
+    await captured.dialog.buttons.roll.callback(fakeHtml({ "#contest-char": "s", "#contest-self": "60", "#contest-mod": "0" }));
+    const ds = resistButtonData(captured.chat.at(-1).content);
+    captured.nextRoll = 95;
+    await resolveResistClick(ds);
+    expect(held.system.conditions.grappling).toBe(false);
+    expect(holder.system.conditions.grappling).toBe(false);
+    expect(captured.chat.at(-1).content).toContain("вырывается из Захвата");
   });
 
   it("проиграл встречный тест — Захват остаётся", async () => {

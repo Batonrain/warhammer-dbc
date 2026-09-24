@@ -221,7 +221,10 @@ export async function runContestOutcome({ contestId, opponentUuid, initiatorWins
   const target = await fromUuid(opponentUuid).catch(() => null);
   if (!actor) return false;
   if (typeof entry.techDef.onSuccess === "function") {
-    await entry.techDef.onSuccess(actor, { deg: entry.result.deg, target, margin });
+    // Победа меньшим провалом (оба провалили) — Успехов у инициатора нет:
+    // deg провала не должен давать «сдвиг на deg м» / бонус 5+ (приёмка #516).
+    const deg = entry.result.success ? entry.result.deg : 0;
+    await entry.techDef.onSuccess(actor, { deg, target, margin });
   } else if (entry.techDef.note) {
     await postTestCard(actor, {
       icon: rollIcon("sword"), title: `${esc(entry.techDef.label)}: победа над ${esc(target?.name ?? "?")}`,

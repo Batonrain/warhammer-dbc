@@ -25,7 +25,7 @@ import { legacyHistoryIs, legacyChangeTestBonus, bloodthirstyLegacyMeleeActive, 
 import { isNearestUndamagedEnemy } from "../../combat/legacy-weapon-mutations.mjs";
 import { isActorsOwnTurn } from "../../combat/delay-action.mjs";
 import { meleeEffectiveRange, parseGrips } from "../../constants/combat.mjs";
-import { longerWeaponBonus, closeQuartersPenalty } from "../../rules/weapon-length.mjs";
+import { longerWeaponBonus, closeQuartersPenalty, closeQuartersRange } from "../../rules/weapon-length.mjs";
 import { getHeldHand, weaponHandsRequired } from "../../rules/hands.mjs";
 import { BODY_SIDES, fingersLostOn } from "../../rules/limb-loss.mjs";
 
@@ -304,10 +304,6 @@ export function situationalMods(v) {
     }
   }
   const charSwapWhy  = ruleFlagLabels(actor, "charSwap.wp.forWsS", attackCtx);
-  // Отвлекающее/skilled 3-4, Оружие Наследия, рукопашная ветка (wdbc-1rno.35,
-  // стр. 427-428): «При Финте — тест на Charm(Fel) или Int вместо WS.»
-  const charSwapWhyFel = ruleFlagLabels(actor, "charSwap.fel.forWs", attackCtx);
-  const charSwapWhyInt = ruleFlagLabels(actor, "charSwap.int.forWs", attackCtx);
   const twoWeaponWhy = ruleFlagLabels(actor, "penalty.twoWeapon.off", attackCtx);
   const twoWeaponOff  = twoWeaponWhy.length > 0;
   // Дуэлянтское (стр. 73 Книги Аэльдари): бой 1-на-1, когда никто не мешает,
@@ -368,7 +364,7 @@ export function situationalMods(v) {
         Math.max(0, Number(actor?.system?.size) || 0))
     : 0;
   const longerWeaponAuto  = isMelee ? longerWeaponBonus(meleeAttackerRange, attackCtx.targetActor) : false;
-  const closeQuartersAuto = (isMelee && inContactWithTarget) ? closeQuartersPenalty(meleeAttackerRange) : 0;
+  const closeQuartersAuto = (isMelee && inContactWithTarget && weapon) ? closeQuartersPenalty(closeQuartersRange(weapon.system)) : 0;
   // Прикрывающая Стойка (стр. 15, wdbc-x1nz.2.66.7): −20 рукопашным атакам
   // по союзникам, стоящим в Базовом/Глубоком контакте с персонажем в этой
   // Стойке — то же соседство, что Свободная Атака/Связан в Рукопашной
@@ -524,5 +520,5 @@ export function situationalMods(v) {
       note: wp.gyroStabilized ? "снято: Гиро-стаб." : undefined }
   ];
 
-  return { bandKey, charSwapWhy, charSwapWhyFel, charSwapWhyInt, commonMods, specificMods };
+  return { bandKey, charSwapWhy, commonMods, specificMods };
 }

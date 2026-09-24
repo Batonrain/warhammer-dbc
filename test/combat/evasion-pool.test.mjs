@@ -221,6 +221,38 @@ describe("spendPoolSuccesses: списание банка на любой дру
   });
 });
 
+// wdbc-t3c3t.6, Захват (стр. 12): «Парируется со штрафом −30 (или тратит +3
+// Успеха от предыдущего Парирования)» — то же правило пула «+1 Успех за
+// каждые полные −10»: снятие Парированием стоит 2+3=5 без броска. Раньше
+// кнопка списывала 3 ДО броска Парирования и теряла прочие его модификаторы.
+describe("performPoolSpend: Захват Парированием — цена по parryMod (wdbc-t3c3t.6)", () => {
+  beforeEach(() => {
+    globalThis.game.combat = { started: true, id: "c1", combatant: { id: "cbt-1" } };
+  });
+
+  it("costPenalty −30: попадание стоит 5 Успехов, без броска", async () => {
+    const d = defender();
+    await addEvasionSurplus(d, ATTACKER, 5, 0);
+    await performPoolSpend(d, { attackerUuid: ATTACKER, hitsCount: 1, dodgeMod: 0, parryMod: -30, costPenalty: -30 });
+    expect(getEvasionPool(d, ATTACKER)).toBeNull();
+    expect(captured.chat.at(-1).content).toContain("Потрачено 5 Усп.");
+  });
+
+  it("прочие модификаторы Парирования тоже дорожат: −40 → 6 Успехов", async () => {
+    const d = defender();
+    await addEvasionSurplus(d, ATTACKER, 5, 0);
+    await performPoolSpend(d, { attackerUuid: ATTACKER, hitsCount: 1, dodgeMod: 0, parryMod: -40, costPenalty: -40 });
+    expect(getEvasionPool(d, ATTACKER)).toMatchObject({ successes: 5 });
+  });
+
+  it("3 Успеха на Захват не хватает — ничего не списано", async () => {
+    const d = defender();
+    await addEvasionSurplus(d, ATTACKER, 3, 0);
+    await performPoolSpend(d, { attackerUuid: ATTACKER, hitsCount: 1, dodgeMod: 0, parryMod: -30, costPenalty: -30 });
+    expect(getEvasionPool(d, ATTACKER)).toMatchObject({ successes: 3 });
+  });
+});
+
 describe("performPoolSpend: чат-карточка траты пула", () => {
   beforeEach(() => {
     globalThis.game.combat = { started: true, id: "c1", combatant: { id: "cbt-1" } };

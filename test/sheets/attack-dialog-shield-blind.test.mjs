@@ -60,4 +60,28 @@ describe("Щит на голове: то же Ослепление, что и о
     showAttackDialog(attacker({ items: [sword] }), sword);
     expect(captured.dialog.content).not.toMatch(/atk-mod-auto[\s\S]*?Ослеплён/);
   });
+  // wdbc-t3c3t.1: слепит только поднятый к голове щит, не пассивное покрытие.
+  it("щит «Все» (Эльдарский Силовой) голову прикрывает всегда — но без подъёма к голове Ослепления нет", () => {
+    const sword = weaponFor({ weaponClass: "melee" }, { id: "sword-1" });
+    const all = weaponFor({ weaponClass: "melee", shieldAP: 4, shieldZones: "Все", equipped: true },
+      { id: "shield-3", name: "Силовой щит", flags: { "warhammer-dbc.shieldRaised": true } });
+    showAttackDialog(attacker({ items: [sword, all] }), sword);
+    expect(captured.dialog.content).not.toMatch(/atk-mod-auto[\s\S]*?Ослеплён/);
+  });
+
+  it("Каплевидный «(Г)/(Н1+Н2)» поднят, выбран вариант ног — Ослепления нет", () => {
+    const sword = weaponFor({ weaponClass: "melee" }, { id: "sword-1" });
+    const kite = weaponFor({ weaponClass: "melee", shieldAP: 4, shieldZones: "Т+Р1+(Г)/(Н1+Н2)", equipped: true },
+      { id: "shield-4", name: "Каплевидный", flags: { "warhammer-dbc.shieldRaised": true, "warhammer-dbc.shieldVariant": 1 } });
+    showAttackDialog(attacker({ items: [sword, kite] }), sword);
+    expect(captured.dialog.content).not.toMatch(/atk-mod-auto[\s\S]*?Ослеплён/);
+  });
+
+  it("Каплевидный «(Г)/(Н1+Н2)» не поднят — Ослепления нет", () => {
+    const sword = weaponFor({ weaponClass: "melee" }, { id: "sword-1" });
+    const kite = weaponFor({ weaponClass: "melee", shieldAP: 4, shieldZones: "Т+Р1+(Г)/(Н1+Н2)", equipped: true },
+      { id: "shield-4", name: "Каплевидный" });
+    showAttackDialog(attacker({ items: [sword, kite] }), sword);
+    expect(captured.dialog.content).not.toMatch(/atk-mod-auto[\s\S]*?Ослеплён/);
+  });
 });

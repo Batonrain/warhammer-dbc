@@ -92,7 +92,7 @@ describe("becomeParasiteHost", () => {
 
     expect(actor.updates.at(-1)).toEqual({
       "system.characteristics.s.value": 10, "system.characteristics.t.value": 10,
-      "system.characteristics.a.value": 10, "system.wounds.max": 7
+      "system.characteristics.ag.value": 10, "system.wounds.max": 7
     });
     expect(item.getFlag("warhammer-dbc", "maggotParasiteTransformed")).toBe(true);
     expect(captured.chat.at(-1).content).toContain("Опарыш поглощает тело");

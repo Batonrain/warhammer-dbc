@@ -112,6 +112,20 @@ export async function rollExtremeDamage(dmgRoll, { wp, damageType, hitLocation =
   if (hasExtreme && attacker && !minionCanCauseExtremeDamage(attacker)) hasExtreme = false;
   let extremeLevel = 0, critEffect = null, exRoll = null;
   if (hasExtreme) {
+    // Трата Очка — в момент Экстремального Урона, а не при нажатии «Бросок»
+    // (приёмка #516: промах или удар без Экстремального сжигал Очко впустую).
+    // Одна на всю атаку — см. комментарий у legacyCleavingRollRequested.
+    if (wp.legacyCleavingRollRequested && !wp.legacyCleavingRollSpent) {
+      wp.legacyCleavingRollSpent = true;
+      if (attacker && actorInfamyValue(attacker) >= 1) {
+        const path = actorInfamyPath(attacker);
+        const spend = await spendFromInfamyPool(attacker, 1, path);
+        await attacker.update({ [path]: spend.poolValue });
+        wp.legacyCleavingRollActive = true;
+      } else {
+        ui.notifications?.warn("Кромсающее: нет Очков Бесчестия — обычный бросок 1d5+1.");
+      }
+    }
     // Кромсающее, второе предложение (wdbc-1rno.35, стр. 427): «...может
     // потратить Очко Бесчестия, чтобы бросить ВМЕСТО ЭТОГО 1d10−2(мин.1)» —
     // замена всего обычного «1d5+1» целиком, включая extremeLevelBonus,
@@ -312,21 +326,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Второе предложение («может потратить Очко Бесчестия, чтобы бросить
   // 1d10−2 (мин.1) вместо») — галочка attack-dialog.mjs (видна только при
   // наличии Мутации и ≥1 Очка Бесчестия), opts.legacyCleavingRoll долетает
-  // сюда тем же приёмом, что confinedSpace. Трата — ниже, ОДНА на всю атаку
+  // сюда тем же приёмом, что confinedSpace. Трата — в rollExtremeDamage, ОДНА на всю атаку
   // (не за каждое попадание Очереди с Экстремальным Уроном по отдельности:
   // книга не разбирает многократное срабатывание, субъективное упрощение).
   if (takenMutationNames(item).has("Кромсающее")) wp.extremeLevelBonus = (wp.extremeLevelBonus || 0) + 1;
   wp.legacyCleavingRollRequested = takenMutationNames(item).has("Кромсающее") && !!opts.legacyCleavingRoll;
-  if (wp.legacyCleavingRollRequested) {
-    if (actorInfamyValue(actor) >= 1) {
-      const path = actorInfamyPath(actor);
-      const spend = await spendFromInfamyPool(actor, 1, path);
-      await actor.update({ [path]: spend.poolValue });
-      wp.legacyCleavingRollActive = true;
-    } else {
-      ui.notifications?.warn("Кромсающее: нет Очков Бесчестия — обычный бросок 1d5+1.");
-    }
-  }
   // Мучитель/merciless 10-10, Оружие Наследия (wdbc-1rno.35, стр. 428):
   // «Броски в 1 на кубиках урона вызывают Экстремальный Урон» — синтетический
   // флаг для rollExtremeDamage (см. заголовок выше в этом файле).
@@ -541,11 +545,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       : "");
   const sabreSecondAttackItemId = (opts.sabreSecondAttack && !opts.sabreSecondAttackIsSecond) ? String(item.id ?? "") : "";
   // Маятник, Оружие Наследия (wdbc-1rno.35, vigilant 7-7, стр. 427): «Если
-  // персонаж атаковал этим оружием в свой Ход...» — не гейтится попаданием
+  // персонаж атаковал этим оружием в свой Ход...» — Свободная Атака/Контратака
+  // в чужой Ход флаг не пишут (wdbc-t3c3t.5). Не гейтится попаданием
   // (книга говорит «атаковал», не «попал»), поэтому пишется тут же, до
   // разбора Уклонения/Парирования цели. Модификатор атаки = порог теста
   // МИНУС голая характеристика — ровно то, что диалог атаки насчитал сверху.
-  const pendulumFlag = pendulumLegacyFlagValue(item, threshold - (Number(actor.system?.characteristics?.[charKey]?.total) || 0));
+  const pendulumFlag = isActorsOwnTurn(actor) && pendulumLegacyFlagValue(item, threshold - (Number(actor.system?.characteristics?.[charKey]?.total) || 0));
   if (pendulumFlag) await actor.setFlag("warhammer-dbc", "legacyPendulumBonus", pendulumFlag);
   // Дикарь (стр. 62, wdbc-pb60): парными когтями — «+2 Успеха при успешной
   // атаке». Прибавляется к СТЕПЕНИ, а не к порогу: от степени зависят и число
@@ -1296,9 +1301,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         ...poolAffordableHits(evasionPoolEntry, techOpts.targetDodgeMod ?? 0, hitsCount, defenderActor),
         canRecoil: !isMelee && evasionPoolEntry.successes >= 2 && recoilPoolRemaining(defenderActor) > 0,
         // Захват (стр. 12, wdbc-x1nz.2.66.13): «Парируется со штрафом −30
-        // (или тратит +3 Успеха от предыдущего Парирования)» — цель может
-        // потратить 3 банковских Успеха ВМЕСТО обычного −30 этого Приёма.
-        canWaiveGrappleParry: isMelee && techOpts.technique === "grapple" && evasionPoolEntry.successes >= 3 }
+        // (или тратит +3 Успеха от предыдущего Парирования)» — по правилу
+        // пула −30 = +3 к цене снятия: 2+3=5 Успехов без броска (wdbc-t3c3t.6).
+        canWaiveGrappleParry: isMelee && techOpts.technique === "grapple"
+          && poolAffordableHits(evasionPoolEntry, techOpts.targetParryMod ?? 0, 1, defenderActor).hits > 0 }
     : null;
 
   // Ethereal Swarm / Эфирная Стая (wdbc-1rno, rules/ethereal-swarm.mjs) —

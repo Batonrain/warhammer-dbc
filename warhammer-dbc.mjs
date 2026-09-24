@@ -993,6 +993,16 @@ Hooks.once("ready", () => {
         if (!allowed) return console.warn("Warhammer DBC | itemUpdate отклонён: путь вне system.history.*/system.infoguard", data.data);
         await item.update(data.data);
       }
+      else if (data.action === "messageDamageBoost") {
+        // Прибавка к попаданию на чужой карточке чата (Огонь Души, Смертельная
+        // Ловушка — persistDamageBoost, module/combat/soulfire.mjs,
+        // wdbc-t3c3t.9). Путь сужен до флага прибавок, как у itemUpdate выше.
+        const message = game.messages.get(data.messageId);
+        if (!message || !data.data || typeof data.data !== "object") return;
+        const allowed = Object.keys(data.data).every(k => k.startsWith("flags.warhammer-dbc.damageBoosts."));
+        if (!allowed) return console.warn("Warhammer DBC | messageDamageBoost отклонён: путь вне damageBoosts", data.data);
+        await message.update(data.data);
+      }
       else if (data.action === "startCharacter") {
         // Игрок нажал «Начать создание персонажа», а права заводить Актёров у
         // его роли нет. Лист создаём мы и сразу отдаём его во владение
@@ -1098,7 +1108,12 @@ Hooks.once("ready", async () => {
   // по несвязанным токенам — под своим ключом (module/migrations/unlinked-tokens.mjs).
   await runMigrationGate({
     key: "charDamageSignVersion", tokensKey: "charDamageSignTokensVersion", label: "Знак Мод. характеристик",
-    full: () => migrateCharDamageSign(), tokensOnly: () => migrateCharDamageSign({ tokensOnly: true })
+    // Догоночный проход по токенам НЕ гоняем (приёмка #516): инверсия знака не
+    // переживает повтора, а в дельте старый знак от нового не отличить — у
+    // миров, где полный прогон уже шёл с токенами (с 11.09) или в дельту с тех
+    // пор писали по новой конвенции (тик Радиации, Гангрена), штраф стал бы
+    // бонусом. Токены инвертируются только в составе первого полного прогона.
+    full: () => migrateCharDamageSign(), tokensOnly: async () => ({})
   });
 });
 
@@ -1122,7 +1137,10 @@ Hooks.once("ready", async () => {
   // по несвязанным токенам — под своим ключом (module/migrations/unlinked-tokens.mjs).
   await runMigrationGate({
     key: "gearEquippedVersion", tokensKey: "gearEquippedTokensVersion", label: "Надетое снаряжение",
-    full: () => migrateGearEquipped(), tokensOnly: () => migrateGearEquipped({ tokensOnly: true })
+    // Догоночный проход по токенам НЕ гоняем (приёмка #516): в delta.items лежат
+    // и унаследованные предметы, правленные на токене — снятая на токене броня
+    // оказалась бы надетой заново. Токены — только в составе полного прогона.
+    full: () => migrateGearEquipped(), tokensOnly: async () => ({})
   });
 });
 

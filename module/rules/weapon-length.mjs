@@ -73,6 +73,17 @@ export function closeQuartersPenalty(rng) {
 }
 
 /**
+ * Rng для правила 4: «минимальный Rng» — rangeMin, если задан, иначе range,
+ * через основной Хват (Хв роняет минимум до 0), без Длинных Рук — Размер
+ * растит только максимум (стр. 39, wdbc-t3c3t.2).
+ * @param {object} sys weapon.system
+ */
+export function closeQuartersRange(sys) {
+  const min = Number(sys?.rangeMin) > 0 ? sys.rangeMin : sys?.range;
+  return meleeEffectiveRange(min, parseGrips(sys?.grips)[0] ?? null, "standard", false, 0);
+}
+
+/**
  * Правило 3 (стр. 39, wdbc-x1nz.2.67.1): «Оружие с Rng 8 может атаковать в
  * рукопашной и создаёт Базовый контакт через клетку 1×1, а не только в упор,
  * оружие с Rng 9 — через две.» Зазор (в клетках/метрах — 1 клетка сцены этой

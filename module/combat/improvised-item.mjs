@@ -98,13 +98,14 @@ export async function useThrowItem(actor, item) {
       title: "Опора при Метании",
       content: `<p>${esc(item.name)} весит сравнимо с вашим собственным телом (0.5-1.5×). Без надёжной опоры — риск сбития с ног.</p><p>Опора есть?</p>`
     });
+    if (hasFooting == null) return; // окно закрыто крестиком — отказ, а не «опоры нет»
     combinedTestRequired = !hasFooting;
   }
 
   let knockedDown = false, halved = false;
   if (combinedTestRequired) {
     const sTotal = actor.system.characteristics.s?.total ?? 0;
-    const aTotal = actor.system.characteristics.a?.total ?? 0;
+    const aTotal = actor.system.characteristics.ag?.total ?? 0;
     const sRoll = await new Roll("1d100").evaluate();
     const aRoll = await new Roll("1d100").evaluate();
     if (!(sRoll.total <= sTotal - 30 && aRoll.total <= aTotal - 30)) {

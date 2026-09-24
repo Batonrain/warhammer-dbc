@@ -1012,7 +1012,8 @@ export async function applyDamageToActor(actor, damageData) {
   // без T.b — armorBreachOutcome), а не «любой непоглощённый урон»: удар,
   // оставивший ушиб сквозь броню, её не пробивает. warpSoak не считается:
   // варп-оружие обходит броню целиком, а не проламывает её физически.
-  const { breached, breachAbsorption } = warpSoak
+  // То же у Заломить (ignoreArmour, приёмка #516): броню игнорирует, не ломает.
+  const { breached, breachAbsorption } = (warpSoak || ignoreArmour)
     ? { breached: false, breachAbsorption: 0 }
     : armorBreachOutcome({
         rawDamage, effArmorAP, damageSubtype,

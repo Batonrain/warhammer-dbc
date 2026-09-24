@@ -151,9 +151,9 @@ export async function spendPoolForRecoil(defender, attackerUuid, cost = 2) {
  * Списание N банковских Успехов на что угодно ЕЩЁ, кроме готовых двух выше
  * (негация попаданий/Отскок) — ровно тот же примитив (getEvasionPool +
  * spendFromPool), названный по своему поводу, а не по имени первого
- * потребителя. Первый случай — Захват (стр. 12, wdbc-x1nz.2.66.13): «−30
- * Парирования или +3 Успеха от предыдущего Парирования» — цель тратит 3
- * вместо обычного штрафа Приёма. Возвращает true, если получилось; false —
+ * потребителя. Сейчас это ответный удар безоружного (unarmed-combat.mjs);
+ * Захват отсюда ушёл в performPoolSpend с ценой по parryMod (wdbc-t3c3t.6).
+ * Возвращает true, если получилось; false —
  * банк пуст/устарел/не хватает на cost, вызывающая сторона ничего не тратит.
  */
 export async function spendPoolSuccesses(defender, attackerUuid, cost) {
@@ -172,7 +172,11 @@ export async function spendPoolSuccesses(defender, attackerUuid, cost) {
  */
 export async function performPoolSpend(defender, {
   attackerUuid, hitsCount = 1, dodgeMod = 0, dodgeModRecoil = null, parryMod = 0, targetIsVehicle = false,
-  flexible = false, forcedDefenceReroll = "", isMelee = false
+  flexible = false, forcedDefenceReroll = "", isMelee = false,
+  // Штраф, по которому считается цена снятия. Обычно dodgeMod (см. шапку);
+  // Захват снимается Парированием — parryMod, где −30 Приёма = +3 Успеха
+  // (стр. 12, wdbc-t3c3t.6).
+  costPenalty = dodgeMod
 } = {}) {
   const entry = getEvasionPool(defender, attackerUuid);
   if (!entry) {
@@ -183,7 +187,7 @@ export async function performPoolSpend(defender, {
     return;
   }
 
-  const { hits: negated, cost, perHit } = poolAffordableHits(entry, dodgeMod, hitsCount, defender);
+  const { hits: negated, cost, perHit } = poolAffordableHits(entry, costPenalty, hitsCount, defender);
   await spendFromPool(defender, attackerUuid, cost);
   const remaining = hitsCount - negated;
 

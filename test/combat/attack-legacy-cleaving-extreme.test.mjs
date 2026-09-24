@@ -36,3 +36,30 @@ describe("Кромсающее: +1 к extremeLevel (1d5+1 вместо 1d5)", ()
     expect(card()).toContain("d5: 3");
   });
 });
+
+describe("Кромсающее 1d10−2: Очко Бесчестия — только при Экстремальном Уроне (приёмка #516)", () => {
+  function infamyActor(weapon) {
+    const actor = actorFor({ items: [weapon], fate: { value: 2, max: 3 } });
+    const updates = [];
+    actor.update = async (d) => { updates.push(d); };
+    return { actor, updates };
+  }
+
+  it("попадание без Экстремального Урона — Очко не тратится", async () => {
+    const weapon = weaponFor({ legacy: { active: true, mutations: [{ name: "Кромсающее" }] } });
+    const { actor, updates } = infamyActor(weapon);
+    captured.dice = [10, 4];
+    await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, { legacyCleavingRoll: true });
+    expect(updates.some(u => "system.fate.value" in u)).toBe(false);
+  });
+
+  it("Экстремальный Урон — Очко тратится и бросается 1d10−2", async () => {
+    const weapon = weaponFor({ legacy: { active: true, mutations: [{ name: "Кромсающее" }] } });
+    const { actor, updates } = infamyActor(weapon);
+    captured.dice = [10, 10, 7];
+    await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, { legacyCleavingRoll: true });
+    // Само число пула не сверяем: foundry.utils.getProperty в стенде — заглушка.
+    expect(updates.some(u => "system.fate.value" in u)).toBe(true);
+    expect(card()).toContain("Экстремальный урон");
+  });
+});

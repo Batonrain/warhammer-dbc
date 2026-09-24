@@ -982,7 +982,6 @@ async function _doThrow(actor) {
   }
   const target = _requireThirdPartyTarget(actor, partner, "метнёте");
   if (!target) return;
-  if (!(await _payThrowOrSwing(actor, "Метнуть"))) return;
 
   // Опора (стр. 28) — сравнение с СОБСТВЕННЫМ весом ТЕЛА бросающего
   // (bodyWeightOf), отдельная ось от тира выше (тот — про Ношение).
@@ -1007,13 +1006,16 @@ async function _doThrow(actor) {
       title: "Опора при Метании",
       content: `<p>${esc(partner.name)} весит сравнимо с вашим собственным телом (0.5-1.5×). Без надёжной опоры — риск сбития с ног.</p><p>Опора есть?</p>`
     });
+    if (hasFooting == null) return; // окно закрыто крестиком — отказ, а не «опоры нет»
     combinedTestRequired = !hasFooting;
   }
+  // Оплата — после всех отказов по Опоре: отказ не съедает Ход (приёмка #516).
+  if (!(await _payThrowOrSwing(actor, "Метнуть"))) return;
 
   let knockedDown = false, halved = false;
   if (combinedTestRequired) {
     const sTotal = actor.system.characteristics.s?.total ?? 0;
-    const aTotal = actor.system.characteristics.a?.total ?? 0;
+    const aTotal = actor.system.characteristics.ag?.total ?? 0;
     const sRoll = await new Roll("1d100").evaluate();
     const aRoll = await new Roll("1d100").evaluate();
     if (!(sRoll.total <= sTotal - 30 && aRoll.total <= aTotal - 30)) {
@@ -1310,5 +1312,6 @@ export function showGrappleDialog(actor) {
 // подвид урона в прямых попаданиях Борьбы, wdbc-9zpt): внутри системы их зовёт
 // лишь этот файл. showGrappleDialog, через который они идут в игре, заглушка
 // тестов не проходит (см. шапку test/combat/grapple.test.mjs). Тот же приём,
-// что у vehicle.mjs::_resolveRam.
-export { _resolveWrenchSuccess, _doBite, _doCrunch };
+// что у vehicle.mjs::_resolveRam. TARGET_TESTS — ради grapple-rules.test.mjs:
+// «Вырваться» настоящей записью, не подставным onSuccess (wdbc-t3c3t.15).
+export { _resolveWrenchSuccess, _doBite, _doCrunch, TARGET_TESTS };

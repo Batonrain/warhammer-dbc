@@ -34,7 +34,7 @@ import { getModEffects, mergeWeaponPropEntries, getInstalledMods } from "../comb
 import { hasRuleFlag }                        from "../rules/flags.mjs";
 import { isStunnedOrDazed }    from "../rules/predicates.mjs";
 import { suffersBlindness } from "../rules/blindness.mjs";
-import { shieldArmorByLocation } from "../combat/hand-shield.mjs";
+import { shieldRaisedToHead } from "../combat/hand-shield.mjs";
 import { isHallucinatingCannotAttack }         from "../combat/hallucinogenic.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
 import { mountPairFor, mountSelectiveMod, SELECTIVE_MODS,
@@ -695,9 +695,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // считается слепым с углов прикрытия щита» — упрощение: не различаем
   // «слеп только в направлении, что закрывает щит» (та же геометрия, которой
   // в системе нет, что у арки/«прижата к стене») — трактуем как обычное
-  // Ослепление ВСЕГДА, пока голова прикрыта (shieldArmorByLocation уже сама
-  // учитывает shieldRaised для частичных зон вроде «(Г)»).
-  const shieldBlindsSelf = (shieldArmorByLocation(actor).head || 0) > 0;
+  // Ослепление, пока щит поднят к голове (hand-shield.mjs::shieldRaisedToHead;
+  // пассивное покрытие головы вроде «Все» не слепит, wdbc-t3c3t.1).
+  const shieldBlindsSelf = shieldRaisedToHead(actor);
   // Sonar Sense / Unnatural Senses снимают «все штрафы Ослепления» — и от
   // Состояния, и от щита (wdbc-x1nz.2.89, rules/blindness.mjs).
   const isBlinded = suffersBlindness(actor, { extraBlind: shieldBlindsSelf });
@@ -942,7 +942,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
   // Ситуативные модификаторы вынесены в sheets/attack/mods.mjs (wdbc-uh56):
   // данные без вёрстки, шов замерен (12 внутрь, 4 наружу).
-  const { bandKey, charSwapWhy, charSwapWhyFel, charSwapWhyInt, commonMods, specificMods } = situationalMods({
+  const { bandKey, charSwapWhy, commonMods, specificMods } = situationalMods({
     actor,
     attackCtx,
     attackerToken,
@@ -1345,8 +1345,6 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     bandHtml,
     charKey,
     charSwapWhy,
-    charSwapWhyFel,
-    charSwapWhyInt,
     charVal,
     commonMods,
     distanceHintHtml,
