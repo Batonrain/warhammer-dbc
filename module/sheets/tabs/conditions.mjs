@@ -465,6 +465,11 @@ export function conditionRemoveFields(key) {
   const def    = CONDITIONS_DEF[key];
   const fields = { [`system.conditions.${key}`]: false };
   if (def?.hasLevel && def.levelField) fields[`system.conditions.${def.levelField}`] = 0;
+  // Шок (стр. 53): вместе с Состоянием уходит и выпавшая строка таблицы
+  // (rules/shock.mjs::SHOCK_FLAG), иначе снятый вручную и наложенный заново
+  // Шок унаследовал бы чужой штраф. Штраф «до конца сцены» — отдельный флаг,
+  // он выход из Шока переживает намеренно. Строкой, как burningDamageFormula.
+  if (key === "shocked") fields["flags.warhammer-dbc.-=shock"] = null;
   // Горение (wdbc-3pv5): снятие тушит и запомненные числа Cooler/Морозного
   // Сердца — иначе следующее загорание унаследовало бы чужие урон поджигания
   // и остаток окна от предыдущего пожара.

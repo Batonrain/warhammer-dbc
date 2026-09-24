@@ -207,6 +207,8 @@ export async function triggerNewScene() {
   await revertSunderingOnSceneEnd();
   // Убийца, Оружие Наследия (wdbc-t3c3t.4): Felling «до конца боя или сцены».
   await revertLegacyKillerOnSceneEnd();
+  // Страх (стр. 53): пройденные рейтинги и штраф Шока «до конца сцены».
+  await (await import("../combat/fear.mjs")).clearFearSceneState();
   // Божественная Защита: без сознания «до конца сцены или боя».
   await wakeDivineProtected(game.actors ?? []);
   await ChatMessage.create({
@@ -229,6 +231,8 @@ export async function triggerSessionEnd() {
   await revertSunderingOnSceneEnd();
   // Убийца, Оружие Наследия (wdbc-t3c3t.4): Felling «до конца боя или сцены».
   await revertLegacyKillerOnSceneEnd();
+  // Страх (стр. 53): пройденные рейтинги и штраф Шока «до конца сцены».
+  await (await import("../combat/fear.mjs")).clearFearSceneState();
   await endDivineProtection();
   await refillFatePools();
   await ChatMessage.create({

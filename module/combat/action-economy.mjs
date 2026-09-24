@@ -32,6 +32,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { determinationToFightApBonus } from "../rules/determination-to-fight.mjs";
 import { isStunnedOrDazed } from "../rules/predicates.mjs";
+import { shockApLocked, shockHalfAction } from "../rules/shock.mjs";
 import { turnStartFlagClears, turnStartAttackCarryOver, turnStartSqueezeCarryOver } from "../rules/turn-flags.mjs";
 import { rollLegacyChangeBonus, tickLegacyExcessBoost } from "../rules/legacy-weapon.mjs";
 
@@ -101,11 +102,16 @@ export async function resetActionEconomy(actor) {
   // Оглушения — не через isStunnedOrDazed, у Без сознания это СВОЙ пункт
   // книги, не производный от Беспомощности выше) — абсолютный запрет (0),
   // сильнее ограничения Подавленного ниже (min 1).
-  const apLocked       = isStunnedOrDazed(actor) || !!sys.conditions?.unconscious || surprised;
+  // Шок «Замер от ужаса» (стр. 53, строка 61–80): «не может совершать никаких
+  // действий, пока не оправится» — тот же абсолютный запрет.
+  const apLocked       = isStunnedOrDazed(actor) || !!sys.conditions?.unconscious || surprised
+                         || shockApLocked(actor);
   // Стр. 33: Подавленный персонаж в укрытии имеет только 1 ОД в свой Ход
   // («в укрытии» не проверяем — тот же приём, что у штрафа BS в диалоге
   // атаки: считаем по самому факту Подавления).
-  const apMaxBase      = apLocked ? 0 : sys.conditions?.pinned
+  // Шок «ошеломлён» (стр. 53, строка 1–20): «только одно Полудействие в свой
+  // следующий Ход» — то же ограничение в 1 ОД; флаг гасит реестр turn-flags.
+  const apMaxBase      = apLocked ? 0 : (sys.conditions?.pinned || shockHalfAction(actor))
     ? Math.min(1, effectiveActionPointsMax(actor))
     : effectiveActionPointsMax(actor);
   // Пожиратель Времени (wdbc-xzfp): «теряют полудействие» — долг, записанный
@@ -261,6 +267,7 @@ export function actionBlockReason(actor, { physical } = {}) {
   if (c.unconscious) return "Без сознания";
   if (c.stunned)     return "Оглушён";
   if (c.dazed)       return "в Ступоре";
+  if (shockApLocked(actor)) return "замер от ужаса (Шок)";
   if (c.helpless && physical !== false) return "Беспомощен (не может совершать Физические действия)";
   return "";
 }

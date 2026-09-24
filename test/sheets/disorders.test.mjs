@@ -53,7 +53,9 @@ describe("mental disorders", () => {
       "#fear-prop-demon": true
     }));
 
-    expect(captured.rolls).toEqual(["1d100", "1d100"]);
+    // Тест, бросок Шока (90 + 70 = 160 → «хнычет 1d5+1 Раундов») и срок этой
+    // Беспомощности — строка Шока применяется сама (rules/shock.mjs).
+    expect(captured.rolls).toEqual(["1d100", "1d100", "1d5+1"]);
     expect(captured.chat[0].content).toContain('title="Страх 3 | W: 40 (модификатор -25)"');
     expect(captured.chat[0].content).toContain("<label>Порог</label><b>15</b>");
     expect(captured.chat[0].content).toContain("Свойства: <b>Демон</b>");

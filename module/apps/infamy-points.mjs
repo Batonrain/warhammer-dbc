@@ -17,8 +17,9 @@ import { tempInfamyInfo, tempInfamyAmount, spendTempInfamy } from "../rules/temp
 /**
  * Текущие Очки Бесчестия актора — тот же путь, что и лист (actor-sheet.mjs
  * `_infamyPath`/demon-prince-sheet.mjs override), но по типу актора, а не по
- * классу листа: нужен местам, у которых листа нет (module/combat/fear.mjs —
- * тест Страха берёт свою Инфамию для автоуспеха, стр. 438).
+ * классу листа: нужен местам, у которых листа нет. Тест Страха его НЕ берёт:
+ * там нужна характеристика Inf (пороги 20+…80+), см. sheets/tabs/disorders.mjs
+ * ::fearDialogDefaults.
  */
 export function actorInfamyValue(actor) {
   const raw = actor?.type === "demonPrince"
