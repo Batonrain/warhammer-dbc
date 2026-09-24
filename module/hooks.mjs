@@ -7,7 +7,7 @@ import { performPoolSpend, clearEvasionPools } from "./combat/evasion-pool.mjs";
 import { showRecoilDialog, performRecoil, performPoolRecoil } from "./combat/recoil.mjs";
 import { rollOverpenetration } from "./combat/overpenetration.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
-import { _executeFearRoll, FAITH_FLAG, rollShockRecovery, postShockRecoveryPrompt } from "./combat/fear.mjs";
+import { _executeFearRoll, FAITH_FLAG, rollShockRecovery, postShockRecoveryPrompt, revertFearFailure, fearCardActor, rollHeartAttack } from "./combat/fear.mjs";
 import { isRuleUsageUsed, markRuleUsageUsed,
          isRoundCapabilityAvailable, markRoundCapabilityUsed } from "./apps/game-session.mjs";
 import { fatePoolLabel }                 from "./rules/fate-save.mjs";
@@ -943,11 +943,16 @@ export function registerHooks() {
         ev.preventDefault();
         const ctx = message.flags?.["warhammer-dbc"]?.fearTest;
         if (!ctx) return;
-        const actor = game.actors?.get(ctx.actorId);
+        const btnEl = ev.currentTarget;
+        const actor = await fearCardActor(ctx);
         if (!actor?.isOwner) {
           return ui.notifications.warn("Перебросить может только владелец персонажа (или ГМ).");
         }
-        ev.currentTarget.disabled = true;
+        btnEl.disabled = true;
+        // Переброс заменяет проваленный тест целиком — вместе с Шоком и
+        // потерей Командования, которые тот уже наложил. Новый провал наложит
+        // их заново.
+        await revertFearFailure(actor, ctx.failUndo);
         await _executeFearRoll(actor, ctx.ratingKey, ctx.type, ctx.infamy, ctx.mod, ctx.properties, { free: true });
       });
     });
@@ -956,6 +961,12 @@ export function registerHooks() {
     // поэтому прячем их на клиенте по фактическим правам на актора.
     html.querySelectorAll(".wh-owner-only[data-actor-id]").forEach(el => {
       if (!game.actors?.get(el.dataset.actorId)?.isOwner) el.style.display = "none";
+    });
+    // То же по uuid — несвязанный токен id своего актора в game.actors не имеет.
+    html.querySelectorAll(".wh-owner-only[data-actor-uuid]").forEach(el => {
+      let a = null;
+      try { a = fromUuidSync(el.dataset.actorUuid); } catch { a = null; }
+      if (!a?.isOwner) el.style.display = "none";
     });
 
     // «Абсолютная вера в прошлое» (Мир-кладбище): тратит Очко Судьбы/Бесчестья,
@@ -967,7 +978,8 @@ export function registerHooks() {
         ev.preventDefault();
         const ctx = message.flags?.["warhammer-dbc"]?.faithInThePast;
         if (!ctx) return;
-        const actor = game.actors?.get(ctx.actorId);
+        const btnEl = ev.currentTarget;
+        const actor = await fearCardActor(ctx);
         if (!actor?.isOwner) {
           return ui.notifications.warn("Использовать может только владелец персонажа (или ГМ).");
         }
@@ -976,7 +988,7 @@ export function registerHooks() {
         }
         const fate = Number(actor.system.fate?.value) || 0;
         if (fate <= 0 && tempInfamyAmount(actor) < 1) return ui.notifications.warn("Нет Очков Судьбы/Бесчестья.");
-        ev.currentTarget.disabled = true;
+        btnEl.disabled = true;
 
         // Трата помечена whSkipFateSave: иначе её перехватила бы «Пламенная
         // вера» (Мир-храм) и Очко могло бы «не потратиться». Здесь это
@@ -988,6 +1000,8 @@ export function registerHooks() {
           "system.corruption.value": (Number(actor.system.corruption?.value) || 0) + 1
         }, { whSkipFateSave: true });
         await markRuleUsageUsed(actor, FAITH_FLAG, "scene");
+        // Тест пройден — ни Шока, ни потери Командования от провала больше нет.
+        await revertFearFailure(actor, ctx.failUndo);
 
         // Не карточка теста (wdbc-kuun): броска и Порога здесь нет — Очко
         // засчитывает уже проваленный тест Страха как пройденный. Уведомление
@@ -1751,6 +1765,18 @@ export function registerHooks() {
         if (!actor) return ui.notifications.warn("⚠️ Шокированный персонаж не найден.");
         el.disabled = true;
         await rollShockRecovery(actor);
+      });
+    });
+    // Сердечный приступ (таблица Шока, 171+): тест T+0 или смерть.
+    html.querySelectorAll(".wh-shock-heart-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = el.dataset.actorUuid ? (await fromUuid(el.dataset.actorUuid).catch(() => null)) : null;
+        if (!actor) return ui.notifications.warn("⚠️ Персонаж не найден.");
+        if (!actor.isOwner) return ui.notifications.warn("Бросить может владелец персонажа (или ГМ).");
+        el.disabled = true;
+        await rollHeartAttack(actor);
       });
     });
     // «Командир дрогнул» (глава «Командование», wdbc-x1nz.2): Charm/Deceive(F)+0
@@ -3001,7 +3027,11 @@ function _attachFateContextMenu(message, html) {
         if (prevActor.system.conditions?.pinned) await postSuppressionRecoveryPrompt(prevActor);
         // «Укрепление Морали» (глава «Командование»): сбросить Шок можно и в
         // конце Хода, не только в начале.
-        if (prevActor.system.conditions?.shocked && commandMoraleOn(prevActor)) await postShockRecoveryPrompt(prevActor);
+        // Конец Хода ещё и закрывает «первый Ход Шока» (стр. 53) — поэтому
+        // зовётся всегда, а кнопку даёт только при Укреплении Морали.
+        if (prevActor.system.conditions?.shocked) {
+          await postShockRecoveryPrompt(prevActor, { at: "end", prompt: commandMoraleOn(prevActor) });
+        }
         // Финт (стр. 31, wdbc-x1nz.2.65): «до конца ЕГО Хода» — снимается
         // здесь, на конце Хода атаковавшего, не цели.
         await clearFeintAtTurnEnd(prevActor);

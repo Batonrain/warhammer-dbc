@@ -181,6 +181,24 @@ describe("resetActionEconomy", () => {
     expect(actor.system.actionPoints.value).toBe(0);
   });
 
+  // Шок (стр. 53): «замер от ужаса» (61–80) — 0 ОД и 0 Реакций, пока в Шоке;
+  // «ошеломлён» (1–20) — в следующий Ход одно Полудействие, флаг гаснет.
+  it("Шок «замер» — 0 ОД и 0 Реакций", async () => {
+    const actor = actorFor({ actionPoints: { value: 0, max: 2 }, conditions: { shocked: true } });
+    await actor.setFlag("warhammer-dbc", "shock", { apLock: true });
+    await resetActionEconomy(actor);
+    expect(actor.system.actionPoints.value).toBe(0);
+    expect(actor.system.reactions.value).toBe(0);
+  });
+
+  it("Шок «ошеломлён» — 1 ОД в этот Ход, флаг снят", async () => {
+    const actor = actorFor({ actionPoints: { value: 0, max: 2 } });
+    await actor.setFlag("warhammer-dbc", "shockHalfAction", true);
+    await resetActionEconomy(actor);
+    expect(actor.system.actionPoints.value).toBe(1);
+    expect(actor.getFlag("warhammer-dbc", "shockHalfAction")).toBeUndefined();
+  });
+
   it("Без сознания и Подавлен разом — Без сознания побеждает (0, не 1)", async () => {
     const actor = actorFor({ actionPoints: { value: 0, max: 2 }, conditions: { unconscious: true, pinned: true } });
     await resetActionEconomy(actor);

@@ -21,7 +21,10 @@ function makeActor({ fatigue = 0, wp = 40 } = {}) {
       fate: { value: 0 }
     },
     getFlag: () => undefined,
-    update: async () => {}
+    update: async () => {},
+    // Шок со сроком (Без сознания/Беспомощен) заводит ActiveEffect.
+    effects: [],
+    createEmbeddedDocuments: async () => []
   };
 }
 
@@ -158,5 +161,69 @@ describe("_executeFearRoll: общая возможность fear.immune (wdbc-
     captured.nextRoll = 99;
     await _executeFearRoll(makeActor({ fatigue: 0, wp: 40 }), 3, "important", 0, 0);
     expect(captured.chat.at(-1).content).not.toContain("выстоял");
+  });
+});
+
+// Стр. 53: правила автоуспеха и памяти сцены из главы «Страх».
+function makeFlagActor({ wp = 40, fearRating = 0, faced = 0 } = {}) {
+  const flags = faced ? { fearFacedRating: faced } : {};
+  return {
+    ...makeActor({ wp }),
+    system: { ...makeActor({ wp }).system, fearRating },
+    getFlag: (_s, k) => flags[k],
+    setFlag: async (_s, k, v) => { flags[k] = v; },
+    flags
+  };
+}
+
+describe("_executeFearRoll: собственный Страх и Infamy (стр. 53)", () => {
+  it("свой Страх 2 против Страха 2 — Важный проходит автоматически", async () => {
+    captured.nextRoll = 99;
+    await _executeFearRoll(makeFlagActor({ fearRating: 2 }), 2, "important", 0, 0);
+    expect(captured.chat.at(-1).content).toContain("выстоял");
+  });
+
+  it("свой Страх 1 против Страха 2 — тест как обычно", async () => {
+    captured.nextRoll = 99;
+    await _executeFearRoll(makeFlagActor({ fearRating: 1 }), 2, "important", 0, 0);
+    expect(captured.chat.at(-1).content).not.toContain("выстоял");
+  });
+
+  it("Обычный персонаж с Infamy 20 против Страха 1 — автоуспеха нет", async () => {
+    captured.nextRoll = 99;
+    await _executeFearRoll(makeFlagActor(), 1, "normal", 20, 0);
+    expect(captured.chat.at(-1).content).not.toContain("выстоял");
+  });
+
+  it("Обычный персонаж не вычитает Infamy из броска Шока", async () => {
+    captured.nextRoll = 99;
+    await _executeFearRoll(makeFlagActor(), 1, "normal", 15, 0);
+    expect(captured.chat.at(-1).content).not.toContain("−15");
+  });
+});
+
+describe("_executeFearRoll: один тест против источника до конца сцены (стр. 53)", () => {
+  it("после теста против Страха 2 тот же рейтинг и ниже не тестируются", async () => {
+    const actor = makeFlagActor();
+    captured.nextRoll = 99;
+    await _executeFearRoll(actor, 2, "important", 0, 0);
+    expect(actor.flags.fearFacedRating).toBe(2);
+    await _executeFearRoll(actor, 1, "important", 0, 0);
+    expect(captured.chat.at(-1).content).toContain("Не требуется");
+  });
+
+  it("более сильный источник — новый тест", async () => {
+    const actor = makeFlagActor({ faced: 2 });
+    captured.nextRoll = 99;
+    await _executeFearRoll(actor, 3, "important", 0, 0);
+    expect(captured.chat.at(-1).content).not.toContain("Не требуется");
+    expect(actor.flags.fearFacedRating).toBe(3);
+  });
+
+  it("бесплатный переброс Демона — не новая встреча, не отсекается", async () => {
+    const actor = makeFlagActor({ faced: 2 });
+    captured.nextRoll = 99;
+    await _executeFearRoll(actor, 2, "important", 0, 0, { demon: true }, { free: true });
+    expect(captured.chat.at(-1).content).not.toContain("Не требуется");
   });
 });

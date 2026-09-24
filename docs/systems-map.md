@@ -759,6 +759,16 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `module/apps/token-conditions.mjs` — синхронизация с Token HUD.
 - `module/sheets/tabs/conditions.mjs` — вкладка Состояния/Усталость.
 - `module/constants/fear-tables.mjs` — Страх/Шок/Ментальная Травма/Расстройства.
+  Строки Шока несут `effect` — что строка делает сама.
+- Страх и Шок (стр. 53): `combat/fear.mjs` — тест Страха (автоуспех по Inf/
+  своему Страху только у Важных; «один тест против рейтинга до конца сцены» —
+  флаг `fearFacedRating`, сброс «Новой сценой»), `applyShockRow`/`revertShock`
+  (строка Шока и её откат при перебросе Демона/«Вере в прошлое»), первый Ход
+  Шока, сердечный приступ. `rules/shock.mjs` — чтение: штраф в
+  `rules/situational.mjs`, запрет действовать и 1 ОД в `combat/action-
+  economy.mjs`. Машины без воли — возможность `fear.machineMind` (Int вместо
+  W; стоит на Черте Сервочереп). Диалог подставляет Inf, рейтинг и «Демон» с
+  выделенного источника (`sheets/tabs/disorders.mjs::fearDialogDefaults`).
 - Здравомыслие пилота Дредноута: `rules/dreadnought.mjs`, `sheets/tabs/
   dreadnought-panel.mjs`.
 - Расстройства/Травмы: `data/item/mental-disorder.mjs`, `mental-trauma.mjs`,
@@ -1105,7 +1115,9 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   Короткие — наибольшая, Воля Командира, Храбрость-переброс, Прикрытие,
   ½ P.b командиров, F.b×2 подчинённых) + `combat/command-state.mjs`
   (источник правил «command», срок до Хода отдающего, конец боя, провал
-  Морали → флаг commandLost / снятие Команд Командира + «Скрыть трусость»,
+  Морали → флаг commandLost / снятие Команд Командира + «Скрыть трусость»;
+  `handleMoraleFailure` возвращает откат — `revertMoraleFailure` при
+  отменённом провале Страха (переброс Демона, «Вера в прошлое»),
   «Храбрость» снимает Подавление/Шок, «Особая Тактика» — временный Талант).
   Отряд: Подвиг и Ход по Брифингу — `sheets/squad-sheet.mjs`.
   Там же в command-state: Синхронный Натиск (кнопка Давления после

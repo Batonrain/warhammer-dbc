@@ -7490,6 +7490,17 @@ export const CAPABILITIES = {
     reader: "module/combat/fear.mjs — _executeFearRoll (autoPass, FEAR_IMMUNE_FLAG)"
   },
 
+  // ── Страх и Машины (стр. 53) ─────────────────────────────────────────────
+  // «Машины без свободы воли (Сервиторы, Сервочерепа) для механик Страха и
+  // Шока бросают на I вместо W». Не Черта Machine: Техножрец с ней мыслит
+  // как человек. Поэтому своё имя, которое ставится тем, кто действует по
+  // программе, — Черте Сервочереп, будущему Сервитору, NPC вручную.
+  "fear.machineMind": {
+    label: "Машина без свободы воли: тесты Страха и выхода из Шока — на Int вместо W",
+    source: "Черта: Servoskull / Сервочереп (Основная книга, «Страх и Машины», стр. 53)",
+    reader: "module/combat/fear.mjs — fearChar (_executeFearRoll, rollShockRecovery, postShockRecoveryPrompt) + sheets/tabs/disorders.mjs::openFearDialog"
+  },
+
   // ── Опознание способности на акторе (wdbc-iadw) ─────────────────────────
   // Полсотни Талантов, Черт и Мутаций опознавались в коде по литеральному
   // имени: itemHasName(i, "Bone Song"). Переименование предмета в компендиуме

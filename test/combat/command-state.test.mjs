@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import "../support/foundry-stub.mjs";
 import { resetCaptured, captured } from "../support/foundry-stub.mjs";
-import { commandNodesFor, expireCommandsAtTurnStart, handleMoraleFailure,
+import { commandNodesFor, expireCommandsAtTurnStart, handleMoraleFailure, revertMoraleFailure,
          clearCommandsOnCombatEnd, COMMAND_LOST_FLAG } from "../../module/combat/command-state.mjs";
 import { resolveTest } from "../../module/rules/resolve-test.mjs";
 
@@ -22,7 +22,11 @@ function doc(uuid, type, system, extra = {}) {
     async update(u) {
       this.updates.push(u);
       for (const [path, v] of Object.entries(u)) {
-        if (path.startsWith("flags.warhammer-dbc.")) { flags[path.split(".").pop()] = v; continue; }
+        if (path.startsWith("flags.warhammer-dbc.")) {
+          const k = path.split(".").pop();
+          if (k.startsWith("-=")) delete flags[k.slice(2)]; else flags[k] = v;
+          continue;
+        }
         const keys = path.replace(/^system\./, "").split(".");
         let n = this.system;
         while (keys.length > 1) n = (n[keys[0]] ??= {}, n[keys.shift()]);
@@ -131,6 +135,45 @@ describe("провал Морали", () => {
     squad.system.posts = { coordinator: { uuid: "Actor.c" } };
     await handleMoraleFailure(sarge);
     expect(squad.system.shortCommand.active).toBe(true);
+  });
+});
+
+// Провал, который потом отменили (переброс Демона / «Вера в прошлое» у теста
+// Страха), не должен оставлять потерянное Командование.
+describe("отмена провала Морали", () => {
+  it("подчинённый: метка снята, Команда снова доходит до броска", async () => {
+    const undo = await handleMoraleFailure(soldier);
+    await revertMoraleFailure(undo);
+    expect(soldier.getFlag("warhammer-dbc", COMMAND_LOST_FLAG)).toBeUndefined();
+    const { autoMods } = resolveTest({ actor: soldier, kind: "attack", isMelee: false });
+    expect(autoMods.some(m => m.ruleId === "command.short")).toBe(true);
+  });
+
+  it("подчинённый: прежняя метка (более ранний провал) остаётся", async () => {
+    await soldier.setFlag("warhammer-dbc", COMMAND_LOST_FLAG, { combatId: "cb", round: 0 });
+    const undo = await handleMoraleFailure(soldier);
+    await revertMoraleFailure(undo);
+    expect(soldier.getFlag("warhammer-dbc", COMMAND_LOST_FLAG)).toEqual({ combatId: "cb", round: 0 });
+  });
+
+  it("Командир: Команды возвращены, карточка «Командир дрогнул» убрана", async () => {
+    let deleted = false;
+    globalThis.ChatMessage.create = async m => { captured.chat.push(m); return { id: "msg1" }; };
+    const realMessages = game.messages;
+    game.messages = { get: id => id === "msg1" ? { isOwner: true, delete: async () => { deleted = true; } } : null };
+    try {
+      const undo = await handleMoraleFailure(sarge);
+      expect(squad.system.shortCommand.active).toBe(false);
+      await revertMoraleFailure(undo);
+      expect(squad.system.presence.active).toBe(true);
+      expect(squad.system.shortCommand).toMatchObject({ active: true, successes: 3 });
+      expect(deleted).toBe(true);
+    } finally { game.messages = realMessages; }
+  });
+
+  it("терять было нечего — отката нет", async () => {
+    const loner = doc("Actor.x", "character", { conditions: {} });
+    expect(await handleMoraleFailure(loner)).toBeNull();
   });
 });
 

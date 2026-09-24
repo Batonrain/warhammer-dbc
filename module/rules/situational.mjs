@@ -56,6 +56,7 @@
 //     разбрасывается.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { shockPenalty, shockFleeing } from "./shock.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
 import { fatigueGraceForActor } from "./fatigue-grace.mjs";
@@ -259,6 +260,14 @@ export function situationalRules(actor, ctx = {}) {
       springingStrengthPenalty(actor, charKey));
   add("situational.grappleSqueeze", "🤼 Сжат в Захвате",
       grappleSqueezePenalty(actor, ctx, skillKey));
+  // Шок (стр. 53, rules/shock.mjs): штраф выпавшей строки таблицы.
+  add("situational.shock", "😨 Шок", shockPenalty(actor, charKey));
+  // «Бежит в панике; если пути к побегу нет — −20» (строка 81–100): есть ли
+  // путь, видно только за столом, поэтому это галочка, а не автоштраф.
+  if (shockFleeing(actor) && String(charKey ?? "").toLowerCase() !== "t") {
+    rules.push({ id: "situational.shockNoEscape", label: "😨 Шок: нет пути к побегу", when: {},
+      effects: [{ kind: "rollBonus", target: "all", value: -20, label: "😨 Шок: нет пути к побегу" }] });
+  }
 
   return rules;
 }

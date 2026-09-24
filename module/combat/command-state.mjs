@@ -345,11 +345,18 @@ const anyActive = c => !!(c?.presence?.active || c?.shortCommand?.active || c?.d
  * этот и следующий Раунд; Командир/Лидер — теряет все отданные Команды у
  * всех своих подчинённых (Координатор — нет). Карточка с кнопкой «Скрыть
  * трусость» хранит снимок отданного, чтобы вернуть его при успехе.
+ *
+ * Возвращает «откат» (revertMoraleFailure): провал, который потом отменили
+ * (бесплатный переброс Демона, «Вера в прошлое» у теста Страха), не должен
+ * оставлять после себя потерянное Командование. null — терять было нечего.
  */
 export async function handleMoraleFailure(actor) {
-  if (!actor || typeof game === "undefined") return;
+  if (!actor || typeof game === "undefined") return null;
+  const undo = { actorUuid: actor.uuid, lostSet: false, prevLost: null, entries: [], messageId: "" };
   if (commandNodesFor(actor).length) {
     const combat = game.combat;
+    undo.lostSet = true;
+    undo.prevLost = actor.getFlag?.(NS, COMMAND_LOST_FLAG) ?? null;
     await updateOrRelay(actor, { [`flags.${NS}.${COMMAND_LOST_FLAG}`]: { combatId: combat?.id ?? "", round: Number(combat?.round) || 0 } });
   }
 
@@ -367,9 +374,10 @@ export async function handleMoraleFailure(actor) {
     await removeTacticGrants(actor.uuid);
     await updateOrRelay(actor, { "system.command.presence.active": false, ...OFF_SHORT("system.command."), ...OFF_DETAIL("system.command.") });
   }
-  if (!snapshot.length) return;
+  undo.entries = snapshot;
+  if (!snapshot.length) return undo.lostSet ? undo : null;
 
-  await ChatMessage.create({
+  const msg = await ChatMessage.create({
     speaker: ChatMessage.getSpeaker({ actor }),
     flags: { [NS]: { commandSnapshot: { actorUuid: actor.uuid, entries: snapshot } } },
     content: `<div class="wh-roll-result sq-chat">
@@ -381,6 +389,41 @@ export async function handleMoraleFailure(actor) {
         <button type="button" class="wh-cmd-conceal" data-skill="deceive">Deceive(F)+0</button>
       </div></div>`
   });
+  undo.messageId = msg?.id ?? "";
+  return undo;
+}
+
+/**
+ * Вернуть отданное по снимку. Талант «Особой Тактики» провал снимал вместе с
+ * Командой (removeTacticGrants) — возвращённая Детальная Команда выдаёт его
+ * заново, иначе Команда числилась бы, а Таланта у подчинённых не было.
+ */
+async function restoreCommandSnapshot(entries) {
+  for (const e of entries ?? []) {
+    const doc = resolve(e.uuid);
+    if (!doc) continue;
+    const flat = foundry.utils.flattenObject({ presence: e.data.presence, shortCommand: e.data.shortCommand, detailCommand: e.data.detailCommand });
+    const upd = Object.fromEntries(Object.entries(flat).map(([k, v]) => [`${e.prefix}${k}`, v]));
+    await updateOrRelay(doc, upd);
+    const tactic = e.data.detailCommand?.active ? e.data.detailCommand?.tactic : "";
+    if (tactic) await grantTacticTalent(doc, tactic);
+  }
+}
+
+/** Отменить последствия провала Морали, записанные handleMoraleFailure. */
+export async function revertMoraleFailure(undo) {
+  if (!undo || typeof game === "undefined") return;
+  const actor = resolve(undo.actorUuid);
+  if (actor && undo.lostSet) {
+    await updateOrRelay(actor, undo.prevLost
+      ? { [`flags.${NS}.${COMMAND_LOST_FLAG}`]: undo.prevLost }
+      : { [`flags.${NS}.-=${COMMAND_LOST_FLAG}`]: null });
+  }
+  await restoreCommandSnapshot(undo.entries);
+  // Карточка «Командир дрогнул» больше неправда — её кнопка «Скрыть
+  // трусость» вернула бы Команды второй раз.
+  const msg = undo.messageId ? game.messages?.get(undo.messageId) : null;
+  if (msg?.isOwner) await msg.delete();
 }
 
 /** Кнопка «Скрыть трусость»: тест Charm/Deceive(F)+0, успех возвращает Команды. */
@@ -396,14 +439,7 @@ export async function concealCowardice(message, skill) {
   const threshold = base + mods.total;
   const roll = await new Roll("1d100").evaluate();
   const ok = roll.total <= threshold;
-  if (ok) {
-    for (const e of snap.entries ?? []) {
-      const doc = resolve(e.uuid);
-      const flat = foundry.utils.flattenObject({ presence: e.data.presence, shortCommand: e.data.shortCommand, detailCommand: e.data.detailCommand });
-      const upd = Object.fromEntries(Object.entries(flat).map(([k, v]) => [`${e.prefix}${k}`, v]));
-      await updateOrRelay(doc, upd);
-    }
-  }
+  if (ok) await restoreCommandSnapshot(snap.entries);
   if (message.isOwner) await message.setFlag(NS, "commandSnapshot", { ...snap, used: true });
   const label = skill === "charm" ? "Charm" : "Deceive";
   await ChatMessage.create({
