@@ -60,13 +60,21 @@ export async function _showContestDialog(actor, techDef) {
   const charEntries = techDef.allowedChars
     ? Object.entries(CHARACTERISTICS).filter(([key]) => techDef.allowedChars.includes(key))
     : Object.entries(CHARACTERISTICS);
+  // Отвлекающее, Оружие Наследия (стр. 427-428): «При Финте — тест на
+  // Charm(Fel) или Int вместо WS». Список и так полный — подпись лишь
+  // отличает разрешённую книгой подмену от самоуправства; живёт здесь, в
+  // окне Финта, а не в окне обычной атаки (wdbc-t3c3t.3).
+  const feintSwapWhy = techDef.label === "Финт"
+    ? { fel: ruleFlagLabels(actor, "charSwap.fel.forWs"), int: ruleFlagLabels(actor, "charSwap.int.forWs") }
+    : {};
   const charOptions = charEntries.map(([key, meta]) => {
     let val = sideValue(actor, sideFor(key));
     if (key === "ws" && stanceWsBonus) val += stanceWsBonus;
     val += extraBonus;
     const label = techDef.charLabels?.[key] ?? `${meta.abbr} — ${meta.label}`;
+    const swap = feintSwapWhy[key]?.length ? ` — вместо WS: ${esc(feintSwapWhy[key].join(", "))}` : "";
     return `<option value="${key}" ${key === defaultChar ? "selected" : ""}>
-      ${label} (${val})
+      ${label} (${val})${swap}
     </option>`;
   }).join("");
 
