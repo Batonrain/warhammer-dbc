@@ -48,6 +48,41 @@ const resolve = uuid => {
   try { const d = fromUuidSync(uuid); return d?.actor ?? d ?? null; } catch { return null; }
 };
 
+/**
+ * Все uuid, под которыми этот боец может встретиться в списках (Отряд, «Под
+ * моим Присутствием», пост, отметка «кто отдал»). Токены персонажей по
+ * умолчанию НЕсвязанные (actorLink:false): бросок идёт от актора токена
+ * (Scene.x.Token.y.Actor.z), а в список могли положить мирового актора с
+ * боковой панели — и наоборот. Без этого бонусы не доходили, а Команда не
+ * гасла на Ходу командира (найдено живой проверкой).
+ */
+export function actorIdentityUuids(actor) {
+  const ids = new Set();
+  if (!actor) return ids;
+  if (actor.uuid) ids.add(actor.uuid);
+  if (actor.isToken) {
+    const base = actor.token?.baseActor ?? game.actors?.get?.(actor.id);
+    if (base?.uuid) ids.add(base.uuid);
+  }
+  for (const t of actor.getActiveTokens?.() ?? []) if (t.actor?.uuid) ids.add(t.actor.uuid);
+  return ids;
+}
+
+const sameActor = (actor, uuid) => !!uuid && actorIdentityUuids(actor).has(uuid);
+
+/**
+ * Живые документы записи списка: мировой актор НЕсвязанного токена
+ * раскрывается в акторов его токенов на сцене — Состояния (Подавление, Шок)
+ * и выданные Таланты живут там, а не на мировом.
+ */
+function liveDocsOf(uuid) {
+  const doc = resolve(uuid);
+  if (!doc) return [];
+  if (doc.isToken || doc.prototypeToken?.actorLink !== false) return [doc];
+  const tokenActors = (doc.getActiveTokens?.() ?? []).map(t => t.actor).filter(Boolean);
+  return tokenActors.length ? tokenActors : [doc];
+}
+
 /** Отметка «когда отдано» — по ней Команда истекает на следующем Ходу отдающего. */
 export function issueStamp(giverUuid = "") {
   const combat = game.combat;
@@ -82,7 +117,7 @@ export function commandNodesFor(actor) {
   for (const squad of game.actors ?? []) {
     if (squad.type !== "squad") continue;
     const members = Array.isArray(squad.system?.members) ? squad.system.members : [];
-    const idx = members.findIndex(m => m.uuid === actor.uuid);
+    const idx = members.findIndex(m => sameActor(actor, m.uuid));
     if (idx < 0) continue;
     const { active, willOf } = squadGiver(squad);
     const cap = active ? (Number(active.system?.characteristics?.fel?.bonus) || 0) * 2 : Infinity;
@@ -100,7 +135,7 @@ export function commandNodesFor(actor) {
   const by = actor.getFlag?.(NS, "commandedBy");
   const boss = by?.uuid ? resolve(by.uuid) : null;
   const followers = Array.isArray(boss?.system?.followers) ? boss.system.followers : [];
-  const fIdx = followers.findIndex(f => f.uuid === actor.uuid);
+  const fIdx = followers.findIndex(f => sameActor(actor, f.uuid));
   if (boss && fIdx >= 0) {
     const cmd = boss.system.command ?? {};
     // Дрессировка: «максимум подчинённых животных — P.b» вместо F.b×2.
@@ -179,7 +214,7 @@ export async function expireCommandsAtTurnStart(combat) {
   for (const squad of game.actors ?? []) {
     if (squad.type !== "squad") continue;
     const s = squad.system.shortCommand, d = squad.system.detailCommand;
-    const mine = cmd => giver && cmd?.giverUuid === giver.uuid;
+    const mine = cmd => giver && sameActor(giver, cmd?.giverUuid);
     const brief = cmd => cmd?.giverUuid === "briefing";
     const upd = {};
     if (staleIn(s, combat) && (mine(s) || brief(s))) Object.assign(upd, OFF_SHORT("system."));
@@ -232,7 +267,7 @@ export function subordinatesOf(source, { moraleOnly = false } = {}) {
   const list = source?.type === "squad"
     ? (source.system.members || []).map(m => ({ uuid: m.uuid, moraleLost: !!m.moraleLost }))
     : (source?.system?.followers || []).map(f => ({ uuid: f.uuid, moraleLost: false }));
-  return list.map(e => ({ e, doc: resolve(e.uuid) })).filter(({ e, doc }) => {
+  return list.flatMap(e => liveDocsOf(e.uuid).map(doc => ({ e, doc }))).filter(({ e, doc }) => {
     if (!doc) return false;
     const reach = commandReachFor(doc.type, "", doc, { moraleLost: e.moraleLost || commandLostActive(doc) });
     if (reach.commands) return true;
@@ -284,8 +319,7 @@ export async function removeTacticGrants(sourceUuid) {
   const list = source?.type === "squad"
     ? (source.system.members || []).map(m => m.uuid)
     : (source?.system?.followers || []).map(f => f.uuid);
-  for (const uuid of list) {
-    const doc = resolve(uuid);
+  for (const doc of list.flatMap(liveDocsOf)) {
     const ids = (doc?.items ?? []).filter(i => i.flags?.[NS]?.[TACTIC_FLAG]?.source === sourceUuid).map(i => i.id);
     if (ids.length && doc.isOwner) await doc.deleteEmbeddedDocuments("Item", ids);
   }
@@ -298,9 +332,9 @@ function squadsCommandedBy(actor) {
   return (game.actors ?? []).filter(sq => {
     if (sq.type !== "squad") return false;
     const p = sq.system.posts || {};
-    if (p.commander?.uuid === actor.uuid) return true;
+    if (sameActor(actor, p.commander?.uuid)) return true;
     // Лидер: сам командует без Командира или делегировал ему авторитет.
-    return p.leader?.uuid === actor.uuid && (!p.commander?.uuid || sq.system.delegated);
+    return sameActor(actor, p.leader?.uuid) && (!p.commander?.uuid || sq.system.delegated);
   });
 }
 
@@ -394,7 +428,8 @@ export function commandEffectOn(actor, key) {
 function nodeMatesOf(actor, node) {
   if (!node?.sourceUuid) return [];
   const source = resolve(node.sourceUuid);
-  return subordinatesOf(source).filter(d => d.uuid !== actor.uuid);
+  const me = actorIdentityUuids(actor);
+  return subordinatesOf(source).filter(d => !me.has(d.uuid));
 }
 
 const tokenOf = actor => actor?.getActiveTokens?.(false)?.[0]?.document ?? actor?.token ?? null;
@@ -539,8 +574,8 @@ export async function declareFocusFire() {
 export async function offerMindControlTests(controlled) {
   if (typeof game === "undefined" || !controlled) return;
   const squads = (game.actors ?? []).filter(sq => sq.type === "squad" && (
-    (sq.system.members || []).some(m => m.uuid === controlled.uuid)
-    || Object.values(sq.system.posts || {}).some(p => p?.uuid === controlled.uuid)));
+    (sq.system.members || []).some(m => sameActor(controlled, m.uuid))
+    || Object.values(sq.system.posts || {}).some(p => sameActor(controlled, p?.uuid))));
   for (const sq of squads) {
     const p = sq.system.posts || {};
     const uuids = [...new Set([controlled.uuid, p.leader?.uuid, p.commander?.uuid, p.coordinator?.uuid,
