@@ -132,7 +132,7 @@ import { showHealingDialog } from "./sheets/tabs/healing.mjs";
 import { rollInfoguard } from "./apps/infoguard.mjs";
 import { CHARACTERISTICS } from "./constants/characteristics.mjs";
 import { SKILLS_DEF } from "./constants/skills.mjs";
-import { performUnarmedRiposte } from "./combat/unarmed-combat.mjs";
+import { performUnarmedRiposte, UNARMED_RIPOSTE_USED_FLAG } from "./combat/unarmed-combat.mjs";
 import { resolveResistClick } from "./combat/opposed-contest.mjs";
 import { maybeAutoReleaseGrapple, grappleReleaseTriggered } from "./combat/grapple.mjs";
 import { weaponProfiles } from "./combat/weapon-profiles.mjs";
@@ -734,7 +734,10 @@ export function registerHooks() {
     // Ответный удар по безоружной атаке (core.json, «Безоружный Бой»,
     // wdbc-x1nz.2.69): 2 Успеха Парирования → урон своего оружия с S.b
     // атакующего в его атакующую конечность. Бьёт тот, кто парировал.
+    // Владелец и однократность — в самой performUnarmedRiposte (флаг на
+    // карточке, wdbc-t3c3t.8); здесь кнопка лишь гаснет у всех после удара.
     html.querySelectorAll(".wh-unarmed-riposte-btn").forEach(btn => {
+      if (message?.getFlag("warhammer-dbc", UNARMED_RIPOSTE_USED_FLAG)) btn.disabled = true;
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
         const el = ev.currentTarget;
@@ -746,7 +749,7 @@ export function registerHooks() {
         await performUnarmedRiposte(actor, {
           weaponId: ds.weaponId, improvised: ds.improvised === "1",
           attackerUuid: ds.attackerUuid || "", attackerWeaponUuid: ds.attackerWeaponUuid || "",
-          banked: ds.banked === "1"
+          banked: ds.banked === "1", message
         });
       });
     });
