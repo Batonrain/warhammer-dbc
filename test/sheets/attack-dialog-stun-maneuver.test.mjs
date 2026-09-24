@@ -86,3 +86,27 @@ describe("Приём Оглушить: свойства в реальном бр
     expect(primitiveAttr()).toBe("1");
   });
 });
+
+describe("Приём Оглушить: штраф −20 один раз (приёмка #516)", () => {
+  function thresholdInCard() {
+    const m = (captured.chat.at(-1)?.content ?? "").match(/<label>Порог<\/label><b>(-?\d+)<\/b>/);
+    return m ? Number(m[1]) : null;
+  }
+  async function thresholdFor(fields) {
+    resetCaptured();
+    const mace = weaponFor({ weaponClass: "melee" }, { name: "Булава" });
+    captured.dice = [99, 0];
+    const p = showAttackDialog(attacker({ items: [mace] }), mace);
+    await pressRoll(p, { "#atk-char": "ws", ...fields });
+    return thresholdInCard();
+  }
+
+  it("Оглушить (прицел в голову форсирован) = обычная атака −20, а не −40", async () => {
+    const plain = await thresholdFor({});
+    // В живом окне выбрана «Голова» с её data-penalty −20 — как её отдал бы select.
+    const stun = await thresholdFor({ "input[name='atk-maneuver']:checked": "stun", "#atk-aim": "head",
+      "#atk-aim option:checked": { dataset: { penalty: "-20" } } });
+    expect(plain).not.toBeNull();
+    expect(stun).toBe(plain - 20);
+  });
+});

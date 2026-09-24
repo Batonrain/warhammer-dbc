@@ -75,6 +75,10 @@ async function gangreneClock(actor, { from, to }) {
     testAt = from;
     await actor.update({ [`flags.${NS}.gangreneTestAt`]: from });
   }
+  // Метка старше отрезка больше чем на интервал — осталась от ручной кнопки до
+  // появления часов (приёмка #516): догонять пропущенное не берёмся, иначе
+  // первый же тик Календаря выдал бы разом 1d10×N и убил. Отсчёт — с отрезка.
+  if (testAt + gangreneIntervalSeconds(actor.system?.characteristics?.t?.bonus) < from) testAt = from;
   for (let i = 0; i < MAX_TICKS; i++) {
     if (!actor.system?.conditions?.gangrene || actor.getFlag?.(NS, "deceased")) return;
     const due = testAt + gangreneIntervalSeconds(actor.system?.characteristics?.t?.bonus);

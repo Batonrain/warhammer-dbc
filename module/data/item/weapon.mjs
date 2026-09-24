@@ -212,4 +212,17 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
       wraithboneImmune: new BooleanField({ initial: false, label: "Иммунно к Reformation Song" })
     };
   }
+
+  /**
+   * Подтип Меча из имени, если не проставлен руками (приёмка #516): в паках
+   * meleeSubtype пуст у всех Сабель/Рапир, поля на листе нет — без этого
+   * правила Рапиры/Сабли не включались никогда. Производное, в базу не пишется.
+   * @override
+   */
+  prepareBaseData() {
+    if (this.meleeSubtype || this.meleeCategory !== "Меч") return;
+    const name = this.parent?.name ?? "";
+    if (/Сабля/i.test(name)) this.meleeSubtype = "Сабля";
+    else if (/Рапира/i.test(name)) this.meleeSubtype = "Рапира";
+  }
 }

@@ -112,6 +112,20 @@ export async function rollExtremeDamage(dmgRoll, { wp, damageType, hitLocation =
   if (hasExtreme && attacker && !minionCanCauseExtremeDamage(attacker)) hasExtreme = false;
   let extremeLevel = 0, critEffect = null, exRoll = null;
   if (hasExtreme) {
+    // Трата Очка — в момент Экстремального Урона, а не при нажатии «Бросок»
+    // (приёмка #516: промах или удар без Экстремального сжигал Очко впустую).
+    // Одна на всю атаку — см. комментарий у legacyCleavingRollRequested.
+    if (wp.legacyCleavingRollRequested && !wp.legacyCleavingRollSpent) {
+      wp.legacyCleavingRollSpent = true;
+      if (attacker && actorInfamyValue(attacker) >= 1) {
+        const path = actorInfamyPath(attacker);
+        const spend = await spendFromInfamyPool(attacker, 1, path);
+        await attacker.update({ [path]: spend.poolValue });
+        wp.legacyCleavingRollActive = true;
+      } else {
+        ui.notifications?.warn("Кромсающее: нет Очков Бесчестия — обычный бросок 1d5+1.");
+      }
+    }
     // Кромсающее, второе предложение (wdbc-1rno.35, стр. 427): «...может
     // потратить Очко Бесчестия, чтобы бросить ВМЕСТО ЭТОГО 1d10−2(мин.1)» —
     // замена всего обычного «1d5+1» целиком, включая extremeLevelBonus,
@@ -312,21 +326,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Второе предложение («может потратить Очко Бесчестия, чтобы бросить
   // 1d10−2 (мин.1) вместо») — галочка attack-dialog.mjs (видна только при
   // наличии Мутации и ≥1 Очка Бесчестия), opts.legacyCleavingRoll долетает
-  // сюда тем же приёмом, что confinedSpace. Трата — ниже, ОДНА на всю атаку
+  // сюда тем же приёмом, что confinedSpace. Трата — в rollExtremeDamage, ОДНА на всю атаку
   // (не за каждое попадание Очереди с Экстремальным Уроном по отдельности:
   // книга не разбирает многократное срабатывание, субъективное упрощение).
   if (takenMutationNames(item).has("Кромсающее")) wp.extremeLevelBonus = (wp.extremeLevelBonus || 0) + 1;
   wp.legacyCleavingRollRequested = takenMutationNames(item).has("Кромсающее") && !!opts.legacyCleavingRoll;
-  if (wp.legacyCleavingRollRequested) {
-    if (actorInfamyValue(actor) >= 1) {
-      const path = actorInfamyPath(actor);
-      const spend = await spendFromInfamyPool(actor, 1, path);
-      await actor.update({ [path]: spend.poolValue });
-      wp.legacyCleavingRollActive = true;
-    } else {
-      ui.notifications?.warn("Кромсающее: нет Очков Бесчестия — обычный бросок 1d5+1.");
-    }
-  }
   // Мучитель/merciless 10-10, Оружие Наследия (wdbc-1rno.35, стр. 428):
   // «Броски в 1 на кубиках урона вызывают Экстремальный Урон» — синтетический
   // флаг для rollExtremeDamage (см. заголовок выше в этом файле).

@@ -1098,7 +1098,12 @@ Hooks.once("ready", async () => {
   // по несвязанным токенам — под своим ключом (module/migrations/unlinked-tokens.mjs).
   await runMigrationGate({
     key: "charDamageSignVersion", tokensKey: "charDamageSignTokensVersion", label: "Знак Мод. характеристик",
-    full: () => migrateCharDamageSign(), tokensOnly: () => migrateCharDamageSign({ tokensOnly: true })
+    // Догоночный проход по токенам НЕ гоняем (приёмка #516): инверсия знака не
+    // переживает повтора, а в дельте старый знак от нового не отличить — у
+    // миров, где полный прогон уже шёл с токенами (с 11.09) или в дельту с тех
+    // пор писали по новой конвенции (тик Радиации, Гангрена), штраф стал бы
+    // бонусом. Токены инвертируются только в составе первого полного прогона.
+    full: () => migrateCharDamageSign(), tokensOnly: async () => ({})
   });
 });
 
@@ -1122,7 +1127,10 @@ Hooks.once("ready", async () => {
   // по несвязанным токенам — под своим ключом (module/migrations/unlinked-tokens.mjs).
   await runMigrationGate({
     key: "gearEquippedVersion", tokensKey: "gearEquippedTokensVersion", label: "Надетое снаряжение",
-    full: () => migrateGearEquipped(), tokensOnly: () => migrateGearEquipped({ tokensOnly: true })
+    // Догоночный проход по токенам НЕ гоняем (приёмка #516): в delta.items лежат
+    // и унаследованные предметы, правленные на токене — снятая на токене броня
+    // оказалась бы надетой заново. Токены — только в составе полного прогона.
+    full: () => migrateGearEquipped(), tokensOnly: async () => ({})
   });
 });
 

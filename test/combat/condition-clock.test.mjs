@@ -103,6 +103,14 @@ describe("Гангрена по Календарю", () => {
     expect(a.system.charDamage.t).toBe(0);
   });
 
+  it("метка старше отрезка (ручная кнопка до часов) — пропущенное не догоняется разом (приёмка #516)", async () => {
+    captured.dice = [2, 3, 4, 5];
+    const day = 24 * 3600;
+    const a = makeActor({ tb: 4, conditions: { gangrene: true }, flags: { gangreneTestAt: 0 } });
+    await sweepConditionClock(a, { from: 3 * day, to: 3 * day + 2 });
+    expect(a.system.charDamage.t).toBe(0);
+  });
+
   it("нет метки отсчёта — считается с начала отрезка", async () => {
     captured.dice = [4];
     const a = makeActor({ tb: 4, conditions: { gangrene: true } });

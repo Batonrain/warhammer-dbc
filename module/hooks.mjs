@@ -527,11 +527,12 @@ export function registerHooks() {
         const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
         const actor = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
         if (!actor) return ui.notifications.warn("⚠️ Атакующий персонаж карточки не найден.");
-        if (!await spendReaction(actor)) return ui.notifications.warn("⚠️ Не хватает Реакций.");
         const target = [...(game.user?.targets ?? [])][0]?.actor ?? null;
         if (target && knockdownForbidden(actor, target)) {
           return ui.notifications.warn(`⚠️ Повалить: нельзя проводить против ${target.name} — цель на 2+ Размера крупнее (стр. 14).`);
         }
+        // Реакция — после запрета по Размеру: запрет не съедает её (приёмка #516).
+        if (!await spendReaction(actor)) return ui.notifications.warn("⚠️ Не хватает Реакций.");
         const sizePenalty = target ? knockdownSizePenalty(actor, target) : 0;
         await _showContestDialog(actor, { ...MELEE_CONTESTS.knockdown, onSuccess: resolveKnockdownSuccess,
           resistMods: (opp, me) => knockdownResistMods(me, opp),
@@ -1084,6 +1085,9 @@ export function registerHooks() {
           // Огонь Души (combat/soulfire.mjs) ставит атрибут, усилив попадание.
           ignoreSubtypeImmunity: ds.ignoreSubtypeImmunity === "1",
           stunManeuver: ds.stunManeuver === "1",
+          // Оппортунист (wdbc-1rno.35): data-opportunist-floor ставит attack-card.mjs,
+          // без этой строки damage.mjs всегда брал флэт-1 (приёмка #516).
+          opportunistFloor: ds.opportunistFloor === "1",
           warpSoak:     ds.warpSoak     === "1",
           lance:        ds.lance        === "1",
           sanctified:   ds.sanctified   === "1",

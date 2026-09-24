@@ -982,7 +982,6 @@ async function _doThrow(actor) {
   }
   const target = _requireThirdPartyTarget(actor, partner, "метнёте");
   if (!target) return;
-  if (!(await _payThrowOrSwing(actor, "Метнуть"))) return;
 
   // Опора (стр. 28) — сравнение с СОБСТВЕННЫМ весом ТЕЛА бросающего
   // (bodyWeightOf), отдельная ось от тира выше (тот — про Ношение).
@@ -1009,11 +1008,13 @@ async function _doThrow(actor) {
     });
     combinedTestRequired = !hasFooting;
   }
+  // Оплата — после всех отказов по Опоре: отказ не съедает Ход (приёмка #516).
+  if (!(await _payThrowOrSwing(actor, "Метнуть"))) return;
 
   let knockedDown = false, halved = false;
   if (combinedTestRequired) {
     const sTotal = actor.system.characteristics.s?.total ?? 0;
-    const aTotal = actor.system.characteristics.a?.total ?? 0;
+    const aTotal = actor.system.characteristics.ag?.total ?? 0;
     const sRoll = await new Roll("1d100").evaluate();
     const aRoll = await new Roll("1d100").evaluate();
     if (!(sRoll.total <= sTotal - 30 && aRoll.total <= aTotal - 30)) {

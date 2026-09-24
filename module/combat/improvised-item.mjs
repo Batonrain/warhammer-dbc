@@ -104,7 +104,7 @@ export async function useThrowItem(actor, item) {
   let knockedDown = false, halved = false;
   if (combinedTestRequired) {
     const sTotal = actor.system.characteristics.s?.total ?? 0;
-    const aTotal = actor.system.characteristics.a?.total ?? 0;
+    const aTotal = actor.system.characteristics.ag?.total ?? 0;
     const sRoll = await new Roll("1d100").evaluate();
     const aRoll = await new Roll("1d100").evaluate();
     if (!(sRoll.total <= sTotal - 30 && aRoll.total <= aTotal - 30)) {
