@@ -201,6 +201,10 @@ export async function _showContestDialog(actor, techDef) {
             return;
           }
           if (techDef.isAttack) await takeAttackAction(actor);
+          // Прочая цена приёма (Реакция «Повалить» с карточки атаки, hooks.mjs)
+          // — здесь, а не до окна: «Отмена» ничего не должна съедать
+          // (wdbc-t3c3t.7). pay сам предупреждает, чего не хватило.
+          if (techDef.pay && !(await techDef.pay(actor))) return;
 
           // Dance of Deception — свободное действие за Очко Бесчестия
           // (wdbc-1rno): Состязания не списывают ОД программно вовсе (см.

@@ -8,7 +8,7 @@
 // содержимое собранной разметки.
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { captured, resetCaptured } from "../support/foundry-stub.mjs";
+import { captured, resetCaptured, fakeHtml } from "../support/foundry-stub.mjs";
 import { actorFor } from "../support/combat-fixtures.mjs";
 import { _showContestDialog } from "../../module/combat/techniques.mjs";
 import { MELEE_CONTESTS } from "../../module/constants/combat.mjs";
@@ -137,5 +137,36 @@ describe("_showContestDialog — extraBonus (плоский бонус исто�
     await _showContestDialog(actor, { ...MELEE_CONTESTS.knockdown, extraBonus: -10, extraBonusLabel: "Штраф" });
     expect(selfValue()).toBe(10); // нетренированный Athletics 20 − 10
     expect(captured.dialog.content).toContain("Штраф: -10");
+  });
+});
+
+// wdbc-t3c3t.7: Реакцию «Повалить» (hooks.mjs) списывали ДО окна — «Отмена»
+// её не возвращала. techDef.pay зовётся только по «Бросок!», вместе с ОД.
+describe("_showContestDialog — оплата techDef.pay только при подтверждении (wdbc-t3c3t.7)", () => {
+  const withOpponent = () => {
+    const opp = actorFor({});
+    const opponents = () => [opp];
+    return opponents;
+  };
+  const press = () => captured.dialog.buttons.roll.callback(fakeHtml({ "#contest-char": "s", "#contest-self": "20", "#contest-mod": "0" }));
+
+  it("«Отмена» — pay не вызван", async () => {
+    let paid = 0;
+    await _showContestDialog(actorFor({}), { ...MELEE_CONTESTS.knockdown, opponents: withOpponent(), pay: async () => { paid++; return true; } });
+    expect(paid).toBe(0);
+  });
+
+  it("«Бросок!» — pay вызван один раз, бросок сделан", async () => {
+    let paid = 0;
+    await _showContestDialog(actorFor({}), { ...MELEE_CONTESTS.knockdown, opponents: withOpponent(), pay: async () => { paid++; return true; } });
+    await press();
+    expect(paid).toBe(1);
+    expect(captured.chat.length).toBe(1);
+  });
+
+  it("pay отказал (нет Реакции) — броска нет", async () => {
+    await _showContestDialog(actorFor({}), { ...MELEE_CONTESTS.knockdown, opponents: withOpponent(), pay: async () => false });
+    await press();
+    expect(captured.chat.length).toBe(0);
   });
 });

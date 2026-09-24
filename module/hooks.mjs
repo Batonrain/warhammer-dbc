@@ -531,10 +531,15 @@ export function registerHooks() {
         if (target && knockdownForbidden(actor, target)) {
           return ui.notifications.warn(`⚠️ Повалить: нельзя проводить против ${target.name} — цель на 2+ Размера крупнее (стр. 14).`);
         }
-        // Реакция — после запрета по Размеру: запрет не съедает её (приёмка #516).
-        if (!await spendReaction(actor)) return ui.notifications.warn("⚠️ Не хватает Реакций.");
+        // Реакция списывается по «Бросок!» окна (techDef.pay): ни запрет по
+        // Размеру, ни «Отмена» её не съедают (приёмка #516, wdbc-t3c3t.7).
         const sizePenalty = target ? knockdownSizePenalty(actor, target) : 0;
         await _showContestDialog(actor, { ...MELEE_CONTESTS.knockdown, onSuccess: resolveKnockdownSuccess,
+          pay: async a => {
+            if (await spendReaction(a)) return true;
+            ui.notifications.warn("⚠️ Не хватает Реакций.");
+            return false;
+          },
           resistMods: (opp, me) => knockdownResistMods(me, opp),
           defaultMod: sizePenalty,
           note: sizePenalty ? `${MELEE_CONTESTS.knockdown.note} Подсказанный штраф за Размер: ${sizePenalty}.` : MELEE_CONTESTS.knockdown.note });
