@@ -143,7 +143,10 @@ describe("Гангрена по Календарю", () => {
 });
 
 describe("sweepAllConditionClocks", () => {
-  afterEach(() => { delete globalThis.game.actors; globalThis.game.users = []; globalThis.game.user = {}; });
+  afterEach(() => {
+    delete globalThis.game.actors; delete globalThis.game.scenes;
+    globalThis.game.users = []; globalThis.game.user = {};
+  });
 
   it("только основной ГМ", async () => {
     const a = makeActor({ fatigue: 9, conditions: { unconscious: true, fatigueFaintWakeAt: 1000 } });
@@ -155,4 +158,24 @@ describe("sweepAllConditionClocks", () => {
     await sweepAllConditionClocks(1100, 200);
     expect(a.system.conditions.unconscious).toBe(false);
   });
+  // wdbc-t3c3t.11: несвязанный токен (статист) — синтетический актор, в
+  // game.actors его нет; связанный токен уже пройден через game.actors.
+  it("идёт и у несвязанных токенов сцен, связанные не дублируются", async () => {
+    const world = makeActor({ fatigue: 9, conditions: { unconscious: true, fatigueFaintWakeAt: 1000 } });
+    const extra = makeActor({ fatigue: 9, conditions: { unconscious: true, fatigueFaintWakeAt: 1000 } });
+    const tokens = [
+      { actorLink: true, actor: world },
+      { actorLink: false, actor: extra },
+      { actorLink: false, actor: null }
+    ];
+    Object.assign(globalThis.game, {
+      actors: [world], scenes: [{ tokens: { contents: tokens } }],
+      users: { activeGM: { id: "gm1" } }, user: { id: "gm1" }
+    });
+    await sweepAllConditionClocks(1100, 200);
+    expect(world.system.conditions.unconscious).toBe(false);
+    expect(extra.system.conditions.unconscious).toBe(false);
+    expect(captured.chat.length).toBe(2);
+  });
+
 });

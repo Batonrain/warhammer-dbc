@@ -25,6 +25,7 @@
 import { fatigueChangeFields, announceFatigueChange } from "../sheets/tabs/conditions.mjs";
 import { gangreneTick, gangreneIntervalSeconds } from "./gangrene.mjs";
 import { haemorrhageHourly, suffocationRestClock } from "./condition-ticks.mjs";
+import { unlinkedTokens } from "../migrations/unlinked-tokens.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -137,4 +138,8 @@ export async function sweepAllConditionClocks(worldTime, dt) {
   const to = Number(worldTime);
   const from = to - (Number(dt) || 0);
   for (const actor of game.actors ?? []) await sweepConditionClock(actor, { from, to });
+  // Несвязанные токены (статисты, wdbc-t3c3t.11): их синтетических акторов в
+  // game.actors нет. Мёртвые и без Состояний отсекаются в sweepConditionClock
+  // и первыми строками обработчиков — без записей.
+  for (const { actor } of unlinkedTokens()) await sweepConditionClock(actor, { from, to });
 }
