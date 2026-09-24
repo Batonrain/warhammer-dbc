@@ -37,6 +37,8 @@ import { damageFormulaFor, meleeStrengthBonus } from "./attack-outcome.mjs";
 export const ARMED_VS_UNARMED_PARRY_BONUS = 20;
 /** «может потратить 2 Успеха в тесте на Парирование» на ответный удар. */
 export const UNARMED_RIPOSTE_COST = 2;
+/** Флаг карточки Парирования: ответный удар по ней уже нанесён (wdbc-t3c3t.8). */
+export const UNARMED_RIPOSTE_USED_FLAG = "unarmedRiposteUsed";
 
 /** Безоружная ли это атака/защита: нет оружия вовсе или интегральная атака. */
 export function isUnarmedWeapon(weapon) {
@@ -157,11 +159,19 @@ export async function rollStrikeOn(target, { weapon, sbActor, location, source, 
  * В бою Успехи уже лежат в пуле Избегания (evasion-pool.mjs, стр. 12) —
  * списываем оттуда: иначе те же 2 Успеха можно было бы потратить и на удар, и
  * на снятие попадания следующей атаки. Пуста/устарела запись — удар не
- * проходит (Успехи уже потрачены или сменился Ход). Вне боя пула нет, и
- * повтор сдерживает сама кнопка: hooks.mjs гасит её после клика.
+ * проходит (Успехи уже потрачены или сменился Ход). Вне боя пула нет —
+ * повтор сдерживает флаг на самой карточке Парирования (message): он виден
+ * всем клиентам, а не только гасит кнопку у нажавшего (wdbc-t3c3t.8).
  */
 export async function performUnarmedRiposte(defender, { weaponId, improvised = false, attackerUuid = "",
-                                                        attackerWeaponUuid = "", banked = false } = {}) {
+                                                        attackerWeaponUuid = "", banked = false, message = null } = {}) {
+  if (!defender?.isOwner) return ui.notifications.warn("⚠️ Ответный удар наносит владелец парировавшего (или ГМ).");
+  if (message?.getFlag("warhammer-dbc", UNARMED_RIPOSTE_USED_FLAG))
+    return ui.notifications.warn("⚠️ Ответный удар по этому Парированию уже нанесён.");
+  // Флаг на чужую карточку (её бросил ГМ) игрок записать не может — тогда
+  // пусть бьёт ГМ: иначе однократность держалась бы лишь на одном клиенте.
+  if (message && !message.canUserModify(game.user, "update"))
+    return ui.notifications.warn("⚠️ Карточку Парирования бросал ГМ — ответный удар нажимает он.");
   const item = defender?.items?.get(weaponId);
   const weapon = improvised ? (item ? gunAsParryWeapon(item) : null) : item;
   if (!weapon) return ui.notifications.warn("⚠️ Оружие ответного удара не найдено или больше не годится для рукопашной.");
@@ -173,6 +183,7 @@ export async function performUnarmedRiposte(defender, { weaponId, improvised = f
     if (!await spendPoolSuccesses(defender, attackerUuid, UNARMED_RIPOSTE_COST))
       return ui.notifications.warn("⚠️ Неизрасходованных Успехов уже не хватает (потрачены или сменился Ход).");
   }
+  await message?.setFlag("warhammer-dbc", UNARMED_RIPOSTE_USED_FLAG, true);
   const location = strikeLocation(attackerWeapon);
   const { roll } = await rollStrikeOn(attacker, {
     weapon, sbActor: attacker, location, source: defender,

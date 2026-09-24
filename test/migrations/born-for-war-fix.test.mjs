@@ -12,7 +12,7 @@ import { describe, it, expect, afterEach } from "vitest";
 import {
   isBornForWarItem, bornForWarHasStaleEffects, fixBornForWarItem, migrateBornForWarDivination
 } from "../../module/migrations/born-for-war-fix.mjs";
-import { bornForWarStaleTChoice, bornForWarRepickPatch } from "../../module/migrations/born-for-war-fix.mjs";
+import { bornForWarStaleTChoice, bornForWarRepickPatch, announceBornForWarRepicks } from "../../module/migrations/born-for-war-fix.mjs";
 
 const T_KEY   = "system.characteristics.t.totalFx";
 const INT_KEY = "system.characteristics.int.totalFx";
@@ -301,5 +301,34 @@ describe("«Ты рождён для войны»: переспросить вы
   it("не тот предмет или выбора «Т» нет — патча нет", () => {
     expect(bornForWarRepickPatch(bfwItem(["ws1"]))).toBe(null);
     expect(bornForWarRepickPatch({ type: "talent", name: "Другое", getFlag: () => undefined })).toBe(null);
+  });
+  // wdbc-t3c3t.14: синтетический актор несвязанного токена видит и предметы
+  // базового актора — без фильтра по дельте персонаж попадал в карточку ГМа
+  // за мирового актора и ещё раз за каждый токен.
+  describe("announceBornForWarRepicks: несвязанные токены", () => {
+    afterEach(() => { delete globalThis.game; delete globalThis.ui; delete globalThis.ChatMessage; });
+
+    it("унаследованный предмет — одна строка; предмет из дельты токена — своя", async () => {
+      const inherited = { ...bfwItem(["t1"]), id: "bfw", uuid: "Actor.a1.Item.bfw" };
+      const own = { ...bfwItem(["t1"]), id: "own", uuid: "Scene.s.Token.t2.Actor.a1.Item.own" };
+      const token = (name, items, deltaItems) => ({
+        name, actorLink: false, actor: { items }, delta: { _source: { items: deltaItems } }
+      });
+      const chats = [];
+      globalThis.ChatMessage = { create: async m => { chats.push(m); } };
+      globalThis.ui = { notifications: { warn: () => {} } };
+      globalThis.game = {
+        user: { isGM: true }, users: [],
+        actors: [{ name: "Кадет", items: [inherited] }],
+        scenes: [{ name: "Сцена", tokens: { contents: [
+          token("Кадет", [inherited], []),
+          token("Кадет 2", [inherited, own], [{ _id: "own" }])
+        ] } }]
+      };
+      const res = await announceBornForWarRepicks();
+      expect(res.count).toBe(2);
+      expect(chats[0].content).toContain("Actor.a1.Item.bfw");
+      expect(chats[0].content).toContain("Item.own");
+    });
   });
 });

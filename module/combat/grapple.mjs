@@ -1006,6 +1006,7 @@ async function _doThrow(actor) {
       title: "Опора при Метании",
       content: `<p>${esc(partner.name)} весит сравнимо с вашим собственным телом (0.5-1.5×). Без надёжной опоры — риск сбития с ног.</p><p>Опора есть?</p>`
     });
+    if (hasFooting == null) return; // окно закрыто крестиком — отказ, а не «опоры нет»
     combinedTestRequired = !hasFooting;
   }
   // Оплата — после всех отказов по Опоре: отказ не съедает Ход (приёмка #516).
@@ -1311,5 +1312,6 @@ export function showGrappleDialog(actor) {
 // подвид урона в прямых попаданиях Борьбы, wdbc-9zpt): внутри системы их зовёт
 // лишь этот файл. showGrappleDialog, через который они идут в игре, заглушка
 // тестов не проходит (см. шапку test/combat/grapple.test.mjs). Тот же приём,
-// что у vehicle.mjs::_resolveRam.
-export { _resolveWrenchSuccess, _doBite, _doCrunch };
+// что у vehicle.mjs::_resolveRam. TARGET_TESTS — ради grapple-rules.test.mjs:
+// «Вырваться» настоящей записью, не подставным onSuccess (wdbc-t3c3t.15).
+export { _resolveWrenchSuccess, _doBite, _doCrunch, TARGET_TESTS };

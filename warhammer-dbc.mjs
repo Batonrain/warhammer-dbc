@@ -993,6 +993,16 @@ Hooks.once("ready", () => {
         if (!allowed) return console.warn("Warhammer DBC | itemUpdate отклонён: путь вне system.history.*/system.infoguard", data.data);
         await item.update(data.data);
       }
+      else if (data.action === "messageDamageBoost") {
+        // Прибавка к попаданию на чужой карточке чата (Огонь Души, Смертельная
+        // Ловушка — persistDamageBoost, module/combat/soulfire.mjs,
+        // wdbc-t3c3t.9). Путь сужен до флага прибавок, как у itemUpdate выше.
+        const message = game.messages.get(data.messageId);
+        if (!message || !data.data || typeof data.data !== "object") return;
+        const allowed = Object.keys(data.data).every(k => k.startsWith("flags.warhammer-dbc.damageBoosts."));
+        if (!allowed) return console.warn("Warhammer DBC | messageDamageBoost отклонён: путь вне damageBoosts", data.data);
+        await message.update(data.data);
+      }
       else if (data.action === "startCharacter") {
         // Игрок нажал «Начать создание персонажа», а права заводить Актёров у
         // его роли нет. Лист создаём мы и сразу отдаём его во владение

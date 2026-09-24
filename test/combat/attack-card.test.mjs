@@ -504,6 +504,9 @@ describe("Захват: альтернативная кнопка Париров
       pool: { successes: 5, hits: 0, cost: 0, perHit: 0, canRecoil: false, canWaiveGrappleParry: true } });
     expect(html).toContain("wh-pool-grapple-parry-btn");
     expect(html).toContain("wh-parry-btn"); // обычная кнопка остаётся, это альтернатива, не замена
+    // wdbc-t3c3t.6: не отдельный бросок, а снятие из пула по цене Парирования
+    // (обработчик .wh-pool-spend-btn, costPenalty = parryMod).
+    expect(html).toMatch(/class="wh-pool-spend-btn wh-pool-grapple-parry-btn"[^>]*data-cost-by-parry="1"/);
   });
 
   it("pool без canWaiveGrappleParry (не Захват / банка недостаточно) — кнопки нет", () => {

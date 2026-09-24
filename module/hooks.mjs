@@ -3,7 +3,7 @@ import { refreshParasiteHosts } from "./rules/parasite-trait.mjs";
 import { repickBornForWar } from "./migrations/born-for-war-fix.mjs";
 import { _performUnseenDetect, _performUnseenBypass } from "./combat/unseen-attack.mjs";
 import { applyCancerousHealingFromButton, APPLY_BTN_CLASS as CH_APPLY_BTN_CLASS } from "./apps/cancerous-healing.mjs";
-import { performPoolSpend, clearEvasionPools, spendPoolSuccesses } from "./combat/evasion-pool.mjs";
+import { performPoolSpend, clearEvasionPools } from "./combat/evasion-pool.mjs";
 import { showRecoilDialog, performRecoil, performPoolRecoil } from "./combat/recoil.mjs";
 import { rollOverpenetration } from "./combat/overpenetration.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
@@ -53,7 +53,7 @@ import { eaterOfPainBenefitUpdate, eaterOfPainChoiceButtonsHtml } from "./rules/
 import { fateTerm, esc, resolveCharFormula } from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
 import { postTestCard, rollStatLine }    from "./helpers/test-card.mjs";
-import { injectSoulfireButtons }          from "./combat/soulfire.mjs";
+import { injectSoulfireButtons, persistDamageBoost } from "./combat/soulfire.mjs";
 import { registerActorSetupHook }        from "./apps/actor-setup.mjs";
 import { resolvePendingSusAnHeals }      from "./apps/sus-an-heal.mjs";
 import { decayAblativeApShieldOnNewRound } from "./apps/ablative-ap-shield.mjs";
@@ -132,7 +132,7 @@ import { showHealingDialog } from "./sheets/tabs/healing.mjs";
 import { rollInfoguard } from "./apps/infoguard.mjs";
 import { CHARACTERISTICS } from "./constants/characteristics.mjs";
 import { SKILLS_DEF } from "./constants/skills.mjs";
-import { performUnarmedRiposte } from "./combat/unarmed-combat.mjs";
+import { performUnarmedRiposte, UNARMED_RIPOSTE_USED_FLAG } from "./combat/unarmed-combat.mjs";
 import { resolveResistClick } from "./combat/opposed-contest.mjs";
 import { maybeAutoReleaseGrapple, grappleReleaseTriggered } from "./combat/grapple.mjs";
 import { weaponProfiles } from "./combat/weapon-profiles.mjs";
@@ -531,10 +531,15 @@ export function registerHooks() {
         if (target && knockdownForbidden(actor, target)) {
           return ui.notifications.warn(`⚠️ Повалить: нельзя проводить против ${target.name} — цель на 2+ Размера крупнее (стр. 14).`);
         }
-        // Реакция — после запрета по Размеру: запрет не съедает её (приёмка #516).
-        if (!await spendReaction(actor)) return ui.notifications.warn("⚠️ Не хватает Реакций.");
+        // Реакция списывается по «Бросок!» окна (techDef.pay): ни запрет по
+        // Размеру, ни «Отмена» её не съедают (приёмка #516, wdbc-t3c3t.7).
         const sizePenalty = target ? knockdownSizePenalty(actor, target) : 0;
         await _showContestDialog(actor, { ...MELEE_CONTESTS.knockdown, onSuccess: resolveKnockdownSuccess,
+          pay: async a => {
+            if (await spendReaction(a)) return true;
+            ui.notifications.warn("⚠️ Не хватает Реакций.");
+            return false;
+          },
           resistMods: (opp, me) => knockdownResistMods(me, opp),
           defaultMod: sizePenalty,
           note: sizePenalty ? `${MELEE_CONTESTS.knockdown.note} Подсказанный штраф за Размер: ${sizePenalty}.` : MELEE_CONTESTS.knockdown.note });
@@ -655,27 +660,6 @@ export function registerHooks() {
       });
     });
 
-    // Захват (стр. 12, wdbc-x1nz.2.66.13): «−30 Парирования (или +3 Успеха от
-    // предыдущего Парирования)» — тратит 3 из банка (тот же банк, что у
-    // wh-pool-spend-btn/wh-pool-recoil-btn) и парирует БЕЗ штрафа Приёма
-    // (extraMod: 0, не −30 обычной кнопки Парирования выше).
-    html.querySelectorAll(".wh-pool-grapple-parry-btn").forEach(btn => {
-      btn.addEventListener("click", async (ev) => {
-        ev.preventDefault();
-        const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
-        if (!actor) return;
-        const ds = { ...ev.currentTarget.dataset };
-        if (!await confirmHordeDefense(actor, "Парирование")) return;
-        const spent = await spendPoolSuccesses(actor, ds.attackerUuid || "", 3);
-        if (!spent) return ui.notifications.warn("⚠️ Пул неизрасходованных Успехов пуст или устарел (сменился Ход).");
-        await _performParry(actor, {
-          extraMod: 0, attackerUuid: ds.attackerUuid || "",
-          hitsCount: parseInt(ds.hitsCount || "1"), isMelee: ds.melee !== "0",
-          attackerWeaponUuid: ds.attackerWeaponUuid || "", attackId: ds.attackId || ""
-        });
-      });
-    });
-
     // Контратака (стр. 12, Талант Counter Attack): успешное Парирование
     // предлагает тут же ударить в ответ тем же оружием — по выбору игрока.
     // Раз-в-Раунд метится в момент клика (не после броска): открывшийся
@@ -734,7 +718,10 @@ export function registerHooks() {
     // Ответный удар по безоружной атаке (core.json, «Безоружный Бой»,
     // wdbc-x1nz.2.69): 2 Успеха Парирования → урон своего оружия с S.b
     // атакующего в его атакующую конечность. Бьёт тот, кто парировал.
+    // Владелец и однократность — в самой performUnarmedRiposte (флаг на
+    // карточке, wdbc-t3c3t.8); здесь кнопка лишь гаснет у всех после удара.
     html.querySelectorAll(".wh-unarmed-riposte-btn").forEach(btn => {
+      if (message?.getFlag("warhammer-dbc", UNARMED_RIPOSTE_USED_FLAG)) btn.disabled = true;
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
         const el = ev.currentTarget;
@@ -746,7 +733,7 @@ export function registerHooks() {
         await performUnarmedRiposte(actor, {
           weaponId: ds.weaponId, improvised: ds.improvised === "1",
           attackerUuid: ds.attackerUuid || "", attackerWeaponUuid: ds.attackerWeaponUuid || "",
-          banked: ds.banked === "1"
+          banked: ds.banked === "1", message
         });
       });
     });
@@ -832,7 +819,9 @@ export function registerHooks() {
           targetIsVehicle: el.dataset.targetVehicle === "1",
           flexible: el.dataset.flexible === "1",
           forcedDefenceReroll: el.dataset.forceReroll || "",
-          isMelee: el.dataset.melee === "1"
+          isMelee: el.dataset.melee === "1",
+          // Захват Парированием (wdbc-t3c3t.6): цена по parryMod, не dodgeMod.
+          ...(el.dataset.costByParry === "1" ? { costPenalty: parseInt(el.dataset.parryMod || "0") } : {})
         });
       });
     });
@@ -1859,6 +1848,8 @@ export function registerHooks() {
           applyBtn.dataset.damage = String(next);
           const b = applyBtn.querySelector("b");
           if (b) b.textContent = String(next);
+          // В сам ChatMessage — иначе «Применить урон» у ГМа видит старое число (wdbc-t3c3t.9).
+          await persistDamageBoost(applyBtn, { damage: next, deadlyTrap: true });
         }
         el.disabled = true;
         el.textContent = "🪤 Смертельная Ловушка применена";
