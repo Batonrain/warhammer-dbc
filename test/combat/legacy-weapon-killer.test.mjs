@@ -48,3 +48,24 @@ describe("clearLegacyKillerBuffs", () => {
     await expect(clearLegacyKillerBuffs(null)).resolves.toBeUndefined();
   });
 });
+
+// wdbc-t3c3t.4: книга (стр. 427) — «до конца боя ИЛИ СЦЕНЫ». Активация вне боя
+// (или актором не из трекера) по концу боя не откатывалась никогда — Felling
+// оставался на оружии навсегда. Конец сцены — кнопки «🎬 Сцена»/«⏻ Сессия».
+describe("Убийца — откат по концу сцены (wdbc-t3c3t.4)", () => {
+  it("triggerNewScene снимает Felling Убийцы у всех акторов мира", async () => {
+    const { triggerNewScene } = await import("../../module/apps/game-session.mjs");
+    const w = weaponWithRevert([{ key: "felling", rating: 4 }], { originalRating: null });
+    const prev = { actors: game.actors, user: game.user };
+    game.actors = [{ items: [w], getFlag: () => undefined }];
+    game.user = { isGM: true };
+    try {
+      await triggerNewScene();
+    } finally {
+      game.actors = prev.actors;
+      game.user = prev.user;
+    }
+    expect(w.system.weaponProps).toEqual([]);
+    expect(w.getFlag("warhammer-dbc", "legacyKillerFellingRevert")).toBeUndefined();
+  });
+});

@@ -11,7 +11,8 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { applyDamageToActor } from "../../module/combat/damage.mjs";
-import { boostHit, soulfirePower } from "../../module/combat/soulfire.mjs";
+import { boostHit, soulfirePower, injectSoulfireButtons, applyDamageBoosts } from "../../module/combat/soulfire.mjs";
+import { readFileSync } from "node:fs";
 
 beforeEach(resetCaptured);
 
@@ -70,6 +71,92 @@ describe("Огонь Души: исход манифестации", () => {
     await boostHit(psyker(), applyBtn, btn, 3);
     expect(applyBtn.textContent).toBe("22 → Торс");
     expect(label.textContent).toBe("22");
+  });
+});
+
+// wdbc-t3c3t.9: прибавка жила только в DOM клиента псайкера — у ГМа, который
+// жмёт «Применить урон», оставалось старое число, а цена в W уже списана.
+// Теперь она сохраняется флагом в самом ChatMessage и накладывается на кнопку
+// при отрисовке карточки у любого клиента.
+describe("Огонь Души: прибавка живёт в ChatMessage (wdbc-t3c3t.9)", () => {
+  function inMessage(applyBtn, message) {
+    const other = { dataset: { damage: "5" } };
+    const msgEl = { dataset: { messageId: "m1" }, querySelectorAll: () => [other, applyBtn] };
+    applyBtn.closest = () => msgEl;
+    globalThis.game.messages = new Map([["m1", message]]);
+  }
+
+  it("владелец сообщения пишет прибавку флагом в само сообщение", async () => {
+    const { applyBtn, btn } = buttons(12);
+    const updates = [];
+    inMessage(applyBtn, { isOwner: true, async update(d) { updates.push(d); } });
+    captured.dice = [2, 4, 5, 4];
+    await boostHit(psyker(), applyBtn, btn, 3);
+    expect(updates).toContainEqual({
+      "flags.warhammer-dbc.damageBoosts.1.damage": 23,
+      "flags.warhammer-dbc.damageBoosts.1.ignoreSubtypeImmunity": true
+    });
+  });
+
+  it("чужое сообщение — правка уходит ГМу сокетом", async () => {
+    const { applyBtn, btn } = buttons(12);
+    const emitted = [];
+    const prev = { socket: game.socket, users: game.users, user: game.user };
+    game.socket = { emit: (ch, d) => emitted.push(d) };
+    game.users = Object.assign([], { activeGM: { id: "gm" } });
+    game.user = { id: "u1" };
+    inMessage(applyBtn, { isOwner: false, async update() { throw new Error("нет прав"); } });
+    captured.dice = [2, 4, 5, 4];
+    try {
+      await boostHit(psyker(), applyBtn, btn, 3);
+    } finally { Object.assign(game, prev); }
+    expect(emitted).toContainEqual({ action: "messageDamageBoost", messageId: "m1", userId: "u1",
+      data: { "flags.warhammer-dbc.damageBoosts.1.damage": 23,
+        "flags.warhammer-dbc.damageBoosts.1.ignoreSubtypeImmunity": true } });
+  });
+
+  it("отрисовка у другого клиента: кнопка «Применить урон» видит новое число, кнопки силы нет", async () => {
+    const { applyBtn } = buttons(12);
+    applyBtn.after = () => { throw new Error("повторная кнопка силы"); };
+    const html = {
+      dataset: { messageId: "m1" },
+      querySelectorAll: () => [applyBtn]
+    };
+    globalThis.game.messages = new Map([["m1", {
+      getFlag: (s, k) => (k === "damageBoosts" ? { 0: { damage: 23, ignoreSubtypeImmunity: true } } : undefined)
+    }]]);
+    applyBtn.dataset.attackerUuid = "Actor.p";
+    // Свой псайкер с силой — без пометки «уже усилено» кнопка силы появилась бы снова.
+    const prevSync = globalThis.fromUuidSync;
+    globalThis.fromUuidSync = () => ({ ...psyker(), isOwner: true });
+    try { injectSoulfireButtons(html); } finally { globalThis.fromUuidSync = prevSync; }
+    expect(applyBtn.dataset.damage).toBe("23");
+    expect(applyBtn.b.textContent).toBe("23");
+    expect(applyBtn.dataset.ignoreSubtypeImmunity).toBe("1");
+  });
+});
+
+// Смертельная Ловушка (hooks.mjs, .wh-legacy-deadly-trap-btn) — тот же приём:
+// после перерисовки карточки число новое, а кнопка Ловушки уже нажата.
+describe("Смертельная Ловушка: прибавка из ChatMessage (wdbc-t3c3t.9)", () => {
+  it("applyDamageBoosts ставит число и гасит кнопку Ловушки своей строки", () => {
+    const { applyBtn } = buttons(10);
+    const trap = { disabled: false, textContent: "🪤" };
+    applyBtn.closest = sel => (sel === ".roll-dmg-hit-group" ? { querySelector: () => trap } : null);
+    const html = { dataset: { messageId: "m1" }, querySelectorAll: () => [applyBtn] };
+    globalThis.game.messages = new Map([["m1", {
+      getFlag: (s, k) => (k === "damageBoosts" ? { 0: { damage: 17, deadlyTrap: true } } : undefined)
+    }]]);
+    applyDamageBoosts(html);
+    expect(applyBtn.dataset.damage).toBe("17");
+    expect(applyBtn.dataset.ignoreSubtypeImmunity).toBeUndefined();
+    expect(trap.disabled).toBe(true);
+  });
+
+  it("hooks.mjs: клик Ловушки сохраняет прибавку в сообщение", () => {
+    const src = readFileSync(new URL("../../module/hooks.mjs", import.meta.url), "utf8");
+    const block = src.slice(src.indexOf('".wh-legacy-deadly-trap-btn"'));
+    expect(block.slice(0, 1200)).toMatch(/persistDamageBoost\(applyBtn, \{ damage: next, deadlyTrap: true \}\)/);
   });
 });
 

@@ -545,11 +545,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       : "");
   const sabreSecondAttackItemId = (opts.sabreSecondAttack && !opts.sabreSecondAttackIsSecond) ? String(item.id ?? "") : "";
   // Маятник, Оружие Наследия (wdbc-1rno.35, vigilant 7-7, стр. 427): «Если
-  // персонаж атаковал этим оружием в свой Ход...» — не гейтится попаданием
+  // персонаж атаковал этим оружием в свой Ход...» — Свободная Атака/Контратака
+  // в чужой Ход флаг не пишут (wdbc-t3c3t.5). Не гейтится попаданием
   // (книга говорит «атаковал», не «попал»), поэтому пишется тут же, до
   // разбора Уклонения/Парирования цели. Модификатор атаки = порог теста
   // МИНУС голая характеристика — ровно то, что диалог атаки насчитал сверху.
-  const pendulumFlag = pendulumLegacyFlagValue(item, threshold - (Number(actor.system?.characteristics?.[charKey]?.total) || 0));
+  const pendulumFlag = isActorsOwnTurn(actor) && pendulumLegacyFlagValue(item, threshold - (Number(actor.system?.characteristics?.[charKey]?.total) || 0));
   if (pendulumFlag) await actor.setFlag("warhammer-dbc", "legacyPendulumBonus", pendulumFlag);
   // Дикарь (стр. 62, wdbc-pb60): парными когтями — «+2 Успеха при успешной
   // атаке». Прибавляется к СТЕПЕНИ, а не к порогу: от степени зависят и число
