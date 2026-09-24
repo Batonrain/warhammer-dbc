@@ -27,10 +27,22 @@ function doorWallsOnScene(scene) {
  * @returns {{doorWidthCells:number}|null}
  */
 export function checkSqueeze({ fromCenter, toCenter, doorWalls, cellPx, baseSize }) {
-  if (!baseSize) return null; // Размер 2+ — на откуп ГМу (wdbc-x1nz.2.20), не наше дело
+  if (!baseSize) return null; // Базы нет вовсе (см. squeezeBaseSize) — проверять не с чем
   const width = narrowestDoorCrossed(fromCenter, toCenter, doorWalls, cellPx);
   if (width == null) return null;
   return isSqueeze(width, baseSize) ? { doorWidthCells: width } : null;
+}
+
+/**
+ * База для проверки тесноты, в клетках. По правилу (rules/tactical-map.mjs::
+ * baseSizeCells) — 2 или 3; у Размера 2+ правило отдаёт null («на откуп
+ * ГМу», стр. 31), и тогда База — больший размер токена: этим ГМ и выражает
+ * своё решение о Базе крупного существа на карте (wdbc-bjy1.9, решение
+ * владельца). Токен не перевели из 1×1 — теснота молчит, как и раньше.
+ */
+export function squeezeBaseSize(ruleBase, tokenWidth, tokenHeight) {
+  if (ruleBase) return ruleBase;
+  return Math.max(Number(tokenWidth) || 0, Number(tokenHeight) || 0) || null;
 }
 
 export async function postSqueezeReminder(actor, tokenName) {
@@ -82,7 +94,7 @@ export function initSqueezeHooks() {
 
     const actor = tokenDoc.actor;
     if (!isBaseTrackedActor(actor)) return;
-    const baseSize = actorBaseSizeCells(actor);
+    const baseSize = squeezeBaseSize(actorBaseSizeCells(actor), tokenDoc.width, tokenDoc.height);
     if (!baseSize) return;
 
     const scene = tokenDoc.parent;

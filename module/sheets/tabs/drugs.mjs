@@ -6,7 +6,8 @@
 import { CHARACTERISTICS } from "../../constants/characteristics.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { _degWord, resolveCharFormula, esc } from "../../helpers/utils.mjs";
-import { conditionAdjustFields, conditionApplyFields, conditionRemoveFields } from "./conditions.mjs";
+import { conditionAdjustFields, conditionApplyFields, conditionRemoveFields,
+         fatigueChangeFields, announceFatigueChange } from "./conditions.mjs";
 import { collectTestMods } from "../../rules/roll-mods.mjs";
 import { computeWoundHealing } from "./wounds.mjs";
 import { woundLossUpdates } from "../../rules/wounds.mjs";
@@ -99,9 +100,13 @@ export async function applyEffectExtras(target, fx) {
     }
   }
 
+  // Доп. Усталость НЕ пишется в updates, а отдаётся дельтой (wdbc-x1nz.2.95):
+  // applyDrug/triggerAfterEffect складывают её со своими изменениями
+  // Усталости и пишут ОДИН патч через fatigueChangeFields (порог обморока,
+  // Саркофаг). Раньше каждая ветка писала fatigue.value поверх соседней.
+  let fatigueDelta = 0;
   if (fx.grantsFatigue > 0) {
-    const fatVal = target.system.fatigue?.value ?? 0;
-    updates["system.fatigue.value"] = fatVal + fx.grantsFatigue;
+    fatigueDelta = Number(fx.grantsFatigue) || 0;
     lines.push(`${rollIcon("warn","#ffb84d")}Усталость +<b>${fx.grantsFatigue}</b>`);
   }
 
@@ -116,7 +121,21 @@ export async function applyEffectExtras(target, fx) {
     }
   }
 
-  return { updates, lines, rolls };
+  return { updates, lines, rolls, fatigueDelta };
+}
+
+/**
+ * Все изменения Усталости одного препарата — одним патчем через
+ * fatigueChangeFields (wdbc-x1nz.2.95): снятие уровней, «снять Усталость
+ * целиком», наложение и доп. Усталость из applyEffectExtras. Раньше каждая
+ * ветка читала старое значение и писала своё поверх соседней, и ни одна не
+ * проверяла порог обморока.
+ * @returns {object|null} итог fatigueChangeFields (для announceFatigueChange) или null — Усталость не трогается
+ */
+function drugFatigueChange(actor, { delta = 0, zero = false, touched = false } = {}) {
+  if (!touched) return null;
+  const base = zero ? 0 : (Number(actor.system.fatigue?.value) || 0);
+  return fatigueChangeFields(actor, base + delta);
 }
 
 export async function applyDrug(owner, item, recipient = null) {
@@ -165,11 +184,13 @@ export async function applyDrug(owner, item, recipient = null) {
     Object.assign(actorUpdates, conditionAdjustFields(actor, "bleeding", -fx.removesBleedingLevels));
   }
 
+  // Усталость копится здесь и пишется одним патчем ниже (drugFatigueChange).
+  const fat = { delta: 0, zero: false, touched: false };
   if (fx.removesFatigueLevels > 0) {
     // «Усталость» — зеркало system.fatigue.value (rules/character.mjs), тег
     // сам пересчитается из него; conditionAdjustFields на "fatigued" — no-op.
-    const fatVal = actor.system.fatigue?.value || 0;
-    actorUpdates["system.fatigue.value"] = Math.max(0, fatVal - fx.removesFatigueLevels);
+    fat.delta -= fx.removesFatigueLevels;
+    fat.touched = true;
   }
 
   if (fx.removesWounds > 0) {
@@ -182,8 +203,8 @@ export async function applyDrug(owner, item, recipient = null) {
       ? conditionAdjustFields(actor, fx.removesCondition, -lvlToRemove)
       : conditionRemoveFields(fx.removesCondition));
     if (fx.removesCondition === "fatigued") {
-      const fatVal = actor.system.fatigue?.value || 0;
-      actorUpdates["system.fatigue.value"] = lvlToRemove > 0 ? Math.max(0, fatVal - lvlToRemove) : 0;
+      if (lvlToRemove > 0) fat.delta -= lvlToRemove; else fat.zero = true;
+      fat.touched = true;
     }
   }
 
@@ -197,8 +218,8 @@ export async function applyDrug(owner, item, recipient = null) {
     const curLvl      = levelField ? (actor.system.conditions?.[levelField] || 0) : 0;
     Object.assign(actorUpdates, conditionApplyFields(fx.grantsCondition, levelField ? curLvl + lvlToGrant : null, actor));
     if (fx.grantsCondition === "fatigued") {
-      const fatVal = actor.system.fatigue?.value || 0;
-      actorUpdates["system.fatigue.value"] = fatVal + lvlToGrant;
+      fat.delta += lvlToGrant;
+      fat.touched = true;
     }
   }
 
@@ -218,8 +239,12 @@ export async function applyDrug(owner, item, recipient = null) {
 
   const extras = await applyEffectExtras(actor, fx);
   Object.assign(actorUpdates, extras.updates);
+  if (extras.fatigueDelta) { fat.delta += extras.fatigueDelta; fat.touched = true; }
+  const fatRes = drugFatigueChange(actor, fat);
+  if (fatRes) Object.assign(actorUpdates, fatRes.fields);
 
   if (Object.keys(actorUpdates).length > 0) await actor.update(actorUpdates);
+  if (fatRes) await announceFatigueChange(actor, fatRes);
 
   // Enjoyment/Наслаждение (wdbc-sk8s): Наркотик триггерит, ТОЛЬКО когда его
   // применил кто-то другой (applyToOther) — не сам персонаж себе.
@@ -338,9 +363,10 @@ export async function triggerAfterEffect(actor, item) {
     Object.assign(actorUpdates, conditionAdjustFields(actor, "bleeding", -fx.removesBleedingLevels));
   }
 
+  const fat = { delta: 0, zero: false, touched: false };
   if (fx.removesFatigueLevels > 0) {
-    const fatVal = actor.system.fatigue?.value || 0;
-    actorUpdates["system.fatigue.value"] = Math.max(0, fatVal - fx.removesFatigueLevels);
+    fat.delta -= fx.removesFatigueLevels;
+    fat.touched = true;
   }
 
   if (fx.removesWounds > 0) {
@@ -353,15 +379,19 @@ export async function triggerAfterEffect(actor, item) {
     const curLvl     = levelField ? (actor.system.conditions?.[levelField] || 0) : 0;
     Object.assign(actorUpdates, conditionApplyFields(fx.grantsCondition, levelField ? curLvl + lvlToGrant : null, actor));
     if (fx.grantsCondition === "fatigued") {
-      const fatVal = actor.system.fatigue?.value || 0;
-      actorUpdates["system.fatigue.value"] = fatVal + lvlToGrant;
+      fat.delta += lvlToGrant;
+      fat.touched = true;
     }
   }
 
   const extras = await applyEffectExtras(actor, fx);
   Object.assign(actorUpdates, extras.updates);
+  if (extras.fatigueDelta) { fat.delta += extras.fatigueDelta; fat.touched = true; }
+  const fatRes = drugFatigueChange(actor, fat);
+  if (fatRes) Object.assign(actorUpdates, fatRes.fields);
 
   if (Object.keys(actorUpdates).length > 0) await actor.update(actorUpdates);
+  if (fatRes) await announceFatigueChange(actor, fatRes);
 
   const cd = sys.afterEffectCharDamage || {};
   let charDamageStat = "";

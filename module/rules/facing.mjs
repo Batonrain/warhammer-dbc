@@ -184,6 +184,9 @@ export function parseMountArc(spec) {
     const width = Math.abs(toNum(nums[0]));
     return width >= 360 ? null : { width, center: 0 };
   }
+  // Полный круг проверяется ДО нормализации: −180 и +180 после неё — один и
+  // тот же угол, и «−180°..+180°» давал бы ширину 0 (wdbc-4umq).
+  if (Math.abs(toNum(nums[1]) - toNum(nums[0])) >= 360) return null;
   const a = normalizeAngle180(toNum(nums[0])), b = normalizeAngle180(toNum(nums[1]));
   const width = Math.abs(b - a);
   return width >= 360 ? null : { width, center: (a + b) / 2 };

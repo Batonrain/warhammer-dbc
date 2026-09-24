@@ -55,26 +55,32 @@ describe("Усталость: тег СОСТОЯНИЙ зеркалит fatigue
   });
 });
 
-// Гангрена (стр. 30-31, wdbc-r5o7.5): «+1 неснимаемой Усталости» — пол на
-// КАЖДЫЙ пересчёт, а не разовое начисление в хранимое поле (иначе отдых
-// откатил бы fatigue.value до 0 обычным путём, ничего не зная о Гангрене).
-describe("Гангрена: +1 неснимаемая Усталость", () => {
-  it("Гангрена стоит, fatigue.value=0 — пол поднимает до 1", () => {
+// Гангрена («Статусы», wdbc-x1nz.2.96): «получает 1 Усталости, которую нельзя
+// снять, пока не вылечена Гангрена» — +1 ПОВЕРХ хранимой, не пол. Прежние
+// тесты закрепляли пол Math.max(1, value) (Усталость 3 с Гангреной
+// оставалась 3) — исправлены под книгу: действующая 4. Хранимое
+// fatigue.value не трогается, иначе надбавка запеклась бы в него при первой
+// записи Усталости (отдых, препарат); действующее — fatigue.effective.
+describe("Гангрена: +1 неснимаемая Усталость поверх хранимой", () => {
+  it("Гангрена стоит, fatigue.value=0 — действующая 1, хранимое 0", () => {
     const s = characterWith({ fatigueValue: 0, gangrene: true });
-    expect(s.fatigue.value).toBe(1);
+    expect(s.fatigue.value).toBe(0);
+    expect(s.fatigue.effective).toBe(1);
     expect(s.conditions.fatigued).toBe(true);
     expect(s.conditions.fatiguedLevel).toBe(1);
   });
 
-  it("Гангрена стоит, fatigue.value уже выше 1 — не трогается", () => {
+  it("Гангрена стоит, fatigue.value=3 — действующая 4 (+1, а не пол)", () => {
     const s = characterWith({ fatigueValue: 3, gangrene: true });
     expect(s.fatigue.value).toBe(3);
-    expect(s.conditions.fatiguedLevel).toBe(3);
+    expect(s.fatigue.effective).toBe(4);
+    expect(s.conditions.fatiguedLevel).toBe(4);
   });
 
-  it("нет Гангрены — fatigue.value=0 остаётся 0", () => {
+  it("нет Гангрены — действующая равна хранимой", () => {
     const s = characterWith({ fatigueValue: 0, gangrene: false });
     expect(s.fatigue.value).toBe(0);
+    expect(s.fatigue.effective).toBe(0);
     expect(s.conditions.fatigued).toBe(false);
   });
 });

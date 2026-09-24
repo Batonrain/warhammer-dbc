@@ -150,12 +150,16 @@
         <div class="header-cell fate-cell fatigue-cell">
           <label class="fatigue-label">
             Усталость
-            {{#if system.fatigue.value}}
-            <span class="fatigue-penalty-badge" title="Штраф −10 на все тесты (кроме T, Inf, Cog)">−10</span>
+            {{#if system.fatigue.effective}}
+            <span class="fatigue-penalty-badge" title="Штраф −10 на все тесты (кроме T, Inf, Cor)">−10</span>
             {{/if}}
+            {{#if system.fatigue.gangrene}}<span class="fatigue-penalty-badge" title="Гангрена: +1 Усталости сверх этого числа — не снимается, пока Гангрена не вылечена">+1</span>{{/if}}
           </label>
           <div class="fate-values fatigue-values">
-            <input type="number" name="system.fatigue.value" value="{{system.fatigue.value}}" min="0" class="fatigue-value-input{{#if system.fatigue.value}} fatigue-nonzero{{/if}}"/>
+            {{!-- Без name (wdbc-x1nz.2.95): число идёт обработчиком
+                 .fatigue-value-input (sheets/tabs/conditions.mjs), с порогом
+                 обморока и Саркофагом, а не отправкой формы. --}}
+            <input type="number" value="{{system.fatigue.value}}" min="0" class="fatigue-value-input{{#if system.fatigue.value}} fatigue-nonzero{{/if}}"/>
             <span>/</span>
             <input type="number" value="{{system.fatigue.max}}" readonly title="Порог Усталости — авторасчёт: T.b + W.b"/>
           </div>

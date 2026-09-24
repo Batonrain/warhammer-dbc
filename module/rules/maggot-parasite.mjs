@@ -44,7 +44,7 @@ export function parasiteHostUpdate() {
   return {
     "system.characteristics.s.value": HOST_CHAR_VALUE,
     "system.characteristics.t.value": HOST_CHAR_VALUE,
-    "system.characteristics.a.value": HOST_CHAR_VALUE,
+    "system.characteristics.ag.value": HOST_CHAR_VALUE,
     "system.wounds.max": HOST_WOUNDS_MAX
   };
 }

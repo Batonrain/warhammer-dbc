@@ -63,8 +63,35 @@ import { disabledArmourPenalty } from "./armour-penalty.mjs";
 import { inventoryOverloadPenalty } from "./encumbrance.mjs";
 import { isItemActive } from "../apps/effects.mjs";
 
-/** Характеристики, которых Усталость не касается (стр. 26). */
-const FATIGUE_EXEMPT = ["t", "inf", "cog", "pf"];
+/**
+ * Тесты, которых Усталость не касается. Книга («Раны и Урон» → «Статусы»,
+ * wdbc-x1nz.2.95): «штраф −10 на все тесты, кроме тестов T, Inf и Cor».
+ *
+ * Было ["t","inf","cog","pf"] со времён первого коммита: "cog" — опечатка
+ * вместо "cor" (характеристики/теста с ключом "cog" в системе нет вовсе,
+ * а тест Проявления Порчи — sheets/tabs/possession.mjs, char:"cor" — зря
+ * получал −10). "pf" — тест Фактора Прибыли (actor-sheet.mjs::_rollCharacteristic,
+ * «не характеристика»): в книге его нет, но это тот же род теста, что Inf
+ * (богатство/положение династии, а не тело персонажа) — оставлен как
+ * аналог Inf, а не как отступление от книги.
+ */
+const FATIGUE_EXEMPT = ["t", "inf", "cor", "pf"];
+
+/**
+ * Действующая Усталость: хранимая + 1 от Гангрены (wdbc-x1nz.2.96, книга:
+ * «получает 1 Усталости, которую нельзя снять, пока не вылечена Гангрена»).
+ * +1 — производная надбавка, а не запись в fatigue.value: хранимое число
+ * снимается отдыхом/сном как обычно, а эта единица держится, пока стоит
+ * Состояние. Считается заново из value + флага, а не читается из
+ * fatigue.effective (rules/character.mjs): между actor.update и пересчётом
+ * производных fatigue.effective ещё старое.
+ */
+export function gangreneFatigueExtra(actor) {
+  return actor?.system?.conditions?.gangrene ? 1 : 0;
+}
+export function effectiveFatigue(actor) {
+  return Math.max(0, Number(actor?.system?.fatigue?.value) || 0) + gangreneFatigueExtra(actor);
+}
 
 // Гололит (стр. 256, wdbc-x1nz.2): «час подготовки → +10 Command» — бонус
 // разовый, на СЛЕДУЮЩИЙ тест Command после успешного брифинга (combat/
@@ -114,7 +141,8 @@ export function fatiguePenalty(actor, charKey) {
   // поэтому берётся максимум. Прежний захардкоженный путь оставлен работать
   // рядом: Происхождения на новую запись не переводились.
   const grace = Math.max(hwGrace, fatigueGraceForActor(actor));
-  if ((actor?.system?.fatigue?.value ?? 0) < 1 + grace) return 0;
+  // Действующая, а не хранимая: +1 Гангрены тоже даёт штраф (wdbc-x1nz.2.96).
+  if (effectiveFatigue(actor) < 1 + grace) return 0;
   if (FATIGUE_EXEMPT.includes(String(charKey ?? "").toLowerCase())) return 0;
 
   // Feels No Pain / Не Чувствует Боли (wdbc-1rno): «не получает штраф −10 от
@@ -152,6 +180,16 @@ function marchTrackBonus(ctx) {
 }
 
 /**
+ * Пружинящая Стойка (стр. 15, wdbc-x1nz.2.66.8): «тесты S −10» — читается
+ * широко, как остальные четыре штрафа этого файла (любой тест характеристикой
+ * Силы, не только Athletics), пока Стойка активна.
+ */
+export function springingStrengthPenalty(actor, charKey) {
+  if (String(charKey ?? "").toLowerCase() !== "s") return 0;
+  return actor?.system?.meleeStance === "springing" ? -10 : 0;
+}
+
+/**
  * Снятый шлем силовой брони: +5 ко всем тестам на основе Товарищества.
  * Раньше жил методом листа (`_getHelmetlessBonus`) — единственный из пяти,
  * у кого своей функции вне листа не было вовсе.
@@ -174,6 +212,24 @@ const skillKeyOf = ctx => ctx?.skill ?? ctx?.group ?? undefined;
  * штраф. Ноль записи не даёт вовсе — иначе игрок видел бы в окне броска
  * строку «Усталость (+0)» у отдохнувшего персонажа.
  */
+/**
+ * Сжать (стр. 12, wdbc-x1nz.2.76): «штраф –10 на любые Физические действия, за
+ * каждое полудействие, потраченное на Сжатие, если она все еще в Захвате».
+ * Физические тесты здесь — атаки и Навыки тела (Атлетика — все тесты Борьбы,
+ * Акробатика, Уклонение, Парирование); социальные/ментальные не задеты.
+ * Счётчик ставит combat/grapple.mjs::_doSqueeze, в действующий переводит начало
+ * Хода Цели (rules/turn-flags.mjs::turnStartSqueezeCarryOver).
+ */
+const PHYSICAL_SKILLS = ["athletics", "acrobatics", "dodge", "parry"];
+function grappleSqueezePenalty(actor, ctx, skillKey) {
+  if (!actor?.system?.conditions?.grappling) return 0;
+  const n = Number(actor?.getFlag?.("warhammer-dbc", "grappleSqueezeActive")
+    ?? actor?.flags?.["warhammer-dbc"]?.grappleSqueezeActive) || 0;
+  if (!n) return 0;
+  const physical = ctx.kind === "attack" || PHYSICAL_SKILLS.includes(skillKey);
+  return physical ? -10 * n : 0;
+}
+
 export function situationalRules(actor, ctx = {}) {
   if (!actor) return [];
   const charKey  = ctx.char;
@@ -199,6 +255,10 @@ export function situationalRules(actor, ctx = {}) {
       hololithBriefingBonus(actor, skillKey));
   add("situational.marchTrackBonus", "🏃 Цель марширует/бежит — легче засечь",
       marchTrackBonus(ctx));
+  add("situational.springingStance", "🐸 Пружинящая Стойка",
+      springingStrengthPenalty(actor, charKey));
+  add("situational.grappleSqueeze", "🤼 Сжат в Захвате",
+      grappleSqueezePenalty(actor, ctx, skillKey));
 
   return rules;
 }

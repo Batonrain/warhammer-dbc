@@ -19,6 +19,8 @@
 //  Чужие импланты (Механикус, бионика, биоимпланты Друкхари) не трогаются.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { deltaOwnedItems, unlinkedTokens } from "./unlinked-tokens.mjs";
+
 const SYSTEM = "warhammer-dbc";
 const SPIT_NAME = "Кислотный плевок (Железа Бетчера)";
 
@@ -44,8 +46,8 @@ export function geneSeedLeftoverIds(items = []) {
  * код в migrateRemoveGeneSeed (тот же приём, что и в module/migrations/
  * gear-equipped.mjs).
  */
-async function migrateOneActorGeneSeed(actor) {
-  const ids = geneSeedLeftoverIds(actor.items);
+async function migrateOneActorGeneSeed(actor, items = actor.items) {
+  const ids = geneSeedLeftoverIds(items);
   if (ids.length) await actor.deleteEmbeddedDocuments("Item", ids);
   return ids.length;
 }
@@ -60,13 +62,13 @@ async function migrateOneActorGeneSeed(actor) {
  * Ошибка на одном акторе/токене логируется и пропускается, не прерывая
  * обработку следующих: остатки у разных персонажей друг от друга не зависят.
  */
-export async function migrateRemoveGeneSeed() {
+export async function migrateRemoveGeneSeed({ tokensOnly = false } = {}) {
   if (!game.user?.isGM) { ui.notifications?.warn("Чистка Геносемени: только для ГМа."); return; }
   let actorCount = 0, worldCount = 0, failed = 0;
 
   // Мировые акторы. Связанные токены (actorLink:true) используют тот же
   // документ Actor — им отдельный проход не нужен.
-  for (const actor of game.actors) {
+  for (const actor of tokensOnly ? [] : (game.actors ?? [])) {
     try {
       actorCount += await migrateOneActorGeneSeed(actor);
     } catch (e) {
@@ -77,26 +79,26 @@ export async function migrateRemoveGeneSeed() {
 
   // Несвязанные токены сцен: их синтетический актор (tokenDoc.actor) пишет
   // прямо в ActorDelta токена.
-  for (const scene of game.scenes ?? []) {
-    for (const tokenDoc of scene.tokens?.contents ?? []) {
-      if (tokenDoc.actorLink) continue;
-      const actor = tokenDoc.actor;
-      if (!actor) continue;
-      try {
-        actorCount += await migrateOneActorGeneSeed(actor);
-      } catch (e) {
-        failed++;
-        console.error(`Warhammer DBC | Чистка Геносемени: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
-      }
+  // Только предметы из дельты токена: унаследованные от базового актора уже
+  // прошли вместе с ним (wdbc-gbd3, module/migrations/unlinked-tokens.mjs).
+  for (const { scene, tokenDoc, actor } of unlinkedTokens()) {
+    try {
+      actorCount += await migrateOneActorGeneSeed(actor, deltaOwnedItems(tokenDoc));
+    } catch (e) {
+      failed++;
+      console.error(`Warhammer DBC | Чистка Геносемени: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
     }
   }
 
-  try {
-    const ids = geneSeedLeftoverIds(game.items);
-    if (ids.length) { await Item.deleteDocuments(ids); worldCount = ids.length; }
-  } catch (e) {
-    failed++;
-    console.error("Warhammer DBC | Чистка Геносемени (мир):", e);
+  // Мировые предметы — часть прошлого прохода, в режиме «только токены» их не трогаем.
+  if (!tokensOnly) {
+    try {
+      const ids = geneSeedLeftoverIds(game.items);
+      if (ids.length) { await Item.deleteDocuments(ids); worldCount = ids.length; }
+    } catch (e) {
+      failed++;
+      console.error("Warhammer DBC | Чистка Геносемени (мир):", e);
+    }
   }
 
   const msg = failed

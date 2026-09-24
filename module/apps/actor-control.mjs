@@ -53,7 +53,9 @@ export async function attemptSeizeControl(actor, {
   const techDef = {
     label, note, defaultChar, extraBonus,
     modLabel: `${defaultChar.toUpperCase()} vs защита цели`,
-    chatNote: "⚡ Состязательный бросок — сравнить со степенью защиты цели вручную",
+    // Встречный тест (wdbc-x1nz.2.73): цель сопротивляется той же
+    // Характеристикой по кнопке в карточке — сравнивать вручную больше не надо.
+    chatNote: "⚡ Встречный тест — цель сопротивляется по кнопке в карточке",
     onSuccess: async () => { await establishControl(target, actor.uuid, controlOpts); }
   };
   await _showContestDialog(actor, techDef);

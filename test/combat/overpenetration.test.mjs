@@ -83,6 +83,10 @@ describe("rollOverpenetration", () => {
     expect(card).toContain('data-weapon-uuid="Item.bolter-1"');
     expect(card).toContain('data-penetration="4"');
     expect(card).toContain('data-damage-type="X"');
+    // Ради этих двух полей тест и написан (wdbc-bjy1.8): урон — 1d10(3)+5,
+    // место — реверс 30→03, Голова. Без них кнопка применила бы не тот удар.
+    expect(card).toContain('data-damage="8"');
+    expect(card).toMatch(/data-hit-location="[^"]*Голова[^"]*"/);
     // Нет forceTarget/forceHorde в разметке — showApplyDamageDialog спросит цель у ГМа.
     expect(card).not.toContain("data-force-target");
   });

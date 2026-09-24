@@ -22,6 +22,7 @@ export function buildAttackContent(v) {
   const {
     actor,
     aimHtml,
+    aimLocked,
     aimingBadgeHtml,
     ammoCondHtml,
     ammoDialogHtml,
@@ -34,6 +35,8 @@ export function buildAttackContent(v) {
     bandHtml,
     charKey,
     charSwapWhy,
+    charSwapWhyFel,
+    charSwapWhyInt,
     charVal,
     commonMods,
     distanceHintHtml,
@@ -61,6 +64,10 @@ export function buildAttackContent(v) {
     vehicleSideHtml,
     wideBurstHtml,
     confinedSpaceHtml,
+    targetAgainstWallHtml,
+    rapierIgnoreRngHtml,
+    sabreSecondAttackHtml,
+    legacyCleavingHtml,
     wp,
     wpDialogHtml,
   } = v;
@@ -91,7 +98,11 @@ return `
           // законным, и это подписывается прямо в пункте: иначе игрок не
           // отличит разрешённую книгой подмену от самоуправства.
           const swap = (k === "wp" && charSwapWhy.length)
-            ? ` — вместо ${isMelee ? "WS" : "BS"}: ${charSwapWhy.join(", ")}` : "";
+            ? ` — вместо ${isMelee ? "WS" : "BS"}: ${charSwapWhy.join(", ")}`
+            : (k === "fel" && isMelee && charSwapWhyFel.length)
+              ? ` — вместо WS (Финт): ${charSwapWhyFel.join(", ")}`
+              : (k === "int" && isMelee && charSwapWhyInt.length)
+                ? ` — вместо WS (Финт): ${charSwapWhyInt.join(", ")}` : "";
           return `<option value="${k}" ${k === charKey ? "selected" : ""}>${m.abbr} (${v})${swap}</option>`;
         }).join("")}
       </select>
@@ -137,6 +148,10 @@ return `
       <div class="av-pills">${rofPills}</div>
       ${wideBurstHtml}
       ${confinedSpaceHtml}
+      ${targetAgainstWallHtml}
+      ${rapierIgnoreRngHtml}
+      ${sabreSecondAttackHtml}
+      ${legacyCleavingHtml}
     </div>
     ${fanningActive ? `
     <div class="av-row">
@@ -149,7 +164,7 @@ return `
 
     <div class="av-row">
       <label>Избирательная атака</label>
-      <select id="atk-aim" class="av-input av-wide">${aimHtml}</select>
+      <select id="atk-aim" class="av-input av-wide"${aimLocked ? " disabled" : ""}>${aimHtml}</select>
     </div>
     ${mountHtml}
     ${vehicleSideHtml}

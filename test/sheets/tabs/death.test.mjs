@@ -10,7 +10,7 @@ import "../../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { doMiraculousSave, doDivineProtection, doSusAnimation, doSundering, showDeathSaveDialog }
+import { doMiraculousSave, doDivineProtection, doSusAnimation, doSundering, doResurrect, showDeathSaveDialog }
   from "../../../module/sheets/tabs/death.mjs";
 import { eternalWarriorFreeSaveAvailable } from "../../../module/combat/eternal-warrior.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../../module/rules/sources.mjs";
@@ -124,6 +124,9 @@ describe("Kiss of Death — удвоенная цена Спасения (wdbc-1
 
     const upd = actor.updates.at(-1);
     expect(upd["system.fate.value"]).toBe(29); // 30 - 1, не 30 - 2
+    // wdbc-zye1: метка одноразовая и здесь — иначе удвоит СЛЕДУЮЩЕЕ,
+    // уже не связанное с Поцелуем Спасение.
+    expect(upd["flags.warhammer-dbc.-=killedByKissOfDeath"]).toBe(null);
   });
 });
 
@@ -199,11 +202,15 @@ describe("Sundering/Разделение — видимость опции и с
 describe("doSusAnimation (Замедленная Анимация, wdbc-r5o7.7)", () => {
   it("успех — ставит unconscious, НЕ ставит helpless напрямую (она производная)", async () => {
     const actor = astartesForSusAn({ wp: 40 });
+    await actor.setFlag("warhammer-dbc", "killedByKissOfDeath", true);
     captured.dice = [50]; // W 40 + 30 = 70 порог, 50 <= 70 → успех
     await doSusAnimation(actor);
 
     const upd = actor.updates[0];
     expect(upd["system.conditions.unconscious"]).toBe(true);
+    // wdbc-zye1: смерть разрешилась — метка Поцелуя Смерти не должна дожить до
+    // следующей, уже не связанной с ним.
+    expect(upd["flags.warhammer-dbc.-=killedByKissOfDeath"]).toBe(null);
     expect(upd).not.toHaveProperty("system.conditions.helpless");
     expect(captured.chat.at(-1).content).toContain("Успех");
   });
@@ -215,5 +222,16 @@ describe("doSusAnimation (Замедленная Анимация, wdbc-r5o7.7)"
 
     expect(actor.updates).toHaveLength(0);
     expect(captured.chat.at(-1).content).toContain("Провал");
+  });
+});
+
+describe("doResurrect снимает метку Поцелуя Смерти (wdbc-zye1)", () => {
+  it("воскрешённый больше не платит вдвое при следующей смерти", async () => {
+    const actor = berserker();
+    await actor.setFlag("warhammer-dbc", "killedByKissOfDeath", true);
+    await doResurrect(actor);
+    const upd = actor.updates.at(-1);
+    expect(upd["flags.warhammer-dbc.deceased"]).toBe(false);
+    expect(upd["flags.warhammer-dbc.-=killedByKissOfDeath"]).toBe(null);
   });
 });

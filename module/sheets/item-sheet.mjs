@@ -6,7 +6,8 @@ import { submutationContext, rollSubmutation,
          pickSubmutation, clearSubmutation }                   from "../apps/submutations.mjs";
 import { legacyContext, rollAscension, breakLegacy, setHistory, rollHistory,
          rollMutation, addCustomMutation, removeMutation,
-         legacyPrompt }                                        from "../apps/legacy-weapon.mjs";
+         legacyPrompt, activateKillerLegacyFelling, activateExcessBoost,
+         activateSoulboundLegacyBonus, activateLegacyHatredShield }        from "../apps/legacy-weapon.mjs";
 import { shipQualityMods, qualityOptionsFor, effectiveWeapon, clampQuality, QUALITY_LABELS }
   from "../constants/ship-quality.mjs";
 import { availableFieldModes, fieldSuitFor } from "../constants/drukhari-armor-fields.mjs";
@@ -17,7 +18,8 @@ import { ARMOR_PROPERTIES,
          DRUG_CATEGORIES, DRUG_DELIVERY,
          DRUG_CHAR_KEYS, WEAPON_MOD_GROUPS,
          ARMOR_MOD_GROUPS, GEAR_CATEGORIES,
-         TOOL_CATEGORIES, RIG_COMFORT, RIG_SLOT_SIZES, ITEM_TYPES } from "../constants/items.mjs";
+         TOOL_CATEGORIES, RIG_COMFORT, RIG_SLOT_SIZES, ITEM_TYPES,
+         DAMAGE_SUBTYPES } from "../constants/items.mjs";
 import { qualityEffects, itemSpecificQuality }       from "../constants/quality.mjs";
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
 import { susAnHealButtonHtml, useSusAnHeal }         from "../apps/sus-an-heal.mjs";
@@ -408,7 +410,7 @@ async function onArmigerWeaponRelease() {
 // ── Психосила: доп. профили атаки и вариации броска ──
 function onPsyProfileAdd() {
   const arr = foundry.utils.deepClone(this.item.system.profiles || []);
-  arr.push({ label: "", damage: "", damageType: "energy", penetration: 0, propsText: "", charDamageStat: "", charDamageFormula: "" });
+  arr.push({ label: "", damage: "", damageType: "energy", damageSubtype: "", penetration: 0, propsText: "", charDamageStat: "", charDamageFormula: "" });
   return this.item.update({ "system.profiles": arr });
 }
 
@@ -1068,6 +1070,10 @@ export class WarhammerItemSheet
     context.infoguard     = infoguardContext(this.item);
     // Субмутации — только у мутаций, у которых таблица есть в тексте (стр. 440).
     context.submutation   = submutationContext(this.item);
+    // Подвид урона из скобок книги — выпадашка у психосилы/техночуда и их
+    // профилей (wdbc-9zpt); у оружия список пока вписан в weapon.hbs руками.
+    context.damageSubtypeOptions = Object.fromEntries(
+      Object.entries(DAMAGE_SUBTYPES).map(([k, d]) => [k, d.label]));
     // Оружие Наследия — только у оружия (стр. 426-428).
     context.legacy        = legacyContext(this.item);
     context.system = this.item.system;
@@ -1505,7 +1511,8 @@ export class WarhammerItemSheet
         if (!Array.isArray(context.system.variants)) context.system.variants = [];
         context.psyProfiles = context.system.profiles.map((p, i) => ({
           idx: i, label: p.label ?? "", damage: p.damage ?? "",
-          damageType: p.damageType ?? "energy", penetration: p.penetration ?? 0,
+          damageType: p.damageType ?? "energy", damageSubtype: p.damageSubtype ?? "",
+          penetration: p.penetration ?? 0,
           propsText: p.propsText ?? "", charDamageStat: p.charDamageStat ?? "",
           charDamageFormula: p.charDamageFormula ?? ""
         }));
@@ -2415,6 +2422,7 @@ export class WarhammerItemSheet
     // булевы поля.
     mechField(".mech-cc-damage",      (e, v) => { e.ccDamage = v; });
     mechField(".mech-cc-damage-type", (e, v) => { e.ccDamageType = v; });
+    mechField(".mech-cc-damage-subtype", (e, v) => { e.ccDamageSubtype = v; });
     mechField(".mech-cc-pen",         (e, v) => { e.ccPen = Math.max(0, parseInt(v) || 0); });
     mechField(".mech-cc-label",       (e, v) => { e.ccLabel = v; });
     on(".mech-cc-tearing", "change", ev => {
@@ -2440,6 +2448,15 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.ccOnUnarmedOrGrapple = !!ev.currentTarget.checked; saveMech(arr); }
     });
+
+    // Свойство атаки (kind:"attackProp", wdbc-rmrm9) — область/свойство/
+    // рейтинги хранятся строками (рейтинг может быть формулой с кубами, как
+    // у ccDamage выше). Смена области/свойства сохраняет и перерисовывает
+    // лист (mechField), чтобы поля рейтинга показались/спрятались по def.
+    mechField(".mech-ap-scope",   (e, v) => { e.apScope = v; });
+    mechField(".mech-ap-key",     (e, v) => { e.apKey = v; });
+    mechField(".mech-ap-rating",  (e, v) => { e.apRating = String(v ?? "").trim(); });
+    mechField(".mech-ap-rating2", (e, v) => { e.apRating2 = String(v ?? "").trim(); });
 
     // Усталость (kind:"fatigue") — каскад действие → характеристика. Смена
     // действия перерисовывает поля, поэтому сохраняем и даём листу обновиться.
@@ -2626,6 +2643,12 @@ export class WarhammerItemSheet
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.auraAffects = ev.currentTarget.value; saveMech(arr); }
+    });
+    // Интегральная атака «по выбору» (wdbc-o368c, rules/integral-rating.mjs).
+    on(".mech-integral-optional", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.equipOptional = !!ev.currentTarget.checked; saveMech(arr); }
     });
     on(".mech-aura-self", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
@@ -3103,6 +3126,13 @@ export class WarhammerItemSheet
       if (text === null) return;
       await addCustomMutation(this.item, name, text);
     });
+    // Мутации-кнопки со стр. 427 (wdbc-1rno.35): Убийца/Перебор (Очко
+    // Бесчестия), Душесвязанное (свободное действие), Щит Ненависти (Реакция).
+    on(".legacy-killer-activate", "click", () => activateKillerLegacyFelling(this.item));
+    on(".legacy-excess-boost-activate", "click", () => activateExcessBoost(this.item));
+    on(".legacy-soulbound-activate", "click", () => activateSoulboundLegacyBonus(this.item));
+    on(".legacy-soulbound-activate-psychic", "click", () => activateSoulboundLegacyBonus(this.item, { psychic: true }));
+    on(".legacy-hatred-shield-activate", "click", () => activateLegacyHatredShield(this.item));
 
     // ── Особенность комплекта силовой брони ──
     // relayItemUpdate, а не this.item.update напрямую: комплект силовой брони
@@ -3241,7 +3271,8 @@ export class WarhammerItemSheet
       const field = ev.currentTarget.dataset.field;
       const arr = foundry.utils.deepClone(this.item.system.profiles || []);
       if (!arr[i]) return;
-      arr[i][field] = field === "penetration" ? (parseInt(ev.currentTarget.value) || 0) : ev.currentTarget.value;
+      // Пробитие профиля — формула строкой, как у основного (wdbc-1mwm9).
+      arr[i][field] = ev.currentTarget.value;
       await this.item.update({ "system.profiles": arr });
     });
 

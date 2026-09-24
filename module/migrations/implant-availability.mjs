@@ -24,6 +24,8 @@
 //  рассинхрона» уже совершала с testMod (см. AGENTS.md).
 // ════════════════════════════════════════════════════════════════════════════
 
+import { deltaOwnedItems, unlinkedTokens } from "./unlinked-tokens.mjs";
+
 const FLAG_PACK = "warhammer-dbc.implants";
 
 /**
@@ -72,9 +74,9 @@ async function findSource(item, pack, byName) {
  * вызывающий код в migrateImplantAvailability (тот же приём, что и в
  * module/migrations/gear-equipped.mjs).
  */
-async function migrateOneActorImplantAvailability(actor, pack, byName) {
+async function migrateOneActorImplantAvailability(actor, pack, byName, items = actor.items) {
   const updates = [];
-  for (const item of actor.items ?? []) {
+  for (const item of items ?? []) {
     if (item.type !== "implant") continue;
     const src = await findSource(item, pack, byName);
     if (!src) continue;
@@ -96,7 +98,7 @@ async function migrateOneActorImplantAvailability(actor, pack, byName) {
  * Ошибка на одном акторе/токене логируется и пропускается, не прерывая
  * обработку следующих: импланты разных персонажей друг от друга не зависят.
  */
-export async function migrateImplantAvailability() {
+export async function migrateImplantAvailability({ tokensOnly = false } = {}) {
   if (!game.user?.isGM) { ui.notifications?.warn("Доливка полей биоимплантов: только для ГМа."); return; }
   const pack = game.packs?.get(FLAG_PACK);
   if (!pack) return { fixed: 0, failed: 0 };
@@ -112,7 +114,7 @@ export async function migrateImplantAvailability() {
 
   // Мировые акторы. Связанные токены (actorLink:true) используют тот же
   // документ Actor — им отдельный проход не нужен.
-  for (const actor of game.actors ?? []) {
+  for (const actor of tokensOnly ? [] : (game.actors ?? [])) {
     try {
       fixed += await migrateOneActorImplantAvailability(actor, pack, byName);
     } catch (e) {
@@ -123,17 +125,14 @@ export async function migrateImplantAvailability() {
 
   // Несвязанные токены сцен: их синтетический актор (tokenDoc.actor) пишет
   // прямо в ActorDelta токена.
-  for (const scene of game.scenes ?? []) {
-    for (const tokenDoc of scene.tokens?.contents ?? []) {
-      if (tokenDoc.actorLink) continue;
-      const actor = tokenDoc.actor;
-      if (!actor) continue;
-      try {
-        fixed += await migrateOneActorImplantAvailability(actor, pack, byName);
-      } catch (e) {
-        failed++;
-        console.error(`Warhammer DBC | Доливка полей биоимплантов: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
-      }
+  // Только предметы из дельты токена: унаследованные от базового актора уже
+  // прошли вместе с ним (wdbc-gbd3, module/migrations/unlinked-tokens.mjs).
+  for (const { scene, tokenDoc, actor } of unlinkedTokens()) {
+    try {
+      fixed += await migrateOneActorImplantAvailability(actor, pack, byName, deltaOwnedItems(tokenDoc));
+    } catch (e) {
+      failed++;
+      console.error(`Warhammer DBC | Доливка полей биоимплантов: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
     }
   }
 

@@ -11,6 +11,7 @@ import { describe, it, expect } from "vitest";
 import {
   personalAdaptationCap, personalAdaptationBonusFor, nextPersonalAdaptationBonuses, NINE_YEARS
 } from "../../module/rules/personal-adaptation.mjs";
+import { personalAdaptationKey } from "../../module/rules/personal-adaptation.mjs";
 
 describe("personalAdaptationCap", () => {
   it("округление ½Cor.b вверх, ×5", () => {
@@ -88,5 +89,30 @@ describe("nextPersonalAdaptationBonuses", () => {
     ];
     const next = nextPersonalAdaptationBonuses(list, "Actor.a", 1000, 25);
     expect(next.find(r => r.targetUuid === "Actor.b")).toEqual({ targetUuid: "Actor.b", bonus: 20, expiresAt: 6000 });
+  });
+});
+
+// wdbc-4umq (5): ключ записи — «этот самый противник». Инициатор встречного
+// теста бывает мировым актором несвязанного НПЦ (лист открыт из боковой
+// панели, uuid Actor.z), а цель на сцене — его токеном (Scene.x.Token.y.Actor.z):
+// разные ключи, «+5 против того же противника» не копился.
+describe("personalAdaptationKey — один ключ на одного противника", () => {
+  const tokenActor = { uuid: "Scene.s.Token.t.Actor.z", isToken: true };
+  it("актор токена — его собственный uuid", () => {
+    expect(personalAdaptationKey(tokenActor)).toBe("Scene.s.Token.t.Actor.z");
+  });
+  it("мировой актор несвязанного НПЦ с токеном на сцене — uuid токенного актора", () => {
+    const world = { uuid: "Actor.z", isToken: false, prototypeToken: { actorLink: false },
+      getActiveTokens: () => [{ actor: tokenActor }] };
+    expect(personalAdaptationKey(world)).toBe("Scene.s.Token.t.Actor.z");
+  });
+  it("связанный актор (персонаж игрока) — свой uuid", () => {
+    const pc = { uuid: "Actor.pc", isToken: false, prototypeToken: { actorLink: true },
+      getActiveTokens: () => [{ actor: { uuid: "Actor.pc" } }] };
+    expect(personalAdaptationKey(pc)).toBe("Actor.pc");
+  });
+  it("несвязанный без токена на сцене — свой uuid, не падает", () => {
+    const world = { uuid: "Actor.z", isToken: false, prototypeToken: { actorLink: false }, getActiveTokens: () => [] };
+    expect(personalAdaptationKey(world)).toBe("Actor.z");
   });
 });

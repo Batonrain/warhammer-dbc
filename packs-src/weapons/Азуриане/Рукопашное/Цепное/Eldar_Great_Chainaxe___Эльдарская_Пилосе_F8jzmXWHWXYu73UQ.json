@@ -12,7 +12,31 @@
     "balance": 0,
     "grips": "2р (1р, Бл, 1р+Кл)",
     "profileLabel": "Топор",
-    "profiles": [],
+    "profiles": [
+      {
+        "label": "Крюк",
+        "range": "4",
+        "damage": "2d10+3",
+        "damageType": "rending",
+        "damageSubtype": "",
+        "penetration": 6,
+        "weaponProps": [
+          {
+            "key": "felling",
+            "rating": 2
+          }
+        ]
+      },
+      {
+        "label": "Посох",
+        "range": "2-4",
+        "damage": "1d10",
+        "damageType": "impact",
+        "damageSubtype": "crushing",
+        "penetration": 1,
+        "weaponProps": []
+      }
+    ],
     "reload": "–",
     "magazineCur": 0,
     "magazineMax": 0,

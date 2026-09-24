@@ -196,6 +196,16 @@ describe("activateTechMiracle", () => {
     expect(captured.chat[0].content).toContain("d5: 4");
   });
 
+  // wdbc-9zpt: подвид из скобок книги доходит до кнопки «Применить урон».
+  it("подвид урона Техночуда едет на кнопку урона", async () => {
+    const miracle = item({ system: {
+      testSkill: "techUse", damage: "1d10", damageType: "energy", damageSubtype: "electrical"
+    } });
+    captured.dice = [10, 6];
+    await activateTechMiracle(actor(), miracle);
+    expect(captured.chat[0].content).toContain('data-damage-subtype="electrical"');
+  });
+
   it("провал тратит Когницию, но не тратит Энергию", async () => {
     const a = actor();
     const miracle = item({ system: { cognitionCost: 2, energyCost: 3, testSkill: "techUse" } });

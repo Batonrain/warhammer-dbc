@@ -21,16 +21,17 @@
         "penetration": 0,
         "weaponProps": [
           {
-            "key": "imprecise",
-            "rating": 0,
-            "rating2": 0
+            "key": "concussive",
+            "rating": -1
           },
           {
-            "key": "primitive",
-            "rating": 0,
-            "rating2": 0
+            "key": "imprecise"
+          },
+          {
+            "key": "primitive"
           }
-        ]
+        ],
+        "damageSubtype": "crushing"
       },
       {
         "label": "Копьё",
@@ -52,7 +53,8 @@
             "rating": 0,
             "rating2": 0
           }
-        ]
+        ],
+        "damageSubtype": "crushing"
       }
     ],
     "reload": "–",

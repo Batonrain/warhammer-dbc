@@ -9,7 +9,7 @@
 import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { checkSqueeze, postSqueezeReminder, initSqueezeHooks } from "../../module/combat/squeeze.mjs";
+import { checkSqueeze, postSqueezeReminder, initSqueezeHooks, squeezeBaseSize } from "../../module/combat/squeeze.mjs";
 
 function fakeActor({ type = "character", uuid = "Actor.stub", name = "Носильщик" } = {}) {
   return { type, uuid, name, items: [], system: {} };
@@ -49,7 +49,7 @@ describe("checkSqueeze: чистая проверка по готовым дан
     expect(result).toBeNull();
   });
 
-  it("baseSize отсутствует (Размер 2+, на откуп ГМу) — не наше дело, null", () => {
+  it("baseSize отсутствует (нет ни правила, ни размера токена) — проверять не с чем, null", () => {
     const result = checkSqueeze({
       fromCenter: { x: 0, y: 50 }, toCenter: { x: 200, y: 50 },
       doorWalls: [door], cellPx, baseSize: null
@@ -171,5 +171,28 @@ describe("initSqueezeHooks: подписка на Foundry-хуки", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+// wdbc-bjy1.9 (решение владельца, 23.09.2026): у Размера 2+ Базу по книге
+// решает ГМ — и выражает это размером токена. Он и становится Базой.
+describe("squeezeBaseSize — База для проверки тесноты", () => {
+  it("обычный/крупный персонаж — База по правилу (2/3), токен не важен", () => {
+    expect(squeezeBaseSize(2, 1, 1)).toBe(2);
+    expect(squeezeBaseSize(3, 1, 1)).toBe(3);
+  });
+
+  it("Размер 2+ (правило вернуло null) — База = больший размер токена в клетках", () => {
+    expect(squeezeBaseSize(null, 3, 3)).toBe(3);
+    expect(squeezeBaseSize(null, 2, 4)).toBe(4);
+  });
+
+  it("Размер 2+, токен 3×3 в двери шириной 1 клетка — теснота", () => {
+    const door = { c: [0, 0, 100, 0] };
+    const res = checkSqueeze({
+      fromCenter: { x: 50, y: -100 }, toCenter: { x: 50, y: 100 },
+      doorWalls: [door], cellPx: 100, baseSize: squeezeBaseSize(null, 3, 3)
+    });
+    expect(res).toEqual({ doorWidthCells: 1 });
   });
 });

@@ -121,7 +121,10 @@ describe("карточка атаки", () => {
 
     it("кнопка и обычная «Применить урон» лежат в одной группе для DOM-обработчика", () => {
       const html = card({ hits: [{ total: 11, loc: "Торс", baseDieResult: 4, successes: 3 }] });
-      expect(html).toMatch(/<span class="roll-dmg-hit-group">\s*<button class="wh-apply-dmg-btn[\s\S]*wh-dmg-swap-btn[\s\S]*<\/span>/);
+      // Между открытием группы и .wh-apply-dmg-btn может стоять что-то ещё
+      // (напр. галочка «Цель вне арки щита», attack-card.mjs::shieldArcCheckbox)
+      // — важна не строгая смежность, а то, что обе кнопки внутри ОДНОГО span.
+      expect(html).toMatch(/<span class="roll-dmg-hit-group">[\s\S]*?<button class="wh-apply-dmg-btn[\s\S]*wh-dmg-swap-btn[\s\S]*<\/span>/);
     });
   });
 
@@ -488,6 +491,30 @@ describe("защита от Распыления", () => {
     const html = card({ isMelee: false, wp: {} });
     expect(html).toContain("wh-dodge-btn");
     expect(html).toContain("wh-parry-btn");
+  });
+});
+
+// Захват (стр. 12, wdbc-x1nz.2.66.13): «−30 Парирования (или +3 Успеха от
+// предыдущего Парирования)» — альтернативная кнопка Парирования появляется
+// только когда attack.mjs уже посчитал pool.canWaiveGrappleParry (банк ≥3
+// Успехов от предыдущей атаки того же противника, сама эта атака — Захват).
+describe("Захват: альтернативная кнопка Парирования без штрафа за 3 банковских Успеха", () => {
+  it("pool.canWaiveGrappleParry — кнопка появляется рядом с обычным Парированием", () => {
+    const html = card({ isMelee: true, wp: {},
+      pool: { successes: 5, hits: 0, cost: 0, perHit: 0, canRecoil: false, canWaiveGrappleParry: true } });
+    expect(html).toContain("wh-pool-grapple-parry-btn");
+    expect(html).toContain("wh-parry-btn"); // обычная кнопка остаётся, это альтернатива, не замена
+  });
+
+  it("pool без canWaiveGrappleParry (не Захват / банка недостаточно) — кнопки нет", () => {
+    const html = card({ isMelee: true, wp: {},
+      pool: { successes: 1, hits: 0, cost: 0, perHit: 0, canRecoil: false, canWaiveGrappleParry: false } });
+    expect(html).not.toContain("wh-pool-grapple-parry-btn");
+  });
+
+  it("нет пула вовсе (pool: null) — кнопки нет, не падает", () => {
+    const html = card({ isMelee: true, wp: {}, pool: null });
+    expect(html).not.toContain("wh-pool-grapple-parry-btn");
   });
 });
 

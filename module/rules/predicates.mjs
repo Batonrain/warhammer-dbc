@@ -369,6 +369,15 @@ export const PREDICATES = {
   hasCondition: (actor, ctx, value) =>
     list(value).some(key => !!actor?.system?.conditions?.[key]),
 
+  // Ослеплён по-настоящему (wdbc-x1nz.2.89): свой флаг ИЛИ оба глаза потеряны
+  // (isBlindedActor выше) — hasCondition одного ключа не видит второй путь.
+  // `isBlinded: true` — Ослеплён, `false` — нет. Альтернативные чувства
+  // (Sonar Sense/Unnatural Senses) здесь НЕ проверяются: их снимает
+  // вытеснение (rules/library/conditions.mjs, conditions.blinded.altSenses),
+  // иначе Возможность Конструктора пришлось бы спрашивать изнутри отбора
+  // правил — рекурсия collectRules → предикат → collectRules.
+  isBlinded: (actor, ctx, value) => isBlindedActor(actor) === (value !== false),
+
   // То же самое, но про цель броска (ctx.targetActor) — «атаки по Поваленной
   // цели» и подобные правила со стороны атакующего.
   targetHasCondition: (actor, ctx, value) =>

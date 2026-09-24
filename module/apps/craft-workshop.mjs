@@ -27,6 +27,7 @@ import { VAT_QUALITY, BIO_TARGET_QUALITY, BIO_TEST_SKILLS, BIO_OUTCOMES,
 import { bioImplantCatalog } from "../constants/drukhari-bio.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { addFatigue } from "../sheets/tabs/conditions.mjs";
 import { diceModeFor } from "../rules/test-kind.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
 import { critLineHtml } from "../rules/test-kind-widget.mjs";
@@ -440,9 +441,11 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     proj.project.accumulated += gain;
     const done = proj.project.accumulated >= R.bank;
 
+    // Через addFatigue (wdbc-x1nz.2.95): смена работы у порога T.b+W.b роняет
+    // мастера без сознания, Саркофаг держит иммунитет — прямой записью ни
+    // того, ни другого не было.
     try {
-      const fat = crafter.system.fatigue?.value || 0;
-      await crafter.update({ "system.fatigue.value": fat + 1 });
+      await addFatigue(crafter, 1);
     } catch (e) { console.warn("warhammer-dbc | craft fatigue", e); }
 
     const skillList = R.combined.rows.map(r => `${r.label}: ${r.isPrimary ? `<b>${r.total}</b> ведущий` : `+${r.rankBonus} ранг`}${r.synergy ? ` +${r.synergy} синергия` : ""}`).join("; ");

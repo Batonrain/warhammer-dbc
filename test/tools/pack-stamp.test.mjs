@@ -12,7 +12,8 @@ import { describe, it, expect, afterEach } from "vitest";
 import { mkdirSync, rmSync, writeFileSync, utimesSync } from "node:fs";
 import { join } from "node:path";
 import { ROOT } from "../../tools/packs.mjs";
-import { packsChangedSince, latestDbChange, STAMP_FILE } from "../../tools/pack-stamp.mjs";
+import { packsChangedSince, latestDbChange, sourcesChangedSince, STAMP_FILE } from "../../tools/pack-stamp.mjs";
+import { sourceFingerprint } from "../../tools/pack-fingerprint.mjs";
 
 /** Пак с временем последней записи в его базу. */
 const pack = (name, mtimeMs) => ({ name, mtimeMs });
@@ -120,5 +121,68 @@ describe("latestDbChange — только настоящая запись в б�
     const t = edited / 1000;
     utimesSync(abs("000003.log"), t, t);
     expect(latestDbChange(DIR)).toBe(edited);
+  });
+});
+
+// wdbc-6dps: обратная сторона сторожа — исходники ушли вперёд непересобранной
+// базы. Сторож дрейфа видит это, только если пропал бы документ целиком; поля
+// тех же документов извлечение откатывало молча.
+describe("sourcesChangedSince — исходники менялись после сверки", () => {
+  const stamp = (sources) => ({ when: STAMP, fpVersion: 3, packs: {}, sources });
+
+  it("отпечатки совпали — база собрана из текущих исходников", () => {
+    expect(sourcesChangedSince(stamp({ gear: "a", traits: "b" }), { gear: "a", traits: "b" })).toEqual([]);
+  });
+
+  it("исходник пака поменялся — пак назван", () => {
+    expect(sourcesChangedSince(stamp({ gear: "a", traits: "b" }), { gear: "a", traits: "B" })).toEqual(["traits"]);
+  });
+
+  it("пак, которого нет в отметке, считается изменённым — судить не с чем", () => {
+    expect(sourcesChangedSince(stamp({ gear: "a" }), { gear: "a", races: "r" })).toEqual(["races"]);
+  });
+
+  it("отметки нет, старый формат или записана до сверки исходников — null", () => {
+    expect(sourcesChangedSince(null, { gear: "a" })).toBeNull();
+    expect(sourcesChangedSince(STAMP, { gear: "a" })).toBeNull();
+    expect(sourcesChangedSince(stamp(null), { gear: "a" })).toBeNull();
+  });
+});
+
+describe("sourceFingerprint — отпечаток исходника пака", () => {
+  const DIR = "test/tools/.tmp-source-fingerprint";
+  const abs = (...p) => join(ROOT, DIR, ...p);
+  afterEach(() => rmSync(join(ROOT, DIR), { recursive: true, force: true }));
+  const put = (rel, text) => {
+    mkdirSync(join(abs(rel), ".."), { recursive: true });
+    writeFileSync(abs(rel), text);
+  };
+
+  it("меняется от правки поля, а не только от состава", () => {
+    put("a.json", '{"_id":"a","damage":"1d10"}\n');
+    const before = sourceFingerprint(abs());
+    put("a.json", '{"_id":"a","damage":"2d10"}\n');
+    expect(sourceFingerprint(abs())).not.toBe(before);
+  });
+
+  it("переводы строк Windows правкой не считаются", () => {
+    put("a.json", '{\n "_id": "a"\n}\n');
+    const lf = sourceFingerprint(abs());
+    put("a.json", '{\r\n "_id": "a"\r\n}\r\n');
+    expect(sourceFingerprint(abs())).toBe(lf);
+  });
+
+  it("переезд документа в другую папку — тоже правка", () => {
+    put("x/a.json", "{}\n");
+    const before = sourceFingerprint(abs());
+    rmSync(abs("x"), { recursive: true });
+    put("y/a.json", "{}\n");
+    expect(sourceFingerprint(abs())).not.toBe(before);
+  });
+
+  it("книга — один файл; исходника нет — null", () => {
+    put("book.json", "{}\n");
+    expect(sourceFingerprint(abs("book.json"))).toMatch(/^[0-9a-f]{40}$/);
+    expect(sourceFingerprint(abs("нет.json"))).toBeNull();
   });
 });

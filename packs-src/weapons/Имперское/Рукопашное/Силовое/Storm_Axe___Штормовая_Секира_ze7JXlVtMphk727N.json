@@ -12,7 +12,24 @@
     "balance": 0,
     "grips": "2р",
     "profileLabel": "Топор",
-    "profiles": [],
+    "profiles": [
+      {
+        "label": "Посох",
+        "range": "4",
+        "damage": "1d10+6",
+        "damageType": "energy",
+        "damageSubtype": "",
+        "penetration": 5,
+        "weaponProps": [
+          {
+            "key": "imprecise"
+          },
+          {
+            "key": "powerField"
+          }
+        ]
+      }
+    ],
     "reload": "–",
     "magazineCur": 0,
     "magazineMax": 0,

@@ -27,6 +27,8 @@
 // предмете достаточно, apps/effects.mjs::isItemActive уже гасит психосилу по
 // isSustained, а источник "items" уже читает собственные предметы владельца.
 
+import { entryWhenOk } from "./mech-when.mjs";
+
 const TARGET_PREFIX = "target:";
 
 /** Все kind:"capability" записи предмета с префиксом "target:" — рекурсивно по подгруппам. */
@@ -59,6 +61,9 @@ export function psychicSustainTargetRules(actor) {
       if (item.type !== "psychicPower" || !item.system?.isSustained) continue;
       if (item.system?.sustainedTargetUuid !== actor.uuid) continue;
       for (const entry of targetCapabilityEntries(item)) {
+        // Условие записи — по владельцу силы, как у любой записи предмета
+        // (wdbc-4a92: раньше не проверялось, условная запись срабатывала всегда).
+        if (!entryWhenOk(caster, entry, item)) continue;
         const flag = entry.capabilityKey.slice(TARGET_PREFIX.length);
         rules.push({
           id: `psychicSustainTarget.${item.uuid ?? item.id ?? entry.id}.${entry.id}`,

@@ -25,6 +25,7 @@
     "range": "Касание",
     "damage": "3d10+S.b",
     "damageType": "impact",
+    "damageSubtype": "crushing",
     "penetration": 0,
     "effect": "[Железо: 2+ мехадендрита, Embedded Auspex · Цена: 1К+1Э · Процесс: Нет · Тип: Борьба, Компенсатор, Физическое] Треб.: Athletics+10. Только если держит цель в Захвате ≥2 мехадендритами (S слабейшего). Athletics(S) vs Athletics(S); при победе: 3d10+S.b I(Cr), Pen 0, Concussive (1), Wrecker (3), игнор AP. +1 Когниция (до +3) — +10 на тест за каждую.",
     "effects": {

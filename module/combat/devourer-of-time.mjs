@@ -18,18 +18,14 @@
 //  Доп. Ход — существующий примитив combat/extra-turn.mjs (ещё один
 //  Combatant того же актора), тот же, что у Last Actor/Последнего Актёра.
 //  Выдаётся РОВНО ОДИН раз на бой (повторные захваты Врасплох добавляют
-//  жертв в список, не плодят второй доп. Ход) и живёт до конца Combat
-//  (Combatant, как и у Последнего Актёра, отдельно не снимается — Combat
-//  удаляется целиком). «В конец инициативы» — Foundry сортирует Ходы по
+//  жертв в список, не плодят второй доп. Ход) и снимается сменой Раунда
+//  после того, как отыгран: книга даёт «первый Ход в бою два раза», не
+//  каждый Раунд (wdbc-xzfp, processDevourerOfTimeRoundChange ниже). «В конец инициативы» — Foundry сортирует Ходы по
 //  убыванию инициативы, «конец» = минимум минус единица (endOfOrderInitiative).
 //
-//  Полудействие — реальный ОД (combat/action-economy.mjs::spendActionPoints,
-//  1 ОД = полудействие, стр. 12). Списывается на жертвах КАЖДЫЙ раунд в
-//  момент, когда начинается именно доп. Ход этой находки (hooks.mjs::
-//  updateCombat, читает isDevourerOfTimeExtraTurn) — не одноразово: доп.
-//  Ход сам повторяется каждый раунд (это простой второй Combatant в
-//  порядке инициативы), значит и потеря повторяется вместе с ним до конца
-//  боя, без отдельного счётчика раундов.
+//  Полудействие — реальный ОД (1 ОД = полудействие, стр. 12), но ДОЛГОМ на
+//  следующий Ход жертвы, а не списанием в момент доп. Хода чемпиона: к тому
+//  моменту жертвы свой Ход уже отыграли (wdbc-xzfp, раздел внизу файла).
 // ════════════════════════════════════════════════════════════════════════
 
 export const DEVOURER_OF_TIME_CAPABILITY = "gift.tzeentch.devourerOfTime";
@@ -64,4 +60,65 @@ export function devourerOfTimeVictimUuids(actor) {
 /** Уникальное объединение уже записанных жертв с новыми Uuid — чистая функция для кнопки и теста. */
 export function mergedVictimUuids(existing, added) {
   return [...new Set([...(Array.isArray(existing) ? existing : []), ...(Array.isArray(added) ? added : [])])];
+}
+
+// ── wdbc-xzfp: долг ОД, один доп. Ход, уборка ───────────────────────────────
+//
+// Шапка выше описывает прежнее поведение; оно расходилось с книгой в трёх
+// местах. (1) «Теряют полудействие» списывалось в момент доп. Хода
+// чемпиона — жертвы к тому моменту свой Ход уже отыграли (а застигнутые
+// Врасплох и вовсе пропускают первый Раунд, стр. 12), spendActionPoints
+// возвращал false и ничего не писал. Теперь это ДОЛГ: жертва начинает свой
+// следующий Ход на 1 ОД меньше (action-economy.mjs::resetActionEconomy).
+// (2) Список жертв не снимался с концом боя. (3) Книга: «совершает свой
+// ПЕРВЫЙ Ход в бою два раза за Раунд» — доп. Ход один, а не каждый Раунд:
+// использованный снимается сменой Раунда.
+
+/** Флаг на ЖЕРТВЕ — сколько ОД снять в начале её следующего Хода. */
+export const DEVOURER_OF_TIME_AP_DEBT_FLAG = "devourerOfTimeApDebt";
+/** Флаг на ЧЕМПИОНЕ — Раунд, в котором доп. Ход уже отыгран. */
+export const DEVOURER_OF_TIME_USED_ROUND_FLAG = "devourerOfTimeUsedRound";
+
+/** ОД Хода после долга — не ниже нуля. */
+export function apAfterDevourerDebt(apMax, debt) {
+  return Math.max(0, (Number(apMax) || 0) - (Number(debt) || 0));
+}
+
+/** Начало доп. Хода чемпиона (hooks.mjs::updateCombat): долг жертвам, отметка Раунда. */
+export async function processDevourerOfTimeExtraTurn(combat, combatant) {
+  const champion = combatant?.actor;
+  if (!champion) return;
+  for (const uuid of devourerOfTimeVictimUuids(champion)) {
+    const victim = await fromUuid(uuid).catch(() => null);
+    if (!victim) continue;
+    const debt = Number(victim.getFlag?.("warhammer-dbc", DEVOURER_OF_TIME_AP_DEBT_FLAG)) || 0;
+    await victim.setFlag("warhammer-dbc", DEVOURER_OF_TIME_AP_DEBT_FLAG, debt + 1);
+  }
+  await champion.setFlag("warhammer-dbc", DEVOURER_OF_TIME_USED_ROUND_FLAG, Number(combat?.round) || 0);
+}
+
+/**
+ * Смена Раунда: доп. Ход, уже отыгранный в прошлом Раунде, снимается — книга
+ * даёт его только первому Ходу. Снимается именно на смене Раунда: доп. Ход
+ * стоит в конце порядка, текущий Ход (первый в новом Раунде) не сдвигается.
+ */
+export async function processDevourerOfTimeRoundChange(combat) {
+  const ids = [];
+  for (const c of combat?.combatants ?? []) {
+    if (!isDevourerOfTimeExtraTurn(c)) continue;
+    const used = c.actor?.getFlag?.("warhammer-dbc", DEVOURER_OF_TIME_USED_ROUND_FLAG);
+    if (used != null && Number(combat.round) > Number(used)) ids.push(c.id);
+  }
+  if (ids.length) await combat.deleteEmbeddedDocuments("Combatant", ids);
+}
+
+/** Конец боя: список жертв, отметка Раунда и неиспользованный долг не переживают бой. */
+export async function clearDevourerOfTimeAtCombatEnd(combat) {
+  for (const c of combat?.combatants ?? []) {
+    const actor = c.actor;
+    if (!actor?.getFlag) continue;
+    for (const key of [DEVOURER_OF_TIME_VICTIMS_FLAG, DEVOURER_OF_TIME_USED_ROUND_FLAG, DEVOURER_OF_TIME_AP_DEBT_FLAG]) {
+      if (actor.getFlag("warhammer-dbc", key) != null) await actor.unsetFlag("warhammer-dbc", key);
+    }
+  }
 }

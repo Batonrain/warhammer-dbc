@@ -13,6 +13,8 @@
 //  узел НЕ трогаем: чужие данные дороже чистоты, о таких сообщаем в консоль.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { deltaOwnedItems, unlinkedTokens } from "./unlinked-tokens.mjs";
+
 const PACK = "warhammer-dbc.ship-components";
 
 /** Легаси-Корпуса (узлы kind === "hull") среди предметов актора. */
@@ -42,10 +44,10 @@ export function matchHullDoc(item, docs = []) {
  * остальных), принимает вызывающий код в migrateShipHulls (тот же приём, что
  * и в module/migrations/gear-equipped.mjs). Возвращает {migrated, skipped}.
  */
-async function migrateOneShipHulls(actor, docs) {
+async function migrateOneShipHulls(actor, docs, items = actor.items) {
   let migrated = 0, skipped = 0;
   if (actor.type !== "ship") return { migrated, skipped };
-  for (const legacy of legacyHullItems(actor.items)) {
+  for (const legacy of legacyHullItems(items)) {
     const doc = matchHullDoc(legacy, docs);
     if (!doc) {
       skipped++;
@@ -75,7 +77,7 @@ async function migrateOneShipHulls(actor, docs) {
  * Ошибка на одном акторе/токене логируется и пропускается, не прерывая
  * обработку следующих: Корпуса разных кораблей друг от друга не зависят.
  */
-export async function migrateShipHulls() {
+export async function migrateShipHulls({ tokensOnly = false } = {}) {
   if (!game.user?.isGM) { ui.notifications?.warn("Корпуса кораблей: только для ГМа."); return; }
 
   const pack = game.packs?.get(PACK);
@@ -84,7 +86,7 @@ export async function migrateShipHulls() {
 
   // Мировые акторы. Связанные токены (actorLink:true) используют тот же
   // документ Actor — им отдельный проход не нужен.
-  for (const actor of game.actors) {
+  for (const actor of tokensOnly ? [] : (game.actors ?? [])) {
     try {
       const res = await migrateOneShipHulls(actor, docs);
       migrated += res.migrated; skipped += res.skipped;
@@ -96,18 +98,15 @@ export async function migrateShipHulls() {
 
   // Несвязанные токены сцен: их синтетический актор (tokenDoc.actor) пишет
   // прямо в ActorDelta токена.
-  for (const scene of game.scenes ?? []) {
-    for (const tokenDoc of scene.tokens?.contents ?? []) {
-      if (tokenDoc.actorLink) continue;
-      const actor = tokenDoc.actor;
-      if (!actor) continue;
-      try {
-        const res = await migrateOneShipHulls(actor, docs);
-        migrated += res.migrated; skipped += res.skipped;
-      } catch (e) {
-        failed++;
-        console.error(`Warhammer DBC | Корпуса кораблей: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
-      }
+  // Только предметы из дельты токена: унаследованные от базового актора уже
+  // прошли вместе с ним (wdbc-gbd3, module/migrations/unlinked-tokens.mjs).
+  for (const { scene, tokenDoc, actor } of unlinkedTokens()) {
+    try {
+      const res = await migrateOneShipHulls(actor, docs, deltaOwnedItems(tokenDoc));
+      migrated += res.migrated; skipped += res.skipped;
+    } catch (e) {
+      failed++;
+      console.error(`Warhammer DBC | Корпуса кораблей: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
     }
   }
 

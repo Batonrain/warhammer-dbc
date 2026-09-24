@@ -9,6 +9,7 @@
     "weaponClass": "melee",
     "weaponType": "chain",
     "range": 6,
+    "rangeMin": 3,
     "balance": -2,
     "grips": "2р (Бл)",
     "profileLabel": "Меч",

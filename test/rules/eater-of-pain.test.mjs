@@ -94,10 +94,24 @@ describe("eaterOfPainHoldersNear", () => {
 
 describe("eaterOfPainBenefitUpdate", () => {
   it("fatigue — снимает Усталость, не уходит в минус", () => {
+    // fatigueChangeFields (wdbc-x1nz.2.95) пишет ещё и порог (fatigue.max).
     expect(eaterOfPainBenefitUpdate({ fatigue: { value: 3 } }, "fatigue", 5))
-      .toEqual({ "system.fatigue.value": 0 });
+      .toMatchObject({ "system.fatigue.value": 0 });
     expect(eaterOfPainBenefitUpdate({ fatigue: { value: 8 } }, "fatigue", 3))
-      .toEqual({ "system.fatigue.value": 5 });
+      .toMatchObject({ "system.fatigue.value": 5 });
+  });
+
+  it("fatigue — снижение ниже порога выводит из обморока от Усталости", () => {
+    const system = {
+      fatigue: { value: 7 },
+      characteristics: { t: { bonus: 4 }, wp: { bonus: 3 } },
+      conditions: { unconscious: true, fatigueFaintWakeAt: 500 }
+    };
+    expect(eaterOfPainBenefitUpdate(system, "fatigue", 2)).toMatchObject({
+      "system.fatigue.value": 5,
+      "system.conditions.unconscious": false,
+      "system.conditions.fatigueFaintWakeAt": 0
+    });
   });
 
   it("wounds — лечит Раны, не выше эффективного максимума", () => {

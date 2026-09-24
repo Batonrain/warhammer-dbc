@@ -150,6 +150,24 @@ export function emptyArmorLocFlags() {
 }
 
 /**
+ * Пробитие Брони (core.json, «Раны и Урон», стр. 42; wdbc-x1nz.2.78) —
+ * отдельный от обычного Поглощения расчёт: «AP удваивается (или утраивается
+ * против I(Cr) Dmg) в расчёте Поглощения, но T.b игнорируется. Если в таком
+ * расчёте попадание нанесло бы непоглощённый урон, это считается как
+ * пробитие брони». Pen вычитается ДО умножения — effArmorAP уже после Pen/
+ * Копья, как в обычном Поглощении (книга порядок не называет). Остальные
+ * слагаемые Поглощения, не являющиеся T.b (аблативный AP-щит, Адаптация,
+ * плоское снижение урона), входят как есть, без умножения. Чистая функция.
+ *
+ * @returns {{breached: boolean, breachAbsorption: number}}
+ */
+export function armorBreachOutcome({ rawDamage, effArmorAP = 0, damageSubtype = "", otherAbsorption = 0 }) {
+  const mult = damageSubtype === "crushing" ? 3 : 2;
+  const breachAbsorption = Math.max(0, Number(effArmorAP) || 0) * mult + (Number(otherAbsorption) || 0);
+  return { breached: (Number(rawDamage) || 0) - breachAbsorption > 0, breachAbsorption };
+}
+
+/**
  * Помечает надетую броню, покрывающую локацию, как пробитую (wdbc-k0ff) —
  * общее состояние между ударами, а не привязанное к конкретному свойству:
  * ЧТО означает пробитие (теряет Sealed, теряет ещё что-то) решает читатель

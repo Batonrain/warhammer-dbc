@@ -38,6 +38,9 @@
       },
       {
         "key": "overheats"
+      },
+      {
+        "key": "longRifle"
       }
     ],
     "needsRecharge": false,

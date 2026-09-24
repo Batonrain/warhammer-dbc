@@ -23,10 +23,11 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
+import { sizeOf } from "../rules/predicates.mjs";
 
 /** Разница в Размере (мовер − цель); >0 — цель МЕНЬШЕ. */
 export function bulldozeSizeDiff(actor, target) {
-  return (Number(actor?.system?.size) || 0) - (Number(target?.system?.size) || 0);
+  return sizeOf(actor) - sizeOf(target);
 }
 
 /** «Нельзя против противников на 1+ Размер больше персонажа» — жёсткий запрет. */
@@ -34,7 +35,12 @@ export function bulldozeForbidden(actor, target) {
   return bulldozeSizeDiff(actor, target) <= -1;
 }
 
-/** Подсказанный штраф −10 за уровень разницы (только если цель МЕНЬШЕ). */
+/**
+ * Штраф −10 за уровень разницы МЕНЬШЕМУ противнику (только если цель
+ * МЕНЬШЕ). С wdbc-x1nz.2.73 идёт в бросок сопротивления противника, а не
+ * инициатору: до этого он «подсказывался» в Доп. модификатор самого
+ * Напролома, то есть наказывал того, кто крупнее.
+ */
 export function bulldozeSizePenalty(actor, target) {
   const diff = bulldozeSizeDiff(actor, target);
   return diff > 0 ? -10 * diff : 0;

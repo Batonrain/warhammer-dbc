@@ -40,6 +40,9 @@
       {
         "key": "proven",
         "rating": 3
+      },
+      {
+        "key": "longRifle"
       }
     ],
     "needsRecharge": false,

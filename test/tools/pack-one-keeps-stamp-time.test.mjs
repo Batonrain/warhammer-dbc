@@ -5,7 +5,7 @@
 // отпечатки (см. там же: «дата осталась быстрым предфильтром»), поэтому
 // поднятое до «сейчас» время выводит из-под подозрения ЛЮБОЙ другой пак,
 // который правили в игре раньше, — и следующий общий packs:build снесёт его
-// базу молча. Ровно от этого сценария _pack-one и заведён.
+// базу молча. Ровно от этого сценария pack-one и заведён.
 //
 // Проверяется по исходнику: чистые stampAfterPack*/stampAfterUnpack возвращают
 // только отпечатки, а первый аргумент writeStamp живёт в самом инструменте и
@@ -18,7 +18,7 @@ import path from "node:path";
 const root = path.resolve(import.meta.dirname, "../..");
 
 describe("точечная сборка пака не двигает время общей отметки", () => {
-  for (const tool of ["tools/_pack-one.mjs", "tools/_unpack-one.mjs"]) {
+  for (const tool of ["tools/pack-one.mjs", "tools/unpack-one.mjs"]) {
     it(`${tool} зовёт writeStamp с прежним временем`, () => {
       const src = fs.readFileSync(path.join(root, tool), "utf8");
       const call = src.match(/writeStamp\(([^)]*)\)/);

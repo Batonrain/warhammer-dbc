@@ -19,7 +19,7 @@
     "rof_semi": 2,
     "rof_full": 4,
     "damage": "2d10+6",
-    "damageType": "impact",
+    "damageType": "blast",
     "penetration": 4,
     "quality": "common",
     "bookSource": "DoomBC — Основная книга, IV. Арсенал («Стрелковое оружие», стр. 171-186)",
@@ -72,7 +72,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "fragmentation"
   },
   "_id": "4QAgqaYgrswnwbMV",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-heavy.svg",

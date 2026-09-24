@@ -56,7 +56,7 @@ import { expectedPhase } from "../constants/effect-keys.mjs";
 import { WARP_GODS_MAP } from "../constants/veil.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
-import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
+import { conditionApplyFields, removeFatigue } from "../sheets/tabs/conditions.mjs";
 import { buildTargetEffectButtons, resolveWeaponPropsList } from "./weapon-properties.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 
@@ -228,8 +228,10 @@ export async function applyPrimalHowl(actor, casterToken) {
       await a.update({ "system.wounds.ablative": next, "system.wounds.ablativeMax": Math.max(max, next) });
     } else if (god === "slaanesh") {
       changes.push({ key: charFxKey("ag"), type: "add", value: 10 }); // вместо S/T
+      // −1 Усталости — removeFatigue (wdbc-x1nz.2.95): союзник в обмороке от
+      // Усталости приходит в себя по книге (до T.b+W.b−1), таймер гаснет.
       const cur = Number(a.system?.fatigue?.value) || 0;
-      if (cur > 0) await a.update({ "system.fatigue.value": cur - 1 });
+      if (cur > 0) await removeFatigue(a, 1);
     } else if (god === "tzeentch") {
       changes.push({ key: charFxKey("per"), type: "add", value: 10 }); // вместо S/T
     } else {

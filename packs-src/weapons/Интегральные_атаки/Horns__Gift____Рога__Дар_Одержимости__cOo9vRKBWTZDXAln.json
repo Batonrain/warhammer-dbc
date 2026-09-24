@@ -1,0 +1,89 @@
+{
+  "name": "Horns (Gift) / Рога (Дар Одержимости)",
+  "type": "weapon",
+  "system": {
+    "description": "",
+    "notes": "",
+    "grips": "Голова",
+    "profileLabel": "Рога",
+    "profiles": [],
+    "reload": "–",
+    "magazineCur": 0,
+    "magazineMax": 0,
+    "rof_single": 0,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "quality": "common",
+    "availability": 0,
+    "weight": 0,
+    "attackBonus": 0,
+    "special": "Трейт Deadly Natural Weapon (Рога) (DoomBC — Основная книга): 2d10+X R, Pen X, Reinforced; X — рейтинг от Проявления (Cor 1-35/36-55/56-70/71-90/91-100 → 0/1/1/2/2); смоделирован свойством «Естественное оружие Проявления» (+рейтинг к урону и Пробитию). Использовать можно только в Ход, следующий за Натиском — не смоделировано.",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "invocationNaturalWeapon"
+      },
+      {
+        "key": "reinforced"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    },
+    "bookSource": "DoomBC — Основная книга, III. ПРОДВИЖЕНИЕ («Одержимый», стр. 129-132)",
+    "weaponClass": "melee",
+    "weaponType": "primitive",
+    "range": 0,
+    "balance": -2,
+    "damage": "2d10 R",
+    "damageType": "rending",
+    "penetration": 0,
+    "meleeCategory": "Природное"
+  },
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "folder": "mCeNfRO1LB6dGxU3",
+  "_id": "cOo9vRKBWTZDXAln",
+  "_key": "!items!cOo9vRKBWTZDXAln"
+}

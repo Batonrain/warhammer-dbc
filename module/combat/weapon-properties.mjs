@@ -432,7 +432,9 @@ export function buildPropertyChatBlock(props) {
 
 /**
  * Кнопки «Применить эффект к цели» для свойств с auto.targetEffect.
- * onlyUnsoaked=true означает, что был непоглощённый урон (для Toxic/Rad).
+ * Эффекты «при пробитии брони» (Toxic/Rad/…, te.onBreach) кнопку получают
+ * всегда — цель и итог урона здесь ещё неизвестны; пробитие проверяет
+ * hooks.mjs::_applyWeaponPropEffect (wdbc-x1nz.2.79).
  * Возвращает HTML или "".
  *
  * ammoName (wdbc-utaw) — имя заряженного боеприпаса ЭТОГО выстрела (если
@@ -451,7 +453,7 @@ export function buildPropertyChatBlock(props) {
  * и _applyWeaponPropEffect резолвит актора по uuid вместо requireControlledActor,
  * не спрашивая игрока выцелить токен на сцене заново.
  */
-export function buildTargetEffectButtons(props, { hit, netDamageKnown = false, hadUnsoaked = false, ammoName = "", forceActor = null, deg = null } = {}) {
+export function buildTargetEffectButtons(props, { hit, ammoName = "", forceActor = null, deg = null } = {}) {
   if (!hit) return "";
   const btns = [];
 
@@ -475,9 +477,6 @@ export function buildTargetEffectButtons(props, { hit, netDamageKnown = false, h
       // или урон вида «рейтинг×mult + add + Провалы» (provalyDamage) — иначе
       // эффекту нечего накладывать, и показывать нечего.
       if (!te.condition && te.kind !== "grav" && !te.damage && !te.damageFromRating && !te.provalyDamage) continue;
-
-      // Эффекты «при непоглощённом уроне» показываем кнопку только если урон прошёл
-      if (te.onUnsoaked && netDamageKnown && !hadUnsoaked) continue;
 
       const label = p.def.label + (te.labelSuffix ? ` (${te.labelSuffix})` : "");
       const data = [
@@ -504,6 +503,9 @@ export function buildTargetEffectButtons(props, { hit, netDamageKnown = false, h
         `data-wp-min-dop="${te.conditionMinDoP ?? 1}"`,
         `data-wp-vehicle-flat="${te.vehicleFlatDamage ? 1 : 0}"`,
         `data-wp-armor-pen="${te.armorPenDamage ? 1 : 0}"`,
+        // «При пробитии брони» (Rad/Toxic/…, wdbc-x1nz.2.79) — проверяется
+        // в hooks.mjs::_applyWeaponPropEffect по итогу применения урона.
+        `data-wp-on-breach="${te.onBreach ? 1 : 0}"`,
         `data-wp-ammo-name="${ammoName}"`,
         `data-wp-force-actor-uuid="${forceActor?.uuid ?? ""}"`,
         // wdbc-zlx7: базовый порог Успехов уже отфильтрован ВЫШЕ этой функции

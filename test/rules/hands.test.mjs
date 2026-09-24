@@ -11,7 +11,8 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
 import {
   currentMeleeGrip, weaponHandsRequired, getHeldHand, setHeldHand,
-  baseHandsFromTraits, maxHands, handHeldItems, handsOccupied, canEquipInHands
+  baseHandsFromTraits, maxHands, handHeldItems, handsOccupied, canEquipInHands,
+  twoHandedTestPenalty
 } from "../../module/rules/hands.mjs";
 
 const flags = {};
@@ -43,9 +44,17 @@ describe("weaponHandsRequired — рукопашное (GRIPS)", () => {
   it("2р — 2 руки", () => {
     expect(weaponHandsRequired(weapon({ system: { grips: "2р (1р)" } }))).toBe(2);
   });
-  it("П (запястье) и Л (ладонь) — 0 рук, как книжные Independent/Wrist", () => {
+  it("П (предплечье, Когти.П) — 0 рук, как книжные Independent/Wrist: ладонь свободна", () => {
     expect(weaponHandsRequired(weapon({ system: { grips: "П" } }))).toBe(0);
-    expect(weaponHandsRequired(weapon({ system: { grips: "Л" } }))).toBe(0);
+  });
+  // Когти.Р (core.json, «Типы Рукопашного Оружия»): «не дают пользоваться
+  // этой рукой для использования другого оружия и тонкой работы с
+  // устройствами» — в отличие от Когти.П, занимает ладонь как обычное
+  // держимое оружие. "П+Л" (Силовой Кулак/Молниевые Когти — оба хвата разом)
+  // тоже покрывает всю ладонь.
+  it("Л (ладонь, Когти.Р) и П+Л — 1 рука: ладонь занята, не свободна для другого оружия", () => {
+    expect(weaponHandsRequired(weapon({ system: { grips: "Л" } }))).toBe(1);
+    expect(weaponHandsRequired(weapon({ system: { grips: "П+Л" } }))).toBe(1);
   });
   it("специальный хват (Об/Бл/Кл/Мх) без явного 1р/2р — 1 рука по умолчанию", () => {
     expect(weaponHandsRequired(weapon({ system: { grips: "Об" } }))).toBe(1);
@@ -265,7 +274,8 @@ describe("handsOccupied / canEquipInHands", () => {
     const p2 = weapon({ id: "p2", system: { weaponClass: "pistol" } });
     const a = actor([p1, p2]);
     const occ = handsOccupied(a);
-    expect(occ).toEqual({ max: 2, used: 2, free: 0, over: false, items: [p1, p2] });
+    // toMatchObject: с wdbc-x1nz.2.97 сводка несёт ещё поля запястий/обрубков.
+    expect(occ).toMatchObject({ max: 2, used: 2, free: 0, over: false, items: [p1, p2] });
 
     const p3 = weapon({ id: "p3", system: { weaponClass: "pistol" }, equippedNew: true });
     expect(canEquipInHands(a, p3)).toBe(false);
@@ -469,5 +479,78 @@ describe("weaponHandsRequired — пальцевое оружие (wdbc-9dg8 A)"
     const occ = handsOccupied(a);
     expect(occ.used).toBe(1);
     expect(occ.over).toBe(false);
+  });
+});
+
+// ── wdbc-x1nz.2.97 п.2: кисть и рука различаются («Раны и Урон», стр. 43) ──
+// «Ладонь: ... кроме предметов, что цепляются к запястью (щит, когти,
+// нартеций). Рука: ... больше не имеет запястья, чтобы нацепить щит, когти,
+// или другой предмет.»
+describe("потеря кисти vs потеря руки", () => {
+  const shield = (id = "s1") => weapon({ id, system: { weaponClass: "melee", shieldAP: 3 } });
+  const pistol = (id = "p1") => weapon({ id, system: { weaponClass: "pistol" } });
+  const wristGun = (id = "w1") => weapon({ id, system: { weaponClass: "pistol", weaponProps: [{ key: "wrist" }] } });
+  const forearmClaws = (id = "claw1") => weapon({ id, system: { weaponClass: "melee", grips: "П" } });
+
+  it("без кисти: щит пристёгнут к обрубку и не занимает здоровую руку", () => {
+    const a = actor([shield(), pistol()], { lostHandsCount: 1 });
+    const occ = handsOccupied(a);
+    expect(occ.max).toBe(1);
+    expect(occ.used).toBe(1);   // только пистолет; раньше 2 — «не хватает рук»
+    expect(occ.over).toBe(false);
+    expect(occ.stumpShields).toBe(1);
+  });
+
+  it("без кисти: щит можно надеть к пистолету в здоровой руке", () => {
+    const a = actor([pistol()], { lostHandsCount: 1 });
+    expect(canEquipInHands(a, shield())).toBe(true);
+  });
+
+  it("без РУКИ: обрубка кисти нет — щит к пистолету уже не влезает", () => {
+    const a = actor([pistol()], { lostArmsCount: 1 });
+    expect(canEquipInHands(a, shield())).toBe(false);
+  });
+
+  it("без обеих кистей: два щита на обрубках, ладоней не осталось", () => {
+    const a = actor([shield("s1")], { lostHandsCount: 2 });
+    expect(canEquipInHands(a, shield("s2"))).toBe(true);
+    expect(canEquipInHands(a, pistol())).toBe(false);
+  });
+
+  it("предмет на запястье (Wrist) — без обеих рук недоступен", () => {
+    const a = actor([], { lostArmsCount: 2 });
+    expect(canEquipInHands(a, wristGun())).toBe(false);
+  });
+
+  it("предмет на запястье — без обеих КИСТЕЙ доступен (запястья целы)", () => {
+    const a = actor([], { lostHandsCount: 2 });
+    expect(canEquipInHands(a, wristGun())).toBe(true);
+    expect(canEquipInHands(a, forearmClaws())).toBe(true);
+  });
+
+  it("одна рука потеряна: одно запястье — второй наручный предмет не влезает", () => {
+    const a = actor([wristGun("w1")], { lostArmsCount: 1 });
+    expect(canEquipInHands(a, forearmClaws())).toBe(false);
+    expect(handsOccupied(a).over).toBe(false);
+  });
+
+  // wdbc-x1nz.2.97 п.3: «−20 на все тесты, что требуют двух рук» — по бюджету рук.
+  it("twoHandedTestPenalty: −20 при потере кисти или руки у двурукого", () => {
+    expect(twoHandedTestPenalty(actor([], { lostHandsCount: 1 }))).toBe(-20);
+    expect(twoHandedTestPenalty(actor([], { lostArmsCount: 1 }))).toBe(-20);
+    expect(twoHandedTestPenalty(actor([]))).toBe(0);
+  });
+
+  it("twoHandedTestPenalty: многорукий без кисти, но с 3 руками — штрафа нет", () => {
+    const a = actor([trait("Multiple Arms (4) / Многорукий (4)", 4)], { lostHandsCount: 1 });
+    expect(twoHandedTestPenalty(a)).toBe(0);
+    const b = actor([trait("Multiple Arms (4) / Многорукий (4)", 4)], { lostHandsCount: 3 });
+    expect(twoHandedTestPenalty(b)).toBe(-20);
+  });
+
+  it("без потерь — наручные предметы и щит ведут себя как раньше", () => {
+    const a = actor([wristGun("w1"), shield()]);
+    expect(canEquipInHands(a, pistol())).toBe(true);
+    expect(handsOccupied(a).used).toBe(1);
   });
 });

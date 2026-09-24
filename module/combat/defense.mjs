@@ -1,8 +1,8 @@
 import { SKILL_RANKS }    from "../constants/characteristics.mjs";
-import { MELEE_STANCES, BALANCE_PARRY_MOD, gripEffects } from "../constants/combat.mjs";
+import { MELEE_STANCES, BALANCE_PARRY_MOD, gripEffects, parseGrips } from "../constants/combat.mjs";
 import { currentMeleeGrip } from "../rules/hands.mjs";
 import { _degWord, _hitWord, _leftoverSuccessPhrase, negatedHits, esc } from "../helpers/utils.mjs";
-import { resolveWeaponPropsList, aggregateAuto } from "./weapon-properties.mjs";
+import { resolveWeaponPropsList, resolveWeaponProps, aggregateAuto } from "./weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries }  from "./weapon-mods.mjs";
 import { rollIcon }       from "../constants/roll-icons.mjs";
 import { pickReroll }     from "../rules/reroll-pick.mjs";
@@ -10,12 +10,15 @@ import { collectTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { hasRuleFlag }    from "../rules/flags.mjs";
 import { isRoundCapabilityAvailable } from "../apps/game-session.mjs";
-import { equippedMeleeWeapon } from "./equipped-melee.mjs";
+import { equippedMeleeWeapon, isIntegralAttack } from "./equipped-melee.mjs";
+import { grappleDodgeBlockReason } from "./grapple.mjs";
+import { parryWeaponFor, strikeLocation, locationAcc, rollStrikeOn, ARMED_VS_UNARMED_PARRY_BONUS, UNARMED_RIPOSTE_COST } from "./unarmed-combat.mjs";
 import { withWitchsEdge } from "./witchs-edge.mjs";
 import { spendReaction }  from "./action-economy.mjs";
 import { addEvasionSurplus } from "./evasion-pool.mjs";
 import { recoilButtonHtml } from "./recoil.mjs";
 import { overpenetrationButtonHtml } from "./overpenetration.mjs";
+import { stunningLegacyButtonHtml } from "./legacy-weapon-stunning.mjs";
 import { danceOfFireAdvantage } from "../rules/dodge-advantage.mjs";
 import { duckAndCoverAdvantage } from "../rules/duck-and-cover.mjs";
 import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs";
@@ -118,6 +121,10 @@ export async function _performDodge(actor, {
   // тратится — Уклонение физически недоступно, а не просто провалено.
   if ((Number(actor.system.conditions?.lostLegsCount) || 0) > 0)
     return _noReactionCard(actor, "Уклонение (нет ног)");
+  // Борьба (стр. 12, wdbc-x1nz.2.74): Цель не Уклоняется вовсе, держащий — лишь
+  // тяжелее и не меньше цели. Реакция не тратится — как и без ног выше.
+  const grappleNoDodge = grappleDodgeBlockReason(actor);
+  if (grappleNoDodge) return _bladeShieldRefusal(actor, grappleNoDodge, "Уклонение");
   if (!(await spendReaction(actor, { forDefense: true, attackId }))) return _noReactionCard(actor, "Уклонение");
   const { agTotal, threshold: baseThreshold, modParts } = dodgeProfile(actor, extraMod);
   // Фантомные Копии (Wrapped in Chaos "2-3", wdbc-1rno): штраф Уклонению
@@ -206,11 +213,17 @@ export async function _performDodge(actor, {
   // может, а кнопки контратаки/старые вызовы itemUuid не несут (тот же честный
   // дефолт, что у attackerUuid выше).
   const overpenSection = (passed && !isMelee) ? overpenetrationButtonHtml(itemUuid) : "";
+  // Ошеломляющее, Оружие Наследия, стрелковая ветка (wdbc-1rno.35, стр.
+  // 427): «Если цель Уклонилась» — кнопка на карточке этого самого
+  // Уклонения, только для стрелкового оружия с этой Мутацией (сам гейт —
+  // внутри stunningLegacyButtonHtml, ей нужен резолвленный предмет, не UUID).
+  const stunningItem = (passed && !isMelee && itemUuid) ? await fromUuid(itemUuid).catch(() => null) : null;
+  const stunningSection = stunningItem ? stunningLegacyButtonHtml(stunningItem, actor.uuid) : "";
 
     await postTestCard(actor, {
     icon: rollIcon("run"), title: `Уклонение — ${esc(actor.name)}`, actorUuid: actor.uuid,
     threshold: rollStatLine({ label: "Ag", base: agTotal, parts: modParts, threshold, rv }),
-    outcome: outcomeHtml, sections: [leftoverNote, recoilSection, overpenSection]
+    outcome: outcomeHtml, sections: [leftoverNote, recoilSection, overpenSection, stunningSection]
   }, { rolls: [roll] });
 }
 
@@ -295,14 +308,24 @@ export function parryProfile(actor, extraMod = 0, weaponOverride = null, { useCr
 
   // Эффекты модификаций парирующего оружия (баланс, Защитное/Power Field и т.п.)
   const modFx      = getModEffects(actor, meleeWeapon);
-  // Хват (стр. 39, wdbc-x1nz.2.45): «Баланс оружия принудительно ставится в
-  // это значение» (balSet) у Ближнего/Хвостового Хвата — раньше читался только
-  // на АТАКЕ (selection.mjs), Парирование всегда брало «голый» system.balance,
-  // и выбор Хвата в диалоге атаки не менял Порог Парирования тем же оружием.
+  // Хват (стр. 39, wdbc-x1nz.2.45 + wdbc-x1nz.2.68): «Баланс оружия
+  // принудительно ставится в это значение» (balSet) у Ближнего/Хвостового
+  // Хвата, «Баланс −1» (balMod, ОТНОСИТЕЛЬНО system.balance) у Одноручного
+  // как вторичного хвата двуручного оружия — раньше читался только на АТАКЕ
+  // (selection.mjs), Парирование всегда брало «голый» system.balance, и
+  // выбор Хвата в диалоге атаки не менял Порог Парирования тем же оружием.
   // currentMeleeGrip — тот же сохранённый hudGrip, что диалог атаки пишет по
-  // роллу (module/rules/hands.mjs), с тем же фоллбэком на первый Хват профиля.
-  const gripBalSet = meleeWeapon ? gripEffects(currentMeleeGrip(meleeWeapon)).balSet : null;
-  const balance    = (gripBalSet ?? parseInt(meleeWeapon?.system.balance ?? 0)) + (modFx.balanceMod || 0);
+  // роллу (module/rules/hands.mjs), с тем же фоллбэком на первый Хват
+  // профиля; «вторичный» — этот хват отличается от первого в строке grips.
+  // Фоллбэк «1р» на пустой sys.grips — ТОТ ЖЕ, что у currentMeleeGrip (а не
+  // null): иначе у оружия без заполненного grips (пак ещё не бэкфиллен)
+  // gripKeyNow="1р" (фоллбэк currentMeleeGrip) сравнивался бы с primary=null
+  // и ложно считался вторичным хватом на любом обычном мече.
+  const gripKeyNow  = meleeWeapon ? currentMeleeGrip(meleeWeapon) : null;
+  const gripPrimary = meleeWeapon ? (parseGrips(meleeWeapon.system?.grips)[0] || "1р") : null;
+  const gripFx      = gripKeyNow ? gripEffects(gripKeyNow, gripKeyNow !== gripPrimary) : null;
+  const baseBalance = parseInt(meleeWeapon?.system.balance ?? 0) + (gripFx?.balMod || 0);
+  const balance    = (gripFx?.balSet ?? baseBalance) + (modFx.balanceMod || 0);
   const balanceMod = BALANCE_PARRY_MOD[String(balance)];
 
   const stance    = actor.system.meleeStance || "standard";
@@ -380,10 +403,10 @@ export function weaponParryPropBonus(actor, weapon) {
   return parryPropBonuses(props).total;
 }
 
-/** Отказ Парирования: почему нельзя. Реакция при этом не тратится. */
-function _bladeShieldRefusal(actor, why) {
+/** Отказ Парирования (или Уклонения): почему нельзя. Реакция при этом не тратится. */
+function _bladeShieldRefusal(actor, why, what = "Парирование") {
   return postTestCard(actor, {
-    icon: rollIcon("sword"), title: `Парирование — ${esc(actor.name)}`, actorUuid: actor.uuid,
+    icon: rollIcon("sword"), title: `${what} — ${esc(actor.name)}`, actorUuid: actor.uuid,
     outcome: `<span class="roll-failure">${rollIcon("ban","#ff6b6b")}${why}</span>`
   });
 }
@@ -541,8 +564,40 @@ export async function _performParry(actor, {
       `Противник крупнее на ${sizeGate.steps} ${stepWord(sizeGate.steps)} Размера — Парирование ${need} (стр. 12).`);
   }
 
-  const { wsTotal, meleeWeapon, balance, balanceMod, threshold: baseParryThreshold, modParts, pwp, crossblock } =
-    parryProfile(actor, extraMod, null, { useCrossblock });
+  // Безоружный Бой (core.json, стр. 40, wdbc-x1nz.2.71): стрелок без
+  // рукопашного «считается безоружным против невооруженных атак, но
+  // вооруженным во всех прочих случаях» — Парирует своим стволом по профилю
+  // «Ударить оружием» (Баланс −1/−2 книги), а не голыми руками с −20.
+  // attackerUnarmedKnown — атака ИЗВЕСТНА как безоружная (оружие резолвнулось
+  // и оно интегральное); неизвестное оружие атакующего ни +20, ни «стрелок
+  // безоружен» не включает.
+  const attackerUnarmedKnown = !!attackerWeapon && isIntegralAttack(attackerWeapon);
+  const parryWith = parryWeaponFor(actor, { attackerUnarmed: isMelee && attackerUnarmedKnown });
+  const { wsTotal, meleeWeapon, balance, balanceMod, threshold: parryProfileThreshold, modParts, pwp, crossblock } =
+    parryProfile(actor, extraMod, parryWith?.improvisedFrom ? parryWith : null, { useCrossblock });
+
+  // Безоружное Парирование / Кулак.Б (core.json, раздел «Безоружный Бой»):
+  // «Невооруженный персонаж получает штраф –20 на Парирование полноценного
+  // рукопашного оружия.» «Кулак.Б... может Парировать рукопашное оружие,
+  // наносящее R Dmg (со свойством Power Field – также оружие, наносящее E
+  // Dmg), считаясь полноценным оружием» — экземпция от этого штрафа, но
+  // ТОЛЬКО против R/E-атак (иначе Кулак.Б получает тот же −20, что голый
+  // кулак). attackerWp нужен и здесь (тип урона/Power Field атакующего), и
+  // ниже — Power Field против безоружной защиты.
+  const attackerWp = attackerWeapon ? aggregateAuto(resolveWeaponProps(attackerWeapon)) : null;
+  const attackerIsUnarmed = !attackerWeapon || isIntegralAttack(attackerWeapon);
+  const defenderUnarmed = !meleeWeapon || isIntegralAttack(meleeWeapon);
+  const attackerDmgType = attackerWeapon?.system?.damageType || "";
+  const armoredFistExempt = defenderUnarmed && meleeWeapon?.system?.meleeSubtype === "Кулак.Б"
+    && (attackerDmgType === "rending" || (attackerDmgType === "energy" && !!attackerWp?.powerField));
+  const unarmedParryPenalty = (defenderUnarmed && !attackerIsUnarmed && !armoredFistExempt) ? -20 : 0;
+  if (unarmedParryPenalty) modParts.push(`безоружное Парирование ${unarmedParryPenalty}`);
+  // «Вооруженный персонаж получает бонус +20 на Парирование безоружных атак»
+  // (wdbc-x1nz.2.69). Кулак.Б — всё ещё кулак (defenderUnarmed), бонуса нет.
+  const armedVsUnarmedBonus = (isMelee && attackerUnarmedKnown && !defenderUnarmed) ? ARMED_VS_UNARMED_PARRY_BONUS : 0;
+  if (armedVsUnarmedBonus) modParts.push(`вооружён против безоружной атаки +${armedVsUnarmedBonus}`);
+  const baseParryThreshold = parryProfileThreshold + unarmedParryPenalty + armedVsUnarmedBonus;
+
   // Взор Неизбежности (стр. …, wdbc-1rno.3) — тот же приём, что у Уклонения
   // (_performDodge): защищающийся видит глаза атакующего-носителя Дара —
   // Комбинированный Порог с W−10, провал снимает все Реакции.
@@ -674,13 +729,70 @@ export async function _performParry(actor, {
     const pfRoll = await new Roll("1d100").evaluate();
     allRolls.push(pfRoll);
     const destroyed = pfRoll.total <= 75;
-    powerFieldNote = `
+    // Безоружная атака (core.json, «Безоружный Бой», wdbc-x1nz.2.70): кулак
+    // «уничтожить» нельзя — «это считается попаданием этим оружием в
+    // атакующую часть тела с 1 Успехом (используя S.b. атакующего при
+    // парировании безоружной атаки силовым оружием), но сама безоружная атака
+    // остается доступной». 1 Успех — без доп. кубиков/степеней.
+    if (destroyed && isMelee && attackerUnarmedKnown && attackerActor) {
+      const location = strikeLocation(attackerWeapon);
+      const { roll: hitRoll } = await rollStrikeOn(attackerActor, {
+        weapon: meleeWeapon, sbActor: attackerActor, location, source: actor,
+        corruptionBonus: actor.system?.corruptionBonus ?? 0
+      });
+      allRolls.push(hitRoll);
+      powerFieldNote = `
+      <div class="roll-defense-note">
+        ${rollIcon("bolt","#6fe6ff")}Силовое поле — бросок: <b>${pfRoll.total}</b> →
+        <span class="roll-success">безоружная атака «${esc(attackerWeapon.name)}» разбита о поле: попадание ${esc(meleeWeapon.name)} в ${locationAcc(location)} атакующего — <b>${hitRoll.total}</b> Dmg (S.b атакующего, 1 Успех). Сама безоружная атака остаётся доступной.</span>
+      </div>`;
+    } else {
+      powerFieldNote = `
       <div class="roll-defense-note">
         ${rollIcon("bolt","#6fe6ff")}Силовое поле — бросок: <b>${pfRoll.total}</b> →
         ${destroyed
           ? `<span class="roll-success">оружие противника <b>уничтожено</b> (если без Power Field / Reinforced)!</span>`
           : `<span class="roll-failure">оружие противника уцелело (76+).</span>`}
       </div>`;
+    }
+  }
+
+  // Безоружное Парирование / Кулак.Б, продолжение (core.json, «Безоружный
+  // Бой»): «Если силовое оружие «уничтожает» безоружную атаку, это считается
+  // попаданием этим оружием в атакующую часть тела с 1 Успехом (используя
+  // S.b. атакующего при парировании безоружной атаки силовым оружием), но
+  // сама безоружная атака остается доступной.» Тот же бросок 1–75, что у
+  // обычного Силового поля выше, но по СВОЙСТВАМ АТАКУЮЩЕГО оружия (не pwp
+  // защитника) — и вместо «оружие уничтожено» защитник получает попадание
+  // (формула/S.b атакующего, deg=1 — «1 Успех», без доп. кубиков). Книга не
+  // исключает Кулак.Б из этой угрозы («если только оно не привело к
+  // разрушению кулака свойством Power Field») — гейт по defenderUnarmed, не
+  // по armoredFistExempt.
+  let unarmedPowerFieldNote = "";
+  if (parried && defenderUnarmed && attackerWp?.powerField && attackerActor) {
+    const pfRoll2 = await new Roll("1d100").evaluate();
+    allRolls.push(pfRoll2);
+    const destroyed = pfRoll2.total <= 75;
+    if (destroyed) {
+      // «В атакующую часть тела» (wdbc-x1nz.2.70): Пинок отбивал Ногой,
+      // Удар головой — Головой; раньше здесь была прибита Рука.
+      const location = strikeLocation(meleeWeapon);
+      const { roll: dmgRoll } = await rollStrikeOn(actor, {
+        weapon: attackerWeapon, sbActor: attackerActor, location, source: attackerActor,
+        corruptionBonus: attackerActor.system?.corruptionBonus ?? 0
+      });
+      allRolls.push(dmgRoll);
+      unarmedPowerFieldNote = `
+      <div class="roll-defense-note">
+        ${rollIcon("bolt","#6fe6ff")}Силовое поле противника — бросок: <b>${pfRoll2.total}</b> →
+        <span class="roll-failure">безоружная защита не выдержала: попадание ${esc(attackerWeapon.name)} в ${locationAcc(location)} — <b>${dmgRoll.total}</b> Dmg (S.b атакующего, 1 Успех).</span>
+      </div>`;
+    } else {
+      unarmedPowerFieldNote = `
+      <div class="roll-defense-note">
+        ${rollIcon("bolt","#6fe6ff")}Силовое поле противника — бросок: <b>${pfRoll2.total}</b> → <span class="roll-success">безоружная защита выдержала (76+).</span>
+      </div>`;
+    }
   }
 
   // Контратака (стр. 12, Талант Counter Attack): «успешно Парировав, персонаж
@@ -701,8 +813,28 @@ export async function _performParry(actor, {
       && isRoundCapabilityAvailable(actor, COUNTER_ATTACK_CAPABILITY))
     ? `<div class="roll-defense-section">
          <button class="wh-counter-attack-btn" type="button"
-           data-weapon-id="${meleeWeapon.id}" data-attacker-uuid="${attackerUuid}">
+           data-weapon-id="${meleeWeapon.id}" data-attacker-uuid="${attackerUuid}"
+           ${meleeWeapon.improvisedFrom ? `data-improvised="1"` : ""}>
            ${rollIcon("sword")}Контратака (−10)
+         </button>
+       </div>`
+    : "";
+
+  // Ответный удар по безоружной атаке (core.json, «Безоружный Бой»,
+  // wdbc-x1nz.2.69): «может потратить 2 Успеха в тесте на Парирование, чтобы
+  // нанести атакующему урон своего оружия с S.b атакующего вместо своего (в
+  // атакующую конечность)». «Может» — выбор игрока, поэтому кнопка. Тратятся
+  // Успехи СВЕРХ снятых попаданий (leftover): те же, что иначе ушли бы в пул
+  // Избегания стр. 12, и в бою клик списывает их из пула
+  // (hooks.mjs → performUnarmedRiposte), чтобы одни Успехи не тратить дважды.
+  const riposteHtml = (parried && isMelee && attackerUnarmedKnown && !defenderUnarmed && attackerActor
+      && leftover >= UNARMED_RIPOSTE_COST)
+    ? `<div class="roll-defense-section">
+         <button class="wh-unarmed-riposte-btn" type="button"
+           data-weapon-id="${meleeWeapon.id}" ${meleeWeapon.improvisedFrom ? `data-improvised="1"` : ""}
+           data-attacker-uuid="${attackerUuid}" data-attacker-weapon-uuid="${attackerWeaponUuid}"
+           data-banked="${banked ? "1" : "0"}">
+           ${rollIcon("sword")}Ответный удар в ${locationAcc(strikeLocation(attackerWeapon))} (${UNARMED_RIPOSTE_COST} Успеха)
          </button>
        </div>`
     : "";
@@ -726,8 +858,8 @@ export async function _performParry(actor, {
       ? `<div style="font-size:0.82em;color:#5a4a30;margin-bottom:2px;">Оружие: ${esc(meleeWeapon.name)} (Баланс ${balance >= 0 ? "+" : ""}${balance})</div>`
       : ""],
     outcome: outcomeHtml,
-    sections: [leftoverNote, powerFieldNote, crossblockNote, counterAttackHtml]
-  }, { rolls: [roll] });
+    sections: [leftoverNote, powerFieldNote, unarmedPowerFieldNote, crossblockNote, counterAttackHtml, riposteHtml]
+  }, { rolls: allRolls });
 }
 
 /**

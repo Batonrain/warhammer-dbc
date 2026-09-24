@@ -23,6 +23,7 @@
     "sustainAction": "free",
     "damage": "PRd10",
     "damageType": "impact",
+    "damageSubtype": "crushing",
     "penetration": 0,
     "weaponProps": [
       {

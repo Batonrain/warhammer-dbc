@@ -6,7 +6,7 @@
 
 import "../support/foundry-stub.mjs";
 import { describe, it, expect, afterEach } from "vitest";
-import { dayNumber, expiredTheftEntries, devourerPermanentRules, devouredSkillRank, DAY }
+import { dayNumber, expiredTheftEntries, devourerPermanentRules, devouredSkillRank, DAY, nextDevourerStreak, pruneDevourerStreaks }
   from "../../module/rules/devourer-of-knowledge.mjs";
 import { resolveAptitudeOverride } from "../../module/rules/aptitude-overrides.mjs";
 import { clearRuleSources, registerRuleSource, getRuleSources } from "../../module/rules/sources.mjs";
@@ -127,5 +127,38 @@ describe("devouredSkillRank — какая Ступень достаётся ч�
   it("пустые значения не роняют расчёт", () => {
     expect(devouredSkillRank(null, undefined, undefined))
       .toEqual({ stolen: "untrained", gained: "untrained" });
+  });
+});
+
+// wdbc-63fe: серия «9 дней подряд» жила в записи временной кражи, а та
+// стиралась тиком Календаря ровно при переводе на сутки вперёд — серия
+// сбрасывалась в 1 при обычном ходе игры. Теперь серия — отдельная запись.
+describe("nextDevourerStreak — серия «9 дней подряд»", () => {
+  it("нет записи — первый день", () => {
+    expect(nextDevourerStreak(undefined, 100)).toEqual({ streak: 1, sameDay: false });
+  });
+  it("вчера — серия растёт, даже если сама кража уже истекла", () => {
+    expect(nextDevourerStreak({ streak: 8, lastDay: 99 }, 100)).toEqual({ streak: 9, sameDay: false });
+  });
+  it("сегодня уже пожирал — повтор, серия не растёт", () => {
+    expect(nextDevourerStreak({ streak: 3, lastDay: 100 }, 100)).toEqual({ streak: 3, sameDay: true });
+  });
+  it("пропущен день — серия заново", () => {
+    expect(nextDevourerStreak({ streak: 5, lastDay: 97 }, 100)).toEqual({ streak: 1, sameDay: false });
+  });
+  it("девять суток подряд с полным переводом Календаря набирают 9", () => {
+    let rec;
+    for (let day = 10; day < 19; day++) {
+      const { streak } = nextDevourerStreak(rec, day);
+      rec = { streak, lastDay: day };
+    }
+    expect(rec.streak).toBe(9);
+  });
+});
+
+describe("pruneDevourerStreaks — отмершие серии не копятся", () => {
+  it("оставляет сегодняшние и вчерашние, убирает более старые", () => {
+    const all = { a: { streak: 2, lastDay: 100 }, b: { streak: 4, lastDay: 99 }, c: { streak: 7, lastDay: 98 } };
+    expect(Object.keys(pruneDevourerStreaks(all, 100)).sort()).toEqual(["a", "b"]);
   });
 });

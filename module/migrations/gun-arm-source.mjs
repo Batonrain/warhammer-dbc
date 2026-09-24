@@ -15,6 +15,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { GUN_ARM_CLASSES, isGunArmGift, isGunArmWeapon } from "../rules/gun-arm.mjs";
+import { unlinkedTokens } from "./unlinked-tokens.mjs";
 
 const FLAG = "warhammer-dbc";
 
@@ -72,7 +73,7 @@ async function migrateOneActorGunArmSource(actor, ask) {
  * штамповалась безусловно — не читая failed, — поэтому недомигрированные
  * акторы не подхватывались повторным запуском; wdbc-059h).
  */
-export async function migrateGunArmSource() {
+export async function migrateGunArmSource({ tokensOnly = false } = {}) {
   if (!game.user?.isGM) return;
   let marked = 0;
   let failed = 0;
@@ -80,7 +81,7 @@ export async function migrateGunArmSource() {
 
   // Мировые акторы. Связанные токены (actorLink:true) используют тот же
   // документ Actor — им отдельный проход не нужен.
-  for (const actor of game.actors ?? []) {
+  for (const actor of tokensOnly ? [] : (game.actors ?? [])) {
     try {
       marked += await migrateOneActorGunArmSource(actor, ask);
     } catch (e) {
@@ -91,17 +92,16 @@ export async function migrateGunArmSource() {
 
   // Несвязанные токены сцен: их синтетический актор (tokenDoc.actor) пишет
   // прямо в ActorDelta токена.
-  for (const scene of game.scenes ?? []) {
-    for (const tokenDoc of scene.tokens?.contents ?? []) {
-      if (tokenDoc.actorLink) continue;
-      const actor = tokenDoc.actor;
-      if (!actor) continue;
-      try {
-        marked += await migrateOneActorGunArmSource(actor, ask);
-      } catch (e) {
-        failed++;
-        console.error(`Warhammer DBC | Рука-Пушка: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
-      }
+  // Здесь — все предметы синтетического актора, а не только из дельты
+  // (wdbc-gbd3): решение смотрит на Дар и оружие ВМЕСТЕ, а они могут лежать
+  // по разные стороны дельты. Повтора миграция не боится — уже помеченное
+  // оружие даёт «skip».
+  for (const { scene, tokenDoc, actor } of unlinkedTokens()) {
+    try {
+      marked += await migrateOneActorGunArmSource(actor, ask);
+    } catch (e) {
+      failed++;
+      console.error(`Warhammer DBC | Рука-Пушка: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
     }
   }
 

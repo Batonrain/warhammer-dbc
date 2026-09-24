@@ -8,6 +8,8 @@ import {
   requestRevokeControlOwnership, revokeControlOwnership
 } from "../../module/apps/actor-control.mjs";
 import { isControlled, controllerUuidOf } from "../../module/rules/actor-control.mjs";
+import { resistButtonData } from "../support/contest.mjs";
+import { resolveResistClick } from "../../module/combat/opposed-contest.mjs";
 
 beforeEach(() => { resetCaptured(); captured.dice = [10]; });
 
@@ -34,7 +36,11 @@ describe("attemptSeizeControl", () => {
     const actor = actorFor({});
     actor.uuid = "Actor.seizer";
     const target = flaggedActor({});
+    target.uuid = "Actor.victim";
     globalThis.game.user.targets = [{ actor: target }];
+    globalThis.game.user.id = "user-1";
+    globalThis.game.user.isGM = true;
+    globalThis.fromUuid = async uuid => (uuid === actor.uuid ? actor : uuid === target.uuid ? target : null);
 
     await attemptSeizeControl(actor, { label: "Захват", defaultChar: "ws", controlOpts: { permanent: true, sourceItemUuid: "Item.x" } });
 
@@ -43,6 +49,13 @@ describe("attemptSeizeControl", () => {
     // Состязания книги не вычитают Ранг Навыка, только характеристику).
     const html = fakeHtml({ "#contest-char": "ws", "#contest-self": "45", "#contest-mod": "0" });
     await captured.dialog.buttons.roll.callback(html);
+
+    // Встречный тест (wdbc-x1nz.2.73): цель сопротивляется по кнопке, и только
+    // проиграв, попадает под контроль.
+    expect(isControlled(target)).toBe(false);
+    const ds = resistButtonData(captured.chat.at(-1).content);
+    captured.dice = [99];
+    await resolveResistClick(ds);
 
     expect(isControlled(target)).toBe(true);
     expect(controllerUuidOf(target)).toBe(actor.uuid);

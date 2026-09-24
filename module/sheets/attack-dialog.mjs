@@ -17,7 +17,7 @@
 
 import { CHARACTERISTICS }                    from "../constants/characteristics.mjs";
 import { DAMAGE_TYPES }                       from "../constants/items.mjs";
-import { MELEE_STANCES, MELEE_BASES, parseGrips } from "../constants/combat.mjs";
+import { MELEE_STANCES, MELEE_BASES, parseGrips, meleeEffectiveRange } from "../constants/combat.mjs";
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { rollIcon }                           from "../constants/roll-icons.mjs";
 import { openAttackDialog } from "./attack/dialog.mjs";
@@ -32,7 +32,9 @@ import { resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properti
 import { mergeExtraProps } from "../combat/attack-weapon.mjs";
 import { getModEffects, mergeWeaponPropEntries, getInstalledMods } from "../combat/weapon-mods.mjs";
 import { hasRuleFlag }                        from "../rules/flags.mjs";
-import { isStunnedOrDazed, isBlindedActor }    from "../rules/predicates.mjs";
+import { isStunnedOrDazed }    from "../rules/predicates.mjs";
+import { suffersBlindness } from "../rules/blindness.mjs";
+import { shieldArmorByLocation } from "../combat/hand-shield.mjs";
 import { isHallucinatingCannotAttack }         from "../combat/hallucinogenic.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
 import { mountPairFor, mountSelectiveMod, SELECTIVE_MODS,
@@ -43,6 +45,7 @@ import { isWalkerVehicle } from "../rules/walker.mjs";
 import { legionAttackPenalty, LEGION_FIT_FLAG, OVERSIZED_FIT_FLAG } from "../rules/legion-fit.mjs";
 import { ogrynAttackPenalty, OGRYN_FIT_FLAG } from "../rules/ogryn-fit.mjs";
 import { meleeTrainingStatus, weaponTrainingPenalty } from "../rules/weapon-training.mjs";
+import { extendedReachCells, meleeContactDisplay } from "../rules/weapon-length.mjs";
 import { MELEE_CATEGORIES, sameCategory } from "../constants/weapon-categories.mjs";
 import { isHandShield } from "../combat/hand-shield.mjs";
 import { weaponHandsRequired, handsOccupied } from "../rules/hands.mjs";
@@ -62,7 +65,9 @@ import { canDualWield, offHandCandidates, dualWieldMods }
   from "../rules/dual-wield.mjs";
 import { targetHasActiveFlies, fliesAttackPenalty, wrathHeatAttackPenalty } from "../rules/wrapped-in-chaos.mjs";
 import { MAGGOT_PARASITE_CAPABILITY } from "../rules/maggot-parasite.mjs";
-import { legacyWrathEffectiveRof } from "../rules/legacy-weapon.mjs";
+import { legacyWrathEffectiveRof, takenMutationNames } from "../rules/legacy-weapon.mjs";
+import { actorInfamyValue } from "../apps/infamy-points.mjs";
+import { isSabre, NS as SABRE_NS, SABRE_PENDING_FLAG } from "../combat/sabre-second-attack.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -94,7 +99,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // наибольшей RoF, или S/2− вместо S/−/−» — клон sys с этой точки, реальный
   // предмет не трогаем (module/rules/legacy-weapon.mjs::legacyWrathEffectiveRof,
   // тот же приём, что combat/attack.mjs использует на самом броске).
-  const sys     = legacyWrathEffectiveRof(item.system, item);
+  let   sys     = legacyWrathEffectiveRof(item.system, item);
   // Стартовое значение «Доп. мод» — напр. Контратака (стр. 12, требует Талант
   // Counter Attack): «−10» уже вписаны, когда открывается окно, а не молча
   // сидят в пороге — игрок видит и волен поправить/убрать.
@@ -115,6 +120,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   if (profIdx === undefined || profIdx === null) profIdx = item.getFlag?.("warhammer-dbc", "hudProfile");
   profIdx = Number.isFinite(Number(profIdx)) ? Number(profIdx) : -1;
   const startProfile = profIdx >= 0 ? (atkProfiles[profIdx] || null) : null;
+  // «Ударить оружием» (core.json, «Безоружный Бой»): Баланс приклада — из
+  // таблицы книги (−1/−2), а не system.balance ствола. Стойки/Приёмы с
+  // минимумом Баланса (attack/selection.mjs) читают sys.balance. Внутри окна
+  // профиль меняется только на профиль того же вида (profileOptions), а у
+  // стрелкового рукопашный профиль один — подмена на входе не разъедется.
+  if (startProfile?.generated && startProfile.balance != null) sys = { ...sys, balance: startProfile.balance };
 
   // Вид теста фиксируется на ВХОДЕ в окно и внутри него не меняется: от него
   // зависит около восьмидесяти мест расчёта (см. wdbc-uh56 — окно атаки это
@@ -142,6 +153,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     kind: "attack",
     weaponClass: sys.weaponClass,
     isMelee,
+    // Область «weapon:unarmed» (Свойство атаки Конструктора, wdbc-rmrm9).
+    unarmed: isIntegralAttack(item),
     char: charKey,
     targetActor: [...(game.user?.targets ?? [])][0]?.actor ?? null
   };
@@ -430,8 +443,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // +20» — та же форма, что у Бега (runningMod) чуть выше, тем же приёмом,
   // что уже сделан для Беспомощной цели (badge, не «Спецправила»/rollBonus:
   // безусловное книжное правило, не галочка на усмотрение игрока).
-  const targetProne    = !!attackCtx.targetActor?.system?.conditions?.prone;
-  const proneMod       = targetProne ? (isMelee ? 20 : -20) : 0;
+  const { targetProne, proneMod, targetStunned, stunnedMod } =
+    targetConditionAttackMods(attackCtx.targetActor, isMelee);
   const proneBadge     = targetProne
     ? `<span class="atk-training-warn" title="Цель Повалена (стр. 30-31)">🧎 Цель Повалена (${isMelee ? "+20" : "−20"})</span>`
     : "";
@@ -443,9 +456,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Оглушена» буквально — эта фраза уже занята независимым ручным
   // чекбоксом «Ситуативные» (commonMods ниже, для случаев, которые система
   // не отследит сама), тот же приём, что различают «Цель лежит»
-  // (ручной)/«Цель Повалена» (авто) и «Цель бежит» (тот и другой).
-  const targetStunned  = isStunnedOrDazed(attackCtx.targetActor);
-  const stunnedMod     = targetStunned ? 20 : 0;
+  // (ручной)/«Цель Повалена» (авто) и «Цель бежит» (тот и другой). Когда
+  // Состояние распознано, ручная галочка отмечена, заперта и стоит 0
+  // (sheets/attack/mods.mjs, wdbc-x1nz.2.97 п.6) — бонус только отсюда.
   const stunnedBadge   = targetStunned
     ? `<span class="atk-training-warn" title="Цель Оглушена/в Ступоре (стр. 30-31)">💫 Цель Оглушена/в Ступоре (+20)</span>`
     : "";
@@ -482,7 +495,20 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // рукопашный бой или продолжает в нём находиться — то есть практически
   // всегда, когда идёт рукопашная атака этим оружием; безусловно, без галочки.
   const stepByStepMod = (isMelee && wp.stepByStep) ? 10 : 0;
-  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + ogrynFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + stepByStepMod + bowMarkedMod + proneMod + stunnedMod + fliesMod + wrathHeatMod;
+  // Булава (core.json, «Типы Рукопашного Оружия»): +10 на не-Избирательные
+  // атаки. Здесь — «холодное» окно ОТКРЫТИЯ (аим ещё не выбран, по умолчанию
+  // "" — не-Избирательная, см. attackForm/thresholdParts), поэтому применяется
+  // безусловно; живой пересчёт при смене аима — своя строка в thresholdParts
+  // ниже (та же схема, что уже развела proneMod/wpAttackMod от «Цель
+  // Повалена»/baseParts, wdbc-r5o7.2).
+  const meleeMaceMod = (isMelee && sys.meleeCategory === "Булава") ? 10 : 0;
+  // Крюк (core.json, «Типы Рукопашного Оружия»): «Дает –10 на не-Избирательные
+  // атаки и –15 на Избирательные» — зеркало Булавы выше, только штраф и с
+  // двумя разными величинами по Избирательности вместо одной безусловной.
+  // «Холодное» значение здесь тоже по умолчанию не-Избирательное (−10) — тем
+  // же приёмом, что meleeMaceMod.
+  const meleeHookMod = (isMelee && sys.meleeCategory === "Крюк") ? -10 : 0;
+  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + ogrynFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + stepByStepMod + bowMarkedMod + proneMod + stunnedMod + fliesMod + wrathHeatMod + meleeMaceMod + meleeHookMod;
   const meleeCategory = sys.meleeCategory || "";
   // Категория оружия по выбранному Профилю (стр. 14, «Композиция Рукопашной
   // Атаки»): у многопрофильного оружия каждый альт-профиль — фактически
@@ -570,7 +596,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // выбранная связка — в sheets/attack/selection.mjs (wdbc-uh56).
   const {
     profileOptions, computeStanceOptions, computeGripOptions, computeBaseOptions,
-    computeManeuverOptions, computeLockNoteHtml, resolveSelectionSafe, dyn0
+    computeManeuverOptions, computeLockNoteHtml, computeLengthOptions, hasVariableLength,
+    resolveSelectionSafe, dyn0
   } = buildSelection({
     actor,
     atkProfiles,
@@ -590,8 +617,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     sBonus,
     stance,
     sys,
+    targetActor: attackCtx.targetActor,
     trainingFor,
     wp,
+    // Вторая атака Сабли (wdbc-f6j9y): База зафиксирована «Верховая Атака».
+    forcedBaseKey: techniqueOpts.sabreSecondAttack ? "mounted" : null,
   });
 
   /**
@@ -650,13 +680,25 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     + wpAttackMod + dyn0.techBon + dyn0.stanceBon + dyn0.gWs + (wp.noAim ? 0 : aimingBonus) + ammoAtkMod;
 
   // Штраф усталости (мод препаратов уже учтён в char.total)
-  const hasFatigue = (actor.system.fatigue?.value ?? 0) >= 1;
-  // Ослеплён (стр. 30-31, wdbc-r5o7.4): автопровал BS, −30 WS — тот же
-  // приём, что Усталость выше (autoCheck на реальном состоянии, галочка
+  // fatigue.effective — с +1 неснимаемой от Гангрены (wdbc-x1nz.2.96).
+  const hasFatigue = (actor.system.fatigue?.effective ?? actor.system.fatigue?.value ?? 0) >= 1;
+  // Ослеплён (стр. 30-31, wdbc-r5o7.4): автопровал BS, −30 WS. При
+  // реальном Ослеплении галочка отмечена и заперта (wdbc-x1nz.2.89, решение
+  // владельца 4 — снять руками нельзя, sheets/attack/mods.mjs); без него
   // остаётся ручной для случаев, которые система не отследит сама, напр.
-  // ослепление вспышкой без хранимого флага). isBlindedActor — свой флаг
-  // ИЛИ Потеря обоих глаз (rules/predicates.mjs).
-  const isBlinded = isBlindedActor(actor);
+  // ослепление вспышкой без хранимого флага. Ослеплён — свой флаг ИЛИ
+  // Потеря обоих глаз (rules/predicates.mjs::isBlindedActor).
+  // Щит на голове (core.json, «Типы Рукопашного Оружия», разд. «Щит»):
+  // «При прикрытии головы щитом, персонаж перекрывает себе обзор... персонаж
+  // считается слепым с углов прикрытия щита» — упрощение: не различаем
+  // «слеп только в направлении, что закрывает щит» (та же геометрия, которой
+  // в системе нет, что у арки/«прижата к стене») — трактуем как обычное
+  // Ослепление ВСЕГДА, пока голова прикрыта (shieldArmorByLocation уже сама
+  // учитывает shieldRaised для частичных зон вроде «(Г)»).
+  const shieldBlindsSelf = (shieldArmorByLocation(actor).head || 0) > 0;
+  // Sonar Sense / Unnatural Senses снимают «все штрафы Ослепления» — и от
+  // Состояния, и от щита (wdbc-x1nz.2.89, rules/blindness.mjs).
+  const isBlinded = suffersBlindness(actor, { extraBlind: shieldBlindsSelf });
   // Потеря глаз (частичная, book: «−10 на BS», независимо от полной
   // слепоты) — читает флаг напрямую, не через isBlindedActor: тут именно
   // «хоть один глаз потерян», а не производное «оба потеряны = Ослеплён».
@@ -744,12 +786,27 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   if (attackCtx.targetActor && hasRuleFlag(attackCtx.targetActor, MAGGOT_PARASITE_CAPABILITY)) {
     aimTargets = aimTargets.filter(t => !t.value);
   }
+  // Приём Оглушить (стр. 14, wdbc-x1nz.2.66.3): «базовая рукопашная
+  // Избирательная атака в голову» — не подсказка, форсированный выбор.
+  // Широкий Взмах (стр. 14, wdbc-x1nz.2.66.1): «не может быть Избирательной
+  // атакой» — форсирован на «— Без прицела —». Список целей не режем (та же
+  // геометрия disabled+checked, что у пилюль Приёма/Стойки/Базы) — нужное
+  // значение отмечается selected и весь select дисейблится, чтобы игрок не
+  // мог выбрать другую часть тела; readAttackForm по-прежнему читает :value
+  // независимо от disabled (тот же приём, что у пилюль). Live-переключение
+  // Приёма ПОСЛЕ открытия окна — то же самое делает dialog.mjs::updateTotal
+  // (aimEl.value/.disabled), этот select строится только при первом рендере.
+  const forcedAimValue = dyn0.maneuverKey === "stun" ? "head"
+    : dyn0.maneuverKey === "sweep" ? ""
+    : null;
+  const aimLocked = forcedAimValue !== null;
   const aimHtml = aimTargets.map(t => {
     const pen = (t.precise && csMod) ? Math.min(0, t.penalty + csMod) : t.penalty;
     const lbl = t.value && !t.label.includes("(")
       ? `${t.label} (${pen})`
       : t.label;
-    return `<option value="${t.value}" data-penalty="${pen}">${lbl}</option>`;
+    const selected = (aimLocked && t.value === forcedAimValue) ? " selected" : "";
+    return `<option value="${t.value}" data-penalty="${pen}"${selected}>${lbl}</option>`;
   }).join("");
 
   // ── Цель верхом (стр. 478) ──────────────────────────────────────────────
@@ -883,7 +940,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
   // Ситуативные модификаторы вынесены в sheets/attack/mods.mjs (wdbc-uh56):
   // данные без вёрстки, шов замерен (12 внутрь, 4 наружу).
-  const { bandKey, charSwapWhy, commonMods, specificMods } = situationalMods({
+  const { bandKey, charSwapWhy, charSwapWhyFel, charSwapWhyInt, commonMods, specificMods } = situationalMods({
     actor,
     attackCtx,
     attackerToken,
@@ -907,19 +964,24 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const makeMods = arr => arr.map(m => {
     const isAF      = m.autofail === true;
     const isAS      = m.autosuccess === true;
-    const isChecked = m.autoCheck === true;
+    // locked (wdbc-x1nz.2.89/.97): отмечено и не снимается — состояние
+    // распознано системой (Ослеплён; «Цель лежит»/«Цель Оглушена» при
+    // авто-бонусе). disabled-галочка всё равно видна селектору :checked
+    // (sheets/attack/form.mjs), поэтому в сумму и автопровал она идёт.
+    const isLocked  = m.locked === true;
+    const isChecked = m.autoCheck === true || isLocked;
     // Погашенный правилом цели модификатор не прячем: игрок должен видеть,
     // ПОЧЕМУ бонуса нет, а не гадать, куда делся пункт списка.
     const dispVal   = m.immune ? "иммунитет"
                     : (isAF ? "провал" : (isAS ? "авто-успех, ×2" : (m.value >= 0 ? `+${m.value}` : `${m.value}`)));
     const note      = m.note ? ` [${m.note}]` : "";
-    return `<label class="attack-mod-check${isChecked ? " atk-mod-auto" : ""}${m.immune ? " atk-mod-immune" : ""}">
+    return `<label class="attack-mod-check${isChecked ? " atk-mod-auto" : ""}${m.immune ? " atk-mod-immune" : ""}"${isLocked ? ' title="Распознано автоматически — снять нельзя"' : ""}>
       <input type="checkbox" class="atk-mod-cb"
              ${m.id ? `id="${m.id}"` : ""}
              data-value="${(isAF || isAS) ? 0 : m.value}"
              ${isAF    ? 'data-autofail="true"' : ""}
              ${isAS    ? 'data-autosuccess="true"' : ""}
-             ${m.immune ? "disabled" : ""}
+             ${(m.immune || isLocked) ? "disabled" : ""}
              ${isChecked ? "checked" : ""}/>
       <span>${m.label} (${dispVal})${note}${isChecked ? " 😓" : ""}</span>
     </label>`;
@@ -1076,6 +1138,67 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     <label class="attack-mod-check" title="Стр. 36: комната не больше 4×радиус взрыва. X Dmg — +1d10 урона и радиус ×1.5 (окр. вверх); E Dmg — Рвущее; Оглушающее — рейтинг +1. Решает ГМ на глаз, геометрия стен системой не считается.">
       <input type="checkbox" id="atk-confined-space"/> Тесное помещение (≤4×радиус взрыва)
     </label>` : "";
+  // Молот/Топор по лежащей или прижатой к стене цели (core.json, «Типы
+  // Рукопашного Оружия»): «+1d10 Dmg и получает свойство Concussive(–1)/
+  // Felling(2), или +1 к рейтингу, если оно уже имело это свойство».
+  // «Лежащая» — статус Повержен цели, читается автоматически (см. proneMod
+  // выше); «прижата к стене» система не отслеживает (нет геометрии стен, тот
+  // же принцип, что у Тесного помещения выше) — решает ГМ галочкой.
+  const meleeTypeBonusWeapon = isMelee && (sys.meleeCategory === "Молот" || sys.meleeCategory === "Топор");
+  const targetAgainstWallHtml = meleeTypeBonusWeapon ? `
+    <label class="attack-mod-check" title="Типы Рукопашного Оружия: по лежащей или прижатой к стене цели Молот/Топор наносят +1d10 Dmg и получают Concussive/Felling (или +1 к рейтингу, если уже было). «Лежащая» цель определяется автоматически (Повержен); эта галочка — только для «прижата к стене», решает ГМ на глаз.">
+      <input type="checkbox" id="atk-target-against-wall"/> Цель прижата к стене (+1d10, ${sys.meleeCategory === "Молот" ? "Concussive" : "Felling"} +1)
+    </label>` : "";
+  // Рапира (core.json, «Типы Рукопашного Оружия»): «при проведении Выпада
+  // может проигнорировать +1 к Rng, чтобы уменьшить штраф на Избирательные
+  // атаки на 10» — категория-гейт (не по текущему выбранному Приёму: тот
+  // меняется живьём в этом же окне, а остальные категорийные галочки этой
+  // сессии тоже не следят за живым Приёмом, см. targetAgainstWallHtml выше).
+  // Эффект — своя строка в thresholdParts ниже, гейтится f.aimVal (есть ли
+  // вообще штраф, который уменьшать) и живым выбором Приёма f.maneuverKey.
+  // Побочный эффект на саму Длину (+1 Rng Выпада, весовое сравнение с
+  // оружием цели) этой галочкой не тронут — отдельный, более глубокий пробел.
+  const rapierIgnoreRngAvailable = isMelee && sys.meleeCategory === "Меч" && sys.meleeSubtype === "Рапира";
+  const rapierIgnoreRngHtml = rapierIgnoreRngAvailable ? `
+    <label class="attack-mod-check" title="Рапира, приём Выпад: игнорирует +1 к Rng этого приёма, вместо этого штраф Избирательной атаки этим Выпадом снижается на 10.">
+      <input type="checkbox" id="atk-rapier-ignore-rng"/> Рапира: игнорировать +1 Rng Выпада (−10 к штрафу Избирательной атаки)
+    </label>` : "";
+  // Сабля (core.json, «Типы Рукопашного Оружия»): «при совершении Верховой
+  // Атаки может проигнорировать бонус +20, чтобы совершить две атаки вместо
+  // одной, но по разным целям на пути». Геометрии «пути Натиска» и второго
+  // НЕЗАВИСИМОГО броска попадания в системе нет (честный предел — тот же,
+  // что у «Вторичных целей Очереди», attack.mjs::burstSecondaryTargets:
+  // только подсказка, реальное распределение/вторая атака — за столом).
+  // Здесь — галочка отменяет сам +20 (своя строка в thresholdParts, гейт по
+  // живому f.baseKey==="mounted"), карточка отдельно напоминает про вторую
+  // атаку (см. attack.mjs::sabreSecondAttackNote).
+  //
+  // wdbc-f6j9y: галочка первой атаки взводит вторую (combat/sabre-second-
+  // attack.mjs) — кнопка на карточке открывает это же окно с
+  // techniqueOpts.sabreSecondAttack: галочка там стоит намертво (без +20),
+  // База зафиксирована «Верховая Атака», ОД и Лимит Атак не тратятся.
+  // Пока вторая атака взведена, первую повторно не предлагаем.
+  const sabreSecondMode = !!techniqueOpts.sabreSecondAttack;
+  const sabreSecondAttackAvailable = isMounted && isSabre(sys)
+    && (sabreSecondMode || !actor.getFlag?.(SABRE_NS, SABRE_PENDING_FLAG));
+  const sabreSecondAttackHtml = !sabreSecondAttackAvailable ? ""
+    : sabreSecondMode ? `
+    <label class="attack-mod-check" title="Вторая атака Сабли после Верховой Атаки: без ОД и вне Лимита Атак, бонус +20 не действует, цель — другая.">
+      <input type="checkbox" id="atk-sabre-second-attack" checked disabled/> Сабля: вторая атака (без ОД, без +20)
+    </label>`
+    : `
+    <label class="attack-mod-check" title="Сабля, Верховая Атака: отказаться от +20 этой Базы — взамен до конца Хода доступна вторая атака этой Саблей по другой цели, без ОД (кнопка на карточке атаки).">
+      <input type="checkbox" id="atk-sabre-second-attack"/> Сабля: вторая атака вместо +20 Верховой Атаки
+    </label>`;
+  // Кромсающее/fearsome 10-10, Оружие Наследия (wdbc-1rno.35, стр. 427),
+  // второе предложение: «...может потратить Очко Бесчестия, чтобы бросить
+  // ВМЕСТО ЭТОГО 1d10−2(мин.1)» вместо обычного 1d5+1 на Экстремальном Уроне.
+  // Видна только при наличии Мутации и ≥1 Очка Бесчестия — трата случается
+  // в attack.mjs, ОДНА на всю атаку, не за каждое попадание Очереди.
+  const legacyCleavingHtml = (takenMutationNames(item).has("Кромсающее") && actorInfamyValue(actor) >= 1) ? `
+    <label class="attack-mod-check" title="Кромсающее: при Экстремальном Уроне бросить 1d10−2(мин.1) вместо обычного 1d5+1, потратив 1 Очко Бесчестия.">
+      <input type="checkbox" id="atk-legacy-cleaving"/> Кромсающее: 1d10−2(мин.1) вместо 1d5+1 (−1 Очко Бесчестия)
+    </label>` : "";
   // ── Стойка/База/Приём/Хват/Профиль — теперь выбираются прямо в диалоге ───
   // Под пилюлями каждой группы — своя заметка с полным текстом эффекта
   // текущего выбора (id для updateTotal ниже), тем же приёмом, что раньше
@@ -1083,12 +1206,26 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Тактическая карта (wdbc-8k0i): вид контакта — чисто информационно (нет
   // автоматических триггеров «Свободной Атаки», это ручная Реакция, стр. 12),
   // подсказывает игроку/ГМ, легален ли рукопашный Приём вообще.
+  // Длина Оружия, правило 3 (wdbc-x1nz.2.67.1, стр. 39): Rng 8/9 создаёт
+  // Базовый контакт «через клетку» — meleeAttackerRange здесь на основной
+  // Хват + Приём «Стандартная» (не пересчитывается живьём при смене пилюль
+  // в этом же окне), та же оговорка неточности, что у автогалочек правил 1/4
+  // (sheets/attack/mods.mjs) — подсказка, не гарантированное число после
+  // смены Приёма/Хвата.
+  const meleeAttackerRange = isMelee
+    ? meleeEffectiveRange(sys.range, parseGrips(sys.grips)[0] ?? null, "standard", false,
+        Math.max(0, Number(actor?.system?.size) || 0))
+    : 0;
+  const reachCells = isMelee ? extendedReachCells(meleeAttackerRange) : 0;
+  const contactDisplay = (isMelee && measured)
+    ? meleeContactDisplay(measured.contact, measured.edgeM, meleeAttackerRange) : null;
   const CONTACT_BADGE = {
     deep: `<span class="atk-training-warn" title="Базы налагаются — как при переносе раненого">🔶 Глубокий контакт</span>`,
     base: `<span class="atk-training-warn" title="Грани Баз соприкасаются">⚔ Базовый контакт</span>`,
+    reach: `<span class="atk-training-warn" title="Rng ${meleeAttackerRange}: Базовый контакт через ${reachCells === 2 ? "две клетки" : "клетку"} (Длина Оружия, стр. 39)">🗡 Контакт через оружие (${reachCells} кл.)</span>`,
     none: `<span class="atk-training-warn" title="Базы не касаются — рукопашная может быть недоступна">⚠ Нет контакта</span>`
   };
-  const contactBadgeHtml = (isMelee && measured) ? CONTACT_BADGE[measured.contact] : "";
+  const contactBadgeHtml = contactDisplay ? CONTACT_BADGE[contactDisplay] : "";
   const maneuverBlockHtml = isMelee ? `
     <div class="av-section">
       ${contactBadgeHtml}
@@ -1116,6 +1253,16 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       <div class="av-sec-lbl">Хват</div>
       <div class="av-pills" id="atk-grip-pills">${pillsHtml("atk-grip", computeGripOptions(dyn0.pIdx), dyn0.gKey)}</div>
     </div>` : "";
+  // Длина Оружия, правило 5 (стр. 39, wdbc-x1nz.2.67.2): у оружия с
+  // диапазоном Rng (rangeMin>0, из книги — Гладий 1-3, Меч 2-4 и т.п.)
+  // персонаж выбирает длину атаки на каждую атаку; у обычного оружия
+  // (rangeMin=0 — большинство, пока не размечено content-проходом) пилюли
+  // не показываются вовсе, effRange считается как раньше по range.
+  const lengthBlockHtml = hasVariableLength ? `
+    <div class="av-section" title="Стр. 39: у оружия с диапазоном Rng длина атаки выбирается заново каждый раз">
+      <div class="av-sec-lbl">Длина</div>
+      <div class="av-pills" id="atk-length-pills">${pillsHtml("atk-length", computeLengthOptions(), String(dyn0.length))}</div>
+    </div>` : "";
   // "Основной" тоже вариант выбора — поэтому порог "больше одного" по общему
   // числу опций (главный + доп. профили), а не только по числу доп. профилей.
   const profileBlockHtml = profileOptions.length > 1 ? `
@@ -1123,7 +1270,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       <div class="av-sec-lbl">Профиль</div>
       <div class="av-pills">${pillsHtml("atk-profile", profileOptions, dyn0.pIdx, "idx")}</div>
     </div>` : "";
-  const techSectionsHtml = `${maneuverBlockHtml}${stanceBlockHtml}${baseBlockHtml}${gripBlockHtml}${profileBlockHtml}`;
+  const techSectionsHtml = `${maneuverBlockHtml}${stanceBlockHtml}${baseBlockHtml}${gripBlockHtml}${lengthBlockHtml}${profileBlockHtml}`;
 
   // ── Обе руки одним действием (wdbc-3jlm, Талант «Два Оружия») ───────────
   // Строка появляется только у того, кто это умеет И у кого есть что взять во
@@ -1184,6 +1331,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     actor,
     dualWieldHtml,
     aimHtml,
+    aimLocked,
     aimingBadgeHtml,
     ammoCondHtml,
     ammoDialogHtml,
@@ -1195,6 +1343,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     bandHtml,
     charKey,
     charSwapWhy,
+    charSwapWhyFel,
+    charSwapWhyInt,
     charVal,
     commonMods,
     distanceHintHtml,
@@ -1221,6 +1371,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     techSectionsHtml,
     wideBurstHtml,
     confinedSpaceHtml,
+    targetAgainstWallHtml,
+    rapierIgnoreRngHtml,
+    sabreSecondAttackHtml,
+    legacyCleavingHtml,
     vehicleSideHtml,
     wp,
     wpDialogHtml,
@@ -1245,12 +1399,40 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const baseParts = [
       { label: CHARACTERISTICS[f.char]?.abbr || f.char, value: actor.system.characteristics[f.char]?.total ?? 0 },
       { label: "Бонус оружия",       value: sys.attackBonus || 0 },
+      // «Все атаки стрелковым оружием, использующим эти профили, получают
+      // штраф –10, который увеличивается до –20 для тяжелого оружия»
+      // (core.json, «Безоружный Бой») — поле attackMod профиля «Ударить оружием».
+      { label: "Стрелковое в рукопашной", value: Number(sel.prof?.attackMod) || 0 },
       { label: "Свойства оружия",    value: wp.attackMod || 0 },
       { label: "Модификации",        value: modFx.attackMod || 0 },
       { label: "Качество",           value: qTestMod },
       { label: "Легион",             value: legionFit.total },
       { label: "Огрины",             value: ogrynFit.total },
       { label: "Тренировка",         value: weaponTraining.total },
+      // Булава (core.json, «Типы Рукопашного Оружия»): «Дает бонус +10 на
+      // любые не-Избирательные атаки» — живой чекбокс f.aimVal (та же
+      // «Избирательность», что ниже строкой modParts) определяет и это.
+      { label: "Булава (не-Избирательная атака)",
+        value: (isMelee && sys.meleeCategory === "Булава" && !f.aimVal) ? 10 : 0 },
+      // Крюк (core.json, «Типы Рукопашного Оружия»): −10 не-Избирательная / −15
+      // Избирательная — тот же живой f.aimVal, что у Булавы, только знак и
+      // величина другие для двух исходов вместо одного.
+      { label: "Крюк (Избирательная/не-Избирательная атака)",
+        value: (isMelee && sys.meleeCategory === "Крюк") ? (f.aimVal ? -15 : -10) : 0 },
+      // Рапира (core.json, «Типы Рукопашного Оружия»): «при проведении
+      // Выпада может проигнорировать +1 к Rng, чтобы уменьшить штраф на
+      // Избирательные атаки на 10» — только пока реально выбран Выпад И
+      // отмечена галочка И есть сам штраф, который уменьшать (f.aimVal).
+      { label: "Рапира: игнорирует +1 Rng Выпада",
+        value: (isMelee && sys.meleeCategory === "Меч" && sys.meleeSubtype === "Рапира"
+          && f.maneuverKey === "thrust" && f.rapierIgnoreRng && f.aimVal) ? 10 : 0 },
+      // Сабля (core.json, «Типы Рукопашного Оружия»): отменяет +20 Верховой
+      // Атаки (уже сидит в sel.baseBon этой Базы) взамен на вторую атаку —
+      // своя строка компенсирует ровно тот бонус, а не жёстко «-20» (если
+      // книжный бонус когда-то изменится, компенсация не разъедется).
+      { label: "Сабля: вторая атака вместо +20",
+        value: (isMelee && sys.meleeCategory === "Меч" && sys.meleeSubtype === "Сабля"
+          && sel.baseKey === "mounted" && f.sabreSecondAttack) ? -sel.baseBon : 0 },
       { label: "Стойка цели",        value: targetStanceMod },
       { label: "Цель раскрыта",      value: exposedMod },
       { label: "Беспомощная цель",   value: helplessRangedMod },
@@ -1391,6 +1573,24 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   });
 }
 
+/**
+ * Бонусы атаке от Состояния ЦЕЛИ, которые книга даёт безусловно: Повален
+ * («Стрельба по нему −20, рукопашная +20») и Оглушён/Ступор («все атаки по
+ * нему +20»), «Раны и Урон», «Статусы». Одна функция на оба пути атаки —
+ * окно (showAttackDialog) и безусловный приём без оружия
+ * (showAttackDialogNoWeapon), где этих бонусов раньше не было вовсе
+ * (wdbc-x1nz.2.97 п.6).
+ */
+export function targetConditionAttackMods(targetActor, isMelee) {
+  const targetProne   = !!targetActor?.system?.conditions?.prone;
+  const targetStunned = isStunnedOrDazed(targetActor);
+  return {
+    targetProne, targetStunned,
+    proneMod:   targetProne ? (isMelee ? 20 : -20) : 0,
+    stunnedMod: targetStunned ? 20 : 0
+  };
+}
+
 export async function showAttackDialogNoWeapon(actor, techDef) {
   if (isHallucinatingCannotAttack(actor))
     return ui.notifications.warn("⚠️ Галлюцинации («Я маленький...») — не может совершать Атаки.");
@@ -1420,12 +1620,18 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
   // ни в сумму, ни в карточку).
   const bodyMods = collectTestMods(actor, { kind: "attack", isMelee: true, char: "ws" });
   const fatigue  = bodyMods.total;
+  const targetActor = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+  // Повалена/Оглушена цель — +20, тем же кодом, что окно атаки
+  // (wdbc-x1nz.2.97 п.6); Ослеплённый бьёт с −30 WS, как строка «Ослеплён»
+  // окна (wdbc-x1nz.2.89) — здесь галочек нет, поэтому сразу в Порог.
+  const { proneMod, stunnedMod } = targetConditionAttackMods(targetActor, true);
+  const blindMod = suffersBlindness(actor) ? -30 : 0;
   // WS уже включает мод препаратов (см. prepareDerivedData)
-  const final    = ws + techDef.wsBonus + baseBon + stBon + fatigue;
+  const final    = ws + techDef.wsBonus + baseBon + stBon + fatigue + proneMod + stunnedMod + blindMod;
 
   // Беспомощная цель, рукопашная (в т.ч. безоружная) — авто-успех и ×2 урона,
   // как и в showAttackDialog (см. helplessAutoMelee там же).
-  const targetHelpless = !!([...(game.user?.targets ?? [])][0]?.actor)?.system?.conditions?.helpless;
+  const targetHelpless = !!targetActor?.system?.conditions?.helpless;
 
   const roll     = await new Roll("1d100").evaluate();
   const rv       = roll.total;
@@ -1491,6 +1697,9 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
     `база ${baseBon >= 0 ? "+" : ""}${baseBon}${fullAttackForced ? " (Локус Сокрушения)" : ""}`,
     stBon !== 0 ? `стойка ${stBon >= 0 ? "+" : ""}${stBon}` : "",
     techDef.wsBonus !== 0 ? `${techDef.wsBonus >= 0 ? "+" : ""}${techDef.wsBonus}` : "",
+    proneMod   ? `Цель Повалена +${proneMod}` : "",
+    stunnedMod ? `Цель Оглушена/в Ступоре +${stunnedMod}` : "",
+    blindMod   ? `Ослеплён ${blindMod}` : "",
     ...bodyMods.parts
   ];
 

@@ -35,6 +35,20 @@ export const PERSONAL_ADAPTATION_CAPABILITY = "gift.tzeentch.personalAdaptation"
 /** Флаг на чемпионе — список { targetUuid, bonus, expiresAt }. */
 export const PERSONAL_ADAPTATION_FLAG = "personalAdaptationBonuses";
 
+/**
+ * Ключ записи — «этот самый противник» (wdbc-4umq). Актор токена — свой uuid.
+ * Мировой актор НЕсвязанного НПЦ (лист открыт из боковой панели, а не с
+ * токена) приводится к актору его активного токена на сцене: цель встречного
+ * теста приходит как раз токенным актором (Scene.x.Token.y.Actor.z), и без
+ * этого у одного противника было два ключа. Несвязанный без токена и
+ * связанный актор — свой uuid.
+ */
+export function personalAdaptationKey(actor) {
+  if (!actor) return "";
+  if (actor.isToken || actor.prototypeToken?.actorLink !== false) return actor.uuid;
+  return actor.getActiveTokens?.()?.[0]?.actor?.uuid ?? actor.uuid;
+}
+
 /** Секунд в 9 игровых годах (365-дневный год — тот же счёт, что уже даёт «Календарь»). */
 export const NINE_YEARS = 9 * 365 * 86400;
 

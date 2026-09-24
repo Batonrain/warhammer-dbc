@@ -71,7 +71,7 @@
     "weaponType": "exotic",
     "range": 20,
     "damage": "2d10",
-    "damageType": "impact",
+    "damageType": "blast",
     "penetration": 0,
     "meleeCategory": ""
   },

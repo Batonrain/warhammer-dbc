@@ -88,7 +88,8 @@ describe("migrateShipHulls: изоляция сбоя одного корабл�
       user: { isGM: true },
       actors: [],
       scenes: [{ name: "Сцена 1", tokens: { contents: [
-        { id: "t1", name: "Токен корабля", actorLink: false, actor: tokenShip }
+        { id: "t1", name: "Токен корабля", actorLink: false, actor: tokenShip,
+          delta: { _source: { items: [{ _id: "hullTok" }] } } }
       ] } }],
       packs: { get: () => ({ getDocuments: async () => [packDoc] }) }
     };

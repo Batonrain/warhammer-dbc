@@ -38,6 +38,9 @@
       },
       {
         "key": "linger"
+      },
+      {
+        "key": "longRifle"
       }
     ],
     "needsRecharge": false,

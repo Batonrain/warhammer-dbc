@@ -216,8 +216,9 @@ export async function activateTechMiracle(actor, item) {
             <div class="roll-damage-label">Урон (${dt}, Проб. ${pen}): <b>${dmgRoll.total}</b></div>
             <button class="wh-apply-dmg-btn" type="button"
               data-damage="${dmgRoll.total}" data-penetration="${pen}"
-              data-damage-type="${sys.damageType}" data-hit-location="Торс"
-              data-weapon-name="${item.name}" data-attacker="${actor.name}"
+              data-damage-type="${sys.damageType}" data-damage-subtype="${sys.damageSubtype || ""}"
+              data-hit-location="Торс"
+              data-weapon-name="${item.name}" data-attacker="${actor.name}" data-attacker-uuid="${actor.uuid}"
               data-felling="${wp.fellingRating ?? 0}"
               data-primitive="${wp.primitive ? 1 : 0}"
               data-ignore-shield="${wp.ignoreShield ? 1 : 0}"
@@ -235,7 +236,7 @@ export async function activateTechMiracle(actor, item) {
   let attackPropsSection = "";
   if (success && atkProps.length) {
     const propBlock  = buildPropertyChatBlock(atkProps);
-    const effectBtns = buildTargetEffectButtons(atkProps, { hit: true, netDamageKnown: false });
+    const effectBtns = buildTargetEffectButtons(atkProps, { hit: true });
     attackPropsSection = (propBlock || "") + (effectBtns || "");
   }
 

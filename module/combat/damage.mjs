@@ -12,12 +12,15 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, outcomeHtml, rollStatLine } from "../helpers/test-card.mjs";
 import { ablativeDamage, mountRangedApBonus } from "../rules/mount.mjs";
 import { LAST_DAMAGE_WEAPON_FLAG } from "./blood-flame.mjs";
-import { resolveArmorAbsorptionAP, breachArmorAtLocation } from "./armor-properties.mjs";
+import { resolveArmorAbsorptionAP, breachArmorAtLocation, armorBreachOutcome } from "./armor-properties.mjs";
 import { applyWoundLoss, ablativeAbsorb } from "../rules/wounds.mjs";
 import { CAST_OUT_OF_DEATH_CAPABILITY, CAST_OUT_OF_DEATH_FLAG, scheduleCastOutOfDeathRegen } from "../rules/cast-out-of-death.mjs";
 import { eaterOfPainHoldersNear } from "../rules/eater-of-pain.mjs";
+import { realityRendingPenalty } from "../rules/wrapped-in-chaos.mjs";
 import { VOLUNTEER_ACTOR_CAPABILITY, isHarlequinsKissItem } from "../rules/volunteer-actor.mjs";
 import { MAGGOT_PARASITE_CAPABILITY } from "../rules/maggot-parasite.mjs";
+import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
+import { conditionLevelField } from "../constants/conditions.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { redirectHitLocationForMachine } from "../rules/bronze-myrmidon.mjs";
@@ -37,6 +40,9 @@ import { justTheLightReduction } from "./just-the-light.mjs";
 import { coverApForLocation } from "../rules/cover-locations.mjs";
 import { addFatigue, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { CONDITIONS_DEF } from "../constants/conditions.mjs";
+import { reaperLegacyButtonHtml } from "./legacy-weapon-reaper.mjs";
+import { braveHeartLegacyButtonHtml } from "./legacy-weapon-brave-heart.mjs";
+import { legacyHatredShieldApForLocation } from "../rules/legacy-weapon.mjs";
 
 // ─── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling/Haywire ──────────
 // Применяются здесь (не в attack.mjs/hooks.mjs), потому что только тут разом
@@ -185,7 +191,7 @@ async function _applyHaywire(actor, rating, damage2 = "") {
 }
 
 // ─── Маппинг места попадания → поле брони актора ──────────────────────────────
-const LOCATION_TO_ARMOR = {
+export const LOCATION_TO_ARMOR = {
   "Голова":           "head",
   "Торс":             "body",
   "П. Рука":          "rightArm",
@@ -369,7 +375,7 @@ async function _applyShieldOverload(shieldItem, actor, s, { attackerUuid = "", i
   return { overloadRolls, overloadExtraHtml };
 }
 
-async function _rollActiveShield(actor, { skipWarp = false, melee = false, damageSubtype = "", hitLocation = "", attackerUuid = "", isRetaliation = false } = {}) {
+async function _rollActiveShield(actor, { skipWarp = false, melee = false, damageSubtype = "", hitLocation = "", attackerUuid = "", isRetaliation = false, ignoreDomeShields = false } = {}) {
   // Ищем самый мощный активный щит (по currentRating). Освящённое оружие
   // (skipWarp) пропускает чародейские (варп-природные) щиты. Кровопомазанник
   // (wdbc-1rno, combat/turn-state-shield.mjs) даёт щит ТОЛЬКО от стрелковых
@@ -396,7 +402,10 @@ async function _rollActiveShield(actor, { skipWarp = false, melee = false, damag
       !(skipWarp && (i.system.shieldNature || "technological") === "warp") &&
       !(melee && i.getFlag?.("warhammer-dbc", "turnStateShieldRangedOnly")) &&
       !(damageSubtype && _shieldSubtypeEntries(i).some(e => e.shieldSubtypeMode === "exclude" && e.shieldSubtypeKey === damageSubtype)) &&
-      !(_hasShieldArmorGate(i) && (!_hasHardArmorAtBody(actor) || Number(wornOnly[hitArmorKey]) <= 0))
+      !(_hasShieldArmorGate(i) && (!_hasHardArmorAtBody(actor) || Number(wornOnly[hitArmorKey]) <= 0)) &&
+      // Приём Пила (стр. 14, wdbc-x1nz.2.67): «игнорирует силовые щиты-купола»
+      // — только shieldType "dome" (по умолчанию), не Дефлекторный/Сквозной.
+      !(ignoreDomeShields && (i.system.shieldType || "dome") === "dome")
     )
     .sort((a, b) => (b.system.currentRating ?? 0) - (a.system.currentRating ?? 0))[0];
 
@@ -518,7 +527,12 @@ export async function rollShieldAgainstConditionTick(actor, condKey, { damageSub
       i.type === "forcefield" &&
       i.system.equipped &&
       i.system.status === "active" &&
-      _shieldVsConditionEntries(i).some(e => e.shieldVsConditionKey === condKey)
+      _shieldVsConditionEntries(i).some(e => e.shieldVsConditionKey === condKey) &&
+      // Морозное Сердце (shieldArmorGate): без Жёсткого нагрудника «весь щит
+      // обесточен» — тот же гейт, что в обычном броске щита выше (wdbc-7wn7).
+      // Проверка «попадание пришло в бронированную локацию» к тику не
+      // относится: у тика Состояния нет места попадания.
+      !(_hasShieldArmorGate(i) && !_hasHardArmorAtBody(actor))
     )
     .sort((a, b) => (b.system.currentRating ?? 0) - (a.system.currentRating ?? 0))[0];
   if (!shieldItem) return false;
@@ -697,11 +711,14 @@ export async function applyDamageToActor(actor, damageData) {
     felling = 0,     // Разящее (X): −X к Сверхъест. Стойкости цели
     primitive = false, // Примитивное: броня цели ×2 (макс +6)
     ignoreShield = false, // Омывание (Flush) / Варп-Оружие: игнор щита
+    ignoreDomeShields = false, // Приём Пила (стр. 14, wdbc-x1nz.2.67): игнор щитов-куполов
+    stunManeuver = false, // Приём Оглушить (стр. 14, wdbc-x1nz.2.66.3): непоглощённый урон → Оглушение вместо Ран
     warpSoak = false,  // Варп-Оружие: поглощение по W.b вместо AP+T.b
     lance = false,     // Копьё/Пика: AP цели капается до 20 (до вычета Pen)
     sanctified = false, // Освящённое: игнорирует чародейские (варп) щиты
     melee = false,      // Рукопашная атака — нужно свойству брони Rods (Стержни)
     frontArcHit = false, // Атака из передней дуги защищающегося — Cloak/Плащ (wdbc-p5el)
+    shieldOutOfArc = false, // Щит: атака вне арки 180° щита (core.json, «Типы Рукопашного Оружия») — геометрия не считается, решает ГМ
     corrosiveRating = 0, // Разъедающее (X): −X AP в месте попадания (wdbc-plsf)
     entropyRating = 0,   // Касание Энтропии: −X AP места попадания ДО поглощения (wdbc-1rno)
     touchOfPainIgnoreTb = false, // Касание Боли: T.b Поглощения этой атаки игнорируется целиком (wdbc-1rno)
@@ -714,7 +731,10 @@ export async function applyDamageToActor(actor, damageData) {
     ignoreArmour = false, // Заломить (стр. 12, Борьба): урон "игнорирующий броню" — AP=0, T.b всё равно поглощает
     blast = 0,   // Взрывное(X): уже в damageData для доп. попаданий по Орде — Странной Неуязвимости нужен сам факт свойства (wdbc-1rno)
     spray = false, // Распыление: свойство присутствует (wdbc-1rno)
-    hasExtreme = false // Экстремальный Урон (wdbc-x1nz.2.50): гарантирует 1 непоглощаемого урона ниже
+    hasExtreme = false, // Экстремальный Урон (wdbc-x1nz.2.50): гарантирует 1 непоглощаемого урона ниже
+    opportunistFloor = false, // Оппортунист/versatile 10-10 (wdbc-1rno.35): минимум 1d10−2(мин.1) вместо флэт-1
+    ignoreSubtypeImmunity = false, // Огонь Души (combat/soulfire.mjs): иммунитет к подвиду этого попадания не действует
+    sourceMessageId = "" // карточка атаки, с которой пришёл урон — к ней привязан итог пробития (wdbc-x1nz.2.79)
   } = damageData;
 
   // Bronze Myrmidon (wdbc-1rno.1, rules/bronze-myrmidon.mjs): у актора с
@@ -726,7 +746,7 @@ export async function applyDamageToActor(actor, damageData) {
   // ── Бросок щита (если есть активный) ─────────────────────────────────────
   // ignoreShield (Flush/Варп) — щит не катится совсем; sanctified — катится, но
   // варп-природные (чародейские) щиты пропускаются.
-  const shieldResult = ignoreShield ? null : await _rollActiveShield(actor, { skipWarp: sanctified, melee, damageSubtype, hitLocation, attackerUuid, isRetaliation });
+  const shieldResult = ignoreShield ? null : await _rollActiveShield(actor, { skipWarp: sanctified, melee, damageSubtype, hitLocation, attackerUuid, isRetaliation, ignoreDomeShields });
 
   // Если щит заблокировал — урон аннулирован, выходим
   if (shieldResult?.blocked) return;
@@ -756,7 +776,8 @@ export async function applyDamageToActor(actor, damageData) {
   // не только побочного эффекта. Единое пространство имён на все 6 подвидов
   // (не по одному capability-ключу на подвид, как выше) — источник сам
   // называет подвид, а не жёстко на нём завязан код.
-  if (damageSubtype && hasRuleFlag(actor, `damageImmunity.subtype.${damageSubtype}`)) return;
+  if (damageSubtype && !ignoreSubtypeImmunity
+      && hasRuleFlag(actor, `damageImmunity.subtype.${damageSubtype}`)) return;
 
   const absorption = system.absorption || {};
   const armorKey  = LOCATION_TO_ARMOR[hitLocation] || "body";
@@ -783,6 +804,12 @@ export async function applyDamageToActor(actor, damageData) {
   const actorUpdate = {};
 
   let tb, armorAP, effArmorAP, totalAbsorption;
+  // Адаптация (wdbc-q0q8): бонус, накопленный ПРЕДЫДУЩИМИ попаданиями этого
+  // же вида урона — читается напрямую (см. adaptation.mjs, почему не через
+  // vsType/vsSubtype листа). Книга: «+1 к Поглощению», а не к AP брони —
+  // поэтому идёт в итог рядом с T.b (wdbc-4umq): Пробитием не срезается, в
+  // Сочленении на 3 не делится, вместе с бронёй не обнуляется.
+  const adaptBonus = adaptationBonusFor(actor, damageType, damageSubtype);
   let runesBonus = 0;
   let coverBonus = 0;
   // Касание Энтропии: сколько AP съедено этим попаданием — для подписи в карточке.
@@ -810,7 +837,7 @@ export async function applyDamageToActor(actor, damageData) {
         ? Math.floor(warpArmorAP / 2)
         : 0;
     effArmorAP = armorAP;
-    totalAbsorption = (system.characteristics?.wp?.bonus ?? 0) + armorAP + ablativeShieldBefore;
+    totalAbsorption = (system.characteristics?.wp?.bonus ?? 0) + armorAP + ablativeShieldBefore + adaptBonus;
   } else {
     // T.b — не игнорируется пробитием. Разящее снижает Сверхъест. часть Стойкости.
     tb = absorption.toughnessBonus ?? 0;
@@ -834,23 +861,39 @@ export async function applyDamageToActor(actor, damageData) {
       // (Conductive/Flak/Soft/Rods/Open/Primitive) — см. armor-properties.mjs и
       // сбор флагов по локациям в documents/actor.mjs.
       // Ртуть (wdbc-q0q8): отмеченная локация «электропроводна» — тот же
-      // эффект, что свойство брони Conductive (noEnergy), только на ОДНУ
-      // часть тела и временно, поэтому накладывается сверху пропFlags этой
-      // локации, а не хранится на предмете брони.
+      // эффект, что свойство брони Conductive (нет AP от E(El): «E(El) —
+      // игнорирует электропроводящую броню», wdbc-7wn7 — раньше гасился AP
+      // от ЛЮБОЙ энергии, включая огонь), только на ОДНУ часть тела и
+      // временно, поэтому накладывается сверху пропFlags этой локации.
+      const baseLocFlags = absorption.propFlags?.[armorKey] || {};
       const locFlags = mercuryMarked
-        ? { ...(absorption.propFlags?.[armorKey] || {}), noEnergy: true }
+        ? { ...baseLocFlags, noApVsSubtype: { ...(baseLocFlags.noApVsSubtype || {}), electrical: true } }
         : absorption.propFlags?.[armorKey];
-      // Адаптация (wdbc-q0q8): бонус, накопленный ПРЕДЫДУЩИМИ попаданиями
-      // этого же вида урона — читается напрямую (см. adaptation.mjs почему
-      // не через vsType/vsSubtype листа), добавляется к бонусу нужной
-      // гранулярности: подвид, если атака его называет, иначе широкий тип.
-      const adaptBonus = adaptationBonusFor(actor, damageType, damageSubtype);
+      // Щит вне арки (core.json, «Типы Рукопашного Оружия», разд. «Щит»):
+      // «...от атак спереди и с того боку, который прикрывает рука со щитом
+      // (в арке 180°)» — геометрию системой не считает никто (нет
+      // отслеживания угла атаки на сцене), решает ГМ галочкой на кнопке
+      // «Применить урон» (attack-card.mjs/hooks.mjs). Срабатывает, только
+      // если щит реально дал максимум этой локации (shieldSourceLoc) —
+      // иначе выключать нечего, победила обычная броня.
+      const shieldExcluded = shieldOutOfArc && !!absorption.shieldSourceLoc?.[armorKey];
+      const baseArmorAP = shieldExcluded
+        ? (absorption.noShield?.[armorKey] ?? 0) - (absorption.toughnessBonus ?? 0)
+        : (absorption[armorKey] ?? 0) - (absorption.toughnessBonus ?? 0);
+      // Primitive-броня щита (там же): «Если щит имеет свойство Primitive,
+      // АР от него считается примитивной бронёй, кроме как от атак от
+      // примитивного стрелкового оружия» — блокирует удвоение AP атакующим
+      // Primitive-оружием (blocksPrimitiveDouble), но ТОЛЬКО от рукопашных
+      // атак; стрелковый Primitive по-прежнему получает удвоение как от
+      // обычной высокотех. брони. Не действует, если щит уже исключён выше.
+      const shieldPrimitiveHere = !shieldExcluded && melee && !!absorption.shieldPrimitiveLoc?.[armorKey];
+      const effLocFlags = shieldPrimitiveHere ? { ...(locFlags || {}), blocksPrimitiveDouble: true } : locFlags;
       armorAP = resolveArmorAbsorptionAP({
-        baseArmorAP: (absorption[armorKey] ?? 0) - (absorption.toughnessBonus ?? 0),
-        vsTypeBonus: (absorption.vsType?.[damageType] ?? 0) + (damageSubtype ? 0 : adaptBonus),
-        subtypeBonus: (absorption.vsSubtype?.[damageSubtype] ?? 0) + (damageSubtype ? adaptBonus : 0),
+        baseArmorAP,
+        vsTypeBonus: absorption.vsType?.[damageType] ?? 0,
+        subtypeBonus: absorption.vsSubtype?.[damageSubtype] ?? 0,
         damageType, damageSubtype, melee, hitLocation, primitive, frontArcHit,
-        flags: locFlags,
+        flags: effLocFlags,
         wornAP: absorption.wornOnly?.[armorKey]
       });
       // Рыцарь Кхорна (wdbc-1rno): демон-скакун, вселённый в технику/скакуна,
@@ -918,6 +961,12 @@ export async function applyDamageToActor(actor, damageData) {
         : 1;
       coverBonus = combinedCoverBase * blastCoverMult;
       if (coverBonus > 0) armorAP += coverBonus;
+      // Щит Ненависти/vigilant 9-9, Оружие Наследия (wdbc-1rno.35, стр. 427):
+      // временный +½Inf.b(окр.▲) AP на руке(ах), держащей оружие с этой
+      // Мутацией, и на Торсе — до начала следующего своего Хода
+      // (turn-flags.mjs гасит, если не сброшено активацией новой защиты).
+      const hatredShieldBonus = legacyHatredShieldApForLocation(actor, armorKey);
+      if (hatredShieldBonus > 0) armorAP += hatredShieldBonus;
       // Повреждение Укрытий (стр. 33, wdbc-x1nz.2.62): попадание, ПРОБИВАЮЩЕЕ
       // укрытие (Pen оружия ≥ его AP), снимает укрытию 1 AP. Только ручное
       // system.cover.ap (стол сам вписал число из книжной таблицы — это
@@ -937,24 +986,46 @@ export async function applyDamageToActor(actor, damageData) {
     }
     // Итоговое поглощение = эффективный AP + T.b (всегда) + аблативный AP-щит
     // (не подчиняется Пробитию/Копью — отдельный слой, не физическая броня).
-    totalAbsorption = effArmorAP + tb + ablativeShieldBefore;
+    totalAbsorption = effArmorAP + tb + ablativeShieldBefore + adaptBonus;
   }
   // Точка расширения (wdbc-ls9d): плоское снижение входящего урона от эффектов
   // (system.incomingDamageReduction, суммируется — см. _creature.mjs) —
   // отдельно от AP/T.b, пробитием не уменьшается.
-  const incomingReduction = (Number(system.incomingDamageReduction) || 0)
+  const otherReduction = (Number(system.incomingDamageReduction) || 0)
     + determinationToFightReduction(actor)
     + determinationToFightWsReduction(actor)
     + justTheLightReduction(actor);
+  // Рассечение Реальности (wdbc-bjy1.3): зависит от позиций токенов, поэтому
+  // живьём здесь, а не в prepareDerivedData — сосед подошёл/отошёл, пересчёта
+  // цели не бывает. Отрицательное: −3 поглощения = +3 урона.
+  const realityRending = realityRendingPenalty(actor);
+  const incomingReduction = otherReduction + realityRending;
 
   // Непоглощённый урон. Аблативное Бронирование скакуна (стр. 478) срезает
   // его до 1, пока запас Ран полон, — первый же удар снимает слой, и дальше
   // Черта молчит до полного восстановления.
   let rawNet = Math.max(0, rawDamage - totalAbsorption - incomingReduction);
-  // Пробитие (wdbc-k0ff): непоглощённый урон дошёл до цели — броня этой
-  // локации скомпрометирована. warpSoak не считается: варп-оружие обходит
-  // броню целиком, а не проламывает её физически.
-  if (rawNet > 0 && !warpSoak) await breachArmorAtLocation(actor, armorKey);
+  // Пробитие (wdbc-k0ff): броня этой локации скомпрометирована. Считается
+  // своим расчётом книги (стр. 42, wdbc-x1nz.2.78: AP ×2, ×3 против I(Cr),
+  // без T.b — armorBreachOutcome), а не «любой непоглощённый урон»: удар,
+  // оставивший ушиб сквозь броню, её не пробивает. warpSoak не считается:
+  // варп-оружие обходит броню целиком, а не проламывает её физически.
+  // То же у Заломить (ignoreArmour, приёмка #516): броню игнорирует, не ломает.
+  const { breached, breachAbsorption } = (warpSoak || ignoreArmour)
+    ? { breached: false, breachAbsorption: 0 }
+    : armorBreachOutcome({
+        rawDamage, effArmorAP, damageSubtype,
+        otherAbsorption: ablativeShieldBefore + adaptBonus + incomingReduction
+      });
+  if (breached) await breachArmorAtLocation(actor, armorKey);
+  // Итог пробития для кнопок Rad/Toxic/… той же карточки (wdbc-x1nz.2.79):
+  // эффект «при пробитии брони» проверяет его в hooks.mjs::_applyWeaponPropEffect.
+  // Очередь из одной карточки — пробило хоть одним попаданием, значит пробито.
+  if (sourceMessageId) {
+    const prev = actor.getFlag?.("warhammer-dbc", "lastBreach");
+    const already = prev?.messageId === sourceMessageId && prev.breached;
+    actorUpdate["flags.warhammer-dbc.lastBreach"] = { messageId: sourceMessageId, breached: breached || !!already };
+  }
 
   // wdbc-bxw6: аблативные AP-моды брони и аблативный AP-щит теряют ровно 1
   // заряд с ЭТОГО попадания — независимо от нанесённого урона (rules/ablative-ap.mjs).
@@ -991,7 +1062,36 @@ export async function applyDamageToActor(actor, damageData) {
   // (брони, Аблативного бронирования скакуна, Саркофага Дредноута выше), они
   // этот минимум больше не режут.
   const extremeFloorApplied = hasExtreme && netDamage === 0;
-  if (extremeFloorApplied) netDamage = 1;
+  let opportunistFloorRoll = null;
+  if (extremeFloorApplied) {
+    // Оппортунист/versatile 10-10, Оружие Наследия (wdbc-1rno.35, стр. 427):
+    // «...оно наносит 1d10−2 (минимум 1) непоглощаемого урона вместо 1, как
+    // обычно» — тот же момент, что и обычный флэт-минимум выше, просто иначе
+    // считает величину.
+    if (opportunistFloor) {
+      opportunistFloorRoll = await new Roll("1d10-2").evaluate();
+      netDamage = Math.max(1, opportunistFloorRoll.total);
+    } else {
+      netDamage = 1;
+    }
+  }
+
+  // Приём Оглушить (стр. 14, wdbc-x1nz.2.66.3): «непоглощённый урон
+  // игнорируется, вместо этого цель Оглушается на 1 Ход за каждый нечётный
+  // урон» — читается как ⌈netDamage/2⌉ Раундов Оглушения. Урон дальше НЕ
+  // применяется как Раны — netDamage обнуляется, и все нижестоящие ветки,
+  // завязанные на «netDamage > 0» (Раны, Крит, Piercing/Crippling, Нурглинги
+  // и т.п.), естественно отключаются сами, без отдельного гейта на каждой.
+  let stunRoundsApplied = 0;
+  if (stunManeuver && netDamage > 0) {
+    stunRoundsApplied = Math.ceil(netDamage / 2);
+    const stunLevelField = conditionLevelField("stunned");
+    const curStunRounds = stunLevelField ? (actor.system.conditions?.[stunLevelField] ?? 0) : 0;
+    const stunFields = conditionApplyFields("stunned", Math.max(curStunRounds, stunRoundsApplied), actor);
+    if (Object.keys(stunFields).length) await actor.update(stunFields);
+    else stunRoundsApplied = 0; // иммунитет к Оглушению — не наложилось, note ниже не врёт
+    netDamage = 0;
+  }
 
   const { currentWounds, newWounds, newCritical, gotCritical } =
     await applyWoundLoss(actor, netDamage);
@@ -1004,6 +1104,27 @@ export async function applyDamageToActor(actor, damageData) {
   if (weaponUuid && netDamage > 0) {
     await actor.setFlag("warhammer-dbc", LAST_DAMAGE_WEAPON_FLAG, weaponUuid);
   }
+
+  // Обескровливание (wdbc-x1nz.2.92): без сознания от него — «пока он не
+  // получит непоглощенный урон». Динамический импорт: condition-ticks.mjs
+  // сам импортирует этот файл (тот же приём, что action-economy.mjs →
+  // damage.mjs).
+  if (netDamage > 0 && actor.getFlag?.("warhammer-dbc", "haemorrhageFaint")) {
+    const { wakeFromHaemorrhageOnDamage } = await import("./condition-ticks.mjs");
+    await wakeFromHaemorrhageOnDamage(actor);
+  }
+
+  // Жнец/merciless 5-6 (wdbc-1rno.35, стр. 428): кнопка теста Т цели на
+  // Кровотечение — виден только при непоглощённом уроне и Мутации на оружии.
+  const reaperWeaponItem = (weaponUuid && netDamage > 0) ? await fromUuid(weaponUuid).catch(() => null) : null;
+  const reaperSection = reaperWeaponItem ? reaperLegacyButtonHtml(reaperWeaponItem, actor.uuid) : "";
+
+  // Лучшая Часть Отваги/skilled 5-6, стрелковая ветка (wdbc-1rno.35, стр.
+  // 427): кнопка «цель жива и не обезврежена» — не гейтится netDamage,
+  // показывается на любом попадании этим оружием (стол сам решает, кликать
+  // ли: тот же уровень доверия, что Kiss of Mimic/Silent Elimination выше).
+  const braveHeartWeaponItem = weaponUuid ? (reaperWeaponItem ?? await fromUuid(weaponUuid).catch(() => null)) : null;
+  const braveHeartSection = braveHeartWeaponItem ? braveHeartLegacyButtonHtml(braveHeartWeaponItem, attackerUuid) : "";
 
   // Критический эффект по таблице — только при уходе в Критические.
   const critEffect = gotCritical ? getCriticalEffect(damageType, hitLocation, newCritical) : null;
@@ -1132,12 +1253,17 @@ export async function applyDamageToActor(actor, damageData) {
   if (primitive)   propNotes.push("Примитивное: броня ×2");
   if (felling > 0) propNotes.push(`Разящее ${felling}: −Сверхъест. T`);
   if (touchOfPainIgnoreTb) propNotes.push("Касание Боли: T.b Поглощения проигнорирован");
+  if (adaptBonus > 0) propNotes.push(`Адаптация: +${adaptBonus} Поглощения`);
   if (ignoreShield && !warpSoak) propNotes.push("Омывание: щит проигнорирован");
   if (ignoreArmour && !warpSoak) propNotes.push("Приём Борьбы: броня проигнорирована");
   if (!warpSoak) {
     const pfNote = absorption.propFlags?.[armorKey] || {};
-    if (pfNote.noEnergy && damageType === "energy")  propNotes.push("Проводящая: без AP от Энергии");
-    if (pfNote.noImpact && damageType === "impact")  propNotes.push("Мягкая: без AP от Удара");
+    // Флаги уровня ТИПА (noApVsType) — общий механизм; Проводящая и Мягкая
+    // давно на подвидах (строка noApVsSubtype ниже), поэтому подпись не
+    // называет свойство, а только тип (wdbc-7wn7).
+    if (pfNote.noEnergy && damageType === "energy")  propNotes.push(`Без AP от ${DAMAGE_TYPES.energy?.label || "Энергии"}`);
+    if (pfNote.noImpact && damageType === "impact")  propNotes.push(`Без AP от ${DAMAGE_TYPES.impact?.label || "Удара"}`);
+    if (mercuryMarked && damageSubtype === "electrical") propNotes.push("Ртуть: броня этой части тела электропроводна");
     if (pfNote.doubleBlast && damageType === "blast") propNotes.push("Флак: AP брони ×2");
     if (damageSubtype && pfNote.noApVsSubtype?.[damageSubtype])
       propNotes.push(`Без AP от ${DAMAGE_SUBTYPES[damageSubtype]?.label || damageSubtype}`);
@@ -1157,9 +1283,11 @@ export async function applyDamageToActor(actor, damageData) {
     if (coverBonus > 0) propNotes.push(`${coverFromRecoil ? "Отскок в Укрытие" : "Укрытие"}: +${coverBonus} AP`);
   }
 
-  const reductionNote = incomingReduction > 0
-    ? `<div class="dmg-tb-note">Доп. снижение входящего урона: <b>−${incomingReduction}</b></div>`
-    : "";
+  const reductionNote = (otherReduction > 0
+    ? `<div class="dmg-tb-note">Доп. снижение входящего урона: <b>−${otherReduction}</b></div>`
+    : "") + (realityRending < 0
+    ? `<div class="dmg-tb-note">Рассечение Реальности: <b>+${-realityRending}</b> к входящему урону</div>`
+    : "");
   const ablativeShieldNote = ablativeShieldBefore > 0
     ? `<div class="dmg-tb-note">Аблативный AP-щит: +${ablativeShieldBefore} (остаток после попадания: ${ablativeApAfterHit(ablativeShieldBefore)})</div>`
     : "";
@@ -1181,14 +1309,21 @@ export async function applyDamageToActor(actor, damageData) {
           ? `<span class="dmg-tb-note">(T.b не игнорируется пробитием)</span>`
           : ""}
         ${propNotes.length ? `<div class="dmg-tb-note">${propNotes.join(" · ")}</div>` : ""}
+        ${armorAP > 0 ? `<div class="dmg-tb-note">${breached
+          ? "Броня пробита"
+          : "Броня не пробита"} (AP ×${damageSubtype === "crushing" ? 3 : 2} без T.b: ${breachAbsorption})</div>` : ""}
         ${reductionNote}
         ${ablativeShieldNote}
       </div>`;
 
-  const woundsLine = netDamage > 0
+  const woundsLine = stunManeuver && stunRoundsApplied > 0
+    ? `Приём Оглушить: урон проигнорирован — цель Оглушена на <b>${stunRoundsApplied}</b> Ход(ов)`
+    : netDamage > 0
     ? `Раны: <b>${currentWounds}</b> → <b>${newWounds}</b>${
         ablated ? ` <span class="dmg-tb-note">(Аблативное Бронирование: ${rawNet} → 1)</span>` : ""}${
-        extremeFloorApplied ? ` <span class="dmg-tb-note">(Экстремальный Урон: поглощено полностью, но 1 непоглощаемого урона всё равно проходит, стр. 34)</span>` : ""}`
+        extremeFloorApplied ? ` <span class="dmg-tb-note">(Экстремальный Урон: поглощено полностью, но ${
+          opportunistFloorRoll ? `Оппортунист — 1d10−2: ${opportunistFloorRoll.total} (мин.1)` : "1 непоглощаемого урона всё равно проходит, стр. 34"
+        })</span>` : ""}`
     : `Урон поглощён полностью`;
 
   // wdbc-xql6: типовые фразы крит-строки («Оглушена на NdX Раундов» и т.п.)
@@ -1254,7 +1389,9 @@ export async function applyDamageToActor(actor, damageData) {
         </div>`,
       critLine,
       propEffectNotes.join(""),
-      throughShotBtn
+      throughShotBtn,
+      reaperSection,
+      braveHeartSection
     ]
   }, { speaker: { alias: "Система" }, sound: false });
 }

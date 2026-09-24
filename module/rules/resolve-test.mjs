@@ -21,6 +21,7 @@
 import { gatherRules, selectRules } from "./collect.mjs";
 import { isKnownEffectKind } from "./effects.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
+import { conditionLevelField } from "../constants/conditions.mjs";
 import { itemHasName, sizeOf } from "./predicates.mjs";
 import { WEAPON_PROPERTIES } from "../constants/weapon-properties.mjs";
 import { mechFormulaTotalSafe, mechRollData } from "./mech-formula.mjs";
@@ -87,6 +88,9 @@ function attackScopeApplies(scope, ctx) {
   const want = scope.slice("weapon:".length);
   if (want === "melee")  return ctx.isMelee === true;
   if (want === "ranged") return ctx.isMelee === false;
+  // Безоружная атака — интегральная (Кулак/Пинок/…, combat/equipped-melee.mjs::
+  // isIntegralAttack); ставит attack-dialog.mjs (wdbc-rmrm9, Электродуга).
+  if (want === "unarmed") return ctx.unarmed === true;
   return want === String(ctx.weaponClass ?? "").toLowerCase();
 }
 
@@ -132,6 +136,13 @@ function powerScopeApplies(scope, ctx) {
  * потому, что оба читают один и тот же `ctx.skill`.
  */
 function effectAppliesTo(target, ctx) {
+  // Список областей (wdbc-x1nz.2.89, Ослеплён: «−30 на WS и тесты, что
+  // требуют зрения») — эффект срабатывает ОДИН раз, если подходит хоть одна.
+  // Нужен там, где книга одним штрафом накрывает пересекающиеся области:
+  // Бдительность Ослеплённого бывает и на WS (Распознать Стойку,
+  // combat/recognize-stance.mjs) — два отдельных эффекта «basedon:ws» и
+  // «skill:awareness» сложились бы в −60.
+  if (Array.isArray(target)) return target.some(t => effectAppliesTo(t, ctx));
   const scope = String(target ?? "all").trim().toLowerCase();
 
   if (scope.endsWith(":recipient")) {
@@ -172,6 +183,22 @@ function effectAppliesTo(target, ctx) {
   // Болезни своего теста не имеют вовсе (type:"disease" — статичные данные,
   // без броска), поэтому этот scope покрывает только яд, не болезнь.
   if (scope === "poison") return ctx.poisonTest === true;
+  // Наследие Крови, Оружие Наследия (wdbc-1rno.35, стр. 427, wdbc-1rno.46):
+  // «+10 на встречные тесты против психосил/выжигания души» — общий тег
+  // «это тест против опасной психической угрозы», протащенный явно через
+  // делегированные тесты Сопротивления (psy-resist-request-btn, Soul Burn).
+  if (scope === "psychicthreat") return ctx.psychicThreat === true;
+  // «basedon:<хар-ка>» (wdbc-x1nz.2.89/.97/.92) — ЛЮБОЙ тест навыка или
+  // характеристики на этой Характеристике: «−20 на броски WS» у Поваленного
+  // (Парирование — навык от WS), «−5 на все тесты T» у Обескровленного. Не
+  // то же, что `char:ws` (только голый тест характеристики, см. выше) и не
+  // подхватывает атаку/манифестацию: у тех свои области, и «ко всем ударам»
+  // книга пишет отдельно — окно атаки считает Ослеплён/Повален своими
+  // строками (sheets/attack/mods.mjs), и задвоиться они не должны.
+  if (scope.startsWith("basedon:")) {
+    if (ctx.kind === "attack" || ctx.kind === "power") return false;
+    return String(ctx.char ?? "").toLowerCase() === scope.slice("basedon:".length);
+  }
   if (ctx.kind === "attack") return attackScopeApplies(scope, ctx);
   if (ctx.kind === "power")  return powerScopeApplies(scope, ctx);
   if (ctx.skill) return scope === `skill:${String(ctx.skill).toLowerCase()}`;
@@ -220,10 +247,33 @@ function effectAppliesTo(target, ctx) {
  * @returns {?number} null, если источник значения не распознан
  */
 function effectValue(effect, ctx, ruleId) {
+  const v = rawEffectValue(effect, ctx, ruleId);
+  // «Половина штрафа» Смягчения при значении из источника (rules/item-rules.mjs::
+  // halvedEffects) — округление к нулю, как у числового value там же.
+  if (effect.halved && v != null) return Math.trunc(v / 2) || 0;
+  return v;
+}
+
+function rawEffectValue(effect, ctx, ruleId) {
   if (effect.formula != null) return mechFormulaTotalSafe(effect.formula, mechRollData(ctx?.actor));
   if (!effect.valueFrom) return Number(effect.value) || 0;
 
-  const { targetCharBonus, selfCharBonus, masterCharBonus, targetTraitRating, targetSize, selfSize, multiplier = 1 } = effect.valueFrom;
+  const { targetCharBonus, selfCharBonus, masterCharBonus, targetTraitRating, targetSize, selfSize,
+          selfConditionLevel, multiplier = 1 } = effect.valueFrom;
+  // Уровень своего Состояния со счётчиком (wdbc-x1nz.2.92, «Раны и Урон»,
+  // «Статусы»: «За каждый уровень Обескровливания … –5 на все тесты T»).
+  // Поле счётчика — из реестра Состояний (conditionLevelField), тот же ключ,
+  // что пишут condition-ticks.mjs и лист. Состояние без счётчика — жалоба,
+  // а не тихий ноль (как у неизвестного источника ниже).
+  if (selfConditionLevel) {
+    const field = conditionLevelField(selfConditionLevel);
+    if (!field) {
+      console.error(`Warhammer DBC | правило «${ruleId ?? "без id"}»: у Состояния «${selfConditionLevel}» нет счётчика уровня`);
+      return null;
+    }
+    const level = Number(ctx?.actor?.system?.conditions?.[field]) || 0;
+    return level * multiplier || 0;
+  }
   // Своя характеристика: «+Inf герольда на тесты Нестабильности» (Локус Цепей).
   // Числа в данных быть не может — Бесчестие у каждого своё.
   // "pr" — не характеристика: Психосилы/Техночудеса скалируются собственным
@@ -460,6 +510,17 @@ export function critModsFromRules(rules, ctx = {}) {
  *
  * @returns {{ruleId:string, label:string, key:string, rating:number, rating2:number}[]}
  */
+/**
+ * Рейтинг выданного свойства: число — числом, формула («PR», «2d10+T.b» —
+ * Дуга Электродуги, wdbc-rmrm9) — строкой, её дальше считает тот же движок,
+ * что и рейтинги свойств самого оружия. Раньше Number() молча давал 0.
+ */
+function propRatingValue(v) {
+  const s = String(v ?? "").trim();
+  if (!s) return 0;
+  return Number.isFinite(Number(s)) ? Number(s) : s;
+}
+
 export function weaponPropsFromRules(rules, ctx = {}) {
   const out = [];
   for (const rule of rules ?? []) {
@@ -474,7 +535,7 @@ export function weaponPropsFromRules(rules, ctx = {}) {
       }
       out.push({
         ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id,
-        key, rating: Number(effect.rating) || 0, rating2: Number(effect.rating2) || 0
+        key, rating: propRatingValue(effect.rating), rating2: propRatingValue(effect.rating2)
       });
     }
   }
@@ -527,6 +588,29 @@ export function scriptTriggersFromRules(rules, ctx = {}) {
 }
 
 /**
+ * Автопровал теста (wdbc-x1nz.2.89, «Раны и Урон», «Статусы»: Ослеплённый
+ * «автоматически проваливает тесты на BS») — эффект `autoFail`. Как и
+ * `critRangeMod`, не галочка: провал не выбирают, он есть, пока действует
+ * правило. Применяет его rules/kind-outcome.mjs::resolveKindOutcome (общий
+ * исход теста Навыка/Характеристики); окно атаки считает свою строку
+ * «Ослеплён» само (sheets/attack/mods.mjs) — поэтому области атаки сюда
+ * писать не нужно, и `basedon:bs` атаку не подхватывает.
+ *
+ * @returns {{ruleId:string, label:string}[]} пустой — провала нет
+ */
+export function autoFailFromRules(rules, ctx = {}) {
+  const out = [];
+  for (const rule of rules ?? []) {
+    for (const effect of rule?.effects ?? []) {
+      if (effect?.kind !== "autoFail") continue;
+      if (!effectAppliesTo(effect.target, ctx)) continue;
+      out.push({ ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id });
+    }
+  }
+  return out;
+}
+
+/**
  * Фазы 1–3 целиком: контекст, сбор, отбор.
  *
  * Хук «dbc.collectRules» получает контекст и изменяемый список правил до
@@ -552,6 +636,7 @@ export function resolveTest(input = {}) {
     crit: critModsFromRules(rules, ctx),
     weaponProps: weaponPropsFromRules(rules, ctx),
     failDegExtra: failDegModFromRules(rules, ctx),
-    scriptTriggers: scriptTriggersFromRules(rules, ctx)
+    scriptTriggers: scriptTriggersFromRules(rules, ctx),
+    autoFail: autoFailFromRules(rules, ctx)
   };
 }

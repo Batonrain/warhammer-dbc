@@ -15,13 +15,155 @@ import { isMirroredCondition, mirrorClearPatch, isMirrorClearable }
 import { isItemActive } from "../../apps/effects.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
+import { effectiveFatigue, gangreneFatigueExtra } from "../../rules/situational.mjs";
+import { raceMatches } from "../../rules/race.mjs";
+import { LIMB_LOSS_KEYS, limbLossGangreneField, limbLossGangreneCheckAt } from "../../rules/limb-loss.mjs";
 import { esc, on } from "../../helpers/utils.mjs";
+
+const NS = "warhammer-dbc";
+const SECONDS_PER_HOUR = 3600;
+const worldNow = () => Number(globalThis.game?.time?.worldTime) || 0;
 
 function fatigueThreshold(actor) {
   const system = actor.system || {};
   const tb = system.characteristics?.t?.bonus ?? 0;
   const wb = system.characteristics?.wp?.bonus ?? 0;
   return { tb, wb, threshold: tb + wb };
+}
+
+/** Книга: «теряет сознание на 10–T.b минут, до минимума в 1 минуту». */
+export function fatigueFaintMinutes(tb) {
+  return Math.max(1, 10 - (Number(tb) || 0));
+}
+
+/**
+ * В обмороке ли актор ОТ УСТАЛОСТИ. Основной признак — таймер пробуждения
+ * (conditions.fatigueFaintWakeAt). Второй — для обмороков, заведённых до
+ * таймера (wdbc-x1nz.2.95): Без сознания при Усталости на пороге и выше —
+ * иначе такой персонаж не просыпался бы ни от −1, ни от Календаря.
+ */
+export function isFatigueFaint(actor) {
+  const c = actor?.system?.conditions ?? {};
+  if ((Number(c.fatigueFaintWakeAt) || 0) > 0) return true;
+  const { threshold } = fatigueThreshold(actor);
+  return !!c.unconscious && threshold > 0 && effectiveFatigue(actor) >= threshold;
+}
+
+/**
+ * ЕДИНЫЙ путь смены Усталости (wdbc-x1nz.2.95): патч под actor.update и
+ * описание того, что случилось, — без записи. Раньше порог T.b+W.b и
+ * иммунитет Саркофага знал только addFatigue, а Вой Ужаса, препараты,
+ * Мастерская, Завеса и ручной ввод на листе писали fatigue.value напрямую —
+ * персонаж стоял на ногах с Усталостью выше порога. Теперь каждый писатель
+ * собирает патч здесь (и сливает со своими полями, если пишет одним
+ * update), а после записи зовёт announceFatigueChange.
+ *
+ * - Саркофаг Дредноута (стр. 57): рост Усталости отбрасывается (снижение — нет).
+ * - Порог считается по ДЕЙСТВУЮЩЕЙ Усталости (+1 Гангрены, wdbc-x1nz.2.96).
+ * - Достиг порога — Без сознания и таймер пробуждения (10−T.b мин, мин. 1).
+ * - Опустился ниже порога из обморока от Усталости — пришёл в себя.
+ * - `wake: true` — «приход в себя» по книге (кнопка −1, Час отдыха, снятие
+ *   Без сознания крестиком, таймер Календаря): «после прихода в себя снимает
+ *   1 Усталости» + «уменьшает Усталость до T.b+W.b−1» — итог не выше
+ *   min(действующая−1, порог−1), даже если её перекинуло за порог (Вой Ужаса
+ *   до 9 при пороге 6 раньше требовал четырёх нажатий −1).
+ *
+ * @returns {{fields: object, before: number, value: number, effective: number,
+ *   threshold: number, tb: number, fainted: {minutes:number}|null, woke: boolean, blocked: boolean}}
+ */
+export function fatigueChangeFields(actor, next, { wake = false } = {}) {
+  const { tb, threshold } = fatigueThreshold(actor);
+  const before = Math.max(0, Number(actor?.system?.fatigue?.value) || 0);
+  const extra = gangreneFatigueExtra(actor);
+  let value = Math.max(0, Math.round(Number(next) || 0));
+  let blocked = false;
+  if (value > before && hasRuleFlag(actor, "sarcophagus.immuneBleedingFatigue")) {
+    value = before;
+    blocked = true;
+  }
+  const faint = isFatigueFaint(actor);
+  if (wake && faint && threshold > 0) value = Math.max(0, Math.min(value, threshold - 1 - extra));
+  const effective = value + extra;
+
+  const fields = { "system.fatigue.value": value, "system.fatigue.max": threshold };
+  const result = { fields, before, value, effective, threshold, tb, fainted: null, woke: false, blocked };
+  if (threshold > 0 && effective >= threshold) {
+    // Уже без сознания (от Усталости или от чего-то ещё) — второй раз не
+    // «теряет сознание», таймер не продлевается.
+    if (!faint && !actor.system?.conditions?.unconscious) {
+      const apply = conditionApplyFields("unconscious", null, actor);
+      // Иммунитет к Без сознания (запись Конструктора) — обморока нет вовсе.
+      if (Object.keys(apply).length) {
+        const minutes = fatigueFaintMinutes(tb);
+        Object.assign(fields, apply, { "system.conditions.fatigueFaintWakeAt": worldNow() + minutes * 60 });
+        result.fainted = { minutes };
+      }
+    }
+  } else if (faint) {
+    Object.assign(fields, conditionRemoveFields("unconscious"));
+    result.woke = true;
+  }
+  return result;
+}
+
+/** Карточка/уведомление по итогу fatigueChangeFields — звать ПОСЛЕ actor.update. */
+export async function announceFatigueChange(actor, res) {
+  if (!res) return;
+  if (res.fainted) {
+    const { minutes } = res.fainted;
+    // Уведомление о состоянии, а не карточка теста (ни броска, ни Порога) —
+    // на общий сборщик helpers/test-card.mjs не переводится (wdbc-kuun).
+    await ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content: `<div class="wh-roll-result">
+        <div class="roll-header">${rollIcon("warn","#ff6b6b")}${esc(actor.name)} — Потеря сознания!</div>
+        <div class="roll-threshold">
+          Усталость: <b>${res.effective}</b> ≥ порог T.b + W.b (<b>${res.threshold}</b>).
+        </div>
+        <div class="roll-outcome">
+          <span class="roll-failure">
+            Без сознания <b>${minutes}</b> мин. (10 − ${res.tb} = ${minutes}, мин. 1)
+          </span>
+        </div>
+        <div class="roll-threshold" style="font-size:0.85em;">
+          Очнётся сам, когда Календарь отсчитает ${minutes} мин.; Усталость опустится до
+          ${Math.max(0, res.threshold - 1)} (T.b + W.b − 1). Раньше — кнопкой −1 или снятием Без сознания.
+        </div>
+      </div>`
+    }, game.settings.get("core", "rollMode")));
+    ui.notifications.warn(`${actor.name} потерял сознание на ${minutes} мин.!`);
+    return;
+  }
+  if (res.woke) {
+    await ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content: `<div class="wh-roll-result">
+        <div class="roll-header">${rollIcon("spark","#4dffa6")}${esc(actor.name)} — приходит в себя</div>
+        <div class="roll-outcome">
+          <span class="roll-success">Без сознания снято. Усталость: <b>${res.effective}</b> (порог ${res.threshold}).</span>
+        </div>
+      </div>`
+    }, game.settings.get("core", "rollMode")));
+    return;
+  }
+  if (res.effective >= 1 && res.before + (res.effective - res.value) < 1) {
+    ui.notifications.info(`${actor.name}: Усталость 1+ — штраф −10 на все тесты (кроме T, Inf, Cor).`);
+  }
+}
+
+/**
+ * Выставить Усталость (хранимую) и применить всё, что из этого следует:
+ * порог обморока, пробуждение, Саркофаг. Для писателей, которым не нужно
+ * сливать патч с другими полями.
+ * @returns {Promise<object|null>} итог fatigueChangeFields; null — ничего не изменилось
+ */
+export async function setFatigue(actor, next, { wake = false } = {}) {
+  const res = fatigueChangeFields(actor, next, { wake });
+  // Саркофаг отбросил рост и больше ничего не случилось — не писать вовсе.
+  if (res.blocked && res.value === res.before && !res.fainted && !res.woke) return null;
+  await actor.update(res.fields);
+  await announceFatigueChange(actor, res);
+  return res;
 }
 
 // Усталость и Марш переехали в module/rules/situational.mjs (wdbc-n17t): их
@@ -36,84 +178,72 @@ export async function addFatigue(actor, amount = 1, { slow = false } = {}) {
   // (как grace выше) и не смягчение штрафа (как feelsNoPain в fatiguePenalty),
   // а полный запрет её накопления: тело пилота в саркофаге физически не
   // устаёт, откуда бы Усталость ни пришла (Марш, Горение, снаряжение).
-  if (hasRuleFlag(actor, "sarcophagus.immuneBleedingFatigue")) return;
-  const system = actor.system;
-  const { tb, threshold } = fatigueThreshold(actor);
-  const current = system.fatigue?.value ?? 0;
-  const newVal = current + amount;
-
-  const updates = {
-    "system.fatigue.value": newVal,
-    "system.fatigue.max": threshold
-  };
+  // (Сама проверка — в fatigueChangeFields, общая для всех писателей.)
+  const current = Math.max(0, Number(actor.system?.fatigue?.value) || 0);
+  const res = await setFatigue(actor, current + amount);
+  if (!res) return null;
 
   // Форсированный марш (стр. 29): Усталость от него восстанавливается
   // вдвое медленнее — считаем отдельно, сколько очков текущей Усталости
   // «медленные» (fatiguePeriodRest снимает их раз в 2 вызова, см. ниже).
-  if (slow && actor.setFlag) {
+  if (slow && actor.setFlag && res.value > current) {
     const slowNow = Number(actor.getFlag?.("warhammer-dbc", "slowFatigue")) || 0;
-    await actor.setFlag("warhammer-dbc", "slowFatigue", Math.min(newVal, slowNow + amount));
+    await actor.setFlag("warhammer-dbc", "slowFatigue", Math.min(res.value, slowNow + (res.value - current)));
   }
-
-  if (threshold > 0 && newVal >= threshold) {
-    const unconsciousMinutes = Math.max(1, 10 - tb);
-    Object.assign(updates, conditionApplyFields("unconscious"));
-
-    await actor.update(updates);
-
-    const rollMode = game.settings.get("core", "rollMode");
-    // Уведомление о состоянии, а не карточка теста (ни броска, ни Порога) —
-    // на общий сборщик helpers/test-card.mjs не переводится (wdbc-kuun).
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor }),
-      content: `<div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("warn","#ff6b6b")}${esc(actor.name)} — Потеря сознания!</div>
-        <div class="roll-threshold">
-          Усталость: <b>${newVal}</b> ≥ порог T.b + W.b (<b>${threshold}</b>) — превышен.
-        </div>
-        <div class="roll-outcome">
-          <span class="roll-failure">
-            Персонаж без сознания <b>${unconsciousMinutes}</b> мин.
-            (10 − ${tb} = ${unconsciousMinutes}, мин. 1)
-          </span>
-        </div>
-        <div class="roll-threshold" style="font-size:0.85em;">
-          После прихода в себя — снимается 1 Усталость автоматически.
-        </div>
-      </div>`
-    }, rollMode));
-
-    ui.notifications.warn(`${actor.name} потерял сознание на ${unconsciousMinutes} минут!`);
-  } else {
-    await actor.update(updates);
-    if (newVal >= 1 && current < 1) {
-      ui.notifications.info(`${actor.name}: Усталость 1+ — штраф −10 на все тесты (кроме T, Inf, Cog).`);
-    }
-  }
+  return res;
 }
 
+/**
+ * Снять Усталость (кнопка −1, Час отдыха). Для персонажа в обмороке от
+ * Усталости это «приход в себя» по книге (wdbc-x1nz.2.95): Усталость
+ * опускается до min(действующая − amount, T.b+W.b − 1) и Без сознания
+ * снимается — даже если её перекинуло за порог на несколько единиц.
+ */
 export async function removeFatigue(actor, amount = 1) {
-  const system = actor.system;
-  const current = system.fatigue?.value ?? 0;
-  const { threshold } = fatigueThreshold(actor);
-  const newVal = Math.max(0, current - amount);
-
-  const updates = {
-    "system.fatigue.value": newVal,
-    "system.fatigue.max": threshold
-  };
-
-  if (system.conditions?.unconscious && newVal < threshold) {
-    Object.assign(updates, conditionRemoveFields("unconscious"));
-  }
-
-  await actor.update(updates);
+  const current = Math.max(0, Number(actor.system?.fatigue?.value) || 0);
+  const res = await setFatigue(actor, current - amount, { wake: true });
+  const newVal = res?.value ?? current;
 
   // Не может остаться «медленных» очков больше, чем самой Усталости.
   if (actor.setFlag) {
     const slowNow = Number(actor.getFlag?.("warhammer-dbc", "slowFatigue")) || 0;
     if (slowNow > newVal) await actor.setFlag("warhammer-dbc", "slowFatigue", newVal);
   }
+  return res;
+}
+
+/**
+ * Полноценный сон по книге: «8 часов для человека, 3 для космодесантника».
+ * Космодесантник — не раса в коде, а возможность «Физиология Астартес»
+ * (healing.astartes, rules/library/astartes.mjs — тот же признак, по
+ * которому лечится healing.mjs); раса astartes — страховка на случай, если
+ * правило расы у актора ещё не собрано (Прошлое, ручной лист).
+ */
+export function hasAstartesPhysiology(actor) {
+  return hasRuleFlag(actor, "healing.astartes") || raceMatches(actor?.system, "astartes");
+}
+export function sleepHours(actor) {
+  return hasAstartesPhysiology(actor) ? 3 : 8;
+}
+
+/**
+ * Отдых и сон двигают Календарь сами (решение владельца, wdbc-x1nz.2.95):
+ * game.time.advance доступен только ГМу (core.time — мировая настройка).
+ * Игрок снимает Усталость как раньше, а карточка просит ГМа сдвинуть время.
+ *
+ * Звать ПОСЛЕ записи Усталости: сдвиг времени вызовет updateWorldTime →
+ * combat/condition-clock.mjs, и таймер обморока, уже снятый здесь, там не
+ * сработает второй раз (иначе персонаж «пришёл бы в себя» и потерял бы
+ * Усталость дважды).
+ * @returns {Promise<string>} строка для карточки
+ */
+async function advanceRestClock(hours) {
+  const time = globalThis.game?.time;
+  if (globalThis.game?.user?.isGM && typeof time?.advance === "function") {
+    await time.advance(hours * SECONDS_PER_HOUR);
+    return `Календарь сдвинут на ${hours} ч.`;
+  }
+  return `Время двигает ГМ — сдвиньте Календарь на ${hours} ч.`;
 }
 
 /**
@@ -125,7 +255,9 @@ export async function removeFatigue(actor, amount = 1) {
 export async function fatiguePeriodRest(actor) {
   const current = actor.system.fatigue?.value ?? 0;
   if (current <= 0) {
-    ui.notifications.info(`${actor.name}: Усталость и так 0.`);
+    ui.notifications.info(gangreneFatigueExtra(actor)
+      ? `${actor.name}: снимать нечего — осталась только Усталость Гангрены, она держится до излечения.`
+      : `${actor.name}: Усталость и так 0.`);
     return;
   }
 
@@ -134,6 +266,8 @@ export async function fatiguePeriodRest(actor) {
     const parity = !!actor.getFlag?.("warhammer-dbc", "slowFatigueParity");
     if (!parity) {
       await actor.setFlag("warhammer-dbc", "slowFatigueParity", true);
+      // Час всё равно прошёл — Календарь двигается и здесь.
+      const clockLine = await advanceRestClock(1);
       const rollMode = game.settings.get("core", "rollMode");
       // Уведомление о состоянии, а не карточка теста (ни броска, ни Порога) —
       // на общий сборщик helpers/test-card.mjs не переводится (wdbc-kuun).
@@ -145,6 +279,7 @@ export async function fatiguePeriodRest(actor) {
             <span class="roll-threshold">Усталость от Форсированного марша восстанавливается вдвое
             медленнее — этот час зачтён наполовину, Усталость не снята.</span>
           </div>
+          <div class="roll-threshold" style="font-size:0.85em;">${clockLine}</div>
         </div>`
       }, rollMode));
       return;
@@ -153,7 +288,8 @@ export async function fatiguePeriodRest(actor) {
     await actor.setFlag("warhammer-dbc", "slowFatigue", Math.max(0, slowNow - 1));
   }
 
-  await removeFatigue(actor, 1);
+  const res = await removeFatigue(actor, 1);
+  const clockLine = await advanceRestClock(1);
 
   const rollMode = game.settings.get("core", "rollMode");
   // Уведомление о состоянии, а не карточка теста (ни броска, ни Порога) —
@@ -163,8 +299,9 @@ export async function fatiguePeriodRest(actor) {
     content: `<div class="wh-roll-result">
       <div class="roll-header">${rollIcon("spark","#4dffa6")}${esc(actor.name)} — Час отдыха</div>
       <div class="roll-outcome">
-        <span class="roll-success">Снята 1 Усталость. Осталось: <b>${Math.max(0, current - 1)}</b></span>
+        <span class="roll-success">Снята Усталость. Осталось: <b>${res?.effective ?? Math.max(0, current - 1)}</b></span>
       </div>
+      <div class="roll-threshold" style="font-size:0.85em;">${clockLine}</div>
     </div>`
   }, rollMode));
 }
@@ -172,7 +309,11 @@ export async function fatiguePeriodRest(actor) {
 export async function fatigueSleep(actor) {
   const current = actor.system.fatigue?.value ?? 0;
   const { threshold } = fatigueThreshold(actor);
+  const hours = sleepHours(actor);
 
+  // Без сознания снимается любое (не только обморок от Усталости) — как и
+  // было: проспав полноценный сон, персонаж просыпается. conditionRemoveFields
+  // гасит и таймер обморока — updateWorldTime от сдвига ниже его не найдёт.
   await actor.update({
     "system.fatigue.value": 0,
     "system.fatigue.max": threshold,
@@ -180,17 +321,23 @@ export async function fatigueSleep(actor) {
   });
   if (actor.getFlag?.("warhammer-dbc", "slowFatigue")) await actor.unsetFlag?.("warhammer-dbc", "slowFatigue");
   if (actor.getFlag?.("warhammer-dbc", "slowFatigueParity")) await actor.unsetFlag?.("warhammer-dbc", "slowFatigueParity");
+  const clockLine = await advanceRestClock(hours);
 
   const rollMode = game.settings.get("core", "rollMode");
+  const gangreneNote = gangreneFatigueExtra(actor)
+    ? `<div class="roll-threshold" style="font-size:0.85em;">Осталась 1 Усталость Гангрены — не снимается до излечения.</div>`
+    : "";
   // Уведомление о состоянии, а не карточка теста (ни броска, ни Порога) —
   // на общий сборщик helpers/test-card.mjs не переводится (wdbc-kuun).
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("spark","#4dffa6")}${esc(actor.name)} — Полноценный сон</div>
+      <div class="roll-header">${rollIcon("spark","#4dffa6")}${esc(actor.name)} — Полноценный сон (${hours} ч.)</div>
       <div class="roll-outcome">
         <span class="roll-success">Вся Усталость снята (было: <b>${current}</b>).</span>
       </div>
+      ${gangreneNote}
+      <div class="roll-threshold" style="font-size:0.85em;">${clockLine}</div>
     </div>`
   }, rollMode));
 }
@@ -241,7 +388,48 @@ export function conditionApplyFields(key, level = null, actor = null) {
     fields["system.reactions.value"] = 0;
     fields["system.reactions.defenseValue"] = 0;
   }
+  // Гангрена (wdbc-x1nz.2.96): «каждые T.b×2 часов 1d10 урона в T» — отсчёт
+  // идёт от начала болезни. Метка времени — тот же флаг, что у кнопки
+  // (combat/gangrene.mjs, gangreneTestAt); её читает Календарь
+  // (combat/condition-clock.mjs). Повторное наложение уже стоящей Гангрены
+  // отсчёт не сбрасывает.
+  if (key === "gangrene" && actor && !actor.system?.conditions?.gangrene) {
+    fields[`flags.${NS}.gangreneTestAt`] = worldNow();
+  }
   return fields;
+}
+
+/**
+ * Таймер Гангрены обрубка (стр. 30-31, «через T.b дней с шансом 80%…»).
+ * Один на тип конечности (conditions.lostXGangreneAt). Уже идущий таймер
+ * НЕ переносится на более поздний срок (wdbc-x1nz.2.97): раньше вторая
+ * потеря того же типа перезаписывала срок, и первый, более ранний обрубок
+ * получал отсрочку. Раньший срок держится — обрубок, загноившийся первым,
+ * и даёт Гангрену; второй бросок 80% по второму обрубку ничего бы не
+ * добавил: Гангрена — одно Состояние без уровней.
+ */
+export function stumpTimerFields(actor, key) {
+  const field = limbLossGangreneField(key);
+  if (!field || !actor) return {};
+  const tb = actor.system?.characteristics?.t?.bonus ?? 0;
+  const at = limbLossGangreneCheckAt(worldNow(), tb);
+  const running = Number(actor.system?.conditions?.[field]) || 0;
+  return { [`system.conditions.${field}`]: running > 0 ? Math.min(running, at) : at };
+}
+
+/**
+ * Последствия НОВОЙ потери конечности, поставленной рукой (диалог, строка
+ * уровня, addCondition — wdbc-x1nz.2.97): «Потеря конечностей всегда
+ * приводит к Кровотечению» + таймер Гангрены обрубка. Крит-пилюля
+ * (combat/crit-effect-parser.mjs) делает то же сама своим путём — сюда не
+ * заходит (идёт через conditionAdjustFields); наложение Кровотечения — флаг
+ * true, повтор ничего не удваивает. Ампутация (healing.mjs, стр. 231) и
+ * Мутация Loss of Limb сюда тоже не заходят: у операции своё правило
+ * Кровотечения, у Мутации обрубок уже закрыт.
+ */
+function limbLossSideFields(actor, key) {
+  if (!LIMB_LOSS_KEYS.includes(key)) return {};
+  return { ...conditionApplyFields("bleeding", null, actor), ...stumpTimerFields(actor, key) };
 }
 
 /** Патч на снятие — флаг false и (если у Состояния есть счётчик) счётчик 0. */
@@ -261,7 +449,17 @@ export function conditionRemoveFields(key) {
   if (key === "burning") {
     fields["system.conditions.burningSourceDamage"] = 0;
     fields["system.conditions.burningGraceRounds"]  = 0;
+    // И формулу урона погасшего пламени (combat/condition-ticks.mjs::
+    // BURNING_FORMULA_FLAG) — иначе следующее загорание горело бы чужой
+    // формулой. Строкой, а не импортом: condition-ticks тянет damage.mjs и
+    // сам импортирует этот файл. «-=» на отсутствующем флаге Foundry молча
+    // пропускает. Все вызывающие пишут патч в actor.update, не в токен.
+    fields["flags.warhammer-dbc.-=burningDamageFormula"] = null;
   }
+  // Любое снятие Без сознания гасит таймер обморока от Усталости
+  // (wdbc-x1nz.2.95) — иначе Календарь «разбудил» бы уже очнувшегося и
+  // второй раз опустил бы ему Усталость.
+  if (key === "unconscious") fields["system.conditions.fatigueFaintWakeAt"] = 0;
   return fields;
 }
 
@@ -293,12 +491,37 @@ export function conditionAdjustFields(actor, key, delta) {
  * только для состояний со счётчиком (Кровотечение, Оглушение и т.п.).
  */
 export async function addCondition(actor, key, { level = null } = {}) {
-  const fields = conditionApplyFields(key, level, actor);
+  const fields = manualApplyFields(actor, key, level);
   if (Object.keys(fields).length) await actor.update(fields);
+}
+
+/**
+ * Ручное наложение (диалог, addCondition): патч conditionApplyFields плюс,
+ * для потери конечности, её последствия (limbLossSideFields). Счётчик
+ * потерь без уровня ставится в 1: флаг без счётчика ничего не делал бы —
+ * руки/ноги/глаза считают именно Count (rules/hands.mjs, movement.mjs).
+ */
+function manualApplyFields(actor, key, level = null) {
+  const def = CONDITIONS_DEF[key];
+  const isLimb = LIMB_LOSS_KEYS.includes(key);
+  const before = isLimb ? (Number(actor.system?.conditions?.[def?.levelField]) || 0) : 0;
+  const lvl = isLimb && level == null ? Math.max(1, before) : level;
+  const fields = conditionApplyFields(key, lvl, actor);
+  if (isLimb && Object.keys(fields).length && (Number(lvl) || 0) > before) {
+    Object.assign(fields, limbLossSideFields(actor, key));
+  }
+  return fields;
 }
 
 /** Крестик в строке состояния: снять его, а со счётчиком — обнулить и счётчик. */
 export async function removeCondition(actor, key) {
+  // Без сознания от Усталости (wdbc-x1nz.2.95): снять крестиком — значит
+  // привести в себя, а по книге это ещё и Усталость до T.b+W.b−1. Иначе
+  // очнувшийся стоял бы с Усталостью на пороге и выше.
+  if (key === "unconscious" && isFatigueFaint(actor)) {
+    await removeFatigue(actor, 1);
+    return;
+  }
   // «Усталость» правится только Усталостью на ТЕЛЕ (см. showAddConditionDialog) —
   // крестик тут ничего не изменит, тег пересчитается обратно из fatigue.value.
   const fields = conditionRemoveFields(key);
@@ -311,7 +534,12 @@ export async function setConditionLevel(actor, key, value) {
   const def = CONDITIONS_DEF[key];
   const val = parseInt(value) || 0;
   if (!def?.hasLevel || !def.levelField) return;
-  await actor.update({ [`system.conditions.${def.levelField}`]: val });
+  const fields = { [`system.conditions.${def.levelField}`]: val };
+  // Потеря конечности, поднятая числом в строке (wdbc-x1nz.2.97) — та же
+  // новая потеря, что и из диалога: Кровотечение + таймер обрубка.
+  const before = Number(actor.system?.conditions?.[def.levelField]) || 0;
+  if (LIMB_LOSS_KEYS.includes(key) && val > before) Object.assign(fields, limbLossSideFields(actor, key));
+  await actor.update(fields);
 }
 
 export function showAddConditionDialog(actor) {
@@ -364,8 +592,10 @@ export function showAddConditionDialog(actor) {
           // точка не спрашивает иммунитет, и Состояние продавливается вручную
           // мимо него (wdbc-d9dp). Галочка иммунного Состояния и так отключена
           // выше — это второй рубеж на случай подделанной формы/скрипта.
+          // manualApplyFields, а не голый conditionApplyFields: потеря
+          // конечности отсюда тоже тянет Кровотечение и таймер обрубка.
           for (const cb of button.form.querySelectorAll(".add-cond-cb:checked"))
-            Object.assign(updates, conditionApplyFields(cb.dataset.condition, null, actor));
+            Object.assign(updates, manualApplyFields(actor, cb.dataset.condition));
           if (Object.keys(updates).length) await actor.update(updates);
         }
       },
@@ -391,6 +621,14 @@ export function activateConditionsListeners(root, actor) {
     await setConditionLevel(actor, ev.currentTarget.dataset.condition, ev.currentTarget.value);
   });
 
+  // Ручной ввод числа Усталости (wdbc-x1nz.2.95): у поля нет name — форма
+  // листа его не отправляет, число идёт тем же путём, что кнопки, с порогом
+  // обморока и иммунитетом Саркофага. Раньше ввод «9» при пороге 6 оставлял
+  // персонажа на ногах.
+  on(root, ".fatigue-value-input", "change", async ev => {
+    ev.stopPropagation();
+    await setFatigue(actor, parseInt(ev.currentTarget.value) || 0);
+  });
   on(root, ".fatigue-add-btn", "click", async ev => {
     ev.preventDefault();
     await addFatigue(actor, 1);

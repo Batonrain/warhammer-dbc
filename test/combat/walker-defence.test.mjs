@@ -220,6 +220,24 @@ describe("performWalkerDodge", () => {
     expect(captured.chat.at(-1).content).toContain("<label>Порог</label><b>35</b>");
   });
 
+  // wdbc-2ny6: Опрокинутый Шагоход «сбит с ног» (Книга Машин) — как Повален у
+  // персонажа: −20 к Уклонению (rules/library/conditions.mjs), Парирование
+  // книга не штрафует. Штраф ложится на половину Уклонения пилота.
+  it("Опрокинутый Шагоход уклоняется с −20, как Поваленный", async () => {
+    const pilot = pilotActor({ ag: 75 });
+    globalThis.fromUuid = async () => pilot;
+    captured.nextRoll = 10;
+    const v = walkerVehicle({ size: 4, operate: 90 });
+    v.system.damageStates = [{ label: "Опрокидывание" }];
+
+    await performWalkerDodge(v);
+
+    // 75 − 20 − 40 − 20 (Опрокинут) = −5 → Порог −5, Operate 80 выше.
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("<label>Порог</label><b>-5</b>");
+    expect(card).toContain("Опрокинут −20");
+  });
+
   it("пустая машина — отказ", async () => {
     globalThis.fromUuid = async () => null;
     await performWalkerDodge(walkerVehicle({ stations: [] }));

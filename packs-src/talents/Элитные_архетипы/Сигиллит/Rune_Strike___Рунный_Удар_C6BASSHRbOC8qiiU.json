@@ -24,15 +24,7 @@
     "effects": {
       "initMod": 0,
       "fearRating": 0,
-      "speedMod": 0,
-      "weaponBuff": {
-        "enabled": false,
-        "scope": "equipped",
-        "damageMod": 0,
-        "penMod": 0,
-        "rangeMod": 0,
-        "addProps": []
-      }
+      "speedMod": 0
     }
   },
   "_id": "C6BASSHRbOC8qiiU",

@@ -19,6 +19,7 @@
  */
 
 import { getHeldHand } from "../rules/hands.mjs";
+import { resolveWeaponProps, aggregateAuto } from "./weapon-properties.mjs";
 
 // Ключи локаций брони системы.
 const LOC = {
@@ -90,17 +91,26 @@ export const isHandShield = (item) =>
   item?.type === "weapon" && item.system?.shieldAP != null;
 
 /**
- * AP щитов по локациям для актора: берём ЭКИПИРОВАННЫЕ щиты.
- * Не складывается с бронёй, а берётся максимум по каждой локации (щит
- * прикрывает броню, а не суммируется с ней) — как и остальные источники AP.
- * @returns {Object} { head:0, body:0, ... }
+ * AP щитов по локациям + признак Primitive у ПОБЕДИВШЕГО (максимальный AP)
+ * щита этой локации — общее ядро для shieldArmorByLocation (совместимость)
+ * и Primitive-брони от щита (core.json, «Типы Рукопашного Оружия»: «Если щит
+ * имеет свойство Primitive, АР от него считается примитивной бронёй, кроме
+ * как от атак от примитивного стрелкового оружия» — «кроме… стрелкового»
+ * разбирает уже потребитель, combat/damage.mjs, здесь только сырой флаг «АР
+ * этой локации дал Primitive-щит»).
+ * @returns {Object} { head:{ap,primitive}, body:{...}, ... }
  */
-export function shieldArmorByLocation(actor) {
-  const acc = { head: 0, body: 0, leftArm: 0, rightArm: 0, leftLeg: 0, rightLeg: 0 };
+export function shieldCoverageByLocation(actor) {
+  const acc = {
+    head: { ap: 0, primitive: false }, body: { ap: 0, primitive: false },
+    leftArm: { ap: 0, primitive: false }, rightArm: { ap: 0, primitive: false },
+    leftLeg: { ap: 0, primitive: false }, rightLeg: { ap: 0, primitive: false }
+  };
   for (const item of actor.items) {
     if (!isHandShield(item) || !item.system.equipped) continue;
     const ap = Number(item.system.shieldAP) || 0;
     if (ap <= 0) continue;
+    const primitive = !!aggregateAuto(resolveWeaponProps(item)).primitive;
     const hand   = getHeldHand(item) || "left";
     const raised = !!item.getFlag?.("warhammer-dbc", "shieldRaised");
     const z = parseShieldZones(item.system.shieldZones, hand);
@@ -111,9 +121,24 @@ export function shieldArmorByLocation(actor) {
       const pick = Number(item.getFlag?.("warhammer-dbc", "shieldVariant") ?? 0);
       for (const v of z.variants) locs.push(...(v[pick] || v[0] || []));
     }
-    for (const l of locs) acc[l] = Math.max(acc[l] || 0, ap);
+    for (const l of locs) {
+      const cur = acc[l];
+      if (ap > cur.ap) acc[l] = { ap, primitive };
+      else if (ap === cur.ap && primitive) cur.primitive = true;
+    }
   }
   return acc;
+}
+
+/**
+ * AP щитов по локациям для актора: берём ЭКИПИРОВАННЫЕ щиты.
+ * Не складывается с бронёй, а берётся максимум по каждой локации (щит
+ * прикрывает броню, а не суммируется с ней) — как и остальные источники AP.
+ * @returns {Object} { head:0, body:0, ... }
+ */
+export function shieldArmorByLocation(actor) {
+  const cov = shieldCoverageByLocation(actor);
+  return Object.fromEntries(Object.entries(cov).map(([l, v]) => [l, v.ap]));
 }
 
 /** Человекочитаемая сводка «что прикрывает» — для листа и подсказок. */

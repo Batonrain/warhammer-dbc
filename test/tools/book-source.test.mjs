@@ -8,20 +8,20 @@ const book = { slug: "core", pack: "book-core" };
 // ссылки уже расставлены, названия книги и страницы PDF — во флагах.
 const docs = [
   {
-    name: "II. МЕХАНИКА", sort: 200,
+    _id: "EntryMechanics01", name: "II. МЕХАНИКА", sort: 200,
     flags: { "warhammer-dbc": { book: "core", pdfPage: 40, source: "DoomBC_Core.pdf" } },
     pages: [
-      { name: "Тесты", sort: 200, text: { content: "<p>Второй.</p>" },
+      { _id: "PageTestsId00001", name: "Тесты", sort: 200, text: { content: "<p>Второй.</p>" },
         flags: { "warhammer-dbc": { book: "core", pdfPage: 42 } } },
-      { name: "Движение", sort: 100, text: { content: "<p>Первый.</p>" },
+      { _id: "PageMoveId000001", name: "Движение", sort: 100, text: { content: "<p>Первый.</p>" },
         flags: { "warhammer-dbc": { book: "core", pdfPage: 41 } } }
     ]
   },
   {
-    name: "ВСТУПЛЕНИЕ", sort: 100,
+    _id: "EntryIntroId0001", name: "ВСТУПЛЕНИЕ", sort: 100,
     flags: { "warhammer-dbc": { book: "core", pdfPage: 2, source: "DoomBC_Core.pdf" } },
     pages: [
-      { name: "Вступление", sort: 100,
+      { _id: "PageIntroId00001", name: "Вступление", sort: 100,
         text: { content: "<p>Стреляет @UUID[Compendium.warhammer-dbc.weapons.Item.aaa]{Болт-пистолет}.</p>" },
         flags: { "warhammer-dbc": { book: "core", pdfPage: 2 } } }
     ]
@@ -60,5 +60,14 @@ describe("bookSource", () => {
     const src = bookSource(existing, docs);
     const rebuilt = bookDocuments(book, src, new Map());
     expect(bookSource(existing, rebuilt)).toEqual(src);
+  });
+
+  // wdbc-bjy1.10: замороженный _id едет в исходник и обратно в сборку.
+  it("_id глав и разделов переживает извлечение и повторную сборку", () => {
+    const src = bookSource(existing, docs);
+    expect(src.entries.map(e => e._id)).toEqual(["EntryIntroId0001", "EntryMechanics01"]);
+    expect(src.entries[1].pages.map(pg => pg._id)).toEqual(["PageMoveId000001", "PageTestsId00001"]);
+    const rebuilt = bookDocuments(book, src, new Map());
+    expect(rebuilt[1].pages.map(pg => pg._id)).toEqual(["PageMoveId000001", "PageTestsId00001"]);
   });
 });

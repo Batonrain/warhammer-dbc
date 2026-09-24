@@ -90,9 +90,20 @@
 - `module/combat/ablative-wounds.mjs` — авторегенерация аблатива по Ходу.
 - `module/combat/damage.mjs` — применение урона (`showApplyDamageDialog`):
   поглощение, локация, критический эффект — центральный расчёт.
+- Пробитие Брони (стр. 42, wdbc-x1nz.2.78/.79) — `combat/armor-properties.mjs::
+  armorBreachOutcome` (AP после Pen ×2, ×3 против I(Cr), без T.b); помечает
+  броню `system.breached` (Sealed, пустотная броня) и пишет итог в
+  `flags.warhammer-dbc.lastBreach` цели с id карточки атаки. Эффекты свойств с
+  `targetEffect.onBreach` (Rad, Toxic, Сновидение, Погибель) проверяют его в
+  `hooks.mjs::_applyWeaponPropEffect`; Shift-клик — наложить вручную.
 - Подвиды урона в скобках книги (I(Cr)/X(Fr)/E(El)/E(Fl)/E(Ls)/C(Tx), wdbc-q0q8,
   12.09.2026) — на уровень точнее широкого `damageType`: `system.damageSubtype`
-  у оружия (`data/item/weapon.mjs`), `damageImmunity.subtype.*` (иммунитет),
+  у оружия (`data/item/weapon.mjs`), психосилы и её `profiles[]`, техночуда,
+  `ccDamageSubtype` встречной атаки Конструктора (wdbc-9zpt); до урона едет
+  атрибутом `data-damage-subtype` кнопки «Применить урон» — его кладут все
+  окна урона (атака, Орда, Таран/Скакун — I(Cr), Борьба, Дуга — E(El),
+  психосила, техночудо, встречная атака; тест
+  `test/combat/damage-subtype-sources.test.mjs`), `damageImmunity.subtype.*` (иммунитет),
   `system.absorption.vsSubtype.<подвид>` (AP-бонус, читает
   `combat/armor-properties.mjs::resolveArmorAbsorptionAP`), `ARMOR_PROPERTIES`
   auto-директивы `noApVsSubtype`/`doubleApVsSubtype`/`tripleApVsSubtype`/
@@ -152,8 +163,9 @@
   `reachable-cells.mjs` (подсветка клеток по Dijkstra).
 - Доп. ходы/действия: `combat/snapshot.mjs`, `assassin-strike.mjs`,
   `extra-turn.mjs`, `last-actor.mjs`, `middle-of-the-hunt.mjs`,
-  `devourer-of-time.mjs` (Пожиратель Времени — доп. Ход в конец инициативы
-  после захвата Врасплох, полудействие жертв каждый раунд).
+  `devourer-of-time.mjs` (Пожиратель Времени — один доп. Ход в конец
+  инициативы после захвата Врасплох, снимается сменой Раунда; полудействие
+  жертв — долг ОД на их следующий Ход, гасится в resetActionEconomy).
 
 ## 5. Бой: конвейер атаки/защиты, состязания
 
@@ -256,7 +268,21 @@ character}`), просто никакой combat-код его пока не ч�
 диалога `_showContestDialog` для Повалить/Финт/Давление/Напролом/Обезоружить/
 Заломить), `combat/grapple.mjs` (Борьба), `combat/mount.mjs` + `rules/mount.
 mjs` (верховой бой), `combat/tactical-map.mjs` + `rules/tactical-map.mjs`
-(база/дистанция/контакт).
+(база/дистанция/контакт). Встречный тест всех Состязаний (wdbc-x1nz.2.73) —
+`combat/opposed-contest.mjs`: инициатор бросает Навык (Ранг в пороге,
+`techDef.skills`), противник жмёт «Сопротивляться» в его карточке
+(`techDef.resist`, `resistMods`, `resistRolls`), сравнение
+`rules/test-kind.mjs::resolveOpposed`, эффект (`onSuccess`) исполняется у
+клиента инициатора (сокет `contestResolved`). Борьба (wdbc-x1nz.2.74-.77):
+роли Атакующий/Цель (`grappleRole`), руки в Захвате (`grappleHands`,
+занимают руки в `rules/hands.mjs::handsOccupied`), Сжать — штраф в Ход Цели
+(`rules/turn-flags.mjs::turnStartSqueezeCarryOver` → `rules/situational.mjs`),
+гейты атаки/Движения/Уклонения по роли (`grappleAttackBlockReason`,
+`grappleMoveAllowed`, `grappleDodgeBlockReason`), +20 чужим атакам по
+сцепившимся (`sheets/attack/mods.mjs`), авто-выпуск при Оглушении/Ступоре/
+Беспомощности (`maybeAutoReleaseGrapple`, hooks.mjs), укрытие друг другом
+±45° с перенаправлением попаданий (`grappleCoverPartner` → attack.mjs
+`grappleCoverHits`).
 
 **Финт/Давление/Напролом (wdbc-x1nz.2.65, 20.09.2026):** эффект победы в
 состязании раньше нигде не применялся (бросок засчитывался и всё). Теперь —
@@ -269,9 +295,172 @@ attacker↔target, снимается `clearFeintAtTurnEnd` в `hooks.mjs`; Да
 успехах). Честно не смоделировано: Напролом против ОЧЕРЕДИ из нескольких
 врагов одним броском — `_showContestDialog` рассчитан на одного оппонента,
 для честной реализации нужна отдельная архитектура (см. заголовок
-`bulldoze.mjs`). Приёмы и Стойки (Взмах/Выпад/Пила/Оглушить/Захват и т.д.) —
-почти все эффекты СВЕРХ WS/Уклонения/Парирования всё ещё не реализованы,
-детальный разбор по каждому — `wdbc-x1nz.2.66`.
+`bulldoze.mjs`).
+
+**Приёмы и Стойки (wdbc-x1nz.2.66, 22.09.2026):** эффекты сверх WS/
+Уклонения/Парирования теперь реализованы почти все. Взмах — запрет
+Избирательной атаки (форсированный `#atk-aim`, `attack-dialog.mjs::
+forcedAimValue/aimLocked`). Пила — гейт по свойству оружия
+(`requiresWeaponProps`), ½S.b урона (тот же слот, что у Обратного Хвата),
+Rng→0, игнор силовых щитов-куполов (`damage.mjs::_rollActiveShield`
+читает `wp.ignoreDomeShields`). Оглушить — тот же форс `#atk-aim`
+(«Голова»), игнор Primitive, конверсия непоглощённого урона в Оглушение
+(`damage.mjs::stunManeuver`, ⌈netDamage/2⌉ Раундов через уже существующий
+`conditionApplyFields`). Захват — `combat/grapple.mjs::
+resolveGrappleSuccess` (встречный тест Athletics vs Athletics вместо
+безусловного попадания через `_showContestDialog`, запрет против целей на
+2+ Размера), альтернатива штрафу Парирования −30 — банк Успехов
+(`evasion-pool.mjs::spendPoolSuccesses`, тот же банк, что у Отскока/
+негации попаданий). Повалить — новый `combat/knockdown.mjs` (авто-Ничком,
+доп. урон на 5+ на выбор, штраф по Размеру); `_showContestDialog` получил
+`techDef.allowedChars/charLabels` — сужает общий 10-характеристичный
+дропдаун до Athletics(S)/Acrobatics(A) книгой, не любой характеристики.
+Стойки: Защитная (Полное действие вместо Полудействия + запрет Натиска при
+щите), Прикрывающая (`free-attack.mjs::coveringDefendersOf` — союзное
+зеркало `enemyContactTokenDocs`, штраф −20 атакам по прикрытым союзникам +
+триггер свободной атаки через `offerFreeAttack`), Пружинящая (SPD+2 Вольту
+— `movement-actions.mjs::vaultHalfMove`, −10 тестам S — новый ситуативный
+авто-мод `rules/situational.mjs::springingStrengthPenalty`), Частокол
+(HUD-кнопки Натиск/Бег гейтятся `MELEE_STANCES[*].noCharge/noRun`, не
+только пилюля диалога атаки), «только в пешем бою» учитывает высоту полёта
+(`system.movement.altitude`, не только `isMounted`). Новый
+`combat/recognize-stance.mjs` — Awareness(WS)+20 раз в Раунд, автоуспех на
+Пределе 75+, раскрывает чужую Стойку. Честно не смоделировано: очерёдность
+действий по инициативе (Частокол/Захват) и «поле зрения»/линия видимости
+(`recognize-stance.mjs`) — решает стол.
+
+**Приёмы и Стойки — фильтр доступности и доводка Прикрывающей (22.09.2026,
+wdbc-x1nz.2.66.14/.15/.16):** диалог атаки уже прятал недоступные Приёмы/
+Стойки из списка (категория оружия/Баланс/Тренировка/пешком) — но отдельная
+персистентная панель «Стойка» на вкладке БОЙ (`character-context.mjs::
+combatStanceOptions`, кнопки `.technique-btn-stance`) показывала все 6 Стоек
+без этого фильтра. Общая логика вынесена в `rules/melee-stance-gate.mjs::
+meleeStanceAllowed` — подключена и в контекст листа (список кнопок), и
+вторым рубежом в клик-обработчик `tabs/combat.mjs` (на случай устаревшего
+рендера листа у другого клиента). Заодно найден и убран мёртвый код: панель
+«База» на той же вкладке была снята с разметки ещё 29.08.2026 (осознанно —
+База выбирается в диалоге атаки, у «Натиска» есть быстрая кнопка на панели
+ДВИЖЕНИЕ), но `combatBaseOptions`/`.technique-btn-base` в JS остались
+неубранными. Прикрывающая Стойка (`free-attack.mjs::friendlyContactTokenDocs`)
+решением стола расширена: Neutral-диспозиция защищена наравне с Friendly —
+но симметрично по лагерям (обе диспозиции в {Friendly,Neutral}, либо обе
+Hostile), не «любой Neutral рядом с кем угодно».
+
+**Длина Оружия (wdbc-x1nz.2.67, закрыт 22.09.2026):** книжный раздел про
+числовой Rng рукопашного оружия (стр. 39) раньше нигде не читался — теперь
+все 5 книжных правил реализованы. `constants/combat.mjs::meleeEffectiveRange`
+(база профиля/выбранной длины + Хват + Приём: Выпад +1, Пила →0) и
+`rules/weapon-length.mjs` (`longerWeaponBonus`, `chargeTargetDodgeBonus`,
+`closeQuartersPenalty`, `extendedReachCells`/`meleeContactDisplay`). Бонус
+атакующему за более длинное оружие и штраф вблизи для Rng≥6 — автогалочки в
+`sheets/attack/mods.mjs`; бонус Избегания цели при Натиске на оружие короче
+на 3+ — живой пересчёт на сабмите формы (`sheets/attack/selection.mjs::
+resolveSelection`). Расширенный Базовый контакт для Rng 8/9 (`wdbc-x1nz.2.
+67.1`) — бейдж диалога атаки читает `meleeContactDisplay`, не трогая общий
+`rules/tactical-map.mjs::contactType()` (сознательно, blast radius). Выбор
+длины оружия за атаку (`wdbc-x1nz.2.67.2`) — поле `system.rangeMin` на
+предмете (weapon.mjs), пилюли «Длина» в диалоге атаки, показываются только
+когда `rangeMin>0 && rangeMin<range`; content-проход по всем 16 книгам
+(только 3 реально содержат диапазоны Rng — core.json, chaos.json,
+machines.json) плюс починка сопутствующего старого бага `range=0` у оружия
+демонов/Дредноутов (`wdbc-x1nz.2.67.2.1`/`.2.1.1`).
+
+**Хваты рукопашного оружия (wdbc-x1nz.2.68, закрыт 22.09.2026):** сверка
+раздела «Хваты» (стр. 39, `constants/combat.mjs::GRIPS`) с книгой нашла 4
+числовых расхождения и 1 несовпадение пака. «1р» давал +1 Rng ВСЕГДА, а
+книга — только как вторичному хвату (перехват двуручного одной рукой);
+`meleeEffectiveRange` получил параметр `isSecondary` (только вызов из окна
+атаки, `sheets/attack/selection.mjs`, реально его вычисляет — остальные 3
+вызывающих места читают основной хват оружия, `isSecondary=false`).
+Попутно найден и починен третий баг того же хвата: «Баланс −1» (`secBal`)
+был заведён в данных, но `gripEffects()` его не читал — Порог Парирования
+не менялся; добавлено `balMod` (относительный мод, в отличие от `balSet` —
+абсолютной подмены у Бл/Хв), подключено в `combat/defense.mjs::parryProfile`.
+«2р» вторичный → +10 Оглушить/Повалить и «Об» → +10 Финт — новая
+`gripManeuverBonus()`: Оглушить читает `selection.mjs` (обычный WS-манёвр),
+Финт/Повалить — отдельные Состязания, бонус подсказан в `defaultMod`
+диалога (`sheets/tabs/combat.mjs::contestGripBonus`). Длинные Руки (Размер
+1+ увеличивает максимальную дальность, не минимальную) — новый параметр
+`sizeBonus` у `meleeEffectiveRange`, исключены Ног/Гол/Зуб/Хв/Щуп (книга
+явно исключает голову/ногу/укус; хвост/щупальце — не рука по тому же
+принципу, книга их не описывает вовсе). Пак: `Parasitic_Bite` grips
+«Рот»→«Зуб» (нераспознанный хват съедал 1 руку из бюджета за укус).
+**Ловушка, пойманная тестами до коммита:** два разных фоллбэка «хват не
+задан» в кодовой базе — `parseGrips(...)[0] ?? null` (данные) против
+`currentMeleeGrip()`'s `parseGrips(...)[0] || "1р"` (rules/hands.mjs) —
+если сравнивать их напрямую для isSecondary, любое оружие без заполненного
+`sys.grips` ложно считается «вторичным хватом 1р». При написании новых
+мест, сравнивающих «текущий хват» с «основным хватом оружия», брать
+фоллбэк `|| "1р"` с ОБЕИХ сторон сравнения, не `?? null` ни с одной.
+
+**Типы Рукопашного Оружия (core.json, разд. «Типы Рукопашного Оружия» +
+«Безоружный Бой», 22.09.2026):** книжный раздел про типовые особенности по
+`system.meleeCategory`/`system.meleeSubtype` (Булава/Топор/Молот/Крюк/Когти/
+Кистень/Кнут/Посох/Меч-Рапира/Сабля/Кулак-Кулак.Б/Щит/Укус) не читался нигде
+вообще. Статические бонусы/штрафы атаки — `sheets/attack-dialog.mjs`
+(baseParts-строки Булава +10/Крюк −10/−15, Рапира −10 к штрафу Избирательной
+за отказ от +1 Rng Выпада, Сабля отмена +20 Верховой Атаки) и `sheets/attack/
+selection.mjs` (`swordSubtypeBon` — Рапира +10 Выпад/−10 Взмах, Сабля
+наоборот). Урон/эффекты попадания — `combat/attack.mjs` (Молот/Топор +1d10 и
+Concussive/Felling по лежачей/«у стены» цели — галочка `atk-target-against-
+wall`, «лежачая» авто по `conditions.prone`; Когти.Р +1 Dmg за нечётный
+Успех кроме первого — `flatBonus`, гейт по хвату «Л»/«П+Л»; Кнут — Snare(−2)
+опциональной кнопкой при попадании в конечность) и `combat/draw-action.mjs::
+resolveFlailMeleeFumble` (Кистень/Кнут — Критический Промах бьёт по себе в
+случайную часть тела, Кнут без S.b). Реакция «Повалить» на 3+ Успеха
+Крюком/Избирательное в Ногу Посохом — `attack-card.mjs::
+reactionKnockdownSection` + `hooks.mjs::.wh-reaction-knockdown-btn`
+(переиспользует готовый `combat/knockdown.mjs`). Занятость руки Когти.Р
+(хват «Л»/«П+Л») была багом молчаливо игнорировавшим правило — `rules/
+hands.mjs::MELEE_GRIP_HANDS` поправлен на 1 руку (было 0). Борьба: Укус
+теперь автопопадание без WS/BS-теста (был баг, шёл полным броском) и
+Заломить с экипированными Когтями бьёт их формулой урона вместо
+фиксированного 1d5+S.b (deg=1) — оба `combat/grapple.mjs::_doBite/
+_resolveWrenchSuccess`. Безоружное Парирование (раздел «Безоружный Бой», не
+«Щит») — новая механика (раньше не было вовсе ни для одного оружия): −20
+голым рукам против «полноценного» оружия, экземпция Кулака.Б
+(`meleeSubtype:"Кулак.Б"` на интегральной атаке) только против R/E(+Power
+Field); Силовое поле атакующего против безоружной защиты — 1-75 бросок,
+попадание в парирующую конечность (по Хвату: Рука/Нога/Голова) своим S.b —
+оба `combat/defense.mjs::_performParry`. Остальное правило (wdbc-x1nz.2.69-.72)
+— `combat/unarmed-combat.mjs`: +20 вооружённому против безоружной атаки,
+кнопка «Ответный удар» за 2 Успеха (урон своего оружия с S.b атакующего,
+списывается из пула Избегания), силовое оружие против безоружной атаки бьёт
+атакующего в конечность вместо «оружие уничтожено», стрелок без рукопашного
+Парирует стволом по профилю «Ударить оружием» (Bl −1/−2, безоружен только
+против безоружной атаки). Профиль «Ударить оружием» (`combat/weapon-profiles.mjs`)
+несёт штраф атаки −10/−20 (строка порога в окне атаки), Дл. винтовка —
+свойство `longRifle` на предмете, Закреплённое тяжёлое (и стрелявшее из
+Закрепления в этом Ходу, флаг `firedBracedHeavy`) профиля не даёт. Щит:
+арка 180° и Primitive-броня щита потребовали новых derived-полей
+`system.absorption.{noShield,shieldSourceLoc,shieldPrimitiveLoc}`
+(`rules/character.mjs`, источник — `combat/hand-shield.mjs::
+shieldCoverageByLocation`) и галочки «Цель вне арки щита» на кнопке
+применения урона (`attack-card.mjs`/`hooks.mjs` → `combat/damage.mjs`,
+параметр `shieldOutOfArc`); слепота от прикрытия головы щитом переиспользует
+готовый `isBlindedActor`-путь (`attack-dialog.mjs`).
+
+**Сабля, вторая атака Верховой Атаки (wdbc-f6j9y, 22.09.2026):**
+`combat/sabre-second-attack.mjs` — отказ от +20 взводит метку
+`sabreSecondAttackPending` (оружие + токен первой цели); кнопка карточки
+открывает окно атаки с `techniqueOpts.sabreSecondAttack`: База зафиксирована
+(`selection.mjs`, `forcedBaseKey`), без ОД и вне Лимита Атак
+(`sheets/attack/dialog.mjs`), другая цель обязательна; метка сгорает концом
+Хода (`hooks.mjs`) и страховочно в `rules/turn-flags.mjs`. «На пути» не
+проверяется — геометрии пути нет.
+
+**Естественное оружие из Черт/Даров (wdbc-o368c, 22.09.2026):** запись
+`integralAttack` (`apps/mechanics.mjs`) + `rules/integral-rating.mjs`: «X» в
+уроне оружия-образца (и Pen по флагу `penetrationFromRating`) — из рейтинга
+источника, пересчёт при смене рейтинга (`warhammer-dbc.mjs`, updateItem);
+`equipOptional` — выбор галочками при получении (флаг `integralChosen`);
+`grappleOnly` — Укус (X) скрыт из HUD/БОЙ, пока нет второго укуса. Образцы —
+`packs-src/weapons/Интегральные_атаки/` (Укус (X), 7+7 профилей Natural/Deadly
+Natural Weapons). Дары Одержимости (Пасть, Огромная Пасть, Рога, Звериные
+Ноги) — свойства оружия `invocationNaturalWeapon`/`invocationNaturalDamage`
+(`rules/invocation-natural.mjs`, рейтинг DNW из `constants/possession.mjs::
+MANIFEST_TABLE`). Не смоделировано: «Рога только после Натиска», «Укус как
+единственная атака Хода».
 
 **Связан в Рукопашной (wdbc-x1nz.2.64, 20.09.2026):** персонаж в базовом
 контакте с враждебным не мог быть ограничен в стрельбе НЕ по рукопашной, и
@@ -342,17 +531,36 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   ветка Талантов сверх базового штрафа; `weapon-training.mjs` (Арсенал);
   `improvised-weapon.mjs` (импровизированное/метание).
 - Оружие Наследия: `constants/legacy-weapon.mjs`, `rules/legacy-weapon.mjs`,
-  `apps/legacy-weapon.mjs` (блок «Наследие» на листе оружия). Применение
-  конкретных Историй/Мутаций в бою (wdbc-1rno.35) — точечные хуки в
-  `combat/attack.mjs`/`sheets/attack/mods.mjs`/`sheets/attack-dialog.mjs`,
-  плюс geometry-хелперы `combat/legacy-weapon-betrayal.mjs` (союзник рядом),
-  `combat/legacy-weapon-mutations.mjs` (ближайший неповреждённый враг) и
-  `combat/legacy-weapon-excess.mjs` (каскад W+0/Порча). Прогресс по всей
-  таблице (10 Историй + 35 Мутаций) — bd-комментарии тикета `wdbc-1rno.35`.
+  `apps/legacy-weapon.mjs` (блок «Наследие» на листе оружия, включая кнопки
+  «потратить Очко Бесчестия» Убийцы/Перебора/Душесвязанного/Щита Ненависти).
+  Применение конкретных Историй/Мутаций в бою (wdbc-1rno.35, закрыт
+  21.09.2026 — 44/45 с механикой) — точечные хуки в `combat/attack.mjs`/
+  `sheets/attack/mods.mjs`/`sheets/attack-dialog.mjs`/`combat/defense.mjs`/
+  `combat/damage.mjs`/`combat/action-economy.mjs`/`hooks.mjs` (клики карточек,
+  очистка на конец боя/смену Раунда), плюс geometry- и карточные хелперы:
+  `combat/legacy-weapon-betrayal.mjs` (союзник рядом), `combat/legacy-weapon-
+  mutations.mjs` (ближайший неповреждённый враг), `combat/legacy-weapon-
+  excess.mjs` (каскад W+0/Порча), `combat/legacy-weapon-killer.mjs` (очистка
+  Felling на конец боя), `combat/legacy-weapon-kill-credit.mjs` (Ужасающее/
+  Злорадство — реагируют на смерть/трату Судьбы), `combat/legacy-weapon-
+  reaper.mjs`/`legacy-weapon-stunning.mjs` (кнопки на карточке урона/
+  Уклонения), `combat/legacy-weapon-brave-heart.mjs` + `combat/movement-
+  actions.mjs::declareLegacyBraveHeartMove/declareLegacyBraveDisengage`
+  (свободное Полудвижение/Выход из Боя), `combat/legacy-weapon-regroup.mjs`
+  (отложенный переброс Инициативы на смену Раунда). Прогресс по всей таблице
+  (10 Историй + 35 Мутаций) — bd-комментарии тикета `wdbc-1rno.35`.
 - Дар «Рука-Пушка»: `rules/gun-arm.mjs`, `apps/gun-arm.mjs`, `migrations/
   gun-arm-source.mjs`. «Рука Смерти»: `rules/hand-of-death.mjs` + `apps`.
   «Выстрел не тратит патрон»: `rules/ammo-free.mjs`.
 - `migrations/weapon-grips.mjs` — разовое заполнение Хватов/Профилей из текста.
+- «Свойство атаки» Конструктора (`kind:"attackProp"`, wdbc-rmrm9) — предмет
+  выдаёт Особое Свойство Оружия атакам владельца области unarmed/melee/
+  ranged/attack: `rules/item-rules.mjs` → эффект `grantWeaponProp`
+  (`rules/resolve-test.mjs::weaponPropsFromRules`, рейтинги-формулы строкой),
+  область `weapon:unarmed` = интегральные атаки (`ctx.unarmed`, ставит
+  `sheets/attack-dialog.mjs`). Первый пользователь — Электродуга (Arc + Shocking
+  безоружным). Урон Дуги с бонусом характеристики («2d10+T.b») подставляет
+  `hooks.mjs` (.wh-arc-btn) по характеристикам стрелка.
 
 ## 7. Броня, щиты, защитные поля
 
@@ -412,6 +620,11 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   — отдельный крюк в `combat/defense.mjs` (Уклонение/Парирование
   Комбинированный с W−10, если защищающийся видит глаза атакующего-
   носителя; провал снимает все Реакции), не через этот facing-примитив.
+  `warhammer-dbc.mjs::disableFixedFacingAutoRotate` (хук `preMoveToken`) —
+  гасит автоповорот ядра Foundry v13 (`core.tokenAutoRotate`) для акторов
+  ship/vehicle: у них `rotation` токена — источник арок орудий/щитов
+  (`isWithinMountArc`), а не просто визуальный разворот, и не должен молча
+  съезжать от обычного перетаскивания токена по карте.
 - `module/rules/tactical-map.mjs` + `combat/tactical-map.mjs` — Тактическая
   карта (wdbc-8k0i, стр. 31): размер Базы (2×2/3×3, null = Размер 2+, «на
   откуп ГМу»), дистанции от края/от центра Базы, вид контакта none/base/deep,
@@ -473,6 +686,22 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   части тела. Мутация Loss of Limb/Потеря Конечности — НЕ реализована,
   вынесена в wdbc-1rno.6.1 (гейт Best.Q сравнением субмутации, субтаблица
   «Пальцы» — открытые решения).
+- Сверка раздела «Статусы» с книгой (wdbc-x1nz.2.87–.97, 23.09.2026):
+  - `combat/condition-clock.mjs` — часы Состояний по игровому времени
+    (`updateWorldTime`, список `CONDITION_CLOCK_HANDLERS`): пробуждение из
+    обморока от Усталости, урон Гангрены раз в T.b×2 ч, −1 Обескровливания в
+    час, Удушье «в покое» по минутам.
+  - `combat/condition-death.mjs::killByCondition` — смерть от Состояния
+    (Кровотечение/Удушье/Гангрена): флаг deceased + «Повержен» + defeated.
+  - Единый путь смены Усталости — `sheets/tabs/conditions.mjs::
+    setFatigue/fatigueChangeFields` (порог T.b+W.b, Саркофаг, пробуждение);
+    действующее значение с +1 Гангрены — `system.fatigue.effective`.
+  - Запрет действий Состояниями в любой момент Раунда и метка «Физическое»
+    (Беспомощный) — `combat/action-economy.mjs::actionBlockReason`.
+  - Остановка Кровотечения и операция от Гангрены — режимы диалога Лечения;
+    тушение Горения — `combat/extinguish.mjs` (кнопка на вкладке БОЙ).
+  - Ослепление и его снятие сонаром — `rules/blindness.mjs`; атаки по
+    Ослеплённому Незримые (`combat/attack.mjs`).
 - `module/apps/token-conditions.mjs` — синхронизация с Token HUD.
 - `module/sheets/tabs/conditions.mjs` — вкладка Состояния/Усталость.
 - `module/constants/fear-tables.mjs` — Страх/Шок/Ментальная Травма/Расстройства.
@@ -760,6 +989,16 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   Руна), wdbc-exjp (Импровизированная Руна, Прометеев Огонь — обоим нужен
   список изученных Рун), wdbc-qd6w (сочетание механик Пути, Тауматургия,
   −30 обнаружению манифестации).
+- Огонь Души / Soulfire (`combat/soulfire.mjs`, 23.09.2026) — кнопка силы
+  рядом с каждой кнопкой урона E(Fl) своего псайкера (впрыскивается в
+  `hooks.mjs` renderChatMessageHTML); открывает обычное окно манифестации
+  (`showManifestDialog(actor, item, {onResult})` — executePsychotest отдаёт
+  исход через `opts.onResult`), при Успехе: +PRd5 к попаданию, флаг
+  `ignoreSubtypeImmunity` (combat/damage.mjs пропускает
+  `damageImmunity.subtype.*`), псайкеру PR+1d5 в `system.charDamage.wp`.
+- Доп. профиль психосилы (`system.profiles[]`) понимает Пробитие формулой и
+  формульные рейтинги в `propsText` (wdbc-1mwm9) — выбор типа урона силой
+  (Опустошительный Дождь: огонь/яд) делается профилем.
 
 ## 15. Крафт, Мастерская, Качество, Разгрузка
 
@@ -812,7 +1051,8 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `data/item/{vehicle-gear,vehicle-trait}.mjs`, `migrations/
   vehicle-trait-effects.mjs`.
 - `constants/vehicle-weapons-library.mjs` — библиотека Орудий Техники.
-- `combat/vehicle.mjs` — Вираж/Таран/Трудный Ландшафт/урон по стороне брони.
+- `combat/vehicle.mjs` — Вираж (Реакция водителя: driver→pilot→commander;
+  экипажа нет — без траты)/Таран/Трудный Ландшафт/урон по стороне брони.
 - `sheets/vehicle-sheet.mjs`.
 - Пилот Дредноута — см. §9 (`rules/dreadnought.mjs`).
 - **Шагоход (Walker)** — `rules/walker.mjs` (арифметика без Foundry) +
@@ -956,6 +1196,13 @@ AGENTS.md).
   `rules/{merge-abilities,name-generator,name-generator-helpers}.mjs`,
   `constants/{item-icons,craft-icons,roll-icons,tech-icons,veil-icons,fonts,
   name-lists,name-gen,library-packs,items}.mjs`.
+- Мировые миграции: `module/migrations/*.mjs`, гейты — в `warhammer-dbc.mjs`
+  (`Hooks.once("ready")`). Проход по несвязанным токенам и гейт с отдельным
+  ключом версии под него — `migrations/unlinked-tokens.mjs`
+  (`runMigrationGate`, `deltaOwnedItems`, wdbc-gbd3).
+- Сборка/извлечение компендиумов: `tools/pack.mjs`, `tools/unpack.mjs`;
+  отметка сверки с отпечатками баз и исходников — `tools/pack-stamp.mjs`,
+  `tools/pack-fingerprint.mjs` (wdbc-1c10, wdbc-6dps).
 - `module/data/item/infoguard.mjs`, `_legacy-char-bonus.mjs` — не
   TypeDataModel, общие миксины схем (счётчик Инфограждения; миграция пары
   `charBonusStat/charBonusValue`).

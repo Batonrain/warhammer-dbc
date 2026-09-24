@@ -18,7 +18,7 @@
     "rof_single": 1,
     "rof_semi": 4,
     "rof_full": 6,
-    "damage": "2d10+12",
+    "damage": "2d10+8",
     "damageType": "rending",
     "penetration": 6,
     "quality": "common",

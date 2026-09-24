@@ -229,6 +229,16 @@ function _wireEnvDrag(el) {
   });
 }
 
+/**
+ * За кого катать тест на Жару/Холод с виджета: выделенные токены (у каждого
+ * свой актор, без повторов), иначе назначенный персонаж (wdbc-4umq).
+ */
+export function envTestActors(controlledTokens = [], userCharacter = null) {
+  const fromTokens = [...new Set((controlledTokens ?? []).map(t => t?.actor).filter(Boolean))];
+  if (fromTokens.length) return fromTokens;
+  return userCharacter ? [userCharacter] : [];
+}
+
 export function refreshEnvWidget() {
   try {
     const scene = currentScene();
@@ -251,14 +261,15 @@ export function refreshEnvWidget() {
       const c = el.classList.toggle("collapsed");
       try { localStorage.setItem("wh-env-collapsed", c ? "1" : "0"); } catch (e) {}
     });
-    // Тест на Жару/Холод (wdbc-1rno) — «мой персонаж» тем же способом, что
-    // назначение по умолчанию у самого Foundry (User#character); виджет
-    // глобальный, не листа, привязать к конкретному актору иначе нечем.
+    // Тест на Жару/Холод (wdbc-1rno) — за выделенные токены, а если их нет,
+    // за «моего персонажа» (User#character). Виджет глобальный, не листа; у ГМа
+    // назначенного персонажа обычно нет — его способ указать «за кого» —
+    // выделение токенов (wdbc-4umq).
     el.querySelector(".wh-env-w-temp-btn")?.addEventListener("click", async ev => {
       ev.stopPropagation();
-      const actor = game.user?.character;
-      if (!actor) return ui.notifications?.warn("Нет назначенного персонажа (User → Character) — тест не за кого катать.");
-      await rollTempHazardTest(actor);
+      const actors = envTestActors(canvas?.tokens?.controlled, game.user?.character);
+      if (!actors.length) return ui.notifications?.warn("Выделите токены или назначьте персонажа (User → Character) — тест не за кого катать.");
+      for (const actor of actors) await rollTempHazardTest(actor);
     });
     // Клик по телу открывает окно (только ГМ) — объединённую страницу «Сцена»
     // на разделе «Окружение», а не старое отдельное окно (wdbc-59if). Импорт

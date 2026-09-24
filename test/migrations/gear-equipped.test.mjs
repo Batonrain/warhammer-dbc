@@ -88,7 +88,8 @@ describe("migrateGearEquipped: изоляция сбоя одного актор
       scenes: [{
         name: "Сцена 1",
         tokens: { contents: [
-          { id: "t1", name: "Токен 1", actorLink: false, actor: tokenActor },
+          { id: "t1", name: "Токен 1", actorLink: false, actor: tokenActor,
+            delta: { _source: { items: [{ _id: "cloak" }] } } },
           { id: "t2", name: "Токен 2", actorLink: true,  actor: linkedTokenActor }
         ] }
       }]
@@ -110,7 +111,8 @@ describe("migrateGearEquipped: изоляция сбоя одного актор
       user: { isGM: true },
       actors: [],
       scenes: [{ name: "Сцена 1", tokens: { contents: [
-        { id: "t1", name: "Токен сбойный", actorLink: false, actor: badTokenActor }
+        { id: "t1", name: "Токен сбойный", actorLink: false, actor: badTokenActor,
+          delta: { _source: { items: [{ _id: "mask" }] } } }
       ] } }]
     };
     globalThis.ui = { notifications: { info: () => {}, warn: () => {} } };

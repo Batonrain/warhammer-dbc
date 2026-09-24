@@ -12,8 +12,8 @@
 //  тоже»): контакт/длительность/срыв (module/apps/parasite-trait.mjs,
 //  Состояние parasiticContact — счётчик тикает ГЕНЕРИК-циклом
 //  processConditionTurnStart, combat/condition-ticks.mjs, спец-хук на 0
-//  завершает заражение) и числовая часть слияния — Инициатива/P/W-
-//  характеристики, лучший из WS/BS (module/rules/character.mjs), блок
+//  завершает заражение) и числовая часть слияния — Инициатива, Int/Per/WP
+//  паразита, лучший из WS/BS (module/rules/character.mjs), блок
 //  собственных психосил (module/sheets/tabs/psychic.mjs).
 //
 //  НЕ автоматизировано (честная граница, отмечено и на самом предмете
@@ -62,26 +62,76 @@ export function isPossessedByParasite(actor) {
 /**
  * Числовая часть слияния — «действует в Инициативу паразита и использует
  * его I, P и W, а если его WS или BS ниже, чем у паразита — то также и их».
- * Живой пересчёт (module/rules/character.mjs, самый хвост
- * prepareCharacterDerived — ПОСЛЕ того, как обычные Инициатива/Характеристики
- * уже посчитаны, иначе перезаписывать было бы нечего): actor/system/chars
- * правятся НА МЕСТЕ, ничего не возвращает. typeof game/fromUuidSync — тот
- * же честный guard, что у rules/wrapped-in-chaos.mjs::realityRendingPenalty —
- * character.mjs обязан остаться безопасным на «голых» объектах без стаба.
- * Навыки/Таланты/блок Чудес Веры и Warp-Gifted — см. заголовок файла.
+ * I — Интеллект, не Инициатива: книга пишет Характеристики как «WS, BS, S,
+ * T, A, I, P, W, F», а Инициатива названа в той же фразе отдельно.
+ *
+ * Разбито на две точки (wdbc-bjy1.4): Характеристики подставляются ВНУТРИ
+ * цикла характеристик module/rules/character.mjs — сразу после вывода
+ * Бонуса, до Навыков, Здравомыслия, Усталости и прочего, что считается от
+ * .total/.bonus; раньше подмена шла в хвосте пересчёта, и всё производное
+ * оставалось хозяйским. Инициатива — в хвосте (applyParasiteFusion), после
+ * prepareFinalPools, иначе её перезапишут.
+ *
+ * typeof game/fromUuidSync — тот же честный guard, что у
+ * rules/wrapped-in-chaos.mjs::realityRendingPenalty: character.mjs обязан
+ * остаться безопасным на «голых» объектах без стаба.
  */
-export function applyParasiteFusion(actor, system, chars) {
-  if (typeof game === "undefined" || typeof fromUuidSync === "undefined") return;
+export function fusedParasite(actor) {
+  if (typeof fromUuidSync === "undefined") return null;
   const parasiteUuid = possessingParasiteUuid(actor);
-  if (!parasiteUuid) return;
-  let parasite;
-  try { parasite = fromUuidSync(parasiteUuid); } catch { parasite = null; }
-  if (!parasite) return;
+  if (!parasiteUuid) return null;
+  try { return fromUuidSync(parasiteUuid) ?? null; } catch { return null; }
+}
 
-  const pChars = parasite.system?.characteristics ?? {};
+/** Характеристики, которые хост берёт у паразита целиком / только если у паразита выше. */
+const FUSED_ALWAYS = new Set(["int", "per", "wp"]);
+const FUSED_IF_HIGHER = new Set(["ws", "bs"]);
+
+/**
+ * Подставляет Характеристику паразита в char хоста (число и Бонус вместе —
+ * Бонус паразита уже несёт его Unnatural). Правит на месте; true — если
+ * подставлено (вызывающий код переписывает разборку Итого).
+ */
+export function fuseParasiteCharacteristic(key, char, pChar) {
+  if (!char || !pChar) return false;
+  const pTotal = Number(pChar.total) || 0;
+  const take = FUSED_ALWAYS.has(key) || (FUSED_IF_HIGHER.has(key) && pTotal > (Number(char.total) || 0));
+  if (!take) return false;
+  char.total = pTotal;
+  char.bonus = Number(pChar.bonus ?? Math.floor(pTotal / 10)) || 0;
+  return true;
+}
+
+/** Хвост пересчёта: Инициатива паразита. Характеристики — fuseParasiteCharacteristic. */
+export function applyParasiteFusion(actor, system) {
+  const parasite = fusedParasite(actor);
+  if (!parasite) return;
   system.initiative = Number(parasite.system?.initiative) || 0;
-  if (chars.per) chars.per.total = Number(pChars.per?.total) || 0;
-  if (chars.wp)  chars.wp.total  = Number(pChars.wp?.total)  || 0;
-  if (chars.ws)  chars.ws.total  = Math.max(Number(chars.ws?.total) || 0, Number(pChars.ws?.total) || 0);
-  if (chars.bs)  chars.bs.total  = Math.max(Number(chars.bs?.total) || 0, Number(pChars.bs?.total) || 0);
+}
+
+/**
+ * Пересчитать хостов, слитых с этим паразитом (wdbc-bjy1.14). Хост берёт
+ * Характеристики и Инициативу паразита в своём prepareDerivedData, а
+ * обновление ТОЛЬКО паразита (урон характеристике, эффект, предмет) пересчёт
+ * хоста не запускает — хост держал старые числа до своего следующего
+ * обновления. Зовётся из хуков updateActor/…Item/…ActiveEffect паразита на
+ * КАЖДОМ клиенте: производные данные локальны, писать в базу нечего.
+ * Хосты — мировые акторы и акторы токенов сцены (несвязанный токен несёт свой
+ * флаг в дельте). Возвращает число пересчитанных.
+ */
+export function refreshParasiteHosts(parasite) {
+  const uuid = parasite?.uuid;
+  if (!uuid || typeof game === "undefined") return 0;
+  const candidates = new Set([
+    ...(game.actors ?? []),
+    ...((typeof canvas !== "undefined" && canvas?.tokens?.placeables) || []).map(t => t?.actor).filter(Boolean)
+  ]);
+  let n = 0;
+  for (const host of candidates) {
+    if (possessingParasiteUuid(host) !== uuid) continue;
+    host.reset?.();
+    if (host.sheet?.rendered) host.sheet.render(false);
+    n++;
+  }
+  return n;
 }

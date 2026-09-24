@@ -9,6 +9,7 @@
     "itemSize": "2x1",
     "weaponType": "exotic",
     "range": 3,
+    "rangeMin": 1,
     "balance": 0,
     "grips": "П",
     "profileLabel": "Нож",

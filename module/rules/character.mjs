@@ -20,7 +20,7 @@ import { carryRow }                        from "../helpers/utils.mjs";
 import { getArmorModEffects, armorModApForLocation, armorAgilityCap,
          disabledArmourOverloadTier, disabledArmourWeight } from "../combat/armor-mods.mjs";
 import { inventoryOverloadTier } from "./encumbrance.mjs";
-import { shieldArmorByLocation } from "../combat/hand-shield.mjs";
+import { shieldCoverageByLocation } from "../combat/hand-shield.mjs";
 import { resolveArmorProps, aggregateArmorAuto, mergeArmorLocFlags, emptyArmorLocFlags } from "../combat/armor-properties.mjs";
 import { qualityEffects } from "../constants/quality.mjs";
 import { fieldModeEffects } from "../constants/drukhari-armor-fields.mjs";
@@ -42,8 +42,7 @@ import { hasRuleFlag } from "./flags.mjs";
 import { invalidateRulesCacheFor } from "./collect.mjs";
 import { runeMax } from "./sigillite-runes.mjs";
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
-import { realityRendingPenalty } from "./wrapped-in-chaos.mjs";
-import { applyParasiteFusion } from "./parasite-trait.mjs";
+import { applyParasiteFusion, fusedParasite, fuseParasiteCharacteristic } from "./parasite-trait.mjs";
 import { woundLevel } from "./wound-tier.mjs";
 import { prepareFinalPools } from "./character/final-pools.mjs";
 import { prepareMovementDerived } from "./character/movement.mjs";
@@ -165,17 +164,9 @@ export function prepareCharacterDerived(actor, system) {
     }
     system.drugCharMods = drugCharMods;
 
-    // Рассечение Реальности/Reality Rending (Wrapped in Chaos/Укутанный в
-    // Хаос, субмутация "9", wdbc-1rno): «+3 ко всему входящему урону» всем
-    // в радиусе 3м владельца, кроме исключённых до W.b союзников — ВТОРОЙ
-    // независимый источник того же поля, что наркотики выше (по прямому
-    // запросу пользователя обобщить incomingDamageReduction, не только под
-    // наркотики). Живой cross-actor источник (module/rules/wrapped-in-
-    // chaos.mjs::realityRendingPenalty), тот же приём, что уже даёт
-    // rules/psychic-sustain-target.mjs — считается заново каждый раз,
-    // ничего не хранится на цели.
-    system.incomingDamageReduction =
-      (Number(system.incomingDamageReduction) || 0) + realityRendingPenalty(actor);
+    // Рассечение Реальности (Wrapped in Chaos, субмутация "9") сюда НЕ
+    // пишется: зависит от позиций токенов и считается живьём в момент урона
+    // (combat/damage.mjs, wdbc-bjy1.3).
 
     // ── Эффекты от черт (трейтов) ──────────────────────────────────────────
     // Ядро автоматизации: +X к бонусу характеристики (Unnatural), естественная
@@ -482,6 +473,9 @@ export function prepareCharacterDerived(actor, system) {
       if (hasRuleFlag(actor, "sarcophagus.noFoodWaterAir")) { eff.hunger = 0; eff.thirst = 0; }
       return eff;
     })()) : {};
+    // Слияние с Паразитом (wdbc-bjy1.4): его Характеристики — в этом же
+    // проходе, до всего, что считается от .total/.bonus ниже.
+    const parasiteChars = fusedParasite(actor)?.system?.characteristics ?? null;
     for (const [key, char] of Object.entries(chars)) {
       const impBonus  = IMPROVEMENT_BONUS[char.improvement] || 0;
       const drugMod   = drugCharMods[key]   || 0;
@@ -529,6 +523,9 @@ export function prepareCharacterDerived(actor, system) {
       // и перемещений, которые считаются ниже по этому же проходу.
       char.bonus   = Math.floor(char.total / 10) + (char.supernatural || 0) + (char.bonusFx || 0)
                    + traitMod + pathMod;
+      if (parasiteChars && fuseParasiteCharacteristic(key, char, parasiteChars[key])) {
+        char.totalBreakdown = [{ label: "Паразит (слияние)", value: char.total }];
+      }
     }
 
     // Гемункул, Стадия 1 (Идеал Плоти): +I.b к максимуму Ран и Regeneration
@@ -557,14 +554,18 @@ export function prepareCharacterDerived(actor, system) {
       system.fatigue.max = (chars.t?.bonus ?? 0) + (chars.wp?.bonus ?? 0);
     }
 
-    // Гангрена (стр. 30-31, wdbc-r5o7.5): «+1 неснимаемой Усталости» — не
-    // разовое начисление (легло бы в хранимое поле и ушло бы при следующем
-    // отдыхе, как обычная Усталость), а пол на КАЖДЫЙ пересчёт: пока
-    // Состояние стоит, fatigue.value здесь не опускается ниже 1, чем бы его
-    // ни обнулили (кнопка отдыха и любой другой писатель поля не в курсе
-    // Гангрены и не обязаны быть). Тег ниже читает уже клампнутое значение.
-    if (system.conditions?.gangrene && system.fatigue) {
-      system.fatigue.value = Math.max(1, Number(system.fatigue.value) || 0);
+    // Гангрена («Раны и Урон» → «Статусы», wdbc-x1nz.2.96): «получает 1
+    // Усталости, которую нельзя снять, пока не вылечена Гангрена» — это +1
+    // ПОВЕРХ хранимой, а не пол (было Math.max(1, value): Усталость 3 с
+    // Гангреной оставалась 3, должна быть 4). fatigue.value не трогается —
+    // его читают писатели (отдых, препараты, Пожиратель Боли…), и надбавка,
+    // записанная в него, запеклась бы в хранимое при первой же записи.
+    // Действующее число — fatigue.effective; по нему считаются штраф −10
+    // (rules/situational.mjs::effectiveFatigue), порог обморока
+    // (sheets/tabs/conditions.mjs) и тег СОСТОЯНИЙ ниже.
+    if (system.fatigue) {
+      system.fatigue.gangrene  = system.conditions?.gangrene ? 1 : 0;
+      system.fatigue.effective = Math.max(0, Number(system.fatigue.value) || 0) + system.fatigue.gangrene;
     }
 
     // Тег «Усталость» в СОСТОЯНИЯХ — не отдельное поле, а зеркало настоящего
@@ -574,7 +575,7 @@ export function prepareCharacterDerived(actor, system) {
     // давно снята. Считаем здесь заново на каждый прогон — источник истины
     // один, отдельно писать в conditions.fatigued/-Level больше не нужно.
     if (system.conditions && system.fatigue) {
-      const fatVal = Math.max(0, Number(system.fatigue.value) || 0);
+      const fatVal = Math.max(0, Number(system.fatigue.effective ?? system.fatigue.value) || 0);
       system.conditions.fatiguedLevel = fatVal;
       system.conditions.fatigued = fatVal > 0;
     }
@@ -759,11 +760,26 @@ export function prepareCharacterDerived(actor, system) {
     const armorManual = system.armor || {};
     // Ручные щиты (стр. 215): прикрывают зоны своим AP. Щит держат ПОВЕРХ брони,
     // поэтому не суммируем, а берём лучшее по каждой зоне — как и прочие AP.
-    const shieldAP = shieldArmorByLocation(actor);
+    const shieldCoverage = shieldCoverageByLocation(actor);
+    const shieldAP = Object.fromEntries(Object.entries(shieldCoverage).map(([l, v]) => [l, v.ap]));
     system.shieldArmor = shieldAP;
-    const best = (k) => Math.max(
-      armorFromItems[k], armorManual[k] || 0, shieldAP[k] || 0, armorFloorLoc[k] || 0
-    );
+    // bestNoShield/shieldIsSource (core.json, «Типы Рукопашного Оружия»):
+    // «...от атак спереди и с того боку, который прикрывает рука со щитом
+    // (в арке 180°)» — геометрия арки системой не считается (нет отслеживания
+    // угла атаки), поэтому решает ГМ галочкой «Цель вне арки щита» на кнопке
+    // применения урона (attack-card.mjs/hooks.mjs); чтобы эту галочку вообще
+    // было чем подкрепить, здесь держим АП БЕЗ щита рядом с обычным —
+    // без этого «выключить щит на одном попадании» было бы нечем считать
+    // (АР щита уже слит с остальной бронёй через Math.max, отдельно недоступен).
+    const bestNoShield = (k) => Math.max(armorFromItems[k], armorManual[k] || 0, armorFloorLoc[k] || 0);
+    const best = (k) => Math.max(bestNoShield(k), shieldAP[k] || 0);
+    // shieldSourceLoc: щит реально дал максимум этой локации (а не был
+    // перебит обычной бронёй) — только тогда «вне арки» вообще что-то меняет.
+    const shieldSourceLoc = Object.fromEntries(Object.keys(AP_LOCATIONS).map(k =>
+      [k, (shieldAP[k] || 0) > 0 && (shieldAP[k] || 0) >= bestNoShield(k)]));
+    // shieldPrimitiveLoc: тот же победивший щит имеет свойство Primitive.
+    const shieldPrimitiveLoc = Object.fromEntries(Object.keys(AP_LOCATIONS).map(k =>
+      [k, !!(shieldSourceLoc[k] && shieldCoverage[k]?.primitive)]));
     // Складываемая надбавка AP от эффектов (естественная броня Черт, броня
     // имплантов, что угодно ещё). Хранимое поле схемы — эффекты целятся в него
     // в фазе "initial", то есть ДО этого расчёта, тем же приёмом, что и
@@ -781,6 +797,12 @@ export function prepareCharacterDerived(actor, system) {
     // сразу в шести местах.
     const armorAP = Object.fromEntries(Object.keys(AP_LOCATIONS).map(k => [k,
       Math.max(0, best(k) + traitArmourAll + traitArmorLoc[k] + (fxArmor[k] || 0) - corroded(k))
+    ]));
+    // Та же формула, но без вклада щита (bestNoShield вместо best) — только
+    // для локаций, где щит реально победил (shieldSourceLoc); нужна кнопке
+    // «Цель вне арки щита» (см. комментарий у bestNoShield выше).
+    const armorAPNoShield = Object.fromEntries(Object.keys(AP_LOCATIONS).map(k => [k,
+      Math.max(0, bestNoShield(k) + traitArmourAll + traitArmorLoc[k] + (fxArmor[k] || 0) - corroded(k))
     ]));
 
     // Только носимое/ручное/щит, без естественной брони Черт и имплантов:
@@ -800,7 +822,13 @@ export function prepareCharacterDerived(actor, system) {
       wornOnly,
       vsType:         armorVsType,
       vsSubtype:      armorVsSubtype,
-      propFlags:      propFlagsByLoc
+      propFlags:      propFlagsByLoc,
+      // Щит: АР без него (для «вне арки»), какие локации он реально даёт, и
+      // какие из них — от Primitive-щита (core.json, «Типы Рукопашного
+      // Оружия», разд. «Щит») — читает module/combat/damage.mjs.
+      noShield:         Object.fromEntries(Object.keys(AP_LOCATIONS).map(k => [k, armorAPNoShield[k] + tb])),
+      shieldSourceLoc,
+      shieldPrimitiveLoc
     };
 
     // ── Навыки ────────────────────────────────────────────────────────────
@@ -991,7 +1019,8 @@ export function prepareCharacterDerived(actor, system) {
     // считается из уже готовых чисел, поэтому выносится без риска для порядка.
     prepareFinalPools(actor, system, { chars, agBonus, traitInitMod, implantEnergyMax,
                                        sustainedCost, implantCompBonus, techFocusInstalled });
-    // Parasite/Паразит (Трейт — общий, wdbc-ux8a): числовая часть слияния —
-    // ПОСЛЕ Инициативы/Характеристик выше, иначе нечего перезаписывать.
-    applyParasiteFusion(actor, system, chars);
+    // Parasite/Паразит (Трейт — общий, wdbc-ux8a): Инициатива паразита —
+    // после prepareFinalPools, иначе её перезапишут. Характеристики
+    // подставлены раньше, в цикле характеристик (wdbc-bjy1.4).
+    applyParasiteFusion(actor, system);
 }

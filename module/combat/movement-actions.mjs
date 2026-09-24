@@ -49,16 +49,24 @@ import { hasRuleFlag } from "../rules/flags.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
 import { raceMatches } from "../rules/race.mjs";
 import { isGrappled } from "../rules/predicates.mjs";
+import { grappleMoveAllowed } from "./grapple.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
 import { enemyContactTokenDocs, offerFreeAttack } from "./free-attack.mjs";
+import { equippedLegacyWeaponWithMutation } from "../rules/legacy-weapon.mjs";
+import { resolveOpposed } from "../rules/test-kind.mjs";
+import { MELEE_STANCES } from "../constants/combat.mjs";
+import { twoHandedTestPenalty, TWO_HANDED_PENALTY_LABEL } from "../rules/hands.mjs";
 
 // Захват (стр. 12, wdbc-x1nz.2.31): «только действия Борьбы или не-Физические»
 // — Движение Физическое (см. тип действия «Физическое», стр. 12), поэтому
 // каждое боевое объявление движения ниже сначала спрашивает isGrappled.
 // Действия Борьбы (Оторваться и т.п.) живут в combat/grapple.mjs и этот гейт
 // не проходят — им сюда не заходить.
-function _blockedByGrapple(actor) {
+function _blockedByGrapple(actor, { move = false } = {}) {
   if (!isGrappled(actor)) return false;
+  // «Полудвижение и Движение, если его Размер больше цели» — держащему
+  // (wdbc-x1nz.2.75); Бег/Натиск/Вольт и прочее — нет.
+  if (move && grappleMoveAllowed(actor)) return false;
   ui.notifications.warn("⚠️ В Захвате: доступны только действия Борьбы или не-Физические (стр. 12).");
   return true;
 }
@@ -85,6 +93,17 @@ function _showReachRing(actor, meters) {
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
+/** Добавляет к сбору collectTestMods штраф «тест двумя руками» (rules/hands.mjs), если он есть. */
+function _withTwoHandedPenalty(mods, actor) {
+  const value = twoHandedTestPenalty(actor);
+  if (!value) return mods;
+  return {
+    list:  [...mods.list, { label: TWO_HANDED_PENALTY_LABEL, value }],
+    total: mods.total + value,
+    parts: [...mods.parts, `${TWO_HANDED_PENALTY_LABEL} ${sgn(value)}`]
+  };
+}
+
 /** Потеря ОБЕИХ ног (стр. 30-31, wdbc-r5o7.5): «не может ходить» — жёсткий запрет, не тест. */
 function _bothLegsLost(actor) {
   return (Number(actor.system.conditions?.lostLegsCount) || 0) >= 2;
@@ -96,18 +115,36 @@ function _bothFeetLost(actor) {
 }
 
 /**
- * Подтверждение Acrobatics−10 «без обеих стоп» (стр. 30-31, wdbc-r5o7.5) —
- * тот же приём, что Вызов/Challenge выше (Dialog.confirm, а не форсированный
- * бросок): движок здесь не гоняет тесты навыков за игрока, кнопка навыка
- * «Акробатика» на листе уже даёт нужный штраф (rules/library/conditions.mjs,
- * conditions.lostFeetOrLegs) — этот диалог только не даёт забыть, что бросок
- * вообще нужен, и не позволяет объявить движение без него.
+ * Без обеих стоп «персонаж требует броска на Acrobatics–10 просто чтобы
+ * ходить, балансируя на обрубках» («Раны и Урон», стр. 43; wdbc-x1nz.2.97
+ * п.4). Раньше это был Dialog.confirm «бросок сделан?» и только у части
+ * движений — теперь настоящий бросок на КАЖДОМ боевом движении (Полу/Полное/
+ * Натиск/Бег/Выход из Боя/Полушаг/свободное Полудвижение Наследия).
+ *
+ * Порог — тем же приёмом, что Прыжок (_resolveJump): Навык + общий сбор
+ * collectTestMods, поэтому штрафы тела доезжают сами — в том числе −20
+ * «на все тесты Движения» той же потери стоп (conditions.lostFeetOrLegs,
+ * rules/library/conditions.mjs), итого Acrobatics−30 по книге (−10 броска
+ * + −20 Движения). _d100 с actor — Помеха после Полного Движения тоже
+ * доезжает. Карточка броска — в чат всегда; вызыватель решает, что значит
+ * провал для ОД (см. каждое движение ниже).
+ *
+ * @returns {Promise<boolean>} true — пошёл, false — не удержался
  */
-async function _confirmAcrobaticsToWalk(actor) {
-  return Dialog.confirm({
-    title: "Потеря обеих стоп",
-    content: `<p>${esc(actor.name)} без обеих стоп: чтобы просто идти, нужен успешный бросок Акробатики−10.</p><p>Бросок сделан и успешен?</p>`
-  });
+async function _rollWalkOnStumps(actor, moveLabel) {
+  const acro = skillTotal(actor, "acrobatics");
+  const bodyMods = collectTestMods(actor, { kind: "skill", skill: "acrobatics", char: "ag" });
+  const threshold = acro - 10 + bodyMods.total;
+  const { rv, passed, deg } = await _d100(threshold, actor);
+  const outcome = passed
+    ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Удержался на обрубках: ${esc(moveLabel)}.</span>`
+    : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Не удержал равновесие: ${esc(moveLabel)} не совершено.</span>`;
+  await _postCard(actor, `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("run", passed ? "#b0a080" : "#c0392b")}${esc(actor.name)} — Ходьба без обеих стоп</div>
+    ${rollStatLine({ label: "Acrobatics", base: acro, parts: ["−10 (без обеих стоп)", ...bodyMods.parts], threshold, rv })}
+    <div class="roll-outcome">${outcome}</div>
+  </div>`);
+  return passed;
 }
 
 /**
@@ -216,11 +253,10 @@ async function _postCard(actor, content) {
 
 export async function declareHalfMove(actor) {
   if (!actor) return;
-  if (_blockedByGrapple(actor)) return;
+  if (_blockedByGrapple(actor, { move: true })) return;
   // Потеря обеих ног (стр. 30-31, wdbc-r5o7.5): «не может ходить» вообще.
   if (_bothLegsLost(actor))
     return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
-  if (_bothFeetLost(actor) && !await _confirmAcrobaticsToWalk(actor)) return;
   const useBonus = hasRuleFlag(actor, BONUS_HALF_MOVE_CAPABILITY)
     && isRoundCapabilityAvailable(actor, BONUS_HALF_MOVE_CAPABILITY);
   if (useBonus) {
@@ -228,6 +264,9 @@ export async function declareHalfMove(actor) {
   } else if (!await spendActionPoints(actor, 1, { physical: true })) {
     return ui.notifications.warn("⚠️ Не хватает ОД.");
   }
+  // wdbc-x1nz.2.97 п.4: бросок ПОСЛЕ оплаты — провал съедает действие, как
+  // проваленный Прыжок/Карабканье ниже (попытка была, движения нет).
+  if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Полудвижение")) return;
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "half");
   _showReachRing(actor, actor.system.movement?.halfMove);
@@ -239,13 +278,38 @@ export async function declareHalfMove(actor) {
   </div>`);
 }
 
-export async function declareFullMove(actor) {
+/**
+ * Лучшая Часть Отваги/skilled 5-6, Оружие Наследия, стрелковая ветка
+ * (wdbc-1rno.35, стр. 427): «Если выстрел этого оружия не убил и не
+ * обезвредил цель, персонаж может совершить Полудвижение за свободное
+ * действие.» Кнопка живёт на карточке урона (combat/legacy-weapon-brave-
+ * heart.mjs) — «жива и не обезврежена» стол подтверждает самим кликом, тот
+ * же честный уровень, что Kiss of Mimic/Silent Elimination (damage.mjs).
+ * Без spendActionPoints вовсе — свободное действие, 0 ОД.
+ */
+export async function declareLegacyBraveHeartMove(actor) {
   if (!actor) return;
   if (_blockedByGrapple(actor)) return;
   if (_bothLegsLost(actor))
     return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
-  if (_bothFeetLost(actor) && !await _confirmAcrobaticsToWalk(actor)) return;
+  // Свободное действие — провал броска просто отменяет шаг, ОД не было.
+  if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Полудвижение")) return;
+  await markMovedThisTurn(actor);
+  await markMoveDegreeThisTurn(actor, "half");
+  _showReachRing(actor, actor.system.movement?.halfMove);
+  await _postCard(actor, `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Лучшая Часть Отваги</div>
+    <div class="roll-threshold">Свободное действие (0 ОД) — выстрел не убил и не обезвредил цель. Перемещение до SPD×1.</div>
+  </div>`);
+}
+
+export async function declareFullMove(actor) {
+  if (!actor) return;
+  if (_blockedByGrapple(actor, { move: true })) return;
+  if (_bothLegsLost(actor))
+    return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
   if (!await spendActionPoints(actor, 2, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Полное Движение")) return;
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
   // Стр. 28, wdbc-x1nz.2.34: доп. полудействие после Полного Движения (не
@@ -272,6 +336,22 @@ export async function declareCharge(actor) {
     return ui.notifications.warn("⚠️ Повален — нельзя объявить Натиск. Сначала встать (Полудействие).");
   if (_bothLegsLost(actor))
     return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
+  // Стойки с noCharge (стр. 15: Частокол — древковое оружие мешает Натиску;
+  // Защитная, wdbc-x1nz.2.66.6 — «не даёт совершать Натиск») — тот же флаг,
+  // что уже гейтит пилюлю Базы «Натиск» в диалоге атаки (module/sheets/
+  // attack/selection.mjs::computeBaseOptions), здесь для отдельной HUD-кнопки.
+  const stanceKey = actor.system?.meleeStance || "standard";
+  if (MELEE_STANCES[stanceKey]?.noCharge) {
+    return ui.notifications.warn(`⚠️ Недоступно в Стойке «${MELEE_STANCES[stanceKey].label}».`);
+  }
+  // wdbc-x1nz.2.97 п.4: без обеих стоп — тот же бросок, что у ходьбы. ОД
+  // Натиска обычно списываются на броске атаки; раз до атаки дело не дошло,
+  // провал списывает их здесь (Полное действие потрачено на попытку — тот же
+  // исход, что у проваленных Полудвижения/Бега). База «Натиск» не ставится.
+  if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Натиск")) {
+    await spendActionPoints(actor, 2, { physical: true });
+    return;
+  }
   await actor.update({ "system.meleeBase": "charge" });
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
@@ -297,7 +377,6 @@ export async function declareDisengage(actor) {
   if (_blockedByGrapple(actor)) return;
   if (_bothLegsLost(actor))
     return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
-  if (_bothFeetLost(actor) && !await _confirmAcrobaticsToWalk(actor)) return;
   if (actor.system.conditions?.challenged) {
     const confirmed = await Dialog.confirm({
       title: "Вызов (Challenge)",
@@ -306,6 +385,7 @@ export async function declareDisengage(actor) {
     if (!confirmed) return;
   }
   if (!await spendActionPoints(actor, 2, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Выход из Боя")) return;
   await actor.setFlag("warhammer-dbc", "disengageActive", true);
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "half");
@@ -313,6 +393,98 @@ export async function declareDisengage(actor) {
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Выход из Боя</div>
     <div class="roll-threshold">Полное действие (2 ОД). Перемещение до SPD×1, не провоцирует Свободную Атаку.</div>
+  </div>`);
+}
+
+/**
+ * Лучшая Часть Отваги/skilled 5-6, Оружие Наследия, рукопашная ветка
+ * (wdbc-1rno.35, стр. 427): «Персонаж может пройти тест на Charm+0 vs P+0
+ * или Inf+0 vs P+0, чтобы Выйти из Боя за полудействие.» Тот же эффект, что
+ * declareDisengage, но 1 ОД вместо 2 — по выигранному встречному тесту
+ * против ОДНОГО выбранного противника из контакта (enemyContactTokenDocs,
+ * combat/free-attack.mjs — тот же список, что дал бы Свободную Атаку).
+ * Тот же двухшаговый приём, что Вольт (_rollVaultContest/wh-vault-contest-
+ * btn): свой бросок катается сразу, кнопка на каждого врага в контакте
+ * ждёт клика — второй бросок (их Per) и решение случаются по клику
+ * (resolveLegacyBraveDisengageContest, hooks.mjs). Charm или Inf — какая
+ * выше у актора СЕЙЧАС, книжное «или» не создаёт стратегической разницы,
+ * которую стоило бы отдавать отдельным диалогом. Буквально «+0»: без
+ * ситуативных модификаторов — книга не просит больше.
+ */
+export async function declareLegacyBraveDisengage(actor) {
+  if (!actor) return;
+  if (_blockedByGrapple(actor)) return;
+  if (_bothLegsLost(actor))
+    return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
+  if (actor.system.conditions?.challenged) {
+    const confirmed = await Dialog.confirm({
+      title: "Вызов (Challenge)",
+      content: `<p>${esc(actor.name)} под эффектом Вызова: нельзя добровольно выходить из рукопашной, кроме как чтобы увернуться от атаки по площади.</p><p>Это тот самый случай?</p>`
+    });
+    if (!confirmed) return;
+  }
+  // wdbc-x1nz.2.97 п.4: бросок на обрубках — до встречного теста. ОД здесь
+  // списываются только при выигранном встречном (resolveLegacyBraveDisengage-
+  // Contest), поэтому и провал ходьбы их не трогает — тот же исход, что у
+  // проигранного встречного.
+  if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Выход из Боя")) return;
+
+  const felTotal = Number(actor.system?.characteristics?.fel?.total) || 0;
+  const infTotal = Number(actor.system?.characteristics?.inf?.total) || 0;
+  const charKey = infTotal > felTotal ? "inf" : "fel";
+  const charLabel = charKey === "fel" ? "Charm(Fel)" : "Inf";
+  const myTotal = Math.max(felTotal, infTotal);
+  const myRoll = await new Roll("1d100").evaluate();
+
+  const tokenDoc = actor.getActiveTokens?.(false, true)?.[0] ?? null;
+  const contacts = tokenDoc ? enemyContactTokenDocs(tokenDoc) : [];
+  const contestBtns = contacts.map(en => {
+    const enemyActor = en.actor;
+    if (!enemyActor) return "";
+    return `<button class="wh-legacy-brave-contest-btn" type="button"
+      data-actor-uuid="${actor.uuid}" data-enemy-uuid="${enemyActor.uuid}"
+      data-char-key="${charKey}" data-my-roll="${myRoll.total}" data-my-total="${myTotal}">
+      Встречный тест: ${esc(enemyActor.name)}
+    </button>`;
+  }).join("");
+
+  await _postCard(actor, `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Лучшая Часть Отваги</div>
+    ${rollStatLine({ label: charLabel, base: myTotal, threshold: myTotal, rv: myRoll.total })}
+    <div class="roll-threshold" style="font-size:0.85em;">Выход из Боя за полудействие (1 ОД вместо 2) — выберите противника для встречного теста Per+0.</div>
+    ${contestBtns ? `<div class="roll-defense-btns">${contestBtns}</div>`
+      : `<div class="roll-threshold" style="font-size:0.85em;">Нет врагов в рукопашной с ним.</div>`}
+  </div>`);
+}
+
+/** Клик по кнопке встречного теста выше — их бросок Per+0, решение, применение эффекта. */
+export async function resolveLegacyBraveDisengageContest(actorUuid, enemyUuid, charKey, myRollTotal, myTotal) {
+  const actor = await fromUuid(actorUuid).catch(() => null);
+  const enemyActor = await fromUuid(enemyUuid).catch(() => null);
+  if (!actor) return ui.notifications.warn("⚠️ Актор не найден.");
+  if (!enemyActor) return ui.notifications.warn("⚠️ Противник не найден.");
+
+  const charLabel = charKey === "fel" ? "Charm(Fel)" : "Inf";
+  const theirTotal = Number(enemyActor.system?.characteristics?.per?.total) || 0;
+  const theirRoll = await new Roll("1d100").evaluate();
+  const mine = { ...testOutcome(Number(myRollTotal) || 0, Number(myTotal) || 0), threshold: Number(myTotal) || 0 };
+  const theirs = { ...testOutcome(theirRoll.total, theirTotal), threshold: theirTotal };
+  const { winner } = resolveOpposed(mine, theirs);
+
+  if (winner !== "mine") {
+    return _postCard(actor, `<div class="wh-roll-result">
+      <div class="roll-header">${rollIcon("run","#c0392b")}${esc(actor.name)} — Лучшая Часть Отваги (провал)</div>
+      <div class="roll-threshold">Против Per+0 ${esc(enemyActor.name)}: <b>${theirRoll.total}</b> vs <b>${theirTotal}</b> — не вышло. Обычный Выход из Боя (2 ОД) всё ещё доступен.</div>
+    </div>`);
+  }
+  if (!await spendActionPoints(actor, 1, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  await actor.setFlag("warhammer-dbc", "disengageActive", true);
+  await markMovedThisTurn(actor);
+  await markMoveDegreeThisTurn(actor, "half");
+  _showReachRing(actor, actor.system.movement?.halfMove);
+  await _postCard(actor, `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Лучшая Часть Отваги: Выход из Боя</div>
+    <div class="roll-threshold">${charLabel}+0 выигран против Per+0 ${esc(enemyActor.name)}: <b>${theirRoll.total}</b> vs <b>${theirTotal}</b>. Полудействие (1 ОД). Перемещение до SPD×1, не провоцирует Свободную Атаку.</div>
   </div>`);
 }
 
@@ -344,7 +516,15 @@ export async function declareRun(actor) {
     return ui.notifications.warn("⚠️ Повален — нельзя объявить Бег. Сначала встать (Полудействие).");
   if (_bothLegsLost(actor))
     return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
+  // Частокол (стр. 15, wdbc-x1nz.2.66.9): «нельзя Натиск и Бег» — noRun несёт
+  // только эта Стойка (Защитная запрещает лишь Натиск, см. noCharge выше).
+  const runStanceKey = actor.system?.meleeStance || "standard";
+  if (MELEE_STANCES[runStanceKey]?.noRun) {
+    return ui.notifications.warn(`⚠️ Недоступно в Стойке «${MELEE_STANCES[runStanceKey].label}».`);
+  }
   if (!await spendActionPoints(actor, 2, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  // wdbc-x1nz.2.97 п.4: Бег без обеих стоп — тот же бросок (раньше не было).
+  if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Бег")) return;
   await actor.setFlag("warhammer-dbc", "running", true);
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
@@ -370,6 +550,9 @@ export async function declareHalfStep(actor) {
   if (!actor) return;
   if (_blockedByGrapple(actor)) return;
   if (!actorHasHalfStep(actor)) return ui.notifications.warn("⚠️ Нужен Талант Half-Step/Полушаг.");
+  // Без обеих ног «не может ходить» — Полушаг тоже ходьба (wdbc-x1nz.2.97 п.4,
+  // заодно с броском на обрубках ниже: раньше Полушаг не проверял ни то, ни другое).
+  if (_bothLegsLost(actor)) return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
   if (!isThrottleReady(actor, HALF_STEP_FLAG, "round")) {
     return ui.notifications.warn("⚠️ Полушаг уже использован в этом Ходу.");
   }
@@ -399,6 +582,12 @@ export async function declareHalfStep(actor) {
   });
   if (result == null) return;
 
+  // wdbc-x1nz.2.97 п.4: без обеих стоп — бросок на обрубках. Провал тратит
+  // раз-в-Ход Полушага (попытка была), но не дистанцию Отскока (не пошёл).
+  if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Полушаг")) {
+    await markThrottleUsed(actor, HALF_STEP_FLAG, "round");
+    return;
+  }
   const spent = await spendRecoil(actor, Math.min(result, maxMeters));
   await markThrottleUsed(actor, HALF_STEP_FLAG, "round");
   await markMovedThisTurn(actor);
@@ -548,6 +737,18 @@ async function _rollVaultContest(actor) {
   return { statLineHtml, contestSection };
 }
 
+/**
+ * Дальность Вольта (Отскока) в клетках — Пружинящая Стойка (стр. 15,
+ * wdbc-x1nz.2.66.8) даёт ей SPD+2 вместо обычного SPD−2 движения. halfMove
+ * уже несёт готовый −2 (module/rules/character/movement.mjs — общий для
+ * ЛЮБОГО движения), поэтому здесь нужно снять этот минус и прибавить свою
+ * книжную +2 — то есть +4 к уже посчитанному halfMove, только для Вольта.
+ */
+export function vaultHalfMove(actor) {
+  const halfMove = actor.system.movement?.halfMove;
+  return actor.system?.meleeStance === "springing" ? (Number(halfMove) || 0) + 4 : halfMove;
+}
+
 export async function declareVault(actor) {
   if (!actor) return;
   if (_blockedByGrapple(actor)) return;
@@ -559,7 +760,7 @@ export async function declareVault(actor) {
   // combat/free-attack.mjs::processTokenMove выдаёт тем же врагам ещё и
   // обычную Свободную Атаку, и одно движение наказывается дважды.
   await actor.setFlag("warhammer-dbc", "disengageActive", true);
-  _showReachRing(actor, actor.system.movement?.halfMove);
+  _showReachRing(actor, vaultHalfMove(actor));
   const { statLineHtml, contestSection } = await _rollVaultContest(actor);
 
   await _postCard(actor, `<div class="wh-roll-result">
@@ -642,6 +843,7 @@ export async function declareDuckAndCover(actor) {
   });
   if (!confirmed) return;
   if (!await spendActionPoints(actor, 2, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Перебежка")) return; // wdbc-x1nz.2.97 п.4
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
   await actor.setFlag("warhammer-dbc", "duckAndCoverActive", true);
@@ -718,8 +920,10 @@ export async function _resolveClimb(actor, type, ath, acro, mod, spd) {
   // здесь считалась одна Усталость вручную, а выключенная броня и Перевес
   // инвентаря до Карабканья не доезжали, хотя это физическое действие.
   // Athletics идёт по S, Acrobatics по Ag — сборы разные.
-  const athMods  = collectTestMods(actor, { kind: "skill", skill: "athletics",  char: "s"  });
-  const acroMods = collectTestMods(actor, { kind: "skill", skill: "acrobatics", char: "ag" });
+  // wdbc-x1nz.2.97 п.3: Карабканье — тест двумя руками; без кисти/руки −20
+  // («Раны и Урон», стр. 43), обоим Пределам отвесного склона тоже.
+  const athMods  = _withTwoHandedPenalty(collectTestMods(actor, { kind: "skill", skill: "athletics",  char: "s"  }), actor);
+  const acroMods = _withTwoHandedPenalty(collectTestMods(actor, { kind: "skill", skill: "acrobatics", char: "ag" }), actor);
   const modsNote = m => (m.parts.length ? ` (${m.parts.join(", ")})` : "");
 
   if (type === "rope") {
@@ -1385,6 +1589,13 @@ export function movementMenuItems(actor) {
     items.push({ key: "charge", label: "Натиск", cost: "", action: () => declareCharge(actor) });
     items.push({ key: "run", label: "Бег", cost: "2 ОД", action: () => declareRun(actor) });
     items.push({ key: "disengage", label: "Выход из Боя", cost: "2 ОД", action: () => declareDisengage(actor) });
+    // Лучшая Часть Отваги/skilled 5-6, Оружие Наследия, рукопашная ветка
+    // (wdbc-1rno.35, стр. 427) — только при наличии Мутации на экипированном
+    // оружии, тот же приём, что actorHasHalfStep ниже.
+    if (equippedLegacyWeaponWithMutation(actor, "Лучшая Часть Отваги")) {
+      items.push({ key: "legacyBraveDisengage", label: "Выход из Боя (Лучшая Часть Отваги)", cost: "1 ОД, тест",
+        action: () => declareLegacyBraveDisengage(actor) });
+    }
     items.push({ key: "vault", label: "Вольт", cost: "1 ОД", action: () => declareVault(actor) });
     items.push({ key: "duckAndCover", label: "Перебежка", cost: "2 ОД", action: () => declareDuckAndCover(actor) });
     if (actorHasHalfStep(actor)) {

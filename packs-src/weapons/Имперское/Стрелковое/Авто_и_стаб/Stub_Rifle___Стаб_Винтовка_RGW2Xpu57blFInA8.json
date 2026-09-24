@@ -32,6 +32,9 @@
     "weaponProps": [
       {
         "key": "accurate"
+      },
+      {
+        "key": "longRifle"
       }
     ],
     "needsRecharge": false,

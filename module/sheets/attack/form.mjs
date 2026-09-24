@@ -45,6 +45,12 @@ export function readAttackForm(form, ammoConds) {
   const gripKeySel   = el("input[name='atk-grip']:checked")?.value;
   const profIdxRaw   = el("input[name='atk-profile']:checked")?.value;
   const profIdxSel   = profIdxRaw === undefined ? undefined : Number(profIdxRaw);
+  // Длина Оружия, правило 5 (wdbc-x1nz.2.67.2) — пилюли «Длина» есть только у
+  // оружия с диапазоном Rng (attack-dialog.mjs::lengthBlockHtml); undefined,
+  // если группы в форме нет вовсе — resolveSelection тогда берёт верхнюю
+  // границу range, как раньше.
+  const lengthRaw    = el("input[name='atk-length']:checked")?.value;
+  const lengthSel    = lengthRaw === undefined ? undefined : Number(lengthRaw);
 
   const ammoSel = all(".atk-ammo-cond:checked")
     .map(cb => ammoConds[parseInt(cb.dataset.idx)]).filter(Boolean);
@@ -105,6 +111,24 @@ export function readAttackForm(form, ammoConds) {
     // Тесное помещение (стр. 36, wdbc-x1nz.2.63) — ГМ решает на глаз, галочка
     // видна только у Взрывного (attack-dialog.mjs::confinedSpaceHtml).
     confinedSpace: el("#atk-confined-space")?.checked || false,
+    // Молот/Топор по цели у стены (core.json, «Типы Рукопашного Оружия») —
+    // ГМ решает на глаз, галочка видна только этим двум типам
+    // (attack-dialog.mjs::targetAgainstWallHtml); «лежащая» цель определяется
+    // автоматически, эта галочка нужна только для «прижата к стене».
+    targetAgainstWall: el("#atk-target-against-wall")?.checked || false,
+    // Рапира, Выпад (core.json, «Типы Рукопашного Оружия») — галочка видна
+    // только этому подтипу (attack-dialog.mjs::rapierIgnoreRngHtml); эффект
+    // (−10 к штрафу Избирательной атаки) считается в thresholdParts живьём
+    // по f.maneuverKey/f.aimVal, здесь только читается сырой чекбокс.
+    rapierIgnoreRng: el("#atk-rapier-ignore-rng")?.checked || false,
+    // Сабля, Верховая Атака (core.json, «Типы Рукопашного Оружия») — галочка
+    // видна только этому подтипу и только верхом (attack-dialog.mjs::
+    // sabreSecondAttackHtml); отменяет +20 Базы в thresholdParts живьём.
+    sabreSecondAttack: el("#atk-sabre-second-attack")?.checked || false,
+    // Кромсающее, Оружие Наследия (wdbc-1rno.35, стр. 427), второе
+    // предложение — галочка видна только при наличии Мутации и Очков
+    // Бесчестия (attack-dialog.mjs::legacyCleavingHtml).
+    legacyCleavingRoll: el("#atk-legacy-cleaving")?.checked || false,
     aimVal:     el("#atk-aim")?.value,
     aimPenalty: attr("#atk-aim option:checked", "penalty"),
     // Кого выцеливают в паре «всадник + скакун» и во что это обходится. Штраф
@@ -153,6 +177,6 @@ export function readAttackForm(form, ammoConds) {
     weaponOff:  on("#atk-weaponoff"),
     maximal:    on("#atk-maximal"),
     bandIdx:    Number(el("#atk-band")?.value ?? -1),
-    stanceKey, baseKey, maneuverKey, gripKey: gripKeySel, profIdx: profIdxSel
+    stanceKey, baseKey, maneuverKey, gripKey: gripKeySel, profIdx: profIdxSel, length: lengthSel
   };
 }

@@ -38,13 +38,44 @@ describe("_showContestDialog — бонус Стойки", () => {
   it("Повалить/Напролом — тесты Athletics, Стойка на них не влияет", async () => {
     const actor = actorFor({ meleeStance: "aggressive" });
     await _showContestDialog(actor, MELEE_CONTESTS.knockdown);
-    expect(selfValue()).toBe(40); // s 40, без бонуса WS
+    // Athletics(S) — тест НАВЫКА (wdbc-x1nz.2.73): у стенда Навыка нет,
+    // нетренированный S 40 − 20 = 20; бонуса WS нет.
+    expect(selfValue()).toBe(20);
+  });
+
+  it("тренированная Атлетика входит в порог Повалить (Ранг Навыка, не голая Сила)", async () => {
+    const actor = actorFor({ skills: { athletics: { total: 60 } } });
+    await _showContestDialog(actor, MELEE_CONTESTS.knockdown);
+    expect(selfValue()).toBe(60);
   });
 
   it("Стандартная Стойка не даёт бонуса Давлению", async () => {
     const actor = actorFor({ meleeStance: "standard" });
     await _showContestDialog(actor, MELEE_CONTESTS.press);
     expect(selfValue()).toBe(45);
+  });
+});
+
+// wdbc-x1nz.2.66.5: Повалить книгой ограничен ровно двумя Навыками
+// (Athletics(S)/Acrobatics(A)) — общий дропдаун характеристик должен
+// сужаться до них с правильными подписями, а не предлагать все 10.
+describe("_showContestDialog — Повалить сужает выбор характеристики (allowedChars/charLabels)", () => {
+  it("список опций — ровно Athletics(S) и Acrobatics(A), с книжными подписями", async () => {
+    const actor = actorFor({});
+    await _showContestDialog(actor, MELEE_CONTESTS.knockdown);
+    const html = captured.dialog.content;
+    expect(html).toContain("Athletics(S)");
+    expect(html).toContain("Acrobatics(A)");
+    expect(html).not.toContain("Int —");
+    expect(html).not.toContain("Fel —");
+  });
+
+  it("Финт/Давление без allowedChars — дропдаун по-прежнему полный (регресс)", async () => {
+    const actor = actorFor({});
+    await _showContestDialog(actor, MELEE_CONTESTS.feint);
+    const html = captured.dialog.content;
+    expect(html).toContain("Int —");
+    expect(html).toContain("Fel —");
   });
 });
 
@@ -80,13 +111,13 @@ describe("_showContestDialog — extraBonus (плоский бонус исто�
   it("складывается с базой характеристики и виден в поле «Ваш бросок с»", async () => {
     const actor = actorFor({});
     await _showContestDialog(actor, { ...MELEE_CONTESTS.knockdown, extraBonus: 20, extraBonusLabel: "Щупальце" });
-    expect(selfValue()).toBe(60); // s 40 + 20
+    expect(selfValue()).toBe(40); // нетренированный Athletics 20 + 20
   });
 
   it("без extraBonus — поведение не меняется (0 по умолчанию)", async () => {
     const actor = actorFor({});
     await _showContestDialog(actor, MELEE_CONTESTS.knockdown);
-    expect(selfValue()).toBe(40);
+    expect(selfValue()).toBe(20); // нетренированный Athletics
   });
 
   it("складывается со Стойкой, если оба присутствуют", async () => {
@@ -104,7 +135,7 @@ describe("_showContestDialog — extraBonus (плоский бонус исто�
   it("отрицательный extraBonus вычитается", async () => {
     const actor = actorFor({});
     await _showContestDialog(actor, { ...MELEE_CONTESTS.knockdown, extraBonus: -10, extraBonusLabel: "Штраф" });
-    expect(selfValue()).toBe(30); // s 40 - 10
+    expect(selfValue()).toBe(10); // нетренированный Athletics 20 − 10
     expect(captured.dialog.content).toContain("Штраф: -10");
   });
 });

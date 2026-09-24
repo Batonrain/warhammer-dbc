@@ -1056,7 +1056,7 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
           const values  = (term?.results ?? []).map(d => d.result);
           const targets = terminalPenetrationTargets(values, shipAuto.terminalPenetration);
           const rerolled = [];
-          for (let i = 0; i < targets.length; i++) {
+          for (let t = 0; t < targets.length; t++) {
             const reroll = await (new Roll(`1d${term.faces}`)).evaluate();
             allRolls.push(reroll);
             rerolled.push(reroll.total);

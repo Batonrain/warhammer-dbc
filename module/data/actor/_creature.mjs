@@ -152,6 +152,12 @@ export function creatureSchema({ granted = false } = {}) {
   // sweetMist сам по себе булев без "часового" counter (тех трёх типов не
   // хватает), момент истечения хранится отдельным числом.
   conditionFields.sweetMistExpiresAt = num(0, "Сладкий Туман: worldTime истечения");
+  // Обморок от Усталости (wdbc-x1nz.2.95, «Статусы»: «теряет сознание на
+  // 10–T.b минут, до минимума в 1 минуту») — момент пробуждения
+  // (game.time.worldTime), 0 = персонаж не в обмороке от Усталости. Тот же
+  // приём, что sweetMistExpiresAt выше; будит combat/condition-clock.mjs по
+  // хуку updateWorldTime, гасит conditionRemoveFields("unconscious").
+  conditionFields.fatigueFaintWakeAt = num(0, "Обморок от Усталости: worldTime пробуждения");
   // Мононить «Поцелуй Мимика» (wdbc-ux8a) — «за доп. 10 сек/1м можно лишить
   // цель психосил/техночудес», опциональная надстройка сверх самого
   // Состояния (та же форма ручной надстройки, что burningSourceDamage/

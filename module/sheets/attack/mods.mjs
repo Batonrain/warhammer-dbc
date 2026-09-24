@@ -6,22 +6,26 @@
 //  свёрнутом блоке диалога. Ничего не рисует: отдаёт данные, вёрстку из них
 //  собирает markup.mjs.
 //
-//  Шов узкий по замеру (tools/_uh56-seam.mjs): 12 значений внутрь, 4 наружу
+//  Шов узкий по замеру (tools/seam-measure.mjs): 12 значений внутрь, 4 наружу
 //  на 117 строк. Поперёк функции такого места больше нет — в середине через
 //  границу идёт 90–106 значений.
 // ══════════════════════════════════════════════════════════════════════════
 
 import { ruleFlagLabels }         from "../../rules/flags.mjs";
+import { isStunnedOrDazed }       from "../../rules/predicates.mjs";
 import { meleeContactCount, hasHighGround } from "../../combat/tactical-map.mjs";
 import { rangeBandKey }           from "../../rules/tactical-map.mjs";
 import { getTerrainInfoForToken } from "../../regions/difficult-terrain.mjs";
 import { actorHasAspectPath }     from "../../constants/aeldari-paths.mjs";
 import { hasBlackEyesDarknessImmunity } from "../../rules/black-eyes.mjs";
 import { isBraced } from "../../combat/brace-weapon.mjs";
-import { lockingContactTokenDocs } from "../../combat/free-attack.mjs";
+import { lockingContactTokenDocs, coveringDefendersOf } from "../../combat/free-attack.mjs";
 import { hasQuietElimination, isQuietEliminationWeapon } from "../../rules/quiet-elimination.mjs";
-import { legacyHistoryIs, legacyChangeTestBonus, bloodthirstyLegacyMeleeActive, takenMutationNames, DISTRACTING_LEGACY_FLAG, adaptiveLegacyMeleeWsBonus } from "../../rules/legacy-weapon.mjs";
+import { legacyHistoryIs, legacyChangeTestBonus, bloodthirstyLegacyMeleeActive, takenMutationNames, DISTRACTING_LEGACY_FLAG, adaptiveLegacyMeleeWsBonus, adaptiveLegacyDefenderPenalty, punisherLegacyBonus, legacySlaughterThresholdDelta, patienceLegacyOverwatchBonus, patienceLegacyMeleeChargeInterruptActive } from "../../rules/legacy-weapon.mjs";
 import { isNearestUndamagedEnemy } from "../../combat/legacy-weapon-mutations.mjs";
+import { isActorsOwnTurn } from "../../combat/delay-action.mjs";
+import { meleeEffectiveRange, parseGrips } from "../../constants/combat.mjs";
+import { longerWeaponBonus, closeQuartersPenalty } from "../../rules/weapon-length.mjs";
 /**
  * @param {object} v состояние броска: оружие, токены, замеренная дистанция
  * @returns {{commonMods: object[], specificMods: object[], charSwapWhy: string[], bandKey: string|null}}
@@ -47,8 +51,34 @@ export function situationalMods(v) {
     ogrynBracePenalty = 0,
   } = v;
 
+  // Без Предупреждения, Оружие Наследия (wdbc-1rno.35, versatile 9-9, стр.
+  // 428), второе предложение: «В первый Раунд боя оружие может атаковать
+  // врагов, чья Инициатива вдвое ниже или меньше, как если бы они были
+  // Застигнуты Врасплох» — синтетически ставит autoCheck на УЖЕ
+  // существующую галочку «Цель Врасплох» (id: atk-mod-surprised, читается
+  // ниже как opts.targetSurprised), а не заводит отдельный путь.
+  const legacyForewarnedSurprise = (weapon && game.combat?.round === 1 && attackCtx.targetActor) ? (() => {
+    if (!takenMutationNames(weapon).has("Без Предупреждения")) return false;
+    const attackerCombatant = game.combat.combatants?.find(c => c.actorId === actor.id);
+    const targetCombatant   = game.combat.combatants?.find(c => c.actorId === attackCtx.targetActor.id);
+    const ai = attackerCombatant?.initiative, ti = targetCombatant?.initiative;
+    return ai != null && ti != null && ai >= ti * 2;
+  })() : false;
+
+  // Борьба (стр. 12, wdbc-x1nz.2.74): «другие персонажи получают бонус +20 на
+  // атаки по ним» — по любому из сцепившихся, кроме его же партнёра.
+  const tgt = attackCtx?.targetActor ?? null;
+  const tgtGrappled = !!tgt?.system?.conditions?.grappling;
+  const tgtPartnerUuid = tgt?.getFlag?.("warhammer-dbc", "grapplePartnerUuid") ?? tgt?.flags?.["warhammer-dbc"]?.grapplePartnerUuid;
+  const vsGrappled = tgtGrappled && tgtPartnerUuid !== actor?.uuid;
+  // Те же условия, по которым окно атаки само даёт ±20 (attack-dialog.mjs,
+  // proneMod/stunnedMod) — wdbc-x1nz.2.97 п.6.
+  const tgtProneAuto   = !!tgt?.system?.conditions?.prone;
+  const tgtStunnedAuto = isStunnedOrDazed(tgt);
   const commonMods = [
     { label: "Усталость",     value: -10, autoCheck: hasFatigue },
+    { label: "Цель в Борьбе (не ваш Захват)", value: 20, autoCheck: vsGrappled,
+      note: vsGrappled ? "стр. 12: +20 на атаки по сцепившимся" : undefined },
     // visionPenalty (wdbc-1rno.1, Чёрные Глаза/Black Eyes, Cor 60+) — три
     // галочки ниже гасятся у АТАКУЮЩЕГО (не у цели, поэтому не immuneFlag —
     // тот гасит только возможности ЦЕЛИ, см. цикл ниже).
@@ -58,20 +88,37 @@ export function situationalMods(v) {
     { label: "Слабый свет",   value: isMelee ? 0 : -10, visionPenalty: true },
     { label: "Дым / туман",   value: isMelee ? -10 : -20, visionPenalty: true },
     { label: "Тьма",          value: isMelee ? -20 : -30, visionPenalty: true },
-    { label: "Ослеплён",      value: isMelee ? -30 : -99, autofail: !isMelee, autoCheck: isBlinded },
+    // Ослеплён (wdbc-x1nz.2.89, решение владельца 4): при распознанном
+    // Ослеплении (свой флаг/оба глаза/щит на голове, без Sonar Sense и
+    // Unnatural Senses — rules/blindness.mjs) галочка заперта — автопровал BS
+    // и −30 WS руками не снимаются. Без него — ручная, как раньше.
+    { label: "Ослеплён",      value: isMelee ? -30 : -99, autofail: !isMelee, autoCheck: isBlinded, locked: isBlinded },
     // Потеря глаз (частичная): −10 на BS и «тесты определения расстояний»
     // (последнее не автоматизировано — нет отдельного типа теста «на глаз»)
     // — только стрелковая, книга не даёт штрафа рукопашной от неё отдельно.
     ...(isMelee ? [] : [{ label: "Потеря глаз", value: -10, autoCheck: hasLostEyes }]),
-    { label: "Цель лежит",    value: isMelee ?  20 : -20 },
+    // «Цель лежит»/«Цель Оглушена» (wdbc-x1nz.2.97 п.6): распознанное
+    // Состояние цели уже дало свои ±20 автоматически (attack-dialog.mjs,
+    // proneMod/stunnedMod). Тогда ручная галочка отмечена, заперта и стоит
+    // 0 — один источник бонуса, а не два; без распознанного Состояния она
+    // ручная, как раньше (цель без листа, лежит «по сюжету»).
+    tgtProneAuto
+      ? { label: "Цель лежит", value: 0, autoCheck: true, locked: true,
+          note: `Цель Повалена — ${isMelee ? "+20" : "−20"} учтено автоматически` }
+      : { label: "Цель лежит", value: isMelee ?  20 : -20 },
     { label: "Цель бежит",    value: isMelee ?  20 : -20 },
-    { label: "Цель Оглушена", value: 20 },
+    tgtStunnedAuto
+      ? { label: "Цель Оглушена", value: 0, autoCheck: true, locked: true,
+          note: "Оглушение/Ступор цели — +20 учтено автоматически" }
+      : { label: "Цель Оглушена", value: 20 },
     // id нужен readAttackForm (wdbc-1rno.3, стр. 32 «Скрытная Атака»):
     // «Взятие Врасплох» читается как именованный флаг attack.mjs::
     // targetSurprised (Quiet Elimination: +1 куб урона/тихая смерть ПО
     // ЛЮБОЙ атаке, отмеченной Врасплох, не только ножом/пистолетом — см.
     // rules/quiet-elimination.mjs), а не только суммируется в общий Порог.
-    { id: "atk-mod-surprised", label: "Цель Врасплох", value: 30, immuneFlag: "attack.surpriseImmune" },
+    { id: "atk-mod-surprised", label: "Цель Врасплох", value: 30, immuneFlag: "attack.surpriseImmune",
+      autoCheck: legacyForewarnedSurprise,
+      ...(legacyForewarnedSurprise ? { note: "Без Предупреждения: Инициатива цели вдвое ниже, 1-й Раунд" } : {}) },
     // id нужен readAttackForm (стр. 12, wdbc-x1nz.2.29): «Избегание невозможно
     // от атаки, о которой цель не знает» — атакующий сам объявляет это
     // галочкой (со спины/из засады/невидимый-неслышный снаряд книга не даёт
@@ -124,6 +171,39 @@ export function situationalMods(v) {
     ...(weapon ? (() => {
       const v = legacyChangeTestBonus(actor, weapon);
       return v ? [{ label: `Наследие Перемен: ${v >= 0 ? "+" : ""}${v} (бросок этого Хода)`, value: v, autoCheck: true }] : [];
+    })() : []),
+    // Наследие Бойни (H1, стр. 426), стрелковая ветка: +20 к следующей атаке
+    // после убийства этим оружием — флэт, без Приёмов (те — только
+    // рукопашные). Рукопашная ветка (включая −30 на Оглушить) уже сложена в
+    // sheets/attack/selection.mjs::maneuverBon, здесь она бы задвоилась.
+    ...(!isMelee && weapon ? (() => {
+      const v = legacySlaughterThresholdDelta(actor, weapon);
+      return v ? [{ label: `Наследие Бойни (История): +${v} — заряжено убийством этим оружием`, value: v, autoCheck: true }] : [];
+    })() : []),
+    // Терпение/vigilant 3-4, Оружие Наследия, стрелковая ветка (wdbc-1rno.35/
+    // wdbc-1rno.41, стр. 427-428): «+30 на выстрелы в Карауле» — заряжено
+    // combat/overwatch.mjs при клике режима огня, гасится в attack.mjs на
+    // фактическом броске (тот же приём, что hairTriggerUnseenPending).
+    ...(!isMelee && weapon ? (() => {
+      const v = patienceLegacyOverwatchBonus(actor);
+      return v ? [{ label: `Терпение (Мутация): +${v} — выстрел из Караула`, value: v, autoCheck: true }] : [];
+    })() : []),
+    // Терпение, рукопашная половина (wdbc-1rno.41, стр. 427): «атакует
+    // Задержкой идущего в Натиск противника — всегда первым, +30». Детект —
+    // решение пользователя 21.09.2026: банкованное 1 ОД (Задержка) + цель в
+    // Натиске (rules/legacy-weapon.mjs::patienceLegacyMeleeChargeInterruptActive,
+    // не может сама проверить «не свой Ход» — цикл через action-economy.mjs,
+    // см. комментарий там), плюс !isActorsOwnTurn здесь.
+    ...(isMelee && weapon && attackCtx.targetActor && !isActorsOwnTurn(actor)
+      && patienceLegacyMeleeChargeInterruptActive({ actor, weapon, defenderActor: attackCtx.targetActor })
+      ? [{ label: "Терпение (Мутация): +30 — атака Задержкой по идущему в Натиск, действует первым", value: 30, autoCheck: true }]
+      : []),
+    // Каратель/merciless 8-8, Оружие Наследия (wdbc-1rno.35, стр. 428): «+3
+    // накопительно на попадание по НЕЙ до конца боя» — счётчик живёт на
+    // цели, ключ id ЭТОГО оружия (rules/legacy-weapon.mjs::punisherLegacyBonus).
+    ...(weapon && attackCtx.targetActor ? (() => {
+      const v = punisherLegacyBonus(attackCtx.targetActor, weapon);
+      return v ? [{ label: `Каратель (Мутация): +${v} — накоплено по этой цели`, value: v, autoCheck: true }] : [];
     })() : []),
     // Отвлекающее/skilled 3-4, Оружие Наследия, стрелковая ветка (wdbc-1rno.35,
     // стр. 427-428): «Все остальные персонажи +10 по цели, в которую попало
@@ -206,6 +286,10 @@ export function situationalMods(v) {
     }
   }
   const charSwapWhy  = ruleFlagLabels(actor, "charSwap.wp.forWsS", attackCtx);
+  // Отвлекающее/skilled 3-4, Оружие Наследия, рукопашная ветка (wdbc-1rno.35,
+  // стр. 427-428): «При Финте — тест на Charm(Fel) или Int вместо WS.»
+  const charSwapWhyFel = ruleFlagLabels(actor, "charSwap.fel.forWs", attackCtx);
+  const charSwapWhyInt = ruleFlagLabels(actor, "charSwap.int.forWs", attackCtx);
   const twoWeaponWhy = ruleFlagLabels(actor, "penalty.twoWeapon.off", attackCtx);
   const twoWeaponOff  = twoWeaponWhy.length > 0;
   // Дуэлянтское (стр. 73 Книги Аэльдари): бой 1-на-1, когда никто не мешает,
@@ -255,7 +339,29 @@ export function situationalMods(v) {
   // своим исключением для Пистолета) — отдельный штраф −20 без исключений.
   const targetLocked = (!isMelee && targetToken && !inContactWithTarget)
     ? lockingContactTokenDocs(targetToken.document ?? targetToken).length > 0 : false;
+  // Длина Оружия (wdbc-x1nz.2.67, стр. 39): действующий Rng атакующего
+  // оружия на основной Хват, Приём «Стандартная» — этот список галочек
+  // считается один раз ДО того, как игрок переключает пилюли Хвата/Приёма
+  // в этом же окне, поэтому автогалочки ниже — подсказка по базовой связке
+  // оружия, а не гарантированно точное число после Выпада/другого Хвата;
+  // как и остальные автогалочки этого файла, их можно поправить руками.
+  const meleeAttackerRange = (isMelee && weapon)
+    ? meleeEffectiveRange(weapon.system?.range, parseGrips(weapon.system?.grips)[0] ?? null, "standard", false,
+        Math.max(0, Number(actor?.system?.size) || 0))
+    : 0;
+  const longerWeaponAuto  = isMelee ? longerWeaponBonus(meleeAttackerRange, attackCtx.targetActor) : false;
+  const closeQuartersAuto = (isMelee && inContactWithTarget) ? closeQuartersPenalty(meleeAttackerRange) : 0;
+  // Прикрывающая Стойка (стр. 15, wdbc-x1nz.2.66.7): −20 рукопашным атакам
+  // по союзникам, стоящим в Базовом/Глубоком контакте с персонажем в этой
+  // Стойке — то же соседство, что Свободная Атака/Связан в Рукопашной
+  // (module/combat/free-attack.mjs::coveringDefendersOf).
+  const coveringDefenders = (isMelee && targetToken)
+    ? coveringDefendersOf(targetToken.document ?? targetToken) : [];
   const specificMods = isMelee ? [
+    ...(coveringDefenders.length ? [{
+      label: "Прикрывающая Стойка союзника рядом", value: -20, autoCheck: true,
+      note: `${coveringDefenders.map(d => d.name).join(", ")} прикрывает цель (стр. 15)`
+    }] : []),
     { label: "Трудный ландшафт",       value: -10, autoCheck: !!meleeTerrain?.inTerrain,
       note: meleeTerrain?.inTerrain ? "зона Трудного Ландшафта под атакующим" : undefined },
     { label: "Очень трудный ландшафт", value: -20 },
@@ -263,6 +369,12 @@ export function situationalMods(v) {
       note: outnumberCount == null ? undefined : `в контакте с целью: ${outnumberCount}` },
     { label: "Числ. перевес 3к1",      value:  20, autoCheck: outnumberCount != null && outnumberCount >= 3,
       note: outnumberCount == null ? undefined : `в контакте с целью: ${outnumberCount}` },
+    // Адаптивное у ЦЕЛИ, третья ступень (стр. 428, wdbc-bjy1.13): «когда 3к1 —
+    // враги получают −10 на рукопашные атаки по персонажу».
+    ...(adaptiveLegacyDefenderPenalty({ targetActor: attackCtx.targetActor, targetContactCount: outnumberCount, isMelee }) ? [{
+      label: "Адаптивное у цели: −10 — перевес 3к1", value: -10, autoCheck: true,
+      note: `в контакте с целью: ${outnumberCount}`
+    }] : []),
     { label: "Положение выше",         value:  10, autoCheck: highGround === true,
       note: highGround === true ? "elevation токена выше цели" : undefined },
     // Полёт (стр. 30, wdbc-x1nz.2): Низкая/Высокая — «вне досягаемости
@@ -272,7 +384,12 @@ export function situationalMods(v) {
     { label: "Цель в полёте (Низкая/Высокая) — рукопашная недосягаема",
       value: 0, autofail: true, autoCheck: targetAtLow || targetAtHigh,
       note: (targetAtLow || targetAtHigh) ? `цель на высоте «${targetAltitude}» (стр. 30)` : undefined },
-    { label: "Более длинное оружие",   value:   5 },
+    { label: "Более длинное оружие",   value:   5, autoCheck: longerWeaponAuto,
+      note: longerWeaponAuto ? `Rng ${meleeAttackerRange} длиннее макс. оружия цели (Длина Оружия, стр. 39)` : undefined },
+    ...(closeQuartersAuto < 0 ? [{
+      label: "Слишком длинное оружие вблизи", value: closeQuartersAuto, autoCheck: true,
+      note: `Rng ${meleeAttackerRange} в Базовом контакте — −5 за каждый пункт выше 5 (Длина Оружия, стр. 39)`
+    }] : []),
     ...(wp.duelingParry ? [{
       label: "Дуэлянтское: бой 1-на-1 (никто не мешает)", value: 5,
       autoCheck: duelContacts === 1,
@@ -350,14 +467,20 @@ export function situationalMods(v) {
     { label: "Дальняя дистанция",       value: -10, autoCheck: bandKey === "long",       note: bandNote("long") },
     { label: "Экстремальная дистанция", value: -30, autoCheck: bandKey === "extreme",    note: bandNote("extreme") },
     // Беспомощная цель, выстрел в упор/в рукопашной: как рукопашная — авто-
-    // успех и удвоенный урон, а не просто +30 (см. targetHelpless выше). Это
-    // ситуативный факт про конкретный выстрел (дистанция), а не хранимое
-    // состояние — поэтому галочка, а не автоматика, ровно как «Дистанция в упор».
-    ...(targetHelpless ? [{
-      id: "atk-helpless-close", label: "Беспомощная цель: в упор / в рукопашной",
-      value: 0, autosuccess: true,
-      note: "заменяет +30 на авто-успех и ×2 урона"
-    }] : []),
+    // успех и удвоенный урон, а не просто +30 (см. targetHelpless выше).
+    // wdbc-x1nz.2.88 п.2: отмечается сама по той же замеренной дистанции, что
+    // «Дистанция в упор» (bandKey pointBlank), и по контакту Баз — стрельба
+    // в рукопашной. Без токенов/замера — ручная, как раньше.
+    ...(targetHelpless ? (() => {
+      const closeAuto = bandKey === "pointBlank" || (!!measured?.contact && measured.contact !== "none");
+      return [{
+        id: "atk-helpless-close", label: "Беспомощная цель: в упор / в рукопашной",
+        value: 0, autosuccess: true, autoCheck: closeAuto,
+        note: closeAuto
+          ? "дистанция в упор / в рукопашной — авто-успех и ×2 урона вместо +30"
+          : "заменяет +30 на авто-успех и ×2 урона"
+      }];
+    })() : []),
     // ── Ситуативные штрафы боя (wdbc-z56a, стр. 32/166): теснота/высота-
     // скорость цели/нестабильная платформа — раньше в диалоге не существовали
     // вовсе, поэтому Anti-Air/Gyro-Stabilized нечего было гасить. ──────────
@@ -383,5 +506,5 @@ export function situationalMods(v) {
       note: wp.gyroStabilized ? "снято: Гиро-стаб." : undefined }
   ];
 
-  return { bandKey, charSwapWhy, commonMods, specificMods };
+  return { bandKey, charSwapWhy, charSwapWhyFel, charSwapWhyInt, commonMods, specificMods };
 }

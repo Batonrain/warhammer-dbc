@@ -9,6 +9,7 @@
     "weaponClass": "melee",
     "weaponType": "power",
     "range": 6,
+    "rangeMin": 3,
     "balance": 2,
     "grips": "2р (1р, Бл, Мх)",
     "profileLabel": "Меч",

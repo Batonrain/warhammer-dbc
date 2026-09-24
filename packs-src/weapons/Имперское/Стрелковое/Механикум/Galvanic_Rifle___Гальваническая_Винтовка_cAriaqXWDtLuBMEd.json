@@ -35,6 +35,9 @@
       },
       {
         "key": "tearing"
+      },
+      {
+        "key": "longRifle"
       }
     ],
     "needsRecharge": false,

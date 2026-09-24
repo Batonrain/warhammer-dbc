@@ -124,6 +124,8 @@ describe("rollSuppressionTest: рукопашный контакт — имму�
     expect(immune).toBe(true);
     expect(a.system.conditions.pinned).toBe(false);
     expect(captured.chat.at(-1).content).toContain("Подавлению не подвержен");
+    // Тест не катался вовсе (wdbc-bjy1.8): ни одного Roll не создано.
+    expect(captured.rolls).toHaveLength(0);
   });
 
   it("врага рядом нет — тест катается как обычно", async () => {
@@ -153,6 +155,7 @@ describe("rollSuppressionTest: safeOverride — ГМ отметил «завед
     expect(autoSafe).toBe(true);
     expect(a.system.conditions.pinned).toBe(false);
     expect(captured.chat.at(-1).content).toContain("Заведомо безопасно");
+    expect(captured.rolls).toHaveLength(0);
   });
 
   it("safeOverride: false (по умолчанию) — тест катается как обычно", async () => {

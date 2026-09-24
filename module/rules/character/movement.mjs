@@ -123,15 +123,23 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   // ОБЕИХ ног — «не может ходить» вообще, это сильнее деления и обнуляет
   // Движение целиком (см. lostLegsCount ниже); Уклонение при потере ног —
   // отдельно, combat/defense.mjs.
+  //
+  // wdbc-x1nz.2.91 («Раны и Урон», стр. 43): вдвое с округлением вниз режется
+  // сам SPD (= Полушаг), а Полное/Натиск/Бег выводятся из него ×2/×3/×6 —
+  // раньше floor брался от каждого производного числа отдельно, и при SPD 3
+  // выходило 1/3/4/9 вместо книжных 1/2/3/6. К этому месту все четыре числа
+  // уже согласованы (halfMove = текущий SPD после модов, Стойки, Поваленного),
+  // поэтому новый SPD берём из halfMove. Пол 0.5 — тот же книжный минимум.
   const lostFeetOrLeg = !!(system.conditions?.lostFeet || system.conditions?.lostLegs);
   const bothLegsLost  = (Number(system.conditions?.lostLegsCount) || 0) >= 2;
   if (bothLegsLost) {
     halfMove = 0; move = 0; charge = 0; run = 0;
   } else if (lostFeetOrLeg) {
-    halfMove = Math.max(0.5, Math.floor(halfMove / 2));
-    move     = Math.max(0.5, Math.floor(move / 2));
-    charge   = Math.max(0.5, Math.floor(charge / 2));
-    run      = Math.max(0.5, Math.floor(run / 2));
+    const halvedSpd = Math.max(0.5, Math.floor(halfMove / 2));
+    halfMove = halvedSpd;
+    move     = halvedSpd * 2;
+    charge   = halvedSpd * 3;
+    run      = halvedSpd * 6;
   }
 
   system.movement.halfMove = halfMove;

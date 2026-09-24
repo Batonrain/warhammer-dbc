@@ -190,7 +190,13 @@ export function isOutsideDefenderView(defenderToken, attackerToken) {
 // Foundry для акторов, у которых угол раньше не был явно сужен/расширен.
 /** Экспортирован отдельно от регистрации — тестируется напрямую, Hooks.on в тестах заглушка (foundry-stub.mjs). */
 export function applyDefaultSightAngle(actor, data) {
-  const angle = Number(data?.prototypeToken?.sight?.angle ?? actor.prototypeToken?.sight?.angle);
-  if (!angle || angle === 360) actor.updateSource({ "prototypeToken.sight.angle": DEFAULT_SIGHT_ANGLE_DEGREES });
+  const angle = data?.prototypeToken?.sight?.angle ?? actor.prototypeToken?.sight?.angle;
+  if (isUnsetSightAngle(angle)) actor.updateSource({ "prototypeToken.sight.angle": DEFAULT_SIGHT_ANGLE_DEGREES });
+}
+
+/** Угол не настроен: пусто, 0 или Foundry-дефолт 360. Общий для хука и migrations/sight-angle.mjs. */
+export function isUnsetSightAngle(angle) {
+  const n = Number(angle);
+  return !n || n === 360;
 }
 Hooks.on("preCreateActor", applyDefaultSightAngle);

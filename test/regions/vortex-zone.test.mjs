@@ -172,8 +172,9 @@ describe("processVortexTurnStart: провал контролёра — случ
     await processVortexTurnStart(fakeCombatant(scene));
 
     expect(behavior.system.championSuccess).toBe(false);
-    // deltaRoll может не совпасть 1:1 с captured.dice при общей заглушке nextRoll —
-    // главное: Х изменился (не остался 2) и зона не пропала при положительном Х.
+    // Очередь кубов детерминирована (captured.dice важнее nextRoll): 1d10=10 →
+    // Х 2 + (10−6) = 6 (wdbc-bjy1.8 — раньше «Х меняется» не проверялось).
+    expect(behavior.system.xValue).toBe(6);
     expect(region.update).toHaveBeenCalled();
     expect(scene.deleteEmbeddedDocuments).not.toHaveBeenCalled();
   });
@@ -270,5 +271,80 @@ describe("spendVortexSuccess: трата Успеха победителем", (
 
     expect(behavior.system.xValue).toBe(2);
     expect(globalThis.ui.notifications.warn).toHaveBeenCalledWith(expect.stringContaining("уже потрачены"));
+  });
+});
+
+// wdbc-bjy1.7 — четыре расхождения с книгой/столом.
+describe("Вихрь Рока: создатель, кубы, развеивание, имя силы (wdbc-bjy1.7)", () => {
+  const inCombat = () => { globalThis.game.combat = { started: true }; };
+  const noReactions = (uuid) => fakeControllerActor(uuid, {
+    type: "character",
+    system: { characteristics: { wp: { total: 90 } }, psyker: { currentRating: 9 }, reactions: { value: 0 } },
+    getFlag: () => undefined, update: vi.fn()
+  });
+
+  it("создатель перехватывает контроль без Реакции (книга, стр. 313)", async () => {
+    inCombat();
+    const behavior = fakeBehavior({ controllerUuid: "Actor.other" }); // ownerUuid = CONTROLLER
+    const { scene } = fakeRegion(behavior);
+    globalThis.game.scenes = { get: (id) => (id === "s1" ? scene : null) };
+    globalThis.ui = { notifications: { warn: vi.fn() } };
+    captured.nextRoll = 10;
+    await reactToVortex(noReactions(CONTROLLER), { regionId: "r1", sceneId: "s1", behaviorId: "b1" });
+    expect(globalThis.ui.notifications.warn).not.toHaveBeenCalled();
+    expect(behavior.system.controllerUuid).toBe(CONTROLLER);
+    delete globalThis.game.combat;
+  });
+
+  it("чужой псайкер без Реакций — не может вмешаться", async () => {
+    inCombat();
+    const behavior = fakeBehavior({ controllerUuid: CONTROLLER });
+    const { scene } = fakeRegion(behavior);
+    globalThis.game.scenes = { get: (id) => (id === "s1" ? scene : null) };
+    globalThis.ui = { notifications: { warn: vi.fn() } };
+    await reactToVortex(noReactions("Actor.reactor"), { regionId: "r1", sceneId: "s1", behaviorId: "b1" });
+    expect(globalThis.ui.notifications.warn).toHaveBeenCalledWith(expect.stringContaining("Реакций"));
+    expect(behavior.system.controllerUuid).toBe(CONTROLLER);
+    delete globalThis.game.combat;
+  });
+
+  it("карточка теста поддержания несёт кубы (rolls) — их видит стол и Dice So Nice", async () => {
+    const behavior = fakeBehavior({ xValue: 2 });
+    const { scene } = fakeRegion(behavior);
+    globalThis.fromUuid = async (uuid) => (uuid === CONTROLLER ? fakeControllerActor() : null);
+    captured.nextRoll = 10;
+    await processVortexTurnStart(fakeCombatant(scene));
+    const card = captured.chat.find(c => c.content?.includes("Поддержание Вихря"));
+    expect(card?.rolls?.length).toBe(1);
+  });
+
+  it("провал развеял Вихрь (Х≤0) — приглашений на Реакцию нет", async () => {
+    const reactor = { x: 1000, y: 1000, width: 1, height: 1, actor: {
+      uuid: "Actor.reactor", name: "Сосед", testUserPermission: () => true,
+      items: [{ type: "psychicPower", name: "Mind Over Matter / Разум Превыше Материи" }]
+    } };
+    const behavior = fakeBehavior({ xValue: 1 });
+    const { scene } = fakeRegion(behavior, { tokens: [reactor] });
+    globalThis.fromUuid = async (uuid) => (uuid === CONTROLLER ? fakeControllerActor() : null);
+    globalThis.game.users = Object.assign([], { players: [] });
+    captured.nextRoll = 95; // провал; 1d10 тем же числом → Х падает до 0
+    captured.dice = [95, 1, 1];
+    await processVortexTurnStart(fakeCombatant(scene));
+    expect(scene.deleteEmbeddedDocuments).toHaveBeenCalled();
+    expect(captured.chat.some(c => c.content?.includes("перехватить контроль?"))).toBe(false);
+  });
+
+  it("Mind Over Matter узнаётся и по русскому имени", async () => {
+    const reactor = { x: 1000, y: 1000, width: 1, height: 1, actor: {
+      uuid: "Actor.reactor", name: "Сосед", testUserPermission: () => true,
+      items: [{ type: "psychicPower", name: "Разум Превыше Материи" }]
+    } };
+    const behavior = fakeBehavior({ xValue: 2 });
+    const { scene } = fakeRegion(behavior, { tokens: [reactor] });
+    globalThis.fromUuid = async (uuid) => (uuid === CONTROLLER ? fakeControllerActor() : null);
+    globalThis.game.users = Object.assign([], { players: [] });
+    captured.nextRoll = 10;
+    await processVortexTurnStart(fakeCombatant(scene));
+    expect(captured.chat.some(c => c.content?.includes("перехватить контроль?"))).toBe(true);
   });
 });

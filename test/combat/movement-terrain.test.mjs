@@ -93,6 +93,16 @@ describe("Ослеплён — Трудный Ландшафт вне насто
     expect(captured.dialog.content).not.toContain("Ослеплён");
   });
 
+  // wdbc-x1nz.2.89: «альтернативными чувствами (Sonar Sense, Unnatural
+  // Senses) все штрафы Ослепления игнорируются» — и ландшафтные тоже.
+  it("Ослеплён, но с Sonar Sense — ни Трудного Ландшафта, ни −20", async () => {
+    const actor = actorFor({ conditions: { blinded: true } });
+    actor.items.push({ type: "trait", name: "Sonar Sense / Сонарное Чувство", system: {}, getFlag: () => undefined });
+    await showDifficultTerrainDialog(actor, terrainTokenDoc(-10, "Грязь"));
+    expect(captured.dialog.content).toContain("-10");
+    expect(captured.dialog.content).not.toContain("Ослеплён");
+  });
+
   it("реальный тест: Ослеплён на чистой земле, порог Ag+0 доходит до карточки чата", async () => {
     const actor = actorFor({ conditions: { blinded: true } });
     await showDifficultTerrainDialog(actor, cleanTokenDoc());

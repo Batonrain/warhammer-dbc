@@ -210,11 +210,15 @@ describe("drug special effects", () => {
     expect(result.updates).toMatchObject({
       "system.conditions.haemorrhagingLevel": 1,
       "system.conditions.haemorrhaging": true,
-      "system.fatigue.value": 2,
       "system.wounds.value": 3,
       "system.wounds.critical": 0,
       "system.wounds.firstAidUsed": false
     });
+    // wdbc-x1nz.2.95: доп. Усталость — дельтой, а не записью fatigue.value:
+    // вызывающий складывает её с остальными изменениями Усталости препарата
+    // и пишет одним патчем через порог обморока.
+    expect(result.updates).not.toHaveProperty("system.fatigue.value");
+    expect(result.fatigueDelta).toBe(1);
     expect(result.rolls).toHaveLength(2);
     expect(result.lines.join("\n")).toContain("Обескровливания");
   });

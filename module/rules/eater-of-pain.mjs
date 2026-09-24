@@ -30,6 +30,7 @@
 import { hasRuleFlag } from "./flags.mjs";
 import { tokensWithinRadius } from "./aoe-target.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { fatigueChangeFields } from "../sheets/tabs/conditions.mjs";
 
 export const EATER_OF_PAIN_CAPABILITY = "gift.slaanesh.eaterOfPain";
 
@@ -66,7 +67,11 @@ export function eaterOfPainBenefitUpdate(system, choice, roll) {
   if (n <= 0) return {};
   if (choice === "fatigue") {
     const cur = Number(system?.fatigue?.value) || 0;
-    return { "system.fatigue.value": Math.max(0, cur - n) };
+    // Единый путь смены Усталости (wdbc-x1nz.2.95): снижение ниже порога
+    // выводит из обморока от Усталости и гасит его таймер. Функция остаётся
+    // чистой — fatigueChangeFields только собирает патч; на снижение ему
+    // нужен лишь system (иммунитет Саркофага спрашивается только на рост).
+    return fatigueChangeFields({ system }, Math.max(0, cur - n)).fields;
   }
   if (choice === "wounds") {
     const cur = Number(system?.wounds?.value) || 0;

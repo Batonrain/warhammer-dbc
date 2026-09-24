@@ -33,6 +33,30 @@ export const DEVOURER_THEFTS_FLAG = "devourerOfKnowledgeThefts";
 /** Флаг на НОСИТЕЛЕ — ключи Навыков, украденных ПЕРМАНЕНТНО (после 9 дней подряд). */
 export const DEVOURER_PERMANENT_FLAG = "devourerOfKnowledgePermanent";
 
+/**
+ * Флаг на НОСИТЕЛЕ — серии «9 дней подряд» по паре «жертва|Навык»:
+ * { [recKey]: { streak, lastDay, victimPrevRank } }. Отдельно от
+ * DEVOURER_THEFTS_FLAG намеренно (wdbc-63fe): запись кражи стирается тиком
+ * Календаря ровно при переводе на сутки вперёд, и серия, лежавшая в ней,
+ * сбрасывалась в 1 при обычном ходе игры — 9 дней было не собрать.
+ */
+export const DEVOURER_STREAKS_FLAG = "devourerOfKnowledgeStreaks";
+
+/**
+ * Следующее значение серии для пары на календарный день `today`.
+ * Вчера — серия растёт, сегодня уже был — повтор без роста, иначе заново.
+ */
+export function nextDevourerStreak(rec, today) {
+  if (rec && rec.lastDay === today) return { streak: Number(rec.streak) || 1, sameDay: true };
+  if (rec && rec.lastDay === today - 1) return { streak: (Number(rec.streak) || 0) + 1, sameDay: false };
+  return { streak: 1, sameDay: false };
+}
+
+/** Серии, которые ещё могут продолжиться (сегодня/вчера) — отмершие не копятся во флаге. */
+export function pruneDevourerStreaks(all, today) {
+  return Object.fromEntries(Object.entries(all ?? {}).filter(([, r]) => Number(r?.lastDay) >= today - 1));
+}
+
 /** Секунд в игровых сутках — «1 день»/«9 дней подряд» книги считаются по «Календарю». */
 export const DAY = 86400;
 

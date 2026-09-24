@@ -21,6 +21,9 @@ import { WarhammerStructuralSheet } from "./structural-sheet.mjs";
 import { convertHordeToActor } from "../apps/horde-convert.mjs";
 import { openContextMenu } from "./context-menu.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { resolveTest } from "../rules/resolve-test.mjs";
+import { suffersBlindness } from "../rules/blindness.mjs";
+import { targetConditionAttackMods } from "./attack-dialog.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 const CHAR_ORDER = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel"];
@@ -460,14 +463,20 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
     const ruleMods = collectTestMods(this.actor, ctx ?? { kind: "skill" });
     const threshold = baseThreshold + ruleMods.total;
     const roll = await new Roll("1d100").evaluate();
-    const rv = roll.total, success = rv <= threshold;
+    // Автопровал от правила (wdbc-x1nz.2.89, Ослеплённая Орда — тест BS) —
+    // тот же эффект autoFail, что считает общий исход теста листа персонажа
+    // (rules/kind-outcome.mjs): у Орды свой бросок, поэтому читается здесь.
+    const autoFail = resolveTest({ actor: this.actor, ...(ctx ?? { kind: "skill" }) }).autoFail ?? [];
+    const rv = roll.total, success = !autoFail.length && rv <= threshold;
     const deg = Math.floor(Math.abs(rv - threshold) / 10) + 1;
+    const autoFailLine = autoFail.length
+      ? `<div class="roll-threshold">⛔ Автопровал: ${autoFail.map(a => esc(a.label)).join(", ")}</div>` : "";
     // wdbc-fyvv: `prefix` («Навык», «WP (Ослаблена −10)»…) — то же, что везде
     // называет ячейку Режим; сама плашка та же, что у остальных тестов.
     await postTestCard(this.actor, {
       title: `${esc(this.actor.name)} — ${esc(label)}`,
       threshold: rollStatLine({ label: prefix, base: baseThreshold, parts: ruleMods.parts, threshold, rv }),
-      outcome: outcomeHtml(success, `${success ? "Успех" : "Провал"} (${deg} ст.)`)
+      outcome: autoFailLine + outcomeHtml(success, `${success ? "Успех" : "Провал"} (${deg} ст.)`)
     }, { rolls: [roll], sound: false });
   }
 
@@ -495,10 +504,25 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
 
     const rangedModsHtml = !isMelee ? HORDE_RANGED_MODS.map((m, i) =>
       `<label class="attack-mod-check"><input type="radio" name="h-range" class="h-mod" data-value="${m.value}" ${i === 2 ? "checked" : ""}/><span>${m.label}</span></label>`).join("") : "";
+    // Состояние цели распознано (wdbc-x1nz.2.97 п.6) — «Цель лежит»/«Цель
+    // Оглушена» отмечены и заперты, тем же кодом, что окно атаки персонажа:
+    // ±20 не зависит от того, вспомнил ли ГМ поставить галочку. У Орды
+    // галочка — единственный источник этого бонуса, поэтому значение остаётся
+    // на ней, а не уходит в отдельную авто-строку.
+    const targetActor = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+    const tc = targetConditionAttackMods(targetActor, isMelee);
+    const autoMod = { "Цель лежит": tc.targetProne, "Цель Оглушена": tc.targetStunned };
     const commonModsHtml = HORDE_COMMON_MODS.map(m => {
       const v = isMelee ? m.melee : m.ranged;
-      return `<label class="attack-mod-check"><input type="checkbox" class="h-mod" data-value="${v}"/><span>${m.label} (${v >= 0 ? "+" : ""}${v})</span></label>`;
+      const lock = autoMod[m.label] ? ` checked disabled title="Состояние цели распознано"` : "";
+      return `<label class="attack-mod-check"><input type="checkbox" class="h-mod" data-value="${v}"${lock}/><span>${m.label} (${v >= 0 ? "+" : ""}${v})</span></label>`;
     }).join("");
+    // Ослеплённая Орда (wdbc-x1nz.2.89): рукопашная −30, стрельба —
+    // автопровал; сонар/Unnatural Senses снимают (rules/blindness.mjs).
+    const blind = suffersBlindness(this.actor);
+    const blindHtml = !blind ? "" : isMelee
+      ? `<label class="attack-mod-check"><input type="checkbox" class="h-mod" data-value="-30" checked disabled/><span>Ослеплена (−30)</span></label>`
+      : `<div class="atk-horde-info">⛔ Орда Ослеплена: стрельба — автопровал.</div>`;
 
     const hordeVsNote = melee?.note ? `<div class="atk-horde-info">${esc(melee.note)}</div>` : "";
     const rangeInfo = (!isMelee && sys.range > 0)
@@ -517,7 +541,7 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
       <div class="atk-dlg-row"><label>Базовый порог:</label><input id="h-threshold" type="number" value="${charVal}"/></div>
       <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="h-modifier" type="number" value="0"/></div>
       ${!isMelee ? `<div class="atk-dlg-modifiers"><div class="atk-mods-title">Дистанция</div><div class="atk-mods-list">${rangedModsHtml}</div></div>` : ""}
-      <div class="atk-dlg-modifiers"><div class="atk-mods-title">Модификаторы</div><div class="atk-mods-list">${commonModsHtml}</div></div>
+      <div class="atk-dlg-modifiers"><div class="atk-mods-title">Модификаторы</div><div class="atk-mods-list">${commonModsHtml}${blindHtml}</div></div>
       <div class="atk-dlg-row atk-total-row"><label>Итоговый порог:</label><span id="h-total">${charVal}</span></div>
     </div>`;
 
@@ -532,7 +556,8 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
         {
           action: "roll", label: "Бросок!", icon: "fas fa-dice-d10", default: true,
           callback: (event, button) =>
-            this._executeHordeAttack(w, key, hordeThreshold(button.form), isMelee, targets)
+            this._executeHordeAttack(w, key, hordeThreshold(button.form), isMelee, targets,
+              { autoFail: blind && !isMelee })
         },
         { action: "cancel", label: "Отмена" }
       ],
@@ -548,7 +573,7 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
   }
 
   // ── Исполнение атаки Орды: попадание, урон (+кубы Магнитуды), карточка с защитой ──
-  async _executeHordeAttack(w, key, threshold, isMelee, targets) {
+  async _executeHordeAttack(w, key, threshold, isMelee, targets, { autoFail = false } = {}) {
     const sys = w.system;
     const actor = this.actor;
     const d = actor.system.derived || {};
@@ -560,7 +585,7 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
 
     const roll = await new Roll("1d100").evaluate();
     const rv = roll.total;
-    const hit = rv <= threshold;                       // «промах» у Орды — тоже урон, но без кубов Магнитуды и его можно Избегать
+    const hit = !autoFail && rv <= threshold;                       // «промах» у Орды — тоже урон, но без кубов Магнитуды и его можно Избегать
     const deg = Math.abs(degreesOfSuccess(rv, threshold));
 
     // Место попадания (по перевёрнутым цифрам, как в обычной атаке).
@@ -600,6 +625,7 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
     // обычный случай, и Взрывное с Распылением там работают так же.
     const applyBtn = `<button class="wh-apply-dmg-btn" type="button"
       data-damage="${totalDamage}" data-penetration="${pen}" data-damage-type="${dtype}"
+      data-damage-subtype="${sys.damageSubtype || ""}"
       data-hit-location="${hitLoc}" data-weapon-name="${w.name}" data-attacker="${actor.name}"
       data-attacker-uuid="${actor.uuid || ""}"
       data-felling="${wp.fellingRating || 0}" data-primitive="${wp.primitive ? 1 : 0}"
@@ -616,7 +642,7 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
            ${isMelee && !wp.flexible ? `<button class="wh-parry-btn" type="button" data-extra-mod="0" data-attack-deg="${deg}">Парирование</button>` : ""}</div></div>`
       : `<div class="roll-defense-note">Попадание Орды нельзя Избегать (шквал / навал).</div>`;
 
-    const targetEffectBtns = buildTargetEffectButtons(wProps, { hit, netDamageKnown: false });
+    const targetEffectBtns = buildTargetEffectButtons(wProps, { hit });
     const magNote = magDice ? ` · <span class="horde-chip">Магнитуда +${magDice}d10</span>` : "";
     const meta = CHARACTERISTICS[key];
 
@@ -629,6 +655,7 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
         ${buildPropertyChatBlock(wProps)}
         <div class="roll-header">${esc(actor.name)} — ${esc(w.name)}</div>
         <div class="roll-threshold">${meta?.abbr || key}: Порог <b>${threshold}</b> · целей: <b>${targets}</b> · бросок <b>${rv}</b></div>
+        ${autoFail ? `<div class="roll-threshold">⛔ Автопровал: Орда Ослеплена</div>` : ""}
         <div class="roll-outcome">${hit
           ? `<span class="roll-success">Попадание — ${deg} ${_degWord(deg)}, шквал накрывает цель</span>`
           : `<span class="roll-failure">Промах = попадание без бонусов Магнитуды (можно Избегать)</span>`}</div>

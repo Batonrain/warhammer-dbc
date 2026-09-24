@@ -107,6 +107,9 @@ describe("parseMountArc — vehicleMount.hArc/vArc (wdbc-m38e)", () => {
     expect(parseMountArc("360°")).toBeNull();
     expect(parseMountArc("")).toBeNull();
     expect(parseMountArc(undefined)).toBeNull();
+    // wdbc-4umq (14): −180..+180 — полный круг; после нормализации оба конца
+    // совпадали, и ширина выходила 0 («ничего не видит») вместо «не ограничен».
+    expect(parseMountArc("−180°..+180°")).toBeNull();
     expect(parseMountArc("—")).toBeNull();
     expect(parseMountArc("рука")).toBeNull(); // пометка на рукопашном — не число
   });

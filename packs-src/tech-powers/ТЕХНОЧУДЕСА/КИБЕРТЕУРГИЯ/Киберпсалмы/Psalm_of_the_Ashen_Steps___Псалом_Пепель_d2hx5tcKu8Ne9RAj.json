@@ -25,6 +25,7 @@
     "range": "Сам",
     "damage": "2d10+3",
     "damageType": "energy",
+    "damageSubtype": "flame",
     "penetration": 2,
     "effect": "[Железо: Fyceline Torch, Excursion Field · Цена: 2К · Процесс: 2 (У) · Тип: —] Треб.: Tech-Use+10. Шаблон на техножреце (движется с ним, Linger): 2d10+3 E(Fl), Pen 2, Blast (3), Flame, Linger. Сам и до ½I.b(окр.▲) других иммунны и +30 на А против E(Fl)-взрывов/спреев и иммунитет к Горению.",
     "effects": {

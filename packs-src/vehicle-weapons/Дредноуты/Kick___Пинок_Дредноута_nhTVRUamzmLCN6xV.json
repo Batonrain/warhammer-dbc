@@ -8,7 +8,8 @@
     "notes": "",
     "weaponClass": "melee",
     "weaponType": "primitive",
-    "range": 0,
+    "range": 2,
+    "rangeMin": 0,
     "balance": 0,
     "reload": "–",
     "magazineCur": 0,
@@ -57,7 +58,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "crushing"
   },
   "_id": "nhTVRUamzmLCN6xV",
   "effects": [],

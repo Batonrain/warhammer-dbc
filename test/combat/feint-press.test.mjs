@@ -9,6 +9,8 @@ import { captured, resetCaptured, fakeHtml } from "../support/foundry-stub.mjs";
 import { actorFor } from "../support/combat-fixtures.mjs";
 import { _showContestDialog } from "../../module/combat/techniques.mjs";
 import { MELEE_CONTESTS } from "../../module/constants/combat.mjs";
+import { resistButtonData } from "../support/contest.mjs";
+import { resolveResistClick, _resetPendingContests } from "../../module/combat/opposed-contest.mjs";
 import { resolveFeintSuccess, resolvePressSuccess, feintBlocksEvasion, clearFeintAtTurnEnd } from "../../module/combat/feint-press.mjs";
 
 beforeEach(() => {
@@ -122,17 +124,60 @@ describe("resolvePressSuccess", () => {
   });
 });
 
+// Встречный тест (wdbc-x1nz.2.73): бросок инициатора сам по себе эффекта не
+// даёт — цель жмёт «Сопротивляться», и только выигранный встречный тест
+// применяет Финт.
+async function feintThenResist(actor, target, { mine, theirs }) {
+  globalThis.game.user = { ...globalThis.game.user, id: "user-1", isGM: true, targets: new Set([{ actor: target }]) };
+  globalThis.fromUuid = async uuid => (uuid === actor.uuid ? actor : uuid === target.uuid ? target : null);
+  captured.nextRoll = mine;
+  await _showContestDialog(actor, { ...MELEE_CONTESTS.feint, onSuccess: resolveFeintSuccess });
+  await captured.dialog.buttons.roll.callback(fakeHtml({ "#contest-char": "ws", "#contest-self": "45", "#contest-mod": "0" }));
+  const ds = resistButtonData(captured.chat.at(-1).content);
+  if (theirs == null) return ds;
+  captured.nextRoll = theirs;
+  await resolveResistClick(ds);
+  return ds;
+}
+
 describe("Интеграция через _showContestDialog: клик по Финту реально ставит флаг", () => {
-  it("успешный Финт (через кнопку броска) вызывает onSuccess с целью", async () => {
+  beforeEach(() => _resetPendingContests());
+
+  it("Финт выиграл встречный тест — onSuccess ставит флаг на цели", async () => {
     const actor  = actorWithFlags({}); actor.uuid = "Actor.attacker"; actor.name = "Атакующий";
     const target = actorWithFlags({}); target.uuid = "Actor.target"; target.name = "Цель";
-    globalThis.game.user = { ...globalThis.game.user, targets: new Set([{ actor: target }]) };
-    captured.nextRoll = 10; // WS 45 — успех
-
-    await _showContestDialog(actor, { ...MELEE_CONTESTS.feint, onSuccess: resolveFeintSuccess });
-    await captured.dialog.buttons.roll.callback(fakeHtml({ "#contest-char": "ws", "#contest-self": "45", "#contest-mod": "0" }));
+    await feintThenResist(actor, target, { mine: 10, theirs: 90 }); // 4 Успеха против провала
 
     expect(target.getFlag("warhammer-dbc", "feintNoEvade")?.byUuid).toBe("Actor.attacker");
+  });
+
+  it("свой бросок успешен, но цель бросила лучше — Финт не удаётся", async () => {
+    const actor  = actorWithFlags({}); actor.uuid = "Actor.attacker";
+    const target = actorWithFlags({}); target.uuid = "Actor.target";
+    await feintThenResist(actor, target, { mine: 40, theirs: 5 }); // 1 Успех против 5
+
+    expect(target.getFlag("warhammer-dbc", "feintNoEvade")).toBeUndefined();
+    expect(captured.chat.at(-1).content).toContain("отбивается");
+  });
+
+  it("пока цель не бросила — эффекта нет, в карточке кнопка «Сопротивляться»", async () => {
+    const actor  = actorWithFlags({}); actor.uuid = "Actor.attacker";
+    const target = actorWithFlags({}); target.uuid = "Actor.target"; target.name = "Цель";
+    const ds = await feintThenResist(actor, target, { mine: 10, theirs: null });
+
+    expect(ds).not.toBeNull();
+    expect(ds.opponentUuid).toBe("Actor.target");
+    expect(target.getFlag("warhammer-dbc", "feintNoEvade")).toBeUndefined();
+  });
+
+  it("без цели бросок не делается вовсе", async () => {
+    const actor = actorWithFlags({});
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set() };
+    await _showContestDialog(actor, { ...MELEE_CONTESTS.feint, onSuccess: resolveFeintSuccess });
+    const before = captured.chat.length;
+    await captured.dialog.buttons.roll.callback(fakeHtml({ "#contest-char": "ws", "#contest-self": "45", "#contest-mod": "0" }));
+    expect(captured.chat.length).toBe(before);
+    expect(captured.warnings.some(w => w.includes("нет противника"))).toBe(true);
   });
 
   it("провал Финта — флаг не ставится", async () => {

@@ -19,7 +19,11 @@ import { MELEE_CONTESTS } from "../../module/constants/combat.mjs";
 foundry.utils.getProperty = (object, key) =>
   String(key).split(".").reduce((o, k) => o?.[k], object);
 
-beforeEach(() => resetCaptured());
+// Встречный тест (wdbc-x1nz.2.73) без противника не бросается — нужна цель.
+beforeEach(() => {
+  resetCaptured();
+  globalThis.game.user = { ...globalThis.game.user, targets: new Set([{ actor: { uuid: "Actor.foe", name: "Противник" } }]) };
+});
 
 const giftItem = { type: "mutation", name: "Dance of Deception / Танец Обмана", system: {},
   flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [

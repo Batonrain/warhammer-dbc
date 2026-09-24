@@ -25,6 +25,7 @@
     "range": "I×2м",
     "damage": "Xd10+I.b",
     "damageType": "energy",
+    "damageSubtype": "laser",
     "penetration": 0,
     "weaponProps": [
       {

@@ -49,6 +49,26 @@ describe("situationalRules: упаковка штрафов в записи пр
     expect(situationalRules(loaded, { char: "int" })).toEqual([]);
   });
 
+  // wdbc-x1nz.2.66.8 (стр. 15): «тесты S −10» в Пружинящей Стойке.
+  it("Пружинящая Стойка даёт −10 тестам Силы", () => {
+    const springer = actor({ fatigue: { value: 0 }, meleeStance: "springing" });
+    expect(idsOf(situationalRules(springer, { char: "s" }))).toEqual(["situational.springingStance"]);
+    expect(situationalRules(springer, { char: "s" })[0].effects).toEqual([{
+      kind: "rollBonus", target: "all", value: -10, label: "🐸 Пружинящая Стойка", auto: true
+    }]);
+  });
+
+  it("Пружинящая Стойка не трогает другие характеристики", () => {
+    const springer = actor({ fatigue: { value: 0 }, meleeStance: "springing" });
+    expect(situationalRules(springer, { char: "ag" })).toEqual([]);
+    expect(situationalRules(springer, { char: "ws" })).toEqual([]);
+  });
+
+  it("другая Стойка не даёт штрафа тестам Силы", () => {
+    const standard = actor({ fatigue: { value: 0 }, meleeStance: "standard" });
+    expect(situationalRules(standard, { char: "s" })).toEqual([]);
+  });
+
   it("несколько штрафов сразу — несколько записей, каждая со своей подписью", () => {
     const wreck = actor({
       fatigue: { value: 1 }, helmetlessActive: true,

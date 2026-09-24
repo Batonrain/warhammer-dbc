@@ -19,7 +19,7 @@
     "rof_semi": 0,
     "rof_full": 0,
     "damage": "2d10+2",
-    "damageType": "impact",
+    "damageType": "blast",
     "penetration": 2,
     "quality": "common",
     "bookSource": "DoomBC — Основная книга, IV. Арсенал («Стрелковое оружие», стр. 171-186)",
@@ -69,7 +69,8 @@
       "standard": false,
       "reloads": 10
     },
-    "rangeBands": []
+    "rangeBands": [],
+    "damageSubtype": "fragmentation"
   },
   "_id": "ZxshEvN9XmQJjYbB",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-thrown.svg",

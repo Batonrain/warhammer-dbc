@@ -21,6 +21,7 @@ import { MOUNT_SPEEDS, MOUNT_ROLES, MOUNT_TRAIT_DEFS, RIDER_ACTOR_TYPES,
          maneuverMods, skidInfo, mountRangedPenalty, isBroken,
          possessionOf, isPossessed, mountControlSkill, skillValue, BLADES_TIER_USES} from "../../rules/mount.mjs";
 import { spendActionPoints } from "../../combat/action-economy.mjs";
+import { esc } from "../../helpers/utils.mjs";
 
 /** Лимит атак Лезвиями в Ход по рангу Навыка управления (стр. 478). */
 
@@ -155,9 +156,24 @@ export async function setMount(actor, target) {
   await actor.update({ "system.mount.uuid": target.uuid, "system.mount.skidUsed": false, "system.mount.bladesUsed": 0 });
 }
 
+/**
+ * Аварийный выход ГМа (wdbc-bjy1.12): ОД на Спешиться нет, а в седло посадили
+ * по ошибке — ГМ снимает связь без траты ОД, но только явным подтверждением,
+ * иначе ГМ за НПЦ молча обходил бы Полудействие в честной игре. Игроку не
+ * предлагается.
+ */
+async function gmDismountCorrection(actor) {
+  if (!game.user?.isGM) return false;
+  return !!await foundry.applications.api.DialogV2.confirm({
+    window: { title: "Спешиться без ОД" },
+    content: `<p>У «${esc(actor.name)}» нет ОД на Спешиться. Снять с седла без траты ОД как исправление ошибки?</p>`,
+    rejectClose: false
+  });
+}
+
 /** Спешиться (стр. 477, wdbc-x1nz.2.35: Полудействие): связь снимается, скорость возвращается к стоянке. */
 export async function clearMount(actor) {
-  if (!await spendActionPoints(actor, 1, { physical: true })) {
+  if (!await spendActionPoints(actor, 1, { physical: true }) && !await gmDismountCorrection(actor)) {
     return ui.notifications?.warn("⚠️ Не хватает ОД (Спешиться — полудействие, стр. 477).");
   }
   await actor.update({

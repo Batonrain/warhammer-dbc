@@ -67,7 +67,18 @@
 
 import { isKnownCapability } from "../constants/capabilities.mjs";
 import { entryWhenOk } from "./mech-when.mjs";
-import { conditionRulesFor } from "./library/conditions.mjs";
+import { conditionRulesFor, ALT_SENSES_CAPABILITIES } from "./library/conditions.mjs";
+
+/**
+ * Возможности, которые по книге сами снимают книжное правило (вытеснением,
+ * `overrides`): Sonar Sense/Unnatural Senses, выданные Конструктором, гасят
+ * «все штрафы Ослепления» (wdbc-x1nz.2.89, «Раны и Урон», «Статусы») — ровно
+ * как одноимённая Черта по имени (conditions.blinded.altSenses). Изнутри
+ * `when` Возможность не спросить (рекурсия отбора), поэтому вытесняет
+ * носитель самой Возможности.
+ */
+const CAPABILITY_OVERRIDES = Object.fromEntries(
+  ALT_SENSES_CAPABILITIES.map(key => [key, ["conditions.blinded"]]));
 
 const SYSTEM = "warhammer-dbc";
 
@@ -130,6 +141,10 @@ const halve = (n) => (n < 0 ? -Math.floor(Math.abs(n) / 2) : Math.floor(n / 2));
 /** Ополовиненная копия эффектов книжного правила Состояния. */
 function halvedEffects(effects, ruleId) {
   return (effects ?? []).map(fx => {
+    // Значение из источника (уровень Состояния и т.п., wdbc-x1nz.2.92) —
+    // числа здесь нет, ополовинивает сам расчёт теста по пометке halved
+    // (rules/resolve-test.mjs::effectValue), тем же округлением к нулю.
+    if (fx.valueFrom && typeof fx.value !== "number") return { ...fx, halved: true };
     if (typeof fx.value !== "number") {
       // Молча оставить полный штраф под подписью «половина» — хуже, чем
       // пожаловаться: автор увидит в консоли, что его «½» ничего не сделала.
@@ -330,6 +345,21 @@ function ruleFromEntry(item, entry, groupId = null) {
     return { id, label: entry.label || item.name, when: {}, effects: [{ kind: "failDegMod", target, value: Number(entry.value) || 0 }] };
   }
 
+  if (entry?.kind === "attackProp") {
+    // «Свойство атаки» (wdbc-rmrm9, Электродуга: «Все безоружные атаки
+    // получают свойства Arc (7/2d10+T.b) и Shocking») — атаки владельца
+    // выбранной области получают Особое Свойство Оружия. Тот же эффект
+    // grantWeaponProp, что у правил библиотеки (beastman-shaman.mjs):
+    // attack-dialog.mjs доливает его в свойства атаки до расчёта урона.
+    const key = String(entry.apKey || "").trim();
+    if (!key) return null;
+    const scope = String(entry.apScope || "attack").trim();
+    const target = scope === "attack" ? "attack" : `weapon:${scope}`;
+    return { id, label: entry.label || item.name, when: {},
+             effects: [{ kind: "grantWeaponProp", target, propKey: key,
+                         rating: entry.apRating ?? 0, rating2: entry.apRating2 ?? 0 }] };
+  }
+
   // entry?.kind === "condition" сюда не доходит: «Смягчение» собирается не
   // по одной записи, а по ключу Состояния СРАЗУ со всех предметов
   // (collectMitigations + mitigationRules ниже, вызывается из
@@ -390,7 +420,8 @@ function ruleFromEntry(item, entry, groupId = null) {
       ? { pool: entry.capabilityCostPool, amount: Math.max(1, Number(entry.capabilityCostAmount) || 1) }
       : null;
     return { id, label: entry.label || item.name, when: {},
-             effects: [{ kind: "grantFlag", target: key, ...(cost ? { cost } : {}) }] };
+             effects: [{ kind: "grantFlag", target: key, ...(cost ? { cost } : {}) }],
+             ...(CAPABILITY_OVERRIDES[key] ? { overrides: CAPABILITY_OVERRIDES[key] } : {}) };
   }
 
   if (entry?.kind === "script") {

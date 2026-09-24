@@ -35,6 +35,9 @@
       },
       {
         "key": "gyroStabilized"
+      },
+      {
+        "key": "longRifle"
       }
     ],
     "needsRecharge": false,

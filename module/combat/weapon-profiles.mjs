@@ -27,15 +27,39 @@
 
 const SYSTEM = "warhammer-dbc";
 
+// «Закреплено ли оружие» считает combat/brace-weapon.mjs по геометрии токена —
+// а это цепочка импортов до Foundry (facing → regions), которую этот чистый
+// модуль тянуть не должен: его грузят HUD, окно атаки и тесты без сцены.
+// brace-weapon.mjs регистрирует свою проверку сам при загрузке; без неё
+// (тесты) оружие считается незакреплённым.
+let braceCheck = () => false;
+export function registerBraceCheck(fn) { braceCheck = typeof fn === "function" ? fn : () => false; }
+
 /**
  * Импровизированная рукопашная по классу оружия (корбук стр. 40).
  *
- * Пистолет — как Булава (1d5−3), винтовка/ручное — как Посох (1d10−3),
- * тяжёлое/пусковое/станковое — как Булава (2d10−4). Всё ударное, Pen 0,
- * Imprecise + Primitive.
+ * Таблица книги (core.json, «Безоружный Бой»):
  *
- * ── ПОЧЕМУ В СТРОКЕ НЕТ «+S.b», ХОТЯ В КНИГЕ ОН ЕСТЬ ────────────────────
- * Книга пишет ИТОГ («1d5-3+S.b»), а система записывает урон рукопашного БЕЗ
+ *   Пистолет      1р Булава 1   1d5–2  I(Cr) Bl −1
+ *   Винтовка      2р Посох  2-3 1d10–2 I(Cr) Bl −1
+ *   Дл. винтовка  2р Посох  2-4 1d10–2 I(Cr) Bl −1
+ *   Тяж. оружие   2р Булава 3   2d10–4 I(Cr) Bl −2
+ *
+ * всем Pen 0, Imprecise + Primitive; «Все атаки стрелковым оружием, использующим
+ * эти профили, получают штраф –10, который увеличивается до –20 для тяжелого
+ * оружия» — поле attackMod (окно атаки читает его отдельной строкой порога).
+ * Баланс — поле balance: у ствола свой system.balance про стрельбу не пишется
+ * вовсе, а рукопашной нужен книжный (Парирование, Стойки/Приёмы с минимумом).
+ *
+ * «Дл. винтовка» — не класс, а свойство longRifle на предмете (тип «дл.
+ * винтовка» в таблицах Арсенала), тот же признак, что запрещает из неё
+ * стрелять в рукопашной.
+ *
+ * Числа сверены с книгой в wdbc-x1nz.2: до этого стояли −3/−3 и 3→2 м,
+ * унаследованные из старой кнопки HUD, а не из книги.
+ *
+ * ── ПОЧЕМУ В СТРОКЕ НЕТ «+S.b» ──────────────────────────────────────────
+ * Прежнее описание удара в упор писало ИТОГ («1d5-3+S.b»), а система записывает урон рукопашного БЕЗ
  * бонуса Силы и прибавляет его сама: combat/attack.mjs::flatBonus добавляет
  * sbEff каждой рукопашной атаке. Так записаны все рукопашные предметы и все
  * авторские рукопашные профили паков — у меча «1d10+2», у профиля «Посох»
@@ -46,16 +70,51 @@ const SYSTEM = "warhammer-dbc";
  * (S.b=3 давало 1d10-3+3+3 вместо 1d10-3+3). Возвращать «+S.b» «чтобы было как
  * в книге» нельзя — это удвоение, а не точность.
  */
+const HEAVY_ROW = { damage: "2d10-4", like: "Булава", range: "3 м", balance: -2, attackMod: -20, heavy: true };
 const IMPROVISED_BY_CLASS = {
-  pistol:     { damage: "1d5-3",  like: "Булава", range: "1 м" },
-  basic:      { damage: "1d10-3", like: "Посох",  range: "2–3 м" },
-  heavy:      { damage: "2d10-4", like: "Булава", range: "2 м" },
-  launcher:   { damage: "2d10-4", like: "Булава", range: "2 м" },
-  stationary: { damage: "2d10-4", like: "Булава", range: "2 м" }
+  pistol:     { damage: "1d5-2",  like: "Булава", range: "1 м",   balance: -1, attackMod: -10 },
+  basic:      { damage: "1d10-2", like: "Посох",  range: "2–3 м", balance: -1, attackMod: -10 },
+  heavy:      HEAVY_ROW,
+  launcher:   HEAVY_ROW,
+  stationary: HEAVY_ROW
 };
+const IMPROVISED_LONG_RIFLE =
+              { damage: "1d10-2", like: "Посох",  range: "2–4 м", balance: -1, attackMod: -10 };
 
 /** Класс, не названный в книге поимённо, бьёт как винтовка — прежнее умолчание. */
 const IMPROVISED_FALLBACK = IMPROVISED_BY_CLASS.basic;
+
+function hasLongRifleProp(sys) {
+  return (sys?.weaponProps || []).some(p => (p?.key ?? p) === "longRifle");
+}
+
+/** Строка таблицы книги для этого ствола. */
+function improvisedRow(sys) {
+  if (sys?.weaponClass === "basic" && hasLongRifleProp(sys)) return IMPROVISED_LONG_RIFLE;
+  return IMPROVISED_BY_CLASS[sys?.weaponClass] || IMPROVISED_FALLBACK;
+}
+
+/**
+ * «Закрепленное тяжелое оружие нельзя использовать в рукопашной и персонаж с
+ * таким оружием считается безоружным до начала своего следующего Хода, если он
+ * стрелял из него» (core.json, «Безоружный Бой»). Метку «стрелял из
+ * Закреплённого» ставит combat/attack.mjs, гасит начало своего Хода
+ * (rules/turn-flags.mjs, firedBracedHeavy).
+ */
+export const FIRED_BRACED_FLAG = "firedBracedHeavy";
+
+export function firedBracedHeavyIds(actor) {
+  const v = actor?.getFlag?.(SYSTEM, FIRED_BRACED_FLAG) ?? actor?.flags?.[SYSTEM]?.[FIRED_BRACED_FLAG];
+  return Array.isArray(v) ? v.map(String) : [];
+}
+
+/** Тяжёлое оружие сейчас Закреплено или из Закреплённого стреляли в этом Ходу. */
+export function braceBlocksMelee(item) {
+  if (!improvisedRow(item?.system).heavy) return false;
+  const actor = item?.actor ?? item?.parent ?? null;
+  if (!actor) return false;
+  return !!braceCheck(actor, item) || firedBracedHeavyIds(actor).includes(String(item.id));
+}
 
 /**
  * Метка профиля удара оружием. По ней же его узнаёт HUD и окно атаки.
@@ -68,7 +127,7 @@ export const IMPROVISED_MELEE_LABEL = "Ударить оружием";
 /**
  * Полагается ли этому предмету профиль удара в упор.
  *
- * Три условия, и каждое по просьбе владельца:
+ * Четыре условия; первые три — по просьбе владельца, четвёртое — книга:
  *
  * 1. ОРУЖИЕ НАДЕТО. Прикладом бьют тем, что в руках; ствол в рюкзаке такого
  *    профиля не даёт. Гейт стоит ЗДЕСЬ, а не у каждого читателя: HUD и так
@@ -97,6 +156,9 @@ export function canStrikeWithGun(item, { isIntegralAttack } = {}) {
   // теряя собственные Урон/Тип/Пробитие). Рукопашное использование включает
   // opts.forceMelee (см. attackIsMelee) — оно уже не трогает этот профиль.
   if (sys.weaponClass === "thrown") return false;
+  // 4. Закреплённое тяжёлое (или стрелял из Закреплённого в этом Ходу) —
+  //    рукопашной им нельзя, см. braceBlocksMelee.
+  if (braceBlocksMelee(item)) return false;
   const integral = isIntegralAttack ? isIntegralAttack(item) : false;
   if (!integral) return true;
   return !!(item?.getFlag?.(SYSTEM, "allowGunMeleeStrike")
@@ -112,7 +174,7 @@ export function canStrikeWithGun(item, { isIntegralAttack } = {}) {
  */
 export function improvisedMeleeProfile(item, opts = {}) {
   if (!canStrikeWithGun(item, opts)) return null;
-  const p = IMPROVISED_BY_CLASS[item?.system?.weaponClass] || IMPROVISED_FALLBACK;
+  const p = improvisedRow(item?.system);
   return {
     label: IMPROVISED_MELEE_LABEL,
     melee: true,
@@ -134,9 +196,14 @@ export function improvisedMeleeProfile(item, opts = {}) {
     range: p.range,
     damage: p.damage,
     damageType: "impact",
+    // I(Cr) по таблице книги. Без явного поля attack-weapon.mjs взял бы
+    // подтип самого ствола (напр. Взрывной у болтера) — прикладом не взрывают.
+    damageSubtype: "crushing",
     penetration: 0,
     weaponProps: [{ key: "imprecise" }, { key: "primitive" }],
-    note: `Импровизированное рукопашное — как ${p.like}, досягаемость ${p.range}.`
+    balance: p.balance,
+    attackMod: p.attackMod,
+    note: `Импровизированное рукопашное — как ${p.like}, досягаемость ${p.range}, Баланс ${p.balance}, атака ${p.attackMod}.`
   };
 }
 

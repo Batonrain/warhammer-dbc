@@ -14,7 +14,7 @@ import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mj
 import { getTerrainInfoForToken } from "../regions/difficult-terrain.mjs";
 import { getItemMechanics } from "../apps/mechanics.mjs";
 import { entryWhenOk } from "../rules/mech-when.mjs";
-import { isBlindedActor } from "../rules/predicates.mjs";
+import { suffersBlindness } from "../rules/blindness.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { IN_FLIGHT_ALTITUDES } from "./movement-actions.mjs";
 
@@ -59,7 +59,9 @@ function effectiveTerrainInfo(tokenDoc, actor) {
   const groundProps = flying ? [] : raw.props;
   const active = groundProps.filter(p => !ignored.has(p.key));
   const skipped = flying ? raw.props : raw.props.filter(p => ignored.has(p.key));
-  const blinded = isBlindedActor(actor);
+  // Sonar Sense / Unnatural Senses снимают и этот штраф Ослепления
+  // (wdbc-x1nz.2.89, «все штрафы Ослепления игнорируются»).
+  const blinded = suffersBlindness(actor);
   const realTerrain = !flying && raw.inTerrain;
   const blindedPenalty = (blinded && realTerrain) ? -20 : 0;
   return {

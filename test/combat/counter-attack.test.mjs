@@ -21,10 +21,10 @@ afterEach(() => resetCaptured());
 /** Предмет-armorMod с записью Механики kind:"counterAttack" (Шипы-подобный). */
 function ccItem({
   id = "spikes", name = "Шипы", installedOn = "host-1", activatable = false, active = false,
-  ccDamage = "1d5+S.b", ccPen = 2, ccDamageType = "rending", ccTearing = false, ccShocking = false,
+  ccDamage = "1d5+S.b", ccPen = 2, ccDamageType = "rending", ccDamageSubtype = "", ccTearing = false, ccShocking = false,
   ccOnMiss = true, ccOnUnarmedOrGrapple = true, ccLabel = "", when = undefined
 } = {}) {
-  const entry = { id: "e1", kind: "counterAttack", ccDamage, ccPen, ccDamageType, ccTearing, ccShocking, ccOnMiss, ccOnUnarmedOrGrapple, ccLabel, when };
+  const entry = { id: "e1", kind: "counterAttack", ccDamage, ccPen, ccDamageType, ccDamageSubtype, ccTearing, ccShocking, ccOnMiss, ccOnUnarmedOrGrapple, ccLabel, when };
   const flags = { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [entry] }] } };
   return {
     id, name, type: "armorMod",
@@ -250,6 +250,21 @@ describe("counterAttackSectionHtml", () => {
     expect(html).toContain("wh-dodge-btn");
     expect(html).not.toContain("wh-parry-btn");
     expect(html).toContain("Применить урон: 7 → Хаосит");
+  });
+
+  // wdbc-9zpt: подвид записи (ccDamageSubtype) доходит до кнопки урона;
+  // без него — пустой атрибут, а не «undefined».
+  it("подвид встречной атаки едет на кнопку урона", async () => {
+    const attacker = { uuid: "Actor.a", name: "Хаосит" };
+    captured.dice = [3];
+    const withSub = await counterAttackSectionHtml(
+      wearer({ items: [ccItem({ ccDamageType: "energy", ccDamageSubtype: "electrical" })], s: 40 }),
+      attacker, { onMiss: true, onUnarmedOrGrapple: false });
+    expect(withSub.html).toContain('data-damage-subtype="electrical"');
+    captured.dice = [3];
+    const noSub = await counterAttackSectionHtml(wearer({ items: [ccItem()], s: 40 }),
+      attacker, { onMiss: true, onUnarmedOrGrapple: false });
+    expect(noSub.html).toContain('data-damage-subtype=""');
   });
 
   it("Рвущее у Цепных Бандольеров — доп. куб учтён в итоговом уроне", async () => {

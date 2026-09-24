@@ -253,6 +253,12 @@
 //      которое игрок волен отложить.
 //      Живёт и снимается тем же syncGrantedEquipment, что и equipment "direct":
 //      сняли имплант в Хирургиконе — атака ушла вместе с ним.
+//      equipOptional: true (wdbc-o368c) — «по выбору»: такие записи предмета
+//      собираются в ОДНО окно с галочками при получении (Естественное
+//      Оружие — у существа могут быть и Когти, и Рога), выбор помнится флагом
+//      источника integralChosen. «X» в уроне оружия-образца (и Пробитие при
+//      флаге penetrationFromRating) берётся из рейтинга источника и
+//      пересчитывается при его смене — rules/integral-rating.mjs.
 //    loyalty: { loyaltyMinionType:""|"human"|"beast"|"machine"|"daemon",
 //               loyaltyOp:"add"|"subtract", loyaltyValue }
 //      → ОДНОРАЗОВАЯ ПЕРМАНЕНТНАЯ правка system.loyalty.value у ВСЕХ Миньонов
@@ -330,8 +336,10 @@
 //      (flags.warhammer-dbc.cohesionApplied={squadUuid,amount} на предмете).
 //      Откат при УДАЛЕНИИ предмета — отдельно, в Hooks.on("deleteItem",...),
 //      т.к. предмета уже не будет к моменту, когда reconcile мог бы его найти.
-//    counterAttack: { ccDamage, ccPen, ccDamageType, ccTearing, ccShocking,
-//                      ccOnMiss, ccOnUnarmedOrGrapple, ccLabel }
+//    counterAttack: { ccDamage, ccPen, ccDamageType, ccDamageSubtype, ccTearing,
+//                      ccShocking, ccOnMiss, ccOnUnarmedOrGrapple, ccLabel }
+//      (ccDamageSubtype — подвид из скобок книги, ключ DAMAGE_SUBTYPES или ""
+//      — едет на кнопку «Применить урон», wdbc-9zpt)
 //      → ВСТРЕЧНАЯ АТАКА (wdbc-2wy7, Шипы/Цепные Бандольеры, стр. брони): пока
 //      предмет на акторе и активен (armorMod — установлен и, если включаемый,
 //      включён), противник, который промахнулся рукопашной по владельцу ИЛИ
@@ -366,6 +374,19 @@
 //      именно эту пару предметов брони с этим тестом означало бы re-архитектуру
 //      общего диалога встречных тестов ради одной строки правила, честный
 //      диагноз зафиксирован тикетом, не форсировался обходной путь.
+//    attackProp: { apScope:"unarmed"|"melee"|"ranged"|"attack", apKey,
+//                  apRating, apRating2 }
+//      → СВОЙСТВО АТАКИ (wdbc-rmrm9, Electric Arc/Электродуга): атаки
+//      владельца выбранной области получают Особое Свойство Оружия из
+//      constants/weapon-properties.mjs::WEAPON_PROPERTIES (apKey — ключ
+//      записи, apRating/apRating2 — её X/Y, число или формула с кубами вроде
+//      «2d10+T.b»). ЖИВОЙ ЗАПРОС, как counterAttack/reroll выше: ничего не
+//      пишет и не создаёт при получении предмета — module/rules/
+//      item-rules.mjs собирает из него правило grantWeaponProp с target
+//      "weapon:<apScope>" (или "attack" при apScope:"attack") в момент самой
+//      атаки, ровно как test/reroll-модификаторы собираются из
+//      testMod/reroll. apScope:"unarmed" — интегральные безоружные атаки
+//      (Кулак/Пинок/…, isIntegralAttack), не обычное оружие в руке.
 //
 //  Идемпотентность: flags.warhammer-dbc.mechanicsApplied — один раз при
 //  createItem (см. Hooks.on("createItem", ...) в warhammer-dbc.mjs).
@@ -420,6 +441,8 @@ import { DURATION_UNITS, durationLabel, conditionEntryTerm, conditionHasLevelInp
 import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "../constants/legions.mjs";
 import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod, whenCondition, whenQuality, whenChosenEffect } from "../rules/mech-when.mjs";
 import { TIER_LABELS as WOUND_TIER_LABELS } from "../rules/wound-tier.mjs";
+import { INTEGRAL_CHOSEN_FLAG, RATING_TEMPLATE_FLAG, sourceRating, ratingTemplateOf, applyRatingTemplate,
+         optionalIntegralEntries, integralEntrySelected } from "../rules/integral-rating.mjs";
 import { parseSubmutations } from "../rules/submutations.mjs";
 import { mechFormulaTotal, mechFormulaTotalSafe, mechRollData } from "../rules/mech-formula.mjs";
 import { hasEliteArchetype }                  from "../rules/predicates.mjs";
@@ -610,6 +633,7 @@ const KIND_LABELS = {
   shieldArmorGate: "Щит: только по бронированным участкам",
   burningGrace: "Горение: окно без эффектов (Cooler)",
   counterAttack: "Встречная атака",
+  attackProp: "Свойство атаки",
   equipment: "Снаряжение",
   integralAttack: "Интегральная атака",
   loyalty: "Лояльность миньонов",
@@ -617,10 +641,20 @@ const KIND_LABELS = {
   group: "Вложенная группа",
   script: "Код"
 };
+/** Виды записи, которые читаются ТОЛЬКО у силового поля (type:"forcefield"). */
+const FORCEFIELD_ONLY_KINDS = new Set(["shieldSubtype", "shieldVsCondition", "shieldArmorGate"]);
 // Максимальная глубина вложенности подгрупп (kind:"group") — верхняя группа
 // вкладки МЕХАНИКА уже уровень 1, поэтому подгрупп-в-подгруппах допускается 4.
 const MAX_GROUP_DEPTH = 5;
 const WEIGHT_SCOPE_LABELS = { all: "Общее", carry: "Ношение", lift: "Подъём", push: "Толкание" };
+// Области «Свойства атаки» (kind:"attackProp", wdbc-rmrm9) — какие атаки
+// владельца получают Особое Свойство Оружия из WEAPON_PROPERTIES.
+const AP_SCOPE_LABELS = {
+  unarmed: "Безоружные атаки (Кулак/Пинок/…, интегральные)",
+  melee: "Рукопашные атаки",
+  ranged: "Стрелковые атаки",
+  attack: "Любые атаки",
+};
 // Область override склонности (capability, capabilityMode:"aptOverride", wdbc-zk69).
 const CAPABILITY_APT_SCOPE_LABELS = { skill: "Навык", talent: "Талант", characteristic: "Характеристика" };
 // Области «Переброса» (kind:"reroll"). Совпадают с областями `target` в
@@ -926,14 +960,22 @@ export function blankMechEntry(kind = "characteristic") {
     // момент атаки против владельца (module/combat/counter-attack.mjs), при
     // получении предмета ничего не делает. ccDamage — формула урона (кубы +
     // S.b/T.b/…, тот же парсер, что у оружия — см. CC_DAMAGE_HINT).
-    ccDamage: "1d5", ccPen: 0, ccDamageType: "rending", ccTearing: false, ccShocking: false,
+    ccDamage: "1d5", ccPen: 0, ccDamageType: "rending", ccDamageSubtype: "", ccTearing: false, ccShocking: false,
     ccOnMiss: true, ccOnUnarmedOrGrapple: true, ccLabel: "",
+    // attackProp — «Свойство атаки» (wdbc-rmrm9): живой запрос, читается в
+    // момент атаки владельца (module/rules/item-rules.mjs), при получении
+    // предмета ничего не делает. apRating/apRating2 — число или формула
+    // (та же нотация, что у ccDamage — MECH_FORMULA_HINT/CC_DAMAGE_HINT).
+    apScope: "unarmed", apKey: "", apRating: "", apRating2: "",
     // reroll — «Переброс»: живой запрос, читается в момент броска
     // (module/rules/item-rules.mjs), при получении предмета ничего не делает.
     rerollScope: "all", rerollChar: "ag", rerollMode: "keepBest",
     // testMod — «Модификатор теста»: тот же живой запрос, области общие
     // с «Перебросом» (rerollChar/skillKey переиспользуются как уточнение).
     modScope: "all", modValueMode: "flat", modCharBonus: "inf",
+    // Область «power» у reroll/testMod: пусто — любая манифестация, имя —
+    // только эта психосила (wdbc-4umq: поле объявлено, как у сохранённых записей).
+    powerName: "",
     // reroll: чей бросок перебрасывается — свой или навязанный цели.
     rerollWho: "self",
     // capability — имя возможности из constants/capabilities.mjs
@@ -1131,12 +1173,22 @@ export function describeMechEntry(entry) {
       const triggers = [];
       if (entry.ccOnMiss) triggers.push("промах противника в рукопашной");
       if (entry.ccOnUnarmedOrGrapple) triggers.push("безоружная атака/Захват против владельца");
-      const dt = DAMAGE_TYPES[entry.ccDamageType] || entry.ccDamageType;
+      const sub = DAMAGE_SUBTYPES[entry.ccDamageSubtype]?.book;
+      const dt = (DAMAGE_TYPES[entry.ccDamageType] || entry.ccDamageType) + (sub ? ` ${sub}` : "");
       const tear = entry.ccTearing ? ", Рвущее" : "";
       const shock = entry.ccShocking ? ", Шокирующее" : "";
       const label = entry.ccLabel ? `«${entry.ccLabel}» ` : "";
       return `Встречная атака: ${label}${entry.ccDamage} ${dt}, Проб. ${entry.ccPen ?? 0}${tear}${shock} — ${
         triggers.length ? triggers.join(" / ") : "(триггер не выбран)"}`;
+    }
+    case "attackProp": {
+      const scopeLabel = AP_SCOPE_LABELS[entry.apScope] || entry.apScope;
+      if (!scopeLabel) return "Свойство атаки: (область не выбрана)";
+      const def = WEAPON_PROPERTIES[entry.apKey];
+      if (!def) return `Свойство атаки: ${scopeLabel} — (свойство не выбрано)`;
+      const ratings = [entry.apRating, entry.apRating2].filter(v => String(v ?? "").trim() !== "");
+      const ratingStr = ratings.length ? ` (${ratings.join("/")})` : "";
+      return `Свойство атаки: ${scopeLabel} — ${def.label}${ratingStr}`;
     }
     case "capability": {
       if (entry.capabilityMode === "aptOverride") {
@@ -1234,6 +1286,7 @@ export function describeMechEntry(entry) {
     }
     case "integralAttack": {
       if (!entry.equipSourceUuid) return "Интегральная атака: (выберите оружие)";
+      if (entry.equipOptional) return `Интегральная атака по выбору: ${entry.equipSourceName || "?"} — предлагается галочкой при получении`;
       return `Интегральная атака: ${entry.equipSourceName || "?"} — надета всегда, снять и удалить нельзя`;
     }
     case "loyalty": {
@@ -1369,6 +1422,8 @@ function isEntryComplete(e) {
       return Array.isArray(e.ignoreTerrainProps) && e.ignoreTerrainProps.length > 0;
     case "counterAttack":
       return !!String(e.ccDamage ?? "").trim() && !!(e.ccOnMiss || e.ccOnUnarmedOrGrapple);
+    case "attackProp":
+      return !!e.apScope && !!e.apKey && !!WEAPON_PROPERTIES[e.apKey];
     case "fatigue":
       return e.fatigueAction === "threshold" && !!e.fatigueThresholdChar;
     case "condition":
@@ -1956,6 +2011,14 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
     return;
   }
 
+  if (entry.kind === "attackProp") {
+    // Живой запрос (wdbc-rmrm9): правила атаки собираются в момент самой
+    // атаки — module/rules/item-rules.mjs превращает запись в правило
+    // grantWeaponProp (target "weapon:<apScope>" / "attack") — писать и
+    // откатывать нечего, ровно как у reroll/testMod ниже.
+    return;
+  }
+
   if (entry.kind === "aura") {
     // Ничего не пишем и не создаём здесь — как terrainIgnore выше:
     // flags.warhammer-dbc.aura на предмете (не в этом applied-цикле) ведёт
@@ -2097,6 +2160,9 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
   }
 
   if (entry.kind === "integralAttack") {
+    // «По выбору» выдаёт не эта запись, а общее окно с галочками
+    // (resolveOptionalIntegralChoice) и затем syncGrantedEquipment.
+    if (entry.equipOptional) return;
     const data = await buildIntegralAttackData(entry, sourceItem);
     if (data) await actor.createEmbeddedDocuments("Item", [data]);
     return;
@@ -2431,12 +2497,19 @@ async function buildIntegralAttackData(entry, sourceItem) {
   // Надета всегда: и HUD, и вкладка БОЙ отбирают оружие по system.equipped,
   // а снять её игрок не сможет — см. preUpdateItem в warhammer-dbc.mjs.
   data.system = { ...(data.system || {}), equipped: true };
+  // Профиль от рейтинга источника (Укус (X) и т.п., wdbc-o368c): «X» в уроне
+  // образца подставляется, образец помнится для пересчёта при смене X.
+  const template = ratingTemplateOf(data.system, data.flags?.[FLAG]);
+  const rating = sourceRating(sourceItem.system);
+  const rated = !!template && rating !== null;
+  if (rated) Object.assign(data.system, applyRatingTemplate(template, rating));
   // equipSourceUuid — устойчивый идентификатор вида удара (кулак/пинок/…):
   // кнопки HUD ищут предмет по нему, и переименование предмета игроком не
   // должно убивать кнопку (см. apps/hud.mjs, UNARMED_SOURCE_IDS).
   data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}),
     grantedByItem: sourceItem.id, equipEntryId: entry.id, integralAttack: true,
-    equipSourceUuid: entry.equipSourceUuid } };
+    equipSourceUuid: entry.equipSourceUuid,
+    ...(rated ? { [RATING_TEMPLATE_FLAG]: template } : {}) } };
   return data;
 }
 
@@ -2451,7 +2524,9 @@ function collectDirectEquipmentEntries(groups, actor = null, item = null) {
   const walk = (entries, operator) => {
     if (operator === "OR") return;
     for (const e of entries) {
-      if (e.kind === "integralAttack" && isEntryComplete(e)) out.push(e);
+      if (e.kind === "integralAttack" && isEntryComplete(e)) {
+        if (integralEntrySelected(e, item?.getFlag?.(FLAG, INTEGRAL_CHOSEN_FLAG))) out.push(e);
+      }
       else if (e.kind === "equipment" && e.equipMode !== "choice" && isEntryComplete(e)) out.push(e);
       else if (e.kind === "group" && e.group) walk(e.group.entries || [], e.group.operator);
     }
@@ -2590,6 +2665,69 @@ export async function syncGrantedEquipment(sourceItem) {
     toCreate.push(data);
   }
   if (toCreate.length) await actor.createEmbeddedDocuments("Item", toCreate);
+  await syncIntegralRatings(sourceItem, grantedNow);
+}
+
+/**
+ * Рейтинг источника сменили на листе (Укус (1) → Укус (3)) — выданные им
+ * интегральные атаки с образцом профиля пересчитываются (wdbc-o368c).
+ * Зовётся из syncGrantedEquipment; тот — из хука updateItem на смену
+ * system.rating (warhammer-dbc.mjs).
+ */
+async function syncIntegralRatings(sourceItem, granted) {
+  const rating = sourceRating(sourceItem.system);
+  if (rating === null) return;
+  const updates = [];
+  for (const w of granted) {
+    const template = w.getFlag?.(FLAG, RATING_TEMPLATE_FLAG);
+    if (!template) continue;
+    const want = applyRatingTemplate(template, rating);
+    const patch = {};
+    if (want.damage !== w.system?.damage) patch["system.damage"] = want.damage;
+    if ("penetration" in want && Number(want.penetration) !== Number(w.system?.penetration))
+      patch["system.penetration"] = want.penetration;
+    if (Object.keys(patch).length) updates.push({ _id: w.id, ...patch });
+  }
+  if (updates.length) await sourceItem.parent.updateEmbeddedDocuments("Item", updates);
+}
+
+/**
+ * Окно «по выбору» для интегральных атак (wdbc-o368c): все записи
+ * integralAttack с equipOptional одного предмета — галочками в одном окне.
+ * Спрашивается один раз: ответ (даже пустой) пишется флагом integralChosen,
+ * дальше его читает collectDirectEquipmentEntries.
+ */
+async function resolveOptionalIntegralChoice(item) {
+  if (item.getFlag(FLAG, INTEGRAL_CHOSEN_FLAG) !== undefined) return;
+  const entries = optionalIntegralEntries(getItemMechanics(item));
+  if (!entries.length) return;
+  const chosen = await showIntegralChoiceDialog(item, entries);
+  await item.setFlag(FLAG, INTEGRAL_CHOSEN_FLAG, chosen);
+}
+
+/** Галочки «какие естественные атаки есть у существа» — массив id записей. */
+function showIntegralChoiceDialog(item, entries) {
+  return new Promise(resolve => {
+    let resolved = false;
+    const done = v => { if (!resolved) { resolved = true; resolve(v); } };
+    const rows = entries.map(e => `<label class="grant-choice-row">
+      <input type="checkbox" name="integral-choice" value="${esc(e.id)}"/>
+      <span>${esc(e.equipSourceName || "?")}</span></label>`).join("");
+    new Dialog({
+      title: `Выбор — ${item.name}`,
+      content: `<div class="wh-grant-choice">
+        <p>Какие атаки «${esc(item.name)}» есть у существа? Отметьте все подходящие.</p>${rows}</div>`,
+      buttons: {
+        pick: {
+          icon: '<i class="fas fa-check"></i>', label: "Применить",
+          callback: html => done(html.find('input[name="integral-choice"]:checked').map((_, el) => el.value).get())
+        },
+        skip: { label: "Ничего", callback: () => done([]) }
+      },
+      default: "pick",
+      close: () => done([])
+    }, { classes: ["dialog", "warhammer-dbc", "wh-holo"], width: 420 }).render(true);
+  });
 }
 
 // Записи, выдающие Черту или Талант, из тех же АНД-цепочек. ИЛИ-ветки
@@ -3006,6 +3144,9 @@ async function _applyItemMechanics(item) {
   await syncMechanicsEffects(item);
   await syncWeaponPropItemEffects(item);
   await syncAuraFlag(item);
+  // Интегральные атаки «по выбору» (wdbc-o368c) — окно с галочками один раз,
+  // сами предметы выдаёт syncGrantedEquipment ниже по записанному выбору.
+  await resolveOptionalIntegralChoice(item);
   // Источник мог родиться неактивным (напр. Имплант создан ещё не
   // установленным) — откатывает то, что applyMechEntry(equipment) уже
   // успел выдать выше, чтобы конечное состояние сразу было верным.
@@ -3189,6 +3330,10 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       <input type="text" class="mech-cc-damage" data-group-id="${groupId}" data-entry-id="${ent.id}"
              value="${esc(ent.ccDamage ?? "")}" placeholder="напр. 1d5+S.b" title="${esc(CC_DAMAGE_HINT)}" ${dis}/>
       <select class="mech-cc-damage-type" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${dtOpts}</select>
+      <select class="mech-cc-damage-subtype" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Подвид урона из скобок книги" ${dis}>
+        <option value="" ${ent.ccDamageSubtype ? "" : "selected"}>— подвид —</option>${Object.entries(DAMAGE_SUBTYPES)
+          .map(([k, d]) => optHtml(k, d.label, ent.ccDamageSubtype === k)).join("")}
+      </select>
       <input type="number" class="mech-cc-pen" min="0" value="${esc(ent.ccPen ?? 0)}"
              title="Пробитие" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>
       <label class="mech-cc-check"><input type="checkbox" class="mech-cc-tearing" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.ccTearing ? "checked" : ""} ${dis}/> Рвущее</label>
@@ -3197,6 +3342,32 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       <label class="mech-cc-check"><input type="checkbox" class="mech-cc-on-unarmed" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.ccOnUnarmedOrGrapple ? "checked" : ""} ${dis}/> при безоружной атаке/Захвате против владельца</label>
       <input type="text" class="mech-cc-label" placeholder="подпись в карточке (по умолчанию — имя предмета)" value="${esc(ent.ccLabel || "")}"
              data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
+  }
+
+  if (ent.kind === "attackProp") {
+    // Свойство атаки (kind:"attackProp", wdbc-rmrm9): выбор области атак
+    // владельца + свойство из WEAPON_PROPERTIES + его рейтинг(и). Смена
+    // области/свойства сохраняет запись и даёт листу перерисоваться (тот же
+    // приём, что у .mech-fatigue-action выше) — так поля рейтинга
+    // появляются/прячутся по факту def.rating/def.rating2 выбранного свойства.
+    const scopeOpts = Object.entries(AP_SCOPE_LABELS)
+      .map(([v, l]) => optHtml(v, l, (ent.apScope || "unarmed") === v)).join("");
+    const propOpts = Object.values(WEAPON_PROPERTIES)
+      .map(p => optHtml(p.key, `${p.label} (${p.en})`, ent.apKey === p.key)).join("");
+    const def = WEAPON_PROPERTIES[ent.apKey];
+    const ratingHtml = (!def || def.rating) ? `
+      <input type="text" class="mech-ap-rating" value="${esc(ent.apRating ?? "")}"
+             placeholder="X, напр. 7 или PR" title="${esc(CC_DAMAGE_HINT)}"
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>` : "";
+    const rating2Html = (!def || def.rating2) ? `
+      <input type="text" class="mech-ap-rating2" value="${esc(ent.apRating2 ?? "")}"
+             placeholder="Y, напр. 2d10+T.b" title="${esc(CC_DAMAGE_HINT)}"
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>` : "";
+    return `
+      <select class="mech-ap-scope" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${scopeOpts}</select>
+      <select class="mech-ap-key" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+        <option value="" ${ent.apKey ? "" : "selected"}>— свойство —</option>${propOpts}
+      </select>${ratingHtml}${rating2Html}`;
   }
 
   if (ent.kind === "capability") {
@@ -3428,7 +3599,8 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     return `<select class="mech-equip-source" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
       <option value="">— выберите оружие —</option>
       ${equipmentOptionsHtml(ent.equipSourceUuid, ["weapons"])}
-    </select>`;
+    </select>
+    <label class="mech-cc-check" title="Все такие записи предмета предлагаются галочками в одном окне при получении (напр. Естественное Оружие: Когти, Рога, Укус...)"><input type="checkbox" class="mech-integral-optional" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.equipOptional ? "checked" : ""} ${dis}/> по выбору</label>`;
   }
 
   if (ent.kind === "equipment") {
@@ -3966,8 +4138,12 @@ function buildScriptRunHtml(groupId, ent, canEdit, item) {
 }
 
 function buildEntryHtml(groupId, ent, canEdit, depth = 1, item = null) {
+  // Виды «Щит: …» читаются только у type:"forcefield" (wdbc-4umq) — у прочих
+  // предметов в списке их нет; уже выбранный не прячется, чтобы не пропасть
+  // молча. item неизвестен (null) — список полный, как раньше.
   const kindEntries = Object.entries(KIND_LABELS)
-    .filter(([k]) => k !== "group" || ent.kind === "group" || depth < MAX_GROUP_DEPTH);
+    .filter(([k]) => k !== "group" || ent.kind === "group" || depth < MAX_GROUP_DEPTH)
+    .filter(([k]) => !FORCEFIELD_ONLY_KINDS.has(k) || ent.kind === k || !item || item.type === "forcefield");
   const kindOpts = kindEntries.map(([k, l]) => optHtml(k, l, ent.kind === k)).join("");
   const isScript = ent.kind === "script";
   const isGroup  = ent.kind === "group";

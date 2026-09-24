@@ -18,7 +18,7 @@
     "rof_single": 0,
     "rof_semi": 0,
     "rof_full": 12,
-    "damage": "1d10+4",
+    "damage": "1d10+3",
     "damageType": "impact",
     "penetration": 0,
     "quality": "common",

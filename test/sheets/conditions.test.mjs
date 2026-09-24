@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, fakeForm, listenerRoot, resetCaptured } from "../support/foundry-stub.mjs";
 import { activateConditionsListeners, addFatigue, addCondition, removeCondition, removeFatigue,
-         fatigueSleep, setConditionLevel, fatiguePenalty,
+         fatigueSleep, setConditionLevel, fatiguePenalty, setFatigue, fatiguePeriodRest,
+         fatigueChangeFields, stumpTimerFields,
          conditionApplyFields, conditionRemoveFields, conditionAdjustFields,
          showAddConditionDialog } from "../../module/sheets/tabs/conditions.mjs";
 import { clearRuleSources, registerRuleSource, getRuleSources } from "../../module/rules/sources.mjs";
@@ -280,9 +281,12 @@ describe("conditionApplyFields / conditionRemoveFields / conditionAdjustFields",
     // Горение (wdbc-3pv5) несёт ещё два бесхозных поля сверх общего
     // флаг+счётчик — burningSourceDamage/burningGraceRounds (Cooler/Морозное
     // Сердце), снятие Состояния обнуляет и их же.
+    // + метка формулы урона погасшего пламени (BURNING_FORMULA_FLAG,
+    // combat/condition-ticks.mjs) — следующее загорание начинается с нуля.
     expect(conditionRemoveFields("burning")).toEqual({
       "system.conditions.burning": false, "system.conditions.burningLevel": 0,
-      "system.conditions.burningSourceDamage": 0, "system.conditions.burningGraceRounds": 0
+      "system.conditions.burningSourceDamage": 0, "system.conditions.burningGraceRounds": 0,
+      "flags.warhammer-dbc.-=burningDamageFormula": null
     });
   });
 
@@ -369,7 +373,8 @@ describe("activateConditionsListeners", () => {
     expect(a.updates).toEqual([
       {
         "system.conditions.burning": false, "system.conditions.burningLevel": 0,
-        "system.conditions.burningSourceDamage": 0, "system.conditions.burningGraceRounds": 0
+        "system.conditions.burningSourceDamage": 0, "system.conditions.burningGraceRounds": 0,
+        "flags.warhammer-dbc.-=burningDamageFormula": null
       },
       { "system.conditions.burningLevel": 2 }
     ]);
@@ -381,5 +386,203 @@ describe("activateConditionsListeners", () => {
     handlers[".conditions-add-btn:click"](ev());
 
     expect(captured.dialog.window.title).toBe("Добавить состояние");
+  });
+
+  // wdbc-x1nz.2.95 п.1: ручной ввод числа шёл отправкой формы мимо порога.
+  it("ручной ввод Усталости на пороге роняет без сознания", async () => {
+    const a = makeActor({ fatigue: 0, tBonus: 4, wpBonus: 3 });
+    const handlers = wire(a);
+    await handlers[".fatigue-value-input:change"](ev({}, "9"));
+    expect(a.system.fatigue.value).toBe(9);
+    expect(a.system.conditions.unconscious).toBe(true);
+  });
+});
+
+// ── Сверка «Статусы» (wdbc-x1nz.2.95/.96/.97) ─────────────────────────────
+describe("Усталость по книге («Раны и Урон» → «Статусы»)", () => {
+  const savedTime = globalThis.game.time;
+  const savedUser = globalThis.game.user;
+  afterEach(() => { globalThis.game.time = savedTime; globalThis.game.user = savedUser; });
+
+  // п.3: «кроме тестов T, Inf, и Cor» — было "cog" вместо "cor".
+  it("штраф −10 не касается тестов T, Inf и Cor", () => {
+    const a = makeActor({ fatigue: 2 });
+    expect(fatiguePenalty(a, "cor")).toBe(0);
+    expect(fatiguePenalty(a, "t")).toBe(0);
+    expect(fatiguePenalty(a, "inf")).toBe(0);
+    expect(fatiguePenalty(a, "ws")).toBe(-10);
+  });
+
+  // .96: «+1 Усталости, которую нельзя снять» — штраф при хранимой 0.
+  it("Гангрена даёт штраф −10 при хранимой Усталости 0", () => {
+    const a = makeActor({ fatigue: 0 });
+    a.system.conditions.gangrene = true;
+    expect(fatiguePenalty(a, "ws")).toBe(-10);
+  });
+
+  // .96: порог обморока — по действующей Усталости (хранимая + 1 Гангрены).
+  it("Гангрена: хранимая 5 + 1 = 6 → +1 доводит до порога 7", async () => {
+    const a = makeActor({ fatigue: 5, tBonus: 4, wpBonus: 3 });
+    a.system.conditions.gangrene = true;
+    await addFatigue(a, 1);
+    expect(a.system.fatigue.value).toBe(6);
+    expect(a.system.conditions.unconscious).toBe(true);
+  });
+
+  // п.3: таймер пробуждения 10−T.b минут, мин. 1.
+  it("обморок заводит таймер пробуждения worldTime + (10−T.b) мин", async () => {
+    globalThis.game.time = { worldTime: 5000 };
+    const a = makeActor({ fatigue: 6, tBonus: 4, wpBonus: 3 });
+    await addFatigue(a, 1);
+    expect(a.system.conditions.fatigueFaintWakeAt).toBe(5000 + 6 * 60);
+    expect(captured.chat[0].content).not.toContain("автоматически");
+    expect(captured.chat[0].content).toContain("Очнётся");
+  });
+
+  it("T.b ≥ 10 — обморок минимум на 1 минуту", async () => {
+    globalThis.game.time = { worldTime: 0 };
+    const a = makeActor({ fatigue: 0, tBonus: 12, wpBonus: 3 });
+    await addFatigue(a, 15);
+    expect(a.system.conditions.fatigueFaintWakeAt).toBe(60);
+  });
+
+  // п.2: перескок порога (Вой Ужаса до 9 при пороге 7) — −1 будит по книге.
+  it("−1 при перескоке порога будит и опускает до T.b+W.b−1", async () => {
+    const a = makeActor({ fatigue: 9, unconscious: true, tBonus: 4, wpBonus: 3 });
+    a.system.conditions.fatigueFaintWakeAt = 1234;
+    await removeFatigue(a, 1);
+    expect(a.system.fatigue.value).toBe(6);
+    expect(a.system.conditions.unconscious).toBe(false);
+    expect(a.system.conditions.fatigueFaintWakeAt).toBe(0);
+  });
+
+  it("крестик на Без сознания от Усталости — тоже приход в себя по книге", async () => {
+    const a = makeActor({ fatigue: 9, unconscious: true, tBonus: 4, wpBonus: 3 });
+    a.system.conditions.fatigueFaintWakeAt = 1234;
+    await removeCondition(a, "unconscious");
+    expect(a.system.fatigue.value).toBe(6);
+    expect(a.system.conditions.unconscious).toBe(false);
+  });
+
+  // п.1: Саркофаг и для прямой установки значения.
+  it("setFatigue: иммунитет Саркофага отбрасывает рост", async () => {
+    const saved = getRuleSources();
+    clearRuleSources();
+    registerRuleSource("test", () => [
+      { id: "test.rule", when: {}, effects: [{ kind: "grantFlag", target: "sarcophagus.immuneBleedingFatigue" }] }
+    ]);
+    try {
+      const a = makeActor({ fatigue: 1 });
+      await setFatigue(a, 9);
+      expect(a.system.fatigue.value).toBe(1);
+      await setFatigue(a, 0);
+      expect(a.system.fatigue.value).toBe(0);
+    } finally {
+      clearRuleSources();
+      for (const [key, fn] of saved) registerRuleSource(key, fn);
+    }
+  });
+
+  it("fatigueChangeFields — чистый патч, актор не пишется", () => {
+    const a = makeActor({ fatigue: 0, tBonus: 4, wpBonus: 3 });
+    const res = fatigueChangeFields(a, 7);
+    expect(res.fields).toMatchObject({ "system.fatigue.value": 7, "system.conditions.unconscious": true });
+    expect(res.fainted).toEqual({ minutes: 6 });
+    expect(a.updates).toEqual([]);
+  });
+
+  // п.4 + решение 2: отдых и сон двигают Календарь, но только у ГМа.
+  it("Час отдыха у ГМа сдвигает Календарь на 1 ч.", async () => {
+    const advanced = [];
+    globalThis.game.time = { worldTime: 0, advance: async s => { advanced.push(s); } };
+    globalThis.game.user = { isGM: true };
+    const a = makeActor({ fatigue: 2 });
+    await fatiguePeriodRest(a);
+    expect(a.system.fatigue.value).toBe(1);
+    expect(advanced).toEqual([3600]);
+  });
+
+  it("Час отдыха у игрока — Усталость снята, время не двигается, карточка зовёт ГМа", async () => {
+    const advanced = [];
+    globalThis.game.time = { worldTime: 0, advance: async s => { advanced.push(s); } };
+    globalThis.game.user = { isGM: false };
+    const a = makeActor({ fatigue: 2 });
+    await fatiguePeriodRest(a);
+    expect(a.system.fatigue.value).toBe(1);
+    expect(advanced).toEqual([]);
+    expect(captured.chat.at(-1).content).toContain("Время двигает ГМ");
+  });
+
+  it("Сон: человек — 8 ч., космодесантник — 3 ч.", async () => {
+    const advanced = [];
+    globalThis.game.time = { worldTime: 0, advance: async s => { advanced.push(s); } };
+    globalThis.game.user = { isGM: true };
+    await fatigueSleep(makeActor({ fatigue: 3 }));
+    const marine = makeActor({ fatigue: 3 });
+    marine.system.race = "astartes";
+    await fatigueSleep(marine);
+    expect(advanced).toEqual([8 * 3600, 3 * 3600]);
+  });
+
+  it("Сон гасит таймер обморока до сдвига времени — Календарь не разбудит второй раз", async () => {
+    globalThis.game.time = { worldTime: 0, advance: async () => {} };
+    globalThis.game.user = { isGM: true };
+    const a = makeActor({ fatigue: 7, unconscious: true, tBonus: 4, wpBonus: 3 });
+    a.system.conditions.fatigueFaintWakeAt = 360;
+    await fatigueSleep(a);
+    expect(a.system.conditions.fatigueFaintWakeAt).toBe(0);
+    expect(a.system.fatigue.value).toBe(0);
+  });
+});
+
+describe("Потеря конечностей вручную (wdbc-x1nz.2.97 п.1)", () => {
+  const savedTime = globalThis.game.time;
+  afterEach(() => { globalThis.game.time = savedTime; });
+
+  it("диалог: потеря кисти — счётчик 1, Кровотечение и таймер обрубка", async () => {
+    globalThis.game.time = { worldTime: 1000 };
+    const a = makeActor({ tBonus: 3 });
+    showAddConditionDialog(a);
+    await captured.press("add", fakeForm({}, {
+      ".add-cond-cb:checked": [{ dataset: { condition: "lostHands" } }]
+    }));
+    expect(a.updates[0]).toMatchObject({
+      "system.conditions.lostHands": true,
+      "system.conditions.lostHandsCount": 1,
+      "system.conditions.bleeding": true,
+      "system.conditions.lostHandsGangreneAt": 1000 + 3 * 86400
+    });
+  });
+
+  it("addCondition: потеря ноги — то же самое", async () => {
+    globalThis.game.time = { worldTime: 0 };
+    const a = makeActor({ tBonus: 2 });
+    await addCondition(a, "lostLegs");
+    expect(a.system.conditions.bleeding).toBe(true);
+    expect(a.system.conditions.lostLegsGangreneAt).toBe(2 * 86400);
+  });
+
+  it("строка уровня: 1 → 2 глаза — новая потеря; 2 → 1 — нет", async () => {
+    globalThis.game.time = { worldTime: 0 };
+    const a = makeActor({ tBonus: 2 });
+    a.system.conditions.lostEyes = true;
+    a.system.conditions.lostEyesCount = 1;
+    await setConditionLevel(a, "lostEyes", "2");
+    expect(a.updates[0]).toMatchObject({ "system.conditions.lostEyesCount": 2, "system.conditions.bleeding": true });
+    await setConditionLevel(a, "lostEyes", "1");
+    expect(a.updates[1]).toEqual({ "system.conditions.lostEyesCount": 1 });
+  });
+
+  it("вторая потеря того же типа не переносит уже идущий, более ранний таймер", () => {
+    globalThis.game.time = { worldTime: 5000 };
+    const a = makeActor({ tBonus: 3 });
+    a.system.conditions.lostArmsGangreneAt = 6000;
+    expect(stumpTimerFields(a, "lostArms")).toEqual({ "system.conditions.lostArmsGangreneAt": 6000 });
+  });
+
+  it("не-конечность через диалог — без Кровотечения", async () => {
+    const a = makeActor();
+    await addCondition(a, "prone");
+    expect(a.updates[0]).toEqual({ "system.conditions.prone": true });
   });
 });

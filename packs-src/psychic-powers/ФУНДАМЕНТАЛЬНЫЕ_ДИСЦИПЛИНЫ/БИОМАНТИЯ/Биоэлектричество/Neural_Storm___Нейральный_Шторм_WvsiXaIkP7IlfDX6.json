@@ -22,6 +22,7 @@
     "sustainAction": "free",
     "damage": "1d10+T.b",
     "damageType": "energy",
+    "damageSubtype": "electrical",
     "penetration": 0,
     "weaponProps": [
       {

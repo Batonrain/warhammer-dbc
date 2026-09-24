@@ -1,23 +1,31 @@
 // module/sheets/tabs/combat.mjs
 //
 // Вкладка БОЙ: состязательные приёмы, кнопка атаки у оружия, лечение, Очки
-// Боли Друкхари и Стойка/База. Обычные Приёмы выбираются прямо в диалоге атаки
-// (attack-dialog.mjs) и своих кнопок на этой вкладке не имеют — но Стойка/База
-// персистентны на акторе (system.meleeStance/meleeBase), диалог их только
-// читает как стартовое значение, поэтому свои кнопки здесь тоже есть (клик
-// пишет то же поле, что и диалог — расхождения не будет).
+// Боли Друкхари и Стойка. Обычные Приёмы и База выбираются прямо в диалоге
+// атаки (attack-dialog.mjs) и своих кнопок на этой вкладке не имеют — кроме
+// Базы «Натиск», у которой есть быстрая кнопка на панели ДВИЖЕНИЕ
+// (declareCharge, module/combat/movement-actions.mjs). Стойка персистентна на
+// акторе (system.meleeStance), диалог её только читает как стартовое
+// значение, поэтому своя кнопка здесь тоже есть (клик пишет то же поле, что
+// и диалог — расхождения не будет).
 // Состязания (Повалить/Финт/Давление/Напролом) — отдельный встречный тест без
 // диалога атаки вовсе (combat/techniques.mjs), поэтому свои кнопки сохраняют.
 //
 // Функции принимают актора, а не лист. Свёртка «Состязаний» осталась на листе:
 // это состояние окна, а не актора.
 
-import { MELEE_CONTESTS } from "../../constants/combat.mjs";
+import { MELEE_CONTESTS, parseGrips, gripManeuverBonus } from "../../constants/combat.mjs";
+import { equippedMeleeWeapon } from "../../combat/equipped-melee.mjs";
+import { currentMeleeGrip } from "../../rules/hands.mjs";
 import { showAttackDialog } from "../attack-dialog.mjs";
 import { _showContestDialog } from "../../combat/techniques.mjs";
 import { showGrappleDialog } from "../../combat/grapple.mjs";
+import { rollRecognizeStance } from "../../combat/recognize-stance.mjs";
 import { beginTargeting } from "../../combat/aim.mjs";
+import { meleeStanceAllowed } from "../../rules/melee-stance-gate.mjs";
 import { showHealingDialog } from "./healing.mjs";
+import { showExtinguishDialog } from "../../combat/extinguish.mjs";
+import { toggleSuffocationMode } from "../../combat/condition-ticks.mjs";
 import { showDelegateTestPicker } from "../../rules/delegate-test.mjs";
 import { painChange, openPainSoulBurnDialog } from "./pain.mjs";
 import { showSkillfulTortureDialog } from "../../apps/skillful-torture.mjs";
@@ -54,6 +62,7 @@ import { spendActionPoints, spendReaction, resetActionEconomy } from "../../comb
 import { attackedThisTurn } from "../../rules/turn-flags.mjs";
 import { resolveFeintSuccess, resolvePressSuccess } from "../../combat/feint-press.mjs";
 import { resolveBulldozeSuccess, bulldozeForbidden, bulldozeSizePenalty } from "../../combat/bulldoze.mjs";
+import { resolveKnockdownSuccess, knockdownForbidden, knockdownSizePenalty, knockdownResistMods } from "../../combat/knockdown.mjs";
 import {
   beginSustainedAction, continueSustainedAction, passSustainedCheckpoint,
   interruptSustained, clearSustainedAction
@@ -104,6 +113,12 @@ export function activateCombatListeners(root, actor) {
   // не исполнитель — тот выбирается уже в самом пикере.
   on(root, ".wounds-request-heal-btn", "click", () =>
     showDelegateTestPicker(actor, { title: "Попросить лечение", kind: "healing", label: "Лечение", buttonLabel: "Открыть Лечение" }));
+
+  // Тушение Горения (wdbc-x1nz.2.93) и режим Удушья (wdbc-x1nz.2.94) — рядом
+  // с Лечением: тег Состояния свою кнопку действия не несёт (вкладка Тело —
+  // только снять/уровень).
+  on(root, ".wounds-extinguish-btn", "click", () => showExtinguishDialog(actor));
+  on(root, ".wounds-suffocation-mode-btn", "click", () => toggleSuffocationMode(actor));
 
   // ── Перевес выключенной силовой брони: тест раз в T.b часов (стр. 233) ──
   on(root, ".disabled-armour-periodic-test-btn", "click", () => useDisabledArmourPeriodicTest(actor));
@@ -255,6 +270,24 @@ export function activateCombatListeners(root, actor) {
     await applyConjureWraith(actor, "weapon");
   });
 
+  // Хват текущего надетого рукопашного к Приёму этого Состязания (стр. 39,
+  // wdbc-x1nz.2.68): Об → Финт +10 (хват сам по себе), 2р как вторичный хват
+  // одноручного → Повалить +10. Тот же реестр (GRIPS.maneuverBonus/
+  // secManeuverBonus), что читает Оглушить в обычном диалоге атаки
+  // (sheets/attack/selection.mjs) — Финт/Повалить идут отдельным Состязанием
+  // без диалога атаки вовсе, поэтому бонус подсказывается сюда, в
+  // defaultMod (редактируемое поле, как штраф за Размер ниже).
+  function contestGripBonus(maneuverKey) {
+    const weapon = equippedMeleeWeapon(actor);
+    if (!weapon || weapon.system?.weaponClass !== "melee") return 0;
+    // Фоллбэк «1р» на пустой sys.grips — тот же, что у currentMeleeGrip
+    // (module/rules/hands.mjs), иначе оружие без заполненного grips ложно
+    // считалось бы вторичным хватом (wdbc-x1nz.2.68, см. defense.mjs).
+    const primary = parseGrips(weapon.system?.grips)[0] || "1р";
+    const current = currentMeleeGrip(weapon);
+    return gripManeuverBonus(current, maneuverKey, current !== primary);
+  }
+
   // ── Состязания (Повалить/Финт/Давление/Напролом) ─────────────────────────
   // Эффект победы Финта/Давления (стр. 31, wdbc-x1nz.2.65) подмешивается
   // здесь, не в constants/combat.mjs — та запись чистые данные, как и все
@@ -264,28 +297,59 @@ export function activateCombatListeners(root, actor) {
     const key = ev.currentTarget.dataset.technique;
     const base = MELEE_CONTESTS[key];
     if (!base) return;
-    if (key === "feint")  return _showContestDialog(actor, { ...base, onSuccess: resolveFeintSuccess });
+    if (key === "feint") {
+      const gripBonus = contestGripBonus("feint");
+      return _showContestDialog(actor, { ...base, onSuccess: resolveFeintSuccess,
+        defaultMod: gripBonus,
+        note: gripBonus ? `${base.note} Обратный Хват: +${gripBonus}.` : base.note });
+    }
     if (key === "press")  return _showContestDialog(actor, { ...base, onSuccess: resolvePressSuccess });
+    if (key === "knockdown") {
+      // Повалить (стр. 14, wdbc-x1nz.2.66.5): нельзя против цели на 2+
+      // Размера крупнее — диалог не открывается вовсе (тот же принцип, что
+      // у Напролома/Захвата — книга говорит «нельзя проводить»). Штраф −10×
+      // разница Размера — подсказан в Доп. модификаторе для инициатора,
+      // только когда МЕНЬШЕ он сам (симметричный случай не покрыт, см.
+      // module/combat/knockdown.mjs).
+      const target = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+      if (target && knockdownForbidden(actor, target)) {
+        return ui.notifications.warn(`⚠️ Повалить: нельзя проводить против ${target.name} — цель на 2+ Размера крупнее (стр. 14).`);
+      }
+      const sizePenalty = target ? knockdownSizePenalty(actor, target) : 0;
+      const gripBonus = contestGripBonus("knockdown");
+      const noteParts = [base.note];
+      if (sizePenalty) noteParts.push(`Подсказанный штраф за Размер: ${sizePenalty}.`);
+      if (gripBonus) noteParts.push(`Двуручный Хват вторичный: +${gripBonus}.`);
+      return _showContestDialog(actor, { ...base, onSuccess: resolveKnockdownSuccess,
+        resistMods: (opp, me) => knockdownResistMods(me, opp),
+        defaultMod: sizePenalty + gripBonus,
+        note: noteParts.join(" ") });
+    }
     if (key === "bulldoze") {
       // Напролом (стр. 31, wdbc-x1nz.2.65): жёсткий запрет против цели на
       // 1+ Размер крупнее — диалог не открывается вовсе (не «бросок пройдёт,
       // эффект спишется вручную», как у Обезоружить — книга говорит именно
       // «нельзя ПРОВОДИТЬ»). Штраф −10×разница Размера у МЕНЬШИХ целей —
       // подсказан в Доп. модификаторе, поле остаётся редактируемым.
-      const target = [...(game.user?.targets ?? [])][0]?.actor ?? null;
-      if (target && bulldozeForbidden(actor, target)) {
-        return ui.notifications.warn(`⚠️ Напролом: нельзя проводить против ${target.name} — цель на 1+ Размер крупнее (стр. 31).`);
+      // Встречный тест против КАЖДОГО врага на пути (все цели под прицелом,
+      // wdbc-x1nz.2.73); меньшие получают −10 за уровень разницы на свой
+      // бросок сопротивления, а не инициатор.
+      const foes = [...(game.user?.targets ?? [])].map(t => t.actor).filter(Boolean);
+      const bigger = foes.find(t => bulldozeForbidden(actor, t));
+      if (bigger) {
+        return ui.notifications.warn(`⚠️ Напролом: нельзя проводить против ${bigger.name} — цель на 1+ Размер крупнее (стр. 31).`);
       }
-      const sizePenalty = target ? bulldozeSizePenalty(actor, target) : 0;
       return _showContestDialog(actor, { ...base, onSuccess: resolveBulldozeSuccess,
-        defaultMod: sizePenalty,
-        note: sizePenalty ? `${base.note} Подсказанный штраф за Размер против ${target.name}: ${sizePenalty}.` : base.note });
+        resistMods: (opp, me) => {
+          const p = bulldozeSizePenalty(me, opp);
+          return p ? [{ label: "меньше Размером", value: p }] : [];
+        } });
     }
     _showContestDialog(actor, base);
   });
 
-  // ── Стойка/База — то же actor.update, что читает как стартовое значение
-  // и умеет сменить на разовый бросок диалог атаки (attack-dialog.mjs):
+  // ── Стойка — то же actor.update, что читает как стартовое значение и
+  // умеет сменить на разовый бросок диалог атаки (attack-dialog.mjs):
   // клик здесь виден и там, и наоборот, без отдельной синхронизации.
   // Стр. 31, wdbc-x1nz.2.64: «нельзя после рукопашной атаки» — кнопка уже
   // disabled в разметке (character-context.mjs::stanceLocked), это второй
@@ -296,11 +360,13 @@ export function activateCombatListeners(root, actor) {
     if (attackedThisTurn(actor).some(id => actor.items.get(id)?.system?.weaponClass === "melee")) {
       return ui.notifications.warn("⚠️ Стр. 31: Смену Стойки нельзя проводить после рукопашной атаки в этом Ходу.");
     }
+    // Недоступная Стойка уже не должна была отрисоваться (character-context.mjs
+    // ::combatStanceOptions) — это второй рубеж на случай устаревшего рендера
+    // листа у другого клиента, тот же принцип, что у stanceLocked выше.
+    if (key !== actor.system.meleeStance && !meleeStanceAllowed(actor, key)) {
+      return ui.notifications.warn("⚠️ Эта Стойка недоступна: не подходит оружие/Баланс, нет Тренировки, или персонаж не в пешем бою (стр. 15).");
+    }
     actor.update({ "system.meleeStance": key });
-  });
-  on(root, ".technique-btn-base", "click", ev => {
-    const key = ev.currentTarget.dataset.base;
-    if (key) actor.update({ "system.meleeBase": key });
   });
 
   // ── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling — блок под
@@ -331,6 +397,10 @@ export function activateCombatListeners(root, actor) {
   // ── Борьба (стр. 12) — кнопка видна, пока активно conditions.grappling
   // (выставляется module/combat/grapple.mjs после попадания Приёмом «Захват»).
   on(root, ".grapple-btn", "click", () => showGrappleDialog(actor));
+
+  // ── Стойки (стр. 15, wdbc-x1nz.2.66.11): «Раз в Ход… тест Awareness(WS)+20,
+  // чтобы понять чужие стойки». Цель — выцеленный токен (game.user.targets).
+  on(root, ".recognize-stance-btn", "click", () => rollRecognizeStance(actor));
 
   // ── Экономика действий (стр. 12): ручная трата для действий без своей
   // кнопки в другом месте листа — Уклонение/Парирование уже тратят Реакцию

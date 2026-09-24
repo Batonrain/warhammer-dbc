@@ -20,6 +20,7 @@ import { _executeAttackRoll } from "../../combat/attack.mjs";
 import { spendActionPoints, apCostForActionType, spendReaction } from "../../combat/action-economy.mjs";
 import { canTakeAttackAction, takeAttackAction } from "../../combat/attack-limit.mjs";
 import { isGrappled } from "../../rules/predicates.mjs";
+import { grappleAttackBlockReason } from "../../combat/grapple.mjs";
 import { delayBlocksAttack } from "../../combat/delay-action.mjs";
 import { deathDanceNextCost, markDeathDanceUsed } from "../../combat/death-dance.mjs";
 import { markRoundCapabilityUsed } from "../../apps/game-session.mjs";
@@ -32,6 +33,7 @@ import { attackIsMelee } from "../../combat/weapon-profiles.mjs";
 import { weaponThresholdPart } from "../../combat/attack-threshold.mjs";
 import { withEyeOfEnvy } from "../../rules/eye-of-envy.mjs";
 import { AIM_FOCUS_EXTENDED_FLAG } from "../../rules/aim-focus.mjs";
+import { isSabre, sabreSecondAttackBlockFor, armSabreSecondAttack, consumeSabreSecondAttack } from "../../combat/sabre-second-attack.mjs";
 
 /**
  * Два условия книги на парную атаку (стр. 62, wdbc-3jlm), которые до этого
@@ -160,13 +162,18 @@ export function openAttackDialog(ctx) {
           // Захват (стр. 12, wdbc-x1nz.2.31): «только действия Борьбы или
           // не-Физические» — обычная Атака (эта, стандартная, не действия
           // Борьбы из combat/grapple.mjs) недоступна, пока актор в Захвате.
-          if (isGrappled(actor)) {
+          // С wdbc-x1nz.2.75 — по роли: держащий бьёт третьих свободно, цель —
+          // ножом/пистолетом; удерживаемый — только свободными руками.
+          const grappleWhy = isGrappled(actor)
+            ? grappleAttackBlockReason(actor, item, targetActor, { isMelee, baseKey: sel.baseKey })
+            : "";
+          if (grappleWhy) {
             await ChatMessage.create({
               speaker: ChatMessage.getSpeaker({ actor: actor }),
               content: `<div class="wh-roll-result">
                 <div class="roll-header">${rollIcon("sword")}${esc(item.name)}</div>
                 <div class="roll-outcome">
-                  <span class="roll-failure">${rollIcon("ban","#ff6b6b")}В Захвате доступны только действия Борьбы (стр. 12).</span>
+                  <span class="roll-failure">${rollIcon("ban","#ff6b6b")}Борьба: ${esc(grappleWhy)} (стр. 12).</span>
                 </div></div>`
             });
             return false;
@@ -190,7 +197,19 @@ export function openAttackDialog(ctx) {
           // Лимит Атак за Ход (стр. 12, wdbc-x1nz.2.30): «Персонаж может
           // совершать только одну Атаку в свой Ход» — проверяется ДО списания
           // ОД, чтобы заблокированная попытка не тратила ресурс впустую.
-          if (!canTakeAttackAction(actor)) {
+          // Вторая атака Сабли (wdbc-f6j9y, combat/sabre-second-attack.mjs):
+          // входит в ту же Верховую Атаку — ни ОД, ни Лимита Атак за Ход не
+          // тратит. Условия перепроверяются на броске, а не только на кнопке:
+          // пока окно было открыто, Ход мог смениться, а цель — остаться той же.
+          const sabreSecond = !!techniqueOpts?.sabreSecondAttack;
+          if (sabreSecond) {
+            const reason = sabreSecondAttackBlockFor(actor, item);
+            if (reason) {
+              ui.notifications.warn(`⚠️ Сабля: ${reason}.`);
+              return false;
+            }
+          }
+          if (!sabreSecond && !canTakeAttackAction(actor)) {
             await ChatMessage.create({
               speaker: ChatMessage.getSpeaker({ actor: actor }),
               content: `<div class="wh-roll-result">
@@ -227,14 +246,22 @@ export function openAttackDialog(ctx) {
           // тратит Реакцию — sel.cheapShotActive уже вынудил Базу быть
           // "standard" (resolveSelection), здесь остаётся только сменить
           // ресурс списания на тот же spendReaction, что у Уклонения/Парирования.
-          if (isMelee && sel.cheapShotActive) {
+          if (sabreSecond) {
+            // ничего не списывается — см. выше
+          } else if (isMelee && sel.cheapShotActive) {
             if (!await spendReaction(actor)) {
               ui.notifications.warn("⚠️ Не хватает Реакций (Запрещённый Приём).");
               return false;
             }
           } else {
+            // Защитная Стойка + щит (стр. 15, wdbc-x1nz.2.66.6): атака доп.
+            // оружием — Полное действие вместо Полудействия. Меняет только
+            // цену в ОД здесь, НЕ sel.bDef (тот всё ещё несёт свой честный
+            // wsBonus/note — Натиск/Верховая уже Полное действие сами по себе,
+            // трогать нечего, noCharge выше исключил единственный конфликт).
             const ownActionType = isMelee
-              ? sel.bDef.actionType
+              ? (sel.stDef?.forcesFullAction && sel.bDef.actionType === "Полудействие"
+                  ? "Полное действие" : sel.bDef.actionType)
               : (f.rofMode === "suppression" ? "Полное действие" : "Полудействие");
             // Обе руки одним действием (wdbc-3jlm): пара ударов занимает
             // НАИБОЛЬШЕЕ действие из двух, а не два своих. Ровно в этом смысл
@@ -251,7 +278,12 @@ export function openAttackDialog(ctx) {
           }
           // Ресурс (ОД или Реакция Запрещённого Приёма) списан — атака состоялась,
           // засчитываем её в лимит Хода (стр. 12, wdbc-x1nz.2.30).
-          await takeAttackAction(actor);
+          if (!sabreSecond) await takeAttackAction(actor);
+          // Сабля: вторая атака расходуется, первая (Верховая с отказом от +20)
+          // взводит её до конца Хода — ДО броска, чтобы карточка уже нашла метку.
+          if (sabreSecond) await consumeSabreSecondAttack(actor);
+          else if (isMelee && f.sabreSecondAttack && sel.baseKey === "mounted" && isSabre(item.system))
+            await armSabreSecondAttack(actor, item);
 
           // Death Dance / Смертельный Танец (wdbc-shr, находка 2): списание
           // ОС и отметка использования — только теперь, при подтверждённой
@@ -303,7 +335,7 @@ export function openAttackDialog(ctx) {
             actorUpdates["flags.warhammer-dbc.-=trackingAimActive"] = null;
           }
           if (isMelee && sel.stanceKey !== stance) actorUpdates["system.meleeStance"] = sel.stanceKey;
-          if (isMelee && !fullAttackForced && sel.baseKey !== meleeBaseKey) actorUpdates["system.meleeBase"] = sel.baseKey;
+          if (isMelee && !fullAttackForced && !sabreSecond && sel.baseKey !== meleeBaseKey) actorUpdates["system.meleeBase"] = sel.baseKey;
           await actor.update(actorUpdates);
           if (sel.gKey !== gripKey) await item.setFlag?.("warhammer-dbc", "hudGrip", sel.gKey);
           if (sel.pIdx !== profIdx) await item.setFlag?.("warhammer-dbc", "hudProfile", sel.pIdx);
@@ -400,7 +432,9 @@ export function openAttackDialog(ctx) {
               weaponOff: f.weaponOff, gripKey: sel.gKey,
               gripProps: sel.gDef ? sel.gDef.addProps : [],
               gripDmgFlat: sel.gDef ? sel.gDef.dmgFlat : 0,
-              gripSbHalf: sel.gDef ? sel.gDef.sbHalf : false,
+              // Пила (стр. 14, wdbc-x1nz.2.66.2) — тот же слот, что у Обратного
+              // Хвата: sbHalf сюда приходит true либо от Хвата, либо от Приёма.
+              gripSbHalf: !!((sel.gDef && sel.gDef.sbHalf) || (sel.mDef && sel.mDef.sbHalf)),
               // Обратный Хват + Выпад Полной Атакой (стр. 39, module/sheets/
               // attack/selection.mjs): S.b не режется, но получает ещё
               // +½S.b (окр.▲) сверху — сам бонус считает attack.mjs, ему
@@ -416,6 +450,17 @@ export function openAttackDialog(ctx) {
               // видна только у Взрывного; применимость по damageType/Concussive
               // разбирает сам attack.mjs.
               confinedSpace: f.confinedSpace,
+              // Молот/Топор по цели у стены (core.json, «Типы Рукопашного
+              // Оружия») — галочка диалога, «лежащую» цель attack.mjs
+              // определяет сам по статусу Повержен.
+              targetAgainstWall: f.targetAgainstWall,
+              // Сабля, Верховая Атака (core.json, «Типы Рукопашного Оружия») —
+              // галочка диалога отменяет +20 Базы (уже в threshold), сюда
+              // едет только чтобы attack.mjs мог напомнить про вторую атаку
+              // в карточке (само распределение — за столом).
+              sabreSecondAttack: f.sabreSecondAttack,
+              sabreSecondAttackIsSecond: sabreSecond,
+              legacyCleavingRoll: f.legacyCleavingRoll,
               // Условные эффекты боеприпаса, отмеченные игроком (стр. 203).
               ammoCondProps:  f.ammoSel.flatMap(c => c.wp || []),
               ammoCondDmg:    f.ammoSel.reduce((n, c) => n + (c.dmg || 0), 0),
@@ -520,6 +565,7 @@ export function openAttackDialog(ctx) {
       const stancePillsEl   = form.querySelector("#atk-stance-pills");
       const gripPillsEl     = form.querySelector("#atk-grip-pills");
       const maneuverPillsEl = form.querySelector("#atk-maneuver-pills");
+      const aimEl            = form.querySelector("#atk-aim");
       let lastStanceKey = dyn0.stanceKey;
       let lastBaseKey   = dyn0.baseKey;
       let lastProfIdx   = dyn0.pIdx;
@@ -540,6 +586,16 @@ export function openAttackDialog(ctx) {
         if (stanceNoteEl)   stanceNoteEl.innerHTML   = sel.stDef.note;
         if (baseNoteEl)     baseNoteEl.innerHTML     = sel.bDef.note;
         if (maneuverNoteEl) maneuverNoteEl.innerHTML = sel.mDef.note;
+        // Приём Оглушить (стр. 14, wdbc-x1nz.2.66.3) форсирует «Голову»,
+        // Широкий Взмах (стр. 14, wdbc-x1nz.2.66.1) — «— Без прицела —»; тут
+        // же, если игрок переключил Приём ПОСЛЕ открытия окна — тот же select,
+        // что и при первом рендере (attack-dialog.mjs::aimLocked/forcedAimValue),
+        // просто без перестройки списка опций (обе цели уже есть в нём).
+        const forcedAim = sel.maneuverKey === "stun" ? "head" : sel.maneuverKey === "sweep" ? "" : null;
+        if (aimEl) {
+          aimEl.disabled = forcedAim !== null;
+          if (forcedAim !== null) aimEl.value = forcedAim;
+        }
         // База зависит от выбранной Стойки (Частокол запрещает Натиск, стр. 15)
         // И от Хвата (Хвост временно даёт Cheap Shot, см. computeBaseOptions) —
         // перерисовываем пилюли только когда что-то из этого реально

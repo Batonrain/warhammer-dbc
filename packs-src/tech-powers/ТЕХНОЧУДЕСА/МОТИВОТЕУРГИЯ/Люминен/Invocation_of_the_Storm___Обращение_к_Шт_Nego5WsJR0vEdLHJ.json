@@ -25,6 +25,7 @@
     "range": "I×2м",
     "damage": "2d10+I.b",
     "damageType": "energy",
+    "damageSubtype": "electrical",
     "penetration": 0,
     "effect": "[Железо: Luminen Capacitors · Цена: 3К+5Э · Процесс: 1 , 2 (У) · Тип: Атака, Компенсатор (1), Манипула (2), Славословие (2), Физическое] Треб.: For.Lore (Mechanicum)+30. Облако шторма: 2d10+I.b E(El), Pen ½I.b, Blast (I.b), Extreme (7), Linger (?/1d10), Shocking, Smoke (I.b). До ½I.b(окр.▲) целей иммунны. Остаётся, пока Процесс активен; в начале Хода смещение (Tech-Use−20 — ±Успехи м).",
     "effects": {

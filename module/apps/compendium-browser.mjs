@@ -74,7 +74,6 @@ export const CATEGORIES = [
   { label: "Предсказания",            sources: [{ pack: "divinations" }] },
   { label: "Фракции",                 sources: [{ pack: "factions" }] },
   { label: "Корабельные узлы",        sources: [{ pack: "ship-components" }], tabs: ["voidcraft"] },
-  { label: "Малые суда",              sources: [{ pack: "small-craft" }], tabs: ["voidcraft"] },
   { label: "Таланты — Книга Пустоты", sources: [{ pack: "talents", onlyFolder: "Книга Пустоты" }],
                                        tabs: ["voidcraft"], allTab: false },
   { label: "Снаряжение техники",      sources: [{ pack: "vehicle-equipment" }], tabs: ["vehicles"] },

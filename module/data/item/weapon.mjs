@@ -36,6 +36,14 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
       // с общим правилом (напр. карабин 3×1 против винтовки 4×1).
       itemSize:     new StringField({ initial: "", label: "Размер (разгрузка)" }),
       range:        num(0, "Дальность"),
+      // Длина Оружия, правило 5 (стр. 39, wdbc-x1nz.2.67.2): у части
+      // рукопашного оружия книга даёт Rng диапазоном («мин-макс», напр.
+      // Гладий 1-3, Меч 2-4) — персонаж выбирает длину атаки из него на
+      // каждую атаку (module/sheets/attack/selection.mjs). range несёт
+      // верхнюю границу, как и раньше; rangeMin — нижнюю, когда книга её
+      // даёт. 0 (по умолчанию) — оружие без выбора длины, обычный случай,
+      // диалог атаки пикер не показывает вовсе.
+      rangeMin:     num(0, "Дальность (мин.)"),
       balance:      num(0, "Баланс"),
       grips:        new StringField({ initial: "", label: "Хват" }),
       profileLabel: new StringField({ initial: "", label: "Название профиля" }),
@@ -44,6 +52,13 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
       // роль — ярлык профиля хвата для HUD) — заполняется отдельно, из
       // profileLabel как источника, но своим полем, чтобы не путать смыслы.
       meleeCategory: new StringField({ initial: "", label: "Категория (Арсенал)" }),
+      // Книжные подтипы ВНУТРИ категории (core.json, «Типы Рукопашного
+      // Оружия»): Рапира/Сабля у «Меч», Кулак.Б у «Кулаки» (meleeCategory у
+      // всех троих остаётся базовым — «Меч»/«Кулаки», иначе разошлось бы с
+      // Melee Training/MELEE_CATEGORIES/MELEE_MANEUVERS.categories,
+      // завязанными на буквальное значение категории). Пусто — без подтипа;
+      // "Рапира"/"Сабля"/"Кулак.Б" — единственные ожидаемые значения на сейчас.
+      meleeSubtype: new StringField({ initial: "", label: "Подтип (Меч: Рапира/Сабля; Кулаки: Кулак.Б)" }),
       profiles:     list("Профили"),
       // Перезарядка — строка: в книге это и «1», и «полн.», и «2 полн.».
       reload:       new StringField({ initial: "1", label: "Перезарядка" }),
@@ -196,5 +211,18 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
       // записанное на предмете дальше применялось автоматически.
       wraithboneImmune: new BooleanField({ initial: false, label: "Иммунно к Reformation Song" })
     };
+  }
+
+  /**
+   * Подтип Меча из имени, если не проставлен руками (приёмка #516): в паках
+   * meleeSubtype пуст у всех Сабель/Рапир, поля на листе нет — без этого
+   * правила Рапиры/Сабли не включались никогда. Производное, в базу не пишется.
+   * @override
+   */
+  prepareBaseData() {
+    if (this.meleeSubtype || this.meleeCategory !== "Меч") return;
+    const name = this.parent?.name ?? "";
+    if (/Сабля/i.test(name)) this.meleeSubtype = "Сабля";
+    else if (/Рапира/i.test(name)) this.meleeSubtype = "Рапира";
   }
 }

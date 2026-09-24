@@ -30,31 +30,37 @@ const integral = (weaponClass, flag = null) => ({
 });
 const asIntegral = { isIntegralAttack: item => item.name === "Кислотный Плевок" };
 
-describe("improvisedMeleeProfile: таблица книги перенесена без потерь (wdbc-bs0q)", () => {
-  it("пистолет бьёт как Булава — 1d5−3, досягаемость 1 м", () => {
+describe("improvisedMeleeProfile: таблица книги стр. 40 (wdbc-bs0q, сверка wdbc-x1nz.2)", () => {
+  it("пистолет бьёт как Булава — 1d5−2, досягаемость 1 м", () => {
     const p = improvisedMeleeProfile(gun("pistol"));
-    expect(p.damage).toBe("1d5-3");
+    expect(p.damage).toBe("1d5-2");
     expect(p.range).toBe("1 м");
     expect(p.note).toContain("Булава");
   });
 
-  it("винтовка бьёт как Посох — 1d10−3, 2–3 м", () => {
+  it("винтовка бьёт как Посох — 1d10−2, 2–3 м", () => {
     const p = improvisedMeleeProfile(gun("basic"));
-    expect(p.damage).toBe("1d10-3");
+    expect(p.damage).toBe("1d10-2");
     expect(p.range).toBe("2–3 м");
     expect(p.note).toContain("Посох");
   });
 
-  it("тяжёлое, пусковое и станковое — как Булава, 2d10−4+S.b, 2 м", () => {
+  it("тяжёлое, пусковое и станковое — как Булава, 2d10−4, 3 м", () => {
     for (const cls of ["heavy", "launcher", "stationary"]) {
       const p = improvisedMeleeProfile(gun(cls));
       expect(p.damage, cls).toBe("2d10-4");
-      expect(p.range, cls).toBe("2 м");
+      expect(p.range, cls).toBe("3 м");
     }
   });
 
+  it("подтип урона — I(Cr) по книге, а не подтип самого ствола", () => {
+    const g = gun("basic");
+    g.system.damageSubtype = "explosive";
+    expect(improvisedMeleeProfile(g).damageSubtype).toBe("crushing");
+  });
+
   it("класс, не названный в книге, бьёт как винтовка — прежнее умолчание", () => {
-    expect(improvisedMeleeProfile(gun("exotic-future-class")).damage).toBe("1d10-3");
+    expect(improvisedMeleeProfile(gun("exotic-future-class")).damage).toBe("1d10-2");
   });
 
   // Метательное/Граната (стр. 40, wdbc-x1nz.2.58): «в рукопашной может

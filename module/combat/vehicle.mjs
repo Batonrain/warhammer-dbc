@@ -17,7 +17,7 @@ import { isDreadnought, pilotUuidOf, pilotDamageThreshold }
 import { applyWoundLoss, woundLossAfter } from "../rules/wounds.mjs";
 import { ablativeApAfterHit } from "../rules/ablative-ap.mjs";
 import { resolveAttackerToken, tokenDistance } from "./facing.mjs";
-import { apCostForActionType, canSpendActionPoints, spendActionPoints } from "./action-economy.mjs";
+import { apCostForActionType, canSpendActionPoints, spendActionPoints, spendReaction } from "./action-economy.mjs";
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -27,7 +27,23 @@ const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 // про машины: «аналогично как с пешим Уклонением»), без сравнения степеней.
 // wdbc-8zi (п.6): объект опций — тот же приём, что у _performDodge/_performParry
 // (module/combat/defense.mjs), тем же именам полей.
-export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attackerUuid = "" } = {}) {
+/** Порядок, в котором ищется водитель для Виража: «водитель бросает» (Книга Машин). */
+const SWERVE_CREW_ROLES = ["driver", "pilot", "commander"];
+
+/** Водитель машины (актор со станции), или null — экипаж не назначен. */
+async function swerveDriver(vehicle) {
+  const stations = Array.isArray(vehicle?.system?.stations) ? vehicle.system.stations : [];
+  for (const role of SWERVE_CREW_ROLES) {
+    const st = stations.find(s => String(s?.role ?? "").trim().toLowerCase() === role && s?.uuid);
+    if (!st) continue;
+    const doc = await fromUuid(st.uuid).catch(() => null);
+    const driver = doc?.actor ?? doc;
+    if (driver) return driver;
+  }
+  return null;
+}
+
+export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attackerUuid = "", attackId = "" } = {}) {
   if (actor.type !== "vehicle") {
     return ui.notifications.warn("⚠️ Вираж может совершать только Техника — выберите токен машины.");
   }
@@ -35,6 +51,20 @@ export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attac
   if (der.swerveDisabled) {
     return ui.notifications.warn("⚠️ Эта машина не может совершать Вираж (Неподвижная / нет ходовой).");
   }
+  // Книга Машин: Вираж — «Действие: Реакция», «водитель бросает» (wdbc-2ny6,
+  // решение владельца 23.09.2026: Реакция водителя у всей техники). Раньше не
+  // тратилась вовсе. Экипаж не назначен (стол ведёт машину без станций) —
+  // Вираж по Operate машины, как было, с честной пометкой в карточке.
+  const driver = await swerveDriver(actor);
+  if (driver && !(await spendReaction(driver, { forDefense: true, attackId }))) {
+    return postTestCard(actor, {
+      icon: rollIcon("warp", "#8fd0ff"), title: `Вираж — ${esc(actor.name)}`,
+      outcome: outcomeHtml(false, `У водителя «${esc(driver.name)}» не осталось Реакций — Вираж невозможен.`)
+    }, { sound: false });
+  }
+  const reactionNote = driver
+    ? `<div class="roll-defense-note">Реакцию тратит водитель — ${esc(driver.name)}.</div>`
+    : `<div class="roll-defense-note">Экипаж не назначен — Реакция не списана (посадите водителя на вкладке «Экипаж»).</div>`;
   const operate   = Number(actor.system.operate) || 0;
   const swerveMod = Number(der.swerveMod) || 0;
   const threshold = operate + swerveMod + extraMod;
@@ -74,7 +104,7 @@ export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attac
   await postTestCard(actor, {
     icon: rollIcon("warp","#8fd0ff"), title: `Вираж — ${esc(actor.name)}`,
     threshold: rollStatLine({ label: "Operate", base: operate, parts: modParts, threshold, rv }),
-    outcome, sections: [leftoverNote]
+    outcome, sections: [reactionNote, leftoverNote]
   }, { rolls: [roll] });
 }
 
@@ -276,7 +306,7 @@ export async function _resolveRam(actor, fast, targetBigger) {
     <div class="roll-apply-dmg-section">
       <div class="roll-section-head">Применить к цели <span class="roll-head-hint">— выберите токен</span></div>
       <button class="wh-apply-dmg-btn" type="button"
-        data-damage="${dmg}" data-penetration="0" data-damage-type="impact"
+        data-damage="${dmg}" data-penetration="0" data-damage-type="impact" data-damage-subtype="crushing"
         data-hit-location="Торс" data-weapon-name="Таран" data-attacker="${actor.name}"
         data-felling="0" data-primitive="0" data-ignore-shield="0" data-warp-soak="0">
         Применить урон Тарана: <b>${dmg}</b>

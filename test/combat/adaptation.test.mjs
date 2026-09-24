@@ -160,3 +160,26 @@ describe("Адаптация через applyDamageToActor (wdbc-q0q8)", () => {
     expect(actor.system.wounds.value).toBe(1);
   });
 });
+
+// wdbc-4umq (6): книга даёт «+1 к Поглощению», а не к AP брони — бонус ведёт
+// себя как T.b: Пробитием не срезается, в Сочленении на 3 не делится, вместе
+// с бронёй не обнуляется.
+describe("Адаптация — к Поглощению, а не к AP брони (wdbc-4umq)", () => {
+  const primed = (bonus) => {
+    const actor = characterActor({ armorAP: 0, wounds: 20, corruptionBonus: 9, capabilityKeys: [ADAPTATION_CAPABILITY] });
+    actor.setFlag("warhammer-dbc", "adaptationAbsorption", { "vsType:impact": bonus });
+    return actor;
+  };
+
+  it("Пробитие не срезает бонус Адаптации", async () => {
+    const actor = primed(3);
+    await applyDamageToActor(actor, damage({ rawDamage: 10, penetration: 5, damageType: "impact" }));
+    expect(actor.system.wounds.value).toBe(20 - (10 - 3));
+  });
+
+  it("попадание в Сочленение не делит бонус на 3", async () => {
+    const actor = primed(3);
+    await applyDamageToActor(actor, damage({ rawDamage: 10, damageType: "impact", hitLocation: "Сочленение / Шея" }));
+    expect(actor.system.wounds.value).toBe(20 - (10 - 3));
+  });
+});

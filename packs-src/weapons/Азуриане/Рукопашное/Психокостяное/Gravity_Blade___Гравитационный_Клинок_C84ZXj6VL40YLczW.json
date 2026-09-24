@@ -15,7 +15,7 @@
       {
         "label": "Подавительный",
         "range": "",
-        "damage": "2d10+12",
+        "damage": "2d10+8",
         "damageType": "impact",
         "penetration": 0,
         "weaponProps": [

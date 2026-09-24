@@ -159,7 +159,7 @@ describe("Ртуть через applyDamageToActor (wdbc-q0q8)", () => {
 
   it("отмеченная локация проводит ток: следующий Энергетический удар той же локации теряет AP от брони", async () => {
     // Первый удар (10 > AP 6) непоглощён частично — ставит метку. Второй,
-    // Энергетический — без метки AP=6 поглотил бы весь урон; с меткой (noEnergy) AP=0.
+    // Электрический — без метки AP=6 поглотил бы весь урон; с меткой AP=0.
     const actor = characterActor({
       armorAP: 6, wounds: 20, capabilityKeys: ["mutation.bloodReplacement.mercuryReaction"]
     });
@@ -169,8 +169,24 @@ describe("Ртуть через applyDamageToActor (wdbc-q0q8)", () => {
     await applyDamageToActor(actor, damage({
       rawDamage: 10, damageType: "energy", damageSubtype: "electrical", hitLocation: "Торс"
     }));
-    // AP обнулён (noEnergy) — весь удар проходит непоглощённым.
+    // AP против E(El) обнулён (электропроводящая броня) — удар проходит целиком.
     expect(actor.system.wounds.value).toBe(6);
+  });
+
+  // wdbc-7wn7: книга — «делает её броню электропроводящей», а электропроводящая
+  // броня не держит только E(El) («E(El) — игнорирует электропроводящую
+  // броню»). Огонь и энергия без подвида AP сохраняют.
+  it("огонь по отмеченной локации — AP брони остаётся (проводит только ток)", async () => {
+    const actor = characterActor({
+      armorAP: 6, wounds: 20, capabilityKeys: ["mutation.bloodReplacement.mercuryReaction"]
+    });
+    await applyDamageToActor(actor, damage({ rawDamage: 10, damageType: "impact", hitLocation: "Торс" }));
+    expect(actor.system.wounds.value).toBe(16);
+
+    await applyDamageToActor(actor, damage({
+      rawDamage: 10, damageType: "energy", damageSubtype: "flame", hitLocation: "Торс"
+    }));
+    expect(actor.system.wounds.value).toBe(12); // 10 − AP 6 = 4
   });
 
   it("попадание поглощено полностью (netDamage=0) — метка не ставится", async () => {

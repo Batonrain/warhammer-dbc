@@ -19,7 +19,7 @@
     "rof_semi": 2,
     "rof_full": 0,
     "damage": "1d10+12",
-    "damageType": "impact",
+    "damageType": "blast",
     "penetration": 6,
     "quality": "common",
     "bookSource": "DoomBC — Основная книга, IV. Арсенал («Стрелковое оружие», стр. 188-198)",
@@ -40,6 +40,9 @@
       {
         "key": "storm",
         "rating": 2
+      },
+      {
+        "key": "longRifle"
       }
     ],
     "needsRecharge": false,

@@ -12,6 +12,9 @@ import { DANCE_OF_DECEPTION_CAPABILITY, danceOfDeceptionFeintOptions } from "../
 import { phantomCopiesFeintBonus } from "../rules/wrapped-in-chaos.mjs";
 import { spendFromInfamyPool } from "../apps/infamy-points.mjs";
 import { tempInfamyAmount } from "../rules/temp-infamy.mjs";
+import { sideValue, sideContext, registerContest, contestOpponents } from "./opposed-contest.mjs";
+import { spendActionPoints } from "./action-economy.mjs";
+import { canTakeAttackAction, takeAttackAction } from "./attack-limit.mjs";
 
 export async function _showContestDialog(actor, techDef) {
   // Повалить и Напролом — Athletics(S) vs Athletics(S), Финт/Давление — WS vs WS.
@@ -38,17 +41,32 @@ export async function _showContestDialog(actor, techDef) {
   // ни то, ни другое не WS/Повалить-Напролом, поэтому нужна отдельная ручка,
   // а не растягивать isKnock ещё сильнее).
   const defaultChar = techDef.defaultChar || (isKnock ? "s" : "ws");
-  const baseVal     = (actor.system.characteristics[defaultChar]?.total ?? 0)
+  // Навык вместо голой Характеристики (wdbc-x1nz.2.73): «Athletics(S)+0» —
+  // тест Навыка, Ранг (нетренированный −20, +10/+20/+30) входит в порог.
+  // techDef.skills: { s: "athletics", ag: "acrobatics" } — какой ключ списка
+  // бросается Навыком; остальные — Характеристикой, как раньше (WS у Финта).
+  const sideFor = key => techDef.skills?.[key] ? { skill: techDef.skills[key] } : { char: key };
+  const baseVal     = sideValue(actor, sideFor(defaultChar))
                      + (defaultChar === "ws" ? stanceWsBonus : 0)
                      + extraBonus;
 
-  // Строим опции для выбора характеристики
-  const charOptions = Object.entries(CHARACTERISTICS).map(([key, meta]) => {
-    let val = actor.system.characteristics[key]?.total ?? 0;
+  // Строим опции для выбора характеристики. techDef.allowedChars (Повалить,
+  // стр. 14, wdbc-x1nz.2.66.5: «Athletics(S)+0 vs Athletics(S)+0 или
+  // Acrobatics(A)+0» — РОВНО эти два, не любая из 10) сужает список; без
+  // этого поля поведение прежнее (любая характеристика — Финт/Давление/
+  // Напролом/Обезоружить книгой не ограничены конкретным Навыком).
+  // techDef.charLabels — подпись поверх общей (meta.label даёт «Ловкость»,
+  // книге здесь нужно «Acrobatics(A)», не характеристика сама по себе).
+  const charEntries = techDef.allowedChars
+    ? Object.entries(CHARACTERISTICS).filter(([key]) => techDef.allowedChars.includes(key))
+    : Object.entries(CHARACTERISTICS);
+  const charOptions = charEntries.map(([key, meta]) => {
+    let val = sideValue(actor, sideFor(key));
     if (key === "ws" && stanceWsBonus) val += stanceWsBonus;
     val += extraBonus;
+    const label = techDef.charLabels?.[key] ?? `${meta.abbr} — ${meta.label}`;
     return `<option value="${key}" ${key === defaultChar ? "selected" : ""}>
-      ${meta.abbr} — ${meta.label} (${val})
+      ${label} (${val})
     </option>`;
   }).join("");
 
@@ -80,7 +98,7 @@ export async function _showContestDialog(actor, techDef) {
   // общего диалога теста Навыка (mods не пересчитываются реактивно при
   // смене дропдауна): честное самоподтверждение игрока всё равно решает,
   // применять ли галочку, форма Состязания не проверяет роль/условие сама.
-  const rr = ruleRerollsHtml(actor, { kind: "skill", char: defaultChar });
+  const rr = ruleRerollsHtml(actor, sideContext(sideFor(defaultChar)));
 
   const extraBonusNote = extraBonus
     ? `<div style="font-size:0.85em;color:#8fd0ff;margin-bottom:6px;">
@@ -158,10 +176,31 @@ export async function _showContestDialog(actor, techDef) {
           // шёл мимо реестра правил — «Цель» в окне игрок правил руками.
           // Навыком (danceOpt) — ctx несёт и char (Ловкость), и сам Навык,
           // как у обычного броска Навыка (actor-sheet.mjs::_rollSkill).
+          const side = danceOpt ? { skill: danceOpt.skillKey } : sideFor(charKey);
           const ruleMods = collectTestMods(actor, danceOpt
             ? { kind: "skill", char: danceOpt.charKey, skill: danceOpt.skillKey }
-            : { kind: "skill", char: charKey });
+            : sideContext(side));
           const eff      = selfVal + mod + ruleMods.total;
+
+          // Встречный тест (wdbc-x1nz.2.73): без противника сравнивать не с
+          // чем — бросок не делается вовсе, ОД не тратятся.
+          const opponents = contestOpponents(actor, techDef);
+          if (!opponents.length) {
+            ui.notifications?.warn(`${techDef.label}: нет противника — наведите цель (встречный тест).`);
+            return;
+          }
+          // Цена действия (Борьба, стр. 12: Полудействие/Полное действие) —
+          // у тех приёмов, что её несут; прочие Состязания ОД не списывают.
+          // Тип «Атака» (Заломить, Пересилить — стр. 12) входит в Лимит Атак за Ход.
+          if (techDef.isAttack && !canTakeAttackAction(actor)) {
+            ui.notifications?.warn(`⚠️ ${techDef.label}: Атака в этом Ходу уже была (стр. 12).`);
+            return;
+          }
+          if (techDef.apCost && !(await spendActionPoints(actor, techDef.apCost, { physical: true }))) {
+            ui.notifications?.warn(`⚠️ ${techDef.label}: не хватает ОД (${techDef.apCost}).`);
+            return;
+          }
+          if (techDef.isAttack) await takeAttackAction(actor);
 
           // Dance of Deception — свободное действие за Очко Бесчестия
           // (wdbc-1rno): Состязания не списывают ОД программно вовсе (см.
@@ -186,10 +225,15 @@ export async function _showContestDialog(actor, techDef) {
           const rerollIdx = parseInt(rerollEl?.data?.("idx") ?? "-1");
           const useReroll = rerollIdx >= 0;
           const mode = rerollEl?.data?.("mode") || "keepBest";
+          // Лишние руки в Захвате (стр. 12, wdbc-x1nz.2.77): «за каждую
+          // дополнительную руку он может бросать... дополнительный раз,
+          // выбирая лучший» — techDef.rollCount; с перебросом правил не
+          // складывается (оба — «выбрать лучший из нескольких»).
+          const extraRolls = Math.max(1, Number(techDef.rollCount) || 1);
           const rolled = [];
-          for (let i = 0; i < (useReroll ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
-          const picked = pickReroll(rolled.map(r => r.total), mode);
-          const roll   = rolled[picked.index];
+          const nRolls = useReroll ? Math.max(2, extraRolls) : extraRolls;
+          for (let i = 0; i < nRolls; i++) rolled.push(await new Roll("1d100").evaluate());
+          const picked = pickReroll(rolled.map(r => r.total), useReroll ? mode : "keepBest");
           const rv     = picked.value;
           const { success: hit, deg } = testOutcome(rv, eff);
           const outcome  = hit
@@ -203,7 +247,8 @@ export async function _showContestDialog(actor, techDef) {
             mod !== 0 ? `${mod >= 0 ? "+" : ""}${mod}` : "",
             ...ruleMods.parts
           ];
-          const rerollLabel = rr.rerolls?.[rerollIdx]?.label;
+          const rerollLabel = useReroll ? rr.rerolls?.[rerollIdx]?.label
+            : (extraRolls > 1 ? `Лишние руки в Захвате, лучший из ${extraRolls}` : "");
           const rerollNote = picked.dropped.length
             ? `<div class="roll-defense-note">${rerollLabel || "Переброс"}: отброшено ${picked.dropped.join(", ")}</div>`
             : "";
@@ -224,11 +269,14 @@ export async function _showContestDialog(actor, techDef) {
             }),
             rerollNote, outcome,
             sections: [
-              hit
-                ? `<div class="roll-location" style="font-size:0.88em;margin-top:3px;">
-                     ${rollIcon("spark","#8fd0ff")}${techDef.note}
-                   </div>`
-                : "",
+              `<div class="roll-location" style="font-size:0.88em;margin-top:3px;">
+                 ${rollIcon("spark","#8fd0ff")}При победе: ${techDef.note}
+               </div>`,
+              registerContest(actor, techDef, {
+                success: hit, deg, threshold: eff, rv, side,
+                resistMods: Object.fromEntries(opponents.map(o => [o.uuid, techDef.resistMods?.(o, actor) ?? []])),
+                resistRolls: Object.fromEntries(opponents.map(o => [o.uuid, techDef.resistRolls?.(o, actor) ?? 1]))
+              }, opponents),
               hit && immune
                 ? `<div class="roll-location" style="font-size:0.88em;margin-top:3px;color:#e08a3a;">
                      ⚠️ ${esc(target.name)}: нельзя обезоружить${immuneLabels ? ` (${esc(immuneLabels)})` : ""} — эффект Приёма не применяется
@@ -236,14 +284,16 @@ export async function _showContestDialog(actor, techDef) {
                 : "",
               freeActionNote
             ]
-          }, { rolls: [roll] });
+          }, { rolls: rolled });
 
           // Опциональный колбэк на успех (техника несёт реальный эффект, не
           // только прозу-заметку) — «Заломить» (grapple.mjs), «Финт»/«Давление»
           // (combat/feint-press.mjs, wdbc-x1nz.2.65). target — уже вычисленная
           // выше выцеленная цель (см. immune/target), тот же токен, что
           // получает эффект. Необязателен: у Повалить/Напролом его нет.
-          if (hit && techDef.onSuccess) await techDef.onSuccess(actor, { deg, target });
+          // С wdbc-x1nz.2.73 он зовётся НЕ здесь, а после броска противника —
+          // combat/opposed-contest.mjs::runContestOutcome, когда инициатор
+          // выиграл встречный тест.
         }
       },
       cancel: { label: "Отмена" }
@@ -258,7 +308,7 @@ export async function _showContestDialog(actor, techDef) {
         if (danceOpt) {
           val = danceOpt.value;
         } else {
-          val = actor.system.characteristics[key]?.total ?? 0;
+          val = sideValue(actor, sideFor(key));
           if (key === "ws" && stanceWsBonus) val += stanceWsBonus;
           val += extraBonus;
         }

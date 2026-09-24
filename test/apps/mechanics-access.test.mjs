@@ -70,3 +70,23 @@ describe("Механика предмета: настраивают все, а �
       { action: "itemMechanics", uuid: "Item.abc", groups, userId: "u1" });
   });
 });
+
+// wdbc-4umq (7): три вида записи «Щит: …» читаются ТОЛЬКО у type:"forcefield";
+// на Черте или Таланте они прошли бы проверку заполненности и молча ничего
+// не сделали — в выпадающем списке их там быть не должно.
+describe("Виды «Щит: …» в списке — только у силового поля", () => {
+  const shieldOpts = ['value="shieldSubtype"', 'value="shieldVsCondition"', 'value="shieldArmorGate"'];
+  it("у Черты их в списке нет", () => {
+    const html = buildMechanicsTabHtml(itemWithMech({ type: "trait" }), true);
+    for (const o of shieldOpts) expect(html).not.toContain(o);
+  });
+  it("у силового поля — есть", () => {
+    const html = buildMechanicsTabHtml(itemWithMech({ type: "forcefield" }), true);
+    for (const o of shieldOpts) expect(html).toContain(o);
+  });
+  it("уже выбранный вид не пропадает из списка молча", () => {
+    const item = { type: "trait", uuid: "Item.t", getFlag: (_s, key) => key === "mechanics"
+      ? [{ id: "g1", operator: "AND", entries: [{ id: "e1", kind: "shieldArmorGate" }] }] : undefined };
+    expect(buildMechanicsTabHtml(item, true)).toContain('value="shieldArmorGate"');
+  });
+});

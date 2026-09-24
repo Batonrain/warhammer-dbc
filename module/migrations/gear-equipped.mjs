@@ -25,6 +25,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { gearRequiresWearing } from "../apps/effects.mjs";
+import { deltaOwnedItems, unlinkedTokens } from "./unlinked-tokens.mjs";
 
 /**
  * Носимое снаряжение актора, которое ещё не отмечено надетым.
@@ -49,8 +50,8 @@ export function gearNeedingEquipped(items = []) {
  * остальных), принимает вызывающий код в migrateGearEquipped, а не эта
  * функция: у неё нет доступа к «сколько акторов ещё впереди».
  */
-async function migrateOneActorGear(actor) {
-  const updates = gearNeedingEquipped(actor.items)
+async function migrateOneActorGear(actor, items = actor.items) {
+  const updates = gearNeedingEquipped(items)
     .map(item => ({ _id: item.id, "system.equipped": true }));
   if (updates.length) await actor.updateEmbeddedDocuments("Item", updates);
   return updates.length;
@@ -68,7 +69,7 @@ async function migrateOneActorGear(actor) {
  * не прерывая обработку следующих: gear-equipped идёт по вещам разных
  * персонажей, и они друг от друга не зависят.
  */
-export async function migrateGearEquipped() {
+export async function migrateGearEquipped({ tokensOnly = false } = {}) {
   if (!game.user?.isGM) { ui.notifications?.warn("Надетое снаряжение: только для ГМа."); return; }
 
   let updated = 0;
@@ -76,7 +77,7 @@ export async function migrateGearEquipped() {
 
   // Мировые акторы. Связанные токены (actorLink:true) используют тот же
   // документ Actor — им отдельный проход не нужен.
-  for (const actor of game.actors) {
+  for (const actor of tokensOnly ? [] : (game.actors ?? [])) {
     try {
       updated += await migrateOneActorGear(actor);
     } catch (e) {
@@ -88,17 +89,14 @@ export async function migrateGearEquipped() {
   // Несвязанные токены сцен: их синтетический актор (tokenDoc.actor) пишет
   // прямо в ActorDelta токена — тот же приём, что и везде в проекте
   // (module/combat/*.mjs, module/regions/*.mjs — tokenDoc.actor).
-  for (const scene of game.scenes ?? []) {
-    for (const tokenDoc of scene.tokens?.contents ?? []) {
-      if (tokenDoc.actorLink) continue;
-      const actor = tokenDoc.actor;
-      if (!actor) continue;
-      try {
-        updated += await migrateOneActorGear(actor);
-      } catch (e) {
-        failed++;
-        console.error(`Warhammer DBC | Надетое снаряжение: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
-      }
+  // Только предметы из дельты токена: унаследованные от базового актора уже
+  // прошли вместе с ним (wdbc-gbd3, module/migrations/unlinked-tokens.mjs).
+  for (const { scene, tokenDoc, actor } of unlinkedTokens()) {
+    try {
+      updated += await migrateOneActorGear(actor, deltaOwnedItems(tokenDoc));
+    } catch (e) {
+      failed++;
+      console.error(`Warhammer DBC | Надетое снаряжение: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
     }
   }
 

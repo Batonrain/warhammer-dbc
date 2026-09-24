@@ -295,10 +295,12 @@ function notReachedBy(actor, kind, benefitKey) {
     .filter(f => !f.missing && (kind === "presence" ? !f.reach.presenceApplies : !f.reach.commands));
   if (!missed.length) return "";
 
-  const names = missed.map(f => esc(f.name)).join(", ");
+  // Причина у подчинённого (Оглох/Без сознания, wdbc-x1nz.2.90) — в скобках
+  // у имени: общий «why» ниже написан про Орду и глухому не подходит.
+  const names = missed.map(f => esc(f.name) + (f.reach.blockedBy ? ` (${f.reach.blockedBy})` : "")).join(", ");
   const why = kind === "presence"
     ? `выбранное преимущество (эффект ${presenceNumber(benefitKey)}) до них не доходит`
-    : "Команды на них не действуют — только эффекты 1 и 3 Присутствия";
+    : "Команды на них не действуют (Орде доходят лишь эффекты 1 и 3 Присутствия)";
   return `<div class="sq-chat-note sq-chat-missed">Не получают: <b>${names}</b> — ${why}.</div>`;
 }
 

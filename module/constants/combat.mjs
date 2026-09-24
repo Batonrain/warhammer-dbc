@@ -49,6 +49,12 @@ export const MELEE_STANCES = {
   defensive: {
     label: "Защитная", wsBonus: 0, dodgeBonus: 0, parryBonus: 0,
     attackerMod: -20, noAttackWithoutShield: true,
+    // wdbc-x1nz.2.66.6 (стр. 15): «Полное действие вместо Полудействия» для
+    // атаки доп. оружием при щите — noAttackWithoutShield выше уже гарантирует,
+    // что если атака вообще разрешена, щит экипирован; noCharge — тот же флаг,
+    // что у Частокола ниже (module/sheets/attack/selection.mjs::computeBaseOptions),
+    // «не даёт совершать Натиск» без отдельного механизма.
+    noCharge: true, forcesFullAction: true,
     reactionRule: { grantDefenseReaction: true },
     shortDesc: "Нельзя атаковать (кроме доп. оружия при щите — Полное действие, без Натиска). Атаки по персонажу −20. +1 Реакция на рукопашные Избегания.",
     note: "Оружие: любое. Персонаж не может атаковать — кроме как другим оружием при экипированном щите (тогда Полное действие вместо Полудействия, без Натиска). Рукопашные атаки по персонажу −20 (уже в пороге атакующего). +1 Реакция только на рукопашные Избегания."
@@ -57,7 +63,15 @@ export const MELEE_STANCES = {
     label: "Прикрывающая", wsBonus: 0, dodgeBonus: 0, parryBonus: 0,
     attackerMod: 20,
     shortDesc: "Все атаки по персонажу +20. Атаки по союзникам рядом −20.",
-    note: "Оружие: любое. Рукопашные атаки по персонажу +20 (уже в пороге атакующего), по его союзникам в контакте с ним −20 — это не считается: нет данных о соседстве на карте. Когда противник в контакте атакует союзника персонажа, персонаж может совершить по нему свободную атаку (первым действует тот, у кого выше Ag) — ручной триггер, диалог атаки его не подсказывает."
+    // «−20 союзникам рядом» и триггер свободной атаки автоматизированы
+    // через module/combat/free-attack.mjs::coveringDefendersOf (Базовый/
+    // Глубокий контакт — tactical-map.mjs::contactType). Решением стола
+    // (не книга) «союзник» здесь расширен до Friendly/Neutral: и Friendly-
+    // прикрывающий защищает нейтрального компаньона рядом, и наоборот —
+    // но не пересекает лагеря (враждебный не прикроет Friendly просто по
+    // факту его диспозиции, и наоборот), см. комментарий у
+    // friendlyContactTokenDocs.
+    note: "Оружие: любое. Рукопашные атаки по персонажу +20 (уже в пороге атакующего), по его союзникам (Friendly/Neutral) в контакте с ним −20 (автогалочка в окне атаки). Когда противник в контакте атакует союзника персонажа, персонаж может совершить по нему свободную атаку (первым действует тот, у кого выше Ag) — предлагается автоматически карточкой в чат при попадании по прикрытой цели."
   },
   springing: {
     label: "Пружинящая", wsBonus: 0, dodgeBonus: 10, parryBonus: -10,
@@ -71,7 +85,7 @@ export const MELEE_STANCES = {
     // Тренировке — в отличие от Приёмов и остальных Стоек, неизвестная
     // категория (пак ещё не пересобран) не должна пропускать Частокол
     // «на всякий случай»: module/sheets/attack-dialog.mjs, stanceOptions.
-    categories: ["Глефа", "Копьё", "Штык"], strictCategory: true, noCharge: true,
+    categories: ["Глефа", "Копьё", "Штык"], strictCategory: true, noCharge: true, noRun: true,
     shortDesc: "Нельзя Натиск и Бег. Раз до след. Хода — свободная атака на атакующего с меньшим Rng, до его удара.",
     note: "Оружие: Глефа, Копьё, Штык. Персонаж не может совершать Натиск и Бег — База «Натиск» недоступна в этой Стойке. Раз до начала следующего Хода, когда персонаж или союзник в контакте с ним атакован оружием с меньшим Rng, персонаж может совершить одну свободную атаку по атакующему до его удара — ручной триггер, не отслеживается автоматически."
   }
@@ -148,14 +162,22 @@ export const MELEE_MANEUVERS = {
   saw: {
     label: "Пила", wsBonus: -10, bases: ["standard", "charge"],
     categories: ["Глефа", "Когти", "Копьё", "Меч", "Нож", "Топор", "Штык"],
-    note: "WS −10. Только со свойством оружия Tearing/Power Field. Игнорирует силовые щиты.",
+    // Требование к самому оружию (свойство, не категория) — тот же принцип
+    // гейта, что categories/minBalance у других Приёмов/Стоек (wdbc-x1nz.2.66.2,
+    // module/sheets/attack/selection.mjs::computeManeuverOptions, requiresWeaponProps).
+    requiresWeaponProps: ["tearing", "powerField"],
+    sbHalf: true, // ½S.b (окр.▲) в уроне — тот же слот, что у Хвата (module/combat/attack.mjs::sbHalf)
+    note: "WS −10. Только со свойством оружия Tearing/Power Field. S.b в уроне вдвое (окр.▲). Rng этой атаки падает до 0. Игнорирует силовые щиты-купола.",
     targetDodgeMod: 0, targetParryMod: 0,
-    chatNote: "⚡ Игнорирует силовые щиты"
+    chatNote: "⚡ Игнорирует силовые щиты-купола, урон ½S.b (окр.▲), Rng атаки 0"
   },
   stun: {
-    label: "Оглушить", wsBonus: -20, bases: ["standard", "charge", "fullatk"],
+    // wsBonus 0: −20 — это штраф самого прицела в голову, который окно
+    // форсирует (attack-dialog.mjs::forcedAimValue); свой −20 здесь давал −40
+    // и отнимал у Приёма скидку Локуса на голову (приёмка #516).
+    label: "Оглушить", wsBonus: 0, bases: ["standard", "charge", "fullatk"],
     categories: ["Булава", "Кистень", "Кулаки", "Молот", "Посох", "Щит"],
-    note: "Избирательная атака в голову (−20). Успех → Оглушение вместо урона.",
+    note: "Избирательная атака в голову (−20 прицела). Успех → Оглушение вместо урона.",
     targetDodgeMod: 0, targetParryMod: 0,
     chatNote: "😵 При попадании — Оглушение (голова)"
   },
@@ -218,9 +240,19 @@ export const MELEE_CONTESTS = {
     label: "Повалить", wsBonus: 0, bases: ["charge", "fullatk"],
     categories: ["Когти", "Крюк", "Кулаки", "Посох", "Топор", "Щит"],
     modLabel: "Ath vs Ath",
-    note: "Состязание: Athletics S+0 vs Athletics S+0.",
+    // Стр. 14, wdbc-x1nz.2.66.5: «Athletics(S)+0 vs Athletics(S)+0 или
+    // Acrobatics(A)+0» — ровно эти два (не любая характеристика из общего
+    // дропдауна _showContestDialog). Победа: цель Ничком; 5+ Успехов —
+    // доп. урон/Усталость (module/combat/knockdown.mjs::resolveKnockdownSuccess).
+    allowedChars: ["s", "ag"],
+    charLabels: { s: "Athletics(S)", ag: "Acrobatics(A)" },
+    // Встречный тест Навыков (wdbc-x1nz.2.73): Ранг входит в порог, цель
+    // сопротивляется Athletics или Acrobatics на выбор.
+    skills: { s: "athletics", ag: "acrobatics" },
+    resist: [{ skill: "athletics" }, { skill: "acrobatics" }],
+    note: "Состязание: Athletics(S)+0 vs Athletics(S)+0 или Acrobatics(A)+0. Победа: цель Ничком. 5+ Успехов: доп. урон/Усталость на выбор.",
     targetDodgeMod: 0, targetParryMod: 0,
-    chatNote: "⚡ Состязательный бросок Athletics"
+    chatNote: "⚡ Состязательный бросок Athletics/Acrobatics"
   },
   feint: {
     label: "Финт", wsBonus: 0,
@@ -244,6 +276,9 @@ export const MELEE_CONTESTS = {
   bulldoze: {
     label: "Напролом", wsBonus: 0,
     modLabel: "Ath vs Ath",
+    defaultChar: "s",
+    skills: { s: "athletics" },
+    resist: [{ skill: "athletics" }],
     note: "Athletics(S)+0 vs Athletics(S)+0 против всех врагов на пути персонажа по очереди (один бросок против всех сразу). Противники меньшего Размера — штраф −10 за уровень разницы. Успех — персонаж проходит путь, игнорируя противников и не получая Свободных Атак. Провал — останавливается перед первым победившим противником. Победа на 5+ Успехов — цель сбивается с ног и получает Пинок. Нельзя против противников на 1+ Размер больше персонажа. Этот диалог считает только сам встречный тест — прохождение дистанции и разбор попаданий по нескольким целям остаются на ГМ.",
     targetDodgeMod: 0, targetParryMod: 0,
     chatNote: "⚡ Состязательный бросок Athletics — против каждого врага на пути отдельно"
@@ -279,11 +314,16 @@ export const MELEE_CONTESTS = {
 //     addProp  — добавляемое особое свойство (precise / cheapShot).
 //     sbHalf   — S.b в расчёте урона считается как ½ (▲).
 //     balSet   — Баланс оружия принудительно ставится в это значение (для парирования).
+//     secBal   — доп. МОД (не override) Баланса, только как вторичный хват (1р −1).
 //     rngSet/rngMod — изменение досягаемости (в основном справочно).
+//     secRngMod — доп. мод Rng, только как вторичный хват (1р +1).
+//     maneuverBonus/secManeuverBonus — {приём: бонус WS}, хват сам по себе
+//       (Об → Финт) либо только как вторичный (2р → Оглушить/Повалить),
+//       читает gripManeuverBonus() ниже (wdbc-x1nz.2.68).
 export const GRIPS = {
-  "1р":  { label: "Одноручный (1р)",  ws: 0,   secWs: -5, rngMod: +1, secBal: -1, note: "Занимает 1 руку. Как вторичный хват двуручного: −1 кубик урона (или −4, если кубик один), Баланс −1, WS −5, +1 Rng." },
-  "2р":  { label: "Двуручный (2р)",   ws: 0,   secDmg: +3, note: "Занимает 2 руки. Как вторичный хват одноручного: +3 урона, +10 к приёмам Оглушить/Повалить." },
-  "Об":  { label: "Обратный (Об)",    ws: -10, sbHalf: true, rngMod: -2, note: "−10 WS (Финт +10, Выпад — без штрафа), урон ½S.b (▲), −2 Rng (мин 0). Можно метать оружие (Rng S.b×1, BS −10)." },
+  "1р":  { label: "Одноручный (1р)",  ws: 0,   secWs: -5, secRngMod: +1, secBal: -1, note: "Занимает 1 руку. Как вторичный хват двуручного: −1 кубик урона (или −4, если кубик один), Баланс −1, WS −5, +1 Rng." },
+  "2р":  { label: "Двуручный (2р)",   ws: 0,   secDmg: +3, secManeuverBonus: { stun: 10, knockdown: 10 }, note: "Занимает 2 руки. Как вторичный хват одноручного: +3 урона, +10 к приёмам Оглушить/Повалить." },
+  "Об":  { label: "Обратный (Об)",    ws: -10, sbHalf: true, rngMod: -2, maneuverBonus: { feint: 10 }, note: "−10 WS (Финт +10, Выпад — без штрафа), урон ½S.b (▲), −2 Rng (мин 0). Можно метать оружие (Rng S.b×1, BS −10)." },
   "Бл":  { label: "Ближний (Бл)",     ws: 0,   addProp: "precise", balSet: -2, rngMod: -2, note: "Свойство Precise, −2 Rng (мин 0), Баланс −2, нельзя в Борьбе." },
   "Кл":  { label: "Кулачный (Кл)",    ws: 0,   dmgFlat: -2, rngSet: 0, note: "Rng 0, −2 урона, считается кулаком (только профили топора/крюка/молота)." },
   "Мх":  { label: "Мордхау (Мх)",     ws: -5,  note: "−5 WS, профиль одноручной булавы в двуручном хвате (удар яблоком/гардой)." },
@@ -337,19 +377,82 @@ export function parseGrips(str) {
   return [...new Set(keys)].filter(k => GRIPS[k]);
 }
 
+// ── Длина Оружия (wdbc-x1nz.2.67, стр. 39) ──────────────────────────────────
+// Действующий Rng рукопашного оружия для конкретной атаки: база профиля
+// (system.range) + Хват (GRIPS[*].rngMod/rngSet, уже заведены в реестре выше,
+// но раньше нигде не читались) + Приём (Выпад +1, Пила → 0, стр. 14).
+// Минимум 0 — книга не даёт отрицательный Rng ни при каком сочетании.
+// Сравнения/бонусы, которые используют это число (длиннее оружие цели → +5,
+// Натиск на оружие короче на 3+ → цель +5 Избегание, штраф вблизи при Rng≥6)
+// — module/rules/weapon-length.mjs. Расширенный Базовый контакт для Rng 8/9
+// и выбор переменной длины за атаку (книга допускает диапазон) сознательно
+// НЕ автоматизированы этим тикетом — геометрия карты и новая модель диапазона
+// длины оружия остаются на потом (см. wdbc-x1nz.2.67).
+//
+// isSecondary (wdbc-x1nz.2.68): «+1 Rng» у «1р» книга даёт ТОЛЬКО как
+// вторичному хвату (перехват двуручного одной рукой) — как и WS−5/Баланс−1
+// у того же хвата. rngSet (Кл/Бл/Хв — абсолютное значение) и «безусловный»
+// rngMod (Об/Бл — хват сам по себе) применяются независимо от isSecondary.
+//
+// «Длинные Руки» (стр. 39, wdbc-x1nz.2.68): персонажи Размером 1+ увеличивают
+// МАКСИМАЛЬНУЮ дальность рукопашного оружия на свой Размер — «это правило не
+// применимо к атакам головой и ногами... укуса, удара рогами, или атаки, для
+// которой нужно наступить на врага». Книга явно исключает только Гол/Ног и
+// укус (Зуб); Хв/Щуп — не рука в принципе, книга их не описывает вовсе
+// (щупальце/хвост — расширение этой системы), исключены тем же принципом «не
+// удлиняет руку, потому что не рука». Держащая оружие рука/предплечье
+// (1р/2р/Об/Бл/Кл/Мх/П/Л/П+Л/Кист) получает бонус всегда. sizeBonus передаёт
+// вызывающая сторона (Math.max(0, actor.system.size)) — функция здесь решает
+// только ПРИМЕНИМ ли он к этому Хвату, число берёт снаружи, чтобы остаться
+// чистой (без обращения к actor).
+export const LONG_ARMS_EXCLUDED_GRIPS = new Set(["Ног", "Гол", "Зуб", "Хв", "Щуп"]);
+
+export function meleeEffectiveRange(baseRange, gripKey, maneuverKey = "standard", isSecondary = false, sizeBonus = 0) {
+  let rng = Number(baseRange) || 0;
+  const g = GRIPS[gripKey];
+  if (g) {
+    if (g.rngSet != null) rng = g.rngSet;
+    else {
+      const mod = (g.rngMod || 0) + (isSecondary ? (g.secRngMod || 0) : 0);
+      if (mod) rng += mod;
+    }
+  }
+  if (sizeBonus > 0 && !LONG_ARMS_EXCLUDED_GRIPS.has(gripKey)) rng += sizeBonus;
+  if (maneuverKey === "thrust") rng += 1;
+  else if (maneuverKey === "saw") rng = 0;
+  return Math.max(0, rng);
+}
+
 // Сводит эффекты выбранного хвата с учётом, основной он или вторичный.
 // isSecondary — хват отличается от основного (первого в профиле оружия).
 export function gripEffects(key, isSecondary = false) {
   const g = GRIPS[key];
-  if (!g) return { ws: 0, dmgFlat: 0, addProps: [], sbHalf: false, label: "", note: "", balSet: null };
+  if (!g) return { ws: 0, dmgFlat: 0, addProps: [], sbHalf: false, label: "", note: "", balSet: null, balMod: 0 };
   const ws      = (g.ws || 0) + (isSecondary ? (g.secWs || 0) : 0);
   const dmgFlat = (g.dmgFlat || 0) + (isSecondary ? (g.secDmg || 0) : 0);
+  // balMod (wdbc-x1nz.2.68) — относительный мод поверх system.balance оружия
+  // (1р вторичный: −1), в отличие от balSet — абсолютной подмены (Бл/Хв).
+  const balMod  = isSecondary ? (g.secBal || 0) : 0;
   return {
     ws, dmgFlat,
     addProps: g.addProp ? [g.addProp] : [],
     sbHalf: !!g.sbHalf,
     balSet: (g.balSet ?? null),
+    balMod,
     label: g.label,
     note: g.note
   };
+}
+
+// Бонус текущего Хвата к конкретному Приёму/Состязанию (стр. 39,
+// wdbc-x1nz.2.68): maneuverBonus — хват сам по себе (Об → Финт +10, вне
+// зависимости от того, основной он у оружия или альтернативный), secManeuverBonus
+// — только когда хват ВТОРИЧНЫЙ относительно первого хвата в профиле оружия
+// (2р у одноручного → Оглушить/Повалить +10). Читают: selection.mjs (Оглушить
+// — обычный WS-манёвр атаки) и sheets/tabs/combat.mjs (Финт/Повалить —
+// отдельные Состязания, свой встречный бросок).
+export function gripManeuverBonus(gripKey, maneuverKey, isSecondary = false) {
+  const g = GRIPS[gripKey];
+  if (!g) return 0;
+  return (g.maneuverBonus?.[maneuverKey] || 0) + (isSecondary ? (g.secManeuverBonus?.[maneuverKey] || 0) : 0);
 }

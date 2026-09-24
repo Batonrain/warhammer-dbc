@@ -19,7 +19,7 @@
     "rof_semi": 0,
     "rof_full": 0,
     "damage": "2d10+7",
-    "damageType": "impact",
+    "damageType": "blast",
     "penetration": 6,
     "quality": "common",
     "bookSource": "Книга Аэльдари: Ответвления, АРСЕНАЛ ДРУКХАРИ («Темносветовое оружие», стр. 116)",

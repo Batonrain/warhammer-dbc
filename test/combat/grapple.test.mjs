@@ -7,7 +7,7 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { applyGrappleOnHit, grapplePartner, endGrapple, isBiteWeapon, crunchWeapon, tentacleTechDef, tentacleBonus, detachableTentacle, isDetachedGrapple, swingProfile, throwProfile } from "../../module/combat/grapple.mjs";
+import { applyGrappleOnHit, resolveGrappleSuccess, grapplePartner, endGrapple, isBiteWeapon, crunchWeapon, tentacleTechDef, tentacleBonus, detachableTentacle, isDetachedGrapple, swingProfile, throwProfile } from "../../module/combat/grapple.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 import { actorFor } from "../support/combat-fixtures.mjs";
 
@@ -18,7 +18,7 @@ function actorWith(name, uuid) {
   const updates = [];
   return {
     id: uuid, name, uuid,
-    system: { conditions: { grappling: false } },
+    system: { conditions: { grappling: false }, characteristics: {}, meleeStance: "standard" },
     getFlag: (_s, k) => flags[k],
     setFlag: async (_s, k, v) => { flags[k] = v; return v; },
     unsetFlag: async (_s, k) => { delete flags[k]; },
@@ -49,17 +49,35 @@ beforeEach(() => {
 });
 
 describe("applyGrappleOnHit", () => {
-  it("связывает атакующего и цель Борьбой при попадании Приёмом «Захват»", async () => {
+  // wdbc-x1nz.2.66.4: попадание больше НЕ связывает Захватом синхронно —
+  // сперва встречный тест Athletics(S) vs Athletics(S) (_showContestDialog),
+  // цель может «отбить попытку». Реальную связку по победе проверяет
+  // resolveGrappleSuccess напрямую (см. ниже), тем же приёмом, что
+  // resolveFeintSuccess/resolvePressSuccess в feint-press.test.mjs.
+  it("попадание Приёмом «Захват» открывает встречный тест, а не связывает сразу", async () => {
     const attacker = actorWith("Атакующий", "Actor.a1");
     const target = actorWith("Цель", "Actor.t1");
     const targetToken = { actor: target };
 
     await applyGrappleOnHit(attacker, targetToken, true, { technique: "grapple" });
 
-    expect(attacker._updates).toContainEqual(expect.objectContaining({ "system.conditions.grappling": true }));
-    expect(target._updates).toContainEqual(expect.objectContaining({ "system.conditions.grappling": true }));
-    expect(attacker._flags.grapplePartnerUuid).toBe("Actor.t1");
-    expect(target._flags.grapplePartnerUuid).toBe("Actor.a1");
+    expect(captured.dialog?.content ?? "").toContain("Захват");
+    expect(attacker._updates).toHaveLength(0); // ещё не связаны — ждёт исхода теста
+    expect(target._updates).toHaveLength(0);
+  });
+
+  it("запрет против целей на 2+ Размера крупнее — попытка невозможна, тест не открывается вовсе", async () => {
+    const attacker = actorWith("Атакующий", "Actor.a1");
+    attacker.system.size = 0;
+    const target = actorWith("Цель", "Actor.t1");
+    target.system.size = 2;
+    resetCaptured();
+
+    await applyGrappleOnHit(attacker, { actor: target }, true, { technique: "grapple" });
+
+    expect(captured.dialog).toBeFalsy(); // диалог теста не открылся
+    expect(attacker._updates).toHaveLength(0);
+    expect(target._updates).toHaveLength(0);
   });
 
   it("не связывает при промахе", async () => {
@@ -82,6 +100,20 @@ describe("applyGrappleOnHit", () => {
     const attacker = actorWith("Атакующий", "Actor.a1");
     await applyGrappleOnHit(attacker, { actor: attacker }, true, { technique: "grapple" });
     expect(attacker._updates).toHaveLength(0);
+  });
+});
+
+describe("resolveGrappleSuccess — победа атакующего во встречном тесте", () => {
+  it("связывает атакующего и цель Борьбой (conditions.grappling + взаимный флаг партнёра)", async () => {
+    const attacker = actorWith("Атакующий", "Actor.a1");
+    const target = actorWith("Цель", "Actor.t1");
+
+    await resolveGrappleSuccess(attacker, { target });
+
+    expect(attacker._updates).toContainEqual(expect.objectContaining({ "system.conditions.grappling": true }));
+    expect(target._updates).toContainEqual(expect.objectContaining({ "system.conditions.grappling": true }));
+    expect(attacker._flags.grapplePartnerUuid).toBe("Actor.t1");
+    expect(target._flags.grapplePartnerUuid).toBe("Actor.a1");
   });
 });
 
@@ -169,18 +201,22 @@ describe("crunchWeapon", () => {
 // см. ALL_TESTS в grapple.mjs) — здесь, через tentacleTechDef перед вызовом
 // _showContestDialog. Сжать/Хруст броска не делают вовсе (см. шапку файла) —
 // бонусу там нечего усиливать, поэтому в дело не идут.
-// tentacleBonus — общий расчёт под tentacleTechDef (5 контестов) И _doBite/
-// _doThrow (wdbc-oxdn: Укус/Метнуть/Замахнуться — три «безролловых» на вид
-// действия Борьбы, которые на деле идут полным тестом WS/BS через
-// attack-dialog.mjs — тоже «тесты в Борьбе» по тексту мутации, просто со
-// своим бонусом techDef.wsBonus/bsBonus вместо tentacleTechDef/extraBonus).
-// _doBite/_doThrow сами не экспортированы и не тестируются изолированно
-// здесь: showGrappleDialog рендерит кастомные кнопки внутри DialogV2.wait и
-// зовёт dialog.close() у результата рендера — этого пути текущая заглушка
-// (test/support/foundry-stub.mjs) не поддерживает вовсе (не только для этой
-// правки — showGrappleDialog не был протестирован и до неё). Проверяется
-// чистая логика бонуса здесь и приём techDef.ranged/forceTargetActor,
-// который _doThrow задействует, в test/sheets/attack-dialog.test.mjs.
+// tentacleBonus — общий расчёт под tentacleTechDef (5 контестов) И _doThrow
+// (wdbc-oxdn: Метнуть/Замахнуться — «безролловые» на вид действия Борьбы,
+// которые на деле идут полным тестом WS/BS через attack-dialog.mjs — тоже
+// «тесты в Борьбе» по тексту мутации, просто со своим бонусом techDef.
+// wsBonus/bsBonus вместо tentacleTechDef/extraBonus). Укус (_doBite) сюда
+// больше не входит — с core.json, «Типы Рукопашного Оружия» («может
+// автоматически наносить попадание в Борьбе») он тоже стал безролловым
+// НА ДЕЛЕ, не только на вид, и tentacleBonus ему нечего усиливать (тот же
+// случай, что Сжать/Хруст, см. шапку файла). _doThrow сам не экспортирован
+// и не тестируется изолированно здесь: showGrappleDialog рендерит кастомные
+// кнопки внутри DialogV2.wait и зовёт dialog.close() у результата рендера —
+// этого пути текущая заглушка (test/support/foundry-stub.mjs) не
+// поддерживает вовсе (не только для этой правки — showGrappleDialog не был
+// протестирован и до неё). Проверяется чистая логика бонуса здесь и приём
+// techDef.ranged/forceTargetActor, который _doThrow задействует, в
+// test/sheets/attack-dialog.test.mjs.
 describe("tentacleBonus", () => {
   const DEFAULT_SOURCES = getRuleSources();
   afterEach(() => {
@@ -199,8 +235,7 @@ describe("tentacleBonus", () => {
   });
 
   // Субмутация 9 «Изменчивое» (wdbc-2ynk): пока предмет-Щупальце временно в
-  // форме руки — бонусу нечем помогать ни приёму Захват, ни этим тестам, ни
-  // Укусу (все три читают один и тот же tentacleBonus).
+  // форме руки — бонусу нечем помогать ни приёму Захват, ни этим тестам.
   it("с mutation.tentacle, но предмет-Щупальце в форме руки — 0", () => {
     registerRuleSource("test", () => [{ id: "tentacle", label: "Щупальце",
       effects: [{ kind: "grantFlag", target: "mutation.tentacle" }] }]);
@@ -334,7 +369,7 @@ describe("isDetachedGrapple", () => {
 // партнёра относительно бросающего, module/rules/improvised-weapon.mjs.
 // Сами _doSwing/_doThrow (реальные броски/чат) не экспортированы и не
 // тестируются изолированно здесь — тот же путь через DialogV2.wait, что и у
-// _doBite (см. комментарий у tentacleBonus выше).
+// _doWrench (см. комментарий у tentacleBonus выше).
 describe("swingProfile", () => {
   const DEFAULT_SOURCES = getRuleSources();
   afterEach(() => {

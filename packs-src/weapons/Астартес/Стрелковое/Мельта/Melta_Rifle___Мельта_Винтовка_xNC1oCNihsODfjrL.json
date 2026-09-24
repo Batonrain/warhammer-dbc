@@ -38,6 +38,9 @@
       },
       {
         "key": "melta"
+      },
+      {
+        "key": "longRifle"
       }
     ],
     "needsRecharge": false,

@@ -77,3 +77,42 @@ describe("clearMount (Спешиться)", () => {
     expect(captured.warnings.some(w => w.includes("Спешиться"))).toBe(true);
   });
 });
+
+// wdbc-bjy1.12: ГМ, по ошибке посадивший персонажа в седло, должен суметь
+// откатить это без ОД — но только явным подтверждением, иначе ГМ за НПЦ
+// молча обходил бы правило в честной игре.
+describe("clearMount: аварийный выход ГМа без ОД", () => {
+  let savedUser;
+  beforeEach(() => { savedUser = globalThis.game.user; captured.dialog = null; });
+  afterEach(() => { globalThis.game.user = savedUser; captured.confirmAnswer = undefined; });
+
+  it("ГМ подтвердил исправление — связь снята, ОД не тронуты", async () => {
+    globalThis.game.combat = { started: true };
+    globalThis.game.user = { ...savedUser, isGM: true };
+    captured.confirmAnswer = true;
+    const rider = actorFor({ actionPoints: { value: 0, max: 2 }, mount: { uuid: "Actor.horse1" } });
+    await clearMount(rider);
+    expect(captured.dialog).toBeTruthy();
+    expect(rider.system.mount.uuid).toBe("");
+    expect(rider.system.actionPoints.value).toBe(0);
+  });
+
+  it("ГМ отказался — связь остаётся", async () => {
+    globalThis.game.combat = { started: true };
+    globalThis.game.user = { ...savedUser, isGM: true };
+    captured.confirmAnswer = false;
+    const rider = actorFor({ actionPoints: { value: 0, max: 2 }, mount: { uuid: "Actor.horse1" } });
+    await clearMount(rider);
+    expect(rider.system.mount.uuid).toBe("Actor.horse1");
+  });
+
+  it("игроку без ОД диалог не предлагается — только предупреждение", async () => {
+    globalThis.game.combat = { started: true };
+    globalThis.game.user = { ...savedUser, isGM: false };
+    captured.confirmAnswer = true;
+    const rider = actorFor({ actionPoints: { value: 0, max: 2 }, mount: { uuid: "Actor.horse1" } });
+    await clearMount(rider);
+    expect(captured.dialog).toBeNull();
+    expect(rider.system.mount.uuid).toBe("Actor.horse1");
+  });
+});

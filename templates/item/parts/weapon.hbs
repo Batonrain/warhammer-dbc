@@ -350,6 +350,27 @@
           <b>{{m.name}}</b>{{#if m.roll}} <span class="wms-legacy-roll">({{m.roll}})</span>{{/if}}
           <button type="button" class="wms-legacy-del legacy-mutation-del" data-index="{{idx}}" title="Убрать Мутацию">✕</button>
           <div class="wms-legacy-text">{{m.text}}</div>
+          {{#if m.canActivateKiller}}
+          <button type="button" class="wms-btn legacy-killer-activate" title="1 Очко Бесчестия → Felling(Inf.b) до конца боя">Убийца: активировать</button>
+          {{else if m.killerActive}}
+          <span class="wms-legacy-meta">Активировано до конца боя</span>
+          {{/if}}
+          {{#if m.canActivateExcessBoost}}
+          <button type="button" class="wms-btn legacy-excess-boost-activate" title="1 Очко Бесчестия → бонус урона ×2 на ½Inf.b(окр.▲) Ходов">Перебор: активировать</button>
+          {{else if m.excessBoostActive}}
+          <span class="wms-legacy-meta">Буст активен ещё {{m.excessBoostTurnsLeft}} Ход(ов)</span>
+          {{/if}}
+          {{#if m.canActivateSoulbound}}
+          <button type="button" class="wms-btn legacy-soulbound-activate" title="Свободное действие — тест W+0, успех заряжает бонус урона следующему попаданию">Душесвязанное: тест W</button>
+          {{#if m.canActivateSoulboundPsychic}}
+          <button type="button" class="wms-btn legacy-soulbound-activate-psychic" title="Свободное действие — Психотест W+5×ПС, успех заряжает бонус эPR (риск Феномена)">Психотест</button>
+          {{/if}}
+          {{/if}}
+          {{#if m.canActivateHatredShield}}
+          <button type="button" class="wms-btn legacy-hatred-shield-activate" title="Реакция в свой Ход — +½Inf.b(окр.▲) AP руке(ам) и Торсу до начала следующего Хода">Щит Ненависти: поднять</button>
+          {{else if m.hatredShieldActive}}
+          <span class="wms-legacy-meta">Щит поднят</span>
+          {{/if}}
         </div>
         {{/each}}
         <div class="wms-legacy-pick">

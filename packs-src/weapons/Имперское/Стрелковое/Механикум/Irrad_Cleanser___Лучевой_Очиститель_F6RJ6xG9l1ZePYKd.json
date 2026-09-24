@@ -48,6 +48,9 @@
       },
       {
         "key": "radiationSourced"
+      },
+      {
+        "key": "longRifle"
       }
     ],
     "needsRecharge": false,

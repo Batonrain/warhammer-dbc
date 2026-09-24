@@ -9,6 +9,7 @@
     "itemSize": "2x1",
     "weaponType": "shock",
     "range": 4,
+    "rangeMin": 2,
     "balance": 0,
     "grips": "1р (2р)",
     "profileLabel": "Рапира",

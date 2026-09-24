@@ -22,7 +22,7 @@
     "rof_single": 1,
     "rof_semi": 5,
     "rof_full": 9,
-    "damage": "1d10+6",
+    "damage": "1d10+9",
     "damageType": "blast",
     "penetration": 4,
     "quality": "common",

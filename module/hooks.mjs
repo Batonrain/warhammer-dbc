@@ -1,7 +1,9 @@
 import { _performDodge, _performParry, _performSprayCancel, _performCompression, _performExtendBodyPart, _performEtherealSwarm, _performPsychicParry, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
+import { refreshParasiteHosts } from "./rules/parasite-trait.mjs";
+import { repickBornForWar } from "./migrations/born-for-war-fix.mjs";
 import { _performUnseenDetect, _performUnseenBypass } from "./combat/unseen-attack.mjs";
 import { applyCancerousHealingFromButton, APPLY_BTN_CLASS as CH_APPLY_BTN_CLASS } from "./apps/cancerous-healing.mjs";
-import { performPoolSpend, clearEvasionPools } from "./combat/evasion-pool.mjs";
+import { performPoolSpend, clearEvasionPools, spendPoolSuccesses } from "./combat/evasion-pool.mjs";
 import { showRecoilDialog, performRecoil, performPoolRecoil } from "./combat/recoil.mjs";
 import { rollOverpenetration } from "./combat/overpenetration.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
@@ -23,7 +25,7 @@ import { maybeGrantEnjoymentPain }       from "./combat/enjoyment.mjs";
 import { saddleTest, applyFall, showMountedDodgeDialog, resolveHitAllocation } from "./combat/mount.mjs";
 import { resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity } from "./combat/weapon-properties.mjs";
 import { conditionLevelField, CONDITIONS_DEF } from "./constants/conditions.mjs";
-import { conditionApplyFields } from "./sheets/tabs/conditions.mjs";
+import { conditionApplyFields, setFatigue } from "./sheets/tabs/conditions.mjs";
 import { rollHallucinogenicEffect } from "./combat/hallucinogenic.mjs";
 import { rollSuppressionTest, rollSuppressionRecovery, postSuppressionRecoveryPrompt, applySuppressionProne } from "./combat/suppression.mjs";
 import { clearFeintAtTurnEnd } from "./combat/feint-press.mjs";
@@ -48,9 +50,10 @@ import { getModEffects, mergeWeaponPropEntries } from "./combat/weapon-mods.mjs"
 import { fatalismBlocksPower } from "./rules/fatalism.mjs";
 import { everYouthfulBlocksPower } from "./rules/ever-youthful.mjs";
 import { eaterOfPainBenefitUpdate, eaterOfPainChoiceButtonsHtml } from "./rules/eater-of-pain.mjs";
-import { fateTerm, esc }                 from "./helpers/utils.mjs";
+import { fateTerm, esc, resolveCharFormula } from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
 import { postTestCard, rollStatLine }    from "./helpers/test-card.mjs";
+import { injectSoulfireButtons }          from "./combat/soulfire.mjs";
 import { registerActorSetupHook }        from "./apps/actor-setup.mjs";
 import { resolvePendingSusAnHeals }      from "./apps/sus-an-heal.mjs";
 import { decayAblativeApShieldOnNewRound } from "./apps/ablative-ap-shield.mjs";
@@ -67,9 +70,13 @@ import { placeVortexZone, processVortexTurnStart, clearAllVortexZones, reactToVo
 import { placeSmokeZone } from "./regions/difficult-terrain.mjs";
 import { findArcTarget } from "./combat/arc.mjs";
 import { findThroughShotTarget } from "./combat/through-shot.mjs";
-import { resetActionEconomy, applyTurnEndStanceEffects, applyAimFocusTurnEnd, postTurnStartCard, spendActionPoints } from "./combat/action-economy.mjs";
+import { resetActionEconomy, applyTurnEndStanceEffects, applyAimFocusTurnEnd, postTurnStartCard, spendReaction } from "./combat/action-economy.mjs";
+import { MELEE_CONTESTS } from "./constants/combat.mjs";
+import { _showContestDialog } from "./combat/techniques.mjs";
+import { resolveKnockdownSuccess, knockdownForbidden, knockdownSizePenalty, knockdownResistMods } from "./combat/knockdown.mjs";
 import { shouldOfferRapidReaction, postRapidReactionPrompt, rollRapidReactionTest } from "./combat/rapid-reaction.mjs";
-import { isDevourerOfTimeExtraTurn, devourerOfTimeVictimUuids } from "./combat/devourer-of-time.mjs";
+import { isDevourerOfTimeExtraTurn, processDevourerOfTimeExtraTurn, processDevourerOfTimeRoundChange,
+         clearDevourerOfTimeAtCombatEnd } from "./combat/devourer-of-time.mjs";
 import { BLESSED_FITS_CAPABILITY, BLESSED_FITS_PENDING_FLAG } from "./rules/blessed-fits.mjs";
 import { clearDreadWailWeaponBuff } from "./combat/dread-wail.mjs";
 import { clearBowToAudienceMark } from "./combat/bow-to-audience.mjs";
@@ -97,13 +104,19 @@ import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { processConditionTurnStart, processConditionTurnEnd } from "./combat/condition-ticks.mjs";
 import { sweepConditionDurations } from "./combat/condition-effects.mjs";
-import { conditionExpiryLine, postConditionCard } from "./combat/condition-ticks.mjs";
+import { conditionExpiryLine, postConditionCard, setBurningDamageFormula } from "./combat/condition-ticks.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart,
          processPreparedRuneCombatStart } from "./rules/sigillite-runes-combat.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
 import { setDeceased } from "./sheets/tabs/body.mjs";
 import { clearBloodFlameBuffs } from "./combat/blood-flame.mjs";
+import { clearLegacyKillerBuffs } from "./combat/legacy-weapon-killer.mjs";
+import { clearLegacyPunisherStacks, markLegacyDeadlyTrapUsed } from "./rules/legacy-weapon.mjs";
+import { activateLegacyRegroup, processLegacyRegroupRoundStart } from "./combat/legacy-weapon-regroup.mjs";
+import { activateSabreSecondAttack, clearSabreSecondAttackAtTurnEnd } from "./combat/sabre-second-attack.mjs";
+import { rollStunningLegacyCheck } from "./combat/legacy-weapon-stunning.mjs";
+import { rollLegacyReaperTest } from "./combat/legacy-weapon-reaper.mjs";
 import { clearTaintedBladeBuffs } from "./combat/wrapped-in-chaos.mjs";
 import { huntReturnToWarpButtonHtml } from "./combat/the-hunter.mjs";
 import { isHunterHoundActor } from "./rules/the-hunter.mjs";
@@ -114,11 +127,16 @@ import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
 import { WC_CODE } from "./constants/ship.mjs";
 import { registerDelegatedTestOpener, openDelegatedTest, activeOwnerOf, requestDelegatedTest, openDelegatedTestDirect } from "./rules/delegate-test.mjs";
-import { skillTotal, resolveVaultContestClick } from "./combat/movement-actions.mjs";
+import { skillTotal, resolveVaultContestClick, declareLegacyBraveHeartMove, resolveLegacyBraveDisengageContest } from "./combat/movement-actions.mjs";
 import { showHealingDialog } from "./sheets/tabs/healing.mjs";
 import { rollInfoguard } from "./apps/infoguard.mjs";
 import { CHARACTERISTICS } from "./constants/characteristics.mjs";
 import { SKILLS_DEF } from "./constants/skills.mjs";
+import { performUnarmedRiposte } from "./combat/unarmed-combat.mjs";
+import { resolveResistClick } from "./combat/opposed-contest.mjs";
+import { maybeAutoReleaseGrapple, grappleReleaseTriggered } from "./combat/grapple.mjs";
+import { weaponProfiles } from "./combat/weapon-profiles.mjs";
+import { isIntegralAttack } from "./combat/equipped-melee.mjs";
 import { collectTestMods } from "./rules/roll-mods.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
@@ -223,6 +241,10 @@ export function registerHooks() {
 
   // ── Обработчики кнопок в чате ────────────────────────────────────────────
   Hooks.on("renderChatMessageHTML", (message, html, data) => {
+
+    // Огонь Души (module/combat/soulfire.mjs) — кнопка силы рядом с каждой
+    // кнопкой урона E(Fl), если атакующий — свой псайкер с этой силой.
+    injectSoulfireButtons(html);
 
     // Состояние, наложенное Ритуалом (module/apps/ritual-cast.mjs) — пилюля
     // в карточке успешного проведения; ГМ тащит её на лист актора, которому
@@ -411,6 +433,17 @@ export function registerHooks() {
     // успешного дистанционного Уклонения, что и Отскок выше — оружия достаточно
     // резолвить по itemUuid, актор-стрелок карточке не нужен (вторую цель
     // выбирает ГМ на карточке применения урона).
+    // «Ты рождён для войны» (wdbc-o28t): переспросить выбор вместо снятой
+    // «+3 Стойкости» — патч предмета, диалог задаёт штатный applyItemMechanics.
+    html.querySelectorAll(".wh-bfw-repick-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const b = ev.currentTarget;
+        b.disabled = true;
+        await repickBornForWar(b.dataset.itemUuid);
+      });
+    });
+
     html.querySelectorAll(".wh-overpenetration-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
@@ -479,6 +512,32 @@ export function registerHooks() {
         const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
         const attackId = ev.currentTarget.dataset.attackId || "";
         await _performCompression(actor, location, attackerUuid, attackId);
+      });
+    });
+
+    // Посох/Крюк, Реакция «Повалить» (core.json, «Типы Рукопашного Оружия») —
+    // это Реакция АТАКУЮЩЕГО, поэтому актор резолвится по data-attacker-uuid
+    // карточки (тот же приём, что .wh-recoil-btn/.wh-soulburn-btn), а не через
+    // requireControlledActor (тот выбирает ЗАЩИЩАЮЩЕГОСЯ). Обычный
+    // spendReaction без forDefense/attackId — свой отдельный пул Реакций
+    // атакующего, не гейт «одна Реакция на одно чужое Действие».
+    html.querySelectorAll(".wh-reaction-knockdown-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
+        const actor = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
+        if (!actor) return ui.notifications.warn("⚠️ Атакующий персонаж карточки не найден.");
+        const target = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+        if (target && knockdownForbidden(actor, target)) {
+          return ui.notifications.warn(`⚠️ Повалить: нельзя проводить против ${target.name} — цель на 2+ Размера крупнее (стр. 14).`);
+        }
+        // Реакция — после запрета по Размеру: запрет не съедает её (приёмка #516).
+        if (!await spendReaction(actor)) return ui.notifications.warn("⚠️ Не хватает Реакций.");
+        const sizePenalty = target ? knockdownSizePenalty(actor, target) : 0;
+        await _showContestDialog(actor, { ...MELEE_CONTESTS.knockdown, onSuccess: resolveKnockdownSuccess,
+          resistMods: (opp, me) => knockdownResistMods(me, opp),
+          defaultMod: sizePenalty,
+          note: sizePenalty ? `${MELEE_CONTESTS.knockdown.note} Подсказанный штраф за Размер: ${sizePenalty}.` : MELEE_CONTESTS.knockdown.note });
       });
     });
 
@@ -596,6 +655,27 @@ export function registerHooks() {
       });
     });
 
+    // Захват (стр. 12, wdbc-x1nz.2.66.13): «−30 Парирования (или +3 Успеха от
+    // предыдущего Парирования)» — тратит 3 из банка (тот же банк, что у
+    // wh-pool-spend-btn/wh-pool-recoil-btn) и парирует БЕЗ штрафа Приёма
+    // (extraMod: 0, не −30 обычной кнопки Парирования выше).
+    html.querySelectorAll(".wh-pool-grapple-parry-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
+        if (!actor) return;
+        const ds = { ...ev.currentTarget.dataset };
+        if (!await confirmHordeDefense(actor, "Парирование")) return;
+        const spent = await spendPoolSuccesses(actor, ds.attackerUuid || "", 3);
+        if (!spent) return ui.notifications.warn("⚠️ Пул неизрасходованных Успехов пуст или устарел (сменился Ход).");
+        await _performParry(actor, {
+          extraMod: 0, attackerUuid: ds.attackerUuid || "",
+          hitsCount: parseInt(ds.hitsCount || "1"), isMelee: ds.melee !== "0",
+          attackerWeaponUuid: ds.attackerWeaponUuid || "", attackId: ds.attackId || ""
+        });
+      });
+    });
+
     // Контратака (стр. 12, Талант Counter Attack): успешное Парирование
     // предлагает тут же ударить в ответ тем же оружием — по выбору игрока.
     // Раз-в-Раунд метится в момент клика (не после броска): открывшийся
@@ -640,7 +720,34 @@ export function registerHooks() {
         // снимает этот штраф целиком.
         const cwProps    = resolveWeaponPropsList(mergeWeaponPropEntries(weapon, getModEffects(actor, weapon)));
         const counterMod = aggregateAuto(cwProps).duelingParry ? 0 : -10;
-        await actor.sheet._showAttackDialog?.(weapon, { modifier: counterMod, forceBase: "standard" });
+        // Парировал стрелковым как рукопашным (Безоружный Бой, wdbc-x1nz.2.71) —
+        // контратакует им же «Ударить оружием», а не выстрелом.
+        const improvisedIdx = el.dataset.improvised === "1"
+          ? weaponProfiles(weapon, { isIntegralAttack }).findIndex(p => p.generated && p.melee) : -1;
+        await actor.sheet._showAttackDialog?.(weapon, {
+          modifier: counterMod, forceBase: "standard",
+          ...(improvisedIdx >= 0 ? { profileIdx: improvisedIdx } : {})
+        });
+      });
+    });
+
+    // Ответный удар по безоружной атаке (core.json, «Безоружный Бой»,
+    // wdbc-x1nz.2.69): 2 Успеха Парирования → урон своего оружия с S.b
+    // атакующего в его атакующую конечность. Бьёт тот, кто парировал.
+    html.querySelectorAll(".wh-unarmed-riposte-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const cardUuid = el.closest(".wh-roll-result")?.dataset.actorUuid;
+        const actor = cardUuid ? (await fromUuid(cardUuid).catch(() => null)) : null;
+        if (!actor) return ui.notifications.warn("⚠️ Парировавший персонаж карточки не найден.");
+        el.disabled = true;
+        const ds = el.dataset;
+        await performUnarmedRiposte(actor, {
+          weaponId: ds.weaponId, improvised: ds.improvised === "1",
+          attackerUuid: ds.attackerUuid || "", attackerWeaponUuid: ds.attackerWeaponUuid || "",
+          banked: ds.banked === "1"
+        });
       });
     });
 
@@ -653,7 +760,7 @@ export function registerHooks() {
         const extraMod = parseInt(ev.currentTarget.dataset.extraMod || "0");
         const hitsCount = parseInt(ev.currentTarget.dataset.hitsCount || "1");
         const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
-        await _performSwerve(actor, { extraMod, hitsCount, attackerUuid });
+        await _performSwerve(actor, { extraMod, hitsCount, attackerUuid, attackId: ev.currentTarget.dataset.attackId || "" });
       });
     });
 
@@ -951,8 +1058,14 @@ export function registerHooks() {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
         const ds = ev.currentTarget.dataset;
+        // Щит вне арки (core.json, «Типы Рукопашного Оружия») — галочка
+        // рядом с кнопкой (attack-card.mjs::shieldArcCheckbox), тот же приём
+        // чтения соседнего DOM, что у .wh-dmg-swap-btn выше в этом файле.
+        const shieldOutOfArc = !!ev.currentTarget.closest(".roll-dmg-hit-group")
+          ?.querySelector(".wh-shield-out-of-arc-checkbox")?.checked;
         const damageData = {
           rawDamage:    parseInt(ds.damage      || "0"),
+          shieldOutOfArc,
           penetration:  parseInt(ds.penetration || "0"),
           damageType:   ds.damageType  || "impact",
           damageSubtype: ds.damageSubtype || "",
@@ -968,6 +1081,13 @@ export function registerHooks() {
           felling:      parseInt(ds.felling || "0"),
           primitive:    ds.primitive    === "1",
           ignoreShield: ds.ignoreShield === "1",
+          ignoreDomeShields: ds.ignoreDomeShield === "1",
+          // Огонь Души (combat/soulfire.mjs) ставит атрибут, усилив попадание.
+          ignoreSubtypeImmunity: ds.ignoreSubtypeImmunity === "1",
+          stunManeuver: ds.stunManeuver === "1",
+          // Оппортунист (wdbc-1rno.35): data-opportunist-floor ставит attack-card.mjs,
+          // без этой строки damage.mjs всегда брал флэт-1 (приёмка #516).
+          opportunistFloor: ds.opportunistFloor === "1",
           warpSoak:     ds.warpSoak     === "1",
           lance:        ds.lance        === "1",
           sanctified:   ds.sanctified   === "1",
@@ -1010,7 +1130,10 @@ export function registerHooks() {
           // Экстремальный Урон (стр. 34, wdbc-x1nz.2.50): «1 непоглощаемого
           // урона», если после Поглощения реального урона не осталось —
           // считается в applyDamageToActor/applyDamageToVehicle.
-          hasExtreme:      ds.hasExtreme === "1"
+          hasExtreme:      ds.hasExtreme === "1",
+          // Карточка, с которой пришёл урон: к ней привязывается итог
+          // пробития брони для кнопок Rad/Toxic той же карточки (wdbc-x1nz.2.79).
+          sourceMessageId: message?.id ?? ""
         };
         // «Прячась в Орде»: попадание уже расписано в Орду — цель не выбирается.
         if (ds.forceHorde) {
@@ -1138,6 +1261,8 @@ export function registerHooks() {
             felling:      parseInt(ds.felling || "0"),
             primitive:    ds.primitive    === "1",
             ignoreShield: ds.ignoreShield === "1",
+            ignoreDomeShields: ds.ignoreDomeShield === "1",
+            stunManeuver: ds.stunManeuver === "1",
             warpSoak:     ds.warpSoak     === "1",
             lance:        ds.lance        === "1",
             sanctified:   ds.sanctified   === "1",
@@ -1222,8 +1347,8 @@ export function registerHooks() {
         const ds = ev.currentTarget.dataset;
         const primaryToken = canvas.tokens?.controlled?.[0];
         if (!primaryToken?.actor) return ui.notifications.warn("⚠️ Выберите токен поражённой цели на сцене!");
-        const attackerToken = ds.attackerUuid
-          ? (await fromUuid(ds.attackerUuid).catch(() => null))?.getActiveTokens?.(false)?.[0] : null;
+        const attackerActor = ds.attackerUuid ? await fromUuid(ds.attackerUuid).catch(() => null) : null;
+        const attackerToken = attackerActor?.getActiveTokens?.(false)?.[0] ?? null;
         const candidates = canvas.tokens.placeables.filter(t => t !== primaryToken && t !== attackerToken);
         const target = findArcTarget(primaryToken, candidates, 5);
         if (!target?.actor) return ui.notifications.info("⚡ В радиусе 5м от цели никого нет — Дуга не сработала.");
@@ -1231,12 +1356,15 @@ export function registerHooks() {
         // «Arc(6/2d10)») — раньше parseInt() тихо обрезал её до первой цифры
         // («2d10» → 2), теперь дайс-паттерн бросается по-честному; голое
         // число (подавляющее большинство существующего оружия) — как раньше.
-        const arcFormula = ds.arcDamage || "0";
-        const isDiceArc  = /\d+d\d+/i.test(arcFormula);
+        // Бонус характеристики стрелка в Y (Электродуга: «Arc (7/2d10+T.b)»,
+        // wdbc-rmrm9) — подставляется до броска, Roll() «T.b» не понимает.
+        const arcFormula = resolveCharFormula(ds.arcDamage || "0",
+          attackerActor?.system?.characteristics, attackerActor?.system?.corruptionBonus ?? 0);
+        const isDiceArc  = !/^\s*\d+\s*$/.test(arcFormula);
         const arcRoll    = isDiceArc ? await new Roll(arcFormula).evaluate() : null;
         const arcDamage  = isDiceArc ? arcRoll.total : (parseInt(arcFormula) || 0);
         await applyDamageToActor(target.actor, {
-          rawDamage: arcDamage, penetration: arcDamage, damageType: "energy", hitLocation: "Торс",
+          rawDamage: arcDamage, penetration: arcDamage, damageType: "energy", damageSubtype: "electrical", hitLocation: "Торс",
           weaponName: ds.weaponName || "", attackerName: ds.attacker || "", attackerUuid: ds.attackerUuid || ""
         });
         if (isDiceArc) {
@@ -1295,7 +1423,9 @@ export function registerHooks() {
     html.querySelectorAll(".wh-wprop-apply-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
-        await _applyWeaponPropEffect(ev.currentTarget.dataset);
+        // Shift — ГМ накладывает эффект «при пробитии» вручную, минуя
+        // проверку пробития (wdbc-x1nz.2.79): урон применён мимо системы и т.п.
+        await _applyWeaponPropEffect(ev.currentTarget.dataset, { messageId: message?.id ?? "", force: ev.shiftKey });
       });
     });
 
@@ -1490,8 +1620,16 @@ export function registerHooks() {
         el.disabled = true;
         const choice = el.dataset.choice;
         const roll = await new Roll(el.dataset.dice || "1d5").evaluate();
-        const update = eaterOfPainBenefitUpdate(eater.system, choice, roll.total);
-        if (Object.keys(update).length) await eater.update(update);
+        if (choice === "fatigue") {
+          // Единый путь смены Усталости (wdbc-x1nz.2.95): setFatigue сам
+          // выводит из обморока от Усталости и пишет карточку «приходит в
+          // себя» — чистая eaterOfPainBenefitUpdate карточку дать не может.
+          const cur = Number(eater.system?.fatigue?.value) || 0;
+          await setFatigue(eater, Math.max(0, cur - (Number(roll.total) || 0)));
+        } else {
+          const update = eaterOfPainBenefitUpdate(eater.system, choice, roll.total);
+          if (Object.keys(update).length) await eater.update(update);
+        }
         const labels = { fatigue: "Усталость снята", wounds: "Раны исцелены", char: "Характеристики восстановлены" };
         await postTestCard(eater, {
           icon: rollIcon("heart", "#ff6bd6"), title: `Пожиратель Боли — ${esc(eater.name)}`,
@@ -1615,6 +1753,17 @@ export function registerHooks() {
       });
     });
 
+    // Встречный тест приёма (wdbc-x1nz.2.73): противник бросает сам по
+    // кнопке в карточке инициатора — combat/opposed-contest.mjs.
+    html.querySelectorAll(".wh-contest-resist-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        el.disabled = true;
+        await resolveResistClick({ ...el.dataset });
+      });
+    });
+
     // Вольт (стр. 30, wdbc-x1nz.2.37) — каждый враг проверяет WS+0 против уже
     // готового броска вольтующего своей кнопкой.
     html.querySelectorAll(".wh-vault-contest-btn").forEach(btn => {
@@ -1624,6 +1773,97 @@ export function registerHooks() {
         el.disabled = true;
         const ds = el.dataset;
         await resolveVaultContestClick(ds.moverUuid, Number(ds.moverScore) || 0, ds.enemyUuid);
+      });
+    });
+
+    // Перегруппировка, Оружие Наследия (wdbc-1rno.35, стр. 427) — кнопка на
+    // карточке атаки, тратит Очко Бесчестия сразу, сам переброс — на смене
+    // Раунда (combat/legacy-weapon-regroup.mjs::processLegacyRegroupRoundStart).
+    html.querySelectorAll(".wh-legacy-regroup-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        await activateLegacyRegroup(ev.currentTarget.dataset.attackerUuid);
+      });
+    });
+
+    // Сабля, вторая атака Верховой Атаки (wdbc-f6j9y) — кнопка на карточке
+    // первой атаки; все условия (метка, свой Ход, другая цель) проверяет
+    // combat/sabre-second-attack.mjs, окно атаки — обычное, в режиме второй.
+    html.querySelectorAll(".wh-sabre-second-attack-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        await activateSabreSecondAttack(ds.attackerUuid, ds.itemId);
+      });
+    });
+
+    // Ошеломляющее, Оружие Наследия, стрелковая ветка (wdbc-1rno.35, стр.
+    // 427) — кнопка на карточке успешного дистанционного Уклонения.
+    html.querySelectorAll(".wh-legacy-stunning-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        const item = ds.itemUuid ? await fromUuid(ds.itemUuid).catch(() => null) : null;
+        const defenderActor = ds.defenderUuid ? await fromUuid(ds.defenderUuid).catch(() => null) : null;
+        await rollStunningLegacyCheck(item, defenderActor);
+      });
+    });
+
+    // Жнец, Оружие Наследия (wdbc-1rno.35, стр. 428) — кнопка на карточке
+    // непоглощённого урона от оружия с этой Мутацией.
+    html.querySelectorAll(".wh-legacy-reaper-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        const item = ds.itemUuid ? await fromUuid(ds.itemUuid).catch(() => null) : null;
+        const defenderActor = ds.defenderUuid ? await fromUuid(ds.defenderUuid).catch(() => null) : null;
+        await rollLegacyReaperTest(item, defenderActor);
+      });
+    });
+
+    // Лучшая Часть Отваги, Оружие Наследия, стрелковая ветка (wdbc-1rno.35,
+    // стр. 427) — кнопка на карточке урона АТАКУЮЩЕЙ стороны: свободное
+    // Полудвижение (module/combat/movement-actions.mjs).
+    html.querySelectorAll(".wh-legacy-brave-heart-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const actor = await fromUuid(ev.currentTarget.dataset.actorUuid).catch(() => null);
+        await declareLegacyBraveHeartMove(actor);
+      });
+    });
+
+    // Лучшая Часть Отваги, рукопашная ветка — второй шаг встречного теста
+    // (Charm/Inf vs Per), тот же двухшаговый приём, что Вольт выше.
+    html.querySelectorAll(".wh-legacy-brave-contest-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        el.disabled = true;
+        const ds = el.dataset;
+        await resolveLegacyBraveDisengageContest(ds.actorUuid, ds.enemyUuid, ds.charKey, Number(ds.myRoll) || 0, Number(ds.myTotal) || 0);
+      });
+    });
+
+    // Смертельная Ловушка, Оружие Наследия (wdbc-1rno.35, стр. 427) — правит
+    // data-damage соседней .wh-apply-dmg-btn прямо в DOM, тем же приёмом,
+    // что Кубик→Успехи (.wh-dmg-swap-btn) выше; раз-в-бой — сервер-флаг.
+    html.querySelectorAll(".wh-legacy-deadly-trap-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const ds = el.dataset;
+        const applyBtn = el.closest(".roll-dmg-hit-group")?.querySelector(".wh-apply-dmg-btn");
+        if (applyBtn) {
+          const current = parseInt(applyBtn.dataset.damage) || 0;
+          const next = current + (parseInt(ds.delta) || 0);
+          applyBtn.dataset.damage = String(next);
+          const b = applyBtn.querySelector("b");
+          if (b) b.textContent = String(next);
+        }
+        el.disabled = true;
+        el.textContent = "🪤 Смертельная Ловушка применена";
+        const actor = ds.attackerUuid ? await fromUuid(ds.attackerUuid).catch(() => null) : null;
+        if (actor) await markLegacyDeadlyTrapUsed(actor);
       });
     });
 
@@ -1746,7 +1986,7 @@ async function _applyShipHullDamage(dmg) {
 // Экспорт с подчёркиванием — тот же приём, что _resolveSoulBurn выше:
 // внутренняя функция обработчика клика, но тестируемая напрямую (wdbc-5tz),
 // без симуляции самого клика по карточке чата.
-export async function _applyWeaponPropEffect(ds) {
+export async function _applyWeaponPropEffect(ds, { messageId = "", force = false } = {}) {
   // forceActorUuid (wdbc-z5mn) — цель уже известна на 100% (Встречная атака:
   // Shocking у Электродуги бьёт по нападающему, не по выбранному на сцене
   // токену) — тот же приём, что data-force-target у кнопки урона выше:
@@ -1852,6 +2092,27 @@ export async function _applyWeaponPropEffect(ds) {
     }, rollMode));
   }
 
+  // «При пробитии брони» (Rad/Toxic/Сновидение/Погибель; стр. 42,
+  // wdbc-x1nz.2.79): эффект срабатывает, только если урон ЭТОЙ карточки,
+  // применённый к цели, пробил её броню (combat/damage.mjs пишет итог во
+  // flags.lastBreach). Технику и Орду не проверяем — у них свой учёт брони,
+  // пробитие там не считается. Shift-клик — ГМ накладывает вручную.
+  if (ds.wpOnBreach === "1" && !force && messageId && actor.type !== "vehicle" && actor.type !== "horde") {
+    const rec = actor.getFlag?.("warhammer-dbc", "lastBreach");
+    if (rec?.messageId !== messageId) {
+      return ui.notifications.warn(`⚠️ ${label}: сначала примените урон этой атаки к ${actor.name} — эффект срабатывает только при пробитии брони (Shift — наложить вручную).`);
+    }
+    if (!rec.breached) {
+      return ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor }),
+        content: `<div class="wh-roll-result">
+          <div class="roll-header">${label} → ${esc(actor.name)}</div>
+          <div class="roll-outcome"><span class="roll-success">Броня не пробита — эффект не применён</span></div>
+        </div>`
+      });
+    }
+  }
+
   const allRolls = [];
 
   // Тест сопротивления цели (если задана характеристика)
@@ -1954,6 +2215,9 @@ export async function _applyWeaponPropEffect(ds) {
     // наложилось (не погашено иммунитетом цели в блоке выше).
     if (condition === "burning" && actor.system.conditions?.burning) {
       await actor.update({ "system.conditions.burningSourceDamage": dmg });
+      // «Некоторые источники пламени наносят больше урона» (Статусы, «Огонь»,
+      // wdbc-x1nz.2.93): тик Горения бьёт формулой источника, а не 1d10.
+      await setBurningDamageFormula(actor, dmgFormula);
     }
     // Гиперрост (wdbc-utaw): этот же тик яда, если он от боеприпаса
     // «Гиперрост» именно — цель получает столько же аблативных Ран.
@@ -2008,7 +2272,7 @@ export async function _resolveSoulBurn(attackerId) {
 
 // Опозный тест W+tPR×5 vs W+tPR×5. При победе псайкера — d10 непоглощаемого
 // E Dmg за каждый чистый Успех, напрямую в Раны цели (минуя броню и T.b).
-async function _executeSoulBurn(attacker, target) {
+export async function _executeSoulBurn(attacker, target) {
   const allRolls = [];
 
   // Встречные тесты Воли обеих сторон — оба через общий сбор (wdbc-ct65.2):
@@ -2021,7 +2285,11 @@ async function _executeSoulBurn(attacker, target) {
 
   const tWp = target.system.characteristics?.wp?.total ?? 0;
   const tPr = target.system.psyker?.currentRating ?? 0;
-  const tMods = collectTestMods(target, { kind: "skill", char: "wp" });
+  // Наследие Крови, Оружие Наследия (wdbc-1rno.35/.46, стр. 427): «+10 на
+  // все встречные тесты против выжигания души» — только у ЦЕЛИ этого
+  // конкретного встречного теста (эффекты target:"psychicThreat" в реестре
+  // правил), не у самого псайкера — pMods выше нарочно без этого флага.
+  const tMods = collectTestMods(target, { kind: "skill", char: "wp", psychicThreat: true });
   const tEff = tWp + 5 * tPr + tMods.total;
 
   // Бросок псайкера
@@ -2365,6 +2633,9 @@ function _attachFateContextMenu(message, html) {
         await actor.unsetFlag("warhammer-dbc", ROUND_DAMAGE_FLAG);
     }
     await resolvePendingSusAnHeals(combat);
+    // Пожиратель Времени (wdbc-xzfp): доп. Ход — только «первый Ход в бою»,
+    // отыгранный снимается сменой Раунда.
+    await processDevourerOfTimeRoundChange(combat);
     // Spirit Talk/Духовный Разговор (wdbc-q30d): захваченный конструкт
     // держит инициативу сразу за кастером каждый Раунд, пока не истекут
     // F.b — та же смена Раунда, ГМ пишет.
@@ -2383,6 +2654,10 @@ function _attachFateContextMenu(message, html) {
     // fight.mjs::determinationToFightWsReduction/ParryBonus до следующей
     // смены Раунда.
     await snapshotStanceForRoundStart(combat);
+    // Перегруппировка, Оружие Наследия (wdbc-1rno.35, стр. 427): переброс
+    // Инициативы, отложенный кнопкой карточки атаки до этой самой смены
+    // Раунда (combat/legacy-weapon-regroup.mjs).
+    await processLegacyRegroupRoundStart(combat);
   });
 
   // Бой кончился раньше, чем подошёл отложенный Раунд Сус-ан Мембраны —
@@ -2435,13 +2710,23 @@ function _attachFateContextMenu(message, html) {
     // Адаптация (wdbc-q0q8, Панцирь) — накопленные за бой бонусы AP по видам
     // урона живут строго «до конца боя», та же логика, что у Ртути выше.
     await clearAdaptationBonuses(combat);
+    // Пожиратель Времени (wdbc-xzfp): жертвы, отметка Раунда и неиспользованный
+    // долг ОД — строго «до конца боя».
+    await clearDevourerOfTimeAtCombatEnd(combat);
     // Очко «Ока Зависти» — та же уборка по концу боя, что у меток Ртути и
     // бонусов Адаптации: временный запас не должен переживать бой.
     await clearEyeOfEnvyOnCombatEnd(combat);
+    // Убийца, Оружие Наследия (wdbc-1rno.35, стр. 427): временный Felling
+    // возвращается к исходному рейтингу по концу боя (combat/legacy-weapon-
+    // killer.mjs — сканирует предметы всех комбатантов сама).
+    await clearLegacyKillerBuffs(combat);
     // Щит по состоянию Хода — предмет, а не флаг: «забытый» после боя
     // щит-дефлектор видно в инвентаре и он выглядел бы настоящим.
     for (const combatant of combat.combatants ?? []) {
       if (combatant.actor) await clearTurnStateShields(combatant.actor);
+      // Каратель, Оружие Наследия (wdbc-1rno.35, стр. 428): накопленный
+      // штраф на цели — та же логика «до конца боя», что у щита выше.
+      if (combatant.actor) await clearLegacyPunisherStacks(combatant.actor);
     }
   });
 
@@ -2647,6 +2932,9 @@ function _attachFateContextMenu(message, html) {
         // Финт (стр. 31, wdbc-x1nz.2.65): «до конца ЕГО Хода» — снимается
         // здесь, на конце Хода атаковавшего, не цели.
         await clearFeintAtTurnEnd(prevActor);
+        // Сабля (wdbc-f6j9y): несовершённая вторая атака Верховой Атаки
+        // сгорает с концом Хода всадника.
+        await clearSabreSecondAttackAtTurnEnd(prevActor);
         // Кровотечение/Горение (wdbc-j3yf) — книга бьёт ими «в конце своего
         // Хода», не в начале следующего.
         await processConditionTurnEnd(prevActor);
@@ -2705,18 +2993,12 @@ function _attachFateContextMenu(message, html) {
       // тот же такт и та же геометрия, что у Стервятника выше.
       await processIrradiatedTurnStart(nextCombatant.actor, nextCombatant.token);
       // Пожиратель Времени/Devourer of Time (Тзинч, wdbc-1rno): «застигнутые
-      // Врасплох теряют полудействие в [обладателя дара] второй Ход» — этот
-      // такт срабатывает именно тогда, когда начинается доп. Ход самой
-      // находки (isDevourerOfTimeExtraTurn), а не обычный Ход чемпиона —
-      // доп. Combatant повторяется каждый раунд сам (combat/extra-turn.mjs),
-      // так что потеря ОД у жертв повторяется вместе с ним без отдельного
-      // счётчика раундов. Жертвы могут не иметь токена в этой сцене/уже
-      // выйти из боя — fromUuid тогда просто не находит актора, пропуск.
+      // Врасплох теряют полудействие в [обладателя дара] второй Ход» — такт
+      // начала именно доп. Хода находки. Жертвы свой Ход к этому моменту
+      // уже отыграли, поэтому это ДОЛГ на их следующий Ход, а не списание
+      // сейчас (wdbc-xzfp, combat/devourer-of-time.mjs).
       if (isDevourerOfTimeExtraTurn(nextCombatant)) {
-        for (const uuid of devourerOfTimeVictimUuids(nextCombatant.actor)) {
-          const victim = await fromUuid(uuid).catch(() => null);
-          if (victim) await spendActionPoints(victim, 1);
-        }
+        await processDevourerOfTimeExtraTurn(combat, nextCombatant);
       }
       // Временные эффекты Шамана Зверолюдей (wdbc-xxb7) — «до начала
       // следующего Хода ШАМАНА» (не получателя), тем же тактом.
@@ -2753,6 +3035,18 @@ function _attachFateContextMenu(message, html) {
     await syncInventoryOverloadTimer(actor);
   });
 
+  // Слияние с Паразитом (wdbc-bjy1.14): хост берёт числа паразита в своём
+  // prepareDerivedData — любое изменение паразита (сам актор, его предметы и
+  // эффекты) пересчитывает хостов. На каждом клиенте: пересчёт локальный.
+  Hooks.on("updateActor", actor => { refreshParasiteHosts(actor); });
+  for (const hook of ["createItem", "updateItem", "deleteItem", "createActiveEffect", "updateActiveEffect", "deleteActiveEffect"]) {
+    Hooks.on(hook, doc => {
+      const owner = doc?.parent?.documentName === "Actor" ? doc.parent
+        : doc?.parent?.parent?.documentName === "Actor" ? doc.parent.parent : null;
+      if (owner) refreshParasiteHosts(owner);
+    });
+  }
+
   // ── Таймер периодического теста Перевеса инвентаря (стр. 27) ────────────
   // (combat/encumbrance.mjs) — в отличие от Перевеса ВЫКЛЮЧЕННОЙ силовой
   // брони выше (тот зависит только от веса самой брони и характеристик,
@@ -2787,6 +3081,16 @@ function _attachFateContextMenu(message, html) {
   // а не обработчик на каждом месте. userId-гвард — иначе каждый подключённый
   // клиент запустил бы свой пересчёт и свою запись поверх других (см.
   // doombc-foundry-v13-gotchas, «Multi-client hook duplication»).
+  // Борьба (стр. 12, wdbc-x1nz.2.74): Атакующий «автоматически выпускает, когда
+  // он Оглушен, в Ступоре, или Беспомощен». Тот же userId-гвард: снимает
+  // Захват только клиент, поставивший Состояние. Повод — grappleReleaseTriggered:
+  // там же Без сознания, чья Беспомощность производная и в changes не приходит
+  // (wdbc-x1nz.2.88 п.3).
+  Hooks.on("updateActor", async (actor, changes, options, userId) => {
+    if (game.user.id !== userId) return;
+    if (!grappleReleaseTriggered(changes)) return;
+    await maybeAutoReleaseGrapple(actor);
+  });
   Hooks.on("updateActor", async (actor, changes, options, userId) => {
     if (game.user.id !== userId) return;
     if (actor.type !== "character") return;

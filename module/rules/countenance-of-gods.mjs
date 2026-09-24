@@ -87,6 +87,6 @@ export function buildCountenanceFearFlag(godKey, roundHint = null) {
     specialLabel: info.specialLabel,
     specialText: info.specialText,
     grantedRound: roundHint,
-    restriction: "до начала своего следующего Хода (отметьте вручную — рейтинг Страха этой способности не интегрирован в общий расчёт, тест Страха всегда запускается вручную)"
+    restriction: "до начала своего следующего Хода (метка снимается сама — rules/turn-flags.mjs; рейтинг Страха этой способности не интегрирован в общий расчёт, тест Страха всегда запускается вручную)"
   };
 }

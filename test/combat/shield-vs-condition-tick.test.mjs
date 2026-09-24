@@ -145,3 +145,31 @@ describe("kind:\"shieldVsCondition\" — Морозное Сердце прот�
     expect(actor.system.fatigue.value).toBe(3);       // 4-1
   });
 });
+
+// wdbc-7wn7: Морозное Сердце несёт и shieldVsCondition, и shieldArmorGate.
+// Без жёсткого нагрудника «весь щит обесточен» — при обычном попадании он из
+// отбора выпадал, а против тика Горения всё равно тушил пожар.
+describe("shieldArmorGate и тик Горения (wdbc-7wn7)", () => {
+  const gated = [{ id: "g1", operator: "AND", entries: [
+    { id: "e1", kind: "shieldVsCondition", shieldVsConditionKey: "burning" },
+    { id: "e2", kind: "shieldArmorGate" }
+  ] }];
+  const hardChest = { id: "a1", type: "armor", system: { equipped: true, body: 4, properties: ["hard"] } };
+
+  it("без жёсткого нагрудника щит обесточен — Горение не тушит, тик идёт", async () => {
+    const actor = makeActor(shieldItem({ currentRating: 99, mechanics: gated }));
+    captured.dice = [1, 5]; // 1 ≤ 99 потушил бы, если бы щит катился; 5 — тик
+    await processConditionTurnEnd(actor);
+    expect(actor.system.conditions.burning).toBe(true);
+    expect(actor.system.wounds.value).toBeLessThan(10);
+  });
+
+  it("с жёстким нагрудником — щит работает против тика", async () => {
+    const shield = shieldItem({ currentRating: 99, mechanics: gated });
+    const actor = makeActor(shield);
+    actor.items.push(hardChest); actor.items.contents.push(hardChest);
+    captured.dice = [1];
+    await processConditionTurnEnd(actor);
+    expect(actor.system.conditions.burning).toBe(false);
+  });
+});

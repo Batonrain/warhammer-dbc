@@ -36,6 +36,9 @@
       },
       {
         "key": "legion"
+      },
+      {
+        "key": "longRifle"
       }
     ],
     "needsRecharge": false,

@@ -44,6 +44,7 @@ import { simultaneousActionWinner, reactingOrderCharTotal } from "../rules/simul
 import {
   markHairTriggerUnseenPending, hairTriggerAllowedWeapon, HAIR_TRIGGER_CAPABILITY
 } from "../rules/hair-trigger.mjs";
+import { patienceLegacyOverwatchWeapon, markPatienceLegacyOverwatchPending } from "../rules/legacy-weapon.mjs";
 import { aggregateAuto, resolveWeaponProps } from "./weapon-properties.mjs";
 import { rollSuppressionTest } from "./suppression.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -244,7 +245,11 @@ export async function offerOverwatchShot(shooterActor, moverTokenDoc, { auto = t
   const hasVigilance = hasRuleFlag(shooterActor, VIGILANCE_CAPABILITY);
   const shooterChars = shooterActor.system.characteristics || {};
   const moverActor = moverTokenDoc.actor;
-  const winner = simultaneousActionWinner({
+  // Терпение/vigilant 3-4, Оружие Наследия, стрелковая ветка (wdbc-1rno.35/
+  // wdbc-1rno.41, стр. 427-428): «Оружие ВСЕГДА стреляет первым в Карауле» —
+  // не встречный тест (как Hair Trigger выше), а безусловная подмена исхода.
+  const patienceActive = patienceLegacyOverwatchWeapon(weapon);
+  const winner = patienceActive ? "reacting" : simultaneousActionWinner({
     actingCharTotal: Number(moverActor?.system?.characteristics?.ag?.total) || 0,
     reactingCharTotal: reactingOrderCharTotal(shooterChars, hasVigilance, true),
     actingInitiative: game.combat?.combatants?.find(c => c.actorId === moverActor?.id)?.initiative ?? 0,
@@ -274,8 +279,9 @@ export async function offerOverwatchShot(shooterActor, moverTokenDoc, { auto = t
     speaker: ChatMessage.getSpeaker({ actor: shooterActor }),
     content: `<div class="wh-roll-result">
       <div class="roll-header">${rollIcon("target", "#ff9d4d")}Караул — ${esc(moverTokenDoc.name)} ${auto ? "входит в сектор" : "в секторе"} ${esc(shooterActor.name)}</div>
-      <div class="roll-threshold">Очерёдность (A${hasVigilance ? "/P" : ""}, тай-брейк Инициатива): первым действует <b>${winner === "reacting" ? esc(shooterActor.name) : esc(moverTokenDoc.name)}</b> — что это значит для конкретной ситуации, решает стол.</div>
+      <div class="roll-threshold">Очерёдность (A${hasVigilance ? "/P" : ""}, тай-брейк Инициатива): первым действует <b>${winner === "reacting" ? esc(shooterActor.name) : esc(moverTokenDoc.name)}</b>${patienceActive ? " (Терпение: всегда безусловно)" : ""} — что это значит для конкретной ситуации, решает стол.</div>
       ${canHairTrigger ? `<div class="roll-threshold">Есть Hair Trigger — можно разыграть встречный тест Awareness(P)+0 vs Awareness(P)+0 за столом; победа даёт действие первым независимо от Ag и Незримый выстрел.</div>` : ""}
+      ${patienceActive ? `<div class="roll-threshold">Терпение: +30 на этот выстрел из Караула (заряжено на клик режима огня ниже).</div>` : ""}
       <div class="roll-defense-btns">${hairTriggerBtn}${buttons}</div>
     </div>`,
     sound: null
@@ -308,6 +314,12 @@ export async function resolveOverwatchFireClick(shooterUuid, moverUuid, mode) {
   const { shotsRemaining, exhausted } = applyOverwatchShot(mode, state.shotsRemaining);
   if (exhausted) await clearOverwatch(shooter);
   else await shooter.setFlag(NS, FLAG_KEY, { ...state, shotsRemaining });
+
+  // Терпение/vigilant 3-4, стрелковая ветка: «+30 на выстрелы в Карауле» —
+  // заряжается здесь (стол ещё не открыл диалог атаки), тратится в
+  // attack.mjs на фактическом броске (тот же приём, что hairTriggerUnseenPending).
+  const patienceWeapon = shooter.items.get(state.weaponId);
+  if (patienceLegacyOverwatchWeapon(patienceWeapon)) await markPatienceLegacyOverwatchPending(shooter);
 
   const moverTokenDoc = await fromUuid(moverUuid).catch(() => null);
   const moverToken = moverTokenDoc?.object;

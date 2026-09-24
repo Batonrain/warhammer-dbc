@@ -5,23 +5,25 @@
 //  Источники наложения lostX сами решают, звать ли scheduleLimbLossGangreneFields
 //  — combat/crit-effect-parser.mjs зовёт, будущая Мутация Loss of Limb
 //  (wdbc-1rno.6.1) — намеренно нет (её обрубок книга описывает уже
-//  закрытым, без риска нагноения).
+//  закрытым, без риска нагноения). Ручная постановка потери на листе
+//  (диалог/строка уровня, sheets/tabs/conditions.mjs) заводит таймер и
+//  Кровотечение сама (wdbc-x1nz.2.97).
 // ════════════════════════════════════════════════════════════════════════════
 
-import {
-  limbLossGangreneField, limbLossGangreneCheckAt, dueLimbLossGangreneKeys
-} from "../rules/limb-loss.mjs";
-import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
+import { limbLossGangreneField, dueLimbLossGangreneKeys } from "../rules/limb-loss.mjs";
+import { conditionApplyFields, stumpTimerFields } from "../sheets/tabs/conditions.mjs";
 import { CONDITIONS_DEF } from "../constants/conditions.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 
-/** Патч «запланировать проверку Гангрены обрубка через T.b дней от сейчас». */
+/**
+ * Патч «запланировать проверку Гангрены обрубка через T.b дней от сейчас».
+ * Одна реализация с ручной постановкой потери (sheets/tabs/conditions.mjs::
+ * stumpTimerFields) — там же объяснено, почему уже идущий, более ранний
+ * таймер не переносится второй потерей того же типа (wdbc-x1nz.2.97).
+ */
 export function scheduleLimbLossGangreneFields(actor, key) {
-  const field = limbLossGangreneField(key);
-  if (!field || !actor) return {};
-  const tb = actor.system?.characteristics?.t?.bonus ?? 0;
-  return { [`system.conditions.${field}`]: limbLossGangreneCheckAt(game.time.worldTime, tb) };
+  return stumpTimerFields(actor, key);
 }
 
 /** Патч «обрубок обработан вовремя» — таймер снят, Гангрена не разыгрывается. */

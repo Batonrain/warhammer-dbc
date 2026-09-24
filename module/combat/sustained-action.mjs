@@ -30,9 +30,12 @@ function apLabelFor(kind) {
  * @param {Actor} actor
  * @param {{label:string, kind:"long"|"extended", threshold:number, physical?:boolean}} opts
  *   threshold — turnsNeeded (Длительное) или testInterval (Расширенное).
+ *   physical — метка action-economy.mjs::actionBlockReason, передаётся как
+ *   есть: НЕ умолчание false, иначе любое Длительное действие считалось бы
+ *   явно не-физическим и было бы доступно Беспомощному (wdbc-x1nz.2.88).
  * @returns {?object} новая строка банка ({key,...}), либо null — не хватило ОД
  */
-export async function beginSustainedAction(actor, { label, kind, threshold, physical = false } = {}) {
+export async function beginSustainedAction(actor, { label, kind, threshold, physical } = {}) {
   const cost = apCostForActionType(apLabelFor(kind));
   if (!await spendActionPoints(actor, cost, { physical })) return null;
   const key = sustainedActionKey(label);
@@ -42,7 +45,7 @@ export async function beginSustainedAction(actor, { label, kind, threshold, phys
 }
 
 /** Продолжить на ещё один Ход — тот же расход ОД, тот же порог. */
-export async function continueSustainedAction(actor, key, { physical = false } = {}) {
+export async function continueSustainedAction(actor, key, { physical } = {}) {
   const state = actor.getFlag(FLAG_SCOPE, `${FLAG_ROOT}.${key}`);
   if (!state) return null;
   const cost = apCostForActionType(apLabelFor(state.kind));

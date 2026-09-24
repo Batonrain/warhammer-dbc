@@ -3,8 +3,8 @@ import { pickReroll } from "../rules/reroll-pick.mjs";
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { critLineHtml } from "../rules/test-kind-widget.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES }            from "../constants/items.mjs";
-import { MELEE_STANCES }                           from "../constants/combat.mjs";
-import { _getAmmoSpent, _buildAmmoModString }       from "../helpers/utils.mjs";
+import { MELEE_STANCES, parseGrips }                from "../constants/combat.mjs";
+import { _getAmmoSpent, _buildAmmoModString, esc }  from "../helpers/utils.mjs";
 import { getCriticalEffect }                        from "../../critical-tables.mjs";
 import { resolveWeaponProps, resolveWeaponPropsList, aggregateAuto,
          jamThreshold, sprayJamFace, sprayJams, buildPropertyChatBlock,
@@ -14,7 +14,10 @@ import { hitCount, hitLocation, locationForHit, meleeStrengthBonus,
          attackPenetration, damageFormulaFor, bonusDamageDice,
          attackHitOutcome }                          from "./attack-outcome.mjs";
 import { effectiveDamage, mergeExtraProps, weaponOffEffects } from "./attack-weapon.mjs";
-import { attackIsMelee } from "./weapon-profiles.mjs";
+import { attackIsMelee, FIRED_BRACED_FLAG, firedBracedHeavyIds } from "./weapon-profiles.mjs";
+import { isBraced } from "./brace-weapon.mjs";
+import { isIntegralAttack } from "./equipped-melee.mjs";
+import { grappleCoverPartner } from "./grapple.mjs";
 import { ammoIsFree } from "../rules/ammo-free.mjs";
 import { attackCard, jamCard }                      from "./attack-card.mjs";
 import { rollScatter }                               from "./scatter.mjs";
@@ -27,9 +30,10 @@ import { minionCanCauseExtremeDamage }                from "../rules/squad-roles
 import { measureTokens }                              from "./tactical-map.mjs";
 import { lockingContactTokenDocs, allContactTokenDocs } from "./free-attack.mjs";
 import { feintBlocksEvasion } from "./feint-press.mjs";
-import { resolveGrenadeMeleeFumble }                  from "./draw-action.mjs";
+import { resolveGrenadeMeleeFumble, resolveFlailMeleeFumble } from "./draw-action.mjs";
 import { hidingInHordeSplit }                        from "./horde-tokens.mjs";
 import { applyGrappleOnHit }                          from "./grapple.mjs";
+import { coveringDefendersOf, offerFreeAttack }        from "./free-attack.mjs";
 import { rollOgrynWeaponBreak, ogrynBreakNote }      from "./ogryn-weapon-break.mjs";
 import { getEvasionPool, poolAffordableHits }         from "./evasion-pool.mjs";
 import { activeSwarm }                                from "../rules/ethereal-swarm.mjs";
@@ -40,7 +44,6 @@ import { hasSixthSense, hasMusicOfBattle, hasBlindFighting, hasBackstab, isKnife
 import { isOutsideDefenderView, resolveAttackerToken } from "./facing.mjs";
 import { hasQuietElimination } from "../rules/quiet-elimination.mjs";
 import { hasJanusRearVision } from "../rules/janus.mjs";
-import { actorInfamyValue }                           from "../apps/infamy-points.mjs";
 import { sunderingDamageFormula, SUNDERING_COPY_FLAG } from "../rules/sundering.mjs";
 import { recoilRemaining as recoilPoolRemaining }     from "./recoil-pool.mjs";
 import { suppressionTestMod }                         from "./suppression.mjs";
@@ -53,15 +56,19 @@ import { touchOfPainActive } from "./touch-of-pain.mjs";
 import { withWitchsEdge }                             from "./witchs-edge.mjs";
 import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
 import { bloodFlameDamageBonus }                      from "../rules/blood-flame.mjs";
-import { preciseLegacyDamageBonus, wrathLegacyDamageBonus, legacyWrathEffectiveRof, betrayalLegacyActive, legacyHistoryIs, excessLegacyExtraDeg, bloodLegacyDamageBonus, legacyChangeDamageBonus, takenMutationNames, swiftLegacyRangedDodgePenalty, swiftLegacyMeleeDodgePenalty, dishonorableLegacyActive, distractingLegacyActive, DISTRACTING_LEGACY_FLAG, LEGACY_GUARDIAN_FLAG, earlyDeathLegacyDamageBonus, markEarlyDeathLegacyUsed, adaptiveLegacyMeleeDamageBonus } from "../rules/legacy-weapon.mjs";
+import { preciseLegacyDamageBonus, wrathLegacyDamageBonus, legacyWrathEffectiveRof, betrayalLegacyActive, legacyHistoryIs, excessLegacyExtraDeg, bloodLegacyDamageBonus, legacyChangeDamageBonus, takenMutationNames, swiftLegacyRangedDodgePenalty, swiftLegacyMeleeDodgePenalty, dishonorableLegacyActive, distractingLegacyActive, DISTRACTING_LEGACY_FLAG, LEGACY_GUARDIAN_FLAG, earlyDeathLegacyDamageBonus, markEarlyDeathLegacyUsed, adaptiveLegacyMeleeDamageBonus, pendulumLegacyFlagValue, incrementPunisherLegacyStack, soulboundLegacyDamageBonus, consumeSoulboundLegacyBonus, legacyDeadlyTrapEligible, legacyDeadlyTrapDamageDelta, consumeLegacySlaughterBonus, legacySlaughterAmmoReliability, patienceLegacyOverwatchWeapon, consumePatienceLegacyOverwatchPending } from "../rules/legacy-weapon.mjs";
+import { isActorsOwnTurn } from "./delay-action.mjs";
 import { meleeContactCount } from "./tactical-map.mjs";
 import { betrayalRandomAllyToken } from "./legacy-weapon-betrayal.mjs";
+import { actorInfamyValue, actorInfamyPath, spendFromInfamyPool } from "../apps/infamy-points.mjs";
 import { handOfKhorneStrengthMultiplier, handOfKhorneBlocksRangedAttack } from "../rules/hand-of-khorne.mjs";
 import { triggerAttackAnimation }                     from "../integrations/autoanimations.mjs";
 import { assassinStrikeAvailable }                    from "./assassin-strike.mjs";
 import { evasionImperativeBonus, hasEvasionRecoilImperative } from "./imperative-bonuses.mjs";
 import { isFusedByHandOfDeath }                       from "../rules/hand-of-death.mjs";
 import { counterAttackTriggers, counterAttackSectionHtml } from "./counter-attack.mjs";
+import { invocationNaturalAdd } from "../rules/invocation-natural.mjs";
+import { suffersBlindness } from "../rules/blindness.mjs";
 
 /**
  * Экстремальный урон (стр. 166-170): куб урона выбросил Х+ — порог берётся из
@@ -105,10 +112,46 @@ export async function rollExtremeDamage(dmgRoll, { wp, damageType, hitLocation =
   if (hasExtreme && attacker && !minionCanCauseExtremeDamage(attacker)) hasExtreme = false;
   let extremeLevel = 0, critEffect = null, exRoll = null;
   if (hasExtreme) {
-    exRoll = await new Roll("1d5").evaluate();
-    // Monofilament (X): «+2 Экстремальный урон ИЛИ Крит. эффект» — здесь
-    // extremeLevel сразу задаёт оба (getCriticalEffect читает его же).
-    extremeLevel = exRoll.total + (wp.extremeLevelBonus || 0);
+    // Трата Очка — в момент Экстремального Урона, а не при нажатии «Бросок»
+    // (приёмка #516: промах или удар без Экстремального сжигал Очко впустую).
+    // Одна на всю атаку — см. комментарий у legacyCleavingRollRequested.
+    if (wp.legacyCleavingRollRequested && !wp.legacyCleavingRollSpent) {
+      wp.legacyCleavingRollSpent = true;
+      if (attacker && actorInfamyValue(attacker) >= 1) {
+        const path = actorInfamyPath(attacker);
+        const spend = await spendFromInfamyPool(attacker, 1, path);
+        await attacker.update({ [path]: spend.poolValue });
+        wp.legacyCleavingRollActive = true;
+      } else {
+        ui.notifications?.warn("Кромсающее: нет Очков Бесчестия — обычный бросок 1d5+1.");
+      }
+    }
+    // Кромсающее, второе предложение (wdbc-1rno.35, стр. 427): «...может
+    // потратить Очко Бесчестия, чтобы бросить ВМЕСТО ЭТОГО 1d10−2(мин.1)» —
+    // замена всего обычного «1d5+1» целиком, включая extremeLevelBonus,
+    // которым как раз и представлен книжный «+1» самой Мутации выше.
+    if (wp.legacyCleavingRollActive) {
+      exRoll = await new Roll("1d10").evaluate();
+      extremeLevel = Math.max(1, exRoll.total - 2);
+    } else {
+      exRoll = await new Roll("1d5").evaluate();
+      // Monofilament (X): «+2 Экстремальный урон ИЛИ Крит. эффект» — здесь
+      // extremeLevel сразу задаёт оба (getCriticalEffect читает его же).
+      extremeLevel = exRoll.total + (wp.extremeLevelBonus || 0);
+    }
+    // Оппортунист/versatile 10-10, Оружие Наследия (wdbc-1rno.35, стр. 427):
+    // «Оружие бросает на Экстремальный Урон два раза и выбирает больший
+    // результат» — второй независимый бросок ТОЙ ЖЕ формулой, что и первый
+    // (Кромсающее выше не встречается на одном оружии — Мутации берутся с
+    // разных таблиц Характера, но если бы встретились, второй бросок тоже
+    // пошёл бы по активной формуле, как и первый).
+    if (wp.legacyOpportunistDoubleRoll) {
+      const exRoll2 = await new Roll(wp.legacyCleavingRollActive ? "1d10" : "1d5").evaluate();
+      const extremeLevel2 = wp.legacyCleavingRollActive
+        ? Math.max(1, exRoll2.total - 2)
+        : exRoll2.total + (wp.extremeLevelBonus || 0);
+      if (extremeLevel2 > extremeLevel) { exRoll = exRoll2; extremeLevel = extremeLevel2; }
+    }
     if (!targetIsVehicle) critEffect = getCriticalEffect(damageType, hitLocation, extremeLevel);
   }
   return { hasExtreme, extremeLevel, critEffect, exRoll };
@@ -229,6 +272,28 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     if (concussiveEntry) concussiveEntry.rating = (Number(concussiveEntry.rating) || 0) + 1;
   }
 
+  // Молот/Топор по лежащей или прижатой к стене цели (core.json, «Типы
+  // Рукопашного Оружия»): «+1d10 Dmg и получает свойство Concussive(–1)/
+  // Felling(2), или +1 к рейтингу, если оно уже имело это свойство». Та же
+  // мутация _mergedEntries ДО сборки wProps, что у Тесного помещения выше.
+  // Чтение game.user.targets тут же, инлайн (не ждём defenderActor ниже по
+  // функции — тот определяется позже, а этот блок обязан успеть до wProps).
+  // «Лежащая» — статус Повержен цели, тот же conditions.prone, что читает
+  // attack-dialog.mjs для proneMod; «прижата к стене» система не отслеживает
+  // (нет геометрии стен) — решает ГМ галочкой (opts.targetAgainstWall,
+  // attack-dialog.mjs::targetAgainstWallHtml).
+  const meleeTypeToken = [...(game.user?.targets ?? [])][0] ?? null;
+  const meleeTypeTargetActor = meleeTypeToken?.actor ?? meleeTypeToken?.document?.actor ?? null;
+  const meleeType = sys.meleeCategory;
+  const meleeTypeBonusOn = isMelee && (meleeType === "Молот" || meleeType === "Топор")
+    && (!!meleeTypeTargetActor?.system?.conditions?.prone || !!opts.targetAgainstWall);
+  if (meleeTypeBonusOn) {
+    const propKey = meleeType === "Молот" ? "concussive" : "felling";
+    const typeEntry = _mergedEntries.find(x => x.key === propKey);
+    if (typeEntry) typeEntry.rating = (Number(typeEntry.rating) || 0) + 1;
+    else _mergedEntries.push({ key: propKey, rating: meleeType === "Молот" ? -1 : 2 });
+  }
+
   const wProps    = resolveWeaponPropsList(_mergedEntries);
   const wp         = aggregateAuto(wProps);
   wp.reliabilityScore += modFx.reliabilityMod || 0;
@@ -259,13 +324,26 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // тот же примитив, что Monofilament (constants/weapon-properties.mjs,
   // auto.extremeLevelBonus:2), только +1 и по Мутации, а не по свойству.
   // Второе предложение («может потратить Очко Бесчестия, чтобы бросить
-  // 1d10−2 (мин.1) вместо») честно НЕ реализовано — тот же общий пробел
-  // «нет кнопки временного эффекта на Мутации», см. bd-комментарий Перебора.
+  // 1d10−2 (мин.1) вместо») — галочка attack-dialog.mjs (видна только при
+  // наличии Мутации и ≥1 Очка Бесчестия), opts.legacyCleavingRoll долетает
+  // сюда тем же приёмом, что confinedSpace. Трата — в rollExtremeDamage, ОДНА на всю атаку
+  // (не за каждое попадание Очереди с Экстремальным Уроном по отдельности:
+  // книга не разбирает многократное срабатывание, субъективное упрощение).
   if (takenMutationNames(item).has("Кромсающее")) wp.extremeLevelBonus = (wp.extremeLevelBonus || 0) + 1;
+  wp.legacyCleavingRollRequested = takenMutationNames(item).has("Кромсающее") && !!opts.legacyCleavingRoll;
   // Мучитель/merciless 10-10, Оружие Наследия (wdbc-1rno.35, стр. 428):
   // «Броски в 1 на кубиках урона вызывают Экстремальный Урон» — синтетический
   // флаг для rollExtremeDamage (см. заголовок выше в этом файле).
   if (takenMutationNames(item).has("Мучитель")) wp.legacyExtremeOnOne = true;
+  // Оппортунист/versatile 10-10, Оружие Наследия (wdbc-1rno.35, стр. 427):
+  // двойной бросок Экстремального Урона (см. rollExtremeDamage) — второй
+  // синтетический флаг тем же приёмом, что и Мучитель выше. legacyOpportunistFloor
+  // читается ниже по цепочке (attack-card.mjs → hooks.mjs → damage.mjs) для
+  // «1d10−2(мин.1) вместо 1» на непробитом Экстремальном.
+  if (takenMutationNames(item).has("Оппортунист")) {
+    wp.legacyOpportunistDoubleRoll = true;
+    wp.legacyOpportunistFloor = true;
+  }
 
   // Sniper Assassin / Снайпер-Убийца (wdbc-1rno.2, rules/unseen-talents.mjs)
   // — ДО блока unseen ниже: сам ставит wp.unseen, тот читается следующей
@@ -330,7 +408,14 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // «выигранный встречный тест — выстрел из Караула считается Незримым».
   // Та же одноразовая пометка, снятая тем же тактом, что Hidden Threat выше.
   const hairTriggerFlag = await consumeHairTriggerUnseenPending(actor);
-  const unseen = !!(wp.unseen || hiddenThreatFlag || hairTriggerFlag);
+  // Ослеплённая цель (wdbc-x1nz.2.89, «Раны и Урон», «Статусы»):
+  // «Ослепленный персонаж считает все атаки Незримыми» — со всеми
+  // последствиями Незримого ниже: Уклонение/Парирование заперты, пока атаку
+  // не засекли (Психонаука/Ноосфера/Варп-Зрение), Бой Вслепую (−20 в
+  // рукопашной), Шестое Чувство и т.п. Sonar Sense/Unnatural Senses цели
+  // снимают это вместе с остальными штрафами слепоты (rules/blindness.mjs).
+  const targetBlindedUnseen = !!defenderActor && suffersBlindness(defenderActor);
+  const unseen = !!(wp.unseen || hiddenThreatFlag || hairTriggerFlag || targetBlindedUnseen);
   // Сокрытая Угроза добавляет реактивному тесту засечения её собственный
   // −50 (её книжный текст, не общее правило стр. 32 — там штрафа нет).
   const unseenPenalty = hiddenThreatFlag ? -50 : 0;
@@ -360,6 +445,15 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const qAuto = qualityEffects(item).auto;
   if (!isMelee) wp.reliabilityScore += qAuto.reliabilityMod || 0;
   if (qAuto.losesPrimitive) wp.primitive = false;
+  // Наследие Бойни (H1, стр. 426), стрелковая ветка: «Понижает СВОЮ Надёжность
+  // ДО −2 при стрельбе нелетальными боеприпасами» — абсолютное значение, не
+  // дельта, поэтому присваивание, а не += (rules/legacy-weapon.mjs::
+  // legacySlaughterAmmoReliability, закрытый список нелетальных боеприпасов
+  // по имени — структурного поля «нелетальный» в системе нет).
+  if (!isMelee) {
+    const slaughterReliability = legacySlaughterAmmoReliability(item, loadedAmmo);
+    if (slaughterReliability != null) wp.reliabilityScore = slaughterReliability;
+  }
   // Мельта/Рассеивание зависят от дистанции — флаг приходит из диалога
   const shortRange = !!opts.shortRange;
   // Выбранная полоса дальности (у оружия со своими бонусами по дистанции).
@@ -423,6 +517,40 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     rv, threshold, isMelee, wp,
     forceHit: opts.forceHit, forceFail: handOfKhorneForceFail, fixedSuccessDeg: opts.fixedSuccessDeg
   });
+  // Наследие Бойни (H1, стр. 426): +20/−30 уже сложены в порог ДО этого
+  // броска (sheets/attack/selection.mjs для рукопашной ветки, sheets/attack/
+  // mods.mjs для стрелковой) — здесь только гасим флаг, «следующая атака»
+  // состоялась независимо от того, попала она или нет.
+  if (legacyHistoryIs(item, "Наследие Бойни")) await consumeLegacySlaughterBonus(actor, item);
+  // Терпение/vigilant 3-4, стрелковая ветка (wdbc-1rno.35/wdbc-1rno.41):
+  // +30 уже сложены в порог ДО этого броска (sheets/attack/mods.mjs) — здесь
+  // только гасим пометку «выстрел из Караула состоялся».
+  if (!isMelee && patienceLegacyOverwatchWeapon(item)) await consumePatienceLegacyOverwatchPending(actor);
+  // Перегруппировка/vigilant 1-2, Оружие Наследия (wdbc-1rno.35, стр. 427):
+  // «После успешной атаки этим оружием (даже если цель Избежала её)» — тот
+  // же «hit», что здесь, ДО любого разбора Уклонения/Парирования ниже.
+  // Кнопка карточки — combat/legacy-weapon-regroup.mjs::activateLegacyRegroup.
+  const regroupLegacyActive = hit && takenMutationNames(item).has("Перегруппировка");
+  // Сабля, Верховая Атака (core.json, «Типы Рукопашного Оружия»): «может
+  // проигнорировать бонус +20, чтобы совершить две атаки вместо одной, но по
+  // разным целям на пути» — +20 уже отменён в самом threshold (галочка
+  // диалога, attack-dialog.mjs), вторая атака взведена диалогом до конца Хода
+  // (combat/sabre-second-attack.mjs, wdbc-f6j9y). Карточка первой атаки
+  // несёт кнопку второй; карточка второй — только подпись. «На пути» система
+  // не проверяет (геометрии пути нет) — кто это, решает стол.
+  const sabreSecondAttackNote = opts.sabreSecondAttackIsSecond
+    ? "Сабля: вторая атака Верховой Атаки — без ОД, без +20."
+    : (opts.sabreSecondAttack
+      ? "Сабля: +20 Верховой Атаки проигнорирован — до конца Хода доступна вторая атака этим оружием по другой цели на пути, без ОД. Выберите цель и нажмите кнопку."
+      : "");
+  const sabreSecondAttackItemId = (opts.sabreSecondAttack && !opts.sabreSecondAttackIsSecond) ? String(item.id ?? "") : "";
+  // Маятник, Оружие Наследия (wdbc-1rno.35, vigilant 7-7, стр. 427): «Если
+  // персонаж атаковал этим оружием в свой Ход...» — не гейтится попаданием
+  // (книга говорит «атаковал», не «попал»), поэтому пишется тут же, до
+  // разбора Уклонения/Парирования цели. Модификатор атаки = порог теста
+  // МИНУС голая характеристика — ровно то, что диалог атаки насчитал сверху.
+  const pendulumFlag = pendulumLegacyFlagValue(item, threshold - (Number(actor.system?.characteristics?.[charKey]?.total) || 0));
+  if (pendulumFlag) await actor.setFlag("warhammer-dbc", "legacyPendulumBonus", pendulumFlag);
   // Дикарь (стр. 62, wdbc-pb60): парными когтями — «+2 Успеха при успешной
   // атаке». Прибавляется к СТЕПЕНИ, а не к порогу: от степени зависят и число
   // попаданий (Быстрая/Молниеносная), и остаточные Успехи приёмов.
@@ -433,6 +561,17 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // атаки всегда ws/bs), отдельного гейта по charKey не нужно.
   const excessBonus = excessLegacyExtraDeg({ hit, weapon: item });
   const deg = rolledDeg + savageBonus + excessBonus;
+  // Посох/Крюк (core.json, «Типы Рукопашного Оружия»): «При Избирательном
+  // попадании в Ногу [Посохом]... может потратить Реакцию, чтобы провести
+  // против цели прием Повалить» / «На 3+ Успеха на попадание [Крюком]...».
+  // Строка причины — и доступность кнопки, и её подпись разом; пусто = кнопки
+  // нет. aimTarget?.value — тот же параметр, что уже определяет
+  // Избирательность атаки везде выше по функции.
+  const reactionKnockdownReason = (isMelee && hit && sys.meleeCategory === "Посох" && aimTarget?.value === "leg")
+    ? "Посох: Избирательное попадание в Ногу"
+    : (isMelee && hit && sys.meleeCategory === "Крюк" && deg >= 3)
+      ? "Крюк: 3+ Успеха на попадание"
+      : "";
   // Крит-диапазон (натуральные 1-5/96-100, стр. 25) — не путать с «Критическим
   // Результатом/Эффектом» ниже: тот триггерится свойством Extreme оружия по
   // граням урона, этот — только по натуральному броску атаки, независимо от
@@ -459,6 +598,16 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // «Граната», поэтому применяется к любому броску этим оружием.
   if (sys.weaponType === "grenade" && critOutcome?.failure) {
     await resolveGrenadeMeleeFumble(actor, item);
+    return;
+  }
+
+  // Кистень/Кнут, Критический Промах (core.json, «Типы Рукопашного Оружия»):
+  // «При Критическом Промахе наносит попадание по себе в случайную часть
+  // тела» — тот же приём короткого замыкания, что у гранаты выше. Кнут
+  // дополнительно не получает бонус Силы к этому попаданию (книга).
+  if (isMelee && critOutcome?.failure
+    && (sys.meleeCategory === "Кистень" || sys.meleeCategory === "Кнут")) {
+    await resolveFlailMeleeFumble(actor, item, { noStrengthBonus: sys.meleeCategory === "Кнут" });
     return;
   }
 
@@ -584,6 +733,24 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         if (success) hitLocLabel = "Торс";
       }
     }
+  }
+
+  // Кнут (core.json, «Типы Рукопашного Оружия»): «При попадании в конечность
+  // кнутом персонаж может выбрать дать ему свойство Snare (–2)» — «может
+  // выбрать» реализовано кнопкой применения к цели (buildTargetEffectButtons
+  // ниже, тот же путь, что у любого другого targetEffect-свойства вроде
+  // Оглушающего) — решение это клик по ней, отдельная галочка не нужна.
+  // wProps — тот же массив, что читает buildTargetEffectButtons в конце
+  // функции (общая ссылка, мутация видна там же); guard на уже имеющийся
+  // Snare — не переписывать собственное свойство оружия, если оно уже есть.
+  // Обе формы места попадания — случайный бросок ("П. Рука"/"Л. Рука"/
+  // "П. Нога"/"Л. Нога") и Избирательная атака (aimTarget → "Рука"/"Нога",
+  // без стороны, см. AIM_LOCATIONS в attack-outcome.mjs) — книга не различает
+  // сторону конечности, обе считаются «конечностью».
+  if (isMelee && hit && sys.meleeCategory === "Кнут"
+    && ["П. Рука", "Л. Рука", "П. Нога", "Л. Нога", "Рука", "Нога"].includes(hitLocLabel)
+    && !wProps.some(p => p.key === "snare")) {
+    wProps.push(...resolveWeaponPropsList([{ key: "snare", rating: -2 }]));
   }
 
   // Место конкретного попадания: у техники 1-е и 2-е — в часть, остальные в Корпус;
@@ -722,8 +889,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // +Cor.b владельца И к Пробитию (здесь), И к урону (flatBonus ниже) —
   // живой пересчёт на каждой атаке, отдельный флаг от tainted (другая находка).
   const deadlyNaturalCorBAdd = wp.deadlyNaturalCorB ? (actor.system.corruptionBonus ?? 0) : 0;
+  // Естественное оружие Даров Одержимости (wdbc-o368c): рейтинг DNW от
+  // Проявления по Порче — rules/invocation-natural.mjs.
+  const invocationAdd = invocationNaturalAdd(wp, actor);
   const pen = attackPenetration({
-    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen + deadlyNaturalCorBAdd,
+    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen + deadlyNaturalCorBAdd + invocationAdd.pen,
     wp: penWp, hit, deg, shortRange, maximal: maximalOn, band, forceBonus
   });
 
@@ -774,6 +944,17 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // legacy-weapon.mjs): +1 Dmg за каждый чётный Успех, одиночный выстрел или
   // рукопашная атака с Прицеливанием.
   const preciseLegacyBonus = preciseLegacyDamageBonus({ weapon: item, hit, deg, rofMode, isMelee, aimed });
+  // Когти.Р (core.json, «Типы Рукопашного Оружия»): «получают +1 Dmg за
+  // каждый нечетный Успех на попадание, кроме первого (3, 5, 7, и т.д.)» —
+  // только хват «Л»/«П+Л» (Когти.Р); «П» (Когти.П, ладонь свободна) бонуса не
+  // даёт. Текущий хват — opts.gripKey (тот же, что уже приходит для gripProps
+  // выше) — выбор ИМЕННО этого броска; без него (вызов не из диалога) —
+  // первый хват из sys.grips, тот же фолбэк, что currentMeleeGrip (hands.mjs).
+  const clawsHandGrip = opts.gripKey || parseGrips(sys.grips)[0] || "";
+  const clawsHandBonus = (isMelee && hit && sys.meleeCategory === "Когти"
+    && (clawsHandGrip === "Л" || clawsHandGrip === "П+Л"))
+    ? Math.max(0, Math.floor(((Number(deg) || 0) - 1) / 2))
+    : 0;
   // Наследие Гнева/wrath, Оружие Наследия (wdbc-1rno.35, rules/legacy-weapon.mjs):
   // +2 Dmg против цели Ненависти носителя — переиспользует hatredTargetsOf/
   // anyTargetMatches (rules/hatred.mjs), defenderActor уже известен выше.
@@ -822,8 +1003,31 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   if (hit && !isMelee && defenderActor && takenMutationNames(item).has("Защитник") && item.system?.weaponClass !== "melee") {
     await defenderActor.setFlag?.("warhammer-dbc", LEGACY_GUARDIAN_FLAG, { shooterUuid: actor.uuid });
   }
-  const flatBonus = (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus;
+  // Каратель/merciless 8-8, Оружие Наследия (wdbc-1rno.35, стр. 428): «За
+  // каждое успешное попадание оружие получает накапливающийся +3 на
+  // попадание по НЕМУ до конца боя. Атаки с множественными попаданиями
+  // считаются как одно» — инкремент здесь, ОДИН раз за вызов
+  // _executeAttackRoll, независимо от числа готовых попаданий (hits) ниже
+  // по функции. Счётчик — на ЦЕЛИ, ключ id ЭТОГО оружия (несколько разных
+  // Карателей по одной цели копят независимо).
+  if (hit && defenderActor && takenMutationNames(item).has("Каратель")) {
+    await incrementPunisherLegacyStack(defenderActor, item);
+  }
+  // Душесвязанное/skilled 7-7, Оружие Наследия (wdbc-1rno.35, стр. 427):
+  // заряженный кнопкой листа оружия (apps/legacy-weapon.mjs::
+  // activateSoulboundLegacyBonus) бонус к урону следующего попадания.
+  const soulboundLegacyBonus = soulboundLegacyDamageBonus(actor, item, hit);
+  // Смертельная Ловушка/vigilant 10-10, Оружие Наследия (wdbc-1rno.35, стр.
+  // 427): доступность необязательной кнопки на карточке урона (боевой
+  // конвейер не решает Уклонение/Парирование здесь — см. wdbc-1rno.44,
+  // поэтому кнопка, а не автоприбавка, читает решение стола постфактум).
+  const deadlyTrapLegacyEligible = legacyDeadlyTrapEligible({
+    weapon: item, actor, hit, isOwnTurn: isActorsOwnTurn(actor)
+  });
+  const deadlyTrapLegacyDelta = deadlyTrapLegacyEligible ? legacyDeadlyTrapDamageDelta(actor) : 0;
+  const flatBonus = (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + invocationAdd.dmg + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus;
   if (earlyDeathBonus) await markEarlyDeathLegacyUsed(actor, item, hit);
+  if (soulboundLegacyBonus) await consumeSoulboundLegacyBonus(actor, item, hit);
   let dmgFormula = damageFormulaFor({
     damage: effDamage, flatBonus, chars,
     corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee
@@ -844,7 +1048,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     wp, rofMode, hit, deg, shortRange, maximal: maximalOn, band,
     ammoDice: ammoSys?.damageDiceMod,
     aimed,
-    confinedSpace: confinedSpaceOn, damageType: effDmgType
+    confinedSpace: confinedSpaceOn, damageType: effDmgType,
+    meleeTypeBonusDie: meleeTypeBonusOn
   });
 
   const damageRolls = [];
@@ -939,8 +1144,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         wp, damageType: effDmgType, hitLocation: locForHit(i), targetIsVehicle, attacker: actor
       });
       if (exRoll) allRolls.push(exRoll);
+      // Кромсающее, второе предложение (wdbc-1rno.35, стр. 427): карточка
+      // должна называть РЕАЛЬНО брошенный куб (1d10−2), не «d5» по умолчанию —
+      // иначе игрок видит подпись «d5: 7», хотя катался d10.
       damageRolls.push({ total, extremeLevel, hasExtreme, critEffect, bonusNote, deflagrateNote, msPenalty,
-        baseDieResult, successes: deg });
+        baseDieResult, successes: deg, cleavingRoll: !!wp.legacyCleavingRollActive,
+        opportunistFloor: !!wp.legacyOpportunistFloor });
     }
   }
 
@@ -961,6 +1170,19 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     const allyActor = allyToken?.actor ?? allyToken?.document?.actor ?? null;
     if (allyActor) {
       for (const d of hits) betrayalHits.push({ total: d.total, loc: d.loc, targetName: allyActor.name, targetUuid: allyActor.uuid });
+      hits.length = 0;
+    }
+  }
+
+  // Борьба как укрытие (стр. 12, wdbc-x1nz.2.77): не-Избирательная атака по
+  // сцепившемуся с той стороны, где его прикрывает партнёр, «попадает вместо
+  // этого по другому» (а меньшего за большим и Избирательной не выцелить).
+  // Та же форма перенаправления, что у Наследия Предательства выше.
+  const grappleCoverHits = [];
+  if (hits.length) {
+    const coverPartner = grappleCoverPartner({ attackerToken, targetToken, targetActor: defenderActor, aimed: !!aimTarget?.value });
+    if (coverPartner) {
+      for (const d of hits) grappleCoverHits.push({ total: d.total, loc: d.loc, targetName: coverPartner.name, targetUuid: coverPartner.uuid });
       hits.length = 0;
     }
   }
@@ -1076,7 +1298,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const evasionPool = evasionPoolEntry
     ? { successes: evasionPoolEntry.successes,
         ...poolAffordableHits(evasionPoolEntry, techOpts.targetDodgeMod ?? 0, hitsCount, defenderActor),
-        canRecoil: !isMelee && evasionPoolEntry.successes >= 2 && recoilPoolRemaining(defenderActor) > 0 }
+        canRecoil: !isMelee && evasionPoolEntry.successes >= 2 && recoilPoolRemaining(defenderActor) > 0,
+        // Захват (стр. 12, wdbc-x1nz.2.66.13): «Парируется со штрафом −30
+        // (или тратит +3 Успеха от предыдущего Парирования)» — цель может
+        // потратить 3 банковских Успеха ВМЕСТО обычного −30 этого Приёма.
+        canWaiveGrappleParry: isMelee && techOpts.technique === "grapple" && evasionPoolEntry.successes >= 3 }
     : null;
 
   // Ethereal Swarm / Эфирная Стая (wdbc-1rno, rules/ethereal-swarm.mjs) —
@@ -1117,6 +1343,21 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // отдельным сообщением следом.
   if (hit && techOpts.technique === "grapple") applyGrappleOnHit(actor, targetToken, hit, techOpts);
 
+  // Прикрывающая Стойка (стр. 15, wdbc-x1nz.2.66.7): «Когда противник в
+  // контакте атакует союзника персонажа, персонаж может совершить по нему
+  // свободную атаку» — предлагается независимо от исхода (попадание/промах),
+  // тот же принцип «момент триггера на усмотрение стола», что у обычной
+  // Свободной Атаки выше по файлу; очерёдность («первым действует тот, у
+  // кого выше Ag») не автоматизирована — решает стол, как и там.
+  if (isMelee && targetToken && attackerToken) {
+    const targetTokenDoc = targetToken.document ?? targetToken;
+    const attackerTokenDoc = attackerToken.document ?? attackerToken;
+    for (const defenderDoc of coveringDefendersOf(targetTokenDoc)) {
+      offerFreeAttack(defenderDoc, attackerTokenDoc,
+        `${esc(actor.name)} атакует ${esc(defenderActor?.name ?? "союзника")} рядом с ${esc(defenderDoc.name)}`);
+    }
+  }
+
   // Встречная атака (wdbc-2wy7, Шипы/Цепные Бандольеры, module/combat/
   // counter-attack.mjs, kind:"counterAttack" Конструктора): defenderActor
   // (цель ЭТОЙ атаки) бьёт actor (атакующего) в ответ, если он промахнулся
@@ -1127,7 +1368,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   let counterAttackBlock = "";
   if (defenderActor) {
     const ccTriggers = counterAttackTriggers({
-      isMelee, hit, technique: techOpts.technique || "", meleeCategory: sys.meleeCategory || ""
+      isMelee, hit, technique: techOpts.technique || "", meleeCategory: sys.meleeCategory || "",
+      unarmed: isIntegralAttack(item)
     });
     if (ccTriggers.onMiss || ccTriggers.onUnarmedOrGrapple) {
       const cc = await counterAttackSectionHtml(defenderActor, actor, ccTriggers);
@@ -1186,6 +1428,16 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       await actor.setFlag("warhammer-dbc", "attackedThisTurn", [...already, String(item.id)]);
   }
 
+  // Закреплённое тяжёлое (core.json, «Безоружный Бой»): «персонаж с таким
+  // оружием считается безоружным до начала своего следующего Хода, если он
+  // стрелял из него» — метка на Ход (rules/turn-flags.mjs), её читают профиль
+  // «Ударить оружием» и Парирование (combat/weapon-profiles.mjs::braceBlocksMelee).
+  if (!isMelee && item?.id && typeof actor.setFlag === "function" && isBraced(actor, item)) {
+    const fired = firedBracedHeavyIds(actor);
+    if (!fired.includes(String(item.id)))
+      await actor.setFlag("warhammer-dbc", FIRED_BRACED_FLAG, [...fired, String(item.id)]);
+  }
+
   const needsRecharge = !isMelee && (wp.recharge || maximalOn);
   if (needsRecharge) await item.update({ "system.needsRecharge": true, "system.rechargeTurnsRemaining": 1 });
 
@@ -1200,7 +1452,19 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const messageData = ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: attackCard({
-      actorName: actor.name, weaponName: item.name, wp,
+      actorName: actor.name, weaponName: item.name,
+      // Пила/Оглушить (стр. 14, wdbc-x1nz.2.67/.66.3) — свойства самого Приёма,
+      // не оружия, поэтому не в aggregateAuto(wProps) — домешиваются сюда же,
+      // откуда карточка уже читает wp.* для data-атрибутов кнопки «Применить
+      // урон» (combat/damage.mjs::_rollActiveShield читает ignoreDomeShields;
+      // applyDamageToActor читает stunManeuver; wp.primitive=false для Оглушить
+      // переиспользует уже существующий data-primitive без нового атрибута).
+      wp: {
+        ...wp,
+        ignoreDomeShields: isMelee && techOpts.technique === "saw",
+        stunManeuver: isMelee && techOpts.technique === "stun",
+        primitive: (isMelee && techOpts.technique === "stun") ? false : wp.primitive
+      },
       threshold, rv, hit, deg, hitsCount, hits, rerollDropped, critLine,
       // Почему исход не от броска: "spray" — авто-попадание Распыления.
       autoHit: autoHitKind,
@@ -1223,6 +1487,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       burstSecondaryTargets,
       misfireHits,
       betrayalHits,
+      grappleCoverHits,
+      regroupLegacyActive,
+      deadlyTrapLegacyDelta,
+      reactionKnockdownReason,
+      sabreSecondAttackNote,
+      sabreSecondAttackItemId,
       // Урон по Орде: Rng нужен Распылению, burst — Таланту «Свинцовый Дождь»,
       // uuid — чтобы найти Таланты и Размер стрелка.
       weaponRange: Number(sys.range) || 0,
@@ -1293,9 +1563,15 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
             + `${shelter.count} из ${hitsCount} попадан${shelter.count === 1 ? "ия уходит" : "ий уходят"} в толпу.`
           : "",
         attack:    opts.attackNote,
-        helpless:  opts.doubleDamage
+        // Строки о Состоянии цели. Ослеплённая (wdbc-x1nz.2.89) — сюда же:
+        // defense.note карточка не рисует, а игрок должен видеть, ПОЧЕМУ
+        // кнопки защиты заперты «не засечена».
+        helpless:  [opts.doubleDamage
           ? "🪢 Цель Беспомощна: попадание автоматическое, урон ×2 (до Поглощения)."
           : "",
+          (targetBlindedUnseen && hit)
+          ? "🙈 Цель Ослеплена: для неё все атаки Незримые — Уклонение/Парирование только после засечения."
+          : ""].filter(Boolean).join("<br>"),
         // Quiet Elimination / Тихое Устранение (wdbc-1rno.3): «цель не издаёт
         // звука при гибели» — честно только строка, нет детектора смерти на
         // этом такте (формула урона ещё не разрешена, killstate решается позже).
@@ -1334,7 +1610,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // ammoName (wdbc-utaw) — какой боеприпас заряжен на ЭТОТ выстрел, для
         // спец-боеприпасов, чей эффект зависит от собственной идентичности
         // (Гиперрост), не только от ключа свойства Toxic.
-        targetEffects: buildTargetEffectButtons(wProps, { hit, netDamageKnown: false, ammoName: loadedAmmo?.name || "" }),
+        targetEffects: buildTargetEffectButtons(wProps, { hit, ammoName: loadedAmmo?.name || "" }),
         counterAttack: counterAttackBlock,
         dice:          renderedDice
       }

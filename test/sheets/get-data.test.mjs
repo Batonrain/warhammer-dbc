@@ -63,19 +63,20 @@ describe("сенсоры когитатора", () => {
   });
 });
 
-describe("Стойка/База на вкладке БОЙ", () => {
+describe("Стойка на вкладке БОЙ", () => {
+  // База своей панели на БОЙ не имеет (убрана вместе с combatBaseOptions —
+  // выбирается прямо в диалоге атаки, у «Натиска» есть быстрая кнопка на
+  // панели ДВИЖЕНИЕ, module/combat/movement-actions.mjs::declareCharge).
   it("список из constants/combat.mjs, отмечена текущая (по умолчанию — Стандартная)", () => {
     const ctx = ctxOf({});
     expect(ctx.combatStanceOptions.find(s => s.key === "standard").active).toBe(true);
     expect(ctx.combatStanceOptions.filter(s => s.active)).toHaveLength(1);
-    expect(ctx.combatBaseOptions.find(b => b.key === "standard").active).toBe(true);
   });
 
   it("невалидное/непустое значение на акторе тоже отмечается активным", () => {
-    const ctx = ctxOf({ meleeStance: "aggressive", meleeBase: "charge" });
+    const ctx = ctxOf({ meleeStance: "aggressive" });
     expect(ctx.combatStanceOptions.find(s => s.key === "aggressive").active).toBe(true);
     expect(ctx.combatStanceOptions.filter(s => s.active)).toHaveLength(1);
-    expect(ctx.combatBaseOptions.find(b => b.key === "charge").active).toBe(true);
   });
 
   it("Опыт: доля потраченного, у пустого листа — ноль", () => {
