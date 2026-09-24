@@ -82,6 +82,25 @@ export class HordeData extends foundry.abstract.TypeDataModel {
       // Магнитуды при расчёте её собственной стрельбы.
       detachedMagnitude: num(0, "Отдельные стрелки"),
       immuneFear:     new BooleanField({ initial: false, label: "Иммунитет к Страху" }),
+      // Состояния Орды. Из всех Состояний персонажа книга явно переносит на
+      // толпу только Подавление («Контроль Орды»: «Подавление вполне работает
+      // на Ордах») — поле под тем же путём, что у существ, чтобы общий код
+      // Подавления (combat/suppression.mjs, хуки Хода) работал без развилок.
+      // Экономика действий («Орды», Действия): «действует как один персонаж,
+      // имеющий обычный запас ОД», и «имеет Реакции как обычный персонаж», но
+      // тратит их только в свой Ход. Те же поля и умолчания, что у существ
+      // (_creature.mjs) — общий код combat/action-economy.mjs работает без развилок.
+      actionPoints: new SchemaField({
+        value: num(2, "Текущие"), max: num(2, "Максимум")
+      }, { label: "Очки действия" }),
+      reactions: new SchemaField({
+        value: num(1, "Текущие"), max: num(1, "Максимум"),
+        defenseValue: num(0, "Текущие (только Избегание)"),
+        defenseMax:   num(0, "Максимум (только Избегание)")
+      }, { label: "Реакции" }),
+      conditions: new SchemaField({
+        pinned: new BooleanField({ initial: false, label: "Подавлена" })
+      }, { label: "Состояния" }),
       traits:  str("Черты"),
       notes:   new HTMLField({ initial: "", label: "Заметки" }),
       gmNotes: new HTMLField({ initial: "", label: "Заметки ГМ" })

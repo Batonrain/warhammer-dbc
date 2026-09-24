@@ -151,3 +151,21 @@ describe("minionCanCauseExtremeDamage", () => {
     expect(minionCanCauseExtremeDamage(minion({ commandedBy: { uuid: "Actor.gone", name: "?" } }))).toBe(false);
   });
 });
+
+describe("minionCanCauseExtremeDamage: Орда («Контроль Орды» — эффект 1 Присутствия)", () => {
+  const horde = (commandedBy = null) => ({
+    type: "horde", uuid: "Actor.h1",
+    getFlag: (scope, key) => (scope === "warhammer-dbc" && key === "commandedBy") ? commandedBy : undefined
+  });
+
+  it("без Присутствия Орда Экстремального Урона не наносит", () => {
+    globalThis.game.actors = [];
+    expect(minionCanCauseExtremeDamage(horde())).toBe(false);
+  });
+
+  it("в Отряде с Присутствием «Экстремальный Урон» — наносит", () => {
+    globalThis.game.actors = [{ type: "squad", system: {
+      posts: {}, members: [{ uuid: "Actor.h1" }], presence: { active: true, benefit: "extreme" } } }];
+    expect(minionCanCauseExtremeDamage(horde())).toBe(true);
+  });
+});

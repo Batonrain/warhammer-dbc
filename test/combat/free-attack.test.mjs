@@ -215,8 +215,16 @@ describe("processTokenMove: новый контакт снимает Подав�
 });
 
 describe("offerFreeAttack: экономика действия реагирующего", () => {
-  it("тип без экономики действий (Орда/Техника/...) — не предлагает", async () => {
-    const reactor = fakeActor({ type: "horde" });
+  it("тип без экономики действий (Техника/...) — не предлагает", async () => {
+    const reactor = fakeActor({ type: "vehicle" });
+    await offerFreeAttack(token({ id: "e", actor: reactor }).document, token({ id: "m" }).document);
+    expect(captured.chat.length).toBe(0);
+  });
+
+  it("Орда — Реакции только в свой Ход: Свободную Атаку в чужой не предлагает", async () => {
+    globalThis.game.combat = { started: true, round: 1, combatant: { actor: { uuid: "Actor.other" } } };
+    const reactor = fakeActor({ type: "horde", uuid: "Actor.horde",
+      reactions: { value: 1, max: 1, defenseValue: 0, defenseMax: 0 } });
     await offerFreeAttack(token({ id: "e", actor: reactor }).document, token({ id: "m" }).document);
     expect(captured.chat.length).toBe(0);
   });

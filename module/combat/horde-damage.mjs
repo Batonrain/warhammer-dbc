@@ -11,7 +11,7 @@
 import { hordeExtraHits, hordeMagnitudeLoss, needsMassDamageTest, massDamageThreshold }
   from "../rules/horde-damage.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
-import { lockPsychHealing } from "./horde-psych.mjs";
+import { lockIfCrossedHalf, LAST_HIT_FLAG } from "./horde-psych.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { testCardHtml, postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { DAMAGE_TYPES } from "../constants/items.mjs";
@@ -76,7 +76,7 @@ export async function applyDamageToHorde(horde, damageData = {}) {
     rawDamage = 0, damageType = "impact", attackerName = "", weaponName = "",
     blast = 0, flame = false, powerField = false, spray = false, weaponRange = 0,
     devastating = 0, melee = false, burst = false, attackerUuid = "",
-    psychological = false
+    psychological = false, sourceMessageId = ""
   } = damageData;
 
   const sys = horde.system ?? {};
@@ -111,8 +111,15 @@ export async function applyDamageToHorde(horde, damageData = {}) {
 
     // Просели за половину — психологический урон не восстанавливается 10−W.b
     // часов. Ставим запрет один раз, на самом переходе.
-    const start = Number(sys.magnitude?.start) || 0;
-    if (start > 0 && before > start / 2 && after <= start / 2) await lockPsychHealing(horde);
+    await lockIfCrossedHalf(horde, before, after);
+  }
+  // Сколько Магнитуды сняло именно это попадание этой карточки — Огню нужно
+  // для «вместо Горения — ещё столько же психологического урона» (hooks.mjs).
+  // Несколько попаданий одной карточки (очередь) складываются.
+  if (sourceMessageId) {
+    const prev = horde.getFlag("warhammer-dbc", LAST_HIT_FLAG);
+    const sum = (prev?.messageId === sourceMessageId ? Number(prev.magLoss) || 0 : 0) + magLoss;
+    await horde.setFlag("warhammer-dbc", LAST_HIT_FLAG, { messageId: sourceMessageId, magLoss: sum });
   }
 
   await postHordeDamageCard(horde, {

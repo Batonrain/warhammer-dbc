@@ -8,6 +8,7 @@
 import { actorFactionKeys, anySameOrDescendant, isSameOrDescendant, getFactionIndex }
   from "./factions.mjs";
 import { raceMatches } from "./race.mjs";
+import { hordeSizeFor } from "./horde-damage.mjs";
 import { hasPathGrade } from "../constants/aeldari-paths.mjs";
 import { anyTargetMatches } from "./talent-targets.mjs";
 
@@ -107,6 +108,19 @@ export function sizeOf(actor) {
   const sys = actor?.system ?? {};
   if (sys.sizeTotal != null) return Number(sys.sizeTotal) || 0;
   return (Number(sys.size) || 0) + (Number(sys.sizeMod) || 0) + (Number(sys.sizeModNoSpd) || 0);
+}
+
+/**
+ * Размер в таблице «попадание по цели / Скрытность» (стр. 30). У всех, кроме
+ * Орды, это обычный sizeOf. Орда же по книге («Орды», Магнитуда) берёт Размер
+ * по Магнитуде — «в расчёте атак по орде и тестов Stealth (но не SPD)»: толпа
+ * в 60 Магнитуды — Размер 4 и +40 к попаданию по ней, чей бы рост ни был у
+ * отдельных её членов. Борьба, Повалить, Парирование и прочее, что меряет
+ * рост существ, читают sizeOf — туда Размер Орды книга не переносит.
+ */
+export function hitSizeOf(actor) {
+  if (actor?.type === "horde") return hordeSizeFor(actor.system?.magnitude?.value);
+  return sizeOf(actor);
 }
 
 // Силовая/аспектная броня — то же множество, что POWER_ARMOR_TYPES в
@@ -386,8 +400,8 @@ export const PREDICATES = {
   // Ненулевой Размер — гейт core.sizeToHit/core.sizeStealth (rules/library/
   // core.mjs): без него строка с «(+0)» лезла бы в чек-лист на каждом броске
   // против обычного человека, а не только там, где Размер реально что-то даёт.
-  hasSize:       (actor, ctx) => sizeOf(actor) !== 0,
-  targetHasSize: (actor, ctx) => sizeOf(ctx?.targetActor) !== 0,
+  hasSize:       (actor, ctx) => hitSizeOf(actor) !== 0,
+  targetHasSize: (actor, ctx) => hitSizeOf(ctx?.targetActor) !== 0,
 
   // «Позволяет сохранять Трейт Nimble в силовой броне» (имплант «Чёрный
   // Панцирь / Black Carapace», DoomBC — ГЕНОСЕМЯ) — без брони условие не

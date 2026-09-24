@@ -58,9 +58,11 @@ describe("hasActionEconomy", () => {
     for (const type of ["character", "daemon", "demonPrince", "minion"])
       expect(hasActionEconomy(actorFor({ type }))).toBe(true);
   });
-  it("Орда/техника — нет", () => {
-    expect(hasActionEconomy(actorFor({ type: "horde" }))).toBe(false);
+  it("Техника — нет", () => {
     expect(hasActionEconomy(actorFor({ type: "vehicle" }))).toBe(false);
+  });
+  it("Орда — да: «действует как один персонаж, имеющий обычный запас ОД»", () => {
+    expect(hasActionEconomy(actorFor({ type: "horde" }))).toBe(true);
   });
 });
 
@@ -276,10 +278,16 @@ describe("resetActionEconomy", () => {
     expect(actor.getFlag("warhammer-dbc", "justTheLightActive")).toBeUndefined();
   });
 
-  it("Орда/техника — ничего не делает", async () => {
-    const actor = actorFor({ type: "horde", actionPoints: { value: 0, max: 2 } });
+  it("Техника — ничего не делает", async () => {
+    const actor = actorFor({ type: "vehicle", actionPoints: { value: 0, max: 2 } });
     await resetActionEconomy(actor);
     expect(actor.system.actionPoints.value).toBe(0); // update ни разу не вызван
+  });
+
+  it("Подавленная Орда получает не больше 1 ОД — как Подавленный персонаж", async () => {
+    const actor = actorFor({ type: "horde", actionPoints: { value: 0, max: 2 }, conditions: { pinned: true } });
+    await resetActionEconomy(actor);
+    expect(actor.system.actionPoints.value).toBe(1);
   });
 
   // Врасплох (стр. 12, wdbc-x1nz.2.26): «пропускает свой первый Ход» — тот же
@@ -607,9 +615,9 @@ describe("postTurnStartCard", () => {
     expect(captured.chat[0].content).toContain("Реакции");
   });
 
-  it("Орда/техника — ничего не постит (нет экономики действий)", async () => {
+  it("Техника — ничего не постит (нет экономики действий)", async () => {
     captured.chat = [];
-    const actor = actorFor({ type: "horde" });
+    const actor = actorFor({ type: "vehicle" });
     await postTurnStartCard(actor);
     expect(captured.chat).toHaveLength(0);
   });
@@ -789,5 +797,15 @@ describe("Беспомощный: только не-Физические дей�
     const actor = actorFor({ actionPoints: { value: 2, max: 2 } });
     await spendActionPoints(actor, 1);
     expect(actor.getFlag("warhammer-dbc", "physicalApSpentThisTurn")).toBeUndefined();
+  });
+});
+
+describe("Реакции Орды — только в свой Ход («Орды», Действия)", () => {
+  it("в чужой Ход Реакцию не тратит, в свой — тратит", async () => {
+    const actor = actorFor({ type: "horde", reactions: { value: 1, max: 1, defenseValue: 0, defenseMax: 0 } });
+    globalThis.game.combat = { started: true, combatant: { actor: { uuid: "Actor.other" } } };
+    expect(canSpendReaction(actor)).toBe(false);
+    globalThis.game.combat = { started: true, combatant: { actor } };
+    expect(canSpendReaction(actor)).toBe(true);
   });
 });

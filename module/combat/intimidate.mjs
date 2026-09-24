@@ -22,6 +22,8 @@
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { resolveOpposed } from "../rules/test-kind.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { psychThreshold, applyPsychDamage } from "./horde-psych.mjs";
+import { psychDamageFor } from "../rules/horde-damage.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { rootEl } from "../sheets/v2-helpers.mjs";
@@ -32,8 +34,13 @@ export function intimidateThreshold(attacker, mod = 0) {
   return (Number(attacker?.system?.skills?.intimidate?.total) || 0) + (Number(mod) || 0);
 }
 
-/** Порог теста Морали цели (Воля+mod) — то, чем книга встречает Intimidate. */
+/**
+ * Порог теста Морали цели (Воля+mod) — то, чем книга встречает Intimidate.
+ * Орда («Орды», Психологический урон) получает к нему бонус, равный своей
+ * Магнитуде (и −10 Ослабленной) — тот же порог, что у её теста на Страх.
+ */
 export function moraleThreshold(target, mod = 0) {
+  if (target?.type === "horde") return psychThreshold(target, mod);
   return (Number(target?.system?.characteristics?.wp?.total) || 0) + (Number(mod) || 0);
 }
 
@@ -60,7 +67,10 @@ export async function rollIntimidateContest(attacker, target, { attackerMod = 0,
   const tgtRoll = await new Roll("1d100").evaluate();
   const atkRv = atkRoll.total, tgtRv = tgtRoll.total;
 
-  const autoPass = hasRuleFlag(target, "sarcophagus.autoPassFear");
+  // Несломляемая Орда (immuneFear) «автоматически проходит тесты против
+  // Запугивания» — тот же автопасс, что у Саркофага.
+  const autoPass = hasRuleFlag(target, "sarcophagus.autoPassFear")
+    || (target?.type === "horde" && !!target.system?.immuneFear);
   const atkOutcome = testOutcome(atkRv, atkThreshold);
   const tgtOutcome = testOutcome(tgtRv, tgtThreshold, { autoSuccess: autoPass });
 
@@ -73,13 +83,17 @@ export async function rollIntimidateContest(attacker, target, { attackerMod = 0,
     const { handleMoraleFailure } = await import("./command-state.mjs");
     await handleMoraleFailure(target);
   }
+  // Орда: Провалы её теста против Запугивания — психологический урон ×1 в
+  // Магнитуду (applyPsychDamage сам пропускает Несломляемую).
+  const hordePsych = (target?.type === "horde" && winner === "mine" && !tgtOutcome.success)
+    ? await applyPsychDamage(target, psychDamageFor("intimidate", tgtOutcome.deg)) : 0;
 
   await _postIntimidateMsg(attacker, target, {
     atkThreshold, tgtThreshold, atkRv, tgtRv, atkOutcome, tgtOutcome,
     // Подписи модификаторов обеих сторон (wdbc-kuun): Порог считался с ними,
     // но в карточке стояло голое число.
     atkParts: atkMods.parts, tgtParts: tgtMods.parts,
-    winner, margin, sarcophagusSaved: autoPass && tgtRv > tgtThreshold,
+    winner, margin, sarcophagusSaved: autoPass && tgtRv > tgtThreshold, hordePsych,
     rolls: [atkRoll, tgtRoll]
   });
 
@@ -88,7 +102,7 @@ export async function rollIntimidateContest(attacker, target, { attackerMod = 0,
 
 async function _postIntimidateMsg(attacker, target, data) {
   const { atkThreshold, tgtThreshold, atkRv, tgtRv, atkOutcome, tgtOutcome, atkParts = [], tgtParts = [],
-          winner, margin, sarcophagusSaved, rolls } = data;
+          winner, margin, sarcophagusSaved, hordePsych = 0, rolls } = data;
 
   const outcomeLine = winner === "mine"
     ? `<span class="roll-success">${esc(attacker.name)} побеждает, margin <b>${margin}</b></span>`
@@ -105,8 +119,9 @@ async function _postIntimidateMsg(attacker, target, data) {
         <div class="roll-threshold">Intimidate (${esc(attacker.name)}): <b>${atkThreshold}</b>${atkParts.length ? ` (${atkParts.join(", ")})` : ""} → бросок <b>${atkRv}</b> —
           ${atkOutcome.success ? "Успех" : "Провал"} ${atkOutcome.deg} ${_degWord(atkOutcome.deg)}</div>
         <div class="roll-threshold">Тест Морали (${esc(target.name)}): <b>${tgtThreshold}</b>${tgtParts.length ? ` (${tgtParts.join(", ")})` : ""} → бросок <b>${tgtRv}</b> —
-          ${tgtOutcome.success ? "Успех" : "Провал"} ${tgtOutcome.deg} ${_degWord(tgtOutcome.deg)}${sarcophagusSaved ? " (Саркофаг Дредноута)" : ""}</div>
+          ${tgtOutcome.success ? "Успех" : "Провал"} ${tgtOutcome.deg} ${_degWord(tgtOutcome.deg)}${sarcophagusSaved ? (target.type === "horde" ? " (Орда не знает страха)" : " (Саркофаг Дредноута)") : ""}</div>
         <div class="roll-outcome">${outcomeLine}</div>
+        ${hordePsych > 0 ? `<div class="roll-threshold">Орда: психологический урон <b>${hordePsych}</b> Магнитуды (Провалы×1)</div>` : ""}
         <div class="roll-threshold">Исход по книге решает ГМ: подчинение требуемому, паническое бегство или Шок.</div>
       </div>`,
     rolls, sound: CONFIG.sounds.dice
