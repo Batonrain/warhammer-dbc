@@ -98,6 +98,7 @@ export async function useThrowItem(actor, item) {
       title: "Опора при Метании",
       content: `<p>${esc(item.name)} весит сравнимо с вашим собственным телом (0.5-1.5×). Без надёжной опоры — риск сбития с ног.</p><p>Опора есть?</p>`
     });
+    if (hasFooting == null) return; // окно закрыто крестиком — отказ, а не «опоры нет»
     combinedTestRequired = !hasFooting;
   }
 
