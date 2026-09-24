@@ -53,7 +53,7 @@ import { eaterOfPainBenefitUpdate, eaterOfPainChoiceButtonsHtml } from "./rules/
 import { fateTerm, esc, resolveCharFormula } from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
 import { postTestCard, rollStatLine }    from "./helpers/test-card.mjs";
-import { injectSoulfireButtons }          from "./combat/soulfire.mjs";
+import { injectSoulfireButtons, persistDamageBoost } from "./combat/soulfire.mjs";
 import { registerActorSetupHook }        from "./apps/actor-setup.mjs";
 import { resolvePendingSusAnHeals }      from "./apps/sus-an-heal.mjs";
 import { decayAblativeApShieldOnNewRound } from "./apps/ablative-ap-shield.mjs";
@@ -1859,6 +1859,8 @@ export function registerHooks() {
           applyBtn.dataset.damage = String(next);
           const b = applyBtn.querySelector("b");
           if (b) b.textContent = String(next);
+          // В сам ChatMessage — иначе «Применить урон» у ГМа видит старое число (wdbc-t3c3t.9).
+          await persistDamageBoost(applyBtn, { damage: next, deadlyTrap: true });
         }
         el.disabled = true;
         el.textContent = "🪤 Смертельная Ловушка применена";

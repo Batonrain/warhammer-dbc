@@ -12,8 +12,10 @@
 //  каждой кнопкой урона подвида E(Fl), у которой атакующий — владелец Огня
 //  Души, появляется кнопка силы. Она открывает обычное окно манифестации
 //  (фазы, Усиление, Феномены — всё как при касте с листа), а при Успехе
-//  правит data-damage соседней кнопки прямо в DOM — тот же приём, что у
-//  Смертельной Ловушки (.wh-legacy-deadly-trap-btn, hooks.mjs).
+//  правит data-damage соседней кнопки и сохраняет прибавку флагом в самом
+//  ChatMessage (persistDamageBoost ниже, wdbc-t3c3t.9) — иначе «Применить
+//  урон» у ГМа видел старое число. Тот же приём у Смертельной Ловушки
+//  (.wh-legacy-deadly-trap-btn, hooks.mjs).
 //
 //  Иммунитет к «E» (широкому типу) в системе не заведён вовсе — есть только
 //  damageImmunity.subtype.*, его и снимает флаг ignoreSubtypeImmunity.
@@ -40,8 +42,12 @@ export function soulfirePower(actor) {
  * @param {HTMLElement} html  отрисованная карточка чата
  */
 export function injectSoulfireButtons(html) {
+  // Здесь, а не отдельной строкой в hooks.mjs: эта функция и так зовётся на
+  // каждую отрисовку карточки, а прибавки обязаны лечь до кнопок силы.
+  applyDamageBoosts(html);
   for (const applyBtn of html.querySelectorAll('.wh-apply-dmg-btn[data-damage-subtype="flame"]')) {
     if (applyBtn.nextElementSibling?.classList.contains(BTN_CLASS)) continue;
+    if (applyBtn.dataset.ignoreSubtypeImmunity === "1") continue;   // уже усилено Огнём Души
     const uuid = applyBtn.dataset.attackerUuid;
     if (!uuid) continue;
     let actor = null;
@@ -91,6 +97,51 @@ function showNewDamage(applyBtn, prev, next) {
 }
 
 /**
+ * Сохранить прибавку к попаданию в самом ChatMessage (wdbc-t3c3t.9): правка
+ * DOM живёт только у того, кто нажал, а «Применить урон» может жать ГМ.
+ * Ключ — номер кнопки «Применить урон» в карточке; патч — {damage,
+ * ignoreSubtypeImmunity?, deadlyTrap?}. Своё сообщение пишем сами, чужое —
+ * через активного ГМа (action "messageDamageBoost", warhammer-dbc.mjs), тем
+ * же приёмом, что relayItemUpdate (helpers/utils.mjs).
+ */
+export async function persistDamageBoost(applyBtn, patch) {
+  const msgEl = applyBtn.closest?.("[data-message-id]");
+  const message = game.messages?.get(msgEl?.dataset.messageId);
+  if (!message) return;
+  const index = [...msgEl.querySelectorAll(".wh-apply-dmg-btn")].indexOf(applyBtn);
+  if (index < 0) return;
+  const data = {};
+  for (const [k, v] of Object.entries(patch)) data[`flags.warhammer-dbc.damageBoosts.${index}.${k}`] = v;
+  if (message.isOwner) return message.update(data);
+  if (!game.users?.activeGM) {
+    return ui.notifications?.warn("Прибавка к урону видна только вам: карточка не ваша, а Мастера нет в игре.");
+  }
+  game.socket?.emit("system.warhammer-dbc",
+    { action: "messageDamageBoost", messageId: message.id ?? msgEl.dataset.messageId, userId: game.user.id, data });
+}
+
+/** Наложить сохранённые прибавки (persistDamageBoost) на отрисованную карточку. */
+export function applyDamageBoosts(html) {
+  const id = html.dataset?.messageId ?? html.closest?.("[data-message-id]")?.dataset.messageId;
+  const boosts = game.messages?.get(id)?.getFlag?.("warhammer-dbc", "damageBoosts");
+  if (!boosts) return;
+  const applyBtns = [...html.querySelectorAll(".wh-apply-dmg-btn")];
+  for (const [i, b] of Object.entries(boosts)) {
+    const applyBtn = applyBtns[Number(i)];
+    if (!applyBtn) continue;
+    if (b.damage != null) {
+      showNewDamage(applyBtn, parseInt(applyBtn.dataset.damage) || 0, b.damage);
+      applyBtn.dataset.damage = String(b.damage);
+    }
+    if (b.ignoreSubtypeImmunity) applyBtn.dataset.ignoreSubtypeImmunity = "1";
+    if (b.deadlyTrap) {
+      const trap = applyBtn.closest?.(".roll-dmg-hit-group")?.querySelector(".wh-legacy-deadly-trap-btn");
+      if (trap) { trap.disabled = true; trap.textContent = "🪤 Смертельная Ловушка применена"; }
+    }
+  }
+}
+
+/**
  * Успешная манифестация: +PRd5 к попаданию, иммунитет к подвиду не действует,
  * псайкеру — PR+1d5 урона в W. Экспортирована для теста.
  */
@@ -106,6 +157,7 @@ export async function boostHit(actor, applyBtn, btn, ePR) {
   showNewDamage(applyBtn, prev, next);
   btn.disabled = true;
   btn.textContent = `🔥 Огонь Души: +${boost.total} Dmg, иммунитет к E(Fl) не действует`;
+  await persistDamageBoost(applyBtn, { damage: next, ignoreSubtypeImmunity: true });
 
   const before = Number(actor.system.charDamage?.wp) || 0;
   await actor.update({ "system.charDamage.wp": before - self.total });
