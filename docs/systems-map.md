@@ -84,7 +84,13 @@
   аблатива (откуда бы урон ни пришёл).
 - `module/rules/wound-tier.mjs` — уровень Ранения (лёгкое/тяжёлое/критическое).
 - `module/rules/death-save.mjs` — Чудесное Спасение, Божественная Защита,
-  Замедленная Анимация (Сус-ан Мембрана Астартес).
+  Замедленная Анимация (Сус-ан Мембрана Астартес, Сон Героя), Игрушка Богов.
+  Цена хаосита — характеристика Inf (inf.base), не пул Очков. Откат удара —
+  снимок `flags.preHitWounds` из `rules/wounds.mjs::applyWoundLoss`; причина
+  смерти от Состояния — `flags.deathCause`. Божественная Защита до ⏻ Конца
+  сессии — флаг `divineProtection`: гейты в `combat/damage.mjs`,
+  `applyWoundLoss`, `killByCondition`, движении и Натиске. Диалог и броски —
+  `sheets/tabs/death.mjs`.
 - `module/rules/ablative-ap.mjs` — общий примитив «−1 заряд аблатива за
   попадание» (мод брони, Роба Чемпиона, Минный Плуг техники).
 - `module/combat/ablative-wounds.mjs` — авторегенерация аблатива по Ходу.
@@ -739,7 +745,8 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
     обморока от Усталости, урон Гангрены раз в T.b×2 ч, −1 Обескровливания в
     час, Удушье «в покое» по минутам.
   - `combat/condition-death.mjs::killByCondition` — смерть от Состояния
-    (Кровотечение/Удушье/Гангрена): флаг deceased + «Повержен» + defeated.
+    (Кровотечение/Удушье/Гангрена/T до 0): флаг deceased + «Повержен» + defeated,
+    причина — flags.deathCause; под Божественной Защитой не убивает.
   - Единый путь смены Усталости — `sheets/tabs/conditions.mjs::
     setFatigue/fatigueChangeFields` (порог T.b+W.b, Саркофаг, пробуждение);
     действующее значение с +1 Гангрены — `system.fatigue.effective`.
