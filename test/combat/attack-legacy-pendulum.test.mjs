@@ -5,7 +5,7 @@
 // АТАКИ, не гейтится попаданием (книга говорит «атаковал», не «попал»).
 // Чтение/трата флага — module/combat/defense.mjs, отдельный тест-файл.
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { weaponFor } from "../support/combat-fixtures.mjs";
 import { _executeAttackRoll } from "../../module/combat/attack.mjs";
@@ -13,7 +13,7 @@ import { _executeAttackRoll } from "../../module/combat/attack.mjs";
 function actorWithFlags(items = []) {
   const flags = {};
   return {
-    id: "a1", name: "Подставной", items,
+    id: "a1", uuid: "Actor.a1", name: "Подставной", items,
     system: { characteristics: { ws: { total: 45, bonus: 4 }, bs: { total: 45, bonus: 4 } } },
     getActiveTokens: () => [],
     getFlag: (scope, key) => flags[`${scope}.${key}`],
@@ -21,7 +21,12 @@ function actorWithFlags(items = []) {
   };
 }
 
-beforeEach(() => { resetCaptured(); });
+// Свой Ход актора в трекере — по умолчанию (книга: «атаковал в свой Ход»).
+beforeEach(() => {
+  resetCaptured();
+  globalThis.game.combat = { combatant: { actor: { uuid: "Actor.a1" } } };
+});
+afterEach(() => { globalThis.game.combat = undefined; });
 
 describe("Маятник: attack.mjs пишет legacyPendulumBonus", () => {
   it("попадание оружием с Мутацией — флаг = порог минус голая характеристика", async () => {
@@ -53,6 +58,27 @@ describe("Маятник: attack.mjs пишет legacyPendulumBonus", () => {
 
   it("оружие без Мутации — флаг не пишется", async () => {
     const weapon = weaponFor({ legacy: { active: true, mutations: [] } });
+    const actor = actorWithFlags([weapon]);
+    captured.dice = [10, 5];
+    await _executeAttackRoll(actor, weapon, "bs", 60, "single", null, {});
+    expect(actor.getFlag("warhammer-dbc", "legacyPendulumBonus")).toBeUndefined();
+  });
+
+  // wdbc-t3c3t.5: Свободная Атака/Контратака в чужой Ход бонуса не дают.
+  it("атака не в свой Ход — флаг не пишется", async () => {
+    globalThis.game.combat = { combatant: { actor: { uuid: "Actor.other" } } };
+    const weapon = weaponFor({ legacy: { active: true, mutations: [{ name: "Маятник" }] } });
+    weapon.id = "w1";
+    const actor = actorWithFlags([weapon]);
+    captured.dice = [10, 5];
+    await _executeAttackRoll(actor, weapon, "bs", 60, "single", null, {});
+    expect(actor.getFlag("warhammer-dbc", "legacyPendulumBonus")).toBeUndefined();
+  });
+
+  it("вне боя (нет Хода) — флаг не пишется", async () => {
+    globalThis.game.combat = undefined;
+    const weapon = weaponFor({ legacy: { active: true, mutations: [{ name: "Маятник" }] } });
+    weapon.id = "w1";
     const actor = actorWithFlags([weapon]);
     captured.dice = [10, 5];
     await _executeAttackRoll(actor, weapon, "bs", 60, "single", null, {});
