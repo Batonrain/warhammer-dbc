@@ -120,6 +120,27 @@
   Огненного Дракона).
 - `module/sheets/tabs/{death,healing,wounds}.mjs` — UI Смерти, Лечения,
   расчётов Ран на листе.
+- Естественное лечение по Календарю (wdbc-x1nz.2.104): режим
+  `system.healing.regimen` (Активен/Отдых/Постельный) на листе, медик на
+  уходе `system.healing.caregiver`; таблица книги — `rules/healing-clock.mjs`
+  (её же читает ручная кнопка диалога), обработчик часов —
+  `combat/healing-clock.mjs` в `CONDITION_CLOCK_HANDLERS`. Предел Первой
+  Помощи — `system.wounds.lostSinceFirstAid` (растёт в
+  `documents/actor.mjs::_preUpdate`). Состояние «Кома» (wdbc-x1nz.2.105) —
+  `constants/conditions.mjs`, производно Без сознания → Беспомощен
+  (`rules/character.mjs`), снимает Вывод из комы.
+- Урон в Характеристики (wdbc-x1nz.2.83): `system.charLoss.<х-ка>` ≥ 0 —
+  отдельно от ручного «Мод.» `system.charDamage` (бафф/дебафф стола).
+  Писать урон — только `combat/char-damage.mjs::applyCharDamage` (пол 0,
+  T = 0 — смерть) или `rules/char-loss.mjs::charLossAddFields` для общих
+  патчей; лечить — `charHealFields` (урон по книге, затем старый минус
+  «Мод.»). Итог (вычет, пол 0) — `rules/character.mjs`; эффекты нулевой
+  Характеристики — производно там же (`ZERO_EFFECTS`), метки Парализован/
+  Немота — `rules/condition-mirrors.mjs`; запрет атак при WS/BS = 0 —
+  `sheets/attack-dialog.mjs`. Восстановление 1/ч — обработчик `charLoss` в
+  `combat/condition-clock.mjs`; блок/замедление — записи правил
+  `{ kind: "charRecovery", target, mode: "block"|"period", hours }`
+  (Гангрена, Лучевая болезнь — `rules/library/conditions.mjs`).
 - Именные: `apps/ablative-ap-shield.mjs` (Роба Чемпиона), `apps/
   psalm-unseen-fortress.mjs` (ресинк «Купола Рефрактора»), `apps/
   sus-an-heal.mjs` (исцеление Сус-ан по игровым суткам).

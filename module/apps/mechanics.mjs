@@ -387,6 +387,23 @@
 //      атаки, ровно как test/reroll-модификаторы собираются из
 //      testMod/reroll. apScope:"unarmed" — интегральные безоружные атаки
 //      (Кулак/Пинок/…, isIntegralAttack), не обычное оружие в руке.
+//    charRecovery: { crTargets: string[], crMode:"block"|"period", crHours, label }
+//      → ЖИВОЙ ЗАПРОС (wdbc-x1nz.2.83), как reroll/testMod/attackProp выше:
+//      ничего не пишет и не создаёт при получении предмета. module/rules/
+//      item-rules.mjs собирает из записи правило { kind:"charRecovery",
+//      target, mode, hours } (docs/rules-format.md), которое читает
+//      module/rules/char-loss.mjs::actorRecoveryPolicy() при каждом часовом
+//      шаге восстановления Урона в Характеристики. crTargets — Характеристики
+//      записи (мультивыбор constants/characteristics.mjs, включая
+//      псевдо-пункт «Все») → target "t" / "t,s" / "all" — та же нотация, что
+//      у книжных источников (Лучевая болезнь — rules/library/conditions.mjs).
+//      crMode:"block" — эти Характеристики вообще не восстанавливаются
+//      пассивно, пока предмет на акторе (Гниль Нургла — T, зависимость от
+//      препарата — I/P/W/F); crMode:"period" — восстанавливаются раз в
+//      crHours часов вместо раза в час (Гниль Нургла — все Характеристики
+//      раз в 7 часов, той же записью «Все»). Несколько источников по одной
+//      Характеристике — любой block побеждает; иначе берётся самый длинный
+//      period (recoveryPolicy(), char-loss.mjs).
 //
 //  Идемпотентность: flags.warhammer-dbc.mechanicsApplied — один раз при
 //  createItem (см. Hooks.on("createItem", ...) в warhammer-dbc.mjs).
@@ -634,6 +651,7 @@ const KIND_LABELS = {
   burningGrace: "Горение: окно без эффектов (Cooler)",
   counterAttack: "Встречная атака",
   attackProp: "Свойство атаки",
+  charRecovery: "Восстановление урона в Характеристики",
   equipment: "Снаряжение",
   integralAttack: "Интегральная атака",
   loyalty: "Лояльность миньонов",
@@ -967,6 +985,13 @@ export function blankMechEntry(kind = "characteristic") {
     // предмета ничего не делает. apRating/apRating2 — число или формула
     // (та же нотация, что у ccDamage — MECH_FORMULA_HINT/CC_DAMAGE_HINT).
     apScope: "unarmed", apKey: "", apRating: "", apRating2: "",
+    // charRecovery — «Восстановление урона в Характеристики» (wdbc-x1nz.2.83):
+    // живой запрос, читается rules/char-loss.mjs::actorRecoveryPolicy() через
+    // rules/item-rules.mjs, при получении предмета ничего не делает.
+    // crTargets — ключи Характеристик (пусто ⇒ ничего не выбрано, запись
+    // считается незаполненной, см. isEntryComplete); "all" в массиве — та же
+    // область "all", что у книжных источников (все Характеристики разом).
+    crTargets: [], crMode: "block", crHours: 1,
     // reroll — «Переброс»: живой запрос, читается в момент броска
     // (module/rules/item-rules.mjs), при получении предмета ничего не делает.
     rerollScope: "all", rerollChar: "ag", rerollMode: "keepBest",
@@ -1189,6 +1214,16 @@ export function describeMechEntry(entry) {
       const ratings = [entry.apRating, entry.apRating2].filter(v => String(v ?? "").trim() !== "");
       const ratingStr = ratings.length ? ` (${ratings.join("/")})` : "";
       return `Свойство атаки: ${scopeLabel} — ${def.label}${ratingStr}`;
+    }
+    case "charRecovery": {
+      if (!Array.isArray(entry.crTargets) || !entry.crTargets.length) return "Восстановление урона в Характеристики: (не выбрано)";
+      const targetLabel = entry.crTargets.includes("all")
+        ? "Все Характеристики"
+        : entry.crTargets.map(k => CHARACTERISTICS[k]?.label || k).join(", ");
+      const modeLabel = entry.crMode === "period"
+        ? `восстанавливается раз в ${Number(entry.crHours) || 1} ч. (вместо раза в час)`
+        : "не восстанавливается, пока предмет активен";
+      return `Восстановление урона в Характеристики: ${targetLabel} — ${modeLabel}`;
     }
     case "capability": {
       if (entry.capabilityMode === "aptOverride") {
@@ -1424,6 +1459,9 @@ function isEntryComplete(e) {
       return !!String(e.ccDamage ?? "").trim() && !!(e.ccOnMiss || e.ccOnUnarmedOrGrapple);
     case "attackProp":
       return !!e.apScope && !!e.apKey && !!WEAPON_PROPERTIES[e.apKey];
+    case "charRecovery":
+      if (!Array.isArray(e.crTargets) || !e.crTargets.length) return false;
+      return e.crMode === "period" ? numOk(e.crHours) && Number(e.crHours) > 0 : true;
     case "fatigue":
       return e.fatigueAction === "threshold" && !!e.fatigueThresholdChar;
     case "condition":
@@ -3373,6 +3411,29 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       <select class="mech-ap-key" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
         <option value="" ${ent.apKey ? "" : "selected"}>— свойство —</option>${propOpts}
       </select>${ratingHtml}${rating2Html}`;
+  }
+
+  if (ent.kind === "charRecovery") {
+    // «Восстановление урона в Характеристики» (wdbc-x1nz.2.83) — мультивыбор
+    // Характеристик (та же форма multi-select, что у Ландшафта/игнора выше) +
+    // режим «не восстанавливается» / «медленнее» с полем часов, показанным
+    // только у второго (тот же приём каскада, что у .mech-fatigue-action).
+    const chosen = new Set(ent.crTargets || []);
+    const opts = [["all", "— Все Характеристики —"], ...Object.entries(CHARACTERISTICS).map(([k, c]) => [k, c.label || k])]
+      .map(([k, l]) => `<option value="${esc(k)}" ${chosen.has(k) ? "selected" : ""}>${esc(l)}</option>`).join("");
+    const modeOpts = [["block", "Не восстанавливается"], ["period", "Медленнее"]]
+      .map(([v, l]) => optHtml(v, l, (ent.crMode || "block") === v)).join("");
+    const hoursHtml = ent.crMode === "period" ? `
+      <input type="number" class="mech-cr-hours" min="1" value="${esc(ent.crHours ?? 1)}"
+             title="Раз в сколько часов восстанавливается (вместо обычного 1 в час)"
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>` : "";
+    return `
+      <select class="mech-cr-chars" multiple size="6" title="Какие Характеристики — «Все» перекрывает остальной выбор"
+              data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opts}</select>
+      <select class="mech-cr-mode" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${modeOpts}</select>
+      ${hoursHtml}
+      <input type="text" class="mech-reroll-label" placeholder="подпись (источник в списках восстановления)" value="${esc(ent.label || "")}"
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
   }
 
   if (ent.kind === "capability") {

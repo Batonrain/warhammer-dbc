@@ -2458,6 +2458,24 @@ export class WarhammerItemSheet
     mechField(".mech-ap-rating",  (e, v) => { e.apRating = String(v ?? "").trim(); });
     mechField(".mech-ap-rating2", (e, v) => { e.apRating2 = String(v ?? "").trim(); });
 
+    // Восстановление урона в Характеристики (kind:"charRecovery", wdbc-x1nz.2.83)
+    // — мультивыбор, как .mech-terrain-ignore выше (не mechField: нужен массив
+    // выбранных значений, не одно .value). Смена режима перерисовывает лист —
+    // поле часов есть только у «Медленнее» (тот же каскад, что у .mech-fatigue-action).
+    on(".mech-cr-chars", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.crTargets = Array.from(ev.currentTarget.selectedOptions).map(o => o.value);
+      saveMech(arr);
+    });
+    on(".mech-cr-mode", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.crMode = ev.currentTarget.value; saveMech(arr); }
+    });
+    mechField(".mech-cr-hours", (e, v) => { e.crHours = Math.max(1, parseInt(v) || 1); });
+
     // Усталость (kind:"fatigue") — каскад действие → характеристика. Смена
     // действия перерисовывает поля, поэтому сохраняем и даём листу обновиться.
     on(".mech-fatigue-action", "change", ev => {

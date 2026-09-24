@@ -211,6 +211,9 @@ export async function takeSelectedTokens(actor) {
  *   тест сразу засчитан успешным с этим числом Успехов.
  */
 export async function rollCommand(actor, kind, { mod = 0, benefit = "", shortKey = "", declaredSuccesses = 0 } = {}) {
+  // Немота — Общительность 0 от урона (wdbc-x1nz.2.83): приказ не отдать.
+  if (actor.system?.conditions?.mute)
+    return ui.notifications?.warn(`${actor.name}: Немота (Общительность 0 от урона) — не может отдавать Команды.`);
   const cmd = actor.system?.command ?? {};
   const base = Number(actor.system?.skills?.command?.total) || 0;
   // Общий сбор модификаторов (wdbc-ct65.2). Командование — социальный навык

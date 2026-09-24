@@ -40,7 +40,7 @@ function talent(name, extra = {}) {
 function actorOf({ runeMagic = true, talents = [], archeotechRank = null,
                    int = 40, intBonus = 4, psyRating = 3, runes = 0,
                    extraCaps = [], wounds = { value: 10, max: 10, critical: 0 },
-                   charDamage = { s: 0, ag: 0, wp: 0 } } = {}) {
+                   charLoss = { s: 0, ag: 0, wp: 0 } } = {}) {
   const items = [];
   if (runeMagic) items.push(capabilityItem(RUNE_MAGIC_FLAG));
   for (const cap of extraCaps) items.push(capabilityItem(cap));
@@ -51,11 +51,11 @@ function actorOf({ runeMagic = true, talents = [], archeotechRank = null,
   return {
     name: "Сигиллит", type: "character",
     system: {
-      characteristics: { int: { total: int, bonus: intBonus } },
+      characteristics: { int: { total: int, bonus: intBonus }, s: { total: 30 }, ag: { total: 30 }, wp: { total: 30 } },
       psyker: { rating: psyRating, currentRating: psyRating, class: "bound" },
       groupSkills: { forbiddenLore },
       sigilliteRunes: { value: runes, max: 0 },
-      wounds, charDamage
+      wounds, charLoss, charLossAt: {}
     },
     items: Object.assign(items.slice(), { contents: items })
   };
@@ -405,20 +405,20 @@ describe("Цена и допустимость изучения Руны (runeLe
 });
 
 describe("Improvised Rune — цена манифестации неизученной Руны", () => {
-  it("1 непоглощаемая Рана + 1 к Мод. S/A/W разом", () => {
+  it("1 непоглощаемая Рана + 1 урона в S/A/W разом (charLoss, wdbc-x1nz.2.83)", () => {
     const a = actorOf({ wounds: { value: 10, max: 10, critical: 0 } });
     const patch = improvisedRuneCostUpdates(a);
     expect(patch["system.wounds.value"]).toBe(9);
-    expect(patch["system.charDamage.s"]).toBe(-1);
-    expect(patch["system.charDamage.ag"]).toBe(-1);
-    expect(patch["system.charDamage.wp"]).toBe(-1);
+    expect(patch["system.charLoss.s"]).toBe(1);
+    expect(patch["system.charLoss.ag"]).toBe(1);
+    expect(patch["system.charLoss.wp"]).toBe(1);
   });
 
-  it("копится поверх уже имеющегося Мод. характеристики", () => {
-    const a = actorOf({ charDamage: { s: -2, ag: 0, wp: -1 } });
+  it("копится поверх уже имеющегося урона в Характеристику", () => {
+    const a = actorOf({ charLoss: { s: 2, ag: 0, wp: 1 } });
     const patch = improvisedRuneCostUpdates(a);
-    expect(patch["system.charDamage.s"]).toBe(-3);
-    expect(patch["system.charDamage.wp"]).toBe(-2);
+    expect(patch["system.charLoss.s"]).toBe(3);
+    expect(patch["system.charLoss.wp"]).toBe(2);
   });
 
   it("Раны ниже нуля уходят в Критические, как любой другой прямой урон", () => {

@@ -229,6 +229,8 @@ const DEVIATIONS = {
     // находки Fruit of Flesh/Плода Плоти (module/constants/conditions.mjs).
     "conditions.stasis": false,
     "conditions.stasisRounds": 0,
+    // Кома (wdbc-x1nz.2.105) — заведено гораздо позже template.json.
+    "conditions.coma": false,
     // Сладкий Туман (wdbc-1rno) — заведено гораздо позже template.json.
     "conditions.sweetMist": false,
     "conditions.sweetMistExpiresAt": 0,
@@ -315,6 +317,13 @@ const DEVIATIONS = {
     // отдельный пул ПЕРЕД обычными Ранами, заведён гораздо позже template.json.
     "wounds.ablative": 0,
     "wounds.ablativeMax": 0,
+    // Предел Первой Помощи (wdbc-x1nz.2.103) и лечение по Календарю
+    // (wdbc-x1nz.2.104) — заведены гораздо позже template.json.
+    "wounds.lostSinceFirstAid": null,
+    healing: { regimen: "active", caregiver: "", nextAt: 0, careOk: false },
+    // Урон в Характеристики по книге (wdbc-x1nz.2.83) — отдельно от «Мод.».
+    charLoss: Object.fromEntries(Object.keys(CHARACTERISTICS).map(k => [k, 0])),
+    charLossAt: Object.fromEntries(Object.keys(CHARACTERISTICS).map(k => [k, 0])),
     // Аблативный AP-щит (wdbc-bxw6, напр. Роба Чемпиона) — отдельный от
     // аблативных Ран пул, заведён гораздо позже template.json.
     "ablativeApShield.value": 0,

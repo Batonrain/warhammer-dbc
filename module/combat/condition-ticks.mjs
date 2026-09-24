@@ -54,6 +54,7 @@ import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 // Смерть от Состояния (wdbc-x1nz.2.92/.94): Кровотечение «на 0 и ниже он
 // умирает», Удушье «умирает от удушья через T.b Раундов» — общий путь.
 import { killByCondition } from "./condition-death.mjs";
+import { applyCharDamage } from "./char-damage.mjs";
 // Тесты внутри тиков (T+0 против жара/удушья, W+0 Обескровливания) — с
 // модификаторами персонажа, как любой тест без диалога (rules/roll-mods.mjs::
 // collectTestMods): раньше тут был голый 1d100 против t.total, и штрафы
@@ -759,11 +760,10 @@ export async function processConditionTurnEnd(actor) {
   // Радиации, не отдельный тег листа), а флаг актора с собственным
   // worldTime-тиком раз в 8 часов, combat/radiation.mjs.
   if (conds.radiation) {
-    const before = Number(actor.system.charDamage?.t) || 0;
-    const after  = before - 1;
     const level  = Number(conds.radiationLevel) || 0;
     const newLevel = level + 1;
-    await actor.update({ "system.charDamage.t": after, ...conditionAdjustFields(actor, "radiation", 1) });
+    // Единый конвейер урона в Характеристики (wdbc-x1nz.2.83).
+    const { before, after } = await applyCharDamage(actor, "t", 1, { extra: conditionAdjustFields(actor, "radiation", 1) });
     let sicknessNote = "";
     if (newLevel % 10 === 0) {
       // Тот же тест T+0 с модификаторами персонажа, что у Горения/Удушья выше.
@@ -774,7 +774,7 @@ export async function processConditionTurnEnd(actor) {
         ? `<span class="roll-failure">провал → лучевая болезнь</span>`
         : `<span class="roll-success">успех</span>`}`;
     }
-    lines.push(`<div class="roll-threshold">${rollIcon("warp", "#ffe14d")}Радиация: урон T <b>1</b> (Мод. T: ${before}→${after})${sicknessNote}</div>`);
+    lines.push(`<div class="roll-threshold">${rollIcon("warp", "#ffe14d")}Радиация: урон в T <b>1</b> (T ${before}→${after})${sicknessNote}</div>`);
   }
 
   if (lines.length) await postConditionCard(actor, lines);

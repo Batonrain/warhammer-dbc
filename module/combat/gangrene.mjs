@@ -10,9 +10,9 @@
 //  +1 Усталость — производная надбавка поверх хранимой (rules/character.mjs,
 //  fatigue.effective; rules/situational.mjs::effectiveFatigue). −20 на
 //  ментальные действия — rules/library/conditions.mjs (rollBonus, charIn:
-//  Int/Per/WP/Fel/Inf). «Не восстанавливает T отдыхом» — в этой системе
-//  вообще нет автоматического восстановления system.charDamage.* отдыхом
-//  (ручное поле листа «Мод.»), противоречить нечему.
+//  Int/Per/WP/Fel/Inf). «Не восстанавливает T отдыхом» — запись
+//  charRecovery (block, T) в rules/library/conditions.mjs: часы урона в
+//  Характеристики (rules/char-loss.mjs) не снимают урон в T, пока Гангрена.
 //
 //  Периодический урон T — gangreneTick. Идёт сам по игровому времени
 //  (решение владельца: всё «минуты/часы» — к Календарю): его зовёт
@@ -34,7 +34,7 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { conditionRemoveFields, hasAstartesPhysiology } from "../sheets/tabs/conditions.mjs";
-import { killByCondition } from "./condition-death.mjs";
+import { applyCharDamage } from "./char-damage.mjs";
 
 const FLAG = "warhammer-dbc";
 const TEST_AT_FLAG = "gangreneTestAt";
@@ -95,27 +95,18 @@ export async function gangreneTick(actor, { at = game.time?.worldTime ?? 0 } = {
 
   const roll = await new Roll("1d10").evaluate();
   rolls.push(roll);
-  const before = Number(actor.system.charDamage?.t) || 0;
-  const after  = before - roll.total;
-  // Итог T — до записи: после actor.update он пересчитается, но у заглушек
-  // тестов и у несвязанных токенов пересчёта может не быть.
-  const tBefore = Number(actor.system.characteristics?.t?.total) || 0;
-  const tAfter  = tBefore - roll.total;
-  await actor.update({
-    "system.charDamage.t": after,
-    [`flags.${FLAG}.${TEST_AT_FLAG}`]: at
-  });
-
-  let died = false;
-  if (tAfter <= 0) {
-    died = await killByCondition(actor);
+  // Единый конвейер урона в Характеристики (wdbc-x1nz.2.83): пол 0, смерть
+  // при нулевой T — combat/char-damage.mjs.
+  const { before: tBefore, after: tAfter, died } = await applyCharDamage(actor, "t", roll.total,
+    { extra: { [`flags.${FLAG}.${TEST_AT_FLAG}`]: at }, at });
+  if (died) {
     sections.push(`<div class="roll-outcome">${outcomeHtml(false, `Стойкость упала до ${tAfter} — ${esc(actor.name)} умирает от Гангрены.`)}</div>`);
   }
 
   await postTestCard(actor, {
     icon: rollIcon("blood","#7a8a4d"), title: `Гангрена → ${esc(actor.name)}`,
     head, threshold,
-    lines: [`<div class="roll-threshold">Урон T: <b>${roll.total}</b> (Мод. T: ${before}→${after}; T ${tBefore}→${tAfter})</div>`],
+    lines: [`<div class="roll-threshold">Урон в T: <b>${roll.total}</b> (T ${tBefore}→${tAfter})</div>`],
     sections
   }, { rolls });
   return { damage: roll.total, died };

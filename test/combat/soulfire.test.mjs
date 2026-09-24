@@ -33,11 +33,12 @@ function psychicButtons(damage) {
   return { applyBtn, label, btn: { disabled: false, textContent: "" } };
 }
 
-function psyker(wpDamage = 0) {
+function psyker(wpLoss = 0) {
   const updates = [];
   return {
     name: "Пиромант", uuid: "Actor.p", updates,
-    system: { charDamage: { wp: wpDamage } },
+    // Урон в Характеристики по книге (wdbc-x1nz.2.83) — charLoss, не «Мод.».
+    system: { characteristics: { wp: { total: 40 } }, charLoss: { wp: wpLoss }, charLossAt: { wp: wpLoss ? 5000 : 0 } },
     items: [{ type: "psychicPower", name: "Soulfire / Огонь Души" }],
     async update(data) { updates.push(data); }
   };
@@ -50,7 +51,7 @@ describe("Огонь Души: исход манифестации", () => {
   });
 
   it("+PRd5 к попаданию, флаг пробоя иммунитета, PR+1d5 урона в W", async () => {
-    const actor = psyker(-2);
+    const actor = psyker(2);
     const { applyBtn, btn } = buttons(12);
     // 3d5 → 2+4+5 = 11; 3+1d5 → 3+4 = 7
     captured.dice = [2, 4, 5, 4];
@@ -60,7 +61,7 @@ describe("Огонь Души: исход манифестации", () => {
     expect(applyBtn.b.textContent).toBe("23");
     expect(applyBtn.dataset.ignoreSubtypeImmunity).toBe("1");
     expect(btn.disabled).toBe(true);
-    expect(actor.updates).toContainEqual({ "system.charDamage.wp": -9 });
+    expect(actor.updates).toContainEqual({ "system.charLoss.wp": 9 });
   });
 
   // Живая проверка 23.09.2026: на карточке психосилы число на кнопке и в

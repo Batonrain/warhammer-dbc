@@ -98,6 +98,20 @@ export function clearSideFields(side) {
 }
 
 /**
+ * Восстановление после Пришивания/установки бионики (wdbc-x1nz.2.106):
+ * «пациент требует 1d10+3−T.b суток на восстановление/адаптацию» — решение
+ * владельца 24.09.2026: конечность бесполезна этот срок, как в лубке, и
+ * снимается сама по Календарю (uselessClockStep, событие healed).
+ */
+export function recoveryFields(side, { days = 1, worldTime = 0 } = {}) {
+  return {
+    ...clearSideFields(side),
+    [path(side, "state")]: "splinted",
+    [path(side, "healAt")]: Number(worldTime) + Math.max(1, days) * SECONDS_PER_DAY
+  };
+}
+
+/**
  * Сделать конечность бесполезной.
  * rounds > 0 — временно, на Раунды (лечения не нужно; второй такой эффект
  * не укорачивает уже идущий срок). Иначе — до лечения: пошли часы 2×T.b.

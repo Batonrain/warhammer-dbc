@@ -35,6 +35,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { USELESS_SIDES, uselessCount, uselessHint, clearSideFields } from "./useless-limbs.mjs";
+import { isZeroedByLoss } from "./char-loss.mjs";
 
 const FLAG_SCOPE = "warhammer-dbc";
 
@@ -147,6 +148,16 @@ export const CONDITION_MIRRORS = {
   radiationSickness: {
     label: "Лучевая болезнь",
     sources: [{ kind: "flag", path: "radiationSickness" }]
+  },
+  // Нулевая Характеристика от урона (wdbc-x1nz.2.83). Снять тегом нельзя —
+  // источник урон, он отходит по часам (clear — пустой патч).
+  paralyzed: {
+    label: "Парализован",
+    sources: [{ kind: "fn", read: actor => isZeroedByLoss(actor?.system, "ag"), hint: () => "Ловкость 0 от урона", clear: () => ({}) }]
+  },
+  mute: {
+    label: "Немота",
+    sources: [{ kind: "fn", read: actor => isZeroedByLoss(actor?.system, "fel"), hint: () => "Общительность 0 от урона", clear: () => ({}) }]
   },
   uselessArm: {
     label: "Бесполезная рука",

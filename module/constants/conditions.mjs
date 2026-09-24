@@ -87,6 +87,29 @@ export const CONDITIONS = {
     desc: "Не может совершать Действия и Реакции. Считается Беспомощным, не видит и не слышит окружающих.",
     body: `<path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M3.5 5L6 7.5M6 5L3.5 7.5M10 5L12.5 7.5M12.5 5L10 7.5M5 11.5C7 10 9 10 11 11.5"/>`
   },
+  // Кома (книга, «Лечение → Кома», wdbc-x1nz.2.105; решение владельца
+  // 24.09.2026): «остаётся в коме, пока не будет выведен из неё». Без
+  // сознания и Беспомощен — производно (rules/character.mjs), сама не
+  // проходит; снимает её Успех «Вывода из комы» (Medicae−40 раз в 10−T.b
+  // дней, sheets/tabs/healing.mjs). Постоянный уход и питание — за столом.
+  coma: {
+    label: "Кома", icon: "🛌", color: "#8a7fd0",
+    desc: "Без сознания и Беспомощен, пока не выведен из комы: медик раз в 10−T.b дней может попытаться тестом Medicae−40. Нужен постоянный медицинский уход и внутривенное питание.",
+    body: `<path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 12.5H13M3 12.5V9.5H13V12.5M4.5 9.5V8A1.5 1.5 0 0 1 7.5 8V9.5"/>
+     <path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" d="M9 2.5H11.5L9 5.5H11.5"/>`
+  },
+  // Нулевая Ловкость/Общительность от урона в Характеристики (wdbc-x1nz.2.83,
+  // таблица книги): метки, стоят, пока Итог 0 (rules/condition-mirrors.mjs).
+  paralyzed: {
+    label: "Парализован", icon: "🧊", color: "#9fd0ff", mark: true,
+    desc: "Ловкость упала до 0 от урона: парализован и Беспомощен, не может двигаться. Проходит, когда урон в Ловкость восстановится.",
+    body: `<path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M8 2V14M2.8 5L13.2 11M13.2 5L2.8 11"/>`
+  },
+  mute: {
+    label: "Немота", icon: "🤐", color: "#c9a0ff", mark: true,
+    desc: "Общительность упала до 0 от урона: не может общаться — ни социальных тестов, ни отдачи Команд. Проходит, когда урон восстановится.",
+    body: `<g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 8H13"/><path d="M5 6V10M8 6V10M11 6V10"/></g>`
+  },
   // Стазис (корбук, глава «Хрономантия», раздел «Стазис» — источники в
   // книге: психосилы Хрономантии, Stasis Shield/Стазис Щит, Stasis-Pod/
   // Стазис-Капсула, Stasis Bomb/Стазис Бомба; новая запись заведена по

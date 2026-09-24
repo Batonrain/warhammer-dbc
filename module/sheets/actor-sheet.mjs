@@ -2945,6 +2945,10 @@ export class WarhammerCharacterSheet
     // названием/целью, а не «Обычный», как при обычном клике по Навыку.
     defaultKind = "base", extendedPreset = null
   } = {}) {
+    // Немота — Общительность 0 от урона (wdbc-x1nz.2.83): «теряет способность
+    // общаться», тесты на Общительности недоступны.
+    if (defaultChar === "fel" && this.actor.system?.conditions?.mute)
+      return ui.notifications.warn(`${this.actor.name}: Немота (Общительность 0 от урона) — не может общаться.`);
     const result = await this._showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect,
       rollContext, defaultKind, { effectTargetActor, opposedRequest, presetModifier, extendedPreset });
     if (!result) return;

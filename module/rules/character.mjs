@@ -35,6 +35,7 @@ import { raceMatches } from "./race.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { readAllMirrors } from "./condition-mirrors.mjs";
+import { zeroedKeys, ZERO_EFFECTS } from "./char-loss.mjs";
 import { derivedLimbLossConditions } from "./limb-loss.mjs";
 import { PA_TABLES } from "../constants/power-armour-lore.mjs";
 import { sanityMax, madnessLevels, sarcophagusCharDelta, DREADNOUGHT_PILOT_FLAG,
@@ -449,6 +450,9 @@ export function prepareCharacterDerived(actor, system) {
 
     // ── Характеристики ────────────────────────────────────────────────────
     const charDamage = system.charDamage || {};
+    // Урон в Характеристики по книге (wdbc-x1nz.2.83, rules/char-loss.mjs) —
+    // отдельно от ручного «Мод.»: вычитается и не опускает Итог ниже 0.
+    const charLoss = system.charLoss || {};
     // Авто-дебафф от потребностей (Голод/Жажда) — отдельно от ручного charDamage.
     // Эффективная стадия каждого Виталa — max(сохранённая, естественная по
     // прошедшему worldTime) (wdbc-jnqj). Порог Голода — ½T.b суток, но
@@ -461,7 +465,7 @@ export function prepareCharacterDerived(actor, system) {
       const t = chars.t || {};
       const tTotal = (t.base || 0) + (t.advance || 0) + (IMPROVEMENT_BONUS[t.improvement] || 0)
                    + (armorCharBonus.t || 0) + (traitCharValueBonus.t || 0) + (t.totalFx || 0)
-                   + (charDamage.t || 0);
+                   + (charDamage.t || 0) - (charLoss.t || 0);
       const tb = Math.floor(tTotal / 10) + (t.supernatural || 0) + (t.bonusFx || 0)
                + (traitCharBonus.t || 0) + (pathPassives.charBonus.t || 0);
       const worldTime  = game.time?.worldTime ?? 0;
@@ -493,8 +497,14 @@ export function prepareCharacterDerived(actor, system) {
       // totalFx — надбавка к ЗНАЧЕНИЮ от эффектов, парная к bonusFx ниже:
       // хранимое поле, фаза "initial", входит в расчёт ДО вывода Бонуса,
       // потолка Ловкости и навыков.
+      const lossMod   = Math.max(0, Number(charLoss[key]) || 0);
+      char.charLoss   = lossMod;
       char.total   = (char.base || 0) + (char.advance || 0) + impBonus + drugMod + armorMod + valueMod
                    + (char.totalFx || 0) + dmgMod - vitalMod;
+      // «Характеристика не может опускаться ниже 0» — пол только для урона:
+      // остальные слагаемые ведут себя как раньше.
+      const beforeLoss = char.total;
+      if (lossMod) char.total = Math.max(Math.min(0, beforeLoss), beforeLoss - lossMod);
       // Потолок брони режет готовое значение Ловкости — и Бонус ниже считается
       // уже от урезанного. Сверхъестественная Ловкость потолком не ограничена:
       // она прибавляется к Бонусу отдельным слагаемым, а не к значению.
@@ -514,6 +524,7 @@ export function prepareCharacterDerived(actor, system) {
       if (valueMod) breakdown.push({ label: "Черты/импланты", value: valueMod });
       breakdown.push(...characteristicMechContrib(actor, key));
       if (dmgMod) breakdown.push({ label: "Мод. (ручной)", value: dmgMod });
+      if (lossMod) breakdown.push({ label: "Урон в Характеристику (отходит по 1 в час)", value: char.total - beforeLoss });
       if (vitalMod) breakdown.push({ label: "Голод/Жажда", value: -vitalMod });
       if (cappedByArmor) breakdown.push({ label: "Потолок Ловкости (броня)", value: null, cap: agilityCap });
       char.totalBreakdown = breakdown;
@@ -606,6 +617,19 @@ export function prepareCharacterDerived(actor, system) {
     // hasCondition/targetLacksCondition) — без сознания это строго хуже
     // просто Беспомощности, так что переопределение (не «ИЛИ» с уже стоящим
     // значением) корректно в обе стороны.
+    // Кома (wdbc-x1nz.2.105) — «без сознания, пока не выведут»: тот же
+    // производный приём, чтобы все читатели «Без сознания» (ОД, Борьба,
+    // Команды, HUD) видели её без своей ветки.
+    // Нулевая Характеристика от урона (wdbc-x1nz.2.83, таблица книги —
+    // rules/char-loss.mjs::ZERO_EFFECTS): следствия стоят, пока Итог 0.
+    // Парализован/Немота — метки-зеркала (rules/condition-mirrors.mjs), здесь
+    // только существующие Состояния. T = 0 — смерть в момент урона.
+    if (system.conditions) {
+      for (const key of zeroedKeys(system)) {
+        for (const cond of ZERO_EFFECTS[key].conditions ?? []) system.conditions[cond] = true;
+      }
+    }
+    if (system.conditions?.coma) system.conditions.unconscious = true;
     if (system.conditions?.unconscious) system.conditions.helpless = true;
 
     // Кэш сборки правил (rules/collect.mjs) сложился ВЫШЕ — на первом же

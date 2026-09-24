@@ -701,11 +701,11 @@ describe("processConditionTurnEnd: Горение", () => {
 // на кратных 10 — тест T+0, провал ставит флаг radiationSickness (лечится
 // отдельно, combat/radiation.mjs).
 describe("processConditionTurnEnd: Радиация", () => {
-  it("фикс. 1 урон в T (Мод. характеристики), доза +1, ниже порога — без теста", async () => {
+  it("фикс. 1 урон в T (урон в Характеристику, wdbc-x1nz.2.83), доза +1, ниже порога — без теста", async () => {
     const actor = makeActor({ conditions: { radiation: true, radiationLevel: 3 } });
     await processConditionTurnEnd(actor);
 
-    expect(actor.system.charDamage.t).toBe(-1);
+    expect(actor.system.charLoss.t).toBe(1);
     expect(actor.system.conditions.radiationLevel).toBe(4);
     expect(captured.chat[0].content).not.toContain("тест T+0");
   });
@@ -731,11 +731,12 @@ describe("processConditionTurnEnd: Радиация", () => {
     expect(captured.chat[0].content).toContain("успех");
   });
 
-  it("накопленный урон складывается (Мод. уже отрицательный)", async () => {
+  it("накопленный урон складывается", async () => {
     const actor = makeActor({ conditions: { radiation: true, radiationLevel: 0 } });
-    actor.system.charDamage = { t: -4 };
+    actor.system.charLoss = { t: 4 };
+    actor.system.charLossAt = { t: 5000 };
     await processConditionTurnEnd(actor);
-    expect(actor.system.charDamage.t).toBe(-5);
+    expect(actor.system.charLoss.t).toBe(5);
   });
 
   it("нет Радиации — тишина", async () => {

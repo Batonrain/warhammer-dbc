@@ -126,6 +126,22 @@ export async function applyWoundLoss(actor, amount) {
   };
 }
 
+/**
+ * Счётчик «потеряно Ран после прошлой Первой Помощи» (wdbc-x1nz.2.103) после
+ * смены Ран. Запас здоровья — value − critical (Критические — Раны в минусе),
+ * рост потери — его падение. Лечение счётчик не уменьшает: книга считает
+ * потерянное ПОСЛЕ помощи, а не нынешнюю нехватку. null (помощь ещё не
+ * оказывали) остаётся null.
+ *
+ * @returns {number|null|undefined} новое значение; undefined — не менять
+ */
+export function lostSinceFirstAidAfter(prev, before, after) {
+  if (typeof prev !== "number") return undefined;
+  const hp = w => (Number(w?.value) || 0) - (Number(w?.critical) || 0);
+  const grow = hp(before) - hp(after);
+  return grow > 0 ? prev + grow : undefined;
+}
+
 /** Порог гибели по отрицательным (Критическим) Ранам — Макс Ран + 7. */
 export function woundDeathThreshold(maxWounds) {
   return (Number(maxWounds) || 0) + 7;

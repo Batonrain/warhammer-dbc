@@ -29,6 +29,8 @@ import { esc } from "../helpers/utils.mjs";
 import { gangreneTick, gangreneIntervalSeconds } from "./gangrene.mjs";
 import { haemorrhageHourly, suffocationRestClock } from "./condition-ticks.mjs";
 import { unlinkedTokens } from "../migrations/unlinked-tokens.mjs";
+import { healingClock } from "./healing-clock.mjs";
+import { charLossClockStep, actorRecoveryPolicy } from "../rules/char-loss.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -151,7 +153,20 @@ export const CONDITION_CLOCK_HANDLERS = [
   { id: "suffocationRest", run: suffocationRestClock },
   // Бесполезные Конечности: 2×T.b ч без помощи, лубок, Гангрена (wdbc-x1nz.2.99).
   { id: "uselessLimbs", run: uselessLimbsClock },
+  // Естественное лечение: сутки / 8 ч под уходом, режим с листа (wdbc-x1nz.2.104).
+  { id: "healing", run: healingClock },
+  // Урон в Характеристики: 1 в час, блоки/замедления — записи charRecovery
+  // (wdbc-x1nz.2.83, rules/char-loss.mjs). Молча — без карточки на каждый час.
+  { id: "charLoss", run: charLossClock },
 ];
+
+async function charLossClock(actor, { to }) {
+  const sys = actor.system;
+  const any = obj => Object.values(obj ?? {}).some(v => Number(v) > 0);
+  if (!sys?.charLoss || (!any(sys.charLoss) && !any(sys.charLossAt))) return;
+  const { patch } = charLossClockStep(sys, actorRecoveryPolicy(actor), to);
+  if (Object.keys(patch).length) await actor.update(patch);
+}
 
 /**
  * Прогнать часы Состояний одного актора за отрезок игрового времени.

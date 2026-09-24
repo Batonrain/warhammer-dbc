@@ -134,6 +134,23 @@ export const CONDITION_RULES = [
     effects: [{ kind: "rollBonus", target: "all", value: -20 }]
   },
   {
+    // «Не может восстанавливать урон в T отдыхом и медитацией» (Гангрена) —
+    // отдельной записью: у записи выше условие charIn для тестов, а
+    // восстановление спрашивается без теста (wdbc-x1nz.2.83).
+    id: "conditions.gangreneRecovery",
+    label: "Гангрена",
+    when: { hasCondition: "gangrene" },
+    effects: [{ kind: "charRecovery", target: "t", mode: "block" }]
+  },
+  {
+    // Лучевая болезнь: «не дает восстанавливать урон в T отдыхом и
+    // медитацией» (wdbc-x1nz.2.83).
+    id: "conditions.radiationSicknessRecovery",
+    label: "Лучевая болезнь",
+    when: { hasCondition: "radiationSickness" },
+    effects: [{ kind: "charRecovery", target: "t", mode: "block" }]
+  },
+  {
     // Стр. 30-31, wdbc-r5o7.6: «Оглох — ... −30 на устные социальные тесты и
     // Командование». В этой кодовой базе Командование УЖЕ входит в область
     // `social` (apt2: "social" у навыка, docs/rules-format.md) — одна запись

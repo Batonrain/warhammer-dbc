@@ -101,6 +101,16 @@ export function creatureSchema({ granted = false } = {}) {
   for (const [key, def] of Object.entries(CHARACTERISTICS))
     charDamageFields[key] = num(0, def.label);
 
+  // Урон в Характеристики по книге (wdbc-x1nz.2.83) — отдельно от ручного
+  // «Мод.» выше: ≥ 0, не опускает Итог ниже 0, отходит по 1 в час
+  // (charLossAt — момент следующего восстановления). rules/char-loss.mjs.
+  const charLossFields = {};
+  const charLossAtFields = {};
+  for (const [key, def] of Object.entries(CHARACTERISTICS)) {
+    charLossFields[key] = new NumberField({ initial: 0, nullable: false, integer: true, min: 0, label: def.label });
+    charLossAtFields[key] = num(0, def.label);
+  }
+
   const skillFields = {};
   for (const [key, def] of Object.entries(SKILLS_DEF)) {
     skillFields[key] = new SchemaField({
@@ -233,6 +243,12 @@ export function creatureSchema({ granted = false } = {}) {
       max:          num(0, "Максимум"),
       critical:     num(0, "Критические"),
       firstAidUsed: bool(false, "Первая помощь оказана"),
+      // «Первая помощь не может вылечить больше Ран, чем персонаж потерял
+      // после предыдущего оказания первой помощи» (wdbc-x1nz.2.103). null —
+      // Первую Помощь ещё не оказывали: предел — вся нехватка. Растёт в
+      // documents/actor.mjs::_preUpdate на ЛЮБУЮ потерю Ран (путей урона
+      // много), обнуляется Первой Помощью (sheets/tabs/healing.mjs).
+      lostSinceFirstAid: new NumberField({ initial: null, nullable: true, integer: true, min: 0, label: "Потеряно после Первой Помощи" }),
       // Аблативные Раны (wdbc-smy7) — отдельный пул ПЕРЕД обычными Ранами
       // (напр. Дар Нургла «Абсурдно Толстый»: +10 аблативных, регенерация
       // 1/Ход). ablativeMax — цель kind:"poolMax" Конструктора
@@ -241,6 +257,16 @@ export function creatureSchema({ granted = false } = {}) {
       ablative:     num(0, "Аблативные (текущие)"),
       ablativeMax:  num(0, "Аблативные (максимум)")
     }, { label: "Раны" }),
+    // Естественное лечение по Календарю (wdbc-x1nz.2.104, книга «Лечение»):
+    // режим, медик на уходе, момент следующего лечения и итог теста ухода
+    // на текущий период. Считает combat/healing-clock.mjs, таблица —
+    // rules/healing-clock.mjs.
+    healing: new SchemaField({
+      regimen:   new StringField({ initial: "active", choices: ["active", "rest", "bedRest"], label: "Режим лечения" }),
+      caregiver: new StringField({ initial: "", label: "Медик на уходе (UUID)" }),
+      nextAt:    num(0, "Следующее лечение (worldTime)"),
+      careOk:    bool(false, "Уход на этот период успешен")
+    }, { label: "Лечение" }),
     // Аблативный AP-щит (wdbc-bxw6, напр. Роба Чемпиона: 1 тPR → 2 аблативных
     // AP) — ОТДЕЛЬНЫЙ пул от аблативных Ран выше: не поглощение урона по
     // очкам, а плоская добавка к AP при каждом попадании, которая теряет
@@ -339,6 +365,8 @@ export function creatureSchema({ granted = false } = {}) {
     corruption: new SchemaField({ value: num(0, "Значение"), threshold: num(0, "Порог") }, { label: "Порча" }),
     characteristics: new SchemaField(charFields, { label: "Характеристики" }),
     charDamage:      new SchemaField(charDamageFields, { label: "Мод. характеристик" }),
+    charLoss:        new SchemaField(charLossFields, { label: "Урон в Характеристики" }),
+    charLossAt:      new SchemaField(charLossAtFields, { label: "Восстановление урона в Характеристики (worldTime)" }),
     skills:          new SchemaField(skillFields, { label: "Навыки" }),
     // ПЕРЕОПРЕДЕЛЕНИЕ ПРИВЯЗКИ СКЛОННОСТЕЙ (wdbc-1pvq): «у нашего стола
     // Уклонение относится к Интеллекту и Знанию, а не к Ловкости и Защите».

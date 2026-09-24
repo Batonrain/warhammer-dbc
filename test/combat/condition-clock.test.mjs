@@ -19,7 +19,9 @@ function makeActor({ fatigue = 0, tb = 4, wb = 3, tTotal = 40, conditions = {}, 
       fatigue: { value: fatigue, max: tb + wb },
       characteristics: { t: { bonus: tb, total: tTotal }, wp: { bonus: wb } },
       conditions: { ...conditions },
-      charDamage: { t: 0 }
+      charDamage: { t: 0 },
+      // Урон в Характеристики по книге (wdbc-x1nz.2.83).
+      charLoss: { t: 0 }, charLossAt: {}
     },
     getFlag: (_s, k) => f[k],
     setFlag: async (_s, k, v) => { f[k] = v; return v; },
@@ -27,7 +29,7 @@ function makeActor({ fatigue = 0, tb = 4, wb = 3, tTotal = 40, conditions = {}, 
       for (const [path, v] of Object.entries(data)) {
         const m = path.match(/^flags\.warhammer-dbc\.(.+)$/);
         if (m) { f[m[1]] = v; continue; }
-        if (path === "system.charDamage.t") a.system.characteristics.t.total += v - a.system.charDamage.t;
+        if (path === "system.charLoss.t") a.system.characteristics.t.total -= v - a.system.charLoss.t;
         const parts = path.split(".");
         let node = a;
         for (const p of parts.slice(0, -1)) node = (node[p] ??= {});
@@ -93,14 +95,14 @@ describe("Гангрена по Календарю", () => {
     captured.dice = [2, 3];
     const a = makeActor({ tb: 4, conditions: { gangrene: true }, flags: { gangreneTestAt: 0 } });
     await sweepConditionClock(a, { from: 0, to: 16 * 3600 + 5 });
-    expect(a.system.charDamage.t).toBe(-5);
+    expect(a.system.charLoss.t).toBe(5);
     expect(a.flags.gangreneTestAt).toBe(16 * 3600);
   });
 
   it("интервал не истёк — урона нет", async () => {
     const a = makeActor({ tb: 4, conditions: { gangrene: true }, flags: { gangreneTestAt: 0 } });
     await sweepConditionClock(a, { from: 0, to: 8 * 3600 - 1 });
-    expect(a.system.charDamage.t).toBe(0);
+    expect(a.system.charLoss.t).toBe(0);
   });
 
   it("метка старше отрезка (ручная кнопка до часов) — пропущенное не догоняется разом (приёмка #516)", async () => {
@@ -108,14 +110,14 @@ describe("Гангрена по Календарю", () => {
     const day = 24 * 3600;
     const a = makeActor({ tb: 4, conditions: { gangrene: true }, flags: { gangreneTestAt: 0 } });
     await sweepConditionClock(a, { from: 3 * day, to: 3 * day + 2 });
-    expect(a.system.charDamage.t).toBe(0);
+    expect(a.system.charLoss.t).toBe(0);
   });
 
   it("нет метки отсчёта — считается с начала отрезка", async () => {
     captured.dice = [4];
     const a = makeActor({ tb: 4, conditions: { gangrene: true } });
     await sweepConditionClock(a, { from: 1000, to: 1000 + 8 * 3600 });
-    expect(a.system.charDamage.t).toBe(-4);
+    expect(a.system.charLoss.t).toBe(4);
   });
 
   it("космодесантник исцелился на первом тике — дальше урона нет", async () => {
@@ -123,14 +125,14 @@ describe("Гангрена по Календарю", () => {
     const a = makeActor({ tb: 4, race: "astartes", conditions: { gangrene: true }, flags: { gangreneTestAt: 0 } });
     await sweepConditionClock(a, { from: 0, to: 24 * 3600 });
     expect(a.system.conditions.gangrene).toBe(false);
-    expect(a.system.charDamage.t).toBe(0);
+    expect(a.system.charLoss.t).toBe(0);
   });
 
   it("T.b = 0 — урон раз в час, а не подряд без паузы", async () => {
     captured.dice = [1, 1];
     const a = makeActor({ tb: 0, tTotal: 9, conditions: { gangrene: true }, flags: { gangreneTestAt: 0 } });
     await sweepConditionClock(a, { from: 0, to: 2 * 3600 + 10 });
-    expect(a.system.charDamage.t).toBe(-2);
+    expect(a.system.charLoss.t).toBe(2);
   });
 
   it("смерть останавливает часы", async () => {
@@ -138,7 +140,8 @@ describe("Гангрена по Календарю", () => {
     const a = makeActor({ tb: 1, tTotal: 5, conditions: { gangrene: true }, flags: { gangreneTestAt: 0 } });
     await sweepConditionClock(a, { from: 0, to: 100 * 3600 });
     expect(a.flags.deceased).toBe(true);
-    expect(a.system.charDamage.t).toBe(-9);
+    // Пол 0 (wdbc-x1nz.2.83): при T 5 урон 9 записывается как 5.
+    expect(a.system.charLoss.t).toBe(5);
   });
 });
 

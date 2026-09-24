@@ -68,6 +68,7 @@ import { MAGGOT_PARASITE_CAPABILITY } from "../rules/maggot-parasite.mjs";
 import { legacyWrathEffectiveRof, takenMutationNames } from "../rules/legacy-weapon.mjs";
 import { actorInfamyValue } from "../apps/infamy-points.mjs";
 import { isSabre, NS as SABRE_NS, SABRE_PENDING_FLAG } from "../combat/sabre-second-attack.mjs";
+import { isZeroedByLoss, ZERO_EFFECTS } from "../rules/char-loss.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -140,6 +141,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // окном — там же разобрано, чем именно.
   const isMelee = attackIsMelee(sys, { forceMelee, profile: startProfile });
   const charKey = isMelee ? "ws" : "bs";
+  // Нулевая WS/BS от урона в Характеристики (wdbc-x1nz.2.83): «не может
+  // совершать рукопашные атаки» / «не может стрелять».
+  if (isZeroedByLoss(actor.system, charKey))
+    return ui.notifications.warn(`⚠️ ${charKey === "ws" ? "WS" : "BS"} = 0 от урона — ${ZERO_EFFECTS[charKey].label.toLowerCase()}.`);
 
   // ── Правила из реестра (module/rules/) ───────────────────────────────────
   //   Атака — такой же тест конвейера, как бросок навыка: вид теста «attack»,
@@ -1594,6 +1599,8 @@ export function targetConditionAttackMods(targetActor, isMelee) {
 export async function showAttackDialogNoWeapon(actor, techDef) {
   if (isHallucinatingCannotAttack(actor))
     return ui.notifications.warn("⚠️ Галлюцинации («Я маленький...») — не может совершать Атаки.");
+  if (isZeroedByLoss(actor.system, "ws"))
+    return ui.notifications.warn(`⚠️ WS = 0 от урона — ${ZERO_EFFECTS.ws.label.toLowerCase()}.`);
   const ws       = actor.system.characteristics.ws?.total ?? 0;
   const stance   = actor.system.meleeStance || "standard";
   const stBon    = MELEE_STANCES[stance]?.wsBonus ?? 0;

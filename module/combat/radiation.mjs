@@ -22,6 +22,7 @@ import { worldTimeRemaining } from "../rules/cooldown.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
+import { applyCharDamage } from "./char-damage.mjs";
 
 const FLAG = "warhammer-dbc";
 const SICKNESS_FLAG = "radiationSickness";
@@ -47,15 +48,12 @@ export async function useRadiationSicknessTest(actor) {
     return ui.notifications.warn("Лучевая болезнь ещё не накопилась на новый урон T.");
   }
 
-  const before = Number(actor.system.charDamage?.t) || 0;
-  const after  = before - 1;
-  await actor.update({
-    "system.charDamage.t": after,
-    [`flags.${FLAG}.${TEST_AT_FLAG}`]: game.time.worldTime
-  });
+  // Единый конвейер урона в Характеристики (wdbc-x1nz.2.83).
+  const { before, after, died } = await applyCharDamage(actor, "t", 1,
+    { extra: { [`flags.${FLAG}.${TEST_AT_FLAG}`]: game.time.worldTime } });
 
   await postTestCard(actor, {
     icon: rollIcon("warp","#ffe14d"), title: `Лучевая болезнь → ${esc(actor.name)}`,
-    lines: [`<div class="roll-threshold">Урон T: <b>1</b> (Мод. T: ${before}→${after})</div>`]
+    lines: [`<div class="roll-threshold">Урон в T: <b>1</b> (T ${before}→${after})${died ? " — умирает" : ""}</div>`]
   }, { sound: false });
 }

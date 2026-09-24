@@ -31,6 +31,7 @@ import { hasRuleFlag } from "./flags.mjs";
 import { tokensWithinRadius } from "./aoe-target.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { fatigueChangeFields } from "../sheets/tabs/conditions.mjs";
+import { charHealFields } from "./char-loss.mjs";
 
 export const EATER_OF_PAIN_CAPABILITY = "gift.slaanesh.eaterOfPain";
 
@@ -80,9 +81,9 @@ export function eaterOfPainBenefitUpdate(system, choice, roll) {
   }
   if (choice === "char") {
     const upd = {};
+    // Урон по книге (charLoss) и старый минус в «Мод.» — wdbc-x1nz.2.83.
     for (const key of Object.keys(system?.characteristics ?? {})) {
-      const cur = Number(system?.charDamage?.[key]) || 0;
-      if (cur < 0) upd[`system.charDamage.${key}`] = Math.min(0, cur + n);
+      Object.assign(upd, charHealFields(system, key, n).patch);
     }
     return upd;
   }

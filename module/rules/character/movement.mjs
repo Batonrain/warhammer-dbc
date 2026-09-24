@@ -13,6 +13,7 @@
 
 import { calcMovement } from "../movement.mjs";
 import { uselessCount } from "../useless-limbs.mjs";
+import { isZeroedByLoss } from "../char-loss.mjs";
 import { inventoryOverloadTier } from "../encumbrance.mjs";
 import { disabledArmourOverloadTier, disabledArmourWeight } from "../../combat/armor-mods.mjs";
 
@@ -135,7 +136,9 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   const uselessLegs   = uselessCount(system, "leg");
   const lostFeetOrLeg = !!(system.conditions?.lostFeet || system.conditions?.lostLegs) || uselessLegs > 0;
   const bothLegsLost  = (Number(system.conditions?.lostLegsCount) || 0) + uselessLegs >= 2;
-  if (bothLegsLost) {
+  // Нулевая Ловкость от урона — «Парализован» (wdbc-x1nz.2.83): не двигается.
+  const paralyzed     = isZeroedByLoss(system, "ag");
+  if (bothLegsLost || paralyzed) {
     halfMove = 0; move = 0; charge = 0; run = 0;
   } else if (lostFeetOrLeg) {
     const halvedSpd = Math.max(0.5, Math.floor(halfMove / 2));
@@ -170,7 +173,10 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
     spdBreakdown.push({ label: "Повален", value: null, halved: true });
     expectedHalfMove /= 2;
   }
-  if (bothLegsLost) {
+  if (paralyzed) {
+    spdBreakdown.push({ label: "Парализован (Ловкость 0)", value: null, immobile: true });
+    expectedHalfMove = 0;
+  } else if (bothLegsLost) {
     spdBreakdown.push({ label: uselessLegs ? "Обе ноги потеряны/бесполезны" : "Потеря обеих ног", value: null, immobile: true });
     expectedHalfMove = 0;
   } else if (lostFeetOrLeg) {

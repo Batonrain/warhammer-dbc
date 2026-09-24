@@ -17,6 +17,7 @@
 import { itemHasName } from "./predicates.mjs";
 import { itemIs } from "./item-marker.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
+import { charDamageOutstanding } from "./char-loss.mjs";
 
 const NAME = "Tireless Warrior";
 
@@ -39,11 +40,11 @@ export function tirelessWarriorFatigueRelief(system) {
  * @returns {{key:string, label:string, current:number}[]}
  */
 export function tirelessWarriorDamagedCharacteristics(system) {
-  const charDamage = system?.charDamage || {};
   const out = [];
   for (const [key, def] of Object.entries(CHARACTERISTICS)) {
-    const cur = Number(charDamage[key]) || 0;
-    if (cur < 0) out.push({ key, label: def.label, current: cur });
+    // Урон по книге (charLoss, wdbc-x1nz.2.83) и старый минус в «Мод.».
+    const dmg = charDamageOutstanding(system, key);
+    if (dmg > 0) out.push({ key, label: def.label, current: -dmg });
   }
   return out;
 }

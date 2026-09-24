@@ -52,6 +52,14 @@
 //              половина). Три остальных режима той же записи сюда не едут:
 //              apply/remove разовые (applyMechEntry), immunity читает
 //              rules/condition-guards.mjs в момент наложения.
+//    charRecovery (wdbc-x1nz.2.83) — «Восстановление урона в Характеристики»:
+//              crTargets (массив ключей, "all" — все разом), crMode
+//              ("block"|"period"), crHours. Область — та же нотация "t" /
+//              "t,s" / "all", что читает rules/char-loss.mjs::
+//              actorRecoveryPolicy(), никакого своего перевода не нужно —
+//              собранные ключи склеиваются запятой. Живой запрос: правило
+//              собирается заново на каждый часовой шаг восстановления, а не
+//              пишется на актора при получении предмета.
 //    script  — «Код» с ценой ИЛИ частотой (wdbc-suwp): не эффект для теста,
 //              а координаты (itemId/groupId/entryId) для панели актора
 //              «ВОЗМОЖНОСТИ СЕЙЧАС» — там kind:"capability" (кнопка
@@ -358,6 +366,20 @@ function ruleFromEntry(item, entry, groupId = null) {
     return { id, label: entry.label || item.name, when: {},
              effects: [{ kind: "grantWeaponProp", target, propKey: key,
                          rating: entry.apRating ?? 0, rating2: entry.apRating2 ?? 0 }] };
+  }
+
+  if (entry?.kind === "charRecovery") {
+    // «Восстановление урона в Характеристики» (wdbc-x1nz.2.83) — target у
+    // char-loss.mjs::recoveryTargets() уже умеет "all"/"t"/"t,s", поэтому
+    // массив просто склеивается запятой; "all" в crTargets перекрывает
+    // остальной выбор (та же семантика, что у пустой строки в recoveryTargets).
+    const targets = Array.isArray(entry.crTargets) ? entry.crTargets : [];
+    if (!targets.length) return null;
+    const target = targets.includes("all") ? "all" : targets.join(",");
+    const mode = entry.crMode === "period" ? "period" : "block";
+    const effect = { kind: "charRecovery", target, mode };
+    if (mode === "period") effect.hours = Math.max(1, Number(entry.crHours) || 1);
+    return { id, label: entry.label || item.name, when: {}, effects: [effect] };
   }
 
   // entry?.kind === "condition" сюда не доходит: «Смягчение» собирается не
