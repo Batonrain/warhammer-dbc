@@ -141,6 +141,23 @@ export function shieldArmorByLocation(actor) {
   return Object.fromEntries(Object.entries(cov).map(([l, v]) => [l, v.ap]));
 }
 
+/**
+ * Щит поднят к голове — носитель им себе перекрывает обзор (core.json, «Типы
+ * Рукопашного Оружия», разд. «Щит»: «При прикрытии головы щитом, персонаж
+ * перекрывает себе обзор»). Только явный подъём (shieldRaised) с головой в
+ * скобочной зоне или выбранном варианте; голова в постоянных зонах («Все»,
+ * «Г» без скобок) — пассивное покрытие, не слепит (wdbc-t3c3t.1).
+ */
+export function shieldRaisedToHead(actor) {
+  return actor.items.some(item => {
+    if (!isHandShield(item) || !item.system.equipped || !(Number(item.system.shieldAP) > 0)) return false;
+    if (!item.getFlag?.("warhammer-dbc", "shieldRaised")) return false;
+    const z = parseShieldZones(item.system.shieldZones, getHeldHand(item) || "left");
+    const pick = Number(item.getFlag?.("warhammer-dbc", "shieldVariant") ?? 0);
+    return z.partial.includes(LOC.head) || z.variants.some(v => (v[pick] || v[0] || []).includes(LOC.head));
+  });
+}
+
 /** Человекочитаемая сводка «что прикрывает» — для листа и подсказок. */
 export function shieldCoverageLabel(item) {
   if (!isHandShield(item)) return "";
