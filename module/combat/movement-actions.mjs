@@ -56,6 +56,7 @@ import { equippedLegacyWeaponWithMutation } from "../rules/legacy-weapon.mjs";
 import { resolveOpposed } from "../rules/test-kind.mjs";
 import { MELEE_STANCES } from "../constants/combat.mjs";
 import { twoHandedTestPenalty, TWO_HANDED_PENALTY_LABEL } from "../rules/hands.mjs";
+import { uselessCount } from "../rules/useless-limbs.mjs";
 
 // Захват (стр. 12, wdbc-x1nz.2.31): «только действия Борьбы или не-Физические»
 // — Движение Физическое (см. тип действия «Физическое», стр. 12), поэтому
@@ -106,7 +107,8 @@ function _withTwoHandedPenalty(mods, actor) {
 
 /** Потеря ОБЕИХ ног (стр. 30-31, wdbc-r5o7.5): «не может ходить» — жёсткий запрет, не тест. */
 function _bothLegsLost(actor) {
-  return (Number(actor.system.conditions?.lostLegsCount) || 0) >= 2;
+  // Бесполезная нога (wdbc-x1nz.2.99) считается как потерянная.
+  return (Number(actor.system.conditions?.lostLegsCount) || 0) + uselessCount(actor.system, "leg") >= 2;
 }
 
 /** Потеря ОБЕИХ стоп: сам факт не блокирует движение, но требует Acrobatics−10 «просто чтобы идти». */
@@ -256,7 +258,7 @@ export async function declareHalfMove(actor) {
   if (_blockedByGrapple(actor, { move: true })) return;
   // Потеря обеих ног (стр. 30-31, wdbc-r5o7.5): «не может ходить» вообще.
   if (_bothLegsLost(actor))
-    return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
+    return ui.notifications.warn("⚠️ Нет обеих ног (или они бесполезны) — Движение недоступно.");
   const useBonus = hasRuleFlag(actor, BONUS_HALF_MOVE_CAPABILITY)
     && isRoundCapabilityAvailable(actor, BONUS_HALF_MOVE_CAPABILITY);
   if (useBonus) {
@@ -291,7 +293,7 @@ export async function declareLegacyBraveHeartMove(actor) {
   if (!actor) return;
   if (_blockedByGrapple(actor)) return;
   if (_bothLegsLost(actor))
-    return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
+    return ui.notifications.warn("⚠️ Нет обеих ног (или они бесполезны) — Движение недоступно.");
   // Свободное действие — провал броска просто отменяет шаг, ОД не было.
   if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Полудвижение")) return;
   await markMovedThisTurn(actor);
@@ -307,7 +309,7 @@ export async function declareFullMove(actor) {
   if (!actor) return;
   if (_blockedByGrapple(actor, { move: true })) return;
   if (_bothLegsLost(actor))
-    return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
+    return ui.notifications.warn("⚠️ Нет обеих ног (или они бесполезны) — Движение недоступно.");
   if (!await spendActionPoints(actor, 2, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
   if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Полное Движение")) return;
   await markMovedThisTurn(actor);
@@ -335,7 +337,7 @@ export async function declareCharge(actor) {
   if (actor.system.conditions?.prone)
     return ui.notifications.warn("⚠️ Повален — нельзя объявить Натиск. Сначала встать (Полудействие).");
   if (_bothLegsLost(actor))
-    return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
+    return ui.notifications.warn("⚠️ Нет обеих ног (или они бесполезны) — Движение недоступно.");
   // Стойки с noCharge (стр. 15: Частокол — древковое оружие мешает Натиску;
   // Защитная, wdbc-x1nz.2.66.6 — «не даёт совершать Натиск») — тот же флаг,
   // что уже гейтит пилюлю Базы «Натиск» в диалоге атаки (module/sheets/
@@ -376,7 +378,7 @@ export async function declareDisengage(actor) {
   if (!actor) return;
   if (_blockedByGrapple(actor)) return;
   if (_bothLegsLost(actor))
-    return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
+    return ui.notifications.warn("⚠️ Нет обеих ног (или они бесполезны) — Движение недоступно.");
   if (actor.system.conditions?.challenged) {
     const confirmed = await Dialog.confirm({
       title: "Вызов (Challenge)",
@@ -415,7 +417,7 @@ export async function declareLegacyBraveDisengage(actor) {
   if (!actor) return;
   if (_blockedByGrapple(actor)) return;
   if (_bothLegsLost(actor))
-    return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
+    return ui.notifications.warn("⚠️ Нет обеих ног (или они бесполезны) — Движение недоступно.");
   if (actor.system.conditions?.challenged) {
     const confirmed = await Dialog.confirm({
       title: "Вызов (Challenge)",
@@ -515,7 +517,7 @@ export async function declareRun(actor) {
   if (actor.system.conditions?.prone)
     return ui.notifications.warn("⚠️ Повален — нельзя объявить Бег. Сначала встать (Полудействие).");
   if (_bothLegsLost(actor))
-    return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
+    return ui.notifications.warn("⚠️ Нет обеих ног (или они бесполезны) — Движение недоступно.");
   // Частокол (стр. 15, wdbc-x1nz.2.66.9): «нельзя Натиск и Бег» — noRun несёт
   // только эта Стойка (Защитная запрещает лишь Натиск, см. noCharge выше).
   const runStanceKey = actor.system?.meleeStance || "standard";
@@ -552,7 +554,7 @@ export async function declareHalfStep(actor) {
   if (!actorHasHalfStep(actor)) return ui.notifications.warn("⚠️ Нужен Талант Half-Step/Полушаг.");
   // Без обеих ног «не может ходить» — Полушаг тоже ходьба (wdbc-x1nz.2.97 п.4,
   // заодно с броском на обрубках ниже: раньше Полушаг не проверял ни то, ни другое).
-  if (_bothLegsLost(actor)) return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
+  if (_bothLegsLost(actor)) return ui.notifications.warn("⚠️ Нет обеих ног (или они бесполезны) — Движение недоступно.");
   if (!isThrottleReady(actor, HALF_STEP_FLAG, "round")) {
     return ui.notifications.warn("⚠️ Полушаг уже использован в этом Ходу.");
   }
@@ -835,7 +837,7 @@ export async function resolveVaultContestClick(moverUuid, moverScore, enemyUuid)
 export async function declareDuckAndCover(actor) {
   if (!actor) return;
   if (_blockedByGrapple(actor)) return;
-  if (_bothLegsLost(actor)) return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
+  if (_bothLegsLost(actor)) return ui.notifications.warn("⚠️ Нет обеих ног (или они бесполезны) — Движение недоступно.");
   const confirmed = await Dialog.confirm({
     title: "Перебежка",
     content: `<p>Персонаж начинает и заканчивает движение в укрытии (стр. 30) — подтвердите: это действительно так?</p>

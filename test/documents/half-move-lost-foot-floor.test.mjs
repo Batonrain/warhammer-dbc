@@ -16,10 +16,11 @@ import { describe, it, expect } from "vitest";
 import { WarhammerActor } from "../../module/documents/actor.mjs";
 import { ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
 
-function characterWith(conditions = {}) {
+function characterWith(conditions = {}, lostLimbs = {}) {
   const system = new ACTOR_DATA_MODELS.character({}).toObject();
   system.characteristics.ag.base = 30; // Ag.b 3 → база SPD 3, halfMove 3, move 6
   Object.assign(system.conditions, conditions);
+  Object.assign(system.lostLimbs, lostLimbs);
   const list = [];
   list.get = () => null;
   const actor = { type: "character", name: "Подставной", system, items: list, getFlag: () => undefined };
@@ -29,7 +30,7 @@ function characterWith(conditions = {}) {
 
 describe("Потеря стопы/ноги — пол SPD 0.5 работает и после Math.floor", () => {
   it("только потеря стопы (без Поваленного): halfMove = floor(3/2) = 1, минимум не нужен", () => {
-    const system = characterWith({ lostFeet: true });
+    const system = characterWith({}, { rightFoot: { lost: true } });
     expect(system.movement.halfMove).toBe(1);
     // wdbc-x1nz.2.91: Полное = урезанный SPD × 2 (книга, «Раны и Урон»), а не
     // floor(6/2) = 3, как закреплял прежний тест.
@@ -37,7 +38,7 @@ describe("Потеря стопы/ноги — пол SPD 0.5 работает �
   });
 
   it("Повален + потеря стопы: Полудвижение не проваливается ниже 0.5 и не падает ниже половины Полного", () => {
-    const system = characterWith({ prone: true, lostFeet: true });
+    const system = characterWith({ prone: true }, { rightFoot: { lost: true } });
     // Без фикса: halfMove = floor(1.5/2) = 0, move = floor(3/2) = 1 —
     // Полудвижение (0) оказывается МЕНЬШЕ половины Полного (0.5).
     // wdbc-x1nz.2.91: SPD = max(0.5, floor(1.5/2)) = 0.5, производные от него
@@ -51,7 +52,7 @@ describe("Потеря стопы/ноги — пол SPD 0.5 работает �
   });
 
   it("потеря обеих ног по-прежнему обнуляет движение целиком, а не клампится к 0.5", () => {
-    const system = characterWith({ lostLegs: true, lostLegsCount: 2 });
+    const system = characterWith({}, { rightLeg: { lost: true }, leftLeg: { lost: true } });
     expect(system.movement.halfMove).toBe(0);
     expect(system.movement.move).toBe(0);
   });

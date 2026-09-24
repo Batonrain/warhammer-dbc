@@ -89,7 +89,8 @@ describe("mitigate: книжное правило на несколько Сос
   it("смягчение одного не снимает штраф второго — тому возвращается полная копия", () => {
     const rules = rulesFromItemMechanics([item("Протезы", [cond({ condKey: "lostFeet" })])]);
     const rest = rules.find(r => r.id.endsWith(".rest.conditions.lostFeetOrLegs"));
-    expect(rest.when.hasCondition).toEqual(["lostLegs"]);
+    // Бесполезная нога (wdbc-x1nz.2.99) — тоже в этом правиле, протезы стоп её не смягчают.
+    expect(rest.when.hasCondition).toEqual(["lostLegs", "uselessLeg"]);
     expect(rest.effects).toEqual(conditionRulesFor("lostFeet")[0].effects);
   });
 

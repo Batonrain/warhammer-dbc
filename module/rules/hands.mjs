@@ -22,6 +22,8 @@ import { isMultipleArmsTrait } from "./cybernetic-excellence.mjs";
 import { isFusedByHandOfDeath } from "./hand-of-death.mjs";
 import { hasRuleFlag } from "./flags.mjs";
 import { isPathOneHandedWeapon } from "./library/paths.mjs";
+import { uselessCount, isSideUseless } from "./useless-limbs.mjs";
+import { BODY_SIDES, isLostOn } from "./limb-loss.mjs";
 
 const NS = "warhammer-dbc";
 const BASE_HANDS = 2;
@@ -211,11 +213,38 @@ export function baseHandsFromTraits(actor) {
   return ratings.length ? Math.max(...ratings) : BASE_HANDS;
 }
 
+/**
+ * Состояние рук ПО СТОРОНАМ (wdbc-x1nz.2.100): потерянная кисть и рука на
+ * одной стороне — одна недоступная рука, а не две; бесполезная рука на
+ * стороне, где руки уже нет, тоже не вычитается второй раз.
+ *   noHand  — сторон без рабочей ладони (кисть/рука потеряна или рука бесполезна);
+ *   noWrist — сторон без запястья (рука потеряна или бесполезна);
+ *   stumps  — обрубков кисти при целой рабочей руке.
+ * Без system.lostLimbs (старые заготовки, тесты) — по прежним счётчикам.
+ */
+function armSideState(actor) {
+  const sys = actor?.system;
+  if (!sys?.lostLimbs) {
+    const cond = sys?.conditions || {};
+    const hands = Number(cond.lostHandsCount) || 0;
+    const arms  = (Number(cond.lostArmsCount) || 0) + uselessCount(sys, "arm");
+    return { noHand: hands + arms, noWrist: arms, stumps: hands };
+  }
+  let noHand = 0, noWrist = 0, stumps = 0;
+  for (const side of BODY_SIDES) {
+    const armGone = isLostOn(sys, "lostArms", side) || isSideUseless(sys.uselessLimbs?.[side + "Arm"]);
+    const handGone = isLostOn(sys, "lostHands", side);
+    if (armGone || handGone) noHand++;
+    if (armGone) noWrist++;
+    else if (handGone) stumps++;
+  }
+  return { noHand, noWrist, stumps };
+}
+
 /** Сколько рук у актора доступно прямо сейчас: Трейт минус ампутации (0-31/32). */
 export function maxHands(actor) {
-  const cond = actor?.system?.conditions || {};
-  const lost = (Number(cond.lostHandsCount) || 0) + (Number(cond.lostArmsCount) || 0);
-  return Math.max(0, baseHandsFromTraits(actor) - lost);
+  // Бесполезная рука (wdbc-x1nz.2.99) — пока не вылечена, как потерянная.
+  return Math.max(0, baseHandsFromTraits(actor) - armSideState(actor).noHand);
 }
 
 // ── Кисть и рука (wdbc-x1nz.2.97 п.2, «Раны и Урон», стр. 43) ─────────────
@@ -240,24 +269,21 @@ export function maxHands(actor) {
  * @returns {number} −20 или 0
  */
 export function twoHandedTestPenalty(actor) {
-  const cond = actor?.system?.conditions || {};
-  const lost = (Number(cond.lostHandsCount) || 0) + (Number(cond.lostArmsCount) || 0);
-  return lost >= 1 && maxHands(actor) < 2 ? -20 : 0;
+  return armSideState(actor).noHand >= 1 && maxHands(actor) < 2 ? -20 : 0;
 }
 
 /** Подпись штрафа выше — одна на все места, где он применяется. */
-export const TWO_HANDED_PENALTY_LABEL = "Без кисти/руки (тест двумя руками)";
+export const TWO_HANDED_PENALTY_LABEL = "Без кисти/руки или рука бесполезна (тест двумя руками)";
 
 /** Сколько у актора запястий: базовые руки минус потерянные РУКИ (не кисти). */
 export function maxWrists(actor) {
-  const lostArms = Number(actor?.system?.conditions?.lostArmsCount) || 0;
-  return Math.max(0, baseHandsFromTraits(actor) - lostArms);
+  // Бесполезной рукой не удержать и пристёгнутое к запястью (wdbc-x1nz.2.99).
+  return Math.max(0, baseHandsFromTraits(actor) - armSideState(actor).noWrist);
 }
 
 /** Обрубки кисти — запястья без ладони, к которым можно пристегнуть щит. */
 export function handStumps(actor) {
-  const lostHands = Number(actor?.system?.conditions?.lostHandsCount) || 0;
-  return Math.max(0, Math.min(lostHands, maxWrists(actor)));
+  return Math.max(0, Math.min(armSideState(actor).stumps, maxWrists(actor)));
 }
 
 /**

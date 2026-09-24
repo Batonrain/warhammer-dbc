@@ -62,6 +62,7 @@ import { killByCondition } from "./condition-death.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { isAstartes } from "../rules/legacy-weapon.mjs";
+import { uselessRoundTick, SIDE_LABELS } from "../rules/useless-limbs.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -598,6 +599,16 @@ export async function processConditionTurnStart(actor) {
     // (маршрутизация Опарыш-Паразит vs общий фьюжн). Накопленный здесь
     // updates.parasiticContact=false всё равно применится следом — не мешает.
     if (key === "parasiticContact" && next <= 0) await completeInfection(actor);
+  }
+
+  // Временно бесполезная рука/нога (крит «бесполезна на 1d10 Раундов»,
+  // wdbc-x1nz.2.99) — у каждой конечности свой счётчик в system.uselessLimbs.
+  const uselessTick = uselessRoundTick(actor.system);
+  Object.assign(updates, uselessTick.patch);
+  for (const t of uselessTick.ticks) {
+    lines.push(t.to <= 0
+      ? `<div class="roll-threshold">Бесполезна (${SIDE_LABELS[t.side]}): <b>${t.from}</b> → снято</div>`
+      : `<div class="roll-threshold">Бесполезна (${SIDE_LABELS[t.side]}): <b>${t.from}</b> → <b>${t.to}</b></div>`);
   }
 
   // Удушье (книга, «Удушье», wdbc-x1nz.2.94): ВО ВРЕМЯ задержки — тест T+0

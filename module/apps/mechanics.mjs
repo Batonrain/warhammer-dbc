@@ -3350,7 +3350,12 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     // области/свойства сохраняет запись и даёт листу перерисоваться (тот же
     // приём, что у .mech-fatigue-action выше) — так поля рейтинга
     // появляются/прячутся по факту def.rating/def.rating2 выбранного свойства.
-    const scopeOpts = Object.entries(AP_SCOPE_LABELS)
+    // Область «name:<Оружие>» (Мясник → Нартеций, wdbc-x1nz.2.101) в списке
+    // не предлагается, но стоящая в данных — показывается и не сбрасывается.
+    const scopeEntries = Object.entries(AP_SCOPE_LABELS);
+    if (String(ent.apScope || "").startsWith("name:"))
+      scopeEntries.push([ent.apScope, `Только оружие «${ent.apScope.slice(5)}»`]);
+    const scopeOpts = scopeEntries
       .map(([v, l]) => optHtml(v, l, (ent.apScope || "unarmed") === v)).join("");
     const propOpts = Object.values(WEAPON_PROPERTIES)
       .map(p => optHtml(p.key, `${p.label} (${p.en})`, ent.apKey === p.key)).join("");

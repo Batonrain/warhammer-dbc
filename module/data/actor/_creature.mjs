@@ -23,7 +23,10 @@ import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../../constants/skills.mjs";
 // своего хранимого поля не получают — они целиком производные, считаются из
 // чужого источника на каждом пересчёте (rules/character.mjs::readAllMirrors).
 import { CONDITION_STORED_KEYS, CONDITION_COUNTERS } from "../../constants/conditions.mjs";
-import { LIMB_LOSS_KEYS, limbLossGangreneField } from "../../rules/limb-loss.mjs";
+import { LOST_SIDE_KEYS, FINGER_SIDE_KEYS } from "../../rules/limb-loss.mjs";
+import { USELESS_SIDES } from "../../rules/useless-limbs.mjs";
+
+const USELESS_LIMB_KEYS = Object.keys(USELESS_SIDES);
 
 /** Зоны попадания — порядок как в листе. */
 export const HIT_LOCATIONS = ["head", "leftArm", "rightArm", "body", "leftLeg", "rightLeg"];
@@ -163,12 +166,8 @@ export function creatureSchema({ granted = false } = {}) {
   // Состояния (та же форма ручной надстройки, что burningSourceDamage/
   // sweetMistExpiresAt выше) — читает module/sheets/tabs/psychic.mjs.
   conditionFields.mimicWireBlocksPowers = bool(false, "Мононить: блокирует психосилы/техночудеса");
-  // Потеря Конечностей (wdbc-1rno.6, стр. 30-31): «обрубок нуждается в мед.
-  // обработке, иначе через T.b дней с шансом 80% загноится» — по одному
-  // worldTime-таймеру на часть тела (та же форма ручной надстройки, что
-  // burningSourceDamage/sweetMistExpiresAt выше), 0 = таймер не идёт.
-  for (const key of LIMB_LOSS_KEYS)
-    conditionFields[limbLossGangreneField(key)] = num(0, `${key}: worldTime проверки Гангрены`);
+  // Потеря Конечностей — с wdbc-x1nz.2.100 по сторонам в system.lostLimbs
+  // ниже (там же таймеры Гангрены обрубков); lostX/*Count — производные.
 
   return {
     // Книга-источник (wdbc-7pjs). У предметов это поле есть у полутора десятков
@@ -380,6 +379,31 @@ export function creatureSchema({ granted = false } = {}) {
     // часть тела»); автоматизирован только клинически чистый кусок: −1 SPD
     // при попадании в торс/ногу (movement.mjs) и кнопка извлечения.
     piercingWounds: new SchemaField(armorFields(), { label: "Проникающие ранения (0/1 по зоне)" }),
+    // Потеря Конечностей по сторонам (wdbc-x1nz.2.100, rules/limb-loss.mjs):
+    // rightHand/leftHand/rightArm/…/leftEye — потеряна ли и когда проверка
+    // Гангрены обрубка (0 — обрубок обработан/закрыт). Состояния lostX и их
+    // *Count считаются отсюда (rules/character.mjs).
+    // rightFingers/leftFingers — «Пальцы» мутации Loss of Limb (wdbc-1rno.6.1):
+    // без Состояния, −10 к атакам оружием в этой руке. mutation — потеряно
+    // мутацией: вернуть можно только Best.Q бионикой.
+    lostLimbs: new SchemaField(Object.fromEntries([...LOST_SIDE_KEYS, ...FINGER_SIDE_KEYS].map(sideKey => [sideKey, new SchemaField({
+      lost:       bool(false, "Потеряна"),
+      gangreneAt: num(0, "worldTime: проверка Гангрены обрубка"),
+      mutation:   bool(false, "Потеряна мутацией (только Best.Q бионика)")
+    }, { label: sideKey })])), { label: "Потерянные конечности" }),
+    // Бесполезные Конечности (wdbc-x1nz.2.99, «Бесполезные Конечности и
+    // Ампутация») — по каждой руке/ноге свои срок, попытки и Гангрена
+    // (rules/useless-limbs.mjs). Теги «Бесполезная рука/нога» — зеркала.
+    uselessLimbs: new SchemaField(Object.fromEntries(USELESS_LIMB_KEYS.map(side => [side, new SchemaField({
+      state:          str("", "Состояние лечения"),
+      rounds:         num(0, "Бесполезна ещё Раундов"),
+      noAidAt:        num(0, "worldTime: без помощи станет перманентной"),
+      healAt:         num(0, "worldTime: конец срока в лубке"),
+      attempts:       num(0, "Проваленных попыток зафиксировать"),
+      healMod:        num(0, "Мод. тестов лечения этой конечности"),
+      gangreneAt:     num(0, "worldTime: проверка Гангрены"),
+      gangreneChance: num(0, "Шанс Гангрены, %")
+    }, { label: side })])), { label: "Бесполезные конечности" }),
     // Свойство оружия Crippling (X), wdbc-plsf: шипы/осколки в ране после
     // непоглощённого урона от этого оружия — при трате обоих ОД в Ход на
     // физическое действие цель получает X непоглощаемого урона в ту же часть

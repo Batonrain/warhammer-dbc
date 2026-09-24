@@ -4,7 +4,8 @@ import { HIT_LOCATIONS }  from "../constants/combat.mjs";
 import { DAMAGE_TYPES, DAMAGE_SUBTYPES } from "../constants/items.mjs";
 import { _degWord, esc }       from "../helpers/utils.mjs";
 import { getCriticalEffect } from "../../critical-tables.mjs";
-import { parseCritEffectPills, critPillsHtml, deathButtonHtml, textAssertsDeath } from "./crit-effect-parser.mjs";
+import { LOCATION_TO_SIDE } from "../rules/useless-limbs.mjs";
+import { parseCritEffectPills, critPillsHtml, deathButtonHtml, dropButtonHtml, textAssertsDeath } from "./crit-effect-parser.mjs";
 import { SHIELD_STATUS }  from "../constants/shields.mjs";
 import { applyDamageToVehicle } from "./vehicle.mjs";
 import { applyDamageToHorde }   from "./horde-damage.mjs";
@@ -23,6 +24,7 @@ import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { conditionLevelField } from "../constants/conditions.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { itemHasName } from "../rules/predicates.mjs";
 import { redirectHitLocationForMachine } from "../rules/bronze-myrmidon.mjs";
 import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
 import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG } from "./pacifism.mjs";
@@ -1118,6 +1120,20 @@ export async function applyDamageToActor(actor, damageData) {
   const reaperWeaponItem = (weaponUuid && netDamage > 0) ? await fromUuid(weaponUuid).catch(() => null) : null;
   const reaperSection = reaperWeaponItem ? reaperLegacyButtonHtml(reaperWeaponItem, actor.uuid) : "";
 
+  // Мясник (Талант Медика, wdbc-x1nz.2.101): «Нартеций в его руках… при
+  // непоглощённом уроне в сочленения также вызывает Кровотечение» — без
+  // теста, в отличие от Жнеца выше. Сочленение — только Избирательная атака
+  // «Сочленение / Шея» (attack-outcome.mjs).
+  let butcherBleedNote = "";
+  if (reaperWeaponItem && hitLocation === "Сочленение / Шея" && itemHasName(reaperWeaponItem, "Нартеций")
+      && reaperWeaponItem.parent && hasRuleFlag(reaperWeaponItem.parent, "medic.core.butcher")) {
+    const bleed = conditionApplyFields("bleeding", null, actor);
+    if (Object.keys(bleed).length) {
+      await actor.update(bleed);
+      butcherBleedNote = `<div class="dmg-tb-note">🩸 Мясник: Нартеций в сочленение — Кровотечение</div>`;
+    }
+  }
+
   // Лучшая Часть Отваги/skilled 5-6, стрелковая ветка (wdbc-1rno.35, стр.
   // 427): кнопка «цель жива и не обезврежена» — не гейтится netDamage,
   // показывается на любом попадании этим оружием (стол сам решает, кликать
@@ -1226,6 +1242,7 @@ export async function applyDamageToActor(actor, damageData) {
   // Гейт capability weaponPropertyImmunity.<key> — Мутации/Дары («Пылающее
   // Тело», «Щит Чистоты» и т.п.) дают его через Механику (kind: "capability").
   const propEffectNotes = [];
+  if (butcherBleedNote) propEffectNotes.push(butcherBleedNote);
   // Касание Энтропии сработала ВЫШЕ, до расчёта поглощения (см. там) — здесь
   // только подпись, чтобы игрок видел, почему броня вдруг не удержала.
   if (entropyLost > 0) {
@@ -1335,7 +1352,8 @@ export async function applyDamageToActor(actor, damageData) {
     <div class="dmg-critical-block">
       <b>Критический урон</b> · отрицательные раны: <b>${newCritical}</b>
       ${critEffect ? `<div class="roll-crit-effect">${critEffect}</div>` : ""}
-      ${critPillsHtml(critPills, actor.uuid, netDamage)}
+      ${critPillsHtml(critPills, actor.uuid, netDamage, { side: LOCATION_TO_SIDE[hitLocation] || "" })}
+      ${critEffect ? dropButtonHtml(critEffect, actor.uuid, LOCATION_TO_SIDE[hitLocation] || "") : ""}
       ${maggotParasiteHtml || kissOfMimicHtml || (castOutOfDeathBlocksDeath
         ? `<div class="wh-crit-pills roll-threshold">💀 Изгнанный из Смерти: не может умереть от этого — Раны сами вернутся к −7 в течение 7ч (Календарь).</div>`
         : (critEffect ? deathButtonHtml(critEffect, actor.uuid, weaponUuid) : ""))}

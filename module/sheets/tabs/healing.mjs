@@ -13,11 +13,14 @@ import { esc } from "../../helpers/utils.mjs";
 import { postTestCard } from "../../helpers/test-card.mjs";
 import { SECONDS_PER_DAY } from "../../constants/imperial-calendar.mjs";
 import { openSurgeon } from "../../apps/surgeon.mjs";
-import { addFatigue, conditionAdjustFields, conditionApplyFields, conditionRemoveFields } from "./conditions.mjs";
+import { addFatigue, conditionApplyFields, conditionRemoveFields } from "./conditions.mjs";
 import { spendActionPoints } from "../../combat/action-economy.mjs";
 import { worldTimeRemaining } from "../../rules/cooldown.mjs";
 import { showDelegateTestPicker } from "../../rules/delegate-test.mjs";
-import { clearLimbLossGangreneFields } from "../../combat/limb-loss.mjs";
+import { dropFromHand } from "../../combat/limb-loss.mjs";
+import { classifyImplant } from "../../constants/body-map.mjs";
+import { SIDE_LABELS, STATE_LABELS, settableSides, setLimbOutcome, clearSideFields } from "../../rules/useless-limbs.mjs";
+import { BODY_SIDE_SHORT, isLostOn, pickLostSide, lostSideFields, clearStumpTimerFields, stumpSidesWithTimer, lostByMutation } from "../../rules/limb-loss.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -29,6 +32,29 @@ const LIMB_TYPES = {
   leg:  { label: "Нога",  flag: "lostLegs",  count: "lostLegsCount"  },
   eye:  { label: "Глаз",  flag: "lostEyes",  count: "lostEyesCount"  }
 };
+
+/** Какой тип бесполезности снимает ампутация/операция этой части тела (wdbc-x1nz.2.99). */
+const LIMB_USELESS_TYPE = { arm: "arm", leg: "leg" };
+
+/** Ключ system.uselessLimbs той же стороны: ("arm", "left") → "leftArm". */
+const uselessKeyOf = (limb, side) => LIMB_USELESS_TYPE[limb] ? side + (limb === "arm" ? "Arm" : "Leg") : null;
+
+/** « (П.)» для строк карточки. */
+const sideTag = side => side ? ` (${BODY_SIDE_SHORT[side]})` : "";
+
+/** Есть ли у медика Нартеций — по имени предмета (в паке «Narthecium / Нартеций»). */
+export function hasNarthecium(medic) {
+  return [...(medic?.items ?? [])].some(i => /narthec|нартец/i.test(i.name ?? ""));
+}
+
+/**
+ * Мясник (Талант Медика): «автоматически проходит тесты на лечение
+ * бесполезных конечностей и ампутацию при помощи Нартеция» — возможность
+ * medic.core.butcher (constants/capabilities.mjs), только с Нартецием.
+ */
+export function butcherAutoPass(medic, narthecium) {
+  return !!narthecium && hasRuleFlag(medic, "medic.core.butcher");
+}
 
 /** Уход при лечении болезней (стр. 232) — модификатор к тесту Medicae. */
 const DISEASE_CARE_MOD = { bedRest: 0, rest: -20, none: -40 };
@@ -122,6 +148,7 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
           <option value="bedRest">Постельный режим (сутки)</option>
           <option value="passive">Пассивное (сутки)</option>
           <option value="cauterize">Прижигание</option>
+          <option value="setLimb">Зафиксировать бесполезную конечность (Medicae+0, 5 мин)</option>
           <option value="amputate">Ампутация (Medicae−10)</option>
           <option value="reattach">Пришивание конечности (Medicae−30)</option>
           <option value="stumpCare">Обработка обрубка (Medicae−10, 5 мин)</option>
@@ -142,6 +169,11 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
           ${Object.entries(LIMB_TYPES).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join("")}
         </select>
       </div>
+      <div class="atk-dlg-row" data-mode="amputate,reattach,stumpCare,bionic,gangreneSurgery"><label title="Потеря конечностей хранится по сторонам (wdbc-x1nz.2.100). «Любая» — первая подходящая.">Сторона:</label>
+        <select id="heal-body-side"><option value="">— любая подходящая —</option><option value="right">Правая</option><option value="left">Левая</option></select>
+      </div>
+      <div class="atk-dlg-row" data-mode="setLimb"><label>Конечность:</label><select id="heal-useless-side"></select></div>
+      <div class="atk-dlg-row" data-mode="setLimb,amputate"><label title="Талант «Мясник»: с Нартецием тест проходится автоматически"><input type="checkbox" id="heal-narthecium" ${hasNarthecium(medic) ? "checked" : ""}/> Нартецием</label></div>
       <div class="atk-dlg-row" data-mode="cauterize"><label title="Иначе — тест W−20, чтобы не вырваться (без доп. эффекта)"><input type="checkbox" id="heal-restrained"/> Пациент зафиксирован</label></div>
       <div class="atk-dlg-row" data-mode="disease"><label>Уход:</label>
         <select id="heal-disease-care">
@@ -178,10 +210,27 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
     if (diseases.some(d => d.id === cur)) sel.value = cur;
   };
 
+  const rebuildUselessSelect = (form, patient) => {
+    const sel = form.querySelector("#heal-useless-side");
+    if (!sel) return;
+    const cur = sel.value;
+    const sides = settableSides(patient?.system);
+    sel.innerHTML = sides.length
+      ? sides.map(side => {
+        const e = patient.system.uselessLimbs[side];
+        const tail = [STATE_LABELS[e.state], e.attempts ? `попыток ${e.attempts}` : "", e.healMod ? `мод. ${e.healMod}` : ""]
+          .filter(Boolean).join(", ");
+        return `<option value="${side}">${SIDE_LABELS[side]} (${esc(tail)})</option>`;
+      }).join("")
+      : `<option value="">— нечего фиксировать —</option>`;
+    if (sides.includes(cur)) sel.value = cur;
+  };
+
   const updateNote = form => {
     const patient = patientOf(form);
     syncModeRows(form);
     rebuildDiseaseSelect(form, patient);
+    rebuildUselessSelect(form, patient);
     if (!patient) return;
     const lvl = woundLevel(patient.system);
     const parts = [
@@ -240,8 +289,11 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
             mod:        num("#heal-mod"),
             bonus:      num("#heal-bonus"),
             limb:       form.querySelector("#heal-limb")?.value,
+            bodySide:   form.querySelector("#heal-body-side")?.value || "",
             diseaseCare: form.querySelector("#heal-disease-care")?.value,
-            diseaseId:   form.querySelector("#heal-disease-item")?.value
+            diseaseId:   form.querySelector("#heal-disease-item")?.value,
+            side:        form.querySelector("#heal-useless-side")?.value,
+            narthecium:  !!form.querySelector("#heal-narthecium")?.checked
           };
           if (mode === "bionic") {
             runBionicInstall(medic, patient, opts);
@@ -323,22 +375,29 @@ async function applyCauterize(medic, patient, { restrained }) {
 }
 
 /** Ампутация (стр. 231): Medicae−10, провал → Кровотечение + обрубок. */
-async function applyAmputate(medic, patient, { mod, limb }) {
+async function applyAmputate(medic, patient, { mod, limb, narthecium, bodySide = "" }) {
   const def = LIMB_TYPES[limb];
   if (!def) { ui.notifications.warn("Выберите часть тела для ампутации."); return; }
+  const side = pickLostSide(patient.system, def.flag, bodySide);
+  if (!side) { ui.notifications.warn(`${patient.name}: «${def.label}» — обе уже потеряны.`); return; }
 
   const pMod = patientHealingMod(patient);
   const eff = medicaeEff(medic, patient, mod - 10);
   const roll = await new Roll("1d100").evaluate();
   const rolls = [roll];
-  const success = roll.total <= eff;
+  const butcher = butcherAutoPass(medic, narthecium);
+  const success = butcher || roll.total <= eff;
   const lines = [
     ...pMod.lines,
     `${rollIcon("blood","#ff6b6b")}<b>Ампутация</b> (${def.label}): Медика−10${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`
   ];
 
-  const updates = conditionAdjustFields(patient, def.flag, 1);
-  lines.push(`Конечность (${def.label}) удалена.`);
+  if (butcher) lines.push("Мясник с Нартецием — тест пройден автоматически.");
+  const updates = lostSideFields(def.flag, side);
+  lines.push(`Конечность (${def.label}${sideTag(side)}) удалена.`);
+  // Удалённая рука/нога больше не «бесполезная» (wdbc-x1nz.2.99).
+  const uselessKey = uselessKeyOf(limb, side);
+  if (uselessKey) Object.assign(updates, clearSideFields(uselessKey));
 
   if (!success) {
     // У Кровотечения нет книжных «уровней» (wdbc-x1nz.2.92): тик — d10 минус
@@ -366,14 +425,63 @@ async function applyAmputate(medic, patient, { mod, limb }) {
     lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — примените вручную.`);
   }
   await sendHealChatMsg(medic, patient, rollIcon("blood","#ff6b6b"), "Ампутация", lines, rolls);
+  // Без кисти/руки на этой стороне ничего не удержать (wdbc-x1nz.2.100).
+  if (limb === "hand" || limb === "arm") await dropFromHand(patient, side, { wrist: limb === "arm", reason: "ампутация" });
+}
+
+/**
+ * Зафиксировать бесполезную конечность (книга, «Бесполезные Конечности и
+ * Ампутация», wdbc-x1nz.2.99): 5 минут, Medicae+0 (плюс штраф самой
+ * конечности, напр. −20 от некроза). Успех — в лубке на 2d10−T.b суток
+ * (минимум 1), дальше срок ведут часы игрового времени; Провал —
+ * зафиксирована неправильно, попыток до T.b пациента, все провалены —
+ * перманентно (ампутация, иначе через T.b дней 60% Гангрены).
+ */
+async function applySetLimb(medic, patient, { mod, side, narthecium }) {
+  const entry = patient.system?.uselessLimbs?.[side];
+  if (!entry || !settableSides(patient.system).includes(side)) {
+    ui.notifications.warn(`${patient.name}: нет бесполезной конечности, которую можно зафиксировать.`);
+    return;
+  }
+  const tb = Number(patient.system.characteristics?.t?.bonus) || 0;
+  const limbMod = Number(entry.healMod) || 0;
+  const pMod = patientHealingMod(patient);
+  const eff = medicaeEff(medic, patient, mod + limbMod);
+  const roll = await new Roll("1d100").evaluate();
+  const rolls = [roll];
+  const butcher = butcherAutoPass(medic, narthecium);
+  const success = butcher || roll.total <= eff;
+  const modTxt = [limbMod ? `${limbMod} (конечность)` : "", mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""].filter(Boolean).join(" ");
+  const lines = [
+    ...pMod.lines,
+    `${rollIcon("wrench","#d9a066")}<b>Фиксация</b> (${SIDE_LABELS[side]}): Медика+0${modTxt ? ` ${modTxt}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}${butcher ? " (Мясник с Нартецием — автоматически)" : ""}`
+  ];
+  let days = 1;
+  if (success) {
+    const daysRoll = await new Roll("2d10").evaluate();
+    rolls.push(daysRoll);
+    days = Math.max(1, daysRoll.total - tb);
+  }
+  const out = setLimbOutcome(patient.system, side, { success, days, worldTime: game.time.worldTime, tb });
+  if (out.result === "splinted") {
+    lines.push(`Травма обработана правильно. Конечность в лубке и бесполезна ещё <b>${days}</b> сут. (2d10−T.b, мин. 1) — снимется сама по Календарю.`);
+  } else if (out.result === "misset") {
+    lines.push(`Зафиксирована неправильно. Попыток: ${out.attempts} из ${out.maxAttempts} (T.b пациента) — можно пробовать снова.`);
+  } else {
+    lines.push(`Все ${out.maxAttempts} попыток провалены — конечность <b>перманентно бесполезна</b>. Нужна ампутация, иначе через T.b дн. 60% Гангрены.`);
+  }
+  try { await patient.update(out.patch); } catch {
+    lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — примените вручную.`);
+  }
+  await sendHealChatMsg(medic, patient, rollIcon("wrench","#d9a066"), "Бесполезная конечность", lines, rolls);
 }
 
 /** Пришивание конечностей (стр. 231): Medicae−30. */
-async function applyReattach(medic, patient, { mod, limb }) {
+async function applyReattach(medic, patient, { mod, limb, bodySide = "" }) {
   const def = LIMB_TYPES[limb];
   if (!def) { ui.notifications.warn("Выберите часть тела для пришивания."); return; }
-  const curCount = patient.system.conditions?.[def.count] ?? 0;
-  if (curCount <= 0) {
+  const side = pickLostSide(patient.system, def.flag, bodySide, { lost: false });
+  if (!side) {
     ui.notifications.warn(`У пациента нет потерянной части «${def.label}» для пришивания.`);
     return;
   }
@@ -393,11 +501,11 @@ async function applyReattach(medic, patient, { mod, limb }) {
     const daysRoll = await new Roll("1d10").evaluate();
     rolls.push(daysRoll);
     const days = Math.max(1, daysRoll.total + 3 - tb);
-    const updates = conditionAdjustFields(patient, def.flag, -1);
+    const updates = lostSideFields(def.flag, side, { lost: false });
     try { await patient.update(updates); } catch {
       lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — примените вручную.`);
     }
-    lines.push(`Конечность пришита. Восстановление: <b>${days}</b> сут. (1d10+3−T.b, мин. 1).`);
+    lines.push(`Конечность${sideTag(side)} пришита. Восстановление: <b>${days}</b> сут. (1d10+3−T.b, мин. 1).`);
   } else {
     lines.push("Провал — спасённая конечность умирает и более не может быть использована.");
   }
@@ -411,12 +519,15 @@ async function applyReattach(medic, patient, { mod, limb }) {
  * применима к любому текущему lostX, независимо от причины (кроме Мутации
  * Loss of Limb, которая эту угрозу вообще не заводит, см. rules/limb-loss.mjs).
  */
-async function applyStumpCare(medic, patient, { mod, limb }) {
+async function applyStumpCare(medic, patient, { mod, limb, bodySide = "" }) {
   const def = LIMB_TYPES[limb];
   if (!def) { ui.notifications.warn("Выберите часть тела для обработки обрубка."); return; }
-  const curCount = patient.system.conditions?.[def.count] ?? 0;
-  if (curCount <= 0) {
-    ui.notifications.warn(`У пациента нет обрубка «${def.label}» для обработки.`);
+  // Таймер у каждого обрубка свой (wdbc-x1nz.2.100): выбранная сторона, если
+  // её обрубок ещё ждёт обработки, иначе первый такой.
+  const waiting = stumpSidesWithTimer(patient.system, def.flag);
+  const side = waiting.includes(bodySide) ? bodySide : waiting[0];
+  if (!side) {
+    ui.notifications.warn(`У пациента нет необработанного обрубка «${def.label}».`);
     return;
   }
 
@@ -426,11 +537,11 @@ async function applyStumpCare(medic, patient, { mod, limb }) {
   const success = roll.total <= eff;
   const lines = [
     ...pMod.lines,
-    `${rollIcon("blood","#ff6b6b")}<b>Обработка обрубка</b> (${def.label}): Медика−10${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`
+    `${rollIcon("blood","#ff6b6b")}<b>Обработка обрубка</b> (${def.label}${sideTag(side)}): Медика−10${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`
   ];
   if (success) {
     lines.push("Обрубок обработан — угроза Гангрены снята.");
-    try { await patient.update(clearLimbLossGangreneFields(def.flag)); } catch {
+    try { await patient.update(clearStumpTimerFields(def.flag, side)); } catch {
       lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — снимите таймер вручную.`);
     }
   } else {
@@ -526,7 +637,7 @@ const LIMB_WHOLE = { hand: "arm", foot: "leg" };
  * Кровотечение и новый таймер обрубка не ставятся: это плановая операция в
  * операционной, а не травма.
  */
-async function applyGangreneSurgery(medic, patient, { mod, limb, theatre }) {
+async function applyGangreneSurgery(medic, patient, { mod, limb, theatre, bodySide = "" }) {
   if (!patient.system.conditions?.gangrene) {
     ui.notifications.warn(`${patient.name}: Гангрены нет.`);
     return;
@@ -549,25 +660,35 @@ async function applyGangreneSurgery(medic, patient, { mod, limb, theatre }) {
   }
   const updates = { ...conditionRemoveFields("gangrene") };
   const def = LIMB_TYPES[limb];
+  // Сторона (wdbc-x1nz.2.100): выбранная, иначе первый обрубок с таймером,
+  // иначе первая целая — там и гниёт.
+  const side = bodySide
+    || (def && stumpSidesWithTimer(patient.system, def.flag)[0])
+    || (def && pickLostSide(patient.system, def.flag, "")) || "right";
+  // Гангренозная бесполезная рука/нога теряется — бесполезной ей больше не быть.
+  const uselessKey = uselessKeyOf(LIMB_WHOLE[limb] ?? limb, side);
+  if (uselessKey) Object.assign(updates, clearSideFields(uselessKey));
+  let dropWrist = null;
   if (!def) {
     lines.push("Гангрена излечена. Гангренозная конечность потеряна полностью — отметьте её потерю на листе.");
-  } else if ((patient.system.conditions?.[def.count] ?? 0) <= 0) {
-    Object.assign(updates, conditionAdjustFields(patient, def.flag, 1));
-    lines.push(`Гангрена излечена. Конечность (${def.label}) потеряна полностью.`);
+  } else if (!isLostOn(patient.system, def.flag, side)) {
+    Object.assign(updates, lostSideFields(def.flag, side));
+    lines.push(`Гангрена излечена. Конечность (${def.label}${sideTag(side)}) потеряна полностью.`);
+    if (limb === "hand" || limb === "arm") dropWrist = limb === "arm";
   } else if (LIMB_WHOLE[limb]) {
     const whole = LIMB_TYPES[LIMB_WHOLE[limb]];
-    Object.assign(updates,
-      conditionAdjustFields(patient, def.flag, -1), clearLimbLossGangreneFields(def.flag),
-      conditionAdjustFields(patient, whole.flag, 1));
-    lines.push(`Гангрена излечена. Обрубок (${def.label}) иссечён — потеряна вся конечность (${whole.label}).`);
+    Object.assign(updates, lostSideFields(def.flag, side, { lost: false }), lostSideFields(whole.flag, side));
+    lines.push(`Гангрена излечена. Обрубок (${def.label}${sideTag(side)}) иссечён — потеряна вся конечность (${whole.label}).`);
+    if (limb === "hand") dropWrist = true;
   } else {
-    Object.assign(updates, clearLimbLossGangreneFields(def.flag));
-    lines.push(`Гангрена излечена. Гангренозный обрубок (${def.label}) иссечён.`);
+    Object.assign(updates, clearStumpTimerFields(def.flag, side));
+    lines.push(`Гангрена излечена. Гангренозный обрубок (${def.label}${sideTag(side)}) иссечён.`);
   }
   try { await patient.update(updates); } catch {
     lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — примените вручную.`);
   }
   await sendHealChatMsg(medic, patient, rollIcon("skull","#7a8a4d"), "Операция от Гангрены", lines, [roll]);
+  if (dropWrist !== null) await dropFromHand(patient, side, { wrist: dropWrist, reason: "операция от Гангрены" });
 }
 
 /** Вывод из комы (стр. 232): Medicae−40, раз в 10−T.b дней. */
@@ -619,12 +740,60 @@ async function applyDiseaseCure(medic, patient, { mod, diseaseCare, diseaseId })
  * из своего close() — ждём этот хук вместо переопределения close() на
  * инстансе, чтобы не трогать чужой класс.
  */
-export function runBionicInstall(medic, patient, { mod, limb }) {
+export function runBionicInstall(medic, patient, { mod, limb, bodySide = "" }) {
+  const before = implantSnapshot(patient);
   const app = openSurgeon(patient);
   if (!app) return;
   Hooks.once(`close${app.constructor.name}`, () => {
-    resolveBionicTest(medic, patient, { mod, limb });
+    // Сторона импланта, который поставили в Хирургеоне прямо сейчас, важнее
+    // выбора в окне Лечения — бионика встала туда (wdbc-x1nz.2.100, хвост 1).
+    const after = implantSnapshot(patient);
+    const side = installedImplantSide(before, after, limb) || bodySide;
+    const fresh = newInstalledImplants(before, after, limb);
+    resolveBionicTest(medic, patient, { mod, limb, bodySide: side,
+      implantQuality: fresh.length ? (fresh.every(i => i.quality === "best") ? "best" : "lower") : "" });
   });
+}
+
+/** Часть тела Лечения → тип импланта Хирургеона (constants/body-map.mjs::classifyImplant). */
+const LIMB_IMPLANT_KIND = { hand: "arm", arm: "arm", foot: "leg", leg: "leg", eye: "eye" };
+
+/** Снимок имплантов актора: id → { kind, side, installed } — до и после Хирургеона. */
+export function implantSnapshot(actor) {
+  const out = new Map();
+  for (const i of actor?.items ?? []) {
+    if (i.type !== "implant") continue;
+    out.set(i.id, {
+      kind: classifyImplant(i.name, i.system?.installed, i.system?.category)?.kind || null,
+      side: i.getFlag?.(NS, "bodySide") || "",
+      quality: i.system?.quality || "common",
+      installed: !!i.getFlag?.(NS, "installed")
+    });
+  }
+  return out;
+}
+
+/**
+ * Сторона импланта нужного типа, который в Хирургеоне появился или стал
+ * установленным между двумя снимками. Несколько сразу (пара ног) или ни
+ * одного со стороной — "" (решает выбор в окне Лечения).
+ */
+export function installedImplantSide(before, after, limb) {
+  const sides = new Set(newInstalledImplants(before, after, limb).map(i => i.side).filter(Boolean));
+  return sides.size === 1 ? [...sides][0] : "";
+}
+
+/** Импланты нужного типа, установленные между снимками: [{ side, quality }]. */
+export function newInstalledImplants(before, after, limb) {
+  const kind = LIMB_IMPLANT_KIND[limb];
+  if (!kind) return [];
+  const out = [];
+  for (const [id, now] of after) {
+    const was = before.get(id);
+    if (now.kind !== kind || !now.installed) continue;
+    if (!was || !was.installed || was.side !== now.side) out.push({ side: now.side, quality: now.quality });
+  }
+  return out;
 }
 
 /**
@@ -633,9 +802,11 @@ export function runBionicInstall(medic, patient, { mod, limb }) {
  * тела). Пустое значение — обычный имплант не по месту потери конечности
  * (напр. чисто когнитивный), тогда ветка ниже не трогает Состояния вообще.
  */
-export async function resolveBionicTest(medic, patient, { mod, limb }) {
+export async function resolveBionicTest(medic, patient, { mod, limb, bodySide = "", implantQuality = "" }) {
   const def = LIMB_TYPES[limb];
-  const curCount = def ? (patient.system.conditions?.[def.count] ?? 0) : 0;
+  // Бионика встаёт на выбранную сторону, если там есть потеря, иначе на
+  // первую потерянную (wdbc-x1nz.2.100).
+  const side = def ? pickLostSide(patient.system, def.flag, bodySide, { lost: false }) : null;
   const pMod = patientHealingMod(patient);
   const eff = medicaeEff(medic, patient, mod - 30);
   const roll = await new Roll("1d100").evaluate();
@@ -652,9 +823,16 @@ export async function resolveBionicTest(medic, patient, { mod, limb }) {
     rolls.push(daysRoll);
     const days = Math.max(1, daysRoll.total + 3 - tb);
     lines.push(`Адаптация: <b>${days}</b> сут. (1d10+3−T.b, мин. 1).`);
-    if (def && curCount > 0) {
-      const updates = { ...conditionAdjustFields(patient, def.flag, -1), ...clearLimbLossGangreneFields(def.flag) };
-      try { await patient.update(updates); lines.push(`Часть тела (${def.label}) восстановлена бионикой.`); } catch {
+    // Потеряно мутацией Loss of Limb (wdbc-1rno.6.1): «только Best.Q бионикой,
+    // протезы более низкого Качества… отторгаются». Качество — у импланта,
+    // только что поставленного в Хирургеоне; неизвестно (поставлен вручную) —
+    // решает стол, конечность не восстанавливаем молча.
+    const mutationGate = def && side && lostByMutation(patient.system, def.flag, side) && implantQuality !== "best";
+    if (mutationGate) {
+      lines.push(`${rollIcon("warn","#ffb84d")}Часть тела (${def.label}${sideTag(side)}) потеряна мутацией — прижится только Best.Q бионика${implantQuality ? "; этот протез отторгнется" : " (Качество импланта не определено — проверьте вручную)"}.`);
+    } else if (def && side) {
+      const updates = lostSideFields(def.flag, side, { lost: false });
+      try { await patient.update(updates); lines.push(`Часть тела (${def.label}${sideTag(side)}) восстановлена бионикой.`); } catch {
         lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — снимите «${def.label}» вручную.`);
       }
     } else if (def) {
@@ -678,6 +856,7 @@ export async function resolveBionicTest(medic, patient, { mod, limb }) {
 export async function applyHealing(medic, patient, opts) {
   const { mode, care, mod, bonus } = opts;
   if (mode === "cauterize") return applyCauterize(medic, patient, opts);
+  if (mode === "setLimb")   return applySetLimb(medic, patient, opts);
   if (mode === "amputate")  return applyAmputate(medic, patient, opts);
   if (mode === "reattach")  return applyReattach(medic, patient, opts);
   if (mode === "stumpCare") return applyStumpCare(medic, patient, opts);

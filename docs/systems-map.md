@@ -686,6 +686,32 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   части тела. Мутация Loss of Limb/Потеря Конечности — НЕ реализована,
   вынесена в wdbc-1rno.6.1 (гейт Best.Q сравнением субмутации, субтаблица
   «Пальцы» — открытые решения).
+  С wdbc-x1nz.2.100 потеря хранится ПО СТОРОНАМ: `system.lostLimbs.{right,left}
+  {Hand,Arm,Foot,Leg,Eye} = {lost, gangreneAt}`; `lostX`/`lostXCount` —
+  производные (`rules/character.mjs` ← `rules/limb-loss.mjs::
+  derivedLimbLossConditions`). Писать — только через `rules/limb-loss.mjs`
+  (`lostSideFields`/`lostCountFields`) или единую точку `sheets/tabs/
+  conditions.mjs`; таймер Гангрены — у каждой стороны свой. Бюджет рук —
+  по сторонам (`rules/hands.mjs::armSideState`). «Выронить» —
+  `combat/limb-loss.mjs::dropFromHand` (по `heldHand`, без траты ОД): при
+  потере кисти/руки, бесполезной руке, кнопкой «Выронить» под крит-строкой.
+  Мутация Loss of Limb (wdbc-1rno.6.1) — `combat/limb-loss.mjs::
+  syncLossOfLimbMutation` по хукам create/update/deleteItem: строка
+  субмутации → сторона с пометкой `mutation` (без Кровотечения/Гангрены);
+  «Пальцы» — `lostLimbs.{right,left}Fingers`, −10 к атаке оружием в этой руке
+  (`sheets/attack/mods.mjs::fingersPenalty`); бионика восстанавливает такую
+  сторону только при Best.Q импланте (`healing.mjs::resolveBionicTest`,
+  качество и сторона — из импланта, поставленного в Хирургеоне).
+- Бесполезные Конечности (wdbc-x1nz.2.99) — `system.uselessLimbs.{rightArm,
+  leftArm,rightLeg,leftLeg}` (по каждой конечности: стадия лечения, Раунды,
+  часы, попытки, Гангрена), чистая логика — `rules/useless-limbs.mjs`. Теги
+  «Бесполезная рука/нога» — зеркала (`rules/condition-mirrors.mjs`, источник
+  kind:"fn"). Считаются как потерянные в `rules/hands.mjs`, `rules/character/
+  movement.mjs`, `combat/defense.mjs`, `combat/movement-actions.mjs`,
+  `rules/library/conditions.mjs`. Кнопка из крит-строки — `combat/crit-effect-
+  parser.mjs` (сторона — по месту попадания), Раунды — `combat/condition-
+  ticks.mjs`, 2×T.b ч / лубок / Гангрена — `combat/condition-clock.mjs`,
+  «Зафиксировать» и Мясник — `sheets/tabs/healing.mjs`.
 - Сверка раздела «Статусы» с книгой (wdbc-x1nz.2.87–.97, 23.09.2026):
   - `combat/condition-clock.mjs` — часы Состояний по игровому времени
     (`updateWorldTime`, список `CONDITION_CLOCK_HANDLERS`): пробуждение из

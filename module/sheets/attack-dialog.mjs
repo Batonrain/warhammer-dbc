@@ -155,6 +155,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     isMelee,
     // Область «weapon:unarmed» (Свойство атаки Конструктора, wdbc-rmrm9).
     unarmed: isIntegralAttack(item),
+    // Область «weapon:name:<Имя>» (Мясник → Нартеций, wdbc-x1nz.2.101).
+    weapon: item,
     char: charKey,
     targetActor: [...(game.user?.targets ?? [])][0]?.actor ?? null
   };

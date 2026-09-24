@@ -108,7 +108,8 @@ export const CONDITION_RULES = [
     // (declareHalfMove/FullMove/Charge/Run/Disengage).
     id: "conditions.lostFeetOrLegs",
     label: "Потеря стоп/ног",
-    when: { hasCondition: ["lostFeet", "lostLegs"] },
+    // Бесполезная нога (wdbc-x1nz.2.99) — пока не вылечена, как потерянная.
+    when: { hasCondition: ["lostFeet", "lostLegs", "uselessLeg"] },
     effects: [
       { kind: "rollBonus", target: "skill:acrobatics", value: -20 },
       { kind: "rollBonus", target: "skill:athletics",  value: -20 }

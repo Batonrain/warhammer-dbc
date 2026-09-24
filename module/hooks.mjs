@@ -109,6 +109,7 @@ import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart,
          processPreparedRuneCombatStart } from "./rules/sigillite-runes-combat.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
+import { dropFromHand, syncLossOfLimbMutation, isLossOfLimbMutation } from "./combat/limb-loss.mjs";
 import { setDeceased } from "./sheets/tabs/body.mjs";
 import { clearBloodFlameBuffs } from "./combat/blood-flame.mjs";
 import { clearLegacyKillerBuffs } from "./combat/legacy-weapon-killer.mjs";
@@ -1440,7 +1441,8 @@ export function registerHooks() {
         el.disabled = true;
         await applyCritEffectPill(actor, {
           key: ds.condKey, formula: ds.formula || null, permanent: ds.permanent === "1",
-          sourceDamage: ds.sourceDamage != null && ds.sourceDamage !== "" ? Number(ds.sourceDamage) : null
+          sourceDamage: ds.sourceDamage != null && ds.sourceDamage !== "" ? Number(ds.sourceDamage) : null,
+          side: ds.side || "", healMod: Number(ds.healMod) || 0
         });
       });
     });
@@ -1450,6 +1452,20 @@ export function registerHooks() {
     // flags.warhammer-dbc.deceased, что и ручная галочка на вкладке Тело
     // (module/sheets/tabs/body.mjs::setDeceased), только по факту чтения
     // конкретной книжной строки, а не отдельного похода на другую вкладку.
+    // «Цель роняет всё, что держит в этой руке» (wdbc-x1nz.2.100) — сторона
+    // из места попадания, снятие без траты ОД (combat/limb-loss.mjs).
+    html.querySelectorAll(".wh-crit-drop-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor?.isOwner) return ui.notifications.warn("Выронить может владелец цели (или ГМ).");
+        el.disabled = true;
+        const dropped = await dropFromHand(actor, el.dataset.side, { reason: "крит-эффект" });
+        if (!dropped.length) ui.notifications.info(`${actor.name}: в этой руке ничего не было.`);
+      });
+    });
+
     html.querySelectorAll(".wh-crit-death-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
@@ -3067,6 +3083,20 @@ function _attachFateContextMenu(message, html) {
     if (item.actor && (STOWABLE_TYPES.includes(item.type) || item.type === "armor")) {
       await syncInventoryOverloadTimer(item.actor);
     }
+  });
+
+  // Мутация Loss of Limb/Потеря Конечности (wdbc-1rno.6.1): выпавшая строка
+  // субмутации ставит потерю на своей стороне, смена строки/удаление мутации
+  // возвращают часть тела. Только у того, кто правил, — иначе каждый клиент
+  // повторил бы запись.
+  Hooks.on("createItem", async (item, options, userId) => {
+    if (userId === game.user?.id && isLossOfLimbMutation(item)) await syncLossOfLimbMutation(item);
+  });
+  Hooks.on("updateItem", async (item, changes, options, userId) => {
+    if (userId === game.user?.id && changes?.system?.submutation && isLossOfLimbMutation(item)) await syncLossOfLimbMutation(item);
+  });
+  Hooks.on("deleteItem", async (item, options, userId) => {
+    if (userId === game.user?.id && isLossOfLimbMutation(item)) await syncLossOfLimbMutation(item, { removed: true });
   });
 
   // ── Пересчёт цены Продвижения при смене Покровителя/стереотипа/режима ───

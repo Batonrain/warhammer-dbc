@@ -91,6 +91,10 @@ function attackScopeApplies(scope, ctx) {
   // Безоружная атака — интегральная (Кулак/Пинок/…, combat/equipped-melee.mjs::
   // isIntegralAttack); ставит attack-dialog.mjs (wdbc-rmrm9, Электродуга).
   if (want === "unarmed") return ctx.unarmed === true;
+  // «weapon:name:<Имя>» — только это оружие по имени (любой половине
+  // двуязычного, без скобок): «Нартеций в его руках получает…» (Мясник,
+  // wdbc-x1nz.2.101). Оружие кладёт в контекст attack-dialog.mjs.
+  if (want.startsWith("name:")) return !!ctx.weapon && itemHasName(ctx.weapon, want.slice("name:".length));
   return want === String(ctx.weaponClass ?? "").toLowerCase();
 }
 

@@ -22,7 +22,10 @@
 //  погашенный таймер.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { fatigueChangeFields, announceFatigueChange } from "../sheets/tabs/conditions.mjs";
+import { fatigueChangeFields, announceFatigueChange, conditionApplyFields } from "../sheets/tabs/conditions.mjs";
+import { uselessClockStep, SIDE_LABELS } from "../rules/useless-limbs.mjs";
+import { rollIcon } from "../constants/roll-icons.mjs";
+import { esc } from "../helpers/utils.mjs";
 import { gangreneTick, gangreneIntervalSeconds } from "./gangrene.mjs";
 import { haemorrhageHourly, suffocationRestClock } from "./condition-ticks.mjs";
 
@@ -86,6 +89,46 @@ async function gangreneClock(actor, { from, to }) {
 }
 
 /**
+ * Бесполезные Конечности (wdbc-x1nz.2.99): без помощи 2×T.b часов —
+ * перманентно; срок в лубке (2d10−T.b суток) вышел — конечность в строю;
+ * перманентная через T.b дней — бросок Гангрены (1-7 на 1d10 без помощи,
+ * 1-6 после проваленных попыток). Вся арифметика — rules/useless-limbs.mjs.
+ */
+async function uselessLimbsClock(actor, { to }) {
+  const tb = Number(actor.system?.characteristics?.t?.bonus) || 0;
+  const { patch, events } = uselessClockStep(actor.system, { to, tb });
+  if (!events.length) return;
+  const lines = [];
+  const rolls = [];
+  for (const ev of events) {
+    const side = SIDE_LABELS[ev.side];
+    if (ev.kind === "noAid") {
+      lines.push(`<b>${side}</b>: медпомощи не было 2×T.b ч. — конечность <span class="roll-failure">перманентно бесполезна</span>. Нужна ампутация, иначе через T.b дн. возможна Гангрена.`);
+    } else if (ev.kind === "healed") {
+      lines.push(`<b>${side}</b>: срок в лубке вышел — <span class="roll-success">конечность снова в строю</span>.`);
+    } else if (ev.kind === "gangreneDue") {
+      const roll = await new Roll("1d10").evaluate();
+      rolls.push(roll);
+      const gangrene = roll.total * 10 <= ev.chance;
+      if (gangrene) Object.assign(patch, conditionApplyFields("gangrene", null, actor));
+      lines.push(`<b>${side}</b>: не ампутирована — проверка Гангрены (${ev.chance}%, 1-${ev.chance / 10} на 1d10): бросок <b>${roll.total}</b> — ${gangrene
+        ? `<span class="roll-failure">загноилась, наложена Гангрена</span>`
+        : `<span class="roll-success">обошлось</span>`}.`);
+    }
+  }
+  await actor.update(patch);
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `<div class="wh-roll-result">
+      <div class="roll-header">${rollIcon("warn", "#d9a066")}${esc(actor.name)} — Бесполезная конечность</div>
+      <div class="roll-threshold">${lines.join("<br/>")}</div>
+    </div>`,
+    rolls,
+    sound: rolls.length ? CONFIG.sounds.dice : null
+  }, game.settings.get("core", "rollMode")));
+}
+
+/**
  * Обработчики часов Состояний, по порядку. { id, run(actor, { from, to }) }.
  *
  * Порядок значим: пробуждение из обморока идёт раньше урона Гангрены —
@@ -101,6 +144,8 @@ export const CONDITION_CLOCK_HANDLERS = [
   // Удушье в покое: T.b минут, тест T+0 раз в минуту, без сознания — смерть
   // через T.b Раундов (wdbc-x1nz.2.94) — combat/condition-ticks.mjs.
   { id: "suffocationRest", run: suffocationRestClock },
+  // Бесполезные Конечности: 2×T.b ч без помощи, лубок, Гангрена (wdbc-x1nz.2.99).
+  { id: "uselessLimbs", run: uselessLimbsClock },
 ];
 
 /**

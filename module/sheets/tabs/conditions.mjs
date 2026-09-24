@@ -17,7 +17,7 @@ import { rollIcon } from "../../constants/roll-icons.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { effectiveFatigue, gangreneFatigueExtra } from "../../rules/situational.mjs";
 import { raceMatches } from "../../rules/race.mjs";
-import { LIMB_LOSS_KEYS, limbLossGangreneField, limbLossGangreneCheckAt } from "../../rules/limb-loss.mjs";
+import { LIMB_LOSS_KEYS, BODY_SIDES, lostCount, lostCountFields, lostSideFields } from "../../rules/limb-loss.mjs";
 import { esc, on } from "../../helpers/utils.mjs";
 
 const NS = "warhammer-dbc";
@@ -375,6 +375,12 @@ export function conditionApplyFields(key, level = null, actor = null) {
   // её собственное действие («объявить Бег», «войти в Ярость»), не эта функция.
   if (isMirroredCondition(key)) return {};
   if (actor && isImmuneToCondition(actor, key, isItemActive)) return {};
+  // Потеря конечности (wdbc-x1nz.2.100) хранится по сторонам: число
+  // переводится в стороны (новые — на первые целые), флаг/счётчик производные.
+  if (LIMB_LOSS_KEYS.includes(key)) {
+    const cur = lostCount(actor?.system, key);
+    return lostCountFields(actor?.system, key, level != null ? Number(level) || 0 : Math.max(1, cur));
+  }
   const fields = { [`system.conditions.${key}`]: true };
   if (def.hasLevel && def.levelField && level != null) {
     fields[`system.conditions.${def.levelField}`] = Number(level) || 0;
@@ -408,13 +414,8 @@ export function conditionApplyFields(key, level = null, actor = null) {
  * и даёт Гангрену; второй бросок 80% по второму обрубку ничего бы не
  * добавил: Гангрена — одно Состояние без уровней.
  */
-export function stumpTimerFields(actor, key) {
-  const field = limbLossGangreneField(key);
-  if (!field || !actor) return {};
-  const tb = actor.system?.characteristics?.t?.bonus ?? 0;
-  const at = limbLossGangreneCheckAt(worldNow(), tb);
-  const running = Number(actor.system?.conditions?.[field]) || 0;
-  return { [`system.conditions.${field}`]: running > 0 ? Math.min(running, at) : at };
+export function stumpTimerOpts(actor) {
+  return { timer: true, worldTime: worldNow(), tb: Number(actor?.system?.characteristics?.t?.bonus) || 0 };
 }
 
 /**
@@ -427,9 +428,12 @@ export function stumpTimerFields(actor, key) {
  * Мутация Loss of Limb сюда тоже не заходят: у операции своё правило
  * Кровотечения, у Мутации обрубок уже закрыт.
  */
-function limbLossSideFields(actor, key) {
+function limbLossSideFields(actor, key, target) {
   if (!LIMB_LOSS_KEYS.includes(key)) return {};
-  return { ...conditionApplyFields("bleeding", null, actor), ...stumpTimerFields(actor, key) };
+  // Таймер обрубка у каждой стороны свой (wdbc-x1nz.2.100) — заводится
+  // только новым потерям, уже идущие не переносятся.
+  return { ...conditionApplyFields("bleeding", null, actor),
+           ...lostCountFields(actor.system, key, target, stumpTimerOpts(actor)) };
 }
 
 /** Патч на снятие — флаг false и (если у Состояния есть счётчик) счётчик 0. */
@@ -440,6 +444,8 @@ export function conditionRemoveFields(key) {
   // (wdbc-5uae). Патч собирает rules/condition-mirrors.mjs — он один знает,
   // где какая метка живёт.
   if (isMirroredCondition(key)) return mirrorClearPatch(key);
+  if (LIMB_LOSS_KEYS.includes(key))
+    return Object.assign({}, ...BODY_SIDES.map(side => lostSideFields(key, side, { lost: false })));
   const def    = CONDITIONS_DEF[key];
   const fields = { [`system.conditions.${key}`]: false };
   if (def?.hasLevel && def.levelField) fields[`system.conditions.${def.levelField}`] = 0;
@@ -477,6 +483,7 @@ export function conditionAdjustFields(actor, key, delta) {
   // Иммунитет гасит только НАКОПЛЕНИЕ: снять уровень (delta < 0) он мешать не
   // должен — иначе предмет-иммунитет запер бы Состояние, наложенное до него.
   if (delta > 0 && isImmuneToCondition(actor, key, isItemActive)) return {};
+  if (LIMB_LOSS_KEYS.includes(key)) return lostCountFields(actor.system, key, lostCount(actor.system, key) + delta);
   if (!def.hasLevel || !def.levelField) {
     return delta > 0 ? { [`system.conditions.${key}`]: true } : {};
   }
@@ -502,15 +509,14 @@ export async function addCondition(actor, key, { level = null } = {}) {
  * руки/ноги/глаза считают именно Count (rules/hands.mjs, movement.mjs).
  */
 function manualApplyFields(actor, key, level = null) {
-  const def = CONDITIONS_DEF[key];
   const isLimb = LIMB_LOSS_KEYS.includes(key);
-  const before = isLimb ? (Number(actor.system?.conditions?.[def?.levelField]) || 0) : 0;
+  const before = isLimb ? lostCount(actor.system, key) : 0;
   const lvl = isLimb && level == null ? Math.max(1, before) : level;
-  const fields = conditionApplyFields(key, lvl, actor);
-  if (isLimb && Object.keys(fields).length && (Number(lvl) || 0) > before) {
-    Object.assign(fields, limbLossSideFields(actor, key));
+  if (isLimb && (Number(lvl) || 0) > before) {
+    if (isImmuneToCondition(actor, key, isItemActive)) return {};
+    return limbLossSideFields(actor, key, lvl);
   }
-  return fields;
+  return conditionApplyFields(key, lvl, actor);
 }
 
 /** Крестик в строке состояния: снять его, а со счётчиком — обнулить и счётчик. */
@@ -534,11 +540,16 @@ export async function setConditionLevel(actor, key, value) {
   const def = CONDITIONS_DEF[key];
   const val = parseInt(value) || 0;
   if (!def?.hasLevel || !def.levelField) return;
-  const fields = { [`system.conditions.${def.levelField}`]: val };
   // Потеря конечности, поднятая числом в строке (wdbc-x1nz.2.97) — та же
-  // новая потеря, что и из диалога: Кровотечение + таймер обрубка.
-  const before = Number(actor.system?.conditions?.[def.levelField]) || 0;
-  if (LIMB_LOSS_KEYS.includes(key) && val > before) Object.assign(fields, limbLossSideFields(actor, key));
+  // новая потеря, что и из диалога: Кровотечение + таймер обрубка; хранится
+  // по сторонам (wdbc-x1nz.2.100).
+  if (LIMB_LOSS_KEYS.includes(key)) {
+    const before = lostCount(actor.system, key);
+    const fields = val > before ? limbLossSideFields(actor, key, val) : lostCountFields(actor.system, key, val);
+    if (Object.keys(fields).length) await actor.update(fields);
+    return;
+  }
+  const fields = { [`system.conditions.${def.levelField}`]: val };
   await actor.update(fields);
 }
 

@@ -9,6 +9,7 @@ import { pickReroll }     from "../rules/reroll-pick.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { hasRuleFlag }    from "../rules/flags.mjs";
+import { uselessCount }   from "../rules/useless-limbs.mjs";
 import { isRoundCapabilityAvailable } from "../apps/game-session.mjs";
 import { equippedMeleeWeapon, isIntegralAttack } from "./equipped-melee.mjs";
 import { grappleDodgeBlockReason } from "./grapple.mjs";
@@ -121,6 +122,9 @@ export async function _performDodge(actor, {
   // тратится — Уклонение физически недоступно, а не просто провалено.
   if ((Number(actor.system.conditions?.lostLegsCount) || 0) > 0)
     return _noReactionCard(actor, "Уклонение (нет ног)");
+  // Бесполезная нога (wdbc-x1nz.2.99) — пока не вылечена, как потерянная.
+  if (uselessCount(actor.system, "leg") > 0)
+    return _noReactionCard(actor, "Уклонение (нога бесполезна)");
   // Борьба (стр. 12, wdbc-x1nz.2.74): Цель не Уклоняется вовсе, держащий — лишь
   // тяжелее и не меньше цели. Реакция не тратится — как и без ног выше.
   const grappleNoDodge = grappleDodgeBlockReason(actor);

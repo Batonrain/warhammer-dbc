@@ -241,24 +241,16 @@ const DEVIATIONS = {
     // Паразитический контакт (Трейт Parasite, wdbc-ux8a) — заведено гораздо позже template.json.
     "conditions.parasiticContact": false,
     "conditions.parasiticContactRounds": 0,
-    "conditions.lostHands": false,
-    "conditions.lostHandsCount": 0,
-    "conditions.lostArms": false,
-    "conditions.lostArmsCount": 0,
-    "conditions.lostFeet": false,
-    "conditions.lostFeetCount": 0,
-    "conditions.lostLegs": false,
-    "conditions.lostLegsCount": 0,
-    "conditions.lostEyes": false,
-    "conditions.lostEyesCount": 0,
-    // Потеря Конечностей (стр. 30-31, wdbc-1rno.6): таймер отложенной
-    // проверки Гангрены обрубка, по одному на часть тела — заведено гораздо
-    // позже template.json (module/rules/limb-loss.mjs).
-    "conditions.lostHandsGangreneAt": 0,
-    "conditions.lostArmsGangreneAt": 0,
-    "conditions.lostFeetGangreneAt": 0,
-    "conditions.lostLegsGangreneAt": 0,
-    "conditions.lostEyesGangreneAt": 0,
+    // Потеря Конечностей (стр. 30-31, wdbc-1rno.6, по сторонам —
+    // wdbc-x1nz.2.100): лежит в system.lostLimbs, а не в conditions.lostX —
+    // флаг и *Count теперь ПРОИЗВОДНЫЕ (derivedLimbLossConditions,
+    // rules/character.mjs), своего хранимого поля в схеме у них больше нет.
+    lostLimbs: Object.fromEntries(
+      ["rightHand", "leftHand", "rightArm", "leftArm", "rightFoot", "leftFoot",
+       "rightLeg", "leftLeg", "rightEye", "leftEye",
+       // «Пальцы» мутации Потеря Конечности (wdbc-1rno.6.1) — без Состояния.
+       "rightFingers", "leftFingers"].map(k => [k, { lost: false, gangreneAt: 0, mutation: false }])
+    ),
     // Стр. 12 («Борьба») — связаны Захватом, заведено гораздо позже template.json.
     "conditions.grappling": false,
     // Собственный вес тела (Записи → Вес, wdbc-oxdn) — нужен для Метания/
@@ -299,6 +291,10 @@ const DEVIATIONS = {
     // гораздо позже template.json, см. combat/damage.mjs.
     armorCorrosion: { head: 0, leftArm: 0, rightArm: 0, body: 0, leftLeg: 0, rightLeg: 0 },
     piercingWounds: { head: 0, leftArm: 0, rightArm: 0, body: 0, leftLeg: 0, rightLeg: 0 },
+    // Бесполезные Конечности (wdbc-x1nz.2.99) — rules/useless-limbs.mjs.
+    uselessLimbs: Object.fromEntries(["rightArm", "leftArm", "rightLeg", "leftLeg"].map(side => [side, {
+      state: "", rounds: 0, noAidAt: 0, healAt: 0, attempts: 0, healMod: 0, gangreneAt: 0, gangreneChance: 0
+    }])),
     crippledWounds: [],
     // Тумблер «В Ярости» (wdbc-plsf) — заведён гораздо позже template.json.
     inRage: false,

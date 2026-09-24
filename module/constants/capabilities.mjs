@@ -2461,7 +2461,8 @@ export const CAPABILITIES = {
   },
   "medic.core.butcher": {
     label: "Персонаж автоматически проходит тесты на лечение бесполезных конечностей и ампутацию при помощи Нартеция.",
-    source: "Butcher / Мясник", reader: ""
+    source: "Butcher / Мясник",
+    reader: "module/sheets/tabs/healing.mjs butcherAutoPass() — applySetLimb (Бесполезная конечность, wdbc-x1nz.2.99) и applyAmputate; только с галочкой «Нартецием» (по умолчанию стоит, если у медика есть предмет Нартеций). Extreme (9) и Precise Нартеция — записи «Свойство атаки» Таланта с областью name:Нартеций (rules/resolve-test.mjs attackScopeApplies); Кровотечение при непоглощённом уроне в «Сочленение / Шея» — module/combat/damage.mjs (wdbc-x1nz.2.101)"
   },
   "medic.core.cook": {
     label: "Имея набор разнообразных химикатов, персонаж может потратить Очко Бесчестия и за 5 минут приготовить I.b смесей,",

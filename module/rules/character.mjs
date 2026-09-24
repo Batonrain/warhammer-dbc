@@ -35,6 +35,7 @@ import { raceMatches } from "./race.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { readAllMirrors } from "./condition-mirrors.mjs";
+import { derivedLimbLossConditions } from "./limb-loss.mjs";
 import { PA_TABLES } from "../constants/power-armour-lore.mjs";
 import { sanityMax, madnessLevels, sarcophagusCharDelta, DREADNOUGHT_PILOT_FLAG,
          SARCOPHAGUS, sarcophagusWarpWounds, sarcophagusHelplessNow } from "./dreadnought.mjs";
@@ -589,6 +590,9 @@ export function prepareCharacterDerived(actor, system) {
     // своим кодом; см. rules/condition-mirrors.mjs.
     if (system.conditions) {
       Object.assign(system.conditions, readAllMirrors(actor));
+      // Потеря конечностей (wdbc-x1nz.2.100): хранится по сторонам
+      // (system.lostLimbs), флаг и *Count — отсюда, для всех прежних читателей.
+      Object.assign(system.conditions, derivedLimbLossConditions(system));
     }
 
     // Без сознания (стр. 30-31, wdbc-r5o7.7): «Считается Беспомощным» — тем

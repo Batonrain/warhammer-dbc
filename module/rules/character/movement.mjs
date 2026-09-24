@@ -12,6 +12,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { calcMovement } from "../movement.mjs";
+import { uselessCount } from "../useless-limbs.mjs";
 import { inventoryOverloadTier } from "../encumbrance.mjs";
 import { disabledArmourOverloadTier, disabledArmourWeight } from "../../combat/armor-mods.mjs";
 
@@ -130,8 +131,10 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   // выходило 1/3/4/9 вместо книжных 1/2/3/6. К этому месту все четыре числа
   // уже согласованы (halfMove = текущий SPD после модов, Стойки, Поваленного),
   // поэтому новый SPD берём из halfMove. Пол 0.5 — тот же книжный минимум.
-  const lostFeetOrLeg = !!(system.conditions?.lostFeet || system.conditions?.lostLegs);
-  const bothLegsLost  = (Number(system.conditions?.lostLegsCount) || 0) >= 2;
+  // Бесполезная нога (wdbc-x1nz.2.99) — пока не вылечена, как потерянная.
+  const uselessLegs   = uselessCount(system, "leg");
+  const lostFeetOrLeg = !!(system.conditions?.lostFeet || system.conditions?.lostLegs) || uselessLegs > 0;
+  const bothLegsLost  = (Number(system.conditions?.lostLegsCount) || 0) + uselessLegs >= 2;
   if (bothLegsLost) {
     halfMove = 0; move = 0; charge = 0; run = 0;
   } else if (lostFeetOrLeg) {
@@ -168,10 +171,10 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
     expectedHalfMove /= 2;
   }
   if (bothLegsLost) {
-    spdBreakdown.push({ label: "Потеря обеих ног", value: null, immobile: true });
+    spdBreakdown.push({ label: uselessLegs ? "Обе ноги потеряны/бесполезны" : "Потеря обеих ног", value: null, immobile: true });
     expectedHalfMove = 0;
   } else if (lostFeetOrLeg) {
-    spdBreakdown.push({ label: "Потеря стопы/ноги", value: null, halvedFloor: true });
+    spdBreakdown.push({ label: uselessLegs ? "Потеря стопы/ноги или нога бесполезна" : "Потеря стопы/ноги", value: null, halvedFloor: true });
     expectedHalfMove = Math.floor(expectedHalfMove / 2);
   }
   if (expectedHalfMove !== halfMove) spdBreakdown.push({ label: "Минимум SPD", value: null, floor: 0.5 });
