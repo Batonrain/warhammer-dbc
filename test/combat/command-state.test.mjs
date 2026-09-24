@@ -151,3 +151,27 @@ describe("Залповый Огонь", () => {
     expect(captured.chat.at(-1).content).toContain("Тест Подавления (+20)");
   });
 });
+
+// Живая проверка: токены по умолчанию НЕсвязанные — бросок идёт от актора
+// токена (Scene.x.Token.y.Actor.z), а в Отряд положили мирового актора.
+describe("несвязанные токены", () => {
+  it("боец в Отряде мировым актором получает бонус, бросая от токена", () => {
+    const tokenActor = doc("Scene.sc.Token.t1.Actor.s", "character", soldier.system,
+      { isToken: true, id: "s", token: { baseActor: soldier } });
+    const { autoMods } = resolveTest({ actor: tokenActor, kind: "attack", isMelee: false });
+    expect(autoMods.find(m => m.ruleId === "command.short")?.value).toBe(3);
+  });
+
+  it("в Отряде актор токена — узнаётся и мировой лист (через активный токен)", () => {
+    squad.system.members = [{ id: "m1", uuid: "Scene.sc.Token.t1.Actor.s" }];
+    soldier.getActiveTokens = () => [{ actor: { uuid: "Scene.sc.Token.t1.Actor.s" } }];
+    expect(commandNodesFor(soldier)).toHaveLength(1);
+  });
+
+  it("Команда, отданная с мирового листа, гаснет на Ходу токена командира", async () => {
+    const sargeToken = doc("Scene.sc.Token.t2.Actor.c", "character", sarge.system,
+      { isToken: true, id: "c", token: { baseActor: sarge } });
+    await expireCommandsAtTurnStart({ id: "cb", round: 2, combatant: { actor: sargeToken } });
+    expect(squad.system.shortCommand.active).toBe(false);
+  });
+});
