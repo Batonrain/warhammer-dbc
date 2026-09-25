@@ -263,10 +263,12 @@ export function situationalRules(actor, ctx = {}) {
   // Шок (стр. 53, rules/shock.mjs): штраф выпавшей строки таблицы.
   add("situational.shock", "😨 Шок", shockPenalty(actor, charKey));
   // «Бежит в панике; если пути к побегу нет — −20» (строка 81–100): есть ли
-  // путь, видно только за столом, поэтому это галочка, а не автоштраф.
+  // путь, видно только за столом, поэтому это галочка, а не автоштраф — и
+  // только галочка (askOnly): в бросках без диалога её не складывают
+  // (решение Сергея 25.09.2026: считать, что путь есть).
   if (shockFleeing(actor) && String(charKey ?? "").toLowerCase() !== "t") {
     rules.push({ id: "situational.shockNoEscape", label: "😨 Шок: нет пути к побегу", when: {},
-      effects: [{ kind: "rollBonus", target: "all", value: -20, label: "😨 Шок: нет пути к побегу" }] });
+      effects: [{ kind: "rollBonus", target: "all", value: -20, askOnly: true, label: "😨 Шок: нет пути к побегу" }] });
   }
 
   return rules;
