@@ -9,7 +9,7 @@
 // а не своя арифметика — своей больше нет.
 
 import { describe, it, expect } from "vitest";
-import { SECONDS_PER_ROUND, DURATION_UNITS, durationLabel, durationDataFor,
+import { SECONDS_PER_ROUND, DURATION_UNITS, durationLabel, durationDataFor, isTurnEndDurationExpired,
          remainingOf, isDurationExpired, remainingRounds, remainingLabel,
          conditionEntryTerm, conditionHasLevelInput }
   from "../../module/rules/condition-duration.mjs";
@@ -43,7 +43,7 @@ describe("durationDataFor: срок автора → duration эффекта", (
   it("единицы автора — это единицы Foundry, переводить нечего", () => {
     // Свой перевод единиц и был причиной обоих багов живой проверки:
     // считать самим то, что считает ядро, — способ разойтись с ядром.
-    expect(durationDataFor(2, "rounds")).toEqual({ value: 2, units: "rounds" });
+    expect(durationDataFor(2, "rounds")).toEqual({ value: 2, units: "rounds", expiry: "turnEnd" });
     expect(durationDataFor(10, "minutes")).toEqual({ value: 10, units: "minutes" });
     expect(durationDataFor(1, "hours")).toEqual({ value: 1, units: "hours" });
     expect(durationDataFor(1, "days")).toEqual({ value: 1, units: "days" });
@@ -51,7 +51,7 @@ describe("durationDataFor: срок автора → duration эффекта", (
 
   it("момент начала НЕ проставляется — его пишет ядро при создании эффекта", () => {
     const d = durationDataFor(2, "rounds");
-    expect(Object.keys(d).sort()).toEqual(["units", "value"]);
+    expect(Object.keys(d).sort()).toEqual(["expiry", "units", "value"]);
   });
 
   it("нет срока — null: Состояние висит до ручного снятия, как раньше", () => {
@@ -187,5 +187,24 @@ describe("conditionHasLevelInput", () => {
     expect(conditionHasLevelInput("bleeding")).toBe(true);
     expect(conditionHasLevelInput("stunned")).toBe(false);
     expect(conditionHasLevelInput("prone")).toBe(false);
+  });
+});
+
+// Книга, «Длительность Эффектов» (wdbc-x1nz.2.84): эффект на N Раундов
+// кончается в КОНЦЕ Хода наложившего — ни в начале Хода носителя, ни раньше.
+describe("isTurnEndDurationExpired: конец Хода наложившего", () => {
+  it("идёт последний Раунд (остаток 0) — держится до конца Хода наложившего", () => {
+    expect(isTurnEndDurationExpired({ remaining: 0 }, "cA", "")).toBe(false);     // начало Хода носителя
+    expect(isTurnEndDurationExpired({ remaining: 0 }, "cA", "cB")).toBe(false);   // кончился чужой Ход
+    expect(isTurnEndDurationExpired({ remaining: 0 }, "cA", "cA")).toBe(true);    // кончился Ход наложившего
+  });
+  it("Раунды ещё остались — не истёк даже в конце Хода наложившего", () => {
+    expect(isTurnEndDurationExpired({ remaining: 1 }, "cA", "cA")).toBe(false);
+  });
+  it("конец того Хода пропущен (остаток ниже нуля) — снимается сразу", () => {
+    expect(isTurnEndDurationExpired({ remaining: -1 }, "cA", "")).toBe(true);
+  });
+  it("наложено вне боя (наложивший не записан) — прежнее правило «остаток 0»", () => {
+    expect(isTurnEndDurationExpired({ remaining: 0 }, "", "")).toBe(true);
   });
 });

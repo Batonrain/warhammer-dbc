@@ -5,6 +5,7 @@ import { DAMAGE_TYPES, DAMAGE_SUBTYPES } from "../constants/items.mjs";
 import { _degWord, esc }       from "../helpers/utils.mjs";
 import { getCriticalEffect } from "../../critical-tables.mjs";
 import { LOCATION_TO_SIDE } from "../rules/useless-limbs.mjs";
+import { secondaryCritHtml, ARMOR_KEY_TO_LOCATION } from "./secondary-crit.mjs";
 import { parseCritEffectPills, critPillsHtml, deathButtonHtml, dropButtonHtml, textAssertsDeath } from "./crit-effect-parser.mjs";
 import { SHIELD_STATUS }  from "../constants/shields.mjs";
 import { applyDamageToVehicle } from "./vehicle.mjs";
@@ -41,6 +42,7 @@ import { ablativeApAfterHit } from "../rules/ablative-ap.mjs";
 import { determinationToFightReduction, determinationToFightWsReduction } from "../rules/determination-to-fight.mjs";
 import { justTheLightReduction } from "./just-the-light.mjs";
 import { coverApForLocation } from "../rules/cover-locations.mjs";
+import { coverRegionForShot } from "./cover.mjs";
 import { addFatigue, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { CONDITIONS_DEF } from "../constants/conditions.mjs";
 import { reaperLegacyButtonHtml } from "./legacy-weapon-reaper.mjs";
@@ -61,8 +63,11 @@ async function _applyCorrosive(actor, armorKey, hitLocation, rating) {
 
   let overflowNote = "";
   if (overflow > 0) {
-    const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, overflow);
+    const loss = await applyWoundLoss(actor, overflow);
+    const { currentWounds, newWounds, newCritical, gotCritical } = loss;
     overflowNote = `, остаток <b>${overflow}</b> — непоглощаемый урон (Раны ${currentWounds}→${newWounds}${gotCritical ? `, крит. ${newCritical}` : ""})`;
+    // Остаток — непоглощаемый C Dmg: в минус он тоже даёт Крит. Эффект (wdbc-x1nz.2.85).
+    overflowNote += await secondaryCritHtml(actor, loss, { damageType: "chemical", hitLocation });
   }
   return `<div class="dmg-tb-note">🧪 Разъедающее: −${lost} AP брони (${hitLocation})${overflowNote}</div>`;
 }
@@ -106,10 +111,12 @@ export async function extractPiercingWound(actor, armorKey) {
     return ui.notifications?.info(`${actor.name}: в этой части тела нет застрявшего снаряда.`);
   }
   await actor.update({ [`system.piercingWounds.${armorKey}`]: 0 });
-  const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, 1);
+  const loss = await applyWoundLoss(actor, 1);
+  const { currentWounds, newWounds, newCritical, gotCritical } = loss;
+  const crit = await secondaryCritHtml(actor, loss, { damageType: "rending", hitLocation: ARMOR_KEY_TO_LOCATION[armorKey] || "Торс" });
   await postTestCard(actor, {
     title: `🏹 Извлечение снаряда → ${esc(actor.name)}`,
-    lines: [`<div class="roll-threshold">Снаряд извлечён (${armorKey}), +1 непоглощ. R Dmg (Раны ${currentWounds}→${newWounds}${gotCritical ? `, крит. ${newCritical}` : ""})</div>`]
+    lines: [`<div class="roll-threshold">Снаряд извлечён (${armorKey}), +1 непоглощ. R Dmg (Раны ${currentWounds}→${newWounds}${gotCritical ? `, крит. ${newCritical}` : ""})</div>`, crit]
   }, { sound: false });
 }
 
@@ -128,16 +135,19 @@ async function _applyCrippling(actor, armorKey, hitLocation, damageType, rating)
   await actor.update({ "system.crippledWounds": wounds });
   return `<div class="dmg-tb-note">
     🩸 Калечащее: рана с шипами в ${hitLocation} — снимается лечением/полным исцелением
-    <button class="wh-crippling-trigger-btn" type="button" data-actor-uuid="${actor.uuid}" data-rating="${rating}" data-location="${hitLocation}">Оба ОД на физ. действие — нанести ${rating} урона</button>
+    <button class="wh-crippling-trigger-btn" type="button" data-actor-uuid="${actor.uuid}" data-rating="${rating}" data-location="${hitLocation}" data-damage-type="${damageType}">Оба ОД на физ. действие — нанести ${rating} урона</button>
   </div>`;
 }
 
 /** Наносит урон одной раны Калечащего (клик .wh-crippling-trigger-btn, hooks.mjs) — рана не снимается. */
-export async function applyCripplingTrigger(actor, rating, hitLocation) {
-  const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, rating);
+export async function applyCripplingTrigger(actor, rating, hitLocation, damageType = "rending") {
+  const loss = await applyWoundLoss(actor, rating);
+  const { currentWounds, newWounds, newCritical, gotCritical } = loss;
+  // «Урон того же типа в ту же часть тела» — Крит. Эффект по ним же (wdbc-x1nz.2.85).
+  const crit = await secondaryCritHtml(actor, loss, { damageType: damageType || "rending", hitLocation: hitLocation || "Торс" });
   await postTestCard(actor, {
     title: `🩸 Калечащее (${hitLocation}) → ${esc(actor.name)}`,
-    lines: [`<div class="roll-threshold">Непоглощ. урон: <b>${rating}</b> (Раны ${currentWounds}→${newWounds}${gotCritical ? `, крит. ${newCritical}` : ""})</div>`]
+    lines: [`<div class="roll-threshold">Непоглощ. урон: <b>${rating}</b> (Раны ${currentWounds}→${newWounds}${gotCritical ? `, крит. ${newCritical}` : ""})</div>`, crit]
   }, { sound: false });
 }
 
@@ -659,6 +669,17 @@ export async function applyDamageToActor(actor, damageData) {
   // Техника: урон сразу в Структуру. Сторона брони пришла из окна атаки
   // (damageData.side), часть машины — из авто-места попадания (damageData.hitLocation).
   if (actor.type === "vehicle") {
+    // C(Tx) «действует только на живых существ» (Виды Урона, wdbc-x1nz.2.82;
+    // решение Сергея 23.09.2026: неживые — Техника и Укрытия, Укрытия урона
+    // в системе не получают вовсе). Говорим вслух — молча пропавший урон
+    // ГМ примет за баг.
+    if (damageData.damageSubtype === "toxic" && !damageData.ignoreSubtypeImmunity) {
+      return ChatMessage.create({
+        speaker: { alias: "Система" },
+        content: `<div class="wh-roll-result"><div class="roll-header">Урон → ${esc(actor.name)}</div>
+          <div class="roll-outcome"><span class="roll-success">C(Tx) действует только на живых — Технику не повреждает</span></div></div>`
+      });
+    }
     const VEH_PARTS = ["Ходовая", "Корпус", "Орудие", "Башня"];
     return applyDamageToVehicle(actor, {
       ...damageData,
@@ -834,6 +855,7 @@ export async function applyDamageToActor(actor, damageData) {
   // Подпись в карточке: пришёл ли AP от ОБЪЯВЛЕННОГО Отскока или от ручного
   // поля Укрытия на листе — писать «Отскок» про второе было бы враньём.
   let coverFromRecoil = false;
+  let coverWearNote = "";
 
   if (warpSoak) {
     // Варп-Оружие: игнорирует броню и обычную Стойкость — поглощает только W.b.
@@ -911,7 +933,12 @@ export async function applyDamageToActor(actor, damageData) {
         subtypeBonus: absorption.vsSubtype?.[damageSubtype] ?? 0,
         damageType, damageSubtype, melee, hitLocation, primitive, frontArcHit,
         flags: effLocFlags,
-        wornAP: absorption.wornOnly?.[armorKey]
+        wornAP: absorption.wornOnly?.[armorKey],
+        // Обнуление по предмету, а не по локации (wdbc-x1nz.2.81); Ртуть — вся
+        // часть тела, поэтому целиком.
+        layers: absorption.layers?.[armorKey] ?? null,
+        otherWornAP: (shieldExcluded ? absorption.otherWornNoShield : absorption.otherWorn)?.[armorKey] ?? 0,
+        locationNulled: mercuryMarked && damageSubtype === "electrical"
       });
       // Рыцарь Кхорна (wdbc-1rno): демон-скакун, вселённый в технику/скакуна,
       // даёт «+8 AP от стрелковых атак» — ТОЛЬКО против !melee, книга не
@@ -954,20 +981,22 @@ export async function applyDamageToActor(actor, damageData) {
       // неоткуда. Галочки локаций ограничивают ОБА источника: и это число, и
       // разовый бонус Отскока (см. rules/cover-locations.mjs).
       //
-      // AP зоны Region сюда СОЗНАТЕЛЬНО НЕ подмешивается. coverApForToken
-      // (combat/cover.mjs) не проверяет линию огня — её шапка прямо говорит,
-      // что это законно только потому, что игрок САМ объявил «отскочил в эту
-      // зону». Дёргать её на каждое попадание значило бы дать броню стены и
-      // против удара в упор, и против стрелка, стоящего за той же стеной, —
-      // и молча сделать всю стрельбу по укрывшимся тяжелее, чего wdbc-qkua не
-      // просил. Автоматика зоны остаётся ровно там, где была: в объявленном
-      // Отскоке (combat/recoil.mjs).
+      // Зона Укрытия на сцене (решение Сергея 24.09.2026, «Разрушение
+      // Укрытий»): её AP идёт в поглощение СТРЕЛКОВОГО попадания, если цель
+      // стоит в зоне и линия огня от стрелка её пересекает
+      // (combat/cover.mjs::coverRegionForShot — с проверкой линии, в отличие
+      // от coverApForToken Отскока). Рукопашная — не «от стрельбы», стена не
+      // мешает удару в упор.
+      const targetToken = actor.getActiveTokens?.()?.[0] ?? null;
+      const regionCover = (!melee && targetToken)
+        ? coverRegionForShot(await resolveAttackerToken(attackerUuid), targetToken) : null;
+      const regionAp = regionCover?.ap ?? 0;
       const manualCover = coverApForLocation(system.cover, armorKey, 0);
-      // Больший из двух, а не сумма: это одна и та же стена, и сложить её с
-      // собой значило бы дать двойную защиту тому, кто и стоял за ней, и
-      // отскочил в неё.
-      const combinedCoverBase = Math.max(coverApForLocation(system.cover, armorKey, recoilCover), manualCover);
-      coverFromRecoil = recoilCover > 0 && combinedCoverBase === recoilCover && manualCover < recoilCover;
+      // Больший, а не сумма: это одна и та же стена, и сложить её с собой
+      // значило бы дать двойную защиту тому, кто и стоял за ней, и отскочил в неё.
+      const declaredCover = Math.max(recoilCover, regionAp);
+      const combinedCoverBase = Math.max(coverApForLocation(system.cover, armorKey, declaredCover), manualCover);
+      coverFromRecoil = recoilCover > 0 && combinedCoverBase === recoilCover && manualCover < recoilCover && regionAp < recoilCover;
       // Взрывы и Окружение (стр. 36, wdbc-x1nz.2.63): укрытие вдвое эффективнее
       // против любого Взрывного, втрое — против взрывов X Dmg, вчетверо —
       // против X(Fr) Dmg. К ЛЮБОМУ источнику AP (ручному и разовому Отскоку
@@ -984,16 +1013,32 @@ export async function applyDamageToActor(actor, damageData) {
       // (turn-flags.mjs гасит, если не сброшено активацией новой защиты).
       const hatredShieldBonus = legacyHatredShieldApForLocation(actor, armorKey);
       if (hatredShieldBonus > 0) armorAP += hatredShieldBonus;
-      // Повреждение Укрытий (стр. 33, wdbc-x1nz.2.62): попадание, ПРОБИВАЮЩЕЕ
-      // укрытие (Pen оружия ≥ его AP), снимает укрытию 1 AP. Только ручное
-      // system.cover.ap (стол сам вписал число из книжной таблицы — это
-      // персистентный объект сцены); сравнение — с настоящим AP материала
-      // укрытия (manualCover), а не с усиленным против Взрыва coverBonus —
-      // множитель Взрыва это эффективность поглощения, не физическая
-      // прочность преграды; разовый бонус Отскока (recoilCover) не портим —
-      // не привязан к конкретному числу на листе.
-      if (manualCover > 0 && (penetration || 0) >= manualCover) {
-        actorUpdate["system.cover.ap"] = Math.max(0, manualCover - 1);
+      // Разрушение Укрытий (стр. 33, wdbc-x1nz.2.62): «каждый раз, когда
+      // укрытие получает попадание, пробивающее его, оно теряет 1 AP».
+      // «Пробивающее» — урон прошёл СКВОЗЬ укрытие (решение Сергея
+      // 24.09.2026): больше его защиты против этого попадания, то есть AP
+      // укрытия с множителем Взрыва за вычетом Пробития. Изнашивается то
+      // укрытие, что дало защиту: число на листе или зона сцены; разовый
+      // бонус Отскока ни к чему не привязан — его не портим. Тирантикос
+      // («Когда атаки Терминатора повреждают Укрытия, те теряют 1d10 AP
+      // вместо 1») — 1d10.
+      if (combinedCoverBase > 0 && (Number(rawDamage) || 0) > Math.max(0, coverBonus - (penetration || 0))) {
+        const attackerActor = attackerUuid ? (await fromUuid(attackerUuid).catch(() => null)) : null;
+        const tyranthikos = [...(attackerActor?.actor ?? attackerActor)?.items ?? []]
+          .some(i => i.type === "talent" && itemHasName(i, "Tyranthikos"));
+        const coverLoss = tyranthikos ? (await new Roll("1d10").evaluate()).total : 1;
+        if (manualCover > 0 && manualCover >= regionAp && manualCover >= recoilCover) {
+          actorUpdate["system.cover.ap"] = Math.max(0, manualCover - coverLoss);
+          coverWearNote = `Укрытие пробито: −${coverLoss} AP (${manualCover} → ${Math.max(0, manualCover - coverLoss)})`;
+        } else if (regionCover && regionAp >= recoilCover) {
+          const left = Math.max(0, regionAp - coverLoss);
+          if (game.user?.isGM) {
+            await regionCover.behavior.update({ "system.coverAp": left });
+            coverWearNote = `Зона Укрытия пробита: −${coverLoss} AP (${regionAp} → ${left})`;
+          } else {
+            coverWearNote = `Зона Укрытия пробита: ГМ — снимите ${coverLoss} AP (${regionAp} → ${left})`;
+          }
+        }
       }
       // Копьё/Пика (Lance): если AP цели > 20 — снижается до 20 в расчёте
       // поглощения, ДО вычета пробития (стр. 168).
@@ -1293,12 +1338,16 @@ export async function applyDamageToActor(actor, damageData) {
     // Флаги уровня ТИПА (noApVsType) — общий механизм; Проводящая и Мягкая
     // давно на подвидах (строка noApVsSubtype ниже), поэтому подпись не
     // называет свойство, а только тип (wdbc-7wn7).
-    if (pfNote.noEnergy && damageType === "energy")  propNotes.push(`Без AP от ${DAMAGE_TYPES.energy?.label || "Энергии"}`);
-    if (pfNote.noImpact && damageType === "impact")  propNotes.push(`Без AP от ${DAMAGE_TYPES.impact?.label || "Удара"}`);
+    // С wdbc-x1nz.2.81 такие свойства снимают AP только своего предмета —
+    // подпись говорит «предмет», а не «локация».
+    if (pfNote.noEnergy && damageType === "energy")  propNotes.push(`Без AP предмета от ${DAMAGE_TYPES.energy?.label || "Энергии"}`);
+    if (pfNote.noImpact && damageType === "impact")  propNotes.push(`Без AP предмета от ${DAMAGE_TYPES.impact?.label || "Удара"}`);
+    if (damageSubtype === "crushing" && (hitLocation === "Голова" || hitLocation === "Глаз (Голова)"))
+      propNotes.push("I(Cr) по голове: половина AP головы проигнорирована");
     if (mercuryMarked && damageSubtype === "electrical") propNotes.push("Ртуть: броня этой части тела электропроводна");
     if (pfNote.doubleBlast && damageType === "blast") propNotes.push("Флак: AP брони ×2");
     if (damageSubtype && pfNote.noApVsSubtype?.[damageSubtype])
-      propNotes.push(`Без AP от ${DAMAGE_SUBTYPES[damageSubtype]?.label || damageSubtype}`);
+      propNotes.push(`Без AP предмета от ${DAMAGE_SUBTYPES[damageSubtype]?.label || damageSubtype}`);
     if (damageSubtype && pfNote.doubleApVsSubtype?.[damageSubtype])
       propNotes.push(`AP брони ×2 против ${DAMAGE_SUBTYPES[damageSubtype]?.label || damageSubtype}`);
     if (damageSubtype && pfNote.tripleApVsSubtype?.[damageSubtype])
@@ -1313,6 +1362,7 @@ export async function applyDamageToActor(actor, damageData) {
     if (primitive && pfNote.blocksPrimitiveDouble)    propNotes.push("Примитивная броня: без бонуса AP примитивного оружия");
     if (runesBonus > 0) propNotes.push(`Защитные Руны: +${runesBonus} AP (см. бросок выше)`);
     if (coverBonus > 0) propNotes.push(`${coverFromRecoil ? "Отскок в Укрытие" : "Укрытие"}: +${coverBonus} AP`);
+    if (coverWearNote) propNotes.push(coverWearNote);
   }
 
   const reductionNote = (otherReduction > 0

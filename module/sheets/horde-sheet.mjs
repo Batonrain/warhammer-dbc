@@ -786,7 +786,7 @@ async function rollHordeAttackOn(actor, w, key, threshold, isMelee, targets, { a
          ${isMelee && !wp.flexible ? `<button class="wh-parry-btn" type="button" ${defData}>Парирование</button>` : ""}</div></div>`
     : `<div class="roll-defense-note">Попадание Орды нельзя Избегать (шквал / навал).</div>`;
 
-  const targetEffectBtns = buildTargetEffectButtons(wProps, { hit });
+  const targetEffectBtns = buildTargetEffectButtons(wProps, { hit, damageType: dtype, hitLocation: hitLoc });
   const magNote = magDice ? ` · <span class="horde-chip">Магнитуда +${magDice}d10</span>` : "";
   const meta = CHARACTERISTICS[key];
 

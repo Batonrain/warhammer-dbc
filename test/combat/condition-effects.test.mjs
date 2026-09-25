@@ -16,7 +16,7 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
 import { conditionDurationEffects, conditionDurationEffect,
          hasConditionDuration, applyConditionWithDuration, clearConditionDuration,
-         sweepConditionDurations, conditionRemainingLabel }
+         sweepConditionDurations, conditionRemainingLabel, onConditionEffectExpired }
   from "../../module/combat/condition-effects.mjs";
 
 const FLAG = "warhammer-dbc";
@@ -144,7 +144,7 @@ describe("applyConditionWithDuration: со сроком", () => {
     await applyConditionWithDuration(actor, "stunned", { value: 3, unit: "rounds" });
 
     expect(actor.effects).toHaveLength(1);
-    expect(actor.effects[0].duration).toEqual({ value: 3, units: "rounds" });
+    expect(actor.effects[0].duration).toEqual({ value: 3, units: "rounds", expiry: "turnEnd" });
   });
 });
 
@@ -333,5 +333,44 @@ describe("остаток перечитывается перед чтением,
     await sweepConditionDurations(actor, { round: 7, turn: 1 });
 
     expect(actor.effects[0].durationRefreshes[0]).toEqual({ round: 7, turn: 1 });
+  });
+});
+
+// Книга, «Длительность Эффектов» (wdbc-x1nz.2.84): Раунды кончаются в конце
+// Хода наложившего. Последний Раунд (остаток 0) эффект ещё держится.
+describe("срок в Раундах — до конца Хода наложившего", () => {
+  it("начало Хода носителя его не снимает, конец Хода наложившего — снимает", async () => {
+    const actor = makeActor();
+    await applyConditionWithDuration(actor, "stunned", { value: 1, unit: "rounds" });
+    actor.effects[0].start = { combatant: "cA" };
+    actor.effects[0].setRemaining(0);
+
+    let r = await sweepConditionDurations(actor);                           // Ход носителя
+    expect(r.expired).toEqual([]);
+    expect(actor.system.conditions.stunnedRounds).toBe(1);                  // счётчик не «0 = снято»
+    r = await sweepConditionDurations(actor, { endedCombatantId: "cB" });   // чужой Ход
+    expect(r.expired).toEqual([]);
+    // Конец Хода наложившего: срок вышел, но снимает его не подметание, а
+    // отметка ядра (иначе гонка — эффект у несвязанного токена воскресал).
+    r = await sweepConditionDurations(actor, { endedCombatantId: "cA" });
+    expect(r.expired).toEqual([]);
+    expect(actor.effects).toHaveLength(1);
+    // Ядро пометило истёкшим — теперь подметание (или обработчик) снимает.
+    actor.effects[0].duration.expired = true;
+    r = await sweepConditionDurations(actor, { endedCombatantId: "cA" });
+    expect(r.expired).toEqual(["stunned"]);
+  });
+
+  it("отметка ядра «истёк» снимает эффект обработчиком — только у активного ГМа", async () => {
+    const actor = makeActor();
+    await applyConditionWithDuration(actor, "stunned", { value: 1, unit: "rounds" });
+    const fx = actor.effects[0];
+    fx.parent = actor;
+    globalThis.game.users = { activeGM: { isSelf: false } };
+    expect(await onConditionEffectExpired(fx, { duration: { expired: true } })).toBe(false);
+    globalThis.game.users = { activeGM: { isSelf: true } };
+    expect(await onConditionEffectExpired(fx, { duration: { remaining: 0 } })).toBe(false);
+    expect(await onConditionEffectExpired(fx, { duration: { expired: true } })).toBe(true);
+    expect(actor.effects).toHaveLength(0);
   });
 });
