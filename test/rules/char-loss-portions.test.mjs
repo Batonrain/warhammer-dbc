@@ -6,7 +6,7 @@
 
 import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
-import { charLossTotal, charLossPortionsAddFields, charLossPortionsStep, charLossPortionsHeal,
+import { charLossAddFields, charLossTotal, charLossPortionsAddFields, charLossPortionsStep, charLossPortionsHeal,
          charHealAllFields, recoveryPolicy, SECONDS_PER_HOUR } from "../../module/rules/char-loss.mjs";
 
 const H = SECONDS_PER_HOUR;
@@ -66,5 +66,13 @@ describe("порции урона в Характеристики", () => {
     const s = sys([{ key: "t", amount: 2, hours: 1 }, { key: "wp", amount: 2, hours: 1 }]);
     const patch = charHealAllFields(s, 1);
     expect(patch["system.charLossPortions"].map(p => `${p.key}:${p.amount}`)).toEqual(["t:1", "wp:1"]);
+  });
+});
+
+describe("первый отсчёт обычного урона — по действующему периоду", () => {
+  it("Гниль Нургла (7 ч): первая единица отходит через 7 ч, а не через час", () => {
+    const s = { characteristics: { s: { total: 40 } }, charLoss: {}, charLossAt: {} };
+    expect(charLossAddFields(s, "s", 2, 1000, 7).patch["system.charLossAt.s"]).toBe(1000 + 7 * H);
+    expect(charLossAddFields(s, "s", 2, 1000).patch["system.charLossAt.s"]).toBe(1000 + H);
   });
 });

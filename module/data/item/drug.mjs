@@ -24,7 +24,7 @@ export class DrugData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, HTMLField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
+    const { StringField, HTMLField, BooleanField, NumberField, SchemaField } = foundry.data.fields;
     const num  = (initial, label) => new NumberField({ initial, nullable: false, label });
     const text = label => new StringField({ initial: "", label });
     /** Правки всех девяти характеристик — одинаковый набор у эффекта и пост-эффекта. */

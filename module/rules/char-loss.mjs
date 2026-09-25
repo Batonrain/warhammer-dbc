@@ -75,7 +75,7 @@ export function zeroedKeys(system) {
  * @param {object} system  actor.system (нужен Итог characteristics.<key>.total)
  * @returns {{patch: object, applied: number, before: number, after: number}}
  */
-export function charLossAddFields(system, key, amount, worldTime = 0) {
+export function charLossAddFields(system, key, amount, worldTime = 0, periodHours = DEFAULT_RECOVERY_HOURS) {
   const total = Number(system?.characteristics?.[key]?.total) || 0;
   const applied = Math.min(num(amount), Math.max(0, total));
   const cur = num(system?.charLoss?.[key]);
@@ -83,7 +83,10 @@ export function charLossAddFields(system, key, amount, worldTime = 0) {
   const patch = {};
   if (applied > 0) {
     patch[`system.charLoss.${key}`] = cur + applied;
-    if (!at) patch[`system.charLossAt.${key}`] = Number(worldTime) + DEFAULT_RECOVERY_HOURS * SECONDS_PER_HOUR;
+    // Первый отсчёт — по периоду, что действует сейчас (Гниль Нургла — 7 ч):
+    // иначе первая единица отходила через час, а период включался со второй
+    // (живая проверка 25.09.2026).
+    if (!at) patch[`system.charLossAt.${key}`] = Number(worldTime) + Math.max(1, Number(periodHours) || DEFAULT_RECOVERY_HOURS) * SECONDS_PER_HOUR;
   }
   return { patch, applied, before: total, after: total - applied };
 }
