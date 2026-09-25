@@ -399,7 +399,9 @@ export function rollModsFromRules(rules, ctx = {}, { auto = false } = {}) {
       const label = effect.label ?? rule.label ?? rule.id;
       if (effect.kind === "rollBonus") {
         const value = effectValue(effect, ctx, rule.id);
-        if (value !== null) mods.push({ ruleId: rule.id, label, value, halvePenalty: false });
+        // askOnly — модификатор только для галочки в диалоге: без диалога
+        // (rules/roll-mods.mjs::collectTestMods) его не складывают.
+        if (value !== null) mods.push({ ruleId: rule.id, label, value, halvePenalty: false, ...(effect.askOnly ? { askOnly: true } : {}) });
         continue;
       }
       // Диалог умеет только ополовинить штраф — другого множителя в нём нет.

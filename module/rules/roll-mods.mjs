@@ -34,7 +34,10 @@ export function autoModsTotal(autoMods) {
  */
 export function collectTestMods(actor, context) {
   const { mods, autoMods } = resolveTest({ actor, ...context });
-  const list = [...autoMods, ...mods];
+  // askOnly («есть ли путь к побегу» и т.п. — видно только за столом): без
+  // диалога не складывается, спросить некого — считаем, что условия нет, а
+  // ГМ накинет штраф сам, если оно есть.
+  const list = [...autoMods, ...mods.filter(m => !m.askOnly)];
   return {
     list,
     total: list.reduce((sum, m) => sum + (Number(m.value) || 0), 0),
