@@ -10,7 +10,7 @@
 //  эффекты нулевой Характеристики производные (rules/character.mjs).
 // ════════════════════════════════════════════════════════════════════════════
 
-import { charLossAddFields, charLossHealFields } from "../rules/char-loss.mjs";
+import { charLossAddFields, charLossHealFields, charLossPortionsAddFields } from "../rules/char-loss.mjs";
 import { killByCondition } from "./condition-death.mjs";
 
 /**
@@ -22,10 +22,20 @@ import { killByCondition } from "./condition-death.mjs";
  * @param {object} [opts.extra]  доп. поля в тот же actor.update (флаги таймеров источника)
  * @param {number} [opts.at]     момент (worldTime) для отсчёта восстановления
  * @param {string} [opts.cause]  причина смерти при T ≤ 0 (rules/death-save.mjs::DEATH_CAUSE_FLAG)
+ * @param {?object} [opts.portion] урон со своим темпом (task 1-8): { hours (0 —
+ *   перманентный), until, source, noMagic } — отдельной порцией, не в общий charLoss
  * @returns {Promise<{applied: number, before: number, after: number, died: boolean}>}
  */
-export async function applyCharDamage(actor, key, amount, { extra = {}, at = globalThis.game?.time?.worldTime ?? 0, cause = "toughness" } = {}) {
-  const { patch, applied, before, after } = charLossAddFields(actor.system, key, amount, at);
+export async function applyCharDamage(actor, key, amount, { extra = {}, at = globalThis.game?.time?.worldTime ?? 0, cause = "toughness", portion = null } = {}) {
+  let patch, applied;
+  const before = Number(actor.system?.characteristics?.[key]?.total) || 0;
+  if (portion) {
+    const r = charLossPortionsAddFields(actor.system, [{ ...portion, key, amount }], at);
+    patch = r.patch; applied = r.applied[key] || 0;
+  } else {
+    ({ patch, applied } = charLossAddFields(actor.system, key, amount, at));
+  }
+  const after = before - applied;
   const upd = { ...patch, ...extra };
   if (Object.keys(upd).length) await actor.update(upd);
   let died = false;

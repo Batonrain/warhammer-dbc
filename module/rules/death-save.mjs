@@ -14,8 +14,9 @@
 //  Пул Очков (system.fate) у хаосита — Inf.b, 3-6 очков: цена 11-20 из него
 //  проваливалась почти всегда. Тот же путь, что награда Бесчестием в конце
 //  сессии (rules/session-rewards.mjs::INFAMY_PATH, решение владельца 07.09).
-//  Лоялист по-прежнему платит пулом Судьбы — книга хаоситская и про него
-//  ничего не говорит.
+//  Лоялист платит той же характеристикой Inf (у него — Влияние): книга
+//  хаоситская и про него молчит, а пул Судьбы мал, и Спасение из него почти
+//  всегда проваливалось (решение Сергея 25.09.2026, task-3aa8).
 //
 //  «Игрушка Богов» (стр. 233) — обязанность первой за сессию смерти
 //  Покровительствуемого (только четыре Бога, решение владельца 24.09.2026),
@@ -41,19 +42,16 @@ export function fatePoolLabel(actor) {
 }
 
 /**
- * Откуда списывается цена Спасения/Защиты: хаосит — постоянное Inf (пишется в
- * inf.base, как награда Бесчестием), лоялист — пул Судьбы.
- * @returns {{kind:"inf"|"pool", current:number, path:string, base:number}}
+ * Откуда списывается цена Спасения/Защиты: постоянное Inf (пишется в
+ * inf.base, как награда Бесчестием) — у хаосита это Бесчестие, у лоялиста
+ * Влияние (решение Сергея 25.09.2026).
+ * @returns {{kind:"inf", current:number, path:string, base:number}}
  */
 export function saveCostSource(actor) {
-  if (paysWithInfamy(actor)) {
-    return {
-      kind: "inf", current: permanentInfamy(actor), path: INFAMY_PATH,
-      base: Number(actor?.system?.characteristics?.inf?.base) || 0
-    };
-  }
-  const v = Number(actor?.system?.fate?.value) || 0;
-  return { kind: "pool", current: v, path: "system.fate.value", base: v };
+  return {
+    kind: "inf", current: permanentInfamy(actor), path: INFAMY_PATH,
+    base: Number(actor?.system?.characteristics?.inf?.base) || 0
+  };
 }
 
 /** Чудесное Спасение: 1d10+10 Бесчестия, 1d10 Порчи (стр. 232). */

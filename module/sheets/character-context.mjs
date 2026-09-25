@@ -598,7 +598,7 @@ export function characterContext(actor) {
       costManual:   !!system.characteristics[key]?.costManual,
       charDamage:   system.charDamage?.[key]                  ?? 0,
       // Урон в Характеристику по книге (wdbc-x1nz.2.83) — подсветка клетки.
-      charLoss:     system.charLoss?.[key]                    ?? 0
+      charLoss:     system.characteristics[key]?.charLoss       ?? 0
     };
   });
 

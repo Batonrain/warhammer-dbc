@@ -344,6 +344,8 @@ const DEVIATIONS = {
     // Урон в Характеристики по книге (wdbc-x1nz.2.83) — отдельно от «Мод.».
     charLoss: Object.fromEntries(Object.keys(CHARACTERISTICS).map(k => [k, 0])),
     charLossAt: Object.fromEntries(Object.keys(CHARACTERISTICS).map(k => [k, 0])),
+    // Порции урона со своим темпом (task 1-8, руна Сигиллита, перманентный урон).
+    charLossPortions: [],
     // Аблативный AP-щит (wdbc-bxw6, напр. Роба Чемпиона) — отдельный от
     // аблативных Ран пул, заведён гораздо позже template.json.
     "ablativeApShield.value": 0,

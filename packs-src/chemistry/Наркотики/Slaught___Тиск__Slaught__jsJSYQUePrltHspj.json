@@ -27,7 +27,8 @@
       "testChar": "t",
       "testMod": 10,
       "frequency": "1 день",
-      "penalty": "1d5−1 урона в P"
+      "penalty": "1d5−1 урона в P",
+      "blocksRecovery": "int,per,wp,fel"
     },
     "statMods": {
       "ws": 0,

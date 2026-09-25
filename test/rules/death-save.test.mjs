@@ -52,9 +52,10 @@ describe("saveCostSource", () => {
       characteristics: { inf: { base: 30, total: 42, drugMod: 5 } } } });
     expect(src).toEqual({ kind: "inf", current: 37, path: "system.characteristics.inf.base", base: 30 });
   });
-  it("лоялист — пул Судьбы, как раньше", () => {
-    const src = saveCostSource({ system: { alignment: "loyalist", fate: { value: 4 } } });
-    expect(src).toMatchObject({ kind: "pool", current: 4, path: "system.fate.value" });
+  it("лоялист — тоже Inf (Влияние), не маленький пул Судьбы (решение 25.09.2026)", () => {
+    const src = saveCostSource({ system: { alignment: "loyalist", fate: { value: 4 },
+      characteristics: { inf: { base: 35, total: 35 } } } });
+    expect(src).toEqual({ kind: "inf", current: 35, path: "system.characteristics.inf.base", base: 35 });
   });
 });
 

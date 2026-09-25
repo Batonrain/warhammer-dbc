@@ -39,7 +39,7 @@ import { hasRuleFlag } from "../rules/flags.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { EATER_OF_PAIN_CAPABILITY, eaterOfPainChoiceButtonsHtml } from "../rules/eater-of-pain.mjs";
-import { charHealFields } from "../rules/char-loss.mjs";
+import { charHealAllFields } from "../rules/char-loss.mjs";
 
 const FLAG = "skillfulTorture";
 
@@ -92,9 +92,7 @@ export async function grantTortureBenefit(actor, healRolls) {
   const pain = 1 + healRolls.length; // 2 Боли база (1 тир) + 1 за каждый доп. тир
   const upd = {};
   // Урон по книге (charLoss) и старый минус в «Мод.» — wdbc-x1nz.2.83.
-  for (const key of Object.keys(actor.system?.characteristics ?? {})) {
-    Object.assign(upd, charHealFields(actor.system, key, totalHeal).patch);
-  }
+  Object.assign(upd, charHealAllFields(actor.system, totalHeal));
   const fateCur = actor.system.fate?.value ?? 0;
   const fateMax = actor.system.fate?.max ?? 0;
   upd["system.fate.value"] = Math.min(fateMax, fateCur + pain);

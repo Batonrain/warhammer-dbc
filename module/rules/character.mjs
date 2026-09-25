@@ -35,7 +35,7 @@ import { raceMatches } from "./race.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { readAllMirrors } from "./condition-mirrors.mjs";
-import { zeroedKeys, ZERO_EFFECTS } from "./char-loss.mjs";
+import { zeroedKeys, ZERO_EFFECTS, charLossTotals } from "./char-loss.mjs";
 import { derivedLimbLossConditions } from "./limb-loss.mjs";
 import { PA_TABLES } from "../constants/power-armour-lore.mjs";
 import { sanityMax, madnessLevels, sarcophagusCharDelta, DREADNOUGHT_PILOT_FLAG,
@@ -452,7 +452,8 @@ export function prepareCharacterDerived(actor, system) {
     const charDamage = system.charDamage || {};
     // Урон в Характеристики по книге (wdbc-x1nz.2.83, rules/char-loss.mjs) —
     // отдельно от ручного «Мод.»: вычитается и не опускает Итог ниже 0.
-    const charLoss = system.charLoss || {};
+    // Плюс порции со своим темпом (руна Сигиллита, пытки, перманентный — task 1-8).
+    const charLoss = charLossTotals(system);
     // Авто-дебафф от потребностей (Голод/Жажда) — отдельно от ручного charDamage.
     // Эффективная стадия каждого Виталa — max(сохранённая, естественная по
     // прошедшему worldTime) (wdbc-jnqj). Порог Голода — ½T.b суток, но

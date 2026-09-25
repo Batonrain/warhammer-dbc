@@ -20,6 +20,7 @@ import { isFrontArcHit, resolveAttackerToken } from "./combat/facing.mjs";
 import { rollPacifismTest } from "./combat/pacifism.mjs";
 import { rollHordePsychTest, rollHordeFlameTest } from "./combat/horde-psych.mjs";
 import { secondaryCritHtml } from "./combat/secondary-crit.mjs";
+import { applyCharDamageButton } from "./combat/char-damage-button.mjs";
 import { ROUND_DAMAGE_FLAG }             from "./combat/horde-damage.mjs";
 import { _performSwerve, applyStructureLoss } from "./combat/vehicle.mjs";
 import { performWalkerParry, performWalkerDodge, standUpFromTipOver, showTipOverDialog } from "./combat/walker.mjs";
@@ -1446,6 +1447,25 @@ export function registerHooks() {
     // Пилюли распознанных крит-эффектов/Шока (wdbc-xql6) — цель уже известна
     // по data-actor-uuid (та же, что несла карточку урона/теста Страха),
     // поэтому в отличие от wh-wprop-apply-btn выше не нужен выбор токена.
+    // Урон в Характеристики (крит-строка — у цели карточки, психосила — у
+    // выделенного токена): combat/char-damage-button.mjs, task-174e/task-5820.
+    html.querySelectorAll(".wh-char-dmg-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const ds = { ...el.dataset };
+        const doc = ds.actorUuid ? await fromUuid(ds.actorUuid).catch(() => null) : null;
+        const actor = ds.actorUuid ? (doc?.actor ?? doc) : requireControlledActor("⚠️ Выберите токен цели на сцене!");
+        if (!actor) return;
+        if (!actor.isOwner) return ui.notifications.warn("Нанести урон может владелец цели (или ГМ).");
+        el.disabled = true;
+        await applyCharDamageButton(actor, {
+          keys: String(ds.keys || "").split(",").filter(Boolean), formula: ds.formula || "",
+          amount: ds.amount === "" ? null : Number(ds.amount), permanent: ds.permanent === "1", source: ds.source || ""
+        });
+      });
+    });
+
     html.querySelectorAll(".wh-crit-apply-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();

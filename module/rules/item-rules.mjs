@@ -513,6 +513,29 @@ export function rulesFromItemMechanics(items, isActive = () => true, actor = nul
     const rules = mitigationRules(key, mode === "half", label, id);
     if (rules) out.push(...rules);
   }
+  out.push(...addictionRecoveryRules(items));
+  return out;
+}
+
+/**
+ * Зависимость от препарата держит урон в Характеристики (task-56da): Тиск —
+ * «не может восстанавливать урон в I, P, W и F, кроме как сверхъестественными
+ * методами», Сатрофин — то же без оговорки. Действует только пока
+ * зависимость ЕСТЬ (addiction.isAddicted) — препарат в сумке без зависимости
+ * ничего не держит, поэтому это не запись Конструктора (та действовала бы
+ * фактом владения), а поле самой зависимости: addiction.blocksRecovery
+ * (нотация char-loss.mjs::recoveryTargets). Сверхъестественное лечение
+ * (charHealFields magic) блок и так не трогает — он только для пассивного.
+ */
+export function addictionRecoveryRules(items) {
+  const out = [];
+  for (const item of items || []) {
+    const a = item?.type === "drug" ? item.system?.addiction : null;
+    const target = String(a?.blocksRecovery || "").trim();
+    if (!a?.isAddicted || !target) continue;
+    out.push({ id: `drug.addiction.recovery.${item.id ?? item.name}`, label: `Зависимость: ${item.name}`, when: {},
+      effects: [{ kind: "charRecovery", target, mode: "block" }] });
+  }
   return out;
 }
 
