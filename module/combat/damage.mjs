@@ -6,6 +6,7 @@ import { _degWord, esc }       from "../helpers/utils.mjs";
 import { getCriticalEffect } from "../../critical-tables.mjs";
 import { LOCATION_TO_SIDE } from "../rules/useless-limbs.mjs";
 import { secondaryCritHtml, ARMOR_KEY_TO_LOCATION } from "./secondary-crit.mjs";
+import { critCharDamageHtml } from "./char-damage-button.mjs";
 import { parseCritEffectPills, critPillsHtml, deathButtonHtml, dropButtonHtml, textAssertsDeath } from "./crit-effect-parser.mjs";
 import { SHIELD_STATUS }  from "../constants/shields.mjs";
 import { applyDamageToVehicle } from "./vehicle.mjs";
@@ -1419,6 +1420,7 @@ export async function applyDamageToActor(actor, damageData) {
       <b>Критический урон</b> · отрицательные раны: <b>${newCritical}</b>
       ${critEffect ? `<div class="roll-crit-effect">${critEffect}</div>` : ""}
       ${critPillsHtml(critPills, actor.uuid, netDamage, { side: LOCATION_TO_SIDE[hitLocation] || "" })}
+      ${critEffect ? critCharDamageHtml(critEffect, actor.uuid) : ""}
       ${critEffect ? dropButtonHtml(critEffect, actor.uuid, LOCATION_TO_SIDE[hitLocation] || "") : ""}
       ${maggotParasiteHtml || kissOfMimicHtml || (castOutOfDeathBlocksDeath
         ? `<div class="wh-crit-pills roll-threshold">💀 Изгнанный из Смерти: не может умереть от этого — Раны сами вернутся к −7 в течение 7ч (Календарь).</div>`

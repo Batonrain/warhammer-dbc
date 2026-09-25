@@ -56,7 +56,10 @@ export class DrugData extends foundry.abstract.TypeDataModel {
         testChar:     new StringField({ initial: "t", label: "Характеристика теста" }),
         testMod:      num(0, "Модификатор теста"),
         frequency:    text("Периодичность"),
-        penalty:      text("Штраф")
+        penalty:      text("Штраф"),
+        // Какие Характеристики не восстанавливают урон, пока зависимость есть
+        // (task-56da; нотация rules/char-loss.mjs::recoveryTargets: "int,per,wp,fel").
+        blocksRecovery: new StringField({ initial: "", label: "Не восстанавливает урон в (при зависимости)" })
       }, { label: "Зависимость" }),
       statMods:            statMods("Правки характеристик"),
       afterEffectStatMods: statMods("Правки характеристик от пост-эффекта"),

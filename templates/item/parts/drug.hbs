@@ -560,6 +560,12 @@
            value="{{system.addiction.penalty}}"
            class="wr-input-md" placeholder="напр. 1d5-1 Р урона"/>
   </div>
+  <div class="weapon-row">
+    <label class="wr-label" data-tooltip="Пока зависимость есть, урон в эти Характеристики не восстанавливается сам (ключи через запятую: int,per,wp,fel; all — все)">Не восст.</label>
+    <input type="text" name="system.addiction.blocksRecovery"
+           value="{{system.addiction.blocksRecovery}}"
+           class="wr-input-md" placeholder="напр. int,per,wp,fel"/>
+  </div>
   {{/if}}
 </div>
 

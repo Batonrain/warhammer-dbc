@@ -39,6 +39,7 @@ import { hasRuneMagic, runeMax, runeValue, runeCostForPower, runeCostTotal,
 import { postTestCard, rollStatLine, outcomeHtml } from "../../helpers/test-card.mjs";
 import { mechRollData } from "../../rules/mech-formula.mjs";
 import { runForceBladeShop, forceBladeShopClear } from "../../apps/force-blade-choice.mjs";
+import { charDamageButtonHtml } from "../../combat/char-damage-button.mjs";
 
 /**
  * Через что кастуется психосила. Прорицание (divination) — через навык
@@ -963,7 +964,7 @@ export async function executePsychotest(actor, item, opts) {
       charDamageSection = `
           <div class="roll-damage-section">
             <div class="roll-damage-label">Урон в характеристику <b>${cdAbbr}</b>: <b>${cdRoll.total}</b></div>
-            <div class="roll-threshold" style="font-size:0.82em;">Примените к соответствующей характеристике цели (минуя Раны).</div>
+            ${charDamageButtonHtml({ amount: cdRoll.total, keys: [atk.charStat] }, { source: item.name ?? "" })}
           </div>`;
     } catch {
       ui.notifications.warn(`Не удалось бросить урон в характеристику: ${atk.charForm}`);

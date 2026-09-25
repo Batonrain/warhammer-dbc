@@ -30,7 +30,7 @@ import { gangreneTick, gangreneIntervalSeconds } from "./gangrene.mjs";
 import { haemorrhageHourly, suffocationRestClock } from "./condition-ticks.mjs";
 import { unlinkedTokens } from "../migrations/unlinked-tokens.mjs";
 import { healingClock } from "./healing-clock.mjs";
-import { charLossClockStep, actorRecoveryPolicy } from "../rules/char-loss.mjs";
+import { charLossClockStep, actorRecoveryPolicy, charLossPortions, charLossPortionsStep } from "../rules/char-loss.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -163,8 +163,13 @@ export const CONDITION_CLOCK_HANDLERS = [
 async function charLossClock(actor, { to }) {
   const sys = actor.system;
   const any = obj => Object.values(obj ?? {}).some(v => Number(v) > 0);
-  if (!sys?.charLoss || (!any(sys.charLoss) && !any(sys.charLossAt))) return;
-  const { patch } = charLossClockStep(sys, actorRecoveryPolicy(actor), to);
+  const hasPortions = charLossPortions(sys).length > 0;
+  if (!sys?.charLoss || (!any(sys.charLoss) && !any(sys.charLossAt) && !hasPortions)) return;
+  const policy = actorRecoveryPolicy(actor);
+  const { patch } = charLossClockStep(sys, policy, to);
+  // Порции со своим темпом — task 1-8.
+  const portions = hasPortions ? charLossPortionsStep(sys, policy, to) : null;
+  if (portions) patch["system.charLossPortions"] = portions;
   if (Object.keys(patch).length) await actor.update(patch);
 }
 

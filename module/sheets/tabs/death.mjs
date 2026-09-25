@@ -34,7 +34,7 @@ import {
   fatePoolLabel, MIRACULOUS_SAVE, DIVINE_PROTECTION, SUS_AN_TEST_MOD,
   hasSusAnMembrane, susAnEligible, susAnCriticalLimit, hasHeroSleep, fateSaveFails,
   toyOfGodsApplies, toyOfGodsForcedOptions, TOY_OF_GODS_FLAG, TOY_OF_GODS_TEST_MOD,
-  saveCostSource, paysWithInfamy, rollsTwiceKeepLow, conditionsEndedBySave, rollbackWounds,
+  saveCostSource, rollsTwiceKeepLow, conditionsEndedBySave, rollbackWounds,
   DIVINE_PROTECTION_FLAG, DIVINE_TELEPORT_MIN_INF, DEATH_CAUSE_FLAG, PRE_HIT_WOUNDS_FLAG,
   SUS_AN_ATTEMPT_FLAG
 } from "../../rules/death-save.mjs";
@@ -453,8 +453,8 @@ export function showDeathSaveDialog(actor) {
     ui.notifications.warn(`${actor.name}: смерть не констатирована.`);
     return;
   }
-  const pool = fatePoolLabel(actor);
-  const cost = paysWithInfamy(actor) ? "Inf" : pool;
+  // Цена Спасения/Защиты — Inf у всех (rules/death-save.mjs::saveCostSource).
+  const cost = "Inf";
   const canSusAn  = _susAnAvailable(actor);
   const miracCfg = _miraculousCfg(actor);
   const miracCorNote = miracCfg.corDie === "1d5" ? "1d5 Порчи (Прах Феникса)" : "1d10 Порчи";

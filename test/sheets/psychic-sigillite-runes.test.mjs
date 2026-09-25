@@ -418,9 +418,8 @@ describe("Психотест — гейт «манифестировать мо�
     // цена Пути (бPR 1 × 2 = 2 Руны) + цена Импровизации (1 Рана, −1 S/A/W).
     expect(a.system.sigilliteRunes.value).toBe(18);
     expect(a.system.wounds.value).toBe(7);
-    expect(a.system.charLoss.s).toBe(1);
-    expect(a.system.charLoss.ag).toBe(1);
-    expect(a.system.charLoss.wp).toBe(1);
+    // Урон руны — порциями 1 за 8 ч (task 1-8), не в общий charLoss.
+    expect((a.system.charLossPortions ?? []).map(p => `${p.key}:${p.amount}`)).toEqual(["s:1", "ag:1", "wp:1"]);
   });
 
   it("изученная Руна манифестируется без Improvised Rune и без цены тела", async () => {

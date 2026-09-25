@@ -58,7 +58,7 @@ const num = v => Math.max(0, Number(v) || 0);
  * это незаполненный лист (новый актор, шаблон), а не эффект книги.
  */
 export function isZeroedByLoss(system, key) {
-  return num(system?.charLoss?.[key]) > 0 && (Number(system?.characteristics?.[key]?.total) || 0) <= 0;
+  return charLossTotal(system, key) > 0 && (Number(system?.characteristics?.[key]?.total) || 0) <= 0;
 }
 
 /** Ключи обнулённых уроном Характеристик. */
@@ -109,11 +109,15 @@ export function charLossHealFields(system, key, n) {
  * не превращается).
  * @returns {{patch: object, healed: number}}
  */
-export function charHealFields(system, key, n) {
+export function charHealFields(system, key, n, { magic = false } = {}) {
   const { patch, healed } = charLossHealFields(system, key, n);
   let rest = num(n) - healed;
+  // Затем порции со своим темпом (кроме перманентных и «не лечится
+  // сверхъестественным» при magic) — task 1-8.
+  const portions = charLossPortionsHeal(system, key, rest, { magic });
+  if (portions.healed) { patch["system.charLossPortions"] = portions.list; rest -= portions.healed; }
   const legacy = Number(system?.charDamage?.[key]) || 0;
-  let total = healed;
+  let total = healed + portions.healed;
   if (rest > 0 && legacy < 0) {
     const fix = Math.min(rest, -legacy);
     patch[`system.charDamage.${key}`] = legacy + fix;
@@ -124,7 +128,7 @@ export function charHealFields(system, key, n) {
 
 /** Сколько урона сейчас на Характеристике: по книге + старый минус в «Мод.». */
 export function charDamageOutstanding(system, key) {
-  return num(system?.charLoss?.[key]) + Math.max(0, -(Number(system?.charDamage?.[key]) || 0));
+  return charLossTotal(system, key) + Math.max(0, -(Number(system?.charDamage?.[key]) || 0));
 }
 
 /** Какие Характеристики задевает запись: "t", "t,s", "all". */
@@ -196,4 +200,128 @@ export function charLossClockStep(system, policy, to) {
     if (nextAt !== (Number(system?.charLossAt?.[key]) || 0)) patch[`system.charLossAt.${key}`] = nextAt;
   }
   return { patch, healed };
+}
+
+// ── Порции урона со своим темпом (task 1-8, решение Сергея 25.09.2026) ──────
+//
+// Книга местами задаёт темп у САМОГО урона: Импровизированная Руна
+// Сигиллита — «восстанавливает 1 за 8 часов, не лечится психосилами/судьбой/
+// медитацией», пытки — «не может восстанавливать урон в W, пока не пройдут
+// сутки», крит — «1 перманентного урона в I». Такой урон — отдельной порцией
+// в system.charLossPortions: сколько, куда, свой период (hours, 0 — не
+// восстанавливается вовсе), «не раньше» (until, worldTime), источник и
+// «не лечится сверхъестественным» (noMagic). Обычный урон остаётся одним
+// числом charLoss. Итог Характеристики вычитает оба (charLossTotal).
+
+/** Порции урона актора (пустой список, если поля нет). */
+export function charLossPortions(system) {
+  return Array.isArray(system?.charLossPortions) ? system.charLossPortions : [];
+}
+
+/** Весь урон на Характеристике: обычный + порции. */
+export function charLossTotal(system, key) {
+  return num(system?.charLoss?.[key])
+    + charLossPortions(system).filter(p => p?.key === key).reduce((s, p) => s + num(p.amount), 0);
+}
+
+/** Весь урон по всем Характеристикам: { key: число } — для расчёта листа. */
+export function charLossTotals(system) {
+  return Object.fromEntries(CHAR_LOSS_KEYS.map(k => [k, charLossTotal(system, k)]));
+}
+
+/** Порция не восстанавливается никогда (перманентный урон). */
+export function isPermanentPortion(p) {
+  return !(Number(p?.hours) > 0);
+}
+
+/**
+ * Патч «получить урон порциями». entries — [{ key, amount, hours, until,
+ * source, noMagic }]; пол 0 по каждой Характеристике — как у обычного урона,
+ * с учётом того, что уже снято этим же вызовом.
+ * @returns {{patch: object, applied: Record<string, number>}}
+ */
+export function charLossPortionsAddFields(system, entries = [], worldTime = 0) {
+  const list = [...charLossPortions(system)];
+  const applied = {};
+  for (const e of entries) {
+    if (!CHAR_LOSS_KEYS.includes(e?.key)) continue;
+    const total = (Number(system?.characteristics?.[e.key]?.total) || 0) - (applied[e.key] || 0);
+    const a = Math.min(num(e.amount), Math.max(0, total));
+    if (!a) continue;
+    applied[e.key] = (applied[e.key] || 0) + a;
+    const hours = Math.max(0, Number(e.hours) || 0);
+    const until = Math.max(0, Number(e.until) || 0);
+    list.push({
+      key: e.key, amount: a, hours, until,
+      at: hours > 0 ? Math.max(Number(worldTime) + hours * SECONDS_PER_HOUR, until) : 0,
+      source: String(e.source || ""), noMagic: !!e.noMagic
+    });
+  }
+  return { patch: Object.keys(applied).length ? { "system.charLossPortions": list } : {}, applied };
+}
+
+/**
+ * Шаг часов порций до `to`: каждая отходит по 1 за свой период, не раньше
+ * своего until. Блок политики актора (Гниль Нургла и т.п.) держит и порции;
+ * период политики длиннее своего — берётся длиннейший. Перманентные — никогда.
+ * @returns {?object[]} новый список или null, если ничего не изменилось
+ */
+export function charLossPortionsStep(system, policy, to) {
+  const list = charLossPortions(system);
+  if (!list.length) return null;
+  let changed = false;
+  const out = [];
+  for (const p of list) {
+    if (isPermanentPortion(p)) { out.push(p); continue; }
+    const pol = policy?.[p.key] ?? { blocked: false, hours: DEFAULT_RECOVERY_HOURS };
+    if (pol.blocked) { out.push(p); continue; }
+    const period = Math.max(Number(p.hours), pol.hours || 0) * SECONDS_PER_HOUR;
+    let amount = num(p.amount);
+    let at = Math.max(Number(p.at) || 0, Number(p.until) || 0);
+    while (amount > 0 && at <= to) { amount -= 1; at += period; }
+    if (amount !== num(p.amount) || at !== Number(p.at)) changed = true;
+    if (amount > 0) out.push({ ...p, amount, at });
+  }
+  return changed ? out : null;
+}
+
+/**
+ * Лечение урона порциями после обычного: n единиц, сперва старые порции.
+ * Перманентные не лечатся; noMagic — только не сверхъестественным путём
+ * (magic:true — психосилы, Судьба, медитация).
+ * @returns {{list: object[], healed: number}}
+ */
+export function charLossPortionsHeal(system, key, n, { magic = false } = {}) {
+  let left = num(n);
+  let healed = 0;
+  const list = [];
+  for (const p of charLossPortions(system)) {
+    if (left > 0 && p.key === key && !isPermanentPortion(p) && !(magic && p.noMagic)) {
+      const take = Math.min(left, num(p.amount));
+      left -= take; healed += take;
+      if (num(p.amount) - take > 0) list.push({ ...p, amount: num(p.amount) - take });
+      continue;
+    }
+    list.push(p);
+  }
+  return { list, healed };
+}
+
+/**
+ * Лечение n урона в КАЖДУЮ Характеристику одним патчем (пытки, Пожиратель
+ * Боли). Порции — один список на актора, поэтому каждая следующая
+ * Характеристика лечится уже от списка после предыдущей, а не от исходного:
+ * иначе в патче выжило бы только последнее лечение порций.
+ * @returns {object} patch
+ */
+export function charHealAllFields(system, n, { magic = false } = {}) {
+  const patch = {};
+  let shadow = system;
+  for (const key of CHAR_LOSS_KEYS) {
+    if (!system?.characteristics?.[key]) continue;
+    const r = charHealFields(shadow, key, n, { magic });
+    Object.assign(patch, r.patch);
+    if (r.patch["system.charLossPortions"]) shadow = { ...shadow, charLossPortions: r.patch["system.charLossPortions"] };
+  }
+  return patch;
 }

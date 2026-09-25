@@ -273,7 +273,9 @@ const TYPES = {
       hasAfterEffect: false,
       addiction: {
         hasAddiction: false, isAddicted: false, minDose: 0, testChar: "t",
-        testMod: 0, frequency: "", penalty: ""
+        testMod: 0, frequency: "", penalty: "",
+        // При зависимости не восстанавливается урон в эти Характеристики (task-56da).
+        blocksRecovery: ""
       },
       statMods:            { ws: 0, bs: 0, s: 0, t: 0, ag: 0, int: 0, per: 0, wp: 0, fel: 0 },
       afterEffectStatMods: { ws: 0, bs: 0, s: 0, t: 0, ag: 0, int: 0, per: 0, wp: 0, fel: 0 },

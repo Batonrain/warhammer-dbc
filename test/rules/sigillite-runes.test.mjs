@@ -405,20 +405,24 @@ describe("Цена и допустимость изучения Руны (runeLe
 });
 
 describe("Improvised Rune — цена манифестации неизученной Руны", () => {
-  it("1 непоглощаемая Рана + 1 урона в S/A/W разом (charLoss, wdbc-x1nz.2.83)", () => {
+  // Урон руны — порцией со своим темпом (task 1-8): «восстанавливает 1 за 8
+  // часов, не лечится психосилами/судьбой/медитацией».
+  it("1 непоглощаемая Рана + по порции 1 урона в S/A/W: 1 за 8 ч, не лечится сверхъестественным", () => {
     const a = actorOf({ wounds: { value: 10, max: 10, critical: 0 } });
     const patch = improvisedRuneCostUpdates(a);
     expect(patch["system.wounds.value"]).toBe(9);
-    expect(patch["system.charLoss.s"]).toBe(1);
-    expect(patch["system.charLoss.ag"]).toBe(1);
-    expect(patch["system.charLoss.wp"]).toBe(1);
+    const portions = patch["system.charLossPortions"];
+    expect(portions.map(p => p.key)).toEqual(["s", "ag", "wp"]);
+    expect(portions.every(p => p.amount === 1 && p.hours === 8 && p.noMagic)).toBe(true);
+    expect(patch["system.charLoss.s"]).toBeUndefined();
   });
 
-  it("копится поверх уже имеющегося урона в Характеристику", () => {
-    const a = actorOf({ charLoss: { s: 2, ag: 0, wp: 1 } });
+  it("копится поверх уже имеющихся порций — новые добавляются, старые целы", () => {
+    const a = actorOf();
+    a.system.charLossPortions = [{ key: "wp", amount: 2, hours: 8, until: 0, at: 0, source: "x", noMagic: true }];
     const patch = improvisedRuneCostUpdates(a);
-    expect(patch["system.charLoss.s"]).toBe(3);
-    expect(patch["system.charLoss.wp"]).toBe(2);
+    expect(patch["system.charLossPortions"]).toHaveLength(4);
+    expect(patch["system.charLossPortions"][0].amount).toBe(2);
   });
 
   it("Раны ниже нуля уходят в Критические, как любой другой прямой урон", () => {

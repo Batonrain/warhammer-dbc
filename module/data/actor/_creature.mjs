@@ -382,6 +382,18 @@ export function creatureSchema({ granted = false } = {}) {
     charDamage:      new SchemaField(charDamageFields, { label: "Мод. характеристик" }),
     charLoss:        new SchemaField(charLossFields, { label: "Урон в Характеристики" }),
     charLossAt:      new SchemaField(charLossAtFields, { label: "Восстановление урона в Характеристики (worldTime)" }),
+    // Порции урона со своим темпом (task 1-8, rules/char-loss.mjs): руна
+    // Сигиллита (1 за 8 ч, не лечится сверхъестественным), пытки (W — не
+    // раньше суток), перманентный урон из крит-таблиц (hours 0).
+    charLossPortions: new ArrayField(new SchemaField({
+      key:     new StringField({ initial: "", label: "Характеристика" }),
+      amount:  new NumberField({ initial: 0, integer: true, min: 0, nullable: false, label: "Урон" }),
+      hours:   new NumberField({ initial: 0, min: 0, nullable: false, label: "Период восстановления, ч (0 — никогда)" }),
+      until:   new NumberField({ initial: 0, nullable: false, label: "Не раньше (worldTime)" }),
+      at:      new NumberField({ initial: 0, nullable: false, label: "Следующее восстановление (worldTime)" }),
+      source:  new StringField({ initial: "", label: "Источник" }),
+      noMagic: new BooleanField({ initial: false, label: "Не лечится сверхъестественным" })
+    }), { label: "Урон в Характеристики со своим темпом" }),
     skills:          new SchemaField(skillFields, { label: "Навыки" }),
     // ПЕРЕОПРЕДЕЛЕНИЕ ПРИВЯЗКИ СКЛОННОСТЕЙ (wdbc-1pvq): «у нашего стола
     // Уклонение относится к Интеллекту и Знанию, а не к Ловкости и Защите».
