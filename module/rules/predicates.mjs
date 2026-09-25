@@ -392,6 +392,10 @@ export const PREDICATES = {
   // правил — рекурсия collectRules → предикат → collectRules.
   isBlinded: (actor, ctx, value) => isBlindedActor(actor) === (value !== false),
 
+  // «Рядовой» (корбук стр. 4, system.rankAndFile): `true` — Рядовой, `false` —
+  // чемпион. Гейт записей, которых у Рядовых по книге нет (Черты Человека).
+  rankAndFile: (actor, ctx, value) => !!actor?.system?.rankAndFile === (value !== false),
+
   // То же самое, но про цель броска (ctx.targetActor) — «атаки по Поваленной
   // цели» и подобные правила со стороны атакующего.
   targetHasCondition: (actor, ctx, value) =>

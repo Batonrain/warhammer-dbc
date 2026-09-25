@@ -21,7 +21,8 @@ import { rollPacifismTest } from "./combat/pacifism.mjs";
 import { rollHordePsychTest, rollHordeFlameTest } from "./combat/horde-psych.mjs";
 import { secondaryCritHtml } from "./combat/secondary-crit.mjs";
 import { applyCharDamageButton } from "./combat/char-damage-button.mjs";
-import { ROUND_DAMAGE_FLAG }             from "./combat/horde-damage.mjs";
+import { hordeHitEvasionBlock }          from "./rules/horde-single-target.mjs";
+import { ROUND_DAMAGE_FLAG }            from "./combat/horde-damage.mjs";
 import { _performSwerve, applyStructureLoss } from "./combat/vehicle.mjs";
 import { performWalkerParry, performWalkerDodge, standUpFromTipOver, showTipOverDialog } from "./combat/walker.mjs";
 import { maybeGrantEnjoymentPain }       from "./combat/enjoyment.mjs";
@@ -406,6 +407,7 @@ export function registerHooks() {
         const attackerIsHorde = ds.attackerIsHorde === "1";
         const attackId = ds.attackId || "";
         if (!await confirmHordeDefense(actor, "Уклонение")) return;
+        if (!await confirmHordeHitEvasion(actor, ds.hordeHit === "1", "Уклонение")) return;
         // Верхом Уклонение устроено иначе: за скакуна оно комбинируется с
         // Навыком управления, за себя — идёт с −10 (стр. 478). Кнопка в
         // карточке одна, а знает о седле только сама цель, поэтому развилка
@@ -662,6 +664,7 @@ export function registerHooks() {
         // момент отрисовки карточки защищающийся ещё не выбран.
         const isMelee = ds.melee !== "0";
         if (!await confirmHordeDefense(actor, "Парирование")) return;
+        if (!await confirmHordeHitEvasion(actor, ds.hordeHit === "1", "Парирование")) return;
         await _performParry(actor, { extraMod, attackerUuid: ds.attackerUuid || "", hitsCount, burst, attackerIsHorde, isMelee, attackerWeaponUuid: ds.attackerWeaponUuid || "", attackId: ds.attackId || "" });
       });
     });
@@ -3406,6 +3409,28 @@ function _attachFateContextMenu(message, html) {
   });
 
 // ── Вспомогательные функции ───────────────────────────────────────────────────
+
+/**
+ * Попадание Орды Избегать нельзя (шквал / навал) — кроме «Быстрых и Мёртвых»
+ * и Серого Человека Размером < 2 (rules/horde-single-target.mjs). Карточка
+ * Орды не знает, чей токен выделят, поэтому проверка — на кнопке. Как и у
+ * confirmHordeDefense ниже: предупредить и спросить, а не молча отказать —
+ * у ГМа бывают домашние Черты.
+ *
+ * @returns {Promise<boolean>} продолжать ли бросок
+ */
+async function confirmHordeHitEvasion(actor, hordeHit, label) {
+  const why = hordeHitEvasionBlock(actor, hordeHit);
+  if (!why) return true;
+  ui.notifications.warn(`⚠️ ${why}`);
+  return foundry.applications.api.DialogV2.confirm({
+    window: { title: `${label}: попадание Орды` },
+    classes: ["warhammer-dbc", "wh-holo"],
+    content: `<p>${esc(why)}</p><p>Бросить ${esc(label.toLowerCase())} за <b>${esc(actor.name)}</b> всё равно?</p>`,
+    yes: { label: "Бросить" },
+    no:  { label: "Отмена", default: true }
+  }).catch(() => false);
+}
 
 /**
  * Орда не может совершать Избегания — но кнопки защиты в чате не знают, чей

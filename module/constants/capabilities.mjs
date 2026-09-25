@@ -254,9 +254,9 @@ export const CAPABILITIES = {
   },
   // ── Избегание Орды как одиночной цели (wdbc-gzuf) ────────────────────────
   "horde.singleTargetImmune": {
-    label: "Избегает атак Орды как одиночная цель (без бонусных кубиков урона за Магнитуду), теряется при Размере 2+",
-    source: "Раса: Серый Человек (Oteshii)",
-    reader: "module/combat/damage.mjs — applyDamageToActor() вычитает magDiceBonus из rawDamage, если sizeTotal < 2"
+    label: "Атаки Орды и «Троек» (Концентрация огня) — как атаки одиночного персонажа: можно Избегать, без бонусных кубиков урона; теряется при Размере 2+",
+    source: "Раса: Серый Человек (Oteshii); Трейт The Quick and The Dead / Быстрые и Мёртвые",
+    reader: "module/rules/horde-single-target.mjs — evadesHordeAsSingle(): combat/damage.mjs снимает magDiceBonus, hooks.mjs пускает Избегать попадание Орды, combat/attack.mjs гасит −20/+2 куба Концентрации огня"
   },
   // ── Бросок «с Преимуществом» на боевую Инициативу (wdbc-0tzr) ────────────
   // НЕ то же самое, что charRollAdvantage субрасы (module/rules/roll-advantage.mjs) —
@@ -5544,7 +5544,8 @@ export const CAPABILITIES = {
   },
   "trait.theQuickAndTheDead": {
     label: "+2 к Инициативе; Избегание атак Орды.",
-    source: "The Quick and The Dead / Быстрые и Мёртвые", reader: ""
+    source: "The Quick and The Dead / Быстрые и Мёртвые",
+    reader: "ActiveEffect system.initiative +2; остальное — возможность horde.singleTargetImmune на Черте (module/rules/horde-single-target.mjs)"
   },
   "trait.theSilentGuard": {
     label: "Игнорирует требования по характеристикам для Миньонов-машин из психокости; погибшего миньона воскрешает за смену.",

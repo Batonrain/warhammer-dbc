@@ -147,6 +147,7 @@ import { registerFeatureSettings, registerSettingsSections,
          isFeatureEnabled }           from "./module/constants/features.mjs";
 import { registerDuplicateGrantSettings, initTalentGroupIndex } from "./module/rules/duplicate-grants.mjs";
 import { registerAdvancePricingSettings, initTalentGodIndex } from "./module/constants/patronage.mjs";
+import { registerCreationMethodSetting } from "./module/constants/creation-method.mjs";
 import { registerSystemFonts, registerFontSettings, applySystemFont } from "./module/constants/fonts.mjs";
 import { initPackCaches }             from "./module/apps/origin-shared.mjs";
 import { initFactionIndex }           from "./module/apps/faction-cache.mjs";
@@ -178,6 +179,7 @@ Hooks.once("init", () => {
   registerDiagonalDefaultSetting();
   registerTokenAutoRotateDefaultSetting();
   registerAdvancePricingSettings();
+  registerCreationMethodSetting(); // Генерация / Сборка / оба (стр. 3)
   registerFontSettings();       // выбор шрифта интерфейса (мир + личный, wdbc-9m83)
   registerSettingsSections();   // подразделы в окне настроек
 

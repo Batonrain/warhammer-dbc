@@ -49,4 +49,25 @@ describe("startLevelValues", () => {
     expect(startLevelValues({ level: "нет-такого" })).toBeNull();
     expect(startLevelValues()).toBeNull();
   });
+
+  // «При создании Человек может взять одну субрасу, потратив на это часть
+  // стартового опыта, если его хватает».
+  it("субраса вычитается из стартового опыта", () => {
+    expect(startLevelValues({ level: "l1", subraceCost: 750 }))
+      .toMatchObject({ xp: 3000, subraceCost: 750, xpShort: false });
+  });
+
+  it("ровно хватает — можно, опыт 0", () => {
+    expect(startLevelValues({ level: "l1", subraceCost: 3750 }))
+      .toMatchObject({ xp: 0, xpShort: false });
+  });
+
+  it("не хватает — xpShort, добавка опыта это исправляет", () => {
+    expect(startLevelValues({ level: "l1", subraceCost: 4000 }).xpShort).toBe(true);
+    expect(startLevelValues({ level: "l1", subraceCost: 4000, extraXp: 250 }).xpShort).toBe(false);
+  });
+
+  it("без субрасы — как раньше", () => {
+    expect(startLevelValues({ level: "l2" })).toMatchObject({ xp: 7500, subraceCost: 0, xpShort: false });
+  });
 });

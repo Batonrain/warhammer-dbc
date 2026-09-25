@@ -75,6 +75,8 @@ const OWN_DEVIATIONS = {
     // Стереотип Покровительства и своя система цены Продвижения — заведены
     // гораздо позже template.json (constants/patronage.mjs).
     patronStereotype: "", pricingModeOverride: "",
+    // «Рядовой» (стр. 4, rules/starting-characteristics.mjs) — заведён позже template.json.
+    rankAndFile: false,
     // Момент последнего «Поесть/Попить/Поспать» (worldTime) для автопрогресса
     // стадий по времени (wdbc-jnqj) — заведён гораздо позже template.json.
     vitals: { hunger: 0, thirst: 0, sleep: 0, lastFed: null, lastDrank: null, lastSlept: null },

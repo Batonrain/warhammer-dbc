@@ -24,6 +24,8 @@
 .wh-cstart .cstart-hint {
   font-size: 0.78em; color: var(--wh-text-mid); line-height: 1.4; margin-bottom: 5px;
 }
+/* Не хватает опыта на субрасу — «Далее» не пустит, строка это и говорит. */
+.wh-cstart .cstart-hint.cstart-short { color: var(--wh-red, #d9534f); }
 /* Колонка опыта своей расы подсвечена, чужая — приглушена: выбирать между ними
    не нужно, значение берётся по расе из того же окна. */
 .wh-cstart.cstart-astartes .cstart-col-mortal,

@@ -18,7 +18,7 @@
       "fel": 15,
       "inf": 14
     },
-    "bonusRolls": 1,
+    "bonusRolls": 2,
     "skills": "",
     "gear": "4 элемента Снаряжения/Инструментов до R1 (1 Good.Q)",
     "talents": "",
@@ -27,7 +27,7 @@
     "hasGeneSeed": false,
     "pastRaces": [],
     "size": 0,
-    "bonusPoints": 5,
+    "bonusPoints": 7,
     "charShift": 2,
     "fateRoll": "",
     "skillsNote": "",

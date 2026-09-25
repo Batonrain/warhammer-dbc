@@ -27,6 +27,7 @@ import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { conditionLevelField } from "../constants/conditions.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { redirectHitLocationForMachine } from "../rules/bronze-myrmidon.mjs";
 import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
@@ -721,18 +722,13 @@ export async function applyDamageToActor(actor, damageData) {
     }, game.settings.get("core", "rollMode")));
   }
 
-  // «Избегает атак Орды как одиночная цель» (wdbc-gzuf, Серый Человек) —
-  // цель ещё не была известна на момент броска Орды (magDiceBonus едет
-  // отдельным числом от horde-sheet.mjs через hooks.mjs), поэтому кубы
-  // Магнитуды вычитаются здесь, где актор-цель уже точно известен. Теряется
-  // при Размере 2+ (тот же sizeTotal, что читает sizeOf() в horde-damage.mjs).
-  if (Number(damageData.magDiceBonus) > 0) {
-    const sizeTotal = actor.system?.sizeTotal != null
-      ? Number(actor.system.sizeTotal) || 0
-      : (Number(actor.system?.size) || 0) + (Number(actor.system?.sizeMod) || 0) + (Number(actor.system?.sizeModNoSpd) || 0);
-    if (sizeTotal < 2 && hasRuleFlag(actor, "horde.singleTargetImmune")) {
-      damageData = { ...damageData, rawDamage: Math.max(0, (Number(damageData.rawDamage) || 0) - Number(damageData.magDiceBonus)) };
-    }
+  // «Избегает атак Орды как одиночная цель» (Быстрые и Мёртвые, Серый
+  // Человек — rules/horde-single-target.mjs) — цель ещё не была известна на
+  // момент броска Орды (magDiceBonus едет отдельным числом от horde-sheet.mjs
+  // через hooks.mjs), поэтому кубы Магнитуды вычитаются здесь, где актор-цель
+  // уже точно известен. Теряется при Размере 2+.
+  if (Number(damageData.magDiceBonus) > 0 && evadesHordeAsSingle(actor)) {
+    damageData = { ...damageData, rawDamage: Math.max(0, (Number(damageData.rawDamage) || 0) - Number(damageData.magDiceBonus)) };
   }
 
   const {

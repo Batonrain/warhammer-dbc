@@ -30,7 +30,7 @@ const START_LEVEL_FLAG_KEY   = "startLevelApplied";
 
 import { disabledRaceKeys }      from "../constants/features.mjs";
 import { BODY_TYPES }            from "../constants/body-map.mjs";
-import { raceGroupList, subracesOf, raceDef } from "./race-library.mjs";
+import { raceGroupList, subracesOf, subraceEntries, raceDef } from "./race-library.mjs";
 import { applyRace, applySubrace, applyLegion, applyYnnari, applyHarlequin,
          actorRaceItem, actorSubraceItem }    from "./races.mjs";
 import { buildLegionOptions, buildChapterOptions,
@@ -49,6 +49,10 @@ import { CREATION_ROLL_CHARS, creationBonusRolls, rollCharSet, creationCharSum,
          grantCreationSkills, grantMechanicusImplants, grantMechanicumImplantsTrait,
          grantSkitariiWarPlate, ruSpec } from "./creation.mjs";
 import { startingInfamyFormula } from "../rules/starting-infamy.mjs";
+import { allowedMethods, effectiveBonusRolls, pointBuyPool, effectiveShifts, pointBuyCost,
+         defaultPointBuy, checkPointBuy, canStepPointBuy, applyShifts, completeShifts,
+         POINTBUY_MIN, POINTBUY_MAX, SHIFT_STEP } from "../rules/starting-characteristics.mjs";
+import { worldCreationMethod } from "../constants/creation-method.mjs";
 import { CHAOS_PATRONS } from "../constants/chaos-patron.mjs";
 import { effectivePricingMode, charStereotypesFor } from "../constants/patronage.mjs";
 import { ASPIRATION_TABLES } from "../constants/aspirations.mjs";
@@ -58,7 +62,7 @@ import { START_LEVELS, START_CAP, startLevelValues } from "../constants/start-le
 import { resolveCultureFx } from "../constants/legions.mjs";
 import { splitTopLevel } from "../helpers/utils.mjs";
 import { archetypeEntries, archetypesForRace, applyArchetype, actorArchetypeItem } from "./archetypes.mjs";
-import { withMechCollector, describeMechEntry } from "./mechanics.mjs";
+import { withMechCollector, describeMechEntry, syncRankAndFileGrants } from "./mechanics.mjs";
 import { TALENT_ALIAS, TALENT_CHOICE_SEP } from "../sheets/actor-sheet.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { testCardHtml } from "../helpers/test-card.mjs";
@@ -249,6 +253,12 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     this.activeSetIdx = 0;
     this.charAssign = {};
     this.armedVi = null;
+    // Метод (Генерация/Сборка), «Рядовой», раскладка Сборки и Смещения —
+    // rules/starting-characteristics.mjs; заводятся в _ensureCharState.
+    this.charMethod = "generation";
+    this.rankAndFile = false;
+    this.pbAlloc = null;
+    this.shifts = [];
     this.pickedApts = new Set();
     // Состояние Этапа 4 — выбор уровня стартовой игры (Стремления пишутся
     // сразу через activateAspirationListeners, своего состояния не требуют).
@@ -322,8 +332,12 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       races: g.races.filter(r => r.key === sys.race || !offRaces.includes(r.key))
         .map(r => ({ key: r.key, label: r.label, selected: r.key === sys.race }))
     })).filter(g => g.races.length);
-    const subraceOpts = subracesOf(sys.race).map(s =>
-      ({ key: s.key, label: s.label, selected: s.key === sys.subrace }));
+    // Цена субрасы — рядом с названием: платится стартовым опытом на Этапе 4.
+    const subCosts = subraceEntries();
+    const subraceOpts = subracesOf(sys.race).map(s => {
+      const cost = Number(subCosts[s.key]?.cost) || 0;
+      return { key: s.key, label: cost ? `${s.label} (${cost} XP)` : s.label, selected: s.key === sys.subrace };
+    });
     const isAstartes = sys.race === "astartes";
 
     return {
@@ -383,7 +397,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       // всё время применения — прерывать его на середине означало бы бросить
       // актора частично выданным. На Этапе 5 «Готово» блокируется, пока
       // резолвятся предметы снаряжения.
-      nextDisabled: (this.step.id === "characteristics" && !this._aptReady())
+      nextDisabled: (this.step.id === "characteristics" && !(this._aptReady() && this._charMethodReady()))
         // До старта применения — обычная проверка «раса выбрана». После
         // старта system.race читать для этого нельзя (см. _advanceOriginStep):
         // applyRace временно обнуляет его на всё время своей работы, включая
@@ -963,6 +977,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       startCap: START_CAP,
       startExtraXp: this.startExtraXp, startExtraInf: this.startExtraInf, startExtraCor: this.startExtraCor,
       startIsAstartes: sys.race === "astartes",
+      startSubrace: this._startSubraceInfo(),
       // Уже применяли Уровень старта на этом персонаже раньше — предупреждаем,
       // а не молча копим бонусы Влияния/Порчи ещё раз поверх. Флаг, а не
       // «опыт не пуст»: возврат опыта за совпавший Навык (Этап 3) законно
@@ -980,35 +995,71 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
   async _confirmAspirations() {
     const actor = this.actor;
     const sys = actor.system;
-    if (actor.getFlag(START_LEVEL_FLAG_SCOPE, START_LEVEL_FLAG_KEY)) return;
+    if (actor.getFlag(START_LEVEL_FLAG_SCOPE, START_LEVEL_FLAG_KEY)) return true;
 
-    const start = startLevelValues({
-      level: this.startLevelKey, astartes: sys.race === "astartes",
-      extraXp: this.startExtraXp, extraInf: this.startExtraInf, extraCor: this.startExtraCor
-    });
-    if (!start) return;
+    const start = this._startValues();
+    if (!start) return true;
+    // Субраса оплачивается стартовым опытом «если его хватает» — не хватает:
+    // остаёмся на Этапе 4, пусть выберут уровень повыше или снимут субрасу.
+    if (start.xpShort) {
+      ui.notifications?.warn(`Не хватает стартового опыта на субрасу (${start.subraceCost} XP): выберите уровень выше, добавьте опыт или снимите субрасу на Этапе 1.`);
+      return false;
+    }
     const cap = v => Math.max(0, Math.min(START_CAP, Math.round(v)));
     // «+», не «=»: на счету уже может лежать законный возврат опыта за
     // совпавший Навык (Этап 3, rules/duplicate-grants.mjs) — стартовый опыт
-    // должен добавиться поверх, а не стереть его.
-    await actor.update({
+    // должен добавиться поверх, а не стереть его. start.xp — уже за вычетом
+    // субрасы; сама трата — строкой журнала, чтобы было видно, куда ушла.
+    const upd = {
       "system.experience.total":   (Number(sys.experience?.total) || 0) + start.xp,
       "system.experience.current": (Number(sys.experience?.current) || 0) + start.xp,
       "system.characteristics.inf.base": cap((Number(sys.characteristics?.inf?.base) || 0) + start.infamy),
       "system.corruption.value":   cap((Number(sys.corruption?.value) || 0) + start.corruption),
       [`flags.${START_LEVEL_FLAG_SCOPE}.${START_LEVEL_FLAG_KEY}`]: true
+    };
+    if (start.subraceCost) {
+      const log = Array.isArray(sys.experience?.log) ? foundry.utils.deepClone(sys.experience.log) : [];
+      log.push({ at: Date.now(), amount: -start.subraceCost, kind: "spend",
+                 reason: `Субраса «${this._subraceDef()?.label || sys.subrace}» (из стартового опыта)` });
+      upd["system.experience.log"] = log;
+    }
+    await actor.update(upd);
+    return true;
+  }
+
+  /** Запись субрасы персонажа из библиотеки (с ценой) или null. */
+  _subraceDef() {
+    const key = this.actor.system.subrace;
+    return key ? subraceEntries()[key] || null : null;
+  }
+
+  /** Строка «Субраса: −цена → на счёт» для Этапа 4; null без платной субрасы. */
+  _startSubraceInfo() {
+    const start = this._startValues();
+    if (!start?.subraceCost) return null;
+    return { label: this._subraceDef()?.label || "", cost: start.subraceCost,
+             net: start.xp, short: start.xpShort };
+  }
+
+  /** Итог Этапа 4 с текущим выбором уровня, добавками и ценой субрасы. */
+  _startValues() {
+    const sys = this.actor.system;
+    return startLevelValues({
+      level: this.startLevelKey, astartes: sys.race === "astartes",
+      extraXp: this.startExtraXp, extraInf: this.startExtraInf, extraCor: this.startExtraCor,
+      subraceCost: this._subraceDef()?.cost || 0
     });
   }
 
-  // ── Этап 2: Характеристики (метод «Генерация») ──────────────────────────
+  // ── Этап 2: Характеристики (Генерация / Сборка, Смещения, «Рядовой») ────
 
   _ensureCharState() {
     if (this.charSets) return;
-    const bonus = creationBonusRolls(this.actor.system.race);
-    this.charSets = [rollCharSet(bonus), rollCharSet(bonus)];
-    this.activeSetIdx = 0;
-    this.charAssign = {};
-    this.armedVi = null;
+    this.rankAndFile = !!this.actor.system.rankAndFile;
+    this.charMethod = allowedMethods(worldCreationMethod())[0];
+    this._rollCharSets();
+    this.pbAlloc = defaultPointBuy();
+    this._resetShifts();
     this.pickedApts = new Set(this.actor.system.aptitudes || []);
     // Режим цены Продвижения (constants/patronage.mjs) — на момент создания
     // персонажа известно только мировое умолчание: personal-оверрайд (Настройки
@@ -1028,7 +1079,29 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     return creationCharSum({ race, past, arch: null, sub });
   }
 
+  _raceDef() { return raceDef(this.actor.system.race); }
+
+  /** Бонусные Броски с учётом «Рядового» (у Рядовых теряются). */
+  _bonusRolls() { return effectiveBonusRolls({ bonusRolls: creationBonusRolls(this.actor.system.race) }, this.rankAndFile); }
+
+  /** Два свежих комплекта Генерации; раскладка сбрасывается. */
+  _rollCharSets() {
+    const bonus = this._bonusRolls();
+    this.charSets = [rollCharSet(bonus), rollCharSet(bonus)];
+    this.activeSetIdx = 0;
+    this.charAssign = {};
+    this.armedVi = null;
+  }
+
+  _shiftLimit() { return effectiveShifts(this._raceDef(), this.rankAndFile); }
+  _resetShifts() { this.shifts = Array.from({ length: this._shiftLimit() }, () => ({ up: "", down: "" })); }
+  _pointPool() { return pointBuyPool(this._raceDef(), this.rankAndFile); }
+
+  /** Бонусные значения по действующему методу: раскиданный бросок или очки Сборки. */
   _charValues() {
+    if (this.charMethod === "pointbuy") {
+      return Object.fromEntries(CREATION_ROLL_CHARS.map(k => [k, Number(this.pbAlloc?.[k]) || 0]));
+    }
     const vals = this.charSets[this.activeSetIdx]?.vals || [];
     const out = {};
     for (const k of CREATION_ROLL_CHARS) {
@@ -1036,6 +1109,21 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       out[k] = (vi != null) ? (vals[vi] ?? 0) : 0;
     }
     return out;
+  }
+
+  /** Стартовые значения 9 Характеристик: база + бонус, затем Смещения. */
+  _startValues() {
+    const sum = this._charSum();
+    const bonus = this._charValues();
+    const raw = Object.fromEntries(CREATION_ROLL_CHARS.map(k => [k, (sum[k] || 0) + (bonus[k] || 0)]));
+    return applyShifts(raw, this.shifts, this._shiftLimit());
+  }
+
+  /** Сборка без перерасхода и не ниже +2; у Генерации проверять нечего. */
+  _charMethodReady() {
+    this._ensureCharState();
+    if (this.charMethod !== "pointbuy") return true;
+    return checkPointBuy(this.pbAlloc, this._pointPool()).ok;
   }
 
   _aptitudesReady() {
@@ -1096,6 +1184,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
         const val = has ? (vals[vi] ?? 0) : 0;
         return { key: k, abbr: CHARACTERISTICS[k].abbr, label: CHARACTERISTICS[k].label, base, val, has, total: base + val, vi };
       }),
+      ...this._charMethodContext(sum),
       aptChar:  aptRow(APT_CHAR_KEYS, APT_PICK.char),
       aptOther: aptRow(APT_OTHER_KEYS, APT_PICK.other),
       aptReady: this._aptReady(),
@@ -1113,6 +1202,50 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
             key: s.key, label: s.label, selected: s.key === this.pickedPatronStereotype
           }))
         : []
+    };
+  }
+
+  /** Переключатель метода, «Рядовой», строки Сборки и Смещений для шаблона. */
+  _charMethodContext(sum) {
+    const methods = allowedMethods(worldCreationMethod());
+    // Мир мог сменить настройку, а игрок — расу на Этапе 1 после первого захода.
+    if (!methods.includes(this.charMethod)) this.charMethod = methods[0];
+    if (this.shifts.length !== this._shiftLimit()) this._resetShifts();
+    const isPB = this.charMethod === "pointbuy";
+    const pool = this._pointPool();
+    const pb = checkPointBuy(this.pbAlloc, pool);
+    const start = this._startValues();
+    const bonus = this._charValues();
+    const charOpts = sel => CREATION_ROLL_CHARS.map(k => ({ key: k, abbr: CHARACTERISTICS[k].abbr, selected: k === sel }));
+    const race = this._raceDef();
+    return {
+      charMethodChoice: methods.length > 1,
+      charMethods: methods.map(m => ({ key: m, label: m === "pointbuy" ? "Сборка" : "Генерация", active: m === this.charMethod })),
+      isGeneration: !isPB, isPointBuy: isPB,
+      rankAndFile: this.rankAndFile,
+      bonusRolls: this._bonusRolls(),
+      raceBonusRolls: Number(race?.bonusRolls) || 0,
+      pbPool: pool, pbSpent: pb.spent, pbLeft: pb.left, pbOver: pb.left < 0,
+      pbMin: POINTBUY_MIN, pbMax: POINTBUY_MAX,
+      pbRows: CREATION_ROLL_CHARS.map(k => {
+        const v = Number(this.pbAlloc?.[k]) || 0;
+        return {
+          key: k, abbr: CHARACTERISTICS[k].abbr, label: CHARACTERISTICS[k].label,
+          base: sum[k] || 0, val: v, cost: pointBuyCost(v), total: (sum[k] || 0) + v,
+          canUp: canStepPointBuy(this.pbAlloc, pool, k, 1),
+          canDown: canStepPointBuy(this.pbAlloc, pool, k, -1),
+          nextCost: v < POINTBUY_MAX ? pointBuyCost(v + 1) - pointBuyCost(v) : 0
+        };
+      }),
+      shiftStep: SHIFT_STEP,
+      shiftLimit: this._shiftLimit(),
+      raceShifts: Number(race?.charShift) || 0,
+      shiftRows: this.shifts.map((s, i) => ({ index: i, up: charOpts(s.up), down: charOpts(s.down) })),
+      shiftsUsed: completeShifts(this.shifts).length,
+      startRows: CREATION_ROLL_CHARS.map(k => {
+        const raw = (sum[k] || 0) + (bonus[k] || 0);
+        return { key: k, abbr: CHARACTERISTICS[k].abbr, total: start[k], shift: start[k] - raw };
+      })
     };
   }
 
@@ -1139,7 +1272,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   async _confirmCharacteristics() {
     const actor = this.actor;
-    if (!this._aptReady()) return false;
+    if (!this._aptReady() || !this._charMethodReady()) return false;
     // Покровитель+стереотип (constants/patronage.mjs) — пишутся вместе со
     // Склонностями независимо от режима: даже в режиме "aptitude" ГМ мог
     // разрешить этому персонажу personal-оверрайд ПОЗЖЕ (Настройки листа), и
@@ -1148,12 +1281,13 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       "system.patronGod": this.pickedPatronGod || "",
       "system.patronStereotype": this.pickedPatronStereotype || ""
     };
+    patronUpdates["system.rankAndFile"] = !!this.rankAndFile;
     if (this._wasEmpty) {
       const sum = this._charSum();
-      const rolls = this._charValues();
+      const start = this._startValues();
       const updates = { "system.aptitudes": [...this.pickedApts], ...patronUpdates };
       for (const k of CREATION_ROLL_CHARS) {
-        if (this._wasEmpty[k]) updates[`system.characteristics.${k}.base`] = (sum[k] || 0) + (rolls[k] || 0);
+        if (this._wasEmpty[k]) updates[`system.characteristics.${k}.base`] = start[k] || 0;
       }
       await actor.update(updates);
 
@@ -1168,14 +1302,21 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
           raceKey: sys.race, subraceKey: sys.subrace, archKey: sys.archetype,
           ynnariPast: sys.ynnariPast, harlequinPast: sys.harlequinPast
         });
-        const infv = await rollFormulaForChar(actor,
-          startingInfamyFormula(sum.inf, true), "inf", sub, "Стартовое Бесчестие");
+        // Генерация — +1d5 броском, Сборка — ровно +2 (стр. 4).
+        const generated = this.charMethod !== "pointbuy";
+        const formula = startingInfamyFormula(sum.inf, generated);
+        const infv = generated
+          ? await rollFormulaForChar(actor, formula, "inf", sub, "Стартовое Бесчестие")
+          : formula;
         this._infamyRolled = true;
         if (infv) await actor.update({ "system.characteristics.inf.base": infv });
       }
     } else {
       await actor.update({ "system.aptitudes": [...this.pickedApts], ...patronUpdates });
     }
+    // Флажок «Рядовой» уже записан — снять/вернуть выданные расой Черты,
+    // которых у Рядовых по книге нет (when.predicates.rankAndFile).
+    await syncRankAndFileGrants(actor);
     return true;
   }
 
@@ -2165,7 +2306,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     on(".wiz-set-reroll", "click", ev => {
       ev.preventDefault(); ev.stopPropagation();
       const si = Number(ev.currentTarget.dataset.set);
-      this.charSets[si] = rollCharSet(creationBonusRolls(this.actor.system.race));
+      this.charSets[si] = rollCharSet(this._bonusRolls());
       if (si === this.activeSetIdx) { this.charAssign = {}; this.armedVi = null; }
       this.render(false);
     });
@@ -2206,6 +2347,38 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     on(".wiz-char-clear", "click", ev => {
       ev.preventDefault();
       this.charAssign = {}; this.armedVi = null;
+      this.render(false);
+    });
+    // Метод, «Рядовой», Сборка, Смещения (rules/starting-characteristics.mjs).
+    on(".wiz-method", "click", ev => {
+      ev.preventDefault();
+      const m = ev.currentTarget.dataset.method;
+      if (!allowedMethods(worldCreationMethod()).includes(m) || m === this.charMethod) return;
+      this.charMethod = m;
+      this.render(false);
+    });
+    on(".wiz-rank-and-file", "change", ev => {
+      this.rankAndFile = !!ev.currentTarget.checked;
+      // Число бросков в комплекте и запас очков зависят от флажка —
+      // старые комплекты и Смещения к новому составу не подходят.
+      this._rollCharSets();
+      this._resetShifts();
+      this.render(false);
+    });
+    on(".wiz-pb-step", "click", ev => {
+      ev.preventDefault();
+      const k = ev.currentTarget.dataset.char;
+      const dir = Number(ev.currentTarget.dataset.dir);
+      if (!canStepPointBuy(this.pbAlloc, this._pointPool(), k, dir)) return;
+      this.pbAlloc[k] = (Number(this.pbAlloc[k]) || 0) + dir;
+      this.render(false);
+    });
+    on(".wiz-pb-reset", "click", ev => { ev.preventDefault(); this.pbAlloc = defaultPointBuy(); this.render(false); });
+    on(".wiz-shift-sel", "change", ev => {
+      const i = Number(ev.currentTarget.dataset.index);
+      const side = ev.currentTarget.dataset.side;
+      if (!this.shifts[i] || !["up", "down"].includes(side)) return;
+      this.shifts[i][side] = ev.currentTarget.value;
       this.render(false);
     });
     on(".wiz-apt", "change", ev => { this._toggleApt(ev.currentTarget.value); this.render(false); });
@@ -2290,7 +2463,11 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       this._resolveAspirationChoice({ kind: "skip", value: null });
     });
     on(".wiz-start-level", "change", ev => { this.startLevelKey = ev.currentTarget.value; this.render(false); });
-    on(".wiz-start-xp",  "change", ev => { this.startExtraXp  = parseInt(ev.currentTarget.value)  || 0; });
+    // Перерисовка — только ради строки цены субрасы («на счёт N XP»).
+    on(".wiz-start-xp",  "change", ev => {
+      this.startExtraXp  = parseInt(ev.currentTarget.value)  || 0;
+      if (this._subraceDef()?.cost) this.render(false);
+    });
     on(".wiz-start-inf", "change", ev => { this.startExtraInf = parseInt(ev.currentTarget.value) || 0; });
     on(".wiz-start-cor", "change", ev => { this.startExtraCor = parseInt(ev.currentTarget.value) || 0; });
   }
@@ -2329,7 +2506,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       }
       if (this.step.id === "characteristics") {
         const ok = await this._confirmCharacteristics();
-        if (!ok) { ui.notifications?.warn("Выберите Склонности — ровно 4 Характеристики и 4 прочих."); return; }
+        if (!ok) { ui.notifications?.warn(this._charMethodReady() ? "Выберите Склонности — ровно 4 Характеристики и 4 прочих." : "Сборка: очки распределены с перерасходом или ниже +2."); return; }
         // Родной мир с Int-зависимым выбором специализаций (см. Этап 1) —
         // применяем именно сейчас, Интеллект уже посчитан; строки читаем из
         // DOM формы этого же шага (_homeworldChoiceContext их сюда и
@@ -2350,7 +2527,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
         const done = await this._advanceArchetypeStep();
         if (!done) return;
       }
-      if (this.step.id === "aspirations") await this._confirmAspirations();
+      if (this.step.id === "aspirations" && !(await this._confirmAspirations())) return;
       this._goStep(this.stepIndex + 1);
     } finally {
       this._advancingStep = false;

@@ -30,6 +30,7 @@ import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mj
 import { FEAR_RATINGS } from "../constants/fear-tables.mjs";
 import { spendActionPoints } from "../combat/action-economy.mjs";
 import { canTakeAttackAction, takeAttackAction } from "../combat/attack-limit.mjs";
+import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
 
 const CHAR_ORDER = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel"];
 // Общие модификаторы атаки Орды (без Прицеливания и Избирательных — их у Орд нет).
@@ -779,9 +780,16 @@ async function rollHordeAttackOn(actor, w, key, threshold, isMelee, targets, { a
   const defData = `data-extra-mod="0" data-attack-deg="${deg}" data-hits-count="1"
     data-attacker-uuid="${actor.uuid || ""}" data-item-uuid="${w.uuid || ""}"
     data-attacker-weapon-uuid="${w.uuid || ""}" data-attacker-is-horde="1"
-    data-melee="${isMelee ? 1 : 0}" data-attack-id="${foundry.utils.randomID()}"`;
-  const dodgeBtn = !hit
-    ? `<div class="roll-defense-section"><div class="roll-section-head">Защита цели <span class="roll-head-hint">— промах Орды можно Избегать</span></div>
+    data-melee="${isMelee ? 1 : 0}" data-horde-hit="${hit ? 1 : 0}" data-attack-id="${foundry.utils.randomID()}"`;
+  // Попадание Орды Избегать нельзя — кроме «Быстрых и Мёртвых»/Серого Человека
+  // Размером < 2 (rules/horde-single-target.mjs): для них это атака одиночного
+  // персонажа. Цель известна (несколько целей) — кнопки только если может;
+  // не известна — кнопки есть, а кнопка сама отказывает остальным (hooks.mjs).
+  const hitEvadable = !hit || (target?.actor ? evadesHordeAsSingle(target.actor) : true);
+  const defenseHint = !hit ? "промах Орды можно Избегать"
+    : "попадание Орды Избегают только Быстрые и Мёртвые / Серый Человек (Размер < 2)";
+  const dodgeBtn = hitEvadable
+    ? `<div class="roll-defense-section"><div class="roll-section-head">Защита цели <span class="roll-head-hint">— ${defenseHint}</span></div>
          <div class="roll-defense-btns"><button class="wh-dodge-btn" type="button" ${defData}>Уклонение</button>
          ${isMelee && !wp.flexible ? `<button class="wh-parry-btn" type="button" ${defData}>Парирование</button>` : ""}</div></div>`
     : `<div class="roll-defense-note">Попадание Орды нельзя Избегать (шквал / навал).</div>`;

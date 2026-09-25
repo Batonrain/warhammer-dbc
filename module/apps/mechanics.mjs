@@ -2835,6 +2835,32 @@ export async function syncGrantedAbilities(sourceItem) {
 }
 
 /**
+ * Пересверяет Черты/Таланты, выданные записями с условием «Рядовой»
+ * (when.predicates.rankAndFile), после смены system.rankAndFile. Раса выдаёт
+ * их на Этапе 1 Мастера, а флажок ставится только на Этапе 2 — без пересверки
+ * Рядовой Человек сохранил бы чемпионские Черты (корбук стр. 5), а снявший
+ * флажок при повторном проходе остался бы без них.
+ *
+ * Трогает только такие записи: общий syncGrantedAbilities выдачу по
+ * несработавшему условию не снимает, и менять это для всех источников разом
+ * здесь незачем.
+ */
+export async function syncRankAndFileGrants(actor) {
+  if (!(actor instanceof Actor)) return;
+  for (const item of [...actor.items]) {
+    const gated = collectDirectAbilityEntries(getItemMechanics(item))
+      .filter(e => e.when?.predicates && Object.hasOwn(e.when.predicates, "rankAndFile"));
+    for (const e of gated) {
+      const granted = actor.items.filter(i =>
+        i.getFlag(FLAG, "grantedByItem") === item.id && i.getFlag(FLAG, "abilityEntryId") === e.id);
+      const ok = entryWhenOk(actor, e, item);
+      if (!ok && granted.length) await actor.deleteEmbeddedDocuments("Item", granted.map(i => i.id));
+      if (ok && !granted.length) await applyMechEntry(actor, e, item);
+    }
+  }
+}
+
+/**
  * Подавляет/возвращает ВСЕ Мутации/Дары актора, кроме источника (Pure Form) —
  * тонкая обёртка над rules/mutation-suppression.mjs, передающая ей свои же
  * локальные функции пересинхронизации (dependency injection, см. шапку того

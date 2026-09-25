@@ -52,6 +52,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // мировую настройку advancePricingMode (Настройки листа). Пусто =
       // наследовать от мира (constants/patronage.mjs, effectivePricingMode()).
       pricingModeOverride: new StringField({ initial: "", label: "Своя система продвижения" }),
+      // «Рядовой» (стр. 4): непримечательный представитель расы — без Бонусных
+      // Бросков/Очков и Смещений при создании (rules/starting-characteristics.mjs).
+      rankAndFile: new BooleanField({ initial: false, label: "Рядовой" }),
       patronFavor: new SchemaField({
         undivided: favor("Неделимый"),
         khorne:    favor("Кхорн"),

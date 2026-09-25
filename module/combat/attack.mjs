@@ -69,6 +69,7 @@ import { isFusedByHandOfDeath }                       from "../rules/hand-of-dea
 import { counterAttackTriggers, counterAttackSectionHtml } from "./counter-attack.mjs";
 import { invocationNaturalAdd } from "../rules/invocation-natural.mjs";
 import { suffersBlindness } from "../rules/blindness.mjs";
+import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
 import { isHeadHit } from "./armor-properties.mjs";
 
 /**
@@ -595,7 +596,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // на все тесты Избегания и +2 куба урона. Метка на атакующем, одна атака.
   const focusFire = actor.getFlag?.("warhammer-dbc", "focusFire");
   const focusFireOn = !!focusFire && focusFire.weaponName === item.name;
-  const focusEvasion = focusFireOn ? -20 : 0;
+  // «Быстрые и Мёртвые» (Размер < 2): атака «Тройки» для них — атака
+  // одиночного персонажа, ни −20, ни +2 куба (rules/horde-single-target.mjs).
+  // Метка всё равно гасится ниже — Тройка свою атаку совершила.
+  const focusFireBonusOn = focusFireOn && !evadesHordeAsSingle(defenderActor);
+  const focusEvasion = focusFireBonusOn ? -20 : 0;
 
   // Граната, Критический Промах (стр. 40, wdbc-x1nz.2.59): «граната падает
   // персонажу под ноги и взрывается» — весь остаток обычного разбора атаки
@@ -1052,7 +1057,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Доп. кубы урона: Меткое (одиночный, по СУ, ТОЛЬКО с Прицеливанием — книга
   // «При одиночных выстрелах С Прицеливанием»), Рассеивание (кор. дист.),
   // Максимальный режим (+1d10). Эти кубы НЕ вызывают Экстремальный урон.
-  const bonusDice = (focusFireOn && hit ? 2 : 0) + bonusDamageDice({
+  const bonusDice = (focusFireBonusOn && hit ? 2 : 0) + bonusDamageDice({
     wp, rofMode, hit, deg, shortRange, maximal: maximalOn, band,
     ammoDice: ammoSys?.damageDiceMod,
     aimed,

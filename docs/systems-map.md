@@ -49,6 +49,14 @@
 - Мастер создания: `module/apps/character-wizard.mjs` (5 этапов одним окном),
   `creation.mjs` (чистые функции Раса→Субраса→Мировоззрение→Архетип),
   `character-start.mjs` (кнопка запуска).
+- Стартовые Характеристики (корбук стр. 3–4): `module/rules/starting-characteristics.mjs`
+  — Генерация/Сборка (100+Бонусные Очки, +2…+20, +19 за 2, +20 за 3),
+  Смещения (+5/−5), «Рядовой»; метод — мировая настройка `creationCharMethod`
+  (`module/constants/creation-method.mjs`), Этап 2 Мастера. Бесчестие —
+  `rules/starting-infamy.mjs` (+1d5 / +2). Флажок `system.rankAndFile`:
+  предикат `rankAndFile` гейтит чемпионские Черты расы (Человек),
+  `syncRankAndFileGrants` (apps/mechanics.mjs) пересверяет их после Этапа 2,
+  `actorInfamyMax` даёт Рядовому 0 Очков Бесчестия.
 
 ## 2. Характеристики, Навыки, Склонности, Опыт/Продвижение
 

@@ -41,6 +41,7 @@ const raceFromDoc = doc => ({
   group: doc.system?.group || "",
   chars: { ...(doc.system?.chars || {}) },
   bonusRolls: doc.system?.bonusRolls || 0,
+  bonusPoints: doc.system?.bonusPoints || 0, charShift: doc.system?.charShift || 0,
   skills: doc.system?.skills || "", gear: doc.system?.gear || "",
   talents: doc.system?.talents || "", desc: doc.system?.description || "",
   hasGeneSeed: !!doc.system?.hasGeneSeed,
@@ -52,6 +53,7 @@ const raceFromDoc = doc => ({
 const raceFromConst = (key, r) => ({
   key, label: r.label, group: constGroup(key),
   chars: { ...(r.chars || {}) }, bonusRolls: r.bonusRolls || 0,
+  bonusPoints: r.bonusPoints || 0, charShift: r.charShift || 0,
   skills: r.skills || "", gear: r.gear || "",
   talents: Array.isArray(r.talents) ? r.talents.join(", ") : (r.talents || ""),
   desc: r.desc || "", hasGeneSeed: !!r.hasGeneSeed,

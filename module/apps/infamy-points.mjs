@@ -39,6 +39,8 @@ export function actorInfamyValue(actor) {
  * лист (wdbc-k1hc — game-session.mjs::refillFatePools).
  */
 export function actorInfamyMax(actor) {
+  // «Рядовые противники, даже имеющие свое Бесчестие, лишены этой способности».
+  if (actor?.system?.rankAndFile) return 0;
   if (actor?.type === "demonPrince" || actor?.system?.alignment === "heretic")
     return Math.max(0, Number(actor?.system?.characteristics?.inf?.bonus) || 0);
   return Math.max(0, Number(actor?.system?.fate?.max) || 0);
