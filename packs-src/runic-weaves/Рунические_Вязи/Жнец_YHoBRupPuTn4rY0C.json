@@ -1,16 +1,16 @@
 {
-  "name": "Scapegoat / Козел Отпущения",
+  "name": "Жнец",
   "type": "runicWeave",
   "img": "systems/warhammer-dbc/assets/item-icons/armormod.svg",
   "system": {
-    "description": "Это две разные вязи, которые должны быть нанесены на два разных комплекта доспехов. Когда носитель первого доспеха получает урон от психосил или варп-оружия, и носитель второго доспеха находится не более чем в 90 м от него, урон вместо этого получает носитель второго.",
+    "description": "Если Выжигание Души от этого оружия наносит вдвое больше урона, чем максимум Ран цели, псайкер восстанавливает W.b цели Ран или урона в любую Характеристику по его выбору. С каждым применением этой вязи она частично выгорает и после трех использований теряет все мистические свойства и перестает работать.",
     "notes": "",
     "availability": 1,
     "craftDiff": 0,
-    "craftBank": 40,
-    "surface": "жесткая броня",
+    "craftBank": 75,
+    "surface": "психосиловое оружие",
     "surfaceKinds": [
-      "armor"
+      "weapon"
     ],
     "installedOnType": "carrier",
     "installedOn": "",
@@ -19,9 +19,9 @@
     "bookSource": "Core, стр. 434"
   },
   "folder": "X3ME9fVmFuyuLESG",
-  "_id": "zaHuhdce7TRemSJk",
+  "_id": "YHoBRupPuTn4rY0C",
   "effects": [],
-  "sort": 190,
+  "sort": 180,
   "ownership": {
     "default": 0
   },
@@ -29,11 +29,11 @@
     "warhammer-dbc": {
       "mechanics": [
         {
-          "id": "vl3Lpa5NziZYUf4d",
+          "id": "T1FHpBBgSRvrHAvg",
           "operator": "AND",
           "entries": [
             {
-              "id": "scapegoat-cap",
+              "id": "reaper-cap",
               "kind": "capability",
               "group": null,
               "corruptionValue": "1",
@@ -74,7 +74,7 @@
               "modValueMode": "flat",
               "modCharBonus": "inf",
               "rerollWho": "self",
-              "capabilityKey": "runicWeave.scapegoat",
+              "capabilityKey": "runicWeave.reaper",
               "fatigueAction": "threshold",
               "fatigueThresholdChar": "t",
               "equipMode": "direct",
@@ -135,5 +135,5 @@
     "modifiedTime": null,
     "lastModifiedBy": null
   },
-  "_key": "!items!zaHuhdce7TRemSJk"
+  "_key": "!items!YHoBRupPuTn4rY0C"
 }
