@@ -10,7 +10,7 @@
 //  эффекты нулевой Характеристики производные (rules/character.mjs).
 // ════════════════════════════════════════════════════════════════════════════
 
-import { charLossAddFields, charLossHealFields, charLossPortionsAddFields } from "../rules/char-loss.mjs";
+import { charLossAddFields, charLossHealFields, charLossPortionsAddFields, actorRecoveryPolicy } from "../rules/char-loss.mjs";
 import { killByCondition } from "./condition-death.mjs";
 
 /**
@@ -33,7 +33,10 @@ export async function applyCharDamage(actor, key, amount, { extra = {}, at = glo
     const r = charLossPortionsAddFields(actor.system, [{ ...portion, key, amount }], at);
     patch = r.patch; applied = r.applied[key] || 0;
   } else {
-    ({ patch, applied } = charLossAddFields(actor.system, key, amount, at));
+    // Период восстановления по политике актора (болезни, Конструктор) — для
+    // первого отсчёта.
+    const hours = actorRecoveryPolicy(actor)?.[key]?.hours;
+    ({ patch, applied } = charLossAddFields(actor.system, key, amount, at, hours));
   }
   const after = before - applied;
   const upd = { ...patch, ...extra };
