@@ -139,6 +139,12 @@
   `documents/actor.mjs::_preUpdate`). Состояние «Кома» (wdbc-x1nz.2.105) —
   `constants/conditions.mjs`, производно Без сознания → Беспомощен
   (`rules/character.mjs`), снимает Вывод из комы.
+- Урон в Характеристики со своим темпом (task 1-8): порции
+  `system.charLossPortions` (период, «не раньше», источник, noMagic; hours 0 —
+  перманентный) — `rules/char-loss.mjs::charLossPortions*`, `applyCharDamage(…, {portion})`;
+  руна Сигиллита — 1 за 8 ч. Кнопка урона в Характеристики из крит-строк и
+  психосил — `combat/char-damage-button.mjs`. Зависимость держит урон —
+  `addiction.blocksRecovery` препарата, `rules/item-rules.mjs::addictionRecoveryRules`.
 - Урон в Характеристики (wdbc-x1nz.2.83): `system.charLoss.<х-ка>` ≥ 0 —
   отдельно от ручного «Мод.» `system.charDamage` (бафф/дебафф стола).
   Писать урон — только `combat/char-damage.mjs::applyCharDamage` (пол 0,
