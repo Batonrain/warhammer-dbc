@@ -93,7 +93,11 @@
   `sheets/tabs/death.mjs`.
 - `module/rules/ablative-ap.mjs` — общий примитив «−1 заряд аблатива за
   попадание» (мод брони, Роба Чемпиона, Минный Плуг техники).
-- `module/combat/ablative-wounds.mjs` — авторегенерация аблатива по Ходу.
+- `module/combat/ablative-wounds.mjs` — авторегенерация аблатива по Ходу: только
+  у «Абсурдно Толстого» и до его 10 (wdbc-x1nz.2.86). Максимум пула — фаза
+  initial (`constants/effect-keys.mjs`), иначе кламп обнулял пул.
+- `module/combat/secondary-crit.mjs` — Крит. Эффект от урона мимо удара оружием
+  (Разъедающее, Проникающее, Калечащее, яд, «X+Провалы», Горение; wdbc-x1nz.2.85).
 - `module/combat/damage.mjs` — применение урона (`showApplyDamageDialog`):
   поглощение, локация, критический эффект — центральный расчёт.
 - Пробитие Брони (стр. 42, wdbc-x1nz.2.78/.79) — `combat/armor-properties.mjs::
@@ -599,6 +603,13 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `module/rules/armour-penalty.mjs` (штраф выключенной силовой брони),
   `ablative-ap.mjs`, `void-air.mjs` (запас воздуха герметичной брони),
   `cover-locations.mjs` (Укрытие по зонам тела).
+- Слои брони по локации (`absorption.layers`, `rules/character/armour.mjs`):
+  Мягкая/Проводящая и др. обнуляют AP только своего предмета (wdbc-x1nz.2.81);
+  I(Cr) по голове — ⌈AP/2⌉ и Concussive(−1) (.80). Свойства брони — список строк
+  (`data/string-list.mjs`, миграция `migrations/string-list-restore.mjs`).
+- Разрушение Укрытий: `combat/damage.mjs` + `combat/cover.mjs::coverRegionForShot` —
+  зона Укрытия сцены даёт AP стрельбе по линии огня и изнашивается, «пробивает» =
+  урон прошёл сквозь; Тирантикос — 1d10.
 - Истории комплекта силовой брони: `data/item/armour-history-entry.mjs`,
   `constants/power-armour-lore.mjs`, `apps/armour-history.mjs` +
   `armour-history-trance.mjs`.
@@ -687,6 +698,9 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   Характеристики (`actor-sheet.mjs::_runTest`) по новому полю payload
   `onFailItemUuid` — кладёт ТОЛЬКО psychic.mjs при запросе теста
   Сопротивления, gate строгий (обычный делегированный тест это поле не несёт).
+- Сроки Состояний в Раундах — `expiry: "turnEnd"`: кончаются в конце Хода
+  наложившего, снимаются `onConditionEffectExpired` после отметки ядра
+  (wdbc-x1nz.2.84; `rules/condition-duration.mjs`, `condition-ticks.mjs::sweepApplierTurnEnd`).
 - `module/combat/condition-effects.mjs`, `condition-ticks.mjs` (тик по Ходам —
   Кровотечение/Горение). Горение несёт три завязанных на предметы живых
   проверки — все читают Механику НАПРЯМУЮ с предмета, ничего не пишут при
@@ -1098,7 +1112,11 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - Орды: `data/actor/horde.mjs`, `rules/horde.mjs`, `horde-convert.mjs`
   (+`apps`), `horde-damage.mjs` (+`combat/horde-damage.mjs`),
   `horde-geometry.mjs`, `combat/horde-psych.mjs`, `combat/horde-tokens.mjs`,
-  `sheets/horde-sheet.mjs`.
+  `sheets/horde-sheet.mjs`. Размер по Магнитуде в попадании/Скрытности —
+  `rules/predicates.mjs::hitSizeOf`; ОД Орды — общая экономика действий
+  (`combat/action-economy.mjs`, Реакции только в свой Ход); «Тем же действием»
+  и по броску на цель — `horde-sheet.mjs::_confirmHordeAttack`; Огонь по Орде —
+  `combat/horde-psych.mjs::rollHordeFlameTest`.
 - Отряды: `data/actor/squad.mjs`, `rules/squad.mjs`, `squad-roles.mjs`,
   `constants/squad.mjs`, `sheets/squad-sheet.mjs`.
 - Формирования («Книга Битв»): `data/actor/formation.mjs`, `rules/formation.
