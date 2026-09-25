@@ -808,7 +808,25 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   Прошлого), `apps/races.mjs` (применение расы), `apps/race-library.mjs` +
   `sheets/race-picker.mjs`.
 - `data/item/race.mjs`, `subrace.mjs` (parentKey, charRollAdvantage,
-  removesTraits).
+  removesTraits, tierCosts — уровни покупки, bannedArchetypes, mutationsAsAstartes).
+- Субрасы Людей (сверка главы I, 26.09.2026): цена субрасы списывается со
+  стартового опыта на Этапе 4 Мастера (`constants/start-levels.mjs`
+  subraceCost/xpShort, `race-library.mjs::subraceCostAt`); уровень —
+  `system.subraceTier`, в формулах Механики `subtier` (Затупленный 1–4);
+  максимум Бесчестия Хаосита Inf.b ± `system.infamyMaxMod` (poolMax с целью
+  «infamy», `apps/infamy-points.mjs::infamyMaxWithMod`); закрытые Архетипы
+  (`apps/archetypes.mjs::archetypesForRace`); выбор мутации из списка
+  (`equipChoiceIds`, фильтр `ids`) и строки субмутации
+  (`apps/submutations.mjs::chooseSubmutation`); дружественная одна
+  специализация Группы — `спец:группа:специализация` в
+  `rules/aptitude-overrides.mjs`.
+- Ауры Парии и Дискорданта: `rules/null-zones.mjs` (+ `rules/library/
+  null-zones.mjs`) — аура W.b×3 м выдаёт Черту-метку «В Пустоте Парии» /
+  «В Поле Дискорданта»; класс техники оружия/имплантов — `system.techClass`
+  (electric/mechanical/none), гашение мутаций/имплантов —
+  `apps/mechanics.mjs::syncNullZoneSuppression` (флаг `nullSuppressed`).
+- «Избегает атак Орды как одиночная цель» (Быстрые и Мёртвые, Серый
+  Человек) — `rules/horde-single-target.mjs`.
 - `module/constants/legions.mjs` — Легионы Космодесанта (Геносемя/Культура/
   Проклятье); `rules/legion-fit.mjs`, `legion-upgrade.mjs`.
 - Пути Азуриан: `constants/aeldari-paths.mjs`, `rules/library/paths.mjs`,

@@ -74,7 +74,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "techClass": "none"
   },
   "_id": "UPL5YApF9GJxmXpF",
   "effects": [],

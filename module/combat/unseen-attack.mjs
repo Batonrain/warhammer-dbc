@@ -83,6 +83,7 @@ export async function _performUnseenBypass(actor, { persistent = false, label = 
   // Незримого получался бесплатным (приёмка стопки #482-#504).
   const poolPath = actorInfamyPath(actor);
   const spend = await spendFromInfamyPool(actor, 1, poolPath);
+  if (!spend) return { spent: false };
   await actor.update({ [poolPath]: spend.poolValue });
   if (persistent) await markUnseenDetectedUntilNextTurn(actor);
 

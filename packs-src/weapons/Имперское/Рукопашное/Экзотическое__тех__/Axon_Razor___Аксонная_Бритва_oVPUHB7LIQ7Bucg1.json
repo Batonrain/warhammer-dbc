@@ -69,7 +69,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Нож"
+    "meleeCategory": "Нож",
+    "techClass": "electric"
   },
   "_id": "oVPUHB7LIQ7Bucg1",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-knife.svg",

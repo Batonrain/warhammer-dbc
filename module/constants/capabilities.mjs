@@ -252,6 +252,22 @@ export const CAPABILITIES = {
     source: "Раса: Серый Человек (Oteshii)",
     reader: "warhammer-dbc.mjs — Hooks.on(\"preUpdateActor\") перехватывает system.corruption.value"
   },
+  // ── Пустота Парии / поле Дискорданта (сверка главы I, 26.09.2026) ───────────
+  "pariah.void": {
+    label: "В Пустоте Парии: психосилы (кроме Непрямых) развеиваются, нельзя тратить Бесчестие/Судьбу и получать Порчу, сверхъестественные мутации гаснут, псайкеры −бPR×3, демоны −30",
+    source: "Черта-метка «В Пустоте Парии» (выдаёт аура Парии)",
+    reader: "module/rules/null-zones.mjs (inPariahVoid) — sheets/tabs/psychic.mjs, hooks.mjs, combat/damage.mjs, apps/infamy-points.mjs, sheets/tabs/death.mjs, warhammer-dbc.mjs, apps/mechanics.mjs::syncNullZoneSuppression"
+  },
+  "pariah.self": {
+    label: "Сам Пария: Cor не выше 0 (и без токена на сцене)",
+    source: "Черта Pariah / Пария",
+    reader: "module/rules/null-zones.mjs::corruptionInVoid (preUpdateActor в warhammer-dbc.mjs)"
+  },
+  "discordant.field": {
+    label: "В Поле Дискорданта: электрическое стрелковое не стреляет, рукопашное — выключено, электронные импланты отключены, техночудеса по цели в поле — Критический Провал",
+    source: "Черта-метка «В Поле Дискорданта» (выдаёт аура Дискорданта)",
+    reader: "module/rules/null-zones.mjs (inDiscordantField) — sheets/attack-dialog.mjs, combat/attack.mjs, sheets/tabs/tech.mjs, apps/mechanics.mjs::syncNullZoneSuppression"
+  },
   // ── Избегание Орды как одиночной цели (wdbc-gzuf) ────────────────────────
   "horde.singleTargetImmune": {
     label: "Атаки Орды и «Троек» (Концентрация огня) — как атаки одиночного персонажа: можно Избегать, без бонусных кубиков урона; теряется при Размере 2+",
@@ -5620,8 +5636,9 @@ export const CAPABILITIES = {
     source: "Craftworld Citizen / Житель Мира-Корабля", reader: ""
   },
   "trait.treytyRas.discordant": {
-    label: "Аура Haywire против техники.",
-    source: "Discordant / Дискордант", reader: ""
+    label: "Аура W.b×3 м — поле Дискорданта (Haywire (7) для электрики).",
+    source: "Discordant / Дискордант",
+    reader: "запись kind:aura → Черта-метка «В Поле Дискорданта» (discordant.field), правила — module/rules/null-zones.mjs"
   },
   "trait.treytyRas.distortedBody": {
     label: "Не нуждается в еде, воде, сне; иммунитет к обычным и сверхъестественным болезням; не страдает от погодного жара/холода (но не от огнемёта/кр…",
@@ -5668,8 +5685,9 @@ export const CAPABILITIES = {
     source: "Non Imperial / Не Имперец", reader: ""
   },
   "trait.treytyRas.pariah": {
-    label: "Аура чернокнижия (Untouchable).",
-    source: "Pariah / Пария", reader: ""
+    label: "Аура W.b×3 м — Пустота Парии.",
+    source: "Pariah / Пария",
+    reader: "запись kind:aura → Черта-метка «В Пустоте Парии» (pariah.void) + pariah.self, правила — module/rules/null-zones.mjs, rules/library/null-zones.mjs"
   },
   "trait.treytyRas.powerOfSouls": {
     label: "Когда Иннари кого-либо убивает или кто-то умирает в радиусе 10 м — тест W+20, при успехе +1 Мёртвое Могущество (макс. W.b×3).",

@@ -31,6 +31,10 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
       corEffects:   list("Эффекты порчи"),
       weaponClass:  new StringField({ initial: "melee", label: "Класс" }),
       weaponType:   new StringField({ initial: "laser", label: "Тип" }),
+      // Техника для поля Дискорданта (rules/null-zones.mjs): "electric" —
+      // отключается сразу, "mechanical" — заклинивает позже, "none" — не
+      // задевается. Пусто — по weaponType (запасной вариант для старых данных).
+      techClass:    new StringField({ initial: "", label: "Техника (поле Дискорданта)" }),
       // Свой размер на разгрузке (стр. 27) — переопределяет вывод по
       // weaponClass в itemSizeStr(), когда конкретный предмет не совпадает
       // с общим правилом (напр. карабин 3×1 против винтовки 4×1).

@@ -86,7 +86,8 @@
       "reloads": 10
     },
     "meleeCategory": "Булава",
-    "damageSubtype": "crushing"
+    "damageSubtype": "crushing",
+    "techClass": "none"
   },
   "_id": "n0WbrWa0sS8ja127",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-mace.svg",

@@ -108,6 +108,8 @@ const TYPES = {
     defaults: {
       description: "", notes: "", category: "mechanicus", quality: "common",
       effect: "", installed: "", linkedWeapon: "", bookSource: "",
+      // Техника для поля Дискорданта (rules/null-zones.mjs), 26.09.2026.
+      techClass: "",
       // Редкость (wdbc-ukpu, шаг 1б) — у Best.Q биоимпланта каждый доп.
       // эффект сверх первого поднимает её на 1. Умолчание — null, а не 0
       // (wdbc-wc3): 0 это книжный «Дефицит», а не «не заполнено», и книга
@@ -252,7 +254,10 @@ const TYPES = {
       // Бросок «с Преимуществом» на характеристику Мастера создания
       // (wdbc-0tzr) — {char, rolls}, пусто у субрас без такого правила.
       charRollAdvantage: {}, talents: "",
-      removesTraits: [], description: "", notes: "", bookSource: ""
+      removesTraits: [], description: "", notes: "", bookSource: "",
+      // Уровни покупки (Затупленный 500–1250), закрытые Архетипы и таблица
+      // мутаций Астартес — сверка главы I, 26.09.2026.
+      tierCosts: [], bannedArchetypes: [], mutationsAsAstartes: false
     }
   },
   armourHistoryEntry: {
@@ -333,6 +338,8 @@ const TYPES = {
     defaults: {
       description: "", notes: "", benefit: "", source: "", bookSource: "",
       roll: "", god: "",
+      // Сверхъестественная — гаснет в Пустоте Парии (rules/null-zones.mjs), 26.09.2026.
+      supernatural: false,
       // В template.json объявлено не было, но лежит у трёх мутаций пака и
       // читается общим пикером Талантов, Черт и Мутаций — как у Черты.
       requirement: "",
@@ -372,7 +379,7 @@ const TYPES = {
     pack: ["weapons", "vehicle-weapons"],
     defaults: {
       description: "", notes: "", infoguard: 0, rangeBands: [], offProfile: {}, gripProps2h: [],
-      corEffects: [], weaponClass: "melee", weaponType: "laser", itemSize: "", range: 0, rangeMin: 0,
+      corEffects: [], weaponClass: "melee", weaponType: "laser", techClass: "", itemSize: "", range: 0, rangeMin: 0,
       balance: 0, grips: "", profileLabel: "", meleeCategory: "", meleeSubtype: "", profiles: [], reload: "1",
       magazineCur: 0, magazineMax: 0, rof_single: 0, rof_semi: 0, rof_full: 0,
       damage: "", damageType: "impact", damageSubtype: "", penetration: 0, quality: "common",

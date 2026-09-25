@@ -58,7 +58,8 @@
       "reloads": 10
     },
     "meleeCategory": "Когти",
-    "damageSubtype": "electrical"
+    "damageSubtype": "electrical",
+    "techClass": "electric"
   },
   "_id": "B4ktVZf28Uv3XGyV",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

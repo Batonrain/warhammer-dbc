@@ -73,7 +73,8 @@
     "damage": "2d10",
     "damageType": "blast",
     "penetration": 0,
-    "meleeCategory": ""
+    "meleeCategory": "",
+    "techClass": "none"
   },
   "_id": "o9a4U2EGz8Y0pg0f",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

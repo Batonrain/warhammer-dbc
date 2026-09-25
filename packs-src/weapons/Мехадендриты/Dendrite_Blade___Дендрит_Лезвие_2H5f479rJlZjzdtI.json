@@ -63,7 +63,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "techClass": "electric"
   },
   "_id": "2H5f479rJlZjzdtI",
   "img": "systems/warhammer-dbc/assets/item-icons/mechadendrite.svg",

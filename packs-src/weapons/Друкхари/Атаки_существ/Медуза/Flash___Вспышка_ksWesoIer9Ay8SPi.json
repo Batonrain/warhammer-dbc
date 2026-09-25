@@ -61,7 +61,8 @@
       "standard": false,
       "reloads": 10
     },
-    "drukhari": true
+    "drukhari": true,
+    "techClass": "none"
   },
   "_id": "ksWesoIer9Ay8SPi",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-pistol.svg",

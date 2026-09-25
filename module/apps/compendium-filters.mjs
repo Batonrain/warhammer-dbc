@@ -39,7 +39,11 @@ export const ITEM_FILTERS = {
   /** Категория импланта: «Мехадендрит» — это system.category, а не папка. */
   implantCategory: (it, want) => it?.category === want,
   /** Пси-Рейтинг силы не выше указанного: system.cost — цена в опыте, Пси-Рейтинг лежит в system.prRequired. */
-  maxPsyRating: (it, want) => (Number(it?.prRequired) || 0) <= Number(want)
+  maxPsyRating: (it, want) => (Number(it?.prRequired) || 0) <= Number(want),
+  /** Закрытый список предметов по id — книга перечисляет, из чего выбирать
+   *  («мутация из списка: Циклоп, Хвост, …» у Мутанта), и ни папка, ни
+   *  свойство этот список не описывают. */
+  ids: (it, want) => (Array.isArray(want) ? want : [want]).includes(it?.id)
 };
 
 /**

@@ -66,7 +66,8 @@
     "shieldZones": "Т+Р1+Н1+Н2+(Г+Р2)",
     "shieldForm": "Л. Башенный",
     "meleeCategory": "Щит",
-    "damageSubtype": "crushing"
+    "damageSubtype": "crushing",
+    "techClass": "none"
   },
   "_id": "AWHl6lL6Ry663xFG",
   "img": "systems/warhammer-dbc/assets/item-icons/shield.svg",

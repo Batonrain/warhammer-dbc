@@ -65,7 +65,8 @@
       "standard": false,
       "reloads": 10
     },
-    "rangeBands": []
+    "rangeBands": [],
+    "techClass": "none"
   },
   "_id": "yLZuW0aJoggRk4yu",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-thrown.svg",

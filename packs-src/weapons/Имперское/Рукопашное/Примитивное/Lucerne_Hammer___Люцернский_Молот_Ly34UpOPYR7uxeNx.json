@@ -102,7 +102,8 @@
       "reloads": 10
     },
     "meleeCategory": "Молот",
-    "damageSubtype": "crushing"
+    "damageSubtype": "crushing",
+    "techClass": "none"
   },
   "_id": "Ly34UpOPYR7uxeNx",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-spear.svg",

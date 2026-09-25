@@ -79,7 +79,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "techClass": "electric"
   },
   "_id": "F6RJ6xG9l1ZePYKd",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",

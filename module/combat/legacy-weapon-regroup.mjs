@@ -34,6 +34,7 @@ export async function activateLegacyRegroup(actorUuid) {
 
   const path = actorInfamyPath(actor);
   const spend = await spendFromInfamyPool(actor, 1, path);
+  if (!spend) return;
   await actor.update({ [path]: spend.poolValue });
   await combatant.setFlag("warhammer-dbc", PENDING_FLAG, true);
 

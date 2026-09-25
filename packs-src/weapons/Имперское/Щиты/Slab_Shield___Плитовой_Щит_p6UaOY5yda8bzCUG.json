@@ -69,7 +69,8 @@
     "shieldAP": 8,
     "shieldZones": "Т+Р1+Н1+Н2+(Г+Р2)",
     "shieldForm": "Л. Башенный",
-    "damageSubtype": "crushing"
+    "damageSubtype": "crushing",
+    "techClass": "none"
   },
   "_id": "p6UaOY5yda8bzCUG",
   "img": "systems/warhammer-dbc/assets/item-icons/shield.svg",

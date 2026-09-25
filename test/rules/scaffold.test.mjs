@@ -31,7 +31,8 @@ describe("каркас module/rules", () => {
     // legacyGuardianMarked (метка Защитника, Оружие Наследия, wdbc-1rno.35),
     // isBlinded (свой флаг или оба глаза, Ослеплён, wdbc-x1nz.2.89).
     // rankAndFile («Рядовой», корбук стр. 4, task-ce3a).
-    expect(Object.keys(predicates.PREDICATES)).toHaveLength(31);
+    // inPariahVoid/isDaemon/targetPsykerOrDaemon — Пустота Парии (rules/null-zones.mjs).
+    expect(Object.keys(predicates.PREDICATES)).toHaveLength(34);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);
     expect(typeof sources.registerRuleSource).toBe("function");

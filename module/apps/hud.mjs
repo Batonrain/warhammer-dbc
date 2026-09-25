@@ -22,6 +22,7 @@ import { aimMenuItems, aimFocusToggleState, toggleAimFocusPending, trackingAimTo
 import { overwatchMenuItems, overwatchManualFireItem, isOverwatchActive, overwatchState } from "../combat/overwatch.mjs";
 import { applyDrug, deactivateDrugEffect } from "../sheets/tabs/drugs.mjs";
 import { grappleOnlyHidden, isBiteName } from "../rules/integral-rating.mjs";
+import { actorInfamyMax } from "./infamy-points.mjs";
 
 const SYSTEM = "warhammer-dbc";
 const TPL = `systems/${SYSTEM}/templates/apps/hud.hbs`;
@@ -434,9 +435,7 @@ export function hudData(actor) {
     fateTerm: fateTerm(sys),
     fate: (() => {
       const value = actor.type === "demonPrince" ? (Number(sys.dp?.ip) || 0) : (Number(sys.fate?.value) || 0);
-      const max = (actor.type === "demonPrince" || sys.alignment === "heretic")
-        ? Math.max(0, Number(sys.characteristics?.inf?.bonus) || 0)
-        : (Number(sys.fate?.max) || 0);
+      const max = actorInfamyMax(actor);
       return {
         value, max,
         pips: Array.from({ length: clamp(max, 0, 10) }, (_, i) => ({ full: i < value }))

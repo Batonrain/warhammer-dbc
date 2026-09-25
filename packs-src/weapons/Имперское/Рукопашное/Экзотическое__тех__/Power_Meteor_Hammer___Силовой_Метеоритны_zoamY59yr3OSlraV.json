@@ -72,7 +72,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Молот"
+    "meleeCategory": "Молот",
+    "techClass": "electric"
   },
   "_id": "zoamY59yr3OSlraV",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-hammer.svg",

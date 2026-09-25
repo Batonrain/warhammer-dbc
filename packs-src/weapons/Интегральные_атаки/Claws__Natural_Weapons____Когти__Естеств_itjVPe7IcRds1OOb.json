@@ -63,7 +63,8 @@
     "damageSubtype": "",
     "penetration": 0,
     "meleeCategory": "Когти",
-    "meleeSubtype": ""
+    "meleeSubtype": "",
+    "techClass": "none"
   },
   "_id": "itjVPe7IcRds1OOb",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

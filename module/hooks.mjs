@@ -22,6 +22,7 @@ import { rollHordePsychTest, rollHordeFlameTest } from "./combat/horde-psych.mjs
 import { secondaryCritHtml } from "./combat/secondary-crit.mjs";
 import { applyCharDamageButton } from "./combat/char-damage-button.mjs";
 import { hordeHitEvasionBlock }          from "./rules/horde-single-target.mjs";
+import { inPariahVoid }                  from "./rules/null-zones.mjs";
 import { ROUND_DAMAGE_FLAG }            from "./combat/horde-damage.mjs";
 import { _performSwerve, applyStructureLoss } from "./combat/vehicle.mjs";
 import { performWalkerParry, performWalkerDodge, standUpFromTipOver, showTipOverDialog } from "./combat/walker.mjs";
@@ -294,6 +295,16 @@ export function registerHooks() {
         // дисциплина силы защищена (rules/fatalism.mjs), тест Сопротивления
         // не открывается вовсе, сила фиксируется как провалившаяся сразу.
         const targetToken = d.targetTokenUuid ? await fromUuid(d.targetTokenUuid).catch(() => null) : null;
+        // Пустота Парии (rules/null-zones.mjs): цель в ауре — сила (кроме
+        // Непрямой) развеивается, Сопротивляться нечему.
+        if (inPariahVoid(targetActor) && d.psyPowerType !== "indirect") {
+          await postTestCard(targetActor, `<div class="wh-roll-result">
+            <div class="roll-header">${rollIcon("shield", "#8fd0ff")}Пустота Парии — ${esc(targetActor.name)}</div>
+            <div class="roll-threshold">Цель в ауре Парии: психосила развеивается, тест Сопротивления не нужен.</div>
+            </div>`,
+            { sound: false });
+          return;
+        }
         if (targetToken && fatalismBlocksPower(targetToken, d.discipline)) {
           await postTestCard(targetActor, `<div class="wh-roll-result">
             <div class="roll-header">${rollIcon("shield", "#8fd0ff")}Фатализм — ${esc(targetActor.name)}</div>
@@ -1001,6 +1012,7 @@ export function registerHooks() {
         // осознанная цена способности, а не обычный расход. Временный запас
         // (wdbc-e728, Voice of God и т.п.) уходит первым.
         const spend = await spendFromInfamyPool(actor, 1, "system.fate.value");
+        if (!spend) { btnEl.disabled = false; return; }
         await actor.update({
           "system.fate.value": spend.poolValue,
           "system.corruption.value": (Number(actor.system.corruption?.value) || 0) + 1
@@ -1084,6 +1096,8 @@ export function registerHooks() {
           hitLocation:  ds.hitLocation || "Торс",
           side:         ds.vehicleSide || "",   // сторона брони техники (из окна атаки)
           weaponName:   ds.weaponName  || "",
+          // Урон психосилы — для Пустоты Парии (rules/null-zones.mjs); null — не психосила.
+          psychicPowerType: ds.psychic === "1" ? (ds.psyPowerType || "") : null,
           // Кровавое Пламя (wdbc-1rno): «убил этим оружием» — deathButtonHtml
           // несёт weaponUuid дальше, module/combat/blood-flame.mjs читает его
           // по клику «Констатировать смерть».
@@ -2610,6 +2624,7 @@ function _attachFateContextMenu(message, html) {
 
       // Тратим очко судьбы — временный запас (wdbc-e728) уходит первым.
       const reroll1 = await spendFromInfamyPool(actor, 1, "system.fate.value");
+      if (!reroll1) return;
       await actor.update({ "system.fate.value": reroll1.poolValue });
 
       // Если это была атака — повторяем атаку целиком (новый бросок d100,
@@ -2712,6 +2727,7 @@ function _attachFateContextMenu(message, html) {
         if (atkItem) {
           // Временный запас (wdbc-e728) уходит первым.
           const bonus1 = await spendFromInfamyPool(actor, 1, "system.fate.value");
+          if (!bonus1) return;
           await actor.update({ "system.fate.value": bonus1.poolValue });
           await _executeAttackRoll(atkActor, atkItem, atkB.charKey,
             (Number(atkB.threshold) || 0) + FATE_BONUS,
@@ -2737,6 +2753,7 @@ function _attachFateContextMenu(message, html) {
 
       // Временный запас (wdbc-e728) уходит первым.
       const bonus1 = await spendFromInfamyPool(actor, 1, "system.fate.value");
+      if (!bonus1) return;
       await actor.update({ "system.fate.value": bonus1.poolValue });
 
       const outcomeSpan = outcome.success

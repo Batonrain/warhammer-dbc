@@ -5,7 +5,7 @@
   "folder": "NQHsbl75bk7fCc77",
   "system": {
     "description": "",
-    "notes": "Аура Haywire против техники в радиусе — эффект на ЧУЖИЕ (вражеские) машины, а не на носителя; движок Ауры (auras.mjs) рассчитан на баффы своим/себе, действие «постоянный урон/помеха чужой технике по радиусу» не проверено как готовый канал.",
+    "notes": "Аура W.b×3 м (включая самого Дискорданта) выдаёт Черту-метку «В Поле Дискорданта» — правила поля в module/rules/null-zones.mjs.",
     "benefit": "Аура Haywire против техники.",
     "source": "раса",
     "hasRating": false,
@@ -30,7 +30,36 @@
   "sort": 0,
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "d3yBzLW8OHJHGrp1",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "DiscordAuraEnt1",
+              "kind": "aura",
+              "group": null,
+              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.DiscordFieldZn01",
+              "sourceName": "In the Discordant's Field / В Поле Дискорданта",
+              "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+              "sourceHasRating": false,
+              "rating": "",
+              "equipSourceUuid": "",
+              "auraRadius": "wp*3",
+              "auraAffects": "all",
+              "auraIncludesSelf": true,
+              "auraImmuneTraits": "",
+              "label": "",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

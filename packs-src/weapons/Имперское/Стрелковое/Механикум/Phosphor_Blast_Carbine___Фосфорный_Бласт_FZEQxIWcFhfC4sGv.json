@@ -75,7 +75,8 @@
       "standard": false,
       "reloads": 10
     },
-    "damageSubtype": "flame"
+    "damageSubtype": "flame",
+    "techClass": "electric"
   },
   "_id": "FZEQxIWcFhfC4sGv",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",

@@ -61,7 +61,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Когти"
+    "meleeCategory": "Когти",
+    "techClass": "none"
   },
   "_id": "9aVE0UP6jXzuU1Kb",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

@@ -89,6 +89,15 @@ function nameForms(item) {
  * записаны тем же типом предмета, что и общие Мутации (system.god), находки
  * вида «противник ПРОТИВ персонажа с Мутацией/Даром X» иначе не матчились бы.
  */
+/** Имя Черты-метки Пустоты Парии (packs-src/traits/Трейты_рас, PariahVoidZone01). */
+export const PARIAH_VOID_TRAIT = "In the Pariah's Void";
+
+function isDaemonActor(actor) {
+  if (!actor) return false;
+  if (actor.type === "daemon" || actor.type === "demonPrince") return true;
+  return hasNamed(actor, "Daemonic");
+}
+
 function hasNamed(actor, names) {
   const items = [...(actor?.items ?? [])];
   return list(names).every(name => items.some(
@@ -283,7 +292,7 @@ export const CTX_DEPENDENT_PREDICATES = new Set([
   "targetHasTrait", "targetLacksCondition", "targetHasCondition",
   "targetHasSize", "targetKeepsNimbleInArmour", "targetHasFaction",
   "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus", "hasHatredTarget",
-  "legacyGuardianMarked"
+  "legacyGuardianMarked", "targetPsykerOrDaemon"
 ]);
 
 export const PREDICATES = {
@@ -343,6 +352,21 @@ export const PREDICATES = {
 
   hasTalent: (actor, ctx, value) => hasNamed(actor, value),
   hasTrait:  (actor, ctx, value) => hasNamed(actor, value),
+
+  // Пустота Парии (rules/null-zones.mjs) — по Черте-метке, которую выдаёт
+  // аура, а НЕ через hasRuleFlag: флаг собирается тем же движком правил, и
+  // условие правила, спрашивающее флаг, зациклило бы сбор.
+  inPariahVoid: (actor, ctx, value) => hasNamed(actor, PARIAH_VOID_TRAIT) === (value !== false),
+
+  // Демон — тип актора или Черта Daemonic («Демоны получают штраф −30…»).
+  isDaemon: (actor, ctx, value) => isDaemonActor(actor) === (value !== false),
+
+  // Цель броска — псайкер или демон (Пария: −60 вместо −30 к социальным).
+  targetPsykerOrDaemon: (actor, ctx, value) => {
+    const t = ctx?.targetActor;
+    const hit = !!t && ((Number(t.system?.psyker?.rating) || 0) >= 1 || isDaemonActor(t));
+    return hit === (value !== false);
+  },
 
   weaponClass: (actor, ctx, value) => list(value).includes(ctx?.weapon?.system?.weaponClass),
 

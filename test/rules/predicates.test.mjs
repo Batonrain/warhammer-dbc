@@ -441,6 +441,9 @@ describe("общее требование к предикатам", () => {
     // Ослеплён по-настоящему (wdbc-x1nz.2.89): свой флаг ИЛИ оба глаза.
     isBlinded: true,
     rankAndFile: false,
+    // Пустота Парии / демон / цель-псайкер или демон (rules/null-zones.mjs,
+    // сверка главы I, 26.09.2026).
+    inPariahVoid: true, isDaemon: true, targetPsykerOrDaemon: true,
     charNotIn: ["t", "inf", "cor"],
     charIn: ["int", "per", "wp", "fel", "inf"],
     hasSize: undefined, targetHasSize: undefined, targetKeepsNimbleInArmour: undefined,

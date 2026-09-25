@@ -68,7 +68,8 @@
     "damage": "1d5-3",
     "damageType": "impact",
     "penetration": 0,
-    "meleeCategory": "Кулаки"
+    "meleeCategory": "Кулаки",
+    "techClass": "none"
   },
   "_id": "3O8OX5aoqIYIRRvs",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

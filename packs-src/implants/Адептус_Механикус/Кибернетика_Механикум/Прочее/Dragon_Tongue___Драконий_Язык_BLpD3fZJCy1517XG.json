@@ -37,7 +37,8 @@
       "equipped": false,
       "status": "inactive"
     },
-    "bookSource": "DoomBC — Основная книга, БИОНИКА И КИБЕРНЕТИКА (стр. 263-275)"
+    "bookSource": "DoomBC — Основная книга, БИОНИКА И КИБЕРНЕТИКА (стр. 263-275)",
+    "techClass": "electric"
   },
   "folder": "Y8xc4V2spArcQ4bF",
   "_id": "BLpD3fZJCy1517XG",

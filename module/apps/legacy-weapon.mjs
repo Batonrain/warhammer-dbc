@@ -450,6 +450,7 @@ async function spendOneLegacyInfamyPoint(actor) {
   }
   const path = actorInfamyPath(actor);
   const spend = await spendFromInfamyPool(actor, 1, path);
+  if (!spend) return false;
   await actor.update({ [path]: spend.poolValue });
   return true;
 }

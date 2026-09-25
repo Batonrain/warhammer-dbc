@@ -144,7 +144,8 @@ export async function rallyExoditeSquad(actor, { mod = -10 } = {}) {
  */
 export async function applyLordOfExoditesFailPenalty(actor, { dof = 0, usedReroll = false } = {}) {
   if (!usedReroll || dof < 2 || !hasLordOfExodites(actor)) return;
-  const spend = await spendFromInfamyPool(actor, 1, "system.fate.value");
+  // Штраф, а не трата: списывается и в Пустоте Парии (forced).
+  const spend = await spendFromInfamyPool(actor, 1, "system.fate.value", { forced: true });
   await actor.update({ "system.fate.value": spend.poolValue });
   await actor.setFlag("warhammer-dbc", DISGRACE_FLAG, true);
   await flipAuraGrants(actor, -20);

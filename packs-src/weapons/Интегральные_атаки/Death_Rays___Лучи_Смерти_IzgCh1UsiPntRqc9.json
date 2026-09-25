@@ -66,7 +66,8 @@
     "damage": "3d10",
     "damageType": "energy",
     "penetration": 7,
-    "meleeCategory": ""
+    "meleeCategory": "",
+    "techClass": "none"
   },
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-ranged.svg",
   "effects": [],

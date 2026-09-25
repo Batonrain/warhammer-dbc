@@ -429,7 +429,8 @@ import { normalizeBudget, BUDGET_XP, BUDGET_MODES } from "../rules/pick-budget.m
 import { pickXPCost }                          from "../rules/pick-xp-cost.mjs";
 import { ITEM_QUALITY, ITEM_QUALITY_LIST }     from "../constants/quality.mjs";
 import { hasSubmutations }                     from "../rules/submutations.mjs";
-import { rollSubmutation }                     from "./submutations.mjs";
+import { rollSubmutation, chooseSubmutation }  from "./submutations.mjs";
+import { voidSuppressesMutation, fieldDisablesImplant } from "../rules/null-zones.mjs";
 import { MINION_GROUPS, MINION_TIERS }         from "../constants/minions.mjs";
 import { isMinionTalent }                      from "../rules/minion-build.mjs";
 import { applyMinionSlot, promptMinionSlot }   from "./minion-talent.mjs";
@@ -1350,7 +1351,8 @@ export function describeMechEntry(entry) {
       return `Модификатор броска: ${name}${label}${spec} ${sign}${entry.value ?? ""}`;
     }
     case "poolMax": {
-      const label = entry.poolTarget === "ablativeWounds" ? "Аблативные Раны" : "Очки Судьбы или Бесчестья";
+      const label = entry.poolTarget === "ablativeWounds" ? "Аблативные Раны"
+        : entry.poolTarget === "infamy" ? "Очки Бесчестия (Хаосит)" : "Очки Судьбы или Бесчестья";
       if (entry.value === "" || entry.value == null) return `${label}: (не задано)`;
       const sign = Number(entry.value) >= 0 ? "+" : "";
       return `${label}: ${sign}${entry.value} (максимум)`;
@@ -2135,6 +2137,8 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
       if (entry.equipMaxPsyRating !== "" && entry.equipMaxPsyRating != null) filters.maxPsyRating = Number(entry.equipMaxPsyRating);
       if (entry.equipCategoryPack === "implants" && entry.equipImplantCategory) filters.implantCategory = entry.equipImplantCategory;
       if (Number.isFinite(Number(entry.equipMaxAvailability))) filters.maxAvailability = Number(entry.equipMaxAvailability);
+      // Закрытый список id (equipChoiceIds): «1 мутация из списка» Мутанта.
+      if (Array.isArray(entry.equipChoiceIds) && entry.equipChoiceIds.length) filters.ids = [...entry.equipChoiceIds];
 
       const budget = normalizeBudget({ mode: entry.equipBudgetMode, value: entry.equipBudgetValue });
       const picked = await openCompendiumBrowser(false, {
@@ -2192,7 +2196,10 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
     // Мутация с субмутациями сразу спрашивает свою строку — тот же приём,
     // что у ручного добавления мутации (sheets/tabs/mutations.mjs).
     if (granted?.type === "mutation" && hasSubmutations(granted.system?.benefit || "")) {
-      await rollSubmutation(granted, { actor });
+      // submutationChoice — строка выбирается, а не бросается («Мутант может
+      // выбирать субмутацию в пределах 1-10»).
+      if (entry.submutationChoice) await chooseSubmutation(granted, { actor });
+      else await rollSubmutation(granted, { actor });
     }
     return;
   }
@@ -2294,6 +2301,12 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
         specialization: spec,
         granted: true, purchased: false, cost: 0
       };
+      // Цели Таланта (Enemy/Hatred/Peer — rules/talent-targets.mjs) из записи:
+      // «Enemy (Adeptus Mechanicus, Dark Mechanicum)» Дискорданта иначе лёг бы
+      // без целей и не срабатывал ни против кого — подпись в специализации
+      // предикаты не читают.
+      if (Array.isArray(entry.targets) && entry.targets.length)
+        data.system.targets = foundry.utils.deepClone(entry.targets);
       // Рейтинговый Талант (Psy Rating, Enemy…): рейтинг задаётся записью
       // Механики, а не берётся из значения по умолчанию в компендиуме —
       // иначе Ведьма/Псайкер/Чародей получали бы Пси-Рейтинг 1 вместо 3/2.
@@ -2869,6 +2882,32 @@ export async function syncRankAndFileGrants(actor) {
  * runMechScriptEntry, чтобы дать script-контексту kind:"script" (wdbc-1rno,
  * Pure Form/Чистая Форма).
  */
+/**
+ * Пустота Парии / поле Дискорданта (rules/null-zones.mjs): гасит на акторе
+ * сверхъестественные мутации/Дары (в Пустоте) и электронные импланты (в поле)
+ * флагом nullSuppressed и возвращает их при выходе — та же цепочка
+ * пересинхронизации, что у Чистой Формы ниже. Зовётся хуком на появление/
+ * снятие Черты-метки зоны и на новую мутацию/имплант (warhammer-dbc.mjs).
+ * @returns {Promise<string[]>} имена предметов, сменивших состояние
+ */
+export async function syncNullZoneSuppression(actor) {
+  const names = [];
+  for (const item of [...(actor?.items ?? [])]) {
+    let want;
+    if (item.type === "mutation") want = voidSuppressesMutation(actor, item);
+    else if (item.type === "implant") want = fieldDisablesImplant(actor, item);
+    else continue;
+    if (!!item.getFlag(FLAG, "nullSuppressed") === want) continue;
+    await item.setFlag(FLAG, "nullSuppressed", want);
+    await syncItemEffectsDisabled(item);
+    await syncWeaponPropItemEffects(item);
+    await syncGrantedAbilities(item);
+    await syncGrantedEquipment(item);
+    names.push(item.name);
+  }
+  return names;
+}
+
 export async function setMutationsSuppressed(sourceItem, suppressed) {
   return _setMutationsSuppressed(sourceItem, suppressed, {
     syncItemEffectsDisabled, syncWeaponPropItemEffects, syncGrantedAbilities, syncGrantedEquipment
@@ -2924,7 +2963,10 @@ function mechEffectData(entry, sourceItem, actor = null) {
     changes.push({ key, type: entry.op, value: num(entry.movementValue),
                    phase: expectedPhase(key), priority: 0 });
   } else if (entry.kind === "poolMax") {
-    const key = entry.poolTarget === "ablativeWounds" ? "system.wounds.ablativeMax" : "system.fate.max";
+    // «infamy» — сдвиг максимума Бесчестия Хаосита (Inf.b ± N, apps/infamy-points.mjs):
+    // fate.max у Хаосита не читается, +1 туда молча пропадал.
+    const key = entry.poolTarget === "ablativeWounds" ? "system.wounds.ablativeMax"
+      : entry.poolTarget === "infamy" ? "system.infamyMaxMod" : "system.fate.max";
     changes.push({ key, type: "add", value: num(entry.value),
                    phase: expectedPhase(key), priority: 0 });
   } else if (entry.kind === "armour") {
@@ -3780,7 +3822,7 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
   }
 
   if (ent.kind === "poolMax") {
-    const targetOpts = [["fate", "Судьба/Бесчестье"], ["ablativeWounds", "Аблативные Раны (wdbc-smy7)"]]
+    const targetOpts = [["fate", "Судьба/Бесчестье"], ["infamy", "Бесчестие Хаосита (Inf.b ± N)"], ["ablativeWounds", "Аблативные Раны (wdbc-smy7)"]]
       .map(([v, l]) => optHtml(v, l, (ent.poolTarget || "fate") === v)).join("");
     return `<select class="mech-poolmax-target" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${targetOpts}</select>
       <input type="text" class="mech-poolmax-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.value ?? "")}" placeholder="напр. -1, 2 или ceil(cor/2)" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`;

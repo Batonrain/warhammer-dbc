@@ -293,3 +293,46 @@ function shiftDialog(item, actor, table, { roll1, roll2, infB, patron, mine, fro
     }, { classes: ["dialog", "warhammer-dbc", "wh-holo"], width: 460 }).render(true);
   });
 }
+
+/**
+ * Строки таблицы, доступные для выбора «в пределах 1–10» (Мутант: «может
+ * выбирать субмутацию к этой мутации в пределах 1-10»): диапазон строки
+ * целиком внутри 1–10. Строки враждебного Бога возвращаются с blocked — их
+ * показываем, но не даём взять, как и при броске.
+ */
+export function choosableSubmutations(item, patron = "", maxRoll = 10) {
+  const table = parseSubmutations(item?.system?.benefit || "");
+  return table.entries
+    .filter(e => e.lo !== null && e.lo >= 1 && e.hi <= maxRoll)
+    .map(e => ({ entry: e, label: entryLabel(e), blocked: isSubBlocked(e, patron) }));
+}
+
+/**
+ * Окно выбора субмутации вместо броска. Отмена — строка не пишется, её можно
+ * выбрать позже на листе мутации (pickSubmutation). Таблицы нет — ничего.
+ */
+export async function chooseSubmutation(item, { actor = null, maxRoll = 10 } = {}) {
+  const patron = (actor ?? item?.actor)?.system?.patronGod || "";
+  const rows = choosableSubmutations(item, patron, maxRoll);
+  if (!rows.length) return null;
+  const DialogV2 = foundry.applications.api.DialogV2;
+  const content = `<p>Субмутация «${esc(item.name)}» — выберите строку (1–${maxRoll}):</p>
+    <div class="wh-submut-choice">${rows.map((r, i) => `<label style="display:block">
+      <input type="radio" name="submut" value="${i}" ${r.blocked ? "disabled" : ""}/>
+      ${esc(r.label)}${r.blocked ? " — закрыта (враждебный Бог)" : ""}</label>`).join("")}</div>`;
+  const idx = await DialogV2.wait({
+    window: { title: `Субмутация: ${item.name}` },
+    classes: ["warhammer-dbc", "wh-holo"],
+    content,
+    buttons: [
+      { action: "pick", label: "Выбрать", default: true,
+        callback: (ev, btn) => btn.form?.elements?.submut?.value ?? null },
+      { action: "cancel", label: "Позже" }
+    ],
+    rejectClose: false
+  }).catch(() => null);
+  const row = rows[Number(idx)];
+  if (idx === null || idx === "cancel" || !row || row.blocked) return null;
+  await setSubmutation(item, row.entry);
+  return row.entry;
+}

@@ -72,7 +72,8 @@
       "reloads": 10
     },
     "rangeBands": [],
-    "damageSubtype": "flame"
+    "damageSubtype": "flame",
+    "techClass": "none"
   },
   "_id": "9ow4xnjmL3ke8I5r",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-thrown.svg",

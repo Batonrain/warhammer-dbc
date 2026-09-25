@@ -66,7 +66,8 @@
       "standard": false,
       "reloads": 10
     },
-    "damageSubtype": "fragmentation"
+    "damageSubtype": "fragmentation",
+    "techClass": "electric"
   },
   "_id": "DDqjBOKRyxRDB4qD",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-thrown.svg",

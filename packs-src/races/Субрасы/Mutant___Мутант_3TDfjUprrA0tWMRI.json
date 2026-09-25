@@ -7,13 +7,13 @@
     "key": "mutant",
     "parentKey": "human",
     "cost": 500,
-    "effect": "+5 Cor и 1 дополнительная мутация (выбор из списка). Навыки Deceive или For.Lore (Mutants) становятся дружественными.",
+    "effect": "+5 Cor и 1 дополнительная мутация на выбор из списка: Животный Гибрид, Циклоп, Глаза-Стебельки, Панцирь, Множественные Глаза, Безголовый, Странные Руки, Величественные Рога, Дополнительная Рука, Хвост, Щупальце, Странный Язык — с субмутацией на выбор (1–10). Навык Deceive или For.Lore (Mutants) по выбору становится дружественным.",
     "god": "",
     "charMods": {},
     "talents": "",
     "removesTraits": [],
-    "description": "+5 Cor и 1 дополнительная мутация (выбор из списка). Навыки Deceive или For.Lore (Mutants) становятся дружественными.",
-    "notes": "Механикой не выражено: выбор дружественного Навыка между Deceive и Forbidden Lore (Mutants) — нет способа задать игроку выбор дружественности между двумя конкретными Навыками. +5 Cor и добор дополнительной мутации из списка уже смоделированы группами Механики (kind:\"corruption\" и kind:\"equipment\" equipMode:\"choice\" по паку mutations).",
+    "description": "+5 Cor и 1 дополнительная мутация на выбор из списка: Животный Гибрид, Циклоп, Глаза-Стебельки, Панцирь, Множественные Глаза, Безголовый, Странные Руки, Величественные Рога, Дополнительная Рука, Хвост, Щупальце, Странный Язык — с субмутацией на выбор (1–10). Навык Deceive или For.Lore (Mutants) по выбору становится дружественным.",
+    "notes": "Автоматизировано: +5 Cor (kind:corruption); доп. мутация — выбор только из 12 книжных (equipChoiceIds) со строкой субмутации на выбор 1–10 (submutationChoice, apps/submutations.mjs::chooseSubmutation); выбор дружественного Навыка Deceive ИЛИ For.Lore (Mutants) — окно после выдачи субрасы (apps/subrace-choice.mjs).",
     "bookSource": "DoomBC — Основная книга"
   },
   "_id": "3TDfjUprrA0tWMRI",
@@ -198,7 +198,22 @@
               "when": {
                 "negate": false,
                 "conditions": []
-              }
+              },
+              "equipChoiceIds": [
+                "pPO5CvN42bCeLVOo",
+                "Hdb0dzfpQKp8TkkD",
+                "loevdqDGs1X0MtBS",
+                "2n52RpWDImyz3Ev1",
+                "QNkitLzwFw8vE4Gn",
+                "GJ0E9NX1keEc7636",
+                "ApXVLD3qzW9ngnuC",
+                "7gVtvzDAlpTU48cd",
+                "xoWlsrVgPgeN8Ptp",
+                "F7iMcjy64r5w52bz",
+                "nUfrCbj7cIAEWope",
+                "7cchLXBNvN31QfzY"
+              ],
+              "submutationChoice": true
             }
           ]
         }

@@ -64,7 +64,8 @@
       "standard": false,
       "reloads": 10
     },
-    "damageSubtype": "crushing"
+    "damageSubtype": "crushing",
+    "techClass": "electric"
   },
   "_id": "OyOuffeOz1mUXUcJ",
   "img": "systems/warhammer-dbc/assets/item-icons/mechadendrite.svg",

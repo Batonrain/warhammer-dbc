@@ -49,7 +49,8 @@ import { sweepAllConditionClocks } from "./module/combat/condition-clock.mjs";
 import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
-         saveItemMechanics, mechanicsRelevantChange, syncGrantedEquipment } from "./module/apps/mechanics.mjs";
+         saveItemMechanics, mechanicsRelevantChange, syncGrantedEquipment,
+         syncNullZoneSuppression } from "./module/apps/mechanics.mjs";
 import { isItemActive, syncOrphanedModEffects } from "./module/apps/effects.mjs";
 import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
 import { applyRace, applySubrace, SKIP_MECHANICS_HOOK } from "./module/apps/races.mjs";
@@ -76,6 +77,7 @@ import { reconcileHyperGrowthToFit } from "./module/apps/hyper-growth.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
 import { hasRuleFlag }                from "./module/rules/flags.mjs";
 import { redirectCorruptionToMadness } from "./module/rules/corruption-madness.mjs";
+import { corruptionInVoid }          from "./module/rules/null-zones.mjs";
 import { FATE_SAVE_FLAG, FATE_SAVE_DIE, fateSpent, fateSaved, fatePoolLabel }
   from "./module/rules/fate-save.mjs";
 import { DEFAULT_CALENDAR_CONFIG }    from "./module/constants/imperial-calendar.mjs";
@@ -2441,6 +2443,18 @@ Hooks.on("updateActor", async (doc, changes, options, userId) => {
 // что пишут Cor напрямую (mechanics.mjs/psychic.mjs/homeworlds.mjs/creation.mjs/...) —
 // preUpdateActor мутирует changes синхронно, отдельного updateActor не нужно.
 // Арифметика — module/rules/corruption-madness.mjs (тестируется без стенда).
+// Пустота Парии (rules/null-zones.mjs): «не могут получать Порчу» — прирост
+// отменяется ДО перенаправления в Безумие ниже (регистрация раньше).
+Hooks.on("preUpdateActor", (doc, changes) => {
+  const newCor = foundry.utils.getProperty(changes, "system.corruption.value");
+  if (typeof newCor !== "number") return;
+  const keep = corruptionInVoid(doc, doc.system?.corruption?.value, newCor);
+  if (keep !== newCor) {
+    foundry.utils.setProperty(changes, "system.corruption.value", keep);
+    ui.notifications?.info(`${doc.name}: в Пустоте Парии Порча не прибавляется.`);
+  }
+});
+
 Hooks.on("preUpdateActor", (doc, changes) => {
   const newCor = foundry.utils.getProperty(changes, "system.corruption.value");
   if (typeof newCor !== "number") return;
@@ -2586,3 +2600,21 @@ Hooks.on("preUpdateItem", (item, changed) => {
   ui.notifications?.warn(`«${item.name}» — интегральная атака: снять её нельзя.`);
   return false;
 });
+
+// ── Пустота Парии / поле Дискорданта (rules/null-zones.mjs) ───────────────────
+// Черту-метку зоны выдаёт и снимает аура носителя (regions/auras.mjs, у ГМа).
+// По её появлению/снятию — и по новой мутации/импланту у того, кто уже в
+// зоне, — гасим/возвращаем сверхъестественные мутации и электронные импланты.
+// Применяет ровно один ГМ, как и сама аура.
+const NULL_ZONE_TRAITS = ["In the Pariah's Void", "In the Discordant's Field"];
+function _nullZoneRelevant(item) {
+  if (item?.type === "mutation" || item?.type === "implant") return true;
+  return item?.type === "trait" && NULL_ZONE_TRAITS.some(n => String(item.name || "").startsWith(n));
+}
+for (const hook of ["createItem", "deleteItem"]) {
+  Hooks.on(hook, item => {
+    if (game.users.activeGM !== game.user) return;
+    if (!(item?.parent instanceof Actor) || !_nullZoneRelevant(item)) return;
+    syncNullZoneSuppression(item.parent).catch(e => console.error("Warhammer DBC | зона Парии/Дискорданта:", e));
+  });
+}

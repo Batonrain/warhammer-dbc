@@ -1,0 +1,70 @@
+{
+  "name": "In the Discordant's Field / В Поле Дискорданта",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "NQHsbl75bk7fCc77",
+  "system": {
+    "description": "Вы в ауре Дискорданта: электрические устройства отключены как в поле Haywire (7) — электрическое стрелковое оружие не стреляет, электрическое рукопашное бьёт как примитивное, электронные импланты отключены; техночудеса с целью в поле проваливаются Критическим Провалом.",
+    "notes": "Метка зоны: выдаётся аурой носителя (module/regions/auras.mjs) всем в радиусе и снимается при выходе. Правила зоны читают флаг discordant.field (module/rules/null-zones.mjs).",
+    "benefit": "Вы в ауре Дискорданта: электрические устройства отключены как в поле Haywire (7) — электрическое стрелковое оружие не стреляет, электрическое рукопашное бьёт как примитивное, электронные импланты отключены; техночудеса с целью в поле проваливаются Критическим Провалом.",
+    "source": "аура",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "DiscordFieldZn01",
+  "effects": [],
+  "sort": 0,
+  "flags": {
+    "warhammer-dbc": {
+      "mechanics": [
+        {
+          "id": "DiscordFieldGrp1",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "DiscordFieldCap1",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "discordant.field",
+              "label": "In the Discordant's Field / В Поле Дискорданта",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786993504008,
+    "modifiedTime": 1786993504008,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!DiscordFieldZn01"
+}

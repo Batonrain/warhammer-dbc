@@ -28,6 +28,7 @@ import { conditionLevelField } from "../constants/conditions.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
+import { inPariahVoid } from "../rules/null-zones.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { redirectHitLocationForMachine } from "../rules/bronze-myrmidon.mjs";
 import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
@@ -644,6 +645,16 @@ async function _rollRunesOfProtection(actor) {
 
 // ─── Применить урон к актору ──────────────────────────────────────────────────
 export async function applyDamageToActor(actor, damageData) {
+  // Пустота Парии (rules/null-zones.mjs): урон психосилы (кроме Непрямой)
+  // по цели в ауре не проходит — сила развеивается. psychicPowerType
+  // приходит с кнопки урона карточки манифестации (sheets/tabs/psychic.mjs).
+  if (damageData?.psychicPowerType != null && damageData.psychicPowerType !== "indirect" && inPariahVoid(actor)) {
+    await postTestCard(actor, {
+      title: `🕳 Пустота Парии → ${esc(actor.name)}`,
+      lines: [`<div class="roll-threshold">«${esc(damageData.weaponName || "Психосила")}» развеивается в ауре Парии — урон не проходит.</div>`]
+    }, { sound: false });
+    return;
+  }
   // «Крайне миролюбив» (wdbc-gzuf, Серый Человек) — флаг «атакован в этом
   // бою» взводится здесь, в единой точке резолва урона (обычные атаки через
   // hooks.mjs, атаки Орды через horde-sheet.mjs — оба пути доходят сюда).

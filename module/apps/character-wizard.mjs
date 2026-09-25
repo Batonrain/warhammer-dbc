@@ -30,9 +30,9 @@ const START_LEVEL_FLAG_KEY   = "startLevelApplied";
 
 import { disabledRaceKeys }      from "../constants/features.mjs";
 import { BODY_TYPES }            from "../constants/body-map.mjs";
-import { raceGroupList, subracesOf, subraceEntries, raceDef } from "./race-library.mjs";
+import { raceGroupList, subracesOf, subraceEntries, subraceCostAt, raceDef } from "./race-library.mjs";
 import { applyRace, applySubrace, applyLegion, applyYnnari, applyHarlequin,
-         actorRaceItem, actorSubraceItem }    from "./races.mjs";
+         actorRaceItem, subraceItemCurrent } from "./races.mjs";
 import { buildLegionOptions, buildChapterOptions,
          buildCultureLegionOptions }          from "../constants/legions.mjs";
 import { applyHomeworldPicks, homeworldSheetContext, needsIntBonusChoice, rollRandomHomeworldKey,
@@ -333,10 +333,19 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
         .map(r => ({ key: r.key, label: r.label, selected: r.key === sys.race }))
     })).filter(g => g.races.length);
     // Цена субрасы — рядом с названием: платится стартовым опытом на Этапе 4.
-    const subCosts = subraceEntries();
-    const subraceOpts = subracesOf(sys.race).map(s => {
-      const cost = Number(subCosts[s.key]?.cost) || 0;
-      return { key: s.key, label: cost ? `${s.label} (${cost} XP)` : s.label, selected: s.key === sys.subrace };
+    // Субраса, покупаемая уровнями (Затупленный 1–4), — строкой на уровень:
+    // значение «ключ@уровень», уровень пишется в system.subraceTier.
+    const subDefs = subraceEntries();
+    const curTier = Math.max(1, Number(sys.subraceTier) || 1);
+    const subraceOpts = subracesOf(sys.race).flatMap(s => {
+      const def = subDefs[s.key];
+      const tiers = def?.tierCosts?.length ? def.tierCosts.map((_, i) => i + 1) : [0];
+      return tiers.map(t => {
+        const cost = subraceCostAt(def, t || 1);
+        const name = t ? `${s.label} (${t})` : s.label;
+        return { key: t ? `${s.key}@${t}` : s.key, label: cost ? `${name} (${cost} XP)` : name,
+                 selected: s.key === sys.subrace && (!t || t === curTier) };
+      });
     });
     const isAstartes = sys.race === "astartes";
 
@@ -997,7 +1006,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     const sys = actor.system;
     if (actor.getFlag(START_LEVEL_FLAG_SCOPE, START_LEVEL_FLAG_KEY)) return true;
 
-    const start = this._startValues();
+    const start = this._startLevelResult();
     if (!start) return true;
     // Субраса оплачивается стартовым опытом «если его хватает» — не хватает:
     // остаёмся на Этапе 4, пусть выберут уровень повыше или снимут субрасу.
@@ -1020,11 +1029,18 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     if (start.subraceCost) {
       const log = Array.isArray(sys.experience?.log) ? foundry.utils.deepClone(sys.experience.log) : [];
       log.push({ at: Date.now(), amount: -start.subraceCost, kind: "spend",
-                 reason: `Субраса «${this._subraceDef()?.label || sys.subrace}» (из стартового опыта)` });
+                 reason: `Субраса «${this._subraceLabel() || sys.subrace}» (из стартового опыта)` });
       upd["system.experience.log"] = log;
     }
     await actor.update(upd);
     return true;
+  }
+
+  /** Подпись субрасы с уровнем, если она покупается уровнями: «Затупленный (2)». */
+  _subraceLabel() {
+    const def = this._subraceDef();
+    if (!def) return "";
+    return def.tierCosts?.length ? `${def.label} (${Math.max(1, Number(this.actor.system.subraceTier) || 1)})` : def.label;
   }
 
   /** Запись субрасы персонажа из библиотеки (с ценой) или null. */
@@ -1035,19 +1051,19 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /** Строка «Субраса: −цена → на счёт» для Этапа 4; null без платной субрасы. */
   _startSubraceInfo() {
-    const start = this._startValues();
+    const start = this._startLevelResult();
     if (!start?.subraceCost) return null;
-    return { label: this._subraceDef()?.label || "", cost: start.subraceCost,
+    return { label: this._subraceLabel(), cost: start.subraceCost,
              net: start.xp, short: start.xpShort };
   }
 
   /** Итог Этапа 4 с текущим выбором уровня, добавками и ценой субрасы. */
-  _startValues() {
+  _startLevelResult() {
     const sys = this.actor.system;
     return startLevelValues({
       level: this.startLevelKey, astartes: sys.race === "astartes",
       extraXp: this.startExtraXp, extraInf: this.startExtraInf, extraCor: this.startExtraCor,
-      subraceCost: this._subraceDef()?.cost || 0
+      subraceCost: subraceCostAt(this._subraceDef(), sys.subraceTier)
     });
   }
 
@@ -2208,7 +2224,10 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       if (ev.currentTarget.value === "") return; // плейсхолдер «— выбрать —», не настоящая раса
       this.actor.update({ "system.race": ev.currentTarget.value, "system.subrace": "" }).then(() => this.render(false));
     });
-    on(".wiz-subrace-sel", "change", ev => this.actor.update({ "system.subrace": ev.currentTarget.value }));
+    on(".wiz-subrace-sel", "change", ev => {
+      const [key, tier] = String(ev.currentTarget.value).split("@");
+      return this.actor.update({ "system.subrace": key, "system.subraceTier": Number(tier) || 1 });
+    });
     on(".wiz-align-sel", "change", ev => this.actor.update({ "system.alignment": ev.currentTarget.value }));
     on(".wiz-body-type-sel", "change", ev => this.actor.update({ "system.bodyType": ev.currentTarget.value }));
 
@@ -2466,7 +2485,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     // Перерисовка — только ради строки цены субрасы («на счёт N XP»).
     on(".wiz-start-xp",  "change", ev => {
       this.startExtraXp  = parseInt(ev.currentTarget.value)  || 0;
-      if (this._subraceDef()?.cost) this.render(false);
+      if (this._subraceDef()) this.render(false);
     });
     on(".wiz-start-inf", "change", ev => { this.startExtraInf = parseInt(ev.currentTarget.value) || 0; });
     on(".wiz-start-cor", "change", ev => { this.startExtraCor = parseInt(ev.currentTarget.value) || 0; });
@@ -2609,7 +2628,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     const actor = this.actor;
     const sys = actor.system;
     if (sys.race && !actorRaceItem(actor)) return false;
-    if (sys.subrace && !actorSubraceItem(actor)) return false;
+    if (sys.subrace && !subraceItemCurrent(actor)) return false;
     return true;
   }
 
@@ -2626,7 +2645,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     const createTraits = (list, source) => actor.sheet?._createTraitsFromList?.(list, source);
 
     if (sys.race && !actorRaceItem(actor)) await applyRace(actor, sys.race);
-    if (sys.subrace && !actorSubraceItem(actor)) await applySubrace(actor, sys.subrace);
+    if (sys.subrace && !subraceItemCurrent(actor)) await applySubrace(actor, sys.subrace);
     if (sys.race === "astartes" && sys.geneSeed?.legion) await applyLegion(actor, { createTraits });
     if (sys.race === "ynnari" && sys.ynnariPast) await applyYnnari(actor, { createTraits });
     if (sys.race === "harlequin" && sys.harlequinPast) await applyHarlequin(actor, { createTraits });

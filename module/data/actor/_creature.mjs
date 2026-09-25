@@ -187,6 +187,9 @@ export function creatureSchema({ granted = false } = {}) {
     bookSource:    str("", "Книга-источник"),
     race:          str("", "Раса"),
     subrace:       str("", "Подраса"),
+    // Уровень купленной субрасы (Затупленный 1–4: 500/750/1000/1250 xp).
+    // Формулы Механики читают его как «subtier» (rules/mech-formula.mjs).
+    subraceTier:   num(1, "Уровень субрасы"),
     ynnariPast:    str("", "Прошлое Иннари"),
     harlequinPast: str("", "Прошлое Арлекина"),
     harlequinMasque: str("", "Маскарад"),
@@ -279,6 +282,10 @@ export function creatureSchema({ granted = false } = {}) {
       max:   num(0, "Аблативный AP-щит (максимум)")
     }, { label: "Аблативный AP-щит" }),
     fate:      pool("Судьба"),
+    // Сдвиг максимума Очков Бесчестия Хаосита (Inf.b ± N) — пишется
+    // ActiveEffect'ом Механики poolMax с целью «infamy» (Наследник +1,
+    // Затупленный −уровень); читает apps/infamy-points.mjs::actorInfamyMax.
+    infamyMaxMod: num(0, "Сдвиг максимума Бесчестия"),
     deadMight: pool("Мощь мёртвых"),
     // Руны Сигиллитов (wdbc-fsl9) — ресурс Элитного Архетипа «Последователь
     // Ордена Сигиллитов». Пул, а не Состояние: у Состояния в этой системе нет

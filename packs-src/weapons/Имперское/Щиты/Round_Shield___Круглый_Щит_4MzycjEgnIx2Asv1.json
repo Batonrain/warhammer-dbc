@@ -69,7 +69,8 @@
     "shieldAP": 2,
     "shieldZones": "Т+Р1+Р2+(Г)",
     "shieldForm": "Круглый",
-    "damageSubtype": "crushing"
+    "damageSubtype": "crushing",
+    "techClass": "none"
   },
   "_id": "4MzycjEgnIx2Asv1",
   "img": "systems/warhammer-dbc/assets/item-icons/shield.svg",

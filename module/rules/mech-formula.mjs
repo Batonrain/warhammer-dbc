@@ -32,7 +32,9 @@ const CHAR_KEYS = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel", "inf"]
 // Раньше выразить это было нечем ни для одной характеристики, кроме Порчи, и
 // авторы подставляли «P.b» — то есть урезали книжную дальность в ~10 раз.
 const RAW_KEYS = CHAR_KEYS.map(k => `${k}v`);
-const KEYS = [...CHAR_KEYS, "cor", "pr", "corv", ...RAW_KEYS];
+// «subtier» — уровень купленной субрасы (system.subraceTier, Затупленный 1–4):
+// рейтинг Blunted и штраф к максимуму Бесчестия задаются одной формулой.
+const KEYS = [...CHAR_KEYS, "cor", "pr", "corv", "subtier", ...RAW_KEYS];
 
 // Каноническая нотация системы — «X.b» (resolveCharFormula, module/helpers/
 // utils.mjs: WS.b, Cor.b, однобуквенные A/I/P/W/F как алиасы Ag/Int/Per/WP/Fel).
@@ -63,7 +65,8 @@ export function mechRollData(actor) {
     // «Cor.b» (напр. Herald of Humility «½Cor (окр.▲)м», не «Cor.b м»,
     // wdbc-1rno) — «cor» здесь исторически уже занят под Cor.b (см. шапку
     // файла), поэтому raw-значение получает отдельный ключ.
-    corv: Number(actor?.system?.corruption?.value) || 0
+    corv: Number(actor?.system?.corruption?.value) || 0,
+    subtier: Math.max(1, Number(actor?.system?.subraceTier) || 1)
   };
   for (const k of CHAR_KEYS) {
     data[k] = bonus(k);

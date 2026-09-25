@@ -69,7 +69,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Меч"
+    "meleeCategory": "Меч",
+    "techClass": "electric"
   },
   "_id": "d174x8tsS9uWlZOD",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

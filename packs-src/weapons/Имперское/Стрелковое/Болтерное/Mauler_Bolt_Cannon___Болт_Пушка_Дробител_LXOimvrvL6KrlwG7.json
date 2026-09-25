@@ -68,7 +68,8 @@
       "standard": false,
       "reloads": 10
     },
-    "drukhari": false
+    "drukhari": false,
+    "techClass": "mechanical"
   },
   "_id": "LXOimvrvL6KrlwG7",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-heavy.svg",

@@ -69,6 +69,7 @@ import { legacyWrathEffectiveRof, takenMutationNames } from "../rules/legacy-wea
 import { actorInfamyValue } from "../apps/infamy-points.mjs";
 import { isSabre, NS as SABRE_NS, SABRE_PENDING_FLAG } from "../combat/sabre-second-attack.mjs";
 import { isZeroedByLoss, ZERO_EFFECTS } from "../rules/char-loss.mjs";
+import { fieldDisablesWeapon } from "../rules/null-zones.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -96,6 +97,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Натиск/Бег (movement-actions.mjs).
   if (isHallucinatingCannotAttack(actor))
     return ui.notifications.warn("⚠️ Галлюцинации («Я маленький...») — не может совершать Атаки.");
+  // Поле Дискорданта (rules/null-zones.mjs, как Haywire (7)): электрическое
+  // стрелковое оружие не стреляет; рукопашное бьёт выключенным (ниже).
+  if (fieldDisablesWeapon(actor, item) && item.system?.weaponClass !== "melee")
+    return ui.notifications.warn(`⚠️ «${item.name}»: в поле Дискорданта электрическое оружие не стреляет.`);
   // Наследие Ярости/Rage, ranged-ветка (wdbc-1rno.35, стр. 427): «+1 к
   // наибольшей RoF, или S/2− вместо S/−/−» — клон sys с этой точки, реальный
   // предмет не трогаем (module/rules/legacy-weapon.mjs::legacyWrathEffectiveRof,
@@ -1109,10 +1114,13 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
                      shock: "как примитивное, −2 урона",
                      power: sys.offProfile?.name ? `как «${sys.offProfile.name}»` : "как примитивное" };
   const canOff  = ["chain", "shock", "power"].includes(sys.weaponType);
-  const offHtml = (isMelee && canOff) ? `
+  // В поле Дискорданта электрическое рукопашное выключено принудительно —
+  // галочка стоит и не снимается (combat/attack.mjs держит то же самое).
+  const fieldOff = fieldDisablesWeapon(actor, item);
+  const offHtml = (isMelee && (canOff || fieldOff)) ? `
     <label class="attack-mod-check">
-      <input type="checkbox" id="atk-weaponoff"/>
-      <span>${rollIcon("bolt", "#ff9d4d")}Оружие выключено / подавлено ЭМИ — ${OFF_HINT[sys.weaponType]}</span>
+      <input type="checkbox" id="atk-weaponoff" ${fieldOff ? "checked disabled title=\"Поле Дискорданта\"" : ""}/>
+      <span>${rollIcon("bolt", "#ff9d4d")}Оружие выключено / подавлено ЭМИ — ${OFF_HINT[sys.weaponType] || "как примитивное"}${fieldOff ? " (поле Дискорданта)" : ""}</span>
     </label>` : "";
   const maximalHtml = wantMaximal ? `
     <label class="attack-mod-check">

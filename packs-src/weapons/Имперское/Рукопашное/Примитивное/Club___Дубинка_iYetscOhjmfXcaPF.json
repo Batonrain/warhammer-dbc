@@ -65,7 +65,8 @@
       "standard": false,
       "reloads": 10
     },
-    "damageSubtype": "crushing"
+    "damageSubtype": "crushing",
+    "techClass": "none"
   },
   "_id": "iYetscOhjmfXcaPF",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-mace.svg",

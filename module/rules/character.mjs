@@ -32,6 +32,7 @@ import { computePathPassives } from "../constants/aeldari-paths.mjs";
 import { manifestProfile } from "../constants/possession.mjs";
 import { vitalCharMods, vitalEffectiveStage, VITAL_TIME_FIELD } from "../constants/vitals.mjs";
 import { raceMatches } from "./race.mjs";
+import { subraceEntries } from "../apps/race-library.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { readAllMirrors } from "./condition-mirrors.mjs";
@@ -94,8 +95,13 @@ const MUTATION_THRESHOLDS_ASTARTES = [10, 30, 60, 90];
 /** Ближайший непройденный Порог Мутации, или null, если все уже пройдены (Cor 100 — не мутация, а Возвышение/Отродье). */
 export function nextMutationThreshold(system) {
   const cor = Number(system?.corruption?.value) || 0;
-  let table = raceMatches(system, "astartes") ? MUTATION_THRESHOLDS_ASTARTES : MUTATION_THRESHOLDS_HUMAN;
-  if (table === MUTATION_THRESHOLDS_ASTARTES && system?.alignment === "loyalist") {
+  // Затупленный «получает мутации как Космодесантник, а не человек» — флаг
+  // субрасы mutationsAsAstartes. Поблажка лоялисту ниже — только настоящим
+  // Астартес: она про их геносемя, не про таблицу.
+  const astartes = raceMatches(system, "astartes");
+  const asAstartes = astartes || !!subraceEntries()[system?.subrace || ""]?.mutationsAsAstartes;
+  let table = asAstartes ? MUTATION_THRESHOLDS_ASTARTES : MUTATION_THRESHOLDS_HUMAN;
+  if (astartes && system?.alignment === "loyalist") {
     table = table.filter(t => t >= 60);
   }
   return table.find(t => t > cor) ?? null;

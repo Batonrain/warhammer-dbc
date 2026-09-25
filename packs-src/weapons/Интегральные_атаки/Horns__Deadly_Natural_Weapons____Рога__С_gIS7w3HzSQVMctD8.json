@@ -63,7 +63,8 @@
     "damageSubtype": "",
     "penetration": 0,
     "meleeCategory": "",
-    "meleeSubtype": ""
+    "meleeSubtype": "",
+    "techClass": "none"
   },
   "_id": "gIS7w3HzSQVMctD8",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

@@ -51,6 +51,7 @@ import { collectTestMods } from "../../rules/roll-mods.mjs";
 import { KISS_OF_DEATH_FLAG } from "../../rules/kiss-of-death.mjs";
 import { triggerLegacyGleeOnFateSave } from "../../combat/legacy-weapon-kill-credit.mjs";
 import { isThrottleReady, markThrottleUsed } from "../../rules/cooldown.mjs";
+import { inPariahVoid } from "../../rules/null-zones.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -141,6 +142,13 @@ async function _confirmSusAnInstead(actor, reason) {
  */
 async function _resolveFateSave(actor, kind, cfg, { eternalWarrior = null, confirmSusAn = _confirmSusAnInstead } = {}) {
   const title = kind === "divine" ? "Божественная Защита" : "Чудесное Спасение";
+  // Пустота Парии (rules/null-zones.mjs): «не могут… избегать смерти,
+  // сжигая Бесчестие или Очки Судьбы» — у Хаосита это постоянный Inf, мимо
+  // пула, поэтому отказ здесь, а не только в spendFromInfamyPool.
+  if (inPariahVoid(actor)) {
+    ui.notifications?.warn(`${title}: в Пустоте Парии нельзя избежать смерти, сжигая Бесчестие/Судьбу.`);
+    return;
+  }
   const pool = fatePoolLabel(actor);
   const free = eternalWarrior === "free" || eternalWarrior === "flat";
   // Цена обычного пути у хаосита — характеристика Inf (rules/death-save.mjs);
@@ -209,6 +217,7 @@ async function _resolveFateSave(actor, kind, cfg, { eternalWarrior = null, confi
     newValue = current - loss;
   } else {
     const spend = await spendFromInfamyPool(actor, loss, src.path);
+    if (!spend) return;
     costUpd[src.path] = spend.poolValue;
     newValue = spend.poolValue;
     if (spend.tempSpent) spentNote = `, из них ${spend.tempSpent} из временного запаса`;

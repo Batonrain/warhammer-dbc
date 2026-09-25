@@ -68,7 +68,8 @@
     "damage": "1d10+5",
     "damageType": "rending",
     "penetration": 2,
-    "meleeCategory": ""
+    "meleeCategory": "",
+    "techClass": "none"
   },
   "_id": "ENhZ3WE6lPfrv8HE",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

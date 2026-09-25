@@ -66,7 +66,8 @@
       "reloads": 10
     },
     "meleeCategory": "Нож",
-    "wraithbone": true
+    "wraithbone": true,
+    "techClass": "none"
   },
   "_id": "J1T1ygRfCHP3dvMH",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-knife.svg",

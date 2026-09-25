@@ -70,6 +70,7 @@ import { counterAttackTriggers, counterAttackSectionHtml } from "./counter-attac
 import { invocationNaturalAdd } from "../rules/invocation-natural.mjs";
 import { suffersBlindness } from "../rules/blindness.mjs";
 import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
+import { fieldDisablesWeapon } from "../rules/null-zones.mjs";
 import { isHeadHit } from "./armor-properties.mjs";
 
 /**
@@ -122,8 +123,10 @@ export async function rollExtremeDamage(dmgRoll, { wp, damageType, hitLocation =
       if (attacker && actorInfamyValue(attacker) >= 1) {
         const path = actorInfamyPath(attacker);
         const spend = await spendFromInfamyPool(attacker, 1, path);
-        await attacker.update({ [path]: spend.poolValue });
-        wp.legacyCleavingRollActive = true;
+        if (spend) {
+          await attacker.update({ [path]: spend.poolValue });
+          wp.legacyCleavingRollActive = true;
+        }
       } else {
         ui.notifications?.warn("Кромсающее: нет Очков Бесчестия — обычный бросок 1d5+1.");
       }
@@ -237,11 +240,21 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   _mergedEntries = withWitchsEdge(item, _mergedEntries);
 
   // ── Выключенное оружие (стр. 209-211) ────────────────────────────────────
+  // Поле Дискорданта (rules/null-zones.mjs): электрическое рукопашное бьёт
+  // выключенным, даже если окно атаки обошли (другие пути до броска).
+  const fieldOff = fieldDisablesWeapon(actor, item);
   const off = weaponOffEffects({
-    sys, entries: _mergedEntries, on: !!opts.weaponOff, basePen: effPen0, gripDmgFlat
+    sys, entries: _mergedEntries, on: !!opts.weaponOff || fieldOff, basePen: effPen0, gripDmgFlat
   });
   _mergedEntries = off.entries;
-  const offDmgMod = off.dmgMod, offPenMod = off.penMod, offNote = off.note;
+  // Прочая электрика ближнего боя (экзотика «тех» и т.п.) своей строки в
+  // weaponOffEffects не имеет — в поле Дискорданта она просто примитивная.
+  let fieldOffNote = "";
+  if (fieldOff && !off.note) {
+    if (!_mergedEntries.some(e => e.key === "primitive")) _mergedEntries.push({ key: "primitive", rating: 0, rating2: 0 });
+    fieldOffNote = "Поле Дискорданта: оружие выключено, работает как примитивное.";
+  }
+  const offDmgMod = off.dmgMod, offPenMod = off.penMod, offNote = off.note || fieldOffNote;
   if (off.damage) effDamage = off.damage;
 
   // Осколочное оружие: длинная очередь рвёт плоть — добавляем Tearing к этому

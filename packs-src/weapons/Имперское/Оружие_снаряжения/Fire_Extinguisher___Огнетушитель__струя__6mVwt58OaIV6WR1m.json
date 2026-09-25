@@ -61,7 +61,8 @@
       "standard": false,
       "reloads": 10
     },
-    "rangeBands": []
+    "rangeBands": [],
+    "techClass": "none"
   },
   "_id": "6mVwt58OaIV6WR1m",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",
