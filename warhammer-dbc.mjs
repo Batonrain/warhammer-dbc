@@ -136,6 +136,7 @@ import { migrateBornForWarDivination, announceBornForWarRepicks } from "./module
 import { migrateWarpforgedPlate } from "./module/migrations/warpforged-plate-fix.mjs";
 import { migrateNimbleRating } from "./module/migrations/nimble-rating.mjs";
 import { migrateSightAngle } from "./module/migrations/sight-angle.mjs";
+import { migrateStringListRestore } from "./module/migrations/string-list-restore.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
 import { runMigrationGate } from "./module/migrations/unlinked-tokens.mjs";
 import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
@@ -582,6 +583,12 @@ Hooks.once("init", () => {
   // Версия проставления угла обзора 210° старым акторам и токенам сцен —
   // хук preCreateActor ставит его только новым (одноразовая, wdbc-bjy1.6)
   game.settings.register("warhammer-dbc", "sightAngleVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия восстановления строк-ключей (свойства брони и т.п.), потерянных
+  // схемой ArrayField(ObjectField) (одноразовая, wdbc-x1nz.2.81)
+  game.settings.register("warhammer-dbc", "stringListRestoreVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -1046,7 +1053,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -1249,6 +1256,21 @@ Hooks.once("ready", async () => {
     if (!result?.failed) await game.settings.set("warhammer-dbc", "sightAngleVersion", VERSION);
     else console.warn("Warhammer DBC | Угол обзора: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
   } catch (e) { console.error("Warhammer DBC | Угол обзора:", e); }
+});
+
+// ── Одноразовая правка: свойства брони, пути отравления и снимаемые
+// модификацией свойства, потерянные схемой ArrayField(ObjectField) — ключи
+// берутся из компендиума-источника (wdbc-x1nz.2.81) ──
+// Ручной перезапуск: game.warhammerDBC.migrateStringListRestore()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "stringListRestoreVersion") || 0) >= VERSION) return;
+  try {
+    const result = await migrateStringListRestore();
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "stringListRestoreVersion", VERSION);
+    else console.warn("Warhammer DBC | Свойства брони: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
+  } catch (e) { console.error("Warhammer DBC | Свойства брони:", e); }
 });
 
 // ── Одноразовая доливка: биоимпланты, выданные до появления Доступности ──────

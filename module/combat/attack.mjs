@@ -69,6 +69,7 @@ import { isFusedByHandOfDeath }                       from "../rules/hand-of-dea
 import { counterAttackTriggers, counterAttackSectionHtml } from "./counter-attack.mjs";
 import { invocationNaturalAdd } from "../rules/invocation-natural.mjs";
 import { suffersBlindness } from "../rules/blindness.mjs";
+import { isHeadHit } from "./armor-properties.mjs";
 
 /**
  * Экстремальный урон (стр. 166-170): куб урона выбросил Х+ — порог берётся из
@@ -1164,6 +1165,19 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // строке урона, и в кнопке применения урона.
   const hits = damageRolls.map((d, i) => ({ ...d, loc: locForHit(i) }));
 
+  // I(Cr) по голове (Виды Урона, wdbc-x1nz.2.80): «получает свойство
+  // Concussive (–1), попадая в голову» — или +1 к рейтингу, если оно уже было
+  // (тот же приём, что Молот по лежащему выше). Место известно только теперь,
+  // поэтому свойства карточки пересобираются здесь; на урон Concussive не влияет.
+  const crushingHead = (ammoDmgSubtype || effDmgSubtype) === "crushing" && hits.some(h => isHeadHit(h.loc));
+  const cardProps = crushingHead ? (() => {
+    const entries = _mergedEntries.map(e => ({ ...e }));
+    const conc = entries.find(e => e.key === "concussive");
+    if (conc) conc.rating = (Number(conc.rating) || 0) + 1;
+    else entries.push({ key: "concussive", rating: -1 });
+    return resolveWeaponPropsList(entries);
+  })() : wProps;
+
   // Наследие Предательства, Оружие Наследия (wdbc-1rno.35, История 4, стр.
   // 427): нат. 100 на попадание — «оружие попадает по случайному союзнику»
   // ВМЕСТО исходной цели. rv (roll.total) — тот же сырой d100, что дал сам
@@ -1612,13 +1626,14 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
           : ""
       },
       blocks: {
-        props:         buildPropertyChatBlock(wProps),
+        props:         buildPropertyChatBlock(cardProps),
         quality:       buildQualityChatBlock(item),
         splinter:      isSplinter(sys) ? splinterReminders() : "",
         // ammoName (wdbc-utaw) — какой боеприпас заряжен на ЭТОТ выстрел, для
         // спец-боеприпасов, чей эффект зависит от собственной идентичности
         // (Гиперрост), не только от ключа свойства Toxic.
-        targetEffects: buildTargetEffectButtons(wProps, { hit, ammoName: loadedAmmo?.name || "" }),
+        targetEffects: buildTargetEffectButtons(cardProps, { hit, ammoName: loadedAmmo?.name || "",
+          damageType: effDmgType, hitLocation: hits[0]?.loc || "" }),
         counterAttack: counterAttackBlock,
         dice:          renderedDice
       }

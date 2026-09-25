@@ -35,7 +35,7 @@ export class CoverBehaviorType extends foundry.data.regionBehaviors.RegionBehavi
       coverAp: new fields.NumberField({
         required: true, integer: true, initial: 0, min: 0, nullable: false,
         label: "AP укрытия",
-        hint: "Доп. AP поглощения цели, стоящей в этом Укрытии, при Отскоке в него (стр. 12) — книжная цифра по типу Укрытия, стр. 30-31."
+        hint: "Доп. AP поглощения цели в этом Укрытии против стрельбы через него (и при Отскоке в него, стр. 12) — книжная цифра по типу Укрытия, стр. 30-31. Попадание, пробившее укрытие, снимает 1 AP (Тирантикос — 1d10)."
       })
     };
   }

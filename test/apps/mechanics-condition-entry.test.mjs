@@ -102,7 +102,7 @@ describe("applyMechEntry: разовые режимы", () => {
       "system.conditions.stunned": true, "system.conditions.stunnedRounds": 3
     }]);
     expect(actor.effects).toHaveLength(1);
-    expect(actor.effects[0].duration).toEqual({ value: 3, units: "rounds" });
+    expect(actor.effects[0].duration).toEqual({ value: 3, units: "rounds", expiry: "turnEnd" });
   });
 
   it("срок — формула бонуса характеристики, как «Рейтинг» у Черты", async () => {
@@ -111,7 +111,7 @@ describe("applyMechEntry: разовые режимы", () => {
       condKey: "stunned", condDurationValue: "t", condDurationUnit: "rounds"
     }), source);
     expect(actor.updates[0]["system.conditions.stunnedRounds"]).toBe(5);
-    expect(actor.effects[0].duration).toEqual({ value: 5, units: "rounds" });
+    expect(actor.effects[0].duration).toEqual({ value: 5, units: "rounds", expiry: "turnEnd" });
   });
 
   it("сила у Состояния с уровнями — своё поле, и эффекта без срока не заводится", async () => {

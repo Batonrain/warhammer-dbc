@@ -194,6 +194,52 @@ export async function breachArmorAtLocation(actor, armorKey) {
 }
 
 /**
+ * Обнуляет ли свойство брони её AP против ЭТОГО попадания. Одно правило на
+ * два случая: флаги одного предмета (слой, wdbc-x1nz.2.81) и слитые флаги
+ * всей локации (прежний путь, если слоёв нет).
+ */
+export function armorNulledBy(f, { damageType, damageSubtype = "", melee = false, hitLocation = "", frontArcHit = false } = {}) {
+  if (!f) return false;
+  return !!((f.noEnergy && damageType === "energy")
+    || (f.noImpact && damageType === "impact")
+    || (damageSubtype && f.noApVsSubtype?.[damageSubtype])
+    || (f.noRanged && !melee)
+    || (f.noJointCalled && hitLocation === "Сочленение / Шея")
+    || (f.noEyeCalled && hitLocation === "Глаз (Голова)")
+    || (f.frontArcNoProtect && frontArcHit));
+}
+
+/** Флаги-обнулители одного предмета — то, что кладётся в его слой. */
+export function armorNullers(propAuto = {}) {
+  return {
+    noEnergy: !!propAuto.noEnergy, noImpact: !!propAuto.noImpact,
+    noApVsSubtype: { ...(propAuto.noApVsSubtype || {}) },
+    noRanged: !!propAuto.noRanged, noJointCalled: !!propAuto.noJointCalled,
+    noEyeCalled: !!propAuto.noEyeCalled, frontArcNoProtect: !!propAuto.frontArcNoProtect
+  };
+}
+
+/**
+ * AP носимой брони локации из её слоёв — тем же порядком и правилом, что
+ * rules/character/armour.mjs: «stacks» складывается, прочие берут лучшее.
+ * keep — какие слои считать (прочие как будто сняты).
+ */
+export function wornLayersAP(layers, keep = () => true) {
+  let acc = 0;
+  for (const l of layers ?? []) {
+    if (!keep(l)) continue;
+    const ap = Math.max(0, Number(l.ap) || 0);
+    acc = l.stacks ? acc + ap : Math.max(acc, ap);
+  }
+  return acc;
+}
+
+/** Попадание «в голову» для правил вида урона (I(Cr)): голова и глаз. */
+export function isHeadHit(hitLocation) {
+  return hitLocation === "Голова" || hitLocation === "Глаз (Голова)";
+}
+
+/**
  * Считает итоговый AP брони одной локации против одного попадания, применяя
  * флаги её свойств (см. mergeArmorLocFlags). Чистая функция — не знает про
  * пробитие/T.b/Копьё, это делает вызывающая сторона (module/combat/damage.mjs)
@@ -218,21 +264,36 @@ export async function breachArmorAtLocation(actor, armorKey) {
  * @param {number|null} wornAP  часть baseArmorAP от носимой брони/щита
  *   (absorption.wornOnly); остаток — естественная броня Черт/имплантов.
  *   Нужен только правилу Глаза; null — считать весь baseArmorAP носимым.
+ * @param {?object[]} layers  слои носимой брони этой локации ({ap, stacks,
+ *   nullers}, rules/character/armour.mjs). wdbc-x1nz.2.81: Мягкая, Проводящая
+ *   и прочие обнулители снимают AP ТОЛЬКО своего предмета — жёсткие слои и
+ *   естественная броня остаются. Без слоёв — прежний путь: слитые flags
+ *   обнуляют всю локацию.
+ * @param {number}  otherWornAP  лучшее из не-предметного носимого AP локации
+ *   (ручное поле, пол, щит) — с ним сравнивается остаток слоёв.
+ * @param {boolean} locationNulled  обнулить локацию целиком (Ртуть: вся часть
+ *   тела «электропроводна», не один предмет).
  */
 export function resolveArmorAbsorptionAP({
   baseArmorAP, vsTypeBonus = 0, damageType, subtypeBonus = 0, damageSubtype = "",
   melee = false, hitLocation = "",
-  primitive = false, flags = null, frontArcHit = false, wornAP = null
+  primitive = false, flags = null, frontArcHit = false, wornAP = null,
+  layers = null, otherWornAP = 0, locationNulled = false
 }) {
   const pf = flags || emptyArmorLocFlags();
-  const armorNulled = (pf.noEnergy && damageType === "energy")
-                    || (pf.noImpact && damageType === "impact")
-                    || (damageSubtype && pf.noApVsSubtype?.[damageSubtype])
-                    || (pf.noRanged && !melee)
-                    || (pf.noJointCalled && hitLocation === "Сочленение / Шея")
-                    || (pf.noEyeCalled  && hitLocation === "Глаз (Голова)")
-                    || (pf.frontArcNoProtect && frontArcHit);
-  if (armorNulled) return 0;
+  const hit = { damageType, damageSubtype, melee, hitLocation, frontArcHit };
+  if (locationNulled) return 0;
+  if (Array.isArray(layers)) {
+    const other = Math.max(0, Number(otherWornAP) || 0);
+    const drop = Math.max(wornLayersAP(layers), other)
+               - Math.max(wornLayersAP(layers, l => !armorNulledBy(l.nullers, hit)), other);
+    baseArmorAP = Math.max(0, baseArmorAP - drop);
+    if (wornAP != null) wornAP = Math.max(0, (Number(wornAP) || 0) - drop);
+  } else if (armorNulledBy(pf, hit)) return 0;
+
+  // I(Cr) по голове (Виды Урона, wdbc-x1nz.2.80): «игнорирует половину
+  // (окр.▼) брони головы» — остаётся большая половина, ⌈AP/2⌉.
+  const halveHead = ap => (damageSubtype === "crushing" && isHeadHit(hitLocation)) ? Math.ceil(ap / 2) : ap;
 
   // Попадание в Глаз — попадание в голову, игнорирующее AP шлема целиком
   // (стр. 34), кроме силовых шлемов: у них по правилам дома всё равно есть
@@ -240,10 +301,10 @@ export function resolveArmorAbsorptionAP({
   // Естественная броня (Черты, импланты) — не шлем, она остаётся.
   if (hitLocation === "Глаз (Голова)") {
     const natural = wornAP == null ? 0 : Math.max(0, baseArmorAP - (Number(wornAP) || 0));
-    return natural + (pf.isPowerArmor ? 4 : 0);
+    return halveHead(natural + (pf.isPowerArmor ? 4 : 0));
   }
 
-  let ap = baseArmorAP + vsTypeBonus + subtypeBonus;
+  let ap = halveHead(baseArmorAP + vsTypeBonus + subtypeBonus);
   // Попадание в Сочленение/Шею — AP этой части тела втрое меньше настоящего,
   // округление вниз (стр. 34). У брони без сочленений (Мягкая) выцелить
   // нечего — идёт полный AP.

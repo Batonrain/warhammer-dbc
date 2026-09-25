@@ -340,7 +340,7 @@ async function _maybeTriggerCrippling(actor, cost) {
   });
   const { applyCripplingTrigger } = await import("./damage.mjs");
   for (const w of wounds) {
-    await applyCripplingTrigger(actor, Number(w.rating) || 0, w.locationLabel || w.location || "");
+    await applyCripplingTrigger(actor, Number(w.rating) || 0, w.locationLabel || w.location || "", w.damageType || "");
   }
 }
 

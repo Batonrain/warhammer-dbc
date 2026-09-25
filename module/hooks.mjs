@@ -19,6 +19,7 @@ import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyC
 import { isFrontArcHit, resolveAttackerToken } from "./combat/facing.mjs";
 import { rollPacifismTest } from "./combat/pacifism.mjs";
 import { rollHordePsychTest, rollHordeFlameTest } from "./combat/horde-psych.mjs";
+import { secondaryCritHtml } from "./combat/secondary-crit.mjs";
 import { ROUND_DAMAGE_FLAG }             from "./combat/horde-damage.mjs";
 import { _performSwerve, applyStructureLoss } from "./combat/vehicle.mjs";
 import { performWalkerParry, performWalkerDodge, standUpFromTipOver, showTipOverDialog } from "./combat/walker.mjs";
@@ -104,8 +105,8 @@ import { hasRuleFlag as hasFleshmetalFlag } from "./rules/flags.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { liftDivineProtection, wakeDivineProtected } from "./sheets/tabs/death.mjs";
-import { processConditionTurnStart, processConditionTurnEnd } from "./combat/condition-ticks.mjs";
-import { sweepConditionDurations } from "./combat/condition-effects.mjs";
+import { processConditionTurnStart, processConditionTurnEnd, sweepApplierTurnEnd } from "./combat/condition-ticks.mjs";
+import { sweepConditionDurations, onConditionEffectExpired } from "./combat/condition-effects.mjs";
 import { conditionExpiryLine, postConditionCard, setBurningDamageFormula } from "./combat/condition-ticks.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart,
@@ -1203,7 +1204,7 @@ export function registerHooks() {
         const ds = ev.currentTarget.dataset;
         const actor = ds.actorUuid ? (await fromUuid(ds.actorUuid).catch(() => null)) : null;
         if (!actor) return ui.notifications.warn("⚠️ Актор не найден (возможно, удалён).");
-        await applyCripplingTrigger(actor, parseInt(ds.rating || "0"), ds.location || "");
+        await applyCripplingTrigger(actor, parseInt(ds.rating || "0"), ds.location || "", ds.damageType || "");
       });
     });
 
@@ -2216,6 +2217,17 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
   // провал теста вместо него стоит психологического урона, равного урону в
   // Магнитуду от этого попадания. Раньше ветка ниже писала Орде несуществующие
   // Горение и Раны — кнопка молча ничего не делала.
+  // Яд по Технике (Виды Урона, wdbc-x1nz.2.82): токсическое «действует только
+  // на живых существ» — Отравление и его урон машине не накладываются.
+  if (actor.type === "vehicle" && condition === "poisoned") {
+    return ChatMessage.create({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content: `<div class="wh-roll-result">
+        <div class="roll-header">${label} → ${esc(actor.name)}</div>
+        <div class="roll-outcome"><span class="roll-success">Яд действует только на живых — Технику не травит</span></div>
+      </div>`
+    });
+  }
   if (actor.type === "horde" && condition === "burning") {
     return rollHordeFlameTest(actor, { testChar: testChar || "ag", testMod, messageId, force, label });
   }
@@ -2308,12 +2320,21 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
 
   // Доп. урон (Токсичное и т.п.) — при провале теста, минуя броню
   let dmgNote = "";
+  // Крит. Эффект от доп. урона свойства (wdbc-x1nz.2.85): вид — по природе
+  // эффекта (яд — C, огонь — E), иначе вид урона самой атаки; место — место
+  // попадания карточки, без него — Торс.
+  const critCtx = {
+    damageType: condition === "poisoned" ? "chemical" : condition === "burning" ? "energy" : (ds.wpDmgType || "impact"),
+    hitLocation: ds.wpHitLocation || "Торс"
+  };
   if (!resisted && dmgFormula) {
     const dmgRoll = await new Roll(dmgFormula).evaluate();
     allRolls.push(dmgRoll);
     const dmg = dmgRoll.total;
-    const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, dmg);
-    dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Доп. урон (минуя броню): <b>${dmg}</b> → Раны ${currentWounds} → ${newWounds}${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>`;
+    const loss = await applyWoundLoss(actor, dmg);
+    const { currentWounds, newWounds, newCritical, gotCritical } = loss;
+    dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Доп. урон (минуя броню): <b>${dmg}</b> → Раны ${currentWounds} → ${newWounds}${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>`
+      + await secondaryCritHtml(actor, loss, critCtx);
     // Горение (wdbc-3pv5): у Огня (Flame) этот же dmg — рейтинг-бросок
     // свойства (damageFromRating), ровно то число, с которым Cooler/Морозное
     // Сердце сравнивают книжный порог «пламя наносит не больше 1d10» —
@@ -2342,8 +2363,10 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
     // «X+Провалы» (Bane, Vibro и т.п.): не кубик, а рейтинг×mult + add + Провалы
     // проваленного теста сопротивления — уже посчитано выше как deg.
     const dmg = rating * provalyMult + provalyAdd + deg;
-    const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, dmg);
-    dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Доп. урон (минуя броню, ${rating}×${provalyMult}+${provalyAdd}+${deg} Провалы): <b>${dmg}</b> → Раны ${currentWounds} → ${newWounds}${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>`;
+    const loss = await applyWoundLoss(actor, dmg);
+    const { currentWounds, newWounds, newCritical, gotCritical } = loss;
+    dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Доп. урон (минуя броню, ${rating}×${provalyMult}+${provalyAdd}+${deg} Провалы): <b>${dmg}</b> → Раны ${currentWounds} → ${newWounds}${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>`
+      + await secondaryCritHtml(actor, loss, critCtx);
   }
 
   await postTestCard(actor, {
@@ -2769,6 +2792,10 @@ function _attachFateContextMenu(message, html) {
 
   // Бой кончился раньше, чем подошёл отложенный Раунд Сус-ан Мембраны —
   // доносим исцеление немедленно, а не теряем его молча (module/apps/sus-an-heal.mjs).
+  // Срок Состояния «до конца Хода наложившего» (wdbc-x1nz.2.84): ядро
+  // помечает его истёкшим — снимаем уже после этой отметки, не наперегонки.
+  Hooks.on("updateActiveEffect", (effect, changes) => { onConditionEffectExpired(effect, changes); });
+
   Hooks.on("deleteCombat", async combat => {
     if (!game.user.isGM) return;
     await resolvePendingSusAnHeals(combat, { force: true });
@@ -3056,6 +3083,9 @@ function _attachFateContextMenu(message, html) {
         // Кровотечение/Горение (wdbc-j3yf) — книга бьёт ими «в конце своего
         // Хода», не в начале следующего.
         await processConditionTurnEnd(prevActor);
+        // Сроки в Раундах, наложенные в ЭТОТ Ход, кончаются в его конце — у
+        // кого бы они ни висели (книга, «Длительность Эффектов», wdbc-x1nz.2.84).
+        await sweepApplierTurnEnd(combat, prevId);
         // Snapshot/Выстрел Навскидку (wdbc-1rno): +1 ОД в конце Хода, если
         // не подвигался больше Полудвижения — тот же такт, читает
         // movement-actions.mjs::moveDegreeThisTurn (сбрасывается позже, на

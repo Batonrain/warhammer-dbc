@@ -8,7 +8,19 @@
 
 const CHARS = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel"];
 
+import { stringList, repairStringListAt } from "../string-list.mjs";
+
 export class DrugData extends foundry.abstract.TypeDataModel {
+
+  /**
+   * Строки-ключи, испорченные прежней схемой в {}, — в метку для мировой
+   * миграции (data/string-list.mjs). До очистки полей, поэтому здесь.
+   * @override
+   */
+  static migrateData(source) {
+    repairStringListAt(source, "poisonVector");
+    return super.migrateData(source);
+  }
 
   /** @override */
   static defineSchema() {
@@ -83,7 +95,7 @@ export class DrugData extends foundry.abstract.TypeDataModel {
         grantsConditionLevel:       num(1, "Уровень даваемого"),
         customEffect:               text("Особое")
       }, { label: "Особые действия пост-эффекта" }),
-      poisonVector:   new ArrayField(new ObjectField(), { label: "Пути отравления" }),
+      poisonVector:   stringList("Пути отравления"),
       poisonEffect:   text("Действие яда"),
       poisonTestChar: new StringField({ initial: "t", label: "Характеристика теста на яд" }),
       poisonTestMod:  num(0, "Модификатор теста на яд"),

@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from "vitest";
 import "../support/foundry-stub.mjs";
-import { coverApForToken } from "../../module/combat/cover.mjs";
+import { coverApForToken, coverRegionForShot } from "../../module/combat/cover.mjs";
 import { COVER_TYPE } from "../../module/regions/cover.mjs";
 
 function behavior({ type = COVER_TYPE, disabled = false, coverAp = 0 } = {}) {
@@ -44,5 +44,38 @@ describe("coverApForToken", () => {
   it("behavior другого типа игнорируется", () => {
     const region = { behaviors: [behavior({ type: "difficultTerrain", coverAp: 8 })] };
     expect(coverApForToken(tokenIn([region]))).toBe(0);
+  });
+});
+
+// «Разрушение Укрытий» (решение Сергея 24.09.2026): зона на сцене даёт AP
+// обычному стрелковому урону и изнашивается — но только если линия огня её
+// пересекает (стрелок за той же стеной — не прикрывает).
+describe("coverRegionForShot", () => {
+  const shooter = { center: { x: 0, y: 0 } };
+  const target = regions => ({ center: { x: 100, y: 0 }, document: { regions: new Set(regions), elevation: 0 } });
+  const wall = (ap, hit) => ({ behaviors: [behavior({ coverAp: ap })], testPoint: () => hit });
+
+  it("зона на линии огня — её AP и сам behavior (чтобы изнашивать)", () => {
+    const r = wall(6, true);
+    const found = coverRegionForShot(shooter, target([r]));
+    expect(found.ap).toBe(6);
+    expect(found.behavior).toBe(r.behaviors[0]);
+  });
+
+  it("линия огня зону не пересекает — не прикрывает", () => {
+    expect(coverRegionForShot(shooter, target([wall(6, false)]))).toBeNull();
+  });
+
+  it("несколько зон на линии — наибольший AP", () => {
+    expect(coverRegionForShot(shooter, target([wall(4, true), wall(9, true)])).ap).toBe(9);
+  });
+});
+
+describe("coverRegionForShot: документ токена вместо самого токена", () => {
+  it("TokenDocument стрелка (как отдаёт resolveAttackerToken) — берётся его object", () => {
+    const shooterDoc = { object: { center: { x: 0, y: 0 } } };
+    const region = { behaviors: [behavior({ coverAp: 6 })], testPoint: () => true };
+    const target = { center: { x: 100, y: 0 }, document: { regions: new Set([region]), elevation: 0 } };
+    expect(coverRegionForShot(shooterDoc, target)?.ap).toBe(6);
   });
 });

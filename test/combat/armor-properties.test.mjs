@@ -8,7 +8,7 @@ import { describe, it, expect, vi } from "vitest";
 import {
   resolveArmorProps, aggregateArmorAuto, mergeArmorLocFlags,
   emptyArmorLocFlags, resolveArmorAbsorptionAP, aggregateArmorSkillMods,
-  breachArmorAtLocation
+  breachArmorAtLocation, armorNullers
 } from "../../module/combat/armor-properties.mjs";
 
 describe("resolveArmorProps", () => {
@@ -415,5 +415,41 @@ describe("breachArmorAtLocation (wdbc-k0ff)", () => {
     expect(actor.updateEmbeddedDocuments).toHaveBeenCalledOnce();
     expect(a.system.breached).toBe(true);
     expect(b.system.breached).toBe(true);
+  });
+});
+
+// wdbc-x1nz.2.81: Мягкая/Проводящая и прочие обнулители снимают AP ТОЛЬКО
+// своего предмета — жёсткий слой и естественная броня остаются.
+describe("обнуление по предмету, а не по локации", () => {
+  const soft  = { ap: 2, stacks: true,  nullers: armorNullers({ noApVsSubtype: { crushing: true } }) };
+  const hard  = { ap: 5, stacks: false, nullers: armorNullers({}) };
+  const base = extra => ({ damageType: "impact", damageSubtype: "crushing", hitLocation: "Торс", ...extra });
+
+  it("мягкий поддоспешник под жёсткой бронёй: дубина снимает только его 2 AP", () => {
+    // слои: жёсткая 5, затем мягкая +2 (stacks) = 7; естественная +3 → база 10
+    expect(resolveArmorAbsorptionAP(base({ baseArmorAP: 10, layers: [hard, soft] }))).toBe(8);
+  });
+
+  it("одна мягкая броня — AP локации от неё обнулён, естественная остаётся", () => {
+    const onlySoft = { ...soft, stacks: false };
+    expect(resolveArmorAbsorptionAP(base({ baseArmorAP: 5, layers: [onlySoft] }))).toBe(3);
+  });
+
+  it("щит/ручное поле выше остатка слоёв — сравнивается с ним", () => {
+    const onlySoft = { ...soft, ap: 4, stacks: false };
+    expect(resolveArmorAbsorptionAP(base({ baseArmorAP: 4, layers: [onlySoft], otherWornAP: 3 }))).toBe(3);
+  });
+
+  it("Ртуть — вся часть тела целиком", () => {
+    expect(resolveArmorAbsorptionAP(base({ baseArmorAP: 10, layers: [hard], locationNulled: true }))).toBe(0);
+  });
+});
+
+// wdbc-x1nz.2.80: I(Cr) «игнорирует половину (окр.▼) брони головы».
+describe("I(Cr) по голове", () => {
+  it("остаётся большая половина AP головы, по торсу — полный", () => {
+    expect(resolveArmorAbsorptionAP({ baseArmorAP: 7, damageType: "impact", damageSubtype: "crushing", hitLocation: "Голова" })).toBe(4);
+    expect(resolveArmorAbsorptionAP({ baseArmorAP: 7, damageType: "impact", damageSubtype: "crushing", hitLocation: "Торс" })).toBe(7);
+    expect(resolveArmorAbsorptionAP({ baseArmorAP: 7, damageType: "impact", damageSubtype: "", hitLocation: "Голова" })).toBe(7);
   });
 });

@@ -774,7 +774,7 @@ export function prepareCharacterDerived(actor, system) {
     // Броня вынесена в rules/character/armour.mjs (wdbc-neez). Накопителей
     // сверху ей не нужно — считает по надетым предметам сама, — но четыре
     // её величины читают разделы ниже, поэтому она их возвращает.
-    const { armorFromItems, armorVsType, armorVsSubtype, propFlagsByLoc, sealedCoverage } =
+    const { armorFromItems, armorVsType, armorVsSubtype, propFlagsByLoc, sealedCoverage, layersByLoc } =
       prepareArmourDerived(actor, system);
     // ── Снятый шлем ────────────────────────────────────────────────────────
     // Показатель «сколько ОБ на голову даёт снаряжение» считается ДО снятия:
@@ -783,7 +783,7 @@ export function prepareCharacterDerived(actor, system) {
     const helmetOff = !!system.helmetOff && isFeatureEnabled("helmetless");
     system.helmetlessActive = helmetOff && armorFromItems.head > 0;
     // Теряются все ОБ на голове от носимой брони (естественная броня остаётся).
-    if (system.helmetlessActive) armorFromItems.head = 0;
+    if (system.helmetlessActive) { armorFromItems.head = 0; layersByLoc.head = []; }
 
     const armorManual = system.armor || {};
     // Ручные щиты (стр. 215): прикрывают зоны своим AP. Щит держат ПОВЕРХ брони,
@@ -851,6 +851,11 @@ export function prepareCharacterDerived(actor, system) {
       vsType:         armorVsType,
       vsSubtype:      armorVsSubtype,
       propFlags:      propFlagsByLoc,
+      // Слои носимой брони и лучшее из прочего носимого AP (ручное поле, пол,
+      // щит) — для обнуления по предмету, а не по локации (wdbc-x1nz.2.81).
+      layers:         layersByLoc,
+      otherWorn:      Object.fromEntries(Object.keys(AP_LOCATIONS).map(k => [k, Math.max(armorManual[k] || 0, armorFloorLoc[k] || 0, shieldAP[k] || 0)])),
+      otherWornNoShield: Object.fromEntries(Object.keys(AP_LOCATIONS).map(k => [k, Math.max(armorManual[k] || 0, armorFloorLoc[k] || 0)])),
       // Щит: АР без него (для «вне арки»), какие локации он реально даёт, и
       // какие из них — от Primitive-щита (core.json, «Типы Рукопашного
       // Оружия», разд. «Щит») — читает module/combat/damage.mjs.
