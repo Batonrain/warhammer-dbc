@@ -5186,8 +5186,8 @@ export const CAPABILITIES = {
     source: "Dark Prince's Child / Дитя Тёмного Принца", reader: ""
   },
   "trait.darkSight": {
-    label: "Видит в темноте.",
-    source: "Dark Sight / Ночное Зрение", reader: ""
+    label: "Видит в темноте. Реализовано (wdbc-1rno.36): галочки «Слабый свет» и «Тьма» окна атаки у носителя стоят 0 с подписью «Ночное Зрение» (опознание — и по имени Черты). Автоопределения освещения сцены нет — галочки ставит стол.",
+    source: "Dark Sight / Ночное Зрение", reader: "module/rules/vision-penalty-immunity.mjs — lightPenaltyImmunityReason; module/sheets/attack/mods.mjs"
   },
   "trait.dataAcquisition": {
     label: "Преимущество на тесты Awareness механизировано (wdbc-u0by, kind:\"reroll\"/keepBest). Иммунитет к кодам командования Боевых Лат Скитария — не механизировано, нет такого понятия в коде вовсе",

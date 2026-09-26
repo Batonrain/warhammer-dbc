@@ -27,6 +27,7 @@ import { isActorsOwnTurn } from "../../combat/delay-action.mjs";
 import { meleeEffectiveRange, parseGrips } from "../../constants/combat.mjs";
 import { longerWeaponBonus, closeQuartersPenalty, closeQuartersRange } from "../../rules/weapon-length.mjs";
 import { longRangeImmunityReason } from "../../rules/range-penalty-immunity.mjs";
+import { lightPenaltyImmunityReason, smokePenaltyImmunityReason } from "../../rules/vision-penalty-immunity.mjs";
 import { getInstalledMods } from "../../combat/weapon-mods.mjs";
 /**
  * @param {object} v состояние броска: оружие, токены, замеренная дистанция
@@ -89,9 +90,9 @@ export function situationalMods(v) {
     // Слабый свет (стр. 34, wdbc-x1nz.2.46): штраф только стрелковой — у
     // рукопашной книжная таблица «Стандартные Модификаторы Атаки» даёт
     // пустую ячейку (0), в отличие от Дыма/Тьмы ниже, где штраф есть у обеих.
-    { label: "Слабый свет",   value: isMelee ? 0 : -10, visionPenalty: true },
-    { label: "Дым / туман",   value: isMelee ? -10 : -20, visionPenalty: true },
-    { label: "Тьма",          value: isMelee ? -20 : -30, visionPenalty: true },
+    { label: "Слабый свет",   value: isMelee ? 0 : -10, visionPenalty: "light" },
+    { label: "Дым / туман",   value: isMelee ? -10 : -20, visionPenalty: "smoke" },
+    { label: "Тьма",          value: isMelee ? -20 : -30, visionPenalty: "light" },
     // Ослеплён (wdbc-x1nz.2.89, решение владельца 4): при распознанном
     // Ослеплении (свой флаг/оба глаза/щит на голове, без Sonar Sense и
     // Unnatural Senses — rules/blindness.mjs) галочка заперта — автопровал BS
@@ -263,6 +264,24 @@ export function situationalMods(v) {
       m.value  = 0;
       m.immune = true;
       m.note   = "Чёрные Глаза: видит сквозь тьму/дым/слабый свет (Cor 60+)";
+    }
+  }
+  // Ночное Зрение, Охотничий Визор, Термальный и Джинн-Прицел (wdbc-1rno.36,
+  // rules/vision-penalty-immunity.mjs) — тем же приёмом, что Чёрные Глаза:
+  // Слабый свет/Тьма и Дым гасятся раздельно.
+  {
+    const mods = weapon ? getInstalledMods(actor, weapon) : [];
+    const aiming = actor?.system?.aiming;
+    const why = {
+      light: lightPenaltyImmunityReason(actor, mods, { aiming }),
+      smoke: smokePenaltyImmunityReason(actor, mods, { aiming })
+    };
+    for (const m of commonMods) {
+      const reason = m.visionPenalty && !m.immune ? why[m.visionPenalty] : null;
+      if (!reason) continue;
+      m.value  = 0;
+      m.immune = true;
+      m.note   = `${reason}: штрафа нет`;
     }
   }
   // Aspect (wdbc-8b5/wdbc-28ld, стр. 168): без соответствующего Пути — −30 на

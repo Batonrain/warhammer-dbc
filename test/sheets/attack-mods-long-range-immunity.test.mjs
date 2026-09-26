@@ -80,3 +80,39 @@ describe("Цель в Состоянии Врасплох (стр. 12)", () => {
     expect(surprisedRow(1, false).autoCheck).toBe(false);
   });
 });
+
+// wdbc-1rno.36: гасители штрафов плохой видимости со стороны атакующего.
+describe("Ночное Зрение, Охотничий Визор, Термальный и Джинн-Прицел", () => {
+  const vision = actor => {
+    const { commonMods } = situationalMods({
+      actor, attackCtx: {}, attackerToken: null, gripRange: null, hasFatigue: false,
+      hasLostEyes: false, isBlinded: false, isMelee: false, measured: null,
+      targetHelpless: false, targetToken: null, weapon, wProps: [], wp: {}
+    });
+    const row = label => commonMods.find(m => m.label === label);
+    return { dim: row("Слабый свет"), smoke: row("Дым / туман"), dark: row("Тьма") };
+  };
+  const trait = name => ({ id: "t", type: "trait", name, system: {} });
+
+  it("Ночное Зрение гасит Слабый свет и Тьму, но не дым", () => {
+    const r = vision(actorWith([trait("Dark Sight / Ночное Зрение")]));
+    expect(r.dim.value).toBe(0);
+    expect(r.dark.value).toBe(0);
+    expect(r.smoke.value).toBe(-20);
+  });
+
+  it("Охотничий Визор — только надетый", () => {
+    const visor = on => ({ id: "v", type: "gear", name: "Preysense Visor / Охотничий Визор", system: { equipped: on } });
+    expect(vision(actorWith([visor(true)])).dark.value).toBe(0);
+    expect(vision(actorWith([visor(false)])).dark.value).toBe(-30);
+  });
+
+  it("Термальный Прицел гасит свет, Джинн — дым; оба только при Прицеливании", () => {
+    const thermal = scope("Thermal Sight / Термальный Прицел");
+    const djinn = { ...scope("Djinn Sight / Джинн-Прицел"), id: "m2" };
+    expect(vision(actorWith([thermal], "none")).dark.value).toBe(-30);
+    expect(vision(actorWith([thermal], "half")).dark.value).toBe(0);
+    expect(vision(actorWith([djinn], "half")).smoke.value).toBe(0);
+    expect(vision(actorWith([djinn], "half")).dark.value).toBe(-30);
+  });
+});
