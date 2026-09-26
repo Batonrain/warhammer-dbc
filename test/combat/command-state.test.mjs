@@ -218,3 +218,59 @@ describe("несвязанные токены", () => {
     expect(squad.system.shortCommand.active).toBe(false);
   });
 });
+
+// Приёмка #518–#526: бой из несвязанных токенов, а Отряд/Команды записаны
+// мировыми uuid. Актор токена — копия мирового: запись в него (дельту) до
+// мирового актора не доходит, а подчинённые читают именно мировой.
+describe("несвязанные токены: конец боя, Ход, провал Морали", () => {
+  const tokenOf = (base, t) => doc(`Scene.sc.Token.${t}.Actor.${base.uuid.slice(6)}`, base.type,
+    structuredClone(base.system), { isToken: true, id: base.uuid.slice(6), token: { baseActor: base } });
+  const nextWeek = () => { game.combat = { id: "cb2", round: 1, combatant: null }; };
+  const shortMod = actor => resolveTest({ actor, kind: "attack", isMelee: false }).autoMods
+    .find(m => m.ruleId === "command.short")?.value;
+
+  it("удалённый бой гасит Команды Отряда — в новой сцене бойцы без +3 и «Воли Командира»", async () => {
+    const soldierToken = tokenOf(soldier, "t1"), sargeToken = tokenOf(sarge, "t2");
+    await clearCommandsOnCombatEnd({ id: "cb", combatants: [{ actor: soldierToken }, { actor: sargeToken }] });
+    nextWeek();
+    expect(shortMod(soldierToken)).toBeUndefined();
+    const { autoMods } = resolveTest({ actor: soldierToken, kind: "skill", char: "wp", morale: true });
+    expect(autoMods.some(m => m.ruleId === "command.presenceWill")).toBe(false);
+  });
+
+  describe("Команда командира с мирового листа («Под моим Присутствием»)", () => {
+    let soldierToken, sargeToken;
+    beforeEach(() => {
+      game.actors = [soldier, sarge];
+      sarge.system.followers = [{ uuid: "Actor.s" }];
+      sarge.system.command = { presence: { active: true, benefit: "morale" }, detailCommand: {},
+        shortCommand: { active: true, key: "inspire", successes: 3, combatId: "cb", round: 1 } };
+      soldierToken = tokenOf(soldier, "t1"); sargeToken = tokenOf(sarge, "t2");
+      soldierToken.flags.commandedBy = { uuid: "Actor.c" };
+      expect(shortMod(soldierToken)).toBe(3);
+    });
+
+    it("конец боя токеном командира гасит мировую Команду", async () => {
+      await clearCommandsOnCombatEnd({ id: "cb", combatants: [{ actor: soldierToken }, { actor: sargeToken }] });
+      nextWeek();
+      expect(shortMod(soldierToken)).toBeUndefined();
+    });
+
+    it("Ход токена командира в следующем Раунде гасит мировую Команду", async () => {
+      await expireCommandsAtTurnStart({ id: "cb", round: 2, combatant: { actor: sargeToken } });
+      expect(shortMod(soldierToken)).toBeUndefined();
+    });
+
+    it("провал Морали токена командира снимает мировую Команду", async () => {
+      await handleMoraleFailure(sargeToken);
+      expect(shortMod(soldierToken)).toBeUndefined();
+      expect(captured.chat.at(-1).flags["warhammer-dbc"].commandSnapshot.entries.map(e => e.uuid)).toContain("Actor.c");
+    });
+  });
+
+  it("Личная Команда получателю мировым uuid — +Успехи×5 и при броске от токена", () => {
+    squad.system.shortCommand = { active: true, key: "personal", successes: 2, recipientUuid: "Actor.s",
+      giverUuid: "Actor.c", combatId: "cb", round: 1 };
+    expect(shortMod(tokenOf(soldier, "t1"))).toBe(10);
+  });
+});
