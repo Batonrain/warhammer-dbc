@@ -36,7 +36,7 @@ import {
   toyOfGodsApplies, toyOfGodsForcedOptions, TOY_OF_GODS_FLAG, TOY_OF_GODS_TEST_MOD,
   saveCostSource, rollsTwiceKeepLow, conditionsEndedBySave, rollbackWounds,
   DIVINE_PROTECTION_FLAG, DIVINE_TELEPORT_MIN_INF, DEATH_CAUSE_FLAG, PRE_HIT_WOUNDS_FLAG,
-  SUS_AN_ATTEMPT_FLAG
+  SUS_AN_ATTEMPT_FLAG, FATE_SAVE_FAILED_FLAG
 } from "../../rules/death-save.mjs";
 import { computeWoundHealing } from "./wounds.mjs";
 import { conditionApplyFields, conditionRemoveFields } from "./conditions.mjs";
@@ -72,12 +72,13 @@ async function _postCard(actor, header, lines, rolls = []) {
 /**
  * Снятие всех меток ОДНОЙ смерти, когда она разрешилась (спасся, вошёл в
  * анабиоз, воскрешён): причина, снимок Ран, попытка Сус-ан, провал теста
- * Игрушки Богов и одноразовая метка Поцелуя Смерти (wdbc-zye1). Только
- * реально стоящие — «-=» на отсутствующем флаге лишний.
+ * Игрушки Богов, провал Спасения и одноразовая метка Поцелуя Смерти
+ * (wdbc-zye1). Только реально стоящие — «-=» на отсутствующем флаге лишний.
  */
-function _deathResolvedFields(actor) {
+export function _deathResolvedFields(actor) {
   const out = {};
-  for (const key of [DEATH_CAUSE_FLAG, PRE_HIT_WOUNDS_FLAG, SUS_AN_ATTEMPT_FLAG, TOY_TEST_FAILED_FLAG, KISS_OF_DEATH_FLAG]) {
+  for (const key of [DEATH_CAUSE_FLAG, PRE_HIT_WOUNDS_FLAG, SUS_AN_ATTEMPT_FLAG, TOY_TEST_FAILED_FLAG, KISS_OF_DEATH_FLAG,
+    FATE_SAVE_FAILED_FLAG]) {
     if (actor.getFlag?.(NS, key) !== undefined) out[`flags.${NS}.-=${key}`] = null;
   }
   return out;
@@ -149,6 +150,10 @@ async function _resolveFateSave(actor, kind, cfg, { eternalWarrior = null, confi
     ui.notifications?.warn(`${title}: в Пустоте Парии нельзя избежать смерти, сжигая Бесчестие/Судьбу.`);
     return;
   }
+  if (actor.getFlag?.(NS, FATE_SAVE_FAILED_FLAG)) {
+    ui.notifications?.warn(`${title}: Спасение на эту смерть уже провалено — Боги отвернулись.`);
+    return;
+  }
   const pool = fatePoolLabel(actor);
   const free = eternalWarrior === "free" || eternalWarrior === "flat";
   // Цена обычного пути у хаосита — характеристика Inf (rules/death-save.mjs);
@@ -213,8 +218,11 @@ async function _resolveFateSave(actor, kind, cfg, { eternalWarrior = null, confi
   let spentNote = "";
   let newValue;
   if (src.kind === "inf") {
-    if (loss > 0) costUpd[src.path] = Math.max(0, src.base - loss);
-    newValue = current - loss;
+    // База — с полом 0, Продвижение цена не трогает: остаток считается от
+    // реально записанного, а не current − loss, иначе карточка врёт.
+    const newBase = Math.max(0, src.base - loss);
+    if (loss > 0) costUpd[src.path] = newBase;
+    newValue = current - (src.base - newBase);
   } else {
     const spend = await spendFromInfamyPool(actor, loss, src.path);
     if (!spend) return;
@@ -222,17 +230,21 @@ async function _resolveFateSave(actor, kind, cfg, { eternalWarrior = null, confi
     newValue = spend.poolValue;
     if (spend.tempSpent) spentNote = `, из них ${spend.tempSpent} из временного запаса`;
   }
+  const shortNote = src.kind === "inf" && current - newValue < loss
+    ? `, списано ${current - newValue} — база Inf исчерпана` : "";
   // Злорадство, Оружие Наследия (wdbc-1rno.35, merciless 3-4, стр. 428) —
   // на сам факт траты (у "free" реальной траты нет).
   if (eternalWarrior !== "free") await triggerLegacyGleeOnFateSave(actor);
   await _markToyOfGodsSession(actor);
 
   if (failed) {
-    const upd = { ...costUpd };
+    // Метка провала — иначе на остатке Inf (Продвижение) повтор на эту же
+    // смерть проходил бы; снимает её только разрешение смерти (_deathResolvedFields).
+    const upd = { ...costUpd, [`flags.${NS}.${FATE_SAVE_FAILED_FLAG}`]: true };
     if (hadKissOfDeath) upd[`flags.${NS}.-=${KISS_OF_DEATH_FLAG}`] = null;
     await actor.update(upd);
     await _postCard(actor, title, [
-      `${costWord}: <b>${current}</b> − ${lossLabel}${spentNote} → опустился бы до 0 и ниже.`,
+      `${costWord}: <b>${current}</b> − ${lossLabel}${spentNote} → 0 и ниже; осталось <b>${newValue}</b>${shortNote}.`,
       `<span class="roll-failure">Провал — Боги отвернулись. Персонаж мёртв по-настоящему.</span>`
     ], allRolls);
     return;
@@ -247,7 +259,7 @@ async function _resolveFateSave(actor, kind, cfg, { eternalWarrior = null, confi
     ..._deathResolvedFields(actor)
   };
   const lines = [
-    `${costWord}: <b>${current}</b> − ${loss}${kissNote}${spentNote}${fate?.note ?? ""} → <b>${newValue}</b>.`,
+    `${costWord}: <b>${current}</b> − ${loss}${kissNote}${spentNote}${fate?.note ?? ""}${shortNote} → <b>${newValue}</b>.`,
     free
       ? `Порча: без изменений (Вечный Воин, ${eternalWarrior === "free" ? "раз за сессию" : "дальнобойная смерть"} — бесплатно в Ярости).`
       : `Порча: +${corGain}${cor?.note ?? ""} → <b>${Math.min(100, newCor)}</b>${newCor > 100 ? " (потолок 100)" : ""}.`
@@ -502,15 +514,17 @@ export function showDeathSaveDialog(actor) {
 
   const susLimit = susAnCriticalLimit(actor);
   const susAttempted = !!actor.getFlag?.(NS, SUS_AN_ATTEMPT_FLAG);
+  const saveFailed = !!actor.getFlag?.(NS, FATE_SAVE_FAILED_FLAG);
+  const failedNote = "Уже провалено на эту смерть — Боги отвернулись.";
   const content = `
     <div class="wh-wizard-form" style="padding:6px;">
       <div class="atk-dlg-header"><span class="atk-weapon-name">${rollIcon("skull","#ff6b6b")}Спасение от смерти</span></div>
       ${toyNote}
       ${ewNote}
-      ${opt("miraculous", "Чудесное Спасение", `−(1d10+10) ${cost} и ${miracCorNote} — провал, если ${cost} опустится до 0. `
-        + `Смертельный удар откатывается, эффект-причина прекращается.${heir}`)}
-      ${opt("divine", "Божественная Защита", `−(1d5+5) ${cost} и 1d5 Порчи — провал, если ${cost} опустится до 0. `
-        + `Раны до 0, без сознания до конца сцены/боя; до конца сессии неуязвим, в бою — только полудвижения.${heir}`)}
+      ${opt("miraculous", "Чудесное Спасение", saveFailed ? failedNote : `−(1d10+10) ${cost} и ${miracCorNote} — провал, если ${cost} опустится до 0. `
+        + `Смертельный удар откатывается, эффект-причина прекращается.${heir}`, !saveFailed)}
+      ${opt("divine", "Божественная Защита", saveFailed ? failedNote : `−(1d5+5) ${cost} и 1d5 Порчи — провал, если ${cost} опустится до 0. `
+        + `Раны до 0, без сознания до конца сцены/боя; до конца сессии неуязвим, в бою — только полудвижения.${heir}`, !saveFailed)}
       ${opt("susan", "Замедленная Анимация", canSusAn
         ? `Тест W+30 (не тратит ${cost}/Порчу). Одна попытка на смерть${hasHeroSleep(actor) ? ", Сон Героя — переброс провала" : ""}.`
         : susAttempted

@@ -39,9 +39,19 @@ export const DISCORDANT_FIELD = "discordant.field";
 export const inPariahVoid = actor => !!actor && hasRuleFlag(actor, PARIAH_VOID);
 export const inDiscordantField = actor => !!actor && hasRuleFlag(actor, DISCORDANT_FIELD);
 
-/** Сила развеивается в Пустоте: любая, кроме Непрямой (system.powerType "indirect"). */
+/**
+ * Непрямая сила (system психосилы): основной тип «Непрямое» или доп. тип
+ * {type:"indirect"} в extraTypes. В книге «Непрямое» почти всегда не первое
+ * в строке типа («Атака · Стрельба · Непрямое» у Тарана), поэтому в паке оно
+ * лежит доп. типом. Карточки чата несут ответ готовым (data-psy-indirect).
+ */
+export function isIndirectPower(sys) {
+  return sys?.powerType === "indirect" || (sys?.extraTypes ?? []).some(e => e?.type === "indirect");
+}
+
+/** Сила развеивается в Пустоте: любая, кроме Непрямой. */
 export function voidBlocksPower(actor, power) {
-  return inPariahVoid(actor) && power?.system?.powerType !== "indirect";
+  return inPariahVoid(actor) && !isIndirectPower(power?.system);
 }
 
 /**

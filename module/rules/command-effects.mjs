@@ -98,15 +98,17 @@ export function matchesGeneralKind(kind, ctx = {}) {
 /**
  * Бонус одной Короткой Команды этому броску (0 — не действует).
  * @param {object} short {active,key,successes,testKind,recipientUuid}
+ * @param {Set<string>} [ids] все uuid бойца (мировой актор и актор токена —
+ *   получателя Личной Команды выбирают из списка, а бросок идёт от токена)
  */
-export function shortCommandBonus(short, actor, ctx) {
+export function shortCommandBonus(short, actor, ctx, ids = new Set([actor?.uuid])) {
   if (!short?.active) return 0;
   const sux = Number(short.successes) || 0;
   if (sux <= 0 || !shortCommandEligible(ctx)) return 0;
   switch (short.key) {
     case "inspire":  return sux;
     case "general":  return matchesGeneralKind(short.testKind, ctx) ? sux * 3 : 0;
-    case "personal": return short.recipientUuid && short.recipientUuid === actor?.uuid ? sux * 5 : 0;
+    case "personal": return short.recipientUuid && ids.has(short.recipientUuid) ? sux * 5 : 0;
     case "morale":   return isMoraleCtx(ctx) ? sux * 5 : 0;
     default:         return 0;
   }
@@ -133,10 +135,11 @@ const SHORT_LABEL = { inspire: "Воодушевление", general: "Обща�
  * @param {object} actor подчинённый
  * @param {CommandNode[]} nodes
  * @param {object} ctx контекст броска (resolveTest)
- * @param {{commandLost?: boolean}} [opts] commandLost — провалил тест Морали
- *   (флаг на самом акторе, см. combat/command-state.mjs)
+ * @param {{commandLost?: boolean, identityUuids?: Set<string>}} [opts] commandLost —
+ *   провалил тест Морали (флаг на самом акторе, см. combat/command-state.mjs);
+ *   identityUuids — все uuid бойца для Личной Команды (actorIdentityUuids)
  */
-export function commandRulesFor(actor, nodes, ctx = {}, { commandLost = false } = {}) {
+export function commandRulesFor(actor, nodes, ctx = {}, { commandLost = false, identityUuids } = {}) {
   if (!actor || !nodes?.length) return [];
   // Несколько командиров — не больше ½ P.b (окр.▼), хотя бы один: берутся
   // сильнейшие по Успехам Короткой Команды («у кого больше Успехов»).
@@ -157,7 +160,7 @@ export function commandRulesFor(actor, nodes, ctx = {}, { commandLost = false } 
     const moraleOnly = reach.moraleLost && !reach.blockedBy && actor.type !== "horde";
 
     if (reach.commands || (moraleOnly && node.short?.key === "morale")) {
-      const v = shortCommandBonus(node.short, actor, ctx);
+      const v = shortCommandBonus(node.short, actor, ctx, identityUuids);
       if (v > 0 && (!bestShort || v > bestShort.value))
         bestShort = { value: v, label: `${SHORT_LABEL[node.short.key] || "Короткая Команда"} (${node.label})` };
     }

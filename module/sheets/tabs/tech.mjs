@@ -157,8 +157,9 @@ export async function activateTechMiracle(actor, item) {
   // Критический Провал». Куб брошен для истории, в зачёт идёт 100.
   const fieldTarget = [...(game.user?.targets ?? [])][0]?.actor ?? null;
   const fieldFail = fieldFailsTechPower(actor, fieldTarget);
+  // Провал — и при пороге ≥ 100, где «100 ≤ порога» иначе прошло бы Успехом.
   const rv      = fieldFail ? 100 : roll.total;
-  const success = rv <= eff;
+  const success = !fieldFail && rv <= eff;
   const deg     = Math.floor(Math.abs(rv - eff) / 10) + 1;
 
   // Трата ресурсов: Когниция ⚙ — всегда (до теста), Энергия ⚡ — только при Успехе.

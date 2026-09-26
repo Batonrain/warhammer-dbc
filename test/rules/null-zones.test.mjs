@@ -7,7 +7,8 @@ import "../support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
 import { packDocById } from "../support/pack-doc.mjs";
-import { inPariahVoid, inDiscordantField, voidBlocksPower, corruptionInVoid,
+import { packDocuments, PACK_SCAN_TIMEOUT } from "../support/pack-docs.mjs";
+import { inPariahVoid, inDiscordantField, voidBlocksPower, isIndirectPower, corruptionInVoid,
          weaponTechClass, fieldDisablesWeapon, fieldDisablesImplant,
          voidSuppressesMutation, fieldFailsTechPower } from "../../module/rules/null-zones.mjs";
 import { PREDICATES } from "../../module/rules/predicates.mjs";
@@ -18,6 +19,23 @@ const VOID = packDocById(TRAITS, "PariahVoidZone01");
 const FIELD = packDocById(TRAITS, "DiscordFieldZn01");
 const PARIAH = packDocById(TRAITS, "x8rVwVWA6EabOqsv");
 const DISCORDANT = packDocById(TRAITS, "d3yBzLW8OHJHd5Om");
+// Таран (core, Телекинез): книжный тип «Атака, Стрельба, Непрямое» —
+// основной тип «Атака», «Непрямое» — доп. типом.
+const TARAN = packDocById("packs-src/psychic-powers/ФУНДАМЕНТАЛЬНЫЕ_ДИСЦИПЛИНЫ/ТЕЛЕКИНЕЗ/Сокрушение", "4jq01cSZKuKyuUWv");
+
+// Силы, у которых в книжной строке «Тип:» стоит «Непрямое» (core, aeldari,
+// aeldari-branches). Не входят: Усиленный Поток и Крепость Души (о Непрямых
+// только в тексте), силы Мирового Певца с «Непрямым» лишь «на природной
+// территории» и Лесная Прогулка / Генезис Эволюция / Воля Мира (дают тип
+// ДРУГИМ силам).
+const INDIRECT_POWERS = [
+  "4jq01cSZKuKyuUWv", "WPJLOx2pkXtUWplW", "WvsiXaIkP7IlfDX6", "v897lW8ZtsTJhubk",
+  "BdTEfoyGDcBA71yT", "U8bnhE2DoLAmA9MO", "i7XRuR5gg8DI0t7m",
+  "1w7cyBOVFL0aUQOP", "KkedeJrIZf7QldJV", "CCam22fS5HBVYouw", "z3QhfhqiEYo11lAT",
+  "AaHJpG03ipkyPG0z", "GFPECJG3Lhjjxbwl", "siUHQ3q8MXEp0F6j",
+  "98O0oeJhbjWZKyJH", "EG404GFR7SlK4BGF", "7015Kfkmcb8TCdud", "xvejJ80WWZkkNcJm",
+  "zUF07vjkSjRcxh8s", "dsjDWR9fPP7iHO1V"
+];
 
 const asItem = doc => ({ id: doc._id, name: doc.name, type: doc.type, system: doc.system, flags: doc.flags });
 function actor(docs = [], extra = {}) {
@@ -50,6 +68,16 @@ describe("Пустота Парии", () => {
     expect(voidBlocksPower(inside, { system: { powerType: "indirect" } })).toBe(false);
     expect(voidBlocksPower(actor([]), { system: { powerType: "direct" } })).toBe(false);
   });
+  it("Таран из пака — Непрямой, в Пустоте не развеивается", () => {
+    expect(TARAN.system.powerType).toBe("attack");
+    expect(isIndirectPower(TARAN.system)).toBe(true);
+    expect(voidBlocksPower(inside, asItem(TARAN))).toBe(false);
+  });
+  it("пак: пометка Непрямой — ровно у сил с «Непрямое» в книжной строке типа", () => {
+    const marked = packDocuments("psychic-powers", "psychicPower")
+      .filter(({ doc }) => isIndirectPower(doc.system)).map(({ doc }) => doc._id);
+    expect(marked.sort()).toEqual([...INDIRECT_POWERS].sort());
+  }, PACK_SCAN_TIMEOUT);
   it("Порча не прибавляется, убывание не трогаем", () => {
     expect(corruptionInVoid(inside, 10, 15)).toBe(10);
     expect(corruptionInVoid(inside, 10, 5)).toBe(5);

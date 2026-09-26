@@ -373,4 +373,17 @@ describe("срок в Раундах — до конца Хода наложив
     expect(await onConditionEffectExpired(fx, { duration: { expired: true } })).toBe(true);
     expect(actor.effects).toHaveLength(0);
   });
+
+  it("вне боя отметке ядра не верим: остаток в Раундах не посчитан (wdbc-tr02)", async () => {
+    const actor = makeActor();
+    await applyConditionWithDuration(actor, "stunned", { value: 2, unit: "rounds" });
+    const fx = actor.effects[0];
+    fx.parent = actor;
+    globalThis.game.users = { activeGM: { isSelf: true } };
+    // Тик Календаря вне боя: ядро ставит expired на любой срок в Раундах,
+    // а остаток посчитать нечем — Infinity.
+    fx.setRemaining(Infinity);
+    expect(await onConditionEffectExpired(fx, { duration: { expired: true } })).toBe(false);
+    expect(actor.effects).toHaveLength(1);
+  });
 });

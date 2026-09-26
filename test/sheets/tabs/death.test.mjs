@@ -408,3 +408,76 @@ describe("Игрушка Богов — диалог и тест Inf+30", () => 
     expect(captured.dialog.content).not.toContain("Игрушка Богов");
   });
 });
+
+// ── Провал Спасения окончателен (ревью зоны «Смерть») ────────────────────────
+// Цена пишется в inf.base с полом 0, а провал считается по постоянному Inf
+// целиком (база + Продвижение). После провала Inf не 0 — Продвижение остаётся,
+// и повторная попытка на ту же смерть проходила: «мёртв по-настоящему» врал.
+
+/** Хаосит, у которого update правда меняет Inf и флаги — как живой документ. */
+function championWithAdvance({ base = 20, advance = 15 } = {}) {
+  const flags = { "warhammer-dbc.deceased": true };
+  const inf = { base, advance, total: base + advance, bonus: Math.floor((base + advance) / 10) };
+  return {
+    id: "c1", uuid: "Actor.c1", name: "Чемпион", type: "character",
+    system: {
+      alignment: "heretic", fate: { value: 4 }, corruption: { value: 10 },
+      characteristics: { inf, wp: { total: 40 }, t: { bonus: 4 } },
+      wounds: { value: 0, critical: 12, max: 14 }, conditions: {}
+    },
+    items: [], updates: [],
+    getFlag: (scope, key) => flags[`${scope}.${key}`],
+    async setFlag(scope, key, value) { flags[`${scope}.${key}`] = value; },
+    async unsetFlag(scope, key) { delete flags[`${scope}.${key}`]; },
+    async update(data) {
+      this.updates.push(data);
+      for (const [path, v] of Object.entries(data)) {
+        if (path === "system.characteristics.inf.base") { inf.base = v; inf.total = v + inf.advance; }
+        else if (path.startsWith("flags.warhammer-dbc.-=")) delete flags[`warhammer-dbc.${path.slice(22)}`];
+        else if (path.startsWith("flags.warhammer-dbc.")) flags[`warhammer-dbc.${path.slice(20)}`] = v;
+      }
+    }
+  };
+}
+
+describe("Провал Спасения окончателен на эту смерть", () => {
+  async function failMiraculous() {
+    const actor = championWithAdvance({ base: 20, advance: 15 });
+    await actor.setFlag("warhammer-dbc", "killedByKissOfDeath", true);
+    captured.dice = [8]; // (10+8)×2 = 36, Inf 35 → провал
+    await doMiraculousSave(actor);
+    return actor;
+  }
+
+  it("Поцелуй Смерти, Inf 20+15: после провала Божественная Защита уже не спасает", async () => {
+    const actor = await failMiraculous();
+    expect(captured.chat.at(-1).content).toContain("Провал");
+    expect(actor.system.characteristics.inf.total).toBe(15); // база 20 → 0, Продвижение осталось
+
+    captured.dice = [3, 1]; // 5+3 = 8 < 15 — раньше здесь персонаж оживал
+    await doDivineProtection(actor);
+    expect(actor.getFlag("warhammer-dbc", "deceased")).toBe(true);
+    expect(actor.updates.some(u => u["flags.warhammer-dbc.deceased"] === false)).toBe(false);
+    expect(actor.system.characteristics.inf.total).toBe(15); // вторая цена не списана
+  });
+
+  it("карточка провала называет Inf, который реально остался", async () => {
+    await failMiraculous();
+    expect(captured.chat.at(-1).content).toContain("<b>15</b>");
+  });
+
+  it("диалог после провала: оба пути отключены", async () => {
+    const actor = await failMiraculous();
+    showDeathSaveDialog(actor);
+    expect(captured.dialog.content).toContain('data-action="miraculous" disabled');
+    expect(captured.dialog.content).toContain('data-action="divine" disabled');
+  });
+
+  it("«Воскресить» снимает метку — следующая смерть снова со Спасением", async () => {
+    const actor = await failMiraculous();
+    await doResurrect(actor);
+    await actor.setFlag("warhammer-dbc", "deceased", true);
+    showDeathSaveDialog(actor);
+    expect(captured.dialog.content).not.toContain('data-action="divine" disabled');
+  });
+});

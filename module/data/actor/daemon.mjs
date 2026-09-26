@@ -6,6 +6,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { creatureSchema, migrateReactionsString } from "./_creature.mjs";
+import { migrateLegacyLimbLoss } from "../../rules/limb-loss.mjs";
 
 export class DaemonData extends foundry.abstract.TypeDataModel {
 
@@ -34,6 +35,6 @@ export class DaemonData extends foundry.abstract.TypeDataModel {
    */
   static migrateData(source) {
     if (Array.isArray(source?.isPsyker)) source.isPsyker = source.isPsyker.some(Boolean);
-    return migrateReactionsString(source);
+    return migrateLegacyLimbLoss(migrateReactionsString(source));
   }
 }

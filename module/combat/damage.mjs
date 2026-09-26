@@ -660,9 +660,10 @@ async function _rollRunesOfProtection(actor) {
 // ─── Применить урон к актору ──────────────────────────────────────────────────
 export async function applyDamageToActor(actor, damageData) {
   // Пустота Парии (rules/null-zones.mjs): урон психосилы (кроме Непрямой)
-  // по цели в ауре не проходит — сила развеивается. psychicPowerType
-  // приходит с кнопки урона карточки манифестации (sheets/tabs/psychic.mjs).
-  if (damageData?.psychicPowerType != null && damageData.psychicPowerType !== "indirect" && inPariahVoid(actor)) {
+  // по цели в ауре не проходит — сила развеивается. psychicPowerType и
+  // psychicIndirect приходят с кнопки урона карточки манифестации
+  // (sheets/tabs/psychic.mjs, rules/null-zones.mjs::isIndirectPower).
+  if (damageData?.psychicPowerType != null && !damageData.psychicIndirect && inPariahVoid(actor)) {
     await postTestCard(actor, {
       title: `🕳 Пустота Парии → ${esc(actor.name)}`,
       lines: [`<div class="roll-threshold">«${esc(damageData.weaponName || "Психосила")}» развеивается в ауре Парии — урон не проходит.</div>`]

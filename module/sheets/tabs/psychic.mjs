@@ -44,7 +44,7 @@ import { measureTokens } from "../../combat/tactical-map.mjs";
 import { mechRollData } from "../../rules/mech-formula.mjs";
 import { runForceBladeShop, forceBladeShopClear } from "../../apps/force-blade-choice.mjs";
 import { charDamageButtonHtml } from "../../combat/char-damage-button.mjs";
-import { voidBlocksPower } from "../../rules/null-zones.mjs";
+import { voidBlocksPower, isIndirectPower } from "../../rules/null-zones.mjs";
 
 /**
  * Через что кастуется психосила. Прорицание (divination) — через навык
@@ -930,6 +930,7 @@ export async function executePsychotest(actor, item, opts) {
                 data-hit-location="Торс"
                 data-weapon-name="${item.name}" data-attacker="${actor.name}" data-attacker-uuid="${actor.uuid}"
                 data-psychic="1" data-psy-power-type="${esc(item.system?.powerType || "")}"
+                data-psy-indirect="${isIndirectPower(item.system) ? 1 : ""}"
                 data-felling="${wp.fellingRating ?? 0}"
                 data-primitive="${wp.primitive ? 1 : 0}"
                 data-ignore-shield="${wp.ignoreShield ? 1 : 0}"
@@ -1118,7 +1119,7 @@ export async function executePsychotest(actor, item, opts) {
            data-discipline="${esc(sys.discipline || "")}"
            data-target-token-uuid="${esc(targetToken?.document?.uuid || "")}"
            data-item-uuid="${esc(item.uuid)}"
-           data-psy-power-type="${esc(item.system?.powerType || "")}"
+           data-psy-indirect="${isIndirectPower(item.system) ? 1 : ""}"
            data-label="${esc(`Сопротивление: ${item.name}`)}">
            📨 Запросить тест Сопротивления у ${esc(targetActor.name)}
          </button>`
@@ -1290,7 +1291,8 @@ export async function activateNavigatorPower(actor, item) {
               data-damage="${dmgRoll.total}" data-penetration="${pen}"
               data-damage-type="${sys.damageType}" data-hit-location="Торс"
               data-weapon-name="${item.name}" data-attacker="${actor.name}"
-              data-psychic="1" data-psy-power-type="${esc(item.system?.powerType || "")}">
+              data-psychic="1" data-psy-power-type="${esc(item.system?.powerType || "")}"
+              data-psy-indirect="${isIndirectPower(item.system) ? 1 : ""}">
               Применить урон: ${dmgRoll.total} → Торс
             </button>
           </div>`;

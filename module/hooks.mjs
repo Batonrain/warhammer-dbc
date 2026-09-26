@@ -298,8 +298,9 @@ export function registerHooks() {
         // не открывается вовсе, сила фиксируется как провалившаяся сразу.
         const targetToken = d.targetTokenUuid ? await fromUuid(d.targetTokenUuid).catch(() => null) : null;
         // Пустота Парии (rules/null-zones.mjs): цель в ауре — сила (кроме
-        // Непрямой) развеивается, Сопротивляться нечему.
-        if (inPariahVoid(targetActor) && d.psyPowerType !== "indirect") {
+        // Непрямой, data-psy-indirect от isIndirectPower) развеивается,
+        // Сопротивляться нечему.
+        if (inPariahVoid(targetActor) && d.psyIndirect !== "1") {
           await postTestCard(targetActor, `<div class="wh-roll-result">
             <div class="roll-header">${rollIcon("shield", "#8fd0ff")}Пустота Парии — ${esc(targetActor.name)}</div>
             <div class="roll-threshold">Цель в ауре Парии: психосила развеивается, тест Сопротивления не нужен.</div>
@@ -1100,6 +1101,7 @@ export function registerHooks() {
           weaponName:   ds.weaponName  || "",
           // Урон психосилы — для Пустоты Парии (rules/null-zones.mjs); null — не психосила.
           psychicPowerType: ds.psychic === "1" ? (ds.psyPowerType || "") : null,
+          psychicIndirect:  ds.psyIndirect === "1",
           // Кровавое Пламя (wdbc-1rno): «убил этим оружием» — deathButtonHtml
           // несёт weaponUuid дальше, module/combat/blood-flame.mjs читает его
           // по клику «Констатировать смерть».

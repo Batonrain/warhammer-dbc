@@ -71,6 +71,17 @@ export function actorIdentityUuids(actor) {
 const sameActor = (actor, uuid) => !!uuid && actorIdentityUuids(actor).has(uuid);
 
 /**
+ * Документы бойца под всеми его uuid — там, где могла лечь его Команда:
+ * лист с боковой панели пишет в мирового актора, лист токена — в дельту.
+ * Мировой первым: правка его доходит и до актора несвязанного токена, и
+ * тот больше не активен — запись в дельту не нужна.
+ */
+function identityDocs(actor) {
+  const docs = [...actorIdentityUuids(actor)].map(u => u === actor.uuid ? actor : resolve(u)).filter(Boolean);
+  return [...new Set(docs)].sort((a, b) => Number(!!a.isToken) - Number(!!b.isToken));
+}
+
+/**
  * Живые документы записи списка: мировой актор НЕсвязанного токена
  * раскрывается в акторов его токенов на сцене — Состояния (Подавление, Шок)
  * и выданные Таланты живут там, а не на мировом.
@@ -159,7 +170,7 @@ registerRuleSource("command", (actor, ctx) => {
   if (typeof game === "undefined" || !ctx || !Object.keys(ctx).length || !ctx.kind) return [];
   const nodes = commandNodesFor(actor);
   if (!nodes.length) return [];
-  return commandRulesFor(actor, nodes, ctx, { commandLost: commandLostActive(actor) });
+  return commandRulesFor(actor, nodes, ctx, { commandLost: commandLostActive(actor), identityUuids: actorIdentityUuids(actor) });
 });
 
 /** «Храбрость» на акторе: Паника от Горения проходится сама. */
@@ -224,21 +235,23 @@ export async function expireCommandsAtTurnStart(combat) {
       await squad.update(upd);
     }
   }
-  const c = giver?.system?.command;
-  if (c) {
+  for (const doc of giver ? identityDocs(giver) : []) {
+    const c = doc.system?.command;
+    if (!c) continue;
     const upd = {};
     if (staleIn(c.shortCommand, combat)) Object.assign(upd, OFF_SHORT("system.command."));
     if (staleIn(c.detailCommand, combat)) Object.assign(upd, OFF_DETAIL("system.command."));
     if (Object.keys(upd).length) {
-      if ("system.command.detailCommand.active" in upd) await removeTacticGrants(giver.uuid);
-      await giver.update(upd);
+      if ("system.command.detailCommand.active" in upd) await removeTacticGrants(doc.uuid);
+      await doc.update(upd);
     }
   }
 }
 
 /** Конец боя: Присутствие («до конца боя») и всё отданное гаснут, метки Морали снимаются. */
 export async function clearCommandsOnCombatEnd(combat) {
-  const inCombat = new Set((combat?.combatants ?? []).map(c => c.actor?.uuid).filter(Boolean));
+  // Все uuid бойцов: в Отряде мировой актор, в бою — актор несвязанного токена.
+  const inCombat = new Set((combat?.combatants ?? []).flatMap(c => [...actorIdentityUuids(c.actor)]));
   const touches = squad => {
     const p = squad.system.posts || {};
     return [p.leader?.uuid, p.commander?.uuid, p.coordinator?.uuid, ...(squad.system.members || []).map(m => m.uuid)]
@@ -252,9 +265,10 @@ export async function clearCommandsOnCombatEnd(combat) {
   for (const c of combat?.combatants ?? []) {
     const a = c.actor;
     if (!a) continue;
-    if (a.system?.command) {
-      await removeTacticGrants(a.uuid);
-      await a.update({ "system.command.presence.active": false, ...OFF_SHORT("system.command."), ...OFF_DETAIL("system.command.") });
+    for (const doc of identityDocs(a)) {
+      if (!anyActive(doc.system?.command)) continue;
+      await removeTacticGrants(doc.uuid);
+      await doc.update({ "system.command.presence.active": false, ...OFF_SHORT("system.command."), ...OFF_DETAIL("system.command.") });
     }
     if (a.getFlag?.(NS, COMMAND_LOST_FLAG)) await a.unsetFlag(NS, COMMAND_LOST_FLAG);
   }
@@ -369,10 +383,11 @@ export async function handleMoraleFailure(actor) {
     await removeTacticGrants(sq.uuid);
     await updateOrRelay(sq, { "system.presence.active": false, ...OFF_SHORT("system."), ...OFF_DETAIL("system.") });
   }
-  if (anyActive(actor.system?.command)) {
-    snapshot.push({ uuid: actor.uuid, prefix: "system.command.", data: foundry.utils.deepClone(actor.system.command) });
-    await removeTacticGrants(actor.uuid);
-    await updateOrRelay(actor, { "system.command.presence.active": false, ...OFF_SHORT("system.command."), ...OFF_DETAIL("system.command.") });
+  for (const doc of identityDocs(actor)) {
+    if (!anyActive(doc.system?.command)) continue;
+    snapshot.push({ uuid: doc.uuid, prefix: "system.command.", data: foundry.utils.deepClone(doc.system.command) });
+    await removeTacticGrants(doc.uuid);
+    await updateOrRelay(doc, { "system.command.presence.active": false, ...OFF_SHORT("system.command."), ...OFF_DETAIL("system.command.") });
   }
   undo.entries = snapshot;
   if (!snapshot.length) return undo.lostSet ? undo : null;

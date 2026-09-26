@@ -89,6 +89,13 @@ export function fateSaveFails(currentFate, loss) {
   return (Number(currentFate) || 0) - loss <= 0;
 }
 
+/**
+ * Спасение/Защита на эту смерть провалены — «умирает как и положено, забытый
+ * Богами» (стр. 232). Цена ложится в inf.base с полом 0, а Продвижение
+ * остаётся, поэтому Inf после провала не 0 и сам по себе повтор не запрещает.
+ */
+export const FATE_SAVE_FAILED_FLAG = "fateSaveFailed";
+
 // ── Причина смерти и что Спасение прекращает ─────────────────────────────────
 
 /** Флаг причины смерти от Состояния — ставит combat/condition-death.mjs::killByCondition. */

@@ -139,6 +139,7 @@ import { migrateWarpforgedPlate } from "./module/migrations/warpforged-plate-fix
 import { migrateNimbleRating } from "./module/migrations/nimble-rating.mjs";
 import { migrateSightAngle } from "./module/migrations/sight-angle.mjs";
 import { migrateStringListRestore } from "./module/migrations/string-list-restore.mjs";
+import { migrateLimbLossSides } from "./module/migrations/limb-loss-sides.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
 import { runMigrationGate } from "./module/migrations/unlinked-tokens.mjs";
 import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
@@ -593,6 +594,12 @@ Hooks.once("init", () => {
   // Версия восстановления строк-ключей (свойства брони и т.п.), потерянных
   // схемой ArrayField(ObjectField) (одноразовая, wdbc-x1nz.2.81)
   game.settings.register("warhammer-dbc", "stringListRestoreVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия записи потери конечностей по сторонам (system.lostLimbs) у уже
+  // покалеченных — прежние conditions.lostX схема вычищает (приёмка #518-#526)
+  game.settings.register("warhammer-dbc", "limbLossSidesVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -1057,7 +1064,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -1275,6 +1282,20 @@ Hooks.once("ready", async () => {
     if (!result?.failed) await game.settings.set("warhammer-dbc", "stringListRestoreVersion", VERSION);
     else console.warn("Warhammer DBC | Свойства брони: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
   } catch (e) { console.error("Warhammer DBC | Свойства брони:", e); }
+});
+
+// ── Одноразовая запись: потеря конечностей по сторонам у уже покалеченных
+// (module/migrations/limb-loss-sides.mjs) ──
+// Ручной перезапуск: game.warhammerDBC.migrateLimbLossSides()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "limbLossSidesVersion") || 0) >= VERSION) return;
+  try {
+    const result = await migrateLimbLossSides();
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "limbLossSidesVersion", VERSION);
+    else console.warn("Warhammer DBC | Потеря конечностей: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
+  } catch (e) { console.error("Warhammer DBC | Потеря конечностей:", e); }
 });
 
 // ── Одноразовая доливка: биоимпланты, выданные до появления Доступности ──────

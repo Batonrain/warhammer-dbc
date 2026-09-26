@@ -191,6 +191,10 @@ export async function onConditionEffectExpired(effect, changes) {
   if (!globalThis.game?.users?.activeGM?.isSelf) return false;
   const key = effect?.getFlag?.(FLAG, DURATION_FLAG) ?? effect?.flags?.[FLAG]?.[DURATION_FLAG];
   if (!key || !CONDITIONS_DEF[key]) return false;
+  // Остаток ядро не посчитало (Раунды вне боя — Infinity) — отметка ложная:
+  // вне боя ядро ставит её на любой тик Календаря (wdbc-tr02, см.
+  // rules/condition-duration.mjs::isDurationExpired).
+  if (remainingOf(effect.duration ?? {}) === null) return false;
   const actor = effect.parent;
   await effect.delete();
   const { postConditionCard, conditionExpiryLine } = await import("./condition-ticks.mjs");

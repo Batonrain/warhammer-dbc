@@ -9,7 +9,7 @@ import { openSurgeon } from "../../apps/surgeon.mjs";
 import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 import { syncGrantedEquipment } from "../../apps/mechanics.mjs";
 import { on } from "../../helpers/utils.mjs";
-import { showDeathSaveDialog, doResurrect } from "./death.mjs";
+import { showDeathSaveDialog, doResurrect, _deathResolvedFields } from "./death.mjs";
 import { VITAL_TIME_FIELD } from "../../constants/vitals.mjs";
 import { satisfyAddiction, setAddictionSubstance } from "../../rules/addiction.mjs";
 import { registerBloodFlameKill, LAST_DAMAGE_WEAPON_FLAG } from "../../combat/blood-flame.mjs";
@@ -63,6 +63,13 @@ export async function satisfyVital(actor, key) {
 export async function setDeceased(actor, deceased) {
   const was = !!actor?.getFlag?.("warhammer-dbc", "deceased");
   await actor.setFlag("warhammer-dbc", "deceased", deceased);
+  // Снятая галочка — та смерть разрешилась (ГМ «оживил» руками): её метки
+  // (провал Спасения, попытка Анимации, провал Игрушки Богов, причина) не
+  // должны закрывать Спасение и Анимацию на следующую смерть.
+  if (!deceased && was) {
+    const clear = _deathResolvedFields(actor);
+    if (Object.keys(clear).length) await actor.update(clear);
+  }
   if (!deceased || was) return;
   const uuid = actor.getFlag("warhammer-dbc", LAST_DAMAGE_WEAPON_FLAG);
   const weapon = uuid ? await fromUuid(uuid).catch(() => null) : null;

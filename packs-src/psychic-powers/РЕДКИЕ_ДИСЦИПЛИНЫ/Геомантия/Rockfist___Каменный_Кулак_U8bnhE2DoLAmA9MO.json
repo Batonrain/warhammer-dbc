@@ -10,7 +10,12 @@
     "discipline": "geomancy",
     "subtype": "",
     "powerType": "attack",
-    "extraTypes": [],
+    "extraTypes": [
+      {
+        "type": "indirect",
+        "x": 0
+      }
+    ],
     "shootSubtype": "projectile",
     "prRequired": 2,
     "testChar": "wp",
@@ -34,7 +39,7 @@
     "charDamageFormula": "",
     "profiles": [],
     "variants": [],
-    "effect": "Атака · Заземление · Незримое · Психический Снаряд · Стрельба. Треб.: Tremor Sense. Профиль: PR×10м, 1d10+2×PR I(Cr), Pen 0, Concussive (½PR окр.▲).",
+    "effect": "Атака · Заземление · Непрямое · Психический Снаряд · Стрельба. Треб.: Tremor Sense. Профиль: PR×10м, 1d10+2×PR I(Cr), Pen 0, Concussive (½PR окр.▲).",
     "isSustained": false,
     "effects": {
       "charBonusStat": "",

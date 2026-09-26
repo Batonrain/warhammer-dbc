@@ -10,7 +10,12 @@
     "discipline": "worldSinger",
     "subtype": "Воззвание к Природе",
     "powerType": "aura",
-    "extraTypes": [],
+    "extraTypes": [
+      {
+        "type": "indirect",
+        "x": 0
+      }
+    ],
     "shootSubtype": "",
     "prRequired": 1,
     "testChar": "wp",

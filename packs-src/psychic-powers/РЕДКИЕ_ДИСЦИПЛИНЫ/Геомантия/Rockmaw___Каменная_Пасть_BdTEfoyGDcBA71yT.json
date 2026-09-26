@@ -10,7 +10,12 @@
     "discipline": "geomancy",
     "subtype": "",
     "powerType": "attack",
-    "extraTypes": [],
+    "extraTypes": [
+      {
+        "type": "indirect",
+        "x": 0
+      }
+    ],
     "shootSubtype": "projectile",
     "prRequired": 5,
     "testChar": "wp",
