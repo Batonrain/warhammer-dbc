@@ -32,6 +32,9 @@
 import { describe, it, expect } from "vitest";
 import { PACK_SCAN_TIMEOUT, allPackDocuments } from "../support/pack-docs.mjs";
 
+// pack-docs отдаёт путь с разделителем ОС; FIXED_MELEE_WEAPONS записан через «/».
+const posixPath = file => file.replaceAll("\\", "/");
+
 function parseDamage(str) {
   const m = String(str ?? "").trim().match(/^(\d*d\d+)\s*([+-]\s*\d+)?/i);
   if (!m) return null;
@@ -158,7 +161,7 @@ describe("рукопашное оружие бестиария не дублир
   it("исправленные пары существо/оружие не вернулись к прежнему книжному итогу", () => {
     let checked = 0;
     for (const [file, weapon, fixedDamage] of FIXED_MELEE_WEAPONS) {
-      const { doc } = allPackDocuments("bestiary").find(d => d.file === file) ?? {};
+      const { doc } = allPackDocuments("bestiary").find(d => posixPath(d.file) === file) ?? {};
       expect(doc, `${file}: файл не найден среди актёров bestiary`).toBeTruthy();
       const item = doc.items.find(it => it.name === weapon && it.type === "weapon");
       expect(item, `${file}: оружие «${weapon}» не найдено`).toBeTruthy();
@@ -213,7 +216,7 @@ describe("рукопашное оружие бестиария не дублир
       for (const it of doc.items) {
         if (it.type !== "weapon" || it.system?.weaponClass !== "melee") continue;
         meleeWeapons++;
-        if (alreadyFixed.has(`${file}\u0000${it.name}`)) continue;
+        if (alreadyFixed.has(`${posixPath(file)}\u0000${it.name}`)) continue;
         const dmg = parseDamage(it.system?.damage);
         if (!dmg) continue;
 
