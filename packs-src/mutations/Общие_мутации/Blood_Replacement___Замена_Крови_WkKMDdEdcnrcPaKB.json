@@ -519,7 +519,7 @@
               "modValueMode": "flat",
               "modCharBonus": "inf",
               "rerollWho": "self",
-              "capabilityKey": "weaponPropertyImmunity.corrosive",
+              "capabilityKey": "weaponPropertyImmunity.corrosiveBodyOnly",
               "capabilityCostPool": "",
               "capabilityCostAmount": 1,
               "capabilityMode": "flag",

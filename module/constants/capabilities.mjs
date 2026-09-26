@@ -28,6 +28,11 @@ export const CAPABILITIES = {
     source: "Мутация: Burning Body / Shield of Purity (Общие мутации)",
     reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — hooks.mjs _applyWeaponPropEffect (кнопка condition:\"burning\")"
   },
+  "weaponPropertyImmunity.corrosiveBodyOnly": {
+    label: "Иммунитет к Corrosive у самого персонажа, но НЕ у носимой им брони (Замена Крови, субмутация 10 «Кислота», wdbc-1rno.15): броня теряет AP как обычно, остаток рейтинга на тело не переходит",
+    source: "Мутация: Blood Replacement, субмутация 10 (Общие мутации)",
+    reader: "module/combat/damage.mjs applyDamageToActor (_applyCorrosive, bodyImmune)"
+  },
   "weaponPropertyImmunity.corrosive": {
     label: "Иммунитет к свойству оружия Corrosive (не теряет AP брони)",
     source: "Мутация: Shield of Purity (Общие мутации)",

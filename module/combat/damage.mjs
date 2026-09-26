@@ -44,12 +44,20 @@ import { reaperLegacyButtonHtml } from "./legacy-weapon-reaper.mjs";
 import { braveHeartLegacyButtonHtml } from "./legacy-weapon-brave-heart.mjs";
 import { legacyHatredShieldApForLocation } from "../rules/legacy-weapon.mjs";
 
+/** «Иммунитет к Corrosive, но не у брони» — Замена Крови, «Кислота» (wdbc-1rno.15). */
+export const CORROSIVE_BODY_IMMUNITY = "weaponPropertyImmunity.corrosiveBodyOnly";
+
 // ─── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling/Haywire ──────────
 // Применяются здесь (не в attack.mjs/hooks.mjs), потому что только тут разом
 // известны актор, место попадания (armorKey), тип урона и непоглощённый урон.
 
-/** Разъедающее: −X AP в месте попадания; остаток рейтинга — непоглощ. C Dmg. */
-async function _applyCorrosive(actor, armorKey, hitLocation, rating) {
+/**
+ * Разъедающее: −X AP в месте попадания; остаток рейтинга — непоглощ. C Dmg.
+ * bodyImmune — «иммунитет к Corrosive, но не у носимой брони» (Замена Крови,
+ * субмутация 10 «Кислота», wdbc-1rno.15): броня разъедается как обычно, а
+ * остаток на тело не переходит.
+ */
+async function _applyCorrosive(actor, armorKey, hitLocation, rating, { bodyImmune = false } = {}) {
   const currentAP = Math.max(0, Number(actor.system.absorption?.armorOnly?.[armorKey]) || 0);
   const existing  = Number(actor.system.armorCorrosion?.[armorKey]) || 0;
   const lost      = Math.min(rating, currentAP);
@@ -57,7 +65,9 @@ async function _applyCorrosive(actor, armorKey, hitLocation, rating) {
   await actor.update({ [`system.armorCorrosion.${armorKey}`]: existing + lost });
 
   let overflowNote = "";
-  if (overflow > 0) {
+  if (overflow > 0 && bodyImmune) {
+    overflowNote = `, остаток <b>${overflow}</b> — телу вреда нет (иммунитет к Corrosive)`;
+  } else if (overflow > 0) {
     const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, overflow);
     overflowNote = `, остаток <b>${overflow}</b> — непоглощаемый урон (Раны ${currentWounds}→${newWounds}${gotCritical ? `, крит. ${newCritical}` : ""})`;
   }
@@ -1233,7 +1243,8 @@ export async function applyDamageToActor(actor, damageData) {
     propEffectNotes.push(`<div class="dmg-tb-note">🜁 Касание Энтропии: −${entropyLost} AP брони (${hitLocation}) ещё до поглощения</div>`);
   }
   if (corrosiveRating > 0 && !hasWeaponPropertyImmunity(actor, "corrosive")) {
-    propEffectNotes.push(await _applyCorrosive(actor, armorKey, hitLocation, corrosiveRating));
+    propEffectNotes.push(await _applyCorrosive(actor, armorKey, hitLocation, corrosiveRating,
+      { bodyImmune: hasRuleFlag(actor, CORROSIVE_BODY_IMMUNITY) }));
   }
   if (piercing && netDamage > 0 && !hasWeaponPropertyImmunity(actor, "piercing")) {
     propEffectNotes.push(await _applyPiercing(actor, armorKey, hitLocation));
