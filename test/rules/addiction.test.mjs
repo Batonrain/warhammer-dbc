@@ -195,3 +195,43 @@ describe("scope anySkill (resolve-test.mjs::effectAppliesTo, через rollMods
     expect(rollModsFromRules(rule, buildTestContext({ kind: "power" }))).toHaveLength(0);
   });
 });
+
+// wdbc-1rno.12/.14: последствия утоления у субмутаций 4, 10, 12.
+import { addictionSatisfiedDays, addictionSatisfiedStamp, knowsXenosSpecies } from "../../module/rules/addiction.mjs";
+
+describe("срок утоления по субмутации (wdbc-1rno.14)", () => {
+  const withRoll = label => ({ system: { submutation: { label } } });
+
+  it("Камень Душ (12) — год, Живая плоть (10) при жертве — 10 дней, прочее — сутки", () => {
+    expect(addictionSatisfiedDays(withRoll("12"))).toBe(365);
+    expect(addictionSatisfiedDays(withRoll("10"), { servedBeforeVictim: true })).toBe(10);
+    expect(addictionSatisfiedDays(withRoll("10"))).toBe(1);
+    expect(addictionSatisfiedDays(withRoll("4"))).toBe(1);
+  });
+
+  it("утоление на N суток: штраф начинается ровно через N суток", () => {
+    const now = 1000 * SECONDS_PER_DAY;
+    const item = { system: { dependency: { lastSatisfied: addictionSatisfiedStamp(now, 365) } } };
+    expect(isAddictionUnsatisfied(item, now + 364 * SECONDS_PER_DAY)).toBe(false);
+    expect(isAddictionUnsatisfied(item, now + 365 * SECONDS_PER_DAY)).toBe(true);
+    expect(addictionStatusLabel(item, now)).toMatch(/^до штрафа/);
+  });
+
+  it("обычное утоление — метка «сейчас», как раньше", () => {
+    expect(addictionSatisfiedStamp(500)).toBe(500);
+  });
+});
+
+describe("знаком ли с видом ксеносов (wdbc-1rno.12)", () => {
+  const actor = specs => ({ system: { groupSkills: { forbiddenLore: specs.map(s => ({ specialty: s, rank: "knows" })) } } });
+
+  it("строго по виду: Xenos (Эльдар) не засчитывается за Орков", () => {
+    expect(knowsXenosSpecies(actor(["Xenos (Эльдар)"]), "Орки")).toBe(false);
+    expect(knowsXenosSpecies(actor(["Xenos (Орки)"]), "орки")).toBe(true);
+  });
+
+  it("другие Запретные знания и пустой вид — не знаком", () => {
+    expect(knowsXenosSpecies(actor(["Warp"]), "Орки")).toBe(false);
+    expect(knowsXenosSpecies(actor([]), "")).toBe(false);
+  });
+});

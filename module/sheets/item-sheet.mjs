@@ -1150,6 +1150,13 @@ export class WarhammerItemSheet
           damageSubtype: prof.damageSubtype ?? "",
           penetration: prof.penetration ?? 0,
           range: prof.range ?? "",
+          // Свой ствол (комби-оружие, wdbc-jho9, combat/weapon-profiles.mjs):
+          // поля показываются только у стрелкового оружия.
+          ranged: context.system.weaponClass !== "melee",
+          ownFire: !!prof.ownFire,
+          rof_single: prof.rof_single ?? 0, rof_semi: prof.rof_semi ?? 0, rof_full: prof.rof_full ?? 0,
+          magazineMax: prof.magazineMax ?? 0, magazineCur: prof.magazineCur ?? 0,
+          reload: prof.reload ?? "", weaponType: prof.weaponType ?? "",
           propsActive: pActive
             .map(p => ({ key: p.key, rating: p.rating ?? 0, rating2: p.rating2 ?? 0, def: WEAPON_PROPERTIES[p.key] }))
             .filter(p => p.def),
@@ -3328,7 +3335,9 @@ export class WarhammerItemSheet
       const field = ev.currentTarget.dataset.field;
       const arr = foundry.utils.deepClone(this.item.system.profiles || []);
       if (!arr[i]) return;
-      arr[i][field] = field === "penetration" ? (parseInt(ev.currentTarget.value) || 0) : ev.currentTarget.value;
+      const NUMERIC = ["penetration", "rof_single", "rof_semi", "rof_full", "magazineMax", "magazineCur"];
+      arr[i][field] = ev.currentTarget.type === "checkbox" ? ev.currentTarget.checked
+        : NUMERIC.includes(field) ? (parseInt(ev.currentTarget.value) || 0) : ev.currentTarget.value;
       await this.item.update({ "system.profiles": arr });
     });
     // Свойства конкретного профиля (свой блок Devastating/Primitive и т.п.)

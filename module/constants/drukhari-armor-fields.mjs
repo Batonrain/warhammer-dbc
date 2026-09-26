@@ -26,6 +26,7 @@ const WRAITH_MODES = [
     nimble: 20,
     text: "В радиусе 2 м непросматриваемый чёрный дым. Носителю в работающем шлеме поле не мешает. Избирательные и Прицельные атаки на расстоянии по нему невозможны. Трейт Nimble растёт до 20." },
   { key: "damping", label: "Амортизирующее поле", need: "good",
+    flak: true,
     text: "Блестящее покрытие: носитель получает особенность Flak как у ксенопластикового доспеха Best.Q. Не может Загореться или Окислиться, кроме как от магии." },
   { key: "suppressing", label: "Подавляющее поле", need: "best",
     blunted: 0, psyMod: -10,
@@ -42,7 +43,7 @@ const GHOST_MODES = [
     nimble: 30,
     text: "В радиусе 2 м непросматриваемый чёрный дым. Избирательные и Прицельные атаки на расстоянии невозможны, избирательные в упор тоже. Трейт Nimble растёт до 30." },
   { key: "damping", label: "Амортизирующее поле", need: "good",
-    protective: 4,
+    flak: true, protective: 4,
     text: "Flak как у ксенопластикового доспеха Best.Q и Protective (4). Не может Загореться или Окислиться, кроме как от магии; при активации перестаёт Гореть и снимает эффекты на броне." },
   { key: "suppressing", label: "Подавляющее поле", need: "best",
     blunted: 1, psyMod: -20,
@@ -85,7 +86,7 @@ export function activeFieldMode(item) {
 
 /**
  * Машинные эффекты активного режима: щит, Nimble, Blunted, штраф чужим
- * психотестам, Protective. Пустой объект, если режим не активен.
+ * психотестам, Protective, Flak. Пустой объект, если режим не активен.
  */
 export function fieldModeEffects(item) {
   const m = activeFieldMode(item);
@@ -96,5 +97,6 @@ export function fieldModeEffects(item) {
   if (m.blunted != null) fx.blunted = m.blunted;
   if (m.psyMod)     fx.psyMod     = m.psyMod;
   if (m.protective) fx.protective = m.protective;
+  if (m.flak)       fx.flak       = true;
   return fx;
 }

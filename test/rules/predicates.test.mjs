@@ -465,7 +465,12 @@ describe("общее требование к предикатам", () => {
     // Защитник, Оружие Наследия (wdbc-1rno.35) — читает флаг ЦЕЛИ
     // (ctx.targetActor), значение из `when` не участвует, тот же случай, что
     // avatarOfSlaughterOffTarget/hexMarkedPreyAllyBonus выше.
-    legacyGuardianMarked: undefined
+    legacyGuardianMarked: undefined,
+    // Подавляющее поле друкхарийской брони цели (wdbc-j8cn) — читает
+    // system.fieldPsyMod ЦЕЛИ, значение из `when` не участвует.
+    targetHasFieldPsyMod: undefined,
+    // Цель без герметичной брони (wdbc-1rno.11, Миазмы) — читает ЦЕЛЬ.
+    targetLacksSealedArmour: undefined
   };
 
   it("на пустом акторе каждый возвращает строго true или false", () => {

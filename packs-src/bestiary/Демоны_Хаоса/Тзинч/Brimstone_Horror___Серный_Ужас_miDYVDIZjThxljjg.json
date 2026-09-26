@@ -834,7 +834,7 @@
       "img": "icons/svg/sword.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Урон без S.b (1): его атака прибавляет его сама; книга Хаоса, Серный Ужас даёт итог с S.b.",
         "rangeBands": [],
         "offProfile": {},
         "gripProps2h": [],
@@ -852,7 +852,7 @@
         "rof_single": false,
         "rof_semi": 0,
         "rof_full": 0,
-        "damage": "1d5+2",
+        "damage": "1d5+1",
         "damageType": "energy",
         "penetration": 1,
         "quality": "common",

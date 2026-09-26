@@ -13,6 +13,7 @@ import { isFrontArcHit as isFrontArcHitPure, bearingDegrees, isWithinMountArc, i
 // по умолчанию, там — сырые данные документа + explicit grid для фоновых
 // сцен), поэтому обвязка своя, но сама арифметика теперь одна.
 import { tokenDocDistance } from "../regions/auras.mjs";
+import { headlessSightAngle } from "../rules/headless.mjs";
 
 /**
  * Центр токена в пиксельных координатах сцены (не клетках — углу масштаб не
@@ -174,8 +175,12 @@ export function isOutsideDefenderView(defenderToken, attackerToken) {
   const attackerPos = tokenCenter(attackerToken);
   if (!defenderPos || !attackerPos) return false;
   const rawAngle = Number((defenderToken?.document ?? defenderToken)?.sight?.angle);
-  if (rawAngle >= 360) return false;
-  const angle = rawAngle > 0 ? rawAngle : DEFAULT_SIGHT_ANGLE_DEGREES;
+  // Безголовый (wdbc-1rno.20, rules/headless.mjs): обзор не шире 120°, даже
+  // если у токена настроен круговой.
+  const defenderActor = defenderToken?.actor ?? defenderToken?.document?.actor ?? null;
+  const baseAngle = rawAngle > 0 ? rawAngle : DEFAULT_SIGHT_ANGLE_DEGREES;
+  const angle = headlessSightAngle(defenderActor, baseAngle);
+  if (angle >= 360) return false;
   const bearing = bearingDegrees(defenderPos, attackerPos);
   return !isWithinArc(tokenRotation(defenderToken), bearing, angle);
 }

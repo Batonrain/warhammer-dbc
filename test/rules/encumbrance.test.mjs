@@ -61,3 +61,19 @@ describe("inventoryOverloadPenalty: применение к тесту", () => {
     expect(inventoryOverloadPenalty(normal, { charKey: "ws" })).toBe(0);
   });
 });
+
+// wdbc-zy93: «Не считать вес снаряжения» — флаг актора для НПС-заглушек.
+describe("«Не считать вес снаряжения» (флаг ignoreWeight)", () => {
+  const heavy = flags => ({ system: { encumbrance: { effectiveCurrent: 200, carry: 60 } }, flags });
+
+  it("флаг гасит Перевес и его штраф", () => {
+    const a = heavy({ "warhammer-dbc": { ignoreWeight: true } });
+    expect(inventoryOverloadTier(a)).toBeNull();
+    expect(inventoryOverloadPenalty(a, { charKey: "ws" })).toBe(0);
+  });
+
+  it("без флага (или с false) Перевес на месте", () => {
+    expect(inventoryOverloadTier(heavy(undefined))).toEqual({ moveAtkMod: -10, spdMod: -1 });
+    expect(inventoryOverloadTier(heavy({ "warhammer-dbc": { ignoreWeight: false } }))).not.toBeNull();
+  });
+});

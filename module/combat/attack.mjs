@@ -14,7 +14,8 @@ import { hitCount, hitLocation, locationForHit, meleeStrengthBonus,
          attackPenetration, damageFormulaFor, bonusDamageDice,
          attackHitOutcome }                          from "./attack-outcome.mjs";
 import { effectiveDamage, mergeExtraProps, weaponOffEffects } from "./attack-weapon.mjs";
-import { attackIsMelee, FIRED_BRACED_FLAG, firedBracedHeavyIds } from "./weapon-profiles.mjs";
+import { attackIsMelee, FIRED_BRACED_FLAG, firedBracedHeavyIds,
+         profileHasOwnFire, sysWithProfileFire, authoredProfileIndex, profileFireUpdate } from "./weapon-profiles.mjs";
 import { isBraced } from "./brace-weapon.mjs";
 import { isIntegralAttack } from "./equipped-melee.mjs";
 import { grappleCoverPartner } from "./grapple.mjs";
@@ -197,7 +198,16 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // поверх клона. С этой точки sys — уже эффективный (с бонусом), все
   // нижеидущие чтения rof_semi/rof_full (счёт попаданий, расход патронов,
   // потолок Подавления) видят применённую Историю.
-  const sys     = legacyWrathEffectiveRof(rawSys, item);
+  // Свой ствол профиля (комби-оружие, wdbc-jho9, combat/weapon-profiles.mjs):
+  // скорострельность, магазин и боеприпас второго ствола подменяют поля
+  // оружия ДО всего остального — счёт попаданий, расход патронов, клин.
+  const ownFireIdx = profileHasOwnFire(opts.profile)
+    ? authoredProfileIndex(item, opts.profile, opts.profileIdx) : -1;
+  const sys     = legacyWrathEffectiveRof(sysWithProfileFire(rawSys, opts.profile), item);
+  // Куда писать остаток магазина: в профиль (свой ствол) или в оружие.
+  const magazineUpdate = (value, extra = {}) => ownFireIdx >= 0
+    ? { ...profileFireUpdate(item, ownFireIdx, { magazineCur: value }), ...extra }
+    : { "system.magazineCur": value, ...extra };
   // Метательное (Граната и т.п.) по умолчанию бросается по BS — стр. 40:
   // «В рукопашной оно МОЖЕТ использоваться как рукопашное», это не default.
   // Решение «рукопашная ли это атака» одно на окно и на бросок
@@ -657,11 +667,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     // (combat/clear-jam.mjs::rollRestoreJammedAmmo).
     const curMag = sys.magazineCur || 0;
     const spoiled = Math.min(2 * (_getAmmoSpent({ system: sys }, rofMode) || 0), curMag);
-    await item.update({
+    await item.update(magazineUpdate(curMag - spoiled, {
       "system.jammed": true,
-      "system.magazineCur": curMag - spoiled,
       "system.jammedAmmo": (sys.jammedAmmo || 0) + spoiled
-    });
+    }));
     const jamData = ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: jamCard({
@@ -859,7 +868,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       if (ammoSpent > 0) {
         const curMag = sys.magazineCur || 0;
         const newMag = Math.max(0, curMag - ammoSpent);
-        await item.update({ "system.magazineCur": newMag });
+        await item.update(magazineUpdate(newMag));
         if (newMag === 0) {
           ammoWarning = `<div class="roll-allout-note">Магазин пуст! Требуется перезарядка.</div>`;
         } else if (newMag <= Math.ceil((sys.magazineMax || 1) * 0.25)) {

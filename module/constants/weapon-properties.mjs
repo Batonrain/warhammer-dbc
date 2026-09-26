@@ -89,6 +89,27 @@ export const WEAPON_PROPERTIES = {
     auto: { antiAir: true }
   },
 
+  // Arc Pen (wdbc-3hgd0) — Пробитие дуг.
+  arcPen: {
+    key: "arcPen", label: "Пробитие дуг", en: "Arc Pen", rating: true, cat: "both",
+    desc: "Дуги от свойства Дуга этого оружия бьют с Пробитием X вместо обычного.",
+    reminder: "⚡ Пробитие дуг X",
+    auto: { arcPen: null }
+  },
+  // Arc Chain (wdbc-3hgd0) — Цепная дуга.
+  arcChain: {
+    key: "arcChain", label: "Цепная дуга", en: "Arc Chain", rating: true, rating2: true, cat: "both",
+    desc: "Сами дуги этого оружия несут Дугу (X/Y): на X+ на кубике урона дуги выпускается новая дуга Y(El) от поражённого ею, но не по тем, кто уже получил попадание дугой этой атаки.",
+    reminder: "⚡ Цепная дуга: дуги сами выпускают дуги",
+    auto: { arcChain: null }
+  },
+  // Conductive (wdbc-3hgd0) — Электропроводящее.
+  conductive: {
+    key: "conductive", label: "Электропроводящее", en: "Conductive", rating: false, cat: "melee",
+    desc: "Оружие проводит электричество (металлический клинок, древко и т.п.). Нужно для способностей, которые передают разряд через проводящие броню и оружие.",
+    reminder: "⚡ Электропроводящее",
+    auto: { conductive: true }
+  },
   arc: {
     key: "arc", label: "Дуга", en: "Arc", rating: true, rating2: true, rating2Dice: true, cat: "ranged",
     desc: "Накопленное электричество выпускает дугу: при попадании Y(El) Dmg, Pen Y по ближайшей к цели персонажу/союзнику в 5м, исключая уже получивших попадание этой атакой.",

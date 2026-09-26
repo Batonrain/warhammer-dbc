@@ -37,6 +37,10 @@ import { hasRuneMagic, runeMax, runeValue, runeCostForPower, runeCostTotal,
          runeLearnInfo, improvisedRuneCostUpdates,
          preparedRuneDiscount, markPreparedRuneUsed } from "../../rules/sigillite-runes.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../../helpers/test-card.mjs";
+import { bluntedCasterTest } from "../../rules/blunted.mjs";
+import { arcExtraAttrs } from "../../rules/arc-extra.mjs";
+import { leftSustainRange } from "../../rules/psy-range.mjs";
+import { measureTokens } from "../../combat/tactical-map.mjs";
 import { mechRollData } from "../../rules/mech-formula.mjs";
 import { runForceBladeShop, forceBladeShopClear } from "../../apps/force-blade-choice.mjs";
 import { charDamageButtonHtml } from "../../combat/char-damage-button.mjs";
@@ -947,7 +951,7 @@ export async function executePsychotest(actor, item, opts) {
       // (.wh-arc-btn) общий, ничего своего заводить не пришлось.
       const arcBtn = (wp.arcRating > 0 && firstHitTotal != null && firstHitTotal >= wp.arcRating) ? `
         <button class="wh-arc-btn" type="button"
-          data-arc-damage="${wp.arcDamage}" data-weapon-name="${item.name}"
+          data-arc-damage="${wp.arcDamage}" data-weapon-name="${item.name}"${arcExtraAttrs(wp)}
           data-attacker="${actor.name}" data-attacker-uuid="${actor.uuid}">
           ⚡ Дуга: выберите поражённую цель → ближайшая вторая в 5м (${wp.arcDamage}(El) Pen ${wp.arcDamage})
         </button>` : "";
@@ -1127,6 +1131,25 @@ export async function executePsychotest(actor, item, opts) {
         </div>`;
   }
 
+  // ── Затупленная цель (wdbc-j8cn, rules/blunted.mjs) ──────────────────────
+  // Черта Blunted (X) или Подавляющее поле друкхарийской брони: кастер
+  // проходит Psyniscience−10×X, при Провале цель игнорирует эффект целиком.
+  // Порог считается здесь же — игроку не нужно искать навык и вычитать.
+  let bluntedSection = "";
+  if (success) {
+    const bTarget = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+    const bt = bluntedCasterTest(actor, bTarget, item, (sys.weaponProps || []).map(p => p?.key));
+    if (bt) {
+      const base = Number(actor.system.skills?.[bt.skill]?.total ?? -20) || 0;
+      const modTxt = `${bt.mod >= 0 ? "+" : "−"}${Math.abs(bt.mod)}`;
+      bluntedSection = `
+        <div class="roll-threshold" style="color:#c07000;">
+          ${esc(bTarget.name)} — Затупленный (${bt.rating}): пройдите <b>${bt.label} ${modTxt}</b>
+          (Порог <b>${base + bt.mod}</b>). При Провале цель полностью игнорирует эффект силы.
+        </div>`;
+    }
+  }
+
   // ── Парирование психосилы Талантом «Щит Клинков» (wdbc-bwf9) ──────────────
   // Отдельная секция, а не общий defenseSection карточки атаки: от психосилы
   // не Уклоняются, Вираж и Сжатие к ней тоже не относятся, а само Парирование
@@ -1189,7 +1212,7 @@ export async function executePsychotest(actor, item, opts) {
     outcome: outcomeHtml(success, success
       ? `Манифестация удалась — ${deg} ${_degWord(deg)}`
       : `Психотест провален — ${deg} ${_degWord(deg)}`),
-    sections: [conversionLine, resistSection, bladeShieldSection, damageSection, charDamageSection,
+    sections: [conversionLine, bluntedSection, resistSection, bladeShieldSection, damageSection, charDamageSection,
                attackPropsSection, phenSection, warpShockSection]
   }, { rolls: allRolls });
   // Automated Animations (если установлен и включён) — module/integrations/autoanimations.mjs.
@@ -1197,6 +1220,18 @@ export async function executePsychotest(actor, item, opts) {
   // Кто открыл манифестацию с контекстом (Огонь Души с карточки урона,
   // module/combat/soulfire.mjs) — узнаёт исход; обычный каст с листа его не передаёт.
   await opts.onResult?.({ success, deg, ePR });
+}
+
+/**
+ * Вышел ли носитель Плода Плоти из радиуса поддержания силы (wdbc-bd1ii).
+ * эПР — зафиксированный при поддержании (sustainedEpr), иначе текущий тПР.
+ */
+function fruitLeftSustainRange(casterActor, bearerActor, power) {
+  const a = casterActor?.getActiveTokens?.(false)?.[0] ?? null;
+  const b = bearerActor?.getActiveTokens?.(false)?.[0] ?? null;
+  if (!a || !b) return false;
+  const pr = Number(power.system?.sustainedEpr ?? casterActor.system?.psyker?.currentRating) || 0;
+  return leftSustainRange(power.system, pr, measureTokens(a, b)?.edgeM ?? null);
 }
 
 export function rollPsyniscience(actor, rollSkill) {
@@ -1371,9 +1406,14 @@ export function activatePsychicListeners(html, actor, { rollSkill, resolveSoulBu
     // отдельного хука на его удаление не нужно.
     if (!turningOn) {
       const lockUuid = item.getFlag?.("warhammer-dbc", "fruitOfFleshLockUuid");
-      if (lockUuid && await fromUuid(lockUuid)) {
+      const fruit = lockUuid ? await fromUuid(lockUuid) : null;
+      // «...или покинет радиус поддержания» (wdbc-bd1ii): замок отпускает,
+      // когда носитель плода на сцене дальше радиуса поддержания силы
+      // (rules/psy-range.mjs::leftSustainRange). Нет обоих токенов на сцене
+      // или радиус не числовой — выход не доказан, замок держится.
+      if (fruit && !fruitLeftSustainRange(actor, fruit.actor, item)) {
         ev.currentTarget.checked = true;
-        ui.notifications.warn("Заточена в Плоде Плоти — нельзя развеять, пока плод не уничтожен.");
+        ui.notifications.warn("Заточена в Плоде Плоти — нельзя развеять, пока плод не уничтожен или не покинет радиус поддержания.");
         return;
       }
     }

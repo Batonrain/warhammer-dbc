@@ -31,6 +31,7 @@ import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
 import { inPariahVoid } from "../rules/null-zones.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { redirectHitLocationForMachine } from "../rules/bronze-myrmidon.mjs";
+import { redirectHitLocationForHeadless } from "../rules/headless.mjs";
 import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
 import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG } from "./pacifism.mjs";
 import { QUICK_TO_ANGER_CAPABILITY, rollQuickToAngerTest } from "../rules/quick-to-anger.mjs";
@@ -52,12 +53,23 @@ import { reaperLegacyButtonHtml } from "./legacy-weapon-reaper.mjs";
 import { braveHeartLegacyButtonHtml } from "./legacy-weapon-brave-heart.mjs";
 import { legacyHatredShieldApForLocation } from "../rules/legacy-weapon.mjs";
 
+/** Электродуга Best.Q «Электрическая регенерация» (wdbc-3hgd0). */
+export const ELECTRIC_REGENERATION = "implant.electricArc.regeneration";
+
+/** «Иммунитет к Corrosive, но не у брони» — Замена Крови, «Кислота» (wdbc-1rno.15). */
+export const CORROSIVE_BODY_IMMUNITY = "weaponPropertyImmunity.corrosiveBodyOnly";
+
 // ─── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling/Haywire ──────────
 // Применяются здесь (не в attack.mjs/hooks.mjs), потому что только тут разом
 // известны актор, место попадания (armorKey), тип урона и непоглощённый урон.
 
-/** Разъедающее: −X AP в месте попадания; остаток рейтинга — непоглощ. C Dmg. */
-async function _applyCorrosive(actor, armorKey, hitLocation, rating) {
+/**
+ * Разъедающее: −X AP в месте попадания; остаток рейтинга — непоглощ. C Dmg.
+ * bodyImmune — «иммунитет к Corrosive, но не у носимой брони» (Замена Крови,
+ * субмутация 10 «Кислота», wdbc-1rno.15): броня разъедается как обычно, а
+ * остаток на тело не переходит.
+ */
+async function _applyCorrosive(actor, armorKey, hitLocation, rating, { bodyImmune = false } = {}) {
   const currentAP = Math.max(0, Number(actor.system.absorption?.armorOnly?.[armorKey]) || 0);
   const existing  = Number(actor.system.armorCorrosion?.[armorKey]) || 0;
   const lost      = Math.min(rating, currentAP);
@@ -65,7 +77,9 @@ async function _applyCorrosive(actor, armorKey, hitLocation, rating) {
   await actor.update({ [`system.armorCorrosion.${armorKey}`]: existing + lost });
 
   let overflowNote = "";
-  if (overflow > 0) {
+  if (overflow > 0 && bodyImmune) {
+    overflowNote = `, остаток <b>${overflow}</b> — телу вреда нет (иммунитет к Corrosive)`;
+  } else if (overflow > 0) {
     const loss = await applyWoundLoss(actor, overflow);
     const { currentWounds, newWounds, newCritical, gotCritical } = loss;
     overflowNote = `, остаток <b>${overflow}</b> — непоглощаемый урон (Раны ${currentWounds}→${newWounds}${gotCritical ? `, крит. ${newCritical}` : ""})`;
@@ -788,7 +802,8 @@ export async function applyDamageToActor(actor, damageData) {
   // активным Трейтом Machine (Ярость) попадание в Сочленение/Глаз резолвится
   // ДАЛЬШЕ (AP, крит-таблица) как попадание в Руку/Голову — редирект целиком,
   // одной точкой, а не патчем каждого места, читающего hitLocation.
-  const hitLocation = redirectHitLocationForMachine(rawHitLocation, actor);
+  // Безголовый (wdbc-1rno.20, rules/headless.mjs): голова и глаз — в торс.
+  const hitLocation = redirectHitLocationForHeadless(redirectHitLocationForMachine(rawHitLocation, actor), actor);
 
   // ── Бросок щита (если есть активный) ─────────────────────────────────────
   // ignoreShield (Flush/Варп) — щит не катится совсем; sanctified — катится, но
@@ -818,6 +833,10 @@ export async function applyDamageToActor(actor, damageData) {
   if (melee && damageType === "impact" && hasRuleFlag(actor, "damageImmunity.meleeImpact")) return;
   if (melee && damageType === "rending" && hasRuleFlag(actor, "damageImmunity.meleeRending")) return;
   if (!melee && damageType === "impact" && hasRuleFlag(actor, "damageImmunity.rangedImpact")) return;
+  // Марионетка (Странная Неуязвимость, субмутация 9, wdbc-1rno.24): «Попадания
+  // варп-оружия проходят сквозь него, не причиняя вреда» — warpSoak и есть
+  // признак попадания свойством Warp Weapon.
+  if (warpSoak && hasRuleFlag(actor, "damageImmunity.warpWeapon")) return;
   // Иммунитет по подвиду урона (wdbc-q0q8) — тот же приём, что три ветки выше,
   // но по DAMAGE_SUBTYPES вместо DAMAGE_TYPES/melee: полный игнор попадания,
   // не только побочного эффекта. Единое пространство имён на все 6 подвидов
@@ -1127,6 +1146,13 @@ export async function applyDamageToActor(actor, damageData) {
 
   let netDamage = ablativeDamage(rawNet, actor);
   const ablated = netDamage !== rawNet;
+  // «Сопротивление к <подвид> урону» (Электродуга: «сопротивление к E(El)
+  // урону», wdbc-3hgd0; то же слово у других друкхарийских имплантов) — книги
+  // числом его не задают; принято как у Магмы Замены Крови: урон этого подвида
+  // после Поглощения вдвое (окр.▲). Одно место — поменять трактовку здесь.
+  const resisted = netDamage > 0 && !!damageSubtype
+    && hasRuleFlag(actor, `damageResistance.subtype.${damageSubtype}`);
+  if (resisted) netDamage = Math.ceil(netDamage / 2);
   // Экстремальный Урон (стр. 34, wdbc-x1nz.2.50): «если после Поглощения
   // попадание не нанесло никакого реального урона, оно наносит 1
   // непоглощаемого урона» — последняя проверка, ПОСЛЕ всех слоёв поглощения
@@ -1166,6 +1192,19 @@ export async function applyDamageToActor(actor, damageData) {
 
   const { currentWounds, newWounds, newCritical, gotCritical } =
     await applyWoundLoss(actor, netDamage);
+
+  // Электрическая регенерация (Электродуга Best.Q, wdbc-3hgd0): «Каждый раз,
+  // когда персонаж получает E(El), он восстанавливает 1d10 ран» — решение
+  // владельца 26.09.2026: после попадания E(El), нанёсшего урон.
+  let electricRegenNote = "";
+  if (netDamage > 0 && damageSubtype === "electrical" && hasRuleFlag(actor, ELECTRIC_REGENERATION)) {
+    const regen = await new Roll("1d10").evaluate();
+    const maxW = Number(actor.system.wounds?.max) || 0;
+    const cur = Number(actor.system.wounds?.value) || 0;
+    const healed = Math.min(regen.total, Math.max(0, maxW - cur));
+    if (healed > 0) await actor.update({ "system.wounds.value": cur + healed });
+    electricRegenNote = `<div class="dmg-tb-note">⚡ Электрическая регенерация: 1d10 = ${regen.total}, восстановлено <b>${healed}</b> Ран.</div>`;
+  }
 
   // Чем ранили в последний раз — читает sheets/tabs/body.mjs::setDeceased,
   // чтобы засчитать убийство Кровавому Пламени в тот момент, когда система
@@ -1319,7 +1358,8 @@ export async function applyDamageToActor(actor, damageData) {
     propEffectNotes.push(`<div class="dmg-tb-note">🜁 Касание Энтропии: −${entropyLost} AP брони (${hitLocation}) ещё до поглощения</div>`);
   }
   if (corrosiveRating > 0 && !hasWeaponPropertyImmunity(actor, "corrosive")) {
-    propEffectNotes.push(await _applyCorrosive(actor, armorKey, hitLocation, corrosiveRating));
+    propEffectNotes.push(await _applyCorrosive(actor, armorKey, hitLocation, corrosiveRating,
+      { bodyImmune: hasRuleFlag(actor, CORROSIVE_BODY_IMMUNITY) }));
   }
   if (piercing && netDamage > 0 && !hasWeaponPropertyImmunity(actor, "piercing")) {
     propEffectNotes.push(await _applyPiercing(actor, armorKey, hitLocation));
@@ -1330,6 +1370,9 @@ export async function applyDamageToActor(actor, damageData) {
   if (haywireActive && !hasWeaponPropertyImmunity(actor, "haywire")) {
     propEffectNotes.push(await _applyHaywire(actor, haywireRating, haywireDamage2));
   }
+
+  if (resisted) propEffectNotes.push(`<div class="dmg-tb-note">⚡ Сопротивление к ${damageSubtype === "electrical" ? "E(El)" : damageSubtype}: урон после поглощения вдвое.</div>`);
+  if (electricRegenNote) propEffectNotes.push(electricRegenNote);
 
   // ── Сообщение в чат ──────────────────────────────────────────────────────
   const dtLabel  = DAMAGE_TYPES[damageType] || damageType;

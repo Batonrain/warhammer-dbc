@@ -250,3 +250,56 @@ export function isMeleeProfile(profile) {
 export function attackIsMelee(sys, { forceMelee = false, profile = null } = {}) {
   return sys?.weaponClass === "melee" || !!forceMelee || isMeleeProfile(profile);
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+//  СВОЙ СТВОЛ ПРОФИЛЯ — комби-оружие (wdbc-jho9).
+//
+//  Второй ствол комби-оружия (болтер + мелта-подствольник) — не просто другой
+//  урон: у него своя скорострельность, свой магазин, своя перезарядка и свои
+//  боеприпасы. Решение владельца 26.09.2026 — отдельный магазин, как в книге.
+//  Профиль с `ownFire: true` несёт эти поля сам (rof_single/rof_semi/rof_full,
+//  magazineMax/magazineCur, reload, range, weaponType для подбора боеприпаса,
+//  loadedAmmoId), и на время атаки/перезарядки они подменяют поля оружия —
+//  одной функцией, чтобы окно атаки, бросок и перезарядка видели одно и то же.
+//  Профиль без `ownFire` ведёт себя ровно как раньше: стреляет магазином
+//  самого оружия.
+// ════════════════════════════════════════════════════════════════════════════
+
+/** Есть ли у профиля свой ствол (магазин, скорострельность). */
+export function profileHasOwnFire(profile) {
+  return !!profile?.ownFire;
+}
+
+/** system оружия, каким его видит атака/перезарядка этим профилем. */
+export function sysWithProfileFire(sys, profile) {
+  if (!profileHasOwnFire(profile)) return sys;
+  const n = k => Number(profile[k]) || 0;
+  return {
+    ...sys,
+    rof_single: n("rof_single"), rof_semi: n("rof_semi"), rof_full: n("rof_full"),
+    magazineMax: n("magazineMax"), magazineCur: n("magazineCur"),
+    reload: profile.reload ?? sys.reload,
+    ...(n("range") > 0 ? { range: n("range") } : {}),
+    weaponType: profile.weaponType || sys.weaponType,
+    loadedAmmoId: profile.loadedAmmoId || ""
+  };
+}
+
+/** Индекс авторского профиля на предмете (явный, иначе поиск по ссылке/имени). */
+export function authoredProfileIndex(item, profile, explicitIdx = null) {
+  const list = Array.isArray(item?.system?.profiles) ? item.system.profiles : [];
+  const i = explicitIdx == null || explicitIdx === "" ? NaN : Number(explicitIdx);
+  if (Number.isInteger(i) && i >= 0 && i < list.length) return i;
+  if (!profile) return -1;
+  const byRef = list.indexOf(profile);
+  if (byRef >= 0) return byRef;
+  return list.findIndex(p => p?.ownFire && (p.label ?? "") === (profile.label ?? ""));
+}
+
+/** Патч предмета: поменять поля ствола профиля idx (магазин, боеприпас). */
+export function profileFireUpdate(item, idx, fields) {
+  const arr = (item?.system?.profiles || []).map(p => ({ ...p }));
+  if (!arr[idx]) return {};
+  Object.assign(arr[idx], fields);
+  return { "system.profiles": arr };
+}

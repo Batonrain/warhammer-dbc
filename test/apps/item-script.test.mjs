@@ -46,6 +46,8 @@ describe("executeItemCode — стандартные помощники в об�
       seen.eatHealFruit = typeof eatHealFruit;
       seen.useSoulSeer = typeof useSoulSeer;
       seen.activateWrappedInChaos = typeof activateWrappedInChaos;
+      seen.attemptPossessionAttack = typeof attemptPossessionAttack;
+      seen.leavePossessionHost = typeof leavePossessionHost;
     `, null, { seen });
     expect(seen).toEqual({
       woundLossUpdates: "function", isTokenInSight: "function",
@@ -58,7 +60,8 @@ describe("executeItemCode — стандартные помощники в об�
       endOfOrderInitiative: "function", mergedVictimUuids: "function", grantArmourOfTheGods: "function",
       resolveBurnedSenses: "function", buildCountenanceFearFlag: "function", purityOfBattleWave: "function",
       activateFruitOfFlesh: "function", eatHealFruit: "function", useSoulSeer: "function",
-      activateWrappedInChaos: "function"
+      activateWrappedInChaos: "function",
+      attemptPossessionAttack: "function", leavePossessionHost: "function"
     });
   });
 
