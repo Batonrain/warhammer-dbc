@@ -49,6 +49,26 @@ describe("выдача Черты «Когда Ярость» следует з�
     expect(hasWhenGatedAbilityGrant(setup({ inRage: false }).source)).toBe(true);
   });
 
+  // Приёмка #527: when.conditions — гейт ГЕНОСЕМЕНИ (легион), от состояния
+  // актора не зависит; гейт Состояния — when.condition. Путаница делала
+  // «зависящими от состояния» 9 имплантов Астартес (Оккулоб), и их выдачи
+  // пересверялись на каждом уроне — с бесплатной копией уже оплаченного Таланта.
+  const itemWith = (when) => {
+    const mechanics = [{ id: "g1", operator: "AND", entries: [{ id: "e1", kind: "talent",
+      sourceUuid: "Compendium.warhammer-dbc.talents.Item.abc123", sourceName: "Dark Sight", when }] }];
+    return { id: "src", type: "implant", name: "Оккулоб", system: {}, flags: { [FLAG]: { mechanics } },
+      getFlag: (_s, k) => ({ mechanics })[k] };
+  };
+
+  it("гейт Геносемени (when.conditions) — не состояние актора", () => {
+    expect(hasWhenGatedAbilityGrant(itemWith({ negate: false, conditions: [{ legion: "VIII" }] }))).toBe(false);
+    expect(hasWhenGatedAbilityGrant(itemWith({ conditions: [], anyOf: true }))).toBe(false);
+  });
+
+  it("гейт Состояния (when.condition) опознаётся", () => {
+    expect(hasWhenGatedAbilityGrant(itemWith({ condition: ["stunned"] }))).toBe(true);
+  });
+
   it("в Ярости — Черта выдаётся; вышел из Ярости — снимается; снова в Ярости — возвращается", async () => {
     const { actor, source, granted } = setup({ inRage: true });
     await syncGrantedAbilities(source);

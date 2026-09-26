@@ -2804,8 +2804,10 @@ function collectDirectAbilityEntries(groups, actor = null, item = null, { ignore
  * состояния актора (Ярость, Раны, Состояния; warhammer-dbc.mjs, updateActor).
  */
 export function hasWhenGatedAbilityGrant(item) {
-  const when = e => e?.when && (e.when.requireRage || (e.when.woundTier || []).length
-    || (e.when.conditions || []).length || (e.when.anyOf || []).length || (e.when.patronGod || []).length);
+  // Гейт Состояния — when.condition; when.conditions — Геносемя (легион), от
+  // состояния актора не зависит; anyOf — способ сложения гейтов, не гейт.
+  const when = e => e?.when && (e.when.requireRage || whenWoundTier(e.when).length
+    || whenCondition(e.when).length || whenPatronGod(e.when).length);
   return collectDirectAbilityEntries(getItemMechanics(item), null, item, { ignoreWhen: true }).some(when);
 }
 
