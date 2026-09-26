@@ -138,6 +138,7 @@ import { maybeAutoReleaseGrapple, grappleReleaseTriggered } from "./combat/grapp
 import { weaponProfiles } from "./combat/weapon-profiles.mjs";
 import { isIntegralAttack } from "./combat/equipped-melee.mjs";
 import { collectTestMods } from "./rules/roll-mods.mjs";
+import { syncArmorFieldShields } from "./combat/armor-field-shield.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
 // updateCombat ниже) сама отслеживает, чей Ход только что закончился.
@@ -3119,6 +3120,18 @@ function _attachFateContextMenu(message, html) {
       await promptDisabledArmourForkTest(item.actor);
     }
   });
+
+  // Защитное поле друкхарийской брони (wdbc-j8cn, combat/armor-field-shield.mjs):
+  // встроенный щит живёт, пока броня надета и режим включён. Сверку делает
+  // только клиент, внёсший правку (userId) — иначе каждый подключённый клиент
+  // создал бы свой экземпляр щита.
+  const _armorFieldSync = (item, userId) => {
+    if (item.type !== "armor" || !item.actor || userId !== game.user?.id) return;
+    return syncArmorFieldShields(item.actor);
+  };
+  Hooks.on("updateItem", (item, changes, options, userId) => _armorFieldSync(item, userId));
+  Hooks.on("createItem", (item, options, userId) => _armorFieldSync(item, userId));
+  Hooks.on("deleteItem", (item, options, userId) => _armorFieldSync(item, userId));
 
   // Узлы корабля (wdbc-qhwb): запоминаем старый system.status ДО применения
   // правки — preUpdate видит документ ещё нетронутым, а options — тот же

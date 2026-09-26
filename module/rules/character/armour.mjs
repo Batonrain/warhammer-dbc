@@ -79,7 +79,15 @@ export function prepareArmourDerived(actor, system) {
     // — распространяются на все локации, куда он реально даёт AP (ap[k] > 0).
     // isPowerArmor — не свойство из properties[], а сам armorType предмета:
     // силовой шлем даёт 4 AP на глаза даже при Избирательном в Глаз (стр. 34).
-    const propAuto = aggregateArmorAuto(resolveArmorProps(item), s.propRatings);
+    // Активный режим поля друкхарийской брони (constants/drukhari-armor-fields.mjs)
+    // считается здесь, до свойств: Амортизирующее поле ДАЁТ броне Flak, а
+    // Flak — такое же свойство, как вписанное в properties[] (wdbc-j8cn).
+    const fld = fieldModeEffects(item);
+    const itemProps = resolveArmorProps(item);
+    if (fld.flak && !itemProps.some(p => p.key === "flak")) {
+      itemProps.push(...resolveArmorProps({ system: { properties: ["flak"] } }));
+    }
+    const propAuto = aggregateArmorAuto(itemProps, s.propRatings);
     propAuto.isPowerArmor = s.armorType === "power";
     for (const k of Object.keys(ap)) {
       if (ap[k] > 0) propFlagsByLoc[k] = mergeArmorLocFlags(propFlagsByLoc[k], propAuto);
@@ -111,8 +119,16 @@ export function prepareArmourDerived(actor, system) {
     if (qArmor.apAll) { for (const k of Object.keys(ap)) ap[k] += qArmor.apAll; }
     // Активный режим поля друкхарийской брони: Амортизирующее даёт Protective,
     // Подавляющее — Blunted и штраф чужим психотестам, Рассеивающее — Nimble.
-    const fld = fieldModeEffects(item);
-    if (fld.protective)      system.fieldProtective = fld.protective;
+    // Читатели (wdbc-j8cn): Protective — прямо здесь, та же прибавка против
+    // DAMAGE_TYPES.chemical, что у свойства брони Protective (X) выше;
+    // Nimble — resolve-test.mjs::traitRatingSum; Blunted — rules/blunted.mjs
+    // (карточка манифестации); psyMod — правило core.drukhariFieldPsyMod
+    // (rules/library/core.mjs); shield — встроенный щит,
+    // combat/armor-field-shield.mjs.
+    if (fld.protective) {
+      system.fieldProtective = fld.protective;
+      armorVsType.chemical += fld.protective;
+    }
     if (fld.nimble != null)  system.fieldNimble  = fld.nimble;
     if (fld.blunted != null) system.fieldBlunted = fld.blunted;
     if (fld.psyMod)          system.fieldPsyMod  = fld.psyMod;

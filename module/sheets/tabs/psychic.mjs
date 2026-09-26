@@ -37,6 +37,7 @@ import { hasRuneMagic, runeMax, runeValue, runeCostForPower, runeCostTotal,
          runeLearnInfo, improvisedRuneCostUpdates,
          preparedRuneDiscount, markPreparedRuneUsed } from "../../rules/sigillite-runes.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../../helpers/test-card.mjs";
+import { bluntedCasterTest } from "../../rules/blunted.mjs";
 import { mechRollData } from "../../rules/mech-formula.mjs";
 import { runForceBladeShop, forceBladeShopClear } from "../../apps/force-blade-choice.mjs";
 
@@ -1116,6 +1117,25 @@ export async function executePsychotest(actor, item, opts) {
         </div>`;
   }
 
+  // ── Затупленная цель (wdbc-j8cn, rules/blunted.mjs) ──────────────────────
+  // Черта Blunted (X) или Подавляющее поле друкхарийской брони: кастер
+  // проходит Psyniscience−10×X, при Провале цель игнорирует эффект целиком.
+  // Порог считается здесь же — игроку не нужно искать навык и вычитать.
+  let bluntedSection = "";
+  if (success) {
+    const bTarget = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+    const bt = bluntedCasterTest(actor, bTarget, item, (sys.weaponProps || []).map(p => p?.key));
+    if (bt) {
+      const base = Number(actor.system.skills?.[bt.skill]?.total ?? -20) || 0;
+      const modTxt = `${bt.mod >= 0 ? "+" : "−"}${Math.abs(bt.mod)}`;
+      bluntedSection = `
+        <div class="roll-threshold" style="color:#c07000;">
+          ${esc(bTarget.name)} — Затупленный (${bt.rating}): пройдите <b>${bt.label} ${modTxt}</b>
+          (Порог <b>${base + bt.mod}</b>). При Провале цель полностью игнорирует эффект силы.
+        </div>`;
+    }
+  }
+
   // ── Парирование психосилы Талантом «Щит Клинков» (wdbc-bwf9) ──────────────
   // Отдельная секция, а не общий defenseSection карточки атаки: от психосилы
   // не Уклоняются, Вираж и Сжатие к ней тоже не относятся, а само Парирование
@@ -1178,7 +1198,7 @@ export async function executePsychotest(actor, item, opts) {
     outcome: outcomeHtml(success, success
       ? `Манифестация удалась — ${deg} ${_degWord(deg)}`
       : `Психотест провален — ${deg} ${_degWord(deg)}`),
-    sections: [conversionLine, resistSection, bladeShieldSection, damageSection, charDamageSection,
+    sections: [conversionLine, bluntedSection, resistSection, bladeShieldSection, damageSection, charDamageSection,
                attackPropsSection, phenSection, warpShockSection]
   }, { rolls: allRolls });
   // Automated Animations (если установлен и включён) — module/integrations/autoanimations.mjs.

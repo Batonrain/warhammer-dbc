@@ -5109,8 +5109,8 @@ export const CAPABILITIES = {
     source: "Blood for the Blood God / Кровь Богу Крови", reader: ""
   },
   "trait.blunted": {
-    label: "Скрыт от Варпа; защита от психо-атак ×X.",
-    source: "Blunted / Затупленный (X)", reader: ""
+    label: "Реализовано (wdbc-j8cn): на карточке удачной манифестации против Затупленной цели — строка «пройдите Psyniscience −10×X (Порог N)», с Warp Sight — Awareness +20−10×X; при Провале цель игнорирует эффект. Психострельба без Warp Weapon строки не даёт (книга). X — Черта Blunted или Подавляющее поле друкхарийской брони (что больше). НЕ смоделировано: сам тест не бросается кнопкой и эффект силы не отменяется автоматически; снижение получаемой Порчи на X и потеря Черты при Daemonic/Psyker и т.п.",
+    source: "Blunted / Затупленный (X)", reader: "module/rules/blunted.mjs — bluntedCasterTest; module/sheets/tabs/psychic.mjs (bluntedSection карточки манифестации)"
   },
   "trait.bolterVirtuoso": {
     label: "Болт-оружие получает ещё один дополнительный кубик ко всем альтернативным профилям (приклад, штык, из подствольника и т.д.).",

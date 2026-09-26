@@ -268,7 +268,7 @@ export const CTX_DEPENDENT_PREDICATES = new Set([
   "weaponClass", "charNotIn", "charIn",
   "targetHasTrait", "targetLacksCondition", "targetHasCondition",
   "targetHasSize", "targetKeepsNimbleInArmour", "targetHasFaction",
-  "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus", "hasHatredTarget",
+  "targetHasFieldPsyMod", "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus", "hasHatredTarget",
   "legacyGuardianMarked"
 ]);
 
@@ -397,6 +397,11 @@ export const PREDICATES = {
     if (!wearsPowerArmour(t)) return true;
     return hasInstalledImplant(t, "Black Carapace");
   },
+
+  // Подавляющее поле друкхарийской брони цели (wdbc-j8cn): штраф чужим
+  // психотестам лежит в system.fieldPsyMod (rules/character/armour.mjs) и
+  // есть, только пока режим реально включён.
+  targetHasFieldPsyMod: (actor, ctx) => (Number(ctx?.targetActor?.system?.fieldPsyMod) || 0) !== 0,
 
   // Принадлежность к фракции — своя и у цели. Обе считают нижестоящие: условие
   // «Хаос» подходит и роте в составе его легиона, обратное неверно.

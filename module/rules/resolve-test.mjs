@@ -259,7 +259,7 @@ function rawEffectValue(effect, ctx, ruleId) {
   if (!effect.valueFrom) return Number(effect.value) || 0;
 
   const { targetCharBonus, selfCharBonus, masterCharBonus, targetTraitRating, targetSize, selfSize,
-          selfConditionLevel, multiplier = 1 } = effect.valueFrom;
+          selfConditionLevel, targetFieldPsyMod, multiplier = 1 } = effect.valueFrom;
   // Уровень своего Состояния со счётчиком (wdbc-x1nz.2.92, «Раны и Урон»,
   // «Статусы»: «За каждый уровень Обескровливания … –5 на все тесты T»).
   // Поле счётчика — из реестра Состояний (conditionLevelField), тот же ключ,
@@ -324,6 +324,9 @@ function rawEffectValue(effect, ctx, ruleId) {
   if (selfSize)   return sizeOf(ctx?.actor) * multiplier || 0;
   if (targetSize) return sizeOf(ctx?.targetActor) * multiplier || 0;
   if (targetTraitRating) return traitRatingSum(ctx?.targetActor, targetTraitRating) * multiplier || 0;
+  // Подавляющее поле друкхарийской брони цели (wdbc-j8cn): число уже со
+  // знаком (−10/−20), посчитано расчётом брони цели.
+  if (targetFieldPsyMod) return (Number(ctx?.targetActor?.system?.fieldPsyMod) || 0) * multiplier || 0;
 
   console.error(`Warhammer DBC | правило «${ruleId ?? "без id"}»: неизвестный источник значения ${JSON.stringify(effect.valueFrom)}`);
   return null;
