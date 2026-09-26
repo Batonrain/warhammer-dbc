@@ -38,6 +38,7 @@ import { hasRuneMagic, runeMax, runeValue, runeCostForPower, runeCostTotal,
          preparedRuneDiscount, markPreparedRuneUsed } from "../../rules/sigillite-runes.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../../helpers/test-card.mjs";
 import { bluntedCasterTest } from "../../rules/blunted.mjs";
+import { arcExtraAttrs } from "../../rules/arc-extra.mjs";
 import { leftSustainRange } from "../../rules/psy-range.mjs";
 import { measureTokens } from "../../combat/tactical-map.mjs";
 import { mechRollData } from "../../rules/mech-formula.mjs";
@@ -940,7 +941,7 @@ export async function executePsychotest(actor, item, opts) {
       // (.wh-arc-btn) общий, ничего своего заводить не пришлось.
       const arcBtn = (wp.arcRating > 0 && firstHitTotal != null && firstHitTotal >= wp.arcRating) ? `
         <button class="wh-arc-btn" type="button"
-          data-arc-damage="${wp.arcDamage}" data-weapon-name="${item.name}"
+          data-arc-damage="${wp.arcDamage}" data-weapon-name="${item.name}"${arcExtraAttrs(wp)}
           data-attacker="${actor.name}" data-attacker-uuid="${actor.uuid}">
           ⚡ Дуга: выберите поражённую цель → ближайшая вторая в 5м (${wp.arcDamage}(El) Pen ${wp.arcDamage})
         </button>` : "";

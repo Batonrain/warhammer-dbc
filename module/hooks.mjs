@@ -69,6 +69,7 @@ import { placeGravitonZone, processGravitonShooterTurnStart, clearAllGravitonZon
 import { placeVortexZone, processVortexTurnStart, clearAllVortexZones, reactToVortex, spendVortexSuccess } from "./regions/vortex-zone.mjs";
 import { placeSmokeZone } from "./regions/difficult-terrain.mjs";
 import { findArcTarget } from "./combat/arc.mjs";
+import { parseArcHitIds, chainArcCount } from "./rules/arc-extra.mjs";
 import { findThroughShotTarget } from "./combat/through-shot.mjs";
 import { resetActionEconomy, applyTurnEndStanceEffects, applyAimFocusTurnEnd, postTurnStartCard, spendReaction } from "./combat/action-economy.mjs";
 import { MELEE_CONTESTS } from "./constants/combat.mjs";
@@ -1334,18 +1335,26 @@ export function registerHooks() {
     html.querySelectorAll(".wh-arc-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
-        const ds = ev.currentTarget.dataset;
-        const primaryToken = canvas.tokens?.controlled?.[0];
+        const button = ev.currentTarget;
+        const ds = button.dataset;
+        // Цепная дуга (wdbc-3hgd0) несёт свой исходный токен — поражённого
+        // предыдущей дугой; первичная ждёт, что ГМ выберет поражённую цель.
+        const primaryToken = ds.originTokenId
+          ? canvas.tokens?.get(ds.originTokenId)
+          : canvas.tokens?.controlled?.[0];
         if (!primaryToken?.actor) return ui.notifications.warn("⚠️ Выберите токен поражённой цели на сцене!");
         const attackerActor = ds.attackerUuid ? await fromUuid(ds.attackerUuid).catch(() => null) : null;
         const attackerToken = attackerActor?.getActiveTokens?.(false)?.[0] ?? null;
-        const candidates = canvas.tokens.placeables.filter(t => t !== primaryToken && t !== attackerToken);
+        // Книга (Arc (X/Y)): «исключая атакующего и персонажей, что уже
+        // получали попадание от дуги с этой цели» — список поражённых дугами
+        // этой атаки едет на кнопке и растёт с каждой дугой.
+        const hitIds = new Set([...parseArcHitIds(ds.arcHit), primaryToken.id]);
+        const candidates = canvas.tokens.placeables.filter(t =>
+          t !== primaryToken && t !== attackerToken && !hitIds.has(t.id));
         const target = findArcTarget(primaryToken, candidates, 5);
         if (!target?.actor) return ui.notifications.info("⚡ В радиусе 5м от цели никого нет — Дуга не сработала.");
         // wdbc-wv8u: rating2 «Y» может быть дайс-формулой («2d10», книжное
-        // «Arc(6/2d10)») — раньше parseInt() тихо обрезал её до первой цифры
-        // («2d10» → 2), теперь дайс-паттерн бросается по-честному; голое
-        // число (подавляющее большинство существующего оружия) — как раньше.
+        // «Arc(6/2d10)») — бросается по-честному; голое число — как раньше.
         // Бонус характеристики стрелка в Y (Электродуга: «Arc (7/2d10+T.b)»,
         // wdbc-rmrm9) — подставляется до броска, Roll() «T.b» не понимает.
         const arcFormula = resolveCharFormula(ds.arcDamage || "0",
@@ -1353,19 +1362,38 @@ export function registerHooks() {
         const isDiceArc  = !/^\s*\d+\s*$/.test(arcFormula);
         const arcRoll    = isDiceArc ? await new Roll(arcFormula).evaluate() : null;
         const arcDamage  = isDiceArc ? arcRoll.total : (parseInt(arcFormula) || 0);
+        // Пробитие: своё у Электродуги Best.Q (data-arc-pen), иначе = урону дуги.
+        const arcPen = ds.arcPen !== undefined && ds.arcPen !== "" ? Number(ds.arcPen) || 0 : arcDamage;
+        hitIds.add(target.id);
+        button.dataset.arcHit = [...hitIds].join(",");
         await applyDamageToActor(target.actor, {
-          rawDamage: arcDamage, penetration: arcDamage, damageType: "energy", damageSubtype: "electrical", hitLocation: "Торс",
+          rawDamage: arcDamage, penetration: arcPen, damageType: "energy", damageSubtype: "electrical", hitLocation: "Торс",
           weaponName: ds.weaponName || "", attackerName: ds.attacker || "", attackerUuid: ds.attackerUuid || ""
         });
-        if (isDiceArc) {
+        // Цепная дуга (Электродуга Best.Q, wdbc-3hgd0): сами дуги несут Arc
+        // (X/Y) — за каждый кубик X+ на уроне этой дуги новая дуга от
+        // поражённого ею, не по уже поражённым дугами этой атаки.
+        const chainN = arcRoll
+          ? chainArcCount(arcRoll.dice.flatMap(d => d.results.map(r => r.result)), ds.arcChainRating) : 0;
+        const chainBtns = Array.from({ length: chainN }, () => `
+          <button class="wh-arc-btn" type="button"
+            data-arc-damage="${esc(ds.arcChainDamage || "")}" data-weapon-name="${esc(ds.weaponName || "")}"
+            data-attacker="${esc(ds.attacker || "")}" data-attacker-uuid="${esc(ds.attackerUuid || "")}"
+            data-origin-token-id="${esc(target.id)}" data-arc-hit="${esc([...hitIds].join(","))}"
+            ${ds.arcPen !== undefined ? `data-arc-pen="${esc(ds.arcPen)}"` : ""}
+            data-arc-chain-rating="${esc(ds.arcChainRating || "")}" data-arc-chain-damage="${esc(ds.arcChainDamage || "")}">
+            ⚡ Цепная дуга от ${esc(target.name)}
+          </button>`).join("");
+        if (isDiceArc || chainBtns) {
           await ChatMessage.create(ChatMessage.applyRollMode({
             speaker: ChatMessage.getSpeaker({ actor: target.actor }),
             content: `
               <div class="wh-roll-result">
                 <div class="roll-header">${rollIcon("spark", "#c98bff")}⚡ Дуга (${esc(arcFormula)}) → ${esc(target.name)}</div>
-                <div class="roll-outcome">Урон: <b>${arcDamage}</b>(El) Pen ${arcDamage}</div>
+                <div class="roll-outcome">Урон: <b>${arcDamage}</b>(El) Pen ${arcPen}</div>
+                ${chainBtns}
               </div>`,
-            rolls: [arcRoll],
+            rolls: arcRoll ? [arcRoll] : [],
             sound: CONFIG.sounds.dice
           }, game.settings.get("core", "rollMode")));
         }

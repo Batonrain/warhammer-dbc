@@ -60,6 +60,7 @@ import { measureTokens }                      from "../combat/tactical-map.mjs";
 import { rangeBandBoundaries }                from "../rules/tactical-map.mjs";
 import { coverBonusForShot }                  from "../combat/cover.mjs";
 import { weaponProfiles, attackIsMelee, sysWithProfileFire } from "../combat/weapon-profiles.mjs";
+import { conductiveMeleeOf } from "../rules/conductive.mjs";
 import { isIntegralAttack }                    from "../combat/equipped-melee.mjs";
 import { isPathOneHandedWeapon }               from "../rules/library/paths.mjs";
 import { canDualWield, offHandCandidates, dualWieldMods }
@@ -161,6 +162,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     isMelee,
     // Область «weapon:unarmed» (Свойство атаки Конструктора, wdbc-rmrm9).
     unarmed: isIntegralAttack(item),
+    // Область «weapon:conductiveMelee» (Электродуга, wdbc-3hgd0).
+    conductive: isMelee && conductiveMeleeOf(actor, item),
     char: charKey,
     targetActor: [...(game.user?.targets ?? [])][0]?.actor ?? null
   };

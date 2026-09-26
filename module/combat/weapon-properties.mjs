@@ -184,6 +184,9 @@ export function aggregateAuto(props) {
     independent: false, wrist: false, digital: false, crunch: false, cheapShot: false,
     smokeRating: 0, lingerRating: 0, lingerDrift: 0, revolver: false,
     combi: false, cognis: false, arcing: false, arcRating: 0, arcDamage: 0,
+    // Электродуга Best.Q (wdbc-3hgd0): Пробитие дуг (null — обычное, = Y) и
+    // цепная дуга «дуги сами несут Arc (X/Y)»; Электропроводящее оружие.
+    arcPen: null, arcChainRating: 0, arcChainDamage: 0, conductive: false,
     shrinkTemplate: 0, difficultTerrain: 0,
     // Свойства, дающие Орде дополнительные попадания (rules/horde-damage.mjs).
     blastRating: 0, flame: false,
@@ -292,6 +295,13 @@ export function aggregateAuto(props) {
         ? p.rating2
         : Math.max(a.arcDamage, p.rating2 || 0);
     }
+    if (au.arcPen !== undefined) a.arcPen = Math.max(a.arcPen ?? 0, r);
+    if (au.arcChain !== undefined) {
+      a.arcChainRating = Math.max(a.arcChainRating, r);
+      a.arcChainDamage = (typeof p.rating2 === "string" && /\d+d\d+/i.test(p.rating2))
+        ? p.rating2 : Math.max(Number(a.arcChainDamage) || 0, p.rating2 || 0);
+    }
+    if (au.conductive) a.conductive = true;
     if (au.hefty) { a.hefty = true; if (typeof au.hefty === "string") a.heftyType = au.hefty; }
     if (au.carbine)        a.carbine = true;
     if (au.antiAir)        a.antiAir = true;

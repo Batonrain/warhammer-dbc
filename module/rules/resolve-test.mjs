@@ -91,6 +91,11 @@ function attackScopeApplies(scope, ctx) {
   // Безоружная атака — интегральная (Кулак/Пинок/…, combat/equipped-melee.mjs::
   // isIntegralAttack); ставит attack-dialog.mjs (wdbc-rmrm9, Электродуга).
   if (want === "unarmed") return ctx.unarmed === true;
+  // Рукопашная электропроводящим оружием в электропроводящей броне
+  // (Электродуга: «Если он использует электропроводящую броню и оружие, его
+  // рукопашные атаки также получают это свойство», wdbc-3hgd0) — признак
+  // ставит attack-dialog.mjs (conductiveMeleeOf).
+  if (want.toLowerCase() === "conductivemelee") return ctx.isMelee === true && ctx.conductive === true;
   return want === String(ctx.weaponClass ?? "").toLowerCase();
 }
 

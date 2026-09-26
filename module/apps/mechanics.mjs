@@ -652,6 +652,7 @@ const WEIGHT_SCOPE_LABELS = { all: "Общее", carry: "Ношение", lift: 
 const AP_SCOPE_LABELS = {
   unarmed: "Безоружные атаки (Кулак/Пинок/…, интегральные)",
   melee: "Рукопашные атаки",
+  conductiveMelee: "Рукопашные электропроводящим оружием в электропроводящей броне",
   ranged: "Стрелковые атаки",
   attack: "Любые атаки",
 };

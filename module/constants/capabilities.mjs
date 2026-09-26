@@ -28,6 +28,16 @@ export const CAPABILITIES = {
     source: "Мутация: Burning Body / Shield of Purity (Общие мутации)",
     reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — hooks.mjs _applyWeaponPropEffect (кнопка condition:\"burning\")"
   },
+  "damageResistance.subtype.electrical": {
+    label: "Сопротивление к E(El) урону: урон этого подвида после Поглощения вдвое (окр.▲) — книги числом «сопротивление» не задают, принято как у Магмы Замены Крови (Электродуга, wdbc-3hgd0)",
+    source: "Имплант: Electric Arc / Электродуга (Друкхари)",
+    reader: "module/combat/damage.mjs applyDamageToActor (damageResistance.subtype.*)"
+  },
+  "implant.electricArc.regeneration": {
+    label: "Электрическая регенерация (Электродуга Best.Q, wdbc-3hgd0): после попадания E(El), нанёсшего урон, — +1d10 Ран; раз в час полное исцеление от мощного источника тока — кнопка на импланте",
+    source: "Имплант: Electric Arc / Электродуга (Друкхари), Best.Q",
+    reader: "module/combat/damage.mjs applyDamageToActor (ELECTRIC_REGENERATION); кнопка — kind:script на импланте"
+  },
   "damageImmunity.warpWeapon": {
     label: "Попадания оружия со свойством Warp Weapon не причиняют вреда (Странная Неуязвимость, субмутация 9 «Марионетка», wdbc-1rno.24)",
     source: "Мутация: Strange Invulnerability, субмутация 9 (Общие мутации)",

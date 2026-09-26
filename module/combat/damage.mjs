@@ -45,6 +45,9 @@ import { reaperLegacyButtonHtml } from "./legacy-weapon-reaper.mjs";
 import { braveHeartLegacyButtonHtml } from "./legacy-weapon-brave-heart.mjs";
 import { legacyHatredShieldApForLocation } from "../rules/legacy-weapon.mjs";
 
+/** Электродуга Best.Q «Электрическая регенерация» (wdbc-3hgd0). */
+export const ELECTRIC_REGENERATION = "implant.electricArc.regeneration";
+
 /** «Иммунитет к Corrosive, но не у брони» — Замена Крови, «Кислота» (wdbc-1rno.15). */
 export const CORROSIVE_BODY_IMMUNITY = "weaponPropertyImmunity.corrosiveBodyOnly";
 
@@ -1072,6 +1075,13 @@ export async function applyDamageToActor(actor, damageData) {
 
   let netDamage = ablativeDamage(rawNet, actor);
   const ablated = netDamage !== rawNet;
+  // «Сопротивление к <подвид> урону» (Электродуга: «сопротивление к E(El)
+  // урону», wdbc-3hgd0; то же слово у других друкхарийских имплантов) — книги
+  // числом его не задают; принято как у Магмы Замены Крови: урон этого подвида
+  // после Поглощения вдвое (окр.▲). Одно место — поменять трактовку здесь.
+  const resisted = netDamage > 0 && !!damageSubtype
+    && hasRuleFlag(actor, `damageResistance.subtype.${damageSubtype}`);
+  if (resisted) netDamage = Math.ceil(netDamage / 2);
   // Экстремальный Урон (стр. 34, wdbc-x1nz.2.50): «если после Поглощения
   // попадание не нанесло никакого реального урона, оно наносит 1
   // непоглощаемого урона» — последняя проверка, ПОСЛЕ всех слоёв поглощения
@@ -1111,6 +1121,19 @@ export async function applyDamageToActor(actor, damageData) {
 
   const { currentWounds, newWounds, newCritical, gotCritical } =
     await applyWoundLoss(actor, netDamage);
+
+  // Электрическая регенерация (Электродуга Best.Q, wdbc-3hgd0): «Каждый раз,
+  // когда персонаж получает E(El), он восстанавливает 1d10 ран» — решение
+  // владельца 26.09.2026: после попадания E(El), нанёсшего урон.
+  let electricRegenNote = "";
+  if (netDamage > 0 && damageSubtype === "electrical" && hasRuleFlag(actor, ELECTRIC_REGENERATION)) {
+    const regen = await new Roll("1d10").evaluate();
+    const maxW = Number(actor.system.wounds?.max) || 0;
+    const cur = Number(actor.system.wounds?.value) || 0;
+    const healed = Math.min(regen.total, Math.max(0, maxW - cur));
+    if (healed > 0) await actor.update({ "system.wounds.value": cur + healed });
+    electricRegenNote = `<div class="dmg-tb-note">⚡ Электрическая регенерация: 1d10 = ${regen.total}, восстановлено <b>${healed}</b> Ран.</div>`;
+  }
 
   // Чем ранили в последний раз — читает sheets/tabs/body.mjs::setDeceased,
   // чтобы засчитать убийство Кровавому Пламени в тот момент, когда система
@@ -1261,6 +1284,9 @@ export async function applyDamageToActor(actor, damageData) {
   if (haywireActive && !hasWeaponPropertyImmunity(actor, "haywire")) {
     propEffectNotes.push(await _applyHaywire(actor, haywireRating, haywireDamage2));
   }
+
+  if (resisted) propEffectNotes.push(`<div class="dmg-tb-note">⚡ Сопротивление к ${damageSubtype === "electrical" ? "E(El)" : damageSubtype}: урон после поглощения вдвое.</div>`);
+  if (electricRegenNote) propEffectNotes.push(electricRegenNote);
 
   // ── Сообщение в чат ──────────────────────────────────────────────────────
   const dtLabel  = DAMAGE_TYPES[damageType] || damageType;
