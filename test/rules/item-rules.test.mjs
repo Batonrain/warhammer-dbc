@@ -407,14 +407,14 @@ describe("rulesFromItemMechanics + rollModsFromRules: «Тонкая работ�
   // НАСТОЯЩЕЙ записью пака через packDocByFileHint (уже импортирован выше
   // для другого блока), чтобы будущий дрейф пака (снятый гейт, другое
   // значение) уронил именно этот тест, а не остался незамеченным.
-  it("настоящая запись пака несёт тот же двойной гейт (submutations:[9] И patronGod:[slaanesh])", () => {
+  it("настоящая запись пака гейтована только строкой 9 (цвет Слаанеш — не условие, решение 26.09.2026)", () => {
     const data = packDocByFileHint(
       "packs-src/mutations/Общие_мутации/Strange_Hands___Странные_Руки_ApXVLD3qzW9ngnuC.json");
     const mechanics = data.flags[SYSTEM].mechanics;
     const entry = mechanics.flatMap(g => g.entries).find(e => e.id === "strangeHands-sub9-boneHands");
     expect(entry).toBeTruthy();
     expect(entry.when.submutations).toEqual(["9"]);
-    expect(entry.when.patronGod).toEqual(["slaanesh"]);
+    expect(entry.when.patronGod ?? []).toEqual([]);
     expect(entry.modScope).toBe("skill");
     expect(entry.skillKey).toBe("trade");
     expect(entry.value).toBe(20);
@@ -430,6 +430,8 @@ describe("rulesFromItemMechanics + rollModsFromRules: «Тонкая работ�
     const slaaneshRules = rulesFromItemMechanics([asItem("9")], () => true, slaaneshActor());
     expect(slaaneshRules.some(r => r.effects.some(ef => ef.target === "skill:trade" && ef.value === 20))).toBe(true);
     const tzeentchRules = rulesFromItemMechanics([asItem("9")], () => true, slaaneshActor("tzeentch"));
-    expect(tzeentchRules.some(r => r.effects.some(ef => ef.target === "skill:trade"))).toBe(false);
+    expect(tzeentchRules.some(r => r.effects.some(ef => ef.target === "skill:trade" && ef.value === 20))).toBe(true);
+    const otherRow = rulesFromItemMechanics([asItem("3")], () => true, slaaneshActor());
+    expect(otherRow.some(r => r.effects.some(ef => ef.target === "skill:trade"))).toBe(false);
   });
 });

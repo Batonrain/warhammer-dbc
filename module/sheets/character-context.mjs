@@ -21,6 +21,7 @@ import { charAdvanceCat, advanceCatSource }     from "../rules/advance-category.
 
 import { fateTerm }                              from "../helpers/utils.mjs";
 import { hasRuneMagic }                          from "../rules/sigillite-runes.mjs";
+import { ignoresWeight }                         from "../rules/encumbrance.mjs";
 import { raceEntries, raceDef, subracesOf,
          isAeldariRace, raceGroupList,
          subraceEntries }                        from "../apps/race-library.mjs";
@@ -247,6 +248,10 @@ export function characterContext(actor) {
   context.encumbrancePct   = Math.max(0, Math.min(100, _pct));
   context.encumbranceOver  = _pct > 100;
   context.encumbranceLevel = _pct >= 100 ? "over" : _pct >= 66 ? "heavy" : "ok";
+  // «Не считать вес» (wdbc-zy93, rules/encumbrance.mjs::ignoresWeight): вес
+  // по-прежнему показывается, но перегруз не подсвечивается и не штрафует.
+  context.encumbranceIgnored = ignoresWeight(actor);
+  if (context.encumbranceIgnored) { context.encumbranceOver = false; context.encumbranceLevel = "ok"; }
   // T.b + S.b — база строки Ношение/Подъём/Толкание (стр. 27, carryRow) —
   // напоказ перед тремя числами: не сама итоговая цифра (та ещё учитывает
   // Родной мир и Мод. Экзоскелета/подобных через Механику, kind:"weight"),

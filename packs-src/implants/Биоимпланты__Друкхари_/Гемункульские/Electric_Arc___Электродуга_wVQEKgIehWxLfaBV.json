@@ -157,6 +157,327 @@
                   "Электромагнитный импульс"
                 ]
               }
+            },
+            {
+              "id": "e7",
+              "kind": "attackProp",
+              "label": "Электродуга: Дуга рукопашных (электропроводящие броня и оружие)",
+              "apScope": "conductiveMelee",
+              "apKey": "arc",
+              "apRating": "7",
+              "apRating2": "2d10+T.b",
+              "when": {
+                "quality": [
+                  "poor",
+                  "common",
+                  "good",
+                  "artisan"
+                ]
+              }
+            },
+            {
+              "id": "e8",
+              "kind": "attackProp",
+              "label": "Электродуга Best.Q: Дуга рукопашных (электропроводящие броня и оружие)",
+              "apScope": "conductiveMelee",
+              "apKey": "arc",
+              "apRating": "8",
+              "apRating2": "2d10",
+              "when": {
+                "quality": [
+                  "best"
+                ]
+              }
+            },
+            {
+              "id": "e9",
+              "kind": "attackProp",
+              "label": "Электродуга: Шокирующее рукопашных (электропроводящие броня и оружие)",
+              "apScope": "conductiveMelee",
+              "apKey": "shocking",
+              "apRating": "",
+              "apRating2": ""
+            },
+            {
+              "id": "e10",
+              "kind": "attackProp",
+              "label": "Электромагнитный импульс: Haywire рукопашных (электропроводящие броня и оружие)",
+              "apScope": "conductiveMelee",
+              "apKey": "haywire",
+              "apRating": "0",
+              "apRating2": "",
+              "when": {
+                "quality": [
+                  "best"
+                ],
+                "chosenEffect": [
+                  "Электромагнитный импульс"
+                ]
+              }
+            },
+            {
+              "id": "e11",
+              "kind": "attackProp",
+              "label": "Электродуга Best.Q: Пробитие дуг 4",
+              "apScope": "unarmed",
+              "apKey": "arcPen",
+              "apRating": "4",
+              "apRating2": "",
+              "when": {
+                "quality": [
+                  "best"
+                ]
+              }
+            },
+            {
+              "id": "e12",
+              "kind": "attackProp",
+              "label": "Электродуга Best.Q: Пробитие дуг 4 (рукопашные)",
+              "apScope": "conductiveMelee",
+              "apKey": "arcPen",
+              "apRating": "4",
+              "apRating2": "",
+              "when": {
+                "quality": [
+                  "best"
+                ]
+              }
+            },
+            {
+              "id": "e13",
+              "kind": "attackProp",
+              "label": "Электродуга Best.Q: дуги сами несут Arc (8/2d10)",
+              "apScope": "unarmed",
+              "apKey": "arcChain",
+              "apRating": "8",
+              "apRating2": "2d10",
+              "when": {
+                "quality": [
+                  "best"
+                ]
+              }
+            },
+            {
+              "id": "e14",
+              "kind": "attackProp",
+              "label": "Электродуга Best.Q: дуги сами несут Arc (8/2d10) (рукопашные)",
+              "apScope": "conductiveMelee",
+              "apKey": "arcChain",
+              "apRating": "8",
+              "apRating2": "2d10",
+              "when": {
+                "quality": [
+                  "best"
+                ]
+              }
+            },
+            {
+              "id": "e15",
+              "kind": "capability",
+              "capabilityKey": "damageResistance.subtype.electrical",
+              "label": "Электродуга: сопротивление к E(El) урону"
+            },
+            {
+              "id": "e16",
+              "kind": "capability",
+              "capabilityKey": "implant.electricArc.regeneration",
+              "label": "Электрическая регенерация: +1d10 Ран после попадания E(El), нанёсшего урон",
+              "when": {
+                "quality": [
+                  "best"
+                ],
+                "chosenEffect": [
+                  "Электрическая регенерация"
+                ]
+              }
+            },
+            {
+              "id": "e17",
+              "kind": "script",
+              "group": null,
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "minionGroup": "",
+              "minionTier": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "specChoiceCount": 1,
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "movementTarget": "spd",
+              "movementValue": 1,
+              "armourLocation": "body",
+              "armourValue": 1,
+              "ignoreTerrainProps": [],
+              "rerollScope": "all",
+              "rerollChar": "ag",
+              "rerollMode": "keepBest",
+              "modScope": "all",
+              "modValueMode": "flat",
+              "modCharBonus": "inf",
+              "rerollWho": "self",
+              "capabilityKey": "",
+              "fatigueAction": "threshold",
+              "fatigueThresholdChar": "t",
+              "equipMode": "direct",
+              "equipQty": 1,
+              "equipSourceUuid": "",
+              "equipSourceName": "",
+              "equipSourceImg": "",
+              "equipCategoryPack": "weapons",
+              "equipWeaponType": "",
+              "equipWeaponProp": "",
+              "equipArmorType": "",
+              "equipMaxAvailability": 5,
+              "equipQuality": "common",
+              "equipTalentTier": "",
+              "equipMaxPsyRating": "",
+              "equipImplantCategory": "",
+              "equipBudgetMode": "count",
+              "equipBudgetValue": 1,
+              "loyaltyMinionType": "",
+              "loyaltyOp": "add",
+              "loyaltyValue": 1,
+              "auraRadius": "1",
+              "auraAffects": "allies",
+              "auraIncludesSelf": false,
+              "weaponPropAction": "add",
+              "weaponPropKey": "",
+              "weaponPropLabel": "",
+              "weaponPropHasRating": false,
+              "weaponPropHasRating2": false,
+              "weaponPropValue": "1",
+              "weaponPropValue2": "0",
+              "weaponPropNewKey": "",
+              "weaponPropNewLabel": "",
+              "weaponPropNewHasRating": false,
+              "weaponPropNewHasRating2": false,
+              "weaponPropNewValue": "1",
+              "weaponPropNewValue2": "0",
+              "label": "Восстановление: снять до T.b Усталости (Arc/Shocking выключатся на 8 ч)",
+              "code": "// Электродуга Best.Q «Восстановление» (wdbc-3hgd0): «Персонаж может немедленно\n// снять с себя до T.b уровней усталости, взамен лишившись Arc и Shocking (и\n// Haywire, если то есть) от этого импланта на 8 часов». Метка\n// attackPropsSuspendedUntil гасит все «Свойства атаки» импланта\n// (rules/item-rules.mjs) до этого момента мира.\nconst now = game.time?.worldTime ?? 0;\nconst until = Number(item.getFlag(\"warhammer-dbc\", \"attackPropsSuspendedUntil\")) || 0;\nif (until > now) {\n  ui.notifications?.warn(`Электродуга уже разряжена ещё ${Math.ceil((until - now) / 3600)} ч.`);\n} else {\n  const tb = Number(actor.system.characteristics?.t?.bonus) || 0;\n  const cur = Math.max(0, Number(actor.system.fatigue?.value) || 0);\n  const removed = Math.min(tb, cur);\n  if (removed > 0) await actor.update({ \"system.fatigue.value\": cur - removed });\n  await item.setFlag(\"warhammer-dbc\", \"attackPropsSuspendedUntil\", now + 8 * 3600);\n  await ChatMessage.create({ speaker,\n    content: `<b>Электродуга — Восстановление:</b> снято Усталости: ${removed} (до T.b ${tb}). Arc, Shocking и Haywire импланта отключены на 8 часов.` });\n}",
+              "scriptThrottleUnit": "",
+              "scriptThrottleMax": 1,
+              "scriptTrigger": "",
+              "when": {
+                "quality": [
+                  "best"
+                ],
+                "chosenEffect": [
+                  "Восстановление"
+                ]
+              }
+            },
+            {
+              "id": "e18",
+              "kind": "script",
+              "group": null,
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "minionGroup": "",
+              "minionTier": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "specChoiceCount": 1,
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "movementTarget": "spd",
+              "movementValue": 1,
+              "armourLocation": "body",
+              "armourValue": 1,
+              "ignoreTerrainProps": [],
+              "rerollScope": "all",
+              "rerollChar": "ag",
+              "rerollMode": "keepBest",
+              "modScope": "all",
+              "modValueMode": "flat",
+              "modCharBonus": "inf",
+              "rerollWho": "self",
+              "capabilityKey": "",
+              "fatigueAction": "threshold",
+              "fatigueThresholdChar": "t",
+              "equipMode": "direct",
+              "equipQty": 1,
+              "equipSourceUuid": "",
+              "equipSourceName": "",
+              "equipSourceImg": "",
+              "equipCategoryPack": "weapons",
+              "equipWeaponType": "",
+              "equipWeaponProp": "",
+              "equipArmorType": "",
+              "equipMaxAvailability": 5,
+              "equipQuality": "common",
+              "equipTalentTier": "",
+              "equipMaxPsyRating": "",
+              "equipImplantCategory": "",
+              "equipBudgetMode": "count",
+              "equipBudgetValue": 1,
+              "loyaltyMinionType": "",
+              "loyaltyOp": "add",
+              "loyaltyValue": 1,
+              "auraRadius": "1",
+              "auraAffects": "allies",
+              "auraIncludesSelf": false,
+              "weaponPropAction": "add",
+              "weaponPropKey": "",
+              "weaponPropLabel": "",
+              "weaponPropHasRating": false,
+              "weaponPropHasRating2": false,
+              "weaponPropValue": "1",
+              "weaponPropValue2": "0",
+              "weaponPropNewKey": "",
+              "weaponPropNewLabel": "",
+              "weaponPropNewHasRating": false,
+              "weaponPropNewHasRating2": false,
+              "weaponPropNewValue": "1",
+              "weaponPropNewValue2": "0",
+              "label": "Электрическая регенерация: полное исцеление от источника тока (раз в час)",
+              "code": "// Электродуга Best.Q «Электрическая регенерация» (wdbc-3hgd0): «Раз в час он\n// может полностью исцелиться, поглотив мощный внешний источник электричества\n// (например, кабель высокого напряжения)». Наличие источника подтверждает\n// стол нажатием; раз в час — метка времени мира на импланте.\nconst now = game.time?.worldTime ?? 0;\nconst last = Number(item.getFlag(\"warhammer-dbc\", \"electricFullHealAt\"));\nif (Number.isFinite(last) && now - last < 3600) {\n  ui.notifications?.warn(`Электрическая регенерация: следующее полное исцеление через ${Math.ceil((3600 - (now - last)) / 60)} мин.`);\n} else {\n  const max = Number(actor.system.wounds?.max) || 0;\n  const before = Number(actor.system.wounds?.value) || 0;\n  await actor.update({ \"system.wounds.value\": max, \"system.wounds.critical\": 0 });\n  await item.setFlag(\"warhammer-dbc\", \"electricFullHealAt\", now);\n  await ChatMessage.create({ speaker,\n    content: `<b>Электрическая регенерация:</b> поглотив мощный источник тока, персонаж полностью исцелился (Раны ${before} → ${max}).` });\n}",
+              "scriptThrottleUnit": "",
+              "scriptThrottleMax": 1,
+              "scriptTrigger": "",
+              "when": {
+                "quality": [
+                  "best"
+                ],
+                "chosenEffect": [
+                  "Электрическая регенерация"
+                ]
+              }
             }
           ]
         }

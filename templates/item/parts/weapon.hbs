@@ -100,8 +100,8 @@
 
   <div class="weapon-profiles">
     <div class="wprofiles-head">
-      <span class="wprofiles-title" title="Профили ББ (Крюк/Посох и т.п.). Профиль №1 — это статы выше; ниже — альтернативные. В HUD переключаются на лету.">
-        <i class="fas fa-layer-group"></i> ПРОФИЛИ БЛИЖНЕГО БОЯ
+      <span class="wprofiles-title" title="Альтернативные профили: рукопашные (Крюк/Посох и т.п.) и второй ствол комби-оружия. Профиль №1 — это статы выше; ниже — альтернативные. В HUD переключаются на лету.">
+        <i class="fas fa-layer-group"></i> ПРОФИЛИ
       </span>
       <a class="wprofile-add" data-action="wprofileAdd" title="Добавить альтернативный профиль"><i class="fas fa-plus"></i> профиль</a>
     </div>
@@ -147,6 +147,21 @@
         <label>Пробой<input type="number" class="wprofile-field" data-field="penetration" value="{{prof.penetration}}"/></label>
         <label>Rng<input type="text" class="wprofile-field" data-field="range" value="{{prof.range}}" placeholder="2-4"/></label>
       </div>
+      {{#if prof.ranged}}
+      {{!-- Свой ствол комби-оружия (wdbc-jho9): своя скорострельность, магазин, перезарядка --}}
+      <div class="wprofile-grid wprofile-fire">
+        <label title="Второй ствол комби-оружия: свой магазин, скорострельность и боеприпасы"><input type="checkbox" class="wprofile-field" data-field="ownFire" {{#if prof.ownFire}}checked{{/if}}/> Свой ствол (Комби)</label>
+        {{#if prof.ownFire}}
+        <label>RoF S<input type="number" class="wprofile-field" data-field="rof_single" value="{{prof.rof_single}}"/></label>
+        <label>RoF кор.<input type="number" class="wprofile-field" data-field="rof_semi" value="{{prof.rof_semi}}"/></label>
+        <label>RoF дл.<input type="number" class="wprofile-field" data-field="rof_full" value="{{prof.rof_full}}"/></label>
+        <label>Магазин<input type="number" class="wprofile-field" data-field="magazineCur" value="{{prof.magazineCur}}"/></label>
+        <label>из<input type="number" class="wprofile-field" data-field="magazineMax" value="{{prof.magazineMax}}"/></label>
+        <label>Перезар.<input type="text" class="wprofile-field" data-field="reload" value="{{prof.reload}}" placeholder="½"/></label>
+        <label title="Тип оружия для подбора боеприпасов (как у предмета: melta, bolt…)">Боеприпас<input type="text" class="wprofile-field" data-field="weaponType" value="{{prof.weaponType}}"/></label>
+        {{/if}}
+      </div>
+      {{/if}}
       <div class="wprofile-props">
         <select class="wprofile-prop-add wr-select-sm">
           <option value="">＋ свойство профиля…</option>

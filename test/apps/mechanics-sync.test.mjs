@@ -339,3 +339,29 @@ describe("дубликаты эффектов одной записи (wdbc-b3mz
     expect(item.effects).toHaveLength(after);
   });
 });
+
+// wdbc-hbxrl: «ActiveEffect … does not exist!» при смене вида записи. Сохранение
+// Механики зовёт сверку само, и хук updateItem зовёт её ещё раз — две
+// параллельные сверки удаляли один и тот же эффект, вторая падала.
+describe("параллельные сверки одного предмета (wdbc-hbxrl)", () => {
+  it("вторая сверка ждёт первую и не удаляет уже удалённый эффект", async () => {
+    // Запись сменила вид на такой, что эффектов не заводит: её эффект уносится.
+    const item = itemDoc({
+      mechanics: [andGroup({ id: "e1", kind: "attackProp", apScope: "melee", apKey: "shocking" })],
+      fx: [fxFor("e1", "system.characteristics.s.bonus", 1)]
+    });
+    item.uuid = "Actor.a.Item.item-1";
+    const real = item.deleteEmbeddedDocuments;
+    item.deleteEmbeddedDocuments = async (type, ids) => {
+      // Как Foundry: удаление несуществующего — ошибка. Пауза даёт второй
+      // сверке шанс стартовать с устаревшим снимком, если очереди нет.
+      await new Promise(r => setTimeout(r, 5));
+      for (const id of ids) {
+        if (!item.effects.some(e => e.id === id)) throw new Error(`ActiveEffect "${id}" does not exist!`);
+      }
+      return real(type, ids);
+    };
+    await expect(Promise.all([syncMechanicsEffects(item), syncMechanicsEffects(item)])).resolves.toBeDefined();
+    expect(item.effects).toEqual([]);
+  });
+});

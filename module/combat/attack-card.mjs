@@ -21,6 +21,7 @@ import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { isCompressibleLocation, normalizeCompressibleLocation } from "../rules/compression.mjs";
 import { testCardHtml, statLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { arcExtraAttrs } from "../rules/arc-extra.mjs";
 
 /** Знак перед числом модификатора: −10 печатается как есть, +10 — со знаком. */
 const signed = n => `${n >= 0 ? "+" : ""}${n}`;
@@ -197,8 +198,8 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
   const arcBtn = (wp.arcRating > 0 && hits.length && hits[0].total >= wp.arcRating) ? `
     <button class="wh-arc-btn" type="button"
       data-arc-damage="${wp.arcDamage}" data-weapon-name="${weaponName}"
-      data-attacker="${actorName}" data-attacker-uuid="${attackerUuid}">
-      ⚡ Дуга: выберите поражённую цель → ближайшая вторая в 5м (${wp.arcDamage}(El) Pen ${wp.arcDamage})
+      data-attacker="${actorName}" data-attacker-uuid="${attackerUuid}"${arcExtraAttrs(wp)}>
+      ⚡ Дуга: выберите поражённую цель → ближайшая вторая в 5м (${wp.arcDamage}(El) Pen ${wp.arcPen ?? wp.arcDamage})
     </button>` : "";
   const buttons = hits.map((d, i) => {
     // «Прячась в Орде»: попадание, уведённое в союзную Орду, применяется к ней,

@@ -1,6 +1,7 @@
 import { _buildAmmoModString, _buildAmmoModDetails, _getAmmoSpent, esc } from "../helpers/utils.mjs";
 import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { spendActionPoints } from "./action-economy.mjs";
+import { profileHasOwnFire, sysWithProfileFire, profileFireUpdate } from "./weapon-profiles.mjs";
 
 /**
  * Стоимость Перезарядки в ОД по книжному полю system.reload (стр. 35,
@@ -25,8 +26,8 @@ export function reloadApCost(reloadField) {
   return 0;
 }
 
-export function _getCompatibleAmmo(actor, weapon) {
-  const sys        = weapon.system;
+export function _getCompatibleAmmo(actor, weapon, sysOverride = null) {
+  const sys        = sysOverride ?? weapon.system;
   const weaponType = sys.weaponType;
   const weapClass  = sys.weaponClass;
   return actor.items.filter(i => {
@@ -97,20 +98,29 @@ export async function _showAmmoSelectDialog(weapon, compatAmmo) {
   });
 }
 
-export async function _reloadWeapon(actor, weapon) {
-  const sys    = weapon.system;
+/**
+ * Перезарядка. У комби-оружия (wdbc-jho9) заряжается ствол, выбранный сейчас
+ * профилем в HUD (флаг hudProfile), если у этого профиля свой ствол: свой
+ * магазин, свои боеприпасы (weaponType профиля), свой срок перезарядки.
+ */
+export async function _reloadWeapon(actor, weapon, { profileIdx = null } = {}) {
+  const pIdx   = Number(profileIdx ?? weapon.getFlag?.("warhammer-dbc", "hudProfile") ?? -1);
+  const prof   = pIdx >= 0 ? weapon.system.profiles?.[pIdx] : null;
+  const ownIdx = profileHasOwnFire(prof) ? pIdx : -1;
+  const sys    = ownIdx >= 0 ? sysWithProfileFire(weapon.system, prof) : weapon.system;
+  const barrel = ownIdx >= 0 ? `${weapon.name} (${prof.label || "второй ствол"})` : weapon.name;
   const maxMag = sys.magazineMax || 0;
   const curMag = sys.magazineCur || 0;
   const needed = maxMag - curMag;
 
   if (needed <= 0) {
-    ui.notifications.info(`${weapon.name}: магазин уже полон (${curMag}/${maxMag}).`);
+    ui.notifications.info(`${barrel}: магазин уже полон (${curMag}/${maxMag}).`);
     return;
   }
 
-  const compatAmmo = _getCompatibleAmmo(actor, weapon);
+  const compatAmmo = _getCompatibleAmmo(actor, weapon, sys);
   if (!compatAmmo.length) {
-    ui.notifications.warn(`Нет подходящих боеприпасов для ${weapon.name}!`);
+    ui.notifications.warn(`Нет подходящих боеприпасов для ${barrel}!`);
     return;
   }
 
@@ -140,7 +150,7 @@ export async function _reloadWeapon(actor, weapon) {
   // диалога выбора выше ничего не стоит, только реально начатая перезарядка.
   const apCost = reloadApCost(sys.reload);
   if (apCost > 0 && !await spendActionPoints(actor, apCost, { physical: true })) {
-    return ui.notifications.warn(`⚠️ ${weapon.name}: не хватает ОД на перезарядку (нужно ${apCost}).`);
+    return ui.notifications.warn(`⚠️ ${barrel}: не хватает ОД на перезарядку (нужно ${apCost}).`);
   }
 
   // По правилам системы: 1 предмет-боеприпас = 1 полный магазин. Перезарядка
@@ -148,14 +158,13 @@ export async function _reloadWeapon(actor, weapon) {
   const newMag = maxMag;
   const newQty = ammoQty - 1;
 
-  await weapon.update({
-    "system.magazineCur":  newMag,
-    "system.loadedAmmoId": preferredAmmo.id
-  });
+  await weapon.update(ownIdx >= 0
+    ? profileFireUpdate(weapon, ownIdx, { magazineCur: newMag, loadedAmmoId: preferredAmmo.id })
+    : { "system.magazineCur": newMag, "system.loadedAmmoId": preferredAmmo.id });
   await preferredAmmo.update({ "system.quantity": newQty });
 
   await postTestCard(actor, {
-    title: `Перезарядка — ${esc(weapon.name)}`,
+    title: `Перезарядка — ${esc(barrel)}`,
     lines: [`<div class="roll-damage-meta">
           Боеприпасы: <b>${esc(preferredAmmo.name)}</b>
         </div>`],

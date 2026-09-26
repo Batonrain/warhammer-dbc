@@ -354,6 +354,13 @@ function ruleFromEntry(item, entry, groupId = null) {
   }
 
   if (entry?.kind === "attackProp") {
+    // Свойства атаки предмета временно отключены (Электродуга Best.Q
+    // «Восстановление»: «лишившись Arc и Shocking (и Haywire) от этого
+    // импланта на 8 часов», wdbc-3hgd0) — метка времени мира на самом
+    // предмете, ставит кнопка-скрипт импланта.
+    const suspendedUntil = Number(item?.flags?.["warhammer-dbc"]?.attackPropsSuspendedUntil) || 0;
+    const now = (typeof game !== "undefined" ? game.time?.worldTime : null) ?? 0;
+    if (suspendedUntil > now) return null;
     // «Свойство атаки» (wdbc-rmrm9, Электродуга: «Все безоружные атаки
     // получают свойства Arc (7/2d10+T.b) и Shocking») — атаки владельца
     // выбранной области получают Особое Свойство Оружия. Тот же эффект
