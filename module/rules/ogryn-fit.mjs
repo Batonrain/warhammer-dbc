@@ -7,9 +7,9 @@
 //   • оружие с Ogrynized в чужих руках: −10 за Размер меньше 1, −10 за Бонус
 //     Силы меньше 10 и −10 за то, что руки (или перчатки) не изменены под
 //     форму рук Огрина;
-//   • Огрин с оружием БЕЗ Ogrynized: −10, а для стрелкового −20 — Черта расы
-//     «Brute Physiology / Физиология Громилы» (constants/races.mjs) говорит
-//     ровно это.
+//   • Огрин с оружием БЕЗ Ogrynized: −10, а для стрелкового −20, кроме
+//     гранат — Черта расы «Brute Physiology / Физиология Громилы»
+//     (constants/races.mjs) говорит ровно это.
 //
 // Устроено по образцу Легиона намеренно: правило то же самое, отличаются
 // только пороги и величина обратного штрафа, и расходиться этим двум расчётам
@@ -52,6 +52,7 @@ export const OGRYN_FIT_FLAG = "weapons.ogryn";
  * @param {number}  o.size          Размер носителя
  * @param {number}  o.sBonus        Бонус Силы носителя
  * @param {boolean} o.isRanged      стрелковое (для обратной стороны это −20)
+ * @param {boolean} o.isGrenade     граната — обратной стороны нет («кроме гранат»)
  * @param {boolean} o.ignoresSizeStrength  носитель снимает штрафы за Размер и
  *        Бонус Силы (Best.Q Откатная Перчатка, OVERSIZED_FIT_FLAG в
  *        rules/legion-fit.mjs) — «неудобная форма» при этом остаётся: книга
@@ -60,6 +61,7 @@ export const OGRYN_FIT_FLAG = "weapons.ogryn";
  */
 export function ogrynAttackPenalty({ hasOgrynized = false, fitsOgryn = false,
                                      size = 0, sBonus = 0, isRanged = false,
+                                     isGrenade = false,
                                      ignoresSizeStrength = false } = {}) {
   const parts = [];
 
@@ -69,7 +71,9 @@ export function ogrynAttackPenalty({ hasOgrynized = false, fitsOgryn = false,
     // Форма рук — то же сложение, что даёт fitsOgryn; раз его нет, хват не по
     // руке. Перчаткой не снимается: это и есть книжная «неудобная форма».
     parts.push({ label: "Огрины: руки не огринской формы", value: OGRYN_STEP });
-  } else if (!hasOgrynized && fitsOgryn) {
+  } else if (!hasOgrynized && fitsOgryn && !isGrenade) {
+    // «…без свойства Ogrynized (кроме гранат)» — граната не требует пролезть
+    // пальцем в скобу, её просто бросают.
     parts.push({
       label: isRanged ? "Оружие не огринское (стрелковое)" : "Оружие не огринское",
       value: isRanged ? OGRYN_RANGED_STEP : OGRYN_STEP

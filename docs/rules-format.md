@@ -185,6 +185,7 @@ export const PREDICATES = {
 | `failDegMod` | `target`, `value` | доп. степени провала (`value`, может быть отрицательным), суммируются, только если тест УЖЕ провален |
 | `scriptTrigger` | `target`, `side`, `itemId`, `entryId` | автозапуск записи `kind:"script"` по исходу теста; `side`: `critSuccess` или `critFailure` |
 | `autoFail` | `target` | тест в этой области провален без учёта броска (Ослеплён — `basedon:bs`); применяет общий исход теста `rules/kind-outcome.mjs` |
+| `successDegCap` | `target`, `value` | потолок степени УСПЕХА (`value` ≥ 1, из нескольких — наименьший); применяется после всех прибавок, на провал не влияет (BONE-Head: `basedon:int`, 1) |
 | `script` | `code` | аварийный выход, см. предупреждение ниже |
 
 `target` для бросков пишется с областью через двоеточие: `initiative`,

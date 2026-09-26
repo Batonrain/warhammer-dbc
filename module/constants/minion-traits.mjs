@@ -120,7 +120,7 @@ export const MINION_TRAITS = {
   "Ogryn": {
     cost: 5, complex: true, groups: only("human", "machine", "daemon"), tiers: tiers(null, null, true),
     note: "Огрин: Трейты Size (1), Fanatic, Unnatural S (6), Unnatural T (6), Brute Physiology, BONE-Head, "
-        + "Таланты Iron Jaw и Resistance (Cold, Heat), +15 S и T, −15 Ag и Int, +15 Ран."
+        + "Таланты Iron Jaw и Resistance (Cold, Heat), +15 S и T, −15 Ag и Int (+15 Ран — от Brute Physiology)."
   },
   "Servoskull": {
     cost: 2, complex: true, groups: only("machine"), tiers: tiers(true, true, true),

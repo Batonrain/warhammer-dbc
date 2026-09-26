@@ -27,6 +27,7 @@ import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { conditionLevelField } from "../constants/conditions.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { applyConditionWithDuration } from "./condition-effects.mjs";
 import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
 import { inPariahVoid } from "../rules/null-zones.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
@@ -203,7 +204,34 @@ async function _applyHaywire(actor, rating, damage2 = "") {
   const text = (isStorm && damage2)
     ? tier.text.replace(/1d5\+1 непоглощ\. E Dmg\.$/, `${damage2} непоглощ. E Dmg (книжный нестандартный урон этого предмета).`)
     : tier.text;
-  return `<div class="dmg-tb-note">📡 ЭМИ${rating ? ` (радиус ${rating} м)` : ""}: 1d10=<b>${total}</b> → <b>${tier.label}</b>. ${text}</div>`;
+  const boneHead = await _applyBoneHeadHaywire(actor, total);
+  return `<div class="dmg-tb-note">📡 ЭМИ${rating ? ` (радиус ${rating} м)` : ""}: 1d10=<b>${total}</b> → <b>${tier.label}</b>. ${text}${boneHead}</div>`;
+}
+
+/**
+ * Сколько Ходов поле Haywire мощностью `power` держится на 3+: «каждый Ход
+ * затухает на 2» (стр. 168) — 3-4 → 1, 5-6 → 2, 7-8 → 3, 9-10 → 4. Ниже 3 — 0.
+ */
+export function haywireRoundsAtThree(power) {
+  const p = Number(power) || 0;
+  return p < 3 ? 0 : Math.floor((p - 3) / 2) + 1;
+}
+
+/**
+ * BONE-Head / Костеголов (Огрин): поле 3+ — «Сбой импланта» на столько Ходов,
+ * сколько поле держится на 3+; 7+ — ещё и Ступор на 1 Раунд («или пока не
+ * покинет поле» — вышедшему раньше ГМ снимает Состояние с листа). Возвращает
+ * строку для карточки попадания.
+ */
+async function _applyBoneHeadHaywire(actor, power) {
+  const rounds = haywireRoundsAtThree(power);
+  if (!rounds || !hasRuleFlag(actor, "haywire.boneHead")) return "";
+  const notes = [];
+  if (await applyConditionWithDuration(actor, "implantHaywire", { value: rounds, unit: "rounds" }))
+    notes.push(`Сбой импланта на ${rounds} Р. — тесты I провалены, ментальные действия вдвое дольше`);
+  if (power >= 7 && await applyConditionWithDuration(actor, "dazed", { value: 1, unit: "rounds" }))
+    notes.push("Ступор на 1 Раунд");
+  return notes.length ? `<br/>🧠 BONE-Head: ${notes.join("; ")}.` : "";
 }
 
 // ─── Маппинг места попадания → поле брони актора ──────────────────────────────

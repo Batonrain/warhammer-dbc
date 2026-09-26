@@ -25,7 +25,7 @@ import { addFatigue, conditionAdjustFields, conditionApplyFields, conditionRemov
 import { rollMoraleTest } from "../rules/morale-test.mjs";
 import { postShockRecoveryPrompt } from "./fear.mjs";
 import { applyLordOfExoditesFailPenalty } from "./lord-of-exodites.mjs";
-import { hasRuleFlag } from "../rules/flags.mjs";
+import { hasRuleFlag, ruleFlagLabels } from "../rules/flags.mjs";
 import { resolveArmorProps } from "./armor-properties.mjs";
 // Морозное Сердце (wdbc-5knb): щит с записью Конструктора
 // kind:"shieldVsCondition" можно бросить против ТИКА Горения, гася его
@@ -673,19 +673,31 @@ export async function processConditionTurnEnd(actor) {
     const roll = await new Roll("1d10").evaluate();
     const level = Number(conds.haemorrhagingLevel) || 0;
     const eff = roll.total - level;
-    if (eff <= 0) {
+    // Brute Physiology / Физиология Громилы: «Огрин не может умереть от
+    // Кровотечения» — бросок тот же (Обескровливание он может и не получать —
+    // это иммунитет Механики Черты, см. ниже), но смерти нет.
+    const noDeath = hasRuleFlag(actor, "bleeding.noDeath");
+    if (eff <= 0 && noDeath) {
+      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: 1d10 <b>${roll.total}</b> − Обескровливание ${level} = <b>${eff}</b> → не умирает от Кровотечения (${esc(ruleFlagLabels(actor, "bleeding.noDeath")[0] ?? "")})</div>`);
+    } else if (eff <= 0) {
       lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: 1d10 <b>${roll.total}</b> − Обескровливание ${level} = <b>${eff}</b> → <span class="roll-failure"><b>СМЕРТЬ</b> (независимо от количества Ран)</span></div>`);
       await killByCondition(actor, "bleeding");
     } else if (eff <= 5) {
       const newLevel = level + 1;
       const upd = conditionAdjustFields(actor, "haemorrhaging", 1);
-      // Отсчёт «−1 Обескровливания в час» (haemorrhageHourly) — с момента,
-      // когда уровень стал ненулевым, а не с первой прокрутки Календаря.
-      if (level <= 0 && Object.keys(upd).length) {
-        upd[`flags.${NS}.${HAEMORRHAGE_HOUR_FLAG}`] = Number(globalThis.game?.time?.worldTime) || 0;
+      // Иммунитет к Обескровливанию (Механика «Состояние: иммунитет») — пустой
+      // патч: уровень не растёт, и карточка не должна врать «+1».
+      if (!Object.keys(upd).length) {
+        lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: 1d10 <b>${roll.total}</b> − ${level} = <b>${eff}</b> → Обескровливание не накапливается (иммунитет)</div>`);
+      } else {
+        // Отсчёт «−1 Обескровливания в час» (haemorrhageHourly) — с момента,
+        // когда уровень стал ненулевым, а не с первой прокрутки Календаря.
+        if (level <= 0 && Object.keys(upd).length) {
+          upd[`flags.${NS}.${HAEMORRHAGE_HOUR_FLAG}`] = Number(globalThis.game?.time?.worldTime) || 0;
+        }
+        await actor.update(upd);
+        lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: 1d10 <b>${roll.total}</b> − ${level} = <b>${eff}</b> → +1 Обескровливание (<b>${newLevel}</b>)</div>`);
       }
-      await actor.update(upd);
-      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: 1d10 <b>${roll.total}</b> − ${level} = <b>${eff}</b> → +1 Обескровливание (<b>${newLevel}</b>)</div>`);
     } else {
       lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: 1d10 <b>${roll.total}</b> − ${level} = <b>${eff}</b> → обошлось</div>`);
     }
@@ -702,6 +714,12 @@ export async function processConditionTurnEnd(actor) {
   if (conds.stunned && !conds.hallucinogenic && hasRuleFlag(actor, "sarcophagus.autoWakeFromStun")) {
     await actor.update(conditionRemoveFields("stunned"));
     lines.push(`<div class="roll-threshold">${rollIcon("bolt", "#8fd0ff")}Электрошок саркофага снял Оглушение</div>`);
+  } else if (conds.stunned && hasRuleFlag(actor, "stun.shakeOffTurnEnd")) {
+    // Brute Physiology / Физиология Громилы: «В конце своего Хода Огрин
+    // автоматически снимает с себя Оглушение» — без оговорок, в отличие от
+    // саркофага выше, и Галлюцинации тоже.
+    await actor.update(conditionRemoveFields("stunned"));
+    lines.push(`<div class="roll-threshold">${rollIcon("bolt", "#8fd0ff")}Стряхнул Оглушение (${esc(ruleFlagLabels(actor, "stun.shakeOffTurnEnd")[0] ?? "")})</div>`);
   }
 
   // Морозное Сердце (wdbc-5knb): щит с kind:"shieldVsCondition" на "burning"

@@ -5134,8 +5134,9 @@ export const CAPABILITIES = {
     source: "Bolter Virtuoso / Болтерный Виртуоз", reader: ""
   },
   "trait.boneHead": {
-    label: "Импланты интеллекта (с оговорками).",
-    source: "BONE-Head / Костеголов", reader: ""
+    label: "Тест I — не больше 1 Успеха; Haywire 3+ — сбой импланта, 7+ — Ступор.",
+    source: "BONE-Head / Костеголов",
+    reader: "module/rules/library/ogryn.mjs (OGRYN_TRAIT_RULES: ogryn.boneHead.*) — по Черте, условие hasTrait"
   },
   "trait.braggingWealth": {
     label: "+15 на оценку ценности, поиск трофеев и взлом замков. При провале поиска ценностей — находит 1d5+1 расходников. До I.",
@@ -5146,8 +5147,9 @@ export const CAPABILITIES = {
     source: "Brutal Charge / Брутальный Натиск (X)", reader: ""
   },
   "trait.brutePhysiology": {
-    label: "+15 Ран; штрафы на немодифицированное оружие.",
-    source: "Brute Physiology / Физиология Громилы", reader: ""
+    label: "+15 Ран; сам восстанавливает Раны; не умирает от Кровотечения; стряхивает Оглушение; −20 тонкой манипуляции; штрафы на оружие без Ogrynized.",
+    source: "Brute Physiology / Физиология Громилы",
+    reader: "module/rules/library/ogryn.mjs (OGRYN_TRAIT_RULES: ogryn.brute.*) — по Черте, условие hasTrait; +15 Ран и иммунитет к Обескровливанию — Механика Черты"
   },
   "trait.burrower": {
     label: "Роет тоннели со скоростью SPD×X.",
@@ -7386,6 +7388,26 @@ export const CAPABILITIES = {
     label: "Сложение под легионное оружие: своё берёт без штрафа, чужое — со штрафом за тесную спусковую скобу",
     source: "Раса Астартес, «Физиология Астартес» (module/rules/library/astartes.mjs)",
     reader: "module/rules/legion-fit.mjs — LEGION_FIT_FLAG"
+  },
+  "bleeding.noDeath": {
+    label: "Не умирает от Кровотечения (бросок Кровотечения не убивает)",
+    source: "Черта «Brute Physiology / Физиология Громилы» (module/rules/library/ogryn.mjs)",
+    reader: "module/combat/condition-ticks.mjs::processConditionTurnEnd"
+  },
+  "stun.shakeOffTurnEnd": {
+    label: "В конце своего Хода сам снимает Оглушение",
+    source: "Черта «Brute Physiology / Физиология Громилы» (module/rules/library/ogryn.mjs)",
+    reader: "module/combat/condition-ticks.mjs::processConditionTurnEnd"
+  },
+  "healing.bruteRegen": {
+    label: "Сам восстанавливает 1 Рану в минуту (легко ранен) / 10 минут (тяжело) / час (критически)",
+    source: "Черта «Brute Physiology / Физиология Громилы» (module/rules/library/ogryn.mjs)",
+    reader: "module/combat/brute-regen.mjs::bruteRegenClock (часы Календаря, combat/condition-clock.mjs) — арифметика module/rules/brute-regen.mjs"
+  },
+  "haywire.boneHead": {
+    label: "Мозговые импланты: поле Haywire 3+ — «Сбой импланта» (тесты I провалены), 7+ — Ступор на 1 Раунд",
+    source: "Черта «BONE-Head / Костеголов» (module/rules/library/ogryn.mjs)",
+    reader: "module/combat/damage.mjs::_applyBoneHeadHaywire (из _applyHaywire)"
   },
   "weapons.ogryn": {
     label: "Сложение под огринское оружие: своё берёт без штрафа, чужое — со штрафом (−10, стрелковое −20)",
