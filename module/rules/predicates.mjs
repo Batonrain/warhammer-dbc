@@ -268,7 +268,7 @@ export const CTX_DEPENDENT_PREDICATES = new Set([
   "weaponClass", "charNotIn", "charIn",
   "targetHasTrait", "targetLacksCondition", "targetHasCondition",
   "targetHasSize", "targetKeepsNimbleInArmour", "targetHasFaction",
-  "targetHasFieldPsyMod", "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus", "hasHatredTarget",
+  "targetHasFieldPsyMod", "targetLacksSealedArmour", "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus", "hasHatredTarget",
   "legacyGuardianMarked"
 ]);
 
@@ -397,6 +397,11 @@ export const PREDICATES = {
     if (!wearsPowerArmour(t)) return true;
     return hasInstalledImplant(t, "Black Carapace");
   },
+
+  // Цель без надетой герметичной брони (wdbc-1rno.11, Миазмы: «если он не
+  // носит герметический доспех или скафандр… бонус +40 на попытки отследить
+  // его по запаху») — тот же wearsSealedArmour, но про ЦЕЛЬ броска.
+  targetLacksSealedArmour: (actor, ctx) => !!ctx?.targetActor && !wearsSealedArmour(ctx.targetActor),
 
   // Подавляющее поле друкхарийской брони цели (wdbc-j8cn): штраф чужим
   // психотестам лежит в system.fieldPsyMod (rules/character/armour.mjs) и

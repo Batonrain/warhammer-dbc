@@ -464,7 +464,9 @@ describe("общее требование к предикатам", () => {
     legacyGuardianMarked: undefined,
     // Подавляющее поле друкхарийской брони цели (wdbc-j8cn) — читает
     // system.fieldPsyMod ЦЕЛИ, значение из `when` не участвует.
-    targetHasFieldPsyMod: undefined
+    targetHasFieldPsyMod: undefined,
+    // Цель без герметичной брони (wdbc-1rno.11, Миазмы) — читает ЦЕЛЬ.
+    targetLacksSealedArmour: undefined
   };
 
   it("на пустом акторе каждый возвращает строго true или false", () => {

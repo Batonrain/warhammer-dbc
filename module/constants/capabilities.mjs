@@ -6992,7 +6992,7 @@ export const CAPABILITIES = {
     reader: "packs-src item mutation.majesticHorns: majestichorns-45-natweapons/-45-deadly (субмутация 4-5), majestichorns-6-social/-6-command (субмутация 6, patronGod:slaanesh), majestichorns-8-natweapons/-8-deadly (субмутация 8, ЧАСТИЧНО — patronGod:khorne)"
   },
   "mutation.miasma": {
-    label: "+40 Выживание (выслеживание по запаху) без герметичной брони механизировано отдельной записью kind:\"testMod\" под новым гейтом when.requireSealedArmour+negateSealedArmour (wdbc-1rno, PREDICATES.wearsSealedArmour — ARMOR_PROPERTIES.sealed) на этом же предмете. Capability покрывает ТОЛЬКО остаток: штрафы на соц. взаимодействие/Stealth без гермодоспеха — книга не даёт конкретного числа («это может давать штрафы»), не смоделированы",
+    label: "+40 выслеживанию по запаху получает ПРЕСЛЕДОВАТЕЛЬ носителя (wdbc-1rno.11; раньше запись на самом предмете давала +40 самому мутанту — наоборот книге, снята): правило core.miasmaTracking (rules/library/core.mjs) — галочка +40 к Выживанию того, кто бросает против цели с Миазмами без герметичной брони (PREDICATES.targetLacksSealedArmour). Capability покрывает ТОЛЬКО остаток: штрафы на соц. взаимодействие/Stealth без гермодоспеха — книга не даёт конкретного числа («это может давать штрафы»), ждёт решения владельца",
     source: "Мутация: Miasma (Общие мутации)",
     reader: ""
   },
