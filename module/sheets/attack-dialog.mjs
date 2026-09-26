@@ -15,6 +15,7 @@
 // любой другой (Приём зависит от Базы, Стойка/Приём/Хват — от Профиля через
 // категорию оружия, categoryFor/trainingFor ниже).
 
+import { hardTargetPenalty } from "../rules/hard-target.mjs";
 import { CHARACTERISTICS }                    from "../constants/characteristics.mjs";
 import { DAMAGE_TYPES }                       from "../constants/items.mjs";
 import { MELEE_STANCES, MELEE_BASES, parseGrips, meleeEffectiveRange } from "../constants/combat.mjs";
@@ -413,6 +414,18 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         : `<span class="atk-training-warn" title="Цель Бежит (стр. 32)">🏃 Цель Бежит (${isMelee ? "+20" : "−20"})</span>`)
     : "";
 
+  // Трудная Цель (стр. 62, wdbc-1rno.30): Бег/Натиск/Верховая Атака цели с
+  // этим Талантом — −10 стрельбе по ней; гасят те же «штрафы за скорость
+  // цели», что и −20 Бега выше, плюс Зенитное (стр. 166 называет Hard Target
+  // поимённо). rules/hard-target.mjs.
+  const hardTargetMod = hardTargetPenalty(attackCtx.targetActor, {
+    isMelee,
+    speedPenaltyIgnored: !!wp.antiAir || trackingAimIgnoresRunning || motionPredictorIgnoresRunning
+  });
+  const hardTargetBadge = hardTargetMod
+    ? `<span class="atk-training-warn" title="Трудная Цель (стр. 62): цель бежала или шла в Натиск в свой Ход">🎯 Трудная Цель (−10)</span>`
+    : "";
+
   // Bow to the Audience/Поклон Публике (wdbc-1rno): метка живёт на
   // АТАКУЮЩЕМ (module/combat/bow-to-audience.mjs), не на цели — бонус/штраф
   // действует только пока бьёт именно отметивший, до начала его следующего
@@ -508,7 +521,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // «Холодное» значение здесь тоже по умолчанию не-Избирательное (−10) — тем
   // же приёмом, что meleeMaceMod.
   const meleeHookMod = (isMelee && sys.meleeCategory === "Крюк") ? -10 : 0;
-  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + ogrynFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + stepByStepMod + bowMarkedMod + proneMod + stunnedMod + fliesMod + wrathHeatMod + meleeMaceMod + meleeHookMod;
+  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + ogrynFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + hardTargetMod + stepByStepMod + bowMarkedMod + proneMod + stunnedMod + fliesMod + wrathHeatMod + meleeMaceMod + meleeHookMod;
   const meleeCategory = sys.meleeCategory || "";
   // Категория оружия по выбранному Профилю (стр. 14, «Композиция Рукопашной
   // Атаки»): у многопрофильного оружия каждый альт-профиль — фактически
@@ -657,7 +670,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const blockedBadge = sel.blocked
       ? `<span class="atk-training-warn" title="Защитная Стойка без щита запрещает атаки (стр. 15)">🚫 Защитная Стойка — атака запрещена</span>`
       : "";
-    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${runningBadge}${bowMarkedBadge}${targetHelplessBadge}${proneBadge}${stunnedBadge}${fliesBadge}${wrathHeatBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}${handsBadge(sel)}`;
+    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${runningBadge}${hardTargetBadge}${bowMarkedBadge}${targetHelplessBadge}${proneBadge}${stunnedBadge}${fliesBadge}${wrathHeatBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}${handsBadge(sel)}`;
   }
 
   // Недоступные варианты (без Рукопашной Тренировки/не подходит категории) не
@@ -1435,6 +1448,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       { label: "Цель раскрыта",      value: exposedMod },
       { label: "Беспомощная цель",   value: helplessRangedMod },
       { label: "Цель бежит",         value: runningMod },
+      { label: "Трудная Цель",       value: hardTargetMod },
       { label: "Цель Повалена",      value: proneMod },
       { label: "Оглушение/Ступор цели", value: stunnedMod },
       // Мухи (wdbc-1rno) — эскалация читает ЖИВОЙ f.aimPenalty (чекбокс

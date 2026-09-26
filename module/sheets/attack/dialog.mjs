@@ -14,6 +14,7 @@
 //  остальное нельзя, — заведён там, где направление одностороннее.
 // ══════════════════════════════════════════════════════════════════════════
 
+import { FAST_MOVE_FLAG } from "../../rules/hard-target.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { esc } from "../../helpers/utils.mjs";
 import { _executeAttackRoll } from "../../combat/attack.mjs";
@@ -336,6 +337,11 @@ export function openAttackDialog(ctx) {
           }
           if (isMelee && sel.stanceKey !== stance) actorUpdates["system.meleeStance"] = sel.stanceKey;
           if (isMelee && !fullAttackForced && !sabreSecond && sel.baseKey !== meleeBaseKey) actorUpdates["system.meleeBase"] = sel.baseKey;
+          // Трудная Цель (wdbc-1rno.30): Натиск и Верховая Атака этого Хода —
+          // метка до начала следующего своего Хода (rules/hard-target.mjs).
+          if (isMelee && (sel.baseKey === "charge" || sel.baseKey === "mounted")) {
+            actorUpdates[`flags.warhammer-dbc.${FAST_MOVE_FLAG}`] = true;
+          }
           await actor.update(actorUpdates);
           if (sel.gKey !== gripKey) await item.setFlag?.("warhammer-dbc", "hudGrip", sel.gKey);
           if (sel.pIdx !== profIdx) await item.setFlag?.("warhammer-dbc", "hudProfile", sel.pIdx);
