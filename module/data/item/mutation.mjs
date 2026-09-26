@@ -6,6 +6,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { migrateCharBonusPair } from "./_legacy-char-bonus.mjs";
+import { activationSchema } from "./_activation.mjs";
 
 /** Умолчание `effects`: те же нули, что раздавал template.json. */
 function emptyEffects() {
@@ -39,6 +40,8 @@ export class MutationData extends foundry.abstract.TypeDataModel {
       // работать (rules/null-zones.mjs).
       supernatural: new BooleanField({ initial: false, label: "Сверхъестественная" }),
       active:      new BooleanField({ initial: false, label: "Включена" }),
+      // Цена включения и срок — общая схема с Чертой (data/item/_activation.mjs).
+      activation:  activationSchema(),
       // В template.json объявлено не было, но лежит у трёх мутаций пака и
       // читается общим пикером Талантов, Черт и Мутаций — как у Черты.
       requirement: new StringField({ initial: "", label: "Требование" }),

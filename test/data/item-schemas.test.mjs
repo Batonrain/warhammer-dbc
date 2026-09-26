@@ -50,6 +50,7 @@ const TYPES = {
       hasRating: false, rating: 0, hasRating2: false, rating2: 0,
       // Включаемая Черта (Босоногий Ратлинга) — тумблер как у Мутации.
       activatable: false, active: false,
+      activation: { costPool: "", costAmount: 1, apOn: 0, apOff: 0, until: "" },
       effects: {
         charBonuses: [], charValueBonuses: [],
         armourAll: 0, fearRating: 0, sizeMod: 0, initMod: 0, speedMod: 0
@@ -351,6 +352,7 @@ const TYPES = {
       // armorMod (module/apps/effects.mjs::isItemActive), для Мутаций/Даров
       // с эффектом «до конца боя/сцены» вместо постоянного (Живое Оружие).
       activatable: false, active: false,
+      activation: { costPool: "", costAmount: 1, apOn: 0, apOff: 0, until: "" },
       effects: {
         charBonuses: [], charValueBonuses: [], armourAll: 0,
         fearRating: 0, sizeMod: 0, initMod: 0, speedMod: 0

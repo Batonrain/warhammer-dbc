@@ -1,5 +1,6 @@
 // module/sheets/sheet-helpers.mjs
 
+import { activationLabel } from "../rules/item-activation.mjs";
 import { CHARACTERISTICS, APTITUDES }   from "../constants/characteristics.mjs";
 import { LIMB_LOSS_KEYS, lostSidesLabel } from "../rules/limb-loss.mjs";
 import { getHeldHand } from "../rules/hands.mjs";
@@ -1151,6 +1152,7 @@ function buildGetDataUncached(actor) {
       // Включаемая Черта (Босоногий: «обут/босиком») — тот же тумблер, что у Мутаций.
       activatable:   !!g.first.system.activatable,
       active:        !!g.first.system.active,
+      activationHint: activationLabel(g.first),
       toggles:       toggleRows(allItems, g.first)
     };
   });
@@ -1172,7 +1174,8 @@ function buildGetDataUncached(actor) {
       benefit:    i.system.benefit || i.system.description || "",
       subText:    sub.name ? `${sub.label} — ${sub.name}: ${sub.text}` : "",
       activatable: !!i.system.activatable,
-      active:      !!i.system.active
+      active:      !!i.system.active,
+      activationHint: activationLabel(i)
     };
   });
 

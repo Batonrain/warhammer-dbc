@@ -20,6 +20,7 @@ function emptyEffects() {
 }
 
 import { migrateCharBonusPair } from "./_legacy-char-bonus.mjs";
+import { activationSchema } from "./_activation.mjs";
 
 export class TraitData extends foundry.abstract.TypeDataModel {
 
@@ -47,7 +48,10 @@ export class TraitData extends foundry.abstract.TypeDataModel {
       // которого система сама не видит: «Босоногий» — «когда Ратлинг не носит
       // обувь» (обуви в системе нет — игрок щёлкает «обут/босиком»).
       activatable: new BooleanField({ initial: false, label: "Включаемая" }),
-      active:      new BooleanField({ initial: false, label: "Включена" })
+      active:      new BooleanField({ initial: false, label: "Включена" }),
+      // Цена включения и срок («за полное действие и Очко Бесчестия — до
+      // конца боя»): субрасы Зверолюда, data/item/_activation.mjs.
+      activation:  activationSchema()
     };
   }
 

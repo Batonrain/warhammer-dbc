@@ -1,0 +1,53 @@
+{
+  "name": "Tzaangor Enlightened / Тзаангор Просвещённый",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "BstSubraceTal001",
+  "system": {
+    "description": "",
+    "notes": "Не смоделировано: часовой ритуал без теста, призывающий Диск Тзинча, и 3d10 урона в W ритуалисту — ритуал Трансформации Диска в системе не заведён. Ведётся вручную (очередь «Разобрать»).",
+    "benefit": "Проведя простой ритуал (1 час, без тестов), Тзаангор призывает Диск Тзинча под своим управлением, как если бы провёл ритуал Трансформации Диска (стр. 397). Он получает 3d10 урона в W, как обычный ритуалист, трансформирующий диск.",
+    "tier": 3,
+    "requirement": "Субраса Тзаангор, Cor 30, Inf 30, Forbidden Lore (Daemons)",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, I. РАСЫ («Субрасы Зверолюда»)"
+  },
+  "_id": "Q3Z5NnzisjqmBpxB",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121983562,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Q3Z5NnzisjqmBpxB"
+}

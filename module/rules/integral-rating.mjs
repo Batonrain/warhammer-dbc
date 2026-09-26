@@ -83,6 +83,35 @@ export function presetIntegralChoice(groups, specialization) {
 }
 
 /**
+ * Строка снятия Черты субрасой: «Natural Weapons (Рога, Когти)» — снять у
+ * Черты только эти атаки, а не всю Черту (Тзаангор: «отнимает Трейты Natural
+ * Weapons (Рога, Когти)» — Укус и Копыта остаются). Без скобок — вся Черта.
+ */
+export function parseTraitRemoval(str) {
+  const m = /^(.+?)\s*\(([^)]*)\)\s*$/.exec(String(str || "").trim());
+  if (!m) return { name: String(str || "").trim(), parts: [] };
+  const parts = m[2].split(",").map(s => s.trim()).filter(s => s && !/^\d+$/.test(s));
+  return { name: m[1].trim(), parts };
+}
+
+/**
+ * Выбор «по выбору» после снятия атак по имени (половины без скобок, как у
+ * presetIntegralChoice). Возвращает { keep, dropped } — id записей.
+ */
+export function dropIntegralChoice(groups, chosen, parts) {
+  const wanted = (parts || []).map(s => String(s).trim().toLowerCase()).filter(Boolean);
+  const halves = name => String(name || "").split("/").map(h => h.replace(/\([^)]*\)/g, "").trim().toLowerCase());
+  const byId = new Map(optionalIntegralEntries(groups).map(e => [e.id, e]));
+  const keep = [], dropped = [];
+  for (const id of chosen || []) {
+    const e = byId.get(id);
+    if (e && halves(e.equipSourceName).some(h => wanted.includes(h))) dropped.push(id);
+    else keep.push(id);
+  }
+  return { keep, dropped };
+}
+
+/**
  * Проходит ли запись integralAttack в выдачу: обычная — всегда, «по выбору» —
  * только отмеченная в окне (chosen — массив id записей или undefined, если
  * вопрос ещё не задавался: тогда не выдаём, окно спросит).

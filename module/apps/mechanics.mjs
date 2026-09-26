@@ -2877,7 +2877,11 @@ export async function syncGrantedAbilities(sourceItem) {
       data.system.rating = mechFormulaTotalSafe(e.rating, mechRollData(actor));
     }
     if (e.kind === "talent" && e.specialization) data.system.specialization = e.specialization;
+    // Перечень атак в записи («1, Рога, Укус, Когти, Копыта») — как при первой
+    // выдаче (applyMechEntry): окно выбора на каждом включении формы не нужно.
+    const preset = e.kind === "trait" ? presetIntegralChoice(data.flags?.[FLAG]?.mechanics, e.specialization) : null;
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}),
+      ...(preset ? { [INTEGRAL_CHOSEN_FLAG]: preset } : {}),
       grantedByItem: sourceItem.id, abilityEntryId: e.id } };
     toCreate.push(data);
   }
@@ -3315,6 +3319,13 @@ async function _applyItemMechanics(item) {
   // установленным) — откатывает то, что applyMechEntry(equipment) уже
   // успел выдать выше, чтобы конечное состояние сразу было верным.
   await syncGrantedEquipment(item);
+  // То же для Черт/Талантов: выключенная при получении форма (Кхорнгор —
+  // Смертельное Естественное Оружие «до конца боя» только по включению)
+  // не держит выданное. Только откат: у активного источника первая выдача
+  // уже прошла через applyMechEntry с её возвратом опыта за дубли. Только у
+  // включаемых (activatable) — выдачи прочих неактивных источников (снятая
+  // броня, не вживлённый имплант) живут по своим давним правилам.
+  if (item.system?.activatable && !isItemActive(item)) await syncGrantedAbilities(item);
   // Пишем, только если что-то действительно отыгралось: иначе каждый прогон
   // правил бы предмет и будил хук updateItem по кругу.
   if (applied.size !== before) await item.setFlag(FLAG, "mechanicsApplied", [...applied]);

@@ -1,0 +1,53 @@
+{
+  "name": "Pestigor Mourner / Пестигор Плакальщик",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "BstSubraceTal001",
+  "system": {
+    "description": "",
+    "notes": "Не смоделировано: реакция «раз за бой/сцену уменьшить непоглощённый урон до 1 и на 1 Раунд удвоить T.b в поглощении» — вмешательство в уже посчитанный урон и временный множитель T.b; точки такой реакции в расчёте урона нет. Ведётся вручную (очередь «Разобрать»).",
+    "benefit": "Раз за бой или сцену после получения непоглощённого урона Пестигор может уменьшить его до 1 и на 1 Раунд удвоить свой T.b в расчёте поглощения.",
+    "tier": 3,
+    "requirement": "Субраса Пестигор, Cor 30, Inf 30",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Нургл",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, I. РАСЫ («Субрасы Зверолюда»)"
+  },
+  "_id": "A5PNdOgFrUxZZkC2",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121983562,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!A5PNdOgFrUxZZkC2"
+}

@@ -10,13 +10,15 @@
 //  зовёт и Мастер создания персонажа (apps/creation.mjs).
 // ════════════════════════════════════════════════════════════════════════════
 
+import { parseTraitRemoval, dropIntegralChoice, INTEGRAL_CHOSEN_FLAG } from "../rules/integral-rating.mjs";
+import { patronKeyOfGod } from "../rules/subrace-patron.mjs";
 import { RACES } from "../constants/races.mjs";
 import { getLegion, getChapter, resolveCulture } from "../constants/legions.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { raceDef, subraceEntries } from "./race-library.mjs";
 import { clearGrantedBy, withOriginLock } from "./origin-shared.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
-import { applyItemMechanics } from "./mechanics.mjs";
+import { applyItemMechanics, getItemMechanics } from "./mechanics.mjs";
 import { needsAptitudeChoice, promptSubraceAptitudeChoice, applySubraceAptitudeChoice } from "./subrace-choice.mjs";
 
 const FLAG  = "warhammer-dbc";
@@ -258,15 +260,35 @@ export async function applySubrace(actor, key) {
   // (rules/predicates.mjs) — тем же способом, что и предикат `hasTrait`: по
   // РАВЕНСТВУ половины двуязычного имени, а не по вхождению подстроки, иначе
   // «Natural Weapons» снёс бы заодно другую Черту — «Deadly Natural Weapons».
-  const drop = def?.removesTraits || [];
+  //
+  // Со скобками — снимаются только названные атаки Черты («Natural Weapons
+  // (Рога, Когти)» у Тзаангора): выбор атак на Черте урезается, выданное по
+  // снятым записям оружие удаляется (rules/integral-rating.mjs).
+  const drop = (def?.removesTraits || []).map(parseTraitRemoval);
   if (drop.length) {
-    const ids = actor.items
-      .filter(i => i.type === "trait" && drop.some(name => itemHasName(i, name)))
-      .map(i => i.id);
-    if (ids.length) await actor.deleteEmbeddedDocuments("Item", ids);
+    const traits = actor.items.filter(i => i.type === "trait");
+    const ids = [];
+    for (const d of drop) {
+      for (const t of traits.filter(i => itemHasName(i, d.name))) {
+        if (!d.parts.length) { ids.push(t.id); continue; }
+        const { keep, dropped } = dropIntegralChoice(getItemMechanics(t), t.getFlag(FLAG, INTEGRAL_CHOSEN_FLAG), d.parts);
+        if (!dropped.length) continue;
+        await t.setFlag(FLAG, INTEGRAL_CHOSEN_FLAG, keep);
+        ids.push(...actor.items.filter(w => w.getFlag(FLAG, "grantedByItem") === t.id
+          && dropped.includes(w.getFlag(FLAG, "equipEntryId"))).map(w => w.id));
+      }
+    }
+    if (ids.length) await actor.deleteEmbeddedDocuments("Item", [...new Set(ids)]);
   }
 
-  await actor.update({ "system.subrace": key });
+  // «Не может потерять покровительство <Бога>» (субрасы Зверолюда): субраса
+  // сразу ставит своего Бога покровителем; дальше его держит хук
+  // preUpdateActor (hooks.mjs, rules/subrace-patron.mjs).
+  const patron = patronKeyOfGod(def?.god);
+  if (patron && actor.system.patronGod !== patron) {
+    ui.notifications?.info?.(`${def.label}: покровитель — ${def.god}.`);
+  }
+  await actor.update({ "system.subrace": key, ...(patron ? { "system.patronGod": patron } : {}) });
 }
 
 /** Иннари: бонусы Прошлого (бывшей расы) + Черты Иннари. */

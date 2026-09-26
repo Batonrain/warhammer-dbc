@@ -24,6 +24,7 @@ import { SKILL_RANKS } from "./characteristics.mjs";
 import { matchSpec, specCovers } from "./skill-specializations.mjs";
 import { itemsNamed } from "../rules/req-atom.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { SUBRACES } from "./races.mjs";
 
 /** Сокращения характеристик из требований → ключи системы. */
 const CHAR_ALIASES = {
@@ -188,6 +189,11 @@ function parseAtom(raw) {
     return { kind: "unknown", raw };
   }
 
+  // «Субраса Слаангор» — Таланты субрас Зверолюда (корбук гл. I): субраса
+  // «даёт доступ к Таланту», брать его может только она.
+  m = /^субраса\s+(.+)$/i.exec(text);
+  if (m) return { kind: "subrace", name: m[1].trim(), raw };
+
   // Просто имя: навык без продвижения или талант
   const skill = SKILL_ALIASES[norm(text)];
   if (skill) return { kind: "skill", key: skill, bonus: 0, raw };
@@ -310,6 +316,12 @@ function checkAtom(actor, atom) {
     // packs-src/traits/Метки_Богов (wdbc-f7fn). Спрашиваем возможность, а не
     // имя предмета: тогда любой другой источник той же Метки засчитается сам.
     case "mark": return hasRuleFlag(actor, `mark.${atom.key}`);
+    case "subrace": {
+      const key = sys.subrace || "";
+      if (!key) return false;
+      const want = norm(atom.name);
+      return norm(key) === want || norm(SUBRACES[key] || "") === want;
+    }
     case "talent": return hasTalent(actor, atom);
     default: return null;                      // проза — не проверяем
   }
