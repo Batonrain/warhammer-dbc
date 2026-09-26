@@ -64,7 +64,9 @@ export async function rollMutationOrGift(actor) {
   const physImmune = hasRuleFlag(actor, "mutation.physicalImmune");
   const infB = actor.system.characteristics?.inf?.bonus ?? 0;
   const patron = actor.system.patronGod || "";
-  const undivided = !physImmune && patron === "undivided";
+  // Пасынки Богов (Зверолюд): «всегда бросая только один кубик на мутации и
+  // субмутации» — второго броска Неделимых нет (mutation.singleDie).
+  const undivided = !physImmune && patron === "undivided" && !hasRuleFlag(actor, "mutation.singleDie");
   const roll1 = await new Roll("1d100").evaluate();
   const roll2 = undivided ? await new Roll("1d100").evaluate() : null;
   const defaultGod = GOD_GIFTS[patron] ? patron : Object.keys(GOD_GIFTS)[0];

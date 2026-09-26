@@ -65,6 +65,24 @@ export function optionalIntegralEntries(groups) {
 }
 
 /**
+ * Выбор «по выбору» заранее — по перечню в специализации записи, выдающей
+ * Черту («1, Рога, Укус, Когти, Копыта» — Natural Weapons Зверолюда). Число
+ * в перечне — рейтинг, не атака, пропускается. Атака опознаётся по любой
+ * половине имени без скобок («Horns (Natural Weapons) / Рога (Естественное
+ * Оружие)» ↔ «Рога»). Ничего не опознано — null: окно спросит как обычно.
+ */
+export function presetIntegralChoice(groups, specialization) {
+  const wanted = String(specialization || "").split(",").map(s => s.trim().toLowerCase())
+    .filter(s => s && !/^\d+$/.test(s));
+  if (!wanted.length) return null;
+  const halves = name => String(name || "").split("/").map(h => h.replace(/\([^)]*\)/g, "").trim().toLowerCase());
+  const ids = optionalIntegralEntries(groups)
+    .filter(e => halves(e.equipSourceName).some(h => wanted.includes(h)))
+    .map(e => e.id);
+  return ids.length ? ids : null;
+}
+
+/**
  * Проходит ли запись integralAttack в выдачу: обычная — всегда, «по выбору» —
  * только отмеченная в окне (chosen — массив id записей или undefined, если
  * вопрос ещё не задавался: тогда не выдаём, окно спросит).

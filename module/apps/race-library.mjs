@@ -48,6 +48,7 @@ const raceFromDoc = doc => ({
   pastRaces: [...(doc.system?.pastRaces || [])],
   largeBase: !!doc.system?.largeBase, // wdbc-8k0i: крупная База 3×3 (Огрин и т.п.)
   allowedArchetypes: [...(doc.system?.allowedArchetypes || [])],
+  startCorruption: Number(doc.system?.startCorruption) || 0,
   uuid: doc.uuid
 });
 
@@ -61,6 +62,7 @@ const raceFromConst = (key, r) => ({
   pastRaces: [...(r.pastRaces || [])],
   largeBase: !!r.largeBase, // wdbc-8k0i: крупная База 3×3 (Огрин и т.п.)
   allowedArchetypes: [...(r.allowedArchetypes || [])],
+  startCorruption: Number(r.startCorruption) || 0,
   uuid: ""
 });
 

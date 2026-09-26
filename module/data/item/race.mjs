@@ -35,6 +35,9 @@ export class RaceData extends foundry.abstract.TypeDataModel {
       // Архетипов (system.key в паке archetypes). Пусто — ограничения нет
       // (Человек: «все Архетипы Людей»). Фильтр — apps/archetypes.mjs.
       allowedArchetypes: new ArrayField(new StringField(), { label: "Доступные Архетипы" }),
+      // Столбец Cor таблицы стартовых характеристик (Зверолюд, Гарпия, Нага — 5):
+      // стартовая Порча, выставляется при применении расы (apps/races.mjs).
+      startCorruption: new NumberField({ initial: 0, integer: true, min: 0, label: "Стартовая Порча" }),
       // Ниже — книжная справка: система по ней ничего не считает, но текст из
       // книги терять нельзя, поэтому он виден на листе расы.
       size:        new NumberField({ initial: 0, integer: true, label: "Размер" }),

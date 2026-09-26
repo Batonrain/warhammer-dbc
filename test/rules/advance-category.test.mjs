@@ -75,19 +75,32 @@ describe("единая категория Продвижения (значок =
     expect(skillAdvanceCat(a, SKILLS_DEF.dodge, { skillKey: "dodge" }, apts)).toBe("ally");
   });
 
-  it("Ремесло и Общие знания Дружественные всегда — приоритет выше override", () => {
-    withRule([{ kind: "grantAptitudeOverride", scope: "skill", match: "Ремесло", align: "enemy" }]);
+  it("Ремесло и Общие знания Дружественные всегда — выше Склонностей и Дружественного override", () => {
+    withRule([{ kind: "grantAptitudeOverride", scope: "skill", match: "Ремесло", align: "ally" }]);
     const a = actor();
     const apts = charAptitudeSet(a.system.aptitudes);
     const def  = GROUP_SKILLS_DEF.trade;
 
     expect(def.alwaysAlly).toBe(true);
     expect(skillAdvanceCat(a, def, { group: "trade", specialty: "Оружейник" }, apts)).toBe("ally");
-    // Подпись обязана объяснять ТУ ЖЕ букву: раньше она обходила alwaysAlly и
-    // рассказывала про Враждебность, пока значок показывал Д (ревью 07.09.2026).
     const src = advanceCatSource(a, "group", "trade", { specialty: "Оружейник" });
     expect(src.align).toBe("ally");
-    expect(src.text).toMatch(/Дружественн/);
+  });
+
+  // Отвращение к Порядку Зверолюда (сверка главы I, 26.09.2026): «считает все
+  // [Навыки] групп Lore и Trade враждебными, независимо от Покровительства» —
+  // частное правило расы сильнее общего «Дружественные всегда». Подпись по-
+  // прежнему обязана объяснять ТУ ЖЕ букву, что на значке (ревью 07.09.2026).
+  it("Враждебный override сильнее «Дружественные всегда», и подпись совпадает со значком", () => {
+    withRule([{ kind: "grantAptitudeOverride", scope: "skill", match: "Ремесло", align: "enemy" }]);
+    const a = actor();
+    const apts = charAptitudeSet(a.system.aptitudes);
+    const def  = GROUP_SKILLS_DEF.trade;
+
+    expect(skillAdvanceCat(a, def, { group: "trade", specialty: "Оружейник" }, apts)).toBe("enemy");
+    const src = advanceCatSource(a, "group", "trade", { specialty: "Оружейник" });
+    expect(src.align).toBe("enemy");
+    expect(src.text).toMatch(/Враждебн/);
   });
 
   it("Враждебный override побеждает Дружественный (правило самого resolveAptitudeOverride)", () => {

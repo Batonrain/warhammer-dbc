@@ -500,9 +500,11 @@ function buildGetDataUncached(actor) {
       char: CHARACTERISTICS[def.char]?.abbr ?? def.char,
       // Отношение группы к склонностям (стр. 24) — по [char группы, apt2].
       // Общие знания и Ремесло всегда Дружественные (стр. 58, 61).
-      alwaysAlly: !!def.alwaysAlly,
       aptCat: skillAdvanceCat(actor, def, { group: groupKey }, _skApts),
       aptSourceText: advanceCatSource(actor, "group", groupKey)?.text ?? "",
+      // «Всегда Дружественная» — только пока её не перебил враждебный override
+      // (Отвращение к Порядку Зверолюда).
+      alwaysAlly: !!def.alwaysAlly && skillAdvanceCat(actor, def, { group: groupKey }, _skApts) !== "enemy",
       // Привязку Группы целиком тоже можно менять (wdbc-fzbu) — значок в
       // заголовке группы такая же кнопка, как у обычного Навыка.
       ...aptBindingContext(actor, "skill", groupKey, [def.char, def.apt2], a => APTITUDES[a] || a),

@@ -42,6 +42,7 @@ import { PA_TABLES } from "../constants/power-armour-lore.mjs";
 import { sanityMax, madnessLevels, sarcophagusCharDelta, DREADNOUGHT_PILOT_FLAG,
          SARCOPHAGUS, sarcophagusWarpWounds, sarcophagusHelplessNow } from "./dreadnought.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { bionicsRejection, REJECTS_BIONICS_FLAG } from "./aversion-to-order.mjs";
 import { invalidateRulesCacheFor } from "./collect.mjs";
 import { runeMax } from "./sigillite-runes.mjs";
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
@@ -409,6 +410,12 @@ export function prepareCharacterDerived(actor, system) {
     }
 
     system.traitCharBonus      = traitCharBonus;
+    // Отвращение к Порядку (Зверолюд): каждая установленная бионика/
+    // кибернетика — −5 T (и −2 Раны, ниже у effectiveMax). Живой расчёт:
+    // снял имплант — штраф ушёл (rules/aversion-to-order.mjs).
+    const orderRejection = bionicsRejection(actor.items, hasRuleFlag(actor, REJECTS_BIONICS_FLAG));
+    if (orderRejection.count) traitCharValueBonus.t = (traitCharValueBonus.t || 0) + orderRejection.t;
+    system.orderRejection = orderRejection;
     system.traitCharValueBonus = traitCharValueBonus;
     system.fearRating     = traitFearRating;
     system.talentInitMod  = traitInitMod;
@@ -748,6 +755,9 @@ export function prepareCharacterDerived(actor, system) {
       system.wounds.effectiveMax = hasRuleFlag(actor, DREADNOUGHT_PILOT_FLAG)
         ? Math.max(0, (Number(system.wounds.max) || 0) + SARCOPHAGUS.woundsMax)
         : (Number(system.wounds.max) || 0);
+      // Отвращение к Порядку: −2 Раны за каждую установленную бионику/кибернетику.
+      if (system.orderRejection?.wounds)
+        system.wounds.effectiveMax = Math.max(0, system.wounds.effectiveMax + system.orderRejection.wounds);
       const wLvl = woundLevel(system);
       system.wounds.tier = wLvl.displayKey;
       system.wounds.tierLabel = wLvl.displayLabel;

@@ -34,7 +34,10 @@ const CHAR_KEYS = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel", "inf"]
 const RAW_KEYS = CHAR_KEYS.map(k => `${k}v`);
 // «subtier» — уровень купленной субрасы (system.subraceTier, Затупленный 1–4):
 // рейтинг Blunted и штраф к максимуму Бесчестия задаются одной формулой.
-const KEYS = [...CHAR_KEYS, "cor", "pr", "corv", "subtier", ...RAW_KEYS];
+// «rating» — рейтинг САМОГО предмета-носителя записи (Черта «Digitigrade (X)»:
+// «+X к SPD» — одна запись на любой рейтинг). Подставляет вызывающий, у
+// которого предмет под рукой (apps/mechanics.mjs::mechEffectData).
+const KEYS = [...CHAR_KEYS, "cor", "pr", "corv", "subtier", "rating", ...RAW_KEYS];
 
 // Каноническая нотация системы — «X.b» (resolveCharFormula, module/helpers/
 // utils.mjs: WS.b, Cor.b, однобуквенные A/I/P/W/F как алиасы Ag/Int/Per/WP/Fel).

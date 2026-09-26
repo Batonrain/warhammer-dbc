@@ -269,23 +269,25 @@ export const RACES = {
     subraces: ["slaangor","pestigor","khorngor","tzaangor"],
     chars: { ws:25, bs:25, s:25, t:25, ag:25, int:25, per:25, wp:25, fel:25, inf:19 },
     bonusRolls: 2, bonusPoints: 7, charShift: 2,
+    startCorruption: 5,
     size: 0,
     skills:  "Common Lore (любые 2), Linguistics (Low Gothic), Survival",
     gear:    "4 элемента Снаряжения/Инструментов до R1 (1 Good.Q)",
     talents: ["Heightened Senses (Hearing, Smell)", "Unarmed Warrior"],
     traits: [
-      { name: "Bite (1) / Укус (1)", benefit:"Естественная атака укусом (профиль).", rating:1, hasRating:true },
+      { name: "Bite (2) / Укус (2)", benefit:"Естественная атака укусом (профиль).", rating:2, hasRating:true },
       { name: "Digitigrade (1) / Двусоставный (1)", benefit:"+1 к SPD; +5 на группирование.", rating:1, hasRating:true },
-      { name: "Natural Weapons (1) / Естественное Оружие (1)", benefit:"Рога/Когти/Копыта как оружие (профиль).", rating:1, hasRating:true },
-      { name: "Unnatural Strength (1) / Сверхъестественная Сила (1)", benefit:"+1 к Бонусу Силы.", rating:1, hasRating:true, effects:{ charBonusStat:"s", charBonusValue:1 } },
-      { name: "Unnatural Toughness (1) / Сверхъестественная Стойкость (1)", benefit:"+1 к Бонусу Стойкости.", rating:1, hasRating:true, effects:{ charBonusStat:"t", charBonusValue:1 } },
+      { name: "Natural Weapons (1) / Естественное Оружие (1)", benefit:"Рога, Укус, Когти, Копыта как оружие (профиль).", rating:1, hasRating:true },
+      { name: "Unnatural Strength (2) / Сверхъестественная Сила (2)", benefit:"+2 к Бонусу Силы.", rating:2, hasRating:true, effects:{ charBonusStat:"s", charBonusValue:2 } },
+      { name: "Unnatural Toughness (2) / Сверхъестественная Стойкость (2)", benefit:"+2 к Бонусу Стойкости.", rating:2, hasRating:true, effects:{ charBonusStat:"t", charBonusValue:2 } },
       { name: "The Quick and The Dead / Быстрые и Мёртвые", benefit:"+2 к Инициативе; Избегание атак Орды." },
       { name: "Fast Learner (20) / Ловит на Лету (20)", benefit:"+20% к стартовому опыту и опыту за сессию.", rating:20, hasRating:true },
-      { name: "Aversion to Order / Отвращение к Порядку", benefit:"Таланты Lore и Trade враждебны; бонусы предыдущих Бронфинов/Талантов Combat Formation теряются при переходе." },
-      { name: "Cloven One / Копытный", benefit:"Двусоставные ноги: +20 на тесты Трудного Ландшафта." },
-      { name: "Stepchildren of the Gods / Пасынки Богов", benefit:"+10 на тесты против заинтересованных богов Хаоса; −1 к минимуму Бесчестья 1; не мутирует от Хаоса как человек." }
+      { name: "Aversion to Order / Отвращение к Порядку", benefit:"Навыки групп Lore и Trade враждебны; без брифингов, Combat Formation и Iron Discipline; каждая бионика/кибернетика — −2 Раны и −5 T." },
+      { name: "Cloven One / Копытный", benefit:"+20 на тесты Трудного Ландшафта; Leap Up, Jumper, Preternatural Speed, Sprint, Tireless, Steady Footwork — Дружественные." },
+      { name: "Stepchildren of the Gods / Пасынки Богов", benefit:"Максимум Бесчестия −1 (не ниже 1); мутации как у Космодесантника, один кубик на мутации и субмутации." }
     ],
     archetypes: ["Отступник", "Ересиарх", "Ренегат", "Пират", "Дикарь", "Ведьма"],
+    allowedArchetypes: ["apostate", "heresiarch", "renegade", "pirate", "savage", "witch"],
     desc: "Звероподобный мутант человека: примитивный, но воинственный и агрессивный."
   },
   harpy: {

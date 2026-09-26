@@ -83,6 +83,13 @@ export function raceCharsUpdate(actor, chars) {
   return upd;
 }
 
+/** Стартовая Порча расы — только если у персонажа Порчи ещё нет. */
+export function raceCorruptionUpdate(actor, startCorruption) {
+  const v = Number(startCorruption) || 0;
+  if (!v || (Number(actor?.system?.corruption?.value) || 0) !== 0) return {};
+  return { "system.corruption.value": v };
+}
+
 /**
  * Снимает расу, всё ею выданное, субрасу и Прошлое: оба относились к прежней
  * расе и без неё теряют смысл (Прошлое существует только у Иннари/Арлекина,
@@ -176,7 +183,10 @@ export async function applyRace(actor, key, { tag = "race", mirror = true } = {}
 
   await actor.update({
     ...(mirror ? { "system.race": key, ...(raceUnchanged ? {} : { "system.subrace": "" }) } : {}),
-    ...raceCharsUpdate(actor, def?.chars || {})
+    ...raceCharsUpdate(actor, def?.chars || {}),
+    // Стартовая Порча расы (столбец Cor таблицы: Зверолюд 5) — тоже только в
+    // пустое поле: заполненное — уже Порча персонажа, раса её не трогает.
+    ...(mirror ? raceCorruptionUpdate(actor, def?.startCorruption) : {})
   });
 
   ui.notifications?.info(`🧬 ${mirror ? "Раса" : "Прошлое"}: ${def?.label || key}.`);

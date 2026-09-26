@@ -246,7 +246,7 @@ const TYPES = {
     defaults: {
       key: "", group: "", chars: {}, bonusRolls: 0, skills: "", gear: "", talents: "",
       description: "", notes: "", hasGeneSeed: false, pastRaces: [], largeBase: false,
-      allowedArchetypes: [],
+      allowedArchetypes: [], startCorruption: 0,
       size: 0, bonusPoints: 0, charShift: 0, fateRoll: "", skillsNote: "", adaptations: "",
       bookSource: ""
     }

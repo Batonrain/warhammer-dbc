@@ -5129,8 +5129,9 @@ export const CAPABILITIES = {
     source: "Auto-Stabilized / Авто-Стабилизированный", reader: ""
   },
   "trait.aversionToOrder": {
-    label: "Lore/Trade враждебны.",
-    source: "Aversion to Order / Отвращение к Порядку", reader: ""
+    label: "Навыки групп Lore и Trade — Враждебные; каждая бионика/кибернетика — −2 Раны и −5 T.",
+    source: "Aversion to Order / Отвращение к Порядку",
+    reader: "Механика Черты: aptOverride enemy (module/rules/advance-category.mjs::skillAdvanceCat) и implants.rejectOrder (module/rules/aversion-to-order.mjs)"
   },
   "trait.aThousandSongs": {
     label: "При провале теста крафта — за Очко Судьбы вместо этого преуспеть на F.b успехов. Игнорирует требования по характеристикам для Миньонов-машин…",
@@ -5201,8 +5202,9 @@ export const CAPABILITIES = {
     reader: "Механика Черты — галочки testMod (skill:trade/techUse/security), module/rules/item-rules.mjs"
   },
   "trait.clovenOne": {
-    label: "+20 vs Трудный Ландшафт.",
-    source: "Cloven One / Копытный", reader: ""
+    label: "+20 на тесты Трудного Ландшафта; шесть Талантов движения — Дружественные.",
+    source: "Cloven One / Копытный",
+    reader: "Механика Черты: testMod области terrain (module/combat/movement-terrain.mjs) и aptOverride ally Талантов"
   },
   "trait.coldKiller": {
     label: "При нанесении Экстремального Урона бросает d5 дважды на Критический Результат 2 и берёт лучший.",
@@ -5263,7 +5265,8 @@ export const CAPABILITIES = {
   },
   "trait.digitigrade": {
     label: "+X к SPD; +5×X на группирование.",
-    source: "Digitigrade / Двусоставный (X)", reader: ""
+    source: "Digitigrade / Двусоставный (X)",
+    reader: "Механика Черты: movement +rating к SPD (module/rules/mech-formula.mjs, переменная rating)"
   },
   "trait.divinelyGifted": {
     label: "Выбирает 1 дополнительную мутацию/субмутацию (кроме Доспеха Богов и Знания Веков). На покровительстве Бога может вместо этого выбрать 1 Дар.",
@@ -5548,8 +5551,9 @@ export const CAPABILITIES = {
     source: "Steed / Скакун", reader: ""
   },
   "trait.stepchildrenOfTheGods": {
-    label: "Бонусы против богов Хаоса.",
-    source: "Stepchildren of the Gods / Пасынки Богов", reader: ""
+    label: "Максимум Бесчестия −1 (не ниже 1); мутации как у Космодесантника; один кубик на мутации и субмутации.",
+    source: "Stepchildren of the Gods / Пасынки Богов",
+    reader: "Механика Черты: poolMax infamy −1, mutations.asAstartes, mutation.singleDie (module/sheets/tabs/mutations.mjs::rollMutationOrGift, module/apps/submutations.mjs)"
   },
   "trait.stuffOfNightmares": {
     label: "Иммунитет к Усталости/ядам/болезням/радиации/экстрим.температурам/вакууму/Кровотечению/Обескровливанию; не может быть Оглушён; не стареет;",
@@ -7449,6 +7453,16 @@ export const CAPABILITIES = {
     label: "Тест I занимает Полное действие (2 ОД в свой Ход в бою)",
     source: "Черта «BONE-Head / Костеголов» (module/rules/library/ogryn.mjs)",
     reader: "module/combat/bone-head.mjs::payIntTestAction (из module/sheets/actor-sheet.mjs::_runTest)"
+  },
+  "implants.rejectOrder": {
+    label: "Тело отвергает Порядок: каждая установленная бионика/кибернетика — −2 к максимуму Ран и −5 T",
+    source: "Черта «Aversion to Order / Отвращение к Порядку» (Зверолюд)",
+    reader: "module/rules/aversion-to-order.mjs — REJECTS_BIONICS_FLAG, читает module/rules/character.mjs (пересчёт листа)"
+  },
+  "mutation.singleDie": {
+    label: "Один кубик на мутации и субмутации (без второго броска Неделимых)",
+    source: "Черта «Stepchildren of the Gods / Пасынки Богов» (Зверолюд)",
+    reader: "module/sheets/tabs/mutations.mjs::rollMutationOrGift + module/apps/submutations.mjs"
   },
   "mutations.asAstartes": {
     label: "Получает мутации как Космодесантник (пороги Порчи по таблице Астартес)",
