@@ -183,3 +183,25 @@ describe("core.psyker", () => {
     expect(collectRules(actor({ psyker: { rating: 0 } })).map(r => r.id)).not.toContain("core.psyker");
   });
 });
+
+// wdbc-1rno.11: Миазмы — +40 по запаху получает преследователь, не мутант.
+describe("Миазмы цели: выслеживание по запаху", () => {
+  const miasma = { type: "mutation", name: "Miasma / Миазмы", system: {} };
+  const sealed = { type: "armor", name: "Скафандр", system: { equipped: true, properties: ["sealed"] } };
+  const track = targetActor => resolveTest({ actor: actor(), skill: "survival", char: "per", targetActor });
+
+  it("бросок Выживания против цели с Миазмами — галочка +40", () => {
+    expect(track(actor({ items: [miasma] })).mods)
+      .toEqual([expect.objectContaining({ ruleId: "core.miasmaTracking", value: 40 })]);
+  });
+
+  it("цель в герметичной броне или без мутации — ничего", () => {
+    expect(track(actor({ items: [miasma, sealed] })).mods).toEqual([]);
+    expect(track(actor()).mods).toEqual([]);
+  });
+
+  it("сам мутант своему Выживанию +40 не получает", () => {
+    const { mods } = resolveTest({ actor: actor({ items: [miasma] }), skill: "survival", char: "per" });
+    expect(mods).toEqual([]);
+  });
+});

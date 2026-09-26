@@ -216,3 +216,20 @@ describe("tokenDistance (wdbc-y33b, Пустотные Щиты)", () => {
     expect(tokenDistance(token({ x: 0, y: 0 }), null)).toBeNull();
   });
 });
+
+// wdbc-1rno.20: Безголовый — обзор ограничен 120°.
+describe("isOutsideDefenderView: Безголовый (wdbc-1rno.20)", () => {
+  const headlessActor = { items: [{ type: "mutation", name: "Headless / Безголовый", system: {} }] };
+  it("сбоку (~60° от курса) — в обычных 210° видно, у Безголового уже нет", () => {
+    const plain = token({ x: 0, y: 0, rotation: 0 });
+    const headless = { ...token({ x: 0, y: 0, rotation: 0 }), actor: headlessActor };
+    const side = token({ x: 260, y: -150 });
+    expect(isOutsideDefenderView(plain, side)).toBe(false);
+    expect(isOutsideDefenderView(headless, side)).toBe(true);
+  });
+
+  it("даже круговой sight.angle у токена Безголового сужается до 120°", () => {
+    const headless = { ...token({ x: 0, y: 0, rotation: 0, sight: { angle: 360 } }), actor: headlessActor };
+    expect(isOutsideDefenderView(headless, token({ x: 0, y: 300 }))).toBe(true);
+  });
+});

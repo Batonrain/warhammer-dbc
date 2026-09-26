@@ -102,6 +102,16 @@ describe("Corrosive: −X AP в месте попадания, остаток �
     expect(actor.system.armorCorrosion.body).toBe(0);
   });
 
+  // wdbc-1rno.15: Замена Крови «Кислота» — «иммунитет к Corrosive, но не у
+  // носимой им брони»: броня разъедается, остаток на тело не переходит.
+  it("иммунитет «только тело» (corrosiveBodyOnly) — броня теряет AP, Раны целы", async () => {
+    const actor = characterActor({ armorAP: 3, toughnessBonus: 0, wounds: 20, immuneTo: "corrosiveBodyOnly" });
+    await applyDamageToActor(actor, damage({ rawDamage: 0, corrosiveRating: 5 }));
+    expect(actor.system.armorCorrosion.body).toBe(3);
+    expect(actor.system.wounds.value).toBe(20);
+    expect(captured.chat.at(-1).content).toContain("телу вреда нет");
+  });
+
   it("заметка в чате называет место попадания и −X AP", async () => {
     const actor = characterActor({ armorAP: 10, toughnessBonus: 0, wounds: 20 });
     await applyDamageToActor(actor, damage({ rawDamage: 0, corrosiveRating: 4, hitLocation: "Торс" }));
@@ -300,5 +310,27 @@ describe("Иммунитет по субмутации (Animal Hybrid, субм�
 
   it("выпала субмутация «7» (Слизняк) — иммунитет есть", () => {
     expect(hasRuleFlag(actorWithHybrid("7"), "weaponPropertyImmunity.corrosive")).toBe(true);
+  });
+});
+
+// wdbc-1rno.24: Марионетка — попадания варп-оружия проходят насквозь.
+describe("Странная Неуязвимость, субмутация 9: иммунитет к варп-оружию", () => {
+  const withCap = key => {
+    const a = characterActor({ armorAP: 0, toughnessBonus: 0, wounds: 20 });
+    const item = { id: "si", name: "Strange Invulnerability", type: "mutation", system: {},
+      flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+        { id: "e", kind: "capability", capabilityKey: key, label: "" }] }] } } };
+    a.items.push(item); a.items.contents.push(item);
+    return a;
+  };
+  it("попадание с Warp Weapon не наносит урона", async () => {
+    const actor = withCap("damageImmunity.warpWeapon");
+    await applyDamageToActor(actor, damage({ rawDamage: 12, warpSoak: true }));
+    expect(actor.system.wounds.value).toBe(20);
+  });
+  it("обычное попадание проходит", async () => {
+    const actor = withCap("damageImmunity.warpWeapon");
+    await applyDamageToActor(actor, damage({ rawDamage: 12 }));
+    expect(actor.system.wounds.value).toBeLessThan(20);
   });
 });

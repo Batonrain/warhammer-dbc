@@ -1208,7 +1208,7 @@
       "img": "icons/svg/sword.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Урон без S.b (3): его атака прибавляет его сама; книга Хаоса, Паланкин Нургла даёт итог с S.b.",
         "rangeBands": [],
         "offProfile": {},
         "gripProps2h": [],
@@ -1226,7 +1226,7 @@
         "rof_single": false,
         "rof_semi": 0,
         "rof_full": 0,
-        "damage": "1d10+4",
+        "damage": "1d10+1",
         "damageType": "rending",
         "penetration": 1,
         "quality": "common",

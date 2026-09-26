@@ -47,11 +47,11 @@ describe("Tail/Хвост: Механика субмутации 8 (Скорпи
     expect(withSub.every(e => e.kind === "trait")).toBe(true);
   });
 
-  it("все три гейтованы ТОЛЬКО khorne (книга: '[только для последователей: khorne]')", () => {
-    for (const e of withSub) {
-      expect(e.when.patronGod).toEqual(["khorne"]);
-      expect(e.when.negatePatronGod).toBe(false);
-    }
+  // Решение владельца 26.09.2026 «по книге» (стр. 440): цвет Бога у строки —
+  // право его последователей выбрать её, а не условие эффекта; враждебного
+  // Бога отсекает сам бросок (rules/submutations.mjs::isSubBlocked).
+  it("гейта по Покровителю у записей нет — только строка субмутации", () => {
+    for (const e of withSub) expect(e.when.patronGod ?? []).toEqual([]);
   });
 
   it("Natural Armour с рейтингом 4", () => {
@@ -71,13 +71,13 @@ describe("Tail/Хвост: Механика субмутации 8 (Скорпи
     expect(e.rating).toBe(0);
   });
 
-  it("entryWhenOk включает запись только когда выпала строка 8 И персонаж — khornit", () => {
+  it("entryWhenOk включает запись, когда выпала строка 8 — у любого Покровителя", () => {
     const e = withSub[0];
     const item = { system: { submutation: { label: "8" } } };
     const khornit = { system: { patronGod: "khorne" } };
-    const nurglite = { system: { patronGod: "nurgle" } };
+    const unaligned = { system: { patronGod: "" } };
     expect(entryWhenOk(khornit, e, item)).toBe(true);
-    expect(entryWhenOk(nurglite, e, item)).toBe(false);
+    expect(entryWhenOk(unaligned, e, item)).toBe(true);
     expect(entryWhenOk(khornit, e, { system: { submutation: { label: "2-3" } } })).toBe(false);
     expect(entryWhenOk(khornit, e, { system: { submutation: { label: "" } } })).toBe(false);
   });

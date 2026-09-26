@@ -11,7 +11,7 @@
 //  границу идёт 90–106 значений.
 // ══════════════════════════════════════════════════════════════════════════
 
-import { ruleFlagLabels }         from "../../rules/flags.mjs";
+import { ruleFlagLabels, hasRuleFlag } from "../../rules/flags.mjs";
 import { isStunnedOrDazed }       from "../../rules/predicates.mjs";
 import { meleeContactCount, hasHighGround } from "../../combat/tactical-map.mjs";
 import { rangeBandKey }           from "../../rules/tactical-map.mjs";
@@ -28,6 +28,9 @@ import { meleeEffectiveRange, parseGrips } from "../../constants/combat.mjs";
 import { longerWeaponBonus, closeQuartersPenalty, closeQuartersRange } from "../../rules/weapon-length.mjs";
 import { getHeldHand, weaponHandsRequired } from "../../rules/hands.mjs";
 import { BODY_SIDES, fingersLostOn } from "../../rules/limb-loss.mjs";
+import { longRangeImmunityReason } from "../../rules/range-penalty-immunity.mjs";
+import { lightPenaltyImmunityReason, smokePenaltyImmunityReason } from "../../rules/vision-penalty-immunity.mjs";
+import { getInstalledMods } from "../../combat/weapon-mods.mjs";
 
 /**
  * Атака оружием в руке без пальцев (мутация Потеря Конечности, субмутации
@@ -41,6 +44,7 @@ export function fingersPenalty(actor, weapon) {
   if (weaponHandsRequired(weapon, actor) >= 2) return BODY_SIDES.some(s => fingersLostOn(actor?.system, s));
   return false;
 }
+
 /**
  * @param {object} v состояние броска: оружие, токены, замеренная дистанция
  * @returns {{commonMods: object[], specificMods: object[], charSwapWhy: string[], bandKey: string|null}}
@@ -89,8 +93,17 @@ export function situationalMods(v) {
   // Те же условия, по которым окно атаки само даёт ±20 (attack-dialog.mjs,
   // proneMod/stunnedMod) — wdbc-x1nz.2.97 п.6.
   const tgtProneAuto   = !!tgt?.system?.conditions?.prone;
+  // Антиприцел (Странная Неуязвимость, субмутация 11, wdbc-1rno.24): «Атаки,
+  // что получают преимущества Прицеливания, автоматически промахиваются».
+  const aimingOn = !!actor?.system?.aiming && actor.system.aiming !== "none";
+  const tgtAntiAim = !!tgt && hasRuleFlag(tgt, "attack.antiAim");
+  const tgtSurprisedRound1 = !!tgt?.system?.conditions?.surprised
+    && (typeof game !== "undefined" ? game.combat?.round : null) === 1;
   const tgtStunnedAuto = isStunnedOrDazed(tgt);
   const commonMods = [
+    ...(tgtAntiAim ? [{ label: "Антиприцел цели", value: 0, autofail: true, autoCheck: aimingOn,
+      note: aimingOn ? "вы прицелились — атака автоматически промахивается (Странная Неуязвимость)"
+                     : "атаки с Прицеливанием по этой цели автоматически промахиваются" }] : []),
     { label: "Усталость",     value: -10, autoCheck: hasFatigue },
     { label: "Цель в Борьбе (не ваш Захват)", value: 20, autoCheck: vsGrappled,
       note: vsGrappled ? "стр. 12: +20 на атаки по сцепившимся" : undefined },
@@ -100,9 +113,9 @@ export function situationalMods(v) {
     // Слабый свет (стр. 34, wdbc-x1nz.2.46): штраф только стрелковой — у
     // рукопашной книжная таблица «Стандартные Модификаторы Атаки» даёт
     // пустую ячейку (0), в отличие от Дыма/Тьмы ниже, где штраф есть у обеих.
-    { label: "Слабый свет",   value: isMelee ? 0 : -10, visionPenalty: true },
-    { label: "Дым / туман",   value: isMelee ? -10 : -20, visionPenalty: true },
-    { label: "Тьма",          value: isMelee ? -20 : -30, visionPenalty: true },
+    { label: "Слабый свет",   value: isMelee ? 0 : -10, visionPenalty: "light" },
+    { label: "Дым / туман",   value: isMelee ? -10 : -20, visionPenalty: "smoke" },
+    { label: "Тьма",          value: isMelee ? -20 : -30, visionPenalty: "light" },
     // Ослеплён (wdbc-x1nz.2.89, решение владельца 4): при распознанном
     // Ослеплении (свой флаг/оба глаза/щит на голове, без Sonar Sense и
     // Unnatural Senses — rules/blindness.mjs) галочка заперта — автопровал BS
@@ -134,14 +147,21 @@ export function situationalMods(v) {
     // targetSurprised (Quiet Elimination: +1 куб урона/тихая смерть ПО
     // ЛЮБОЙ атаке, отмеченной Врасплох, не только ножом/пистолетом — см.
     // rules/quiet-elimination.mjs), а не только суммируется в общий Порог.
+    // Состояние «Врасплох» цели в 1-м Раунде (стр. 12: «Застигнутые Врасплох…
+    // В первый Раунд любая атака по ним получает бонус +30», wdbc-1rno.3.1) —
+    // галочка ставится сама, снимается рукой.
     { id: "atk-mod-surprised", label: "Цель Врасплох", value: 30, immuneFlag: "attack.surpriseImmune",
-      autoCheck: legacyForewarnedSurprise,
-      ...(legacyForewarnedSurprise ? { note: "Без Предупреждения: Инициатива цели вдвое ниже, 1-й Раунд" } : {}) },
+      autoCheck: legacyForewarnedSurprise || tgtSurprisedRound1,
+      ...(legacyForewarnedSurprise ? { note: "Без Предупреждения: Инициатива цели вдвое ниже, 1-й Раунд" }
+        : tgtSurprisedRound1 ? { note: "цель Застигнута Врасплох, 1-й Раунд (стр. 12)" } : {}) },
     // id нужен readAttackForm (стр. 12, wdbc-x1nz.2.29): «Избегание невозможно
     // от атаки, о которой цель не знает» — атакующий сам объявляет это
     // галочкой (со спины/из засады/невидимый-неслышный снаряд книга не даёт
     // теста на автоопределение), а не только получает +30 к попаданию.
-    { id: "atk-mod-hidden", label: "Скрытая атака", value: 30, note: "цель не знает — Избегание невозможно" },
+    // Без +30 (решение владельца 26.09.2026, wdbc-1rno.3.1): стр. 12 даёт тут
+    // только «Избегание невозможно», +30 — это «Цель Врасплох» выше; вместе
+    // они давали +60 за одно книжное правило.
+    { id: "atk-mod-hidden", label: "Скрытая атака", value: 0, note: "цель не знает — Избегание невозможно" },
     // Тихое Устранение / Quiet Elimination (стр. …, wdbc-1rno.3): «нож или
     // игольчатый/осколочный пистолет — +10 к тестам атаки», независимо от
     // Врасплох — авто-галочка, вычисляется прямо здесь (actor/weapon уже в
@@ -273,6 +293,24 @@ export function situationalMods(v) {
       m.value  = 0;
       m.immune = true;
       m.note   = "Чёрные Глаза: видит сквозь тьму/дым/слабый свет (Cor 60+)";
+    }
+  }
+  // Ночное Зрение, Охотничий Визор, Термальный и Джинн-Прицел (wdbc-1rno.36,
+  // rules/vision-penalty-immunity.mjs) — тем же приёмом, что Чёрные Глаза:
+  // Слабый свет/Тьма и Дым гасятся раздельно.
+  {
+    const mods = weapon ? getInstalledMods(actor, weapon) : [];
+    const aiming = actor?.system?.aiming;
+    const why = {
+      light: lightPenaltyImmunityReason(actor, mods, { aiming }),
+      smoke: smokePenaltyImmunityReason(actor, mods, { aiming })
+    };
+    for (const m of commonMods) {
+      const reason = m.visionPenalty && !m.immune ? why[m.visionPenalty] : null;
+      if (!reason) continue;
+      m.value  = 0;
+      m.immune = true;
+      m.note   = `${reason}: штрафа нет`;
     }
   }
   // Aspect (wdbc-8b5/wdbc-28ld, стр. 168): без соответствующего Пути — −30 на
@@ -520,5 +558,37 @@ export function situationalMods(v) {
       note: wp.gyroStabilized ? "снято: Гиро-стаб." : undefined }
   ];
 
+  // Низкая высота цели (wdbc-1rno.29): Прицел на Упреждение («следующий
+  // выстрел игнорировал все штрафы… за скорость цели, высоту», стр. 62) и
+  // Предсказатель Движения при Прицеливании («игнорирует штрафы за скорость
+  // и высоту цели», стр. 171; то же поле aimIgnoresRunning — книга даёт обе
+  // половины одной фразой) снимают −10. Запрет «Высокая высота» они НЕ
+  // снимают — это не штраф (вопрос владельцу в тикете).
+  if (!isMelee) {
+    const aiming = actor?.system?.aiming;
+    const tracking = !!(actor?.getFlag?.("warhammer-dbc", "trackingAimActive")
+      ?? actor?.flags?.["warhammer-dbc"]?.trackingAimActive);
+    const predictor = !!aiming && aiming !== "none" && weapon
+      && getInstalledMods(actor, weapon).some(m => !!m.system?.effects?.aimIgnoresRunning);
+    const why = tracking ? "Прицел на Упреждение" : predictor ? "Предсказатель Движения" : null;
+    const row = why && specificMods.find(m => m.label === "Низкая высота цели" && !m.immune);
+    if (row) { row.value = 0; row.immune = true; row.note = `снято: ${why}`; }
+  }
+  // Дальняя/экстремальная дистанция (wdbc-1rno.31): Снайпер, Холодные Глаза
+  // и оптические прицелы при Прицеливании снимают оба штрафа — тем же
+  // приёмом, что Зенитное гасит «Цель бежит» (выше).
+  if (!isMelee) {
+    const why = longRangeImmunityReason(actor, weapon ? getInstalledMods(actor, weapon) : [],
+                                        { aiming: actor?.system?.aiming });
+    if (why) {
+      for (const m of specificMods) {
+        if ((m.label === "Дальняя дистанция" || m.label === "Экстремальная дистанция") && !m.immune) {
+          m.value = 0;
+          m.immune = true;
+          m.note = `${why}: нет штрафа дальней/экстремальной дистанции`;
+        }
+      }
+    }
+  }
   return { bandKey, charSwapWhy, commonMods, specificMods };
 }

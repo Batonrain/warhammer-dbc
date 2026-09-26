@@ -63,3 +63,24 @@ describe("rangeVerdict: измеренная дистанция vs дально�
     expect(rangeVerdict(NaN, 30)).toBeNull();
   });
 });
+
+// wdbc-bd1ii: Плод Плоти «Заточение Силы» — «...или покинет радиус поддержания».
+import { leftSustainRange } from "../../module/rules/psy-range.mjs";
+
+describe("leftSustainRange — вышла ли цель из радиуса поддержания", () => {
+  it("своя (П)-дальность приоритетнее обычной", () => {
+    const sys = { range: "PR×1м", sustainRange: "PR×5м" };
+    expect(leftSustainRange(sys, 3, 10)).toBe(false); // 10 ≤ 15
+    expect(leftSustainRange(sys, 3, 16)).toBe(true);
+  });
+
+  it("без (П)-дальности берётся обычная", () => {
+    expect(leftSustainRange({ range: "30м" }, 0, 31)).toBe(true);
+    expect(leftSustainRange({ range: "30м" }, 0, 30)).toBe(false);
+  });
+
+  it("не числовой радиус или нет измерения — выход не доказан, замок держится", () => {
+    expect(leftSustainRange({ range: "Касание" }, 3, 100)).toBe(false);
+    expect(leftSustainRange({ range: "30м" }, 3, null)).toBe(false);
+  });
+});

@@ -1,18 +1,18 @@
 {
-  "name": "Torturer / Мучитель",
+  "name": "Серпентин",
   "type": "drug",
   "img": "systems/warhammer-dbc/assets/item-icons/drug-narcotic.svg",
   "system": {
-    "description": "Алхимия Друкхари (R 3). Действует 10 минут, только на друкхари (для мон-кай — Яд Best.Q). Требует Рецепт (R+1).",
+    "description": "Алхимия Друкхари (R 1). Действует 10 минут, только на друкхари (для мон-кай — Яд Best.Q). Требует Рецепт (R+1).",
     "notes": "",
     "drugCategory": "narcotic",
     "deliveryMethod": "injection",
     "quantity": 1,
     "weight": 0,
-    "availability": 3,
+    "availability": 1,
     "quality": "common",
     "duration": "",
-    "effect": "Базовый: +Очки Боли ко всем тестам. | Trade (Chymist)+20: +2×Очки Боли ко всем тестам. | Scholastic Lore (Occult)+20: Трата Боли даёт и Усиление, и Переброс при выборе одной из опций. | Forbidden Lore (Xenobiology)+20: Срок увеличен до 30 минут",
+    "effect": "Базовый: +10 WS и A. | Trade (Chymist)+20: Бонус +20 (WS и A). | Scholastic Lore (Occult)+20: Unnatural WS и A +2. | Forbidden Lore (Xenobiology)+20: Срок увеличен до 30 минут",
     "afterEffect": "Пост-эффект: по окончании действия персонаж платит R×5 Боли (не единоразово), иначе не может пользоваться механикой Боли; и получает R уровней Усталости. Токсичность 2. Работает в Нуль-Поле.",
     "afterEffectDice": "",
     "afterEffectCharDamage": {
@@ -102,7 +102,7 @@
     "bookSource": "Книга Аэльдари: Ответвления, АРСЕНАЛ ДРУКХАРИ («Друкхарийские Алхимические Стимуляторы» стр. 155)"
   },
   "folder": "9yEMAbbNXEXq8KDs",
-  "_id": "MgUgowbMBYRC0NkB",
+  "_id": "Xsgep0nJRfefRmDD",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -121,5 +121,5 @@
     "modifiedTime": 1782752980922,
     "lastModifiedBy": "0avJJRhWNcjVNZyk"
   },
-  "_key": "!items!MgUgowbMBYRC0NkB"
+  "_key": "!items!Xsgep0nJRfefRmDD"
 }

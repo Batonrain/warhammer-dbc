@@ -51,6 +51,7 @@ import { purityOfBattleWave } from "../combat/purity-of-battle.mjs";
 import { activateFruitOfFlesh, eatHealFruit } from "./fruit-of-flesh.mjs";
 import { useSoulSeer } from "./soul-seer.mjs";
 import { activateWrappedInChaos } from "./wrapped-in-chaos.mjs";
+import { attemptPossessionAttack, leavePossessionHost } from "./possession-attack.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -149,6 +150,9 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *    выпавшей субмутации (Дымовая Завеса реализована, остальные — честное
  *    предупреждение; «Мухи» — не здесь, бьёт атакующего, см. sheets/
  *    attack-dialog.mjs).
+ *  - `attemptPossessionAttack`/`leavePossessionHost` (apps/possession-attack.mjs)
+ *    — Трейт Possession/Одержимость (wdbc-q267): Ход Атаки Одержимостью по
+ *    текущей цели (оба теста W+0, счёт до ±5) и выход из хоста.
  *
  * `extra` — необязательный набор ДОПОЛНИТЕЛЬНЫХ именованных функций для
  * конкретного вызывающего (например, runMechScriptEntry добавляет
@@ -176,6 +180,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "resolveBurnedSenses", "buildCountenanceFearFlag", "purityOfBattleWave", "devouredSkillRank",
     "nextDevourerStreak", "pruneDevourerStreaks",
     "activateFruitOfFlesh", "eatHealFruit", "useSoulSeer", "activateWrappedInChaos",
+    "attemptPossessionAttack", "leavePossessionHost",
     ...extraNames,
     code
   );
@@ -192,6 +197,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     resolveBurnedSenses, buildCountenanceFearFlag, purityOfBattleWave, devouredSkillRank,
     nextDevourerStreak, pruneDevourerStreaks,
     activateFruitOfFlesh, eatHealFruit, useSoulSeer, activateWrappedInChaos,
+    attemptPossessionAttack, leavePossessionHost,
     ...extraNames.map(k => extra[k])
   );
 }
