@@ -30,7 +30,7 @@ import { dualWieldMods, dualWieldActionType, missingSpecs, targetSpreadExceeded,
          SPEC_LABELS, TARGET_SPREAD_LIMIT_M } from "../../rules/dual-wield.mjs";
 import { allGunsBlazingMod } from "../../rules/dual-wield-talents.mjs";
 import { measureTokens } from "../../combat/tactical-map.mjs";
-import { attackIsMelee } from "../../combat/weapon-profiles.mjs";
+import { attackIsMelee, profileHasOwnFire, weaponProfiles as atkProfilesOf } from "../../combat/weapon-profiles.mjs";
 import { weaponThresholdPart } from "../../combat/attack-threshold.mjs";
 import { withEyeOfEnvy } from "../../rules/eye-of-envy.mjs";
 import { AIM_FOCUS_EXTENDED_FLAG } from "../../rules/aim-focus.mjs";
@@ -105,7 +105,8 @@ export function openAttackDialog(ctx) {
     computeBaseOptions,
     computeGripOptions,
     computeManeuverOptions,
-    computeStanceOptions
+    computeStanceOptions,
+    reopenWithProfile
   } = ctx;
   // Death Dance / Смертельный Танец (wdbc-shr, находка 2): кнопка в render()
   // ниже только ВООРУЖАЕТ намерение — реальное списание ОС и счётчика
@@ -426,7 +427,7 @@ export function openAttackDialog(ctx) {
               // {forceMelee, profile})), и если сюда отдать только профиль,
               // бросок посчитает вид из половины тех же данных и разойдётся с
               // окном (wdbc-bs0q).
-              forceMelee, profile: sel.prof,
+              forceMelee, profile: sel.prof, profileIdx: sel.pIdx,
               // Первая карточка пары тоже должна признаться, что она половина
               // одной атаки (wdbc-3jlm): без этой строки за столом ровно тот
               // спор, ради которого просили «одну карточку» — два сообщения
@@ -615,6 +616,18 @@ export function openAttackDialog(ctx) {
         // см. categoryFor выше) — вместе с ней и доступность Стойки/Хвата, а
         // через Тренировку — и Приёма. Приём вдобавок зависит от Базы (см. ниже).
         const profChanged = sel.pIdx !== lastProfIdx;
+        // Другой ствол комби-оружия (wdbc-jho9): режимы огня и магазин окна
+        // посчитаны от ствола, с которым окно открыто, — переоткрываем окно
+        // на выбранном профиле, а не подменяем полокна.
+        if (profChanged && reopenWithProfile) {
+          const fireKey = i => (i >= 0 && profileHasOwnFire(atkProfilesOf(item)[i])) ? `p${i}` : "main";
+          if (fireKey(sel.pIdx) !== fireKey(lastProfIdx)) {
+            lastProfIdx = sel.pIdx;
+            dialog.close();
+            reopenWithProfile(sel.pIdx);
+            return;
+          }
+        }
         if (stancePillsEl && profChanged) {
           stancePillsEl.innerHTML = pillsHtml("atk-stance", computeStanceOptions(sel.pIdx), sel.stanceKey);
         }

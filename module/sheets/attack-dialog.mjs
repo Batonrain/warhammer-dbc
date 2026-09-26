@@ -59,7 +59,7 @@ import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs"
 import { measureTokens }                      from "../combat/tactical-map.mjs";
 import { rangeBandBoundaries }                from "../rules/tactical-map.mjs";
 import { coverBonusForShot }                  from "../combat/cover.mjs";
-import { weaponProfiles, attackIsMelee }         from "../combat/weapon-profiles.mjs";
+import { weaponProfiles, attackIsMelee, sysWithProfileFire } from "../combat/weapon-profiles.mjs";
 import { isIntegralAttack }                    from "../combat/equipped-melee.mjs";
 import { isPathOneHandedWeapon }               from "../rules/library/paths.mjs";
 import { canDualWield, offHandCandidates, dualWieldMods }
@@ -127,6 +127,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // профиль меняется только на профиль того же вида (profileOptions), а у
   // стрелкового рукопашный профиль один — подмена на входе не разъедется.
   if (startProfile?.generated && startProfile.balance != null) sys = { ...sys, balance: startProfile.balance };
+  // Свой ствол профиля (комби-оружие, wdbc-jho9): режимы огня, магазин и
+  // боеприпас окна — второго ствола. Смена ствола внутри окна переоткрывает
+  // окно (attack/dialog.mjs, reopenWithProfile) — вся сборка ниже считается
+  // один раз от этих полей.
+  sys = sysWithProfileFire(sys, startProfile);
 
   // Вид теста фиксируется на ВХОДЕ в окно и внутри него не меняется: от него
   // зависит около восьмидесяти мест расчёта (см. wdbc-uh56 — окно атаки это
@@ -1582,6 +1587,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     computeGripOptions,
     computeManeuverOptions,
     computeStanceOptions,
+    reopenWithProfile: (idx) => showAttackDialog(actor, item, { ...techniqueOpts, profileIdx: idx }),
   });
 }
 
