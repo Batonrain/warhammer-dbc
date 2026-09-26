@@ -72,6 +72,8 @@ This protocol applies when ending a Beads implementation workflow. It is subordi
 как компьютерная игра, минимум ручного счёта у игрока; любой отчёт/находка/
 задача заканчивается строкой «Для игры:»; задачи — в Sahara Studio
 (`node tools/sahara-tasks.mjs`, завести — `mcp__sahara__createTask`), не в bd.
+Всё, что не проверено живьём в Foundry, — задачей в очередь `testing` (bd,
+команда «Тестирование»); в облаке без bd — блоком в описании PR.
 
 Установка, сборка компендиумов и порядок релизов — [README.md](README.md).
 Замысел архитектуры — [docs/architecture-plan.md](docs/architecture-plan.md).
