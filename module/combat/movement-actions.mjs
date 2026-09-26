@@ -29,6 +29,7 @@
 //  вкладке БОЙ (templates/actor/parts/tab-combat.hbs, combat.mjs).
 // ════════════════════════════════════════════════════════════════════════
 
+import { FAST_MOVE_FLAG } from "../rules/hard-target.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
@@ -368,7 +369,8 @@ export async function declareCharge(actor) {
     await spendActionPoints(actor, 2, { physical: true });
     return;
   }
-  await actor.update({ "system.meleeBase": "charge" });
+  await actor.update({ "system.meleeBase": "charge",
+                       [`flags.warhammer-dbc.${FAST_MOVE_FLAG}`]: true });
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
   _showReachRing(actor, actor.system.movement?.charge);
@@ -543,6 +545,7 @@ export async function declareRun(actor) {
   // wdbc-x1nz.2.97 п.4: Бег без обеих стоп — тот же бросок (раньше не было).
   if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Бег")) return;
   await actor.setFlag("warhammer-dbc", "running", true);
+  await actor.setFlag("warhammer-dbc", FAST_MOVE_FLAG, true);
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
   _showReachRing(actor, actor.system.movement?.run);

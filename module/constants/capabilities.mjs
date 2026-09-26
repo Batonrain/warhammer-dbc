@@ -28,6 +28,36 @@ export const CAPABILITIES = {
     source: "Мутация: Burning Body / Shield of Purity (Общие мутации)",
     reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — hooks.mjs _applyWeaponPropEffect (кнопка condition:\"burning\")"
   },
+  "damageResistance.subtype.electrical": {
+    label: "Сопротивление к E(El) урону: урон этого подвида после Поглощения вдвое (окр.▲) — книги числом «сопротивление» не задают, принято как у Магмы Замены Крови (Электродуга, wdbc-3hgd0)",
+    source: "Имплант: Electric Arc / Электродуга (Друкхари)",
+    reader: "module/combat/damage.mjs applyDamageToActor (damageResistance.subtype.*)"
+  },
+  "implant.electricArc.regeneration": {
+    label: "Электрическая регенерация (Электродуга Best.Q, wdbc-3hgd0): после попадания E(El), нанёсшего урон, — +1d10 Ран; раз в час полное исцеление от мощного источника тока — кнопка на импланте",
+    source: "Имплант: Electric Arc / Электродуга (Друкхари), Best.Q",
+    reader: "module/combat/damage.mjs applyDamageToActor (ELECTRIC_REGENERATION); кнопка — kind:script на импланте"
+  },
+  "damageImmunity.warpWeapon": {
+    label: "Попадания оружия со свойством Warp Weapon не причиняют вреда (Странная Неуязвимость, субмутация 9 «Марионетка», wdbc-1rno.24)",
+    source: "Мутация: Strange Invulnerability, субмутация 9 (Общие мутации)",
+    reader: "module/combat/damage.mjs applyDamageToActor (warpSoak)"
+  },
+  "soulBurnImmunity": {
+    label: "Выжигание Души бесполезно — встречный тест не бросается (Странная Неуязвимость, субмутация 9 «Марионетка», wdbc-1rno.24)",
+    source: "Мутация: Strange Invulnerability, субмутация 9 (Общие мутации)",
+    reader: "module/hooks.mjs _executeSoulBurn"
+  },
+  "attack.antiAim": {
+    label: "Атаки с Прицеливанием (Полу-/Полным) по носителю автоматически промахиваются — галочка-автопровал окна атаки, отмечена сама, если стрелок прицелился (Странная Неуязвимость, субмутация 11 «Антиприцел», wdbc-1rno.24). Избирательная атака без Прицеливания не считается — вопрос владельцу.",
+    source: "Мутация: Strange Invulnerability, субмутация 11 (Общие мутации)",
+    reader: "module/sheets/attack/mods.mjs situationalMods"
+  },
+  "weaponPropertyImmunity.corrosiveBodyOnly": {
+    label: "Иммунитет к Corrosive у самого персонажа, но НЕ у носимой им брони (Замена Крови, субмутация 10 «Кислота», wdbc-1rno.15): броня теряет AP как обычно, остаток рейтинга на тело не переходит",
+    source: "Мутация: Blood Replacement, субмутация 10 (Общие мутации)",
+    reader: "module/combat/damage.mjs applyDamageToActor (_applyCorrosive, bodyImmune)"
+  },
   "weaponPropertyImmunity.corrosive": {
     label: "Иммунитет к свойству оружия Corrosive (не теряет AP брони)",
     source: "Мутация: Shield of Purity (Общие мутации)",
@@ -2707,8 +2737,8 @@ export const CAPABILITIES = {
     source: "Flourish Dance / Размашистый Танец", reader: ""
   },
   "dodge.core.hardTarget": {
-    label: "Когда персонаж совершает Верховую Атаку, Натиск или Бег, вся стрельба по нему получает −10 до начала его следующего Хода.",
-    source: "Hard Target / Трудная Цель", reader: ""
+    label: "Когда персонаж совершает Верховую Атаку, Натиск или Бег, вся стрельба по нему получает −10 до начала его следующего Хода. Реализовано (wdbc-1rno.30): метка fastMoveThisTurn (HUD-кнопки Бега/Натиска и бросок атаки с Базой Натиск/Верховая Атака), строка «Трудная Цель −10» в окне стрельбы по носителю; гасят Зенитное, Прицел на Упреждение и Предсказатель Движения. Талант у СКАКУНА при Верховой Атаке всадника не переносится — метку ставит только сам атакующий.",
+    source: "Hard Target / Трудная Цель", reader: "module/rules/hard-target.mjs — hardTargetPenalty; module/sheets/attack-dialog.mjs (hardTargetMod)"
   },
   "dodge.core.highGuard": {
     label: "Персонаж может проводить Вольт, используя Parry(WS) вместо Acrobatics(A), используя при этом модификаторы баланса рукопашного оружия.",
@@ -3152,8 +3182,8 @@ export const CAPABILITIES = {
     source: "Hip Shooting / Стрельба от Бедра", reader: ""
   },
   "rangedCore.core.marksman": {
-    label: "Персонаж не получает штрафов к стрельбе за дальнюю и экстремальную дистанцию.",
-    source: "Marksman / Снайпер", reader: ""
+    label: "Персонаж не получает штрафов к стрельбе за дальнюю и экстремальную дистанцию. Реализовано (wdbc-1rno.31): строки «Дальняя/Экстремальная дистанция» окна атаки у носителя стоят 0 с подписью «Снайпер».",
+    source: "Marksman / Снайпер", reader: "module/rules/range-penalty-immunity.mjs — longRangeImmunityReason; module/sheets/attack/mods.mjs::situationalMods"
   },
   "rangedCore.core.masterDragoon": {
     label: "Персонаж игнорирует любые штрафы на стрельбу из пистолетов, винтовок и дл. винтовок за нестабильную платформу.",
@@ -5049,6 +5079,11 @@ export const CAPABILITIES = {
     source: "Voltaic Confluence / Вольтаическое Слияние", reader: ""
   },
   // ── Черты: packs-src/traits — Фаза 2, capability-документация ──
+  "trait.possession": {
+    label: "Атака Одержимостью (wdbc-q267, вариант «а» по решению Сергея 26.09.2026): кнопка на Трейте сама бросает W+0 атакующего и жертвы (текущая цель, не далее W.b м), копит счёт Успехов на флаге атакующего; +5 — вселение (контроль над телом через rules/actor-control.mjs, ActiveEffect +10 S/+10 T, +1d10+3 Ран на хосте), −5 — отпор (1d10 непоглощаемого урона, запрет на эту жертву 24 ч игрового времени). Unnatural W атакующего не даёт «ничьей» при проигрыше. Вторая кнопка — выход: снимает бонусы, возвращает контроль, выжившему хосту 3d10 урона каждой Характеристике и 1d10 Порчи. НЕ смоделировано: подмена I/P/W и WS/BS хоста значениями демона; «урон восстанавливается в 12 раз медленнее» — только текстом.",
+    source: "Трейт: Possession / Одержимость",
+    reader: "module/apps/possession-attack.mjs (attemptPossessionAttack, leavePossessionHost), module/rules/possession-attack.mjs (possessionStep, possessionBarredRemaining, possessionInRange)"
+  },
   "trait.ablativePlating": {
     label: "При полном запасе любой непоглощённый урон уменьшается до 1.",
     source: "Ablative Plating / Аблативное Бронирование", reader: ""
@@ -5126,8 +5161,8 @@ export const CAPABILITIES = {
     source: "Blood for the Blood God / Кровь Богу Крови", reader: ""
   },
   "trait.blunted": {
-    label: "Скрыт от Варпа; защита от психо-атак ×X.",
-    source: "Blunted / Затупленный (X)", reader: ""
+    label: "Реализовано (wdbc-j8cn): на карточке удачной манифестации против Затупленной цели — строка «пройдите Psyniscience −10×X (Порог N)», с Warp Sight — Awareness +20−10×X; при Провале цель игнорирует эффект. Психострельба без Warp Weapon строки не даёт (книга). X — Черта Blunted или Подавляющее поле друкхарийской брони (что больше). НЕ смоделировано: сам тест не бросается кнопкой и эффект силы не отменяется автоматически; снижение получаемой Порчи на X и потеря Черты при Daemonic/Psyker и т.п.",
+    source: "Blunted / Затупленный (X)", reader: "module/rules/blunted.mjs — bluntedCasterTest; module/sheets/tabs/psychic.mjs (bluntedSection карточки манифестации)"
   },
   "trait.bolterVirtuoso": {
     label: "Болт-оружие получает ещё один дополнительный кубик ко всем альтернативным профилям (приклад, штык, из подствольника и т.д.).",
@@ -5200,8 +5235,8 @@ export const CAPABILITIES = {
     source: "Dark Prince's Child / Дитя Тёмного Принца", reader: ""
   },
   "trait.darkSight": {
-    label: "Видит в темноте.",
-    source: "Dark Sight / Ночное Зрение", reader: ""
+    label: "Видит в темноте. Реализовано (wdbc-1rno.36): галочки «Слабый свет» и «Тьма» окна атаки у носителя стоят 0 с подписью «Ночное Зрение» (опознание — и по имени Черты). Автоопределения освещения сцены нет — галочки ставит стол.",
+    source: "Dark Sight / Ночное Зрение", reader: "module/rules/vision-penalty-immunity.mjs — lightPenaltyImmunityReason; module/sheets/attack/mods.mjs"
   },
   "trait.dataAcquisition": {
     label: "Преимущество на тесты Awareness механизировано (wdbc-u0by, kind:\"reroll\"/keepBest). Иммунитет к кодам командования Боевых Лат Скитария — не механизировано, нет такого понятия в коде вовсе",
@@ -5404,10 +5439,6 @@ export const CAPABILITIES = {
   "trait.pheromoneGlands": {
     label: "+10 социальные (феромоны).",
     source: "Pheromone Glands / Феромонные Железы", reader: ""
-  },
-  "trait.possession": {
-    label: "Вселяется в тело смертного.",
-    source: "Possession / Одержимость", reader: ""
   },
   "trait.preferredStrike": {
     label: "Доп. куб урона для переброса за каждый −10 от Сочленений цели (макс 3). Талант-снижение штрафа не уменьшает кубы. До ½ P.b раз/битву.",
@@ -7014,7 +7045,7 @@ export const CAPABILITIES = {
     reader: "packs-src item mutation.majesticHorns: majestichorns-45-natweapons/-45-deadly (субмутация 4-5), majestichorns-6-social/-6-command (субмутация 6, patronGod:slaanesh), majestichorns-8-natweapons/-8-deadly (субмутация 8, ЧАСТИЧНО — patronGod:khorne)"
   },
   "mutation.miasma": {
-    label: "+40 Выживание (выслеживание по запаху) без герметичной брони механизировано отдельной записью kind:\"testMod\" под новым гейтом when.requireSealedArmour+negateSealedArmour (wdbc-1rno, PREDICATES.wearsSealedArmour — ARMOR_PROPERTIES.sealed) на этом же предмете. Capability покрывает ТОЛЬКО остаток: штрафы на соц. взаимодействие/Stealth без гермодоспеха — книга не даёт конкретного числа («это может давать штрафы»), не смоделированы",
+    label: "+40 выслеживанию по запаху получает ПРЕСЛЕДОВАТЕЛЬ носителя (wdbc-1rno.11; раньше запись на самом предмете давала +40 самому мутанту — наоборот книге, снята): правило core.miasmaTracking (rules/library/core.mjs) — галочка +40 к Выживанию того, кто бросает против цели с Миазмами без герметичной брони (PREDICATES.targetLacksSealedArmour). Capability покрывает ТОЛЬКО остаток: штрафы на соц. взаимодействие/Stealth без гермодоспеха — книга не даёт конкретного числа («это может давать штрафы»), ждёт решения владельца",
     source: "Мутация: Miasma (Общие мутации)",
     reader: ""
   },
@@ -7047,19 +7078,19 @@ export const CAPABILITIES = {
     reader: "module/rules/addiction.mjs (addictionPenaltyRules/rules/sources.mjs — общий конвейер теста), module/sheets/sheet-helpers.mjs+tabs/body.mjs (трекер и кнопка «Утолить» на вкладке ТЕЛО); apps/addiction.mjs — панель и кнопка «Утолить» на листе самой Мутации"
   },
   "mutation.addiction.xenosLore": {
-    label: "Субмутация 4 (Прах ксеноса): если ГМ решит, что персонаж незнаком с этим видом ксеносов — Навык Forbidden Lore (Xenos), конкретный вид ксеноса определяет ГМ каждый раз заново — не автоматизировано (переменная специализация)",
+    label: "Субмутация 4 (Прах ксеноса). Реализовано (wdbc-1rno.12): кнопка «Утолить» спрашивает вид ксеносов (решает ГМ) и, если у персонажа нет Forbidden Lore (Xenos (этот вид)) ни на каком ранге, выдаёт её на +0.",
     source: "Мутация: Addiction, субмутация 4 (Общие мутации)",
-    reader: ""
+    reader: "module/apps/addiction.mjs — useSatisfyAddiction; module/rules/addiction.mjs — knowsXenosSpecies"
   },
   "mutation.addiction.radioactive": {
-    label: "Субмутация 11 (Радиоактивное): иммунитет к радиации, безопасная работа с раскалённым/радиоактивным, определение радиоактивных материалов на глаз",
+    label: "Субмутация 11 (Радиоактивное). Реализовано (wdbc-1rno.13): иммунитет к Состоянию Радиации — запись kind:condition immunity на самом предмете (та же, что у Дара Облучённый), с гейтом субмутации 11. «Брать и жевать раскалённые стержни без вреда» и «определять радиоактивное на глаз» — описательно, числа в книге нет.",
     source: "Мутация: Addiction, субмутация 11 (Общие мутации)",
-    reader: ""
+    reader: "packs-src/mutations/Общие_мутации/Addiction___Зависимость (entry addiction-radioactive-immunity) → rules/condition-guards.mjs"
   },
   "mutation.addiction.soulStone": {
-    label: "Субмутация 12 (Камень Душ): утоление восстанавливает 1d5 потраченных ОБ и держит зависимость утолённой год — событийное восстановление ресурса, не статичный бонус",
+    label: "Субмутация 12 (Камень Душ). Реализовано (wdbc-1rno.14): кнопка «Утолить» бросает 1d5 и возвращает столько Очков Бесчестия (не выше максимума), зависимость утолена на год. Заодно субмутация 10 (Живая плоть): при подаче в присутствии жертвы — на 10 дней (вопрос в окне).",
     source: "Мутация: Addiction, субмутация 12 (Общие мутации)",
-    reader: ""
+    reader: "module/apps/addiction.mjs — useSatisfyAddiction; module/rules/addiction.mjs — addictionSatisfiedDays/addictionSatisfiedStamp"
   },
   "mutation.beastman": {
     label: "Реализована (wdbc-1rno) выдача 6 из 10 книжных Трейтов расы Зверолюда — прямые kind:\"trait\"-гранты по имени (Bite/Укус, Digitigrade/Двусоставный, Natural Weapons/Естественное Оружие, Unnatural Strength/Сверхъестественная Сила, Unnatural Toughness/Сверхъестественная Стойкость, Cloven One/Копытный). Bite и Natural Weapons — те же описательные Трейты без отдельного оружия-профиля, что и у нативных Зверолюдов через расовый чарген (не новый пробел этой мутации, паритет с расой). НЕ реализовано намеренно: 4 названных исключения (The Quick and The Dead/Fast Learner/Aversion to Order/Stepchildren of the Gods) книга явно запрещает — правильно не выдавать; понижение уже вложенных Навыков групп Lore/Trade на ступень (до мин. +0) требует перебора СПЕЦИАЛИЗАЦИЙ актора и правки уже установленных рангов — риск испортить данные персонажа при ошибке в этой логике выше пользы точечного скрипта, оставлено честным текстом; «становится полноценным Зверолюдом» (субрасы, дети) — статус персонажа, не число",
@@ -7117,9 +7148,9 @@ export const CAPABILITIES = {
     reader: "module/apps/hand-of-death.mjs — кнопка на листе Мутации (+10 WS/BS и Reinforced оружию, Баланс до 0, +10 AP выбранной руке)"
   },
   "mutation.headless": {
-    label: "Угол обзора 120°, попадания в голову = попадания в торс (−2 Инициатива вынесена отдельной записью kind:characteristic/charKey:initiative, wdbc-v9a7) — обзора/facing в системе нет вовсе, редиректа попаданий в локацию тоже, гейтить нечем",
+    label: "Реализовано (wdbc-1rno.20): угол обзора 120° (facing «Скрытной Атаки» — атака вне сектора сама Незримая), попадания в «Голову», «Глаз (Голова)» и «Сочленение / Шея» (решение владельца 26.09) приходятся в Торс при применении урона; −2 Инициативы — отдельная запись kind:characteristic (wdbc-v9a7); карточка атаки до выбора цели показывает исходную «Голову».",
     source: "Мутация: Headless (Общие мутации)",
-    reader: ""
+    reader: "module/rules/headless.mjs — combat/facing.mjs::isOutsideDefenderView, combat/damage.mjs::applyDamageToActor"
   },
   "mutation.heartOfSteel": {
     label: "4 god-гейтнутые субмутации (доп. −1 против конкретных типов целей) не реализованы — тесту Страха неоткуда взять категорию источника (wdbc-tsz6)",
@@ -7137,13 +7168,8 @@ export const CAPABILITIES = {
   // module/apps/mechanics.mjs::resolveEntrySpecChoice/applyMechEntry). Эта
   // запись держит только ВТОРУЮ, ещё не мехнизированную половину.
   "mutation.knowledgeOfAges": {
-    label: "Усиление/Успех/Переброс для добытого Навыка — переброс 1d10 (9-10: бесплатно, 1: Ступор)",
+    label: "Усиление/Успех/Переброс для добытого Навыка — может бросить 1d10 (9-10: Очко не тратится, 1: Ступор на 1 Раунд). Не автоматизировано, ждёт решения владельца (wdbc-1rno.23); сама выдача Навыка до +30 и Mastery работает.",
     source: "Мутация: Knowledge of Ages (Общие мутации)",
-    reader: ""
-  },
-  "mutation.livingMirror": {
-    label: "Иммунитет к E(Ls) Dmg (снаряжение зеркалится через 5 минут ношения); штрафы Stealth по решению ГМа — упирается в архитектурный пробел иммунитета к типу урона (готовой Черты под это в паке нет, проверено grep)",
-    source: "Мутация: Living Mirror (Общие мутации)",
     reader: ""
   },
   "mutation.multipleEyes": {
@@ -7162,7 +7188,7 @@ export const CAPABILITIES = {
     reader: ""
   },
   "mutation.strangeInvulnerability": {
-    label: "Целиком в субмутациях (12 вариантов неуязвимости к типам атак — тупое/клинковое/стрелковое/взрывы/множественные цели и др.), база сама не даёт эффекта — не автоматизировано",
+    label: "Целиком в субмутациях, база сама не даёт эффекта. Работают (записи на предмете): 2 Око Бури, 3 Упругий, 4 Пуленепробиваемый, 5 Текучая Плоть, 6 Щит Тщеславия — взрывы/спреи (очереди и рукопашные, разделённые между целями, — нет: атака одноцелевая), 9 Марионетка — варп-оружие и Выжигание Души (Одержимость и Телепатия — нет), 11 Антиприцел (wdbc-1rno.24). Не сделаны 0, 1, 7, 8, 10 — ждут решения владельца.",
     source: "Мутация: Strange Invulnerability (Общие мутации)",
     reader: ""
   },

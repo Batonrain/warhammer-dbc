@@ -64,3 +64,16 @@ describe("_executeSoulBurn: psychicThreat на встречном тесте ц�
     expect(thresholds(captured.chat.at(-1).content)).toEqual([40, 30]);
   });
 });
+
+// wdbc-1rno.24: Марионетка — Выжигание Души бесполезно, тест не бросается.
+describe("_executeSoulBurn: цель с soulBurnImmunity", () => {
+  it("карточка теста не создаётся", async () => {
+    const attacker = participant(40);
+    const target = { ...participant(30), name: "Марионетка", items: [{ type: "mutation", name: "Strange Invulnerability", system: {},
+      flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+        { id: "e", kind: "capability", capabilityKey: "soulBurnImmunity", label: "" }] }] } } }] };
+    const before = captured.chat.length;
+    await _executeSoulBurn(attacker, target);
+    expect(captured.chat.length).toBe(before);
+  });
+});

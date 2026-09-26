@@ -114,6 +114,8 @@ import { resolveArmorProps, aggregateArmorSkillMods } from "../combat/armor-prop
 import { actorHasAspectPath } from "../constants/aeldari-paths.mjs";
 import { zeroBlankNumbers } from "../helpers/blank-zero.mjs";
 import { clearHololithBriefing } from "../combat/hololith-briefing.mjs";
+import { ignoresWeight, IGNORE_WEIGHT_FLAG } from "../rules/encumbrance.mjs";
+import { convertActorToMinion } from "../apps/minion-convert.mjs";
 
 /** Книжная пара Склонностей Навыка — [char, apt2] его определения. */
 const bookSkillPair = (key) => {
@@ -1240,6 +1242,22 @@ export class WarhammerCharacterSheet
    * @param {string[]} keys  какие из пяти показать и в каком порядке — состав
    *                         отличается по типу актора (см. _sheetSettingsEntries).
    */
+  /**
+   * «Не считать вес снаряжения» (wdbc-zy93) — флаг актора, а не поле схемы
+   * (см. rules/encumbrance.mjs::ignoresWeight): для НПС-заглушек, которым
+   * незачем считать перевес по каждому предмету. Во всех меню, где есть
+   * снаряжение.
+   */
+  _ignoreWeightEntry() {
+    const on = ignoresWeight(this.actor);
+    return {
+      cls: "wh-ctx-tog-noweight", label: "Не считать вес снаряжения", checkbox: true, checked: on,
+      onClick: () => (on
+        ? this.actor.unsetFlag("warhammer-dbc", IGNORE_WEIGHT_FLAG)
+        : this.actor.setFlag("warhammer-dbc", IGNORE_WEIGHT_FLAG, true))
+    };
+  }
+
   _sheetToggleEntries(keys) {
     const sys = this.actor.system;
     const toggle = (key) => this.actor.update({ [`system.${key}`]: !sys[key] });
@@ -1674,14 +1692,17 @@ export class WarhammerCharacterSheet
    *  - Персонаж — Мастер, Телосложение▸, [разделитель], Мировоззрение▸ (кроме
    *    Аэльдари), [разделитель], Система продвижения, [разделитель], Открыть
    *    доступ▸ (Одержимость/Пси-Пробуждение/Техножрец), Доступен для ремёсел,
-   *    Фактор Прибыли (кроме Аэльдари), В Орду.
-   *  - Демон — Пси-Пробуждение, Доступен для ремёсел, В Орду. Нет ни Мастера,
-   *    ни поля system.bodyType, ни подменю «Открыть доступ».
-   *  - Принц Демона — Фактор Прибыли, Пси-Пробуждение, Доступен для ремёсел.
-   *    Без «В Орду»: своя кнопка уже есть на вкладке ЗАПИСИ, дублировать не
-   *    просили.
+   *    Фактор Прибыли (кроме Аэльдари), Не считать вес, В Орду, В Миньона.
+   *  - Демон — Пси-Пробуждение, Доступен для ремёсел, Не считать вес, В Орду,
+   *    В Миньона. Нет ни Мастера, ни поля system.bodyType, ни подменю
+   *    «Открыть доступ».
+   *  - Принц Демона — Фактор Прибыли, Пси-Пробуждение, Доступен для ремёсел,
+   *    Не считать вес, В Миньона. Без «В Орду»: своя кнопка уже есть на
+   *    вкладке ЗАПИСИ, дублировать не просили.
    *  - Миньон — Открыть доступ▸ (Пси-Пробуждение/Одержимость/Техножрец), В
-   *    Орду, Телосложение▸, Доступен для ремёсел. Без Мастера и Фактора Прибыли.
+   *    Орду, Телосложение▸, Доступен для ремёсел, Не считать вес. Без Мастера
+   *    и Фактора Прибыли.
+   * «Не считать вес» — wdbc-zy93, «В Миньона» — wdbc-v99a.
    * Пустой массив ⇒ кнопка в шапке вообще не рисуется (см. _attachFrameListeners) —
    * у Формирования/Отряда/Корабля/Техники/Звёздной системы этот класс не
    * используется (свои классы листов), там пунктов и не просили.
@@ -1696,6 +1717,11 @@ export class WarhammerCharacterSheet
       cls: "wh-ctx-tohorde", label: "☠ Превратить в Орду",
       onClick: () => convertActorToHorde(this.actor)
     };
+    // wdbc-v99a: дубль актора Миньоном (apps/minion-convert.mjs).
+    const minion = {
+      cls: "wh-ctx-tominion", label: "⛓ Превратить в Миньона",
+      onClick: () => convertActorToMinion(this.actor)
+    };
 
     if (type === "character") {
       // Техножрец/Фактор Прибыли — имперские понятия; у Аэльдари (и ветвей)
@@ -1708,20 +1734,22 @@ export class WarhammerCharacterSheet
         this._advancePricingSubmenu(), { sep: true },
         this._accessSubmenu(accessKeys),
         ...this._sheetToggleEntries(["craftAvailable", ...(aeldari ? [] : ["isRogueTrader"])]),
-        horde
+        this._ignoreWeightEntry(),
+        horde, minion
       ].filter(Boolean);
     }
     if (type === "daemon") {
-      return [...this._sheetToggleEntries(["isPsyker", "craftAvailable"]), horde];
+      return [...this._sheetToggleEntries(["isPsyker", "craftAvailable"]), this._ignoreWeightEntry(), horde, minion];
     }
     if (type === "demonPrince") {
-      return this._sheetToggleEntries(["isRogueTrader", "isPsyker", "craftAvailable"]);
+      return [...this._sheetToggleEntries(["isRogueTrader", "isPsyker", "craftAvailable"]), this._ignoreWeightEntry(), minion];
     }
     if (type === "minion") {
       return [
         this._accessSubmenu(["isPsyker", "possessed", "isTechpriest"]),
         horde, this._bodyTypeSubmenu(),
-        ...this._sheetToggleEntries(["craftAvailable"])
+        ...this._sheetToggleEntries(["craftAvailable"]),
+        this._ignoreWeightEntry()
       ].filter(Boolean);
     }
     return [];

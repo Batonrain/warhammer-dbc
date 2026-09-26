@@ -28,6 +28,9 @@
 //  ЧТО ИМЕННО утоляет зависимость — одна из 13 субмутаций текста (последняя
 //  еда, яд, кровь врага и т.п.) — не автоматизировано и не будет: это чисто
 //  отыгрышевый выбор игрока/ГМа (см. capabilities.mjs::mutation.addiction).
+//  Но ПОСЛЕДСТВИЯ утоления у трёх субмутаций — числа, и их кнопка «Утолить»
+//  делает сама (apps/addiction.mjs): 4 — Forbidden Lore Xenos(вид)+0, если
+//  вида не знал; 10 — на 10 дней, если подано при жертве; 12 — +1d5 ОБ и год.
 // ════════════════════════════════════════════════════════════════════════════
 
 import { isItemActive } from "../apps/effects.mjs";
@@ -69,7 +72,10 @@ export function isAddictionUnsatisfied(item, worldTime) {
 
 /** Строка статуса для листа: "до штрафа: 6ч" либо "не удовлетворена: 3д 4ч". */
 export function addictionStatusLabel(item, worldTime) {
-  const elapsed = addictionDaysSince(item, worldTime) * SECONDS_PER_DAY;
+  // Без обрезки нулём: утоление «на год» (субмутация 12) ставит метку в
+  // будущее, и остаток до штрафа должен быть честным годом, а не сутками.
+  const last = item?.system?.dependency?.lastSatisfied;
+  const elapsed = last == null ? 0 : (Number(worldTime) - Number(last));
   if (elapsed < THRESHOLD_DAYS * SECONDS_PER_DAY) {
     return `до штрафа: ${formatDuration(THRESHOLD_DAYS * SECONDS_PER_DAY - elapsed)}`;
   }
@@ -99,9 +105,55 @@ export function addictionPenaltyRules(actor) {
   return rules;
 }
 
+/** Строка таблицы выпавшей субмутации («4», «11», «12»…). */
+export function addictionSubmutationRoll(item) {
+  return String(item?.system?.submutation?.label ?? "").trim();
+}
+
+/**
+ * На сколько суток утоляет одно поглощение (wdbc-1rno.14): Камень Душ
+ * (субмутация 12) — «на 1 год», Живая плоть (10), поданная к столу в
+ * присутствии жертвы, — «на 10 дней»; прочие — сутки (THRESHOLD_DAYS).
+ * @param {{servedBeforeVictim?: boolean}} [opts] — только для субмутации 10
+ */
+export function addictionSatisfiedDays(item, { servedBeforeVictim = false } = {}) {
+  const roll = addictionSubmutationRoll(item);
+  if (roll === "12") return 365;
+  if (roll === "10" && servedBeforeVictim) return 10;
+  return THRESHOLD_DAYS;
+}
+
+/**
+ * Метка «последнего утоления» для утоления на N суток. Хранится одно поле
+ * (lastSatisfied), а порог — сутки, поэтому N суток = метка, сдвинутая
+ * вперёд на N−1 суток: штраф начнётся ровно через N суток. Так срок
+ * утоления не требует нового поля схемы (и перезагрузки мира).
+ */
+export function addictionSatisfiedStamp(worldTime, days = THRESHOLD_DAYS) {
+  return Number(worldTime) + (Math.max(THRESHOLD_DAYS, Number(days) || 0) - THRESHOLD_DAYS) * SECONDS_PER_DAY;
+}
+
+/**
+ * Знает ли персонаж Forbidden Lore (Xenos) именно про этот вид (wdbc-1rno.12,
+ * субмутация 4: «если персонаж не знаком с этим видом ксеносов»). Сравнение
+ * строгое по виду — общий findGroupEntry засчитал бы «Xenos (Эльдар)» и за
+ * «Xenos (Орки)», для выдачи Навыка это неверно.
+ */
+export function knowsXenosSpecies(actor, species) {
+  const want = String(species ?? "").trim().toLowerCase();
+  if (!want) return false;
+  const arr = actor?.system?.groupSkills?.forbiddenLore;
+  if (!Array.isArray(arr)) return false;
+  return arr.some(e => {
+    const spec = String(e?.specialty ?? "").trim().toLowerCase();
+    const m = spec.match(/^(?:xenos|ксенос[ыа]?)\s*\((.+)\)$/);
+    return !!m && m[1].trim() === want;
+  });
+}
+
 /** «Удовлетворить»: метка времени → сейчас; если объект ещё не вписан — подставить из субмутации. */
-export async function satisfyAddiction(item) {
-  const update = { "system.dependency.lastSatisfied": game.time?.worldTime ?? 0 };
+export async function satisfyAddiction(item, { days = THRESHOLD_DAYS } = {}) {
+  const update = { "system.dependency.lastSatisfied": addictionSatisfiedStamp(game.time?.worldTime ?? 0, days) };
   if (!String(item?.system?.dependency?.substance ?? "").trim()) {
     const auto = String(item?.system?.submutation?.name ?? "").trim();
     if (auto) update["system.dependency.substance"] = auto;

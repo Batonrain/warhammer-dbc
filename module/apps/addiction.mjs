@@ -7,8 +7,12 @@
 //  rules/addiction.mjs).
 // ════════════════════════════════════════════════════════════════════════
 
-import { isAddictionItem, addictionDaysSince, satisfyAddiction } from "../rules/addiction.mjs";
+import { isAddictionItem, addictionDaysSince, satisfyAddiction, addictionSubmutationRoll,
+         addictionSatisfiedDays, knowsXenosSpecies } from "../rules/addiction.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { changeActorInfamy } from "./infamy-points.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 export { isAddictionItem };
 
@@ -28,7 +32,60 @@ export function addictionPanelHtml(item) {
   </div>`;
 }
 
-/** Нажатие кнопки «Утолить» на листе Мутации. */
+/**
+ * Нажатие кнопки «Утолить» на листе Мутации. У трёх субмутаций утоление
+ * имеет числовые последствия, и кнопка делает их сама (wdbc-1rno.12/.14):
+ *  4 «Прах ксеноса» — спрашивает вид (решает ГМ) и, если персонаж с ним не
+ *    знаком, выдаёт Forbidden Lore (Xenos (вид)) на +0;
+ *  10 «Живая плоть» — спрашивает, подано ли при жертве: тогда на 10 дней;
+ *  12 «Камень Душ» — +1d5 потраченных Очков Бесчестия (не выше максимума) и
+ *    зависимость утолена на год.
+ */
 export async function useSatisfyAddiction(item) {
-  await satisfyAddiction(item);
+  const actor = item?.actor ?? item?.parent ?? null;
+  const roll = addictionSubmutationRoll(item);
+  const lines = [];
+
+  if (roll === "4" && actor) {
+    const species = await foundry.applications.api.DialogV2.prompt({
+      window: { title: "Прах ксеноса" },
+      content: `<label>Какой вид ксеносов? <small>(решает ГМ)</small>
+        <input type="text" name="species" autofocus/></label>`,
+      ok: { label: "Утолить", callback: (_ev, btn) => btn.form.elements.species.value.trim() }
+    }).catch(() => null);
+    if (species == null) return;
+    if (species && !knowsXenosSpecies(actor, species)) {
+      const arr = foundry.utils.deepClone(actor.system.groupSkills?.forbiddenLore || []);
+      arr.push({ specialty: `Xenos (${species})`, rank: "knows", grantedRank: "knows", cost: 0 });
+      await actor.update({ "system.groupSkills.forbiddenLore": arr });
+      lines.push(`Незнакомый вид — получен Навык <b>Forbidden Lore (Xenos (${esc(species)}))</b> +0.`);
+    }
+  }
+
+  let servedBeforeVictim = false;
+  if (roll === "10") {
+    servedBeforeVictim = await foundry.applications.api.DialogV2.confirm({
+      window: { title: "Живая плоть" },
+      content: "<p>Плоть приготовлена, подана к столу и съедена в присутствии жертвы? Тогда зависимость утолена на 10 дней.</p>",
+      rejectClose: false
+    }).catch(() => false) === true;
+  }
+
+  if (roll === "12" && actor) {
+    const r = await new Roll("1d5").evaluate();
+    const { before, after } = await changeActorInfamy(actor, r.total);
+    lines.push(`Камень Душ: 1d5 = ${r.total}, Очки Бесчестия ${before} → <b>${after}</b>.`);
+  }
+
+  const days = addictionSatisfiedDays(item, { servedBeforeVictim });
+  await satisfyAddiction(item, { days });
+  if (days > 1) lines.push(`Зависимость утолена на <b>${days === 365 ? "1 год" : `${days} дней`}</b>.`);
+
+  if (actor && lines.length) {
+    await postTestCard(actor, {
+      icon: rollIcon("blood", "#ffd24d"),
+      title: `Зависимость утолена — ${esc(item.name)}`,
+      lines: lines.map(l => `<div class="roll-threshold">${l}</div>`)
+    }, { sound: false });
+  }
 }

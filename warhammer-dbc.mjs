@@ -50,7 +50,7 @@ import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
          saveItemMechanics, mechanicsRelevantChange, syncGrantedEquipment,
-         syncNullZoneSuppression } from "./module/apps/mechanics.mjs";
+         syncNullZoneSuppression, syncGrantedAbilities, hasWhenGatedAbilityGrant } from "./module/apps/mechanics.mjs";
 import { isItemActive, syncOrphanedModEffects } from "./module/apps/effects.mjs";
 import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
 import { applyRace, applySubrace, SKIP_MECHANICS_HOOK } from "./module/apps/races.mjs";
@@ -2163,6 +2163,20 @@ Hooks.on("updateItem", async (item, changed, options, userId) => {
   if (!mechanicsRelevantChange(changed)) return;
   if (item.parent instanceof Actor) await applyItemMechanics(item);
   else await syncMechanicsEffects(item);
+});
+
+// Выдача Черт/Талантов с условием «Когда Ярость/Тир Ран/Состояние/Покровитель» (wdbc-0diqq)
+// зависит от состояния АКТОРА, а не предмета: на смену этого состояния
+// пересверяем такие выдачи (снять — условие пропало, выдать — вернулось).
+// userId-гвард — иначе каждый клиент создал бы свою копию Черты.
+Hooks.on("updateActor", async (actor, changed, options, userId) => {
+  if (game.user.id !== userId) return;
+  const sys = changed?.system;
+  if (!sys || (sys.inRage === undefined && sys.wounds === undefined
+      && sys.conditions === undefined && sys.patronGod === undefined)) return;
+  for (const item of actor.items.contents ?? [...actor.items]) {
+    if (hasWhenGatedAbilityGrant(item)) await syncGrantedAbilities(item);
+  }
 });
 
 // ── Cybernetic Excellence / Кибернетическое Превосходство (стр. книги,

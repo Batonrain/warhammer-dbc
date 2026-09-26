@@ -671,6 +671,7 @@ const WEIGHT_SCOPE_LABELS = { all: "Общее", carry: "Ношение", lift: 
 const AP_SCOPE_LABELS = {
   unarmed: "Безоружные атаки (Кулак/Пинок/…, интегральные)",
   melee: "Рукопашные атаки",
+  conductiveMelee: "Рукопашные электропроводящим оружием в электропроводящей броне",
   ranged: "Стрелковые атаки",
   attack: "Любые атаки",
 };
@@ -2784,7 +2785,7 @@ function showIntegralChoiceDialog(item, entries) {
 // Записи, выдающие Черту или Талант, из тех же АНД-цепочек. ИЛИ-ветки
 // пропускаются по той же причине, что и у снаряжения: выбор там сделан один
 // раз диалогом, переигрывать его на каждом включении нельзя.
-function collectDirectAbilityEntries(groups, actor = null, item = null) {
+function collectDirectAbilityEntries(groups, actor = null, item = null, { ignoreWhen = false } = {}) {
   const out = [];
   const walk = (entries, operator) => {
     if (operator === "OR") return;
@@ -2794,7 +2795,20 @@ function collectDirectAbilityEntries(groups, actor = null, item = null) {
     }
   };
   for (const g of groups) walk(g.entries || [], g.operator);
-  return out.filter(e => entryWhenOk(actor, e, item));
+  return ignoreWhen ? out : out.filter(e => entryWhenOk(actor, e, item));
+}
+
+/**
+ * Есть ли у предмета выдача Черты/Таланта с условием «Когда» — такие записи
+ * надо пересверять не только на правку самого предмета, но и на смену
+ * состояния актора (Ярость, Раны, Состояния; warhammer-dbc.mjs, updateActor).
+ */
+export function hasWhenGatedAbilityGrant(item) {
+  // Гейт Состояния — when.condition; when.conditions — Геносемя (легион), от
+  // состояния актора не зависит; anyOf — способ сложения гейтов, не гейт.
+  const when = e => e?.when && (e.when.requireRage || whenWoundTier(e.when).length
+    || whenCondition(e.when).length || whenPatronGod(e.when).length);
+  return collectDirectAbilityEntries(getItemMechanics(item), null, item, { ignoreWhen: true }).some(when);
 }
 
 /**
@@ -2815,8 +2829,9 @@ function collectDirectAbilityEntries(groups, actor = null, item = null) {
 export async function syncGrantedAbilities(sourceItem) {
   const actor = sourceItem.parent;
   if (!(actor instanceof Actor)) return;
-  const entries = collectDirectAbilityEntries(getItemMechanics(sourceItem), actor, sourceItem);
-  if (!entries.length) return;
+  const all = collectDirectAbilityEntries(getItemMechanics(sourceItem), actor, sourceItem, { ignoreWhen: true });
+  if (!all.length) return;
+  const entries = all.filter(e => entryWhenOk(actor, e, sourceItem));
 
   const grantedNow = actor.items.filter(i =>
     i.getFlag(FLAG, "grantedByItem") === sourceItem.id && i.getFlag(FLAG, "abilityEntryId"));
@@ -2825,6 +2840,18 @@ export async function syncGrantedAbilities(sourceItem) {
     if (grantedNow.length) await actor.deleteEmbeddedDocuments("Item", grantedNow.map(i => i.id));
     return;
   }
+
+  // Условие «Когда» записи больше не выполняется (вышел из Ярости, сменился
+  // Тир Ран…) — выданное ею снимается, как эффект у syncMechanicsEffects
+  // (wdbc-0diqq: раньше Черта «пока в Ярости» оставалась висеть).
+  // Только записи И-цепочек (all) — выдачу ИЛИ-выбора не трогаем.
+  const allIds = new Set(all.map(e => e.id));
+  const passingIds = new Set(entries.map(e => e.id));
+  const stale = grantedNow.filter(i => {
+    const id = i.getFlag(FLAG, "abilityEntryId");
+    return allIds.has(id) && !passingIds.has(id);
+  });
+  if (stale.length) await actor.deleteEmbeddedDocuments("Item", stale.map(i => i.id));
 
   const haveIds = new Set(grantedNow.map(i => i.getFlag(FLAG, "abilityEntryId")));
   const toCreate = [];
@@ -3024,7 +3051,27 @@ function collectMechEntries(groups) {
  * совпало — не пишет. Трогает только СВОИ эффекты (метка mechEntry): ручной
  * эффект ГМа и след миграции остаются на месте.
  */
-export async function syncMechanicsEffects(item) {
+// Очередь сверки эффектов по предмету (wdbc-hbxrl) — тот же приём, что
+// _mechRuns у applyItemMechanics ниже. Сохранение Механики зовёт сверку
+// напрямую (saveMechanics), и тут же хук updateItem на акторе зовёт её ещё раз
+// через applyItemMechanics. Две параллельные сверки видят один и тот же
+// снимок item.effects и обе удаляют эффект сменившей вид записи — вторая
+// падает «ActiveEffect … does not exist!» (разовая красная плашка при смене
+// вида записи Конструктора). По очереди вторая видит уже итог первой.
+const _syncRuns = new Map();
+
+export function syncMechanicsEffects(item) {
+  const key = item?.uuid || item?.id;
+  if (!key) return _syncMechanicsEffects(item);
+  const run = (_syncRuns.get(key) ?? Promise.resolve())
+    .catch(() => {})
+    .then(() => _syncMechanicsEffects(item));
+  _syncRuns.set(key, run);
+  run.catch(() => {}).finally(() => { if (_syncRuns.get(key) === run) _syncRuns.delete(key); });
+  return run;
+}
+
+async function _syncMechanicsEffects(item) {
   const actor = item.parent instanceof Actor ? item.parent : null;
   const { durable, allIds, durableKindIds } = collectMechEntries(getItemMechanics(item));
   // durableIds — ВСЕ И-ветвенные долговечные записи, даже те, чьё «Когда»

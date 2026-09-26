@@ -15,6 +15,7 @@
 // любой другой (Приём зависит от Базы, Стойка/Приём/Хват — от Профиля через
 // категорию оружия, categoryFor/trainingFor ниже).
 
+import { hardTargetPenalty } from "../rules/hard-target.mjs";
 import { CHARACTERISTICS }                    from "../constants/characteristics.mjs";
 import { DAMAGE_TYPES }                       from "../constants/items.mjs";
 import { MELEE_STANCES, MELEE_BASES, parseGrips, meleeEffectiveRange } from "../constants/combat.mjs";
@@ -58,7 +59,8 @@ import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs"
 import { measureTokens }                      from "../combat/tactical-map.mjs";
 import { rangeBandBoundaries }                from "../rules/tactical-map.mjs";
 import { coverBonusForShot }                  from "../combat/cover.mjs";
-import { weaponProfiles, attackIsMelee }         from "../combat/weapon-profiles.mjs";
+import { weaponProfiles, attackIsMelee, sysWithProfileFire } from "../combat/weapon-profiles.mjs";
+import { conductiveMeleeOf } from "../rules/conductive.mjs";
 import { isIntegralAttack }                    from "../combat/equipped-melee.mjs";
 import { isPathOneHandedWeapon }               from "../rules/library/paths.mjs";
 import { canDualWield, offHandCandidates, dualWieldMods }
@@ -132,6 +134,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // профиль меняется только на профиль того же вида (profileOptions), а у
   // стрелкового рукопашный профиль один — подмена на входе не разъедется.
   if (startProfile?.generated && startProfile.balance != null) sys = { ...sys, balance: startProfile.balance };
+  // Свой ствол профиля (комби-оружие, wdbc-jho9): режимы огня, магазин и
+  // боеприпас окна — второго ствола. Смена ствола внутри окна переоткрывает
+  // окно (attack/dialog.mjs, reopenWithProfile) — вся сборка ниже считается
+  // один раз от этих полей.
+  sys = sysWithProfileFire(sys, startProfile);
 
   // Вид теста фиксируется на ВХОДЕ в окно и внутри него не меняется: от него
   // зависит около восьмидесяти мест расчёта (см. wdbc-uh56 — окно атаки это
@@ -167,6 +174,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     unarmed: isIntegralAttack(item),
     // Область «weapon:name:<Имя>» (Мясник → Нартеций, wdbc-x1nz.2.101).
     weapon: item,
+    // Область «weapon:conductiveMelee» (Электродуга, wdbc-3hgd0).
+    conductive: isMelee && conductiveMeleeOf(actor, item),
     char: charKey,
     targetActor: [...(game.user?.targets ?? [])][0]?.actor ?? null
   };
@@ -437,6 +446,18 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         : `<span class="atk-training-warn" title="Цель Бежит (стр. 32)">🏃 Цель Бежит (${isMelee ? "+20" : "−20"})</span>`)
     : "";
 
+  // Трудная Цель (стр. 62, wdbc-1rno.30): Бег/Натиск/Верховая Атака цели с
+  // этим Талантом — −10 стрельбе по ней; гасят те же «штрафы за скорость
+  // цели», что и −20 Бега выше, плюс Зенитное (стр. 166 называет Hard Target
+  // поимённо). rules/hard-target.mjs.
+  const hardTargetMod = hardTargetPenalty(attackCtx.targetActor, {
+    isMelee,
+    speedPenaltyIgnored: !!wp.antiAir || trackingAimIgnoresRunning || motionPredictorIgnoresRunning
+  });
+  const hardTargetBadge = hardTargetMod
+    ? `<span class="atk-training-warn" title="Трудная Цель (стр. 62): цель бежала или шла в Натиск в свой Ход">🎯 Трудная Цель (−10)</span>`
+    : "";
+
   // Bow to the Audience/Поклон Публике (wdbc-1rno): метка живёт на
   // АТАКУЮЩЕМ (module/combat/bow-to-audience.mjs), не на цели — бонус/штраф
   // действует только пока бьёт именно отметивший, до начала его следующего
@@ -532,7 +553,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // «Холодное» значение здесь тоже по умолчанию не-Избирательное (−10) — тем
   // же приёмом, что meleeMaceMod.
   const meleeHookMod = (isMelee && sys.meleeCategory === "Крюк") ? -10 : 0;
-  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + ogrynFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + stepByStepMod + bowMarkedMod + proneMod + stunnedMod + fliesMod + wrathHeatMod + meleeMaceMod + meleeHookMod;
+  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + ogrynFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + hardTargetMod + stepByStepMod + bowMarkedMod + proneMod + stunnedMod + fliesMod + wrathHeatMod + meleeMaceMod + meleeHookMod;
   const meleeCategory = sys.meleeCategory || "";
   // Категория оружия по выбранному Профилю (стр. 14, «Композиция Рукопашной
   // Атаки»): у многопрофильного оружия каждый альт-профиль — фактически
@@ -681,7 +702,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const blockedBadge = sel.blocked
       ? `<span class="atk-training-warn" title="Защитная Стойка без щита запрещает атаки (стр. 15)">🚫 Защитная Стойка — атака запрещена</span>`
       : "";
-    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${runningBadge}${bowMarkedBadge}${targetHelplessBadge}${proneBadge}${stunnedBadge}${fliesBadge}${wrathHeatBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}${handsBadge(sel)}`;
+    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${runningBadge}${hardTargetBadge}${bowMarkedBadge}${targetHelplessBadge}${proneBadge}${stunnedBadge}${fliesBadge}${wrathHeatBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}${handsBadge(sel)}`;
   }
 
   // Недоступные варианты (без Рукопашной Тренировки/не подходит категории) не
@@ -1464,6 +1485,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       { label: "Цель раскрыта",      value: exposedMod },
       { label: "Беспомощная цель",   value: helplessRangedMod },
       { label: "Цель бежит",         value: runningMod },
+      { label: "Трудная Цель",       value: hardTargetMod },
       { label: "Цель Повалена",      value: proneMod },
       { label: "Оглушение/Ступор цели", value: stunnedMod },
       // Мухи (wdbc-1rno) — эскалация читает ЖИВОЙ f.aimPenalty (чекбокс
@@ -1601,6 +1623,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     computeGripOptions,
     computeManeuverOptions,
     computeStanceOptions,
+    reopenWithProfile: (idx) => showAttackDialog(actor, item, { ...techniqueOpts, profileIdx: idx }),
   });
 }
 
