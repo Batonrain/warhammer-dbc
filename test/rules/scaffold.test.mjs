@@ -29,11 +29,11 @@ describe("каркас module/rules", () => {
     // (порог по Бонусу характеристики, «S.b 5+» у Poor.Q Откатной Перчатки,
     // wdbc-vsma), hasHatredTarget (цель Таланта Ненависти, wdbc-1rno) и
     // legacyGuardianMarked (метка Защитника, Оружие Наследия, wdbc-1rno.35),
-    // isBlinded (свой флаг или оба глаза, Ослеплён, wdbc-x1nz.2.89).
-    // rankAndFile («Рядовой», корбук стр. 4, task-ce3a).
-    // inPariahVoid/isDaemon/targetPsykerOrDaemon — Пустота Парии (rules/null-zones.mjs).
+    // isBlinded (свой флаг или оба глаза, Ослеплён, wdbc-x1nz.2.89),
     // targetHasFieldPsyMod (Подавляющее поле брони цели, wdbc-j8cn),
     // targetLacksSealedArmour (цель без гермодоспеха, Миазмы, wdbc-1rno.11).
+    // rankAndFile («Рядовой», корбук стр. 4, task-ce3a).
+    // inPariahVoid/isDaemon/targetPsykerOrDaemon — Пустота Парии (rules/null-zones.mjs).
     expect(Object.keys(predicates.PREDICATES)).toHaveLength(36);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);

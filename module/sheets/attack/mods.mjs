@@ -44,6 +44,7 @@ export function fingersPenalty(actor, weapon) {
   if (weaponHandsRequired(weapon, actor) >= 2) return BODY_SIDES.some(s => fingersLostOn(actor?.system, s));
   return false;
 }
+
 /**
  * @param {object} v состояние броска: оружие, токены, замеренная дистанция
  * @returns {{commonMods: object[], specificMods: object[], charSwapWhy: string[], bandKey: string|null}}
