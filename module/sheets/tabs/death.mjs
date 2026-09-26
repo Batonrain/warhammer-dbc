@@ -75,7 +75,7 @@ async function _postCard(actor, header, lines, rolls = []) {
  * Игрушки Богов, провал Спасения и одноразовая метка Поцелуя Смерти
  * (wdbc-zye1). Только реально стоящие — «-=» на отсутствующем флаге лишний.
  */
-function _deathResolvedFields(actor) {
+export function _deathResolvedFields(actor) {
   const out = {};
   for (const key of [DEATH_CAUSE_FLAG, PRE_HIT_WOUNDS_FLAG, SUS_AN_ATTEMPT_FLAG, TOY_TEST_FAILED_FLAG, KISS_OF_DEATH_FLAG,
     FATE_SAVE_FAILED_FLAG]) {
