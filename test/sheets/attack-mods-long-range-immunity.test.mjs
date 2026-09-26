@@ -157,3 +157,16 @@ describe("Антиприцел цели", () => {
     expect(row("none").autoCheck).toBe(false);
   });
 });
+
+// wdbc-1rno.3.1 (решение владельца 26.09): «Скрытая атака» — только «Избегание
+// невозможно», без +30; +30 даёт «Цель Врасплох».
+describe("Скрытая атака без +30", () => {
+  it("строка есть, но числа не даёт", () => {
+    const { commonMods } = situationalMods({
+      actor: actorWith([]), attackCtx: {}, attackerToken: null, gripRange: null, hasFatigue: false,
+      hasLostEyes: false, isBlinded: false, isMelee: true, measured: null, targetHelpless: false,
+      targetToken: null, weapon: null, wProps: [], wp: {}
+    });
+    expect(commonMods.find(m => m.id === "atk-mod-hidden").value).toBe(0);
+  });
+});

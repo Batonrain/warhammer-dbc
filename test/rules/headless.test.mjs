@@ -11,10 +11,10 @@ describe("Безголовый", () => {
     expect(isHeadless(plain)).toBe(false);
   });
 
-  it("голова и глаз — в торс; суставы/шея и прочее — без изменений", () => {
+  it("голова, глаз и шея — в торс; прочее — без изменений", () => {
     expect(redirectHitLocationForHeadless("Голова", headless)).toBe("Торс");
     expect(redirectHitLocationForHeadless("Глаз (Голова)", headless)).toBe("Торс");
-    expect(redirectHitLocationForHeadless("Сочленение / Шея", headless)).toBe("Сочленение / Шея");
+    expect(redirectHitLocationForHeadless("Сочленение / Шея", headless)).toBe("Торс");
     expect(redirectHitLocationForHeadless("Рука", headless)).toBe("Рука");
     expect(redirectHitLocationForHeadless("Голова", plain)).toBe("Голова");
   });
