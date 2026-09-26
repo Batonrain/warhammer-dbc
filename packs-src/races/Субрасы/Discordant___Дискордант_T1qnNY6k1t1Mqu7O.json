@@ -7,14 +7,18 @@
     "key": "discordant",
     "parentKey": "human",
     "cost": 1500,
-    "effect": "Аура Haywire (W.b×3 м, интенсивность 7): глушит технику; +T0 vs болезни; биотех изнашивается. Талант Enemy (Adeptus Mechanicus, Dark Mechanicus). Не получает Архетипы Техножрец и Скитарий.",
+    "effect": "Аура W.b×3 м: электрические устройства отключаются как в поле Haywire (7); механика заклинивает через 1d5+1 Ходов, примитивное оружие не страдает; техночудеса с целью в ауре — Критический Провал; биоорганы — тест T+0 каждые 10 мин, за каждые T.b×2 Провалов орган отторгается; медицина −10…−60. Не действует на технологии Некронов, Эльдар (кроме Тёмных), Орков (при Орках), психические/демонические устройства и Оружие Наследия. Псайкер может сжать ауру до 2 м. Талант Enemy (Adeptus Mechanicus, Dark Mechanicum). Не может брать Архетипы Еретех и Скитарий.",
     "god": "",
     "charMods": {},
     "talents": "",
     "removesTraits": [],
-    "description": "Аура Haywire (W.b×3 м, интенсивность 7): глушит технику; +T0 vs болезни; биотех изнашивается. Талант Enemy (Adeptus Mechanicus, Dark Mechanicus). Не получает Архетипы Техножрец и Скитарий.",
+    "description": "Аура W.b×3 м: электрические устройства отключаются как в поле Haywire (7); механика заклинивает через 1d5+1 Ходов, примитивное оружие не страдает; техночудеса с целью в ауре — Критический Провал; биоорганы — тест T+0 каждые 10 мин, за каждые T.b×2 Провалов орган отторгается; медицина −10…−60. Не действует на технологии Некронов, Эльдар (кроме Тёмных), Орков (при Орках), психические/демонические устройства и Оружие Наследия. Псайкер может сжать ауру до 2 м. Талант Enemy (Adeptus Mechanicus, Dark Mechanicum). Не может брать Архетипы Еретех и Скитарий.",
     "notes": "",
-    "bookSource": "DoomBC — Основная книга"
+    "bookSource": "DoomBC — Основная книга",
+    "bannedArchetypes": [
+      "heretek",
+      "skitarii"
+    ]
   },
   "_id": "T1qnNY6k1t1Mqu7O",
   "effects": [],
@@ -81,6 +85,39 @@
               "weaponPropNewValue2": "0",
               "label": "",
               "code": ""
+            },
+            {
+              "id": "DscEnemyTalent01",
+              "kind": "talent",
+              "group": null,
+              "sourceUuid": "Compendium.warhammer-dbc.talents.Item.AqT5w5x74AaCZ5kh",
+              "sourceName": "Enemy / Враг",
+              "sourceImg": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+              "sourceHasRating": true,
+              "rating": "1",
+              "specialization": "Adeptus Mechanicus, Dark Mechanicum",
+              "targets": [
+                {
+                  "kind": "faction",
+                  "ref": "adeptus-mechanicus",
+                  "value": "",
+                  "name": "Adeptus Mechanicus / Адептус Механикус",
+                  "img": "icons/svg/aura.svg"
+                },
+                {
+                  "kind": "faction",
+                  "ref": "dark-mechanicum",
+                  "value": "",
+                  "name": "Dark Mechanicum / Тёмные Механикум",
+                  "img": "icons/svg/aura.svg"
+                }
+              ],
+              "label": "",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             }
           ]
         }

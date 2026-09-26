@@ -94,7 +94,27 @@ export function durationLabel(value, unit) {
 export function durationDataFor(value, unit) {
   const n = Math.max(0, Math.round(Number(value) || 0));
   if (!UNIT_KEYS.has(unit) || !n) return null;
-  return { value: n, units: unit };
+  // Раунды кончаются в КОНЦЕ Хода того, кто наложил эффект (книга,
+  // «Длительность Эффектов», wdbc-x1nz.2.84): ядро помнит, чей был Ход при
+  // наложении (effect.start.combatant), и expiry "turnEnd" привязывает
+  // окончание ровно к нему. Время мира так не меряется.
+  return unit === "rounds" ? { value: n, units: unit, expiry: "turnEnd" } : { value: n, units: unit };
+}
+
+/**
+ * Истёк ли срок, кончающийся в конце Хода наложившего (expiry "turnEnd").
+ * Остаток 0 значит «идёт последний Раунд»: эффект ещё действует и снимается
+ * только в конце Хода наложившего — endedCombatantId. Остаток ниже нуля —
+ * конец того Хода пропущен (наложивший выбыл), снимаем сразу. Без записи,
+ * кто наложил (эффект заведён вне боя), — прежнее правило «остаток 0».
+ */
+export function isTurnEndDurationExpired(duration, startCombatantId, endedCombatantId = "") {
+  const left = remainingOf(duration);
+  if (left === null) return false;
+  if (left < 0) return true;
+  if (left > 0) return false;
+  if (!startCombatantId) return true;
+  return !!endedCombatantId && endedCombatantId === startCombatantId;
 }
 
 /**

@@ -98,3 +98,41 @@ describe("rollIntimidateContest: встречная проверка", () => {
     expect(card).toContain("<b>25</b>"); // 30 − 5 (targetMod)
   });
 });
+
+describe("Запугивание против Орды («Орды», Психологический урон)", () => {
+  function horde({ wp = 30, magnitude = 40, immuneFear = false, state = "steady" } = {}) {
+    return {
+      id: "h1", name: "Орда", uuid: "Actor.h1", type: "horde",
+      system: { magnitude: { value: magnitude, start: 40 }, psychDamage: 0, immuneFear,
+        characteristics: { wp: { total: wp, bonus: 3 } }, derived: { state } },
+      async update(data) {
+        if (data["system.magnitude.value"] !== undefined) this.system.magnitude.value = data["system.magnitude.value"];
+        if (data["system.psychDamage"] !== undefined) this.system.psychDamage = data["system.psychDamage"];
+      },
+      getFlag: () => undefined, async setFlag() {}
+    };
+  }
+
+  it("порог Морали Орды — Воля плюс Магнитуда (−10 Ослабленной)", () => {
+    expect(moraleThreshold(horde({ wp: 30, magnitude: 40 }))).toBe(70);
+    expect(moraleThreshold(horde({ wp: 30, magnitude: 40, state: "weakened" }))).toBe(60);
+  });
+
+  it("проигранный тест снимает Провалы×1 Магнитуды психологическим уроном", async () => {
+    captured.dice = [5, 95];                // цель: 95 против 40 (W 30 + Маг 10) — 6 Провалов
+    const tgt = horde({ wp: 30, magnitude: 10 });
+    const { winner } = await rollIntimidateContest(actor({ intimidate: 60 }), tgt);
+    expect(winner).toBe("mine");
+    expect(tgt.system.magnitude.value).toBe(4);
+    expect(tgt.system.psychDamage).toBe(6);
+    expect(captured.chat.at(-1).content).toContain("Провалы×1");
+  });
+
+  it("Несломляемая Орда проходит тест автоматически и Магнитуду не теряет", async () => {
+    captured.dice = [5, 95];
+    const tgt = horde({ wp: 30, magnitude: 10, immuneFear: true });
+    await rollIntimidateContest(actor({ intimidate: 60 }), tgt);
+    expect(tgt.system.magnitude.value).toBe(10);
+    expect(captured.chat.at(-1).content).toContain("Орда не знает страха");
+  });
+});

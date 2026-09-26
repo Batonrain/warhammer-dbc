@@ -13,11 +13,22 @@ export class SubraceData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { HTMLField, StringField, NumberField, ObjectField, ArrayField } = foundry.data.fields;
+    const { HTMLField, StringField, NumberField, ObjectField, ArrayField, BooleanField } = foundry.data.fields;
     return {
       key:           new StringField({ initial: "", label: "Ключ" }),
       parentKey:     new StringField({ initial: "", label: "Раса-родитель" }),
       cost:          new NumberField({ initial: 0, integer: true, label: "Стоимость в опыте" }),
+      // Покупка уровнями (Затупленный: 500/750/1000/1250 → Blunted 1–4):
+      // цена уровня N — tierCosts[N-1]; пусто — один уровень по `cost`.
+      // Выбранный уровень живёт на акторе (system.subraceTier), формулы
+      // Механики читают его как «subtier».
+      tierCosts:     new ArrayField(new NumberField({ integer: true }), { label: "Цены уровней" }),
+      // Ключи Архетипов, закрытых субрасе (Пария: witch, renegadePsyker) —
+      // Мастер их не показывает (apps/archetypes.mjs::archetypesForRace).
+      bannedArchetypes: new ArrayField(new StringField(), { label: "Запрещённые Архетипы" }),
+      // «Получает мутации как Космодесантник» (Затупленный): пороги мутаций
+      // по таблице Астартес (rules/character.mjs).
+      mutationsAsAstartes: new BooleanField({ initial: false, label: "Мутации как у Астартес" }),
       effect:        new StringField({ initial: "", label: "Действие" }),
       god:           new StringField({ initial: "", label: "Бог" }),
       charMods:      new ObjectField({ label: "Изменения характеристик" }),

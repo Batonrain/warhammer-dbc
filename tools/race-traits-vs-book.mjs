@@ -171,6 +171,43 @@ export function rulesLibraryTraits() {
   return byRace;
 }
 
+/**
+ * Черты, которые раса получает ЧЕРЕЗ носитель: Черта расы (Геносемя) выдаёт
+ * импланты, а уже они — Черты (Оссмодула: Nimble (+5), Size (1), Unnatural T
+ * (+2)…). Книжное «Nimble (10)» у Космодесантника — итог двух имплантов, и
+ * без этого источника сверка требовала бы выдать его расе ещё раз сверху.
+ * Берутся только безусловные записи (без when): у легионных вариантов
+ * («Bite» только у XIX) своё условие. Одноимённые складываются рейтингом.
+ *
+ * @returns {{name:string, rating:?number, raw:string}[]}
+ */
+export function carrierTraits(raceDoc) {
+  const files = walk(path.join(ROOT, "packs-src"));
+  const byId = id => {
+    const file = id && files.find(p => p.endsWith(`_${id}.json`));
+    return file ? JSON.parse(fs.readFileSync(file, "utf8")) : null;
+  };
+  const idOf = uuid => String(uuid || "").split(".").pop();
+  const entries = doc => (doc?.flags?.["warhammer-dbc"]?.mechanics ?? []).flatMap(g => g.entries || []);
+  const unconditional = e => !(e?.when?.conditions?.length);
+  const sums = new Map();
+  for (const t of entries(raceDoc).filter(e => e.kind === "trait" && e.sourceUuid)) {
+    const carrier = entries(byId(idOf(t.sourceUuid)))
+      .filter(e => e.kind === "equipment" && e.equipCategoryPack === "implants");
+    for (const imp of carrier) {
+      for (const e of entries(byId(idOf(imp.equipSourceUuid))).filter(e => e.kind === "trait" && unconditional(e))) {
+        const name = normTraitName(englishHalf(e.sourceName));
+        const r = String(e.rating ?? "").trim();
+        const cur = sums.get(name) ?? { name, rating: null, raw: "" };
+        if (r !== "" && Number.isFinite(Number(r))) cur.rating = (cur.rating ?? 0) + Number(r);
+        cur.raw = `${englishHalf(e.sourceName)} (импланты${cur.rating != null ? `, ${cur.rating}` : ""})`;
+        sums.set(name, cur);
+      }
+    }
+  }
+  return [...sums.values()];
+}
+
 /** Записи kind:"trait" расы: английское имя и рейтинг. */
 export function packTraits(raceDoc) {
   const out = [];
@@ -271,7 +308,8 @@ export function compareRaces() {
     // слоя правил. Сверять надо объединение — иначе раса, переведённая на
     // правила, читается как потерявшая всё сразу.
     const mine = [...packTraits(found.doc),
-                  ...(fromRules.get(String(found.doc.system?.key || "")) ?? [])];
+                  ...(fromRules.get(String(found.doc.system?.key || "")) ?? []),
+                  ...carrierTraits(found.doc)];
     const problems = [];
     const unchecked = [];
     for (const bt of bookTraits) {

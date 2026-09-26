@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, fakeForm, listenerRoot, resetCaptured } from "../support/foundry-stub.mjs";
 import { activateConditionsListeners, addFatigue, addCondition, removeCondition, removeFatigue,
          fatigueSleep, setConditionLevel, fatiguePenalty, setFatigue, fatiguePeriodRest,
-         fatigueChangeFields, stumpTimerFields,
+         fatigueChangeFields, stumpTimerOpts,
          conditionApplyFields, conditionRemoveFields, conditionAdjustFields,
          showAddConditionDialog } from "../../module/sheets/tabs/conditions.mjs";
 import { clearRuleSources, registerRuleSource, getRuleSources } from "../../module/rules/sources.mjs";
@@ -304,9 +304,9 @@ describe("conditionApplyFields / conditionRemoveFields / conditionAdjustFields",
 
   it("conditionAdjustFields: отрицательная дельта снимает флаг на нуле, не уходит в минус", () => {
     const a = makeActor();
-    a.system.conditions.lostHandsCount = 1;
+    a.system.lostLimbs = { rightHand: { lost: true } };
     expect(conditionAdjustFields(a, "lostHands", -5)).toEqual({
-      "system.conditions.lostHands": false, "system.conditions.lostHandsCount": 0
+      "system.lostLimbs.rightHand.lost": false, "system.lostLimbs.rightHand.gangreneAt": 0, "system.lostLimbs.rightHand.mutation": false
     });
   });
 
@@ -568,7 +568,7 @@ describe("Потеря конечностей вручную (wdbc-x1nz.2.97 п.
   const savedTime = globalThis.game.time;
   afterEach(() => { globalThis.game.time = savedTime; });
 
-  it("диалог: потеря кисти — счётчик 1, Кровотечение и таймер обрубка", async () => {
+  it("диалог: потеря кисти — сторона (правая, первая целая), Кровотечение и таймер обрубка", async () => {
     globalThis.game.time = { worldTime: 1000 };
     const a = makeActor({ tBonus: 3 });
     showAddConditionDialog(a);
@@ -576,10 +576,9 @@ describe("Потеря конечностей вручную (wdbc-x1nz.2.97 п.
       ".add-cond-cb:checked": [{ dataset: { condition: "lostHands" } }]
     }));
     expect(a.updates[0]).toMatchObject({
-      "system.conditions.lostHands": true,
-      "system.conditions.lostHandsCount": 1,
+      "system.lostLimbs.rightHand.lost": true,
       "system.conditions.bleeding": true,
-      "system.conditions.lostHandsGangreneAt": 1000 + 3 * 86400
+      "system.lostLimbs.rightHand.gangreneAt": 1000 + 3 * 86400, "system.lostLimbs.rightHand.mutation": false
     });
   });
 
@@ -588,25 +587,38 @@ describe("Потеря конечностей вручную (wdbc-x1nz.2.97 п.
     const a = makeActor({ tBonus: 2 });
     await addCondition(a, "lostLegs");
     expect(a.system.conditions.bleeding).toBe(true);
-    expect(a.system.conditions.lostLegsGangreneAt).toBe(2 * 86400);
+    expect(a.system.lostLimbs.rightLeg.gangreneAt).toBe(2 * 86400);
   });
 
-  it("строка уровня: 1 → 2 глаза — новая потеря; 2 → 1 — нет", async () => {
+  it("строка уровня: 1 → 2 глаза — новая потеря (вторая сторона); 2 → 1 — нет", async () => {
     globalThis.game.time = { worldTime: 0 };
     const a = makeActor({ tBonus: 2 });
-    a.system.conditions.lostEyes = true;
-    a.system.conditions.lostEyesCount = 1;
+    a.system.lostLimbs = { rightEye: { lost: true } };
     await setConditionLevel(a, "lostEyes", "2");
-    expect(a.updates[0]).toMatchObject({ "system.conditions.lostEyesCount": 2, "system.conditions.bleeding": true });
+    expect(a.updates[0]).toMatchObject({ "system.lostLimbs.leftEye.lost": true, "system.conditions.bleeding": true });
     await setConditionLevel(a, "lostEyes", "1");
-    expect(a.updates[1]).toEqual({ "system.conditions.lostEyesCount": 1 });
+    expect(a.updates[1]).toEqual({ "system.lostLimbs.leftEye.lost": false, "system.lostLimbs.leftEye.gangreneAt": 0, "system.lostLimbs.leftEye.mutation": false });
   });
 
-  it("вторая потеря того же типа не переносит уже идущий, более ранний таймер", () => {
+  // wdbc-x1nz.2.100: таймер обрубка теперь ПО СТОРОНЕ — у каждой стороны своё
+  // поле в system.lostLimbs, и вторая потеря того же типа (другая сторона)
+  // физически не может задеть уже идущий таймер первой (разные ключи).
+  it("вторая потеря того же типа (другая сторона) не переносит уже идущий, более ранний таймер первой", async () => {
+    globalThis.game.time = { worldTime: 6000 };
+    const a = makeActor({ tBonus: 3 });
+    a.system.lostLimbs = { rightArm: { lost: true, gangreneAt: 6000 } };
+    await setConditionLevel(a, "lostArms", "2");
+    expect(a.updates[0]).toMatchObject({
+      "system.lostLimbs.leftArm.lost": true,
+      "system.lostLimbs.leftArm.gangreneAt": 6000 + 3 * 86400, "system.lostLimbs.leftArm.mutation": false
+    });
+    expect(a.system.lostLimbs.rightArm.gangreneAt).toBe(6000);
+  });
+
+  it("stumpTimerOpts — те же worldTime/T.b, что заводит новый таймер обрубка", () => {
     globalThis.game.time = { worldTime: 5000 };
     const a = makeActor({ tBonus: 3 });
-    a.system.conditions.lostArmsGangreneAt = 6000;
-    expect(stumpTimerFields(a, "lostArms")).toEqual({ "system.conditions.lostArmsGangreneAt": 6000 });
+    expect(stumpTimerOpts(a)).toEqual({ timer: true, worldTime: 5000, tb: 3 });
   });
 
   it("не-конечность через диалог — без Кровотечения", async () => {

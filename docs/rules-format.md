@@ -92,6 +92,10 @@ when: {
 | `targetHasCondition` | массив ключей `CONDITIONS_DEF` | то же про цель броска | да |
 | `targetLacksCondition` | массив ключей `CONDITIONS_DEF` | у цели нет НИ ОДНОГО из перечисленных Состояний | да |
 | `isBlinded` | `true`/`false` | актор Ослеплён: свой флаг или потеряны оба глаза (Sonar Sense/Unnatural Senses снимаются вытеснением, не здесь) | да |
+| `rankAndFile` | `true`/`false` | актор — «Рядовой» (`system.rankAndFile`, корбук стр. 4); у чемпионских Черт расы стоит `false` | да |
+| `inPariahVoid` | `true`/`false` | актор в ауре Парии — у него Черта-метка «In the Pariah's Void» (rules/null-zones.mjs); по Черте, не по флагу, чтобы не зациклить сбор правил | нет |
+| `isDaemon` | `true`/`false` | актор — демон: тип `daemon`/`demonPrince` или Черта Daemonic | нет |
+| `targetPsykerOrDaemon` | `true`/`false` | цель броска — псайкер (Пси-Рейтинг ≥ 1) или демон | да |
 
 Столбец «Есть» — реализовано ли условие сейчас. Восемь предикатов покрывают
 существующий контент, остальные добавляются, когда под них появляются данные.

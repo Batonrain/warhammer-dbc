@@ -25,6 +25,7 @@ import { hasElectrovigour } from "../../rules/electrovigour.mjs";
 import { pickReroll } from "../../rules/reroll-pick.mjs";
 import { markUnseenDetectedUntilNextTurn } from "../../rules/unseen-attack.mjs";
 import { testOutcome } from "../../rules/roll-outcome.mjs";
+import { fieldFailsTechPower } from "../../rules/null-zones.mjs";
 
 /** Активация Техночуда: Когниция + Энергия + тест Tech-Use (Ментальное) + урон. */
 export async function activateTechMiracle(actor, item) {
@@ -151,8 +152,14 @@ export async function activateTechMiracle(actor, item) {
   // ── Основной тест активации ──────────────────────────────────────────────
   const roll    = await new Roll("1d100").evaluate();
   allRolls.push(roll);
-  const rv      = roll.total;
-  const success = rv <= eff;
+  // Поле Дискорданта (rules/null-zones.mjs): цель — или сам техножрец, если
+  // цели нет, — в поле: «автоматически проваливаются… считается как
+  // Критический Провал». Куб брошен для истории, в зачёт идёт 100.
+  const fieldTarget = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+  const fieldFail = fieldFailsTechPower(actor, fieldTarget);
+  // Провал — и при пороге ≥ 100, где «100 ≤ порога» иначе прошло бы Успехом.
+  const rv      = fieldFail ? 100 : roll.total;
+  const success = !fieldFail && rv <= eff;
   const deg     = Math.floor(Math.abs(rv - eff) / 10) + 1;
 
   // Трата ресурсов: Когниция ⚙ — всегда (до теста), Энергия ⚡ — только при Успехе.
@@ -315,7 +322,9 @@ export async function activateTechMiracle(actor, item) {
       costLine ? `<div class="roll-threshold">${costLine}</div>` : "",
       sys.range ? `<div class="roll-threshold" style="font-size:0.85em;">Дальность: <b>${sys.range}</b></div>` : ""
     ],
-    outcome: success
+    outcome: fieldFail
+      ? `<span class="roll-failure">Поле Дискорданта: Критический Провал — техночудо сорвано, импланты сбоят.</span>`
+      : success
       ? `<span class="roll-success">Активировано — ${deg} ${_degWord(deg)}</span>`
       : `<span class="roll-failure">Сбой — ${deg} ${_degWord(deg)}</span>`,
     sections: [

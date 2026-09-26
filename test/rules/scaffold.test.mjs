@@ -30,7 +30,9 @@ describe("каркас module/rules", () => {
     // wdbc-vsma), hasHatredTarget (цель Таланта Ненависти, wdbc-1rno) и
     // legacyGuardianMarked (метка Защитника, Оружие Наследия, wdbc-1rno.35),
     // isBlinded (свой флаг или оба глаза, Ослеплён, wdbc-x1nz.2.89).
-    expect(Object.keys(predicates.PREDICATES)).toHaveLength(30);
+    // rankAndFile («Рядовой», корбук стр. 4, task-ce3a).
+    // inPariahVoid/isDaemon/targetPsykerOrDaemon — Пустота Парии (rules/null-zones.mjs).
+    expect(Object.keys(predicates.PREDICATES)).toHaveLength(34);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);
     expect(typeof sources.registerRuleSource).toBe("function");

@@ -106,7 +106,7 @@ describe("system.movement.spdBreakdown", () => {
   // wdbc-x1nz.2.91: книга режет вдвое сам SPD, производные — ×2/×3/×6 от
   // уже урезанного. Прежний тест закреплял floor от каждого числа (1/3/4/9).
   it("Потеря одной стопы — SPD floor(÷2), Полное/Натиск/Бег от него ×2/×3/×6", () => {
-    const system = characterWith({ conditions: { lostFeet: true, lostFeetCount: 1 } });
+    const system = characterWith({ lostLimbs: { rightFoot: { lost: true } } });
     expect(system.movement.halfMove).toBe(1); // floor(3/2)
     expect(system.movement.move).toBe(2);     // 1 × 2
     expect(system.movement.charge).toBe(3);   // 1 × 3
@@ -118,13 +118,13 @@ describe("system.movement.spdBreakdown", () => {
   });
 
   it("Потеря одной ноги — тот же эффект, что и стопа (halvedFloor)", () => {
-    const system = characterWith({ conditions: { lostLegs: true, lostLegsCount: 1 } });
+    const system = characterWith({ lostLimbs: { rightLeg: { lost: true } } });
     expect(system.movement.halfMove).toBe(1);
     expect(system.movement.spdBreakdown.map(b => b.label)).toContain("Потеря стопы/ноги");
   });
 
   it("Потеря ОБЕИХ ног — полная неподвижность, а не просто деление", () => {
-    const system = characterWith({ conditions: { lostLegs: true, lostLegsCount: 2 } });
+    const system = characterWith({ lostLimbs: { rightLeg: { lost: true }, leftLeg: { lost: true } } });
     expect(system.movement.halfMove).toBe(0);
     expect(system.movement.move).toBe(0);
     expect(system.movement.charge).toBe(0);
@@ -136,13 +136,21 @@ describe("system.movement.spdBreakdown", () => {
   });
 
   it("Потеря обеих СТОП (не ног) — делится пополам, но не полная неподвижность", () => {
-    const system = characterWith({ conditions: { lostFeet: true, lostFeetCount: 2 } });
+    const system = characterWith({ lostLimbs: { rightFoot: { lost: true }, leftFoot: { lost: true } } });
     expect(system.movement.halfMove).toBe(1); // floor(3/2), не 0 — «нужен Acrobatics−10», не запрет числа
     expect(system.movement.spdBreakdown.map(b => b.label)).toContain("Потеря стопы/ноги");
   });
 
+  // wdbc-x1nz.2.100: потеря ноги на ОДНОЙ стороне не должна опираться на
+  // счётчик другой — сторона права нетронута, но эффект уже полный (1 из 2).
+  it("Потеря стопы на одной стороне независима от другой: правая цела, левая потеряна", () => {
+    const system = characterWith({ lostLimbs: { leftFoot: { lost: true } } });
+    expect(system.movement.halfMove).toBe(1); // floor(3/2) — тот же эффект, что и «правая»
+    expect(system.lostLimbs?.rightFoot?.lost).not.toBe(true);
+  });
+
   it("Повален + потеря стопы — оба применяются по очереди (÷2, затем floor(÷2))", () => {
-    const system = characterWith({ movement: { spdBonus: 3 }, conditions: { prone: true, lostFeet: true, lostFeetCount: 1 } });
+    const system = characterWith({ movement: { spdBonus: 3 }, conditions: { prone: true }, lostLimbs: { rightFoot: { lost: true } } });
     // (3 + 3) = 6 → Повален: 6/2 = 3 → Потеря стопы: floor(3/2) = 1
     expect(system.movement.halfMove).toBe(1);
     expect(system.movement.run).toBe(6); // wdbc-x1nz.2.91: 1 × 6, не floor(9/2)

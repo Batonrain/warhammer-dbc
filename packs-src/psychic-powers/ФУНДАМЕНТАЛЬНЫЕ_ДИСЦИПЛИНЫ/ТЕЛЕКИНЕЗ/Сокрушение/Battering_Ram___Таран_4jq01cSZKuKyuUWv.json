@@ -10,7 +10,12 @@
     "discipline": "telekinesis",
     "subtype": "Сокрушение",
     "powerType": "attack",
-    "extraTypes": [],
+    "extraTypes": [
+      {
+        "type": "indirect",
+        "x": 0
+      }
+    ],
     "shootSubtype": "",
     "prRequired": 4,
     "testChar": "wp",

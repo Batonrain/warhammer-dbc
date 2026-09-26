@@ -62,7 +62,8 @@
       "reloads": 10
     },
     "meleeCategory": "Кнут",
-    "damageSubtype": "crushing"
+    "damageSubtype": "crushing",
+    "techClass": "none"
   },
   "_id": "bfbq8vSWm8vE1Urg",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-whip.svg",

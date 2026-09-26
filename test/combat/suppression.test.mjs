@@ -389,3 +389,17 @@ describe("postSuppressionRecoveryPrompt", () => {
     expect(card).toContain(`data-actor-uuid="${a.uuid}"`);
   });
 });
+
+describe("Подавление Орды («Контроль Орды»): бонус к тесту равен Магнитуде", () => {
+  it("Магнитуда складывается с Волей, Ослабленная — ещё −10", async () => {
+    const a = actor({ wp: 30 });
+    a.type = "horde";
+    a.system.magnitude = { value: 25, start: 40 };
+    a.system.derived = { state: "steady" };
+    let { threshold } = await rollSuppressionTest(a, { mod: -10 });
+    expect(threshold).toBe(45);                        // 30 − 10 + 25
+    a.system.derived.state = "weakened";
+    ({ threshold } = await rollSuppressionTest(a, { mod: -10 }));
+    expect(threshold).toBe(35);
+  });
+});

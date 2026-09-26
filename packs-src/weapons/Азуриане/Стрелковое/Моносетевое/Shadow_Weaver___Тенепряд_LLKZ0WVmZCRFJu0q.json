@@ -77,7 +77,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "techClass": "none"
   },
   "_id": "LLKZ0WVmZCRFJu0q",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-heavy.svg",

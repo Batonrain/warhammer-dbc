@@ -72,7 +72,8 @@
       "standard": false,
       "reloads": 10
     },
-    "damageSubtype": "toxic"
+    "damageSubtype": "toxic",
+    "techClass": "none"
   },
   "_id": "f4UQUImXaE48h9VT",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-thrown.svg",

@@ -69,6 +69,9 @@ import { isFusedByHandOfDeath }                       from "../rules/hand-of-dea
 import { counterAttackTriggers, counterAttackSectionHtml } from "./counter-attack.mjs";
 import { invocationNaturalAdd } from "../rules/invocation-natural.mjs";
 import { suffersBlindness } from "../rules/blindness.mjs";
+import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
+import { fieldDisablesWeapon } from "../rules/null-zones.mjs";
+import { isHeadHit } from "./armor-properties.mjs";
 
 /**
  * Экстремальный урон (стр. 166-170): куб урона выбросил Х+ — порог берётся из
@@ -120,8 +123,10 @@ export async function rollExtremeDamage(dmgRoll, { wp, damageType, hitLocation =
       if (attacker && actorInfamyValue(attacker) >= 1) {
         const path = actorInfamyPath(attacker);
         const spend = await spendFromInfamyPool(attacker, 1, path);
-        await attacker.update({ [path]: spend.poolValue });
-        wp.legacyCleavingRollActive = true;
+        if (spend) {
+          await attacker.update({ [path]: spend.poolValue });
+          wp.legacyCleavingRollActive = true;
+        }
       } else {
         ui.notifications?.warn("Кромсающее: нет Очков Бесчестия — обычный бросок 1d5+1.");
       }
@@ -235,11 +240,21 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   _mergedEntries = withWitchsEdge(item, _mergedEntries);
 
   // ── Выключенное оружие (стр. 209-211) ────────────────────────────────────
+  // Поле Дискорданта (rules/null-zones.mjs): электрическое рукопашное бьёт
+  // выключенным, даже если окно атаки обошли (другие пути до броска).
+  const fieldOff = fieldDisablesWeapon(actor, item);
   const off = weaponOffEffects({
-    sys, entries: _mergedEntries, on: !!opts.weaponOff, basePen: effPen0, gripDmgFlat
+    sys, entries: _mergedEntries, on: !!opts.weaponOff || fieldOff, basePen: effPen0, gripDmgFlat
   });
   _mergedEntries = off.entries;
-  const offDmgMod = off.dmgMod, offPenMod = off.penMod, offNote = off.note;
+  // Прочая электрика ближнего боя (экзотика «тех» и т.п.) своей строки в
+  // weaponOffEffects не имеет — в поле Дискорданта она просто примитивная.
+  let fieldOffNote = "";
+  if (fieldOff && !off.note) {
+    if (!_mergedEntries.some(e => e.key === "primitive")) _mergedEntries.push({ key: "primitive", rating: 0, rating2: 0 });
+    fieldOffNote = "Поле Дискорданта: оружие выключено, работает как примитивное.";
+  }
+  const offDmgMod = off.dmgMod, offPenMod = off.penMod, offNote = off.note || fieldOffNote;
   if (off.damage) effDamage = off.damage;
 
   // Осколочное оружие: длинная очередь рвёт плоть — добавляем Tearing к этому
@@ -589,6 +604,16 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // атака (hiddenAttack, -999) Избегание уже блокирует целиком — прибавлять
   // сюда нечего, поэтому там веток нет.
   const critHitPenalty = (hit && critOutcome?.success) ? -30 : 0;
+  // Концентрация огня (Командное Присутствие, эффект 2; combat/command-state.mjs
+  // ::declareFocusFire): атака за тройку подчинённых — попадания получают −20
+  // на все тесты Избегания и +2 куба урона. Метка на атакующем, одна атака.
+  const focusFire = actor.getFlag?.("warhammer-dbc", "focusFire");
+  const focusFireOn = !!focusFire && focusFire.weaponName === item.name;
+  // «Быстрые и Мёртвые» (Размер < 2): атака «Тройки» для них — атака
+  // одиночного персонажа, ни −20, ни +2 куба (rules/horde-single-target.mjs).
+  // Метка всё равно гасится ниже — Тройка свою атаку совершила.
+  const focusFireBonusOn = focusFireOn && !evadesHordeAsSingle(defenderActor);
+  const focusEvasion = focusFireBonusOn ? -20 : 0;
 
   // Граната, Критический Промах (стр. 40, wdbc-x1nz.2.59): «граната падает
   // персонажу под ноги и взрывается» — весь остаток обычного разбора атаки
@@ -1045,7 +1070,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Доп. кубы урона: Меткое (одиночный, по СУ, ТОЛЬКО с Прицеливанием — книга
   // «При одиночных выстрелах С Прицеливанием»), Рассеивание (кор. дист.),
   // Максимальный режим (+1d10). Эти кубы НЕ вызывают Экстремальный урон.
-  const bonusDice = bonusDamageDice({
+  const bonusDice = (focusFireBonusOn && hit ? 2 : 0) + bonusDamageDice({
     wp, rofMode, hit, deg, shortRange, maximal: maximalOn, band,
     ammoDice: ammoSys?.damageDiceMod,
     aimed,
@@ -1157,6 +1182,19 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Место каждого попадания считается один раз: карточка печатает его и в
   // строке урона, и в кнопке применения урона.
   const hits = damageRolls.map((d, i) => ({ ...d, loc: locForHit(i) }));
+
+  // I(Cr) по голове (Виды Урона, wdbc-x1nz.2.80): «получает свойство
+  // Concussive (–1), попадая в голову» — или +1 к рейтингу, если оно уже было
+  // (тот же приём, что Молот по лежащему выше). Место известно только теперь,
+  // поэтому свойства карточки пересобираются здесь; на урон Concussive не влияет.
+  const crushingHead = (ammoDmgSubtype || effDmgSubtype) === "crushing" && hits.some(h => isHeadHit(h.loc));
+  const cardProps = crushingHead ? (() => {
+    const entries = _mergedEntries.map(e => ({ ...e }));
+    const conc = entries.find(e => e.key === "concussive");
+    if (conc) conc.rating = (Number(conc.rating) || 0) + 1;
+    else entries.push({ key: "concussive", rating: -1 });
+    return resolveWeaponPropsList(entries);
+  })() : wProps;
 
   // Наследие Предательства, Оружие Наследия (wdbc-1rno.35, История 4, стр.
   // 427): нат. 100 на попадание — «оружие попадает по случайному союзнику»
@@ -1539,13 +1577,13 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // (безусловно) — у одного оружия сразу оба быть не могут (разные
         // weaponClass-ветки самой записи).
         dodgeMod: (hiddenAttack || feintBlocked) ? -999
-          : meleeShotDodgeBonus + evasionImperativeBonus(defenderActor) + (blindFightingBypass ? -20 : 0) + critHitPenalty + wideBurstPenalty
+          : meleeShotDodgeBonus + evasionImperativeBonus(defenderActor) + (blindFightingBypass ? -20 : 0) + critHitPenalty + wideBurstPenalty + focusEvasion
             + swiftLegacyMeleeDodgePenalty(item) + swiftLegacyRangedDodgePenalty(item),
         dodgeModRecoil: (!hiddenAttack && !feintBlocked && hasEvasionRecoilImperative(defenderActor))
-          ? meleeShotDodgeBonus + evasionImperativeBonus(defenderActor, { planningRecoil: true }) + (blindFightingBypass ? -20 : 0) + critHitPenalty + wideBurstPenalty
+          ? meleeShotDodgeBonus + evasionImperativeBonus(defenderActor, { planningRecoil: true }) + (blindFightingBypass ? -20 : 0) + critHitPenalty + wideBurstPenalty + focusEvasion
             + swiftLegacyMeleeDodgePenalty(item) + swiftLegacyRangedDodgePenalty(item)
           : null,
-        parryMod: (hiddenAttack || feintBlocked) ? -999 : (techOpts.targetParryMod ?? 0) + (blindFightingBypass ? -20 : 0) + critHitPenalty,
+        parryMod: (hiddenAttack || feintBlocked) ? -999 : (techOpts.targetParryMod ?? 0) + (blindFightingBypass ? -20 : 0) + critHitPenalty + focusEvasion,
         // Переброс, НАВЯЗАННЫЙ защищающемуся (Локус Кровопролития): бросает его
         // цель у себя, а знает о нём атакующий — поэтому он едет атрибутом на
         // кнопках защиты в карточке.
@@ -1606,13 +1644,14 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
           : ""
       },
       blocks: {
-        props:         buildPropertyChatBlock(wProps),
+        props:         buildPropertyChatBlock(cardProps),
         quality:       buildQualityChatBlock(item),
         splinter:      isSplinter(sys) ? splinterReminders() : "",
         // ammoName (wdbc-utaw) — какой боеприпас заряжен на ЭТОТ выстрел, для
         // спец-боеприпасов, чей эффект зависит от собственной идентичности
         // (Гиперрост), не только от ключа свойства Toxic.
-        targetEffects: buildTargetEffectButtons(wProps, { hit, ammoName: loadedAmmo?.name || "" }),
+        targetEffects: buildTargetEffectButtons(cardProps, { hit, ammoName: loadedAmmo?.name || "",
+          damageType: effDmgType, hitLocation: hits[0]?.loc || "" }),
         counterAttack: counterAttackBlock,
         dice:          renderedDice
       }
@@ -1641,6 +1680,17 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     if (existing) { await existing.update(messageData); return; }
   }
   await ChatMessage.create(messageData);
+  // Командование (глава «Командование»): метка Концентрации огня гасится
+  // атакой; Синхронный Натиск и счётчик Залпового Огня — после атаки
+  // подчинённого (combat/command-state.mjs). Переброс (forcedRoll) — та же
+  // атака, второй раз не считается.
+  if (!forcedRoll) {
+    try {
+      const cs = await import("./command-state.mjs");
+      if (focusFireOn) await cs.updateOrRelay(actor, { "flags.warhammer-dbc.-=focusFire": null });
+      await cs.afterSubordinateAttack(actor, { isMelee, isThrown: sys.weaponClass === "thrown", defenderActor });
+    } catch (e) { console.warn("Warhammer DBC | Командование после атаки:", e); }
+  }
   // Automated Animations (если установлен и включён) — см. module/integrations/autoanimations.mjs.
   triggerAttackAnimation({ actor, item, hit });
 }

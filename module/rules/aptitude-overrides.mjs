@@ -25,9 +25,17 @@ const norm = s => String(s ?? "").toLowerCase().trim();
  * Совпадение по подстроке имени или по целой «группе:Имя» (тот же приём, что
  * у cultureCat) — «группа:Имя!Искл1,Искл2» значит «вся группа, кроме...».
  */
-function nameHit(match, name, group) {
+function nameHit(match, name, group, specialty = "") {
   const m = norm(match);
   if (!m) return false;
+  // «спец:группа:Специализация[|вариант]» — одна специализация Группы Навыков
+  // (Мутант: «For.Lore (Mutants) становится дружественным», а не вся группа
+  // Запретных знаний). Варианты через «|»: подпись и ключ специализации.
+  if (m.startsWith("спец:")) {
+    const [grp, specs = ""] = m.slice(5).split(":");
+    if (norm(group) !== grp.trim()) return false;
+    return specs.split("|").some(x => x.trim() && norm(specialty) === x.trim());
+  }
   if (m.startsWith("группа:")) {
     const [grp, exc] = m.slice(7).split("!");
     if (norm(group) !== grp.trim()) return false;
@@ -56,7 +64,7 @@ export function resolveAptitudeOverride(actor, scope, name, group = "", ctx = {}
   for (const rule of collectRules(actor, ctx)) {
     for (const effect of rule?.effects ?? []) {
       if (effect?.kind !== "grantAptitudeOverride" || effect.scope !== scope) continue;
-      const hit = scope === "characteristic" ? norm(effect.match) === n : nameHit(effect.match, n, group);
+      const hit = scope === "characteristic" ? norm(effect.match) === n : nameHit(effect.match, n, group, ctx.specialty);
       if (!hit) continue;
       if (effect.align === "enemy") enemy = true;
       else if (effect.align === "ally") ally = true;
@@ -81,7 +89,7 @@ export function aptitudeOverrideLabels(actor, scope, name, group = "", ctx = {})
   for (const rule of collectRules(actor, ctx)) {
     for (const effect of rule?.effects ?? []) {
       if (effect?.kind !== "grantAptitudeOverride" || effect.scope !== scope) continue;
-      const hit = scope === "characteristic" ? norm(effect.match) === n : nameHit(effect.match, n, group);
+      const hit = scope === "characteristic" ? norm(effect.match) === n : nameHit(effect.match, n, group, ctx.specialty);
       if (!hit) continue;
       const label = rule.label || rule.id;
       if (label && !out.includes(label)) out.push(label);

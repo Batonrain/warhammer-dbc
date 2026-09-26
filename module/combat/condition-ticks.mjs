@@ -49,11 +49,12 @@ import { completeInfection } from "../apps/parasite-trait.mjs";
 // срок задан, сюда не попадает вовсе: его считает Foundry, а истечение
 // подметается ниже. Свой декремент остаётся ровно для тех, кому срок
 // проставили старым способом — числом в поле, без эффекта.
-import { sweepConditionDurations, hasConditionDuration } from "./condition-effects.mjs";
+import { sweepConditionDurations, hasConditionDuration, conditionDurationEffects } from "./condition-effects.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 // Смерть от Состояния (wdbc-x1nz.2.92/.94): Кровотечение «на 0 и ниже он
 // умирает», Удушье «умирает от удушья через T.b Раундов» — общий путь.
 import { killByCondition } from "./condition-death.mjs";
+import { applyCharDamage } from "./char-damage.mjs";
 // Тесты внутри тиков (T+0 против жара/удушья, W+0 Обескровливания) — с
 // модификаторами персонажа, как любой тест без диалога (rules/roll-mods.mjs::
 // collectTestMods): раньше тут был голый 1d100 против t.total, и штрафы
@@ -62,6 +63,8 @@ import { killByCondition } from "./condition-death.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { isAstartes } from "../rules/legacy-weapon.mjs";
+import { uselessRoundTick, SIDE_LABELS } from "../rules/useless-limbs.mjs";
+import { secondaryCritHtml } from "./secondary-crit.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -297,7 +300,7 @@ async function stepSuffocationHold(actor, { rest = false, faintAt = null } = {})
 /** Смерть от удушья: метка отсчёта снимается, смерть — общим путём. */
 async function suffocationDeath(actor) {
   await actor.update({ [`flags.${NS}.-=${SUFFOCATION_FLAG}`]: null });
-  await killByCondition(actor);
+  await killByCondition(actor, "suffocating");
   return `<div class="roll-threshold">${SUFF_ICON()}Удушье: <span class="roll-failure"><b>СМЕРТЬ</b> от удушья</span></div>`;
 }
 
@@ -512,6 +515,16 @@ export async function ensureBurningGrace(actor) {
  */
 export async function rollBurningPanicTest(actor) {
   const wp = actor.system.characteristics.wp?.total ?? 0;
+  // Детальная Команда «Храбрость»: подчинённые «автоматически выходят из
+  // … паники от Горения» — теста нет (глава «Командование»).
+  const { commandBraveryOn } = await import("./command-state.mjs");
+  if (commandBraveryOn(actor)) {
+    await postTestCard(actor, {
+      icon: rollIcon("fire","#8fd0ff"), title: `Паника от Горения — ${esc(actor.name)}`,
+      outcome: `<span class="roll-success">Храбрость: командир держит строй — паники нет</span>`
+    });
+    return { success: true, rv: null, eff: wp };
+  }
   const { eff, parts, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wp);
   if (!success) await actor.update({ "system.actionPoints.value": 0 });
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });
@@ -600,6 +613,16 @@ export async function processConditionTurnStart(actor) {
     if (key === "parasiticContact" && next <= 0) await completeInfection(actor);
   }
 
+  // Временно бесполезная рука/нога (крит «бесполезна на 1d10 Раундов»,
+  // wdbc-x1nz.2.99) — у каждой конечности свой счётчик в system.uselessLimbs.
+  const uselessTick = uselessRoundTick(actor.system);
+  Object.assign(updates, uselessTick.patch);
+  for (const t of uselessTick.ticks) {
+    lines.push(t.to <= 0
+      ? `<div class="roll-threshold">Бесполезна (${SIDE_LABELS[t.side]}): <b>${t.from}</b> → снято</div>`
+      : `<div class="roll-threshold">Бесполезна (${SIDE_LABELS[t.side]}): <b>${t.from}</b> → <b>${t.to}</b></div>`);
+  }
+
   // Удушье (книга, «Удушье», wdbc-x1nz.2.94): ВО ВРЕМЯ задержки — тест T+0
   // каждый Ход (провал +1 Усталости), запас suffocatingRounds тает на 1; не
   // вздохнул за отведённое время (запас кончился) — Без сознания; без
@@ -652,7 +675,7 @@ export async function processConditionTurnEnd(actor) {
     const eff = roll.total - level;
     if (eff <= 0) {
       lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: 1d10 <b>${roll.total}</b> − Обескровливание ${level} = <b>${eff}</b> → <span class="roll-failure"><b>СМЕРТЬ</b> (независимо от количества Ран)</span></div>`);
-      await killByCondition(actor);
+      await killByCondition(actor, "bleeding");
     } else if (eff <= 5) {
       const newLevel = level + 1;
       const upd = conditionAdjustFields(actor, "haemorrhaging", 1);
@@ -718,10 +741,15 @@ export async function processConditionTurnEnd(actor) {
     const fireAp = fireproofBurningApBonus(actor);
     const net = Math.max(0, roll.total - tb - fireAp);
     if (net > 0) {
-      const { currentWounds, newWounds, newCritical, maxWounds, gotCritical } = await applyWoundLoss(actor, net);
+      const loss = await applyWoundLoss(actor, net);
+      const { currentWounds, newWounds, newCritical, maxWounds, gotCritical } = loss;
       await addFatigue(actor, 1);
       const destroyed = gotCritical && newCritical >= woundDeathThreshold(maxWounds);
       lines.push(`<div class="roll-threshold">${rollIcon("fire", "#ff8a3a")}Горение: ${esc(formula)} <b>${roll.total}</b> − T.b ${tb}${fireAp ? ` − AP(×2) ${fireAp}` : ""} = <b>${net}</b> урона E(Fl)${fireAp ? "" : ", игнор брони"}. Раны: ${currentWounds} → ${newWounds}${gotCritical ? ` (крит. <b>${newCritical}</b>)` : ""} · 😓 Усталость +1${destroyed ? ` — <b>уничтожен</b>` : ""}</div>`);
+      // Горение в минус — Крит. Эффект по таблице Энергии (E(Fl)), место не
+      // названо книгой — Торс (wdbc-x1nz.2.85).
+      const burnCrit = await secondaryCritHtml(actor, loss, { damageType: "energy", hitLocation: "Торс" });
+      if (burnCrit) lines.push(burnCrit);
       // Непоглощённый урон будит лишившегося сознания от Обескровливания.
       if (await releaseUnconsciousCause(actor, HAEMORRHAGE_FAINT_FLAG)) {
         lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Обескровливание: непоглощённый урон приводит в чувство</div>`);
@@ -748,11 +776,10 @@ export async function processConditionTurnEnd(actor) {
   // Радиации, не отдельный тег листа), а флаг актора с собственным
   // worldTime-тиком раз в 8 часов, combat/radiation.mjs.
   if (conds.radiation) {
-    const before = Number(actor.system.charDamage?.t) || 0;
-    const after  = before - 1;
     const level  = Number(conds.radiationLevel) || 0;
     const newLevel = level + 1;
-    await actor.update({ "system.charDamage.t": after, ...conditionAdjustFields(actor, "radiation", 1) });
+    // Единый конвейер урона в Характеристики (wdbc-x1nz.2.83).
+    const { before, after } = await applyCharDamage(actor, "t", 1, { extra: conditionAdjustFields(actor, "radiation", 1) });
     let sicknessNote = "";
     if (newLevel % 10 === 0) {
       // Тот же тест T+0 с модификаторами персонажа, что у Горения/Удушья выше.
@@ -763,8 +790,31 @@ export async function processConditionTurnEnd(actor) {
         ? `<span class="roll-failure">провал → лучевая болезнь</span>`
         : `<span class="roll-success">успех</span>`}`;
     }
-    lines.push(`<div class="roll-threshold">${rollIcon("warp", "#ffe14d")}Радиация: урон T <b>1</b> (Мод. T: ${before}→${after})${sicknessNote}</div>`);
+    lines.push(`<div class="roll-threshold">${rollIcon("warp", "#ffe14d")}Радиация: урон в T <b>1</b> (T ${before}→${after})${sicknessNote}</div>`);
   }
 
   if (lines.length) await postConditionCard(actor, lines);
+}
+
+/**
+ * Конец Хода наложившего (книга, «Длительность Эффектов», wdbc-x1nz.2.84):
+ * эффект на N Раундов кончается в конце соответствующего Хода — наложил сам
+ * в свой Ход → в конце своего следующего, наложил противник → в конце
+ * следующего Хода противника. Подметаются все участники боя, у кого висит
+ * срок, начатый в Ход endedCombatantId. Раунд — того самого Хода: при смене
+ * Раунда combat.round уже новый.
+ */
+export async function sweepApplierTurnEnd(combat, endedCombatantId) {
+  if (!combat || !endedCombatantId) return;
+  const round = combat.previous?.round ?? combat.round;
+  const turn = combat.previous?.turn ?? combat.turn;
+  const seen = new Set();
+  for (const c of combat.combatants ?? []) {
+    const actor = c.actor;
+    if (!actor || seen.has(actor)) continue;
+    seen.add(actor);
+    if (!conditionDurationEffects(actor).length) continue;
+    const swept = await sweepConditionDurations(actor, { round, turn, endedCombatantId });
+    if (swept.expired.length) await postConditionCard(actor, swept.expired.map(conditionExpiryLine));
+  }
 }

@@ -18,7 +18,7 @@
       "fel": 25,
       "inf": 19
     },
-    "bonusRolls": 2,
+    "bonusRolls": 3,
     "skills": "",
     "gear": "5 элементов Снаряжения/Инструментов до R1 (2 Good.Q, 1 Best.Q)",
     "talents": "",
@@ -97,6 +97,11 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
+              "when": {
+                "predicates": {
+                  "rankAndFile": false
+                }
+              },
               "label": "",
               "code": ""
             },
@@ -153,6 +158,11 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
+              "when": {
+                "predicates": {
+                  "rankAndFile": false
+                }
+              },
               "label": "",
               "code": ""
             }

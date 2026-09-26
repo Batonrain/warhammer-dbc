@@ -74,7 +74,8 @@
       "standard": false,
       "reloads": 10
     },
-    "damageSubtype": "laser"
+    "damageSubtype": "laser",
+    "techClass": "electric"
   },
   "_id": "u0GROI7aTGdkD9BO",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-pistol.svg",

@@ -61,7 +61,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Кистень"
+    "meleeCategory": "Кистень",
+    "techClass": "none"
   },
   "_id": "hUSKlUVTHCf3mhTr",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

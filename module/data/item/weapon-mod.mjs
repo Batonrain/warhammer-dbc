@@ -9,6 +9,7 @@
 //  опечатка в пути дала бы тихий ноль.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { stringList, repairStringListAt } from "../string-list.mjs";
 import { migrateCharBonusPair } from "./_legacy-char-bonus.mjs";
 import { infoguardField } from "./infoguard.mjs";
 
@@ -71,14 +72,24 @@ export class WeaponModData extends foundry.abstract.TypeDataModel {
         fittedToId:     new StringField({ initial: "", label: "Подстроена под" }),
         fittedBonus:    new NumberField({ initial: 0, nullable: false, label: "Бонус подстройки (±)" }),
         addProps:        props("Добавляет свойства"),
-        removeProps:     props("Снимает свойства"),
+        // Снимаемые свойства — ключи-строки (data/string-list.mjs).
+        removeProps:     stringList("Снимает свойства"),
         mechAddProps:    props("Добавляет свойства (механикум)"),
-        mechRemoveProps: props("Снимает свойства (механикум)")
+        mechRemoveProps: stringList("Снимает свойства (механикум)")
       }, { label: "Механика" }),
       drukhari:     new BooleanField({ initial: false, label: "Друкхари" })
     };
   }
 
-  /** @override — общий разбор пары charBonusStat/charBonusValue. */
-  static migrateData(source) { return migrateCharBonusPair(source); }
+  /**
+   * Общий разбор пары charBonusStat/charBonusValue; снимаемые свойства,
+   * испорченные прежней схемой в {}, — в метку для мировой миграции
+   * (data/string-list.mjs).
+   * @override
+   */
+  static migrateData(source) {
+    repairStringListAt(source, "effects.removeProps");
+    repairStringListAt(source, "effects.mechRemoveProps");
+    return migrateCharBonusPair(source);
+  }
 }

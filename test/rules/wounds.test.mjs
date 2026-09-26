@@ -91,6 +91,33 @@ describe("applyWoundLoss: применение к актору", () => {
     expect(a.updates[0]["system.wounds.firstAidUsed"]).toBe(false);
   });
 
+  // Чудесное Спасение откатывает смертельный удар (rules/death-save.mjs::rollbackWounds).
+  it("пишет снимок Ран ДО потери тем же update (wdbc-x1nz.2, Смерть)", async () => {
+    const a = actor({ value: 3, critical: 1 });
+    await applyWoundLoss(a, 7);
+    expect(a.updates).toHaveLength(1);
+    expect(a.updates[0]["flags.warhammer-dbc.preHitWounds"]).toEqual({ value: 3, critical: 1 });
+  });
+
+  it("у мёртвого снимок не перезаписывается — добивание не сдвигает точку отката", async () => {
+    const a = { ...actor({ value: 0, critical: 9 }), getFlag: (s, k) => k === "deceased" };
+    await applyWoundLoss(a, 4);
+    expect(a.updates[0]).not.toHaveProperty("flags.warhammer-dbc.preHitWounds");
+  });
+
+  it("новая потеря Ран снимает прежнюю причину смерти от Состояния", async () => {
+    const a = { ...actor({ value: 5 }), getFlag: (s, k) => k === "deathCause" ? "bleeding" : undefined };
+    await applyWoundLoss(a, 2);
+    expect(a.updates[0]["flags.warhammer-dbc.-=deathCause"]).toBeNull();
+  });
+
+  it("под Божественной Защитой Раны не теряются вовсе", async () => {
+    const a = { ...actor({ value: 5 }), getFlag: (s, k) => k === "divineProtection" };
+    const result = await applyWoundLoss(a, 20);
+    expect(result).toMatchObject({ applied: false, newWounds: 5, newCritical: 0, gotCritical: false });
+    expect(a.updates).toHaveLength(0);
+  });
+
   it("нулевой урон не шлёт update вовсе", async () => {
     const a = actor({ value: 8, critical: 0 });
     const result = await applyWoundLoss(a, 0);

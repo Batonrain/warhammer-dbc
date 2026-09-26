@@ -67,7 +67,8 @@
       "standard": false,
       "reloads": 10
     },
-    "rangeBands": []
+    "rangeBands": [],
+    "techClass": "electric"
   },
   "_id": "wgbaYCD3tzyFPnfl",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-heavy.svg",

@@ -13,11 +13,18 @@ import { esc } from "../../helpers/utils.mjs";
 import { postTestCard } from "../../helpers/test-card.mjs";
 import { SECONDS_PER_DAY } from "../../constants/imperial-calendar.mjs";
 import { openSurgeon } from "../../apps/surgeon.mjs";
-import { addFatigue, conditionAdjustFields, conditionApplyFields, conditionRemoveFields } from "./conditions.mjs";
+import { addFatigue, conditionApplyFields, conditionRemoveFields } from "./conditions.mjs";
 import { spendActionPoints } from "../../combat/action-economy.mjs";
 import { worldTimeRemaining } from "../../rules/cooldown.mjs";
 import { showDelegateTestPicker } from "../../rules/delegate-test.mjs";
-import { clearLimbLossGangreneFields } from "../../combat/limb-loss.mjs";
+import { dropFromHand } from "../../combat/limb-loss.mjs";
+import { classifyImplant } from "../../constants/body-map.mjs";
+import { SIDE_LABELS, STATE_LABELS, settableSides, setLimbOutcome, clearSideFields, recoveryFields } from "../../rules/useless-limbs.mjs";
+import { BODY_SIDE_SHORT, isLostOn, pickLostSide, lostSideFields, clearStumpTimerFields, stumpSidesWithTimer, lostByMutation } from "../../rules/limb-loss.mjs";
+import { collectTestMods } from "../../rules/roll-mods.mjs";
+import { regimenHeal, healPeriodSeconds } from "../../rules/healing-clock.mjs";
+import { killByCondition } from "../../combat/condition-death.mjs";
+import { charLossAddFields } from "../../rules/char-loss.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -30,13 +37,46 @@ const LIMB_TYPES = {
   eye:  { label: "Глаз",  flag: "lostEyes",  count: "lostEyesCount"  }
 };
 
+/** Какой тип бесполезности снимает ампутация/операция этой части тела (wdbc-x1nz.2.99). */
+const LIMB_USELESS_TYPE = { arm: "arm", leg: "leg" };
+
+/** Ключ system.uselessLimbs той же стороны: ("arm", "left") → "leftArm". */
+const uselessKeyOf = (limb, side) => LIMB_USELESS_TYPE[limb] ? side + (limb === "arm" ? "Arm" : "Leg") : null;
+
+/**
+ * Восстановление после Пришивания/бионики (wdbc-x1nz.2.106): рука/нога
+ * (кисть — в руке, стопа — в ноге) бесполезна `days` суток, снимется по
+ * Календарю. Глаз — только строка в карточке: бесполезного глаза в системе нет.
+ */
+function recoveryPatch(limb, side, days) {
+  const key = uselessKeyOf({ hand: "arm", foot: "leg" }[limb] ?? limb, side);
+  return key ? recoveryFields(key, { days, worldTime: game.time.worldTime }) : {};
+}
+
+/** « (П.)» для строк карточки. */
+const sideTag = side => side ? ` (${BODY_SIDE_SHORT[side]})` : "";
+
+/** Есть ли у медика Нартеций — по имени предмета (в паке «Narthecium / Нартеций»). */
+export function hasNarthecium(medic) {
+  return [...(medic?.items ?? [])].some(i => /narthec|нартец/i.test(i.name ?? ""));
+}
+
+/**
+ * Мясник (Талант Медика): «автоматически проходит тесты на лечение
+ * бесполезных конечностей и ампутацию при помощи Нартеция» — возможность
+ * medic.core.butcher (constants/capabilities.mjs), только с Нартецием.
+ */
+export function butcherAutoPass(medic, narthecium) {
+  return !!narthecium && hasRuleFlag(medic, "medic.core.butcher");
+}
+
 /** Уход при лечении болезней (стр. 232) — модификатор к тесту Medicae. */
 const DISEASE_CARE_MOD = { bedRest: 0, rest: -20, none: -40 };
 
 /** Бонус Медики медика — общий для всех режимов теста. */
 function medicSkill(medic) {
   return medic.system.skills?.medicae?.total
-    ?? ((medic.system.characteristics?.int?.value ?? 20) - 20);
+    ?? ((medic.system.characteristics?.int?.total ?? 20) - 20);
 }
 
 /**
@@ -58,7 +98,7 @@ function patientHealingMod(patient) {
 }
 
 /** Итоговый Порог теста Медики: медик + автоматический мод. от пациента + свой довесок режима. */
-function medicaeEff(medic, patient, extra = 0) {
+export function medicaeEff(medic, patient, extra = 0) {
   return medicSkill(medic) + patientHealingMod(patient).total + extra;
 }
 
@@ -87,14 +127,14 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
       <summary style="cursor:pointer;font-weight:bold;">📖 Справка по лечению</summary>
       <div style="padding:4px 2px;line-height:1.35;">
         <b>Уровни ранения</b> (потеря Ран): Лёгкое — до T.b×2; Тяжёлое — больше T.b×2; Критическое — Отрицательные Раны (крит. урон).<br/>
-        <b>Первая Помощь</b> (5 Ходов; 1 раз после урона, провал = использование): Лёгкое Medicae+10 (I.b Ран), Тяжёлое Medicae+0 (2), Критическое Medicae−10 (1).<br/>
+        <b>Первая Помощь</b> (5 Ходов; 1 раз после урона, провал = использование; не больше Ран, чем потеряно после прошлой): Лёгкое Medicae+10 (I.b Ран), Тяжёлое Medicae+0 (2), Критическое Medicae−10 (1).<br/>
         <b>Пассивное</b> (раз в сутки): Лёгкое 1; Тяжёлое — тест T+0 на 1; Критическое — нет.<br/>
         <b>Отдых</b> (сутки, без тяжёлой работы/боёв): Лёгкое ½T.b; Тяжёлое 1; Критическое — тест T+0 на 1.<br/>
         <b>Постельный режим</b> (сутки, лёжа): Лёгкое T.b; Тяжёлое ½T.b (окр.▲); Критическое 1.<br/>
         <b>Мед. уход</b>: Medicae+0 (лёгкий/тяжёлый) сокращает период до 8 часов; Medicae−10 (критический) — лечится как тяжёлый, но раз в сутки.<br/>
         <b>Физиология Астартес</b>: всегда считается отдыхающим; реальный отдых = постельный режим; полный постельный режим не ускоряет сверх этого.<br/>
-        <b>Прижигание</b>: раскалённым предметом — 1d5 Усталости и 1d10 урон в Т, цель фиксируют или тест W−20; иногда останавливает заражение через рану.<br/>
-        <b>Бесполезные конечности/Ампутация</b>: лечение перелома — 5 мин + Medicae+0 (конечность бесполезна 2d10−T.b сут.). Без помощи 2×T.b ч — перманентно; ампутация Medicae−10 (провал → Кровотечение, обрубок Medicae−10 или Гангрена).<br/>
+        <b>Прижигание</b>: раскалённым предметом — 1d5 Усталости и 1d10 урона в T (Характеристику), цель фиксируют или тест W−20; останавливает Кровотечение, прижжённый обрубок не загноится.<br/>
+        <b>Бесполезные конечности/Ампутация</b>: лечение перелома — 5 мин + Medicae+0 (конечность бесполезна 2d10−T.b сут.). Без помощи 2×T.b ч — перманентно; ампутация Medicae−10 (провал → Кровотечение, обрубок Medicae−10 или Гангрена); отрубить клинком — как провал (E — без Кровотечения).<br/>
         <b>Потеря конечности (крит/бой)</b>: всегда Кровотечение; обрубок не обработан за T.b дней → 80% Гангрены (розыгрыш сам по виджету Календаря). «Обработка обрубка» — Medicae−10, 5 мин, снимает угрозу.<br/>
         <b>Остановить Кровотечение</b>: полудействие, Medicae−10; −30, если пациент активно действовал в прошлый Ход или кровь останавливают на себе; жгут/ремень/верёвка — полное действие, +40.<br/>
         <b>Лечение Гангрены</b>: операция хотя бы в операционной, смена работы, Medicae−30; даже при Успехе конечность теряется полностью.<br/>
@@ -121,7 +161,9 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
           <option value="rest">Отдых (сутки)</option>
           <option value="bedRest">Постельный режим (сутки)</option>
           <option value="passive">Пассивное (сутки)</option>
+          <option value="careAssign">Взять на мед. уход (по Календарю)</option>
           <option value="cauterize">Прижигание</option>
+          <option value="setLimb">Зафиксировать бесполезную конечность (Medicae+0, 5 мин)</option>
           <option value="amputate">Ампутация (Medicae−10)</option>
           <option value="reattach">Пришивание конечности (Medicae−30)</option>
           <option value="stumpCare">Обработка обрубка (Medicae−10, 5 мин)</option>
@@ -132,16 +174,23 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
           <option value="disease">Лечение болезни</option>
         </select>
       </div>
-      <div class="atk-dlg-row" data-mode="firstAid,rest,bedRest,passive"><label title="Medicae: критический лечится как тяжёлый; период до 8 часов"><input type="checkbox" id="heal-care"/> Мед. уход</label></div>
+      <div class="atk-dlg-row" data-mode="rest,bedRest,passive"><label title="Medicae: критический лечится как тяжёлый; период до 8 часов"><input type="checkbox" id="heal-care"/> Мед. уход</label></div>
       <div class="atk-dlg-row" data-mode="stopBleeding"><label title="Книга: −30 вместо −10, если пациент активно действовал в свой прошлый Ход (отмечается само по движению/атаке/физическим ОД). На себе — всегда −30."><input type="checkbox" id="heal-patient-active"/> Пациент активно действовал в прошлый Ход</label></div>
       <div class="atk-dlg-row" data-mode="stopBleeding"><label title="Жгут, ремень или тонкая верёвка: полное действие вместо полудействия, +40"><input type="checkbox" id="heal-tourniquet"/> Жгут/ремень/верёвка (+40, полное действие)</label></div>
       <div class="atk-dlg-row" data-mode="gangreneSurgery"><label title="Книга: сложная операция хотя бы в операционной комнате, занимает смену работы. Даже при Успехе гангренозная конечность теряется полностью — выберите её ниже."><input type="checkbox" id="heal-theatre"/> Есть операционная (обязательно)</label></div>
-      <div class="atk-dlg-row" data-mode="amputate,reattach,stumpCare,bionic,gangreneSurgery"><label>Часть тела:</label>
+      <div class="atk-dlg-row" data-mode="amputate,reattach,stumpCare,bionic,gangreneSurgery,cauterize"><label title="Для Прижигания — какой обрубок прижечь (снимает угрозу Гангрены). Пусто — единственный необработанный, если он один.">Часть тела:</label>
         <select id="heal-limb">
           <option value="">— (для Бионики, если не восстанавливает утраченную часть) —</option>
           ${Object.entries(LIMB_TYPES).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join("")}
         </select>
       </div>
+      <div class="atk-dlg-row" data-mode="amputate,reattach,stumpCare,bionic,gangreneSurgery,cauterize"><label title="Потеря конечностей хранится по сторонам (wdbc-x1nz.2.100). «Любая» — первая подходящая.">Сторона:</label>
+        <select id="heal-body-side"><option value="">— любая подходящая —</option><option value="right">Правая</option><option value="left">Левая</option></select>
+      </div>
+      <div class="atk-dlg-row" data-mode="setLimb"><label>Конечность:</label><select id="heal-useless-side"></select></div>
+      <div class="atk-dlg-row" data-mode="setLimb,amputate"><label title="Талант «Мясник»: с Нартецием тест проходится автоматически"><input type="checkbox" id="heal-narthecium" ${hasNarthecium(medic) ? "checked" : ""}/> Нартецием</label></div>
+      <div class="atk-dlg-row" data-mode="amputate"><label title="Книга: отрубить любым рукопашным оружием с лезвием — без теста, как проваленная ампутация"><input type="checkbox" id="heal-chop"/> Отрубить клинком (без теста)</label></div>
+      <div class="atk-dlg-row" data-mode="amputate"><label title="Оружие, наносящее E Dmg, не вызывает Кровотечение"><input type="checkbox" id="heal-chop-energy"/> Оружие E (без Кровотечения)</label></div>
       <div class="atk-dlg-row" data-mode="cauterize"><label title="Иначе — тест W−20, чтобы не вырваться (без доп. эффекта)"><input type="checkbox" id="heal-restrained"/> Пациент зафиксирован</label></div>
       <div class="atk-dlg-row" data-mode="disease"><label>Уход:</label>
         <select id="heal-disease-care">
@@ -178,10 +227,27 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
     if (diseases.some(d => d.id === cur)) sel.value = cur;
   };
 
+  const rebuildUselessSelect = (form, patient) => {
+    const sel = form.querySelector("#heal-useless-side");
+    if (!sel) return;
+    const cur = sel.value;
+    const sides = settableSides(patient?.system);
+    sel.innerHTML = sides.length
+      ? sides.map(side => {
+        const e = patient.system.uselessLimbs[side];
+        const tail = [STATE_LABELS[e.state], e.attempts ? `попыток ${e.attempts}` : "", e.healMod ? `мод. ${e.healMod}` : ""]
+          .filter(Boolean).join(", ");
+        return `<option value="${side}">${SIDE_LABELS[side]} (${esc(tail)})</option>`;
+      }).join("")
+      : `<option value="">— нечего фиксировать —</option>`;
+    if (sides.includes(cur)) sel.value = cur;
+  };
+
   const updateNote = form => {
     const patient = patientOf(form);
     syncModeRows(form);
     rebuildDiseaseSelect(form, patient);
+    rebuildUselessSelect(form, patient);
     if (!patient) return;
     const lvl = woundLevel(patient.system);
     const parts = [
@@ -240,8 +306,13 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
             mod:        num("#heal-mod"),
             bonus:      num("#heal-bonus"),
             limb:       form.querySelector("#heal-limb")?.value,
+            bodySide:   form.querySelector("#heal-body-side")?.value || "",
             diseaseCare: form.querySelector("#heal-disease-care")?.value,
-            diseaseId:   form.querySelector("#heal-disease-item")?.value
+            diseaseId:   form.querySelector("#heal-disease-item")?.value,
+            side:        form.querySelector("#heal-useless-side")?.value,
+            narthecium:  !!form.querySelector("#heal-narthecium")?.checked,
+            chop:        !!form.querySelector("#heal-chop")?.checked,
+            chopEnergy:  !!form.querySelector("#heal-chop-energy")?.checked
           };
           if (mode === "bionic") {
             runBionicInstall(medic, patient, opts);
@@ -289,20 +360,65 @@ async function sendHealChatMsg(medic, patient, headerIcon, headerLabel, lines, r
   }, { rolls, sound: rolls.length > 0 });
 }
 
-/** Прижигание (стр. 231): без теста, 1d5 Усталости + 1d10 урон в Т. */
-async function applyCauterize(medic, patient, { restrained }) {
+/** Все необработанные обрубки пациента: [{ limb, side }] — для Прижигания без выбора. */
+function waitingStumps(system) {
+  return Object.entries(LIMB_TYPES).flatMap(([limb, def]) =>
+    stumpSidesWithTimer(system, def.flag).map(side => ({ limb, side })));
+}
+
+/**
+ * Тест Характеристики пациента без диалога: Итог + Черты/Конструктор
+ * (collectTestMods — тот же сбор, что у Т-теста Гангрены) + свой модификатор.
+ */
+async function charTest(actor, char, extra = 0) {
+  const base = Number(actor.system.characteristics?.[char]?.total) || 0;
+  const ruleMods = collectTestMods(actor, { kind: "skill", char });
+  const threshold = base + ruleMods.total + extra;
+  const roll = await new Roll("1d100").evaluate();
+  const rules = ruleMods.parts.length ? ` (${esc(ruleMods.parts.join(", "))})` : "";
+  return { roll, threshold, success: roll.total <= threshold, rules };
+}
+
+/**
+ * Прижигание (книга, «Прижигание», wdbc-x1nz.2.103): без теста — 1d5
+ * Усталости и 1d10 урона в T. «Урон в T» — урон в Характеристику
+ * (system.charDamage.t, как у Гангрены), не Раны: в книге «урона в T/W/I/S»
+ * везде значит Характеристику. Прижигает кровоточащую рану (снимает
+ * Кровотечение) или обрубок — психосила Пиромантии «Прижигание» прямо
+ * называет эти два исхода обычного Прижигания; прижжённый обрубок снимает
+ * угрозу Гангрены (решение владельца 24.09.2026). T ≤ 0 — смерть
+ * (нулевая T, раздел «Урон в Характеристики»).
+ */
+async function applyCauterize(medic, patient, { restrained, limb = "", bodySide = "" }) {
   const rolls = [];
   const fatigueRoll = await new Roll("1d5").evaluate();
   rolls.push(fatigueRoll);
   const dmgRoll = await new Roll("1d10").evaluate();
   rolls.push(dmgRoll);
-  const tb = patient.system.characteristics?.t?.bonus ?? 0;
-  const dmg = Math.max(0, dmgRoll.total - tb);
 
-  const updates = computeWoundDamage(patient.system, dmg);
+  // Урон в T — единый конвейер (wdbc-x1nz.2.83): пол 0, отходит по 1 в час.
+  const loss = charLossAddFields(patient.system, "t", dmgRoll.total, game.time?.worldTime ?? 0);
+  const tBefore = loss.before;
+  const tAfter = loss.after;
+  const updates = { ...loss.patch };
   const lines = [
-    `${rollIcon("fire","#ff8a3a")}<b>Прижигание</b>: Усталость <b>${fatigueRoll.total}</b>, урон <b>${dmgRoll.total}</b> − T.b(${tb}) = <b>${dmg}</b> непоглощаемого урона.`
+    `${rollIcon("fire","#ff8a3a")}<b>Прижигание</b>: Усталость <b>${fatigueRoll.total}</b>, урон в T <b>${dmgRoll.total}</b> (T ${tBefore}→${tAfter}).`
   ];
+  if (patient.system.conditions?.bleeding) {
+    Object.assign(updates, conditionRemoveFields("bleeding"));
+    lines.push("Кровотечение остановлено.");
+  }
+  // Какой обрубок: выбранная часть тела (сторона — выбранная или первая
+  // ждущая), без выбора — единственный необработанный.
+  const def = LIMB_TYPES[limb];
+  const waiting = def ? stumpSidesWithTimer(patient.system, def.flag).map(side => ({ limb, side })) : waitingStumps(patient.system);
+  const stump = waiting.find(w => w.side === bodySide) ?? (def || waiting.length === 1 ? waiting[0] : null);
+  if (stump) {
+    Object.assign(updates, clearStumpTimerFields(LIMB_TYPES[stump.limb].flag, stump.side));
+    lines.push(`Обрубок (${LIMB_TYPES[stump.limb].label}${sideTag(stump.side)}) прижжён — угроза Гангрены снята.`);
+  } else if (waiting.length > 1) {
+    lines.push(`${rollIcon("warn","#ffb84d")}Необработанных обрубков несколько — выберите часть тела, чтобы прижечь обрубок.`);
+  }
   try {
     await patient.update(updates);
   } catch {
@@ -310,70 +426,130 @@ async function applyCauterize(medic, patient, { restrained }) {
   }
 
   if (!restrained) {
-    const wp = (patient.system.characteristics?.wp?.total ?? 0) - 20;
-    const roll = await new Roll("1d100").evaluate();
-    rolls.push(roll);
-    const success = roll.total <= wp;
-    lines.push(`${rollIcon("warn","#ffb84d")}Пациент не зафиксирован — тест W−20 → порог <b>${wp}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">не пытается вырваться</span>` : `<span class="roll-failure">пытается вырваться</span>`}`);
+    const t = await charTest(patient, "wp", -20);
+    rolls.push(t.roll);
+    lines.push(`${rollIcon("warn","#ffb84d")}Пациент не зафиксирован — тест W−20${t.rules} → порог <b>${t.threshold}</b>, бросок <b>${t.roll.total}</b> — ${t.success ? `<span class="roll-success">не пытается вырваться</span>` : `<span class="roll-failure">пытается вырваться</span>`}`);
   }
 
   try { await addFatigue(patient, fatigueRoll.total); } catch {}
 
+  if (tAfter <= 0 && await killByCondition(patient)) {
+    lines.push(`${rollIcon("skull","#ff6b6b")}Стойкость упала до ${tAfter} — <b>${esc(patient.name)} умирает</b>.`);
+  }
   await sendHealChatMsg(medic, patient, rollIcon("fire","#ff8a3a"), "Прижигание", lines, rolls);
 }
 
-/** Ампутация (стр. 231): Medicae−10, провал → Кровотечение + обрубок. */
-async function applyAmputate(medic, patient, { mod, limb }) {
+/**
+ * Ампутация (книга, «Бесполезные Конечности и Ампутация»): Medicae−10.
+ * Провал всё равно удаляет конечность, но вызывает Кровотечение, а обрубок
+ * «нуждается в медицинской обработке (Medicae−10), иначе с шансом 80%
+ * загноится» — тот же таймер обрубка, что у потери от крит-эффекта (T.b
+ * дней, combat/limb-loss.mjs), обработка — режим «Обработка обрубка» или
+ * Прижигание (wdbc-x1nz.2.103; раньше обработка и 80% разыгрывались сразу).
+ * chop — «просто отрубив конечность любым рукопашным оружием с лезвием»:
+ * без теста, как провал; chopEnergy — оружие E Dmg не вызывает Кровотечение.
+ */
+async function applyAmputate(medic, patient, { mod, limb, narthecium, bodySide = "", chop = false, chopEnergy = false }) {
   const def = LIMB_TYPES[limb];
   if (!def) { ui.notifications.warn("Выберите часть тела для ампутации."); return; }
+  const side = pickLostSide(patient.system, def.flag, bodySide);
+  if (!side) { ui.notifications.warn(`${patient.name}: «${def.label}» — обе уже потеряны.`); return; }
 
   const pMod = patientHealingMod(patient);
-  const eff = medicaeEff(medic, patient, mod - 10);
-  const roll = await new Roll("1d100").evaluate();
-  const rolls = [roll];
-  const success = roll.total <= eff;
-  const lines = [
-    ...pMod.lines,
-    `${rollIcon("blood","#ff6b6b")}<b>Ампутация</b> (${def.label}): Медика−10${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`
-  ];
+  const rolls = [];
+  const lines = [...pMod.lines];
+  let success = false;
+  if (chop) {
+    lines.push(`${rollIcon("blood","#ff6b6b")}<b>Ампутация клинком</b> (${def.label}): без теста — как проваленная ампутация.`);
+  } else {
+    const eff = medicaeEff(medic, patient, mod - 10);
+    const roll = await new Roll("1d100").evaluate();
+    rolls.push(roll);
+    const butcher = butcherAutoPass(medic, narthecium);
+    success = butcher || roll.total <= eff;
+    lines.push(`${rollIcon("blood","#ff6b6b")}<b>Ампутация</b> (${def.label}): Медика−10${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`);
+    if (butcher) lines.push("Мясник с Нартецием — тест пройден автоматически.");
+  }
 
-  const updates = conditionAdjustFields(patient, def.flag, 1);
-  lines.push(`Конечность (${def.label}) удалена.`);
+  const tb = Number(patient.system.characteristics?.t?.bonus) || 0;
+  const updates = lostSideFields(def.flag, side, { timer: !success, worldTime: game.time.worldTime, tb });
+  lines.push(`Конечность (${def.label}${sideTag(side)}) удалена.`);
+  // Удалённая рука/нога больше не «бесполезная» (wdbc-x1nz.2.99).
+  const uselessKey = uselessKeyOf(limb, side);
+  if (uselessKey) Object.assign(updates, clearSideFields(uselessKey));
 
   if (!success) {
-    // У Кровотечения нет книжных «уровней» (wdbc-x1nz.2.92): тик — d10 минус
-    // ОБЕСКРОВЛИВАНИЕ, bleedingLevel ни на что не влияет. Раньше провал
-    // «повышал уровень Кровотечения» впустую — теперь просто накладывает его.
-    Object.assign(updates, conditionApplyFields("bleeding", null, patient));
-    lines.push(`${rollIcon("blood","#ff6b6b")}Провал → <b>Кровотечение</b>.`);
-
-    const stumpEff = medicaeEff(medic, patient, mod - 10);
-    const stumpRoll = await new Roll("1d100").evaluate();
-    rolls.push(stumpRoll);
-    const stumpOk = stumpRoll.total <= stumpEff;
-    lines.push(`Обработка обрубка: Медика−10${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${stumpEff}</b>, бросок <b>${stumpRoll.total}</b> — ${stumpOk ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`);
-
-    if (!stumpOk) {
-      const gangRoll = await new Roll("1d100").evaluate();
-      rolls.push(gangRoll);
-      const gangrene = gangRoll.total <= 80;
-      lines.push(`Шанс Гангрены (80%): бросок <b>${gangRoll.total}</b> — ${gangrene ? `<span class="roll-failure">Гангрена началась</span>` : `<span class="roll-success">пронесло</span>`}`);
-      if (gangrene) Object.assign(updates, conditionApplyFields("gangrene", null, patient));
+    // У Кровотечения нет книжных «уровней» (wdbc-x1nz.2.92) — просто накладывается.
+    if (chop && chopEnergy) {
+      lines.push("Оружие E — рана прижжена ударом, Кровотечения нет.");
+    } else {
+      Object.assign(updates, conditionApplyFields("bleeding", null, patient));
+      lines.push(`${rollIcon("blood","#ff6b6b")}<b>Кровотечение</b>.`);
     }
+    lines.push(`Обрубок нужно обработать (Medicae−10 или Прижигание), иначе через ${tb} дн. 80% Гангрены.`);
   }
 
   try { await patient.update(updates); } catch {
     lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — примените вручную.`);
   }
   await sendHealChatMsg(medic, patient, rollIcon("blood","#ff6b6b"), "Ампутация", lines, rolls);
+  // Без кисти/руки на этой стороне ничего не удержать (wdbc-x1nz.2.100).
+  if (limb === "hand" || limb === "arm") await dropFromHand(patient, side, { wrist: limb === "arm", reason: "ампутация" });
+}
+
+/**
+ * Зафиксировать бесполезную конечность (книга, «Бесполезные Конечности и
+ * Ампутация», wdbc-x1nz.2.99): 5 минут, Medicae+0 (плюс штраф самой
+ * конечности, напр. −20 от некроза). Успех — в лубке на 2d10−T.b суток
+ * (минимум 1), дальше срок ведут часы игрового времени; Провал —
+ * зафиксирована неправильно, попыток до T.b пациента, все провалены —
+ * перманентно (ампутация, иначе через T.b дней 60% Гангрены).
+ */
+async function applySetLimb(medic, patient, { mod, side, narthecium }) {
+  const entry = patient.system?.uselessLimbs?.[side];
+  if (!entry || !settableSides(patient.system).includes(side)) {
+    ui.notifications.warn(`${patient.name}: нет бесполезной конечности, которую можно зафиксировать.`);
+    return;
+  }
+  const tb = Number(patient.system.characteristics?.t?.bonus) || 0;
+  const limbMod = Number(entry.healMod) || 0;
+  const pMod = patientHealingMod(patient);
+  const eff = medicaeEff(medic, patient, mod + limbMod);
+  const roll = await new Roll("1d100").evaluate();
+  const rolls = [roll];
+  const butcher = butcherAutoPass(medic, narthecium);
+  const success = butcher || roll.total <= eff;
+  const modTxt = [limbMod ? `${limbMod} (конечность)` : "", mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""].filter(Boolean).join(" ");
+  const lines = [
+    ...pMod.lines,
+    `${rollIcon("wrench","#d9a066")}<b>Фиксация</b> (${SIDE_LABELS[side]}): Медика+0${modTxt ? ` ${modTxt}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}${butcher ? " (Мясник с Нартецием — автоматически)" : ""}`
+  ];
+  let days = 1;
+  if (success) {
+    const daysRoll = await new Roll("2d10").evaluate();
+    rolls.push(daysRoll);
+    days = Math.max(1, daysRoll.total - tb);
+  }
+  const out = setLimbOutcome(patient.system, side, { success, days, worldTime: game.time.worldTime, tb });
+  if (out.result === "splinted") {
+    lines.push(`Травма обработана правильно. Конечность в лубке и бесполезна ещё <b>${days}</b> сут. (2d10−T.b, мин. 1) — снимется сама по Календарю.`);
+  } else if (out.result === "misset") {
+    lines.push(`Зафиксирована неправильно. Попыток: ${out.attempts} из ${out.maxAttempts} (T.b пациента) — можно пробовать снова.`);
+  } else {
+    lines.push(`Все ${out.maxAttempts} попыток провалены — конечность <b>перманентно бесполезна</b>. Нужна ампутация, иначе через T.b дн. 60% Гангрены.`);
+  }
+  try { await patient.update(out.patch); } catch {
+    lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — примените вручную.`);
+  }
+  await sendHealChatMsg(medic, patient, rollIcon("wrench","#d9a066"), "Бесполезная конечность", lines, rolls);
 }
 
 /** Пришивание конечностей (стр. 231): Medicae−30. */
-async function applyReattach(medic, patient, { mod, limb }) {
+async function applyReattach(medic, patient, { mod, limb, bodySide = "" }) {
   const def = LIMB_TYPES[limb];
   if (!def) { ui.notifications.warn("Выберите часть тела для пришивания."); return; }
-  const curCount = patient.system.conditions?.[def.count] ?? 0;
-  if (curCount <= 0) {
+  const side = pickLostSide(patient.system, def.flag, bodySide, { lost: false });
+  if (!side) {
     ui.notifications.warn(`У пациента нет потерянной части «${def.label}» для пришивания.`);
     return;
   }
@@ -393,11 +569,12 @@ async function applyReattach(medic, patient, { mod, limb }) {
     const daysRoll = await new Roll("1d10").evaluate();
     rolls.push(daysRoll);
     const days = Math.max(1, daysRoll.total + 3 - tb);
-    const updates = conditionAdjustFields(patient, def.flag, -1);
+    const recovery = recoveryPatch(limb, side, days);
+    const updates = { ...lostSideFields(def.flag, side, { lost: false }), ...recovery };
     try { await patient.update(updates); } catch {
       lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — примените вручную.`);
     }
-    lines.push(`Конечность пришита. Восстановление: <b>${days}</b> сут. (1d10+3−T.b, мин. 1).`);
+    lines.push(`Конечность${sideTag(side)} пришита. Восстановление: <b>${days}</b> сут. (1d10+3−T.b, мин. 1)${Object.keys(recovery).length ? " — до тех пор бесполезна, снимется сама по Календарю" : ""}.`);
   } else {
     lines.push("Провал — спасённая конечность умирает и более не может быть использована.");
   }
@@ -411,12 +588,15 @@ async function applyReattach(medic, patient, { mod, limb }) {
  * применима к любому текущему lostX, независимо от причины (кроме Мутации
  * Loss of Limb, которая эту угрозу вообще не заводит, см. rules/limb-loss.mjs).
  */
-async function applyStumpCare(medic, patient, { mod, limb }) {
+async function applyStumpCare(medic, patient, { mod, limb, bodySide = "" }) {
   const def = LIMB_TYPES[limb];
   if (!def) { ui.notifications.warn("Выберите часть тела для обработки обрубка."); return; }
-  const curCount = patient.system.conditions?.[def.count] ?? 0;
-  if (curCount <= 0) {
-    ui.notifications.warn(`У пациента нет обрубка «${def.label}» для обработки.`);
+  // Таймер у каждого обрубка свой (wdbc-x1nz.2.100): выбранная сторона, если
+  // её обрубок ещё ждёт обработки, иначе первый такой.
+  const waiting = stumpSidesWithTimer(patient.system, def.flag);
+  const side = waiting.includes(bodySide) ? bodySide : waiting[0];
+  if (!side) {
+    ui.notifications.warn(`У пациента нет необработанного обрубка «${def.label}».`);
     return;
   }
 
@@ -426,11 +606,11 @@ async function applyStumpCare(medic, patient, { mod, limb }) {
   const success = roll.total <= eff;
   const lines = [
     ...pMod.lines,
-    `${rollIcon("blood","#ff6b6b")}<b>Обработка обрубка</b> (${def.label}): Медика−10${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`
+    `${rollIcon("blood","#ff6b6b")}<b>Обработка обрубка</b> (${def.label}${sideTag(side)}): Медика−10${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`
   ];
   if (success) {
     lines.push("Обрубок обработан — угроза Гангрены снята.");
-    try { await patient.update(clearLimbLossGangreneFields(def.flag)); } catch {
+    try { await patient.update(clearStumpTimerFields(def.flag, side)); } catch {
       lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — снимите таймер вручную.`);
     }
   } else {
@@ -526,7 +706,7 @@ const LIMB_WHOLE = { hand: "arm", foot: "leg" };
  * Кровотечение и новый таймер обрубка не ставятся: это плановая операция в
  * операционной, а не травма.
  */
-async function applyGangreneSurgery(medic, patient, { mod, limb, theatre }) {
+async function applyGangreneSurgery(medic, patient, { mod, limb, theatre, bodySide = "" }) {
   if (!patient.system.conditions?.gangrene) {
     ui.notifications.warn(`${patient.name}: Гангрены нет.`);
     return;
@@ -549,29 +729,46 @@ async function applyGangreneSurgery(medic, patient, { mod, limb, theatre }) {
   }
   const updates = { ...conditionRemoveFields("gangrene") };
   const def = LIMB_TYPES[limb];
+  // Сторона (wdbc-x1nz.2.100): выбранная, иначе первый обрубок с таймером,
+  // иначе первая целая — там и гниёт.
+  const side = bodySide
+    || (def && stumpSidesWithTimer(patient.system, def.flag)[0])
+    || (def && pickLostSide(patient.system, def.flag, "")) || "right";
+  // Гангренозная бесполезная рука/нога теряется — бесполезной ей больше не быть.
+  const uselessKey = uselessKeyOf(LIMB_WHOLE[limb] ?? limb, side);
+  if (uselessKey) Object.assign(updates, clearSideFields(uselessKey));
+  let dropWrist = null;
   if (!def) {
     lines.push("Гангрена излечена. Гангренозная конечность потеряна полностью — отметьте её потерю на листе.");
-  } else if ((patient.system.conditions?.[def.count] ?? 0) <= 0) {
-    Object.assign(updates, conditionAdjustFields(patient, def.flag, 1));
-    lines.push(`Гангрена излечена. Конечность (${def.label}) потеряна полностью.`);
+  } else if (!isLostOn(patient.system, def.flag, side)) {
+    Object.assign(updates, lostSideFields(def.flag, side));
+    lines.push(`Гангрена излечена. Конечность (${def.label}${sideTag(side)}) потеряна полностью.`);
+    if (limb === "hand" || limb === "arm") dropWrist = limb === "arm";
   } else if (LIMB_WHOLE[limb]) {
     const whole = LIMB_TYPES[LIMB_WHOLE[limb]];
-    Object.assign(updates,
-      conditionAdjustFields(patient, def.flag, -1), clearLimbLossGangreneFields(def.flag),
-      conditionAdjustFields(patient, whole.flag, 1));
-    lines.push(`Гангрена излечена. Обрубок (${def.label}) иссечён — потеряна вся конечность (${whole.label}).`);
+    Object.assign(updates, lostSideFields(def.flag, side, { lost: false }), lostSideFields(whole.flag, side));
+    lines.push(`Гангрена излечена. Обрубок (${def.label}${sideTag(side)}) иссечён — потеряна вся конечность (${whole.label}).`);
+    if (limb === "hand") dropWrist = true;
   } else {
-    Object.assign(updates, clearLimbLossGangreneFields(def.flag));
-    lines.push(`Гангрена излечена. Гангренозный обрубок (${def.label}) иссечён.`);
+    Object.assign(updates, clearStumpTimerFields(def.flag, side));
+    lines.push(`Гангрена излечена. Гангренозный обрубок (${def.label}${sideTag(side)}) иссечён.`);
   }
   try { await patient.update(updates); } catch {
     lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — примените вручную.`);
   }
   await sendHealChatMsg(medic, patient, rollIcon("skull","#7a8a4d"), "Операция от Гангрены", lines, [roll]);
+  if (dropWrist !== null) await dropFromHand(patient, side, { wrist: dropWrist, reason: "операция от Гангрены" });
 }
 
-/** Вывод из комы (стр. 232): Medicae−40, раз в 10−T.b дней. */
+/**
+ * Вывод из комы (стр. 232): Medicae−40, раз в 10−T.b дней. Успех снимает
+ * Состояние «Кома» (wdbc-x1nz.2.105) — оно само не проходит.
+ */
 async function applyComaWake(medic, patient, { mod }) {
+  if (!patient.system.conditions?.coma) {
+    ui.notifications.warn(`${patient.name}: не в коме.`);
+    return;
+  }
   const tb = patient.system.characteristics?.t?.bonus ?? 0;
   const testAt = patient.getFlag?.(NS, "comaTestAt");
   const remaining = comaWakeRemaining(testAt, game.time.worldTime, tb);
@@ -589,6 +786,11 @@ async function applyComaWake(medic, patient, { mod }) {
     `${rollIcon("spark","#4dffa6")}<b>Вывод из комы</b>: Медика−40${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех — пациент приходит в себя</span>` : `<span class="roll-failure">Провал</span>`}`
   ];
   try { await patient.setFlag(NS, "comaTestAt", game.time.worldTime); } catch {}
+  if (success) {
+    try { await patient.update(conditionRemoveFields("coma")); } catch {
+      lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — снимите Кому вручную.`);
+    }
+  }
   await sendHealChatMsg(medic, patient, rollIcon("spark","#4dffa6"), "Вывод из комы", lines, [roll]);
 }
 
@@ -619,12 +821,60 @@ async function applyDiseaseCure(medic, patient, { mod, diseaseCare, diseaseId })
  * из своего close() — ждём этот хук вместо переопределения close() на
  * инстансе, чтобы не трогать чужой класс.
  */
-export function runBionicInstall(medic, patient, { mod, limb }) {
+export function runBionicInstall(medic, patient, { mod, limb, bodySide = "" }) {
+  const before = implantSnapshot(patient);
   const app = openSurgeon(patient);
   if (!app) return;
   Hooks.once(`close${app.constructor.name}`, () => {
-    resolveBionicTest(medic, patient, { mod, limb });
+    // Сторона импланта, который поставили в Хирургеоне прямо сейчас, важнее
+    // выбора в окне Лечения — бионика встала туда (wdbc-x1nz.2.100, хвост 1).
+    const after = implantSnapshot(patient);
+    const side = installedImplantSide(before, after, limb) || bodySide;
+    const fresh = newInstalledImplants(before, after, limb);
+    resolveBionicTest(medic, patient, { mod, limb, bodySide: side,
+      implantQuality: fresh.length ? (fresh.every(i => i.quality === "best") ? "best" : "lower") : "" });
   });
+}
+
+/** Часть тела Лечения → тип импланта Хирургеона (constants/body-map.mjs::classifyImplant). */
+const LIMB_IMPLANT_KIND = { hand: "arm", arm: "arm", foot: "leg", leg: "leg", eye: "eye" };
+
+/** Снимок имплантов актора: id → { kind, side, installed } — до и после Хирургеона. */
+export function implantSnapshot(actor) {
+  const out = new Map();
+  for (const i of actor?.items ?? []) {
+    if (i.type !== "implant") continue;
+    out.set(i.id, {
+      kind: classifyImplant(i.name, i.system?.installed, i.system?.category)?.kind || null,
+      side: i.getFlag?.(NS, "bodySide") || "",
+      quality: i.system?.quality || "common",
+      installed: !!i.getFlag?.(NS, "installed")
+    });
+  }
+  return out;
+}
+
+/**
+ * Сторона импланта нужного типа, который в Хирургеоне появился или стал
+ * установленным между двумя снимками. Несколько сразу (пара ног) или ни
+ * одного со стороной — "" (решает выбор в окне Лечения).
+ */
+export function installedImplantSide(before, after, limb) {
+  const sides = new Set(newInstalledImplants(before, after, limb).map(i => i.side).filter(Boolean));
+  return sides.size === 1 ? [...sides][0] : "";
+}
+
+/** Импланты нужного типа, установленные между снимками: [{ side, quality }]. */
+export function newInstalledImplants(before, after, limb) {
+  const kind = LIMB_IMPLANT_KIND[limb];
+  if (!kind) return [];
+  const out = [];
+  for (const [id, now] of after) {
+    const was = before.get(id);
+    if (now.kind !== kind || !now.installed) continue;
+    if (!was || !was.installed || was.side !== now.side) out.push({ side: now.side, quality: now.quality });
+  }
+  return out;
 }
 
 /**
@@ -633,9 +883,11 @@ export function runBionicInstall(medic, patient, { mod, limb }) {
  * тела). Пустое значение — обычный имплант не по месту потери конечности
  * (напр. чисто когнитивный), тогда ветка ниже не трогает Состояния вообще.
  */
-export async function resolveBionicTest(medic, patient, { mod, limb }) {
+export async function resolveBionicTest(medic, patient, { mod, limb, bodySide = "", implantQuality = "" }) {
   const def = LIMB_TYPES[limb];
-  const curCount = def ? (patient.system.conditions?.[def.count] ?? 0) : 0;
+  // Бионика встаёт на выбранную сторону, если там есть потеря, иначе на
+  // первую потерянную (wdbc-x1nz.2.100).
+  const side = def ? pickLostSide(patient.system, def.flag, bodySide, { lost: false }) : null;
   const pMod = patientHealingMod(patient);
   const eff = medicaeEff(medic, patient, mod - 30);
   const roll = await new Roll("1d100").evaluate();
@@ -652,9 +904,20 @@ export async function resolveBionicTest(medic, patient, { mod, limb }) {
     rolls.push(daysRoll);
     const days = Math.max(1, daysRoll.total + 3 - tb);
     lines.push(`Адаптация: <b>${days}</b> сут. (1d10+3−T.b, мин. 1).`);
-    if (def && curCount > 0) {
-      const updates = { ...conditionAdjustFields(patient, def.flag, -1), ...clearLimbLossGangreneFields(def.flag) };
-      try { await patient.update(updates); lines.push(`Часть тела (${def.label}) восстановлена бионикой.`); } catch {
+    // Потеряно мутацией Loss of Limb (wdbc-1rno.6.1): «только Best.Q бионикой,
+    // протезы более низкого Качества… отторгаются». Качество — у импланта,
+    // только что поставленного в Хирургеоне; неизвестно (поставлен вручную) —
+    // решает стол, конечность не восстанавливаем молча.
+    const mutationGate = def && side && lostByMutation(patient.system, def.flag, side) && implantQuality !== "best";
+    if (mutationGate) {
+      lines.push(`${rollIcon("warn","#ffb84d")}Часть тела (${def.label}${sideTag(side)}) потеряна мутацией — прижится только Best.Q бионика${implantQuality ? "; этот протез отторгнется" : " (Качество импланта не определено — проверьте вручную)"}.`);
+    } else if (def && side) {
+      const recovery = recoveryPatch(limb, side, days);
+      const updates = { ...lostSideFields(def.flag, side, { lost: false }), ...recovery };
+      try {
+        await patient.update(updates);
+        lines.push(`Часть тела (${def.label}${sideTag(side)}) восстановлена бионикой${Object.keys(recovery).length ? " — бесполезна, пока идёт адаптация" : ""}.`);
+      } catch {
         lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — снимите «${def.label}» вручную.`);
       }
     } else if (def) {
@@ -663,9 +926,10 @@ export async function resolveBionicTest(medic, patient, { mod, limb }) {
   } else {
     const dmgRoll = await new Roll("1d10").evaluate();
     rolls.push(dmgRoll);
+    // Книга: «При Провале пациент получает 1d10 непоглощаемого R Dmg» — и
+    // только; Калечения в тексте нет (wdbc-x1nz.2.103).
     const updates = computeWoundDamage(patient.system, dmgRoll.total);
-    Object.assign(updates, conditionApplyFields("crippling", null, patient));
-    lines.push(`Провал → <b>${dmgRoll.total}</b> непоглощаемого урона + <b>конечность бесполезна</b> (Калечение).`);
+    lines.push(`Провал → <b>${dmgRoll.total}</b> непоглощаемого урона (R).`);
     try { await patient.update(updates); } catch {
       lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — примените вручную.`);
     }
@@ -674,10 +938,32 @@ export async function resolveBionicTest(medic, patient, { mod, limb }) {
   await sendHealChatMsg(medic, patient, rollIcon("gear","#c98bff"), "Установка бионики/кибернетики", lines, rolls);
 }
 
+/**
+ * Взять пациента на медицинский уход (wdbc-x1nz.2.104): медик сохраняется в
+ * system.healing.caregiver, дальше тест ухода в начале каждого периода лечения
+ * бросают часы Календаря (combat/healing-clock.mjs). Повторно тот же медик —
+ * снимает с ухода.
+ */
+export async function assignCare(medic, patient) {
+  if (!patient.system?.healing) { ui.notifications.warn(`${patient.name}: лечение по Календарю не ведётся для этого типа.`); return; }
+  const same = patient.system.healing.caregiver === medic.uuid;
+  try {
+    await patient.update({ "system.healing.caregiver": same ? "" : medic.uuid });
+  } catch {
+    ui.notifications.warn("Нет прав на изменение листа пациента — попросите ГМа.");
+    return;
+  }
+  await sendHealChatMsg(medic, patient, rollIcon("heart","#ff8a8a"), "Мед. уход", [same
+    ? `${esc(medic.name)} больше не ухаживает за пациентом.`
+    : `${esc(medic.name)} берёт пациента на уход: тест Medicae (+0, критическому −10) в начале каждого периода лечения — успех сокращает его до 8 ч или лечит критического как тяжёлого.`]);
+}
+
 /** Расчёт и применение лечения к пациенту + сообщение в чат. */
 export async function applyHealing(medic, patient, opts) {
   const { mode, care, mod, bonus } = opts;
+  if (mode === "careAssign") return assignCare(medic, patient);
   if (mode === "cauterize") return applyCauterize(medic, patient, opts);
+  if (mode === "setLimb")   return applySetLimb(medic, patient, opts);
   if (mode === "amputate")  return applyAmputate(medic, patient, opts);
   if (mode === "reattach")  return applyReattach(medic, patient, opts);
   if (mode === "stumpCare") return applyStumpCare(medic, patient, opts);
@@ -695,7 +981,8 @@ export async function applyHealing(medic, patient, opts) {
   const lines = [...pMod.lines];
   let heal = 0;
   const lblOf = { light: "Лёгкое", heavy: "Тяжёлое", critical: "Критическое" };
-  const half = (n, up) => up ? Math.ceil(n / 2) : Math.floor(n / 2);
+  let periodRestart = null;
+  let careSucceeded = false;
   // Включает автоматический мод. пациента (patientHealingMod) — в отличие от
   // «сырой» medicSkill(medic), это уже итоговый Порог со стороны медика.
   const medSkill = () => medicSkill(medic) + pMod.total;
@@ -717,7 +1004,14 @@ export async function applyHealing(medic, patient, opts) {
     lines.push(`${rollIcon("heart","#ff8a8a")}<b>Первая Помощь</b> (${lvl.label}): Медика ${skill}${testMod >= 0 ? "+" : ""}${testMod} → порог <b>${eff}</b>, бросок <b>${rv}</b> — ${success ? `<span class="roll-success">Успех (${deg})</span>` : `<span class="roll-failure">Провал (${deg})</span>`}`);
     heal = success ? Math.max(0, baseHeal + bonus) : 0;
     if (!success) lines.push("Восстановление: 0 — Первая Помощь израсходована.");
-    try { await patient.update({ "system.wounds.firstAidUsed": true }); } catch {}
+    // «Не может вылечить больше Ран, чем персонаж потерял после предыдущего
+    // оказания первой помощи» (wdbc-x1nz.2.103); null — ещё не оказывали.
+    const since = patient.system.wounds?.lostSinceFirstAid;
+    if (typeof since === "number" && heal > since) {
+      lines.push(`Ограничено: после прошлой Первой Помощи потеряно только <b>${since}</b> Ран.`);
+      heal = since;
+    }
+    try { await patient.update({ "system.wounds.firstAidUsed": true, "system.wounds.lostSinceFirstAid": 0 }); } catch {}
   } else {
     let effMode = mode;
     if (isAstartes) {
@@ -732,6 +1026,7 @@ export async function applyHealing(medic, patient, opts) {
       const roll = await new Roll("1d100").evaluate();
       rolls.push(roll);
       const ok = roll.total <= eff;
+      careSucceeded = ok;
       if (lvl.key === "critical") {
         lines.push(`${rollIcon("heart","#ff8a8a")}<b>Мед. уход</b> (крит): Медика−10${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${ok ? `<span class="roll-success">Успех — лечится как тяжёлый</span>` : `<span class="roll-failure">Провал</span>`}`);
         if (ok) key = "heavy";
@@ -740,22 +1035,18 @@ export async function applyHealing(medic, patient, opts) {
       }
     }
     const modeLabel = { rest: "Отдых", bedRest: "Постельный режим", passive: "Пассивное лечение" }[effMode];
-    let amount = 0, needT = false;
-    if (effMode === "rest") {
-      amount = { light: half(tb), heavy: 1, critical: 0 }[key];
-      if (key === "critical") needT = true;
-    } else if (effMode === "bedRest") {
-      amount = { light: tb, heavy: half(tb, true), critical: 1 }[key];
-    } else {
-      amount = { light: 1, heavy: 0, critical: 0 }[key];
-      if (key === "heavy") needT = true;
-    }
+    // Та же таблица, что у часов Календаря (rules/healing-clock.mjs); «Пассивное» — режим "active".
+    const { amount, needT } = regimenHeal(effMode === "passive" ? "active" : effMode, key, tb);
+    // Кнопка — запасной путь для стола без Календаря: период лечения по
+    // часам начинается заново, иначе те же сутки вылечили бы дважды.
+    if (patient.system.healing) periodRestart = { "system.healing.nextAt": (game.time?.worldTime ?? 0) + healPeriodSeconds(key, care && key === lvl.key && careSucceeded), "system.healing.careOk": false };
     if (needT) {
-      const tv = (patient.system.characteristics?.t?.value ?? 0) + mod;
-      const roll = await new Roll("1d100").evaluate();
-      rolls.push(roll);
-      const ok = roll.total <= tv;
-      lines.push(`${rollIcon("heart","#8fd0ff")}<b>${modeLabel}</b> (${lblOf[key]}): тест T+0${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${tv}</b>, бросок <b>${roll.total}</b> — ${ok ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`);
+      // Итог T (у характеристик нет поля value — раньше порог выходил 0 и тест
+      // проваливался всегда, wdbc-x1nz.2.103) + Черты/Конструктор.
+      const t = await charTest(patient, "t", mod);
+      rolls.push(t.roll);
+      const ok = t.success;
+      lines.push(`${rollIcon("heart","#8fd0ff")}<b>${modeLabel}</b> (${lblOf[key]}): тест T+0${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""}${t.rules} → порог <b>${t.threshold}</b>, бросок <b>${t.roll.total}</b> — ${ok ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`);
       heal = ok ? Math.max(0, 1 + bonus) : 0;
     } else {
       heal = amount > 0 ? Math.max(0, amount + bonus) : 0;
@@ -763,9 +1054,14 @@ export async function applyHealing(medic, patient, opts) {
     }
   }
 
-  const missing = Math.max(0, (patient.system.wounds?.max ?? 0) - (patient.system.wounds?.value ?? 0))
+  // effectiveMax — Саркофаг Дредноута (wdbc-drn): выше него Раны не лечатся.
+  const woundMax = patient.system.wounds?.effectiveMax ?? patient.system.wounds?.max ?? 0;
+  const missing = Math.max(0, woundMax - (patient.system.wounds?.value ?? 0))
     + (patient.system.wounds?.critical ?? 0);
   const applied = Math.min(heal, missing);
+  if (periodRestart) {
+    try { await patient.update(periodRestart); } catch {}
+  }
   if (applied > 0) {
     try {
       await patient.update(computeWoundHealing(patient.system, applied));

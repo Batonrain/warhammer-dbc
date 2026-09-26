@@ -77,7 +77,8 @@
     "damageType": "chemical",
     "penetration": 2,
     "meleeCategory": "",
-    "damageSubtype": ""
+    "damageSubtype": "",
+    "techClass": "none"
   },
   "_id": "dvphB0FBov0nVVYy",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

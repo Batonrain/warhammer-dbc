@@ -56,7 +56,8 @@
     "damage": "1d5",
     "damageType": "rending",
     "penetration": 0,
-    "meleeCategory": "Природное"
+    "meleeCategory": "Природное",
+    "techClass": "none"
   },
   "_id": "sTn9BiteFangXq2K",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

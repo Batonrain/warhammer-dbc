@@ -7,9 +7,20 @@
 //  конкретного предмета, схемой их не перечислить.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { stringList, repairStringListAt } from "../string-list.mjs";
 import { infoguardField } from "./infoguard.mjs";
 
 export class ArmorData extends foundry.abstract.TypeDataModel {
+
+  /**
+   * Строки-ключи, испорченные прежней схемой в {}, — в метку для мировой
+   * миграции (data/string-list.mjs). До очистки полей, поэтому здесь.
+   * @override
+   */
+  static migrateData(source) {
+    repairStringListAt(source, "properties");
+    return super.migrateData(source);
+  }
 
   /** @override */
   static defineSchema() {
@@ -59,7 +70,8 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
       bookSource:   new StringField({ initial: "", label: "Книга-источник" }),
       availability: num(0, "Доступность"),
       weight:       num(0, "Вес"),
-      properties:   new ArrayField(new ObjectField(), { label: "Свойства" }),
+      // Ключи свойств брони — строки (data/string-list.mjs, wdbc-x1nz.2.81).
+      properties:   stringList("Свойства"),
       strengthBonus: num(0, "Бонус Силы"),
       wpBonus:      num(0, "Бонус Силы Воли"),
       drukhari:     new BooleanField({ initial: false, label: "Друкхари" }),

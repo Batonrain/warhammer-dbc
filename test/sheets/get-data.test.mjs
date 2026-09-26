@@ -522,8 +522,8 @@ describe("Экономика действий: гейт кнопок", () => {
     expect(ctx.aeSpendGate.reaction.title).toContain("Реакций");
   });
 
-  it("Орда/техника — moveGate вовсе не добавляется в контекст (нет экономики действий)", () => {
-    const ctx = ctxOf({ type: "horde" });
+  it("Техника — moveGate вовсе не добавляется в контекст (нет экономики действий)", () => {
+    const ctx = ctxOf({ type: "vehicle" });
     expect(ctx.moveGate).toBeUndefined();
   });
 });

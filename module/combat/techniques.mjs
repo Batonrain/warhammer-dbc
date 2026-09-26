@@ -226,8 +226,8 @@ export async function _showContestDialog(actor, techDef) {
               ui.notifications?.warn("Танец Обмана: нет Очков Бесчестия — Финт остаётся обычным действием.");
             } else {
               const spend = await spendFromInfamyPool(actor, 1, poolPath);
-              await actor.update({ [poolPath]: spend.poolValue });
-              freeActionNote = `<div class="roll-threshold">💃 Танец Обмана: потрачено 1 Очко Бесчестия — Финт проведён как свободное действие.</div>`;
+              if (spend) await actor.update({ [poolPath]: spend.poolValue });
+              if (spend) freeActionNote = `<div class="roll-threshold">💃 Танец Обмана: потрачено 1 Очко Бесчестия — Финт проведён как свободное действие.</div>`;
             }
           }
 

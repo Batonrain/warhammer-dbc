@@ -80,7 +80,8 @@
         "dice": 2,
         "pen": 8
       }
-    ]
+    ],
+    "techClass": "none"
   },
   "_id": "Yevy89XKZAr4QK4S",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",

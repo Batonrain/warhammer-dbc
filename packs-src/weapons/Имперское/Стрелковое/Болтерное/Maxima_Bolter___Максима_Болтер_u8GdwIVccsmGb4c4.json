@@ -75,7 +75,8 @@
       "standard": false,
       "reloads": 10
     },
-    "drukhari": false
+    "drukhari": false,
+    "techClass": "mechanical"
   },
   "_id": "u8GdwIVccsmGb4c4",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",

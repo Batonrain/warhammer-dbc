@@ -1,6 +1,8 @@
 // module/sheets/sheet-helpers.mjs
 
 import { CHARACTERISTICS, APTITUDES }   from "../constants/characteristics.mjs";
+import { LIMB_LOSS_KEYS, lostSidesLabel } from "../rules/limb-loss.mjs";
+import { getHeldHand } from "../rules/hands.mjs";
 import { withRulesCache } from "../rules/collect.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }              from "../constants/skills.mjs";
 import { SKILL_DESCRIPTIONS }                        from "../constants/skill-descriptions.mjs";
@@ -329,7 +331,10 @@ function _buildActiveConditions(system, actor = null) {
       // (Кхорн)», «вид: форсированный». Нагрузка при этом остаётся у своего
       // правила — сюда приходит только готовая строка (rules/condition-
       // mirrors.mjs::mirrorHint), второго места правды не заводится.
-      desc:     [def.desc || "", actor ? mirrorHint(actor, key) : ""].filter(Boolean).join(" "),
+      // Потеря конечностей — какая сторона (wdbc-x1nz.2.100): «Стороны: П. и Л.».
+      desc:     [def.desc || "", actor ? mirrorHint(actor, key) : "",
+                 LIMB_LOSS_KEYS.includes(key) && lostSidesLabel(system, key) ? `Стороны: ${lostSidesLabel(system, key)}.` : ""]
+                .filter(Boolean).join(" "),
       // Показывать ли крестик «снять» (wdbc-5uae). Раньше единственное
       // исключение — «Усталость» — было зашито прямо в шаблон условием по
       // ключу; теперь шаблон спрашивает данные, и исключений стало три класса:
@@ -595,12 +600,14 @@ function buildGetDataUncached(actor) {
       // Ручной щит (стр. 215): AP, прикрываемые зоны и состояние «поднят».
       isShield:        s.shieldAP != null,
       shieldAP:        s.shieldAP ?? 0,
-      shieldHand:      i.getFlag?.("warhammer-dbc", "shieldHand") || "left",
+      // heldHand (setHeldHand) — старые shieldHand/weaponHand больше не пишутся;
+      // подсветка по ним не видела новых назначений (wdbc-x1nz.2.100).
+      shieldHand:      getHeldHand(i) || "left",
       shieldRaised:    !!i.getFlag?.("warhammer-dbc", "shieldRaised"),
       shieldCoverage:  s.shieldAP != null ? shieldCoverageLabel(i) : "",
       // В какой руке оружие (module/apps/hud.mjs, карточки правая/левая) — без
       // дефолта, в отличие от shieldHand: одиночное оружие руку не форсирует.
-      hand:            i.getFlag?.("warhammer-dbc", "weaponHand") || "",
+      hand:            getHeldHand(i) || "",
       hasMods,
       modNames:        modFx.names.join(", "),
       attackThreshold: (system.characteristics[ck]?.total ?? 0) + (s.attackBonus || 0) + baseBon + stBon + (modFx.attackMod || 0) + qTestMod,

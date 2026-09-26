@@ -7,13 +7,17 @@
 import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import {
-  scheduleLimbLossGangreneFields, clearLimbLossGangreneFields, sweepLimbLossGangrene
-} from "../../module/combat/limb-loss.mjs";
+import { sweepLimbLossGangrene } from "../../module/combat/limb-loss.mjs";
+import { lostSideFields, clearStumpTimerFields } from "../../module/rules/limb-loss.mjs";
 
-function makeActor(name = "Носитель", conditions = {}, tb = 3) {
+// scheduleLimbLossGangreneFields/clearLimbLossGangreneFields (по типу конечности,
+// без стороны) удалены — с wdbc-x1nz.2.100 таймер обрубка заводится/снимается
+// ПО СТОРОНЕ (rules/limb-loss.mjs::lostSideFields/clearStumpTimerFields), чистая
+// логика этого куска проверяется там же (test/rules/limb-loss.test.mjs), не здесь.
+
+function makeActor(name = "Носитель", lostLimbs = {}, tb = 3) {
   const actor = {
-    name, system: { characteristics: { t: { bonus: tb } }, conditions: { ...conditions } },
+    name, system: { characteristics: { t: { bonus: tb } }, conditions: {}, lostLimbs: { ...lostLimbs } },
     update: async data => {
       for (const [path, v] of Object.entries(data)) {
         const parts = path.split(".");
@@ -28,78 +32,79 @@ function makeActor(name = "Носитель", conditions = {}, tb = 3) {
 
 beforeEach(resetCaptured);
 
-describe("scheduleLimbLossGangreneFields", () => {
-  afterEach(() => { delete globalThis.game.time; });
-
-  it("патч на worldTime + T.b дней", () => {
-    globalThis.game.time = { worldTime: 1000 };
-    const actor = makeActor("Раненый", {}, 3);
-    expect(scheduleLimbLossGangreneFields(actor, "lostHands"))
-      .toEqual({ "system.conditions.lostHandsGangreneAt": 1000 + 3 * 86400 });
-  });
-
-  it("чужой ключ Состояния — пустой патч", () => {
-    globalThis.game.time = { worldTime: 1000 };
-    expect(scheduleLimbLossGangreneFields(makeActor(), "bleeding")).toEqual({});
-  });
-
-  it("нет актора — пустой патч, без падения", () => {
-    globalThis.game.time = { worldTime: 1000 };
-    expect(scheduleLimbLossGangreneFields(null, "lostHands")).toEqual({});
-  });
-});
-
-describe("clearLimbLossGangreneFields", () => {
-  it("снимает таймер (поле в 0)", () => {
-    expect(clearLimbLossGangreneFields("lostEyes")).toEqual({ "system.conditions.lostEyesGangreneAt": 0 });
-  });
-  it("чужой ключ — пустой патч", () => {
-    expect(clearLimbLossGangreneFields("bleeding")).toEqual({});
-  });
-});
-
 describe("sweepLimbLossGangrene", () => {
   afterEach(() => { delete globalThis.game.actors; delete globalThis.game.users; delete globalThis.game.user; });
 
   it("основной ГМ, просроченный таймер, неудачный бросок (>8) — снимает таймер, Гангрены нет", async () => {
     captured.dice = [9]; // 1d10 = 9 → 9-10 безопасно (80% = 1-8)
-    const actor = makeActor("Раненый", { lostHands: true, lostHandsCount: 1, lostHandsGangreneAt: 1000 });
+    const actor = makeActor("Раненый", { rightHand: { lost: true, gangreneAt: 1000 } });
     Object.assign(globalThis.game, { actors: [actor], users: { activeGM: { id: "gm1" } }, user: { id: "gm1" } });
 
     await sweepLimbLossGangrene(1500);
 
-    expect(actor.system.conditions.lostHandsGangreneAt).toBe(0);
+    expect(actor.system.lostLimbs.rightHand.gangreneAt).toBe(0);
     expect(actor.system.conditions.gangrene).toBeUndefined();
     expect(captured.chat).toHaveLength(1);
   });
 
   it("основной ГМ, просроченный таймер, неудачный бросок (≤8) — накладывает Гангрену", async () => {
     captured.dice = [3];
-    const actor = makeActor("Раненый", { lostLegs: true, lostLegsCount: 1, lostLegsGangreneAt: 1000 });
+    const actor = makeActor("Раненый", { rightLeg: { lost: true, gangreneAt: 1000 } });
     Object.assign(globalThis.game, { actors: [actor], users: { activeGM: { id: "gm1" } }, user: { id: "gm1" } });
 
     await sweepLimbLossGangrene(1500);
 
-    expect(actor.system.conditions.lostLegsGangreneAt).toBe(0);
+    expect(actor.system.lostLimbs.rightLeg.gangreneAt).toBe(0);
     expect(actor.system.conditions.gangrene).toBe(true);
   });
 
   it("срок ещё не наступил — не трогает", async () => {
-    const actor = makeActor("Раненый", { lostHands: true, lostHandsGangreneAt: 2000 });
+    const actor = makeActor("Раненый", { rightHand: { lost: true, gangreneAt: 2000 } });
     Object.assign(globalThis.game, { actors: [actor], users: { activeGM: { id: "gm1" } }, user: { id: "gm1" } });
 
     await sweepLimbLossGangrene(1500);
 
-    expect(actor.system.conditions.lostHandsGangreneAt).toBe(2000);
+    expect(actor.system.lostLimbs.rightHand.gangreneAt).toBe(2000);
     expect(captured.chat).toHaveLength(0);
   });
 
   it("не основной ГМ (другой клиент) — ничего не делает", async () => {
-    const actor = makeActor("Раненый", { lostHands: true, lostHandsGangreneAt: 1000 });
+    const actor = makeActor("Раненый", { rightHand: { lost: true, gangreneAt: 1000 } });
     Object.assign(globalThis.game, { actors: [actor], users: { activeGM: { id: "gm1" } }, user: { id: "player1" } });
 
     await sweepLimbLossGangrene(1500);
 
-    expect(actor.system.conditions.lostHandsGangreneAt).toBe(1000);
+    expect(actor.system.lostLimbs.rightHand.gangreneAt).toBe(1000);
+  });
+
+  // wdbc-x1nz.2.100: таймеры двух сторон независимы — просрочка одной руки
+  // не трогает таймер другой, ещё не наступивший.
+  it("две стороны с разными сроками — только просроченная снимается, вторая не тронута", async () => {
+    captured.dice = [9];
+    const actor = makeActor("Раненый", {
+      rightHand: { lost: true, gangreneAt: 1000 },
+      leftHand:  { lost: true, gangreneAt: 5000 }
+    });
+    Object.assign(globalThis.game, { actors: [actor], users: { activeGM: { id: "gm1" } }, user: { id: "gm1" } });
+
+    await sweepLimbLossGangrene(1500);
+
+    expect(actor.system.lostLimbs.rightHand.gangreneAt).toBe(0);
+    expect(actor.system.lostLimbs.leftHand.gangreneAt).toBe(5000);
+    expect(captured.chat).toHaveLength(1);
+  });
+});
+
+// Сама Foundry-функция lostSideFields/clearStumpTimerFields — чистая логика,
+// проверена без заглушки в test/rules/limb-loss.test.mjs; здесь достаточно
+// убедиться, что sweep читает и пишет ровно тот путь, который они производят.
+describe("lostSideFields / clearStumpTimerFields — путь, который читает sweep", () => {
+  it("lostSideFields с timer даёт тот же путь, что видит sweepLimbLossGangrene", () => {
+    expect(lostSideFields("lostHands", "right", { timer: true, worldTime: 1000, tb: 3 }))
+      .toEqual({ "system.lostLimbs.rightHand.lost": true, "system.lostLimbs.rightHand.gangreneAt": 1000 + 3 * 86400, "system.lostLimbs.rightHand.mutation": false });
+  });
+
+  it("clearStumpTimerFields снимает ровно то поле, что обнуляет sweep", () => {
+    expect(clearStumpTimerFields("lostLegs", "left")).toEqual({ "system.lostLimbs.leftLeg.gangreneAt": 0 });
   });
 });

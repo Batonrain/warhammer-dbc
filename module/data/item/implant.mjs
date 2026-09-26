@@ -36,6 +36,10 @@ export class ImplantData extends foundry.abstract.TypeDataModel {
       description:   new HTMLField({ initial: "", label: "Описание" }),
       notes:         new HTMLField({ initial: "", label: "Заметки" }),
       category:      new StringField({ initial: "mechanicus", label: "Категория" }),
+      // "electric" — электроника (бионика, кибернетика, Механикус): в поле
+      // Дискорданта отключается (rules/null-zones.mjs). Органы Астартес,
+      // биоимпланты Друкхари, псибернетика — пусто.
+      techClass:     new StringField({ initial: "", label: "Техника (поле Дискорданта)" }),
       quality:       new StringField({ initial: "common", label: "Качество" }),
       effect:        new StringField({ initial: "", label: "Эффект" }),
       installed:     new StringField({ initial: "", label: "Куда установлен" }),

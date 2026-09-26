@@ -12,7 +12,9 @@ import { resolveWeaponPropsList, aggregateAuto, applyDamageDiceMods,
          buildPropertyChatBlock, buildTargetEffectButtons } from "../combat/weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
 import { meleeStrengthBonus } from "../combat/attack-outcome.mjs";
-import { rollHordePsychTest, psychHealLocked, PSYCH_TESTS } from "../combat/horde-psych.mjs";
+import { rollExtremeDamage } from "../combat/attack.mjs";
+import { rollHordePsychTest, psychHealLocked, PSYCH_TESTS, lockIfCrossedHalf } from "../combat/horde-psych.mjs";
+import { addRoundDamage } from "../combat/horde-damage.mjs";
 import { hordeContacts, hordeMeleeTargets } from "../combat/horde-tokens.mjs";
 import { attachItemPicker } from "./item-picker.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
@@ -25,6 +27,10 @@ import { resolveTest } from "../rules/resolve-test.mjs";
 import { suffersBlindness } from "../rules/blindness.mjs";
 import { targetConditionAttackMods } from "./attack-dialog.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { FEAR_RATINGS } from "../constants/fear-tables.mjs";
+import { spendActionPoints } from "../combat/action-economy.mjs";
+import { canTakeAttackAction, takeAttackAction } from "../combat/attack-limit.mjs";
+import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
 
 const CHAR_ORDER = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel"];
 // Общие модификаторы атаки Орды (без Прицеливания и Избирательных — их у Орд нет).
@@ -75,6 +81,51 @@ function onMag(event, target) {
   // Shift/Ctrl — шаг ×5.
   const [dMag, dPsych] = MAG_STEPS[kind]((event.shiftKey || event.ctrlKey) ? 5 : 1);
   return this._magChange(dMag, dPsych);
+}
+
+/**
+ * Сколько дают атаке Орды распознанные Состояния этой цели («Цель лежит»,
+ * «Цель Оглушена» — те же строки HORDE_COMMON_MODS, что в окне атаки).
+ */
+function targetConditionMod(targetActor, isMelee) {
+  if (!targetActor) return 0;
+  const tc = targetConditionAttackMods(targetActor, isMelee);
+  const on = { "Цель лежит": tc.targetProne, "Цель Оглушена": tc.targetStunned };
+  return HORDE_COMMON_MODS.reduce((sum, m) => sum + (on[m.label] ? (isMelee ? m.melee : m.ranged) : 0), 0);
+}
+
+/**
+ * Цели атаки Орды («Атаки Орды»): до Магнитуда/5 персонажей в рукопашной или
+ * до расчётного числа выстрелов — каждый своим броском. Берутся нацеленные
+ * токены (game.user.targets) в порядке нацеливания, не больше лимита.
+ * @returns {{picked:object[], dropped:number}}
+ */
+export function hordeAttackTargets(targetTokens, limit) {
+  const all = [...(targetTokens ?? [])].filter(t => t?.actor);
+  const cap = Math.max(1, Number(limit) || 0);
+  return { picked: all.slice(0, cap), dropped: Math.max(0, all.length - cap) };
+}
+
+/** Рукопашное ли оружие Орды (то же деление, что в окне атаки). */
+function isMeleeWeapon(w) {
+  return ["melee", "unarmed", "thrown"].includes(w?.system?.weaponClass);
+}
+
+/**
+ * Порог второго оружия совместной атаки («может одновременно стрелять и
+ * атаковать в рукопашной одним действием»): его характеристика, тот же доп.
+ * модификатор окна и те же отмеченные условия (свет, дым, «Цель лежит»…), но
+ * по столбцу ЕГО вида атаки; Подавленная — −20 к стрельбе, Ослеплённая — −30
+ * в рукопашной (стрельба Ослеплённой — автопровал, решает вызывающий).
+ */
+export function hordeSecondaryThreshold(actor, weapon, { modifier = 0, checkedLabels = [] } = {}) {
+  const melee = isMeleeWeapon(weapon);
+  const char = Number(actor.system?.characteristics?.[melee ? "ws" : "bs"]?.total) || 0;
+  const labels = new Set(checkedLabels);
+  const cond = HORDE_COMMON_MODS.reduce((sum, m) => sum + (labels.has(m.label) ? (melee ? m.melee : m.ranged) : 0), 0);
+  const pinned = !melee && actor.system?.conditions?.pinned ? -20 : 0;
+  const blind = melee && suffersBlindness(actor) ? -30 : 0;
+  return char + (Number(modifier) || 0) + cond + pinned + blind;
 }
 
 /** Итоговый порог атаки Орды: база + доп. модификатор + отмеченные галочки. */
@@ -323,6 +374,12 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
     const clamped  = Math.min(newVal, cap);
     const newPsych = Math.max(0, psych + dPsych);
     await this.actor.update({ "system.magnitude.value": clamped, "system.psychDamage": newPsych });
+    // Потери, снятые кнопкой, — тот же урон в Магнитуду: идут в счёт массивных
+    // потерь за Раунд и в запрет лечения при падении за половину.
+    if (clamped < cur) {
+      await addRoundDamage(this.actor, cur - clamped);
+      await lockIfCrossedHalf(this.actor, cur, clamped);
+    }
   }
 
   /**
@@ -353,6 +410,11 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
     const def = PSYCH_TESTS[kind];
     if (!def) return;
     const d = this.actor.system.derived || {};
+    // Страх: модификатор теста берётся из рейтинга источника (Орда — это не
+    // «Важный NPC», поэтому колонка обычная), а не вписывается руками.
+    const fearSelect = kind === "fear" ? `<div class="atk-dlg-row"><label>Рейтинг Страха:</label>
+          <select id="h-fear-rating">${Object.entries(FEAR_RATINGS).map(([k, r]) =>
+            `<option value="${r.normal}">${esc(r.label)} (${r.normal >= 0 ? "+" : ""}${r.normal})</option>`).join("")}</select></div>` : "";
     const mod = await foundry.applications.api.DialogV2.prompt({
       window: { title: `${def.label} — ${this.actor.name}` },
       classes: ["warhammer-dbc", "wh-holo"],
@@ -361,10 +423,12 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
         <div class="atk-dlg-row"><label>Базовый порог:</label>
           <span>W + Магнитуда${d.wpPenalty ? ` ${d.wpPenalty} (Ослаблена)` : ""} = <b>${d.psychTestThreshold ?? 0}</b></span></div>
         <div class="atk-dlg-row"><label>Модификатор:</label>
-          <input id="h-psych-mod" type="number" value="0" data-tooltip="Рейтинг Страха, степень Запугивания и прочее"/></div>
+          <input id="h-psych-mod" type="number" value="0" data-tooltip="Прочие модификаторы теста"/></div>
+        ${fearSelect}
       </div>`,
       ok: { label: "Бросок!", icon: "fas fa-dice-d10",
-            callback: (event, button) => parseInt(button.form.querySelector("#h-psych-mod")?.value) || 0 }
+            callback: (event, button) => (parseInt(button.form.querySelector("#h-psych-mod")?.value) || 0)
+              + (parseInt(button.form.querySelector("#h-fear-rating")?.value) || 0) }
     }).catch(() => null);
     if (mod === null || mod === undefined) return;
     return rollHordePsychTest(this.actor, kind, { mod });
@@ -515,7 +579,7 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
     const commonModsHtml = HORDE_COMMON_MODS.map(m => {
       const v = isMelee ? m.melee : m.ranged;
       const lock = autoMod[m.label] ? ` checked disabled title="Состояние цели распознано"` : "";
-      return `<label class="attack-mod-check"><input type="checkbox" class="h-mod" data-value="${v}"${lock}/><span>${m.label} (${v >= 0 ? "+" : ""}${v})</span></label>`;
+      return `<label class="attack-mod-check"><input type="checkbox" class="h-mod" data-label="${m.label}" data-value="${v}"${lock}/><span>${m.label} (${v >= 0 ? "+" : ""}${v})</span></label>`;
     }).join("");
     // Ослеплённая Орда (wdbc-x1nz.2.89): рукопашная −30, стрельба —
     // автопровал; сонар/Unnatural Senses снимают (rules/blindness.mjs).
@@ -524,10 +588,24 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
       ? `<label class="attack-mod-check"><input type="checkbox" class="h-mod" data-value="-30" checked disabled/><span>Ослеплена (−30)</span></label>`
       : `<div class="atk-horde-info">⛔ Орда Ослеплена: стрельба — автопровал.</div>`;
 
+    // Подавленная Орда (стр. 33, «Контроль Орды»): −20 к стрельбе, как у
+    // Подавленного персонажа (sheets/attack/mods.mjs, «Подавлен огнём»).
+    const pinnedHtml = (!isMelee && this.actor.system.conditions?.pinned)
+      ? `<label class="attack-mod-check"><input type="checkbox" class="h-mod" data-value="-20" checked disabled/><span>Подавлена (−20)</span></label>`
+      : "";
     const hordeVsNote = melee?.note ? `<div class="atk-horde-info">${esc(melee.note)}</div>` : "";
     const rangeInfo = (!isMelee && sys.range > 0)
       ? `<div class="atk-range-info"><div class="atk-range-title">Дистанции (Rng = ${sys.range}м)</div>
           <div class="atk-range-grid"><span class="atr-zone atr-pb">В упор →+30</span><span class="atr-zone atr-sh">Кор. →+10</span><span class="atr-zone atr-cb">Боевая →±0</span><span class="atr-zone atr-lg">Дальняя →−10</span><span class="atr-zone atr-ex">Экстр. →−30</span></div></div>` : "";
+
+    // Совместная атака: «может одновременно стрелять и атаковать в рукопашной
+    // одним действием» — второе оружие другого вида бросается тем же кликом,
+    // без второй траты ОД и без второго места в лимите Атак.
+    const others = this.actor.items.filter(i => i.type === "weapon" && isMeleeWeapon(i) !== isMelee);
+    const pairHtml = others.length
+      ? `<div class="atk-dlg-row"><label data-tooltip="Орда может стрелять и бить в рукопашной одним действием">Тем же действием:</label>
+          <select id="h-pair"><option value="">—</option>${others.map(o => `<option value="${o.id}">${esc(o.name)}</option>`).join("")}</select></div>`
+      : "";
 
     // Без <form>: DialogV2 сам оборачивает содержимое в форму, и вложенная
     // ломала бы button.form, через который читаются поля.
@@ -541,8 +619,10 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
       <div class="atk-dlg-row"><label>Базовый порог:</label><input id="h-threshold" type="number" value="${charVal}"/></div>
       <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="h-modifier" type="number" value="0"/></div>
       ${!isMelee ? `<div class="atk-dlg-modifiers"><div class="atk-mods-title">Дистанция</div><div class="atk-mods-list">${rangedModsHtml}</div></div>` : ""}
-      <div class="atk-dlg-modifiers"><div class="atk-mods-title">Модификаторы</div><div class="atk-mods-list">${commonModsHtml}${blindHtml}</div></div>
+      <div class="atk-dlg-modifiers"><div class="atk-mods-title">Модификаторы</div><div class="atk-mods-list">${commonModsHtml}${blindHtml}${pinnedHtml}</div></div>
       <div class="atk-dlg-row atk-total-row"><label>Итоговый порог:</label><span id="h-total">${charVal}</span></div>
+      ${pairHtml}
+      <div class="atk-horde-info">Атака — Полудействие (1 ОД), одна за Ход.</div>
     </div>`;
 
     return foundry.applications.api.DialogV2.wait({
@@ -555,9 +635,8 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
       buttons: [
         {
           action: "roll", label: "Бросок!", icon: "fas fa-dice-d10", default: true,
-          callback: (event, button) =>
-            this._executeHordeAttack(w, key, hordeThreshold(button.form), isMelee, targets,
-              { autoFail: blind && !isMelee })
+          callback: (event, button) => this._confirmHordeAttack(button.form,
+            { w, key, isMelee, targets, blind, meleeTargets: d.meleeTargets, rangedShots: d.rangedShots })
         },
         { action: "cancel", label: "Отмена" }
       ],
@@ -572,105 +651,178 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
     }).catch(() => null);
   }
 
-  // ── Исполнение атаки Орды: попадание, урон (+кубы Магнитуды), карточка с защитой ──
-  async _executeHordeAttack(w, key, threshold, isMelee, targets, { autoFail = false } = {}) {
-    const sys = w.system;
+  /**
+   * Подтверждённое «Бросок!»: Обычная Атака — Полудействие (1 ОД), одна Атака
+   * за Ход (combat/attack-limit.mjs) — Орда «действует как один персонаж,
+   * имеющий обычный запас ОД». Вне Encounter обе проверки пропускают сами.
+   * Затем основной бросок и, если выбрано, второе оружие того же действия.
+   */
+  async _confirmHordeAttack(form, { w, key, isMelee, targets, blind, meleeTargets, rangedShots }) {
     const actor = this.actor;
-    const d = actor.system.derived || {};
-    const chars = actor.system.characteristics;
+    if (!canTakeAttackAction(actor)) {
+      ui.notifications.warn(`⚠️ ${actor.name}: Атака в этот Ход уже была.`);
+      return false;
+    }
+    if (!await spendActionPoints(actor, 1, { physical: true })) {
+      ui.notifications.warn("⚠️ Не хватает ОД.");
+      return false;
+    }
+    await takeAttackAction(actor);
+    await this._executeHordeAttack(w, key, hordeThreshold(form), isMelee, targets, { autoFail: blind && !isMelee });
 
-    const modFx  = getModEffects(actor, w);
-    const wProps = resolveWeaponPropsList(mergeWeaponPropEntries(w, modFx));
-    const wp     = aggregateAuto(wProps);
-
-    const roll = await new Roll("1d100").evaluate();
-    const rv = roll.total;
-    const hit = !autoFail && rv <= threshold;                       // «промах» у Орды — тоже урон, но без кубов Магнитуды и его можно Избегать
-    const deg = Math.abs(degreesOfSuccess(rv, threshold));
-
-    // Место попадания (по перевёрнутым цифрам, как в обычной атаке).
-    const rvStr = String(rv).padStart(2, "0");
-    const locRoll = Math.min(Math.max(parseInt(rvStr.split("").reverse().join("")) || 1, 1), 100);
-    const hitLoc = (HIT_LOCATIONS.find(l => locRoll >= l.min && locRoll <= l.max)?.label) || "Торс";
-
-    // Урон: база + S.b (рукопашная) + кубы Магнитуды (только при попадании).
-    const pen = (sys.penetration || 0) + (modFx.penMod || 0);
-    const sb  = chars.s?.bonus ?? 0;
-    // Могучее ×2, Сдержанное 0 — общее правило с обычной атакой. Хватов у Орды
-    // нет, поэтому sbHalf не передаётся.
-    const sbEff = meleeStrengthBonus({ sb, wp });
-    const flat = (isMelee ? sbEff : 0) + (modFx.damageMod || 0);
-    const rawDmg = String(sys.damage || "").replace(/\s+[REIXРЕИ](?:\([^)]*\))?\s*$/i, "").trim();
-    const baseDmg = rawDmg || (isMelee ? "0" : "1d10");
-    let formula = flat !== 0 ? `${baseDmg} + ${flat}` : baseDmg;
-    formula = applyDamageDiceMods(resolveCharFormula(formula, chars, actor.system.corruptionBonus ?? 0), wp);
-    const magDice = hit ? (d.magDamageDice || 0) : 0;
-    // Отдельный бросок для кубов Магнитуды — не общей формулой: цель ещё не
-    // выбрана (карточка применяется позже кнопкой), а «Серый Человек избегает
-    // атак Орды как одиночная цель» (wdbc-gzuf) должен вычесть РОВНО эту
-    // надбавку из готового урона на шаге применения, не весь бросок целиком.
-    const magRoll = magDice ? await new Roll(`${magDice}d10`).evaluate() : null;
-    const dmgRoll = await new Roll(formula).evaluate();
-    const totalDamage = dmgRoll.total + (magRoll?.total || 0);
-    const allDice = [...(dmgRoll.dice || []), ...(magRoll?.dice || [])];
-    const dtLabel = DAMAGE_TYPES[sys.damageType] || sys.damageType || "";
-    const dtype = sys.damageType || "impact";
-
-    // Дистанции дайсов урона для наглядности.
-    const diceParts = allDice.map(die => `${die.number}d${die.faces} [${die.results.map(r => r.result).join(",")}]`).join(" + ");
-
-    // Кнопки: применить урон всегда (попадание или «промах»); Уклонение — только при промахе
-    // (обычное попадание Орды Избегать нельзя — это шквал/навал).
-    // Свойства, дающие лишние попадания, едут и отсюда: Орда против Орды —
-    // обычный случай, и Взрывное с Распылением там работают так же.
-    const applyBtn = `<button class="wh-apply-dmg-btn" type="button"
-      data-damage="${totalDamage}" data-penetration="${pen}" data-damage-type="${dtype}"
-      data-damage-subtype="${sys.damageSubtype || ""}"
-      data-hit-location="${hitLoc}" data-weapon-name="${w.name}" data-attacker="${actor.name}"
-      data-attacker-uuid="${actor.uuid || ""}"
-      data-felling="${wp.fellingRating || 0}" data-primitive="${wp.primitive ? 1 : 0}"
-      data-ignore-shield="${wp.ignoreShield ? 1 : 0}" data-warp-soak="${wp.warpSoak ? 1 : 0}"
-      data-blast="${wp.blastRating || 0}" data-flame="${wp.flame ? 1 : 0}"
-      data-power-field="${wp.powerField ? 1 : 0}" data-spray="${wp.spray ? 1 : 0}"
-      data-devastating="${wp.devastatingRating || 0}"
-      data-mag-dice-bonus="${magRoll?.total || 0}"
-      data-weapon-range="${Number(sys.range) || 0}" data-melee="${isMelee ? 1 : 0}">
-      Применить урон: <b>${totalDamage}</b> → ${hitLoc}</button>`;
-    const dodgeBtn = !hit
-      ? `<div class="roll-defense-section"><div class="roll-section-head">Защита цели <span class="roll-head-hint">— промах Орды можно Избегать</span></div>
-           <div class="roll-defense-btns"><button class="wh-dodge-btn" type="button" data-extra-mod="0" data-attack-deg="${deg}">Уклонение</button>
-           ${isMelee && !wp.flexible ? `<button class="wh-parry-btn" type="button" data-extra-mod="0" data-attack-deg="${deg}">Парирование</button>` : ""}</div></div>`
-      : `<div class="roll-defense-note">Попадание Орды нельзя Избегать (шквал / навал).</div>`;
-
-    const targetEffectBtns = buildTargetEffectButtons(wProps, { hit });
-    const magNote = magDice ? ` · <span class="horde-chip">Магнитуда +${magDice}d10</span>` : "";
-    const meta = CHARACTERISTICS[key];
-
-    // Карточка АТАКИ (wdbc-kuun): на общий сборщик теста сознательно не
-    // переводится — у атак своя большая разметка (попадания, локации,
-    // урон, кнопки защиты), общая с attack-card.mjs.
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor }),
-      content: `<div class="wh-roll-result horde-atk">
-        ${buildPropertyChatBlock(wProps)}
-        <div class="roll-header">${esc(actor.name)} — ${esc(w.name)}</div>
-        <div class="roll-threshold">${meta?.abbr || key}: Порог <b>${threshold}</b> · целей: <b>${targets}</b> · бросок <b>${rv}</b></div>
-        ${autoFail ? `<div class="roll-threshold">⛔ Автопровал: Орда Ослеплена</div>` : ""}
-        <div class="roll-outcome">${hit
-          ? `<span class="roll-success">Попадание — ${deg} ${_degWord(deg)}, шквал накрывает цель</span>`
-          : `<span class="roll-failure">Промах = попадание без бонусов Магнитуды (можно Избегать)</span>`}</div>
-        <div class="roll-damage-section">
-          <div class="roll-damage-meta">${dtLabel} · Пробитие ${pen}${isMelee ? `, S.b +${sbEff}` : ""}${magNote}</div>
-          <div class="roll-damage-line"><b>${hitLoc}</b>: <b class="roll-dmg-big">${totalDamage}</b> <span class="horde-dmg-formula">= ${formula}${magDice ? ` + ${magDice}d10` : ""}${diceParts ? ` → ${diceParts}` : ""}</span></div>
-        </div>
-        ${targetEffectBtns}
-        <div class="roll-apply-dmg-section"><div class="roll-section-head">Применить к цели <span class="roll-head-hint">— выберите токен</span></div>${applyBtn}</div>
-        ${dodgeBtn}
-      </div>`,
-      rolls: [roll, dmgRoll, ...(magRoll ? [magRoll] : [])],
-      sound: CONFIG.sounds.dice
-    }, game.settings.get("core", "rollMode")));
+    const pair = actor.items.get(form.querySelector("#h-pair")?.value || "");
+    if (!pair) return true;
+    const pMelee = isMeleeWeapon(pair);
+    const pTargets = pMelee ? this._meleeTargets(meleeTargets).targets : rangedShots;
+    if (pTargets <= 0) {
+      ui.notifications.info(`${actor.name}: стрелять некому — все выстрелы связаны рукопашной.`);
+      return true;
+    }
+    const checkedLabels = [...form.querySelectorAll(".h-mod:checked")].map(i => i.dataset.label).filter(Boolean);
+    const threshold = hordeSecondaryThreshold(actor, pair,
+      { modifier: parseInt(form.querySelector("#h-modifier")?.value) || 0, checkedLabels });
+    await this._executeHordeAttack(pair, pMelee ? "ws" : "bs", threshold, pMelee, pTargets,
+      { autoFail: blind && !pMelee });
+    return true;
   }
+
+  // ── Исполнение атаки Орды: по броску на каждую нацеленную цель ──
+  // «Атакует до Магнитуда/5 персонажей ... обычным количеством рукопашных
+  // атак» — у каждой цели свой бросок, своё место попадания, своя защита.
+  // Порог окна посчитан с Состояниями первой цели; для остальных он
+  // пересчитывается по их собственным Состояниям.
+  async _executeHordeAttack(w, key, threshold, isMelee, targets, opts = {}) {
+    const { picked, dropped } = hordeAttackTargets(game.user?.targets, targets);
+    if (picked.length <= 1) return rollHordeAttackOn(this.actor, w, key, threshold, isMelee, targets, opts);
+    if (dropped) ui.notifications.info(`Орда атакует не больше ${targets} целей — лишние ${dropped} не атакованы.`);
+    const base = threshold - targetConditionMod(picked[0].actor, isMelee);
+    for (const token of picked) {
+      await rollHordeAttackOn(this.actor, w, key, base + targetConditionMod(token.actor, isMelee), isMelee, targets,
+        { ...opts, target: token });
+    }
+  }
+}
+
+// ── Один бросок атаки Орды: попадание, урон (+кубы Магнитуды), карточка с защитой ──
+async function rollHordeAttackOn(actor, w, key, threshold, isMelee, targets, { autoFail = false, target = null } = {}) {
+  const sys = w.system;
+  const d = actor.system.derived || {};
+  const chars = actor.system.characteristics;
+
+  const modFx  = getModEffects(actor, w);
+  const wProps = resolveWeaponPropsList(mergeWeaponPropEntries(w, modFx));
+  const wp     = aggregateAuto(wProps);
+
+  const roll = await new Roll("1d100").evaluate();
+  const rv = roll.total;
+  const hit = !autoFail && rv <= threshold;                       // «промах» у Орды — тоже урон, но без кубов Магнитуды и его можно Избегать
+  const deg = Math.abs(degreesOfSuccess(rv, threshold));
+
+  // Место попадания (по перевёрнутым цифрам, как в обычной атаке).
+  const rvStr = String(rv).padStart(2, "0");
+  const locRoll = Math.min(Math.max(parseInt(rvStr.split("").reverse().join("")) || 1, 1), 100);
+  const hitLoc = (HIT_LOCATIONS.find(l => locRoll >= l.min && locRoll <= l.max)?.label) || "Торс";
+
+  // Урон: база + S.b (рукопашная) + кубы Магнитуды (только при попадании).
+  const pen = (sys.penetration || 0) + (modFx.penMod || 0);
+  const sb  = chars.s?.bonus ?? 0;
+  // Могучее ×2, Сдержанное 0 — общее правило с обычной атакой. Хватов у Орды
+  // нет, поэтому sbHalf не передаётся.
+  const sbEff = meleeStrengthBonus({ sb, wp });
+  const flat = (isMelee ? sbEff : 0) + (modFx.damageMod || 0);
+  const rawDmg = String(sys.damage || "").replace(/\s+[REIXРЕИ](?:\([^)]*\))?\s*$/i, "").trim();
+  const baseDmg = rawDmg || (isMelee ? "0" : "1d10");
+  let formula = flat !== 0 ? `${baseDmg} + ${flat}` : baseDmg;
+  formula = applyDamageDiceMods(resolveCharFormula(formula, chars, actor.system.corruptionBonus ?? 0), wp);
+  const magDice = hit ? (d.magDamageDice || 0) : 0;
+  // Отдельный бросок для кубов Магнитуды — не общей формулой: цель ещё не
+  // выбрана (карточка применяется позже кнопкой), а «Серый Человек избегает
+  // атак Орды как одиночная цель» (wdbc-gzuf) должен вычесть РОВНО эту
+  // надбавку из готового урона на шаге применения, не весь бросок целиком.
+  const magRoll = magDice ? await new Roll(`${magDice}d10`).evaluate() : null;
+  const dmgRoll = await new Roll(formula).evaluate();
+  // Экстремальный урон — только под Командным Присутствием «Экстремальный
+  // Урон» (эффект 1, доходит до Орды — «Контроль Орды»): без него Орда, как
+  // Маловажные NPC, его не наносит (rules/squad-roles.mjs). Кубы Магнитуды
+  // бросаются отдельно и Экстремального не вызывают.
+  const ext = await rollExtremeDamage(dmgRoll, { wp, damageType: sys.damageType || "impact", hitLocation: hitLoc, attacker: actor });
+  const totalDamage = dmgRoll.total + (magRoll?.total || 0);
+  const allDice = [...(dmgRoll.dice || []), ...(magRoll?.dice || [])];
+  const dtLabel = DAMAGE_TYPES[sys.damageType] || sys.damageType || "";
+  const dtype = sys.damageType || "impact";
+
+  // Дистанции дайсов урона для наглядности.
+  const diceParts = allDice.map(die => `${die.number}d${die.faces} [${die.results.map(r => r.result).join(",")}]`).join(" + ");
+
+  // Кнопки: применить урон всегда (попадание или «промах»); Уклонение — только при промахе
+  // (обычное попадание Орды Избегать нельзя — это шквал/навал).
+  // Свойства, дающие лишние попадания, едут и отсюда: Орда против Орды —
+  // обычный случай, и Взрывное с Распылением там работают так же.
+  const applyBtn = `<button class="wh-apply-dmg-btn" type="button"
+    data-damage="${totalDamage}" data-penetration="${pen}" data-damage-type="${dtype}"
+    data-damage-subtype="${sys.damageSubtype || ""}"
+    data-hit-location="${hitLoc}" data-weapon-name="${w.name}" data-attacker="${actor.name}"
+    data-attacker-uuid="${actor.uuid || ""}"
+    data-felling="${wp.fellingRating || 0}" data-primitive="${wp.primitive ? 1 : 0}"
+    data-ignore-shield="${wp.ignoreShield ? 1 : 0}" data-warp-soak="${wp.warpSoak ? 1 : 0}"
+    data-blast="${wp.blastRating || 0}" data-flame="${wp.flame ? 1 : 0}"
+    data-power-field="${wp.powerField ? 1 : 0}" data-spray="${wp.spray ? 1 : 0}"
+    data-devastating="${wp.devastatingRating || 0}"
+    data-mag-dice-bonus="${magRoll?.total || 0}"
+    data-has-extreme="${ext.hasExtreme ? 1 : 0}"
+    data-weapon-range="${Number(sys.range) || 0}" data-melee="${isMelee ? 1 : 0}"
+    ${target ? `data-force-target="${target.document?.uuid ?? target.actor?.uuid ?? ""}"` : ""}>
+    Применить урон: <b>${totalDamage}</b> → ${hitLoc}</button>`;
+  // Кнопки защиты несут атакующего и признак «атакует Орда» так же, как
+  // карточка обычной атаки: без них «Один Против Сотни» (Преимущество на
+  // Избегание атак Орды) и прочие правила «кто на меня напал» молчали, а
+  // attackId держит правило «одно Действие — одна Реакция».
+  const defData = `data-extra-mod="0" data-attack-deg="${deg}" data-hits-count="1"
+    data-attacker-uuid="${actor.uuid || ""}" data-item-uuid="${w.uuid || ""}"
+    data-attacker-weapon-uuid="${w.uuid || ""}" data-attacker-is-horde="1"
+    data-melee="${isMelee ? 1 : 0}" data-horde-hit="${hit ? 1 : 0}" data-attack-id="${foundry.utils.randomID()}"`;
+  // Попадание Орды Избегать нельзя — кроме «Быстрых и Мёртвых»/Серого Человека
+  // Размером < 2 (rules/horde-single-target.mjs): для них это атака одиночного
+  // персонажа. Цель известна (несколько целей) — кнопки только если может;
+  // не известна — кнопки есть, а кнопка сама отказывает остальным (hooks.mjs).
+  const hitEvadable = !hit || (target?.actor ? evadesHordeAsSingle(target.actor) : true);
+  const defenseHint = !hit ? "промах Орды можно Избегать"
+    : "попадание Орды Избегают только Быстрые и Мёртвые / Серый Человек (Размер < 2)";
+  const dodgeBtn = hitEvadable
+    ? `<div class="roll-defense-section"><div class="roll-section-head">Защита цели <span class="roll-head-hint">— ${defenseHint}</span></div>
+         <div class="roll-defense-btns"><button class="wh-dodge-btn" type="button" ${defData}>Уклонение</button>
+         ${isMelee && !wp.flexible ? `<button class="wh-parry-btn" type="button" ${defData}>Парирование</button>` : ""}</div></div>`
+    : `<div class="roll-defense-note">Попадание Орды нельзя Избегать (шквал / навал).</div>`;
+
+  const targetEffectBtns = buildTargetEffectButtons(wProps, { hit, damageType: dtype, hitLocation: hitLoc });
+  const magNote = magDice ? ` · <span class="horde-chip">Магнитуда +${magDice}d10</span>` : "";
+  const meta = CHARACTERISTICS[key];
+
+  // Карточка АТАКИ (wdbc-kuun): на общий сборщик теста сознательно не
+  // переводится — у атак своя большая разметка (попадания, локации,
+  // урон, кнопки защиты), общая с attack-card.mjs.
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `<div class="wh-roll-result horde-atk">
+      ${buildPropertyChatBlock(wProps)}
+      <div class="roll-header">${esc(actor.name)} — ${esc(w.name)}${target ? ` → ${esc(target.name ?? target.actor?.name ?? "")}` : ""}</div>
+      <div class="roll-threshold">${meta?.abbr || key}: Порог <b>${threshold}</b> · целей: <b>${targets}</b> · бросок <b>${rv}</b></div>
+      ${autoFail ? `<div class="roll-threshold">⛔ Автопровал: Орда Ослеплена</div>` : ""}
+      <div class="roll-outcome">${hit
+        ? `<span class="roll-success">Попадание — ${deg} ${_degWord(deg)}, шквал накрывает цель</span>`
+        : `<span class="roll-failure">Промах = попадание без бонусов Магнитуды (можно Избегать)</span>`}</div>
+      <div class="roll-damage-section">
+        <div class="roll-damage-meta">${dtLabel} · Пробитие ${pen}${isMelee ? `, S.b +${sbEff}` : ""}${magNote}</div>
+        ${ext.hasExtreme ? `<div class="roll-extreme-block"><b>Экстремальный урон</b> · d5: ${ext.extremeLevel}${ext.critEffect ? `<div class="roll-crit-effect">${ext.critEffect}</div>` : ""}</div>` : ""}
+        <div class="roll-damage-line"><b>${hitLoc}</b>: <b class="roll-dmg-big">${totalDamage}</b> <span class="horde-dmg-formula">= ${formula}${magDice ? ` + ${magDice}d10` : ""}${diceParts ? ` → ${diceParts}` : ""}</span></div>
+      </div>
+      ${targetEffectBtns}
+      <div class="roll-apply-dmg-section"><div class="roll-section-head">Применить к цели <span class="roll-head-hint">${target ? `— ${esc(target.name ?? target.actor?.name ?? "")}` : "— выберите токен"}</span></div>${applyBtn}</div>
+      ${dodgeBtn}
+    </div>`,
+    rolls: [roll, dmgRoll, ...(magRoll ? [magRoll] : []), ...(ext.exRoll ? [ext.exRoll] : [])],
+    sound: CONFIG.sounds.dice
+  }, game.settings.get("core", "rollMode")));
 }
 
 // Орда не наследует лист персонажа — подключаем окно выбора отдельно.

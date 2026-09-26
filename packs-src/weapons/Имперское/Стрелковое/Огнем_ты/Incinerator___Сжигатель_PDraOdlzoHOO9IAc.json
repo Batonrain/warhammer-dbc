@@ -78,7 +78,8 @@
       "standard": false,
       "reloads": 10
     },
-    "damageSubtype": "flame"
+    "damageSubtype": "flame",
+    "techClass": "mechanical"
   },
   "_id": "PDraOdlzoHOO9IAc",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-heavy.svg",

@@ -69,7 +69,8 @@
       "standard": false,
       "reloads": 10
     },
-    "damageSubtype": ""
+    "damageSubtype": "",
+    "techClass": "none"
   },
   "_id": "6WcaNaveRx2HrNjU",
   "effects": [],

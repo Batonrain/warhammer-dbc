@@ -63,7 +63,8 @@
     "damageSubtype": "crushing",
     "penetration": 0,
     "meleeCategory": "Кулаки",
-    "meleeSubtype": "Кулак.Б"
+    "meleeSubtype": "Кулак.Б",
+    "techClass": "none"
   },
   "_id": "RqjeYunc39z2NXPF",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

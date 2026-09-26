@@ -34,17 +34,26 @@ const clampCap = v => Math.max(0, Math.min(START_CAP, Math.round(Number(v) || 0)
  * @param {number}  o.extraXp   ручная добавка опыта
  * @param {number}  o.extraInf  ручная добавка Бесчестия
  * @param {number}  o.extraCor  ручная добавка Порчи
- * @returns {{xp:number, infamy:number, corruption:number, capped:boolean}|null}
+ * @param {number}  o.subraceCost цена субрасы в опыте — «при создании
+ *   Человек может взять одну субрасу, потратив на это часть стартового опыта,
+ *   если его хватает»: вычитается из опыта; не хватает — xpShort
+ * @returns {{xp:number, infamy:number, corruption:number, capped:boolean,
+ *            subraceCost:number, xpShort:boolean}|null}
  */
 export function startLevelValues({ level, astartes = false,
-                                   extraXp = 0, extraInf = 0, extraCor = 0 } = {}) {
+                                   extraXp = 0, extraInf = 0, extraCor = 0, subraceCost = 0 } = {}) {
   const row = START_LEVELS.find(l => l.key === level);
   if (!row) return null;
 
   const infamyRaw = row.infamy     + (Number(extraInf) || 0);
   const corRaw    = row.corruption + (Number(extraCor) || 0);
+  const grossXp   = Math.max(0, (astartes ? row.astartes : row.mortal) + (Number(extraXp) || 0));
+  const cost      = Math.max(0, Number(subraceCost) || 0);
   return {
-    xp:          Math.max(0, (astartes ? row.astartes : row.mortal) + (Number(extraXp) || 0)),
+    xp:          Math.max(0, grossXp - cost),
+    subraceCost: cost,
+    // Опыта не хватает на субрасу — Мастер не пускает дальше (Этап 4).
+    xpShort:     cost > grossXp,
     infamy:      clampCap(infamyRaw),
     corruption:  clampCap(corRaw),
     // Потолок сработал — это стоит сказать вслух, иначе введённое число молча

@@ -5,12 +5,13 @@
 // момент «убил рукопашной» подтверждает игрок, а не автодетект.
 
 import { isTirelessWarriorItem, tirelessWarriorFatigueRelief, tirelessWarriorDamagedCharacteristics,
-         tirelessWarriorHealWounds, tirelessWarriorHealCharacteristic } from "../rules/tireless-warrior.mjs";
+         tirelessWarriorHealWounds } from "../rules/tireless-warrior.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { fatigueChangeFields, announceFatigueChange } from "../sheets/tabs/conditions.mjs";
+import { charHealFields } from "../rules/char-loss.mjs";
 
 export { isTirelessWarriorItem };
 
@@ -66,10 +67,11 @@ export async function useTirelessWarriorKill(actor, item) {
     update["system.wounds.value"] = newWounds;
     healLine = `Раны: <b>${newWounds}</b> (+${healAmount})`;
   } else {
-    const newDamage = tirelessWarriorHealCharacteristic(actor.system, target, healAmount);
-    update[`system.charDamage.${target}`] = newDamage;
+    // Урон по книге (charLoss) и старый минус в «Мод.» — wdbc-x1nz.2.83.
+    const { patch, healed } = charHealFields(actor.system, target, healAmount);
+    Object.assign(update, patch);
     const label = CHARACTERISTICS[target]?.label || target.toUpperCase();
-    healLine = `${esc(label)}: мод. <b>${newDamage}</b> (+${healAmount})`;
+    healLine = `${esc(label)}: восстановлено урона <b>${healed}</b> (бросок ${healAmount})`;
   }
 
   await actor.update(update);

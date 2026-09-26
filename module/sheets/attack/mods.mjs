@@ -26,6 +26,21 @@ import { isNearestUndamagedEnemy } from "../../combat/legacy-weapon-mutations.mj
 import { isActorsOwnTurn } from "../../combat/delay-action.mjs";
 import { meleeEffectiveRange, parseGrips } from "../../constants/combat.mjs";
 import { longerWeaponBonus, closeQuartersPenalty, closeQuartersRange } from "../../rules/weapon-length.mjs";
+import { getHeldHand, weaponHandsRequired } from "../../rules/hands.mjs";
+import { BODY_SIDES, fingersLostOn } from "../../rules/limb-loss.mjs";
+
+/**
+ * Атака оружием в руке без пальцев (мутация Потеря Конечности, субмутации
+ * 1/6): рука назначена кнопкой Л/П — она; двуручное — любая из двух; без
+ * назначенной руки у одноручного сторона неизвестна — штрафа нет.
+ */
+export function fingersPenalty(actor, weapon) {
+  if (!weapon) return false;
+  const side = getHeldHand(weapon);
+  if (side) return fingersLostOn(actor?.system, side);
+  if (weaponHandsRequired(weapon, actor) >= 2) return BODY_SIDES.some(s => fingersLostOn(actor?.system, s));
+  return false;
+}
 /**
  * @param {object} v состояние броска: оружие, токены, замеренная дистанция
  * @returns {{commonMods: object[], specificMods: object[], charSwapWhy: string[], bandKey: string|null}}
@@ -97,6 +112,9 @@ export function situationalMods(v) {
     // (последнее не автоматизировано — нет отдельного типа теста «на глаз»)
     // — только стрелковая, книга не даёт штрафа рукопашной от неё отдельно.
     ...(isMelee ? [] : [{ label: "Потеря глаз", value: -10, autoCheck: hasLostEyes }]),
+    // «Пальцы» мутации Потеря Конечности (wdbc-1rno.6.1, решение владельца
+    // 24.09.2026): рука держит оружие, но атака им — −10.
+    ...(fingersPenalty(actor, weapon) ? [{ label: "Нет пальцев (мутация)", value: -10, autoCheck: true }] : []),
     // «Цель лежит»/«Цель Оглушена» (wdbc-x1nz.2.97 п.6): распознанное
     // Состояние цели уже дало свои ±20 автоматически (attack-dialog.mjs,
     // proneMod/stunnedMod). Тогда ручная галочка отмечена, заперта и стоит

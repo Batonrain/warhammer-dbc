@@ -7,6 +7,7 @@ import { prepareFormationDerived } from "../rules/formation.mjs";
 import { prepareSquadDerived } from "../rules/squad.mjs";
 import { prepareCharacterDerived } from "../rules/character.mjs";
 import { withRulesCache } from "../rules/collect.mjs";
+import { lostSinceFirstAidAfter } from "../rules/wounds.mjs";
 
 export class WarhammerActor extends Actor {
   prepareData() { super.prepareData(); }
@@ -77,6 +78,19 @@ export class WarhammerActor extends Actor {
         `Подсистема «${feature.name}» выключена. Включите её в Настройках Игры → Warhammer DBC, ` +
         `чтобы выбрать эту расу.`);
       return false;
+    }
+
+    // Потеряно после прошлой Первой Помощи (wdbc-x1nz.2.103): считается здесь,
+    // а не в каждом писателе Ран — урон приходит десятком путей.
+    const { getProperty, setProperty } = foundry.utils;
+    const wounds = this.system?.wounds;
+    const nextValue = getProperty(data, "system.wounds.value");
+    const nextCrit  = getProperty(data, "system.wounds.critical");
+    if (wounds && (nextValue !== undefined || nextCrit !== undefined)
+        && getProperty(data, "system.wounds.lostSinceFirstAid") === undefined) {
+      const next = lostSinceFirstAidAfter(wounds.lostSinceFirstAid, wounds,
+        { value: nextValue ?? wounds.value, critical: nextCrit ?? wounds.critical });
+      if (next !== undefined) setProperty(data, "system.wounds.lostSinceFirstAid", next);
     }
   }
 

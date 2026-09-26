@@ -39,6 +39,8 @@ import { hasRuneMagic, runeMax, runeValue, runeCostForPower, runeCostTotal,
 import { postTestCard, rollStatLine, outcomeHtml } from "../../helpers/test-card.mjs";
 import { mechRollData } from "../../rules/mech-formula.mjs";
 import { runForceBladeShop, forceBladeShopClear } from "../../apps/force-blade-choice.mjs";
+import { charDamageButtonHtml } from "../../combat/char-damage-button.mjs";
+import { voidBlocksPower, isIndirectPower } from "../../rules/null-zones.mjs";
 
 /**
  * Через что кастуется психосила. Прорицание (divination) — через навык
@@ -152,6 +154,12 @@ export async function learnSigilliteRune(actor, item) {
  *   onResult({success, deg, ePR}) у Огня Души (module/combat/soulfire.mjs).
  */
 export function showManifestDialog(actor, item, extraOpts = {}) {
+  // Пустота Парии (rules/null-zones.mjs): психосилы в ауре развеиваются —
+  // кроме Непрямых. Отказ до окна манифестации, фокус не бросается.
+  if (voidBlocksPower(actor, item)) {
+    ui.notifications.warn(`«${item.name}»: в Пустоте Парии психосилы развеиваются (кроме Непрямых).`);
+    return;
+  }
   if (sarcophagusBlocksPsychicPowers(actor)) {
     ui.notifications.warn("Саркофаг Дредноута: манифестация психосил заблокирована (нужна Матрица Осирис).");
     return;
@@ -917,6 +925,8 @@ export async function executePsychotest(actor, item, opts) {
                 data-damage-type="${atk.damageType}" data-damage-subtype="${atk.damageSubtype}"
                 data-hit-location="Торс"
                 data-weapon-name="${item.name}" data-attacker="${actor.name}" data-attacker-uuid="${actor.uuid}"
+                data-psychic="1" data-psy-power-type="${esc(item.system?.powerType || "")}"
+                data-psy-indirect="${isIndirectPower(item.system) ? 1 : ""}"
                 data-felling="${wp.fellingRating ?? 0}"
                 data-primitive="${wp.primitive ? 1 : 0}"
                 data-ignore-shield="${wp.ignoreShield ? 1 : 0}"
@@ -963,7 +973,7 @@ export async function executePsychotest(actor, item, opts) {
       charDamageSection = `
           <div class="roll-damage-section">
             <div class="roll-damage-label">Урон в характеристику <b>${cdAbbr}</b>: <b>${cdRoll.total}</b></div>
-            <div class="roll-threshold" style="font-size:0.82em;">Примените к соответствующей характеристике цели (минуя Раны).</div>
+            ${charDamageButtonHtml({ amount: cdRoll.total, keys: [atk.charStat] }, { source: item.name ?? "" })}
           </div>`;
     } catch {
       ui.notifications.warn(`Не удалось бросить урон в характеристику: ${atk.charForm}`);
@@ -1105,6 +1115,7 @@ export async function executePsychotest(actor, item, opts) {
            data-discipline="${esc(sys.discipline || "")}"
            data-target-token-uuid="${esc(targetToken?.document?.uuid || "")}"
            data-item-uuid="${esc(item.uuid)}"
+           data-psy-indirect="${isIndirectPower(item.system) ? 1 : ""}"
            data-label="${esc(`Сопротивление: ${item.name}`)}">
            📨 Запросить тест Сопротивления у ${esc(targetActor.name)}
          </button>`
@@ -1244,7 +1255,9 @@ export async function activateNavigatorPower(actor, item) {
             <button class="wh-apply-dmg-btn" type="button"
               data-damage="${dmgRoll.total}" data-penetration="${pen}"
               data-damage-type="${sys.damageType}" data-hit-location="Торс"
-              data-weapon-name="${item.name}" data-attacker="${actor.name}">
+              data-weapon-name="${item.name}" data-attacker="${actor.name}"
+              data-psychic="1" data-psy-power-type="${esc(item.system?.powerType || "")}"
+              data-psy-indirect="${isIndirectPower(item.system) ? 1 : ""}">
               Применить урон: ${dmgRoll.total} → Торс
             </button>
           </div>`;

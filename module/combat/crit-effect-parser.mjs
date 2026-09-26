@@ -26,12 +26,47 @@ import { CONDITIONS_DEF } from "../constants/conditions.mjs";
 import { addFatigue, conditionAdjustFields, conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
-import { LIMB_LOSS_KEYS } from "../rules/limb-loss.mjs";
-import { scheduleLimbLossGangreneFields } from "./limb-loss.mjs";
+import { LIMB_LOSS_KEYS, BODY_SIDE_SHORT, sideOfLimb, pickLostSide, lostSideFields } from "../rules/limb-loss.mjs";
+import { dropFromHand } from "./limb-loss.mjs";
+import { isImmuneToCondition } from "../rules/condition-guards.mjs";
+import { isItemActive } from "../apps/effects.mjs";
+import { USELESS_SIDES, SIDE_LABELS, pickSide, uselessApplyFields } from "../rules/useless-limbs.mjs";
+
+/** Пилюли Бесполезной конечности (wdbc-x1nz.2.99) — не Состояния, а запись в system.uselessLimbs. */
+const USELESS_KEYS = { uselessArm: "arm", uselessLeg: "leg" };
+
+/** Потеря какой части тела на какой конечности попадания (wdbc-x1nz.2.100). Глаза — без стороны попадания. */
+const LIMB_KEY_TYPE = { lostHands: "arm", lostArms: "arm", lostFeet: "leg", lostLegs: "leg" };
+
+/** Сторона ("right"/"left"/"") для пилюли по конечности попадания ("rightArm"…), если тип совпал. */
+function pillSide(key, limbSide) {
+  const type = USELESS_KEYS[key] ?? LIMB_KEY_TYPE[key];
+  return type && USELESS_SIDES[limbSide] === type ? limbSide : "";
+}
+
+/**
+ * «Цель роняет всё, что держит в этой руке», «выбивает из руки», «То, что
+ * было в руке, падает» (wdbc-x1nz.2.100) — кнопка «Выронить» под текстом.
+ * Только на попадании в руку: сторона берётся из места попадания.
+ */
+export function textDropsHeld(text) {
+  return /рон(?:яет|ять)|выронить|выбивает\s+из\s+руки|выпускает\s+из\s+этой\s+руки|что\s+было\s+в\s+руке,?\s+падает|что\s+было\s+у\s+цели\s+в\s+руке,\s+уничтожено/iu.test(text ?? "");
+}
+
+export function dropButtonHtml(text, actorUuid, limbSide = "") {
+  const side = sideOfLimb(limbSide);
+  if (!actorUuid || !side || USELESS_SIDES[limbSide] !== "arm" || !textDropsHeld(text)) return "";
+  return `<div class="wh-crit-pills">
+    <button type="button" class="wh-crit-drop-btn" data-actor-uuid="${esc(actorUuid)}" data-side="${side}"
+      title="Снять из этой руки всё, что в ней было (без траты ОД)">
+      ${rollIcon("warn", "#d9a066")} Выронить (${BODY_SIDE_SHORT[side]} рука)</button>
+  </div>`;
+}
 
 // «Стем + на NdX/N Раунд(ов)» — общий костяк для Оглушения/Ослепления.
 function roundPhrase(stem) {
-  return new RegExp(`${stem}[а-яёА-ЯЁ]*\\s+(?:цель\\s+|её\\s+|его\\s+)?на\\s+(\\d+d\\d+|\\d+)\\s+Раунд`, "giu");
+  // «её»/«ее» — книга пишет без ё («Оглушая ее на 1 Раунд», wdbc-x1nz.2.98).
+  return new RegExp(`${stem}[а-яёА-ЯЁ]*\\s+(?:цель\\s+|е[её]\\s+|его\\s+)?на\\s+(\\d+d\\d+|\\d+)\\s+Раунд`, "giu");
 }
 
 /**
@@ -58,6 +93,10 @@ export function parseCritEffectPills(text) {
   // Ослепление: «Ослепляет/Ослеплена ... на NdX Раундов», отдельно — перманент
   for (const m of text.matchAll(roundPhrase("Ослеп"))) push("blinded", m[1]);
   if (/перманентно\s+ослеплен[а-яёА-ЯЁ]*/giu.test(text)) push("blinded", null, { permanent: true });
+
+  // Беспомощность: «Беспомощна/Беспомощной на 1d5 Раундов» (Химические, wdbc-x1nz.2.98).
+  // Тикающего счётчика у helpless нет — кинутые Раунды идут в карточку текстом.
+  for (const m of text.matchAll(roundPhrase("Беспомощ"))) push("helpless", m[1]);
 
   // Усталость: «N[dX] [уровень/уровня/уровней] Усталости»
   for (const m of text.matchAll(/(\d+d\d+|\d+)\s+(?:уровень|уровня|уровней)?\s*Усталост[а-яёА-ЯЁ]*/giu))
@@ -96,8 +135,8 @@ export function parseCritEffectPills(text) {
   // в этой таблице). Каждая пилюля тянет Кровотечение — книга «Потеря
   // конечностей ВСЕГДА приводит к Кровотечению» не оговаривает исключений
   // для строк, которые само слово не упоминают.
-  const LIMB_LOSS_WORDS = { ладони: "lostHands", кисти: "lostHands", кисть: "lostHands", стопу: "lostFeet", ногу: "lostLegs", глаз: "lostEyes" };
-  for (const m of text.matchAll(/(?:лишиться|потерять)\s+(ладони|кисти|кисть|стопу|ногу|глаз)/giu)) {
+  const LIMB_LOSS_WORDS = { ладони: "lostHands", кисти: "lostHands", кисть: "lostHands", стопу: "lostFeet", ступню: "lostFeet", ногу: "lostLegs", глаз: "lostEyes" };
+  for (const m of text.matchAll(/(?:лишиться|потерять)\s+(ладони|кисти|кисть|стопу|ступню|ногу|глаз)/giu)) {
     const key = LIMB_LOSS_WORDS[m[1].toLowerCase()];
     if (key) { push(key, "1"); push("bleeding", null); }
   }
@@ -108,6 +147,22 @@ export function parseCritEffectPills(text) {
   // Состояние — перманентное Ослепление (тот же приём, что уже даёт
   // «перманентно ослеплена» строкой выше).
   if (/[Цц]ель\s+теря[а-яёА-ЯЁ]*\s+зрение/gu.test(text)) push("blinded", null, { permanent: true });
+
+  // Бесполезная конечность (wdbc-x1nz.2.99): по предложениям — в одной строке
+  // таблицы рядом бывают «сбита с ног» и «Рука становится бесполезной», тип
+  // конечности берётся из того предложения, где сказано «бесполезн-».
+  // «на NdX Раундов» — временно (лечения не нужно), иначе — до лечения.
+  // «Ступня бесполезна» — это нога (решение владельца, 24.09.2026).
+  const healPenalty = /Тесты\s+лечения\s+бесполезной\s+конечности\s+получают\s+штраф\s+[–−-](\d+)/iu.exec(text);
+  for (const sentence of text.split(/(?<=[.!?])\s+/u)) {
+    if (!/бесполезн/iu.test(sentence) || /Тесты\s+лечения/iu.test(sentence)) continue;
+    const key = /(?:^|[^а-яёА-ЯЁ])(?:ног[аиу]|ступн[а-яё]*)(?![а-яёА-ЯЁ])/iu.test(sentence) ? "uselessLeg" : "uselessArm";
+    const rounds = /бесполезн[а-яёА-ЯЁ]*\s+на\s+(\d+d\d+|\d+)\s+Раунд/iu.exec(sentence)
+      || /на\s+(\d+d\d+|\d+)\s+Раунд[а-яёА-ЯЁ]*\s+рук[а-яёА-ЯЁ]*\s+становится\s+бесполезн/iu.exec(sentence);
+    push(key, rounds ? rounds[1] : null, healPenalty ? { healMod: -Number(healPenalty[1]) } : {});
+  }
+  // «рука бесполезна и поражена Гангреной» (C/Рука 9, C/Нога 9).
+  if (/поражен[а-яёА-ЯЁ]*\s+Гангрен/iu.test(text)) push("gangrene", null);
 
   return pills;
 }
@@ -156,7 +211,10 @@ export function parseCritEffectPills(text) {
  */
 export function textAssertsDeath(text) {
   if (!text) return false;
-  return /умира[а-яёА-ЯЁ]*|убива[а-яёА-ЯЁ]*|погиба[а-яёА-ЯЁ]*|безжизненн[а-яёА-ЯЁ]*|труп(?!н)[а-яёА-ЯЁ]*|уходит\s+жизнь|не\s+(?:удаётся|способна)\s+пережить|смерть\s+наступает|заканчивается\s+мгновенной\s+смертью|это\s+смертельно|голов[а-яё]*\s+цели\s+взрывается|прежде\s+чем[^.]*умереть|смертельнее\s+не\s+бывает|в\s+кровавые\s+клочья|прекращает\s+сво[её]\s+существование/giu
+  // «тест на T+0, или умирает от остановки сердца» (C/Торс 9) — та же условная
+  // смерть, что «или умереть от шока», но глаголом «умира-»: вырезаем до скана.
+  text = text.replace(/или\s+умира[а-яёА-ЯЁ]*/giu, "");
+  return /умира[а-яёА-ЯЁ]*|убива[а-яёА-ЯЁ]*|погиба[а-яёА-ЯЁ]*|безжизненн[а-яёА-ЯЁ]*|труп(?!н)[а-яёА-ЯЁ]*|уходит\s+жизнь|не\s+(?:уда[её]тся|способна)\s+пережить|смерть\s+наступает|заканчивается\s+мгновенной\s+смертью|это\s+смертельно|голов[а-яё]*\s+цели\s+взрывается|прежде\s+чем[^.]*умереть|смертельнее\s+не\s+бывает|в\s+кровавые\s+клочья|прекращает\s+сво[её]\s+существование/giu
     .test(text);
 }
 
@@ -202,15 +260,22 @@ function formulaIsDice(formula) {
  * крит-таблица бьёт только фактом. Ближайший осмысленный кандидат — урон
  * этого же попадания, поэтому кладём его в data-source-damage, только у
  * пилюли "burning" (остальным он не нужен).
+ *
+ * side (wdbc-x1nz.2.99, опционально) — какая конечность задета (ключ
+ * rules/useless-limbs.mjs::LOCATION_TO_SIDE по месту попадания): только у
+ * пилюль Бесполезной руки/ноги, чтобы бесполезной стала именно она.
  */
-export function critPillsHtml(pills, actorUuid, hitNetDamage = null) {
+export function critPillsHtml(pills, actorUuid, hitNetDamage = null, { side = "" } = {}) {
   if (!pills?.length || !actorUuid) return "";
   const btns = pills.map(p => {
     const def = CONDITIONS_DEF[p.key];
     if (!def) return "";
-    const durTxt = p.permanent ? " (перм.)" : (p.formula ? ` ${esc(p.formula)}` : "");
-    const srcDmgAttr = (p.key === "burning" && hitNetDamage != null)
+    const useless = USELESS_KEYS[p.key];
+    const durTxt = p.permanent ? " (перм.)" : (p.formula ? ` ${esc(p.formula)}${useless ? " Р." : ""}` : (useless ? " (до лечения)" : ""));
+    let srcDmgAttr = (p.key === "burning" && hitNetDamage != null)
       ? ` data-source-damage="${esc(String(hitNetDamage))}"` : "";
+    if (useless) srcDmgAttr += ` data-heal-mod="${Number(p.healMod) || 0}"`;
+    if (useless || LIMB_KEY_TYPE[p.key]) srcDmgAttr += ` data-side="${pillSide(p.key, side)}"`;
     return `<button type="button" class="wh-crit-apply-btn" data-actor-uuid="${esc(actorUuid)}"
       data-cond-key="${p.key}" data-formula="${esc(p.formula || "")}" data-permanent="${p.permanent ? "1" : "0"}"${srcDmgAttr}
       title="Наложить на цель карточки">
@@ -234,9 +299,11 @@ export function critPillsHtml(pills, actorUuid, hitNetDamage = null) {
  * записью, что накладывает само Состояние — Cooler/Морозное Сердце сравнивают
  * его с книжным порогом (condition-ticks.mjs::ensureBurningGrace).
  */
-export async function applyCritEffectPill(actor, { key, formula, permanent, sourceDamage = null } = {}) {
+export async function applyCritEffectPill(actor, { key, formula, permanent, sourceDamage = null, side = "", healMod = 0 } = {}) {
   const def = CONDITIONS_DEF[key];
   if (!actor || !def) return;
+  if (USELESS_KEYS[key]) return applyUselessLimbPill(actor, { key, formula, side, healMod });
+  if (LIMB_LOSS_KEYS.includes(key)) return applyLimbLossPill(actor, { key, side });
 
   let amount = null, diceHtml = "", diceRoll = null;
   if (formulaIsDice(formula)) {
@@ -251,12 +318,8 @@ export async function applyCritEffectPill(actor, { key, formula, permanent, sour
   if (key === "fatigued") {
     await addFatigue(actor, amount || 1);
   } else if (def.hasLevel && def.levelField && amount != null && !permanent) {
-    const fields = conditionAdjustFields(actor, key, amount);
-    // Потеря части тела от крита (wdbc-1rno.6) — заводит таймер обрубка
-    // (T.b дней, иначе 80% Гангрены) прямо здесь, в момент наложения. Не
-    // трогает Мутацию Loss of Limb — та не проходит через эту пилюлю.
-    if (LIMB_LOSS_KEYS.includes(key)) Object.assign(fields, scheduleLimbLossGangreneFields(actor, key));
-    await actor.update(fields);
+    // Потеря части тела сюда не доходит — applyLimbLossPill выше (по сторонам).
+    await actor.update(conditionAdjustFields(actor, key, amount));
   } else {
     // Удушье без числа (wdbc-x1nz.2.94): полный запас активного режима,
     // T.b×2 Раундов (condition-ticks.mjs::suffocationHoldUnits — не
@@ -293,4 +356,72 @@ export async function applyCritEffectPill(actor, { key, formula, permanent, sour
     rolls: diceRoll ? [diceRoll] : [],
     sound: diceRoll ? CONFIG.sounds.dice : null
   }, game.settings.get("core", "rollMode")));
+}
+
+/**
+ * Пилюля «Бесполезная рука/нога» (wdbc-x1nz.2.99): запись в
+ * system.uselessLimbs той конечности, куда пришёлся удар (иначе — первой
+ * целой этого типа). С формулой — на столько Раундов, без — до лечения:
+ * с этой минуты идут часы 2×T.b (rules/useless-limbs.mjs).
+ */
+async function applyUselessLimbPill(actor, { key, formula, side, healMod }) {
+  const def = CONDITIONS_DEF[key];
+  const type = USELESS_KEYS[key];
+  const target = pickSide(actor.system, type, side);
+  let rounds = 0, diceRoll = null, diceHtml = "";
+  if (formulaIsDice(formula)) {
+    diceRoll = await new Roll(formula).evaluate();
+    rounds = diceRoll.total;
+    diceHtml = await diceRoll.render();
+  } else if (formula) {
+    rounds = Number(formula) || 0;
+  }
+  const tb = Number(actor.system?.characteristics?.t?.bonus) || 0;
+  await actor.update(uselessApplyFields(actor.system, target, {
+    rounds, healMod: Number(healMod) || 0, worldTime: game.time?.worldTime ?? 0, tb
+  }));
+  // Бесполезной рукой ничего не удержать (wdbc-x1nz.2.100).
+  if (type === "arm") await dropFromHand(actor, sideOfLimb(target), { reason: "рука бесполезна" });
+  const note = rounds > 0
+    ? `на <b>${rounds}</b> Раунд.`
+    : `до лечения — Medicae+0 в течение <b>${2 * Math.max(0, tb)}</b> ч. (2×T.b), иначе перманентно${Number(healMod) ? `; тесты лечения ${healMod}` : ""}`;
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `<div class="wh-roll-result">
+      <div class="roll-header">${rollIcon("warn", "#8fd0ff")}Крит-эффект → ${esc(actor.name)}</div>
+      <div class="roll-threshold">${def.svg || def.icon} <b>${esc(def.label)}</b> (${esc(SIDE_LABELS[target])}) — ${note}</div>
+      ${diceHtml}
+    </div>`,
+    rolls: diceRoll ? [diceRoll] : [],
+    sound: diceRoll ? CONFIG.sounds.dice : null
+  }, game.settings.get("core", "rollMode")));
+}
+
+/**
+ * Пилюля потери части тела (wdbc-1rno.6, по сторонам — wdbc-x1nz.2.100):
+ * на стороне попадания (или первой целой), с таймером Гангрены обрубка
+ * (T.b дней, иначе 80%). Кровотечение — своей пилюлей рядом. Потерянная
+ * кисть/рука роняет то, что держала (кисть — кроме закреплённого на
+ * запястье и щита: его пристёгивают к обрубку).
+ */
+async function applyLimbLossPill(actor, { key, side }) {
+  const def = CONDITIONS_DEF[key];
+  if (isImmuneToCondition(actor, key, isItemActive)) return;
+  const bodySide = pickLostSide(actor.system, key, sideOfLimb(side));
+  if (!bodySide) {
+    ui.notifications?.warn(`${actor.name}: «${def.label}» — обе уже потеряны.`);
+    return;
+  }
+  await actor.update(lostSideFields(key, bodySide, {
+    timer: true, worldTime: game.time?.worldTime ?? 0, tb: Number(actor.system?.characteristics?.t?.bonus) || 0
+  }));
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `<div class="wh-roll-result">
+      <div class="roll-header">${rollIcon("warn", "#8fd0ff")}Крит-эффект → ${esc(actor.name)}</div>
+      <div class="roll-threshold">${def.svg || def.icon} <b>${esc(def.label)}</b> (${BODY_SIDE_SHORT[bodySide]}) — обрубок нужно обработать (Medicae−10) за T.b дн., иначе 80% Гангрены</div>
+    </div>`
+  }, game.settings.get("core", "rollMode")));
+  if (key === "lostHands" || key === "lostArms")
+    await dropFromHand(actor, bodySide, { wrist: key === "lostArms", reason: key === "lostArms" ? "рука потеряна" : "кисть потеряна" });
 }

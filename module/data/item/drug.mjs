@@ -8,11 +8,23 @@
 
 const CHARS = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel"];
 
+import { stringList, repairStringListAt } from "../string-list.mjs";
+
 export class DrugData extends foundry.abstract.TypeDataModel {
+
+  /**
+   * Строки-ключи, испорченные прежней схемой в {}, — в метку для мировой
+   * миграции (data/string-list.mjs). До очистки полей, поэтому здесь.
+   * @override
+   */
+  static migrateData(source) {
+    repairStringListAt(source, "poisonVector");
+    return super.migrateData(source);
+  }
 
   /** @override */
   static defineSchema() {
-    const { StringField, HTMLField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
+    const { StringField, HTMLField, BooleanField, NumberField, SchemaField } = foundry.data.fields;
     const num  = (initial, label) => new NumberField({ initial, nullable: false, label });
     const text = label => new StringField({ initial: "", label });
     /** Правки всех девяти характеристик — одинаковый набор у эффекта и пост-эффекта. */
@@ -44,7 +56,10 @@ export class DrugData extends foundry.abstract.TypeDataModel {
         testChar:     new StringField({ initial: "t", label: "Характеристика теста" }),
         testMod:      num(0, "Модификатор теста"),
         frequency:    text("Периодичность"),
-        penalty:      text("Штраф")
+        penalty:      text("Штраф"),
+        // Какие Характеристики не восстанавливают урон, пока зависимость есть
+        // (task-56da; нотация rules/char-loss.mjs::recoveryTargets: "int,per,wp,fel").
+        blocksRecovery: new StringField({ initial: "", label: "Не восстанавливает урон в (при зависимости)" })
       }, { label: "Зависимость" }),
       statMods:            statMods("Правки характеристик"),
       afterEffectStatMods: statMods("Правки характеристик от пост-эффекта"),
@@ -83,7 +98,7 @@ export class DrugData extends foundry.abstract.TypeDataModel {
         grantsConditionLevel:       num(1, "Уровень даваемого"),
         customEffect:               text("Особое")
       }, { label: "Особые действия пост-эффекта" }),
-      poisonVector:   new ArrayField(new ObjectField(), { label: "Пути отравления" }),
+      poisonVector:   stringList("Пути отравления"),
       poisonEffect:   text("Действие яда"),
       poisonTestChar: new StringField({ initial: "t", label: "Характеристика теста на яд" }),
       poisonTestMod:  num(0, "Модификатор теста на яд"),

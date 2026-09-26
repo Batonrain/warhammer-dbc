@@ -57,6 +57,21 @@ export function actorRacePastItem(actor) { return grantedItem(actor, "race", "ra
 export function actorSubraceItem(actor) { return grantedItem(actor, "subrace", "subrace"); }
 
 /**
+ * На персонаже лежит ровно та субраса и тот её уровень, что выбраны в
+ * system.subrace/subraceTier. Нет — Мастер переприменяет (applySubrace
+ * сперва снимает старую). Предмет без ключа (старые данные) считается
+ * совпавшим: сверять его не с чем.
+ */
+export function subraceItemCurrent(actor) {
+  const item = actorSubraceItem(actor);
+  if (!item) return false;
+  const key = item.system?.key;
+  if (key && key !== actor.system?.subrace) return false;
+  const tier = Number(item.flags?.[FLAG]?.subraceTier) || 1;
+  return tier === Math.max(1, Number(actor.system?.subraceTier) || 1);
+}
+
+/**
  * Стартовые характеристики расы — ТОЛЬКО в пустые поля. Заполненное значение
  * это уже выбор игрока или бросок Мастера, и раса его не переписывает.
  */
@@ -200,7 +215,10 @@ export async function applySubrace(actor, key) {
   if (src) {
     const data = src.toObject();
     delete data._id;
-    data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), [GRANT]: "subrace" } };
+    // subraceTier — уровень, с которым субраса выдана (Затупленный 1–4): смена
+    // уровня в Мастере переприменяет субрасу (subraceItemCurrent ниже).
+    data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), [GRANT]: "subrace",
+      subraceTier: Math.max(1, Number(actor.system.subraceTier) || 1) } };
     // Хук createItem применит Механику носителя асинхронно и Foundry его
     // промис не ждёт (Hooks.callAll не await'ит колбэки) — фильтр removesTraits
     // ниже читает actor.items СРАЗУ и может пробежать раньше хука, не увидев

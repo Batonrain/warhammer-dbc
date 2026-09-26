@@ -453,7 +453,7 @@ export function buildPropertyChatBlock(props) {
  * и _applyWeaponPropEffect резолвит актора по uuid вместо requireControlledActor,
  * не спрашивая игрока выцелить токен на сцене заново.
  */
-export function buildTargetEffectButtons(props, { hit, ammoName = "", forceActor = null, deg = null } = {}) {
+export function buildTargetEffectButtons(props, { hit, ammoName = "", forceActor = null, deg = null, damageType = "", hitLocation = "" } = {}) {
   if (!hit) return "";
   const btns = [];
 
@@ -507,6 +507,10 @@ export function buildTargetEffectButtons(props, { hit, ammoName = "", forceActor
         // в hooks.mjs::_applyWeaponPropEffect по итогу применения урона.
         `data-wp-on-breach="${te.onBreach ? 1 : 0}"`,
         `data-wp-ammo-name="${ammoName}"`,
+        // Вид урона и место атаки — для Крит. Эффекта, если доп. урон свойства
+        // уведёт цель в минус (wdbc-x1nz.2.85).
+        `data-wp-dmg-type="${damageType}"`,
+        `data-wp-hit-location="${hitLocation}"`,
         `data-wp-force-actor-uuid="${forceActor?.uuid ?? ""}"`,
         // wdbc-zlx7: базовый порог Успехов уже отфильтрован ВЫШЕ этой функции
         // (filterPropsBySuccesses, psychic.mjs) — сюда доезжают только записи,

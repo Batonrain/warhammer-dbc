@@ -10,7 +10,12 @@
     "discipline": "geomancy",
     "subtype": "",
     "powerType": "aura",
-    "extraTypes": [],
+    "extraTypes": [
+      {
+        "type": "indirect",
+        "x": 0
+      }
+    ],
     "shootSubtype": "",
     "prRequired": 3,
     "testChar": "wp",

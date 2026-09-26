@@ -76,6 +76,7 @@
         <span class="horde-chip" data-tooltip="Сломлена при 25% и ниже">25%: <b>{{d.quarterThreshold}}</b></span>
         {{#if d.roundDamage}}<span class="horde-chip" data-tooltip="Порог теста W+Магнитуда — {{d.massDamageThreshold}}">За Раунд: <b>{{d.roundDamage}}</b></span>{{/if}}
         {{#if d.immune}}<span class="horde-chip immune">✦ Несломляема</span>{{/if}}
+        {{#if system.conditions.pinned}}<label class="horde-chip pinned" data-tooltip="Подавлена: вне укрытия тратит все действия, чтобы до него добраться; в укрытии — 1 ОД в Ход и −20 к стрельбе. Снимается тестом W+Магнитуда в конце Хода или рукопашным контактом. Снять галочку — снять вручную."><input type="checkbox" name="system.conditions.pinned" {{checked system.conditions.pinned}}/> 📌 Подавлена</label>{{/if}}
         <label class="horde-immune-toggle" data-tooltip="Иммунна к псих. урону, не может быть Сломлена"><input type="checkbox" name="system.immuneFear" {{checked system.immuneFear}}/> авто-Страх</label>
       </div>
       {{#if psychLock}}
@@ -107,6 +108,8 @@
         <div class="horde-stat"><span class="horde-stat-lbl">Бонус урона</span><b class="horde-stat-val">{{d.magDamageStr}}</b></div>
         <div class="horde-stat"><span class="horde-stat-lbl">Целей (бл.)</span><b class="horde-stat-val">{{d.meleeTargets}}</b></div>
         <div class="horde-stat"><span class="horde-stat-lbl">Выстрелов</span><b class="horde-stat-val">{{d.rangedShots}}</b></div>
+        <div class="horde-stat" data-tooltip="Очки действия: восполняются в начале Хода Орды, тратятся атаками. Подавленная — не больше 1."><span class="horde-stat-lbl">ОД</span><span class="horde-stat-val"><input type="number" name="system.actionPoints.value" value="{{system.actionPoints.value}}" min="0" class="horde-stat-input"/>/{{system.actionPoints.max}}</span></div>
+        <div class="horde-stat" data-tooltip="Реакции: только в свой Ход и только на особые действия (мехадендриты, Furious Assault). Избеганий Орда не совершает."><span class="horde-stat-lbl">Реакции</span><span class="horde-stat-val"><input type="number" name="system.reactions.value" value="{{system.reactions.value}}" min="0" class="horde-stat-input"/>/{{system.reactions.max}}</span></div>
         <div class="horde-stat"><span class="horde-stat-lbl">Бонус W/Страх</span><b class="horde-stat-val">+{{d.psychTestBonus}}</b></div>
         <div class="horde-stat"><span class="horde-stat-lbl">Врагов в бл.</span><input type="number" name="system.enemiesInMelee" value="{{system.enemiesInMelee}}" min="0" class="horde-stat-input" data-tooltip="Уменьшает число выстрелов"/></div>
         <div class="horde-stat"><span class="horde-stat-lbl">Отд. стрелки</span><input type="number" name="system.detachedMagnitude" value="{{system.detachedMagnitude}}" min="0" class="horde-stat-input" data-tooltip="Расчёты тяжёлого оружия: стреляют отдельно, своими атаками без бонусов Орды, и вычитаются из Магнитуды при расчёте её стрельбы"/></div>

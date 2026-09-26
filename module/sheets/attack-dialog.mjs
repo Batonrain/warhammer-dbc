@@ -50,7 +50,7 @@ import { MELEE_CATEGORIES, sameCategory } from "../constants/weapon-categories.m
 import { isHandShield } from "../combat/hand-shield.mjs";
 import { weaponHandsRequired, handsOccupied } from "../rules/hands.mjs";
 import { isFusedByHandOfDeath } from "../rules/hand-of-death.mjs";
-import { collectTestMods, ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
+import { collectTestMods, ruleRollModsHtml, ruleRerollsHtml, ruleAutoModsHtml } from "../rules/roll-mods.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
@@ -68,6 +68,8 @@ import { MAGGOT_PARASITE_CAPABILITY } from "../rules/maggot-parasite.mjs";
 import { legacyWrathEffectiveRof, takenMutationNames } from "../rules/legacy-weapon.mjs";
 import { actorInfamyValue } from "../apps/infamy-points.mjs";
 import { isSabre, NS as SABRE_NS, SABRE_PENDING_FLAG } from "../combat/sabre-second-attack.mjs";
+import { isZeroedByLoss, ZERO_EFFECTS } from "../rules/char-loss.mjs";
+import { fieldDisablesWeapon } from "../rules/null-zones.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -95,6 +97,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Натиск/Бег (movement-actions.mjs).
   if (isHallucinatingCannotAttack(actor))
     return ui.notifications.warn("⚠️ Галлюцинации («Я маленький...») — не может совершать Атаки.");
+  // Поле Дискорданта (rules/null-zones.mjs, как Haywire (7)): электрическое
+  // стрелковое оружие не стреляет; рукопашное бьёт выключенным (ниже).
+  if (fieldDisablesWeapon(actor, item) && item.system?.weaponClass !== "melee")
+    return ui.notifications.warn(`⚠️ «${item.name}»: в поле Дискорданта электрическое оружие не стреляет.`);
   // Наследие Ярости/Rage, ranged-ветка (wdbc-1rno.35, стр. 427): «+1 к
   // наибольшей RoF, или S/2− вместо S/−/−» — клон sys с этой точки, реальный
   // предмет не трогаем (module/rules/legacy-weapon.mjs::legacyWrathEffectiveRof,
@@ -140,6 +146,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // окном — там же разобрано, чем именно.
   const isMelee = attackIsMelee(sys, { forceMelee, profile: startProfile });
   const charKey = isMelee ? "ws" : "bs";
+  // Нулевая WS/BS от урона в Характеристики (wdbc-x1nz.2.83): «не может
+  // совершать рукопашные атаки» / «не может стрелять».
+  if (isZeroedByLoss(actor.system, charKey))
+    return ui.notifications.warn(`⚠️ ${charKey === "ws" ? "WS" : "BS"} = 0 от урона — ${ZERO_EFFECTS[charKey].label.toLowerCase()}.`);
 
   // ── Правила из реестра (module/rules/) ───────────────────────────────────
   //   Атака — такой же тест конвейера, как бросок навыка: вид теста «attack»,
@@ -155,6 +165,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     isMelee,
     // Область «weapon:unarmed» (Свойство атаки Конструктора, wdbc-rmrm9).
     unarmed: isIntegralAttack(item),
+    // Область «weapon:name:<Имя>» (Мясник → Нартеций, wdbc-x1nz.2.101).
+    weapon: item,
     char: charKey,
     targetActor: [...(game.user?.targets ?? [])][0]?.actor ?? null
   };
@@ -351,6 +363,17 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Один обход правил актора на диалог: mods/rerolls/crit/weaponProps из
   // одного результата, посчитанного выше (до сборки _entries/wp).
   const ruleMods = ruleRollModsHtml(actor, attackCtx, resolvedAttack);
+  // Автоматические модификаторы конвейера (auto:true), которых у атаки нет
+  // своим путём: бонус Короткой Команды (rules/command-effects.mjs, «command.*»)
+  // и штраф строки Шока (rules/situational.mjs, «situational.shock»). Раньше
+  // окно их не читало вовсе — Общая Команда «Атаки» +9 и Шок −10 до броска
+  // не доезжали, хотя карточки обещают «учитывается само». Прочие autoMods
+  // сюда НЕ идут: Порог атаки собирается здесь, и часть их уже стоит своим
+  // путём (Усталость — галочкой в sheets/attack/mods.mjs), огулом — задвоение.
+  const ruleAutoMods = ruleAutoModsHtml(actor, attackCtx, {
+    autoMods: (resolvedAttack.autoMods || []).filter(m =>
+      String(m.ruleId ?? "").startsWith("command.") || m.ruleId === "situational.shock")
+  });
   // Перебросы от правил (Локус Буйства — «перебросить любой тест атаки»).
   // Отдельным блоком: складывать их не с чем, выбирается один.
   const ruleRerolls = ruleRerollsHtml(actor, attackCtx, resolvedAttack);
@@ -677,7 +700,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   }
 
   const charVal = (actor.system.characteristics[charKey]?.total ?? 0) + (sys.attackBonus || 0)
-    + wpAttackMod + dyn0.techBon + dyn0.stanceBon + dyn0.gWs + (wp.noAim ? 0 : aimingBonus) + ammoAtkMod;
+    + wpAttackMod + dyn0.techBon + dyn0.stanceBon + dyn0.gWs + (wp.noAim ? 0 : aimingBonus) + ammoAtkMod
+    + ruleAutoMods.total;
 
   // Штраф усталости (мод препаратов уже учтён в char.total)
   // fatigue.effective — с +1 неснимаемой от Гангрены (wdbc-x1nz.2.96).
@@ -1102,10 +1126,13 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
                      shock: "как примитивное, −2 урона",
                      power: sys.offProfile?.name ? `как «${sys.offProfile.name}»` : "как примитивное" };
   const canOff  = ["chain", "shock", "power"].includes(sys.weaponType);
-  const offHtml = (isMelee && canOff) ? `
+  // В поле Дискорданта электрическое рукопашное выключено принудительно —
+  // галочка стоит и не снимается (combat/attack.mjs держит то же самое).
+  const fieldOff = fieldDisablesWeapon(actor, item);
+  const offHtml = (isMelee && (canOff || fieldOff)) ? `
     <label class="attack-mod-check">
-      <input type="checkbox" id="atk-weaponoff"/>
-      <span>${rollIcon("bolt", "#ff9d4d")}Оружие выключено / подавлено ЭМИ — ${OFF_HINT[sys.weaponType]}</span>
+      <input type="checkbox" id="atk-weaponoff" ${fieldOff ? "checked disabled title=\"Поле Дискорданта\"" : ""}/>
+      <span>${rollIcon("bolt", "#ff9d4d")}Оружие выключено / подавлено ЭМИ — ${OFF_HINT[sys.weaponType] || "как примитивное"}${fieldOff ? " (поле Дискорданта)" : ""}</span>
     </label>` : "";
   const maximalHtml = wantMaximal ? `
     <label class="attack-mod-check">
@@ -1361,6 +1388,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     rangeInfoHtml,
     rechargeWarnHtml,
     rofPills,
+    ruleAutoMods,
     ruleMods,
     ruleRerolls,
     shortRangeHtml,
@@ -1466,7 +1494,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       // подключён (aimAttackMod), остальные упираются в отдельные пробелы
       // (wdbc-1rno.29/.31/.36/.37/.38).
       { label: "Прицел (пока Прицеливаюсь)", value: currentAiming === "none" ? 0
-        : installedMods.reduce((n, m) => n + (Number(modFxOf(m).aimAttackMod) || 0), 0) }
+        : installedMods.reduce((n, m) => n + (Number(modFxOf(m).aimAttackMod) || 0), 0) },
+      // Команды и Шок (ruleAutoMods выше) — в базе, а не в modParts: как и в
+      // диалоге броска навыка (actor-sheet.mjs), автоматические модификаторы
+      // идут мимо ополовинивания штрафа галочек (halvePenalty).
+      ...ruleAutoMods.autoMods.map(m => ({ label: m.label, value: m.value }))
     ];
     const modParts = [
       { label: "Доп. модификатор",     value: f.modifier },
@@ -1592,6 +1624,8 @@ export function targetConditionAttackMods(targetActor, isMelee) {
 export async function showAttackDialogNoWeapon(actor, techDef) {
   if (isHallucinatingCannotAttack(actor))
     return ui.notifications.warn("⚠️ Галлюцинации («Я маленький...») — не может совершать Атаки.");
+  if (isZeroedByLoss(actor.system, "ws"))
+    return ui.notifications.warn(`⚠️ WS = 0 от урона — ${ZERO_EFFECTS.ws.label.toLowerCase()}.`);
   const ws       = actor.system.characteristics.ws?.total ?? 0;
   const stance   = actor.system.meleeStance || "standard";
   const stBon    = MELEE_STANCES[stance]?.wsBonus ?? 0;

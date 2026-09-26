@@ -17,7 +17,7 @@ import {
   parseCritEffectPills, applyCritEffectPill, critPillsHtml,
   textAssertsDeath, deathButtonHtml
 } from "../../module/combat/crit-effect-parser.mjs";
-import { CRITICAL_TABLES } from "../../critical-tables.mjs";
+import { CRITICAL_TABLES, critRowText } from "../../critical-tables.mjs";
 import { SHOCK_TABLE } from "../../module/constants/fear-tables.mjs";
 
 function makeActor(overrides = {}) {
@@ -354,25 +354,32 @@ describe("applyCritEffectPill — клик применяет состояние
     beforeEach(() => { globalThis.game.time = { worldTime: 1000 }; });
     afterEach(() => { globalThis.game.time = undefined; });
 
-    it("lostHands +1 и таймер = worldTime + T.b дней", async () => {
+    it("lostHands +1 и таймер = worldTime + T.b дней (на первой целой стороне)", async () => {
       const actor = makeActor({ characteristics: { t: { bonus: 3 } } });
       await applyCritEffectPill(actor, { key: "lostHands", formula: "1" });
-      expect(actor.system.conditions.lostHands).toBe(true);
-      expect(actor.system.conditions.lostHandsCount).toBe(1);
-      expect(actor.system.conditions.lostHandsGangreneAt).toBe(1000 + 3 * 86400);
+      expect(actor.system.lostLimbs.rightHand.lost).toBe(true);
+      expect(actor.system.lostLimbs.rightHand.gangreneAt).toBe(1000 + 3 * 86400);
     });
 
     it("T.b 0 — таймер сразу на текущий worldTime", async () => {
       const actor = makeActor({ characteristics: { t: { bonus: 0 } } });
       await applyCritEffectPill(actor, { key: "lostLegs", formula: "1" });
-      expect(actor.system.conditions.lostLegsGangreneAt).toBe(1000);
+      expect(actor.system.lostLimbs.rightLeg.gangreneAt).toBe(1000);
     });
 
     it("Состояние без счётчика (напр. Оглушение) — таймер не заводится", async () => {
       captured.dice = [4];
       const actor = makeActor();
       await applyCritEffectPill(actor, { key: "stunned", formula: "1d10" });
-      expect(actor.system.conditions.lostHandsGangreneAt).toBeUndefined();
+      expect(actor.system.lostLimbs).toBeUndefined();
+    });
+
+    // wdbc-x1nz.2.100: сторона попадания определяет, КАКАЯ рука/нога потеряна.
+    it("сторона попадания (leftArm) ставит именно leftHand, не правую", async () => {
+      const actor = makeActor({ characteristics: { t: { bonus: 3 } } });
+      await applyCritEffectPill(actor, { key: "lostHands", formula: "1", side: "leftArm" });
+      expect(actor.system.lostLimbs.leftHand.lost).toBe(true);
+      expect(actor.system.lostLimbs.rightHand?.lost).not.toBe(true);
     });
   });
 });
@@ -546,7 +553,8 @@ describe("метрика покрытия — снимок доли распоз
     let total = 0, recognized = 0;
     for (const locs of Object.values(CRITICAL_TABLES)) {
       for (const rows of Object.values(locs)) {
-        for (const [, text] of rows) {
+        for (const [n] of rows) {
+          const text = critRowText(rows, n);
           total++;
           if (parseCritEffectPills(text).length) recognized++;
         }
@@ -575,7 +583,8 @@ describe("метрика покрытия — снимок доли распоз
     let total = 0, deadly = 0;
     for (const locs of Object.values(CRITICAL_TABLES)) {
       for (const rows of Object.values(locs)) {
-        for (const [, text] of rows) {
+        for (const [n] of rows) {
+          const text = critRowText(rows, n);
           total++;
           if (textAssertsDeath(text)) deadly++;
         }
@@ -614,18 +623,66 @@ describe("textAssertsDeath: строки без глагола смерти (wdb
     expect(textAssertsDeath("Тест T+0, или умереть от шока. Рана поражена трупным ядом.")).toBe(false);
   });
 
-  it("ни одна из 14 условных строк «или умереть» не попала под новые обороты", () => {
+  // wdbc-x1nz.2.98: таблица заменена книжным текстом — условных строк стало 12
+  // (11 «или умереть» + C/Торс 9 «или умирает от остановки сердца»).
+  it("ни одна из 12 условных строк «или умереть/умирает» не утверждает смерть", () => {
     let conditional = 0, falsePositives = 0;
     for (const locs of Object.values(CRITICAL_TABLES)) {
       for (const rows of Object.values(locs)) {
-        for (const [, text] of rows) {
-          if (!/или\s+умереть/iu.test(text)) continue;
+        for (const [n] of rows) {
+          const text = critRowText(rows, n);
+          if (!/или\s+(?:умереть|умира)/iu.test(text)) continue;
           conditional++;
           if (textAssertsDeath(text)) falsePositives++;
         }
       }
     }
-    expect(conditional).toBe(14);
+    expect(conditional).toBe(12);
     expect(falsePositives).toBe(0);
+  });
+});
+
+// wdbc-x1nz.2.98: пересказ в critical-tables.mjs заменён книжным текстом —
+// обороты книги, которые пересказ прятал от разборщика.
+describe("книжный текст крит-таблиц (wdbc-x1nz.2.98)", () => {
+  const keys = text => parseCritEffectPills(text).map(p => `${p.key}:${p.formula ?? ""}`);
+  const row = (type, loc, n) => critRowText(CRITICAL_TABLES[type][loc], n);
+
+  it("«Оглушая ее» без ё даёт Оглушение (R/Голова 5, E/Рука 3)", () => {
+    expect(keys(row("rending", "head", 5))).toContain("stunned:1d5");
+    expect(keys(row("energy", "arm", 3))).toContain("stunned:1");
+  });
+
+  it("«Ослепляет ее на 1 Раунд» даёт Ослепление (I/Голова 3)", () => {
+    expect(keys(row("impact", "head", 3))).toContain("blinded:1");
+  });
+
+  it("«потерять ступню» — потеря стопы (R/Нога 6, E/Нога 6)", () => {
+    expect(keys(row("rending", "leg", 6))).toContain("lostFeet:1");
+    expect(keys(row("energy", "leg", 6))).toContain("lostFeet:1");
+  });
+
+  it("«Беспомощна на 1d5 Раундов» даёт Беспомощность (C/Голова 7, C/Торс 9)", () => {
+    expect(keys(row("chemical", "head", 7))).toContain("helpless:1d5");
+    expect(keys(row("chemical", "torso", 9))).toContain("helpless:1d5");
+  });
+
+  it("«Цели не удается пережить» (без ё) — смерть (E/Голова 8)", () => {
+    expect(textAssertsDeath(row("energy", "head", 8))).toBe(true);
+  });
+
+  it("«или умирает от остановки сердца» — смерть условная (C/Торс 9)", () => {
+    expect(textAssertsDeath(row("chemical", "torso", 9))).toBe(false);
+  });
+
+  it("строка 10+ «Как выше, но…» выдаётся вместе с 9-й — смерть не теряется", () => {
+    const text = row("impact", "leg", 10);
+    expect(text.startsWith("Ногу буквально разрывает")).toBe(true);
+    expect(text).toContain("Как выше, но крики жертвы");
+    expect(textAssertsDeath(text)).toBe(true);
+  });
+
+  it("X/Голова 10 «…ситуации» продолжает «за исключением…» 9-й строки", () => {
+    expect(row("blast", "head", 10)).toContain("за исключением… ситуации, когда");
   });
 });

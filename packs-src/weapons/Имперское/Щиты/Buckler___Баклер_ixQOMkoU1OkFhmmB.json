@@ -69,7 +69,8 @@
     "shieldAP": 0,
     "shieldZones": "",
     "shieldForm": "Баклер",
-    "damageSubtype": "crushing"
+    "damageSubtype": "crushing",
+    "techClass": "none"
   },
   "_id": "ixQOMkoU1OkFhmmB",
   "img": "systems/warhammer-dbc/assets/item-icons/shield.svg",

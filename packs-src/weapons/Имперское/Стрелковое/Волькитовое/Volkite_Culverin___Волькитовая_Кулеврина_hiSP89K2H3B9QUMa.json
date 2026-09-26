@@ -65,7 +65,8 @@
       "standard": false,
       "reloads": 10
     },
-    "damageSubtype": "laser"
+    "damageSubtype": "laser",
+    "techClass": "electric"
   },
   "_id": "hiSP89K2H3B9QUMa",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-heavy.svg",

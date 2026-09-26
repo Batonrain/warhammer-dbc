@@ -76,6 +76,7 @@ function actor({ sigillite = false, strikeTalent = false, runes = 20,
       corruption: { value: 12 }, corruptionBonus: 1,
       wounds: { value: 8, max: 10, critical: 0 },
       charDamage: { s: 0, ag: 0, wp: 0 },
+      charLoss: { s: 0, ag: 0, wp: 0 }, charLossAt: {},
       sigilliteRunes: { value: runes, max: 20 },
       experience: { current: experienceCurrent, log: [] },
       characteristics: {
@@ -83,7 +84,8 @@ function actor({ sigillite = false, strikeTalent = false, runes = 20,
         int: { total: 40, value: 40, bonus: 4 },
         per: { total: 35, value: 35, bonus: 3 },
         t:   { total: 42, value: 42, bonus: 4 },
-        s:   { total: 30, value: 30, bonus: 3 }
+        s:   { total: 30, value: 30, bonus: 3 },
+        ag:  { total: 30, value: 30, bonus: 3 }
       }
     },
     update: async data => {
@@ -416,9 +418,8 @@ describe("Психотест — гейт «манифестировать мо�
     // цена Пути (бPR 1 × 2 = 2 Руны) + цена Импровизации (1 Рана, −1 S/A/W).
     expect(a.system.sigilliteRunes.value).toBe(18);
     expect(a.system.wounds.value).toBe(7);
-    expect(a.system.charDamage.s).toBe(-1);
-    expect(a.system.charDamage.ag).toBe(-1);
-    expect(a.system.charDamage.wp).toBe(-1);
+    // Урон руны — порциями 1 за 8 ч (task 1-8), не в общий charLoss.
+    expect((a.system.charLossPortions ?? []).map(p => `${p.key}:${p.amount}`)).toEqual(["s:1", "ag:1", "wp:1"]);
   });
 
   it("изученная Руна манифестируется без Improvised Rune и без цены тела", async () => {
@@ -429,7 +430,7 @@ describe("Психотест — гейт «манифестировать мо�
     expect(captured.chat.length).toBe(1);
     expect(captured.chat[0].content).not.toContain("Импровизированная Руна");
     expect(a.system.wounds.value).toBe(8);   // не тронуты
-    expect(a.system.charDamage.s).toBe(0);
+    expect(a.system.charLoss.s).toBe(0);
   });
 
   it("Путь, отличный от «Руны Сигиллитов», гейт не трогает даже без изученной Руны", async () => {

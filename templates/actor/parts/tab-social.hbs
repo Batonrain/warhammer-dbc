@@ -198,9 +198,14 @@
       <button type="button" class="cmd-roll-btn{{#if shortActive}} cmd-on{{/if}}" data-cmd-roll="short"
               title="Полудействие. Бонус = Успехи × множитель приказа">
         Короткая{{#if shortActive}} +{{shortBonus}}{{/if}}</button>
+      {{#unless training}}
       <button type="button" class="cmd-roll-btn{{#if detailActive}} cmd-on{{/if}}" data-cmd-roll="detail"
               title="Полное действие. Успехи тратятся на эффекты">
         Детальная{{#if detailActive}} {{detailSuccesses}}{{/if}}</button>
+      {{/unless}}
+      {{#if focusSelected}}
+      <button type="button" class="cmd-focus-fire" title="Концентрация огня: выделите на сцене трёх подчинённых с одинаковым оружием — атакует тот, у кого меньше BS/WS, с +2 кубами урона и −20 Избеганию цели">Тройка</button>
+      {{/if}}
       <button type="button" class="cmd-clear" title="Снять всё отданное — конец боя или потеря Командования">Сбросить</button>
       {{#if exoditeLord}}
       <button type="button" class="cmd-lord-clear" title="Полное действие: вывести до F.b выделенных союзников из Страха/Шока/Подавления">Вывести из состояний</button>
@@ -209,6 +214,7 @@
     </div>
 
     <div class="cmd-presence-row">
+      <label title="Дрессировка: Survival(P) вместо Command(F), до P.b животных, лимит Успехов 2 + продвижения Awareness и Survival; Детальных Команд нет"><input type="checkbox" data-cmd-training {{#if training}}checked{{/if}}/> Дрессировка{{#if training}} (лимит {{trainingCap}}){{/if}}</label>
       <label>Преимущество Присутствия:</label>
       <select data-cmd-benefit>
         {{#each presenceBenefits as |b|}}
@@ -221,7 +227,7 @@
     <div class="cmd-detail-picks">
       {{#each detailCommands as |c|}}
       <button type="button" class="cmd-detail-pick{{#if c.picked}} cmd-picked{{/if}}{{#unless c.afford}} cmd-poor{{/unless}}"
-              data-key="{{c.key}}" title="{{c.desc}}"><span class="sq-chat-cost">{{c.cost}}</span> {{c.label}}</button>
+              data-key="{{c.key}}" title="{{c.desc}}"><span class="sq-chat-cost">{{#if c.costLabel}}{{c.costLabel}}{{else}}{{c.cost}}{{/if}}</span> {{c.label}}</button>
       {{/each}}
     </div>
     {{/if}}

@@ -22,7 +22,7 @@ import { gatherRules, selectRules } from "./collect.mjs";
 import { isKnownEffectKind } from "./effects.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
 import { conditionLevelField } from "../constants/conditions.mjs";
-import { itemHasName, sizeOf } from "./predicates.mjs";
+import { itemHasName, hitSizeOf } from "./predicates.mjs";
 import { WEAPON_PROPERTIES } from "../constants/weapon-properties.mjs";
 import { mechFormulaTotalSafe, mechRollData } from "./mech-formula.mjs";
 
@@ -91,6 +91,10 @@ function attackScopeApplies(scope, ctx) {
   // Безоружная атака — интегральная (Кулак/Пинок/…, combat/equipped-melee.mjs::
   // isIntegralAttack); ставит attack-dialog.mjs (wdbc-rmrm9, Электродуга).
   if (want === "unarmed") return ctx.unarmed === true;
+  // «weapon:name:<Имя>» — только это оружие по имени (любой половине
+  // двуязычного, без скобок): «Нартеций в его руках получает…» (Мясник,
+  // wdbc-x1nz.2.101). Оружие кладёт в контекст attack-dialog.mjs.
+  if (want.startsWith("name:")) return !!ctx.weapon && itemHasName(ctx.weapon, want.slice("name:".length));
   return want === String(ctx.weaponClass ?? "").toLowerCase();
 }
 
@@ -321,8 +325,8 @@ function rawEffectValue(effect, ctx, ruleId) {
     const bonus = ctx?.masterActor?.system?.characteristics?.[masterCharBonus]?.bonus ?? 0;
     return bonus * multiplier || 0;
   }
-  if (selfSize)   return sizeOf(ctx?.actor) * multiplier || 0;
-  if (targetSize) return sizeOf(ctx?.targetActor) * multiplier || 0;
+  if (selfSize)   return hitSizeOf(ctx?.actor) * multiplier || 0;
+  if (targetSize) return hitSizeOf(ctx?.targetActor) * multiplier || 0;
   if (targetTraitRating) return traitRatingSum(ctx?.targetActor, targetTraitRating) * multiplier || 0;
 
   console.error(`Warhammer DBC | правило «${ruleId ?? "без id"}»: неизвестный источник значения ${JSON.stringify(effect.valueFrom)}`);
@@ -395,7 +399,9 @@ export function rollModsFromRules(rules, ctx = {}, { auto = false } = {}) {
       const label = effect.label ?? rule.label ?? rule.id;
       if (effect.kind === "rollBonus") {
         const value = effectValue(effect, ctx, rule.id);
-        if (value !== null) mods.push({ ruleId: rule.id, label, value, halvePenalty: false });
+        // askOnly — модификатор только для галочки в диалоге: без диалога
+        // (rules/roll-mods.mjs::collectTestMods) его не складывают.
+        if (value !== null) mods.push({ ruleId: rule.id, label, value, halvePenalty: false, ...(effect.askOnly ? { askOnly: true } : {}) });
         continue;
       }
       // Диалог умеет только ополовинить штраф — другого множителя в нём нет.

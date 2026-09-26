@@ -82,7 +82,8 @@
       "reloads": 10
     },
     "meleeCategory": "Глефа",
-    "wraithbone": true
+    "wraithbone": true,
+    "techClass": "none"
   },
   "_id": "t1NbcVBKZiZGLqDi",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-spear.svg",

@@ -18,6 +18,7 @@ import { EXODITE_RULES, DRUKHARI_RULES, AZURIANE_RULES, HARLEQUIN_RULES, YNNARI_
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { CORE_RULES } from "./library/core.mjs";
+import { NULL_ZONE_RULES } from "./library/null-zones.mjs";
 import { CONDITION_RULES } from "./library/conditions.mjs";
 import { rulesFromItemMechanics, opposedTargetRerollRules } from "./item-rules.mjs";
 import { isItemActive } from "../apps/effects.mjs";
@@ -50,6 +51,10 @@ const hwKey = actor =>
 // ни к Происхождению, а отбираются по условию `when`. Так живёт «Проворный» —
 // Черта нескольких рас, штраф от которой достаётся не носителю, а атакующему.
 registerRuleSource("core", () => CORE_RULES);
+
+// Пустота Парии (library/null-zones.mjs): штрафы псайкерам/демонам в ауре и
+// социальные штрафы самого Парии — отбор по условию when, как у «core».
+registerRuleSource("nullZones", () => NULL_ZONE_RULES);
 
 // Ситуативные штрафы состояния тела и снаряжения (wdbc-n17t): Усталость,
 // Марш, снятый шлем, выключенная силовая броня, Перевес инвентаря. Числа

@@ -13,7 +13,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { ARCHETYPES } from "../constants/archetypes.mjs";
-import { isAeldariRace } from "./race-library.mjs";
+import { isAeldariRace, subraceEntries } from "./race-library.mjs";
 import { clearGrantedBy } from "./origin-shared.mjs";
 import { SKIP_MECHANICS_HOOK } from "./races.mjs";
 import { applyItemMechanics } from "./mechanics.mjs";
@@ -74,6 +74,14 @@ const KNOWN_DRUKHARI_SUBRACES = ["", "truebornDrukhari", "mandrake", "wrack"];
  *   pastRace — для Иннари: раса, чей архетип наследуется (actor.system.ynnariPast).
  */
 export function archetypesForRace(raceKey, opts = {}) {
+  // Субраса может закрыть Архетипы (bannedArchetypes: Пария — Ведьма и Беглый
+  // Псайкер, Дискордант — Еретех и Скитарий) — их просто нет в списке.
+  const banned = new Set(subraceEntries()[opts.subrace || ""]?.bannedArchetypes || []);
+  const list = archetypesForRaceUnbanned(raceKey, opts);
+  return banned.size ? list.filter(([k]) => !banned.has(k)) : list;
+}
+
+function archetypesForRaceUnbanned(raceKey, opts = {}) {
   const { subrace = "", pastRace = "" } = opts;
   const all = Object.entries(archetypeEntries());
   const byRace = r => all.filter(([, a]) => a.race === r);

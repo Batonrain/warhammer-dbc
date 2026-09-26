@@ -21,7 +21,8 @@
       "initMod": 0,
       "speedMod": 0
     },
-    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Мутации», стр. 440-452)"
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Мутации», стр. 440-452)",
+    "supernatural": true
   },
   "_id": "5ptME0bBf9Co4XoQ",
   "effects": [],

@@ -70,7 +70,8 @@
       "standard": false,
       "reloads": 10
     },
-    "rangeBands": []
+    "rangeBands": [],
+    "techClass": "electric"
   },
   "_id": "v95d65HOIfvaYHAV",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",

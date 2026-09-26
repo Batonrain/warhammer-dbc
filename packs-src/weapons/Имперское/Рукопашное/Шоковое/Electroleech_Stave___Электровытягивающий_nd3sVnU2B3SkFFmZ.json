@@ -70,7 +70,8 @@
       "reloads": 10
     },
     "meleeCategory": "Посох",
-    "damageSubtype": "electrical"
+    "damageSubtype": "electrical",
+    "techClass": "electric"
   },
   "_id": "nd3sVnU2B3SkFFmZ",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-staff.svg",

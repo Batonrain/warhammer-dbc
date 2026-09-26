@@ -63,7 +63,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "techClass": "electric"
   },
   "_id": "IZ1GkCS5jSyNQcma",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-launcher.svg",

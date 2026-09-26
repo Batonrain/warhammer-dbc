@@ -75,7 +75,8 @@
       "reloads": 10
     },
     "meleeCategory": "Меч",
-    "wraithbone": true
+    "wraithbone": true,
+    "techClass": "none"
   },
   "_id": "jFpR9xTLFb1LreZQ",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

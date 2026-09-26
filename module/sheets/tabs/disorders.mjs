@@ -14,14 +14,13 @@
 
 import { CHARACTERISTICS } from "../../constants/characteristics.mjs";
 import { FEAR_RATINGS, DISORDER_LIBRARY, rollDisorderEntry } from "../../constants/fear-tables.mjs";
-import { _executeFearRoll, _executeTraumaRoll } from "../../combat/fear.mjs";
+import { _executeFearRoll, _executeTraumaRoll, fearChar } from "../../combat/fear.mjs";
 import { _degWord, esc } from "../../helpers/utils.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { centerPicker, pickerPos } from "../picker-ui.mjs";
 import { autoTestMods, ruleRollModsHtml, ruleRerollsHtml } from "../../rules/roll-mods.mjs";
 import { postTestCard, rollStatLine } from "../../helpers/test-card.mjs";
 import { resolveKindOutcome } from "../../rules/kind-outcome.mjs";
-import { actorInfamyValue } from "../../apps/infamy-points.mjs";
 import { fatiguePenalty } from "./conditions.mjs";
 import { testKindHtml, diceModeHtml, readTestKind, readDiceChoice,
          mergeReroll, wireTestKindLive, rollD100WithReroll } from "../../rules/test-kind-widget.mjs";
@@ -58,10 +57,29 @@ function checkedOf(html) {
   return sel => !!html.find(sel).prop("checked");
 }
 
+/**
+ * Что диалог Страха может подставить сам (стр. 53), чтобы игроку не сверять
+ * числа руками:
+ *  - Infamy — ХАРАКТЕРИСТИКА (Inf), не Очки Бесчестия: пороги книги 20+…80+,
+ *    пул Очков (≤ Inf.b) до них не дотягивает никогда;
+ *  - рейтинг — Страх выделенного на сцене источника (system.fearRating);
+ *  - «Демон» — источник типа daemon или с Чертой Daemonic;
+ *  - «Важный» — у персонажа есть игрок-владелец; ГМ переключит для важного NPC.
+ */
+export function fearDialogDefaults(actor, source = null) {
+  const infamy = Math.max(0, Number(actor?.system?.characteristics?.inf?.total) || 0);
+  const srcFear = Number(source?.system?.fearRating) || 0;
+  const rating = Math.min(4, Math.max(1, srcFear || 1));
+  const demon = !!source && (source.type === "daemon"
+    || [...(source.items ?? [])].some(i => i.type === "trait" && /^Daemonic\s*([(/]|$)/i.test(i.name ?? "")));
+  const important = actor?.hasPlayerOwner ?? true;
+  return { infamy, rating, demon, important };
+}
+
 /** Диалог теста Страха: форма живёт рядом с остальными кнопками безумия. */
 export function openFearDialog(actor) {
-  const ratingOpts = Object.entries(FEAR_RATINGS).map(([key, rating]) =>
-    `<option value="${key}">${rating.label} — важный W${rating.important >= 0 ? "+" : ""}${rating.important}, Infamy ${rating.infamy}+</option>`
+  const ratingOpts = rating => Object.entries(FEAR_RATINGS).map(([key, r]) =>
+    `<option value="${key}"${Number(key) === rating ? " selected" : ""}>${r.label} — важный W${r.important >= 0 ? "+" : ""}${r.important}, Infamy ${r.infamy}+</option>`
   ).join("");
   // Галочки правил (Конструктор, kind:"testMod", область char:wp/morale) —
   // та же область testMod, что у Травмы ниже: Каталептический Узел и
@@ -74,20 +92,24 @@ export function openFearDialog(actor) {
   // источник угрозы всё же выделен, cross-actor правила (Ненависть) могут его
   // прочитать. Без выделенного токена — null, ведёт себя как раньше.
   const targetActor = [...(game.user?.targets ?? [])][0]?.actor ?? null;
-  const ctx = { kind: "skill", char: "wp", morale: true, targetActor };
+  // Машина без свободы воли (стр. 53) проходит Страх на Int — и галочки,
+  // и предпросмотр Порога считаются по той же характеристике, что бросок.
+  const char = fearChar(actor);
+  const ctx = { kind: "skill", char, morale: true, targetActor };
+  const pre = fearDialogDefaults(actor, targetActor);
   const rm = ruleRollModsHtml(actor, ctx);
   const rr = ruleRerollsHtml(actor, ctx);
   new Dialog({
     title: "😱 Тест Страха",
     content: `
       <form class="wh-attack-form" style="padding:6px;">
-        <div class="atk-dlg-row"><label>Рейтинг Страха:</label><select id="fear-rating">${ratingOpts}</select></div>
+        <div class="atk-dlg-row"><label>Рейтинг Страха:</label><select id="fear-rating">${ratingOpts(pre.rating)}</select></div>
         <div class="atk-dlg-row"><label>Тип персонажа:</label>
-          <select id="fear-type"><option value="important">Важный (игрок)</option><option value="normal">Обычный</option></select></div>
-        <div class="atk-dlg-row"><label>Infamy:</label><input id="fear-infamy" type="number" value="${actorInfamyValue(actor)}"/></div>
+          <select id="fear-type"><option value="important"${pre.important ? " selected" : ""}>Важный (игрок)</option><option value="normal"${pre.important ? "" : " selected"}>Обычный</option></select></div>
+        <div class="atk-dlg-row"><label>Infamy:</label><input id="fear-infamy" type="number" value="${pre.infamy}"/></div>
         <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="fear-mod" type="number" value="0"/></div>
         <div class="atk-dlg-section">Свойства</div>
-        <div class="atk-dlg-row"><label><input id="fear-prop-demon" type="checkbox"/> Демон</label></div>
+        <div class="atk-dlg-row"><label><input id="fear-prop-demon" type="checkbox"${pre.demon ? " checked" : ""}/> Демон</label></div>
         ${rm.html}
         ${rr.html}
         ${testKindHtml({ label: "Тест Страха" })}
@@ -117,7 +139,7 @@ export function openFearDialog(actor) {
     default: "roll",
     render: html => {
       const root = html[0];
-      const wp = actor.system.characteristics.wp?.total ?? 0;
+      const wp = actor.system.characteristics[char]?.total ?? 0;
       const { updateAutoOutcomeNote } = wireTestKindLive(root, {
         actor, label: "Тест Страха",
         getBaseEff: () => {
@@ -132,7 +154,7 @@ export function openFearDialog(actor) {
           // Предпросмотр обязан совпадать с тем, что посчитает сам бросок
           // (combat/fear.mjs), иначе игрок видит один Порог, а получает другой.
           return wp + ratingMod + mod + difficulty
-            + autoTestMods(actor, { kind: "skill", char: "wp", morale: true, targetActor }).total;
+            + autoTestMods(actor, { kind: "skill", char, morale: true, targetActor }).total;
         }
       });
       root.querySelectorAll("#fear-rating, #fear-type, #fear-mod, .rule-mod").forEach(el =>

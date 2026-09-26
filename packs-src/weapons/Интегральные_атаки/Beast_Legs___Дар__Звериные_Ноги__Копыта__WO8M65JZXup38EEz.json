@@ -66,7 +66,8 @@
     "damage": "1d10 I(Cr)",
     "damageType": "crushing",
     "penetration": 0,
-    "meleeCategory": "Природное"
+    "meleeCategory": "Природное",
+    "techClass": "none"
   },
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
   "effects": [],

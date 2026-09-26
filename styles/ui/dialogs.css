@@ -644,6 +644,25 @@
 :is(.wh-wizard-form, .wh-char-wizard) .wiz-slot .ws-total { font-size: 1.1em; font-weight: 700; color: #4dffa6; line-height: 1.1; }
 :is(.wh-wizard-form, .wh-char-wizard) .wiz-slot .ws-base { font-size: .58em; opacity: .55; }
 
+/* Метод (Генерация/Сборка), «Рядовой», Сборка, Смещения */
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-method-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-method-switch { display: flex; gap: 4px; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-method.active { background: #4dffa6; color: #04120b; border-color: #4dffa6; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-method-fixed { font-size: .82em; opacity: .75; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-raf { margin-left: auto; display: flex; align-items: center; gap: 4px; font-size: .82em; cursor: pointer; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-pb-slots .wiz-slot,
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-start-slots .wiz-slot { cursor: default; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-pb-ctl { display: flex; align-items: center; gap: 2px; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-pb-step {
+  cursor: pointer; padding: 0 4px; border-radius: 3px; line-height: 1.2;
+  border: 1px solid var(--wh-border, #1f6f4a); color: #7fe0a8;
+}
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-pb-step:hover { color: #4dffa6; border-color: #4dffa6; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-pb-step.disabled { opacity: .3; pointer-events: none; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-pb-left.over { color: #ff6b6b; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-shift-row { display: flex; align-items: center; gap: 6px; font-size: .85em; margin: 3px 0; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-shift-row select { width: auto; flex: 0 0 auto; }
+
 /* ══ Прицеливание по клику (стрельба по токену) ══════════════════════════ */
 /* Перекрестие вместо курсора над канвасом. Одной строкой намеренно: перенос
    внутри url() утащил бы отступы в саму картинку. «16 16» — остриё по центру. */

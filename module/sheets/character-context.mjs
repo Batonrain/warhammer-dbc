@@ -42,6 +42,7 @@ import { isHelmetMod,
 import { inventoryOverloadPeriodicRemaining }    from "../combat/encumbrance.mjs";
 import { gangrenePeriodicRemaining }             from "../combat/gangrene.mjs";
 import { radiationSicknessRemaining }            from "../combat/radiation.mjs";
+import { REGIMEN_LABELS }                        from "../rules/healing-clock.mjs";
 import { archetypeSheetContext }                 from "../apps/archetypes.mjs";
 import { homeworldSheetContext }                 from "../apps/homeworlds.mjs";
 import { itemHasName, hasEliteArchetype, isPossessed } from "../rules/predicates.mjs";
@@ -595,7 +596,9 @@ export function characterContext(actor) {
       // Цена вписана ГМом руками (wdbc-rcr9) — строка рисует кнопку ↺ «вернуть
       // авто-цену» и выпадает из общего пересчёта по Склонностям.
       costManual:   !!system.characteristics[key]?.costManual,
-      charDamage:   system.charDamage?.[key]                  ?? 0
+      charDamage:   system.charDamage?.[key]                  ?? 0,
+      // Урон в Характеристику по книге (wdbc-x1nz.2.83) — подсветка клетки.
+      charLoss:     system.characteristics[key]?.charLoss       ?? 0
     };
   });
 
@@ -613,6 +616,14 @@ export function characterContext(actor) {
   context.fatigueThreshold = fatigueThreshold;
   context.fatigueValue     = system.fatigue?.value ?? 0;
   context.fatigueMax       = system.fatigue?.max   ?? fatigueThreshold;
+
+  // Режим естественного лечения по Календарю (wdbc-x1nz.2.104): выбор,
+  // медик на уходе и подсказка «когда следующее лечение».
+  context.healingRegimens = REGIMEN_LABELS;
+  const healing = system.healing ?? {};
+  context.healingCaregiverName = healing.caregiver ? (globalThis.fromUuidSync?.(healing.caregiver)?.name ?? "—") : "";
+  const healLeft = (Number(healing.nextAt) || 0) - (globalThis.game?.time?.worldTime ?? 0);
+  context.healingNextHint = healLeft > 0 ? `Следующее лечение через ~${Math.ceil(healLeft / 3600)} ч игрового времени.` : "";
 
   // Доп. AP против типов урона (от модификаций брони) — строка для боя
   const vs = system.absorption?.vsType || {};

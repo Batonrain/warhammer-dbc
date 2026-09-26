@@ -68,7 +68,8 @@
     "meleeCategory": "Щит",
     "shieldAP": 3,
     "shieldZones": "Все",
-    "shieldForm": "Тарг"
+    "shieldForm": "Тарг",
+    "techClass": "none"
   },
   "_id": "7F1G3ctBxhTBPqNZ",
   "img": "systems/warhammer-dbc/assets/item-icons/shield.svg",

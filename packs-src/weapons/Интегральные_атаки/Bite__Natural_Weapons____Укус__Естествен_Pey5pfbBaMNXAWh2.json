@@ -66,7 +66,8 @@
     "damageSubtype": "",
     "penetration": 0,
     "meleeCategory": "Укус",
-    "meleeSubtype": ""
+    "meleeSubtype": "",
+    "techClass": "none"
   },
   "_id": "Pey5pfbBaMNXAWh2",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

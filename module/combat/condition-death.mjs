@@ -11,18 +11,27 @@
 //  статус ядра «Повержен» на токене и отметка в трекере боя, чтобы мёртвый
 //  выбывал из очереди Ходов. Снимается как обычно — вкладкой Смерть/Тело и
 //  кликом по статусу.
+//
+//  Причина пишется в flags.warhammer-dbc.deathCause — Чудесное Спасение
+//  прекращает именно «эффект, что вызвал смерть» (rules/death-save.mjs).
+//  Под Божественной Защитой (до конца сессии «не может быть убит никаким
+//  образом») смерть не наступает вовсе.
 // ════════════════════════════════════════════════════════════════════════════
 
 import { setDeceased } from "../sheets/tabs/body.mjs";
+import { divineProtectionActive, DEATH_CAUSE_FLAG } from "../rules/death-save.mjs";
 
 /**
  * Констатировать смерть актора от Состояния.
  * @param {Actor} actor
- * @returns {Promise<boolean>} true — актор умер сейчас, false — уже был мёртв/нет актора
+ * @param {string|null} cause ключ Состояния-причины ("bleeding"/"suffocating"/"gangrene")
+ * @returns {Promise<boolean>} true — актор умер сейчас, false — уже был мёртв/нет актора/под Защитой
  */
-export async function killByCondition(actor) {
+export async function killByCondition(actor, cause = null) {
   if (!actor) return false;
   if (actor.getFlag?.("warhammer-dbc", "deceased")) return false;
+  if (divineProtectionActive(actor)) return false;
+  if (cause) await actor.setFlag("warhammer-dbc", DEATH_CAUSE_FLAG, cause);
   await setDeceased(actor, true);
   const deadId = globalThis.CONFIG?.specialStatusEffects?.DEFEATED;
   if (deadId && typeof actor.toggleStatusEffect === "function") {

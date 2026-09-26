@@ -70,7 +70,8 @@
       "standard": false,
       "reloads": 10
     },
-    "damageSubtype": "flame"
+    "damageSubtype": "flame",
+    "techClass": "mechanical"
   },
   "_id": "pPmu4DAS1IIgWkyk",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-pistol.svg",

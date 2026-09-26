@@ -23,7 +23,10 @@ import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../../constants/skills.mjs";
 // своего хранимого поля не получают — они целиком производные, считаются из
 // чужого источника на каждом пересчёте (rules/character.mjs::readAllMirrors).
 import { CONDITION_STORED_KEYS, CONDITION_COUNTERS } from "../../constants/conditions.mjs";
-import { LIMB_LOSS_KEYS, limbLossGangreneField } from "../../rules/limb-loss.mjs";
+import { LOST_SIDE_KEYS, FINGER_SIDE_KEYS } from "../../rules/limb-loss.mjs";
+import { USELESS_SIDES } from "../../rules/useless-limbs.mjs";
+
+const USELESS_LIMB_KEYS = Object.keys(USELESS_SIDES);
 
 /** Зоны попадания — порядок как в листе. */
 export const HIT_LOCATIONS = ["head", "leftArm", "rightArm", "body", "leftLeg", "rightLeg"];
@@ -98,6 +101,16 @@ export function creatureSchema({ granted = false } = {}) {
   for (const [key, def] of Object.entries(CHARACTERISTICS))
     charDamageFields[key] = num(0, def.label);
 
+  // Урон в Характеристики по книге (wdbc-x1nz.2.83) — отдельно от ручного
+  // «Мод.» выше: ≥ 0, не опускает Итог ниже 0, отходит по 1 в час
+  // (charLossAt — момент следующего восстановления). rules/char-loss.mjs.
+  const charLossFields = {};
+  const charLossAtFields = {};
+  for (const [key, def] of Object.entries(CHARACTERISTICS)) {
+    charLossFields[key] = new NumberField({ initial: 0, nullable: false, integer: true, min: 0, label: def.label });
+    charLossAtFields[key] = num(0, def.label);
+  }
+
   const skillFields = {};
   for (const [key, def] of Object.entries(SKILLS_DEF)) {
     skillFields[key] = new SchemaField({
@@ -163,12 +176,8 @@ export function creatureSchema({ granted = false } = {}) {
   // Состояния (та же форма ручной надстройки, что burningSourceDamage/
   // sweetMistExpiresAt выше) — читает module/sheets/tabs/psychic.mjs.
   conditionFields.mimicWireBlocksPowers = bool(false, "Мононить: блокирует психосилы/техночудеса");
-  // Потеря Конечностей (wdbc-1rno.6, стр. 30-31): «обрубок нуждается в мед.
-  // обработке, иначе через T.b дней с шансом 80% загноится» — по одному
-  // worldTime-таймеру на часть тела (та же форма ручной надстройки, что
-  // burningSourceDamage/sweetMistExpiresAt выше), 0 = таймер не идёт.
-  for (const key of LIMB_LOSS_KEYS)
-    conditionFields[limbLossGangreneField(key)] = num(0, `${key}: worldTime проверки Гангрены`);
+  // Потеря Конечностей — с wdbc-x1nz.2.100 по сторонам в system.lostLimbs
+  // ниже (там же таймеры Гангрены обрубков); lostX/*Count — производные.
 
   return {
     // Книга-источник (wdbc-7pjs). У предметов это поле есть у полутора десятков
@@ -178,6 +187,9 @@ export function creatureSchema({ granted = false } = {}) {
     bookSource:    str("", "Книга-источник"),
     race:          str("", "Раса"),
     subrace:       str("", "Подраса"),
+    // Уровень купленной субрасы (Затупленный 1–4: 500/750/1000/1250 xp).
+    // Формулы Механики читают его как «subtier» (rules/mech-formula.mjs).
+    subraceTier:   num(1, "Уровень субрасы"),
     ynnariPast:    str("", "Прошлое Иннари"),
     harlequinPast: str("", "Прошлое Арлекина"),
     harlequinMasque: str("", "Маскарад"),
@@ -234,6 +246,12 @@ export function creatureSchema({ granted = false } = {}) {
       max:          num(0, "Максимум"),
       critical:     num(0, "Критические"),
       firstAidUsed: bool(false, "Первая помощь оказана"),
+      // «Первая помощь не может вылечить больше Ран, чем персонаж потерял
+      // после предыдущего оказания первой помощи» (wdbc-x1nz.2.103). null —
+      // Первую Помощь ещё не оказывали: предел — вся нехватка. Растёт в
+      // documents/actor.mjs::_preUpdate на ЛЮБУЮ потерю Ран (путей урона
+      // много), обнуляется Первой Помощью (sheets/tabs/healing.mjs).
+      lostSinceFirstAid: new NumberField({ initial: null, nullable: true, integer: true, min: 0, label: "Потеряно после Первой Помощи" }),
       // Аблативные Раны (wdbc-smy7) — отдельный пул ПЕРЕД обычными Ранами
       // (напр. Дар Нургла «Абсурдно Толстый»: +10 аблативных, регенерация
       // 1/Ход). ablativeMax — цель kind:"poolMax" Конструктора
@@ -242,6 +260,16 @@ export function creatureSchema({ granted = false } = {}) {
       ablative:     num(0, "Аблативные (текущие)"),
       ablativeMax:  num(0, "Аблативные (максимум)")
     }, { label: "Раны" }),
+    // Естественное лечение по Календарю (wdbc-x1nz.2.104, книга «Лечение»):
+    // режим, медик на уходе, момент следующего лечения и итог теста ухода
+    // на текущий период. Считает combat/healing-clock.mjs, таблица —
+    // rules/healing-clock.mjs.
+    healing: new SchemaField({
+      regimen:   new StringField({ initial: "active", choices: ["active", "rest", "bedRest"], label: "Режим лечения" }),
+      caregiver: new StringField({ initial: "", label: "Медик на уходе (UUID)" }),
+      nextAt:    num(0, "Следующее лечение (worldTime)"),
+      careOk:    bool(false, "Уход на этот период успешен")
+    }, { label: "Лечение" }),
     // Аблативный AP-щит (wdbc-bxw6, напр. Роба Чемпиона: 1 тPR → 2 аблативных
     // AP) — ОТДЕЛЬНЫЙ пул от аблативных Ран выше: не поглощение урона по
     // очкам, а плоская добавка к AP при каждом попадании, которая теряет
@@ -254,6 +282,10 @@ export function creatureSchema({ granted = false } = {}) {
       max:   num(0, "Аблативный AP-щит (максимум)")
     }, { label: "Аблативный AP-щит" }),
     fate:      pool("Судьба"),
+    // Сдвиг максимума Очков Бесчестия Хаосита (Inf.b ± N) — пишется
+    // ActiveEffect'ом Механики poolMax с целью «infamy» (Наследник +1,
+    // Затупленный −уровень); читает apps/infamy-points.mjs::actorInfamyMax.
+    infamyMaxMod: num(0, "Сдвиг максимума Бесчестия"),
     deadMight: pool("Мощь мёртвых"),
     // Руны Сигиллитов (wdbc-fsl9) — ресурс Элитного Архетипа «Последователь
     // Ордена Сигиллитов». Пул, а не Состояние: у Состояния в этой системе нет
@@ -278,6 +310,9 @@ export function creatureSchema({ granted = false } = {}) {
     // подчинённые читают карточку в чате: на них ничего не пишется, кроме
     // обратной метки (flags.warhammer-dbc.commandedBy).
     command: new SchemaField({
+      // Дрессировка (глава «Командование»): Survival(P) вместо Command(F),
+      // до P.b животных, лимит Успехов 2 + продвижения Awareness/Survival.
+      training: bool(false, "Дрессировка"),
       presence: new SchemaField({
         active:  bool(false, "Присутствие"),
         benefit: str("extreme", "Преимущество")
@@ -286,12 +321,24 @@ export function creatureSchema({ granted = false } = {}) {
         active:    bool(false, "Отдан"),
         key:       str("inspire", "Приказ"),
         successes: num(0, "Успехи"),
-        note:      str("", "Пометка")
+        note:      str("", "Пометка"),
+        // Вид тестов Общей Команды и получатель Личной — rules/command-effects.mjs.
+        testKind:      str("", "Вид тестов"),
+        recipientUuid: str("", "Получатель"),
+        // Когда отдано — Команда гаснет в начале следующего Хода отдающего
+        // (combat/command-state.mjs::expireCommandsAtTurnStart).
+        combatId:  str("", "Бой"),
+        round:     num(0, "Раунд")
       }, { label: "Короткая Команда" }),
       detailCommand: new SchemaField({
         active:    bool(false, "Отдан"),
         successes: num(0, "Успехи"),
-        picks:     objList("Выбранное")
+        // Ключи купленных эффектов — строки (ObjectField превращал их в {}).
+        picks:     strList("Выбранное"),
+        coverSuccesses: num(0, "Успехи в Прикрытии"),
+        tactic:    str("", "Особая Тактика"),
+        combatId:  str("", "Бой"),
+        round:     num(0, "Раунд")
       }, { label: "Детальная Команда" })
     }, { label: "Командование" }),
     // Подчинённые вне Отряда: ссылка на актора плюс заметка. Тип любой из
@@ -340,6 +387,20 @@ export function creatureSchema({ granted = false } = {}) {
     corruption: new SchemaField({ value: num(0, "Значение"), threshold: num(0, "Порог") }, { label: "Порча" }),
     characteristics: new SchemaField(charFields, { label: "Характеристики" }),
     charDamage:      new SchemaField(charDamageFields, { label: "Мод. характеристик" }),
+    charLoss:        new SchemaField(charLossFields, { label: "Урон в Характеристики" }),
+    charLossAt:      new SchemaField(charLossAtFields, { label: "Восстановление урона в Характеристики (worldTime)" }),
+    // Порции урона со своим темпом (task 1-8, rules/char-loss.mjs): руна
+    // Сигиллита (1 за 8 ч, не лечится сверхъестественным), пытки (W — не
+    // раньше суток), перманентный урон из крит-таблиц (hours 0).
+    charLossPortions: new ArrayField(new SchemaField({
+      key:     new StringField({ initial: "", label: "Характеристика" }),
+      amount:  new NumberField({ initial: 0, integer: true, min: 0, nullable: false, label: "Урон" }),
+      hours:   new NumberField({ initial: 0, min: 0, nullable: false, label: "Период восстановления, ч (0 — никогда)" }),
+      until:   new NumberField({ initial: 0, nullable: false, label: "Не раньше (worldTime)" }),
+      at:      new NumberField({ initial: 0, nullable: false, label: "Следующее восстановление (worldTime)" }),
+      source:  new StringField({ initial: "", label: "Источник" }),
+      noMagic: new BooleanField({ initial: false, label: "Не лечится сверхъестественным" })
+    }), { label: "Урон в Характеристики со своим темпом" }),
     skills:          new SchemaField(skillFields, { label: "Навыки" }),
     // ПЕРЕОПРЕДЕЛЕНИЕ ПРИВЯЗКИ СКЛОННОСТЕЙ (wdbc-1pvq): «у нашего стола
     // Уклонение относится к Интеллекту и Знанию, а не к Ловкости и Защите».
@@ -380,6 +441,31 @@ export function creatureSchema({ granted = false } = {}) {
     // часть тела»); автоматизирован только клинически чистый кусок: −1 SPD
     // при попадании в торс/ногу (movement.mjs) и кнопка извлечения.
     piercingWounds: new SchemaField(armorFields(), { label: "Проникающие ранения (0/1 по зоне)" }),
+    // Потеря Конечностей по сторонам (wdbc-x1nz.2.100, rules/limb-loss.mjs):
+    // rightHand/leftHand/rightArm/…/leftEye — потеряна ли и когда проверка
+    // Гангрены обрубка (0 — обрубок обработан/закрыт). Состояния lostX и их
+    // *Count считаются отсюда (rules/character.mjs).
+    // rightFingers/leftFingers — «Пальцы» мутации Loss of Limb (wdbc-1rno.6.1):
+    // без Состояния, −10 к атакам оружием в этой руке. mutation — потеряно
+    // мутацией: вернуть можно только Best.Q бионикой.
+    lostLimbs: new SchemaField(Object.fromEntries([...LOST_SIDE_KEYS, ...FINGER_SIDE_KEYS].map(sideKey => [sideKey, new SchemaField({
+      lost:       bool(false, "Потеряна"),
+      gangreneAt: num(0, "worldTime: проверка Гангрены обрубка"),
+      mutation:   bool(false, "Потеряна мутацией (только Best.Q бионика)")
+    }, { label: sideKey })])), { label: "Потерянные конечности" }),
+    // Бесполезные Конечности (wdbc-x1nz.2.99, «Бесполезные Конечности и
+    // Ампутация») — по каждой руке/ноге свои срок, попытки и Гангрена
+    // (rules/useless-limbs.mjs). Теги «Бесполезная рука/нога» — зеркала.
+    uselessLimbs: new SchemaField(Object.fromEntries(USELESS_LIMB_KEYS.map(side => [side, new SchemaField({
+      state:          str("", "Состояние лечения"),
+      rounds:         num(0, "Бесполезна ещё Раундов"),
+      noAidAt:        num(0, "worldTime: без помощи станет перманентной"),
+      healAt:         num(0, "worldTime: конец срока в лубке"),
+      attempts:       num(0, "Проваленных попыток зафиксировать"),
+      healMod:        num(0, "Мод. тестов лечения этой конечности"),
+      gangreneAt:     num(0, "worldTime: проверка Гангрены"),
+      gangreneChance: num(0, "Шанс Гангрены, %")
+    }, { label: side })])), { label: "Бесполезные конечности" }),
     // Свойство оружия Crippling (X), wdbc-plsf: шипы/осколки в ране после
     // непоглощённого урона от этого оружия — при трате обоих ОД в Ход на
     // физическое действие цель получает X непоглощаемого урона в ту же часть

@@ -9,7 +9,8 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { rollHordePsychTest, psychThreshold, applyPsychDamage,
-         healPsychDamage, psychHealLocked, lockPsychHealing, PSYCH_LOCK_FLAG }
+         healPsychDamage, psychHealLocked, lockPsychHealing, PSYCH_LOCK_FLAG,
+         hordeFlameFailDamage, rollHordeFlameTest, LAST_HIT_FLAG }
   from "../../module/combat/horde-psych.mjs";
 
 function hordeActor({ magnitude = 40, start = 40, wp = 30, wpBonus = 3,
@@ -146,5 +147,51 @@ describe("запрет лечения у Ослабленной Орды", () =>
     const flags = {};
     expect(await lockPsychHealing(hordeActor({ wpBonus: 12, flags }))).toBe(0);
     expect(flags[PSYCH_LOCK_FLAG]).toBeUndefined();
+  });
+});
+
+describe("Огонь по Орде: вместо Горения — психологический урон", () => {
+  it("провал стоит столько же Магнитуды, сколько сняло попадание", () => {
+    expect(hordeFlameFailDamage({ resisted: false, magLoss: 3 })).toBe(3);
+    expect(hordeFlameFailDamage({ resisted: true, magLoss: 3 })).toBe(0);
+    expect(hordeFlameFailDamage({ resisted: false, magLoss: 3, immune: true })).toBe(0);
+  });
+
+  it("читает урон этой карточки и снимает его ещё раз психологическим", async () => {
+    const horde = hordeActor({ magnitude: 30, start: 40, flags: { [LAST_HIT_FLAG]: { messageId: "m1", magLoss: 2 } } });
+    horde.system.characteristics.ag = { total: 20 };
+    captured.nextRoll = 90;
+    const res = await rollHordeFlameTest(horde, { messageId: "m1" });
+    expect(res).toMatchObject({ resisted: false, psychDamage: 2 });
+    expect(horde.system.magnitude.value).toBe(28);
+    expect(horde.system.psychDamage).toBe(2);
+  });
+
+  it("урон этой карточки к Орде не применён — отказ без броска", async () => {
+    const horde = hordeActor({ flags: { [LAST_HIT_FLAG]: { messageId: "other", magLoss: 2 } } });
+    expect(await rollHordeFlameTest(horde, { messageId: "m1" })).toBeNull();
+  });
+
+  it("психологический провал за половину ставит запрет лечения", async () => {
+    const horde = hordeActor({ magnitude: 22, start: 40, wpBonus: 3 });
+    await applyPsychDamage(horde, 4);
+    expect(horde.getFlag("warhammer-dbc", PSYCH_LOCK_FLAG)).toBe(7 * 3600);
+  });
+});
+
+describe("психологический урон в счёт массивных потерь за Раунд", () => {
+  it("провал теста копится в тот же счётчик, что урон оружием", async () => {
+    const flags = { hordeRoundDamage: 3 };
+    const horde = hordeActor({ magnitude: 40, start: 40, flags });
+    await applyPsychDamage(horde, 4);
+    expect(flags.hordeRoundDamage).toBe(7);
+  });
+
+  it("переход через 25% стартовой — требование теста W+Магнитуда в чате", async () => {
+    const flags = { hordeRoundDamage: 8 };
+    const horde = hordeActor({ magnitude: 32, start: 40, flags });
+    const before = captured.chat.length;
+    await applyPsychDamage(horde, 2);                  // 8 → 10 = порог 10
+    expect(captured.chat.slice(before).some(c => c.content.includes("массивные потери"))).toBe(true);
   });
 });

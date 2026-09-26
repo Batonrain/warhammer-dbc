@@ -65,7 +65,8 @@
       "reloads": 10
     },
     "meleeCategory": "Кулаки",
-    "damageSubtype": "crushing"
+    "damageSubtype": "crushing",
+    "techClass": "none"
   },
   "_id": "L6G8yVSGCKlxoznC",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

@@ -71,7 +71,8 @@
       "standard": false,
       "reloads": 10
     },
-    "damageSubtype": ""
+    "damageSubtype": "",
+    "techClass": "electric"
   },
   "_id": "LQT85DY8w7Ni8hVj",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",

@@ -44,7 +44,7 @@ describe("tempModifierData: форма временного модификато
 
   it("срок переводится в duration Foundry, который ядро тикает само", () => {
     const data = tempModifierData({ charKey: "ag", value: -10, duration: 3, unit: "rounds" });
-    expect(data.duration).toEqual({ value: 3, units: "rounds" });
+    expect(data.duration).toEqual({ value: 3, units: "rounds", expiry: "turnEnd" });
   });
 
   it("без срока duration пуст — бессрочный штраф не должен истечь на первом же раунде", () => {

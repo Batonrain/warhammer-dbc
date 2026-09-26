@@ -27,7 +27,15 @@ import { esc } from "../helpers/utils.mjs";
 /** Ключ субрасы → {charCount, skillCount} — сколько Характеристик/Навыков выбирает игрок. */
 export const SUBRACE_APTITUDE_CHOICES = {
   afriel:  { charCount: 2, skillCount: 3 },
-  eldanar: { charCount: 3, skillCount: 6 }
+  eldanar: { charCount: 3, skillCount: 6 },
+  // Мутант: «Навыки Deceive или For.Lore (Mutants) по его выбору становятся
+  // дружественными» — один из двух, не из всего списка. match — готовая
+  // строка capabilityAptMatch («спец:…» — одна специализация Группы,
+  // rules/aptitude-overrides.mjs).
+  mutant:  { charCount: 0, skillCount: 1, skillOptions: [
+    { match: "Обман", label: "Обман (Deceive)" },
+    { match: "спец:forbiddenlore:мутанты|mutants", label: "Запретные знания (Мутанты)" }
+  ] }
 };
 
 export function needsAptitudeChoice(subraceKey) {
@@ -49,6 +57,14 @@ export function aptitudeOverrideMechanicsGroup(picks) {
       ...blankMechEntry("capability"),
       capabilityMode: "aptOverride", capabilityAptScope: "characteristic",
       capabilityAptMatch: charKey, capabilityAptAlign: "ally"
+    });
+  }
+  // Готовые строки сопоставления (skillOptions конфига) — без SKILLS_DEF.
+  for (const match of new Set((picks?.matches || []).filter(Boolean))) {
+    entries.push({
+      ...blankMechEntry("capability"),
+      capabilityMode: "aptOverride", capabilityAptScope: "skill",
+      capabilityAptMatch: match, capabilityAptAlign: "ally"
     });
   }
   for (const skillKey of new Set((picks?.skills || []).filter(Boolean))) {
@@ -73,7 +89,14 @@ export async function applySubraceAptitudeChoice(item, picks) {
 }
 
 /** HTML диалога: N дропдаунов Характеристик + M дропдаунов Навыков. */
-function choiceDialogHtml(charCount, skillCount) {
+function choiceDialogHtml(charCount, skillCount, skillOptions = null) {
+  if (skillOptions?.length) {
+    const opts = skillOptions.map((o, i) => `<label style="display:block"><input type="radio" name="sub-apt-opt" class="sub-apt-opt" value="${i}" ${i ? "" : "checked"}/> ${esc(o.label)}</label>`).join("");
+    return `<form class="hw-choice-form">
+      <div class="hw-choice-desc">Выберите Навык, который станет Дружественным независимо от Покровительства.</div>
+      <div class="hw-choice">${opts}</div>
+    </form>`;
+  }
   const charOpts = Object.entries(CHARACTERISTICS)
     .map(([k, c]) => `<option value="${k}">${esc(c.label)} (${c.abbr})</option>`).join("");
   const skillOpts = Object.entries(SKILLS_DEF)
@@ -112,12 +135,18 @@ export function promptSubraceAptitudeChoice(subraceKey, label) {
     let done = false;
     new Dialog({
       title: `${label}: выбор Дружественных`,
-      content: choiceDialogHtml(cfg.charCount, cfg.skillCount),
+      content: choiceDialogHtml(cfg.charCount, cfg.skillCount, cfg.skillOptions),
       buttons: {
         ok: {
           icon: '<i class="fas fa-check"></i>', label: "Принять",
           callback: h => {
             if (done) return; done = true;
+            if (cfg.skillOptions?.length) {
+              const i = Number(h.find(".sub-apt-opt:checked").val());
+              const opt = cfg.skillOptions[i];
+              resolve(opt ? { chars: [], skills: [], matches: [opt.match] } : null);
+              return;
+            }
             const chars = [], skills = [];
             h.find(".sub-apt-char").each((_, el) => { if (el.value) chars.push(el.value); });
             h.find(".sub-apt-skill").each((_, el) => { if (el.value) skills.push(el.value); });

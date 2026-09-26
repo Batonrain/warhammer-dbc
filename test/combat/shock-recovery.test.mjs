@@ -19,6 +19,8 @@ function actor({ wp = 40, shocked = false } = {}) {
               conditions: { shocked } },
     updates,
     getFlag: () => undefined,
+    effects: [],
+    createEmbeddedDocuments: async () => [],
     async update(data) {
       updates.push(data);
       if ("system.conditions.shocked" in data) this.system.conditions.shocked = data["system.conditions.shocked"];
@@ -32,7 +34,9 @@ describe("_executeFearRoll: устанавливает conditions.shocked при
   it("провал, Шок не предотвращён Infamy — ставит conditions.shocked", async () => {
     const a = actor();
     captured.nextRoll = 99; // гарантированный провал теста Страха
-    captured.dice = [99, 80]; // 1) тест Страха 99, 2) бросок по таблице Шока 80
+    // 1) тест Страха 99 (4 Провала), 2) Шок 80+30 = 110 → потеря сознания,
+    // 3) её срок 1d5 Раундов (строка применяется сама, rules/shock.mjs).
+    captured.dice = [99, 80, 3];
     await _executeFearRoll(a, 1, "important", 0, 0);
     expect(a.system.conditions.shocked).toBe(true);
   });
