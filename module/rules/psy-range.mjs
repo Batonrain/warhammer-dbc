@@ -56,3 +56,20 @@ export function rangeVerdict(edgeM, rangeMeters) {
 export function sustainRangeText(system) {
   return system?.sustainRange || system?.range || "";
 }
+
+/**
+ * Покинула ли цель радиус поддержания силы (wdbc-bd1ii, Плод Плоти «Заточение
+ * Силы»: «псайкер не может развеять её, пока плод не уничтожен или покинет
+ * радиус поддержания»). true — только когда радиус числовой и измеренная
+ * дистанция его превышает; нечисловой радиус («Касание», составной через «/»)
+ * или отсутствие измерения — false: не доказано, что вышла, замок держится,
+ * как держался до этого тикета.
+ * @param {{range?: string, sustainRange?: string}} system  system психосилы
+ * @param {number} prValue  эПР, с которым сила поддерживается
+ * @param {number|null} edgeM  измеренная дистанция псайкер → цель, метры
+ * @returns {boolean}
+ */
+export function leftSustainRange(system, prValue, edgeM) {
+  const v = rangeVerdict(edgeM, parseRangeMeters(sustainRangeText(system), prValue));
+  return !!v && !v.inBounds;
+}

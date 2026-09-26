@@ -38,6 +38,8 @@ import { hasRuneMagic, runeMax, runeValue, runeCostForPower, runeCostTotal,
          preparedRuneDiscount, markPreparedRuneUsed } from "../../rules/sigillite-runes.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../../helpers/test-card.mjs";
 import { bluntedCasterTest } from "../../rules/blunted.mjs";
+import { leftSustainRange } from "../../rules/psy-range.mjs";
+import { measureTokens } from "../../combat/tactical-map.mjs";
 import { mechRollData } from "../../rules/mech-formula.mjs";
 import { runForceBladeShop, forceBladeShopClear } from "../../apps/force-blade-choice.mjs";
 
@@ -1208,6 +1210,18 @@ export async function executePsychotest(actor, item, opts) {
   await opts.onResult?.({ success, deg, ePR });
 }
 
+/**
+ * Вышел ли носитель Плода Плоти из радиуса поддержания силы (wdbc-bd1ii).
+ * эПР — зафиксированный при поддержании (sustainedEpr), иначе текущий тПР.
+ */
+function fruitLeftSustainRange(casterActor, bearerActor, power) {
+  const a = casterActor?.getActiveTokens?.(false)?.[0] ?? null;
+  const b = bearerActor?.getActiveTokens?.(false)?.[0] ?? null;
+  if (!a || !b) return false;
+  const pr = Number(power.system?.sustainedEpr ?? casterActor.system?.psyker?.currentRating) || 0;
+  return leftSustainRange(power.system, pr, measureTokens(a, b)?.edgeM ?? null);
+}
+
 export function rollPsyniscience(actor, rollSkill) {
   const def = SKILLS_DEF.psyniscience;
   const sk  = actor.system.skills?.psyniscience;
@@ -1378,9 +1392,14 @@ export function activatePsychicListeners(html, actor, { rollSkill, resolveSoulBu
     // отдельного хука на его удаление не нужно.
     if (!turningOn) {
       const lockUuid = item.getFlag?.("warhammer-dbc", "fruitOfFleshLockUuid");
-      if (lockUuid && await fromUuid(lockUuid)) {
+      const fruit = lockUuid ? await fromUuid(lockUuid) : null;
+      // «...или покинет радиус поддержания» (wdbc-bd1ii): замок отпускает,
+      // когда носитель плода на сцене дальше радиуса поддержания силы
+      // (rules/psy-range.mjs::leftSustainRange). Нет обоих токенов на сцене
+      // или радиус не числовой — выход не доказан, замок держится.
+      if (fruit && !fruitLeftSustainRange(actor, fruit.actor, item)) {
         ev.currentTarget.checked = true;
-        ui.notifications.warn("Заточена в Плоде Плоти — нельзя развеять, пока плод не уничтожен.");
+        ui.notifications.warn("Заточена в Плоде Плоти — нельзя развеять, пока плод не уничтожен или не покинет радиус поддержания.");
         return;
       }
     }

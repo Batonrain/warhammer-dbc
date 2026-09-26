@@ -20,6 +20,7 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { SECONDS_PER_DAY } from "../constants/imperial-calendar.mjs";
+import { sustainRangeText } from "../rules/psy-range.mjs";
 
 const MATURITY_FLAG    = "fruitOfFleshMaturesAt";
 const CAPACITY_FLAG    = "fruitOfFleshCapacity";
@@ -303,8 +304,9 @@ async function activateShardFruit(actor, item, tokenDoc) {
 /**
  * "9" Заточение Силы (только tzeentch) — половина книги, не архитектурно
  * блокированная (Одержимость/«Демонхост» — bd wdbc-q267, отдельная боевая
- * подсистема; «радиус поддержания» как общее понятие — bd wdbc-efyl,
- * подключить эту ветку туда, когда будет готово). Провал встречного теста
+ * подсистема). «...или покинет радиус поддержания» (wdbc-bd1ii) — проверка
+ * дистанции псайкер↔носитель плода в том же месте, что и замок
+ * (sheets/tabs/psychic.mjs::fruitLeftSustainRange, rules/psy-range.mjs). Провал встречного теста
  * на W — самоотчёт-выбор игрока (не архитектурная дыра: тот же приём, что
  * Priest of Bloodshed/Плод Исцеления). Цель психосилы ищется тем же
  * cross-actor приёмом, что уже даёт rules/psychic-sustain-target.mjs
@@ -330,7 +332,7 @@ async function activateSpellLockFruit(actor, item) {
     title: `Плод Плоти — ${esc(item.name)}`,
     lines: [
       `<div class="roll-threshold">Психосила «${esc(power.name)}» ${esc(power.actor?.name || "")} заточена в плоде — псайкер не может развеять её, пока плод не уничтожен.</div>`,
-      `<div class="roll-threshold" style="opacity:.8;">«...или покинет радиус поддержания» — не автоматизировано (bd wdbc-efyl: в системе нет общего понятия «радиус поддержания» ни у одной психосилы).</div>`
+      `<div class="roll-threshold" style="opacity:.8;">Замок снимется и тогда, когда носитель плода окажется дальше радиуса поддержания силы (${esc(sustainRangeText(power.system) || "радиус не указан")}) — проверяется при попытке развеять.</div>`
     ]
   }, { sound: false });
 }
