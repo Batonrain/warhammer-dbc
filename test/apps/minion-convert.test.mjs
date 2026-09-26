@@ -7,7 +7,7 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
-import { minionCreateDataFrom, MINION_CONVERTIBLE_TYPES } from "../../module/apps/minion-convert.mjs";
+import { minionCreateDataFrom, MINION_CONVERTIBLE_TYPES, convertActorToMinion } from "../../module/apps/minion-convert.mjs";
 import { ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
 
 const character = () => {
@@ -49,5 +49,28 @@ describe("minionCreateDataFrom", () => {
 
   it("становиться Миньоном умеют существа с общей схемой", () => {
     expect(MINION_CONVERTIBLE_TYPES).toEqual(["character", "daemon", "demonPrince"]);
+  });
+});
+
+// Приёмка #527: связи предметов держатся на id (installedOn у модификаций и
+// Рунических Вязей, linkedWeapon у имплантов). Без keepId Foundry выдаёт
+// новые _id, и у Миньона моды и вязи лежат в инвентаре неустановленными.
+describe("convertActorToMinion", () => {
+  it("предметы переезжают со своими _id — связи между ними целы", async () => {
+    let created = null;
+    const minion = { name: "Гвардеец", sheet: null,
+      createEmbeddedDocuments: async (_t, docs, opts) => { created = { docs, opts }; return docs; } };
+    const prevCreate = globalThis.Actor.create;
+    globalThis.Actor.create = async () => minion;
+    try {
+      const items = [{ toObject: () => ({ _id: "armor00000000001", type: "armor" }) },
+                     { toObject: () => ({ _id: "mod0000000000001", type: "armorMod", system: { installedOn: "armor00000000001" } }) }];
+      const actor = { ...character(), toObject() { return { ...character() }; }, items };
+      await convertActorToMinion(actor);
+      expect(created.opts).toEqual(expect.objectContaining({ keepId: true }));
+      expect(created.docs.map(d => d._id)).toEqual(["armor00000000001", "mod0000000000001"]);
+    } finally {
+      globalThis.Actor.create = prevCreate;
+    }
   });
 });
