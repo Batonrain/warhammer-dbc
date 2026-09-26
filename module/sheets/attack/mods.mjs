@@ -26,6 +26,8 @@ import { isNearestUndamagedEnemy } from "../../combat/legacy-weapon-mutations.mj
 import { isActorsOwnTurn } from "../../combat/delay-action.mjs";
 import { meleeEffectiveRange, parseGrips } from "../../constants/combat.mjs";
 import { longerWeaponBonus, closeQuartersPenalty, closeQuartersRange } from "../../rules/weapon-length.mjs";
+import { longRangeImmunityReason } from "../../rules/range-penalty-immunity.mjs";
+import { getInstalledMods } from "../../combat/weapon-mods.mjs";
 /**
  * @param {object} v состояние броска: оружие, токены, замеренная дистанция
  * @returns {{commonMods: object[], specificMods: object[], charSwapWhy: string[], bandKey: string|null}}
@@ -502,5 +504,21 @@ export function situationalMods(v) {
       note: wp.gyroStabilized ? "снято: Гиро-стаб." : undefined }
   ];
 
+  // Дальняя/экстремальная дистанция (wdbc-1rno.31): Снайпер, Холодные Глаза
+  // и оптические прицелы при Прицеливании снимают оба штрафа — тем же
+  // приёмом, что Зенитное гасит «Цель бежит» (выше).
+  if (!isMelee) {
+    const why = longRangeImmunityReason(actor, weapon ? getInstalledMods(actor, weapon) : [],
+                                        { aiming: actor?.system?.aiming });
+    if (why) {
+      for (const m of specificMods) {
+        if ((m.label === "Дальняя дистанция" || m.label === "Экстремальная дистанция") && !m.immune) {
+          m.value = 0;
+          m.immune = true;
+          m.note = `${why}: нет штрафа дальней/экстремальной дистанции`;
+        }
+      }
+    }
+  }
   return { bandKey, charSwapWhy, commonMods, specificMods };
 }

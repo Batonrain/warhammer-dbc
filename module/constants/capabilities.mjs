@@ -3135,8 +3135,8 @@ export const CAPABILITIES = {
     source: "Hip Shooting / Стрельба от Бедра", reader: ""
   },
   "rangedCore.core.marksman": {
-    label: "Персонаж не получает штрафов к стрельбе за дальнюю и экстремальную дистанцию.",
-    source: "Marksman / Снайпер", reader: ""
+    label: "Персонаж не получает штрафов к стрельбе за дальнюю и экстремальную дистанцию. Реализовано (wdbc-1rno.31): строки «Дальняя/Экстремальная дистанция» окна атаки у носителя стоят 0 с подписью «Снайпер».",
+    source: "Marksman / Снайпер", reader: "module/rules/range-penalty-immunity.mjs — longRangeImmunityReason; module/sheets/attack/mods.mjs::situationalMods"
   },
   "rangedCore.core.masterDragoon": {
     label: "Персонаж игнорирует любые штрафы на стрельбу из пистолетов, винтовок и дл. винтовок за нестабильную платформу.",
