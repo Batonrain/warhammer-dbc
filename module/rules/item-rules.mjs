@@ -113,12 +113,14 @@ function scopeTarget(rawScope, entry, ruleId, what) {
   // (module/combat/movement-actions.mjs::showClimbDialog), отдельно от
   // «skill:athletics», чтобы не задваиваться с тестами Борьбы, тоже идущими
   // по Athletics(S) (wdbc-egll). terrain — только тест Трудного Ландшафта
-  // (module/combat/movement-terrain.mjs, ctx.terrain; Босоногий Ратлинга). vsExorcism — УЖЕ узнан вид теста, не общий
+  // (module/combat/movement-terrain.mjs, ctx.terrain; Босоногий Ратлинга).
+  // poison — тест сопротивления яду (module/hooks.mjs, ctx.poisonTest;
+  // Крепкий как Камень Сквата). vsExorcism — УЖЕ узнан вид теста, не общий
   // "opposed": Локус Цепей (wdbc-smc) даёт бонус конкретно на встречный тест
   // демона против Экзорцизма/Чистой Демонологии (daemon-sheet.mjs::
   // _rollVsExorcism, kind:"vsExorcism") — обычный "opposed" сработал бы на
   // ЛЮБОМ встречном тесте, что книга не говорит.
-  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "morale", "climbing", "terrain", "vsExorcism"].includes(scope)) return scope;
+  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "morale", "climbing", "terrain", "poison", "vsExorcism"].includes(scope)) return scope;
   if (scope === "char") {
     const key = String(entry.rerollChar || "").trim();
     if (key) return `char:${key.toLowerCase()}`;

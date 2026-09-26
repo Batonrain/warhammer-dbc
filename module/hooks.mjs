@@ -146,6 +146,8 @@ import { maybeAutoReleaseGrapple, grappleReleaseTriggered } from "./combat/grapp
 import { weaponProfiles } from "./combat/weapon-profiles.mjs";
 import { isIntegralAttack } from "./combat/equipped-melee.mjs";
 import { collectTestMods } from "./rules/roll-mods.mjs";
+import { resolveTest } from "./rules/resolve-test.mjs";
+import { pickReroll } from "./rules/reroll-pick.mjs";
 import { expireCommandsAtTurnStart, clearCommandsOnCombatEnd, commandMoraleOn } from "./combat/command-state.mjs";
 import { syncArmorFieldShields } from "./combat/armor-field-shield.mjs";
 
@@ -2314,11 +2316,21 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
     // кидается «тест против яда» — только у condition==="poisoned" (Toxic),
     // остальные свойства оружия (Concussive/Flame/…) идут тем же кодом с
     // другим condition и этот флаг не несут.
-    const resistMods = collectTestMods(actor, { kind: "skill", char: testChar, poisonTest: condition === "poisoned" });
+    const resistCtx  = { kind: "skill", char: testChar, poisonTest: condition === "poisoned" };
+    const resistMods = collectTestMods(actor, resistCtx);
     const threshold = charTotal + testMod + resistMods.total;
     const roll      = await new Roll("1d100").evaluate();
     allRolls.push(roll);
-    const rv        = roll.total;
+    let rv          = roll.total;
+    // Преимущество против яда (Крепкий как Камень Сквата — переброс области
+    // «poison»): диалога нет, провал перебрасывается сам, берётся лучший.
+    const poisonReroll = resistCtx.poisonTest
+      ? resolveTest({ actor, ...resistCtx }).rerolls.find(r => r.who === "self") : null;
+    if (poisonReroll && rv > threshold) {
+      const again = await new Roll("1d100").evaluate();
+      allRolls.push(again);
+      rv = pickReroll([rv, again.total], poisonReroll.mode).value;
+    }
     resisted        = rv <= threshold;
     deg             = Math.max(1, Math.floor(Math.abs(rv - threshold) / 10) + 1);
     // Плашка Бросок/Режим/Порог — общим сборщиком (wdbc-fyvv): слагаемые

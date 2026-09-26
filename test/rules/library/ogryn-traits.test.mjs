@@ -164,8 +164,8 @@ describe("паки Огрина против книги", () => {
     const names = race.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries).map(e => e.sourceName);
     expect(names).toContain("Brute Physiology / Физиология Громилы");
     expect(names).toContain("BONE-Head / Костеголов");
-    expect(names).not.toContain("Clever Hands / Умные Руки");
-    expect(names).not.toContain("Hard as Stone / Крепкий как Камень");
+    expect(names.some(n => /^Clever Hands/.test(n))).toBe(false);
+    expect(names.some(n => /^Hard as Stone/.test(n))).toBe(false);
   });
 
   it("Трейт Миньона «Ogryn»: +15 Ран только через Brute Physiology, без надбавки к Бонусам", () => {

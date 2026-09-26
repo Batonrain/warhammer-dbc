@@ -93,13 +93,15 @@ const MUTATION_THRESHOLDS_HUMAN    = [10, 20, 40, 60, 80];
 const MUTATION_THRESHOLDS_ASTARTES = [10, 30, 60, 90];
 
 /** Ближайший непройденный Порог Мутации, или null, если все уже пройдены (Cor 100 — не мутация, а Возвышение/Отродье). */
-export function nextMutationThreshold(system) {
+export function nextMutationThreshold(system, { asAstartes: byRule = false } = {}) {
   const cor = Number(system?.corruption?.value) || 0;
   // Затупленный «получает мутации как Космодесантник, а не человек» — флаг
   // субрасы mutationsAsAstartes. Поблажка лоялисту ниже — только настоящим
   // Астартес: она про их геносемя, не про таблицу.
   const astartes = raceMatches(system, "astartes");
-  const asAstartes = astartes || !!subraceEntries()[system?.subrace || ""]?.mutationsAsAstartes;
+  // Крепкий как Камень (Скват) — «получает мутации как Космодесантник» той же
+  // таблицей: возможность mutations.asAstartes, вызывающий передаёт byRule.
+  const asAstartes = astartes || byRule || !!subraceEntries()[system?.subrace || ""]?.mutationsAsAstartes;
   let table = asAstartes ? MUTATION_THRESHOLDS_ASTARTES : MUTATION_THRESHOLDS_HUMAN;
   if (astartes && system?.alignment === "loyalist") {
     table = table.filter(t => t >= 60);
@@ -560,7 +562,7 @@ export function prepareCharacterDerived(actor, system) {
       system.corruption.limit = 100 + (pathPassives.corLimit || 0);
       // Ближайший Порог Мутации — для панели ПОРЧА (wdbc-2l2x), не хранимое
       // поле, пересчитывается каждый раз, как limit чуть выше.
-      const nextThr = nextMutationThreshold(system);
+      const nextThr = nextMutationThreshold(system, { asAstartes: hasRuleFlag(actor, "mutations.asAstartes") });
       system.corruption.nextThreshold = nextThr;
       system.corruption.thresholdRemaining = nextThr !== null ? Math.max(0, nextThr - (system.corruption.value || 0)) : null;
     }

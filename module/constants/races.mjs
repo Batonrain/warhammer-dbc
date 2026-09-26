@@ -245,7 +245,7 @@ export const RACES = {
     chars: { ws:25, bs:25, s:25, t:25, ag:25, int:25, per:25, wp:25, fel:25, inf:19 },
     bonusRolls: 1, bonusPoints: 4, charShift: 1,
     size: 0,
-    skills:  "Common Lore (любые 2), Linguistics (Low Gothic), Tech-Use, Trade (любые 2) +10",
+    skills:  "Common Lore (любые 4), Linguistics (Low Gothic), Tech-Use, Trade (любые 2) +10",
     gear:    "5 элементов до R1 (3 Good.Q, 2 Best.Q), Vox-Bead, +2 очка стартового снаряжения",
     talents: ["Hunker Down", "Tireless", "Workaholic"],
     traits: [
@@ -254,11 +254,13 @@ export const RACES = {
       { name: "Unnatural Strength (2) / Сверхъестественная Сила (2)", benefit:"+2 к Бонусу Силы.", rating:2, hasRating:true, effects:{ charBonusStat:"s", charBonusValue:2 } },
       { name: "Unnatural Toughness (4) / Сверхъестественная Стойкость (4)", benefit:"+4 к Бонусу Стойкости.", rating:4, hasRating:true, effects:{ charBonusStat:"t", charBonusValue:4 } },
       { name: "Fast Learner / Ловит на Лету", benefit:"+10% к стартовому опыту и опыту за сессию." },
-      { name: "Clever Hands / Умные Руки", benefit:"+15 к тонкой работе (Craft, ремонт)." },
-      { name: "Hard as Stone / Крепкий как Камень", benefit:"Сопротивление эффектам против разума при концентрации." },
-      { name: "Sure Tread / Надёжная Поступь", benefit:"+1 SPD пешком; не сбивается с ног; устойчивость в невесомости/нестабильном грунте." }
+      { name: "Clever Hands / Умелые Руки", benefit:"+15 на Крафт, ремонт и обслуживание с тонкой работой, +30 в экстремальной ситуации." },
+      { name: "Hard as Stone / Крепкий как Камень", benefit:"Лечится как Космодесантник; Преимущество против ядов, болезней и вакуума; защита от радиации −3; сон 3 ч; мутации как у Космодесантника." },
+      { name: "Sure Tread / Надёжная Поступь", benefit:"−1 SPD, пешком не больше 3×SPD за Ход; Трудный Ландшафт — Awareness (P) вместо A, на 3+ Успеха не замедляет." },
+      { name: "Void in Veins / Пустота в Венах", benefit:"Невесомость/микрогравитация: I вместо A на тесты ориентации и передвижения, с Преимуществом." }
     ],
     archetypes: ["Отступник", "Ересиарх", "Ренегат", "Пират", "Дикарь", "Благородный", "Ведьма"],
+    allowedArchetypes: ["apostate", "heresiarch", "renegade", "pirate", "savage", "noble", "witch"],
     desc: "Коренастый абхуман-инженер, крепкий к Порче, но порой поддающийся соблазнам Хаоса."
   },
 

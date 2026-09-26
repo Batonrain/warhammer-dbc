@@ -5196,8 +5196,9 @@ export const CAPABILITIES = {
     source: "Chaos Psyker / Псайкер Хаоса", reader: ""
   },
   "trait.cleverHands": {
-    label: "+15 на тонкую ручную работу, поднимается до +30 в экстремальных ситуациях (вроде взлома замка посреди боя).",
-    source: "Clever Hands / Умные Руки", reader: ""
+    label: "+15 на Крафт/ремонт/обслуживание с тонкой работой, +30 в экстремальной ситуации.",
+    source: "Clever Hands / Умелые Руки",
+    reader: "Механика Черты — галочки testMod (skill:trade/techUse/security), module/rules/item-rules.mjs"
   },
   "trait.clovenOne": {
     label: "+20 vs Трудный Ландшафт.",
@@ -5318,8 +5319,9 @@ export const CAPABILITIES = {
     source: "Gene-Splice / Ген-Сплайс", reader: ""
   },
   "trait.hardAsStone": {
-    label: "Сопротивление ментальным эффектам.",
-    source: "Hard as Stone / Крепкий как Камень", reader: ""
+    label: "Лечится как Космодесантник; Преимущество против ядов, болезней, вакуума; радиация −3; сон 3 ч; мутации как у Космодесантника.",
+    source: "Hard as Stone / Крепкий как Камень",
+    reader: "Механика Черты: healing.astartes, mutations.asAstartes, переброс области poison (module/hooks.mjs — тест сопротивления Toxic)"
   },
   "trait.hollowBones": {
     label: "−5 Поглощение vs I(Cr).",
@@ -5557,9 +5559,14 @@ export const CAPABILITIES = {
     label: "+20 vs Захват/Оглушение, +30 vs сбивание/отбрасывание.",
     source: "Sturdy / Надёжный", reader: ""
   },
+  "trait.voidInVeins": {
+    label: "Невесомость/микрогравитация: I вместо A на тесты ориентации и передвижения, с Преимуществом.",
+    source: "Void in Veins / Пустота в Венах", reader: ""
+  },
   "trait.sureTread": {
     label: "−1 SPD, максимум 3×SPD пешком; вместо A использует Awareness(P) на Трудном Ландшафте (3+ Успеха — не замедляет).",
-    source: "Sure Tread / Надёжная Поступь", reader: ""
+    source: "Sure Tread / Надёжная Поступь",
+    reader: "Механика Черты: movement −1 SPD и возможность terrain.awarenessInsteadAg — module/combat/movement-terrain.mjs::showDifficultTerrainDialog"
   },
   "trait.survivor": {
     label: "При провале не-атакующего теста S/T/A/P может потратить Очко Бесчестья — вместо этого преуспеть на 1 Успех.",
@@ -7442,6 +7449,16 @@ export const CAPABILITIES = {
     label: "Тест I занимает Полное действие (2 ОД в свой Ход в бою)",
     source: "Черта «BONE-Head / Костеголов» (module/rules/library/ogryn.mjs)",
     reader: "module/combat/bone-head.mjs::payIntTestAction (из module/sheets/actor-sheet.mjs::_runTest)"
+  },
+  "mutations.asAstartes": {
+    label: "Получает мутации как Космодесантник (пороги Порчи по таблице Астартес)",
+    source: "Черта «Hard as Stone / Крепкий как Камень» (Скват)",
+    reader: "module/rules/character.mjs::nextMutationThreshold (из prepareCharacterDerived)"
+  },
+  "terrain.awarenessInsteadAg": {
+    label: "Тест Трудного Ландшафта — Awareness (P) вместо A; на 3+ Успеха зона до следующего Хода не замедляет",
+    source: "Черта «Sure Tread / Надёжная Поступь» (Скват)",
+    reader: "module/combat/movement-terrain.mjs::showDifficultTerrainDialog + module/regions/difficult-terrain.mjs (флаг terrainUnslowed)"
   },
   "weapons.runt": {
     label: "Сложение Ратлинга: винтовка без Compact — длинная (нельзя стрелять в рукопашной), двуручное стрелковое без Compact — не одной рукой",

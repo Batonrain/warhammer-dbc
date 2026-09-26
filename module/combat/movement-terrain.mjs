@@ -18,6 +18,18 @@ import { suffersBlindness } from "../rules/blindness.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
+
+/** Надёжная Поступь (Скват) — выдаёт Механика Черты Sure Tread. */
+export const SURE_TREAD_FLAG = "terrain.awarenessInsteadAg";
+
+/** Порог Awareness актора (Навык; не изучен — половина Восприятия, как у любого Навыка). */
+function awarenessTarget(actor) {
+  const sk = actor.system?.skills?.awareness;
+  const t = Number(sk?.total ?? sk?.target);
+  if (Number.isFinite(t) && t > 0) return t;
+  return Math.floor((Number(actor.system?.characteristics?.per?.total) || 0) / 2);
+}
 import { IN_FLIGHT_ALTITUDES } from "./movement-actions.mjs";
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
@@ -91,7 +103,12 @@ export async function showDifficultTerrainDialog(actor, tokenDoc = null) {
   if (!td) return ui.notifications.warn("⚠️ Токен персонажа не найден на сцене.");
 
   const info = effectiveTerrainInfo(td, actor);
-  const ag   = Number(actor.system.characteristics?.ag?.total) || 0;
+  // Надёжная Поступь (Скват): «может использовать Awareness (P) вместо А для
+  // тестов Трудного Ландшафта» — берётся большее из двух.
+  const agRaw = Number(actor.system.characteristics?.ag?.total) || 0;
+  const aware = hasRuleFlag(actor, SURE_TREAD_FLAG) ? awarenessTarget(actor) : 0;
+  const useAwareness = aware > agRaw;
+  const ag   = useAwareness ? aware : agRaw;
   const labelsLine = info.labels.length ? ` (${info.labels.join(", ")})` : "";
   const ignoredLine = info.ignoredLabels.length
     ? `<div class="atk-range-info" style="font-size:0.82em;">Игнорирует: ${info.ignoredLabels.join(", ")}</div>` : "";
@@ -100,7 +117,7 @@ export async function showDifficultTerrainDialog(actor, tokenDoc = null) {
     title: "Трудный Ландшафт",
     content: `
       <form class="wh-vehicle-dialog" style="padding:6px;">
-        <div class="atk-dlg-row"><label>Ловкость (Ag):</label><input id="tr-ag" type="number" value="${ag}"/></div>
+        <div class="atk-dlg-row"><label>${useAwareness ? "Awareness (Надёжная Поступь)" : "Ловкость (Ag)"}:</label><input id="tr-ag" type="number" value="${ag}"/></div>
         <div class="atk-dlg-row"><label>Ландшафт зоны:</label><span>${sgn(info.mod)}${labelsLine}</span></div>
         <div class="atk-dlg-row"><label>Доп. мод:</label><input id="tr-mod" type="number" value="0"/></div>
         ${ignoredLine}
@@ -152,6 +169,10 @@ async function _resolveDifficultTerrain(actor, ag, terrainMod, extraMod, labels)
   }
   const passed = rv <= threshold;
   const deg    = Math.floor(Math.abs(passed ? threshold - rv : rv - threshold) / 10) + 1;
+  // Надёжная Поступь: «на 3+ Успеха Трудный Ландшафт вовсе не замедляет его»
+  // — до начала своего следующего Хода зона не удваивает стоимость движения.
+  const unslowed = passed && deg >= 3 && hasRuleFlag(actor, SURE_TREAD_FLAG);
+  if (unslowed) await actor.setFlag("warhammer-dbc", "terrainUnslowed", true);
 
   const outcome = passed
     ? outcomeHtml(true,  `Успех — ${deg} ${_degWord(deg)}. Устоял на ногах.`)
@@ -168,7 +189,10 @@ async function _resolveDifficultTerrain(actor, ag, terrainMod, extraMod, labels)
     icon: rollIcon("burst","#b0a080"), title: `Трудный Ландшафт — ${esc(actor.name)}`,
     threshold: rollStatLine({ label: "Ag", base: ag, parts, threshold, rv }),
     outcome,
-    ...(rerollNote ? { lines: [`<div class="roll-threshold">🔁 ${rerollNote}</div>`] } : {})
+    lines: [
+      rerollNote ? `<div class="roll-threshold">🔁 ${rerollNote}</div>` : "",
+      unslowed ? `<div class="roll-threshold">🥾 Надёжная Поступь: 3+ Успеха — ландшафт до следующего Хода не замедляет</div>` : ""
+    ]
   }, { rolls });
 }
 
