@@ -43,13 +43,13 @@ describe("Eyes of Chaos/Глаза Хаоса: Механика субмутац
   });
 
   for (const [sub, { god, skill }] of Object.entries(SKILL_BY_SUB)) {
-    it(`субмутация ${sub}: +10 к Навыку «${skill}», только у последователя ${god}`, () => {
+    it(`субмутация ${sub}: +10 к Навыку «${skill}» (цвет ${god} — не условие эффекта)`, () => {
       const e = withSub.find(x => x.when.submutations.includes(sub));
       expect(e.kind).toBe("testMod");
       expect(e.modScope).toBe("skill");
       expect(e.skillKey).toBe(skill);
       expect(Number(e.value)).toBe(10);
-      expect(e.when.patronGod).toEqual([god]);
+      expect(e.when.patronGod ?? []).toEqual([]);
     });
   }
 
@@ -65,15 +65,13 @@ describe("Eyes of Chaos/Глаза Хаоса: Механика субмутац
 
   // +10, а не +20: сверено с книжным текстом в system.benefit того же
   // документа («Он получает +10 на тесты Interrogate» и т.д.).
-  // Двойной гейт submutation + patronGod складывается через «И»
-  // (rules/mech-when.mjs) — иначе +20 достался бы всем подряд.
-  it("гейт Покровителя реально работает: чужой Бог записи не получает", () => {
-    const e = withSub.find(x => x.when.submutations.includes("8"));   // Кхорн
+  // Решение владельца 26.09.2026 «по книге» (стр. 440): цвет Бога не
+  // условие эффекта — выпавшая строка работает у любого Покровителя.
+  it("выпавшая строка работает и у персонажа другого Покровителя", () => {
+    const e = withSub.find(x => x.when.submutations.includes("8"));   // цвет Кхорна
     const item = { system: { submutation: { label: "8" } } };
-    const khorne = { system: { patronGod: "khorne" } };
     const nurgle = { system: { patronGod: "nurgle" } };
-    expect(entryWhenOk(khorne, e, item)).toBe(true);
-    expect(entryWhenOk(nurgle, e, item)).toBe(false);
+    expect(entryWhenOk(nurgle, e, item)).toBe(true);
   });
 
   it("субмутация не выбрана — ни одна запись не включается", () => {

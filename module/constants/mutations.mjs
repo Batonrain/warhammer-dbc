@@ -721,7 +721,7 @@ const FX0 = { charBonusStat: "", charBonusValue: 0, charBonuses: [], charValueBo
 
 const subText = (sub) => sub.length
   ? "\n\nСУБМУТАЦИИ (d10):\n" + sub.map(s =>
-      `${s.roll} — ${s.name}: ${s.text}${s.god ? ` [только для последователей: ${s.god}]` : ""}`).join("\n")
+      `${s.roll} — ${s.name}: ${s.text}${s.god ? ` [цвет Бога: ${s.god}]` : ""}`).join("\n")
   : "";
 
 export const MUTATION_LIBRARY = MUTATIONS.map(m => ({
