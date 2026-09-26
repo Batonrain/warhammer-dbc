@@ -460,7 +460,7 @@ import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "
 import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod, whenCondition, whenQuality, whenChosenEffect } from "../rules/mech-when.mjs";
 import { TIER_LABELS as WOUND_TIER_LABELS } from "../rules/wound-tier.mjs";
 import { INTEGRAL_CHOSEN_FLAG, RATING_TEMPLATE_FLAG, sourceRating, ratingTemplateOf, applyRatingTemplate,
-         optionalIntegralEntries, integralEntrySelected } from "../rules/integral-rating.mjs";
+         optionalIntegralEntries, integralEntrySelected, presetIntegralChoice } from "../rules/integral-rating.mjs";
 import { parseSubmutations } from "../rules/submutations.mjs";
 import { mechFormulaTotal, mechFormulaTotalSafe, mechRollData } from "../rules/mech-formula.mjs";
 import { hasEliteArchetype }                  from "../rules/predicates.mjs";
@@ -471,7 +471,7 @@ const FLAG = "warhammer-dbc";
 // Подсказка полям «Значение»/«Рейтинг», принимающим формулу mech-formula.mjs
 // вместо голого числа — те же короткие ключи, что книга пишет как «X.b».
 const MECH_FORMULA_HINT = "Число или формула бонуса характеристики: ws/bs/s/t/ag/int/per/wp/fel/inf/cor "
-  + "(cor — Cor.b), + - * /, ceil()/floor()/round(). Напр.: ag*2, ceil(cor/2)";
+  + "(cor — Cor.b), rating — рейтинг самой Черты, + - * /, ceil()/floor()/round(). Напр.: ag*2, ceil(cor/2), rating";
 // Подсказка полю урона «Встречной атаки» (kind:"counterAttack") — та же
 // нотация, что в поле «Урон» у оружия (S.b/T.b/... через resolveCharFormula),
 // а не mech-formula.mjs выше: тут нужны кубы (XdY), не голое число/бонус.
@@ -693,6 +693,11 @@ const REROLL_SCOPES = [
   // Запугивание и Пытки) — wdbc-zepq, Lord of the Exodites.
   ["morale",     "тесты Морали"],
   ["climbing",   "Карабканье"],
+  // Тест Трудного Ландшафта (combat/movement-terrain.mjs, ctx.terrain) —
+  // Босоногий Ратлинга: «+20 и переброс тестов Трудного Ландшафта».
+  ["terrain",    "Трудный Ландшафт"],
+  // Тест сопротивления яду (module/hooks.mjs, ctx.poisonTest) — Крепкий как Камень Сквата.
+  ["poison",     "тесты против яда"],
   // Манифестация психосилы (wdbc-4bxa) — «power» само по себе уже область
   // («любая психосила»), имя (powerName) необязательно сужает до конкретной.
   ["power",      "манифестация психосилы"]
@@ -2291,6 +2296,11 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
     const ratingTotal = (entry.rating !== "" && entry.rating != null)
       ? mechFormulaTotalSafe(entry.rating, mechRollData(actor)) : null;
     if (entry.kind === "trait") {
+      // Естественное оружие с перечнем в записи («Natural Weapons (1, Рога,
+      // Укус, Когти, Копыта)» у Зверолюда): книга уже назвала атаки — окно
+      // выбора не нужно, отмечаем их сразу (rules/integral-rating.mjs).
+      const preset = presetIntegralChoice(data.flags?.[FLAG]?.mechanics, entry.specialization);
+      if (preset) data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), [INTEGRAL_CHOSEN_FLAG]: preset } };
       if (ratingTotal !== null && data.system) {
         rescaleTraitByRating(data, ratingTotal);   // пока system.rating — рейтинг шаблона
         data.system.hasRating = true;
@@ -2867,7 +2877,11 @@ export async function syncGrantedAbilities(sourceItem) {
       data.system.rating = mechFormulaTotalSafe(e.rating, mechRollData(actor));
     }
     if (e.kind === "talent" && e.specialization) data.system.specialization = e.specialization;
+    // Перечень атак в записи («1, Рога, Укус, Когти, Копыта») — как при первой
+    // выдаче (applyMechEntry): окно выбора на каждом включении формы не нужно.
+    const preset = e.kind === "trait" ? presetIntegralChoice(data.flags?.[FLAG]?.mechanics, e.specialization) : null;
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}),
+      ...(preset ? { [INTEGRAL_CHOSEN_FLAG]: preset } : {}),
       grantedByItem: sourceItem.id, abilityEntryId: e.id } };
     toCreate.push(data);
   }
@@ -2965,7 +2979,8 @@ export const DURABLE_MECH_KINDS = new Set(["characteristic", "weight", "movement
  * себе (тот же уровень «живости», что у остальной Механики).
  */
 function mechEffectData(entry, sourceItem, actor = null) {
-  const rd = mechRollData(actor);
+  // «rating» — рейтинг самого предмета (Digitigrade (X): «+X к SPD»).
+  const rd = { ...mechRollData(actor), rating: Number(sourceItem?.system?.rating) || 0 };
   const num = f => mechFormulaTotalSafe(f, rd);
   const changes = [];
   if (entry.kind === "characteristic") {
@@ -3304,6 +3319,13 @@ async function _applyItemMechanics(item) {
   // установленным) — откатывает то, что applyMechEntry(equipment) уже
   // успел выдать выше, чтобы конечное состояние сразу было верным.
   await syncGrantedEquipment(item);
+  // То же для Черт/Талантов: выключенная при получении форма (Кхорнгор —
+  // Смертельное Естественное Оружие «до конца боя» только по включению)
+  // не держит выданное. Только откат: у активного источника первая выдача
+  // уже прошла через applyMechEntry с её возвратом опыта за дубли. Только у
+  // включаемых (activatable) — выдачи прочих неактивных источников (снятая
+  // броня, не вживлённый имплант) живут по своим давним правилам.
+  if (item.system?.activatable && !isItemActive(item)) await syncGrantedAbilities(item);
   // Пишем, только если что-то действительно отыгралось: иначе каждый прогон
   // правил бы предмет и будил хук updateItem по кругу.
   if (applied.size !== before) await item.setFlag(FLAG, "mechanicsApplied", [...applied]);

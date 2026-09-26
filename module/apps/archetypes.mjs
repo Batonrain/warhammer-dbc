@@ -13,7 +13,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { ARCHETYPES } from "../constants/archetypes.mjs";
-import { isAeldariRace, subraceEntries } from "./race-library.mjs";
+import { isAeldariRace, subraceEntries, raceDef } from "./race-library.mjs";
 import { clearGrantedBy } from "./origin-shared.mjs";
 import { SKIP_MECHANICS_HOOK } from "./races.mjs";
 import { applyItemMechanics } from "./mechanics.mjs";
@@ -96,6 +96,10 @@ function archetypesForRaceUnbanned(raceKey, opts = {}) {
   }
   if (raceKey === "sslyth") return byRace("drukhari").filter(([, a]) => !!a.sslythAccess);
   if (raceKey === "human")  return human();
+  // Раса с книжным списком «получает доступ к следующим Архетипам Людей»
+  // (Огрин, Ратлинг, … — system.allowedArchetypes расы): только они.
+  const allowed = raceDef(raceKey)?.allowedArchetypes || [];
+  if (allowed.length) return human().filter(([k]) => allowed.includes(k));
   // Иннари: своих архетипов нет — «выберите любую прошлую расу и архетип».
   if (raceKey === "ynnari") return pastRace ? archetypesForRace(pastRace) : [];
   // Полуэльдар: любой архетип людей, Азуриани или Друкхари (на договоре с ГМ).

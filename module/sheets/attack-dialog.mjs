@@ -45,6 +45,7 @@ import { ARMOUR_SIDES } from "../constants/vehicle.mjs";
 import { isWalkerVehicle } from "../rules/walker.mjs";
 import { legionAttackPenalty, LEGION_FIT_FLAG, OVERSIZED_FIT_FLAG } from "../rules/legion-fit.mjs";
 import { ogrynAttackPenalty, OGRYN_FIT_FLAG } from "../rules/ogryn-fit.mjs";
+import { RUNT_FIT_FLAG, hasCompactMod, runtLongRifle, runtRangedGrips } from "../rules/runt-fit.mjs";
 import { meleeTrainingStatus, weaponTrainingPenalty } from "../rules/weapon-training.mjs";
 import { extendedReachCells, meleeContactDisplay } from "../rules/weapon-length.mjs";
 import { MELEE_CATEGORIES, sameCategory } from "../constants/weapon-categories.mjs";
@@ -216,6 +217,15 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   //   пистолет, wdbc-eduq) и Double Grip (пистолет 2р, wdbc-mu6v) — их самих
   //   на предмете нет, добавляются здесь.
   const installedMods   = isMelee ? [] : getInstalledMods(actor, item);
+  // Runt / Коротышка (Ратлинг, rules/runt-fit.mjs): без Compact винтовка в
+  // его руках — длинная винтовка (в рукопашной из неё не стрелять), а
+  // двуручное стрелковое одной рукой нельзя вовсе (фильтр хватов ниже).
+  const runt = !isMelee && hasRuleFlag(actor, RUNT_FIT_FLAG);
+  const runtCompact = runt && hasCompactMod(installedMods);
+  if (runtLongRifle({ isRunt: runt, weaponClass: sys.weaponClass,
+                      hasLongRifle: _entries.some(e => e.key === "longRifle"), compact: runtCompact })) {
+    wp.noMeleeFire = true;
+  }
   // Эффекты модификации лежат во ВЛОЖЕННОМ system.effects (схема
   // module/data/item/weapon-mod.mjs), как их и читает getModEffects
   // (combat/weapon-mods.mjs:38). Здесь они раньше читались плоско из
@@ -251,7 +261,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Рука Смерти (wdbc-hftn, стр. 46): сросшееся оружие — всегда «1р», никаких
   // альтернативных хватов (Об/Бл/Кл/Мх/Хв) и никакого «2р» даже у профильно
   // двуручного/тяжёлого — единственный пункт списка, пилюли Хвата не рисуются.
-  const gripList  = isFusedByHandOfDeath(item) ? ["1р"] : [...new Set([...baseGrips, ...extraGrips])];
+  const gripList  = isFusedByHandOfDeath(item) ? ["1р"]
+    : runtRangedGrips([...new Set([...baseGrips, ...extraGrips])],
+                      { isRunt: runt, compact: runtCompact, ownGrips, weaponClass: sys.weaponClass });
   const primGrip  = gripList[0] || "";
   // S.b — нужен только для гейта Отдачи (стр. 166): персонаж с S.b меньше
   // рейтинга свойства не может выбрать "1р", должен стрелять "2р".
@@ -311,6 +323,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     size:         actor.system.size ?? 0,
     sBonus:       actor.system.characteristics?.s?.bonus ?? 0,
     isRanged:     !isMelee,
+    isGrenade:    sys.weaponType === "grenade",
     ignoresSizeStrength: hasRuleFlag(actor, OVERSIZED_FIT_FLAG)
   });
   // Арсенал (стр. 62): без Weapon Training на класс оружия — штраф −20.

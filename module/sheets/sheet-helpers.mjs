@@ -1,5 +1,6 @@
 // module/sheets/sheet-helpers.mjs
 
+import { activationLabel } from "../rules/item-activation.mjs";
 import { CHARACTERISTICS, APTITUDES }   from "../constants/characteristics.mjs";
 import { LIMB_LOSS_KEYS, lostSidesLabel } from "../rules/limb-loss.mjs";
 import { getHeldHand } from "../rules/hands.mjs";
@@ -500,9 +501,11 @@ function buildGetDataUncached(actor) {
       char: CHARACTERISTICS[def.char]?.abbr ?? def.char,
       // Отношение группы к склонностям (стр. 24) — по [char группы, apt2].
       // Общие знания и Ремесло всегда Дружественные (стр. 58, 61).
-      alwaysAlly: !!def.alwaysAlly,
       aptCat: skillAdvanceCat(actor, def, { group: groupKey }, _skApts),
       aptSourceText: advanceCatSource(actor, "group", groupKey)?.text ?? "",
+      // «Всегда Дружественная» — только пока её не перебил враждебный override
+      // (Отвращение к Порядку Зверолюда).
+      alwaysAlly: !!def.alwaysAlly && skillAdvanceCat(actor, def, { group: groupKey }, _skApts) !== "enemy",
       // Привязку Группы целиком тоже можно менять (wdbc-fzbu) — значок в
       // заголовке группы такая же кнопка, как у обычного Навыка.
       ...aptBindingContext(actor, "skill", groupKey, [def.char, def.apt2], a => APTITUDES[a] || a),
@@ -1146,6 +1149,10 @@ function buildGetDataUncached(actor) {
       ratingDisplay: g.ratingText,
       effectSummary: fx.join(" · "),
       benefit:       g.first.system.benefit || "",
+      // Включаемая Черта (Босоногий: «обут/босиком») — тот же тумблер, что у Мутаций.
+      activatable:   !!g.first.system.activatable,
+      active:        !!g.first.system.active,
+      activationHint: activationLabel(g.first),
       toggles:       toggleRows(allItems, g.first)
     };
   });
@@ -1167,7 +1174,8 @@ function buildGetDataUncached(actor) {
       benefit:    i.system.benefit || i.system.description || "",
       subText:    sub.name ? `${sub.label} — ${sub.name}: ${sub.text}` : "",
       activatable: !!i.system.activatable,
-      active:      !!i.system.active
+      active:      !!i.system.active,
+      activationHint: activationLabel(i)
     };
   });
 

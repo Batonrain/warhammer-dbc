@@ -5129,16 +5129,18 @@ export const CAPABILITIES = {
     source: "Auto-Stabilized / Авто-Стабилизированный", reader: ""
   },
   "trait.aversionToOrder": {
-    label: "Lore/Trade враждебны.",
-    source: "Aversion to Order / Отвращение к Порядку", reader: ""
+    label: "Навыки групп Lore и Trade — Враждебные; каждая бионика/кибернетика — −2 Раны и −5 T.",
+    source: "Aversion to Order / Отвращение к Порядку",
+    reader: "Механика Черты: aptOverride enemy (module/rules/advance-category.mjs::skillAdvanceCat) и implants.rejectOrder (module/rules/aversion-to-order.mjs)"
   },
   "trait.aThousandSongs": {
     label: "При провале теста крафта — за Очко Судьбы вместо этого преуспеть на F.b успехов. Игнорирует требования по характеристикам для Миньонов-машин…",
     source: "A Thousand Songs / Тысяча Песен", reader: ""
   },
   "trait.barefoot": {
-    label: "+20 Stealth (бесшумность).",
-    source: "Barefoot / Босоногий", reader: ""
+    label: "Босиком (переключатель на листе): +20 и переброс Stealth (бесшумно) и тестов Трудного Ландшафта.",
+    source: "Barefoot / Босоногий",
+    reader: "Механика Черты (testMod/reroll, области skill:stealth и terrain) — module/rules/resolve-test.mjs (область terrain), module/combat/movement-terrain.mjs::_resolveDifficultTerrain (переброс); переключатель — module/apps/effects.mjs::isItemActive (Черта activatable)"
   },
   "trait.bestial": {
     label: "Авто Survival; не использует сложные действия.",
@@ -5169,8 +5171,9 @@ export const CAPABILITIES = {
     source: "Bolter Virtuoso / Болтерный Виртуоз", reader: ""
   },
   "trait.boneHead": {
-    label: "Импланты интеллекта (с оговорками).",
-    source: "BONE-Head / Костеголов", reader: ""
+    label: "Тест I — не больше 1 Успеха; Haywire 3+ — сбой импланта, 7+ — Ступор.",
+    source: "BONE-Head / Костеголов",
+    reader: "module/rules/library/ogryn.mjs (OGRYN_TRAIT_RULES: ogryn.boneHead.*) — по Черте, условие hasTrait"
   },
   "trait.braggingWealth": {
     label: "+15 на оценку ценности, поиск трофеев и взлом замков. При провале поиска ценностей — находит 1d5+1 расходников. До I.",
@@ -5181,8 +5184,9 @@ export const CAPABILITIES = {
     source: "Brutal Charge / Брутальный Натиск (X)", reader: ""
   },
   "trait.brutePhysiology": {
-    label: "+15 Ран; штрафы на немодифицированное оружие.",
-    source: "Brute Physiology / Физиология Громилы", reader: ""
+    label: "+15 Ран; сам восстанавливает Раны; не умирает от Кровотечения; стряхивает Оглушение; −20 тонкой манипуляции; штрафы на оружие без Ogrynized.",
+    source: "Brute Physiology / Физиология Громилы",
+    reader: "module/rules/library/ogryn.mjs (OGRYN_TRAIT_RULES: ogryn.brute.*) — по Черте, условие hasTrait; +15 Ран и иммунитет к Обескровливанию — Механика Черты"
   },
   "trait.burrower": {
     label: "Роет тоннели со скоростью SPD×X.",
@@ -5193,12 +5197,14 @@ export const CAPABILITIES = {
     source: "Chaos Psyker / Псайкер Хаоса", reader: ""
   },
   "trait.cleverHands": {
-    label: "+15 на тонкую ручную работу, поднимается до +30 в экстремальных ситуациях (вроде взлома замка посреди боя).",
-    source: "Clever Hands / Умные Руки", reader: ""
+    label: "+15 на Крафт/ремонт/обслуживание с тонкой работой, +30 в экстремальной ситуации.",
+    source: "Clever Hands / Умелые Руки",
+    reader: "Механика Черты — галочки testMod (skill:trade/techUse/security), module/rules/item-rules.mjs"
   },
   "trait.clovenOne": {
-    label: "+20 vs Трудный Ландшафт.",
-    source: "Cloven One / Копытный", reader: ""
+    label: "+20 на тесты Трудного Ландшафта; шесть Талантов движения — Дружественные.",
+    source: "Cloven One / Копытный",
+    reader: "Механика Черты: testMod области terrain (module/combat/movement-terrain.mjs) и aptOverride ally Талантов"
   },
   "trait.coldKiller": {
     label: "При нанесении Экстремального Урона бросает d5 дважды на Критический Результат 2 и берёт лучший.",
@@ -5259,7 +5265,8 @@ export const CAPABILITIES = {
   },
   "trait.digitigrade": {
     label: "+X к SPD; +5×X на группирование.",
-    source: "Digitigrade / Двусоставный (X)", reader: ""
+    source: "Digitigrade / Двусоставный (X)",
+    reader: "Механика Черты: movement +rating к SPD (module/rules/mech-formula.mjs, переменная rating)"
   },
   "trait.divinelyGifted": {
     label: "Выбирает 1 дополнительную мутацию/субмутацию (кроме Доспеха Богов и Знания Веков). На покровительстве Бога может вместо этого выбрать 1 Дар.",
@@ -5286,8 +5293,9 @@ export const CAPABILITIES = {
     source: "Fanatic / Фанатик", reader: ""
   },
   "trait.fastLearner": {
-    label: "+X% к опыту.",
-    source: "Fast Learner / Ловит на Лету (X)", reader: ""
+    label: "+X% к стартовому опыту и опыту за сессию.",
+    source: "Fast Learner / Ловит на Лету (X)",
+    reader: "module/rules/character.mjs (system.fastLearnerBonus) → module/rules/session-rewards.mjs::sessionXpWithFastLearner и module/constants/start-levels.mjs::startLevelValues (стартовый опыт в Мастере)"
   },
   "trait.firePoint": {
     label: "Тратит Очко Бесчестья на переброс стрелковой атаки, даже Оглушённым/лёжа/сбит с ног. На покровительстве Нургла может перебрасывать с Преимущ…",
@@ -5314,8 +5322,9 @@ export const CAPABILITIES = {
     source: "Gene-Splice / Ген-Сплайс", reader: ""
   },
   "trait.hardAsStone": {
-    label: "Сопротивление ментальным эффектам.",
-    source: "Hard as Stone / Крепкий как Камень", reader: ""
+    label: "Лечится как Космодесантник; Преимущество против ядов, болезней, вакуума; радиация −3; сон 3 ч; мутации как у Космодесантника.",
+    source: "Hard as Stone / Крепкий как Камень",
+    reader: "Механика Черты: healing.astartes, mutations.asAstartes, переброс области poison (module/hooks.mjs — тест сопротивления Toxic)"
   },
   "trait.hollowBones": {
     label: "−5 Поглощение vs I(Cr).",
@@ -5476,8 +5485,9 @@ export const CAPABILITIES = {
     source: "Ritual of Eight Spokes / Ритуал Восьми Спиц", reader: ""
   },
   "trait.runt": {
-    label: "−4 Ран; Compact с оружием.",
-    source: "Runt / Коротышка", reader: ""
+    label: "−4 Ран; винтовки — как длинные, двуручное стрелковое — не одной рукой; Compact снимает.",
+    source: "Runt / Коротышка",
+    reader: "Механика Черты: Раны −4 и возможность weapons.runt — module/rules/runt-fit.mjs"
   },
   "trait.scrounge": {
     label: "Тратит смену работы и Очко Бесчестья, чтобы добыть расходники/находку до 2d10 Редкости (R2).",
@@ -5541,8 +5551,9 @@ export const CAPABILITIES = {
     source: "Steed / Скакун", reader: ""
   },
   "trait.stepchildrenOfTheGods": {
-    label: "Бонусы против богов Хаоса.",
-    source: "Stepchildren of the Gods / Пасынки Богов", reader: ""
+    label: "Максимум Бесчестия −1 (не ниже 1); мутации как у Космодесантника; один кубик на мутации и субмутации.",
+    source: "Stepchildren of the Gods / Пасынки Богов",
+    reader: "Механика Черты: poolMax infamy −1, mutations.asAstartes, mutation.singleDie (module/sheets/tabs/mutations.mjs::rollMutationOrGift, module/apps/submutations.mjs)"
   },
   "trait.stuffOfNightmares": {
     label: "Иммунитет к Усталости/ядам/болезням/радиации/экстрим.температурам/вакууму/Кровотечению/Обескровливанию; не может быть Оглушён; не стареет;",
@@ -5552,9 +5563,14 @@ export const CAPABILITIES = {
     label: "+20 vs Захват/Оглушение, +30 vs сбивание/отбрасывание.",
     source: "Sturdy / Надёжный", reader: ""
   },
+  "trait.voidInVeins": {
+    label: "Невесомость/микрогравитация: I вместо A на тесты ориентации и передвижения, с Преимуществом.",
+    source: "Void in Veins / Пустота в Венах", reader: ""
+  },
   "trait.sureTread": {
     label: "−1 SPD, максимум 3×SPD пешком; вместо A использует Awareness(P) на Трудном Ландшафте (3+ Успеха — не замедляет).",
-    source: "Sure Tread / Надёжная Поступь", reader: ""
+    source: "Sure Tread / Надёжная Поступь",
+    reader: "Механика Черты: movement −1 SPD и возможность terrain.awarenessInsteadAg — module/combat/movement-terrain.mjs::showDifficultTerrainDialog"
   },
   "trait.survivor": {
     label: "При провале не-атакующего теста S/T/A/P может потратить Очко Бесчестья — вместо этого преуспеть на 1 Успех.",
@@ -7412,6 +7428,56 @@ export const CAPABILITIES = {
     label: "Сложение под легионное оружие: своё берёт без штрафа, чужое — со штрафом за тесную спусковую скобу",
     source: "Раса Астартес, «Физиология Астартес» (module/rules/library/astartes.mjs)",
     reader: "module/rules/legion-fit.mjs — LEGION_FIT_FLAG"
+  },
+  "bleeding.noDeath": {
+    label: "Не умирает от Кровотечения (бросок Кровотечения не убивает)",
+    source: "Черта «Brute Physiology / Физиология Громилы» (module/rules/library/ogryn.mjs)",
+    reader: "module/combat/condition-ticks.mjs::processConditionTurnEnd"
+  },
+  "stun.shakeOffTurnEnd": {
+    label: "В конце своего Хода сам снимает Оглушение",
+    source: "Черта «Brute Physiology / Физиология Громилы» (module/rules/library/ogryn.mjs)",
+    reader: "module/combat/condition-ticks.mjs::processConditionTurnEnd"
+  },
+  "healing.bruteRegen": {
+    label: "Сам восстанавливает 1 Рану в минуту (легко ранен) / 10 минут (тяжело) / час (критически)",
+    source: "Черта «Brute Physiology / Физиология Громилы» (module/rules/library/ogryn.mjs)",
+    reader: "module/combat/brute-regen.mjs::bruteRegenClock (часы Календаря, combat/condition-clock.mjs) — арифметика module/rules/brute-regen.mjs"
+  },
+  "haywire.boneHead": {
+    label: "Мозговые импланты: поле Haywire 3+ — «Сбой импланта» (тесты I провалены, ментальные действия вдвое дольше, снимается при выходе из поля), 7+ — Ступор на 1 Раунд",
+    source: "Черта «BONE-Head / Костеголов» (module/rules/library/ogryn.mjs)",
+    reader: "module/combat/damage.mjs::_applyBoneHeadHaywire (из _applyHaywire) + module/combat/action-economy.mjs::isImplantDisrupted (ментальные траты ОД вдвое) + module/combat/bone-head.mjs::checkHaywireFieldExit (выход из поля)"
+  },
+  "tests.intFullAction": {
+    label: "Тест I занимает Полное действие (2 ОД в свой Ход в бою)",
+    source: "Черта «BONE-Head / Костеголов» (module/rules/library/ogryn.mjs)",
+    reader: "module/combat/bone-head.mjs::payIntTestAction (из module/sheets/actor-sheet.mjs::_runTest)"
+  },
+  "implants.rejectOrder": {
+    label: "Тело отвергает Порядок: каждая установленная бионика/кибернетика — −2 к максимуму Ран и −5 T",
+    source: "Черта «Aversion to Order / Отвращение к Порядку» (Зверолюд)",
+    reader: "module/rules/aversion-to-order.mjs — REJECTS_BIONICS_FLAG, читает module/rules/character.mjs (пересчёт листа)"
+  },
+  "mutation.singleDie": {
+    label: "Один кубик на мутации и субмутации (без второго броска Неделимых)",
+    source: "Черта «Stepchildren of the Gods / Пасынки Богов» (Зверолюд)",
+    reader: "module/sheets/tabs/mutations.mjs::rollMutationOrGift + module/apps/submutations.mjs"
+  },
+  "mutations.asAstartes": {
+    label: "Получает мутации как Космодесантник (пороги Порчи по таблице Астартес)",
+    source: "Черта «Hard as Stone / Крепкий как Камень» (Скват)",
+    reader: "module/rules/character.mjs::nextMutationThreshold (из prepareCharacterDerived)"
+  },
+  "terrain.awarenessInsteadAg": {
+    label: "Тест Трудного Ландшафта — Awareness (P) вместо A; на 3+ Успеха зона до следующего Хода не замедляет",
+    source: "Черта «Sure Tread / Надёжная Поступь» (Скват)",
+    reader: "module/combat/movement-terrain.mjs::showDifficultTerrainDialog + module/regions/difficult-terrain.mjs (флаг terrainUnslowed)"
+  },
+  "weapons.runt": {
+    label: "Сложение Ратлинга: винтовка без Compact — длинная (нельзя стрелять в рукопашной), двуручное стрелковое без Compact — не одной рукой",
+    source: "Черта «Runt / Коротышка» (Механика Черты)",
+    reader: "module/rules/runt-fit.mjs — RUNT_FIT_FLAG, подключено в module/sheets/attack-dialog.mjs и module/rules/hands.mjs::availableRangedGrips"
   },
   "weapons.ogryn": {
     label: "Сложение под огринское оружие: своё берёт без штрафа, чужое — со штрафом (−10, стрелковое −20)",

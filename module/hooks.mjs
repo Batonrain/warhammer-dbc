@@ -1,4 +1,7 @@
 import { _performDodge, _performParry, _performSprayCancel, _performCompression, _performExtendBodyPart, _performEtherealSwarm, _performPsychicParry, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
+import { patronKeyOfGod, enforcedPatron } from "./rules/subrace-patron.mjs";
+import { subraceEntries } from "./apps/race-library.mjs";
+import { endActivationsForCombat } from "./combat/item-activation.mjs";
 import { refreshParasiteHosts } from "./rules/parasite-trait.mjs";
 import { repickBornForWar } from "./migrations/born-for-war-fix.mjs";
 import { _performUnseenDetect, _performUnseenBypass } from "./combat/unseen-attack.mjs";
@@ -146,6 +149,8 @@ import { maybeAutoReleaseGrapple, grappleReleaseTriggered } from "./combat/grapp
 import { weaponProfiles } from "./combat/weapon-profiles.mjs";
 import { isIntegralAttack } from "./combat/equipped-melee.mjs";
 import { collectTestMods } from "./rules/roll-mods.mjs";
+import { resolveTest } from "./rules/resolve-test.mjs";
+import { pickReroll } from "./rules/reroll-pick.mjs";
 import { expireCommandsAtTurnStart, clearCommandsOnCombatEnd, commandMoraleOn } from "./combat/command-state.mjs";
 import { syncArmorFieldShields } from "./combat/armor-field-shield.mjs";
 
@@ -2314,11 +2319,21 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
     // кидается «тест против яда» — только у condition==="poisoned" (Toxic),
     // остальные свойства оружия (Concussive/Flame/…) идут тем же кодом с
     // другим condition и этот флаг не несут.
-    const resistMods = collectTestMods(actor, { kind: "skill", char: testChar, poisonTest: condition === "poisoned" });
+    const resistCtx  = { kind: "skill", char: testChar, poisonTest: condition === "poisoned" };
+    const resistMods = collectTestMods(actor, resistCtx);
     const threshold = charTotal + testMod + resistMods.total;
     const roll      = await new Roll("1d100").evaluate();
     allRolls.push(roll);
-    const rv        = roll.total;
+    let rv          = roll.total;
+    // Преимущество против яда (Крепкий как Камень Сквата — переброс области
+    // «poison»): диалога нет, провал перебрасывается сам, берётся лучший.
+    const poisonReroll = resistCtx.poisonTest
+      ? resolveTest({ actor, ...resistCtx }).rerolls.find(r => r.who === "self") : null;
+    if (poisonReroll && rv > threshold) {
+      const again = await new Roll("1d100").evaluate();
+      allRolls.push(again);
+      rv = pickReroll([rv, again.total], poisonReroll.mode).value;
+    }
     resisted        = rv <= threshold;
     deg             = Math.max(1, Math.floor(Math.abs(rv - threshold) / 10) + 1);
     // Плашка Бросок/Режим/Порог — общим сборщиком (wdbc-fyvv): слагаемые
@@ -2887,6 +2902,8 @@ function _attachFateContextMenu(message, html) {
   Hooks.on("deleteCombat", async combat => {
     if (!game.user.isGM) return;
     await resolveTrancesForCombat(combat);
+    // Формы «до конца боя или сцены» (Клешня Слаангора и др., system.activation).
+    await endActivationsForCombat(combat);
     // Командное Присутствие — «до конца боя»; Команды и метки Морали тоже.
     await clearCommandsOnCombatEnd(combat);
     // Божественная Защита: без сознания «до конца сцены или боя».
@@ -3334,6 +3351,20 @@ function _attachFateContextMenu(message, html) {
     if (game.user.id !== userId) return;
     if (!grappleReleaseTriggered(changes)) return;
     await maybeAutoReleaseGrapple(actor);
+  });
+  // «Не может потерять покровительство <Бога>» — субрасы Зверолюда
+  // (rules/subrace-patron.mjs). Правка, уводящая покровителя от Бога
+  // субрасы, приводится обратно до записи. Субраса меняется той же правкой —
+  // сверяем с новой.
+  Hooks.on("preUpdateActor", (actor, changes) => {
+    const next = foundry.utils.getProperty(changes, "system.patronGod");
+    if (next === undefined) return;
+    const subKey = foundry.utils.getProperty(changes, "system.subrace") ?? actor.system?.subrace ?? "";
+    const def = subKey ? subraceEntries()[subKey] : null;
+    const keep = enforcedPatron(patronKeyOfGod(def?.god), next);
+    if (!keep) return;
+    foundry.utils.setProperty(changes, "system.patronGod", keep);
+    ui.notifications?.warn?.(`${actor.name}: ${def.label} не может потерять покровительство ${def.god}.`);
   });
   Hooks.on("updateActor", async (actor, changes, options, userId) => {
     if (game.user.id !== userId) return;

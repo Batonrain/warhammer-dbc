@@ -20,6 +20,7 @@ function emptyEffects() {
 }
 
 import { migrateCharBonusPair } from "./_legacy-char-bonus.mjs";
+import { activationSchema } from "./_activation.mjs";
 
 export class TraitData extends foundry.abstract.TypeDataModel {
 
@@ -40,7 +41,17 @@ export class TraitData extends foundry.abstract.TypeDataModel {
       rating:      new NumberField({ initial: 0, integer: true, nullable: false, label: "Рейтинг" }),
       hasRating2:  new BooleanField({ initial: false, label: "Принимает второй рейтинг (X/Y)" }),
       rating2:     new NumberField({ initial: 0, integer: true, nullable: false, label: "Второй рейтинг" }),
-      effects:     new ObjectField({ initial: emptyEffects, label: "Механика" })
+      effects:     new ObjectField({ initial: emptyEffects, label: "Механика" }),
+      // Включаемая Черта — тот же тумблер, что у Мутации (data/item/mutation.mjs):
+      // Механика Черты действует, только пока она включена (apps/effects.mjs::
+      // isItemActive). Нужна там, где книжный эффект держится на обстоятельстве,
+      // которого система сама не видит: «Босоногий» — «когда Ратлинг не носит
+      // обувь» (обуви в системе нет — игрок щёлкает «обут/босиком»).
+      activatable: new BooleanField({ initial: false, label: "Включаемая" }),
+      active:      new BooleanField({ initial: false, label: "Включена" }),
+      // Цена включения и срок («за полное действие и Очко Бесчестия — до
+      // конца боя»): субрасы Зверолюда, data/item/_activation.mjs.
+      activation:  activationSchema()
     };
   }
 

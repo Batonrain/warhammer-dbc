@@ -130,6 +130,7 @@ export const RAD_PROTECTION = [
   { label: "Трейт Machine",                       val: "−1" },
   { label: "Работающий Меланохром (геносемя)",    val: "−1" },
   { label: "Трейт Stuff of Nightmares",           val: "Иммунитет" },
+  { label: "Трейт Hard as Stone (Скват)",          val: "−3" },
   { label: "Внутри жестяного здания",             val: "−1" },
   { label: "Внутри рокритового здания",           val: "−2" },
   { label: "Внутри бункера / пещеры",             val: "−3" },

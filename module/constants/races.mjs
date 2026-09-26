@@ -208,12 +208,11 @@ export const RACES = {
       { name: "Size (1) / Размер (1)", benefit: "Размер +1 к SPD.", rating:1, hasRating:true, effects:{ sizeMod:1 } },
       { name: "Unnatural Strength (6) / Сверхъестественная Сила (6)", benefit:"+6 к Бонусу Силы.", rating:6, hasRating:true, effects:{ charBonusStat:"s", charBonusValue:6 } },
       { name: "Unnatural Toughness (6) / Сверхъестественная Стойкость (6)", benefit:"+6 к Бонусу Стойкости.", rating:6, hasRating:true, effects:{ charBonusStat:"t", charBonusValue:6 } },
-      { name: "Brute Physiology / Физиология Громилы", benefit:"+15 к максимуму Ран; пассивное восстановление; −10 на оружие без свойства Ogrynized; −20 на стрелковое оружие." },
-      { name: "Clever Hands / Умные Руки", benefit:"+15 к тонкой работе (Craft, ремонт)." },
-      { name: "Hard as Stone / Крепкий как Камень", benefit:"Сопротивление эффектам против разума; +30 vs Страх/паника при концентрации." },
-      { name: "BONE-Head / Костеголов", benefit:"Мозговые импланты: Int не выше человеческого; интенсивность импланта 3+ — повышение Int." }
+      { name: "Brute Physiology / Физиология Громилы", benefit:"+15 к максимуму Ран; сам восстанавливает 1 Рану в минуту (легко ранен) / в 10 минут (тяжело) / в час (критически); не умирает от Кровотечения, иммунен к Обескровливанию; в конце своего Хода снимает Оглушение; −20 на тонкую манипуляцию; −10 на оружие без Ogrynized (кроме гранат), −20 на стрелковое; рукопашная атака таким оружием ломает его на 1-3 по 1d10." },
+      { name: "BONE-Head / Костеголов", benefit:"Любой тест I — минимум Полное действие и не больше 1 Успеха. Поле Haywire 3+: импланты сбоят — все тесты I провалены, ментальные действия вдвое дольше; 7+: Ступор на 1 Раунд." }
     ],
     archetypes: ["Ренегат", "Пират", "Дикарь"],
+    allowedArchetypes: ["renegade", "pirate", "savage"],
     desc: "Могучий, но недалёкий нижний абхуман, возвышенный вниманием Тёмных Богов."
   },
 
@@ -232,10 +231,11 @@ export const RACES = {
       { name: "Unnatural Perception (2) / Сверхъестественное Восприятие (2)", benefit:"+2 к Бонусу Per.", rating:2, hasRating:true, effects:{ charBonusStat:"per", charBonusValue:2 } },
       { name: "The Quick and The Dead / Быстрые и Мёртвые", benefit:"+2 к Инициативе; Избегание атак Орды." },
       { name: "Fast Learner (15) / Ловит на Лету (15)", benefit:"+15% к стартовому опыту и опыту за сессию.", rating:15, hasRating:true },
-      { name: "Barefoot / Босоногий", benefit:"Кожа на ногах прочнее: бонус +20 и перебросы Stealth для бесшумного передвижения." },
-      { name: "Runt / Коротышка", benefit:"−4 к максимуму Ран; свойство Compact нивелирует штрафы за маленькое оружие." }
+      { name: "Barefoot / Босоногий", benefit:"Босиком (переключатель): +20 и переброс Stealth для бесшумного передвижения и тестов Трудного Ландшафта." },
+      { name: "Runt / Коротышка", benefit:"−4 к максимуму Ран; винтовки считает длинными, двуручное стрелковое не может одной рукой; модификация Compact снимает оба штрафа." }
     ],
     archetypes: ["Отступник", "Ересиарх", "Ренегат", "Пират", "Дикарь", "Ведьма", "Нумен"],
+    allowedArchetypes: ["apostate", "heresiarch", "renegade", "pirate", "savage", "witch", "numen"],
     desc: "Маленький, но зоркий и ловкий абхуман — идеальный разведчик и снайпер."
   },
 
@@ -245,7 +245,7 @@ export const RACES = {
     chars: { ws:25, bs:25, s:25, t:25, ag:25, int:25, per:25, wp:25, fel:25, inf:19 },
     bonusRolls: 1, bonusPoints: 4, charShift: 1,
     size: 0,
-    skills:  "Common Lore (любые 2), Linguistics (Low Gothic), Tech-Use, Trade (любые 2) +10",
+    skills:  "Common Lore (любые 4), Linguistics (Low Gothic), Tech-Use, Trade (любые 2) +10",
     gear:    "5 элементов до R1 (3 Good.Q, 2 Best.Q), Vox-Bead, +2 очка стартового снаряжения",
     talents: ["Hunker Down", "Tireless", "Workaholic"],
     traits: [
@@ -254,11 +254,13 @@ export const RACES = {
       { name: "Unnatural Strength (2) / Сверхъестественная Сила (2)", benefit:"+2 к Бонусу Силы.", rating:2, hasRating:true, effects:{ charBonusStat:"s", charBonusValue:2 } },
       { name: "Unnatural Toughness (4) / Сверхъестественная Стойкость (4)", benefit:"+4 к Бонусу Стойкости.", rating:4, hasRating:true, effects:{ charBonusStat:"t", charBonusValue:4 } },
       { name: "Fast Learner / Ловит на Лету", benefit:"+10% к стартовому опыту и опыту за сессию." },
-      { name: "Clever Hands / Умные Руки", benefit:"+15 к тонкой работе (Craft, ремонт)." },
-      { name: "Hard as Stone / Крепкий как Камень", benefit:"Сопротивление эффектам против разума при концентрации." },
-      { name: "Sure Tread / Надёжная Поступь", benefit:"+1 SPD пешком; не сбивается с ног; устойчивость в невесомости/нестабильном грунте." }
+      { name: "Clever Hands / Умелые Руки", benefit:"+15 на Крафт, ремонт и обслуживание с тонкой работой, +30 в экстремальной ситуации." },
+      { name: "Hard as Stone / Крепкий как Камень", benefit:"Лечится как Космодесантник; Преимущество против ядов, болезней и вакуума; защита от радиации −3; сон 3 ч; мутации как у Космодесантника." },
+      { name: "Sure Tread / Надёжная Поступь", benefit:"−1 SPD, пешком не больше 3×SPD за Ход; Трудный Ландшафт — Awareness (P) вместо A, на 3+ Успеха не замедляет." },
+      { name: "Void in Veins / Пустота в Венах", benefit:"Невесомость/микрогравитация: I вместо A на тесты ориентации и передвижения, с Преимуществом." }
     ],
     archetypes: ["Отступник", "Ересиарх", "Ренегат", "Пират", "Дикарь", "Благородный", "Ведьма"],
+    allowedArchetypes: ["apostate", "heresiarch", "renegade", "pirate", "savage", "noble", "witch"],
     desc: "Коренастый абхуман-инженер, крепкий к Порче, но порой поддающийся соблазнам Хаоса."
   },
 
@@ -267,23 +269,25 @@ export const RACES = {
     subraces: ["slaangor","pestigor","khorngor","tzaangor"],
     chars: { ws:25, bs:25, s:25, t:25, ag:25, int:25, per:25, wp:25, fel:25, inf:19 },
     bonusRolls: 2, bonusPoints: 7, charShift: 2,
+    startCorruption: 5,
     size: 0,
     skills:  "Common Lore (любые 2), Linguistics (Low Gothic), Survival",
     gear:    "4 элемента Снаряжения/Инструментов до R1 (1 Good.Q)",
     talents: ["Heightened Senses (Hearing, Smell)", "Unarmed Warrior"],
     traits: [
-      { name: "Bite (1) / Укус (1)", benefit:"Естественная атака укусом (профиль).", rating:1, hasRating:true },
+      { name: "Bite (2) / Укус (2)", benefit:"Естественная атака укусом (профиль).", rating:2, hasRating:true },
       { name: "Digitigrade (1) / Двусоставный (1)", benefit:"+1 к SPD; +5 на группирование.", rating:1, hasRating:true },
-      { name: "Natural Weapons (1) / Естественное Оружие (1)", benefit:"Рога/Когти/Копыта как оружие (профиль).", rating:1, hasRating:true },
-      { name: "Unnatural Strength (1) / Сверхъестественная Сила (1)", benefit:"+1 к Бонусу Силы.", rating:1, hasRating:true, effects:{ charBonusStat:"s", charBonusValue:1 } },
-      { name: "Unnatural Toughness (1) / Сверхъестественная Стойкость (1)", benefit:"+1 к Бонусу Стойкости.", rating:1, hasRating:true, effects:{ charBonusStat:"t", charBonusValue:1 } },
+      { name: "Natural Weapons (1) / Естественное Оружие (1)", benefit:"Рога, Укус, Когти, Копыта как оружие (профиль).", rating:1, hasRating:true },
+      { name: "Unnatural Strength (2) / Сверхъестественная Сила (2)", benefit:"+2 к Бонусу Силы.", rating:2, hasRating:true, effects:{ charBonusStat:"s", charBonusValue:2 } },
+      { name: "Unnatural Toughness (2) / Сверхъестественная Стойкость (2)", benefit:"+2 к Бонусу Стойкости.", rating:2, hasRating:true, effects:{ charBonusStat:"t", charBonusValue:2 } },
       { name: "The Quick and The Dead / Быстрые и Мёртвые", benefit:"+2 к Инициативе; Избегание атак Орды." },
       { name: "Fast Learner (20) / Ловит на Лету (20)", benefit:"+20% к стартовому опыту и опыту за сессию.", rating:20, hasRating:true },
-      { name: "Aversion to Order / Отвращение к Порядку", benefit:"Таланты Lore и Trade враждебны; бонусы предыдущих Бронфинов/Талантов Combat Formation теряются при переходе." },
-      { name: "Cloven One / Копытный", benefit:"Двусоставные ноги: +20 на тесты Трудного Ландшафта." },
-      { name: "Stepchildren of the Gods / Пасынки Богов", benefit:"+10 на тесты против заинтересованных богов Хаоса; −1 к минимуму Бесчестья 1; не мутирует от Хаоса как человек." }
+      { name: "Aversion to Order / Отвращение к Порядку", benefit:"Навыки групп Lore и Trade враждебны; без брифингов, Combat Formation и Iron Discipline; каждая бионика/кибернетика — −2 Раны и −5 T." },
+      { name: "Cloven One / Копытный", benefit:"+20 на тесты Трудного Ландшафта; Leap Up, Jumper, Preternatural Speed, Sprint, Tireless, Steady Footwork — Дружественные." },
+      { name: "Stepchildren of the Gods / Пасынки Богов", benefit:"Максимум Бесчестия −1 (не ниже 1); мутации как у Космодесантника, один кубик на мутации и субмутации." }
     ],
     archetypes: ["Отступник", "Ересиарх", "Ренегат", "Пират", "Дикарь", "Ведьма"],
+    allowedArchetypes: ["apostate", "heresiarch", "renegade", "pirate", "savage", "witch"],
     desc: "Звероподобный мутант человека: примитивный, но воинственный и агрессивный."
   },
   harpy: {
@@ -487,44 +491,38 @@ export const SUBRACE_DATA = {
   // ── Субрасы Зверолюда (посвящённые Богам Хаоса) ─────────────────────────
   slaangor: {
     label: "Слаангор", cost: 750, god: "Слаанеш", parent: "beastman",
-    effect: "+5 A, +5 P; не может потерять покровительство Слаанеш. Trait Digitigrade (3); Deadly Natural Weapons (Клешня: 1d10+2 R, Pen 3, Razor Sharp/Reinforced/Tearing). Талант Slaangor Fiendblood.",
+    effect: "+5 A, +5 P; не может потерять покровительство Слаанеш. Trait Digitigrade (3). Форма Слаангора: полное действие + Очко Бесчестия — рука становится Клешнёй (1d10+2 R, Pen 3, Extreme (8), Razor Sharp, Reinforced, Tearing; как Deadly Natural Weapons) до конца боя или сцены, обратно — полное действие бесплатно. Жажда наслаждений: ГМ может потребовать тест W+10. Доступ к Таланту Slaangor Fiendblood.",
     charMods: { ag: 5, per: 5 },
     traits: [
       { name:"Digitigrade (3) / Двусоставный (3)", benefit:"+3 SPD; +15 группирование.", rating:3, hasRating:true },
-      { name:"Deadly Natural Weapons / Смертельное Естественное Оружие", benefit:"Клешня: 1d10+2 R, Pen 3, Razor Sharp, Reinforced, Tearing." },
-      { name:"Slaangor Fiendblood / Слаангор Извергкровка", benefit:"Раз за бой/сцену после рукопашной атаки — ещё одна атака с той же базой (в т.ч. с нескольких рук). Требования: Cor 30, Inf 30." }
+      { name:"Slaangor Form / Форма Слаангора", benefit:"Полное действие + Очко Бесчестия: рука — Клешня до конца боя или сцены." }
     ]
   },
   pestigor: {
     label: "Пестигор", cost: 750, god: "Нургл", parent: "beastman",
-    effect: "+5 T, +5 I; не может потерять покровительство Нургла. Trait Toxic (1); Sturdy и Stuff of Nightmares. Талант Pestigor Mourner.",
+    effect: "+5 T, +5 I; не может потерять покровительство Нургла. Trait Toxic (1). Форма Пестигора: полное действие + Очко Бесчестия — Sturdy и Stuff of Nightmares до конца боя или сцены. Лень: ГМ может потребовать тест W+10. Доступ к Таланту Pestigor Mourner.",
     charMods: { t: 5, int: 5 },
     traits: [
       { name:"Toxic (1) / Токсичный (1)", benefit:"Естественное оружие Toxic (1).", rating:1, hasRating:true },
-      { name:"Sturdy / Надёжный", benefit:"+20 vs Захват/Оглушение, +30 vs сбивание." },
-      { name:"Stuff of Nightmares / Существо из Кошмаров", benefit:"Иммунитет к Усталости/критам/ядам; игнор Горения." },
-      { name:"Pestigor Mourner / Пестигор Плакальщик", benefit:"Раз за бой/сцену после непоглощённого урона — уменьшить его до 1 и на 1 Раунд удвоить свой T.b в расчёте поглощения. Требования: Cor 30, Inf 30." }
+      { name:"Pestigor Form / Форма Пестигора", benefit:"Полное действие + Очко Бесчестия: Sturdy и Stuff of Nightmares до конца боя или сцены." }
     ]
   },
   khorngor: {
     label: "Кхорнгор", cost: 750, god: "Кхорн", parent: "beastman",
-    effect: "+5 WS, +5 S; не может потерять покровительство Кхорна. Trait Brutal Charge (2); Natural Weapons → Deadly Natural Weapons; Талант Frenzy. Талант Khorngor Butcher.",
+    effect: "+5 WS, +5 S; не может потерять покровительство Кхорна. Trait Brutal Charge (2), Талант Frenzy. Форма Кхорнгора: свободное действие + Очко Бесчестия — Natural Weapons → Deadly Natural Weapons и Brutal Charge +2 до конца боя или сцены. Урон, оскорбления, угрозы: тест W+10 или Ярость. Доступ к Таланту Khorngor Butcher.",
     charMods: { ws: 5, s: 5 },
     talents: ["Frenzy"],
     traits: [
       { name:"Brutal Charge (2) / Брутальный Натиск (2)", benefit:"+2 урона при Натиске/Верховой атаке.", rating:2, hasRating:true },
-      { name:"Deadly Natural Weapons / Смертельное Естественное Оружие", benefit:"Естественное оружие теряет Primitive." },
-      { name:"Khorngor Butcher / Кхорнгор Мясник", benefit:"Запас кубиков: по 1 за Талант Hatred 2-го ур. и 1 за 2 Таланта Hatred 1-го ур. Нанося урон атакой с бонусом S.b (после броска, до щитов), можно потратить до ½ W.b (окр.▲) кубиков, +1 кубик урона за каждый (Экстремальный урон возможен). Восстанавливаются в конце боя. Требования: Cor 30, Inf 30, Hatred." }
+      { name:"Khorngor Form / Форма Кхорнгора", benefit:"Свободное действие + Очко Бесчестия: Deadly Natural Weapons и Brutal Charge +2 до конца боя или сцены." }
     ]
   },
   tzaangor: {
     label: "Тзаангор", cost: 750, god: "Тзинч", parent: "beastman",
-    effect: "+5 I, +5 F; не может потерять покровительство Тзинча. Теряет Natural Weapons (Рога/Когти), Aversion to Order и Stepchildren of the Gods. Талант Tzaangor Enlightened.",
+    effect: "+5 I, +5 F; не может потерять покровительство Тзинча. Теряет атаки Рога и Когти у Natural Weapons (Укус и Копыта остаются), Aversion to Order и Stepchildren of the Gods. Амбиции: ГМ может потребовать тест W+10 (и по решению ГМа — Logic, чтобы увидеть последствия). Доступ к Таланту Tzaangor Enlightened.",
     charMods: { int: 5, fel: 5 },
-    removesTraits: ["Natural Weapons", "Aversion to Order", "Stepchildren of the Gods"],
-    traits: [
-      { name:"Tzaangor Enlightened / Тзаангор Просвещённый", benefit:"Ритуалом (1 час, без теста) призывает Диск Тзинча под своим управлением, как при ритуале Трансформации Диска; получает 3d10 урона в W. Требования: Cor 30, Inf 30, Forbidden Lore (Daemons) +0." }
-    ]
+    removesTraits: ["Natural Weapons (Рога, Когти)", "Aversion to Order", "Stepchildren of the Gods"],
+    traits: []
   },
 
   // ── Субрасы Друкхари ──

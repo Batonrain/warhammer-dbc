@@ -32,7 +32,16 @@
     "fateRoll": "",
     "skillsNote": "",
     "adaptations": "",
-    "bookSource": "DoomBC — Основная книга"
+    "bookSource": "DoomBC — Основная книга",
+    "allowedArchetypes": [
+      "apostate",
+      "heresiarch",
+      "renegade",
+      "pirate",
+      "savage",
+      "witch"
+    ],
+    "startCorruption": 5
   },
   "_id": "aCWwJQUQSDbx1uEo",
   "effects": [],
@@ -173,7 +182,7 @@
               "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
               "sourceHasRating": true,
               "rating": 1,
-              "specialization": "",
+              "specialization": "Рога, Укус, Когти, Копыта",
               "skillScope": "plain",
               "skillKey": "",
               "specKey": "",

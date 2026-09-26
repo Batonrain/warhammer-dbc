@@ -235,6 +235,7 @@ const DEVIATIONS = {
     // Состояние «Беспомощный» заведено гораздо позже template.json (auto-успех
     // и удвоенный урон против него — attack-dialog.mjs/attack.mjs).
     "conditions.helpless": false,
+    "conditions.implantHaywire": false,
     // Горение (wdbc-3pv5, Cooler/Охладитель + Морозное Сердце): урон
     // поджигания и остаток окна «без эффектов Горения» — два бесхозных числа
     // сверх общего флаг+счётчик (burningLevel), заведены гораздо позже

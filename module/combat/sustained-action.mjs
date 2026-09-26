@@ -7,7 +7,8 @@
 //  трата ОД — combat/action-economy.mjs.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { spendActionPoints, apCostForActionType } from "./action-economy.mjs";
+import { spendActionPoints, apCostForActionType, isImplantDisrupted } from "./action-economy.mjs";
+import { mentalSustainedThreshold } from "../rules/bone-head.mjs";
 import {
   advanceSustainedAction, interruptSustainedAction, passCheckpoint,
   sustainedActionKey, SUSTAINED_ACTION_KINDS
@@ -37,7 +38,12 @@ function apLabelFor(kind) {
  */
 export async function beginSustainedAction(actor, { label, kind, threshold, physical } = {}) {
   const cost = apCostForActionType(apLabelFor(kind));
-  if (!await spendActionPoints(actor, cost, { physical })) return null;
+  // Сбой импланта Костеголова (rules/bone-head.mjs): ментальное Длительное
+  // тянется вдвое больше Ходов. Цена Хода остаётся 2 ОД — удваивается срок,
+  // а не трата за Ход (4 ОД в Ход не влезли бы вовсе).
+  const disrupted = physical === false && isImplantDisrupted(actor);
+  threshold = mentalSustainedThreshold(threshold, { physical, disrupted });
+  if (!await spendActionPoints(actor, cost, { physical, sustained: true })) return null;
   const key = sustainedActionKey(label);
   const state = { kind, label, threshold, ...advanceSustainedAction(null, threshold) };
   await actor.setFlag(FLAG_SCOPE, `${FLAG_ROOT}.${key}`, state);
@@ -49,7 +55,8 @@ export async function continueSustainedAction(actor, key, { physical } = {}) {
   const state = actor.getFlag(FLAG_SCOPE, `${FLAG_ROOT}.${key}`);
   if (!state) return null;
   const cost = apCostForActionType(apLabelFor(state.kind));
-  if (!await spendActionPoints(actor, cost, { physical })) return null;
+  // Срок уже удвоен при начале (beginSustainedAction) — Ход стоит 2 ОД как есть.
+  if (!await spendActionPoints(actor, cost, { physical, sustained: true })) return null;
   const next = { ...state, ...advanceSustainedAction(state, state.threshold) };
   await actor.setFlag(FLAG_SCOPE, `${FLAG_ROOT}.${key}`, next);
   return { key, ...next };

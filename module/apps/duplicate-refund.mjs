@@ -37,9 +37,13 @@ function skillCat(actor, def, entryChar = "", group = "", specialty = "") {
   // Общие знания и Ремесло всегда Дружественные — это перебивает и Склонности,
   // и культуру легиона, ровно как на «Развитии». То же самое — специализация,
   // отмеченная как Дружественная на Родном мире (Исследовательская станция).
-  const cat = def.alwaysAlly ? "ally"
+  // Враждебный override (Отвращение к Порядку) сильнее «всегда Дружественных»
+  // — тот же порядок, что rules/advance-category.mjs::skillAdvanceCat.
+  const override = resolveAptitudeOverride(actor, "skill", def.label || "", group, { specialty });
+  const cat = override === "enemy" ? "enemy"
+    : def.alwaysAlly ? "ally"
     : (group && isFriendlySpecialty(actor, group, specialty)) ? "ally"
-    : resolveAptitudeOverride(actor, "skill", def.label || "", group, { specialty })
+    : override
       // cultureCat матчит по-английски — см. тот же фикс в sheets/tabs/advance.mjs (wdbc-ko14).
       ?? cultureCat("skill", def.en || def.label || "", "", cultFxOf(actor));
   return { apts, itemApts, cat };

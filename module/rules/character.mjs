@@ -42,6 +42,7 @@ import { PA_TABLES } from "../constants/power-armour-lore.mjs";
 import { sanityMax, madnessLevels, sarcophagusCharDelta, DREADNOUGHT_PILOT_FLAG,
          SARCOPHAGUS, sarcophagusWarpWounds, sarcophagusHelplessNow } from "./dreadnought.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { bionicsRejection, REJECTS_BIONICS_FLAG } from "./aversion-to-order.mjs";
 import { invalidateRulesCacheFor } from "./collect.mjs";
 import { runeMax } from "./sigillite-runes.mjs";
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
@@ -93,13 +94,15 @@ const MUTATION_THRESHOLDS_HUMAN    = [10, 20, 40, 60, 80];
 const MUTATION_THRESHOLDS_ASTARTES = [10, 30, 60, 90];
 
 /** Ближайший непройденный Порог Мутации, или null, если все уже пройдены (Cor 100 — не мутация, а Возвышение/Отродье). */
-export function nextMutationThreshold(system) {
+export function nextMutationThreshold(system, { asAstartes: byRule = false } = {}) {
   const cor = Number(system?.corruption?.value) || 0;
   // Затупленный «получает мутации как Космодесантник, а не человек» — флаг
   // субрасы mutationsAsAstartes. Поблажка лоялисту ниже — только настоящим
   // Астартес: она про их геносемя, не про таблицу.
   const astartes = raceMatches(system, "astartes");
-  const asAstartes = astartes || !!subraceEntries()[system?.subrace || ""]?.mutationsAsAstartes;
+  // Крепкий как Камень (Скват) — «получает мутации как Космодесантник» той же
+  // таблицей: возможность mutations.asAstartes, вызывающий передаёт byRule.
+  const asAstartes = astartes || byRule || !!subraceEntries()[system?.subrace || ""]?.mutationsAsAstartes;
   let table = asAstartes ? MUTATION_THRESHOLDS_ASTARTES : MUTATION_THRESHOLDS_HUMAN;
   if (astartes && system?.alignment === "loyalist") {
     table = table.filter(t => t >= 60);
@@ -407,6 +410,12 @@ export function prepareCharacterDerived(actor, system) {
     }
 
     system.traitCharBonus      = traitCharBonus;
+    // Отвращение к Порядку (Зверолюд): каждая установленная бионика/
+    // кибернетика — −5 T (и −2 Раны, ниже у effectiveMax). Живой расчёт:
+    // снял имплант — штраф ушёл (rules/aversion-to-order.mjs).
+    const orderRejection = bionicsRejection(actor.items, hasRuleFlag(actor, REJECTS_BIONICS_FLAG));
+    if (orderRejection.count) traitCharValueBonus.t = (traitCharValueBonus.t || 0) + orderRejection.t;
+    system.orderRejection = orderRejection;
     system.traitCharValueBonus = traitCharValueBonus;
     system.fearRating     = traitFearRating;
     system.talentInitMod  = traitInitMod;
@@ -560,7 +569,7 @@ export function prepareCharacterDerived(actor, system) {
       system.corruption.limit = 100 + (pathPassives.corLimit || 0);
       // Ближайший Порог Мутации — для панели ПОРЧА (wdbc-2l2x), не хранимое
       // поле, пересчитывается каждый раз, как limit чуть выше.
-      const nextThr = nextMutationThreshold(system);
+      const nextThr = nextMutationThreshold(system, { asAstartes: hasRuleFlag(actor, "mutations.asAstartes") });
       system.corruption.nextThreshold = nextThr;
       system.corruption.thresholdRemaining = nextThr !== null ? Math.max(0, nextThr - (system.corruption.value || 0)) : null;
     }
@@ -746,6 +755,9 @@ export function prepareCharacterDerived(actor, system) {
       system.wounds.effectiveMax = hasRuleFlag(actor, DREADNOUGHT_PILOT_FLAG)
         ? Math.max(0, (Number(system.wounds.max) || 0) + SARCOPHAGUS.woundsMax)
         : (Number(system.wounds.max) || 0);
+      // Отвращение к Порядку: −2 Раны за каждую установленную бионику/кибернетику.
+      if (system.orderRejection?.wounds)
+        system.wounds.effectiveMax = Math.max(0, system.wounds.effectiveMax + system.orderRejection.wounds);
       const wLvl = woundLevel(system);
       system.wounds.tier = wLvl.displayKey;
       system.wounds.tierLabel = wLvl.displayLabel;

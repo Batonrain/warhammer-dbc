@@ -18,6 +18,7 @@ import { characterContext, charLabel } from "./character-context.mjs";
 import { showAttackDialog } from "./attack-dialog.mjs";
 import { rollMutationOrGift, openMutationPicker } from "./tabs/mutations.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { payIntTestAction } from "../combat/bone-head.mjs";
 import { applyOnTargetFailConditions } from "../rules/on-target-fail.mjs";
 import { createDisorderItem, activateDisorderListeners,
          openFearDialog, openTraumaDialog, rollDisorder } from "./tabs/disorders.mjs";
@@ -31,7 +32,8 @@ import { activatePsychicListeners, activateNavigatorPower, executePsychotest,
          resolvePsyCastAttr, rollPsyWpTest, rollPsyniscience, showManifestDialog,
          wirePsyManifestPreview } from "./tabs/psychic.mjs";
 import { activateTechListeners, activateTechMiracle, techGenResource } from "./tabs/tech.mjs";
-import { activateGearListeners, toggleGearModActive } from "./tabs/gear.mjs";
+import { activateGearListeners } from "./tabs/gear.mjs";
+import { toggleItemActivation } from "../combat/item-activation.mjs";
 import { betterThanPoorEquipped, UNSEEN_BEGGAR } from "../rules/unseen-beggar.mjs";
 import { QUALITY_LABELS } from "../constants/ship-quality.mjs";
 import { craftTabContext, activateCraftListeners } from "./tabs/craft.mjs";
@@ -736,14 +738,13 @@ function onMutgiftRoll(event) {
   return rollMutationOrGift(this.actor);
 }
 
-// Вкл./выкл. у Мутации/Дара с activatable:true (wdbc-egll, напр. Живое
-// Оружие — полудействие+1 Бесчестия, до конца боя/сцены). Переиспользует
-// тот же тумблер, что и включаемые системы брони (module/sheets/tabs/
-// gear.mjs::toggleGearModActive) — реализация не завязана на тип предмета,
-// только на общее поле system.active + isItemActive().
+// Вкл./выкл. у Мутации/Дара/Черты с activatable:true (wdbc-egll; Босоногий;
+// формы субрас Зверолюда). Цена включения и срок — system.activation
+// (combat/item-activation.mjs): ОД и Очко Бесчестия списываются до
+// переключения, выданные предметом Черты и атаки пересобираются сразу.
 async function onMutgiftToggleActive(event, target) {
   event.preventDefault(); event.stopPropagation();
-  await toggleGearModActive(this.actor.items.get(target.dataset.itemId));
+  await toggleItemActivation(this.actor, this.actor.items.get(target.dataset.itemId));
 }
 
 // ── Раса, Прошлое и легион ── (apps/races.mjs держит применение, лист даёт
@@ -3032,6 +3033,9 @@ export class WarhammerCharacterSheet
     // Переброс: бросаем сколько сказано и оставляем один. Какой именно —
     // решает rules/reroll-pick.mjs: на d100 «лучший» это МЕНЬШИЙ, и это знание
     // держится в одном месте, а не переписывается на каждом месте броска.
+    // BONE-Head / Костеголов: тест I в свой Ход в бою — Полное действие
+    // (combat/bone-head.mjs); ОД не хватает — теста нет.
+    if (!await payIntTestAction(this.actor, charKey)) return;
     const { roll, rv, rerollNote } = await rollD100WithReroll(forcedOpponentReroll || reroll, { confirmPick });
     const charAbbr = CHARACTERISTICS[charKey]?.abbr ?? charKey;
 

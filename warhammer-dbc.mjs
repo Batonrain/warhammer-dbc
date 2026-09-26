@@ -111,6 +111,7 @@ import { initForceMoveHud } from "./module/combat/force-move-menu.mjs";
 import { initTearOpenHud } from "./module/combat/tear-open.mjs";
 import { initFreeAttackHooks } from "./module/combat/free-attack.mjs";
 import { initSqueezeHooks } from "./module/combat/squeeze.mjs";
+import { initBoneHeadHooks } from "./module/combat/bone-head.mjs";
 import { initOverwatchHooks } from "./module/combat/overwatch.mjs";
 import { checkAuras, clearAuraGrants } from "./module/regions/auras.mjs";
 import { redrawAuraRings } from "./module/regions/aura-rings.mjs";
@@ -1363,6 +1364,8 @@ Hooks.once("init", () => initTearOpenHud());
 Hooks.once("init", () => initMovedFlagTracking());
 Hooks.once("init", () => initFreeAttackHooks());
 Hooks.once("init", () => initSqueezeHooks());
+// BONE-Head (Огрин): вышел из поля Haywire — Сбой импланта снимается сам.
+Hooks.once("init", () => initBoneHeadHooks());
 Hooks.once("init", () => initOverwatchHooks());
 Hooks.once("init", () => initEquipmentIndex());
 Hooks.once("init", () => registerCalloutHooks());

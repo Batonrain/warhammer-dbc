@@ -21,6 +21,7 @@ import { isHandShield } from "../combat/hand-shield.mjs";
 import { isMultipleArmsTrait } from "./cybernetic-excellence.mjs";
 import { isFusedByHandOfDeath } from "./hand-of-death.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { RUNT_FIT_FLAG, hasCompactMod, runtRangedGrips } from "./runt-fit.mjs";
 import { isPathOneHandedWeapon } from "./library/paths.mjs";
 import { uselessCount, isSideUseless } from "./useless-limbs.mjs";
 import { BODY_SIDES, isLostOn } from "./limb-loss.mjs";
@@ -101,7 +102,13 @@ function availableRangedGrips(item, actor, auto) {
   // Стрела Кхейна у адепта Пути Воина уровня Следующий (wdbc-4e60) — тот же
   // список читает окно атаки; расходиться этим двум местам нельзя.
   if (isPathOneHandedWeapon(item) && hasRuleFlag(actor, "weapon.oneHandedWarriorPath")) addExtra("1р");
-  return [...own, ...extra];
+  // Runt / Коротышка (Ратлинг): двуручное стрелковое одной рукой нельзя «невзирая
+  // на модификации», пока нет Compact — тот же фильтр, что в окне атаки.
+  const isRunt = hasRuleFlag(actor, RUNT_FIT_FLAG);
+  return runtRangedGrips([...own, ...extra], {
+    isRunt, compact: isRunt && hasCompactMod(getInstalledMods(actor, item)),
+    ownGrips: parseGrips(item.system?.grips), weaponClass: item.system?.weaponClass
+  });
 }
 
 /**

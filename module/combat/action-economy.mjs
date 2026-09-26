@@ -35,6 +35,8 @@ import { isStunnedOrDazed } from "../rules/predicates.mjs";
 import { shockApLocked, shockHalfAction } from "../rules/shock.mjs";
 import { turnStartFlagClears, turnStartAttackCarryOver, turnStartSqueezeCarryOver } from "../rules/turn-flags.mjs";
 import { rollLegacyChangeBonus, tickLegacyExcessBoost } from "../rules/legacy-weapon.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
+import { BONE_HEAD_FLAG, implantDisrupted, mentalApCost } from "../rules/bone-head.mjs";
 
 /** Типы акторов, несущих экономику действий (общая часть — _creature.mjs). */
 export const ACTION_ECONOMY_ACTOR_TYPES = ["character", "daemon", "demonPrince", "minion", "horde"];
@@ -296,8 +298,27 @@ function warnBlocked(actor, reason, what) {
  * формальные нулевые вызовы, напр. Натиск до броска) Состояниями не гейтится:
  * эти вызовы ничего не списывают, а ОД на действие потом спишет настоящая трата.
  */
-export function canSpendActionPoints(actor, cost, { physical } = {}) {
+/**
+ * Сбит ли мозговой имплант Костеголова (rules/bone-head.mjs) — тогда его
+ * ментальные действия (physical:false) стоят вдвое. Спрашивается только при
+ * висящем Состоянии, чтобы не собирать правила на каждую трату ОД.
+ */
+export function isImplantDisrupted(actor) {
+  const conds = actor?.system?.conditions;
+  return !!conds?.implantHaywire && implantDisrupted(conds, hasRuleFlag(actor, BONE_HEAD_FLAG));
+}
+
+/** Цена траты ОД для этого актора — с удвоением ментальных при Сбое импланта. */
+// sustained — Ход Длительного действия: у него при Сбое удваивается срок
+// (combat/sustained-action.mjs), а не цена Хода.
+export function effectiveApCost(actor, cost, { physical, sustained = false } = {}) {
+  if (sustained) return Number(cost) || 0;
+  return mentalApCost(cost, { physical, disrupted: physical === false && isImplantDisrupted(actor) });
+}
+
+export function canSpendActionPoints(actor, cost, { physical, sustained = false } = {}) {
   if (!cost || !isEncounterActive() || !hasActionEconomy(actor)) return true;
+  cost = effectiveApCost(actor, cost, { physical, sustained });
   if (actionBlockReason(actor, { physical })) return false;
   return (Number(actor.system.actionPoints?.value) || 0) >= cost;
 }
@@ -372,14 +393,21 @@ async function _maybeClearAiming(actor) {
  * см. actionBlockReason. Отказ по Состоянию сам пишет уведомление с причиной
  * (wdbc-x1nz.2.87/.88) — «не хватает ОД» вызывающей стороны тогда лишь вторит.
  */
-export async function spendActionPoints(actor, cost, { physical } = {}) {
-  if (!canSpendActionPoints(actor, cost, { physical })) {
+export async function spendActionPoints(actor, cost, { physical, sustained = false } = {}) {
+  if (!canSpendActionPoints(actor, cost, { physical, sustained })) {
     const reason = cost && isEncounterActive() && hasActionEconomy(actor) ? actionBlockReason(actor, { physical }) : "";
     if (reason) warnBlocked(actor, reason, "Действие");
+    else if (effectiveApCost(actor, cost, { physical, sustained }) > effectiveActionPointsMax(actor))
+      globalThis.ui?.notifications?.warn?.(`⚠️ ${actor?.name ?? "Персонаж"}: Сбой импланта — ментальное Полное действие вдвое дольше и в один Ход не влезает; проведите его Длительным действием.`);
     return false;
   }
   if (cost && isEncounterActive() && hasActionEconomy(actor)) {
     const value = Number(actor.system.actionPoints?.value) || 0;
+    // Сбой импланта Костеголова: ментальное действие вдвое дороже
+    // (canSpendActionPoints выше уже проверил удвоенную цену).
+    const paid = effectiveApCost(actor, cost, { physical, sustained });
+    if (paid !== cost) globalThis.ui?.notifications?.info?.(`${actor.name}: Сбой импланта — ментальное действие вдвое дольше (${paid} ОД вместо ${cost}).`);
+    cost = paid;
     await actor.update({ "system.actionPoints.value": Math.max(0, value - cost) });
     if (physical === true) await _maybeTriggerCrippling(actor, cost);
     await _maybeClearAiming(actor);
@@ -469,9 +497,10 @@ export function apSpendGate(actor, cost, { physical } = {}) {
   if (ok) return { disabled: false, title: "" };
   // Запрет по Состоянию (wdbc-x1nz.2.87/.88) — называем его, а не «не хватает».
   const reason = actionBlockReason(actor, { physical });
+  const need = effectiveApCost(actor, cost, { physical });
   return {
     disabled: true,
-    title: reason || `Не хватает ОД: нужно ${cost}, есть ${Number(actor.system.actionPoints?.value) || 0}`
+    title: reason || `Не хватает ОД: нужно ${need}${need !== cost ? " (Сбой импланта — вдвое)" : ""}, есть ${Number(actor.system.actionPoints?.value) || 0}`
   };
 }
 

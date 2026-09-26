@@ -130,12 +130,14 @@ describe("источники по умолчанию", () => {
     // ПЕРМАНЕНТНО (9 дней подряд), считаются Дружественными для Продвижения.
     // prophetOfGallerpox (wdbc-1rno.1, 15.09.2026) — штраф −30 против ядов
     // не-Нурглитам на сцене заражённого Vehicle/Ship-актора.
+    // ogrynTraits (сверка Огрина, 26.09.2026) — правила Черт Brute Physiology
+    // и BONE-Head по самой Черте: их несёт и Миньон с Трейтом «Ogryn».
     expect([...getRuleSources().map(([key]) => key)].sort())
       .toEqual(["addiction", "adjutant", "beastmanShaman", "conditions", "core",
                 "daemonInevitability", "devourerOfKnowledge", "dreadnought", "hatred", "homeworld", "items",
                 "legacyBloodPsychic", "legacyDistractingCharSwap", "legacyExcess", "legacyGuardian",
                 "legacyInstinctiveDisarm", "legacyQuietAwareness", "legacyWrath", "nullZones",
-                "opposedTarget", "paths", "patron", "prophetOfGallerpox",
+                "ogrynTraits", "opposedTarget", "paths", "patron", "prophetOfGallerpox",
                 "psychicSustainTarget", "race", "situational", "synesthesia"]);
   });
 

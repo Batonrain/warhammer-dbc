@@ -186,6 +186,10 @@ function effectAppliesTo(target, ctx) {
   // (module/combat/grapple.mjs), и «skill:athletics» подхватил бы оба —
   // разные правила книги под одинаковым навыком.
   if (scope === "climbing") return ctx.climbing === true;
+  // Тест Трудного Ландшафта (combat/movement-terrain.mjs ставит ctx.terrain) —
+  // своя область, а не «char:ag»: тот же тест Ловкости у Уклонения и прочего
+  // книга ландшафтным не считает (Босоногий Ратлинга).
+  if (scope === "terrain") return ctx.terrain === true;
   // Тест сопротивления яду (wdbc-1rno.1, Пророк Гэллерпокса): единственный
   // реальный «тест против яда» в системе — сопротивление свойству оружия
   // Toxic (module/hooks.mjs::_applyWeaponPropEffect, condition==="poisoned").
@@ -625,6 +629,29 @@ export function autoFailFromRules(rules, ctx = {}) {
 }
 
 /**
+ * Потолок степени УСПЕХА (BONE-Head / Костеголов: «любой тест I … при Успехе
+ * даёт не больше 1 Успеха») — эффект `successDegCap`. Как `autoFail`, не
+ * галочка; применяет rules/kind-outcome.mjs::resolveKindOutcome после всех
+ * прибавок к степени (Сверхъестественная Характеристика тоже упирается в
+ * потолок — книга говорит «не больше», не «без учёта бонусов»). Несколько
+ * потолков — берётся наименьший.
+ *
+ * @returns {{value:number, label:string}|null} null — потолка нет
+ */
+export function successDegCapFromRules(rules, ctx = {}) {
+  let best = null;
+  for (const rule of rules ?? []) {
+    for (const effect of rule?.effects ?? []) {
+      if (effect?.kind !== "successDegCap") continue;
+      if (!effectAppliesTo(effect.target, ctx)) continue;
+      const value = Math.max(1, Number(effect.value) || 1);
+      if (!best || value < best.value) best = { value, label: effect.label ?? rule.label ?? rule.id };
+    }
+  }
+  return best;
+}
+
+/**
  * Фазы 1–3 целиком: контекст, сбор, отбор.
  *
  * Хук «dbc.collectRules» получает контекст и изменяемый список правил до
@@ -651,6 +678,7 @@ export function resolveTest(input = {}) {
     weaponProps: weaponPropsFromRules(rules, ctx),
     failDegExtra: failDegModFromRules(rules, ctx),
     scriptTriggers: scriptTriggersFromRules(rules, ctx),
-    autoFail: autoFailFromRules(rules, ctx)
+    autoFail: autoFailFromRules(rules, ctx),
+    successDegCap: successDegCapFromRules(rules, ctx)
   };
 }

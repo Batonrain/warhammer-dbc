@@ -34,6 +34,7 @@ const clampCap = v => Math.max(0, Math.min(START_CAP, Math.round(Number(v) || 0)
  * @param {number}  o.extraXp   ручная добавка опыта
  * @param {number}  o.extraInf  ручная добавка Бесчестия
  * @param {number}  o.extraCor  ручная добавка Порчи
+ * @param {number}  o.fastLearnerPct Ловит на Лету (X): +X% к стартовому опыту
  * @param {number}  o.subraceCost цена субрасы в опыте — «при создании
  *   Человек может взять одну субрасу, потратив на это часть стартового опыта,
  *   если его хватает»: вычитается из опыта; не хватает — xpShort
@@ -41,16 +42,23 @@ const clampCap = v => Math.max(0, Math.min(START_CAP, Math.round(Number(v) || 0)
  *            subraceCost:number, xpShort:boolean}|null}
  */
 export function startLevelValues({ level, astartes = false,
-                                   extraXp = 0, extraInf = 0, extraCor = 0, subraceCost = 0 } = {}) {
+                                   extraXp = 0, extraInf = 0, extraCor = 0, subraceCost = 0,
+                                   fastLearnerPct = 0 } = {}) {
   const row = START_LEVELS.find(l => l.key === level);
   if (!row) return null;
 
   const infamyRaw = row.infamy     + (Number(extraInf) || 0);
   const corRaw    = row.corruption + (Number(extraCor) || 0);
-  const grossXp   = Math.max(0, (astartes ? row.astartes : row.mortal) + (Number(extraXp) || 0));
+  const baseXp    = Math.max(0, (astartes ? row.astartes : row.mortal) + (Number(extraXp) || 0));
+  // Ловит на Лету / Fast Learner (X): «на X% больше стартового опыта» —
+  // округление вверх, как у опыта за сессию (rules/session-rewards.mjs).
+  const pct       = Math.max(0, Number(fastLearnerPct) || 0);
+  const grossXp   = pct ? Math.ceil(baseXp * (1 + pct / 100)) : baseXp;
   const cost      = Math.max(0, Number(subraceCost) || 0);
   return {
     xp:          Math.max(0, grossXp - cost),
+    // Сколько из стартового опыта дала Ловит на Лету — для подписи в Мастере.
+    fastLearnerXp: grossXp - baseXp,
     subraceCost: cost,
     // Опыта не хватает на субрасу — Мастер не пускает дальше (Этап 4).
     xpShort:     cost > grossXp,

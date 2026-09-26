@@ -12,7 +12,7 @@
 // их импортируют отсюда три с лишним десятка файлов.
 
 import { ASTARTES_RULES } from "./library/astartes.mjs";
-import { OGRYN_RULES } from "./library/ogryn.mjs";
+import { OGRYN_RULES, OGRYN_TRAIT_RULES } from "./library/ogryn.mjs";
 import { EXODITE_RULES, DRUKHARI_RULES, AZURIANE_RULES, HARLEQUIN_RULES, YNNARI_RULES,
          HALF_ELDAR_RULES } from "./library/aeldari.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
@@ -67,6 +67,10 @@ registerRuleSource("situational", (a, ctx) => situationalRules(a, ctx));
 // ни к расе, ни к предмету, отбор целиком по `when.hasCondition`/
 // `when.targetHasCondition`.
 registerRuleSource("conditions", () => CONDITION_RULES);
+
+// Черты Огрина (Brute Physiology, BONE-Head) — по самим Чертам, а не по расе:
+// их выдаёт и комплексный Трейт Миньона «Ogryn».
+registerRuleSource("ogrynTraits", () => OGRYN_TRAIT_RULES);
 
 // Машинная часть расовых Черт остаётся кодом (этап 3 плана): в данные уехало
 // описание расы, а не её правила.

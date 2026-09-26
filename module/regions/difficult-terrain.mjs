@@ -74,6 +74,11 @@ export class DifficultTerrainBehaviorType extends foundry.data.regionBehaviors.R
   // по правилу (стр. 29), независимо от того, какие галочки включены.
   /** @override */
   _getTerrainEffects(token, segment, options) {
+    // Надёжная Поступь (Скват): прошёл тест Трудного Ландшафта на 3+ Успеха —
+    // зона его в этом Ходу не замедляет (флаг terrainUnslowed, rules/turn-flags.mjs,
+    // ставит combat/movement-terrain.mjs).
+    const actor = token?.actor ?? token?.document?.actor;
+    if (actor?.getFlag?.("warhammer-dbc", "terrainUnslowed")) return [];
     return [{ name: "difficulty", difficulty: 2 }];
   }
 
