@@ -24,6 +24,7 @@ import { conditionLevelField } from "../constants/conditions.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { redirectHitLocationForMachine } from "../rules/bronze-myrmidon.mjs";
+import { redirectHitLocationForHeadless } from "../rules/headless.mjs";
 import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
 import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG } from "./pacifism.mjs";
 import { QUICK_TO_ANGER_CAPABILITY, rollQuickToAngerTest } from "../rules/quick-to-anger.mjs";
@@ -751,7 +752,8 @@ export async function applyDamageToActor(actor, damageData) {
   // активным Трейтом Machine (Ярость) попадание в Сочленение/Глаз резолвится
   // ДАЛЬШЕ (AP, крит-таблица) как попадание в Руку/Голову — редирект целиком,
   // одной точкой, а не патчем каждого места, читающего hitLocation.
-  const hitLocation = redirectHitLocationForMachine(rawHitLocation, actor);
+  // Безголовый (wdbc-1rno.20, rules/headless.mjs): голова и глаз — в торс.
+  const hitLocation = redirectHitLocationForHeadless(redirectHitLocationForMachine(rawHitLocation, actor), actor);
 
   // ── Бросок щита (если есть активный) ─────────────────────────────────────
   // ignoreShield (Flush/Варп) — щит не катится совсем; sanctified — катится, но

@@ -7100,9 +7100,9 @@ export const CAPABILITIES = {
     reader: "module/apps/hand-of-death.mjs — кнопка на листе Мутации (+10 WS/BS и Reinforced оружию, Баланс до 0, +10 AP выбранной руке)"
   },
   "mutation.headless": {
-    label: "Угол обзора 120°, попадания в голову = попадания в торс (−2 Инициатива вынесена отдельной записью kind:characteristic/charKey:initiative, wdbc-v9a7) — обзора/facing в системе нет вовсе, редиректа попаданий в локацию тоже, гейтить нечем",
+    label: "Реализовано (wdbc-1rno.20): угол обзора 120° (facing «Скрытной Атаки» — атака вне сектора сама Незримая), попадания в «Голову» и «Глаз (Голова)» приходятся в Торс при применении урона; −2 Инициативы — отдельная запись kind:characteristic (wdbc-v9a7). НЕ переводится «Сочленение / Шея» (общая метка суставов и шеи — вопрос владельцу); карточка атаки до выбора цели показывает исходную «Голову».",
     source: "Мутация: Headless (Общие мутации)",
-    reader: ""
+    reader: "module/rules/headless.mjs — combat/facing.mjs::isOutsideDefenderView, combat/damage.mjs::applyDamageToActor"
   },
   "mutation.heartOfSteel": {
     label: "4 god-гейтнутые субмутации (доп. −1 против конкретных типов целей) не реализованы — тесту Страха неоткуда взять категорию источника (wdbc-tsz6)",
