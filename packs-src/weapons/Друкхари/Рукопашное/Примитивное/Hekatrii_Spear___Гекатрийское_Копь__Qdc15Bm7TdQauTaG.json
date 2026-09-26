@@ -61,7 +61,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Копьё"
+    "meleeCategory": "Копьё",
+    "techClass": "none"
   },
   "_id": "Qdc15Bm7TdQauTaG",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-spear.svg",

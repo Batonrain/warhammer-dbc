@@ -3,7 +3,7 @@
 // Гангрена (стр. 30-31, wdbc-r5o7.5): «каждые T.b×2 часов — 1d10 урона в T».
 // Тот же общий приём worldTime-кулдауна, что и Перевес выключенной силовой
 // брони (disabled-armour-periodic-test.test.mjs) — здесь только интервал
-// другой (×2 часа вместо ×1) и цель урона другая (system.charDamage.t, не
+// другой (×2 часа вместо ×1) и цель урона другая (system.charLoss.t, не
 // Усталость).
 
 import "../support/foundry-stub.mjs";
@@ -15,7 +15,7 @@ import { gangrenePeriodicRemaining, useGangrenePeriodicTest, gangreneTick } from
 const FLAG = "warhammer-dbc";
 const TEST_AT_FLAG = "gangreneTestAt";
 
-function actorWith({ tb = 4, tTotal = 40, gangrene = true, charDamageT = 0, testAt, race = "human" } = {}) {
+function actorWith({ tb = 4, tTotal = 40, gangrene = true, charLossT = 0, testAt, race = "human" } = {}) {
   const flags = {};
   if (testAt !== undefined) flags[TEST_AT_FLAG] = testAt;
   const actor = {
@@ -24,16 +24,18 @@ function actorWith({ tb = 4, tTotal = 40, gangrene = true, charDamageT = 0, test
       race,
       characteristics: { t: { bonus: tb, total: tTotal } },
       conditions: { gangrene },
-      charDamage: { t: charDamageT }
+      // Урон в Характеристики по книге (wdbc-x1nz.2.83) — charLoss, не «Мод.».
+      charDamage: { t: 0 },
+      charLoss: { t: charLossT }, charLossAt: {}
     },
     getFlag: (_s, k) => flags[k],
     setFlag: async (_s, k, v) => { flags[k] = v; return v; },
     update: async data => {
       captured.updates.push(data);
-      if ("system.charDamage.t" in data) {
-        const delta = data["system.charDamage.t"] - actor.system.charDamage.t;
-        actor.system.charDamage.t = data["system.charDamage.t"];
-        actor.system.characteristics.t.total += delta;
+      if ("system.charLoss.t" in data) {
+        const delta = data["system.charLoss.t"] - actor.system.charLoss.t;
+        actor.system.charLoss.t = data["system.charLoss.t"];
+        actor.system.characteristics.t.total -= delta;
       }
       if ("system.conditions.gangrene" in data) actor.system.conditions.gangrene = data["system.conditions.gangrene"];
       for (const [path, value] of Object.entries(data)) {
@@ -89,24 +91,24 @@ describe("useGangrenePeriodicTest", () => {
     await useGangrenePeriodicTest(actor);
     expect(captured.warnings.length).toBe(1);
     expect(captured.chat).toEqual([]);
-    expect(actor.system.charDamage.t).toBe(0);
+    expect(actor.system.charLoss.t).toBe(0);
   });
 
-  it("интервал прошёл — 1d10 урона в T (вычитается из Мод.), таймер сбрасывается", async () => {
+  it("интервал прошёл — 1d10 урона в T (урон в Характеристику), таймер сбрасывается", async () => {
     captured.nextRoll = 6;
-    const actor = actorWith({ tb: 4, charDamageT: 0, testAt: 100000 - 9 * 3600 });
+    const actor = actorWith({ tb: 4, testAt: 100000 - 9 * 3600 });
     await useGangrenePeriodicTest(actor);
-    expect(actor.system.charDamage.t).toBe(-6);
+    expect(actor.system.charLoss.t).toBe(6);
     expect(actor.getFlag(FLAG, TEST_AT_FLAG)).toBe(100000);
     expect(captured.chat.length).toBe(1);
     expect(captured.chat[0].content).toContain("Гангрена");
   });
 
-  it("накопленный урон складывается (Мод. уже отрицательный)", async () => {
+  it("накопленный урон складывается", async () => {
     captured.nextRoll = 3;
-    const actor = actorWith({ tb: 4, charDamageT: -6, testAt: 100000 - 9 * 3600 });
+    const actor = actorWith({ tb: 4, tTotal: 34, charLossT: 6, testAt: 100000 - 9 * 3600 });
     await useGangrenePeriodicTest(actor);
-    expect(actor.system.charDamage.t).toBe(-9);
+    expect(actor.system.charLoss.t).toBe(9);
   });
 
   it("флага не было вовсе — тест проводится сразу", async () => {
@@ -115,7 +117,7 @@ describe("useGangrenePeriodicTest", () => {
     await useGangrenePeriodicTest(actor);
     expect(captured.warnings.length).toBe(0);
     expect(actor.getFlag(FLAG, TEST_AT_FLAG)).toBe(100000);
-    expect(actor.system.charDamage.t).toBe(-4);
+    expect(actor.system.charLoss.t).toBe(4);
   });
 });
 
@@ -129,7 +131,7 @@ describe("gangreneTick — космодесантник и смерть", () => 
     const res = await gangreneTick(actor, { at: 100000 });
     expect(res.healed).toBe(true);
     expect(actor.system.conditions.gangrene).toBe(false);
-    expect(actor.system.charDamage.t).toBe(0);
+    expect(actor.system.charLoss.t).toBe(0);
     expect(captured.chat[0].content).toContain("побеждает Гангрену");
   });
 
@@ -139,7 +141,7 @@ describe("gangreneTick — космодесантник и смерть", () => 
     const res = await gangreneTick(actor, { at: 100000 });
     expect(res.damage).toBe(5);
     expect(actor.system.conditions.gangrene).toBe(true);
-    expect(actor.system.charDamage.t).toBe(-5);
+    expect(actor.system.charLoss.t).toBe(5);
   });
 
   it("человек теста не проходит — сразу урон", async () => {

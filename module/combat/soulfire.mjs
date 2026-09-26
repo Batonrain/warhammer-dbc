@@ -26,6 +26,7 @@ import { showManifestDialog } from "../sheets/tabs/psychic.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { applyCharDamage } from "./char-damage.mjs";
 
 const BTN_CLASS = "wh-soulfire-btn";
 
@@ -159,8 +160,8 @@ export async function boostHit(actor, applyBtn, btn, ePR) {
   btn.textContent = `🔥 Огонь Души: +${boost.total} Dmg, иммунитет к E(Fl) не действует`;
   await persistDamageBoost(applyBtn, { damage: next, ignoreSubtypeImmunity: true });
 
-  const before = Number(actor.system.charDamage?.wp) || 0;
-  await actor.update({ "system.charDamage.wp": before - self.total });
+  // Единый конвейер урона в Характеристики (wdbc-x1nz.2.83).
+  await applyCharDamage(actor, "wp", self.total);
 
   await postTestCard(actor, {
     icon: rollIcon("fire", "#4f8cff"), title: `Огонь Души — ${esc(actor.name)}`,

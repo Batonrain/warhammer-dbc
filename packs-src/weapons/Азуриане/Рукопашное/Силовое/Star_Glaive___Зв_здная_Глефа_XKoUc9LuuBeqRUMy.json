@@ -86,7 +86,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Глефа"
+    "meleeCategory": "Глефа",
+    "techClass": "none"
   },
   "_id": "XKoUc9LuuBeqRUMy",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-spear.svg",

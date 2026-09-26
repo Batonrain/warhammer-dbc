@@ -34,6 +34,9 @@
 //  актора и сборка патча для actor.update.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { USELESS_SIDES, uselessCount, uselessHint, clearSideFields } from "./useless-limbs.mjs";
+import { isZeroedByLoss } from "./char-loss.mjs";
+
 const FLAG_SCOPE = "warhammer-dbc";
 
 /**
@@ -59,6 +62,9 @@ function uuidName(uuid) {
  * kind:
  *   "system"   — поле схемы актора (system.<path>);
  *   "flag"     — флаг актора (flags.warhammer-dbc.<path>);
+ *   "fn"       — вычисляемый источник: read(actor) → значение, clear() →
+ *                патч снятия (Бесполезные Конечности: по конечностям в
+ *                system.uselessLimbs, wdbc-x1nz.2.99);
  *   "itemFlag" — флаг на ПРЕДМЕТЕ актора: метка не про актора, а про вещь в
  *                руках, и Состояние показывает «хоть один такой предмет
  *                сейчас в этом состоянии».
@@ -67,6 +73,18 @@ function uuidName(uuid) {
  * значит и метку Аватара Резни, и Проклятую Метку, и Поклон Публике. Игроку
  * важно «на мне метка», а чья именно — написано в подсказке тега.
  */
+/** Источник «Бесполезная рука/нога»: сколько бесполезно; подсказка — какие и что с лечением. */
+function uselessSource(type) {
+  return {
+    kind: "fn",
+    read: actor => uselessCount(actor?.system, type),
+    hint: (_v, actor) => uselessHint(actor?.system, type),
+    // Снятие тегом — все конечности этого типа разом (ГМ поправил вручную).
+    clear: () => Object.assign({}, ...Object.keys(USELESS_SIDES)
+      .filter(side => USELESS_SIDES[side] === type).map(clearSideFields))
+  };
+}
+
 export const CONDITION_MIRRORS = {
   inRage: {
     label: "Ярость",
@@ -131,6 +149,24 @@ export const CONDITION_MIRRORS = {
     label: "Лучевая болезнь",
     sources: [{ kind: "flag", path: "radiationSickness" }]
   },
+  // Нулевая Характеристика от урона (wdbc-x1nz.2.83). Снять тегом нельзя —
+  // источник урон, он отходит по часам (clear — пустой патч).
+  paralyzed: {
+    label: "Парализован",
+    sources: [{ kind: "fn", read: actor => isZeroedByLoss(actor?.system, "ag"), hint: () => "Ловкость 0 от урона", clear: () => ({}) }]
+  },
+  mute: {
+    label: "Немота",
+    sources: [{ kind: "fn", read: actor => isZeroedByLoss(actor?.system, "fel"), hint: () => "Общительность 0 от урона", clear: () => ({}) }]
+  },
+  uselessArm: {
+    label: "Бесполезная рука",
+    sources: [uselessSource("arm")]
+  },
+  uselessLeg: {
+    label: "Бесполезная нога",
+    sources: [uselessSource("leg")]
+  },
   shieldUp: {
     label: "Щит поднят",
     // Флаг на ПРЕДМЕТЕ (щите), не на акторе: у персонажа может быть два щита,
@@ -155,6 +191,7 @@ function sourceValue(actor, source) {
     const viaFlag = actor?.getFlag?.(FLAG_SCOPE, source.path);
     return viaFlag ?? actor?.flags?.[FLAG_SCOPE]?.[source.path];
   }
+  if (source.kind === "fn") return source.read(actor);
   if (source.kind === "itemFlag") {
     for (const item of actor?.items ?? []) {
       const v = item?.getFlag?.(FLAG_SCOPE, source.path) ?? item?.flags?.[FLAG_SCOPE]?.[source.path];
@@ -200,7 +237,7 @@ export function mirrorHint(actor, key) {
   for (const source of def.sources) {
     const value = sourceValue(actor, source);
     if (value === undefined || value === null || value === false || value === "" || value === 0) continue;
-    const text = source.hint ? String(source.hint(value) ?? "").trim() : "";
+    const text = source.hint ? String(source.hint(value, actor) ?? "").trim() : "";
     if (text) parts.push(text);
   }
   return parts.join("; ");
@@ -233,6 +270,7 @@ export function mirrorClearPatch(key) {
   for (const s of def.sources) {
     if (s.kind === "system") patch[`system.${s.path}`] = false;
     else if (s.kind === "flag") patch[`flags.${FLAG_SCOPE}.-=${s.path}`] = null;
+    else if (s.kind === "fn" && s.clear) Object.assign(patch, s.clear());
   }
   return patch;
 }

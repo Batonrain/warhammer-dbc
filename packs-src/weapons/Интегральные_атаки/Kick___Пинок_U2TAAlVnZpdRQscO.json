@@ -82,7 +82,8 @@
     "damageType": "impact",
     "penetration": 0,
     "meleeCategory": "",
-    "damageSubtype": "crushing"
+    "damageSubtype": "crushing",
+    "techClass": "none"
   },
   "_id": "U2TAAlVnZpdRQscO",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

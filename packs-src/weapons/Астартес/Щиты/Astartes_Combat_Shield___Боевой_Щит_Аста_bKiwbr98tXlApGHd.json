@@ -72,7 +72,8 @@
     "shieldAP": 3,
     "shieldZones": "Р1",
     "shieldForm": "Тарг",
-    "damageSubtype": "crushing"
+    "damageSubtype": "crushing",
+    "techClass": "none"
   },
   "_id": "bKiwbr98tXlApGHd",
   "img": "systems/warhammer-dbc/assets/item-icons/shield.svg",

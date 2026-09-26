@@ -109,6 +109,8 @@ export function activateCombatListeners(root, actor) {
 
   // ── Лечение и Очки Боли ──────────────────────────────────────────────────
   on(root, ".wounds-heal-btn", "click", () => showHealingDialog(actor));
+  // Снять медика с ухода (wdbc-x1nz.2.104) — период идёт дальше без него.
+  on(root, ".wounds-care-stop", "click", () => actor.update({ "system.healing.caregiver": "" }));
   // Делегирование (wdbc-uez7): актор с этой кнопки — ЦЕЛЬ эффекта (пациент),
   // не исполнитель — тот выбирается уже в самом пикере.
   on(root, ".wounds-request-heal-btn", "click", () =>

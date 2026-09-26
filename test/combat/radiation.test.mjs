@@ -15,17 +15,18 @@ const FLAG = "warhammer-dbc";
 const SICKNESS_FLAG = "radiationSickness";
 const TEST_AT_FLAG = "radiationSicknessTestAt";
 
-function actorWith({ sick = true, charDamageT = 0, testAt } = {}) {
+function actorWith({ sick = true, testAt } = {}) {
   const flags = {};
   if (sick) flags[SICKNESS_FLAG] = true;
   if (testAt !== undefined) flags[TEST_AT_FLAG] = testAt;
   const actor = {
     id: "actor-1", name: "Тестовый",
-    system: { charDamage: { t: charDamageT } },
+    // Урон в Характеристики по книге (wdbc-x1nz.2.83) — charLoss, не «Мод.».
+    system: { characteristics: { t: { total: 40 } }, charLoss: { t: 0 }, charLossAt: {} },
     getFlag: (_s, k) => flags[k],
     update: async data => {
       captured.updates.push(data);
-      if ("system.charDamage.t" in data) actor.system.charDamage.t = data["system.charDamage.t"];
+      if ("system.charLoss.t" in data) actor.system.charLoss.t = data["system.charLoss.t"];
       for (const [path, value] of Object.entries(data)) {
         const m = path.match(/^flags\.warhammer-dbc\.(-=)?(.+)$/);
         if (!m) continue;
@@ -67,13 +68,13 @@ describe("useRadiationSicknessTest", () => {
     const actor = actorWith({ testAt: 100000 });
     await useRadiationSicknessTest(actor);
     expect(captured.warnings.length).toBe(1);
-    expect(actor.system.charDamage.t).toBe(0);
+    expect(actor.system.charLoss.t).toBe(0);
   });
 
   it("интервал прошёл — 1 урона в T, таймер сбрасывается", async () => {
-    const actor = actorWith({ charDamageT: 0, testAt: 100000 - 9 * 3600 });
+    const actor = actorWith({ testAt: 100000 - 9 * 3600 });
     await useRadiationSicknessTest(actor);
-    expect(actor.system.charDamage.t).toBe(-1);
+    expect(actor.system.charLoss.t).toBe(1);
     expect(actor.getFlag(FLAG, TEST_AT_FLAG)).toBe(100000);
     expect(captured.chat.length).toBe(1);
     expect(captured.chat[0].content).toContain("Лучевая болезнь");
@@ -83,6 +84,6 @@ describe("useRadiationSicknessTest", () => {
     const actor = actorWith({});
     await useRadiationSicknessTest(actor);
     expect(captured.warnings.length).toBe(0);
-    expect(actor.system.charDamage.t).toBe(-1);
+    expect(actor.system.charLoss.t).toBe(1);
   });
 });

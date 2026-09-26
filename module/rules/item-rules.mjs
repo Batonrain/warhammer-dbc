@@ -52,6 +52,14 @@
 //              половина). Три остальных режима той же записи сюда не едут:
 //              apply/remove разовые (applyMechEntry), immunity читает
 //              rules/condition-guards.mjs в момент наложения.
+//    charRecovery (wdbc-x1nz.2.83) — «Восстановление урона в Характеристики»:
+//              crTargets (массив ключей, "all" — все разом), crMode
+//              ("block"|"period"), crHours. Область — та же нотация "t" /
+//              "t,s" / "all", что читает rules/char-loss.mjs::
+//              actorRecoveryPolicy(), никакого своего перевода не нужно —
+//              собранные ключи склеиваются запятой. Живой запрос: правило
+//              собирается заново на каждый часовой шаг восстановления, а не
+//              пишется на актора при получении предмета.
 //    script  — «Код» с ценой ИЛИ частотой (wdbc-suwp): не эффект для теста,
 //              а координаты (itemId/groupId/entryId) для панели актора
 //              «ВОЗМОЖНОСТИ СЕЙЧАС» — там kind:"capability" (кнопка
@@ -367,6 +375,20 @@ function ruleFromEntry(item, entry, groupId = null) {
                          rating: entry.apRating ?? 0, rating2: entry.apRating2 ?? 0 }] };
   }
 
+  if (entry?.kind === "charRecovery") {
+    // «Восстановление урона в Характеристики» (wdbc-x1nz.2.83) — target у
+    // char-loss.mjs::recoveryTargets() уже умеет "all"/"t"/"t,s", поэтому
+    // массив просто склеивается запятой; "all" в crTargets перекрывает
+    // остальной выбор (та же семантика, что у пустой строки в recoveryTargets).
+    const targets = Array.isArray(entry.crTargets) ? entry.crTargets : [];
+    if (!targets.length) return null;
+    const target = targets.includes("all") ? "all" : targets.join(",");
+    const mode = entry.crMode === "period" ? "period" : "block";
+    const effect = { kind: "charRecovery", target, mode };
+    if (mode === "period") effect.hours = Math.max(1, Number(entry.crHours) || 1);
+    return { id, label: entry.label || item.name, when: {}, effects: [effect] };
+  }
+
   // entry?.kind === "condition" сюда не доходит: «Смягчение» собирается не
   // по одной записи, а по ключу Состояния СРАЗУ со всех предметов
   // (collectMitigations + mitigationRules ниже, вызывается из
@@ -497,6 +519,29 @@ export function rulesFromItemMechanics(items, isActive = () => true, actor = nul
   for (const [key, { mode, label, id }] of collectMitigations(items, isActive, actor)) {
     const rules = mitigationRules(key, mode === "half", label, id);
     if (rules) out.push(...rules);
+  }
+  out.push(...addictionRecoveryRules(items));
+  return out;
+}
+
+/**
+ * Зависимость от препарата держит урон в Характеристики (task-56da): Тиск —
+ * «не может восстанавливать урон в I, P, W и F, кроме как сверхъестественными
+ * методами», Сатрофин — то же без оговорки. Действует только пока
+ * зависимость ЕСТЬ (addiction.isAddicted) — препарат в сумке без зависимости
+ * ничего не держит, поэтому это не запись Конструктора (та действовала бы
+ * фактом владения), а поле самой зависимости: addiction.blocksRecovery
+ * (нотация char-loss.mjs::recoveryTargets). Сверхъестественное лечение
+ * (charHealFields magic) блок и так не трогает — он только для пассивного.
+ */
+export function addictionRecoveryRules(items) {
+  const out = [];
+  for (const item of items || []) {
+    const a = item?.type === "drug" ? item.system?.addiction : null;
+    const target = String(a?.blocksRecovery || "").trim();
+    if (!a?.isAddicted || !target) continue;
+    out.push({ id: `drug.addiction.recovery.${item.id ?? item.name}`, label: `Зависимость: ${item.name}`, when: {},
+      effects: [{ kind: "charRecovery", target, mode: "block" }] });
   }
   return out;
 }

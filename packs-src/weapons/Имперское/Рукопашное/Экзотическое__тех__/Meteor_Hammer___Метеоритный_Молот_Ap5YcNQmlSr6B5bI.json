@@ -70,7 +70,8 @@
       "reloads": 10
     },
     "meleeCategory": "Молот",
-    "damageSubtype": "crushing"
+    "damageSubtype": "crushing",
+    "techClass": "electric"
   },
   "_id": "Ap5YcNQmlSr6B5bI",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-hammer.svg",

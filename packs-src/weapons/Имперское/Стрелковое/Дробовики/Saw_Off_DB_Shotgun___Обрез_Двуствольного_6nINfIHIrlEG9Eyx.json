@@ -70,7 +70,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "techClass": "mechanical"
   },
   "_id": "6nINfIHIrlEG9Eyx",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-pistol.svg",

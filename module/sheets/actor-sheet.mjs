@@ -64,7 +64,7 @@ import { activateItemContextMenu, openContextMenu } from "./context-menu.mjs";
 import { _resolveSoulBurn }                 from "../hooks.mjs";
 import { openRigManager }                   from "../apps/rig-manager.mjs";
 import { openXpLog }                        from "../apps/xp-log.mjs";
-import { infamyContext, changeInfamy, restoreInfamy, spendInfamy } from "../apps/infamy-points.mjs";
+import { infamyContext, changeInfamy, restoreInfamy, spendInfamy, actorInfamyMaxForSheet } from "../apps/infamy-points.mjs";
 import { tempInfamyInfo } from "../rules/temp-infamy.mjs";
 import { ruleFlagCost } from "../rules/flags.mjs";
 import { spendCapabilityCost } from "../combat/capability-cost.mjs";
@@ -1559,7 +1559,10 @@ export class WarhammerCharacterSheet
   get _infamyEnabled() { return true; }
   get _showPatronPicker() { return true; }   // Демон-Принц переопределяет на false (патрон в шапке)
   get _infamyPath() { return "system.fate.value"; }
-  get _infamyMax()  { return Math.max(0, Number(this.actor.system.characteristics?.inf?.bonus) || 0); }
+  // Inf.b со сдвигом субрасы и нулём у Рядового — тот же расчёт, что у
+  // actorInfamyMax (apps/infamy-points.mjs), чтобы лист, HUD и восполнение
+  // пула не расходились. Демон-Принц переопределяет геттер своим.
+  get _infamyMax()  { return actorInfamyMaxForSheet(this.actor); }
   // Счётчик Очков Бесчестия переехал из шапки листа в саму полосу
   // «ОЧКИ БЕСЧЕСТИЯ» (infamy-strip.hbs, showCounter) — как у Демон-Принца.
   get _infamyShowCounter() { return true; }
@@ -2973,6 +2976,10 @@ export class WarhammerCharacterSheet
     // названием/целью, а не «Обычный», как при обычном клике по Навыку.
     defaultKind = "base", extendedPreset = null
   } = {}) {
+    // Немота — Общительность 0 от урона (wdbc-x1nz.2.83): «теряет способность
+    // общаться», тесты на Общительности недоступны.
+    if (defaultChar === "fel" && this.actor.system?.conditions?.mute)
+      return ui.notifications.warn(`${this.actor.name}: Немота (Общительность 0 от урона) — не может общаться.`);
     const result = await this._showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect,
       rollContext, defaultKind, { effectTargetActor, opposedRequest, presetModifier, extendedPreset });
     if (!result) return;

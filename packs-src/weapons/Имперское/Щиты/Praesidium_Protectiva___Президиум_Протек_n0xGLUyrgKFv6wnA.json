@@ -74,7 +74,8 @@
     "meleeCategory": "Щит",
     "shieldAP": 5,
     "shieldZones": "Как у стандартного",
-    "shieldForm": "Любой"
+    "shieldForm": "Любой",
+    "techClass": "none"
   },
   "_id": "n0xGLUyrgKFv6wnA",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

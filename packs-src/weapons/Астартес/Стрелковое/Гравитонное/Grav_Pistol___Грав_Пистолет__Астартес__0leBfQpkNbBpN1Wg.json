@@ -67,7 +67,8 @@
       "standard": false,
       "reloads": 10
     },
-    "rangeBands": []
+    "rangeBands": [],
+    "techClass": "electric"
   },
   "_id": "0leBfQpkNbBpN1Wg",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-pistol.svg",

@@ -134,7 +134,7 @@ describe("источники по умолчанию", () => {
       .toEqual(["addiction", "adjutant", "beastmanShaman", "conditions", "core",
                 "daemonInevitability", "devourerOfKnowledge", "dreadnought", "hatred", "homeworld", "items",
                 "legacyBloodPsychic", "legacyDistractingCharSwap", "legacyExcess", "legacyGuardian",
-                "legacyInstinctiveDisarm", "legacyQuietAwareness", "legacyWrath",
+                "legacyInstinctiveDisarm", "legacyQuietAwareness", "legacyWrath", "nullZones",
                 "opposedTarget", "paths", "patron", "prophetOfGallerpox",
                 "psychicSustainTarget", "race", "situational", "synesthesia"]);
   });

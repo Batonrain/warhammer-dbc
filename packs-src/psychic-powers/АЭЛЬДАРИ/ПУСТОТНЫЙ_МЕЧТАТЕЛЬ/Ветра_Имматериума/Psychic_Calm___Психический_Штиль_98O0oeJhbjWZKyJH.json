@@ -10,7 +10,12 @@
     "discipline": "voidDreamer",
     "subtype": "Ветра Имматериума",
     "powerType": "aura",
-    "extraTypes": [],
+    "extraTypes": [
+      {
+        "type": "indirect",
+        "x": 0
+      }
+    ],
     "shootSubtype": "",
     "prRequired": 3,
     "requirement": "PR 3, Weather Forecast",

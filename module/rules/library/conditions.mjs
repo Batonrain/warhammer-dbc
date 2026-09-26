@@ -108,7 +108,8 @@ export const CONDITION_RULES = [
     // (declareHalfMove/FullMove/Charge/Run/Disengage).
     id: "conditions.lostFeetOrLegs",
     label: "Потеря стоп/ног",
-    when: { hasCondition: ["lostFeet", "lostLegs"] },
+    // Бесполезная нога (wdbc-x1nz.2.99) — пока не вылечена, как потерянная.
+    when: { hasCondition: ["lostFeet", "lostLegs", "uselessLeg"] },
     effects: [
       { kind: "rollBonus", target: "skill:acrobatics", value: -20 },
       { kind: "rollBonus", target: "skill:athletics",  value: -20 }
@@ -131,6 +132,23 @@ export const CONDITION_RULES = [
     label: "Гангрена",
     when: { hasCondition: "gangrene", charIn: ["int", "per", "wp", "fel", "inf"] },
     effects: [{ kind: "rollBonus", target: "all", value: -20 }]
+  },
+  {
+    // «Не может восстанавливать урон в T отдыхом и медитацией» (Гангрена) —
+    // отдельной записью: у записи выше условие charIn для тестов, а
+    // восстановление спрашивается без теста (wdbc-x1nz.2.83).
+    id: "conditions.gangreneRecovery",
+    label: "Гангрена",
+    when: { hasCondition: "gangrene" },
+    effects: [{ kind: "charRecovery", target: "t", mode: "block" }]
+  },
+  {
+    // Лучевая болезнь: «не дает восстанавливать урон в T отдыхом и
+    // медитацией» (wdbc-x1nz.2.83).
+    id: "conditions.radiationSicknessRecovery",
+    label: "Лучевая болезнь",
+    when: { hasCondition: "radiationSickness" },
+    effects: [{ kind: "charRecovery", target: "t", mode: "block" }]
   },
   {
     // Стр. 30-31, wdbc-r5o7.6: «Оглох — ... −30 на устные социальные тесты и

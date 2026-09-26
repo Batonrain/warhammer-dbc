@@ -36,3 +36,14 @@ describe("actorInfamyMax", () => {
     expect(actorInfamyMax({ type: "character" })).toBe(0);
   });
 });
+
+// «Рядовые противники, даже имеющие свое Бесчестие, лишены этой способности»
+// (корбук, Очки Бесчестия) — флажок system.rankAndFile, стр. 4.
+describe("actorInfamyMax — Рядовой", () => {
+  it("у Рядового Очков Бесчестия нет ни у лоялиста, ни у Хаосита", () => {
+    expect(actorInfamyMax({ type: "character", system: {
+      rankAndFile: true, alignment: "loyalist", fate: { max: 3 } } })).toBe(0);
+    expect(actorInfamyMax({ type: "character", system: {
+      rankAndFile: true, alignment: "heretic", characteristics: { inf: { bonus: 4 } } } })).toBe(0);
+  });
+});

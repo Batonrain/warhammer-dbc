@@ -71,7 +71,8 @@
       "standard": false,
       "reloads": 10
     },
-    "rangeBands": []
+    "rangeBands": [],
+    "techClass": "mechanical"
   },
   "_id": "m0bbQi4lo0mdmjRS",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",

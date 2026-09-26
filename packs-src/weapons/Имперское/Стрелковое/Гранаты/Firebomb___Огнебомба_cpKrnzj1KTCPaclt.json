@@ -72,7 +72,8 @@
       "standard": false,
       "reloads": 10
     },
-    "damageSubtype": "flame"
+    "damageSubtype": "flame",
+    "techClass": "none"
   },
   "_id": "cpKrnzj1KTCPaclt",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-thrown.svg",

@@ -26,7 +26,7 @@ import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 // Тот же глиф, что рисует иконку статуса на токене — эффект создаётся здесь,
 // а не мостом, и обязан выглядеть ровно так же, как если бы его завёл мост.
 import { statusIconUri } from "../apps/token-conditions.mjs";
-import { durationDataFor, isDurationExpired, remainingRounds, remainingLabel,
+import { durationDataFor, isDurationExpired, isTurnEndDurationExpired, remainingRounds, remainingLabel, remainingOf,
          isTimeBasedDuration, SECONDS_PER_ROUND }
   from "../rules/condition-duration.mjs";
 
@@ -83,7 +83,12 @@ export async function applyConditionWithDuration(actor, key, { level = null, val
     const existing = conditionDurationEffect(actor, key);
     // Повторное наложение продлевает срок, а не плодит второй эффект: книга
     // нигде не говорит «два Оглушения», она говорит «Оглушён дольше».
-    if (existing) await existing.update({ duration });
+    // Отсчёт — заново с этого наложения (и с Хода этого наложившего): иначе
+    // новый срок мерился бы от старого начала.
+    if (existing) {
+      const start = globalThis.CONFIG?.ActiveEffect?.documentClass?.getEffectStart?.();
+      await existing.update(start ? { duration, start } : { duration });
+    }
     else {
       await actor.createEmbeddedDocuments("ActiveEffect", [{
         name: def.label, img: statusIconUri(key),
@@ -121,7 +126,7 @@ export async function clearConditionDuration(actor, key) {
  *
  * @returns {{expired: string[], refreshed: string[]}} что сняли и что пересчитали
  */
-export async function sweepConditionDurations(actor, { timeOnly = false, round, turn } = {}) {
+export async function sweepConditionDurations(actor, { timeOnly = false, round, turn, endedCombatantId = "" } = {}) {
   const expired = [], refreshed = [];
   const updates = {};
   for (const { effect, key } of conditionDurationEffects(actor)) {
@@ -138,15 +143,34 @@ export async function sweepConditionDurations(actor, { timeOnly = false, round, 
     // дело боевого трекера: вне боя их остаток не считается вовсе, и трогать
     // их по времени значит снимать «Оглушение на 2 раунда» до начала боя.
     if (timeOnly && !isTimeBasedDuration(duration)) continue;
-    if (isDurationExpired(duration)) {
+    // Срок в Раундах кончается в конце Хода наложившего (wdbc-x1nz.2.84):
+    // его подметает конец ТОГО Хода (endedCombatantId), а не начало Хода носителя.
+    const turnEnd = duration.expiry === "turnEnd";
+    const isOver = turnEnd
+      ? isTurnEndDurationExpired(duration, effect.start?.combatant ?? "", endedCombatantId)
+      : isDurationExpired(duration);
+    if (isOver) {
+      // Срок «до конца Хода наложившего» в тот же миг помечает истёкшим и
+      // ядро (expiryAction "update"). Удалять его наперегонки с этой отметкой
+      // нельзя: у несвязанного токена запоздавшая отметка по уже удалённому
+      // эффекту заводит его заново — чат пишет «снято», а Оглушение висит
+      // (живая проверка 25.09.2026). Поэтому такой эффект снимает
+      // onConditionEffectExpired — ПОСЛЕ отметки ядра. Сами — только когда
+      // отметки не будет: она уже стоит, конец того Хода пропущен (остаток
+      // ниже нуля) или наложивший не записан.
+      const coreWillMark = turnEnd && !duration.expired && (remainingOf(duration) ?? 0) >= 0 && !!effect.start?.combatant;
+      if (coreWillMark) continue;
       await effect.delete();
       expired.push(key);
       continue;
     }
     const field = conditionLevelField(key);
     if (!field) continue;
-    const left = remainingRounds(duration);
-    if (left === null) continue;
+    // Последний Раунд (остаток 0) ещё действует — счётчик на листе не
+    // показывает 0, который читатели поля понимают как «снято».
+    const rawLeft = remainingRounds(duration);
+    if (rawLeft === null) continue;
+    const left = turnEnd ? Math.max(1, rawLeft) : rawLeft;
     if (Number(actor.system?.conditions?.[field]) !== left) {
       updates[`system.conditions.${field}`] = left;
       refreshed.push(key);
@@ -154,6 +178,28 @@ export async function sweepConditionDurations(actor, { timeOnly = false, round, 
   }
   if (Object.keys(updates).length) await actor.update(updates);
   return { expired, refreshed };
+}
+
+/**
+ * Ядро пометило срок Состояния истёкшим (duration.expired, expiryAction
+ * "update") — снимаем эффект и называем это в чате. Мост «лист ↔ токен»
+ * (apps/token-conditions.mjs) гасит само Состояние. Только активный ГМ:
+ * отметку ставит он же, и снимать дважды незачем.
+ */
+export async function onConditionEffectExpired(effect, changes) {
+  if (changes?.duration?.expired !== true) return false;
+  if (!globalThis.game?.users?.activeGM?.isSelf) return false;
+  const key = effect?.getFlag?.(FLAG, DURATION_FLAG) ?? effect?.flags?.[FLAG]?.[DURATION_FLAG];
+  if (!key || !CONDITIONS_DEF[key]) return false;
+  // Остаток ядро не посчитало (Раунды вне боя — Infinity) — отметка ложная:
+  // вне боя ядро ставит её на любой тик Календаря (wdbc-tr02, см.
+  // rules/condition-duration.mjs::isDurationExpired).
+  if (remainingOf(effect.duration ?? {}) === null) return false;
+  const actor = effect.parent;
+  await effect.delete();
+  const { postConditionCard, conditionExpiryLine } = await import("./condition-ticks.mjs");
+  if (actor) await postConditionCard(actor, [conditionExpiryLine(key)]);
+  return true;
 }
 
 /** Остаток срока словами — для тега на листе и подсказки на токене. */

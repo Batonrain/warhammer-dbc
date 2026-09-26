@@ -79,7 +79,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "techClass": "none"
   },
   "_id": "Z0dpXv9pjaHp9dh2",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-knife.svg",

@@ -76,7 +76,8 @@
       "reloads": 10
     },
     "meleeCategory": "Посох",
-    "damageSubtype": "crushing"
+    "damageSubtype": "crushing",
+    "techClass": "none"
   },
   "_id": "LC0zyc7wDcOFEQtB",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-staff.svg",

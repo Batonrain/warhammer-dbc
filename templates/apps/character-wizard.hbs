@@ -179,8 +179,24 @@
     {{/if}}
 
     <div class="wiz-panel">
-      <div class="wiz-panel-title">Генерация значений</div>
-      <div class="wiz-gen-lbl">1. Выбери набор бросков (можно перебросить):</div>
+      <div class="wiz-panel-title wiz-method-head">
+        <span>Бонусные Характеристики</span>
+        {{#if charMethodChoice}}
+        <span class="wiz-method-switch">
+          {{#each charMethods as |m|}}
+          <button type="button" class="wiz-mini-btn wiz-method{{#if m.active}} active{{/if}}" data-method="{{m.key}}">{{m.label}}</button>
+          {{/each}}
+        </span>
+        {{else}}
+        <span class="wiz-method-fixed" title="Метод задан настройкой мира">{{#if isPointBuy}}Сборка{{else}}Генерация{{/if}}</span>
+        {{/if}}
+        <label class="wiz-raf" title="Рядовой — непримечательный представитель расы, а не чемпион: теряет Бонусные Броски ({{raceBonusRolls}}) и Бонусные Очки, Смещения Характеристик игнорируются.">
+          <input type="checkbox" class="wiz-rank-and-file" {{#if rankAndFile}}checked{{/if}}/> Рядовой
+        </label>
+      </div>
+
+      {{#if isGeneration}}
+      <div class="wiz-gen-lbl" title="Каждый набор — {{bonusRolls}} лишних бросков 2d10 сверх девяти, в набор идут 9 старших. Один набор отбрасывается.">1. Выбери набор бросков (можно перебросить):</div>
       <div class="wiz-sets">
         {{#each charSets as |s|}}
         <div class="wiz-set{{#if s.active}} active{{/if}}" data-set="{{s.index}}" title="Выбрать набор {{s.index}}">
@@ -216,8 +232,56 @@
         </div>
         {{/each}}
       </div>
-      <div class="roll-threshold" style="font-size:0.8em;">Итог = база расы/Прошлого/субрасы + раскиданное значение. Бонус архетипа добавится на Этапе 3.</div>
+      {{/if}}
+
+      {{#if isPointBuy}}
+      <div class="wiz-gen-lbl">
+        <span title="Очки Сборки: 100 + Бонусные Очки расы. В каждую Характеристику минимум +{{pbMin}}, максимум +{{pbMax}}; +18→+19 стоит 2 Очка, +19→+20 — 3 Очка.">Очки: <b class="wiz-pb-left{{#if pbOver}} over{{/if}}">{{pbLeft}}</b> / {{pbPool}}</span>
+        <button type="button" class="wiz-mini-btn wiz-pb-reset" title="Вернуть по +{{pbMin}} в каждую">✕ сброс</button>
+      </div>
+      <div class="wiz-slots wiz-pb-slots">
+        {{#each pbRows as |r|}}
+        <div class="wiz-slot filled" title="{{r.label}}: база {{r.base}} + {{r.val}} (потрачено {{r.cost}}){{#if r.nextCost}}; следующее +1 стоит {{r.nextCost}}{{/if}}">
+          <span class="ws-abbr">{{r.abbr}}</span>
+          <span class="wiz-pb-ctl">
+            <a class="wiz-pb-step{{#unless r.canDown}} disabled{{/unless}}" data-char="{{r.key}}" data-dir="-1">−</a>
+            <span class="ws-chip">{{r.val}}</span>
+            <a class="wiz-pb-step{{#unless r.canUp}} disabled{{/unless}}" data-char="{{r.key}}" data-dir="1">+</a>
+          </span>
+          <span class="ws-total">{{r.total}}</span>
+          <span class="ws-base">база {{r.base}}</span>
+        </div>
+        {{/each}}
+      </div>
+      {{/if}}
+      <div class="roll-threshold" style="font-size:0.8em;">Итог = база расы/Прошлого/субрасы + бонус. Бонус архетипа добавится на Этапе 3.</div>
     </div>
+
+    {{#if shiftLimit}}
+    <div class="wiz-panel">
+      <div class="wiz-panel-title" title="За каждое Смещение одна стартовая Характеристика получает +{{shiftStep}}, другая −{{shiftStep}}. Одну и ту же можно поднимать несколько раз.">Смещение Характеристик <span class="apt-count">{{shiftsUsed}} / {{shiftLimit}}</span></div>
+      {{#each shiftRows as |s|}}
+      <div class="wiz-shift-row">
+        <span>+{{../shiftStep}}</span>
+        <select class="wiz-shift-sel" data-index="{{s.index}}" data-side="up">
+          <option value="">—</option>
+          {{#each s.up as |o|}}<option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.abbr}}</option>{{/each}}
+        </select>
+        <span>за счёт −{{../shiftStep}}</span>
+        <select class="wiz-shift-sel" data-index="{{s.index}}" data-side="down">
+          <option value="">—</option>
+          {{#each s.down as |o|}}<option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.abbr}}</option>{{/each}}
+        </select>
+      </div>
+      {{/each}}
+      <div class="wiz-slots wiz-start-slots">
+        {{#each startRows as |r|}}
+        <div class="wiz-slot filled"><span class="ws-abbr">{{r.abbr}}</span><span class="ws-total">{{r.total}}</span>
+          {{#if r.shift}}<span class="ws-base">{{#if (gt r.shift 0)}}+{{/if}}{{r.shift}}</span>{{/if}}</div>
+        {{/each}}
+      </div>
+    </div>
+    {{/if}}
 
     {{#if usesAptitudes}}
     <div class="wiz-panel">
@@ -431,6 +495,9 @@
             <td><input type="number" class="wiz-start-cor" value="{{startExtraCor}}" title="Дополнительная Порча"/></td>
           </tr></tfoot>
         </table>
+        {{#if startSubrace}}
+        <div class="cstart-hint{{#if startSubrace.short}} cstart-short{{/if}}" title="Субраса оплачивается стартовым опытом, если его хватает">Субраса «{{startSubrace.label}}»: −{{startSubrace.cost}} XP → на счёт {{startSubrace.net}} XP{{#if startSubrace.short}} — не хватает опыта{{/if}}</div>
+        {{/if}}
         {{/if}}
       </div>
     </div>

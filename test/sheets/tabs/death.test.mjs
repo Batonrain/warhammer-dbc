@@ -10,7 +10,7 @@ import "../../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { doMiraculousSave, doDivineProtection, doSusAnimation, doSundering, doResurrect, showDeathSaveDialog }
+import { doMiraculousSave, doDivineProtection, doSusAnimation, doSundering, doResurrect, showDeathSaveDialog, doToyOfGodsTest }
   from "../../../module/sheets/tabs/death.mjs";
 import { eternalWarriorFreeSaveAvailable } from "../../../module/combat/eternal-warrior.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../../module/rules/sources.mjs";
@@ -22,7 +22,9 @@ import { registerRuleSource, clearRuleSources, getRuleSources } from "../../../m
 foundry.utils.getProperty = (object, key) =>
   String(key).split(".").reduce((o, k) => o?.[k], object);
 
-function berserker({ fate = 30, corruption = 10 } = {}) {
+// inf — характеристика Inf (цена Спасения у хаосита, rules/death-save.mjs),
+// fate — пул Очков Бесчестия (тратит только Вечный Воин «flat» и Разделение).
+function berserker({ fate = 30, corruption = 10, inf = 30 } = {}) {
   const flags = {};
   const updates = [];
   return {
@@ -30,6 +32,7 @@ function berserker({ fate = 30, corruption = 10 } = {}) {
     system: {
       alignment: "heretic", inRage: true,
       fate: { value: fate }, corruption: { value: corruption },
+      characteristics: { inf: { base: inf, total: inf, bonus: Math.floor(inf / 10) } },
       wounds: { value: -3, critical: 3, max: 10 }
     },
     items: [{ type: "mutation", name: "Eternal Warrior / Вечный Воин" }],
@@ -46,14 +49,15 @@ function berserker({ fate = 30, corruption = 10 } = {}) {
 beforeEach(resetCaptured);
 
 describe("Eternal Warrior — путь free", () => {
-  it("0 стоимость пула, Порча не растёт, отмечает разовый заряд сессии", async () => {
-    const actor = berserker({ fate: 30, corruption: 10 });
+  it("0 стоимость, Порча не растёт, отмечает разовый заряд сессии", async () => {
+    const actor = berserker({ fate: 30, corruption: 10, inf: 30 });
     expect(eternalWarriorFreeSaveAvailable(actor)).toBe(true);
     await doMiraculousSave(actor, { eternalWarrior: "free" });
 
     expect(captured.rolls).toEqual([]); // никаких костей — путь бесплатный
     const upd = actor.updates.at(-1);
-    expect(upd["system.fate.value"]).toBe(30); // не потрачено
+    expect(upd).not.toHaveProperty("system.characteristics.inf.base"); // Inf не тронуто
+    expect(upd).not.toHaveProperty("system.fate.value"); // и пул тоже
     expect(upd["system.corruption.value"]).toBe(10); // не выросла
     expect(eternalWarriorFreeSaveAvailable(actor)).toBe(false); // заряд сессии сгорел
   });
@@ -83,20 +87,20 @@ describe("Eternal Warrior — путь flat", () => {
 // Судьбы» — метка на ЖЕРТВЕ (не на носителе Дара), одноразовая.
 describe("Kiss of Death — удвоенная цена Спасения (wdbc-1rno)", () => {
   it("метка стоит — цена Чудесного Спасения удваивается, метка снимается при успехе", async () => {
-    const actor = berserker({ fate: 30, corruption: 10 });
+    const actor = berserker({ inf: 40, corruption: 10 });
     actor.setFlag("warhammer-dbc", "killedByKissOfDeath", true);
     captured.dice = [5, 3]; // fateDie 1d10 → 5, corDie 1d10 → 3
     await doMiraculousSave(actor);
 
     const upd = actor.updates.at(-1);
-    // (5+10)=15 без метки, ×2 с меткой = 30 → 30-30=0
-    expect(upd["system.fate.value"]).toBe(0);
+    // (5+10)=15 без метки, ×2 с меткой = 30 → Inf 40-30=10
+    expect(upd["system.characteristics.inf.base"]).toBe(10);
     expect(upd["flags.warhammer-dbc.-=killedByKissOfDeath"]).toBeNull();
     expect(captured.chat.at(-1).content).toContain("×2 Поцелуй Смерти");
   });
 
   it("метка стоит — цена удвоена и на провале, метка тоже снимается", async () => {
-    const actor = berserker({ fate: 10, corruption: 10 });
+    const actor = berserker({ inf: 10, corruption: 10 });
     actor.setFlag("warhammer-dbc", "killedByKissOfDeath", true);
     captured.dice = [5]; // (5+10)×2 = 30 > 10 в пуле → провал
     await doMiraculousSave(actor);
@@ -107,12 +111,12 @@ describe("Kiss of Death — удвоенная цена Спасения (wdbc-1
   });
 
   it("метки нет — цена обычная, без удвоения", async () => {
-    const actor = berserker({ fate: 30, corruption: 10 });
+    const actor = berserker({ inf: 30, corruption: 10 });
     captured.dice = [5, 3];
     await doMiraculousSave(actor);
 
     const upd = actor.updates.at(-1);
-    expect(upd["system.fate.value"]).toBe(15); // 30 - 15, без ×2
+    expect(upd["system.characteristics.inf.base"]).toBe(15); // 30 - 15, без ×2
     expect(upd).not.toHaveProperty("flags.warhammer-dbc.-=killedByKissOfDeath");
     expect(captured.chat.at(-1).content).not.toContain("Поцелуй Смерти");
   });
@@ -233,5 +237,247 @@ describe("doResurrect снимает метку Поцелуя Смерти (wdb
     const upd = actor.updates.at(-1);
     expect(upd["flags.warhammer-dbc.deceased"]).toBe(false);
     expect(upd["flags.warhammer-dbc.-=killedByKissOfDeath"]).toBe(null);
+  });
+});
+
+// ── Сверка с книгой (wdbc-x1nz.2, 24.09.2026, глава «Смерть») ────────────────
+
+/** Умирающий хаосит: Inf-характеристика, флаги читаются/пишутся как у актора. */
+function dying({ inf = 40, corruption = 10, flags = {}, conditions = {}, items = [], subrace = "", wp = 40, patronGod = "" } = {}) {
+  const f = Object.fromEntries(Object.entries(flags).map(([k, v]) => [`warhammer-dbc.${k}`, v]));
+  f["warhammer-dbc.deceased"] = true;
+  const updates = [];
+  return {
+    id: "d1", uuid: "Actor.d1", name: "Чемпион", type: "character",
+    system: {
+      alignment: "heretic", subrace, patronGod,
+      fate: { value: 4 }, corruption: { value: corruption },
+      characteristics: { inf: { base: inf, total: inf, bonus: Math.floor(inf / 10) }, wp: { total: wp }, t: { bonus: 5 } },
+      wounds: { value: 0, critical: 12, max: 14 },
+      conditions
+    },
+    items, updates,
+    getFlag: (scope, key) => f[`${scope}.${key}`],
+    async setFlag(scope, key, value) { f[`${scope}.${key}`] = value; },
+    async unsetFlag(scope, key) { delete f[`${scope}.${key}`]; },
+    async update(data) { updates.push(data); }
+  };
+}
+const MEMBRANE = { type: "implant", name: "Сус-ан Мембрана", getFlag: (s, k) => k === "installed" };
+const HERO_SLEEP = { type: "talent", name: "Hero's Sleep / Сон Героя" };
+
+describe("Чудесное Спасение — цена из Inf и откат смертельного удара", () => {
+  it("Inf 40 − (10+4) → inf.base 26, Раны возвращены к снимку до удара", async () => {
+    const actor = dying({ inf: 40, flags: { preHitWounds: { value: 7, critical: 0 } } });
+    captured.dice = [4, 3];
+    await doMiraculousSave(actor);
+    const upd = actor.updates.at(-1);
+    expect(upd["system.characteristics.inf.base"]).toBe(26);
+    expect(upd).not.toHaveProperty("system.fate.value"); // пул Очков не тронут
+    expect(upd["system.corruption.value"]).toBe(13);
+    expect(upd["system.wounds.value"]).toBe(7);
+    expect(upd["system.wounds.critical"]).toBe(0);
+    expect(upd["flags.warhammer-dbc.deceased"]).toBe(false);
+    expect(upd["flags.warhammer-dbc.-=preHitWounds"]).toBeNull();
+  });
+
+  it("Inf 12 − 14 → провал, персонаж мёртв", async () => {
+    const actor = dying({ inf: 12 });
+    captured.dice = [4];
+    await doMiraculousSave(actor);
+    expect(captured.chat.at(-1).content).toContain("Провал");
+    expect(actor.updates.at(-1)).not.toHaveProperty("flags.warhammer-dbc.deceased");
+  });
+
+  it("смерть от Кровотечения — рана закрыта и кровь восполнена, Раны без отката", async () => {
+    const actor = dying({ flags: { deathCause: "bleeding", preHitWounds: { value: 9, critical: 0 } },
+      conditions: { bleeding: true, haemorrhaging: true, haemorrhagingLevel: 3 } });
+    captured.dice = [4, 3];
+    await doMiraculousSave(actor);
+    const upd = actor.updates.at(-1);
+    expect(upd["system.conditions.bleeding"]).toBe(false);
+    expect(upd["system.conditions.haemorrhaging"]).toBe(false);
+    expect(upd["system.wounds.value"]).not.toBe(9); // не откат к старому снимку
+    expect(upd["flags.warhammer-dbc.-=deathCause"]).toBeNull();
+  });
+});
+
+describe("Божественная Защита — неуязвимость до конца сессии", () => {
+  it("ставит флаг, Без сознания и снимает смертельные Состояния", async () => {
+    const actor = dying({ inf: 40, conditions: { burning: true, bleeding: true } });
+    captured.dice = [2, 1];
+    await doDivineProtection(actor);
+    const upd = actor.updates.at(-1);
+    expect(upd["system.characteristics.inf.base"]).toBe(33); // 40 − (5+2)
+    expect(upd["flags.warhammer-dbc.divineProtection"]).toBe(true);
+    expect(upd["system.conditions.unconscious"]).toBe(true);
+    expect(upd["system.conditions.burning"]).toBe(false);
+    expect(upd["system.conditions.bleeding"]).toBe(false);
+    expect(captured.chat.at(-1).content).toContain("wh-divine-protection-lift");
+  });
+
+  it("Inf после потери 50+ — строка о переносе на базу, ниже — нет", async () => {
+    const rich = dying({ inf: 60 });
+    captured.dice = [1, 1];
+    await doDivineProtection(rich);
+    expect(captured.chat.at(-1).content).toContain("безопасная база");
+
+    resetCaptured();
+    const poor = dying({ inf: 40 });
+    captured.dice = [1, 1];
+    await doDivineProtection(poor);
+    expect(captured.chat.at(-1).content).not.toContain("безопасная база");
+  });
+});
+
+describe("Астартес: отмена Спасения ради Замедленной Анимации (стр. 233)", () => {
+  it("провал по Inf — отмена ничего не списывает, идёт тест W+30", async () => {
+    const actor = dying({ inf: 12, items: [MEMBRANE], wp: 40 });
+    captured.confirmAnswer = true;
+    captured.dice = [4, 50]; // потеря 14 ≥ 12 → провал; W+30=70, 50 → успех
+    await doMiraculousSave(actor);
+    expect(actor.updates.some(u => "system.characteristics.inf.base" in u)).toBe(false);
+    expect(actor.updates.at(-1)["system.conditions.unconscious"]).toBe(true);
+    expect(captured.chat.at(-1).content).toContain("Замедленную Анимацию");
+  });
+
+  it("Cor дошла бы до 100 — тоже можно отменить", async () => {
+    const actor = dying({ inf: 40, corruption: 95, items: [MEMBRANE] });
+    captured.confirmAnswer = true;
+    captured.dice = [2, 9, 30]; // потеря 12, Порча +9 → 104; затем W-тест 30
+    await doMiraculousSave(actor);
+    expect(actor.updates.some(u => "system.characteristics.inf.base" in u)).toBe(false);
+  });
+
+  it("отказ от отмены — Спасение проходит как обычно", async () => {
+    const actor = dying({ inf: 40, corruption: 95, items: [MEMBRANE] });
+    captured.confirmAnswer = false;
+    captured.dice = [2, 9];
+    await doMiraculousSave(actor);
+    expect(actor.updates.at(-1)["system.corruption.value"]).toBe(100);
+  });
+});
+
+describe("Наследник — кубы Спасения дважды, берётся меньший", () => {
+  it("потеря 10+min(8,3), Порча min(6,2)", async () => {
+    const actor = dying({ inf: 40, subrace: "inheritor" });
+    captured.dice = [8, 3, 6, 2];
+    await doMiraculousSave(actor);
+    const upd = actor.updates.at(-1);
+    expect(upd["system.characteristics.inf.base"]).toBe(27); // 40 − 13
+    expect(upd["system.corruption.value"]).toBe(12);
+  });
+});
+
+describe("Замедленная Анимация — одна попытка, Сон Героя перебрасывает", () => {
+  it("провал ставит метку попытки", async () => {
+    const actor = dying({ items: [MEMBRANE], wp: 10 });
+    captured.dice = [90];
+    await doSusAnimation(actor);
+    expect(actor.getFlag("warhammer-dbc", "susAnAttempted")).toBe(true);
+  });
+
+  it("Сон Героя: провал 90 → переброс 20 → успех", async () => {
+    const actor = dying({ items: [MEMBRANE, HERO_SLEEP], wp: 40 });
+    captured.dice = [90, 20];
+    await doSusAnimation(actor);
+    expect(actor.updates.at(-1)["system.conditions.unconscious"]).toBe(true);
+    expect(captured.chat.at(-1).content).toContain("Сон Героя");
+  });
+});
+
+describe("Игрушка Богов — диалог и тест Inf+30", () => {
+  it("Покровитель Кхорн, первая смерть сессии — диалог называет обязанность и тест", () => {
+    const actor = dying({ patronGod: "khorne", corruption: 20 });
+    showDeathSaveDialog(actor);
+    expect(captured.dialog.content).toContain("Игрушка Богов");
+    expect(captured.dialog.content).toContain("data-action=\"toy\"");
+  });
+
+  it("Неделимый — правило не действует", () => {
+    const actor = dying({ patronGod: "undivided" });
+    showDeathSaveDialog(actor);
+    expect(captured.dialog.content).not.toContain("Игрушка Богов");
+  });
+
+  it("успех теста снимает обязанность до конца сессии", async () => {
+    const actor = dying({ patronGod: "khorne", inf: 40 });
+    captured.dice = [60]; // 40+30=70
+    expect(await doToyOfGodsTest(actor)).toBe(true);
+    showDeathSaveDialog(actor);
+    expect(captured.dialog.content).not.toContain("Игрушка Богов");
+  });
+});
+
+// ── Провал Спасения окончателен (ревью зоны «Смерть») ────────────────────────
+// Цена пишется в inf.base с полом 0, а провал считается по постоянному Inf
+// целиком (база + Продвижение). После провала Inf не 0 — Продвижение остаётся,
+// и повторная попытка на ту же смерть проходила: «мёртв по-настоящему» врал.
+
+/** Хаосит, у которого update правда меняет Inf и флаги — как живой документ. */
+function championWithAdvance({ base = 20, advance = 15 } = {}) {
+  const flags = { "warhammer-dbc.deceased": true };
+  const inf = { base, advance, total: base + advance, bonus: Math.floor((base + advance) / 10) };
+  return {
+    id: "c1", uuid: "Actor.c1", name: "Чемпион", type: "character",
+    system: {
+      alignment: "heretic", fate: { value: 4 }, corruption: { value: 10 },
+      characteristics: { inf, wp: { total: 40 }, t: { bonus: 4 } },
+      wounds: { value: 0, critical: 12, max: 14 }, conditions: {}
+    },
+    items: [], updates: [],
+    getFlag: (scope, key) => flags[`${scope}.${key}`],
+    async setFlag(scope, key, value) { flags[`${scope}.${key}`] = value; },
+    async unsetFlag(scope, key) { delete flags[`${scope}.${key}`]; },
+    async update(data) {
+      this.updates.push(data);
+      for (const [path, v] of Object.entries(data)) {
+        if (path === "system.characteristics.inf.base") { inf.base = v; inf.total = v + inf.advance; }
+        else if (path.startsWith("flags.warhammer-dbc.-=")) delete flags[`warhammer-dbc.${path.slice(22)}`];
+        else if (path.startsWith("flags.warhammer-dbc.")) flags[`warhammer-dbc.${path.slice(20)}`] = v;
+      }
+    }
+  };
+}
+
+describe("Провал Спасения окончателен на эту смерть", () => {
+  async function failMiraculous() {
+    const actor = championWithAdvance({ base: 20, advance: 15 });
+    await actor.setFlag("warhammer-dbc", "killedByKissOfDeath", true);
+    captured.dice = [8]; // (10+8)×2 = 36, Inf 35 → провал
+    await doMiraculousSave(actor);
+    return actor;
+  }
+
+  it("Поцелуй Смерти, Inf 20+15: после провала Божественная Защита уже не спасает", async () => {
+    const actor = await failMiraculous();
+    expect(captured.chat.at(-1).content).toContain("Провал");
+    expect(actor.system.characteristics.inf.total).toBe(15); // база 20 → 0, Продвижение осталось
+
+    captured.dice = [3, 1]; // 5+3 = 8 < 15 — раньше здесь персонаж оживал
+    await doDivineProtection(actor);
+    expect(actor.getFlag("warhammer-dbc", "deceased")).toBe(true);
+    expect(actor.updates.some(u => u["flags.warhammer-dbc.deceased"] === false)).toBe(false);
+    expect(actor.system.characteristics.inf.total).toBe(15); // вторая цена не списана
+  });
+
+  it("карточка провала называет Inf, который реально остался", async () => {
+    await failMiraculous();
+    expect(captured.chat.at(-1).content).toContain("<b>15</b>");
+  });
+
+  it("диалог после провала: оба пути отключены", async () => {
+    const actor = await failMiraculous();
+    showDeathSaveDialog(actor);
+    expect(captured.dialog.content).toContain('data-action="miraculous" disabled');
+    expect(captured.dialog.content).toContain('data-action="divine" disabled');
+  });
+
+  it("«Воскресить» снимает метку — следующая смерть снова со Спасением", async () => {
+    const actor = await failMiraculous();
+    await doResurrect(actor);
+    await actor.setFlag("warhammer-dbc", "deceased", true);
+    showDeathSaveDialog(actor);
+    expect(captured.dialog.content).not.toContain('data-action="divine" disabled');
   });
 });

@@ -387,6 +387,23 @@
 //      атаки, ровно как test/reroll-модификаторы собираются из
 //      testMod/reroll. apScope:"unarmed" — интегральные безоружные атаки
 //      (Кулак/Пинок/…, isIntegralAttack), не обычное оружие в руке.
+//    charRecovery: { crTargets: string[], crMode:"block"|"period", crHours, label }
+//      → ЖИВОЙ ЗАПРОС (wdbc-x1nz.2.83), как reroll/testMod/attackProp выше:
+//      ничего не пишет и не создаёт при получении предмета. module/rules/
+//      item-rules.mjs собирает из записи правило { kind:"charRecovery",
+//      target, mode, hours } (docs/rules-format.md), которое читает
+//      module/rules/char-loss.mjs::actorRecoveryPolicy() при каждом часовом
+//      шаге восстановления Урона в Характеристики. crTargets — Характеристики
+//      записи (мультивыбор constants/characteristics.mjs, включая
+//      псевдо-пункт «Все») → target "t" / "t,s" / "all" — та же нотация, что
+//      у книжных источников (Лучевая болезнь — rules/library/conditions.mjs).
+//      crMode:"block" — эти Характеристики вообще не восстанавливаются
+//      пассивно, пока предмет на акторе (Гниль Нургла — T, зависимость от
+//      препарата — I/P/W/F); crMode:"period" — восстанавливаются раз в
+//      crHours часов вместо раза в час (Гниль Нургла — все Характеристики
+//      раз в 7 часов, той же записью «Все»). Несколько источников по одной
+//      Характеристике — любой block побеждает; иначе берётся самый длинный
+//      period (recoveryPolicy(), char-loss.mjs).
 //
 //  Идемпотентность: flags.warhammer-dbc.mechanicsApplied — один раз при
 //  createItem (см. Hooks.on("createItem", ...) в warhammer-dbc.mjs).
@@ -412,7 +429,8 @@ import { normalizeBudget, BUDGET_XP, BUDGET_MODES } from "../rules/pick-budget.m
 import { pickXPCost }                          from "../rules/pick-xp-cost.mjs";
 import { ITEM_QUALITY, ITEM_QUALITY_LIST }     from "../constants/quality.mjs";
 import { hasSubmutations }                     from "../rules/submutations.mjs";
-import { rollSubmutation }                     from "./submutations.mjs";
+import { rollSubmutation, chooseSubmutation }  from "./submutations.mjs";
+import { voidSuppressesMutation, fieldDisablesImplant } from "../rules/null-zones.mjs";
 import { MINION_GROUPS, MINION_TIERS }         from "../constants/minions.mjs";
 import { isMinionTalent }                      from "../rules/minion-build.mjs";
 import { applyMinionSlot, promptMinionSlot }   from "./minion-talent.mjs";
@@ -634,6 +652,7 @@ const KIND_LABELS = {
   burningGrace: "Горение: окно без эффектов (Cooler)",
   counterAttack: "Встречная атака",
   attackProp: "Свойство атаки",
+  charRecovery: "Восстановление урона в Характеристики",
   equipment: "Снаряжение",
   integralAttack: "Интегральная атака",
   loyalty: "Лояльность миньонов",
@@ -968,6 +987,13 @@ export function blankMechEntry(kind = "characteristic") {
     // предмета ничего не делает. apRating/apRating2 — число или формула
     // (та же нотация, что у ccDamage — MECH_FORMULA_HINT/CC_DAMAGE_HINT).
     apScope: "unarmed", apKey: "", apRating: "", apRating2: "",
+    // charRecovery — «Восстановление урона в Характеристики» (wdbc-x1nz.2.83):
+    // живой запрос, читается rules/char-loss.mjs::actorRecoveryPolicy() через
+    // rules/item-rules.mjs, при получении предмета ничего не делает.
+    // crTargets — ключи Характеристик (пусто ⇒ ничего не выбрано, запись
+    // считается незаполненной, см. isEntryComplete); "all" в массиве — та же
+    // область "all", что у книжных источников (все Характеристики разом).
+    crTargets: [], crMode: "block", crHours: 1,
     // reroll — «Переброс»: живой запрос, читается в момент броска
     // (module/rules/item-rules.mjs), при получении предмета ничего не делает.
     rerollScope: "all", rerollChar: "ag", rerollMode: "keepBest",
@@ -1191,6 +1217,16 @@ export function describeMechEntry(entry) {
       const ratingStr = ratings.length ? ` (${ratings.join("/")})` : "";
       return `Свойство атаки: ${scopeLabel} — ${def.label}${ratingStr}`;
     }
+    case "charRecovery": {
+      if (!Array.isArray(entry.crTargets) || !entry.crTargets.length) return "Восстановление урона в Характеристики: (не выбрано)";
+      const targetLabel = entry.crTargets.includes("all")
+        ? "Все Характеристики"
+        : entry.crTargets.map(k => CHARACTERISTICS[k]?.label || k).join(", ");
+      const modeLabel = entry.crMode === "period"
+        ? `восстанавливается раз в ${Number(entry.crHours) || 1} ч. (вместо раза в час)`
+        : "не восстанавливается, пока предмет активен";
+      return `Восстановление урона в Характеристики: ${targetLabel} — ${modeLabel}`;
+    }
     case "capability": {
       if (entry.capabilityMode === "aptOverride") {
         if (!entry.capabilityAptMatch) return "Возможность (override склонности): (не задано совпадение)";
@@ -1316,7 +1352,8 @@ export function describeMechEntry(entry) {
       return `Модификатор броска: ${name}${label}${spec} ${sign}${entry.value ?? ""}`;
     }
     case "poolMax": {
-      const label = entry.poolTarget === "ablativeWounds" ? "Аблативные Раны" : "Очки Судьбы или Бесчестья";
+      const label = entry.poolTarget === "ablativeWounds" ? "Аблативные Раны"
+        : entry.poolTarget === "infamy" ? "Очки Бесчестия (Хаосит)" : "Очки Судьбы или Бесчестья";
       if (entry.value === "" || entry.value == null) return `${label}: (не задано)`;
       const sign = Number(entry.value) >= 0 ? "+" : "";
       return `${label}: ${sign}${entry.value} (максимум)`;
@@ -1425,6 +1462,9 @@ function isEntryComplete(e) {
       return !!String(e.ccDamage ?? "").trim() && !!(e.ccOnMiss || e.ccOnUnarmedOrGrapple);
     case "attackProp":
       return !!e.apScope && !!e.apKey && !!WEAPON_PROPERTIES[e.apKey];
+    case "charRecovery":
+      if (!Array.isArray(e.crTargets) || !e.crTargets.length) return false;
+      return e.crMode === "period" ? numOk(e.crHours) && Number(e.crHours) > 0 : true;
     case "fatigue":
       return e.fatigueAction === "threshold" && !!e.fatigueThresholdChar;
     case "condition":
@@ -2098,6 +2138,8 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
       if (entry.equipMaxPsyRating !== "" && entry.equipMaxPsyRating != null) filters.maxPsyRating = Number(entry.equipMaxPsyRating);
       if (entry.equipCategoryPack === "implants" && entry.equipImplantCategory) filters.implantCategory = entry.equipImplantCategory;
       if (Number.isFinite(Number(entry.equipMaxAvailability))) filters.maxAvailability = Number(entry.equipMaxAvailability);
+      // Закрытый список id (equipChoiceIds): «1 мутация из списка» Мутанта.
+      if (Array.isArray(entry.equipChoiceIds) && entry.equipChoiceIds.length) filters.ids = [...entry.equipChoiceIds];
 
       const budget = normalizeBudget({ mode: entry.equipBudgetMode, value: entry.equipBudgetValue });
       const picked = await openCompendiumBrowser(false, {
@@ -2155,7 +2197,10 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
     // Мутация с субмутациями сразу спрашивает свою строку — тот же приём,
     // что у ручного добавления мутации (sheets/tabs/mutations.mjs).
     if (granted?.type === "mutation" && hasSubmutations(granted.system?.benefit || "")) {
-      await rollSubmutation(granted, { actor });
+      // submutationChoice — строка выбирается, а не бросается («Мутант может
+      // выбирать субмутацию в пределах 1-10»).
+      if (entry.submutationChoice) await chooseSubmutation(granted, { actor });
+      else await rollSubmutation(granted, { actor });
     }
     return;
   }
@@ -2257,6 +2302,12 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
         specialization: spec,
         granted: true, purchased: false, cost: 0
       };
+      // Цели Таланта (Enemy/Hatred/Peer — rules/talent-targets.mjs) из записи:
+      // «Enemy (Adeptus Mechanicus, Dark Mechanicum)» Дискорданта иначе лёг бы
+      // без целей и не срабатывал ни против кого — подпись в специализации
+      // предикаты не читают.
+      if (Array.isArray(entry.targets) && entry.targets.length)
+        data.system.targets = foundry.utils.deepClone(entry.targets);
       // Рейтинговый Талант (Psy Rating, Enemy…): рейтинг задаётся записью
       // Механики, а не берётся из значения по умолчанию в компендиуме —
       // иначе Ведьма/Псайкер/Чародей получали бы Пси-Рейтинг 1 вместо 3/2.
@@ -2822,6 +2873,32 @@ export async function syncGrantedAbilities(sourceItem) {
 }
 
 /**
+ * Пересверяет Черты/Таланты, выданные записями с условием «Рядовой»
+ * (when.predicates.rankAndFile), после смены system.rankAndFile. Раса выдаёт
+ * их на Этапе 1 Мастера, а флажок ставится только на Этапе 2 — без пересверки
+ * Рядовой Человек сохранил бы чемпионские Черты (корбук стр. 5), а снявший
+ * флажок при повторном проходе остался бы без них.
+ *
+ * Трогает только такие записи: общий syncGrantedAbilities выдачу по
+ * несработавшему условию не снимает, и менять это для всех источников разом
+ * здесь незачем.
+ */
+export async function syncRankAndFileGrants(actor) {
+  if (!(actor instanceof Actor)) return;
+  for (const item of [...actor.items]) {
+    const gated = collectDirectAbilityEntries(getItemMechanics(item))
+      .filter(e => e.when?.predicates && Object.hasOwn(e.when.predicates, "rankAndFile"));
+    for (const e of gated) {
+      const granted = actor.items.filter(i =>
+        i.getFlag(FLAG, "grantedByItem") === item.id && i.getFlag(FLAG, "abilityEntryId") === e.id);
+      const ok = entryWhenOk(actor, e, item);
+      if (!ok && granted.length) await actor.deleteEmbeddedDocuments("Item", granted.map(i => i.id));
+      if (ok && !granted.length) await applyMechEntry(actor, e, item);
+    }
+  }
+}
+
+/**
  * Подавляет/возвращает ВСЕ Мутации/Дары актора, кроме источника (Pure Form) —
  * тонкая обёртка над rules/mutation-suppression.mjs, передающая ей свои же
  * локальные функции пересинхронизации (dependency injection, см. шапку того
@@ -2830,6 +2907,32 @@ export async function syncGrantedAbilities(sourceItem) {
  * runMechScriptEntry, чтобы дать script-контексту kind:"script" (wdbc-1rno,
  * Pure Form/Чистая Форма).
  */
+/**
+ * Пустота Парии / поле Дискорданта (rules/null-zones.mjs): гасит на акторе
+ * сверхъестественные мутации/Дары (в Пустоте) и электронные импланты (в поле)
+ * флагом nullSuppressed и возвращает их при выходе — та же цепочка
+ * пересинхронизации, что у Чистой Формы ниже. Зовётся хуком на появление/
+ * снятие Черты-метки зоны и на новую мутацию/имплант (warhammer-dbc.mjs).
+ * @returns {Promise<string[]>} имена предметов, сменивших состояние
+ */
+export async function syncNullZoneSuppression(actor) {
+  const names = [];
+  for (const item of [...(actor?.items ?? [])]) {
+    let want;
+    if (item.type === "mutation") want = voidSuppressesMutation(actor, item);
+    else if (item.type === "implant") want = fieldDisablesImplant(actor, item);
+    else continue;
+    if (!!item.getFlag(FLAG, "nullSuppressed") === want) continue;
+    await item.setFlag(FLAG, "nullSuppressed", want);
+    await syncItemEffectsDisabled(item);
+    await syncWeaponPropItemEffects(item);
+    await syncGrantedAbilities(item);
+    await syncGrantedEquipment(item);
+    names.push(item.name);
+  }
+  return names;
+}
+
 export async function setMutationsSuppressed(sourceItem, suppressed) {
   return _setMutationsSuppressed(sourceItem, suppressed, {
     syncItemEffectsDisabled, syncWeaponPropItemEffects, syncGrantedAbilities, syncGrantedEquipment
@@ -2885,7 +2988,10 @@ function mechEffectData(entry, sourceItem, actor = null) {
     changes.push({ key, type: entry.op, value: num(entry.movementValue),
                    phase: expectedPhase(key), priority: 0 });
   } else if (entry.kind === "poolMax") {
-    const key = entry.poolTarget === "ablativeWounds" ? "system.wounds.ablativeMax" : "system.fate.max";
+    // «infamy» — сдвиг максимума Бесчестия Хаосита (Inf.b ± N, apps/infamy-points.mjs):
+    // fate.max у Хаосита не читается, +1 туда молча пропадал.
+    const key = entry.poolTarget === "ablativeWounds" ? "system.wounds.ablativeMax"
+      : entry.poolTarget === "infamy" ? "system.infamyMaxMod" : "system.fate.max";
     changes.push({ key, type: "add", value: num(entry.value),
                    phase: expectedPhase(key), priority: 0 });
   } else if (entry.kind === "armour") {
@@ -3395,7 +3501,12 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     // области/свойства сохраняет запись и даёт листу перерисоваться (тот же
     // приём, что у .mech-fatigue-action выше) — так поля рейтинга
     // появляются/прячутся по факту def.rating/def.rating2 выбранного свойства.
-    const scopeOpts = Object.entries(AP_SCOPE_LABELS)
+    // Область «name:<Оружие>» (Мясник → Нартеций, wdbc-x1nz.2.101) в списке
+    // не предлагается, но стоящая в данных — показывается и не сбрасывается.
+    const scopeEntries = Object.entries(AP_SCOPE_LABELS);
+    if (String(ent.apScope || "").startsWith("name:"))
+      scopeEntries.push([ent.apScope, `Только оружие «${ent.apScope.slice(5)}»`]);
+    const scopeOpts = scopeEntries
       .map(([v, l]) => optHtml(v, l, (ent.apScope || "unarmed") === v)).join("");
     const propOpts = Object.values(WEAPON_PROPERTIES)
       .map(p => optHtml(p.key, `${p.label} (${p.en})`, ent.apKey === p.key)).join("");
@@ -3413,6 +3524,29 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       <select class="mech-ap-key" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
         <option value="" ${ent.apKey ? "" : "selected"}>— свойство —</option>${propOpts}
       </select>${ratingHtml}${rating2Html}`;
+  }
+
+  if (ent.kind === "charRecovery") {
+    // «Восстановление урона в Характеристики» (wdbc-x1nz.2.83) — мультивыбор
+    // Характеристик (та же форма multi-select, что у Ландшафта/игнора выше) +
+    // режим «не восстанавливается» / «медленнее» с полем часов, показанным
+    // только у второго (тот же приём каскада, что у .mech-fatigue-action).
+    const chosen = new Set(ent.crTargets || []);
+    const opts = [["all", "— Все Характеристики —"], ...Object.entries(CHARACTERISTICS).map(([k, c]) => [k, c.label || k])]
+      .map(([k, l]) => `<option value="${esc(k)}" ${chosen.has(k) ? "selected" : ""}>${esc(l)}</option>`).join("");
+    const modeOpts = [["block", "Не восстанавливается"], ["period", "Медленнее"]]
+      .map(([v, l]) => optHtml(v, l, (ent.crMode || "block") === v)).join("");
+    const hoursHtml = ent.crMode === "period" ? `
+      <input type="number" class="mech-cr-hours" min="1" value="${esc(ent.crHours ?? 1)}"
+             title="Раз в сколько часов восстанавливается (вместо обычного 1 в час)"
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>` : "";
+    return `
+      <select class="mech-cr-chars" multiple size="6" title="Какие Характеристики — «Все» перекрывает остальной выбор"
+              data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opts}</select>
+      <select class="mech-cr-mode" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${modeOpts}</select>
+      ${hoursHtml}
+      <input type="text" class="mech-reroll-label" placeholder="подпись (источник в списках восстановления)" value="${esc(ent.label || "")}"
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
   }
 
   if (ent.kind === "capability") {
@@ -3733,7 +3867,7 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
   }
 
   if (ent.kind === "poolMax") {
-    const targetOpts = [["fate", "Судьба/Бесчестье"], ["ablativeWounds", "Аблативные Раны (wdbc-smy7)"]]
+    const targetOpts = [["fate", "Судьба/Бесчестье"], ["infamy", "Бесчестие Хаосита (Inf.b ± N)"], ["ablativeWounds", "Аблативные Раны (wdbc-smy7)"]]
       .map(([v, l]) => optHtml(v, l, (ent.poolTarget || "fate") === v)).join("");
     return `<select class="mech-poolmax-target" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${targetOpts}</select>
       <input type="text" class="mech-poolmax-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.value ?? "")}" placeholder="напр. -1, 2 или ceil(cor/2)" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`;

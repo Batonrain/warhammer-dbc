@@ -15,9 +15,18 @@ import { psychDamageFor, PSYCH_MULTIPLIERS, WEAKENED_WP_PENALTY, noRecoveryHours
 import { esc, _degWord } from "../helpers/utils.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
+// Взаимный импорт с horde-damage.mjs (тот берёт отсюда lockIfCrossedHalf):
+// обе стороны зовут функции только во время выполнения, не при загрузке.
+import { addRoundDamage } from "./horde-damage.mjs";
 
 /** Флаг: до какого worldTime Ослабленная Орда не лечит психологический урон. */
 export const PSYCH_LOCK_FLAG = "hordePsychLockUntil";
+
+/**
+ * Флаг: сколько Магнитуды сняла последняя карточка атаки ({messageId, magLoss})
+ * — пишет combat/horde-damage.mjs, читает Огонь (rollHordeFlameTest).
+ */
+export const LAST_HIT_FLAG = "hordeLastHit";
 
 export const PSYCH_TESTS = {
   massDamage: { label: "Массивные потери", sub: "тест W+Магнитуда после потери 25%+ за Раунд" },
@@ -113,6 +122,74 @@ export async function rollHordePsychTest(horde, kind, { mod = 0 } = {}) {
 }
 
 /**
+ * Сколько психологического урона стоит Орде проваленный тест против Огня:
+ * «вместо эффекта Горения получает дополнительный Психологический урон,
+ * равный обычному урону в Магнитуду от этого попадания». Несломляемая Орда
+ * психологического урона не получает вовсе.
+ */
+export function hordeFlameFailDamage({ resisted = false, magLoss = 0, immune = false } = {}) {
+  if (resisted || immune) return 0;
+  return Math.max(0, Number(magLoss) || 0);
+}
+
+/**
+ * Огонь по Орде («Орды», Психологический урон): тест A+мод, чтобы не
+ * загореться. Горения у Орды нет — провал вместо него снимает ещё столько
+ * Магнитуды психологическим уроном, сколько сняло само попадание этой
+ * карточки атаки (флаг LAST_HIT_FLAG). Урон карточки не применён к этой Орде —
+ * отказ с подсказкой; Shift (force) — ГМ вводит число сам.
+ *
+ * @returns {Promise<?{resisted:boolean, psychDamage:number}>}
+ */
+export async function rollHordeFlameTest(horde, { testChar = "ag", testMod = 0, messageId = "", force = false, label = "Огонь" } = {}) {
+  const rec = horde.getFlag?.("warhammer-dbc", LAST_HIT_FLAG);
+  let magLoss = rec?.messageId && rec.messageId === messageId ? Number(rec.magLoss) || 0 : null;
+  if (magLoss === null) {
+    if (!force) {
+      ui.notifications.warn(`⚠️ ${label}: сначала примените урон этой атаки к Орде «${horde.name}» — психологический урон равен снятой им Магнитуде (Shift — ввести вручную).`);
+      return null;
+    }
+    magLoss = await foundry.applications.api.DialogV2.prompt({
+      window: { title: `${label} → ${horde.name}` },
+      classes: ["warhammer-dbc", "wh-holo"],
+      content: `<div class="wh-attack-form"><div class="atk-dlg-row"><label>Урон в Магнитуду от попадания:</label>
+        <input id="h-flame-mag" type="number" min="0" value="1"/></div></div>`,
+      ok: { label: "Бросок!", callback: (event, button) => parseInt(button.form.querySelector("#h-flame-mag")?.value) || 0 }
+    }).catch(() => null);
+    if (magLoss === null || magLoss === undefined) return null;
+  }
+
+  const base = Number(horde.system?.characteristics?.[testChar]?.total) || 0;
+  const ruleMods = collectTestMods(horde, { kind: "skill", char: testChar });
+  const threshold = base + (Number(testMod) || 0) + ruleMods.total;
+  const roll = await new Roll("1d100").evaluate();
+  const rv = roll.total;
+  const resisted = rv <= threshold;
+  const deg = Math.floor(Math.abs(rv - threshold) / 10) + 1;
+  const immune = !!horde.system?.immuneFear;
+  const damage = hordeFlameFailDamage({ resisted, magLoss, immune });
+  if (damage > 0) await applyPsychDamage(horde, damage);
+
+  const outcome = resisted
+    ? `Успех (${deg} ${_degWord(deg)}) — пламя не сломило строй`
+    : immune
+      ? `Провал — но эта Орда психологического урона не получает`
+      : `Провал (${deg} ${_degWord(deg)}) — вместо Горения психологический урон <b>${damage}</b> Магнитуды`;
+  await postTestCard(horde, {
+    classes: "horde-psych",
+    title: `${esc(horde.name)} — ${esc(label)}`,
+    threshold: rollStatLine({
+      label: testChar.toUpperCase(), base,
+      parts: [testMod ? `мод. ${testMod >= 0 ? "+" : ""}${testMod}` : "", ...ruleMods.parts],
+      threshold, rv
+    }),
+    outcome: outcomeHtml(resisted, outcome),
+    sections: [`<div class="roll-damage-meta">Попадание сняло ${magLoss} Магнитуды — провал стоит столько же психологическим уроном</div>`]
+  }, { rolls: [roll], sound: false });
+  return { resisted, psychDamage: damage };
+}
+
+/**
  * Наносит психологический урон: он уменьшает Магнитуду так же, как обычный,
  * но копится отдельно — только его можно «вылечить» речью и угрозами.
  */
@@ -123,11 +200,27 @@ export async function applyPsychDamage(horde, amount) {
   if (!damage) return 0;
 
   const value = Math.max(0, Number(sys.magnitude?.value) || 0);
+  const after = Math.max(0, value - damage);
   await horde.update({
-    "system.magnitude.value": Math.max(0, value - damage),
+    "system.magnitude.value": after,
     "system.psychDamage": (Number(sys.psychDamage) || 0) + damage
   });
+  // Психологический урон «уменьшает Магнитуду так же, как обычный» — он
+  // идёт и в счёт массивных потерь за Раунд (25% стартовой → тест
+  // W+Магнитуда), и может уронить Орду за половину (запрет лечения).
+  await addRoundDamage(horde, value - after);
+  await lockIfCrossedHalf(horde, value, after);
   return damage;
+}
+
+/**
+ * Просела за половину стартовой Магнитуды именно этим уроном — психологический
+ * урон не восстанавливается 10−W.b часов. Ставится один раз, на переходе.
+ */
+export async function lockIfCrossedHalf(horde, before, after) {
+  const start = Number(horde.system?.magnitude?.start) || 0;
+  if (start > 0 && before > start / 2 && after <= start / 2) return lockPsychHealing(horde);
+  return 0;
 }
 
 /**

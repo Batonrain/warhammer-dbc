@@ -61,7 +61,7 @@ export function skillAdvanceCat(actor, def, { group = "", specialty = "", skillK
   if (def?.alwaysAlly) return "ally";
   if (group && isFriendlySpecialty(actor, group, specialty)) return "ally";
   const itemApts = [entryChar || def?.char, def?.apt2].filter(Boolean);
-  return resolveAptitudeOverride(actor, "skill", def?.label || def?.name || "", group)
+  return resolveAptitudeOverride(actor, "skill", def?.label || def?.name || "", group, { specialty })
       // cultureCat матчит по-английски (CULT.friendlySkills/hostileSkills в
       // legions.mjs) — def?.label русский и никогда бы не совпал (wdbc-ko14).
       ?? cultureCat("skill", def?.en || def?.label || def?.name || "", "", cultFxOf(actor))
@@ -106,8 +106,8 @@ export function advanceCatSource(actor, scope, key, { group = "", specialty = ""
   if (grp && specialty && isFriendlySpecialty(actor, grp, specialty))
     return describe("homeworld", "ally", ["Родной мир"]);
 
-  const align = resolveAptitudeOverride(actor, "skill", name, grp);
-  if (align) return describe("override", align, aptitudeOverrideLabels(actor, "skill", name, grp));
+  const align = resolveAptitudeOverride(actor, "skill", name, grp, { specialty });
+  if (align) return describe("override", align, aptitudeOverrideLabels(actor, "skill", name, grp, { specialty }));
 
   const cult = cultureCat("skill", def?.en || name, "", cultFxOf(actor));
   if (cult) return describe("culture", cult, ["культура легиона"]);

@@ -83,8 +83,11 @@ describe("clearMoraleConditions", () => {
 
     await clearMoraleConditions(lord, [mate1, mate2]);
 
-    expect(mate1.updates).toContainEqual({ "system.conditions.shocked": false, "system.conditions.pinned": false });
-    expect(mate2.updates).toContainEqual({ "system.conditions.shocked": false, "system.conditions.pinned": false });
+    // Снятие Шока уносит и выпавшую строку таблицы (rules/shock.mjs::SHOCK_FLAG).
+    const cleared = { "system.conditions.shocked": false, "flags.warhammer-dbc.-=shock": null,
+                      "system.conditions.pinned": false };
+    expect(mate1.updates).toContainEqual(cleared);
+    expect(mate2.updates).toContainEqual(cleared);
     expect(captured.chat.at(-1).content).toContain(mate1.name);
     expect(captured.chat.at(-1).content).toContain(mate2.name);
   });

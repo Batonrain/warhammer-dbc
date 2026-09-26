@@ -77,6 +77,8 @@ describe("Руническая Вязь «Прах Феникса» — Чуде
       system: {
         alignment: "loyalist",
         fate: { value: fate }, corruption: { value: corruption },
+        // Цена Спасения — Inf и у лоялиста (решение 25.09.2026, task-3aa8).
+        characteristics: { inf: { base: fate, total: fate } },
         wounds: { value: -5, critical: 5, max: 10 }
       },
       items: list, updates,

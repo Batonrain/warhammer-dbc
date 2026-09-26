@@ -25,10 +25,12 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { creatureSchema, migrateReactionsString } from "./_creature.mjs";
+import { migrateLegacyLimbLoss } from "../../rules/limb-loss.mjs";
 
 export class CharacterData extends foundry.abstract.TypeDataModel {
-  /** @override — строковые «Реакции» уезжают памяткой в notes (см. _creature.mjs). */
-  static migrateData(source) { return migrateReactionsString(source); }
+  /** @override — строковые «Реакции» уезжают памяткой в notes (см. _creature.mjs),
+   *  старая потеря конечностей — по сторонам (rules/limb-loss.mjs). */
+  static migrateData(source) { return migrateLegacyLimbLoss(migrateReactionsString(source)); }
 
 
   /** @override */
@@ -52,6 +54,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // мировую настройку advancePricingMode (Настройки листа). Пусто =
       // наследовать от мира (constants/patronage.mjs, effectivePricingMode()).
       pricingModeOverride: new StringField({ initial: "", label: "Своя система продвижения" }),
+      // «Рядовой» (стр. 4): непримечательный представитель расы — без Бонусных
+      // Бросков/Очков и Смещений при создании (rules/starting-characteristics.mjs).
+      rankAndFile: new BooleanField({ initial: false, label: "Рядовой" }),
       patronFavor: new SchemaField({
         undivided: favor("Неделимый"),
         khorne:    favor("Кхорн"),

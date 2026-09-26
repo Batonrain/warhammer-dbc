@@ -10,7 +10,12 @@
     "discipline": "fulmination",
     "subtype": "",
     "powerType": "attack",
-    "extraTypes": [],
+    "extraTypes": [
+      {
+        "type": "indirect",
+        "x": 0
+      }
+    ],
     "shootSubtype": "projectile",
     "prRequired": 4,
     "testChar": "wp",

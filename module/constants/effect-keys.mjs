@@ -116,6 +116,12 @@ const INITIAL_PHASE_KEYS = [
                                      // в size, который уходит в calcMovement
   "system.incomingDamageReduction",  // плоское снижение урона (combat/damage.mjs читает
                                       // ХРАНИМОЕ поле напрямую, не производное)
+  "system.wounds.ablativeMax",       // максимум аблативного пула (kind:"poolMax") —
+                                      // ВХОД расчёта: rules/character.mjs клампит по нему
+                                      // system.wounds.ablative. "final" ложился после
+                                      // клампа, и пул от Терминаторской брони/Толстого
+                                      // обнулялся на каждом пересчёте (живая проверка
+                                      // 25.09.2026, wdbc-x1nz.2.86)
   "system.actionPoints.max",         // база экономики действий — ХРАНИМОЕ поле,
   "system.reactions.max",            // сбрасывается в .value каждый Ход
   "system.reactions.defenseMax"      // (module/combat/action-economy.mjs)

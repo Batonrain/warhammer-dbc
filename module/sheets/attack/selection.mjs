@@ -22,6 +22,7 @@ import { isFusedByHandOfDeath }    from "../../rules/hand-of-death.mjs";
 import { attackIsMelee }           from "../../combat/weapon-profiles.mjs";
 import { tentacleBonusSuppressed } from "../../rules/tentacle-hand-form.mjs";
 import { legacySlaughterThresholdDelta } from "../../rules/legacy-weapon.mjs";
+import { divineProtectionActive } from "../../rules/death-save.mjs";
 
 /**
  * @param {object} v оружие, профиль, состояние актора и уже посчитанные бонусы
@@ -213,6 +214,11 @@ export function buildSelection(v) {
       if (allowed && noCharge && key === "charge") {
         allowed = false;
         reason = `Недоступно в Стойке «${MELEE_STANCES[stanceKeyNow]?.label ?? stanceKeyNow}»`;
+      }
+      // Божественная Защита (стр. 233): до конца сессии — только полудвижения.
+      if (allowed && key === "charge" && divineProtectionActive(actor)) {
+        allowed = false;
+        reason = "Божественная Защита: до конца сессии — только полудвижения";
       }
       return { key, label: def.label, allowed, reason };
     });

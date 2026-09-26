@@ -114,6 +114,31 @@ describe("body tab helpers", () => {
 
     expect(a.flags.deceased).toBe(true);
   });
+
+  // Приёмка #518-#526 (wdbc-lsz1x.2): ГМ «оживил» галочкой — метки ТОЙ смерти
+  // (провал Спасения, попытка Анимации, провал Игрушки Богов, причина) не
+  // должны закрывать Спасение и Анимацию на следующую смерть.
+  it("снятая галочка смерти снимает метки прошлой смерти", async () => {
+    const a = actor();
+    await setDeceased(a, true);
+    Object.assign(a.flags, { fateSaveFailed: true, susAnAttempted: true, toyOfGodsTestFailed: true, deathCause: "bleeding" });
+
+    await setDeceased(a, false);
+
+    expect(a.flags.deceased).toBe(false);
+    expect(a.updates.at(-1)).toEqual({
+      "flags.warhammer-dbc.-=deathCause": null,
+      "flags.warhammer-dbc.-=susAnAttempted": null,
+      "flags.warhammer-dbc.-=toyOfGodsTestFailed": null,
+      "flags.warhammer-dbc.-=fateSaveFailed": null
+    });
+  });
+
+  it("снятие галочки у живого ничего не пишет", async () => {
+    const a = actor();
+    await setDeceased(a, false);
+    expect(a.updates).toEqual([]);
+  });
 });
 
 // wdbc-t4m/wdbc-665: setDeceased — ЕДИНСТВЕННАЯ точка, где система признаёт

@@ -260,6 +260,7 @@
         <div class="sq-actions">
           <button type="button" class="sq-btn sq-btn-roll sq-presence-roll" data-action="presenceRoll"><i class="fas fa-dice-d10"></i> Активировать (Command)</button>
           {{#if presenceActive}}<button type="button" class="sq-btn sq-presence-off" data-action="presenceOff"><i class="fas fa-power-off"></i> Снять Присутствие</button>{{/if}}
+          {{#if focusActive}}<button type="button" class="sq-btn sq-focus-fire" data-action="focusFire" title="Выделите на сцене трёх подчинённых с одинаковым оружием: атакует тот, у кого меньше BS/WS, с +2 кубами урона и −20 Избеганию цели"><i class="fas fa-crosshairs"></i> Тройка</button>{{/if}}
         </div>
       </div>
     </div>
@@ -281,9 +282,19 @@
           </label>
           {{/each}}
         </div>
+        {{#if showGeneralKind}}
+        <div class="sq-row">
+          <label>Вид тестов</label>
+          <select name="system.shortCommand.testKind">
+            {{#each generalKindOptions as |k|}}
+            <option value="{{k.key}}" {{#if k.selected}}selected{{/if}}>{{k.label}}</option>
+            {{/each}}
+          </select>
+        </div>
+        {{/if}}
         <div class="sq-row">
           <label>Уточнение</label>
-          <input type="text" name="system.shortCommand.note" value="{{shortNote}}" placeholder="Вид тестов"/>
+          <input type="text" name="system.shortCommand.note" value="{{shortNote}}" placeholder="Пометка"/>
         </div>
         {{#if showPersonalRecipient}}
         <div class="sq-row">
@@ -319,14 +330,11 @@
           <div class="sq-detail{{#if c.picked}} sq-detail-on{{/if}}{{#if c.disabled}} sq-detail-off{{/if}}">
             <button type="button" class="sq-detail-pick{{#unless c.affordable}} sq-detail-poor{{/unless}}" data-action="detailPick" data-key="{{c.key}}"
                     title="{{#if c.picked}}Отменить{{else}}Потратить {{c.cost}} Успех(ов){{/if}}">
-              <span class="sq-detail-cost">{{c.cost}}</span>
+              <span class="sq-detail-cost">{{#if c.costLabel}}{{c.costLabel}}{{else}}{{c.cost}}{{/if}}</span>
             </button>
             <div class="sq-detail-body">
-              <div class="sq-detail-name">{{c.label}}{{#if c.disabled}} <span class="sq-detail-block">— Слаженность не ниже стартовой</span>{{/if}}</div>
+              <div class="sq-detail-name">{{c.label}}{{#if c.disabled}} <span class="sq-detail-block">— Слаженность не ниже стартовой</span>{{/if}}{{#if c.extra}} <span class="sq-bonus">{{c.extra}}</span>{{/if}}</div>
               <div class="sq-detail-desc">{{c.desc}}</div>
-              {{#if (eq c.key "tactics")}}
-              <div class="sq-tactics">{{#each @root.tacticsTalents as |t|}}<span class="sq-tactic">{{t}}</span>{{/each}}</div>
-              {{/if}}
             </div>
           </div>
           {{/each}}
@@ -349,6 +357,9 @@
           <button type="button" class="sq-btn sq-btn-roll sq-briefing-roll" data-action="briefingRoll" title="Комбинированный тест Command(I)−10 и Logic(I)−10">
             <i class="fas fa-map"></i> Предбоевой брифинг
           </button>
+          <button type="button" class="sq-btn sq-btn-roll sq-feat-roll" data-action="featRoll" title="После Подвига Лидера (решает ГМ): Присутствие и Короткая Команда свободным действием, Command+0 даже неизученный, через F, W или Характеристику подвига">
+            <i class="fas fa-medal"></i> Подвиг
+          </button>
           <button type="button" class="sq-btn sq-btn-roll sq-heroic-roll" data-action="heroicRoll" title="Command(W)+0 vs Intimidate(W)+0 того, кто вывел командира из боя">
             <i class="fas fa-skull"></i> Героический Конец
           </button>
@@ -357,6 +368,7 @@
         <div class="sq-note">Брифинг: подчинённым доступно <b>{{briefingSux}}</b> Ход(ов) с преимуществами Короткой Команды силой
           {{#if briefingPower}}<b>{{briefingPower}}</b>{{else}}½ I.b{{/if}} Успехов (по выбору их Лидера).
           <input type="number" name="system.briefing.successes" value="{{briefingSux}}" min="0" class="sq-inline-num" title="Осталось Ходов"/>
+          <button type="button" class="sq-btn sq-briefing-use" data-action="briefingUse" title="Потратить один Ход Брифинга: Короткая Команда без броска до конца Раунда"><i class="fas fa-map"></i> Ход по Брифингу</button>
         </div>
         {{/if}}
       </div>

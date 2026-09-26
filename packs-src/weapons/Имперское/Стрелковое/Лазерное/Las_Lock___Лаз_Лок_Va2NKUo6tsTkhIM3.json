@@ -61,7 +61,8 @@
       "standard": false,
       "reloads": 10
     },
-    "damageSubtype": "laser"
+    "damageSubtype": "laser",
+    "techClass": "electric"
   },
   "_id": "Va2NKUo6tsTkhIM3",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",

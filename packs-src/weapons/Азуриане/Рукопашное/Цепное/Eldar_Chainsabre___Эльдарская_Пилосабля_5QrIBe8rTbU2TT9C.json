@@ -64,7 +64,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Меч"
+    "meleeCategory": "Меч",
+    "techClass": "none"
   },
   "_id": "5QrIBe8rTbU2TT9C",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

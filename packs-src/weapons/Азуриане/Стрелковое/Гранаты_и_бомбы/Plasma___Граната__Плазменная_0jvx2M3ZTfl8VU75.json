@@ -65,7 +65,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "techClass": "none"
   },
   "_id": "0jvx2M3ZTfl8VU75",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-thrown.svg",

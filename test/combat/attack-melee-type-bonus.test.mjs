@@ -116,3 +116,30 @@ describe("Молот/Топор-бонус: гейт по типу оружия"
     expect(card()).toContain('data-damage="5"');
   });
 });
+
+// Виды Урона (wdbc-x1nz.2.80): I(Cr) «получает свойство Concussive (–1),
+// попадая в голову» — или +1 к рейтингу, если оно уже было.
+describe("I(Cr) по голове: Concussive(–1)", () => {
+  const club = (props = []) => weaponFor({ weaponClass: "melee", damage: "1d10", damageSubtype: "crushing", weaponProps: props });
+
+  it("попадание в голову — кнопка Оглушающего с тестом T+10", async () => {
+    const weapon = club();
+    captured.dice = [10, 5];               // 10 → «01» → Голова
+    await _executeAttackRoll(meleeActor([weapon]), weapon, "ws", 45, "melee", null, {});
+    expect(card()).toContain('data-wp-test-mod="10"');
+  });
+
+  it("попадание в торс — Оглушающего нет", async () => {
+    const weapon = club();
+    captured.dice = [4, 5];                // 4 → «40» → Торс
+    await _executeAttackRoll(meleeActor([weapon]), weapon, "ws", 45, "melee", null, {});
+    expect(card()).not.toContain("Оглушающее");
+  });
+
+  it("уже было Concussive(1) — становится (2)", async () => {
+    const weapon = club([{ key: "concussive", rating: 1 }]);
+    captured.dice = [10, 5];
+    await _executeAttackRoll(meleeActor([weapon]), weapon, "ws", 45, "melee", null, {});
+    expect(card()).toContain('data-wp-test-mod="-20"');
+  });
+});

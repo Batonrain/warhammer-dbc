@@ -68,7 +68,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Кнут"
+    "meleeCategory": "Кнут",
+    "techClass": "none"
   },
   "_id": "zJy6mINbrEa6hzZU",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-whip.svg",

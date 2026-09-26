@@ -1,0 +1,70 @@
+{
+  "name": "In the Pariah's Void / В Пустоте Парии",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "NQHsbl75bk7fCc77",
+  "system": {
+    "description": "Вы в ауре Парии: психосилы (кроме Непрямых) и демонические дары не действуют; нельзя тратить и сжигать Очки Бесчестия/Судьбы; сверхъестественные мутации и дары не работают; нельзя получать Порчу; псайкеры −PR×3, демоны −30 на все тесты.",
+    "notes": "Метка зоны: выдаётся аурой носителя (module/regions/auras.mjs) всем в радиусе и снимается при выходе. Правила зоны читают флаг pariah.void (module/rules/null-zones.mjs).",
+    "benefit": "Вы в ауре Парии: психосилы (кроме Непрямых) и демонические дары не действуют; нельзя тратить и сжигать Очки Бесчестия/Судьбы; сверхъестественные мутации и дары не работают; нельзя получать Порчу; псайкеры −PR×3, демоны −30 на все тесты.",
+    "source": "аура",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "PariahVoidZone01",
+  "effects": [],
+  "sort": 0,
+  "flags": {
+    "warhammer-dbc": {
+      "mechanics": [
+        {
+          "id": "PariahVoidZoGrp1",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "PariahVoidZoCap1",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "pariah.void",
+              "label": "In the Pariah's Void / В Пустоте Парии",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786993504008,
+    "modifiedTime": 1786993504008,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!PariahVoidZone01"
+}

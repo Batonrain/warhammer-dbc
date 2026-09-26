@@ -15,7 +15,13 @@ import { rollD100WithReroll }                      from "../rules/test-kind-widg
 import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { autoTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
-import { parseCritEffectPills, critPillsHtml, deathButtonHtml } from "./crit-effect-parser.mjs";
+// Пилюли крит-таблиц (wdbc-xql6) карточке Шока больше не нужны: строка
+// применяется сама (applyShockRow), кнопка лишь задвоила бы Без сознания.
+import { deathButtonHtml } from "./crit-effect-parser.mjs";
+import { applyConditionWithDuration, clearConditionDuration } from "./condition-effects.mjs";
+import { activeShock, shockFlagPatch, shockRecoveryBlock, SHOCK_FLAG, SHOCK_SCENE_FLAG,
+         SHOCK_HALF_ACTION_FLAG, MACHINE_MIND_FLAG } from "../rules/shock.mjs";
+import { testOutcome } from "../rules/roll-outcome.mjs";
 import { rollMoraleTest }                          from "../rules/morale-test.mjs";
 import { applyLordOfExoditesFailPenalty }          from "./lord-of-exodites.mjs";
 
@@ -25,6 +31,25 @@ export const FAITH_FLAG = "fear.faithInThePast";
 /** Полный иммунитет к Страху — автоуспех любого теста Страха (wdbc-m7we). */
 export const FEAR_IMMUNE_FLAG = "fear.immune";
 
+/** Флаг актора: наибольший рейтинг Страха, против которого уже был тест в этой сцене. */
+export const FEAR_FACED_FLAG = "fearFacedRating";
+
+/**
+ * «Новая сцена»/«Конец сессии» — забыть пройденные тесты Страха и штраф Шока
+ * «до конца сцены» (стр. 53). Несвязанные токены хранят флаги в своём
+ * дельта-акторе, которого нет в game.actors, — поэтому обходятся и токены
+ * текущей сцены.
+ */
+export async function clearFearSceneState() {
+  const actors = new Set(game.actors ?? []);
+  for (const t of canvas?.scene?.tokens ?? []) if (t.actor) actors.add(t.actor);
+  for (const a of actors) {
+    for (const key of [FEAR_FACED_FLAG, SHOCK_SCENE_FLAG]) {
+      if (a.getFlag?.("warhammer-dbc", key)) await a.unsetFlag("warhammer-dbc", key);
+    }
+  }
+}
+
 /**
  * Тест Страха (1d100 + 10×Провалы−1 − Infamy → таблица Шока при провале).
  * ratingKey — ключ FEAR_RATINGS. properties.demon + провал → карточка
@@ -33,7 +58,9 @@ export const FEAR_IMMUNE_FLAG = "fear.immune";
  * (одна бесплатная попытка на тест, не бесконечная цепочка).
  */
 export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, properties = {}, opts = {}) {
-  const wp = actor.system.characteristics.wp?.total ?? 0;
+  // «Страх и Машины» (стр. 53): машина без свободы воли бросает на Int.
+  const charKey = fearChar(actor);
+  const wp = actor.system.characteristics[charKey]?.total ?? 0;
   // Стальное Сердце (Мутация, wdbc-tsz6): персонаж считает ВСЕ рейтинги
   // Страха на 1 меньше настоящего — не выдача Страха себе (для этого уже
   // есть Трейт Fear(X)), а обратное направление: снижение того, как чужой
@@ -47,7 +74,25 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   const effectiveKey = steelHeart ? Number(ratingKey) - 1 : Number(ratingKey);
   const steelHeartIgnored = steelHeart && effectiveKey <= 0;
   const r  = FEAR_RATINGS[effectiveKey] || FEAR_RATINGS[1];
-  const ratingMod = type === "important" ? r.important : r.normal;
+  const important = type === "important";
+  const ratingMod = important ? r.important : r.normal;
+
+  // «Один тест на Страх в Ход — против сильнейшего источника, и до конца сцены
+  // все прочие источники равного или меньшего рейтинга игнорируются» (стр. 53).
+  // Без этой памяти каждый новый демон той же силы требовал нового теста, и
+  // помнить, кто что уже прошёл, приходилось ГМу. Сравнивается настоящий
+  // рейтинг источника, не пониженный Стальным Сердцем. Переброс Демона
+  // (opts.free) — тот же тест, не новая встреча.
+  const faced = Number(actor.getFlag?.("warhammer-dbc", FEAR_FACED_FLAG)) || 0;
+  if (!opts.free && faced >= Number(ratingKey)) {
+    await postTestCard(actor, {
+      title: `Тест Страха — ${esc(actor.name)}`,
+      outcome: `<span class="roll-success">Не требуется — в этой сцене уже был тест против Страха ${faced}</span>`,
+      lines: [`<div class="roll-threshold">Источники Страха ${Number(ratingKey)} и ниже до конца сцены игнорируются.</div>`]
+    });
+    return;
+  }
+  if (!opts.free) await actor.setFlag?.("warhammer-dbc", FEAR_FACED_FLAG, Number(ratingKey));
   // Вид теста/Кубик/Крит из диалога (rules/test-kind-widget.mjs) — только у
   // самого первого броска; бесплатный переброс Демона (opts.free) идёт уже
   // Базовым тестом без tk, это отдельная книжная механика, не общий Кубик.
@@ -59,7 +104,7 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   // Именно autoMods, а НЕ collectTestMods: галочки правил у Страха уже свои —
   // их показывает диалог (sheets/tabs/disorders.mjs::openFearDialog) и
   // складывает в `mod`. Общий сбор добавил бы отмеченную галочку второй раз.
-  const ruleMods = autoTestMods(actor, { kind: "skill", char: "wp", morale: true });
+  const ruleMods = autoTestMods(actor, { kind: "skill", char: charKey, morale: true });
   const baseEff  = wp + ratingMod + mod + (tk.difficulty || 0) + ruleMods.total;
   // Саркофаг Дредноута (стр. 57, wdbc-drn): пилот, отключённый от чувств,
   // автоматически проходит тесты Страха независимо от Infamy.
@@ -70,7 +115,14 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   //
   // Отличие от «Стального Сердца» выше: то лишь снижает воспринимаемый
   // рейтинг на 1, и Страх 3 остаётся Страхом 2 — тест по-прежнему нужен.
-  const autoPass = steelHeartIgnored || infamy >= r.infamy
+  //
+  // Infamy и собственный Страх (стр. 53) — привилегия Важных персонажей: оба
+  // условия стоят в одной фразе с ними. Собственный рейтинг сравнивается с
+  // настоящим рейтингом источника: «равный или выше, чем у источника».
+  const ownFear = Number(actor.system.fearRating) || 0;
+  const infamyPass = important && infamy >= r.infamy;
+  const ownFearPass = important && ownFear > 0 && ownFear >= Number(ratingKey);
+  const autoPass = steelHeartIgnored || infamyPass || ownFearPass
                    || hasRuleFlag(actor, "sarcophagus.autoPassFear")
                    || hasRuleFlag(actor, FEAR_IMMUNE_FLAG);
 
@@ -79,26 +131,26 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
 
   const outcome = await resolveKindOutcome(actor, {
     baseEff, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed,
-    ctx: { actor, kind: "skill", char: "wp", morale: true }, autoSuccess: autoPass
+    ctx: { actor, kind: "skill", char: charKey, morale: true }, autoSuccess: autoPass
   });
   const { eff, success, deg } = outcome;
   const dof      = success ? 0 : deg;
   const allRolls = [roll];
   let shockHtml  = "";
+  let shockUndo  = null;
+  let moraleUndo = null;
   if (!success) {
     const sRoll = await new Roll("1d100").evaluate(); allRolls.push(sRoll);
-    const total = sRoll.total + 10 * (dof - 1) - infamy;
+    // Infamy вычитают только Важные персонажи (стр. 53).
+    const shockInfamy = important ? infamy : 0;
+    const total = sRoll.total + 10 * (dof - 1) - shockInfamy;
     if (total <= 0) {
       shockHtml = `<div class="roll-outcome"><span class="roll-success">${rollIcon("shield","#4dffa6")}Шок предотвращён (Infamy)</span></div>`;
     } else {
       const row = lookupTable(SHOCK_TABLE, total);
-      // wdbc-xql6: та же пилюльная обвязка, что у крит-таблиц — цель Шока
-      // это сам actor теста Страха, известен уже здесь.
-      const shockPills = row?.text ? parseCritEffectPills(row.text) : [];
       shockHtml = `<div class="roll-damage-section">
-        <div class="roll-damage-label">Шок (${sRoll.total}${dof > 1 ? ` +${10 * (dof - 1)}` : ""}${infamy ? ` −${infamy}` : ""} = ${total}):</div>
+        <div class="roll-damage-label">Шок (${sRoll.total}${dof > 1 ? ` +${10 * (dof - 1)}` : ""}${shockInfamy ? ` −${shockInfamy}` : ""} = ${total}):</div>
         <div class="roll-threshold">${row?.text ?? "—"}</div>
-        ${critPillsHtml(shockPills, actor.uuid)}
         ${/* Сегодня ни одна строка Шоковой таблицы смерть напрямую не
              утверждает — это закреплено сторожем (test/combat/crit-effect-
              parser.test.mjs, «Шоковая таблица: …только условная»), и вызов
@@ -108,12 +160,19 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
              убрать вызов — означало бы, что такую строку заметят только за
              столом. */""}
         ${row?.text ? deathButtonHtml(row.text, actor.uuid) : ""}</div>`;
-      // Персистентное состояние «в Шоке» (стр. 53) — снимается тестом
-      // выхода из Шока в начале Хода (rollShockRecovery ниже).
-      await actor.update(conditionApplyFields("shocked", null, actor));
+      // Строка Шока применяется сама (rules/shock.mjs) — ГМу остаётся
+      // только то, чего система не видит: путь к побегу, ближайшая цель.
+      const applied = await applyShockRow(actor, row);
+      shockHtml += applied.html;
+      shockUndo = applied.undo;
     }
   }
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll: !!reroll });
+  // Страх — тест Морали: провал снимает Командование (combat/command-state.mjs).
+  if (!success) {
+    const { handleMoraleFailure } = await import("./command-state.mjs");
+    moraleUndo = await handleMoraleFailure(actor);
+  }
   // 5+ степеней провала Страха → Ментальная Травма (в конце сцены)
   if (!success && dof >= 5) {
     shockHtml += `<div class="roll-threshold" style="margin-top:4px;color:#9a0000;font-weight:bold;">5+ степеней провала — в конце сцены пройдите тест Ментальной Травмы (кнопка «Травма»).</div>`;
@@ -126,11 +185,15 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   // обработчик в hooks.mjs, сбрасывает «Новая сцена» (apps/game-session.mjs).
   const faithLabel = (!success && !isRuleUsageUsed(actor, FAITH_FLAG))
     ? ruleFlagLabels(actor, FAITH_FLAG)[0] : null;
-  const faithCtx = faithLabel ? { actorId: actor.id, label: faithLabel } : null;
+  const faithCtx = faithLabel ? { actorId: actor.id, actorUuid: actor.uuid, label: faithLabel } : null;
+  // Что отменить, если провал потом станет успехом (переброс Демона, «Вера
+  // в прошлое»): наложенный Шок и потерянное Командование.
+  const failUndo = (shockUndo || moraleUndo) ? { shock: shockUndo, morale: moraleUndo } : null;
 
   const canReroll = !!properties.demon && !success && !opts.free;
   await _postFearMsg(actor, "Тест Страха", r.label, wp, ratingMod + mod, rv, eff, success, dof, shockHtml, allRolls, {
-    properties, rerollCtx: canReroll ? { ratingKey, type, infamy, mod } : null, faithCtx,
+    properties, rerollCtx: canReroll ? { ratingKey, type, infamy, mod, failUndo } : null,
+    faithCtx: faithCtx ? { ...faithCtx, failUndo } : null, charLabel: charKey === "int" ? "Int" : "W",
     rerollNote, critLine: outcome.critLine, kindLabel: outcome.kindLabel,
     combinedLine: outcome.combinedLine, extendedLine: outcome.extendedLine, opposedLine: outcome.opposedLine,
     difficulty: tk.difficulty || 0, ruleParts: ruleMods.parts
@@ -197,22 +260,144 @@ export async function _executeTraumaRoll(actor, mod = 0, tk = {}) {
   });
 }
 
+/** Характеристика тестов Страха и Шока: машина без свободы воли — Int (стр. 53). */
+export function fearChar(actor) {
+  return hasRuleFlag(actor, MACHINE_MIND_FLAG) ? "int" : "wp";
+}
+
+const UNIT_WORDS = { rounds: "Раундов", hours: "часов" };
+
 /**
- * Напоминание в начале Хода Шокированного персонажа (стр. 53) — тест выхода
- * из Шока катается по кнопке (не автоматически), тем же приёмом, что
- * напоминание Подавления (module/combat/suppression.mjs::
- * postSuppressionRecoveryPrompt). Провал НЕ отнимает эффекты Командования
- * (книга это отдельно оговаривает), поэтому в отличие от исходного теста
- * Страха здесь нет параметра «важный»/Infamy — только W+0.
+ * Применить строку таблицы Шока (стр. 53) — данные SHOCK_TABLE[].effect.
+ * Возвращает html-строки для карточки и «откат» — что именно наложено, чтобы
+ * бесплатный переброс Демона и «Вера в прошлое» могли это снять: оба
+ * превращают проваленный тест в пройденный уже ПОСЛЕ броска Шока.
  */
-export async function postShockRecoveryPrompt(actor) {
+export async function applyShockRow(actor, row) {
+  const eff = row?.effect ?? {};
+  const undo = { conditions: [], halfAction: false, sceneChanged: false,
+                 prevScene: actor.getFlag?.("warhammer-dbc", SHOCK_SCENE_FLAG) ?? null };
+  const notes = [];
+  const patch = shockFlagPatch(actor, eff);
+  if (eff.shocked) {
+    const fields = conditionApplyFields("shocked", null, actor);
+    if (Object.keys(fields).length) { Object.assign(patch, fields); undo.conditions.push("shocked"); }
+    else delete patch[`flags.warhammer-dbc.${SHOCK_FLAG}`];   // иммунитет к Шоку
+  }
+  undo.halfAction = `flags.warhammer-dbc.${SHOCK_HALF_ACTION_FLAG}` in patch;
+  undo.sceneChanged = `flags.warhammer-dbc.${SHOCK_SCENE_FLAG}` in patch;
+  if (Object.keys(patch).length) await actor.update(patch);
+  const shockedNow = undo.conditions.includes("shocked");
+
+  for (const [key, formula, unit] of [["unconscious", eff.unconscious, "rounds"],
+                                      ["helpless", eff.helpless, "rounds"],
+                                      ["helpless", eff.catatonia, "hours"]]) {
+    if (!formula) continue;
+    const r = await new Roll(formula).evaluate();
+    if (await applyConditionWithDuration(actor, key, { value: r.total, unit })) {
+      undo.conditions.push(key);
+      notes.push(`${key === "unconscious" ? "Без сознания" : "Беспомощен"}: <b>${r.total}</b> ${UNIT_WORDS[unit]} (${formula}) — снимется само`);
+    }
+  }
+  if (undo.halfAction) notes.push("В следующий Ход — только 1 ОД (одно Полудействие)");
+  if (shockedNow && eff.penalty) notes.push(`${eff.penalty} ко всем тестам, кроме T, пока в Шоке — учитывается само`);
+  if (shockedNow && eff.apLock) notes.push("Не может действовать, пока в Шоке — ОД и Реакции 0");
+  if (shockedNow && eff.fleeing) notes.push("Нет пути к побегу — галочка «😨 Шок: нет пути к побегу» (−20) в диалогах тестов");
+  if (shockedNow && eff.noFirstTurn) notes.push("В первый Ход Шока оправиться нельзя — напоминание придёт Ходом позже");
+  if (eff.scenePenalty) notes.push(`${eff.scenePenalty} ко всем тестам${eff.sceneAllTests ? "" : ", кроме T,"} до конца сцены — учитывается само`);
+  let html = notes.length
+    ? `<div class="roll-threshold">${notes.map(n => `• ${n}`).join("<br>")}</div>` : "";
+  if (eff.heartAttack) {
+    html += `<div class="roll-defense-btns">
+      <button class="wh-shock-heart-btn" type="button" data-actor-uuid="${actor.uuid}">${rollIcon("skull", "#ff6b6b")} Тест T+0 — сердечный приступ</button>
+    </div>`;
+  }
+  return { html, undo };
+}
+
+/**
+ * Проваленный тест Страха засчитан пройденным (переброс Демона, «Вера в
+ * прошлое») — снять Шок и вернуть потерянное Командование.
+ */
+export async function revertFearFailure(actor, failUndo) {
+  if (!failUndo) return;
+  await revertShock(actor, failUndo.shock);
+  if (failUndo.morale) {
+    const { revertMoraleFailure } = await import("./command-state.mjs");
+    await revertMoraleFailure(failUndo.morale);
+  }
+}
+
+/**
+ * Персонаж кнопки карточки Страха. По uuid, а не по id: у несвязанного токена
+ * id — это id актора-прототипа в мире, и кнопка сработала бы на него, а не
+ * на сам токен. actorId — для карточек, созданных до этой правки.
+ */
+export async function fearCardActor(ctx) {
+  if (ctx?.actorUuid) {
+    const a = await fromUuid(ctx.actorUuid).catch(() => null);
+    if (a) return a;
+  }
+  return ctx?.actorId ? game.actors?.get(ctx.actorId) ?? null : null;
+}
+
+/** Снять то, что наложил applyShockRow (переброс Демона, «Вера в прошлое»). */
+export async function revertShock(actor, undo) {
+  if (!actor || !undo) return;
+  const patch = {};
+  if (undo.conditions?.includes("shocked")) Object.assign(patch, conditionRemoveFields("shocked"));
+  if (undo.halfAction) patch[`flags.warhammer-dbc.-=${SHOCK_HALF_ACTION_FLAG}`] = null;
+  if (undo.sceneChanged) {
+    if (undo.prevScene) patch[`flags.warhammer-dbc.${SHOCK_SCENE_FLAG}`] = undo.prevScene;
+    else patch[`flags.warhammer-dbc.-=${SHOCK_SCENE_FLAG}`] = null;
+  }
+  for (const key of ["unconscious", "helpless"]) {
+    if (!undo.conditions?.includes(key)) continue;
+    await clearConditionDuration(actor, key);
+    Object.assign(patch, conditionRemoveFields(key));
+  }
+  if (Object.keys(patch).length) await actor.update(patch);
+}
+
+/**
+ * Такт Шока на границе Хода (стр. 53) — тест выхода катается по кнопке, тем
+ * же приёмом, что напоминание Подавления (combat/suppression.mjs::
+ * postSuppressionRecoveryPrompt). Провал НЕ отнимает эффекты Командования
+ * (книга оговаривает отдельно), поэтому здесь нет «важный»/Infamy — только W+0.
+ *
+ * at:"start" — начало Хода (condition-ticks.mjs), at:"end" — конец Хода
+ * (hooks.mjs); prompt:false — только сдвинуть «первый Ход», без кнопки
+ * (выход в конце Хода даёт лишь «Укрепление Морали» Командования).
+ *
+ * «Первый Ход Шока»: ставится "pending" при наложении. Начало Хода делает его
+ * текущим ("active"), конец Хода — прошедшим. Шок, полученный посреди своего
+ * Хода, считает первым этот же Ход.
+ */
+export async function postShockRecoveryPrompt(actor, { at = "start", prompt = true } = {}) {
+  const shock = activeShock(actor);
+  if (shock?.firstTurn) {
+    const next = (at === "start" && shock.firstTurn === "pending") ? "active" : "";
+    await actor.setFlag?.("warhammer-dbc", SHOCK_FLAG, { ...shock, firstTurn: next });
+    if (at === "start") {
+      await postTestCard(actor, {
+        icon: rollIcon("target","#8fd0ff"), title: `${esc(actor.name)} в Шоке — начало Хода`,
+        outcome: `<span class="roll-failure">Первый Ход Шока — оправиться нельзя</span>`
+      }, { sound: false });
+    }
+    return;
+  }
+  if (!prompt) return;
+  if (shockRecoveryBlock(actor)) return;
+  const where = at === "end" ? "конец Хода" : "начало Хода";
+  const far = shock?.fleeing ? " Только если персонаж уже вдали от источника Страха." : "";
+  const char = fearChar(actor) === "int" ? "Int" : "W";
   const rollMode = game.settings.get("core", "rollMode");
   const messageData = ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
       <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("target","#8fd0ff")}${esc(actor.name)} в Шоке — начало Хода</div>
-        <div class="roll-threshold">Тест W+0 на выход из Шока.</div>
+        <div class="roll-header">${rollIcon("target","#8fd0ff")}${esc(actor.name)} в Шоке — ${where}</div>
+        <div class="roll-threshold">Тест ${char}+0 на выход из Шока.${far}</div>
         <div class="roll-defense-btns">
           <button class="wh-shock-recovery-btn" type="button" data-actor-uuid="${actor.uuid}">Тест</button>
         </div>
@@ -222,16 +407,23 @@ export async function postShockRecoveryPrompt(actor) {
   await ChatMessage.create(messageData);
 }
 
-/** Тест выхода из Шока (стр. 53): W+0, тест Морали. Успех снимает conditions.shocked. */
+/** Тест выхода из Шока (стр. 53): W+0 (машина — Int+0), тест Морали. Успех снимает conditions.shocked. */
 export async function rollShockRecovery(actor) {
-  const wp = actor.system.characteristics.wp?.total ?? 0;
-  const { eff, parts, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wp);
+  const block = shockRecoveryBlock(actor);
+  if (block) {
+    globalThis.ui?.notifications?.warn?.(`${actor.name}: ${block}.`);
+    return { success: false, blocked: block };
+  }
+  const char = fearChar(actor);
+  const wp = actor.system.characteristics[char]?.total ?? 0;
+  const { eff, parts, roll, rv, rerollNote, success, dof, usedReroll } =
+    await rollMoraleTest(actor, wp, { affectsCommand: false, char });
   if (success) await actor.update(conditionRemoveFields("shocked"));
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });
 
   await postTestCard(actor, {
     icon: rollIcon("target","#8fd0ff"), title: `Выход из Шока — ${esc(actor.name)}`,
-    threshold: rollStatLine({ label: "WP", base: wp, parts, threshold: eff, rv }),
+    threshold: rollStatLine({ label: char === "int" ? "Int" : "WP", base: wp, parts, threshold: eff, rv }),
     rerollNote,
     outcome: success
       ? `<span class="roll-success">Успех — Шок снят</span>`
@@ -241,12 +433,44 @@ export async function rollShockRecovery(actor) {
 }
 
 /**
+ * Сердечный приступ (строка 171+): «тест T+0 или умереть; при Успехе —
+ * кататония на 1d5 часов». Смерть — через ту же кнопку «Констатировать
+ * смерть», что у крит-таблиц: её жмёт владелец, и за ней стоит Спасение от
+ * смерти (rules/death-save.mjs).
+ */
+export async function rollHeartAttack(actor) {
+  const t = actor.system.characteristics.t?.total ?? 0;
+  const ruleMods = autoTestMods(actor, { kind: "skill", char: "t" });
+  const eff = t + ruleMods.total;
+  const { roll, rv, rerollNote } = await rollD100WithReroll(null);
+  const { success } = testOutcome(rv, eff);
+  let extra;
+  if (success) {
+    const r = await new Roll("1d5").evaluate();
+    await applyConditionWithDuration(actor, "helpless", { value: r.total, unit: "hours" });
+    extra = `<div class="roll-threshold">Кататония: Беспомощен <b>${r.total}</b> часов (1d5) — снимется само.</div>`;
+  } else {
+    extra = deathButtonHtml("Персонаж умирает от сердечного приступа.", actor.uuid);
+  }
+  await postTestCard(actor, {
+    icon: rollIcon("skull", "#ff6b6b"), title: `Сердечный приступ — ${esc(actor.name)}`,
+    threshold: rollStatLine({ label: "T", base: t, parts: ruleMods.parts, threshold: eff, rv }),
+    rerollNote,
+    outcome: success
+      ? `<span class="roll-success">Выжил — кататония</span>`
+      : `<span class="roll-failure">Провал — сердце останавливается</span>`,
+    sections: [extra]
+  }, { rolls: [roll] });
+  return { success };
+}
+
+/**
  * Общая карточка для Страха/Травмы. rerollCtx (только у Страха, при
  * непройденном тесте с «Демон») добавляет кнопку и кладёт контекст в
  * flags.warhammer-dbc.fearTest — оттуда её читает обработчик в hooks.mjs.
  */
 export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success, dof, extraHtml, allRolls,
-  { properties = {}, rerollCtx = null, faithCtx = null, rerollNote = "", critLine = "",
+  { properties = {}, rerollCtx = null, faithCtx = null, rerollNote = "", critLine = "", charLabel = "W",
     kindLabel = null, combinedLine = "", extendedLine = "", opposedLine = "", difficulty = 0, ruleParts = [] } = {}) {
   const dice = (await Promise.all(allRolls.map(r => r.render()))).join("");
   // Свойства источника Страха (напр. Демон) — для будущих эффектов, которые
@@ -267,7 +491,7 @@ export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success
   // равно перепроверяет права). Неактивна, если тратить нечего.
   const hasPoint = (Number(actor.system.fate?.value) || 0) > 0;
   const faithHtml = faithCtx ? `
-    <div class="roll-defense-section roll-fear-faith wh-owner-only" data-actor-id="${actor.id}">
+    <div class="roll-defense-section roll-fear-faith wh-owner-only" data-actor-uuid="${actor.uuid}">
       <div class="roll-defense-title">${faithCtx.label}</div>
       <div class="roll-defense-btns">
         <button type="button" class="wh-fear-faith-btn" ${hasPoint ? "" : "disabled"}
@@ -288,7 +512,7 @@ export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success
   ];
   await postTestCard(actor, {
     title: `${header}${kindLabel ? ` · ${kindLabel}` : ""} — ${esc(actor.name)}`,
-    threshold: rollStatLine({ prefix: sub, label: "W", base: wp, parts, threshold: eff, rv }),
+    threshold: rollStatLine({ prefix: sub, label: charLabel, base: wp, parts, threshold: eff, rv }),
     lines: [combinedLine, propsHtml],
     rerollNote, critLine,
     outcome: success
@@ -304,7 +528,7 @@ export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success
     // переброс «Демон» (hooks.mjs) и «Вера в прошлое» (Особенность Мира).
     flags: (rerollCtx || faithCtx) ? {
       "warhammer-dbc": {
-        ...(rerollCtx ? { fearTest: { actorId: actor.id, properties, ...rerollCtx } } : {}),
+        ...(rerollCtx ? { fearTest: { actorId: actor.id, actorUuid: actor.uuid, properties, ...rerollCtx } } : {}),
         ...(faithCtx ? { faithInThePast: faithCtx } : {})
       }
     } : null

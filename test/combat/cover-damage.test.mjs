@@ -1,8 +1,9 @@
 // test/combat/cover-damage.test.mjs
 //
 // Повреждение Укрытий (стр. 33, wdbc-x1nz.2.62): «каждый раз, когда укрытие
-// получает попадание, пробивающее его, оно теряет 1 AP» — Pen оружия ≥ AP
-// самого укрытия (не суммарного поглощения). Только ручное system.cover.ap
+// получает попадание, пробивающее его, оно теряет 1 AP». С 24.09.2026
+// (решение Сергея) «пробивающее» — урон прошёл СКВОЗЬ укрытие: больше его AP
+// (с множителем Взрыва) за вычетом Пробития, а не «Pen ≥ AP». Только ручное system.cover.ap
 // (стол сам вписал число из книжной таблицы — персистентный объект сцены);
 // разовый бонус Отскока (recoilCoverBonus) не портится — он не привязан к
 // конкретному числу на листе.
@@ -53,10 +54,25 @@ describe("Повреждение Укрытий: Pen ≥ AP укрытия сн�
     expect(actor.system.cover.ap).toBe(5);
   });
 
-  it("Pen меньше AP укрытия — не пробивает, AP не трогается", async () => {
+  it("урон не превысил защиту укрытия — не пробивает, AP не трогается", async () => {
     const actor = characterActor({ coverAp: 6 });
-    await applyDamageToActor(actor, damage({ penetration: 3 }));
+    await applyDamageToActor(actor, damage({ rawDamage: 5, penetration: 0 }));
     expect(actor.system.cover.ap).toBe(6);
+  });
+
+  it("лазган без Пробития, но урон больше AP стола — стол изнашивается", async () => {
+    const actor = characterActor({ coverAp: 4 });
+    await applyDamageToActor(actor, damage({ rawDamage: 9, penetration: 0 }));
+    expect(actor.system.cover.ap).toBe(3);
+  });
+
+  it("Тирантикос — укрытие теряет 1d10 AP вместо 1", async () => {
+    const actor = characterActor({ coverAp: 8 });
+    const attacker = { uuid: "Actor.term", items: [{ type: "talent", name: "Tyranthikos / Тирантикос" }] };
+    globalThis.fromUuid = async uuid => uuid === "Actor.term" ? attacker : null;
+    captured.dice = [6];
+    await applyDamageToActor(actor, damage({ penetration: 8, attackerUuid: "Actor.term" }));
+    expect(actor.system.cover.ap).toBe(2);
   });
 
   it("нет ручного укрытия (ap=0) — нечего портить, не падает", async () => {

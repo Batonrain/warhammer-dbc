@@ -32,9 +32,12 @@ import { computePathPassives } from "../constants/aeldari-paths.mjs";
 import { manifestProfile } from "../constants/possession.mjs";
 import { vitalCharMods, vitalEffectiveStage, VITAL_TIME_FIELD } from "../constants/vitals.mjs";
 import { raceMatches } from "./race.mjs";
+import { subraceEntries } from "../apps/race-library.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { readAllMirrors } from "./condition-mirrors.mjs";
+import { zeroedKeys, ZERO_EFFECTS, charLossTotals } from "./char-loss.mjs";
+import { derivedLimbLossConditions } from "./limb-loss.mjs";
 import { PA_TABLES } from "../constants/power-armour-lore.mjs";
 import { sanityMax, madnessLevels, sarcophagusCharDelta, DREADNOUGHT_PILOT_FLAG,
          SARCOPHAGUS, sarcophagusWarpWounds, sarcophagusHelplessNow } from "./dreadnought.mjs";
@@ -92,8 +95,13 @@ const MUTATION_THRESHOLDS_ASTARTES = [10, 30, 60, 90];
 /** Ближайший непройденный Порог Мутации, или null, если все уже пройдены (Cor 100 — не мутация, а Возвышение/Отродье). */
 export function nextMutationThreshold(system) {
   const cor = Number(system?.corruption?.value) || 0;
-  let table = raceMatches(system, "astartes") ? MUTATION_THRESHOLDS_ASTARTES : MUTATION_THRESHOLDS_HUMAN;
-  if (table === MUTATION_THRESHOLDS_ASTARTES && system?.alignment === "loyalist") {
+  // Затупленный «получает мутации как Космодесантник, а не человек» — флаг
+  // субрасы mutationsAsAstartes. Поблажка лоялисту ниже — только настоящим
+  // Астартес: она про их геносемя, не про таблицу.
+  const astartes = raceMatches(system, "astartes");
+  const asAstartes = astartes || !!subraceEntries()[system?.subrace || ""]?.mutationsAsAstartes;
+  let table = asAstartes ? MUTATION_THRESHOLDS_ASTARTES : MUTATION_THRESHOLDS_HUMAN;
+  if (astartes && system?.alignment === "loyalist") {
     table = table.filter(t => t >= 60);
   }
   return table.find(t => t > cor) ?? null;
@@ -448,6 +456,10 @@ export function prepareCharacterDerived(actor, system) {
 
     // ── Характеристики ────────────────────────────────────────────────────
     const charDamage = system.charDamage || {};
+    // Урон в Характеристики по книге (wdbc-x1nz.2.83, rules/char-loss.mjs) —
+    // отдельно от ручного «Мод.»: вычитается и не опускает Итог ниже 0.
+    // Плюс порции со своим темпом (руна Сигиллита, пытки, перманентный — task 1-8).
+    const charLoss = charLossTotals(system);
     // Авто-дебафф от потребностей (Голод/Жажда) — отдельно от ручного charDamage.
     // Эффективная стадия каждого Виталa — max(сохранённая, естественная по
     // прошедшему worldTime) (wdbc-jnqj). Порог Голода — ½T.b суток, но
@@ -460,7 +472,7 @@ export function prepareCharacterDerived(actor, system) {
       const t = chars.t || {};
       const tTotal = (t.base || 0) + (t.advance || 0) + (IMPROVEMENT_BONUS[t.improvement] || 0)
                    + (armorCharBonus.t || 0) + (traitCharValueBonus.t || 0) + (t.totalFx || 0)
-                   + (charDamage.t || 0);
+                   + (charDamage.t || 0) - (charLoss.t || 0);
       const tb = Math.floor(tTotal / 10) + (t.supernatural || 0) + (t.bonusFx || 0)
                + (traitCharBonus.t || 0) + (pathPassives.charBonus.t || 0);
       const worldTime  = game.time?.worldTime ?? 0;
@@ -492,8 +504,14 @@ export function prepareCharacterDerived(actor, system) {
       // totalFx — надбавка к ЗНАЧЕНИЮ от эффектов, парная к bonusFx ниже:
       // хранимое поле, фаза "initial", входит в расчёт ДО вывода Бонуса,
       // потолка Ловкости и навыков.
+      const lossMod   = Math.max(0, Number(charLoss[key]) || 0);
+      char.charLoss   = lossMod;
       char.total   = (char.base || 0) + (char.advance || 0) + impBonus + drugMod + armorMod + valueMod
                    + (char.totalFx || 0) + dmgMod - vitalMod;
+      // «Характеристика не может опускаться ниже 0» — пол только для урона:
+      // остальные слагаемые ведут себя как раньше.
+      const beforeLoss = char.total;
+      if (lossMod) char.total = Math.max(Math.min(0, beforeLoss), beforeLoss - lossMod);
       // Потолок брони режет готовое значение Ловкости — и Бонус ниже считается
       // уже от урезанного. Сверхъестественная Ловкость потолком не ограничена:
       // она прибавляется к Бонусу отдельным слагаемым, а не к значению.
@@ -513,6 +531,7 @@ export function prepareCharacterDerived(actor, system) {
       if (valueMod) breakdown.push({ label: "Черты/импланты", value: valueMod });
       breakdown.push(...characteristicMechContrib(actor, key));
       if (dmgMod) breakdown.push({ label: "Мод. (ручной)", value: dmgMod });
+      if (lossMod) breakdown.push({ label: "Урон в Характеристику (отходит по 1 в час)", value: char.total - beforeLoss });
       if (vitalMod) breakdown.push({ label: "Голод/Жажда", value: -vitalMod });
       if (cappedByArmor) breakdown.push({ label: "Потолок Ловкости (броня)", value: null, cap: agilityCap });
       char.totalBreakdown = breakdown;
@@ -589,6 +608,9 @@ export function prepareCharacterDerived(actor, system) {
     // своим кодом; см. rules/condition-mirrors.mjs.
     if (system.conditions) {
       Object.assign(system.conditions, readAllMirrors(actor));
+      // Потеря конечностей (wdbc-x1nz.2.100): хранится по сторонам
+      // (system.lostLimbs), флаг и *Count — отсюда, для всех прежних читателей.
+      Object.assign(system.conditions, derivedLimbLossConditions(system));
     }
 
     // Без сознания (стр. 30-31, wdbc-r5o7.7): «Считается Беспомощным» — тем
@@ -602,6 +624,19 @@ export function prepareCharacterDerived(actor, system) {
     // hasCondition/targetLacksCondition) — без сознания это строго хуже
     // просто Беспомощности, так что переопределение (не «ИЛИ» с уже стоящим
     // значением) корректно в обе стороны.
+    // Кома (wdbc-x1nz.2.105) — «без сознания, пока не выведут»: тот же
+    // производный приём, чтобы все читатели «Без сознания» (ОД, Борьба,
+    // Команды, HUD) видели её без своей ветки.
+    // Нулевая Характеристика от урона (wdbc-x1nz.2.83, таблица книги —
+    // rules/char-loss.mjs::ZERO_EFFECTS): следствия стоят, пока Итог 0.
+    // Парализован/Немота — метки-зеркала (rules/condition-mirrors.mjs), здесь
+    // только существующие Состояния. T = 0 — смерть в момент урона.
+    if (system.conditions) {
+      for (const key of zeroedKeys(system)) {
+        for (const cond of ZERO_EFFECTS[key].conditions ?? []) system.conditions[cond] = true;
+      }
+    }
+    if (system.conditions?.coma) system.conditions.unconscious = true;
     if (system.conditions?.unconscious) system.conditions.helpless = true;
 
     // Кэш сборки правил (rules/collect.mjs) сложился ВЫШЕ — на первом же
@@ -746,7 +781,7 @@ export function prepareCharacterDerived(actor, system) {
     // Броня вынесена в rules/character/armour.mjs (wdbc-neez). Накопителей
     // сверху ей не нужно — считает по надетым предметам сама, — но четыре
     // её величины читают разделы ниже, поэтому она их возвращает.
-    const { armorFromItems, armorVsType, armorVsSubtype, propFlagsByLoc, sealedCoverage } =
+    const { armorFromItems, armorVsType, armorVsSubtype, propFlagsByLoc, sealedCoverage, layersByLoc } =
       prepareArmourDerived(actor, system);
     // ── Снятый шлем ────────────────────────────────────────────────────────
     // Показатель «сколько ОБ на голову даёт снаряжение» считается ДО снятия:
@@ -755,7 +790,7 @@ export function prepareCharacterDerived(actor, system) {
     const helmetOff = !!system.helmetOff && isFeatureEnabled("helmetless");
     system.helmetlessActive = helmetOff && armorFromItems.head > 0;
     // Теряются все ОБ на голове от носимой брони (естественная броня остаётся).
-    if (system.helmetlessActive) armorFromItems.head = 0;
+    if (system.helmetlessActive) { armorFromItems.head = 0; layersByLoc.head = []; }
 
     const armorManual = system.armor || {};
     // Ручные щиты (стр. 215): прикрывают зоны своим AP. Щит держат ПОВЕРХ брони,
@@ -823,6 +858,11 @@ export function prepareCharacterDerived(actor, system) {
       vsType:         armorVsType,
       vsSubtype:      armorVsSubtype,
       propFlags:      propFlagsByLoc,
+      // Слои носимой брони и лучшее из прочего носимого AP (ручное поле, пол,
+      // щит) — для обнуления по предмету, а не по локации (wdbc-x1nz.2.81).
+      layers:         layersByLoc,
+      otherWorn:      Object.fromEntries(Object.keys(AP_LOCATIONS).map(k => [k, Math.max(armorManual[k] || 0, armorFloorLoc[k] || 0, shieldAP[k] || 0)])),
+      otherWornNoShield: Object.fromEntries(Object.keys(AP_LOCATIONS).map(k => [k, Math.max(armorManual[k] || 0, armorFloorLoc[k] || 0)])),
       // Щит: АР без него (для «вне арки»), какие локации он реально даёт, и
       // какие из них — от Primitive-щита (core.json, «Типы Рукопашного
       // Оружия», разд. «Щит») — читает module/combat/damage.mjs.

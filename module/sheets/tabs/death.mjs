@@ -7,9 +7,21 @@
 //  цене и тяжести последствий, книга не требует для второй никакого
 //  Таланта, несмотря на одноимённый Талант Пси-стойкости — совпадение
 //  перевода названий, не связанные механики; wdbc-80du), и Замедленная
-//  Анимация (только Астартес с установленной Сус-ан Мембраной,
-//  Раны не ниже −15). «Игрушка Богов» — напоминание текстом, не гейт: ГМ и
-//  игрок сами решают, вынужден ли персонаж воспользоваться Спасением.
+//  Анимация (только Астартес с установленной Сус-ан Мембраной, одна попытка
+//  на смерть, Раны не ниже −15 / −(10+T.b) со Сном Героя).
+//
+//  Сверка с книгой (wdbc-x1nz.2, 24.09.2026):
+//   • цена хаосита — характеристика Inf, не пул Очков (rules/death-save.mjs);
+//   • Чудесное Спасение откатывает Раны к снимку до смертельного удара и
+//     прекращает Состояние-причину смерти; Божественная Защита — все
+//     смертельные Состояния, Без сознания, и до ⏻ Конца сессии неуязвимость
+//     и только полудвижения (флаг divineProtection);
+//   • Астартес может отменить Спасение/Защиту, которые провалились бы или
+//     подняли бы Cor до 100, и вместо них попытаться войти в Замедленную
+//     Анимацию (стр. 233);
+//   • «Игрушка Богов» — у Покровительствуемого одним из четырёх Богов на
+//     первой смерти сессии диалог называет обязательные пути (кроме тех, что
+//     могут поднять Cor до 100) и даёт тест Inf+30 для отказа.
 //  «Воскресить» — отдельная кнопка без формулы вовсе: последствия того, ЧТО
 //  и КАК воскресило персонажа (стр. 233, «Воскрешение» — чистая нарративная
 //  глава без единой цифры в книге) — на усмотрение ГМа и игроков.
@@ -20,11 +32,14 @@ import { esc } from "../../helpers/utils.mjs";
 import { postTestCard } from "../../helpers/test-card.mjs";
 import {
   fatePoolLabel, MIRACULOUS_SAVE, DIVINE_PROTECTION, SUS_AN_TEST_MOD,
-  hasSusAnMembrane, susAnEligible, fateSaveFails,
-  toyOfGodsApplies
+  hasSusAnMembrane, susAnEligible, susAnCriticalLimit, hasHeroSleep, fateSaveFails,
+  toyOfGodsApplies, toyOfGodsForcedOptions, TOY_OF_GODS_FLAG, TOY_OF_GODS_TEST_MOD,
+  saveCostSource, rollsTwiceKeepLow, conditionsEndedBySave, rollbackWounds,
+  DIVINE_PROTECTION_FLAG, DIVINE_TELEPORT_MIN_INF, DEATH_CAUSE_FLAG, PRE_HIT_WOUNDS_FLAG,
+  SUS_AN_ATTEMPT_FLAG, FATE_SAVE_FAILED_FLAG
 } from "../../rules/death-save.mjs";
 import { computeWoundHealing } from "./wounds.mjs";
-import { conditionApplyFields } from "./conditions.mjs";
+import { conditionApplyFields, conditionRemoveFields } from "./conditions.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { spendFromInfamyPool, changeActorInfamy } from "../../apps/infamy-points.mjs";
 import { SUNDERING_CAPABILITY } from "../../rules/sundering.mjs";
@@ -35,8 +50,13 @@ import {
 import { collectTestMods } from "../../rules/roll-mods.mjs";
 import { KISS_OF_DEATH_FLAG } from "../../rules/kiss-of-death.mjs";
 import { triggerLegacyGleeOnFateSave } from "../../combat/legacy-weapon-kill-credit.mjs";
+import { isThrottleReady, markThrottleUsed } from "../../rules/cooldown.mjs";
+import { inPariahVoid } from "../../rules/null-zones.mjs";
 
 const NS = "warhammer-dbc";
+
+/** Флаг: тест Inf+30 против «Игрушки Богов» на этой смерти уже провален. */
+const TOY_TEST_FAILED_FLAG = "toyOfGodsTestFailed";
 
 // Все карточки Спасения — одной формы: шапка «череп + название пути» и один
 // блок строк. Сборка и публикация — общий helpers/test-card.mjs (wdbc-kuun);
@@ -50,137 +70,349 @@ async function _postCard(actor, header, lines, rolls = []) {
 }
 
 /**
- * Чудесное Спасение и Божественная Защита расплачиваются пулом Судьбы/Бесчестья
- * одинаково. eternalWarrior: null (обычная стоимость по cfg), "free" (Вечный
- * Воин, путь 1 — 0 пула/0 Порчи, отмечает разовый заряд сессии), "flat" (путь
- * 2 — фиксированная 1 Очко Бесчестия, без кубика, без Порчи).
+ * Снятие всех меток ОДНОЙ смерти, когда она разрешилась (спасся, вошёл в
+ * анабиоз, воскрешён): причина, снимок Ран, попытка Сус-ан, провал теста
+ * Игрушки Богов, провал Спасения и одноразовая метка Поцелуя Смерти
+ * (wdbc-zye1). Только реально стоящие — «-=» на отсутствующем флаге лишний.
  */
-async function _resolveFateSave(actor, kind, cfg, { restoreToZero, resurrectNote, eternalWarrior = null }) {
-  const pool = fatePoolLabel(actor);
-  const current = Number(actor.system.fate?.value) || 0;
-  const free = eternalWarrior === "free" || eternalWarrior === "flat";
+export function _deathResolvedFields(actor) {
+  const out = {};
+  for (const key of [DEATH_CAUSE_FLAG, PRE_HIT_WOUNDS_FLAG, SUS_AN_ATTEMPT_FLAG, TOY_TEST_FAILED_FLAG, KISS_OF_DEATH_FLAG,
+    FATE_SAVE_FAILED_FLAG]) {
+    if (actor.getFlag?.(NS, key) !== undefined) out[`flags.${NS}.-=${key}`] = null;
+  }
+  return out;
+}
 
-  let fateRoll = null, rolledLoss;
+/** Патч снятия Состояний из списка — только реально стоящих, с метками Удушья. */
+function _endConditionsFields(actor, keys) {
+  const conds = actor.system?.conditions ?? {};
+  const out = {};
+  const ended = [];
+  for (const key of keys) {
+    const active = key === "haemorrhaging" ? (Number(conds.haemorrhagingLevel) || 0) > 0 || conds.haemorrhaging : conds[key];
+    if (!active) continue;
+    Object.assign(out, conditionRemoveFields(key));
+    ended.push(key);
+    // Отсчёт задержки дыхания/смерти от удушья живёт во флагах
+    // (combat/condition-ticks.mjs::SUFFOCATION_*) — строками, как в
+    // conditions.mjs: condition-ticks тянет damage.mjs и цикл импорта.
+    if (key === "suffocating") {
+      for (const f of ["suffocation", "suffocationRest", "suffocationClockAt"]) {
+        if (actor.getFlag?.(NS, f) !== undefined) out[`flags.${NS}.-=${f}`] = null;
+      }
+    }
+  }
+  return { fields: out, ended };
+}
+
+const CONDITION_LABELS = {
+  bleeding: "Кровотечение", haemorrhaging: "Обескровливание", burning: "Горение",
+  suffocating: "Удушье", gangrene: "Гангрена"
+};
+
+/** Бросок кубика; у Наследника — дважды, берётся меньший. */
+async function _rollMaybeKeepLow(formula, keepLow) {
+  const a = await new Roll(formula).evaluate();
+  if (!keepLow) return { roll: a, total: a.total, rolls: [a], note: "" };
+  const b = await new Roll(formula).evaluate();
+  const pick = b.total < a.total ? b : a;
+  return { roll: pick, total: pick.total, rolls: [a, b], note: ` (Наследник: ${a.total}/${b.total} → меньший)` };
+}
+
+/** Может ли Астартес сейчас вместо этого пути попробовать Замедленную Анимацию. */
+function _susAnAvailable(actor) {
+  return hasSusAnMembrane(actor) && susAnEligible(actor);
+}
+
+async function _confirmSusAnInstead(actor, reason) {
+  return foundry.applications.api.DialogV2.confirm({
+    window: { title: "Отменить Спасение?" },
+    content: `<p>${esc(actor.name)}: ${reason}</p>
+      <p>Можно отменить этот путь (ничего не тратится) и вместо него попытаться войти в Замедленную Анимацию (тест W+${SUS_AN_TEST_MOD}).</p>`,
+    rejectClose: false
+  });
+}
+
+/**
+ * Чудесное Спасение и Божественная Защита. eternalWarrior: null (обычная
+ * стоимость по cfg), "free" (Вечный Воин, путь 1 — 0 цены/0 Порчи, отмечает
+ * разовый заряд сессии), "flat" (путь 2 — фиксированное 1 Очко Бесчестия из
+ * пула, без кубика, без Порчи). confirmSusAn — внедряемый для тестов вопрос
+ * «отменить и уйти в Замедленную Анимацию?».
+ */
+async function _resolveFateSave(actor, kind, cfg, { eternalWarrior = null, confirmSusAn = _confirmSusAnInstead } = {}) {
+  const title = kind === "divine" ? "Божественная Защита" : "Чудесное Спасение";
+  // Пустота Парии (rules/null-zones.mjs): «не могут… избегать смерти,
+  // сжигая Бесчестие или Очки Судьбы» — у Хаосита это постоянный Inf, мимо
+  // пула, поэтому отказ здесь, а не только в spendFromInfamyPool.
+  if (inPariahVoid(actor)) {
+    ui.notifications?.warn(`${title}: в Пустоте Парии нельзя избежать смерти, сжигая Бесчестие/Судьбу.`);
+    return;
+  }
+  if (actor.getFlag?.(NS, FATE_SAVE_FAILED_FLAG)) {
+    ui.notifications?.warn(`${title}: Спасение на эту смерть уже провалено — Боги отвернулись.`);
+    return;
+  }
+  const pool = fatePoolLabel(actor);
+  const free = eternalWarrior === "free" || eternalWarrior === "flat";
+  // Цена обычного пути у хаосита — характеристика Inf (rules/death-save.mjs);
+  // Вечный Воин «flat» платит именно Очком Бесчестия — пулом.
+  const src = eternalWarrior === "flat"
+    ? { kind: "pool", current: Number(actor.system.fate?.value) || 0, path: "system.fate.value" }
+    : saveCostSource(actor);
+  const current = src.current;
+  const keepLow = !free && rollsTwiceKeepLow(actor);
+
+  let fate = null, rolledLoss;
   if (eternalWarrior === "free") rolledLoss = 0;
   else if (eternalWarrior === "flat") rolledLoss = 1;
   else {
-    fateRoll = await new Roll(cfg.fateDie).evaluate();
-    rolledLoss = fateRoll.total + (cfg.fateFlat || 0);
+    fate = await _rollMaybeKeepLow(cfg.fateDie, keepLow);
+    rolledLoss = fate.total + (cfg.fateFlat || 0);
   }
   // Kiss of Death/Поцелуй Смерти (Слаанеш, wdbc-1rno): «Спасение от смерти,
   // вызванной этой атакой, тратит двойное количество Бесчестия или Очков
-  // Судьбы» — метка одноразовая (снимается ниже при ЛЮБОМ исходе попытки),
-  // Вечный Воин (free/flat) книга не упоминает — обе фиксированные цены не
-  // трогаем, удваивать «0» и «1 без кубика» смысла нет. rolledLoss остаётся
-  // «как выпало» для подписи брейкдауна, loss — уже удвоенная сумма списания.
-  // Метка снимается при ЛЮБОЙ попытке, если стоит, — не только когда удвоила
-  // цену: иначе после бесплатного Спасения Вечного Воина она доживала до
-  // следующей, уже не связанной с Поцелуем смерти (wdbc-zye1).
-  const hadKissOfDeath = !!actor.getFlag?.("warhammer-dbc", KISS_OF_DEATH_FLAG);
+  // Судьбы» — Вечного Воина (free/flat) книга не упоминает, фиксированные
+  // цены не удваиваются. Метка снимается при ЛЮБОЙ попытке (wdbc-zye1).
+  const hadKissOfDeath = !!actor.getFlag?.(NS, KISS_OF_DEATH_FLAG);
   const kissOfDeathDoubled = !free && hadKissOfDeath;
   const loss = kissOfDeathDoubled ? rolledLoss * 2 : rolledLoss;
-  // Временный запас (wdbc-e728, Voice of God и т.п.) гасит цену Спасения первым.
-  const spend = await spendFromInfamyPool(actor, loss, "system.fate.value");
-  // Злорадство, Оружие Наследия (wdbc-1rno.35, merciless 3-4, стр. 428) —
-  // на сам факт траты пула, не на исход (eternalWarrior === "free": Вечный
-  // Воин, реальной траты нет — "flat" тратит фиксированное Очко Бесчестия).
-  if (eternalWarrior !== "free") await triggerLegacyGleeOnFateSave(actor);
-  const failed = fateSaveFails(current, spend.poolSpent);
-  const tempNote = spend.tempSpent ? `, из них ${spend.tempSpent} из временного запаса` : "";
+  // Нулевая цена (Вечный Воин «free») ничего не опускает — провала нет.
+  const failed = loss > 0 && fateSaveFails(current, loss);
+
+  // Порча катится сразу — от неё зависит, отменит ли Астартес путь (Cor 100).
+  const cor = free || failed ? null : await _rollMaybeKeepLow(cfg.corDie, keepLow);
+  const corGain = cor ? cor.total : 0;
+  const curCor = Number(actor.system.corruption?.value) || 0;
+  const newCor = curCor + corGain;
+
   const kissNote = kissOfDeathDoubled ? ", ×2 Поцелуй Смерти" : "";
-  const lossLabel = fateRoll ? `(${cfg.fateFlat ? `${cfg.fateFlat}+` : ""}${fateRoll.total}=${rolledLoss}${kissNote}${tempNote})` : `${loss}${kissNote}${tempNote}`;
+  const lossLabel = fate
+    ? `(${cfg.fateFlat ? `${cfg.fateFlat}+` : ""}${fate.total}=${rolledLoss}${fate.note}${kissNote})`
+    : `${loss}${kissNote}`;
+  const costWord = src.kind === "inf" ? "Inf" : `Пул ${pool}`;
+  const allRolls = [...(fate?.rolls ?? []), ...(cor?.rolls ?? [])];
+
+  // Замедленная Анимация (стр. 233): «если это опускает его Inf до 0 или
+  // поднимает Cor до 100, выбрать отменить его и вместо этого попытаться
+  // войти в Замедленную Анимацию» — ничего не списывается.
+  if ((failed || newCor >= 100) && _susAnAvailable(actor)) {
+    const reason = failed
+      ? `${title} провалится — ${costWord} ${current} − ${lossLabel} опустится до 0.`
+      : `${title} поднимет Порчу до ${newCor} (100+).`;
+    if (await confirmSusAn(actor, reason)) {
+      await _postCard(actor, title, [
+        `${reason}`,
+        "Отменено — ничего не потрачено. Десантник пытается войти в Замедленную Анимацию."
+      ], allRolls);
+      await doSusAnimation(actor);
+      return;
+    }
+  }
+
+  // Списание. Inf хаосита — постоянное, в inf.base (как награда Бесчестием,
+  // rules/session-rewards.mjs); пул — через общую точку (временный запас
+  // Очков гасит цену первым, wdbc-e728).
+  const costUpd = {};
+  let spentNote = "";
+  let newValue;
+  if (src.kind === "inf") {
+    // База — с полом 0, Продвижение цена не трогает: остаток считается от
+    // реально записанного, а не current − loss, иначе карточка врёт.
+    const newBase = Math.max(0, src.base - loss);
+    if (loss > 0) costUpd[src.path] = newBase;
+    newValue = current - (src.base - newBase);
+  } else {
+    const spend = await spendFromInfamyPool(actor, loss, src.path);
+    if (!spend) return;
+    costUpd[src.path] = spend.poolValue;
+    newValue = spend.poolValue;
+    if (spend.tempSpent) spentNote = `, из них ${spend.tempSpent} из временного запаса`;
+  }
+  const shortNote = src.kind === "inf" && current - newValue < loss
+    ? `, списано ${current - newValue} — база Inf исчерпана` : "";
+  // Злорадство, Оружие Наследия (wdbc-1rno.35, merciless 3-4, стр. 428) —
+  // на сам факт траты (у "free" реальной траты нет).
+  if (eternalWarrior !== "free") await triggerLegacyGleeOnFateSave(actor);
+  await _markToyOfGodsSession(actor);
 
   if (failed) {
-    const upd = { "system.fate.value": spend.poolValue };
-    if (hadKissOfDeath) upd["flags.warhammer-dbc.-=" + KISS_OF_DEATH_FLAG] = null;
+    // Метка провала — иначе на остатке Inf (Продвижение) повтор на эту же
+    // смерть проходил бы; снимает её только разрешение смерти (_deathResolvedFields).
+    const upd = { ...costUpd, [`flags.${NS}.${FATE_SAVE_FAILED_FLAG}`]: true };
+    if (hadKissOfDeath) upd[`flags.${NS}.-=${KISS_OF_DEATH_FLAG}`] = null;
     await actor.update(upd);
-    await _postCard(actor, kind, [
-      `Пул ${pool}: <b>${current}</b> − ${lossLabel} → опустился бы до 0 и ниже.`,
+    await _postCard(actor, title, [
+      `${costWord}: <b>${current}</b> − ${lossLabel}${spentNote} → 0 и ниже; осталось <b>${newValue}</b>${shortNote}.`,
       `<span class="roll-failure">Провал — Боги отвернулись. Персонаж мёртв по-настоящему.</span>`
-    ], fateRoll ? [fateRoll] : []);
+    ], allRolls);
     return;
   }
 
   if (eternalWarrior === "free") await markEternalWarriorUsed(actor);
 
-  const corRoll = free ? null : await new Roll(cfg.corDie).evaluate();
-  const corGain = corRoll ? corRoll.total : 0;
-  const newFate = spend.poolValue;
-  const newCor  = (Number(actor.system.corruption?.value) || 0) + corGain;
   const updates = {
-    "system.fate.value": newFate,
-    "system.corruption.value": Math.min(100, newCor)
+    ...costUpd,
+    "system.corruption.value": Math.min(100, newCor),
+    [`flags.${NS}.deceased`]: false,
+    ..._deathResolvedFields(actor)
   };
-  updates[`flags.${NS}.deceased`] = false;
-  if (hadKissOfDeath) updates[`flags.${NS}.-=${KISS_OF_DEATH_FLAG}`] = null;
-  if (restoreToZero) {
-    Object.assign(updates, computeWoundHealing(actor.system, Math.max(0, -(Number(actor.system.wounds?.value) || 0)) + (Number(actor.system.wounds?.critical) || 0)));
-  }
-  await actor.update(updates);
-
   const lines = [
-    `Пул ${pool}: <b>${current}</b> − ${loss}${kissNote}${tempNote} → <b>${newFate}</b>.`,
+    `${costWord}: <b>${current}</b> − ${loss}${kissNote}${spentNote}${fate?.note ?? ""}${shortNote} → <b>${newValue}</b>.`,
     free
       ? `Порча: без изменений (Вечный Воин, ${eternalWarrior === "free" ? "раз за сессию" : "дальнобойная смерть"} — бесплатно в Ярости).`
-      : `Порча: +${corGain} → <b>${Math.min(100, newCor)}</b>${newCor > 100 ? " (потолок 100)" : ""}.`,
-    `<span class="roll-success">Успех — персонаж жив. Кардиомонитор перезапущен.</span>`
+      : `Порча: +${corGain}${cor?.note ?? ""} → <b>${Math.min(100, newCor)}</b>${newCor > 100 ? " (потолок 100)" : ""}.`
   ];
-  if (resurrectNote) lines.push(resurrectNote);
-  await _postCard(actor, kind, lines, [fateRoll, corRoll].filter(Boolean));
+
+  const cause = actor.getFlag?.(NS, DEATH_CAUSE_FLAG) || null;
+  const { fields: condFields, ended } = _endConditionsFields(actor, conditionsEndedBySave(kind, cause));
+  Object.assign(updates, condFields);
+
+  if (kind === "miraculous") {
+    const back = rollbackWounds(actor);
+    if (back) {
+      updates["system.wounds.value"] = back.value;
+      updates["system.wounds.critical"] = back.critical;
+      lines.push(`Смертельный удар откатан — Раны возвращены к <b>${back.value}</b>${back.critical ? ` (крит. ${back.critical})` : ""}, как до попадания. `
+        + "Потерю конечностей и прочие последствия этого удара ГМ снимает руками.");
+    } else {
+      Object.assign(updates, _healToZero(actor));
+      if (cause === "toughness") lines.push("Смерть от падения T до 0 — сколько урона в T вернуть, решает ГМ.");
+    }
+    if (cause === "suffocating") lines.push("До конца сцены персонаж чудом может дышать в вакууме, под водой или в удушающей хватке.");
+  } else {
+    Object.assign(updates, _healToZero(actor));
+    Object.assign(updates, conditionApplyFields("unconscious", null, actor));
+    updates[`flags.${NS}.${DIVINE_PROTECTION_FLAG}`] = true;
+  }
+  if (ended.length) lines.push(`Прекращено: ${ended.map(k => CONDITION_LABELS[k] || k).join(", ")}.`);
+
+  await actor.update(updates);
+
+  lines.push(`<span class="roll-success">Успех — персонаж жив. Кардиомонитор перезапущен.</span>`);
+  if (kind === "divine") {
+    lines.push("Без сознания до конца сцены/боя. До ⏻ Конца сессии его нельзя ранить или убить, в бою — только полудвижения.");
+    if (src.kind === "inf" && newValue >= DIVINE_TELEPORT_MIN_INF) {
+      lines.push(`Inf ${newValue} ≥ ${DIVINE_TELEPORT_MIN_INF}: если есть безопасная база (крепость, корабль, логово) — можно чудом перенестись туда.`);
+    }
+    lines.push(`<button type="button" class="wh-divine-protection-lift" data-actor-uuid="${esc(actor.uuid ?? "")}">`
+      + "Снять Защиту досрочно (ГМ: остался во власти врагов без союзников)</button>");
+  }
+  await _postCard(actor, title, lines, allRolls);
 }
 
-export async function doMiraculousSave(actor, { eternalWarrior = null } = {}) {
-  // Руническая Вязь «Прах Феникса» (wdbc-unku): тратит только 1d5 Порчи/Бесчестия
+/** Раны до 0, если они ниже (снимаются и Критические). */
+function _healToZero(actor) {
+  const w = Number(actor.system.wounds?.value) || 0;
+  const crit = Number(actor.system.wounds?.critical) || 0;
+  return computeWoundHealing(actor.system, Math.max(0, -w) + crit);
+}
+
+/** Игрушка Богов: смерть этой сессии уже была — обязанность снята до ⏻ Конца сессии. */
+async function _markToyOfGodsSession(actor) {
+  if (toyOfGodsApplies(actor) && isThrottleReady(actor, TOY_OF_GODS_FLAG, "session")) {
+    await markThrottleUsed(actor, TOY_OF_GODS_FLAG, "session");
+  }
+}
+
+function _miraculousCfg(actor) {
+  // Руническая Вязь «Прах Феникса» (wdbc-unku): тратит только 1d5 Порчи
   // вместо обычного 1d10 — тот же MIRACULOUS_SAVE, только corDie сужен.
-  const cfg = hasRuleFlag(actor, "runicWeave.ashesOfThePhoenix")
+  return hasRuleFlag(actor, "runicWeave.ashesOfThePhoenix")
     ? { ...MIRACULOUS_SAVE, corDie: "1d5" }
     : MIRACULOUS_SAVE;
-  await _resolveFateSave(actor, "Чудесное Спасение", cfg, {
-    restoreToZero: true,
-    resurrectNote: "Урон и эффекты смертельного попадания откатываются — персонаж как будто не получал этот удар.",
-    eternalWarrior
-  });
 }
 
-export async function doDivineProtection(actor, { eternalWarrior = null } = {}) {
-  await _resolveFateSave(actor, "Божественная Защита", DIVINE_PROTECTION, {
-    restoreToZero: true,
-    resurrectNote: "Персонаж без сознания до конца сцены/боя, а до конца сессии может совершать только полудвижения. "
-      + "Если Inf/Cor теперь 50+ и есть безопасная база — можно чудом переместиться туда (по решению игрока/ГМа).",
-    eternalWarrior
-  });
+export async function doMiraculousSave(actor, opts = {}) {
+  await _resolveFateSave(actor, "miraculous", _miraculousCfg(actor), opts);
 }
 
-/** Замедленная Анимация — не тратит Судьбу/Бесчестье, отдельный тест W+30 (Сус-ан Мембрана). */
+export async function doDivineProtection(actor, opts = {}) {
+  await _resolveFateSave(actor, "divine", DIVINE_PROTECTION, opts);
+}
+
+/** ГМ снимает Божественную Защиту досрочно — книжное «во власти врагов без союзников». */
+export async function liftDivineProtection(actor) {
+  if (!actor?.getFlag?.(NS, DIVINE_PROTECTION_FLAG)) return false;
+  await actor.unsetFlag(NS, DIVINE_PROTECTION_FLAG);
+  await _postCard(actor, "Божественная Защита снята", [
+    "Персонаж остался во власти врагов без единого боеспособного союзника — Боги больше не хранят его."
+  ]);
+  return true;
+}
+
+/**
+ * Божественная Защита: «теряет сознание до конца сцены или боя» — будит
+ * защищённых (флаг divineProtection) по «🎬 Новая сцена» и по концу боя.
+ * Неуязвимость и полудвижения при этом остаются до ⏻ Конца сессии.
+ * @param {Iterable<Actor>} actors
+ */
+export async function wakeDivineProtected(actors) {
+  for (const actor of actors ?? []) {
+    if (!actor?.getFlag?.(NS, DIVINE_PROTECTION_FLAG) || !actor.system?.conditions?.unconscious) continue;
+    await actor.update(conditionRemoveFields("unconscious"));
+  }
+}
+
+/**
+ * Замедленная Анимация — не тратит Судьбу/Бесчестье, отдельный тест W+30
+ * (Сус-ан Мембрана). Одна попытка на смерть; Сон Героя перебрасывает провал.
+ */
 export async function doSusAnimation(actor) {
   const w = Number(actor.system.characteristics?.wp?.total) || 0;
-  // Общий сбор модификаторов (wdbc-asuc): тест W+30 считался мимо реестра —
-  // ни Усталость, ни Черты, ни Состояния в него не входили. Диалога с
-  // галочками у кнопки нет, поэтому collectTestMods.
+  // Общий сбор модификаторов (wdbc-asuc): Усталость, Черты, Состояния.
   const ruleMods = collectTestMods(actor, { kind: "skill", char: "wp" });
   const threshold = w + SUS_AN_TEST_MOD + ruleMods.total;
-  const roll = await new Roll("1d100").evaluate();
-  const success = roll.total <= threshold;
+  const rolls = [await new Roll("1d100").evaluate()];
+  let success = rolls[0].total <= threshold;
+  const heroSleep = !success && hasHeroSleep(actor);
+  if (heroSleep) {
+    rolls.push(await new Roll("1d100").evaluate());
+    success = rolls[1].total <= threshold;
+  }
 
-  const lines = [`W <b>${w}</b>+${SUS_AN_TEST_MOD}${ruleMods.parts.map(p => ` ${p}`).join("")} → порог <b>${threshold}</b>, бросок <b>${roll.total}</b>.`];
+  const lines = [`W <b>${w}</b>+${SUS_AN_TEST_MOD}${ruleMods.parts.map(p => ` ${p}`).join("")} → порог <b>${threshold}</b>, бросок <b>${rolls[0].total}</b>`
+    + `${heroSleep ? `, Сон Героя — переброс <b>${rolls[1].total}</b>` : ""}.`];
   if (success) {
-    // Беспомощность отдельно не ставим (wdbc-r5o7.7): «Без сознания» теперь
-    // сама производит Беспомощность для любого читателя conditions.helpless
-    // (rules/character.mjs, derived data) — дублирующая запись годами могла
-    // разойтись, если кто-то снимал один флаг и забывал другой.
+    // Беспомощность отдельно не ставим (wdbc-r5o7.7): «Без сознания» сама
+    // производит Беспомощность (rules/character.mjs, derived data).
     await actor.update({
       [`flags.${NS}.deceased`]: false,
       ...conditionApplyFields("unconscious", null, actor),
-      // Смерть разрешилась — метка Поцелуя Смерти не переживает её (wdbc-zye1).
-      ...(actor.getFlag?.(NS, KISS_OF_DEATH_FLAG) ? { [`flags.${NS}.-=${KISS_OF_DEATH_FLAG}`]: null } : {})
+      ..._deathResolvedFields(actor)
     });
     lines.push(`<span class="roll-success">Успех — десантник входит в Замедленную Анимацию вместо смерти.</span>`);
     lines.push("Без сознания и Беспомощен. Диагностика −60 (For.Lore (Astartes Implants) снимает штраф). "
       + "Вывод — операция в апотекарионе, Medicae−40, медик с For.Lore (Astartes Implants)+0, 12−Успехи ч. (мин. 3).");
   } else {
-    lines.push(`<span class="roll-failure">Провал — тело не выдерживает, десантник мёртв.</span>`);
+    // «свою попытку» — одна на смерть; Спасение/Защита после неё остаются.
+    await actor.setFlag(NS, SUS_AN_ATTEMPT_FLAG, true);
+    lines.push(`<span class="roll-failure">Провал — тело не выдерживает. Остаются Чудесное Спасение и Божественная Защита.</span>`);
   }
-  await _postCard(actor, "Замедленная Анимация", lines, [roll]);
+  await _postCard(actor, "Замедленная Анимация", lines, rolls);
+}
+
+/**
+ * Игрушка Богов: тест Inf+30 — союзники способны «поднять из мёртвых», и
+ * Бог позволяет фигуре поставить жизнь на кон. Успех снимает обязанность
+ * до конца сессии, провал — повторить на этой смерти нельзя.
+ */
+export async function doToyOfGodsTest(actor) {
+  const inf = Number(actor.system.characteristics?.inf?.total) || 0;
+  const ruleMods = collectTestMods(actor, { kind: "skill", char: "inf" });
+  const threshold = inf + TOY_OF_GODS_TEST_MOD + ruleMods.total;
+  const roll = await new Roll("1d100").evaluate();
+  const success = roll.total <= threshold;
+  if (success) await markThrottleUsed(actor, TOY_OF_GODS_FLAG, "session");
+  else await actor.setFlag(NS, TOY_TEST_FAILED_FLAG, true);
+  await _postCard(actor, "Игрушка Богов", [
+    `Inf <b>${inf}</b>+${TOY_OF_GODS_TEST_MOD}${ruleMods.parts.map(p => ` ${p}`).join("")} → порог <b>${threshold}</b>, бросок <b>${roll.total}</b>.`,
+    success
+      ? `<span class="roll-success">Успех — уверенность в соратниках передаётся Богу, и тот позволяет своей фигуре поставить жизнь на кон. Спасаться не обязан.</span>`
+      : `<span class="roll-failure">Провал — Бог не отпустит свою игрушку: обязан воспользоваться Спасением/Защитой.</span>`
+  ], [roll]);
+  return success;
 }
 
 /**
@@ -204,11 +436,11 @@ export async function doSundering(actor) {
 }
 
 export async function doResurrect(actor) {
-  // Одним update и снятие метки Поцелуя Смерти: воскрешённый не должен платить
-  // вдвое при следующей, уже не связанной с Поцелуем смерти (wdbc-zye1).
+  // Одним update и снятие меток этой смерти, включая Поцелуй Смерти:
+  // воскрешённый не платит вдвое при следующей, уже не связанной (wdbc-zye1).
   await actor.update({
     [`flags.${NS}.deceased`]: false,
-    ...(actor.getFlag?.(NS, KISS_OF_DEATH_FLAG) ? { [`flags.${NS}.-=${KISS_OF_DEATH_FLAG}`]: null } : {})
+    ..._deathResolvedFields(actor)
   });
   await _postCard(actor, "Воскрешение", [
     "Кардиомонитор перезапущен вручную — персонаж воскрешён.",
@@ -216,18 +448,39 @@ export async function doResurrect(actor) {
   ]);
 }
 
+/** Блок «Игрушка Богов» диалога — пусто, если правило не действует на эту смерть. */
+function _toyOfGodsHtml(actor, miracCfg) {
+  if (!toyOfGodsApplies(actor)) return "";
+  if (!isThrottleReady(actor, TOY_OF_GODS_FLAG, "session")) return "";
+  const forced = toyOfGodsForcedOptions(actor, { miraculousCorDie: miracCfg.corDie });
+  const style = "font-size:0.82em;color:#e0a83a;";
+  if (!forced.length) {
+    return `<div class="atk-range-info" style="${style}">Игрушка Богов: оба пути могут поднять Cor до 100 — спасаться не обязан.</div>`;
+  }
+  const names = forced.map(k => k === "miraculous" ? "Чудесное Спасение" : "Божественная Защита").join(" или ");
+  const testFailed = !!actor.getFlag?.(NS, TOY_TEST_FAILED_FLAG);
+  return `<div class="atk-range-info" style="${style}">
+      ⚠ Игрушка Богов: первая смерть за сессию — Покровитель обязывает использовать ${names}
+      (путь, способный поднять Cor до 100, не обязателен). Не действует, если смерть ненастоящая (изгнание в Варп, анабиоз).
+      <button type="button" class="wh-death-action" data-action="toy" ${testFailed ? "disabled" : ""}
+        style="width:100%;text-align:left;margin:3px 0;${testFailed ? "opacity:0.45;" : ""}">
+        <b>Тест Inf+${TOY_OF_GODS_TEST_MOD}</b> — союзники способны поднять из мёртвых${testFailed ? " (уже провален)" : ""}
+      </button>
+    </div>`;
+}
+
 export function showDeathSaveDialog(actor) {
   if (!actor?.getFlag?.(NS, "deceased")) {
     ui.notifications.warn(`${actor.name}: смерть не констатирована.`);
     return;
   }
-  const pool = fatePoolLabel(actor);
-  const canSusAn  = hasSusAnMembrane(actor) && susAnEligible(actor);
-  const phoenix = hasRuleFlag(actor, "runicWeave.ashesOfThePhoenix");
-  const miracCorNote = phoenix ? "1d5 Порчи (Прах Феникса)" : "1d10 Порчи";
-  const toyNote = toyOfGodsApplies(actor)
-    ? `<div class="atk-range-info" style="font-size:0.82em;color:#e0a83a;">⚠ Игрушка Богов: на первом смертельном ранении сессии Покровительство обычно обязывает воспользоваться Спасением/Защитой, если это не подняло бы Cor до 100 — решение за столом.</div>`
-    : "";
+  // Цена Спасения/Защиты — Inf у всех (rules/death-save.mjs::saveCostSource).
+  const cost = "Inf";
+  const canSusAn  = _susAnAvailable(actor);
+  const miracCfg = _miraculousCfg(actor);
+  const miracCorNote = miracCfg.corDie === "1d5" ? "1d5 Порчи (Прах Феникса)" : "1d10 Порчи";
+  const heir = rollsTwiceKeepLow(actor) ? " Наследник: кубы дважды, берётся меньший." : "";
+  const toyNote = _toyOfGodsHtml(actor, miracCfg);
 
   // Eternal Warrior/Вечный Воин (wdbc-sk8s): в Ярости следующий Miraculous/Divine
   // бесплатен (раз за сессию), либо всегда за фиксированную 1 Очко Бесчестия при
@@ -259,17 +512,24 @@ export function showDeathSaveDialog(actor) {
       <b>${label}</b><br/><span style="font-size:0.8em;">${note}</span>
     </button>`;
 
+  const susLimit = susAnCriticalLimit(actor);
+  const susAttempted = !!actor.getFlag?.(NS, SUS_AN_ATTEMPT_FLAG);
+  const saveFailed = !!actor.getFlag?.(NS, FATE_SAVE_FAILED_FLAG);
+  const failedNote = "Уже провалено на эту смерть — Боги отвернулись.";
   const content = `
     <div class="wh-wizard-form" style="padding:6px;">
       <div class="atk-dlg-header"><span class="atk-weapon-name">${rollIcon("skull","#ff6b6b")}Спасение от смерти</span></div>
       ${toyNote}
       ${ewNote}
-      ${opt("miraculous", "Чудесное Спасение", `1d10+10 ${pool} и ${miracCorNote} — провал, если пул опустится до 0.`)}
-      ${opt("divine", "Божественная Защита", `1d5+5 ${pool} и 1d5 Порчи — провал, если пул опустится до 0. `
-        + "Дешевле Чудесного Спасения, но персонаж без сознания до конца сцены/боя и до конца сессии — только полудвижения.")}
+      ${opt("miraculous", "Чудесное Спасение", saveFailed ? failedNote : `−(1d10+10) ${cost} и ${miracCorNote} — провал, если ${cost} опустится до 0. `
+        + `Смертельный удар откатывается, эффект-причина прекращается.${heir}`, !saveFailed)}
+      ${opt("divine", "Божественная Защита", saveFailed ? failedNote : `−(1d5+5) ${cost} и 1d5 Порчи — провал, если ${cost} опустится до 0. `
+        + `Раны до 0, без сознания до конца сцены/боя; до конца сессии неуязвим, в бою — только полудвижения.${heir}`, !saveFailed)}
       ${opt("susan", "Замедленная Анимация", canSusAn
-        ? `Тест W+30 (не тратит ${pool}/Порчу). Только Астартес с Сус-ан Мембраной, Раны не ниже −15.`
-        : "Только Астартес с установленной Сус-ан Мембраной и Ранами не ниже −15.", canSusAn)}
+        ? `Тест W+30 (не тратит ${cost}/Порчу). Одна попытка на смерть${hasHeroSleep(actor) ? ", Сон Героя — переброс провала" : ""}.`
+        : susAttempted
+          ? "Попытка на эту смерть уже потрачена."
+          : `Только Астартес с установленной Сус-ан Мембраной и Ранами не ниже −${susLimit}.`, canSusAn)}
       ${hasSundering ? opt("sundering", "Разделение (Тзинч)",
         "1 Очко Бесчестия — тело исчезает, появляются 2 копии (S/T−20, 9 Ран, Размер−1), действующие в вашу Инициативу. "
         + "В конце сцены обе исчезают, вы возвращаетесь с 0 Ран на месте одной из них.") : ""}
@@ -288,11 +548,16 @@ export function showDeathSaveDialog(actor) {
         const key = b.dataset.action;
         const ewChecked = form.querySelector('input[name="ew-mode"]:checked')?.value || null;
         const eternalWarrior = ewChecked || null;
+        dialog.close();
         if (key === "miraculous") await doMiraculousSave(actor, { eternalWarrior });
         else if (key === "divine") await doDivineProtection(actor, { eternalWarrior });
         else if (key === "susan") await doSusAnimation(actor);
         else if (key === "sundering") await doSundering(actor);
-        dialog.close();
+        else if (key === "toy") {
+          // Смерть тест не разрешает — диалог снова: при успехе без обязанности, при провале с ней.
+          await doToyOfGodsTest(actor);
+          showDeathSaveDialog(actor);
+        }
       }));
     }
   });

@@ -13,12 +13,14 @@ import { DP_INFAMY_ABILITIES, DP_PATRON_ABILITIES, DP_PATRONAGE, DP_GODS_MAP } f
 import { esc } from "../helpers/utils.mjs";
 import { conditionRemoveFields, fatigueChangeFields, announceFatigueChange } from "../sheets/tabs/conditions.mjs";
 import { tempInfamyInfo, tempInfamyAmount, spendTempInfamy } from "../rules/temp-infamy.mjs";
+import { inPariahVoid } from "../rules/null-zones.mjs";
 
 /**
  * Текущие Очки Бесчестия актора — тот же путь, что и лист (actor-sheet.mjs
  * `_infamyPath`/demon-prince-sheet.mjs override), но по типу актора, а не по
- * классу листа: нужен местам, у которых листа нет (module/combat/fear.mjs —
- * тест Страха берёт свою Инфамию для автоуспеха, стр. 438).
+ * классу листа: нужен местам, у которых листа нет. Тест Страха его НЕ берёт:
+ * там нужна характеристика Inf (пороги 20+…80+), см. sheets/tabs/disorders.mjs
+ * ::fearDialogDefaults.
  */
 export function actorInfamyValue(actor) {
   const raw = actor?.type === "demonPrince"
@@ -38,9 +40,37 @@ export function actorInfamyValue(actor) {
  * лист (wdbc-k1hc — game-session.mjs::refillFatePools).
  */
 export function actorInfamyMax(actor) {
-  if (actor?.type === "demonPrince" || actor?.system?.alignment === "heretic")
+  // «Рядовые противники, даже имеющие свое Бесчестие, лишены этой способности».
+  if (actor?.system?.rankAndFile) return 0;
+  if (actor?.type === "demonPrince")
     return Math.max(0, Number(actor?.system?.characteristics?.inf?.bonus) || 0);
+  if (actor?.system?.alignment === "heretic")
+    return infamyMaxWithMod(actor?.system?.characteristics?.inf?.bonus, actor?.system?.infamyMaxMod);
   return Math.max(0, Number(actor?.system?.fate?.max) || 0);
+}
+
+/**
+ * Максимум для полосы «ОЧКИ БЕСЧЕСТИЯ» листа персонажа (actor-sheet.mjs
+ * ::_infamyMax): лист показывает её от Inf.b при любом мировоззрении, поэтому
+ * без ветки fate.max; сдвиг субрасы — только у Хаосита, как в actorInfamyMax.
+ */
+export function actorInfamyMaxForSheet(actor) {
+  if (actor?.system?.rankAndFile) return 0;
+  const mod = actor?.system?.alignment === "heretic" ? actor?.system?.infamyMaxMod : 0;
+  return infamyMaxWithMod(actor?.system?.characteristics?.inf?.bonus, mod);
+}
+
+/**
+ * Inf.b со сдвигом субрасы (system.infamyMaxMod): Наследник «увеличивает
+ * максимум на 1»; Затупленный «уменьшает на 1 [2/3/4] до минимума в 1» —
+ * понижение не опускает ниже 1, но и не поднимает до 1 тот максимум, что и
+ * так был 0.
+ */
+export function infamyMaxWithMod(infBonus, mod) {
+  const base = Math.max(0, Number(infBonus) || 0);
+  const m = Number(mod) || 0;
+  if (m >= 0) return base + m;
+  return Math.max(Math.min(base, 1), base + m);
 }
 
 // Контекст для общего партиала infamy-strip.hbs.
@@ -110,7 +140,14 @@ export async function changeInfamy(actor, ipFullPath, ipMax, delta) {
  * @returns {{tempSpent:number, poolSpent:number, poolValue:number}}
  *   poolValue — новое значение обычного пула после вычета poolSpent.
  */
-export async function spendFromInfamyPool(actor, amount, poolFullPath) {
+export async function spendFromInfamyPool(actor, amount, poolFullPath, { forced = false } = {}) {
+  // Пустота Парии (rules/null-zones.mjs): «не могут использовать Очки
+  // Бесчестия или Очки Судьбы». null — трата не состоялась, вызывающий
+  // прерывает действие. forced — принудительная потеря (штраф), не трата.
+  if (!forced && inPariahVoid(actor)) {
+    ui.notifications?.warn("В Пустоте Парии нельзя тратить Очки Бесчестия/Судьбы.");
+    return null;
+  }
   amount = Math.max(0, Number(amount) || 0);
   const cur = Math.max(0, Number(foundry.utils.getProperty(actor, poolFullPath)) || 0);
   const haveTemp = tempInfamyAmount(actor);
@@ -156,6 +193,7 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta 
   if (cor < threshold) return ui.notifications.warn(`«${ability.label}»: нужно Порчи ≥ ${threshold} (сейчас ${cor}).`);
 
   const spend = await spendFromInfamyPool(actor, 1, ipFullPath);
+  if (!spend) return;
   const upd = { [ipFullPath]: spend.poolValue };
   const lines = [];
   const rolls = [];

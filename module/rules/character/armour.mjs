@@ -10,7 +10,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { getArmorModEffects, armorModApForLocation } from "../../combat/armor-mods.mjs";
-import { resolveArmorProps, aggregateArmorAuto, mergeArmorLocFlags, emptyArmorLocFlags }
+import { resolveArmorProps, aggregateArmorAuto, mergeArmorLocFlags, emptyArmorLocFlags, armorNullers }
   from "../../combat/armor-properties.mjs";
 import { qualityEffects } from "../../constants/quality.mjs";
 import { fieldModeEffects } from "../../constants/drukhari-armor-fields.mjs";
@@ -21,7 +21,7 @@ import { PA_TABLES } from "../../constants/power-armour-lore.mjs";
  * @param {object} actor  актор — для надетых предметов
  * @param {object} system system актора, правится на месте
  * @returns {{armorFromItems: object, armorVsType: object, armorVsSubtype: object,
- *           propFlagsByLoc: object, sealedCoverage: object}} величины, которые
+ *           propFlagsByLoc: object, sealedCoverage: object, layersByLoc: object}} величины, которые
  *           читают разделы ниже
  */
 export function prepareArmourDerived(actor, system) {
@@ -61,6 +61,8 @@ export function prepareArmourDerived(actor, system) {
     leftArm: emptyArmorLocFlags(), rightArm: emptyArmorLocFlags(),
     leftLeg: emptyArmorLocFlags(), rightLeg: emptyArmorLocFlags()
   };
+
+  const layersByLoc = { head: [], body: [], leftArm: [], rightArm: [], leftLeg: [], rightLeg: [] };
 
   for (const item of actor.items) {
     if (item.type !== "armor" || !item.system.equipped) continue;
@@ -155,6 +157,13 @@ export function prepareArmourDerived(actor, system) {
     } else {
       for (const k of Object.keys(ap)) armorFromItems[k] = Math.max(armorFromItems[k], ap[k]);
     }
+    // Слой этого предмета по локациям (wdbc-x1nz.2.81): Мягкая/Проводящая и
+    // прочие обнулители снимают AP только своего предмета, поэтому damage.mjs
+    // нужен вклад каждого предмета отдельно, в том же порядке сложения.
+    const nullers = armorNullers(propAuto);
+    for (const k of Object.keys(ap)) {
+      if (ap[k] > 0) layersByLoc[k].push({ ap: ap[k], stacks: !!s.stacks, nullers });
+    }
   }
 
   // Укрытие по подвиду урона от активного Защитного поля (Mistshield/Туманный
@@ -171,5 +180,5 @@ export function prepareArmourDerived(actor, system) {
     }
   }
 
-  return { armorFromItems, armorVsType, armorVsSubtype, propFlagsByLoc, sealedCoverage };
+  return { armorFromItems, armorVsType, armorVsSubtype, propFlagsByLoc, sealedCoverage, layersByLoc };
 }

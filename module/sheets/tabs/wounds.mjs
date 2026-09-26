@@ -10,7 +10,8 @@
 export function computeWoundHealing(system, amount) {
   let value = system.wounds?.value ?? 0;
   let critical = system.wounds?.critical ?? 0;
-  const max = system.wounds?.max ?? 0;
+  // effectiveMax — Саркофаг Дредноута (wdbc-drn, rules/character.mjs).
+  const max = system.wounds?.effectiveMax ?? system.wounds?.max ?? 0;
   let heal = Math.max(0, amount);
 
   if (critical > 0) {

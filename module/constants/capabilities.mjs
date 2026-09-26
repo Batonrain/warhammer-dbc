@@ -282,11 +282,27 @@ export const CAPABILITIES = {
     source: "Раса: Серый Человек (Oteshii)",
     reader: "warhammer-dbc.mjs — Hooks.on(\"preUpdateActor\") перехватывает system.corruption.value"
   },
+  // ── Пустота Парии / поле Дискорданта (сверка главы I, 26.09.2026) ───────────
+  "pariah.void": {
+    label: "В Пустоте Парии: психосилы (кроме Непрямых) развеиваются, нельзя тратить Бесчестие/Судьбу и получать Порчу, сверхъестественные мутации гаснут, псайкеры −бPR×3, демоны −30",
+    source: "Черта-метка «В Пустоте Парии» (выдаёт аура Парии)",
+    reader: "module/rules/null-zones.mjs (inPariahVoid) — sheets/tabs/psychic.mjs, hooks.mjs, combat/damage.mjs, apps/infamy-points.mjs, sheets/tabs/death.mjs, warhammer-dbc.mjs, apps/mechanics.mjs::syncNullZoneSuppression"
+  },
+  "pariah.self": {
+    label: "Сам Пария: Cor не выше 0 (и без токена на сцене)",
+    source: "Черта Pariah / Пария",
+    reader: "module/rules/null-zones.mjs::corruptionInVoid (preUpdateActor в warhammer-dbc.mjs)"
+  },
+  "discordant.field": {
+    label: "В Поле Дискорданта: электрическое стрелковое не стреляет, рукопашное — выключено, электронные импланты отключены, техночудеса по цели в поле — Критический Провал",
+    source: "Черта-метка «В Поле Дискорданта» (выдаёт аура Дискорданта)",
+    reader: "module/rules/null-zones.mjs (inDiscordantField) — sheets/attack-dialog.mjs, combat/attack.mjs, sheets/tabs/tech.mjs, apps/mechanics.mjs::syncNullZoneSuppression"
+  },
   // ── Избегание Орды как одиночной цели (wdbc-gzuf) ────────────────────────
   "horde.singleTargetImmune": {
-    label: "Избегает атак Орды как одиночная цель (без бонусных кубиков урона за Магнитуду), теряется при Размере 2+",
-    source: "Раса: Серый Человек (Oteshii)",
-    reader: "module/combat/damage.mjs — applyDamageToActor() вычитает magDiceBonus из rawDamage, если sizeTotal < 2"
+    label: "Атаки Орды и «Троек» (Концентрация огня) — как атаки одиночного персонажа: можно Избегать, без бонусных кубиков урона; теряется при Размере 2+",
+    source: "Раса: Серый Человек (Oteshii); Трейт The Quick and The Dead / Быстрые и Мёртвые",
+    reader: "module/rules/horde-single-target.mjs — evadesHordeAsSingle(): combat/damage.mjs снимает magDiceBonus, hooks.mjs пускает Избегать попадание Орды, combat/attack.mjs гасит −20/+2 куба Концентрации огня"
   },
   // ── Бросок «с Преимуществом» на боевую Инициативу (wdbc-0tzr) ────────────
   // НЕ то же самое, что charRollAdvantage субрасы (module/rules/roll-advantage.mjs) —
@@ -1528,7 +1544,7 @@ export const CAPABILITIES = {
   },
   "geneseed.core.heroSSleep": {
     label: "Десантник может перебрасывать неудачные тесты на активацию Сус-ан мембраны и может активировать её до порога −(10+T.",
-    source: "Hero's Sleep / Сон Героя", reader: ""
+    source: "Hero's Sleep / Сон Героя", reader: "rules/death-save.mjs::susAnCriticalLimit/hasHeroSleep + sheets/tabs/death.mjs::doSusAnimation — порог −(10+T.b) и переброс провала"
   },
   "geneseed.core.letItFlow": {
     label: "Когда десантник умирает от Кровотечения, вместо этого он только получает 1 Усталости.",
@@ -2491,7 +2507,8 @@ export const CAPABILITIES = {
   },
   "medic.core.butcher": {
     label: "Персонаж автоматически проходит тесты на лечение бесполезных конечностей и ампутацию при помощи Нартеция.",
-    source: "Butcher / Мясник", reader: ""
+    source: "Butcher / Мясник",
+    reader: "module/sheets/tabs/healing.mjs butcherAutoPass() — applySetLimb (Бесполезная конечность, wdbc-x1nz.2.99) и applyAmputate; только с галочкой «Нартецием» (по умолчанию стоит, если у медика есть предмет Нартеций). Extreme (9) и Precise Нартеция — записи «Свойство атаки» Таланта с областью name:Нартеций (rules/resolve-test.mjs attackScopeApplies); Кровотечение при непоглощённом уроне в «Сочленение / Шея» — module/combat/damage.mjs (wdbc-x1nz.2.101)"
   },
   "medic.core.cook": {
     label: "Имея набор разнообразных химикатов, персонаж может потратить Очко Бесчестия и за 5 минут приготовить I.b смесей,",
@@ -5574,7 +5591,8 @@ export const CAPABILITIES = {
   },
   "trait.theQuickAndTheDead": {
     label: "+2 к Инициативе; Избегание атак Орды.",
-    source: "The Quick and The Dead / Быстрые и Мёртвые", reader: ""
+    source: "The Quick and The Dead / Быстрые и Мёртвые",
+    reader: "ActiveEffect system.initiative +2; остальное — возможность horde.singleTargetImmune на Черте (module/rules/horde-single-target.mjs)"
   },
   "trait.theSilentGuard": {
     label: "Игнорирует требования по характеристикам для Миньонов-машин из психокости; погибшего миньона воскрешает за смену.",
@@ -5649,8 +5667,9 @@ export const CAPABILITIES = {
     source: "Craftworld Citizen / Житель Мира-Корабля", reader: ""
   },
   "trait.treytyRas.discordant": {
-    label: "Аура Haywire против техники.",
-    source: "Discordant / Дискордант", reader: ""
+    label: "Аура W.b×3 м — поле Дискорданта (Haywire (7) для электрики).",
+    source: "Discordant / Дискордант",
+    reader: "запись kind:aura → Черта-метка «В Поле Дискорданта» (discordant.field), правила — module/rules/null-zones.mjs"
   },
   "trait.treytyRas.distortedBody": {
     label: "Не нуждается в еде, воде, сне; иммунитет к обычным и сверхъестественным болезням; не страдает от погодного жара/холода (но не от огнемёта/кр…",
@@ -5697,8 +5716,9 @@ export const CAPABILITIES = {
     source: "Non Imperial / Не Имперец", reader: ""
   },
   "trait.treytyRas.pariah": {
-    label: "Аура чернокнижия (Untouchable).",
-    source: "Pariah / Пария", reader: ""
+    label: "Аура W.b×3 м — Пустота Парии.",
+    source: "Pariah / Пария",
+    reader: "запись kind:aura → Черта-метка «В Пустоте Парии» (pariah.void) + pariah.self, правила — module/rules/null-zones.mjs, rules/library/null-zones.mjs"
   },
   "trait.treytyRas.powerOfSouls": {
     label: "Когда Иннари кого-либо убивает или кто-то умирает в радиусе 10 м — тест W+20, при успехе +1 Мёртвое Могущество (макс. W.b×3).",
@@ -7513,6 +7533,17 @@ export const CAPABILITIES = {
     label: "Иммунитет к Страху: любой тест Страха проходится автоматически",
     source: "Мутация: Infernal Will / Инфернальная Воля (Общие мутации)",
     reader: "module/combat/fear.mjs — _executeFearRoll (autoPass, FEAR_IMMUNE_FLAG)"
+  },
+
+  // ── Страх и Машины (стр. 53) ─────────────────────────────────────────────
+  // «Машины без свободы воли (Сервиторы, Сервочерепа) для механик Страха и
+  // Шока бросают на I вместо W». Не Черта Machine: Техножрец с ней мыслит
+  // как человек. Поэтому своё имя, которое ставится тем, кто действует по
+  // программе, — Черте Сервочереп, будущему Сервитору, NPC вручную.
+  "fear.machineMind": {
+    label: "Машина без свободы воли: тесты Страха и выхода из Шока — на Int вместо W",
+    source: "Черта: Servoskull / Сервочереп (Основная книга, «Страх и Машины», стр. 53)",
+    reader: "module/combat/fear.mjs — fearChar (_executeFearRoll, rollShockRecovery, postShockRecoveryPrompt) + sheets/tabs/disorders.mjs::openFearDialog"
   },
 
   // ── Опознание способности на акторе (wdbc-iadw) ─────────────────────────

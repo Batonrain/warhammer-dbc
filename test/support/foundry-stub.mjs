@@ -258,6 +258,17 @@ globalThis.foundry = {
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;"),
     getProperty: () => undefined,
     setProperty: () => true,
+    // Как у Foundry: вложенный объект → { "a.b.c": значение }; массивы и
+    // пустые объекты — листья.
+    flattenObject: function flatten(obj, _d = 0) {
+      const out = {};
+      for (const [k, v] of Object.entries(obj ?? {})) {
+        if (v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length) {
+          for (const [kk, vv] of Object.entries(flatten(v, _d + 1))) out[`${k}.${kk}`] = vv;
+        } else out[k] = v;
+      }
+      return out;
+    },
     // Как у настоящего Foundry: путь через точку, но без создания
     // промежуточных объектов — только проверка, что путь СУЩЕСТВУЕТ.
     hasProperty: (object, key) => {

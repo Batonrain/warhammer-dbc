@@ -51,7 +51,9 @@ describe("Резонанс саркофага: урон по Дредноуту 
 
     await applyDamageToVehicle(actor, { rawDamage: 5, side: "side" });
 
-    expect(p._updates).toEqual([{ "system.wounds.value": 15, "system.wounds.critical": 0, "system.wounds.firstAidUsed": false }]);
+    // preHitWounds — снимок для отката Чудесным Спасением (rules/wounds.mjs::applyWoundLoss).
+    expect(p._updates).toEqual([{ "system.wounds.value": 15, "system.wounds.critical": 0, "system.wounds.firstAidUsed": false,
+      "flags.warhammer-dbc.preHitWounds": { value: 20, critical: 0 } }]);
     const card = captured.chat.at(-1).content;
     expect(card).toContain("Резонанс саркофага");
     expect(card).toContain("Сор Шаати");

@@ -20,12 +20,24 @@ import { COVER_TYPE } from "../regions/cover.mjs";
 const LINE_SAMPLES = 8;
 
 /**
+ * Токен на сцене из того, что пришло: сам Token (у него есть center) или его
+ * TokenDocument (facing.mjs::resolveAttackerToken отдаёт документ, а у
+ * документа center нет — проверка линии огня молча возвращала «укрытия нет»,
+ * живая проверка 25.09.2026).
+ */
+function placeableOf(t) {
+  if (!t) return null;
+  return t.center ? t : (t.object ?? null);
+}
+
+/**
  * Наибольший подходящий модификатор Укрытия для этого выстрела/удара, или 0.
  * @param {Token} attackerToken
  * @param {Token} targetToken
  * @returns {number}
  */
 export function coverBonusForShot(attackerToken, targetToken) {
+  attackerToken = placeableOf(attackerToken); targetToken = placeableOf(targetToken);
   const regions = targetToken?.document?.regions;
   if (!regions || !regions.size) return 0;
   const ac = attackerToken?.center, tc = targetToken?.center;
@@ -40,6 +52,33 @@ export function coverBonusForShot(attackerToken, targetToken) {
       if (!mod) continue;
       const onLine = _segmentHitsRegion(region, ac, tc, elevation);
       if (onLine && Math.abs(mod) > Math.abs(best)) best = mod;
+    }
+  }
+  return best;
+}
+
+/**
+ * Зона Укрытия, прикрывающая цель от ЭТОГО стрелка: цель стоит в ней, и
+ * линия огня её пересекает (та же проверка, что у coverBonusForShot). Нужна
+ * урону (combat/damage.mjs): AP зоны идёт в поглощение, а пробившее её
+ * попадание зону изнашивает («Разрушение Укрытий», wdbc-x1nz.2.62).
+ * Наибольший AP, если зон несколько.
+ * @returns {?{ap:number, behavior:object}}
+ */
+export function coverRegionForShot(attackerToken, targetToken) {
+  attackerToken = placeableOf(attackerToken); targetToken = placeableOf(targetToken);
+  const regions = targetToken?.document?.regions;
+  if (!regions || !regions.size) return null;
+  const ac = attackerToken?.center, tc = targetToken?.center;
+  if (!ac || !tc) return null;
+  const elevation = targetToken.document.elevation ?? 0;
+  let best = null;
+  for (const region of regions) {
+    for (const behavior of region.behaviors ?? []) {
+      if (behavior.type !== COVER_TYPE || behavior.disabled) continue;
+      const ap = Number(behavior.system?.coverAp) || 0;
+      if (ap <= 0 || (best && ap <= best.ap)) continue;
+      if (_segmentHitsRegion(region, ac, tc, elevation)) best = { ap, behavior };
     }
   }
   return best;

@@ -41,6 +41,7 @@ const raceFromDoc = doc => ({
   group: doc.system?.group || "",
   chars: { ...(doc.system?.chars || {}) },
   bonusRolls: doc.system?.bonusRolls || 0,
+  bonusPoints: doc.system?.bonusPoints || 0, charShift: doc.system?.charShift || 0,
   skills: doc.system?.skills || "", gear: doc.system?.gear || "",
   talents: doc.system?.talents || "", desc: doc.system?.description || "",
   hasGeneSeed: !!doc.system?.hasGeneSeed,
@@ -52,6 +53,7 @@ const raceFromDoc = doc => ({
 const raceFromConst = (key, r) => ({
   key, label: r.label, group: constGroup(key),
   chars: { ...(r.chars || {}) }, bonusRolls: r.bonusRolls || 0,
+  bonusPoints: r.bonusPoints || 0, charShift: r.charShift || 0,
   skills: r.skills || "", gear: r.gear || "",
   talents: Array.isArray(r.talents) ? r.talents.join(", ") : (r.talents || ""),
   desc: r.desc || "", hasGeneSeed: !!r.hasGeneSeed,
@@ -70,6 +72,9 @@ const subFromDoc = doc => ({
   charRollAdvantage: { ...(doc.system?.charRollAdvantage || {}) },
   talents: doc.system?.talents || "",
   removesTraits: [...(doc.system?.removesTraits || [])],
+  tierCosts: [...(doc.system?.tierCosts || [])],
+  bannedArchetypes: [...(doc.system?.bannedArchetypes || [])],
+  mutationsAsAstartes: !!doc.system?.mutationsAsAstartes,
   uuid: doc.uuid
 });
 
@@ -82,7 +87,10 @@ const subFromConst = (key, label) => {
     charMods: { ...(s.charMods || {}) },
     charRollAdvantage: { ...(s.charRollAdvantage || {}) },
     talents: Array.isArray(s.talents) ? s.talents.join(", ") : (s.talents || ""),
-    removesTraits: [...(s.removesTraits || [])], uuid: ""
+    removesTraits: [...(s.removesTraits || [])],
+    tierCosts: [...(s.tierCosts || [])],
+    bannedArchetypes: [...(s.bannedArchetypes || [])],
+    mutationsAsAstartes: !!s.mutationsAsAstartes, uuid: ""
   };
 };
 
@@ -141,3 +149,14 @@ export function raceGroupList() {
 }
 
 registerPackCacheRefresh(PACK, refreshRaceCache);
+
+/**
+ * Цена субрасы на выбранном уровне: tierCosts[tier-1], без уровней — cost.
+ * Уровень вне списка прижимается к краю (1…число уровней).
+ */
+export function subraceCostAt(def, tier = 1) {
+  const tiers = Array.isArray(def?.tierCosts) ? def.tierCosts : [];
+  if (!tiers.length) return Number(def?.cost) || 0;
+  const i = Math.min(tiers.length, Math.max(1, Number(tier) || 1)) - 1;
+  return Number(tiers[i]) || 0;
+}

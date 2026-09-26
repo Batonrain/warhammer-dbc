@@ -63,7 +63,8 @@
       "reloads": 10
     },
     "meleeCategory": "Топор",
-    "wraithbone": true
+    "wraithbone": true,
+    "techClass": "none"
   },
   "_id": "zbLOCrnZPxKcoZ58",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-axe.svg",

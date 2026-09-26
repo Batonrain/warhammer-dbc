@@ -95,7 +95,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Крюк"
+    "meleeCategory": "Крюк",
+    "techClass": "mechanical"
   },
   "_id": "nRZwIFRSBWJYB7GD",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-staff.svg",

@@ -251,8 +251,15 @@ describe("эффекты Детальной Команды", () => {
   it("покупаются, пока хватает Успехов", async () => {
     const boss = commander({ cmd: { detailCommand: { active: true, successes: 3, picks: [] } } });
     await toggleDetailPick(boss, "bravery");           // стоит 1
-    await toggleDetailPick(boss, "rally");             // стоит 2
-    expect(boss.system.command.detailCommand.picks).toEqual(["bravery", "rally"]);
+    await toggleDetailPick(boss, "volley");             // стоит 2
+    expect(boss.system.command.detailCommand.picks).toEqual(["bravery", "volley"]);
+  });
+
+  it("«Сплочения» у сброда нет: Слаженности нет — и поднимать нечего", async () => {
+    const boss = commander({ cmd: { detailCommand: { active: true, successes: 4, picks: [] } } });
+    await toggleDetailPick(boss, "rally");
+    expect(boss.system.command.detailCommand.picks).toEqual([]);
+    expect(commandContext(boss).detailCommands.map(c => c.key)).not.toContain("rally");
   });
 
   it("сверх накопленного не покупаются", async () => {
@@ -262,15 +269,15 @@ describe("эффекты Детальной Команды", () => {
   });
 
   it("повторный клик снимает выбор и возвращает Успехи", async () => {
-    const boss = commander({ cmd: { detailCommand: { active: true, successes: 3, picks: ["rally"] } } });
-    await toggleDetailPick(boss, "rally");
+    const boss = commander({ cmd: { detailCommand: { active: true, successes: 3, picks: ["volley"] } } });
+    await toggleDetailPick(boss, "volley");
     expect(boss.system.command.detailCommand.picks).toEqual([]);
   });
 
   it("сброс гасит всё отданное", async () => {
     const boss = commander({ cmd: {
       presence: { active: true, benefit: "extreme" },
-      detailCommand: { active: true, successes: 4, picks: ["rally"] }
+      detailCommand: { active: true, successes: 4, picks: ["volley"] }
     } });
     await clearCommands(boss);
     expect(boss.system.command.presence.active).toBe(false);
@@ -314,5 +321,19 @@ describe("речь к Орде", () => {
     registerActors(grunt);
     await rallyHorde(commander(), grunt.uuid);
     expect(captured.chat).toEqual([]);
+  });
+});
+
+describe("Дрессировка", () => {
+  it("Survival(P), лимит Успехов 2 + продвижения Awareness/Survival, без Детальных", async () => {
+    const boss = commander({ cmd: { training: true } });
+    boss.system.skills.survival = { total: 90, rank: "trained" };   // +10 → 1
+    boss.system.skills.awareness = { rank: "knows" };               // +0 → 0
+    captured.nextRoll = 5;                                          // 9 Успехов → лимит 3
+    const res = await rollCommand(boss, "short", { shortKey: "inspire" });
+    expect(res.successes).toBe(3);
+    expect(captured.chat.at(-1).content).toContain("Survival(P)");
+    await rollCommand(boss, "detail");
+    expect(captured.warnings.join(" ")).toContain("Детальных");
   });
 });

@@ -5,6 +5,9 @@ import { getCriticalEffect }          from "./critical-tables.mjs";
 // единственный, кого rules/sources.mjs не импортирует (цикл импортов,
 // wdbc-795h). Без этой строки Талант просто не даст Командиру переброс.
 import "./module/rules/adjutant.mjs";
+// Источник правил «command» (бонусы Команд к броскам подчинённых, глава
+// «Командование») — тоже саморегистрация, по той же причине, что Адъютант.
+import { applyRelayedCommandUpdate } from "./module/combat/command-state.mjs";
 import { RACES, SUBRACES }            from "./module/constants/races.mjs";
 import { CHARACTERISTICS, IMPROVEMENTS,
          IMPROVEMENT_BONUS,
@@ -47,7 +50,7 @@ import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
          saveItemMechanics, mechanicsRelevantChange, syncGrantedEquipment,
-         syncGrantedAbilities, hasWhenGatedAbilityGrant } from "./module/apps/mechanics.mjs";
+         syncNullZoneSuppression, syncGrantedAbilities, hasWhenGatedAbilityGrant } from "./module/apps/mechanics.mjs";
 import { isItemActive, syncOrphanedModEffects } from "./module/apps/effects.mjs";
 import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
 import { applyRace, applySubrace, SKIP_MECHANICS_HOOK } from "./module/apps/races.mjs";
@@ -74,6 +77,7 @@ import { reconcileHyperGrowthToFit } from "./module/apps/hyper-growth.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
 import { hasRuleFlag }                from "./module/rules/flags.mjs";
 import { redirectCorruptionToMadness } from "./module/rules/corruption-madness.mjs";
+import { corruptionInVoid }          from "./module/rules/null-zones.mjs";
 import { FATE_SAVE_FLAG, FATE_SAVE_DIE, fateSpent, fateSaved, fatePoolLabel }
   from "./module/rules/fate-save.mjs";
 import { DEFAULT_CALENDAR_CONFIG }    from "./module/constants/imperial-calendar.mjs";
@@ -134,6 +138,8 @@ import { migrateBornForWarDivination, announceBornForWarRepicks } from "./module
 import { migrateWarpforgedPlate } from "./module/migrations/warpforged-plate-fix.mjs";
 import { migrateNimbleRating } from "./module/migrations/nimble-rating.mjs";
 import { migrateSightAngle } from "./module/migrations/sight-angle.mjs";
+import { migrateStringListRestore } from "./module/migrations/string-list-restore.mjs";
+import { migrateLimbLossSides } from "./module/migrations/limb-loss-sides.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
 import { runMigrationGate } from "./module/migrations/unlinked-tokens.mjs";
 import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
@@ -144,6 +150,7 @@ import { registerFeatureSettings, registerSettingsSections,
          isFeatureEnabled }           from "./module/constants/features.mjs";
 import { registerDuplicateGrantSettings, initTalentGroupIndex } from "./module/rules/duplicate-grants.mjs";
 import { registerAdvancePricingSettings, initTalentGodIndex } from "./module/constants/patronage.mjs";
+import { registerCreationMethodSetting } from "./module/constants/creation-method.mjs";
 import { registerSystemFonts, registerFontSettings, applySystemFont } from "./module/constants/fonts.mjs";
 import { initPackCaches }             from "./module/apps/origin-shared.mjs";
 import { initFactionIndex }           from "./module/apps/faction-cache.mjs";
@@ -175,6 +182,7 @@ Hooks.once("init", () => {
   registerDiagonalDefaultSetting();
   registerTokenAutoRotateDefaultSetting();
   registerAdvancePricingSettings();
+  registerCreationMethodSetting(); // Генерация / Сборка / оба (стр. 3)
   registerFontSettings();       // выбор шрифта интерфейса (мир + личный, wdbc-9m83)
   registerSettingsSections();   // подразделы в окне настроек
 
@@ -583,6 +591,18 @@ Hooks.once("init", () => {
     scope: "world", config: false, type: Number, default: 0
   });
 
+  // Версия восстановления строк-ключей (свойства брони и т.п.), потерянных
+  // схемой ArrayField(ObjectField) (одноразовая, wdbc-x1nz.2.81)
+  game.settings.register("warhammer-dbc", "stringListRestoreVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия записи потери конечностей по сторонам (system.lostLimbs) у уже
+  // покалеченных — прежние conditions.lostX схема вычищает (приёмка #518-#526)
+  game.settings.register("warhammer-dbc", "limbLossSidesVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
   // Столица протектората Вольного Торговца (id актёра-системы)
   game.settings.register("warhammer-dbc", "protectorateCapital", {
     scope: "world", config: false, type: String, default: ""
@@ -858,6 +878,12 @@ Hooks.once("ready", () => {
       const requester = game.users.get(data?.userId);
       if (!requester) return;
 
+      // Правка командования чужого документа (Отряд, подчинённый) — с клиента
+      // без прав; module/combat/command-state.mjs::updateOrRelay.
+      if (data.action === "commandUpdate") {
+        await applyRelayedCommandUpdate(data);
+        return;
+      }
       if (data.action === "veilShift") {
         // Отвращение Варпа от игрока (module/apps/ritual-cast.mjs,
         // defaultVeilShiftFn) — у не-ГМ veilShift() тихо не срабатывает,
@@ -1038,7 +1064,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -1241,6 +1267,35 @@ Hooks.once("ready", async () => {
     if (!result?.failed) await game.settings.set("warhammer-dbc", "sightAngleVersion", VERSION);
     else console.warn("Warhammer DBC | Угол обзора: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
   } catch (e) { console.error("Warhammer DBC | Угол обзора:", e); }
+});
+
+// ── Одноразовая правка: свойства брони, пути отравления и снимаемые
+// модификацией свойства, потерянные схемой ArrayField(ObjectField) — ключи
+// берутся из компендиума-источника (wdbc-x1nz.2.81) ──
+// Ручной перезапуск: game.warhammerDBC.migrateStringListRestore()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "stringListRestoreVersion") || 0) >= VERSION) return;
+  try {
+    const result = await migrateStringListRestore();
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "stringListRestoreVersion", VERSION);
+    else console.warn("Warhammer DBC | Свойства брони: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
+  } catch (e) { console.error("Warhammer DBC | Свойства брони:", e); }
+});
+
+// ── Одноразовая запись: потеря конечностей по сторонам у уже покалеченных
+// (module/migrations/limb-loss-sides.mjs) ──
+// Ручной перезапуск: game.warhammerDBC.migrateLimbLossSides()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "limbLossSidesVersion") || 0) >= VERSION) return;
+  try {
+    const result = await migrateLimbLossSides();
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "limbLossSidesVersion", VERSION);
+    else console.warn("Warhammer DBC | Потеря конечностей: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
+  } catch (e) { console.error("Warhammer DBC | Потеря конечностей:", e); }
 });
 
 // ── Одноразовая доливка: биоимпланты, выданные до появления Доступности ──────
@@ -2423,6 +2478,18 @@ Hooks.on("updateActor", async (doc, changes, options, userId) => {
 // что пишут Cor напрямую (mechanics.mjs/psychic.mjs/homeworlds.mjs/creation.mjs/...) —
 // preUpdateActor мутирует changes синхронно, отдельного updateActor не нужно.
 // Арифметика — module/rules/corruption-madness.mjs (тестируется без стенда).
+// Пустота Парии (rules/null-zones.mjs): «не могут получать Порчу» — прирост
+// отменяется ДО перенаправления в Безумие ниже (регистрация раньше).
+Hooks.on("preUpdateActor", (doc, changes) => {
+  const newCor = foundry.utils.getProperty(changes, "system.corruption.value");
+  if (typeof newCor !== "number") return;
+  const keep = corruptionInVoid(doc, doc.system?.corruption?.value, newCor);
+  if (keep !== newCor) {
+    foundry.utils.setProperty(changes, "system.corruption.value", keep);
+    ui.notifications?.info(`${doc.name}: в Пустоте Парии Порча не прибавляется.`);
+  }
+});
+
 Hooks.on("preUpdateActor", (doc, changes) => {
   const newCor = foundry.utils.getProperty(changes, "system.corruption.value");
   if (typeof newCor !== "number") return;
@@ -2568,3 +2635,21 @@ Hooks.on("preUpdateItem", (item, changed) => {
   ui.notifications?.warn(`«${item.name}» — интегральная атака: снять её нельзя.`);
   return false;
 });
+
+// ── Пустота Парии / поле Дискорданта (rules/null-zones.mjs) ───────────────────
+// Черту-метку зоны выдаёт и снимает аура носителя (regions/auras.mjs, у ГМа).
+// По её появлению/снятию — и по новой мутации/импланту у того, кто уже в
+// зоне, — гасим/возвращаем сверхъестественные мутации и электронные импланты.
+// Применяет ровно один ГМ, как и сама аура.
+const NULL_ZONE_TRAITS = ["In the Pariah's Void", "In the Discordant's Field"];
+function _nullZoneRelevant(item) {
+  if (item?.type === "mutation" || item?.type === "implant") return true;
+  return item?.type === "trait" && NULL_ZONE_TRAITS.some(n => String(item.name || "").startsWith(n));
+}
+for (const hook of ["createItem", "deleteItem"]) {
+  Hooks.on(hook, item => {
+    if (game.users.activeGM !== game.user) return;
+    if (!(item?.parent instanceof Actor) || !_nullZoneRelevant(item)) return;
+    syncNullZoneSuppression(item.parent).catch(e => console.error("Warhammer DBC | зона Парии/Дискорданта:", e));
+  });
+}

@@ -8,6 +8,7 @@
 import { actorFactionKeys, anySameOrDescendant, isSameOrDescendant, getFactionIndex }
   from "./factions.mjs";
 import { raceMatches } from "./race.mjs";
+import { hordeSizeFor } from "./horde-damage.mjs";
 import { hasPathGrade } from "../constants/aeldari-paths.mjs";
 import { anyTargetMatches } from "./talent-targets.mjs";
 
@@ -88,6 +89,15 @@ function nameForms(item) {
  * записаны тем же типом предмета, что и общие Мутации (system.god), находки
  * вида «противник ПРОТИВ персонажа с Мутацией/Даром X» иначе не матчились бы.
  */
+/** Имя Черты-метки Пустоты Парии (packs-src/traits/Трейты_рас, PariahVoidZone01). */
+export const PARIAH_VOID_TRAIT = "In the Pariah's Void";
+
+function isDaemonActor(actor) {
+  if (!actor) return false;
+  if (actor.type === "daemon" || actor.type === "demonPrince") return true;
+  return hasNamed(actor, "Daemonic");
+}
+
 function hasNamed(actor, names) {
   const items = [...(actor?.items ?? [])];
   return list(names).every(name => items.some(
@@ -107,6 +117,19 @@ export function sizeOf(actor) {
   const sys = actor?.system ?? {};
   if (sys.sizeTotal != null) return Number(sys.sizeTotal) || 0;
   return (Number(sys.size) || 0) + (Number(sys.sizeMod) || 0) + (Number(sys.sizeModNoSpd) || 0);
+}
+
+/**
+ * Размер в таблице «попадание по цели / Скрытность» (стр. 30). У всех, кроме
+ * Орды, это обычный sizeOf. Орда же по книге («Орды», Магнитуда) берёт Размер
+ * по Магнитуде — «в расчёте атак по орде и тестов Stealth (но не SPD)»: толпа
+ * в 60 Магнитуды — Размер 4 и +40 к попаданию по ней, чей бы рост ни был у
+ * отдельных её членов. Борьба, Повалить, Парирование и прочее, что меряет
+ * рост существ, читают sizeOf — туда Размер Орды книга не переносит.
+ */
+export function hitSizeOf(actor) {
+  if (actor?.type === "horde") return hordeSizeFor(actor.system?.magnitude?.value);
+  return sizeOf(actor);
 }
 
 // Силовая/аспектная броня — то же множество, что POWER_ARMOR_TYPES в
@@ -269,7 +292,7 @@ export const CTX_DEPENDENT_PREDICATES = new Set([
   "targetHasTrait", "targetLacksCondition", "targetHasCondition",
   "targetHasSize", "targetKeepsNimbleInArmour", "targetHasFaction",
   "targetHasFieldPsyMod", "targetLacksSealedArmour", "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus", "hasHatredTarget",
-  "legacyGuardianMarked"
+  "legacyGuardianMarked", "targetPsykerOrDaemon"
 ]);
 
 export const PREDICATES = {
@@ -330,6 +353,21 @@ export const PREDICATES = {
   hasTalent: (actor, ctx, value) => hasNamed(actor, value),
   hasTrait:  (actor, ctx, value) => hasNamed(actor, value),
 
+  // Пустота Парии (rules/null-zones.mjs) — по Черте-метке, которую выдаёт
+  // аура, а НЕ через hasRuleFlag: флаг собирается тем же движком правил, и
+  // условие правила, спрашивающее флаг, зациклило бы сбор.
+  inPariahVoid: (actor, ctx, value) => hasNamed(actor, PARIAH_VOID_TRAIT) === (value !== false),
+
+  // Демон — тип актора или Черта Daemonic («Демоны получают штраф −30…»).
+  isDaemon: (actor, ctx, value) => isDaemonActor(actor) === (value !== false),
+
+  // Цель броска — псайкер или демон (Пария: −60 вместо −30 к социальным).
+  targetPsykerOrDaemon: (actor, ctx, value) => {
+    const t = ctx?.targetActor;
+    const hit = !!t && ((Number(t.system?.psyker?.rating) || 0) >= 1 || isDaemonActor(t));
+    return hit === (value !== false);
+  },
+
   weaponClass: (actor, ctx, value) => list(value).includes(ctx?.weapon?.system?.weaponClass),
 
   // Характеристика ТЕКУЩЕГО теста НЕ входит в список — «для всех тестов,
@@ -378,6 +416,10 @@ export const PREDICATES = {
   // правил — рекурсия collectRules → предикат → collectRules.
   isBlinded: (actor, ctx, value) => isBlindedActor(actor) === (value !== false),
 
+  // «Рядовой» (корбук стр. 4, system.rankAndFile): `true` — Рядовой, `false` —
+  // чемпион. Гейт записей, которых у Рядовых по книге нет (Черты Человека).
+  rankAndFile: (actor, ctx, value) => !!actor?.system?.rankAndFile === (value !== false),
+
   // То же самое, но про цель броска (ctx.targetActor) — «атаки по Поваленной
   // цели» и подобные правила со стороны атакующего.
   targetHasCondition: (actor, ctx, value) =>
@@ -386,8 +428,8 @@ export const PREDICATES = {
   // Ненулевой Размер — гейт core.sizeToHit/core.sizeStealth (rules/library/
   // core.mjs): без него строка с «(+0)» лезла бы в чек-лист на каждом броске
   // против обычного человека, а не только там, где Размер реально что-то даёт.
-  hasSize:       (actor, ctx) => sizeOf(actor) !== 0,
-  targetHasSize: (actor, ctx) => sizeOf(ctx?.targetActor) !== 0,
+  hasSize:       (actor, ctx) => hitSizeOf(actor) !== 0,
+  targetHasSize: (actor, ctx) => hitSizeOf(ctx?.targetActor) !== 0,
 
   // «Позволяет сохранять Трейт Nimble в силовой броне» (имплант «Чёрный
   // Панцирь / Black Carapace», DoomBC — ГЕНОСЕМЯ) — без брони условие не

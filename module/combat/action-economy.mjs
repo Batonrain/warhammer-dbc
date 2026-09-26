@@ -32,11 +32,25 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { determinationToFightApBonus } from "../rules/determination-to-fight.mjs";
 import { isStunnedOrDazed } from "../rules/predicates.mjs";
+import { shockApLocked, shockHalfAction } from "../rules/shock.mjs";
 import { turnStartFlagClears, turnStartAttackCarryOver, turnStartSqueezeCarryOver } from "../rules/turn-flags.mjs";
 import { rollLegacyChangeBonus, tickLegacyExcessBoost } from "../rules/legacy-weapon.mjs";
 
 /** Типы акторов, несущих экономику действий (общая часть — _creature.mjs). */
-export const ACTION_ECONOMY_ACTOR_TYPES = ["character", "daemon", "demonPrince", "minion"];
+export const ACTION_ECONOMY_ACTOR_TYPES = ["character", "daemon", "demonPrince", "minion", "horde"];
+
+/**
+ * Идёт ли сейчас Ход этого актора. Сравнение по документу, по uuid и — для
+ * связанного токена — по id мирового актора: в Encounter лежит токен-актор,
+ * а вызывающая сторона может держать мирового (и наоборот).
+ */
+export function isOwnTurn(actor) {
+  const cur = game.combat?.combatant;
+  const other = cur?.actor;
+  if (!actor || !other) return false;
+  if (other === actor || (other.uuid && other.uuid === actor.uuid)) return true;
+  return !!actor.id && !actor.isToken && !other.isToken && cur.actorId === actor.id;
+}
 
 export function hasActionEconomy(actor) {
   return ACTION_ECONOMY_ACTOR_TYPES.includes(actor?.type);
@@ -101,11 +115,16 @@ export async function resetActionEconomy(actor) {
   // Оглушения — не через isStunnedOrDazed, у Без сознания это СВОЙ пункт
   // книги, не производный от Беспомощности выше) — абсолютный запрет (0),
   // сильнее ограничения Подавленного ниже (min 1).
-  const apLocked       = isStunnedOrDazed(actor) || !!sys.conditions?.unconscious || surprised;
+  // Шок «Замер от ужаса» (стр. 53, строка 61–80): «не может совершать никаких
+  // действий, пока не оправится» — тот же абсолютный запрет.
+  const apLocked       = isStunnedOrDazed(actor) || !!sys.conditions?.unconscious || surprised
+                         || shockApLocked(actor);
   // Стр. 33: Подавленный персонаж в укрытии имеет только 1 ОД в свой Ход
   // («в укрытии» не проверяем — тот же приём, что у штрафа BS в диалоге
   // атаки: считаем по самому факту Подавления).
-  const apMaxBase      = apLocked ? 0 : sys.conditions?.pinned
+  // Шок «ошеломлён» (стр. 53, строка 1–20): «только одно Полудействие в свой
+  // следующий Ход» — то же ограничение в 1 ОД; флаг гасит реестр turn-flags.
+  const apMaxBase      = apLocked ? 0 : (sys.conditions?.pinned || shockHalfAction(actor))
     ? Math.min(1, effectiveActionPointsMax(actor))
     : effectiveActionPointsMax(actor);
   // Пожиратель Времени (wdbc-xzfp): «теряют полудействие» — долг, записанный
@@ -261,6 +280,7 @@ export function actionBlockReason(actor, { physical } = {}) {
   if (c.unconscious) return "Без сознания";
   if (c.stunned)     return "Оглушён";
   if (c.dazed)       return "в Ступоре";
+  if (shockApLocked(actor)) return "замер от ужаса (Шок)";
   if (c.helpless && physical !== false) return "Беспомощен (не может совершать Физические действия)";
   return "";
 }
@@ -320,7 +340,7 @@ async function _maybeTriggerCrippling(actor, cost) {
   });
   const { applyCripplingTrigger } = await import("./damage.mjs");
   for (const w of wounds) {
-    await applyCripplingTrigger(actor, Number(w.rating) || 0, w.locationLabel || w.location || "");
+    await applyCripplingTrigger(actor, Number(w.rating) || 0, w.locationLabel || w.location || "", w.damageType || "");
   }
 }
 
@@ -403,6 +423,10 @@ export function canSpendReaction(actor, { forDefense = false, attackId = "", phy
   if (actionBlockReason(actor, { physical })) return false;
   // Бег (стр. 32): до начала следующего Хода бегущий не может Реакции.
   if (actor.getFlag("warhammer-dbc", "running")) return false;
+  // Орда («Орды», Действия): Реакции есть, но тратить их она может «только в
+  // свой Ход» — на особые действия вроде атаки мехадендритами или Furious
+  // Assault. Свободные Атаки, Избегания и прочие ответы в чужой Ход ей закрыты.
+  if (actor.type === "horde" && !isOwnTurn(actor)) return false;
   if (hasReactedToAttack(actor, attackId)) return false;
   const universal = Number(actor.system.reactions?.value) || 0;
   const defense    = forDefense ? (Number(actor.system.reactions?.defenseValue) || 0) : 0;

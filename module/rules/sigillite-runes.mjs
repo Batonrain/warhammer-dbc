@@ -66,6 +66,7 @@ import { rankIndex } from "./req-atom.mjs";
 import { hasRuleFlag } from "./flags.mjs";
 import { PSY_DISCIPLINES } from "../constants/disciplines.mjs";
 import { woundLossUpdates } from "./wounds.mjs";
+import { charLossPortionsAddFields } from "./char-loss.mjs";
 
 /** Базовый потолок Рун из книги: «У персонажа может быть максимум 20 рун». */
 export const RUNE_BASE_MAX = 20;
@@ -410,16 +411,17 @@ export function runeLearnInfo(actor, item) {
  * этого файла (см. PATH.woundCost выше по конвейеру, tabs/psychic.mjs).
  *
  * «восстанавливает 1 за 8 часов, не лечится психосилами/судьбой/бесчестия/
- * медитацией» — НЕ смоделировано: в системе нет вообще ни одного авто-
- * восстановления system.charDamage.* (см. combat/gangrene.mjs) — этому темпу
- * сейчас нечему противоречить, лечить эти минус-очки, кроме ручной правки
- * игроком поля «Мод.», всё равно нечем ни у одного источника такого урона.
+ * медитацией» — урон идёт порцией со своим темпом (system.charLossPortions,
+ * rules/char-loss.mjs, task 1-8): 1 за 8 ч, noMagic.
  */
 export function improvisedRuneCostUpdates(actor) {
   const updates = woundLossUpdates(actor.system, IMPROVISED_RUNE_WOUND_COST);
-  for (const key of IMPROVISED_RUNE_CHARS) {
-    const cur = num(actor?.system?.charDamage?.[key]);
-    updates[`system.charDamage.${key}`] = cur - IMPROVISED_RUNE_CHAR_DAMAGE;
-  }
+  // Единый конвейер урона в Характеристики (wdbc-x1nz.2.83): пол 0. Темп —
+  // книжный, у самой порции: 1 за 8 ч, не лечится сверхъестественным (task 1-8).
+  const entries = IMPROVISED_RUNE_CHARS.map(key => ({
+    key, amount: IMPROVISED_RUNE_CHAR_DAMAGE, hours: 8, noMagic: true,
+    source: "Импровизированная Руна Сигиллита"
+  }));
+  Object.assign(updates, charLossPortionsAddFields(actor?.system, entries, globalThis.game?.time?.worldTime ?? 0).patch);
   return updates;
 }

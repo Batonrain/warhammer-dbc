@@ -21,7 +21,8 @@
       "initMod": 0,
       "speedMod": 0
     },
-    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)",
+    "supernatural": true
   },
   "_id": "qkngN9Hac4D3l73D",
   "effects": [],

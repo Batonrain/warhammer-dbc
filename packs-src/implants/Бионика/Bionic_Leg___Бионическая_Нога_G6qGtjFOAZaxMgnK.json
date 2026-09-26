@@ -36,7 +36,8 @@
       "currentRating": 0,
       "equipped": false,
       "status": "inactive"
-    }
+    },
+    "techClass": "electric"
   },
   "folder": "QoiEzJ5FFywJIo98",
   "_id": "G6qGtjFOAZaxMgnK",

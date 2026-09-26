@@ -119,7 +119,8 @@ export const INFAMY_CAP = 100;
  */
 export function permanentInfamy(actor) {
   const inf = actor?.system?.characteristics?.inf ?? {};
-  return int(inf.total) - int(inf.drugMod) - int(inf.charDamage) + int(inf.vitalMod);
+  // + charLoss — урон по книге (wdbc-x1nz.2.83) тоже временный.
+  return int(inf.total) - int(inf.drugMod) - int(inf.charDamage) + int(inf.charLoss) + int(inf.vitalMod);
 }
 
 /** Сколько ещё можно прибавить к Бесчестию, не пробив потолок. */

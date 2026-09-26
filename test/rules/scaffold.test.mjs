@@ -32,7 +32,9 @@ describe("каркас module/rules", () => {
     // isBlinded (свой флаг или оба глаза, Ослеплён, wdbc-x1nz.2.89),
     // targetHasFieldPsyMod (Подавляющее поле брони цели, wdbc-j8cn),
     // targetLacksSealedArmour (цель без гермодоспеха, Миазмы, wdbc-1rno.11).
-    expect(Object.keys(predicates.PREDICATES)).toHaveLength(32);
+    // rankAndFile («Рядовой», корбук стр. 4, task-ce3a).
+    // inPariahVoid/isDaemon/targetPsykerOrDaemon — Пустота Парии (rules/null-zones.mjs).
+    expect(Object.keys(predicates.PREDICATES)).toHaveLength(36);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);
     expect(typeof sources.registerRuleSource).toBe("function");

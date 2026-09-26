@@ -75,6 +75,8 @@ const OWN_DEVIATIONS = {
     // Стереотип Покровительства и своя система цены Продвижения — заведены
     // гораздо позже template.json (constants/patronage.mjs).
     patronStereotype: "", pricingModeOverride: "",
+    // «Рядовой» (стр. 4, rules/starting-characteristics.mjs) — заведён позже template.json.
+    rankAndFile: false,
     // Момент последнего «Поесть/Попить/Поспать» (worldTime) для автопрогресса
     // стадий по времени (wdbc-jnqj) — заведён гораздо позже template.json.
     vitals: { hunger: 0, thirst: 0, sleep: 0, lastFed: null, lastDrank: null, lastSlept: null },
@@ -103,7 +105,14 @@ const DEVIATIONS = {
     // же поле лежало и ниже вторым ключом `squad` (объект перекрывал сам
     // себя, вторая копия без эффекта), слито в одну запись при введении
     // no-dupe-keys (wdbc-swzz).
-    "shortCommand.recipientUuid": ""
+    "shortCommand.recipientUuid": "",
+    // Командование в бросках подчинённых (глава «Командование», wdbc-x1nz.2):
+    // вид тестов Общей Команды, кто и когда отдал (срок до следующего Хода
+    // отдающего), Успехи в «Прикрытии» и Талант «Особой Тактики».
+    "shortCommand.testKind": "", "shortCommand.giverUuid": "",
+    "shortCommand.combatId": "", "shortCommand.round": 0,
+    "detailCommand.coverSuccesses": 0, "detailCommand.tactic": "",
+    "detailCommand.giverUuid": "", "detailCommand.combatId": "", "detailCommand.round": 0
   },
   vehicle: {
     // Объявлена не была, но лежит у всех 56 машин пака.
@@ -156,7 +165,14 @@ const DEVIATIONS = {
     // template.json тем же приёмом, что и у Персонажа/Демона/Миньона/Принца
     // Демона (charDamage в _creature.mjs). У Орды нет Влияния.
     charDamage: Object.fromEntries(Object.keys(CHARACTERISTICS)
-      .filter(k => k !== "inf").map(k => [k, 0]))
+      .filter(k => k !== "inf").map(k => [k, 0])),
+    // Подавление («Контроль Орды»: «вполне работает на Ордах») — единственное
+    // Состояние, которое книга переносит на толпу; путь тот же, что у существ.
+    conditions: { pinned: false },
+    // Экономика действий («Орды», Действия: «обычный запас ОД», Реакции как у
+    // персонажа) — те же поля и умолчания, что у существ.
+    actionPoints: { value: 2, max: 2 },
+    reactions: { value: 1, max: 1, defenseValue: 0, defenseMax: 0 }
   },
   // У трёх существ три набора расхождений сразу, и записаны они по-разному:
   // поля Миньонов и свои поля типа — обычными именами, надбавки характеристик —
@@ -170,6 +186,10 @@ const DEVIATIONS = {
   ...Object.fromEntries(["character", "daemon", "demonPrince"].map(type => [type, {
     ...MINION_FIELDS,
     ...MOUNT_FIELDS,
+    // Уровень купленной субрасы (Затупленный 1–4) и сдвиг максимума Бесчестия
+    // Хаосита от субрасы (Наследник +1, Затупленный −уровень) — сверка главы
+    // I, 26.09.2026, гораздо позже template.json.
+    subraceTier: 1, infamyMaxMod: 0,
     // Три слота Стремлений. Раньше писались прямо в `aspirations`, но то поле
     // объявлено объектом (там Фактор Прибыли), и массив схема отбрасывала —
     // выбор не сохранялся вовсе. Теперь у слотов своё поле.
@@ -190,9 +210,15 @@ const DEVIATIONS = {
     // у всех до первого приобретённого/присвоенного маршрута.
     knownRoutes: [],
     command: {
+      // Дрессировка — Survival(P) вместо Command(F) (глава «Командование»).
+      training: false,
       presence:      { active: false, benefit: "extreme" },
-      shortCommand:  { active: false, key: "inspire", successes: 0, note: "" },
-      detailCommand: { active: false, successes: 0, picks: [] }
+      // testKind…round, coverSuccesses, tactic — бонусы Команд в бросках
+      // подчинённых и их срок (wdbc-x1nz.2, rules/command-effects.mjs).
+      shortCommand:  { active: false, key: "inspire", successes: 0, note: "",
+                       testKind: "", recipientUuid: "", combatId: "", round: 0 },
+      detailCommand: { active: false, successes: 0, picks: [],
+                       coverSuccesses: 0, tactic: "", combatId: "", round: 0 }
     },
     // Журнал опыта: откуда взялся опыт помимо ручной правки «Всего». Первым
     // его наполняет возврат за совпавшую выдачу Навыка или Таланта.
@@ -229,6 +255,8 @@ const DEVIATIONS = {
     // находки Fruit of Flesh/Плода Плоти (module/constants/conditions.mjs).
     "conditions.stasis": false,
     "conditions.stasisRounds": 0,
+    // Кома (wdbc-x1nz.2.105) — заведено гораздо позже template.json.
+    "conditions.coma": false,
     // Сладкий Туман (wdbc-1rno) — заведено гораздо позже template.json.
     "conditions.sweetMist": false,
     "conditions.sweetMistExpiresAt": 0,
@@ -241,24 +269,16 @@ const DEVIATIONS = {
     // Паразитический контакт (Трейт Parasite, wdbc-ux8a) — заведено гораздо позже template.json.
     "conditions.parasiticContact": false,
     "conditions.parasiticContactRounds": 0,
-    "conditions.lostHands": false,
-    "conditions.lostHandsCount": 0,
-    "conditions.lostArms": false,
-    "conditions.lostArmsCount": 0,
-    "conditions.lostFeet": false,
-    "conditions.lostFeetCount": 0,
-    "conditions.lostLegs": false,
-    "conditions.lostLegsCount": 0,
-    "conditions.lostEyes": false,
-    "conditions.lostEyesCount": 0,
-    // Потеря Конечностей (стр. 30-31, wdbc-1rno.6): таймер отложенной
-    // проверки Гангрены обрубка, по одному на часть тела — заведено гораздо
-    // позже template.json (module/rules/limb-loss.mjs).
-    "conditions.lostHandsGangreneAt": 0,
-    "conditions.lostArmsGangreneAt": 0,
-    "conditions.lostFeetGangreneAt": 0,
-    "conditions.lostLegsGangreneAt": 0,
-    "conditions.lostEyesGangreneAt": 0,
+    // Потеря Конечностей (стр. 30-31, wdbc-1rno.6, по сторонам —
+    // wdbc-x1nz.2.100): лежит в system.lostLimbs, а не в conditions.lostX —
+    // флаг и *Count теперь ПРОИЗВОДНЫЕ (derivedLimbLossConditions,
+    // rules/character.mjs), своего хранимого поля в схеме у них больше нет.
+    lostLimbs: Object.fromEntries(
+      ["rightHand", "leftHand", "rightArm", "leftArm", "rightFoot", "leftFoot",
+       "rightLeg", "leftLeg", "rightEye", "leftEye",
+       // «Пальцы» мутации Потеря Конечности (wdbc-1rno.6.1) — без Состояния.
+       "rightFingers", "leftFingers"].map(k => [k, { lost: false, gangreneAt: 0, mutation: false }])
+    ),
     // Стр. 12 («Борьба») — связаны Захватом, заведено гораздо позже template.json.
     "conditions.grappling": false,
     // Собственный вес тела (Записи → Вес, wdbc-oxdn) — нужен для Метания/
@@ -299,6 +319,10 @@ const DEVIATIONS = {
     // гораздо позже template.json, см. combat/damage.mjs.
     armorCorrosion: { head: 0, leftArm: 0, rightArm: 0, body: 0, leftLeg: 0, rightLeg: 0 },
     piercingWounds: { head: 0, leftArm: 0, rightArm: 0, body: 0, leftLeg: 0, rightLeg: 0 },
+    // Бесполезные Конечности (wdbc-x1nz.2.99) — rules/useless-limbs.mjs.
+    uselessLimbs: Object.fromEntries(["rightArm", "leftArm", "rightLeg", "leftLeg"].map(side => [side, {
+      state: "", rounds: 0, noAidAt: 0, healAt: 0, attempts: 0, healMod: 0, gangreneAt: 0, gangreneChance: 0
+    }])),
     crippledWounds: [],
     // Тумблер «В Ярости» (wdbc-plsf) — заведён гораздо позже template.json.
     inRage: false,
@@ -319,6 +343,15 @@ const DEVIATIONS = {
     // отдельный пул ПЕРЕД обычными Ранами, заведён гораздо позже template.json.
     "wounds.ablative": 0,
     "wounds.ablativeMax": 0,
+    // Предел Первой Помощи (wdbc-x1nz.2.103) и лечение по Календарю
+    // (wdbc-x1nz.2.104) — заведены гораздо позже template.json.
+    "wounds.lostSinceFirstAid": null,
+    healing: { regimen: "active", caregiver: "", nextAt: 0, careOk: false },
+    // Урон в Характеристики по книге (wdbc-x1nz.2.83) — отдельно от «Мод.».
+    charLoss: Object.fromEntries(Object.keys(CHARACTERISTICS).map(k => [k, 0])),
+    charLossAt: Object.fromEntries(Object.keys(CHARACTERISTICS).map(k => [k, 0])),
+    // Порции урона со своим темпом (task 1-8, руна Сигиллита, перманентный урон).
+    charLossPortions: [],
     // Аблативный AP-щит (wdbc-bxw6, напр. Роба Чемпиона) — отдельный от
     // аблативных Ран пул, заведён гораздо позже template.json.
     "ablativeApShield.value": 0,

@@ -87,6 +87,29 @@ export const CONDITIONS = {
     desc: "Не может совершать Действия и Реакции. Считается Беспомощным, не видит и не слышит окружающих.",
     body: `<path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M3.5 5L6 7.5M6 5L3.5 7.5M10 5L12.5 7.5M12.5 5L10 7.5M5 11.5C7 10 9 10 11 11.5"/>`
   },
+  // Кома (книга, «Лечение → Кома», wdbc-x1nz.2.105; решение владельца
+  // 24.09.2026): «остаётся в коме, пока не будет выведен из неё». Без
+  // сознания и Беспомощен — производно (rules/character.mjs), сама не
+  // проходит; снимает её Успех «Вывода из комы» (Medicae−40 раз в 10−T.b
+  // дней, sheets/tabs/healing.mjs). Постоянный уход и питание — за столом.
+  coma: {
+    label: "Кома", icon: "🛌", color: "#8a7fd0",
+    desc: "Без сознания и Беспомощен, пока не выведен из комы: медик раз в 10−T.b дней может попытаться тестом Medicae−40. Нужен постоянный медицинский уход и внутривенное питание.",
+    body: `<path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 12.5H13M3 12.5V9.5H13V12.5M4.5 9.5V8A1.5 1.5 0 0 1 7.5 8V9.5"/>
+     <path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" d="M9 2.5H11.5L9 5.5H11.5"/>`
+  },
+  // Нулевая Ловкость/Общительность от урона в Характеристики (wdbc-x1nz.2.83,
+  // таблица книги): метки, стоят, пока Итог 0 (rules/condition-mirrors.mjs).
+  paralyzed: {
+    label: "Парализован", icon: "🧊", color: "#9fd0ff", mark: true,
+    desc: "Ловкость упала до 0 от урона: парализован и Беспомощен, не может двигаться. Проходит, когда урон в Ловкость восстановится.",
+    body: `<path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M8 2V14M2.8 5L13.2 11M13.2 5L2.8 11"/>`
+  },
+  mute: {
+    label: "Немота", icon: "🤐", color: "#c9a0ff", mark: true,
+    desc: "Общительность упала до 0 от урона: не может общаться — ни социальных тестов, ни отдачи Команд. Проходит, когда урон восстановится.",
+    body: `<g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 8H13"/><path d="M5 6V10M8 6V10M11 6V10"/></g>`
+  },
   // Стазис (корбук, глава «Хрономантия», раздел «Стазис» — источники в
   // книге: психосилы Хрономантии, Stasis Shield/Стазис Щит, Stasis-Pod/
   // Стазис-Капсула, Stasis Bomb/Стазис Бомба; новая запись заведена по
@@ -248,7 +271,7 @@ export const CONDITIONS = {
   // поэтому не рисовалось ни на листе, ни на токене и не снималось вручную.
   shocked: {
     label: "В Шоке", icon: "😨", color: "#e8c34d",
-    desc: "Провал теста Страха бросает по таблице Шока (стр. 53) — от −10 на все тесты, кроме T, до полной неспособности действовать (степень зависит от результата броска). Оправиться — тест WP+0 в начале каждого своего Хода (тест Морали, провал не снимает эффекты Командования).",
+    desc: "Провал теста Страха бросает по таблице Шока (стр. 53) — от −10 на все тесты, кроме T, до полной неспособности действовать (степень зависит от результата броска). Штраф выпавшей строки и запрет действовать учитываются сами. Оправиться — тест WP+0 в начале каждого своего Хода (тест Морали, провал не снимает эффекты Командования); в первый Ход Шока у некоторых строк нельзя, у панического бегства — только вдали от источника.",
     body: `<path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M9 1.5L4.2 8.5H7.5L6.5 14.5L11.8 6.8H8.2L9 1.5Z"/>`
   },
   // ── Стр. 30-31 (Раны и Урон, «Статусы») ──────────────────────────────────
@@ -274,31 +297,31 @@ export const CONDITIONS = {
      <circle cx="7.6" cy="10.4" r="0.8" fill="currentColor"/>`
   },
   lostHands: {
-    label: "Потеря кистей", icon: "✋", counter: "count", color: "#c99a7a",
+    label: "Потеря кистей", icon: "✋", counter: "count", sided: true, color: "#c99a7a",
     desc: "−20 на все тесты, требующие двух рук. Этой рукой нельзя пользоваться оружием/предметами, кроме крепящихся к запястью.",
     body: `<path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 12V6.5M3 12H9M9 12V8.5"/>
      <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M10.5 4L14.5 12"/>`
   },
   lostArms: {
-    label: "Потеря рук", icon: "💪", counter: "count", color: "#c99a7a",
+    label: "Потеря рук", icon: "💪", counter: "count", sided: true, color: "#c99a7a",
     desc: "Как потеря кисти, но без запястья — нельзя закрепить даже щит, когти или другой предмет.",
     body: `<path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M3.5 3V7.5A3 3 0 0 0 6.3 10.5H9" stroke-dasharray="1.6 1.6"/>
      <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M10 6L14 13"/>`
   },
   lostFeet: {
-    label: "Потеря стоп", icon: "🦶", counter: "count", color: "#c99a7a",
+    label: "Потеря стоп", icon: "🦶", counter: "count", sided: true, color: "#c99a7a",
     desc: "SPD уменьшена вдвое (окр. вниз), −20 на тесты Движения. Без обеих стоп нужен бросок Acrobatics−10 просто чтобы ходить.",
     body: `<path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M6 3V8.5H12"/>
      <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M3.5 10.5L9 13.5"/>`
   },
   lostLegs: {
-    label: "Потеря ног", icon: "🦵", counter: "count", color: "#c99a7a",
+    label: "Потеря ног", icon: "🦵", counter: "count", sided: true, color: "#c99a7a",
     desc: "Как потеря стопы, но дополнительно нельзя Уклоняться. Без обеих ног персонаж не может ходить.",
     body: `<path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M7 2.5V7L9.5 10.5" stroke-dasharray="1.6 1.6"/>
      <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M4 12.5L12.5 9"/>`
   },
   lostEyes: {
-    label: "Потеря глаз", icon: "👁️", counter: "count", color: "#cf9fff",
+    label: "Потеря глаз", icon: "👁️", counter: "count", sided: true, color: "#cf9fff",
     desc: "−10 на BS и тесты определения расстояний. Угол Караула сужен до 30°. Без обоих глаз персонаж Ослеплён.",
     body: `<path fill="none" stroke="currentColor" stroke-width="1.5" d="M4 8Q8 5.4 12 8"/>
      <path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" d="M5 9.5L6 8M7.3 10L7.6 8.3M9.6 10L9.3 8.3M11 9.5L10 8"/>`
@@ -404,6 +427,21 @@ export const CONDITIONS = {
      <path fill="currentColor" d="M13.5 11.2A6.4 6.4 0 0 1 8 14.4v-3.6a2.8 2.8 0 0 0 2.4-1.4Z"/>
      <path fill="currentColor" d="M2.5 11.2A6.4 6.4 0 0 0 8 14.4v-3.6a2.8 2.8 0 0 1-2.4-1.4Z" transform="rotate(180 5.25 12.6)"/>`
   },
+  // Бесполезные Конечности (wdbc-x1nz.2.99) — зеркала system.uselessLimbs
+  // (rules/useless-limbs.mjs): какая именно рука/нога и что с лечением —
+  // в подсказке тега. Лечится режимом «Зафиксировать конечность» в Лечении.
+  uselessArm: {
+    label: "Бесполезная рука", icon: "🩼", color: "#d9a066", mark: true,
+    desc: "Рукой нельзя пользоваться — как при потере руки (хват оружия, щит, тесты двумя руками −20). До лечения: Medicae+0, затем 2d10−T.b суток в лубке. Без помощи 2×T.b часов — перманентно (ампутация, иначе Гангрена).",
+    body: `<path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M3.5 3V7.5A3 3 0 0 0 6.3 10.5H9"/>
+     <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M9 8.5L13 12.5M13 8.5L9 12.5"/>`
+  },
+  uselessLeg: {
+    label: "Бесполезная нога", icon: "🩼", color: "#d9a066", mark: true,
+    desc: "Ногой нельзя пользоваться — как при потере ноги (SPD вдвое, нельзя Уклоняться, −20 Acrobatics/Athletics; обе — не может ходить). Лечение — как у руки.",
+    body: `<path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M6 2.5V7L8.5 10.5"/>
+     <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M9 8.5L13 12.5M13 8.5L9 12.5"/>`
+  },
   // Свойство оружия Вызов/Challenge (X), wdbc-2xku: блокирует «Выход из Боя».
   challenged: {
     label: "Вызван", icon: "⚔️", color: "#ff5a5a",
@@ -454,7 +492,15 @@ export const CONDITION_MARK_KEYS = Object.entries(CONDITIONS)
  * (data/actor/_creature.mjs) строится из ЭТОГО списка, не из CONDITION_KEYS.
  */
 export const CONDITION_STORED_KEYS = Object.entries(CONDITIONS)
-  .filter(([, c]) => !c.mark).map(([key]) => key);
+  .filter(([, c]) => !c.mark && !c.sided).map(([key]) => key);
+
+/**
+ * Потеря конечностей (sided:true, wdbc-x1nz.2.100): хранится по сторонам в
+ * system.lostLimbs (rules/limb-loss.mjs), флаг и *Count — производные. В
+ * отличие от меток, ставится рукой ГМа (диалог, строка уровня) — через
+ * sheets/tabs/conditions.mjs, который переводит число в стороны.
+ */
+export const isSidedCondition = (key) => !!CONDITIONS[key]?.sided;
 
 /** Метка ли это (а не книжное Состояние). */
 export const isConditionMark = (key) => !!CONDITIONS[key]?.mark;

@@ -67,8 +67,8 @@ describe("hudData: секция ОД/Реакции (wdbc-jpls)", () => {
     expect(hudData(actor).actionEconomy.encounterActive).toBe(true);
   });
 
-  it("Орда/техника — actionEconomy отсутствует (не несёт экономику действий)", () => {
-    const actor = hudActor({ type: "horde" });
+  it("Техника — actionEconomy отсутствует (не несёт экономику действий)", () => {
+    const actor = hudActor({ type: "vehicle" });
     expect(hudData(actor).actionEconomy).toBeNull();
   });
 });

@@ -93,6 +93,13 @@ export function buildControlFlag(controllerUuid, {
 /** Установить контроль над targetActor. */
 export async function establishControl(targetActor, controllerUuid, opts = {}) {
   await targetActor.setFlag(SCOPE, FLAG, buildControlFlag(controllerUuid, opts));
+  // Контроль разума над бойцом отряда: он сам и видевшие сослуживцы проходят
+  // W ± Слаженность (глава «Командование»). Импорт ленивый — command-state
+  // тянет источники правил.
+  if (typeof game !== "undefined") {
+    try { await (await import("../combat/command-state.mjs")).offerMindControlTests(targetActor); }
+    catch (e) { console.warn("Warhammer DBC | контроль разума в отряде:", e); }
+  }
 }
 
 /** Снять контроль (независимо от причины — вызывающая находка решает, что это значит для цели). */

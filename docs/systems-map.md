@@ -49,6 +49,14 @@
 - Мастер создания: `module/apps/character-wizard.mjs` (5 этапов одним окном),
   `creation.mjs` (чистые функции Раса→Субраса→Мировоззрение→Архетип),
   `character-start.mjs` (кнопка запуска).
+- Стартовые Характеристики (корбук стр. 3–4): `module/rules/starting-characteristics.mjs`
+  — Генерация/Сборка (100+Бонусные Очки, +2…+20, +19 за 2, +20 за 3),
+  Смещения (+5/−5), «Рядовой»; метод — мировая настройка `creationCharMethod`
+  (`module/constants/creation-method.mjs`), Этап 2 Мастера. Бесчестие —
+  `rules/starting-infamy.mjs` (+1d5 / +2). Флажок `system.rankAndFile`:
+  предикат `rankAndFile` гейтит чемпионские Черты расы (Человек),
+  `syncRankAndFileGrants` (apps/mechanics.mjs) пересверяет их после Этапа 2,
+  `actorInfamyMax` даёт Рядовому 0 Очков Бесчестия.
 
 ## 2. Характеристики, Навыки, Склонности, Опыт/Продвижение
 
@@ -84,10 +92,20 @@
   аблатива (откуда бы урон ни пришёл).
 - `module/rules/wound-tier.mjs` — уровень Ранения (лёгкое/тяжёлое/критическое).
 - `module/rules/death-save.mjs` — Чудесное Спасение, Божественная Защита,
-  Замедленная Анимация (Сус-ан Мембрана Астартес).
+  Замедленная Анимация (Сус-ан Мембрана Астартес, Сон Героя), Игрушка Богов.
+  Цена хаосита — характеристика Inf (inf.base), не пул Очков. Откат удара —
+  снимок `flags.preHitWounds` из `rules/wounds.mjs::applyWoundLoss`; причина
+  смерти от Состояния — `flags.deathCause`. Божественная Защита до ⏻ Конца
+  сессии — флаг `divineProtection`: гейты в `combat/damage.mjs`,
+  `applyWoundLoss`, `killByCondition`, движении и Натиске. Диалог и броски —
+  `sheets/tabs/death.mjs`.
 - `module/rules/ablative-ap.mjs` — общий примитив «−1 заряд аблатива за
   попадание» (мод брони, Роба Чемпиона, Минный Плуг техники).
-- `module/combat/ablative-wounds.mjs` — авторегенерация аблатива по Ходу.
+- `module/combat/ablative-wounds.mjs` — авторегенерация аблатива по Ходу: только
+  у «Абсурдно Толстого» и до его 10 (wdbc-x1nz.2.86). Максимум пула — фаза
+  initial (`constants/effect-keys.mjs`), иначе кламп обнулял пул.
+- `module/combat/secondary-crit.mjs` — Крит. Эффект от урона мимо удара оружием
+  (Разъедающее, Проникающее, Калечащее, яд, «X+Провалы», Горение; wdbc-x1nz.2.85).
 - `module/combat/damage.mjs` — применение урона (`showApplyDamageDialog`):
   поглощение, локация, критический эффект — центральный расчёт.
 - Пробитие Брони (стр. 42, wdbc-x1nz.2.78/.79) — `combat/armor-properties.mjs::
@@ -120,6 +138,33 @@
   Огненного Дракона).
 - `module/sheets/tabs/{death,healing,wounds}.mjs` — UI Смерти, Лечения,
   расчётов Ран на листе.
+- Естественное лечение по Календарю (wdbc-x1nz.2.104): режим
+  `system.healing.regimen` (Активен/Отдых/Постельный) на листе, медик на
+  уходе `system.healing.caregiver`; таблица книги — `rules/healing-clock.mjs`
+  (её же читает ручная кнопка диалога), обработчик часов —
+  `combat/healing-clock.mjs` в `CONDITION_CLOCK_HANDLERS`. Предел Первой
+  Помощи — `system.wounds.lostSinceFirstAid` (растёт в
+  `documents/actor.mjs::_preUpdate`). Состояние «Кома» (wdbc-x1nz.2.105) —
+  `constants/conditions.mjs`, производно Без сознания → Беспомощен
+  (`rules/character.mjs`), снимает Вывод из комы.
+- Урон в Характеристики со своим темпом (task 1-8): порции
+  `system.charLossPortions` (период, «не раньше», источник, noMagic; hours 0 —
+  перманентный) — `rules/char-loss.mjs::charLossPortions*`, `applyCharDamage(…, {portion})`;
+  руна Сигиллита — 1 за 8 ч. Кнопка урона в Характеристики из крит-строк и
+  психосил — `combat/char-damage-button.mjs`. Зависимость держит урон —
+  `addiction.blocksRecovery` препарата, `rules/item-rules.mjs::addictionRecoveryRules`.
+- Урон в Характеристики (wdbc-x1nz.2.83): `system.charLoss.<х-ка>` ≥ 0 —
+  отдельно от ручного «Мод.» `system.charDamage` (бафф/дебафф стола).
+  Писать урон — только `combat/char-damage.mjs::applyCharDamage` (пол 0,
+  T = 0 — смерть) или `rules/char-loss.mjs::charLossAddFields` для общих
+  патчей; лечить — `charHealFields` (урон по книге, затем старый минус
+  «Мод.»). Итог (вычет, пол 0) — `rules/character.mjs`; эффекты нулевой
+  Характеристики — производно там же (`ZERO_EFFECTS`), метки Парализован/
+  Немота — `rules/condition-mirrors.mjs`; запрет атак при WS/BS = 0 —
+  `sheets/attack-dialog.mjs`. Восстановление 1/ч — обработчик `charLoss` в
+  `combat/condition-clock.mjs`; блок/замедление — записи правил
+  `{ kind: "charRecovery", target, mode: "block"|"period", hours }`
+  (Гангрена, Лучевая болезнь — `rules/library/conditions.mjs`).
 - Именные: `apps/ablative-ap-shield.mjs` (Роба Чемпиона), `apps/
   psalm-unseen-fortress.mjs` (ресинк «Купола Рефрактора»), `apps/
   sus-an-heal.mjs` (исцеление Сус-ан по игровым суткам).
@@ -584,6 +629,13 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `module/rules/armour-penalty.mjs` (штраф выключенной силовой брони),
   `ablative-ap.mjs`, `void-air.mjs` (запас воздуха герметичной брони),
   `cover-locations.mjs` (Укрытие по зонам тела).
+- Слои брони по локации (`absorption.layers`, `rules/character/armour.mjs`):
+  Мягкая/Проводящая и др. обнуляют AP только своего предмета (wdbc-x1nz.2.81);
+  I(Cr) по голове — ⌈AP/2⌉ и Concussive(−1) (.80). Свойства брони — список строк
+  (`data/string-list.mjs`, миграция `migrations/string-list-restore.mjs`).
+- Разрушение Укрытий: `combat/damage.mjs` + `combat/cover.mjs::coverRegionForShot` —
+  зона Укрытия сцены даёт AP стрельбе по линии огня и изнашивается, «пробивает» =
+  урон прошёл сквозь; Тирантикос — 1d10.
 - Истории комплекта силовой брони: `data/item/armour-history-entry.mjs`,
   `constants/power-armour-lore.mjs`, `apps/armour-history.mjs` +
   `armour-history-trance.mjs`.
@@ -680,6 +732,9 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   Характеристики (`actor-sheet.mjs::_runTest`) по новому полю payload
   `onFailItemUuid` — кладёт ТОЛЬКО psychic.mjs при запросе теста
   Сопротивления, gate строгий (обычный делегированный тест это поле не несёт).
+- Сроки Состояний в Раундах — `expiry: "turnEnd"`: кончаются в конце Хода
+  наложившего, снимаются `onConditionEffectExpired` после отметки ядра
+  (wdbc-x1nz.2.84; `rules/condition-duration.mjs`, `condition-ticks.mjs::sweepApplierTurnEnd`).
 - `module/combat/condition-effects.mjs`, `condition-ticks.mjs` (тик по Ходам —
   Кровотечение/Горение). Горение несёт три завязанных на предметы живых
   проверки — все читают Механику НАПРЯМУЮ с предмета, ничего не пишут при
@@ -706,13 +761,40 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   части тела. Мутация Loss of Limb/Потеря Конечности — НЕ реализована,
   вынесена в wdbc-1rno.6.1 (гейт Best.Q сравнением субмутации, субтаблица
   «Пальцы» — открытые решения).
+  С wdbc-x1nz.2.100 потеря хранится ПО СТОРОНАМ: `system.lostLimbs.{right,left}
+  {Hand,Arm,Foot,Leg,Eye} = {lost, gangreneAt}`; `lostX`/`lostXCount` —
+  производные (`rules/character.mjs` ← `rules/limb-loss.mjs::
+  derivedLimbLossConditions`). Писать — только через `rules/limb-loss.mjs`
+  (`lostSideFields`/`lostCountFields`) или единую точку `sheets/tabs/
+  conditions.mjs`; таймер Гангрены — у каждой стороны свой. Бюджет рук —
+  по сторонам (`rules/hands.mjs::armSideState`). «Выронить» —
+  `combat/limb-loss.mjs::dropFromHand` (по `heldHand`, без траты ОД): при
+  потере кисти/руки, бесполезной руке, кнопкой «Выронить» под крит-строкой.
+  Мутация Loss of Limb (wdbc-1rno.6.1) — `combat/limb-loss.mjs::
+  syncLossOfLimbMutation` по хукам create/update/deleteItem: строка
+  субмутации → сторона с пометкой `mutation` (без Кровотечения/Гангрены);
+  «Пальцы» — `lostLimbs.{right,left}Fingers`, −10 к атаке оружием в этой руке
+  (`sheets/attack/mods.mjs::fingersPenalty`); бионика восстанавливает такую
+  сторону только при Best.Q импланте (`healing.mjs::resolveBionicTest`,
+  качество и сторона — из импланта, поставленного в Хирургеоне).
+- Бесполезные Конечности (wdbc-x1nz.2.99) — `system.uselessLimbs.{rightArm,
+  leftArm,rightLeg,leftLeg}` (по каждой конечности: стадия лечения, Раунды,
+  часы, попытки, Гангрена), чистая логика — `rules/useless-limbs.mjs`. Теги
+  «Бесполезная рука/нога» — зеркала (`rules/condition-mirrors.mjs`, источник
+  kind:"fn"). Считаются как потерянные в `rules/hands.mjs`, `rules/character/
+  movement.mjs`, `combat/defense.mjs`, `combat/movement-actions.mjs`,
+  `rules/library/conditions.mjs`. Кнопка из крит-строки — `combat/crit-effect-
+  parser.mjs` (сторона — по месту попадания), Раунды — `combat/condition-
+  ticks.mjs`, 2×T.b ч / лубок / Гангрена — `combat/condition-clock.mjs`,
+  «Зафиксировать» и Мясник — `sheets/tabs/healing.mjs`.
 - Сверка раздела «Статусы» с книгой (wdbc-x1nz.2.87–.97, 23.09.2026):
   - `combat/condition-clock.mjs` — часы Состояний по игровому времени
     (`updateWorldTime`, список `CONDITION_CLOCK_HANDLERS`): пробуждение из
     обморока от Усталости, урон Гангрены раз в T.b×2 ч, −1 Обескровливания в
     час, Удушье «в покое» по минутам.
   - `combat/condition-death.mjs::killByCondition` — смерть от Состояния
-    (Кровотечение/Удушье/Гангрена): флаг deceased + «Повержен» + defeated.
+    (Кровотечение/Удушье/Гангрена/T до 0): флаг deceased + «Повержен» + defeated,
+    причина — flags.deathCause; под Божественной Защитой не убивает.
   - Единый путь смены Усталости — `sheets/tabs/conditions.mjs::
     setFatigue/fatigueChangeFields` (порог T.b+W.b, Саркофаг, пробуждение);
     действующее значение с +1 Гангрены — `system.fatigue.effective`.
@@ -725,6 +807,16 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `module/apps/token-conditions.mjs` — синхронизация с Token HUD.
 - `module/sheets/tabs/conditions.mjs` — вкладка Состояния/Усталость.
 - `module/constants/fear-tables.mjs` — Страх/Шок/Ментальная Травма/Расстройства.
+  Строки Шока несут `effect` — что строка делает сама.
+- Страх и Шок (стр. 53): `combat/fear.mjs` — тест Страха (автоуспех по Inf/
+  своему Страху только у Важных; «один тест против рейтинга до конца сцены» —
+  флаг `fearFacedRating`, сброс «Новой сценой»), `applyShockRow`/`revertShock`
+  (строка Шока и её откат при перебросе Демона/«Вере в прошлое»), первый Ход
+  Шока, сердечный приступ. `rules/shock.mjs` — чтение: штраф в
+  `rules/situational.mjs`, запрет действовать и 1 ОД в `combat/action-
+  economy.mjs`. Машины без воли — возможность `fear.machineMind` (Int вместо
+  W; стоит на Черте Сервочереп). Диалог подставляет Inf, рейтинг и «Демон» с
+  выделенного источника (`sheets/tabs/disorders.mjs::fearDialogDefaults`).
 - Здравомыслие пилота Дредноута: `rules/dreadnought.mjs`, `sheets/tabs/
   dreadnought-panel.mjs`.
 - Расстройства/Травмы: `data/item/mental-disorder.mjs`, `mental-trauma.mjs`,
@@ -736,7 +828,25 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   Прошлого), `apps/races.mjs` (применение расы), `apps/race-library.mjs` +
   `sheets/race-picker.mjs`.
 - `data/item/race.mjs`, `subrace.mjs` (parentKey, charRollAdvantage,
-  removesTraits).
+  removesTraits, tierCosts — уровни покупки, bannedArchetypes, mutationsAsAstartes).
+- Субрасы Людей (сверка главы I, 26.09.2026): цена субрасы списывается со
+  стартового опыта на Этапе 4 Мастера (`constants/start-levels.mjs`
+  subraceCost/xpShort, `race-library.mjs::subraceCostAt`); уровень —
+  `system.subraceTier`, в формулах Механики `subtier` (Затупленный 1–4);
+  максимум Бесчестия Хаосита Inf.b ± `system.infamyMaxMod` (poolMax с целью
+  «infamy», `apps/infamy-points.mjs::infamyMaxWithMod`); закрытые Архетипы
+  (`apps/archetypes.mjs::archetypesForRace`); выбор мутации из списка
+  (`equipChoiceIds`, фильтр `ids`) и строки субмутации
+  (`apps/submutations.mjs::chooseSubmutation`); дружественная одна
+  специализация Группы — `спец:группа:специализация` в
+  `rules/aptitude-overrides.mjs`.
+- Ауры Парии и Дискорданта: `rules/null-zones.mjs` (+ `rules/library/
+  null-zones.mjs`) — аура W.b×3 м выдаёт Черту-метку «В Пустоте Парии» /
+  «В Поле Дискорданта»; класс техники оружия/имплантов — `system.techClass`
+  (electric/mechanical/none), гашение мутаций/имплантов —
+  `apps/mechanics.mjs::syncNullZoneSuppression` (флаг `nullSuppressed`).
+- «Избегает атак Орды как одиночная цель» (Быстрые и Мёртвые, Серый
+  Человек) — `rules/horde-single-target.mjs`.
 - `module/constants/legions.mjs` — Легионы Космодесанта (Геносемя/Культура/
   Проклятье); `rules/legion-fit.mjs`, `legion-upgrade.mjs`.
 - Пути Азуриан: `constants/aeldari-paths.mjs`, `rules/library/paths.mjs`,
@@ -1057,7 +1167,11 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - Орды: `data/actor/horde.mjs`, `rules/horde.mjs`, `horde-convert.mjs`
   (+`apps`), `horde-damage.mjs` (+`combat/horde-damage.mjs`),
   `horde-geometry.mjs`, `combat/horde-psych.mjs`, `combat/horde-tokens.mjs`,
-  `sheets/horde-sheet.mjs`.
+  `sheets/horde-sheet.mjs`. Размер по Магнитуде в попадании/Скрытности —
+  `rules/predicates.mjs::hitSizeOf`; ОД Орды — общая экономика действий
+  (`combat/action-economy.mjs`, Реакции только в свой Ход); «Тем же действием»
+  и по броску на цель — `horde-sheet.mjs::_confirmHordeAttack`; Огонь по Орде —
+  `combat/horde-psych.mjs::rollHordeFlameTest`.
 - Отряды: `data/actor/squad.mjs`, `rules/squad.mjs`, `squad-roles.mjs`,
   `constants/squad.mjs`, `sheets/squad-sheet.mjs`.
 - Формирования («Книга Битв»): `data/actor/formation.mjs`, `rules/formation.
@@ -1065,7 +1179,30 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   флагом `battleBook` (см. §26) — единственная фича, добавляющая свой тип
   актора.
 - Командование/Присутствие: `rules/command.mjs`, `sheets/tabs/command.mjs`
-  («Под моим Присутствием» — командование не входящими в отряд).
+  («Под моим Присутствием» — командование не входящими в отряд). Что до
+  бойца доходит — `commandReachFor` (Орда, Оглох/Без сознания, проваленная
+  Мораль `members[].moraleLost` → только «Укрепление Морали»/«Храбрость»).
+  Тесты Морали и Сломленного Отряда бойцов — через `rules/morale-test.mjs`
+  (W+0, провал ставит moraleLost).
+- Бонусы Команд в бросках подчинённых: `rules/command-effects.mjs` (чисто:
+  Короткие — наибольшая, Воля Командира, Храбрость-переброс, Прикрытие,
+  ½ P.b командиров, F.b×2 подчинённых) + `combat/command-state.mjs`
+  (источник правил «command», срок до Хода отдающего, конец боя, провал
+  Морали → флаг commandLost / снятие Команд Командира + «Скрыть трусость»;
+  `handleMoraleFailure` возвращает откат — `revertMoraleFailure` при
+  отменённом провале Страха (переброс Демона, «Вера в прошлое»),
+  «Храбрость» снимает Подавление/Шок, «Особая Тактика» — временный Талант).
+  Отряд: Подвиг и Ход по Брифингу — `sheets/squad-sheet.mjs`.
+  Там же в command-state: Синхронный Натиск (кнопка Давления после
+  рукопашной, `combat/attack.mjs`), Залповый Огонь (−1 ОД Прицеливанию,
+  `combat/aiming-action.mjs`; счётчик стрелков → тест Подавления),
+  «Прикрытие» (чужая Реакция в 3 м и Парирование +1 Размер,
+  `combat/defense.mjs`), Концентрация огня (кнопка «Тройка», метка focusFire
+  → +2 куба и −20 Избеганию в `combat/attack.mjs`), тест W±Слаженность при
+  контроле разума (`rules/actor-control.mjs::establishControl`).
+  Дрессировка — флаг `system.command.training` на панели «Под моим
+  Присутствием»: Survival(P), P.b животных, лимит Успехов 2+продвижения.
+  Потолок Успехов по Риску действует и на Координатора.
 
 ## 18. Техника (Vehicles)
 

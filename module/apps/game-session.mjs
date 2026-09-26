@@ -40,6 +40,9 @@ import { actorInfamyMax } from "./infamy-points.mjs";
 import { breakBloodFlameOnSceneEnd } from "../combat/blood-flame.mjs";
 import { revertSunderingOnSceneEnd } from "../combat/sundering.mjs";
 import { revertLegacyKillerOnSceneEnd } from "../combat/legacy-weapon-killer.mjs";
+import { DIVINE_PROTECTION_FLAG } from "../rules/death-save.mjs";
+import { wakeDivineProtected } from "../sheets/tabs/death.mjs";
+import { unlinkedTokens } from "../migrations/unlinked-tokens.mjs";
 
 const BANNER_TEXT = {
   scene:   "Поворот судьбы",
@@ -182,6 +185,30 @@ export async function refillFatePools() {
   }
 }
 
+/**
+ * Акторы мира вместе с синтетическими акторами несвязанных токенов — тех в
+ * game.actors нет (тот же обход, что combat/condition-clock.mjs).
+ */
+function worldActors() {
+  return [...(game.actors ?? []), ...Array.from(unlinkedTokens(), t => t.actor)];
+}
+
+/**
+ * Божественная Защита (rules/death-save.mjs) держится «до конца сессии» —
+ * неуязвимость и только полудвижения снимаются здесь у всех актёров мира.
+ * Конец сессии — и конец сцены: сперва будим (wakeDivineProtected ищет
+ * именно этот флаг), потом снимаем флаг — иначе «Без сознания» навсегда.
+ */
+async function endDivineProtection() {
+  const actors = worldActors();
+  await wakeDivineProtected(actors);
+  for (const actor of actors) {
+    if (actor.getFlag?.("warhammer-dbc", DIVINE_PROTECTION_FLAG)) {
+      await actor.unsetFlag("warhammer-dbc", DIVINE_PROTECTION_FLAG);
+    }
+  }
+}
+
 export async function triggerNewScene() {
   if (!game.user.isGM) return;
   await resetUsageLimit("scene");
@@ -193,6 +220,10 @@ export async function triggerNewScene() {
   await revertSunderingOnSceneEnd();
   // Убийца, Оружие Наследия (wdbc-t3c3t.4): Felling «до конца боя или сцены».
   await revertLegacyKillerOnSceneEnd();
+  // Страх (стр. 53): пройденные рейтинги и штраф Шока «до конца сцены».
+  await (await import("../combat/fear.mjs")).clearFearSceneState();
+  // Божественная Защита: без сознания «до конца сцены или боя».
+  await wakeDivineProtected(worldActors());
   await ChatMessage.create({
     speaker: { alias: "Мастер Игры" },
     content: bannerCard("🎬 Новая сцена", BANNER_TEXT.scene)
@@ -213,6 +244,9 @@ export async function triggerSessionEnd() {
   await revertSunderingOnSceneEnd();
   // Убийца, Оружие Наследия (wdbc-t3c3t.4): Felling «до конца боя или сцены».
   await revertLegacyKillerOnSceneEnd();
+  // Страх (стр. 53): пройденные рейтинги и штраф Шока «до конца сцены».
+  await (await import("../combat/fear.mjs")).clearFearSceneState();
+  await endDivineProtection();
   await refillFatePools();
   await ChatMessage.create({
     speaker: { alias: "Мастер Игры" },

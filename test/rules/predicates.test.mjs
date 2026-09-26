@@ -440,6 +440,10 @@ describe("общее требование к предикатам", () => {
     hasCondition: "prone", targetHasCondition: "prone",
     // Ослеплён по-настоящему (wdbc-x1nz.2.89): свой флаг ИЛИ оба глаза.
     isBlinded: true,
+    rankAndFile: false,
+    // Пустота Парии / демон / цель-псайкер или демон (rules/null-zones.mjs,
+    // сверка главы I, 26.09.2026).
+    inPariahVoid: true, isDaemon: true, targetPsykerOrDaemon: true,
     charNotIn: ["t", "inf", "cor"],
     charIn: ["int", "per", "wp", "fel", "inf"],
     hasSize: undefined, targetHasSize: undefined, targetKeepsNimbleInArmour: undefined,
@@ -542,5 +546,15 @@ describe("giftNamesOf — Дары Одержимого по двуязычно�
 
   it("GIFT_NAME_PREFIX — общая константа с завершающим пробелом", () => {
     expect(GIFT_NAME_PREFIX).toBe("Дар: ");
+  });
+});
+
+describe("rankAndFile", () => {
+  const raf = PREDICATES.rankAndFile;
+  it("true — Рядовой, false — чемпион", () => {
+    expect(raf(actor({ rankAndFile: true }), {}, true)).toBe(true);
+    expect(raf(actor({ rankAndFile: false }), {}, true)).toBe(false);
+    expect(raf(actor({ rankAndFile: true }), {}, false)).toBe(false);
+    expect(raf(actor({}), {}, false)).toBe(true);
   });
 });

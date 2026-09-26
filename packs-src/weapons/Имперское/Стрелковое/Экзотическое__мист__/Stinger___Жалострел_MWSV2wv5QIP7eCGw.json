@@ -69,7 +69,8 @@
       "standard": false,
       "reloads": 10
     },
-    "damageSubtype": "toxic"
+    "damageSubtype": "toxic",
+    "techClass": "none"
   },
   "_id": "MWSV2wv5QIP7eCGw",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-pistol.svg",

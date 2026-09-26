@@ -53,6 +53,7 @@ export function buildAttackContent(v) {
     rangeInfoHtml,
     rechargeWarnHtml,
     rofPills,
+    ruleAutoMods,
     ruleMods,
     ruleRerolls,
     shortRangeHtml,
@@ -167,6 +168,7 @@ return `
     ${distanceHintHtml}
     ${shortRangeHtml}${bandHtml}${offHtml}${maximalHtml}
     ${ammoCondHtml}
+    ${ruleAutoMods.html}
     ${ruleMods.html}
     ${ruleRerolls.html}
     ${oneVsHundredHtml}

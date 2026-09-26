@@ -7,14 +7,25 @@
     "key": "stunted",
     "parentKey": "human",
     "cost": 500,
-    "effect": "Трейт Blunted (1); уменьшает максимум Очков Бесчестья на 1 (до минимума 1). Можно повышать рейтинг Blunted (дороже).",
+    "effect": "Трейт Blunted (1); максимум Очков Бесчестия −1 (не ниже 1). За 750/1000/1250 xp — Blunted (2/3/4) и максимум Очков Бесчестия −2/−3/−4 (не ниже 1). Получает мутации как Космодесантник. Не может брать Архетипы, дающие Трейт Psyker.",
     "god": "",
     "charMods": {},
     "talents": "",
     "removesTraits": [],
-    "description": "Трейт Blunted (1); уменьшает максимум Очков Бесчестья на 1 (до минимума 1). Можно повышать рейтинг Blunted (дороже).",
-    "notes": "",
-    "bookSource": "DoomBC — Основная книга"
+    "description": "Трейт Blunted (1); максимум Очков Бесчестия −1 (не ниже 1). За 750/1000/1250 xp — Blunted (2/3/4) и максимум Очков Бесчестия −2/−3/−4 (не ниже 1). Получает мутации как Космодесантник. Не может брать Архетипы, дающие Трейт Psyker.",
+    "notes": "Автоматизировано: уровень 1–4 выбирается в списке субрас Мастера (tierCosts 500/750/1000/1250 → system.subraceTier, формула subtier): Blunted (subtier) и максимум Бесчестия −subtier (не ниже 1, poolMax → infamy); пороги мутаций по таблице Астартес (mutationsAsAstartes); Архетипы с Psyker (Ведьма, Беглый Псайкер) скрыты (bannedArchetypes). Сама Черта Blunted против психосил — своя заглушка.",
+    "bookSource": "DoomBC — Основная книга",
+    "tierCosts": [
+      500,
+      750,
+      1000,
+      1250
+    ],
+    "bannedArchetypes": [
+      "witch",
+      "renegadePsyker"
+    ],
+    "mutationsAsAstartes": true
   },
   "_id": "AYWhzwq9qbfsX6zJ",
   "effects": [],
@@ -42,7 +53,7 @@
               "sourceName": "Blunted / Затупленный (X)",
               "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
               "sourceHasRating": true,
-              "rating": 1,
+              "rating": "subtier",
               "specialization": "",
               "skillScope": "plain",
               "skillKey": "",
@@ -81,6 +92,19 @@
               "weaponPropNewValue2": "0",
               "label": "",
               "code": ""
+            },
+            {
+              "id": "StuntInfMaxPen01",
+              "kind": "poolMax",
+              "group": null,
+              "poolTarget": "infamy",
+              "value": "-subtier",
+              "label": "",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             }
           ]
         }

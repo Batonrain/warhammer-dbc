@@ -35,11 +35,14 @@ function person({ items = [], fatigue = 0, t = 40, wp = 30, medicae = 40 } = {})
     system: {
       fatigue: { value: fatigue },
       conditions: {},
+      charDamage: {},
       wounds: { value: 5, max: 10, critical: 0 },
       characteristics: {
-        t:   { total: t,  value: t,  bonus: Math.floor(t / 10) },
-        wp:  { total: wp, value: wp, bonus: Math.floor(wp / 10) },
-        int: { total: 40, value: 40, bonus: 4 }
+        // Форма настоящих характеристик: total/bonus, поля value НЕТ —
+        // фикстура с value прятала баг T-теста (wdbc-x1nz.2.103).
+        t:   { total: t,  bonus: Math.floor(t / 10) },
+        wp:  { total: wp, bonus: Math.floor(wp / 10) },
+        int: { total: 40, bonus: 4 }
       },
       skills: { medicae: { total: medicae } }
     },
@@ -74,15 +77,16 @@ describe("comaWakeRemaining: чистый расчёт таймера", () => {
 });
 
 describe("applyHealing: cauterize (Прижигание)", () => {
-  it("зафиксированный пациент — без теста W, урон минус T.b, Усталость через addFatigue", async () => {
+  it("зафиксированный пациент — без теста W, 1d10 урона в Характеристику T (не Раны), Усталость через addFatigue", async () => {
     const medic = person();
-    const patient = person({ t: 40 }); // T.b = 4
+    const patient = person({ t: 40 });
     captured.dice = [3, 8]; // 1d5 Усталости, 1d10 урон
 
     await applyHealing(medic, patient, { mode: "cauterize", restrained: true, mod: 0 });
 
     expect(patient.system.fatigue.value).toBe(3);
-    expect(patient.system.wounds.value).toBe(1); // 5 - (8-4)
+    expect(patient.system.charLoss.t).toBe(8); // урон в T — charLoss (wdbc-x1nz.2.83)
+    expect(patient.system.wounds.value).toBe(5); // Раны не тронуты
     expect(captured.rolls).toEqual(["1d5", "1d10"]); // тест W не бросался
     expect(captured.chat[0].content).not.toContain("вырваться");
   });
@@ -99,6 +103,44 @@ describe("applyHealing: cauterize (Прижигание)", () => {
   });
 });
 
+describe("applyHealing: cauterize — Кровотечение и обрубок (wdbc-x1nz.2.103)", () => {
+  it("снимает Кровотечение и единственный таймер Гангрены обрубка", async () => {
+    const patient = person();
+    patient.system.conditions.bleeding = true;
+    patient.system.lostLimbs = { rightHand: { lost: true, gangreneAt: 500000 } };
+    captured.dice = [1, 1];
+
+    await applyHealing(person(), patient, { mode: "cauterize", restrained: true, mod: 0 });
+
+    expect(patient.system.conditions.bleeding).toBe(false);
+    expect(patient.system.lostLimbs.rightHand.gangreneAt).toBe(0);
+    expect(captured.chat[0].content).toContain("прижжён");
+  });
+
+  it("два необработанных обрубка без выбора — ни один не трогается, подсказка в чате", async () => {
+    const patient = person();
+    patient.system.lostLimbs = { rightHand: { lost: true, gangreneAt: 500000 }, leftLeg: { lost: true, gangreneAt: 600000 } };
+    captured.dice = [1, 1];
+
+    await applyHealing(person(), patient, { mode: "cauterize", restrained: true, mod: 0 });
+
+    expect(patient.system.lostLimbs.rightHand.gangreneAt).toBe(500000);
+    expect(patient.system.lostLimbs.leftLeg.gangreneAt).toBe(600000);
+    expect(captured.chat[0].content).toContain("несколько");
+  });
+
+  it("выбранная часть тела — прижигается именно она", async () => {
+    const patient = person();
+    patient.system.lostLimbs = { rightHand: { lost: true, gangreneAt: 500000 }, leftLeg: { lost: true, gangreneAt: 600000 } };
+    captured.dice = [1, 1];
+
+    await applyHealing(person(), patient, { mode: "cauterize", restrained: true, mod: 0, limb: "leg" });
+
+    expect(patient.system.lostLimbs.leftLeg.gangreneAt).toBe(0);
+    expect(patient.system.lostLimbs.rightHand.gangreneAt).toBe(500000);
+  });
+});
+
 describe("applyHealing: amputate (Ампутация, Medicae−10)", () => {
   it("успех — конечность удалена, без Кровотечения и Гангрены", async () => {
     const medic = person({ medicae: 40 });
@@ -107,27 +149,61 @@ describe("applyHealing: amputate (Ампутация, Medicae−10)", () => {
 
     await applyHealing(medic, patient, { mode: "amputate", mod: 0, limb: "arm" });
 
-    expect(patient.system.conditions.lostArms).toBe(true);
-    expect(patient.system.conditions.lostArmsCount).toBe(1);
+    // wdbc-x1nz.2.100: потеря хранится по сторонам — первая целая (правая).
+    expect(patient.system.lostLimbs.rightArm.lost).toBe(true);
     expect(patient.system.conditions.bleeding).toBeUndefined();
     expect(patient.system.conditions.gangrene).toBeUndefined();
   });
 
-  it("провал — Кровотечение + провал обработки обрубка → шанс Гангрены", async () => {
+  // wdbc-x1nz.2.100: bodySide в опциях диалога выбирает КОНКРЕТНУЮ сторону,
+  // не всегда «первую целую».
+  it("bodySide:'left' ампутирует левую руку, не правую", async () => {
     const medic = person({ medicae: 40 });
     const patient = person();
-    // eff везде 30: тест ампутации 90 (провал), обработка обрубка 90 (провал), Гангрена ≤80 → 50 (наступает)
-    captured.dice = [90, 90, 50];
+    captured.nextRoll = 10;
+
+    await applyHealing(medic, patient, { mode: "amputate", mod: 0, limb: "arm", bodySide: "left" });
+
+    expect(patient.system.lostLimbs.leftArm.lost).toBe(true);
+    expect(patient.system.lostLimbs.rightArm?.lost).not.toBe(true);
+  });
+
+  // wdbc-x1nz.2.103: обработка обрубка и 80% Гангрены — не сразу, а таймером
+  // обрубка (T.b дней), как у потери от крит-эффекта.
+  it("провал — Кровотечение + таймер Гангрены обрубка, Гангрены сразу нет", async () => {
+    const medic = person({ medicae: 40 });
+    const patient = person(); // T.b 4
+    captured.dice = [90];
 
     await applyHealing(medic, patient, { mode: "amputate", mod: 0, limb: "leg" });
 
-    expect(patient.system.conditions.lostLegs).toBe(true);
-    expect(patient.system.conditions.lostLegsCount).toBe(1);
+    expect(captured.rolls).toEqual(["1d100"]);
+    expect(patient.system.lostLimbs.rightLeg.lost).toBe(true);
+    expect(patient.system.lostLimbs.rightLeg.gangreneAt).toBe(1_000_000 + 4 * 86400);
     expect(patient.system.conditions.bleeding).toBe(true);
-    // wdbc-x1nz.2.92: «уровень Кровотечения» книжного смысла не имеет — провал
-    // накладывает Кровотечение, счётчик не трогает.
+    // wdbc-x1nz.2.92: «уровень Кровотечения» книжного смысла не имеет.
     expect(patient.system.conditions.bleedingLevel).toBeUndefined();
-    expect(patient.system.conditions.gangrene).toBe(true);
+    expect(patient.system.conditions.gangrene).toBeUndefined();
+  });
+
+  it("успех — таймера обрубка нет", async () => {
+    const patient = person();
+    captured.nextRoll = 10;
+    await applyHealing(person({ medicae: 40 }), patient, { mode: "amputate", mod: 0, limb: "leg" });
+    expect(patient.system.lostLimbs.rightLeg.gangreneAt).toBe(0);
+  });
+
+  it("отрубить клинком — без теста, как провал; оружие E — без Кровотечения", async () => {
+    const a = person();
+    await applyHealing(person(), a, { mode: "amputate", mod: 0, limb: "leg", chop: true });
+    expect(captured.rolls).toEqual([]);
+    expect(a.system.conditions.bleeding).toBe(true);
+    expect(a.system.lostLimbs.rightLeg.gangreneAt).toBeGreaterThan(0);
+
+    const b = person();
+    await applyHealing(person(), b, { mode: "amputate", mod: 0, limb: "leg", chop: true, chopEnergy: true });
+    expect(b.system.conditions.bleeding).toBeUndefined();
+    expect(b.system.lostLimbs.rightLeg.gangreneAt).toBeGreaterThan(0);
   });
 });
 
@@ -146,27 +222,41 @@ describe("applyHealing: reattach (Пришивание конечности, Med
   it("успех — счётчик уменьшается, флаг снимается при нуле, показаны сутки восстановления", async () => {
     const medic = person({ medicae: 40 });
     const patient = person({ t: 40 }); // T.b = 4
-    patient.system.conditions.lostArms = true;
-    patient.system.conditions.lostArmsCount = 1;
+    patient.system.lostLimbs = { rightArm: { lost: true, gangreneAt: 0 } };
     captured.dice = [10, 6]; // тест (eff 40-30=10, успех), 1d10 суток = 6
 
     await applyHealing(medic, patient, { mode: "reattach", mod: 0, limb: "arm" });
 
-    expect(patient.system.conditions.lostArmsCount).toBe(0);
-    expect(patient.system.conditions.lostArms).toBe(false);
+    expect(patient.system.lostLimbs.rightArm.lost).toBe(false);
     expect(captured.chat[0].content).toContain("5"); // 6+3-4=5 суток
+    // wdbc-x1nz.2.106: рука бесполезна эти 5 суток, снимется по Календарю.
+    expect(patient.system.uselessLimbs.rightArm.state).toBe("splinted");
+    expect(patient.system.uselessLimbs.rightArm.healAt).toBe(1_000_000 + 5 * 86400);
   });
 
-  it("провал — счётчик не меняется, конечность потеряна безвозвратно", async () => {
+  it("пришитая кисть — бесполезна вся рука на срок восстановления; глаз — без бесполезности", async () => {
+    const hand = person({ t: 40 });
+    hand.system.lostLimbs = { leftHand: { lost: true, gangreneAt: 0 } };
+    captured.dice = [10, 1]; // 1+3-4=0 → мин. 1 сутки
+    await applyHealing(person({ medicae: 40 }), hand, { mode: "reattach", mod: 0, limb: "hand" });
+    expect(hand.system.uselessLimbs.leftArm.healAt).toBe(1_000_000 + 86400);
+
+    const eye = person({ t: 40 });
+    eye.system.lostLimbs = { rightEye: { lost: true, gangreneAt: 0 } };
+    captured.dice = [10, 6];
+    await applyHealing(person({ medicae: 40 }), eye, { mode: "reattach", mod: 0, limb: "eye" });
+    expect(eye.system.uselessLimbs).toBeUndefined();
+  });
+
+  it("провал — сторона не меняется, конечность потеряна безвозвратно", async () => {
     const medic = person({ medicae: 40 });
     const patient = person();
-    patient.system.conditions.lostArms = true;
-    patient.system.conditions.lostArmsCount = 1;
+    patient.system.lostLimbs = { rightArm: { lost: true, gangreneAt: 0 } };
     captured.nextRoll = 90; // eff 10, провал
 
     await applyHealing(medic, patient, { mode: "reattach", mod: 0, limb: "arm" });
 
-    expect(patient.system.conditions.lostArmsCount).toBe(1);
+    expect(patient.system.lostLimbs.rightArm.lost).toBe(true);
     expect(patient.updates.length).toBe(0);
     expect(captured.chat[0].content).toContain("умирает");
   });
@@ -189,47 +279,66 @@ describe("applyHealing: stumpCare (Обработка обрубка, Medicae−
   it("успех — снимает запланированный таймер Гангрены", async () => {
     const medic = person({ medicae: 40 });
     const patient = person();
-    patient.system.conditions.lostHands = true;
-    patient.system.conditions.lostHandsCount = 1;
-    patient.system.conditions.lostHandsGangreneAt = 500000;
+    patient.system.lostLimbs = { rightHand: { lost: true, gangreneAt: 500000 } };
     captured.nextRoll = 10; // eff 40-10=30, успех
 
     await applyHealing(medic, patient, { mode: "stumpCare", mod: 0, limb: "hand" });
 
-    expect(patient.system.conditions.lostHandsGangreneAt).toBe(0);
+    expect(patient.system.lostLimbs.rightHand.gangreneAt).toBe(0);
     expect(captured.chat[0].content).toContain("угроза Гангрены снята");
   });
 
   it("провал — таймер не трогается", async () => {
     const medic = person({ medicae: 40 });
     const patient = person();
-    patient.system.conditions.lostLegs = true;
-    patient.system.conditions.lostLegsCount = 1;
-    patient.system.conditions.lostLegsGangreneAt = 500000;
+    patient.system.lostLimbs = { rightLeg: { lost: true, gangreneAt: 500000 } };
     captured.nextRoll = 90; // eff 30, провал
 
     await applyHealing(medic, patient, { mode: "stumpCare", mod: 0, limb: "leg" });
 
-    expect(patient.system.conditions.lostLegsGangreneAt).toBe(500000);
+    expect(patient.system.lostLimbs.rightLeg.gangreneAt).toBe(500000);
     expect(captured.chat[0].content).toContain("остаётся");
   });
 });
 
 // wdbc-1rno.6: успешная бионика раньше молча не восстанавливала lostX вовсе.
+describe("resolveBionicTest: потеряно мутацией Потеря Конечности — только Best.Q (wdbc-1rno.6.1)", () => {
+  it("имплант ниже Best.Q — конечность не восстанавливается", async () => {
+    const medic = person({ medicae: 40 });
+    const patient = person();
+    patient.system.lostLimbs = { leftArm: { lost: true, gangreneAt: 0, mutation: true } };
+    captured.dice = [10, 6];
+
+    await resolveBionicTest(medic, patient, { mod: 0, limb: "arm", bodySide: "left", implantQuality: "lower" });
+
+    expect(patient.system.lostLimbs.leftArm.lost).toBe(true);
+    expect(captured.chat[0].content).toContain("только Best.Q");
+  });
+
+  it("Best.Q — восстанавливается, пометка мутации снята", async () => {
+    const medic = person({ medicae: 40 });
+    const patient = person();
+    patient.system.lostLimbs = { leftArm: { lost: true, gangreneAt: 0, mutation: true } };
+    captured.dice = [10, 6];
+
+    await resolveBionicTest(medic, patient, { mod: 0, limb: "arm", bodySide: "left", implantQuality: "best" });
+
+    expect(patient.system.lostLimbs.leftArm.lost).toBe(false);
+    expect(patient.system.lostLimbs.leftArm.mutation).toBe(false);
+  });
+});
+
 describe("resolveBionicTest: установка бионики (Medicae−30)", () => {
   it("успех, выбрана часть тела с реальной потерей — снимает lostX и таймер Гангрены", async () => {
     const medic = person({ medicae: 40 });
     const patient = person();
-    patient.system.conditions.lostEyes = true;
-    patient.system.conditions.lostEyesCount = 1;
-    patient.system.conditions.lostEyesGangreneAt = 500000;
+    patient.system.lostLimbs = { rightEye: { lost: true, gangreneAt: 500000 } };
     captured.dice = [10, 6]; // тест (eff 40-30=10, успех), 1d10 суток адаптации
 
     await resolveBionicTest(medic, patient, { mod: 0, limb: "eye" });
 
-    expect(patient.system.conditions.lostEyesCount).toBe(0);
-    expect(patient.system.conditions.lostEyes).toBe(false);
-    expect(patient.system.conditions.lostEyesGangreneAt).toBe(0);
+    expect(patient.system.lostLimbs.rightEye.lost).toBe(false);
+    expect(patient.system.lostLimbs.rightEye.gangreneAt).toBe(0);
     expect(captured.chat[0].content).toContain("восстановлена бионикой");
   });
 
@@ -255,7 +364,7 @@ describe("resolveBionicTest: установка бионики (Medicae−30)", 
     expect(captured.chat[0].content).toContain("нет утраченной");
   });
 
-  it("провал — непогл. урон + Калечение, как раньше (без изменений)", async () => {
+  it("провал — только непогл. урон, Калечения в книге нет (wdbc-x1nz.2.103)", async () => {
     const medic = person({ medicae: 40 });
     const patient = person();
     patient.system.conditions.lostArms = true;
@@ -265,7 +374,9 @@ describe("resolveBionicTest: установка бионики (Medicae−30)", 
     await resolveBionicTest(medic, patient, { mod: 0, limb: "arm" });
 
     expect(patient.system.conditions.lostArmsCount).toBe(1); // не тронуто
-    expect(patient.system.conditions.crippling).toBe(true);
+    expect(patient.system.conditions.crippling).toBeUndefined();
+    expect(patient.system.wounds.value).toBe(0); // 5 − 7 → 0, 2 в Критические
+    expect(patient.system.wounds.critical).toBe(2);
   });
 });
 
@@ -273,6 +384,7 @@ describe("applyHealing: coma (Кома, Medicae−40, раз в 10−T.b дне�
   it("интервал не истёк — предупреждение, тест не бросается", async () => {
     const medic = person();
     const patient = person({ t: 40 }); // T.b=4 → интервал 6 суток
+    patient.system.conditions.coma = true;
     await patient.setFlag("warhammer-dbc", "comaTestAt", game.time.worldTime - 100);
 
     await applyHealing(medic, patient, { mode: "coma", mod: 0 });
@@ -284,6 +396,7 @@ describe("applyHealing: coma (Кома, Medicae−40, раз в 10−T.b дне�
   it("интервал истёк — тест проходит, таймер сбрасывается в любом исходе", async () => {
     const medic = person({ medicae: 40 });
     const patient = person({ t: 40 });
+    patient.system.conditions.coma = true;
     await patient.setFlag("warhammer-dbc", "comaTestAt", game.time.worldTime - 999_999_999);
     captured.nextRoll = 90; // eff = 40-40 = 0, провал
 
@@ -292,6 +405,22 @@ describe("applyHealing: coma (Кома, Medicae−40, раз в 10−T.b дне�
     expect(captured.rolls).toEqual(["1d100"]);
     expect(patient.getFlag("warhammer-dbc", "comaTestAt")).toBe(game.time.worldTime);
     expect(captured.chat[0].content).toContain("Провал");
+    expect(patient.system.conditions.coma).toBe(true);
+  });
+
+  // wdbc-x1nz.2.105: Кома — Состояние, Успех его снимает.
+  it("Успех снимает Кому", async () => {
+    const patient = person({ t: 40 });
+    patient.system.conditions.coma = true;
+    captured.nextRoll = 5; // eff = 50-40 = 10
+    await applyHealing(person({ medicae: 50 }), patient, { mode: "coma", mod: 0 });
+    expect(patient.system.conditions.coma).toBe(false);
+  });
+
+  it("пациент не в коме — предупреждение, без броска", async () => {
+    await applyHealing(person(), person(), { mode: "coma", mod: 0 });
+    expect(captured.warnings.length).toBe(1);
+    expect(captured.rolls.length).toBe(0);
   });
 });
 
@@ -308,6 +437,7 @@ describe("applyHealing: мод. Талантов ПАЦИЕНТА к тесту 
     ]);
     const medic = person({ medicae: 40 });
     const patient = person({ t: 40 });
+    patient.system.conditions.coma = true;
     captured.nextRoll = 10; // eff = 40(медик) + 10(мод. пациента) - 40(кома) = 10
 
     await applyHealing(medic, patient, { mode: "coma", mod: 0 });
@@ -324,6 +454,7 @@ describe("applyHealing: мод. Талантов ПАЦИЕНТА к тесту 
     ]);
     const medic = person({ medicae: 40 });
     const patient = person({ t: 40 });
+    patient.system.conditions.coma = true;
     captured.nextRoll = 10; // без подмешивания eff = 40 - 40 = 0 → 10 > 0 провал
 
     return applyHealing(medic, patient, { mode: "coma", mod: 0 }).then(() => {
@@ -427,20 +558,21 @@ describe("applyHealing: gangreneSurgery (Лечение Гангрены)", () =
     expect(patient.system.conditions.gangrene).toBe(true);
   });
 
-  it("успех, часть тела цела — Гангрена снята, +1 к её потере", async () => {
+  it("успех, часть тела цела — Гангрена снята, +1 к её потере (на первой целой стороне)", async () => {
     const patient = gangrenous();
     captured.nextRoll = 5; // 40−30 = 10
     await applyHealing(person({ medicae: 40 }), patient, { mode: "gangreneSurgery", mod: 0, limb: "leg", theatre: true });
     expect(patient.system.conditions.gangrene).toBe(false);
-    expect(patient.system.conditions.lostLegsCount).toBe(1);
+    expect(patient.system.lostLimbs.rightLeg.lost).toBe(true);
   });
 
-  it("успех, Гангрена обрубка кисти — теряется вся рука", async () => {
-    const patient = gangrenous({ lostHands: true, lostHandsCount: 1 });
+  it("успех, Гангрена обрубка кисти — теряется вся рука (та же сторона)", async () => {
+    const patient = gangrenous();
+    patient.system.lostLimbs = { rightHand: { lost: true, gangreneAt: 1 } };
     captured.nextRoll = 5;
     await applyHealing(person({ medicae: 40 }), patient, { mode: "gangreneSurgery", mod: 0, limb: "hand", theatre: true });
-    expect(patient.system.conditions.lostHandsCount).toBe(0);
-    expect(patient.system.conditions.lostArmsCount).toBe(1);
+    expect(patient.system.lostLimbs.rightHand.lost).toBe(false);
+    expect(patient.system.lostLimbs.rightArm.lost).toBe(true);
   });
 
   it("провал — Гангрена остаётся, конечность цела", async () => {
@@ -448,6 +580,48 @@ describe("applyHealing: gangreneSurgery (Лечение Гангрены)", () =
     captured.nextRoll = 90;
     await applyHealing(person({ medicae: 40 }), patient, { mode: "gangreneSurgery", mod: 0, limb: "leg", theatre: true });
     expect(patient.system.conditions.gangrene).toBe(true);
-    expect(patient.system.conditions.lostLegsCount).toBeUndefined();
+    expect(patient.system.lostLimbs?.rightLeg?.lost).not.toBe(true);
+  });
+});
+
+describe("Первая Помощь и отдых по книге (wdbc-x1nz.2.103)", () => {
+  it("Пассивное, Тяжёлое — тест T+0 по Итогу T (раньше порог был 0)", async () => {
+    const patient = person({ t: 40 });
+    patient.system.wounds = { value: 1, max: 12, critical: 0 }; // потеряно 11 > T.b×2 = 8
+    captured.nextRoll = 35;
+
+    await applyHealing(person(), patient, { mode: "passive", mod: 0, bonus: 0 });
+
+    expect(captured.chat[0].content).toContain("порог <b>40</b>");
+    expect(patient.system.wounds.value).toBe(2);
+  });
+
+  it("не лечит больше, чем потеряно после прошлой Первой Помощи; обнуляет счётчик", async () => {
+    const medic = person(); // I.b 4
+    const patient = person();
+    patient.system.wounds = { value: 5, max: 10, critical: 0, lostSinceFirstAid: 2 };
+    captured.nextRoll = 5;
+
+    await applyHealing(medic, patient, { mode: "firstAid", mod: 0, bonus: 0 });
+
+    expect(patient.system.wounds.value).toBe(7);
+    expect(patient.system.wounds.lostSinceFirstAid).toBe(0);
+    expect(captured.chat[0].content).toContain("Ограничено");
+  });
+
+  it("помощь ещё не оказывали (null) — предел только нехватка", async () => {
+    const patient = person();
+    patient.system.wounds = { value: 5, max: 10, critical: 0, lostSinceFirstAid: null };
+    captured.nextRoll = 5;
+    await applyHealing(person(), patient, { mode: "firstAid", mod: 0, bonus: 0 });
+    expect(patient.system.wounds.value).toBe(9);
+  });
+
+  it("Саркофаг: лечение не поднимает Раны выше effectiveMax", async () => {
+    const patient = person();
+    patient.system.wounds = { value: 3, max: 10, effectiveMax: 5, critical: 0 };
+    captured.nextRoll = 5;
+    await applyHealing(person(), patient, { mode: "firstAid", mod: 0, bonus: 0 });
+    expect(patient.system.wounds.value).toBe(5);
   });
 });
