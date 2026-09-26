@@ -61,7 +61,8 @@ export function skillAdvanceCat(actor, def, { group = "", specialty = "", skillK
   const override = resolveAptitudeOverride(actor, "skill", def?.label || def?.name || "", group, { specialty });
   // «Враждебный независимо от Покровительства» сильнее книжного «Ремесло и
   // Общие знания Дружественные всегда»: Отвращение к Порядку Зверолюда
-  // делает враждебными именно их.
+  // делает враждебными именно их. Порядок подтверждён Сергеем 26.09.2026
+  // (отменяет обратный порядок ревью 07.09.2026).
   if (override === "enemy") return "enemy";
   if (def?.alwaysAlly) return "ally";
   if (group && isFriendlySpecialty(actor, group, specialty)) return "ally";
