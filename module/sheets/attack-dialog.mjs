@@ -50,7 +50,7 @@ import { MELEE_CATEGORIES, sameCategory } from "../constants/weapon-categories.m
 import { isHandShield } from "../combat/hand-shield.mjs";
 import { weaponHandsRequired, handsOccupied } from "../rules/hands.mjs";
 import { isFusedByHandOfDeath } from "../rules/hand-of-death.mjs";
-import { collectTestMods, ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
+import { collectTestMods, ruleRollModsHtml, ruleRerollsHtml, ruleAutoModsHtml } from "../rules/roll-mods.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
@@ -363,6 +363,17 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Один обход правил актора на диалог: mods/rerolls/crit/weaponProps из
   // одного результата, посчитанного выше (до сборки _entries/wp).
   const ruleMods = ruleRollModsHtml(actor, attackCtx, resolvedAttack);
+  // Автоматические модификаторы конвейера (auto:true), которых у атаки нет
+  // своим путём: бонус Короткой Команды (rules/command-effects.mjs, «command.*»)
+  // и штраф строки Шока (rules/situational.mjs, «situational.shock»). Раньше
+  // окно их не читало вовсе — Общая Команда «Атаки» +9 и Шок −10 до броска
+  // не доезжали, хотя карточки обещают «учитывается само». Прочие autoMods
+  // сюда НЕ идут: Порог атаки собирается здесь, и часть их уже стоит своим
+  // путём (Усталость — галочкой в sheets/attack/mods.mjs), огулом — задвоение.
+  const ruleAutoMods = ruleAutoModsHtml(actor, attackCtx, {
+    autoMods: (resolvedAttack.autoMods || []).filter(m =>
+      String(m.ruleId ?? "").startsWith("command.") || m.ruleId === "situational.shock")
+  });
   // Перебросы от правил (Локус Буйства — «перебросить любой тест атаки»).
   // Отдельным блоком: складывать их не с чем, выбирается один.
   const ruleRerolls = ruleRerollsHtml(actor, attackCtx, resolvedAttack);
@@ -689,7 +700,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   }
 
   const charVal = (actor.system.characteristics[charKey]?.total ?? 0) + (sys.attackBonus || 0)
-    + wpAttackMod + dyn0.techBon + dyn0.stanceBon + dyn0.gWs + (wp.noAim ? 0 : aimingBonus) + ammoAtkMod;
+    + wpAttackMod + dyn0.techBon + dyn0.stanceBon + dyn0.gWs + (wp.noAim ? 0 : aimingBonus) + ammoAtkMod
+    + ruleAutoMods.total;
 
   // Штраф усталости (мод препаратов уже учтён в char.total)
   // fatigue.effective — с +1 неснимаемой от Гангрены (wdbc-x1nz.2.96).
@@ -1376,6 +1388,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     rangeInfoHtml,
     rechargeWarnHtml,
     rofPills,
+    ruleAutoMods,
     ruleMods,
     ruleRerolls,
     shortRangeHtml,
@@ -1481,7 +1494,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       // подключён (aimAttackMod), остальные упираются в отдельные пробелы
       // (wdbc-1rno.29/.31/.36/.37/.38).
       { label: "Прицел (пока Прицеливаюсь)", value: currentAiming === "none" ? 0
-        : installedMods.reduce((n, m) => n + (Number(modFxOf(m).aimAttackMod) || 0), 0) }
+        : installedMods.reduce((n, m) => n + (Number(modFxOf(m).aimAttackMod) || 0), 0) },
+      // Команды и Шок (ruleAutoMods выше) — в базе, а не в modParts: как и в
+      // диалоге броска навыка (actor-sheet.mjs), автоматические модификаторы
+      // идут мимо ополовинивания штрафа галочек (halvePenalty).
+      ...ruleAutoMods.autoMods.map(m => ({ label: m.label, value: m.value }))
     ];
     const modParts = [
       { label: "Доп. модификатор",     value: f.modifier },
