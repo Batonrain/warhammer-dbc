@@ -2918,7 +2918,27 @@ function collectMechEntries(groups) {
  * совпало — не пишет. Трогает только СВОИ эффекты (метка mechEntry): ручной
  * эффект ГМа и след миграции остаются на месте.
  */
-export async function syncMechanicsEffects(item) {
+// Очередь сверки эффектов по предмету (wdbc-hbxrl) — тот же приём, что
+// _mechRuns у applyItemMechanics ниже. Сохранение Механики зовёт сверку
+// напрямую (saveMechanics), и тут же хук updateItem на акторе зовёт её ещё раз
+// через applyItemMechanics. Две параллельные сверки видят один и тот же
+// снимок item.effects и обе удаляют эффект сменившей вид записи — вторая
+// падает «ActiveEffect … does not exist!» (разовая красная плашка при смене
+// вида записи Конструктора). По очереди вторая видит уже итог первой.
+const _syncRuns = new Map();
+
+export function syncMechanicsEffects(item) {
+  const key = item?.uuid || item?.id;
+  if (!key) return _syncMechanicsEffects(item);
+  const run = (_syncRuns.get(key) ?? Promise.resolve())
+    .catch(() => {})
+    .then(() => _syncMechanicsEffects(item));
+  _syncRuns.set(key, run);
+  run.catch(() => {}).finally(() => { if (_syncRuns.get(key) === run) _syncRuns.delete(key); });
+  return run;
+}
+
+async function _syncMechanicsEffects(item) {
   const actor = item.parent instanceof Actor ? item.parent : null;
   const { durable, allIds, durableKindIds } = collectMechEntries(getItemMechanics(item));
   // durableIds — ВСЕ И-ветвенные долговечные записи, даже те, чьё «Когда»
