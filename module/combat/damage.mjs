@@ -28,6 +28,7 @@ import { conditionLevelField } from "../constants/conditions.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { applyConditionWithDuration } from "./condition-effects.mjs";
+import { rememberHaywireField } from "./bone-head.mjs";
 import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
 import { inPariahVoid } from "../rules/null-zones.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
@@ -204,7 +205,7 @@ async function _applyHaywire(actor, rating, damage2 = "") {
   const text = (isStorm && damage2)
     ? tier.text.replace(/1d5\+1 непоглощ\. E Dmg\.$/, `${damage2} непоглощ. E Dmg (книжный нестандартный урон этого предмета).`)
     : tier.text;
-  const boneHead = await _applyBoneHeadHaywire(actor, total);
+  const boneHead = await _applyBoneHeadHaywire(actor, total, rating);
   return `<div class="dmg-tb-note">📡 ЭМИ${rating ? ` (радиус ${rating} м)` : ""}: 1d10=<b>${total}</b> → <b>${tier.label}</b>. ${text}${boneHead}</div>`;
 }
 
@@ -223,14 +224,22 @@ export function haywireRoundsAtThree(power) {
  * покинет поле» — вышедшему раньше ГМ снимает Состояние с листа). Возвращает
  * строку для карточки попадания.
  */
-async function _applyBoneHeadHaywire(actor, power) {
+async function _applyBoneHeadHaywire(actor, power, radius = 0) {
   const rounds = haywireRoundsAtThree(power);
   if (!rounds || !hasRuleFlag(actor, "haywire.boneHead")) return "";
   const notes = [];
-  if (await applyConditionWithDuration(actor, "implantHaywire", { value: rounds, unit: "rounds" }))
+  const disrupted = await applyConditionWithDuration(actor, "implantHaywire", { value: rounds, unit: "rounds" });
+  if (disrupted)
     notes.push(`Сбой импланта на ${rounds} Р. — тесты I провалены, ментальные действия вдвое дольше`);
-  if (power >= 7 && await applyConditionWithDuration(actor, "dazed", { value: 1, unit: "rounds" }))
-    notes.push("Ступор на 1 Раунд");
+  const dazed = power >= 7 && await applyConditionWithDuration(actor, "dazed", { value: 1, unit: "rounds" });
+  if (dazed) notes.push("Ступор на 1 Раунд");
+  // «…или пока не покинет поле»: поле запоминается, выход за радиус снимает
+  // Сбой (и этот Ступор) сам — combat/bone-head.mjs. Haywire (0) привязан к
+  // цели, из него не выйти.
+  if (disrupted) {
+    await rememberHaywireField(actor, { radius, dazed });
+    if (Number(radius) > 0) notes.push(`выйдет из поля (${radius} м) — снимется`);
+  }
   return notes.length ? `<br/>🧠 BONE-Head: ${notes.join("; ")}.` : "";
 }
 

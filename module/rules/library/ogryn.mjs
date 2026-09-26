@@ -87,6 +87,14 @@ export const OGRYN_TRAIT_RULES = [
     effects: [{ kind: "successDegCap", target: "basedon:int", value: 1 }]
   },
   {
+    // «Любой тест I занимает у Огрина минимум полное действие» — 2 ОД в свой
+    // Ход в бою, списывает combat/bone-head.mjs::payIntTestAction.
+    id: "ogryn.boneHead.intFullAction",
+    label: "BONE-Head / Костеголов: тест I — Полное действие",
+    when: BONE_HEAD,
+    effects: [{ kind: "grantFlag", target: "tests.intFullAction" }]
+  },
+  {
     // Поле Haywire 3+ — «автоматически проваливает все тесты I». Сбой живёт
     // Состоянием со сроком (его ставит combat/damage.mjs при попадании ЭМИ).
     id: "ogryn.boneHead.haywire",

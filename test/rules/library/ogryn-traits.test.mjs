@@ -180,6 +180,6 @@ describe("паки Огрина против книги", () => {
   it("правила Черт заведены на обе Черты", () => {
     const ids = OGRYN_TRAIT_RULES.map(r => r.id);
     expect(ids.filter(id => id.startsWith("ogryn.brute."))).toHaveLength(5);
-    expect(ids.filter(id => id.startsWith("ogryn.boneHead."))).toHaveLength(3);
+    expect(ids.filter(id => id.startsWith("ogryn.boneHead."))).toHaveLength(4);
   });
 });

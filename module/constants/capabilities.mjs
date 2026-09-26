@@ -7405,9 +7405,14 @@ export const CAPABILITIES = {
     reader: "module/combat/brute-regen.mjs::bruteRegenClock (часы Календаря, combat/condition-clock.mjs) — арифметика module/rules/brute-regen.mjs"
   },
   "haywire.boneHead": {
-    label: "Мозговые импланты: поле Haywire 3+ — «Сбой импланта» (тесты I провалены), 7+ — Ступор на 1 Раунд",
+    label: "Мозговые импланты: поле Haywire 3+ — «Сбой импланта» (тесты I провалены, ментальные действия вдвое дольше, снимается при выходе из поля), 7+ — Ступор на 1 Раунд",
     source: "Черта «BONE-Head / Костеголов» (module/rules/library/ogryn.mjs)",
-    reader: "module/combat/damage.mjs::_applyBoneHeadHaywire (из _applyHaywire)"
+    reader: "module/combat/damage.mjs::_applyBoneHeadHaywire (из _applyHaywire) + module/combat/action-economy.mjs::isImplantDisrupted (ментальные траты ОД вдвое) + module/combat/bone-head.mjs::checkHaywireFieldExit (выход из поля)"
+  },
+  "tests.intFullAction": {
+    label: "Тест I занимает Полное действие (2 ОД в свой Ход в бою)",
+    source: "Черта «BONE-Head / Костеголов» (module/rules/library/ogryn.mjs)",
+    reader: "module/combat/bone-head.mjs::payIntTestAction (из module/sheets/actor-sheet.mjs::_runTest)"
   },
   "weapons.ogryn": {
     label: "Сложение под огринское оружие: своё берёт без штрафа, чужое — со штрафом (−10, стрелковое −20)",

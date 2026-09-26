@@ -18,6 +18,7 @@ import { characterContext, charLabel } from "./character-context.mjs";
 import { showAttackDialog } from "./attack-dialog.mjs";
 import { rollMutationOrGift, openMutationPicker } from "./tabs/mutations.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { payIntTestAction } from "../combat/bone-head.mjs";
 import { applyOnTargetFailConditions } from "../rules/on-target-fail.mjs";
 import { createDisorderItem, activateDisorderListeners,
          openFearDialog, openTraumaDialog, rollDisorder } from "./tabs/disorders.mjs";
@@ -3004,6 +3005,9 @@ export class WarhammerCharacterSheet
     // Переброс: бросаем сколько сказано и оставляем один. Какой именно —
     // решает rules/reroll-pick.mjs: на d100 «лучший» это МЕНЬШИЙ, и это знание
     // держится в одном месте, а не переписывается на каждом месте броска.
+    // BONE-Head / Костеголов: тест I в свой Ход в бою — Полное действие
+    // (combat/bone-head.mjs); ОД не хватает — теста нет.
+    if (!await payIntTestAction(this.actor, charKey)) return;
     const { roll, rv, rerollNote } = await rollD100WithReroll(forcedOpponentReroll || reroll, { confirmPick });
     const charAbbr = CHARACTERISTICS[charKey]?.abbr ?? charKey;
 
