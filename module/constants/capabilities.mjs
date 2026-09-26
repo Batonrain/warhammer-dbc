@@ -5062,6 +5062,11 @@ export const CAPABILITIES = {
     source: "Voltaic Confluence / Вольтаическое Слияние", reader: ""
   },
   // ── Черты: packs-src/traits — Фаза 2, capability-документация ──
+  "trait.possession": {
+    label: "Атака Одержимостью (wdbc-q267, вариант «а» по решению Сергея 26.09.2026): кнопка на Трейте сама бросает W+0 атакующего и жертвы (текущая цель, не далее W.b м), копит счёт Успехов на флаге атакующего; +5 — вселение (контроль над телом через rules/actor-control.mjs, ActiveEffect +10 S/+10 T, +1d10+3 Ран на хосте), −5 — отпор (1d10 непоглощаемого урона, запрет на эту жертву 24 ч игрового времени). Unnatural W атакующего не даёт «ничьей» при проигрыше. Вторая кнопка — выход: снимает бонусы, возвращает контроль, выжившему хосту 3d10 урона каждой Характеристике и 1d10 Порчи. НЕ смоделировано: подмена I/P/W и WS/BS хоста значениями демона; «урон восстанавливается в 12 раз медленнее» — только текстом.",
+    source: "Трейт: Possession / Одержимость",
+    reader: "module/apps/possession-attack.mjs (attemptPossessionAttack, leavePossessionHost), module/rules/possession-attack.mjs (possessionStep, possessionBarredRemaining, possessionInRange)"
+  },
   "trait.ablativePlating": {
     label: "При полном запасе любой непоглощённый урон уменьшается до 1.",
     source: "Ablative Plating / Аблативное Бронирование", reader: ""
@@ -5415,10 +5420,6 @@ export const CAPABILITIES = {
   "trait.pheromoneGlands": {
     label: "+10 социальные (феромоны).",
     source: "Pheromone Glands / Феромонные Железы", reader: ""
-  },
-  "trait.possession": {
-    label: "Вселяется в тело смертного.",
-    source: "Possession / Одержимость", reader: ""
   },
   "trait.preferredStrike": {
     label: "Доп. куб урона для переброса за каждый −10 от Сочленений цели (макс 3). Талант-снижение штрафа не уменьшает кубы. До ½ P.b раз/битву.",
