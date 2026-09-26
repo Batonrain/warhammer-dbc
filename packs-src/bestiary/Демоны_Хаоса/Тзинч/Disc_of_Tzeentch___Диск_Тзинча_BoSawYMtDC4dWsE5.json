@@ -1024,7 +1024,7 @@
       "img": "icons/svg/sword.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Урон без S.b (4): его атака прибавляет его сама; книга Хаоса, Диск Тзинча даёт итог с S.b.",
         "rangeBands": [],
         "offProfile": {},
         "gripProps2h": [],
@@ -1042,7 +1042,7 @@
         "rof_single": false,
         "rof_semi": 0,
         "rof_full": 0,
-        "damage": "1d10+5",
+        "damage": "1d10+1",
         "damageType": "rending",
         "penetration": 4,
         "quality": "common",
