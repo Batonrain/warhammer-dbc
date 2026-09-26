@@ -32,7 +32,12 @@
     "fateRoll": "",
     "skillsNote": "",
     "adaptations": "",
-    "bookSource": "DoomBC — Основная книга"
+    "bookSource": "DoomBC — Основная книга",
+    "allowedArchetypes": [
+      "renegade",
+      "pirate",
+      "savage"
+    ]
   },
   "_id": "tjQaSHFHxbt1tvWU",
   "effects": [],

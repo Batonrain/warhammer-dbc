@@ -5137,8 +5137,9 @@ export const CAPABILITIES = {
     source: "A Thousand Songs / Тысяча Песен", reader: ""
   },
   "trait.barefoot": {
-    label: "+20 Stealth (бесшумность).",
-    source: "Barefoot / Босоногий", reader: ""
+    label: "Босиком (переключатель на листе): +20 и переброс Stealth (бесшумно) и тестов Трудного Ландшафта.",
+    source: "Barefoot / Босоногий",
+    reader: "Механика Черты (testMod/reroll, области skill:stealth и terrain) — module/rules/resolve-test.mjs (область terrain), module/combat/movement-terrain.mjs::_resolveDifficultTerrain (переброс); переключатель — module/apps/effects.mjs::isItemActive (Черта activatable)"
   },
   "trait.bestial": {
     label: "Авто Survival; не использует сложные действия.",
@@ -5288,8 +5289,9 @@ export const CAPABILITIES = {
     source: "Fanatic / Фанатик", reader: ""
   },
   "trait.fastLearner": {
-    label: "+X% к опыту.",
-    source: "Fast Learner / Ловит на Лету (X)", reader: ""
+    label: "+X% к стартовому опыту и опыту за сессию.",
+    source: "Fast Learner / Ловит на Лету (X)",
+    reader: "module/rules/character.mjs (system.fastLearnerBonus) → module/rules/session-rewards.mjs::sessionXpWithFastLearner и module/constants/start-levels.mjs::startLevelValues (стартовый опыт в Мастере)"
   },
   "trait.firePoint": {
     label: "Тратит Очко Бесчестья на переброс стрелковой атаки, даже Оглушённым/лёжа/сбит с ног. На покровительстве Нургла может перебрасывать с Преимущ…",
@@ -5478,8 +5480,9 @@ export const CAPABILITIES = {
     source: "Ritual of Eight Spokes / Ритуал Восьми Спиц", reader: ""
   },
   "trait.runt": {
-    label: "−4 Ран; Compact с оружием.",
-    source: "Runt / Коротышка", reader: ""
+    label: "−4 Ран; винтовки — как длинные, двуручное стрелковое — не одной рукой; Compact снимает.",
+    source: "Runt / Коротышка",
+    reader: "Механика Черты: Раны −4 и возможность weapons.runt — module/rules/runt-fit.mjs"
   },
   "trait.scrounge": {
     label: "Тратит смену работы и Очко Бесчестья, чтобы добыть расходники/находку до 2d10 Редкости (R2).",
@@ -7439,6 +7442,11 @@ export const CAPABILITIES = {
     label: "Тест I занимает Полное действие (2 ОД в свой Ход в бою)",
     source: "Черта «BONE-Head / Костеголов» (module/rules/library/ogryn.mjs)",
     reader: "module/combat/bone-head.mjs::payIntTestAction (из module/sheets/actor-sheet.mjs::_runTest)"
+  },
+  "weapons.runt": {
+    label: "Сложение Ратлинга: винтовка без Compact — длинная (нельзя стрелять в рукопашной), двуручное стрелковое без Compact — не одной рукой",
+    source: "Черта «Runt / Коротышка» (Механика Черты)",
+    reader: "module/rules/runt-fit.mjs — RUNT_FIT_FLAG, подключено в module/sheets/attack-dialog.mjs и module/rules/hands.mjs::availableRangedGrips"
   },
   "weapons.ogryn": {
     label: "Сложение под огринское оружие: своё берёт без штрафа, чужое — со штрафом (−10, стрелковое −20)",

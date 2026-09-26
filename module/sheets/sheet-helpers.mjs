@@ -1146,6 +1146,9 @@ function buildGetDataUncached(actor) {
       ratingDisplay: g.ratingText,
       effectSummary: fx.join(" · "),
       benefit:       g.first.system.benefit || "",
+      // Включаемая Черта (Босоногий: «обут/босиком») — тот же тумблер, что у Мутаций.
+      activatable:   !!g.first.system.activatable,
+      active:        !!g.first.system.active,
       toggles:       toggleRows(allItems, g.first)
     };
   });

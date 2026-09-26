@@ -987,6 +987,12 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       startExtraXp: this.startExtraXp, startExtraInf: this.startExtraInf, startExtraCor: this.startExtraCor,
       startIsAstartes: sys.race === "astartes",
       startSubrace: this._startSubraceInfo(),
+      // Ловит на Лету (X): +X% к стартовому опыту — подсказка, откуда лишний опыт.
+      startFastLearner: (() => {
+        const pct = Number(sys.fastLearnerBonus) || 0;
+        const res = pct ? this._startLevelResult() : null;
+        return res?.fastLearnerXp ? { pct, xp: res.fastLearnerXp } : null;
+      })(),
       // Уже применяли Уровень старта на этом персонаже раньше — предупреждаем,
       // а не молча копим бонусы Влияния/Порчи ещё раз поверх. Флаг, а не
       // «опыт не пуст»: возврат опыта за совпавший Навык (Этап 3) законно
@@ -1063,7 +1069,9 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     return startLevelValues({
       level: this.startLevelKey, astartes: sys.race === "astartes",
       extraXp: this.startExtraXp, extraInf: this.startExtraInf, extraCor: this.startExtraCor,
-      subraceCost: subraceCostAt(this._subraceDef(), sys.subraceTier)
+      subraceCost: subraceCostAt(this._subraceDef(), sys.subraceTier),
+      // Ловит на Лету (X): +X% к стартовому опыту (Человек 25, Ратлинг 15, …).
+      fastLearnerPct: Number(sys.fastLearnerBonus) || 0
     });
   }
 

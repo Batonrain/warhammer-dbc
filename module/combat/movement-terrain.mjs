@@ -16,6 +16,8 @@ import { getItemMechanics } from "../apps/mechanics.mjs";
 import { entryWhenOk } from "../rules/mech-when.mjs";
 import { suffersBlindness } from "../rules/blindness.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { resolveTest } from "../rules/resolve-test.mjs";
+import { pickReroll } from "../rules/reroll-pick.mjs";
 import { IN_FLIGHT_ALTITUDES } from "./movement-actions.mjs";
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
@@ -129,11 +131,25 @@ async function _resolveDifficultTerrain(actor, ag, terrainMod, extraMod, labels)
   // модификатора ландшафта и ручной поправки — ни Усталости, ни Перевеса,
   // ни Черт. Диалога с галочками у броска нет, поэтому collectTestMods.
   // terrain:true — Общая Команда «Трудный ландшафт» (rules/command-effects.mjs).
-  const ruleMods  = collectTestMods(actor, { kind: "skill", char: "ag", terrain: true });
+  const ctx       = { kind: "skill", char: "ag", terrain: true };
+  const ruleMods  = collectTestMods(actor, ctx);
   const threshold = ag + totalMod + ruleMods.total;
 
   const roll   = await new Roll("1d100").evaluate();
-  const rv     = roll.total;
+  const rolls  = [roll];
+  let rv       = roll.total;
+  // Переброс на тест Трудного Ландшафта (Босоногий Ратлинга, область
+  // «terrain» Механики): диалога с галочкой нет — провал перебрасывается сам,
+  // тем же выбором «лучший из», что у прочих перебросов (rules/reroll-pick.mjs).
+  const reroll = resolveTest({ actor, ...ctx }).rerolls.find(r => r.who === "self");
+  let rerollNote = "";
+  if (reroll && rv > threshold) {
+    const again = await new Roll("1d100").evaluate();
+    rolls.push(again);
+    const pick = pickReroll([rv, again.total], reroll.mode);
+    rerollNote = `Переброс (${esc(reroll.label)}): ${rv} → ${again.total}, взят <b>${pick.value}</b>`;
+    rv = pick.value;
+  }
   const passed = rv <= threshold;
   const deg    = Math.floor(Math.abs(passed ? threshold - rv : rv - threshold) / 10) + 1;
 
@@ -151,8 +167,9 @@ async function _resolveDifficultTerrain(actor, ag, terrainMod, extraMod, labels)
   await postTestCard(actor, {
     icon: rollIcon("burst","#b0a080"), title: `Трудный Ландшафт — ${esc(actor.name)}`,
     threshold: rollStatLine({ label: "Ag", base: ag, parts, threshold, rv }),
-    outcome
-  }, { rolls: [roll] });
+    outcome,
+    ...(rerollNote ? { lines: [`<div class="roll-threshold">🔁 ${rerollNote}</div>`] } : {})
+  }, { rolls });
 }
 
 // ─── Кнопка в меню токена ──────────────────────────────────────────────────

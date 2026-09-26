@@ -129,6 +129,9 @@ export function isItemActive(item) {
         .map(i => ({ id: i.id, wornPosition: i.system?.wornPosition || "" }));
       return activeRunicWeaveId(siblings) === item.id;
     }
+    case "trait":
+      // Включаемая Черта (Босоногий и подобные) — тумблер как у Мутации ниже.
+      return sys.activatable ? !!sys.active : true;
     // Мутация/Дар (wdbc-egll) — по умолчанию действует всегда, как Талант/
     // Черта (activatable:false у подавляющего большинства). Часть даёт
     // эффект только «активированным» книжным действием на время (Живое
