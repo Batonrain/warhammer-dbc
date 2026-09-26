@@ -10,7 +10,12 @@
     "discipline": "worldSinger",
     "subtype": "Фантазмы Земли",
     "powerType": "psychicShoot",
-    "extraTypes": [],
+    "extraTypes": [
+      {
+        "type": "indirect",
+        "x": 0
+      }
+    ],
     "shootSubtype": "barrage",
     "prRequired": 5,
     "testChar": "wp",

@@ -10,7 +10,12 @@
     "discipline": "biomancy",
     "subtype": "Биоэлектричество",
     "powerType": "attack",
-    "extraTypes": [],
+    "extraTypes": [
+      {
+        "type": "indirect",
+        "x": 0
+      }
+    ],
     "shootSubtype": "",
     "prRequired": 2,
     "testChar": "wp",

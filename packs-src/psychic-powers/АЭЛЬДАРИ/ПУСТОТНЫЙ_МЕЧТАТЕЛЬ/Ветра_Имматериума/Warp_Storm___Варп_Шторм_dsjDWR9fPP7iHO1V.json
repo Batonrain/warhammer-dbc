@@ -10,7 +10,12 @@
     "discipline": "voidDreamer",
     "subtype": "Ветра Имматериума",
     "powerType": "aura",
-    "extraTypes": [],
+    "extraTypes": [
+      {
+        "type": "indirect",
+        "x": 0
+      }
+    ],
     "shootSubtype": "",
     "prRequired": 13,
     "requirement": "PR 13, Psychic Storm",
