@@ -529,6 +529,22 @@ export function situationalMods(v) {
       note: wp.gyroStabilized ? "снято: Гиро-стаб." : undefined }
   ];
 
+  // Низкая высота цели (wdbc-1rno.29): Прицел на Упреждение («следующий
+  // выстрел игнорировал все штрафы… за скорость цели, высоту», стр. 62) и
+  // Предсказатель Движения при Прицеливании («игнорирует штрафы за скорость
+  // и высоту цели», стр. 171; то же поле aimIgnoresRunning — книга даёт обе
+  // половины одной фразой) снимают −10. Запрет «Высокая высота» они НЕ
+  // снимают — это не штраф (вопрос владельцу в тикете).
+  if (!isMelee) {
+    const aiming = actor?.system?.aiming;
+    const tracking = !!(actor?.getFlag?.("warhammer-dbc", "trackingAimActive")
+      ?? actor?.flags?.["warhammer-dbc"]?.trackingAimActive);
+    const predictor = !!aiming && aiming !== "none" && weapon
+      && getInstalledMods(actor, weapon).some(m => !!m.system?.effects?.aimIgnoresRunning);
+    const why = tracking ? "Прицел на Упреждение" : predictor ? "Предсказатель Движения" : null;
+    const row = why && specificMods.find(m => m.label === "Низкая высота цели" && !m.immune);
+    if (row) { row.value = 0; row.immune = true; row.note = `снято: ${why}`; }
+  }
   // Дальняя/экстремальная дистанция (wdbc-1rno.31): Снайпер, Холодные Глаза
   // и оптические прицелы при Прицеливании снимают оба штрафа — тем же
   // приёмом, что Зенитное гасит «Цель бежит» (выше).

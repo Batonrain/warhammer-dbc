@@ -116,3 +116,25 @@ describe("Ночное Зрение, Охотничий Визор, Термал
     expect(vision(actorWith([djinn], "half")).dark.value).toBe(-30);
   });
 });
+
+// wdbc-1rno.29: Прицел на Упреждение и Предсказатель Движения снимают −10 Низкой высоты.
+describe("Низкая высота цели: гасители", () => {
+  const low = actor => situationalMods({
+    actor, attackCtx: {}, attackerToken: null, gripRange: null, hasFatigue: false,
+    hasLostEyes: false, isBlinded: false, isMelee: false, measured: null,
+    targetHelpless: false, targetToken: null, weapon, wProps: [], wp: {}
+  }).specificMods.find(m => m.label === "Низкая высота цели");
+
+  it("без гасителей −10", () => expect(low(actorWith([])).value).toBe(-10));
+
+  it("успешный Прицел на Упреждение снимает", () => {
+    const a = { ...actorWith([]), flags: { "warhammer-dbc": { trackingAimActive: true } } };
+    expect(low(a)).toEqual(expect.objectContaining({ value: 0, immune: true }));
+  });
+
+  it("Предсказатель Движения — только при Прицеливании", () => {
+    const mp = { ...scope("Motion Predictor / Предсказатель Движения"), system: { installedOn: "w1", effects: { aimIgnoresRunning: true } } };
+    expect(low(actorWith([mp], "none")).value).toBe(-10);
+    expect(low(actorWith([mp], "full")).value).toBe(0);
+  });
+});
