@@ -518,6 +518,18 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 `ogryn-weapon-break.mjs`, `frenzy.mjs` (Ярость — переключатель,
 `system.inRage`), `fully-armed.mjs`.
 
+- Гасители штрафов окна атаки (sheets/attack/mods.mjs, 26.09.2026):
+  дальняя/экстремальная дистанция — `rules/range-penalty-immunity.mjs`
+  (Снайпер, Холодные Глаза, оптика при Прицеливании, wdbc-1rno.31);
+  видимость — `rules/vision-penalty-immunity.mjs` (Ночное Зрение, Охотничий
+  Визор, Термальный/Джинн-Прицел, wdbc-1rno.36); −10 Низкой высоты — Прицел
+  на Упреждение/Предсказатель Движения (wdbc-1rno.29); Трудная Цель —
+  `rules/hard-target.mjs`, метка `fastMoveThisTurn` (wdbc-1rno.30);
+  Антиприцел — capability `attack.antiAim` (wdbc-1rno.24); Состояние
+  «Врасплох» в 1-м Раунде ставит +30 само (wdbc-1rno.3.1).
+- Безголовый: `rules/headless.mjs` — обзор 120° в facing и «Голова»→«Торс»
+  в damage.mjs (wdbc-1rno.20).
+
 ## 6. Оружие и его свойства
 
 - `module/data/item/weapon.mjs` — схема Оружия; `ammo.mjs` (Боеприпас, правит
@@ -581,6 +593,14 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   Сердце) и `overloadRetaliateFormula`/`overloadRetaliatePen` (wdbc-1rno.2,
   16.09.2026 — бьёт формулой в АТАКУЮЩЕГО обычным конвейером урона,
   Archeotech Refractor «Перегрузка»; `isRetaliation` обрывает цепь).
+- Режимы поля друкхарийской брони (Психокостяной Костюм, Призрачная Броня;
+  `constants/drukhari-armor-fields.mjs`, wdbc-j8cn): Защитное поле —
+  встроенный forcefield-щит `combat/armor-field-shield.mjs` (живёт, пока броня
+  надета и режим включён); Амортизирующее — Flak и Protective в
+  `rules/character/armour.mjs`; Подавляющее — правило
+  `core.drukhariFieldPsyMod` (штраф чужим психотестам) и Blunted.
+- Blunted / Затупленный (Черта или поле брони): `rules/blunted.mjs` — строка
+  «пройдите Psyniscience −10×X» на карточке манифестации (wdbc-j8cn).
 
 ## 8. Пространственные механизмы: Шаблоны, Ауры, Зоны
 
@@ -1028,6 +1048,9 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 
 ## 17. Миньоны, Орды, Отряды, Формирования, Командование
 
+- «Превратить в Миньона» (копия актора типа minion): `apps/minion-convert.mjs`
+  (wdbc-v99a). «Не считать вес снаряжения» (флаг ignoreWeight):
+  `rules/encumbrance.mjs::ignoresWeight` (wdbc-zy93).
 - Миньоны: `data/actor/minion.mjs`, `constants/{minions,minion-traits}.mjs`,
   `rules/minion-build.mjs`, `apps/{minion-creator,minion-talent,minions}.mjs`,
   `sheets/minion-sheet.mjs`, `sheets/tabs/minions-panel.mjs`.
