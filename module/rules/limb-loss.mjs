@@ -174,6 +174,38 @@ export function derivedLimbLossConditions(system) {
   return out;
 }
 
+/**
+ * Стороны из прежнего хранения (до wdbc-x1nz.2.100): conditions.lostX —
+ * флаг, lostXCount — сколько (0-2), lostXGangreneAt — один таймер на все
+ * обрубки. Только для ключей, которые в conditions вообще записаны:
+ * { lostArms: { rightArm: {...}, leftArm: {...} } }. Стороны — по порядку
+ * BODY_SIDES, как у lostCountFields: какая именно, прежде не хранилось.
+ */
+export function legacyLimbLossSides(conditions) {
+  const out = {};
+  for (const key of LIMB_LOSS_KEYS) {
+    if (conditions?.[key] === undefined && conditions?.[`${key}Count`] === undefined) continue;
+    const n = conditions[key] ? Math.min(BODY_SIDES.length, Math.max(1, Number(conditions[`${key}Count`]) || 0)) : 0;
+    const gangreneAt = Number(conditions[`${key}GangreneAt`]) || 0;
+    out[key] = Object.fromEntries(BODY_SIDES.map((side, i) => [lostSideKey(key, side),
+      { lost: i < n, gangreneAt: i < n ? gangreneAt : 0, mutation: false }]));
+  }
+  return out;
+}
+
+/**
+ * migrateData существа: старая потеря переезжает в system.lostLimbs, пока
+ * у документа своего lostLimbs нет. Схема старые поля вычищает, так что без
+ * этого у покалеченных персонажей конечности «отрастали» (приёмка #518-#526).
+ * Записанный lostLimbs главнее: после первой записи старые поля — мусор.
+ */
+export function migrateLegacyLimbLoss(source) {
+  if (!source?.conditions || source.lostLimbs !== undefined) return source;
+  const sides = Object.values(legacyLimbLossSides(source.conditions)).filter(s => Object.values(s).some(e => e.lost));
+  if (sides.length) source.lostLimbs = Object.assign({}, ...sides);
+  return source;
+}
+
 /** «П. и Л.», «Л.» — подпись сторон для карточек и подсказок. */
 export function lostSidesLabel(system, key) {
   return lostSides(system, key).map(s => BODY_SIDE_SHORT[s]).join(" и ");

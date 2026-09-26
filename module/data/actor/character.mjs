@@ -25,10 +25,12 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { creatureSchema, migrateReactionsString } from "./_creature.mjs";
+import { migrateLegacyLimbLoss } from "../../rules/limb-loss.mjs";
 
 export class CharacterData extends foundry.abstract.TypeDataModel {
-  /** @override — строковые «Реакции» уезжают памяткой в notes (см. _creature.mjs). */
-  static migrateData(source) { return migrateReactionsString(source); }
+  /** @override — строковые «Реакции» уезжают памяткой в notes (см. _creature.mjs),
+   *  старая потеря конечностей — по сторонам (rules/limb-loss.mjs). */
+  static migrateData(source) { return migrateLegacyLimbLoss(migrateReactionsString(source)); }
 
 
   /** @override */
