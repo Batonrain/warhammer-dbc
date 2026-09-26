@@ -312,3 +312,25 @@ describe("Иммунитет по субмутации (Animal Hybrid, субм�
     expect(hasRuleFlag(actorWithHybrid("7"), "weaponPropertyImmunity.corrosive")).toBe(true);
   });
 });
+
+// wdbc-1rno.24: Марионетка — попадания варп-оружия проходят насквозь.
+describe("Странная Неуязвимость, субмутация 9: иммунитет к варп-оружию", () => {
+  const withCap = key => {
+    const a = characterActor({ armorAP: 0, toughnessBonus: 0, wounds: 20 });
+    const item = { id: "si", name: "Strange Invulnerability", type: "mutation", system: {},
+      flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+        { id: "e", kind: "capability", capabilityKey: key, label: "" }] }] } } };
+    a.items.push(item); a.items.contents.push(item);
+    return a;
+  };
+  it("попадание с Warp Weapon не наносит урона", async () => {
+    const actor = withCap("damageImmunity.warpWeapon");
+    await applyDamageToActor(actor, damage({ rawDamage: 12, warpSoak: true }));
+    expect(actor.system.wounds.value).toBe(20);
+  });
+  it("обычное попадание проходит", async () => {
+    const actor = withCap("damageImmunity.warpWeapon");
+    await applyDamageToActor(actor, damage({ rawDamage: 12 }));
+    expect(actor.system.wounds.value).toBeLessThan(20);
+  });
+});

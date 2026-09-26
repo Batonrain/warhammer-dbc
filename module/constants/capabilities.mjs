@@ -28,6 +28,21 @@ export const CAPABILITIES = {
     source: "Мутация: Burning Body / Shield of Purity (Общие мутации)",
     reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — hooks.mjs _applyWeaponPropEffect (кнопка condition:\"burning\")"
   },
+  "damageImmunity.warpWeapon": {
+    label: "Попадания оружия со свойством Warp Weapon не причиняют вреда (Странная Неуязвимость, субмутация 9 «Марионетка», wdbc-1rno.24)",
+    source: "Мутация: Strange Invulnerability, субмутация 9 (Общие мутации)",
+    reader: "module/combat/damage.mjs applyDamageToActor (warpSoak)"
+  },
+  "soulBurnImmunity": {
+    label: "Выжигание Души бесполезно — встречный тест не бросается (Странная Неуязвимость, субмутация 9 «Марионетка», wdbc-1rno.24)",
+    source: "Мутация: Strange Invulnerability, субмутация 9 (Общие мутации)",
+    reader: "module/hooks.mjs _executeSoulBurn"
+  },
+  "attack.antiAim": {
+    label: "Атаки с Прицеливанием (Полу-/Полным) по носителю автоматически промахиваются — галочка-автопровал окна атаки, отмечена сама, если стрелок прицелился (Странная Неуязвимость, субмутация 11 «Антиприцел», wdbc-1rno.24). Избирательная атака без Прицеливания не считается — вопрос владельцу.",
+    source: "Мутация: Strange Invulnerability, субмутация 11 (Общие мутации)",
+    reader: "module/sheets/attack/mods.mjs situationalMods"
+  },
   "weaponPropertyImmunity.corrosiveBodyOnly": {
     label: "Иммунитет к Corrosive у самого персонажа, но НЕ у носимой им брони (Замена Крови, субмутация 10 «Кислота», wdbc-1rno.15): броня теряет AP как обычно, остаток рейтинга на тело не переходит",
     source: "Мутация: Blood Replacement, субмутация 10 (Общие мутации)",
@@ -7140,7 +7155,7 @@ export const CAPABILITIES = {
     reader: ""
   },
   "mutation.strangeInvulnerability": {
-    label: "Целиком в субмутациях (12 вариантов неуязвимости к типам атак — тупое/клинковое/стрелковое/взрывы/множественные цели и др.), база сама не даёт эффекта — не автоматизировано",
+    label: "Целиком в субмутациях, база сама не даёт эффекта. Работают (записи на предмете): 2 Око Бури, 3 Упругий, 4 Пуленепробиваемый, 5 Текучая Плоть, 6 Щит Тщеславия — взрывы/спреи (очереди и рукопашные, разделённые между целями, — нет: атака одноцелевая), 9 Марионетка — варп-оружие и Выжигание Души (Одержимость и Телепатия — нет), 11 Антиприцел (wdbc-1rno.24). Не сделаны 0, 1, 7, 8, 10 — ждут решения владельца.",
     source: "Мутация: Strange Invulnerability (Общие мутации)",
     reader: ""
   },

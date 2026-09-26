@@ -2265,6 +2265,11 @@ export async function _resolveSoulBurn(attackerId) {
 // Опозный тест W+tPR×5 vs W+tPR×5. При победе псайкера — d10 непоглощаемого
 // E Dmg за каждый чистый Успех, напрямую в Раны цели (минуя броню и T.b).
 export async function _executeSoulBurn(attacker, target) {
+  // Марионетка (Странная Неуязвимость, субмутация 9, wdbc-1rno.24): «Выжигания
+  // Души… бесполезны против него» — тест не бросается вовсе.
+  if (hasFleshmetalFlag(target, "soulBurnImmunity")) {
+    return ui.notifications.warn(`${target.name}: Выжигание Души бесполезно — душа спрятана в Варпе (Странная Неуязвимость).`);
+  }
   const allRolls = [];
 
   // Встречные тесты Воли обеих сторон — оба через общий сбор (wdbc-ct65.2):

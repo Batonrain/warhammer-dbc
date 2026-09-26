@@ -138,3 +138,22 @@ describe("Низкая высота цели: гасители", () => {
     expect(low(actorWith([mp], "full")).value).toBe(0);
   });
 });
+
+// wdbc-1rno.24: Антиприцел — прицельная атака по носителю автоматически промахивается.
+describe("Антиприцел цели", () => {
+  const antiAimTarget = { items: [{ type: "mutation", name: "Strange Invulnerability", system: {},
+    flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+      { id: "e", kind: "capability", capabilityKey: "attack.antiAim", label: "" }] }] } } }], system: {} };
+  const row = aiming => situationalMods({
+    actor: actorWith([], aiming), attackCtx: { targetActor: antiAimTarget }, attackerToken: null, gripRange: null,
+    hasFatigue: false, hasLostEyes: false, isBlinded: false, isMelee: false, measured: null,
+    targetHelpless: false, targetToken: null, weapon, wProps: [], wp: {}
+  }).commonMods.find(m => m.label === "Антиприцел цели");
+
+  it("прицелился — автопровал отмечен сам", () => {
+    expect(row("half")).toEqual(expect.objectContaining({ autofail: true, autoCheck: true }));
+  });
+  it("без Прицеливания — строка есть, но не отмечена", () => {
+    expect(row("none").autoCheck).toBe(false);
+  });
+});

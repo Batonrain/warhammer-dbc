@@ -783,6 +783,10 @@ export async function applyDamageToActor(actor, damageData) {
   if (melee && damageType === "impact" && hasRuleFlag(actor, "damageImmunity.meleeImpact")) return;
   if (melee && damageType === "rending" && hasRuleFlag(actor, "damageImmunity.meleeRending")) return;
   if (!melee && damageType === "impact" && hasRuleFlag(actor, "damageImmunity.rangedImpact")) return;
+  // Марионетка (Странная Неуязвимость, субмутация 9, wdbc-1rno.24): «Попадания
+  // варп-оружия проходят сквозь него, не причиняя вреда» — warpSoak и есть
+  // признак попадания свойством Warp Weapon.
+  if (warpSoak && hasRuleFlag(actor, "damageImmunity.warpWeapon")) return;
   // Иммунитет по подвиду урона (wdbc-q0q8) — тот же приём, что три ветки выше,
   // но по DAMAGE_SUBTYPES вместо DAMAGE_TYPES/melee: полный игнор попадания,
   // не только побочного эффекта. Единое пространство имён на все 6 подвидов

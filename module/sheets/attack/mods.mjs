@@ -11,7 +11,7 @@
 //  границу идёт 90–106 значений.
 // ══════════════════════════════════════════════════════════════════════════
 
-import { ruleFlagLabels }         from "../../rules/flags.mjs";
+import { ruleFlagLabels, hasRuleFlag } from "../../rules/flags.mjs";
 import { isStunnedOrDazed }       from "../../rules/predicates.mjs";
 import { meleeContactCount, hasHighGround } from "../../combat/tactical-map.mjs";
 import { rangeBandKey }           from "../../rules/tactical-map.mjs";
@@ -77,10 +77,17 @@ export function situationalMods(v) {
   // Те же условия, по которым окно атаки само даёт ±20 (attack-dialog.mjs,
   // proneMod/stunnedMod) — wdbc-x1nz.2.97 п.6.
   const tgtProneAuto   = !!tgt?.system?.conditions?.prone;
+  // Антиприцел (Странная Неуязвимость, субмутация 11, wdbc-1rno.24): «Атаки,
+  // что получают преимущества Прицеливания, автоматически промахиваются».
+  const aimingOn = !!actor?.system?.aiming && actor.system.aiming !== "none";
+  const tgtAntiAim = !!tgt && hasRuleFlag(tgt, "attack.antiAim");
   const tgtSurprisedRound1 = !!tgt?.system?.conditions?.surprised
     && (typeof game !== "undefined" ? game.combat?.round : null) === 1;
   const tgtStunnedAuto = isStunnedOrDazed(tgt);
   const commonMods = [
+    ...(tgtAntiAim ? [{ label: "Антиприцел цели", value: 0, autofail: true, autoCheck: aimingOn,
+      note: aimingOn ? "вы прицелились — атака автоматически промахивается (Странная Неуязвимость)"
+                     : "атаки с Прицеливанием по этой цели автоматически промахиваются" }] : []),
     { label: "Усталость",     value: -10, autoCheck: hasFatigue },
     { label: "Цель в Борьбе (не ваш Захват)", value: 20, autoCheck: vsGrappled,
       note: vsGrappled ? "стр. 12: +20 на атаки по сцепившимся" : undefined },
