@@ -17,12 +17,28 @@
 import { PHYSICAL_CHARS, REACTION_SKILLS } from "./armour-penalty.mjs";
 
 /**
+ * «Не считать вес снаряжения» (wdbc-zy93) — ручной выключатель на акторе для
+ * НПС-заглушек («средний гвардеец»), которым незачем считать перевес по
+ * каждому предмету. Флаг, а не поле схемы: это настройка листа, а не данные
+ * персонажа, и новый ключ схемы потребовал бы перезагрузки мира. Гасит
+ * ТОЛЬКО общий Перевес инвентаря — перевес выключенной силовой брони
+ * (combat/armor-mods.mjs) описан книгой отдельно и остаётся.
+ * Читается сырым путём flags, а не getFlag: сюда приходят и простые объекты.
+ */
+export const IGNORE_WEIGHT_FLAG = "ignoreWeight";
+
+export function ignoresWeight(actor) {
+  return !!actor?.flags?.["warhammer-dbc"]?.[IGNORE_WEIGHT_FLAG];
+}
+
+/**
  * Классификация Перевеса инвентаря — чистая функция по уже посчитанным
  * `system.encumbrance.{effectiveCurrent,carry}` (documents/actor.mjs).
  * @param {Actor} actor
  * @returns {{moveAtkMod:number, spdMod:number}|null}
  */
 export function inventoryOverloadTier(actor) {
+  if (ignoresWeight(actor)) return null;
   const enc = actor?.system?.encumbrance || {};
   const carry = Number(enc.carry ?? enc.max) || 0;
   if (carry <= 0) return null;

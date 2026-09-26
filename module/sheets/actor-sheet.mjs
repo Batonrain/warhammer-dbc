@@ -113,6 +113,7 @@ import { resolveArmorProps, aggregateArmorSkillMods } from "../combat/armor-prop
 import { actorHasAspectPath } from "../constants/aeldari-paths.mjs";
 import { zeroBlankNumbers } from "../helpers/blank-zero.mjs";
 import { clearHololithBriefing } from "../combat/hololith-briefing.mjs";
+import { ignoresWeight, IGNORE_WEIGHT_FLAG } from "../rules/encumbrance.mjs";
 
 /** Книжная пара Склонностей Навыка — [char, apt2] его определения. */
 const bookSkillPair = (key) => {
@@ -1239,6 +1240,22 @@ export class WarhammerCharacterSheet
    * @param {string[]} keys  какие из пяти показать и в каком порядке — состав
    *                         отличается по типу актора (см. _sheetSettingsEntries).
    */
+  /**
+   * «Не считать вес снаряжения» (wdbc-zy93) — флаг актора, а не поле схемы
+   * (см. rules/encumbrance.mjs::ignoresWeight): для НПС-заглушек, которым
+   * незачем считать перевес по каждому предмету. Во всех меню, где есть
+   * снаряжение.
+   */
+  _ignoreWeightEntry() {
+    const on = ignoresWeight(this.actor);
+    return {
+      cls: "wh-ctx-tog-noweight", label: "Не считать вес снаряжения", checkbox: true, checked: on,
+      onClick: () => (on
+        ? this.actor.unsetFlag("warhammer-dbc", IGNORE_WEIGHT_FLAG)
+        : this.actor.setFlag("warhammer-dbc", IGNORE_WEIGHT_FLAG, true))
+    };
+  }
+
   _sheetToggleEntries(keys) {
     const sys = this.actor.system;
     const toggle = (key) => this.actor.update({ [`system.${key}`]: !sys[key] });
@@ -1704,20 +1721,22 @@ export class WarhammerCharacterSheet
         this._advancePricingSubmenu(), { sep: true },
         this._accessSubmenu(accessKeys),
         ...this._sheetToggleEntries(["craftAvailable", ...(aeldari ? [] : ["isRogueTrader"])]),
+        this._ignoreWeightEntry(),
         horde
       ].filter(Boolean);
     }
     if (type === "daemon") {
-      return [...this._sheetToggleEntries(["isPsyker", "craftAvailable"]), horde];
+      return [...this._sheetToggleEntries(["isPsyker", "craftAvailable"]), this._ignoreWeightEntry(), horde];
     }
     if (type === "demonPrince") {
-      return this._sheetToggleEntries(["isRogueTrader", "isPsyker", "craftAvailable"]);
+      return [...this._sheetToggleEntries(["isRogueTrader", "isPsyker", "craftAvailable"]), this._ignoreWeightEntry()];
     }
     if (type === "minion") {
       return [
         this._accessSubmenu(["isPsyker", "possessed", "isTechpriest"]),
         horde, this._bodyTypeSubmenu(),
-        ...this._sheetToggleEntries(["craftAvailable"])
+        ...this._sheetToggleEntries(["craftAvailable"]),
+        this._ignoreWeightEntry()
       ].filter(Boolean);
     }
     return [];
