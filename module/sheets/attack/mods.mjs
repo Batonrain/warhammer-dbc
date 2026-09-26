@@ -76,6 +76,8 @@ export function situationalMods(v) {
   // Те же условия, по которым окно атаки само даёт ±20 (attack-dialog.mjs,
   // proneMod/stunnedMod) — wdbc-x1nz.2.97 п.6.
   const tgtProneAuto   = !!tgt?.system?.conditions?.prone;
+  const tgtSurprisedRound1 = !!tgt?.system?.conditions?.surprised
+    && (typeof game !== "undefined" ? game.combat?.round : null) === 1;
   const tgtStunnedAuto = isStunnedOrDazed(tgt);
   const commonMods = [
     { label: "Усталость",     value: -10, autoCheck: hasFatigue },
@@ -118,9 +120,13 @@ export function situationalMods(v) {
     // targetSurprised (Quiet Elimination: +1 куб урона/тихая смерть ПО
     // ЛЮБОЙ атаке, отмеченной Врасплох, не только ножом/пистолетом — см.
     // rules/quiet-elimination.mjs), а не только суммируется в общий Порог.
+    // Состояние «Врасплох» цели в 1-м Раунде (стр. 12: «Застигнутые Врасплох…
+    // В первый Раунд любая атака по ним получает бонус +30», wdbc-1rno.3.1) —
+    // галочка ставится сама, снимается рукой.
     { id: "atk-mod-surprised", label: "Цель Врасплох", value: 30, immuneFlag: "attack.surpriseImmune",
-      autoCheck: legacyForewarnedSurprise,
-      ...(legacyForewarnedSurprise ? { note: "Без Предупреждения: Инициатива цели вдвое ниже, 1-й Раунд" } : {}) },
+      autoCheck: legacyForewarnedSurprise || tgtSurprisedRound1,
+      ...(legacyForewarnedSurprise ? { note: "Без Предупреждения: Инициатива цели вдвое ниже, 1-й Раунд" }
+        : tgtSurprisedRound1 ? { note: "цель Застигнута Врасплох, 1-й Раунд (стр. 12)" } : {}) },
     // id нужен readAttackForm (стр. 12, wdbc-x1nz.2.29): «Избегание невозможно
     // от атаки, о которой цель не знает» — атакующий сам объявляет это
     // галочкой (со спины/из засады/невидимый-неслышный снаряд книга не даёт

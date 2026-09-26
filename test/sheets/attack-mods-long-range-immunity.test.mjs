@@ -54,3 +54,29 @@ describe("гасители штрафа дальней/экстремально�
     expect(longRangeImmunityReason(actorWith([other], "full"), [], { aiming: "full" })).toBeNull();
   });
 });
+
+// wdbc-1rno.3.1: Состояние «Врасплох» цели в 1-м Раунде — галочка +30 сама.
+describe("Цель в Состоянии Врасплох (стр. 12)", () => {
+  const surprisedRow = (round, surprised = true) => {
+    const prev = game.combat;
+    game.combat = round ? { round } : null;
+    try {
+      const { commonMods } = situationalMods({
+        actor: actorWith([]), attackCtx: { targetActor: { system: { conditions: { surprised } } } },
+        attackerToken: null, gripRange: null, hasFatigue: false, hasLostEyes: false, isBlinded: false,
+        isMelee: true, measured: null, targetHelpless: false, targetToken: null, weapon: null, wProps: [], wp: {}
+      });
+      return commonMods.find(m => m.id === "atk-mod-surprised");
+    } finally { game.combat = prev; }
+  };
+
+  it("1-й Раунд — отмечена сама", () => {
+    expect(surprisedRow(1).autoCheck).toBe(true);
+  });
+
+  it("2-й Раунд, вне боя или цель не Врасплох — ручная", () => {
+    expect(surprisedRow(2).autoCheck).toBe(false);
+    expect(surprisedRow(null).autoCheck).toBe(false);
+    expect(surprisedRow(1, false).autoCheck).toBe(false);
+  });
+});
