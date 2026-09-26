@@ -1164,7 +1164,7 @@
       "img": "icons/svg/sword.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Урон без S.b (7): его атака прибавляет его сама; книга Хаоса, Тварь Нургла даёт итог с S.b.",
         "rangeBands": [],
         "offProfile": {},
         "gripProps2h": [],
@@ -1182,7 +1182,7 @@
         "rof_single": false,
         "rof_semi": 0,
         "rof_full": 0,
-        "damage": "2d10+7",
+        "damage": "2d10",
         "damageType": "chemical",
         "penetration": 0,
         "quality": "common",
