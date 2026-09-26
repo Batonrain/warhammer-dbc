@@ -18,6 +18,7 @@ import { LAST_DAMAGE_WEAPON_FLAG } from "./blood-flame.mjs";
 import { divineProtectionActive } from "../rules/death-save.mjs";
 import { resolveArmorAbsorptionAP, breachArmorAtLocation, armorBreachOutcome } from "./armor-properties.mjs";
 import { applyWoundLoss, ablativeAbsorb } from "../rules/wounds.mjs";
+import { computeWoundHealing } from "../sheets/tabs/wounds.mjs";
 import { CAST_OUT_OF_DEATH_CAPABILITY, CAST_OUT_OF_DEATH_FLAG, scheduleCastOutOfDeathRegen } from "../rules/cast-out-of-death.mjs";
 import { eaterOfPainHoldersNear } from "../rules/eater-of-pain.mjs";
 import { realityRendingPenalty } from "../rules/wrapped-in-chaos.mjs";
@@ -1199,10 +1200,12 @@ export async function applyDamageToActor(actor, damageData) {
   let electricRegenNote = "";
   if (netDamage > 0 && damageSubtype === "electrical" && hasRuleFlag(actor, ELECTRIC_REGENERATION)) {
     const regen = await new Roll("1d10").evaluate();
-    const maxW = Number(actor.system.wounds?.max) || 0;
-    const cur = Number(actor.system.wounds?.value) || 0;
-    const healed = Math.min(regen.total, Math.max(0, maxW - cur));
-    if (healed > 0) await actor.update({ "system.wounds.value": cur + healed });
+    // Лечение каноническим путём: сперва Критические, потом Раны до максимума.
+    const w = actor.system.wounds ?? {};
+    const upd = computeWoundHealing(actor.system, regen.total);
+    const healed = (Number(w.critical) || 0) - upd["system.wounds.critical"]
+      + upd["system.wounds.value"] - (Number(w.value) || 0);
+    if (healed > 0) await actor.update(upd);
     electricRegenNote = `<div class="dmg-tb-note">⚡ Электрическая регенерация: 1d10 = ${regen.total}, восстановлено <b>${healed}</b> Ран.</div>`;
   }
 

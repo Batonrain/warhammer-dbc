@@ -95,4 +95,14 @@ describe("сопротивление к E(El) и Электрическая ре
     await applyDamageToActor(a, hit());
     expect(a.system.wounds.value).toBe(10 - 8 + 4);
   });
+
+  // Приёмка #527: регенерация писала wounds.value напрямую и оставляла
+  // Критические — лечение обязано сперва гасить их (computeWoundHealing).
+  it("регенерация у критически раненого сперва гасит Критические", async () => {
+    const a = target([cap("implant.electricArc.regeneration")]);
+    captured.dice = [7];
+    await applyDamageToActor(a, { ...hit(), rawDamage: 14 });   // 10 − 14 → 0 Ран, 4 Критических
+    expect(a.system.wounds.critical).toBe(0);
+    expect(a.system.wounds.value).toBe(3);                       // 7 − 4 на Критические
+  });
 });
