@@ -88,6 +88,7 @@ import { testKindHtml, diceModeHtml, difficultyHtml, readTestKind, readDiceChoic
 import { resolveOpposed, testTargetList, parseTestTarget } from "../rules/test-kind.mjs";
 import { applyGain } from "../rules/extended-test.mjs";
 import { hasUnnaturalCharacteristic } from "../rules/unnatural-characteristic.mjs";
+import { singleCombatNoUnnaturalTie } from "../combat/single-combat.mjs";
 import { egomaniaOverrideResult } from "../rules/egomania.mjs";
 import { PERSONAL_ADAPTATION_CAPABILITY, PERSONAL_ADAPTATION_FLAG,
          personalAdaptationCap, personalAdaptationBonusFor, nextPersonalAdaptationBonuses, personalAdaptationKey }
@@ -2885,7 +2886,8 @@ export class WarhammerCharacterSheet
         // Характеристику знаю сразу; ответчик прочтёт это поле, когда будет
         // считать сравнение своей стороной (_maybePostOpposedComparison).
         initiatorSide: { threshold: baseEff, roll: rv, success: outcome.success, deg: outcome.deg,
-                          unnatural: hasUnnaturalCharacteristic(this.actor, charKey) },
+                          unnatural: hasUnnaturalCharacteristic(this.actor, charKey),
+                          noUnnaturalTie: singleCombatNoUnnaturalTie(this.actor, charKey) },
         safe: !!safe
       }
     });
@@ -2918,7 +2920,8 @@ export class WarhammerCharacterSheet
     // её документ известен напрямую; charKey — Характеристика, которой она
     // реально бросала (пробрасывается вызывающим _runTest).
     const theirs = { deg: outcome.deg, success: outcome.success, threshold: theirsEff,
-                      unnatural: hasUnnaturalCharacteristic(this.actor, charKey) };
+                      unnatural: hasUnnaturalCharacteristic(this.actor, charKey),
+                      noUnnaturalTie: singleCombatNoUnnaturalTie(this.actor, charKey) };
     // Egomania/Эгомания (Слаанеш, wdbc-1rno): та же автопобеда, что уже даёт
     // rules/kind-outcome.mjs NPC-автоброску — здесь this.actor всегда
     // ОТВЕЧАЮЩАЯ сторона («theirs» в терминах этого сравнения), инициатора

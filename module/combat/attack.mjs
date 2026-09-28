@@ -76,6 +76,12 @@ import { isBiteName } from "../rules/integral-rating.mjs";
 import { VENOM_BITE_CAPABILITY, venomBiteDamage } from "../rules/naga-traits.mjs";
 import { fieldDisablesWeapon } from "../rules/null-zones.mjs";
 import { isHeadHit } from "./armor-properties.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
+import { COLD_KILLER } from "../rules/cold-killer.mjs";
+import { LEGIONNAIRE_VIRTUOSO, isLegionRangedWeapon } from "../rules/legionnaire-virtuoso.mjs";
+import { SKY_PREDATOR, activeDieResults, isChargeFromFlight, swapDiceFor } from "../rules/die-swap.mjs";
+import { IN_FLIGHT_ALTITUDES } from "./movement-actions.mjs";
+import { singleCombatBonus } from "./single-combat.mjs";
 
 /**
  * Экстремальный урон (стр. 166-170): куб урона выбросил Х+ — порог берётся из
@@ -154,7 +160,9 @@ export async function rollExtremeDamage(dmgRoll, { wp, damageType, hitLocation =
     // (Кромсающее выше не встречается на одном оружии — Мутации берутся с
     // разных таблиц Характера, но если бы встретились, второй бросок тоже
     // пошёл бы по активной формуле, как и первый).
-    if (wp.legacyOpportunistDoubleRoll) {
+    // Хладнокровный Убийца (Избранный, rules/cold-killer.mjs): тот же второй
+    // бросок, что у Оппортуниста, но от Черты атакующего, а не от оружия.
+    if (wp.legacyOpportunistDoubleRoll || (attacker && hasRuleFlag(attacker, COLD_KILLER))) {
       const exRoll2 = await new Roll(wp.legacyCleavingRollActive ? "1d10" : "1d5").evaluate();
       const extremeLevel2 = wp.legacyCleavingRollActive
         ? Math.max(1, exRoll2.total - 2)
@@ -328,6 +336,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const wProps    = resolveWeaponPropsList(_mergedEntries);
   const wp         = aggregateAuto(wProps);
   wp.reliabilityScore += modFx.reliabilityMod || 0;
+  // Легионер-Виртуоз (Искатель, rules/legionnaire-virtuoso.mjs): стрелковое
+  // оружие Легиона — +1 кубик урона, наименьший отбрасывается. Проверяется
+  // само оружие (rawSys), не профиль: приклад и штык книга включает прямо.
+  if (isLegionRangedWeapon(rawSys) && hasRuleFlag(actor, LEGIONNAIRE_VIRTUOSO)) {
+    wp.extraDropLowest = (wp.extraDropLowest || 0) + 1;
+  }
   // Тесное помещение, продолжение (стр. 36, wdbc-x1nz.2.63): X Dmg — радиус
   // ×1.5 (окр.▲). Правится прямо в wp.blastRating — единая точка, откуда
   // берут радиус и шаблон (attack-card.mjs), и рассеивание (blastScatter
@@ -592,7 +606,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // ровно те же тесты, что вообще проходят через _executeAttackRoll (charKey
   // атаки всегда ws/bs), отдельного гейта по charKey не нужно.
   const excessBonus = excessLegacyExtraDeg({ hit, weapon: item });
-  const deg = rolledDeg + savageBonus + excessBonus;
+  // Бой Один На Один (Палач, combat/single-combat.mjs): +1 Успех к успешной
+  // рукопашной атаке (тест WS/S/A), пока на сцене ровно один враг в контакте.
+  const singleCombatDeg = (hit && isMelee) ? singleCombatBonus(actor, { success: hit, charKey }) : 0;
+  const deg = rolledDeg + savageBonus + excessBonus + singleCombatDeg;
   // Посох/Крюк (core.json, «Типы Рукопашного Оружия»): «При Избирательном
   // попадании в Ногу [Посохом]... может потратить Реакцию, чтобы провести
   // против цели прием Повалить» / «На 3+ Успеха на попадание [Крюком]...».
@@ -1094,6 +1111,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   });
 
   const damageRolls = [];
+  // Хищник Небес (Раптор, rules/die-swap.mjs): Натиск, пока персонаж в воздухе.
+  const skyPredatorOn = isChargeFromFlight({
+    charge: isMelee && opts.baseKey === "charge", altitude: actor.system?.movement?.altitude,
+    inFlightAltitudes: IN_FLIGHT_ALTITUDES
+  }) && hasRuleFlag(actor, SKY_PREDATOR);
   const allRolls    = [roll];
   if (betrayalRoll) allRolls.push(betrayalRoll);
   if (dishonorableRoll) allRolls.push(dishonorableRoll);
@@ -1134,6 +1156,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       // из целей площадной атаки» — решение игрока/ГМа за столом, не гейт кода.
       const baseDieResult = (dmgRoll.terms ?? [])
         .find(t => t.faces && Array.isArray(t.results) && t.results.length)?.results?.[0]?.result ?? null;
+      // Кубики на замену Успехами — только ОСТАВЛЕННЫЕ (rules/die-swap.mjs):
+      // обычно один, у Хищника Небес на Натиске с полёта — до двух.
+      const swapDice = swapDiceFor(activeDieResults(dmgRoll), { skyPredator: skyPredatorOn });
       // Клин Распыления (стр. 168): 9 у обычного, 8-9 у Ненадёжного и хуже,
       // никогда у Надёжного и лучше — по ПЕРВОМУ кубику на урон (первому
       // брошенному, а не оставленному Рвущим), и только у первого попадания.
@@ -1189,7 +1214,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       // должна называть РЕАЛЬНО брошенный куб (1d10−2), не «d5» по умолчанию —
       // иначе игрок видит подпись «d5: 7», хотя катался d10.
       damageRolls.push({ total, extremeLevel, hasExtreme, critEffect, bonusNote, deflagrateNote, msPenalty,
-        baseDieResult, successes: deg, cleavingRoll: !!wp.legacyCleavingRollActive,
+        baseDieResult, swapDice, skyPredator: skyPredatorOn, successes: deg, cleavingRoll: !!wp.legacyCleavingRollActive,
         opportunistFloor: !!wp.legacyOpportunistFloor });
     }
   }

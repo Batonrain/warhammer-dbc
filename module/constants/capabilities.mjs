@@ -5217,10 +5217,6 @@ export const CAPABILITIES = {
     label: "Реализовано (wdbc-j8cn): на карточке удачной манифестации против Затупленной цели — строка «пройдите Psyniscience −10×X (Порог N)», с Warp Sight — Awareness +20−10×X; при Провале цель игнорирует эффект. Психострельба без Warp Weapon строки не даёт (книга). X — Черта Blunted или Подавляющее поле друкхарийской брони (что больше). НЕ смоделировано: сам тест не бросается кнопкой и эффект силы не отменяется автоматически; снижение получаемой Порчи на X и потеря Черты при Daemonic/Psyker и т.п.",
     source: "Blunted / Затупленный (X)", reader: "module/rules/blunted.mjs — bluntedCasterTest; module/sheets/tabs/psychic.mjs (bluntedSection карточки манифестации)"
   },
-  "trait.bolterVirtuoso": {
-    label: "Болт-оружие получает ещё один дополнительный кубик ко всем альтернативным профилям (приклад, штык, из подствольника и т.д.).",
-    source: "Bolter Virtuoso / Болтерный Виртуоз", reader: ""
-  },
   "trait.boneHead": {
     label: "Импланты интеллекта (с оговорками).",
     source: "BONE-Head / Костеголов", reader: ""
@@ -5256,8 +5252,9 @@ export const CAPABILITIES = {
     reader: "записи Черты: «Модификатор теста» области terrain (module/combat/movement-terrain.mjs, ctx.terrain) + override склонности Талантов (module/rules/aptitude-overrides.mjs)"
   },
   "trait.coldKiller": {
-    label: "При нанесении Экстремального Урона бросает d5 дважды на Критический Результат 2 и берёт лучший.",
-    source: "Cold Killer / Хладнокровный Убийца", reader: ""
+    label: "Экстремальный Урон: d5 Критического Результата бросается дважды, берётся больший (книга — «выбирает один»; выбор меньшего кнопкой не предусмотрен). Работает на любом пути урона, где известен атакующий: оружие, психосилы, техночудеса, Орда, выхватывание, сквозной прострел.",
+    source: "Cold Killer / Хладнокровный Убийца",
+    reader: "module/rules/cold-killer.mjs (COLD_KILLER), module/combat/attack.mjs::rollExtremeDamage (второй бросок, как у Оппортуниста)"
   },
   "trait.constrictor": {
     label: "Хвост держит в Захвате как пара рук, руки Наги свободны; +20 на тесты Athletics в Захвате и Борьбе; урон «Заломить» хвостом — с S.b хвоста (Unnatural S (6)). Возможность grapple.constrictorTail",
@@ -5408,8 +5405,9 @@ export const CAPABILITIES = {
     source: "Incorporeal / Бесплотный", reader: ""
   },
   "trait.inspiringPresence": {
-    label: "Может позволять союзникам/подчинённым в пределах видимости использовать его Очки Бесчестья;",
-    source: "Inspiring Presence / Вдохновляющее Присутствие", reader: ""
+    label: "Союзник (та же диспозиция токена) в поле зрения Чемпиона тратит его Очко Бесчестья на переброс — строка «Переброс за Очко Бесчестия: <Чемпион>» в меню карточки теста (правый клик); чужим клиентом Очко списывает ГМ. Переброс уже переброшенного теста система не запирает. НЕ сделано: «+10» за Очко Чемпиона и прочие траты Очка (только Переброс); согласие Чемпиона не спрашивается — решает стол; «видимость» — дальность и сектор обзора токена без стен.",
+    source: "Inspiring Presence / Вдохновляющее Присутствие",
+    reader: "module/rules/inspiring-presence.mjs, module/combat/inspiring-presence.mjs (inspiringChampionsFor/spendInspiringInfamy/applyInspiringSpendRelay), module/hooks.mjs::_attachFateContextMenu, warhammer-dbc.mjs (сокет inspiringPresenceSpend)"
   },
   "trait.itWonTHurt": {
     label: "Первая Помощь без анестезии: цель получает 1d5 Усталости, но восстанавливает столько же Ран; Алхимик получает 1 Очко Боли.",
@@ -5418,6 +5416,11 @@ export const CAPABILITIES = {
   "trait.justCivilian": {
     label: "Знает 2 Пути на выбор (можно начать следовать в любой момент). +1 Очко Судьбы к максимуму; избирает Элитный Архетип, сохраняющий цену;",
     source: "Just Civilian / Просто Гражданский + Взор Судьбы", reader: ""
+  },
+  "trait.legionnaireVirtuoso": {
+    label: "Стрелковое оружие со свойством Legion (Легион): +1 кубик урона, наименьший отбрасывается — на любом профиле этого оружия (приклад, штык). Складывается с Рвущим: болтер Легиона 1d10 → 3d10, два наименьших отбрасываются.",
+    source: "Legionnaire Virtuoso / Легионер-Виртуоз",
+    reader: "module/rules/legionnaire-virtuoso.mjs (isLegionRangedWeapon), module/combat/attack.mjs (wp.extraDropLowest), module/combat/weapon-properties.mjs::applyDamageDiceMods"
   },
   "trait.legionSurgery": {
     label: "Тратит Очко Бесчестья, чтобы авто-пройти тест лечения/работы с геносеменем с 1 Успехом; может пробудить десантника из Сус-ан анимации.",
@@ -5609,12 +5612,14 @@ export const CAPABILITIES = {
     source: "Servoskull / Сервочереп", reader: ""
   },
   "trait.singleCombat": {
-    label: "Против одного противника без союзников: +1 Успех на успешные тесты WS, S и A; Unnatural Characteristic на встречные WS;",
-    source: "Single Combat / Бой Один На Один", reader: ""
+    label: "Бой один на один (на сцене ровно один враг в контакте, и у него в контакте никого, кроме Палача): +1 Успех к успешной рукопашной атаке, Уклонению, Парированию и тестам WS/S/A (и Навыков на них) с листа; во встречном тесте WS/A с листа Сверхъестественная Характеристика противника не сводит его проигрыш к ничьей. НЕ сделано: прочие пути бросков WS/S/A (Захват, приёмы-состязания со своим броском) — там +1 Успех не прибавляется; без токена на сцене бой один на один не распознаётся.",
+    source: "Single Combat / Бой Один На Один",
+    reader: "module/rules/single-combat.mjs, module/combat/single-combat.mjs, module/rules/kind-outcome.mjs, module/rules/test-kind.mjs::resolveOpposed (noUnnaturalTie), module/combat/attack.mjs (singleCombatDeg), module/combat/defense.mjs (Уклонение/Парирование), module/sheets/actor-sheet.mjs (встречный с соперником-игроком)"
   },
   "trait.skyPredator": {
-    label: "В Ход, когда Раптор совершает Натиск с полёта, может заменить до 2 кубиков урона от рукопашных атак Успехами на попадание.",
-    source: "Sky Predator / Хищник Небес", reader: ""
+    label: "Атака с Базой «Натиск», пока персонаж в воздухе (Высота не «приземлён»): карточка урона даёт кнопку «Кубик→Успехи» на два кубика попадания вместо одного. НЕ заперто: «до 2 кубиков за Ход» между разными попаданиями/атаками — считает стол.",
+    source: "Sky Predator / Хищник Небес",
+    reader: "module/rules/die-swap.mjs (SKY_PREDATOR, swapDiceFor), module/combat/attack.mjs (skyPredatorOn), module/combat/attack-card.mjs (кнопки .wh-dmg-swap-btn)"
   },
   "trait.sonarSense": {
     label: "Сонар (круговой обзор) на 30 м.",

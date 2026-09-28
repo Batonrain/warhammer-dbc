@@ -13,6 +13,7 @@ import { isRuleUsageUsed, markRuleUsageUsed,
 import { fatePoolLabel }                 from "./rules/fate-save.mjs";
 import { spendFromInfamyPool }           from "./apps/infamy-points.mjs";
 import { tempInfamyAmount }              from "./rules/temp-infamy.mjs";
+import { inspiringChampionsFor, spendInspiringInfamy } from "./combat/inspiring-presence.mjs";
 import { applyWoundLoss, woundDeathThreshold } from "./rules/wounds.mjs";
 import { fateBonusOutcome, FATE_BONUS }  from "./rules/fate-bonus.mjs";
 import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger, applyMonofilamentHit } from "./combat/damage.mjs";
@@ -2675,6 +2676,18 @@ function _attachFateContextMenu(message, html) {
     );
     menu.appendChild(btnBonus);
 
+    // Вдохновляющее Присутствие (Чемпион, combat/inspiring-presence.mjs):
+    // переброс за Очко союзного Чемпиона, в чьём поле зрения бросающий.
+    const inspireBtns = inspiringChampionsFor(actor).map(ch => {
+      const b = _makeFateMenuItem(
+        `Переброс за Очко Бесчестия: ${ch.actor.name} (${ch.pool})`,
+        !ch.reason,
+        ch.reason || "Вдохновляющее Присутствие Чемпиона — можно и после другого переброса"
+      );
+      menu.appendChild(b);
+      return { b, ch };
+    });
+
     document.body.appendChild(menu);
 
     // Закрытие по клику вне меню
@@ -2689,17 +2702,22 @@ function _attachFateContextMenu(message, html) {
     }, 50);
 
     // ── Переброс ──────────────────────────────────────────────────────────
-    btnReroll.addEventListener("click", async (ev2) => {
+    // champion — Чемпион с Вдохновляющим Присутствием, чьё Очко тратится
+    // вместо своего (null — обычный переброс за своё).
+    const doReroll = async (ev2, champion = null) => {
       ev2.stopPropagation();
       menu.remove();
       document.removeEventListener("click", closeMenu);
 
-      if (!canSpend) return;
+      if (!champion && !canSpend) return;
 
       // Тратим очко судьбы — временный запас (wdbc-e728) уходит первым.
-      const reroll1 = await spendFromInfamyPool(actor, 1, "system.fate.value");
+      const reroll1 = champion
+        ? await spendInspiringInfamy(champion, actor)
+        : await spendFromInfamyPool(actor, 1, "system.fate.value");
       if (!reroll1) return;
-      await actor.update({ "system.fate.value": reroll1.poolValue });
+      if (!champion) await actor.update({ "system.fate.value": reroll1.poolValue });
+      const payerNote = champion ? ` (Очко Чемпиона ${champion.name} — Вдохновляющее Присутствие)` : "";
 
       // Если это была атака — повторяем атаку целиком (новый бросок d100,
       // место попадания, урон, кнопки защиты), а не «голый» переброс.
@@ -2711,7 +2729,7 @@ function _attachFateContextMenu(message, html) {
           await _executeAttackRoll(atkActor, atkItem, atk.charKey, atk.threshold,
             atk.rofMode, atk.aimTarget, { ...(atk.opts || {}), skipAmmo: true });
           ui.notifications.info(
-            `✨ ${actor.name} тратит ${ft.one} на переброс атаки! Осталось: ${reroll1.poolValue}`);
+            `✨ ${actor.name} тратит ${ft.one} на переброс атаки${payerNote}! Осталось: ${reroll1.poolValue}`);
           return;
         }
       }
@@ -2765,7 +2783,7 @@ function _attachFateContextMenu(message, html) {
         title: `Переброс за ${ft.one}`,
         lines: [
           `<div class="roll-damage-meta">
-            ${ft.word} потрачена (осталось: ${reroll1.poolValue})
+            ${ft.word} потрачена${esc(payerNote)} (осталось: ${reroll1.poolValue})
           </div>`,
           rollStatLine({ threshold, rv }),
           blessedFitsLine
@@ -2774,9 +2792,13 @@ function _attachFateContextMenu(message, html) {
       }, { rolls: [newRoll], speaker: message.speaker });
 
       ui.notifications.info(
-        `✨ ${actor.name} тратит ${ft.one} на переброс! Осталось: ${reroll1.poolValue}`
+        `✨ ${actor.name} тратит ${ft.one} на переброс${payerNote}! Осталось: ${reroll1.poolValue}`
       );
-    });
+    };
+    btnReroll.addEventListener("click", ev2 => doReroll(ev2));
+    for (const { b, ch } of inspireBtns) {
+      if (!ch.reason) b.addEventListener("click", ev2 => doReroll(ev2, ch.actor));
+    }
 
     // ── +10 к броску ──────────────────────────────────────────────────────
     btnBonus.addEventListener("click", async (ev2) => {

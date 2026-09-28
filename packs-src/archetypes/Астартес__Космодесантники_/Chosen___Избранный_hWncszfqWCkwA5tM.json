@@ -11,7 +11,7 @@
     "charChoice": "",
     "skills": "",
     "talents": "",
-    "gear": "",
+    "gear": "L. Chain Weapon (до R1) или L. Flamer, L. Meltagun или L. Plasmagun",
     "wounds": "16+1d5",
     "infRoll": "",
     "requiredPath": "",
@@ -23,7 +23,7 @@
     "description": "Элитный оружейный специалист легиона.",
     "trait": {
       "name": "Cold Killer / Хладнокровный Убийца",
-      "benefit": "При нанесении Экстремального Урона бросает d5 дважды на Критический Результат 2 и берёт лучший."
+      "benefit": "Когда Избранный наносит Экстремальный Урон, он бросает d5 на Критический Результат 2 раза и выбирает один из результатов."
     },
     "bookSource": "DoomBC — Основная книга"
   },
@@ -607,18 +607,21 @@
               "movementTarget": "spd",
               "movementValue": 1,
               "ignoreTerrainProps": [],
-              "equipMode": "choice",
+              "equipMode": "direct",
               "equipQty": 1,
               "label": "",
               "code": "",
               "id": "hWncszfqw2",
               "kind": "equipment",
               "equipCategoryPack": "weapons",
-              "equipWeaponType": "1JaUwBD8eZyO8ePW",
+              "equipWeaponType": "",
               "equipMaxAvailability": 5,
               "equipQuality": "common",
               "equipBudgetMode": "count",
-              "equipBudgetValue": 1
+              "equipBudgetValue": 1,
+              "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.OA0ePxaJ7TuwmRDS",
+              "equipSourceName": "Flamer / Огнемёт (Астартес)",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg"
             }
           ]
         },
@@ -654,18 +657,21 @@
               "movementTarget": "spd",
               "movementValue": 1,
               "ignoreTerrainProps": [],
-              "equipMode": "choice",
+              "equipMode": "direct",
               "equipQty": 1,
               "label": "",
               "code": "",
               "id": "hWncszfqw3",
               "kind": "equipment",
               "equipCategoryPack": "weapons",
-              "equipWeaponType": "cqPg6OlJ1DWwZ7X2",
+              "equipWeaponType": "",
               "equipMaxAvailability": 5,
               "equipQuality": "common",
               "equipBudgetMode": "count",
-              "equipBudgetValue": 1
+              "equipBudgetValue": 1,
+              "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.iWAYEF3crcvo5rfw",
+              "equipSourceName": "Meltagun / Мельтаган (Астартес)",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg"
             },
             {
               "corruptionValue": "1",
@@ -695,18 +701,21 @@
               "movementTarget": "spd",
               "movementValue": 1,
               "ignoreTerrainProps": [],
-              "equipMode": "choice",
+              "equipMode": "direct",
               "equipQty": 1,
               "label": "",
               "code": "",
               "id": "hWncszfqw4",
               "kind": "equipment",
               "equipCategoryPack": "weapons",
-              "equipWeaponType": "NpgbxT28YCy1HHku",
+              "equipWeaponType": "",
               "equipMaxAvailability": 5,
               "equipQuality": "common",
               "equipBudgetMode": "count",
-              "equipBudgetValue": 1
+              "equipBudgetValue": 1,
+              "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.5SIzDJ2PsIuZi5bC",
+              "equipSourceName": "Plasmagun / Плазмаган (Астартес)",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg"
             }
           ]
         },

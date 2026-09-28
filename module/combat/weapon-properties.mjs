@@ -333,11 +333,16 @@ export function applyDamageDiceMods(formula, auto) {
   let f = String(formula || "");
   const m = f.match(/(\d+)d(\d+)/);
   if (!m) return f;
-  if (!auto.tearing && !(auto.provenRating > 0) && !auto.doubleDice) return f;
+  // extraDropLowest — ещё кубики «бросить лишний, отбросить наименьший» поверх
+  // Рвущего (Легионер-Виртуоз, rules/legionnaire-virtuoso.mjs): складываются
+  // с ним, kh по-прежнему держит исходное число n.
+  const extraDrop = Math.max(0, parseInt(auto.extraDropLowest, 10) || 0);
+  if (!auto.tearing && !extraDrop && !(auto.provenRating > 0) && !auto.doubleDice) return f;
 
   const n     = parseInt(m[1], 10);
   const faces = parseInt(m[2], 10);
-  let dice  = auto.tearing ? n + 1 : n;
+  const dropN = (auto.tearing ? 1 : 0) + extraDrop;
+  let dice  = n + dropN;
   // Backstab/Удар в Спину (wdbc-1rno.2, rules/unseen-talents.mjs): «удваивает
   // базовые кубики урона» — считается ПОСЛЕ Рвущего (если оба разом), keep-
   // highest от Рвущего (kh) при этом продолжает откидывать ровно один кубик
@@ -346,7 +351,7 @@ export function applyDamageDiceMods(formula, auto) {
   if (auto.doubleDice) dice *= 2;
   let term = `${dice}d${faces}`;
   if (auto.provenRating > 0) term += `min${Math.min(auto.provenRating, faces)}`;
-  if (auto.tearing)          term += `kh${n}`;
+  if (dropN > 0)             term += `kh${n}`;
   return f.replace(/\d+d\d+/, term);
 }
 
