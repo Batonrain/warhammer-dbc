@@ -95,6 +95,7 @@ when: {
 | `rankAndFile` | `true`/`false` | актор — «Рядовой» (`system.rankAndFile`, корбук стр. 4); у чемпионских Черт расы стоит `false` | да |
 | `inPariahVoid` | `true`/`false` | актор в ауре Парии — у него Черта-метка «In the Pariah's Void» (rules/null-zones.mjs); по Черте, не по флагу, чтобы не зациклить сбор правил | нет |
 | `isDaemon` | `true`/`false` | актор — демон: тип `daemon`/`demonPrince` или Черта Daemonic | нет |
+| `wearsFootwear` | `true`/`false` | актор обут: надета броня с AP на ноге или Маг-Сапоги; `false` — «босиком» (Barefoot / Босоногий Ратлинга) | да |
 | `targetPsykerOrDaemon` | `true`/`false` | цель броска — псайкер (Пси-Рейтинг ≥ 1) или демон | да |
 
 Столбец «Есть» — реализовано ли условие сейчас. Восемь предикатов покрывают
@@ -188,7 +189,8 @@ export const PREDICATES = {
 | `script` | `code` | аварийный выход, см. предупреждение ниже |
 
 `target` для бросков пишется с областью через двоеточие: `initiative`,
-`skill:psyniscience`, `char:wp`, `power:smite`, `attack`, `weapon:melee`. Область
+`skill:psyniscience`, `char:wp`, `power:smite`, `attack`, `weapon:melee`,
+`terrain` (тест Трудного Ландшафта — Бег/Натиск через зону). Область
 `all` или пустая означает «в любом тесте». Есть и `social` — все социальные
 навыки книги разом (Обаяние, Командование, Коммерция, Обман, Дознание, Допрос,
 Запугивание). Своего перечня у неё нет: признак берётся из таблицы навыков

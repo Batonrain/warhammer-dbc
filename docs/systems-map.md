@@ -847,6 +847,15 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   `apps/mechanics.mjs::syncNullZoneSuppression` (флаг `nullSuppressed`).
 - «Избегает атак Орды как одиночная цель» (Быстрые и Мёртвые, Серый
   Человек) — `rules/horde-single-target.mjs`.
+- Ратлинг (сверка главы I, 28.09.2026): Коротышка — `rules/runt.mjs`
+  (−4 к производному максимуму Ран `system.wounds.effectiveMax` + строка
+  «С учётом Черт» в блоке РАНЫ; винтовке без Compact — свойство longRifle
+  через `combat/weapon-mods.mjs::getModEffects`; без хвата «1р» у двуручного
+  стрелкового — `rules/hands.mjs` и `sheets/attack-dialog.mjs`). Босоногий —
+  условие «босиком» `when.predicates.wearsFootwear:false`
+  (`rules/predicates.mjs::wearsFootwear`: броня с AP на ногах или Маг-Сапоги)
+  и область теста `terrain` (тест Трудного Ландшафта,
+  `combat/movement-terrain.mjs`, теперь с перебросом).
 - `module/constants/legions.mjs` — Легионы Космодесанта (Геносемя/Культура/
   Проклятье); `rules/legion-fit.mjs`, `legion-upgrade.mjs`.
 - Пути Азуриан: `constants/aeldari-paths.mjs`, `rules/library/paths.mjs`,

@@ -186,6 +186,10 @@ function effectAppliesTo(target, ctx) {
   // (module/combat/grapple.mjs), и «skill:athletics» подхватил бы оба —
   // разные правила книги под одинаковым навыком.
   if (scope === "climbing") return ctx.climbing === true;
+  // Тест Трудного Ландшафта (combat/movement-terrain.mjs) — свой ctx-флаг по
+  // той же причине: сам тест идёт по Ловкости, и «char:ag» подхватил бы любой
+  // тест Ловкости (Barefoot / Босоногий Ратлинга).
+  if (scope === "terrain") return ctx.terrain === true;
   // Тест сопротивления яду (wdbc-1rno.1, Пророк Гэллерпокса): единственный
   // реальный «тест против яда» в системе — сопротивление свойству оружия
   // Toxic (module/hooks.mjs::_applyWeaponPropEffect, condition==="poisoned").

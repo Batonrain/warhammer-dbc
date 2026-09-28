@@ -24,6 +24,7 @@ import { hasRuleFlag } from "./flags.mjs";
 import { isPathOneHandedWeapon } from "./library/paths.mjs";
 import { uselessCount, isSideUseless } from "./useless-limbs.mjs";
 import { BODY_SIDES, isLostOn } from "./limb-loss.mjs";
+import { runtForbidsOneHand } from "./runt.mjs";
 
 const NS = "warhammer-dbc";
 const BASE_HANDS = 2;
@@ -101,6 +102,10 @@ function availableRangedGrips(item, actor, auto) {
   // Стрела Кхейна у адепта Пути Воина уровня Следующий (wdbc-4e60) — тот же
   // список читает окно атаки; расходиться этим двум местам нельзя.
   if (isPathOneHandedWeapon(item) && hasRuleFlag(actor, "weapon.oneHandedWarriorPath")) addExtra("1р");
+  // Runt / Коротышка (Ратлинг): двуручное стрелковое — только двумя руками,
+  // «невзирая на его модификации» — снимает и собственный «1р» профиля, и
+  // выданные выше; держать в согласии с attack-dialog.mjs (module/rules/runt.mjs).
+  if (runtForbidsOneHand(actor, item)) return [...own, ...extra].filter(k => k !== "1р");
   return [...own, ...extra];
 }
 

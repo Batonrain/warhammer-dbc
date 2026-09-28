@@ -16,6 +16,8 @@ import { getItemMechanics } from "../apps/mechanics.mjs";
 import { entryWhenOk } from "../rules/mech-when.mjs";
 import { suffersBlindness } from "../rules/blindness.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { resolveTest } from "../rules/resolve-test.mjs";
+import { rollD100WithReroll } from "../rules/test-kind-widget.mjs";
 import { IN_FLIGHT_ALTITUDES } from "./movement-actions.mjs";
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
@@ -93,6 +95,13 @@ export async function showDifficultTerrainDialog(actor, tokenDoc = null) {
   const labelsLine = info.labels.length ? ` (${info.labels.join(", ")})` : "";
   const ignoredLine = info.ignoredLabels.length
     ? `<div class="atk-range-info" style="font-size:0.82em;">Игнорирует: ${info.ignoredLabels.join(", ")}</div>` : "";
+  // Что добавят к броску Черты и состояния (Босоногий Ратлинга, Усталость…) —
+  // видно ДО кнопки, а не только в карточке после броска.
+  const preCtx = { kind: "skill", char: "ag", terrain: true };
+  const preMods = collectTestMods(actor, preCtx).parts;
+  const preReroll = (resolveTest({ actor, ...preCtx }).rerolls || []).find(r => r.who === "self");
+  const rulesLine = (preMods.length || preReroll)
+    ? `<div class="atk-range-info" style="font-size:0.82em;">Сами: ${esc([...preMods, ...(preReroll ? [`${preReroll.label}: переброс`] : [])].join(", "))}</div>` : "";
 
   new Dialog({
     title: "Трудный Ландшафт",
@@ -102,6 +111,7 @@ export async function showDifficultTerrainDialog(actor, tokenDoc = null) {
         <div class="atk-dlg-row"><label>Ландшафт зоны:</label><span>${sgn(info.mod)}${labelsLine}</span></div>
         <div class="atk-dlg-row"><label>Доп. мод:</label><input id="tr-mod" type="number" value="0"/></div>
         ${ignoredLine}
+        ${rulesLine}
         <div class="atk-range-info" style="font-size:0.82em;">
           Бег/Натиск через трудный ландшафт — тест A+0 или падение (стр. 29).${info.realTerrain
             ? " SPD уже уменьшена вдвое зоной."
@@ -129,11 +139,16 @@ async function _resolveDifficultTerrain(actor, ag, terrainMod, extraMod, labels)
   // модификатора ландшафта и ручной поправки — ни Усталости, ни Перевеса,
   // ни Черт. Диалога с галочками у броска нет, поэтому collectTestMods.
   // terrain:true — Общая Команда «Трудный ландшафт» (rules/command-effects.mjs).
-  const ruleMods  = collectTestMods(actor, { kind: "skill", char: "ag", terrain: true });
+  const ruleCtx   = { kind: "skill", char: "ag", terrain: true };
+  const ruleMods  = collectTestMods(actor, ruleCtx);
   const threshold = ag + totalMod + ruleMods.total;
 
-  const roll   = await new Roll("1d100").evaluate();
-  const rv     = roll.total;
+  // Свой переброс для этого теста (область «terrain» — Barefoot / Босоногий
+  // Ратлинга: «может перебрасывать тесты Трудного Ландшафта»). Диалога с
+  // галочками у броска нет, спросить игрока негде — переброс берётся сам:
+  // «лучший из двух» по вероятности успеха равен «перебросить провал».
+  const reroll = (resolveTest({ actor, ...ruleCtx }).rerolls || []).find(r => r.who === "self") || null;
+  const { roll, rolls, rv, rerollNote } = await rollD100WithReroll(reroll);
   const passed = rv <= threshold;
   const deg    = Math.floor(Math.abs(passed ? threshold - rv : rv - threshold) / 10) + 1;
 
@@ -143,16 +158,19 @@ async function _resolveDifficultTerrain(actor, ag, terrainMod, extraMod, labels)
 
   // Слагаемые Порога — во всплывающую подсказку ячейки Порога (rollStatLine):
   // разбор базы и модификаторов, сама плашка несёт только итоговое число.
+  // ruleMods.parts — Черты/Усталость/Перевес: в Порог они входили и раньше,
+  // но в разборе не показывались.
   const parts = [
     `ландшафт ${sgn(terrainMod)}${labels.length ? `: ${labels.join(", ")}` : ""}`,
-    extraMod ? `доп. мод ${sgn(extraMod)}` : ""
+    extraMod ? `доп. мод ${sgn(extraMod)}` : "",
+    ...ruleMods.parts
   ];
 
   await postTestCard(actor, {
     icon: rollIcon("burst","#b0a080"), title: `Трудный Ландшафт — ${esc(actor.name)}`,
     threshold: rollStatLine({ label: "Ag", base: ag, parts, threshold, rv }),
-    outcome
-  }, { rolls: [roll] });
+    rerollNote, outcome
+  }, { rolls: rolls?.length ? rolls : [roll] });
 }
 
 // ─── Кнопка в меню токена ──────────────────────────────────────────────────

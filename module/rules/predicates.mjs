@@ -172,6 +172,24 @@ export function wearsGasProtection(actor) {
     i?.type === "gear" && i?.system?.equipped && GAS_PROTECTION_NAMES.some(n => itemHasName(i, n)));
 }
 
+// Обувь (Barefoot / Босоногий Ратлинга: «Когда Ратлинг не носит обувь…»).
+// Отдельного слота «ноги» у снаряжения в системе нет, поэтому признак — то,
+// что на листе действительно видно: надетая броня с AP на ноге (доспех с
+// поножами/сапогами — Флак, Панцирь, Силовая) или надетые Маг-Сапоги
+// (gear, «Мобильность»). Плащи и робы с AP на ногах тоже сойдут за обувь —
+// грубость признака осознанная, см. отчёт по Ратлингу (вопрос владельцу).
+const FOOTWEAR_GEAR_NAMES = ["Mag Boots"];
+
+/** Обут ли актор: надетая броня, закрывающая ноги, или надетые сапоги-снаряжение. */
+export function wearsFootwear(actor) {
+  return (actor?.items ?? []).some(i => {
+    if (!i?.system?.equipped) return false;
+    if (i.type === "armor") return (Number(i.system.leftLeg) || 0) > 0 || (Number(i.system.rightLeg) || 0) > 0;
+    if (i.type === "gear") return FOOTWEAR_GEAR_NAMES.some(n => itemHasName(i, n));
+    return false;
+  });
+}
+
 /**
  * Сус-ан Мембрана — орган Геносемени Гвардии Ворона/Призраков Смерти
  * (wdbc-l07y, дубль был в rules/death-save.mjs и apps/sus-an-heal.mjs).
@@ -321,6 +339,10 @@ export const PREDICATES = {
   // Механики (when.requireSealedArmour/negateSealedArmour, mech-when.mjs,
   // wdbc-1rno: «без гермодоспеха» у Миазм и подобных).
   wearsSealedArmour,
+
+  // Обут ли (Barefoot / Босоногий Ратлинга): `true` — обут, `false` — босиком.
+  // Запись Конструктора ставит when.predicates: { wearsFootwear: false }.
+  wearsFootwear: (actor, ctx, value) => wearsFootwear(actor) === (value !== false),
 
   // Уровень Ранения (documents/actor.mjs, rules/wound-tier.mjs): healthy/light/
   // heavy/dying, тот же ключ, что подписан в блоке РАНЫ на листе. Список — «в

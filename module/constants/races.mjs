@@ -220,12 +220,12 @@ export const RACES = {
   ratling: {
     label: "Ратлинг",
     subraces: [],
-    chars: { ws:25, bs:25, s:25, t:25, ag:25, int:25, per:25, wp:25, fel:25, inf:19 },
+    chars: { ws:25, bs:35, s:15, t:20, ag:30, int:25, per:30, wp:25, fel:25, inf:14 },
     bonusRolls: 1, bonusPoints: 4, charShift: 1,
     archetypes: ["apostate", "heresiarch", "renegade", "pirate", "savage", "witch", "numen"],
     size: -1,
     skills:  "Common Lore (любые 2), Linguistics (Low Gothic), Sleight of Hand +10, Stealth +10, Trade (Cook + любое 1)",
-    gear:    "5 элементов до R1 (2 Good.Q, 1 Best.Q), Vox-Bead",
+    gear:    "5 элементов Снаряжения и Инструментов до R1 из них 2 Good.Q и 1 Best.Q, Vox-Bead",
     talents: ["Combat Sense", "Heightened Senses (Sight, Smell, Taste)"],
     traits: [
       { name: "Size (-1) / Размер (-1)", benefit:"Размер −1 к SPD.", rating:-1, hasRating:true, effects:{ sizeMod:-1 } },
@@ -233,8 +233,8 @@ export const RACES = {
       { name: "Unnatural Perception (2) / Сверхъестественное Восприятие (2)", benefit:"+2 к Бонусу Per.", rating:2, hasRating:true, effects:{ charBonusStat:"per", charBonusValue:2 } },
       { name: "The Quick and The Dead / Быстрые и Мёртвые", benefit:"+2 к Инициативе; Избегание атак Орды." },
       { name: "Fast Learner (15) / Ловит на Лету (15)", benefit:"+15% к стартовому опыту и опыту за сессию.", rating:15, hasRating:true },
-      { name: "Barefoot / Босоногий", benefit:"Кожа на ногах прочнее: бонус +20 и перебросы Stealth для бесшумного передвижения." },
-      { name: "Runt / Коротышка", benefit:"−4 к максимуму Ран; свойство Compact нивелирует штрафы за маленькое оружие." }
+      { name: "Barefoot / Босоногий", benefit:"Без обуви: +20 и переброс тестов Stealth для бесшумного передвижения и тестов Трудного Ландшафта." },
+      { name: "Runt / Коротышка", benefit:"−4 к максимуму Ран; все винтовки — как длинные, двуручное стрелковое — только двумя руками; модификация Compact снимает эти штрафы." }
     ],
     desc: "Маленький, но зоркий и ловкий абхуман — идеальный разведчик и снайпер."
   },
