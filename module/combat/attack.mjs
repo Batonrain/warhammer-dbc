@@ -1,5 +1,6 @@
 import { CHARACTERISTICS }                         from "../constants/characteristics.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
+import { hasHitLocationShift } from "../rules/hit-location-shift.mjs";
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { critLineHtml } from "../rules/test-kind-widget.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES }            from "../constants/items.mjs";
@@ -875,8 +876,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     && (!meleeTech || meleeTech === "standard");
   const isRangedSingle  = !isMelee && rofMode === "single";
   const agBonus = Number(actor.system?.characteristics?.ag?.bonus) || 0;
-  const hasLocShiftTalent = (actor.items ?? []).some(i =>
-    (i.type === "trait" || i.type === "talent") && i.getFlag("warhammer-dbc", "hitLocationShift"));
+  const hasLocShiftTalent = hasHitLocationShift(actor.items);
   const canShiftLoc = hit && hitsCount === 1 && (isRangedSingle || isMeleeStandard)
     && (!aimTarget?.value || aimTarget.value === "underfoot") && agBonus > 0 && hasLocShiftTalent;
 

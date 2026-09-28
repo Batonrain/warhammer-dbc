@@ -137,7 +137,7 @@ export function openAttackDialog(ctx) {
               content: `<div class="wh-roll-result">
                 <div class="roll-header">${rollIcon("sword")}${esc(item.name)}</div>
                 <div class="roll-outcome">
-                  <span class="roll-failure">Автоматический провал (Ослеплён)</span>
+                  <span class="roll-failure">Автоматический провал${f.autoFailLabel ? ` (${esc(f.autoFailLabel)})` : ""}</span>
                 </div></div>`
             });
             return false;

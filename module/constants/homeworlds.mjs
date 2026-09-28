@@ -302,6 +302,8 @@ export const HOMEWORLDS = [
       name: "Выживание среди убийц",
       desc: "Выполняя одиночную атаку, персонаж может изменить результат определения места попадания, увеличив или уменьшив результат до своего A.b."
     },
+    // Выдача мира ставит на предмет flags.hitLocationShift (rules/hit-location-shift.mjs).
+    hitLocationShift: true,
     rollMods: [{
       key: "warzone-hitloc", when: { kind: "attack", single: true }, value: 0,
       label: "Выживание среди убийц: сдвинуть место попадания до A.b",

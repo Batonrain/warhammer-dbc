@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { possessionStep, possessionBarredRemaining, possessionInRange, POSSESSION_BAR_SECONDS }
+import { possessionStep, possessionBarredRemaining, possessionBarKey, possessionInRange, POSSESSION_BAR_SECONDS }
   from "../../module/rules/possession-attack.mjs";
 
 const side = (success, deg, threshold = 40, unnatural = false) => ({ success, deg, threshold, unnatural });
@@ -33,10 +33,16 @@ describe("possessionStep — расширенный тест W vs W (wdbc-q267)"
 
 describe("запрет 24 ч и дистанция", () => {
   it("считает остаток запрета только для отбившей цели", () => {
-    const barred = { "Actor.v": 1000 };
+    const barred = { [possessionBarKey("Actor.v")]: 1000 };
     expect(possessionBarredRemaining(barred, "Actor.v", 1000 + 3600)).toBe(POSSESSION_BAR_SECONDS - 3600);
     expect(possessionBarredRemaining(barred, "Actor.v", 1000 + POSSESSION_BAR_SECONDS)).toBe(0);
     expect(possessionBarredRemaining(barred, "Actor.x", 0)).toBe(0);
+  });
+  it("ключ флага не содержит точек: uuid Actor.xxx не раскладывается во вложенный объект", () => {
+    const key = possessionBarKey("Actor.abc123");
+    expect(key).not.toContain(".");
+    const barred = { [key]: 500 };
+    expect(possessionBarredRemaining(barred, "Actor.abc123", 500 + 60)).toBe(POSSESSION_BAR_SECONDS - 60);
   });
   it("не далее W.b метров; без токенов не мешает", () => {
     expect(possessionInRange(5, 5)).toBe(true);
