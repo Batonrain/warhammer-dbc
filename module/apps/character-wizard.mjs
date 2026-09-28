@@ -66,7 +66,13 @@ import { withMechCollector, describeMechEntry, syncRankAndFileGrants } from "./m
 import { TALENT_ALIAS, TALENT_CHOICE_SEP } from "../sheets/actor-sheet.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { testCardHtml } from "../helpers/test-card.mjs";
-import { openCompendiumBrowser } from "./compendium-browser.mjs";
+import { openCompendiumBrowser, weaponTypeFolderIds } from "./compendium-browser.mjs";
+import {
+  splitGearTopLevel, gearChoiceOptions, parseGearEntry, parseGearItem, describeGearSpec,
+  matchEquipPointsBonus, matchGearSizeRule, matchStandardSystemsCount, constructorCoverage,
+  namedLookupKeys, pickNamedCandidate, needsLegionProp, normName, compactKey,
+  qualityForAvailability, defaultQualityPlan
+} from "../rules/creation-gear.mjs";
 import { actorFactionsContext, activateFactionFieldListeners } from "./actor-factions.mjs";
 import { EQUIP_SHOP_ROWS, EQUIP_SHOP_ROW_BY_KEY, EQUIP_SHOP_PACKS, equipPointsTotal, equipPointsLeft,
          canAffordRow, startingAmmoQuantity, SACRIFICE_MOD_COUNT, SACRIFICE_MOD_MAX_AVAILABILITY }
@@ -97,25 +103,12 @@ const POWER_ARMOUR_MARKS = [
 // любой id Foundry, сверен с пользователем), а не один произвольный предмет.
 const STANDARD_SYSTEMS_FOLDER = "PJGdkJLkUXdx2JTp";
 
-// «L. <Категория>» в gear-тексте (см. _matchLegionCategoryGear) — категория
-// текста → id папки компендиума warhammer-dbc.weapons. Проверено на
-// «Power Weapon» → «Имперское/Рукопашное/Силовое» (id сверен по packs-src).
-// Новую категорию добавлять сюда же строкой, без смены разбора текста.
-const LEGION_CATEGORY_FOLDERS = {
-  "power weapon": "x3vbtW2ZuzQfcPFG"
-};
-
 // Те же типы, что STACKABLE_TYPES в compendium-browser.mjs (quantity вместо N
 // раздельных копий) — свой список здесь, а не импорт: тот приватный модулю.
 const EQUIP_STACKABLE_TYPES = new Set(["weapon", "gear", "ammo", "drug", "tool"]);
 
-// «снаряжение бесплатно модифицируется под размер <Расы>» (Огрин) — это
-// ПРАВИЛО на всю выдачу, а не предмет (wdbc-yobj). Механически «подогнано под
-// размер Огрина» = свойство оружия `ogryned` («Огринизированное»,
-// constants/weapon-properties.mjs) — оно же снимает −10/−20 самому Огрину за
-// оружие без него (Физиология Громилы). Раса в тексте → ключ свойства;
-// новая раса добавляется сюда строкой, без смены разбора текста.
-const GEAR_SIZE_RULE_PROPS = { огрин: "ogryned" };
+// Правило «снаряжение модифицируется под Огрина» и его ключ свойства оружия
+// живут в rules/creation-gear.mjs (GEAR_SIZE_RULE_PROPS).
 
 // Ключ флага-ведомости выданного снаряжения (см. _confirmGear): что именно
 // Мастер уже выдал по КАЖДОЙ строке текста Расы/Архетипа. Нужен потому, что
@@ -1337,80 +1330,37 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   // ── Этап 5: Снаряжение (текстовые arch.gear/race.gear и т.п.) ───────────
+  //
+  // Что книга велит выдать по строке, решает чистый модуль rules/creation-gear.mjs
+  // (таблица по всем строкам книги — test/rules/creation-gear.test.mjs). Здесь —
+  // только КАК: именной предмет создаётся сам (с Качеством, количеством, «L.»
+  // Легионом и надстройкой «(+Mono)»), категория открывает Обозреватель, уже
+  // суженный по книге (пак, папка-Тип, потолок Редкости, число), а Качество
+  // выбранного проставляется само — по ступеням «R1 (Best.Q) или R2 (Good.Q)»
+  // или по «из них N Good.Q» в порядке выбора.
+  //
+  // Методы _splitGear*/_match* ниже — тонкие обёртки над модулем: на них
+  // держатся старые тесты (wizard-gear-rules.test.mjs) и внешние вызовы.
 
-  /**
-   * Разбивка варианта на выбор с учётом вложенных скобок — тот же приём,
-   * что был у отключённого grantCreationGear, БЕЗ «;»: в реальных текстах
-   * gear «;» — доп. разделитель ВЕРХНЕГО уровня (как запятая), а не «или»
-   * (см. запись фонового агента про конвертацию снаряжения в Механику —
-   * пример «Splinter Swarm Pistol; Loud Hailer (Best.Q); Translator Rod» —
-   * это три РАЗНЫХ предмета «И», не выбор «ИЛИ»). Старый grantCreationGear
-   * трактовал «;» как выбор — это унаследованная неточность, здесь не
-   * повторяем.
-   */
-  _splitGearChoice(str) {
-    const out = []; let d = 0, cur = "", i = 0;
-    while (i < str.length) {
-      const ch = str[i];
-      if (ch === "(") d++; else if (ch === ")") d--;
-      if (d === 0 && ch === "/") { out.push(cur); cur = ""; i++; continue; }
-      const m = (d === 0) ? str.slice(i).match(/^\s+или\s+/) : null;
-      if (m) { out.push(cur); cur = ""; i += m[0].length; continue; }
-      cur += ch; i++;
-    }
-    if (cur.trim()) out.push(cur);
-    // Хвостовая «,» перед следующим «или» — часть той же цепочки выбора
-    // («A или B, или C»), не разделитель вариантов; чистим её здесь, а не
-    // на входе, чтобы не путать с «,» из _splitGearTopLevel.
-    return out.map(s => s.trim().replace(/,+$/, "").trim()).filter(Boolean);
-  }
+  _splitGearChoice(str) { return gearChoiceOptions(str); }
 
-  /**
-   * Разбивка верхнего уровня на отдельные предметы: «,» и «;» — оба уровня
-   * «И», с учётом скобок. Исключение: «,» ПЕРЕД «или» — это не новый предмет,
-   * а хвост той же цепочки выбора (естественный русский список «A или B, или
-   * C» = «A или B или C») — реальный текст расы Друкхари содержит именно
-   * такую запись («Xenomesh Armour (Good.Q) или Kabalite Armour, или
-   * Wychsuit»); без этого исключения «или Wychsuit» отрывался бы отдельным
-   * лже-предметом верхнего уровня, а Wychsuit пропадал бы из выбора брони.
-   */
-  _splitGearTopLevel(str) {
-    const out = []; let d = 0, cur = "";
-    const s = String(str);
-    for (let i = 0; i < s.length; i++) {
-      const ch = s[i];
-      if (ch === "(") d++; else if (ch === ")") d = Math.max(0, d - 1);
-      if ((ch === "," || ch === ";") && d === 0) {
-        if (ch === "," && /^\s*или\s+/.test(s.slice(i + 1))) { cur += ch; continue; }
-        out.push(cur); cur = "";
-      }
-      else cur += ch;
-    }
-    if (cur.trim()) out.push(cur);
-    return out.map(s => s.trim()).filter(Boolean);
-  }
+  _splitGearTopLevel(str) { return splitGearTopLevel(str); }
 
   /**
    * По ключевым словам в строке текста снаряжения (английская военная
    * номенклатура архетипов/рас, изредка русский) угадывает ОДИН пак
-   * Обозревателя, до которого стоит сузить окно ручного выбора — вместо
-   * того чтобы игрок листал вообще все категории ради «Light Bolter».
-   * Намеренно НЕ угадывает `type`/`folderId` (более узкие фильтры внутри
-   * пака) — при ошибке угадывания там реален жёсткий дедэнд («под условия
-   * не подошёл ни один предмет», Обозреватель сам закрывается), а у пака
-   * целиком предметов десятки, риск пустой категории на практике нулевой.
-   * Не угадал — вернёт null, Обозреватель откроется как раньше, без сужения.
+   * Обозревателя — запасной путь для именной строки, чьё имя в компендиумах не
+   * нашлось («Void Suit Helmet»): игрок выбирает сам, но не из всех вкладок.
+   * Не угадал — null, Обозреватель откроется без сужения.
    *
    * Границы слова у кириллицы пишутся lookaround'ами по буквам обоих
    * алфавитов, а не `\b`: `\b` в JS считает словом только ASCII, поэтому
-   * `/\bмеч\b/` не совпадает НИ С ЧЕМ — ни «меч», ни «силовой меч» (обе
-   * стороны «м»/«ч» тоже не-ASCII, границы нет). Тот же приём ниже у
-   * «люб…» и «до R\d».
+   * `/\bмеч\b/` не совпадает НИ С ЧЕМ (wizard-gear-guess.test.mjs).
    */
   _guessGearPack(text) {
     const t = String(text).toLowerCase();
     if (/\b(bolter|pistol|rifle|shotgun|sword|axe|blade|knife|mace|spear|chain\w*|flamer|cannon|gun|launcher|carbine|autogun|lasgun|las\s*pistol|whip|club|hammer|dagger|talon)\b|оруж|пистолет|винтовк|дробовик|(?<![A-Za-zА-Яа-яЁё])меч(?![A-Za-zА-Яа-яЁё])|(?<![A-Za-zА-Яа-яЁё])нож(?![A-Za-zА-Яа-яЁё])|топор|клинок|булав/.test(t)) return "weapons";
-    if (/\b(armour|armor|carapace|flak|xenomesh|wychsuit)\b|брон|доспех|(?<![A-Za-zА-Яа-яЁё])латы(?![A-Za-zА-Яа-яЁё])|панцир/.test(t)) return "armor";
+    if (/\b(armour|armor|carapace|flak|xenomesh|wychsuit|helmet|helm)\b|брон|доспех|шлем|(?<![A-Za-zА-Яа-яЁё])латы(?![A-Za-zА-Яа-яЁё])|панцир/.test(t)) return "armor";
     if (/\b(ammo|rounds?|clip|magazine)\b|патрон|обойм|магазин|боеприпас/.test(t)) return "ammunition";
     if (/\bshield\b|(?<![A-Za-zА-Яа-яЁё])щит(?![A-Za-zА-Яа-яЁё])/.test(t)) return "shields";
     if (/\b(toolkit|tool\s*kit)\b|инструмент|набор\s+инструментов/.test(t)) return "tools";
@@ -1421,8 +1371,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
    * «Power Armour Mk X-Y» → список ИМЁН предметов компендиума (не выдуманных,
    * см. POWER_ARMOUR_MARKS) для марок от X до Y включительно — как обычная
    * группа выбора («A или B»), только развёрнутая из диапазона, а не из
-   * текста с «или». Не диапазон/непонятная марка — null, строка идёт по
-   * обычному пути (см. вызов в _gearLayout).
+   * текста с «или». Не диапазон/непонятная марка — null.
    */
   _expandPowerArmourMkRange(text) {
     const m = /\bMk\s+([IVXLCDM]+)\s*[-–—]\s*([IVXLCDM]+)\b/i.exec(String(text));
@@ -1434,107 +1383,30 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   /** «N Стандартные системы» → сколько штук выбрать из папки STANDARD_SYSTEMS_FOLDER; иначе null. */
-  _matchStandardSystemsCount(text) {
-    const m = /^\s*(\d+)\s+Стандартны[ех]\s+систем/i.exec(String(text));
-    return m ? Number(m[1]) : null;
-  }
+  _matchStandardSystemsCount(text) { return matchStandardSystemsCount(text); }
 
-  /**
-   * «L. <Категория> (до R<N>, <Кач>.Q)» (пример — Чемпион, «L. Power Weapon
-   * (до R3, Good.Q)») — «L.» значит Легион-тир: любой предмет заданной
-   * категории редкости не выше N, а ВЫБРАННОМУ экземпляру после выбора
-   * нужно проставить Качество и добавить свойство Legion — готового
-   * Legion-варианта на каждый силовой тип оружия в компендиуме просто нет
-   * (в отличие от, скажем, «Болтер (Астартес)», где Legion уже встроен в
-   * сам предмет). Категория определяется папкой компендиума —
-   * LEGION_CATEGORY_FOLDERS ниже, пока известна только «Power Weapon».
-   * Не совпало (неизвестная категория/формат) — null, строка идёт по
-   * обычному пути (см. вызов в _gearLayout).
-   */
+  /** «L. <Тип оружия> (до R<N>, <Кач>.Q)» → { folderId, maxAvailability, quality } или null. */
   _matchLegionCategoryGear(text) {
-    const m = /^L\.\s*(.+?)\s*\(до\s*R(\d+),\s*(\w+)\.?Q\)\s*$/i.exec(String(text).trim());
-    if (!m) return null;
-    const folderId = LEGION_CATEGORY_FOLDERS[m[1].trim().toLowerCase()];
-    if (!folderId) return null;
-    return { folderId, maxAvailability: Number(m[2]), quality: m[3].toLowerCase() };
+    const s = parseGearItem(text);
+    if (s.kind !== "pick" || !s.legion || !s.packs.includes("weapons") || s.folders?.length !== 1) return null;
+    return { folderId: s.folders[0], maxAvailability: s.maxAvailability, quality: s.quality };
   }
 
-  /**
-   * «N элементов [Снаряжения/Инструментов] до R<N> (…Качество…)» (пример —
-   * Человек, «5 элементов Снаряжения/Инструментов до R1 (2 Good.Q, 1 Best.Q)»)
-   * — раньше «/» резался как «А или Б» (_splitGearChoice считает его выбором
-   * между ПРЕДМЕТАМИ, а тут это две КАТЕГОРИИ через дробь одного набора) и
-   * получалось два обрывка фразы, ни один не совпадал с реальным предметом,
-   * а число N терялось — Обозреватель открывался на count:1 (wdbc-ревизия
-   * снаряжения, 22.08.2026). Теперь «/» (и «и» — Друкхари/Сслиты пишут через
-   * союз) между категориями читается как ИЛИ по смыслу книги: игрок берёт N
-   * предметов ЛЮБОГО состава из объединения категорий, не выбор одной штуки
-   * из двух половин фразы. Категория не распозналась или её вообще нет
-   * («5 элементов до R1» без слов) — общий набор «Снаряжение+Инструменты»,
-   * это и есть подразумеваемый смысл голой фразы.
-   * Смесь Качества в скобках («2 Good.Q, 1 Best.Q») не проверяется —
-   * Обозреватель не считает состав по Качеству отдельно, состав — на совести
-   * игрока, как и раньше у ручного подбора.
-   */
+  /** «N элементов [Снаряжения/Инструментов] до R<N>» → { count, maxAvailability, packs } или null. */
   _matchGearBudget(text) {
-    const m = /^(\d+)\s+элемент\w*\s*(?:([^()]*?)\s+)?до\s*R\s*(-?\d+)/iu.exec(String(text).trim());
-    if (!m) return null;
-    const count = Number(m[1]);
-    const maxAvailability = Number(m[3]);
-    const cats = String(m[2] || "");
-    const packs = new Set();
-    if (/снаряжен/iu.test(cats)) packs.add("gear");
-    if (/инструмент/iu.test(cats)) packs.add("tools");
-    if (!packs.size) { packs.add("gear"); packs.add("tools"); }
-    return { count, maxAvailability, packs: [...packs] };
+    const s = parseGearItem(text);
+    if (s.kind !== "pick" || !s.packs.every(p => p === "gear" || p === "tools") || s.folders?.length) return null;
+    return { count: s.count, maxAvailability: s.maxAvailability, packs: s.packs, qualitySlots: s.qualitySlots };
   }
 
-  /**
-   * Ведущее число строки («3 Splinter Pistol», «2 Hekatrix Blade (Best.Q)»)
-   * — количество одного и того же ИМЕННОГО предмета, а не группа выбора и не
-   * абстрактный бюджет. `clean()` (см. _confirmGear) уже срезает его для
-   * поиска имени, но само число раньше нигде не сохранялось — Обозреватель/
-   * точное совпадение всегда создавали ровно 1 экземпляр, а не N.
-   */
-  _matchLeadingCount(text) {
-    const m = /^\s*(\d+)\s*[×x]?\s*[А-ЯЁA-Z]/u.exec(String(text));
-    return m ? Number(m[1]) : 1;
-  }
+  /** Ведущее число строки («3 Splinter Pistol», «2×L. Chain Weapon») — количество. */
+  _matchLeadingCount(text) { return parseGearItem(text).count ?? 1; }
 
-  /**
-   * «+2 очка стартового снаряжения» (Скват) — не предмет, а НАДБАВКА к пулу
-   * Очков Снаряжения той же страницы книги (стр. 24). Раньше строка не
-   * совпадала ни с чем в компендиуме и уезжала в ручной подбор: игрок читал
-   * её глазами и досчитывал очки сам (wdbc-yobj). Теперь число уходит в
-   * _equipShopContext третьим слагаемым пула (Inf.b + бонус ГМа + Раса).
-   * Не совпало — null, строка идёт по обычному пути.
-   *
-   * Окончания слов пишутся `[а-яё]*`, а не `\w*`: `\w` в JS — только ASCII,
-   * и «очк\w*» после «очк» не съедает «а» (тот же капкан, что у границ слова
-   * в _guessGearPack, wizard-gear-guess.test.mjs).
-   */
-  _matchEquipPointsBonus(text) {
-    const m = /^\s*\+\s*(\d+)\s+очк[а-яё]*\s+(?:стартов[а-яё]*\s+)?снаряжени[а-яё]*\s*$/iu.exec(String(text));
-    return m ? Number(m[1]) : null;
-  }
+  /** «+2 очка стартового снаряжения» (Скват) → 2 — надбавка к пулу Очков Снаряжения. */
+  _matchEquipPointsBonus(text) { return matchEquipPointsBonus(text); }
 
-  /**
-   * «снаряжение бесплатно модифицируется под размер Огрина» — тоже не предмет,
-   * а свойство ВСЕЙ выдачи (wdbc-yobj). Возвращает { prop, size }: prop —
-   * ключ свойства оружия из GEAR_SIZE_RULE_PROPS (проставляется всему оружию
-   * персонажа по завершении Этапа 5), size — как раса названа в тексте.
-   * Раса в правиле незнакомая — prop:null: строка всё равно распознана как
-   * ПРАВИЛО (в Обозреватель не уедет), просто применить её автоматически
-   * пока нечем. Не правило вовсе — null.
-   */
-  _matchGearSizeRule(text) {
-    const t = String(text).trim();
-    if (!/снаряжен[а-яё]*[^.;]*модифиц[а-яё]*[^.;]*размер/iu.test(t)) return null;
-    for (const [size, prop] of Object.entries(GEAR_SIZE_RULE_PROPS)) {
-      if (new RegExp(size, "iu").test(t)) return { prop, size };
-    }
-    return { prop: null, size: null };
-  }
+  /** «…снаряжение бесплатно модифицируется под Огрина» → { prop, size } — правило, не предмет. */
+  _matchGearSizeRule(text) { return matchGearSizeRule(text); }
 
   /**
    * Строки снаряжения, уже разрешённые в конкретный текст: фиксированные —
@@ -1550,8 +1422,80 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
   /** Сумма надбавок «+N очков стартового снаряжения» из текста Расы/Архетипа. */
   _gearRuleEquipBonus() {
     let sum = 0;
-    for (const r of this._resolvedGearRows()) sum += this._matchEquipPointsBonus(r) ?? 0;
+    for (const r of this._resolvedGearRows()) {
+      for (const s of parseGearEntry(r)) if (s.kind === "rule" && s.rule === "equipPoints") sum += s.value;
+    }
     return sum;
+  }
+
+  /**
+   * Записи kind:"equipment" Конструктора на Расе/Субрасе/Архетипе актора —
+   * по группам, как они лежат во flags.mechanics. Нужны, чтобы строку текста,
+   * которую уже выдала Механика (Этапы 1–3), не выдать второй раз.
+   */
+  _constructorEquipGroups() {
+    const groups = [];
+    for (const it of this.actor?.items ?? []) {
+      if (!["race", "subrace", "archetype"].includes(it?.type)) continue;
+      const mech = it.flags?.["warhammer-dbc"]?.mechanics;
+      if (Array.isArray(mech)) groups.push(...mech.filter(g => Array.isArray(g?.entries)));
+    }
+    return groups;
+  }
+
+  /**
+   * Индекс имён компендиумов снаряжения: ключ (normName, по каждой половине
+   * двуязычного имени, и слитный вариант) → кандидаты {pack, id, name, folder}.
+   * Кэшируется на окно Мастера: нужен и раскладке (папка именного предмета
+   * для сверки с Конструктором), и выдаче.
+   */
+  async _loadGearIndex() {
+    if (this._gearIndex) return this._gearIndex;
+    // "traits" — в строке снаряжения попадаются и Черты («Mechanicum Implants»
+    // Технодесантника); моды — для надстроек «(+Mono)», «(+Pistol Grip)».
+    const packNames = ["weapons", "armor", "gear", "ammunition", "shields", "tools", "armour-systems",
+      "traits", "implants", "weapon-mods", "armor-mods"];
+    const index = new Map();
+    const folderNames = new Map();
+    for (const p of packNames) {
+      const pk = game.packs?.get?.(`warhammer-dbc.${p}`);
+      if (!pk) continue;
+      for (const f of pk.folders?.contents ?? []) folderNames.set(f.id, f.name);
+      for (const e of await pk.getIndex()) {
+        const folder = typeof e.folder === "string" ? e.folder : (e.folder?.id ?? null);
+        for (const part of String(e.name).split("/")) {
+          const k0 = normName(part);
+          if (!k0) continue;
+          for (const k of new Set([k0, compactKey(k0)])) {
+            if (!index.has(k)) index.set(k, []);
+            index.get(k).push({ pack: pk, packId: p, id: e._id, name: e.name, folder });
+          }
+        }
+      }
+    }
+    this._gearIndex = index;
+    this._gearFolderNames = folderNames;
+    return index;
+  }
+
+  /** Индекс в фоне для раскладки (render синхронный) — перерисовать, когда готов. */
+  _ensureGearIndex() {
+    if (this._gearIndex || this._gearIndexLoading) return;
+    this._gearIndexLoading = true;
+    this._loadGearIndex().catch(() => null).finally(() => {
+      this._gearIndexLoading = false;
+      if (this.step?.id === "gear") this.render(false);
+    });
+  }
+
+  /** Именная заявка → кандидат индекса (с учётом «L.» и гранат) или null. */
+  _findGearNamed(spec, index = this._gearIndex) {
+    if (!index) return null;
+    for (const k of namedLookupKeys(spec)) {
+      const c = index.get(k);
+      if (c?.length) return pickNamedCandidate(c, spec);
+    }
+    return null;
   }
 
   /** Раскладка текста снаряжения на layout (фикс/выбор) + сами группы выбора. Без резолва в предметы. */
@@ -1562,46 +1506,45 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       ynnariPast: sys.ynnariPast, harlequinPast: sys.harlequinPast
     });
     const raw = [arch?.gear, race?.gear, past?.gear, sub?.gear].filter(Boolean).join(", ");
-    const entries = raw.trim() ? this._splitGearTopLevel(raw) : [];
-    const layout = [], choiceDefs = [];
+    const entries = raw.trim() ? splitGearTopLevel(raw) : [];
+    const layout = [], choiceDefs = [], rowOptions = [];
     for (const e of entries) {
       const mkRange = this._expandPowerArmourMkRange(e);
-      if (mkRange) { layout.push({ ci: choiceDefs.length }); choiceDefs.push(mkRange); continue; }
-      // Строки со СВОИМ обработчиком в _confirmGear нельзя пускать в
-      // _splitGearChoice: он режет верхнеуровневые «/» и «или» как выбор
-      // МЕЖДУ ПРЕДМЕТАМИ, а здесь «/» — это перечисление КАТЕГОРИЙ одного
-      // набора. Живой пример — «5 элементов Снаряжения/Инструментов до R1
-      // (2 Good.Q, 1 Best.Q)» (Человек, Огрин, Сслит): строка превращалась в
-      // выпадающий список из двух обрывков фразы («5 элементов Снаряжения» /
-      // «Инструментов до R1 (…)»), ни один из которых уже не совпадал с
-      // _matchGearBudget — и вместо пяти предметов бюджетным Обозревателем
-      // игрок получал один вопрос ручного подбора. _matchGearBudget завели в
-      // wdbc-sai, но проверяли его только в _confirmGear — досюда строка не
-      // доживала в целом виде (wdbc-27ig).
-      if (this._matchStandardSystemsCount(e) != null) { layout.push({ fixed: e }); continue; }
-      if (this._matchGearBudget(e)) { layout.push({ fixed: e }); continue; }
-      if (this._matchLegionCategoryGear(e)) { layout.push({ fixed: e }); continue; }
-      // Правила («+2 очка стартового снаряжения», «…под размер Огрина»,
-      // wdbc-yobj) — тоже целиком, выбором они не являются.
-      if (this._matchEquipPointsBonus(e) != null) { layout.push({ fixed: e }); continue; }
-      if (this._matchGearSizeRule(e)) { layout.push({ fixed: e }); continue; }
-      const parts = this._splitGearChoice(e);
-      if (parts.length > 1) { layout.push({ ci: choiceDefs.length }); choiceDefs.push(parts); }
+      // Выбор между предметами — только настоящий: «R1(Best.Q) или R2(Good.Q)»
+      // (ступени) и «Снаряжения/Инструментов», «Гранат или Бомб» (объединение
+      // категорий под одним счётом) остаются ОДНОЙ строкой (gearChoiceOptions).
+      const opts = mkRange ?? gearChoiceOptions(e);
+      rowOptions.push(opts);
+      if (opts.length > 1) { layout.push({ ci: choiceDefs.length }); choiceDefs.push(opts); }
       else layout.push({ fixed: e });
     }
+    // Что из этого уже выдала Механика Расы/Архетипа (Чемпион: «L. Power
+    // Weapon» — и Выбор Конструктора, и строка текста) — второй раз не
+    // выдаём и не спрашиваем.
+    const covered = constructorCoverage(rowOptions, this._constructorEquipGroups(),
+      spec => this._findGearNamed(spec)?.folder ?? null,
+      id => this._gearFolderNames?.get(id) ?? null);
+    layout.forEach((x, i) => { if (covered[i]) x.covered = true; });
     return { layout, choiceDefs, isAstartes: sys.race === "astartes" };
   }
 
   _gearStepContext() {
+    this._ensureGearIndex();
     const { layout, choiceDefs, isAstartes } = this._gearLayout();
+    const how = text => parseGearEntry(text).map(describeGearSpec).filter(Boolean).join("; ");
     return {
-      gearFixed: layout.filter(x => x.fixed != null).map(x => x.fixed),
-      gearChoices: choiceDefs.map((opts, ci) => ({
-        ci, options: opts, picked: this.gearPicks[ci] ?? opts[0]
+      gearFixed: layout.map((x, i) => ({ x, i })).filter(({ x }) => x.fixed != null || x.covered).map(({ x }) => {
+        const text = x.fixed ?? choiceDefs[x.ci].join(" или ");
+        return { text, how: x.covered ? "уже выдано Механикой Расы/Архетипа — повторно не выдаётся" : how(text) };
+      }),
+      gearChoices: layout.filter(x => x.fixed == null && !x.covered).map(x => ({
+        ci: x.ci, picked: this.gearPicks[x.ci] ?? choiceDefs[x.ci][0],
+        options: choiceDefs[x.ci],
+        how: how(this.gearPicks[x.ci] ?? choiceDefs[x.ci][0])
       })),
       gearIsAstartes: isAstartes,
       gearDone: this._gearDone,
-      hasGear: layout.length > 0 || isAstartes,
+      hasGear: layout.length > 0,
       equipShop: this._equipShopContext()
     };
   }
@@ -1629,11 +1572,72 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   /**
-   * Резолвит выбранные строки снаряжения в реальные предметы: сперва точное
-   * совпадение имени в компендиумах (без нечёткого угадывания — та часть
-   * старого grantCreationGear признана ненадёжной и сюда сознательно не
-   * перенесена), а для всего, что не нашлось один-в-один, спрашивает игрока
-   * через Обозреватель компендиумов — по одному, по очереди.
+   * Объекты для создания на акторе из документа компендиума: Качество,
+   * Легион, «Рунический» и количество. Расходуемые типы (EQUIP_STACKABLE_TYPES)
+   * — одним предметом с quantity, прочие — отдельными копиями.
+   */
+  _gearObjects(doc, { quality = null, legion = false, runic = false, qty = 1 } = {}) {
+    const make = () => {
+      const obj = doc.toObject();
+      const sys = obj.system ?? (obj.system = {});
+      // Качество — поле system.quality (constants/quality.mjs); ставим только
+      // там, где оно есть у типа, как и Конструктор (apps/mechanics.mjs).
+      if (quality && quality !== "common" && "quality" in sys) sys.quality = quality;
+      if (legion && obj.type === "weapon") {
+        const props = Array.isArray(sys.weaponProps) ? sys.weaponProps : [];
+        if (!props.some(p => p?.key === "legion")) props.push({ key: "legion" });
+        sys.weaponProps = props;
+      }
+      if (runic && obj.type === "weapon") sys.daemonWeapon = { ...(sys.daemonWeapon || {}), runic: true };
+      return obj;
+    };
+    const n = Math.max(1, Number(qty) || 1);
+    if (n > 1 && EQUIP_STACKABLE_TYPES.has(doc.type)) {
+      const obj = make();
+      obj.system.quantity = (Number(obj.system.quantity) || 1) * n;
+      return [obj];
+    }
+    return Array.from({ length: n }, make);
+  }
+
+  /** Надстройки «(+Mono)», «(+Void)» — мод из компендиума, сразу установленный на выданный предмет. */
+  async _grantGearAttachments(spec, parent, index) {
+    const missing = [];
+    for (const name of spec.attach || []) {
+      const ref = this._findGearNamed({ name }, index);
+      const doc = ref && ["weapon-mods", "armor-mods"].includes(ref.packId) ? await ref.pack.getDocument(ref.id) : null;
+      if (!doc) { missing.push(name); continue; }
+      const obj = doc.toObject();
+      if (parent?.id && obj.system && "installedOn" in obj.system) obj.system.installedOn = parent.id;
+      await this.actor.createEmbeddedDocuments("Item", [obj]);
+    }
+    return missing;
+  }
+
+  /**
+   * Фильтры Обозревателя по заявке-категории. Ветку оружия («любое
+   * рукопашное») раскрываем в листья — предметы лежат только в них
+   * (weaponTypeFolderIds, compendium-browser.mjs).
+   */
+  _gearPickFilters(spec) {
+    const filters = {};
+    if (spec.maxAvailability != null) filters.maxAvailability = spec.maxAvailability;
+    if (spec.folders?.length) {
+      filters.folderId = spec.packs.includes("weapons")
+        ? [...new Set(spec.folders.flatMap(id => weaponTypeFolderIds(id)))]
+        : [...spec.folders];
+    }
+    if (spec.implantCategories?.length) filters.implantCategory = [...spec.implantCategories];
+    if (spec.ammoType) filters.ammoType = spec.ammoType;
+    return filters;
+  }
+
+  /**
+   * Резолвит выбранные строки снаряжения в реальные предметы. Порядок:
+   * сперва всё, что выдаётся само (точное имя в компендиумах — без нечёткого
+   * угадывания, та часть старого grantCreationGear признана ненадёжной), потом
+   * «N Стандартные системы» (им нужна уже выданная броня), потом по очереди
+   * все выборы из списка — Обозреватель, суженный по книге.
    */
   async _confirmGear() {
     const actor = this.actor;
@@ -1641,70 +1645,36 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     this._confirmingGear = true;
     this.render(false);
     try {
+      const index = await this._loadGearIndex();
+      const { layout } = this._gearLayout();
       const resolved = this._resolvedGearRows();
-
-      // "traits" — в строке снаряжения (Архетип.gear) попадаются не только
-      // предметы инвентаря, но и Черты ("Mechanicum Implants" у Технодесантника
-      // и т.п.): без пака в индексе точное совпадение не находилось, и такая
-      // строка уходила в ручной подбор через Обозреватель — с неугаданным паком
-      // (гадалка по ключевым словам не знает про Черты) он открывался на первой
-      // попавшейся вкладке (Бестиарий), а сама Черта — не выбор, а то, что
-      // положено автоматически.
-      const packNames = ["weapons", "armor", "gear", "ammunition", "shields", "tools", "armour-systems", "traits"];
-      const packs = packNames.map(p => game.packs.get(`warhammer-dbc.${p}`)).filter(Boolean);
-      const index = new Map();
-      const norm = s => String(s || "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
-      for (const pk of packs) for (const e of await pk.getIndex()) {
-        for (const part of String(e.name).split("/")) { const k = norm(part); if (k && !index.has(k)) index.set(k, { pack: pk, id: e._id }); }
-      }
-      // «(Астартес)» — часть настоящего имени предмета (отличает Легион-версию
-      // от обычной), а не квалификатор вроде «(Good.Q)» — не срезаем именно её.
-      const clean = txt => String(txt).replace(/^\s*\d+×?\s*/, "").replace(/^l\.\s*/i, "").replace(/\((?!Астартес\))[^)]*\)/g, "")
-        .replace(/\s*(?<![A-Za-zА-Яа-яЁё])до\s*R\s*\d+\b/gi, "").replace(/\b(Best|Good|Common|Poor)\.?Q\b/gi, "").trim();
 
       // Уже на акторе (в т.ч. бильнгвально, «Bolter (Astartes) / Болтер
       // (Астартес)» = «Болтер (Астартес)») — сюда попадает и то, что реально
       // выдано раньше (повторный проход Мастера), и совпадение строк
-      // Расы/Архетипа (оба перечисляют один и тот же болтер текстом — тогда
-      // «эквип» дублировался бы уже на первом проходе). Ключ — та же norm(),
-      // которой резолвится сам предмет, split("/") — обе половины двуязычного
-      // имени.
+      // Расы/Архетипа. Ключ — та же normName, что у индекса.
       const onActor = new Set();
       for (const it of actor.items) for (const part of String(it.name).split("/")) {
-        const k = norm(part.trim()); if (k) onActor.add(k);
+        const k = normName(part.trim()); if (k) onActor.add(k);
       }
 
-      // Ведомость выданного — точный учёт вместо угадывания (wdbc-27ig).
-      // Три КАТЕГОРИЙНЫХ потока и ручной подбор выбирают вещь ИЗ КАТЕГОРИИ,
-      // а не по имени: сверить их с уже выданным по названию (как onActor
-      // выше делает для именных строк) нельзя — имя выбранного предмета
-      // строке «5 элементов Снаряжения до R1» не равно ничем. Поэтому
-      // запоминаем не «что подошло бы», а ФАКТ: по этой строке уже выдано
-      // вот это. Ключ строки — её нормализованный текст плюс порядковый
-      // номер среди одинаковых (Раса и Архетип МОГУТ обе просить «2
-      // Стандартные системы», и это законные 2+2, а не дубль).
-      //
-      // Сознательно НЕ делаем второго, эвристического дедупа — «эта
-      // КАТЕГОРИЯ уже закрыта тем, что выдала Механика Расы/Архетипа»:
-      // надёжного признака «предмет относится к этой категории» у актора нет
-      // (папка компендиума при создании embedded-предмета не сохраняется), и
-      // угадайка молча съедала бы законный выбор игрока. Ведомость же врать
-      // не может: в ней лежат id ровно тех предметов, которые Мастер создал
-      // сам.
+      // Ведомость выданного — точный учёт вместо угадывания (wdbc-27ig):
+      // категорийные выдачи выбирают ИЗ КАТЕГОРИИ, сверить их с уже выданным
+      // по названию нельзя, поэтому запоминаем ФАКТ: по этой строке выдано
+      // вот это. Ключ строки — нормализованный текст плюс порядковый номер
+      // среди одинаковых (Раса и Архетип МОГУТ обе просить одно и то же).
       const ledger = { ...(actor.getFlag?.("warhammer-dbc", GEAR_LEDGER_FLAG)
         ?? actor.flags?.["warhammer-dbc"]?.[GEAR_LEDGER_FLAG] ?? {}) };
       let ledgerDirty = false;
       const actorItemIds = new Set(Array.from(actor.items ?? [], it => it?.id).filter(Boolean));
       const seenKey = new Map();
       const rowKeys = resolved.map(r => {
-        const k = norm(r);
+        const k = normName(r);
         const n = seenKey.get(k) ?? 0;
         seenKey.set(k, n + 1);
         return `${k}#${n}`;
       });
-      // «Уже выдавали» — только если хоть один записанный предмет ЖИВ на
-      // листе. Игрок стёр всё выданное по строке и зашёл в Мастера заново —
-      // значит выдать честно надо ещё раз, а не молча пропустить.
+      // «Уже выдавали» — только если хоть один записанный предмет ЖИВ на листе.
       const grantedBefore = i => {
         const ids = ledger[rowKeys[i]];
         return Array.isArray(ids) && ids.some(id => actorItemIds.has(id));
@@ -1715,236 +1685,180 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
         ledger[rowKeys[i]] = [...new Set([...(ledger[rowKeys[i]] ?? []), ...ids])];
         ledgerDirty = true;
       };
+      const create = async (i, objs) => {
+        if (!objs.length) return [];
+        const made = await actor.createEmbeddedDocuments("Item", objs);
+        recordGrant(i, made);
+        return made ?? [];
+      };
 
-      // Правило «снаряжение подгоняется под размер <Расы>» (Огрин) — свойство
-      // всей выдачи, а не отдельной строки: ищем его по всему списку заранее,
-      // применяем в самом конце, когда всё стартовое снаряжение уже на листе.
-      const sizeRule = resolved.map(r => this._matchGearSizeRule(r)).find(Boolean) ?? null;
-
-      // done[r] — по КОНКРЕТНОЙ строке (индексу resolved), не общим флагом:
-      // иначе один успешный ручной выбор красил бы «сделано» и все строки,
-      // которые игрок в Обозревателе просто закрыл крестиком (пропустил).
-      const toCreate = [];
-      const done = resolved.map(() => false);
-      // Отметки для карточки в чате: «выдавалось прошлым заходом» и «это
-      // правило, а не предмет» — обе строки сделанные, но по разным причинам,
-      // и молча красить их одинаковой ✓ значит врать игроку.
+      // Каждая строка — одна или несколько выдач (набор « + », «… и 2 до R3»).
+      // Строка сделана, когда сделаны ВСЕ её выдачи; отметки — для карточки ГМу.
+      const tasks = [];
+      const rowTasks = resolved.map(() => []);
       const prior = resolved.map(() => false);
-      const notes = resolved.map(() => "");
-      const manualIdx = [];
-      const stdSysIdx = [];   // «N Стандартные системы» — свой бюджетный поток, не по одной
-      const legionIdx = [];   // «L. <Категория> (до R<N>, <Кач>.Q)» — свой поток с пост-обработкой
-      const gearBudgetIdx = []; // «N элементов [Снаряжения/Инструментов] до R<N>» — свой бюджетный поток
-      const grantedKeys = new Set();
+      const notes = resolved.map(() => []);
       resolved.forEach((r, i) => {
-        // Уже выдано этим же Мастером в прошлый заход — не спрашиваем второй
-        // раз и не создаём вторую пачку (wdbc-27ig). Проверяется ПЕРВОЙ:
-        // категорийные строки ниже выходят из forEach раньше всех прочих
-        // проверок, и любое место позже они бы просто не достигли.
-        if (grantedBefore(i)) { done[i] = true; prior[i] = true; return; }
-        // Правила, а не предметы (wdbc-yobj) — в Обозреватель не уезжают.
-        const ptsBonus = this._matchEquipPointsBonus(r);
-        if (ptsBonus != null) {
-          done[i] = true;
-          notes[i] = `+${ptsBonus} к Очкам Снаряжения — уже в пуле на этом шаге`;
-          return;
+        // Уже выдано этим же Мастером в прошлый заход (wdbc-27ig) — проверяется
+        // ПЕРВОЙ, раньше любого разбора.
+        if (grantedBefore(i)) { prior[i] = true; return; }
+        if (layout[i]?.covered) { notes[i].push("уже выдано Механикой Расы/Архетипа"); prior[i] = true; return; }
+        for (const spec of parseGearEntry(r)) {
+          const t = { i, spec, done: false };
+          tasks.push(t); rowTasks[i].push(t);
         }
-        const size = this._matchGearSizeRule(r);
-        if (size) {
-          done[i] = !!size.prop;
-          notes[i] = size.prop
-            ? "правило выдачи: оружию проставлено свойство «Огринизированное»"
-            : "правило выдачи, а не предмет — примените вручную";
-          return;
-        }
-        if (this._matchStandardSystemsCount(r) != null) { stdSysIdx.push(i); return; }
-        if (this._matchLegionCategoryGear(r)) { legionIdx.push(i); return; }
-        if (this._matchGearBudget(r)) { gearBudgetIdx.push(i); return; }
-        if (/(?<![A-Za-zА-Яа-яЁё])люб/i.test(r) || /модификац|доз|магазин|\bR\d\b\s*$/i.test(r)) return; // абстрактное — вручную, как раньше
-        const k = norm(clean(r));
-        // Предмет уже есть (на акторе — обычно выдан Механикой Расы/Архетипа
-        // на более раннем Этапе, см. doombc-gear-dual-path-bugs — или уже
-        // поставлен в очередь этим же проходом) — не плодим вторую копию И
-        // не открываем Обозреватель повторным вопросом. Проверяется ДО
-        // поиска по пак-индексу (раньше это было только в ветке точного
-        // совпадения — ручной подбор ниже её просто не достигал, потому что
-        // выходил из forEach раньше строкой !ref, wdbc-sai).
-        if (k && (onActor.has(k) || grantedKeys.has(k))) { done[i] = true; return; }
-        const ref = k ? index.get(k) : null;
-        if (!ref) { manualIdx.push(i); return; }
-        grantedKeys.add(k);
-        toCreate.push({ i, ref, count: this._matchLeadingCount(r) });
       });
-      // Броня, выданная этим же проходом (обычно — выбранная марка силовой
-      // брони), — цель авто-подключения «N Стандартных систем» ниже: та же
-      // связка installedOn, что и ручная установка на вкладке «Снаряжение»
-      // (combat/armor-mods.mjs), просто проставленная сразу, а не оставленная
-      // висеть отдельным предметом до первого ручного клика (wdbc-cgu).
+
+      let sizeRule = null;
+      const qualityUps = [];
+      const grantedKeys = new Set();
       let newArmorId = null;
-      if (toCreate.length) {
-        const docs = await Promise.all(toCreate.map(({ ref }) => ref.pack.getDocument(ref.id)));
-        const objs = [];
-        // Строки создаются одним пакетом, а ведомость ведётся ПО СТРОКАМ —
-        // objRow помнит, из какой строки вырос каждый объект пакета.
-        const objRow = [];
-        toCreate.forEach(({ i, count }, idx) => {
-          const doc = docs[idx];
-          if (!doc) return;
-          done[i] = true;
-          // Ведущее число строки («3 Splinter Pistol») — quantity для расходуемых
-          // типов, отдельные копии для остальных; 1 (по умолчанию) — как раньше.
-          if (count > 1 && EQUIP_STACKABLE_TYPES.has(doc.type)) {
-            const obj = doc.toObject();
-            obj.system.quantity = (Number(obj.system.quantity) || 1) * count;
-            objs.push(obj); objRow.push(i);
-          } else {
-            for (let n = 0; n < count; n++) { objs.push(doc.toObject()); objRow.push(i); }
-          }
-        });
-        if (objs.length) {
-          const created = await actor.createEmbeddedDocuments("Item", objs);
-          created.forEach((it, k) => recordGrant(objRow[k], it));
-          const armor = created.find(it => it.type === "armor");
-          if (armor) newArmorId = armor.id;
+
+      // 1) Правила и всё, что выдаётся само.
+      for (const t of tasks) {
+        const { spec, i } = t;
+        if (spec.kind === "rule") {
+          if (spec.rule === "equipPoints") { t.done = true; notes[i].push(`+${spec.value} к Очкам Снаряжения — уже в пуле на этом шаге`); }
+          else if (spec.rule === "sizeRule") { sizeRule = spec; t.done = !!spec.prop; if (!spec.prop) notes[i].push("правило выдачи, а не предмет — примените вручную"); }
+          else if (spec.rule === "qualityUp") qualityUps.push(t);
+          continue;
         }
+        if (spec.kind === "manual") { notes[i].push(spec.note); continue; }
+        if (spec.kind !== "named") continue;
+        const k = normName(spec.name);
+        // Предмет уже есть (обычно выдан Механикой Расы/Архетипа на более
+        // раннем Этапе, doombc-gear-dual-path-bugs — или этим же проходом).
+        if (k && (onActor.has(k) || grantedKeys.has(k))) { t.done = true; continue; }
+        const ref = this._findGearNamed(spec, index);
+        if (!ref) continue; // имени нет в компендиумах — ниже, выбором из списка
+        const doc = await ref.pack.getDocument(ref.id);
+        if (!doc) continue;
+        grantedKeys.add(k);
+        const made = await create(i, this._gearObjects(doc, {
+          quality: spec.quality, legion: needsLegionProp(spec, doc.name), qty: spec.count
+        }));
+        t.done = made.length > 0;
+        if (!newArmorId) newArmorId = made.find(it => it?.type === "armor")?.id ?? null;
+        const missing = await this._grantGearAttachments(spec, made[0], index);
+        if (missing.length) notes[i].push(`надстройки нет в компендиумах: ${missing.join(", ")}`);
       }
 
-      // «N Стандартные системы» — не «предмет за предметом», а один бюджетный
-      // выбор N штук из конкретной папки (STANDARD_SYSTEMS_FOLDER), тем же
-      // Обозревателем, что и у бюджетных покупок Механики (count>1 → живой
-      // счётчик «выбрано X из N» вместо диалога на каждую позицию).
-      for (const i of stdSysIdx) {
-        const need = this._matchStandardSystemsCount(resolved[i]);
+      // 2) «N Стандартные системы» — один бюджетный выбор из папки; системы
+      // сразу подключаются к броне, выданной этим проходом (wdbc-cgu).
+      for (const t of tasks.filter(x => x.spec.kind === "stdSystems")) {
+        const need = t.spec.count;
         const picked = await openCompendiumBrowser(false, {
           count: need, pack: "armour-systems", filters: { folderId: STANDARD_SYSTEMS_FOLDER },
-          prompt: `Стартовое снаряжение: ${resolved[i]}`
+          prompt: `Стартовое снаряжение: ${resolved[t.i]}`
         });
         const uuids = Array.isArray(picked) ? picked : (picked ? [picked] : []);
         if (!uuids.length) continue;
         const docs = await Promise.all(uuids.map(u => fromUuid(u).catch(() => null)));
         const objs = docs.filter(Boolean).map(d => d.toObject());
-        // Системы — armorMod (system.installedOn) — подключаются сразу к
-        // броне, выданной тем же проходом, если она нашлась. Не нашлась
-        // (архетип без своей марки/броня выбирается позже вручную) — предметы
-        // всё равно создаются, просто неустановленными, как раньше.
         if (newArmorId) for (const o of objs) o.system.installedOn = newArmorId;
-        if (objs.length) {
-          recordGrant(i, await actor.createEmbeddedDocuments("Item", objs));
-          done[i] = objs.length === need;
+        const made = await create(t.i, objs);
+        t.done = made.length === need;
+      }
+
+      // 3) Выбор из списка — по строкам, в порядке книги.
+      for (const t of tasks) {
+        const { spec, i } = t;
+        if (t.done) continue;
+        if (spec.kind === "named") {
+          // Имени нет в компендиумах: игрок выбирает сам, но окно уже сужено
+          // до вкладки по словам строки, а Качество/Легион/количество из
+          // строки проставятся выбранному.
+          const filters = spec.maxAvailability != null ? { maxAvailability: spec.maxAvailability } : {};
+          const uuid = await openCompendiumBrowser(false, {
+            count: 1, pack: this._guessGearPack(resolved[i]), filters,
+            prompt: `Стартовое снаряжение: ${spec.raw} — в компендиумах не нашлось по имени, выберите подходящее`
+          });
+          const one = Array.isArray(uuid) ? uuid[0] : uuid;
+          if (!one) continue;
+          const doc = await fromUuid(one).catch(() => null);
+          if (!doc) continue;
+          const made = await create(i, this._gearObjects(doc, {
+            quality: spec.quality, legion: needsLegionProp(spec, doc.name), qty: spec.count
+          }));
+          t.done = made.length > 0;
+          continue;
         }
-      }
-
-      // «L. <Категория> (до R<N>, <Кач>.Q)» — фильтр по папке+редкости
-      // (см. _matchLegionCategoryGear), а после выбора выбранному экземпляру
-      // ПРОГРАММНО проставляются Качество и свойство Legion: готового
-      // Legion-варианта на каждый тип оружия категории в компендиуме нет
-      // (не как у «Болтер (Астартес)», где Legion уже часть самого предмета).
-      for (const i of legionIdx) {
-        const spec = this._matchLegionCategoryGear(resolved[i]);
-        const uuid = await openCompendiumBrowser(false, {
-          count: 1, pack: "weapons",
-          filters: { folderId: spec.folderId, maxAvailability: spec.maxAvailability },
-          prompt: `Стартовое снаряжение: ${resolved[i]}`
-        });
-        if (!uuid) continue;
-        const doc = await fromUuid(uuid).catch(() => null);
-        if (!doc) continue;
-        const obj = doc.toObject();
-        obj.system.quality = spec.quality;
-        const props = Array.isArray(obj.system.weaponProps) ? obj.system.weaponProps : [];
-        if (!props.some(p => p?.key === "legion")) props.push({ key: "legion" });
-        obj.system.weaponProps = props;
-        recordGrant(i, await actor.createEmbeddedDocuments("Item", [obj]));
-        done[i] = true;
-      }
-
-      // «N элементов [Снаряжения/Инструментов] до R<N>» — не «предмет за
-      // предметом», а один бюджетный выбор N штук из общих категорий
-      // снаряжения (см. _matchGearBudget) — тем же Обозревателем, что и «N
-      // Стандартные системы» выше, но без привязки к одной конкретной папке.
-      for (const i of gearBudgetIdx) {
-        const budget = this._matchGearBudget(resolved[i]);
+        if (spec.kind !== "pick") continue;
+        const slotPlan = spec.qualitySlots ? defaultQualityPlan(spec.count, spec.qualitySlots) : null;
+        const slotHint = spec.qualitySlots
+          ? ` Качество по порядку выбора: ${slotPlan.map(q => ({ best: "Высшее", good: "Хорошее" })[q] ?? "Обычное").join(", ")}.`
+          : "";
         const picked = await openCompendiumBrowser(false, {
-          pack: budget.packs, filters: { maxAvailability: budget.maxAvailability },
-          count: budget.count,
-          prompt: `Стартовое снаряжение: ${resolved[i]}`
+          pack: spec.packs.length === 1 ? spec.packs[0] : spec.packs,
+          filters: this._gearPickFilters(spec), count: spec.count,
+          prompt: `Стартовое снаряжение: ${spec.raw} (${describeGearSpec(spec)}).${slotHint}`
         });
         const uuids = Array.isArray(picked) ? picked : (picked ? [picked] : []);
         if (!uuids.length) continue;
-        const counts = new Map();
-        for (const u of uuids) counts.set(u, (counts.get(u) || 0) + 1);
-        const objs = [];
-        for (const [uuid, qty] of counts) {
-          const doc = await fromUuid(uuid).catch(() => null);
+        // Качество каждой выбранной штуки: фиксированное строки, по ступеням
+        // Редкости, либо «из них N Good.Q» — в порядке выбора. Одинаковые
+        // (uuid, Качество) схлопываются в количество.
+        const groups = new Map();
+        for (let k = 0; k < uuids.length; k++) {
+          const doc = await fromUuid(uuids[k]).catch(() => null);
           if (!doc) continue;
-          if (qty > 1 && EQUIP_STACKABLE_TYPES.has(doc.type)) {
-            const obj = doc.toObject();
-            obj.system.quantity = (Number(obj.system.quantity) || 1) * qty;
-            objs.push(obj);
-          } else {
-            for (let n = 0; n < qty; n++) objs.push(doc.toObject());
-          }
+          const q = spec.quality
+            ?? (spec.tiers ? qualityForAvailability(spec.tiers, doc.system?.availability) : null)
+            ?? slotPlan?.[k] ?? null;
+          const key = `${uuids[k]}|${q}`;
+          if (!groups.has(key)) groups.set(key, { doc, q, qty: 0 });
+          groups.get(key).qty++;
         }
-        if (objs.length) {
-          recordGrant(i, await actor.createEmbeddedDocuments("Item", objs));
-          done[i] = true;
+        const objs = [];
+        for (const { doc, q, qty } of groups.values()) {
+          objs.push(...this._gearObjects(doc, { quality: q, legion: needsLegionProp(spec, doc.name), runic: spec.runic, qty }));
         }
-      }
-
-      // Точных совпадений не нашлось — спрашиваем игрока по очереди, а не
-      // угадываем САМ ПРЕДМЕТ: тот же Обозреватель, что и для бюджетных
-      // покупок. Категорию (пак) при этом угадать МОЖНО — сужаем окно до
-      // одной вкладки по ключевым словам строки (see _guessGearPack), чтобы
-      // не листать вообще все компендиумы ради одной винтовки. Угадываем
-      // только ПАК целиком (не type/folderId) — у пака десятки предметов,
-      // риск «под фильтр не подошло ничего» и жёсткого дедэнда практически
-      // нулевой; при неуверенном угадывании просто не сужаем (как раньше).
-      for (const i of manualIdx) {
-        const uuid = await openCompendiumBrowser(false, {
-          count: 1, pack: this._guessGearPack(resolved[i]),
-          prompt: `Стартовое снаряжение: ${resolved[i]}`
-        });
-        if (!uuid) continue;
-        const doc = await fromUuid(uuid).catch(() => null);
-        if (doc) {
-          recordGrant(i, await actor.createEmbeddedDocuments("Item", [doc.toObject()]));
-          done[i] = true;
-        }
+        const made = await create(i, objs);
+        t.done = made.length > 0;
       }
 
       // Правило «подгонки под размер» (Огрин) — последним, когда всё
-      // стартовое снаряжение уже на листе: и текстовая выдача выше, и покупки
-      // за Очки Снаряжения, сделанные на этом же шаге, и то, что выдала
-      // Механика Расы/Архетипа раньше. Всё это и есть «снаряжение персонажа»
-      // в смысле книжного правила — оружие подгоняется бесплатно (wdbc-yobj).
-      const sized = sizeRule?.prop ? await this._applyGearSizeProp(sizeRule.prop) : 0;
+      // стартовое снаряжение уже на листе (wdbc-yobj).
       if (sizeRule?.prop) {
-        const i = resolved.findIndex(r => this._matchGearSizeRule(r)?.prop);
-        if (i >= 0) notes[i] = `правило выдачи: свойство «Огринизированное» проставлено оружию (${sized} шт.)`;
+        const sized = await this._applyGearSizeProp(sizeRule.prop);
+        const t = tasks.find(x => x.spec === sizeRule);
+        if (t) notes[t.i].push(`правило выдачи: свойство «Огринизированное» проставлено оружию (${sized} шт.)`);
+      }
+
+      // «+1 к Качеству 3-х предметов» (Скитарий) — после всей выдачи: игрок
+      // отмечает, каким именно предметам, ступень поднимается сама.
+      for (const t of qualityUps) {
+        const candidates = actor.items.filter(it =>
+          ["weapon", "armor", "gear", "tool", "ammo", "drug", "forcefield", "cybernetic", "implant"].includes(it.type));
+        if (!candidates.length) continue;
+        const picked = await this._pickOwnedItems(candidates, `Стартовое снаряжение: +${t.spec.steps} к Качеству`, t.spec.count);
+        for (const item of picked) {
+          let q = normQuality(item.system.quality);
+          for (let s = 0; s < t.spec.steps; s++) q = capUpgradeQuality(nextQuality(q));
+          await item.update({ "system.quality": q });
+        }
+        t.done = picked.length > 0;
+        if (picked.length) notes[t.i].push(`Качество поднято: ${picked.map(p => p.name).join(", ")}`);
       }
 
       if (ledgerDirty) await actor.setFlag?.("warhammer-dbc", GEAR_LEDGER_FLAG, ledger);
 
+      const done = resolved.map((_, i) => prior[i] || (rowTasks[i].length > 0 && rowTasks[i].every(t => t.done)));
       const rows = resolved.map((r, i) => {
         const mark = !done[i] ? "▫ " : (prior[i] ? "↺ " : "✓ ");
-        const note = notes[i] || (prior[i] ? "выдано прошлым заходом Мастера — повторно не выдаём" : "");
+        const note = notes[i].join("; ") || (prior[i] ? "выдано прошлым заходом Мастера — повторно не выдаём" : "");
         const tail = note ? ` <span style="opacity:.65;">— ${esc(note)}</span>` : "";
         return `<li${done[i] ? ' style="color:#4dffa6;"' : ''}>${mark}${esc(r)}${tail}</li>`;
       }).join("");
       // НЕ карточка теста (wdbc-kuun): броска и Порога нет, это шёпот ГМу со
-      // списком выданного.
-      // Разметка теперь общая (testCardHtml), а публикация осталась своей, и это
-      // не недоделка: postTestCard безусловно прогоняет данные через
-      // ChatMessage.applyRollMode, а тот в публичном режиме броска ОБНУЛЯЕТ
-      // whisper (client/documents/chat-message.mjs, applyMode: `if ( mode ===
-      // "public" ) whisper.length = 0;`) — шёпот ГМу стал бы виден всему столу.
-      // Пока это не разведено в общем helpers/test-card.mjs, шлём напрямую.
+      // списком выданного. Публикация своя, не postTestCard: тот в публичном
+      // режиме броска обнуляет whisper (ChatMessage.applyRollMode).
       ChatMessage.create({
         content: testCardHtml({
           title: `🎒 Стартовое снаряжение — ${esc(actor.name)}`,
           lines: [
             `<ul style="margin:4px 0;padding-left:16px;font-size:.9em;">${rows || "<li>—</li>"}</ul>`,
-            `<div style="font-size:.8em;opacity:.7;margin-top:4px;">✓ — добавлено на лист. ↺ — уже выдавалось прошлым заходом Мастера, второй раз не выдаём. ▫ — не выбрано (пропущено/абстрактно) — выдайте вручную.</div>`
+            `<div style="font-size:.8em;opacity:.7;margin-top:4px;">✓ — добавлено на лист. ↺ — уже выдано раньше (прошлым заходом Мастера или Механикой Расы/Архетипа), второй раз не выдаём. ▫ — не выбрано (пропущено/нет в компендиумах) — выдайте вручную.</div>`
           ]
         }),
         whisper: ChatMessage.getWhisperRecipients?.("GM") || [],
@@ -2201,6 +2115,8 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
 
     on(".wiz-gear-sel", "change", ev => {
       this.gearPicks[Number(ev.currentTarget.dataset.ci)] = ev.currentTarget.value;
+      // Подпись «что будет сделано» у выбора — по выбранному варианту.
+      this.render(false);
     });
     on(".wiz-equip-bonus", "change", ev => {
       this._equipBonusPoints = Math.max(0, Number(ev.currentTarget.value) || 0);

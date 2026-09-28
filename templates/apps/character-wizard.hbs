@@ -511,7 +511,7 @@
       {{#if gearFixed.length}}
       <div class="wiz-gen">
         <div class="wiz-gen-lbl">Без выбора:</div>
-        <ul class="wiz-talent-fixed-list">{{#each gearFixed as |g|}}<li>{{g}}</li>{{/each}}</ul>
+        <ul class="wiz-talent-fixed-list">{{#each gearFixed as |g|}}<li>{{g.text}}{{#if g.how}} <span class="cstart-hint">— {{g.how}}</span>{{/if}}</li>{{/each}}</ul>
       </div>
       {{/if}}
 
@@ -523,14 +523,12 @@
           <select class="wtc-sel wiz-gear-sel" data-ci="{{c.ci}}">
             {{#each c.options as |o|}}<option value="{{o}}" {{#if (eq o c.picked)}}selected{{/if}}>{{o}}</option>{{/each}}
           </select>
+          {{#if c.how}}<span class="cstart-hint">— {{c.how}}</span>{{/if}}
         </div>
         {{/each}}
       </div>
       {{/if}}
-
-      {{#if gearIsAstartes}}
-      <div class="cstart-hint">+ 4 базовые Системы силовой брони на выбор — добавьте вручную на вкладке «Снаряжение».</div>
-      {{/if}}
+      <div class="cstart-hint">«Выдаётся сам» — предмет появится на листе по «Далее»; «список» — откроется Обозреватель, уже отобранный по книге; Качество выбранному проставится само.</div>
 
       {{else}}
       <p class="cstart-hint">У выбранной расы/архетипа нет текстового снаряжения для разбора — добавьте нужное вручную на вкладке «Снаряжение» после «Готово».</p>
