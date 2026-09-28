@@ -913,6 +913,15 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   `elite-req-builder.mjs`, `sheets/elite-picker.mjs`.
 - Расовые библиотеки правил: `rules/library/{aeldari,astartes,ogryn,replicant,core}.mjs`;
   `rules/ogryn-fit.mjs` (аналог legion-fit для Огринов).
+- Огрин (сверка главы I, 28.09.2026): «Физиология Громилы» — возможности
+  `brutePhysiology.*` на самой Черте (их получает и Миньон «Огрин»):
+  пассивное восстановление Ран по Календарю и Раундам (`rules/ogryn-regen.mjs`,
+  `combat/ogryn-regen.mjs`), не умирает от Кровотечения и снимает Оглушение в
+  конце Хода (`combat/condition-ticks.mjs`), иммунитет к Обескровливанию —
+  запись «Состояние». BONE-Head — `OGRYN_TRAIT_RULES` (источник «core», отбор
+  по Черте): потолок 1 Успех на тестах I (эффект `successDegMax`), автопровал
+  I в поле Haywire 3+ (предикат `haywireFieldMin`), Ступор при 7+
+  (`combat/bone-head.mjs`: попадание Haywire, аура Дискорданта).
 
 ## 11. Происхождения и Предсказания
 

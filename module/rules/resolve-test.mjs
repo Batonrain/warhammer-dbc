@@ -629,6 +629,31 @@ export function autoFailFromRules(rules, ctx = {}) {
 }
 
 /**
+ * Потолок степени УСПЕХА (BONE-Head Огрина: «Любой тест I … при Успехе дает
+ * не больше 1 Успеха») — эффект `successDegMax`. Несколько источников —
+ * берётся самый строгий (наименьший). Применяет rules/kind-outcome.mjs
+ * после всех надбавок к степени (Сверхъестественная Характеристика), а
+ * Ассистентов — лист (sheets/actor-sheet.mjs), ПОСЛЕ них: книга ограничивает
+ * итог, а не сырой бросок. На провал не влияет.
+ *
+ * @returns {{value: number, labels: string[]}|null} null — потолка нет
+ */
+export function successDegMaxFromRules(rules, ctx = {}) {
+  let value = null;
+  const labels = [];
+  for (const rule of rules ?? []) {
+    for (const effect of rule?.effects ?? []) {
+      if (effect?.kind !== "successDegMax") continue;
+      if (!effectAppliesTo(effect.target, ctx)) continue;
+      const cap = Math.max(1, Number(effect.value) || 1);
+      value = value == null ? cap : Math.min(value, cap);
+      labels.push(effect.label ?? rule.label ?? rule.id);
+    }
+  }
+  return value == null ? null : { value, labels };
+}
+
+/**
  * Фазы 1–3 целиком: контекст, сбор, отбор.
  *
  * Хук «dbc.collectRules» получает контекст и изменяемый список правил до
@@ -655,6 +680,7 @@ export function resolveTest(input = {}) {
     weaponProps: weaponPropsFromRules(rules, ctx),
     failDegExtra: failDegModFromRules(rules, ctx),
     scriptTriggers: scriptTriggersFromRules(rules, ctx),
-    autoFail: autoFailFromRules(rules, ctx)
+    autoFail: autoFailFromRules(rules, ctx),
+    successDegMax: successDegMaxFromRules(rules, ctx)
   };
 }

@@ -454,6 +454,7 @@ describe("общее требование к предикатам", () => {
     inPariahVoid: true, isDaemon: true, targetPsykerOrDaemon: true,
     // Цель/источник — Космодесантник (Angel Hunters, Йигори, сверка главы I).
     targetIsAstartes: true,
+    haywireFieldMin: 3,
     charNotIn: ["t", "inf", "cor"],
     charIn: ["int", "per", "wp", "fel", "inf"],
     hasSize: undefined, targetHasSize: undefined, targetKeepsNimbleInArmour: undefined,

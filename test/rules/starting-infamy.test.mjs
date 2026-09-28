@@ -10,6 +10,7 @@
 import { describe, it, expect } from "vitest";
 import { startingInfamyFormula, INFAMY_GEN_BONUS, INFAMY_FLAT_BONUS } from "../../module/rules/starting-infamy.mjs";
 import { RACES } from "../../module/constants/races.mjs";
+import { packDocuments } from "../support/pack-docs.mjs";
 
 describe("стартовое Бесчестие", () => {
   it("Генерация даёт формулу для броска", () => {
@@ -32,15 +33,19 @@ describe("стартовое Бесчестие", () => {
     expect(startingInfamyFormula(null, false)).toBe(2);
   });
 
-  // Книга развела расы: у Человека Inf 19, у недочеловеков главы I (Скват,
-  // Репликант, Огрин, Ратлинг, Зверолюд) — 14 (сверка главы I, 28.09.2026).
-  // Формула это переживает; проверка следит, что база берётся у расы.
-  it("у Человека база Бесчестия 19, у Сквата, Репликанта, Ратлинга и Зверолюда — 14 по книге", () => {
-    expect(RACES.human.chars.inf).toBe(19);
-    expect(RACES.squat.chars.inf).toBe(14);
-    expect(RACES.replicant.chars.inf).toBe(14);
-    expect(RACES.ratling.chars.inf).toBe(14);
-    expect(RACES.beastman.chars.inf).toBe(14);
-    expect(startingInfamyFormula(RACES.replicant.chars.inf, true)).toBe("14+1d5");
+  // Книга развела расы по разной базе (Огрин — 14, сверка главы I 28.09.2026),
+  // поэтому «19 у всех» больше не инвариант. Инвариант другой: резерв-константы
+  // несут ту же базу, что документ расы в паке, — иначе без пака Мастер создания
+  // считал бы Бесчестие не по книге.
+  // Резерв-константы этих рас ещё не сверены с паком — сверив расу, уберите
+  // её из списка.
+  const NOT_YET_RECONCILED = ["naga"];
+  it("база Бесчестия в резерв-константах совпадает с документом расы в паке", () => {
+    const packInf = new Map(packDocuments("races", "race").map(({ doc }) => [doc.system?.key, doc.system?.chars?.inf]));
+    const diff = Object.entries(RACES)
+      .filter(([key, r]) => !NOT_YET_RECONCILED.includes(key))
+      .filter(([key, r]) => r.chars?.inf !== undefined && packInf.has(key) && packInf.get(key) !== r.chars.inf)
+      .map(([key, r]) => `${key}: константы ${r.chars.inf}, пак ${packInf.get(key)}`);
+    expect(diff).toEqual([]);
   });
 });

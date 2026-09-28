@@ -317,6 +317,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     size:         actor.system.size ?? 0,
     sBonus:       actor.system.characteristics?.s?.bonus ?? 0,
     isRanged:     !isMelee,
+    // «кроме гранат» (Физиология Громилы); свой кулак — часть тела, не оружие.
+    isGrenade:    sys.weaponType === "grenade",
+    isNatural:    isIntegralAttack(item),
     ignoresSizeStrength: hasRuleFlag(actor, OVERSIZED_FIT_FLAG)
   });
   // Арсенал (стр. 62): без Weapon Training на класс оружия — штраф −20.

@@ -7530,9 +7530,25 @@ export const CAPABILITIES = {
     reader: "module/rules/legion-fit.mjs — LEGION_FIT_FLAG"
   },
   "weapons.ogryn": {
-    label: "Сложение под огринское оружие: своё берёт без штрафа, чужое — со штрафом (−10, стрелковое −20)",
-    source: "Раса Огрин, Черта «Brute Physiology / Физиология Громилы» (module/rules/library/ogryn.mjs)",
-    reader: "module/rules/ogryn-fit.mjs — OGRYN_FIT_FLAG, подключено в module/sheets/attack-dialog.mjs"
+    label: "Сложение под огринское оружие: своё берёт без штрафа, чужое — со штрафом (−10, стрелковое −20; кроме гранат и своих кулаков); рукопашное чужое ломается на 1-3 на 1d10",
+    source: "Раса Огрин (module/rules/library/ogryn.mjs) и запись Конструктора на Черте «Brute Physiology / Физиология Громилы» (Миньон с Чертой «Огрин»)",
+    reader: "module/rules/ogryn-fit.mjs::ogrynAttackPenalty (OGRYN_FIT_FLAG), подключено в module/sheets/attack-dialog.mjs; поломка — module/combat/ogryn-weapon-break.mjs::ogrynBreakApplies"
+  },
+  // ── Физиология Громилы (Огрин, корбук, глава I) ─────────────────────────
+  "brutePhysiology.passiveRegen": {
+    label: "Пассивно восстанавливает Раны: 1 в минуту легко раненым, 1 в 10 минут тяжело, 1 в час критически (Hardy не влияет) — по Календарю и по Раундам боя (5 с), поверх обычного лечения",
+    source: "Brute Physiology / Физиология Громилы",
+    reader: "module/combat/ogryn-regen.mjs::ogrynRegenAdvance — часы Состояний (module/combat/condition-clock.mjs, ogrynRegenClock) и смена Раунда (module/hooks.mjs, ogrynRegenCombatRound); арифметика module/rules/ogryn-regen.mjs::ogrynRegenStep"
+  },
+  "brutePhysiology.bleedingNoDeath": {
+    label: "Не может умереть от Кровотечения (иммунитет к Обескровливанию — отдельной записью «Состояние: иммунитет» на той же Черте)",
+    source: "Brute Physiology / Физиология Громилы",
+    reader: "module/combat/condition-ticks.mjs::processConditionTurnEnd (исход «смерть» броска Кровотечения не убивает)"
+  },
+  "brutePhysiology.shakeOffStun": {
+    label: "В конце своего Хода автоматически снимает Оглушение",
+    source: "Brute Physiology / Физиология Громилы",
+    reader: "module/combat/condition-ticks.mjs::processConditionTurnEnd"
   },
   "fate.save": {
     label: "Пламенная вера: при трате Очка Судьбы бросок 1d10, на 1 очко не тратится",

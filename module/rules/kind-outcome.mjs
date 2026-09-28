@@ -219,7 +219,15 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   // failDegMod (wdbc-1rno: Sentient Cyst «+3 Провала при провале») — только
   // на провале, успешный тест не трогает; не может увести степень ниже 1
   // (та же граница, что testOutcome держит для success выше).
-  const baseDeg = success ? rawDeg + unnaturalBonus : Math.max(1, rawDeg + (resolved.failDegExtra || 0));
+  const uncappedDeg = success ? rawDeg + unnaturalBonus : Math.max(1, rawDeg + (resolved.failDegExtra || 0));
+  // Потолок Успехов (successDegMax, BONE-Head Огрина — тесты I): только на
+  // Успехе, после надбавки Сверхъестественной Характеристики. Ассистентов
+  // лист прибавляет позже и режет тем же degCap (sheets/actor-sheet.mjs).
+  const degCap = success ? (resolved.successDegMax?.value ?? null) : null;
+  const baseDeg = degCap != null ? Math.min(degCap, uncappedDeg) : uncappedDeg;
+  const degCapLine = degCap != null
+    ? `<div class="roll-threshold">${resolved.successDegMax.labels.map(l => esc(l)).join(", ")}${uncappedDeg > baseDeg ? ` — было бы ${uncappedDeg}` : ""}</div>`
+    : "";
   // Автозапуск kind:"script" по Крит.Успеху/Провалу (wdbc-1rno: «Полимат»,
   // «Библиотека Акаши») — после того, как crit уже посчитан для ЭТОГО броска.
   await runScriptTriggers(actor, resolved.scriptTriggers, crit);
@@ -278,6 +286,9 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
     }
   }
 
+  // degCapLine едет в unnaturalLine: вызывающие карточки уже рисуют её рядом
+  // со степенью, отдельного поля они не знают (как autoFailLine в critLine).
   return { eff, success, deg: baseDeg, crit, critLine, kindLabel, combinedLine, combinedAssistCount,
-           personalAdaptationLine, extendedLine, opposedLine, unnaturalLine };
+           personalAdaptationLine, extendedLine, opposedLine, unnaturalLine: unnaturalLine + degCapLine,
+           degCap, degCapLine };
 }

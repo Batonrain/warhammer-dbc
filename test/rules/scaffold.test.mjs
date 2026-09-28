@@ -37,7 +37,8 @@ describe("каркас module/rules", () => {
     // targetIsAstartes — Охотники на Ангелов (Йигори, rules/library/yigori.mjs).
     // wearsFootwear — обут ли (Barefoot / Босоногий Ратлинга).
     // lacksTrait — «нет Черты» (Символ Власти против Отвращения к Порядку).
-    expect(Object.keys(predicates.PREDICATES)).toHaveLength(39);
+    // haywireFieldMin — поле Haywire вокруг BONE-Head Огрина (rules/bone-head.mjs).
+    expect(Object.keys(predicates.PREDICATES)).toHaveLength(40);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);
     expect(typeof sources.registerRuleSource).toBe("function");

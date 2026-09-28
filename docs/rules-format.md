@@ -95,6 +95,7 @@ when: {
 | `isBlinded` | `true`/`false` | актор Ослеплён: свой флаг или потеряны оба глаза (Sonar Sense/Unnatural Senses снимаются вытеснением, не здесь) | да |
 | `rankAndFile` | `true`/`false` | актор — «Рядовой» (`system.rankAndFile`, корбук стр. 4); у чемпионских Черт расы стоит `false` | да |
 | `inPariahVoid` | `true`/`false` | актор в ауре Парии — у него Черта-метка «In the Pariah's Void» (rules/null-zones.mjs); по Черте, не по флагу, чтобы не зациклить сбор правил | нет |
+| `haywireFieldMin` | число | актор стоит в поле Haywire не слабее `value`: флаг `haywireField` (попадание Haywire по носителю BONE-Head, гаснет на 2 за Раунд — combat/bone-head.mjs) или Черта-метка «In the Discordant's Field» (= 7); BONE-Head Огрина | нет |
 | `isDaemon` | `true`/`false` | актор — демон: тип `daemon`/`demonPrince` или Черта Daemonic | нет |
 | `wearsFootwear` | `true`/`false` | актор обут: надета броня с AP на ноге или Маг-Сапоги; `false` — «босиком» (Barefoot / Босоногий Ратлинга) | да |
 | `targetPsykerOrDaemon` | `true`/`false` | цель броска — псайкер (Пси-Рейтинг ≥ 1) или демон | да |
@@ -188,6 +189,7 @@ export const PREDICATES = {
 | `failDegMod` | `target`, `value` | доп. степени провала (`value`, может быть отрицательным), суммируются, только если тест УЖЕ провален |
 | `scriptTrigger` | `target`, `side`, `itemId`, `entryId` | автозапуск записи `kind:"script"` по исходу теста; `side`: `critSuccess` или `critFailure` |
 | `autoFail` | `target` | тест в этой области провален без учёта броска (Ослеплён — `basedon:bs`); применяет общий исход теста `rules/kind-outcome.mjs` |
+| `successDegMax` | `target`, `value` | потолок степени УСПЕХА (провал не трогает); несколько — берётся наименьший; режет итог после Сверхъестественной Характеристики и Ассистентов (BONE-Head Огрина: `basedon:int`, 1) — `rules/kind-outcome.mjs`, `sheets/actor-sheet.mjs` |
 | `script` | `code` | аварийный выход, см. предупреждение ниже |
 
 `target` для бросков пишется с областью через двоеточие: `initiative`,

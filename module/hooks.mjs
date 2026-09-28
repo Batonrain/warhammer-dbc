@@ -152,6 +152,8 @@ import { rollD100WithReroll } from "./rules/test-kind-widget.mjs";
 import { poisonResistReroll } from "./rules/squat-traits.mjs";
 import { expireCommandsAtTurnStart, clearCommandsOnCombatEnd, commandMoraleOn } from "./combat/command-state.mjs";
 import { syncArmorFieldShields } from "./combat/armor-field-shield.mjs";
+import { ogrynRegenCombatRound } from "./combat/ogryn-regen.mjs";
+import { decayHaywireFields, onDiscordantFieldEntered } from "./combat/bone-head.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
 // updateCombat ниже) сама отслеживает, чей Ход только что закончился.
@@ -2963,6 +2965,21 @@ function _attachFateContextMenu(message, html) {
       // штраф на цели — та же логика «до конца боя», что у щита выше.
       if (combatant.actor) await clearLegacyPunisherStacks(combatant.actor);
     }
+  });
+
+  // Огрин (сверка расы): 5 секунд боя за Раунд — время и для пассивного
+  // восстановления Ран «Физиологии Громилы», и для затухания поля Haywire
+  // вокруг BONE-Head. Раунд в этой системе worldTime не двигает (см. ниже),
+  // поэтому часы Календаря этих секунд не видят.
+  Hooks.on("updateCombat", async (combat, changed) => {
+    if (!game.user.isGM || changed?.round === undefined) return;
+    await ogrynRegenCombatRound(combat, changed);
+    await decayHaywireFields(combat, changed);
+  });
+  // BONE-Head: вошёл в ауру Дискорданта (Haywire 7) — Ступор на 1 Раунд.
+  // Только у клиента, выдавшего Черту-метку, — иначе Ступор наложил бы каждый.
+  Hooks.on("createItem", async (item, options, userId) => {
+    if (userId === game.user?.id) await onDiscordantFieldEntered(item);
   });
 
   // Временные выдачи Черт с ограниченным сроком (rules/temp-grant.mjs,

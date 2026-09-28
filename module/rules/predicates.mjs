@@ -92,6 +92,23 @@ function nameForms(item) {
 /** Имя Черты-метки Пустоты Парии (packs-src/traits/Трейты_рас, PariahVoidZone01). */
 export const PARIAH_VOID_TRAIT = "In the Pariah's Void";
 
+/**
+ * Поле Haywire там, где стоит актор (BONE-Head Огрина, wdbc: сверка расы
+ * Огрин). Два источника: Черта-метка ауры Дискорданта — книга: «электрические
+ * устройства отключаются как в поле Haywire (7)» — и попадание оружием с
+ * Haywire, чей бросок мощности пишется флагом актора (combat/bone-head.mjs,
+ * затухает на 2 за Раунд). Берётся сильнейшее.
+ */
+export const DISCORDANT_FIELD_TRAIT = "In the Discordant's Field";
+export const DISCORDANT_HAYWIRE_INTENSITY = 7;
+export const HAYWIRE_FIELD_FLAG = "haywireField";
+
+export function haywireFieldIntensity(actor) {
+  const stored = Number(actor?.flags?.["warhammer-dbc"]?.[HAYWIRE_FIELD_FLAG]) || 0;
+  const aura = actor && hasNamed(actor, DISCORDANT_FIELD_TRAIT) ? DISCORDANT_HAYWIRE_INTENSITY : 0;
+  return Math.max(0, stored, aura);
+}
+
 function isDaemonActor(actor) {
   if (!actor) return false;
   if (actor.type === "daemon" || actor.type === "demonPrince") return true;
@@ -384,6 +401,10 @@ export const PREDICATES = {
   // аура, а НЕ через hasRuleFlag: флаг собирается тем же движком правил, и
   // условие правила, спрашивающее флаг, зациклило бы сбор.
   inPariahVoid: (actor, ctx, value) => hasNamed(actor, PARIAH_VOID_TRAIT) === (value !== false),
+
+  // Стоит в поле Haywire мощностью не ниже value (BONE-Head Огрина: 3+ —
+  // автопровал тестов I). См. haywireFieldIntensity выше.
+  haywireFieldMin: (actor, ctx, value) => haywireFieldIntensity(actor) >= Number(value),
 
   // Демон — тип актора или Черта Daemonic («Демоны получают штраф −30…»).
   isDaemon: (actor, ctx, value) => isDaemonActor(actor) === (value !== false),

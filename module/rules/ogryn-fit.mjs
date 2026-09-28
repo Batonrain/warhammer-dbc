@@ -8,8 +8,9 @@
 //     Силы меньше 10 и −10 за то, что руки (или перчатки) не изменены под
 //     форму рук Огрина;
 //   • Огрин с оружием БЕЗ Ogrynized: −10, а для стрелкового −20 — Черта расы
-//     «Brute Physiology / Физиология Громилы» (constants/races.mjs) говорит
-//     ровно это.
+//     «Brute Physiology / Физиология Громилы» говорит ровно это, «кроме
+//     гранат»; свои кулак/пинок/удар головой (интегральные атаки) тоже не
+//     «оружие не по руке» — это часть тела.
 //
 // Устроено по образцу Легиона намеренно: правило то же самое, отличаются
 // только пороги и величина обратного штрафа, и расходиться этим двум расчётам
@@ -52,6 +53,9 @@ export const OGRYN_FIT_FLAG = "weapons.ogryn";
  * @param {number}  o.size          Размер носителя
  * @param {number}  o.sBonus        Бонус Силы носителя
  * @param {boolean} o.isRanged      стрелковое (для обратной стороны это −20)
+ * @param {boolean} o.isGrenade     граната — книга: «кроме гранат» (обратная сторона)
+ * @param {boolean} o.isNatural     интегральная атака (кулак, пинок, удар головой):
+ *        часть тела Огрина, не «оружие не по руке» (обратная сторона)
  * @param {boolean} o.ignoresSizeStrength  носитель снимает штрафы за Размер и
  *        Бонус Силы (Best.Q Откатная Перчатка, OVERSIZED_FIT_FLAG в
  *        rules/legion-fit.mjs) — «неудобная форма» при этом остаётся: книга
@@ -60,6 +64,7 @@ export const OGRYN_FIT_FLAG = "weapons.ogryn";
  */
 export function ogrynAttackPenalty({ hasOgrynized = false, fitsOgryn = false,
                                      size = 0, sBonus = 0, isRanged = false,
+                                     isGrenade = false, isNatural = false,
                                      ignoresSizeStrength = false } = {}) {
   const parts = [];
 
@@ -69,7 +74,7 @@ export function ogrynAttackPenalty({ hasOgrynized = false, fitsOgryn = false,
     // Форма рук — то же сложение, что даёт fitsOgryn; раз его нет, хват не по
     // руке. Перчаткой не снимается: это и есть книжная «неудобная форма».
     parts.push({ label: "Огрины: руки не огринской формы", value: OGRYN_STEP });
-  } else if (!hasOgrynized && fitsOgryn) {
+  } else if (!hasOgrynized && fitsOgryn && !isGrenade && !isNatural) {
     parts.push({
       label: isRanged ? "Оружие не огринское (стрелковое)" : "Оружие не огринское",
       value: isRanged ? OGRYN_RANGED_STEP : OGRYN_STEP
