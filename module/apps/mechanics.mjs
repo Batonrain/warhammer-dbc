@@ -3138,8 +3138,20 @@ async function _syncMechanicsEffects(item) {
  * диалог выбора одной) — общая для верхнеуровневых групп И ВЛОЖЕННЫХ
  * подгрупп (kind:"group"), рекурсия идёт через applyMechEntry ⇄ здесь.
  */
+/**
+ * Ветки ИЛИ-выбора, которые вообще можно выбрать: завершённые и прошедшие
+ * своё «Когда». Ветка, которую applyMechEntry всё равно отбросит по «Когда»
+ * (Дар чужого Бога-покровителя у Божественно Одарённого Нумена), в диалог
+ * не попадает — иначе выбор молча не давал ничего.
+ */
+export function orChoiceEntries(actor, entries, sourceItem) {
+  return (entries || []).filter(isEntryComplete).filter(e => entryWhenOk(actor, e, sourceItem));
+}
+
 async function applyGroupEntries(actor, group, sourceItem, applied) {
-  const entries = (group?.entries || []).filter(isEntryComplete);
+  const entries = group?.operator === "OR"
+    ? orChoiceEntries(actor, group?.entries, sourceItem)
+    : (group?.entries || []).filter(isEntryComplete);
   if (!entries.length) return;
   if (group.operator === "OR" && entries.length > 1) {
     // Выбор делается ОДИН раз: если одна из веток уже отыграна, вопрос задан и
@@ -3191,7 +3203,7 @@ async function applyGroupEntries(actor, group, sourceItem, applied) {
  */
 async function resolveDirectAsk(entry, applied, sourceItem, actor) {
   if (entry.kind === "group") {
-    const subEntries = (entry.group?.entries || []).filter(isEntryComplete);
+    const subEntries = orChoiceEntries(actor, entry.group?.entries, sourceItem);
     if (entry.group?.operator !== "OR" || subEntries.length <= 1) return undefined;
     if (subEntries.some(e => applied.has(e.id))) return undefined;
     return { type: "or", chosen: (await showMechChoiceDialog(sourceItem, subEntries)) || null };

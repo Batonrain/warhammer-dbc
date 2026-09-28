@@ -186,30 +186,35 @@ export const ARCHETYPES = {
     isPsyker: true, psykerClass: "unbound",
     skills:  "Awareness, Psyniscience, For. Lore (Warp, Daemons and Psykers), Deceive или Intimidate, Dodge или Parry",
     talents: "Psy Rating (×3), 1000хр на Психосилы, Jaded, Warp Sense, Weapon Training (Primary), Weapon Training (Las/SP/Shock), Child of the Warp или Sacrifice",
-    gear:    "Laspistol (+Mono)/Stub Revolver, Sword (Good.Q)/Neural Whip, Knife (+Mono), Flak (Uniform + Flak Vest), Psy-focus",
+    // +3d5 Cor — запись kind:"corruption" Конструктора Архетипа в паке.
+    gear:    "Laspistol или Stub Revolver, Sword (Good.Q) или Neural Whip, Knife(+Mono), Flak Uniform + Flak Vest, Psy-focus",
     trait: { name: "Chaos Psyker / Псайкер Хаоса",
-      benefit: "Получает Трейт Psyker с PR3 и +1d5 Cor. В расчёте психической силы считается Несвязанным." },
-    desc: "Свободный псайкер, развивший дары без Имперского Санкционирования."
+      benefit: "Контакт с варпом без должного обучения и контроля оставляет свои следы. В расчете психической силы он считается Несвязанным." },
+    desc: "Вы свободный псайкер, развивший свои дары без ограничений Имперского Санкционирования."
   },
   renegadePsyker: {
-    name: "Псайкер", race: "human", wounds: "7+1d5", charBonus: { wp: 10, int: -3 },
+    name: "Беглый Псайкер", race: "human", wounds: "7+1d5", charBonus: { wp: 10, int: -3 },
     isPsyker: true, psykerClass: "bound",
     skills:  "Awareness, Psyniscience+10, Schol. Lore (Occult), For. Lore (Warp, Daemons and Psykers)+10, Dodge или Parry",
     talents: "Psy Rating (×2), 1000хр на Психосилы, Jaded, Warp Sense, Weapon Training (Primary), Resistance (Psychic Powers), Strong Minded или Warp Whisper",
-    gear:    "Force Staff, Knife (+Mono), Flak Uniform",
+    // +2d5 Cor и стартовое неизлечимое расстройство — записи Конструктора
+    // Архетипа в паке (kind:"corruption", kind:"script").
+    gear:    "Force Staff, Knife(+Mono), Flak Uniform",
     trait: { name: "Imperial Sanctioning / Имперское Санкционирование",
-      benefit: "Получает Трейт Psyker с PR2 и +1 Cor. Считается Связанным. Тратит Очко Бесчестья для переброса Феномена, если он вызвал Прорыв. Начинает со случайным ментальным расстройством (тяжесть не ниже −2)." },
-    desc: "Беглец, переживший ужасы Имперского Санкционирования, сохранив рассудок."
+      benefit: "Даже самые прочные оковы не способны сдержать мощь эмпириев. В расчете психической силы он считается Связанным. Когда он тратит Очко Бесчестия для переброса Феномена, если Феномен вызвал Прорыв, он может перебросить и Прорыв без траты Очка Бесчестия." },
+    desc: "Черные Корабли доставили вас на Терру, где пред ликом Императора вы пережили ужасы Имперского Санкционирования, сохранив достаточно рассудка, чтобы сбежать от своих мучителей при первой возможности."
   },
   numen: {
     name: "Нумен", race: "human", wounds: "10+1d5", charBonus: {},
-    charChoice: "+5 к одной Характеристике и +2 к другой (по выбору)",
+    charChoice: "+5 к одной Х-ке, +2 к другой",
     skills:  "Awareness, Dodge, Parry, Common Lore (любые 2), Schol. Lore (любые 2), For. Lore (любые 2), Acrobatics или Athletics, Charm или Intimidate, Medicae или Tech-Use, Stealth или Security",
     talents: "Jaded, 12 Талантов 1 уровня, 2 Таланта 2 уровня",
-    gear:    "2 любых рукопашных оружия R0(Best.Q)/R1(Good.Q)/R2, 1 любое стрелковое R0(Best.Q)/R1(Good.Q)/R2, Полный комплект брони R0(Best.Q)/R1(Good.Q)/R2, 6 модификаций для оружия (до R2), 3 модификации для брони (до R2)",
+    gear:    "2 Любых рукопашных оружия R0(Best.Q) или R1(Good.Q) или R2, 1 Любое стрелковое оружие R0(Best.Q) или R1(Good.Q) или R2, 6 Модификаций для оружия (до R2), Полный комплект брони R0(Best.Q) или R1(Good.Q) или R2, 3 Модификации для брони (до R2)",
+    // Вторая Черта — Fated Path / Предначертанный Путь — выдаётся Конструктором
+    // Архетипа в паке (отдельный документ Черты), как и выбор мутации/Дара.
     trait: { name: "Divinely Gifted / Божественно Одарённый",
-      benefit: "Выбирает 1 дополнительную мутацию/субмутацию (кроме Доспеха Богов и Знания Веков). На покровительстве Бога может вместо этого выбрать 1 Дар. + Fated Path: берёт Элитный Архетип по базовой цене, не повышая цену других Элитных." },
-    desc: "У Богов на вас большие планы — и они не спрашивают согласия."
+      benefit: "При создании персонажа, Нумен может выбрать одну дополнительную мутацию (кроме Доспехи Богов и Знания Веков) и субмутацию, если она есть. Если он начинает игру с Покровительством Бога, он может вместо этого выбрать один Дар этого Бога." },
+    desc: "У Богов на вас большие планы, и согласия у вас они не спрашивают. Вы научились идти по проложенной вам тропе и даже извлекать пользу от своего особого статуса."
   },
 
   // ═══════════════════════ АЗУРИАНЕ — ОТСТУПНИКИ ═══════════════════════════

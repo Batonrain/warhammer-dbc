@@ -1,6 +1,7 @@
 // module/sheets/sheet-helpers.mjs
 
 import { CHARACTERISTICS, APTITUDES }   from "../constants/characteristics.mjs";
+import { severityTestMod, severityNote } from "../rules/disorder-severity.mjs";
 import { LIMB_LOSS_KEYS, lostSidesLabel } from "../rules/limb-loss.mjs";
 import { getHeldHand } from "../rules/hands.mjs";
 import { withRulesCache } from "../rules/collect.mjs";
@@ -772,13 +773,16 @@ function buildGetDataUncached(actor) {
   // ── Ментальные расстройства ─────────────────────────────────────────────────
   context.mentalDisorders = allItems.filter(i => i.type === "mentalDisorder").map(i => {
     const abbr = CHARACTERISTICS[i.system.testChar]?.abbr ?? "W";
-    const mod  = i.system.testMod || 0;
+    // Тест расстройства уже с −5×Тяжесть (rules/disorder-severity.mjs) —
+    // то же число, что подставит бросок (sheets/tabs/disorders.mjs).
+    const mod  = (i.system.testMod || 0) + severityTestMod(i.system);
     return {
       id: i.id, name: i.name,
       desc: i.system.description || "",
       testLabel: `${abbr}${mod >= 0 ? "+" : ""}${mod}`,
       testCharKey: i.system.testChar || "wp",
-      testMod: mod
+      testMod: mod,
+      sevNote: severityNote(i.system)
     };
   });
 

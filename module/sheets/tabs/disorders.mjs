@@ -25,6 +25,7 @@ import { fatiguePenalty } from "./conditions.mjs";
 import { testKindHtml, diceModeHtml, readTestKind, readDiceChoice,
          mergeReroll, wireTestKindLive, rollD100WithReroll } from "../../rules/test-kind-widget.mjs";
 import { collectTestMods } from "../../rules/roll-mods.mjs";
+import { severityTestMod, effectiveSeverity, stepSeverity } from "../../rules/disorder-severity.mjs";
 
 /** Сумма отмеченных галочек «Правила» диалога — общий приём с _showSkillRollDialog. */
 function checkedRuleMods(form) {
@@ -218,8 +219,12 @@ export function openTraumaDialog(actor) {
   }, { classes: ["dialog", "wh-attack-dialog"], width: 340 }).render(true);
 }
 
-/** Создаёт предмет-расстройство на акторе из записи библиотеки (без дублей по имени). */
-export async function createDisorderItem(actor, entry) {
+/**
+ * Создаёт предмет-расстройство на акторе из записи библиотеки (без дублей по имени).
+ * extra.system — поля сверх книжных (Тяжесть, предел, «неизлечимо»),
+ * extra.flags — метки выдачи (кто выдал — чтобы снятие источника убрало и его).
+ */
+export async function createDisorderItem(actor, entry, extra = {}) {
   if (actor.items.some(i => i.type === "mentalDisorder" && i.name === entry.name)) {
     ui.notifications.info(`Расстройство «${entry.name}» уже есть.`);
     return null;
@@ -227,16 +232,21 @@ export async function createDisorderItem(actor, entry) {
   const [item] = await actor.createEmbeddedDocuments("Item", [{
     name: entry.name,
     type: "mentalDisorder",
-    system: { description: entry.desc || "", testChar: "wp", testMod: entry.testMod || 0 }
+    system: { description: entry.desc || "", testChar: "wp", testMod: entry.testMod || 0, ...(extra.system || {}) },
+    ...(extra.flags ? { flags: extra.flags } : {})
   }]);
   return item;
 }
 
-/** Случайное Ментальное Расстройство (d100) — создаёт предмет и сообщает в чат. */
-export async function rollDisorder(actor) {
+/**
+ * Случайное Ментальное Расстройство (d100) — создаёт предмет и сообщает в чат.
+ * opts — то же extra, что у createDisorderItem, плюс note — строка в карточку
+ * (почему выдано и чем особенно). Возвращает созданный предмет или null.
+ */
+export async function rollDisorder(actor, opts = {}) {
   const roll = await new Roll("1d100").evaluate();
   const row = rollDisorderEntry(roll.total);
-  if (row) await createDisorderItem(actor, row);
+  const item = row ? await createDisorderItem(actor, row, opts) : null;
   const dice = await roll.render();
   // Выдача по таблице: Порога нет, подпись броска своя («Бросок d100»),
   // поэтому строкой в lines, а не через общий rv (helpers/test-card.mjs).
@@ -245,10 +255,45 @@ export async function rollDisorder(actor) {
     lines: [`<div class="roll-dice">Бросок d100: <b>${roll.total}</b></div>`],
     outcome: `<span class="roll-failure">${rollIcon("warn","#ffb84d")}${esc(row?.name) ?? "—"}</span>`,
     sections: [
+      opts.note ? `<div class="roll-threshold"><b>${esc(opts.note)}</b></div>` : "",
       row?.desc ? `<div class="roll-threshold">${row.desc}</div>` : "",
       `<details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>`
     ]
   }, { rolls: [roll] });
+  return item;
+}
+
+/**
+ * Стартовое расстройство от источника (Архетип «Беглый Псайкер»: «начинает
+ * игру со случайным ментальным расстройством. Оно неизлечимо и его тяжесть не
+ * может опуститься ниже −2»). Зовётся записью Конструктора kind:"script"
+ * источника — один раз при выдаче; повторный запуск («▶ Запустить») второго
+ * расстройства не даёт, пока выданное лежит на листе.
+ * Выданное помечается источником (grantedByItem и его originGrant), так что
+ * смена Архетипа снимает и расстройство.
+ * @returns {Promise<{ok:boolean, reason?:string, item?:Item}>}
+ */
+export async function grantStartingDisorder(actor, sourceItem, { severityMin = null, incurable = true, label = "" } = {}) {
+  if (!actor) return { ok: false, reason: "Нет актора." };
+  const prevId = sourceItem?.getFlag?.("warhammer-dbc", "startingDisorderId");
+  if (prevId && actor.items.get(prevId)) {
+    return { ok: false, reason: `Стартовое расстройство уже выдано: «${actor.items.get(prevId).name}».` };
+  }
+  const originGrant = sourceItem?.getFlag?.("warhammer-dbc", "originGrant");
+  const flags = { "warhammer-dbc": {
+    ...(sourceItem?.id ? { grantedByItem: sourceItem.id } : {}),
+    ...(originGrant ? { originGrant } : {})
+  } };
+  const floor = severityMin === null || severityMin === undefined ? null : Number(severityMin);
+  const who = label || sourceItem?.name || "";
+  const note = `${who ? `${who}: ` : ""}стартовое расстройство${incurable ? ", неизлечимо" : ""}` +
+    `${floor !== null ? `, Тяжесть не ниже ${floor < 0 ? "−" : ""}${Math.abs(floor)}` : ""}.`;
+  const item = await rollDisorder(actor, {
+    system: { severity: 0, severityMin: floor, incurable: !!incurable }, flags, note
+  });
+  if (!item) return { ok: false, reason: "Выпавшее расстройство уже есть на листе — ГМ выбирает другое." };
+  if (sourceItem?.setFlag) await sourceItem.setFlag("warhammer-dbc", "startingDisorderId", item.id);
+  return { ok: true, item };
 }
 
 /**
@@ -348,7 +393,10 @@ export async function rollDisorderTest(actor, item) {
   // этот диалог не показывает (в отличие от соседнего диалога Страха), и
   // задвоить нечего — см. docs/rules-format.md.
   const suppressMods = collectTestMods(actor, { kind: "skill", char: charKey });
-  const baseEffNoDiff = charVal + (system.testMod || 0) + suppressMods.total;
+  // Тяжесть расстройства: все связанные с ним тесты −5×Тяжесть (корбук,
+  // «Ментальные расстройства»; rules/disorder-severity.mjs).
+  const sevMod = severityTestMod(system);
+  const baseEffNoDiff = charVal + (system.testMod || 0) + sevMod + suppressMods.total;
 
   const result = await foundry.applications.api.DialogV2.wait({
     window: { title: item.name },
@@ -403,6 +451,7 @@ export async function rollDisorderTest(actor, item) {
       label: meta?.abbr ?? charKey, base: charVal,
       parts: [
         ...(system.testMod ? [`${system.testMod >= 0 ? "+" : ""}${system.testMod}`] : []),
+        ...(sevMod ? [`${sevMod >= 0 ? "+" : ""}${sevMod} (Тяжесть ${effectiveSeverity(system)})`] : []),
         ...suppressMods.parts,
         ...(difficulty !== 0 ? [`${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)`] : [])
       ],
@@ -474,6 +523,14 @@ export function activateDisorderListeners(html, actor, { rollCharacteristic } = 
   html.find(".disorder-test-btn").click(ev => {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);
     if (item) rollDisorderTest(actor, item);
+  });
+  // Тяжесть ±1 — итог теста ГМа на изменение Тяжести (успех −1, провал +1);
+  // пределы (−5…+5 и свой «не ниже» неизлечимого) держит stepSeverity.
+  html.find(".disorder-sev-btn").click(async ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (!item) return;
+    const next = stepSeverity(item.system, Number(ev.currentTarget.dataset.delta) || 0);
+    if (next !== item.system.severity) await item.update({ "system.severity": next });
   });
   html.find(".disorder-remove-btn").click(async ev => {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);

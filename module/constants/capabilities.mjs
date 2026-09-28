@@ -5189,7 +5189,7 @@ export const CAPABILITIES = {
     source: "Burrower / Бурильщик (X)", reader: ""
   },
   "trait.chaosPsyker": {
-    label: "Получает Трейт Psyker с PR3 и +1d5 Cor. В расчёте психической силы считается Несвязанным.",
+    label: "В расчёте психической силы считается Несвязанным (Черта Архетипа Ведьма). Трейт Psyker, PR3 и +3d5 Cor — строки самого Архетипа, не этой Черты (в книге Черта их не даёт). Реализовано без возможности: Возможность данными не выдаётся: «Несвязанный» ставит сам Архетип — system.psykerClass → system.psyker.class при выборе (module/apps/archetypes.mjs::applyArchetype, module/apps/character-wizard.mjs::_finishArchetypeStep). Психосилы читают system.psyker.class (module/sheets/tabs/psychic.mjs). Ручная смена Природы Дара на листе не запрещена — Ведьма может стать, например, демоническим псайкером позже по сюжету.",
     source: "Chaos Psyker / Псайкер Хаоса", reader: ""
   },
   "trait.cleverHands": {
@@ -5262,7 +5262,7 @@ export const CAPABILITIES = {
     source: "Digitigrade / Двусоставный (X)", reader: ""
   },
   "trait.divinelyGifted": {
-    label: "Выбирает 1 дополнительную мутацию/субмутацию (кроме Доспеха Богов и Знания Веков). На покровительстве Бога может вместо этого выбрать 1 Дар.",
+    label: "Выбирает 1 дополнительную мутацию/субмутацию (кроме Доспеха Богов и Знания Веков). На покровительстве Бога может вместо этого выбрать 1 Дар. Реализовано без возможности: Возможность данными не выдаётся: выбор — ИЛИ-группа Конструктора Архетипа Нумен (kind:\"equipment\" по паку мутаций, equipChoiceIds без Доспехов Богов и Знаний Веков, submutationChoice; ветки Даров — с when.patronGod, лишние из выбора убирает module/apps/mechanics.mjs::orChoiceEntries).",
     source: "Divinely Gifted / Божественно Одарённый", reader: ""
   },
   "trait.emergencyMaintenance": {
@@ -5280,6 +5280,11 @@ export const CAPABILITIES = {
   "trait.expirationDate": {
     label: "Короткий срок жизни.",
     source: "Expiration Date / Срок Годности", reader: ""
+  },
+  "trait.fatedPath": {
+    label: "Предначертанный Путь: избранный Элитный архетип — −1000 опыта, всегда базовая цена, не удорожает прочие; его требования «проверяет ГМ» считаются выполненными.",
+    source: "Fated Path / Предначертанный Путь",
+    reader: "module/rules/fated-path.mjs::fatedEliteName — цена в module/apps/elite-buy.mjs::eliteCostFor, выбор ☆ в module/sheets/elite-picker.mjs::openElitePicker"
   },
   "trait.fanatic": {
     label: "Может перехватить атаку по союзнику.",
@@ -5330,8 +5335,9 @@ export const CAPABILITIES = {
     source: "Hypno-Scars / Гипно-Шрамы", reader: ""
   },
   "trait.imperialSanctioning": {
-    label: "Получает Трейт Psyker с PR2 и +1 Cor. Считается Связанным. Тратит Очко Бесчестья для переброса Феномена, если он вызвал Прорыв.",
-    source: "Imperial Sanctioning / Имперское Санкционирование", reader: ""
+    label: "Связанный (ставит Архетип). Потратив Очко Бесчестия на переброс Феномена («Усмирение Варпа»), вызвавшего Прорыв, перебрасывает и Прорыв без траты Очка.",
+    source: "Imperial Sanctioning / Имперское Санкционирование",
+    reader: "module/rules/calm-warp.mjs::hasImperialSanctioning — кнопка бесплатного переброса Прорыва на карточке оплаченного переброса Феномена (module/combat/calm-warp.mjs::handleCalmWarpClick; кнопки «Усмирение Варпа» — module/sheets/tabs/psychic.mjs). «Связанный» — system.psykerClass Архетипа (module/apps/archetypes.mjs::applyArchetype)."
   },
   "trait.incorporeal": {
     label: "Нематериален; проходит сквозь стены; +30 Stealth.",

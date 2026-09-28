@@ -13,9 +13,10 @@
 // Поле в шапке остаётся текстовым — свой архетип всегда можно вписать руками.
 
 import { ELITE_ARCHETYPES } from "../constants/elite-archetypes.mjs";
-import { checkEliteRequirements, describeEliteReq, eliteWho, eliteTakenCount,
-         eliteCost, eliteCostNote } from "../rules/elite-requirements.mjs";
-import { buyEliteArchetype } from "../apps/elite-buy.mjs";
+import { checkEliteRequirements, describeEliteReq, eliteWho, eliteCostNote } from "../rules/elite-requirements.mjs";
+import { buyEliteArchetype, eliteCostFor } from "../apps/elite-buy.mjs";
+import { hasFatedPath, fatedEliteName, fatedEliteTaken, eliteTakenForPrice, FATED_FLAG }
+  from "../rules/fated-path.mjs";
 import { centerPicker, pickerPos } from "./picker-ui.mjs";
 import { esc } from "../helpers/utils.mjs";
 
@@ -109,29 +110,39 @@ export function eliteAvailability(actor, doc) {
  * они не влезают — у иного архетипа их с десяток, и имя ужималось до «Берсерк
  * К…», а сами требования обрывались многоточием на середине.
  */
-function eliteRow(doc, check, cost, note, taken) {
+function eliteRow(doc, check, cost, note, taken, fated = {}) {
   const unmet = check.secondaryUnmet;
   const bad   = new Set(unmet);
-  const man   = new Set(check.manual);
+  // Избранному Предначертанного Пути сюжетные условия выполняются сами.
+  const man   = new Set(fated.isFated ? [] : check.manual);
   const entries = doc.system?.requirements?.secondary || [];
   const reqTxt = entries.length
     ? entries.map(e => describeEliteReq(e)).filter(Boolean).map(t => {
         const state = bad.has(t) ? "fail" : (man.has(t) ? "unknown" : "ok");
         const title = state === "fail" ? "Не выполнено"
-          : (state === "unknown" ? "Проверяет ГМ" : "Выполнено");
+          : (state === "unknown" ? "Проверяет ГМ"
+            : (fated.isFated && check.manual.includes(t) ? "Предначертанный Путь: выполняется само" : "Выполнено"));
         return `<span class="pick-req pick-req-${state}" title="${title}">${esc(t)}</span>`;
       }).join("")
     : (doc.system?.req
       ? `<span class="pick-req pick-req-book" title="Требования из книги. Сверить их с листом нельзя, пока они не заведены Конструктором на вкладке МЕХАНИКА архетипа">${esc(doc.system.req)}</span>`
       : "");
-  const costTxt = cost
+  const costTxt = (cost || fated.isFated)
     ? `<span class="pick-cost cost-${unmet.length ? "enemy" : "neutral"}" title="Базовая цена ${doc.system?.cost || 0}${note ? `, ${note}` : ""}">${cost} XP</span>`
     : "";
+  // ★ — избранный Предначертанного Пути; ☆ — кнопка выбора, пока избранный
+  // не куплен (после покупки выбор не меняется).
+  const fatedTxt = fated.isFated
+    ? `<span class="pick-req pick-req-ok" title="Предначертанный Путь: −1000 опыта, всегда базовая цена, не удорожает прочие">★ Предначертанный</span>`
+    : (fated.canChoose
+      ? `<button type="button" class="pick-fated" data-name="${esc(doc.name)}" title="Предначертанный Путь: сделать этот Элитный архетип избранным (−1000 опыта, всегда базовая цена)">☆</button>`
+      : "");
   const desc = esc(doc.system?.description || doc.system?.charBonus || "—");
   return `<div class="pick-row${unmet.length ? " pick-unmet" : ""}" data-name="${esc(String(doc.name).toLowerCase())}" data-id="${doc.id}">
     <div class="pick-head elite-head">
       <button type="button" class="pick-exp" title="Показать описание">▸</button>
       <span class="pick-name" title="Раскрыть">${esc(doc.name)}</span>
+      ${fatedTxt}
       ${costTxt}
       <button type="button" class="pick-add" data-id="${doc.id}" title="Купить и добавить на лист">＋</button>
     </div>
@@ -160,8 +171,11 @@ export async function openElitePicker(actor, extraIndex = null) {
   const docs = (await pack.getDocuments())
     .sort((a, b) => String(a.name).localeCompare(String(b.name), "ru"));
 
-  const taken = eliteTakenCount(actor);
+  // Избранный Предначертанного Пути в множитель не входит (rules/fated-path.mjs).
+  const taken = eliteTakenForPrice(actor);
   const note  = eliteCostNote(taken);
+  const fatedName = fatedEliteName(actor);
+  const canChoose = hasFatedPath(actor) && !fatedEliteTaken(actor);
 
   const fit = [];
   for (const d of docs) {
@@ -169,13 +183,17 @@ export async function openElitePicker(actor, extraIndex = null) {
     if (available) fit.push({ doc: d, check });
   }
 
-  const rows = fit.map(({ doc, check }) =>
-    eliteRow(doc, check, eliteCost(doc.system?.cost, taken), note, taken)).join("");
+  const rows = fit.map(({ doc, check }) => {
+    const c = eliteCostFor(actor, doc);
+    return eliteRow(doc, check, c.cost, c.note, taken,
+      { isFated: !!fatedName && doc.name === fatedName, canChoose: canChoose && doc.name !== fatedName });
+  }).join("");
 
   const content = `<div class="wh-item-picker wh-elite-picker">
     <div class="pick-top">
       <input type="text" class="pick-search" placeholder="Поиск по названию…"/>
       <span class="elite-taken" title="Каждый следующий Элитный архетип вдвое дороже предыдущего">Уже взято: ${taken}${note ? ` · ${esc(note)}` : ""}</span>
+      ${hasFatedPath(actor) ? `<span class="elite-taken" title="Черта «Предначертанный Путь»: ☆ в строке — выбрать избранный Элитный архетип">★ ${fatedName ? esc(fatedName) : "избранный не выбран — ☆ в строке"}</span>` : ""}
     </div>
     <div class="pick-list">
       ${rows || '<div class="ep-none">Подходящих записей нет — впишите свой архетип в поле шапки.</div>'}
@@ -199,6 +217,16 @@ export async function openElitePicker(actor, extraIndex = null) {
         if (!item) return;
         ui.notifications.info(`Взят Элитный архетип: ${doc.name}`);
         dlg.close();
+      });
+      // Предначертанный Путь: выбор избранного (до его покупки можно сменить).
+      html.find(".pick-fated").on("click", async ev => {
+        ev.preventDefault(); ev.stopPropagation();
+        const name = ev.currentTarget.dataset.name;
+        if (!name) return;
+        await actor.setFlag("warhammer-dbc", FATED_FLAG, name);
+        ui.notifications.info(`Предначертанный Путь: ${name}`);
+        dlg.close();
+        openElitePicker(actor, extraIndex);
       });
       const toggle = row => {
         const desc = row.querySelector(".pick-desc");

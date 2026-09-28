@@ -371,7 +371,8 @@ const TYPES = {
   mentalDisorder: {
     // Предметов этого типа в паках нет — расстройства заводит сам ГМ.
     pack: null,
-    defaults: { description: "", notes: "", testChar: "wp", testMod: 0, bookSource: "" }
+    defaults: { description: "", notes: "", testChar: "wp", testMod: 0, bookSource: "",
+                severity: 0, severityMin: null, incurable: false }
   },
 
   // ── Оружие и броня (wdbc-ff4.1.2) ──────────────────────────────────────────

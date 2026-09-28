@@ -820,7 +820,12 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - Здравомыслие пилота Дредноута: `rules/dreadnought.mjs`, `sheets/tabs/
   dreadnought-panel.mjs`.
 - Расстройства/Травмы: `data/item/mental-disorder.mjs`, `mental-trauma.mjs`,
-  `sheets/tabs/disorders.mjs`.
+  `sheets/tabs/disorders.mjs`. Тяжесть расстройства (−5…+5, тесты −5×Тяжесть,
+  свой нижний предел неизлечимого `severityMin`, флажок `incurable`) —
+  `rules/disorder-severity.mjs`, кнопки ± на карточке во вкладке Эффекты;
+  стартовое расстройство от источника (Беглый Псайкер: неизлечимо, не ниже −2)
+  — `sheets/tabs/disorders.mjs::grantStartingDisorder`, зовётся записью «Код»
+  Конструктора Архетипа.
 
 ## 10. Расы, Субрасы, Легионы, Пути, Архетипы, Элитные архетипы
 
@@ -862,7 +867,15 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   archetypes.mjs` — Архетипы Мастера создания.
 - Элитные архетипы: `constants/elite-archetypes.mjs`, `data/item/
   elite-archetype.mjs`, `rules/elite-requirements.mjs`, `apps/elite-buy.mjs` +
-  `elite-req-builder.mjs`, `sheets/elite-picker.mjs`.
+  `elite-req-builder.mjs`, `sheets/elite-picker.mjs`. Предначертанный Путь
+  (Черта Нумена: избранный −1000, всегда базовая цена, не удорожает прочие;
+  выбор ☆ в пикере, метка `flags.warhammer-dbc.fatedPath`) —
+  `rules/fated-path.mjs`, возможность `trait.fatedPath`.
+- Порча «+Nd5 Cor» Архетипа (Ведьма +3d5, Беглый Псайкер +2d5) — запись
+  kind:"corruption" его Конструктора (бросок в чат при выборе, откат при
+  смене Архетипа через `poolApplied`). ИЛИ-выбор Конструктора не предлагает
+  ветки, чьё «Когда» не выполнено (`apps/mechanics.mjs::orChoiceEntries`) —
+  так Нумену видны Дары только своего Бога.
 - Расовые библиотеки правил: `rules/library/{aeldari,astartes,ogryn,core}.mjs`;
   `rules/ogryn-fit.mjs` (аналог legion-fit для Огринов).
 
@@ -998,6 +1011,12 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `apps/skillful-torture.mjs` — восстановление Характеристик от пытки.
 
 ## 14. Психосилы, Техночудеса, Мистика, Ритуалы, Варп
+
+- «Усмирение Варпа» (Очко Бесчестия, Cor 20+): кнопки переброса Феномена/
+  Прорыва на карточке манифестации — `combat/calm-warp.mjs` (кнопки,
+  обработчик в `hooks.mjs`), правило — `rules/calm-warp.mjs`; Черта
+  «Имперское Санкционирование» (`trait.imperialSanctioning`) — бесплатный
+  переброс Прорыва после оплаченного переброса Феномена.
 
 - Психосилы: `data/item/psychic-power.mjs`, `rules/psyker.mjs`, `psy-range.
   mjs` (парсер дальности), `psychic-vessel.mjs` (фамильяр/конструкт-
