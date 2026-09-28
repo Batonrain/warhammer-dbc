@@ -56,9 +56,11 @@ describe("Архетипы Людей (глава I) — данные пака �
     ]);
   });
 
+  // Снаряжение выдаёт Этап 5 Мастера по тексту gear (записи Конструктора со
+  // снаряжением сняты — двойная выдача, сверка Архетипов 28.09.2026).
   it("Отступник: «Full Flak Armour или Mesh Armour» — без Качества", () => {
-    const flak = entries(byKey("apostate")).find(e => e.kind === "equipment" && /Full Flak/.test(e.equipSourceName));
-    expect(flak.equipQuality).toBe("common");
+    expect(byKey("apostate").system.gear).toContain("Full Flak Armour или Mesh Armour,");
+    expect(entries(byKey("apostate")).some(e => e.kind === "equipment" && /Full Flak/.test(e.equipSourceName ?? ""))).toBe(false);
   });
 
   it("Демонолог: имя по книге, ключ прежний, Черта — Ведун Тьмы, цели Hatred/Peer", () => {

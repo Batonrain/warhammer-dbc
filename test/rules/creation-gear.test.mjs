@@ -355,13 +355,16 @@ describe("Конструктор Расы/Архетипа и текст не в
     expect(constructorCoverage([["6 Модификаций для оружия (до R2)"]], groups)).toEqual([false]);
   });
 
-  it("настоящий Чемпион из packs-src: текст gear целиком покрыт его же Механикой", () => {
+  // Записи Конструктора со снаряжением у Архетипов сняты (двойная выдача,
+  // сверка 28.09.2026) — Этап 5 выдаёт весь текст сам, пропускать нечего.
+  it("настоящий Чемпион из packs-src: Механика больше не выдаёт его снаряжение — Этап 5 выдаёт всё", () => {
     const dir = path.join(ROOT, "packs-src/archetypes");
     const file = fs.readdirSync(dir, { recursive: true }).find(f => /Champion___/.test(f));
     const doc = JSON.parse(fs.readFileSync(path.join(dir, file), "utf8"));
     const rows = splitGearTopLevel(doc.system.gear).map(gearChoiceOptions);
     const groups = doc.flags["warhammer-dbc"].mechanics;
-    expect(constructorCoverage(rows, groups).every(Boolean)).toBe(true);
+    expect(rows.length).toBeGreaterThan(0);
+    expect(constructorCoverage(rows, groups).some(Boolean)).toBe(false);
   });
 });
 

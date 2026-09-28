@@ -141,9 +141,11 @@ describe("Архетипы Космодесанта — как в книге", (
     expect(fl.specKey).toBe("mechanicum");
   });
 
-  it("Технодесантник: запись Мехадендрита — «R3 или R2 Good.Q», как в книге", () => {
+  // Мехадендрит выдаёт Этап 5 Мастера по тексту gear (записи Конструктора
+  // со снаряжением сняты — двойная выдача, сверка Архетипов 28.09.2026).
+  it("Технодесантник: Мехадендрит — «R3 или R2 Good.Q», как в книге", () => {
     const doc = byKey("techmarine");
-    const mech = entriesOf(doc).filter(e => e.kind === "equipment" && e.equipImplantCategory === "mechadendrite");
-    expect(mech.map(e => [e.equipMaxAvailability, e.equipQuality]).sort()).toEqual([[2, "good"], [3, "common"]]);
+    expect(doc.system.gear).toContain("1 Мехадендрит (R3 или R2 Good.Q)");
+    expect(entriesOf(doc).some(e => e.kind === "equipment" && e.equipImplantCategory === "mechadendrite")).toBe(false);
   });
 });
