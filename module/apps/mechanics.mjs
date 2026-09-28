@@ -37,7 +37,10 @@
 //      на непривязанном предмете, лежащем в списке предметов мира/папке.
 //    trait / talent: как в старой системе Выдач — sourceUuid/sourceName/
 //      sourceImg/sourceHasRating (драг-н-дроп) + rating (Черта) или
-//      specialization (Талант).
+//      specialization (Талант). Специализация «любые N»/«любой 1» — выбор
+//      при получении из перечня самого Таланта библиотеки, тем же диалогом/
+//      коллектором Мастера, что у Навыков (rules/talent-spec-choice.mjs,
+//      resolveTalentSpecChoice); выбранные ложатся одним Талантом через запятую.
 //    skill: skillScope:"plain"|"group", skillKey, specKey/specialty, rank.
 //      specKey:"__choice__" (wdbc-jo51-подобный приём) — «по выбору при
 //      получении»: specChoiceKeys — кандидаты, отмеченные автором,
@@ -466,6 +469,7 @@ import { mechFormulaTotal, mechFormulaTotalSafe, mechRollData } from "../rules/m
 import { hasEliteArchetype }                  from "../rules/predicates.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { TRAIT_LIB_PACKS, TALENT_LIB_PACKS } from "../constants/library-packs.mjs";
+import { anySpecCount, talentSpecOptions, withPickedSpecs } from "../rules/talent-spec-choice.mjs";
 
 const FLAG = "warhammer-dbc";
 // Подсказка полям «Значение»/«Рейтинг», принимающим формулу mech-formula.mjs
@@ -733,7 +737,9 @@ const CONDITION_MITIGATE_LABELS = Object.fromEntries(CONDITION_MITIGATE_UI);
 // величины у записи не показывается вовсе.
 const CONDITION_COUNTER_LABELS = { rounds: "раундов", level: "уровней", count: "штук" };
 const conditionCounterLabel = (key) => CONDITION_COUNTER_LABELS[CONDITIONS[key]?.counter] || "";
-const FATIGUE_THRESHOLD_CHARS = [["t", "Бонус Стойкости (T.b)"], ["wp", "Бонус Воли (WP.b)"]];
+const FATIGUE_THRESHOLD_CHARS = [["t", "Бонус Стойкости (T.b)"], ["wp", "Бонус Воли (WP.b)"],
+  // Enduring / Стойкий Репликанта — rules/fatigue-grace.mjs.
+  ["unt", "Рейтинг Сверхъест. Стойкости (Unnatural T)"]];
 // Действия над Свойством оружия (kind:"weaponProp"). increase/decrease появляются
 // в дропдауне только когда перетащенное свойство обладает рейтингом (см.
 // buildEntryFieldsHtml) — рейтинговых свойств большинство, но не все.
@@ -1299,6 +1305,7 @@ export function describeMechEntry(entry) {
     }
     case "fatigue": {
       if (entry.fatigueAction !== "threshold") return "Усталость: (действие не выбрано)";
+      if (entry.fatigueThresholdChar === "unt") return "Усталость: штрафов нет, пока она не выше рейтинга Unnatural T";
       const charLabel = entry.fatigueThresholdChar === "wp" ? "Воли" : "Стойкости";
       return `Усталость: штраф начинается с Бонуса ${charLabel} (вместо 1)`;
     }
@@ -1935,6 +1942,35 @@ async function resolveEntrySpecChoice(entry) {
 }
 
 /**
+ * Талант «на выбор» (rules/talent-spec-choice.mjs): «Resistance (любые 2)» —
+ * варианты берутся у самого Таланта библиотеки, выбранные ложатся одной
+ * записью через запятую. Не «на выбор» или список Таланта не перечислим —
+ * запись как есть ([entry]); пропуск диалога — [] (Талант не выдаётся, как и
+ * пропущенный выбор Навыка).
+ */
+async function resolveTalentSpecChoice(entry) {
+  const need0 = anySpecCount(entry.specialization);
+  if (need0 == null) return [entry];
+  const src = await resolveMechSource(entry);
+  const options = talentSpecOptions(src?.system?.specialization);
+  if (!options) return [entry];
+  // Русская подпись варианта — тем же словарём, что у Мастера создания.
+  // Динамический импорт: creation.mjs через races.mjs сам тянет этот файл.
+  let ru = s => s;
+  try { ({ ruSpec: ru } = await import("./creation.mjs")); } catch { /* подпись останется английской */ }
+  const choices = options.map(o => {
+    const r = ru(o);
+    return { key: o, display: r && r !== o ? `${o} — ${r}` : o };
+  });
+  const need = Math.min(need0, choices.length);
+  const label = String(src?.name || entry.sourceName || "Талант").split("/").pop().trim();
+  const chosen = await showSpecChoiceDialog(label, choices, need);
+  const list = Array.isArray(chosen) ? chosen : (chosen ? [chosen] : []);
+  if (!list.length) return [];
+  return [withPickedSpecs(entry, list.map(c => c.key))];
+}
+
+/**
  * Применяет одну запись механики: создаёт ActiveEffect/предмет, правит навык,
  * либо исполняет код. `preAsked` — результат resolveEntrySpecChoice, уже
  * полученный ЗАРАНЕЕ через resolveDirectAsk (Promise.all соседей в
@@ -1973,6 +2009,14 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
       }
       return;
     }
+    entry = resolved[0];
+  }
+
+  // Талант «любые N» (rules/talent-spec-choice.mjs) — выбор специализаций до
+  // выдачи, тем же диалогом/коллектором Мастера, что у Навыков.
+  if (entry.kind === "talent" && anySpecCount(entry.specialization) != null) {
+    const resolved = preAsked ?? await resolveTalentSpecChoice(entry);
+    if (!resolved.length) return;
     entry = resolved[0];
   }
 
@@ -3203,6 +3247,11 @@ async function resolveDirectAsk(entry, applied, sourceItem, actor) {
       && (entry.specKey === "__choice__" || entry.specKey === "__choice_any__")
       && !applied.has(entry.id) && entryWhenOk(actor, entry, sourceItem)) {
     return { type: "spec", resolved: await resolveEntrySpecChoice(entry) };
+  }
+  // Талант «любые N» — тем же пакетом, что Навыки «на выбор».
+  if (entry.kind === "talent" && anySpecCount(entry.specialization) != null
+      && !applied.has(entry.id) && entryWhenOk(actor, entry, sourceItem)) {
+    return { type: "spec", resolved: await resolveTalentSpecChoice(entry) };
   }
   return undefined;
 }

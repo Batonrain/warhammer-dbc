@@ -106,6 +106,7 @@ import { DEVOURER_OF_KNOWLEDGE_CAPABILITY, DEVOURER_THEFTS_FLAG, expiredTheftEnt
 import { planFleshmetalRegen, FLESHMETAL_CAPABILITY, FLESHMETAL_FLAG }
   from "./rules/fleshmetal-regen.mjs";
 import { hasRuleFlag as hasFleshmetalFlag } from "./rules/flags.mjs";
+import { ALCHEM_MONSTER, mustRerollSuccess } from "./rules/replicant.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { liftDivineProtection, wakeDivineProtected } from "./sheets/tabs/death.mjs";
@@ -2320,9 +2321,22 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
     const threshold = charTotal + testMod + resistMods.total;
     // Преимущество против яда (Крепкий как Камень, rules/squat-traits.mjs):
     // дважды, берётся лучший — тот же бросок, что у Кубика диалога.
-    const { rv, rolls: resistRolls, rerollNote } =
+    let { rv, rolls: resistRolls, rerollNote } =
       await rollD100WithReroll(poisonResistReroll(actor, condition));
     allRolls.push(...resistRolls);
+    // Alchem Monster / Алхимическое Чудовище (Репликант): «должен
+    // перебрасывать успешные тесты против ядов» — один раз, второй окончателен.
+    // Идёт ПОСЛЕ Преимущества: оба правила у одного носителя складываются
+    // в «лучший из двух, но успех всё равно перебрасывается».
+    let alchemNote = "";
+    if (condition === "poisoned"
+        && mustRerollSuccess(rv <= threshold, hasFleshmetalFlag(actor, ALCHEM_MONSTER))) {
+      const first = rv;
+      const roll = await new Roll("1d100").evaluate();
+      allRolls.push(roll);
+      rv = roll.total;
+      alchemNote = `<div class="roll-threshold">⚗️ Алхимическое Чудовище: успех против яда (${first}) обязательно перебрасывается → <b>${rv}</b></div>`;
+    }
     resisted        = rv <= threshold;
     deg             = Math.max(1, Math.floor(Math.abs(rv - threshold) / 10) + 1);
     // Плашка Бросок/Режим/Порог — общим сборщиком (wdbc-fyvv): слагаемые
@@ -2331,7 +2345,7 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
       label: testChar.toUpperCase(), base: charTotal,
       parts: [testMod !== 0 ? `${testMod >= 0 ? "+" : ""}${testMod}` : "", ...resistMods.parts],
       threshold, rv
-    });
+    }) + alchemNote;
     resistOutcome = rerollNote + (resisted
       ? `<span class="roll-success">Цель сопротивилась — эффект не наложен</span>`
       : `<span class="roll-failure">Провал (${deg} ст.) — эффект наложен</span>`);

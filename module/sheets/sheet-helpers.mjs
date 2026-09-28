@@ -65,8 +65,10 @@ import { hasNavigationWarp, warpRoutesTabContext }   from "./tabs/warp-routes.mj
 import { mergeAbilityItems, mergeAbilityEffects,
          abilityLabel }                              from "../rules/merge-abilities.mjs";
 import { toggleParentId, toggleRows }                from "../rules/toggle-abilities.mjs";
-import { ruleFlags, ruleFlagLabels, ruleFlagCost, scriptAbilities } from "../rules/flags.mjs";
+import { ruleFlags, ruleFlagLabels, ruleFlagCost, scriptAbilities, hasRuleFlag } from "../rules/flags.mjs";
 import { sleepGraceDays, sleepNeededHours } from "../rules/squat-traits.mjs";
+import { ALCHEM_MONSTER, ENDURING, alchemDoseLimit } from "../rules/replicant.mjs";
+import { replicantBodyContext }                      from "../combat/replicant.mjs";
 import { CAPABILITIES }                              from "../constants/capabilities.mjs";
 import { capabilityAutoHint }                        from "../constants/capability-forms.mjs";
 import { capabilityCostLabel, capabilityCostGate }   from "../combat/capability-cost.mjs";
@@ -355,7 +357,7 @@ function _buildActiveConditions(system, actor = null) {
 // Показываем только те, у которых hasAddiction === true
 // (независимо от того, активен ли сейчас препарат)
 
-function _buildAddictions(allItems) {
+function _buildAddictions(allItems, alchem = false) {
   const result = [];
 
   for (const item of allItems) {
@@ -378,7 +380,9 @@ function _buildAddictions(allItems) {
       testMod:      testMod,
       frequency:    add.frequency || "",
       penalty:      add.penalty   || "",
-      minDose:      add.minDose   || 0,
+      // Alchem Monster (Репликант): недельный лимит ×2 — rules/replicant.mjs.
+      minDose:      alchemDoseLimit(add.minDose, alchem),
+      minDoseAlchem: alchem && (add.minDose || 0) > 0,
       isAddicted:   add.isAddicted || false
     });
   }
@@ -768,7 +772,7 @@ function buildGetDataUncached(actor) {
 
   // ── Зависимости ───────────────────────────────────────────────────────────
   // Все препараты у которых hasAddiction === true — всегда показываем в блоке
-  context.addictions = _buildAddictions(allItems);
+  context.addictions = _buildAddictions(allItems, hasRuleFlag(actor, ALCHEM_MONSTER));
 
   // ── Ментальные расстройства ─────────────────────────────────────────────────
   context.mentalDisorders = allItems.filter(i => i.type === "mentalDisorder").map(i => {
@@ -933,7 +937,9 @@ function buildGetDataUncached(actor) {
         }
         return {
           key: v.key, label: v.label, icon: v.icon, tone: v.tone, action: v.action,
-          stage: val, max: VITAL_MAX_STAGE, stageLabel: st.label, fx,
+          stage: val, max: VITAL_MAX_STAGE, stageLabel: st.label,
+          // Enduring / Стойкий (Репликант): «нуждается только в 4 часах сна в сутки».
+          fx: v.key === "sleep" && hasRuleFlag(actor, ENDURING) ? `${fx} Стойкий: достаточно 4 ч сна в сутки.` : fx,
           pen: st.pen, scope: v.scope,
           pips: [1, 2, 3].map(n => ({ on: n <= val })),
           alert: val > 0, crit: val >= VITAL_MAX_STAGE
@@ -951,7 +957,10 @@ function buildGetDataUncached(actor) {
           status: addictionStatusLabel(item, worldTime),
           unsatisfied
         };
-      })
+      }),
+      // Крючок Сывороток / Срок Годности / Генетическое Угасание (Репликант) —
+      // null, если ни одной из этих Черт нет (combat/replicant.mjs).
+      replicant: replicantBodyContext(actor)
     };
   }
 

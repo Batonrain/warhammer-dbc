@@ -12,6 +12,7 @@
 
 import { charLossAddFields, charLossHealFields, charLossPortionsAddFields, actorRecoveryPolicy } from "../rules/char-loss.mjs";
 import { killByCondition } from "./condition-death.mjs";
+import { GENETIC_DECAY, geneticDecayBonus, mutationCountNoGifts, traitWithKey } from "../rules/replicant.mjs";
 
 /**
  * Нанести урон в Характеристику.
@@ -27,6 +28,13 @@ import { killByCondition } from "./condition-death.mjs";
  * @returns {Promise<{applied: number, before: number, after: number, died: boolean}>}
  */
 export async function applyCharDamage(actor, key, amount, { extra = {}, at = globalThis.game?.time?.worldTime ?? 0, cause = "toughness", portion = null } = {}) {
+  // Genetic Decay / Генетическое Угасание (Репликант): «Каждый раз, когда он
+  // получает урон в Характеристики … увеличивает этот урон на +1 за каждую
+  // свою мутацию» (не Дар Богов) — rules/replicant.mjs. Черта читается прямо с
+  // предметов, не через hasRuleFlag: этот файл лежит в графе импортов
+  // источников правил.
+  const decay = geneticDecayBonus(amount, mutationCountNoGifts(actor), !!traitWithKey(actor, GENETIC_DECAY));
+  amount = (Number(amount) || 0) + decay;
   let patch, applied;
   const before = Number(actor.system?.characteristics?.[key]?.total) || 0;
   if (portion) {
@@ -43,7 +51,7 @@ export async function applyCharDamage(actor, key, amount, { extra = {}, at = glo
   if (Object.keys(upd).length) await actor.update(upd);
   let died = false;
   if (key === "t" && applied > 0 && after <= 0) died = await killByCondition(actor, cause);
-  return { applied, before, after, died };
+  return { applied, before, after, died, decay };
 }
 
 /**

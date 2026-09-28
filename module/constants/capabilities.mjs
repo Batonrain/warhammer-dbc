@@ -5105,8 +5105,9 @@ export const CAPABILITIES = {
     source: "Adroit / Искусный", reader: ""
   },
   "trait.alchemMonster": {
-    label: "×2 длительность наркотиков/ядов на себя и ×2 лимит приёма наркотиков в неделю; но обязан перебрасывать УСПЕШНЫЕ тесты против ядов и Зависимо…",
-    source: "Alchem Monster / Алхимическое Чудовище", reader: ""
+    label: "×2 длительность наркотиков/ядов на себе (Наркотики и Яды Химии) и ×2 недельный лимит доз на листе; успешные тесты против яда (Toxic) и Зависимости перебрасываются один раз сами. НЕ сделано: недельного счётчика принятых доз в системе нет вовсе; яд вне Химии и Toxic (укус/газ без предмета) своего теста не имеет — перебрасывать нечего.",
+    source: "Alchem Monster / Алхимическое Чудовище",
+    reader: "module/rules/replicant.mjs (alchemDurationFactor/alchemDoseLimit/mustRerollSuccess) — sheets/tabs/drugs.mjs (applyDrug, rollAddictionTest), hooks.mjs (_applyWeaponPropEffect, poisoned), sheets/sheet-helpers.mjs (_buildAddictions)"
   },
   "trait.alluringPresence": {
     label: "Все враги получают штраф −10 на Избегания против атак демона.",
@@ -5271,16 +5272,18 @@ export const CAPABILITIES = {
     source: "Emergency Maintenance / Экстренное Обслуживание", reader: ""
   },
   "trait.enduring": {
-    label: "Игнор штрафа Усталости.",
-    source: "Enduring / Стойкий", reader: ""
+    label: "Нужно только 4 часа сна в сутки — подсказка у Сна на вкладке ТЕЛО. Порог Усталости = рейтинг Unnatural T и лечение как у Космодесантника делают соседние записи той же Черты (kind:\"fatigue\" unt, healing.astartes). НЕ сделано: сон в часах система не считает (стадии Сна идут по суткам), поэтому «4 часа» — подсказка, а не расчёт.",
+    source: "Enduring / Стойкий",
+    reader: "module/sheets/sheet-helpers.mjs (body.life, fx Сна); порог — module/rules/fatigue-grace.mjs (fatigueThresholdChar \"unt\")"
   },
   "trait.experimentalSerum": {
     label: "Может создавать Яды и Наркотики с вектором Рана/Инъекция из любых других, повышая редкость итогового (по усмотрению ГМа).",
     source: "Experimental Serum / Экспериментальная Сыворотка", reader: ""
   },
   "trait.expirationDate": {
-    label: "Короткий срок жизни.",
-    source: "Expiration Date / Срок Годности", reader: ""
+    label: "Срок жизни 15+1d5 лет: бросок кнопкой на вкладке ТЕЛО (результат на Черте), строка «возраст / предел / осталось» с учётом Генетического Угасания, подсказка про ослабленный Ювенант. НЕ сделано: Ювенантная медицина в системе не считается вовсе (только текст препарата), смерть по достижении предела — решение ГМа.",
+    source: "Expiration Date / Срок Годности",
+    reader: "module/combat/replicant.mjs (rollLifespan, replicantBodyContext) — templates/actor/parts/tab-effects.hbs, sheets/tabs/body.mjs"
   },
   "trait.fanatic": {
     label: "Может перехватить атаку по союзнику.",
@@ -5307,8 +5310,9 @@ export const CAPABILITIES = {
     source: "Fully Armed / Во Всеоружии", reader: "module/combat/fully-armed.mjs"
   },
   "trait.geneticDecay": {
-    label: "Падение макс. возраста.",
-    source: "Genetic Decay / Генетическое Угасание", reader: ""
+    label: "+1 к каждому урону в Характеристики за мутацию (не Дар Богов — у Дара заполнен бог) и −1 год предела возраста за мутацию. НЕ сделано: урон, записанный в обход единой точки applyCharDamage (Хирургия — sheets/tabs/healing.mjs), прибавки не получает.",
+    source: "Genetic Decay / Генетическое Угасание",
+    reader: "module/combat/char-damage.mjs (applyCharDamage), module/combat/replicant.mjs (replicantBodyContext); арифметика — module/rules/replicant.mjs"
   },
   "trait.geneSplice": {
     label: "Выбор адаптаций.",
@@ -5333,8 +5337,9 @@ export const CAPABILITIES = {
     source: "Hoverer / Парящий (X)", reader: ""
   },
   "trait.hypnoScars": {
-    label: "Крит. Провал → Ступор.",
-    source: "Hypno-Scars / Гипно-Шрамы", reader: ""
+    label: "Критический Провал теста на Интеллекте (Характеристика или Навык на ней) — Ступор на 1 Раунд сам; Предел Крит. Провала таких тестов 86+ (правило replicant.hypnoScars.critRange). НЕ сделано: тесты I, которые идут не через общий расчёт исхода (свои окна Техночудес, Крафта и т.п.), Ступор не накладывают.",
+    source: "Hypno-Scars / Гипно-Шрамы",
+    reader: "module/rules/kind-outcome.mjs (resolveKindOutcome) → module/combat/replicant.mjs (applyHypnoScarsStun); Предел — module/rules/library/replicant.mjs"
   },
   "trait.imperialSanctioning": {
     label: "Получает Трейт Psyker с PR2 и +1 Cor. Считается Связанным. Тратит Очко Бесчестья для переброса Феномена, если он вызвал Прорыв.",
@@ -5495,8 +5500,9 @@ export const CAPABILITIES = {
     source: "Serpent's Tongue / Змеиный Язык", reader: ""
   },
   "trait.serumHook": {
-    label: "Без дозы — каждые 8 часов 1d5 урона в S и T без возможности восстановления отдыхом/медитацией.",
-    source: "Serum Hook / Крючок Сывороток", reader: ""
+    label: "Сыворотка раз в неделю по Календарю: строка и кнопка «принять» на вкладке ТЕЛО, приём предмета «Сыворотка Репликанта». Неделя вышла — 1d5 урона в S и 1d5 в T каждые 8 ч игрового времени, восстановление S/T отдыхом заблокировано до приёма. НЕ сделано: Исследование и Крафт сыворотки незнакомым химиком — текстом.",
+    source: "Serum Hook / Крючок Сывороток",
+    reader: "module/combat/replicant.mjs (serumHookClock в combat/condition-clock.mjs, takeSerum), module/rules/replicant.mjs (serumHookRules — источник serumHook в rules/sources.mjs), sheets/tabs/drugs.mjs (applyDrug)"
   },
   "trait.servoskull": {
     label: "Size (−2), Hoverer, Machine; одна «рука» со встроенным оружием и +15 на тесты с ним.",
@@ -5704,8 +5710,9 @@ export const CAPABILITIES = {
     source: "Godless / Безбожник", reader: ""
   },
   "trait.treytyRas.hulking": {
-    label: "Может использовать оружие/снаряжение Легиона как десантник.",
-    source: "Hulking / Громила (Легион)", reader: ""
+    label: "Оружие Легиона как Космодесантник и −10 с оружием не под Легион — Черта выдаёт возможность weapons.legion (этот ключ сам не выдаётся). НЕ сделано: доводка брони Легиона «как от мутации» — подгонки брони под мутации в системе нет.",
+    source: "Hulking / Громила (Легион)",
+    reader: "через weapons.legion — module/rules/legion-fit.mjs"
   },
   "trait.treytyRas.illiengau": {
     label: "−15 на Мораль/Шок/Командование против последователей Слаанеш; −15 на сопротивление одержимости и больше Порчи;",

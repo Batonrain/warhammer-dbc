@@ -854,6 +854,21 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   до 3 суток» (`constants/vitals.mjs`, ctx.sleepGraceDays), пороги Мутации
   Астартес (`mutations.asAstartes`), Бег ≤ Натиска и тест Трудного Ландшафта
   по Awareness (`rules/character/movement.mjs`, `combat/movement-terrain.mjs`).
+- Репликант (сверка главы I): арифметика Черт — `rules/replicant.mjs`,
+  обвязка — `combat/replicant.mjs`, Предел Крит. Провала тестов I —
+  `rules/library/replicant.mjs`. Алхимическое Чудовище — длительность ×2 в
+  `sheets/tabs/drugs.mjs::applyDrug`, обязательный переброс успеха против
+  яда (`hooks.mjs`, Toxic) и Зависимости (`rollAddictionTest`); Стойкий —
+  порог Усталости «unt» (рейтинг Unnatural T, `rules/fatigue-grace.mjs`) +
+  `healing.astartes`; Амбал — `weapons.legion`; Гипно-Шрамы — Ступор в
+  `rules/kind-outcome.mjs`; Крючок Сывороток — часы `serumHook` в
+  `combat/condition-clock.mjs`, источник правил `serumHook` (блок
+  восстановления S/T), предмет «Сыворотка Репликанта» (флаг
+  `replicantSerum`); Генетическое Угасание — `combat/char-damage.mjs::
+  applyCharDamage`; Срок Годности — блок «СРОК ГОДНОСТИ» вкладки ТЕЛО.
+- Талант «любые N» в записи Конструктора — выбор специализаций из перечня
+  Таланта библиотеки (`rules/talent-spec-choice.mjs`,
+  `apps/mechanics.mjs::resolveTalentSpecChoice`).
 - `module/constants/legions.mjs` — Легионы Космодесанта (Геносемя/Культура/
   Проклятье); `rules/legion-fit.mjs`, `legion-upgrade.mjs`.
 - Пути Азуриан: `constants/aeldari-paths.mjs`, `rules/library/paths.mjs`,
@@ -870,7 +885,7 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - Элитные архетипы: `constants/elite-archetypes.mjs`, `data/item/
   elite-archetype.mjs`, `rules/elite-requirements.mjs`, `apps/elite-buy.mjs` +
   `elite-req-builder.mjs`, `sheets/elite-picker.mjs`.
-- Расовые библиотеки правил: `rules/library/{aeldari,astartes,ogryn,core}.mjs`;
+- Расовые библиотеки правил: `rules/library/{aeldari,astartes,ogryn,replicant,core}.mjs`;
   `rules/ogryn-fit.mjs` (аналог legion-fit для Огринов).
 
 ## 11. Происхождения и Предсказания
