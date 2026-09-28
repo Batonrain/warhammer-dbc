@@ -153,3 +153,18 @@ describe("normalizePick", () => {
     expect(normalizePick({ prompt: "Выберите 3 ордена" }).prompt).toBe("Выберите 3 ордена");
   });
 });
+
+describe("Отбор для стартового снаряжения Мастера (rules/creation-gear.mjs)", () => {
+  it("implantCategory принимает список: «Бионики или Кибернетики»", () => {
+    const want = { implantCategory: ["bionic", "cybernetic"] };
+    expect(matchesFilters(item({ category: "cybernetic" }), want)).toBe(true);
+    expect(matchesFilters(item({ category: "mechadendrite" }), want)).toBe(false);
+    expect(matchesFilters(item({ category: "mechadendrite" }), { implantCategory: "mechadendrite" })).toBe(true);
+  });
+
+  it("ammoType: «магазины болтов» — боеприпас под болтерное оружие", () => {
+    expect(matchesFilters(item({ weaponTypes: ["bolt"] }), { ammoType: "bolt" })).toBe(true);
+    expect(matchesFilters(item({ weaponTypes: ["solid"] }), { ammoType: "bolt" })).toBe(false);
+    expect(matchesFilters(item(), { ammoType: "bolt" })).toBe(false);
+  });
+});
