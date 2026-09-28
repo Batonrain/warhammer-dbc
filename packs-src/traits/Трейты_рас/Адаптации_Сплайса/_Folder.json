@@ -1,0 +1,21 @@
+{
+  "name": "Адаптации Сплайса",
+  "type": "Item",
+  "sorting": "m",
+  "folder": "NQHsbl75bk7fCc77",
+  "_id": "nCIz9PenrzVvatbQ",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!nCIz9PenrzVvatbQ"
+}

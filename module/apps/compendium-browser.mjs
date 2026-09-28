@@ -515,7 +515,7 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
         ${pick.prompt ? `<div class="cbrowse-pick-prompt">${esc(pick.prompt)}</div>` : ""}
         ${multi ? `<div class="cbrowse-pick-state">
           <span class="cbrowse-pick-n">${esc(budgetLabel([], budget, xpCost))}</span>
-          <button type="button" class="cbrowse-pick-confirm" disabled>Готово</button>
+          <button type="button" class="cbrowse-pick-confirm" ${budgetReady([], budget, xpCost) ? "" : "disabled"}>Готово</button>
         </div>` : ""}
       </div>` : "";
 

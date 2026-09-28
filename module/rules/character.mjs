@@ -46,6 +46,7 @@ import { MUTATIONS_AS_ASTARTES, sleepGraceDays } from "./squat-traits.mjs";
 import { ORDER_REJECTS_BIONICS, rejectedImplants, bionicsRejection } from "./aversion-to-order.mjs";
 import { invalidateRulesCacheFor } from "./collect.mjs";
 import { runeMax } from "./sigillite-runes.mjs";
+import { spliceExtraAdaptations, fastLearnerWithAdaptations } from "./splice-adaptations.mjs";
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
 import { applyParasiteFusion, fusedParasite, fuseParasiteCharacteristic } from "./parasite-trait.mjs";
 import { woundLevel } from "./wound-tier.mjs";
@@ -1035,7 +1036,11 @@ export function prepareCharacterDerived(actor, system) {
     // тот же диалог в момент прибавления опыта.
     const fastLearner = actor.items.find(i => i.type === "trait"
                                            && (itemHasName(i, "Fast Learner") || itemHasName(i, "Ловит на Лету")));
-    system.fastLearnerBonus = fastLearner ? (Number(fastLearner.system?.rating) || 0) : 0;
+    // Сплайс, Gene-Splice: каждая дополнительная адаптация (сверх трёх
+    // обязательных) снимает 5% — rules/splice-adaptations.mjs.
+    system.fastLearnerBonus = fastLearner
+      ? fastLearnerWithAdaptations(Number(fastLearner.system?.rating) || 0, spliceExtraAdaptations(actor))
+      : 0;
 
     // Автосумма цен характеристик
     let autoCharCost = 0;
