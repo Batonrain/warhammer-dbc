@@ -242,12 +242,12 @@ export const RACES = {
   squat: {
     label: "Скват",
     subraces: [],
-    chars: { ws:25, bs:25, s:25, t:25, ag:25, int:25, per:25, wp:25, fel:25, inf:19 },
+    chars: { ws:25, bs:25, s:30, t:35, ag:20, int:30, per:25, wp:30, fel:20, inf:14 },
     bonusRolls: 1, bonusPoints: 4, charShift: 1,
     archetypes: ["apostate", "heresiarch", "renegade", "pirate", "savage", "noble", "witch"],
     size: 0,
-    skills:  "Common Lore (любые 2), Linguistics (Low Gothic), Tech-Use, Trade (любые 2) +10",
-    gear:    "5 элементов до R1 (3 Good.Q, 2 Best.Q), Vox-Bead, +2 очка стартового снаряжения",
+    skills:  "Common Lore (любые 4), Linguistics (Low Gothic), Tech-Use, Trade (любые 2) +10",
+    gear:    "5 элементов Снаряжения и Инструментов до R1 из них 3 Good.Q и 2 Best.Q, Vox-Bead, +2 очка Стартового Снаряжения",
     talents: ["Hunker Down", "Tireless", "Workaholic"],
     traits: [
       { name: "Blunted (1) / Затупленный (1)", benefit:"Защита от психо-атак на основе Варпа.", rating:1, hasRating:true },
@@ -255,9 +255,10 @@ export const RACES = {
       { name: "Unnatural Strength (2) / Сверхъестественная Сила (2)", benefit:"+2 к Бонусу Силы.", rating:2, hasRating:true, effects:{ charBonusStat:"s", charBonusValue:2 } },
       { name: "Unnatural Toughness (4) / Сверхъестественная Стойкость (4)", benefit:"+4 к Бонусу Стойкости.", rating:4, hasRating:true, effects:{ charBonusStat:"t", charBonusValue:4 } },
       { name: "Fast Learner / Ловит на Лету", benefit:"+10% к стартовому опыту и опыту за сессию." },
-      { name: "Clever Hands / Умные Руки", benefit:"+15 к тонкой работе (Craft, ремонт)." },
-      { name: "Hard as Stone / Крепкий как Камень", benefit:"Сопротивление эффектам против разума при концентрации." },
-      { name: "Sure Tread / Надёжная Поступь", benefit:"+1 SPD пешком; не сбивается с ног; устойчивость в невесомости/нестабильном грунте." }
+      { name: "Clever Hands / Умные Руки", benefit:"+15 на тесты Крафта, ремонта и обслуживания, требующие тонкой работы; +30 в экстремальных ситуациях." },
+      { name: "Hard as Stone / Крепкий как Камень", benefit:"Лечится и мутирует как Космодесантник; Преимущество против ядов, болезней и вакуума; защита от радиации −3; 3 ч сна, без сна до 3 суток." },
+      { name: "Sure Tread / Надёжная Поступь", benefit:"−1 SPD, пешком не больше 3×SPD за Ход; Awareness (P) вместо A на Трудном Ландшафте, 3+ Успеха — не замедляет." },
+      { name: "Void in Veins / Пустота в Венах", benefit:"I вместо A и Преимущество на тесты ориентации и передвижения в невесомости." }
     ],
     desc: "Коренастый абхуман-инженер, крепкий к Порче, но порой поддающийся соблазнам Хаоса."
   },

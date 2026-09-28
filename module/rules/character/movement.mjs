@@ -16,6 +16,8 @@ import { uselessCount } from "../useless-limbs.mjs";
 import { isZeroedByLoss } from "../char-loss.mjs";
 import { inventoryOverloadTier } from "../encumbrance.mjs";
 import { disabledArmourOverloadTier, disabledArmourWeight } from "../../combat/armor-mods.mjs";
+import { hasRuleFlag } from "../flags.mjs";
+import { SURE_TREAD, sureTreadMovementCap } from "../squat-traits.mjs";
 
 /**
  * @param {object} actor   актор — для предметов и флагов
@@ -148,6 +150,12 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
     run      = halvedSpd * 6;
   }
 
+  // Надёжная Поступь (Скват): «не может двигаться пешком более 3×SPD в Ход»
+  // — Бег не длиннее Натиска (rules/squat-traits.mjs). После всех делений
+  // выше: потолок только опускает, поднять урезанное Поваленным он не может.
+  const sureTread = hasRuleFlag(actor, SURE_TREAD);
+  if (sureTread) ({ halfMove, move, charge, run } = sureTreadMovementCap({ halfMove, move, charge, run }));
+
   system.movement.halfMove = halfMove;
   system.movement.move     = move;
   system.movement.charge   = charge;
@@ -184,6 +192,7 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
     expectedHalfMove = Math.floor(expectedHalfMove / 2);
   }
   if (expectedHalfMove !== halfMove) spdBreakdown.push({ label: "Минимум SPD", value: null, floor: 0.5 });
+  if (sureTread) spdBreakdown.push({ label: "Надёжная Поступь: Бег (пешком ≤3×SPD)", value: null, cap: run });
   system.movement.spdBreakdown = spdBreakdown;
 
 }

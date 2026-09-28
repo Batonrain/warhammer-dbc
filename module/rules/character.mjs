@@ -42,6 +42,7 @@ import { PA_TABLES } from "../constants/power-armour-lore.mjs";
 import { sanityMax, madnessLevels, sarcophagusCharDelta, DREADNOUGHT_PILOT_FLAG,
          SARCOPHAGUS, sarcophagusWarpWounds, sarcophagusHelplessNow } from "./dreadnought.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { MUTATIONS_AS_ASTARTES, sleepGraceDays } from "./squat-traits.mjs";
 import { invalidateRulesCacheFor } from "./collect.mjs";
 import { runeMax } from "./sigillite-runes.mjs";
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
@@ -92,14 +93,18 @@ function characteristicMechContrib(actor, charKey) {
 const MUTATION_THRESHOLDS_HUMAN    = [10, 20, 40, 60, 80];
 const MUTATION_THRESHOLDS_ASTARTES = [10, 30, 60, 90];
 
-/** Ближайший непройденный Порог Мутации, или null, если все уже пройдены (Cor 100 — не мутация, а Возвышение/Отродье). */
-export function nextMutationThreshold(system) {
+/**
+ * Ближайший непройденный Порог Мутации, или null, если все уже пройдены (Cor 100 — не мутация, а Возвышение/Отродье).
+ * opts.asAstartes — возможность mutations.asAstartes актора (Крепкий как Камень
+ * Сквата, rules/squat-traits.mjs); спрашивает вызывающий: здесь только system.
+ */
+export function nextMutationThreshold(system, { asAstartes: byCapability = false } = {}) {
   const cor = Number(system?.corruption?.value) || 0;
   // Затупленный «получает мутации как Космодесантник, а не человек» — флаг
   // субрасы mutationsAsAstartes. Поблажка лоялисту ниже — только настоящим
   // Астартес: она про их геносемя, не про таблицу.
   const astartes = raceMatches(system, "astartes");
-  const asAstartes = astartes || !!subraceEntries()[system?.subrace || ""]?.mutationsAsAstartes;
+  const asAstartes = astartes || byCapability || !!subraceEntries()[system?.subrace || ""]?.mutationsAsAstartes;
   let table = asAstartes ? MUTATION_THRESHOLDS_ASTARTES : MUTATION_THRESHOLDS_HUMAN;
   if (astartes && system?.alignment === "loyalist") {
     table = table.filter(t => t >= 60);
@@ -476,7 +481,7 @@ export function prepareCharacterDerived(actor, system) {
       const tb = Math.floor(tTotal / 10) + (t.supernatural || 0) + (t.bonusFx || 0)
                + (traitCharBonus.t || 0) + (pathPassives.charBonus.t || 0);
       const worldTime  = game.time?.worldTime ?? 0;
-      const vitalCtx    = { tb, isAstartes: raceMatches(system, "astartes") };
+      const vitalCtx    = { tb, isAstartes: raceMatches(system, "astartes"), sleepGraceDays: sleepGraceDays(actor) };
       const eff = {};
       for (const key of Object.keys(VITAL_TIME_FIELD))
         eff[key] = vitalEffectiveStage(key, system.vitals[key], system.vitals[VITAL_TIME_FIELD[key]], worldTime, vitalCtx);
@@ -560,7 +565,7 @@ export function prepareCharacterDerived(actor, system) {
       system.corruption.limit = 100 + (pathPassives.corLimit || 0);
       // Ближайший Порог Мутации — для панели ПОРЧА (wdbc-2l2x), не хранимое
       // поле, пересчитывается каждый раз, как limit чуть выше.
-      const nextThr = nextMutationThreshold(system);
+      const nextThr = nextMutationThreshold(system, { asAstartes: hasRuleFlag(actor, MUTATIONS_AS_ASTARTES) });
       system.corruption.nextThreshold = nextThr;
       system.corruption.thresholdRemaining = nextThr !== null ? Math.max(0, nextThr - (system.corruption.value || 0)) : null;
     }

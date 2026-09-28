@@ -847,6 +847,13 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   `apps/mechanics.mjs::syncNullZoneSuppression` (флаг `nullSuppressed`).
 - «Избегает атак Орды как одиночная цель» (Быстрые и Мёртвые, Серый
   Человек) — `rules/horde-single-target.mjs`.
+- Черты Сквата (сверка главы I, 28.09.2026) — `rules/squat-traits.mjs`
+  (читатели возможностей) + `rules/library/squat.mjs` (галочки Умелых Рук
+  +15/+15, отдаёт источник «core»): Расклин +30 (`combat/clear-jam.mjs`),
+  Преимущество на сопротивление Toxic (`hooks.mjs`), лестница Сна «без сна
+  до 3 суток» (`constants/vitals.mjs`, ctx.sleepGraceDays), пороги Мутации
+  Астартес (`mutations.asAstartes`), Бег ≤ Натиска и тест Трудного Ландшафта
+  по Awareness (`rules/character/movement.mjs`, `combat/movement-terrain.mjs`).
 - `module/constants/legions.mjs` — Легионы Космодесанта (Геносемя/Культура/
   Проклятье); `rules/legion-fit.mjs`, `legion-upgrade.mjs`.
 - Пути Азуриан: `constants/aeldari-paths.mjs`, `rules/library/paths.mjs`,

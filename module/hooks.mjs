@@ -146,6 +146,8 @@ import { maybeAutoReleaseGrapple, grappleReleaseTriggered } from "./combat/grapp
 import { weaponProfiles } from "./combat/weapon-profiles.mjs";
 import { isIntegralAttack } from "./combat/equipped-melee.mjs";
 import { collectTestMods } from "./rules/roll-mods.mjs";
+import { rollD100WithReroll } from "./rules/test-kind-widget.mjs";
+import { poisonResistReroll } from "./rules/squat-traits.mjs";
 import { expireCommandsAtTurnStart, clearCommandsOnCombatEnd, commandMoraleOn } from "./combat/command-state.mjs";
 import { syncArmorFieldShields } from "./combat/armor-field-shield.mjs";
 
@@ -2316,9 +2318,11 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
     // другим condition и этот флаг не несут.
     const resistMods = collectTestMods(actor, { kind: "skill", char: testChar, poisonTest: condition === "poisoned" });
     const threshold = charTotal + testMod + resistMods.total;
-    const roll      = await new Roll("1d100").evaluate();
-    allRolls.push(roll);
-    const rv        = roll.total;
+    // Преимущество против яда (Крепкий как Камень, rules/squat-traits.mjs):
+    // дважды, берётся лучший — тот же бросок, что у Кубика диалога.
+    const { rv, rolls: resistRolls, rerollNote } =
+      await rollD100WithReroll(poisonResistReroll(actor, condition));
+    allRolls.push(...resistRolls);
     resisted        = rv <= threshold;
     deg             = Math.max(1, Math.floor(Math.abs(rv - threshold) / 10) + 1);
     // Плашка Бросок/Режим/Порог — общим сборщиком (wdbc-fyvv): слагаемые
@@ -2328,9 +2332,9 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
       parts: [testMod !== 0 ? `${testMod >= 0 ? "+" : ""}${testMod}` : "", ...resistMods.parts],
       threshold, rv
     });
-    resistOutcome = resisted
+    resistOutcome = rerollNote + (resisted
       ? `<span class="roll-success">Цель сопротивилась — эффект не наложен</span>`
-      : `<span class="roll-failure">Провал (${deg} ст.) — эффект наложен</span>`;
+      : `<span class="roll-failure">Провал (${deg} ст.) — эффект наложен</span>`);
   }
 
   // Состояния, которые накладываем при провале. minDoP (Вибро — Ничком только
