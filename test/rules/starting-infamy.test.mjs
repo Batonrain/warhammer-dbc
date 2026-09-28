@@ -35,10 +35,11 @@ describe("стартовое Бесчестие", () => {
   // Книга развела расы: у Человека Inf 19, у недочеловеков главы I (Скват,
   // Репликант, Огрин, Ратлинг, Зверолюд) — 14 (сверка главы I, 28.09.2026).
   // Формула это переживает; проверка следит, что база берётся у расы.
-  it("у Человека база Бесчестия 19, у Сквата и Репликанта — 14 по книге", () => {
+  it("у Человека база Бесчестия 19, у Сквата, Репликанта и Ратлинга — 14 по книге", () => {
     expect(RACES.human.chars.inf).toBe(19);
     expect(RACES.squat.chars.inf).toBe(14);
     expect(RACES.replicant.chars.inf).toBe(14);
+    expect(RACES.ratling.chars.inf).toBe(14);
     expect(startingInfamyFormula(RACES.replicant.chars.inf, true)).toBe("14+1d5");
   });
 });

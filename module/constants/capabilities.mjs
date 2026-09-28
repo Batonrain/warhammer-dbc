@@ -5138,8 +5138,11 @@ export const CAPABILITIES = {
     source: "A Thousand Songs / Тысяча Песен", reader: ""
   },
   "trait.barefoot": {
-    label: "+20 Stealth (бесшумность).",
-    source: "Barefoot / Босоногий", reader: ""
+    label: "Без обуви: +20 и переброс Stealth для бесшумного передвижения и тестов Трудного Ландшафта.",
+    source: "Barefoot / Босоногий",
+    // Имя как Возможность не выдаётся: Черта несёт четыре записи testMod/reroll
+    // с условием when.predicates.wearsFootwear:false, ключ здесь — справка.
+    reader: "записи Конструктора на Черте (testMod/reroll, области skill:stealth и terrain) под условием module/rules/predicates.mjs wearsFootwear(); тест Ландшафта — module/combat/movement-terrain.mjs::_resolveDifficultTerrain. Текстом: хождение по камням/стеклу, обувь в экстремальном климате"
   },
   "trait.bestial": {
     label: "Авто Survival; не использует сложные действия.",
@@ -5527,8 +5530,9 @@ export const CAPABILITIES = {
     source: "Ritual of Eight Spokes / Ритуал Восьми Спиц", reader: ""
   },
   "trait.runt": {
-    label: "−4 Ран; Compact с оружием.",
-    source: "Runt / Коротышка", reader: ""
+    label: "−4 к максимуму Ран; винтовки — как длинные; двуручное стрелковое — только двумя руками; Compact снимает штрафы.",
+    source: "Runt / Коротышка",
+    reader: "module/rules/runt.mjs isRunt() — максимум Ран: module/rules/character.mjs (effectiveMax); винтовка как длинная: module/combat/weapon-mods.mjs getModEffects(); без «1р»: module/rules/hands.mjs availableRangedGrips() и module/sheets/attack-dialog.mjs. Оружие Размера 0 — ограничений нет, ничего не нужно"
   },
   "trait.scrounge": {
     label: "Тратит смену работы и Очко Бесчестья, чтобы добыть расходники/находку до 2d10 Редкости (R2).",

@@ -878,6 +878,15 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   (предикат `targetIsAstartes`); Сознание Стаи — стая (`node.pack`) в
   `combat/command-state.mjs::packOf` + `rules/command-effects.mjs::
   effectivePresence`; Феромонные Железы — записи testMod на Черте.
+- Ратлинг (сверка главы I, 28.09.2026): Коротышка — `rules/runt.mjs`
+  (−4 к производному максимуму Ран `system.wounds.effectiveMax` + строка
+  «С учётом Черт» в блоке РАНЫ; винтовке без Compact — свойство longRifle
+  через `combat/weapon-mods.mjs::getModEffects`; без хвата «1р» у двуручного
+  стрелкового — `rules/hands.mjs` и `sheets/attack-dialog.mjs`). Босоногий —
+  условие «босиком» `when.predicates.wearsFootwear:false`
+  (`rules/predicates.mjs::wearsFootwear`: броня с AP на ногах или Маг-Сапоги)
+  и область теста `terrain` (тест Трудного Ландшафта,
+  `combat/movement-terrain.mjs`, теперь с перебросом).
 - `module/constants/legions.mjs` — Легионы Космодесанта (Геносемя/Культура/
   Проклятье); `rules/legion-fit.mjs`, `legion-upgrade.mjs`.
 - Пути Азуриан: `constants/aeldari-paths.mjs`, `rules/library/paths.mjs`,

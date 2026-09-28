@@ -5,6 +5,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { fullyArmedReliabilityBonus } from "./fully-armed.mjs";
+import { runtRifleIsLong } from "../rules/runt.mjs";
 
 /** Все установленные на данное оружие модификации (среди предметов актора). */
 export function getInstalledMods(actor, weapon) {
@@ -92,6 +93,14 @@ export function getModEffects(actor, weapon) {
   // не-тяжёлого стрелкового оружия с установленным Custom Grip (см.
   // module/combat/fully-armed.mjs; вес — отдельно, в module/constants/rig.mjs).
   fx.reliabilityMod += fullyArmedReliabilityBonus(actor, weapon);
+
+  // Runt / Коротышка (Ратлинг): «считает все винтовки длинными винтовками» —
+  // свойство «Длинная Винтовка» (нельзя стрелять в рукопашной), пока на
+  // винтовке нет модификации Compact (module/rules/runt.mjs).
+  if (runtRifleIsLong(actor, weapon)) {
+    fx.addProps.push({ key: "longRifle", rating: 0, rating2: 0 });
+    fx.names.push("Коротышка: винтовка как длинная");
+  }
 
   return fx;
 }

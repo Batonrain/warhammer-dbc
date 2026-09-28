@@ -472,7 +472,9 @@ describe("общее требование к предикатам", () => {
     // system.fieldPsyMod ЦЕЛИ, значение из `when` не участвует.
     targetHasFieldPsyMod: undefined,
     // Цель без герметичной брони (wdbc-1rno.11, Миазмы) — читает ЦЕЛЬ.
-    targetLacksSealedArmour: undefined
+    targetLacksSealedArmour: undefined,
+    // Обут ли (Barefoot / Босоногий Ратлинга): false — «босиком».
+    wearsFootwear: false
   };
 
   it("на пустом акторе каждый возвращает строго true или false", () => {

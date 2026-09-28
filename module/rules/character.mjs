@@ -48,6 +48,7 @@ import { runeMax } from "./sigillite-runes.mjs";
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
 import { applyParasiteFusion, fusedParasite, fuseParasiteCharacteristic } from "./parasite-trait.mjs";
 import { woundLevel } from "./wound-tier.mjs";
+import { woundsMaxMods as runtWoundsMaxMods } from "./runt.mjs";
 import { prepareFinalPools } from "./character/final-pools.mjs";
 import { prepareMovementDerived } from "./character/movement.mjs";
 import { prepareArmourDerived } from "./character/armour.mjs";
@@ -748,9 +749,28 @@ export function prepareCharacterDerived(actor, system) {
       // effectiveMax, если оно есть, иначе .max — тот же приём, что tier/
       // tierLabel/tierLost ниже. Считается ДО woundLevel(system) — та читает
       // effectiveMax в этом же проходе prepareDerivedData.
-      system.wounds.effectiveMax = hasRuleFlag(actor, DREADNOUGHT_PILOT_FLAG)
-        ? Math.max(0, (Number(system.wounds.max) || 0) + SARCOPHAGUS.woundsMax)
-        : (Number(system.wounds.max) || 0);
+      //
+      // Тем же каналом — Runt / Коротышка Ратлинга, «−4 к максимуму Ран»
+      // (rules/runt.mjs): разовая правка хранимого .max на Этапе 1 Мастера
+      // упиралась в ноль (Раны ещё не брошены) и терялась. maxMods — список
+      // поправок для строки «с учётом Черт» в блоке РАНЫ (tab-combat.hbs).
+      const baseWoundsMax = Number(system.wounds.max) || 0;
+      const woundsMods = [
+        ...(hasRuleFlag(actor, DREADNOUGHT_PILOT_FLAG) ? [{ label: "Саркофаг Дредноута", value: SARCOPHAGUS.woundsMax }] : []),
+        ...runtWoundsMaxMods(actor)
+      ];
+      system.wounds.maxMods = woundsMods;
+      system.wounds.effectiveMax = woundsMods.length
+        ? Math.max(0, baseWoundsMax + woundsMods.reduce((sum, m) => sum + m.value, 0))
+        : baseWoundsMax;
+      // Текущие Раны не выше производного максимума — тот же клампинг на
+      // производных, что у sanity.value/ablative ниже: Мастер кладёт
+      // value = max одним броском, и без клампа Коротышка первые бои
+      // ходил бы с Ранами сверх своего максимума. Только когда поправка есть
+      // и база задана: у пустого листа (max 0) клампить не во что.
+      if (woundsMods.length && baseWoundsMax > 0) {
+        system.wounds.value = Math.min(Number(system.wounds.value) || 0, system.wounds.effectiveMax);
+      }
       const wLvl = woundLevel(system);
       system.wounds.tier = wLvl.displayKey;
       system.wounds.tierLabel = wLvl.displayLabel;
