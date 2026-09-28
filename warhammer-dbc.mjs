@@ -116,6 +116,7 @@ import { initForceMoveHud } from "./module/combat/force-move-menu.mjs";
 import { initTearOpenHud } from "./module/combat/tear-open.mjs";
 import { initFreeAttackHooks } from "./module/combat/free-attack.mjs";
 import { initSqueezeHooks } from "./module/combat/squeeze.mjs";
+import { initBoneHeadHooks } from "./module/combat/bone-head.mjs";
 import { initOverwatchHooks } from "./module/combat/overwatch.mjs";
 import { initFirePointHooks } from "./module/combat/fire-point.mjs";
 import { checkAuras, clearAuraGrants } from "./module/regions/auras.mjs";
@@ -1378,6 +1379,8 @@ Hooks.once("init", () => initTearOpenHud());
 Hooks.once("init", () => initMovedFlagTracking());
 Hooks.once("init", () => initFreeAttackHooks());
 Hooks.once("init", () => initSqueezeHooks());
+// BONE-Head (Огрин): вышел из поля Haywire — сбой импланта и Ступор от поля снимаются сами.
+Hooks.once("init", () => initBoneHeadHooks());
 Hooks.once("init", () => initOverwatchHooks());
 // Огневая Точка (Хавок): сдвиг токена / Повален гасят точку (combat/fire-point.mjs).
 Hooks.once("init", () => initFirePointHooks());

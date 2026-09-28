@@ -222,7 +222,8 @@ async function _applyHaywire(actor, rating, damage2 = "") {
     : tier.text;
   // BONE-Head Огрина (wdbc, сверка расы Огрин): та же мощность поля сбивает
   // мозговой имплант — 3+ автопровал тестов I, 7+ Ступор (combat/bone-head.mjs).
-  const boneHeadNote = await applyHaywireToBoneHead(actor, total);
+  // rating — радиус поля: вышедший за него Огрин освобождается сам.
+  const boneHeadNote = await applyHaywireToBoneHead(actor, total, rating);
   return `<div class="dmg-tb-note">📡 ЭМИ${rating ? ` (радиус ${rating} м)` : ""}: 1d10=<b>${total}</b> → <b>${tier.label}</b>. ${text}</div>${boneHeadNote}`;
 }
 

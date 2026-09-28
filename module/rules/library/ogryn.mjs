@@ -37,9 +37,8 @@ export const OGRYN_RULES = [
 export const OGRYN_TRAIT_RULES = [
   {
     // «Любой тест I занимает у Огрина минимум полное действие и при Успехе
-    // дает не больше 1 Успеха». Полное действие система не навязывает (у
-    // теста Навыка нет своей цены в ОД) — оно названо в той же строке
-    // карточки, где срезаны Успехи.
+    // дает не больше 1 Успеха». Полное действие — 2 ОД до броска в свой Ход
+    // в бою (combat/bone-head.mjs::payIntTestAction из _runTest листа).
     id: "ogryn.boneHead.intTest",
     label: "BONE-Head",
     when: { hasTrait: "BONE-Head" },
@@ -50,8 +49,10 @@ export const OGRYN_TRAIT_RULES = [
   },
   {
     // «При попадании в поле Haywire интенсивностью 3+ … автоматически
-    // проваливает все тесты I». Чтение, письмо, счёт больше пяти и «ментальные
-    // действия вдвое дольше» — в карточке попадания (combat/bone-head.mjs).
+    // проваливает все тесты I». Чтение, письмо, счёт больше пяти — в карточке
+    // попадания (combat/bone-head.mjs); «ментальные действия вдвое дольше» —
+    // трата ОД (combat/action-economy.mjs::effectiveApCost) и срок
+    // Длительного (combat/sustained-action.mjs).
     id: "ogryn.boneHead.haywire",
     label: "BONE-Head в поле Haywire 3+",
     when: { hasTrait: "BONE-Head", haywireFieldMin: 3 },
