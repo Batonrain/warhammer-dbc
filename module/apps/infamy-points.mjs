@@ -14,6 +14,8 @@ import { esc } from "../helpers/utils.mjs";
 import { conditionRemoveFields, fatigueChangeFields, announceFatigueChange } from "../sheets/tabs/conditions.mjs";
 import { tempInfamyInfo, tempInfamyAmount, spendTempInfamy } from "../rules/temp-infamy.mjs";
 import { inPariahVoid } from "../rules/null-zones.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
+import { infamyBoostNotes } from "../rules/infamy-fail-success.mjs";
 
 /**
  * Текущие Очки Бесчестия актора — тот же путь, что и лист (actor-sheet.mjs
@@ -228,6 +230,9 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta 
     lines.push(`Вспышка Гения: +<b>${r.total}</b> Успехов к успешному тесту.`);
   } else {
     lines.push(ability.desc);
+    // Надбавки Черт к Усилению (Змеиный Язык: +1 Успех в социальных
+    // взаимодействиях, rules/infamy-fail-success.mjs) — напоминанием в карточке.
+    if (key === "boost") lines.push(...infamyBoostNotes(flag => hasRuleFlag(actor, flag)));
   }
 
   await actor.update(upd);

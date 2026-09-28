@@ -58,6 +58,7 @@ import { withWitchsEdge }                             from "./witchs-edge.mjs";
 import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
 import { bloodFlameDamageBonus }                      from "../rules/blood-flame.mjs";
 import { preciseLegacyDamageBonus, wrathLegacyDamageBonus, legacyWrathEffectiveRof, betrayalLegacyActive, legacyHistoryIs, excessLegacyExtraDeg, bloodLegacyDamageBonus, legacyChangeDamageBonus, takenMutationNames, swiftLegacyRangedDodgePenalty, swiftLegacyMeleeDodgePenalty, dishonorableLegacyActive, distractingLegacyActive, DISTRACTING_LEGACY_FLAG, LEGACY_GUARDIAN_FLAG, earlyDeathLegacyDamageBonus, markEarlyDeathLegacyUsed, adaptiveLegacyMeleeDamageBonus, pendulumLegacyFlagValue, incrementPunisherLegacyStack, soulboundLegacyDamageBonus, consumeSoulboundLegacyBonus, legacyDeadlyTrapEligible, legacyDeadlyTrapDamageDelta, consumeLegacySlaughterBonus, legacySlaughterAmmoReliability, patienceLegacyOverwatchWeapon, consumePatienceLegacyOverwatchPending } from "../rules/legacy-weapon.mjs";
+import { adroitDegreeBonus } from "../rules/adroit.mjs";
 import { isActorsOwnTurn } from "./delay-action.mjs";
 import { meleeContactCount } from "./tactical-map.mjs";
 import { betrayalRandomAllyToken } from "./legacy-weapon-betrayal.mjs";
@@ -76,7 +77,6 @@ import { isBiteName } from "../rules/integral-rating.mjs";
 import { VENOM_BITE_CAPABILITY, venomBiteDamage } from "../rules/naga-traits.mjs";
 import { fieldDisablesWeapon } from "../rules/null-zones.mjs";
 import { isHeadHit } from "./armor-properties.mjs";
-import { hasRuleFlag } from "../rules/flags.mjs";
 import { COLD_KILLER } from "../rules/cold-killer.mjs";
 import { LEGIONNAIRE_VIRTUOSO, isLegionRangedWeapon } from "../rules/legionnaire-virtuoso.mjs";
 import { SKY_PREDATOR, activeDieResults, isChargeFromFlight, swapDiceFor } from "../rules/die-swap.mjs";
@@ -609,7 +609,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Бой Один На Один (Палач, combat/single-combat.mjs): +1 Успех к успешной
   // рукопашной атаке (тест WS/S/A), пока на сцене ровно один враг в контакте.
   const singleCombatDeg = (hit && isMelee) ? singleCombatBonus(actor, { success: hit, charKey }) : 0;
-  const deg = rolledDeg + savageBonus + excessBonus + singleCombatDeg;
+  // Искусный (Adroit, Ренегат — rules/adroit.mjs): +1 Успех к успешной атаке
+  // на выбранной WS/BS. Только когда исход решил бросок (autoHitKind пуст):
+  // Распыление и «ровно N Успехов» тестом Характеристики не являются.
+  const adroitBonus = autoHitKind ? 0 : adroitDegreeBonus(actor, charKey, hit);
+  const deg = rolledDeg + savageBonus + excessBonus + singleCombatDeg + adroitBonus;
   // Посох/Крюк (core.json, «Типы Рукопашного Оружия»): «При Избирательном
   // попадании в Ногу [Посохом]... может потратить Реакцию, чтобы провести
   // против цели прием Повалить» / «На 3+ Успеха на попадание [Крюком]...».

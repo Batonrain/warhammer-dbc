@@ -105,41 +105,46 @@ export const ARCHETYPES = {
   },
 
   // ═══════════════════════════════ ЛЮДИ ═══════════════════════════════════
+  // Сверка с книгой (глава I, Архетипы Людей) — 28.09.2026: тексты навыков/
+  // Талантов/снаряжения дословно по книге (снаряжение разбирает Этап 5
+  // Мастера создания: «,» — отдельные строки книги, «или» — выбор).
   apostate: {
     name: "Отступник", race: "human", wounds: "9+1d5", charBonus: { fel: 5, int: 2 },
-    skills:  "Linguistics (High Gothic, True Tongue), Awareness, Charm, Command, Deceive, Inquiry, Scrutiny, Schol. Lore (любые 3), Forbidden Lore (любые 3), Dodge или Parry, Interrogate или Sleight of Hand, Intimidate или Commerce, Security/Stealth/Logic, Charm+10 или Deceive+10, Command+10 или Inquiry+10",
-    talents: "Air of Authority, Hatred (любые 2), Peer (любые 2), Cover Up, Total Recall, Unshakeable Will, Weapon Training (любые 3), Clues From the Crowd/Light Sleeper/Unremarkable, Disturbing Voice/Field Execution/Radiant Presence, Decadence/Polyglot/Mimic, Inspire Wrath/Iron Discipline/Minion (Средний)",
-    gear:    "Autopistol (Best.Q)/Laspistol (Good.Q)/Blast Pistol, Chain Weapon (до R1, Good.Q)/Power Weapon (до R2), Full Flak Armour (Best.Q)/Mesh Armour, Cogitator (Best.Q)/Loud Hailer (Best.Q)/Hololith (Good.Q), Disguise Kit (Best.Q)/Torture Tools (Best.Q)/Unholy Tomes",
+    skills:  "Linguistics (High Gothic, True Tongue), Awareness, Charm, Command, Deceive, Inquiry, Scrutiny, Schol. Lore (любые 3), Forbidden Lore (любые 3), Dodge или Parry, Interrogate или Sleight of Hand, Intimidate или Commerce, Security или Stealth или Logic, Charm +10 или Deceive +10, Command +10 или Inquiry +10",
+    talents: "Air of Authority, Hatred (любые 2), Peer (любые 2), Cover Up (суммарно на 10 Inf без траты Inf), Total Recall, Unshakeable Will, Weapon Training (любые 3), Clues From the Crowd или Light Sleeper или Unremarkable, Disturbing Voice или Field Execution или Radiant Presence, Decadence или Polyglot или Mimic, Inspire Wrath или Iron Discipline или Minion (Средний)",
+    gear:    "Autopistol (Best.Q) или Laspistol (Good.Q) или Blast Pistol, Chain Weapon (до R1, Good.Q) или Power Weapon (до R2), Full Flak Armour или Mesh Armour, Cogitator (Best.Q) или Loud Hailer(Best.Q) или Hololith(Good.Q), Disguise Kit(Best.Q) или Torture Tools(Best.Q) или Unholy Tomes",
     trait: { name: "Serpent's Tongue / Змеиный Язык",
-      benefit: "При провале социального/командного/допроса теста может потратить Очко Бесчестья, чтобы вместо этого преуспеть на 1 Успех. Игнорирует требования по Inf для Миньонов-людей." },
-    desc: "Знания, связи и навыки решают задачи словом, а не насилием."
+      benefit: "Когда Отступник проваливает тест социального взаимодействия, командования или допроса, он может потратить Очко Бесчестия, чтобы вместо этого преуспеть в нем на 1 Успех. При трате дополнительных Очков Бесчестия даёт +1 Успех к Усилению на социальные взаимодействия. Отступник игнорирует требования по Inf для Миньонов-людей." },
+    desc: "У вас есть знания, связи, и навыки, чтобы решать задачи словом, а не насилием. Возможно раньше вы были придворным интриганом, шпионом, следователем Арбитес, или даже падшим агентом Инквизиции."
   },
+  // Ключ heresiarch — исторический (на нём живые персонажи), в книге Архетип
+  // называется «Демонолог».
   heresiarch: {
-    name: "Ересиарх", race: "human", wounds: "9+1d5", charBonus: { int: 5, wp: 2 },
-    skills:  "Linguistics (Battle Cant, True Tongue), Awareness, Charm, Command+10, Deceive+10, Inquiry, Scrutiny, Schol. Lore (Occult)+10, For. Lore (Heresy, Warp)+10, For. Lore (Daemons)+20, Dodge или Parry, Interrogate или Intimidate, Inquiry+10 или Scrutiny+10",
-    talents: "Erudite Infernal, Hatred (Ecclesiarchy), Jaded, Peer (Daemons), Total Recall, Melee Training (любые 2), Weapon Training (любые 3), Scapegoat, Unholy Devotion, Minion (Высший, Демон), Foresight/Rite Puzzler/Wisdom of the Ancients",
-    gear:    "Autopistol (Good.Q)/Laspistol, Runic Weapon (Прим., Best.Q)/Sacrificial Athame, Full Flak Armour (Good.Q)/Light Carapace, 1 Мистическое Снаряжение или Инструмент (до R3), 2× Unholy Tomes (на разные темы), Записи Ритуалов на суммарную Редкость 11 (не выше R3 каждый)",
-    trait: { name: "Cult Leader / Лидер Культа",
-      benefit: "Имеет фанатичный культ: добровольные жертвы для ритуалов, Навыки +10 для ритуалов. Может использовать I вместо W или W вместо I с Преимуществом. Игнорирует требования по Inf для Миньонов-демонов." },
-    desc: "Лидер собственного культа, опытный оккультист."
+    name: "Демонолог", race: "human", wounds: "9+1d5", charBonus: { int: 5, wp: 2 },
+    skills:  "Linguistics (Battle Cant, True Tongue), Awareness, Charm, Command+10, Deceive+10, Inquiry, Scrutiny, Schol. Lore (Occult)+10, For. Lore (Heresy, Warp)+10, For. Lore (Daemons)+20, Dodge или Parry, Interrogate или Intimidate, Inquiry +10 или Scrutiny +10",
+    talents: "Erudite-Infernal, Hatred (Ecclesiarchy), Jaded, Peer (Daemons), Total Recall, Melee Training (любые 2), Weapon Training (любые 3), Scapegoat, Unholy Devotion, Minion (Высший, Демон), Foresight или Rite Puzzler или Wisdom of the Ancients",
+    gear:    "Autopistol (Good.Q) или Laspistol, Runic Weapon (Примитивное, Best.Q) или Sacrificial Athame, Full Flak Armour(Good.Q) или Light Carapace, 1 Мистическое Снаряжение или Инструмент (до R3), 2×Unholy Tomes (на разные темы), Записи Ритуалов на суммарную Редкость 11 (но не выше R3 каждый)",
+    trait: { name: "Dark Seer / Ведун Тьмы",
+      benefit: "Он мастер запретных ритуалов, способный обращаться к потусторонним силам Варпа. Его глубокое знание тайн нерождённых позволяет гибко адаптировать методики проведения ритуалов даже в самых нестабильных условиях. Он без труда использует тонкости варпа, заменяя одну характеристику другой там, где это необходимо, чтобы повысить эффективность своих ритуалов. Демонолог может использовать I вместо W или W вместо I в тестах ритуалов, а если использует «правильную» Характеристику, он получает Преимущество на этот тест. Демонолог игнорирует требования по Inf для Миньонов-демонов." },
+    desc: "Вы опытный оккультист, сведущий в темных и запретных тайнах, и способный превратить эти знания в грозное оружие."
   },
   renegade: {
     name: "Ренегат", race: "human", wounds: "10+1d5", charBonus: { bs: 5, ws: 2 },
     skills:  "Athletics, Awareness, Dodge, Parry, Common Lore (War)+10, Schol. Lore (Tactica Imperialis), Operate (Surface), Command или Intimidate, Survival или Stealth, Tech-Use или Medicae, Dodge+10 или Parry+10",
-    talents: "Jaded, Quick Draw, Rapid Reload, Weapon Training (любые 6), Chamber In/Combat Sense, Sure Strike/Deadeye Shot/Marksman, Double Tap/Disarm/Takedown, Two Weapon Wielder (любой 1)/Hip Shooting, Bayonet Charge/Covering Fire, Dragoon/Tracking Aim",
-    gear:    "Lasgun (Best.Q)/Bolter (Good.Q)/Plasma Gun/Heavy Flamer, Combi-Flamer/Auxiliary Grenade Launcher/Long-Las, Laspistol (Best.Q)/Bolt Pistol (Good.Q), Chain Weapon (до R1, Good.Q)/Power Weapon (до R2), 6 модификаций для оружия (до R2), Tempestus Carapace (Good.Q)/Xeno Mesh + Cameleoline Cloak, 4 модификации для брони (до R2), Rebreather (Best.Q)/Stummer, Medkit (Best.Q)/Recoil Glove (Good.Q)/Vox Caster",
+    talents: "Jaded, Quick Draw, Rapid Reload, Melee Training (любые 2), Weapon Training (любые 5), Catfall или Combat Sense, Chamber In или Double Tap или Trick Shooter, Sure Strike или Deadeye Shot или Marksman, Double Team или Disarm или Takedown, Two Weapon Wielder (любой 1) или Hip Shooting, Bayonet Charge или Covering Fire, Dragoon или Tracking Aim",
+    gear:    "Lasgun (Best.Q) или Bolter (Good.Q) или Plasma Gun или Heavy Flamer, Combi-Flamer или Auxiliary Grenade Launcher или Long-Las, Laspistol (Best.Q) или Bolt Pistol (Good.Q), Chain Weapon (до R1, Good.Q) или Power Weapon (до R2), 6 Модификаций для оружия (до R2), Tempestus Carapace (Good.Q) или Xeno Mesh + Chameleoline Cloak, 4 Модификации для брони (до R2), Rebreather(Best.Q) или Magnoculars(Best.Q) или Stummer, Medkit(Best.Q) или Recoil Glove (Good.Q) или Vox Caster",
     trait: { name: "Adroit / Искусный",
-      benefit: "Выбирает одну Характеристику (кроме Inf и Cor): все успешные тесты на неё (в т.ч. навыки через неё) получают +1 Успех." },
-    desc: "Опытный профессиональный солдат — павший штурмовик или элитный боец армий Хаоса."
+      benefit: "При создании персонажа, Ренегат выбирает одну Характеристику (кроме Inf и Cor). Все успешные тесты на эту Характеристику (в т.ч. тесты на навыки через эту Характеристику) получают +1 Успех." },
+    desc: "Вы опытный профессиональный солдат, возможно павший Имперский штурмовик или ветеран Гвардии, или же элитный боец одной из армий Хаоса."
   },
   pirate: {
     name: "Пират", race: "human", wounds: "10+1d5", charBonus: { ws: 5, bs: 2 },
     skills:  "Acrobatics, Awareness, Dodge+10, Parry, Stealth, Common Lore (Imperial Fleet, Tech), Operate (Aeronautica), Commerce или Intimidate, Interrogate или Security, Trade (Technomat, Voidfarer), Awareness+10 или Parry+10",
-    talents: "Ambidextrous, Jaded, Quick Draw, Two Weapon Wielder (Melee, Ranged), Melee Training (любые 3), Weapon Training (любые 4), Lightning Reflexes/Drop and Roll, Catfall/Pirouette, Blind Fighting/Steady Footwork/Street Fighting, Double Team/Disarm/Takedown, Close Quarters/Plasma Expertise/Wallop, Gun Guard/Sideblade/Knife Fighter",
-    gear:    "Vox-Бусина (+Fist Grip)/Bolt Revolver/Plasma Pistol, Chain Weapon (до R1, Good.Q)/Power Weapon (до R2), Shock Weapon (до R1)/Snare Gun (Good.Q)/Webber, 6 модификаций для оружия (до R2), Xeno Mesh (+Void)/Void Suit Helmet, 3 модификации для брони (до R2), Recoil Glove (Best.Q)/Mag-Boots (Good.Q)/Gravchute, Rebreather (Best.Q)/Photo-Visor (Best.Q)/Chem Injector (Good.Q)",
+    talents: "Ambidextrous, Jaded, Quick Draw, Two Weapon Wielder (Melee, Ranged), Melee Training (любые 3), Weapon Training (любые 4), Lightning Reflexes или Drop and Roll, Catfall или Pirouette, Blind Fighting или Steady Footwork или Street Fighting, Double Team или Disarm или Takedown, Close Quarters или Plasma Expertise или Wallop, Gun Guard или Sideblade или Knife Fighter",
+    gear:    "Vox-Legi Shotgun(+Pistol Grip) или Bolt Revolver или Plasma Pistol, Chain Weapon (до R1, Good.Q) или Power Weapon (до R2), Shock Weapon или Snare Gun(Good.Q) или Webber, 6 Модификаций для оружия (до R2), Xeno Mesh(+Void) + Void Suit Helmet, 3 Модификации для брони (до R2), Recoil Glove(Best.Q) или Mag-Boots (Good.Q) или Gravchute, Rebreather(Best.Q) или Photo-Visor(Best.Q) или Chem Injector (Good.Q)",
     trait: { name: "Take Everything / Забирай Всё",
-      benefit: "Преимущество на все тесты поиска/оценки трофеев. Несёт предметы до своего веса Ношения независимо от разгрузки (всё считается на удобных разгрузках)." },
-    desc: "Заработал навыки и славу на борту корабля — Имперский Флот, Вольный Торговец или банда Хаоса."
+      benefit: "Пират получает Преимущество на все тесты на поиск и оценку трофеев. Он может нести на себе до своего веса ношения предметов, независимо от разгрузки, считая все на удобных разгрузках." },
+    desc: "Вы заработали свои навыки и славу на борту корабля. Возможно раньше вы служили в Имперском Флоте, флоте Вольного Торговца, или же на корабле одной из банд Хаоса."
   },
   savage: {
     name: "Дикарь", race: "human", wounds: "11+1d5", charBonus: { t: 5, s: 2 },

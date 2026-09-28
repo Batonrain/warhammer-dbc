@@ -24,6 +24,7 @@ import { danceOfFireAdvantage } from "../rules/dodge-advantage.mjs";
 import { duckAndCoverAdvantage } from "../rules/duck-and-cover.mjs";
 import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
+import { adroitDegreeBonus } from "../rules/adroit.mjs";
 import { retractPart, extendPart, allLimbsCompressed } from "../rules/compression.mjs";
 import { activeSwarm, consumeSwarmScreamer } from "../rules/ethereal-swarm.mjs";
 import { degreesOfSuccess } from "../constants/craft.mjs";
@@ -181,9 +182,10 @@ export async function _performDodge(actor, {
   // Формула степени успеха/провала — module/rules/roll-outcome.mjs (wdbc-5dvx,
   // раньше дублировалась вручную здесь же).
   const { success: passed, deg: rolledDeg } = testOutcome(rv, threshold);
-  // Бой Один На Один (Палач, combat/single-combat.mjs): +1 Успех к успешному
-  // Уклонению (A), пока на сцене ровно один враг в контакте без чужой подмоги.
-  const deg = rolledDeg + singleCombatBonus(actor, { success: passed, charKey: "ag" });
+  // Бой Один На Один (Палач, combat/single-combat.mjs) и Искусный (Ренегат,
+  // rules/adroit.mjs): +1 Успех к успешному Уклонению (A) каждый.
+  const deg = rolledDeg + singleCombatBonus(actor, { success: passed, charKey: "ag" })
+    + adroitDegreeBonus(actor, "ag", passed);
   // Взор Неизбежности: «проваливают ЭТОТ тест [Комбинированный] — теряют
   // все свои Реакции» — тот же бросок выше уже решил и Уклонение, и это.
   if (gazeActive && !passed) await _applyGazeOfInevitabilityFailure(actor);
@@ -695,9 +697,9 @@ export async function _performParry(actor, {
   const rv       = picked.value;
   // Формула степени успеха/провала — module/rules/roll-outcome.mjs (wdbc-5dvx).
   const { success: passed, deg: rolledDeg } = testOutcome(rv, threshold);
-  // Бой Один На Один (Палач, combat/single-combat.mjs): +1 Успех к успешному
-  // Парированию (WS), пока на сцене ровно один враг в контакте без чужой подмоги.
-  const deg = rolledDeg + singleCombatBonus(actor, { success: passed, charKey: "ws" });
+  // Бой Один На Один (Палач) и Искусный (Ренегат): Парирование — навык на WS.
+  const deg = rolledDeg + singleCombatBonus(actor, { success: passed, charKey: "ws" })
+    + adroitDegreeBonus(actor, "ws", passed);
   // Взор Неизбежности: «проваливают ЭТОТ тест [Комбинированный] — теряют
   // все свои Реакции» — тот же бросок выше уже решил и Парирование, и это.
   if (gazeActive && !passed) await _applyGazeOfInevitabilityFailure(actor);

@@ -1,5 +1,5 @@
 {
-  "name": "Heresiarch / Ересиарх",
+  "name": "Heresiarch / Демонолог",
   "type": "archetype",
   "img": "icons/svg/upgrade.svg",
   "folder": "kHJKOoHhPhm8nU1k",
@@ -14,7 +14,7 @@
     "charChoice": "",
     "skills": "",
     "talents": "",
-    "gear": "Runic Weapon (Прим., Best.Q), 1 Мистическое Снаряжение или Инструмент (до R3), Записи Ритуалов на суммарную Редкость 11 (не выше R3 каждый)",
+    "gear": "Autopistol (Good.Q) или Laspistol, Runic Weapon (Примитивное, Best.Q) или Sacrificial Athame, Full Flak Armour(Good.Q) или Light Carapace, 1 Мистическое Снаряжение или Инструмент (до R3), 2×Unholy Tomes (на разные темы), Записи Ритуалов на суммарную Редкость 11 (но не выше R3 каждый)",
     "wounds": "9+1d5",
     "infRoll": "",
     "requiredPath": "",
@@ -23,10 +23,10 @@
     "psykerClass": "",
     "grantsWarPlate": false,
     "grantsImplants": false,
-    "description": "Лидер собственного культа, опытный оккультист.",
+    "description": "Вы опытный оккультист, сведущий в темных и запретных тайнах, и способный превратить эти знания в грозное оружие.",
     "trait": {
-      "name": "Cult Leader / Лидер Культа",
-      "benefit": "Имеет фанатичный культ: добровольные жертвы для ритуалов, Навыки +10 для ритуалов. Может использовать I вместо W или W вместо I с Преимуществом. Игнорирует требования по Inf для Миньонов-демонов."
+      "name": "Dark Seer / Ведун Тьмы",
+      "benefit": "Он мастер запретных ритуалов, способный обращаться к потусторонним силам Варпа. Его глубокое знание тайн нерождённых позволяет гибко адаптировать методики проведения ритуалов даже в самых нестабильных условиях. Он без труда использует тонкости варпа, заменяя одну характеристику другой там, где это необходимо, чтобы повысить эффективность своих ритуалов. Демонолог может использовать I вместо W или W вместо I в тестах ритуалов, а если использует «правильную» Характеристику, он получает Преимущество на этот тест. Демонолог игнорирует требования по Inf для Миньонов-демонов."
     },
     "bookSource": "DoomBC — Основная книга"
   },
@@ -731,7 +731,16 @@
               "label": "",
               "code": "",
               "id": "ewRyz8QGt5f",
-              "kind": "talent"
+              "kind": "talent",
+              "targets": [
+                {
+                  "kind": "faction",
+                  "ref": "ecclesiarchy",
+                  "value": "",
+                  "name": "Ecclesiarchy / Экклезиархия",
+                  "img": "icons/svg/aura.svg"
+                }
+              ]
             },
             {
               "corruptionValue": "1",
@@ -801,7 +810,23 @@
               "label": "",
               "code": "",
               "id": "ewRyz8QGt5h",
-              "kind": "talent"
+              "kind": "talent",
+              "targets": [
+                {
+                  "kind": "actorType",
+                  "ref": "",
+                  "value": "daemon",
+                  "name": "Демон",
+                  "img": ""
+                },
+                {
+                  "kind": "actorType",
+                  "ref": "",
+                  "value": "demonPrince",
+                  "name": "Демон-Принц",
+                  "img": ""
+                }
+              ]
             },
             {
               "corruptionValue": "1",
@@ -1811,7 +1836,7 @@
               "op": "add",
               "value": 1,
               "sourceUuid": "Compendium.warhammer-dbc.traits.Item.l5BBc142jjTHZIwH",
-              "sourceName": "Cult Leader / Лидер Культа",
+              "sourceName": "Dark Seer / Ведун Тьмы",
               "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
               "sourceHasRating": false,
               "rating": "",

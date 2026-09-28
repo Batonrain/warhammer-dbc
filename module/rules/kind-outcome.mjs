@@ -26,6 +26,7 @@ import { getItemMechanics, findMechEntryById, scriptRunReady, markScriptRunUsed 
 import { executeItemCode } from "../apps/item-script.mjs";
 import { egomaniaOverrideResult } from "./egomania.mjs";
 import { singleCombatBonus, singleCombatNoUnnaturalTie, SINGLE_COMBAT_LINE } from "../combat/single-combat.mjs";
+import { adroitDegreeBonus } from "./adroit.mjs";
 import { hasRuleFlag } from "./flags.mjs";
 import { HYPNO_SCARS, hypnoScarsStun } from "./replicant.mjs";
 import { PERSONAL_ADAPTATION_CAPABILITY, PERSONAL_ADAPTATION_FLAG,
@@ -218,13 +219,18 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   // тест WS/S/A, пока на сцене ровно один враг в контакте без чужой подмоги.
   // Строка едет вместе с unnaturalLine — её рисует тот же лист.
   const singleCombatDeg = singleCombatBonus(actor, { success, charKey: usedCharKey });
+  // Искусный (Adroit, Ренегат — rules/adroit.mjs): +1 Успех к успешному
+  // тесту на выбранную Характеристику (usedCharKey — ей реально бросали).
+  const adroitBonus = adroitDegreeBonus(ctx?.actor ?? actor, usedCharKey, success);
   const unnaturalLine = (unnaturalBonus > 0
     ? `<div class="roll-threshold">🧬 Сверхъестественная Характеристика (${unnaturalRatingHere}): +${unnaturalBonus} ${_degWord(unnaturalBonus)}</div>`
-    : "") + (singleCombatDeg ? SINGLE_COMBAT_LINE : "");
+    : "") + (singleCombatDeg ? SINGLE_COMBAT_LINE : "") + (adroitBonus > 0
+    ? `<div class="roll-threshold">🎯 Искусный (${esc(CHARACTERISTICS[usedCharKey]?.abbr ?? usedCharKey)}): +${adroitBonus} ${_degWord(adroitBonus)}</div>`
+    : "");
   // failDegMod (wdbc-1rno: Sentient Cyst «+3 Провала при провале») — только
   // на провале, успешный тест не трогает; не может увести степень ниже 1
   // (та же граница, что testOutcome держит для success выше).
-  const uncappedDeg = success ? rawDeg + unnaturalBonus + singleCombatDeg : Math.max(1, rawDeg + (resolved.failDegExtra || 0));
+  const uncappedDeg = success ? rawDeg + unnaturalBonus + singleCombatDeg + adroitBonus : Math.max(1, rawDeg + (resolved.failDegExtra || 0));
   // Потолок Успехов (successDegMax, BONE-Head Огрина — тесты I): только на
   // Успехе, после надбавки Сверхъестественной Характеристики. Ассистентов
   // лист прибавляет позже и режет тем же degCap (sheets/actor-sheet.mjs).

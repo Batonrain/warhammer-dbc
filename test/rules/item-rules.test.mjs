@@ -185,7 +185,10 @@ describe("wdbc-u0by: реальные pack-файлы «Преимущество
 
   it("Take Everything / Забирай Всё — Преимущество на Awareness И Commerce (решение пользователя: поиск+оценка)", () => {
     const mechanics = readMechanics("packs-src/traits/Take_Everything___Забирай_Вс__tmc7Vu21z6v63Rtd.json");
-    const rules = rulesFromItemMechanics([asItem("Take Everything", mechanics)]);
+    // Третья запись — возможность trait.takeEverything (окно Разгрузки,
+    // сверка Архетипов 28.09.2026), не переброс.
+    const rules = rulesFromItemMechanics([asItem("Take Everything", mechanics)])
+      .filter(r => r.effects[0].kind === "rollMode");
     expect(rules).toHaveLength(2);
     const targets = rules.map(r => r.effects[0].target).sort();
     expect(targets).toEqual(["skill:awareness", "skill:commerce"]);

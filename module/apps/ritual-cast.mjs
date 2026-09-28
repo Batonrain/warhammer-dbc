@@ -36,6 +36,7 @@ import { isHerdSpiritsRitual } from "./herd-spirits-summon.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { hasDominator, isOwnArmiger } from "../rules/dominator.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
+import { DARK_SEER_FLAG, darkSeerAdvantage } from "../rules/dark-seer.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard, testCardHtml, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 
@@ -312,7 +313,12 @@ export async function castRitual(R, actor, {
   // Dominator / Покоритель (wdbc-u0by): «Преимущество на тесты Демонического
   // Владычества» — безусловно для R.type==="dominion", авто (кнопка «Провести
   // ритуал» катает сразу, без отдельного шага под переброс).
-  const advantage = R.type === "dominion" && hasDominator(actor);
+  const dominatorAdv = R.type === "dominion" && hasDominator(actor);
+  // Ведун Тьмы (Демонолог, rules/dark-seer.mjs): Преимущество, если тест
+  // идёт на «правильной» I/W, а не на подменённой. Два источника
+  // Преимущества не складываются — бросков всё равно два.
+  const darkSeerAdv = darkSeerAdvantage(hasRuleFlag(actor, DARK_SEER_FLAG), { ...R, testChar: d.testChar });
+  const advantage = dominatorAdv || darkSeerAdv;
   const rolled = [];
   for (let i = 0; i < (advantage ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
   const picked = pickReroll(rolled.map(r => r.total), "keepBest");
@@ -321,8 +327,9 @@ export async function castRitual(R, actor, {
   const deg = ritualDegrees(rv, threshold);
   const success = deg > 0;
   const allRolls = [roll];
+  const advLabel = [dominatorAdv ? "Покоритель" : "", darkSeerAdv ? "Ведун Тьмы" : ""].filter(Boolean).join(", ");
   const dominatorNote = picked.dropped.length
-    ? ` · Покоритель: Преимущество, отброшено ${picked.dropped.join(", ")}` : "";
+    ? ` · ${advLabel}: Преимущество, отброшено ${picked.dropped.join(", ")}` : "";
   const typeLabel = RITUAL_TYPES_MAP[R.type]?.label || R.type;
   // Разбивка Порога: к ритуальным слагаемым добавлены подписи из реестра
   // (wdbc-kuun) — Порог уже считался с Усталостью Ритуалиста, но в карточке
