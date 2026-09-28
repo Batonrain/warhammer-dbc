@@ -114,6 +114,7 @@
             {
               "id": "HeirAnointed5000",
               "kind": "script",
+              "scriptOnGrant": true,
               "group": null,
               "label": "Помазанник (5) Демон-Принца",
               "code": "// Наследник «отмечен как Помазанник(5) Демон-Принца» (стр. 463). Патрона\n// выбирают на панели «Патрон» (СОЦИУМ); рейтинг не понижаем, если выше.\nif ((Number(actor?.system?.anointed?.rating) || 0) < 5) await actor.update({ \"system.anointed.rating\": 5 });",

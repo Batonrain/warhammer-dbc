@@ -78,6 +78,10 @@ export function readAttackForm(form, ammoConds) {
   return {
     reroll: mergeReroll(namedReroll, diceChoice),
     autoFail:   all(".atk-mod-cb[data-autofail]:checked").length > 0,
+    // Причина автопровала — подпись отмеченной галочки без «(провал)» и пометок.
+    autoFailLabel: all(".atk-mod-cb[data-autofail]:checked")
+      .map(cb => (cb.parentElement?.querySelector("span")?.textContent ?? "").replace(/\s*\(провал\).*$/, "").replace(/^[^\p{L}\p{N}]+/u, "").trim())
+      .filter(Boolean).join(", "),
     // Беспомощная цель в упор/в рукопашной (см. specificMods выше) — авто-
     // успех и удвоенный урон вместо обычного порога, отдельно от autoFail.
     autoSuccess: all(".atk-mod-cb[data-autosuccess]:checked").length > 0,

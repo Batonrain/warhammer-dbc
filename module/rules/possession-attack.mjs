@@ -57,8 +57,11 @@ export function possessionStep(tally, mine, theirs) {
 }
 
 /** Можно ли сейчас пытаться вселиться в эту цель (24 ч после отпора). */
+/** uuid («Actor.xxx») с точками нельзя класть ключом флага: Foundry раскладывает точку во вложенный объект. */
+export const possessionBarKey = uuid => String(uuid).replaceAll(".", "-");
+
 export function possessionBarredRemaining(barred, targetUuid, worldTime) {
-  const at = Number(barred?.[targetUuid]);
+  const at = Number(barred?.[possessionBarKey(targetUuid)]);
   if (!Number.isFinite(at)) return 0;
   return Math.max(0, at + POSSESSION_BAR_SECONDS - Number(worldTime));
 }

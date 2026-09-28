@@ -384,7 +384,7 @@ async function grantHomeworld(actor, hw, picks) {
       charModLabel: charBonuses.map(c => `${c.value >= 0 ? "+" : "−"}${Math.abs(c.value)} ${c.stat.toUpperCase()}`).join(", "),
       choices: chosenLabels, friendlySpecs: friendly.map(f => friendlySpecKey(f.group, f.specialty))
     },
-    flags: { [FLAG]: { mechanics: charBonusesToMechanics(charBonuses) } }
+    flags: { [FLAG]: { mechanics: charBonusesToMechanics(charBonuses), ...(hw.hitLocationShift ? { hitLocationShift: true } : {}) } }
   }], { [SKIP_MECHANICS_HOOK]: true });
   if (worldItem) await applyItemMechanics(worldItem);
 

@@ -1094,6 +1094,11 @@ export function blankMechEntry(kind = "characteristic") {
     // modScope/rerollChar/skillKey переиспользуются как область — те же поля,
     // что у testMod/failDegMod.
     scriptTrigger: "",
+    // script — «При выдаче»: true = код срабатывает сам, когда предмет попал на
+    // актора (пассивные записи: стартовое расстройство, флаг Таланта). По умолчанию
+    // запись — только кнопка «▶ Запустить»; иначе кнопки с ценой и откатом
+    // срабатывали бы при выдаче Черты в Мастере создания.
+    scriptOnGrant: false,
     // when — необязательное условие по Геносемени, общее для ЛЮБОГО вида
     // записи (см. entryWhenOk ниже): пустой conditions = применяется всегда.
     // Несколько вариантов в conditions — ИЛИ («legion VII, ИЛИ legion X орден
@@ -2100,7 +2105,8 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
   }
 
   if (entry.kind === "script") {
-    await executeItemCode(sourceItem, entry.code, null);
+    // Кнопки «▶ Запустить» при выдаче не срабатывают — только записи с «При выдаче».
+    if (entry.scriptOnGrant) await executeItemCode(sourceItem, entry.code, null);
     return;
   }
 
@@ -4073,6 +4079,9 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
               title="Цена в пуле: списывается при успешном «▶ Запустить»">${poolOpts}</select>${costAmountHtml}
       <select class="mech-script-trigger" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Автозапуск по исходу теста" ${dis}>${triggerOpts}</select>
       ${triggerScopeHtml}
+      <label class="mech-script-ongrant-label" title="Запустить код сам, когда предмет попал на персонажа. Выключено — только кнопка «▶ Запустить».">
+        <input type="checkbox" class="mech-script-ongrant" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.scriptOnGrant ? "checked" : ""} ${dis}/> При выдаче
+      </label>
       <textarea class="mech-script-code" data-group-id="${groupId}" data-entry-id="${ent.id}" spellcheck="false" placeholder="// произвольный JS — item, actor, token, speaker, game, ui, ChatMessage, event" ${dis}>${esc(ent.code || "")}</textarea>`;
   }
 

@@ -976,6 +976,7 @@
             {
               "id": "My9wYI8RYKacuVC3",
               "kind": "script",
+              "scriptOnGrant": true,
               "group": null,
               "corruptionValue": "1",
               "woundsValue": "1",

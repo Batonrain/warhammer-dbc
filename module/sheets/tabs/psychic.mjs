@@ -1440,6 +1440,9 @@ export function activatePsychicListeners(html, actor, { rollSkill, resolveSoulBu
       // находить по isSustained:false, но обнулить явно честнее, чем
       // оставлять устаревший uuid висеть в данных предмета.
       upd["system.sustainedTargetUuid"] = "";
+      // Заточение Силы: замок отпущен (плод уничтожен или носитель за радиусом) —
+      // флаг не оставляем, иначе он вернётся на следующем поддержании этой силы.
+      if (item.getFlag?.("warhammer-dbc", "fruitOfFleshLockUuid")) upd["flags.warhammer-dbc.-=fruitOfFleshLockUuid"] = null;
     } else {
       // wdbc-lmd2: запоминаем текущую цель (Foundry-таргетинг) — нужна
       // способностям вида «Цели психосилы получают...» (Dragon Scales/Wings

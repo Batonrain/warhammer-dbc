@@ -301,7 +301,7 @@ export async function expireCommandsAtTurnStart(combat) {
 /** Конец боя: Присутствие («до конца боя») и всё отданное гаснут, метки Морали снимаются. */
 export async function clearCommandsOnCombatEnd(combat) {
   // Все uuid бойцов: в Отряде мировой актор, в бою — актор несвязанного токена.
-  const inCombat = new Set((combat?.combatants ?? []).flatMap(c => [...actorIdentityUuids(c.actor)]));
+  const inCombat = new Set([...(combat?.combatants ?? [])].flatMap(c => [...actorIdentityUuids(c.actor)]));
   const touches = squad => {
     const p = squad.system.posts || {};
     return [p.leader?.uuid, p.commander?.uuid, p.coordinator?.uuid, ...(squad.system.members || []).map(m => m.uuid)]

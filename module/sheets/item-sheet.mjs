@@ -2702,6 +2702,11 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.scriptThrottleUnit = ev.currentTarget.value; saveMech(arr); }
     });
+    on(".mech-script-ongrant", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.scriptOnGrant = ev.currentTarget.checked; saveMech(arr); }
+    });
     on(".mech-script-throttle-max", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);

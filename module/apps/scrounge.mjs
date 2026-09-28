@@ -68,7 +68,7 @@ export async function scroungeSupplies(actor) {
     const cat = await pickCategory(left);
     if (!cat) break;
     const picked = await openCompendiumBrowser(false, {
-      pack: cat.pack, filters: scroungeFilters(cat), budget: { mode: "count", value: left },
+      pack: cat.pack, filters: scroungeFilters(cat), budget: { mode: "count", value: left, min: 1 },
       prompt: `Наскрести: ${cat.label} — до ${left} шт., до R${SCROUNGE_MAX_AVAILABILITY}`
     });
     const list = (Array.isArray(picked) ? picked : [picked]).filter(Boolean);
