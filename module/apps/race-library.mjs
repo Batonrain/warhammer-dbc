@@ -47,6 +47,8 @@ const raceFromDoc = doc => ({
   hasGeneSeed: !!doc.system?.hasGeneSeed,
   pastRaces: [...(doc.system?.pastRaces || [])],
   largeBase: !!doc.system?.largeBase, // wdbc-8k0i: крупная База 3×3 (Огрин и т.п.)
+  startCorruption: Number(doc.system?.startCorruption) || 0,
+  archetypes: [...(doc.system?.archetypes || [])],
   uuid: doc.uuid
 });
 
@@ -59,6 +61,8 @@ const raceFromConst = (key, r) => ({
   desc: r.desc || "", hasGeneSeed: !!r.hasGeneSeed,
   pastRaces: [...(r.pastRaces || [])],
   largeBase: !!r.largeBase, // wdbc-8k0i: крупная База 3×3 (Огрин и т.п.)
+  startCorruption: Number(r.startCorruption) || 0,
+  archetypes: [...(r.archetypes || [])],
   uuid: ""
 });
 

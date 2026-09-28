@@ -198,6 +198,7 @@ export const RACES = {
     subraces: [],
     chars: { ws:25, bs:25, s:25, t:25, ag:25, int:25, per:25, wp:25, fel:25, inf:19 },
     bonusRolls: 1, bonusPoints: 4, charShift: 1,
+    archetypes: ["renegade", "pirate", "savage"],
     size: 1,
     largeBase: true, // Крупная База 3×3 (wdbc-8k0i) — не путать с `size` (бонус к SPD).
     skills:  "Athletics, Linguistics (Low Gothic)",
@@ -213,7 +214,6 @@ export const RACES = {
       { name: "Hard as Stone / Крепкий как Камень", benefit:"Сопротивление эффектам против разума; +30 vs Страх/паника при концентрации." },
       { name: "BONE-Head / Костеголов", benefit:"Мозговые импланты: Int не выше человеческого; интенсивность импланта 3+ — повышение Int." }
     ],
-    archetypes: ["Ренегат", "Пират", "Дикарь"],
     desc: "Могучий, но недалёкий нижний абхуман, возвышенный вниманием Тёмных Богов."
   },
 
@@ -222,6 +222,7 @@ export const RACES = {
     subraces: [],
     chars: { ws:25, bs:25, s:25, t:25, ag:25, int:25, per:25, wp:25, fel:25, inf:19 },
     bonusRolls: 1, bonusPoints: 4, charShift: 1,
+    archetypes: ["apostate", "heresiarch", "renegade", "pirate", "savage", "witch", "numen"],
     size: -1,
     skills:  "Common Lore (любые 2), Linguistics (Low Gothic), Sleight of Hand +10, Stealth +10, Trade (Cook + любое 1)",
     gear:    "5 элементов до R1 (2 Good.Q, 1 Best.Q), Vox-Bead",
@@ -235,7 +236,6 @@ export const RACES = {
       { name: "Barefoot / Босоногий", benefit:"Кожа на ногах прочнее: бонус +20 и перебросы Stealth для бесшумного передвижения." },
       { name: "Runt / Коротышка", benefit:"−4 к максимуму Ран; свойство Compact нивелирует штрафы за маленькое оружие." }
     ],
-    archetypes: ["Отступник", "Ересиарх", "Ренегат", "Пират", "Дикарь", "Ведьма", "Нумен"],
     desc: "Маленький, но зоркий и ловкий абхуман — идеальный разведчик и снайпер."
   },
 
@@ -244,6 +244,7 @@ export const RACES = {
     subraces: [],
     chars: { ws:25, bs:25, s:25, t:25, ag:25, int:25, per:25, wp:25, fel:25, inf:19 },
     bonusRolls: 1, bonusPoints: 4, charShift: 1,
+    archetypes: ["apostate", "heresiarch", "renegade", "pirate", "savage", "noble", "witch"],
     size: 0,
     skills:  "Common Lore (любые 2), Linguistics (Low Gothic), Tech-Use, Trade (любые 2) +10",
     gear:    "5 элементов до R1 (3 Good.Q, 2 Best.Q), Vox-Bead, +2 очка стартового снаряжения",
@@ -258,7 +259,6 @@ export const RACES = {
       { name: "Hard as Stone / Крепкий как Камень", benefit:"Сопротивление эффектам против разума при концентрации." },
       { name: "Sure Tread / Надёжная Поступь", benefit:"+1 SPD пешком; не сбивается с ног; устойчивость в невесомости/нестабильном грунте." }
     ],
-    archetypes: ["Отступник", "Ересиарх", "Ренегат", "Пират", "Дикарь", "Благородный", "Ведьма"],
     desc: "Коренастый абхуман-инженер, крепкий к Порче, но порой поддающийся соблазнам Хаоса."
   },
 
@@ -267,6 +267,7 @@ export const RACES = {
     subraces: ["slaangor","pestigor","khorngor","tzaangor"],
     chars: { ws:25, bs:25, s:25, t:25, ag:25, int:25, per:25, wp:25, fel:25, inf:19 },
     bonusRolls: 2, bonusPoints: 7, charShift: 2,
+    archetypes: ["apostate", "heresiarch", "renegade", "pirate", "savage", "witch"], startCorruption: 5,
     size: 0,
     skills:  "Common Lore (любые 2), Linguistics (Low Gothic), Survival",
     gear:    "4 элемента Снаряжения/Инструментов до R1 (1 Good.Q)",
@@ -283,7 +284,6 @@ export const RACES = {
       { name: "Cloven One / Копытный", benefit:"Двусоставные ноги: +20 на тесты Трудного Ландшафта." },
       { name: "Stepchildren of the Gods / Пасынки Богов", benefit:"+10 на тесты против заинтересованных богов Хаоса; −1 к минимуму Бесчестья 1; не мутирует от Хаоса как человек." }
     ],
-    archetypes: ["Отступник", "Ересиарх", "Ренегат", "Пират", "Дикарь", "Ведьма"],
     desc: "Звероподобный мутант человека: примитивный, но воинственный и агрессивный."
   },
   harpy: {
@@ -291,6 +291,7 @@ export const RACES = {
     subraces: [],
     chars: { ws:25, bs:25, s:25, t:25, ag:25, int:25, per:25, wp:25, fel:25, inf:19 },
     bonusRolls: 2, bonusPoints: 7, charShift: 2,
+    archetypes: ["apostate", "heresiarch", "renegade", "pirate", "savage", "noble", "witch", "numen"], startCorruption: 5,
     size: 0,
     skills:  "Common Lore (любые 2), Linguistics (Low Gothic), Operate (Aeronautica) +10, Trade (любое 1)",
     gear:    "4 элемента до R1 (1 Good.Q, 1 Best.Q)",
@@ -305,7 +306,6 @@ export const RACES = {
       { name:"Razor Talons / Бритвенные Когти", benefit:"Естественное оружие получает свойство Razor Sharp." },
       { name:"Limited Lift / Ограниченная Подъёмная Сила", benefit:"Не может летать при перегрузе Ношения и в тяжёлой броне." }
     ],
-    archetypes: ["Отступник","Ересиарх","Ренегат","Пират","Дикарь","Благородный","Ведьма","Нумен"],
     desc: "Крылатый абхуман-мутант ТЭТ: быстрый и свободный налётчик."
   },
 
@@ -314,6 +314,7 @@ export const RACES = {
     subraces: [],
     chars: { ws:25, bs:25, s:25, t:25, ag:25, int:25, per:25, wp:25, fel:25, inf:19 },
     bonusRolls: 2, bonusPoints: 7, charShift: 2,
+    archetypes: ["apostate", "heresiarch", "renegade", "pirate", "savage"], startCorruption: 5,
     size: 1,
     skills:  "Common Lore (любые 2), Linguistics (Low Gothic)",
     gear:    "4 элемента до R1 (1 Good.Q, 1 Best.Q)",
@@ -335,7 +336,6 @@ export const RACES = {
       { name:"Dark Prince's Child / Дитя Тёмного Принца", benefit:"Благословение Слаанеш." },
       { name:"Vanity Unbound / Безграничное Тщеславие", benefit:"Hatred ко всем (склонность к презрению)." }
     ],
-    archetypes: ["Отступник","Ересиарх","Ренегат","Пират","Дикарь"],
     desc: "Змееподобный результат экспериментов Скульпторов Плоти по воссозданию Лазр."
   },
 
@@ -344,6 +344,7 @@ export const RACES = {
     subraces: [],
     chars: { ws:25, bs:25, s:25, t:25, ag:25, int:25, per:25, wp:25, fel:25, inf:19 },
     bonusRolls: 2, bonusPoints: 7, charShift: 2,
+    archetypes: ["apostate", "heresiarch", "renegade", "pirate", "savage", "noble", "witch", "numen"],
     size: 0,
     skills:  "Common Lore (любые 4), Linguistics (Low Gothic), Trade (любое 1)",
     gear:    "5 элементов до R1 (2 Good.Q, 1 Best.Q), Vox-Bead",
@@ -359,7 +360,6 @@ export const RACES = {
       { name:"Gene-Splice / Ген-Сплайс", benefit:"Выбор 3 адаптаций (Сенсорные/Защитные/Атакующие/Продвинутые) — см. список адаптаций." }
     ],
     adaptations: "Сенсорные (Ищейка, Ночной Хищник, Электрочутьё, Эколокация), Защитные (Амфибия, Жгучесть, Чешуя/Панцирь), Атакующие (Выдвижные/Большие Когти, Огромная Пасть, Хлысткообразные Мышцы), Продвинутые (Взрывное Действие, Ядовитые когти, Проворный Хвост, Переверты, Продвинутый Физиолог, Регенерация)",
-    archetypes: ["Отступник","Ересиарх","Ренегат","Пират","Дикарь","Ведьма","Нумен"],
     desc: "Гибрид человека и животного из ДНК ТЭТ; нестабильный геном с выбором адаптаций."
   },
 
@@ -368,6 +368,7 @@ export const RACES = {
     subraces: [],
     chars: { ws:25, bs:25, s:25, t:25, ag:25, int:25, per:25, wp:25, fel:25, inf:19 },
     bonusRolls: 2, bonusPoints: 7, charShift: 2,
+    archetypes: ["apostate", "heresiarch", "renegade", "pirate", "savage", "skitarii"],
     size: 1,
     skills:  "Common Lore (любые 2), Linguistics (Low Gothic), Trade (любое 1) +10",
     gear:    "5 элементов до R1 (2 Good.Q, 1 Best.Q), Vox-Bead",
@@ -386,7 +387,6 @@ export const RACES = {
       { name:"Expiration Date / Срок Годности", benefit:"Срок жизни ~15+1d5 лет; стареет быстро." },
       { name:"Genetic Decay / Генетическое Угасание", benefit:"Максимальный возраст со временем падает." }
     ],
-    archetypes: ["Отступник","Ересиарх","Ренегат","Пират","Дикарь","Скитарий"],
     desc: "Генетически модифицированный раб-сверхчеловек, зависимый от гормональных сывороток."
   },
 
@@ -395,6 +395,7 @@ export const RACES = {
     subraces: [],
     chars: { ws:25, bs:25, s:25, t:25, ag:25, int:25, per:25, wp:25, fel:25, inf:19 },
     bonusRolls: 3, bonusPoints: 11, charShift: 2,
+    archetypes: ["apostate", "heresiarch", "renegade", "pirate", "savage", "noble", "witch"],
     size: 0,
     skills:  "Common Lore (любые 4), Linguistics (Low Gothic), Trade (любое 1)",
     gear:    "5 элементов до R1 (2 Good.Q, 1 Best.Q), Vox-Bead",
@@ -408,7 +409,6 @@ export const RACES = {
       { name:"Pack Conscious / Сознание Стаи", benefit:"Телепатическая связь со стаей в радиусе Командного Присутствия." },
       { name:"Pheromone Glands / Феромонные Железы", benefit:"+10 на социальные взаимодействия (в герметичной броне не работает)." }
     ],
-    archetypes: ["Отступник","Ересиарх","Ренегат","Пират","Дикарь","Благородный","Ведьма"],
     desc: "Новый человек апотекария Фабия Байла: универсал с дополнительными органами и сознанием стаи."
   }
 };

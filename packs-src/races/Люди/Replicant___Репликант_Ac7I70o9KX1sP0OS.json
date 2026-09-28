@@ -32,6 +32,15 @@
     "fateRoll": "",
     "skillsNote": "",
     "adaptations": "",
+    "startCorruption": 0,
+    "archetypes": [
+      "apostate",
+      "heresiarch",
+      "renegade",
+      "pirate",
+      "savage",
+      "skitarii"
+    ],
     "bookSource": "DoomBC — Основная книга"
   },
   "_id": "Ac7I70o9KX1sP0OS",

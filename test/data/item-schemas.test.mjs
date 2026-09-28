@@ -243,6 +243,8 @@ const TYPES = {
     defaults: {
       key: "", group: "", chars: {}, bonusRolls: 0, skills: "", gear: "", talents: "",
       description: "", notes: "", hasGeneSeed: false, pastRaces: [], largeBase: false,
+      // Сверка главы I: столбец Cor книги и книжный список Архетипов расы.
+      startCorruption: 0, archetypes: [],
       size: 0, bonusPoints: 0, charShift: 0, fateRoll: "", skillsNote: "", adaptations: "",
       bookSource: ""
     }

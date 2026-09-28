@@ -26,9 +26,18 @@
   <div class="weapon-row">
     <label class="wr-label">Бонусные броски</label>
     <input type="number" name="system.bonusRolls" value="{{system.bonusRolls}}" class="wr-input-sm"/>
+    <label class="wr-label">Стартовая Порча</label>
+    <input type="number" name="system.startCorruption" value="{{system.startCorruption}}" class="wr-input-sm" min="0"/>
     <label class="wr-label">Геносемя</label>
     <input type="checkbox" name="system.hasGeneSeed" {{#if system.hasGeneSeed}}checked{{/if}}/>
   </div>
+  {{!-- Список правится в packs-src (ключи записей компендиума Архетипов):
+        поле-массив форма листа не собирает, а ошибка в ключе молча закрыла
+        бы расе Архетип — сторож test/data/race-archetypes-vs-book.test.mjs. --}}
+  {{#if system.archetypes.length}}
+  <div class="weapon-row"><label class="wr-label">Доступные Архетипы</label>
+    <span class="wr-input-lg">{{#each system.archetypes}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}</span></div>
+  {{/if}}
 
   {{!-- Навыки выдаёт вкладка МЕХАНИКА: там они видны записями и работают при
         получении расы, а не только в Мастере создания. Поле осталось для

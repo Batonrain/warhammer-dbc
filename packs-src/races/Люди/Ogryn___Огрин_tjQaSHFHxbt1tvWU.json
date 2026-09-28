@@ -32,6 +32,12 @@
     "fateRoll": "",
     "skillsNote": "",
     "adaptations": "",
+    "startCorruption": 0,
+    "archetypes": [
+      "renegade",
+      "pirate",
+      "savage"
+    ],
     "bookSource": "DoomBC — Основная книга"
   },
   "_id": "tjQaSHFHxbt1tvWU",

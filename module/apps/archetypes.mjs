@@ -13,7 +13,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { ARCHETYPES } from "../constants/archetypes.mjs";
-import { isAeldariRace, subraceEntries } from "./race-library.mjs";
+import { isAeldariRace, raceDef, subraceEntries } from "./race-library.mjs";
 import { clearGrantedBy } from "./origin-shared.mjs";
 import { SKIP_MECHANICS_HOOK } from "./races.mjs";
 import { applyItemMechanics } from "./mechanics.mjs";
@@ -101,8 +101,13 @@ function archetypesForRaceUnbanned(raceKey, opts = {}) {
   // Полуэльдар: любой архетип людей, Азуриани или Друкхари (на договоре с ГМ).
   if (raceKey === "halfEldar") return [...human(), ...byRace("azuriane"), ...byRace("drukhari")];
   // Прочие Аэльдари (Экзодиты) используют Пути — архетипов в паке пока нет
-  // (см. [WIP]-заготовки); всё не-эльдарское прочее — человеческие архетипы.
-  if (!isAeldariRace(raceKey)) return human();
+  // (см. [WIP]-заготовки); всё не-эльдарское прочее — человеческие архетипы,
+  // а если у расы в данных есть книжный список («Огрин получает доступ к
+  // следующим Архетипам Людей: Ренегат, Пират, и Дикарь») — только они.
+  if (!isAeldariRace(raceKey)) {
+    const allow = new Set(raceDef(raceKey)?.archetypes || []);
+    return allow.size ? human().filter(([k]) => allow.has(k)) : human();
+  }
   return [];
 }
 

@@ -84,6 +84,18 @@ export function raceCharsUpdate(actor, chars) {
 }
 
 /**
+ * Стартовая Порча расы (столбец Cor таблицы) — по тому же правилу, что и
+ * Характеристики: только в пустой счётчик. Уже набранную Порчу раса не
+ * трогает — это игра персонажа, а не его происхождение.
+ */
+export function raceCorruptionUpdate(actor, startCorruption) {
+  const v = Number(startCorruption) || 0;
+  if (v <= 0) return {};
+  if ((Number(actor?.system?.corruption?.value) || 0) !== 0) return {};
+  return { "system.corruption.value": v };
+}
+
+/**
  * Снимает расу, всё ею выданное, субрасу и Прошлое: оба относились к прежней
  * расе и без неё теряют смысл (Прошлое существует только у Иннари/Арлекина,
  * которые сами и есть раса — см. Находку 2, wdbc-n1k, раунд правок 1).
@@ -176,7 +188,8 @@ export async function applyRace(actor, key, { tag = "race", mirror = true } = {}
 
   await actor.update({
     ...(mirror ? { "system.race": key, ...(raceUnchanged ? {} : { "system.subrace": "" }) } : {}),
-    ...raceCharsUpdate(actor, def?.chars || {})
+    ...raceCharsUpdate(actor, def?.chars || {}),
+    ...raceCorruptionUpdate(actor, def?.startCorruption)
   });
 
   ui.notifications?.info(`🧬 ${mirror ? "Раса" : "Прошлое"}: ${def?.label || key}.`);
