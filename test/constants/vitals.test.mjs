@@ -50,6 +50,16 @@ describe("vitalNaturalStage", () => {
     expect(vitalNaturalStage("sleep", 0, 3 * DAY)).toBe(3);
   });
 
+  // New Men / Новые Люди (Йигори): «может обходиться без сна до 3-х дней» —
+  // ctx.sleepGraceDays — сутки первой стадии (rules/squat-traits.mjs, общее
+  // с Крепким как Камень Сквата).
+  it("Сон с запасом sleepGraceDays: 3 — первая стадия на третьи сутки", () => {
+    const nm = { sleepGraceDays: 3 };
+    expect(vitalNaturalStage("sleep", 0, 2.9 * DAY, nm)).toBe(0);
+    expect(vitalNaturalStage("sleep", 0, 3 * DAY, nm)).toBe(1);
+    expect(vitalNaturalStage("sleep", 0, 5 * DAY, nm)).toBe(3);
+  });
+
   it("не превышает потолок 3 даже при огромном интервале", () => {
     expect(vitalNaturalStage("hunger", 0, 365 * DAY, { tb: 6 })).toBe(3);
   });

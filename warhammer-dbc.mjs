@@ -169,6 +169,7 @@ import { itemIconFor, isGenericImg }  from "./module/constants/item-icons.mjs";
 import { computeShipIdentity }        from "./module/combat/ship-tokens.mjs";
 import { applySymbolOfPowerGrant, hasSymbolOfPower } from "./module/combat/beastman-shaman.mjs";
 import { needsBestQChoice, runBestQChoice } from "./module/apps/implant-bestq-choice.mjs";
+import { diseaseCreateBlocked } from "./module/rules/new-men.mjs";
 
 // ─── Инициализация ────────────────────────────────────────────────────────────
 
@@ -1735,6 +1736,17 @@ Hooks.on("preCreateItem", (doc, data) => {
     const icon = itemIconFor(data?.type ?? doc.type, doc.system ?? {});
     if (icon) doc.updateSource({ img: icon });
   } catch (e) { /* не мешаем созданию предмета */ }
+});
+
+// Иммунитет ко всем болезням (New Men / Новые Люди — Йигори, возможность
+// immunity.disease): броска на заражение в системе нет, болезнь ГМ кладёт на
+// лист предметом — ровно это и перехватывается. Отказ виден, а не молчалив.
+Hooks.on("preCreateItem", (doc) => {
+  const actor = doc.parent;
+  if (!actor || actor.documentName !== "Actor") return;
+  if (!diseaseCreateBlocked(actor, doc.type)) return;
+  ui.notifications?.info(`${actor.name}: иммунитет к болезням — «${doc.name}» не ложится на лист.`);
+  return false;
 });
 
 Hooks.on("preCreateActor", (doc, data) => {

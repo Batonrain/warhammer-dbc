@@ -39,6 +39,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { hasRuleFlag } from "./flags.mjs";
+import { NEW_MEN } from "./new-men.mjs";
 
 export const CLEVER_HANDS          = "trait.cleverHands";
 export const HARD_AS_STONE         = "trait.hardAsStone";
@@ -66,7 +67,9 @@ export function poisonResistReroll(actor, condition) {
  * (constants/vitals.mjs). Человеку сутки, Сквату «до 3-х суток».
  */
 export function sleepGraceDays(actor) {
-  return actor && hasRuleFlag(actor, HARD_AS_STONE) ? 3 : 1;
+  // Одно правило на две Черты с одинаковым числом: Крепкий как Камень
+  // (Скват) и Новые Люди (Йигори) — «без сна до 3-х суток».
+  return actor && (hasRuleFlag(actor, HARD_AS_STONE) || hasRuleFlag(actor, NEW_MEN.sleep)) ? 3 : 1;
 }
 
 /** «3ч сна в день… за каждые бессонные сутки +3ч до максимума в 9ч». */

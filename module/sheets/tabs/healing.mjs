@@ -25,6 +25,12 @@ import { collectTestMods } from "../../rules/roll-mods.mjs";
 import { regimenHeal, healPeriodSeconds } from "../../rules/healing-clock.mjs";
 import { killByCondition } from "../../combat/condition-death.mjs";
 import { charLossAddFields } from "../../rules/char-loss.mjs";
+// New Men / Новые Люди (Йигори): штраф операции и восстановление вдвое,
+// лубок вчетверо короче (module/rules/new-men.mjs).
+import { newMenSurgeryPenalty, newMenRecoveryDays, splintDays } from "../../rules/new-men.mjs";
+
+/** «Медика−30» / «Медика−15 (Новые Люди)» — подпись порога операции. */
+const surgeryLabel = pen => `Медика−${-pen}${pen !== -30 ? " (Новые Люди: штраф вдвое)" : ""}`;
 
 const NS = "warhammer-dbc";
 
@@ -525,14 +531,18 @@ async function applySetLimb(medic, patient, { mod, side, narthecium }) {
     `${rollIcon("wrench","#d9a066")}<b>Фиксация</b> (${SIDE_LABELS[side]}): Медика+0${modTxt ? ` ${modTxt}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}${butcher ? " (Мясник с Нартецием — автоматически)" : ""}`
   ];
   let days = 1;
+  let fullDays = 1;
   if (success) {
     const daysRoll = await new Roll("2d10").evaluate();
     rolls.push(daysRoll);
-    days = Math.max(1, daysRoll.total - tb);
+    fullDays = Math.max(1, daysRoll.total - tb);
+    // Регенерация Нового Человека: восстановление после перелома вчетверо короче.
+    days = splintDays(patient, fullDays);
   }
   const out = setLimbOutcome(patient.system, side, { success, days, worldTime: game.time.worldTime, tb });
   if (out.result === "splinted") {
-    lines.push(`Травма обработана правильно. Конечность в лубке и бесполезна ещё <b>${days}</b> сут. (2d10−T.b, мин. 1) — снимется сама по Календарю.`);
+    const regen = days !== fullDays ? ` → Новые Люди: вчетверо короче` : "";
+    lines.push(`Травма обработана правильно. Конечность в лубке и бесполезна ещё <b>${days}</b> сут. (2d10−T.b, мин. 1${regen ? `: ${fullDays}${regen}` : ""}) — снимется сама по Календарю.`);
   } else if (out.result === "misset") {
     lines.push(`Зафиксирована неправильно. Попыток: ${out.attempts} из ${out.maxAttempts} (T.b пациента) — можно пробовать снова.`);
   } else {
@@ -555,26 +565,28 @@ async function applyReattach(medic, patient, { mod, limb, bodySide = "" }) {
   }
 
   const pMod = patientHealingMod(patient);
-  const eff = medicaeEff(medic, patient, mod - 30);
+  const pen = newMenSurgeryPenalty(patient, -30);
+  const eff = medicaeEff(medic, patient, mod + pen);
   const roll = await new Roll("1d100").evaluate();
   const rolls = [roll];
   const success = roll.total <= eff;
   const lines = [
     ...pMod.lines,
-    `${rollIcon("wrench","#8fd0ff")}<b>Пришивание конечности</b> (${def.label}): Медика−30${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`
+    `${rollIcon("wrench","#8fd0ff")}<b>Пришивание конечности</b> (${def.label}): ${surgeryLabel(pen)}${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`
   ];
 
   if (success) {
     const tb = patient.system.characteristics?.t?.bonus ?? 0;
     const daysRoll = await new Roll("1d10").evaluate();
     rolls.push(daysRoll);
-    const days = Math.max(1, daysRoll.total + 3 - tb);
+    const fullDays = Math.max(1, daysRoll.total + 3 - tb);
+    const days = newMenRecoveryDays(patient, fullDays);
     const recovery = recoveryPatch(limb, side, days);
     const updates = { ...lostSideFields(def.flag, side, { lost: false }), ...recovery };
     try { await patient.update(updates); } catch {
       lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — примените вручную.`);
     }
-    lines.push(`Конечность${sideTag(side)} пришита. Восстановление: <b>${days}</b> сут. (1d10+3−T.b, мин. 1)${Object.keys(recovery).length ? " — до тех пор бесполезна, снимется сама по Календарю" : ""}.`);
+    lines.push(`Конечность${sideTag(side)} пришита. Восстановление: <b>${days}</b> сут. (1d10+3−T.b, мин. 1${days !== fullDays ? `: ${fullDays} → Новые Люди: вдвое` : ""})${Object.keys(recovery).length ? " — до тех пор бесполезна, снимется сама по Календарю" : ""}.`);
   } else {
     lines.push("Провал — спасённая конечность умирает и более не может быть использована.");
   }
@@ -889,21 +901,23 @@ export async function resolveBionicTest(medic, patient, { mod, limb, bodySide = 
   // первую потерянную (wdbc-x1nz.2.100).
   const side = def ? pickLostSide(patient.system, def.flag, bodySide, { lost: false }) : null;
   const pMod = patientHealingMod(patient);
-  const eff = medicaeEff(medic, patient, mod - 30);
+  const pen = newMenSurgeryPenalty(patient, -30);
+  const eff = medicaeEff(medic, patient, mod + pen);
   const roll = await new Roll("1d100").evaluate();
   const rolls = [roll];
   const success = roll.total <= eff;
   const lines = [
     ...pMod.lines,
-    `${rollIcon("gear","#c98bff")}<b>Установка бионики/кибернетики</b>: Медика−30${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`
+    `${rollIcon("gear","#c98bff")}<b>Установка бионики/кибернетики</b>: ${surgeryLabel(pen)}${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`
   ];
 
   if (success) {
     const tb = patient.system.characteristics?.t?.bonus ?? 0;
     const daysRoll = await new Roll("1d10").evaluate();
     rolls.push(daysRoll);
-    const days = Math.max(1, daysRoll.total + 3 - tb);
-    lines.push(`Адаптация: <b>${days}</b> сут. (1d10+3−T.b, мин. 1).`);
+    const fullDays = Math.max(1, daysRoll.total + 3 - tb);
+    const days = newMenRecoveryDays(patient, fullDays);
+    lines.push(`Адаптация: <b>${days}</b> сут. (1d10+3−T.b, мин. 1${days !== fullDays ? `: ${fullDays} → Новые Люди: вдвое` : ""}).`);
     // Потеряно мутацией Loss of Limb (wdbc-1rno.6.1): «только Best.Q бионикой,
     // протезы более низкого Качества… отторгаются». Качество — у импланта,
     // только что поставленного в Хирургеоне; неизвестно (поставлен вручную) —

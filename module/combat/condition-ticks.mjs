@@ -65,6 +65,9 @@ import { testOutcome } from "../rules/roll-outcome.mjs";
 import { isAstartes } from "../rules/legacy-weapon.mjs";
 import { uselessRoundTick, SIDE_LABELS } from "../rules/useless-limbs.mjs";
 import { secondaryCritHtml } from "./secondary-crit.mjs";
+// New Men / Новые Люди (Йигори): d20 на тике Кровотечения и тест T+0 в начале
+// Хода, чтобы его затянуть.
+import { bleedingDieFormula, canSelfStaunch } from "../rules/new-men.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -568,6 +571,18 @@ export async function processConditionTurnStart(actor) {
   // напоминание Подавления в конце Хода — suppression.mjs).
   if (conds.shocked) await postShockRecoveryPrompt(actor);
 
+  // New Men / Новые Люди (Йигори): «может затянуть свое Кровотечение тестом
+  // T+0 в начале своего Хода». Бросается сам, без кнопки: у попытки нет ни
+  // цены, ни исхода «хуже, чем не пробовать» — спрашивать игрока нечего
+  // (тот же довод, что у окна Cooler, apps/mechanics.mjs burningGrace).
+  if (conds.bleeding && canSelfStaunch(actor)) {
+    const t = await rollConditionCharTest(actor, "t");
+    if (t.success) Object.assign(updates, conditionRemoveFields("bleeding"));
+    lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Новые Люди: ${charTestText("T+0", t)} ${t.success
+      ? `<span class="roll-success">успех — затянул Кровотечение</span>`
+      : `<span class="roll-failure">провал — Кровотечение не затянуть</span>`}</div>`);
+  }
+
   // Сроки, заданные штатной Duration, истекают сами — здесь только подмести
   // истёкшие и освежить видимый остаток. Гашение самого Состояния делает мост
   // «лист ↔ токен» (см. condition-effects.mjs), поэтому строк «снято» ниже мы
@@ -670,11 +685,13 @@ export async function processConditionTurnEnd(actor) {
   if (conds.bleeding && immuneBleeding) {
     lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: иммунитет саркофага — урон не применяется</div>`);
   } else if (conds.bleeding) {
-    const roll = await new Roll("1d10").evaluate();
+    // «Бросает d20 вместо d10 на тестах Кровотечения» (New Men, Йигори).
+    const die = bleedingDieFormula(actor);
+    const roll = await new Roll(die).evaluate();
     const level = Number(conds.haemorrhagingLevel) || 0;
     const eff = roll.total - level;
     if (eff <= 0) {
-      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: 1d10 <b>${roll.total}</b> − Обескровливание ${level} = <b>${eff}</b> → <span class="roll-failure"><b>СМЕРТЬ</b> (независимо от количества Ран)</span></div>`);
+      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: ${die} <b>${roll.total}</b> − Обескровливание ${level} = <b>${eff}</b> → <span class="roll-failure"><b>СМЕРТЬ</b> (независимо от количества Ран)</span></div>`);
       await killByCondition(actor, "bleeding");
     } else if (eff <= 5) {
       const newLevel = level + 1;
@@ -685,9 +702,9 @@ export async function processConditionTurnEnd(actor) {
         upd[`flags.${NS}.${HAEMORRHAGE_HOUR_FLAG}`] = Number(globalThis.game?.time?.worldTime) || 0;
       }
       await actor.update(upd);
-      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: 1d10 <b>${roll.total}</b> − ${level} = <b>${eff}</b> → +1 Обескровливание (<b>${newLevel}</b>)</div>`);
+      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: ${die} <b>${roll.total}</b> − ${level} = <b>${eff}</b> → +1 Обескровливание (<b>${newLevel}</b>)</div>`);
     } else {
-      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: 1d10 <b>${roll.total}</b> − ${level} = <b>${eff}</b> → обошлось</div>`);
+      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: ${die} <b>${roll.total}</b> − ${level} = <b>${eff}</b> → обошлось</div>`);
     }
   }
 
