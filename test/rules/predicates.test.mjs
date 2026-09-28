@@ -470,7 +470,9 @@ describe("общее требование к предикатам", () => {
     // system.fieldPsyMod ЦЕЛИ, значение из `when` не участвует.
     targetHasFieldPsyMod: undefined,
     // Цель без герметичной брони (wdbc-1rno.11, Миазмы) — читает ЦЕЛЬ.
-    targetLacksSealedArmour: undefined
+    targetLacksSealedArmour: undefined,
+    // Змееподобная цель (Безграничное Тщеславие Наги) — читает ЦЕЛЬ.
+    targetSerpentine: true
   };
 
   it("на пустом акторе каждый возвращает строго true или false", () => {

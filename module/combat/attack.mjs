@@ -71,6 +71,9 @@ import { counterAttackTriggers, counterAttackSectionHtml } from "./counter-attac
 import { invocationNaturalAdd } from "../rules/invocation-natural.mjs";
 import { suffersBlindness } from "../rules/blindness.mjs";
 import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
+import { isBiteName } from "../rules/integral-rating.mjs";
+import { VENOM_BITE_CAPABILITY, venomBiteDamage } from "../rules/naga-traits.mjs";
 import { fieldDisablesWeapon } from "../rules/null-zones.mjs";
 import { isHeadHit } from "./armor-properties.mjs";
 
@@ -221,6 +224,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const gripDmgFlat = Number(opts.gripDmgFlat) || 0;
   const eff = effectiveDamage({ sys, profile: P, gripDmgFlat });
   let   effDamage  = eff.damage;
+  // Адаптивная Отрава Наги (rules/naga-traits.mjs): «Укус Наги использует
+  // кубик 1d10 вместо 1d5» — тот же сдвиг, что в Борьбе (grapple.mjs::_doBite).
+  if (isBiteName(item) && hasRuleFlag(actor, VENOM_BITE_CAPABILITY)) effDamage = venomBiteDamage(effDamage);
   const effDmgType = eff.damageType;
   const effDmgSubtype = eff.damageSubtype;
   const effPen0    = eff.penetration;

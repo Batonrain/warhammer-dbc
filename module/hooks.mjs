@@ -106,6 +106,7 @@ import { DEVOURER_OF_KNOWLEDGE_CAPABILITY, DEVOURER_THEFTS_FLAG, expiredTheftEnt
 import { planFleshmetalRegen, FLESHMETAL_CAPABILITY, FLESHMETAL_FLAG }
   from "./rules/fleshmetal-regen.mjs";
 import { hasRuleFlag as hasFleshmetalFlag } from "./rules/flags.mjs";
+import { poisonImmunitySource } from "./apps/naga-traits.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { liftDivineProtection, wakeDivineProtected } from "./sheets/tabs/death.mjs";
@@ -2298,6 +2299,22 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
   }
   if (actor.type === "horde" && condition === "burning") {
     return rollHordeFlameTest(actor, { testChar: testChar || "ag", testMod, messageId, force, label });
+  }
+  // Иммунитет к ядам (Изуверская Физиология Наги и т.п., wdbc naga): Toxic
+  // не травит вовсе — ни теста, ни Отравления, ни доп. урона. Одного
+  // иммунитета к Состоянию (kind:"condition") мало: урон ниже катится и без
+  // наложенного Отравления.
+  if (condition === "poisoned") {
+    const poisonImmune = poisonImmunitySource(actor);
+    if (poisonImmune) {
+      return ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor }),
+        content: `<div class="wh-roll-result">
+          <div class="roll-header">${label} → ${esc(actor.name)}</div>
+          <div class="roll-outcome"><span class="roll-success">${esc(poisonImmune)}: иммунитет к ядам — ни Отравления, ни урона</span></div>
+        </div>`
+      });
+    }
   }
 
   const allRolls = [];

@@ -57,8 +57,31 @@ export const TARGET_FEATURES = {
   psyker:      { label: "Псайкер",           test: a => !!a?.system?.isPsyker },
   possessed:   { label: "Одержимый",         test: a => !!a?.system?.possessed },
   techpriest:  { label: "Техножрец",         test: a => !!a?.system?.isTechpriest },
-  rogueTrader: { label: "Вольный торговец",  test: a => !!a?.system?.isRogueTrader }
+  rogueTrader: { label: "Вольный торговец",  test: a => !!a?.system?.isRogueTrader },
+  // Безграничное Тщеславие Наги: «Ее Талант Hatred (Наги) также
+  // распространяется на персонажей с мутацией „Звероподобный (Змея)“ или
+  // „Центавр (Змея)“» — rules/naga-traits.mjs.
+  snakeMutation: { label: "Мутант-змея (Животный Гибрид/Центавр: Змея)", test: a => hasSnakeMutation(a) }
 };
+
+/** Мутации со змеиной субмутацией: «Центавр (Змея)» и «Звероподобный (Змея)» — в паке «Животный Гибрид». */
+const SNAKE_MUTATION_NAMES = ["centaur", "центавр", "animal hybrid", "животный гибрид"];
+const SNAKE_SUBMUTATION = "змея";
+
+/**
+ * Есть ли у существа мутация со змеиной субмутацией. Имя — по любой половине
+ * двуязычного «Centaur / Центавр» (свой разбор, а не predicates.mjs::itemHasName:
+ * тот сам импортирует этот файл).
+ */
+export function hasSnakeMutation(actor) {
+  for (const item of actor?.items ?? []) {
+    if (item?.type !== "mutation") continue;
+    const halves = String(item.name ?? "").split("/").map(s => s.trim().toLowerCase());
+    if (!halves.some(h => SNAKE_MUTATION_NAMES.includes(h))) continue;
+    if (String(item.system?.submutation?.name ?? "").trim().toLowerCase() === SNAKE_SUBMUTATION) return true;
+  }
+  return false;
+}
 
 /** Пустая цель нужного вида — остальные поля добираются ниже. */
 const blank = kind => ({ kind, ref: "", value: "", name: "", img: "" });

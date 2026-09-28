@@ -14,7 +14,8 @@ import { woundLossUpdates } from "../../rules/wounds.mjs";
 import { conditionLevelField } from "../../constants/conditions.mjs";
 import { maybeGrantEnjoymentPain } from "../../combat/enjoyment.mjs";
 import { postTestCard, rollStatLine } from "../../helpers/test-card.mjs";
-import { hasRuleFlag } from "../../rules/flags.mjs";
+import { hasRuleFlag, ruleFlagLabels } from "../../rules/flags.mjs";
+import { DRUG_AFTERMATH_IMMUNE_CAPABILITY, POISON_IMMUNE_CAPABILITY } from "../../rules/naga-traits.mjs";
 
 // wdbc-1rno (кластер Дары Богов — Слаанеш): «Владыка Праздности» — «Персонаж
 // приобретает иммунитет к любым пост-эффектам и зависимостям от употребления
@@ -28,6 +29,20 @@ import { hasRuleFlag } from "../../rules/flags.mjs";
 // (rig.mjs весит только снаряжение) — читать/гасить нечего, честно остаётся
 // текстом Дара (capabilities.mjs).
 export const LORD_OF_SLOTH_CAPABILITY = "gift.slaanesh.lordOfSloth";
+
+/**
+ * Откуда у актора иммунитет к пост-эффектам и зависимости от наркотиков —
+ * подпись для карточки, или "" (иммунитета нет). Два источника с одним и тем
+ * же книжным текстом: Дар Слаанеш «Владыка Праздности» и Изуверская
+ * Физиология Наги (rules/naga-traits.mjs, та же фраза у Сслита).
+ */
+export function drugAftermathImmunity(actor) {
+  if (hasRuleFlag(actor, LORD_OF_SLOTH_CAPABILITY)) return "Дар Слаанеш «Владыка Праздности»";
+  if (hasRuleFlag(actor, DRUG_AFTERMATH_IMMUNE_CAPABILITY)) {
+    return ruleFlagLabels(actor, DRUG_AFTERMATH_IMMUNE_CAPABILITY)[0] || "Иммунитет к пост-эффектам";
+  }
+  return "";
+}
 
 const DELIVERY_RU = {
   injection: "Инъекция",
@@ -146,6 +161,19 @@ export async function applyDrug(owner, item, recipient = null) {
 
   if (qty < 0) {
     ui.notifications.warn(`Препарат «${item.name}» закончился!`);
+    return;
+  }
+
+  // Иммунитет к ядам (Изуверская Физиология Наги и т.п., rules/naga-traits.mjs):
+  // доза яда потрачена, но на этого получателя не действует вовсе.
+  if (sys.drugCategory === "poison" && hasRuleFlag(actor, POISON_IMMUNE_CAPABILITY)) {
+    await item.update({ "system.quantity": qty });
+    const src = ruleFlagLabels(actor, POISON_IMMUNE_CAPABILITY)[0] || "Иммунитет к ядам";
+    await postTestCard(owner, {
+      icon: rollIcon("shield", "#4dffa6"), title: `${esc(item.name)} → ${esc(actor.name)}`,
+      threshold: `<div class="roll-threshold">${esc(src)} — иммунитет к ядам.</div>`,
+      rv: "—", outcome: `<span class="roll-success">Яд не действует (доза потрачена, осталось: ${qty}).</span>`
+    }, { sound: false });
     return;
   }
 
@@ -355,6 +383,20 @@ export async function applyDrug(owner, item, recipient = null) {
 export async function triggerAfterEffect(actor, item) {
   const sys = item.system;
   if (!sys.hasAfterEffect) return;
+
+  // Иммунитет к пост-эффектам (Владыка Праздности, Изуверская Физиология):
+  // действие препарата просто кончается, пост-эффект не наступает — раньше
+  // Дар гасил только тест Зависимости, а пост-эффект приходил как обычно.
+  const aftermathImmune = drugAftermathImmunity(actor);
+  if (aftermathImmune) {
+    await deactivateDrugEffect(item);
+    await postTestCard(actor, {
+      icon: rollIcon("shield", "#9d7cd8"), title: `Пост-эффект — ${esc(item.name)}`,
+      threshold: `<div class="roll-threshold">${esc(aftermathImmune)} — иммунитет к пост-эффектам наркотиков.</div>`,
+      rv: "—", outcome: `<span class="roll-success">Пост-эффект не наступает.</span>`
+    }, { sound: false });
+    return;
+  }
 
   const fx = sys.afterEffectSpecial || {};
   const actorUpdates = {};
@@ -567,10 +609,11 @@ export function activateDrugListeners(html, actor, { resolveOtherTargetActor } =
 }
 
 export async function rollAddictionTest(actor, item, charKey = "t", testMod = 0) {
-  if (hasRuleFlag(actor, LORD_OF_SLOTH_CAPABILITY)) {
+  const aftermathImmune = drugAftermathImmunity(actor);
+  if (aftermathImmune) {
     await postTestCard(actor, {
       icon: rollIcon("shield", "#9d7cd8"), title: `Тест Зависимости — ${item?.name ?? "Наркотик"}`,
-      threshold: `<div class="roll-threshold">Дар Слаанеш «Владыка Праздности» — иммунитет к пост-эффектам и зависимости от наркотиков.</div>`,
+      threshold: `<div class="roll-threshold">${esc(aftermathImmune)} — иммунитет к пост-эффектам и зависимости от наркотиков.</div>`,
       rv: "—", outcome: `<span class="roll-success">Зависимость невозможна — тест не требуется.</span>`
     }, { sound: false });
     return;

@@ -10,6 +10,7 @@
 import { describe, it, expect } from "vitest";
 import { startingInfamyFormula, INFAMY_GEN_BONUS, INFAMY_FLAT_BONUS } from "../../module/rules/starting-infamy.mjs";
 import { RACES } from "../../module/constants/races.mjs";
+import { packDocuments } from "../support/pack-docs.mjs";
 
 describe("стартовое Бесчестие", () => {
   it("Генерация даёт формулу для броска", () => {
@@ -32,13 +33,16 @@ describe("стартовое Бесчестие", () => {
     expect(startingInfamyFormula(null, false)).toBe(2);
   });
 
-  // Если книга однажды разведёт расы по разной базе, привычное «19 + 1d5»
-  // перестанет быть верным для всех — но формула это переживёт, а проверка
-  // покажет, что расклад изменился.
-  it("у рас книги база Бесчестия одна и та же — 19", () => {
-    const bases = [...new Set(Object.values(RACES)
-      .map(r => r.chars?.inf)
-      .filter(v => v !== undefined))];
-    expect(bases).toEqual([19]);
+  // Книга разводит расы по базе: у Человека 19, у Наги 24 (таблица
+  // «Стартовые Характеристики», столбец Inf; в паке так и было). Прежнее
+  // «у всех рас 19» держалось только потому, что резерв-константы рас были
+  // заглушкой 25/19 — сверка главы I выставляет книжные числа раса за расой
+  // (у Огрина в паке 14, в константе ещё 19 — это его сверка).
+  it("база Бесчестия берётся у расы: Человек 19, Нага 24 — как в паке", () => {
+    const packInf = new Map(packDocuments("races", "race").map(({ doc }) => [doc.system?.key, doc.system?.chars?.inf]));
+    expect(RACES.human.chars.inf).toBe(19);
+    expect(packInf.get("human")).toBe(19);
+    expect(RACES.naga.chars.inf).toBe(24);
+    expect(packInf.get("naga")).toBe(24);
   });
 });

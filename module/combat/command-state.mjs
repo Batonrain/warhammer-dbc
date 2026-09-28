@@ -22,6 +22,25 @@ import { commandRulesFor, braveryActive, moraleCommandActive, commandEffectNode,
          syncAssaultBonus, volleySuppressionMod } from "../rules/command-effects.mjs";
 import { commandReachFor } from "../rules/command.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { isItemActive } from "../apps/effects.mjs";
+import { NO_COMMAND_CAPABILITY } from "../rules/naga-traits.mjs";
+
+/**
+ * Не принимает Командования (Безграничное Тщеславие, rules/naga-traits.mjs).
+ * Прямой скан записей Конструктора, а не hasRuleFlag: commandNodesFor зовёт
+ * сам источник правил «command», и спрашивать реестр правил отсюда — круг
+ * (collectRules → «command» → commandNodesFor → collectRules…).
+ */
+export function refusesCommand(actor) {
+  for (const item of actor?.items ?? []) {
+    const groups = item?.flags?.["warhammer-dbc"]?.mechanics;
+    if (!Array.isArray(groups)) continue;
+    const grants = groups.some(g => (g.entries || []).some(
+      e => e?.kind === "capability" && e.capabilityKey === NO_COMMAND_CAPABILITY));
+    if (grants && isItemActive(item)) return true;
+  }
+  return false;
+}
 
 const NS = "warhammer-dbc";
 const SOCKET = "system.warhammer-dbc";
@@ -124,6 +143,10 @@ export function commandLostActive(actor, combat = game.combat) {
  */
 export function commandNodesFor(actor) {
   if (!actor?.uuid || typeof game === "undefined") return [];
+  // Безграничное Тщеславие Наги: «не может признавать ничьего авторитета и
+  // получать преимущества Командования (даже от координатора)» — над ним
+  // нет ни одного узла командования, значит не доходит ничего.
+  if (refusesCommand(actor)) return [];
   const nodes = [];
   for (const squad of game.actors ?? []) {
     if (squad.type !== "squad") continue;

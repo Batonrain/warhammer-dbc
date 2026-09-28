@@ -52,6 +52,7 @@ import { activateFruitOfFlesh, eatHealFruit } from "./fruit-of-flesh.mjs";
 import { useSoulSeer } from "./soul-seer.mjs";
 import { activateWrappedInChaos } from "./wrapped-in-chaos.mjs";
 import { attemptPossessionAttack, leavePossessionHost } from "./possession-attack.mjs";
+import { useAdaptiveVenom } from "./naga-traits.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -153,6 +154,9 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *  - `attemptPossessionAttack`/`leavePossessionHost` (apps/possession-attack.mjs)
  *    — Трейт Possession/Одержимость (wdbc-q267): Ход Атаки Одержимостью по
  *    текущей цели (оба теста W+0, счёт до ±5) и выход из хоста.
+ *  - `useAdaptiveVenom` (apps/naga-traits.mjs) — Адаптивная Отрава Наги:
+ *    выбор яда (вектор рана/инъекция/еда, Редкость ≤2/3/4 за 1/3/5 Очков
+ *    Бесчестия) и одна доза «яда в клыках» на листе.
  *
  * `extra` — необязательный набор ДОПОЛНИТЕЛЬНЫХ именованных функций для
  * конкретного вызывающего (например, runMechScriptEntry добавляет
@@ -180,7 +184,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "resolveBurnedSenses", "buildCountenanceFearFlag", "purityOfBattleWave", "devouredSkillRank",
     "nextDevourerStreak", "pruneDevourerStreaks",
     "activateFruitOfFlesh", "eatHealFruit", "useSoulSeer", "activateWrappedInChaos",
-    "attemptPossessionAttack", "leavePossessionHost",
+    "attemptPossessionAttack", "leavePossessionHost", "useAdaptiveVenom",
     ...extraNames,
     code
   );
@@ -197,7 +201,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     resolveBurnedSenses, buildCountenanceFearFlag, purityOfBattleWave, devouredSkillRank,
     nextDevourerStreak, pruneDevourerStreaks,
     activateFruitOfFlesh, eatHealFruit, useSoulSeer, activateWrappedInChaos,
-    attemptPossessionAttack, leavePossessionHost,
+    attemptPossessionAttack, leavePossessionHost, useAdaptiveVenom,
     ...extraNames.map(k => extra[k])
   );
 }

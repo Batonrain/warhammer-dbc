@@ -82,6 +82,15 @@ describe("бонус доходит до броска", () => {
     expect(autoMods.find(x => x.ruleId === "command.presenceWill")?.value).toBe(20);
   });
 
+  it("Безграничное Тщеславие Наги: Командование не доходит вовсе (command.cannotReceive)", () => {
+    soldier.items = [{ type: "trait", name: "Vanity Unbound / Безграничное Тщеславие", system: {},
+      flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+        { id: "e", kind: "capability", capabilityKey: "command.cannotReceive" }] }] } } }];
+    expect(commandNodesFor(soldier)).toEqual([]);
+    const { autoMods } = resolveTest({ actor: soldier, kind: "attack", isMelee: false });
+    expect(autoMods.some(m => m.ruleId?.startsWith("command."))).toBe(false);
+  });
+
   it("вопрос без броска (hasRuleFlag с пустым ctx) Команды не собирает", () => {
     expect(commandNodesFor(soldier)).toHaveLength(1);
     expect(resolveTest({ actor: soldier }).autoMods.some(m => m.ruleId?.startsWith("command."))).toBe(false);

@@ -26,6 +26,7 @@ import { rollMoraleTest } from "../rules/morale-test.mjs";
 import { postShockRecoveryPrompt } from "./fear.mjs";
 import { applyLordOfExoditesFailPenalty } from "./lord-of-exodites.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { SELF_STANCH_CAPABILITY } from "../rules/naga-traits.mjs";
 import { resolveArmorProps } from "./armor-properties.mjs";
 // Морозное Сердце (wdbc-5knb): щит с записью Конструктора
 // kind:"shieldVsCondition" можно бросить против ТИКА Горения, гася его
@@ -567,6 +568,17 @@ export async function processConditionTurnStart(actor) {
   // Выход из Шока (стр. 53) — по кнопке, не автоматически (тот же приём, что
   // напоминание Подавления в конце Хода — suppression.mjs).
   if (conds.shocked) await postShockRecoveryPrompt(actor);
+
+  // Изуверская Физиология Наги (rules/naga-traits.mjs): «может в начале
+  // своего Хода затянуть свое Кровотечение тестом T+0». Провал ничего не
+  // стоит, поэтому тест катается сам — игроку не нужно помнить о праве.
+  if (conds.bleeding && hasRuleFlag(actor, SELF_STANCH_CAPABILITY)) {
+    const t = await rollConditionCharTest(actor, "t", 0);
+    if (t.success) Object.assign(updates, conditionRemoveFields("bleeding"));
+    lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Затянуть Кровотечение: ${charTestText("T+0", t)} — ${t.success
+      ? '<span class="roll-success">Кровотечение остановлено</span>'
+      : '<span class="roll-failure">кровь не унялась</span>'}</div>`);
+  }
 
   // Сроки, заданные штатной Duration, истекают сами — здесь только подмести
   // истёкшие и освежить видимый остаток. Гашение самого Состояния делает мост

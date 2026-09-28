@@ -5089,12 +5089,14 @@ export const CAPABILITIES = {
     source: "Ablative Plating / Аблативное Бронирование", reader: ""
   },
   "trait.abominablePhysiology": {
-    label: "Иммунитет к ядам/пост-эффектам/зависимости; лечение как у Космодесантника +1 доп. Рана/сутки; тест T+0 в начале Хода снимает Кровотечение.",
-    source: "Abominable Physiology / Изуверская Физиология", reader: ""
+    label: "Нага (не путать с «Отвратной Физиологией» Чумного Десантника — trait.elitnyeArhetipy.chumnoyDesantnik.abominablePhysiology). Реализовано записями Черты: иммунитет к ядам (poison.immune + kind:\"condition\" immunity Отравления), к пост-эффектам и зависимости (drugs.afterEffectAddictionImmune), лечение как Космодесантник (healing.astartes), +1 Рана в сутки (healing.extraWoundDaily), тест T+0 на Кровотечение в начале Хода (bleeding.selfStanchTurnStart). Не смоделировано: яды «через еду» отдельно от препаратов — такого пути в системе нет, яд в еде применяется той же кнопкой препарата",
+    source: "Abominable Physiology / Изуверская Физиология",
+    reader: "см. возможности poison.immune, drugs.afterEffectAddictionImmune, healing.astartes, healing.extraWoundDaily, bleeding.selfStanchTurnStart (packs-src/traits/Abominable_Physiology…json)"
   },
   "trait.adaptiveVenom": {
-    label: "Toxic 1d10.",
-    source: "Adaptive Venom / Адаптивная Отрава", reader: ""
+    label: "Укус 1d10 вместо 1d5 (bite.venomD10). Кнопка «Сменить яд в клыках» (kind:\"script\"): яд из компендиума Химии с вектором рана/инъекция/еда, Редкость ≤2/3/4 за 1/3/5 Очков Бесчестия — одна доза на листе, применяется к укушенной цели кнопкой препарата. Не смоделировано: автоприменение дозы к цели укуса — у Укуса в Борьбе нет шага «применить эффект к цели», доза идёт отдельной кнопкой",
+    source: "Adaptive Venom / Адаптивная Отрава",
+    reader: "module/rules/naga-traits.mjs (venomBiteDamage, adaptiveVenomCandidates); module/apps/naga-traits.mjs::useAdaptiveVenom (помощник apps/item-script.mjs)"
   },
   "trait.adaptiveXenos": {
     label: "В людском облике (шлем/капюшон + не-эльдарская броня/плащ >70%) и на Низком Готике — нет штрафов на общение с людьми.",
@@ -5205,8 +5207,9 @@ export const CAPABILITIES = {
     source: "Cold Killer / Хладнокровный Убийца", reader: ""
   },
   "trait.constrictor": {
-    label: "+20 Захват; Unnatural S в Захвате.",
-    source: "Constrictor / Удав", reader: ""
+    label: "Хвост держит в Захвате как пара рук, руки Наги свободны; +20 на тесты Athletics в Захвате и Борьбе; урон «Заломить» хвостом — с S.b хвоста (Unnatural S (6)). Возможность grapple.constrictorTail",
+    source: "Constrictor / Удав",
+    reader: "module/combat/grapple.mjs (attackerHoldFields, constrictorAthleticsBonus, _resolveWrenchSuccess); module/rules/hands.mjs::grappleHandsUsed"
   },
   "trait.couldnTHurt": {
     label: "В начале сессии находит 1d5+P.b расходников. +20 на поиск ценного/спрятанного у погибших. Обычно недоступны Кабал/Культ/Ковен.",
@@ -5229,8 +5232,9 @@ export const CAPABILITIES = {
     source: "Daemonic Presence / Демоническое Присутствие (X/Y)", reader: ""
   },
   "trait.darkPrinceSChild": {
-    label: "Впервые набирая 30/60/90 Inf, может выбрать либо +2 руки (Multiple Arms +2), либо +2 к максимуму Очков Бесчестья.",
-    source: "Dark Prince's Child / Дитя Тёмного Принца", reader: ""
+    label: "Покровитель Слаанеш ставится сам и не меняется (patronage.lockedSlaanesh); на 30/60/90 Inf — окно выбора: Многорукий +2 или +2 к максимуму Очков Бесчестия (infamy.darkPrinceMilestones, system.infamyMaxMod)",
+    source: "Dark Prince's Child / Дитя Тёмного Принца",
+    reader: "module/apps/naga-traits.mjs — grantLockedPatron/enforceLockedPatron/checkDarkPrinceMilestones (хуки warhammer-dbc.mjs)"
   },
   "trait.darkSight": {
     label: "Видит в темноте. Реализовано (wdbc-1rno.36): галочки «Слабый свет» и «Тьма» окна атаки у носителя стоят 0 с подписью «Ночное Зрение» (опознание — и по имени Черты). Автоопределения освещения сцены нет — галочки ставит стол.",
@@ -5629,8 +5633,9 @@ export const CAPABILITIES = {
     source: "Unstable Genome / Нестабильный Геном", reader: ""
   },
   "trait.vanityUnbound": {
-    label: "Hatred ко всем.",
-    source: "Vanity Unbound / Безграничное Тщеславие", reader: ""
+    label: "Hatred (Наги) распространяется на мутантов-змей — цель «Мутант-змея» у Таланта из расы (rules/talent-targets.mjs, TARGET_FEATURES.snakeMutation); −20 к социальным тестам против змееподобных (Нага, Сслит, мутант-змея) — само, по выделенной цели; Командование не доходит (command.cannotReceive)",
+    source: "Vanity Unbound / Безграничное Тщеславие",
+    reader: "module/rules/library/naga.mjs (naga.vanityUnbound.serpentineSocial, предикат targetSerpentine); module/combat/command-state.mjs::refusesCommand"
   },
   "trait.warpGifted": {
     label: "Врождённая психосила.",
@@ -7437,6 +7442,55 @@ export const CAPABILITIES = {
     label: "Абсолютная вера в прошлое: Очко Судьбы за провал теста Страха",
     source: "Происхождение «Мир-кладбище» (module/rules/library/homeworlds.mjs)",
     reader: "module/combat/fear.mjs — FAITH_FLAG"
+  },
+
+  // ── Черты Наги (сверка главы I, rules/naga-traits.mjs) ──────────────────
+  // Имена — по правилу, не по расе: «иммунитет к ядам», «+1 Рана в сутки» и
+  // «затянуть Кровотечение» дословно повторяет Физиология Сслита.
+  "poison.immune": {
+    label: "Иммунитет к ядам: Toxic не травит (ни теста, ни Отравления, ни урона), яды-препараты не действуют",
+    source: "Abominable Physiology / Изуверская Физиология (Нага)",
+    reader: "module/hooks.mjs::_applyWeaponPropEffect (Toxic, через apps/naga-traits.mjs::poisonImmunitySource); module/sheets/tabs/drugs.mjs::applyDrug (препарат категории «яд»). Состояние Отравление любым другим путём гасит соседняя запись kind:\"condition\" immunity на той же Черте"
+  },
+  "drugs.afterEffectAddictionImmune": {
+    label: "Иммунитет к пост-эффектам и зависимости от наркотиков, даже сверхъестественных",
+    source: "Abominable Physiology / Изуверская Физиология (Нага)",
+    reader: "module/sheets/tabs/drugs.mjs::drugAftermathImmunity — rollAddictionTest (тест не нужен) и triggerAfterEffect (пост-эффект не наступает)"
+  },
+  "healing.extraWoundDaily": {
+    label: "Дополнительно вылечивает себе 1 Рану в сутки (сверх обычного лечения)",
+    source: "Abominable Physiology / Изуверская Физиология (Нага)",
+    reader: "module/apps/naga-traits.mjs::extraWoundDailyClock — часы Календаря (combat/condition-clock.mjs), арифметика rules/naga-traits.mjs::extraWoundDailyPlan"
+  },
+  "bleeding.selfStanchTurnStart": {
+    label: "В начале своего Хода затягивает Кровотечение тестом T+0 (катается сам)",
+    source: "Abominable Physiology / Изуверская Физиология (Нага)",
+    reader: "module/combat/condition-ticks.mjs::processConditionTurnStart"
+  },
+  "bite.venomD10": {
+    label: "Укус использует кубик 1d10 вместо 1d5",
+    source: "Adaptive Venom / Адаптивная Отрава (Нага)",
+    reader: "module/combat/attack.mjs (атака Укусом) и module/combat/grapple.mjs::_doBite (Укус в Борьбе) — rules/naga-traits.mjs::venomBiteDamage"
+  },
+  "grapple.constrictorTail": {
+    label: "Хвост для Захвата и Борьбы: пара рук (руки свободны), Unnatural S (6) для урона «Заломить», +20 на тесты Athletics в Захвате и Борьбе",
+    source: "Constrictor / Удав (Нага)",
+    reader: "module/combat/grapple.mjs — attackerHoldFields/isTailHold/constrictorAthleticsBonus/_resolveWrenchSuccess; module/rules/hands.mjs::grappleHandsUsed (хвост не занимает рук)"
+  },
+  "patronage.lockedSlaanesh": {
+    label: "Покровительство Слаанеш с начала игры; потерять его нельзя",
+    source: "Dark Prince's Child / Дитя Тёмного Принца (Нага)",
+    reader: "module/apps/naga-traits.mjs — grantLockedPatron (createItem) и enforceLockedPatron (preUpdateActor), хуки в warhammer-dbc.mjs"
+  },
+  "infamy.darkPrinceMilestones": {
+    label: "Впервые набирая 30/60/90 Inf — выбор: Многорукий +2 или +2 к максимуму Очков Бесчестия",
+    source: "Dark Prince's Child / Дитя Тёмного Принца (Нага)",
+    reader: "module/apps/naga-traits.mjs::checkDarkPrinceMilestones — хуки updateActor/createItem в warhammer-dbc.mjs; пороги rules/naga-traits.mjs::darkPrinceMilestonesDue"
+  },
+  "command.cannotReceive": {
+    label: "Не получает преимуществ Командования — ни от командира, ни от координатора",
+    source: "Vanity Unbound / Безграничное Тщеславие (Нага)",
+    reader: "module/combat/command-state.mjs::commandNodesFor (refusesCommand — над актором нет узлов командования)"
   },
 
 
