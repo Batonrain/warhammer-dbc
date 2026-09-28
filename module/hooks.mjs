@@ -12,6 +12,8 @@ import { isRuleUsageUsed, markRuleUsageUsed,
          isRoundCapabilityAvailable, markRoundCapabilityUsed } from "./apps/game-session.mjs";
 import { fatePoolLabel }                 from "./rules/fate-save.mjs";
 import { spendFromInfamyPool }           from "./apps/infamy-points.mjs";
+import { spendInfamyForFailSuccess }     from "./apps/infamy-fail-success.mjs";
+import { onAdroitTraitCreated }          from "./apps/adroit.mjs";
 import { tempInfamyAmount }              from "./rules/temp-infamy.mjs";
 import { applyWoundLoss, woundDeathThreshold } from "./rules/wounds.mjs";
 import { fateBonusOutcome, FATE_BONUS }  from "./rules/fate-bonus.mjs";
@@ -504,6 +506,23 @@ export function registerHooks() {
           yes: { label: "Удалить" }, no: { label: "Отмена" }
         });
         if (ok) await actor.delete();
+      });
+    });
+
+    // Провал → Очко Бесчестия → Успех на 1 Успех (Змеиный Язык Отступника и
+    // т.п., module/apps/infamy-fail-success.mjs). Актор — по uuid карточки:
+    // тратит тот, кто провалил тест, а не тот, чей токен выбран.
+    html.querySelectorAll(".wh-infamy-fail-success-btn").forEach(btn => {
+      if (message.getFlag?.("warhammer-dbc", "infamyFailSuccessUsed")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor) { ui.notifications?.warn("Персонаж не найден."); return; }
+        if (!actor.isOwner) { ui.notifications?.warn("Тратить Очко Бесчестия может только владелец персонажа."); return; }
+        const done = await spendInfamyForFailSuccess(actor, el.dataset.capability || "",
+          { testLabel: el.dataset.testLabel || "", message });
+        if (done) el.disabled = true;
       });
     });
 
@@ -3310,6 +3329,9 @@ function _attachFateContextMenu(message, html) {
   Hooks.on("createItem", async (item, options, userId) => {
     if (userId === game.user?.id && isLossOfLimbMutation(item)) await syncLossOfLimbMutation(item);
   });
+  // Искусный (Adroit, Ренегат): выбор Характеристики при получении Черты —
+  // только у того, кто Черту положил (module/apps/adroit.mjs).
+  Hooks.on("createItem", (item, options, userId) => onAdroitTraitCreated(item, userId));
   Hooks.on("updateItem", async (item, changes, options, userId) => {
     if (userId === game.user?.id && changes?.system?.submutation && isLossOfLimbMutation(item)) await syncLossOfLimbMutation(item);
   });

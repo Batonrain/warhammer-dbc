@@ -6,7 +6,8 @@
 //  хранится на акторе во флаге warhammer-dbc.stowage = { itemId: location }.
 // ════════════════════════════════════════════════════════════════════════
 
-import { RIG_VARIANT_FLAG, rigManagerData, fits, itemSizeStr } from "../constants/rig.mjs";
+import { RIG_VARIANT_FLAG, rigManagerData, fits, itemSizeStr, TAKE_EVERYTHING_FLAG } from "../constants/rig.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 const NS = "warhammer-dbc";
@@ -78,7 +79,7 @@ export class RigManager extends HandlebarsApplicationMixin(ApplicationV2) {
 
   async _prepareContext(options) {
     if (!this.actor) return { missing: true };
-    return rigManagerData(this.actor);
+    return rigManagerData(this.actor, { takeEverything: hasRuleFlag(this.actor, TAKE_EVERYTHING_FLAG) });
   }
 
   _onRender(context, options) {

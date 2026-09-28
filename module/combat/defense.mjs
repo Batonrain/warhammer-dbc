@@ -24,6 +24,7 @@ import { danceOfFireAdvantage } from "../rules/dodge-advantage.mjs";
 import { duckAndCoverAdvantage } from "../rules/duck-and-cover.mjs";
 import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
+import { adroitDegreeBonus } from "../rules/adroit.mjs";
 import { retractPart, extendPart, allLimbsCompressed } from "../rules/compression.mjs";
 import { activeSwarm, consumeSwarmScreamer } from "../rules/ethereal-swarm.mjs";
 import { degreesOfSuccess } from "../constants/craft.mjs";
@@ -178,7 +179,10 @@ export async function _performDodge(actor, {
   const rv     = picked.value;
   // Формула степени успеха/провала — module/rules/roll-outcome.mjs (wdbc-5dvx,
   // раньше дублировалась вручную здесь же).
-  const { success: passed, deg } = testOutcome(rv, threshold);
+  const { success: passed, deg: rolledDeg } = testOutcome(rv, threshold);
+  // Искусный (rules/adroit.mjs): Уклонение — навык на A, +1 Успех, если
+  // выбрана A (лишний Успех снимает ещё одно попадание очереди).
+  const deg = rolledDeg + adroitDegreeBonus(actor, "ag", passed);
   // Взор Неизбежности: «проваливают ЭТОТ тест [Комбинированный] — теряют
   // все свои Реакции» — тот же бросок выше уже решил и Уклонение, и это.
   if (gazeActive && !passed) await _applyGazeOfInevitabilityFailure(actor);
@@ -689,7 +693,9 @@ export async function _performParry(actor, {
   const roll     = rolled[picked.index];
   const rv       = picked.value;
   // Формула степени успеха/провала — module/rules/roll-outcome.mjs (wdbc-5dvx).
-  const { success: passed, deg } = testOutcome(rv, threshold);
+  const { success: passed, deg: rolledDeg } = testOutcome(rv, threshold);
+  // Искусный (rules/adroit.mjs): Парирование — навык на WS.
+  const deg = rolledDeg + adroitDegreeBonus(actor, "ws", passed);
   // Взор Неизбежности: «проваливают ЭТОТ тест [Комбинированный] — теряют
   // все свои Реакции» — тот же бросок выше уже решил и Парирование, и это.
   if (gazeActive && !passed) await _applyGazeOfInevitabilityFailure(actor);

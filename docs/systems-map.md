@@ -860,6 +860,15 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   mjs`.
 - `module/constants/archetypes.mjs`, `data/item/archetype.mjs`, `apps/
   archetypes.mjs` — Архетипы Мастера создания.
+- Черты Архетипов Людей (сверка 28.09.2026): «провал → Очко Бесчестия →
+  Успех на 1 Успех» — реестр `rules/infamy-fail-success.mjs` (кнопка в
+  карточке теста, `apps/infamy-fail-success.mjs`; Змеиный Язык — сюда же
+  Выживальщик/Хирургия Легиона); «игнорирует требования по Inf для
+  Миньонов-X» — возможность `minion.ignoreInfamy.<группа>` →
+  `rules/minion-build.mjs::talentRequirements`; Ведун Тьмы (I↔W в ритуалах) —
+  `rules/dark-seer.mjs`; Искусный (+1 Успех на выбранной Характеристике) —
+  `rules/adroit.mjs` + диалог выбора `apps/adroit.mjs`; Забирай Всё —
+  `TAKE_EVERYTHING_FLAG` в `constants/rig.mjs`.
 - Элитные архетипы: `constants/elite-archetypes.mjs`, `data/item/
   elite-archetype.mjs`, `rules/elite-requirements.mjs`, `apps/elite-buy.mjs` +
   `elite-req-builder.mjs`, `sheets/elite-picker.mjs`.

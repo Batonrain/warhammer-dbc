@@ -14,7 +14,7 @@
     "charChoice": "",
     "skills": "",
     "talents": "",
-    "gear": "",
+    "gear": "Autopistol (Best.Q) или Laspistol (Good.Q) или Blast Pistol, Chain Weapon (до R1, Good.Q) или Power Weapon (до R2), Full Flak Armour или Mesh Armour, Cogitator (Best.Q) или Loud Hailer(Best.Q) или Hololith(Good.Q), Disguise Kit(Best.Q) или Torture Tools(Best.Q) или Unholy Tomes",
     "wounds": "9+1d5",
     "infRoll": "",
     "requiredPath": "",
@@ -23,10 +23,10 @@
     "psykerClass": "",
     "grantsWarPlate": false,
     "grantsImplants": false,
-    "description": "Знания, связи и навыки решают задачи словом, а не насилием.",
+    "description": "У вас есть знания, связи, и навыки, чтобы решать задачи словом, а не насилием. Возможно раньше вы были придворным интриганом, шпионом, следователем Арбитес, или даже падшим агентом Инквизиции.",
     "trait": {
       "name": "Serpent's Tongue / Змеиный Язык",
-      "benefit": "При провале социального/командного/допроса теста может потратить Очко Бесчестья, чтобы вместо этого преуспеть на 1 Успех. Игнорирует требования по Inf для Миньонов-людей."
+      "benefit": "Когда Отступник проваливает тест социального взаимодействия, командования или допроса, он может потратить Очко Бесчестия, чтобы вместо этого преуспеть в нем на 1 Успех. При трате дополнительных Очков Бесчестия даёт +1 Успех к Усилению на социальные взаимодействия. Отступник игнорирует требования по Inf для Миньонов-людей."
     },
     "bookSource": "DoomBC — Основная книга"
   },
@@ -2258,7 +2258,7 @@
               "equipWeaponProp": "",
               "equipArmorType": "",
               "equipMaxAvailability": 5,
-              "equipQuality": "best",
+              "equipQuality": "common",
               "equipTalentTier": "",
               "equipMaxPsyRating": "",
               "equipImplantCategory": "",

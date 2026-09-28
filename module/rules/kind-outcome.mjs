@@ -25,6 +25,7 @@ import { esc, _degWord } from "../helpers/utils.mjs";
 import { getItemMechanics, findMechEntryById, scriptRunReady, markScriptRunUsed } from "../apps/mechanics.mjs";
 import { executeItemCode } from "../apps/item-script.mjs";
 import { egomaniaOverrideResult } from "./egomania.mjs";
+import { adroitDegreeBonus } from "./adroit.mjs";
 import { hasRuleFlag } from "./flags.mjs";
 import { PERSONAL_ADAPTATION_CAPABILITY, PERSONAL_ADAPTATION_FLAG,
          personalAdaptationCap, personalAdaptationBonusFor, nextPersonalAdaptationBonuses, personalAdaptationKey }
@@ -203,13 +204,20 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   // остальных тестов это no-op.
   const unnaturalRatingHere = success ? unnaturalRating(ctx?.actor, usedCharKey) : 0;
   const unnaturalBonus = unnaturalDegreeBonus(unnaturalRatingHere);
-  const unnaturalLine = unnaturalBonus > 0
+  // Искусный (Adroit, Ренегат — rules/adroit.mjs): +1 Успех к успешному
+  // тесту на выбранную Характеристику — той же, которой реально бросали
+  // (usedCharKey), что и у Сверхъестественной выше. Строка едет в том же
+  // unnaturalLine: его уже печатают все вызывающие карточки.
+  const adroitBonus = adroitDegreeBonus(ctx?.actor ?? actor, usedCharKey, success);
+  const unnaturalLine = (unnaturalBonus > 0
     ? `<div class="roll-threshold">🧬 Сверхъестественная Характеристика (${unnaturalRatingHere}): +${unnaturalBonus} ${_degWord(unnaturalBonus)}</div>`
-    : "";
+    : "") + (adroitBonus > 0
+    ? `<div class="roll-threshold">🎯 Искусный (${esc(CHARACTERISTICS[usedCharKey]?.abbr ?? usedCharKey)}): +${adroitBonus} ${_degWord(adroitBonus)}</div>`
+    : "");
   // failDegMod (wdbc-1rno: Sentient Cyst «+3 Провала при провале») — только
   // на провале, успешный тест не трогает; не может увести степень ниже 1
   // (та же граница, что testOutcome держит для success выше).
-  const baseDeg = success ? rawDeg + unnaturalBonus : Math.max(1, rawDeg + (resolved.failDegExtra || 0));
+  const baseDeg = success ? rawDeg + unnaturalBonus + adroitBonus : Math.max(1, rawDeg + (resolved.failDegExtra || 0));
   // Автозапуск kind:"script" по Крит.Успеху/Провалу (wdbc-1rno: «Полимат»,
   // «Библиотека Акаши») — после того, как crit уже посчитан для ЭТОГО броска.
   await runScriptTriggers(actor, resolved.scriptTriggers, crit);

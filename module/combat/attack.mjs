@@ -58,6 +58,7 @@ import { withWitchsEdge }                             from "./witchs-edge.mjs";
 import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
 import { bloodFlameDamageBonus }                      from "../rules/blood-flame.mjs";
 import { preciseLegacyDamageBonus, wrathLegacyDamageBonus, legacyWrathEffectiveRof, betrayalLegacyActive, legacyHistoryIs, excessLegacyExtraDeg, bloodLegacyDamageBonus, legacyChangeDamageBonus, takenMutationNames, swiftLegacyRangedDodgePenalty, swiftLegacyMeleeDodgePenalty, dishonorableLegacyActive, distractingLegacyActive, DISTRACTING_LEGACY_FLAG, LEGACY_GUARDIAN_FLAG, earlyDeathLegacyDamageBonus, markEarlyDeathLegacyUsed, adaptiveLegacyMeleeDamageBonus, pendulumLegacyFlagValue, incrementPunisherLegacyStack, soulboundLegacyDamageBonus, consumeSoulboundLegacyBonus, legacyDeadlyTrapEligible, legacyDeadlyTrapDamageDelta, consumeLegacySlaughterBonus, legacySlaughterAmmoReliability, patienceLegacyOverwatchWeapon, consumePatienceLegacyOverwatchPending } from "../rules/legacy-weapon.mjs";
+import { adroitDegreeBonus } from "../rules/adroit.mjs";
 import { isActorsOwnTurn } from "./delay-action.mjs";
 import { meleeContactCount } from "./tactical-map.mjs";
 import { betrayalRandomAllyToken } from "./legacy-weapon-betrayal.mjs";
@@ -586,7 +587,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // ровно те же тесты, что вообще проходят через _executeAttackRoll (charKey
   // атаки всегда ws/bs), отдельного гейта по charKey не нужно.
   const excessBonus = excessLegacyExtraDeg({ hit, weapon: item });
-  const deg = rolledDeg + savageBonus + excessBonus;
+  // Искусный (Adroit, Ренегат — rules/adroit.mjs): +1 Успех к успешной атаке
+  // на выбранной WS/BS. Только когда исход решил бросок (autoHitKind пуст):
+  // Распыление и «ровно N Успехов» тестом Характеристики не являются.
+  const adroitBonus = autoHitKind ? 0 : adroitDegreeBonus(actor, charKey, hit);
+  const deg = rolledDeg + savageBonus + excessBonus + adroitBonus;
   // Посох/Крюк (core.json, «Типы Рукопашного Оружия»): «При Избирательном
   // попадании в Ногу [Посохом]... может потратить Реакцию, чтобы провести
   // против цели прием Повалить» / «На 3+ Успеха на попадание [Крюком]...».

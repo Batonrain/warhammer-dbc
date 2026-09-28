@@ -1,11 +1,11 @@
 {
-  "name": "Serpent's Tongue / Змеиный Язык",
+  "name": "Dark Seer / Ведун Тьмы",
   "type": "trait",
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "",
-    "notes": "Механика: провал теста социального навыка (Charm, Command, Commerce, Deceive, Inquiry, Interrogate, Intimidate) или голой F — кнопка в карточке «Очко Бесчестия → Успех (1)» (rules/infamy-fail-success.mjs); трата на Усиление пишет напоминание о +1 Успехе в социальном тесте; требование по Бесчестию у Миньона-Человека снято (minion.ignoreInfamy.human).",
-    "benefit": "Когда Отступник проваливает тест социального взаимодействия, командования или допроса, он может потратить Очко Бесчестия, чтобы вместо этого преуспеть в нем на 1 Успех. При трате дополнительных Очков Бесчестия даёт +1 Успех к Усилению на социальные взаимодействия. Отступник игнорирует требования по Inf для Миньонов-людей.",
+    "notes": "Механика: в диалоге «Провести ритуал» у каждого пути теста на I или W появляется путь-двойник на другой Характеристике; тест по исходному пути катается с Преимуществом (rules/dark-seer.mjs, apps/ritual-cast.mjs). Требование по Бесчестию у Миньона-Демона снято (minion.ignoreInfamy.daemon).",
+    "benefit": "Он мастер запретных ритуалов, способный обращаться к потусторонним силам Варпа. Его глубокое знание тайн нерождённых позволяет гибко адаптировать методики проведения ритуалов даже в самых нестабильных условиях. Он без труда использует тонкости варпа, заменяя одну характеристику другой там, где это необходимо, чтобы повысить эффективность своих ритуалов. Демонолог может использовать I вместо W или W вместо I в тестах ритуалов, а если использует «правильную» Характеристику, он получает Преимущество на этот тест. Демонолог игнорирует требования по Inf для Миньонов-демонов.",
     "source": "архетип",
     "bookSource": "",
     "hasRating": false,
@@ -24,7 +24,7 @@
       "speedMod": 0
     }
   },
-  "_id": "d3PBgi3D4Ye4e2Y6",
+  "_id": "l5BBc142jjTHZIwH",
   "effects": [],
   "folder": null,
   "sort": 0,
@@ -36,11 +36,11 @@
       "migratedEffect": true,
       "mechanics": [
         {
-          "id": "SerpTongueGrp001",
+          "id": "DarkSeerGroup001",
           "operator": "AND",
           "entries": [
             {
-              "id": "SerpTongueCap001",
+              "id": "DarkSeerCapab001",
               "kind": "capability",
               "group": null,
               "corruptionValue": "1",
@@ -81,7 +81,7 @@
               "modValueMode": "flat",
               "modCharBonus": "inf",
               "rerollWho": "self",
-              "capabilityKey": "trait.serpentSTongue",
+              "capabilityKey": "trait.darkSeer",
               "capabilityCostPool": "",
               "capabilityCostAmount": 1,
               "capabilityMode": "flag",
@@ -137,7 +137,7 @@
               }
             },
             {
-              "id": "SerpTongueCap002",
+              "id": "DarkSeerCapab002",
               "kind": "capability",
               "group": null,
               "corruptionValue": "1",
@@ -178,7 +178,7 @@
               "modValueMode": "flat",
               "modCharBonus": "inf",
               "rerollWho": "self",
-              "capabilityKey": "minion.ignoreInfamy.human",
+              "capabilityKey": "minion.ignoreInfamy.daemon",
               "capabilityCostPool": "",
               "capabilityCostAmount": 1,
               "capabilityMode": "flag",
@@ -245,9 +245,9 @@
     "coreVersion": "14.367",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
-    "createdTime": 1788391701954,
-    "modifiedTime": 1788391701954,
+    "createdTime": 1788391702243,
+    "modifiedTime": 1788391702243,
     "lastModifiedBy": "4Q6l1C4FQOMQVofr"
   },
-  "_key": "!items!d3PBgi3D4Ye4e2Y6"
+  "_key": "!items!l5BBc142jjTHZIwH"
 }

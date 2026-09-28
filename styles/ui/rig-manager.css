@@ -23,6 +23,8 @@
 .wh-rig-app select:focus { outline: none; border-color: var(--wr-accent); }
 
 .wr-warn { border: 1px solid rgba(240,200,80,0.5); border-radius: 6px; background: rgba(80,60,0,0.25); color: #f0d68a; padding: 7px 10px; font-size: 0.82em; }
+/* Забирай Всё (Пират, constants/rig.mjs TAKE_EVERYTHING_FLAG) — пояснение, не предупреждение. */
+.wr-note { border: 1px solid rgba(120,200,160,0.45); border-radius: 6px; background: rgba(0,60,40,0.25); color: #a8e0c4; padding: 7px 10px; font-size: 0.82em; }
 .wr-rig { border: 1px solid var(--wr-line); border-radius: 7px; padding: 9px 11px; background: rgba(8,24,17,0.5); }
 .wr-rig-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
 .wr-rig-name { font-weight: bold; color: #9fe8c4; letter-spacing: 0.02em; }

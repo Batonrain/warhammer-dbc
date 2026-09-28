@@ -80,6 +80,7 @@ import { EXCESS_LEGACY_RULE_ID } from "../rules/legacy-weapon.mjs";
 import { rollExcessLegacyRiskTest } from "../combat/legacy-weapon-excess.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
+import { infamyFailSuccessButtonsHtml } from "../apps/infamy-fail-success.mjs";
 import { isMoraleOpposedSkill, resolveTest } from "../rules/resolve-test.mjs";
 import { applyLordOfExoditesFailPenalty } from "../combat/lord-of-exodites.mjs";
 import { showDelegateTestPicker, activeOwnerOf, requestDelegatedTest } from "../rules/delegate-test.mjs";
@@ -3130,7 +3131,11 @@ export class WarhammerCharacterSheet
         assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${(outcome.success && effectiveAssistCount === assistCount) ? `, +${assistCount} к степени` : ""})</div>` : ""
       ],
       rerollNote, critLine: outcome.critLine, outcome: outcomeHtml,
-      sections: [outcome.extendedLine, outcome.opposedLine, pendingOpponentNote, onFailNote]
+      sections: [outcome.extendedLine, outcome.opposedLine, pendingOpponentNote, onFailNote,
+        // Провал → Очко Бесчестия → Успех на 1 Успех (Змеиный Язык и т.п.,
+        // rules/infamy-fail-success.mjs) — кнопка только у Черт, покрывающих
+        // ЭТОТ тест; на успехе пусто.
+        infamyFailSuccessButtonsHtml(effectActor, { skill: skillKey ?? undefined, char: charKey, success: outcome.success, testLabel: label })]
     }, { rolls: [roll] });
 
     // Гололит (rules/situational.mjs::hololithBriefingBonus): подготовленный
