@@ -18,7 +18,7 @@ export const RACES = {
     bonusRolls: 3, bonusPoints: 11, charShift: 2,
     size: 0,
     skills:  "Common Lore (любые 4), Linguistics (Low Gothic), Trade (любое 1)",
-    gear:    "5 элементов Снаряжения/Инструментов до R1 (2 Good.Q, 1 Best.Q), Vox-Bead",
+    gear:    "5 элементов Снаряжения и Инструментов до R1 из них 2 Good.Q и 1 Best.Q, Vox-Bead",
     talents: [],
     traits: [
       { name: "The Quick and The Dead / Быстрые и Мёртвые",
