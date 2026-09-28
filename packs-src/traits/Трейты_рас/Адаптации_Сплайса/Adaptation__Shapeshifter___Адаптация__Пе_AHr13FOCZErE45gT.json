@@ -1,0 +1,51 @@
+{
+  "name": "Adaptation: Shapeshifter / Адаптация: Перевертыш",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "Продвинутая адаптация: постоянный эффект Полиморфина как у женщины — за полудействие тест A+20 на смену облика.",
+    "notes": "Текстом целиком: смена облика тестом A+20 по таблице Полиморфина (стр. 283, для женщины). Кнопки смены облика пока нет — задача в Sahara.",
+    "benefit": "Дает перманентно эффект Полиморфина (стр. 283), считаясь как женщина для эффекта, независимо от настоящего пола.\n\nПолиморфин для женщины (стр. 283): за полудействие тест A+20, и в зависимости от количества Успехов персонаж меняет внешность: 1+ У: цвет и тонус кожи и цвет глаз, исказить свой голос; 2+ У: цвет волос, чужой голос, форма лица чуть отличная от своей; 3+ У: лицо на лицо человека того же пола, сменить размер на +/– 10%; 4+ У: форму тела на человека того же пола, размер +/– 20%; 5+ У: форму тела и лицо на другой пол, размер +/– 40%; 7+ У: форму тела и лицо на гуманоидного ксеноса того же Размера с тем же количеством конечностей.",
+    "source": "Сплайс — Продвинутая адаптация (Ген-Сплайс)",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "AHr13FOCZErE45gT",
+  "effects": [],
+  "folder": "nCIz9PenrzVvatbQ",
+  "sort": 1600000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "spliceAdaptation": "advanced"
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!AHr13FOCZErE45gT"
+}

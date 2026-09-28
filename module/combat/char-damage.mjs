@@ -12,6 +12,7 @@
 
 import { charLossAddFields, charLossHealFields, charLossPortionsAddFields, actorRecoveryPolicy } from "../rules/char-loss.mjs";
 import { killByCondition } from "./condition-death.mjs";
+import { unstableGenomeBonus } from "../rules/splice-adaptations.mjs";
 
 /**
  * Нанести урон в Характеристику.
@@ -24,10 +25,16 @@ import { killByCondition } from "./condition-death.mjs";
  * @param {string} [opts.cause]  причина смерти при T ≤ 0 (rules/death-save.mjs::DEATH_CAUSE_FLAG)
  * @param {?object} [opts.portion] урон со своим темпом (task 1-8): { hours (0 —
  *   перманентный), until, source, noMagic } — отдельной порцией, не в общий charLoss
- * @returns {Promise<{applied: number, before: number, after: number, died: boolean}>}
+ * @returns {Promise<{applied: number, before: number, after: number, died: boolean, genome: number}>}
+ *   genome — надбавка Нестабильного Генома Сплайса, уже вошедшая в applied
  */
 export async function applyCharDamage(actor, key, amount, { extra = {}, at = globalThis.game?.time?.worldTime ?? 0, cause = "toughness", portion = null } = {}) {
   let patch, applied;
+  // Сплайс, Нестабильный Геном: «увеличивает этот урон на +1 и еще на +1 за
+  // каждую дополнительную адаптацию» (rules/splice-adaptations.mjs). Только к
+  // настоящему урону: ноль остаётся нулём.
+  const genome = (Number(amount) || 0) > 0 ? unstableGenomeBonus(actor) : 0;
+  amount = (Number(amount) || 0) + genome;
   const before = Number(actor.system?.characteristics?.[key]?.total) || 0;
   if (portion) {
     const r = charLossPortionsAddFields(actor.system, [{ ...portion, key, amount }], at);
@@ -43,7 +50,7 @@ export async function applyCharDamage(actor, key, amount, { extra = {}, at = glo
   if (Object.keys(upd).length) await actor.update(upd);
   let died = false;
   if (key === "t" && applied > 0 && after <= 0) died = await killByCondition(actor, cause);
-  return { applied, before, after, died };
+  return { applied, before, after, died, genome };
 }
 
 /**

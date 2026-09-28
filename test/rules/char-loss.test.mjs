@@ -159,4 +159,29 @@ describe("единая точка урона (combat/char-damage.mjs)", () => {
     const alive = mk(5);
     expect((await applyCharDamage(alive, "t", 4)).died).toBe(false);
   });
+
+  // Сплайс, Unstable Genome: «увеличивает этот урон на +1 и еще на +1 за
+  // каждую дополнительную адаптацию».
+  it("Нестабильный Геном: +1 и +1 за каждую адаптацию сверх трёх", async () => {
+    const { applyCharDamage } = await import("../../module/combat/char-damage.mjs");
+    const adapt = n => ({ type: "trait", name: `A${n}`, flags: { "warhammer-dbc": { spliceAdaptation: "sensory" } } });
+    const mk = items => {
+      const a = {
+        name: "Сплайс", items, system: { characteristics: { s: { total: 40 } }, charLoss: { s: 0 }, charLossAt: {} },
+        update: async d => { if ("system.charLoss.s" in d) a.system.charLoss.s = d["system.charLoss.s"]; }
+      };
+      return a;
+    };
+    const genome = { type: "trait", name: "Unstable Genome / Нестабильный Геном", flags: {} };
+    const plain = mk([genome, adapt(1), adapt(2), adapt(3)]);
+    const r1 = await applyCharDamage(plain, "s", 2);
+    expect(r1.applied).toBe(3);
+    expect(r1.genome).toBe(1);
+    const extra = mk([genome, adapt(1), adapt(2), adapt(3), adapt(4), adapt(5)]);
+    expect((await applyCharDamage(extra, "s", 2)).applied).toBe(5);
+    // нулевой урон не превращается в ненулевой
+    expect((await applyCharDamage(mk([genome]), "s", 0)).applied).toBe(0);
+    // без Черты — как было
+    expect((await applyCharDamage(mk([adapt(1)]), "s", 2)).applied).toBe(2);
+  });
 });

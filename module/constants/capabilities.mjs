@@ -5310,7 +5310,7 @@ export const CAPABILITIES = {
     source: "Genetic Decay / Генетическое Угасание", reader: ""
   },
   "trait.geneSplice": {
-    label: "Выбор адаптаций.",
+    label: "По одной адаптации из Сенсорных, Защитных и Атакующих + до 3 дополнительных (в т.ч. Продвинутые), каждая −5% «Ловит на Лету». Возможностью не выражается и в ней не нуждается: выбор — МЕХАНИКА расы Сплайс (группа «Ген-Сплайс», equipChoiceIds + equipBudgetMin), счёт — module/rules/splice-adaptations.mjs по меткам flags.warhammer-dbc.spliceAdaptation Черт-адаптаций → rules/character.mjs (fastLearnerBonus).",
     source: "Gene-Splice / Ген-Сплайс", reader: ""
   },
   "trait.hardAsStone": {
@@ -5626,7 +5626,8 @@ export const CAPABILITIES = {
   },
   "trait.unstableGenome": {
     label: "Урон в Характеристики усиливается на +1 (плюс ещё +1 за каждую доп. адаптацию).",
-    source: "Unstable Genome / Нестабильный Геном", reader: ""
+    source: "Unstable Genome / Нестабильный Геном",
+    reader: "module/rules/splice-adaptations.mjs (unstableGenomeBonus = 1 + адаптации сверх трёх) → module/combat/char-damage.mjs::applyCharDamage (единая точка урона в Характеристики, в чат — «+N Нестабильный Геном», combat/char-damage-button.mjs) и module/sheets/tabs/healing.mjs::applyCauterize (Прижигание). Не покрыто: урон в Характеристики мимо единой точки — rules/sigillite-runes.mjs (charLossPortionsAddFields напрямую)"
   },
   "trait.vanityUnbound": {
     label: "Hatred ко всем.",

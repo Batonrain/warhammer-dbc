@@ -847,6 +847,13 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   `apps/mechanics.mjs::syncNullZoneSuppression` (флаг `nullSuppressed`).
 - «Избегает атак Орды как одиночная цель» (Быстрые и Мёртвые, Серый
   Человек) — `rules/horde-single-target.mjs`.
+- Сплайс (сверка главы I, 28.09.2026): 18 адаптаций — Черты папки
+  `packs-src/traits/Трейты_рас/Адаптации_Сплайса/` с меткой
+  `flags.warhammer-dbc.spliceAdaptation`; выбор — МЕХАНИКА расы
+  (`equipChoiceIds` + `equipBudgetMin` — «до N» в `rules/pick-budget.mjs`);
+  всё сверх трёх — дополнительные: −5% «Ловит на Лету» и надбавка
+  Нестабильного Генома к урону в Характеристики — `rules/splice-adaptations.
+  mjs` (читают `rules/character.mjs` и `combat/char-damage.mjs`).
 - `module/constants/legions.mjs` — Легионы Космодесанта (Геносемя/Культура/
   Проклятье); `rules/legion-fit.mjs`, `legion-upgrade.mjs`.
 - Пути Азуриан: `constants/aeldari-paths.mjs`, `rules/library/paths.mjs`,

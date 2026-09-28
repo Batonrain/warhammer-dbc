@@ -25,6 +25,7 @@ import { collectTestMods } from "../../rules/roll-mods.mjs";
 import { regimenHeal, healPeriodSeconds } from "../../rules/healing-clock.mjs";
 import { killByCondition } from "../../combat/condition-death.mjs";
 import { charLossAddFields } from "../../rules/char-loss.mjs";
+import { unstableGenomeBonus } from "../../rules/splice-adaptations.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -397,12 +398,14 @@ async function applyCauterize(medic, patient, { restrained, limb = "", bodySide 
   rolls.push(dmgRoll);
 
   // Урон в T — единый конвейер (wdbc-x1nz.2.83): пол 0, отходит по 1 в час.
-  const loss = charLossAddFields(patient.system, "t", dmgRoll.total, game.time?.worldTime ?? 0);
+  // Нестабильный Геном Сплайса — та же надбавка, что в combat/char-damage.mjs.
+  const genome = unstableGenomeBonus(patient);
+  const loss = charLossAddFields(patient.system, "t", dmgRoll.total + genome, game.time?.worldTime ?? 0);
   const tBefore = loss.before;
   const tAfter = loss.after;
   const updates = { ...loss.patch };
   const lines = [
-    `${rollIcon("fire","#ff8a3a")}<b>Прижигание</b>: Усталость <b>${fatigueRoll.total}</b>, урон в T <b>${dmgRoll.total}</b> (T ${tBefore}→${tAfter}).`
+    `${rollIcon("fire","#ff8a3a")}<b>Прижигание</b>: Усталость <b>${fatigueRoll.total}</b>, урон в T <b>${dmgRoll.total}</b>${genome ? ` (+${genome} Нестабильный Геном)` : ""} (T ${tBefore}→${tAfter}).`
   ];
   if (patient.system.conditions?.bleeding) {
     Object.assign(updates, conditionRemoveFields("bleeding"));

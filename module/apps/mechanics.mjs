@@ -38,6 +38,9 @@
 //    trait / talent: как в старой системе Выдач — sourceUuid/sourceName/
 //      sourceImg/sourceHasRating (драг-н-дроп) + rating (Черта) или
 //      specialization (Талант).
+//    equipment choice: equipChoiceIds (закрытый список id) и equipBudgetMin
+//      (только в JSON: «до N» вместо «ровно N», Сплайс — 0–3 доп. адаптации);
+//      label непуст — им подписано окно выбора вместо «выбор — «Черты»».
 //    skill: skillScope:"plain"|"group", skillKey, specKey/specialty, rank.
 //      specKey:"__choice__" (wdbc-jo51-подобный приём) — «по выбору при
 //      получении»: specChoiceKeys — кандидаты, отмеченные автором,
@@ -1305,6 +1308,9 @@ export function describeMechEntry(entry) {
     case "equipment": {
       const qty = Math.max(1, parseInt(entry.equipQty) || 1);
       if (entry.equipMode === "choice") {
+        // Подпись автора («Ген-Сплайс: Сенсорная адаптация») понятнее
+        // «выбор — «Черты» ×1» — её и видит игрок в окне выбора.
+        if (entry.label) return entry.label;
         const cat = GRANTABLE_CATEGORIES.find(c => c.pack === entry.equipCategoryPack)?.label ?? entry.equipCategoryPack;
         const bits = [];
         if (entry.equipCategoryPack === "weapons" && entry.equipWeaponType)
@@ -2141,7 +2147,9 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
       // Закрытый список id (equipChoiceIds): «1 мутация из списка» Мутанта.
       if (Array.isArray(entry.equipChoiceIds) && entry.equipChoiceIds.length) filters.ids = [...entry.equipChoiceIds];
 
-      const budget = normalizeBudget({ mode: entry.equipBudgetMode, value: entry.equipBudgetValue });
+      // equipBudgetMin — «до N» (Сплайс: 0–3 дополнительные адаптации),
+      // поле только в JSON пака, редактора в Конструкторе пока нет.
+      const budget = normalizeBudget({ mode: entry.equipBudgetMode, value: entry.equipBudgetValue, min: entry.equipBudgetMin });
       const picked = await openCompendiumBrowser(false, {
         pack: entry.equipCategoryPack, filters, budget,
         prompt: describeMechEntry(entry),
