@@ -5403,8 +5403,40 @@ export const CAPABILITIES = {
     source: "Natural Weapons / Естественное Оружие", reader: "module/apps/mechanics.mjs (kind:\"integralAttack\" → buildIntegralAttackData, X из рейтинга — module/rules/integral-rating.mjs, wdbc-o368c); выбор — equipOptional"
   },
   "trait.newMen": {
-    label: "Регенерация и иммунитеты Нового Человека.",
-    source: "New Men / Новые Люди", reader: ""
+    label: "Лечится как космодесантник; иммунитет к болезням; яды/наркотики/медикаменты вдвое короче и без побочных эффектов; d20 на Кровотечении и затягивание T+0; до 3 суток без сна; операции легче; переломы заживают вчетверо быстрее. Текстом: пищевые отравления, совместимость крови/органов, отращивание утраченных частей тела (у потери конечности нет таймера отрастания).",
+    source: "New Men / Новые Люди",
+    reader: "возможности на Черте — healing.astartes, immunity.disease, newMen.drugs, newMen.bleeding, newMen.sleep, newMen.surgery, newMen.regeneration (module/rules/new-men.mjs)"
+  },
+  // ── New Men / Новые Люди (Йигори, сверка главы I, 28.09.2026) ─────────────
+  "immunity.disease": {
+    label: "Иммунитет ко всем болезням, даже сверхъестественным: болезнь на лист не ложится",
+    source: "New Men / Новые Люди",
+    reader: "module/rules/new-men.mjs diseaseCreateBlocked() — warhammer-dbc.mjs Hooks.on(\"preCreateItem\")"
+  },
+  "newMen.drugs": {
+    label: "Яды, наркотики, медикаменты: срок вдвое (окр.▼), пост-эффект не наступает, разовый эффект медикамента вдвое",
+    source: "New Men / Новые Люди",
+    reader: "module/rules/new-men.mjs — sheets/tabs/drugs.mjs applyDrug/triggerAfterEffect"
+  },
+  "newMen.bleeding": {
+    label: "Кровотечение: d20 вместо d10; в начале своего Хода — тест T+0, успех затягивает Кровотечение",
+    source: "New Men / Новые Люди",
+    reader: "module/rules/new-men.mjs — combat/condition-ticks.mjs processConditionTurnStart/processConditionTurnEnd"
+  },
+  "newMen.sleep": {
+    label: "Сон: до 3 суток без сна без штрафа (первая стадия Сна — на третьи бессонные сутки)",
+    source: "New Men / Новые Люди",
+    reader: "module/rules/new-men.mjs sleepGraceDays() — rules/character.mjs и sheets/sheet-helpers.mjs (ctx.sleepGraceDays, constants/vitals.mjs)"
+  },
+  "newMen.surgery": {
+    label: "Пришивание и установка бионики: штраф Medicae вдвое (−15 вместо −30), восстановление/адаптация вдвое",
+    source: "New Men / Новые Люди",
+    reader: "module/rules/new-men.mjs — sheets/tabs/healing.mjs applyReattach/resolveBionicTest"
+  },
+  "newMen.regeneration": {
+    label: "Перелом (бесполезная конечность): срок в лубке вчетверо короче",
+    source: "New Men / Новые Люди",
+    reader: "module/rules/new-men.mjs splintDays() — sheets/tabs/healing.mjs applySetLimb"
   },
   "trait.nimble10": {
     label: "Штраф атакующим по нему (−X, Рейтинг Черты).",
@@ -5422,9 +5454,15 @@ export const CAPABILITIES = {
     label: "+15 S и T, −15 Ag и Int, +15 Ран, набор Трейтов и Талантов огрина.",
     source: "Ogryn / Огрин", reader: ""
   },
-  "trait.packConscious": {
-    label: "Телепатия со стаей.",
-    source: "Pack Conscious / Сознание Стаи", reader: ""
+  "trait.packConsciousness": {
+    label: "Стая (Отряд, где у всех бойцов эта Черта): бонусы Команд вдвое, все три эффекта Командного Присутствия даже без Командира (W — наибольшая в стае), Реакция члена стаи в 3 м на Уклонение. Текстом: невербальный язык стаи.",
+    source: "Pack Consciousness / Сознание Стаи",
+    reader: "возможность command.packConsciousness на Черте"
+  },
+  "command.packConsciousness": {
+    label: "Стая Йигори: бонусы Команд вдвое, все три эффекта Присутствия без Командира (W — наибольшая в стае), Реакция члена стаи в 3 м на Уклонение",
+    source: "Pack Consciousness / Сознание Стаи",
+    reader: "module/combat/command-state.mjs commandNodesFor (node.pack) → rules/command-effects.mjs commandRulesFor/commandEffectNode; borrowCoverReaction (Уклонение, combat/defense.mjs)"
   },
   "trait.performance": {
     label: "Раз в раунд — Реакция + Очко Судьбы: +A.b к поглощению урона до начала следующего хода. Талант (Скл. A/Fin; требование — Арлекин).",
@@ -5435,8 +5473,9 @@ export const CAPABILITIES = {
     source: "Phase / Фаза", reader: ""
   },
   "trait.pheromoneGlands": {
-    label: "+10 социальные (феромоны).",
-    source: "Pheromone Glands / Феромонные Железы", reader: ""
+    label: "+10 к социальным тестам против дышащих феромонами людей; Соблазнение противоположного пола +30, того же — 0. Дышит ли собеседник и его пол решает стол — галочки в окне броска.",
+    source: "Pheromone Glands / Феромонные Железы",
+    reader: "записи kind:\"testMod\" на Черте (область social +10; Charm +20) — module/rules/item-rules.mjs"
   },
   "trait.preferredStrike": {
     label: "Доп. куб урона для переброса за каждый −10 от Сочленений цели (макс 3). Талант-снижение штрафа не уменьшает кубы. До ½ P.b раз/битву.",

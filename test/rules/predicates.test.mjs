@@ -444,6 +444,8 @@ describe("общее требование к предикатам", () => {
     // Пустота Парии / демон / цель-псайкер или демон (rules/null-zones.mjs,
     // сверка главы I, 26.09.2026).
     inPariahVoid: true, isDaemon: true, targetPsykerOrDaemon: true,
+    // Цель/источник — Космодесантник (Angel Hunters, Йигори, сверка главы I).
+    targetIsAstartes: true,
     charNotIn: ["t", "inf", "cor"],
     charIn: ["int", "per", "wp", "fel", "inf"],
     hasSize: undefined, targetHasSize: undefined, targetKeepsNimbleInArmour: undefined,

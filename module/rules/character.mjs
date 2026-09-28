@@ -42,6 +42,7 @@ import { PA_TABLES } from "../constants/power-armour-lore.mjs";
 import { sanityMax, madnessLevels, sarcophagusCharDelta, DREADNOUGHT_PILOT_FLAG,
          SARCOPHAGUS, sarcophagusWarpWounds, sarcophagusHelplessNow } from "./dreadnought.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { sleepGraceDays } from "./new-men.mjs";
 import { invalidateRulesCacheFor } from "./collect.mjs";
 import { runeMax } from "./sigillite-runes.mjs";
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
@@ -476,7 +477,7 @@ export function prepareCharacterDerived(actor, system) {
       const tb = Math.floor(tTotal / 10) + (t.supernatural || 0) + (t.bonusFx || 0)
                + (traitCharBonus.t || 0) + (pathPassives.charBonus.t || 0);
       const worldTime  = game.time?.worldTime ?? 0;
-      const vitalCtx    = { tb, isAstartes: raceMatches(system, "astartes") };
+      const vitalCtx    = { tb, isAstartes: raceMatches(system, "astartes"), sleepGraceDays: sleepGraceDays(actor) };
       const eff = {};
       for (const key of Object.keys(VITAL_TIME_FIELD))
         eff[key] = vitalEffectiveStage(key, system.vitals[key], system.vitals[VITAL_TIME_FIELD[key]], worldTime, vitalCtx);

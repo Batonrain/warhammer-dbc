@@ -477,6 +477,64 @@ describe("triggerAfterEffect", () => {
   });
 });
 
+// New Men / Новые Люди (Йигори): «уменьшает время действия любого яда,
+// наркотика или медикамента вдвое (окр.▼) и игнорирует побочные эффекты. Если
+// медикамент действует мгновенно или разово, уменьшает эффект вдвое (окр.▼)».
+describe("New Men / Новые Люди (newMen.drugs)", () => {
+  const yigori = items => actor({ items: [capabilityItem("newMen.drugs", { id: "nm", name: "New Men / Новые Люди" }), ...items] });
+
+  it("срок препарата вдвое, окр.▼: 1d5 = 5 → 2", async () => {
+    const item = drug({ system: { quantity: 1, drugCategory: "narcotic", duration: "1d5", activeEffect: {} } });
+    const a = yigori([item]);
+    captured.nextRoll = 5;
+    await applyDrug(a, item);
+    expect(item.updates[0]["system.activeEffect.roundsRemaining"]).toBe(2);
+    expect(captured.chat[0].content).toContain("Новые Люди");
+  });
+
+  it("разовое лечение медикамента вдвое: 5 Ран → 2", async () => {
+    const item = drug({ system: { quantity: 1, drugCategory: "medicine", specialEffects: { removesWounds: 5 }, activeEffect: {} } });
+    const a = yigori([item]);
+    a.system.wounds = { value: 1, max: 10, critical: 0 };
+    await applyDrug(a, item);
+    expect(a.updates[0]["system.wounds.value"]).toBe(3);
+  });
+
+  it("формула лечения медикамента вдвое после броска: 7 → 3", async () => {
+    const item = drug({ system: { quantity: 1, drugCategory: "medicine", specialEffects: { healFormula: "1d10" }, activeEffect: {} } });
+    const a = yigori([item]);
+    a.system.wounds = { value: 1, max: 10, critical: 0 };
+    captured.nextRoll = 7;
+    await applyDrug(a, item);
+    expect(a.updates[0]["system.wounds.value"]).toBe(4);
+  });
+
+  it("без Черты — прежний срок и полное лечение (регресс)", async () => {
+    const item = drug({ system: { quantity: 1, drugCategory: "medicine", duration: "1d5", specialEffects: { removesWounds: 5 }, activeEffect: {} } });
+    const a = actor({ items: [item] });
+    a.system.wounds = { value: 1, max: 10, critical: 0 };
+    captured.nextRoll = 5;
+    await applyDrug(a, item);
+    expect(item.updates[0]["system.activeEffect.roundsRemaining"]).toBe(5);
+    expect(a.updates[0]["system.wounds.value"]).toBe(6);
+  });
+
+  it("пост-эффект не наступает: ничего не применено, эффект завершён", async () => {
+    const item = drug({ system: {
+      hasAfterEffect: true, drugCategory: "narcotic", afterEffect: "Откат",
+      afterEffectSpecial: { removesWounds: 2, grantsCondition: "stunned" },
+      afterEffectCharDamage: { stat: "int", formula: "1d5" },
+      activeEffect: { isActive: true, roundsRemaining: 1 }
+    } });
+    const a = yigori([item]);
+    await triggerAfterEffect(a, item);
+    expect(a.updates).toEqual([]);
+    expect(item.updates[0]).toMatchObject({ "system.activeEffect.isActive": false, "system.activeEffect.isAfterEffect": false });
+    expect(captured.chat[0].content).toContain("Новые Люди");
+    expect(captured.rolls).toHaveLength(0);
+  });
+});
+
 describe("drug sheet listeners", () => {
   it("deactivateDrugEffect завершает активный эффект препарата", async () => {
     const item = drug({ system: {

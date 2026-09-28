@@ -10,6 +10,7 @@ import { resetCaptured, captured } from "../support/foundry-stub.mjs";
 import { commandNodesFor, expireCommandsAtTurnStart, handleMoraleFailure, revertMoraleFailure,
          clearCommandsOnCombatEnd, COMMAND_LOST_FLAG } from "../../module/combat/command-state.mjs";
 import { resolveTest } from "../../module/rules/resolve-test.mjs";
+import { packDocById } from "../support/pack-doc.mjs";
 
 function doc(uuid, type, system, extra = {}) {
   const flags = {};
@@ -111,6 +112,35 @@ describe("срок Команды", () => {
     await clearCommandsOnCombatEnd({ combatants: [{ actor: soldier }] });
     expect(squad.system.presence.active).toBe(false);
     expect(squad.system.shortCommand.active).toBe(false);
+  });
+});
+
+// Pack Consciousness / Сознание Стаи (Йигори): стая — Отряд, где у всех
+// бойцов Черта; Черта из packs-src, чтобы возможность ехала с ней самой.
+describe("стая Йигори (Сознание Стаи)", () => {
+  const PACK_TRAIT = packDocById("packs-src/traits", "GXPSPdHzlYuusanK");
+  const giveTrait = d => {
+    const t = { id: "pc", name: PACK_TRAIT.name, type: "trait", system: PACK_TRAIT.system, flags: PACK_TRAIT.flags };
+    d.items = Object.assign([t], { contents: [t] });
+  };
+
+  it("весь состав с Чертой — узел-стая, W наибольшая; Воодушевление вдвое", () => {
+    const mate = doc("Actor.m", "character", { characteristics: { wp: { total: 44 } }, conditions: {} });
+    giveTrait(soldier); giveTrait(mate);
+    squad.system.members.push({ id: "m2", uuid: "Actor.m" });
+    const map = { "Actor.s": soldier, "Actor.c": sarge, "Actor.sq": squad, "Actor.m": mate };
+    globalThis.fromUuidSync = u => map[u] ?? null;
+
+    const [node] = commandNodesFor(soldier);
+    expect(node.pack).toEqual({ wp: 44 });
+    const { autoMods } = resolveTest({ actor: soldier, kind: "attack", isMelee: false });
+    expect(autoMods.find(x => x.ruleId === "command.short")?.value).toBe(6);
+  });
+
+  it("хоть один боец без Черты — не стая", () => {
+    giveTrait(soldier);
+    squad.system.members.push({ id: "m2", uuid: "Actor.c" }); // сержант без Черты
+    expect(commandNodesFor(soldier)[0].pack).toBe(null);
   });
 });
 

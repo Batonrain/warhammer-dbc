@@ -74,6 +74,7 @@ import { parseRangeMeters, rangeVerdict }            from "../rules/psy-range.mj
 import { measureTokens }                             from "../combat/tactical-map.mjs";
 import { mechFormulaTotalSafe }                      from "../rules/mech-formula.mjs";
 import { grappleOnlyHidden, isBiteName } from "../rules/integral-rating.mjs";
+import { sleepGraceDays } from "../rules/new-men.mjs";
 
 // Определение всех Состояний листа — реестр constants/conditions.mjs
 // (wdbc-w88h): label/desc/иконка/счётчик собраны там, здесь только реэкспорт
@@ -912,7 +913,8 @@ function buildGetDataUncached(actor) {
       // Жизненные потребности (корбук 483): Голод/Жажда/Сон — стадия двигается
       // сама по game.time.worldTime, см. vitalEffectiveStage (wdbc-jnqj).
       life: VITALS.map(v => {
-        const vitalCtx = { tb: Number(system.characteristics?.t?.bonus) || 0, isAstartes: raceMatches(system, "astartes") };
+        const vitalCtx = { tb: Number(system.characteristics?.t?.bonus) || 0, isAstartes: raceMatches(system, "astartes"),
+                           sleepGraceDays: sleepGraceDays(actor) };
         const val = vitalEffectiveStage(v.key, system.vitals?.[v.key], system.vitals?.[VITAL_TIME_FIELD[v.key]],
           game.time?.worldTime ?? 0, vitalCtx);
         const st  = v.stages[val];

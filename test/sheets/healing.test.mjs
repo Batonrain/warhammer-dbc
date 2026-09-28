@@ -302,6 +302,59 @@ describe("applyHealing: stumpCare (Обработка обрубка, Medicae−
 });
 
 // wdbc-1rno.6: успешная бионика раньше молча не восстанавливала lostX вовсе.
+// New Men / Новые Люди (Йигори): «уменьшая обычные штрафы к тестам Medicae
+// вдвое и уменьшая время на восстановление после операций вдвое»;
+// «регенерация сокращает время восстановления после переломов и бесполезных
+// конечностей в 4 раза».
+describe("New Men / Новые Люди: операции и переломы", () => {
+  const grant = (...flags) => {
+    clearRuleSources();
+    registerRuleSource("test", () => flags.map((f, i) =>
+      ({ id: `test.nm${i}`, when: {}, effects: [{ kind: "grantFlag", target: f }] })));
+  };
+  afterEach(() => {
+    captured.dice = null;
+    clearRuleSources();
+    for (const [key, fn] of DEFAULT_SOURCES) registerRuleSource(key, fn);
+  });
+
+  it("Пришивание: штраф −15 вместо −30 и восстановление вдвое (окр.▼)", async () => {
+    grant("newMen.surgery");
+    const medic = person({ medicae: 40 });
+    const patient = person({ t: 40 });
+    patient.system.lostLimbs = { rightArm: { lost: true, gangreneAt: 0 } };
+    captured.dice = [25, 10]; // eff 40−15=25 — успех; 1d10=10 → 10+3−4=9 → вдвое 4
+
+    await applyHealing(medic, patient, { mode: "reattach", mod: 0, limb: "arm" });
+
+    expect(patient.system.lostLimbs.rightArm.lost).toBe(false);
+    expect(captured.chat[0].content).toContain("−15");
+    expect(patient.system.uselessLimbs.rightArm.healAt).toBe(1_000_000 + 4 * 86400);
+  });
+
+  it("Бионика: тот же порог −15", async () => {
+    grant("newMen.surgery");
+    const patient = person();
+    patient.system.lostLimbs = { rightEye: { lost: true, gangreneAt: 0 } };
+    captured.dice = [25, 6];
+    await resolveBionicTest(person({ medicae: 40 }), patient, { mod: 0, limb: "eye" });
+    expect(patient.system.lostLimbs.rightEye.lost).toBe(false);
+  });
+
+  it("Фиксация перелома: срок в лубке вчетверо короче", async () => {
+    grant("newMen.regeneration");
+    const patient = person({ t: 20 }); // T.b 2
+    patient.system.uselessLimbs = { leftArm: { state: "untreated", noAidAt: 2_000_000 } };
+    captured.dice = [10, 9, 9]; // тест успех; 2d10=18 − 2 = 16 → /4 = 4
+
+    await applyHealing(person({ medicae: 40 }), patient, { mode: "setLimb", mod: 0, side: "leftArm" });
+
+    expect(patient.system.uselessLimbs.leftArm.state).toBe("splinted");
+    expect(patient.system.uselessLimbs.leftArm.healAt).toBe(1_000_000 + 4 * 86400);
+    expect(captured.chat[0].content).toContain("Новые Люди");
+  });
+});
+
 describe("resolveBionicTest: потеряно мутацией Потеря Конечности — только Best.Q (wdbc-1rno.6.1)", () => {
   it("имплант ниже Best.Q — конечность не восстанавливается", async () => {
     const medic = person({ medicae: 40 });

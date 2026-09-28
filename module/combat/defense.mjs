@@ -54,8 +54,8 @@ export const COMPRESSION_CAPABILITY = "mutation.compression";
 // spendReaction ничего не считает и всегда отдаёт true, поэтому вне боя
 // кнопки продолжают работать как раньше, без ограничений.
 /** Командование («Прикрытие») — ленивый импорт: command-state тянет источники правил. */
-async function borrowCoverReaction(actor) {
-  try { return await (await import("./command-state.mjs")).borrowCoverReaction(actor); }
+async function borrowCoverReaction(actor, opts = {}) {
+  try { return await (await import("./command-state.mjs")).borrowCoverReaction(actor, opts); }
   catch (e) { console.warn("Warhammer DBC | Прикрытие:", e); return null; }
 }
 async function coverParrySteps(actor) {
@@ -139,9 +139,10 @@ export async function _performDodge(actor, {
   // тяжелее и не меньше цели. Реакция не тратится — как и без ног выше.
   const grappleNoDodge = grappleDodgeBlockReason(actor);
   if (grappleNoDodge) return _bladeShieldRefusal(actor, grappleNoDodge, "Уклонение");
-  // «Прикрытие» (Детальная Команда): нет своей Реакции — одолжить у соратника в 3 м.
+  // «Прикрытие» (Детальная Команда): нет своей Реакции — одолжить у соратника
+  // в 3 м; у стаи Йигори (Сознание Стаи) — у члена стаи и без «Прикрытия».
   if (!(await spendReaction(actor, { forDefense: true, attackId }))
-      && !(await borrowCoverReaction(actor))) return _noReactionCard(actor, "Уклонение");
+      && !(await borrowCoverReaction(actor, { dodge: true }))) return _noReactionCard(actor, "Уклонение");
   const { agTotal, threshold: baseThreshold, modParts } = dodgeProfile(actor, extraMod);
   // Фантомные Копии (Wrapped in Chaos "2-3", wdbc-1rno): штраф Уклонению
   // ЧУЖОЙ рукопашной атаки — направленный модификатор атакующий→защитник,

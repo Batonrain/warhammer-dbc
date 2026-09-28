@@ -393,21 +393,22 @@ export const RACES = {
   yigori: {
     label: "Йигори",
     subraces: [],
-    chars: { ws:25, bs:25, s:25, t:25, ag:25, int:25, per:25, wp:25, fel:25, inf:19 },
+    chars: { ws:25, bs:25, s:30, t:30, ag:30, int:30, per:30, wp:25, fel:30, inf:19 },
     bonusRolls: 3, bonusPoints: 11, charShift: 2,
     archetypes: ["apostate", "heresiarch", "renegade", "pirate", "savage", "noble", "witch"],
     size: 0,
     skills:  "Common Lore (любые 4), Linguistics (Low Gothic), Trade (любое 1)",
-    gear:    "5 элементов до R1 (2 Good.Q, 1 Best.Q), Vox-Bead",
+    gear:    "5 элементов Снаряжения и Инструментов до R1 из них 2 Good.Q и 1 Best.Q, Vox-Bead",
     talents: ["Ambidextrous", "Double Team", "Frenzy", "Heightened Senses (Sight, Smell)", "Jumper", "Leap Up", "Resistance (Cold, Heat, Poison)", "Sprint", "Total Recall", "Unarmed Warrior"],
     traits: [
       { name:"Unnatural Strength (2) / Сверхъестественная Сила (2)", benefit:"+2 к Бонусу Силы.", rating:2, hasRating:true, effects:{ charBonusStat:"s", charBonusValue:2 } },
-      { name:"Unnatural Intelligence (2) / Сверхъестественный Интеллект (2)", benefit:"+2 к Бонусу Интеллекта.", rating:2, hasRating:true, effects:{ charBonusStat:"int", charBonusValue:2 } },
+      { name:"Unnatural Toughness (2) / Сверхъестественная Стойкость (2)", benefit:"+2 к Бонусу Стойкости.", rating:2, hasRating:true, effects:{ charBonusStat:"t", charBonusValue:2 } },
       { name:"Unnatural Agility (2) / Сверхъестественная Ловкость (2)", benefit:"+2 к Бонусу Ловкости.", rating:2, hasRating:true, effects:{ charBonusStat:"ag", charBonusValue:2 } },
       { name:"The Quick and The Dead / Быстрые и Мёртвые", benefit:"+2 к Инициативе." },
-      { name:"New Men / Новые Люди", benefit:"Лечится как космодесантник; иммунитет к негативным эффектам наркотиков/медикаментов; ускоренная регенерация конечностей; быстрое размножение." },
-      { name:"Pack Conscious / Сознание Стаи", benefit:"Телепатическая связь со стаей в радиусе Командного Присутствия." },
-      { name:"Pheromone Glands / Феромонные Железы", benefit:"+10 на социальные взаимодействия (в герметичной броне не работает)." }
+      { name:"New Men / Новые Люди", benefit:"Лечится как космодесантник; иммунитет ко всем болезням; яды/наркотики/медикаменты вдвое короче и без побочных эффектов; d20 на Кровотечении; сон 4 ч; легче пересадка и бионика; регенерация конечностей." },
+      { name:"Angel Hunters / Охотники на Ангелов", benefit:"Раз в Раунд — переброс любого теста, целью или источником которого является Космодесантник." },
+      { name:"Pack Consciousness / Сознание Стаи", benefit:"Стая: бонусы Командования вдвое, все три эффекта Командного Присутствия без Командира, Реакции стаи на Уклонение." },
+      { name:"Pheromone Glands / Феромонные Железы", benefit:"+10 к социальным тестам против дышащих феромонами людей; Соблазнение противоположного пола +30." }
     ],
     desc: "Новый человек апотекария Фабия Байла: универсал с дополнительными органами и сознанием стаи."
   }

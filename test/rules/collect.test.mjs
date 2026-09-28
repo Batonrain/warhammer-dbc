@@ -136,7 +136,7 @@ describe("источники по умолчанию", () => {
                 "legacyBloodPsychic", "legacyDistractingCharSwap", "legacyExcess", "legacyGuardian",
                 "legacyInstinctiveDisarm", "legacyQuietAwareness", "legacyWrath", "nullZones",
                 "opposedTarget", "paths", "patron", "prophetOfGallerpox",
-                "psychicSustainTarget", "race", "situational", "synesthesia"]);
+                "psychicSustainTarget", "race", "situational", "synesthesia", "yigori"]);
   });
 
   // Наполнена пока одна раса (этап 3 плана), у остальных поле rules пустое.

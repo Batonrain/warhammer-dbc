@@ -1,0 +1,47 @@
+{
+  "name": "Angel Hunters / Охотники на Ангелов",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "Раз в Раунд — переброс любого теста, целью или источником которого является Космодесантник; Йигори в одном Командном Присутствии и в видимости друг друга делятся перебросами.",
+    "notes": "В окне теста (атака, навык, приём, тест Морали от Страха), когда цель или источник — Космодесантник, появляется переброс «Охотники на Ангелов (лучший из 2)» — правило yigori.angelHunters (module/rules/library/yigori.mjs). «Раз в Раунд» и обмен перебросами внутри стаи отслеживает стол: учёт перебросов по Раундам система не ведёт (как у Локусов Герольдов). Уклонение и Парирование по кнопке в карточке атаки переброса не предлагают — там нет окна броска.",
+    "benefit": "Йигори изначально создавались как охотничьи стаи, загоняющие космодесантников и «разбирающие» их на органы для экспериментов Фабия Байла, и подсознательные знания сил, слабостей, и особенностей Ангелов Смерти заложены в них на генетическом уровне.\nРаз в Раунд Йигори может перебросить любой тест, целью или источником которого является Космодесантник. Йигори в одном Командном Присутствии и в пределах видимости друг друга могут делиться этими перебросами между собой.",
+    "source": "Йигори",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "efM9trbCzi2i0jXA",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!efM9trbCzi2i0jXA"
+}

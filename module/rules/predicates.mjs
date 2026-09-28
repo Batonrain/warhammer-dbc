@@ -292,7 +292,7 @@ export const CTX_DEPENDENT_PREDICATES = new Set([
   "targetHasTrait", "targetLacksCondition", "targetHasCondition",
   "targetHasSize", "targetKeepsNimbleInArmour", "targetHasFaction",
   "targetHasFieldPsyMod", "targetLacksSealedArmour", "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus", "hasHatredTarget",
-  "legacyGuardianMarked", "targetPsykerOrDaemon"
+  "legacyGuardianMarked", "targetPsykerOrDaemon", "targetIsAstartes"
 ]);
 
 export const PREDICATES = {
@@ -365,6 +365,18 @@ export const PREDICATES = {
   targetPsykerOrDaemon: (actor, ctx, value) => {
     const t = ctx?.targetActor;
     const hit = !!t && ((Number(t.system?.psyker?.rating) || 0) >= 1 || isDaemonActor(t));
+    return hit === (value !== false);
+  },
+
+  // Цель (или источник) теста — Космодесантник: раса с учётом Прошлого или
+  // Черта «Astartes» — тот же признак, что rules/legacy-weapon.mjs::isAstartes.
+  // Источник теста Морали (Страх) едет в том же ctx.targetActor
+  // (rules/morale-test.mjs), поэтому «целью или источником которого»
+  // (Angel Hunters, Йигори) — одно условие.
+  targetIsAstartes: (actor, ctx, value) => {
+    const t = ctx?.targetActor;
+    const hit = !!t && (raceMatches(t.system, "astartes")
+      || [...(t.items ?? [])].some(i => i?.type === "trait" && itemHasName(i, "Astartes")));
     return hit === (value !== false);
   },
 

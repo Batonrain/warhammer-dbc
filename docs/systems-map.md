@@ -847,6 +847,15 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   `apps/mechanics.mjs::syncNullZoneSuppression` (флаг `nullSuppressed`).
 - «Избегает атак Орды как одиночная цель» (Быстрые и Мёртвые, Серый
   Человек) — `rules/horde-single-target.mjs`.
+- Йигори (сверка главы I, 28.09.2026): Новые Люди — `rules/new-men.mjs`
+  (возможности на Черте: `immunity.disease` — болезнь не ложится, хук
+  preCreateItem; `newMen.drugs` — `sheets/tabs/drugs.mjs`; `newMen.bleeding` —
+  d20 и T+0 в `combat/condition-ticks.mjs`; `newMen.sleep` — сдвиг порогов Сна
+  `constants/vitals.mjs`; `newMen.surgery`/`newMen.regeneration` —
+  `sheets/tabs/healing.mjs`); Охотники на Ангелов — `rules/library/yigori.mjs`
+  (предикат `targetIsAstartes`); Сознание Стаи — стая (`node.pack`) в
+  `combat/command-state.mjs::packOf` + `rules/command-effects.mjs::
+  effectivePresence`; Феромонные Железы — записи testMod на Черте.
 - `module/constants/legions.mjs` — Легионы Космодесанта (Геносемя/Культура/
   Проклятье); `rules/legion-fit.mjs`, `legion-upgrade.mjs`.
 - Пути Азуриан: `constants/aeldari-paths.mjs`, `rules/library/paths.mjs`,

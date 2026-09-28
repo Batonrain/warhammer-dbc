@@ -15,6 +15,10 @@ import { conditionLevelField } from "../../constants/conditions.mjs";
 import { maybeGrantEnjoymentPain } from "../../combat/enjoyment.mjs";
 import { postTestCard, rollStatLine } from "../../helpers/test-card.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
+// New Men / Новые Люди (Йигори): срок вдвое, без пост-эффекта, разовый эффект
+// медикамента вдвое (module/rules/new-men.mjs).
+import { newMenDrugDuration, newMenInstantMedicine, halvesInstantMedicine,
+         ignoresDrugSideEffects, halveDown } from "../../rules/new-men.mjs";
 
 // wdbc-1rno (кластер Дары Богов — Слаанеш): «Владыка Праздности» — «Персонаж
 // приобретает иммунитет к любым пост-эффектам и зависимостям от употребления
@@ -77,7 +81,7 @@ function rollTermsText(roll, total) {
  * Применяет «доп.» (мульти-) эффекты блока к цели: снятие Обескровливания,
  * лечение по формуле, доп. Усталость, непоглощаемый урон в Раны.
  */
-export async function applyEffectExtras(target, fx) {
+export async function applyEffectExtras(target, fx, { halveHeal = false } = {}) {
   const updates = {};
   const lines = [];
   const rolls = [];
@@ -93,8 +97,10 @@ export async function applyEffectExtras(target, fx) {
     try {
       const r = await new Roll(resolveCharFormula(fx.healFormula, chars)).evaluate();
       rolls.push(r);
-      Object.assign(updates, computeWoundHealing(target.system, r.total));
-      lines.push(`${rollIcon("heart","#ff8a8a")}Лечение: <b>${fx.healFormula}</b> = <b>${r.total}</b>`);
+      // Разовый эффект медикамента у Нового Человека — вдвое (окр.▼).
+      const healed = halveHeal ? halveDown(r.total) : r.total;
+      Object.assign(updates, computeWoundHealing(target.system, healed));
+      lines.push(`${rollIcon("heart","#ff8a8a")}Лечение: <b>${fx.healFormula}</b> = <b>${r.total}</b>${halveHeal ? ` → Новые Люди: вдвое = <b>${healed}</b>` : ""}`);
     } catch(e) {
       console.error("healFormula:", e);
     }
@@ -161,6 +167,13 @@ export async function applyDrug(owner, item, recipient = null) {
       durationRoll = await new Roll(resolvedFormula).evaluate();
       resolvedRounds = durationRoll.total;
       durationRollStr = rollTermsText(durationRoll, resolvedRounds);
+      // Новые Люди: «время действия любого яда, наркотика или медикамента
+      // вдвое (окр.▼)» — срок режется у ПОЛУЧАТЕЛЯ, а не у применившего.
+      const halved = newMenDrugDuration(actor, resolvedRounds);
+      if (halved !== resolvedRounds) {
+        durationRollStr += ` → Новые Люди: вдвое = ${halved}`;
+        resolvedRounds = halved;
+      }
     } catch(e) {
       console.warn(`Не удалось бросить формулу длительности: ${sys.duration}`, e);
       durationRollStr = sys.duration;
@@ -178,7 +191,10 @@ export async function applyDrug(owner, item, recipient = null) {
   };
 
   const actorUpdates = {};
-  const fx = sys.specialEffects || {};
+  // Новые Люди: мгновенный/разовый эффект МЕДИКАМЕНТА вдвое (окр.▼) — числа
+  // в карточке ниже берутся уже из урезанного набора.
+  const fx = newMenInstantMedicine(actor, sys.drugCategory, sys.specialEffects || {});
+  const halveHeal = halvesInstantMedicine(actor, sys.drugCategory);
 
   if (fx.removesBleedingLevels > 0) {
     Object.assign(actorUpdates, conditionAdjustFields(actor, "bleeding", -fx.removesBleedingLevels));
@@ -237,7 +253,7 @@ export async function applyDrug(owner, item, recipient = null) {
     }
   }
 
-  const extras = await applyEffectExtras(actor, fx);
+  const extras = await applyEffectExtras(actor, fx, { halveHeal });
   Object.assign(actorUpdates, extras.updates);
   if (extras.fatigueDelta) { fat.delta += extras.fatigueDelta; fat.touched = true; }
   const fatRes = drugFatigueChange(actor, fat);
@@ -335,7 +351,9 @@ export async function applyDrug(owner, item, recipient = null) {
   if (fx.customEffect)
     chatContent += `<div class="roll-threshold">${rollIcon("target","#8fd0ff")}${fx.customEffect}</div>`;
 
-  if (sys.hasAfterEffect) {
+  if (sys.hasAfterEffect && ignoresDrugSideEffects(actor)) {
+    chatContent += `<div class="roll-threshold">${rollIcon("shield","#4dffa6")}Новые Люди: пост-эффект «${sys.afterEffect || "—"}» не наступит</div>`;
+  } else if (sys.hasAfterEffect) {
     chatContent += `<div class="roll-outcome"><span class="roll-failure">${rollIcon("warn","#ffb84d")}Пост-эффект: ${sys.afterEffect || "—"}`;
     if (sys.afterEffectDice) chatContent += ` [${sys.afterEffectDice}]`;
     chatContent += "</span></div>";
@@ -355,6 +373,23 @@ export async function applyDrug(owner, item, recipient = null) {
 export async function triggerAfterEffect(actor, item) {
   const sys = item.system;
   if (!sys.hasAfterEffect) return;
+
+  // Новые Люди (Йигори): «игнорирует побочные эффекты» — пост-эффект не
+  // наступает вовсе, препарат просто заканчивает действие.
+  if (ignoresDrugSideEffects(actor)) {
+    await item.update({
+      "system.activeEffect.isActive": false,
+      "system.activeEffect.isAfterEffect": false,
+      "system.activeEffect.roundsRemaining": 0,
+      "system.activeEffect.charDamageStat": "",
+      "system.activeEffect.charDamageAmount": 0
+    });
+    await postTestCard(actor, `<div class="wh-roll-result">
+      <div class="roll-header">${rollIcon("shield","#4dffa6")}Пост-эффект: ${esc(item.name)}</div>
+      <div class="roll-threshold">Новые Люди: побочные эффекты игнорируются — «${sys.afterEffect || "—"}» не наступает, действие препарата завершено.</div></div>`,
+      { sound: false });
+    return;
+  }
 
   const fx = sys.afterEffectSpecial || {};
   const actorUpdates = {};
