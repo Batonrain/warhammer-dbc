@@ -25,6 +25,7 @@ import { esc, _degWord } from "../helpers/utils.mjs";
 import { getItemMechanics, findMechEntryById, scriptRunReady, markScriptRunUsed } from "../apps/mechanics.mjs";
 import { executeItemCode } from "../apps/item-script.mjs";
 import { egomaniaOverrideResult } from "./egomania.mjs";
+import { singleCombatBonus, singleCombatNoUnnaturalTie, SINGLE_COMBAT_LINE } from "../combat/single-combat.mjs";
 import { hasRuleFlag } from "./flags.mjs";
 import { PERSONAL_ADAPTATION_CAPABILITY, PERSONAL_ADAPTATION_FLAG,
          personalAdaptationCap, personalAdaptationBonusFor, nextPersonalAdaptationBonuses, personalAdaptationKey }
@@ -203,13 +204,17 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   // остальных тестов это no-op.
   const unnaturalRatingHere = success ? unnaturalRating(ctx?.actor, usedCharKey) : 0;
   const unnaturalBonus = unnaturalDegreeBonus(unnaturalRatingHere);
-  const unnaturalLine = unnaturalBonus > 0
+  // Бой Один На Один (Палач, rules/single-combat.mjs): +1 Успех на успешный
+  // тест WS/S/A, пока на сцене ровно один враг в контакте без чужой подмоги.
+  // Строка едет вместе с unnaturalLine — её рисует тот же лист.
+  const singleCombatDeg = singleCombatBonus(actor, { success, charKey: usedCharKey });
+  const unnaturalLine = (unnaturalBonus > 0
     ? `<div class="roll-threshold">🧬 Сверхъестественная Характеристика (${unnaturalRatingHere}): +${unnaturalBonus} ${_degWord(unnaturalBonus)}</div>`
-    : "";
+    : "") + (singleCombatDeg ? SINGLE_COMBAT_LINE : "");
   // failDegMod (wdbc-1rno: Sentient Cyst «+3 Провала при провале») — только
   // на провале, успешный тест не трогает; не может увести степень ниже 1
   // (та же граница, что testOutcome держит для success выше).
-  const baseDeg = success ? rawDeg + unnaturalBonus : Math.max(1, rawDeg + (resolved.failDegExtra || 0));
+  const baseDeg = success ? rawDeg + unnaturalBonus + singleCombatDeg : Math.max(1, rawDeg + (resolved.failDegExtra || 0));
   // Автозапуск kind:"script" по Крит.Успеху/Провалу (wdbc-1rno: «Полимат»,
   // «Библиотека Акаши») — после того, как crit уже посчитан для ЭТОГО броска.
   await runScriptTriggers(actor, resolved.scriptTriggers, crit);
@@ -241,7 +246,8 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
     // знакомым opponentActor, галочка в диалоге при ручном вводе, или ответ
     // соперника-игрока) — без этого поля тай-брейк просто не сработает,
     // как и до этой правки.
-    const mine = { deg: baseDeg, success, threshold: eff, unnatural: hasUnnaturalCharacteristic(actor, usedCharKey) };
+    const mine = { deg: baseDeg, success, threshold: eff, unnatural: hasUnnaturalCharacteristic(actor, usedCharKey),
+                   noUnnaturalTie: singleCombatNoUnnaturalTie(actor, usedCharKey) };
     const theirsOutcome = testOutcome(opposed.roll, opposed.threshold);
     const theirs = { ...theirsOutcome, threshold: opposed.threshold, unnatural: !!opposed.unnatural };
     // Egomania/Эгомания (Слаанеш, wdbc-1rno): «автоматически побеждает в

@@ -884,6 +884,14 @@ Hooks.once("ready", () => {
         await applyRelayedCommandUpdate(data);
         return;
       }
+      if (data.action === "inspiringPresenceSpend") {
+        // Вдохновляющее Присутствие (Чемпион): союзник тратит Очко чужого
+        // Чемпиона — module/combat/inspiring-presence.mjs сверяет Черту,
+        // Очко и владение перебрасывающим.
+        const { applyInspiringSpendRelay } = await import("./module/combat/inspiring-presence.mjs");
+        await applyInspiringSpendRelay(data, requester);
+        return;
+      }
       if (data.action === "veilShift") {
         // Отвращение Варпа от игрока (module/apps/ritual-cast.mjs,
         // defaultVeilShiftFn) — у не-ГМ veilShift() тихо не срабатывает,

@@ -85,9 +85,11 @@ function signedDeg({ deg, success }) {
  * `mine.unnatural`/`theirs.unnatural` — булев признак, есть ли у СТОРОНЫ
  * этот Трейт для характеристики, которой ОНА бросала (проверяется вызывающим
  * кодом через unnatural-characteristic.mjs, здесь только сравнение).
+ * `noUnnaturalTie` — у ПОБЕДИВШЕЙ стороны эта «ничья» гаснет (Бой Один На
+ * Один Палача, rules/single-combat.mjs).
  *
- * @param {{deg:number, success:boolean, threshold:number, unnatural?:boolean}} mine
- * @param {{deg:number, success:boolean, threshold:number, unnatural?:boolean}} theirs
+ * @param {{deg:number, success:boolean, threshold:number, unnatural?:boolean, noUnnaturalTie?:boolean}} mine
+ * @param {{deg:number, success:boolean, threshold:number, unnatural?:boolean, noUnnaturalTie?:boolean}} theirs
  * @param {{safe?:boolean}} [opts]
  * @returns {{winner: "mine"|"theirs"|null, margin: number, unnaturalTieBreak?: boolean}}
  */
@@ -105,7 +107,11 @@ export function resolveOpposed(mine, theirs, { safe = false } = {}) {
   const mineWins = sMine > sTheirs;
   const loserUnnatural  = mineWins ? !!theirs?.unnatural : !!mine?.unnatural;
   const winnerUnnatural = mineWins ? !!mine?.unnatural : !!theirs?.unnatural;
-  if (loserUnnatural && !winnerUnnatural) return { ...tieByThreshold(), unnaturalTieBreak: true };
+  // Бой Один На Один (Палач, rules/single-combat.mjs): у победителя-Палача
+  // форсированная «ничья» из-за Сверхъестественной Характеристики соперника
+  // не применяется — сторона несёт признак noUnnaturalTie.
+  const winnerIgnoresTie = mineWins ? !!mine?.noUnnaturalTie : !!theirs?.noUnnaturalTie;
+  if (loserUnnatural && !winnerUnnatural && !winnerIgnoresTie) return { ...tieByThreshold(), unnaturalTieBreak: true };
 
   const winnerSigned = mineWins ? sMine : sTheirs;
   const loserSigned  = mineWins ? sTheirs : sMine;

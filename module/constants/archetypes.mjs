@@ -15,16 +15,16 @@ export const ARCHETYPES = {
     talents: "Iron Discipline или Protege, Air of Authority или Disturbing Voice, Minion (Низший, Человек) или Sure Strike",
     gear:    "L. Power Weapon (до R3, Good.Q)",
     trait: { name: "Inspiring Presence / Вдохновляющее Присутствие",
-      benefit: "Может позволять союзникам/подчинённым в пределах видимости использовать его Очки Бесчестья; переданное очко даёт другому персонажу переброс теста." },
+      benefit: "Чемпион может позволять союзникам и подчиненным в пределах видимости использовать его Очки Бесчестья, как если бы они имели Cor и Покровительство Чемпиона. Переданные таким образом Очки Бесчестия позволяют другому персонажу перебрасывать уже переброшенный тест." },
     desc: "Один из отрядных лидеров легиона."
   },
   raptor: {
     name: "Раптор", race: "astartes", wounds: "15+1d5", charBonus: {},
     skills:  "Acrobatics или Stealth, Intimidate или Survival, Operate (Aeronautica) +10",
     talents: "Two Weapon Wielder (Melee), Two Weapon Wielder (Ranged), Raptor или Reaper",
-    gear:    "2× L. Chain Weapon (до R1), Jump Pack (Raptor pattern), 6× L. Frag Grenades",
+    gear:    "2×L. Chain Weapon (до R1), Jump Pack (Raptor pattern), 6×L. Frag Grenades",
     trait: { name: "Sky Predator / Хищник Небес",
-      benefit: "В Ход, когда Раптор совершает Натиск с полёта, может заменить до 2 кубиков урона от рукопашных атак Успехами на попадание." },
+      benefit: "В Ход, когда Раптор совершает Натиск с полета, он может заменять до 2-х кубиков урона от атак Успехами на попадание." },
     desc: "Один из воздушных штурмовиков легиона."
   },
   chosen: {
@@ -33,7 +33,7 @@ export const ARCHETYPES = {
     talents: "Lightning Reflexes, Leap Up или Rapid Reload, Disarm или Double Tap, Sure Strike или Deadeye Shot",
     gear:    "L. Chain Weapon (до R1) или L. Flamer, L. Meltagun или L. Plasmagun",
     trait: { name: "Cold Killer / Хладнокровный Убийца",
-      benefit: "При нанесении Экстремального Урона бросает d5 дважды на Критический Результат 2 и берёт лучший." },
+      benefit: "Когда Избранный наносит Экстремальный Урон, он бросает d5 на Критический Результат 2 раза и выбирает один из результатов." },
     desc: "Элитный оружейный специалист легиона."
   },
   executioner: {
@@ -42,16 +42,16 @@ export const ARCHETYPES = {
     talents: "Blade Reader или Disarm, Berserk Charge или Flesh Render, Counter Attack или Swift Attack",
     gear:    "L. Chain Weapon (до R1, Best.Q) или L. Power Weapon (до R3), 3 модификации для оружия (до R3)",
     trait: { name: "Single Combat / Бой Один На Один",
-      benefit: "Против одного противника без союзников: +1 Успех на успешные тесты WS, S и A; Unnatural Characteristic на встречные WS; правило «ничьей» при проигрыше не применяется." },
+      benefit: "Когда Палач связан в рукопашной только с одним противником и без союзников, он получает +1 Успех на все успешные тесты WS, S и A, и если он проводит встречный тест на WS или A и у противника есть Трейт Unnatural Characteristic для его теста, а у Палача – нет, правило форсированной «ничьей» при проигрыше противника не применяется." },
     desc: "Мастер-дуэлянт легиона."
   },
   seeker: {
     name: "Искатель", race: "astartes", wounds: "16+1d5", charBonus: {},
     skills:  "Security или Tech-Use, Acrobatics или Stealth, Awareness +10 или Dodge +10",
     talents: "Deadeye Shot, Rapid Reload, Chamber In или Trick Shooter, Covering Fire или Hip Shooting",
-    gear:    "L. Combi-Bolter / L. Storm Bolter / L. Stalker Bolter / Atrox Bolt Rifle; +Ammo Selector, 4 магазина болтов (до R2/R3); L. Combi-Flamer (Best.Q) / L. Combi-Melta (Good.Q) / L. Combi-Plasma / L. Auxiliary Grenade Launcher (Best.Q)",
-    trait: { name: "Bolter Virtuoso / Болтерный Виртуоз",
-      benefit: "Болт-оружие получает ещё один дополнительный кубик ко всем альтернативным профилям (приклад, штык, из подствольника и т.д.)." },
+    gear:    "L. Combi-Bolter или L. Storm Bolter или L. Stalker Bolter или L. Atrox Bolt Rifle, +Ammo Selector, 4 магазина болтов до R2 и 2 до R3, L. Combi-Flamer (Best.Q) или L. Combi-Melta (Good.Q) или L. Combi-Plasma или L. Auxiliary Grenade Launcher (Best.Q)",
+    trait: { name: "Legionnaire Virtuoso / Легионер-Виртуоз",
+      benefit: "Все стрелковое оружие легиона в руках Искателя получает дополнительный кубик на урон и отбрасывает один с наименьшим результатом, даже на альтернативных профилях (прикладом, штыком, и т.п.)" },
     desc: "Ветеран-стрелок легиона."
   },
   havoc: {

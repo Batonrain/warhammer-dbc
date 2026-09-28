@@ -11,7 +11,7 @@
     "charChoice": "",
     "skills": "",
     "talents": "",
-    "gear": "+Ammo Selector, 4 магазина болтов (до R2/R3)",
+    "gear": "L. Combi-Bolter или L. Storm Bolter или L. Stalker Bolter или L. Atrox Bolt Rifle, +Ammo Selector, 4 магазина болтов до R2 и 2 до R3, L. Combi-Flamer (Best.Q) или L. Combi-Melta (Good.Q) или L. Combi-Plasma или L. Auxiliary Grenade Launcher (Best.Q)",
     "wounds": "16+1d5",
     "infRoll": "",
     "requiredPath": "",
@@ -22,8 +22,8 @@
     "grantsImplants": false,
     "description": "Ветеран-стрелок легиона.",
     "trait": {
-      "name": "Bolter Virtuoso / Болтерный Виртуоз",
-      "benefit": "Болт-оружие получает ещё один дополнительный кубик ко всем альтернативным профилям (приклад, штык, из подствольника и т.д.)."
+      "name": "Legionnaire Virtuoso / Легионер-Виртуоз",
+      "benefit": "Все стрелковое оружие легиона в руках Искателя получает дополнительный кубик на урон и отбрасывает один с наименьшим результатом, даже на альтернативных профилях (прикладом, штыком, и т.п.)"
     },
     "bookSource": "DoomBC — Основная книга"
   },
@@ -620,9 +620,9 @@
               "fatigueThresholdChar": "t",
               "equipMode": "direct",
               "equipQty": 1,
-              "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.8JLnAGT64w1FXxcg",
-              "equipSourceName": "Assault Bolter / Штурмовой Болтер",
-              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-heavy.svg",
+              "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.ZdAUzu733X3Kffvg",
+              "equipSourceName": "Storm Bolter / Шторм Болтер (Астартес)",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",
               "equipCategoryPack": "weapons",
               "equipWeaponType": "",
               "equipWeaponProp": "",
@@ -1154,7 +1154,7 @@
               "op": "add",
               "value": 1,
               "sourceUuid": "Compendium.warhammer-dbc.traits.Item.Vg0mpmZ0g9ffd2hs",
-              "sourceName": "Bolter Virtuoso / Болтерный Виртуоз",
+              "sourceName": "Legionnaire Virtuoso / Легионер-Виртуоз",
               "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
               "sourceHasRating": false,
               "rating": "",

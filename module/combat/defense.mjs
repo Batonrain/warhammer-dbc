@@ -40,6 +40,7 @@ import { phantomCopiesDodgePenalty } from "../rules/wrapped-in-chaos.mjs";
 import { hasGazeOfInevitability } from "../rules/gaze-of-inevitability.mjs";
 import { isTokenInSight } from "../rules/vision-target.mjs";
 import { combinedThreshold } from "../rules/test-kind.mjs";
+import { singleCombatBonus } from "./single-combat.mjs";
 
 // Контратака (стр. 12, Талант Counter Attack) — «раз в Раунд» ключ учёта,
 // тот же примитив, что у Локуса Сокрушения (constants/capabilities.mjs).
@@ -178,7 +179,10 @@ export async function _performDodge(actor, {
   const rv     = picked.value;
   // Формула степени успеха/провала — module/rules/roll-outcome.mjs (wdbc-5dvx,
   // раньше дублировалась вручную здесь же).
-  const { success: passed, deg } = testOutcome(rv, threshold);
+  const { success: passed, deg: rolledDeg } = testOutcome(rv, threshold);
+  // Бой Один На Один (Палач, combat/single-combat.mjs): +1 Успех к успешному
+  // Уклонению (A), пока на сцене ровно один враг в контакте без чужой подмоги.
+  const deg = rolledDeg + singleCombatBonus(actor, { success: passed, charKey: "ag" });
   // Взор Неизбежности: «проваливают ЭТОТ тест [Комбинированный] — теряют
   // все свои Реакции» — тот же бросок выше уже решил и Уклонение, и это.
   if (gazeActive && !passed) await _applyGazeOfInevitabilityFailure(actor);
@@ -689,7 +693,10 @@ export async function _performParry(actor, {
   const roll     = rolled[picked.index];
   const rv       = picked.value;
   // Формула степени успеха/провала — module/rules/roll-outcome.mjs (wdbc-5dvx).
-  const { success: passed, deg } = testOutcome(rv, threshold);
+  const { success: passed, deg: rolledDeg } = testOutcome(rv, threshold);
+  // Бой Один На Один (Палач, combat/single-combat.mjs): +1 Успех к успешному
+  // Парированию (WS), пока на сцене ровно один враг в контакте без чужой подмоги.
+  const deg = rolledDeg + singleCombatBonus(actor, { success: passed, charKey: "ws" });
   // Взор Неизбежности: «проваливают ЭТОТ тест [Комбинированный] — теряют
   // все свои Реакции» — тот же бросок выше уже решил и Парирование, и это.
   if (gazeActive && !passed) await _applyGazeOfInevitabilityFailure(actor);

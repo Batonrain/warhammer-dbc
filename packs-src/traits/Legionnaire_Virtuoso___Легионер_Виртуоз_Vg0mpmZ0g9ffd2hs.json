@@ -1,11 +1,11 @@
 {
-  "name": "Sky Predator / Хищник Небес",
+  "name": "Legionnaire Virtuoso / Легионер-Виртуоз",
   "type": "trait",
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
-    "description": "Натиск с полёта: до 2 кубиков урона можно заменить числом Успехов на попадание.",
-    "notes": "Автоматизировано: в атаке Натиском, когда персонаж в полёте, карточка урона даёт кнопку «Кубик→Успехи» и на второй кубик попадания (до 2 кубиков). Счёт «до 2 за Ход» между разными попаданиями кнопки не запирают — решает стол.",
-    "benefit": "В Ход, когда Раптор совершает Натиск с полета, он может заменять до 2-х кубиков урона от атак Успехами на попадание.",
+    "description": "Стрелковое оружие легиона: +1 кубик урона, наименьший отбрасывается — на любом профиле.",
+    "notes": "Автоматизировано: у стрелкового оружия со свойством Legion (Легион) формула урона получает +1 кубик, наименьший отбрасывается; складывается с Tearing (module/combat/weapon-properties.mjs::applyDamageDiceMods, extraDropLowest).",
+    "benefit": "Все стрелковое оружие легиона в руках Искателя получает дополнительный кубик на урон и отбрасывает один с наименьшим результатом, даже на альтернативных профилях (прикладом, штыком, и т.п.)",
     "source": "архетип",
     "bookSource": "DoomBC — Основная книга",
     "hasRating": false,
@@ -24,7 +24,7 @@
       "speedMod": 0
     }
   },
-  "_id": "fZzOfU2PaAfhGAVo",
+  "_id": "Vg0mpmZ0g9ffd2hs",
   "effects": [],
   "folder": null,
   "sort": 0,
@@ -36,11 +36,11 @@
       "migratedEffect": true,
       "mechanics": [
         {
-          "id": "trCapGrpskyPredator",
+          "id": "trCapGrplegionnaireVirtuoso",
           "operator": "AND",
           "entries": [
             {
-              "id": "trCapskyPredator01",
+              "id": "trCaplegionnaireVirtuoso01",
               "kind": "capability",
               "group": null,
               "corruptionValue": "1",
@@ -81,7 +81,7 @@
               "modValueMode": "flat",
               "modCharBonus": "inf",
               "rerollWho": "self",
-              "capabilityKey": "trait.skyPredator",
+              "capabilityKey": "trait.legionnaireVirtuoso",
               "capabilityCostPool": "",
               "capabilityCostAmount": 0,
               "fatigueAction": "threshold",
@@ -148,9 +148,9 @@
     "coreVersion": "14.367",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
-    "createdTime": 1788391702114,
-    "modifiedTime": 1788391702114,
+    "createdTime": 1788391701696,
+    "modifiedTime": 1788391701696,
     "lastModifiedBy": "4Q6l1C4FQOMQVofr"
   },
-  "_key": "!items!fZzOfU2PaAfhGAVo"
+  "_key": "!items!Vg0mpmZ0g9ffd2hs"
 }
