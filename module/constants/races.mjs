@@ -402,7 +402,7 @@ export const RACES = {
     talents: ["Ambidextrous", "Double Team", "Frenzy", "Heightened Senses (Sight, Smell)", "Jumper", "Leap Up", "Resistance (Cold, Heat, Poison)", "Sprint", "Total Recall", "Unarmed Warrior"],
     traits: [
       { name:"Unnatural Strength (2) / Сверхъестественная Сила (2)", benefit:"+2 к Бонусу Силы.", rating:2, hasRating:true, effects:{ charBonusStat:"s", charBonusValue:2 } },
-      { name:"Unnatural Intelligence (2) / Сверхъестественный Интеллект (2)", benefit:"+2 к Бонусу Интеллекта.", rating:2, hasRating:true, effects:{ charBonusStat:"int", charBonusValue:2 } },
+      { name:"Unnatural Toughness (2) / Сверхъестественная Стойкость (2)", benefit:"+2 к Бонусу Стойкости.", rating:2, hasRating:true, effects:{ charBonusStat:"t", charBonusValue:2 } },
       { name:"Unnatural Agility (2) / Сверхъестественная Ловкость (2)", benefit:"+2 к Бонусу Ловкости.", rating:2, hasRating:true, effects:{ charBonusStat:"ag", charBonusValue:2 } },
       { name:"The Quick and The Dead / Быстрые и Мёртвые", benefit:"+2 к Инициативе." },
       { name:"New Men / Новые Люди", benefit:"Лечится как космодесантник; иммунитет к негативным эффектам наркотиков/медикаментов; ускоренная регенерация конечностей; быстрое размножение." },
