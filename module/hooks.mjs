@@ -56,6 +56,7 @@ import { processVultureTurnStart } from "./combat/vulture.mjs";
 import { processIrradiatedTurnStart } from "./combat/irradiated.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "./combat/weapon-mods.mjs";
 import { fatalismBlocksPower } from "./rules/fatalism.mjs";
+import { handleCalmWarpClick } from "./combat/calm-warp.mjs";
 import { everYouthfulBlocksPower } from "./rules/ever-youthful.mjs";
 import { eaterOfPainBenefitUpdate, eaterOfPainChoiceButtonsHtml } from "./rules/eater-of-pain.mjs";
 import { fateTerm, esc, resolveCharFormula } from "./helpers/utils.mjs";
@@ -1006,6 +1007,15 @@ export function registerHooks() {
         // их заново.
         await revertFearFailure(actor, ctx.failUndo);
         await _executeFearRoll(actor, ctx.ratingKey, ctx.type, ctx.infamy, ctx.mod, ctx.properties, { free: true });
+      });
+    });
+
+    // «Усмирение Варпа» / Имперское Санкционирование — переброс Феномена или
+    // Прорыва с карточки манифестации (combat/calm-warp.mjs).
+    html.querySelectorAll(".wh-calm-warp-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        await handleCalmWarpClick(message, ev.currentTarget);
       });
     });
 

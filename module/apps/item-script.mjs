@@ -56,6 +56,7 @@ import { activateBattleForm, endBattleForm } from "./battle-forms.mjs";
 import { useAdaptiveVenom } from "./naga-traits.mjs";
 import { emergencyMaintenance } from "../combat/emergency-maintenance.mjs";
 import { scroungeSupplies } from "./scrounge.mjs";
+import { grantStartingDisorder } from "../sheets/tabs/disorders.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -169,6 +170,9 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *    повреждения; throw при отказе — Очко Бесчестия записи не списывается.
  *  - `scroungeSupplies` (apps/scrounge.mjs) — Наскрести Изгоя: 2d10
  *    расходников до R2 Обозревателем компендиумов.
+ *  - `grantStartingDisorder` (sheets/tabs/disorders.mjs) — стартовое
+ *    случайное расстройство от источника с «неизлечимо» и пределом Тяжести
+ *    (Архетип Беглый Псайкер: не ниже −2); повторно не выдаёт.
  *
  * `extra` — необязательный набор ДОПОЛНИТЕЛЬНЫХ именованных функций для
  * конкретного вызывающего (например, runMechScriptEntry добавляет
@@ -199,6 +203,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "attemptPossessionAttack", "leavePossessionHost", "useAdaptiveVenom",
     "activateBattleForm", "endBattleForm",
     "emergencyMaintenance", "scroungeSupplies",
+    "grantStartingDisorder",
     ...extraNames,
     code
   );
@@ -218,6 +223,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     attemptPossessionAttack, leavePossessionHost, useAdaptiveVenom,
     activateBattleForm, endBattleForm,
     emergencyMaintenance, scroungeSupplies,
+    grantStartingDisorder,
     ...extraNames.map(k => extra[k])
   );
 }

@@ -15,6 +15,7 @@ import { highSorceryManifestBlocked } from "../../rules/perfect-sorcerer.mjs";
 import { PSY_NATURES, PSY_MODES, PSY_PATHS, PSY_POWER_TYPES, subPathTotals } from "../../constants/psyker.mjs";
 import { PSY_DISCIPLINES } from "../../constants/disciplines.mjs";
 import { getPhenomenon, getPeril } from "../../constants/psyker-tables.mjs";
+import { calmWarpButtonsHtml } from "../../combat/calm-warp.mjs";
 import { WEAPON_PROPERTIES } from "../../constants/weapon-properties.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { _degWord, resolveCharFormula, esc } from "../../helpers/utils.mjs";
@@ -1062,6 +1063,10 @@ export async function executePsychotest(actor, item, opts) {
             <div class="psy-peril-text">${peril.text}</div>
           </div>`;
     }
+    // «Усмирение Варпа» (Очко Бесчестия, Cor 20+) — переброс Феномена/Прорыва
+    // прямо с карточки; Имперское Санкционирование добавляет бесплатный
+    // переброс Прорыва после оплаченного переброса Феномена (combat/calm-warp.mjs).
+    phenSection += calmWarpButtonsHtml(actor, { phenMod, peril: perilTriggered });
   } else if (opts.mode === "safe") {
     phenSection = `<div class="roll-threshold" style="font-size:0.85em;">Безопасный режим — Феномены не вызываются.</div>`;
   } else {

@@ -14,14 +14,23 @@
 //  «Добавить» и «Отменить», а не запрещает.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { checkEliteRequirements, eliteWho, eliteTakenCount, eliteCost, eliteCostNote }
+import { checkEliteRequirements, eliteWho, eliteCost, eliteCostNote }
   from "../rules/elite-requirements.mjs";
+import { isFatedElite, fatedEliteCost, eliteTakenForPrice, FATED_DISCOUNT } from "../rules/fated-path.mjs";
 import { esc } from "../helpers/utils.mjs";
 
-/** Цена архетипа именно для этого персонажа, с множителем за уже взятые. */
+/**
+ * Цена архетипа именно для этого персонажа, с множителем за уже взятые.
+ * Предначертанный Путь (Черта Нумена, rules/fated-path.mjs): избранный —
+ * базовая цена минус 1000 без множителя, и сам в множитель прочих не входит.
+ */
 export function eliteCostFor(actor, doc) {
-  const taken = eliteTakenCount(actor);
-  return { cost: eliteCost(doc?.system?.cost, taken), taken, note: eliteCostNote(taken) };
+  const taken = eliteTakenForPrice(actor);
+  if (isFatedElite(actor, doc)) {
+    return { cost: fatedEliteCost(doc?.system?.cost), taken, fated: true,
+             note: `Предначертанный Путь: −${FATED_DISCOUNT}, всегда базовая цена` };
+  }
+  return { cost: eliteCost(doc?.system?.cost, taken), taken, fated: false, note: eliteCostNote(taken) };
 }
 
 /**
@@ -60,9 +69,12 @@ export async function buyEliteArchetype(actor, doc) {
   if (!actor || !doc) return null;
 
   const check = checkEliteRequirements(doc.system?.requirements, eliteWho(actor));
+  const { cost, note, fated } = eliteCostFor(actor, doc);
+  // Избранному Предначертанного Пути сюжетные условия («проверяет ГМ»)
+  // выполняются сами — окно о них не спрашивает (rules/fated-path.mjs).
+  if (fated) check.manual = [];
   if (check.warn && !(await confirmUnmet(doc, check))) return null;
 
-  const { cost, note } = eliteCostFor(actor, doc);
   const s = actor.system ?? {};
   const exp = s.experience ?? {};
   const current = Number(exp.current) || 0;
