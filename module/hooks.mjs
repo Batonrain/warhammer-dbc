@@ -106,6 +106,7 @@ import { DEVOURER_OF_KNOWLEDGE_CAPABILITY, DEVOURER_THEFTS_FLAG, expiredTheftEnt
 import { planFleshmetalRegen, FLESHMETAL_CAPABILITY, FLESHMETAL_FLAG }
   from "./rules/fleshmetal-regen.mjs";
 import { hasRuleFlag as hasFleshmetalFlag } from "./rules/flags.mjs";
+import { ALCHEM_MONSTER, mustRerollSuccess } from "./rules/replicant.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { liftDivineProtection, wakeDivineProtected } from "./sheets/tabs/death.mjs";
@@ -2316,8 +2317,18 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
     // другим condition и этот флаг не несут.
     const resistMods = collectTestMods(actor, { kind: "skill", char: testChar, poisonTest: condition === "poisoned" });
     const threshold = charTotal + testMod + resistMods.total;
-    const roll      = await new Roll("1d100").evaluate();
+    let roll        = await new Roll("1d100").evaluate();
     allRolls.push(roll);
+    // Alchem Monster / Алхимическое Чудовище (Репликант): «должен
+    // перебрасывать успешные тесты против ядов» — один раз, второй окончателен.
+    let alchemNote = "";
+    if (condition === "poisoned"
+        && mustRerollSuccess(roll.total <= threshold, hasFleshmetalFlag(actor, ALCHEM_MONSTER))) {
+      const first = roll.total;
+      roll = await new Roll("1d100").evaluate();
+      allRolls.push(roll);
+      alchemNote = `<div class="roll-threshold">⚗️ Алхимическое Чудовище: успех против яда (${first}) обязательно перебрасывается → <b>${roll.total}</b></div>`;
+    }
     const rv        = roll.total;
     resisted        = rv <= threshold;
     deg             = Math.max(1, Math.floor(Math.abs(rv - threshold) / 10) + 1);
@@ -2327,7 +2338,7 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
       label: testChar.toUpperCase(), base: charTotal,
       parts: [testMod !== 0 ? `${testMod >= 0 ? "+" : ""}${testMod}` : "", ...resistMods.parts],
       threshold, rv
-    });
+    }) + alchemNote;
     resistOutcome = resisted
       ? `<span class="roll-success">Цель сопротивилась — эффект не наложен</span>`
       : `<span class="roll-failure">Провал (${deg} ст.) — эффект наложен</span>`;

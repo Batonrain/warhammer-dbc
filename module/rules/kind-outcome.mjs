@@ -26,6 +26,7 @@ import { getItemMechanics, findMechEntryById, scriptRunReady, markScriptRunUsed 
 import { executeItemCode } from "../apps/item-script.mjs";
 import { egomaniaOverrideResult } from "./egomania.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { HYPNO_SCARS, hypnoScarsStun } from "./replicant.mjs";
 import { PERSONAL_ADAPTATION_CAPABILITY, PERSONAL_ADAPTATION_FLAG,
          personalAdaptationCap, personalAdaptationBonusFor, nextPersonalAdaptationBonuses, personalAdaptationKey }
   from "./personal-adaptation.mjs";
@@ -193,7 +194,16 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
     : "";
   // Строка автопровала едет вместе с critLine: её рисуют ВСЕ вызывающие
   // карточки (лист, Страх, Верховая езда), отдельного поля они не знают.
-  const critLine = autoFailLine + critLineHtml(crit);
+  let critLine = autoFailLine + critLineHtml(crit);
+  // Hypno-Scars / Гипно-Шрамы (Репликант): «при Критическом Провале теста I
+  // впадает в Ступор на 1 Раунд». Сам бросок d100 здесь есть всегда — и при
+  // автоуспехе тоже, чего книга и требует («бросать d100 даже для тестов I,
+  // которые он проходит автоматически»). Обвязка — динамическим импортом:
+  // combat/replicant.mjs тянет лист Состояний, а этот файл — чистый конвейер.
+  if (hypnoScarsStun(crit, ctx, hasRuleFlag(actor, HYPNO_SCARS))) {
+    const { applyHypnoScarsStun } = await import("../combat/replicant.mjs");
+    critLine += await applyHypnoScarsStun(actor);
+  }
   // Сверхъестественная Характеристика (стр. 26, wdbc-y9i8): +1 Успех за
   // каждые полные 2 рейтинга Unnatural — но ТОЛЬКО на Успехе, и только по
   // Характеристике, которой реально бросали (usedCharKey — ctx.char, либо

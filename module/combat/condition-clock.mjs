@@ -31,6 +31,7 @@ import { haemorrhageHourly, suffocationRestClock } from "./condition-ticks.mjs";
 import { unlinkedTokens } from "../migrations/unlinked-tokens.mjs";
 import { healingClock } from "./healing-clock.mjs";
 import { charLossClockStep, actorRecoveryPolicy, charLossPortions, charLossPortionsStep } from "../rules/char-loss.mjs";
+import { serumHookClock } from "./replicant.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -158,6 +159,10 @@ export const CONDITION_CLOCK_HANDLERS = [
   // Урон в Характеристики: 1 в час, блоки/замедления — записи charRecovery
   // (wdbc-x1nz.2.83, rules/char-loss.mjs). Молча — без карточки на каждый час.
   { id: "charLoss", run: charLossClock },
+  // Крючок Сывороток (Репликант): неделя без сыворотки — 1d5 урона в S и T
+  // каждые 8 ч (combat/replicant.mjs). После charLoss: урон этого отрезка не
+  // должен тут же «восстановиться» тем же шагом.
+  { id: "serumHook", run: serumHookClock },
 ];
 
 async function charLossClock(actor, { to }) {

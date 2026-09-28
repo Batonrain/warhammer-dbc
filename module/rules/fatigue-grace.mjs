@@ -15,6 +15,7 @@
 // функции, проверяются без заглушки Foundry.
 
 import { entryWhenOk } from "./mech-when.mjs";
+import { unnaturalRating } from "./unnatural-characteristic.mjs";
 
 const FLAG_SCOPE = "warhammer-dbc";
 
@@ -62,8 +63,12 @@ export function fatigueGraceForActor(actor) {
     for (const entry of flattenMechEntries(mechanicsOf(item))) {
       if (!isFatigueEntry(entry)) continue;
       if (!entryWhenOk(actor, entry, item)) continue;
-      const key = entry.fatigueThresholdChar === "wp" ? "wp" : "t";
-      const grace = Number(actor?.system?.characteristics?.[key]?.bonus) || 0;
+      // "unt" — рейтинг Черты Unnatural T, а не Бонус (Enduring / Стойкий
+      // Репликанта: «не получает штрафов от Усталости, пока его Усталость не
+      // выше рейтинга его Трейта Unnatural T»).
+      const grace = entry.fatigueThresholdChar === "unt"
+        ? unnaturalRating(actor, "t")
+        : Number(actor?.system?.characteristics?.[entry.fatigueThresholdChar === "wp" ? "wp" : "t"]?.bonus) || 0;
       if (grace > best) best = grace;
     }
   }

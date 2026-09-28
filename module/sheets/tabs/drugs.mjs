@@ -15,6 +15,8 @@ import { conditionLevelField } from "../../constants/conditions.mjs";
 import { maybeGrantEnjoymentPain } from "../../combat/enjoyment.mjs";
 import { postTestCard, rollStatLine } from "../../helpers/test-card.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
+import { ALCHEM_MONSTER, alchemDurationFactor, mustRerollSuccess } from "../../rules/replicant.mjs";
+import { isReplicantSerum, takeSerum } from "../../combat/replicant.mjs";
 
 // wdbc-1rno (кластер Дары Богов — Слаанеш): «Владыка Праздности» — «Персонаж
 // приобретает иммунитет к любым пост-эффектам и зависимостям от употребления
@@ -167,6 +169,15 @@ export async function applyDrug(owner, item, recipient = null) {
     }
   }
 
+  // Alchem Monster / Алхимическое Чудовище (Репликант): «удваивает
+  // длительность всех наркотиков и ядов на себя» — на ПОЛУЧАТЕЛЕ, не на том,
+  // кто вколол (rules/replicant.mjs).
+  const durationFactor = alchemDurationFactor(sys.drugCategory, hasRuleFlag(actor, ALCHEM_MONSTER));
+  if (durationFactor !== 1 && resolvedRounds) {
+    resolvedRounds *= durationFactor;
+    durationRollStr = `${durationRollStr} ×${durationFactor} (Алхимическое Чудовище) = ${resolvedRounds}`;
+  }
+
   const itemUpdates = {
     "system.quantity": qty,
     "system.activeEffect.isActive": true,
@@ -245,6 +256,9 @@ export async function applyDrug(owner, item, recipient = null) {
 
   if (Object.keys(actorUpdates).length > 0) await actor.update(actorUpdates);
   if (fatRes) await announceFatigueChange(actor, fatRes);
+
+  // Сыворотка Репликанта — отметка приёма у Крючка Сывороток получателя.
+  if (isReplicantSerum(item)) await takeSerum(actor);
 
   // Enjoyment/Наслаждение (wdbc-sk8s): Наркотик триггерит, ТОЛЬКО когда его
   // применил кто-то другой (applyToOther) — не сам персонаж себе.
@@ -581,7 +595,17 @@ export async function rollAddictionTest(actor, item, charKey = "t", testMod = 0)
   const eff = charTotal + testMod + ruleMods.total;
   const wasAddicted = item?.system?.addiction?.isAddicted || false;
 
-  const roll = await new Roll("1d100").evaluate();
+  let roll = await new Roll("1d100").evaluate();
+  const rolls = [roll];
+  // Alchem Monster / Алхимическое Чудовище (Репликант): «должен перебрасывать
+  // успешные тесты Зависимости» — один раз, второй бросок окончателен.
+  let rerollNote = "";
+  if (mustRerollSuccess(roll.total <= eff, hasRuleFlag(actor, ALCHEM_MONSTER))) {
+    const first = roll.total;
+    roll = await new Roll("1d100").evaluate();
+    rolls.push(roll);
+    rerollNote = `<div class="roll-threshold">⚗️ Алхимическое Чудовище: успех (${first}) обязательно перебрасывается → <b>${roll.total}</b></div>`;
+  }
   const rv = roll.total;
   const success = rv <= eff;
   const deg = Math.floor(Math.abs(rv - eff) / 10) + 1;
@@ -617,7 +641,7 @@ export async function rollAddictionTest(actor, item, charKey = "t", testMod = 0)
       label: abbr, base: charTotal,
       parts: [...(testMod !== 0 ? [`${testMod >= 0 ? "+" : ""}${testMod}`] : []), ...ruleMods.parts],
       threshold: eff, rv
-    }),
+    }) + rerollNote,
     outcome
-  }, { rolls: [roll] });
+  }, { rolls });
 }

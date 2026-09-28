@@ -35,10 +35,11 @@ describe("стартовое Бесчестие", () => {
   // Если книга однажды разведёт расы по разной базе, привычное «19 + 1d5»
   // перестанет быть верным для всех — но формула это переживёт, а проверка
   // покажет, что расклад изменился.
-  it("у рас книги база Бесчестия одна и та же — 19", () => {
-    const bases = [...new Set(Object.values(RACES)
-      .map(r => r.chars?.inf)
-      .filter(v => v !== undefined))];
-    expect(bases).toEqual([19]);
+  // Книга развела: у Репликанта Inf 14 (сверка главы I, 26.09.2026) — формула
+  // это переживает, проверка следит, что база берётся у расы.
+  it("у Человека база Бесчестия 19, у Репликанта — 14 по книге", () => {
+    expect(RACES.human.chars.inf).toBe(19);
+    expect(RACES.replicant.chars.inf).toBe(14);
+    expect(startingInfamyFormula(RACES.replicant.chars.inf, true)).toBe("14+1d5");
   });
 });
