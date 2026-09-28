@@ -117,6 +117,7 @@ import { initTearOpenHud } from "./module/combat/tear-open.mjs";
 import { initFreeAttackHooks } from "./module/combat/free-attack.mjs";
 import { initSqueezeHooks } from "./module/combat/squeeze.mjs";
 import { initOverwatchHooks } from "./module/combat/overwatch.mjs";
+import { initFirePointHooks } from "./module/combat/fire-point.mjs";
 import { checkAuras, clearAuraGrants } from "./module/regions/auras.mjs";
 import { redrawAuraRings } from "./module/regions/aura-rings.mjs";
 import { LingerZoneBehaviorType, LINGER_ZONE_TYPE } from "./module/regions/linger-zone.mjs";
@@ -1378,6 +1379,8 @@ Hooks.once("init", () => initMovedFlagTracking());
 Hooks.once("init", () => initFreeAttackHooks());
 Hooks.once("init", () => initSqueezeHooks());
 Hooks.once("init", () => initOverwatchHooks());
+// Огневая Точка (Хавок): сдвиг токена / Повален гасят точку (combat/fire-point.mjs).
+Hooks.once("init", () => initFirePointHooks());
 Hooks.once("init", () => initEquipmentIndex());
 Hooks.once("init", () => registerCalloutHooks());
 Hooks.once("init", () => initSceneControlsGuard());

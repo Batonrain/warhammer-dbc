@@ -3137,7 +3137,16 @@ export class WarhammerCharacterSheet
       ],
       rerollNote, critLine: outcome.critLine, outcome: outcomeHtml,
       sections: [outcome.extendedLine, outcome.opposedLine, pendingOpponentNote, onFailNote]
-    }, { rolls: [roll] });
+    }, {
+      rolls: [roll],
+      // Что за тест и чем кончился — меню Очков на карточке (hooks.mjs)
+      // предлагает по нему трату после броска (Хирургия Легиона: провал
+      // Medicae / For.Lore (Astartes Implants) → успех с 1 Успехом).
+      flags: { "warhammer-dbc": { skillTest: {
+        skill: skillKey ?? "", group: rollContext?.group ?? "", specialty: rollContext?.specialty ?? "",
+        label, success: !!outcome.success
+      } } }
+    });
 
     // Гололит (rules/situational.mjs::hololithBriefingBonus): подготовленный
     // брифинг тратится на СЛЕДУЮЩИЙ тест Command, каким бы он ни вышел —

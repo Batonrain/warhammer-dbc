@@ -54,6 +54,8 @@ import { activateWrappedInChaos } from "./wrapped-in-chaos.mjs";
 import { attemptPossessionAttack, leavePossessionHost } from "./possession-attack.mjs";
 import { activateBattleForm, endBattleForm } from "./battle-forms.mjs";
 import { useAdaptiveVenom } from "./naga-traits.mjs";
+import { emergencyMaintenance } from "../combat/emergency-maintenance.mjs";
+import { scroungeSupplies } from "./scrounge.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -162,6 +164,11 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *  - `useAdaptiveVenom` (apps/naga-traits.mjs) — Адаптивная Отрава Наги:
  *    выбор яда (вектор рана/инъекция/еда, Редкость ≤2/3/4 за 1/3/5 Очков
  *    Бесчестия) и одна доза «яда в клыках» на листе.
+ *  - `emergencyMaintenance` (combat/emergency-maintenance.mjs) — Экстренное
+ *    Обслуживание Технодесантника: полное действие, выбор и починка
+ *    повреждения; throw при отказе — Очко Бесчестия записи не списывается.
+ *  - `scroungeSupplies` (apps/scrounge.mjs) — Наскрести Изгоя: 2d10
+ *    расходников до R2 Обозревателем компендиумов.
  *
  * `extra` — необязательный набор ДОПОЛНИТЕЛЬНЫХ именованных функций для
  * конкретного вызывающего (например, runMechScriptEntry добавляет
@@ -191,6 +198,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "activateFruitOfFlesh", "eatHealFruit", "useSoulSeer", "activateWrappedInChaos",
     "attemptPossessionAttack", "leavePossessionHost", "useAdaptiveVenom",
     "activateBattleForm", "endBattleForm",
+    "emergencyMaintenance", "scroungeSupplies",
     ...extraNames,
     code
   );
@@ -209,6 +217,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     activateFruitOfFlesh, eatHealFruit, useSoulSeer, activateWrappedInChaos,
     attemptPossessionAttack, leavePossessionHost, useAdaptiveVenom,
     activateBattleForm, endBattleForm,
+    emergencyMaintenance, scroungeSupplies,
     ...extraNames.map(k => extra[k])
   );
 }

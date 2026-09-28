@@ -5320,8 +5320,9 @@ export const CAPABILITIES = {
     source: "Divinely Gifted / Божественно Одарённый", reader: ""
   },
   "trait.emergencyMaintenance": {
-    label: "Тратит Очко Бесчестья и полное действие, чтобы починить повреждения оружия/брони/снаряжения Легиона (обычно требующие 1 смены работы).",
-    source: "Emergency Maintenance / Экстренное Обслуживание", reader: ""
+    label: "Очко Бесчестия + полное действие: починить повреждение оружия/брони/снаряжения, обычно требующее до 1 смены работы (разъеденный AP брони, заклинившее/сломанное оружие, перегруженный щит).",
+    source: "Emergency Maintenance / Экстренное Обслуживание",
+    reader: "kind:script на Черте (цена 1 Очко Бесчестия) → module/combat/emergency-maintenance.mjs + module/rules/emergency-maintenance.mjs. Принадлежность вещи Легиону не проверяется — у предметов нет такого признака"
   },
   "trait.enduring": {
     label: "Нужно только 4 часа сна в сутки — подсказка у Сна на вкладке ТЕЛО. Порог Усталости = рейтинг Unnatural T и лечение как у Космодесантника делают соседние записи той же Черты (kind:\"fatigue\" unt, healing.astartes). НЕ сделано: сон в часах система не считает (стадии Сна идут по суткам), поэтому «4 часа» — подсказка, а не расчёт.",
@@ -5347,8 +5348,9 @@ export const CAPABILITIES = {
     reader: "module/rules/character.mjs (system.fastLearnerBonus по имени Черты) → module/sheets/actor-sheet.mjs (promptStatAdd bonusPercent), module/rules/session-rewards.mjs"
   },
   "trait.firePoint": {
-    label: "Тратит Очко Бесчестья на переброс стрелковой атаки, даже Оглушённым/лёжа/сбит с ног. На покровительстве Нургла может перебрасывать с Преимущ…",
-    source: "Fire Point / Огневая Точка", reader: ""
+    label: "Переброс стрелковой атаки за Очко Бесчестия или Закрепление занимают Огневую Точку: пока Хавок не сдвинется (кроме Отскока), не заляжет и не будет сбит с ног, все стрелковые атаки перебрасываются без траты Очка (раз на атаку).",
+    source: "Fire Point / Огневая Точка",
+    reader: "module/rules/fire-point.mjs — hooks.mjs::_attachFateContextMenu (занять точку платным перебросом, пункт «Переброс — Огневая Точка»), combat/brace-weapon.mjs::declareBrace (Закрепление), combat/fire-point.mjs (сдвиг токена/Повален гасят, combat/recoil.mjs — Отскок не гасит). «Даже с покровительством Нургла» — меню Очков запрет Переброса Нурглу не проверяет вовсе, исключение выполняется само"
   },
   "trait.flyer": {
     label: "Полёт: в воздухе SPD = X вместо обычной скорости, без модификаторов Размера (core.json «Flyer (X) / Летун»). X формулой (Гарпия: A.b×2) — от текущих Бонусов. Надбавки «+SPD пешком» к полёту не прибавляются, штрафы Перевеса/Piercing — да.",
@@ -5423,8 +5425,9 @@ export const CAPABILITIES = {
     reader: "module/rules/legionnaire-virtuoso.mjs (isLegionRangedWeapon), module/combat/attack.mjs (wp.extraDropLowest), module/combat/weapon-properties.mjs::applyDamageDiceMods"
   },
   "trait.legionSurgery": {
-    label: "Тратит Очко Бесчестья, чтобы авто-пройти тест лечения/работы с геносеменем с 1 Успехом; может пробудить десантника из Сус-ан анимации.",
-    source: "Legion Surgery / Хирургия Легиона", reader: ""
+    label: "Проваленный тест лечения/работы с геносеменем — за Очко Бесчестия пройден с 1 Успехом; после Первой Помощи, поднявшей Раны десантника в Замедленной Анимации до −7 и выше, — за Очко Бесчестия пробудить его.",
+    source: "Legion Surgery / Хирургия Легиона",
+    reader: "module/rules/legion-surgery.mjs — sheets/tabs/healing.mjs (каждый тест Medicae окна Лечения, пробуждение после Первой Помощи; метка Анимации — sheets/tabs/death.mjs::doSusAnimation), hooks.mjs::_attachFateContextMenu (провал Medicae / For.Lore (Astartes Implants) с листа, флаг карточки skillTest из sheets/actor-sheet.mjs::_runTest). Иных тестов «работы с геносеменем» в системе нет"
   },
   "trait.limitedLift": {
     label: "Летит только с грузом не тяжелее Ношения; S от брони не поднимает Ношение для полёта, броня не гасит свой вес. Уже летящую Гарпию с перегрузом система сама не приземляет — только не даёт взлететь/сменить высоту.",
@@ -5595,8 +5598,9 @@ export const CAPABILITIES = {
     reader: "module/rules/runt.mjs isRunt() — максимум Ран: module/rules/character.mjs (effectiveMax); винтовка как длинная: module/combat/weapon-mods.mjs getModEffects(); без «1р»: module/rules/hands.mjs availableRangedGrips() и module/sheets/attack-dialog.mjs. Оружие Размера 0 — ограничений нет, ничего не нужно"
   },
   "trait.scrounge": {
-    label: "Тратит смену работы и Очко Бесчестья, чтобы добыть расходники/находку до 2d10 Редкости (R2).",
-    source: "Scrounge / Наскрести", reader: ""
+    label: "Смена работы + Очко Бесчестия: 2d10 расходников (магазины, гранаты и бомбы, химия) до R2.",
+    source: "Scrounge / Наскрести",
+    reader: "kind:script на Черте (цена 1 Очко Бесчестия) → module/apps/scrounge.mjs (бросок 2d10, Обозреватель компендиумов до R2) + module/rules/scrounge.mjs. «Клады на черный день» — решение ГМа"
   },
   "trait.serpentSTongue": {
     label: "При провале социального/командного/допроса теста может потратить Очко Бесчестья, чтобы вместо этого преуспеть на 1 Успех.",
@@ -5635,8 +5639,9 @@ export const CAPABILITIES = {
     source: "Sophisticated Speech / Утончённая Речь", reader: ""
   },
   "trait.sorcerer": {
-    label: "Получает Трейт Psyker с PR2 и +1 Cor. В расчёте психической силы считается Связанным.",
-    source: "Sorcerer / Чародей", reader: ""
+    label: "+d10 стартовой Порчи; в расчёте психической силы — Связанный.",
+    source: "Sorcerer / Чародей",
+    reader: "Черта несёт psyker.alwaysBound (rules/character/final-pools.mjs); +1d10 Порчи — запись kind:corruption на Архетипе Чародей (apps/mechanics.mjs, бросок при выдаче)"
   },
   "trait.sorcerousBarrier": {
     label: "Не перегружающийся колдовской щит-купол 1-35. Включается и выключается за свободное действие.",

@@ -147,7 +147,12 @@ import { SKILLS_DEF } from "./constants/skills.mjs";
 import { performUnarmedRiposte, UNARMED_RIPOSTE_USED_FLAG } from "./combat/unarmed-combat.mjs";
 import { resolveResistClick } from "./combat/opposed-contest.mjs";
 import { maybeAutoReleaseGrapple, grappleReleaseTriggered } from "./combat/grapple.mjs";
-import { weaponProfiles } from "./combat/weapon-profiles.mjs";
+import { weaponProfiles, attackIsMelee } from "./combat/weapon-profiles.mjs";
+// Огневая Точка (Хавок) и Хирургия Легиона (Апотекарий) — пункты меню Очков карточки.
+import { firePointFreeReroll, firePointActivatesOnPaidReroll } from "./rules/fire-point.mjs";
+import { activateFirePoint } from "./combat/fire-point.mjs";
+import { hasLegionSurgery, legionSurgeryTestEligible } from "./rules/legion-surgery.mjs";
+import { legionSurgeryOnCard } from "./combat/legion-surgery.mjs";
 import { isIntegralAttack } from "./combat/equipped-melee.mjs";
 import { collectTestMods } from "./rules/roll-mods.mjs";
 import { rollD100WithReroll } from "./rules/test-kind-widget.mjs";
@@ -2687,6 +2692,31 @@ function _attachFateContextMenu(message, html) {
       menu.appendChild(b);
       return { b, ch };
     });
+    // Атака этой карточки: стрелковая ли (Огневая Точка — только стрелковые)
+    // и не переброс ли уже (переброс переброса книга не даёт; повтор атаки
+    // из этого меню всегда идёт со skipAmmo — это и есть метка «та же атака»).
+    const atkCtx = message.flags?.["warhammer-dbc"]?.attack ?? null;
+    const atkCtxActor = atkCtx ? (game.actors?.get(atkCtx.actorId) ?? actor) : null;
+    const atkCtxItem = atkCtx ? atkCtxActor?.items?.get(atkCtx.itemId) : null;
+    const atkIsMelee = atkCtxItem
+      ? attackIsMelee(atkCtxItem.system, { forceMelee: atkCtx.opts?.forceMelee, profile: atkCtx.opts?.profile })
+      : true;
+    const atkRerolled = !!atkCtx?.opts?.skipAmmo;
+
+    // Огневая Точка (Хавок): пока точка занята — переброс стрелковой атаки без траты Очка.
+    const btnFirePoint = (atkCtxItem && firePointFreeReroll(atkCtxActor, { isMelee: atkIsMelee, rerolled: atkRerolled }))
+      ? _makeFateMenuItem("Переброс — Огневая Точка (без траты Очка)", true) : null;
+    if (btnFirePoint) menu.appendChild(btnFirePoint);
+
+    // Хирургия Легиона (Апотекарий): проваленный тест Medicae / For.Lore
+    // (Astartes Implants), брошенный с листа, — за Очко засчитать с 1 Успехом.
+    const skillTest = message.flags?.["warhammer-dbc"]?.skillTest ?? null;
+    const btnLegionSurgery = (skillTest && !skillTest.success && hasLegionSurgery(actor)
+      && legionSurgeryTestEligible(skillTest))
+      ? _makeFateMenuItem("Хирургия Легиона — Успех с 1 Успехом", canSpend,
+          !canSpend ? `Нет ${ft.plural}` : "")
+      : null;
+    if (btnLegionSurgery) menu.appendChild(btnLegionSurgery);
 
     document.body.appendChild(menu);
 
@@ -2730,6 +2760,11 @@ function _attachFateContextMenu(message, html) {
             atk.rofMode, atk.aimTarget, { ...(atk.opts || {}), skipAmmo: true });
           ui.notifications.info(
             `✨ ${actor.name} тратит ${ft.one} на переброс атаки${payerNote}! Осталось: ${reroll1.poolValue}`);
+          // Огневая Точка (Хавок): «Когда Хавок тратит Очко Бесчестия на
+          // переброс стрелковой атаки…» — точка занята с этого момента.
+          if (firePointActivatesOnPaidReroll(atkActor, { isMelee: atkIsMelee })) {
+            await activateFirePoint(atkActor, `Переброс стрелковой атаки за ${ft.one}`);
+          }
           return;
         }
       }
@@ -2799,6 +2834,25 @@ function _attachFateContextMenu(message, html) {
     for (const { b, ch } of inspireBtns) {
       if (!ch.reason) b.addEventListener("click", ev2 => doReroll(ev2, ch.actor));
     }
+
+    // ── Огневая Точка: переброс без траты Очка ────────────────────────────
+    btnFirePoint?.addEventListener("click", async (ev2) => {
+      ev2.stopPropagation();
+      menu.remove();
+      document.removeEventListener("click", closeMenu);
+      await _executeAttackRoll(atkCtxActor, atkCtxItem, atkCtx.charKey, atkCtx.threshold,
+        atkCtx.rofMode, atkCtx.aimTarget, { ...(atkCtx.opts || {}), skipAmmo: true });
+      ui.notifications.info(`🎯 ${atkCtxActor.name}: Огневая Точка — переброс атаки без траты Очка.`);
+    });
+
+    // ── Хирургия Легиона: провал → Успех с 1 Успехом ─────────────────────
+    btnLegionSurgery?.addEventListener("click", async (ev2) => {
+      ev2.stopPropagation();
+      menu.remove();
+      document.removeEventListener("click", closeMenu);
+      if (!canSpend) return;
+      await legionSurgeryOnCard(actor, skillTest.label || "Тест");
+    });
 
     // ── +10 к броску ──────────────────────────────────────────────────────
     btnBonus.addEventListener("click", async (ev2) => {
