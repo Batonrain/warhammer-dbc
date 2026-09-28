@@ -927,13 +927,15 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   archetypes.mjs` — Архетипы Мастера создания.
 - Черты Архетипов Людей (сверка 28.09.2026): «провал → Очко Бесчестия →
   Успех на 1 Успех» — реестр `rules/infamy-fail-success.mjs` (кнопка в
-  карточке теста, `apps/infamy-fail-success.mjs`; Змеиный Язык — сюда же
-  Выживальщик/Хирургия Легиона); «игнорирует требования по Inf для
+  карточке теста, `apps/infamy-fail-success.mjs`; Змеиный Язык, Выживальщик); «игнорирует требования по Inf для
   Миньонов-X» — возможность `minion.ignoreInfamy.<группа>` →
   `rules/minion-build.mjs::talentRequirements`; Ведун Тьмы (I↔W в ритуалах) —
   `rules/dark-seer.mjs`; Искусный (+1 Успех на выбранной Характеристике) —
   `rules/adroit.mjs` + диалог выбора `apps/adroit.mjs`; Забирай Всё —
   `TAKE_EVERYTHING_FLAG` в `constants/rig.mjs`.
+- «N Характеристик дружественны» у Благородного — `apps/subrace-choice.mjs`
+  (`ARCHETYPE_APTITUDE_CHOICES`); Импланты Механикум — области теста
+  `noosphere`/`coilCharge`, Катушка Потенции — `rules/potentia-coil.mjs`.
 - Элитные архетипы: `constants/elite-archetypes.mjs`, `data/item/
   elite-archetype.mjs`, `rules/elite-requirements.mjs`, `apps/elite-buy.mjs` +
   `elite-req-builder.mjs`, `sheets/elite-picker.mjs`.
@@ -1226,7 +1228,13 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `data/item/implant.mjs` (механика), `cybernetic.mjs` (просто замена части
   тела, механику несёт implant).
 - `constants/body-map.mjs` (классификация по частям тела), `implants.mjs`
-  (заготовки от архетипов), `implant-mechanics.mjs`.
+  (заготовки от архетипов — запас), `implant-mechanics.mjs`.
+- Импланты Механикум (Еретех/Технодесантник): выдача — `apps/mechanicus-
+  implant-grant.mjs` (из компендиума, уже установленными); модификаторы по
+  Качеству — записи «Модификатор теста» с условием по Качеству на самих
+  имплантах (области `noosphere`/`coilCharge`); Катушка Потенции (−1 Усталость
+  за 2⚡, зарядка Электу-Индукторами) — `rules/potentia-coil.mjs` + кнопки
+  вкладки ТЕХ (`sheets/tabs/tech.mjs`).
 - `apps/surgeon.mjs` (Хирургикон) + `surgeon-plan.mjs` (парная имплантация).
 - `rules/cybernetic-excellence.mjs` + `apps/cybernetic-excellence.mjs`
   (синхронизация Трейта «Многорукий» с покупками Таланта).

@@ -32,6 +32,16 @@ export const INFAMY_FAIL_SUCCESS_SOURCES = [
     // — тоже социальное взаимодействие: книга не называет навык, а «убедить
     // словом» за столом часто бросается чистой F.
     applies: ctx => isSocialSkill(ctx?.skill) || (!ctx?.skill && ctx?.char === "fel")
+  },
+  {
+    capability: "trait.survivor",
+    label: "Выживальщик",
+    // [книга] «не-атакующий тест S, T, A или P». Тест Навыка через эти
+    // Характеристики (Athletics(S), Acrobatics(A), Awareness(P)…) тоже
+    // считается — [допущение]: оговорка «не-атакующий» имеет смысл, только
+    // если Навыки входят (атаки идут по WS/BS и сюда не попадают — кнопку
+    // рисует только карточка теста с листа).
+    applies: ctx => ["s", "t", "ag", "per"].includes(String(ctx?.char ?? "").toLowerCase())
   }
 ];
 

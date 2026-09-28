@@ -1,13 +1,13 @@
 {
-  "name": "Master of Machines / Повелитель Машин",
+  "name": "My Own Master / Сам Себе Хозяин",
   "type": "trait",
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
-    "description": "Миньоны-машины без требования Inf.",
-    "notes": "Требование по Бесчестию у Таланта Миньона группы «Машина» не показывается (возможность minion.ignoreInfamy.machine, module/apps/minion-talent.mjs).",
-    "benefit": "Еретех игнорирует требования по Inf для Миньонов-машин.",
+    "description": "Коды командования Боевых Лат Скитария на него не действуют.",
+    "notes": "Возможность trait.myOwnMaster объявлена. Кодов командования (Катехизисы Командования Лат, Binary Dominion) как механики в системе нет — читать нечему, остаётся текстом.",
+    "benefit": "Коды командования для Боевых Лат Скитария не работают.",
     "source": "архетип",
-    "bookSource": "DoomBC — Основная книга, Архетипы Людей: Еретех",
+    "bookSource": "DoomBC — Основная книга, Архетипы Людей: Скитарий",
     "hasRating": false,
     "rating": 0,
     "hasRating2": false,
@@ -24,7 +24,7 @@
       "speedMod": 0
     }
   },
-  "_id": "bL8lOm6EIJrREQck",
+  "_id": "MyOwnMstrTrt7kQ2",
   "effects": [],
   "folder": null,
   "sort": 0,
@@ -36,11 +36,11 @@
       "migratedEffect": true,
       "mechanics": [
         {
-          "id": "masterMachCaps01",
+          "id": "myOwnMasterCaps1",
           "operator": "AND",
           "entries": [
             {
-              "id": "masterMachCap001",
+              "id": "myOwnMasterCap01",
               "kind": "capability",
               "group": null,
               "corruptionValue": "1",
@@ -88,7 +88,7 @@
               "modValueMode": "flat",
               "modCharBonus": "inf",
               "rerollWho": "self",
-              "capabilityKey": "minion.ignoreInfamy.machine",
+              "capabilityKey": "trait.myOwnMaster",
               "capabilityCostPool": "",
               "capabilityCostAmount": 1,
               "capabilityMode": "flag",
@@ -159,12 +159,12 @@
     "compendiumSource": null,
     "duplicateSource": null,
     "exportSource": null,
-    "coreVersion": "14.367",
+    "coreVersion": "14.365",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
-    "createdTime": 1788391701836,
-    "modifiedTime": 1788391701836,
-    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
   },
-  "_key": "!items!bL8lOm6EIJrREQck"
+  "_key": "!items!MyOwnMstrTrt7kQ2"
 }

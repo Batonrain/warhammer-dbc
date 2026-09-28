@@ -113,6 +113,11 @@ export function groupTally(minions = []) {
  * Выполняет ли Хозяин требования Таланта выбранной пары: значение
  * характеристики группы, Бесчестие и надбавка Навыка группы. Возвращаем
  * список невыполненного, а не «да/нет»: игроку нужно знать, чего не хватило.
+ *
+ * `ignoreInfamy` — Черта Архетипа «игнорирует требования по Inf для
+ * Миньонов-<группы>» (Survivor — звери, Master of Machines — машины и т.п.):
+ * снимается только Бесчестие. Флаг решает вызывающий код по возможности
+ * {@link minionInfamyWaiverFlag} — сама функция остаётся без реестра правил.
  */
 export function talentRequirements(master, group, tier, { ignoreInfamy = false } = {}) {
   const groupDef = MINION_GROUPS[group];
@@ -143,7 +148,7 @@ export function talentRequirements(master, group, tier, { ignoreInfamy = false }
 
 /**
  * Возможность «игнорирует требования по Inf для Миньонов этой группы» —
- * одно имя на группу (`minion.ignoreInfamy.human`, `.daemon`, …), выдаётся
+ * одно имя на группу (`minion.ignoreInfamy.human`, `.daemon`, `.beast`, `.machine`), выдаётся
  * записью Конструктора на Черте Архетипа (module/constants/capabilities.mjs).
  */
 export function minionInfamyWaiverFlag(group) {

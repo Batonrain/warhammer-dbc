@@ -16,7 +16,8 @@ import { raceDef, subraceEntries, subracesOf, isAeldariRace, raceGroupList }
 import { applyRace, applySubrace }      from "./races.mjs";
 import { buildLegionOptions, buildChapterOptions,
          buildCultureLegionOptions, resolveCultureFx } from "../constants/legions.mjs";
-import { MECHANICUS_IMPLANTS, SKITARII_WAR_PLATE, MECHANICUM_IMPLANTS_TRAIT } from "../constants/implants.mjs";
+import { SKITARII_WAR_PLATE, MECHANICUM_IMPLANTS_TRAIT } from "../constants/implants.mjs";
+import { mechanicusImplantData } from "./mechanicus-implant-grant.mjs";
 import { disabledRaceKeys }             from "../constants/features.mjs";
 import { archetypeEntries, archetypesForRace, applyArchetype } from "./archetypes.mjs";
 import { splitTopLevel, esc }           from "../helpers/utils.mjs";
@@ -619,10 +620,13 @@ export async function rollFormulaForChar(actor, formula, charKey, sub, flavor) {
   return rollFormula(actor, formula, flavor);
 }
 
-/** Выдаёт базовые импланты Механикум (пропуская уже имеющиеся). */
+/**
+ * Выдаёт базовые импланты Механикум (пропуская уже имеющиеся) — из
+ * компендиума, установленными (apps/mechanicus-implant-grant.mjs).
+ */
 export async function grantMechanicusImplants(actor) {
-  const existing = new Set(actor.items.filter(i => i.type === "implant").map(i => i.name));
-  const toAdd = MECHANICUS_IMPLANTS.filter(d => !existing.has(d.name)).map(d => foundry.utils.deepClone(d));
+  const existing = actor.items.filter(i => i.type === "implant").map(i => i.name);
+  const toAdd = await mechanicusImplantData(existing);
   if (toAdd.length) await actor.createEmbeddedDocuments("Item", toAdd);
   return toAdd.length;
 }

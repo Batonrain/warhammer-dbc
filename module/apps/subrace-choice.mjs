@@ -43,6 +43,22 @@ export function needsAptitudeChoice(subraceKey) {
 }
 
 /**
+ * Ключ Архетипа → тот же выбор. Благородный (Noble Eugenics / Благородная
+ * Евгеника, книга): «При создании персонажа, Благородный выбирает 2
+ * Характеристики – они становятся дружественными в плане продвижений, и
+ * остаются таковыми, невзирая на его Покровительства». Выбор дописывается в
+ * Механику предмета-Архетипа на акторе (module/apps/archetypes.mjs::
+ * applyArchetype) — сменят Архетип, уйдёт и он.
+ */
+export const ARCHETYPE_APTITUDE_CHOICES = {
+  noble: { charCount: 2, skillCount: 0 }
+};
+
+export function needsArchetypeAptitudeChoice(archetypeKey) {
+  return !!ARCHETYPE_APTITUDE_CHOICES[archetypeKey];
+}
+
+/**
  * Чистая функция: picks → одна AND-группа Конструктора (capability/aptOverride
  * на каждую выбранную Характеристику/Навык). Пустые/повторные ключи молча
  * пропускаются (дедуп по Set) — диалог мешает выбрать дубль, но чистая
@@ -107,16 +123,18 @@ function choiceDialogHtml(charCount, skillCount, skillOptions = null) {
   const skillRows = Array.from({ length: skillCount }, (_, i) => `
     <select class="sub-apt-skill" data-i="${i}"><option value="">— выбрать —</option>${skillOpts}</select>`).join("");
 
+  // Пустой раздел не рисуется: у Благородного выбор только Характеристик.
+  const what = [charCount ? "Характеристики" : "", skillCount ? "Навыки" : ""].filter(Boolean).join(" и ");
   return `<form class="hw-choice-form">
-    <div class="hw-choice-desc">Выберите Характеристики и Навыки, которые станут Дружественными независимо от Покровительства.</div>
-    <div class="hw-choice">
+    <div class="hw-choice-desc">Выберите ${what}, которые станут Дружественными независимо от Покровительства.</div>
+    ${charCount ? `<div class="hw-choice">
       <div class="hw-choice-label">Характеристики (${charCount})</div>
       <div class="hw-many-grid">${charRows}</div>
-    </div>
-    <div class="hw-choice">
+    </div>` : ""}
+    ${skillCount ? `<div class="hw-choice">
       <div class="hw-choice-label">Навыки (${skillCount})</div>
       <div class="hw-many-grid">${skillRows}</div>
-    </div>
+    </div>` : ""}
   </form>`;
 }
 
@@ -128,7 +146,15 @@ function choiceDialogHtml(charCount, skillCount, skillOptions = null) {
  * @returns {Promise<{chars:string[], skills:string[]}|null>}
  */
 export function promptSubraceAptitudeChoice(subraceKey, label) {
-  const cfg = SUBRACE_APTITUDE_CHOICES[subraceKey];
+  return promptAptitudeChoice(SUBRACE_APTITUDE_CHOICES[subraceKey], label);
+}
+
+/** Тот же диалог для Архетипа (Благородная Евгеника) — см. ARCHETYPE_APTITUDE_CHOICES. */
+export function promptArchetypeAptitudeChoice(archetypeKey, label) {
+  return promptAptitudeChoice(ARCHETYPE_APTITUDE_CHOICES[archetypeKey], label);
+}
+
+function promptAptitudeChoice(cfg, label) {
   if (!cfg) return Promise.resolve(null);
 
   return new Promise(resolve => {

@@ -94,6 +94,14 @@
 }
 .warhammer-dbc .tech-tab .cognition-rest-btn:hover { background: color-mix(in srgb, var(--mc-data) 34%, #10141a); box-shadow: 0 0 10px -3px var(--mc-data); }
 .warhammer-dbc .tech-tab .tg-bonus { margin-left: auto; font-size: 0.9em; color: var(--mc-en); }
+/* Катушка Потенции: −1 Усталость за 2⚡ и зарядка Электу-Индукторами. */
+.warhammer-dbc .tech-tab .tg-coil-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.warhammer-dbc .tech-tab .coil-fatigue-btn, .warhammer-dbc .tech-tab .coil-charge-btn {
+  padding: 2px 8px; font-size: 0.9em; border-radius: 4px; cursor: pointer; white-space: nowrap;
+  background: color-mix(in srgb, var(--mc-en) 18%, #10141a); color: #fff3d6;
+  border: 1px solid color-mix(in srgb, var(--mc-en) 55%, transparent);
+}
+.warhammer-dbc .tech-tab .coil-fatigue-btn:hover, .warhammer-dbc .tech-tab .coil-charge-btn:hover { box-shadow: 0 0 10px -3px var(--mc-en); }
 .warhammer-dbc .tech-tab .tg-readout { display: flex; align-items: baseline; gap: 5px; margin-bottom: 7px; }
 .warhammer-dbc .tech-tab .tg-readout input {
   width: 48px; text-align: center; font-size: 1.35em; font-weight: 800;

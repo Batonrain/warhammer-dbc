@@ -1,47 +1,64 @@
 {
-  "name": "Survivor / Выживальщик",
-  "type": "trait",
-  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "name": "Electro-Grafts / Электро-Графты",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
-    "description": "Провал не-атакующего теста S/T/A/P → за Очко Бесчестия успех на 1 Успех; Миньоны-звери без требования Inf.",
-    "notes": "Кнопка «⚜ Выживальщик» на карточке проваленного теста S/T/A/P (и Навыков через них) — тратит Очко и засчитывает успех на 1 Успех (module/rules/infamy-success.mjs). Требование по Бесчестию у Таланта Миньона группы «Зверь» не показывается (возможность minion.ignoreInfamy.beast).",
-    "benefit": "Когда Дикарь проваливает не-атакующий тест S, T, A или P, он может потратить Очко Бесчестия, чтобы вместо этого преуспеть в нем на 1 Успех. Дикарь игнорирует требования по Inf для Миньонов-зверей.",
-    "source": "архетип",
-    "bookSource": "DoomBC — Основная книга, Архетипы Людей: Дикарь",
-    "hasRating": false,
-    "rating": 0,
-    "hasRating2": false,
-    "rating2": 0,
+    "description": "Порты для подключения к машинам; встроены в пальцы или тонкие мехадендриты.",
+    "notes": "Модификатор тестов управления (Operate) по Качеству — записи Конструктора «Модификатор теста» с условием по Качеству (Good.Q +5, Best.Q +10), галочкой в диалоге броска. «Роль до 2-х членов экипажа» (Poor.Q — одного) — на столе: экипажа машины как расчёта в системе нет.",
+    "category": "mechanicus",
+    "quality": "common",
+    "effect": "Позволяют подсоединяться к инфо-портам имперских и хаоситских машин. Как правило, встроены в пальцы или принимают вид тонких слабых мехадендритов. Позволяют выполнять роль до 2-х членов экипажа машины, подключившись к портам.\nPoor.Q – заменяет только 1 члена экипажа.\nGood.Q – +5 на все тесты управления.\nBest.Q – +10 на все тесты управления.",
+    "installed": "",
+    "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",
       "charBonusValue": 0,
       "charBonuses": [],
       "charValueBonuses": [],
       "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
       "fearRating": 0,
       "sizeMod": 0,
       "initMod": 0,
       "speedMod": 0
-    }
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    },
+    "bookSource": "DoomBC — Основная книга, Архетипы Людей: Еретех («Импланты Механикум»)",
+    "techClass": "electric"
   },
-  "_id": "DSgbJn6nYpzWvpbp",
+  "folder": "ai5XtC0QXBo34wg9",
+  "_id": "cbWIdvnkIdwxSiYL",
   "effects": [],
-  "folder": null,
   "sort": 0,
   "ownership": {
-    "default": 0
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
   },
   "flags": {
     "warhammer-dbc": {
       "migratedEffect": true,
       "mechanics": [
         {
-          "id": "survivorCaps0001",
+          "id": "mcgcbWIdvnkIdwxS",
           "operator": "AND",
           "entries": [
             {
-              "id": "survivorCap00001",
-              "kind": "capability",
+              "id": "mcGraftGood00001",
+              "kind": "testMod",
               "group": null,
               "corruptionValue": "1",
               "woundsValue": "1",
@@ -50,7 +67,7 @@
               "charKey": "s",
               "field": "total",
               "op": "add",
-              "value": 1,
+              "value": 5,
               "sourceUuid": "",
               "sourceName": "",
               "sourceImg": "",
@@ -60,7 +77,7 @@
               "minionGroup": "",
               "minionTier": "",
               "skillScope": "plain",
-              "skillKey": "",
+              "skillKey": "operate",
               "specKey": "",
               "specialty": "",
               "specChoiceKeys": [],
@@ -84,11 +101,11 @@
               "rerollScope": "all",
               "rerollChar": "ag",
               "rerollMode": "keepBest",
-              "modScope": "all",
+              "modScope": "skill",
               "modValueMode": "flat",
               "modCharBonus": "inf",
               "rerollWho": "self",
-              "capabilityKey": "trait.survivor",
+              "capabilityKey": "",
               "capabilityCostPool": "",
               "capabilityCostAmount": 1,
               "capabilityMode": "flag",
@@ -140,19 +157,23 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "",
+              "label": "Электро-Графты (Good.Q): тест управления",
               "code": "",
               "scriptThrottleUnit": "",
               "scriptThrottleMax": 1,
               "scriptTrigger": "",
               "when": {
                 "negate": false,
-                "conditions": []
+                "conditions": [],
+                "quality": [
+                  "good"
+                ],
+                "negateQuality": false
               }
             },
             {
-              "id": "survivorCap00002",
-              "kind": "capability",
+              "id": "mcGraftBest00001",
+              "kind": "testMod",
               "group": null,
               "corruptionValue": "1",
               "woundsValue": "1",
@@ -161,7 +182,7 @@
               "charKey": "s",
               "field": "total",
               "op": "add",
-              "value": 1,
+              "value": 10,
               "sourceUuid": "",
               "sourceName": "",
               "sourceImg": "",
@@ -171,7 +192,7 @@
               "minionGroup": "",
               "minionTier": "",
               "skillScope": "plain",
-              "skillKey": "",
+              "skillKey": "operate",
               "specKey": "",
               "specialty": "",
               "specChoiceKeys": [],
@@ -195,11 +216,11 @@
               "rerollScope": "all",
               "rerollChar": "ag",
               "rerollMode": "keepBest",
-              "modScope": "all",
+              "modScope": "skill",
               "modValueMode": "flat",
               "modCharBonus": "inf",
               "rerollWho": "self",
-              "capabilityKey": "minion.ignoreInfamy.beast",
+              "capabilityKey": "",
               "capabilityCostPool": "",
               "capabilityCostAmount": 1,
               "capabilityMode": "flag",
@@ -251,14 +272,18 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "",
+              "label": "Электро-Графты (Best.Q): тест управления",
               "code": "",
               "scriptThrottleUnit": "",
               "scriptThrottleMax": 1,
               "scriptTrigger": "",
               "when": {
                 "negate": false,
-                "conditions": []
+                "conditions": [],
+                "quality": [
+                  "best"
+                ],
+                "negateQuality": false
               }
             }
           ]
@@ -270,12 +295,12 @@
     "compendiumSource": null,
     "duplicateSource": null,
     "exportSource": null,
-    "coreVersion": "14.367",
+    "coreVersion": "14.365",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
-    "createdTime": 1788391701268,
-    "modifiedTime": 1788391701268,
+    "createdTime": 1781703698894,
+    "modifiedTime": 1786122015266,
     "lastModifiedBy": "4Q6l1C4FQOMQVofr"
   },
-  "_key": "!items!DSgbJn6nYpzWvpbp"
+  "_key": "!items!cbWIdvnkIdwxSiYL"
 }
