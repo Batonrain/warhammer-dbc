@@ -52,6 +52,7 @@ import { KISS_OF_DEATH_FLAG } from "../../rules/kiss-of-death.mjs";
 import { triggerLegacyGleeOnFateSave } from "../../combat/legacy-weapon-kill-credit.mjs";
 import { isThrottleReady, markThrottleUsed } from "../../rules/cooldown.mjs";
 import { inPariahVoid } from "../../rules/null-zones.mjs";
+import { SUS_AN_ACTIVE_FLAG } from "../../rules/legion-surgery.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -379,6 +380,9 @@ export async function doSusAnimation(actor) {
     // производит Беспомощность (rules/character.mjs, derived data).
     await actor.update({
       [`flags.${NS}.deceased`]: false,
+      // Метка «лежит в Замедленной Анимации» — по ней Хирургия Легиона
+      // (Апотекарий) предлагает пробуждение после Первой Помощи.
+      [`flags.${NS}.${SUS_AN_ACTIVE_FLAG}`]: true,
       ...conditionApplyFields("unconscious", null, actor),
       ..._deathResolvedFields(actor)
     });

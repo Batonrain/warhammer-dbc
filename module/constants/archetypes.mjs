@@ -58,18 +58,18 @@ export const ARCHETYPES = {
     name: "Хавок", race: "astartes", wounds: "16+1d5", charBonus: {},
     skills:  "Tech-Use, Stealth или Trade (Weaponsmith) +10, Awareness +10 или Dodge +10",
     talents: "Rapid Reload, Technical Knock, Hip Shooting или Saturation Fire",
-    gear:    "L. Heavy Bolter / L. Plasma Cannon / L. Multimelta / L. Autocannon, Backpack Feed или Heavy Power Cable",
+    gear:    "L. Heavy Bolter или L. Plasma Cannon или L. Multimelta или L. Autocannon, Backpack Feed или Heavy Power Cable",
     trait: { name: "Fire Point / Огневая Точка",
-      benefit: "Тратит Очко Бесчестья на переброс стрелковой атаки, даже Оглушённым/лёжа/сбит с ног. На покровительстве Нургла может перебрасывать с Преимуществом." },
+      benefit: "Когда Хавок тратит Очко Бесчестия на переброс стрелковой атаки или он использовал действие Закрепление, он может перебрасывать все стрелковые атаки, пока не сдвинется с места (кроме Отскоком), заляжет, или будет сбит с ног. Он может перебрасывать стрельбу из тяжелого оружия даже с покровительством Нургла." },
     desc: "Специалист по тяжёлому оружию легиона."
   },
   apothecary: {
     name: "Апотекарий", race: "astartes", wounds: "15+1d5", charBonus: {},
     skills:  "For. Lore (Astartes Implants), Trade (Chymist), Athletics +10, Medicae +10",
-    talents: "Frontline Medic, Restitching, Sure Stitch, Fast Stitches или Precise Blow",
-    gear:    "L. Chain Weapon (до R1), Narthecium (Good.Q), 20 доз Химии до R1",
+    talents: "Frontline Medic, Restitching, Sure Strike, Fast Stitches или Precise Blow",
+    gear:    "L. Chain Weapon (до R1), Narthecium (Good.Q), 20 Доз Химии до R1",
     trait: { name: "Legion Surgery / Хирургия Легиона",
-      benefit: "Тратит Очко Бесчестья, чтобы авто-пройти тест лечения/работы с геносеменем с 1 Успехом; может пробудить десантника из Сус-ан анимации." },
+      benefit: "Когда Апотекарий проваливает любой тест на лечение или работу с геносеменем, он может потратить Очко Бесчестия, чтобы автоматически пройти этот тест с 1 Успехом. Если он Первой помощью поднял Раны вошедшего в Замедленную Анимацию десантника до хотя бы –7, Апотекарий может потратить 1 Очко Бесчестия, чтобы пробудить его из анабиоза." },
     desc: "Боевой медик легиона."
   },
   outcast: {
@@ -78,27 +78,29 @@ export const ARCHETYPES = {
     talents: "Blind Fighting или Wallop, Catfall или Iron Jaw, Combat Master или Hunker Down, Breacher или Hip Shooting",
     gear:    "L. Chain Weapon (до R1) или L. Shotgun, 8 L. Гранат или Бомб до R2, Chameleoline Cloak (Good.Q) или L. Boarding Shield (Good.Q)",
     trait: { name: "Scrounge / Наскрести",
-      benefit: "Тратит смену работы и Очко Бесчестья, чтобы добыть расходники/находку до 2d10 Редкости (R1)." },
+      benefit: "Изгой может потратить смену работы и Очко Бесчестия, чтобы добыть где-то 2d10 расходных материалов (магазинов боеприпасов, гранат, химии и т.п.) до R2, украв, выбив силой у кого-то, или найдя клад. Когда у него есть излишки расходников, ГМ может потребовать, чтобы Изгой время от времени прятал часть в клады «на черный день»." },
     desc: "Одинокий волк без банды и дома."
   },
   techmarine: {
     name: "Технодесантник", race: "astartes", wounds: "17+1d5", charBonus: {},
     skills:  "Linguistics (Binary Cant), For. Lore (Mechanicus), Trade (Armourer, Weaponsmith), Tech-Use +10",
-    talents: "500хр на Техночудеса, Blessing of Steel, Mechadendrite Use (Weapon, Utility)",
-    gear:    "Mechanicum Implants, L. Power Weapon (до R3, Good.Q), 1 Мехадендрит (R3 или R2 Good.Q), Combi-Tool (Good.Q)",
-    isTechpriest: true,
+    talents: "500 xp на Техночудеса, Blessing of Steel, Mechadendrite Use (Weapon, Utility)",
+    gear:    "L. Power Weapon (до R3, Good.Q), 1 Мехадендрит (R3 или R2 Good.Q), Combi-Tool (Good.Q)",
+    // Стартовый Трейт «Mechanicum Implants (стр. 20)» — не снаряжение: выдаётся
+    // флагом grantsImplants (apps/archetypes.mjs::grantArchetypeImplants).
+    isTechpriest: true, grantsImplants: true,
     trait: { name: "Emergency Maintenance / Экстренное Обслуживание",
-      benefit: "Тратит Очко Бесчестья и полное действие, чтобы починить повреждения оружия/брони/снаряжения Легиона (обычно требующие 1 смены работы)." },
+      benefit: "Технодесантник может потратить Очко Бесчестия и полное действие, чтобы починить повреждения оружия, брони, или снаряжения Легиона, обычно требующие до 1 смены работы." },
     desc: "Тех-адепт и мастер машин легиона."
   },
   sorcerer: {
     name: "Чародей", race: "astartes", wounds: "15+1d5", charBonus: {},
     skills:  "Psyniscience, Schol. Lore (Occult), Deceive или Scrutiny, For. Lore (Warp, Daemons and Psykers)",
-    talents: "Psy Rating (×2), 500хр на Психосилы, Meditation или Warp Sense",
+    talents: "Psy Rating (×2), 500 xp на Психосилы, Meditation или Warp Sense",
     gear:    "L. Bolt Pistol, L. Force Weapon (до R4)",
-    isPsyker: true,
+    isPsyker: true, psykerClass: "bound",
     trait: { name: "Sorcerer / Чародей",
-      benefit: "Получает Трейт Psyker с PR2 и +1 Cor. В расчёте психической силы считается Связанным." },
+      benefit: "Чародей обладает способностью призывать силы варпа себе на службу, но каждый подобный акт не проходит бесследно. +d10 Стартового Cor. В расчёте психической силы он считается связанным." },
     desc: "Боевой псайкер легиона."
   },
 

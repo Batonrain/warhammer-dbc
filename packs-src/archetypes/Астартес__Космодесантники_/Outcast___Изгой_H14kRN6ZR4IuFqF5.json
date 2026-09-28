@@ -11,7 +11,7 @@
     "charChoice": "",
     "skills": "",
     "talents": "",
-    "gear": "",
+    "gear": "L. Chain Weapon (до R1) или L. Shotgun, 8 L. Гранат или Бомб до R2, Chameleoline Cloak (Good.Q) или L. Boarding Shield (Good.Q)",
     "wounds": "17+1d5",
     "infRoll": "",
     "requiredPath": "",
@@ -23,7 +23,7 @@
     "description": "Одинокий волк без банды и дома.",
     "trait": {
       "name": "Scrounge / Наскрести",
-      "benefit": "Тратит смену работы и Очко Бесчестья, чтобы добыть расходники/находку до 2d10 Редкости (R1)."
+      "benefit": "Изгой может потратить смену работы и Очко Бесчестия, чтобы добыть где-то 2d10 расходных материалов (магазинов боеприпасов, гранат, химии и т.п.) до R2, украв, выбив силой у кого-то, или найдя клад. Когда у него есть излишки расходников, ГМ может потребовать, чтобы Изгой время от времени прятал часть в клады «на черный день»."
     },
     "bookSource": "DoomBC — Основная книга",
     "notes": ""
@@ -38,54 +38,6 @@
   "flags": {
     "warhammer-dbc": {
       "mechanics": [
-        {
-          "id": "T3c0u85gRiztl6VS",
-          "operator": "AND",
-          "entries": [
-            {
-              "id": "B0Jkv7EXkuHcP37n",
-              "kind": "wounds",
-              "corruptionValue": "1",
-              "woundsValue": "1d5+",
-              "cohesionRole": "any",
-              "cohesionValue": "1",
-              "charKey": "s",
-              "field": "total",
-              "op": "add",
-              "value": 1,
-              "sourceUuid": "",
-              "sourceName": "",
-              "sourceImg": "",
-              "sourceHasRating": false,
-              "rating": "",
-              "specialization": "",
-              "skillScope": "plain",
-              "skillKey": "",
-              "specKey": "",
-              "specialty": "",
-              "specChoiceKeys": [],
-              "rank": "untrained",
-              "weightScope": "all",
-              "weightMode": "kg",
-              "weightValue": 1,
-              "weaponPropAction": "add",
-              "weaponPropKey": "",
-              "weaponPropLabel": "",
-              "weaponPropHasRating": false,
-              "weaponPropHasRating2": false,
-              "weaponPropValue": "1",
-              "weaponPropValue2": "0",
-              "weaponPropNewKey": "",
-              "weaponPropNewLabel": "",
-              "weaponPropNewHasRating": false,
-              "weaponPropNewHasRating2": false,
-              "weaponPropNewValue": "1",
-              "weaponPropNewValue2": "0",
-              "label": "",
-              "code": ""
-            }
-          ]
-        },
         {
           "id": "H14kRN6Zgas",
           "operator": "AND",

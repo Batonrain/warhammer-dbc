@@ -52,6 +52,8 @@ import { activateFruitOfFlesh, eatHealFruit } from "./fruit-of-flesh.mjs";
 import { useSoulSeer } from "./soul-seer.mjs";
 import { activateWrappedInChaos } from "./wrapped-in-chaos.mjs";
 import { attemptPossessionAttack, leavePossessionHost } from "./possession-attack.mjs";
+import { emergencyMaintenance } from "../combat/emergency-maintenance.mjs";
+import { scroungeSupplies } from "./scrounge.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -153,6 +155,11 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *  - `attemptPossessionAttack`/`leavePossessionHost` (apps/possession-attack.mjs)
  *    — Трейт Possession/Одержимость (wdbc-q267): Ход Атаки Одержимостью по
  *    текущей цели (оба теста W+0, счёт до ±5) и выход из хоста.
+ *  - `emergencyMaintenance` (combat/emergency-maintenance.mjs) — Экстренное
+ *    Обслуживание Технодесантника: полное действие, выбор и починка
+ *    повреждения; throw при отказе — Очко Бесчестия записи не списывается.
+ *  - `scroungeSupplies` (apps/scrounge.mjs) — Наскрести Изгоя: 2d10
+ *    расходников до R2 Обозревателем компендиумов.
  *
  * `extra` — необязательный набор ДОПОЛНИТЕЛЬНЫХ именованных функций для
  * конкретного вызывающего (например, runMechScriptEntry добавляет
@@ -181,6 +188,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "nextDevourerStreak", "pruneDevourerStreaks",
     "activateFruitOfFlesh", "eatHealFruit", "useSoulSeer", "activateWrappedInChaos",
     "attemptPossessionAttack", "leavePossessionHost",
+    "emergencyMaintenance", "scroungeSupplies",
     ...extraNames,
     code
   );
@@ -198,6 +206,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     nextDevourerStreak, pruneDevourerStreaks,
     activateFruitOfFlesh, eatHealFruit, useSoulSeer, activateWrappedInChaos,
     attemptPossessionAttack, leavePossessionHost,
+    emergencyMaintenance, scroungeSupplies,
     ...extraNames.map(k => extra[k])
   );
 }

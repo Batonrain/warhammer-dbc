@@ -48,6 +48,8 @@ describe("executeItemCode — стандартные помощники в об�
       seen.activateWrappedInChaos = typeof activateWrappedInChaos;
       seen.attemptPossessionAttack = typeof attemptPossessionAttack;
       seen.leavePossessionHost = typeof leavePossessionHost;
+      seen.emergencyMaintenance = typeof emergencyMaintenance;
+      seen.scroungeSupplies = typeof scroungeSupplies;
     `, null, { seen });
     expect(seen).toEqual({
       woundLossUpdates: "function", isTokenInSight: "function",
@@ -61,7 +63,8 @@ describe("executeItemCode — стандартные помощники в об�
       resolveBurnedSenses: "function", buildCountenanceFearFlag: "function", purityOfBattleWave: "function",
       activateFruitOfFlesh: "function", eatHealFruit: "function", useSoulSeer: "function",
       activateWrappedInChaos: "function",
-      attemptPossessionAttack: "function", leavePossessionHost: "function"
+      attemptPossessionAttack: "function", leavePossessionHost: "function",
+      emergencyMaintenance: "function", scroungeSupplies: "function"
     });
   });
 

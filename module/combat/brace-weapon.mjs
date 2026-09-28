@@ -27,6 +27,7 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { registerBraceCheck } from "./weapon-profiles.mjs";
+import { activateFirePoint } from "./fire-point.mjs";
 
 const NS = "warhammer-dbc";
 const FLAG_KEY = "braceState";
@@ -89,4 +90,7 @@ export async function declareBrace(actor, weapon) {
     title: `${esc(actor.name)} — Закрепление: ${esc(weapon.name)}`,
     lines: [`<div class="roll-threshold">Закреплено (Полудействие). Держится, пока не сдвинется с места и не довернёт оружие больше чем на ${BRACE_ARC_WIDTH / 2}° от текущего разворота (стр. 35).</div>`]
   }, { sound: false });
+  // Огневая Точка (Хавок): «…или он использовал действие Закрепление» —
+  // занимает точку; без Черты activateFirePoint ничего не делает.
+  await activateFirePoint(actor, "Закрепление");
 }
