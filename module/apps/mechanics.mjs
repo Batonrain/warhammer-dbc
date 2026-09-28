@@ -459,6 +459,7 @@ import { DURATION_UNITS, durationLabel, conditionEntryTerm, conditionHasLevelInp
 import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "../constants/legions.mjs";
 import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod, whenCondition, whenQuality, whenChosenEffect } from "../rules/mech-when.mjs";
 import { TIER_LABELS as WOUND_TIER_LABELS } from "../rules/wound-tier.mjs";
+import { grantedTraitFlags } from "../rules/trait-grant.mjs";
 import { INTEGRAL_CHOSEN_FLAG, RATING_TEMPLATE_FLAG, sourceRating, ratingTemplateOf, applyRatingTemplate,
          optionalIntegralEntries, integralEntrySelected } from "../rules/integral-rating.mjs";
 import { parseSubmutations } from "../rules/submutations.mjs";
@@ -1125,7 +1126,10 @@ export function describeMechEntry(entry) {
     case "trait": {
       if (!entry.sourceUuid) return "Черта: (перетащите предмет)";
       const rating = entry.rating !== "" && entry.rating != null ? ` (рейтинг ${entry.rating})` : "";
-      return `Черта: ${entry.sourceName || "?"}${rating}`;
+      // «Deadly Natural Weapons (X, Y)» — атаки выбраны записью (rules/trait-grant.mjs).
+      const picked = Array.isArray(entry.integralChosen) && entry.integralChosen.length
+        ? `, атаки выбраны: ${entry.integralChosen.length}` : "";
+      return `Черта: ${entry.sourceName || "?"}${rating}${picked}`;
     }
     case "talent": {
       if (!entry.sourceUuid) return "Талант: (перетащите предмет)";
@@ -2352,8 +2356,10 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
     // работает по одному grantedByItem), а для ЖИВОЙ пересинхронизации:
     // syncGrantedAbilities ниже по нему отличает свою выдачу от чужой и от
     // копии, которую ГМ положил руками.
+    // Выбор атак «Deadly Natural Weapons (X, Y)» и рейтинг-формула (Flyer
+    // (A.b×2)) — флагами на самой Черте, см. rules/trait-grant.mjs.
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}),
-      grantedByItem: sourceItem.id, abilityEntryId: entry.id } };
+      ...grantedTraitFlags(entry), grantedByItem: sourceItem.id, abilityEntryId: entry.id } };
     await actor.createEmbeddedDocuments("Item", [data]);
     return;
   }
@@ -2868,7 +2874,7 @@ export async function syncGrantedAbilities(sourceItem) {
     }
     if (e.kind === "talent" && e.specialization) data.system.specialization = e.specialization;
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}),
-      grantedByItem: sourceItem.id, abilityEntryId: e.id } };
+      ...grantedTraitFlags(e), grantedByItem: sourceItem.id, abilityEntryId: e.id } };
     toCreate.push(data);
   }
   if (toCreate.length) await actor.createEmbeddedDocuments("Item", toCreate);

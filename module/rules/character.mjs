@@ -50,6 +50,7 @@ import { woundLevel } from "./wound-tier.mjs";
 import { prepareFinalPools } from "./character/final-pools.mjs";
 import { prepareMovementDerived } from "./character/movement.mjs";
 import { prepareArmourDerived } from "./character/armour.mjs";
+import { LIMITED_LIFT_CAPABILITY, flightStrengthBonus, limitedLiftStatus } from "./limited-lift.mjs";
 
 /**
  * Именованный вклад предметов-носителей Механики (Архетип/Раса/Субраса/
@@ -925,10 +926,14 @@ export function prepareCharacterDerived(actor, system) {
     // описывает тоже, но здесь не реализованы — отдельная, более крупная
     // задача, не часть этой правки.
     let totalWeight = 0;
+    // Вес брони, которая «несёт себя сама», — отдельно: для полёта с Limited
+    // Lift она его не гасит (rules/limited-lift.mjs).
+    let selfCarriedArmourWeight = 0;
     for (const item of actor.items) {
       const s = item.system;
       const w = parseFloat(s.weight) || 0;
       if (item.type === "armor" && s.equipped && ((s.armorType === "power" && s.active) || s.weightless)) {
+        selfCarriedArmourWeight += w;
         continue; // несёт свой вес сама
       }
       if (["gear","drug","tool","ammo","weapon"].includes(item.type)) {
@@ -972,6 +977,16 @@ export function prepareCharacterDerived(actor, system) {
     system.encumbrance.push  = carryRow(baseIdx + (ib.push  || 0)).push;
     system.encumbrance.max = system.encumbrance.carry;
     system.homeworldCarryBonus = hwCarry;
+    // Limited Lift / Ограниченная Подъёмная Сила (Гарпия): своё Ношение для
+    // полёта — без S от брони, а груз — с весом брони, что для ходьбы несёт
+    // себя сама. Читает окно Полёта (combat/movement-actions.mjs).
+    if (hasRuleFlag(actor, LIMITED_LIFT_CAPABILITY)) {
+      const flightSb = flightStrengthBonus(chars.s, armorCharBonus.s);
+      const flightCarry = carryRow(flightSb + tb + hwCarry + (ib.all || 0) + (ib.carry || 0)).carry;
+      system.encumbrance.flight = limitedLiftStatus({
+        load: (totalWeight + selfCarriedArmourWeight) * gravity, carry: flightCarry
+      });
+    } else system.encumbrance.flight = null;
 
         // ── Опыт ──────────────────────────────────────────────────────────────
     // Ловит на Лету / Fast Learner (X): +X% к стартовому опыту и опыту за

@@ -96,7 +96,7 @@
           <button type="button" class="wh-move-btn" data-move-action="fall" title="Падение и Группирование (стр. 30). Урон по высоте, не дистанция.">Падение</button>
           <div class="movement-item"> <button type="button" class="wh-move-btn" data-move-action="swim" title="Плавание (стр. 30): Athletics. Успех — SPD = ½S.b.">Плавание</button> <span class="mv-box">{{movementDist.swim}}</span> </div>
           {{#if movementCanFly}}
-          <button type="button" class="wh-move-btn" data-move-action="fly" title="Высота полёта и потеря управления (стр. 30).">Полёт</button>
+          <div class="movement-item"> <button type="button" class="wh-move-btn" data-move-action="fly" title="Высота полёта и потеря управления (стр. 30).{{#if movementFlight.spd}} В воздухе SPD {{movementFlight.spd}} (Черта Flyer/Hoverer) вместо обычной.{{/if}}{{#if movementFlight.lift}} Ношение для полёта (Ограниченная Подъёмная Сила): груз {{movementFlight.lift.load}} из {{movementFlight.lift.carry}} кг.{{/if}}">Полёт</button>{{#if movementFlight.spd}} <span class="mv-box"{{#if movementFlight.blocked}} style="color:#e0a030;" title="Груз тяжелее Ношения для полёта — взлететь нельзя"{{/if}}>SPD {{movementFlight.spd}}</span>{{/if}} </div>
           {{/if}}
           {{#if movementCanHalfStep}}
           <button type="button" class="wh-move-btn" data-move-action="halfstep" title="Полушаг (стр. 12, Талант Half-Step): раз в Ход Свободным действием, до ½SPD — дистанция списывается с Отскока этого Раунда.">Полушаг (Талант)</button>

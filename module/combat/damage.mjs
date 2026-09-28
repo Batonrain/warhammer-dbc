@@ -28,6 +28,7 @@ import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { conditionLevelField } from "../constants/conditions.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { hollowBonesTb } from "../rules/hollow-bones.mjs";
 import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
 import { inPariahVoid } from "../rules/null-zones.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
@@ -871,6 +872,7 @@ export async function applyDamageToActor(actor, damageData) {
   const actorUpdate = {};
 
   let tb, armorAP, effArmorAP, totalAbsorption;
+  let hollowBonesHalved = false;
   // Адаптация (wdbc-q0q8): бонус, накопленный ПРЕДЫДУЩИМИ попаданиями этого
   // же вида урона — читается напрямую (см. adaptation.mjs, почему не через
   // vsType/vsSubtype листа). Книга: «+1 к Поглощению», а не к AP брони —
@@ -918,6 +920,8 @@ export async function applyDamageToActor(actor, damageData) {
       tb -= Math.min(felling, Math.max(0, unnaturalT));
       tb  = Math.max(0, tb);
     }
+    // Hollow Bones / Пустые Кости (Гарпия): T.b вдвое (окр.▲) против I(Cr).
+    ({ tb, halved: hollowBonesHalved } = hollowBonesTb(actor, tb, damageSubtype));
     if (ignoreArmour) {
       // Заломить (стр. 12): урон "игнорирующий броню" — AP этой локации не
       // считается вовсе (свойства брони/Руны/Копьё/Отскок в Укрытие сюда тоже
@@ -1385,6 +1389,7 @@ export async function applyDamageToActor(actor, damageData) {
   if (primitive)   propNotes.push("Примитивное: броня ×2");
   if (felling > 0) propNotes.push(`Разящее ${felling}: −Сверхъест. T`);
   if (touchOfPainIgnoreTb) propNotes.push("Касание Боли: T.b Поглощения проигнорирован");
+  if (hollowBonesHalved) propNotes.push("Пустые Кости: T.b вдвое (окр.▲) против I(Cr)");
   if (adaptBonus > 0) propNotes.push(`Адаптация: +${adaptBonus} Поглощения`);
   if (ignoreShield && !warpSoak) propNotes.push("Омывание: щит проигнорирован");
   if (ignoreArmour && !warpSoak) propNotes.push("Приём Борьбы: броня проигнорирована");

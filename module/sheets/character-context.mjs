@@ -37,6 +37,8 @@ import { BODY_TYPES }                            from "../constants/body-map.mjs
 import { isHaemonculus }                         from "../constants/haemonculus.mjs";
 import { HELMETLESS_EFFECTS, HELMETLESS_ACTION } from "../constants/power-armour-lore.mjs";
 import { actorCanFly, actorHasHalfStep, narrativeSpeed } from "../combat/movement-actions.mjs";
+import { flightSpeedOf }                         from "../rules/flight-speed.mjs";
+import { mechRollData }                          from "../rules/mech-formula.mjs";
 import { isFeatureEnabled, disabledRaceKeys }    from "../constants/features.mjs";
 import { isHelmetMod,
          disabledArmourPeriodicTestRemaining }   from "../combat/armor-mods.mjs";
@@ -217,6 +219,13 @@ export function characterContext(actor) {
   // 30) видна только с Чертой Flyer/Hoverer — та же проверка, что и в самой
   // кнопке Token HUD/меню, продублирована здесь только ради видимости кнопки.
   context.movementCanFly = actorCanFly(actor);
+  // Скорость в воздухе (Flyer (X), rules/flight-speed.mjs) и Ношение для полёта
+  // (Limited Lift, system.encumbrance.flight) — чтобы видеть их до взлёта.
+  if (context.movementCanFly) {
+    const lift = system.encumbrance?.flight ?? null;
+    context.movementFlight = { spd: flightSpeedOf(actor.items, mechRollData(actor)),
+                               lift, blocked: !!lift && !lift.canFly };
+  }
   // Полушаг (wdbc-9wvm) — та же видимость «только с Талантом», что у Полёта.
   context.movementCanHalfStep = actorHasHalfStep(actor);
 
