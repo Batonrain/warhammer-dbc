@@ -495,6 +495,9 @@
             <td><input type="number" class="wiz-start-cor" value="{{startExtraCor}}" title="Дополнительная Порча"/></td>
           </tr></tfoot>
         </table>
+        {{#if startFastLearner}}
+        <div class="cstart-hint" title="Черта «Ловит на Лету / Fast Learner»">Ловит на Лету: +{{startFastLearner.pct}}% к стартовому опыту (+{{startFastLearner.xp}} XP)</div>
+        {{/if}}
         {{#if startSubrace}}
         <div class="cstart-hint{{#if startSubrace.short}} cstart-short{{/if}}" title="Субраса оплачивается стартовым опытом, если его хватает">Субраса «{{startSubrace.label}}»: −{{startSubrace.cost}} XP → на счёт {{startSubrace.net}} XP{{#if startSubrace.short}} — не хватает опыта{{/if}}</div>
         {{/if}}
