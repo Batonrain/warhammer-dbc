@@ -74,6 +74,41 @@ export function integralEntrySelected(entry, chosen) {
   return Array.isArray(chosen) && chosen.includes(entry.id);
 }
 
+/**
+ * Записи integralAttack «по выбору», чьё оружие-образец зовётся одним из
+ * `names` (любая половина двуязычного имени без скобок: «Рога» найдёт
+ * «Horns (Natural Weapons) / Рога (Естественное Оружие)»).
+ */
+export function integralEntriesNamed(groups, names) {
+  const want = (names || []).map(n => String(n).trim()).filter(Boolean);
+  if (!want.length) return [];
+  return optionalIntegralEntries(groups)
+    .filter(e => want.some(n => itemHasName({ name: e.equipSourceName || "" }, n)));
+}
+
+/**
+ * Выбор «по выбору», заданный книгой заранее (wdbc: сверка главы I) —
+ * «Natural Weapons (1, Рога, Укус, Когти, Копыта)» у Зверолюда: запись
+ * расы несёт integralPreset: ["Рога", "Укус", "Когти", "Копыта"], и Черта
+ * получает готовый INTEGRAL_CHOSEN_FLAG без окна с галочками. Массив id
+ * записей; пустой preset — null (спросить игрока, как раньше).
+ */
+export function presetIntegralChoice(groups, names) {
+  if (!Array.isArray(names) || !names.length) return null;
+  return integralEntriesNamed(groups, names).map(e => e.id);
+}
+
+/**
+ * «Снимает Черты» субрасы с частью в скобках: «Natural Weapons (Рога,
+ * Когти)» — Тзаангор теряет только эти естественные атаки, а Укус и Копыта
+ * остаются. { name, parts } — parts пуст, если скобок нет (снять Черту целиком).
+ */
+export function partialRemoval(text) {
+  const m = /^(.*?)\s*\(([^)]*)\)\s*$/.exec(String(text || "").trim());
+  if (!m) return { name: String(text || "").trim(), parts: [] };
+  return { name: m[1].trim(), parts: m[2].split(",").map(x => x.trim()).filter(Boolean) };
+}
+
 // ── Укус только в Борьбе ────────────────────────────────────────────────
 // Черта «Укус (X)» (core.json): атаку «можно использовать только в Борьбе»;
 // «если у него есть атака укусом от другого источника, он может ...

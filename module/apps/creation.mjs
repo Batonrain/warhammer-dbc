@@ -520,13 +520,22 @@ export function resolveCreation({ raceKey, subraceKey, archKey, ynnariPast, harl
   return { race, arch, sub, past, pastKey };
 }
 
-/** Плоская база характеристик до броска: раса (+ Прошлое) + архетип + субраса. */
+/**
+ * Плоская база характеристик до броска: раса (+ Прошлое) + архетип.
+ *
+ * Сдвиги СУБРАСЫ (charMods: Слаангор +5 A/+5 P, Мандрагора −10 I…) сюда НЕ
+ * входят: предмет субрасы несёт те же числа записями Механики
+ * kind:"characteristic" (ActiveEffect на Итог), и сложение ещё и в базу
+ * давало +10 вместо +5 (сверка главы I, 28.09.2026). Поле charMods осталось
+ * справкой для списка субрас (sheets/race-picker.mjs). `sub` в подписи
+ * оставлен, чтобы не менять вызовы.
+ */
+// eslint-disable-next-line no-unused-vars
 export function creationCharSum({ race, past, arch, sub }) {
   const sum = {};
   for (const [k, v] of Object.entries(race?.chars    || {})) sum[k] = (sum[k] || 0) + v;
   for (const [k, v] of Object.entries(past?.chars    || {})) sum[k] = (sum[k] || 0) + v;
   for (const [k, v] of Object.entries(arch?.charBonus || {})) sum[k] = (sum[k] || 0) + v;
-  for (const [k, v] of Object.entries(sub?.charMods   || {})) sum[k] = (sum[k] || 0) + v;
   return sum;
 }
 

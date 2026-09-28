@@ -34,7 +34,8 @@ describe("каркас module/rules", () => {
     // targetLacksSealedArmour (цель без гермодоспеха, Миазмы, wdbc-1rno.11).
     // rankAndFile («Рядовой», корбук стр. 4, task-ce3a).
     // inPariahVoid/isDaemon/targetPsykerOrDaemon — Пустота Парии (rules/null-zones.mjs).
-    expect(Object.keys(predicates.PREDICATES)).toHaveLength(36);
+    // lacksTrait — «нет Черты» (Символ Власти против Отвращения к Порядку).
+    expect(Object.keys(predicates.PREDICATES)).toHaveLength(37);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);
     expect(typeof sources.registerRuleSource).toBe("function");

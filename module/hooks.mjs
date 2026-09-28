@@ -131,6 +131,7 @@ import { isHunterHoundActor } from "./rules/the-hunter.mjs";
 import { applyHyperGrowthTick } from "./apps/hyper-growth.mjs";
 import { showHerdSpiritsAllocationDialog } from "./apps/herd-spirits-summon.mjs";
 import { clearBeastmanShamanTempEffects, clearHexMarkedPreyMarks } from "./combat/beastman-shaman.mjs";
+import { endBattleFormsOnCombatEnd } from "./apps/battle-forms.mjs";
 import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
 import { WC_CODE } from "./constants/ship.mjs";
@@ -2915,6 +2916,8 @@ function _attachFateContextMenu(message, html) {
     await releaseControlOnCombatEnd(combat);
     // Метка Проклятой Метки (wdbc-xxb7) — та же логика «до конца боя».
     await clearHexMarkedPreyMarks(combat);
+    // Боевые формы субрас Зверолюда (apps/battle-forms.mjs) — «до конца боя или сцены».
+    await endBattleFormsOnCombatEnd(combat);
     // Аблативные Раны Саркофага Дредноута против варп-оружия — полностью
     // восполняются к концу боя (стр. 57, wdbc-drn).
     await refillSarcophagusWarpWounds(combat);

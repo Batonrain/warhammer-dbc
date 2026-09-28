@@ -244,6 +244,12 @@ describe("hasTalent и hasTrait", () => {
   it("предметы других типов не считаются", () => {
     expect(PREDICATES.hasTrait(actor({ items: [{ type: "weapon", name: "Gene-Seed" }] }), {}, "Gene-Seed")).toBe(false);
   });
+
+  it("lacksTrait — ни одной из перечисленных", () => {
+    expect(PREDICATES.lacksTrait(soldier, {}, "Symbol of Power")).toBe(true);
+    expect(PREDICATES.lacksTrait(soldier, {}, "Геносемя")).toBe(false);
+    expect(PREDICATES.lacksTrait(soldier, {}, ["Symbol of Power", "Gene-Seed"])).toBe(false);
+  });
 });
 
 describe("weaponClass", () => {
@@ -436,6 +442,8 @@ describe("общее требование к предикатам", () => {
     // Градация Пути Азуриан (wdbc-4e60): значение — объект-отбор.
     pathGradeMin: { group: "Путь Воина", grade: "next" },
     hasTalent: "Frenzy", hasTrait: "Gene-Seed", weaponClass: ["melee"],
+    // «нет ни одной из» (Символ Власти снимает часть Отвращения к Порядку).
+    lacksTrait: "Symbol of Power",
     targetHasTrait: "Daemonic", targetLacksCondition: "stunned",
     hasCondition: "prone", targetHasCondition: "prone",
     // Ослеплён по-настоящему (wdbc-x1nz.2.89): свой флаг ИЛИ оба глаза.
