@@ -43,6 +43,7 @@ import { sanityMax, madnessLevels, sarcophagusCharDelta, DREADNOUGHT_PILOT_FLAG,
          SARCOPHAGUS, sarcophagusWarpWounds, sarcophagusHelplessNow } from "./dreadnought.mjs";
 import { hasRuleFlag } from "./flags.mjs";
 import { MUTATIONS_AS_ASTARTES, sleepGraceDays } from "./squat-traits.mjs";
+import { ORDER_REJECTS_BIONICS, rejectedImplants, bionicsRejection } from "./aversion-to-order.mjs";
 import { invalidateRulesCacheFor } from "./collect.mjs";
 import { runeMax } from "./sigillite-runes.mjs";
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
@@ -102,7 +103,8 @@ const MUTATION_THRESHOLDS_ASTARTES = [10, 30, 60, 90];
 export function nextMutationThreshold(system, { asAstartes: byCapability = false } = {}) {
   const cor = Number(system?.corruption?.value) || 0;
   // Затупленный «получает мутации как Космодесантник, а не человек» — флаг
-  // субрасы mutationsAsAstartes. Поблажка лоялисту ниже — только настоящим
+  // субрасы mutationsAsAstartes; Зверолюд — Черта «Пасынки Богов»
+  // (mutations.asAstartes). Поблажка лоялисту ниже — только настоящим
   // Астартес: она про их геносемя, не про таблицу.
   const astartes = raceMatches(system, "astartes");
   const asAstartes = astartes || byCapability || !!subraceEntries()[system?.subrace || ""]?.mutationsAsAstartes;
@@ -494,6 +496,12 @@ export function prepareCharacterDerived(actor, system) {
     // Слияние с Паразитом (wdbc-bjy1.4): его Характеристики — в этом же
     // проходе, до всего, что считается от .total/.bonus ниже.
     const parasiteChars = fusedParasite(actor)?.system?.characteristics ?? null;
+    // Отвращение к Порядку (Зверолюд): каждая установленная бионика/
+    // кибернетика — −5 T и −2 Раны (rules/aversion-to-order.mjs). Производное,
+    // а не правка базы: снял имплант — штраф ушёл сам.
+    const orderRejection = hasRuleFlag(actor, ORDER_REJECTS_BIONICS)
+      ? bionicsRejection(rejectedImplants(actor.items).length) : bionicsRejection(0);
+    system.orderRejection = orderRejection;
     for (const [key, char] of Object.entries(chars)) {
       const impBonus  = IMPROVEMENT_BONUS[char.improvement] || 0;
       const drugMod   = drugCharMods[key]   || 0;
@@ -512,8 +520,9 @@ export function prepareCharacterDerived(actor, system) {
       // потолка Ловкости и навыков.
       const lossMod   = Math.max(0, Number(charLoss[key]) || 0);
       char.charLoss   = lossMod;
+      const orderMod  = key === "t" ? orderRejection.t : 0;
       char.total   = (char.base || 0) + (char.advance || 0) + impBonus + drugMod + armorMod + valueMod
-                   + (char.totalFx || 0) + dmgMod - vitalMod;
+                   + (char.totalFx || 0) + dmgMod - vitalMod + orderMod;
       // «Характеристика не может опускаться ниже 0» — пол только для урона:
       // остальные слагаемые ведут себя как раньше.
       const beforeLoss = char.total;
@@ -539,6 +548,7 @@ export function prepareCharacterDerived(actor, system) {
       if (dmgMod) breakdown.push({ label: "Мод. (ручной)", value: dmgMod });
       if (lossMod) breakdown.push({ label: "Урон в Характеристику (отходит по 1 в час)", value: char.total - beforeLoss });
       if (vitalMod) breakdown.push({ label: "Голод/Жажда", value: -vitalMod });
+      if (orderMod) breakdown.push({ label: `Отвращение к Порядку: бионика/кибернетика ×${orderRejection.count}`, value: orderMod });
       if (cappedByArmor) breakdown.push({ label: "Потолок Ловкости (броня)", value: null, cap: agilityCap });
       char.totalBreakdown = breakdown;
 
@@ -757,7 +767,9 @@ export function prepareCharacterDerived(actor, system) {
       const baseWoundsMax = Number(system.wounds.max) || 0;
       const woundsMods = [
         ...(hasRuleFlag(actor, DREADNOUGHT_PILOT_FLAG) ? [{ label: "Саркофаг Дредноута", value: SARCOPHAGUS.woundsMax }] : []),
-        ...runtWoundsMaxMods(actor)
+        ...runtWoundsMaxMods(actor),
+        // Отвращение к Порядку (Зверолюд): −2 Раны за каждую бионику/кибернетику (выше).
+        ...(system.orderRejection?.wounds ? [{ label: "Отвращение к Порядку", value: system.orderRejection.wounds }] : [])
       ];
       system.wounds.maxMods = woundsMods;
       system.wounds.effectiveMax = woundsMods.length

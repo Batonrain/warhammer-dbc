@@ -374,6 +374,11 @@ export const PREDICATES = {
 
   hasTalent: (actor, ctx, value) => hasNamed(actor, value),
   hasTrait:  (actor, ctx, value) => hasNamed(actor, value),
+  // «НЕТ ни одной из этих Черт/Талантов» (сверка главы I, Зверолюд): Символ
+  // Власти Шамана снимает часть Отвращения к Порядку — записи Черты гейтятся
+  // `when.predicates: { lacksTrait: "Symbol of Power" }`. Список — «ни одной
+  // из», зеркально hasTrait (там список — «все»).
+  lacksTrait: (actor, ctx, value) => !list(value).some(name => hasNamed(actor, name)),
 
   // Пустота Парии (rules/null-zones.mjs) — по Черте-метке, которую выдаёт
   // аура, а НЕ через hasRuleFlag: флаг собирается тем же движком правил, и

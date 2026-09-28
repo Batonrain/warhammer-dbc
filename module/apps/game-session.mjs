@@ -40,6 +40,7 @@ import { actorInfamyMax } from "./infamy-points.mjs";
 import { breakBloodFlameOnSceneEnd } from "../combat/blood-flame.mjs";
 import { revertSunderingOnSceneEnd } from "../combat/sundering.mjs";
 import { revertLegacyKillerOnSceneEnd } from "../combat/legacy-weapon-killer.mjs";
+import { endBattleFormsOnSceneEnd } from "./battle-forms.mjs";
 import { DIVINE_PROTECTION_FLAG } from "../rules/death-save.mjs";
 import { wakeDivineProtected } from "../sheets/tabs/death.mjs";
 import { unlinkedTokens } from "../migrations/unlinked-tokens.mjs";
@@ -220,6 +221,8 @@ export async function triggerNewScene() {
   await revertSunderingOnSceneEnd();
   // Убийца, Оружие Наследия (wdbc-t3c3t.4): Felling «до конца боя или сцены».
   await revertLegacyKillerOnSceneEnd();
+  // Боевые формы субрас Зверолюда (apps/battle-forms.mjs): «до конца боя или сцены».
+  await endBattleFormsOnSceneEnd();
   // Страх (стр. 53): пройденные рейтинги и штраф Шока «до конца сцены».
   await (await import("../combat/fear.mjs")).clearFearSceneState();
   // Божественная Защита: без сознания «до конца сцены или боя».
@@ -244,6 +247,7 @@ export async function triggerSessionEnd() {
   await revertSunderingOnSceneEnd();
   // Убийца, Оружие Наследия (wdbc-t3c3t.4): Felling «до конца боя или сцены».
   await revertLegacyKillerOnSceneEnd();
+  await endBattleFormsOnSceneEnd();
   // Страх (стр. 53): пройденные рейтинги и штраф Шока «до конца сцены».
   await (await import("../combat/fear.mjs")).clearFearSceneState();
   await endDivineProtection();

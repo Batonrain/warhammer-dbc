@@ -119,8 +119,8 @@ function scopeTarget(rawScope, entry, ruleId, what) {
   // ЛЮБОМ встречном тесте, что книга не говорит.
   // terrain — тест Трудного Ландшафта (Бег/Натиск через зону,
   // combat/movement-terrain.mjs, ctx.terrain): Barefoot / Босоногий Ратлинга —
-  // «+20 и переброс тестов Трудного Ландшафта». Не «char:ag»: тот ловил бы
-  // любой тест Ловкости.
+  // «+20 и переброс», Cloven One / Копытный Зверолюда — «+20». Не «char:ag»:
+  // тот ловил бы любой тест Ловкости.
   if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "morale", "climbing", "terrain", "vsExorcism"].includes(scope)) return scope;
   if (scope === "char") {
     const key = String(entry.rerollChar || "").trim();

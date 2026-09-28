@@ -34,6 +34,7 @@
 
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
 import { commandReachFor, PRESENCE_ORDER } from "./command.mjs";
+import { ORDER_NO_BRIEFING, actorCarriesCapability } from "./aversion-to-order.mjs";
 
 /**
  * Pack Consciousness / Сознание Стаи (Йигори, корбук глава I): узел-стая
@@ -177,6 +178,7 @@ export function commandRulesFor(actor, nodes, ctx = {}, { commandLost = false, i
 
   let bestShort = null, bestWill = null, bestCover = null, bravery = null;
   const ownWp = Number(actor.system?.characteristics?.wp?.total) || 0;
+  const noBriefing = actorCarriesCapability(actor, ORDER_NO_BRIEFING);
 
   for (const node of live) {
     // Стая: все три преимущества сразу — доходимость каждого проверяется
@@ -189,7 +191,11 @@ export function commandRulesFor(actor, nodes, ctx = {}, { commandLost = false, i
     // «Укрепление Морали» и «Храбрость».
     const moraleOnly = reach.moraleLost && !reach.blockedBy && actor.type !== "horde";
 
-    if (reach.commands || (moraleOnly && node.short?.key === "morale")) {
+    // Отвращение к Порядку (Зверолюд): «не может получать бонусов от
+    // предбоевых брифингов» — Короткая Команда по Брифингу (giverUuid
+    // "briefing", sheets/squad-sheet.mjs::_briefingUse) до него не доходит.
+    const briefingBlocked = node.short?.giverUuid === "briefing" && noBriefing;
+    if (!briefingBlocked && (reach.commands || (moraleOnly && node.short?.key === "morale"))) {
       const v = shortCommandBonus(node.short, actor, ctx, identityUuids) * mult;
       if (v > 0 && (!bestShort || v > bestShort.value))
         bestShort = { value: v, label: `${SHORT_LABEL[node.short.key] || "Короткая Команда"} (${node.label})` };

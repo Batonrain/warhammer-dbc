@@ -298,6 +298,52 @@ export const CAPABILITIES = {
     source: "Черта-метка «В Поле Дискорданта» (выдаёт аура Дискорданта)",
     reader: "module/rules/null-zones.mjs (inDiscordantField) — sheets/attack-dialog.mjs, combat/attack.mjs, sheets/tabs/tech.mjs, apps/mechanics.mjs::syncNullZoneSuppression"
   },
+  // ── Зверолюд и его субрасы (сверка главы I, 28.09.2026) ─────────────────────
+  "order.rejectsBionics": {
+    label: "Каждая установленная бионика/кибернетика — −5 T и −2 к максимуму Ран",
+    source: "Aversion to Order / Отвращение к Порядку (нет у Шамана с Символом Власти)",
+    reader: "module/rules/character.mjs prepareCharacterDerived() — rules/aversion-to-order.mjs::rejectedImplants, T.total и wounds.effectiveMax"
+  },
+  "order.noBriefing": {
+    label: "Не получает бонусов от предбоевых брифингов",
+    source: "Aversion to Order / Отвращение к Порядку",
+    reader: "module/rules/command-effects.mjs commandRulesFor() — Короткая Команда по Брифингу пропускается"
+  },
+  "order.noFormationTalents": {
+    label: "Не может брать и использовать Таланты Combat Formation и Iron Discipline",
+    source: "Aversion to Order / Отвращение к Порядку",
+    reader: "module/sheets/item-picker.mjs talentRowLock() — замок на строке Таланта в пикере"
+  },
+  "mutation.singleDie": {
+    label: "Всегда один кубик на мутации и субмутации (без второго броска Неделимого)",
+    source: "Stepchildren of the Gods / Пасынки Богов",
+    reader: "module/sheets/tabs/mutations.mjs rollMutationOrGift() + module/apps/submutations.mjs rollSubmutation()"
+  },
+  "talents.beastmanSubrace": {
+    label: "Доступна папка Талантов «Субрасы Зверолюдов» (какой Талант чей — Требование «Субраса …»)",
+    source: "Субрасы Зверолюда: Слаангор, Пестигор, Кхорнгор, Тзаангор",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+  "patron.locked.khorne": {
+    label: "Не может потерять покровительство Кхорна",
+    source: "Субраса Кхорнгор",
+    reader: "warhammer-dbc.mjs — Hooks.on(\"preUpdateActor\") (module/rules/patron-lock.mjs::enforcedPatron) + module/apps/races.mjs::applySubrace"
+  },
+  "patron.locked.nurgle": {
+    label: "Не может потерять покровительство Нургла",
+    source: "Субраса Пестигор",
+    reader: "warhammer-dbc.mjs — Hooks.on(\"preUpdateActor\") (module/rules/patron-lock.mjs::enforcedPatron) + module/apps/races.mjs::applySubrace"
+  },
+  "patron.locked.slaanesh": {
+    label: "Не может потерять покровительство Слаанеш",
+    source: "Субраса Слаангор",
+    reader: "warhammer-dbc.mjs — Hooks.on(\"preUpdateActor\") (module/rules/patron-lock.mjs::enforcedPatron) + module/apps/races.mjs::applySubrace"
+  },
+  "patron.locked.tzeentch": {
+    label: "Не может потерять покровительство Тзинча",
+    source: "Субраса Тзаангор",
+    reader: "warhammer-dbc.mjs — Hooks.on(\"preUpdateActor\") (module/rules/patron-lock.mjs::enforcedPatron) + module/apps/races.mjs::applySubrace"
+  },
   // ── Избегание Орды как одиночной цели (wdbc-gzuf) ────────────────────────
   "horde.singleTargetImmune": {
     label: "Атаки Орды и «Троек» (Концентрация огня) — как атаки одиночного персонажа: можно Избегать, без бонусных кубиков урона; теряется при Размере 2+",
@@ -5130,8 +5176,9 @@ export const CAPABILITIES = {
     source: "Auto-Stabilized / Авто-Стабилизированный", reader: ""
   },
   "trait.aversionToOrder": {
-    label: "Lore/Trade враждебны.",
-    source: "Aversion to Order / Отвращение к Порядку", reader: ""
+    label: "Навыки групп Lore и Trade враждебны (сильнее «всегда Дружественных»); без брифингов, Combat Formation и Iron Discipline; каждая бионика/кибернетика −2 Раны и −5 T.",
+    source: "Aversion to Order / Отвращение к Порядку",
+    reader: "записи Черты: override склонности (module/rules/aptitude-overrides.mjs, приоритет — module/rules/advance-category.mjs::skillAdvanceCat) + order.rejectsBionics/order.noBriefing/order.noFormationTalents"
   },
   "trait.aThousandSongs": {
     label: "При провале теста крафта — за Очко Судьбы вместо этого преуспеть на F.b успехов. Игнорирует требования по характеристикам для Миньонов-машин…",
@@ -5202,8 +5249,9 @@ export const CAPABILITIES = {
     reader: "module/rules/squat-traits.mjs cleverHandsClearJamBonus() — module/combat/clear-jam.mjs::rollClearJam"
   },
   "trait.clovenOne": {
-    label: "+20 vs Трудный Ландшафт.",
-    source: "Cloven One / Копытный", reader: ""
+    label: "+20 на тесты Трудного Ландшафта; Leap Up, Jumper, Preternatural Speed, Sprint, Tireless, Steady Footwork — дружественные.",
+    source: "Cloven One / Копытный",
+    reader: "записи Черты: «Модификатор теста» области terrain (module/combat/movement-terrain.mjs, ctx.terrain) + override склонности Талантов (module/rules/aptitude-overrides.mjs)"
   },
   "trait.coldKiller": {
     label: "При нанесении Экстремального Урона бросает d5 дважды на Критический Результат 2 и берёт лучший.",
@@ -5328,7 +5376,7 @@ export const CAPABILITIES = {
   },
   "mutations.asAstartes": {
     label: "Получает мутации как Космодесантник, а не человек: пороги Мутации 10/30/60/90 вместо 10/20/40/60/80 (поблажка лоялистам-Астартес сюда не входит — она про их геносемя)",
-    source: "Hard as Stone / Крепкий как Камень (Скват)",
+    source: "Hard as Stone / Крепкий как Камень (Скват); Stepchildren of the Gods / Пасынки Богов (Зверолюд)",
     reader: "module/rules/character.mjs nextMutationThreshold()"
   },
   "trait.hollowBones": {
@@ -5597,8 +5645,9 @@ export const CAPABILITIES = {
     source: "Steed / Скакун", reader: ""
   },
   "trait.stepchildrenOfTheGods": {
-    label: "Бонусы против богов Хаоса.",
-    source: "Stepchildren of the Gods / Пасынки Богов", reader: ""
+    label: "Максимум Бесчестия −1 (не ниже 1); мутации как у Космодесантника; один кубик на мутации и субмутации.",
+    source: "Stepchildren of the Gods / Пасынки Богов",
+    reader: "записи Черты: poolMax → infamy (module/apps/infamy-points.mjs) + mutations.asAstartes + mutation.singleDie"
   },
   "trait.stuffOfNightmares": {
     label: "Иммунитет к Усталости/ядам/болезням/радиации/экстрим.температурам/вакууму/Кровотечению/Обескровливанию; не может быть Оглушён; не стареет;",
@@ -5826,21 +5875,25 @@ export const CAPABILITIES = {
     label: "From Beyond. Natural Weapons (A.b, Кулаки; Proven 3, Extreme 8). Nimble (+10). Soul-Bound (Цегорах, защита Чёрной Библиотеки).",
     source: "Дары Цегораха / Базовые Черты Арлекина", reader: ""
   },
-  // ── Черты: packs-src/traits/Трейты_рас\Зверолюды — Фаза 2, capability-документация ──
-  "trait.treytyRas.zverolyudy.khorngorButcher": {
-    label: "Кхорнгор имеет запас кубиков: по 1 за каждый Талант Hatred 2-го уровня и 1 за 2 Таланта Hatred 1-го уровня.",
+  // ── Таланты субрас Зверолюда (packs-src/talents/Субрасы_Зверолюдов) — до
+  //    сверки главы I (28.09.2026) лежали Чертами и выдавались субрасой
+  //    даром; книга даёт к ним только ДОСТУП (Уровень 3, Требования).
+  "talent.beastmanSubrace.slaangorFiendblood": {
+    label: "Раз за бой или сцену после завершения рукопашной атаки — ещё одна атака с той же базой (в т.ч. с нескольких рук).",
+    source: "Slaangor Fiendblood / Слаангор Извергкровка",
+    reader: "запись Таланта kind:script (раз за бой) — отметка использования и напоминание в чате; саму атаку игрок делает обычной кнопкой"
+  },
+  "talent.beastmanSubrace.pestigorMourner": {
+    label: "Раз за бой или сцену после получения непоглощённого урона — уменьшить его до 1 и на 1 Раунд удвоить T.b в поглощении.",
+    source: "Pestigor Mourner / Пестигор Плакальщик",
+    reader: "запись Таланта kind:script (раз за бой) — отметка использования и напоминание; Раны и T.b — вручную"
+  },
+  "talent.beastmanSubrace.khorngorButcher": {
+    label: "Запас кубиков: 1 за Hatred 2-го уровня и 1 за 2 Hatred 1-го; до ½ W.b кубиков урона к атаке с S.b; восстанавливаются в конце боя.",
     source: "Khorngor Butcher / Кхорнгор Мясник", reader: ""
   },
-  "trait.treytyRas.zverolyudy.pestigorMourner": {
-    label: "Раз за бой или сцену после получения непоглощённого урона Пестигор может уменьшить его до 1 и на 1 Раунд удвоить свой T.",
-    source: "Pestigor Mourner / Пестигор Плакальщик", reader: ""
-  },
-  "trait.treytyRas.zverolyudy.slaangorFiendblood": {
-    label: "Раз за бой или сцену после завершения рукопашной атаки Слаангор может совершить ещё одну атаку с той же базой (в т.ч. с нескольких рук).",
-    source: "Slaangor Fiendblood / Слаангор Извергкровка", reader: ""
-  },
-  "trait.treytyRas.zverolyudy.tzaangorEnlightened": {
-    label: "Проведя ритуал длительностью один час без тестов, Тзаангор призывает Диск Тзинча под своим управлением,",
+  "talent.beastmanSubrace.tzaangorEnlightened": {
+    label: "Часовой ритуал без тестов — Диск Тзинча под управлением, как ритуал Трансформации Диска; 3d10 урона в W.",
     source: "Tzaangor Enlightened / Тзаангор Просвещённый", reader: ""
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Архимаг — Фаза 2, capability-документация ──

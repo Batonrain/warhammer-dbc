@@ -75,7 +75,9 @@ import { reconcileEternalWarToFit } from "./module/apps/eternal-war.mjs";
 import { reconcilePsalmUnseenFortressToFit } from "./module/apps/psalm-unseen-fortress.mjs";
 import { reconcileHyperGrowthToFit } from "./module/apps/hyper-growth.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
-import { hasRuleFlag }                from "./module/rules/flags.mjs";
+import { hasRuleFlag, ruleFlags }     from "./module/rules/flags.mjs";
+import { lockedPatron, enforcedPatron } from "./module/rules/patron-lock.mjs";
+import { optionalIntegralEntries, integralEntrySelected, INTEGRAL_CHOSEN_FLAG } from "./module/rules/integral-rating.mjs";
 import { redirectCorruptionToMadness } from "./module/rules/corruption-madness.mjs";
 import { corruptionInVoid }          from "./module/rules/null-zones.mjs";
 import { FATE_SAVE_FLAG, FATE_SAVE_DIE, fateSpent, fateSaved, fatePoolLabel }
@@ -2502,6 +2504,18 @@ Hooks.on("preUpdateActor", (doc, changes) => {
   }
 });
 
+// «Не может потерять покровительство <Бога>» (субрасы Зверолюда, rules/
+// patron-lock.mjs): смена Покровителя на другого возвращается к закреплённому.
+Hooks.on("preUpdateActor", (doc, changes) => {
+  const next = foundry.utils.getProperty(changes, "system.patronGod");
+  if (next === undefined) return;
+  const locked = lockedPatron(ruleFlags(doc));
+  const keep = enforcedPatron(next, locked);
+  if (keep === next) return;
+  foundry.utils.setProperty(changes, "system.patronGod", keep);
+  ui.notifications?.warn(`${doc.name}: субраса не может потерять покровительство своего Бога — Покровитель оставлен прежним.`);
+});
+
 Hooks.on("preUpdateActor", (doc, changes) => {
   const newCor = foundry.utils.getProperty(changes, "system.corruption.value");
   if (typeof newCor !== "number") return;
@@ -2629,6 +2643,13 @@ function _integralProtected(item) {
   if (!sourceId) return !game.user.isGM;   // инлайн в шасси — только ГМ вправе
   const source = actor.items.get(sourceId);
   if (!source) return false;               // источник ушёл — идёт штатный откат
+  // Атака «по выбору», вычеркнутая из выбора источника (Тзаангор теряет Рога
+  // и Когти Естественного Оружия, apps/races.mjs::applySubrace), — тоже
+  // штатный откат, а не попытка выбросить часть тела.
+  const entryId = item.getFlag("warhammer-dbc", "equipEntryId");
+  const optional = optionalIntegralEntries(source.getFlag?.("warhammer-dbc", "mechanics") || [])
+    .find(e => e.id === entryId);
+  if (optional && !integralEntrySelected(optional, source.getFlag("warhammer-dbc", INTEGRAL_CHOSEN_FLAG))) return false;
   return isItemActive(source);
 }
 

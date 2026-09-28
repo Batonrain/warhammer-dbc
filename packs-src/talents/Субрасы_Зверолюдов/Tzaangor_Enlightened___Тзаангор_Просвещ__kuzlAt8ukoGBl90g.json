@@ -1,0 +1,51 @@
+{
+  "name": "Tzaangor Enlightened / Тзаангор Просвещённый",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "1fZN0jHzRRbKwVbq",
+  "system": {
+    "description": "Часовой ритуал без тестов — Диск Тзинча под управлением; 3d10 урона в W.",
+    "notes": "Доступ — только Тзаангору (Требование «Субраса Тзаангор, …, Forbidden Lore (Daemons) +0»). Призыв Диска и урон в W — вручную (ритуал Трансформации Диска, стр. 397).",
+    "benefit": "Близость Тзаангоров к Архитектору Судеб позволяет им призывать себе на службу его Крикунов и трансформировать их в Диски гораздо проще, чем другим последователям Тзинча. Поведя простой ритуал, занимающий один час и не требующий тестов, Тзаангор призывает Диск Тзинча под своим управлением, как если бы он провел ритуал Трансформации Диска (стр. 397). Он получает 3d10 урона в W также, как обычный ритуалист, трансформирующий диск.",
+    "tier": 3,
+    "requirement": "Субраса Тзаангор, Cor 30, Inf 30, Forbidden Lore (Daemons) +0",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "kuzlAt8ukoGBl90g",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {}
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121966767,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!kuzlAt8ukoGBl90g"
+}

@@ -241,6 +241,10 @@
 //      длительность окна (1d5 Ходов) — книжные константы, не поля записи: у
 //      обоих известных на 15.09.2026 предметов число одно и то же, заводить
 //      под него редактируемое поле было бы гаданием на будущее.
+//    trait.integralPreset: string[] (необязательно, только данными) — имена
+//      естественных атак, которые книга называет прямо в записи расы
+//      («Natural Weapons (1, Рога, Укус, Когти, Копыта)»): выданная Черта
+//      получает готовый выбор integralChosen, окно с галочками не всплывает.
 //    integralAttack: { equipSourceUuid, equipSourceName, equipSourceImg }
 //      → ВСТРОЕННАЯ АТАКА: то же создание предмета-оружия на акторе, что и у
 //      equipment режима "direct", но с двумя отличиями, ради которых она и
@@ -463,7 +467,7 @@ import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "
 import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod, whenCondition, whenQuality, whenChosenEffect } from "../rules/mech-when.mjs";
 import { TIER_LABELS as WOUND_TIER_LABELS } from "../rules/wound-tier.mjs";
 import { INTEGRAL_CHOSEN_FLAG, RATING_TEMPLATE_FLAG, sourceRating, ratingTemplateOf, applyRatingTemplate,
-         optionalIntegralEntries, integralEntrySelected } from "../rules/integral-rating.mjs";
+         optionalIntegralEntries, integralEntrySelected, presetIntegralChoice } from "../rules/integral-rating.mjs";
 import { parseSubmutations } from "../rules/submutations.mjs";
 import { mechFormulaTotal, mechFormulaTotalSafe, mechRollData } from "../rules/mech-formula.mjs";
 import { hasEliteArchetype }                  from "../rules/predicates.mjs";
@@ -2397,8 +2401,14 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
     // работает по одному grantedByItem), а для ЖИВОЙ пересинхронизации:
     // syncGrantedAbilities ниже по нему отличает свою выдачу от чужой и от
     // копии, которую ГМ положил руками.
+    // Естественные атаки, названные книгой прямо в записи расы —
+    // «Natural Weapons (1, Рога, Укус, Когти, Копыта)» Зверолюда: выбор
+    // «по выбору» (rules/integral-rating.mjs) ставится сразу, без окна.
+    const preset = entry.kind === "trait"
+      ? presetIntegralChoice(data.flags?.[FLAG]?.mechanics || [], entry.integralPreset) : null;
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}),
-      grantedByItem: sourceItem.id, abilityEntryId: entry.id } };
+      grantedByItem: sourceItem.id, abilityEntryId: entry.id,
+      ...(preset ? { [INTEGRAL_CHOSEN_FLAG]: preset } : {}) } };
     await actor.createEmbeddedDocuments("Item", [data]);
     return;
   }

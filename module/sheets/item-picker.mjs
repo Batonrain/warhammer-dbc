@@ -16,6 +16,7 @@ import { createOrRankTalent } from "../rules/duplicate-grants.mjs";
 import { DREADNOUGHT_PILOT_FLAG } from "../rules/dreadnought.mjs";
 import { masteryTargets, masteryAptitudes } from "../rules/mastery-targets.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { ORDER_NO_FORMATION_TALENTS, isFormationTalent } from "../rules/aversion-to-order.mjs";
 import { isPossessed, hasEliteArchetype } from "../rules/predicates.mjs";
 import { isMinionTalent } from "../rules/minion-build.mjs";
 import { itemIs } from "../rules/item-marker.mjs";
@@ -68,6 +69,18 @@ export function talentCategory(actor, name, folder = "") {
   if (raceAllyTalent(actor?.system?.race, name)) return "ally";
   return resolveAptitudeOverride(actor, "talent", name, folder)
     ?? cultureCat("talent", name, folder, cultFxOf(actor));
+}
+
+/**
+ * Запрет ОДНОГО Таланта (не папки) по условиям листа: Отвращение к Порядку
+ * Зверолюда — «не может получать бонусов от Талантов Combat Formation и Iron
+ * Discipline, или использовать их самому» (order.noFormationTalents).
+ * null — можно; иначе причина для 🔒.
+ */
+export function talentRowLock(actor, kind, name) {
+  if (kind !== "talent" || !isFormationTalent(name)) return null;
+  return hasRuleFlag(actor, ORDER_NO_FORMATION_TALENTS)
+    ? "Отвращение к Порядку: Зверолюд не может пользоваться этим Талантом" : null;
 }
 
 /**
@@ -148,6 +161,13 @@ export function talentGroupLock(actor, kind, parent, folderName) {
   // получит ту же папку из своих данных, без правки этой строки.
   if (!parent && folderName === "Геносемя") {
     return hasRuleFlag(actor, "talents.geneSeed") ? null : "Нужно Геносемя (раса Астартес)";
+  }
+  // Таланты субрас Зверолюда (корбук, глава I): «Также дает доступ к
+  // следующему Таланту» — папку отпирает любая из четырёх субрас (запись
+  // Конструктора на субрасе), а какой именно Талант чей — Требование
+  // «Субраса …» самого Таланта (constants/talent-requirements.mjs).
+  if (!parent && folderName === "Субрасы Зверолюдов") {
+    return hasRuleFlag(actor, "talents.beastmanSubrace") ? null : "Нужна субраса Зверолюда (Слаангор, Пестигор, Кхорнгор или Тзаангор)";
   }
   // Таланты Дредноутов (Книга Машин, стр. 58) книга даёт только заключённому в
   // саркофаг. Возможность раздаёт источник «dreadnought» (module/rules/
@@ -362,10 +382,11 @@ export async function openItemPicker(actor, kind) {
             cost = `<span class="pick-cost cost-${cat}" title="${ALIGN_LABEL[cat]} — совпадений склонностей: ${(d.system.aptitudes||[]).filter(a=>charApts.has(a)).length}">${xp} XP</span>`;
           }
         }
-        const addBtn = g.lock
-          ? `<button type="button" class="pick-add" data-id="${d.id}" disabled title="${esc(g.lock)}">🔒</button>`
+        const lock = g.lock || talentRowLock(actor, kind, d.name);
+        const addBtn = lock
+          ? `<button type="button" class="pick-add" data-id="${d.id}" disabled title="${esc(lock)}">🔒</button>`
           : `<button type="button" class="pick-add" data-id="${d.id}" title="Купить и добавить на лист">＋</button>`;
-        return `<div class="pick-row${chk.state === "fail" ? " pick-unmet" : ""}${g.lock ? " pick-row-locked" : ""}" data-name="${esc(String(d.name).toLowerCase())}" data-req="${chk.state}">
+        return `<div class="pick-row${chk.state === "fail" ? " pick-unmet" : ""}${lock ? " pick-row-locked" : ""}" data-name="${esc(String(d.name).toLowerCase())}" data-req="${chk.state}">
           <div class="pick-head">
             <button type="button" class="pick-exp" title="Показать описание">▸</button>
             <span class="pick-name" title="Раскрыть">${esc(d.name)}</span>${tier}${req}${cost}
@@ -431,7 +452,8 @@ export async function openItemPicker(actor, kind) {
         const d = docs.find(x => x.id === ev.currentTarget.dataset.id);
         if (!d) return;
         const dFolder = d.folder;
-        const lock = dFolder ? talentGroupLock(actor, kind, dFolder.folder?.name || "", dFolder.name) : null;
+        const lock = (dFolder ? talentGroupLock(actor, kind, dFolder.folder?.name || "", dFolder.name) : null)
+          || talentRowLock(actor, kind, d.name);
         if (lock && !forceUnlock) return ui.notifications.warn(`Недоступно: ${lock}`);
         const obj = d.toObject();
         if (kind === "talent" && hasXP) {

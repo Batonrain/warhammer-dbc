@@ -52,6 +52,7 @@ import { activateFruitOfFlesh, eatHealFruit } from "./fruit-of-flesh.mjs";
 import { useSoulSeer } from "./soul-seer.mjs";
 import { activateWrappedInChaos } from "./wrapped-in-chaos.mjs";
 import { attemptPossessionAttack, leavePossessionHost } from "./possession-attack.mjs";
+import { activateBattleForm, endBattleForm } from "./battle-forms.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -153,6 +154,10 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *  - `attemptPossessionAttack`/`leavePossessionHost` (apps/possession-attack.mjs)
  *    — Трейт Possession/Одержимость (wdbc-q267): Ход Атаки Одержимостью по
  *    текущей цели (оба теста W+0, счёт до ±5) и выход из хоста.
+ *  - `activateBattleForm`/`endBattleForm` (apps/battle-forms.mjs) — форма «за
+ *    Очко Бесчестия до конца боя или сцены» (субрасы Зверолюда: Клешня
+ *    Слаангора, Чумная Плоть Пестигора, Кровавая Ярость Кхорнгора). Бросают
+ *    ошибку, если форма уже действует/не хватает ОД — тогда цена не списана.
  *
  * `extra` — необязательный набор ДОПОЛНИТЕЛЬНЫХ именованных функций для
  * конкретного вызывающего (например, runMechScriptEntry добавляет
@@ -181,6 +186,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "nextDevourerStreak", "pruneDevourerStreaks",
     "activateFruitOfFlesh", "eatHealFruit", "useSoulSeer", "activateWrappedInChaos",
     "attemptPossessionAttack", "leavePossessionHost",
+    "activateBattleForm", "endBattleForm",
     ...extraNames,
     code
   );
@@ -198,6 +204,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     nextDevourerStreak, pruneDevourerStreaks,
     activateFruitOfFlesh, eatHealFruit, useSoulSeer, activateWrappedInChaos,
     attemptPossessionAttack, leavePossessionHost,
+    activateBattleForm, endBattleForm,
     ...extraNames.map(k => extra[k])
   );
 }

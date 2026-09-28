@@ -36,7 +36,8 @@ describe("каркас module/rules", () => {
     // inPariahVoid/isDaemon/targetPsykerOrDaemon — Пустота Парии (rules/null-zones.mjs).
     // targetIsAstartes — Охотники на Ангелов (Йигори, rules/library/yigori.mjs).
     // wearsFootwear — обут ли (Barefoot / Босоногий Ратлинга).
-    expect(Object.keys(predicates.PREDICATES)).toHaveLength(38);
+    // lacksTrait — «нет Черты» (Символ Власти против Отвращения к Порядку).
+    expect(Object.keys(predicates.PREDICATES)).toHaveLength(39);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);
     expect(typeof sources.registerRuleSource).toBe("function");
