@@ -56,6 +56,7 @@ import { fatalismBlocksPower } from "./rules/fatalism.mjs";
 import { everYouthfulBlocksPower } from "./rules/ever-youthful.mjs";
 import { eaterOfPainBenefitUpdate, eaterOfPainChoiceButtonsHtml } from "./rules/eater-of-pain.mjs";
 import { fateTerm, esc, resolveCharFormula } from "./helpers/utils.mjs";
+import { INFAMY_SUCCESS_FLAG }           from "./rules/infamy-success.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
 import { postTestCard, rollStatLine }    from "./helpers/test-card.mjs";
 import { injectSoulfireButtons, persistDamageBoost } from "./combat/soulfire.mjs";
@@ -1035,6 +1036,39 @@ export function registerHooks() {
             <div class="roll-threshold">Потрачено Очко ${fatePoolLabel(actor)} · Порча +1</div>
           </div>`
         });
+      });
+    });
+
+    // «Вместо провала — успех на 1 Успех за Очко Бесчестия» (Survivor/
+    // Выживальщик и подобные Черты Архетипов, rules/infamy-success.mjs).
+    // Кнопку рисует карточка проваленного теста (sheets/actor-sheet.mjs::
+    // _runTest); здесь — проверка прав, списание Очка и карточка-итог. Один
+    // раз на тест: метка на сообщении, кнопки гаснут.
+    html.querySelectorAll(".wh-infamy-success-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const capability = ev.currentTarget.dataset.capability;
+        const ctx = message.flags?.["warhammer-dbc"]?.[INFAMY_SUCCESS_FLAG];
+        if (!ctx) return;
+        if (message.flags?.["warhammer-dbc"]?.infamySuccessUsed) {
+          return ui.notifications.warn("Этот тест уже засчитан успешным.");
+        }
+        let actor = null;
+        try { actor = await fromUuid(ctx.actorUuid); } catch { actor = null; }
+        if (!actor?.isOwner) return ui.notifications.warn("Использовать может только владелец персонажа (или ГМ).");
+        const opt = (ctx.options || []).find(o => o.capability === capability);
+        if (!opt) return;
+        const ft = fateTerm(actor.system);
+        const spend = await spendFromInfamyPool(actor, 1, "system.fate.value");
+        if (!spend) return;
+        html.querySelectorAll(".wh-infamy-success-btn").forEach(b => { b.disabled = true; });
+        await actor.update({ "system.fate.value": spend.poolValue });
+        if (message.isOwner) await message.setFlag("warhammer-dbc", "infamySuccessUsed", true);
+        await postTestCard(actor, {
+          title: `⚜ ${esc(opt.label)} — ${esc(ctx.label || "тест")}`,
+          lines: [`<div class="roll-damage-meta">${esc(ft.one)} потрачено (осталось: ${spend.poolValue})</div>`],
+          outcome: `<span class="roll-success">Успех — 1 ${_degWord(1)}</span>`
+        }, { sound: false });
       });
     });
 

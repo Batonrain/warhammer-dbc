@@ -9,7 +9,9 @@ import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { BODY_TYPES } from "../constants/body-map.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }    from "../constants/skills.mjs";
 import { ITEM_TYPES, GEAR_ITEM_TYPES } from "../constants/items.mjs";
-import { _degWord, splitTopLevel, esc } from "../helpers/utils.mjs";
+import { _degWord, splitTopLevel, esc, fateTerm } from "../helpers/utils.mjs";
+import { infamySuccessOptions, infamySuccessSectionHtml, INFAMY_SUCCESS_FLAG } from "../rules/infamy-success.mjs";
+import { ruleFlags } from "../rules/flags.mjs";
 import { ruSpec } from "../apps/creation.mjs";
 import { openCharacterWizard } from "../apps/character-wizard.mjs";
 import { onConvertToHorde, convertActorToHorde } from "../apps/horde-convert.mjs";
@@ -3099,6 +3101,17 @@ export class WarhammerCharacterSheet
         ).join("<br/>")}</div>`;
       }
     }
+    // «Вместо провала — успех на 1 Успех за Очко Бесчестия» (Survivor/
+    // Выживальщик и подобные, rules/infamy-success.mjs): кнопка на карточке
+    // проваленного теста. Только обычный тест — у Встречного и Расширенного
+    // «успех на 1 Успех» меняет уже посчитанное сравнение/банк [допущение].
+    const infamyOpts = (!outcome.success && !finalOpposed && !extended)
+      ? infamySuccessOptions(ruleFlags(this.actor), { kind: "skill", charKey, skillKey }) : [];
+    const infamyHtml = infamySuccessSectionHtml(infamyOpts, {
+      actorUuid: this.actor.uuid,
+      hasPoint: (Number(this.actor.system?.fate?.value) || 0) > 0,
+      pointOne: fateTerm(this.actor.system).one
+    });
     const modStr   = modifier !== 0 ? ` ${modifier >= 0 ? "+" : ""}${modifier}` : "";
     // Подпись характеристики в шапке: если игрок переключил «Бросок с:»,
     // показываем ту, которой бросили, а не ту, с которой открывали диалог.
@@ -3130,8 +3143,9 @@ export class WarhammerCharacterSheet
         assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${(outcome.success && effectiveAssistCount === assistCount) ? `, +${assistCount} к степени` : ""})</div>` : ""
       ],
       rerollNote, critLine: outcome.critLine, outcome: outcomeHtml,
-      sections: [outcome.extendedLine, outcome.opposedLine, pendingOpponentNote, onFailNote]
-    }, { rolls: [roll] });
+      sections: [outcome.extendedLine, outcome.opposedLine, pendingOpponentNote, onFailNote, infamyHtml]
+    }, { rolls: [roll], flags: infamyOpts.length ? { "warhammer-dbc": { [INFAMY_SUCCESS_FLAG]: {
+      actorUuid: this.actor.uuid, label, options: infamyOpts } } } : null });
 
     // Гололит (rules/situational.mjs::hololithBriefingBonus): подготовленный
     // брифинг тратится на СЛЕДУЮЩИЙ тест Command, каким бы он ни вышел —

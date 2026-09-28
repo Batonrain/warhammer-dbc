@@ -22,7 +22,8 @@
 
 import { MINION_GROUPS, MINION_TIERS, MINION_TIER_ORDER,
          MINION_TALENT_FLAG } from "../constants/minions.mjs";
-import { talentRequirements, isMinionTalent, minionSlotOf } from "../rules/minion-build.mjs";
+import { talentRequirements, isMinionTalent, minionSlotOf, minionInfamyWaiverFlag } from "../rules/minion-build.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 import { esc } from "../helpers/utils.mjs";
 
 /** Подпись пары для списка Талантов: «Демон, Высший». */
@@ -87,7 +88,10 @@ export function promptMinionSlot(actor, doc) {
           const group = String(html.find("#minion-group").val() || "");
           const tier  = String(html.find("#minion-tier").val()  || "");
           const def   = MINION_TIERS[tier];
-          const req   = talentRequirements(actor, group, tier);
+          // Черта Архетипа «игнорирует требования по Inf для Миньонов-X»
+          // (Survivor — звери, Master of Machines — машины) — возможность.
+          const req   = talentRequirements(actor, group, tier,
+            { ignoreInfamy: !!group && hasRuleFlag(actor, minionInfamyWaiverFlag(group)) });
           const miss  = req.missing?.length
             ? `<div class="minion-slot-miss">Не хватает: ${esc(req.missing.join("; "))}</div>`
             : `<div class="minion-slot-ok">Требования выполнены</div>`;

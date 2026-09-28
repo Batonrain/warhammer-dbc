@@ -186,6 +186,12 @@ function effectAppliesTo(target, ctx) {
   // (module/combat/grapple.mjs), и «skill:athletics» подхватил бы оба —
   // разные правила книги под одинаковым навыком.
   if (scope === "climbing") return ctx.climbing === true;
+  // Импланты Механикум: «тесты работы с Ноосферой» (Ноосферное Подключение,
+  // ctx.noosphere — Ноосферное Сканирование и Инфограждение вкладки ТЕХ) и
+  // «тесты зарядки» Катушки Потенции (Электу-Индукторы, ctx.coilCharge —
+  // кнопка зарядки у Катушки). Оба — Tech-Use, поэтому свой флаг, а не навык.
+  if (scope === "noosphere") return ctx.noosphere === true;
+  if (scope === "coilcharge") return ctx.coilCharge === true;
   // Тест сопротивления яду (wdbc-1rno.1, Пророк Гэллерпокса): единственный
   // реальный «тест против яда» в системе — сопротивление свойству оружия
   // Toxic (module/hooks.mjs::_applyWeaponPropEffect, condition==="poisoned").

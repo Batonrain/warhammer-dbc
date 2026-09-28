@@ -859,7 +859,12 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - Происхождения Аэльдари (Миры-Корабли/Корсары): `constants/aeldari-origins.
   mjs`.
 - `module/constants/archetypes.mjs`, `data/item/archetype.mjs`, `apps/
-  archetypes.mjs` — Архетипы Мастера создания.
+  archetypes.mjs` — Архетипы Мастера создания. Черты Архетипов: «вместо
+  провала — успех на 1 Успех за Очко Бесчестия» — `rules/infamy-success.mjs`
+  (реестр по возможностям, кнопка на карточке теста); «игнорирует требования
+  по Inf для Миньонов-X» — возможность `minion.ignoreInfamy.<группа>`
+  (`apps/minion-talent.mjs`); «N Характеристик дружественны» у Благородного —
+  `apps/subrace-choice.mjs` (`ARCHETYPE_APTITUDE_CHOICES`).
 - Элитные архетипы: `constants/elite-archetypes.mjs`, `data/item/
   elite-archetype.mjs`, `rules/elite-requirements.mjs`, `apps/elite-buy.mjs` +
   `elite-req-builder.mjs`, `sheets/elite-picker.mjs`.
@@ -1143,7 +1148,13 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `data/item/implant.mjs` (механика), `cybernetic.mjs` (просто замена части
   тела, механику несёт implant).
 - `constants/body-map.mjs` (классификация по частям тела), `implants.mjs`
-  (заготовки от архетипов), `implant-mechanics.mjs`.
+  (заготовки от архетипов — запас), `implant-mechanics.mjs`.
+- Импланты Механикум (Еретех/Технодесантник): выдача — `apps/mechanicus-
+  implant-grant.mjs` (из компендиума, уже установленными); модификаторы по
+  Качеству — записи «Модификатор теста» с условием по Качеству на самих
+  имплантах (области `noosphere`/`coilCharge`); Катушка Потенции (−1 Усталость
+  за 2⚡, зарядка Электу-Индукторами) — `rules/potentia-coil.mjs` + кнопки
+  вкладки ТЕХ (`sheets/tabs/tech.mjs`).
 - `apps/surgeon.mjs` (Хирургикон) + `surgeon-plan.mjs` (парная имплантация).
 - `rules/cybernetic-excellence.mjs` + `apps/cybernetic-excellence.mjs`
   (синхронизация Трейта «Многорукий» с покупками Таланта).

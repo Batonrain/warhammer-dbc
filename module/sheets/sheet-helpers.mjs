@@ -18,6 +18,7 @@ import { shieldCoverageLabel }                        from "../combat/hand-shiel
 import { getLegion, getChapter, buildChapterOptions,
          buildCultureLegionOptions, resolveCulture } from "../constants/legions.mjs";
 import { TECH_MIRACLE_TYPES, TECH_ACTIONS, NOOSPHERE_ACTIONS } from "../constants/tech.mjs";
+import { COIL_FATIGUE_COST } from "../rules/potentia-coil.mjs";
 import { PSY_DISCIPLINES, TECH_DISCIPLINES, canHaveFocusDiscipline } from "../constants/disciplines.mjs";
 import { effectiveFocusDisciplines, ownFocusDisciplines, grantedFocusDisciplines } from "../rules/psy-focus.mjs";
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
@@ -1415,7 +1416,15 @@ function buildGetDataUncached(actor) {
     max:      system.energy?.max ?? 0,
     bonusMax: system.energy?.bonusMax ?? 0,
     maxTotal: enMaxTotal,
-    pips: Array.from({ length: Math.min(16, Math.max(0, enMaxTotal)) }, (_, i) => ({ on: (i + 1) <= enVal }))
+    pips: Array.from({ length: Math.min(16, Math.max(0, enMaxTotal)) }, (_, i) => ({ on: (i + 1) <= enVal })),
+    // Импланты Механикум (книга): Катушка Потенции снимает Усталость 2⚡ за 1,
+    // Электу-Индукторы заряжают её тестом Tech-Use (rules/potentia-coil.mjs,
+    // кнопки — sheets/tabs/tech.mjs). Кнопки видны, когда есть чем действовать.
+    fatigueCost: COIL_FATIGUE_COST,
+    canRelieveFatigue: enMaxTotal > 0,
+    canCharge: enMaxTotal > 0 && allItems.some(i => i.type === "implant"
+      && i.getFlag?.("warhammer-dbc", "installed") && !i.getFlag?.("warhammer-dbc", "disabled")
+      && /electoo|электу/i.test(i.name))
   };
   context.noosphereActions = NOOSPHERE_ACTIONS;
 

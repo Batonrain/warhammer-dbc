@@ -17,7 +17,9 @@ import { isAeldariRace, subraceEntries } from "./race-library.mjs";
 import { clearGrantedBy } from "./origin-shared.mjs";
 import { SKIP_MECHANICS_HOOK } from "./races.mjs";
 import { applyItemMechanics } from "./mechanics.mjs";
-import { MECHANICUS_IMPLANTS, SKITARII_WAR_PLATE, MECHANICUM_IMPLANTS_TRAIT } from "../constants/implants.mjs";
+import { SKITARII_WAR_PLATE, MECHANICUM_IMPLANTS_TRAIT } from "../constants/implants.mjs";
+import { mechanicusImplantData } from "./mechanicus-implant-grant.mjs";
+import { needsArchetypeAptitudeChoice, promptArchetypeAptitudeChoice, applySubraceAptitudeChoice } from "./subrace-choice.mjs";
 import { loadPackDocuments, registerPackCacheRefresh } from "./pack-doc-cache.mjs";
 
 const PACK = "warhammer-dbc.archetypes";
@@ -167,7 +169,9 @@ async function grantArchetypeImplants(actor, { grantsImplants, grantsWarPlate })
   if (!grantsImplants && !grantsWarPlate) return;
   const existing = new Set(actor.items.filter(i => i.type === "implant").map(i => i.name));
   if (grantsImplants) {
-    const toAdd = MECHANICUS_IMPLANTS.filter(d => !existing.has(d.name)).map(d => foundry.utils.deepClone(d));
+    // Из компендиума (с Механикой и зарядами Катушки), установленными —
+    // см. apps/mechanicus-implant-grant.mjs.
+    const toAdd = await mechanicusImplantData(existing);
     // Без этой Черты требование "Трейт Mechanicum Implants" у Элитных
     // архетипов Механикус (Архимагос, Секутор и т.д.) не проходит, хотя
     // физические импланты выше уже выданы — см. grantMechanicumImplantsTrait
@@ -217,6 +221,12 @@ export async function applyArchetype(actor, key) {
   data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), [GRANT]: TAG } };
   const [created] = await actor.createEmbeddedDocuments("Item", [data], { [SKIP_MECHANICS_HOOK]: true });
   if (created) await applyItemMechanics(created);
+  // Благородная Евгеника: 2 Характеристики на выбор становятся Дружественными
+  // (apps/subrace-choice.mjs) — выбор дописывается в Механику этого предмета.
+  if (created && needsArchetypeAptitudeChoice(key)) {
+    const picks = await promptArchetypeAptitudeChoice(key, src.name || key);
+    if (picks) await applySubraceAptitudeChoice(created, picks);
+  }
 
   const s = src.system ?? {};
   const upd = { "system.archetype": key };

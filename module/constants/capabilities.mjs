@@ -1870,6 +1870,18 @@ export const CAPABILITIES = {
     source: "Technical Knock / Технический Трюк", reader: ""
   },
   // ── Миньоны
+  // «Игнорирует требования по Inf для Миньонов-<группы>» — Черты Архетипов
+  // (сверка 28.09.2026): Survivor — звери, Master of Machines — машины;
+  // Serpent's Tongue (люди) и Демонолог (демоны) заводят .human/.daemon сами,
+  // вместе с выдачей на своих Чертах (реестр требует достижимости ключа).
+  "minion.ignoreInfamy.beast": {
+    label: "Требование по Inf (Бесчестию) у Таланта Миньона группы «Зверь» не действует.",
+    source: "Survivor / Выживальщик", reader: "module/apps/minion-talent.mjs (talentRequirements ignoreInfamy)"
+  },
+  "minion.ignoreInfamy.machine": {
+    label: "Требование по Inf (Бесчестию) у Таланта Миньона группы «Машина» не действует.",
+    source: "Master of Machines / Повелитель Машин", reader: "module/apps/minion-talent.mjs (talentRequirements ignoreInfamy)"
+  },
   "minion.core.belovedLeader": {
     label: "Миньоны персонажа получают +10 Лояльности.",
     source: "Beloved Leader / Обожаемый Лидер", reader: ""
@@ -5237,7 +5249,7 @@ export const CAPABILITIES = {
     source: "Dark Sight / Ночное Зрение", reader: "module/rules/vision-penalty-immunity.mjs — lightPenaltyImmunityReason; module/sheets/attack/mods.mjs"
   },
   "trait.dataAcquisition": {
-    label: "Преимущество на тесты Awareness механизировано (wdbc-u0by, kind:\"reroll\"/keepBest). Иммунитет к кодам командования Боевых Лат Скитария — не механизировано, нет такого понятия в коде вовсе",
+    label: "Преимущество на все тесты Awareness механизировано (wdbc-u0by, kind:\"reroll\"/keepBest). Коды командования Лат — отдельная Черта Скитария My Own Master (trait.myOwnMaster), сверка Архетипов 28.09.2026",
     source: "Data Acquisition / Получение Данных",
     reader: "module/rules/item-rules.mjs (kind:\"reroll\" → rollMode-правило общего реестра)"
   },
@@ -5375,8 +5387,12 @@ export const CAPABILITIES = {
     source: "Maneuverable / Манёвренный", reader: ""
   },
   "trait.masterOfMachines": {
-    label: "Игнорирует требования по Inf для Миньонов-машин.",
+    label: "Игнорирует требования по Inf для Миньонов-машин. Черта выдаёт общую возможность minion.ignoreInfamy.machine — этот ключ ею не используется (сверка Архетипов 28.09.2026).",
     source: "Master of Machines / Повелитель Машин", reader: ""
+  },
+  "trait.myOwnMaster": {
+    label: "Коды командования для Боевых Лат Скитария не работают. ПОДТВЕРЖДЕНО ЧЕСТНОЙ ЗАГЛУШКОЙ: кодов командования (Катехизисы Командования Лат, Binary Dominion) как механики в системе нет — читать нечему (сверка Архетипов 28.09.2026).",
+    source: "My Own Master / Сам Себе Хозяин", reader: ""
   },
   "trait.masterOfMindsOfMonKeigh": {
     label: "Если Люди под его командованием не знают его природы (или признают лидером) — за Очко Судьбы даёт им Fearless (с инстинктом самосохранения)…",
@@ -5415,8 +5431,12 @@ export const CAPABILITIES = {
     source: "Nimble / Проворный", reader: ""
   },
   "trait.nobleEugenics": {
-    label: "Выбирает 2 Характеристики — они становятся дружественными в плане продвижений и остаются такими, независимо от Покровительства.",
-    source: "Noble Eugenics / Благородная Евгеника", reader: ""
+    label: "Выбирает 2 Характеристики — они становятся дружественными в плане продвижений и остаются такими, независимо от Покровительства. Реализовано диалогом выбора при выдаче Архетипа (записи aptOverride), этот ключ не используется.",
+    source: "Noble Eugenics / Благородная Евгеника",
+    // Реализация — не через этот ключ: module/apps/subrace-choice.mjs
+    // (ARCHETYPE_APTITUDE_CHOICES) → apps/archetypes.mjs::applyArchetype →
+    // rules/aptitude-overrides.mjs. Ключ никем не выдаётся — reader пуст.
+    reader: ""
   },
   "trait.ogryn": {
     label: "+15 S и T, −15 Ag и Int, +15 Ран, набор Трейтов и Талантов огрина.",
@@ -5557,8 +5577,9 @@ export const CAPABILITIES = {
     source: "Sure Tread / Надёжная Поступь", reader: ""
   },
   "trait.survivor": {
-    label: "При провале не-атакующего теста S/T/A/P может потратить Очко Бесчестья — вместо этого преуспеть на 1 Успех.",
-    source: "Survivor / Выживальщик", reader: ""
+    label: "При провале не-атакующего теста S/T/A/P (и Навыка через них) — кнопка на карточке теста: потратить Очко Бесчестия и преуспеть на 1 Успех. На Встречном/Расширенном тесте не предлагается.",
+    source: "Survivor / Выживальщик",
+    reader: "module/rules/infamy-success.mjs (INFAMY_SUCCESS_ABILITIES) ← module/sheets/actor-sheet.mjs::_runTest (кнопка), module/hooks.mjs (.wh-infamy-success-btn — списание Очка)"
   },
   "trait.swarm": {
     label: "Рой: половина урона от обычных атак; уязвим к Blast/Flame.",

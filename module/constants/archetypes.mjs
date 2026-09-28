@@ -143,19 +143,19 @@ export const ARCHETYPES = {
     name: "Дикарь", race: "human", wounds: "11+1d5", charBonus: { t: 5, s: 2 },
     skills:  "Acrobatics, Athletics, Awareness, Dodge, Navigation (Surface)+10, Parry+10, Survival+10, Schol. Lore (Beasts), Command/Commerce/Intimidate, Interrogate или Scrutiny, Stealth или Sleight of Hand, Awareness+10 или Athletics+10",
     talents: "Frenzy, Heightened Senses (любые 2), Quick Draw, Skilled Rider, Battle Rage, Resistance (любые 2), Melee Training (любые 4), Weapon Training (любые 3), Catfall/Iron Jaw, Defensive Rider/Trot, Blind Fighting/Bodyguard/Steady Footwork, Disarm/Takedown/Sure Strike, Double Team/High Guard/Unarmed Warrior, Cleave/Tenacity/Wrestler",
-    gear:    "3 стандартных Примитивных рукопашных или стрелковых оружия (Best.Q), 6 Throwing Knife (+Mono)/6 Throwing Axe (+Mono), Chain Weapon (до R1, Good.Q)/Power Weapon (до R2), 9 модификаций для оружия (до R2), Xeno Hides (+Jack Chains, Best.Q) + Carapace Helm, Скакун до R1 и набор брони до R1 (базово)",
+    gear:    "3 стандартных Примитивных рукопашных или Примитивных стрелковых оружия (Best.Q), 6 Throwing Knife (+Mono) или 6 Throwing Axe (+Mono), Chain Weapon (до R1, Good.Q) или Power Weapon (до R2), 9 Модификаций для оружия (до R2), Xeno Hides + Jack Chains (Best.Q) + Carapace Helm, Скакун до R1 и набор брони до R1(базово) для него",
     trait: { name: "Survivor / Выживальщик",
-      benefit: "При провале не-атакующего теста S/T/A/P может потратить Очко Бесчестья — вместо этого преуспеть на 1 Успех. Игнорирует требования по Inf для Миньонов-зверей." },
-    desc: "Мастер выживания вне цивилизации — джунгли миров смерти или токсичные пустоши."
+      benefit: "Когда Дикарь проваливает не-атакующий тест S, T, A или P, он может потратить Очко Бесчестия, чтобы вместо этого преуспеть в нем на 1 Успех. Дикарь игнорирует требования по Inf для Миньонов-зверей." },
+    desc: "Вы мастер выживания вне цивилизации, будь то дикие джунгли миров смерти, или выжженные токсичные пустоши между ульями и кузницами индустриальных миров."
   },
   noble: {
     name: "Благородный", race: "human", wounds: "11+1d5", charBonus: { ag: 5, fel: 2 },
     skills:  "Linguistics (High Gothic), Acrobatics, Athletics, Awareness, Charm, Dodge+10, Parry+10, Schol. Lore (Heraldry), Command или Intimidate, Logic или Tech-Use, Stealth или Survival, Acrobatics+10 или Athletics+10",
     talents: "Flip, Peer (Nobility), Quick Draw, Sure Strike, Deflect Shot, Swift Attack, Melee Training (любые 3), Weapon Training (любые 4), Ambidextrous/Leap Up, Catfall/Pirouette, Minion (Низший, Человек)/Radiant Presence, Blind Fighting/Decadence/Jaded, Exotic Weapon Training (1 любое)/Takedown/Disarm, Counter Attack/Precise Blow/Two Weapon Wielder (Melee)",
-    gear:    "2 любых рукопашных оружия R1 (Best.Q)/R2 (Good.Q)/R3, Hotshot Pistol (Best.Q)/Orthlak Duel Revolver (Good.Q)/Needler Pistol, Digital Laser (Good.Q)/Digital Plasma (до R3), 9 модификаций для оружия (до R3), Tempestus Carapace (Best.Q)/Light Power Armour (Good.Q), 5 модификаций и Систем для брони (до R3)",
+    gear:    "2 Любых рукопашных оружия R1(Best.Q) или R2(Good.Q) или R3, Hotshot Pistol(Best.Q) или Orthlak Duel Revolver(Good.Q) или Needler Pistol, Digital Laser(Good.Q) или Digital Plasma или Digital Needler, 9 Модификаций для оружия (до R3), Tempestus Carapace(Best.Q) или Light Power Armour(Good.Q), 5 Модификаций или Систем для брони (до R3)",
     trait: { name: "Noble Eugenics / Благородная Евгеника",
-      benefit: "Выбирает 2 Характеристики — они становятся дружественными в плане продвижений и остаются такими, независимо от Покровительства." },
-    desc: "Из рода Имперских или Хаоситских аристократов, Рыцарского дома или династии Вольного Торговца."
+      benefit: "При создании персонажа, Благородный выбирает 2 Характеристики – они становятся дружественными в плане продвижений, и остаются таковыми, невзирая на его Покровительства." },
+    desc: "Вы происходите из рода Имперских или Хаоситских аристократов, Рыцарского дома, или династии Вольного Торговца, что обеспечило вас лучшим образованием, что можно купить за деньги, и отменной родословной."
   },
 
   // ═══════════════════════════════ МЕХАНИКУС ══════════════════════════════
@@ -164,20 +164,20 @@ export const ARCHETYPES = {
     grantsWarPlate: true,
     skills:  "Linguistics (Binary Cant), Athletics, Awareness+10, Dodge, Parry, Tech-Use, Common Lore (War, Tech), Operate (Aeronautica, Surface), Command или Intimidate, Security или Stealth, Dodge+10 или Parry+10",
     talents: "Combat Sense, Cold Hearted, Jaded, Quick Draw, Rapid Reload, Melee Training (любые 2), Weapon Training (любые 3), Exotic Weapon Training (любые 3), Ambidextrous/Technical Knock, Bodyguard/Disarm/Double Team, Die Hard/Iron Jaw/Orthoproxy, Sure Strike/Deadeye Shot/Marksman, Two Weapon Wielder (любой 1)/Scanning Advance, Reposition/Hunker Down",
-    gear:    "Radium Carbine (Best.Q)/Galvanic Rifle (Best.Q)/Arc Rifle, Radium Pistol (Best.Q)/Flechette Blaster (Good.Q)/Phosphor Pistol, Taser (Good.Q)/Transonic Blade (Good.Q)/Power Weapon (до R2), 2 модификации для оружия (до R2), Skitarii War Plate, 2 Модуля Кибернетики Скитария (R1 Good.Q или R2), +1 к Качеству 3 предметов",
+    gear:    "Radium Carbine (Best.Q) или Galvanic Rifle (Best.Q) или Arc Rifle, Radium Pistol (Best.Q) или Flechette Blaster (Good.Q) или Phosphor Pistol, Taser Goad(Good.Q) или Transonic Blade(Good.Q) или Power Weapon (до R2), 7 Модификаций для оружия (до R2), Skitarii War Plate (нельзя поменять), 2 Модуля Кибернетики Скитарии (R1,Good.Q или R2), +1 к Качеству 3-х предметов",
     trait: { name: "Data Acquisition / Получение Данных",
-      benefit: "Преимущество на тесты Awareness. Коды командования для Боевых Лат Скитария не работают на него." },
-    desc: "Техно-страж Механикума, выравнившийся на цифровых путях своих господ."
+      benefit: "Скитарий получает Преимущество на все тесты Awareness." },
+    desc: "Вы техно-страж Механикум, волей случая, или под действием накопленной порчи, вырвавшийся из цифровых пут своих господ."
   },
   heretek: {
-    name: "Техножрец", race: "mechanicus", wounds: "12+1d5", charBonus: { int: 5, t: 2 },
+    name: "Еретех", race: "mechanicus", wounds: "12+1d5", charBonus: { int: 5, t: 2 },
     grantsImplants: true, isTechpriest: true,
     skills:  "Linguistics (Binary Cant), Logic, Tech-Use+10, Awareness или Medicae, Dodge или Parry, Commerce или Security, Com. Lore (Tech)+20, For. Lore (Mechanicum)+10, For. Lore (Archeotech/Xenos/Warp), Schol. Lore (Chymistry/Numerology), Trade (Armourer, Weaponsmith), Trade (Engineer/Chymist)",
-    talents: "750хр на Техночудеса, Die Hard, Technical Knock, Weapon Training (любые 4), Exotic Weapon Training (любые 1), Mechadendrite Use (Weapon, Utility), Apocrypha Coil/Virtual Memory, Meditation/Total Recall, Armour-Monger/Weapon-Tech, Minion (Низший, Машина)/Cold Hearted",
-    gear:    "Hotshot Pistol (Good.Q)/Bolt Pistol/Phosphor Blast Pistol, Poleaxe (Best.Q +Mono)/Power Axe/Arc Maul, Enforcer Carapace + Vulcanized Cloak, 6 Бионики/Кибернетики (до R2 Good.Q или R1 Best.Q), 3 Кибернетики Механикум (до R2), 2 Мехадендрита (R3/R2 Good.Q/R1 Best.Q), Cogitator (Best.Q) + Retinal Display, Combi-Tool (Good.Q)",
+    talents: "750 xp на Техночудеса, Die Hard, Technical Knock, Weapon Training (любые 4), Exotic Weapon Training (любые 1), Mechadendrite Use (Weapon, Utility), Apocrypha Coil/Virtual Memory, Meditation/Total Recall, Armour-Monger/Weapon-Tech, Minion (Низший, Машина)/Cold Hearted",
+    gear:    "Hotshot Pistol (Good.Q) или Bolt Pistol или Phosphor Blast Pistol, Poleaxe (Best.Q +Mono) или Power Axe или Arc Maul, Enforcer Carapace + Vulcanized Cloak, 4 Бионики или Кибернетики (до R2, Good.Q или до R1 Best.Q), 3 Кибернетики Механикум (до R2), 2 Мехадендрита (R3 или R2 Good.Q или R1 Best.Q), Cogitator(Best.Q) + Retinal Display, Combi-Tool (Good.Q)",
     trait: { name: "Master of Machines / Повелитель Машин",
-      benefit: "Игнорирует требования по Inf для Миньонов-машин." },
-    desc: "Жрец Бога-Машины: предатель и беглец из Адептус Механикус, либо адепт Тёмных Механикус Хаоса."
+      benefit: "Еретех игнорирует требования по Inf для Миньонов-машин." },
+    desc: "Вы один из жрецов Бога-Машины: либо предатель и беглец из Адептус Механикус Марса, либо адепт Темных Механикум Хаоса."
   },
 
   // ════════════════════════════════ ПСАЙКЕРЫ ══════════════════════════════

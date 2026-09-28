@@ -119,6 +119,39 @@ describe("applyArchetype: grantsImplants/grantsWarPlate раньше выдав�
     expect(implants.length).toBe(6);
   });
 
+  // Сверка Архетипов 28.09.2026: «Стартовый Трейт Mechanicum Implants» —
+  // импланты уже в теле. Раньше они выдавались НЕ установленными, и Катушка
+  // Потенции не давала ни одного заряда, пока игрок не «вживлял» каждый
+  // имплант Хирургеоном вручную.
+  it("выданные Импланты Механикум уже установлены", async () => {
+    game.packs.set(PACK, { getDocuments: async () => [archetypeDoc({ grantsImplants: true })] });
+    const actor = actorStub();
+
+    await applyArchetype(actor, "testArch");
+
+    const implants = actor.created.filter(i => i.type === "implant");
+    expect(implants).toHaveLength(7);
+    expect(implants.every(i => i.flags?.["warhammer-dbc"]?.installed === true)).toBe(true);
+  });
+
+  it("берутся из компендиума имплантов (с его Механикой), константы — только запас", async () => {
+    const coil = {
+      name: "Potentia Coil / Катушка Потенции",
+      toObject() { return { _id: "EijXeVNbA61hj3wa", name: this.name, type: "implant",
+        system: { energyMax: { poor: 1, common: 3, good: 5, best: 7 } }, flags: { "warhammer-dbc": { mechanics: [{ id: "g" }] } } }; }
+    };
+    game.packs.set(PACK, { getDocuments: async () => [archetypeDoc({ grantsImplants: true })] });
+    game.packs.set("warhammer-dbc.implants", { getDocuments: async () => [coil] });
+    const actor = actorStub();
+
+    await applyArchetype(actor, "testArch");
+
+    const made = actor.created.find(i => i.name === coil.name);
+    expect(made.flags["warhammer-dbc"].mechanics).toEqual([{ id: "g" }]);
+    expect(made.flags["warhammer-dbc"].installed).toBe(true);
+    expect(made._id).toBeUndefined();
+  });
+
   it("grantsWarPlate создаёт Латы Скитарии, только если ещё не стоят", async () => {
     game.packs.set(PACK, { getDocuments: async () => [archetypeDoc({ grantsWarPlate: true })] });
     const actor = actorStub();
