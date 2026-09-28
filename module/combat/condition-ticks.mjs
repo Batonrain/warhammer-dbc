@@ -673,9 +673,17 @@ export async function processConditionTurnEnd(actor) {
     const roll = await new Roll("1d10").evaluate();
     const level = Number(conds.haemorrhagingLevel) || 0;
     const eff = roll.total - level;
-    if (eff <= 0) {
+    if (eff <= 0 && hasRuleFlag(actor, "brutePhysiology.bleedingNoDeath")) {
+      // Физиология Громилы (Огрин): «не может умереть от Кровотечения».
+      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: 1d10 <b>${roll.total}</b> − Обескровливание ${level} = <b>${eff}</b> → смерть, но <b>Физиология Громилы</b>: от Кровотечения не умирает</div>`);
+    } else if (eff <= 0) {
       lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: 1d10 <b>${roll.total}</b> − Обескровливание ${level} = <b>${eff}</b> → <span class="roll-failure"><b>СМЕРТЬ</b> (независимо от количества Ран)</span></div>`);
       await killByCondition(actor, "bleeding");
+    } else if (eff <= 5 && !Object.keys(conditionAdjustFields(actor, "haemorrhaging", 1)).length) {
+      // Иммунитет к Обескровливанию (запись Конструктора, напр. Физиология
+      // Громилы) — единая точка наложения вернула пустой патч; писать
+      // «+1 Обескровливание» значило бы врать в карточке.
+      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: 1d10 <b>${roll.total}</b> − ${level} = <b>${eff}</b> → Обескровливание не набирается (иммунитет)</div>`);
     } else if (eff <= 5) {
       const newLevel = level + 1;
       const upd = conditionAdjustFields(actor, "haemorrhaging", 1);
@@ -702,6 +710,12 @@ export async function processConditionTurnEnd(actor) {
   if (conds.stunned && !conds.hallucinogenic && hasRuleFlag(actor, "sarcophagus.autoWakeFromStun")) {
     await actor.update(conditionRemoveFields("stunned"));
     lines.push(`<div class="roll-threshold">${rollIcon("bolt", "#8fd0ff")}Электрошок саркофага снял Оглушение</div>`);
+  } else if (conds.stunned && hasRuleFlag(actor, "brutePhysiology.shakeOffStun")) {
+    // Физиология Громилы (Огрин): «В конце своего Хода Огрин автоматически
+    // снимает с себя Оглушение» — без оговорки про Галлюцинации, в отличие
+    // от электрошока саркофага выше: там причина техническая, здесь — тело.
+    await actor.update(conditionRemoveFields("stunned"));
+    lines.push(`<div class="roll-threshold">${rollIcon("bolt", "#8fd0ff")}Физиология Громилы: Огрин стряхнул Оглушение</div>`);
   }
 
   // Морозное Сердце (wdbc-5knb): щит с kind:"shieldVsCondition" на "burning"

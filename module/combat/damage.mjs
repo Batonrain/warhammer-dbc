@@ -53,6 +53,7 @@ import { CONDITIONS_DEF } from "../constants/conditions.mjs";
 import { reaperLegacyButtonHtml } from "./legacy-weapon-reaper.mjs";
 import { braveHeartLegacyButtonHtml } from "./legacy-weapon-brave-heart.mjs";
 import { legacyHatredShieldApForLocation } from "../rules/legacy-weapon.mjs";
+import { applyHaywireToBoneHead } from "./bone-head.mjs";
 
 /** Электродуга Best.Q «Электрическая регенерация» (wdbc-3hgd0). */
 export const ELECTRIC_REGENERATION = "implant.electricArc.regeneration";
@@ -218,7 +219,10 @@ async function _applyHaywire(actor, rating, damage2 = "") {
   const text = (isStorm && damage2)
     ? tier.text.replace(/1d5\+1 непоглощ\. E Dmg\.$/, `${damage2} непоглощ. E Dmg (книжный нестандартный урон этого предмета).`)
     : tier.text;
-  return `<div class="dmg-tb-note">📡 ЭМИ${rating ? ` (радиус ${rating} м)` : ""}: 1d10=<b>${total}</b> → <b>${tier.label}</b>. ${text}</div>`;
+  // BONE-Head Огрина (wdbc, сверка расы Огрин): та же мощность поля сбивает
+  // мозговой имплант — 3+ автопровал тестов I, 7+ Ступор (combat/bone-head.mjs).
+  const boneHeadNote = await applyHaywireToBoneHead(actor, total);
+  return `<div class="dmg-tb-note">📡 ЭМИ${rating ? ` (радиус ${rating} м)` : ""}: 1d10=<b>${total}</b> → <b>${tier.label}</b>. ${text}</div>${boneHeadNote}`;
 }
 
 // ─── Маппинг места попадания → поле брони актора ──────────────────────────────

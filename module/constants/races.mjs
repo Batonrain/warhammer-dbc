@@ -196,22 +196,23 @@ export const RACES = {
     label: "Огрин",
     rules: OGRYN_RULES,
     subraces: [],
-    chars: { ws:25, bs:25, s:25, t:25, ag:25, int:25, per:25, wp:25, fel:25, inf:19 },
+    chars: { ws:25, bs:25, s:40, t:45, ag:15, int:10, per:25, wp:25, fel:20, inf:14 },
     bonusRolls: 1, bonusPoints: 4, charShift: 1,
     size: 1,
-    largeBase: true, // Крупная База 3×3 (wdbc-8k0i) — не путать с `size` (бонус к SPD).
+    // Крупная База 3×3 (wdbc-8k0i) — не путать с `size` (бонус к SPD). Книга,
+    // «Тактическая карта»: «Существа покрупнее … вроде Огринов … Базами 3×3».
+    // Живой мир читает то же поле с документа расы в паке (system.largeBase).
+    largeBase: true,
     skills:  "Athletics, Linguistics (Low Gothic)",
-    gear:    "3 элемента Снаряжения/Инструментов до R1 (1 Good.Q); снаряжение бесплатно модифицируется под размер Огрина",
+    gear:    "3 элемента Снаряжения и Инструментов до R1, из них 1 Good.Q, Все стартовое снаряжение бесплатно модифицируется под Огрина",
     talents: ["Bulging Biceps", "Hardy", "Iron Jaw", "Resistance (Cold, Heat)", "Unarmed Warrior"],
     traits: [
       { name: "Fanatic / Фанатик", benefit: "Может перехватить атаку по союзнику." },
       { name: "Size (1) / Размер (1)", benefit: "Размер +1 к SPD.", rating:1, hasRating:true, effects:{ sizeMod:1 } },
       { name: "Unnatural Strength (6) / Сверхъестественная Сила (6)", benefit:"+6 к Бонусу Силы.", rating:6, hasRating:true, effects:{ charBonusStat:"s", charBonusValue:6 } },
       { name: "Unnatural Toughness (6) / Сверхъестественная Стойкость (6)", benefit:"+6 к Бонусу Стойкости.", rating:6, hasRating:true, effects:{ charBonusStat:"t", charBonusValue:6 } },
-      { name: "Brute Physiology / Физиология Громилы", benefit:"+15 к максимуму Ран; пассивное восстановление; −10 на оружие без свойства Ogrynized; −20 на стрелковое оружие." },
-      { name: "Clever Hands / Умные Руки", benefit:"+15 к тонкой работе (Craft, ремонт)." },
-      { name: "Hard as Stone / Крепкий как Камень", benefit:"Сопротивление эффектам против разума; +30 vs Страх/паника при концентрации." },
-      { name: "BONE-Head / Костеголов", benefit:"Мозговые импланты: Int не выше человеческого; интенсивность импланта 3+ — повышение Int." }
+      { name: "Brute Physiology / Физиология Громилы", benefit:"+15 к максимуму Ран; сам восстанавливает Раны (1/мин легко, 1/10 мин тяжело, 1/час критически ранен); не умирает от Кровотечения, иммунен к Обескровливанию; в конце Хода снимает Оглушение; −20 на тонкую манипуляцию; −10 за оружие без Ogrynized (кроме гранат), −20 за стрелковое; рукопашное такое ломается на 1-3 на 1d10." },
+      { name: "BONE-Head / Костеголов", benefit:"Тест I — минимум полное действие и не больше 1 Успеха. В поле Haywire 3+ — автопровал тестов I, ментальные действия вдвое дольше; 7+ — Ступор на 1 Раунд." }
     ],
     archetypes: ["Ренегат", "Пират", "Дикарь"],
     desc: "Могучий, но недалёкий нижний абхуман, возвышенный вниманием Тёмных Богов."

@@ -3081,7 +3081,10 @@ export class WarhammerCharacterSheet
     // Предел реально используется (см. kind-outcome.mjs), не обоих сразу.
     const effectiveAssistCount = (combined && outcome.combinedAssistCount != null)
       ? outcome.combinedAssistCount : assistCount;
-    const deg      = assistDegrees(outcome.deg, effectiveAssistCount, outcome.success);
+    // Потолок Успехов (BONE-Head Огрина, successDegMax) режет ИТОГ — в т.ч.
+    // степень от Ассистентов: книга «не больше 1 Успеха» не делает исключений.
+    const assisted = assistDegrees(outcome.deg, effectiveAssistCount, outcome.success);
+    const deg      = outcome.degCap != null ? Math.min(outcome.degCap, assisted) : assisted;
     const outcomeHtml = outcome.success
       ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
       : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`;

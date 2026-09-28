@@ -12,7 +12,7 @@
 // их импортируют отсюда три с лишним десятка файлов.
 
 import { ASTARTES_RULES } from "./library/astartes.mjs";
-import { OGRYN_RULES } from "./library/ogryn.mjs";
+import { OGRYN_RULES, OGRYN_TRAIT_RULES } from "./library/ogryn.mjs";
 import { EXODITE_RULES, DRUKHARI_RULES, AZURIANE_RULES, HARLEQUIN_RULES, YNNARI_RULES,
          HALF_ELDAR_RULES } from "./library/aeldari.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
@@ -50,7 +50,10 @@ const hwKey = actor =>
 // Правила основной книги приходят каждому актору: они не привязаны ни к расе,
 // ни к Происхождению, а отбираются по условию `when`. Так живёт «Проворный» —
 // Черта нескольких рас, штраф от которой достаётся не носителю, а атакующему.
-registerRuleSource("core", () => CORE_RULES);
+// Правила Черт Огрина (BONE-Head) идут вместе с ними: отбор по Черте, а не по
+// расе — Черту получает и Миньон с комплексной Чертой «Огрин» (library/ogryn.mjs).
+const CORE_AND_TRAIT_RULES = [...CORE_RULES, ...OGRYN_TRAIT_RULES];
+registerRuleSource("core", () => CORE_AND_TRAIT_RULES);
 
 // Пустота Парии (library/null-zones.mjs): штрафы псайкерам/демонам в ауре и
 // социальные штрафы самого Парии — отбор по условию when, как у «core».
