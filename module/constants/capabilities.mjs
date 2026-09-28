@@ -5341,16 +5341,18 @@ export const CAPABILITIES = {
     source: "Fanatic / Фанатик", reader: ""
   },
   "trait.fastLearner": {
-    label: "+X% к опыту.",
-    source: "Fast Learner / Ловит на Лету (X)", reader: ""
+    label: "+X% к опыту за сессию (прибавка опыта на листе и награды сессии). НЕ реализовано: +X% к СТАРТОВОМУ опыту — Этап 4 Мастера создания (constants/start-levels.mjs::startLevelValues) процент не читает.",
+    source: "Fast Learner / Ловит на Лету (X)",
+    reader: "module/rules/character.mjs (system.fastLearnerBonus по имени Черты) → module/sheets/actor-sheet.mjs (promptStatAdd bonusPercent), module/rules/session-rewards.mjs"
   },
   "trait.firePoint": {
     label: "Тратит Очко Бесчестья на переброс стрелковой атаки, даже Оглушённым/лёжа/сбит с ног. На покровительстве Нургла может перебрасывать с Преимущ…",
     source: "Fire Point / Огневая Точка", reader: ""
   },
   "trait.flyer": {
-    label: "Полёт со скоростью SPD×X.",
-    source: "Flyer / Летун (X)", reader: ""
+    label: "Полёт: в воздухе SPD = X вместо обычной скорости, без модификаторов Размера (core.json «Flyer (X) / Летун»). X формулой (Гарпия: A.b×2) — от текущих Бонусов. Надбавки «+SPD пешком» к полёту не прибавляются, штрафы Перевеса/Piercing — да.",
+    source: "Flyer / Летун (X)",
+    reader: "module/rules/flight-speed.mjs::flightSpeedOf (по имени Черты, не по флагу) → module/rules/character/movement.mjs (SPD при высоте ≠ «не летит»); гейт высот — combat/movement-actions.mjs::actorHasFlyer; рейтинг-формула — флаг ratingFormula (rules/trait-grant.mjs)"
   },
   "trait.fromBeyond": {
     label: "Иммунитет Страх/Подавление/Паника и ментальным психосилам.",
@@ -5380,8 +5382,9 @@ export const CAPABILITIES = {
     reader: "module/rules/character.mjs nextMutationThreshold()"
   },
   "trait.hollowBones": {
-    label: "−5 Поглощение vs I(Cr).",
-    source: "Hollow Bones / Пустые Кости", reader: ""
+    label: "T.b вдвое (окр.▲) при Поглощении I(Cr) урона.",
+    source: "Hollow Bones / Пустые Кости",
+    reader: "module/rules/hollow-bones.mjs::hollowBonesTb → module/combat/damage.mjs applyDamageToActor (подвид crushing), пометка в карточке урона"
   },
   "trait.hoverer": {
     label: "Парение со скоростью SPD X.",
@@ -5417,8 +5420,9 @@ export const CAPABILITIES = {
     source: "Legion Surgery / Хирургия Легиона", reader: ""
   },
   "trait.limitedLift": {
-    label: "Полёт ограничен весом/бронёй.",
-    source: "Limited Lift / Ограниченная Подъёмная Сила", reader: ""
+    label: "Летит только с грузом не тяжелее Ношения; S от брони не поднимает Ношение для полёта, броня не гасит свой вес. Уже летящую Гарпию с перегрузом система сама не приземляет — только не даёт взлететь/сменить высоту.",
+    source: "Limited Lift / Ограниченная Подъёмная Сила",
+    reader: "module/rules/limited-lift.mjs → module/rules/character.mjs (system.encumbrance.flight) → module/combat/movement-actions.mjs::showFlightDialog (запрет взлёта)"
   },
   "trait.lordOfTheStreams": {
     label: "Тест W−30: проводит суда Эльдар сквозь потоки Варпа (быстрее имперских прыжков, но на короткие дистанции/множество коротких).",
@@ -5562,8 +5566,9 @@ export const CAPABILITIES = {
     reader: "module/rules/quiet-elimination.mjs (hasQuietElimination, isQuietEliminationWeapon), module/sheets/attack/mods.mjs (+10 auto-мод), module/sheets/attack/form.mjs+dialog.mjs (targetSurprised), module/combat/attack.mjs (+1 куб, note), module/combat/attack-outcome.mjs::bonusDamageDice"
   },
   "trait.razorTalons": {
-    label: "Естественное оружие: Razor Sharp.",
-    source: "Razor Talons / Бритвенные Когти", reader: ""
+    label: "Когти на ногах (не руках): Razor Sharp.",
+    source: "Razor Talons / Бритвенные Когти",
+    reader: "запись Механики kind:\"attackProp\" (apScope name:Когти на Ногах) на самой Черте → module/rules/item-rules.mjs → grantWeaponProp в диалоге атаки; оружие «Когти на Ногах» — выбор Deadly Natural Weapons"
   },
   "trait.regeneration": {
     label: "В начале Хода тест T+0 → +X Ран.",

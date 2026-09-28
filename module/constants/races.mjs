@@ -290,22 +290,22 @@ export const RACES = {
   harpy: {
     label: "Гарпия",
     subraces: [],
-    chars: { ws:25, bs:25, s:25, t:25, ag:25, int:25, per:25, wp:25, fel:25, inf:19 },
+    chars: { ws:25, bs:25, s:25, t:20, ag:35, int:25, per:30, wp:25, fel:20, inf:19 },
     bonusRolls: 2, bonusPoints: 7, charShift: 2,
     archetypes: ["apostate", "heresiarch", "renegade", "pirate", "savage", "noble", "witch", "numen"], startCorruption: 5,
     size: 0,
     skills:  "Common Lore (любые 2), Linguistics (Low Gothic), Operate (Aeronautica) +10, Trade (любое 1)",
-    gear:    "4 элемента до R1 (1 Good.Q, 1 Best.Q)",
+    gear:    "4 элемента Снаряжения и Инструментов до R1, из них 1 Good.Q и 1 Best.Q",
     talents: ["Flying Kick", "Pirouette", "Raptor"],
     traits: [
-      { name:"Deadly Natural Weapons / Смертельное Естественное Оружие", benefit:"Когти на руках и ногах (2, профиль) теряют Primitive." },
-      { name:"Flyer / Летун (Ag.b×2)", benefit:"Полёт со скоростью Ag.b×2.", rating:2, hasRating:true },
-      { name:"Unnatural Agility (3) / Сверхъестественная Ловкость (3)", benefit:"+3 к Бонусу Ловкости.", rating:3, hasRating:true, effects:{ charBonusStat:"ag", charBonusValue:3 } },
+      { name:"Deadly Natural Weapons (2) / Смертельное Естественное Оружие (2)", benefit:"Когти на руках и ногах: 1d10+2 R, Pen 2, Reinforced.", rating:2, hasRating:true },
+      { name:"Flyer / Летун (A.b×2)", benefit:"Летает, в полёте SPD = A.b×2 вместо обычной скорости.", rating:"ag*2", hasRating:true },
+      { name:"Unnatural Agility (2) / Сверхъестественная Ловкость (2)", benefit:"+2 к Бонусу Ловкости.", rating:2, hasRating:true, effects:{ charBonusStat:"ag", charBonusValue:2 } },
       { name:"The Quick and The Dead / Быстрые и Мёртвые", benefit:"+2 к Инициативе; Избегание атак Орды." },
       { name:"Fast Learner (15) / Ловит на Лету (15)", benefit:"+15% к опыту.", rating:15, hasRating:true },
-      { name:"Hollow Bones / Пустые Кости", benefit:"Полые кости: −5 к Поглощению против I(Cr) урона." },
-      { name:"Razor Talons / Бритвенные Когти", benefit:"Естественное оружие получает свойство Razor Sharp." },
-      { name:"Limited Lift / Ограниченная Подъёмная Сила", benefit:"Не может летать при перегрузе Ношения и в тяжёлой броне." }
+      { name:"Hollow Bones / Пустые Кости", benefit:"T.b вдвое (окр.▲) при Поглощении I(Cr) урона." },
+      { name:"Razor Talons / Бритвенные Когти", benefit:"Когти на ногах (но не руках) получают свойство Razor Sharp." },
+      { name:"Limited Lift / Ограниченная Подъёмная Сила", benefit:"Летает только с грузом не тяжелее Ношения; силовая броня не прибавляет Ношения для полёта и не гасит свой вес." }
     ],
     desc: "Крылатый абхуман-мутант ТЭТ: быстрый и свободный налётчик."
   },

@@ -204,6 +204,14 @@
   Трудный Ландшафт (`regions/difficult-terrain.mjs`) сюда НЕ входит — у него
   свой механизм игнора (флаг высоты полёта, не elevation региона), зона
   рисуется ГМом вручную и не привязана к конкретному радиусу оружия.
+- **Скорость в полёте (Flyer/Hoverer (X), сверка Гарпии 28.09.2026):**
+  `rules/flight-speed.mjs::flightSpeedOf` — в воздухе SPD = X вместо Ag.b+Размер
+  (`rules/character/movement.mjs`, надбавки «пешком» не прибавляются); X
+  формулой (Flyer (A.b×2)) — флаг `ratingFormula` на Черте (`rules/trait-grant.mjs`),
+  считается от текущих Бонусов. Limited Lift — `rules/limited-lift.mjs`,
+  `system.encumbrance.flight` (Ношение для полёта без S брони, груз с весом
+  силовой брони), запрет взлёта в `showFlightDialog`. Hollow Bones —
+  `rules/hollow-bones.mjs` (T.b вдвое против I(Cr) в `combat/damage.mjs`).
 - Визуализация: `combat/range-cells.mjs`, `range-rings.mjs`,
   `reachable-cells.mjs` (подсветка клеток по Dijkstra).
 - Доп. ходы/действия: `combat/snapshot.mjs`, `assassin-strike.mjs`,

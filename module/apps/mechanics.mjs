@@ -466,6 +466,7 @@ import { DURATION_UNITS, durationLabel, conditionEntryTerm, conditionHasLevelInp
 import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "../constants/legions.mjs";
 import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod, whenCondition, whenQuality, whenChosenEffect } from "../rules/mech-when.mjs";
 import { TIER_LABELS as WOUND_TIER_LABELS } from "../rules/wound-tier.mjs";
+import { grantedTraitFlags } from "../rules/trait-grant.mjs";
 import { INTEGRAL_CHOSEN_FLAG, RATING_TEMPLATE_FLAG, sourceRating, ratingTemplateOf, applyRatingTemplate,
          optionalIntegralEntries, integralEntrySelected, presetIntegralChoice } from "../rules/integral-rating.mjs";
 import { parseSubmutations } from "../rules/submutations.mjs";
@@ -1136,7 +1137,10 @@ export function describeMechEntry(entry) {
     case "trait": {
       if (!entry.sourceUuid) return "Черта: (перетащите предмет)";
       const rating = entry.rating !== "" && entry.rating != null ? ` (рейтинг ${entry.rating})` : "";
-      return `Черта: ${entry.sourceName || "?"}${rating}`;
+      // «Deadly Natural Weapons (X, Y)» — атаки выбраны записью (rules/trait-grant.mjs).
+      const picked = Array.isArray(entry.integralChosen) && entry.integralChosen.length
+        ? `, атаки выбраны: ${entry.integralChosen.length}` : "";
+      return `Черта: ${entry.sourceName || "?"}${rating}${picked}`;
     }
     case "talent": {
       if (!entry.sourceUuid) return "Талант: (перетащите предмет)";
@@ -2402,12 +2406,14 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
     // syncGrantedAbilities ниже по нему отличает свою выдачу от чужой и от
     // копии, которую ГМ положил руками.
     // Естественные атаки, названные книгой прямо в записи расы —
-    // «Natural Weapons (1, Рога, Укус, Когти, Копыта)» Зверолюда: выбор
-    // «по выбору» (rules/integral-rating.mjs) ставится сразу, без окна.
+    // «Natural Weapons (1, Рога, Укус, Когти, Копыта)» Зверолюда (по именам,
+    // entry.integralPreset) или «Deadly Natural Weapons (2, Когти.Р (на руках и
+    // ногах))» Гарпии (по id, entry.integralChosen, rules/trait-grant.mjs) —
+    // ставятся сразу, без окна; рейтинг-формула (Flyer (A.b×2)) — там же.
     const preset = entry.kind === "trait"
       ? presetIntegralChoice(data.flags?.[FLAG]?.mechanics || [], entry.integralPreset) : null;
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}),
-      grantedByItem: sourceItem.id, abilityEntryId: entry.id,
+      ...grantedTraitFlags(entry), grantedByItem: sourceItem.id, abilityEntryId: entry.id,
       ...(preset ? { [INTEGRAL_CHOSEN_FLAG]: preset } : {}) } };
     await actor.createEmbeddedDocuments("Item", [data]);
     return;
@@ -2923,7 +2929,7 @@ export async function syncGrantedAbilities(sourceItem) {
     }
     if (e.kind === "talent" && e.specialization) data.system.specialization = e.specialization;
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}),
-      grantedByItem: sourceItem.id, abilityEntryId: e.id } };
+      ...grantedTraitFlags(e), grantedByItem: sourceItem.id, abilityEntryId: e.id } };
     toCreate.push(data);
   }
   if (toCreate.length) await actor.createEmbeddedDocuments("Item", toCreate);

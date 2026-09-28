@@ -20,7 +20,7 @@
     },
     "bonusRolls": 2,
     "skills": "",
-    "gear": "4 элемента до R1 (1 Good.Q, 1 Best.Q)",
+    "gear": "4 элемента Снаряжения и Инструментов до R1, из них 1 Good.Q и 1 Best.Q",
     "talents": "",
     "description": "Крылатый абхуман-мутант ТЭТ: быстрый и свободный налётчик.",
     "notes": "",
@@ -70,8 +70,8 @@
               "sourceUuid": "Compendium.warhammer-dbc.traits.Item.izr4BASd4MVkw3Cm",
               "sourceName": "Deadly Natural Weapons / Смертельное Естественное Оружие",
               "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
-              "sourceHasRating": false,
-              "rating": "",
+              "sourceHasRating": true,
+              "rating": 2,
               "specialization": "",
               "skillScope": "plain",
               "skillKey": "",
@@ -109,7 +109,11 @@
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
               "label": "",
-              "code": ""
+              "code": "",
+              "integralChosen": [
+                "MdAKKPWWE2aYVHza",
+                "hRpFootTalons2Kx"
+              ]
             },
             {
               "id": "AAjE83bBL2UOUuRY",
@@ -127,7 +131,7 @@
               "sourceName": "Flyer / Летун (X)",
               "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
               "sourceHasRating": true,
-              "rating": 2,
+              "rating": "ag*2",
               "specialization": "",
               "skillScope": "plain",
               "skillKey": "",
