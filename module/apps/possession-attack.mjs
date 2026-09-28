@@ -27,6 +27,8 @@ import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { measureTokens } from "../combat/tactical-map.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
+import { applyCharDamage } from "../combat/char-damage.mjs";
+import { DEFAULT_RECOVERY_HOURS } from "../rules/char-loss.mjs";
 import { esc } from "../helpers/utils.mjs";
 
 const NS = "warhammer-dbc";
@@ -170,22 +172,33 @@ export async function leavePossessionHost(actor) {
   const rolls = [];
   // «Если Хост пережил Одержимость» — мёртвое тело последствий не несёт.
   const survived = !host.statuses?.has?.("dead");
+  const charRolls = {};
   if (survived) {
-    const dmg = [];
     for (const k of Object.keys(CHARACTERISTICS)) {
       if (!(k in (host.system?.characteristics ?? {}))) continue;
       const r = await new Roll("3d10").evaluate();
       rolls.push(r);
-      upd[`system.charDamage.${k}`] = (Number(host.system?.charDamage?.[k]) || 0) - r.total;
-      dmg.push(`${CHARACTERISTICS[k].abbr} −${r.total}`);
+      charRolls[k] = r.total;
     }
     const cor = await new Roll("1d10").evaluate();
     rolls.push(cor);
     upd["system.corruption.value"] = (Number(host.system?.corruption?.value) || 0) + cor.total;
-    lines.push(`Хост пережил Одержимость: урон Характеристикам — ${dmg.join(", ")}; Порча +${cor.total}.`,
-      "Этот урон восстанавливается в 12 раз медленнее обычного.");
+    lines.push(`Порча +${cor.total}.`);
   }
   await host.update(upd);
+  // Урон в Характеристики — через единственную точку (combat/char-damage.mjs,
+  // пол 0, восстановление, смерть от T = 0), порцией со своим темпом: «в 12
+  // раз медленнее обычного» = 12 ч за пункт при обычном 1 ч (rules/char-loss.mjs).
+  if (survived) {
+    const dmg = [];
+    for (const [k, amount] of Object.entries(charRolls)) {
+      const { applied } = await applyCharDamage(host, k, amount,
+        { portion: { hours: 12 * DEFAULT_RECOVERY_HOURS, source: "Одержимость" } });
+      dmg.push(`${CHARACTERISTICS[k].abbr} −${applied}`);
+    }
+    lines.push(`Хост пережил Одержимость: урон Характеристикам — ${dmg.join(", ")}.`,
+      "Этот урон восстанавливается в 12 раз медленнее обычного.");
+  }
   await postTestCard(actor, {
     icon: ICON, title: `Одержимость окончена — ${esc(host.name)}`,
     lines: lines.map(l => `<div class="roll-threshold">${l}</div>`)

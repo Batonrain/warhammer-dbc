@@ -56,7 +56,9 @@ export async function convertActorToMinion(actor) {
   const minion = await Actor.create(minionCreateDataFrom(src));
   if (!minion) return null;
   const items = actor.items.map(i => i.toObject());
-  if (items.length) await minion.createEmbeddedDocuments("Item", items);
+  // keepId: связи предметов держатся на id (installedOn модификаций и Вязей,
+  // linkedWeapon имплантов); у нового актора коллизий id нет.
+  if (items.length) await minion.createEmbeddedDocuments("Item", items, { keepId: true });
 
   ui.notifications.info(`Миньон «${minion.name}» создан, предметов перенесено ${items.length}.`);
   minion.sheet?.render(true);
