@@ -39,7 +39,7 @@ describe("стартовое Бесчестие", () => {
   // считал бы Бесчестие не по книге.
   // Резерв-константы этих рас ещё не сверены с паком — сверив расу, уберите
   // её из списка.
-  const NOT_YET_RECONCILED = ["naga"];
+  const NOT_YET_RECONCILED = [];
   it("база Бесчестия в резерв-константах совпадает с документом расы в паке", () => {
     const packInf = new Map(packDocuments("races", "race").map(({ doc }) => [doc.system?.key, doc.system?.chars?.inf]));
     const diff = Object.entries(RACES)

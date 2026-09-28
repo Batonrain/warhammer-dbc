@@ -3,9 +3,9 @@
   "type": "trait",
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
-    "description": "Нага иммунна к ядам, пост-эффектам и зависимости от наркотиков. Лечится как Космодесантник (а не как человек) и дополнительно вылечивает себе 1 Рану в сутки. В начале своего Хода может тестом T+0 затянуть себе Кровотечение.",
-    "notes": "Составной эффект: иммунитеты (яды/пост-эффекты/зависимость) + ускоренная регенерация (+1 Рана/сутки) + активный тест T+0 на снятие Кровотечения — не сводится к одному числовому полю.",
-    "benefit": "Иммунитет к ядам/пост-эффектам/зависимости; лечение как у Космодесантника +1 доп. Рана/сутки; тест T+0 в начале Хода снимает Кровотечение.",
+    "description": "Иммунитет к ядам, пост-эффектам и зависимости от наркотиков; лечится как Космодесантник и ещё +1 Рана в сутки; в начале своего Хода может затянуть Кровотечение тестом T+0.",
+    "notes": "Автоматизировано: Toxic и яды-препараты на неё не действуют (poison.immune), Отравление не накладывается никаким путём (иммунитет к Состоянию); пост-эффект наркотика не наступает, тест Зависимости не нужен (drugs.afterEffectAddictionImmune); естественное лечение — как у Космодесантника (healing.astartes); +1 Рана в сутки по Календарю (healing.extraWoundDaily); в начале Хода с Кровотечением тест T+0 катается сам, успех снимает Кровотечение (bleeding.selfStanchTurnStart).",
+    "benefit": "Нага иммунна к ядам, пост-эффектам и зависимости от наркотиков, даже откровенно сверхъестественных. Она лечится как Космодесантник, а не человек, и дополнительно вылечивает себе 1 Рану в сутки. Нага может в начале своего Хода затянуть свое Кровотечение тестом T+0.",
     "source": "Нага",
     "hasRating": false,
     "rating": 0,
@@ -34,7 +34,178 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "01Ht3eBUajnErOcg",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "ZCCzlaFAMYptbubD",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "poison.immune",
+              "label": "Иммунитет к ядам: Toxic и яды не действуют",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "fkDJQgsxjaxEJmeG",
+              "kind": "condition",
+              "group": null,
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "minionGroup": "",
+              "minionTier": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "specChoiceCount": 1,
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "movementTarget": "spd",
+              "movementValue": 1,
+              "armourLocation": "body",
+              "armourValue": 1,
+              "ignoreTerrainProps": [],
+              "rerollScope": "all",
+              "rerollChar": "ag",
+              "rerollMode": "keepBest",
+              "modScope": "all",
+              "modValueMode": "flat",
+              "modCharBonus": "inf",
+              "rerollWho": "self",
+              "capabilityKey": "",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 0,
+              "capabilityMode": "flag",
+              "capabilityAptScope": "skill",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "fatigueAction": "threshold",
+              "fatigueThresholdChar": "t",
+              "equipMode": "direct",
+              "equipQty": 1,
+              "equipSourceUuid": "",
+              "equipSourceName": "",
+              "equipSourceImg": "",
+              "equipCategoryPack": "weapons",
+              "equipWeaponType": "",
+              "equipWeaponProp": "",
+              "equipArmorType": "",
+              "equipMaxAvailability": 5,
+              "equipQuality": "common",
+              "equipTalentTier": "",
+              "equipMaxPsyRating": "",
+              "equipImplantCategory": "",
+              "equipPrRequiredDelta": 0,
+              "equipBudgetMode": "count",
+              "equipBudgetValue": 1,
+              "loyaltyMinionType": "",
+              "loyaltyOp": "add",
+              "loyaltyValue": 1,
+              "auraRadius": "1",
+              "auraAffects": "allies",
+              "auraIncludesSelf": false,
+              "auraImmuneTraits": "",
+              "weaponPropAction": "add",
+              "weaponPropKey": "",
+              "weaponPropLabel": "",
+              "weaponPropHasRating": false,
+              "weaponPropHasRating2": false,
+              "weaponPropValue": "1",
+              "weaponPropValue2": "0",
+              "weaponPropNewKey": "",
+              "weaponPropNewLabel": "",
+              "weaponPropNewHasRating": false,
+              "weaponPropNewHasRating2": false,
+              "weaponPropNewValue": "1",
+              "weaponPropNewValue2": "0",
+              "label": "Иммунитет к ядам: Отравление не накладывается никаким путём",
+              "code": "",
+              "scriptThrottleUnit": "",
+              "scriptThrottleMax": 0,
+              "when": {
+                "negate": false,
+                "conditions": []
+              },
+              "condKey": "poisoned",
+              "condMode": "immunity",
+              "condLevel": "1",
+              "condMitigate": "ignore",
+              "condDurationValue": "1",
+              "condDurationUnit": ""
+            },
+            {
+              "id": "KN2AFPwvVh5quJna",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "drugs.afterEffectAddictionImmune",
+              "label": "Иммунитет к пост-эффектам и зависимости от наркотиков",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "FQW0PVe33GK2Vqk8",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "healing.astartes",
+              "label": "Лечится как Космодесантник",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "A81WEbMBt1YTK5VB",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "healing.extraWoundDaily",
+              "label": "+1 Рана в сутки сверх обычного лечения",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "CDsrgZ38pqi9AUiq",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "bleeding.selfStanchTurnStart",
+              "label": "В начале Хода — тест T+0, чтобы затянуть Кровотечение",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

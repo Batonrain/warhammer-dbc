@@ -327,6 +327,10 @@ export function grappleHandsUsed(actor) {
   if (!actor?.system?.conditions?.grappling) return 0;
   const f = key => actor?.getFlag?.("warhammer-dbc", key) ?? actor?.flags?.["warhammer-dbc"]?.[key];
   const role = f("grappleRole");
+  // Хвост Удава (Нага, rules/naga-traits.mjs) держит цель «парой рук», не
+  // занимая настоящих: в счёте grappleHands его 2, здесь они вычитаются.
+  // Имя флага строкой, как соседние, — импорт Борьбы сюда недопустим.
+  if (role === "attacker" && f("grappleTail")) return Math.max(0, (Number(f("grappleHands")) || 2) - 2);
   if (role === "attacker") return Math.max(1, Number(f("grappleHands")) || 1);
   if (role === "target") return Number(f("grappleHeldHands")) || 2;
   return 0;

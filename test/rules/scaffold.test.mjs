@@ -38,7 +38,8 @@ describe("каркас module/rules", () => {
     // wearsFootwear — обут ли (Barefoot / Босоногий Ратлинга).
     // lacksTrait — «нет Черты» (Символ Власти против Отвращения к Порядку).
     // haywireFieldMin — поле Haywire вокруг BONE-Head Огрина (rules/bone-head.mjs).
-    expect(Object.keys(predicates.PREDICATES)).toHaveLength(40);
+    // targetSerpentine — змееподобная цель, Безграничное Тщеславие Наги (rules/naga-traits.mjs).
+    expect(Object.keys(predicates.PREDICATES)).toHaveLength(41);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);
     expect(typeof sources.registerRuleSource).toBe("function");

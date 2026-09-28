@@ -895,6 +895,16 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   (`rules/predicates.mjs::wearsFootwear`: броня с AP на ногах или Маг-Сапоги)
   и область теста `terrain` (тест Трудного Ландшафта,
   `combat/movement-terrain.mjs`, теперь с перебросом).
+- Черты Наги (сверка главы I): `rules/naga-traits.mjs` (числа) +
+  `apps/naga-traits.mjs` (обвязка) + `rules/library/naga.mjs`. Возможности
+  по правилу, не по расе: `poison.immune` (Toxic — hooks.mjs, яды-препараты —
+  drugs.mjs), `drugs.afterEffectAddictionImmune`, `healing.extraWoundDaily`
+  (часы Календаря), `bleeding.selfStanchTurnStart` (condition-ticks.mjs),
+  `bite.venomD10`, `grapple.constrictorTail` (хвост — «пара рук», флаг
+  `grappleTail`, hands.mjs), `patronage.lockedSlaanesh`,
+  `infamy.darkPrinceMilestones`, `command.cannotReceive`
+  (command-state.mjs::refusesCommand); цель Ненависти «Мутант-змея»
+  (`TARGET_FEATURES.snakeMutation`), условие `targetSerpentine`.
 - `module/constants/legions.mjs` — Легионы Космодесанта (Геносемя/Культура/
   Проклятье); `rules/legion-fit.mjs`, `legion-upgrade.mjs`.
 - Пути Азуриан: `constants/aeldari-paths.mjs`, `rules/library/paths.mjs`,

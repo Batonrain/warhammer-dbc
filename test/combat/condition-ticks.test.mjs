@@ -639,7 +639,7 @@ describe("Кровотечение у Йигори (newMen.bleeding)", () => {
     await processConditionTurnStart(actor);
 
     expect(actor.system.conditions.bleeding).toBe(false);
-    expect(captured.chat[0].content).toContain("затянул Кровотечение");
+    expect(captured.chat[0].content).toContain("Кровотечение остановлено");
   });
 
   it("начало Хода: тест T+0 провален — Кровотечение остаётся", async () => {
@@ -649,7 +649,7 @@ describe("Кровотечение у Йигори (newMen.bleeding)", () => {
     await processConditionTurnStart(actor);
 
     expect(actor.system.conditions.bleeding).toBe(true);
-    expect(captured.chat[0].content).toContain("не затянуть");
+    expect(captured.chat[0].content).toContain("кровь не унялась");
   });
 
   it("без возможности теста в начале Хода нет вовсе", async () => {

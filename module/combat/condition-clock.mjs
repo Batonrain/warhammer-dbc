@@ -32,6 +32,7 @@ import { unlinkedTokens } from "../migrations/unlinked-tokens.mjs";
 import { healingClock } from "./healing-clock.mjs";
 import { ogrynRegenClock } from "./ogryn-regen.mjs";
 import { haywireFieldClock } from "./bone-head.mjs";
+import { extraWoundDailyClock } from "../apps/naga-traits.mjs";
 import { charLossClockStep, actorRecoveryPolicy, charLossPortions, charLossPortionsStep } from "../rules/char-loss.mjs";
 import { serumHookClock } from "./replicant.mjs";
 
@@ -164,6 +165,9 @@ export const CONDITION_CLOCK_HANDLERS = [
   // Поле Haywire вокруг Огрина с BONE-Head гаснет на 2 за каждые 5 с
   // (Раунд) — combat/bone-head.mjs.
   { id: "haywireField", run: haywireFieldClock },
+  // «+1 Рана в сутки» сверх обычного лечения (Изуверская Физиология Наги,
+  // apps/naga-traits.mjs) — после обычного лечения, чтобы видеть его итог.
+  { id: "extraWoundDaily", run: extraWoundDailyClock },
   // Урон в Характеристики: 1 в час, блоки/замедления — записи charRecovery
   // (wdbc-x1nz.2.83, rules/char-loss.mjs). Молча — без карточки на каждый час.
   { id: "charLoss", run: charLossClock },

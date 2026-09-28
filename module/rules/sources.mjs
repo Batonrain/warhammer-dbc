@@ -15,6 +15,7 @@ import { ASTARTES_RULES } from "./library/astartes.mjs";
 import { OGRYN_RULES, OGRYN_TRAIT_RULES } from "./library/ogryn.mjs";
 import { REPLICANT_RULES } from "./library/replicant.mjs";
 import { serumHookRules } from "./replicant.mjs";
+import { NAGA_RULES } from "./library/naga.mjs";
 import { EXODITE_RULES, DRUKHARI_RULES, AZURIANE_RULES, HARLEQUIN_RULES, YNNARI_RULES,
          HALF_ELDAR_RULES } from "./library/aeldari.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
@@ -91,6 +92,8 @@ const RACE_RULES = {
   ogryn: OGRYN_RULES,
   // Репликант (сверка главы I): Предел Крит. Провала тестов I — Гипно-Шрамы.
   replicant: REPLICANT_RULES,
+  // Нага: штраф Безграничного Тщеславия к общению со змееподобными.
+  naga: NAGA_RULES,
   exodite: EXODITE_RULES,
   drukhari: DRUKHARI_RULES,
   truebornDrukhari: DRUKHARI_RULES,

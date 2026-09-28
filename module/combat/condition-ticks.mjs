@@ -26,6 +26,7 @@ import { rollMoraleTest } from "../rules/morale-test.mjs";
 import { postShockRecoveryPrompt } from "./fear.mjs";
 import { applyLordOfExoditesFailPenalty } from "./lord-of-exodites.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { SELF_STANCH_CAPABILITY } from "../rules/naga-traits.mjs";
 import { resolveArmorProps } from "./armor-properties.mjs";
 // Морозное Сердце (wdbc-5knb): щит с записью Конструктора
 // kind:"shieldVsCondition" можно бросить против ТИКА Горения, гася его
@@ -571,16 +572,16 @@ export async function processConditionTurnStart(actor) {
   // напоминание Подавления в конце Хода — suppression.mjs).
   if (conds.shocked) await postShockRecoveryPrompt(actor);
 
-  // New Men / Новые Люди (Йигори): «может затянуть свое Кровотечение тестом
-  // T+0 в начале своего Хода». Бросается сам, без кнопки: у попытки нет ни
-  // цены, ни исхода «хуже, чем не пробовать» — спрашивать игрока нечего
-  // (тот же довод, что у окна Cooler, apps/mechanics.mjs burningGrace).
-  if (conds.bleeding && canSelfStaunch(actor)) {
-    const t = await rollConditionCharTest(actor, "t");
+  // «Может затянуть свое Кровотечение тестом T+0 в начале своего Хода» —
+  // одно правило у двух Черт: New Men / Новые Люди (Йигори, newMen.bleeding)
+  // и Изуверская Физиология (Нага, rules/naga-traits.mjs). Бросается сам,
+  // без кнопки: у попытки нет ни цены, ни исхода «хуже, чем не пробовать».
+  if (conds.bleeding && (canSelfStaunch(actor) || hasRuleFlag(actor, SELF_STANCH_CAPABILITY))) {
+    const t = await rollConditionCharTest(actor, "t", 0);
     if (t.success) Object.assign(updates, conditionRemoveFields("bleeding"));
-    lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Новые Люди: ${charTestText("T+0", t)} ${t.success
-      ? `<span class="roll-success">успех — затянул Кровотечение</span>`
-      : `<span class="roll-failure">провал — Кровотечение не затянуть</span>`}</div>`);
+    lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Затянуть Кровотечение: ${charTestText("T+0", t)} — ${t.success
+      ? '<span class="roll-success">Кровотечение остановлено</span>'
+      : '<span class="roll-failure">кровь не унялась</span>'}</div>`);
   }
 
   // Сроки, заданные штатной Duration, истекают сами — здесь только подмести

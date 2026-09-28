@@ -20,9 +20,9 @@
     },
     "bonusRolls": 2,
     "skills": "",
-    "gear": "4 элемента до R1 (1 Good.Q, 1 Best.Q)",
+    "gear": "4 элемента Снаряжения и Инструментов до R1, из них 1 Good.Q и 1 Best.Q",
     "talents": "",
-    "description": "Змееподобный результат экспериментов Скульпторов Плоти по воссозданию Лазр.",
+    "description": "Змееподобный результат экспериментов Скульпторов Плоти по воссозданию Лаэр.",
     "notes": "",
     "hasGeneSeed": false,
     "pastRaces": [],
@@ -935,7 +935,7 @@
                 "toil",
                 "war"
               ],
-              "specChoiceCount": 2,
+              "specChoiceCount": 3,
               "rank": "knows",
               "weightScope": "all",
               "weightMode": "kg",
@@ -1060,7 +1060,23 @@
               "label": "",
               "code": "",
               "id": "rKnwCr8wtb0",
-              "kind": "talent"
+              "kind": "talent",
+              "targets": [
+                {
+                  "kind": "race",
+                  "ref": "",
+                  "value": "naga",
+                  "name": "Нага",
+                  "img": ""
+                },
+                {
+                  "kind": "feature",
+                  "ref": "",
+                  "value": "snakeMutation",
+                  "name": "Мутант-змея (Животный Гибрид/Центавр: Змея)",
+                  "img": ""
+                }
+              ]
             },
             {
               "corruptionValue": "1",

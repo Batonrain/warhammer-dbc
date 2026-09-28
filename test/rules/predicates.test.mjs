@@ -483,7 +483,9 @@ describe("общее требование к предикатам", () => {
     // Цель без герметичной брони (wdbc-1rno.11, Миазмы) — читает ЦЕЛЬ.
     targetLacksSealedArmour: undefined,
     // Обут ли (Barefoot / Босоногий Ратлинга): false — «босиком».
-    wearsFootwear: false
+    wearsFootwear: false,
+    // Змееподобная цель (Безграничное Тщеславие Наги) — читает ЦЕЛЬ.
+    targetSerpentine: true
   };
 
   it("на пустом акторе каждый возвращает строго true или false", () => {

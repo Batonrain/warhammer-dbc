@@ -58,6 +58,9 @@ import { backfillAspirationGrants } from "./module/apps/aspirations.mjs";
 import { backfillMinionAptSource } from "./module/apps/minion-talent.mjs";
 import { syncCyberneticExcellenceArms } from "./module/apps/cybernetic-excellence.mjs";
 import { isCyberneticExcellence } from "./module/rules/cybernetic-excellence.mjs";
+import { enforceLockedPatron, grantLockedPatron, checkDarkPrinceMilestones, itemGrantsCapability }
+  from "./module/apps/naga-traits.mjs";
+import { LOCKED_SLAANESH_CAPABILITY, DARK_PRINCE_MILESTONE_CAPABILITY } from "./module/rules/naga-traits.mjs";
 import { cleanupHandOfDeath } from "./module/apps/hand-of-death.mjs";
 import { cleanupGunArm } from "./module/apps/gun-arm.mjs";
 import { isGunArmGift } from "./module/rules/gun-arm.mjs";
@@ -2212,6 +2215,24 @@ Hooks.on("deleteItem", async (item, options, userId) => {
   if (game.user.id !== userId) return;
   if (!isCyberneticExcellence(item) || !(item.parent instanceof Actor)) return;
   await syncCyberneticExcellenceArms(item.parent);
+});
+
+// ── Дитя Тёмного Принца (Нага, module/apps/naga-traits.mjs) ────────────────
+// «Начинает игру с покровительством Слаанеш, и не может потерять его»:
+// Черта попала на лист — Покровитель ставится сам; смена Покровителя
+// откатывается до записи. «Впервые набирая 30, 60, и 90 Inf» — выбор при
+// росте Inf (и сразу при получении Черты, если порог уже пройден).
+// userId-гвард — диалог и запись у того, кто правил, а не у всех клиентов.
+Hooks.on("preUpdateActor", (doc, changes) => { enforceLockedPatron(doc, changes); });
+Hooks.on("createItem", async (item, options, userId) => {
+  if (game.user.id !== userId || !(item.parent instanceof Actor)) return;
+  if (itemGrantsCapability(item, LOCKED_SLAANESH_CAPABILITY)) await grantLockedPatron(item.parent);
+  if (itemGrantsCapability(item, DARK_PRINCE_MILESTONE_CAPABILITY)) await checkDarkPrinceMilestones(item.parent);
+});
+Hooks.on("updateActor", async (actor, changed, options, userId) => {
+  if (game.user.id !== userId) return;
+  if (changed?.system?.characteristics?.inf === undefined) return;
+  await checkDarkPrinceMilestones(actor);
 });
 
 // Модификация пережила своего носителя (wdbc-z6em). Удалили оружие или броню,

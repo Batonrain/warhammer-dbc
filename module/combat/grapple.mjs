@@ -50,6 +50,10 @@ import { spdMeters } from "./recoil-pool.mjs";
 import { maxHands, handsOccupied, weaponHandsRequired, twoHandedTestPenalty, TWO_HANDED_PENALTY_LABEL } from "../rules/hands.mjs";
 import { bearingDegrees, relativeBearing } from "../rules/facing.mjs";
 import { canTakeAttackAction, takeAttackAction } from "./attack-limit.mjs";
+import {
+  CONSTRICTOR_CAPABILITY, GRAPPLE_TAIL_FLAG, CONSTRICTOR_TAIL_HANDS, CONSTRICTOR_ATHLETICS_BONUS,
+  constrictorTailSb, VENOM_BITE_CAPABILITY, venomBiteDamage
+} from "../rules/naga-traits.mjs";
 
 const NS = "warhammer-dbc";
 const PARTNER_FLAG = "grapplePartnerUuid";
@@ -96,6 +100,36 @@ export function grappleHands(actor) {
   return Math.max(1, Number(flagOf(actor, GRAPPLE_HANDS_FLAG)) || 1);
 }
 
+// ── Удав (Нага, rules/naga-traits.mjs) ──────────────────────────────────────
+// «Нага может использовать свой хвост для совершения Захвата и в Борьбе,
+// освобождая руки. В расчете Захвата и Борьбы хвост считается парой рук с
+// Трейтом Unnatural S (6) и получает +20 на все тесты Athletics.»
+// Хвост — две «руки» из счёта grappleHands (лучший из N бросков, по 2 руки
+// цели на каждую), но свои руки Наги не занимает: rules/hands.mjs вычитает
+// их по флагу GRAPPLE_TAIL_FLAG.
+
+/** Держит ли Атакующий цель хвостом Удава. */
+export function isTailHold(actor) {
+  return !!flagOf(actor, GRAPPLE_TAIL_FLAG);
+}
+
+/** Флаги Атакующего на старте удержания: рука — или хвост Удава («пара рук»). */
+export function attackerHoldFields(actor) {
+  const tail = hasRuleFlag(actor, CONSTRICTOR_CAPABILITY);
+  const hands = tail ? CONSTRICTOR_TAIL_HANDS : 1;
+  return {
+    hands,
+    fields: tail
+      ? { [`flags.${NS}.${GRAPPLE_HANDS_FLAG}`]: hands, [`flags.${NS}.${GRAPPLE_TAIL_FLAG}`]: true }
+      : { [`flags.${NS}.${GRAPPLE_HANDS_FLAG}`]: hands, [`flags.${NS}.-=${GRAPPLE_TAIL_FLAG}`]: null }
+  };
+}
+
+/** +20 Удава к тестам Athletics в Захвате и Борьбе (0 — нет Черты). */
+export function constrictorAthleticsBonus(actor) {
+  return hasRuleFlag(actor, CONSTRICTOR_CAPABILITY) ? CONSTRICTOR_ATHLETICS_BONUS : 0;
+}
+
 /**
  * Свободные руки Цели: «если у цели есть свободные руки, она может
  * действовать ими без ограничений Борьбы». Каждая рука Атакующего
@@ -117,11 +151,17 @@ export function grappleSizePenalty(actor, partner) {
   return diff < 0 ? diff * 10 : 0;
 }
 
-/** Модификаторы теста Борьбы для этой стороны — в порог и в подпись. */
-export function grappleTestMods(actor, partner) {
+/**
+ * Модификаторы теста Борьбы для этой стороны — в порог и в подпись.
+ * athletics — тест идёт Athletics (а не Acrobatics «Выкрутиться»): только
+ * тогда действует +20 Удава.
+ */
+export function grappleTestMods(actor, partner, { athletics = true } = {}) {
   const out = [];
   const t = tentacleBonus(actor);
   if (t) out.push({ label: "Щупальце", value: t });
+  const c = athletics ? constrictorAthleticsBonus(actor) : 0;
+  if (c) out.push({ label: "Хвост Удава", value: c });
   const s = grappleSizePenalty(actor, partner);
   if (s) out.push({ label: "меньше Размером", value: s });
   return out;
@@ -175,10 +215,12 @@ export async function applyGrappleOnHit(actor, targetToken, hit, techOpts) {
 export async function resolveGrappleSuccess(actor, { target }) {
   // Состояние и флаг партнёра одним update на актора: каждая отдельная
   // запись — это prepareData + re-render листа и токена у всех клиентов.
+  // Удав держит хвостом — «пара рук», руки свободны (attackerHoldFields).
+  const hold = attackerHoldFields(actor);
   await actor.update({ ...conditionApplyFields("grappling", null, actor), [`flags.${NS}.${PARTNER_FLAG}`]: target.uuid,
-    [`flags.${NS}.${ROLE_FLAG}`]: "attacker", [`flags.${NS}.${GRAPPLE_HANDS_FLAG}`]: 1 });
+    [`flags.${NS}.${ROLE_FLAG}`]: "attacker", ...hold.fields });
   await target.update({ ...conditionApplyFields("grappling", null, target), [`flags.${NS}.${PARTNER_FLAG}`]: actor.uuid,
-    [`flags.${NS}.${ROLE_FLAG}`]: "target", [`flags.${NS}.${GRAPPLE_HELD_HANDS_FLAG}`]: 2 });
+    [`flags.${NS}.${ROLE_FLAG}`]: "target", [`flags.${NS}.${GRAPPLE_HELD_HANDS_FLAG}`]: 2 * hold.hands });
 
   await postTestCard(actor, {
     icon: rollIcon("sword","#e08a3a"), title: `Захват — ${esc(actor.name)} ↔ ${esc(target.name)}`,
@@ -202,6 +244,7 @@ function grappleClearFields() {
     [`flags.${NS}.-=${ROLE_FLAG}`]: null,
     [`flags.${NS}.-=${GRAPPLE_HANDS_FLAG}`]: null,
     [`flags.${NS}.-=${GRAPPLE_HELD_HANDS_FLAG}`]: null,
+    [`flags.${NS}.-=${GRAPPLE_TAIL_FLAG}`]: null,
     [`flags.${NS}.-=${SQUEEZE_PENDING_FLAG}`]: null,
     [`flags.${NS}.-=${SQUEEZE_ACTIVE_FLAG}`]: null
   };
@@ -272,9 +315,13 @@ async function _resolveWrenchSuccess(actor) {
   }
   const sb = Number(actor.system?.characteristics?.s?.bonus) || 0;
   const claws = _wrenchClawsWeapon(actor);
+  // Удав (Нага, rules/naga-traits.mjs): цель держит хвост — «пара рук с
+  // Трейтом Unnatural S (6)», его S.b и ломает. Когти — оружие рук, не хвоста.
+  const tailHold = !claws && isTailHold(actor);
+  const wrenchSb = tailHold ? constrictorTailSb(actor.system?.characteristics?.s?.total, sb) : sb;
   const dmgLabel = claws
     ? `Нанести урон Когтей (${esc(claws.name)}), считается как с 1 Успехом`
-    : `Нанести урон 1d5+S.b (S.b ${sb}) I(Cr), игнорирует броню`;
+    : `Нанести урон 1d5+S.b (S.b ${wrenchSb}${tailHold ? ", хвост Удава: Unnatural S (6)" : ""}) I(Cr), игнорирует броню`;
   const content = `
     <form style="padding:4px 6px;">
       <label class="atk-dlg-row" style="display:flex;gap:6px;align-items:center;margin:4px 0;">
@@ -324,7 +371,7 @@ async function _resolveWrenchSuccess(actor) {
     }, { rolls: [roll] });
   } else if (choice.dmg) {
     const roll = await new Roll("1d5").evaluate();
-    const dmg = roll.total + sb;
+    const dmg = roll.total + wrenchSb;
     const { applyDamageToActor } = await import("./damage.mjs");
     await applyDamageToActor(partner, {
       rawDamage: dmg, penetration: 0, damageType: "impact", damageSubtype: "crushing", ignoreArmour: true,
@@ -333,7 +380,7 @@ async function _resolveWrenchSuccess(actor) {
     });
     await postTestCard(actor, {
       icon: rollIcon("sword","#e08a3a"), title: `Заломить: урон ${esc(partner.name)}`,
-      lines: [`<div class="roll-dice">1d5: <b>${roll.total}</b> + S.b <b>${sb}</b> = <b>${dmg}</b> I(Cr), броня проигнорирована</div>`]
+      lines: [`<div class="roll-dice">1d5: <b>${roll.total}</b> + S.b <b>${wrenchSb}</b>${tailHold ? " (хвост Удава)" : ""} = <b>${dmg}</b> I(Cr), броня проигнорирована</div>`]
     }, { rolls: [roll] });
   }
   if (choice.fat) {
@@ -421,8 +468,8 @@ export function tentacleTechDef(actor, techDef) {
  */
 export function grappleTechDef(actor, def) {
   const partner = def.opponent ?? grapplePartner(actor);
-  const mods = grappleTestMods(actor, partner);
   const char = def.defaultChar || "s";
+  const mods = grappleTestMods(actor, partner, { athletics: char === "s" });
   return {
     ...def,
     defaultChar: char,
@@ -515,15 +562,16 @@ export async function _resolveTakeoverSuccess(actor) {
   const partner = grapplePartner(actor);
   if (!partner) return ui.notifications.warn(`${actor.name}: партнёр по Борьбе не найден.`);
   const apBack = isEncounterActive() && hasActionEconomy(actor);
+  const hold = attackerHoldFields(actor);
   await actor.update({
-    [`flags.${NS}.${ROLE_FLAG}`]: "attacker", [`flags.${NS}.${GRAPPLE_HANDS_FLAG}`]: 1,
+    [`flags.${NS}.${ROLE_FLAG}`]: "attacker", ...hold.fields,
     [`flags.${NS}.-=${GRAPPLE_HELD_HANDS_FLAG}`]: null,
     [`flags.${NS}.-=${SQUEEZE_PENDING_FLAG}`]: null, [`flags.${NS}.-=${SQUEEZE_ACTIVE_FLAG}`]: null,
     ...(apBack ? { "system.actionPoints.value": (Number(actor.system.actionPoints?.value) || 0) + 1 } : {})
   });
   await partner.update({
-    [`flags.${NS}.${ROLE_FLAG}`]: "target", [`flags.${NS}.${GRAPPLE_HELD_HANDS_FLAG}`]: 2,
-    [`flags.${NS}.-=${GRAPPLE_HANDS_FLAG}`]: null
+    [`flags.${NS}.${ROLE_FLAG}`]: "target", [`flags.${NS}.${GRAPPLE_HELD_HANDS_FLAG}`]: 2 * hold.hands,
+    [`flags.${NS}.-=${GRAPPLE_HANDS_FLAG}`]: null, [`flags.${NS}.-=${GRAPPLE_TAIL_FLAG}`]: null
   });
   await postTestCard(actor, {
     icon: rollIcon("sword","#e08a3a"), title: `Перехватить Контроль — ${esc(actor.name)}`,
@@ -540,8 +588,11 @@ export async function setGrappleHands(actor, n) {
   const partner = grapplePartner(actor);
   // Потолок — руки, не занятые оружием (handsOccupied уже считает текущие
   // руки Захвата занятыми, поэтому прибавляем их обратно).
-  const limit = Math.max(1, handsOccupied(actor).free + grappleHands(actor));
-  const hands = Math.min(limit, Math.max(1, Math.round(Number(n) || 1)));
+  // Хвост Удава — всегда держит (его пара рук — нижняя граница), свои руки
+  // добавляются сверх неё.
+  const floor = isTailHold(actor) ? CONSTRICTOR_TAIL_HANDS : 1;
+  const limit = Math.max(floor, handsOccupied(actor).free + grappleHands(actor));
+  const hands = Math.min(limit, Math.max(floor, Math.round(Number(n) || 1)));
   await actor.setFlag(NS, GRAPPLE_HANDS_FLAG, hands);
   if (partner) await partner.setFlag(NS, GRAPPLE_HELD_HANDS_FLAG, 2 * hands);
   return hands;
@@ -618,8 +669,11 @@ async function _doBite(actor, { aim = null } = {}) {
   const sbEff = meleeStrengthBonus({ sb, wp });
   // Укус Дара «Пасть» (wdbc-o368c) — +рейтинг DNW от Проявления, как в attack.mjs.
   const invocationAdd = invocationNaturalAdd(wp, actor);
+  // Адаптивная Отрава Наги: «Укус Наги использует кубик 1d10 вместо 1d5».
+  const biteDamage = hasRuleFlag(actor, VENOM_BITE_CAPABILITY)
+    ? venomBiteDamage(biteWeapon.system.damage) : biteWeapon.system.damage;
   const dmgFormula = damageFormulaFor({
-    damage: biteWeapon.system.damage, flatBonus: sbEff + invocationAdd.dmg, chars: actor.system.characteristics,
+    damage: biteDamage, flatBonus: sbEff + invocationAdd.dmg, chars: actor.system.characteristics,
     corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee: true
   });
   const dmgRoll = await new Roll(dmgFormula).evaluate();

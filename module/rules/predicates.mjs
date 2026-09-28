@@ -11,6 +11,7 @@ import { raceMatches } from "./race.mjs";
 import { hordeSizeFor } from "./horde-damage.mjs";
 import { hasPathGrade } from "../constants/aeldari-paths.mjs";
 import { anyTargetMatches } from "./talent-targets.mjs";
+import { isSerpentine } from "./naga-traits.mjs";
 
 /** Значение условия к списку: строка считается списком из одного элемента. */
 const list = v => (v == null ? [] : Array.isArray(v) ? v : [v]);
@@ -327,6 +328,7 @@ export const CTX_DEPENDENT_PREDICATES = new Set([
   "targetHasTrait", "targetLacksCondition", "targetHasCondition",
   "targetHasSize", "targetKeepsNimbleInArmour", "targetHasFaction",
   "targetHasFieldPsyMod", "targetLacksSealedArmour", "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus", "hasHatredTarget",
+  "targetSerpentine",
   "legacyGuardianMarked", "targetPsykerOrDaemon", "targetIsAstartes"
 ]);
 
@@ -530,6 +532,10 @@ export const PREDICATES = {
   // обладателей Таланта (игрок выбирает его сам), поэтому читается не
   // литерал из данных условия, а собственный `system.targets` предмета.
   hasHatredTarget: (actor, ctx) => anyTargetMatches(hatredTargetsOf(actor), ctx),
+
+  // Безграничное Тщеславие Наги (rules/library/naga.mjs): цель броска —
+  // змееподобное существо (Нага, Сслит, мутант со змеиной субмутацией).
+  targetSerpentine: (actor, ctx) => isSerpentine(ctx?.targetActor),
 
   // Avatar of Slaughter/Аватар Резни (wdbc-sk8s): цель провалила тест W−10
   // против Берсерка → до конца боя −20 на атаки/манёвры, НЕ направленные на

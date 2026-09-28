@@ -8,6 +8,7 @@
 
 import { ASTARTES_RULES } from "../rules/library/astartes.mjs";
 import { OGRYN_RULES }    from "../rules/library/ogryn.mjs";
+import { NAGA_RULES }     from "../rules/library/naga.mjs";
 
 export const RACES = {
   human: {
@@ -314,31 +315,33 @@ export const RACES = {
   naga: {
     label: "Нага",
     subraces: [],
-    chars: { ws:25, bs:25, s:25, t:25, ag:25, int:25, per:25, wp:25, fel:25, inf:19 },
+    chars: { ws:25, bs:25, s:30, t:35, ag:30, int:20, per:25, wp:25, fel:20, inf:24 },
     bonusRolls: 2, bonusPoints: 7, charShift: 2,
     archetypes: ["apostate", "heresiarch", "renegade", "pirate", "savage"], startCorruption: 5,
     size: 1,
-    skills:  "Common Lore (любые 2), Linguistics (Low Gothic)",
-    gear:    "4 элемента до R1 (1 Good.Q, 1 Best.Q)",
+    skills:  "Common Lore (любые 3), Linguistics (Low Gothic)",
+    gear:    "4 элемента Снаряжения и Инструментов до R1, из них 1 Good.Q и 1 Best.Q",
     talents: ["Ambidextrous", "Hatred (Naga)", "Preternatural Speed", "Sprint"],
     traits: [
-      { name:"Bite (1) / Укус (1)", benefit:"Естественная атака укусом.", rating:1, hasRating:true },
+      { name:"Bite (3) / Укус (3)", benefit:"Естественная атака укусом (1d5+3 R, в Борьбе).", rating:3, hasRating:true },
       { name:"Crawler / Ползун", benefit:"Нет штрафов за трудный ландшафт." },
       { name:"Dark Sight / Ночное Зрение", benefit:"Видит в темноте." },
-      { name:"Multiple Arms / Многорукий", benefit:"Дополнительные руки → доп. атаки/манипуляции." },
-      { name:"Natural Armour (1) / Естественная Броня (1)", benefit:"+1 AP на все локации.", rating:1, hasRating:true, effects:{ armourAll:1 } },
+      { name:"Multiple Arms (4) / Многорукий (4)", benefit:"Четыре руки: доп. атака за каждую пару.", rating:4, hasRating:true },
+      { name:"Natural Armour (3) / Естественная Броня (3)", benefit:"+3 AP на все локации.", rating:3, hasRating:true, effects:{ armourAll:3 } },
       { name:"Nimble / Проворный", benefit:"Штраф атакующим по нему (−X, Рейтинг Черты).", rating:10, hasRating:true },
       { name:"Size (1) / Размер (1)", benefit:"Размер +1.", rating:1, hasRating:true, effects:{ sizeMod:1 } },
       { name:"Sturdy / Надёжный", benefit:"+20 vs Захват/Оглушение." },
-      { name:"Toxic / Токсичный", benefit:"Естественное оружие Toxic.", rating:1, hasRating:true },
-      { name:"The Quick and The Dead / Быстрые и Мёртвые", benefit:"+2 к Инициативе." },
-      { name:"Abominable Physiology / Изуверская Физиология", benefit:"Иммунитет к пост-эффектам/зависимости от наркотиков; перебросы T; снятие Кровотечения в начале Хода." },
-      { name:"Adaptive Venom / Адаптивная Отрава", benefit:"Toxic использует 1d10 вместо 1d5." },
-      { name:"Constrictor / Удав", benefit:"+20 на Захват/Борьбу; Unnatural S в Захвате." },
-      { name:"Dark Prince's Child / Дитя Тёмного Принца", benefit:"Благословение Слаанеш." },
-      { name:"Vanity Unbound / Безграничное Тщеславие", benefit:"Hatred ко всем (склонность к презрению)." }
+      { name:"Toxic (3) / Токсичный (3)", benefit:"Естественное оружие Toxic (3).", rating:3, hasRating:true },
+      { name:"The Quick and The Dead / Быстрые и Мёртвые", benefit:"Как у Человека: +2 к Инициативе; атаки Орды и «Троек» — как одиночные." },
+      { name:"Abominable Physiology / Изуверская Физиология", benefit:"Иммунитет к ядам, пост-эффектам и зависимости от наркотиков; лечится как Космодесантник +1 Рана в сутки; в начале Хода может затянуть Кровотечение тестом T+0." },
+      { name:"Adaptive Venom / Адаптивная Отрава", benefit:"Укус 1d10 вместо 1d5; за 1/3/5 Очков Бесчестия — другой яд (рана/инъекция/еда) Редкостью до 2/3/4 на 1 укус." },
+      { name:"Constrictor / Удав", benefit:"Хвост в Захвате и Борьбе — пара рук с Unnatural S (6), +20 Athletics; руки свободны." },
+      { name:"Dark Prince's Child / Дитя Тёмного Принца", benefit:"Покровительство Слаанеш, не теряется; на 30/60/90 Inf — Многорукий +2 или +2 к максимуму Очков Бесчестия." },
+      { name:"Vanity Unbound / Безграничное Тщеславие", benefit:"Hatred (Наги) и на мутантов-змей; −20 к общению со змееподобными; не получает преимуществ Командования." }
     ],
-    desc: "Змееподобный результат экспериментов Скульпторов Плоти по воссозданию Лазр."
+    // Машинная часть Безграничного Тщеславия — module/rules/library/naga.mjs.
+    rules: NAGA_RULES,
+    desc: "Змееподобный результат экспериментов Скульпторов Плоти по воссозданию Лаэр."
   },
 
   splice: {
