@@ -204,6 +204,14 @@
   Трудный Ландшафт (`regions/difficult-terrain.mjs`) сюда НЕ входит — у него
   свой механизм игнора (флаг высоты полёта, не elevation региона), зона
   рисуется ГМом вручную и не привязана к конкретному радиусу оружия.
+- **Скорость в полёте (Flyer/Hoverer (X), сверка Гарпии 28.09.2026):**
+  `rules/flight-speed.mjs::flightSpeedOf` — в воздухе SPD = X вместо Ag.b+Размер
+  (`rules/character/movement.mjs`, надбавки «пешком» не прибавляются); X
+  формулой (Flyer (A.b×2)) — флаг `ratingFormula` на Черте (`rules/trait-grant.mjs`),
+  считается от текущих Бонусов. Limited Lift — `rules/limited-lift.mjs`,
+  `system.encumbrance.flight` (Ношение для полёта без S брони, груз с весом
+  силовой брони), запрет взлёта в `showFlightDialog`. Hollow Bones —
+  `rules/hollow-bones.mjs` (T.b вдвое против I(Cr) в `combat/damage.mjs`).
 - Визуализация: `combat/range-cells.mjs`, `range-rings.mjs`,
   `reachable-cells.mjs` (подсветка клеток по Dijkstra).
 - Доп. ходы/действия: `combat/snapshot.mjs`, `assassin-strike.mjs`,
@@ -820,7 +828,12 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - Здравомыслие пилота Дредноута: `rules/dreadnought.mjs`, `sheets/tabs/
   dreadnought-panel.mjs`.
 - Расстройства/Травмы: `data/item/mental-disorder.mjs`, `mental-trauma.mjs`,
-  `sheets/tabs/disorders.mjs`.
+  `sheets/tabs/disorders.mjs`. Тяжесть расстройства (−5…+5, тесты −5×Тяжесть,
+  свой нижний предел неизлечимого `severityMin`, флажок `incurable`) —
+  `rules/disorder-severity.mjs`, кнопки ± на карточке во вкладке Эффекты;
+  стартовое расстройство от источника (Беглый Псайкер: неизлечимо, не ниже −2)
+  — `sheets/tabs/disorders.mjs::grantStartingDisorder`, зовётся записью «Код»
+  Конструктора Архетипа.
 
 ## 10. Расы, Субрасы, Легионы, Пути, Архетипы, Элитные архетипы
 
@@ -847,6 +860,63 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   `apps/mechanics.mjs::syncNullZoneSuppression` (флаг `nullSuppressed`).
 - «Избегает атак Орды как одиночная цель» (Быстрые и Мёртвые, Серый
   Человек) — `rules/horde-single-target.mjs`.
+- Черты Сквата (сверка главы I, 28.09.2026) — `rules/squat-traits.mjs`
+  (читатели возможностей) + `rules/library/squat.mjs` (галочки Умелых Рук
+  +15/+15, отдаёт источник «core»): Расклин +30 (`combat/clear-jam.mjs`),
+  Преимущество на сопротивление Toxic (`hooks.mjs`), лестница Сна «без сна
+  до 3 суток» (`constants/vitals.mjs`, ctx.sleepGraceDays), пороги Мутации
+  Астартес (`mutations.asAstartes`), Бег ≤ Натиска и тест Трудного Ландшафта
+  по Awareness (`rules/character/movement.mjs`, `combat/movement-terrain.mjs`).
+- Репликант (сверка главы I): арифметика Черт — `rules/replicant.mjs`,
+  обвязка — `combat/replicant.mjs`, Предел Крит. Провала тестов I —
+  `rules/library/replicant.mjs`. Алхимическое Чудовище — длительность ×2 в
+  `sheets/tabs/drugs.mjs::applyDrug`, обязательный переброс успеха против
+  яда (`hooks.mjs`, Toxic) и Зависимости (`rollAddictionTest`); Стойкий —
+  порог Усталости «unt» (рейтинг Unnatural T, `rules/fatigue-grace.mjs`) +
+  `healing.astartes`; Амбал — `weapons.legion`; Гипно-Шрамы — Ступор в
+  `rules/kind-outcome.mjs`; Крючок Сывороток — часы `serumHook` в
+  `combat/condition-clock.mjs`, источник правил `serumHook` (блок
+  восстановления S/T), предмет «Сыворотка Репликанта» (флаг
+  `replicantSerum`); Генетическое Угасание — `combat/char-damage.mjs::
+  applyCharDamage`; Срок Годности — блок «СРОК ГОДНОСТИ» вкладки ТЕЛО.
+- Талант «любые N» в записи Конструктора — выбор специализаций из перечня
+  Таланта библиотеки (`rules/talent-spec-choice.mjs`,
+  `apps/mechanics.mjs::resolveTalentSpecChoice`).
+- Йигори (сверка главы I, 28.09.2026): Новые Люди — `rules/new-men.mjs`
+  (возможности на Черте: `immunity.disease` — болезнь не ложится, хук
+  preCreateItem; `newMen.drugs` — `sheets/tabs/drugs.mjs`; `newMen.bleeding` —
+  d20 и T+0 в `combat/condition-ticks.mjs`; `newMen.sleep` — сдвиг порогов Сна
+  `constants/vitals.mjs`; `newMen.surgery`/`newMen.regeneration` —
+  `sheets/tabs/healing.mjs`); Охотники на Ангелов — `rules/library/yigori.mjs`
+  (предикат `targetIsAstartes`); Сознание Стаи — стая (`node.pack`) в
+  `combat/command-state.mjs::packOf` + `rules/command-effects.mjs::
+  effectivePresence`; Феромонные Железы — записи testMod на Черте.
+- Ратлинг (сверка главы I, 28.09.2026): Коротышка — `rules/runt.mjs`
+  (−4 к производному максимуму Ран `system.wounds.effectiveMax` + строка
+  «С учётом Черт» в блоке РАНЫ; винтовке без Compact — свойство longRifle
+  через `combat/weapon-mods.mjs::getModEffects`; без хвата «1р» у двуручного
+  стрелкового — `rules/hands.mjs` и `sheets/attack-dialog.mjs`). Босоногий —
+  условие «босиком» `when.predicates.wearsFootwear:false`
+  (`rules/predicates.mjs::wearsFootwear`: броня с AP на ногах или Маг-Сапоги)
+  и область теста `terrain` (тест Трудного Ландшафта,
+  `combat/movement-terrain.mjs`, теперь с перебросом).
+- Черты Наги (сверка главы I): `rules/naga-traits.mjs` (числа) +
+  `apps/naga-traits.mjs` (обвязка) + `rules/library/naga.mjs`. Возможности
+  по правилу, не по расе: `poison.immune` (Toxic — hooks.mjs, яды-препараты —
+  drugs.mjs), `drugs.afterEffectAddictionImmune`, `healing.extraWoundDaily`
+  (часы Календаря), `bleeding.selfStanchTurnStart` (condition-ticks.mjs),
+  `bite.venomD10`, `grapple.constrictorTail` (хвост — «пара рук», флаг
+  `grappleTail`, hands.mjs), `patronage.lockedSlaanesh`,
+  `infamy.darkPrinceMilestones`, `command.cannotReceive`
+  (command-state.mjs::refusesCommand); цель Ненависти «Мутант-змея»
+  (`TARGET_FEATURES.snakeMutation`), условие `targetSerpentine`.
+- Сплайс (сверка главы I, 28.09.2026): 18 адаптаций — Черты папки
+  `packs-src/traits/Трейты_рас/Адаптации_Сплайса/` с меткой
+  `flags.warhammer-dbc.spliceAdaptation`; выбор — МЕХАНИКА расы
+  (`equipChoiceIds` + `equipBudgetMin` — «до N» в `rules/pick-budget.mjs`);
+  всё сверх трёх — дополнительные: −5% «Ловит на Лету» и надбавка
+  Нестабильного Генома к урону в Характеристики — `rules/splice-adaptations.
+  mjs` (читают `rules/character.mjs` и `combat/char-damage.mjs`).
 - `module/constants/legions.mjs` — Легионы Космодесанта (Геносемя/Культура/
   Проклятье); `rules/legion-fit.mjs`, `legion-upgrade.mjs`.
 - Пути Азуриан: `constants/aeldari-paths.mjs`, `rules/library/paths.mjs`,
@@ -860,11 +930,39 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   mjs`.
 - `module/constants/archetypes.mjs`, `data/item/archetype.mjs`, `apps/
   archetypes.mjs` — Архетипы Мастера создания.
+- Черты Архетипов Людей (сверка 28.09.2026): «провал → Очко Бесчестия →
+  Успех на 1 Успех» — реестр `rules/infamy-fail-success.mjs` (кнопка в
+  карточке теста, `apps/infamy-fail-success.mjs`; Змеиный Язык, Выживальщик); «игнорирует требования по Inf для
+  Миньонов-X» — возможность `minion.ignoreInfamy.<группа>` →
+  `rules/minion-build.mjs::talentRequirements`; Ведун Тьмы (I↔W в ритуалах) —
+  `rules/dark-seer.mjs`; Искусный (+1 Успех на выбранной Характеристике) —
+  `rules/adroit.mjs` + диалог выбора `apps/adroit.mjs`; Забирай Всё —
+  `TAKE_EVERYTHING_FLAG` в `constants/rig.mjs`.
+- «N Характеристик дружественны» у Благородного — `apps/subrace-choice.mjs`
+  (`ARCHETYPE_APTITUDE_CHOICES`); Импланты Механикум — области теста
+  `noosphere`/`coilCharge`, Катушка Потенции — `rules/potentia-coil.mjs`.
 - Элитные архетипы: `constants/elite-archetypes.mjs`, `data/item/
   elite-archetype.mjs`, `rules/elite-requirements.mjs`, `apps/elite-buy.mjs` +
-  `elite-req-builder.mjs`, `sheets/elite-picker.mjs`.
-- Расовые библиотеки правил: `rules/library/{aeldari,astartes,ogryn,core}.mjs`;
+  `elite-req-builder.mjs`, `sheets/elite-picker.mjs`. Предначертанный Путь
+  (Черта Нумена: избранный −1000, всегда базовая цена, не удорожает прочие;
+  выбор ☆ в пикере, метка `flags.warhammer-dbc.fatedPath`) —
+  `rules/fated-path.mjs`, возможность `trait.fatedPath`.
+- Порча «+Nd5 Cor» Архетипа (Ведьма +3d5, Беглый Псайкер +2d5) — запись
+  kind:"corruption" его Конструктора (бросок в чат при выборе, откат при
+  смене Архетипа через `poolApplied`). ИЛИ-выбор Конструктора не предлагает
+  ветки, чьё «Когда» не выполнено (`apps/mechanics.mjs::orChoiceEntries`) —
+  так Нумену видны Дары только своего Бога.
+- Расовые библиотеки правил: `rules/library/{aeldari,astartes,ogryn,replicant,core}.mjs`;
   `rules/ogryn-fit.mjs` (аналог legion-fit для Огринов).
+- Огрин (сверка главы I, 28.09.2026): «Физиология Громилы» — возможности
+  `brutePhysiology.*` на самой Черте (их получает и Миньон «Огрин»):
+  пассивное восстановление Ран по Календарю и Раундам (`rules/ogryn-regen.mjs`,
+  `combat/ogryn-regen.mjs`), не умирает от Кровотечения и снимает Оглушение в
+  конце Хода (`combat/condition-ticks.mjs`), иммунитет к Обескровливанию —
+  запись «Состояние». BONE-Head — `OGRYN_TRAIT_RULES` (источник «core», отбор
+  по Черте): потолок 1 Успех на тестах I (эффект `successDegMax`), автопровал
+  I в поле Haywire 3+ (предикат `haywireFieldMin`), Ступор при 7+
+  (`combat/bone-head.mjs`: попадание Haywire, аура Дискорданта).
 
 ## 11. Происхождения и Предсказания
 
@@ -998,6 +1096,12 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `apps/skillful-torture.mjs` — восстановление Характеристик от пытки.
 
 ## 14. Психосилы, Техночудеса, Мистика, Ритуалы, Варп
+
+- «Усмирение Варпа» (Очко Бесчестия, Cor 20+): кнопки переброса Феномена/
+  Прорыва на карточке манифестации — `combat/calm-warp.mjs` (кнопки,
+  обработчик в `hooks.mjs`), правило — `rules/calm-warp.mjs`; Черта
+  «Имперское Санкционирование» (`trait.imperialSanctioning`) — бесплатный
+  переброс Прорыва после оплаченного переброса Феномена.
 
 - Психосилы: `data/item/psychic-power.mjs`, `rules/psyker.mjs`, `psy-range.
   mjs` (парсер дальности), `psychic-vessel.mjs` (фамильяр/конструкт-
@@ -1143,7 +1247,13 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `data/item/implant.mjs` (механика), `cybernetic.mjs` (просто замена части
   тела, механику несёт implant).
 - `constants/body-map.mjs` (классификация по частям тела), `implants.mjs`
-  (заготовки от архетипов), `implant-mechanics.mjs`.
+  (заготовки от архетипов — запас), `implant-mechanics.mjs`.
+- Импланты Механикум (Еретех/Технодесантник): выдача — `apps/mechanicus-
+  implant-grant.mjs` (из компендиума, уже установленными); модификаторы по
+  Качеству — записи «Модификатор теста» с условием по Качеству на самих
+  имплантах (области `noosphere`/`coilCharge`); Катушка Потенции (−1 Усталость
+  за 2⚡, зарядка Электу-Индукторами) — `rules/potentia-coil.mjs` + кнопки
+  вкладки ТЕХ (`sheets/tabs/tech.mjs`).
 - `apps/surgeon.mjs` (Хирургикон) + `surgeon-plan.mjs` (парная имплантация).
 - `rules/cybernetic-excellence.mjs` + `apps/cybernetic-excellence.mjs`
   (синхронизация Трейта «Многорукий» с покупками Таланта).

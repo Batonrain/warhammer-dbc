@@ -16,6 +16,9 @@ import { esc } from "../helpers/utils.mjs";
 import { raceDef, subraceEntries } from "./race-library.mjs";
 import { clearGrantedBy, withOriginLock } from "./origin-shared.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
+import { ruleFlags } from "../rules/flags.mjs";
+import { lockedPatron } from "../rules/patron-lock.mjs";
+import { INTEGRAL_CHOSEN_FLAG, partialRemoval, integralEntriesNamed } from "../rules/integral-rating.mjs";
 import { applyItemMechanics } from "./mechanics.mjs";
 import { needsAptitudeChoice, promptSubraceAptitudeChoice, applySubraceAptitudeChoice } from "./subrace-choice.mjs";
 
@@ -81,6 +84,18 @@ export function raceCharsUpdate(actor, chars) {
   for (const [k, v] of Object.entries(chars || {}))
     if ((cur[k]?.base || 0) === 0) upd[`system.characteristics.${k}.base`] = v;
   return upd;
+}
+
+/**
+ * Стартовая Порча расы (столбец Cor таблицы) — по тому же правилу, что и
+ * Характеристики: только в пустой счётчик. Уже набранную Порчу раса не
+ * трогает — это игра персонажа, а не его происхождение.
+ */
+export function raceCorruptionUpdate(actor, startCorruption) {
+  const v = Number(startCorruption) || 0;
+  if (v <= 0) return {};
+  if ((Number(actor?.system?.corruption?.value) || 0) !== 0) return {};
+  return { "system.corruption.value": v };
 }
 
 /**
@@ -176,7 +191,8 @@ export async function applyRace(actor, key, { tag = "race", mirror = true } = {}
 
   await actor.update({
     ...(mirror ? { "system.race": key, ...(raceUnchanged ? {} : { "system.subrace": "" }) } : {}),
-    ...raceCharsUpdate(actor, def?.chars || {})
+    ...raceCharsUpdate(actor, def?.chars || {}),
+    ...raceCorruptionUpdate(actor, def?.startCorruption)
   });
 
   ui.notifications?.info(`🧬 ${mirror ? "Раса" : "Прошлое"}: ${def?.label || key}.`);
@@ -211,6 +227,40 @@ export async function applySubrace(actor, key) {
 
   await clearSubrace(actor);
 
+  // Субрасы отменяют часть расовых Черт (друкхари, Тзаангор) — ДО выдачи
+  // своих: Слаангор заменяет Digitigrade (1) расы на свой Digitigrade (3), и
+  // снятие после выдачи смело бы обе копии. Имена в `removesTraits` и на
+  // Черте почти никогда не совпадают посимвольно: данные книги называют Черту
+  // одной половиной («Natural Weapons»), а предмет в паке — двуязычно
+  // («Natural Weapons / Естественное Оружие»). Сверка идёт через itemHasName
+  // (rules/predicates.mjs) — тем же способом, что и предикат `hasTrait`: по
+  // РАВЕНСТВУ половины двуязычного имени, а не по вхождению подстроки, иначе
+  // «Natural Weapons» снёс бы заодно другую Черту — «Deadly Natural Weapons».
+  //
+  // Запись со скобками — «Natural Weapons (Рога, Когти)» у Тзаангора — снимает
+  // не Черту целиком, а только названные естественные атаки: их оружие
+  // удаляется, а из выбора Черты (INTEGRAL_CHOSEN_FLAG) они вычёркиваются,
+  // чтобы пересинхронизация не выдала их обратно. Укус и Копыта остаются.
+  const drop = (def?.removesTraits || []).map(partialRemoval);
+  if (drop.length) {
+    const whole = drop.filter(d => !d.parts.length);
+    const ids = actor.items
+      .filter(i => i.type === "trait" && whole.some(d => itemHasName(i, d.name)))
+      .map(i => i.id);
+    for (const d of drop.filter(x => x.parts.length)) {
+      for (const trait of actor.items.filter(i => i.type === "trait" && itemHasName(i, d.name))) {
+        const gone = new Set(integralEntriesNamed(trait.getFlag(FLAG, "mechanics") || [], d.parts).map(e => e.id));
+        const chosen = trait.getFlag(FLAG, INTEGRAL_CHOSEN_FLAG);
+        if (Array.isArray(chosen)) await trait.setFlag(FLAG, INTEGRAL_CHOSEN_FLAG, chosen.filter(id => !gone.has(id)));
+        for (const w of actor.items) {
+          if (w.type === "weapon" && w.getFlag(FLAG, "grantedByItem") === trait.id
+              && gone.has(w.getFlag(FLAG, "equipEntryId"))) ids.push(w.id);
+        }
+      }
+    }
+    if (ids.length) await actor.deleteEmbeddedDocuments("Item", ids);
+  }
+
   const src = def?.uuid ? await fromUuid(def.uuid).catch(() => null) : null;
   if (src) {
     const data = src.toObject();
@@ -220,9 +270,10 @@ export async function applySubrace(actor, key) {
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), [GRANT]: "subrace",
       subraceTier: Math.max(1, Number(actor.system.subraceTier) || 1) } };
     // Хук createItem применит Механику носителя асинхронно и Foundry его
-    // промис не ждёт (Hooks.callAll не await'ит колбэки) — фильтр removesTraits
-    // ниже читает actor.items СРАЗУ и может пробежать раньше хука, не увидев
-    // ещё не выданные субрасовые Черты (Находка I3, wdbc-n1k). Применяем
+    // промис не ждёт (Hooks.callAll не await'ит колбэки) — код ниже (замок
+    // Покровителя, Мастер создания следом) читает actor.items СРАЗУ и может
+    // пробежать раньше хука, не увидев ещё не выданные субрасовые Черты
+    // (Находка I3, wdbc-n1k — тогда это был фильтр removesTraits). Применяем
     // Механику сами и синхронно ждём — а SKIP_MECHANICS_HOOK в опциях
     // создания говорит хуку не применять её ещё раз следом (см. константу
     // выше: идемпотентности applyItemMechanics тут НЕ хватает — оба вызова
@@ -241,22 +292,15 @@ export async function applySubrace(actor, key) {
     }
   }
 
-  // Субрасы друкхари отменяют часть расовых Черт. Имена в `removesTraits` и на
-  // Черте почти никогда не совпадают посимвольно: данные книги называют Черту
-  // одной половиной («Natural Weapons»), а предмет в паке — двуязычно
-  // («Natural Weapons / Естественное Оружие»). Сверка идёт через itemHasName
-  // (rules/predicates.mjs) — тем же способом, что и предикат `hasTrait`: по
-  // РАВЕНСТВУ половины двуязычного имени, а не по вхождению подстроки, иначе
-  // «Natural Weapons» снёс бы заодно другую Черту — «Deadly Natural Weapons».
-  const drop = def?.removesTraits || [];
-  if (drop.length) {
-    const ids = actor.items
-      .filter(i => i.type === "trait" && drop.some(name => itemHasName(i, name)))
-      .map(i => i.id);
-    if (ids.length) await actor.deleteEmbeddedDocuments("Item", ids);
-  }
-
   await actor.update({ "system.subrace": key });
+
+  // «Не может потерять покровительство <Бога>» (субрасы Зверолюда):
+  // закреплённый Бог ставится сам, если Покровитель был другим или пустым.
+  const locked = lockedPatron(ruleFlags(actor));
+  if (locked && actor.system?.patronGod !== locked) {
+    await actor.update({ "system.patronGod": locked });
+    ui.notifications?.info(`${actor.name}: ${def.label} — Покровитель выставлен по субрасе.`);
+  }
 }
 
 /** Иннари: бонусы Прошлого (бывшей расы) + Черты Иннари. */

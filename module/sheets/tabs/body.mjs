@@ -15,6 +15,7 @@ import { satisfyAddiction, setAddictionSubstance } from "../../rules/addiction.m
 import { registerBloodFlameKill, LAST_DAMAGE_WEAPON_FLAG } from "../../combat/blood-flame.mjs";
 import { registerLegacyDreadfulKill } from "../../combat/legacy-weapon-kill-credit.mjs";
 import { registerLegacySlaughterKill } from "../../rules/legacy-weapon.mjs";
+import { takeSerum, rollLifespan } from "../../combat/replicant.mjs";
 
 /** Переключить фигуру муж./жен. Значение приходит из data-атрибута кнопки. */
 export async function toggleBodyType(actor, current) {
@@ -179,6 +180,16 @@ export function activateBodyListeners(root, actor, { openSurgeonWindow = openSur
   on(root, "[data-dep-substance]", "change", ev => {
     const item = actor.items.get(ev.currentTarget.dataset.depSubstance);
     if (item) setAddictionSubstance(item, ev.currentTarget.value);
+  });
+
+  // Репликант: «Принять сыворотку» и бросок срока жизни (combat/replicant.mjs).
+  on(root, "[data-serum-take]", "click", ev => {
+    ev.preventDefault();
+    takeSerum(actor);
+  });
+  on(root, "[data-lifespan-roll]", "click", ev => {
+    ev.preventDefault();
+    rollLifespan(actor);
   });
 
   const figPanel = root.querySelector(".bc-figure-panel");

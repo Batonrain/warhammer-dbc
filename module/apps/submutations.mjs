@@ -28,6 +28,7 @@ import { parseSubmutations, submutationByRoll, subShiftLimit, subShiftOptions,
          multiRollCount, multiRollResults }
   from "../rules/submutations.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -178,7 +179,9 @@ export async function rollSubmutation(item, { actor = null, fromFailure = false 
     return pickDialog(item, owner, table);
   }
 
-  const undivided = patron === "undivided";
+  // Пасынки Богов (Зверолюд): «всегда бросает только один кубик на мутации
+  // и субмутации» — второго броска Неделимого нет.
+  const undivided = patron === "undivided" && !hasRuleFlag(owner, "mutation.singleDie");
   const roll1 = await new Roll(`1d${table.die}`).evaluate();
   const roll2 = undivided ? await new Roll(`1d${table.die}`).evaluate() : null;
 

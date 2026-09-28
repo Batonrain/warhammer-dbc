@@ -117,7 +117,11 @@ function scopeTarget(rawScope, entry, ruleId, what) {
   // демона против Экзорцизма/Чистой Демонологии (daemon-sheet.mjs::
   // _rollVsExorcism, kind:"vsExorcism") — обычный "opposed" сработал бы на
   // ЛЮБОМ встречном тесте, что книга не говорит.
-  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "morale", "climbing", "vsExorcism"].includes(scope)) return scope;
+  // terrain — тест Трудного Ландшафта (Бег/Натиск через зону,
+  // combat/movement-terrain.mjs, ctx.terrain): Barefoot / Босоногий Ратлинга —
+  // «+20 и переброс», Cloven One / Копытный Зверолюда — «+20». Не «char:ag»:
+  // тот ловил бы любой тест Ловкости.
+  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "morale", "climbing", "terrain", "vsExorcism", "noosphere", "coilCharge"].includes(scope)) return scope;
   if (scope === "char") {
     const key = String(entry.rerollChar || "").trim();
     if (key) return `char:${key.toLowerCase()}`;

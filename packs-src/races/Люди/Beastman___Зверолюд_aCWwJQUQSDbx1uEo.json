@@ -20,7 +20,7 @@
     },
     "bonusRolls": 2,
     "skills": "",
-    "gear": "4 элемента Снаряжения/Инструментов до R1 (1 Good.Q)",
+    "gear": "4 элемента Снаряжения и Инструментов до R1, из них 1 Good.Q",
     "talents": "",
     "description": "Звероподобный мутант человека: примитивный, но воинственный и агрессивный.",
     "notes": "",
@@ -32,6 +32,15 @@
     "fateRoll": "",
     "skillsNote": "",
     "adaptations": "",
+    "startCorruption": 5,
+    "archetypes": [
+      "apostate",
+      "heresiarch",
+      "renegade",
+      "pirate",
+      "savage",
+      "witch"
+    ],
     "bookSource": "DoomBC — Основная книга"
   },
   "_id": "aCWwJQUQSDbx1uEo",
@@ -210,7 +219,13 @@
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
               "label": "",
-              "code": ""
+              "code": "",
+              "integralPreset": [
+                "Рога",
+                "Укус",
+                "Когти",
+                "Копыта"
+              ]
             },
             {
               "id": "6vRFbtMlmrEL9N5z",

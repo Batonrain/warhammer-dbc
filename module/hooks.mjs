@@ -12,7 +12,10 @@ import { isRuleUsageUsed, markRuleUsageUsed,
          isRoundCapabilityAvailable, markRoundCapabilityUsed } from "./apps/game-session.mjs";
 import { fatePoolLabel }                 from "./rules/fate-save.mjs";
 import { spendFromInfamyPool }           from "./apps/infamy-points.mjs";
+import { spendInfamyForFailSuccess }     from "./apps/infamy-fail-success.mjs";
+import { onAdroitTraitCreated }          from "./apps/adroit.mjs";
 import { tempInfamyAmount }              from "./rules/temp-infamy.mjs";
+import { inspiringChampionsFor, spendInspiringInfamy } from "./combat/inspiring-presence.mjs";
 import { applyWoundLoss, woundDeathThreshold } from "./rules/wounds.mjs";
 import { fateBonusOutcome, FATE_BONUS }  from "./rules/fate-bonus.mjs";
 import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger, applyMonofilamentHit } from "./combat/damage.mjs";
@@ -53,6 +56,7 @@ import { processVultureTurnStart } from "./combat/vulture.mjs";
 import { processIrradiatedTurnStart } from "./combat/irradiated.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "./combat/weapon-mods.mjs";
 import { fatalismBlocksPower } from "./rules/fatalism.mjs";
+import { handleCalmWarpClick } from "./combat/calm-warp.mjs";
 import { everYouthfulBlocksPower } from "./rules/ever-youthful.mjs";
 import { eaterOfPainBenefitUpdate, eaterOfPainChoiceButtonsHtml } from "./rules/eater-of-pain.mjs";
 import { fateTerm, esc, resolveCharFormula } from "./helpers/utils.mjs";
@@ -106,6 +110,8 @@ import { DEVOURER_OF_KNOWLEDGE_CAPABILITY, DEVOURER_THEFTS_FLAG, expiredTheftEnt
 import { planFleshmetalRegen, FLESHMETAL_CAPABILITY, FLESHMETAL_FLAG }
   from "./rules/fleshmetal-regen.mjs";
 import { hasRuleFlag as hasFleshmetalFlag } from "./rules/flags.mjs";
+import { ALCHEM_MONSTER, mustRerollSuccess } from "./rules/replicant.mjs";
+import { poisonImmunitySource } from "./apps/naga-traits.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { liftDivineProtection, wakeDivineProtected } from "./sheets/tabs/death.mjs";
@@ -131,6 +137,7 @@ import { isHunterHoundActor } from "./rules/the-hunter.mjs";
 import { applyHyperGrowthTick } from "./apps/hyper-growth.mjs";
 import { showHerdSpiritsAllocationDialog } from "./apps/herd-spirits-summon.mjs";
 import { clearBeastmanShamanTempEffects, clearHexMarkedPreyMarks } from "./combat/beastman-shaman.mjs";
+import { endBattleFormsOnCombatEnd } from "./apps/battle-forms.mjs";
 import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
 import { WC_CODE } from "./constants/ship.mjs";
@@ -143,11 +150,20 @@ import { SKILLS_DEF } from "./constants/skills.mjs";
 import { performUnarmedRiposte, UNARMED_RIPOSTE_USED_FLAG } from "./combat/unarmed-combat.mjs";
 import { resolveResistClick } from "./combat/opposed-contest.mjs";
 import { maybeAutoReleaseGrapple, grappleReleaseTriggered } from "./combat/grapple.mjs";
-import { weaponProfiles } from "./combat/weapon-profiles.mjs";
+import { weaponProfiles, attackIsMelee } from "./combat/weapon-profiles.mjs";
+// Огневая Точка (Хавок) и Хирургия Легиона (Апотекарий) — пункты меню Очков карточки.
+import { firePointFreeReroll, firePointActivatesOnPaidReroll } from "./rules/fire-point.mjs";
+import { activateFirePoint } from "./combat/fire-point.mjs";
+import { hasLegionSurgery, legionSurgeryTestEligible } from "./rules/legion-surgery.mjs";
+import { legionSurgeryOnCard } from "./combat/legion-surgery.mjs";
 import { isIntegralAttack } from "./combat/equipped-melee.mjs";
 import { collectTestMods } from "./rules/roll-mods.mjs";
+import { rollD100WithReroll } from "./rules/test-kind-widget.mjs";
+import { poisonResistReroll } from "./rules/squat-traits.mjs";
 import { expireCommandsAtTurnStart, clearCommandsOnCombatEnd, commandMoraleOn } from "./combat/command-state.mjs";
 import { syncArmorFieldShields } from "./combat/armor-field-shield.mjs";
+import { ogrynRegenCombatRound } from "./combat/ogryn-regen.mjs";
+import { decayHaywireFields, onDiscordantFieldEntered } from "./combat/bone-head.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
 // updateCombat ниже) сама отслеживает, чей Ход только что закончился.
@@ -504,6 +520,23 @@ export function registerHooks() {
           yes: { label: "Удалить" }, no: { label: "Отмена" }
         });
         if (ok) await actor.delete();
+      });
+    });
+
+    // Провал → Очко Бесчестия → Успех на 1 Успех (Змеиный Язык Отступника и
+    // т.п., module/apps/infamy-fail-success.mjs). Актор — по uuid карточки:
+    // тратит тот, кто провалил тест, а не тот, чей токен выбран.
+    html.querySelectorAll(".wh-infamy-fail-success-btn").forEach(btn => {
+      if (message.getFlag?.("warhammer-dbc", "infamyFailSuccessUsed")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor) { ui.notifications?.warn("Персонаж не найден."); return; }
+        if (!actor.isOwner) { ui.notifications?.warn("Тратить Очко Бесчестия может только владелец персонажа."); return; }
+        const done = await spendInfamyForFailSuccess(actor, el.dataset.capability || "",
+          { testLabel: el.dataset.testLabel || "", message });
+        if (done) el.disabled = true;
       });
     });
 
@@ -974,6 +1007,15 @@ export function registerHooks() {
         // их заново.
         await revertFearFailure(actor, ctx.failUndo);
         await _executeFearRoll(actor, ctx.ratingKey, ctx.type, ctx.infamy, ctx.mod, ctx.properties, { free: true });
+      });
+    });
+
+    // «Усмирение Варпа» / Имперское Санкционирование — переброс Феномена или
+    // Прорыва с карточки манифестации (combat/calm-warp.mjs).
+    html.querySelectorAll(".wh-calm-warp-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        await handleCalmWarpClick(message, ev.currentTarget);
       });
     });
 
@@ -2299,6 +2341,22 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
   if (actor.type === "horde" && condition === "burning") {
     return rollHordeFlameTest(actor, { testChar: testChar || "ag", testMod, messageId, force, label });
   }
+  // Иммунитет к ядам (Изуверская Физиология Наги и т.п., wdbc naga): Toxic
+  // не травит вовсе — ни теста, ни Отравления, ни доп. урона. Одного
+  // иммунитета к Состоянию (kind:"condition") мало: урон ниже катится и без
+  // наложенного Отравления.
+  if (condition === "poisoned") {
+    const poisonImmune = poisonImmunitySource(actor);
+    if (poisonImmune) {
+      return ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor }),
+        content: `<div class="wh-roll-result">
+          <div class="roll-header">${label} → ${esc(actor.name)}</div>
+          <div class="roll-outcome"><span class="roll-success">${esc(poisonImmune)}: иммунитет к ядам — ни Отравления, ни урона</span></div>
+        </div>`
+      });
+    }
+  }
 
   const allRolls = [];
 
@@ -2316,9 +2374,24 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
     // другим condition и этот флаг не несут.
     const resistMods = collectTestMods(actor, { kind: "skill", char: testChar, poisonTest: condition === "poisoned" });
     const threshold = charTotal + testMod + resistMods.total;
-    const roll      = await new Roll("1d100").evaluate();
-    allRolls.push(roll);
-    const rv        = roll.total;
+    // Преимущество против яда (Крепкий как Камень, rules/squat-traits.mjs):
+    // дважды, берётся лучший — тот же бросок, что у Кубика диалога.
+    let { rv, rolls: resistRolls, rerollNote } =
+      await rollD100WithReroll(poisonResistReroll(actor, condition));
+    allRolls.push(...resistRolls);
+    // Alchem Monster / Алхимическое Чудовище (Репликант): «должен
+    // перебрасывать успешные тесты против ядов» — один раз, второй окончателен.
+    // Идёт ПОСЛЕ Преимущества: оба правила у одного носителя складываются
+    // в «лучший из двух, но успех всё равно перебрасывается».
+    let alchemNote = "";
+    if (condition === "poisoned"
+        && mustRerollSuccess(rv <= threshold, hasFleshmetalFlag(actor, ALCHEM_MONSTER))) {
+      const first = rv;
+      const roll = await new Roll("1d100").evaluate();
+      allRolls.push(roll);
+      rv = roll.total;
+      alchemNote = `<div class="roll-threshold">⚗️ Алхимическое Чудовище: успех против яда (${first}) обязательно перебрасывается → <b>${rv}</b></div>`;
+    }
     resisted        = rv <= threshold;
     deg             = Math.max(1, Math.floor(Math.abs(rv - threshold) / 10) + 1);
     // Плашка Бросок/Режим/Порог — общим сборщиком (wdbc-fyvv): слагаемые
@@ -2327,10 +2400,10 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
       label: testChar.toUpperCase(), base: charTotal,
       parts: [testMod !== 0 ? `${testMod >= 0 ? "+" : ""}${testMod}` : "", ...resistMods.parts],
       threshold, rv
-    });
-    resistOutcome = resisted
+    }) + alchemNote;
+    resistOutcome = rerollNote + (resisted
       ? `<span class="roll-success">Цель сопротивилась — эффект не наложен</span>`
-      : `<span class="roll-failure">Провал (${deg} ст.) — эффект наложен</span>`;
+      : `<span class="roll-failure">Провал (${deg} ст.) — эффект наложен</span>`);
   }
 
   // Состояния, которые накладываем при провале. minDoP (Вибро — Ничком только
@@ -2637,6 +2710,43 @@ function _attachFateContextMenu(message, html) {
     );
     menu.appendChild(btnBonus);
 
+    // Вдохновляющее Присутствие (Чемпион, combat/inspiring-presence.mjs):
+    // переброс за Очко союзного Чемпиона, в чьём поле зрения бросающий.
+    const inspireBtns = inspiringChampionsFor(actor).map(ch => {
+      const b = _makeFateMenuItem(
+        `Переброс за Очко Бесчестия: ${ch.actor.name} (${ch.pool})`,
+        !ch.reason,
+        ch.reason || "Вдохновляющее Присутствие Чемпиона — можно и после другого переброса"
+      );
+      menu.appendChild(b);
+      return { b, ch };
+    });
+    // Атака этой карточки: стрелковая ли (Огневая Точка — только стрелковые)
+    // и не переброс ли уже (переброс переброса книга не даёт; повтор атаки
+    // из этого меню всегда идёт со skipAmmo — это и есть метка «та же атака»).
+    const atkCtx = message.flags?.["warhammer-dbc"]?.attack ?? null;
+    const atkCtxActor = atkCtx ? (game.actors?.get(atkCtx.actorId) ?? actor) : null;
+    const atkCtxItem = atkCtx ? atkCtxActor?.items?.get(atkCtx.itemId) : null;
+    const atkIsMelee = atkCtxItem
+      ? attackIsMelee(atkCtxItem.system, { forceMelee: atkCtx.opts?.forceMelee, profile: atkCtx.opts?.profile })
+      : true;
+    const atkRerolled = !!atkCtx?.opts?.skipAmmo;
+
+    // Огневая Точка (Хавок): пока точка занята — переброс стрелковой атаки без траты Очка.
+    const btnFirePoint = (atkCtxItem && firePointFreeReroll(atkCtxActor, { isMelee: atkIsMelee, rerolled: atkRerolled }))
+      ? _makeFateMenuItem("Переброс — Огневая Точка (без траты Очка)", true) : null;
+    if (btnFirePoint) menu.appendChild(btnFirePoint);
+
+    // Хирургия Легиона (Апотекарий): проваленный тест Medicae / For.Lore
+    // (Astartes Implants), брошенный с листа, — за Очко засчитать с 1 Успехом.
+    const skillTest = message.flags?.["warhammer-dbc"]?.skillTest ?? null;
+    const btnLegionSurgery = (skillTest && !skillTest.success && hasLegionSurgery(actor)
+      && legionSurgeryTestEligible(skillTest))
+      ? _makeFateMenuItem("Хирургия Легиона — Успех с 1 Успехом", canSpend,
+          !canSpend ? `Нет ${ft.plural}` : "")
+      : null;
+    if (btnLegionSurgery) menu.appendChild(btnLegionSurgery);
+
     document.body.appendChild(menu);
 
     // Закрытие по клику вне меню
@@ -2651,17 +2761,22 @@ function _attachFateContextMenu(message, html) {
     }, 50);
 
     // ── Переброс ──────────────────────────────────────────────────────────
-    btnReroll.addEventListener("click", async (ev2) => {
+    // champion — Чемпион с Вдохновляющим Присутствием, чьё Очко тратится
+    // вместо своего (null — обычный переброс за своё).
+    const doReroll = async (ev2, champion = null) => {
       ev2.stopPropagation();
       menu.remove();
       document.removeEventListener("click", closeMenu);
 
-      if (!canSpend) return;
+      if (!champion && !canSpend) return;
 
       // Тратим очко судьбы — временный запас (wdbc-e728) уходит первым.
-      const reroll1 = await spendFromInfamyPool(actor, 1, "system.fate.value");
+      const reroll1 = champion
+        ? await spendInspiringInfamy(champion, actor)
+        : await spendFromInfamyPool(actor, 1, "system.fate.value");
       if (!reroll1) return;
-      await actor.update({ "system.fate.value": reroll1.poolValue });
+      if (!champion) await actor.update({ "system.fate.value": reroll1.poolValue });
+      const payerNote = champion ? ` (Очко Чемпиона ${champion.name} — Вдохновляющее Присутствие)` : "";
 
       // Если это была атака — повторяем атаку целиком (новый бросок d100,
       // место попадания, урон, кнопки защиты), а не «голый» переброс.
@@ -2673,7 +2788,12 @@ function _attachFateContextMenu(message, html) {
           await _executeAttackRoll(atkActor, atkItem, atk.charKey, atk.threshold,
             atk.rofMode, atk.aimTarget, { ...(atk.opts || {}), skipAmmo: true });
           ui.notifications.info(
-            `✨ ${actor.name} тратит ${ft.one} на переброс атаки! Осталось: ${reroll1.poolValue}`);
+            `✨ ${actor.name} тратит ${ft.one} на переброс атаки${payerNote}! Осталось: ${reroll1.poolValue}`);
+          // Огневая Точка (Хавок): «Когда Хавок тратит Очко Бесчестия на
+          // переброс стрелковой атаки…» — точка занята с этого момента.
+          if (firePointActivatesOnPaidReroll(atkActor, { isMelee: atkIsMelee })) {
+            await activateFirePoint(atkActor, `Переброс стрелковой атаки за ${ft.one}`);
+          }
           return;
         }
       }
@@ -2727,7 +2847,7 @@ function _attachFateContextMenu(message, html) {
         title: `Переброс за ${ft.one}`,
         lines: [
           `<div class="roll-damage-meta">
-            ${ft.word} потрачена (осталось: ${reroll1.poolValue})
+            ${ft.word} потрачена${esc(payerNote)} (осталось: ${reroll1.poolValue})
           </div>`,
           rollStatLine({ threshold, rv }),
           blessedFitsLine
@@ -2736,8 +2856,31 @@ function _attachFateContextMenu(message, html) {
       }, { rolls: [newRoll], speaker: message.speaker });
 
       ui.notifications.info(
-        `✨ ${actor.name} тратит ${ft.one} на переброс! Осталось: ${reroll1.poolValue}`
+        `✨ ${actor.name} тратит ${ft.one} на переброс${payerNote}! Осталось: ${reroll1.poolValue}`
       );
+    };
+    btnReroll.addEventListener("click", ev2 => doReroll(ev2));
+    for (const { b, ch } of inspireBtns) {
+      if (!ch.reason) b.addEventListener("click", ev2 => doReroll(ev2, ch.actor));
+    }
+
+    // ── Огневая Точка: переброс без траты Очка ────────────────────────────
+    btnFirePoint?.addEventListener("click", async (ev2) => {
+      ev2.stopPropagation();
+      menu.remove();
+      document.removeEventListener("click", closeMenu);
+      await _executeAttackRoll(atkCtxActor, atkCtxItem, atkCtx.charKey, atkCtx.threshold,
+        atkCtx.rofMode, atkCtx.aimTarget, { ...(atkCtx.opts || {}), skipAmmo: true });
+      ui.notifications.info(`🎯 ${atkCtxActor.name}: Огневая Точка — переброс атаки без траты Очка.`);
+    });
+
+    // ── Хирургия Легиона: провал → Успех с 1 Успехом ─────────────────────
+    btnLegionSurgery?.addEventListener("click", async (ev2) => {
+      ev2.stopPropagation();
+      menu.remove();
+      document.removeEventListener("click", closeMenu);
+      if (!canSpend) return;
+      await legionSurgeryOnCard(actor, skillTest.label || "Тест");
     });
 
     // ── +10 к броску ──────────────────────────────────────────────────────
@@ -2915,6 +3058,8 @@ function _attachFateContextMenu(message, html) {
     await releaseControlOnCombatEnd(combat);
     // Метка Проклятой Метки (wdbc-xxb7) — та же логика «до конца боя».
     await clearHexMarkedPreyMarks(combat);
+    // Боевые формы субрас Зверолюда (apps/battle-forms.mjs) — «до конца боя или сцены».
+    await endBattleFormsOnCombatEnd(combat);
     // Аблативные Раны Саркофага Дредноута против варп-оружия — полностью
     // восполняются к концу боя (стр. 57, wdbc-drn).
     await refillSarcophagusWarpWounds(combat);
@@ -2942,6 +3087,21 @@ function _attachFateContextMenu(message, html) {
       // штраф на цели — та же логика «до конца боя», что у щита выше.
       if (combatant.actor) await clearLegacyPunisherStacks(combatant.actor);
     }
+  });
+
+  // Огрин (сверка расы): 5 секунд боя за Раунд — время и для пассивного
+  // восстановления Ран «Физиологии Громилы», и для затухания поля Haywire
+  // вокруг BONE-Head. Раунд в этой системе worldTime не двигает (см. ниже),
+  // поэтому часы Календаря этих секунд не видят.
+  Hooks.on("updateCombat", async (combat, changed) => {
+    if (!game.user.isGM || changed?.round === undefined) return;
+    await ogrynRegenCombatRound(combat, changed);
+    await decayHaywireFields(combat, changed);
+  });
+  // BONE-Head: вошёл в ауру Дискорданта (Haywire 7) — Ступор на 1 Раунд.
+  // Только у клиента, выдавшего Черту-метку, — иначе Ступор наложил бы каждый.
+  Hooks.on("createItem", async (item, options, userId) => {
+    if (userId === game.user?.id) await onDiscordantFieldEntered(item);
   });
 
   // Временные выдачи Черт с ограниченным сроком (rules/temp-grant.mjs,
@@ -3310,6 +3470,9 @@ function _attachFateContextMenu(message, html) {
   Hooks.on("createItem", async (item, options, userId) => {
     if (userId === game.user?.id && isLossOfLimbMutation(item)) await syncLossOfLimbMutation(item);
   });
+  // Искусный (Adroit, Ренегат): выбор Характеристики при получении Черты —
+  // только у того, кто Черту положил (module/apps/adroit.mjs).
+  Hooks.on("createItem", (item, options, userId) => onAdroitTraitCreated(item, userId));
   Hooks.on("updateItem", async (item, changes, options, userId) => {
     if (userId === game.user?.id && changes?.system?.submutation && isLossOfLimbMutation(item)) await syncLossOfLimbMutation(item);
   });

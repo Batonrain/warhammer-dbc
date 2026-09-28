@@ -378,7 +378,7 @@ describe("tech resources", () => {
 
     rollTechScan(actor(), (...args) => calls.push(args));
 
-    expect(calls[0]).toEqual(["📡 Ноосферное Сканирование (Tech-Use)", 50, "int", { skill: "techUse" }]);
+    expect(calls[0]).toEqual(["📡 Ноосферное Сканирование (Tech-Use)", 50, "int", { skill: "techUse", noosphere: true }]);
   });
 });
 
@@ -407,7 +407,7 @@ describe("tech sheet listeners", () => {
     expect(a.updates[0]).toEqual({ "system.cognition.value": 4 });
     expect(a.updates[1]).toEqual({ "system.energy.value": 3 });
     expect(a.updates[2]).toEqual({ "system.cognition.value": 6 });
-    expect(rolls[0]).toEqual(["📡 Ноосферное Сканирование (Tech-Use)", 50, "int", { skill: "techUse" }]);
+    expect(rolls[0]).toEqual(["📡 Ноосферное Сканирование (Tech-Use)", 50, "int", { skill: "techUse", noosphere: true }]);
     expect(implant.flags[0]).toEqual({ scope: "warhammer-dbc", key: "techActive", value: true });
   });
 });

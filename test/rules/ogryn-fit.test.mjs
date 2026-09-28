@@ -72,3 +72,21 @@ describe("ogrynAttackPenalty: Best.Q Откатная Перчатка (wdbc-vsm
     expect(out.total).toBe(OGRYN_STEP);
   });
 });
+
+// Книга (Огрин, «Физиология Громилы»): «штраф –10 на использование оружия без
+// свойства Ogrynized (КРОМЕ ГРАНАТ)». Собственные кулак/пинок/удар головой —
+// часть тела Огрина, не «оружие не по руке» [допущение; поломка
+// (combat/ogryn-weapon-break.mjs) исключает их по той же причине].
+describe("ogrynAttackPenalty: исключения обратной стороны", () => {
+  it("граната без Ogrynized — без штрафа", () => {
+    expect(ogrynAttackPenalty({ hasOgrynized: false, isRanged: true, isGrenade: true, ...ogryn }).total).toBe(0);
+  });
+
+  it("свой кулак (интегральная атака) — без штрафа", () => {
+    expect(ogrynAttackPenalty({ hasOgrynized: false, isNatural: true, ...ogryn }).total).toBe(0);
+  });
+
+  it("чужаку граната огринской не становится: огринская граната в руках человека штрафуется как прежде", () => {
+    expect(ogrynAttackPenalty({ hasOgrynized: true, isGrenade: true, ...human }).total).toBe(3 * OGRYN_STEP);
+  });
+});

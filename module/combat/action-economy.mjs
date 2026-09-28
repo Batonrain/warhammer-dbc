@@ -35,6 +35,7 @@ import { isStunnedOrDazed } from "../rules/predicates.mjs";
 import { shockApLocked, shockHalfAction } from "../rules/shock.mjs";
 import { turnStartFlagClears, turnStartAttackCarryOver, turnStartSqueezeCarryOver } from "../rules/turn-flags.mjs";
 import { rollLegacyChangeBonus, tickLegacyExcessBoost } from "../rules/legacy-weapon.mjs";
+import { implantDisrupted, mentalApCost } from "../rules/bone-head.mjs";
 
 /** Типы акторов, несущих экономику действий (общая часть — _creature.mjs). */
 export const ACTION_ECONOMY_ACTOR_TYPES = ["character", "daemon", "demonPrince", "minion", "horde"];
@@ -296,10 +297,21 @@ function warnBlocked(actor, reason, what) {
  * формальные нулевые вызовы, напр. Натиск до броска) Состояниями не гейтится:
  * эти вызовы ничего не списывают, а ОД на действие потом спишет настоящая трата.
  */
-export function canSpendActionPoints(actor, cost, { physical } = {}) {
+/**
+ * Цена траты ОД для этого актора. BONE-Head Огрина со сбитым имплантом
+ * (поле Haywire 3+, rules/bone-head.mjs): ментальное действие
+ * (physical:false) — вдвое. sustained — Ход Длительного действия: у него при
+ * сбое удлиняется срок (combat/sustained-action.mjs), а не цена Хода.
+ */
+export function effectiveApCost(actor, cost, { physical, sustained = false } = {}) {
+  if (sustained || physical !== false) return Number(cost) || 0;
+  return mentalApCost(cost, { physical, disrupted: implantDisrupted(actor) });
+}
+
+export function canSpendActionPoints(actor, cost, { physical, sustained = false } = {}) {
   if (!cost || !isEncounterActive() || !hasActionEconomy(actor)) return true;
   if (actionBlockReason(actor, { physical })) return false;
-  return (Number(actor.system.actionPoints?.value) || 0) >= cost;
+  return (Number(actor.system.actionPoints?.value) || 0) >= effectiveApCost(actor, cost, { physical, sustained });
 }
 
 /**
@@ -372,14 +384,20 @@ async function _maybeClearAiming(actor) {
  * см. actionBlockReason. Отказ по Состоянию сам пишет уведомление с причиной
  * (wdbc-x1nz.2.87/.88) — «не хватает ОД» вызывающей стороны тогда лишь вторит.
  */
-export async function spendActionPoints(actor, cost, { physical } = {}) {
-  if (!canSpendActionPoints(actor, cost, { physical })) {
+export async function spendActionPoints(actor, cost, { physical, sustained = false } = {}) {
+  if (!canSpendActionPoints(actor, cost, { physical, sustained })) {
     const reason = cost && isEncounterActive() && hasActionEconomy(actor) ? actionBlockReason(actor, { physical }) : "";
     if (reason) warnBlocked(actor, reason, "Действие");
+    else if (cost && effectiveApCost(actor, cost, { physical, sustained }) > effectiveActionPointsMax(actor))
+      globalThis.ui?.notifications?.warn?.(`⚠️ ${actor?.name ?? "Персонаж"}: BONE-Head, имплант сбоит — ментальное действие вдвое дольше и в один Ход не влезает; проведите его Длительным действием.`);
     return false;
   }
   if (cost && isEncounterActive() && hasActionEconomy(actor)) {
     const value = Number(actor.system.actionPoints?.value) || 0;
+    // BONE-Head со сбитым имплантом: ментальное вдвое (проверено выше).
+    const paid = effectiveApCost(actor, cost, { physical, sustained });
+    if (paid !== cost) globalThis.ui?.notifications?.info?.(`${actor.name}: BONE-Head, имплант сбоит — ментальное действие вдвое дольше (${paid} ОД вместо ${cost}).`);
+    cost = paid;
     await actor.update({ "system.actionPoints.value": Math.max(0, value - cost) });
     if (physical === true) await _maybeTriggerCrippling(actor, cost);
     await _maybeClearAiming(actor);
@@ -469,9 +487,10 @@ export function apSpendGate(actor, cost, { physical } = {}) {
   if (ok) return { disabled: false, title: "" };
   // Запрет по Состоянию (wdbc-x1nz.2.87/.88) — называем его, а не «не хватает».
   const reason = actionBlockReason(actor, { physical });
+  const need = effectiveApCost(actor, cost, { physical });
   return {
     disabled: true,
-    title: reason || `Не хватает ОД: нужно ${cost}, есть ${Number(actor.system.actionPoints?.value) || 0}`
+    title: reason || `Не хватает ОД: нужно ${need}${need !== Number(cost) ? " (имплант сбоит — вдвое)" : ""}, есть ${Number(actor.system.actionPoints?.value) || 0}`
   };
 }
 

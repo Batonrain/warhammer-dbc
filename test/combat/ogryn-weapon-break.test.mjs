@@ -79,6 +79,9 @@ describe("ogrynBreakNote: что видно в карточке", () => {
     expect(note).toContain("Цепной Меч");
     expect(note).toContain("1d10 = 2");
     expect(note).toContain("½ смены");
+    // Книга: «(без теста, нужен только Trade (Weaponsmith)+0)».
+    expect(note).toContain("без теста");
+    expect(note).toContain("Trade (Weaponsmith)");
   });
 
   it("выдержало — тоже видно, и бросок назван", () => {

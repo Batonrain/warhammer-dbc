@@ -244,6 +244,12 @@ describe("hasTalent и hasTrait", () => {
   it("предметы других типов не считаются", () => {
     expect(PREDICATES.hasTrait(actor({ items: [{ type: "weapon", name: "Gene-Seed" }] }), {}, "Gene-Seed")).toBe(false);
   });
+
+  it("lacksTrait — ни одной из перечисленных", () => {
+    expect(PREDICATES.lacksTrait(soldier, {}, "Symbol of Power")).toBe(true);
+    expect(PREDICATES.lacksTrait(soldier, {}, "Геносемя")).toBe(false);
+    expect(PREDICATES.lacksTrait(soldier, {}, ["Symbol of Power", "Gene-Seed"])).toBe(false);
+  });
 });
 
 describe("weaponClass", () => {
@@ -436,6 +442,8 @@ describe("общее требование к предикатам", () => {
     // Градация Пути Азуриан (wdbc-4e60): значение — объект-отбор.
     pathGradeMin: { group: "Путь Воина", grade: "next" },
     hasTalent: "Frenzy", hasTrait: "Gene-Seed", weaponClass: ["melee"],
+    // «нет ни одной из» (Символ Власти снимает часть Отвращения к Порядку).
+    lacksTrait: "Symbol of Power",
     targetHasTrait: "Daemonic", targetLacksCondition: "stunned",
     hasCondition: "prone", targetHasCondition: "prone",
     // Ослеплён по-настоящему (wdbc-x1nz.2.89): свой флаг ИЛИ оба глаза.
@@ -444,6 +452,9 @@ describe("общее требование к предикатам", () => {
     // Пустота Парии / демон / цель-псайкер или демон (rules/null-zones.mjs,
     // сверка главы I, 26.09.2026).
     inPariahVoid: true, isDaemon: true, targetPsykerOrDaemon: true,
+    // Цель/источник — Космодесантник (Angel Hunters, Йигори, сверка главы I).
+    targetIsAstartes: true,
+    haywireFieldMin: 3,
     charNotIn: ["t", "inf", "cor"],
     charIn: ["int", "per", "wp", "fel", "inf"],
     hasSize: undefined, targetHasSize: undefined, targetKeepsNimbleInArmour: undefined,
@@ -470,7 +481,11 @@ describe("общее требование к предикатам", () => {
     // system.fieldPsyMod ЦЕЛИ, значение из `when` не участвует.
     targetHasFieldPsyMod: undefined,
     // Цель без герметичной брони (wdbc-1rno.11, Миазмы) — читает ЦЕЛЬ.
-    targetLacksSealedArmour: undefined
+    targetLacksSealedArmour: undefined,
+    // Обут ли (Barefoot / Босоногий Ратлинга): false — «босиком».
+    wearsFootwear: false,
+    // Змееподобная цель (Безграничное Тщеславие Наги) — читает ЦЕЛЬ.
+    targetSerpentine: true
   };
 
   it("на пустом акторе каждый возвращает строго true или false", () => {

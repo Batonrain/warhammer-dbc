@@ -100,7 +100,7 @@ async function buildPackTree(pack) {
     // проход по компендиуму дороже лишних двух строк в индексе.
     fields: ["system.armorType", "system.availability", "system.properties",
              "system.tier", "system.cost", "system.aptitudes", "system.category",
-             "system.benefit", "system.description"]
+             "system.benefit", "system.description", "system.weaponTypes"]
   });
   const folders = pack.folders?.contents ?? [];
   const byParent = new Map();
@@ -135,6 +135,8 @@ async function buildPackTree(pack) {
         availability: it.system?.availability, properties: it.system?.properties || [],
         tier: it.system?.tier, cost: it.system?.cost, aptitudes: it.system?.aptitudes || [],
         category: it.system?.category,
+        // Типы оружия боеприпаса — фильтр ammoType («магазины болтов»).
+        weaponTypes: it.system?.weaponTypes || [],
         // Действие/эффект приоритетнее общего описания — у Талантов и Черт
         // именно в benefit лежит механический текст (см. item-picker.mjs),
         // у остальных типов benefit нет, и в ход идёт description.
@@ -515,7 +517,7 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
         ${pick.prompt ? `<div class="cbrowse-pick-prompt">${esc(pick.prompt)}</div>` : ""}
         ${multi ? `<div class="cbrowse-pick-state">
           <span class="cbrowse-pick-n">${esc(budgetLabel([], budget, xpCost))}</span>
-          <button type="button" class="cbrowse-pick-confirm" disabled>Готово</button>
+          <button type="button" class="cbrowse-pick-confirm" ${budgetReady([], budget, xpCost) ? "" : "disabled"}>Готово</button>
         </div>` : ""}
       </div>` : "";
 

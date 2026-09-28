@@ -58,6 +58,9 @@ import { backfillAspirationGrants } from "./module/apps/aspirations.mjs";
 import { backfillMinionAptSource } from "./module/apps/minion-talent.mjs";
 import { syncCyberneticExcellenceArms } from "./module/apps/cybernetic-excellence.mjs";
 import { isCyberneticExcellence } from "./module/rules/cybernetic-excellence.mjs";
+import { enforceLockedPatron, grantLockedPatron, checkDarkPrinceMilestones, itemGrantsCapability }
+  from "./module/apps/naga-traits.mjs";
+import { LOCKED_SLAANESH_CAPABILITY, DARK_PRINCE_MILESTONE_CAPABILITY } from "./module/rules/naga-traits.mjs";
 import { cleanupHandOfDeath } from "./module/apps/hand-of-death.mjs";
 import { cleanupGunArm } from "./module/apps/gun-arm.mjs";
 import { isGunArmGift } from "./module/rules/gun-arm.mjs";
@@ -75,7 +78,9 @@ import { reconcileEternalWarToFit } from "./module/apps/eternal-war.mjs";
 import { reconcilePsalmUnseenFortressToFit } from "./module/apps/psalm-unseen-fortress.mjs";
 import { reconcileHyperGrowthToFit } from "./module/apps/hyper-growth.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
-import { hasRuleFlag }                from "./module/rules/flags.mjs";
+import { hasRuleFlag, ruleFlags }     from "./module/rules/flags.mjs";
+import { lockedPatron, enforcedPatron } from "./module/rules/patron-lock.mjs";
+import { optionalIntegralEntries, integralEntrySelected, INTEGRAL_CHOSEN_FLAG } from "./module/rules/integral-rating.mjs";
 import { redirectCorruptionToMadness } from "./module/rules/corruption-madness.mjs";
 import { corruptionInVoid }          from "./module/rules/null-zones.mjs";
 import { FATE_SAVE_FLAG, FATE_SAVE_DIE, fateSpent, fateSaved, fatePoolLabel }
@@ -111,7 +116,9 @@ import { initForceMoveHud } from "./module/combat/force-move-menu.mjs";
 import { initTearOpenHud } from "./module/combat/tear-open.mjs";
 import { initFreeAttackHooks } from "./module/combat/free-attack.mjs";
 import { initSqueezeHooks } from "./module/combat/squeeze.mjs";
+import { initBoneHeadHooks } from "./module/combat/bone-head.mjs";
 import { initOverwatchHooks } from "./module/combat/overwatch.mjs";
+import { initFirePointHooks } from "./module/combat/fire-point.mjs";
 import { checkAuras, clearAuraGrants } from "./module/regions/auras.mjs";
 import { redrawAuraRings } from "./module/regions/aura-rings.mjs";
 import { LingerZoneBehaviorType, LINGER_ZONE_TYPE } from "./module/regions/linger-zone.mjs";
@@ -169,6 +176,7 @@ import { itemIconFor, isGenericImg }  from "./module/constants/item-icons.mjs";
 import { computeShipIdentity }        from "./module/combat/ship-tokens.mjs";
 import { applySymbolOfPowerGrant, hasSymbolOfPower } from "./module/combat/beastman-shaman.mjs";
 import { needsBestQChoice, runBestQChoice } from "./module/apps/implant-bestq-choice.mjs";
+import { diseaseCreateBlocked } from "./module/rules/new-men.mjs";
 
 // ─── Инициализация ────────────────────────────────────────────────────────────
 
@@ -884,6 +892,14 @@ Hooks.once("ready", () => {
         await applyRelayedCommandUpdate(data);
         return;
       }
+      if (data.action === "inspiringPresenceSpend") {
+        // Вдохновляющее Присутствие (Чемпион): союзник тратит Очко чужого
+        // Чемпиона — module/combat/inspiring-presence.mjs сверяет Черту,
+        // Очко и владение перебрасывающим.
+        const { applyInspiringSpendRelay } = await import("./module/combat/inspiring-presence.mjs");
+        await applyInspiringSpendRelay(data, requester);
+        return;
+      }
       if (data.action === "veilShift") {
         // Отвращение Варпа от игрока (module/apps/ritual-cast.mjs,
         // defaultVeilShiftFn) — у не-ГМ veilShift() тихо не срабатывает,
@@ -1363,7 +1379,11 @@ Hooks.once("init", () => initTearOpenHud());
 Hooks.once("init", () => initMovedFlagTracking());
 Hooks.once("init", () => initFreeAttackHooks());
 Hooks.once("init", () => initSqueezeHooks());
+// BONE-Head (Огрин): вышел из поля Haywire — сбой импланта и Ступор от поля снимаются сами.
+Hooks.once("init", () => initBoneHeadHooks());
 Hooks.once("init", () => initOverwatchHooks());
+// Огневая Точка (Хавок): сдвиг токена / Повален гасят точку (combat/fire-point.mjs).
+Hooks.once("init", () => initFirePointHooks());
 Hooks.once("init", () => initEquipmentIndex());
 Hooks.once("init", () => registerCalloutHooks());
 Hooks.once("init", () => initSceneControlsGuard());
@@ -1735,6 +1755,17 @@ Hooks.on("preCreateItem", (doc, data) => {
     const icon = itemIconFor(data?.type ?? doc.type, doc.system ?? {});
     if (icon) doc.updateSource({ img: icon });
   } catch (e) { /* не мешаем созданию предмета */ }
+});
+
+// Иммунитет ко всем болезням (New Men / Новые Люди — Йигори, возможность
+// immunity.disease): броска на заражение в системе нет, болезнь ГМ кладёт на
+// лист предметом — ровно это и перехватывается. Отказ виден, а не молчалив.
+Hooks.on("preCreateItem", (doc) => {
+  const actor = doc.parent;
+  if (!actor || actor.documentName !== "Actor") return;
+  if (!diseaseCreateBlocked(actor, doc.type)) return;
+  ui.notifications?.info(`${actor.name}: иммунитет к болезням — «${doc.name}» не ложится на лист.`);
+  return false;
 });
 
 Hooks.on("preCreateActor", (doc, data) => {
@@ -2200,6 +2231,24 @@ Hooks.on("deleteItem", async (item, options, userId) => {
   await syncCyberneticExcellenceArms(item.parent);
 });
 
+// ── Дитя Тёмного Принца (Нага, module/apps/naga-traits.mjs) ────────────────
+// «Начинает игру с покровительством Слаанеш, и не может потерять его»:
+// Черта попала на лист — Покровитель ставится сам; смена Покровителя
+// откатывается до записи. «Впервые набирая 30, 60, и 90 Inf» — выбор при
+// росте Inf (и сразу при получении Черты, если порог уже пройден).
+// userId-гвард — диалог и запись у того, кто правил, а не у всех клиентов.
+Hooks.on("preUpdateActor", (doc, changes) => { enforceLockedPatron(doc, changes); });
+Hooks.on("createItem", async (item, options, userId) => {
+  if (game.user.id !== userId || !(item.parent instanceof Actor)) return;
+  if (itemGrantsCapability(item, LOCKED_SLAANESH_CAPABILITY)) await grantLockedPatron(item.parent);
+  if (itemGrantsCapability(item, DARK_PRINCE_MILESTONE_CAPABILITY)) await checkDarkPrinceMilestones(item.parent);
+});
+Hooks.on("updateActor", async (actor, changed, options, userId) => {
+  if (game.user.id !== userId) return;
+  if (changed?.system?.characteristics?.inf === undefined) return;
+  await checkDarkPrinceMilestones(actor);
+});
+
 // Модификация пережила своего носителя (wdbc-z6em). Удалили оружие или броню,
 // в которую вставлена модификация, — сама модификация остаётся на листе
 // сиротой, и её бонусы обязаны погаснуть вместе с вещью. isItemActive это уже
@@ -2490,6 +2539,18 @@ Hooks.on("preUpdateActor", (doc, changes) => {
   }
 });
 
+// «Не может потерять покровительство <Бога>» (субрасы Зверолюда, rules/
+// patron-lock.mjs): смена Покровителя на другого возвращается к закреплённому.
+Hooks.on("preUpdateActor", (doc, changes) => {
+  const next = foundry.utils.getProperty(changes, "system.patronGod");
+  if (next === undefined) return;
+  const locked = lockedPatron(ruleFlags(doc));
+  const keep = enforcedPatron(next, locked);
+  if (keep === next) return;
+  foundry.utils.setProperty(changes, "system.patronGod", keep);
+  ui.notifications?.warn(`${doc.name}: субраса не может потерять покровительство своего Бога — Покровитель оставлен прежним.`);
+});
+
 Hooks.on("preUpdateActor", (doc, changes) => {
   const newCor = foundry.utils.getProperty(changes, "system.corruption.value");
   if (typeof newCor !== "number") return;
@@ -2617,6 +2678,13 @@ function _integralProtected(item) {
   if (!sourceId) return !game.user.isGM;   // инлайн в шасси — только ГМ вправе
   const source = actor.items.get(sourceId);
   if (!source) return false;               // источник ушёл — идёт штатный откат
+  // Атака «по выбору», вычеркнутая из выбора источника (Тзаангор теряет Рога
+  // и Когти Естественного Оружия, apps/races.mjs::applySubrace), — тоже
+  // штатный откат, а не попытка выбросить часть тела.
+  const entryId = item.getFlag("warhammer-dbc", "equipEntryId");
+  const optional = optionalIntegralEntries(source.getFlag?.("warhammer-dbc", "mechanics") || [])
+    .find(e => e.id === entryId);
+  if (optional && !integralEntrySelected(optional, source.getFlag("warhammer-dbc", INTEGRAL_CHOSEN_FLAG))) return false;
   return isItemActive(source);
 }
 

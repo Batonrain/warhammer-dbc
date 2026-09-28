@@ -11,7 +11,8 @@ import { fakeHtml, captured, resetCaptured } from "../support/foundry-stub.mjs";
 import {
   SUBRACE_APTITUDE_CHOICES, needsAptitudeChoice,
   aptitudeOverrideMechanicsGroup, applySubraceAptitudeChoice,
-  promptSubraceAptitudeChoice
+  promptSubraceAptitudeChoice,
+  ARCHETYPE_APTITUDE_CHOICES, needsArchetypeAptitudeChoice, promptArchetypeAptitudeChoice
 } from "../../module/apps/subrace-choice.mjs";
 
 describe("needsAptitudeChoice / SUBRACE_APTITUDE_CHOICES", () => {
@@ -120,5 +121,27 @@ describe("promptSubraceAptitudeChoice: диалог", () => {
     resetCaptured();
     expect(await promptSubraceAptitudeChoice("human", "Человек")).toBe(null);
     expect(captured.dialog).toBe(null);
+  });
+});
+
+// Благородная Евгеника (Благородный, сверка Архетипов 28.09.2026): «При
+// создании персонажа, Благородный выбирает 2 Характеристики – они становятся
+// дружественными в плане продвижений, и остаются таковыми, невзирая на его
+// Покровительства» — тот же диалог и те же записи aptOverride, что у Африэль,
+// только ключ — Архетип, а Навыков нет.
+describe("Архетип: Благородная Евгеника — выбор 2 Характеристик", () => {
+  it("noble — 2 характеристики, без навыков; прочие архетипы — без выбора", () => {
+    expect(ARCHETYPE_APTITUDE_CHOICES.noble).toEqual({ charCount: 2, skillCount: 0 });
+    expect(needsArchetypeAptitudeChoice("noble")).toBe(true);
+    expect(needsArchetypeAptitudeChoice("savage")).toBe(false);
+  });
+
+  it("диалог без Навыков: Принять отдаёт только Характеристики", async () => {
+    resetCaptured();
+    const promise = promptArchetypeAptitudeChoice("noble", "Благородный");
+    expect(captured.dialog.content).not.toContain("sub-apt-skill");
+    const html = fakeHtml({}, { ".sub-apt-char": [{ dataset: {}, value: "ag" }, { dataset: {}, value: "fel" }], ".sub-apt-skill": [] });
+    captured.dialog.buttons.ok.callback(html);
+    expect(await promise).toEqual({ chars: ["ag", "fel"], skills: [] });
   });
 });

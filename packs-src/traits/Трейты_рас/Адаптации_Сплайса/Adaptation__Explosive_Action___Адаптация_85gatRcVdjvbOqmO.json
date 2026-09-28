@@ -1,0 +1,51 @@
+{
+  "name": "Adaptation: Explosive Action / Адаптация: Взрывное Действие",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "Продвинутая адаптация: раз в Ход бонусное полудействие (не Ментальное), в конце Хода 1 Усталость и 1d5 урона в S, T, A.",
+    "notes": "Текстом целиком: бонусное полудействие и расплата в конце Хода (1 Усталость, 1d5 урона в S, T, A — урон в Характеристики и так увеличит Нестабильный Геном). Кнопки «Взрывное Действие» пока нет — задача в Sahara.",
+    "benefit": "Позволяет раз в Ход получить бонусное полудействие, которое нельзя тратить на Ментальные действия, но тогда в конце Хода персонаж получает 1 Усталости и 1d5 урона в S, T, и A.",
+    "source": "Сплайс — Продвинутая адаптация (Ген-Сплайс)",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "85gatRcVdjvbOqmO",
+  "effects": [],
+  "folder": "nCIz9PenrzVvatbQ",
+  "sort": 1300000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "spliceAdaptation": "advanced"
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!85gatRcVdjvbOqmO"
+}

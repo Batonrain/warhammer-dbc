@@ -21,7 +21,11 @@ import "../support/foundry-stub.mjs";
 import { CharacterWizard } from "../../module/apps/character-wizard.mjs";
 import { openCompendiumBrowser } from "../../module/apps/compendium-browser.mjs";
 
-vi.mock("../../module/apps/compendium-browser.mjs", () => ({ openCompendiumBrowser: vi.fn() }));
+vi.mock("../../module/apps/compendium-browser.mjs", () => ({
+  openCompendiumBrowser: vi.fn(),
+  // Ветка оружия раскрывается в листья только у настоящего пака; здесь — как есть.
+  weaponTypeFolderIds: vi.fn(id => [id])
+}));
 
 const P = CharacterWizard.prototype;
 
@@ -218,5 +222,157 @@ describe("_applyGearSizeProp: бесплатная подгонка оружия
     const n = await P._applyGearSizeProp.call(app, "ogryned");
     expect(n).toBe(1);
     expect(updates).toEqual([{ _id: "w1", "system.weaponProps": [{ key: "ogryned" }] }]);
+  });
+});
+
+// ── Выдача по книге: Качество, Легион, количество, ступени, «из них» ───────
+//
+// Стартовое снаряжение выдаётся само (решение владельца): именная строка —
+// предмет из пака с Качеством/Легионом/количеством из текста; категория —
+// Обозреватель, уже суженный по книге, а Качество выбранному проставляется
+// само. Паки и Обозреватель — подставные, логика Мастера — настоящая.
+
+const weaponDoc = (id, name, extra = {}) => ({
+  id, name, type: "weapon", system: { availability: extra.availability ?? 1 },
+  toObject: () => ({ name, type: "weapon", system: { quality: "common", weaponProps: [], quantity: 1 } })
+});
+
+function deliveryApp({ gearText, layout, packs = {}, uuidDocs = {}, items = [] }) {
+  const created = [];
+  const actor = {
+    id: "a1", name: "Тест", items, flags: {},
+    system: { characteristics: { inf: { bonus: 0 } } },
+    getFlag: () => undefined,
+    setFlag: async () => {},
+    createEmbeddedDocuments: async (type, docs) => {
+      const made = docs.map((d, i) => ({ ...d, id: `new${created.length + i}` }));
+      created.push(...made); return made;
+    },
+    updateEmbeddedDocuments: async () => []
+  };
+  const map = new Map();
+  for (const [id, docs] of Object.entries(packs)) {
+    map.set(`warhammer-dbc.${id}`, {
+      getIndex: async () => docs.map(d => ({ _id: d.id, name: d.name, folder: d.folder ?? null })),
+      getDocument: async id2 => docs.find(d => d.id === id2) ?? null
+    });
+  }
+  globalThis.game.packs = map;
+  globalThis.fromUuid = async u => uuidDocs[u] ?? null;
+  const app = Object.create(P);
+  app.gearPicks = {};
+  app._gearDone = false;
+  app._confirmingGear = false;
+  app.render = () => {};
+  Object.defineProperty(app, "actor", { get: () => actor });
+  app._gearLayout = () => ({ layout: layout ?? [{ fixed: gearText }], choiceDefs: [], isAstartes: false });
+  app._grantStartingAmmo = async () => {};
+  return { app, created };
+}
+
+describe("_confirmGear: выдача по книге сама", () => {
+  it("«L. Bolter (Good.Q)» — Легионная версия из пака, Качество Хорошее, без Обозревателя", async () => {
+    openCompendiumBrowser.mockReset();
+    const { app, created } = deliveryApp({
+      gearText: "L. Bolter (Good.Q)",
+      packs: { weapons: [weaponDoc("b1", "Bolter / Болтер"), weaponDoc("b2", "Bolter / Болтер (Астартес)")] }
+    });
+    await P._confirmGear.call(app);
+    expect(openCompendiumBrowser).not.toHaveBeenCalled();
+    expect(created).toHaveLength(1);
+    expect(created[0]).toMatchObject({ name: "Bolter / Болтер (Астартес)", system: { quality: "good" } });
+  });
+
+  it("«6×L. Frag Grenades» — граната «Фраг» ×6 одним предметом и со свойством Legion", async () => {
+    openCompendiumBrowser.mockReset();
+    const { app, created } = deliveryApp({
+      gearText: "6×L. Frag Grenades",
+      packs: { weapons: [weaponDoc("r1", "Frag / Ракета: Фраг"), { ...weaponDoc("g1", "Frag / Фраг"), folder: "CiKyTXQv7N6C3J3A" }] }
+    });
+    await P._confirmGear.call(app);
+    expect(created).toHaveLength(1);
+    expect(created[0].name).toBe("Frag / Фраг");
+    expect(created[0].system.quantity).toBe(6);
+    expect(created[0].system.weaponProps).toEqual([{ key: "legion" }]);
+  });
+
+  it("«Knife(+Mono)» — нож и установленная на него модификация Mono", async () => {
+    openCompendiumBrowser.mockReset();
+    const mono = { id: "m1", name: "Mono / Mono", type: "weaponMod",
+      toObject: () => ({ name: "Mono / Mono", type: "weaponMod", system: { installedOn: "" } }) };
+    const { app, created } = deliveryApp({
+      gearText: "Knife(+Mono)",
+      packs: { weapons: [weaponDoc("k1", "Knife / Нож")], "weapon-mods": [mono] }
+    });
+    await P._confirmGear.call(app);
+    expect(created.map(c => c.name)).toEqual(["Knife / Нож", "Mono / Mono"]);
+    expect(created[1].system.installedOn).toBe(created[0].id);
+  });
+
+  it("«2×L. Chain Weapon (до R1)» — Обозреватель: Цепное, Редкость ≤1, 2 шт.; выбранному — Legion", async () => {
+    openCompendiumBrowser.mockReset();
+    openCompendiumBrowser.mockResolvedValue(["c1", "c1"]);
+    const { app, created } = deliveryApp({
+      gearText: "2×L. Chain Weapon (до R1)",
+      uuidDocs: { c1: weaponDoc("c1", "Chainsword / Пиломеч", { availability: 0 }) }
+    });
+    await P._confirmGear.call(app);
+    const opts = openCompendiumBrowser.mock.calls[0][1];
+    expect(opts).toMatchObject({ pack: "weapons", count: 2, filters: { maxAvailability: 1, folderId: ["MwsAIUuoQBJXbOQA"] } });
+    expect(created).toHaveLength(1);
+    expect(created[0].system).toMatchObject({ quantity: 2, weaponProps: [{ key: "legion" }] });
+  });
+
+  it("ступени «R1(Best.Q) или R2(Good.Q) или R3» — Качество по Редкости выбранного", async () => {
+    openCompendiumBrowser.mockReset();
+    openCompendiumBrowser.mockResolvedValue(["a", "b"]);
+    const { app, created } = deliveryApp({
+      gearText: "2 Любых рукопашных оружия R1(Best.Q) или R2(Good.Q) или R3",
+      uuidDocs: { a: weaponDoc("a", "A", { availability: 1 }), b: weaponDoc("b", "B", { availability: 3 }) }
+    });
+    await P._confirmGear.call(app);
+    expect(openCompendiumBrowser.mock.calls[0][1].filters.maxAvailability).toBe(3);
+    expect(created.map(c => [c.name, c.system.quality])).toEqual([["A", "best"], ["B", "common"]]);
+  });
+
+  it("«из них 1 Good.Q и 1 Best.Q» — Высшее первому выбранному, Хорошее второму", async () => {
+    openCompendiumBrowser.mockReset();
+    openCompendiumBrowser.mockResolvedValue(["g1", "g2", "g3", "g4"]);
+    const gear = id => ({ id, name: id, type: "gear", system: { availability: 0 },
+      toObject: () => ({ name: id, type: "gear", system: { quality: "common", quantity: 1 } }) });
+    const { app, created } = deliveryApp({
+      gearText: "4 элемента Снаряжения и Инструментов до R1, из них 1 Good.Q и 1 Best.Q",
+      uuidDocs: { g1: gear("g1"), g2: gear("g2"), g3: gear("g3"), g4: gear("g4") }
+    });
+    await P._confirmGear.call(app);
+    expect(openCompendiumBrowser.mock.calls[0][1]).toMatchObject({ pack: ["gear", "tools"], count: 4, filters: { maxAvailability: 1 } });
+    expect(created.map(c => c.system.quality)).toEqual(["best", "good", "common", "common"]);
+  });
+
+  it("строка, уже выданная Механикой Архетипа (covered), не выдаётся и не спрашивается второй раз", async () => {
+    openCompendiumBrowser.mockReset();
+    const { app, created } = deliveryApp({ layout: [{ fixed: "L. Power Weapon (до R3, Good.Q)", covered: true }] });
+    await P._confirmGear.call(app);
+    expect(openCompendiumBrowser).not.toHaveBeenCalled();
+    expect(created).toHaveLength(0);
+  });
+
+  it("Скакун — не предмет: Обозреватель не открывается, строка остаётся ГМу", async () => {
+    openCompendiumBrowser.mockReset();
+    const { app, created } = deliveryApp({ gearText: "Скакун до R1 и набор брони до R1(базово) для него" });
+    await P._confirmGear.call(app);
+    expect(openCompendiumBrowser).not.toHaveBeenCalled();
+    expect(created).toHaveLength(0);
+  });
+
+  it("_constructorEquipGroups: записи Механики берутся с Расы/Субрасы/Архетипа актора", () => {
+    const g = { operator: "OR", entries: [{ kind: "equipment", equipMode: "choice", equipCategoryPack: "weapons" }] };
+    const app = Object.create(P);
+    const actor = { items: [
+      { type: "archetype", flags: { "warhammer-dbc": { mechanics: [g] } } },
+      { type: "weapon", flags: { "warhammer-dbc": { mechanics: [g] } } }
+    ] };
+    Object.defineProperty(app, "actor", { get: () => actor });
+    expect(P._constructorEquipGroups.call(app)).toEqual([g]);
   });
 });

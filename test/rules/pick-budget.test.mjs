@@ -80,3 +80,23 @@ describe("подпись счётчика", () => {
     expect(budgetLabel([talent(300)], XP)).toBe("Потрачено 300 из 500 опыта");
   });
 });
+
+// Сплайс, Gene-Splice: «максимум +3 дополнительные адаптации» — ноль тоже
+// законный выбор. Нижняя граница `min` (штуками): «до N», а не «ровно N».
+describe("штуки «до N» (min)", () => {
+  const UP_TO_3 = { mode: "count", value: 3, min: 0 };
+  it("подтверждается и пустой выбор, и неполный", () => {
+    expect(budgetReady([], UP_TO_3)).toBe(true);
+    expect(budgetReady([talent(0)], UP_TO_3)).toBe(true);
+    expect(budgetReady([talent(0), talent(0), talent(0)], UP_TO_3)).toBe(true);
+  });
+  it("перебор по-прежнему не влезает", () => {
+    expect(budgetFits([talent(0), talent(0), talent(0)], talent(0), UP_TO_3)).toBe(false);
+  });
+  it("без min — по-прежнему ровно N", () => {
+    expect(budgetReady([talent(0)], { mode: "count", value: 3 })).toBe(false);
+  });
+  it("подпись говорит «до»", () => {
+    expect(budgetLabel([talent(0)], UP_TO_3)).toBe("Выбрано 1 из (до) 3");
+  });
+});

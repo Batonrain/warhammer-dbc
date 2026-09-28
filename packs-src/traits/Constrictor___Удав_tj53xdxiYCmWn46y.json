@@ -3,9 +3,9 @@
   "type": "trait",
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
-    "description": "Мощное тело-захват: +20 на тесты Захвата и Борьбы; в Захвате считается на Unnatural S выше.",
-    "notes": "+20 к Захвату (не входит в SKILLS_DEF как отдельный навык — Захват/Grapple резолвится вне обычного теста Навыка) + «Unnatural S в Захвате» — условная подмена характеристики только в одном под-тесте, нет такого скоупа.",
-    "benefit": "+20 Захват; Unnatural S в Захвате.",
+    "description": "Хвост для Захвата и Борьбы: считается парой рук с Unnatural S (6), руки свободны, +20 на тесты Athletics.",
+    "notes": "Автоматизировано (grapple.constrictorTail): Захват берётся хвостом — он держит «парой рук» (лучший из 2 бросков Атакующего, обездвиживает 4 руки цели), свои руки Наги остаются свободными; +20 к тестам Athletics в Захвате и Борьбе (подпись «Хвост Удава»); урон «Заломить» идёт с S.b хвоста (десятки S + 6).",
+    "benefit": "Нага может использовать свой хвост для совершения Захвата и в Борьбе, освобождая руки. В расчете Захвата и Борьбы хвост считается парой рук с Трейтом Unnatural S (6) и получает +20 на все тесты Athletics.",
     "source": "Нага",
     "hasRating": false,
     "rating": 0,
@@ -34,7 +34,27 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "E8DjTMWfnYlk5NR1",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "pJi5mvr0kUJFHOWI",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "grapple.constrictorTail",
+              "label": "Хвост Удава: Захват парой рук, Unnatural S (6), +20 Athletics",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

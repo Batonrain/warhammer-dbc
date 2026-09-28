@@ -16,7 +16,11 @@ import { getItemMechanics } from "../apps/mechanics.mjs";
 import { entryWhenOk } from "../rules/mech-when.mjs";
 import { suffersBlindness } from "../rules/blindness.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { resolveTest } from "../rules/resolve-test.mjs";
+import { rollD100WithReroll } from "../rules/test-kind-widget.mjs";
 import { IN_FLIGHT_ALTITUDES } from "./movement-actions.mjs";
+import { SURE_TREAD, sureTreadTerrainBase, sureTreadIgnoresTerrain } from "../rules/squat-traits.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -89,19 +93,35 @@ export async function showDifficultTerrainDialog(actor, tokenDoc = null) {
   if (!td) return ui.notifications.warn("⚠️ Токен персонажа не найден на сцене.");
 
   const info = effectiveTerrainInfo(td, actor);
-  const ag   = Number(actor.system.characteristics?.ag?.total) || 0;
+  // Надёжная Поступь (Скват): Awareness (P) вместо A, если она лучше —
+  // rules/squat-traits.mjs. Без Черты — всегда Ловкость, как раньше.
+  const base = sureTreadTerrainBase(actor);
+  const ag   = base.base;
+  const sureTread = hasRuleFlag(actor, SURE_TREAD);
+  const sureTreadNote = sureTread
+    ? `<div class="atk-range-info" style="font-size:0.82em;">Надёжная Поступь: тест по лучшему из Ловкости и Awareness (P); 3+ Успеха — Ландшафт вовсе не замедляет. Тест можно бросить и при обычном движении, без риска упасть, — чтобы проложить путь.</div>`
+    : "";
   const labelsLine = info.labels.length ? ` (${info.labels.join(", ")})` : "";
   const ignoredLine = info.ignoredLabels.length
     ? `<div class="atk-range-info" style="font-size:0.82em;">Игнорирует: ${info.ignoredLabels.join(", ")}</div>` : "";
+  // Что добавят к броску Черты и состояния (Босоногий Ратлинга, Усталость…) —
+  // видно ДО кнопки, а не только в карточке после броска.
+  const preCtx = { kind: "skill", char: base.char, terrain: true, ...(base.skill ? { skill: base.skill } : {}) };
+  const preMods = collectTestMods(actor, preCtx).parts;
+  const preReroll = (resolveTest({ actor, ...preCtx }).rerolls || []).find(r => r.who === "self");
+  const rulesLine = (preMods.length || preReroll)
+    ? `<div class="atk-range-info" style="font-size:0.82em;">Сами: ${esc([...preMods, ...(preReroll ? [`${preReroll.label}: переброс`] : [])].join(", "))}</div>` : "";
 
   new Dialog({
     title: "Трудный Ландшафт",
     content: `
       <form class="wh-vehicle-dialog" style="padding:6px;">
-        <div class="atk-dlg-row"><label>Ловкость (Ag):</label><input id="tr-ag" type="number" value="${ag}"/></div>
+        <div class="atk-dlg-row"><label>${esc(base.label)}:</label><input id="tr-ag" type="number" value="${ag}"/></div>
         <div class="atk-dlg-row"><label>Ландшафт зоны:</label><span>${sgn(info.mod)}${labelsLine}</span></div>
         <div class="atk-dlg-row"><label>Доп. мод:</label><input id="tr-mod" type="number" value="0"/></div>
         ${ignoredLine}
+        ${sureTreadNote}
+        ${rulesLine}
         <div class="atk-range-info" style="font-size:0.82em;">
           Бег/Натиск через трудный ландшафт — тест A+0 или падение (стр. 29).${info.realTerrain
             ? " SPD уже уменьшена вдвое зоной."
@@ -115,7 +135,7 @@ export async function showDifficultTerrainDialog(actor, tokenDoc = null) {
         callback: async html => {
           const agVal = parseInt(html.find("#tr-ag").val()) || 0;
           const md    = parseInt(html.find("#tr-mod").val()) || 0;
-          await _resolveDifficultTerrain(actor, agVal, info.mod, md, info.labels);
+          await _resolveDifficultTerrain(actor, agVal, info.mod, md, info.labels, base);
         } },
       cancel: { label: "Отмена" }
     },
@@ -123,36 +143,50 @@ export async function showDifficultTerrainDialog(actor, tokenDoc = null) {
   }, { classes: ["dialog", "wh-attack-dialog"], width: 420 }).render(true);
 }
 
-async function _resolveDifficultTerrain(actor, ag, terrainMod, extraMod, labels) {
+async function _resolveDifficultTerrain(actor, ag, terrainMod, extraMod, labels,
+                                       base = { char: "ag", skill: null, label: "Ag" }) {
   const totalMod  = terrainMod + extraMod;
   // Общий сбор модификаторов (wdbc-1xtl): Порог складывался из Ловкости,
   // модификатора ландшафта и ручной поправки — ни Усталости, ни Перевеса,
   // ни Черт. Диалога с галочками у броска нет, поэтому collectTestMods.
   // terrain:true — Общая Команда «Трудный ландшафт» (rules/command-effects.mjs).
-  const ruleMods  = collectTestMods(actor, { kind: "skill", char: "ag", terrain: true });
+  // Надёжная Поступь: при тесте по Awareness и модификаторы — Awareness.
+  const ruleCtx   = { kind: "skill", char: base.char, terrain: true,
+                      ...(base.skill ? { skill: base.skill } : {}) };
+  const ruleMods  = collectTestMods(actor, ruleCtx);
   const threshold = ag + totalMod + ruleMods.total;
 
-  const roll   = await new Roll("1d100").evaluate();
-  const rv     = roll.total;
+  // Свой переброс для этого теста (область «terrain» — Barefoot / Босоногий
+  // Ратлинга: «может перебрасывать тесты Трудного Ландшафта»). Диалога с
+  // галочками у броска нет, спросить игрока негде — переброс берётся сам:
+  // «лучший из двух» по вероятности успеха равен «перебросить провал».
+  const reroll = (resolveTest({ actor, ...ruleCtx }).rerolls || []).find(r => r.who === "self") || null;
+  const { roll, rolls, rv, rerollNote } = await rollD100WithReroll(reroll);
   const passed = rv <= threshold;
   const deg    = Math.floor(Math.abs(passed ? threshold - rv : rv - threshold) / 10) + 1;
 
+  // Надёжная Поступь: «На 3+ Успеха Трудный Ландшафт вовсе не замедляет его».
+  const unslowed = sureTreadIgnoresTerrain(actor, passed, deg);
   const outcome = passed
-    ? outcomeHtml(true,  `Успех — ${deg} ${_degWord(deg)}. Устоял на ногах.`)
+    ? outcomeHtml(true,  `Успех — ${deg} ${_degWord(deg)}. Устоял на ногах.${unslowed
+        ? " Надёжная Поступь: Трудный Ландшафт в этот Ход не замедляет (SPD не делится вдвое)." : ""}`)
     : outcomeHtml(false, `Провал — ${deg} ${_degWord(deg)}. Персонаж падает!`);
 
   // Слагаемые Порога — во всплывающую подсказку ячейки Порога (rollStatLine):
   // разбор базы и модификаторов, сама плашка несёт только итоговое число.
+  // ruleMods.parts — Черты/Усталость/Перевес: в Порог они входили и раньше,
+  // но в разборе не показывались.
   const parts = [
     `ландшафт ${sgn(terrainMod)}${labels.length ? `: ${labels.join(", ")}` : ""}`,
-    extraMod ? `доп. мод ${sgn(extraMod)}` : ""
+    extraMod ? `доп. мод ${sgn(extraMod)}` : "",
+    ...ruleMods.parts
   ];
 
   await postTestCard(actor, {
     icon: rollIcon("burst","#b0a080"), title: `Трудный Ландшафт — ${esc(actor.name)}`,
-    threshold: rollStatLine({ label: "Ag", base: ag, parts, threshold, rv }),
-    outcome
-  }, { rolls: [roll] });
+    threshold: rollStatLine({ label: base.skill ? "Awareness (P)" : "Ag", base: ag, parts, threshold, rv }),
+    rerollNote, outcome
+  }, { rolls: rolls?.length ? rolls : [roll] });
 }
 
 // ─── Кнопка в меню токена ──────────────────────────────────────────────────

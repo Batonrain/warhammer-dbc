@@ -25,7 +25,10 @@ import { esc, _degWord } from "../helpers/utils.mjs";
 import { getItemMechanics, findMechEntryById, scriptRunReady, markScriptRunUsed } from "../apps/mechanics.mjs";
 import { executeItemCode } from "../apps/item-script.mjs";
 import { egomaniaOverrideResult } from "./egomania.mjs";
+import { singleCombatBonus, singleCombatNoUnnaturalTie, SINGLE_COMBAT_LINE } from "../combat/single-combat.mjs";
+import { adroitDegreeBonus } from "./adroit.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { HYPNO_SCARS, hypnoScarsStun } from "./replicant.mjs";
 import { PERSONAL_ADAPTATION_CAPABILITY, PERSONAL_ADAPTATION_FLAG,
          personalAdaptationCap, personalAdaptationBonusFor, nextPersonalAdaptationBonuses, personalAdaptationKey }
   from "./personal-adaptation.mjs";
@@ -193,7 +196,16 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
     : "";
   // Строка автопровала едет вместе с critLine: её рисуют ВСЕ вызывающие
   // карточки (лист, Страх, Верховая езда), отдельного поля они не знают.
-  const critLine = autoFailLine + critLineHtml(crit);
+  let critLine = autoFailLine + critLineHtml(crit);
+  // Hypno-Scars / Гипно-Шрамы (Репликант): «при Критическом Провале теста I
+  // впадает в Ступор на 1 Раунд». Сам бросок d100 здесь есть всегда — и при
+  // автоуспехе тоже, чего книга и требует («бросать d100 даже для тестов I,
+  // которые он проходит автоматически»). Обвязка — динамическим импортом:
+  // combat/replicant.mjs тянет лист Состояний, а этот файл — чистый конвейер.
+  if (hypnoScarsStun(crit, ctx, hasRuleFlag(actor, HYPNO_SCARS))) {
+    const { applyHypnoScarsStun } = await import("../combat/replicant.mjs");
+    critLine += await applyHypnoScarsStun(actor);
+  }
   // Сверхъестественная Характеристика (стр. 26, wdbc-y9i8): +1 Успех за
   // каждые полные 2 рейтинга Unnatural — но ТОЛЬКО на Успехе, и только по
   // Характеристике, которой реально бросали (usedCharKey — ctx.char, либо
@@ -203,13 +215,30 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   // остальных тестов это no-op.
   const unnaturalRatingHere = success ? unnaturalRating(ctx?.actor, usedCharKey) : 0;
   const unnaturalBonus = unnaturalDegreeBonus(unnaturalRatingHere);
-  const unnaturalLine = unnaturalBonus > 0
+  // Бой Один На Один (Палач, rules/single-combat.mjs): +1 Успех на успешный
+  // тест WS/S/A, пока на сцене ровно один враг в контакте без чужой подмоги.
+  // Строка едет вместе с unnaturalLine — её рисует тот же лист.
+  const singleCombatDeg = singleCombatBonus(actor, { success, charKey: usedCharKey });
+  // Искусный (Adroit, Ренегат — rules/adroit.mjs): +1 Успех к успешному
+  // тесту на выбранную Характеристику (usedCharKey — ей реально бросали).
+  const adroitBonus = adroitDegreeBonus(ctx?.actor ?? actor, usedCharKey, success);
+  const unnaturalLine = (unnaturalBonus > 0
     ? `<div class="roll-threshold">🧬 Сверхъестественная Характеристика (${unnaturalRatingHere}): +${unnaturalBonus} ${_degWord(unnaturalBonus)}</div>`
-    : "";
+    : "") + (singleCombatDeg ? SINGLE_COMBAT_LINE : "") + (adroitBonus > 0
+    ? `<div class="roll-threshold">🎯 Искусный (${esc(CHARACTERISTICS[usedCharKey]?.abbr ?? usedCharKey)}): +${adroitBonus} ${_degWord(adroitBonus)}</div>`
+    : "");
   // failDegMod (wdbc-1rno: Sentient Cyst «+3 Провала при провале») — только
   // на провале, успешный тест не трогает; не может увести степень ниже 1
   // (та же граница, что testOutcome держит для success выше).
-  const baseDeg = success ? rawDeg + unnaturalBonus : Math.max(1, rawDeg + (resolved.failDegExtra || 0));
+  const uncappedDeg = success ? rawDeg + unnaturalBonus + singleCombatDeg + adroitBonus : Math.max(1, rawDeg + (resolved.failDegExtra || 0));
+  // Потолок Успехов (successDegMax, BONE-Head Огрина — тесты I): только на
+  // Успехе, после надбавки Сверхъестественной Характеристики. Ассистентов
+  // лист прибавляет позже и режет тем же degCap (sheets/actor-sheet.mjs).
+  const degCap = success ? (resolved.successDegMax?.value ?? null) : null;
+  const baseDeg = degCap != null ? Math.min(degCap, uncappedDeg) : uncappedDeg;
+  const degCapLine = degCap != null
+    ? `<div class="roll-threshold">${resolved.successDegMax.labels.map(l => esc(l)).join(", ")}${uncappedDeg > baseDeg ? ` — было бы ${uncappedDeg}` : ""}</div>`
+    : "";
   // Автозапуск kind:"script" по Крит.Успеху/Провалу (wdbc-1rno: «Полимат»,
   // «Библиотека Акаши») — после того, как crit уже посчитан для ЭТОГО броска.
   await runScriptTriggers(actor, resolved.scriptTriggers, crit);
@@ -241,7 +270,8 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
     // знакомым opponentActor, галочка в диалоге при ручном вводе, или ответ
     // соперника-игрока) — без этого поля тай-брейк просто не сработает,
     // как и до этой правки.
-    const mine = { deg: baseDeg, success, threshold: eff, unnatural: hasUnnaturalCharacteristic(actor, usedCharKey) };
+    const mine = { deg: baseDeg, success, threshold: eff, unnatural: hasUnnaturalCharacteristic(actor, usedCharKey),
+                   noUnnaturalTie: singleCombatNoUnnaturalTie(actor, usedCharKey) };
     const theirsOutcome = testOutcome(opposed.roll, opposed.threshold);
     const theirs = { ...theirsOutcome, threshold: opposed.threshold, unnatural: !!opposed.unnatural };
     // Egomania/Эгомания (Слаанеш, wdbc-1rno): «автоматически побеждает в
@@ -268,6 +298,9 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
     }
   }
 
+  // degCapLine едет в unnaturalLine: вызывающие карточки уже рисуют её рядом
+  // со степенью, отдельного поля они не знают (как autoFailLine в critLine).
   return { eff, success, deg: baseDeg, crit, critLine, kindLabel, combinedLine, combinedAssistCount,
-           personalAdaptationLine, extendedLine, opposedLine, unnaturalLine };
+           personalAdaptationLine, extendedLine, opposedLine, unnaturalLine: unnaturalLine + degCapLine,
+           degCap, degCapLine };
 }

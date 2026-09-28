@@ -16,7 +16,8 @@ import { raceDef, subraceEntries, subracesOf, isAeldariRace, raceGroupList }
 import { applyRace, applySubrace }      from "./races.mjs";
 import { buildLegionOptions, buildChapterOptions,
          buildCultureLegionOptions, resolveCultureFx } from "../constants/legions.mjs";
-import { MECHANICUS_IMPLANTS, SKITARII_WAR_PLATE, MECHANICUM_IMPLANTS_TRAIT } from "../constants/implants.mjs";
+import { SKITARII_WAR_PLATE, MECHANICUM_IMPLANTS_TRAIT } from "../constants/implants.mjs";
+import { mechanicusImplantData } from "./mechanicus-implant-grant.mjs";
 import { disabledRaceKeys }             from "../constants/features.mjs";
 import { archetypeEntries, archetypesForRace, applyArchetype } from "./archetypes.mjs";
 import { splitTopLevel, esc }           from "../helpers/utils.mjs";
@@ -520,13 +521,22 @@ export function resolveCreation({ raceKey, subraceKey, archKey, ynnariPast, harl
   return { race, arch, sub, past, pastKey };
 }
 
-/** Плоская база характеристик до броска: раса (+ Прошлое) + архетип + субраса. */
+/**
+ * Плоская база характеристик до броска: раса (+ Прошлое) + архетип.
+ *
+ * Сдвиги СУБРАСЫ (charMods: Слаангор +5 A/+5 P, Мандрагора −10 I…) сюда НЕ
+ * входят: предмет субрасы несёт те же числа записями Механики
+ * kind:"characteristic" (ActiveEffect на Итог), и сложение ещё и в базу
+ * давало +10 вместо +5 (сверка главы I, 28.09.2026). Поле charMods осталось
+ * справкой для списка субрас (sheets/race-picker.mjs). `sub` в подписи
+ * оставлен, чтобы не менять вызовы.
+ */
+// eslint-disable-next-line no-unused-vars
 export function creationCharSum({ race, past, arch, sub }) {
   const sum = {};
   for (const [k, v] of Object.entries(race?.chars    || {})) sum[k] = (sum[k] || 0) + v;
   for (const [k, v] of Object.entries(past?.chars    || {})) sum[k] = (sum[k] || 0) + v;
   for (const [k, v] of Object.entries(arch?.charBonus || {})) sum[k] = (sum[k] || 0) + v;
-  for (const [k, v] of Object.entries(sub?.charMods   || {})) sum[k] = (sum[k] || 0) + v;
   return sum;
 }
 
@@ -610,10 +620,13 @@ export async function rollFormulaForChar(actor, formula, charKey, sub, flavor) {
   return rollFormula(actor, formula, flavor);
 }
 
-/** Выдаёт базовые импланты Механикум (пропуская уже имеющиеся). */
+/**
+ * Выдаёт базовые импланты Механикум (пропуская уже имеющиеся) — из
+ * компендиума, установленными (apps/mechanicus-implant-grant.mjs).
+ */
 export async function grantMechanicusImplants(actor) {
-  const existing = new Set(actor.items.filter(i => i.type === "implant").map(i => i.name));
-  const toAdd = MECHANICUS_IMPLANTS.filter(d => !existing.has(d.name)).map(d => foundry.utils.deepClone(d));
+  const existing = actor.items.filter(i => i.type === "implant").map(i => i.name);
+  const toAdd = await mechanicusImplantData(existing);
   if (toAdd.length) await actor.createEmbeddedDocuments("Item", toAdd);
   return toAdd.length;
 }

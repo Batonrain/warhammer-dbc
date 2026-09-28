@@ -14,7 +14,14 @@ import { woundLossUpdates } from "../../rules/wounds.mjs";
 import { conditionLevelField } from "../../constants/conditions.mjs";
 import { maybeGrantEnjoymentPain } from "../../combat/enjoyment.mjs";
 import { postTestCard, rollStatLine } from "../../helpers/test-card.mjs";
-import { hasRuleFlag } from "../../rules/flags.mjs";
+import { hasRuleFlag, ruleFlagLabels } from "../../rules/flags.mjs";
+import { DRUG_AFTERMATH_IMMUNE_CAPABILITY, POISON_IMMUNE_CAPABILITY } from "../../rules/naga-traits.mjs";
+import { ALCHEM_MONSTER, alchemDurationFactor, mustRerollSuccess } from "../../rules/replicant.mjs";
+import { isReplicantSerum, takeSerum } from "../../combat/replicant.mjs";
+// New Men / Новые Люди (Йигори): срок вдвое, без пост-эффекта, разовый эффект
+// медикамента вдвое (module/rules/new-men.mjs).
+import { newMenDrugDuration, newMenInstantMedicine, halvesInstantMedicine,
+         ignoresDrugSideEffects, halveDown } from "../../rules/new-men.mjs";
 
 // wdbc-1rno (кластер Дары Богов — Слаанеш): «Владыка Праздности» — «Персонаж
 // приобретает иммунитет к любым пост-эффектам и зависимостям от употребления
@@ -28,6 +35,20 @@ import { hasRuleFlag } from "../../rules/flags.mjs";
 // (rig.mjs весит только снаряжение) — читать/гасить нечего, честно остаётся
 // текстом Дара (capabilities.mjs).
 export const LORD_OF_SLOTH_CAPABILITY = "gift.slaanesh.lordOfSloth";
+
+/**
+ * Откуда у актора иммунитет к пост-эффектам и зависимости от наркотиков —
+ * подпись для карточки, или "" (иммунитета нет). Два источника с одним и тем
+ * же книжным текстом: Дар Слаанеш «Владыка Праздности» и Изуверская
+ * Физиология Наги (rules/naga-traits.mjs, та же фраза у Сслита).
+ */
+export function drugAftermathImmunity(actor) {
+  if (hasRuleFlag(actor, LORD_OF_SLOTH_CAPABILITY)) return "Дар Слаанеш «Владыка Праздности»";
+  if (hasRuleFlag(actor, DRUG_AFTERMATH_IMMUNE_CAPABILITY)) {
+    return ruleFlagLabels(actor, DRUG_AFTERMATH_IMMUNE_CAPABILITY)[0] || "Иммунитет к пост-эффектам";
+  }
+  return "";
+}
 
 const DELIVERY_RU = {
   injection: "Инъекция",
@@ -77,7 +98,7 @@ function rollTermsText(roll, total) {
  * Применяет «доп.» (мульти-) эффекты блока к цели: снятие Обескровливания,
  * лечение по формуле, доп. Усталость, непоглощаемый урон в Раны.
  */
-export async function applyEffectExtras(target, fx) {
+export async function applyEffectExtras(target, fx, { halveHeal = false } = {}) {
   const updates = {};
   const lines = [];
   const rolls = [];
@@ -93,8 +114,10 @@ export async function applyEffectExtras(target, fx) {
     try {
       const r = await new Roll(resolveCharFormula(fx.healFormula, chars)).evaluate();
       rolls.push(r);
-      Object.assign(updates, computeWoundHealing(target.system, r.total));
-      lines.push(`${rollIcon("heart","#ff8a8a")}Лечение: <b>${fx.healFormula}</b> = <b>${r.total}</b>`);
+      // Разовый эффект медикамента у Нового Человека — вдвое (окр.▼).
+      const healed = halveHeal ? halveDown(r.total) : r.total;
+      Object.assign(updates, computeWoundHealing(target.system, healed));
+      lines.push(`${rollIcon("heart","#ff8a8a")}Лечение: <b>${fx.healFormula}</b> = <b>${r.total}</b>${halveHeal ? ` → Новые Люди: вдвое = <b>${healed}</b>` : ""}`);
     } catch(e) {
       console.error("healFormula:", e);
     }
@@ -149,6 +172,19 @@ export async function applyDrug(owner, item, recipient = null) {
     return;
   }
 
+  // Иммунитет к ядам (Изуверская Физиология Наги и т.п., rules/naga-traits.mjs):
+  // доза яда потрачена, но на этого получателя не действует вовсе.
+  if (sys.drugCategory === "poison" && hasRuleFlag(actor, POISON_IMMUNE_CAPABILITY)) {
+    await item.update({ "system.quantity": qty });
+    const src = ruleFlagLabels(actor, POISON_IMMUNE_CAPABILITY)[0] || "Иммунитет к ядам";
+    await postTestCard(owner, {
+      icon: rollIcon("shield", "#4dffa6"), title: `${esc(item.name)} → ${esc(actor.name)}`,
+      threshold: `<div class="roll-threshold">${esc(src)} — иммунитет к ядам.</div>`,
+      rv: "—", outcome: `<span class="roll-success">Яд не действует (доза потрачена, осталось: ${qty}).</span>`
+    }, { sound: false });
+    return;
+  }
+
   let resolvedRounds = 0;
   let durationRollStr = "";
   let durationRoll = null;
@@ -161,10 +197,26 @@ export async function applyDrug(owner, item, recipient = null) {
       durationRoll = await new Roll(resolvedFormula).evaluate();
       resolvedRounds = durationRoll.total;
       durationRollStr = rollTermsText(durationRoll, resolvedRounds);
+      // Новые Люди: «время действия любого яда, наркотика или медикамента
+      // вдвое (окр.▼)» — срок режется у ПОЛУЧАТЕЛЯ, а не у применившего.
+      const halved = newMenDrugDuration(actor, resolvedRounds);
+      if (halved !== resolvedRounds) {
+        durationRollStr += ` → Новые Люди: вдвое = ${halved}`;
+        resolvedRounds = halved;
+      }
     } catch(e) {
       console.warn(`Не удалось бросить формулу длительности: ${sys.duration}`, e);
       durationRollStr = sys.duration;
     }
+  }
+
+  // Alchem Monster / Алхимическое Чудовище (Репликант): «удваивает
+  // длительность всех наркотиков и ядов на себя» — на ПОЛУЧАТЕЛЕ, не на том,
+  // кто вколол (rules/replicant.mjs).
+  const durationFactor = alchemDurationFactor(sys.drugCategory, hasRuleFlag(actor, ALCHEM_MONSTER));
+  if (durationFactor !== 1 && resolvedRounds) {
+    resolvedRounds *= durationFactor;
+    durationRollStr = `${durationRollStr} ×${durationFactor} (Алхимическое Чудовище) = ${resolvedRounds}`;
   }
 
   const itemUpdates = {
@@ -178,7 +230,10 @@ export async function applyDrug(owner, item, recipient = null) {
   };
 
   const actorUpdates = {};
-  const fx = sys.specialEffects || {};
+  // Новые Люди: мгновенный/разовый эффект МЕДИКАМЕНТА вдвое (окр.▼) — числа
+  // в карточке ниже берутся уже из урезанного набора.
+  const fx = newMenInstantMedicine(actor, sys.drugCategory, sys.specialEffects || {});
+  const halveHeal = halvesInstantMedicine(actor, sys.drugCategory);
 
   if (fx.removesBleedingLevels > 0) {
     Object.assign(actorUpdates, conditionAdjustFields(actor, "bleeding", -fx.removesBleedingLevels));
@@ -237,7 +292,7 @@ export async function applyDrug(owner, item, recipient = null) {
     }
   }
 
-  const extras = await applyEffectExtras(actor, fx);
+  const extras = await applyEffectExtras(actor, fx, { halveHeal });
   Object.assign(actorUpdates, extras.updates);
   if (extras.fatigueDelta) { fat.delta += extras.fatigueDelta; fat.touched = true; }
   const fatRes = drugFatigueChange(actor, fat);
@@ -245,6 +300,9 @@ export async function applyDrug(owner, item, recipient = null) {
 
   if (Object.keys(actorUpdates).length > 0) await actor.update(actorUpdates);
   if (fatRes) await announceFatigueChange(actor, fatRes);
+
+  // Сыворотка Репликанта — отметка приёма у Крючка Сывороток получателя.
+  if (isReplicantSerum(item)) await takeSerum(actor);
 
   // Enjoyment/Наслаждение (wdbc-sk8s): Наркотик триггерит, ТОЛЬКО когда его
   // применил кто-то другой (applyToOther) — не сам персонаж себе.
@@ -335,7 +393,9 @@ export async function applyDrug(owner, item, recipient = null) {
   if (fx.customEffect)
     chatContent += `<div class="roll-threshold">${rollIcon("target","#8fd0ff")}${fx.customEffect}</div>`;
 
-  if (sys.hasAfterEffect) {
+  if (sys.hasAfterEffect && ignoresDrugSideEffects(actor)) {
+    chatContent += `<div class="roll-threshold">${rollIcon("shield","#4dffa6")}Новые Люди: пост-эффект «${sys.afterEffect || "—"}» не наступит</div>`;
+  } else if (sys.hasAfterEffect) {
     chatContent += `<div class="roll-outcome"><span class="roll-failure">${rollIcon("warn","#ffb84d")}Пост-эффект: ${sys.afterEffect || "—"}`;
     if (sys.afterEffectDice) chatContent += ` [${sys.afterEffectDice}]`;
     chatContent += "</span></div>";
@@ -355,6 +415,21 @@ export async function applyDrug(owner, item, recipient = null) {
 export async function triggerAfterEffect(actor, item) {
   const sys = item.system;
   if (!sys.hasAfterEffect) return;
+
+  // Иммунитет к пост-эффектам (Владыка Праздности, Изуверская Физиология):
+  // действие препарата просто кончается, пост-эффект не наступает — раньше
+  // Дар гасил только тест Зависимости, а пост-эффект приходил как обычно.
+  // Новые Люди (Йигори): «игнорирует побочные эффекты» — тот же исход.
+  const aftermathImmune = drugAftermathImmunity(actor) || (ignoresDrugSideEffects(actor) ? "Новые Люди" : "");
+  if (aftermathImmune) {
+    await deactivateDrugEffect(item);
+    await postTestCard(actor, {
+      icon: rollIcon("shield", "#9d7cd8"), title: `Пост-эффект — ${esc(item.name)}`,
+      threshold: `<div class="roll-threshold">${esc(aftermathImmune)} — иммунитет к пост-эффектам наркотиков.</div>`,
+      rv: "—", outcome: `<span class="roll-success">Пост-эффект не наступает.</span>`
+    }, { sound: false });
+    return;
+  }
 
   const fx = sys.afterEffectSpecial || {};
   const actorUpdates = {};
@@ -567,10 +642,11 @@ export function activateDrugListeners(html, actor, { resolveOtherTargetActor } =
 }
 
 export async function rollAddictionTest(actor, item, charKey = "t", testMod = 0) {
-  if (hasRuleFlag(actor, LORD_OF_SLOTH_CAPABILITY)) {
+  const aftermathImmune = drugAftermathImmunity(actor);
+  if (aftermathImmune) {
     await postTestCard(actor, {
       icon: rollIcon("shield", "#9d7cd8"), title: `Тест Зависимости — ${item?.name ?? "Наркотик"}`,
-      threshold: `<div class="roll-threshold">Дар Слаанеш «Владыка Праздности» — иммунитет к пост-эффектам и зависимости от наркотиков.</div>`,
+      threshold: `<div class="roll-threshold">${esc(aftermathImmune)} — иммунитет к пост-эффектам и зависимости от наркотиков.</div>`,
       rv: "—", outcome: `<span class="roll-success">Зависимость невозможна — тест не требуется.</span>`
     }, { sound: false });
     return;
@@ -581,7 +657,17 @@ export async function rollAddictionTest(actor, item, charKey = "t", testMod = 0)
   const eff = charTotal + testMod + ruleMods.total;
   const wasAddicted = item?.system?.addiction?.isAddicted || false;
 
-  const roll = await new Roll("1d100").evaluate();
+  let roll = await new Roll("1d100").evaluate();
+  const rolls = [roll];
+  // Alchem Monster / Алхимическое Чудовище (Репликант): «должен перебрасывать
+  // успешные тесты Зависимости» — один раз, второй бросок окончателен.
+  let rerollNote = "";
+  if (mustRerollSuccess(roll.total <= eff, hasRuleFlag(actor, ALCHEM_MONSTER))) {
+    const first = roll.total;
+    roll = await new Roll("1d100").evaluate();
+    rolls.push(roll);
+    rerollNote = `<div class="roll-threshold">⚗️ Алхимическое Чудовище: успех (${first}) обязательно перебрасывается → <b>${roll.total}</b></div>`;
+  }
   const rv = roll.total;
   const success = rv <= eff;
   const deg = Math.floor(Math.abs(rv - eff) / 10) + 1;
@@ -617,7 +703,7 @@ export async function rollAddictionTest(actor, item, charKey = "t", testMod = 0)
       label: abbr, base: charTotal,
       parts: [...(testMod !== 0 ? [`${testMod >= 0 ? "+" : ""}${testMod}`] : []), ...ruleMods.parts],
       threshold: eff, rv
-    }),
+    }) + rerollNote,
     outcome
-  }, { rolls: [roll] });
+  }, { rolls });
 }

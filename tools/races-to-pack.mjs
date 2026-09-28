@@ -144,6 +144,7 @@ export function raceDocs() {
       description: r.desc || "", notes: "",
       hasGeneSeed: !!r.hasGeneSeed,
       pastRaces: [...(r.pastRaces || [])],
+      largeBase: !!r.largeBase, // wdbc-8k0i: Крупная База 3×3 (Огрин)
       size: r.size || 0, bonusPoints: r.bonusPoints || 0, charShift: r.charShift || 0,
       fateRoll: r.fateRoll || "", skillsNote: r.skillsNote || "",
       adaptations: r.adaptations || "",

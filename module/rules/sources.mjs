@@ -12,13 +12,17 @@
 // их импортируют отсюда три с лишним десятка файлов.
 
 import { ASTARTES_RULES } from "./library/astartes.mjs";
-import { OGRYN_RULES } from "./library/ogryn.mjs";
+import { OGRYN_RULES, OGRYN_TRAIT_RULES } from "./library/ogryn.mjs";
+import { REPLICANT_RULES } from "./library/replicant.mjs";
+import { serumHookRules } from "./replicant.mjs";
+import { NAGA_RULES } from "./library/naga.mjs";
 import { EXODITE_RULES, DRUKHARI_RULES, AZURIANE_RULES, HARLEQUIN_RULES, YNNARI_RULES,
          HALF_ELDAR_RULES } from "./library/aeldari.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { CORE_RULES } from "./library/core.mjs";
 import { NULL_ZONE_RULES } from "./library/null-zones.mjs";
+import { YIGORI_RULES } from "./library/yigori.mjs";
 import { CONDITION_RULES } from "./library/conditions.mjs";
 import { rulesFromItemMechanics, opposedTargetRerollRules } from "./item-rules.mjs";
 import { isItemActive } from "../apps/effects.mjs";
@@ -50,11 +54,18 @@ const hwKey = actor =>
 // Правила основной книги приходят каждому актору: они не привязаны ни к расе,
 // ни к Происхождению, а отбираются по условию `when`. Так живёт «Проворный» —
 // Черта нескольких рас, штраф от которой достаётся не носителю, а атакующему.
-registerRuleSource("core", () => CORE_RULES);
+// Правила Черт Огрина (BONE-Head) идут вместе с ними: отбор по Черте, а не по
+// расе — Черту получает и Миньон с комплексной Чертой «Огрин» (library/ogryn.mjs).
+const CORE_AND_TRAIT_RULES = [...CORE_RULES, ...OGRYN_TRAIT_RULES];
+registerRuleSource("core", () => CORE_AND_TRAIT_RULES);
 
 // Пустота Парии (library/null-zones.mjs): штрафы псайкерам/демонам в ауре и
 // социальные штрафы самого Парии — отбор по условию when, как у «core».
 registerRuleSource("nullZones", () => NULL_ZONE_RULES);
+
+// Черты Йигори с условием по цели броска (Angel Hunters) — отбор по Черте в
+// when, как у «nullZones»: см. library/yigori.mjs.
+registerRuleSource("yigori", () => YIGORI_RULES);
 
 // Ситуативные штрафы состояния тела и снаряжения (wdbc-n17t): Усталость,
 // Марш, снятый шлем, выключенная силовая броня, Перевес инвентаря. Числа
@@ -79,6 +90,10 @@ const RACE_RULES = {
   // Огрин (wdbc-flai): признак сложения под огринское оружие — без него
   // расчёт rules/ogryn-fit.mjs штрафовал бы Огрина за его же дубину.
   ogryn: OGRYN_RULES,
+  // Репликант (сверка главы I): Предел Крит. Провала тестов I — Гипно-Шрамы.
+  replicant: REPLICANT_RULES,
+  // Нага: штраф Безграничного Тщеславия к общению со змееподобными.
+  naga: NAGA_RULES,
   exodite: EXODITE_RULES,
   drukhari: DRUKHARI_RULES,
   truebornDrukhari: DRUKHARI_RULES,
@@ -91,6 +106,12 @@ const RACE_RULES = {
 };
 
 registerRuleSource("race", a => RACE_RULES[a?.system?.race] ?? []);
+
+// Serum Hook / Крючок Сывороток (Репликант): пока сыворотка просрочена, урон в
+// S и T не восстанавливается отдыхом — правило живёт от времени мира, как
+// Зависимость, и отбирается по Черте, а не по расе. См. rules/replicant.mjs.
+registerRuleSource("serumHook", a =>
+  serumHookRules(a, (typeof game !== "undefined" ? game.time?.worldTime : null) ?? 0));
 
 // Пути Азуриан (system.paths) — восьмой источник, wdbc-4e60. Пути хранятся
 // полем актора и предметами не являются, поэтому ни один предмет не мог выдать

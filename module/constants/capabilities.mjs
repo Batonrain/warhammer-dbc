@@ -298,6 +298,52 @@ export const CAPABILITIES = {
     source: "Черта-метка «В Поле Дискорданта» (выдаёт аура Дискорданта)",
     reader: "module/rules/null-zones.mjs (inDiscordantField) — sheets/attack-dialog.mjs, combat/attack.mjs, sheets/tabs/tech.mjs, apps/mechanics.mjs::syncNullZoneSuppression"
   },
+  // ── Зверолюд и его субрасы (сверка главы I, 28.09.2026) ─────────────────────
+  "order.rejectsBionics": {
+    label: "Каждая установленная бионика/кибернетика — −5 T и −2 к максимуму Ран",
+    source: "Aversion to Order / Отвращение к Порядку (нет у Шамана с Символом Власти)",
+    reader: "module/rules/character.mjs prepareCharacterDerived() — rules/aversion-to-order.mjs::rejectedImplants, T.total и wounds.effectiveMax"
+  },
+  "order.noBriefing": {
+    label: "Не получает бонусов от предбоевых брифингов",
+    source: "Aversion to Order / Отвращение к Порядку",
+    reader: "module/rules/command-effects.mjs commandRulesFor() — Короткая Команда по Брифингу пропускается"
+  },
+  "order.noFormationTalents": {
+    label: "Не может брать и использовать Таланты Combat Formation и Iron Discipline",
+    source: "Aversion to Order / Отвращение к Порядку",
+    reader: "module/sheets/item-picker.mjs talentRowLock() — замок на строке Таланта в пикере"
+  },
+  "mutation.singleDie": {
+    label: "Всегда один кубик на мутации и субмутации (без второго броска Неделимого)",
+    source: "Stepchildren of the Gods / Пасынки Богов",
+    reader: "module/sheets/tabs/mutations.mjs rollMutationOrGift() + module/apps/submutations.mjs rollSubmutation()"
+  },
+  "talents.beastmanSubrace": {
+    label: "Доступна папка Талантов «Субрасы Зверолюдов» (какой Талант чей — Требование «Субраса …»)",
+    source: "Субрасы Зверолюда: Слаангор, Пестигор, Кхорнгор, Тзаангор",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+  "patron.locked.khorne": {
+    label: "Не может потерять покровительство Кхорна",
+    source: "Субраса Кхорнгор",
+    reader: "warhammer-dbc.mjs — Hooks.on(\"preUpdateActor\") (module/rules/patron-lock.mjs::enforcedPatron) + module/apps/races.mjs::applySubrace"
+  },
+  "patron.locked.nurgle": {
+    label: "Не может потерять покровительство Нургла",
+    source: "Субраса Пестигор",
+    reader: "warhammer-dbc.mjs — Hooks.on(\"preUpdateActor\") (module/rules/patron-lock.mjs::enforcedPatron) + module/apps/races.mjs::applySubrace"
+  },
+  "patron.locked.slaanesh": {
+    label: "Не может потерять покровительство Слаанеш",
+    source: "Субраса Слаангор",
+    reader: "warhammer-dbc.mjs — Hooks.on(\"preUpdateActor\") (module/rules/patron-lock.mjs::enforcedPatron) + module/apps/races.mjs::applySubrace"
+  },
+  "patron.locked.tzeentch": {
+    label: "Не может потерять покровительство Тзинча",
+    source: "Субраса Тзаангор",
+    reader: "warhammer-dbc.mjs — Hooks.on(\"preUpdateActor\") (module/rules/patron-lock.mjs::enforcedPatron) + module/apps/races.mjs::applySubrace"
+  },
   // ── Избегание Орды как одиночной цели (wdbc-gzuf) ────────────────────────
   "horde.singleTargetImmune": {
     label: "Атаки Орды и «Троек» (Концентрация огня) — как атаки одиночного персонажа: можно Избегать, без бонусных кубиков урона; теряется при Размере 2+",
@@ -1870,6 +1916,18 @@ export const CAPABILITIES = {
     source: "Technical Knock / Технический Трюк", reader: ""
   },
   // ── Миньоны
+  // «Игнорирует требования по Inf для Миньонов-<группы>» — Черты Архетипов
+  // (сверка 28.09.2026): Survivor — звери, Master of Machines — машины;
+  // Serpent's Tongue (люди) и Демонолог (демоны) заводят .human/.daemon сами,
+  // вместе с выдачей на своих Чертах (реестр требует достижимости ключа).
+  "minion.ignoreInfamy.beast": {
+    label: "Требование по Inf (Бесчестию) у Таланта Миньона группы «Зверь» не действует.",
+    source: "Survivor / Выживальщик", reader: "module/apps/minion-talent.mjs (talentRequirements ignoreInfamy)"
+  },
+  "minion.ignoreInfamy.machine": {
+    label: "Требование по Inf (Бесчестию) у Таланта Миньона группы «Машина» не действует.",
+    source: "Master of Machines / Повелитель Машин", reader: "module/apps/minion-talent.mjs (talentRequirements ignoreInfamy)"
+  },
   "minion.core.belovedLeader": {
     label: "Миньоны персонажа получают +10 Лояльности.",
     source: "Beloved Leader / Обожаемый Лидер", reader: ""
@@ -5089,24 +5147,28 @@ export const CAPABILITIES = {
     source: "Ablative Plating / Аблативное Бронирование", reader: ""
   },
   "trait.abominablePhysiology": {
-    label: "Иммунитет к ядам/пост-эффектам/зависимости; лечение как у Космодесантника +1 доп. Рана/сутки; тест T+0 в начале Хода снимает Кровотечение.",
-    source: "Abominable Physiology / Изуверская Физиология", reader: ""
+    label: "Нага (не путать с «Отвратной Физиологией» Чумного Десантника — trait.elitnyeArhetipy.chumnoyDesantnik.abominablePhysiology). Реализовано записями Черты: иммунитет к ядам (poison.immune + kind:\"condition\" immunity Отравления), к пост-эффектам и зависимости (drugs.afterEffectAddictionImmune), лечение как Космодесантник (healing.astartes), +1 Рана в сутки (healing.extraWoundDaily), тест T+0 на Кровотечение в начале Хода (bleeding.selfStanchTurnStart). Не смоделировано: яды «через еду» отдельно от препаратов — такого пути в системе нет, яд в еде применяется той же кнопкой препарата",
+    source: "Abominable Physiology / Изуверская Физиология",
+    reader: "см. возможности poison.immune, drugs.afterEffectAddictionImmune, healing.astartes, healing.extraWoundDaily, bleeding.selfStanchTurnStart (packs-src/traits/Abominable_Physiology…json)"
   },
   "trait.adaptiveVenom": {
-    label: "Toxic 1d10.",
-    source: "Adaptive Venom / Адаптивная Отрава", reader: ""
+    label: "Укус 1d10 вместо 1d5 (bite.venomD10). Кнопка «Сменить яд в клыках» (kind:\"script\"): яд из компендиума Химии с вектором рана/инъекция/еда, Редкость ≤2/3/4 за 1/3/5 Очков Бесчестия — одна доза на листе, применяется к укушенной цели кнопкой препарата. Не смоделировано: автоприменение дозы к цели укуса — у Укуса в Борьбе нет шага «применить эффект к цели», доза идёт отдельной кнопкой",
+    source: "Adaptive Venom / Адаптивная Отрава",
+    reader: "module/rules/naga-traits.mjs (venomBiteDamage, adaptiveVenomCandidates); module/apps/naga-traits.mjs::useAdaptiveVenom (помощник apps/item-script.mjs)"
   },
   "trait.adaptiveXenos": {
     label: "В людском облике (шлем/капюшон + не-эльдарская броня/плащ >70%) и на Низком Готике — нет штрафов на общение с людьми.",
     source: "Adaptive Xenos / Адаптивный Ксенос", reader: ""
   },
   "trait.adroit": {
-    label: "Выбирает одну Характеристику (кроме Inf и Cor): все успешные тесты на неё (в т.ч. навыки через неё) получают +1 Успех.",
-    source: "Adroit / Искусный", reader: ""
+    label: "Выбирает одну Характеристику (кроме Inf и Cor): все успешные тесты на неё (в т.ч. навыки через неё) получают +1 Успех. Реализовано: выбор — диалогом при получении Черты (флаг adroitChar на ней), +1 Успех — тесты Навыков/Характеристик с листа, Страх, верховые, атака WS/BS, Уклонение (A), Парирование (WS). Не покрыто: прочие частные броски со своим подсчётом степени (Захват, приёмы, тесты техники и т.п.) — там бонус считает игрок.",
+    source: "Adroit / Искусный",
+    reader: "module/apps/adroit.mjs (isAdroitTrait — хук createItem, выбор); module/rules/adroit.mjs adroitDegreeBonus ← rules/kind-outcome.mjs, combat/attack.mjs, combat/defense.mjs"
   },
   "trait.alchemMonster": {
-    label: "×2 длительность наркотиков/ядов на себя и ×2 лимит приёма наркотиков в неделю; но обязан перебрасывать УСПЕШНЫЕ тесты против ядов и Зависимо…",
-    source: "Alchem Monster / Алхимическое Чудовище", reader: ""
+    label: "×2 длительность наркотиков/ядов на себе (Наркотики и Яды Химии) и ×2 недельный лимит доз на листе; успешные тесты против яда (Toxic) и Зависимости перебрасываются один раз сами. НЕ сделано: недельного счётчика принятых доз в системе нет вовсе; яд вне Химии и Toxic (укус/газ без предмета) своего теста не имеет — перебрасывать нечего.",
+    source: "Alchem Monster / Алхимическое Чудовище",
+    reader: "module/rules/replicant.mjs (alchemDurationFactor/alchemDoseLimit/mustRerollSuccess) — sheets/tabs/drugs.mjs (applyDrug, rollAddictionTest), hooks.mjs (_applyWeaponPropEffect, poisoned), sheets/sheet-helpers.mjs (_buildAddictions)"
   },
   "trait.alluringPresence": {
     label: "Все враги получают штраф −10 на Избегания против атак демона.",
@@ -5129,16 +5191,20 @@ export const CAPABILITIES = {
     source: "Auto-Stabilized / Авто-Стабилизированный", reader: ""
   },
   "trait.aversionToOrder": {
-    label: "Lore/Trade враждебны.",
-    source: "Aversion to Order / Отвращение к Порядку", reader: ""
+    label: "Навыки групп Lore и Trade враждебны (сильнее «всегда Дружественных»); без брифингов, Combat Formation и Iron Discipline; каждая бионика/кибернетика −2 Раны и −5 T.",
+    source: "Aversion to Order / Отвращение к Порядку",
+    reader: "записи Черты: override склонности (module/rules/aptitude-overrides.mjs, приоритет — module/rules/advance-category.mjs::skillAdvanceCat) + order.rejectsBionics/order.noBriefing/order.noFormationTalents"
   },
   "trait.aThousandSongs": {
     label: "При провале теста крафта — за Очко Судьбы вместо этого преуспеть на F.b успехов. Игнорирует требования по характеристикам для Миньонов-машин…",
     source: "A Thousand Songs / Тысяча Песен", reader: ""
   },
   "trait.barefoot": {
-    label: "+20 Stealth (бесшумность).",
-    source: "Barefoot / Босоногий", reader: ""
+    label: "Без обуви: +20 и переброс Stealth для бесшумного передвижения и тестов Трудного Ландшафта.",
+    source: "Barefoot / Босоногий",
+    // Имя как Возможность не выдаётся: Черта несёт четыре записи testMod/reroll
+    // с условием when.predicates.wearsFootwear:false, ключ здесь — справка.
+    reader: "записи Конструктора на Черте (testMod/reroll, области skill:stealth и terrain) под условием module/rules/predicates.mjs wearsFootwear(); тест Ландшафта — module/combat/movement-terrain.mjs::_resolveDifficultTerrain. Текстом: хождение по камням/стеклу, обувь в экстремальном климате"
   },
   "trait.bestial": {
     label: "Авто Survival; не использует сложные действия.",
@@ -5164,10 +5230,6 @@ export const CAPABILITIES = {
     label: "Реализовано (wdbc-j8cn): на карточке удачной манифестации против Затупленной цели — строка «пройдите Psyniscience −10×X (Порог N)», с Warp Sight — Awareness +20−10×X; при Провале цель игнорирует эффект. Психострельба без Warp Weapon строки не даёт (книга). X — Черта Blunted или Подавляющее поле друкхарийской брони (что больше). НЕ смоделировано: сам тест не бросается кнопкой и эффект силы не отменяется автоматически; снижение получаемой Порчи на X и потеря Черты при Daemonic/Psyker и т.п.",
     source: "Blunted / Затупленный (X)", reader: "module/rules/blunted.mjs — bluntedCasterTest; module/sheets/tabs/psychic.mjs (bluntedSection карточки манифестации)"
   },
-  "trait.bolterVirtuoso": {
-    label: "Болт-оружие получает ещё один дополнительный кубик ко всем альтернативным профилям (приклад, штык, из подствольника и т.д.).",
-    source: "Bolter Virtuoso / Болтерный Виртуоз", reader: ""
-  },
   "trait.boneHead": {
     label: "Импланты интеллекта (с оговорками).",
     source: "BONE-Head / Костеголов", reader: ""
@@ -5189,24 +5251,28 @@ export const CAPABILITIES = {
     source: "Burrower / Бурильщик (X)", reader: ""
   },
   "trait.chaosPsyker": {
-    label: "Получает Трейт Psyker с PR3 и +1d5 Cor. В расчёте психической силы считается Несвязанным.",
+    label: "В расчёте психической силы считается Несвязанным (Черта Архетипа Ведьма). Трейт Psyker, PR3 и +3d5 Cor — строки самого Архетипа, не этой Черты (в книге Черта их не даёт). Реализовано без возможности: Возможность данными не выдаётся: «Несвязанный» ставит сам Архетип — system.psykerClass → system.psyker.class при выборе (module/apps/archetypes.mjs::applyArchetype, module/apps/character-wizard.mjs::_finishArchetypeStep). Психосилы читают system.psyker.class (module/sheets/tabs/psychic.mjs). Ручная смена Природы Дара на листе не запрещена — Ведьма может стать, например, демоническим псайкером позже по сюжету.",
     source: "Chaos Psyker / Псайкер Хаоса", reader: ""
   },
   "trait.cleverHands": {
-    label: "+15 на тонкую ручную работу, поднимается до +30 в экстремальных ситуациях (вроде взлома замка посреди боя).",
-    source: "Clever Hands / Умные Руки", reader: ""
+    label: "Умелые Руки: +15 на тесты Крафта, ремонта и обслуживания, требующие тонкой работы, +30 в экстремальных ситуациях. Галочки +15/+15 в диалоге Ремесла/Техпользования/Безопасности — правила module/rules/library/squat.mjs (по Черте, не по флагу); Расклин (экстремальная ситуация по книге) — +30 сам. Мастерская (окно Крафта) бонус не видит — отдельная задача.",
+    source: "Clever Hands / Умные Руки",
+    reader: "module/rules/squat-traits.mjs cleverHandsClearJamBonus() — module/combat/clear-jam.mjs::rollClearJam"
   },
   "trait.clovenOne": {
-    label: "+20 vs Трудный Ландшафт.",
-    source: "Cloven One / Копытный", reader: ""
+    label: "+20 на тесты Трудного Ландшафта; Leap Up, Jumper, Preternatural Speed, Sprint, Tireless, Steady Footwork — дружественные.",
+    source: "Cloven One / Копытный",
+    reader: "записи Черты: «Модификатор теста» области terrain (module/combat/movement-terrain.mjs, ctx.terrain) + override склонности Талантов (module/rules/aptitude-overrides.mjs)"
   },
   "trait.coldKiller": {
-    label: "При нанесении Экстремального Урона бросает d5 дважды на Критический Результат 2 и берёт лучший.",
-    source: "Cold Killer / Хладнокровный Убийца", reader: ""
+    label: "Экстремальный Урон: d5 Критического Результата бросается дважды, берётся больший (книга — «выбирает один»; выбор меньшего кнопкой не предусмотрен). Работает на любом пути урона, где известен атакующий: оружие, психосилы, техночудеса, Орда, выхватывание, сквозной прострел.",
+    source: "Cold Killer / Хладнокровный Убийца",
+    reader: "module/rules/cold-killer.mjs (COLD_KILLER), module/combat/attack.mjs::rollExtremeDamage (второй бросок, как у Оппортуниста)"
   },
   "trait.constrictor": {
-    label: "+20 Захват; Unnatural S в Захвате.",
-    source: "Constrictor / Удав", reader: ""
+    label: "Хвост держит в Захвате как пара рук, руки Наги свободны; +20 на тесты Athletics в Захвате и Борьбе; урон «Заломить» хвостом — с S.b хвоста (Unnatural S (6)). Возможность grapple.constrictorTail",
+    source: "Constrictor / Удав",
+    reader: "module/combat/grapple.mjs (attackerHoldFields, constrictorAthleticsBonus, _resolveWrenchSuccess); module/rules/hands.mjs::grappleHandsUsed"
   },
   "trait.couldnTHurt": {
     label: "В начале сессии находит 1d5+P.b расходников. +20 на поиск ценного/спрятанного у погибших. Обычно недоступны Кабал/Культ/Ковен.",
@@ -5216,9 +5282,20 @@ export const CAPABILITIES = {
     label: "Нет штрафов за трудный ландшафт.",
     source: "Crawler / Ползун", reader: ""
   },
-  "trait.cultLeader": {
-    label: "Имеет фанатичный культ: добровольные жертвы для ритуалов, Навыки +10 для ритуалов. Может использовать I вместо W или W вместо I с Преимущест…",
-    source: "Cult Leader / Лидер Культа", reader: ""
+  "trait.darkSeer": {
+    label: "Демонолог может использовать I вместо W или W вместо I в тестах ритуалов; тест на «правильной» Характеристике — с Преимуществом. Реализовано в диалоге «Провести ритуал»: путь-двойник на другой Характеристике, исходный путь — бросок с Преимуществом. [допущение] «правильная» — Характеристика пути проведения, и только если это I или W.",
+    source: "Dark Seer / Ведун Тьмы",
+    reader: "module/rules/dark-seer.mjs ← sheets/ritual-cast-dialog.mjs (darkSeerPaths), apps/ritual-cast.mjs castRitual (darkSeerAdvantage)"
+  },
+  "minion.ignoreInfamy.human": {
+    label: "Игнорирует требования по Inf для Миньонов-людей (Змеиный Язык Отступника): в диалоге покупки Таланта «Миньон Хаоса» требование Бесчестия для группы «Человек» не проверяется.",
+    source: "Serpent's Tongue / Змеиный Язык",
+    reader: "module/rules/minion-build.mjs talentRequirements({ignoreInfamy}) ← apps/minion-talent.mjs"
+  },
+  "minion.ignoreInfamy.daemon": {
+    label: "Игнорирует требования по Inf для Миньонов-демонов (Ведун Тьмы Демонолога): в диалоге покупки Таланта «Миньон Хаоса» требование Бесчестия для группы «Демон» не проверяется.",
+    source: "Dark Seer / Ведун Тьмы",
+    reader: "module/rules/minion-build.mjs talentRequirements({ignoreInfamy}) ← apps/minion-talent.mjs"
   },
   "trait.daemonicArmament": {
     label: "Призываемое демоническое оружие (Warp Weapon).",
@@ -5229,15 +5306,16 @@ export const CAPABILITIES = {
     source: "Daemonic Presence / Демоническое Присутствие (X/Y)", reader: ""
   },
   "trait.darkPrinceSChild": {
-    label: "Впервые набирая 30/60/90 Inf, может выбрать либо +2 руки (Multiple Arms +2), либо +2 к максимуму Очков Бесчестья.",
-    source: "Dark Prince's Child / Дитя Тёмного Принца", reader: ""
+    label: "Покровитель Слаанеш ставится сам и не меняется (patronage.lockedSlaanesh); на 30/60/90 Inf — окно выбора: Многорукий +2 или +2 к максимуму Очков Бесчестия (infamy.darkPrinceMilestones, system.infamyMaxMod)",
+    source: "Dark Prince's Child / Дитя Тёмного Принца",
+    reader: "module/apps/naga-traits.mjs — grantLockedPatron/enforceLockedPatron/checkDarkPrinceMilestones (хуки warhammer-dbc.mjs)"
   },
   "trait.darkSight": {
     label: "Видит в темноте. Реализовано (wdbc-1rno.36): галочки «Слабый свет» и «Тьма» окна атаки у носителя стоят 0 с подписью «Ночное Зрение» (опознание — и по имени Черты). Автоопределения освещения сцены нет — галочки ставит стол.",
     source: "Dark Sight / Ночное Зрение", reader: "module/rules/vision-penalty-immunity.mjs — lightPenaltyImmunityReason; module/sheets/attack/mods.mjs"
   },
   "trait.dataAcquisition": {
-    label: "Преимущество на тесты Awareness механизировано (wdbc-u0by, kind:\"reroll\"/keepBest). Иммунитет к кодам командования Боевых Лат Скитария — не механизировано, нет такого понятия в коде вовсе",
+    label: "Преимущество на все тесты Awareness механизировано (wdbc-u0by, kind:\"reroll\"/keepBest). Коды командования Лат — отдельная Черта Скитария My Own Master (trait.myOwnMaster), сверка Архетипов 28.09.2026",
     source: "Data Acquisition / Получение Данных",
     reader: "module/rules/item-rules.mjs (kind:\"reroll\" → rollMode-правило общего реестра)"
   },
@@ -5262,40 +5340,51 @@ export const CAPABILITIES = {
     source: "Digitigrade / Двусоставный (X)", reader: ""
   },
   "trait.divinelyGifted": {
-    label: "Выбирает 1 дополнительную мутацию/субмутацию (кроме Доспеха Богов и Знания Веков). На покровительстве Бога может вместо этого выбрать 1 Дар.",
+    label: "Выбирает 1 дополнительную мутацию/субмутацию (кроме Доспеха Богов и Знания Веков). На покровительстве Бога может вместо этого выбрать 1 Дар. Реализовано без возможности: Возможность данными не выдаётся: выбор — ИЛИ-группа Конструктора Архетипа Нумен (kind:\"equipment\" по паку мутаций, equipChoiceIds без Доспехов Богов и Знаний Веков, submutationChoice; ветки Даров — с when.patronGod, лишние из выбора убирает module/apps/mechanics.mjs::orChoiceEntries).",
     source: "Divinely Gifted / Божественно Одарённый", reader: ""
   },
   "trait.emergencyMaintenance": {
-    label: "Тратит Очко Бесчестья и полное действие, чтобы починить повреждения оружия/брони/снаряжения Легиона (обычно требующие 1 смены работы).",
-    source: "Emergency Maintenance / Экстренное Обслуживание", reader: ""
+    label: "Очко Бесчестия + полное действие: починить повреждение оружия/брони/снаряжения, обычно требующее до 1 смены работы (разъеденный AP брони, заклинившее/сломанное оружие, перегруженный щит).",
+    source: "Emergency Maintenance / Экстренное Обслуживание",
+    reader: "kind:script на Черте (цена 1 Очко Бесчестия) → module/combat/emergency-maintenance.mjs + module/rules/emergency-maintenance.mjs. Принадлежность вещи Легиону не проверяется — у предметов нет такого признака"
   },
   "trait.enduring": {
-    label: "Игнор штрафа Усталости.",
-    source: "Enduring / Стойкий", reader: ""
+    label: "Нужно только 4 часа сна в сутки — подсказка у Сна на вкладке ТЕЛО. Порог Усталости = рейтинг Unnatural T и лечение как у Космодесантника делают соседние записи той же Черты (kind:\"fatigue\" unt, healing.astartes). НЕ сделано: сон в часах система не считает (стадии Сна идут по суткам), поэтому «4 часа» — подсказка, а не расчёт.",
+    source: "Enduring / Стойкий",
+    reader: "module/sheets/sheet-helpers.mjs (body.life, fx Сна); порог — module/rules/fatigue-grace.mjs (fatigueThresholdChar \"unt\")"
   },
   "trait.experimentalSerum": {
     label: "Может создавать Яды и Наркотики с вектором Рана/Инъекция из любых других, повышая редкость итогового (по усмотрению ГМа).",
     source: "Experimental Serum / Экспериментальная Сыворотка", reader: ""
   },
   "trait.expirationDate": {
-    label: "Короткий срок жизни.",
-    source: "Expiration Date / Срок Годности", reader: ""
+    label: "Срок жизни 15+1d5 лет: бросок кнопкой на вкладке ТЕЛО (результат на Черте), строка «возраст / предел / осталось» с учётом Генетического Угасания, подсказка про ослабленный Ювенант. НЕ сделано: Ювенантная медицина в системе не считается вовсе (только текст препарата), смерть по достижении предела — решение ГМа.",
+    source: "Expiration Date / Срок Годности",
+    reader: "module/combat/replicant.mjs (rollLifespan, replicantBodyContext) — templates/actor/parts/tab-effects.hbs, sheets/tabs/body.mjs"
+  },
+  "trait.fatedPath": {
+    label: "Предначертанный Путь: избранный Элитный архетип — −1000 опыта, всегда базовая цена, не удорожает прочие; его требования «проверяет ГМ» считаются выполненными.",
+    source: "Fated Path / Предначертанный Путь",
+    reader: "module/rules/fated-path.mjs::fatedEliteName — цена в module/apps/elite-buy.mjs::eliteCostFor, выбор ☆ в module/sheets/elite-picker.mjs::openElitePicker"
   },
   "trait.fanatic": {
     label: "Может перехватить атаку по союзнику.",
     source: "Fanatic / Фанатик", reader: ""
   },
   "trait.fastLearner": {
-    label: "+X% к опыту.",
-    source: "Fast Learner / Ловит на Лету (X)", reader: ""
+    label: "+X% к опыту за сессию (прибавка опыта на листе и награды сессии). НЕ реализовано: +X% к СТАРТОВОМУ опыту — Этап 4 Мастера создания (constants/start-levels.mjs::startLevelValues) процент не читает.",
+    source: "Fast Learner / Ловит на Лету (X)",
+    reader: "module/rules/character.mjs (system.fastLearnerBonus по имени Черты) → module/sheets/actor-sheet.mjs (promptStatAdd bonusPercent), module/rules/session-rewards.mjs"
   },
   "trait.firePoint": {
-    label: "Тратит Очко Бесчестья на переброс стрелковой атаки, даже Оглушённым/лёжа/сбит с ног. На покровительстве Нургла может перебрасывать с Преимущ…",
-    source: "Fire Point / Огневая Точка", reader: ""
+    label: "Переброс стрелковой атаки за Очко Бесчестия или Закрепление занимают Огневую Точку: пока Хавок не сдвинется (кроме Отскока), не заляжет и не будет сбит с ног, все стрелковые атаки перебрасываются без траты Очка (раз на атаку).",
+    source: "Fire Point / Огневая Точка",
+    reader: "module/rules/fire-point.mjs — hooks.mjs::_attachFateContextMenu (занять точку платным перебросом, пункт «Переброс — Огневая Точка»), combat/brace-weapon.mjs::declareBrace (Закрепление), combat/fire-point.mjs (сдвиг токена/Повален гасят, combat/recoil.mjs — Отскок не гасит). «Даже с покровительством Нургла» — меню Очков запрет Переброса Нурглу не проверяет вовсе, исключение выполняется само"
   },
   "trait.flyer": {
-    label: "Полёт со скоростью SPD×X.",
-    source: "Flyer / Летун (X)", reader: ""
+    label: "Полёт: в воздухе SPD = X вместо обычной скорости, без модификаторов Размера (core.json «Flyer (X) / Летун»). X формулой (Гарпия: A.b×2) — от текущих Бонусов. Надбавки «+SPD пешком» к полёту не прибавляются, штрафы Перевеса/Piercing — да.",
+    source: "Flyer / Летун (X)",
+    reader: "module/rules/flight-speed.mjs::flightSpeedOf (по имени Черты, не по флагу) → module/rules/character/movement.mjs (SPD при высоте ≠ «не летит»); гейт высот — combat/movement-actions.mjs::actorHasFlyer; рейтинг-формула — флаг ratingFormula (rules/trait-grant.mjs)"
   },
   "trait.fromBeyond": {
     label: "Иммунитет Страх/Подавление/Паника и ментальным психосилам.",
@@ -5306,40 +5395,51 @@ export const CAPABILITIES = {
     source: "Fully Armed / Во Всеоружии", reader: "module/combat/fully-armed.mjs"
   },
   "trait.geneticDecay": {
-    label: "Падение макс. возраста.",
-    source: "Genetic Decay / Генетическое Угасание", reader: ""
+    label: "+1 к каждому урону в Характеристики за мутацию (не Дар Богов — у Дара заполнен бог) и −1 год предела возраста за мутацию. НЕ сделано: урон, записанный в обход единой точки applyCharDamage (Хирургия — sheets/tabs/healing.mjs), прибавки не получает.",
+    source: "Genetic Decay / Генетическое Угасание",
+    reader: "module/combat/char-damage.mjs (applyCharDamage), module/combat/replicant.mjs (replicantBodyContext); арифметика — module/rules/replicant.mjs"
   },
   "trait.geneSplice": {
-    label: "Выбор адаптаций.",
+    label: "По одной адаптации из Сенсорных, Защитных и Атакующих + до 3 дополнительных (в т.ч. Продвинутые), каждая −5% «Ловит на Лету». Возможностью не выражается и в ней не нуждается: выбор — МЕХАНИКА расы Сплайс (группа «Ген-Сплайс», equipChoiceIds + equipBudgetMin), счёт — module/rules/splice-adaptations.mjs по меткам flags.warhammer-dbc.spliceAdaptation Черт-адаптаций → rules/character.mjs (fastLearnerBonus).",
     source: "Gene-Splice / Ген-Сплайс", reader: ""
   },
   "trait.hardAsStone": {
-    label: "Сопротивление ментальным эффектам.",
-    source: "Hard as Stone / Крепкий как Камень", reader: ""
+    label: "Крепкий как Камень: Преимущество на тест против яда (сопротивление Toxic); без сна до 3 суток без штрафа (лестница Сна), подсказка длительности сна 3 ч +3 ч за бессонные сутки (до 9). Лечение и мутации — отдельные возможности healing.astartes и mutations.asAstartes той же Черты. Тестов против болезней и вакуума в системе нет — Преимущество там берётся Кубиком диалога; защита от радиации −3 — строка справочника окна Окружения (фон радиации к акторам не применяется).",
+    source: "Hard as Stone / Крепкий как Камень",
+    reader: "module/rules/squat-traits.mjs poisonResistReroll() — module/hooks.mjs (_applyWeaponPropEffect); module/rules/squat-traits.mjs sleepGraceDays() — module/rules/character.mjs (vitalCtx) и module/sheets/sheet-helpers.mjs (life)"
+  },
+  "mutations.asAstartes": {
+    label: "Получает мутации как Космодесантник, а не человек: пороги Мутации 10/30/60/90 вместо 10/20/40/60/80 (поблажка лоялистам-Астартес сюда не входит — она про их геносемя)",
+    source: "Hard as Stone / Крепкий как Камень (Скват); Stepchildren of the Gods / Пасынки Богов (Зверолюд)",
+    reader: "module/rules/character.mjs nextMutationThreshold()"
   },
   "trait.hollowBones": {
-    label: "−5 Поглощение vs I(Cr).",
-    source: "Hollow Bones / Пустые Кости", reader: ""
+    label: "T.b вдвое (окр.▲) при Поглощении I(Cr) урона.",
+    source: "Hollow Bones / Пустые Кости",
+    reader: "module/rules/hollow-bones.mjs::hollowBonesTb → module/combat/damage.mjs applyDamageToActor (подвид crushing), пометка в карточке урона"
   },
   "trait.hoverer": {
     label: "Парение со скоростью SPD X.",
     source: "Hoverer / Парящий (X)", reader: ""
   },
   "trait.hypnoScars": {
-    label: "Крит. Провал → Ступор.",
-    source: "Hypno-Scars / Гипно-Шрамы", reader: ""
+    label: "Критический Провал теста на Интеллекте (Характеристика или Навык на ней) — Ступор на 1 Раунд сам; Предел Крит. Провала таких тестов 86+ (правило replicant.hypnoScars.critRange). НЕ сделано: тесты I, которые идут не через общий расчёт исхода (свои окна Техночудес, Крафта и т.п.), Ступор не накладывают.",
+    source: "Hypno-Scars / Гипно-Шрамы",
+    reader: "module/rules/kind-outcome.mjs (resolveKindOutcome) → module/combat/replicant.mjs (applyHypnoScarsStun); Предел — module/rules/library/replicant.mjs"
   },
   "trait.imperialSanctioning": {
-    label: "Получает Трейт Psyker с PR2 и +1 Cor. Считается Связанным. Тратит Очко Бесчестья для переброса Феномена, если он вызвал Прорыв.",
-    source: "Imperial Sanctioning / Имперское Санкционирование", reader: ""
+    label: "Связанный (ставит Архетип). Потратив Очко Бесчестия на переброс Феномена («Усмирение Варпа»), вызвавшего Прорыв, перебрасывает и Прорыв без траты Очка.",
+    source: "Imperial Sanctioning / Имперское Санкционирование",
+    reader: "module/rules/calm-warp.mjs::hasImperialSanctioning — кнопка бесплатного переброса Прорыва на карточке оплаченного переброса Феномена (module/combat/calm-warp.mjs::handleCalmWarpClick; кнопки «Усмирение Варпа» — module/sheets/tabs/psychic.mjs). «Связанный» — system.psykerClass Архетипа (module/apps/archetypes.mjs::applyArchetype)."
   },
   "trait.incorporeal": {
     label: "Нематериален; проходит сквозь стены; +30 Stealth.",
     source: "Incorporeal / Бесплотный", reader: ""
   },
   "trait.inspiringPresence": {
-    label: "Может позволять союзникам/подчинённым в пределах видимости использовать его Очки Бесчестья;",
-    source: "Inspiring Presence / Вдохновляющее Присутствие", reader: ""
+    label: "Союзник (та же диспозиция токена) в поле зрения Чемпиона тратит его Очко Бесчестья на переброс — строка «Переброс за Очко Бесчестия: <Чемпион>» в меню карточки теста (правый клик); чужим клиентом Очко списывает ГМ. Переброс уже переброшенного теста система не запирает. НЕ сделано: «+10» за Очко Чемпиона и прочие траты Очка (только Переброс); согласие Чемпиона не спрашивается — решает стол; «видимость» — дальность и сектор обзора токена без стен.",
+    source: "Inspiring Presence / Вдохновляющее Присутствие",
+    reader: "module/rules/inspiring-presence.mjs, module/combat/inspiring-presence.mjs (inspiringChampionsFor/spendInspiringInfamy/applyInspiringSpendRelay), module/hooks.mjs::_attachFateContextMenu, warhammer-dbc.mjs (сокет inspiringPresenceSpend)"
   },
   "trait.itWonTHurt": {
     label: "Первая Помощь без анестезии: цель получает 1d5 Усталости, но восстанавливает столько же Ран; Алхимик получает 1 Очко Боли.",
@@ -5349,13 +5449,20 @@ export const CAPABILITIES = {
     label: "Знает 2 Пути на выбор (можно начать следовать в любой момент). +1 Очко Судьбы к максимуму; избирает Элитный Архетип, сохраняющий цену;",
     source: "Just Civilian / Просто Гражданский + Взор Судьбы", reader: ""
   },
+  "trait.legionnaireVirtuoso": {
+    label: "Стрелковое оружие со свойством Legion (Легион): +1 кубик урона, наименьший отбрасывается — на любом профиле этого оружия (приклад, штык). Складывается с Рвущим: болтер Легиона 1d10 → 3d10, два наименьших отбрасываются.",
+    source: "Legionnaire Virtuoso / Легионер-Виртуоз",
+    reader: "module/rules/legionnaire-virtuoso.mjs (isLegionRangedWeapon), module/combat/attack.mjs (wp.extraDropLowest), module/combat/weapon-properties.mjs::applyDamageDiceMods"
+  },
   "trait.legionSurgery": {
-    label: "Тратит Очко Бесчестья, чтобы авто-пройти тест лечения/работы с геносеменем с 1 Успехом; может пробудить десантника из Сус-ан анимации.",
-    source: "Legion Surgery / Хирургия Легиона", reader: ""
+    label: "Проваленный тест лечения/работы с геносеменем — за Очко Бесчестия пройден с 1 Успехом; после Первой Помощи, поднявшей Раны десантника в Замедленной Анимации до −7 и выше, — за Очко Бесчестия пробудить его.",
+    source: "Legion Surgery / Хирургия Легиона",
+    reader: "module/rules/legion-surgery.mjs — sheets/tabs/healing.mjs (каждый тест Medicae окна Лечения, пробуждение после Первой Помощи; метка Анимации — sheets/tabs/death.mjs::doSusAnimation), hooks.mjs::_attachFateContextMenu (провал Medicae / For.Lore (Astartes Implants) с листа, флаг карточки skillTest из sheets/actor-sheet.mjs::_runTest). Иных тестов «работы с геносеменем» в системе нет"
   },
   "trait.limitedLift": {
-    label: "Полёт ограничен весом/бронёй.",
-    source: "Limited Lift / Ограниченная Подъёмная Сила", reader: ""
+    label: "Летит только с грузом не тяжелее Ношения; S от брони не поднимает Ношение для полёта, броня не гасит свой вес. Уже летящую Гарпию с перегрузом система сама не приземляет — только не даёт взлететь/сменить высоту.",
+    source: "Limited Lift / Ограниченная Подъёмная Сила",
+    reader: "module/rules/limited-lift.mjs → module/rules/character.mjs (system.encumbrance.flight) → module/combat/movement-actions.mjs::showFlightDialog (запрет взлёта)"
   },
   "trait.lordOfTheStreams": {
     label: "Тест W−30: проводит суда Эльдар сквозь потоки Варпа (быстрее имперских прыжков, но на короткие дистанции/множество коротких).",
@@ -5375,8 +5482,12 @@ export const CAPABILITIES = {
     source: "Maneuverable / Манёвренный", reader: ""
   },
   "trait.masterOfMachines": {
-    label: "Игнорирует требования по Inf для Миньонов-машин.",
+    label: "Игнорирует требования по Inf для Миньонов-машин. Черта выдаёт общую возможность minion.ignoreInfamy.machine — этот ключ ею не используется (сверка Архетипов 28.09.2026).",
     source: "Master of Machines / Повелитель Машин", reader: ""
+  },
+  "trait.myOwnMaster": {
+    label: "Коды командования для Боевых Лат Скитария не работают. ПОДТВЕРЖДЕНО ЧЕСТНОЙ ЗАГЛУШКОЙ: кодов командования (Катехизисы Командования Лат, Binary Dominion) как механики в системе нет — читать нечему (сверка Архетипов 28.09.2026).",
+    source: "My Own Master / Сам Себе Хозяин", reader: ""
   },
   "trait.masterOfMindsOfMonKeigh": {
     label: "Если Люди под его командованием не знают его природы (или признают лидером) — за Очко Судьбы даёт им Fearless (с инстинктом самосохранения)…",
@@ -5403,8 +5514,40 @@ export const CAPABILITIES = {
     source: "Natural Weapons / Естественное Оружие", reader: "module/apps/mechanics.mjs (kind:\"integralAttack\" → buildIntegralAttackData, X из рейтинга — module/rules/integral-rating.mjs, wdbc-o368c); выбор — equipOptional"
   },
   "trait.newMen": {
-    label: "Регенерация и иммунитеты Нового Человека.",
-    source: "New Men / Новые Люди", reader: ""
+    label: "Лечится как космодесантник; иммунитет к болезням; яды/наркотики/медикаменты вдвое короче и без побочных эффектов; d20 на Кровотечении и затягивание T+0; до 3 суток без сна; операции легче; переломы заживают вчетверо быстрее. Текстом: пищевые отравления, совместимость крови/органов, отращивание утраченных частей тела (у потери конечности нет таймера отрастания).",
+    source: "New Men / Новые Люди",
+    reader: "возможности на Черте — healing.astartes, immunity.disease, newMen.drugs, newMen.bleeding, newMen.sleep, newMen.surgery, newMen.regeneration (module/rules/new-men.mjs)"
+  },
+  // ── New Men / Новые Люди (Йигори, сверка главы I, 28.09.2026) ─────────────
+  "immunity.disease": {
+    label: "Иммунитет ко всем болезням, даже сверхъестественным: болезнь на лист не ложится",
+    source: "New Men / Новые Люди",
+    reader: "module/rules/new-men.mjs diseaseCreateBlocked() — warhammer-dbc.mjs Hooks.on(\"preCreateItem\")"
+  },
+  "newMen.drugs": {
+    label: "Яды, наркотики, медикаменты: срок вдвое (окр.▼), пост-эффект не наступает, разовый эффект медикамента вдвое",
+    source: "New Men / Новые Люди",
+    reader: "module/rules/new-men.mjs — sheets/tabs/drugs.mjs applyDrug/triggerAfterEffect"
+  },
+  "newMen.bleeding": {
+    label: "Кровотечение: d20 вместо d10; в начале своего Хода — тест T+0, успех затягивает Кровотечение",
+    source: "New Men / Новые Люди",
+    reader: "module/rules/new-men.mjs — combat/condition-ticks.mjs processConditionTurnStart/processConditionTurnEnd"
+  },
+  "newMen.sleep": {
+    label: "Сон: до 3 суток без сна без штрафа (первая стадия Сна — на третьи бессонные сутки)",
+    source: "New Men / Новые Люди",
+    reader: "module/rules/squat-traits.mjs sleepGraceDays() (общее с Крепким как Камень) — rules/character.mjs и sheets/sheet-helpers.mjs (ctx.sleepGraceDays, constants/vitals.mjs)"
+  },
+  "newMen.surgery": {
+    label: "Пришивание и установка бионики: штраф Medicae вдвое (−15 вместо −30), восстановление/адаптация вдвое",
+    source: "New Men / Новые Люди",
+    reader: "module/rules/new-men.mjs — sheets/tabs/healing.mjs applyReattach/resolveBionicTest"
+  },
+  "newMen.regeneration": {
+    label: "Перелом (бесполезная конечность): срок в лубке вчетверо короче",
+    source: "New Men / Новые Люди",
+    reader: "module/rules/new-men.mjs splintDays() — sheets/tabs/healing.mjs applySetLimb"
   },
   "trait.nimble10": {
     label: "Штраф атакующим по нему (−X, Рейтинг Черты).",
@@ -5415,16 +5558,26 @@ export const CAPABILITIES = {
     source: "Nimble / Проворный", reader: ""
   },
   "trait.nobleEugenics": {
-    label: "Выбирает 2 Характеристики — они становятся дружественными в плане продвижений и остаются такими, независимо от Покровительства.",
-    source: "Noble Eugenics / Благородная Евгеника", reader: ""
+    label: "Выбирает 2 Характеристики — они становятся дружественными в плане продвижений и остаются такими, независимо от Покровительства. Реализовано диалогом выбора при выдаче Архетипа (записи aptOverride), этот ключ не используется.",
+    source: "Noble Eugenics / Благородная Евгеника",
+    // Реализация — не через этот ключ: module/apps/subrace-choice.mjs
+    // (ARCHETYPE_APTITUDE_CHOICES) → apps/archetypes.mjs::applyArchetype →
+    // rules/aptitude-overrides.mjs. Ключ никем не выдаётся — reader пуст.
+    reader: ""
   },
   "trait.ogryn": {
     label: "+15 S и T, −15 Ag и Int, +15 Ран, набор Трейтов и Талантов огрина.",
     source: "Ogryn / Огрин", reader: ""
   },
-  "trait.packConscious": {
-    label: "Телепатия со стаей.",
-    source: "Pack Conscious / Сознание Стаи", reader: ""
+  "trait.packConsciousness": {
+    label: "Стая (Отряд, где у всех бойцов эта Черта): бонусы Команд вдвое, все три эффекта Командного Присутствия даже без Командира (W — наибольшая в стае), Реакция члена стаи в 3 м на Уклонение. Текстом: невербальный язык стаи.",
+    source: "Pack Consciousness / Сознание Стаи",
+    reader: "возможность command.packConsciousness на Черте"
+  },
+  "command.packConsciousness": {
+    label: "Стая Йигори: бонусы Команд вдвое, все три эффекта Присутствия без Командира (W — наибольшая в стае), Реакция члена стаи в 3 м на Уклонение",
+    source: "Pack Consciousness / Сознание Стаи",
+    reader: "module/combat/command-state.mjs commandNodesFor (node.pack) → rules/command-effects.mjs commandRulesFor/commandEffectNode; borrowCoverReaction (Уклонение, combat/defense.mjs)"
   },
   "trait.performance": {
     label: "Раз в раунд — Реакция + Очко Судьбы: +A.b к поглощению урона до начала следующего хода. Талант (Скл. A/Fin; требование — Арлекин).",
@@ -5435,8 +5588,9 @@ export const CAPABILITIES = {
     source: "Phase / Фаза", reader: ""
   },
   "trait.pheromoneGlands": {
-    label: "+10 социальные (феромоны).",
-    source: "Pheromone Glands / Феромонные Железы", reader: ""
+    label: "+10 к социальным тестам против дышащих феромонами людей; Соблазнение противоположного пола +30, того же — 0. Дышит ли собеседник и его пол решает стол — галочки в окне броска.",
+    source: "Pheromone Glands / Феромонные Железы",
+    reader: "записи kind:\"testMod\" на Черте (область social +10; Charm +20) — module/rules/item-rules.mjs"
   },
   "trait.preferredStrike": {
     label: "Доп. куб урона для переброса за каждый −10 от Сочленений цели (макс 3). Талант-снижение штрафа не уменьшает кубы. До ½ P.b раз/битву.",
@@ -5460,8 +5614,9 @@ export const CAPABILITIES = {
     reader: "module/rules/quiet-elimination.mjs (hasQuietElimination, isQuietEliminationWeapon), module/sheets/attack/mods.mjs (+10 auto-мод), module/sheets/attack/form.mjs+dialog.mjs (targetSurprised), module/combat/attack.mjs (+1 куб, note), module/combat/attack-outcome.mjs::bonusDamageDice"
   },
   "trait.razorTalons": {
-    label: "Естественное оружие: Razor Sharp.",
-    source: "Razor Talons / Бритвенные Когти", reader: ""
+    label: "Когти на ногах (не руках): Razor Sharp.",
+    source: "Razor Talons / Бритвенные Когти",
+    reader: "запись Механики kind:\"attackProp\" (apScope name:Когти на Ногах) на самой Черте → module/rules/item-rules.mjs → grantWeaponProp в диалоге атаки; оружие «Когти на Ногах» — выбор Deadly Natural Weapons"
   },
   "trait.regeneration": {
     label: "В начале Хода тест T+0 → +X Ран.",
@@ -5476,32 +5631,38 @@ export const CAPABILITIES = {
     source: "Ritual of Eight Spokes / Ритуал Восьми Спиц", reader: ""
   },
   "trait.runt": {
-    label: "−4 Ран; Compact с оружием.",
-    source: "Runt / Коротышка", reader: ""
+    label: "−4 к максимуму Ран; винтовки — как длинные; двуручное стрелковое — только двумя руками; Compact снимает штрафы.",
+    source: "Runt / Коротышка",
+    reader: "module/rules/runt.mjs isRunt() — максимум Ран: module/rules/character.mjs (effectiveMax); винтовка как длинная: module/combat/weapon-mods.mjs getModEffects(); без «1р»: module/rules/hands.mjs availableRangedGrips() и module/sheets/attack-dialog.mjs. Оружие Размера 0 — ограничений нет, ничего не нужно"
   },
   "trait.scrounge": {
-    label: "Тратит смену работы и Очко Бесчестья, чтобы добыть расходники/находку до 2d10 Редкости (R2).",
-    source: "Scrounge / Наскрести", reader: ""
+    label: "Смена работы + Очко Бесчестия: 2d10 расходников (магазины, гранаты и бомбы, химия) до R2.",
+    source: "Scrounge / Наскрести",
+    reader: "kind:script на Черте (цена 1 Очко Бесчестия) → module/apps/scrounge.mjs (бросок 2d10, Обозреватель компендиумов до R2) + module/rules/scrounge.mjs. «Клады на черный день» — решение ГМа"
   },
   "trait.serpentSTongue": {
-    label: "При провале социального/командного/допроса теста может потратить Очко Бесчестья, чтобы вместо этого преуспеть на 1 Успех.",
-    source: "Serpent's Tongue / Змеиный Язык", reader: ""
+    label: "При провале теста социального взаимодействия, командования или допроса может потратить Очко Бесчестия, чтобы вместо этого преуспеть на 1 Успех — кнопка в карточке проваленного теста социального Навыка или голой F. «+1 Успех к Усилению на социальные взаимодействия» — напоминание в карточке траты на Усиление (Усиление тратится до броска и с тестом не связано, прибавить Успех автоматически не к чему).",
+    source: "Serpent's Tongue / Змеиный Язык",
+    reader: "module/rules/infamy-fail-success.mjs ← apps/infamy-fail-success.mjs (кнопка sheets/actor-sheet.mjs _runTest, обработчик module/hooks.mjs), apps/infamy-points.mjs spendInfamy (boost)"
   },
   "trait.serumHook": {
-    label: "Без дозы — каждые 8 часов 1d5 урона в S и T без возможности восстановления отдыхом/медитацией.",
-    source: "Serum Hook / Крючок Сывороток", reader: ""
+    label: "Сыворотка раз в неделю по Календарю: строка и кнопка «принять» на вкладке ТЕЛО, приём предмета «Сыворотка Репликанта». Неделя вышла — 1d5 урона в S и 1d5 в T каждые 8 ч игрового времени, восстановление S/T отдыхом заблокировано до приёма. НЕ сделано: Исследование и Крафт сыворотки незнакомым химиком — текстом.",
+    source: "Serum Hook / Крючок Сывороток",
+    reader: "module/combat/replicant.mjs (serumHookClock в combat/condition-clock.mjs, takeSerum), module/rules/replicant.mjs (serumHookRules — источник serumHook в rules/sources.mjs), sheets/tabs/drugs.mjs (applyDrug)"
   },
   "trait.servoskull": {
     label: "Size (−2), Hoverer, Machine; одна «рука» со встроенным оружием и +15 на тесты с ним.",
     source: "Servoskull / Сервочереп", reader: ""
   },
   "trait.singleCombat": {
-    label: "Против одного противника без союзников: +1 Успех на успешные тесты WS, S и A; Unnatural Characteristic на встречные WS;",
-    source: "Single Combat / Бой Один На Один", reader: ""
+    label: "Бой один на один (на сцене ровно один враг в контакте, и у него в контакте никого, кроме Палача): +1 Успех к успешной рукопашной атаке, Уклонению, Парированию и тестам WS/S/A (и Навыков на них) с листа; во встречном тесте WS/A с листа Сверхъестественная Характеристика противника не сводит его проигрыш к ничьей. НЕ сделано: прочие пути бросков WS/S/A (Захват, приёмы-состязания со своим броском) — там +1 Успех не прибавляется; без токена на сцене бой один на один не распознаётся.",
+    source: "Single Combat / Бой Один На Один",
+    reader: "module/rules/single-combat.mjs, module/combat/single-combat.mjs, module/rules/kind-outcome.mjs, module/rules/test-kind.mjs::resolveOpposed (noUnnaturalTie), module/combat/attack.mjs (singleCombatDeg), module/combat/defense.mjs (Уклонение/Парирование), module/sheets/actor-sheet.mjs (встречный с соперником-игроком)"
   },
   "trait.skyPredator": {
-    label: "В Ход, когда Раптор совершает Натиск с полёта, может заменить до 2 кубиков урона от рукопашных атак Успехами на попадание.",
-    source: "Sky Predator / Хищник Небес", reader: ""
+    label: "Атака с Базой «Натиск», пока персонаж в воздухе (Высота не «приземлён»): карточка урона даёт кнопку «Кубик→Успехи» на два кубика попадания вместо одного. НЕ заперто: «до 2 кубиков за Ход» между разными попаданиями/атаками — считает стол.",
+    source: "Sky Predator / Хищник Небес",
+    reader: "module/rules/die-swap.mjs (SKY_PREDATOR, swapDiceFor), module/combat/attack.mjs (skyPredatorOn), module/combat/attack-card.mjs (кнопки .wh-dmg-swap-btn)"
   },
   "trait.sonarSense": {
     label: "Сонар (круговой обзор) на 30 м.",
@@ -5517,8 +5678,9 @@ export const CAPABILITIES = {
     source: "Sophisticated Speech / Утончённая Речь", reader: ""
   },
   "trait.sorcerer": {
-    label: "Получает Трейт Psyker с PR2 и +1 Cor. В расчёте психической силы считается Связанным.",
-    source: "Sorcerer / Чародей", reader: ""
+    label: "+d10 стартовой Порчи; в расчёте психической силы — Связанный.",
+    source: "Sorcerer / Чародей",
+    reader: "Черта несёт psyker.alwaysBound (rules/character/final-pools.mjs); +1d10 Порчи — запись kind:corruption на Архетипе Чародей (apps/mechanics.mjs, бросок при выдаче)"
   },
   "trait.sorcerousBarrier": {
     label: "Не перегружающийся колдовской щит-купол 1-35. Включается и выключается за свободное действие.",
@@ -5541,8 +5703,9 @@ export const CAPABILITIES = {
     source: "Steed / Скакун", reader: ""
   },
   "trait.stepchildrenOfTheGods": {
-    label: "Бонусы против богов Хаоса.",
-    source: "Stepchildren of the Gods / Пасынки Богов", reader: ""
+    label: "Максимум Бесчестия −1 (не ниже 1); мутации как у Космодесантника; один кубик на мутации и субмутации.",
+    source: "Stepchildren of the Gods / Пасынки Богов",
+    reader: "записи Черты: poolMax → infamy (module/apps/infamy-points.mjs) + mutations.asAstartes + mutation.singleDie"
   },
   "trait.stuffOfNightmares": {
     label: "Иммунитет к Усталости/ядам/болезням/радиации/экстрим.температурам/вакууму/Кровотечению/Обескровливанию; не может быть Оглушён; не стареет;",
@@ -5553,12 +5716,14 @@ export const CAPABILITIES = {
     source: "Sturdy / Надёжный", reader: ""
   },
   "trait.sureTread": {
-    label: "−1 SPD, максимум 3×SPD пешком; вместо A использует Awareness(P) на Трудном Ландшафте (3+ Успеха — не замедляет).",
-    source: "Sure Tread / Надёжная Поступь", reader: ""
+    label: "Надёжная Поступь: пешком не больше 3×SPD за Ход (Бег урезан до Натиска); тест Трудного Ландшафта по лучшему из Ловкости и Awareness (P); 3+ Успеха — Ландшафт не замедляет. −1 SPD — запись Движения той же Черты.",
+    source: "Sure Tread / Надёжная Поступь",
+    reader: "module/rules/squat-traits.mjs sureTreadMovementCap() — module/rules/character/movement.mjs; module/rules/squat-traits.mjs sureTreadTerrainBase() и sureTreadIgnoresTerrain() — module/combat/movement-terrain.mjs"
   },
   "trait.survivor": {
-    label: "При провале не-атакующего теста S/T/A/P может потратить Очко Бесчестья — вместо этого преуспеть на 1 Успех.",
-    source: "Survivor / Выживальщик", reader: ""
+    label: "При провале не-атакующего теста S/T/A/P (и Навыка через них) — кнопка на карточке теста: потратить Очко Бесчестия и преуспеть на 1 Успех. ",
+    source: "Survivor / Выживальщик",
+    reader: "module/rules/infamy-fail-success.mjs (INFAMY_FAIL_SUCCESS_SOURCES, общий реестр со Змеиным Языком) ← module/sheets/actor-sheet.mjs::_runTest (кнопка), module/apps/infamy-fail-success.mjs (списание Очка)"
   },
   "trait.swarm": {
     label: "Рой: половина урона от обычных атак; уязвим к Blast/Flame.",
@@ -5569,9 +5734,9 @@ export const CAPABILITIES = {
     source: "Sycophant / Подхалим", reader: ""
   },
   "trait.takeEverything": {
-    label: "Преимущество на тесты поиска/оценки трофеев механизировано (wdbc-u0by, решение пользователя: Awareness+Commerce) — kind:\"reroll\"×2. Несёт предметы до своего веса Ношения независимо от разгрузки — не механизировано, нет точки входа в расчёт разгрузки под 'независимо от нормальных правил'",
+    label: "Преимущество на тесты поиска/оценки трофеев механизировано (wdbc-u0by, решение пользователя: Awareness+Commerce) — kind:\"reroll\"×2, на ЛЮБЫЕ тесты этих Навыков. «Несёт до веса Ношения независимо от разгрузки, всё как на удобных» — окно Разгрузки снимает неудобство слотов (Quick Draw доступен) и поясняет, что неразмещённое несётся; предел — вес Ношения, его считает общий Перевес. Слоты разгрузки система и так не навязывает (неразмещённое не штрафуется) — для прочих персонажей это ручное правило стола.",
     source: "Take Everything / Забирай Всё",
-    reader: "module/rules/item-rules.mjs (kind:\"reroll\" → rollMode-правило общего реестра)"
+    reader: "module/rules/item-rules.mjs (kind:\"reroll\" → rollMode-правило общего реестра); module/constants/rig.mjs rigManagerData({takeEverything}) ← apps/rig-manager.mjs"
   },
   "trait.theBloodOfHeroes": {
     label: "Раз/битву за Свободное действие тест W+10: при успехе — Unnatural Characteristic (+1) на выбор до конца битвы.",
@@ -5626,11 +5791,13 @@ export const CAPABILITIES = {
   },
   "trait.unstableGenome": {
     label: "Урон в Характеристики усиливается на +1 (плюс ещё +1 за каждую доп. адаптацию).",
-    source: "Unstable Genome / Нестабильный Геном", reader: ""
+    source: "Unstable Genome / Нестабильный Геном",
+    reader: "module/rules/splice-adaptations.mjs (unstableGenomeBonus = 1 + адаптации сверх трёх) → module/combat/char-damage.mjs::applyCharDamage (единая точка урона в Характеристики, в чат — «+N Нестабильный Геном», combat/char-damage-button.mjs) и module/sheets/tabs/healing.mjs::applyCauterize (Прижигание). Не покрыто: урон в Характеристики мимо единой точки — rules/sigillite-runes.mjs (charLossPortionsAddFields напрямую)"
   },
   "trait.vanityUnbound": {
-    label: "Hatred ко всем.",
-    source: "Vanity Unbound / Безграничное Тщеславие", reader: ""
+    label: "Hatred (Наги) распространяется на мутантов-змей — цель «Мутант-змея» у Таланта из расы (rules/talent-targets.mjs, TARGET_FEATURES.snakeMutation); −20 к социальным тестам против змееподобных (Нага, Сслит, мутант-змея) — само, по выделенной цели; Командование не доходит (command.cannotReceive)",
+    source: "Vanity Unbound / Безграничное Тщеславие",
+    reader: "module/rules/library/naga.mjs (naga.vanityUnbound.serpentineSocial, предикат targetSerpentine); module/combat/command-state.mjs::refusesCommand"
   },
   "trait.warpGifted": {
     label: "Врождённая психосила.",
@@ -5696,8 +5863,9 @@ export const CAPABILITIES = {
     source: "Godless / Безбожник", reader: ""
   },
   "trait.treytyRas.hulking": {
-    label: "Может использовать оружие/снаряжение Легиона как десантник.",
-    source: "Hulking / Громила (Легион)", reader: ""
+    label: "Оружие Легиона как Космодесантник и −10 с оружием не под Легион — Черта выдаёт возможность weapons.legion (этот ключ сам не выдаётся). НЕ сделано: доводка брони Легиона «как от мутации» — подгонки брони под мутации в системе нет.",
+    source: "Hulking / Громила (Легион)",
+    reader: "через weapons.legion — module/rules/legion-fit.mjs"
   },
   "trait.treytyRas.illiengau": {
     label: "−15 на Мораль/Шок/Командование против последователей Слаанеш; −15 на сопротивление одержимости и больше Порчи;",
@@ -5768,21 +5936,25 @@ export const CAPABILITIES = {
     label: "From Beyond. Natural Weapons (A.b, Кулаки; Proven 3, Extreme 8). Nimble (+10). Soul-Bound (Цегорах, защита Чёрной Библиотеки).",
     source: "Дары Цегораха / Базовые Черты Арлекина", reader: ""
   },
-  // ── Черты: packs-src/traits/Трейты_рас\Зверолюды — Фаза 2, capability-документация ──
-  "trait.treytyRas.zverolyudy.khorngorButcher": {
-    label: "Кхорнгор имеет запас кубиков: по 1 за каждый Талант Hatred 2-го уровня и 1 за 2 Таланта Hatred 1-го уровня.",
+  // ── Таланты субрас Зверолюда (packs-src/talents/Субрасы_Зверолюдов) — до
+  //    сверки главы I (28.09.2026) лежали Чертами и выдавались субрасой
+  //    даром; книга даёт к ним только ДОСТУП (Уровень 3, Требования).
+  "talent.beastmanSubrace.slaangorFiendblood": {
+    label: "Раз за бой или сцену после завершения рукопашной атаки — ещё одна атака с той же базой (в т.ч. с нескольких рук).",
+    source: "Slaangor Fiendblood / Слаангор Извергкровка",
+    reader: "запись Таланта kind:script (раз за бой) — отметка использования и напоминание в чате; саму атаку игрок делает обычной кнопкой"
+  },
+  "talent.beastmanSubrace.pestigorMourner": {
+    label: "Раз за бой или сцену после получения непоглощённого урона — уменьшить его до 1 и на 1 Раунд удвоить T.b в поглощении.",
+    source: "Pestigor Mourner / Пестигор Плакальщик",
+    reader: "запись Таланта kind:script (раз за бой) — отметка использования и напоминание; Раны и T.b — вручную"
+  },
+  "talent.beastmanSubrace.khorngorButcher": {
+    label: "Запас кубиков: 1 за Hatred 2-го уровня и 1 за 2 Hatred 1-го; до ½ W.b кубиков урона к атаке с S.b; восстанавливаются в конце боя.",
     source: "Khorngor Butcher / Кхорнгор Мясник", reader: ""
   },
-  "trait.treytyRas.zverolyudy.pestigorMourner": {
-    label: "Раз за бой или сцену после получения непоглощённого урона Пестигор может уменьшить его до 1 и на 1 Раунд удвоить свой T.",
-    source: "Pestigor Mourner / Пестигор Плакальщик", reader: ""
-  },
-  "trait.treytyRas.zverolyudy.slaangorFiendblood": {
-    label: "Раз за бой или сцену после завершения рукопашной атаки Слаангор может совершить ещё одну атаку с той же базой (в т.ч. с нескольких рук).",
-    source: "Slaangor Fiendblood / Слаангор Извергкровка", reader: ""
-  },
-  "trait.treytyRas.zverolyudy.tzaangorEnlightened": {
-    label: "Проведя ритуал длительностью один час без тестов, Тзаангор призывает Диск Тзинча под своим управлением,",
+  "talent.beastmanSubrace.tzaangorEnlightened": {
+    label: "Часовой ритуал без тестов — Диск Тзинча под управлением, как ритуал Трансформации Диска; 3d10 урона в W.",
     source: "Tzaangor Enlightened / Тзаангор Просвещённый", reader: ""
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Архимаг — Фаза 2, capability-документация ──
@@ -7414,9 +7586,25 @@ export const CAPABILITIES = {
     reader: "module/rules/legion-fit.mjs — LEGION_FIT_FLAG"
   },
   "weapons.ogryn": {
-    label: "Сложение под огринское оружие: своё берёт без штрафа, чужое — со штрафом (−10, стрелковое −20)",
-    source: "Раса Огрин, Черта «Brute Physiology / Физиология Громилы» (module/rules/library/ogryn.mjs)",
-    reader: "module/rules/ogryn-fit.mjs — OGRYN_FIT_FLAG, подключено в module/sheets/attack-dialog.mjs"
+    label: "Сложение под огринское оружие: своё берёт без штрафа, чужое — со штрафом (−10, стрелковое −20; кроме гранат и своих кулаков); рукопашное чужое ломается на 1-3 на 1d10",
+    source: "Раса Огрин (module/rules/library/ogryn.mjs) и запись Конструктора на Черте «Brute Physiology / Физиология Громилы» (Миньон с Чертой «Огрин»)",
+    reader: "module/rules/ogryn-fit.mjs::ogrynAttackPenalty (OGRYN_FIT_FLAG), подключено в module/sheets/attack-dialog.mjs; поломка — module/combat/ogryn-weapon-break.mjs::ogrynBreakApplies"
+  },
+  // ── Физиология Громилы (Огрин, корбук, глава I) ─────────────────────────
+  "brutePhysiology.passiveRegen": {
+    label: "Пассивно восстанавливает Раны: 1 в минуту легко раненым, 1 в 10 минут тяжело, 1 в час критически (Hardy не влияет) — по Календарю и по Раундам боя (5 с), поверх обычного лечения",
+    source: "Brute Physiology / Физиология Громилы",
+    reader: "module/combat/ogryn-regen.mjs::ogrynRegenAdvance — часы Состояний (module/combat/condition-clock.mjs, ogrynRegenClock) и смена Раунда (module/hooks.mjs, ogrynRegenCombatRound); арифметика module/rules/ogryn-regen.mjs::ogrynRegenStep"
+  },
+  "brutePhysiology.bleedingNoDeath": {
+    label: "Не может умереть от Кровотечения (иммунитет к Обескровливанию — отдельной записью «Состояние: иммунитет» на той же Черте)",
+    source: "Brute Physiology / Физиология Громилы",
+    reader: "module/combat/condition-ticks.mjs::processConditionTurnEnd (исход «смерть» броска Кровотечения не убивает)"
+  },
+  "brutePhysiology.shakeOffStun": {
+    label: "В конце своего Хода автоматически снимает Оглушение",
+    source: "Brute Physiology / Физиология Громилы",
+    reader: "module/combat/condition-ticks.mjs::processConditionTurnEnd"
   },
   "fate.save": {
     label: "Пламенная вера: при трате Очка Судьбы бросок 1d10, на 1 очко не тратится",
@@ -7437,6 +7625,55 @@ export const CAPABILITIES = {
     label: "Абсолютная вера в прошлое: Очко Судьбы за провал теста Страха",
     source: "Происхождение «Мир-кладбище» (module/rules/library/homeworlds.mjs)",
     reader: "module/combat/fear.mjs — FAITH_FLAG"
+  },
+
+  // ── Черты Наги (сверка главы I, rules/naga-traits.mjs) ──────────────────
+  // Имена — по правилу, не по расе: «иммунитет к ядам», «+1 Рана в сутки» и
+  // «затянуть Кровотечение» дословно повторяет Физиология Сслита.
+  "poison.immune": {
+    label: "Иммунитет к ядам: Toxic не травит (ни теста, ни Отравления, ни урона), яды-препараты не действуют",
+    source: "Abominable Physiology / Изуверская Физиология (Нага)",
+    reader: "module/hooks.mjs::_applyWeaponPropEffect (Toxic, через apps/naga-traits.mjs::poisonImmunitySource); module/sheets/tabs/drugs.mjs::applyDrug (препарат категории «яд»). Состояние Отравление любым другим путём гасит соседняя запись kind:\"condition\" immunity на той же Черте"
+  },
+  "drugs.afterEffectAddictionImmune": {
+    label: "Иммунитет к пост-эффектам и зависимости от наркотиков, даже сверхъестественных",
+    source: "Abominable Physiology / Изуверская Физиология (Нага)",
+    reader: "module/sheets/tabs/drugs.mjs::drugAftermathImmunity — rollAddictionTest (тест не нужен) и triggerAfterEffect (пост-эффект не наступает)"
+  },
+  "healing.extraWoundDaily": {
+    label: "Дополнительно вылечивает себе 1 Рану в сутки (сверх обычного лечения)",
+    source: "Abominable Physiology / Изуверская Физиология (Нага)",
+    reader: "module/apps/naga-traits.mjs::extraWoundDailyClock — часы Календаря (combat/condition-clock.mjs), арифметика rules/naga-traits.mjs::extraWoundDailyPlan"
+  },
+  "bleeding.selfStanchTurnStart": {
+    label: "В начале своего Хода затягивает Кровотечение тестом T+0 (катается сам)",
+    source: "Abominable Physiology / Изуверская Физиология (Нага)",
+    reader: "module/combat/condition-ticks.mjs::processConditionTurnStart"
+  },
+  "bite.venomD10": {
+    label: "Укус использует кубик 1d10 вместо 1d5",
+    source: "Adaptive Venom / Адаптивная Отрава (Нага)",
+    reader: "module/combat/attack.mjs (атака Укусом) и module/combat/grapple.mjs::_doBite (Укус в Борьбе) — rules/naga-traits.mjs::venomBiteDamage"
+  },
+  "grapple.constrictorTail": {
+    label: "Хвост для Захвата и Борьбы: пара рук (руки свободны), Unnatural S (6) для урона «Заломить», +20 на тесты Athletics в Захвате и Борьбе",
+    source: "Constrictor / Удав (Нага)",
+    reader: "module/combat/grapple.mjs — attackerHoldFields/isTailHold/constrictorAthleticsBonus/_resolveWrenchSuccess; module/rules/hands.mjs::grappleHandsUsed (хвост не занимает рук)"
+  },
+  "patronage.lockedSlaanesh": {
+    label: "Покровительство Слаанеш с начала игры; потерять его нельзя",
+    source: "Dark Prince's Child / Дитя Тёмного Принца (Нага)",
+    reader: "module/apps/naga-traits.mjs — grantLockedPatron (createItem) и enforceLockedPatron (preUpdateActor), хуки в warhammer-dbc.mjs"
+  },
+  "infamy.darkPrinceMilestones": {
+    label: "Впервые набирая 30/60/90 Inf — выбор: Многорукий +2 или +2 к максимуму Очков Бесчестия",
+    source: "Dark Prince's Child / Дитя Тёмного Принца (Нага)",
+    reader: "module/apps/naga-traits.mjs::checkDarkPrinceMilestones — хуки updateActor/createItem в warhammer-dbc.mjs; пороги rules/naga-traits.mjs::darkPrinceMilestonesDue"
+  },
+  "command.cannotReceive": {
+    label: "Не получает преимуществ Командования — ни от командира, ни от координатора",
+    source: "Vanity Unbound / Безграничное Тщеславие (Нага)",
+    reader: "module/combat/command-state.mjs::commandNodesFor (refusesCommand — над актором нет узлов командования)"
   },
 
 

@@ -30,7 +30,11 @@ import { gangreneTick, gangreneIntervalSeconds } from "./gangrene.mjs";
 import { haemorrhageHourly, suffocationRestClock } from "./condition-ticks.mjs";
 import { unlinkedTokens } from "../migrations/unlinked-tokens.mjs";
 import { healingClock } from "./healing-clock.mjs";
+import { ogrynRegenClock } from "./ogryn-regen.mjs";
+import { haywireFieldClock } from "./bone-head.mjs";
+import { extraWoundDailyClock } from "../apps/naga-traits.mjs";
 import { charLossClockStep, actorRecoveryPolicy, charLossPortions, charLossPortionsStep } from "../rules/char-loss.mjs";
+import { serumHookClock } from "./replicant.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -155,9 +159,22 @@ export const CONDITION_CLOCK_HANDLERS = [
   { id: "uselessLimbs", run: uselessLimbsClock },
   // Естественное лечение: сутки / 8 ч под уходом, режим с листа (wdbc-x1nz.2.104).
   { id: "healing", run: healingClock },
+  // Физиология Громилы (Огрин): 1 Рана в минуту / 10 минут / час по уровню
+  // ранения, поверх обычного лечения — combat/ogryn-regen.mjs.
+  { id: "ogrynRegen", run: ogrynRegenClock },
+  // Поле Haywire вокруг Огрина с BONE-Head гаснет на 2 за каждые 5 с
+  // (Раунд) — combat/bone-head.mjs.
+  { id: "haywireField", run: haywireFieldClock },
+  // «+1 Рана в сутки» сверх обычного лечения (Изуверская Физиология Наги,
+  // apps/naga-traits.mjs) — после обычного лечения, чтобы видеть его итог.
+  { id: "extraWoundDaily", run: extraWoundDailyClock },
   // Урон в Характеристики: 1 в час, блоки/замедления — записи charRecovery
   // (wdbc-x1nz.2.83, rules/char-loss.mjs). Молча — без карточки на каждый час.
   { id: "charLoss", run: charLossClock },
+  // Крючок Сывороток (Репликант): неделя без сыворотки — 1d5 урона в S и T
+  // каждые 8 ч (combat/replicant.mjs). После charLoss: урон этого отрезка не
+  // должен тут же «восстановиться» тем же шагом.
+  { id: "serumHook", run: serumHookClock },
 ];
 
 async function charLossClock(actor, { to }) {

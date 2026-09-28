@@ -90,7 +90,9 @@ export async function applyCharDamageButton(actor, { keys = [], formula = "", am
     const r = await applyCharDamage(actor, key, value, { portion });
     results.push({ key, ...r });
   }
-  const lines = results.map(r => `${esc(CHARACTERISTICS[r.key]?.label || r.key)}: <b>${r.before}</b> → <b>${r.after}</b>${r.died ? " — <b>смерть</b>" : ""}`);
+  // genome — надбавка Нестабильного Генома Сплайса (combat/char-damage.mjs):
+  // игрок видит, почему списалось больше, чем на кнопке.
+  const lines = results.map(r => `${esc(CHARACTERISTICS[r.key]?.label || r.key)}: <b>${r.before}</b> → <b>${r.after}</b>${r.genome ? ` (+${r.genome} Нестабильный Геном)` : ""}${r.died ? " — <b>смерть</b>" : ""}`);
   await ChatMessage.create({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `<div class="wh-roll-result">

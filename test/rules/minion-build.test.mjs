@@ -14,7 +14,8 @@ import {
   minionCapacity, groupTally, talentRequirements,
   charLimits, charIssues, charPointsLeft, rollHumanChars,
   skillPointsLeft, talentPointsLeft, traitPointsLeft, skillRankFor,
-  minionWounds, hordeMagnitude, minionInfamy, minionCorruption, minionLoyalty, speechNote
+  minionWounds, hordeMagnitude, minionInfamy, minionCorruption, minionLoyalty, speechNote,
+  minionInfamyWaiverFlag
 } from "../../module/rules/minion-build.mjs";
 
 /** Талант Миньона с выбранной парой «группа + сила». */
@@ -261,5 +262,26 @@ describe("готовый Миньон", () => {
     expect(speechNote({ fel: 5, int: 30 })).toMatch(/говорить не может/i);
     expect(speechNote({ fel: 20, int: 5 })).toMatch(/только команды/i);
     expect(speechNote({ fel: 30, int: 30 })).toBe("");
+  });
+});
+
+// Выживальщик (Дикарь) / Повелитель Машин (Еретех) и подобные Черты Архетипов:
+// «игнорирует требования по Inf для Миньонов-<группы>» — снимается только
+// Бесчестие; Характеристика группы и Навык остаются (сверка Архетипов 28.09.2026).
+describe("требования Таланта: Черта снимает требование по Inf", () => {
+  it("возможность группы — Бесчестие не проверяется", () => {
+    const req = talentRequirements(master({ int: 55, infamy: 0 }), "machine", "greater", { ignoreInfamy: true });
+    expect(req.ok).toBe(true);
+    expect(req.missing).toEqual([]);
+  });
+  it("Характеристика группы по-прежнему нужна", () => {
+    const req = talentRequirements(master({ per: 30, infamy: 0 }), "beast", "standard", { ignoreInfamy: true });
+    expect(req.ok).toBe(false);
+    expect(req.missing).toHaveLength(1);
+    expect(req.missing[0]).toMatch(/PER 30/);
+  });
+  it("имя возможности — по группе", () => {
+    expect(minionInfamyWaiverFlag("beast")).toBe("minion.ignoreInfamy.beast");
+    expect(minionInfamyWaiverFlag("machine")).toBe("minion.ignoreInfamy.machine");
   });
 });
