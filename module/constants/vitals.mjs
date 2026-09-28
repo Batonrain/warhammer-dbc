@@ -91,7 +91,7 @@ export function vitalCharMods(vitals) {
 /** Поле system.vitals.* с моментом (worldTime) последнего удовлетворения потребности. */
 export const VITAL_TIME_FIELD = { hunger: "lastFed", thirst: "lastDrank", sleep: "lastSlept" };
 
-// Пороги в СУТКАХ без удовлетворения для стадий 1/2/3. ctx = { tb, isAstartes }.
+// Пороги в СУТКАХ без удовлетворения для стадий 1/2/3. ctx = { tb, isAstartes, sleepGraceDays }.
 function _hungerDayThresholds(ctx) {
   // Не меньше суток: при T.b 0-1 (или если вызывающий не смог дать T.b) порог
   // «0 суток» означал бы Голод 1-й стадии сразу после еды — со штрафом −10 ко
@@ -109,12 +109,19 @@ function _thirstDayThresholds(ctx) {
   const base = ctx?.isAstartes ? 7 : 2;
   return [base, base + 1, base + 2];
 }
-const _SLEEP_DAY_THRESHOLDS = [1, 2, 3]; // книга считает по бессонным суткам подряд
+// Книга считает по бессонным суткам подряд. ctx.sleepGraceDays — сколько
+// суток без сна проходит без штрафа (человеку сутки, Сквату с Крепким как
+// Камень «до 3-х суток», rules/squat-traits.mjs::sleepGraceDays); дальше та
+// же лестница с шагом в сутки.
+function _sleepDayThresholds(ctx) {
+  const grace = Math.max(1, Math.floor(Number(ctx?.sleepGraceDays) || 1));
+  return [grace, grace + 1, grace + 2];
+}
 
 function _dayThresholds(key, ctx) {
   if (key === "hunger") return _hungerDayThresholds(ctx);
   if (key === "thirst") return _thirstDayThresholds(ctx);
-  if (key === "sleep")  return _SLEEP_DAY_THRESHOLDS;
+  if (key === "sleep")  return _sleepDayThresholds(ctx);
   return null;
 }
 

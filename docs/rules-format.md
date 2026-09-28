@@ -476,6 +476,7 @@ if (hasRuleFlag(patient, "healing.astartes")) { /* … */ }
 | Имя | Что открывает | Кто спрашивает |
 | --- | --- | --- |
 | `healing.astartes` | пассивное лечение считается Отдыхом, Отдых — Постельным режимом | `_applyHealing` |
+| `mutations.asAstartes` | пороги Мутации Космодесантника (10/30/60/90) — «получает мутации как Космодесантник» (Крепкий как Камень Сквата) | `nextMutationThreshold` |
 | `unarmed.astartesProfile` | усиленный профиль безоружного удара (стр. 40) | `_showAttackDialogNoWeapon` |
 | `talents.geneSeed` | папка талантов «Геносемя» в пикере | `_talentGroupLock` |
 | `fate.save` | трата Очка Судьбы/Бесчестья может не состояться (1d10, при 1 возврат) | хук `updateActor`, [fate-save.mjs](../module/rules/fate-save.mjs) |

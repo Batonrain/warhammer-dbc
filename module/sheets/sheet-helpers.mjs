@@ -66,6 +66,7 @@ import { mergeAbilityItems, mergeAbilityEffects,
          abilityLabel }                              from "../rules/merge-abilities.mjs";
 import { toggleParentId, toggleRows }                from "../rules/toggle-abilities.mjs";
 import { ruleFlags, ruleFlagLabels, ruleFlagCost, scriptAbilities } from "../rules/flags.mjs";
+import { sleepGraceDays, sleepNeededHours } from "../rules/squat-traits.mjs";
 import { CAPABILITIES }                              from "../constants/capabilities.mjs";
 import { capabilityAutoHint }                        from "../constants/capability-forms.mjs";
 import { capabilityCostLabel, capabilityCostGate }   from "../combat/capability-cost.mjs";
@@ -912,13 +913,27 @@ function buildGetDataUncached(actor) {
       // Жизненные потребности (корбук 483): Голод/Жажда/Сон — стадия двигается
       // сама по game.time.worldTime, см. vitalEffectiveStage (wdbc-jnqj).
       life: VITALS.map(v => {
-        const vitalCtx = { tb: Number(system.characteristics?.t?.bonus) || 0, isAstartes: raceMatches(system, "astartes") };
+        const graceDays = sleepGraceDays(actor);
+        const vitalCtx = { tb: Number(system.characteristics?.t?.bonus) || 0, isAstartes: raceMatches(system, "astartes"),
+                           sleepGraceDays: graceDays };
+        const worldTime = game.time?.worldTime ?? 0;
         const val = vitalEffectiveStage(v.key, system.vitals?.[v.key], system.vitals?.[VITAL_TIME_FIELD[v.key]],
-          game.time?.worldTime ?? 0, vitalCtx);
+          worldTime, vitalCtx);
         const st  = v.stages[val];
+        // Крепкий как Камень (Скват): норма сна своя — подсказка считает её
+        // сама, чтобы игрок не держал в голове «3 ч + 3 ч за бессонные сутки».
+        let fx = st.fx;
+        if (v.key === "sleep" && graceDays > 1) {
+          const slept = system.vitals?.[VITAL_TIME_FIELD.sleep];
+          // Бессонные сутки — полные сутки сверх обычного суточного цикла:
+          // проснулся сутки назад — это ещё обычная ночь, не пропуск.
+          const awake = slept == null ? 0 : Math.max(0, Math.floor(Math.max(0, worldTime - Number(slept)) / 86400) - 1);
+          fx = `${val === 0 ? `Нет штрафов. Крепкий как Камень: без сна до ${graceDays} суток.` : st.fx} `
+             + `Нужно сна сейчас: ${sleepNeededHours(awake)} ч (3 ч, +3 ч за бессонные сутки, до 9 ч).`;
+        }
         return {
           key: v.key, label: v.label, icon: v.icon, tone: v.tone, action: v.action,
-          stage: val, max: VITAL_MAX_STAGE, stageLabel: st.label, fx: st.fx,
+          stage: val, max: VITAL_MAX_STAGE, stageLabel: st.label, fx,
           pen: st.pen, scope: v.scope,
           pips: [1, 2, 3].map(n => ({ on: n <= val })),
           alert: val > 0, crit: val >= VITAL_MAX_STAGE

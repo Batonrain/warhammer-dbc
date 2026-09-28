@@ -5193,8 +5193,9 @@ export const CAPABILITIES = {
     source: "Chaos Psyker / Псайкер Хаоса", reader: ""
   },
   "trait.cleverHands": {
-    label: "+15 на тонкую ручную работу, поднимается до +30 в экстремальных ситуациях (вроде взлома замка посреди боя).",
-    source: "Clever Hands / Умные Руки", reader: ""
+    label: "Умелые Руки: +15 на тесты Крафта, ремонта и обслуживания, требующие тонкой работы, +30 в экстремальных ситуациях. Галочки +15/+15 в диалоге Ремесла/Техпользования/Безопасности — правила module/rules/library/squat.mjs (по Черте, не по флагу); Расклин (экстремальная ситуация по книге) — +30 сам. Мастерская (окно Крафта) бонус не видит — отдельная задача.",
+    source: "Clever Hands / Умные Руки",
+    reader: "module/rules/squat-traits.mjs cleverHandsClearJamBonus() — module/combat/clear-jam.mjs::rollClearJam"
   },
   "trait.clovenOne": {
     label: "+20 vs Трудный Ландшафт.",
@@ -5314,8 +5315,14 @@ export const CAPABILITIES = {
     source: "Gene-Splice / Ген-Сплайс", reader: ""
   },
   "trait.hardAsStone": {
-    label: "Сопротивление ментальным эффектам.",
-    source: "Hard as Stone / Крепкий как Камень", reader: ""
+    label: "Крепкий как Камень: Преимущество на тест против яда (сопротивление Toxic); без сна до 3 суток без штрафа (лестница Сна), подсказка длительности сна 3 ч +3 ч за бессонные сутки (до 9). Лечение и мутации — отдельные возможности healing.astartes и mutations.asAstartes той же Черты. Тестов против болезней и вакуума в системе нет — Преимущество там берётся Кубиком диалога; защита от радиации −3 — строка справочника окна Окружения (фон радиации к акторам не применяется).",
+    source: "Hard as Stone / Крепкий как Камень",
+    reader: "module/rules/squat-traits.mjs poisonResistReroll() — module/hooks.mjs (_applyWeaponPropEffect); module/rules/squat-traits.mjs sleepGraceDays() — module/rules/character.mjs (vitalCtx) и module/sheets/sheet-helpers.mjs (life)"
+  },
+  "mutations.asAstartes": {
+    label: "Получает мутации как Космодесантник, а не человек: пороги Мутации 10/30/60/90 вместо 10/20/40/60/80 (поблажка лоялистам-Астартес сюда не входит — она про их геносемя)",
+    source: "Hard as Stone / Крепкий как Камень (Скват)",
+    reader: "module/rules/character.mjs nextMutationThreshold()"
   },
   "trait.hollowBones": {
     label: "−5 Поглощение vs I(Cr).",
@@ -5553,8 +5560,9 @@ export const CAPABILITIES = {
     source: "Sturdy / Надёжный", reader: ""
   },
   "trait.sureTread": {
-    label: "−1 SPD, максимум 3×SPD пешком; вместо A использует Awareness(P) на Трудном Ландшафте (3+ Успеха — не замедляет).",
-    source: "Sure Tread / Надёжная Поступь", reader: ""
+    label: "Надёжная Поступь: пешком не больше 3×SPD за Ход (Бег урезан до Натиска); тест Трудного Ландшафта по лучшему из Ловкости и Awareness (P); 3+ Успеха — Ландшафт не замедляет. −1 SPD — запись Движения той же Черты.",
+    source: "Sure Tread / Надёжная Поступь",
+    reader: "module/rules/squat-traits.mjs sureTreadMovementCap() — module/rules/character/movement.mjs; module/rules/squat-traits.mjs sureTreadTerrainBase() и sureTreadIgnoresTerrain() — module/combat/movement-terrain.mjs"
   },
   "trait.survivor": {
     label: "При провале не-атакующего теста S/T/A/P может потратить Очко Бесчестья — вместо этого преуспеть на 1 Успех.",

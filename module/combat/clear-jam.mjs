@@ -29,6 +29,7 @@
 import { canClearJam } from "./weapon-properties.mjs";
 import { spendActionPoints } from "./action-economy.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { cleverHandsClearJamBonus } from "../rules/squat-traits.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
@@ -68,7 +69,12 @@ export async function rollClearJam(actor, item) {
   const ruleMods = skillKey === "techUse"
     ? collectTestMods(actor, { kind: "skill", skill: "techUse", char: "int" })
     : { total: 0, parts: [] };
-  const threshold = base + ruleMods.total;
+  // Умелые Руки (Скват): Расклин книга сама называет «экстремальной
+  // ситуацией» — +30 без спроса (галочки +15/+15 Черты — askOnly и в бросок
+  // без диалога не попадают, rules/library/squat.mjs).
+  const cleverHands = cleverHandsClearJamBonus(actor);
+  if (cleverHands) ruleMods.parts = [...ruleMods.parts, `Умелые Руки (экстремальная ситуация) +${cleverHands}`];
+  const threshold = base + ruleMods.total + cleverHands;
 
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
