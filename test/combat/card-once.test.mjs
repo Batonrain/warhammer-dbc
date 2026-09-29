@@ -123,6 +123,20 @@ describe("стыковка: Огневая Точка (wdbc-6rjtc.2)", () => {
   });
 });
 
+describe("стыковка: Хирургия Легиона и «провал → успех» (wdbc-6rjtc.3)", () => {
+  it("пункт Хирургии Легиона гаснет на уже засчитанной карточке, обработчик передаёт сообщение", () => {
+    const at = HOOKS.indexOf("const btnLegionSurgery");
+    expect(HOOKS.slice(at, at + 300)).toMatch(/!cardOnceUsed\(message, "legionSurgeryUsed"\)/);
+    const click = HOOKS.indexOf("btnLegionSurgery?.addEventListener");
+    expect(HOOKS.slice(click, click + 400)).toMatch(/legionSurgeryOnCard\(actor, [^)]*, message\)/);
+  });
+
+  it("кнопка «провал → успех» гаснет по той же отметке, что ставит обработчик", () => {
+    const at = HOOKS.indexOf('".wh-infamy-fail-success-btn"');
+    expect(HOOKS.slice(at, at + 200)).toMatch(/cardOnceUsed\(message, "infamyFailSuccessUsed"\)/);
+  });
+});
+
 describe("стыковка: ретрансляция отметки ГМу", () => {
   it("warhammer-dbc.mjs принимает messageUsedFlag только из белого списка", () => {
     const main = read("warhammer-dbc.mjs");

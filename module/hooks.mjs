@@ -526,9 +526,10 @@ export function registerHooks() {
 
     // Провал → Очко Бесчестия → Успех на 1 Успех (Змеиный Язык Отступника и
     // т.п., module/apps/infamy-fail-success.mjs). Актор — по uuid карточки:
-    // тратит тот, кто провалил тест, а не тот, чей токен выбран.
+    // тратит тот, кто провалил тест, а не тот, чей токен выбран. Раз на
+    // карточку — combat/card-once.mjs (wdbc-6rjtc.3).
     html.querySelectorAll(".wh-infamy-fail-success-btn").forEach(btn => {
-      if (message.getFlag?.("warhammer-dbc", "infamyFailSuccessUsed")) btn.disabled = true;
+      if (cardOnceUsed(message, "infamyFailSuccessUsed")) btn.disabled = true;
       btn.addEventListener("click", async ev => {
         ev.preventDefault();
         const el = ev.currentTarget;
@@ -2742,9 +2743,10 @@ function _attachFateContextMenu(message, html) {
 
     // Хирургия Легиона (Апотекарий): проваленный тест Medicae / For.Lore
     // (Astartes Implants), брошенный с листа, — за Очко засчитать с 1 Успехом.
+    // Раз на карточку (wdbc-6rjtc.3).
     const skillTest = message.flags?.["warhammer-dbc"]?.skillTest ?? null;
     const btnLegionSurgery = (skillTest && !skillTest.success && hasLegionSurgery(actor)
-      && legionSurgeryTestEligible(skillTest))
+      && legionSurgeryTestEligible(skillTest) && !cardOnceUsed(message, "legionSurgeryUsed"))
       ? _makeFateMenuItem("Хирургия Легиона — Успех с 1 Успехом", canSpend,
           !canSpend ? `Нет ${ft.plural}` : "")
       : null;
@@ -2890,7 +2892,7 @@ function _attachFateContextMenu(message, html) {
       menu.remove();
       document.removeEventListener("click", closeMenu);
       if (!canSpend) return;
-      await legionSurgeryOnCard(actor, skillTest.label || "Тест");
+      await legionSurgeryOnCard(actor, skillTest.label || "Тест", message);
     });
 
     // ── +10 к броску ──────────────────────────────────────────────────────

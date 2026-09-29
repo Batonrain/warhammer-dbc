@@ -16,9 +16,7 @@ import { actorInfamyPath, actorInfamyValue, spendFromInfamyPool } from "./infamy
 import { tempInfamyAmount } from "../rules/temp-infamy.mjs";
 import { postTestCard, testCardHtml, outcomeHtml } from "../helpers/test-card.mjs";
 import { esc } from "../helpers/utils.mjs";
-
-const FLAG = "warhammer-dbc";
-const USED_FLAG = "infamyFailSuccessUsed";
+import { runCardOnce } from "../combat/card-once.mjs";
 
 /**
  * Кнопки для карточки проваленного теста — пустая строка, если ни одна
@@ -37,36 +35,35 @@ export function infamyFailSuccessButtonsHtml(actor, { skill, char, success, test
 }
 
 /**
- * Обработчик кнопки. Возвращает true, если трата состоялась.
+ * Обработчик кнопки. Возвращает true, если трата состоялась. Раз на карточку
+ * `message` (combat/card-once.mjs, wdbc-6rjtc.3): двойной клик не списывает
+ * дважды, чужую карточку помечает ГМ.
  * @param {Actor} actor
  * @param {string} capability имя возможности-источника
- * @param {{testLabel?:string, message?:ChatMessage}} [opts]
+ * @param {{testLabel?:string, message:ChatMessage}} opts
  */
-export async function spendInfamyForFailSuccess(actor, capability, { testLabel = "", message = null } = {}) {
+export async function spendInfamyForFailSuccess(actor, capability, { testLabel = "", message } = {}) {
   const src = infamyFailSuccessSource(capability);
   if (!actor || !src) return false;
   if (!hasRuleFlag(actor, capability)) {
     ui.notifications?.warn(`${actor.name}: нет Черты «${src.label}».`);
     return false;
   }
-  if (message?.getFlag?.(FLAG, USED_FLAG)) {
-    ui.notifications?.warn("Этот провал уже заменён успехом.");
-    return false;
-  }
-  if (actorInfamyValue(actor) < 1 && tempInfamyAmount(actor) < 1) {
-    ui.notifications?.warn(`${actor.name}: нет Очков Бесчестия.`);
-    return false;
-  }
-  const path = actorInfamyPath(actor);
-  const spend = await spendFromInfamyPool(actor, 1, path);
-  if (!spend) return false;
-  if (spend.poolSpent) await actor.update({ [path]: spend.poolValue });
-  if (message?.setFlag) await message.setFlag(FLAG, USED_FLAG, true);
-  await postTestCard(actor, testCardHtml({
-    icon: "⚜ ", title: `${esc(src.label)}${testLabel ? ` — ${esc(testLabel)}` : ""}`,
-    lines: [`<div class="roll-threshold" style="font-size:0.85em;">Потрачено Очко Бесчестия${
-      spend.tempSpent ? " (из временного запаса)" : ""}. Осталось: <b>${actorInfamyValue(actor) + tempInfamyAmount(actor)}</b>.</div>`],
-    outcome: outcomeHtml(true, "Провал заменён: Успех — 1 Успех")
-  }), { sound: false, ignoreRollMode: true });
-  return true;
+  return runCardOnce(message, "infamyFailSuccessUsed", async () => {
+    if (actorInfamyValue(actor) < 1 && tempInfamyAmount(actor) < 1) {
+      ui.notifications?.warn(`${actor.name}: нет Очков Бесчестия.`);
+      return false;
+    }
+    const path = actorInfamyPath(actor);
+    const spend = await spendFromInfamyPool(actor, 1, path);
+    if (!spend) return false;
+    if (spend.poolSpent) await actor.update({ [path]: spend.poolValue });
+    await postTestCard(actor, testCardHtml({
+      icon: "⚜ ", title: `${esc(src.label)}${testLabel ? ` — ${esc(testLabel)}` : ""}`,
+      lines: [`<div class="roll-threshold" style="font-size:0.85em;">Потрачено Очко Бесчестия${
+        spend.tempSpent ? " (из временного запаса)" : ""}. Осталось: <b>${actorInfamyValue(actor) + tempInfamyAmount(actor)}</b>.</div>`],
+      outcome: outcomeHtml(true, "Провал заменён: Успех — 1 Успех")
+    }), { sound: false, ignoreRollMode: true });
+    return true;
+  }, "Этот провал уже заменён успехом.");
 }
