@@ -154,6 +154,7 @@ import { weaponProfiles, attackIsMelee } from "./combat/weapon-profiles.mjs";
 // Огневая Точка (Хавок) и Хирургия Легиона (Апотекарий) — пункты меню Очков карточки.
 import { firePointFreeReroll, firePointActivatesOnPaidReroll } from "./rules/fire-point.mjs";
 import { activateFirePoint } from "./combat/fire-point.mjs";
+import { cardOnceUsed, markCardOnce, runCardOnce } from "./combat/card-once.mjs";
 import { hasLegionSurgery, legionSurgeryTestEligible } from "./rules/legion-surgery.mjs";
 import { legionSurgeryOnCard } from "./combat/legion-surgery.mjs";
 import { isIntegralAttack } from "./combat/equipped-melee.mjs";
@@ -2724,13 +2725,15 @@ function _attachFateContextMenu(message, html) {
     // Атака этой карточки: стрелковая ли (Огневая Точка — только стрелковые)
     // и не переброс ли уже (переброс переброса книга не даёт; повтор атаки
     // из этого меню всегда идёт со skipAmmo — это и есть метка «та же атака»).
+    // Исходная карточка уже переброшенной атаки (за Очко или бесплатно)
+    // помечена флагом attackRerolled (combat/card-once.mjs, wdbc-6rjtc.2).
     const atkCtx = message.flags?.["warhammer-dbc"]?.attack ?? null;
     const atkCtxActor = atkCtx ? (game.actors?.get(atkCtx.actorId) ?? actor) : null;
     const atkCtxItem = atkCtx ? atkCtxActor?.items?.get(atkCtx.itemId) : null;
     const atkIsMelee = atkCtxItem
       ? attackIsMelee(atkCtxItem.system, { forceMelee: atkCtx.opts?.forceMelee, profile: atkCtx.opts?.profile })
       : true;
-    const atkRerolled = !!atkCtx?.opts?.skipAmmo;
+    const atkRerolled = !!atkCtx?.opts?.skipAmmo || cardOnceUsed(message, "attackRerolled");
 
     // Огневая Точка (Хавок): пока точка занята — переброс стрелковой атаки без траты Очка.
     const btnFirePoint = (atkCtxItem && firePointFreeReroll(atkCtxActor, { isMelee: atkIsMelee, rerolled: atkRerolled }))
@@ -2787,6 +2790,9 @@ function _attachFateContextMenu(message, html) {
         if (atkItem) {
           await _executeAttackRoll(atkActor, atkItem, atk.charKey, atk.threshold,
             atk.rofMode, atk.aimTarget, { ...(atk.opts || {}), skipAmmo: true });
+          // Исходная карточка переброшена — бесплатный переброс Огневой Точки
+          // с неё больше не предлагается (переброс переброса).
+          await markCardOnce(message, "attackRerolled");
           ui.notifications.info(
             `✨ ${actor.name} тратит ${ft.one} на переброс атаки${payerNote}! Осталось: ${reroll1.poolValue}`);
           // Огневая Точка (Хавок): «Когда Хавок тратит Очко Бесчестия на
@@ -2865,13 +2871,17 @@ function _attachFateContextMenu(message, html) {
     }
 
     // ── Огневая Точка: переброс без траты Очка ────────────────────────────
+    // Раз на атаку: исходная карточка помечается (combat/card-once.mjs).
     btnFirePoint?.addEventListener("click", async (ev2) => {
       ev2.stopPropagation();
       menu.remove();
       document.removeEventListener("click", closeMenu);
-      await _executeAttackRoll(atkCtxActor, atkCtxItem, atkCtx.charKey, atkCtx.threshold,
-        atkCtx.rofMode, atkCtx.aimTarget, { ...(atkCtx.opts || {}), skipAmmo: true });
-      ui.notifications.info(`🎯 ${atkCtxActor.name}: Огневая Точка — переброс атаки без траты Очка.`);
+      const done = await runCardOnce(message, "attackRerolled", async () => {
+        await _executeAttackRoll(atkCtxActor, atkCtxItem, atkCtx.charKey, atkCtx.threshold,
+          atkCtx.rofMode, atkCtx.aimTarget, { ...(atkCtx.opts || {}), skipAmmo: true });
+        return true;
+      }, "Эта атака уже переброшена.");
+      if (done) ui.notifications.info(`🎯 ${atkCtxActor.name}: Огневая Точка — переброс атаки без траты Очка.`);
     });
 
     // ── Хирургия Легиона: провал → Успех с 1 Успехом ─────────────────────
