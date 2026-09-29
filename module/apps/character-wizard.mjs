@@ -240,6 +240,8 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     // applyRace на Этапе 1 УЖЕ пишет расовую базу в то же поле, напр. 19 у
     // Астартес, — бросок выше неё молча ни разу не срабатывал, wdbc-31b).
     this._infamyRolled = false;
+    // То же для Стартовых Ран Архетипа (_finishArchetypeStep, wdbc-6rjtc.7).
+    this._woundsRolled = false;
     // Состояние Этапа 2 (метод «Генерация») — переживает render() внутри
     // шага, но не должно переживать возврат на Этап 1 и повторный заход.
     this.charSets = null;
@@ -940,13 +942,15 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     // защитный путь на случай, если ГМ когда-нибудь заведёт такую запись.
     if (cultFx) await grantCreationSkills(actor, { race: { skills: (cultFx.grantSkills || []).join(", ") } });
 
-    // Живая проверка ПОВЕРХ снимка _wasEmpty: снимок берётся один раз на
-    // весь мастер, а бросок формулы даёт КАЖДЫЙ РАЗ новое число — без этой
-    // проверки повторное подтверждение того же экземпляра Мастера (напр.
-    // «Назад» и снова «Далее») перебрасывало бы Раны заново.
-    if (this._wasEmpty?.wounds && (actor.system.wounds?.max || 0) === 0) {
+    // Защита от повтора («Назад» и снова «Далее») — флаг сессии Мастера, как
+    // у Бесчестия, а не «max всё ещё 0»: запись kind:"wounds" Расы/Черты
+    // (+3 Сплайса, +15 Огрина) пишет max ещё на Этапе 1, и бросок Архетипа
+    // молча пропускался (wdbc-6rjtc.7). Бросок прибавляется к ней, не затирая.
+    if (this._wasEmpty?.wounds && !this._woundsRolled) {
       const w = await rollFormula(actor, arch?.wounds, "Стартовые Раны");
-      if (w) await actor.update({ "system.wounds.max": w, "system.wounds.value": w });
+      this._woundsRolled = true;
+      const max = (Number(actor.system.wounds?.max) || 0) + w;
+      if (w) await actor.update({ "system.wounds.max": max, "system.wounds.value": max });
     }
     this._archetypeApplyPromise = null; // гигиена — actorArchetypeItem уже делает его неактуальным
   }
