@@ -86,8 +86,12 @@ export function hypnoScarsStun(crit, ctx, hasHypno) {
 // Момент последнего приёма — флаг на самой Черте (flags.warhammer-dbc.
 // serumTakenAt, worldTime в секундах): состояние личное для носителя, как
 // дата утоления у Зависимости (rules/addiction.mjs), и не требует поля схемы.
+// Рядом — serumTickedTo: до какого момента урон уже нанесён. Тики считаются от
+// неподвижного serumTakenAt, и без этой метки откат Календаря и повторный сдвиг
+// били бы те же 8-часовые моменты второй раз (wdbc-6rjtc.9).
 
 export const SERUM_FLAG      = "serumTakenAt";
+export const SERUM_DONE_FLAG = "serumTickedTo";
 export const SERUM_PERIOD    = 7 * SECONDS_PER_DAY;
 export const SERUM_TICK      = 8 * SECONDS_PER_HOUR;
 export const SERUM_TARGETS   = ["s", "t"];
