@@ -16,6 +16,13 @@ describe("hasHitLocationShift", () => {
     expect(hasHitLocationShift([])).toBe(false);
     expect(hasHitLocationShift(undefined)).toBe(false);
   });
+  // wdbc-6rjtc.6: мир, выданный до флага, — предмет без hitLocationShift,
+  // «Обновить мир» флаги не переносит. Признак — ключ мира в константах.
+  it("Родной мир «Военная зона» без флага (персонаж до PR #530) — сдвиг есть", () => {
+    const world = key => ({ type: "homeworld", system: { key }, getFlag: () => undefined });
+    expect(hasHitLocationShift([world("warzone")])).toBe(true);
+    expect(hasHitLocationShift([world("hive")])).toBe(false);
+  });
   it("Военная зона в константах помечена, остальные миры — нет", () => {
     const marked = HOMEWORLDS.filter(h => h.hitLocationShift).map(h => h.key);
     expect(marked).toEqual(["warzone"]);
