@@ -84,6 +84,18 @@ function effectiveTerrainInfo(tokenDoc, actor) {
   };
 }
 
+// Свой переброс для этого теста (область «terrain» — Barefoot / Босоногий
+// Ратлинга: «может перебрасывать тесты Трудного Ландшафта»). Диалога с
+// галочками у броска нет, спросить игрока негде — переброс берётся сам:
+// «лучший из двух» по вероятности успеха равен «перебросить провал». Только
+// с областью terrain (wdbc-6rjtc.4): тест идёт по Ловкости, и первым
+// подходящим оказывался чужой переброс — «Пустота в Венах» Сквата (char:ag,
+// по книге только в невесомости) или «раз в Раунд любой тест» (all),
+// потраченный без спроса.
+function terrainReroll(actor, ctx) {
+  return (resolveTest({ actor, ...ctx }).rerolls || []).find(r => r.who === "self" && r.target === "terrain") || null;
+}
+
 // ─── Тест Трудного Ландшафта (Бег/Натиск через зону) ──────────────────────
 // A+0 со штрафом ландшафта зоны + ручная поправка. Провал → падение
 // (для пехоты книга не формализует урон от падения — оставлено ГМу).
@@ -108,7 +120,7 @@ export async function showDifficultTerrainDialog(actor, tokenDoc = null) {
   // видно ДО кнопки, а не только в карточке после броска.
   const preCtx = { kind: "skill", char: base.char, terrain: true, ...(base.skill ? { skill: base.skill } : {}) };
   const preMods = collectTestMods(actor, preCtx).parts;
-  const preReroll = (resolveTest({ actor, ...preCtx }).rerolls || []).find(r => r.who === "self");
+  const preReroll = terrainReroll(actor, preCtx);
   const rulesLine = (preMods.length || preReroll)
     ? `<div class="atk-range-info" style="font-size:0.82em;">Сами: ${esc([...preMods, ...(preReroll ? [`${preReroll.label}: переброс`] : [])].join(", "))}</div>` : "";
 
@@ -156,11 +168,7 @@ async function _resolveDifficultTerrain(actor, ag, terrainMod, extraMod, labels,
   const ruleMods  = collectTestMods(actor, ruleCtx);
   const threshold = ag + totalMod + ruleMods.total;
 
-  // Свой переброс для этого теста (область «terrain» — Barefoot / Босоногий
-  // Ратлинга: «может перебрасывать тесты Трудного Ландшафта»). Диалога с
-  // галочками у броска нет, спросить игрока негде — переброс берётся сам:
-  // «лучший из двух» по вероятности успеха равен «перебросить провал».
-  const reroll = (resolveTest({ actor, ...ruleCtx }).rerolls || []).find(r => r.who === "self") || null;
+  const reroll = terrainReroll(actor, ruleCtx);
   const { roll, rolls, rv, rerollNote } = await rollD100WithReroll(reroll);
   const passed = rv <= threshold;
   const deg    = Math.floor(Math.abs(passed ? threshold - rv : rv - threshold) / 10) + 1;

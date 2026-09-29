@@ -307,7 +307,7 @@ describe("область Морали (wdbc-zepq)", () => {
     expect(rerolls).toEqual([]); // без источника правил — пусто
     registerRuleSource("s", () => [rerollRule]);
     const withRule = resolveTest({ actor: actor(), morale: true });
-    expect(withRule.rerolls).toEqual([{ ruleId: "r", label: "Владыка", mode: "keepBest", rolls: 2, who: "self" }]);
+    expect(withRule.rerolls).toEqual([{ ruleId: "r", label: "Владыка", mode: "keepBest", rolls: 2, who: "self", target: "morale" }]);
   });
 });
 
