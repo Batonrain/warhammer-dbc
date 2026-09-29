@@ -13,12 +13,15 @@
 // Числа сверяются с текстом книги (packs-src/books/core.json), а не с памятью:
 // тот же приём, что test/data/legion-geneseed-size-vs-book.test.mjs.
 
+import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import { RACES } from "../../module/constants/races.mjs";
 import { OGRYN_REGEN_PERIOD } from "../../module/rules/ogryn-regen.mjs";
 import { packDocById } from "../support/pack-doc.mjs";
+import { resolveTest } from "../../module/rules/resolve-test.mjs";
+import { collectTestMods } from "../../module/rules/roll-mods.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "../..");
 const readJson = rel => JSON.parse(fs.readFileSync(path.join(ROOT, rel), "utf8"));
@@ -40,6 +43,13 @@ const BOOK = coreBookText();
 const ogrynSection = BOOK.slice(BOOK.indexOf("самой распространенной расы аблюдей"), BOOK.indexOf("самой физически маленькой расы"));
 
 const entries = doc => (doc.flags?.["warhammer-dbc"]?.mechanics ?? []).flatMap(g => g.entries);
+
+// Огрин с НАСТОЯЩЕЙ Чертой из пака — модификаторы едут тем же путём, что в игре
+// (источники «items» и «core» конвейера теста).
+const asItem = doc => ({ id: doc._id, name: doc.name, type: doc.type, system: doc.system, flags: doc.flags });
+const OGRYN = { id: "a1", type: "character", system: { characteristics: {}, skills: {} },
+                items: Object.assign([asItem(BRUTE)], { contents: [asItem(BRUTE)] }) };
+const fineMods = mods => mods.filter(m => m.value === -20);
 
 describe("Огрин: данные расы", () => {
   it("раздел книги найден — иначе проверки ниже зелены от пустоты", () => {
@@ -91,10 +101,35 @@ describe("Огрин: Физиология Громилы — числа про�
     expect(OGRYN_REGEN_PERIOD).toEqual({ light: 60, heavy: 600, critical: 3600 });
   });
 
-  it("−20 на тонкую манипуляцию — галочка Конструктора с тем же числом", () => {
+  it("−20 на тонкую манипуляцию — одна галочка (askOnly) на Ремесле, Техпользовании, Безопасности, Ловкости Рук", () => {
     expect(ogrynSection).toContain("штраф –20 на все тесты тонкой манипуляции");
-    const mod = entries(BRUTE).find(e => e.kind === "testMod");
-    expect(mod?.value).toBe(-20);
+    for (const ctx of [
+      { kind: "skill", group: "trade", char: "int" },
+      { kind: "skill", skill: "techUse", char: "int" },
+      { kind: "skill", skill: "security", char: "ag" },
+      { kind: "skill", skill: "sleightOfHand", char: "ag" }
+    ]) {
+      expect(fineMods(resolveTest({ actor: OGRYN, ...ctx }).mods)).toEqual([expect.objectContaining({ value: -20, askOnly: true })]);
+    }
+  });
+
+  // wdbc-6rjtc.1: запись Конструктора «Модификатор теста» (modScope "all", без
+  // askOnly) складывалась сама в каждом броске без диалога — Огрин молча
+  // получал −20 на Уклонение, Парирование, Страх, Панику и т.д.
+  it("сторож: Уклонение, Парирование, Страх, тест T — ни галочки, ни −20 без диалога", () => {
+    for (const ctx of [
+      { kind: "skill", skill: "dodge", char: "ag" },
+      { kind: "skill", skill: "parry", char: "ws" },
+      { kind: "skill", char: "wp", morale: true },
+      { kind: "skill", char: "t" }
+    ]) {
+      expect(fineMods(resolveTest({ actor: OGRYN, ...ctx }).mods)).toEqual([]);
+      expect(collectTestMods(OGRYN, ctx).total).toBe(0);
+    }
+  });
+
+  it("сторож: и на Техпользовании без диалога (Расклин) −20 само не складывается", () => {
+    expect(collectTestMods(OGRYN, { kind: "skill", skill: "techUse", char: "int" }).total).toBe(0);
   });
 
   it("возможности и иммунитет к Обескровливанию — на самой Черте (их получает и Миньон «Огрин»)", () => {
