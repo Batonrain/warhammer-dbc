@@ -1020,7 +1020,8 @@ export function blankMechEntry(kind = "characteristic") {
     rerollScope: "all", rerollChar: "ag", rerollMode: "keepBest",
     // testMod — «Модификатор теста»: тот же живой запрос, области общие
     // с «Перебросом» (rerollChar/skillKey переиспользуются как уточнение).
-    modScope: "all", modValueMode: "flat", modCharBonus: "inf",
+    // modAuto — «сам, без галочки» (rules/item-rules.mjs, wdbc-6rjtc.8).
+    modScope: "all", modValueMode: "flat", modCharBonus: "inf", modAuto: false,
     // Область «power» у reroll/testMod: пусто — любая манифестация, имя —
     // только эта психосила (wdbc-4umq: поле объявлено, как у сохранённых записей).
     powerName: "",
@@ -1286,7 +1287,7 @@ export function describeMechEntry(entry) {
         : entry.modValueMode === "formula"
         ? `формула: ${entry.value}`
         : `${Number(entry.value) >= 0 ? "+" : ""}${entry.value}`;
-      return `Модификатор теста: ${scope} — ${val}`;
+      return `Модификатор теста: ${scope} — ${val}${entry.modAuto ? " (сам)" : ""}`;
     }
     case "failDegMod": {
       const scope = REROLL_SCOPE_LABEL({ ...entry, rerollScope: entry.modScope });
@@ -3737,7 +3738,8 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       <select class="mech-mod-valuemode" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${modeOpts}</select>
       ${valueField}
       <input type="text" class="mech-reroll-label" placeholder="подпись в диалоге" value="${esc(ent.label || "")}"
-             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>
+      <label class="mech-cc-check" title="Не галочка в окне броска, а сразу в Пороге — для навязанных штрафов (Poor.Q)"><input type="checkbox" class="mech-mod-auto" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.modAuto ? "checked" : ""} ${dis}/> сам, без галочки</label>`;
   }
 
   // «Доп. Провалы при провале» (kind:"failDegMod", wdbc-1rno: Sentient Cyst
