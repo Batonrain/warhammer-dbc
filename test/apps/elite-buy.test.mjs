@@ -92,3 +92,39 @@ describe("отбор архетипов для списка", () => {
     expect(res.check.warn).toBe(true);
   });
 });
+
+// Предначертанный Путь (Черта Нумена): избранный Элитный архетип — базовая
+// цена минус 1000, без множителя за взятые, и сам не удорожает прочие.
+describe("Предначертанный Путь", () => {
+  const fatedTrait = {
+    id: "fp", name: "Fated Path / Предначертанный Путь", type: "trait",
+    flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+      { id: "e", kind: "capability", capabilityKey: "trait.fatedPath", label: "" }] }] } }
+  };
+  const numen = (fated, items = []) => ({
+    ...actor({ items: [fatedTrait, ...items] }),
+    flags: { "warhammer-dbc": { fatedPath: fated } }
+  });
+
+  it("избранный — базовая цена минус 1000, даже вторым", () => {
+    const doc = elite("Ведьма Культа", { cost: 2000 });
+    expect(eliteCostFor(numen("Ведьма Культа"), doc).cost).toBe(1000);
+    expect(eliteCostFor(numen("Ведьма Культа", [elite("A")]), doc).cost).toBe(1000);
+    expect(eliteCostFor(numen("Ведьма Культа", [elite("A")]), doc).fated).toBe(true);
+  });
+
+  it("скидка не уводит цену ниже нуля", () => {
+    expect(eliteCostFor(numen("Дешёвый"), elite("Дешёвый", { cost: 500 })).cost).toBe(0);
+  });
+
+  it("взятый избранный не удорожает прочие", () => {
+    const other = elite("Другой", { cost: 1500 });
+    expect(eliteCostFor(numen("Ведьма Культа", [elite("Ведьма Культа")]), other).cost).toBe(1500);
+    expect(eliteCostFor(numen("Ведьма Культа", [elite("Ведьма Культа"), elite("A")]), other).cost).toBe(3000);
+  });
+
+  it("без Черты метка ничего не даёт", () => {
+    const a = { ...actor(), flags: { "warhammer-dbc": { fatedPath: "Ведьма Культа" } } };
+    expect(eliteCostFor(a, elite("Ведьма Культа", { cost: 2000 })).cost).toBe(2000);
+  });
+});

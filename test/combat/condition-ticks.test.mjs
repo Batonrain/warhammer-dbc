@@ -594,6 +594,73 @@ describe("processConditionTurnEnd: возможности Саркофага Д�
   });
 });
 
+// New Men / Новые Люди (Йигори, сверка главы I): «Бросает d20 вместо d10 на
+// тестах Кровотечения и может затянуть свое Кровотечение тестом T+0 в начале
+// своего Хода» — возможность newMen.bleeding.
+describe("Кровотечение у Йигори (newMen.bleeding)", () => {
+  const saved = getRuleSources();
+  const grant = flag => {
+    clearRuleSources();
+    registerRuleSource("test", () => [
+      { id: "test.rule", when: {}, effects: [{ kind: "grantFlag", target: flag }] }
+    ]);
+  };
+  afterEach(() => {
+    captured.dice = null;
+    clearRuleSources();
+    for (const [key, fn] of saved) registerRuleSource(key, fn);
+  });
+
+  it("тик бросает d20: 13 − 2 = 11 — обошлось (на d10 такого не выпасть)", async () => {
+    grant("newMen.bleeding");
+    const actor = makeActor({ conditions: { bleeding: true, haemorrhagingLevel: 2 } });
+    captured.dice = [13];
+    await processConditionTurnEnd(actor);
+
+    expect(captured.rolls).toContain("1d20");
+    expect(actor.system.conditions.haemorrhagingLevel).toBe(2);
+    expect(captured.chat[0].content).toContain("1d20 <b>13</b>");
+    expect(captured.chat[0].content).toContain("обошлось");
+  });
+
+  it("без возможности — прежний d10", async () => {
+    clearRuleSources();
+    const actor = makeActor({ conditions: { bleeding: true, haemorrhagingLevel: 0 } });
+    captured.dice = [7];
+    await processConditionTurnEnd(actor);
+    expect(captured.rolls).toContain("1d10");
+    expect(captured.rolls).not.toContain("1d20");
+  });
+
+  it("начало Хода: тест T+0 успешен — Кровотечение затянуто", async () => {
+    grant("newMen.bleeding");
+    const actor = makeActor({ conditions: { bleeding: true, haemorrhagingLevel: 1 } });
+    captured.nextRoll = 20; // T 40
+    await processConditionTurnStart(actor);
+
+    expect(actor.system.conditions.bleeding).toBe(false);
+    expect(captured.chat[0].content).toContain("Кровотечение остановлено");
+  });
+
+  it("начало Хода: тест T+0 провален — Кровотечение остаётся", async () => {
+    grant("newMen.bleeding");
+    const actor = makeActor({ conditions: { bleeding: true } });
+    captured.nextRoll = 90;
+    await processConditionTurnStart(actor);
+
+    expect(actor.system.conditions.bleeding).toBe(true);
+    expect(captured.chat[0].content).toContain("кровь не унялась");
+  });
+
+  it("без возможности теста в начале Хода нет вовсе", async () => {
+    clearRuleSources();
+    const actor = makeActor({ conditions: { bleeding: true } });
+    await processConditionTurnStart(actor);
+    expect(captured.rolls).toHaveLength(0);
+    expect(actor.system.conditions.bleeding).toBe(true);
+  });
+});
+
 describe("processConditionTurnEnd: Горение", () => {
   it("урон проходит T.b — Раны падают, Усталость +1", async () => {
     const actor = makeActor({ conditions: { burning: true } });

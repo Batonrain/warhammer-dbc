@@ -25,6 +25,8 @@ import { RITUAL_TYPES_MAP, RITUAL_SUMMON_MODS, CURSE_FAMILIARITY, CURSE_SYMPATHY
 import { WARP_GODS } from "../constants/veil.mjs";
 import { isHerdSpiritsRitual } from "../apps/herd-spirits-summon.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
+import { DARK_SEER_FLAG, darkSeerPaths } from "../rules/dark-seer.mjs";
 
 const sgn = n => (n >= 0 ? "+" : "") + n;
 
@@ -47,6 +49,8 @@ function readRitualForm(form, paths) {
 
   return {
     skillValue: path.skillValue, testChar: path.testChar, gmMod: path.gmMod,
+    // Ведун Тьмы (rules/dark-seer.mjs): путь-двойник на I↔W — без Преимущества.
+    darkSeerSwap: !!path.darkSeerSwap,
     assistants, assistSacrificed,
     curseFam: el("#rit-curse-fam")?.value || "close",
     psyker: !!el("#rit-psyker")?.checked,
@@ -88,7 +92,10 @@ export async function showRitualCastDialog(actor, item) {
   const base = newRitualState(actor, item);
   const d0 = ritualThreshold(base, actor, item);
   const s = item.system || {};
-  const paths = ritualPathOptions(actor, item, buildRitualSkills);
+  // Ведун Тьмы (Демонолог): к каждому пути на I/W — двойник на другой
+  // Характеристике (rules/dark-seer.mjs); без Черты список прежний.
+  const paths = darkSeerPaths(ritualPathOptions(actor, item, buildRitualSkills),
+    hasRuleFlag(actor, DARK_SEER_FLAG));
 
   const assistMin = Number(s.assistMin) || 0;
   const assistMax = Number(s.assistMax) || 0;

@@ -26,6 +26,16 @@ describe("startLevelValues", () => {
     expect(startLevelValues({ level: "l3", astartes: false }).xp).toBe(11250);
   });
 
+  // Ловит на Лету (X): «на X% больше стартового опыта» — перенос из #528
+  // (6b2f2717). Округление вверх, как у опыта за сессию; субраса — после.
+  it("Ловит на Лету прибавляет свой процент к стартовому опыту", () => {
+    const out = startLevelValues({ level: "l1", fastLearnerPct: 15 });
+    expect(out.xp).toBe(4313);           // 3750 × 1.15 = 4312.5 → вверх
+    expect(out.fastLearnerXp).toBe(563);
+    expect(startLevelValues({ level: "l1" }).fastLearnerXp).toBe(0);
+    expect(startLevelValues({ level: "l1", fastLearnerPct: 25, subraceCost: 500 }).xp).toBe(4688 - 500);
+  });
+
   it("бонусы Влияния и Порчи — из строки", () => {
     expect(startLevelValues({ level: "l4" })).toMatchObject({ infamy: 30, corruption: 36 });
   });

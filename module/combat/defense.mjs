@@ -24,6 +24,7 @@ import { danceOfFireAdvantage } from "../rules/dodge-advantage.mjs";
 import { duckAndCoverAdvantage } from "../rules/duck-and-cover.mjs";
 import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
+import { adroitDegreeBonus } from "../rules/adroit.mjs";
 import { retractPart, extendPart, allLimbsCompressed } from "../rules/compression.mjs";
 import { activeSwarm, consumeSwarmScreamer } from "../rules/ethereal-swarm.mjs";
 import { degreesOfSuccess } from "../constants/craft.mjs";
@@ -40,6 +41,7 @@ import { phantomCopiesDodgePenalty } from "../rules/wrapped-in-chaos.mjs";
 import { hasGazeOfInevitability } from "../rules/gaze-of-inevitability.mjs";
 import { isTokenInSight } from "../rules/vision-target.mjs";
 import { combinedThreshold } from "../rules/test-kind.mjs";
+import { singleCombatBonus } from "./single-combat.mjs";
 
 // Контратака (стр. 12, Талант Counter Attack) — «раз в Раунд» ключ учёта,
 // тот же примитив, что у Локуса Сокрушения (constants/capabilities.mjs).
@@ -54,8 +56,8 @@ export const COMPRESSION_CAPABILITY = "mutation.compression";
 // spendReaction ничего не считает и всегда отдаёт true, поэтому вне боя
 // кнопки продолжают работать как раньше, без ограничений.
 /** Командование («Прикрытие») — ленивый импорт: command-state тянет источники правил. */
-async function borrowCoverReaction(actor) {
-  try { return await (await import("./command-state.mjs")).borrowCoverReaction(actor); }
+async function borrowCoverReaction(actor, opts = {}) {
+  try { return await (await import("./command-state.mjs")).borrowCoverReaction(actor, opts); }
   catch (e) { console.warn("Warhammer DBC | Прикрытие:", e); return null; }
 }
 async function coverParrySteps(actor) {
@@ -139,9 +141,10 @@ export async function _performDodge(actor, {
   // тяжелее и не меньше цели. Реакция не тратится — как и без ног выше.
   const grappleNoDodge = grappleDodgeBlockReason(actor);
   if (grappleNoDodge) return _bladeShieldRefusal(actor, grappleNoDodge, "Уклонение");
-  // «Прикрытие» (Детальная Команда): нет своей Реакции — одолжить у соратника в 3 м.
+  // «Прикрытие» (Детальная Команда): нет своей Реакции — одолжить у соратника
+  // в 3 м; у стаи Йигори (Сознание Стаи) — у члена стаи и без «Прикрытия».
   if (!(await spendReaction(actor, { forDefense: true, attackId }))
-      && !(await borrowCoverReaction(actor))) return _noReactionCard(actor, "Уклонение");
+      && !(await borrowCoverReaction(actor, { dodge: true }))) return _noReactionCard(actor, "Уклонение");
   const { agTotal, threshold: baseThreshold, modParts } = dodgeProfile(actor, extraMod);
   // Фантомные Копии (Wrapped in Chaos "2-3", wdbc-1rno): штраф Уклонению
   // ЧУЖОЙ рукопашной атаки — направленный модификатор атакующий→защитник,
@@ -178,7 +181,11 @@ export async function _performDodge(actor, {
   const rv     = picked.value;
   // Формула степени успеха/провала — module/rules/roll-outcome.mjs (wdbc-5dvx,
   // раньше дублировалась вручную здесь же).
-  const { success: passed, deg } = testOutcome(rv, threshold);
+  const { success: passed, deg: rolledDeg } = testOutcome(rv, threshold);
+  // Бой Один На Один (Палач, combat/single-combat.mjs) и Искусный (Ренегат,
+  // rules/adroit.mjs): +1 Успех к успешному Уклонению (A) каждый.
+  const deg = rolledDeg + singleCombatBonus(actor, { success: passed, charKey: "ag" })
+    + adroitDegreeBonus(actor, "ag", passed);
   // Взор Неизбежности: «проваливают ЭТОТ тест [Комбинированный] — теряют
   // все свои Реакции» — тот же бросок выше уже решил и Уклонение, и это.
   if (gazeActive && !passed) await _applyGazeOfInevitabilityFailure(actor);
@@ -689,7 +696,10 @@ export async function _performParry(actor, {
   const roll     = rolled[picked.index];
   const rv       = picked.value;
   // Формула степени успеха/провала — module/rules/roll-outcome.mjs (wdbc-5dvx).
-  const { success: passed, deg } = testOutcome(rv, threshold);
+  const { success: passed, deg: rolledDeg } = testOutcome(rv, threshold);
+  // Бой Один На Один (Палач) и Искусный (Ренегат): Парирование — навык на WS.
+  const deg = rolledDeg + singleCombatBonus(actor, { success: passed, charKey: "ws" })
+    + adroitDegreeBonus(actor, "ws", passed);
   // Взор Неизбежности: «проваливают ЭТОТ тест [Комбинированный] — теряют
   // все свои Реакции» — тот же бросок выше уже решил и Парирование, и это.
   if (gazeActive && !passed) await _applyGazeOfInevitabilityFailure(actor);

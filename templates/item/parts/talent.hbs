@@ -234,6 +234,16 @@
     <input type="number" name="system.testMod" value="{{system.testMod}}" class="wr-input-xs"
            title="Модификатор к тесту расстройства (напр. +0, +10, −20)"/>
   </div>
+  <div class="weapon-row">
+    <label class="wr-label">Тяжесть</label>
+    <input type="number" name="system.severity" value="{{system.severity}}" min="-5" max="5" class="wr-input-xs"
+           title="−5…+5, при получении 0. Все тесты расстройства получают −5×Тяжесть"/>
+    <label class="wr-label">Не ниже</label>
+    <input type="number" name="system.severityMin" value="{{system.severityMin}}" min="-5" max="5" class="wr-input-xs"
+           title="Свой нижний предел Тяжести (пусто — книжный −5). Беглый Псайкер: −2"/>
+    <label class="wr-label">Неизлечимо</label>
+    <input type="checkbox" name="system.incurable" {{checked system.incurable}}/>
+  </div>
   <div class="drug-stat-hint">Описание расстройства — в поле «Описание» ниже. Кнопка теста — на вкладке «Эффекты».</div>
 </div>
 {{/if}}

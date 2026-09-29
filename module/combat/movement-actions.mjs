@@ -1335,6 +1335,9 @@ export function showFlightDialog(actor) {
   }
   const hasFlyer = actorHasFlyer(actor);
   const current = actor.system.movement?.altitude || "landed";
+  const lift = actor.system.encumbrance?.flight;
+  const liftBlock = lift && !lift.canFly
+    ? `груз ${lift.load} кг тяжелее Ношения для полёта ${lift.carry} кг (силовая броня не помогает)` : "";
   // Hoverer БЕЗ Flyer (стр. 30) — только Приземная/Не летит, Низкая и
   // Высокая из выбора убираются целиком, не просто дизейблятся.
   const availableAlts = hasFlyer
@@ -1351,6 +1354,9 @@ export function showFlightDialog(actor) {
               `<option value="${k}" ${k === current ? "selected" : ""}>${v.label}</option>`).join("")}
           </select>
         </div>
+        ${liftBlock
+          ? `<div class="atk-range-info" style="font-size:0.82em;color:#e0a030;">Ограниченная Подъёмная Сила: ${esc(liftBlock)} — взлететь нельзя.</div>`
+          : lift ? `<div class="atk-range-info" style="font-size:0.82em;">Ограниченная Подъёмная Сила: груз ${lift.load} из ${lift.carry} кг Ношения для полёта.</div>` : ""}
         ${!hasFlyer
           ? `<div class="atk-range-info" style="font-size:0.82em;color:#e0a030;">Только Hoverer — доступна лишь Приземная высота, Низкая/Высокая требуют Flyer (стр. 30).</div>`
           : ""}
@@ -1376,6 +1382,11 @@ export function showFlightDialog(actor) {
           const alt = html.find("#fly-alt").val();
           if ((alt === "low" || alt === "high") && !actorHasFlyer(actor)) {
             return ui.notifications.warn(`${actor.name}: только Hoverer — доступна лишь Приземная высота (стр. 30).`);
+          }
+          // Limited Lift (Гарпия): с грузом тяжелее Ношения для полёта не взлететь
+          // (rules/limited-lift.mjs, system.encumbrance.flight считает лист).
+          if (alt !== "landed" && liftBlock) {
+            return ui.notifications.warn(`${actor.name}: Ограниченная Подъёмная Сила — ${liftBlock}.`);
           }
           if (alt === current) {
             // Тот же уровень — не Смена Высоты (нет ни ОД, ни движения),

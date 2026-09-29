@@ -18,6 +18,7 @@ import { characterContext, charLabel } from "./character-context.mjs";
 import { showAttackDialog } from "./attack-dialog.mjs";
 import { rollMutationOrGift, openMutationPicker } from "./tabs/mutations.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { payIntTestAction } from "../combat/bone-head.mjs";
 import { applyOnTargetFailConditions } from "../rules/on-target-fail.mjs";
 import { createDisorderItem, activateDisorderListeners,
          openFearDialog, openTraumaDialog, rollDisorder } from "./tabs/disorders.mjs";
@@ -80,6 +81,7 @@ import { EXCESS_LEGACY_RULE_ID } from "../rules/legacy-weapon.mjs";
 import { rollExcessLegacyRiskTest } from "../combat/legacy-weapon-excess.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
+import { infamyFailSuccessButtonsHtml } from "../apps/infamy-fail-success.mjs";
 import { isMoraleOpposedSkill, resolveTest } from "../rules/resolve-test.mjs";
 import { applyLordOfExoditesFailPenalty } from "../combat/lord-of-exodites.mjs";
 import { showDelegateTestPicker, activeOwnerOf, requestDelegatedTest } from "../rules/delegate-test.mjs";
@@ -88,6 +90,7 @@ import { testKindHtml, diceModeHtml, difficultyHtml, readTestKind, readDiceChoic
 import { resolveOpposed, testTargetList, parseTestTarget } from "../rules/test-kind.mjs";
 import { applyGain } from "../rules/extended-test.mjs";
 import { hasUnnaturalCharacteristic } from "../rules/unnatural-characteristic.mjs";
+import { singleCombatNoUnnaturalTie } from "../combat/single-combat.mjs";
 import { egomaniaOverrideResult } from "../rules/egomania.mjs";
 import { PERSONAL_ADAPTATION_CAPABILITY, PERSONAL_ADAPTATION_FLAG,
          personalAdaptationCap, personalAdaptationBonusFor, nextPersonalAdaptationBonuses, personalAdaptationKey }
@@ -2885,7 +2888,8 @@ export class WarhammerCharacterSheet
         // Характеристику знаю сразу; ответчик прочтёт это поле, когда будет
         // считать сравнение своей стороной (_maybePostOpposedComparison).
         initiatorSide: { threshold: baseEff, roll: rv, success: outcome.success, deg: outcome.deg,
-                          unnatural: hasUnnaturalCharacteristic(this.actor, charKey) },
+                          unnatural: hasUnnaturalCharacteristic(this.actor, charKey),
+                          noUnnaturalTie: singleCombatNoUnnaturalTie(this.actor, charKey) },
         safe: !!safe
       }
     });
@@ -2918,7 +2922,8 @@ export class WarhammerCharacterSheet
     // её документ известен напрямую; charKey — Характеристика, которой она
     // реально бросала (пробрасывается вызывающим _runTest).
     const theirs = { deg: outcome.deg, success: outcome.success, threshold: theirsEff,
-                      unnatural: hasUnnaturalCharacteristic(this.actor, charKey) };
+                      unnatural: hasUnnaturalCharacteristic(this.actor, charKey),
+                      noUnnaturalTie: singleCombatNoUnnaturalTie(this.actor, charKey) };
     // Egomania/Эгомания (Слаанеш, wdbc-1rno): та же автопобеда, что уже даёт
     // rules/kind-outcome.mjs NPC-автоброску — здесь this.actor всегда
     // ОТВЕЧАЮЩАЯ сторона («theirs» в терминах этого сравнения), инициатора
@@ -3032,6 +3037,9 @@ export class WarhammerCharacterSheet
     // Переброс: бросаем сколько сказано и оставляем один. Какой именно —
     // решает rules/reroll-pick.mjs: на d100 «лучший» это МЕНЬШИЙ, и это знание
     // держится в одном месте, а не переписывается на каждом месте броска.
+    // BONE-Head / Костеголов: тест I в свой Ход в бою — Полное действие
+    // (combat/bone-head.mjs); ОД не хватает — теста нет. Платит бросающий.
+    if (!await payIntTestAction(this.actor, charKey)) return;
     const { roll, rv, rerollNote } = await rollD100WithReroll(forcedOpponentReroll || reroll, { confirmPick });
     const charAbbr = CHARACTERISTICS[charKey]?.abbr ?? charKey;
 
@@ -3081,7 +3089,10 @@ export class WarhammerCharacterSheet
     // Предел реально используется (см. kind-outcome.mjs), не обоих сразу.
     const effectiveAssistCount = (combined && outcome.combinedAssistCount != null)
       ? outcome.combinedAssistCount : assistCount;
-    const deg      = assistDegrees(outcome.deg, effectiveAssistCount, outcome.success);
+    // Потолок Успехов (BONE-Head Огрина, successDegMax) режет ИТОГ — в т.ч.
+    // степень от Ассистентов: книга «не больше 1 Успеха» не делает исключений.
+    const assisted = assistDegrees(outcome.deg, effectiveAssistCount, outcome.success);
+    const deg      = outcome.degCap != null ? Math.min(outcome.degCap, assisted) : assisted;
     const outcomeHtml = outcome.success
       ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
       : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`;
@@ -3130,8 +3141,21 @@ export class WarhammerCharacterSheet
         assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${(outcome.success && effectiveAssistCount === assistCount) ? `, +${assistCount} к степени` : ""})</div>` : ""
       ],
       rerollNote, critLine: outcome.critLine, outcome: outcomeHtml,
-      sections: [outcome.extendedLine, outcome.opposedLine, pendingOpponentNote, onFailNote]
-    }, { rolls: [roll] });
+      sections: [outcome.extendedLine, outcome.opposedLine, pendingOpponentNote, onFailNote,
+        // Провал → Очко Бесчестия → Успех на 1 Успех (Змеиный Язык и т.п.,
+        // rules/infamy-fail-success.mjs) — кнопка только у Черт, покрывающих
+        // ЭТОТ тест; на успехе пусто.
+        infamyFailSuccessButtonsHtml(effectActor, { skill: skillKey ?? undefined, char: charKey, success: outcome.success, testLabel: label })]
+    }, {
+      rolls: [roll],
+      // Что за тест и чем кончился — меню Очков на карточке (hooks.mjs)
+      // предлагает по нему трату после броска (Хирургия Легиона: провал
+      // Medicae / For.Lore (Astartes Implants) → успех с 1 Успехом).
+      flags: { "warhammer-dbc": { skillTest: {
+        skill: skillKey ?? "", group: rollContext?.group ?? "", specialty: rollContext?.specialty ?? "",
+        label, success: !!outcome.success
+      } } }
+    });
 
     // Гололит (rules/situational.mjs::hololithBriefingBonus): подготовленный
     // брифинг тратится на СЛЕДУЮЩИЙ тест Command, каким бы он ни вышел —

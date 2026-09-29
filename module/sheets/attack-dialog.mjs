@@ -72,6 +72,7 @@ import { actorInfamyValue } from "../apps/infamy-points.mjs";
 import { isSabre, NS as SABRE_NS, SABRE_PENDING_FLAG } from "../combat/sabre-second-attack.mjs";
 import { isZeroedByLoss, ZERO_EFFECTS } from "../rules/char-loss.mjs";
 import { fieldDisablesWeapon } from "../rules/null-zones.mjs";
+import { runtForbidsOneHand } from "../rules/runt.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -251,7 +252,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Рука Смерти (wdbc-hftn, стр. 46): сросшееся оружие — всегда «1р», никаких
   // альтернативных хватов (Об/Бл/Кл/Мх/Хв) и никакого «2р» даже у профильно
   // двуручного/тяжёлого — единственный пункт списка, пилюли Хвата не рисуются.
-  const gripList  = isFusedByHandOfDeath(item) ? ["1р"] : [...new Set([...baseGrips, ...extraGrips])];
+  // Runt / Коротышка (Ратлинг): двуручное стрелковое без Compact — «1р» нет
+  // ни собственного, ни выданного модификацией/Талантом (module/rules/runt.mjs);
+  // тот же фильтр стоит в rules/hands.mjs::availableRangedGrips.
+  const runtTwoHands = !isMelee && runtForbidsOneHand(actor, item);
+  const gripList  = isFusedByHandOfDeath(item) ? ["1р"]
+                  : [...new Set([...baseGrips, ...extraGrips])].filter(k => !(runtTwoHands && k === "1р"));
   const primGrip  = gripList[0] || "";
   // S.b — нужен только для гейта Отдачи (стр. 166): персонаж с S.b меньше
   // рейтинга свойства не может выбрать "1р", должен стрелять "2р".
@@ -311,6 +317,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     size:         actor.system.size ?? 0,
     sBonus:       actor.system.characteristics?.s?.bonus ?? 0,
     isRanged:     !isMelee,
+    // «кроме гранат» (Физиология Громилы); свой кулак — часть тела, не оружие.
+    isGrenade:    sys.weaponType === "grenade",
+    isNatural:    isIntegralAttack(item),
     ignoresSizeStrength: hasRuleFlag(actor, OVERSIZED_FIT_FLAG)
   });
   // Арсенал (стр. 62): без Weapon Training на класс оружия — штраф −20.

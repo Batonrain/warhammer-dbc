@@ -4,6 +4,8 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { SKILLS_DEF } from "../../constants/skills.mjs";
+import { COIL_FATIGUE_COST, coilFatigueRelief, electooChargeGain } from "../../rules/potentia-coil.mjs";
+import { fatigueChangeFields, announceFatigueChange } from "./conditions.mjs";
 import { DAMAGE_TYPES } from "../../constants/items.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { techIcon } from "../../constants/tech-icons.mjs";
@@ -386,6 +388,59 @@ export async function techGenResource(actor, item, { res, amount, fromCognition 
   }, game.settings.get("core", "rollMode")));
 }
 
+/** Сводка энергосистемы в чат — уведомление, не карточка теста. */
+async function energyNote(actor, text) {
+  const pretty = text.replace(/⚡/g, techIcon("energy"));
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `<div class="wh-roll-result"><div class="roll-header">${techIcon("energy")} Катушка Потенции</div><div class="roll-threshold">${pretty}</div></div>`
+  }, game.settings.get("core", "rollMode")));
+}
+
+/**
+ * Катушка Потенции (книга): «Персонаж может тратить заряды, снимая Усталость
+ * по цене 2к1, но не убирая потребность во сне (в т.ч. вне своего Хода)».
+ * Смена Усталости — общим путём fatigueChangeFields (обморок/пробуждение).
+ */
+export async function coilRelieveFatigue(actor) {
+  const en = actor.system.energy || { value: 0 };
+  const res = coilFatigueRelief({ energy: en.value, fatigue: actor.system.fatigue?.value });
+  if (!res.ok) {
+    ui.notifications.warn(res.reason === "fatigue" ? "Усталости нет — снимать нечего."
+      : `Мало зарядов: нужно ${COIL_FATIGUE_COST}⚡.`);
+    return;
+  }
+  const fat = fatigueChangeFields(actor, res.fatigue);
+  await actor.update({ "system.energy.value": res.energy, ...fat.fields });
+  await announceFatigueChange(actor, fat);
+  await energyNote(actor, `−${COIL_FATIGUE_COST} ⚡ → −1 Усталости (осталось ⚡ ${res.energy}, Усталость ${res.fatigue}). Потребность во сне не снимается.`);
+}
+
+/**
+ * Электу-Индукторы (книга): «за полное действие заряжать Катушки Потенции от
+ * электросети или от батарей тестом Tech-Use+0, восстанавливая 1 заряд за
+ * каждый Успех до максимума». Модификатор по Качеству Индукторов — запись
+ * Конструктора с областью coilCharge (Poor.Q — сам в Пороге, Good/Best —
+ * галочкой в диалоге); мощность источника
+ * и разряд батареи — решение ГМа.
+ */
+export async function coilCharge(actor, rollSkill) {
+  const def = SKILLS_DEF.techUse;
+  const sk  = actor.system.skills?.techUse;
+  const r = await rollSkill("⚡ Зарядка Катушки Потенции (Tech-Use)", sk?.total ?? -20, def?.char ?? "int",
+    { skill: "techUse", coilCharge: true });
+  if (!r) return;
+  const en = actor.system.energy || { value: 0 };
+  const max = en.maxTotal ?? en.max ?? 0;
+  const gain = electooChargeGain({ success: r.success, deg: r.deg, energy: en.value, max });
+  if (gain <= 0) {
+    if (r.success) ui.notifications.info("Катушка Потенции уже заполнена.");
+    return;
+  }
+  await actor.update({ "system.energy.value": (Number(en.value) || 0) + gain });
+  await energyNote(actor, `Электу-Индукторы: +${gain} ⚡ (${r.deg} ${_degWord(r.deg)}, максимум ${max}).`);
+}
+
 /**
  * Ноосферное Сканирование (стр. 367, wdbc-1rno.2): «При Успехе засечь это
  * Техночудо, в т.ч. позволяя Избегать от него, если это Незримая атака.
@@ -402,7 +457,9 @@ export async function techGenResource(actor, item, { res, amount, fromCognition 
 export function rollTechScan(actor, rollSkill) {
   const def = SKILLS_DEF.techUse;
   const sk  = actor.system.skills?.techUse;
-  const result = rollSkill("📡 Ноосферное Сканирование (Tech-Use)", sk?.total ?? -20, def?.char ?? "int", { skill: "techUse" });
+  // noosphere — «тесты работы с Ноосферой» (Ноосферное Подключение даёт по
+  // Качеству −10/+5/+10 записью Конструктора с этой областью).
+  const result = rollSkill("📡 Ноосферное Сканирование (Tech-Use)", sk?.total ?? -20, def?.char ?? "int", { skill: "techUse", noosphere: true });
   result?.then?.(r => { if (r?.success) markUnseenDetectedUntilNextTurn(actor); });
   return result;
 }
@@ -439,6 +496,10 @@ export function activateTechListeners(html, actor, { rollSkill } = {}) {
   html.find(".tech-scan-btn").click(() => {
     if (rollSkill) rollTechScan(actor, rollSkill);
   });
+  // Импланты Механикум: Катушка Потенции снимает Усталость 2⚡ за 1,
+  // Электу-Индукторы заряжают её тестом Tech-Use (rules/potentia-coil.mjs).
+  html.find(".coil-fatigue-btn").click(ev => { ev.preventDefault(); coilRelieveFatigue(actor); });
+  html.find(".coil-charge-btn").click(ev => { ev.preventDefault(); if (rollSkill) coilCharge(actor, rollSkill); });
   html.find(".tech-infoguard-roll-btn").click(ev => {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);
     if (item) rollInfoguard(item);

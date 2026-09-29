@@ -3,9 +3,9 @@
   "type": "trait",
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
-    "description": "Нага начинает игру с покровительством Слаанеш и не может его потерять.",
-    "notes": "Выбор на порогах Inf (30/60/90) между двумя разными грантами (+2 руки или +2 к максимуму Бесчестья) — ступенчатый триггер по накопленному ресурсу, не единый плоский модификатор.",
-    "benefit": "Впервые набирая 30/60/90 Inf, может выбрать либо +2 руки (Multiple Arms +2), либо +2 к максимуму Очков Бесчестья.",
+    "description": "Покровительство Слаанеш с начала игры, потерять нельзя; впервые на 30/60/90 Inf — ещё руки (Многорукий +2) или +2 к максимуму Очков Бесчестия.",
+    "notes": "Автоматизировано: Покровитель «Слаанеш» ставится сам при получении Черты, смена Покровителя откатывается (patronage.lockedSlaanesh). Когда Inf впервые достигает 30/60/90 — окно выбора: Многорукий +2 к рейтингу или +2 к максимуму Очков Бесчестия (infamy.darkPrinceMilestones); сделанный выбор помнится.",
+    "benefit": "Наги пользуются особой благосклонностью Слаанеш. Нага начинает игру с покровительством Слаанеш, и не может потерять его. Впервые набирая 30, 60, и 90 Inf, Нага может выбрать либо получить еще 2 пары рук (и Трейт Multiple Arms (+2)), либо получить +2 к максимуму Очков Бесчестия.",
     "source": "Нага",
     "hasRating": false,
     "rating": 0,
@@ -34,7 +34,39 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "uWp13dTY5QX5liko",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "1PwklrlyrV55ujAt",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "patronage.lockedSlaanesh",
+              "label": "Покровительство Слаанеш — с начала игры, не теряется",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "CV2ztpkSLZcUjSYY",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "infamy.darkPrinceMilestones",
+              "label": "30/60/90 Inf: Многорукий +2 или +2 к максимуму Очков Бесчестия",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

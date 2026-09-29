@@ -122,6 +122,43 @@
   </div>
   {{/if}}
 
+  {{!-- Репликант: Крючок Сывороток и Срок Годности (combat/replicant.mjs) —
+        только если у актора есть эти Черты. --}}
+  {{#if body.replicant}}
+  <div class="bc-life bc-dep">
+    {{#if body.replicant.serum}}
+    <div class="bc-life-cap">СЫВОРОТКА</div>
+    <div class="bc-dep-row {{#if body.replicant.serum.overdue}}is-alert{{/if}}">
+      <span class="bc-life-ic">💉</span>
+      <div class="bc-life-mid">
+        <div class="bc-dep-status">{{#if body.replicant.serum.overdue}}<span class="bc-life-pen" title="1d5 урона в S и T каждые 8 ч; S и T не восстанавливаются отдыхом">S/T −1d5 / 8 ч</span>{{/if}} <span>{{body.replicant.serum.status}}</span></div>
+      </div>
+      <div class="bc-life-ctl">
+        <button type="button" class="bc-life-btn bc-life-ok" data-serum-take title="Принять сыворотку — отсчёт недели заново">✓</button>
+      </div>
+    </div>
+    {{/if}}
+    {{#if body.replicant.life}}
+    <div class="bc-life-cap">СРОК ГОДНОСТИ</div>
+    <div class="bc-dep-row {{#if body.replicant.life.alert}}is-alert{{/if}}" data-tooltip="{{body.replicant.life.juvenat}}">
+      <span class="bc-life-ic">⏳</span>
+      <div class="bc-life-mid">
+        <div class="bc-dep-status">
+          {{#if body.replicant.life.rolled}}
+          <span>Возраст {{body.replicant.life.age}} / предел <b>{{body.replicant.life.max}}</b> лет ({{body.replicant.life.formula}} = {{body.replicant.life.base}}{{#if body.replicant.life.decay}}, −{{body.replicant.life.decay}} за мутации{{/if}}) — осталось {{body.replicant.life.left}}</span>
+          {{else}}
+          <span>Срок жизни не брошен ({{body.replicant.life.formula}} лет)</span>
+          {{/if}}
+        </div>
+      </div>
+      <div class="bc-life-ctl">
+        {{#unless body.replicant.life.rolled}}<button type="button" class="bc-life-btn" data-lifespan-roll title="Бросить срок жизни {{body.replicant.life.formula}}">🎲</button>{{/unless}}
+      </div>
+    </div>
+    {{/if}}
+  </div>
+  {{/if}}
+
   {{!-- ── ГЕНОСЕМЯ (перенесено со Способностей) ────────────────────────── --}}
   {{#if isAstartes}}
   <div class="ability-section-panel gene-seed-panel" data-collapse-key="body-gene-seed"> <div class="panel-title" data-action="panelCollapse" title="Числовые бонусы (Unnatural S/T, Размер) применяются автоматически через Черты. Импланты Геносемени — гайд ниже."> ГЕНОСЕМЯ </div> <div class="gene-seed-head"> <span class="gene-origin-label" style="flex:1;align-self:center;">Происхождение и Легион — на вкладке «Записи».</span> </div>
@@ -215,7 +252,7 @@
   <div class="effects-subsection" data-collapse-key="body-addictions"> <div class="panel-title panel-title-addiction" data-action="panelCollapse">ЗАВИСИМОСТИ</div> <div class="addictions-list"> {{#each addictions as |add|}}
       <div class="addiction-entry" data-item-id="{{add.id}}"> <div class="addiction-header"> <span class="addiction-icon"></span> <span class="addiction-name">{{add.name}}</span> <span class="addiction-status-on">● зависим</span> <span class="addiction-test">Тест: <b>{{add.testChar}}{{#if add.testMod}}{{signedNum add.testMod}}{{/if}}</b></span> {{#if add.frequency}}<span class="addiction-freq">{{add.frequency}}</span>{{/if}}
           <button type="button" class="addiction-test-btn" data-item-id="{{add.id}}" data-char="{{add.testCharKey}}" data-mod="{{add.testMod}}" title="Тест на срыв зависимости (успех — избавление)">Тест</button> <button type="button" class="addiction-remove-btn" data-item-id="{{add.id}}" title="Снять зависимость вручную">✕</button> </div> {{#if add.minDose}}
-        <div class="addiction-dose">Мин. опасная доза/нед.: <b>{{add.minDose}}</b></div> {{/if}}
+        <div class="addiction-dose">Мин. опасная доза/нед.: <b>{{add.minDose}}</b>{{#if add.minDoseAlchem}} <span title="Alchem Monster / Алхимическое Чудовище: лимит приёма в неделю удвоен">(×2, Алхимическое Чудовище)</span>{{/if}}</div> {{/if}}
         {{#if add.penalty}}
         <div class="addiction-penalty">Штраф зависимости: {{add.penalty}}</div> {{/if}}
       </div> {{/each}}
@@ -241,7 +278,7 @@
   <div class="effects-subsection" data-collapse-key="body-mental-disorders"> <div class="panel-title conditions-panel-title" data-action="panelCollapse"> МЕНТАЛЬНЫЕ РАССТРОЙСТВА
       <span class="panel-btn-group"> <button type="button" class="panel-mini-btn disorder-roll-btn" title="Случайное расстройство (d100)">d100</button> <button type="button" class="panel-mini-btn disorder-add-btn" title="Добавить расстройство из списка">＋</button> </span> </div> {{#if mentalDisorders.length}}
     <div class="disorders-list"> {{#each mentalDisorders as |d|}}
-      <div class="effect-card" data-item-id="{{d.id}}"> <div class="effect-card-header"> <span class="effect-icon"></span> <span class="effect-name disorder-name-link" data-item-id="{{d.id}}" style="cursor:pointer;">{{d.name}}</span> <span class="addiction-test">Тест: <b>{{d.testLabel}}</b></span> <button type="button" class="disorder-test-btn" data-item-id="{{d.id}}" title="Бросок теста расстройства">Тест</button> <button type="button" class="disorder-remove-btn" data-item-id="{{d.id}}" title="Снять расстройство">✕</button> </div> {{#if d.desc}}<div class="effect-desc">{{d.desc}}</div>{{/if}}
+      <div class="effect-card" data-item-id="{{d.id}}"> <div class="effect-card-header"> <span class="effect-icon"></span> <span class="effect-name disorder-name-link" data-item-id="{{d.id}}" style="cursor:pointer;">{{d.name}}</span> <span class="addiction-test">Тест: <b>{{d.testLabel}}</b></span> <span class="addiction-test" title="Тяжесть расстройства: тесты −5×Тяжесть. Тест ГМа на изменение Тяжести: успех −1, провал +1">{{d.sevNote}}</span> <button type="button" class="disorder-sev-btn" data-item-id="{{d.id}}" data-delta="-1" title="Тяжесть −1 (тест пройден)">−</button><button type="button" class="disorder-sev-btn" data-item-id="{{d.id}}" data-delta="1" title="Тяжесть +1 (тест провален)">+</button> <button type="button" class="disorder-test-btn" data-item-id="{{d.id}}" title="Бросок теста расстройства">Тест</button> <button type="button" class="disorder-remove-btn" data-item-id="{{d.id}}" title="Снять расстройство">✕</button> </div> {{#if d.desc}}<div class="effect-desc">{{d.desc}}</div>{{/if}}
       </div> {{/each}}
     </div> {{else}}
     <div class="conditions-empty">Нет расстройств</div> {{/if}}

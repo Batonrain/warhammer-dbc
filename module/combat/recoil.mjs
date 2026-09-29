@@ -40,6 +40,7 @@ import { spendPoolForRecoil } from "./evasion-pool.mjs";
 import { coverApImperativeAdjust } from "./imperative-bonuses.mjs";
 import { enemyContactTokenDocs } from "./free-attack.mjs";
 import { rollRecoilVault } from "./movement-actions.mjs";
+import { markFirePointRecoil } from "./fire-point.mjs";
 
 /** Цена входа в Отскок из банка Успехов (Voltagheist Blast, wdbc-16ss). */
 export const POOL_RECOIL_COST = 2;
@@ -160,6 +161,9 @@ export async function showRecoilDialog(actor) {
  */
 export async function performRecoil(actor, { meters, intoCover, coverAp, volt = false } = {}) {
   const spent = await spendRecoil(actor, meters);
+  // Огневая Точка (Хавок): «пока не сдвинется с места (кроме Отскоком)» —
+  // фишку после Отскока двигает игрок, и этот сдвиг точку не гасит.
+  await markFirePointRecoil(actor);
   if (intoCover && coverAp > 0) {
     await actor.setFlag("warhammer-dbc", "recoilCoverBonus", coverAp);
   }

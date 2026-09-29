@@ -42,14 +42,19 @@ import { PA_TABLES } from "../constants/power-armour-lore.mjs";
 import { sanityMax, madnessLevels, sarcophagusCharDelta, DREADNOUGHT_PILOT_FLAG,
          SARCOPHAGUS, sarcophagusWarpWounds, sarcophagusHelplessNow } from "./dreadnought.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { MUTATIONS_AS_ASTARTES, sleepGraceDays } from "./squat-traits.mjs";
+import { ORDER_REJECTS_BIONICS, rejectedImplants, bionicsRejection } from "./aversion-to-order.mjs";
 import { invalidateRulesCacheFor } from "./collect.mjs";
 import { runeMax } from "./sigillite-runes.mjs";
+import { spliceExtraAdaptations, fastLearnerWithAdaptations } from "./splice-adaptations.mjs";
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
 import { applyParasiteFusion, fusedParasite, fuseParasiteCharacteristic } from "./parasite-trait.mjs";
 import { woundLevel } from "./wound-tier.mjs";
+import { woundsMaxMods as runtWoundsMaxMods } from "./runt.mjs";
 import { prepareFinalPools } from "./character/final-pools.mjs";
 import { prepareMovementDerived } from "./character/movement.mjs";
 import { prepareArmourDerived } from "./character/armour.mjs";
+import { LIMITED_LIFT_CAPABILITY, flightStrengthBonus, limitedLiftStatus } from "./limited-lift.mjs";
 
 /**
  * Именованный вклад предметов-носителей Механики (Архетип/Раса/Субраса/
@@ -92,14 +97,19 @@ function characteristicMechContrib(actor, charKey) {
 const MUTATION_THRESHOLDS_HUMAN    = [10, 20, 40, 60, 80];
 const MUTATION_THRESHOLDS_ASTARTES = [10, 30, 60, 90];
 
-/** Ближайший непройденный Порог Мутации, или null, если все уже пройдены (Cor 100 — не мутация, а Возвышение/Отродье). */
-export function nextMutationThreshold(system) {
+/**
+ * Ближайший непройденный Порог Мутации, или null, если все уже пройдены (Cor 100 — не мутация, а Возвышение/Отродье).
+ * opts.asAstartes — возможность mutations.asAstartes актора (Крепкий как Камень
+ * Сквата, rules/squat-traits.mjs); спрашивает вызывающий: здесь только system.
+ */
+export function nextMutationThreshold(system, { asAstartes: byCapability = false } = {}) {
   const cor = Number(system?.corruption?.value) || 0;
   // Затупленный «получает мутации как Космодесантник, а не человек» — флаг
-  // субрасы mutationsAsAstartes. Поблажка лоялисту ниже — только настоящим
+  // субрасы mutationsAsAstartes; Зверолюд — Черта «Пасынки Богов»
+  // (mutations.asAstartes). Поблажка лоялисту ниже — только настоящим
   // Астартес: она про их геносемя, не про таблицу.
   const astartes = raceMatches(system, "astartes");
-  const asAstartes = astartes || !!subraceEntries()[system?.subrace || ""]?.mutationsAsAstartes;
+  const asAstartes = astartes || byCapability || !!subraceEntries()[system?.subrace || ""]?.mutationsAsAstartes;
   let table = asAstartes ? MUTATION_THRESHOLDS_ASTARTES : MUTATION_THRESHOLDS_HUMAN;
   if (astartes && system?.alignment === "loyalist") {
     table = table.filter(t => t >= 60);
@@ -476,7 +486,7 @@ export function prepareCharacterDerived(actor, system) {
       const tb = Math.floor(tTotal / 10) + (t.supernatural || 0) + (t.bonusFx || 0)
                + (traitCharBonus.t || 0) + (pathPassives.charBonus.t || 0);
       const worldTime  = game.time?.worldTime ?? 0;
-      const vitalCtx    = { tb, isAstartes: raceMatches(system, "astartes") };
+      const vitalCtx    = { tb, isAstartes: raceMatches(system, "astartes"), sleepGraceDays: sleepGraceDays(actor) };
       const eff = {};
       for (const key of Object.keys(VITAL_TIME_FIELD))
         eff[key] = vitalEffectiveStage(key, system.vitals[key], system.vitals[VITAL_TIME_FIELD[key]], worldTime, vitalCtx);
@@ -488,6 +498,12 @@ export function prepareCharacterDerived(actor, system) {
     // Слияние с Паразитом (wdbc-bjy1.4): его Характеристики — в этом же
     // проходе, до всего, что считается от .total/.bonus ниже.
     const parasiteChars = fusedParasite(actor)?.system?.characteristics ?? null;
+    // Отвращение к Порядку (Зверолюд): каждая установленная бионика/
+    // кибернетика — −5 T и −2 Раны (rules/aversion-to-order.mjs). Производное,
+    // а не правка базы: снял имплант — штраф ушёл сам.
+    const orderRejection = hasRuleFlag(actor, ORDER_REJECTS_BIONICS)
+      ? bionicsRejection(rejectedImplants(actor.items).length) : bionicsRejection(0);
+    system.orderRejection = orderRejection;
     for (const [key, char] of Object.entries(chars)) {
       const impBonus  = IMPROVEMENT_BONUS[char.improvement] || 0;
       const drugMod   = drugCharMods[key]   || 0;
@@ -506,8 +522,9 @@ export function prepareCharacterDerived(actor, system) {
       // потолка Ловкости и навыков.
       const lossMod   = Math.max(0, Number(charLoss[key]) || 0);
       char.charLoss   = lossMod;
+      const orderMod  = key === "t" ? orderRejection.t : 0;
       char.total   = (char.base || 0) + (char.advance || 0) + impBonus + drugMod + armorMod + valueMod
-                   + (char.totalFx || 0) + dmgMod - vitalMod;
+                   + (char.totalFx || 0) + dmgMod - vitalMod + orderMod;
       // «Характеристика не может опускаться ниже 0» — пол только для урона:
       // остальные слагаемые ведут себя как раньше.
       const beforeLoss = char.total;
@@ -533,6 +550,7 @@ export function prepareCharacterDerived(actor, system) {
       if (dmgMod) breakdown.push({ label: "Мод. (ручной)", value: dmgMod });
       if (lossMod) breakdown.push({ label: "Урон в Характеристику (отходит по 1 в час)", value: char.total - beforeLoss });
       if (vitalMod) breakdown.push({ label: "Голод/Жажда", value: -vitalMod });
+      if (orderMod) breakdown.push({ label: `Отвращение к Порядку: бионика/кибернетика ×${orderRejection.count}`, value: orderMod });
       if (cappedByArmor) breakdown.push({ label: "Потолок Ловкости (броня)", value: null, cap: agilityCap });
       char.totalBreakdown = breakdown;
 
@@ -560,7 +578,7 @@ export function prepareCharacterDerived(actor, system) {
       system.corruption.limit = 100 + (pathPassives.corLimit || 0);
       // Ближайший Порог Мутации — для панели ПОРЧА (wdbc-2l2x), не хранимое
       // поле, пересчитывается каждый раз, как limit чуть выше.
-      const nextThr = nextMutationThreshold(system);
+      const nextThr = nextMutationThreshold(system, { asAstartes: hasRuleFlag(actor, MUTATIONS_AS_ASTARTES) });
       system.corruption.nextThreshold = nextThr;
       system.corruption.thresholdRemaining = nextThr !== null ? Math.max(0, nextThr - (system.corruption.value || 0)) : null;
     }
@@ -743,9 +761,30 @@ export function prepareCharacterDerived(actor, system) {
       // effectiveMax, если оно есть, иначе .max — тот же приём, что tier/
       // tierLabel/tierLost ниже. Считается ДО woundLevel(system) — та читает
       // effectiveMax в этом же проходе prepareDerivedData.
-      system.wounds.effectiveMax = hasRuleFlag(actor, DREADNOUGHT_PILOT_FLAG)
-        ? Math.max(0, (Number(system.wounds.max) || 0) + SARCOPHAGUS.woundsMax)
-        : (Number(system.wounds.max) || 0);
+      //
+      // Тем же каналом — Runt / Коротышка Ратлинга, «−4 к максимуму Ран»
+      // (rules/runt.mjs): разовая правка хранимого .max на Этапе 1 Мастера
+      // упиралась в ноль (Раны ещё не брошены) и терялась. maxMods — список
+      // поправок для строки «с учётом Черт» в блоке РАНЫ (tab-combat.hbs).
+      const baseWoundsMax = Number(system.wounds.max) || 0;
+      const woundsMods = [
+        ...(hasRuleFlag(actor, DREADNOUGHT_PILOT_FLAG) ? [{ label: "Саркофаг Дредноута", value: SARCOPHAGUS.woundsMax }] : []),
+        ...runtWoundsMaxMods(actor),
+        // Отвращение к Порядку (Зверолюд): −2 Раны за каждую бионику/кибернетику (выше).
+        ...(system.orderRejection?.wounds ? [{ label: "Отвращение к Порядку", value: system.orderRejection.wounds }] : [])
+      ];
+      system.wounds.maxMods = woundsMods;
+      system.wounds.effectiveMax = woundsMods.length
+        ? Math.max(0, baseWoundsMax + woundsMods.reduce((sum, m) => sum + m.value, 0))
+        : baseWoundsMax;
+      // Текущие Раны не выше производного максимума — тот же клампинг на
+      // производных, что у sanity.value/ablative ниже: Мастер кладёт
+      // value = max одним броском, и без клампа Коротышка первые бои
+      // ходил бы с Ранами сверх своего максимума. Только когда поправка есть
+      // и база задана: у пустого листа (max 0) клампить не во что.
+      if (woundsMods.length && baseWoundsMax > 0) {
+        system.wounds.value = Math.min(Number(system.wounds.value) || 0, system.wounds.effectiveMax);
+      }
       const wLvl = woundLevel(system);
       system.wounds.tier = wLvl.displayKey;
       system.wounds.tierLabel = wLvl.displayLabel;
@@ -925,10 +964,14 @@ export function prepareCharacterDerived(actor, system) {
     // описывает тоже, но здесь не реализованы — отдельная, более крупная
     // задача, не часть этой правки.
     let totalWeight = 0;
+    // Вес брони, которая «несёт себя сама», — отдельно: для полёта с Limited
+    // Lift она его не гасит (rules/limited-lift.mjs).
+    let selfCarriedArmourWeight = 0;
     for (const item of actor.items) {
       const s = item.system;
       const w = parseFloat(s.weight) || 0;
       if (item.type === "armor" && s.equipped && ((s.armorType === "power" && s.active) || s.weightless)) {
+        selfCarriedArmourWeight += w;
         continue; // несёт свой вес сама
       }
       if (["gear","drug","tool","ammo","weapon"].includes(item.type)) {
@@ -972,6 +1015,16 @@ export function prepareCharacterDerived(actor, system) {
     system.encumbrance.push  = carryRow(baseIdx + (ib.push  || 0)).push;
     system.encumbrance.max = system.encumbrance.carry;
     system.homeworldCarryBonus = hwCarry;
+    // Limited Lift / Ограниченная Подъёмная Сила (Гарпия): своё Ношение для
+    // полёта — без S от брони, а груз — с весом брони, что для ходьбы несёт
+    // себя сама. Читает окно Полёта (combat/movement-actions.mjs).
+    if (hasRuleFlag(actor, LIMITED_LIFT_CAPABILITY)) {
+      const flightSb = flightStrengthBonus(chars.s, armorCharBonus.s);
+      const flightCarry = carryRow(flightSb + tb + hwCarry + (ib.all || 0) + (ib.carry || 0)).carry;
+      system.encumbrance.flight = limitedLiftStatus({
+        load: (totalWeight + selfCarriedArmourWeight) * gravity, carry: flightCarry
+      });
+    } else system.encumbrance.flight = null;
 
         // ── Опыт ──────────────────────────────────────────────────────────────
     // Ловит на Лету / Fast Learner (X): +X% к стартовому опыту и опыту за
@@ -983,7 +1036,11 @@ export function prepareCharacterDerived(actor, system) {
     // тот же диалог в момент прибавления опыта.
     const fastLearner = actor.items.find(i => i.type === "trait"
                                            && (itemHasName(i, "Fast Learner") || itemHasName(i, "Ловит на Лету")));
-    system.fastLearnerBonus = fastLearner ? (Number(fastLearner.system?.rating) || 0) : 0;
+    // Сплайс, Gene-Splice: каждая дополнительная адаптация (сверх трёх
+    // обязательных) снимает 5% — rules/splice-adaptations.mjs.
+    system.fastLearnerBonus = fastLearner
+      ? fastLearnerWithAdaptations(Number(fastLearner.system?.rating) || 0, spliceExtraAdaptations(actor))
+      : 0;
 
     // Автосумма цен характеристик
     let autoCharCost = 0;

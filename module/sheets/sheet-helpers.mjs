@@ -1,6 +1,7 @@
 // module/sheets/sheet-helpers.mjs
 
 import { CHARACTERISTICS, APTITUDES }   from "../constants/characteristics.mjs";
+import { severityTestMod, severityNote } from "../rules/disorder-severity.mjs";
 import { LIMB_LOSS_KEYS, lostSidesLabel } from "../rules/limb-loss.mjs";
 import { getHeldHand } from "../rules/hands.mjs";
 import { withRulesCache } from "../rules/collect.mjs";
@@ -18,6 +19,7 @@ import { shieldCoverageLabel }                        from "../combat/hand-shiel
 import { getLegion, getChapter, buildChapterOptions,
          buildCultureLegionOptions, resolveCulture } from "../constants/legions.mjs";
 import { TECH_MIRACLE_TYPES, TECH_ACTIONS, NOOSPHERE_ACTIONS } from "../constants/tech.mjs";
+import { COIL_FATIGUE_COST } from "../rules/potentia-coil.mjs";
 import { PSY_DISCIPLINES, TECH_DISCIPLINES, canHaveFocusDiscipline } from "../constants/disciplines.mjs";
 import { effectiveFocusDisciplines, ownFocusDisciplines, grantedFocusDisciplines } from "../rules/psy-focus.mjs";
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
@@ -65,7 +67,10 @@ import { hasNavigationWarp, warpRoutesTabContext }   from "./tabs/warp-routes.mj
 import { mergeAbilityItems, mergeAbilityEffects,
          abilityLabel }                              from "../rules/merge-abilities.mjs";
 import { toggleParentId, toggleRows }                from "../rules/toggle-abilities.mjs";
-import { ruleFlags, ruleFlagLabels, ruleFlagCost, scriptAbilities } from "../rules/flags.mjs";
+import { ruleFlags, ruleFlagLabels, ruleFlagCost, scriptAbilities, hasRuleFlag } from "../rules/flags.mjs";
+import { sleepGraceDays, sleepNeededHours } from "../rules/squat-traits.mjs";
+import { ALCHEM_MONSTER, ENDURING, alchemDoseLimit } from "../rules/replicant.mjs";
+import { replicantBodyContext }                      from "../combat/replicant.mjs";
 import { CAPABILITIES }                              from "../constants/capabilities.mjs";
 import { capabilityAutoHint }                        from "../constants/capability-forms.mjs";
 import { capabilityCostLabel, capabilityCostGate }   from "../combat/capability-cost.mjs";
@@ -354,7 +359,7 @@ function _buildActiveConditions(system, actor = null) {
 // Показываем только те, у которых hasAddiction === true
 // (независимо от того, активен ли сейчас препарат)
 
-function _buildAddictions(allItems) {
+function _buildAddictions(allItems, alchem = false) {
   const result = [];
 
   for (const item of allItems) {
@@ -377,7 +382,9 @@ function _buildAddictions(allItems) {
       testMod:      testMod,
       frequency:    add.frequency || "",
       penalty:      add.penalty   || "",
-      minDose:      add.minDose   || 0,
+      // Alchem Monster (Репликант): недельный лимит ×2 — rules/replicant.mjs.
+      minDose:      alchemDoseLimit(add.minDose, alchem),
+      minDoseAlchem: alchem && (add.minDose || 0) > 0,
       isAddicted:   add.isAddicted || false
     });
   }
@@ -767,18 +774,21 @@ function buildGetDataUncached(actor) {
 
   // ── Зависимости ───────────────────────────────────────────────────────────
   // Все препараты у которых hasAddiction === true — всегда показываем в блоке
-  context.addictions = _buildAddictions(allItems);
+  context.addictions = _buildAddictions(allItems, hasRuleFlag(actor, ALCHEM_MONSTER));
 
   // ── Ментальные расстройства ─────────────────────────────────────────────────
   context.mentalDisorders = allItems.filter(i => i.type === "mentalDisorder").map(i => {
     const abbr = CHARACTERISTICS[i.system.testChar]?.abbr ?? "W";
-    const mod  = i.system.testMod || 0;
+    // Тест расстройства уже с −5×Тяжесть (rules/disorder-severity.mjs) —
+    // то же число, что подставит бросок (sheets/tabs/disorders.mjs).
+    const mod  = (i.system.testMod || 0) + severityTestMod(i.system);
     return {
       id: i.id, name: i.name,
       desc: i.system.description || "",
       testLabel: `${abbr}${mod >= 0 ? "+" : ""}${mod}`,
       testCharKey: i.system.testChar || "wp",
-      testMod: mod
+      testMod: mod,
+      sevNote: severityNote(i.system)
     };
   });
 
@@ -912,13 +922,29 @@ function buildGetDataUncached(actor) {
       // Жизненные потребности (корбук 483): Голод/Жажда/Сон — стадия двигается
       // сама по game.time.worldTime, см. vitalEffectiveStage (wdbc-jnqj).
       life: VITALS.map(v => {
-        const vitalCtx = { tb: Number(system.characteristics?.t?.bonus) || 0, isAstartes: raceMatches(system, "astartes") };
+        const graceDays = sleepGraceDays(actor);
+        const vitalCtx = { tb: Number(system.characteristics?.t?.bonus) || 0, isAstartes: raceMatches(system, "astartes"),
+                           sleepGraceDays: graceDays };
+        const worldTime = game.time?.worldTime ?? 0;
         const val = vitalEffectiveStage(v.key, system.vitals?.[v.key], system.vitals?.[VITAL_TIME_FIELD[v.key]],
-          game.time?.worldTime ?? 0, vitalCtx);
+          worldTime, vitalCtx);
         const st  = v.stages[val];
+        // Крепкий как Камень (Скват): норма сна своя — подсказка считает её
+        // сама, чтобы игрок не держал в голове «3 ч + 3 ч за бессонные сутки».
+        let fx = st.fx;
+        if (v.key === "sleep" && graceDays > 1) {
+          const slept = system.vitals?.[VITAL_TIME_FIELD.sleep];
+          // Бессонные сутки — полные сутки сверх обычного суточного цикла:
+          // проснулся сутки назад — это ещё обычная ночь, не пропуск.
+          const awake = slept == null ? 0 : Math.max(0, Math.floor(Math.max(0, worldTime - Number(slept)) / 86400) - 1);
+          fx = `${val === 0 ? `Нет штрафов. Крепкий как Камень: без сна до ${graceDays} суток.` : st.fx} `
+             + `Нужно сна сейчас: ${sleepNeededHours(awake)} ч (3 ч, +3 ч за бессонные сутки, до 9 ч).`;
+        }
         return {
           key: v.key, label: v.label, icon: v.icon, tone: v.tone, action: v.action,
-          stage: val, max: VITAL_MAX_STAGE, stageLabel: st.label, fx: st.fx,
+          stage: val, max: VITAL_MAX_STAGE, stageLabel: st.label,
+          // Enduring / Стойкий (Репликант): «нуждается только в 4 часах сна в сутки».
+          fx: v.key === "sleep" && hasRuleFlag(actor, ENDURING) ? `${fx} Стойкий: достаточно 4 ч сна в сутки.` : fx,
           pen: st.pen, scope: v.scope,
           pips: [1, 2, 3].map(n => ({ on: n <= val })),
           alert: val > 0, crit: val >= VITAL_MAX_STAGE
@@ -936,7 +962,10 @@ function buildGetDataUncached(actor) {
           status: addictionStatusLabel(item, worldTime),
           unsatisfied
         };
-      })
+      }),
+      // Крючок Сывороток / Срок Годности / Генетическое Угасание (Репликант) —
+      // null, если ни одной из этих Черт нет (combat/replicant.mjs).
+      replicant: replicantBodyContext(actor)
     };
   }
 
@@ -1415,7 +1444,15 @@ function buildGetDataUncached(actor) {
     max:      system.energy?.max ?? 0,
     bonusMax: system.energy?.bonusMax ?? 0,
     maxTotal: enMaxTotal,
-    pips: Array.from({ length: Math.min(16, Math.max(0, enMaxTotal)) }, (_, i) => ({ on: (i + 1) <= enVal }))
+    pips: Array.from({ length: Math.min(16, Math.max(0, enMaxTotal)) }, (_, i) => ({ on: (i + 1) <= enVal })),
+    // Импланты Механикум (книга): Катушка Потенции снимает Усталость 2⚡ за 1,
+    // Электу-Индукторы заряжают её тестом Tech-Use (rules/potentia-coil.mjs,
+    // кнопки — sheets/tabs/tech.mjs). Кнопки видны, когда есть чем действовать.
+    fatigueCost: COIL_FATIGUE_COST,
+    canRelieveFatigue: enMaxTotal > 0,
+    canCharge: enMaxTotal > 0 && allItems.some(i => i.type === "implant"
+      && i.getFlag?.("warhammer-dbc", "installed") && !i.getFlag?.("warhammer-dbc", "disabled")
+      && /electoo|электу/i.test(i.name))
   };
   context.noosphereActions = NOOSPHERE_ACTIONS;
 

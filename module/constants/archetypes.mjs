@@ -15,16 +15,16 @@ export const ARCHETYPES = {
     talents: "Iron Discipline или Protege, Air of Authority или Disturbing Voice, Minion (Низший, Человек) или Sure Strike",
     gear:    "L. Power Weapon (до R3, Good.Q)",
     trait: { name: "Inspiring Presence / Вдохновляющее Присутствие",
-      benefit: "Может позволять союзникам/подчинённым в пределах видимости использовать его Очки Бесчестья; переданное очко даёт другому персонажу переброс теста." },
+      benefit: "Чемпион может позволять союзникам и подчиненным в пределах видимости использовать его Очки Бесчестья, как если бы они имели Cor и Покровительство Чемпиона. Переданные таким образом Очки Бесчестия позволяют другому персонажу перебрасывать уже переброшенный тест." },
     desc: "Один из отрядных лидеров легиона."
   },
   raptor: {
     name: "Раптор", race: "astartes", wounds: "15+1d5", charBonus: {},
     skills:  "Acrobatics или Stealth, Intimidate или Survival, Operate (Aeronautica) +10",
     talents: "Two Weapon Wielder (Melee), Two Weapon Wielder (Ranged), Raptor или Reaper",
-    gear:    "2× L. Chain Weapon (до R1), Jump Pack (Raptor pattern), 6× L. Frag Grenades",
+    gear:    "2×L. Chain Weapon (до R1), Jump Pack (Raptor pattern), 6×L. Frag Grenades",
     trait: { name: "Sky Predator / Хищник Небес",
-      benefit: "В Ход, когда Раптор совершает Натиск с полёта, может заменить до 2 кубиков урона от рукопашных атак Успехами на попадание." },
+      benefit: "В Ход, когда Раптор совершает Натиск с полета, он может заменять до 2-х кубиков урона от атак Успехами на попадание." },
     desc: "Один из воздушных штурмовиков легиона."
   },
   chosen: {
@@ -33,7 +33,7 @@ export const ARCHETYPES = {
     talents: "Lightning Reflexes, Leap Up или Rapid Reload, Disarm или Double Tap, Sure Strike или Deadeye Shot",
     gear:    "L. Chain Weapon (до R1) или L. Flamer, L. Meltagun или L. Plasmagun",
     trait: { name: "Cold Killer / Хладнокровный Убийца",
-      benefit: "При нанесении Экстремального Урона бросает d5 дважды на Критический Результат 2 и берёт лучший." },
+      benefit: "Когда Избранный наносит Экстремальный Урон, он бросает d5 на Критический Результат 2 раза и выбирает один из результатов." },
     desc: "Элитный оружейный специалист легиона."
   },
   executioner: {
@@ -42,34 +42,34 @@ export const ARCHETYPES = {
     talents: "Blade Reader или Disarm, Berserk Charge или Flesh Render, Counter Attack или Swift Attack",
     gear:    "L. Chain Weapon (до R1, Best.Q) или L. Power Weapon (до R3), 3 модификации для оружия (до R3)",
     trait: { name: "Single Combat / Бой Один На Один",
-      benefit: "Против одного противника без союзников: +1 Успех на успешные тесты WS, S и A; Unnatural Characteristic на встречные WS; правило «ничьей» при проигрыше не применяется." },
+      benefit: "Когда Палач связан в рукопашной только с одним противником и без союзников, он получает +1 Успех на все успешные тесты WS, S и A, и если он проводит встречный тест на WS или A и у противника есть Трейт Unnatural Characteristic для его теста, а у Палача – нет, правило форсированной «ничьей» при проигрыше противника не применяется." },
     desc: "Мастер-дуэлянт легиона."
   },
   seeker: {
     name: "Искатель", race: "astartes", wounds: "16+1d5", charBonus: {},
     skills:  "Security или Tech-Use, Acrobatics или Stealth, Awareness +10 или Dodge +10",
     talents: "Deadeye Shot, Rapid Reload, Chamber In или Trick Shooter, Covering Fire или Hip Shooting",
-    gear:    "L. Combi-Bolter / L. Storm Bolter / L. Stalker Bolter / Atrox Bolt Rifle; +Ammo Selector, 4 магазина болтов (до R2/R3); L. Combi-Flamer (Best.Q) / L. Combi-Melta (Good.Q) / L. Combi-Plasma / L. Auxiliary Grenade Launcher (Best.Q)",
-    trait: { name: "Bolter Virtuoso / Болтерный Виртуоз",
-      benefit: "Болт-оружие получает ещё один дополнительный кубик ко всем альтернативным профилям (приклад, штык, из подствольника и т.д.)." },
+    gear:    "L. Combi-Bolter или L. Storm Bolter или L. Stalker Bolter или L. Atrox Bolt Rifle, +Ammo Selector, 4 магазина болтов до R2 и 2 до R3, L. Combi-Flamer (Best.Q) или L. Combi-Melta (Good.Q) или L. Combi-Plasma или L. Auxiliary Grenade Launcher (Best.Q)",
+    trait: { name: "Legionnaire Virtuoso / Легионер-Виртуоз",
+      benefit: "Все стрелковое оружие легиона в руках Искателя получает дополнительный кубик на урон и отбрасывает один с наименьшим результатом, даже на альтернативных профилях (прикладом, штыком, и т.п.)" },
     desc: "Ветеран-стрелок легиона."
   },
   havoc: {
     name: "Хавок", race: "astartes", wounds: "16+1d5", charBonus: {},
     skills:  "Tech-Use, Stealth или Trade (Weaponsmith) +10, Awareness +10 или Dodge +10",
     talents: "Rapid Reload, Technical Knock, Hip Shooting или Saturation Fire",
-    gear:    "L. Heavy Bolter / L. Plasma Cannon / L. Multimelta / L. Autocannon, Backpack Feed или Heavy Power Cable",
+    gear:    "L. Heavy Bolter или L. Plasma Cannon или L. Multimelta или L. Autocannon, Backpack Feed или Heavy Power Cable",
     trait: { name: "Fire Point / Огневая Точка",
-      benefit: "Тратит Очко Бесчестья на переброс стрелковой атаки, даже Оглушённым/лёжа/сбит с ног. На покровительстве Нургла может перебрасывать с Преимуществом." },
+      benefit: "Когда Хавок тратит Очко Бесчестия на переброс стрелковой атаки или он использовал действие Закрепление, он может перебрасывать все стрелковые атаки, пока не сдвинется с места (кроме Отскоком), заляжет, или будет сбит с ног. Он может перебрасывать стрельбу из тяжелого оружия даже с покровительством Нургла." },
     desc: "Специалист по тяжёлому оружию легиона."
   },
   apothecary: {
     name: "Апотекарий", race: "astartes", wounds: "15+1d5", charBonus: {},
     skills:  "For. Lore (Astartes Implants), Trade (Chymist), Athletics +10, Medicae +10",
-    talents: "Frontline Medic, Restitching, Sure Stitch, Fast Stitches или Precise Blow",
-    gear:    "L. Chain Weapon (до R1), Narthecium (Good.Q), 20 доз Химии до R1",
+    talents: "Frontline Medic, Restitching, Sure Strike, Fast Stitches или Precise Blow",
+    gear:    "L. Chain Weapon (до R1), Narthecium (Good.Q), 20 Доз Химии до R1",
     trait: { name: "Legion Surgery / Хирургия Легиона",
-      benefit: "Тратит Очко Бесчестья, чтобы авто-пройти тест лечения/работы с геносеменем с 1 Успехом; может пробудить десантника из Сус-ан анимации." },
+      benefit: "Когда Апотекарий проваливает любой тест на лечение или работу с геносеменем, он может потратить Очко Бесчестия, чтобы автоматически пройти этот тест с 1 Успехом. Если он Первой помощью поднял Раны вошедшего в Замедленную Анимацию десантника до хотя бы –7, Апотекарий может потратить 1 Очко Бесчестия, чтобы пробудить его из анабиоза." },
     desc: "Боевой медик легиона."
   },
   outcast: {
@@ -78,84 +78,91 @@ export const ARCHETYPES = {
     talents: "Blind Fighting или Wallop, Catfall или Iron Jaw, Combat Master или Hunker Down, Breacher или Hip Shooting",
     gear:    "L. Chain Weapon (до R1) или L. Shotgun, 8 L. Гранат или Бомб до R2, Chameleoline Cloak (Good.Q) или L. Boarding Shield (Good.Q)",
     trait: { name: "Scrounge / Наскрести",
-      benefit: "Тратит смену работы и Очко Бесчестья, чтобы добыть расходники/находку до 2d10 Редкости (R1)." },
+      benefit: "Изгой может потратить смену работы и Очко Бесчестия, чтобы добыть где-то 2d10 расходных материалов (магазинов боеприпасов, гранат, химии и т.п.) до R2, украв, выбив силой у кого-то, или найдя клад. Когда у него есть излишки расходников, ГМ может потребовать, чтобы Изгой время от времени прятал часть в клады «на черный день»." },
     desc: "Одинокий волк без банды и дома."
   },
   techmarine: {
     name: "Технодесантник", race: "astartes", wounds: "17+1d5", charBonus: {},
     skills:  "Linguistics (Binary Cant), For. Lore (Mechanicus), Trade (Armourer, Weaponsmith), Tech-Use +10",
-    talents: "500хр на Техночудеса, Blessing of Steel, Mechadendrite Use (Weapon, Utility)",
-    gear:    "Mechanicum Implants, L. Power Weapon (до R3, Good.Q), 1 Мехадендрит (R3 или R2 Good.Q), Combi-Tool (Good.Q)",
-    isTechpriest: true,
+    talents: "500 xp на Техночудеса, Blessing of Steel, Mechadendrite Use (Weapon, Utility)",
+    gear:    "L. Power Weapon (до R3, Good.Q), 1 Мехадендрит (R3 или R2 Good.Q), Combi-Tool (Good.Q)",
+    // Стартовый Трейт «Mechanicum Implants (стр. 20)» — не снаряжение: выдаётся
+    // флагом grantsImplants (apps/archetypes.mjs::grantArchetypeImplants).
+    isTechpriest: true, grantsImplants: true,
     trait: { name: "Emergency Maintenance / Экстренное Обслуживание",
-      benefit: "Тратит Очко Бесчестья и полное действие, чтобы починить повреждения оружия/брони/снаряжения Легиона (обычно требующие 1 смены работы)." },
+      benefit: "Технодесантник может потратить Очко Бесчестия и полное действие, чтобы починить повреждения оружия, брони, или снаряжения Легиона, обычно требующие до 1 смены работы." },
     desc: "Тех-адепт и мастер машин легиона."
   },
   sorcerer: {
     name: "Чародей", race: "astartes", wounds: "15+1d5", charBonus: {},
     skills:  "Psyniscience, Schol. Lore (Occult), Deceive или Scrutiny, For. Lore (Warp, Daemons and Psykers)",
-    talents: "Psy Rating (×2), 500хр на Психосилы, Meditation или Warp Sense",
+    talents: "Psy Rating (×2), 500 xp на Психосилы, Meditation или Warp Sense",
     gear:    "L. Bolt Pistol, L. Force Weapon (до R4)",
-    isPsyker: true,
+    isPsyker: true, psykerClass: "bound",
     trait: { name: "Sorcerer / Чародей",
-      benefit: "Получает Трейт Psyker с PR2 и +1 Cor. В расчёте психической силы считается Связанным." },
+      benefit: "Чародей обладает способностью призывать силы варпа себе на службу, но каждый подобный акт не проходит бесследно. +d10 Стартового Cor. В расчёте психической силы он считается связанным." },
     desc: "Боевой псайкер легиона."
   },
 
   // ═══════════════════════════════ ЛЮДИ ═══════════════════════════════════
+  // Сверка с книгой (глава I, Архетипы Людей) — 28.09.2026: тексты навыков/
+  // Талантов/снаряжения дословно по книге (снаряжение разбирает Этап 5
+  // Мастера создания: «,» — отдельные строки книги, «или» — выбор).
   apostate: {
     name: "Отступник", race: "human", wounds: "9+1d5", charBonus: { fel: 5, int: 2 },
-    skills:  "Linguistics (High Gothic, True Tongue), Awareness, Charm, Command, Deceive, Inquiry, Scrutiny, Schol. Lore (любые 3), Forbidden Lore (любые 3), Dodge или Parry, Interrogate или Sleight of Hand, Intimidate или Commerce, Security/Stealth/Logic, Charm+10 или Deceive+10, Command+10 или Inquiry+10",
-    talents: "Air of Authority, Hatred (любые 2), Peer (любые 2), Cover Up, Total Recall, Unshakeable Will, Weapon Training (любые 3), Clues From the Crowd/Light Sleeper/Unremarkable, Disturbing Voice/Field Execution/Radiant Presence, Decadence/Polyglot/Mimic, Inspire Wrath/Iron Discipline/Minion (Средний)",
-    gear:    "Autopistol (Best.Q)/Laspistol (Good.Q)/Blast Pistol, Chain Weapon (до R1, Good.Q)/Power Weapon (до R2), Full Flak Armour (Best.Q)/Mesh Armour, Cogitator (Best.Q)/Loud Hailer (Best.Q)/Hololith (Good.Q), Disguise Kit (Best.Q)/Torture Tools (Best.Q)/Unholy Tomes",
+    skills:  "Linguistics (High Gothic, True Tongue), Awareness, Charm, Command, Deceive, Inquiry, Scrutiny, Schol. Lore (любые 3), Forbidden Lore (любые 3), Dodge или Parry, Interrogate или Sleight of Hand, Intimidate или Commerce, Security или Stealth или Logic, Charm +10 или Deceive +10, Command +10 или Inquiry +10",
+    talents: "Air of Authority, Hatred (любые 2), Peer (любые 2), Cover Up (суммарно на 10 Inf без траты Inf), Total Recall, Unshakeable Will, Weapon Training (любые 3), Clues From the Crowd или Light Sleeper или Unremarkable, Disturbing Voice или Field Execution или Radiant Presence, Decadence или Polyglot или Mimic, Inspire Wrath или Iron Discipline или Minion (Средний)",
+    gear:    "Autopistol (Best.Q) или Laspistol (Good.Q) или Blast Pistol, Chain Weapon (до R1, Good.Q) или Power Weapon (до R2), Full Flak Armour или Mesh Armour, Cogitator (Best.Q) или Loud Hailer(Best.Q) или Hololith(Good.Q), Disguise Kit(Best.Q) или Torture Tools(Best.Q) или Unholy Tomes",
     trait: { name: "Serpent's Tongue / Змеиный Язык",
-      benefit: "При провале социального/командного/допроса теста может потратить Очко Бесчестья, чтобы вместо этого преуспеть на 1 Успех. Игнорирует требования по Inf для Миньонов-людей." },
-    desc: "Знания, связи и навыки решают задачи словом, а не насилием."
+      benefit: "Когда Отступник проваливает тест социального взаимодействия, командования или допроса, он может потратить Очко Бесчестия, чтобы вместо этого преуспеть в нем на 1 Успех. При трате дополнительных Очков Бесчестия даёт +1 Успех к Усилению на социальные взаимодействия. Отступник игнорирует требования по Inf для Миньонов-людей." },
+    desc: "У вас есть знания, связи, и навыки, чтобы решать задачи словом, а не насилием. Возможно раньше вы были придворным интриганом, шпионом, следователем Арбитес, или даже падшим агентом Инквизиции."
   },
+  // Ключ heresiarch — исторический (на нём живые персонажи), в книге Архетип
+  // называется «Демонолог».
   heresiarch: {
-    name: "Ересиарх", race: "human", wounds: "9+1d5", charBonus: { int: 5, wp: 2 },
-    skills:  "Linguistics (Battle Cant, True Tongue), Awareness, Charm, Command+10, Deceive+10, Inquiry, Scrutiny, Schol. Lore (Occult)+10, For. Lore (Heresy, Warp)+10, For. Lore (Daemons)+20, Dodge или Parry, Interrogate или Intimidate, Inquiry+10 или Scrutiny+10",
-    talents: "Erudite Infernal, Hatred (Ecclesiarchy), Jaded, Peer (Daemons), Total Recall, Melee Training (любые 2), Weapon Training (любые 3), Scapegoat, Unholy Devotion, Minion (Высший, Демон), Foresight/Rite Puzzler/Wisdom of the Ancients",
-    gear:    "Autopistol (Good.Q)/Laspistol, Runic Weapon (Прим., Best.Q)/Sacrificial Athame, Full Flak Armour (Good.Q)/Light Carapace, 1 Мистическое Снаряжение или Инструмент (до R3), 2× Unholy Tomes (на разные темы), Записи Ритуалов на суммарную Редкость 11 (не выше R3 каждый)",
-    trait: { name: "Cult Leader / Лидер Культа",
-      benefit: "Имеет фанатичный культ: добровольные жертвы для ритуалов, Навыки +10 для ритуалов. Может использовать I вместо W или W вместо I с Преимуществом. Игнорирует требования по Inf для Миньонов-демонов." },
-    desc: "Лидер собственного культа, опытный оккультист."
+    name: "Демонолог", race: "human", wounds: "9+1d5", charBonus: { int: 5, wp: 2 },
+    skills:  "Linguistics (Battle Cant, True Tongue), Awareness, Charm, Command+10, Deceive+10, Inquiry, Scrutiny, Schol. Lore (Occult)+10, For. Lore (Heresy, Warp)+10, For. Lore (Daemons)+20, Dodge или Parry, Interrogate или Intimidate, Inquiry +10 или Scrutiny +10",
+    talents: "Erudite-Infernal, Hatred (Ecclesiarchy), Jaded, Peer (Daemons), Total Recall, Melee Training (любые 2), Weapon Training (любые 3), Scapegoat, Unholy Devotion, Minion (Высший, Демон), Foresight или Rite Puzzler или Wisdom of the Ancients",
+    gear:    "Autopistol (Good.Q) или Laspistol, Runic Weapon (Примитивное, Best.Q) или Sacrificial Athame, Full Flak Armour(Good.Q) или Light Carapace, 1 Мистическое Снаряжение или Инструмент (до R3), 2×Unholy Tomes (на разные темы), Записи Ритуалов на суммарную Редкость 11 (но не выше R3 каждый)",
+    trait: { name: "Dark Seer / Ведун Тьмы",
+      benefit: "Он мастер запретных ритуалов, способный обращаться к потусторонним силам Варпа. Его глубокое знание тайн нерождённых позволяет гибко адаптировать методики проведения ритуалов даже в самых нестабильных условиях. Он без труда использует тонкости варпа, заменяя одну характеристику другой там, где это необходимо, чтобы повысить эффективность своих ритуалов. Демонолог может использовать I вместо W или W вместо I в тестах ритуалов, а если использует «правильную» Характеристику, он получает Преимущество на этот тест. Демонолог игнорирует требования по Inf для Миньонов-демонов." },
+    desc: "Вы опытный оккультист, сведущий в темных и запретных тайнах, и способный превратить эти знания в грозное оружие."
   },
   renegade: {
     name: "Ренегат", race: "human", wounds: "10+1d5", charBonus: { bs: 5, ws: 2 },
     skills:  "Athletics, Awareness, Dodge, Parry, Common Lore (War)+10, Schol. Lore (Tactica Imperialis), Operate (Surface), Command или Intimidate, Survival или Stealth, Tech-Use или Medicae, Dodge+10 или Parry+10",
-    talents: "Jaded, Quick Draw, Rapid Reload, Weapon Training (любые 6), Chamber In/Combat Sense, Sure Strike/Deadeye Shot/Marksman, Double Tap/Disarm/Takedown, Two Weapon Wielder (любой 1)/Hip Shooting, Bayonet Charge/Covering Fire, Dragoon/Tracking Aim",
-    gear:    "Lasgun (Best.Q)/Bolter (Good.Q)/Plasma Gun/Heavy Flamer, Combi-Flamer/Auxiliary Grenade Launcher/Long-Las, Laspistol (Best.Q)/Bolt Pistol (Good.Q), Chain Weapon (до R1, Good.Q)/Power Weapon (до R2), 6 модификаций для оружия (до R2), Tempestus Carapace (Good.Q)/Xeno Mesh + Cameleoline Cloak, 4 модификации для брони (до R2), Rebreather (Best.Q)/Stummer, Medkit (Best.Q)/Recoil Glove (Good.Q)/Vox Caster",
+    talents: "Jaded, Quick Draw, Rapid Reload, Melee Training (любые 2), Weapon Training (любые 5), Catfall или Combat Sense, Chamber In или Double Tap или Trick Shooter, Sure Strike или Deadeye Shot или Marksman, Double Team или Disarm или Takedown, Two Weapon Wielder (любой 1) или Hip Shooting, Bayonet Charge или Covering Fire, Dragoon или Tracking Aim",
+    gear:    "Lasgun (Best.Q) или Bolter (Good.Q) или Plasma Gun или Heavy Flamer, Combi-Flamer или Auxiliary Grenade Launcher или Long-Las, Laspistol (Best.Q) или Bolt Pistol (Good.Q), Chain Weapon (до R1, Good.Q) или Power Weapon (до R2), 6 Модификаций для оружия (до R2), Tempestus Carapace (Good.Q) или Xeno Mesh + Chameleoline Cloak, 4 Модификации для брони (до R2), Rebreather(Best.Q) или Magnoculars(Best.Q) или Stummer, Medkit(Best.Q) или Recoil Glove (Good.Q) или Vox Caster",
     trait: { name: "Adroit / Искусный",
-      benefit: "Выбирает одну Характеристику (кроме Inf и Cor): все успешные тесты на неё (в т.ч. навыки через неё) получают +1 Успех." },
-    desc: "Опытный профессиональный солдат — павший штурмовик или элитный боец армий Хаоса."
+      benefit: "При создании персонажа, Ренегат выбирает одну Характеристику (кроме Inf и Cor). Все успешные тесты на эту Характеристику (в т.ч. тесты на навыки через эту Характеристику) получают +1 Успех." },
+    desc: "Вы опытный профессиональный солдат, возможно павший Имперский штурмовик или ветеран Гвардии, или же элитный боец одной из армий Хаоса."
   },
   pirate: {
     name: "Пират", race: "human", wounds: "10+1d5", charBonus: { ws: 5, bs: 2 },
     skills:  "Acrobatics, Awareness, Dodge+10, Parry, Stealth, Common Lore (Imperial Fleet, Tech), Operate (Aeronautica), Commerce или Intimidate, Interrogate или Security, Trade (Technomat, Voidfarer), Awareness+10 или Parry+10",
-    talents: "Ambidextrous, Jaded, Quick Draw, Two Weapon Wielder (Melee, Ranged), Melee Training (любые 3), Weapon Training (любые 4), Lightning Reflexes/Drop and Roll, Catfall/Pirouette, Blind Fighting/Steady Footwork/Street Fighting, Double Team/Disarm/Takedown, Close Quarters/Plasma Expertise/Wallop, Gun Guard/Sideblade/Knife Fighter",
-    gear:    "Vox-Бусина (+Fist Grip)/Bolt Revolver/Plasma Pistol, Chain Weapon (до R1, Good.Q)/Power Weapon (до R2), Shock Weapon (до R1)/Snare Gun (Good.Q)/Webber, 6 модификаций для оружия (до R2), Xeno Mesh (+Void)/Void Suit Helmet, 3 модификации для брони (до R2), Recoil Glove (Best.Q)/Mag-Boots (Good.Q)/Gravchute, Rebreather (Best.Q)/Photo-Visor (Best.Q)/Chem Injector (Good.Q)",
+    talents: "Ambidextrous, Jaded, Quick Draw, Two Weapon Wielder (Melee, Ranged), Melee Training (любые 3), Weapon Training (любые 4), Lightning Reflexes или Drop and Roll, Catfall или Pirouette, Blind Fighting или Steady Footwork или Street Fighting, Double Team или Disarm или Takedown, Close Quarters или Plasma Expertise или Wallop, Gun Guard или Sideblade или Knife Fighter",
+    gear:    "Vox-Legi Shotgun(+Pistol Grip) или Bolt Revolver или Plasma Pistol, Chain Weapon (до R1, Good.Q) или Power Weapon (до R2), Shock Weapon или Snare Gun(Good.Q) или Webber, 6 Модификаций для оружия (до R2), Xeno Mesh(+Void) + Void Suit Helmet, 3 Модификации для брони (до R2), Recoil Glove(Best.Q) или Mag-Boots (Good.Q) или Gravchute, Rebreather(Best.Q) или Photo-Visor(Best.Q) или Chem Injector (Good.Q)",
     trait: { name: "Take Everything / Забирай Всё",
-      benefit: "Преимущество на все тесты поиска/оценки трофеев. Несёт предметы до своего веса Ношения независимо от разгрузки (всё считается на удобных разгрузках)." },
-    desc: "Заработал навыки и славу на борту корабля — Имперский Флот, Вольный Торговец или банда Хаоса."
+      benefit: "Пират получает Преимущество на все тесты на поиск и оценку трофеев. Он может нести на себе до своего веса ношения предметов, независимо от разгрузки, считая все на удобных разгрузках." },
+    desc: "Вы заработали свои навыки и славу на борту корабля. Возможно раньше вы служили в Имперском Флоте, флоте Вольного Торговца, или же на корабле одной из банд Хаоса."
   },
   savage: {
     name: "Дикарь", race: "human", wounds: "11+1d5", charBonus: { t: 5, s: 2 },
     skills:  "Acrobatics, Athletics, Awareness, Dodge, Navigation (Surface)+10, Parry+10, Survival+10, Schol. Lore (Beasts), Command/Commerce/Intimidate, Interrogate или Scrutiny, Stealth или Sleight of Hand, Awareness+10 или Athletics+10",
     talents: "Frenzy, Heightened Senses (любые 2), Quick Draw, Skilled Rider, Battle Rage, Resistance (любые 2), Melee Training (любые 4), Weapon Training (любые 3), Catfall/Iron Jaw, Defensive Rider/Trot, Blind Fighting/Bodyguard/Steady Footwork, Disarm/Takedown/Sure Strike, Double Team/High Guard/Unarmed Warrior, Cleave/Tenacity/Wrestler",
-    gear:    "3 стандартных Примитивных рукопашных или стрелковых оружия (Best.Q), 6 Throwing Knife (+Mono)/6 Throwing Axe (+Mono), Chain Weapon (до R1, Good.Q)/Power Weapon (до R2), 9 модификаций для оружия (до R2), Xeno Hides (+Jack Chains, Best.Q) + Carapace Helm, Скакун до R1 и набор брони до R1 (базово)",
+    gear:    "3 стандартных Примитивных рукопашных или Примитивных стрелковых оружия (Best.Q), 6 Throwing Knife (+Mono) или 6 Throwing Axe (+Mono), Chain Weapon (до R1, Good.Q) или Power Weapon (до R2), 9 Модификаций для оружия (до R2), Xeno Hides + Jack Chains (Best.Q) + Carapace Helm, Скакун до R1 и набор брони до R1(базово) для него",
     trait: { name: "Survivor / Выживальщик",
-      benefit: "При провале не-атакующего теста S/T/A/P может потратить Очко Бесчестья — вместо этого преуспеть на 1 Успех. Игнорирует требования по Inf для Миньонов-зверей." },
-    desc: "Мастер выживания вне цивилизации — джунгли миров смерти или токсичные пустоши."
+      benefit: "Когда Дикарь проваливает не-атакующий тест S, T, A или P, он может потратить Очко Бесчестия, чтобы вместо этого преуспеть в нем на 1 Успех. Дикарь игнорирует требования по Inf для Миньонов-зверей." },
+    desc: "Вы мастер выживания вне цивилизации, будь то дикие джунгли миров смерти, или выжженные токсичные пустоши между ульями и кузницами индустриальных миров."
   },
   noble: {
     name: "Благородный", race: "human", wounds: "11+1d5", charBonus: { ag: 5, fel: 2 },
     skills:  "Linguistics (High Gothic), Acrobatics, Athletics, Awareness, Charm, Dodge+10, Parry+10, Schol. Lore (Heraldry), Command или Intimidate, Logic или Tech-Use, Stealth или Survival, Acrobatics+10 или Athletics+10",
     talents: "Flip, Peer (Nobility), Quick Draw, Sure Strike, Deflect Shot, Swift Attack, Melee Training (любые 3), Weapon Training (любые 4), Ambidextrous/Leap Up, Catfall/Pirouette, Minion (Низший, Человек)/Radiant Presence, Blind Fighting/Decadence/Jaded, Exotic Weapon Training (1 любое)/Takedown/Disarm, Counter Attack/Precise Blow/Two Weapon Wielder (Melee)",
-    gear:    "2 любых рукопашных оружия R1 (Best.Q)/R2 (Good.Q)/R3, Hotshot Pistol (Best.Q)/Orthlak Duel Revolver (Good.Q)/Needler Pistol, Digital Laser (Good.Q)/Digital Plasma (до R3), 9 модификаций для оружия (до R3), Tempestus Carapace (Best.Q)/Light Power Armour (Good.Q), 5 модификаций и Систем для брони (до R3)",
+    gear:    "2 Любых рукопашных оружия R1(Best.Q) или R2(Good.Q) или R3, Hotshot Pistol(Best.Q) или Orthlak Duel Revolver(Good.Q) или Needler Pistol, Digital Laser(Good.Q) или Digital Plasma или Digital Needler, 9 Модификаций для оружия (до R3), Tempestus Carapace(Best.Q) или Light Power Armour(Good.Q), 5 Модификаций или Систем для брони (до R3)",
     trait: { name: "Noble Eugenics / Благородная Евгеника",
-      benefit: "Выбирает 2 Характеристики — они становятся дружественными в плане продвижений и остаются такими, независимо от Покровительства." },
-    desc: "Из рода Имперских или Хаоситских аристократов, Рыцарского дома или династии Вольного Торговца."
+      benefit: "При создании персонажа, Благородный выбирает 2 Характеристики – они становятся дружественными в плане продвижений, и остаются таковыми, невзирая на его Покровительства." },
+    desc: "Вы происходите из рода Имперских или Хаоситских аристократов, Рыцарского дома, или династии Вольного Торговца, что обеспечило вас лучшим образованием, что можно купить за деньги, и отменной родословной."
   },
 
   // ═══════════════════════════════ МЕХАНИКУС ══════════════════════════════
@@ -164,20 +171,20 @@ export const ARCHETYPES = {
     grantsWarPlate: true,
     skills:  "Linguistics (Binary Cant), Athletics, Awareness+10, Dodge, Parry, Tech-Use, Common Lore (War, Tech), Operate (Aeronautica, Surface), Command или Intimidate, Security или Stealth, Dodge+10 или Parry+10",
     talents: "Combat Sense, Cold Hearted, Jaded, Quick Draw, Rapid Reload, Melee Training (любые 2), Weapon Training (любые 3), Exotic Weapon Training (любые 3), Ambidextrous/Technical Knock, Bodyguard/Disarm/Double Team, Die Hard/Iron Jaw/Orthoproxy, Sure Strike/Deadeye Shot/Marksman, Two Weapon Wielder (любой 1)/Scanning Advance, Reposition/Hunker Down",
-    gear:    "Radium Carbine (Best.Q)/Galvanic Rifle (Best.Q)/Arc Rifle, Radium Pistol (Best.Q)/Flechette Blaster (Good.Q)/Phosphor Pistol, Taser (Good.Q)/Transonic Blade (Good.Q)/Power Weapon (до R2), 2 модификации для оружия (до R2), Skitarii War Plate, 2 Модуля Кибернетики Скитария (R1 Good.Q или R2), +1 к Качеству 3 предметов",
+    gear:    "Radium Carbine (Best.Q) или Galvanic Rifle (Best.Q) или Arc Rifle, Radium Pistol (Best.Q) или Flechette Blaster (Good.Q) или Phosphor Pistol, Taser Goad(Good.Q) или Transonic Blade(Good.Q) или Power Weapon (до R2), 7 Модификаций для оружия (до R2), Skitarii War Plate (нельзя поменять), 2 Модуля Кибернетики Скитарии (R1,Good.Q или R2), +1 к Качеству 3-х предметов",
     trait: { name: "Data Acquisition / Получение Данных",
-      benefit: "Преимущество на тесты Awareness. Коды командования для Боевых Лат Скитария не работают на него." },
-    desc: "Техно-страж Механикума, выравнившийся на цифровых путях своих господ."
+      benefit: "Скитарий получает Преимущество на все тесты Awareness." },
+    desc: "Вы техно-страж Механикум, волей случая, или под действием накопленной порчи, вырвавшийся из цифровых пут своих господ."
   },
   heretek: {
-    name: "Техножрец", race: "mechanicus", wounds: "12+1d5", charBonus: { int: 5, t: 2 },
+    name: "Еретех", race: "mechanicus", wounds: "12+1d5", charBonus: { int: 5, t: 2 },
     grantsImplants: true, isTechpriest: true,
     skills:  "Linguistics (Binary Cant), Logic, Tech-Use+10, Awareness или Medicae, Dodge или Parry, Commerce или Security, Com. Lore (Tech)+20, For. Lore (Mechanicum)+10, For. Lore (Archeotech/Xenos/Warp), Schol. Lore (Chymistry/Numerology), Trade (Armourer, Weaponsmith), Trade (Engineer/Chymist)",
-    talents: "750хр на Техночудеса, Die Hard, Technical Knock, Weapon Training (любые 4), Exotic Weapon Training (любые 1), Mechadendrite Use (Weapon, Utility), Apocrypha Coil/Virtual Memory, Meditation/Total Recall, Armour-Monger/Weapon-Tech, Minion (Низший, Машина)/Cold Hearted",
-    gear:    "Hotshot Pistol (Good.Q)/Bolt Pistol/Phosphor Blast Pistol, Poleaxe (Best.Q +Mono)/Power Axe/Arc Maul, Enforcer Carapace + Vulcanized Cloak, 6 Бионики/Кибернетики (до R2 Good.Q или R1 Best.Q), 3 Кибернетики Механикум (до R2), 2 Мехадендрита (R3/R2 Good.Q/R1 Best.Q), Cogitator (Best.Q) + Retinal Display, Combi-Tool (Good.Q)",
+    talents: "750 xp на Техночудеса, Die Hard, Technical Knock, Weapon Training (любые 4), Exotic Weapon Training (любые 1), Mechadendrite Use (Weapon, Utility), Apocrypha Coil/Virtual Memory, Meditation/Total Recall, Armour-Monger/Weapon-Tech, Minion (Низший, Машина)/Cold Hearted",
+    gear:    "Hotshot Pistol (Good.Q) или Bolt Pistol или Phosphor Blast Pistol, Poleaxe (Best.Q +Mono) или Power Axe или Arc Maul, Enforcer Carapace + Vulcanized Cloak, 4 Бионики или Кибернетики (до R2, Good.Q или до R1 Best.Q), 3 Кибернетики Механикум (до R2), 2 Мехадендрита (R3 или R2 Good.Q или R1 Best.Q), Cogitator(Best.Q) + Retinal Display, Combi-Tool (Good.Q)",
     trait: { name: "Master of Machines / Повелитель Машин",
-      benefit: "Игнорирует требования по Inf для Миньонов-машин." },
-    desc: "Жрец Бога-Машины: предатель и беглец из Адептус Механикус, либо адепт Тёмных Механикус Хаоса."
+      benefit: "Еретех игнорирует требования по Inf для Миньонов-машин." },
+    desc: "Вы один из жрецов Бога-Машины: либо предатель и беглец из Адептус Механикус Марса, либо адепт Темных Механикум Хаоса."
   },
 
   // ════════════════════════════════ ПСАЙКЕРЫ ══════════════════════════════
@@ -186,30 +193,35 @@ export const ARCHETYPES = {
     isPsyker: true, psykerClass: "unbound",
     skills:  "Awareness, Psyniscience, For. Lore (Warp, Daemons and Psykers), Deceive или Intimidate, Dodge или Parry",
     talents: "Psy Rating (×3), 1000хр на Психосилы, Jaded, Warp Sense, Weapon Training (Primary), Weapon Training (Las/SP/Shock), Child of the Warp или Sacrifice",
-    gear:    "Laspistol (+Mono)/Stub Revolver, Sword (Good.Q)/Neural Whip, Knife (+Mono), Flak (Uniform + Flak Vest), Psy-focus",
+    // +3d5 Cor — запись kind:"corruption" Конструктора Архетипа в паке.
+    gear:    "Laspistol или Stub Revolver, Sword (Good.Q) или Neural Whip, Knife(+Mono), Flak Uniform + Flak Vest, Psy-focus",
     trait: { name: "Chaos Psyker / Псайкер Хаоса",
-      benefit: "Получает Трейт Psyker с PR3 и +1d5 Cor. В расчёте психической силы считается Несвязанным." },
-    desc: "Свободный псайкер, развивший дары без Имперского Санкционирования."
+      benefit: "Контакт с варпом без должного обучения и контроля оставляет свои следы. В расчете психической силы он считается Несвязанным." },
+    desc: "Вы свободный псайкер, развивший свои дары без ограничений Имперского Санкционирования."
   },
   renegadePsyker: {
-    name: "Псайкер", race: "human", wounds: "7+1d5", charBonus: { wp: 10, int: -3 },
+    name: "Беглый Псайкер", race: "human", wounds: "7+1d5", charBonus: { wp: 10, int: -3 },
     isPsyker: true, psykerClass: "bound",
     skills:  "Awareness, Psyniscience+10, Schol. Lore (Occult), For. Lore (Warp, Daemons and Psykers)+10, Dodge или Parry",
     talents: "Psy Rating (×2), 1000хр на Психосилы, Jaded, Warp Sense, Weapon Training (Primary), Resistance (Psychic Powers), Strong Minded или Warp Whisper",
-    gear:    "Force Staff, Knife (+Mono), Flak Uniform",
+    // +2d5 Cor и стартовое неизлечимое расстройство — записи Конструктора
+    // Архетипа в паке (kind:"corruption", kind:"script").
+    gear:    "Force Staff, Knife(+Mono), Flak Uniform",
     trait: { name: "Imperial Sanctioning / Имперское Санкционирование",
-      benefit: "Получает Трейт Psyker с PR2 и +1 Cor. Считается Связанным. Тратит Очко Бесчестья для переброса Феномена, если он вызвал Прорыв. Начинает со случайным ментальным расстройством (тяжесть не ниже −2)." },
-    desc: "Беглец, переживший ужасы Имперского Санкционирования, сохранив рассудок."
+      benefit: "Даже самые прочные оковы не способны сдержать мощь эмпириев. В расчете психической силы он считается Связанным. Когда он тратит Очко Бесчестия для переброса Феномена, если Феномен вызвал Прорыв, он может перебросить и Прорыв без траты Очка Бесчестия." },
+    desc: "Черные Корабли доставили вас на Терру, где пред ликом Императора вы пережили ужасы Имперского Санкционирования, сохранив достаточно рассудка, чтобы сбежать от своих мучителей при первой возможности."
   },
   numen: {
     name: "Нумен", race: "human", wounds: "10+1d5", charBonus: {},
-    charChoice: "+5 к одной Характеристике и +2 к другой (по выбору)",
+    charChoice: "+5 к одной Х-ке, +2 к другой",
     skills:  "Awareness, Dodge, Parry, Common Lore (любые 2), Schol. Lore (любые 2), For. Lore (любые 2), Acrobatics или Athletics, Charm или Intimidate, Medicae или Tech-Use, Stealth или Security",
     talents: "Jaded, 12 Талантов 1 уровня, 2 Таланта 2 уровня",
-    gear:    "2 любых рукопашных оружия R0(Best.Q)/R1(Good.Q)/R2, 1 любое стрелковое R0(Best.Q)/R1(Good.Q)/R2, Полный комплект брони R0(Best.Q)/R1(Good.Q)/R2, 6 модификаций для оружия (до R2), 3 модификации для брони (до R2)",
+    gear:    "2 Любых рукопашных оружия R0(Best.Q) или R1(Good.Q) или R2, 1 Любое стрелковое оружие R0(Best.Q) или R1(Good.Q) или R2, 6 Модификаций для оружия (до R2), Полный комплект брони R0(Best.Q) или R1(Good.Q) или R2, 3 Модификации для брони (до R2)",
+    // Вторая Черта — Fated Path / Предначертанный Путь — выдаётся Конструктором
+    // Архетипа в паке (отдельный документ Черты), как и выбор мутации/Дара.
     trait: { name: "Divinely Gifted / Божественно Одарённый",
-      benefit: "Выбирает 1 дополнительную мутацию/субмутацию (кроме Доспеха Богов и Знания Веков). На покровительстве Бога может вместо этого выбрать 1 Дар. + Fated Path: берёт Элитный Архетип по базовой цене, не повышая цену других Элитных." },
-    desc: "У Богов на вас большие планы — и они не спрашивают согласия."
+      benefit: "При создании персонажа, Нумен может выбрать одну дополнительную мутацию (кроме Доспехи Богов и Знания Веков) и субмутацию, если она есть. Если он начинает игру с Покровительством Бога, он может вместо этого выбрать один Дар этого Бога." },
+    desc: "У Богов на вас большие планы, и согласия у вас они не спрашивают. Вы научились идти по проложенной вам тропе и даже извлекать пользу от своего особого статуса."
   },
 
   // ═══════════════════════ АЗУРИАНЕ — ОТСТУПНИКИ ═══════════════════════════

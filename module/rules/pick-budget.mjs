@@ -35,7 +35,10 @@ const num = v => Number(v) || 0;
 export function normalizeBudget(budget) {
   const mode = budget?.mode === BUDGET_XP ? BUDGET_XP : BUDGET_COUNT;
   const value = Math.max(mode === BUDGET_XP ? 0 : 1, num(budget?.value) || (mode === BUDGET_XP ? 0 : 1));
-  return { mode, value };
+  // min (только штуками) — «до N» вместо «ровно N»: Сплайс берёт от 0 до 3
+  // дополнительных адаптаций. Нет поля — прежнее «ровно N».
+  const hasMin = mode === BUDGET_COUNT && budget?.min !== undefined && budget?.min !== null && budget?.min !== "";
+  return hasMin ? { mode, value, min: Math.min(value, Math.max(0, num(budget.min))) } : { mode, value };
 }
 
 /**
@@ -82,7 +85,7 @@ export function budgetLabel(chosen, budget, xpCost) {
   const st = budgetState(chosen, budget, xpCost);
   return st.mode === BUDGET_XP
     ? `Потрачено ${st.spent} из ${st.value} опыта`
-    : `Выбрано ${st.spent} из ${st.value}`;
+    : `Выбрано ${st.spent} из ${st.min !== undefined ? "(до) " : ""}${st.value}`;
 }
 
 /**
@@ -95,5 +98,6 @@ export function budgetLabel(chosen, budget, xpCost) {
 export function budgetReady(chosen, budget, xpCost) {
   const st = budgetState(chosen, budget, xpCost);
   if (st.mode === BUDGET_XP) return !st.over && st.spent > 0;
+  if (st.min !== undefined) return !st.over && st.spent >= st.min;
   return st.done;
 }

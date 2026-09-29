@@ -243,6 +243,8 @@ const TYPES = {
     defaults: {
       key: "", group: "", chars: {}, bonusRolls: 0, skills: "", gear: "", talents: "",
       description: "", notes: "", hasGeneSeed: false, pastRaces: [], largeBase: false,
+      // Сверка главы I: столбец Cor книги и книжный список Архетипов расы.
+      startCorruption: 0, archetypes: [],
       size: 0, bonusPoints: 0, charShift: 0, fateRoll: "", skillsNote: "", adaptations: "",
       bookSource: ""
     }
@@ -371,7 +373,8 @@ const TYPES = {
   mentalDisorder: {
     // Предметов этого типа в паках нет — расстройства заводит сам ГМ.
     pack: null,
-    defaults: { description: "", notes: "", testChar: "wp", testMod: 0, bookSource: "" }
+    defaults: { description: "", notes: "", testChar: "wp", testMod: 0, bookSource: "",
+                severity: 0, severityMin: null, incurable: false }
   },
 
   // ── Оружие и броня (wdbc-ff4.1.2) ──────────────────────────────────────────

@@ -2669,6 +2669,12 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.auraAffects = ev.currentTarget.value; saveMech(arr); }
     });
+    // «Модификатор теста» сам, без галочки (wdbc-6rjtc.8, rules/item-rules.mjs).
+    on(".mech-mod-auto", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.modAuto = !!ev.currentTarget.checked; saveMech(arr); }
+    });
     // Интегральная атака «по выбору» (wdbc-o368c, rules/integral-rating.mjs).
     on(".mech-integral-optional", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
@@ -2701,6 +2707,11 @@ export class WarhammerItemSheet
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.scriptThrottleUnit = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-script-ongrant", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.scriptOnGrant = ev.currentTarget.checked; saveMech(arr); }
     });
     on(".mech-script-throttle-max", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));

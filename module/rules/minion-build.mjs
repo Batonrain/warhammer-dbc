@@ -113,8 +113,13 @@ export function groupTally(minions = []) {
  * Выполняет ли Хозяин требования Таланта выбранной пары: значение
  * характеристики группы, Бесчестие и надбавка Навыка группы. Возвращаем
  * список невыполненного, а не «да/нет»: игроку нужно знать, чего не хватило.
+ *
+ * `ignoreInfamy` — Черта Архетипа «игнорирует требования по Inf для
+ * Миньонов-<группы>» (Survivor — звери, Master of Machines — машины и т.п.):
+ * снимается только Бесчестие. Флаг решает вызывающий код по возможности
+ * {@link minionInfamyWaiverFlag} — сама функция остаётся без реестра правил.
  */
-export function talentRequirements(master, group, tier) {
+export function talentRequirements(master, group, tier, { ignoreInfamy = false } = {}) {
   const groupDef = MINION_GROUPS[group];
   const tierDef  = MINION_TIERS[tier];
   if (!groupDef || !tierDef) return { ok: false, missing: ["Не выбраны группа и сила Миньона."] };
@@ -127,7 +132,10 @@ export function talentRequirements(master, group, tier) {
   if (charTotal < tierDef.req.char) {
     missing.push(`${groupDef.masterChar.toUpperCase()} ${charTotal} — нужно ${tierDef.req.char}`);
   }
-  if (tierDef.req.infamy && infamy < tierDef.req.infamy) {
+  // ignoreInfamy — Черта Архетипа «игнорирует требования по Inf для
+  // Миньонов-<группы>» (Змеиный Язык — люди, Ведун Тьмы — демоны): решает
+  // вызывающий по возможности minionInfamyWaiverFlag(group), см. ниже.
+  if (!ignoreInfamy && tierDef.req.infamy && infamy < tierDef.req.infamy) {
     missing.push(`Бесчестие ${infamy} — нужно ${tierDef.req.infamy}`);
   }
   // Навык проверяем подсказкой: степень владения хранится по-разному у разных
@@ -136,6 +144,15 @@ export function talentRequirements(master, group, tier) {
   const skillNote = `${groupDef.reqSkill} +${tierDef.req.skill}`;
 
   return { ok: !missing.length, missing, skillNote };
+}
+
+/**
+ * Возможность «игнорирует требования по Inf для Миньонов этой группы» —
+ * одно имя на группу (`minion.ignoreInfamy.human`, `.daemon`, `.beast`, `.machine`), выдаётся
+ * записью Конструктора на Черте Архетипа (module/constants/capabilities.mjs).
+ */
+export function minionInfamyWaiverFlag(group) {
+  return `minion.ignoreInfamy.${group}`;
 }
 
 // ── Бюджеты создания ──────────────────────────────────────────────────────

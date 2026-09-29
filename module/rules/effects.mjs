@@ -23,6 +23,7 @@ export const EFFECT_KINDS = {
   failDegMod:  ["target", "value"],   // доп. степени провала, если тест провален (wdbc-1rno)
   scriptTrigger: ["target", "side", "itemId", "entryId"], // автозапуск kind:"script" по исходу (wdbc-1rno)
   autoFail:    ["target"],            // тест провален без броска (Ослеплён — BS, wdbc-x1nz.2.89)
+  successDegMax: ["target", "value"], // потолок Успехов при Успехе (BONE-Head Огрина — тесты I)
   script:      ["code"]               // аварийный выход, см. docs/rules-format.md
 };
 

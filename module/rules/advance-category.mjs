@@ -12,6 +12,8 @@
 //
 //  Порядок приоритетов здесь тот же, по которому книга считает цену, и он
 //  задан ОДИН раз:
+//    0) расовый override «Враждебный» — Отвращение к Порядку Зверолюда делает
+//       враждебными ВСЕ группы Lore и Trade (сверка главы I, 28.09.2026);
 //    1) Ремесло и Общие знания — всегда Дружественные (стр. 58, 61);
 //    2) специализация, отмеченная Дружественной на Родном мире;
 //    3) расовый/субрасовый override (стр. субрас, «независимо от
@@ -58,10 +60,15 @@ export function charAdvanceCat(actor, charKey, charApts) {
  * @param {Set|Array} charApts      Склонности персонажа
  */
 export function skillAdvanceCat(actor, def, { group = "", specialty = "", skillKey = "", entryChar = "", entryApts = null } = {}, charApts) {
+  // Расовый «Враждебный» сильнее книжного «всегда Дружественный»: Отвращение
+  // к Порядку Зверолюда делает враждебными все Навыки групп Lore и Trade —
+  // и Общие знания с Ремеслом тоже (частное правило расы бьёт общее).
+  const override = resolveAptitudeOverride(actor, "skill", def?.label || def?.name || "", group, { specialty });
+  if (override === "enemy") return "enemy";
   if (def?.alwaysAlly) return "ally";
   if (group && isFriendlySpecialty(actor, group, specialty)) return "ally";
   const itemApts = [entryChar || def?.char, def?.apt2].filter(Boolean);
-  return resolveAptitudeOverride(actor, "skill", def?.label || def?.name || "", group, { specialty })
+  return override
       // cultureCat матчит по-английски (CULT.friendlySkills/hostileSkills в
       // legions.mjs) — def?.label русский и никогда бы не совпал (wdbc-ko14).
       ?? cultureCat("skill", def?.en || def?.label || def?.name || "", "", cultFxOf(actor))
@@ -96,9 +103,11 @@ export function advanceCatSource(actor, scope, key, { group = "", specialty = ""
   const grp  = group || (scope === "group" ? key : "");
 
   // ПОРЯДОК ЗДЕСЬ ОБЯЗАН СОВПАДАТЬ С skillAdvanceCat, иначе подпись объяснит
-  // не ту букву, которая нарисована (ревью 07.09.2026): у Ремесла с расовым
-  // override «Враждебный» буква осталась бы Д (alwaysAlly сильнее), а подпись
-  // рассказывала бы про Враждебность.
+  // не ту букву, которая нарисована (ревью 07.09.2026). Расовый «Враждебный»
+  // (Отвращение к Порядку Зверолюда) стоит ВПЕРЕДИ «всегда Дружественного».
+  const align = resolveAptitudeOverride(actor, "skill", name, grp, { specialty });
+  if (align === "enemy") return describe("override", align, aptitudeOverrideLabels(actor, "skill", name, grp, { specialty }));
+
   if (def?.alwaysAlly) return describe("book", "ally", ["Ремесло и Общие знания Дружественные всегда"]);
 
   // Дружественная специализация Родного мира — источник виден на листе
@@ -106,7 +115,6 @@ export function advanceCatSource(actor, scope, key, { group = "", specialty = ""
   if (grp && specialty && isFriendlySpecialty(actor, grp, specialty))
     return describe("homeworld", "ally", ["Родной мир"]);
 
-  const align = resolveAptitudeOverride(actor, "skill", name, grp, { specialty });
   if (align) return describe("override", align, aptitudeOverrideLabels(actor, "skill", name, grp, { specialty }));
 
   const cult = cultureCat("skill", def?.en || name, "", cultFxOf(actor));

@@ -37,7 +37,13 @@
 //      на непривязанном предмете, лежащем в списке предметов мира/папке.
 //    trait / talent: как в старой системе Выдач — sourceUuid/sourceName/
 //      sourceImg/sourceHasRating (драг-н-дроп) + rating (Черта) или
-//      specialization (Талант).
+//      specialization (Талант). Специализация «любые N»/«любой 1» — выбор
+//      при получении из перечня самого Таланта библиотеки, тем же диалогом/
+//      коллектором Мастера, что у Навыков (rules/talent-spec-choice.mjs,
+//      resolveTalentSpecChoice); выбранные ложатся одним Талантом через запятую.
+//    equipment choice: equipChoiceIds (закрытый список id) и equipBudgetMin
+//      (только в JSON: «до N» вместо «ровно N», Сплайс — 0–3 доп. адаптации);
+//      label непуст — им подписано окно выбора вместо «выбор — «Черты»».
 //    skill: skillScope:"plain"|"group", skillKey, specKey/specialty, rank.
 //      specKey:"__choice__" (wdbc-jo51-подобный приём) — «по выбору при
 //      получении»: specChoiceKeys — кандидаты, отмеченные автором,
@@ -238,6 +244,10 @@
 //      длительность окна (1d5 Ходов) — книжные константы, не поля записи: у
 //      обоих известных на 15.09.2026 предметов число одно и то же, заводить
 //      под него редактируемое поле было бы гаданием на будущее.
+//    trait.integralPreset: string[] (необязательно, только данными) — имена
+//      естественных атак, которые книга называет прямо в записи расы
+//      («Natural Weapons (1, Рога, Укус, Когти, Копыта)»): выданная Черта
+//      получает готовый выбор integralChosen, окно с галочками не всплывает.
 //    integralAttack: { equipSourceUuid, equipSourceName, equipSourceImg }
 //      → ВСТРОЕННАЯ АТАКА: то же создание предмета-оружия на акторе, что и у
 //      equipment режима "direct", но с двумя отличиями, ради которых она и
@@ -459,13 +469,15 @@ import { DURATION_UNITS, durationLabel, conditionEntryTerm, conditionHasLevelInp
 import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "../constants/legions.mjs";
 import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod, whenCondition, whenQuality, whenChosenEffect } from "../rules/mech-when.mjs";
 import { TIER_LABELS as WOUND_TIER_LABELS } from "../rules/wound-tier.mjs";
+import { grantedTraitFlags } from "../rules/trait-grant.mjs";
 import { INTEGRAL_CHOSEN_FLAG, RATING_TEMPLATE_FLAG, sourceRating, ratingTemplateOf, applyRatingTemplate,
-         optionalIntegralEntries, integralEntrySelected } from "../rules/integral-rating.mjs";
+         optionalIntegralEntries, integralEntrySelected, presetIntegralChoice } from "../rules/integral-rating.mjs";
 import { parseSubmutations } from "../rules/submutations.mjs";
 import { mechFormulaTotal, mechFormulaTotalSafe, mechRollData } from "../rules/mech-formula.mjs";
 import { hasEliteArchetype }                  from "../rules/predicates.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { TRAIT_LIB_PACKS, TALENT_LIB_PACKS } from "../constants/library-packs.mjs";
+import { anySpecCount, talentSpecOptions, withPickedSpecs } from "../rules/talent-spec-choice.mjs";
 
 const FLAG = "warhammer-dbc";
 // Подсказка полям «Значение»/«Рейтинг», принимающим формулу mech-formula.mjs
@@ -693,6 +705,13 @@ const REROLL_SCOPES = [
   // Запугивание и Пытки) — wdbc-zepq, Lord of the Exodites.
   ["morale",     "тесты Морали"],
   ["climbing",   "Карабканье"],
+  ["terrain",    "тест Трудного Ландшафта"],
+  // Импланты Механикум (сверка Архетипов 28.09.2026): «тесты работы с
+  // Ноосферой» (Ноосферное Подключение) и «тесты зарядки» Катушки Потенции
+  // (Электу-Индукторы) — свои ctx-флаги, как у Карабканья: оба идут по
+  // Tech-Use, а «skill:techUse» подхватил бы любой тест Техпользования.
+  ["noosphere",  "тесты работы с Ноосферой"],
+  ["coilCharge", "зарядка Катушки Потенции"],
   // Манифестация психосилы (wdbc-4bxa) — «power» само по себе уже область
   // («любая психосила»), имя (powerName) необязательно сужает до конкретной.
   ["power",      "манифестация психосилы"]
@@ -733,7 +752,9 @@ const CONDITION_MITIGATE_LABELS = Object.fromEntries(CONDITION_MITIGATE_UI);
 // величины у записи не показывается вовсе.
 const CONDITION_COUNTER_LABELS = { rounds: "раундов", level: "уровней", count: "штук" };
 const conditionCounterLabel = (key) => CONDITION_COUNTER_LABELS[CONDITIONS[key]?.counter] || "";
-const FATIGUE_THRESHOLD_CHARS = [["t", "Бонус Стойкости (T.b)"], ["wp", "Бонус Воли (WP.b)"]];
+const FATIGUE_THRESHOLD_CHARS = [["t", "Бонус Стойкости (T.b)"], ["wp", "Бонус Воли (WP.b)"],
+  // Enduring / Стойкий Репликанта — rules/fatigue-grace.mjs.
+  ["unt", "Рейтинг Сверхъест. Стойкости (Unnatural T)"]];
 // Действия над Свойством оружия (kind:"weaponProp"). increase/decrease появляются
 // в дропдауне только когда перетащенное свойство обладает рейтингом (см.
 // buildEntryFieldsHtml) — рейтинговых свойств большинство, но не все.
@@ -999,7 +1020,8 @@ export function blankMechEntry(kind = "characteristic") {
     rerollScope: "all", rerollChar: "ag", rerollMode: "keepBest",
     // testMod — «Модификатор теста»: тот же живой запрос, области общие
     // с «Перебросом» (rerollChar/skillKey переиспользуются как уточнение).
-    modScope: "all", modValueMode: "flat", modCharBonus: "inf",
+    // modAuto — «сам, без галочки» (rules/item-rules.mjs, wdbc-6rjtc.8).
+    modScope: "all", modValueMode: "flat", modCharBonus: "inf", modAuto: false,
     // Область «power» у reroll/testMod: пусто — любая манифестация, имя —
     // только эта психосила (wdbc-4umq: поле объявлено, как у сохранённых записей).
     powerName: "",
@@ -1073,6 +1095,11 @@ export function blankMechEntry(kind = "characteristic") {
     // modScope/rerollChar/skillKey переиспользуются как область — те же поля,
     // что у testMod/failDegMod.
     scriptTrigger: "",
+    // script — «При выдаче»: true = код срабатывает сам, когда предмет попал на
+    // актора (пассивные записи: стартовое расстройство, флаг Таланта). По умолчанию
+    // запись — только кнопка «▶ Запустить»; иначе кнопки с ценой и откатом
+    // срабатывали бы при выдаче Черты в Мастере создания.
+    scriptOnGrant: false,
     // when — необязательное условие по Геносемени, общее для ЛЮБОГО вида
     // записи (см. entryWhenOk ниже): пустой conditions = применяется всегда.
     // Несколько вариантов в conditions — ИЛИ («legion VII, ИЛИ legion X орден
@@ -1125,7 +1152,10 @@ export function describeMechEntry(entry) {
     case "trait": {
       if (!entry.sourceUuid) return "Черта: (перетащите предмет)";
       const rating = entry.rating !== "" && entry.rating != null ? ` (рейтинг ${entry.rating})` : "";
-      return `Черта: ${entry.sourceName || "?"}${rating}`;
+      // «Deadly Natural Weapons (X, Y)» — атаки выбраны записью (rules/trait-grant.mjs).
+      const picked = Array.isArray(entry.integralChosen) && entry.integralChosen.length
+        ? `, атаки выбраны: ${entry.integralChosen.length}` : "";
+      return `Черта: ${entry.sourceName || "?"}${rating}${picked}`;
     }
     case "talent": {
       if (!entry.sourceUuid) return "Талант: (перетащите предмет)";
@@ -1257,7 +1287,7 @@ export function describeMechEntry(entry) {
         : entry.modValueMode === "formula"
         ? `формула: ${entry.value}`
         : `${Number(entry.value) >= 0 ? "+" : ""}${entry.value}`;
-      return `Модификатор теста: ${scope} — ${val}`;
+      return `Модификатор теста: ${scope} — ${val}${entry.modAuto ? " (сам)" : ""}`;
     }
     case "failDegMod": {
       const scope = REROLL_SCOPE_LABEL({ ...entry, rerollScope: entry.modScope });
@@ -1299,12 +1329,16 @@ export function describeMechEntry(entry) {
     }
     case "fatigue": {
       if (entry.fatigueAction !== "threshold") return "Усталость: (действие не выбрано)";
+      if (entry.fatigueThresholdChar === "unt") return "Усталость: штрафов нет, пока она не выше рейтинга Unnatural T";
       const charLabel = entry.fatigueThresholdChar === "wp" ? "Воли" : "Стойкости";
       return `Усталость: штраф начинается с Бонуса ${charLabel} (вместо 1)`;
     }
     case "equipment": {
       const qty = Math.max(1, parseInt(entry.equipQty) || 1);
       if (entry.equipMode === "choice") {
+        // Подпись автора («Ген-Сплайс: Сенсорная адаптация») понятнее
+        // «выбор — «Черты» ×1» — её и видит игрок в окне выбора.
+        if (entry.label) return entry.label;
         const cat = GRANTABLE_CATEGORIES.find(c => c.pack === entry.equipCategoryPack)?.label ?? entry.equipCategoryPack;
         const bits = [];
         if (entry.equipCategoryPack === "weapons" && entry.equipWeaponType)
@@ -1935,6 +1969,35 @@ async function resolveEntrySpecChoice(entry) {
 }
 
 /**
+ * Талант «на выбор» (rules/talent-spec-choice.mjs): «Resistance (любые 2)» —
+ * варианты берутся у самого Таланта библиотеки, выбранные ложатся одной
+ * записью через запятую. Не «на выбор» или список Таланта не перечислим —
+ * запись как есть ([entry]); пропуск диалога — [] (Талант не выдаётся, как и
+ * пропущенный выбор Навыка).
+ */
+async function resolveTalentSpecChoice(entry) {
+  const need0 = anySpecCount(entry.specialization);
+  if (need0 == null) return [entry];
+  const src = await resolveMechSource(entry);
+  const options = talentSpecOptions(src?.system?.specialization);
+  if (!options) return [entry];
+  // Русская подпись варианта — тем же словарём, что у Мастера создания.
+  // Динамический импорт: creation.mjs через races.mjs сам тянет этот файл.
+  let ru = s => s;
+  try { ({ ruSpec: ru } = await import("./creation.mjs")); } catch { /* подпись останется английской */ }
+  const choices = options.map(o => {
+    const r = ru(o);
+    return { key: o, display: r && r !== o ? `${o} — ${r}` : o };
+  });
+  const need = Math.min(need0, choices.length);
+  const label = String(src?.name || entry.sourceName || "Талант").split("/").pop().trim();
+  const chosen = await showSpecChoiceDialog(label, choices, need);
+  const list = Array.isArray(chosen) ? chosen : (chosen ? [chosen] : []);
+  if (!list.length) return [];
+  return [withPickedSpecs(entry, list.map(c => c.key))];
+}
+
+/**
  * Применяет одну запись механики: создаёт ActiveEffect/предмет, правит навык,
  * либо исполняет код. `preAsked` — результат resolveEntrySpecChoice, уже
  * полученный ЗАРАНЕЕ через resolveDirectAsk (Promise.all соседей в
@@ -1973,6 +2036,14 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
       }
       return;
     }
+    entry = resolved[0];
+  }
+
+  // Талант «любые N» (rules/talent-spec-choice.mjs) — выбор специализаций до
+  // выдачи, тем же диалогом/коллектором Мастера, что у Навыков.
+  if (entry.kind === "talent" && anySpecCount(entry.specialization) != null) {
+    const resolved = preAsked ?? await resolveTalentSpecChoice(entry);
+    if (!resolved.length) return;
     entry = resolved[0];
   }
 
@@ -2035,7 +2106,8 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
   }
 
   if (entry.kind === "script") {
-    await executeItemCode(sourceItem, entry.code, null);
+    // Кнопки «▶ Запустить» при выдаче не срабатывают — только записи с «При выдаче».
+    if (entry.scriptOnGrant) await executeItemCode(sourceItem, entry.code, null);
     return;
   }
 
@@ -2141,7 +2213,9 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
       // Закрытый список id (equipChoiceIds): «1 мутация из списка» Мутанта.
       if (Array.isArray(entry.equipChoiceIds) && entry.equipChoiceIds.length) filters.ids = [...entry.equipChoiceIds];
 
-      const budget = normalizeBudget({ mode: entry.equipBudgetMode, value: entry.equipBudgetValue });
+      // equipBudgetMin — «до N» (Сплайс: 0–3 дополнительные адаптации),
+      // поле только в JSON пака, редактора в Конструкторе пока нет.
+      const budget = normalizeBudget({ mode: entry.equipBudgetMode, value: entry.equipBudgetValue, min: entry.equipBudgetMin });
       const picked = await openCompendiumBrowser(false, {
         pack: entry.equipCategoryPack, filters, budget,
         prompt: describeMechEntry(entry),
@@ -2352,8 +2426,16 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
     // работает по одному grantedByItem), а для ЖИВОЙ пересинхронизации:
     // syncGrantedAbilities ниже по нему отличает свою выдачу от чужой и от
     // копии, которую ГМ положил руками.
+    // Естественные атаки, названные книгой прямо в записи расы —
+    // «Natural Weapons (1, Рога, Укус, Когти, Копыта)» Зверолюда (по именам,
+    // entry.integralPreset) или «Deadly Natural Weapons (2, Когти.Р (на руках и
+    // ногах))» Гарпии (по id, entry.integralChosen, rules/trait-grant.mjs) —
+    // ставятся сразу, без окна; рейтинг-формула (Flyer (A.b×2)) — там же.
+    const preset = entry.kind === "trait"
+      ? presetIntegralChoice(data.flags?.[FLAG]?.mechanics || [], entry.integralPreset) : null;
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}),
-      grantedByItem: sourceItem.id, abilityEntryId: entry.id } };
+      ...grantedTraitFlags(entry), grantedByItem: sourceItem.id, abilityEntryId: entry.id,
+      ...(preset ? { [INTEGRAL_CHOSEN_FLAG]: preset } : {}) } };
     await actor.createEmbeddedDocuments("Item", [data]);
     return;
   }
@@ -2868,7 +2950,7 @@ export async function syncGrantedAbilities(sourceItem) {
     }
     if (e.kind === "talent" && e.specialization) data.system.specialization = e.specialization;
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}),
-      grantedByItem: sourceItem.id, abilityEntryId: e.id } };
+      ...grantedTraitFlags(e), grantedByItem: sourceItem.id, abilityEntryId: e.id } };
     toCreate.push(data);
   }
   if (toCreate.length) await actor.createEmbeddedDocuments("Item", toCreate);
@@ -3138,13 +3220,36 @@ async function _syncMechanicsEffects(item) {
  * диалог выбора одной) — общая для верхнеуровневых групп И ВЛОЖЕННЫХ
  * подгрупп (kind:"group"), рекурсия идёт через applyMechEntry ⇄ здесь.
  */
+/**
+ * Ветки ИЛИ-выбора, которые вообще можно выбрать: завершённые и прошедшие
+ * своё «Когда». Ветка, которую applyMechEntry всё равно отбросит по «Когда»
+ * (Дар чужого Бога-покровителя у Божественно Одарённого Нумена), в диалог
+ * не попадает — иначе выбор молча не давал ничего.
+ */
+export function orChoiceEntries(actor, entries, sourceItem) {
+  return (entries || []).filter(isEntryComplete).filter(e => entryWhenOk(actor, e, sourceItem));
+}
+
+/**
+ * Выбор в ИЛИ-группе уже сделан — по ВСЕМ её веткам, а не по прошедшим «Когда»
+ * (wdbc-6rjtc.5): Дар Кхорна, взятый при Покровителе Кхорн, остаётся выбором и
+ * после смены Покровителя — иначе следующая правка Механики выдала бы второй
+ * Дар или молча единственную оставшуюся ветку «мутация».
+ */
+function orChoiceMade(group, applied) {
+  return (group?.entries || []).filter(isEntryComplete).some(e => applied.has(e.id));
+}
+
 async function applyGroupEntries(actor, group, sourceItem, applied) {
-  const entries = (group?.entries || []).filter(isEntryComplete);
+  const isOr = group?.operator === "OR";
+  // Выбор делается ОДИН раз: если одна из веток уже отыграна, вопрос задан и
+  // отвечен — переспрашивать на каждой правке Механики нельзя.
+  if (isOr && orChoiceMade(group, applied)) return;
+  const entries = isOr
+    ? orChoiceEntries(actor, group?.entries, sourceItem)
+    : (group?.entries || []).filter(isEntryComplete);
   if (!entries.length) return;
-  if (group.operator === "OR" && entries.length > 1) {
-    // Выбор делается ОДИН раз: если одна из веток уже отыграна, вопрос задан и
-    // отвечен — переспрашивать на каждой правке Механики нельзя.
-    if (entries.some(e => applied.has(e.id))) return;
+  if (isOr && entries.length > 1) {
     const chosen = await showMechChoiceDialog(sourceItem, entries);
     if (chosen) await applyMechEntry(actor, chosen, sourceItem, true, applied);
   } else {
@@ -3160,6 +3265,9 @@ async function applyGroupEntries(actor, group, sourceItem, applied) {
     // в неизменном исходном порядке ниже. Порядок применения (и то, от чего
     // зависят «Когда» и общие поля вроде Порчи/Ран) не меняется — меняется
     // только момент, в который задаётся вопрос, а не момент записи.
+    // Единственная ветка ИЛИ (прочие отсеяло «Когда») — всё равно выбор:
+    // долговечной записи эффект заводит только выдача (fromChoice),
+    // пересборка syncMechanicsEffects ИЛИ-ветки не собирает.
     const picks = await Promise.all(entries.map(e => resolveDirectAsk(e, applied, sourceItem, actor)));
     for (let i = 0; i < entries.length; i++) {
       const pick = picks[i];
@@ -3167,9 +3275,9 @@ async function applyGroupEntries(actor, group, sourceItem, applied) {
       if (pick?.type === "or") {
         if (pick.chosen) await applyMechEntry(actor, pick.chosen, sourceItem, true, applied);
       } else if (pick?.type === "spec") {
-        await applyMechEntry(actor, entry, sourceItem, false, applied, pick.resolved);
+        await applyMechEntry(actor, entry, sourceItem, isOr, applied, pick.resolved);
       } else {
-        await applyMechEntry(actor, entry, sourceItem, false, applied);
+        await applyMechEntry(actor, entry, sourceItem, isOr, applied);
       }
     }
   }
@@ -3191,9 +3299,9 @@ async function applyGroupEntries(actor, group, sourceItem, applied) {
  */
 async function resolveDirectAsk(entry, applied, sourceItem, actor) {
   if (entry.kind === "group") {
-    const subEntries = (entry.group?.entries || []).filter(isEntryComplete);
-    if (entry.group?.operator !== "OR" || subEntries.length <= 1) return undefined;
-    if (subEntries.some(e => applied.has(e.id))) return undefined;
+    if (entry.group?.operator !== "OR" || orChoiceMade(entry.group, applied)) return undefined;
+    const subEntries = orChoiceEntries(actor, entry.group.entries, sourceItem);
+    if (subEntries.length <= 1) return undefined;
     return { type: "or", chosen: (await showMechChoiceDialog(sourceItem, subEntries)) || null };
   }
   // «Любой Навык» (__choice_any__, wdbc-2n5t) спрашивается тем же пакетным
@@ -3203,6 +3311,11 @@ async function resolveDirectAsk(entry, applied, sourceItem, actor) {
       && (entry.specKey === "__choice__" || entry.specKey === "__choice_any__")
       && !applied.has(entry.id) && entryWhenOk(actor, entry, sourceItem)) {
     return { type: "spec", resolved: await resolveEntrySpecChoice(entry) };
+  }
+  // Талант «любые N» — тем же пакетом, что Навыки «на выбор».
+  if (entry.kind === "talent" && anySpecCount(entry.specialization) != null
+      && !applied.has(entry.id) && entryWhenOk(actor, entry, sourceItem)) {
+    return { type: "spec", resolved: await resolveTalentSpecChoice(entry) };
   }
   return undefined;
 }
@@ -3639,7 +3752,8 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       <select class="mech-mod-valuemode" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${modeOpts}</select>
       ${valueField}
       <input type="text" class="mech-reroll-label" placeholder="подпись в диалоге" value="${esc(ent.label || "")}"
-             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>
+      <label class="mech-cc-check" title="Не галочка в окне броска, а сразу в Пороге — для навязанных штрафов (Poor.Q)"><input type="checkbox" class="mech-mod-auto" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.modAuto ? "checked" : ""} ${dis}/> сам, без галочки</label>`;
   }
 
   // «Доп. Провалы при провале» (kind:"failDegMod", wdbc-1rno: Sentient Cyst
@@ -3981,6 +4095,9 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
               title="Цена в пуле: списывается при успешном «▶ Запустить»">${poolOpts}</select>${costAmountHtml}
       <select class="mech-script-trigger" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Автозапуск по исходу теста" ${dis}>${triggerOpts}</select>
       ${triggerScopeHtml}
+      <label class="mech-script-ongrant-label" title="Запустить код сам, когда предмет попал на персонажа. Выключено — только кнопка «▶ Запустить».">
+        <input type="checkbox" class="mech-script-ongrant" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.scriptOnGrant ? "checked" : ""} ${dis}/> При выдаче
+      </label>
       <textarea class="mech-script-code" data-group-id="${groupId}" data-entry-id="${ent.id}" spellcheck="false" placeholder="// произвольный JS — item, actor, token, speaker, game, ui, ChatMessage, event" ${dis}>${esc(ent.code || "")}</textarea>`;
   }
 

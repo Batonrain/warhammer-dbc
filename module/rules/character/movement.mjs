@@ -16,6 +16,14 @@ import { uselessCount } from "../useless-limbs.mjs";
 import { isZeroedByLoss } from "../char-loss.mjs";
 import { inventoryOverloadTier } from "../encumbrance.mjs";
 import { disabledArmourOverloadTier, disabledArmourWeight } from "../../combat/armor-mods.mjs";
+import { hasRuleFlag } from "../flags.mjs";
+import { SURE_TREAD, sureTreadMovementCap } from "../squat-traits.mjs";
+import { flightSpeedOf } from "../flight-speed.mjs";
+import { mechRollData } from "../mech-formula.mjs";
+
+// Высоты «в воздухе» — те же, что combat/movement-actions.mjs::IN_FLIGHT_ALTITUDES
+// (отсюда тот модуль не импортируется: он тянет интерфейс и Foundry).
+const IN_FLIGHT = new Set(["ground", "low", "high"]);
 
 /**
  * @param {object} actor   актор — для предметов и флагов
@@ -28,7 +36,7 @@ import { disabledArmourOverloadTier, disabledArmourWeight } from "../../combat/a
  * @param {number} deps.traitSpeedMod     прямая прибавка к SPD от Черт/имплантов
  */
 export function prepareMovementDerived(actor, system, { chars, agBonus, traitSizeMod,
-                                                        traitSizeModNoSpd, traitSpeedMod }) {
+                                                        traitSizeModNoSpd, traitSpeedMod: walkSpeedMod }) {
   // ── Движение (авторасчёт) ─────────────────────────────────────────────
   // 0 = Человек; трейт Размера сдвигает SPD (прямой мод). Трейт «Size/Hulking»
   // выдаётся как embedded ActiveEffect с ключом system.sizeMod, фаза "initial"
@@ -52,6 +60,19 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   const stance  = system.meleeStance || "standard";
 
   let { spd, halfMove, move, charge, run } = calcMovement(agBonus, size);
+  // Полёт (Черты Flyer (X) / Hoverer (X), core.json «Трейты»): «используя SPD X
+  // вместо своей обычной скорости, игнорируя модификаторы Размера». Пока
+  // персонаж в воздухе (высота не «не летит», combat/movement-actions.mjs),
+  // база — X; X формулой (Гарпия: A.b×2) считается от текущих Бонусов
+  // (rules/flight-speed.mjs). Надбавки ходьбы (Черты «+SPD пешком» вроде
+  // Digitigrade, kind:"movement") к полёту не прибавляются — книга заменяет
+  // скорость целиком; штрафы Перевеса/Piercing ниже действуют как обычно.
+  const flightSpd = IN_FLIGHT.has(system.movement?.altitude)
+    ? flightSpeedOf(actor?.items ?? [], mechRollData(actor)) : null;
+  if (flightSpd !== null) {
+    spd = flightSpd;
+    halfMove = spd;  move = spd * 2;  charge = spd * 3;  run = spd * 6;
+  }
   // Снимок базового SPD (Ag.b + Размер, до модификаторов) — для breakdown
   // ниже (wdbc-zbiz), тем же приёмом, что charTotalTooltip у характеристик.
   const spdBase = spd;
@@ -60,7 +81,8 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   // system.movement.spdBonus — входное поле для kind:"movement" (Конструктор,
   // цель "SPD"), ставится ActiveEffect'ом в фазе "initial" (см. mechanics.mjs),
   // т.е. уже на месте к этому моменту расчёта.
-  const spdBonus = Number(system.movement.spdBonus) || 0;
+  const spdBonus = flightSpd !== null ? 0 : (Number(system.movement.spdBonus) || 0);
+  const traitSpeedMod = flightSpd !== null ? 0 : walkSpeedMod;
   // Перевес выключенной силовой брони (стр. 233) — SPD −1 с тира 1 и выше;
   // остальные последствия каскада (штраф теста, только Полное действие на
   // движение, Беспомощность) — не расчёт, а игровое событие, выведены
@@ -148,6 +170,12 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
     run      = halvedSpd * 6;
   }
 
+  // Надёжная Поступь (Скват): «не может двигаться пешком более 3×SPD в Ход»
+  // — Бег не длиннее Натиска (rules/squat-traits.mjs). После всех делений
+  // выше: потолок только опускает, поднять урезанное Поваленным он не может.
+  const sureTread = hasRuleFlag(actor, SURE_TREAD);
+  if (sureTread) ({ halfMove, move, charge, run } = sureTreadMovementCap({ halfMove, move, charge, run }));
+
   system.movement.halfMove = halfMove;
   system.movement.move     = move;
   system.movement.charge   = charge;
@@ -156,7 +184,9 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   // Черты/импланты, Конструктор (kind:"movement"), Перевес брони, Piercing,
   // Пружинящая Стойка. Полушаг = SPD×1, поэтому его breakdown суммируется в
   // halfMove без остатка (Полное/Натиск/Бег — те же слагаемые, ×2/3/6).
-  const spdBreakdown = [{ label: "База", value: spdBase, note: "Ag.b + Размер" }];
+  const spdBreakdown = [flightSpd !== null
+    ? { label: "Полёт", value: spdBase, note: "SPD X Черты Flyer/Hoverer, без Размера" }
+    : { label: "База", value: spdBase, note: "Ag.b + Размер" }];
   if (traitSpeedMod)           spdBreakdown.push({ label: "Черты/импланты",              value: traitSpeedMod });
   if (spdBonus)                spdBreakdown.push({ label: "Механика (Конструктор)",      value: spdBonus });
   if (overloadSpdMod)          spdBreakdown.push({ label: "Перевес выключенной брони",   value: overloadSpdMod });
@@ -184,6 +214,7 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
     expectedHalfMove = Math.floor(expectedHalfMove / 2);
   }
   if (expectedHalfMove !== halfMove) spdBreakdown.push({ label: "Минимум SPD", value: null, floor: 0.5 });
+  if (sureTread) spdBreakdown.push({ label: "Надёжная Поступь: Бег (пешком ≤3×SPD)", value: null, cap: run });
   system.movement.spdBreakdown = spdBreakdown;
 
 }

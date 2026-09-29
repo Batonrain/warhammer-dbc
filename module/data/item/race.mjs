@@ -31,6 +31,15 @@ export class RaceData extends foundry.abstract.TypeDataModel {
       // wdbc-8k0i: крупная База токена (3×3 вместо 2×2) — не путать с `size`
       // ниже (справочный бонус к SPD из характеристики «Размер»).
       largeBase:   new BooleanField({ initial: false, label: "Крупная База (3×3)" }),
+      // Столбец Cor таблицы «Стартовые Характеристики» (Зверолюд/Гарпия/Нага —
+      // 5). Не в `chars`: Порча — не Характеристика с полем base, а счётчик
+      // system.corruption.value, и все циклы по `chars` (сумма Мастера,
+      // сетка пикера) писали бы её в несуществующее characteristics.cor.
+      startCorruption: new NumberField({ initial: 0, integer: true, min: 0, label: "Стартовая Порча" }),
+      // «Архетипы: <раса> получает доступ к следующим Архетипам Людей: …» —
+      // ключи Архетипов (apostate, heresiarch…). Пусто — ограничения нет
+      // (Человек и расы, у которых книга списка не даёт).
+      archetypes:  new ArrayField(new StringField(), { label: "Доступные Архетипы" }),
       // Ниже — книжная справка: система по ней ничего не считает, но текст из
       // книги терять нельзя, поэтому он виден на листе расы.
       size:        new NumberField({ initial: 0, integer: true, label: "Размер" }),

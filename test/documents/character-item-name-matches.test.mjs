@@ -105,6 +105,16 @@ describe("Ловит на Лету / Fast Learner — реальное бигв�
     expect(characterWith({}, []).fastLearnerBonus).toBe(0);
   });
 
+  // Сплайс, Gene-Splice: «теряя +5% опыта от Трейта Fast Learner за каждую»
+  // дополнительную адаптацию (всё сверх трёх обязательных).
+  it("Сплайс: каждая адаптация сверх трёх снимает 5%", () => {
+    const adaptation = n => ({ id: `a${n}`, name: `Adaptation ${n}`, type: "trait", system: {},
+      getFlag: (scope, key) => (key === "spliceAdaptation" ? "sensory" : undefined) });
+    const fl = trait("Fast Learner / Ловит на Лету (X)", { rating: 15 });
+    expect(characterWith({}, [fl, adaptation(1), adaptation(2), adaptation(3)]).fastLearnerBonus).toBe(15);
+    expect(characterWith({}, [fl, adaptation(1), adaptation(2), adaptation(3), adaptation(4), adaptation(5)]).fastLearnerBonus).toBe(5);
+  });
+
   it("Талант с тем же именем (не trait) не считается", () => {
     const s = characterWith({}, [talent("Fast Learner / Ловит на Лету (X)", { rating: 15 })]);
     expect(s.fastLearnerBonus).toBe(0);

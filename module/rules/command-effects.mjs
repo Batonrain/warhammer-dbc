@@ -33,7 +33,34 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
-import { commandReachFor } from "./command.mjs";
+import { commandReachFor, PRESENCE_ORDER } from "./command.mjs";
+import { ORDER_NO_BRIEFING, actorCarriesCapability } from "./aversion-to-order.mjs";
+
+/**
+ * Pack Consciousness / Сознание Стаи (Йигори, корбук глава I): узел-стая
+ * (node.pack = {wp} — Отряд, где у всех бойцов эта Черта; помечает
+ * combat/command-state.mjs::commandNodesFor) «удваивает любые бонусы от
+ * Командования и всегда получает все три эффекта Командного Присутствия, даже
+ * без наличия Командира (наибольшая W среди членов стаи вместо W Командира)».
+ */
+export const PACK_BONUS_MULT = 2;
+
+/**
+ * Какое Присутствие действует у узла: отданное Командиром — одно выбранное
+ * преимущество; у стаи — все три всегда, W — большая из W Командира и
+ * наибольшей W стаи.
+ * @returns {{active:boolean, benefits:string[], wp:?number}}
+ */
+export function effectivePresence(node) {
+  if (node?.pack) {
+    const own = node.presenceWp == null ? null : Number(node.presenceWp);
+    const packWp = Number(node.pack.wp);
+    const wp = [own, Number.isFinite(packWp) ? packWp : null].filter(v => v != null);
+    return { active: true, benefits: [...PRESENCE_ORDER], wp: wp.length ? Math.max(...wp) : null };
+  }
+  const p = node?.presence ?? {};
+  return { active: !!p.active, benefits: p.benefit ? [p.benefit] : [], wp: node?.presenceWp ?? null };
+}
 
 const EVASION_SKILLS = new Set(["dodge", "parry"]);
 const SOCIAL = key => SKILLS_DEF[key]?.apt2 === "social";
@@ -151,32 +178,41 @@ export function commandRulesFor(actor, nodes, ctx = {}, { commandLost = false, i
 
   let bestShort = null, bestWill = null, bestCover = null, bravery = null;
   const ownWp = Number(actor.system?.characteristics?.wp?.total) || 0;
+  const noBriefing = actorCarriesCapability(actor, ORDER_NO_BRIEFING);
 
   for (const node of live) {
-    const reach = commandReachFor(actor.type, node.presence?.benefit || "", actor,
+    // Стая: все три преимущества сразу — доходимость каждого проверяется
+    // ниже по списку reach.presence, а не по одному выбранному ключу.
+    const pres = effectivePresence(node);
+    const mult = node.pack ? PACK_BONUS_MULT : 1;
+    const reach = commandReachFor(actor.type, node.pack ? "" : (node.presence?.benefit || ""), actor,
       { moraleLost: !!node.moraleLost || commandLost });
     // Проваливший Мораль (не Оглох/не без сознания, не Орда) слышит только
     // «Укрепление Морали» и «Храбрость».
     const moraleOnly = reach.moraleLost && !reach.blockedBy && actor.type !== "horde";
 
-    if (reach.commands || (moraleOnly && node.short?.key === "morale")) {
-      const v = shortCommandBonus(node.short, actor, ctx, identityUuids);
+    // Отвращение к Порядку (Зверолюд): «не может получать бонусов от
+    // предбоевых брифингов» — Короткая Команда по Брифингу (giverUuid
+    // "briefing", sheets/squad-sheet.mjs::_briefingUse) до него не доходит.
+    const briefingBlocked = node.short?.giverUuid === "briefing" && noBriefing;
+    if (!briefingBlocked && (reach.commands || (moraleOnly && node.short?.key === "morale"))) {
+      const v = shortCommandBonus(node.short, actor, ctx, identityUuids) * mult;
       if (v > 0 && (!bestShort || v > bestShort.value))
         bestShort = { value: v, label: `${SHORT_LABEL[node.short.key] || "Короткая Команда"} (${node.label})` };
     }
 
-    if (reach.presenceApplies && node.presence?.active && node.presence.benefit === "morale"
-        && isMoraleCtx(ctx) && node.presenceWp != null) {
-      const diff = Number(node.presenceWp) - ownWp;
+    if (reach.presenceApplies && pres.active && pres.benefits.includes("morale") && reach.presence.includes("morale")
+        && isMoraleCtx(ctx) && pres.wp != null) {
+      const diff = Number(pres.wp) - ownWp;
       if (diff > 0 && (!bestWill || diff > bestWill.value))
-        bestWill = { value: diff, label: `Воля Командира W ${node.presenceWp} (${node.label})` };
+        bestWill = { value: diff, label: `Воля ${node.pack ? "стаи" : "Командира"} W ${pres.wp} (${node.label})` };
     }
 
     const picks = node.detail?.active && Array.isArray(node.detail.picks) ? node.detail.picks : [];
     if (picks.includes("bravery") && (reach.commands || moraleOnly) && isMoraleCtx(ctx))
       bravery ??= { label: `Храбрость (${node.label})` };
     if (picks.includes("cover") && reach.commands && isEvasionCtx(ctx)) {
-      const v = (Number(node.detail.coverSuccesses) || 3) * 3;
+      const v = (Number(node.detail.coverSuccesses) || 3) * 3 * mult;
       if (!bestCover || v > bestCover.value) bestCover = { value: v, label: `Прикрытие (${node.label})` };
     }
   }
@@ -216,7 +252,8 @@ export function commandEffectNode(actor, nodes, key, { commandLost = false } = {
     const benefit = key.startsWith("presence:") ? key.slice(9) : (node.presence?.benefit || "");
     const reach = commandReachFor(actor?.type, benefit, actor, { moraleLost: !!node.moraleLost || commandLost });
     if (key.startsWith("presence:")) {
-      if (node.presence?.active && node.presence.benefit === benefit && reach.presenceApplies) return node;
+      const pres = effectivePresence(node);
+      if (pres.active && pres.benefits.includes(benefit) && reach.presenceApplies) return node;
       continue;
     }
     const picks = node.detail?.active && Array.isArray(node.detail.picks) ? node.detail.picks : [];

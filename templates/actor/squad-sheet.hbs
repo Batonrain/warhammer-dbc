@@ -69,6 +69,7 @@
           Под Командованием: <b>{{memberCount}}</b>{{#if capacity}} / {{capacity}}{{/if}}
         </span>
         {{#if presenceActive}}<span class="sq-chip sq-chip-on" title="Командное Присутствие активно">Присутствие</span>{{/if}}
+        {{#if pack}}<span class="sq-chip sq-chip-on" title="Сознание Стаи (Йигори): бонусы Команд вдвое, все три эффекта Командного Присутствия без Командира (W {{pack.wp}} — наибольшая в стае), Реакция члена стаи в 3 м на Уклонение">Стая Йигори</span>{{/if}}
         {{#if shortActive}}<span class="sq-chip sq-chip-on" title="{{shortLabel}}: +{{shortBonus}}">Кор. Команда +{{shortBonus}}</span>{{/if}}
         {{#if derived.broken}}<span class="sq-chip sq-chip-bad" title="Отрицательная Слаженность — члены отряда проходят тесты Сломленного Отряда">Сломленный Отряд</span>{{/if}}
       </div>

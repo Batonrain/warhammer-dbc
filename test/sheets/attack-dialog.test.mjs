@@ -564,12 +564,16 @@ describe("пересчёт порога в открытом окне", () => {
 
     const display = textNode();
     const form = attackForm({ "#atk-total-display": display, ".av-adv-hint": textNode() },
-      { ".atk-mod-cb[data-autofail]:checked": [checkbox(0)] });
+      { ".atk-mod-cb[data-autofail]:checked": [{
+        ...checkbox(0),
+        // подпись рядом с галочкой — как в разметке диалога
+        parentElement: { querySelector: () => ({ textContent: "🙈 Ослеплён — тест BS (провал)" }) }
+      }] });
     captured.rerender(form);
     expect(display.textContent).toBe("ПРОВАЛ");
 
     await captured.press("roll", form);
-    expect(captured.chat.at(-1).content).toContain("Автоматический провал (Ослеплён)");
+    expect(captured.chat.at(-1).content).toContain("Автоматический провал (Ослеплён — тест BS)");
     expect(captured.rolls).toHaveLength(0);
     await expect(p).resolves.toBeNull();
   });

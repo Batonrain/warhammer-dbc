@@ -20,9 +20,11 @@ function makeItem(flags = {}) {
   const item = {
     id: "p1", system: { isSustained: true },
     getFlag: (_s, k) => flags[k],
-    update: async data => Object.assign(item.system, {
-      isSustained: data["system.isSustained"] ?? item.system.isSustained
-    })
+    lastUpdate: null,
+    update: async data => {
+      item.lastUpdate = data;
+      Object.assign(item.system, { isSustained: data["system.isSustained"] ?? item.system.isSustained });
+    }
   };
   return item;
 }
@@ -61,6 +63,8 @@ describe("fruitOfFleshLockUuid — заточённую психосилу не�
     await html.handlers[".psy-sustain-cb:change"](ev);
 
     expect(item.system.isSustained).toBe(false);
+    // флаг замка не остаётся висеть — иначе вернётся на следующем поддержании
+    expect(item.lastUpdate).toHaveProperty(["flags.warhammer-dbc.-=fruitOfFleshLockUuid"], null);
   });
 
   it("без флага заточения — снятие поддержания как обычно, fromUuid не спрашивается", async () => {
@@ -78,5 +82,6 @@ describe("fruitOfFleshLockUuid — заточённую психосилу не�
 
     expect(item.system.isSustained).toBe(false);
     expect(asked).toBe(false);
+    expect(item.lastUpdate).not.toHaveProperty(["flags.warhammer-dbc.-=fruitOfFleshLockUuid"]);
   });
 });

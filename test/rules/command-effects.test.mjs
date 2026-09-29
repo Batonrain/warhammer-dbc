@@ -163,3 +163,45 @@ describe("остатки главы: Натиск, Залп, Дрессиров�
     expect(commandEffectNode({ ...soldier(), type: "horde" }, [p], "presence:focus")).toBe(null);
   });
 });
+
+// Pack Consciousness / Сознание Стаи (Йигори, сверка главы I): «сработавшиеся
+// друг с другом Йигори удваивают любые бонусы от Командования и всегда
+// получают все три эффекта Командного Присутствия, даже без наличия Командира
+// (используя наибольшее значение W среди членов стаи вместо W Командира)».
+// Узел-стаю помечает combat/command-state.mjs (node.pack) — здесь чистая часть.
+describe("стая Йигори (node.pack)", () => {
+  const pack = (over = {}) => node({ pack: { wp: 45 }, presenceWp: null, ...over });
+
+  it("Короткая Команда вдвое: Воодушевление 4 → +8", () => {
+    const n = pack({ short: { active: true, key: "inspire", successes: 4 } });
+    expect(bonusOf(commandRulesFor(soldier(), [n], ATTACK))).toBe(8);
+  });
+
+  it("«Прикрытие» вдвое: 3 Успеха → +18 к Избеганию", () => {
+    const n = pack({ detail: { active: true, picks: ["cover"], coverSuccesses: 3 } });
+    expect(bonusOf(commandRulesFor(soldier(), [n], DODGE))).toBe(18);
+  });
+
+  it("Воля Командира без отданного Присутствия и без Командира: W наибольшая в стае", () => {
+    const n = pack(); // presence.active:false, presenceWp:null
+    const rules = commandRulesFor(soldier(), [n], MORALE);
+    expect(rules.find(r => r.id === "command.presenceWill")?.effects[0].value).toBe(15); // 45 − 30
+  });
+
+  it("Концентрация огня и Экстр. урон — эффекты Присутствия есть всегда", () => {
+    const n = pack();
+    expect(commandEffectNode(soldier(), [n], "presence:focus")).toBe(n);
+    expect(commandEffectNode(soldier(), [n], "presence:extreme")).toBe(n);
+  });
+
+  it("без стаи — как было: Присутствие не отдано, эффектов нет", () => {
+    const n = node({ short: { active: true, key: "inspire", successes: 4 } });
+    expect(bonusOf(commandRulesFor(soldier(), [n], ATTACK))).toBe(4);
+    expect(commandEffectNode(soldier(), [n], "presence:focus")).toBe(null);
+  });
+
+  it("Оглох — до бойца стаи тоже ничего не доходит", () => {
+    const n = pack();
+    expect(commandEffectNode(soldier({ conditions: { deafened: true } }), [n], "presence:focus")).toBe(null);
+  });
+});

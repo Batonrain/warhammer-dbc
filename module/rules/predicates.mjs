@@ -11,6 +11,7 @@ import { raceMatches } from "./race.mjs";
 import { hordeSizeFor } from "./horde-damage.mjs";
 import { hasPathGrade } from "../constants/aeldari-paths.mjs";
 import { anyTargetMatches } from "./talent-targets.mjs";
+import { isSerpentine } from "./naga-traits.mjs";
 
 /** Значение условия к списку: строка считается списком из одного элемента. */
 const list = v => (v == null ? [] : Array.isArray(v) ? v : [v]);
@@ -92,6 +93,23 @@ function nameForms(item) {
 /** Имя Черты-метки Пустоты Парии (packs-src/traits/Трейты_рас, PariahVoidZone01). */
 export const PARIAH_VOID_TRAIT = "In the Pariah's Void";
 
+/**
+ * Поле Haywire там, где стоит актор (BONE-Head Огрина, wdbc: сверка расы
+ * Огрин). Два источника: Черта-метка ауры Дискорданта — книга: «электрические
+ * устройства отключаются как в поле Haywire (7)» — и попадание оружием с
+ * Haywire, чей бросок мощности пишется флагом актора (combat/bone-head.mjs,
+ * затухает на 2 за Раунд). Берётся сильнейшее.
+ */
+export const DISCORDANT_FIELD_TRAIT = "In the Discordant's Field";
+export const DISCORDANT_HAYWIRE_INTENSITY = 7;
+export const HAYWIRE_FIELD_FLAG = "haywireField";
+
+export function haywireFieldIntensity(actor) {
+  const stored = Number(actor?.flags?.["warhammer-dbc"]?.[HAYWIRE_FIELD_FLAG]) || 0;
+  const aura = actor && hasNamed(actor, DISCORDANT_FIELD_TRAIT) ? DISCORDANT_HAYWIRE_INTENSITY : 0;
+  return Math.max(0, stored, aura);
+}
+
 function isDaemonActor(actor) {
   if (!actor) return false;
   if (actor.type === "daemon" || actor.type === "demonPrince") return true;
@@ -170,6 +188,24 @@ const GAS_PROTECTION_NAMES = ["Respirator", "Gas Mask"];
 export function wearsGasProtection(actor) {
   return (actor?.items ?? []).some(i =>
     i?.type === "gear" && i?.system?.equipped && GAS_PROTECTION_NAMES.some(n => itemHasName(i, n)));
+}
+
+// Обувь (Barefoot / Босоногий Ратлинга: «Когда Ратлинг не носит обувь…»).
+// Отдельного слота «ноги» у снаряжения в системе нет, поэтому признак — то,
+// что на листе действительно видно: надетая броня с AP на ноге (доспех с
+// поножами/сапогами — Флак, Панцирь, Силовая) или надетые Маг-Сапоги
+// (gear, «Мобильность»). Плащи и робы с AP на ногах тоже сойдут за обувь —
+// грубость признака осознанная, см. отчёт по Ратлингу (вопрос владельцу).
+const FOOTWEAR_GEAR_NAMES = ["Mag Boots"];
+
+/** Обут ли актор: надетая броня, закрывающая ноги, или надетые сапоги-снаряжение. */
+export function wearsFootwear(actor) {
+  return (actor?.items ?? []).some(i => {
+    if (!i?.system?.equipped) return false;
+    if (i.type === "armor") return (Number(i.system.leftLeg) || 0) > 0 || (Number(i.system.rightLeg) || 0) > 0;
+    if (i.type === "gear") return FOOTWEAR_GEAR_NAMES.some(n => itemHasName(i, n));
+    return false;
+  });
 }
 
 /**
@@ -292,7 +328,8 @@ export const CTX_DEPENDENT_PREDICATES = new Set([
   "targetHasTrait", "targetLacksCondition", "targetHasCondition",
   "targetHasSize", "targetKeepsNimbleInArmour", "targetHasFaction",
   "targetHasFieldPsyMod", "targetLacksSealedArmour", "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus", "hasHatredTarget",
-  "legacyGuardianMarked", "targetPsykerOrDaemon"
+  "targetSerpentine",
+  "legacyGuardianMarked", "targetPsykerOrDaemon", "targetIsAstartes"
 ]);
 
 export const PREDICATES = {
@@ -321,6 +358,10 @@ export const PREDICATES = {
   // Механики (when.requireSealedArmour/negateSealedArmour, mech-when.mjs,
   // wdbc-1rno: «без гермодоспеха» у Миазм и подобных).
   wearsSealedArmour,
+
+  // Обут ли (Barefoot / Босоногий Ратлинга): `true` — обут, `false` — босиком.
+  // Запись Конструктора ставит when.predicates: { wearsFootwear: false }.
+  wearsFootwear: (actor, ctx, value) => wearsFootwear(actor) === (value !== false),
 
   // Уровень Ранения (documents/actor.mjs, rules/wound-tier.mjs): healthy/light/
   // heavy/dying, тот же ключ, что подписан в блоке РАНЫ на листе. Список — «в
@@ -352,11 +393,20 @@ export const PREDICATES = {
 
   hasTalent: (actor, ctx, value) => hasNamed(actor, value),
   hasTrait:  (actor, ctx, value) => hasNamed(actor, value),
+  // «НЕТ ни одной из этих Черт/Талантов» (сверка главы I, Зверолюд): Символ
+  // Власти Шамана снимает часть Отвращения к Порядку — записи Черты гейтятся
+  // `when.predicates: { lacksTrait: "Symbol of Power" }`. Список — «ни одной
+  // из», зеркально hasTrait (там список — «все»).
+  lacksTrait: (actor, ctx, value) => !list(value).some(name => hasNamed(actor, name)),
 
   // Пустота Парии (rules/null-zones.mjs) — по Черте-метке, которую выдаёт
   // аура, а НЕ через hasRuleFlag: флаг собирается тем же движком правил, и
   // условие правила, спрашивающее флаг, зациклило бы сбор.
   inPariahVoid: (actor, ctx, value) => hasNamed(actor, PARIAH_VOID_TRAIT) === (value !== false),
+
+  // Стоит в поле Haywire мощностью не ниже value (BONE-Head Огрина: 3+ —
+  // автопровал тестов I). См. haywireFieldIntensity выше.
+  haywireFieldMin: (actor, ctx, value) => haywireFieldIntensity(actor) >= Number(value),
 
   // Демон — тип актора или Черта Daemonic («Демоны получают штраф −30…»).
   isDaemon: (actor, ctx, value) => isDaemonActor(actor) === (value !== false),
@@ -365,6 +415,18 @@ export const PREDICATES = {
   targetPsykerOrDaemon: (actor, ctx, value) => {
     const t = ctx?.targetActor;
     const hit = !!t && ((Number(t.system?.psyker?.rating) || 0) >= 1 || isDaemonActor(t));
+    return hit === (value !== false);
+  },
+
+  // Цель (или источник) теста — Космодесантник: раса с учётом Прошлого или
+  // Черта «Astartes» — тот же признак, что rules/legacy-weapon.mjs::isAstartes.
+  // Источник теста Морали (Страх) едет в том же ctx.targetActor
+  // (rules/morale-test.mjs), поэтому «целью или источником которого»
+  // (Angel Hunters, Йигори) — одно условие.
+  targetIsAstartes: (actor, ctx, value) => {
+    const t = ctx?.targetActor;
+    const hit = !!t && (raceMatches(t.system, "astartes")
+      || [...(t.items ?? [])].some(i => i?.type === "trait" && itemHasName(i, "Astartes")));
     return hit === (value !== false);
   },
 
@@ -470,6 +532,10 @@ export const PREDICATES = {
   // обладателей Таланта (игрок выбирает его сам), поэтому читается не
   // литерал из данных условия, а собственный `system.targets` предмета.
   hasHatredTarget: (actor, ctx) => anyTargetMatches(hatredTargetsOf(actor), ctx),
+
+  // Безграничное Тщеславие Наги (rules/library/naga.mjs): цель броска —
+  // змееподобное существо (Нага, Сслит, мутант со змеиной субмутацией).
+  targetSerpentine: (actor, ctx) => isSerpentine(ctx?.targetActor),
 
   // Avatar of Slaughter/Аватар Резни (wdbc-sk8s): цель провалила тест W−10
   // против Берсерка → до конца боя −20 на атаки/манёвры, НЕ направленные на

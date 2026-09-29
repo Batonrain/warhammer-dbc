@@ -28,6 +28,7 @@ import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { conditionLevelField } from "../constants/conditions.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { hollowBonesTb } from "../rules/hollow-bones.mjs";
 import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
 import { inPariahVoid } from "../rules/null-zones.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
@@ -53,6 +54,7 @@ import { CONDITIONS_DEF } from "../constants/conditions.mjs";
 import { reaperLegacyButtonHtml } from "./legacy-weapon-reaper.mjs";
 import { braveHeartLegacyButtonHtml } from "./legacy-weapon-brave-heart.mjs";
 import { legacyHatredShieldApForLocation } from "../rules/legacy-weapon.mjs";
+import { applyHaywireToBoneHead } from "./bone-head.mjs";
 
 /** Электродуга Best.Q «Электрическая регенерация» (wdbc-3hgd0). */
 export const ELECTRIC_REGENERATION = "implant.electricArc.regeneration";
@@ -218,7 +220,11 @@ async function _applyHaywire(actor, rating, damage2 = "") {
   const text = (isStorm && damage2)
     ? tier.text.replace(/1d5\+1 непоглощ\. E Dmg\.$/, `${damage2} непоглощ. E Dmg (книжный нестандартный урон этого предмета).`)
     : tier.text;
-  return `<div class="dmg-tb-note">📡 ЭМИ${rating ? ` (радиус ${rating} м)` : ""}: 1d10=<b>${total}</b> → <b>${tier.label}</b>. ${text}</div>`;
+  // BONE-Head Огрина (wdbc, сверка расы Огрин): та же мощность поля сбивает
+  // мозговой имплант — 3+ автопровал тестов I, 7+ Ступор (combat/bone-head.mjs).
+  // rating — радиус поля: вышедший за него Огрин освобождается сам.
+  const boneHeadNote = await applyHaywireToBoneHead(actor, total, rating);
+  return `<div class="dmg-tb-note">📡 ЭМИ${rating ? ` (радиус ${rating} м)` : ""}: 1d10=<b>${total}</b> → <b>${tier.label}</b>. ${text}</div>${boneHeadNote}`;
 }
 
 // ─── Маппинг места попадания → поле брони актора ──────────────────────────────
@@ -871,6 +877,7 @@ export async function applyDamageToActor(actor, damageData) {
   const actorUpdate = {};
 
   let tb, armorAP, effArmorAP, totalAbsorption;
+  let hollowBonesHalved = false;
   // Адаптация (wdbc-q0q8): бонус, накопленный ПРЕДЫДУЩИМИ попаданиями этого
   // же вида урона — читается напрямую (см. adaptation.mjs, почему не через
   // vsType/vsSubtype листа). Книга: «+1 к Поглощению», а не к AP брони —
@@ -918,6 +925,8 @@ export async function applyDamageToActor(actor, damageData) {
       tb -= Math.min(felling, Math.max(0, unnaturalT));
       tb  = Math.max(0, tb);
     }
+    // Hollow Bones / Пустые Кости (Гарпия): T.b вдвое (окр.▲) против I(Cr).
+    ({ tb, halved: hollowBonesHalved } = hollowBonesTb(actor, tb, damageSubtype));
     if (ignoreArmour) {
       // Заломить (стр. 12): урон "игнорирующий броню" — AP этой локации не
       // считается вовсе (свойства брони/Руны/Копьё/Отскок в Укрытие сюда тоже
@@ -1385,6 +1394,7 @@ export async function applyDamageToActor(actor, damageData) {
   if (primitive)   propNotes.push("Примитивное: броня ×2");
   if (felling > 0) propNotes.push(`Разящее ${felling}: −Сверхъест. T`);
   if (touchOfPainIgnoreTb) propNotes.push("Касание Боли: T.b Поглощения проигнорирован");
+  if (hollowBonesHalved) propNotes.push("Пустые Кости: T.b вдвое (окр.▲) против I(Cr)");
   if (adaptBonus > 0) propNotes.push(`Адаптация: +${adaptBonus} Поглощения`);
   if (ignoreShield && !warpSoak) propNotes.push("Омывание: щит проигнорирован");
   if (ignoreArmour && !warpSoak) propNotes.push("Приём Борьбы: броня проигнорирована");

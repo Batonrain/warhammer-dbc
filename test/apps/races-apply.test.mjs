@@ -135,12 +135,40 @@ describe("applySubrace снимает Черты по removesTraits", () => {
   }
 
   it("снимает Черту, записанную в removesTraits только английской половиной имени", async () => {
-    const natural = traitItem("nat-1", "Natural Weapons / Естественное Оружие");
-    const actor = actorStub([natural]);
+    const aversion = traitItem("av-1", "Aversion to Order / Отвращение к Порядку");
+    const actor = actorStub([aversion]);
 
     await applySubrace(actor, "tzaangor");
 
-    expect(actor.deleted).toContain("nat-1");
+    expect(actor.deleted).toContain("av-1");
+  });
+
+  // Сверка главы I: Тзаангор снимает только Natural Weapons (Рога, Когти) —
+  // Укус и Копыта остаются. Сама Черта на листе, из её выбора вычёркиваются
+  // Рога и Когти, их оружие удаляется.
+  it("«Natural Weapons (Рога, Когти)» — снимает только рога и когти, Черта остаётся", async () => {
+    const entry = (id, name) => ({ id, kind: "integralAttack", equipOptional: true,
+      equipSourceUuid: `Compendium.x.${id}`, equipSourceName: name });
+    const mech = [{ id: "g", operator: "AND", entries: [
+      entry("e-horn", "Horns (Natural Weapons) / Рога (Естественное Оружие)"),
+      entry("e-bite", "Bite (Natural Weapons) / Укус (Естественное Оружие)"),
+      entry("e-claw", "Claws (Natural Weapons) / Когти (Естественное Оружие)"),
+      entry("e-hoof", "Hooves (Natural Weapons) / Копыта (Естественное Оружие)")] }];
+    const flags = { mechanics: mech, integralChosen: ["e-horn", "e-bite", "e-claw", "e-hoof"] };
+    const natural = { id: "nat-1", type: "trait", name: "Natural Weapons / Естественное Оружие",
+      getFlag: (_s, k) => flags[k], setFlag: async (_s, k, v) => { flags[k] = v; } };
+    const weapon = (id, entryId) => ({ id, type: "weapon", name: id,
+      getFlag: (_s, k) => ({ grantedByItem: "nat-1", equipEntryId: entryId })[k] });
+    const actor = actorStub([natural, weapon("w-horn", "e-horn"), weapon("w-bite", "e-bite"),
+      weapon("w-claw", "e-claw"), weapon("w-hoof", "e-hoof")]);
+
+    await applySubrace(actor, "tzaangor");
+
+    expect(actor.deleted).not.toContain("nat-1");
+    expect(actor.deleted).toEqual(expect.arrayContaining(["w-horn", "w-claw"]));
+    expect(actor.deleted).not.toContain("w-bite");
+    expect(actor.deleted).not.toContain("w-hoof");
+    expect(flags.integralChosen).toEqual(["e-bite", "e-hoof"]);
   });
 
   it("не трогает похожую по названию, но другую Черту", async () => {

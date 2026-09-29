@@ -133,6 +133,17 @@ export const RIG_COMFORT_HINT = {
 const NS = "warhammer-dbc";
 const FLAG = "stowage";
 
+/**
+ * Take Everything / Забирай Всё (Пират, корбук глава I). [книга] «Он может
+ * нести на себе до своего веса ношения предметов, независимо от разгрузки,
+ * считая все на удобных разгрузках». Возможность выдаёт запись Конструктора
+ * на Черте; окно Разгрузки (apps/rig-manager.mjs) передаёт её сюда в
+ * rigManagerData: неудобство слотов снимается, неразмещённое помечается как
+ * «несётся как на удобной разгрузке». Предел — вес Ношения, его и так
+ * считает общий Перевес (combat/encumbrance.mjs).
+ */
+export const TAKE_EVERYTHING_FLAG = "trait.takeEverything";
+
 // Мелочь, надетая прямо на другой предмет (визор на шлеме, крепление на
 // броне) — system.wornOn у gear указывает на существующий предмет-носитель
 // (оружие/броню того же актора). Пока носитель на месте, вещь не нужно
@@ -166,7 +177,7 @@ export function isValidStowLoc(loc, rigs) {
  * текущего occ по-прежнему исключён явно — своим же содержимым его не
  * «заменить».
  */
-export function rigManagerData(actor) {
+export function rigManagerData(actor, { takeEverything = false } = {}) {
   const stow = actor.getFlag(NS, FLAG) || {};
   const items = actor.items;
 
@@ -185,7 +196,9 @@ export function rigManagerData(actor) {
   const wsum = (arr) => Math.round(arr.reduce((a, i) => a + wt(i), 0) * 100) / 100;
 
   const rigViews = rigs.map(rig => {
-    const comfort = rig.system?.rig?.comfort || "normal";
+    // Забирай Всё (Пират): «всё как на удобных разгрузках» — неудобство
+    // разгрузки для него не действует (см. TAKE_EVERYTHING_FLAG).
+    const comfort = takeEverything ? "normal" : (rig.system?.rig?.comfort || "normal");
     const comfortHint = RIG_COMFORT_HINT[comfort] || "";
     const canQuickDraw = comfort === "normal";        // неудобные не дают Quick Draw
     const backSlot = !!rig.system?.rig?.backSlot;
@@ -232,6 +245,7 @@ export function rigManagerData(actor) {
   return {
     actorName: actor.name, hasRigs: rigViews.length > 0, rigs: rigViews, unassigned,
     backConflict: backCount > 1,
+    takeEverything: !!takeEverything,
     unassignedWeight: wsum(stowable.filter(i => !isValidStowLoc(locOf(i.id), rigs)))
   };
 }

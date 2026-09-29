@@ -21,7 +21,27 @@ import { registerRuleSource } from "../rules/source-registry.mjs";
 import { commandRulesFor, braveryActive, moraleCommandActive, commandEffectNode,
          syncAssaultBonus, volleySuppressionMod } from "../rules/command-effects.mjs";
 import { commandReachFor } from "../rules/command.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { isItemActive } from "../apps/effects.mjs";
+import { NO_COMMAND_CAPABILITY } from "../rules/naga-traits.mjs";
+
+/**
+ * Не принимает Командования (Безграничное Тщеславие, rules/naga-traits.mjs).
+ * Прямой скан записей Конструктора, а не hasRuleFlag: commandNodesFor зовёт
+ * сам источник правил «command», и спрашивать реестр правил отсюда — круг
+ * (collectRules → «command» → commandNodesFor → collectRules…).
+ */
+export function refusesCommand(actor) {
+  for (const item of actor?.items ?? []) {
+    const groups = item?.flags?.["warhammer-dbc"]?.mechanics;
+    if (!Array.isArray(groups)) continue;
+    const grants = groups.some(g => (g.entries || []).some(
+      e => e?.kind === "capability" && e.capabilityKey === NO_COMMAND_CAPABILITY));
+    if (grants && isItemActive(item)) return true;
+  }
+  return false;
+}
 
 const NS = "warhammer-dbc";
 const SOCKET = "system.warhammer-dbc";
@@ -110,6 +130,28 @@ function squadGiver(squad) {
   return { active, willOf };
 }
 
+/**
+ * Pack Consciousness / Сознание Стаи (Йигори): возможность на Черте.
+ * hasRuleFlag здесь безопасен — он собирает правила с пустым контекстом, а
+ * источник «command» ниже на пустом контексте ничего не отдаёт, так что круга
+ * «сбор правил → узлы командования → сбор правил» нет.
+ */
+export const PACK_CAPABILITY = "command.packConsciousness";
+
+/**
+ * Стая: Отряд, где у ВСЕХ бойцов состава есть Сознание Стаи («сработавшиеся
+ * друг с другом Йигори»). Командир на посту в счёт не идёт — книга прямо
+ * говорит «даже без наличия Командира». W стаи — наибольшая среди бойцов.
+ * @returns {?{wp:number}} null — не стая
+ */
+export function packOf(squad) {
+  const members = Array.isArray(squad?.system?.members) ? squad.system.members : [];
+  if (!members.length) return null;
+  const docs = members.map(m => resolve(m.uuid));
+  if (docs.some(d => !d || !hasRuleFlag(d, PACK_CAPABILITY))) return null;
+  return { wp: Math.max(...docs.map(d => Number(d.system?.characteristics?.wp?.total) || 0)) };
+}
+
 /** Провалил ли актор тест Морали недавно: этот и следующий Раунд того же боя. */
 export function commandLostActive(actor, combat = game.combat) {
   const f = actor?.getFlag?.(NS, COMMAND_LOST_FLAG);
@@ -124,6 +166,10 @@ export function commandLostActive(actor, combat = game.combat) {
  */
 export function commandNodesFor(actor) {
   if (!actor?.uuid || typeof game === "undefined") return [];
+  // Безграничное Тщеславие Наги: «не может признавать ничьего авторитета и
+  // получать преимущества Командования (даже от координатора)» — над ним
+  // нет ни одного узла командования, значит не доходит ничего.
+  if (refusesCommand(actor)) return [];
   const nodes = [];
   for (const squad of game.actors ?? []) {
     if (squad.type !== "squad") continue;
@@ -132,6 +178,9 @@ export function commandNodesFor(actor) {
     if (idx < 0) continue;
     const { active, willOf } = squadGiver(squad);
     const cap = active ? (Number(active.system?.characteristics?.fel?.bonus) || 0) * 2 : Infinity;
+    // Стая Йигори — только для бойца, у которого Черта есть сама (packOf
+    // проверяет весь состав, включая его, но спросить дешевле с него).
+    const pack = hasRuleFlag(actor, PACK_CAPABILITY) ? packOf(squad) : null;
     nodes.push({
       sourceUuid: squad.uuid,
       label: `Отряд «${squad.name}»`,
@@ -140,7 +189,8 @@ export function commandNodesFor(actor) {
       short: squad.system.shortCommand ?? {},
       detail: squad.system.detailCommand ?? {},
       moraleLost: !!members[idx].moraleLost,
-      overCapacity: idx >= cap
+      overCapacity: idx >= cap,
+      pack
     });
   }
   const by = actor.getFlag?.(NS, "commandedBy");
@@ -251,7 +301,7 @@ export async function expireCommandsAtTurnStart(combat) {
 /** Конец боя: Присутствие («до конца боя») и всё отданное гаснут, метки Морали снимаются. */
 export async function clearCommandsOnCombatEnd(combat) {
   // Все uuid бойцов: в Отряде мировой актор, в бою — актор несвязанного токена.
-  const inCombat = new Set((combat?.combatants ?? []).flatMap(c => [...actorIdentityUuids(c.actor)]));
+  const inCombat = new Set([...(combat?.combatants ?? [])].flatMap(c => [...actorIdentityUuids(c.actor)]));
   const touches = squad => {
     const p = squad.system.posts || {};
     return [p.leader?.uuid, p.commander?.uuid, p.coordinator?.uuid, ...(squad.system.members || []).map(m => m.uuid)]
@@ -503,7 +553,8 @@ export async function afterSubordinateAttack(actor, { isMelee, isThrown, defende
     const mates = new Set(nodeMatesOf(actor, node).map(d => d.uuid));
     const allies = me ? friendlyContactTokenDocs(me).filter(t => mates.has(t.actor?.uuid)).length : 0;
     if (!allies) return;
-    const bonus = syncAssaultBonus(allies);
+    // Стая Йигори удваивает любые бонусы Командования (Сознание Стаи).
+    const bonus = syncAssaultBonus(allies) * (node.pack ? 2 : 1);
     await ChatMessage.create({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: `<div class="wh-roll-result sq-chat"><div class="roll-header">Синхронный Натиск — ${esc(actor.name)}</div>
@@ -559,9 +610,14 @@ export async function markVolleyAimUsed(actor) {
  * «Прикрытие»: нет своей Реакции на Избегание — берётся Реакция соратника по
  * тому же узлу в пределах 3 м («с их разрешения» — стол вправе отменить,
  * имя одолжившего пишется в чат). @returns {Promise<?Actor>} одолживший
+ *
+ * dodge:true — Уклонение: Сознание Стаи (Йигори) даёт ту же Реакцию члена
+ * стаи в 3 м и без «Прикрытия» («могут использовать для Уклонений Реакции
+ * других членов стаи в пределах 3м (с их разрешения), если исчерпали свои»).
  */
-export async function borrowCoverReaction(actor) {
-  const node = commandEffectOn(actor, "cover");
+export async function borrowCoverReaction(actor, { dodge = false } = {}) {
+  const node = commandEffectOn(actor, "cover")
+    ?? (dodge ? commandNodesFor(actor).find(n => n.pack && !n.overCapacity) ?? null : null);
   if (!node) return null;
   const me = tokenOf(actor);
   if (!me) return null;
@@ -575,7 +631,7 @@ export async function borrowCoverReaction(actor) {
     if (!await spendReaction(mate, { forDefense: true })) continue;
     await ChatMessage.create({
       speaker: ChatMessage.getSpeaker({ actor }),
-      content: `<div class="wh-roll-result sq-chat"><div class="roll-threshold">Прикрытие: <b>${esc(mate.name)}</b> отдаёт свою Реакцию — ${esc(actor.name)} избегает атаки.</div></div>`
+      content: `<div class="wh-roll-result sq-chat"><div class="roll-threshold">${node.pack && !node.detail?.picks?.includes?.("cover") ? "Сознание Стаи" : "Прикрытие"}: <b>${esc(mate.name)}</b> отдаёт свою Реакцию — ${esc(actor.name)} избегает атаки.</div></div>`
     });
     return mate;
   }

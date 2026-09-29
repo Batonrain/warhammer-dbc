@@ -14,7 +14,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import {
-  possessionStep, possessionBarredRemaining, possessionInRange, POSSESSION_GOAL,
+  possessionStep, possessionBarredRemaining, possessionBarKey, possessionInRange, POSSESSION_GOAL,
   POSSESSION_ATTACK_FLAG, POSSESSION_BARRED_FLAG, POSSESSION_HOST_FLAG
 } from "../rules/possession-attack.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
@@ -101,7 +101,7 @@ export async function attemptPossessionAttack(actor) {
       + ` Хост получает +10 S, +10 T и +${bonus} Ран (1d10+3); действует на Инициативе демона.`);
   } else if (step.outcome === "repelled") {
     await actor.unsetFlag(NS, POSSESSION_ATTACK_FLAG);
-    const barredMap = { ...(actor.getFlag(NS, POSSESSION_BARRED_FLAG) ?? {}), [target.uuid]: worldTime };
+    const barredMap = { ...(actor.getFlag(NS, POSSESSION_BARRED_FLAG) ?? {}), [possessionBarKey(target.uuid)]: worldTime };
     await actor.setFlag(NS, POSSESSION_BARRED_FLAG, barredMap);
     const dmg = await new Roll("1d10").evaluate();
     await applyWoundLoss(actor, dmg.total);

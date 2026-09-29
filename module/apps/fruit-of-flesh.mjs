@@ -319,7 +319,7 @@ async function activateShardFruit(actor, item, tokenDoc) {
  * не резолвится, и блок сам перестаёт срабатывать.
  */
 async function activateSpellLockFruit(actor, item) {
-  const power = (game.actors ?? []).flatMap(a => a.items?.contents ?? a.items ?? [])
+  const power = [...(game.actors ?? [])].flatMap(a => a.items?.contents ?? a.items ?? [])
     .find(it => it.type === "psychicPower" && it.system?.isSustained && it.system?.sustainedTargetUuid === actor.uuid);
   if (!power) {
     return ui.notifications?.warn("Плод Плоти (Заточение Силы): не найдено ни одной психосилы, поддерживаемой именно на этого персонажа — привяжите цель через таргетинг Foundry при касте.");

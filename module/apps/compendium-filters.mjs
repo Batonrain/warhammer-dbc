@@ -36,8 +36,12 @@ export const ITEM_FILTERS = {
   minAvailability: (it, want) => (Number(it?.availability) || 0) >= Number(want),
   /** Ступень Таланта: «7 талантов 1 уровня» — это ступень, а не цена. */
   talentTier: (it, want) => Number(it?.tier) === Number(want),
-  /** Категория импланта: «Мехадендрит» — это system.category, а не папка. */
-  implantCategory: (it, want) => it?.category === want,
+  /** Категория импланта: «Мехадендрит» — это system.category, а не папка.
+   *  Список — «Бионики или Кибернетики» стартового снаряжения (rules/creation-gear.mjs). */
+  implantCategory: (it, want) => (Array.isArray(want) ? want : [want]).includes(it?.category),
+  /** Боеприпас под тип оружия (system.weaponTypes): «4 магазина болтов» — это
+   *  и стандартные «Болты», и спецболты из своей папки, по папке не отобрать. */
+  ammoType: (it, want) => (it?.weaponTypes || []).includes(want),
   /** Пси-Рейтинг силы не выше указанного: system.cost — цена в опыте, Пси-Рейтинг лежит в system.prRequired. */
   maxPsyRating: (it, want) => (Number(it?.prRequired) || 0) <= Number(want),
   /** Закрытый список предметов по id — книга перечисляет, из чего выбирать

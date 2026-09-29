@@ -34,6 +34,12 @@
             <div class="tg-readout"><input type="number" class="energy-input" value="{{system.energy.value}}" min="0"/><span class="tg-slash">/</span><input type="number" class="energy-max-input tg-maxinput" value="{{system.energy.max}}" min="0" title="Бонусный макс. Энергии — вручную, сверх автобонуса от имплантов (Катушка Потенции и т.п.)"/></div>
             <div class="tg-maxcap">Бонусный макс. Энергии</div>
             <div class="tg-coil">{{#each energy.pips as |p|}}<i class="tg-cell {{#if p.on}}on{{/if}}"></i>{{/each}}{{#unless energy.pips.length}}<span class="tg-empty">— катушка не установлена —</span>{{/unless}}</div>
+            {{#if (or energy.canRelieveFatigue energy.canCharge)}}
+            <div class="tg-coil-actions">
+              {{#if energy.canRelieveFatigue}}<button type="button" class="coil-fatigue-btn" title="Катушка Потенции: снять 1 Усталость за {{energy.fatigueCost}} заряда (потребность во сне остаётся)">−1 Усталость ({{energy.fatigueCost}}⚡)</button>{{/if}}
+              {{#if energy.canCharge}}<button type="button" class="coil-charge-btn" title="Электу-Индукторы: полное действие, Tech-Use+0 — 1 заряд за каждый Успех до максимума (мощность сети/батареи — решение ГМа)">⚡ Зарядка (Tech-Use)</button>{{/if}}
+            </div>
+            {{/if}}
           </div>
         </div>
       </div>

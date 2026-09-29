@@ -7,6 +7,8 @@
 // Здесь живут правила, которые нельзя приписать одной расе: Черта есть у
 // нескольких, а действует она на того, кто атакует её носителя.
 
+import { SQUAT_TRAIT_RULES } from "./squat.mjs";
+
 export const CORE_RULES = [
   {
     // «Nimble (X) / Проворный» (книга, статья о Черте плюс сводная таблица
@@ -127,5 +129,8 @@ export const CORE_RULES = [
     label: "Аватар Резни: не тот противник",
     when: { avatarOfSlaughterOffTarget: true },
     effects: [{ kind: "rollBonus", target: "attack", value: -20, label: "Аватар Резни: атакует не Берсерка" }]
-  }
+  },
+  // Умелые Руки (Скват) — галочки тонкой работы с отбором по Черте, отдельным
+  // файлом: library/squat.mjs.
+  ...SQUAT_TRAIT_RULES
 ];

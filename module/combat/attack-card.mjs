@@ -214,13 +214,21 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
     // атаки» код не запирает (второй кнопки для второй цели физически нет,
     // GM решает сам, кому из отмеченных применить заменённое число, а кому —
     // родное) — тот же честный компромисс, что у Молотильщика/Дуэлянтского.
-    const canSwapDie = d.baseDieResult != null && Number.isFinite(d.successes);
-    const swappedTotal = canSwapDie ? Math.max(0, d.total - d.baseDieResult + d.successes) : 0;
-    const swapBtn = canSwapDie ? `
-    <button class="wh-dmg-swap-btn" type="button" data-base-die="${d.baseDieResult}" data-successes="${d.successes}"
+    // swapDice (rules/die-swap.mjs) — только оставленные кубики (у Рвущего
+    // отброшенный в итоге не участвует); у Хищника Небес их до двух. Старые
+    // вызыватели без swapDice — прежний первый кубик.
+    const swapDice = Array.isArray(d.swapDice) ? d.swapDice
+      : (d.baseDieResult != null ? [d.baseDieResult] : []);
+    const canSwapDie = swapDice.length > 0 && Number.isFinite(d.successes);
+    const swapBtn = canSwapDie ? swapDice.map((die, k) => k === 0 ? `
+    <button class="wh-dmg-swap-btn" type="button" data-base-die="${die}" data-successes="${d.successes}"
       title="Один кубик этого попадания → число своих Успехов вместо выпавшего значения (стр. 34). Только одно попадание за атаку; у площадной — только одна цель.">
-      🎲 Кубик→Успехи: ${d.baseDieResult}→${d.successes} (итог станет ${swappedTotal})
-    </button>` : "";
+      🎲 Кубик→Успехи: ${die}→${d.successes} (итог станет ${Math.max(0, d.total - die + d.successes)})
+    </button>` : `
+    <button class="wh-dmg-swap-btn" type="button" data-base-die="${die}" data-successes="${d.successes}"
+      title="Хищник Небес: на Натиске с полёта Успехами можно заменить до 2 кубиков урона за Ход.">
+      🦅 Хищник Небес: ещё кубик ${die}→${d.successes} (−${die} +${d.successes})
+    </button>`).join("") : "";
     // Смертельная Ловушка (wdbc-1rno.35, vigilant 10-10, стр. 427): правит
     // data-damage соседней .wh-apply-dmg-btn прямо в DOM, тем же приёмом,
     // что и Кубик→Успехи выше — раз за бой, отмечается по клику

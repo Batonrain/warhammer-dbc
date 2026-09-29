@@ -18,7 +18,7 @@ import { commandReachFor, presenceNumber, moraleLostReach } from "../rules/comma
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { rollMoraleTest } from "../rules/morale-test.mjs";
 import { GENERAL_COMMAND_KINDS, generalKindLabel, detailSpentOf } from "../rules/command-effects.mjs";
-import { issueStamp, declareFocusFire, applyBraveryNow, grantTacticTalent, removeTacticGrants, TACTIC_TALENTS } from "../combat/command-state.mjs";
+import { issueStamp, declareFocusFire, applyBraveryNow, grantTacticTalent, removeTacticGrants, TACTIC_TALENTS, packOf } from "../combat/command-state.mjs";
 import { hasPlagueShepherd, plagueShepherdGrant, plagueShepherdFreeCommandActive } from "../rules/plague-shepherd.mjs";
 import { hasActionEconomy, apCostForActionType, spendActionPoints, apSpendGate } from "../combat/action-economy.mjs";
 import { voiceOfGodAvailable, applyVoiceOfGod } from "../combat/voice-of-god.mjs";
@@ -386,8 +386,11 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     const shortSux = Number(sys.shortCommand?.successes) || 0;
     context.presenceBenefits = PRESENCE_BENEFITS.map(b => ({ ...b, selected: b.key === (sys.presence?.benefit || "extreme") }));
     context.presenceActive   = !!sys.presence?.active;
-    // «Тройка» — Концентрация огня (эффект 2) при активном Присутствии.
-    context.focusActive      = context.presenceActive && sys.presence?.benefit === "focus";
+    // Стая Йигори (Сознание Стаи): все три эффекта Присутствия всегда, даже
+    // без Командира — combat/command-state.mjs::packOf.
+    context.pack             = packOf(this.actor);
+    // «Тройка» — Концентрация огня (эффект 2) при активном Присутствии; у стаи — всегда.
+    context.focusActive      = (context.presenceActive && sys.presence?.benefit === "focus") || !!context.pack;
     // Координатор не раздаёт Командное Присутствие — предупреждаем, если он один.
     context.presenceBlocked  = !commander.filled && !leader.filled && coordinator.filled;
 
