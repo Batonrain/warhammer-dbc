@@ -3230,15 +3230,26 @@ export function orChoiceEntries(actor, entries, sourceItem) {
   return (entries || []).filter(isEntryComplete).filter(e => entryWhenOk(actor, e, sourceItem));
 }
 
+/**
+ * Выбор в ИЛИ-группе уже сделан — по ВСЕМ её веткам, а не по прошедшим «Когда»
+ * (wdbc-6rjtc.5): Дар Кхорна, взятый при Покровителе Кхорн, остаётся выбором и
+ * после смены Покровителя — иначе следующая правка Механики выдала бы второй
+ * Дар или молча единственную оставшуюся ветку «мутация».
+ */
+function orChoiceMade(group, applied) {
+  return (group?.entries || []).filter(isEntryComplete).some(e => applied.has(e.id));
+}
+
 async function applyGroupEntries(actor, group, sourceItem, applied) {
-  const entries = group?.operator === "OR"
+  const isOr = group?.operator === "OR";
+  // Выбор делается ОДИН раз: если одна из веток уже отыграна, вопрос задан и
+  // отвечен — переспрашивать на каждой правке Механики нельзя.
+  if (isOr && orChoiceMade(group, applied)) return;
+  const entries = isOr
     ? orChoiceEntries(actor, group?.entries, sourceItem)
     : (group?.entries || []).filter(isEntryComplete);
   if (!entries.length) return;
-  if (group.operator === "OR" && entries.length > 1) {
-    // Выбор делается ОДИН раз: если одна из веток уже отыграна, вопрос задан и
-    // отвечен — переспрашивать на каждой правке Механики нельзя.
-    if (entries.some(e => applied.has(e.id))) return;
+  if (isOr && entries.length > 1) {
     const chosen = await showMechChoiceDialog(sourceItem, entries);
     if (chosen) await applyMechEntry(actor, chosen, sourceItem, true, applied);
   } else {
@@ -3254,6 +3265,9 @@ async function applyGroupEntries(actor, group, sourceItem, applied) {
     // в неизменном исходном порядке ниже. Порядок применения (и то, от чего
     // зависят «Когда» и общие поля вроде Порчи/Ран) не меняется — меняется
     // только момент, в который задаётся вопрос, а не момент записи.
+    // Единственная ветка ИЛИ (прочие отсеяло «Когда») — всё равно выбор:
+    // долговечной записи эффект заводит только выдача (fromChoice),
+    // пересборка syncMechanicsEffects ИЛИ-ветки не собирает.
     const picks = await Promise.all(entries.map(e => resolveDirectAsk(e, applied, sourceItem, actor)));
     for (let i = 0; i < entries.length; i++) {
       const pick = picks[i];
@@ -3261,9 +3275,9 @@ async function applyGroupEntries(actor, group, sourceItem, applied) {
       if (pick?.type === "or") {
         if (pick.chosen) await applyMechEntry(actor, pick.chosen, sourceItem, true, applied);
       } else if (pick?.type === "spec") {
-        await applyMechEntry(actor, entry, sourceItem, false, applied, pick.resolved);
+        await applyMechEntry(actor, entry, sourceItem, isOr, applied, pick.resolved);
       } else {
-        await applyMechEntry(actor, entry, sourceItem, false, applied);
+        await applyMechEntry(actor, entry, sourceItem, isOr, applied);
       }
     }
   }
@@ -3285,9 +3299,9 @@ async function applyGroupEntries(actor, group, sourceItem, applied) {
  */
 async function resolveDirectAsk(entry, applied, sourceItem, actor) {
   if (entry.kind === "group") {
-    const subEntries = orChoiceEntries(actor, entry.group?.entries, sourceItem);
-    if (entry.group?.operator !== "OR" || subEntries.length <= 1) return undefined;
-    if (subEntries.some(e => applied.has(e.id))) return undefined;
+    if (entry.group?.operator !== "OR" || orChoiceMade(entry.group, applied)) return undefined;
+    const subEntries = orChoiceEntries(actor, entry.group.entries, sourceItem);
+    if (subEntries.length <= 1) return undefined;
     return { type: "or", chosen: (await showMechChoiceDialog(sourceItem, subEntries)) || null };
   }
   // «Любой Навык» (__choice_any__, wdbc-2n5t) спрашивается тем же пакетным

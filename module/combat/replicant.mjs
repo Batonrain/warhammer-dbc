@@ -17,7 +17,7 @@ import { applyCharDamage } from "./char-damage.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 import {
-  SERUM_HOOK, EXPIRATION_DATE, GENETIC_DECAY, SERUM_FLAG, SERUM_TARGETS, LIFESPAN_FLAG, LIFESPAN_FORMULA,
+  SERUM_HOOK, EXPIRATION_DATE, GENETIC_DECAY, SERUM_FLAG, SERUM_DONE_FLAG, SERUM_TARGETS, LIFESPAN_FLAG, LIFESPAN_FORMULA,
   START_AGE_MIN, REPLICANT_JUVENAT_NOTE, traitWithKey, serumTakenAt, serumOverdue, serumTicksBetween,
   serumStatusLabel, lifespanYears, replicantMaxAge, mutationCountNoGifts
 } from "../rules/replicant.mjs";
@@ -64,6 +64,9 @@ export async function takeSerum(actor, { announce = true } = {}) {
   const now = game.time?.worldTime ?? 0;
   const wasOverdue = serumOverdue(serumTakenAt(trait), now);
   await trait.setFlag(NS, SERUM_FLAG, now);
+  // Новая доза — новый отсчёт: метка прошлой просрочки после отката Календаря
+  // может стоять позже now и заглушила бы тики этой дозы.
+  await trait.setFlag(NS, SERUM_DONE_FLAG, now);
   if (announce) {
     await chat(actor, `💉 ${esc(actor.name)} — сыворотка принята`,
       `<div class="roll-threshold">Крючок Сывороток: следующая доза — через 7 дней.${wasOverdue
@@ -85,8 +88,13 @@ export async function serumHookClock(actor, { from, to }) {
     await trait.setFlag(NS, SERUM_FLAG, Number(from));
     return;
   }
-  const ticks = serumTicksBetween(takenAt, from, to);
+  // Бьют только моменты позже метки «нанесено до»: откат Календаря ничего не
+  // снимает и не копит, повторный сдвиг вперёд не повторяет урон. Метка идёт
+  // вперёд до урона — сбой посреди цикла недобьёт, но не ударит дважды.
+  const done = Number(trait.getFlag(NS, SERUM_DONE_FLAG) ?? from);
+  const ticks = serumTicksBetween(takenAt, Math.max(Number(from), done), to);
   if (!ticks.length) return;
+  await trait.setFlag(NS, SERUM_DONE_FLAG, Number(to));
   const rolls = [];
   const lines = [];
   for (const at of ticks) {

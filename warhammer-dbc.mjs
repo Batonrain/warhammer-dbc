@@ -8,6 +8,7 @@ import "./module/rules/adjutant.mjs";
 // Источник правил «command» (бонусы Команд к броскам подчинённых, глава
 // «Командование») — тоже саморегистрация, по той же причине, что Адъютант.
 import { applyRelayedCommandUpdate } from "./module/combat/command-state.mjs";
+import { CARD_ONCE_FLAGS } from "./module/combat/card-once.mjs";
 import { RACES, SUBRACES }            from "./module/constants/races.mjs";
 import { CHARACTERISTICS, IMPROVEMENTS,
          IMPROVEMENT_BONUS,
@@ -1045,6 +1046,14 @@ Hooks.once("ready", () => {
         const allowed = Object.keys(data.data).every(k => k.startsWith("flags.warhammer-dbc.damageBoosts."));
         if (!allowed) return console.warn("Warhammer DBC | messageDamageBoost отклонён: путь вне damageBoosts", data.data);
         await message.update(data.data);
+      }
+      else if (data.action === "messageUsedFlag") {
+        // Одноразовое действие с чужой карточки (Огневая Точка, Хирургия
+        // Легиона, «провал → успех» — module/combat/card-once.mjs,
+        // wdbc-6rjtc.2/.3): ставим только флаг «использовано» из белого списка.
+        const message = game.messages.get(data.messageId);
+        if (!message || !CARD_ONCE_FLAGS.includes(data.key)) return;
+        await message.setFlag("warhammer-dbc", data.key, true);
       }
       else if (data.action === "startCharacter") {
         // Игрок нажал «Начать создание персонажа», а права заводить Актёров у
