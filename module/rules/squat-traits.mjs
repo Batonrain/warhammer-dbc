@@ -23,9 +23,11 @@
 //       resolve-test.mjs scope "poison"): poisonResistReroll;
 //     — «может не спать до 3-х суток»: сдвиг лестницы Сна (vitals.mjs,
 //       sleepGraceDays) и подсказка длительности сна (sleepNeededHours);
-//     — защита от радиации −3: строка справочной таблицы окна Окружения
-//       (constants/environment.mjs::RAD_PROTECTION) — фон радиации сцены к
-//       акторам сам не применяется вовсе, считать пока не с чем.
+//     — защита от радиации −3: считает rules/radiation-scene.mjs (радиация
+//       сцены по часам Календаря, combat/radiation-scene.mjs, wdbc-c5vf0);
+//     — Преимущество против ядов — poisonResistReroll (Живучесть Сплайса —
+//       та же функция, resist.poisonAdvantage); тестов против болезней и
+//       вакуума в системе нет, Преимущество на них — текстом.
 //   Sure Tread / Надёжная Поступь (trait.sureTread):
 //     — −1 SPD — запись Конструктора kind:"movement" на самой Черте;
 //     — «не может двигаться пешком более 3×SPD в Ход» — Бег урезан до
@@ -33,9 +35,10 @@
 //     — Трудный Ландшафт: Awareness (P) вместо A, 3+ Успеха — не замедляет
 //       (combat/movement-terrain.mjs, sureTreadTerrainBase/
 //       sureTreadIgnoresTerrain).
-//   Void in Veins / Пустота в Венах — только записи Конструктора «Переброс»
-//     (лучший из 2) на тесты Ловкости и Акробатики; «I вместо A» — выбор
-//     «Бросок с:» в том же диалоге, кода здесь нет.
+//   Void in Veins / Пустота в Венах — правило squat.voidInVeins (library/
+//     squat.mjs): переброс (лучший из 2) на тесты Ловкости и Акробатики, пока
+//     сцена в невесомости (предикат weightlessScene, гравитация < 0,2 G);
+//     «I вместо A» — выбор «Бросок с:» в том же диалоге, кода здесь нет.
 // ════════════════════════════════════════════════════════════════════════
 
 import { hasRuleFlag } from "./flags.mjs";
@@ -45,6 +48,8 @@ export const CLEVER_HANDS          = "trait.cleverHands";
 export const HARD_AS_STONE         = "trait.hardAsStone";
 export const SURE_TREAD            = "trait.sureTread";
 export const MUTATIONS_AS_ASTARTES = "mutations.asAstartes";
+/** Преимущество на тест против яда от записи Черты/Адаптации (Живучесть Сплайса). */
+export const POISON_ADVANTAGE      = "resist.poisonAdvantage";
 
 /** Расклин — «экстремальная ситуация» по тексту Черты: +30 вместо +15. */
 export function cleverHandsClearJamBonus(actor) {
@@ -58,8 +63,13 @@ export function cleverHandsClearJamBonus(actor) {
  * @returns {?{rolls:number, mode:"keepBest", label:string}}
  */
 export function poisonResistReroll(actor, condition) {
-  if (condition !== "poisoned" || !actor || !hasRuleFlag(actor, HARD_AS_STONE)) return null;
-  return { rolls: 2, mode: "keepBest", label: "Преимущество (Крепкий как Камень)" };
+  if (condition !== "poisoned" || !actor) return null;
+  if (hasRuleFlag(actor, HARD_AS_STONE))
+    return { rolls: 2, mode: "keepBest", label: "Преимущество (Крепкий как Камень)" };
+  // Адаптация Сплайса «Живучесть»: «Преимущество на все тесты против ядов…» (wdbc-dbveg).
+  if (hasRuleFlag(actor, POISON_ADVANTAGE))
+    return { rolls: 2, mode: "keepBest", label: "Преимущество против яда" };
+  return null;
 }
 
 /**
