@@ -26,6 +26,7 @@ import { testKindHtml, diceModeHtml, readTestKind, readDiceChoice,
          mergeReroll, wireTestKindLive, rollD100WithReroll } from "../../rules/test-kind-widget.mjs";
 import { collectTestMods } from "../../rules/roll-mods.mjs";
 import { severityTestMod, effectiveSeverity, stepSeverity } from "../../rules/disorder-severity.mjs";
+import { commitRerollUse } from "../../combat/angel-hunters.mjs";
 
 /** Сумма отмеченных галочек «Правила» диалога — общий приём с _showSkillRollDialog. */
 function checkedRuleMods(form) {
@@ -132,6 +133,7 @@ export function openFearDialog(actor) {
           const properties = { demon: html.find("#fear-prop-demon").is(":checked") };
           const tk = readTestKind(val, checkedOf(html), { label: "Тест Страха" });
           tk.reroll = mergeReroll(namedReroll(html[0]), readDiceChoice(val));
+          await commitRerollUse(actor, html[0]?.querySelector?.(".rule-reroll-opt:checked")?.dataset);
           await _executeFearRoll(actor, ratingKey, type, infamy, mod, properties, { tk });
         }
       },
