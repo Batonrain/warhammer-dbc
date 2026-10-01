@@ -11,6 +11,8 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { SECONDS_PER_DAY } from "../constants/imperial-calendar.mjs";
+import { woundLevel } from "./wound-tier.mjs";
+import { hasRuleFlag } from "./flags.mjs";
 
 export const SECONDS_PER_HOUR = 3600;
 
@@ -62,6 +64,21 @@ export function healPeriodSeconds(key, careOk) {
 /** Уровень, по которому лечит период: успешный уход поднимает критическое до тяжёлого. */
 export function effectiveHealKey(key, careOk) {
   return careOk && key === "critical" ? "heavy" : key;
+}
+
+export const HARDY_CAPABILITY = "resilience.core.hardy";
+
+/**
+ * Уровень ранения ДЛЯ ЛЕЧЕНИЯ. Hardy / Крепкий: «В отношении лечения персонаж
+ * всегда считается легко раненным» — ключ всегда "light", в том числе при
+ * критических Ранах (wdbc-y9pfz). lost/tb/crit остаются настоящими; подпись и
+ * тир на листе, предикаты woundTier и регенерация Огрина читают woundLevel
+ * напрямую и Hardy не замечают (книга Огрина: «Hardy не влияет»).
+ */
+export function healLevel(actor, system) {
+  const lvl = woundLevel(system);
+  if (!hasRuleFlag(actor, HARDY_CAPABILITY)) return lvl;
+  return { ...lvl, key: "light", label: "Лёгкое", hardy: true };
 }
 
 /** Ранен ли вообще (есть что лечить): потеряны Раны или они в минусе. */

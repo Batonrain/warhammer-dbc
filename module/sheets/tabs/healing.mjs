@@ -22,16 +22,14 @@ import { classifyImplant } from "../../constants/body-map.mjs";
 import { SIDE_LABELS, STATE_LABELS, settableSides, setLimbOutcome, clearSideFields, recoveryFields } from "../../rules/useless-limbs.mjs";
 import { BODY_SIDE_SHORT, isLostOn, pickLostSide, lostSideFields, clearStumpTimerFields, stumpSidesWithTimer, lostByMutation } from "../../rules/limb-loss.mjs";
 import { collectTestMods } from "../../rules/roll-mods.mjs";
-import { regimenHeal, healPeriodSeconds } from "../../rules/healing-clock.mjs";
-import { killByCondition } from "../../combat/condition-death.mjs";
-import { charLossAddFields } from "../../rules/char-loss.mjs";
+import { regimenHeal, healPeriodSeconds, healLevel } from "../../rules/healing-clock.mjs";
+import { applyCharDamage } from "../../combat/char-damage.mjs";
 // New Men / Новые Люди (Йигори): штраф операции и восстановление вдвое,
 // лубок вчетверо короче (module/rules/new-men.mjs).
 import { newMenSurgeryPenalty, newMenRecoveryDays, splintDays } from "../../rules/new-men.mjs";
 
 /** «Медика−30» / «Медика−15 (Новые Люди)» — подпись порога операции. */
 const surgeryLabel = pen => `Медика−${-pen}${pen !== -30 ? " (Новые Люди: штраф вдвое)" : ""}`;
-import { unstableGenomeBonus } from "../../rules/splice-adaptations.mjs";
 import { legionSurgeryPass, offerSusAnWake } from "../../combat/legion-surgery.mjs";
 
 const NS = "warhammer-dbc";
@@ -262,6 +260,7 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
       `<b>Пациент:</b> ${esc(patient.name)}`,
       `<b>Уровень ранения:</b> ${lvl.label} (потеряно ${lvl.lost}${lvl.crit ? `, крит ${lvl.crit}` : ""}, T.b ${lvl.tb})`
     ];
+    if (healLevel(patient, patient.system).hardy) parts.push("<i>Hardy / Крепкий: для лечения всегда считается легко раненным.</i>");
     if (hasRuleFlag(patient, "healing.astartes")) parts.push("<i>Физиология Астартес: всегда считается отдыхающим.</i>");
     if (patient.system.wounds?.firstAidUsed) parts.push('<span style="color:#a33;">⚠ Первая Помощь уже оказана (нужен новый урон).</span>');
     const mode = form.querySelector("#heal-mode")?.value;
@@ -404,16 +403,11 @@ async function applyCauterize(medic, patient, { restrained, limb = "", bodySide 
   const dmgRoll = await new Roll("1d10").evaluate();
   rolls.push(dmgRoll);
 
-  // Урон в T — единый конвейер (wdbc-x1nz.2.83): пол 0, отходит по 1 в час.
-  // Нестабильный Геном Сплайса — та же надбавка, что в combat/char-damage.mjs.
-  const genome = unstableGenomeBonus(patient);
-  const loss = charLossAddFields(patient.system, "t", dmgRoll.total + genome, game.time?.worldTime ?? 0);
-  const tBefore = loss.before;
-  const tAfter = loss.after;
-  const updates = { ...loss.patch };
-  const lines = [
-    `${rollIcon("fire","#ff8a3a")}<b>Прижигание</b>: Усталость <b>${fatigueRoll.total}</b>, урон в T <b>${dmgRoll.total}</b>${genome ? ` (+${genome} Нестабильный Геном)` : ""} (T ${tBefore}→${tAfter}).`
-  ];
+  // Урон в T — единый конвейер (wdbc-x1nz.2.83, applyCharDamage): пол 0,
+  // отходит по 1 в час, надбавки Угасания/Генома, смерть при T ≤ 0. Он пишется
+  // одним actor.update вместе с остальными правками ниже (параметр extra).
+  const updates = {};
+  const lines = [];
   if (patient.system.conditions?.bleeding) {
     Object.assign(updates, conditionRemoveFields("bleeding"));
     lines.push("Кровотечение остановлено.");
@@ -429,11 +423,14 @@ async function applyCauterize(medic, patient, { restrained, limb = "", bodySide 
   } else if (waiting.length > 1) {
     lines.push(`${rollIcon("warn","#ffb84d")}Необработанных обрубков несколько — выберите часть тела, чтобы прижечь обрубок.`);
   }
+  let dmg = null;
   try {
-    await patient.update(updates);
+    dmg = await applyCharDamage(patient, "t", dmgRoll.total, { extra: updates });
   } catch {
     lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — примените вручную.`);
   }
+  const bonus = dmg ? [dmg.decay ? `+${dmg.decay} Генетическое Угасание` : "", dmg.genome ? `+${dmg.genome} Нестабильный Геном` : ""].filter(Boolean).join(", ") : "";
+  lines.unshift(`${rollIcon("fire","#ff8a3a")}<b>Прижигание</b>: Усталость <b>${fatigueRoll.total}</b>, урон в T <b>${dmgRoll.total}</b>${bonus ? ` (${bonus})` : ""}${dmg ? ` (T ${dmg.before}→${dmg.after})` : ""}.`);
 
   if (!restrained) {
     const t = await charTest(patient, "wp", -20);
@@ -443,8 +440,8 @@ async function applyCauterize(medic, patient, { restrained, limb = "", bodySide 
 
   try { await addFatigue(patient, fatigueRoll.total); } catch {}
 
-  if (tAfter <= 0 && await killByCondition(patient)) {
-    lines.push(`${rollIcon("skull","#ff6b6b")}Стойкость упала до ${tAfter} — <b>${esc(patient.name)} умирает</b>.`);
+  if (dmg?.died) {
+    lines.push(`${rollIcon("skull","#ff6b6b")}Стойкость упала до ${dmg.after} — <b>${esc(patient.name)} умирает</b>.`);
   }
   await sendHealChatMsg(medic, patient, rollIcon("fire","#ff8a3a"), "Прижигание", lines, rolls);
 }
@@ -1017,7 +1014,7 @@ export async function applyHealing(medic, patient, opts) {
   if (mode === "coma")      return applyComaWake(medic, patient, opts);
   if (mode === "disease")   return applyDiseaseCure(medic, patient, opts);
 
-  const lvl = woundLevel(patient.system);
+  const lvl = healLevel(patient, patient.system);
   const tb = lvl.tb;
   // Физиология Астартес — возможность от правил, а не раса пациента.
   const isAstartes = hasRuleFlag(patient, "healing.astartes");

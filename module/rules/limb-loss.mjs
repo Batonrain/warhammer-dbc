@@ -133,6 +133,61 @@ export function lostCountFields(system, key, target, opts = {}) {
   return fields;
 }
 
+// ── Регенерация Йигори (New Men, wdbc-yffxj) ─────────────────────────────────
+// «Йигори способен медленно регенерировать потерянные конечности и органы…
+// потерянный глаз — за неделю, … руку или ногу — за два месяца. Он не
+// регенерирует органы, замененные бионикой». Книга называет глаз, руку и ногу;
+// кисть и стопу считаем как руку и ногу (решение владельца 01.10.2026), пальцы
+// и органы без стороны (язык, почка, лёгкое) в системе не хранятся — текстом.
+
+/** Срок отрастания части тела, суток (месяц — 30 суток, imperial-calendar). */
+export const LIMB_REGEN_DAYS = { lostEyes: 7, lostHands: 60, lostArms: 60, lostFeet: 60, lostLegs: 60 };
+
+/** Момент (worldTime), когда потерянная часть тела отрастёт. */
+export function limbRegenAt(key, worldTime) {
+  return Number(worldTime) + (LIMB_REGEN_DAYS[key] ?? 0) * SECONDS_PER_DAY;
+}
+
+/**
+ * Дописать к правке актора таймер отрастания: по каждой стороне, потерянной
+ * этой правкой (была цела, стала потеряна) НЕ мутацией. Вернувшаяся часть тела
+ * (пришита, бионика) гасит таймер — бионика не регенерирует.
+ * @param {object} system  system актора ДО правки
+ * @param {object} flat    flattenObject(changes)
+ * @returns {object} патч в плоском виде (пусто — нечего дописывать)
+ */
+export function regenStartFields(system, flat, worldTime) {
+  const patch = {};
+  for (const key of LIMB_LOSS_KEYS) {
+    for (const side of BODY_SIDES) {
+      const sideKey = lostSideKey(key, side);
+      const lostPath = path(sideKey, "lost");
+      if (!(lostPath in flat)) continue;
+      if (flat[lostPath]) {
+        const was = !!system?.lostLimbs?.[sideKey]?.lost;
+        const byMutation = flat[path(sideKey, "mutation")] === true;
+        if (!was && !byMutation) patch[path(sideKey, "regenAt")] = limbRegenAt(key, worldTime);
+      } else {
+        patch[path(sideKey, "regenAt")] = 0;
+      }
+    }
+  }
+  return patch;
+}
+
+/** Какие части тела СЕЙЧАС отросли: [{ key, side }]. Возврат и карточку делает combat/limb-regen.mjs. */
+export function dueLimbRegenSides(system, worldTime) {
+  const due = [];
+  for (const key of LIMB_LOSS_KEYS) {
+    for (const side of BODY_SIDES) {
+      const e = entryOf(system, key, side);
+      const at = Number(e.regenAt) || 0;
+      if (e.lost && !e.mutation && at > 0 && Number(worldTime) >= at) due.push({ key, side });
+    }
+  }
+  return due;
+}
+
 /** Патч «обрубок обработан» — таймер этой стороны снят. */
 export function clearStumpTimerFields(key, side) {
   const sideKey = lostSideKey(key, side);

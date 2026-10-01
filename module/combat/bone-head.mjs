@@ -191,6 +191,31 @@ export async function haywireFieldClock(actor, { from, to }) {
   if (rounds > 0) await setField(actor, decayedHaywire(cur, rounds));
 }
 
+/** Флаг актора: worldTime, до которого Ступор принадлежит полю Дискорданта. */
+export const DISCORDANT_DAZED_FLAG = "discordantDazedUntil";
+
+/**
+ * Хук deleteItem: Черта-метка «В Поле Дискорданта» снята — Огрин покинул ауру
+ * (регионы/ауры выдают и снимают метку по движению, regions/auras.mjs). Книга:
+ * Ступор «на 1 Раунд, или пока не покинет поле (что произойдет первым)» —
+ * оставшийся Ступор от поля снимается (wdbc-7bm4z).
+ */
+export async function onDiscordantFieldLeft(item) {
+  const actor = item?.parent;
+  if (item?.type !== "trait" || !itemHasName(item, DISCORDANT_FIELD_TRAIT) || !isBoneHead(actor)) return;
+  const until = Number(actor.getFlag?.(NS, DISCORDANT_DAZED_FLAG)) || 0;
+  if (!until) return;
+  await actor.update({ [`flags.${NS}.-=${DISCORDANT_DAZED_FLAG}`]: null });
+  const now = globalThis.game?.time?.worldTime ?? 0;
+  if (now >= until || !actor.system?.conditions?.dazed) return;
+  await clearConditionDuration(actor, "dazed");
+  await actor.update(conditionRemoveFields("dazed"));
+  await postTestCard(actor, {
+    icon: rollIcon("bolt", "#8fd0ff"), title: `${esc(actor.name)} — вышел из поля Дискорданта`,
+    lines: [`<div class="roll-threshold">BONE-Head: Ступор от поля снят — Огрин покинул ауру раньше, чем прошёл Раунд.</div>`]
+  }, { sound: false });
+}
+
 /**
  * Хук createItem: на актора легла Черта-метка «В Поле Дискорданта» — это
  * поле Haywire (7), и Огрин впадает в Ступор на 1 Раунд.
@@ -199,6 +224,9 @@ export async function onDiscordantFieldEntered(item) {
   const actor = item?.parent;
   if (item?.type !== "trait" || !itemHasName(item, DISCORDANT_FIELD_TRAIT) || !isBoneHead(actor)) return;
   const dazed = await stuporOneRound(actor);
+  // Ступор наложен именно этим полем: выход из ауры его снимет (onDiscordantFieldLeft),
+  // но только пока 1 Раунд не прошёл — позднейший чужой Ступор не трогаем (wdbc-7bm4z).
+  if (dazed) await actor.update({ [`flags.${NS}.${DISCORDANT_DAZED_FLAG}`]: (globalThis.game?.time?.worldTime ?? 0) + SECONDS_PER_COMBAT_ROUND });
   const rollMode = actor.hasPlayerOwner ? game.settings.get("core", "rollMode") : "gmroll";
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
