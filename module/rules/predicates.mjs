@@ -12,6 +12,7 @@ import { hordeSizeFor } from "./horde-damage.mjs";
 import { hasPathGrade } from "../constants/aeldari-paths.mjs";
 import { anyTargetMatches } from "./talent-targets.mjs";
 import { isSerpentine } from "./naga-traits.mjs";
+import { readEnvForScene } from "../constants/scene-nexus.mjs";
 
 /** Значение условия к списку: строка считается списком из одного элемента. */
 const list = v => (v == null ? [] : Array.isArray(v) ? v : [v]);
@@ -332,6 +333,9 @@ export const CTX_DEPENDENT_PREDICATES = new Set([
   "legacyGuardianMarked", "targetPsykerOrDaemon", "targetIsAstartes"
 ]);
 
+/** Гравитация ниже этого значения (G) считается невесомостью/микро-гравитацией: ниже самой малой строки таблицы книги (0,2 G). */
+export const WEIGHTLESS_BELOW_G = 0.2;
+
 export const PREDICATES = {
   race:    (actor, ctx, value) => list(value).includes(actor?.system?.race),
   subrace: (actor, ctx, value) => list(value).includes(actor?.system?.subrace),
@@ -428,6 +432,16 @@ export const PREDICATES = {
     const hit = !!t && (raceMatches(t.system, "astartes")
       || [...(t.items ?? [])].some(i => i?.type === "trait" && itemHasName(i, "Astartes")));
     return hit === (value !== false);
+  },
+
+  // Сцена актора в невесомости или микро-гравитации (окно «Окружающая Среда»,
+  // гравитация < WEIGHTLESS_BELOW_G): Пустота в Венах Сквата (wdbc-9tpng) —
+  // «для тестов ориентации и передвижения в невесомости или микро-гравитации».
+  // Сцена — токена актора, иначе текущая; нет сцены — не невесомость.
+  weightlessScene: (actor, ctx, value) => {
+    const scene = actor?.token?.parent ?? globalThis.canvas?.scene ?? globalThis.game?.scenes?.current ?? null;
+    const g = scene ? Number(readEnvForScene(scene).gravity) : 1;
+    return (Number.isFinite(g) && g < WEIGHTLESS_BELOW_G) === (value !== false);
   },
 
   weaponClass: (actor, ctx, value) => list(value).includes(ctx?.weapon?.system?.weaponClass),

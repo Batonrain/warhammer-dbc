@@ -19,7 +19,6 @@
 //  Карточка — владельцам-игрокам в общий чат, статистам — только ГМу.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { woundLevel } from "../rules/wound-tier.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { computeWoundHealing } from "../sheets/tabs/wounds.mjs";
@@ -28,7 +27,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 import {
   REGIMEN_HEAL_LABELS, astartesRegimen, regimenHeal, careTestMod,
-  healPeriodSeconds, effectiveHealKey, isWounded
+  healPeriodSeconds, effectiveHealKey, isWounded, healLevel
 } from "../rules/healing-clock.mjs";
 
 /** Страховка от бесконечного цикла: 8-часовых периодов в прыжке на полгода. */
@@ -97,17 +96,17 @@ export async function healingClock(actor, { from, to }) {
   let careOk = !!sys.healing.careOk;
 
   if (!nextAt) {
-    const care = await rollCare(actor, woundLevel(view()).key);
+    const care = await rollCare(actor, healLevel(actor, view()).key);
     if (care.roll) { rolls.push(care.roll); lines.push(care.line); }
     careOk = care.ok;
-    nextAt = Number(from) + healPeriodSeconds(woundLevel(view()).key, careOk);
+    nextAt = Number(from) + healPeriodSeconds(healLevel(actor, view()).key, careOk);
   }
 
   const astartes = hasRuleFlag(actor, "healing.astartes");
   let healed = 0;
   let periods = 0;
   while (nextAt <= to && periods++ < MAX_PERIODS) {
-    const lvl = woundLevel(view());
+    const lvl = healLevel(actor, view());
     if (!isWounded(wounds)) { nextAt = 0; careOk = false; break; }
     const chosen = inCombat(actor) ? "active" : (sys.healing.regimen || "active");
     const regimen = astartesRegimen(chosen, astartes);
@@ -136,10 +135,10 @@ export async function healingClock(actor, { from, to }) {
     lines.push(`<b>${REGIMEN_HEAL_LABELS[chosen]}</b>${regimenNote}, ${LEVEL_LABELS[lvl.key]}${careNote}: ${gain === 0 && !needT ? "нет лечения" : detail}${applied < gain ? ` (восстановлено ${applied})` : ""}.`);
 
     if (!isWounded(wounds)) { nextAt = 0; careOk = false; break; }
-    const care = await rollCare(actor, woundLevel(view()).key);
+    const care = await rollCare(actor, healLevel(actor, view()).key);
     if (care.roll) { rolls.push(care.roll); lines.push(care.line); }
     careOk = care.ok;
-    nextAt += healPeriodSeconds(woundLevel(view()).key, careOk);
+    nextAt += healPeriodSeconds(healLevel(actor, view()).key, careOk);
   }
 
   await actor.update({

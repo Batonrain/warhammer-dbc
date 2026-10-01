@@ -16,16 +16,24 @@ import { vitalNaturalStage } from "../../module/constants/vitals.mjs";
 import { nextMutationThreshold } from "../../module/rules/character.mjs";
 import { RAD_PROTECTION } from "../../module/constants/environment.mjs";
 import {
-  CLEVER_HANDS, HARD_AS_STONE, SURE_TREAD, MUTATIONS_AS_ASTARTES,
+  CLEVER_HANDS, HARD_AS_STONE, SURE_TREAD, MUTATIONS_AS_ASTARTES, POISON_ADVANTAGE,
   cleverHandsClearJamBonus, poisonResistReroll, sleepGraceDays, sleepNeededHours,
   sureTreadTerrainBase, sureTreadIgnoresTerrain, sureTreadMovementCap
 } from "../../module/rules/squat-traits.mjs";
 
 const DAY = 86400;
+
+/** Выполнить fn, пока активная сцена — с этой гравитацией (окно «Окружающая Среда»). */
+function withSceneGravity(g, fn) {
+  const saved = globalThis.canvas;
+  globalThis.canvas = { scene: { id: "s-grav", name: "Сцена", getFlag: (_s, k) => (k === "env" ? { gravity: g } : undefined) } };
+  try { return fn(); } finally { globalThis.canvas = saved; }
+}
 const CLEVER = packDocById("packs-src/traits", "OvEMR1pCdDGL6jkJ");
 const STONE  = packDocById("packs-src/traits", "IsGR11cplUwRIuZv");
 const TREAD  = packDocById("packs-src/traits", "RZ8eDsBa4H4r9l99");
 const VOID   = packDocById("packs-src/traits", "PIbpL2lzqGFcW0LY");
+const SPLICE_RESILIENCE = packDocById("packs-src/traits/Трейты_рас/Адаптации_Сплайса", "MDXsZYrdMFUEcMUO");
 const SQUAT  = packDocById("packs-src/races/Другие_Ксеносы", "KcqfkjljcbTNVEAW");
 
 const asItem = (doc, id = "t1") => ({ id, name: doc.name, type: doc.type, system: doc.system, flags: doc.flags });
@@ -57,14 +65,32 @@ describe("Черты несут свои возможности (данные п
     expect(TREAD.effects.some(e => (e.system?.changes ?? []).some(c => c.key === "system.speed"))).toBe(false);
   });
 
-  it("Пустота в Венах — Преимущество (лучший из 2) на тесты Ловкости и Акробатики", () => {
+  it("Пустота в Венах — Преимущество (лучший из 2) на тесты Ловкости и Акробатики в невесомости сцены (wdbc-9tpng)", () => {
+    withSceneGravity(0, () => {
+      const a = actor([VOID]);
+      const onAg   = resolveTest({ actor: a, kind: "skill", char: "ag" }).rerolls;
+      const onAcro = resolveTest({ actor: a, kind: "skill", skill: "acrobatics", char: "ag" }).rerolls;
+      const onAwar = resolveTest({ actor: a, kind: "skill", skill: "awareness", char: "per" }).rerolls;
+      expect(onAg).toEqual([expect.objectContaining({ mode: "keepBest", rolls: 2, who: "self" })]);
+      expect(onAcro).toHaveLength(1);
+      expect(onAwar).toEqual([]);
+    });
+  });
+
+  it("Пустота в Венах: микро-гравитация (0,1 G) — да; 0,2 G, нормальная и высокая — нет", () => {
     const a = actor([VOID]);
-    const onAg   = resolveTest({ actor: a, kind: "skill", char: "ag" }).rerolls;
-    const onAcro = resolveTest({ actor: a, kind: "skill", skill: "acrobatics", char: "ag" }).rerolls;
-    const onAwar = resolveTest({ actor: a, kind: "skill", skill: "awareness", char: "per" }).rerolls;
-    expect(onAg).toEqual([expect.objectContaining({ mode: "keepBest", rolls: 2, who: "self" })]);
-    expect(onAcro).toHaveLength(1);
-    expect(onAwar).toEqual([]);
+    const has = g => withSceneGravity(g, () => resolveTest({ actor: a, kind: "skill", char: "ag" }).rerolls.length);
+    expect(has(0.1)).toBe(1);
+    expect(has(0.2)).toBe(0);
+    expect(has(1)).toBe(0);
+    expect(has(2)).toBe(0);
+  });
+
+  it("Пустота в Венах: без сцены переброса нет, у не-Сквата в невесомости — тоже", () => {
+    expect(resolveTest({ actor: actor([VOID]), kind: "skill", char: "ag" }).rerolls).toEqual([]);
+    withSceneGravity(0, () => {
+      expect(resolveTest({ actor: actor([]), kind: "skill", char: "ag" }).rerolls).toEqual([]);
+    });
   });
 });
 
@@ -100,6 +126,16 @@ describe("Умелые Руки — галочки +15/+15 на Ремесло, 
   it("Расклин — экстремальная ситуация по книге: +30 сам", () => {
     expect(cleverHandsClearJamBonus(a)).toBe(30);
     expect(cleverHandsClearJamBonus(actor([]))).toBe(0);
+  });
+});
+
+describe("Живучесть Сплайса — Преимущество против яда (wdbc-dbveg)", () => {
+  it("Адаптация несёт возможность, тест против яда — с Преимуществом, прочие состояния — нет", () => {
+    const a = actor([SPLICE_RESILIENCE]);
+    expect(hasRuleFlag(a, POISON_ADVANTAGE)).toBe(true);
+    expect(poisonResistReroll(a, "poisoned")).toEqual({ rolls: 2, mode: "keepBest", label: expect.stringMatching(/Преимущество против яда/) });
+    expect(poisonResistReroll(a, "burning")).toBeNull();
+    expect(poisonResistReroll(actor([]), "poisoned")).toBeNull();
   });
 });
 

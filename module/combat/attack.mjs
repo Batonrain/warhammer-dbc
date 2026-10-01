@@ -75,7 +75,7 @@ import { suffersBlindness } from "../rules/blindness.mjs";
 import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { isBiteName } from "../rules/integral-rating.mjs";
-import { VENOM_BITE_CAPABILITY, venomBiteDamage } from "../rules/naga-traits.mjs";
+import { VENOM_BITE_CAPABILITY, venomBiteDamage, isBiteAttack, ADAPTIVE_VENOM_DOSE_FLAG } from "../rules/naga-traits.mjs";
 import { fieldDisablesWeapon } from "../rules/null-zones.mjs";
 import { isHeadHit } from "./armor-properties.mjs";
 import { COLD_KILLER } from "../rules/cold-killer.mjs";
@@ -83,6 +83,7 @@ import { LEGIONNAIRE_VIRTUOSO, isLegionRangedWeapon } from "../rules/legionnaire
 import { SKY_PREDATOR, activeDieResults, isChargeFromFlight, swapDiceFor } from "../rules/die-swap.mjs";
 import { IN_FLIGHT_ALTITUDES } from "./movement-actions.mjs";
 import { singleCombatBonus } from "./single-combat.mjs";
+import { butcherStatus } from "./beastman-subrace.mjs";
 
 /**
  * Экстремальный урон (стр. 166-170): куб урона выбросил Х+ — порог берётся из
@@ -1087,6 +1088,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     weapon: item, actor, hit, isOwnTurn: isActorsOwnTurn(actor)
   });
   const deadlyTrapLegacyDelta = deadlyTrapLegacyEligible ? legacyDeadlyTrapDamageDelta(actor) : 0;
+  // Кхорнгор Мясник (wdbc-gao07): сколько кубиков запаса можно добавить к урону этого попадания.
+  const butcherDice = (hit && isMelee) ? butcherStatus(actor).left : 0;
+  // Адаптивная Отрава Наги (wdbc-s4ql0): укус при попадании и доза «(яд в клыках)» на листе.
+  const fangVenomDose = (hit && isBiteAttack(item?.name))
+    ? ([...(actor.items ?? [])].find(i => i.getFlag?.("warhammer-dbc", ADAPTIVE_VENOM_DOSE_FLAG))?.name ?? "")
+    : "";
   const flatBonus = (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + invocationAdd.dmg + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus;
   if (earlyDeathBonus) await markEarlyDeathLegacyUsed(actor, item, hit);
   if (soulboundLegacyBonus) await consumeSoulboundLegacyBonus(actor, item, hit);
@@ -1574,6 +1581,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       grappleCoverHits,
       regroupLegacyActive,
       deadlyTrapLegacyDelta,
+      fangVenomDose,
+      butcherDice,
       reactionKnockdownReason,
       sabreSecondAttackNote,
       sabreSecondAttackItemId,

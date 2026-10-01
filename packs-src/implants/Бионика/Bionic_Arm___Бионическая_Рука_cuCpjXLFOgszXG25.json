@@ -37,7 +37,8 @@
       "equipped": false,
       "status": "inactive"
     },
-    "techClass": "electric"
+    "techClass": "electric",
+    "availability": 0
   },
   "folder": "QoiEzJ5FFywJIo98",
   "_id": "cuCpjXLFOgszXG25",

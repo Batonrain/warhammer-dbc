@@ -12,8 +12,7 @@
 
 import { charLossAddFields, charLossHealFields, charLossPortionsAddFields, actorRecoveryPolicy } from "../rules/char-loss.mjs";
 import { killByCondition } from "./condition-death.mjs";
-import { GENETIC_DECAY, geneticDecayBonus, mutationCountNoGifts, traitWithKey } from "../rules/replicant.mjs";
-import { unstableGenomeBonus } from "../rules/splice-adaptations.mjs";
+import { charDamageWithBonuses } from "../rules/char-damage-bonus.mjs";
 
 /**
  * Нанести урон в Характеристику.
@@ -36,14 +35,10 @@ export async function applyCharDamage(actor, key, amount, { extra = {}, at = glo
   // свою мутацию» (не Дар Богов) — rules/replicant.mjs. Черта читается прямо с
   // предметов, не через hasRuleFlag: этот файл лежит в графе импортов
   // источников правил.
-  const decay = geneticDecayBonus(amount, mutationCountNoGifts(actor), !!traitWithKey(actor, GENETIC_DECAY));
-  amount = (Number(amount) || 0) + decay;
+  // Сплайс, Нестабильный Геном — там же (rules/char-damage-bonus.mjs).
+  const { amount: grown, decay, genome } = charDamageWithBonuses(actor, amount);
+  amount = grown;
   let patch, applied;
-  // Сплайс, Нестабильный Геном: «увеличивает этот урон на +1 и еще на +1 за
-  // каждую дополнительную адаптацию» (rules/splice-adaptations.mjs). Только к
-  // настоящему урону: ноль остаётся нулём.
-  const genome = (Number(amount) || 0) > 0 ? unstableGenomeBonus(actor) : 0;
-  amount = (Number(amount) || 0) + genome;
   const before = Number(actor.system?.characteristics?.[key]?.total) || 0;
   if (portion) {
     const r = charLossPortionsAddFields(actor.system, [{ ...portion, key, amount }], at);

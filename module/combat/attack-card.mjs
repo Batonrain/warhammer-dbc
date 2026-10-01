@@ -102,7 +102,7 @@ function hitLines(hits, { blastRating = 0 } = {}) {
  */
 function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", weaponName, actorName, vehicleSide,
                                     isMelee = false, burst = false, weaponRange = 0,
-                                    attackerUuid = "", itemUuid = "", hordeHits = null, deadlyTrapLegacyDelta = 0 }) {
+                                    attackerUuid = "", itemUuid = "", hordeHits = null, deadlyTrapLegacyDelta = 0, fangVenomDose = "", butcherDice = 0 }) {
   if (!hits.length) return "";
   // Взрывное/Распыление — разовый Шаблон (Region-плейсмент, module/combat/
   // templates.mjs): круг радиусом blastRating или конус 30° длиной Rng.
@@ -185,6 +185,13 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
       </button>
       <div class="roll-defense-note">Свободное действие, Реакция не тратится. Если шаблон полностью накрывает Базу цели — годится только Отскок в исходе теста, не сама отмена (стр. 12).</div>
     </div>` : "";
+  // Адаптивная Отрава Наги (wdbc-s4ql0): попав Укусом, ввести цели дозу «(яд в
+  // клыках)» одной кнопкой — доза лежит на листе укусившей (apps/naga-traits.mjs).
+  // Имя дозы приходит готовым (attack.mjs): карточка документов не читает.
+  const fangVenomBtn = fangVenomDose ? `
+    <button class="wh-fang-venom-btn" type="button" data-attacker-uuid="${attackerUuid}">
+      🐍 Ввести яд клыков цели: ${esc(fangVenomDose)}
+    </button>` : "";
   // Дым (wdbc-wlwf) — отдельная кнопка: не накрывает целей, не зависит от
   // Взрывного/Распыления (может быть у оружия без них).
   const smokeBtn = (wp.smokeRating > 0) ? `
@@ -305,7 +312,11 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
   </button>${wp.warpSoak ? `
   <button class="wh-pain-absorb-btn" type="button" data-damage="${d.total}" title="Друкхари с Очками Боли: выбранный токен цели поглощает урон Болью вместо Ран (3 урона за 1 Боль)">
     🔥 Поглотить Болью ${i + 1}: <b>${d.total}</b>
-  </button>` : ""}${swapBtn}${deadlyTrapBtn}</span>`;
+  </button>` : ""}${swapBtn}${deadlyTrapBtn}${butcherDice > 0 ? `
+  <button class="wh-butcher-btn" type="button" data-attacker-uuid="${attackerUuid}" data-weapon-uuid="${itemUuid}"
+    title="Кхорнгор Мясник: потратить кубики запаса — по кубику урона оружия за каждый (до ½W.b), после броска урона, до щитов">
+    🩸 Мясник: +кубики к урону ${i + 1} (до ${butcherDice})
+  </button>` : ""}</span>`;
   }).join("");
   return `
   <div class="roll-apply-dmg-section">
@@ -314,6 +325,7 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
     ${smokeBtn}
     <div class="roll-section-head">Применить к цели <span class="roll-head-hint">— выберите токен</span></div>
     ${buttons}
+    ${fangVenomBtn}
     ${arcBtn}
   </div>`;
 }
@@ -747,6 +759,10 @@ export function attackCard({
   // attack.mjs (актор/своя-очередь-Хода/раз-в-бой там, не здесь) — карточка
   // только рисует кнопку рядом с «Применить урон» (applyDamageSection ниже).
   deadlyTrapLegacyDelta = 0,
+  // Адаптивная Отрава Наги (wdbc-s4ql0): название дозы «(яд в клыках)» — кнопка ввода цели.
+  fangVenomDose = "",
+  // Кхорнгор Мясник (wdbc-gao07): сколько кубиков запаса можно добавить к урону попадания.
+  butcherDice = 0,
   // Посох/Крюк (core.json, «Типы Рукопашного Оружия»): непустая строка —
   // Реакция «Повалить» доступна, её текст объясняет почему (уже посчитано
   // attack.mjs — Избирательное попадание Посохом в Ногу / 3+ Успеха Крюком).
@@ -999,7 +1015,7 @@ export function attackCard({
             sixthSenseBypassAvailable, musicOfBattleBypassAvailable, isMelee, burst, attackerIsHorde, hitLocLabel }) : "",
       applyDamageSection(hit ? hits : [], { wp, pen, damageType, damageSubtype, weaponName, actorName,
                                             vehicleSide, isMelee, burst, weaponRange,
-                                            attackerUuid, itemUuid, hordeHits, deadlyTrapLegacyDelta }),
+                                            attackerUuid, itemUuid, hordeHits, deadlyTrapLegacyDelta, fangVenomDose, butcherDice }),
       misfireHitsSection(misfireHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid }),
       betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid }),
       betrayalHitsSection(grappleCoverHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid },

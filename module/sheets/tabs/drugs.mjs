@@ -18,6 +18,7 @@ import { hasRuleFlag, ruleFlagLabels } from "../../rules/flags.mjs";
 import { DRUG_AFTERMATH_IMMUNE_CAPABILITY, POISON_IMMUNE_CAPABILITY } from "../../rules/naga-traits.mjs";
 import { ALCHEM_MONSTER, alchemDurationFactor, mustRerollSuccess } from "../../rules/replicant.mjs";
 import { isReplicantSerum, takeSerum } from "../../combat/replicant.mjs";
+import { DRUG_DOSES_FLAG, doseKey, logDose, dosesThisWeek, weeklyDoseLimit, addictionCheckFor } from "../../rules/drug-doses.mjs";
 // New Men / Новые Люди (Йигори): срок вдвое, без пост-эффекта, разовый эффект
 // медикамента вдвое (module/rules/new-men.mjs).
 import { newMenDrugDuration, newMenInstantMedicine, halvesInstantMedicine,
@@ -410,6 +411,28 @@ export async function applyDrug(owner, item, recipient = null) {
   // говорящего, режим броска и звук (wdbc-kuun).
   const allRolls = [...(durationRoll ? [durationRoll] : []), ...extras.rolls];
   await postTestCard(owner, chatContent, { rolls: allRolls });
+  await weeklyDoseCheck(actor, item);
+}
+
+/**
+ * Недельный счётчик доз (wdbc-gyqf2, rules/drug-doses.mjs): доза записывается в
+ * журнал получателя, и если за скользящую неделю набрано минимальное опасное
+ * число применений этого наркотика — тест Зависимости со штрафом −10 за каждое
+ * применение сверх числа. Уже зависимого тест не нужен: он решает, сорвётся ли
+ * (кнопка в панели Зависимостей). Лимит: Репликант ×2, Толерантность +1.
+ */
+export async function weeklyDoseCheck(actor, item) {
+  const add = item?.system?.addiction;
+  if (!actor || !add?.hasAddiction || !(Number(add.minDose) > 0)) return;
+  const now = game.time?.worldTime ?? 0;
+  const key = doseKey(item);
+  const log = logDose(actor.getFlag?.("warhammer-dbc", DRUG_DOSES_FLAG), key, now);
+  try { await actor.setFlag("warhammer-dbc", DRUG_DOSES_FLAG, log); } catch { /* нет прав на лист получателя */ }
+  if (add.isAddicted) return;
+  const limit = weeklyDoseLimit(actor, add.minDose);
+  const check = addictionCheckFor(dosesThisWeek(log, key, now), limit);
+  if (!check) return;
+  await rollAddictionTest(actor, item, (add.testChar || "t").toLowerCase(), (Number(add.testMod) || 0) + check.penalty);
 }
 
 export async function triggerAfterEffect(actor, item) {

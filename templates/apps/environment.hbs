@@ -107,6 +107,17 @@
           <div class="wh-env-fx-zone ok">Радиационный фон в норме.</div>
         {{/if}}
       </div>
+      {{#if radTokens.length}}
+      <div class="wh-env-radtok">
+        <div class="wh-env-radtok-h">Персонажи сцены: защита и укрытие (радиация сцены — по часам Календаря)</div>
+        {{#each radTokens as |t|}}
+        <div class="wh-env-radprot-row">
+          <span>{{t.name}} <small>{{t.protection}} · эфф. ур. <b>{{t.effective}}</b></small></span>
+          <select data-rad-shelter="{{t.tokenId}}">{{#each t.shelters as |s|}}<option value="{{s.key}}" {{#if s.selected}}selected{{/if}}>{{s.label}}</option>{{/each}}</select>
+        </div>
+        {{/each}}
+      </div>
+      {{/if}}
       <details class="wh-env-radref">
         <summary>Защита от радиации (эффекты складываются)</summary>
         <div class="wh-env-radprot">

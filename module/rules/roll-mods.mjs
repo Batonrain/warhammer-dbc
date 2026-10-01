@@ -120,21 +120,38 @@ export function ruleRollModsHtml(actor, context, resolved = null) {
  * игрок выбирает, каким воспользоваться. «Без переброса» стоит по умолчанию,
  * потому что переброс почти всегда расходуемый: раз в Раунд, за Очко Бесчестия.
  *
- * Сколько перебросов уже потрачено за Раунд, здесь не считается: система не
- * ведёт учёт Раундов на акторе, и молчаливый счётчик соврал бы. Это остаётся
- * за столом, как и прежде.
+ * Переброс с ограничением «раз в Раунд» (effect.limit, wdbc-erp61) показывается,
+ * только пока ограничитель разрешает: он знает, потрачен ли переброс актора
+ * (rules/cooldown.mjs) и не одолжит ли его кто-то ещё (Охотники на Ангелов —
+ * combat/angel-hunters.mjs). Остальные перебросы без limit по-прежнему не
+ * считаются: учёт Раундов за столом, как и прежде.
  */
+export const rerollLimiters = new Map();
+
+/** Ограничитель переброса: (actor) → null — недоступен, иначе { uuid, name } источника переброса. */
+export function registerRerollLimiter(key, fn) { rerollLimiters.set(key, fn); }
+
 export function ruleRerollsHtml(actor, context, resolved = null) {
   // Только ДОБРОВОЛЬНЫЕ свои перебросы. Навязанные цели (who:"target") бросает
   // она сама, у себя; навязанные МНЕ противником (who:"opponent" — Уравнитель)
   // применяются без спроса в sheets/attack/dialog.mjs и предлагать их
   // наказуемому галочкой нельзя — он её просто не поставит.
-  const rerolls = ((resolved ?? resolveTest({ actor, ...context })).rerolls || []).filter(r => r.who === "self");
+  const rerolls = [];
+  for (const r of ((resolved ?? resolveTest({ actor, ...context })).rerolls || [])) {
+    if (r.who !== "self") continue;
+    const limiter = r.limit ? rerollLimiters.get(r.limit) : null;
+    if (!limiter) { rerolls.push(r); continue; }
+    const source = limiter(actor);
+    if (!source) continue;
+    rerolls.push({ ...r, source,
+      label: source.borrowed ? `${r.label} — переброс стаи: ${source.name}` : r.label });
+  }
   if (!rerolls.length) return { html: "", rerolls };
   const rows = rerolls.map((r, i) => `
     <label class="attack-mod-check rule-reroll">
       <input type="radio" name="rule-reroll" class="rule-reroll-opt" data-idx="${i}"
-             data-mode="${r.mode}" data-rolls="${r.rolls}"/>
+             data-mode="${r.mode}" data-rolls="${r.rolls}"
+             ${r.limit ? `data-limit="${esc(r.limit)}" data-source-uuid="${esc(r.source?.uuid || "")}"` : ""}/>
       <span>${r.label} <b>(${r.mode === "keepWorst" ? "худший" : "лучший"} из ${r.rolls})</b></span>
     </label>`).join("");
   return {

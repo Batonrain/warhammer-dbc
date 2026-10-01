@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "Ноги двусоставные, как у зверя: +X к SPD пешком и +5×X на тесты Группирования (Athletics).",
-    "notes": "«+X к SPD» рейтинг-зависим (аналог Unnatural Characteristic — заполняется на дропнутой копии), а «+5×X на Группирование» целится в узкое под-действие Athletics (не весь Навык) — нет такого скоупа testMod.",
+    "notes": "Автоматизировано: +X к SPD — запись Движения с формулой «rating» (рейтинг этой Черты, wdbc-ird9n); +5×X на Группирование — к тесту Acrobatics в окне Падения (rules/digitigrade.mjs, combat/movement-actions.mjs::_resolveFallDamage).",
     "benefit": "+X к SPD; +5×X на группирование.",
     "source": "строение тела",
     "hasRating": true,
@@ -34,7 +34,23 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "Mm87C1UT3QEKa4rT",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "0JiyHdQgSx7XrYxa",
+              "kind": "movement",
+              "movementTarget": "spd",
+              "movementValue": "rating",
+              "op": "add",
+              "label": "Двусоставный: +X к SPD"
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

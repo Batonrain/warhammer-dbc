@@ -39,7 +39,8 @@
     },
     "weaponProps": [],
     "bookSource": "DoomBC — Основная книга, БИОНИКА И КИБЕРНЕТИКА (стр. 263-275)",
-    "techClass": "electric"
+    "techClass": "electric",
+    "availability": 0
   },
   "folder": "QoiEzJ5FFywJIo98",
   "_id": "0k3GiXwu7JTS57ni",

@@ -488,7 +488,9 @@ export function rerollsFromRules(rules, ctx = {}) {
       // target — область, как записана: бросок без диалога (Трудный Ландшафт,
       // combat/movement-terrain.mjs) берёт переброс сам и обязан брать только
       // СВОЙ, а не любой, чья область подошла по Ловкости или «all».
-      out.push({ ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id, mode, rolls, who, target: effect.target });
+      out.push({ ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id, mode, rolls, who, target: effect.target,
+        // limit — ключ ограничителя «раз в Раунд» (rules/roll-mods.mjs::rerollLimiters), пусто — без ограничения.
+        ...(effect.limit ? { limit: effect.limit } : {}) });
     }
   }
   return out;

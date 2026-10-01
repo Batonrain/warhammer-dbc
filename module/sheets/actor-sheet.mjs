@@ -79,6 +79,7 @@ import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml, ruleAutoModsHtml, autoModsTotal } from "../rules/roll-mods.mjs";
 import { EXCESS_LEGACY_RULE_ID } from "../rules/legacy-weapon.mjs";
 import { rollExcessLegacyRiskTest } from "../combat/legacy-weapon-excess.mjs";
+import { commitRerollUse } from "../combat/angel-hunters.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { infamyFailSuccessButtonsHtml } from "../apps/infamy-fail-success.mjs";
@@ -2464,6 +2465,7 @@ export class WarhammerCharacterSheet
               ? { mode: rerollEl.dataset.mode, rolls: parseInt(rerollEl.dataset.rolls) || 2,
                   label: rerollEl.parentElement?.textContent?.trim() || "Переброс" }
               : null;
+            if (namedReroll) commitRerollUse(this.actor, rerollEl.dataset);
             const reroll = mergeReroll(namedReroll, readDiceChoice(val));
             // Виды теста — независимые галочки (стр. 25-26, wdbc-y9i8): любое
             // подмножение Расширенный/Комбинированный/Встречный(+vss) может

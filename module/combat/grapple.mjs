@@ -42,6 +42,7 @@ import { MELEE_STANCES, MELEE_BASES } from "../constants/combat.mjs";
 import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
+import { extraSuccessDegrees } from "./extra-successes.mjs";
 import { postTestCard, outcomeHtml, rollStatLine } from "../helpers/test-card.mjs";
 import { bodyWeightOf, totalWeightOf, throwTier, canWieldAsCudgel, footingRequirement }
   from "../rules/improvised-weapon.mjs";
@@ -963,7 +964,9 @@ async function _doSwing(actor) {
   const final   = ws + profile.wsBonus + baseBon + stBon + ruleMods.total;
 
   const roll = await new Roll("1d100").evaluate();
-  const { success: hit, deg } = testOutcome(roll.total, final);
+  const { success: hit, deg: rolledDeg } = testOutcome(roll.total, final);
+  // Бой Один На Один / Искусный: +1 Успех к успешному тесту (wdbc-r3379).
+  const deg = rolledDeg + extraSuccessDegrees(actor, { success: hit, charKey: "ws" });
   const dmgRoll = await new Roll(`${profile.diceCount}d10`).evaluate();
   const dmgTotal = dmgRoll.total;
 
@@ -1084,7 +1087,8 @@ async function _doThrow(actor) {
   const throwMods = _withTwoHandedGrapplePenalty(collectTestMods(actor, { kind: "skill", char: profile.testChar }), actor);
   const final   = charVal + profile.testBonus + throwMods.total;
   const roll = await new Roll("1d100").evaluate();
-  const { success: hit, deg } = testOutcome(roll.total, final);
+  const { success: hit, deg: rolledDeg } = testOutcome(roll.total, final);
+  const deg = rolledDeg + extraSuccessDegrees(actor, { success: hit, charKey: profile.testChar });
   const knockNote = knockedDown
     ? `<div class="roll-threshold" style="font-size:0.85em;">Без надёжной опоры: ${esc(actor.name)} сбит(а) с ног (Повален), дальность и урон уменьшены вдвое.</div>` : "";
 
