@@ -485,8 +485,11 @@ export function rerollsFromRules(rules, ctx = {}) {
       // Схлопывать "opponent" в "self" нельзя: тогда наказание попадает в
       // список добровольных перебросов наказуемого, снятым по умолчанию.
       const who = effect.who === "target" || effect.who === "opponent" ? effect.who : "self";
-      // limit — ключ ограничителя «раз в Раунд» (rules/roll-mods.mjs::rerollLimiters), пусто — без ограничения.
-      out.push({ ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id, mode, rolls, who,
+      // target — область, как записана: бросок без диалога (Трудный Ландшафт,
+      // combat/movement-terrain.mjs) берёт переброс сам и обязан брать только
+      // СВОЙ, а не любой, чья область подошла по Ловкости или «all».
+      out.push({ ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id, mode, rolls, who, target: effect.target,
+        // limit — ключ ограничителя «раз в Раунд» (rules/roll-mods.mjs::rerollLimiters), пусто — без ограничения.
         ...(effect.limit ? { limit: effect.limit } : {}) });
     }
   }

@@ -25,6 +25,7 @@
 //              (wdbc-1rno) — mech-formula.mjs нотация, считается заново на
 //              каждый бросок от ctx.actor. charBonus нужен там, где числа
 //              в данных быть не может: «+Inf герольда» у каждого своё.
+//              modAuto — применяется сам, а не галочкой (Poor.Q-штрафы).
 //    failDegMod — «Доп. Провалы при провале» (wdbc-1rno): modScope, value,
 //              label. Считается ПОСЛЕ броска (kind-outcome.mjs), а не в
 //              галочках диалога — суммируется безусловно, только если тест
@@ -353,6 +354,11 @@ function ruleFromEntry(item, entry, groupId = null) {
       : entry.modValueMode === "formula"
       ? { kind: "rollBonus", target, formula: String(entry.value ?? "0") }
       : { kind: "rollBonus", target, value: Number(entry.value) || 0 };
+    // modAuto — «сам, без галочки» (wdbc-6rjtc.8): навязанный штраф вроде
+    // Poor.Q импланта игрок не выбирает, он едет в autoMods (блок «Состояние
+    // (учтено в Пороге)»), как ситуативные штрафы. Только число — «ополовинить
+    // штраф» остаётся галочкой.
+    if (entry.modAuto && effect.kind === "rollBonus") effect.auto = true;
     return { id, label: entry.label || item.name, when: {}, effects: [effect] };
   }
 

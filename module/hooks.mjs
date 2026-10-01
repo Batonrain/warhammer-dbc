@@ -155,6 +155,7 @@ import { weaponProfiles, attackIsMelee } from "./combat/weapon-profiles.mjs";
 // Огневая Точка (Хавок) и Хирургия Легиона (Апотекарий) — пункты меню Очков карточки.
 import { firePointFreeReroll, firePointActivatesOnPaidReroll } from "./rules/fire-point.mjs";
 import { activateFirePoint } from "./combat/fire-point.mjs";
+import { cardOnceUsed, markCardOnce, runCardOnce } from "./combat/card-once.mjs";
 import { hasLegionSurgery, legionSurgeryTestEligible } from "./rules/legion-surgery.mjs";
 import { legionSurgeryOnCard } from "./combat/legion-surgery.mjs";
 import { patronBlocksInfamyAbility } from "./rules/patron-infamy.mjs";
@@ -527,9 +528,10 @@ export function registerHooks() {
 
     // Провал → Очко Бесчестия → Успех на 1 Успех (Змеиный Язык Отступника и
     // т.п., module/apps/infamy-fail-success.mjs). Актор — по uuid карточки:
-    // тратит тот, кто провалил тест, а не тот, чей токен выбран.
+    // тратит тот, кто провалил тест, а не тот, чей токен выбран. Раз на
+    // карточку — combat/card-once.mjs (wdbc-6rjtc.3).
     html.querySelectorAll(".wh-infamy-fail-success-btn").forEach(btn => {
-      if (message.getFlag?.("warhammer-dbc", "infamyFailSuccessUsed")) btn.disabled = true;
+      if (cardOnceUsed(message, "infamyFailSuccessUsed")) btn.disabled = true;
       btn.addEventListener("click", async ev => {
         ev.preventDefault();
         const el = ev.currentTarget;
@@ -2788,13 +2790,15 @@ function _attachFateContextMenu(message, html) {
     // Атака этой карточки: стрелковая ли (Огневая Точка — только стрелковые)
     // и не переброс ли уже (переброс переброса книга не даёт; повтор атаки
     // из этого меню всегда идёт со skipAmmo — это и есть метка «та же атака»).
+    // Исходная карточка уже переброшенной атаки (за Очко или бесплатно)
+    // помечена флагом attackRerolled (combat/card-once.mjs, wdbc-6rjtc.2).
     const atkCtx = message.flags?.["warhammer-dbc"]?.attack ?? null;
     const atkCtxActor = atkCtx ? (game.actors?.get(atkCtx.actorId) ?? actor) : null;
     const atkCtxItem = atkCtx ? atkCtxActor?.items?.get(atkCtx.itemId) : null;
     const atkIsMelee = atkCtxItem
       ? attackIsMelee(atkCtxItem.system, { forceMelee: atkCtx.opts?.forceMelee, profile: atkCtx.opts?.profile })
       : true;
-    const atkRerolled = !!atkCtx?.opts?.skipAmmo;
+    const atkRerolled = !!atkCtx?.opts?.skipAmmo || cardOnceUsed(message, "attackRerolled");
 
     // Огневая Точка (Хавок): пока точка занята — переброс стрелковой атаки без траты Очка.
     const btnFirePoint = (atkCtxItem && firePointFreeReroll(atkCtxActor, { isMelee: atkIsMelee, rerolled: atkRerolled }))
@@ -2803,9 +2807,10 @@ function _attachFateContextMenu(message, html) {
 
     // Хирургия Легиона (Апотекарий): проваленный тест Medicae / For.Lore
     // (Astartes Implants), брошенный с листа, — за Очко засчитать с 1 Успехом.
+    // Раз на карточку (wdbc-6rjtc.3).
     const skillTest = message.flags?.["warhammer-dbc"]?.skillTest ?? null;
     const btnLegionSurgery = (skillTest && !skillTest.success && hasLegionSurgery(actor)
-      && legionSurgeryTestEligible(skillTest))
+      && legionSurgeryTestEligible(skillTest) && !cardOnceUsed(message, "legionSurgeryUsed"))
       ? _makeFateMenuItem("Хирургия Легиона — Успех с 1 Успехом", canSpend,
           !canSpend ? `Нет ${ft.plural}` : "")
       : null;
@@ -2851,6 +2856,9 @@ function _attachFateContextMenu(message, html) {
         if (atkItem) {
           await _executeAttackRoll(atkActor, atkItem, atk.charKey, atk.threshold,
             atk.rofMode, atk.aimTarget, { ...(atk.opts || {}), skipAmmo: true });
+          // Исходная карточка переброшена — бесплатный переброс Огневой Точки
+          // с неё больше не предлагается (переброс переброса).
+          await markCardOnce(message, "attackRerolled");
           ui.notifications.info(
             `✨ ${actor.name} тратит ${ft.one} на переброс атаки${payerNote}! Осталось: ${reroll1.poolValue}`);
           // Огневая Точка (Хавок): «Когда Хавок тратит Очко Бесчестия на
@@ -2930,13 +2938,17 @@ function _attachFateContextMenu(message, html) {
     }
 
     // ── Огневая Точка: переброс без траты Очка ────────────────────────────
+    // Раз на атаку: исходная карточка помечается (combat/card-once.mjs).
     btnFirePoint?.addEventListener("click", async (ev2) => {
       ev2.stopPropagation();
       menu.remove();
       document.removeEventListener("click", closeMenu);
-      await _executeAttackRoll(atkCtxActor, atkCtxItem, atkCtx.charKey, atkCtx.threshold,
-        atkCtx.rofMode, atkCtx.aimTarget, { ...(atkCtx.opts || {}), skipAmmo: true });
-      ui.notifications.info(`🎯 ${atkCtxActor.name}: Огневая Точка — переброс атаки без траты Очка.`);
+      const done = await runCardOnce(message, "attackRerolled", async () => {
+        await _executeAttackRoll(atkCtxActor, atkCtxItem, atkCtx.charKey, atkCtx.threshold,
+          atkCtx.rofMode, atkCtx.aimTarget, { ...(atkCtx.opts || {}), skipAmmo: true });
+        return true;
+      }, "Эта атака уже переброшена.");
+      if (done) ui.notifications.info(`🎯 ${atkCtxActor.name}: Огневая Точка — переброс атаки без траты Очка.`);
     });
 
     // ── Хирургия Легиона: провал → Успех с 1 Успехом ─────────────────────
@@ -2945,7 +2957,7 @@ function _attachFateContextMenu(message, html) {
       menu.remove();
       document.removeEventListener("click", closeMenu);
       if (!canSpend) return;
-      await legionSurgeryOnCard(actor, skillTest.label || "Тест");
+      await legionSurgeryOnCard(actor, skillTest.label || "Тест", message);
     });
 
     // ── +10 к броску ──────────────────────────────────────────────────────

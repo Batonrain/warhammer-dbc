@@ -10,6 +10,7 @@ import { captured, resetCaptured, fakeHtml } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
 import { showDifficultTerrainDialog } from "../../module/combat/movement-terrain.mjs";
 import { DIFFICULT_TERRAIN_TYPE } from "../../module/regions/difficult-terrain.mjs";
+import { packDocById } from "../support/pack-doc.mjs";
 
 function actorFor(overrides = {}) {
   return {
@@ -155,5 +156,33 @@ describe("Полёт — Трудный Ландшафт игнорируетс�
     await rollTerrain(35, "0");
     const card = captured.chat.at(-1).content;
     expect(card).toContain("<label>Порог</label><b>35</b>");
+  });
+});
+
+// wdbc-6rjtc.4: бросок брал ПЕРВЫЙ свой переброс под контекст теста (Ловкость),
+// и Скват получал «Пустоту в Венах» (область char:ag, по книге — только в
+// невесомости) на каждом Ландшафте. Переброс здесь — только с областью terrain.
+describe("Переброс на Трудном Ландшафте — только свой, ландшафтный", () => {
+  const asItem = doc => ({ id: doc._id, name: doc.name, type: doc.type, system: doc.system, flags: doc.flags,
+                           getFlag: (scope, key) => doc.flags?.[scope]?.[key] });
+  const VOID_IN_VEINS = packDocById("packs-src/traits", "PIbpL2lzqGFcW0LY");
+  const BAREFOOT      = packDocById("packs-src/traits", "3MsfNfn6Ihq7Q0zq");
+
+  it("Скват с Пустотой в Венах — ни в окне, ни в броске переброса нет", async () => {
+    const actor = actorFor();
+    actor.items.push(asItem(VOID_IN_VEINS));
+    await showDifficultTerrainDialog(actor, terrainTokenDoc(-10, "Грязь"));
+    expect(captured.dialog.content).not.toContain("Пустота в Венах");
+    await rollTerrain(35, "0");
+    expect(captured.chat.at(-1).content).not.toContain("Пустота в Венах");
+  });
+
+  it("Ратлинг босиком — переброс Босоногого и в окне, и в броске", async () => {
+    const actor = actorFor();
+    actor.items.push(asItem(BAREFOOT));
+    await showDifficultTerrainDialog(actor, terrainTokenDoc(-10, "Грязь"));
+    expect(captured.dialog.content).toContain("Босоногий (Трудный Ландшафт): переброс");
+    await rollTerrain(35, "0");
+    expect(captured.chat.at(-1).content).toContain("Босоногий (Трудный Ландшафт): отброшено");
   });
 });

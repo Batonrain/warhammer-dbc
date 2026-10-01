@@ -29,7 +29,7 @@ const grace = rule("locus.grace", [
 describe("rerollsFromRules: отбор по области теста", () => {
   it("переброс теста Ловкости предлагается на тесте Ловкости", () => {
     expect(rerollsFromRules([grace], { kind: "skill", char: "ag" }))
-      .toEqual([{ ruleId: "locus.grace", label: "locus.grace", mode: "keepBest", rolls: 2, who: "self" }]);
+      .toEqual([{ ruleId: "locus.grace", label: "locus.grace", mode: "keepBest", rolls: 2, who: "self", target: "char:ag" }]);
   });
 
   it("и не предлагается на тесте другой характеристики", () => {
@@ -59,7 +59,7 @@ describe("rerollsFromRules: разбор записи", () => {
   it("режим по умолчанию — «лучший из двух»: так книга описывает переброс", () => {
     const bare = rule("bare", [{ kind: "rollMode", target: "char:t" }]);
     expect(rerollsFromRules([bare], { kind: "skill", char: "t" }))
-      .toEqual([{ ruleId: "bare", label: "bare", mode: "keepBest", rolls: 2, who: "self" }]);
+      .toEqual([{ ruleId: "bare", label: "bare", mode: "keepBest", rolls: 2, who: "self", target: "char:t" }]);
   });
 
   it("«худший из двух» тоже понимается — им пишутся штрафные перебросы", () => {
@@ -95,7 +95,7 @@ describe("resolveTest отдаёт перебросы рядом с модифи
     const out = resolveTest({ actor: { system: {}, items: [] }, kind: "skill", char: "ag" });
     expect(out.mods).toHaveLength(1);
     expect(out.rerolls).toEqual([
-      { ruleId: "locus.grace", label: "locus.grace", mode: "keepBest", rolls: 2, who: "self" }
+      { ruleId: "locus.grace", label: "locus.grace", mode: "keepBest", rolls: 2, who: "self", target: "char:ag" }
     ]);
   });
 

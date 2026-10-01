@@ -13,6 +13,7 @@ import { SERUM_PERIOD, SERUM_TICK } from "../../module/rules/replicant.mjs";
 import { allPackDocuments } from "../support/pack-docs.mjs";
 
 const traitsById = new Map(allPackDocuments("traits").map(({ doc }) => [doc._id, doc]));
+const DAY = 3 * SERUM_TICK;
 
 function trait(id) {
   const doc = structuredClone(traitsById.get(id));
@@ -75,9 +76,47 @@ describe("часы Крючка Сывороток", () => {
     await serumHookClock(a, { from: SERUM_PERIOD, to: SERUM_PERIOD + 2 * SERUM_TICK });
     // 1d5 заглушки — фиксированное число; 2 тика × 2 Характеристики.
     expect(a.system.charLoss).toEqual({ s: 6, t: 6 });
-    const oneTick = mkActor([t]);
-    await serumHookClock(oneTick, { from: SERUM_PERIOD, to: SERUM_PERIOD + SERUM_TICK });
-    expect(oneTick.system.charLoss).toEqual({ s: 3, t: 3 });
+    captured.nextRoll = prev;
+  });
+  it("прыжок Календаря на трое суток — 9 тиков, по одному на каждые 8 ч", async () => {
+    const t = trait("BEIaNeHyHLjqRsUM");
+    await t.setFlag("warhammer-dbc", "serumTakenAt", 0);
+    const prev = captured.nextRoll;
+    captured.nextRoll = 1;
+    const a = mkActor([t]);
+    await serumHookClock(a, { from: SERUM_PERIOD, to: SERUM_PERIOD + 3 * DAY });
+    expect(a.system.charLoss).toEqual({ s: 9, t: 9 });
+    captured.nextRoll = prev;
+  });
+  it("откат Календаря не повторяет урон: +1 сутки, −1 сутки, снова +1 сутки — тики один раз (wdbc-6rjtc.9)", async () => {
+    const t = trait("BEIaNeHyHLjqRsUM");
+    await t.setFlag("warhammer-dbc", "serumTakenAt", 0);
+    const prev = captured.nextRoll;
+    captured.nextRoll = 1;
+    const a = mkActor([t]);
+    await serumHookClock(a, { from: SERUM_PERIOD, to: SERUM_PERIOD + DAY });
+    expect(a.system.charLoss).toEqual({ s: 3, t: 3 });
+    await serumHookClock(a, { from: SERUM_PERIOD + DAY, to: SERUM_PERIOD });
+    await serumHookClock(a, { from: SERUM_PERIOD, to: SERUM_PERIOD + DAY });
+    expect(a.system.charLoss).toEqual({ s: 3, t: 3 });
+    // Откат на полсуток и прыжок на двое суток: бьют только ещё не прожитые сутки.
+    await serumHookClock(a, { from: SERUM_PERIOD + DAY / 2, to: SERUM_PERIOD + 2 * DAY });
+    expect(a.system.charLoss).toEqual({ s: 6, t: 6 });
+    captured.nextRoll = prev;
+  });
+  it("новая доза после отката дальше недели — отсчёт с неё, старая метка не глушит тики", async () => {
+    const t = trait("BEIaNeHyHLjqRsUM");
+    await t.setFlag("warhammer-dbc", "serumTakenAt", 0);
+    const prev = captured.nextRoll;
+    captured.nextRoll = 1;
+    const a = mkActor([t], { s: 100, t: 100 });
+    await serumHookClock(a, { from: SERUM_PERIOD, to: SERUM_PERIOD + 8 * DAY });
+    expect(a.system.charLoss).toEqual({ s: 24, t: 24 });
+    // Календарь откатили на 8 суток, сыворотку приняли там; через неделю и 16 ч — 2 тика от новой дозы.
+    game.time = { worldTime: SERUM_PERIOD };
+    await takeSerum(a, { announce: false });
+    await serumHookClock(a, { from: SERUM_PERIOD, to: 2 * SERUM_PERIOD + 2 * SERUM_TICK });
+    expect(a.system.charLoss).toEqual({ s: 26, t: 26 });
     captured.nextRoll = prev;
   });
   it("«принять сыворотку» — отметка сейчас, у не-Репликанта — ничего", async () => {

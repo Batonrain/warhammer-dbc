@@ -13,11 +13,13 @@
 //    пака: без Механики, без energyMax и НЕ установленными — Катушка
 //    Потенции не давала зарядов, пока игрок сам не «вживлял» её Хирургеоном.
 
+import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
 import { packDocById } from "../support/pack-doc.mjs";
 import { isItemActive } from "../../module/apps/effects.mjs";
 import { rulesFromItemMechanics } from "../../module/rules/item-rules.mjs";
 import { rollModsFromRules } from "../../module/rules/resolve-test.mjs";
+import { ruleAutoModsHtml, ruleRollModsHtml } from "../../module/rules/roll-mods.mjs";
 import { MECHANICUS_IMPLANTS } from "../../module/constants/implants.mjs";
 
 const DIR = "packs-src/implants/Адептус_Механикус/Импланты_Механикус";
@@ -38,9 +40,20 @@ const onActor = (k, quality, installed = true) => {
   };
 };
 const actor = { system: { geneSeed: {}, bio: { age: 0 } }, items: [] };
-const mods = (k, quality, ctx, installed = true) =>
-  rollModsFromRules(rulesFromItemMechanics([onActor(k, quality, installed)], isItemActive, actor), ctx)
-    .map(m => m.value);
+// Обе половины — галочки и то, что считается само (auto): число сверяется с
+// книгой независимо от того, как оно подаётся игроку.
+const mods = (k, quality, ctx, installed = true) => {
+  const rules = rulesFromItemMechanics([onActor(k, quality, installed)], isItemActive, actor);
+  return [...rollModsFromRules(rules, ctx), ...rollModsFromRules(rules, ctx, { auto: true })].map(m => m.value);
+};
+/** Актор с одним установленным имплантом — для окна броска листа. */
+const actorWith = (k, quality) => {
+  const item = onActor(k, quality);
+  return { ...actor, system: { ...actor.system, characteristics: {}, skills: {} },
+           items: Object.assign([item], { contents: [item] }) };
+};
+const charge = { kind: "skill", skill: "techUse", char: "int", coilCharge: true };
+const noo = { kind: "skill", skill: "techUse", char: "int", noosphere: true };
 
 describe("Импланты Механикум: тексты книги", () => {
   it("Электро-Графты — книжное имя и уровни Качества", () => {
@@ -75,7 +88,6 @@ describe("Импланты Механикум: модификаторы по К�
     expect(mods("graft", "best", { kind: "skill", skill: "dodge", char: "ag" })).toEqual([]);
   });
 
-  const charge = { kind: "skill", skill: "techUse", char: "int", coilCharge: true };
   it("Электу-Индукторы: зарядка Катушки −10/0/+10/+20, на прочий Tech-Use — ничего", () => {
     expect(mods("electoo", "poor", charge)).toEqual([-10]);
     expect(mods("electoo", "common", charge)).toEqual([]);
@@ -92,7 +104,6 @@ describe("Импланты Механикум: модификаторы по К�
     expect(mods("respirator", "best", gas)).toEqual([40]);
   });
 
-  const noo = { kind: "skill", skill: "techUse", char: "int", noosphere: true };
   it("Ноосферное Подключение: тесты Ноосферы −10/0/+5/+10, прочий Tech-Use — ничего", () => {
     expect(mods("uplink", "poor", noo)).toEqual([-10]);
     expect(mods("uplink", "common", noo)).toEqual([]);
@@ -104,6 +115,23 @@ describe("Импланты Механикум: модификаторы по К�
   it("не установлен (лежит в сумке) — не даёт ничего", () => {
     expect(mods("graft", "best", operate, false)).toEqual([]);
   });
+});
+
+// wdbc-6rjtc.8: штраф Poor.Q приезжал в окно «⚡ Зарядки» и Ноосферного
+// Сканирования галочкой, снятой по умолчанию, — навязанный штраф игрок мог
+// просто не отметить. Теперь он в блоке «Состояние (учтено в Пороге)»;
+// бонусы Good/Best остаются галочками.
+describe("Poor.Q — штраф считается сам, Good/Best — галочкой", () => {
+  for (const [k, ctx, good] of [["electoo", charge, 10], ["uplink", noo, 5]]) {
+    it(k, () => {
+      const poor = actorWith(k, "poor");
+      expect(ruleAutoModsHtml(poor, ctx).total).toBe(-10);
+      expect(ruleRollModsHtml(poor, ctx).mods.map(m => m.value)).toEqual([]);
+      const g = actorWith(k, "good");
+      expect(ruleAutoModsHtml(g, ctx).total).toBe(0);
+      expect(ruleRollModsHtml(g, ctx).mods.map(m => m.value)).toEqual([good]);
+    });
+  }
 });
 
 describe("Импланты Механикум: резерв-константы в согласии с паком", () => {

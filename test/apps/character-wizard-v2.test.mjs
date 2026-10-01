@@ -7,7 +7,7 @@
 
 import { describe, it, expect, vi } from "vitest";
 import "../support/foundry-stub.mjs";
-import { listenerHtml } from "../support/foundry-stub.mjs";
+import { listenerHtml, captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describeV2Sheet } from "../support/v2-sheet-contract.mjs";
 import { CharacterWizard } from "../../module/apps/character-wizard.mjs";
 import { openCompendiumBrowser } from "../../module/apps/compendium-browser.mjs";
@@ -178,5 +178,48 @@ describe("close()", () => {
     expect(globalThis.Hooks.off).toHaveBeenCalledWith("createItem", 11);
     expect(globalThis.Hooks.off).toHaveBeenCalledWith("deleteItem", 22);
     delete globalThis.Hooks.off;
+  });
+});
+
+// wdbc-6rjtc.7: запись Конструктора kind:"wounds" Расы/Черты (+3 «Адаптация:
+// Живучесть» Сплайса, +15 «Физиология Громилы» Огрина) пишет wounds.max ещё на
+// Этапе 1 — проверка «max === 0» молча пропускала бросок Ран Архетипа, и
+// персонаж оставался с 3 Ранами. Бросок прибавляется к расовой прибавке, от
+// повтора («Назад» → «Далее») держит флаг сессии Мастера, как у Бесчестия.
+describe("_finishArchetypeStep: стартовые Раны Архетипа (wdbc-6rjtc.7)", () => {
+  function woundsApp(max) {
+    const actor = { id: "a1", items: [], system: { archetype: "champion", wounds: { max, value: 0 } } };
+    actor.update = async data => {
+      if ("system.wounds.max" in data) actor.system.wounds.max = data["system.wounds.max"];
+      if ("system.wounds.value" in data) actor.system.wounds.value = data["system.wounds.value"];
+    };
+    const app = appLike(actor);
+    app._wasEmpty = { wounds: true };           // снимок до Расы: Ран ещё не было
+    app._archTalentChoices = () => ({ fixed: [] });
+    app._resolvedTalentChoices = () => [];
+    return { app, actor };
+  }
+
+  it("Раса дала +3 — итог = 3 + бросок «15+1d5», текущие Раны полные", async () => {
+    resetCaptured();
+    captured.nextRoll = 17;
+    const { app, actor } = woundsApp(3);
+
+    await app._finishArchetypeStep("champion");
+
+    expect(actor.system.wounds.max).toBe(20);
+    expect(actor.system.wounds.value).toBe(20);
+  });
+
+  it("повторное подтверждение шага Раны не перебрасывает", async () => {
+    resetCaptured();
+    captured.nextRoll = 17;
+    const { app, actor } = woundsApp(3);
+    await app._finishArchetypeStep("champion");
+
+    captured.nextRoll = 19;
+    await app._finishArchetypeStep("champion");
+
+    expect(actor.system.wounds.max).toBe(20);
   });
 });

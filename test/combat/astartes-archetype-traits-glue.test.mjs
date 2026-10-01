@@ -9,7 +9,7 @@ import { captured, resetCaptured, fakeForm } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { packDocById } from "../support/pack-doc.mjs";
-import { legionSurgeryPass, offerSusAnWake, LEGION_SURGERY_LINE } from "../../module/combat/legion-surgery.mjs";
+import { legionSurgeryPass, offerSusAnWake, legionSurgeryOnCard, LEGION_SURGERY_LINE } from "../../module/combat/legion-surgery.mjs";
 import { emergencyMaintenance } from "../../module/combat/emergency-maintenance.mjs";
 import { activateFirePoint, clearFirePoint, markFirePointRecoil } from "../../module/combat/fire-point.mjs";
 import { SUS_AN_ACTIVE_FLAG } from "../../module/rules/legion-surgery.mjs";
@@ -80,6 +80,20 @@ describe("Хирургия Легиона — вопрос после прова
     expect(medic.updates).toEqual([{ "system.fate.value": 1 }]);
     expect(patient.updates).toHaveLength(1);
     expect(patient.updates[0][`flags.${NS}.-=${SUS_AN_ACTIVE_FLAG}`]).toBe(null);
+  });
+
+  // wdbc-6rjtc.3а: из меню Очков на карточке каждый повторный выбор снова
+  // списывал Очко и писал ещё одну карточку «засчитан».
+  it("меню карточки: повторный выбор на той же карточке Очко не списывает", async () => {
+    const medic = fakeActor({ traits: [LEGION_SURGERY_DOC] });
+    const message = { id: "ls1", isOwner: true, flags: {},
+      getFlag(ns, k) { return this.flags[ns]?.[k]; },
+      async setFlag(ns, k, v) { (this.flags[ns] ??= {})[k] = v; } };
+    expect(await legionSurgeryOnCard(medic, "Medicae", message)).toBe(true);
+    expect(await legionSurgeryOnCard(medic, "Medicae", message)).toBe(false);
+    expect(medic.updates).toEqual([{ "system.fate.value": 1 }]);
+    expect(captured.chat).toHaveLength(1);
+    expect(message.flags[NS].legionSurgeryUsed).toBe(true);
   });
 
   it("пробуждение: Раны ниже −7 — не предлагается", async () => {
