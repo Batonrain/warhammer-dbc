@@ -1458,6 +1458,44 @@ AGENTS.md).
 
 ---
 
+## 28. Разбор «Разобрать» #530 (01.10.2026): что появилось
+
+Точечно — чтобы не искать заново:
+
+- **Урон в Характеристики:** надбавки Генетического Угасания/Нестабильного
+  Генома — одна функция `rules/char-damage-bonus.mjs` (её зовут
+  `applyCharDamage`, Импровизированная Руна, Прижигание).
+- **Падение:** кнопка урона `combat/fall-damage.mjs` (броня игнорируется,
+  T.b поглощает, Лежачий); Двусоставный +5×X на Группирование —
+  `rules/digitigrade.mjs`.
+- **Лечение:** Hardy → `rules/healing-clock.mjs::healLevel` (для лечения всегда
+  «лёгкое»).
+- **Очки Бесчестия:** запреты Покровителя (Нургл — Переброс, Тзинч —
+  Усиление) в меню карточки — `rules/patron-infamy.mjs`; +10 и переброс за
+  Очко Чемпиона — `hooks.mjs::_attachFateContextMenu`.
+- **Йигори:** Охотники на Ангелов раз в Раунд и переброс стаи —
+  `combat/angel-hunters.mjs` (+ `rules/roll-mods.mjs::registerRerollLimiter`);
+  регенерация частей тела — `combat/limb-regen.mjs`, `rules/limb-loss.mjs`.
+- **Скват/среда сцены:** радиация по Календарю —
+  `combat/radiation-scene.mjs`, `rules/radiation-scene.mjs` (укрытие в окне
+  «Окружение»); невесомость → предикат `weightlessScene`; Преимущество против
+  яда — `rules/squat-traits.mjs::poisonResistReroll`.
+- **Яды/наркотики:** недельный счётчик доз и тест Зависимости —
+  `rules/drug-doses.mjs`, `sheets/tabs/drugs.mjs::weeklyDoseCheck`; яд клыков
+  Наги кнопкой — `apps/naga-traits.mjs::injectFangVenom`; Toxic (X) —
+  запись «Свойство атаки» с `apRating:"rating"`.
+- **Субрасы Зверолюда:** Кхорнгор/Мясник/Плакальщик —
+  `combat/beastman-subrace.mjs`; Взрывное Действие Сплайса —
+  `combat/explosive-action.mjs`.
+- **Приёмы:** +1 Успех от Боя Один На Один/Искусного в Захвате и приёмах —
+  `combat/extra-successes.mjs`.
+- **Огрин:** выход из ауры Дискорданта снимает Ступор —
+  `combat/bone-head.mjs::onDiscordantFieldLeft`.
+- **Создание персонажа:** Скакун Дикаря из Бестиария —
+  `apps/mount-grant.mjs` (Редкость в `flags.warhammer-dbc.mountRarity`).
+
+---
+
 ## Инфраструктура и UI-оболочка (не механика, но полезно знать, что есть)
 
 Не несёт игровой логики сама по себе — рендер, хелперы, общие пикеры.
