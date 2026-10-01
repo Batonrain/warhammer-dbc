@@ -54,6 +54,7 @@ import { activateWrappedInChaos } from "./wrapped-in-chaos.mjs";
 import { attemptPossessionAttack, leavePossessionHost } from "./possession-attack.mjs";
 import { activateBattleForm, endBattleForm } from "./battle-forms.mjs";
 import { useAdaptiveVenom } from "./naga-traits.mjs";
+import { useExplosiveAction } from "../combat/explosive-action.mjs";
 import { emergencyMaintenance } from "../combat/emergency-maintenance.mjs";
 import { scroungeSupplies } from "./scrounge.mjs";
 import { grantStartingDisorder } from "../sheets/tabs/disorders.mjs";
@@ -165,6 +166,8 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *  - `useAdaptiveVenom` (apps/naga-traits.mjs) — Адаптивная Отрава Наги:
  *    выбор яда (вектор рана/инъекция/еда, Редкость ≤2/3/4 за 1/3/5 Очков
  *    Бесчестия) и одна доза «яда в клыках» на листе.
+ *  - `useExplosiveAction` (combat/explosive-action.mjs) — Взрывное Действие
+ *    Сплайса: бонусное полудействие раз в Ход, расплата в конце Хода.
  *  - `emergencyMaintenance` (combat/emergency-maintenance.mjs) — Экстренное
  *    Обслуживание Технодесантника: полное действие, выбор и починка
  *    повреждения; throw при отказе — Очко Бесчестия записи не списывается.
@@ -200,7 +203,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "resolveBurnedSenses", "buildCountenanceFearFlag", "purityOfBattleWave", "devouredSkillRank",
     "nextDevourerStreak", "pruneDevourerStreaks",
     "activateFruitOfFlesh", "eatHealFruit", "useSoulSeer", "activateWrappedInChaos",
-    "attemptPossessionAttack", "leavePossessionHost", "useAdaptiveVenom",
+    "attemptPossessionAttack", "leavePossessionHost", "useAdaptiveVenom", "useExplosiveAction",
     "activateBattleForm", "endBattleForm",
     "emergencyMaintenance", "scroungeSupplies",
     "grantStartingDisorder",
@@ -220,7 +223,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     resolveBurnedSenses, buildCountenanceFearFlag, purityOfBattleWave, devouredSkillRank,
     nextDevourerStreak, pruneDevourerStreaks,
     activateFruitOfFlesh, eatHealFruit, useSoulSeer, activateWrappedInChaos,
-    attemptPossessionAttack, leavePossessionHost, useAdaptiveVenom,
+    attemptPossessionAttack, leavePossessionHost, useAdaptiveVenom, useExplosiveAction,
     activateBattleForm, endBattleForm,
     emergencyMaintenance, scroungeSupplies,
     grantStartingDisorder,

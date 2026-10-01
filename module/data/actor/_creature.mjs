@@ -451,6 +451,7 @@ export function creatureSchema({ granted = false } = {}) {
     lostLimbs: new SchemaField(Object.fromEntries([...LOST_SIDE_KEYS, ...FINGER_SIDE_KEYS].map(sideKey => [sideKey, new SchemaField({
       lost:       bool(false, "Потеряна"),
       gangreneAt: num(0, "worldTime: проверка Гангрены обрубка"),
+      regenAt:    num(0, "worldTime: часть тела отрастёт (Йигори, New Men)"),
       mutation:   bool(false, "Потеряна мутацией (только Best.Q бионика)")
     }, { label: sideKey })])), { label: "Потерянные конечности" }),
     // Бесполезные Конечности (wdbc-x1nz.2.99, «Бесполезные Конечности и

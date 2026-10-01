@@ -175,6 +175,7 @@ import { migrateAllItemEffects }       from "./module/migrations/item-effects.mj
 import { itemIconFor, isGenericImg }  from "./module/constants/item-icons.mjs";
 import { computeShipIdentity }        from "./module/combat/ship-tokens.mjs";
 import { applySymbolOfPowerGrant, hasSymbolOfPower } from "./module/combat/beastman-shaman.mjs";
+import { regenOnPreUpdate } from "./module/combat/limb-regen.mjs";
 import { needsBestQChoice, runBestQChoice } from "./module/apps/implant-bestq-choice.mjs";
 import { diseaseCreateBlocked } from "./module/rules/new-men.mjs";
 
@@ -898,6 +899,13 @@ Hooks.once("ready", () => {
         // Очко и владение перебрасывающим.
         const { applyInspiringSpendRelay } = await import("./module/combat/inspiring-presence.mjs");
         await applyInspiringSpendRelay(data, requester);
+        return;
+      }
+      if (data.action === "angelHuntersSpend") {
+        // Охотники на Ангелов (Йигори): переброс стаи — сосед тратит чужой
+        // переброс; combat/angel-hunters.mjs сверяет Черту и владение.
+        const { applyAngelHuntersSpendRelay } = await import("./module/combat/angel-hunters.mjs");
+        await applyAngelHuntersSpendRelay(data, requester);
         return;
       }
       if (data.action === "veilShift") {
@@ -1913,6 +1921,8 @@ export async function applyTokenAutoRotateDefaultOnce() {
 // ── Имя актора → имя токена; арт актора → текстура токена ────────────────────
 // В preUpdate дописываем изменения в прототип-токен той же операции.
 Hooks.on("preUpdateActor", (doc, changes) => {
+  // Регенерация Йигори: потеря части тела получает таймер отрастания (wdbc-yffxj).
+  regenOnPreUpdate(doc, changes);
   if (typeof changes.name === "string") {
     foundry.utils.setProperty(changes, "prototypeToken.name", changes.name);
   }

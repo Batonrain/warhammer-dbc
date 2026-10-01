@@ -2865,7 +2865,8 @@ export const CAPABILITIES = {
   },
   "resilience.core.hardy": {
     label: "В отношении лечения персонаж всегда считается легко раненным.",
-    source: "Hardy / Крепкий", reader: ""
+    source: "Hardy / Крепкий",
+    reader: "module/rules/healing-clock.mjs::healLevel (ключ уровня ранения для лечения всегда light, в т.ч. при критических Ранах) → combat/healing-clock.mjs (часы Календаря) и sheets/tabs/healing.mjs (кнопка Лечения: Первая Помощь, Отдых, Мед. уход). Уровень на листе и регенерация Огрина не затронуты"
   },
   "resilience.core.headGuard": {
     label: "Раз в Раунд, получая попадание в голову (но не Избирательный в глаз или сочленения шеи),",
@@ -5395,7 +5396,7 @@ export const CAPABILITIES = {
     source: "Fully Armed / Во Всеоружии", reader: "module/combat/fully-armed.mjs"
   },
   "trait.geneticDecay": {
-    label: "+1 к каждому урону в Характеристики за мутацию (не Дар Богов — у Дара заполнен бог) и −1 год предела возраста за мутацию. НЕ сделано: урон, записанный в обход единой точки applyCharDamage (Хирургия — sheets/tabs/healing.mjs), прибавки не получает.",
+    label: "+1 к каждому урону в Характеристики за мутацию (не Дар Богов — у Дара заполнен бог) и −1 год предела возраста за мутацию. Единая арифметика надбавок — module/rules/char-damage-bonus.mjs (applyCharDamage, Прижигание через него, Импровизированная Руна Сигиллита).",
     source: "Genetic Decay / Генетическое Угасание",
     reader: "module/combat/char-damage.mjs (applyCharDamage), module/combat/replicant.mjs (replicantBodyContext); арифметика — module/rules/replicant.mjs"
   },
@@ -5408,6 +5409,11 @@ export const CAPABILITIES = {
     source: "Hard as Stone / Крепкий как Камень",
     reader: "module/rules/squat-traits.mjs poisonResistReroll() — module/hooks.mjs (_applyWeaponPropEffect); module/rules/squat-traits.mjs sleepGraceDays() — module/rules/character.mjs (vitalCtx) и module/sheets/sheet-helpers.mjs (life)"
   },
+  "resist.poisonAdvantage": {
+    label: "Преимущество на тест против яда (сопротивление Toxic): бросок дважды, берётся лучший. Адаптация Сплайса «Живучесть». Тестов против болезней, Усталости и Оглушения в системе нет — текстом.",
+    source: "Adaptation: Resilience / Адаптация: Живучесть",
+    reader: "module/rules/squat-traits.mjs poisonResistReroll() — module/hooks.mjs (_applyWeaponPropEffect, сопротивление Toxic)"
+  },
   "mutations.asAstartes": {
     label: "Получает мутации как Космодесантник, а не человек: пороги Мутации 10/30/60/90 вместо 10/20/40/60/80 (поблажка лоялистам-Астартес сюда не входит — она про их геносемя)",
     source: "Hard as Stone / Крепкий как Камень (Скват); Stepchildren of the Gods / Пасынки Богов (Зверолюд)",
@@ -5416,7 +5422,7 @@ export const CAPABILITIES = {
   "trait.hollowBones": {
     label: "T.b вдвое (окр.▲) при Поглощении I(Cr) урона.",
     source: "Hollow Bones / Пустые Кости",
-    reader: "module/rules/hollow-bones.mjs::hollowBonesTb → module/combat/damage.mjs applyDamageToActor (подвид crushing), пометка в карточке урона"
+    reader: "module/rules/hollow-bones.mjs::hollowBonesTb → module/combat/damage.mjs applyDamageToActor (подвид crushing), пометка в карточке урона. Падение (обычный I без Cr) не затрагивает — решение владельца 01.10.2026"
   },
   "trait.hoverer": {
     label: "Парение со скоростью SPD X.",
@@ -5545,9 +5551,9 @@ export const CAPABILITIES = {
     reader: "module/rules/new-men.mjs — sheets/tabs/healing.mjs applyReattach/resolveBionicTest"
   },
   "newMen.regeneration": {
-    label: "Перелом (бесполезная конечность): срок в лубке вчетверо короче",
+    label: "Перелом (бесполезная конечность): срок в лубке вчетверо короче; потерянные глаз (7 суток), рука/кисть/нога/стопа (2 месяца) отрастают сами. Органы без стороны (язык, почка, лёгкое) и пальцы в системе не хранятся — текстом.",
     source: "New Men / Новые Люди",
-    reader: "module/rules/new-men.mjs splintDays() — sheets/tabs/healing.mjs applySetLimb"
+    reader: "module/rules/new-men.mjs splintDays() — sheets/tabs/healing.mjs applySetLimb; module/combat/limb-regen.mjs (таймер в preUpdateActor, возврат — часы Состояний), сроки — rules/limb-loss.mjs LIMB_REGEN_DAYS"
   },
   "trait.nimble10": {
     label: "Штраф атакующим по нему (−X, Рейтинг Черты).",
@@ -5792,7 +5798,7 @@ export const CAPABILITIES = {
   "trait.unstableGenome": {
     label: "Урон в Характеристики усиливается на +1 (плюс ещё +1 за каждую доп. адаптацию).",
     source: "Unstable Genome / Нестабильный Геном",
-    reader: "module/rules/splice-adaptations.mjs (unstableGenomeBonus = 1 + адаптации сверх трёх) → module/combat/char-damage.mjs::applyCharDamage (единая точка урона в Характеристики, в чат — «+N Нестабильный Геном», combat/char-damage-button.mjs) и module/sheets/tabs/healing.mjs::applyCauterize (Прижигание). Не покрыто: урон в Характеристики мимо единой точки — rules/sigillite-runes.mjs (charLossPortionsAddFields напрямую)"
+    reader: "module/rules/splice-adaptations.mjs (unstableGenomeBonus = 1 + адаптации сверх трёх) → module/combat/char-damage.mjs::applyCharDamage (единая точка урона в Характеристики, в чат — «+N Нестабильный Геном», combat/char-damage-button.mjs) , Прижигание (sheets/tabs/healing.mjs::applyCauterize идёт через applyCharDamage) и Импровизированная Руна (rules/sigillite-runes.mjs) — общая арифметика в rules/char-damage-bonus.mjs"
   },
   "trait.vanityUnbound": {
     label: "Hatred (Наги) распространяется на мутантов-змей — цель «Мутант-змея» у Таланта из расы (rules/talent-targets.mjs, TARGET_FEATURES.snakeMutation); −20 к социальным тестам против змееподобных (Нага, Сслит, мутант-змея) — само, по выделенной цели; Командование не доходит (command.cannotReceive)",
@@ -5939,6 +5945,11 @@ export const CAPABILITIES = {
   // ── Таланты субрас Зверолюда (packs-src/talents/Субрасы_Зверолюдов) — до
   //    сверки главы I (28.09.2026) лежали Чертами и выдавались субрасой
   //    даром; книга даёт к ним только ДОСТУП (Уровень 3, Требования).
+  "subrace.khorngor.rage": {
+    label: "Каждый раз, получая урон, оскорбления или угрозы, тест W+10, или Ярость (можно намеренно провалить). Движок видит только урон; оскорбления и угрозы — за столом.",
+    source: "Субраса Кхорнгор",
+    reader: "module/combat/beastman-subrace.mjs::khorngorRageTest ← module/combat/damage.mjs (applyDamageToActor)"
+  },
   "talent.beastmanSubrace.slaangorFiendblood": {
     label: "Раз за бой или сцену после завершения рукопашной атаки — ещё одна атака с той же базой (в т.ч. с нескольких рук).",
     source: "Slaangor Fiendblood / Слаангор Извергкровка",
@@ -5947,11 +5958,12 @@ export const CAPABILITIES = {
   "talent.beastmanSubrace.pestigorMourner": {
     label: "Раз за бой или сцену после получения непоглощённого урона — уменьшить его до 1 и на 1 Раунд удвоить T.b в поглощении.",
     source: "Pestigor Mourner / Пестигор Плакальщик",
-    reader: "запись Таланта kind:script (раз за бой) — отметка использования и напоминание; Раны и T.b — вручную"
+    reader: "module/combat/beastman-subrace.mjs (mournerOffer, mournerTb) ← module/combat/damage.mjs (applyDamageToActor: после расчёта непоглощённого урона и в T.b поглощения)"
   },
   "talent.beastmanSubrace.khorngorButcher": {
     label: "Запас кубиков: 1 за Hatred 2-го уровня и 1 за 2 Hatred 1-го; до ½ W.b кубиков урона к атаке с S.b; восстанавливаются в конце боя.",
-    source: "Khorngor Butcher / Кхорнгор Мясник", reader: ""
+    source: "Khorngor Butcher / Кхорнгор Мясник",
+    reader: "module/rules/beastman-subrace.mjs (butcherPool/…) — module/combat/beastman-subrace.mjs (butcherStatus, addButcherDice) — кнопка .wh-butcher-btn на карточке рукопашного попадания (combat/attack-card.mjs, hooks.mjs)"
   },
   "talent.beastmanSubrace.tzaangorEnlightened": {
     label: "Часовой ритуал без тестов — Диск Тзинча под управлением, как ритуал Трансформации Диска; 3d10 урона в W.",

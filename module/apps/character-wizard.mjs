@@ -28,6 +28,7 @@ const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 const START_LEVEL_FLAG_SCOPE = "warhammer-dbc";
 const START_LEVEL_FLAG_KEY   = "startLevelApplied";
 
+import { grantMount } from "./mount-grant.mjs";
 import { disabledRaceKeys }      from "../constants/features.mjs";
 import { BODY_TYPES }            from "../constants/body-map.mjs";
 import { raceGroupList, subracesOf, subraceEntries, subraceCostAt, raceDef } from "./race-library.mjs";
@@ -1731,7 +1732,15 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
           else if (spec.rule === "qualityUp") qualityUps.push(t);
           continue;
         }
-        if (spec.kind === "manual") { notes[i].push(spec.note); continue; }
+        if (spec.kind === "manual") {
+          // Скакун Дикаря и прочих — выбор из Бестиария и посадка в седло (wdbc-zaesd).
+          if (spec.grant === "mount") {
+            const mount = await grantMount(actor, spec.maxAvailability);
+            t.done = !!mount;
+            notes[i].push(mount ? `Скакун «${mount.name}» взят, всадник посажен в седло; ${spec.note.split(";")[1]?.trim() ?? "набор брони — ГМ"}` : spec.note);
+          } else notes[i].push(spec.note);
+          continue;
+        }
         if (spec.kind !== "named") continue;
         const k = normName(spec.name);
         // Предмет уже есть (обычно выдан Механикой Расы/Архетипа на более

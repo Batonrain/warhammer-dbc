@@ -485,7 +485,9 @@ export function rerollsFromRules(rules, ctx = {}) {
       // Схлопывать "opponent" в "self" нельзя: тогда наказание попадает в
       // список добровольных перебросов наказуемого, снятым по умолчанию.
       const who = effect.who === "target" || effect.who === "opponent" ? effect.who : "self";
-      out.push({ ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id, mode, rolls, who });
+      // limit — ключ ограничителя «раз в Раунд» (rules/roll-mods.mjs::rerollLimiters), пусто — без ограничения.
+      out.push({ ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id, mode, rolls, who,
+        ...(effect.limit ? { limit: effect.limit } : {}) });
     }
   }
   return out;
