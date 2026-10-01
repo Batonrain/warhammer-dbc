@@ -11,14 +11,14 @@
 export const YIGORI_RULES = [
   {
     // «Раз в Раунд Йигори может перебросить любой тест, целью или источником
-    // которого является Космодесантник». «Раз в Раунд» и обмен перебросами
-    // внутри Командного Присутствия отслеживает стол: учёта перебросов по
-    // Раундам система не ведёт (rules/roll-mods.mjs::ruleRerollsHtml — тот же
-    // уговор, что у Локусов Герольдов).
+    // которого является Космодесантник. Йигори в одном Командном Присутствии и
+    // в пределах видимости друг друга могут делиться этими перебросами».
+    // limit — ограничитель «раз в Раунд» и обмена в стае: combat/angel-hunters.mjs
+    // (rules/roll-mods.mjs::registerRerollLimiter), wdbc-erp61.
     id: "yigori.angelHunters",
     label: "Angel Hunters / Охотники на Ангелов",
     when: { hasTrait: "Angel Hunters", targetIsAstartes: true },
     effects: [{ kind: "rollMode", target: "all", mode: "keepBest", rolls: 2,
-                label: "Охотники на Ангелов (раз в Раунд)" }]
+                limit: "angelHunters", label: "Охотники на Ангелов (раз в Раунд)" }]
   }
 ];
