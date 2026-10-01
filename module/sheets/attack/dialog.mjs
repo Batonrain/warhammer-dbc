@@ -34,6 +34,7 @@ import { attackIsMelee, profileHasOwnFire, weaponProfiles as atkProfilesOf } fro
 import { weaponThresholdPart } from "../../combat/attack-threshold.mjs";
 import { withEyeOfEnvy } from "../../rules/eye-of-envy.mjs";
 import { AIM_FOCUS_EXTENDED_FLAG } from "../../rules/aim-focus.mjs";
+import { commitRerollUse } from "../../combat/angel-hunters.mjs";
 import { isSabre, sabreSecondAttackBlockFor, armSabreSecondAttack, consumeSabreSecondAttack } from "../../combat/sabre-second-attack.mjs";
 
 /**
@@ -130,6 +131,8 @@ export function openAttackDialog(ctx) {
         action: "roll", label: "Бросок!", icon: "fas fa-dice-d10", class: "roll", default: true,
         callback: async (event, button) => {
           const f = readAttackForm(button.form, ammoConds);
+          // «Раз в Раунд» (Охотники на Ангелов): выбранный переброс потрачен.
+          await commitRerollUse(actor, button.form.querySelector(".rule-reroll-opt:checked")?.dataset);
 
           if (f.autoFail) {
             await ChatMessage.create({

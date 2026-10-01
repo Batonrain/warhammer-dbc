@@ -15,6 +15,8 @@ import { tempInfamyAmount } from "../rules/temp-infamy.mjs";
 import { sideValue, sideContext, registerContest, contestOpponents } from "./opposed-contest.mjs";
 import { spendActionPoints } from "./action-economy.mjs";
 import { canTakeAttackAction, takeAttackAction } from "./attack-limit.mjs";
+import { commitRerollUse } from "./angel-hunters.mjs";
+import { extraSuccessDegrees } from "./extra-successes.mjs";
 
 export async function _showContestDialog(actor, techDef) {
   // Повалить и Напролом — Athletics(S) vs Athletics(S), Финт/Давление — WS vs WS.
@@ -236,6 +238,7 @@ export async function _showContestDialog(actor, techDef) {
           const rerollEl = html.find(".rule-reroll-opt:checked");
           const rerollIdx = parseInt(rerollEl?.data?.("idx") ?? "-1");
           const useReroll = rerollIdx >= 0;
+          if (useReroll) await commitRerollUse(actor, rerollEl[0]?.dataset);
           const mode = rerollEl?.data?.("mode") || "keepBest";
           // Лишние руки в Захвате (стр. 12, wdbc-x1nz.2.77): «за каждую
           // дополнительную руку он может бросать... дополнительный раз,
@@ -247,7 +250,9 @@ export async function _showContestDialog(actor, techDef) {
           for (let i = 0; i < nRolls; i++) rolled.push(await new Roll("1d100").evaluate());
           const picked = pickReroll(rolled.map(r => r.total), useReroll ? mode : "keepBest");
           const rv     = picked.value;
-          const { success: hit, deg } = testOutcome(rv, eff);
+          const { success: hit, deg: rolledDeg } = testOutcome(rv, eff);
+          // Бой Один На Один / Искусный: +1 Успех к успешному тесту приёма (wdbc-r3379).
+          const deg = rolledDeg + extraSuccessDegrees(actor, { success: hit, charKey });
           const outcome  = hit
             ? outcomeHtml(true,  `Успех — ${deg} ${_degWord(deg)}`)
             : outcomeHtml(false, `Провал — ${deg} ${_degWord(deg)}`);

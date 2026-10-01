@@ -36,6 +36,8 @@ import { SKILLS_DEF } from "../constants/skills.mjs";
 import { rollStatLine } from "../helpers/test-card.mjs";
 import { spendActionPoints, isEncounterActive } from "./action-economy.mjs";
 import { addFatigue, fatiguePenalty, conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
+import { fallDamageSectionHtml } from "./fall-damage.mjs";
+import { digitigradeGroupingBonus } from "../rules/digitigrade.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { hasAbility } from "../rules/ability-by-key.mjs";
@@ -1187,7 +1189,9 @@ export async function _resolveFallDamage(actor, height, { tuck = false } = {}) {
   const dmgRoll = await new Roll(`1d10 + ${cappedHeight}`).evaluate();
   let reduction = 0, tuckLine = "", perfectLanding = false;
   if (tuck) {
-    const acro = skillTotal(actor, "acrobatics");
+    // Двусоставный (X): +5×X на Группирование (rules/digitigrade.mjs, wdbc-ird9n).
+    const digi = digitigradeGroupingBonus(actor);
+    const acro = skillTotal(actor, "acrobatics") + digi;
     const { rv, passed, deg } = await _d100(acro);
     reduction = passed ? deg : 0;
     // Стр. 30: «Если на Группировании набрано больше Успехов, чем высота
@@ -1196,7 +1200,7 @@ export async function _resolveFallDamage(actor, height, { tuck = false } = {}) {
     // просто вычесть deg из 1d10+высоты (бросок мог бы всё равно дать урон),
     // а обнулить его целиком.
     perfectLanding = passed && deg > height;
-    tuckLine = `<div class="roll-threshold">Группирование (Acrobatics ${acro}) · 1d100: <b>${rv}</b> — ${
+    tuckLine = `<div class="roll-threshold">Группирование (Acrobatics ${acro}${digi ? `, Двусоставный +${digi}` : ""}) · 1d100: <b>${rv}</b> — ${
       passed
         ? (perfectLanding ? `Успех, ${deg} усп. > высоты — приземлился на ноги без урона!` : `Успех, −${deg} урона`)
         : "Провал, без смягчения"}</div>`;
@@ -1204,13 +1208,25 @@ export async function _resolveFallDamage(actor, height, { tuck = false } = {}) {
   const finalDmg = perfectLanding ? 0 : Math.max(0, dmgRoll.total - reduction);
   const outcomeText = perfectLanding
     ? `Приземлился на ноги — урон: <b>0</b> I.`
-    : `Урон: <b>${finalDmg}</b> I (Impact), броня не учитывается.`;
+    : `Урон: <b>${finalDmg}</b> I (Impact), броня не учитывается, Стойкость поглощает.`;
+  // «После получения урона от падения персонаж становится Лежачим» (стр. 30).
+  let proneLine = "";
+  if (finalDmg > 0) {
+    try {
+      await actor.update(conditionApplyFields("prone", null, actor));
+      proneLine = `<div class="roll-allout-note">Персонаж лежит на земле.</div>`;
+    } catch {
+      proneLine = `<div class="roll-allout-note">Нет прав на лист — отметьте «Лежачий» вручную.</div>`;
+    }
+  }
 
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("skull","#ff6b6b")}Падение — ${esc(actor.name)}</div>
     <div class="roll-threshold">Высота <b>${height}</b>м${(capped && height > 25) ? " (ограничено терминальной скоростью 25)" : ""}${(!capped && height > 25) ? " (Бриз: терминальная скорость не ограничена)" : ""} · 1d10+${cappedHeight}: <b>${dmgRoll.total}</b></div>
     ${tuckLine}
     <div class="roll-outcome"><span class="${finalDmg > 0 ? "roll-failure" : "roll-success"}">${outcomeText}</span></div>
+    ${finalDmg > 0 ? fallDamageSectionHtml(finalDmg) : ""}
+    ${proneLine}
   </div>`);
 }
 

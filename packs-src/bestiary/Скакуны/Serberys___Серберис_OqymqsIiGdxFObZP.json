@@ -1282,7 +1282,11 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "mountRarity": 2
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,
