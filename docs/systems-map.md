@@ -600,7 +600,8 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   центральный для атаки/защиты/урона; `weapon-profiles.mjs`, `weapon-mods.mjs`,
   `reload.mjs`.
 - `module/rules/dual-wield.mjs` + `dual-wield-talents.mjs` — два оружия и
-  ветка Талантов сверх базового штрафа; `weapon-training.mjs` (Арсенал);
+  ветка Талантов сверх базового штрафа (сюда же элитный Тирантикос: −10 к
+  парной стрельбе, +2d10 второй тяжёлой по цели Размера 2+); `weapon-training.mjs` (Арсенал);
   `improvised-weapon.mjs` (импровизированное/метание).
 - Оружие Наследия: `constants/legacy-weapon.mjs`, `rules/legacy-weapon.mjs`,
   `apps/legacy-weapon.mjs` (блок «Наследие» на листе оружия, включая кнопки

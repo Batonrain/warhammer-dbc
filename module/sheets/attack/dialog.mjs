@@ -28,7 +28,7 @@ import { markRoundCapabilityUsed } from "../../apps/game-session.mjs";
 import { AUTO_HIT_CAPABILITY, FULL_ATTACK_CAPABILITY, readAttackForm } from "./form.mjs";
 import { dualWieldMods, dualWieldActionType, missingSpecs, targetSpreadExceeded,
          SPEC_LABELS, TARGET_SPREAD_LIMIT_M } from "../../rules/dual-wield.mjs";
-import { allGunsBlazingMod } from "../../rules/dual-wield-talents.mjs";
+import { allGunsBlazingMod, tyranthikosSecondAttackDice } from "../../rules/dual-wield-talents.mjs";
 import { measureTokens } from "../../combat/tactical-map.mjs";
 import { attackIsMelee, profileHasOwnFire, weaponProfiles as atkProfilesOf } from "../../combat/weapon-profiles.mjs";
 import { weaponThresholdPart } from "../../combat/attack-threshold.mjs";
@@ -386,7 +386,8 @@ export function openAttackDialog(ctx) {
           // снимает его ПОСЛЕ, если персонаж не потратил (см. rules/eye-of-
           // envy.mjs). Без Дара/без совпадения — no-op, поведение то же, что
           // раньше.
-          await withEyeOfEnvy(actor, targetActor, f.char, () => _executeAttackRoll(
+          // Итог основной руки нужен второй (Тирантикос: «попадает из обоих»).
+          const mainResult = await withEyeOfEnvy(actor, targetActor, f.char, () => _executeAttackRoll(
             actor, item, f.char, thresholdOf(f) - (f.aimHand === "off" ? aimAdjust : 0),
             f.rofMode || rofModes[0]?.value,
             aimTargets.find(t => t.value === f.aimVal),
@@ -529,6 +530,13 @@ export function openAttackDialog(ctx) {
             // известны (f.rofMode — первая рука, offRofMode — вторая).
             const agbMod = allGunsBlazingMod(actor, f.rofMode, offRofMode);
             // Eye of Envy (wdbc-1rno) — вторая рука та же цель, своя
+            // Тирантикос (Sahara 10-2d10-2): +2d10 первому попаданию второй
+            // руки, если обе тяжёлые, цель Размера 2+ и первая рука попала;
+            // «попала и вторая» досчитывает сам бросок (combat/attack.mjs).
+            // «Стреляет из обоих»: удар тяжёлым оружием как дубиной (профиль
+            // «Ударить оружием») выстрелом не считается.
+            const tyranthikosDice = tyranthikosSecondAttackDice(
+              actor, item, dualOff, targetActor, !!mainResult?.hit && !isMelee && !offMelee);
             // Характеристика (offChar), свой независимый бросок.
             await withEyeOfEnvy(actor, targetActor, offChar, () => _executeAttackRoll(
               actor, dualOff, offMelee ? "ws" : "bs",
@@ -543,6 +551,7 @@ export function openAttackDialog(ctx) {
                   + ")",
                 allGunsBlazingMod: agbMod,
                 // Прицеливание положено на вторую руку (wdbc-x1nz.2.41) — метка едет сюда, не основной.
+                tyranthikosDice,
                 aimingLabel: (currentAiming !== "none" && !wp.noAim && f.aimHand === "off")
                   ? (currentAiming === "half" ? `Полу-прицеливание (+${aimingBonus})` : `Полное прицеливание (+${aimingBonus})`)
                   : ""

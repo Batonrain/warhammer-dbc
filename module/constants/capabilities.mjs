@@ -5001,8 +5001,8 @@ export const CAPABILITIES = {
     source: "Phoenician / Фениксиец", reader: ""
   },
   "elite.elitnyeArhetipy.chempionTerminator.tyranthikos": {
-    label: "Уменьшает штраф за стрельбу из любой пары стрелкового оружия на 10, в т.ч. двух тяжёлых. Если вооружён двумя тяжёлыми стрелковыми,",
-    source: "Tyranthikos / Тирантикос", reader: ""
+    label: "Уменьшает штраф за стрельбу из любой пары стрелкового оружия на 10, в т.ч. двух тяжёлых. Две тяжёлые, одна цель Размера 2+, попали обе — +2d10 Dmg первому попаданию второй атаки. Укрытия теряют 1d10 AP вместо 1.",
+    source: "Tyranthikos / Тирантикос", reader: "module/rules/dual-wield.mjs — dualWieldMods (−10 к парному штрафу на паре стрелкового, кроме метательного); module/rules/dual-wield-talents.mjs — tyranthikosSecondAttackDice → module/sheets/attack/dialog.mjs → module/combat/attack.mjs (+2d10 первому попаданию второй руки; переброс ПЕРВОЙ руки после броска второй не пересчитывается — руками); module/combat/damage.mjs — износ Укрытий 1d10 (по имени Таланта)"
   },
   // ── Элитные_архетипы\Чернокнижник — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.chernoknizhnik.cannibalMage": {

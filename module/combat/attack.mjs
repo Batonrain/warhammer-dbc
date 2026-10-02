@@ -1113,7 +1113,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Доп. кубы урона: Меткое (одиночный, по СУ, ТОЛЬКО с Прицеливанием — книга
   // «При одиночных выстрелах С Прицеливанием»), Рассеивание (кор. дист.),
   // Максимальный режим (+1d10). Эти кубы НЕ вызывают Экстремальный урон.
-  const bonusDice = (focusFireBonusOn && hit ? 2 : 0) + bonusDamageDice({
+  // Тирантикос (Sahara 10-2d10-2): окно атаки решило всё, что знало до броска
+  // второй руки (rules/dual-wield-talents.mjs::tyranthikosSecondAttackDice),
+  // здесь остаётся «попала и вторая». Кубы — к первому попаданию, как в книге.
+  const tyranthikosDice = hit ? Math.max(0, Number(opts.tyranthikosDice) || 0) : 0;
+  const bonusDice = (focusFireBonusOn && hit ? 2 : 0) + tyranthikosDice + bonusDamageDice({
     wp, rofMode, hit, deg, shortRange, maximal: maximalOn, band,
     ammoDice: ammoSys?.damageDiceMod,
     aimed,
@@ -1655,7 +1659,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
           ? `Цель прикрыта Ордой «${shelter.hordeToken.name ?? shelter.horde?.name}»: `
             + `${shelter.count} из ${hitsCount} попадан${shelter.count === 1 ? "ия уходит" : "ий уходят"} в толпу.`
           : "",
-        attack:    opts.attackNote,
+        attack:    tyranthikosDice
+          ? [opts.attackNote, `Тирантикос: обе тяжёлые попали по цели Размера 2+ — первое попадание этой атаки +${tyranthikosDice}d10 Dmg (уже в уроне).`]
+              .filter(Boolean).join(" · ")
+          : opts.attackNote,
         // Строки о Состоянии цели. Ослеплённая (wdbc-x1nz.2.89) — сюда же:
         // defense.note карточка не рисует, а игрок должен видеть, ПОЧЕМУ
         // кнопки защиты заперты «не засечена».
@@ -1730,7 +1737,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // т.п.) по-прежнему создаётся новое сообщение, как раньше.
   if (updateMessageId) {
     const existing = game.messages.get(updateMessageId);
-    if (existing) { await existing.update(messageData); return; }
+    if (existing) { await existing.update(messageData); return { hit }; }
   }
   await ChatMessage.create(messageData);
   // Командование (глава «Командование»): метка Концентрации огня гасится
@@ -1747,3 +1754,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Automated Animations (если установлен и включён) — см. module/integrations/autoanimations.mjs.
   triggerAttackAnimation({ actor, item, hit });
 }
+  // Итог броска наружу: окну атаки нужно знать, попала ли основная рука, чтобы
+  // решить про вторую (Тирантикос). Ранние отказы выше отдают undefined —
+  // броска не было, «попал/промахнулся» о нём не скажешь.
+  return { hit };
