@@ -148,6 +148,8 @@ import { migrateNimbleRating } from "./module/migrations/nimble-rating.mjs";
 import { migrateSightAngle } from "./module/migrations/sight-angle.mjs";
 import { migrateStringListRestore } from "./module/migrations/string-list-restore.mjs";
 import { migrateLimbLossSides } from "./module/migrations/limb-loss-sides.mjs";
+import { migrateRadRating } from "./module/migrations/rad-rating.mjs";
+import { migrateRetinalDisplayMark } from "./module/migrations/retinal-display-mark.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
 import { runMigrationGate } from "./module/migrations/unlinked-tokens.mjs";
 import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
@@ -480,7 +482,9 @@ Hooks.once("init", () => {
     "gunArmSourceTokensVersion",
     "legionGeneSeedSizeTokensVersion",
     "implantAvailabilityTokensVersion",
-    "contentSyncBaselineTokensVersion"
+    "contentSyncBaselineTokensVersion",
+    "radRatingTokensVersion",
+    "retinalDisplayMarkTokensVersion"
   ]) {
     game.settings.register("warhammer-dbc", key, { scope: "world", config: false, type: Number, default: 0 });
   }
@@ -610,6 +614,18 @@ Hooks.once("init", () => {
   // Версия записи потери конечностей по сторонам (system.lostLimbs) у уже
   // покалеченных — прежние conditions.lostX схема вычищает (приёмка #518-#526)
   game.settings.register("warhammer-dbc", "limbLossSidesVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия простановки рейтинга Рад (X) радиевому оружию, выданному до
+  // правки пака 02.10.2026 (одноразовая, rad-x-956a)
+  game.settings.register("warhammer-dbc", "radRatingVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия простановки метки встроенного ретинального дисплея броне, маскам и
+  // имплантам, выданным до правки пака 02.10.2026 (одноразовая, task-9b5f)
+  game.settings.register("warhammer-dbc", "retinalDisplayMarkVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -1097,7 +1113,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateRetinalDisplayMark, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -1329,6 +1345,33 @@ Hooks.once("ready", async () => {
     if (!result?.failed) await game.settings.set("warhammer-dbc", "limbLossSidesVersion", VERSION);
     else console.warn("Warhammer DBC | Потеря конечностей: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
   } catch (e) { console.error("Warhammer DBC | Потеря конечностей:", e); }
+});
+
+// ── Одноразовая простановка: рейтинг Рад (X) у радиевого оружия, выданного до
+// правки пака — без него кнопка Рад не бьёт в T (rad-x-956a) ──
+// Ручной перезапуск: game.warhammerDBC.migrateRadRating()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  // Идемпотентна (проставляет только пустой рейтинг), так что и проход по
+  // несвязанным токенам повторять безопасно.
+  await runMigrationGate({
+    key: "radRatingVersion", tokensKey: "radRatingTokensVersion", label: "Рейтинг Рад (X)",
+    full: () => migrateRadRating(), tokensOnly: () => migrateRadRating({ tokensOnly: true })
+  });
+});
+
+// ── Одноразовая простановка: метка встроенного ретинального дисплея у брони,
+// масок и имплантов, выданных до правки пака — без неё Целеуказатель и
+// Омни-Прицел «бесполезны» (task-9b5f) ──
+// Ручной перезапуск: game.warhammerDBC.migrateRetinalDisplayMark()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  // Идемпотентна (метку, которая уже есть, не дописывает), проход по
+  // несвязанным токенам повторять безопасно.
+  await runMigrationGate({
+    key: "retinalDisplayMarkVersion", tokensKey: "retinalDisplayMarkTokensVersion", label: "Встроенный ретинальный дисплей",
+    full: () => migrateRetinalDisplayMark(), tokensOnly: () => migrateRetinalDisplayMark({ tokensOnly: true })
+  });
 });
 
 // ── Одноразовая доливка: биоимпланты, выданные до появления Доступности ──────

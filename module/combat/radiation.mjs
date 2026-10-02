@@ -26,7 +26,7 @@ import { applyCharDamage } from "./char-damage.mjs";
 import { rollConditionCharTest } from "./condition-ticks.mjs";
 import { isImmuneToCondition } from "../rules/condition-guards.mjs";
 import { isItemActive } from "../apps/effects.mjs";
-import { actorIdentityUuids } from "./command-state.mjs";
+import { combatEntryOf, combatOfActor } from "./actor-combat.mjs";
 import {
   COMBAT_RAD_FLAG, COMBAT_RAD_TEST_THRESHOLD, combatRadiationAfterHit, combatRadiationDue,
   radiationTestExempt, vehicleOccupantUuids
@@ -75,27 +75,9 @@ export async function useRadiationSicknessTest(actor) {
 // что жили здесь раньше, в книге нет. Пробитие проверяет вызывающий
 // (hooks.mjs::_applyWeaponPropEffect, flags.lastBreach).
 
-/**
- * Бой, в котором актор участвует, — «тот самый бой» книги. Не game.combat:
- * это бой, открытый в трекере у ГМа (ui.combat.viewed), и он может быть
- * чужим подготовленным столкновением. Сравнение по uuid: у несвязанного
- * токена и цель, и combatant.actor — один синтетический актор.
- */
-function combatEntryOf(actor) {
-  // Личность актора — набор uuid (мировой + актор токена): токены персонажей
-  // по умолчанию НЕсвязанные, и мировой Actor.x из места Техники не равен
-  // Scene.s.Token.t.Actor.x из трекера боя (combat/command-state.mjs).
-  const mine = actorIdentityUuids(actor);
-  if (!mine.size) return null;
-  for (const c of globalThis.game?.combats ?? []) {
-    if (!c.started) continue;
-    for (const cb of c.combatants ?? []) {
-      if ([...actorIdentityUuids(cb.actor)].some(u => mine.has(u))) return { combat: c, actor: cb.actor };
-    }
-  }
-  return null;
-}
-const combatOfActor = actor => combatEntryOf(actor)?.combat ?? null;
+// «Тот самый бой» книги — начатый бой, где цель участвует, а не game.combat
+// (бой, открытый в трекере у ГМа): combat/actor-combat.mjs, общий с «Бичом
+// Чемпионов».
 
 /** Карточка без броска: Рад не сработал по причине цели. */
 function radNoteCard(actor, label, text) {
