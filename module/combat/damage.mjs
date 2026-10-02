@@ -37,6 +37,7 @@ import { redirectHitLocationForHeadless } from "../rules/headless.mjs";
 import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
 import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG } from "./pacifism.mjs";
 import { QUICK_TO_ANGER_CAPABILITY, rollQuickToAngerTest } from "../rules/quick-to-anger.mjs";
+import { scourgeOfChampionsCap, recordScourgeOfChampions, applyPredestined } from "./strange-invulnerability.mjs";
 import { khorngorRageTest, mournerOffer, mournerTb } from "./beastman-subrace.mjs";
 import { maybeGrantEnjoymentPain } from "./enjoyment.mjs";
 import { isMercuryElectrified, maybeMarkMercuryLocation } from "./mercury-reaction.mjs";
@@ -1188,6 +1189,19 @@ export async function applyDamageToActor(actor, damageData) {
     }
   }
 
+  // Странная Неуязвимость (wdbc-1rno.24, combat/strange-invulnerability.mjs) —
+  // после минимума Экстремального Урона, до Плакальщика: тот не должен
+  // тратить «раз за бой» на урон, который мутация и так срежет.
+  //  • «Бич Чемпионов»: враг, уже ранивший в этом бою, — не больше 1
+  //    непоглощённого с попадания.
+  //  • «Предначертание»: атака персонажа выпавшего пола не опускает Раны ниже
+  //    половины. Не при приёме Оглушить — тот Ран не трогает вовсе.
+  const scourge = await scourgeOfChampionsCap(actor, attackerUuid, netDamage);
+  netDamage = scourge.net;
+  const predestined = stunManeuver ? { net: netDamage, note: "" }
+    : await applyPredestined(actor, attackerUuid, netDamage);
+  netDamage = predestined.net;
+
   // Пестигор Плакальщик (wdbc-gao07): «раз за бой после получения непоглощённого
   // урона — уменьшить его до 1 и на 1 Раунд удвоить T.b» — после всех слоёв
   // поглощения, до Ран.
@@ -1214,6 +1228,10 @@ export async function applyDamageToActor(actor, damageData) {
     else stunRoundsApplied = 0; // иммунитет к Оглушению — не наложилось, note ниже не врёт
     netDamage = 0;
   }
+
+  // «Бич Чемпионов»: враг запоминается, только если попадание дошло до Ран —
+  // урон, проигнорированный приёмом Оглушить, не «нанесён».
+  await recordScourgeOfChampions(actor, attackerUuid, netDamage);
 
   const { currentWounds, newWounds, newCritical, gotCritical } =
     await applyWoundLoss(actor, netDamage);
@@ -1400,6 +1418,12 @@ export async function applyDamageToActor(actor, damageData) {
 
   if (resisted) propEffectNotes.push(`<div class="dmg-tb-note">⚡ Сопротивление к ${damageSubtype === "electrical" ? "E(El)" : damageSubtype}: урон после поглощения вдвое.</div>`);
   if (electricRegenNote) propEffectNotes.push(electricRegenNote);
+  // Странная Неуязвимость (wdbc-1rno.24) — здесь, а не в propNotes: те видны
+  // только у обычного поглощения, а срезанный урон от Варп-Оружия тоже
+  // должен объясняться в карточке.
+  for (const note of [scourge.note, predestined.note]) {
+    if (note) propEffectNotes.push(`<div class="dmg-tb-note">${esc(note)}</div>`);
+  }
 
   // ── Сообщение в чат ──────────────────────────────────────────────────────
   const dtLabel  = DAMAGE_TYPES[damageType] || damageType;

@@ -133,3 +133,48 @@ describe("часы лечения", () => {
     expect(a.system.healing.nextAt).toBe(DAY + 8 * HOUR);
   });
 });
+
+// Затронутый Варпом, субмутация 10 «Недоверие к Лечению» (wdbc-1rno.26):
+// Раны, восстановленные под успешным уходом медика, — лечение от другого.
+describe("часы лечения: Недоверие к Лечению", () => {
+  const medic = { documentName: "Actor", id: "medic", uuid: "Actor.medic", name: "Апотекарий", items: [],
+    system: { skills: { medicae: { total: 60 } } }, getFlag: () => undefined };
+  const mistrusting = opts => {
+    const a = makeActor(opts);
+    a.items = [{ id: "wt", name: "Warp Touched / Затронутый Варпом", type: "mutation", system: {},
+      flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+        { id: "e", kind: "capability", capabilityKey: "mutation.warpTouched.healMistrust", label: "" }] }] } } }];
+    const flags = {};
+    a.getFlag = (ns, k) => flags[`${ns}.${k}`];
+    a.setFlag = async (ns, k, v) => { flags[`${ns}.${k}`] = v; };
+    return a;
+  };
+  beforeEach(() => { globalThis.fromUuidSync = () => medic; });
+
+  it("лечение под успешным уходом — час от момента лечения", async () => {
+    const a = mistrusting({ value: 7, nextAt: DAY, caregiver: "Actor.medic", careOk: true });
+    game.time = { worldTime: DAY + 10 };
+    captured.nextRoll = 10;
+    await healingClock(a, { from: DAY - 10, to: DAY + 10 });
+    expect(a.system.wounds.value).toBe(8);
+    expect(a.getFlag("warhammer-dbc", "healMistrustUntil")).toBe(DAY + HOUR);
+    expect(captured.chat[0].content).toContain("Недоверие к Лечению");
+  });
+
+  it("уход в этот период не действовал (провал/не было) — тело лечилось само, метки нет", async () => {
+    const a = mistrusting({ value: 7, nextAt: DAY, caregiver: "Actor.medic", careOk: false });
+    game.time = { worldTime: DAY + 10 };
+    captured.nextRoll = 10;
+    await healingClock(a, { from: DAY - 10, to: DAY + 10 });
+    expect(a.system.wounds.value).toBe(8);
+    expect(a.getFlag("warhammer-dbc", "healMistrustUntil")).toBeUndefined();
+  });
+
+  it("прыжок Календаря дальше часа после лечения — штраф уже истёк, метка не ставится", async () => {
+    const a = mistrusting({ value: 7, nextAt: DAY, caregiver: "Actor.medic", careOk: true });
+    game.time = { worldTime: DAY + 2 * HOUR };
+    captured.nextRoll = 10;
+    await healingClock(a, { from: DAY - 10, to: DAY + 2 * HOUR });
+    expect(a.getFlag("warhammer-dbc", "healMistrustUntil")).toBeUndefined();
+  });
+});

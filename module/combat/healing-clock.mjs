@@ -25,6 +25,7 @@ import { computeWoundHealing } from "../sheets/tabs/wounds.mjs";
 import { medicaeEff } from "../sheets/tabs/healing.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { noteHealingFromOther } from "./warp-touched.mjs";
 import {
   REGIMEN_HEAL_LABELS, astartesRegimen, regimenHeal, careTestMod,
   healPeriodSeconds, effectiveHealKey, isWounded, healLevel
@@ -105,6 +106,7 @@ export async function healingClock(actor, { from, to }) {
   const astartes = hasRuleFlag(actor, "healing.astartes");
   let healed = 0;
   let periods = 0;
+  let caredHealAt = null;
   while (nextAt <= to && periods++ < MAX_PERIODS) {
     const lvl = healLevel(actor, view());
     if (!isWounded(wounds)) { nextAt = 0; careOk = false; break; }
@@ -129,6 +131,9 @@ export async function healingClock(actor, { from, to }) {
       wounds.value = upd["system.wounds.value"];
       wounds.critical = upd["system.wounds.critical"];
       healed += applied;
+      // Раны восстановлены под успешным уходом медика — для «Недоверия к
+      // Лечению» (Затронутый Варпом, wdbc-1rno.26) это лечение от другого.
+      if (careOk) caredHealAt = nextAt;
     }
     const regimenNote = regimen !== chosen ? ` (Астартес: как «${REGIMEN_HEAL_LABELS[regimen]}»)` : "";
     const careNote = key !== lvl.key ? ", уход — как тяжёлое" : "";
@@ -147,6 +152,13 @@ export async function healingClock(actor, { from, to }) {
     "system.healing.nextAt": nextAt,
     "system.healing.careOk": careOk
   });
+  // Затронутый Варпом, «Недоверие к Лечению» (wdbc-1rno.26): час — от
+  // последнего лечения под уходом, не от конца прыжка Календаря.
+  const caregiver = caredHealAt != null ? caregiverOf(actor) : null;
+  if (caregiver) {
+    const mistrust = await noteHealingFromOther(actor, caregiver, { at: caredHealAt });
+    if (mistrust) lines.push(mistrust);
+  }
   if (!periods && !rolls.length) return;
 
   const total = healed ? `<br/>Итого восстановлено Ран: <b>${healed}</b>.` : "";

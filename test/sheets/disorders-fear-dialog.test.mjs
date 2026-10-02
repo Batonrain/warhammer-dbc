@@ -107,3 +107,46 @@ describe("openFearDialog: источник угрозы едет в ctx.targetAc
     expect(captured.dialog.content).not.toContain("Ненависть");
   });
 });
+
+// Warp-Touched / Затронутый Варпом, субмутация 1 (wdbc-1rno.26): «считает
+// всех врагов в Ярости имеющими рейтинг Страха 3».
+describe("Затронутый Варпом (1): враг в Ярости — Страх 3 в диалоге", () => {
+  const warpTouched = () => ({ ...makeActor(), items: [{
+    id: "wt", name: "Warp Touched / Затронутый Варпом", type: "mutation", system: {},
+    flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+      { id: "e", kind: "capability", capabilityKey: "mutation.warpTouched.rageFear", label: "" }
+    ] }] } }
+  }] });
+  const raging = (fear = 0) => ({ type: "character", items: [], system: { fearRating: fear, inRage: true } });
+  afterEach(() => { game.user.targets = undefined; });
+
+  it("враг в Ярости без своего Страха — Страх 3 и пометка, откуда", () => {
+    const d = fearDialogDefaults(warpTouched(), raging(0), { relation: "enemy" });
+    expect(d.rating).toBe(3);
+    expect(d.rageFear).toBe(true);
+  });
+
+  it("свой Страх 4 у врага в Ярости остаётся 4", () => {
+    expect(fearDialogDefaults(warpTouched(), raging(4), { relation: "enemy" }).rating).toBe(4);
+  });
+
+  it("враг не в Ярости — его собственный Страх", () => {
+    const calm = { type: "character", items: [], system: { fearRating: 0, inRage: false } };
+    expect(fearDialogDefaults(warpTouched(), calm, { relation: "enemy" }).rating).toBe(1);
+  });
+
+  it("союзник в Ярости — не враг", () => {
+    expect(fearDialogDefaults(warpTouched(), raging(0), { relation: "ally" }).rating).toBe(1);
+  });
+
+  it("без субмутации — Ярость врага Страха не прибавляет", () => {
+    expect(fearDialogDefaults(makeActor(), raging(0), { relation: "enemy" }).rating).toBe(1);
+  });
+
+  it("выделенный враг в Ярости — диалог открывается со Страхом 3 и подписью", () => {
+    game.user.targets = new Set([{ actor: raging(0) }]);
+    openFearDialog(warpTouched());
+    expect(captured.dialog.content).toContain('<option value="3" selected>');
+    expect(captured.dialog.content).toContain("Затронутый Варпом");
+  });
+});

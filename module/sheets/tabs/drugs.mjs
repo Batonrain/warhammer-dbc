@@ -13,6 +13,7 @@ import { computeWoundHealing } from "./wounds.mjs";
 import { woundLossUpdates } from "../../rules/wounds.mjs";
 import { conditionLevelField } from "../../constants/conditions.mjs";
 import { maybeGrantEnjoymentPain } from "../../combat/enjoyment.mjs";
+import { noteHealingFromOther } from "../../combat/warp-touched.mjs";
 import { postTestCard, rollStatLine } from "../../helpers/test-card.mjs";
 import { hasRuleFlag, ruleFlagLabels } from "../../rules/flags.mjs";
 import { DRUG_AFTERMATH_IMMUNE_CAPABILITY, POISON_IMMUNE_CAPABILITY } from "../../rules/naga-traits.mjs";
@@ -299,8 +300,17 @@ export async function applyDrug(owner, item, recipient = null) {
   const fatRes = drugFatigueChange(actor, fat);
   if (fatRes) Object.assign(actorUpdates, fatRes.fields);
 
+  // Запас здоровья до/после (Критические — Раны в минусе): вылечил ли препарат.
+  const hpOf = w => (Number(w?.value) || 0) - (Number(w?.critical) || 0);
+  const hpBefore = hpOf(actor.system.wounds);
   if (Object.keys(actorUpdates).length > 0) await actor.update(actorUpdates);
   if (fatRes) await announceFatigueChange(actor, fatRes);
+
+  // Затронутый Варпом, «Недоверие к Лечению» (wdbc-1rno.26): Раны вылечил
+  // препарат, вколотый ДРУГИМ, — штраф на час. «Не себе» сверяет сам
+  // noteHealingFromOther (combat/warp-touched.mjs), тем же правилом, что окно Лечения.
+  const mistrustNote = hpOf(actor.system.wounds) > hpBefore
+    ? await noteHealingFromOther(actor, owner) : "";
 
   // Сыворотка Репликанта — отметка приёма у Крючка Сывороток получателя.
   if (isReplicantSerum(item)) await takeSerum(actor);
@@ -393,6 +403,8 @@ export async function applyDrug(owner, item, recipient = null) {
     chatContent += `<div class="roll-threshold">${rollIcon("shield","#4dffa6")}Бонус против ядов: <b>+${fx.bonusVsPoisons}</b></div>`;
   if (fx.customEffect)
     chatContent += `<div class="roll-threshold">${rollIcon("target","#8fd0ff")}${fx.customEffect}</div>`;
+  if (mistrustNote)
+    chatContent += `<div class="roll-threshold">${esc(mistrustNote)}</div>`;
 
   if (sys.hasAfterEffect && ignoresDrugSideEffects(actor)) {
     chatContent += `<div class="roll-threshold">${rollIcon("shield","#4dffa6")}Новые Люди: пост-эффект «${sys.afterEffect || "—"}» не наступит</div>`;
