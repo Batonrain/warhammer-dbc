@@ -6,6 +6,8 @@
 
 import { fullyArmedReliabilityBonus } from "./fully-armed.mjs";
 import { runtRifleIsLong } from "../rules/runt.mjs";
+import { itemHasName } from "../rules/predicates.mjs";
+import { isItemActive } from "../apps/effects.mjs";
 
 /** Все установленные на данное оружие модификации (среди предметов актора). */
 export function getInstalledMods(actor, weapon) {
@@ -13,6 +15,77 @@ export function getInstalledMods(actor, weapon) {
   return actor.items.filter(i =>
     i.type === "weaponMod" && i.system.installedOn === weapon.id
   );
+}
+
+/**
+ * Выполнено ли «интегрируется с X и бесполезен без них» (wdbc-1rno.38):
+ * среди предметов актора есть АКТИВНЫЙ предмет с одним из имён
+ * system.requiresWorn мода. Активность — общая isItemActive (apps/effects.mjs):
+ * снаряжение с местом ношения — надето, имплант — установлен Хирургеоном и не
+ * неисправен (и не погашен полем Дискорданта). Пустой список — условия нет.
+ *
+ * Сравнение по имени (rules/predicates.mjs::itemHasName, любая половина
+ * двуязычного) — тот же приём, что у Респиратора/Противогаза
+ * (wearsGasProtection): отдельного ключа «это ретинальный дисплей» у
+ * предметов нет. Предметы, где ретинальный дисплей ВСТРОЕН (силовая/эльдарская
+ * броня, Маска Шпиона, Всевидящее Око…), сюда пока не засчитываются — вопрос
+ * владельцу, см. отчёт wdbc-1rno-38-x.
+ */
+export function modWornRequirementMet(actor, mod) {
+  const need = (mod?.system?.requiresWorn ?? []).filter(n => typeof n === "string" && n.trim());
+  if (!need.length) return true;
+  return [...(actor?.items ?? [])].some(i =>
+    need.some(n => itemHasName(i, n)) && isItemActive(i));
+}
+
+// ── Один прицел за атаку (wdbc-1rno.40) ────────────────────────────────────
+// Книга, «Модификации → Прицелы»: «Хотя на оружие можно установить несколько
+// прицелов, для каждой атаки можно пользоваться только одним». Прицел — мод
+// группы «sights» (constants/items.mjs::WEAPON_MOD_GROUPS; в паке это ровно
+// десять модов папки «Прицелы», сторож — test/combat/weapon-mod-sights.test.mjs).
+// Выбор живёт флагом на ОРУЖИИ, как Хват/Профиль (hudGrip/hudProfile): его
+// одинаково видят окно атаки, бросок (combat/attack.mjs), лист и бюджет рук —
+// показанный порог не разойдётся с брошенным. Ставит его окно атаки
+// (sheets/attack/dialog.mjs, выпадающий список «Прицел»).
+export const SIGHT_MOD_GROUP = "sights";
+export const ACTIVE_SIGHT_FLAG = "hudSight";
+
+/** Прицел ли эта модификация оружия. */
+export function isSightMod(mod) {
+  return mod?.type === "weaponMod" && mod?.system?.modGroup === SIGHT_MOD_GROUP;
+}
+
+/**
+ * id прицела, через который ведётся атака, или null, если прицелов нет.
+ * Сохранённый на оружии выбор — если такой прицел всё ещё стоит И работает;
+ * иначе первый РАБОЧИЙ (требование «носит X» выполнено), рабочих нет — первый.
+ * «Работает» проверяется и у сохранённого: снял Ретинальный Дисплей — выбранный
+ * раньше Целеуказатель стал бесполезен, и молча оставлять оружие вовсе без
+ * прицела (теряя +5 стоящего рядом Коллиматорного) было бы хуже, чем
+ * переключиться на рабочий.
+ */
+export function activeSightId(actor, weapon) {
+  const sights = getInstalledMods(actor, weapon).filter(isSightMod);
+  if (!sights.length) return null;
+  const saved = weapon?.getFlag?.("warhammer-dbc", ACTIVE_SIGHT_FLAG)
+    ?? weapon?.flags?.["warhammer-dbc"]?.[ACTIVE_SIGHT_FLAG];
+  const working = sights.filter(s => modWornRequirementMet(actor, s));
+  if (saved && working.some(s => s.id === saved)) return saved;
+  return (working[0] ?? sights[0]).id;
+}
+
+/**
+ * Модификации, которые ДЕЙСТВУЮТ на это оружие сейчас: установленные, минус
+ * те, чьё требование «носит предмет X» не выполнено (wdbc-1rno.38), минус все
+ * прицелы, кроме выбранного (wdbc-1rno.40). Все читатели эффектов модов
+ * (getModEffects, окно атаки, ситуативные гасители штрафов, бюджет рук) берут
+ * этот список, а не getInstalledMods, — иначе «бесполезный» или невыбранный мод
+ * тихо работал бы в одном месте и молчал в другом.
+ */
+export function getActiveMods(actor, weapon) {
+  const sightId = activeSightId(actor, weapon);
+  return getInstalledMods(actor, weapon).filter(m =>
+    (!isSightMod(m) || m.id === sightId) && modWornRequirementMet(actor, m));
 }
 
 /**
@@ -32,10 +105,11 @@ export function getModEffects(actor, weapon) {
   const fx = {
     attackMod: 0, damageMod: 0, penMod: 0, rangeMod: 0, rangeMult: 1,
     clipMod: 0, clipMult: 1, rofSemiMod: 0, rofFullMod: 0,
+    rofSingleAttackMod: 0, rofSemiAttackMod: 0, rofFullAttackMod: 0,
     reliabilityMod: 0, balanceMod: 0, weightPct: 0,
     addProps: [], removeProps: [], names: []
   };
-  for (const mod of getInstalledMods(actor, weapon)) {
+  for (const mod of getActiveMods(actor, weapon)) {
     const e = mod.system.effects || {};
     fx.attackMod      += e.attackMod      || 0;
     // Подстройка под конкретного персонажа (Custom Grip и т.п.): бонус только
@@ -52,6 +126,9 @@ export function getModEffects(actor, weapon) {
     fx.clipMult       *= (e.clipMult ?? 1) || 1;
     fx.rofSemiMod     += e.rofSemiMod     || 0;
     fx.rofFullMod     += e.rofFullMod     || 0;
+    fx.rofSingleAttackMod += e.rofSingleAttackMod || 0;
+    fx.rofSemiAttackMod   += e.rofSemiAttackMod   || 0;
+    fx.rofFullAttackMod   += e.rofFullAttackMod   || 0;
     fx.reliabilityMod += e.reliabilityMod || 0;
     fx.balanceMod     += e.balanceMod     || 0;
     fx.weightPct      += e.weightPct      || 0;

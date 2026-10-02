@@ -31,7 +31,8 @@ import { _degWord, _buildAmmoModString, resolveCharFormula, esc } from "../helpe
 import { attackThreshold }                    from "../combat/attack-threshold.mjs";
 import { resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properties.mjs";
 import { mergeExtraProps } from "../combat/attack-weapon.mjs";
-import { getModEffects, mergeWeaponPropEntries, getInstalledMods } from "../combat/weapon-mods.mjs";
+import { getModEffects, mergeWeaponPropEntries, getActiveMods, getInstalledMods, isSightMod,
+         activeSightId, modWornRequirementMet } from "../combat/weapon-mods.mjs";
 import { hasRuleFlag }                        from "../rules/flags.mjs";
 import { isStunnedOrDazed }    from "../rules/predicates.mjs";
 import { suffersBlindness } from "../rules/blindness.mjs";
@@ -216,7 +217,26 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   //   Pistol Grip (weaponMod.grantsGrip, wdbc-8vp1), Commando (карабин 1р как
   //   пистолет, wdbc-eduq) и Double Grip (пистолет 2р, wdbc-mu6v) — их самих
   //   на предмете нет, добавляются здесь.
-  const installedMods   = isMelee ? [] : getInstalledMods(actor, item);
+  // Только ДЕЙСТВУЮЩИЕ моды (combat/weapon-mods.mjs::getActiveMods): «бесполезный
+  // без X» мод (Целеуказатель без ретинального дисплея, wdbc-1rno.38) не даёт
+  // ни Хвата, ни бонусов Прицеливания — тот же список, что у getModEffects.
+  const installedMods   = isMelee ? [] : getActiveMods(actor, item);
+  // Один прицел за атаку (wdbc-1rno.40): при двух и больше установленных
+  // прицелах — выпадающий список. Смена пишет флаг оружия и переоткрывает
+  // окно (sheets/attack/dialog.mjs): от прицела зависят числа, посчитанные
+  // при открытии (Коллиматорный +5, гасители бега/дистанции/света).
+  const sightMods = isMelee ? [] : getInstalledMods(actor, item).filter(isSightMod);
+  const sightIdNow = sightMods.length ? activeSightId(actor, item) : null;
+  const sightHtml = sightMods.length > 1 ? `
+    <div class="av-row" title="На оружии может стоять несколько прицелов, но для каждой атаки можно пользоваться только одним">
+      <label>Прицел</label>
+      <select id="atk-sight" class="av-input av-wide">${sightMods.map(m => {
+        const need = m.system?.requiresWorn ?? [];
+        const dead = modWornRequirementMet(actor, m) ? "" : ` — бесполезен без: ${need.join(" / ")}`;
+        const name = String(m.name ?? "").split("/").pop().trim();
+        return `<option value="${esc(m.id)}" ${m.id === sightIdNow ? "selected" : ""}>${esc(name + dead)}</option>`;
+      }).join("")}</select>
+    </div>` : "";
   // Эффекты модификации лежат во ВЛОЖЕННОМ system.effects (схема
   // module/data/item/weapon-mod.mjs), как их и читает getModEffects
   // (combat/weapon-mods.mjs:38). Здесь они раньше читались плоско из
@@ -765,8 +785,15 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     // здесь только один вариант без своего бонуса, чтобы не задваивать.
     rofModes.push({ value: "melee",  label: "Рукопашная атака",      bonus: 0  });
   } else {
+    // Модификации с бонусом к попаданию в своём режиме огня (wdbc-1rno.38,
+    // Целеуказатель: +5 короткой / +10 длинной) — modFx уже отфильтрован по
+    // действующим модам (требование «носит RD/глаз/MIU», combat/weapon-mods.mjs).
+    const modSingle = Number(modFx.rofSingleAttackMod) || 0;
+    const modSemi   = Number(modFx.rofSemiAttackMod)   || 0;
+    const modFull   = Number(modFx.rofFullAttackMod)   || 0;
+    const modHint   = n => n ? `, модиф. ${n > 0 ? "+" : "−"}${Math.abs(n)}` : "";
     if (sys.rof_single > 0)
-      rofModes.push({ value: "single", label: "Одиночный выстрел (+10)", bonus: 10 });
+      rofModes.push({ value: "single", label: `Одиночный выстрел (+${10 + modSingle}${modHint(modSingle)})`, bonus: 10 + modSingle });
     // Импульсное (стр. 73 Книги Аэльдари): +10 к очередям, вдвое (+20/+10),
     // если сам стрелок не двигался в этом Ходу — flags.warhammer-dbc.
     // movedThisTurn ставят Действия Движения и реальное перемещение токена
@@ -789,17 +816,19 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const extraHint = (hip, dg) => [hip ? `от бедра ${fmtMod(hip)}` : "", dg ? `Double Grip ${fmtMod(dg)}` : ""]
       .filter(Boolean).map(s => `, ${s}`).join("");
     if (sys.rof_semi > 0) {
-      const semiBonus = impulseBonus + hipFireSemi + dgSemi;
-      rofModes.push({ value: "semi", label: `Короткая очередь (${fmtMod(semiBonus)}${impulseHint}${extraHint(hipFireSemi, dgSemi)}, ${sys.rof_semi} выстр.)`, bonus: semiBonus });
+      const semiBonus = impulseBonus + hipFireSemi + dgSemi + modSemi;
+      rofModes.push({ value: "semi", label: `Короткая очередь (${fmtMod(semiBonus)}${impulseHint}${extraHint(hipFireSemi, dgSemi)}${modHint(modSemi)}, ${sys.rof_semi} выстр.)`, bonus: semiBonus });
     }
     if (sys.rof_full > 0) {
       // Fanning / Быстрый Курок (wdbc-fy33, стр. 39): револьвер "1р" со
       // свободной второй рукой — Длинная очередь БЕЗ обычного штрафа −10,
       // вместо обычного расчёта (RoF 2..BS.b по выбору не смоделирован).
-      const fullBonus = fanningActive ? 0 : (impulseBonus - 10 + hipFireFull + dgFull);
+      // Бонус модификации (Целеуказатель) — свойство самого оружия, а не
+      // обычного расчёта очереди, поэтому остаётся и при Быстром Курке.
+      const fullBonus = (fanningActive ? 0 : (impulseBonus - 10 + hipFireFull + dgFull)) + modFull;
       const label = fanningActive
-        ? `Длинная очередь — Быстрый Курок (${fmtMod(fullBonus)}, RoF 2..BS.b по выбору, без бонуса Прицеливания)`
-        : `Длинная очередь (${fmtMod(fullBonus)}${impulseHint}${extraHint(hipFireFull, dgFull)}, ${sys.rof_full} выстр.)`;
+        ? `Длинная очередь — Быстрый Курок (${fmtMod(fullBonus)}${modHint(modFull)}, RoF 2..BS.b по выбору, без бонуса Прицеливания)`
+        : `Длинная очередь (${fmtMod(fullBonus)}${impulseHint}${extraHint(hipFireFull, dgFull)}${modHint(modFull)}, ${sys.rof_full} выстр.)`;
       rofModes.push({ value: "full", label, bonus: fullBonus });
     }
     if (sys.rof_semi > 0 || sys.rof_full > 0) {
@@ -1390,6 +1419,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     aimHtml,
     aimLocked,
     aimingBadgeHtml,
+    sightHtml,
     ammoCondHtml,
     ammoDialogHtml,
     attackerMount,

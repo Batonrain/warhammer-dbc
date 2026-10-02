@@ -1625,6 +1625,94 @@ describe("Хват дальнобойного: 6 отложенных потре
       expect(html).not.toContain("погашено");
     });
 
+    // Целеуказатель (wdbc-1rno.38): «+5 на короткие очереди и +10 на длинные» —
+    // к попаданию в пилюле режима, не к числу выстрелов. Требование RD/глаза/MIU
+    // здесь снято (пустой requiresWorn) — его проверяет weapon-mod-worn-requirement.
+    it("Целеуказатель: +5 в пилюле Короткой очереди, +10 в Длинной (−10 + 10 = ±0)", () => {
+      const rifle = weaponFor({ rof_semi: 3, rof_full: 6 });
+      const mod = modOn(rifle.id, { rofSemiAttackMod: 5, rofFullAttackMod: 10 });
+      showAttackDialog(attacker({ items: [rifle, mod] }), rifle);
+      const html = captured.dialog.content;
+      expect(html).toMatch(/value="semi" data-bonus="5"/);
+      expect(html).toMatch(/value="full" data-bonus="0"/);
+      expect(html).toMatch(/value="single" data-bonus="10"/);
+    });
+
+    it("Целеуказатель: требование не выполнено — пилюли без бонуса", () => {
+      const rifle = weaponFor({ rof_semi: 3, rof_full: 6 });
+      const mod = modOn(rifle.id, { rofSemiAttackMod: 5, rofFullAttackMod: 10 });
+      mod.system.requiresWorn = ["Retinal Display"];
+      showAttackDialog(attacker({ items: [rifle, mod] }), rifle);
+      const html = captured.dialog.content;
+      expect(html).toMatch(/value="semi" data-bonus="0"/);
+      expect(html).toMatch(/value="full" data-bonus="-10"/);
+    });
+
+    it("мод с невыполненным requiresWorn не даёт и «прицельных» бонусов окна (один список с getModEffects)", async () => {
+      const rifle = weaponFor({ weaponProps: [{ key: "reliable" }] });
+      const mod = modOn(rifle.id, { aimAttackMod: 5 });
+      mod.system.requiresWorn = ["Bionic Eye"];
+      const p = showAttackDialog(attacker({ items: [rifle, mod], aiming: "half",
+        characteristics: { bs: char(45) } }), rifle);
+      captured.dice = [96];
+      await pressRoll(p);
+      // 45 BS + 10 (Прицеливание), без +5 «бесполезного» прицела.
+      expect(thresholdInCard()).toBe(55);
+    });
+
+    // «Для каждой атаки можно пользоваться только одним» прицелом (wdbc-1rno.40).
+    const sightOn = (weaponId, id, name, effects) => {
+      const m = modOn(weaponId, effects, { id, name });
+      m.system.modGroup = "sights";
+      return m;
+    };
+    const runnerTarget = () => {
+      const runner = actorFor({});
+      runner.getFlag = (ns, key) => (key === "running" ? true : undefined);
+      return runner;
+    };
+
+    it("два прицела: в окне выбор прицела, по умолчанию первый — бонусы второго не складываются", async () => {
+      const rifle = weaponFor({ weaponProps: [{ key: "reliable" }] });
+      const coll = sightOn(rifle.id, "s1", "Collimator Sight / Коллиматорный Прицел", { aimAttackMod: 5 });
+      const mp   = sightOn(rifle.id, "s2", "Motion Predictor / Предсказатель Движения", { aimIgnoresRunning: true });
+      setTargets([runnerTarget()]);
+      const p = showAttackDialog(attacker({ items: [rifle, coll, mp], aiming: "half",
+        characteristics: { bs: char(45) } }), rifle);
+      const html = captured.dialog.content;
+      expect(html).toContain('id="atk-sight"');
+      expect(html).toMatch(/<option value="s1" selected>[^<]*Коллиматорный Прицел/);
+      expect(html).toMatch(/<option value="s2" >[^<]*Предсказатель Движения/);
+      // Предсказатель не выбран — бег цели не гасится.
+      expect(html).toContain("Цель Бежит (−20)");
+      captured.dice = [96];
+      await pressRoll(p);
+      // 45 BS + 10 Прицеливание + 5 Коллиматорный − 20 Цель Бежит = 40.
+      expect(thresholdInCard()).toBe(40);
+    });
+
+    it("два прицела, на оружии выбран второй — действует только он", async () => {
+      const rifle = weaponFor({ weaponProps: [{ key: "reliable" }] }, { flags: { "warhammer-dbc.hudSight": "s2" } });
+      const coll = sightOn(rifle.id, "s1", "Collimator Sight / Коллиматорный Прицел", { aimAttackMod: 5 });
+      const mp   = sightOn(rifle.id, "s2", "Motion Predictor / Предсказатель Движения", { aimIgnoresRunning: true });
+      setTargets([runnerTarget()]);
+      const p = showAttackDialog(attacker({ items: [rifle, coll, mp], aiming: "half",
+        characteristics: { bs: char(45) } }), rifle);
+      expect(captured.dialog.content).toContain("Цель Бежит (−20, погашено)");
+      expect(captured.dialog.content).toMatch(/<option value="s2" selected>/);
+      captured.dice = [96];
+      await pressRoll(p);
+      // 45 + 10, без +5 Коллиматорного и без −20 бега.
+      expect(thresholdInCard()).toBe(55);
+    });
+
+    it("один прицел — выбора в окне нет", () => {
+      const rifle = weaponFor();
+      const coll = sightOn(rifle.id, "s1", "Collimator Sight / Коллиматорный Прицел", { aimAttackMod: 5 });
+      showAttackDialog(attacker({ items: [rifle, coll], aiming: "half" }), rifle);
+      expect(captured.dialog.content).not.toContain('id="atk-sight"');
+    });
+
     it("Предсказатель Движения: рукопашная — бонус +20 цели-бегуна не задет", () => {
       const sword = weaponFor({ weaponClass: "melee" });
       const mod = modOn(sword.id, { aimIgnoresRunning: true });

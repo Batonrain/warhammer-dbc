@@ -36,6 +36,7 @@ import { withEyeOfEnvy } from "../../rules/eye-of-envy.mjs";
 import { AIM_FOCUS_EXTENDED_FLAG } from "../../rules/aim-focus.mjs";
 import { commitRerollUse } from "../../combat/angel-hunters.mjs";
 import { isSabre, sabreSecondAttackBlockFor, armSabreSecondAttack, consumeSabreSecondAttack } from "../../combat/sabre-second-attack.mjs";
+import { ACTIVE_SIGHT_FLAG } from "../../combat/weapon-mods.mjs";
 
 /**
  * Два условия книги на парную атаку (стр. 62, wdbc-3jlm), которые до этого
@@ -796,6 +797,18 @@ export function openAttackDialog(ctx) {
         vehicleSideEl.addEventListener("change", refreshVehicleRear);
         refreshVehicleRear();
       }
+
+      // Один прицел за атаку (wdbc-1rno.40): выбор пишется флагом ОРУЖИЯ
+      // (combat/weapon-mods.mjs::ACTIVE_SIGHT_FLAG) — его же читают бросок и
+      // лист — и окно переоткрывается тем же путём, что при смене ствола
+      // комби-оружия: бонусы прицела посчитаны при открытии, а не на лету.
+      const sightEl = form.querySelector("#atk-sight");
+      sightEl?.addEventListener("change", async ev => {
+        ev.stopPropagation();
+        await item.setFlag?.("warhammer-dbc", ACTIVE_SIGHT_FLAG, sightEl.value);
+        dialog.close();
+        reopenWithProfile?.(lastProfIdx);
+      });
 
       // Один слушатель на форму вместо списка селекторов: события всплывают,
       // и новая галочка в разметке не требует правки этого места.

@@ -599,6 +599,14 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `module/combat/weapon-properties.mjs` — движок автоматизации Свойств,
   центральный для атаки/защиты/урона; `weapon-profiles.mjs`, `weapon-mods.mjs`,
   `reload.mjs`.
+- Модификации оружия — какие действуют: `combat/weapon-mods.mjs::getActiveMods`
+  (его читают getModEffects, окно атаки, гасители штрафов, бюджет рук).
+  Отсекает мод, «бесполезный без» надетого/установленного предмета
+  (`system.requiresWorn`, Целеуказатель/Омни-Прицел, wdbc-1rno.38), и все
+  прицелы (`modGroup:"sights"`), кроме выбранного в окне атаки — «один прицел
+  за атаку», флаг оружия `hudSight` (wdbc-1rno.40). Бонус попадания по режиму
+  огня — `effects.rof{Single,Semi,Full}AttackMod` (не путать с
+  `rofSemiMod/rofFullMod` — число выстрелов).
 - `module/rules/dual-wield.mjs` + `dual-wield-talents.mjs` — два оружия и
   ветка Талантов сверх базового штрафа (сюда же элитный Тирантикос: −10 к
   парной стрельбе, +2d10 второй тяжёлой по цели Размера 2+); `weapon-training.mjs` (Арсенал);

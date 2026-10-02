@@ -30,7 +30,9 @@ import { getHeldHand, weaponHandsRequired } from "../../rules/hands.mjs";
 import { BODY_SIDES, fingersLostOn } from "../../rules/limb-loss.mjs";
 import { longRangeImmunityReason } from "../../rules/range-penalty-immunity.mjs";
 import { lightPenaltyImmunityReason, smokePenaltyImmunityReason } from "../../rules/vision-penalty-immunity.mjs";
-import { getInstalledMods } from "../../combat/weapon-mods.mjs";
+// Действующие моды (wdbc-1rno.38/.40): без «бесполезных без X» и без
+// невыбранных прицелов — тот же список, что у getModEffects и окна атаки.
+import { getActiveMods } from "../../combat/weapon-mods.mjs";
 
 /**
  * Атака оружием в руке без пальцев (мутация Потеря Конечности, субмутации
@@ -299,7 +301,7 @@ export function situationalMods(v) {
   // rules/vision-penalty-immunity.mjs) — тем же приёмом, что Чёрные Глаза:
   // Слабый свет/Тьма и Дым гасятся раздельно.
   {
-    const mods = weapon ? getInstalledMods(actor, weapon) : [];
+    const mods = weapon ? getActiveMods(actor, weapon) : [];
     const aiming = actor?.system?.aiming;
     const why = {
       light: lightPenaltyImmunityReason(actor, mods, { aiming }),
@@ -569,7 +571,7 @@ export function situationalMods(v) {
     const tracking = !!(actor?.getFlag?.("warhammer-dbc", "trackingAimActive")
       ?? actor?.flags?.["warhammer-dbc"]?.trackingAimActive);
     const predictor = !!aiming && aiming !== "none" && weapon
-      && getInstalledMods(actor, weapon).some(m => !!m.system?.effects?.aimIgnoresRunning);
+      && getActiveMods(actor, weapon).some(m => !!m.system?.effects?.aimIgnoresRunning);
     const why = tracking ? "Прицел на Упреждение" : predictor ? "Предсказатель Движения" : null;
     const row = why && specificMods.find(m => m.label === "Низкая высота цели" && !m.immune);
     if (row) { row.value = 0; row.immune = true; row.note = `снято: ${why}`; }
@@ -578,7 +580,7 @@ export function situationalMods(v) {
   // и оптические прицелы при Прицеливании снимают оба штрафа — тем же
   // приёмом, что Зенитное гасит «Цель бежит» (выше).
   if (!isMelee) {
-    const why = longRangeImmunityReason(actor, weapon ? getInstalledMods(actor, weapon) : [],
+    const why = longRangeImmunityReason(actor, weapon ? getActiveMods(actor, weapon) : [],
                                         { aiming: actor?.system?.aiming });
     if (why) {
       for (const m of specificMods) {

@@ -57,6 +57,7 @@ export function buildAttackContent(v) {
     ruleMods,
     ruleRerolls,
     shortRangeHtml,
+    sightHtml,
     specificMods,
     sys,
     techSectionsHtml,
@@ -156,6 +157,7 @@ return `
              title="2..BS.b (${fanningRofMax}) по выбору — заменяет фиксированный RoF револьвера в режиме Длинной очереди. Без бонуса Прицеливания."/>
     </div>` : ""}
     ${aimingBadgeHtml}
+    ${sightHtml ?? ""}
 
     <div class="av-row">
       <label>Избирательная атака</label>
