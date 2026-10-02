@@ -91,6 +91,18 @@ export function fieldDisablesWeapon(actor, weapon) {
   return inDiscordantField(actor) && weaponTechClass(weapon) === "electric";
 }
 
+/**
+ * Стрелять нельзя: электрическое оружие в поле, и это не рукопашная атака.
+ * Одна проверка на окно атаки (sheets/attack-dialog.mjs) и на сам бросок
+ * (combat/attack.mjs::_executeAttackRoll): пути мимо окна (огонь с листа
+ * техники, рукопашный класс со стрелковым профилем) запрет, стоявший только в
+ * нём, обходили (task-be12).
+ * Электрическое рукопашное запрета не получает — оно бьёт выключенным.
+ */
+export function fieldForbidsShot(actor, weapon, isMelee) {
+  return !isMelee && fieldDisablesWeapon(actor, weapon);
+}
+
 /** Имплант выключен полем: электроника (system.techClass "electric"). */
 export function fieldDisablesImplant(actor, implant) {
   return inDiscordantField(actor) && implant?.system?.techClass === "electric";

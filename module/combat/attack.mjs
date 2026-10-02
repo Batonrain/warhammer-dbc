@@ -76,7 +76,7 @@ import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { isBiteName } from "../rules/integral-rating.mjs";
 import { VENOM_BITE_CAPABILITY, venomBiteDamage, isBiteAttack, ADAPTIVE_VENOM_DOSE_FLAG } from "../rules/naga-traits.mjs";
-import { fieldDisablesWeapon } from "../rules/null-zones.mjs";
+import { fieldDisablesWeapon, fieldForbidsShot } from "../rules/null-zones.mjs";
 import { isHeadHit } from "./armor-properties.mjs";
 import { COLD_KILLER } from "../rules/cold-killer.mjs";
 import { LEGIONNAIRE_VIRTUOSO, isLegionRangedWeapon } from "../rules/legionnaire-virtuoso.mjs";
@@ -229,6 +229,17 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // WS, но считался стрельбой — без прибавки S.b к урону и с кнопками защиты
   // из стрелковой ветки.
   const isMelee = attackIsMelee(sys, { forceMelee: opts.forceMelee, profile: opts.profile });
+  // Поле Дискорданта: электрическое стрелковое не стреляет. Окно атаки
+  // отказывает раньше, но не все пути идут через него (огонь с листа техники,
+  // оружие класса «рукопашное» со стрелковым профилем — task-be12): отказ
+  // здесь, до патронов и броска, чтобы ничего не списалось. Только для НОВОГО
+  // выстрела: перерасчёт уже сделанного (переброс за Очко, +10 за Очко, Огневая
+  // Точка, Горжет, сдвиг места — все идут со skipAmmo) отказывать не должен, их
+  // вызывающие уже списали Очко/кнопку и не узнали бы, что выстрела не вышло.
+  if (!opts.skipAmmo && fieldForbidsShot(actor, item, isMelee)) {
+    ui.notifications?.warn(`⚠️ «${item.name}»: в поле Дискорданта электрическое оружие не стреляет.`);
+    return;
+  }
   // Выбранный профиль атаки (стр. 207-221) и хват (стр. 39) переопределяют урон.
   const P = opts.profile || null;
   const gripDmgFlat = Number(opts.gripDmgFlat) || 0;

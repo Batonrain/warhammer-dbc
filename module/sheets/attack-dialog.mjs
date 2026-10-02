@@ -72,7 +72,7 @@ import { legacyWrathEffectiveRof, takenMutationNames } from "../rules/legacy-wea
 import { actorInfamyValue } from "../apps/infamy-points.mjs";
 import { isSabre, NS as SABRE_NS, SABRE_PENDING_FLAG } from "../combat/sabre-second-attack.mjs";
 import { isZeroedByLoss, ZERO_EFFECTS } from "../rules/char-loss.mjs";
-import { fieldDisablesWeapon } from "../rules/null-zones.mjs";
+import { fieldDisablesWeapon, fieldForbidsShot } from "../rules/null-zones.mjs";
 import { runtForbidsOneHand } from "../rules/runt.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
@@ -103,7 +103,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     return ui.notifications.warn("⚠️ Галлюцинации («Я маленький...») — не может совершать Атаки.");
   // Поле Дискорданта (rules/null-zones.mjs, как Haywire (7)): электрическое
   // стрелковое оружие не стреляет; рукопашное бьёт выключенным (ниже).
-  if (fieldDisablesWeapon(actor, item) && item.system?.weaponClass !== "melee")
+  if (fieldForbidsShot(actor, item, item.system?.weaponClass === "melee"))
     return ui.notifications.warn(`⚠️ «${item.name}»: в поле Дискорданта электрическое оружие не стреляет.`);
   // Наследие Ярости/Rage, ranged-ветка (wdbc-1rno.35, стр. 427): «+1 к
   // наибольшей RoF, или S/2− вместо S/−/−» — клон sys с этой точки, реальный

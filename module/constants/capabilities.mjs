@@ -3319,7 +3319,7 @@ export const CAPABILITIES = {
     reader: "module/rules/psalm-of-guidance.mjs (hasPsalmOfGuidance/actorHasEquippedCognisWeapon/psalmCognitionCost/canSpendCognition/spendCognition), module/combat/aiming-action.mjs (declareAim/aimCostLabel)"
   },
   "psychicPower.tzeentch.blessingOfMagnus": {
-    label: "РЕАЛИЗОВАНО ЧАСТИЧНО (16.09.2026, wdbc-1rno.5, находка 10/12): пока сила поддерживается (item.system.isSustained) И актор тяжело/критически ранен (woundTier heavy/dying) И носит экипированное психосиловое оружие (weaponProp key:\"force\") — Полу-Прицеливание свободным действием. Только Полу- (книга Полное не упоминает). «+5×PR на тесты W» и «действие Пси-Капюшон без капюшона» честно НЕ реализованы — отдельный тикет wdbc-1rno.34.",
+    label: "РЕАЛИЗОВАНО (wdbc-1rno.5, wdbc-1rno.34): пока сила поддерживается (item.system.isSustained) И актор тяжело/критически ранен (woundTier heavy/dying) И носит экипированное психосиловое оружие (weaponProp key:\"force\") — Полу-Прицеливание свободным действием. Только Полу- (книга Полное не упоминает). «+5×PR на тесты W» — НЕ здесь, а отдельной записью «Модификатор теста» (область W, +5×PR, когда тяжело/критически ранен) рядом: вторую вручную не добавлять. «Пси-Капюшон без капюшона» кода не требует: кнопка .psy-hood-btn капюшона не проверяет.",
     source: "Blessing of Magnus / Благословение Магнуса",
     reader: "module/rules/blessing-of-magnus.mjs (hasActiveBlessingOfMagnus/actorHasEquippedForceWeapon/blessingOfMagnusFreeHalfAim), module/rules/aiming.mjs (aimApCost)"
   },
