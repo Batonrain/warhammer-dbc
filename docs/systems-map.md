@@ -114,6 +114,13 @@
   `flags.warhammer-dbc.lastBreach` цели с id карточки атаки. Эффекты свойств с
   `targetEffect.onBreach` (Rad, Toxic, Сновидение, Погибель) проверяют его в
   `hooks.mjs::_applyWeaponPropEffect`; Shift-клик — наложить вручную.
+- Rad (X) (wdbc-x1nz.10): `combat/radiation.mjs::applyRadHit` — X урона в T без
+  теста, счёт «10+ за бой» флагом `combatRadiation`, тест T+0 по концу боя
+  (`resolveCombatRadiation`, `rules/radiation-combat.mjs`). Решения владельца
+  02.10.2026: Демоны/Демоны-Принцы тест после боя не бросают
+  (`radiationTestExempt`; «Машину» не исключали — решения нет); по Технике
+  радиация бьёт экипаж и пассажиров (`system.stations[].uuid`), один бросок X,
+  тот же урон в T каждому; пробитие брони Техники система не проверяет.
 - Подвиды урона в скобках книги (I(Cr)/X(Fr)/E(El)/E(Fl)/E(Ls)/C(Tx), wdbc-q0q8,
   12.09.2026) — на уровень точнее широкого `damageType`: `system.damageSubtype`
   у оружия (`data/item/weapon.mjs`), психосилы и её `profiles[]`, техночуда,

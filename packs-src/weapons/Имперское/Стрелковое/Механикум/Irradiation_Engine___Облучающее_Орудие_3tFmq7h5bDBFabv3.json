@@ -35,7 +35,8 @@
         "rating": 4
       },
       {
-        "key": "rad"
+        "key": "rad",
+        "rating": "2d10"
       },
       {
         "key": "spray"

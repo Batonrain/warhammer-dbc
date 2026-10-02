@@ -266,7 +266,9 @@ describe("Яд и Радиация (\"7\") — снимает Отравлени
     expect(actor.system.conditions.radiation).toBe(false);
     expect(actor.system.conditions.radiationLevel).toBe(0);
     const grenade = actor.items.find(i => i.name.includes("Рад"));
-    expect(grenade.system.weaponProps.find(p => p.key === "rad").rating).toBe(3);
+    // Книга: «свойство Rad (Xd10), где X равно десяткам … урона в Т от
+    // радиации, снятого мутацией» — формула, не голое X (wdbc-x1nz.10).
+    expect(grenade.system.weaponProps.find(p => p.key === "rad").rating).toBe("3d10");
     expect(grenade.system.weaponProps.find(p => p.key === "blast").rating).toBe(2); // ceil(4/2)
     expect(grenade.system.weaponProps.find(p => p.key === "toxic")).toBeUndefined();
   });
@@ -285,7 +287,18 @@ describe("Яд и Радиация (\"7\") — снимает Отравлени
     expect(near.system.conditions.poisoned).toBe(false);
     expect(near.system.conditions.radiationLevel).toBe(0);
     const grenade = caster.items.find(i => i.name.includes("Рад"));
-    expect(grenade.system.weaponProps.find(p => p.key === "rad").rating).toBe(1); // floor(15/10)
+    expect(grenade.system.weaponProps.find(p => p.key === "rad").rating).toBe("1d10"); // floor(15/10)
+    expect(grenade.system.weaponProps.find(p => p.key === "toxic")).toBeTruthy();
+  });
+
+  it("только яд — Рад шаблона (Rad (2d10) штатной гранаты) в Плод не переходит", async () => {
+    const actor = makeActor("Носитель", { conditions: { poisoned: true } });
+    const item = makeItem("7");
+    const TEMPLATE = weaponTemplate("Rad / Рад", [{ key: "blast", rating: 3 }, { key: "rad", rating: "2d10" }]);
+    Object.assign(globalThis.game, { packs: makePacksStub([TEMPLATE]) });
+    await activateFruitOfFlesh(actor, item, tokenOf(actor, 0, 0));
+    const grenade = actor.items.find(i => i.name.includes("Рад"));
+    expect(grenade.system.weaponProps.find(p => p.key === "rad")).toBeUndefined();
     expect(grenade.system.weaponProps.find(p => p.key === "toxic")).toBeTruthy();
   });
 });

@@ -111,7 +111,7 @@ export function haywireFieldIntensity(actor) {
   return Math.max(0, stored, aura);
 }
 
-function isDaemonActor(actor) {
+export function isDaemonActor(actor) {
   if (!actor) return false;
   if (actor.type === "daemon" || actor.type === "demonPrince") return true;
   return hasNamed(actor, "Daemonic");
