@@ -1753,8 +1753,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   }
   // Automated Animations (если установлен и включён) — см. module/integrations/autoanimations.mjs.
   triggerAttackAnimation({ actor, item, hit });
-}
   // Итог броска наружу: окну атаки нужно знать, попала ли основная рука, чтобы
   // решить про вторую (Тирантикос). Ранние отказы выше отдают undefined —
   // броска не было, «попал/промахнулся» о нём не скажешь.
   return { hit };
+}

@@ -529,7 +529,6 @@ export function openAttackDialog(ctx) {
             // атаки пары нужны для условия, а второй карточке они обе уже
             // известны (f.rofMode — первая рука, offRofMode — вторая).
             const agbMod = allGunsBlazingMod(actor, f.rofMode, offRofMode);
-            // Eye of Envy (wdbc-1rno) — вторая рука та же цель, своя
             // Тирантикос (Sahara 10-2d10-2): +2d10 первому попаданию второй
             // руки, если обе тяжёлые, цель Размера 2+ и первая рука попала;
             // «попала и вторая» досчитывает сам бросок (combat/attack.mjs).
@@ -537,6 +536,7 @@ export function openAttackDialog(ctx) {
             // «Ударить оружием») выстрелом не считается.
             const tyranthikosDice = tyranthikosSecondAttackDice(
               actor, item, dualOff, targetActor, !!mainResult?.hit && !isMelee && !offMelee);
+            // Eye of Envy (wdbc-1rno) — вторая рука та же цель, своя
             // Характеристика (offChar), свой независимый бросок.
             await withEyeOfEnvy(actor, targetActor, offChar, () => _executeAttackRoll(
               actor, dualOff, offMelee ? "ws" : "bs",
@@ -550,8 +550,8 @@ export function openAttackDialog(ctx) {
                   + (dw.reductions.length ? `; убавили: ${dw.reductions.map(r => r.label).join(", ")}` : "")
                   + ")",
                 allGunsBlazingMod: agbMod,
-                // Прицеливание положено на вторую руку (wdbc-x1nz.2.41) — метка едет сюда, не основной.
                 tyranthikosDice,
+                // Прицеливание положено на вторую руку (wdbc-x1nz.2.41) — метка едет сюда, не основной.
                 aimingLabel: (currentAiming !== "none" && !wp.noAim && f.aimHand === "off")
                   ? (currentAiming === "half" ? `Полу-прицеливание (+${aimingBonus})` : `Полное прицеливание (+${aimingBonus})`)
                   : ""

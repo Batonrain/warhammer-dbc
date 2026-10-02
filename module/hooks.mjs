@@ -119,8 +119,8 @@ import { liftDivineProtection, wakeDivineProtected } from "./sheets/tabs/death.m
 import { processConditionTurnStart, processConditionTurnEnd, sweepApplierTurnEnd } from "./combat/condition-ticks.mjs";
 import { sweepConditionDurations, onConditionEffectExpired } from "./combat/condition-effects.mjs";
 import { conditionExpiryLine, postConditionCard, setBurningDamageFormula } from "./combat/condition-ticks.mjs";
-import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { applyRadHit, resolveCombatRadiation } from "./combat/radiation.mjs";
+import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart,
          processPreparedRuneCombatStart } from "./rules/sigillite-runes-combat.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
@@ -2375,6 +2375,11 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
     }
   }
 
+  // Rad (X) (wdbc-x1nz.10): X урона в T без теста и счёт «10+ за бой» —
+  // combat/radiation.mjs. Ни теста сопротивления, ни Состояния, ни урона в
+  // Раны ниже у этого свойства нет.
+  if (ds.wpRadiation === "1") return applyRadHit(actor, { formula: dmgFormula, label });
+
   // Огонь по Орде («Орды», Психологический урон): Горения у толпы нет —
   // провал теста вместо него стоит психологического урона, равного урону в
   // Магнитуду от этого попадания. Раньше ветка ниже писала Орде несуществующие
@@ -2393,11 +2398,6 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
   if (actor.type === "horde" && condition === "burning") {
     return rollHordeFlameTest(actor, { testChar: testChar || "ag", testMod, messageId, force, label });
   }
-  // Rad (X) (wdbc-x1nz.10): X урона в T без теста и счёт «10+ за бой» —
-  // combat/radiation.mjs. Ни теста сопротивления, ни Состояния, ни урона в
-  // Раны ниже у этого свойства нет.
-  if (ds.wpRadiation === "1") return applyRadHit(actor, { formula: dmgFormula, label });
-
   // Иммунитет к ядам (Изуверская Физиология Наги и т.п., wdbc naga): Toxic
   // не травит вовсе — ни теста, ни Отравления, ни доп. урона. Одного
   // иммунитета к Состоянию (kind:"condition") мало: урон ниже катится и без
@@ -3122,6 +3122,9 @@ function _attachFateContextMenu(message, html) {
   Hooks.on("deleteCombat", async combat => {
     if (!game.user.isGM) return;
     await resolveTrancesForCombat(combat);
+    // Rad (X) (wdbc-x1nz.10): «10+ урона в T от радиации за один бой — после
+    // боя тест T+0 или лучевая болезнь» (combat/radiation.mjs).
+    await resolveCombatRadiation(combat);
     // Командное Присутствие — «до конца боя»; Команды и метки Морали тоже.
     await clearCommandsOnCombatEnd(combat);
     // Божественная Защита: без сознания «до конца сцены или боя».
@@ -3156,9 +3159,6 @@ function _attachFateContextMenu(message, html) {
     // восполняются к концу боя (стр. 57, wdbc-drn).
     await refillSarcophagusWarpWounds(combat);
     // Ртуть (wdbc-q0q8, Замена Крови) — метки «электропроводных» частей тела
-    // Rad (X) (wdbc-x1nz.10): «10+ урона в T от радиации за один бой — после
-    // боя тест T+0 или лучевая болезнь» (combat/radiation.mjs).
-    await resolveCombatRadiation(combat);
     // живут строго «до конца боя», та же логика, что у остальных меток здесь.
     await clearMercuryMarks(combat);
     // Адаптация (wdbc-q0q8, Панцирь) — накопленные за бой бонусы AP по видам
