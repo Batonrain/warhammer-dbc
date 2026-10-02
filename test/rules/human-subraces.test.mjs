@@ -41,6 +41,28 @@ describe("максимум Очков Бесчестия со сдвигом с�
     expect([heir.poolTarget, heir.value]).toEqual(["infamy", "1"]);
     expect([blunt.poolTarget, blunt.value]).toEqual(["infamy", "-subtier"]);
   });
+  // Решение владельца 02.10.2026 (задача «1»): «+1 к максимуму Судьбы» у Хаосита
+  // переводится в Очки Бесчестия. У Хаосита fate.max не читается
+  // (actorInfamyMax), у не-Хаосита не читается infamyMaxMod — поэтому две записи
+  // («fate» и «infamy») действуют каждая у своего мировоззрения САМИ, без
+  // условия «Когда» и без пересинхронизации при смене мировоззрения.
+  const poolTargets = doc => entriesOf(doc).filter(e => e.kind === "poolMax")
+    .map(e => [e.poolTarget || "fate", Number(e.value)]);
+  it.each([
+    ["Предсказание «Не спрашивай почему ты служишь»", "packs-src/divinations", "Sefr52Z3oSiSAYS2"],
+    ["Эльданар", SUB, "dHESmFkEql3xjb98"],
+    ["Избранный Судьбой", "packs-src/traits", "7Tz0S9YauS3p9iKN"]
+  ])("%s: +1 и Судьбе (лоялист), и Бесчестию (Хаосит)", (_n, dir, id) => {
+    const targets = poolTargets(packDocById(dir, id));
+    expect(targets).toContainEqual(["fate", 1]);
+    expect(targets).toContainEqual(["infamy", 1]);
+    expect(targets).toHaveLength(2);
+  });
+  it("результат на листе: Хаосит получает +1 к Бесчестию, лоялист — к Судьбе", () => {
+    const base = { characteristics: { inf: { bonus: 4 } }, infamyMaxMod: 1, fate: { max: 3 } };
+    expect(actorInfamyMax({ type: "character", system: { ...base, alignment: "heretic" } })).toBe(5);
+    expect(actorInfamyMax({ type: "character", system: { ...base, alignment: "loyalist" } })).toBe(3);
+  });
 });
 
 describe("Затупленный — уровни 1–4", () => {

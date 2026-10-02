@@ -854,7 +854,11 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   subraceCost/xpShort, `race-library.mjs::subraceCostAt`); уровень —
   `system.subraceTier`, в формулах Механики `subtier` (Затупленный 1–4);
   максимум Бесчестия Хаосита Inf.b ± `system.infamyMaxMod` (poolMax с целью
-  «infamy», `apps/infamy-points.mjs::infamyMaxWithMod`); закрытые Архетипы
+  «infamy», `apps/infamy-points.mjs::infamyMaxWithMod`; «+1 к максимуму
+  Судьбы» Эльданара, Избранного Судьбой и Предсказания «Не спрашивай почему
+  ты служишь» — ПАРА записей poolMax, «fate» + «infamy»: fate.max читает
+  только не-Хаосит, infamyMaxMod — только Хаосит, условие «Когда» не нужно);
+  закрытые Архетипы
   (`apps/archetypes.mjs::archetypesForRace`); выбор мутации из списка
   (`equipChoiceIds`, фильтр `ids`) и строки субмутации
   (`apps/submutations.mjs::chooseSubmutation`); дружественная одна
