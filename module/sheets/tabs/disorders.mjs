@@ -28,7 +28,7 @@ import { collectTestMods } from "../../rules/roll-mods.mjs";
 import { severityTestMod, effectiveSeverity, stepSeverity } from "../../rules/disorder-severity.mjs";
 import { commitRerollUse } from "../../combat/angel-hunters.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
-import { RAGE_FEAR_CAPABILITY, rageFearRating, relationByDisposition } from "../../rules/warp-touched.mjs";
+import { RAGE_FEAR_CAPABILITY, rageFearRating, isRageFearSource, relationByDisposition } from "../../rules/warp-touched.mjs";
 
 /** Сумма отмеченных галочек «Правила» диалога — общий приём с _showSkillRollDialog. */
 function checkedRuleMods(form) {
@@ -72,19 +72,23 @@ function checkedOf(html) {
  *  - Затронутый Варпом, субмутация 1 (wdbc-1rno.26): враг в Ярости — Страх
  *    не ниже 3 (rules/warp-touched.mjs::rageFearRating); relation — отношение
  *    источника к персонажу по диспозиции токенов, «ally» не считается врагом.
+ *    unignorable — «не может игнорировать этот Страх» той же субмутации:
+ *    враг в Ярости, и при своём Страхе 4 тоже (Страх всё равно от врага в
+ *    Ярости). Что именно снимается — rules/fear-ignore.mjs.
  */
 export function fearDialogDefaults(actor, source = null, { relation = "neutral" } = {}) {
   const infamy = Math.max(0, Number(actor?.system?.characteristics?.inf?.total) || 0);
   const ownFear = Number(source?.system?.fearRating) || 0;
-  const srcFear = (source && hasRuleFlag(actor, RAGE_FEAR_CAPABILITY))
-    ? rageFearRating(ownFear, { sourceInRage: !!source.system?.inRage, relation })
-    : ownFear;
+  const rageOpts = { sourceInRage: !!source?.system?.inRage, relation };
+  const hasRageFear = !!source && hasRuleFlag(actor, RAGE_FEAR_CAPABILITY);
+  const srcFear = hasRageFear ? rageFearRating(ownFear, rageOpts) : ownFear;
   const rageFear = srcFear > ownFear;
+  const unignorable = hasRageFear && isRageFearSource(rageOpts);
   const rating = Math.min(4, Math.max(1, srcFear || 1));
   const demon = !!source && (source.type === "daemon"
     || [...(source.items ?? [])].some(i => i.type === "trait" && /^Daemonic\s*([(/]|$)/i.test(i.name ?? "")));
   const important = actor?.hasPlayerOwner ?? true;
-  return { infamy, rating, demon, important, rageFear };
+  return { infamy, rating, demon, important, rageFear, unignorable };
 }
 
 /** Диалог теста Страха: форма живёт рядом с остальными кнопками безумия. */
@@ -115,6 +119,12 @@ export function openFearDialog(actor) {
     ? relationByDisposition(ownToken.document?.disposition, targetToken.document?.disposition)
     : "neutral";
   const pre = fearDialogDefaults(actor, targetActor, { relation });
+  // Галочка «Нельзя игнорировать» — только у персонажа с субмутацией 1; без
+  // выделенного врага в Ярости она не отмечена, и ГМ, знающий, что враг в
+  // Ярости, отметит её сам (как «Демон» без выделенного источника).
+  const unignorableHtml = hasRuleFlag(actor, RAGE_FEAR_CAPABILITY)
+    ? `<div class="atk-dlg-row"><label title="Затронутый Варпом: Страх врага в Ярости нельзя игнорировать — не действуют память сцены, автоуспех по Infamy или своему Страху, Стальное Сердце"><input id="fear-prop-unignorable" type="checkbox"${pre.unignorable ? " checked" : ""}/> Нельзя игнорировать (враг в Ярости)</label></div>`
+    : "";
   const rm = ruleRollModsHtml(actor, ctx);
   const rr = ruleRerollsHtml(actor, ctx);
   new Dialog({
@@ -129,6 +139,7 @@ export function openFearDialog(actor) {
         <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="fear-mod" type="number" value="0"/></div>
         <div class="atk-dlg-section">Свойства</div>
         <div class="atk-dlg-row"><label><input id="fear-prop-demon" type="checkbox"${pre.demon ? " checked" : ""}/> Демон</label></div>
+        ${unignorableHtml}
         ${rm.html}
         ${rr.html}
         ${testKindHtml({ label: "Тест Страха" })}
@@ -147,7 +158,10 @@ export function openFearDialog(actor) {
           const mod = (parseInt(html.find("#fear-mod").val()) || 0) + checkedRuleMods(html[0]);
           // Свойства источника Страха — читаются в карточку/флаги сообщения;
           // Демон уже даёт бесплатный переброс при провале (см. fear.mjs).
-          const properties = { demon: html.find("#fear-prop-demon").is(":checked") };
+          // «Нельзя игнорировать» — тоже свойство: переброс Демона (hooks.mjs)
+          // берёт properties из флагов карточки и получит его сам.
+          const properties = { demon: html.find("#fear-prop-demon").is(":checked"),
+                               unignorable: html.find("#fear-prop-unignorable").is(":checked") };
           const tk = readTestKind(val, checkedOf(html), { label: "Тест Страха" });
           tk.reroll = mergeReroll(namedReroll(html[0]), readDiceChoice(val));
           await commitRerollUse(actor, html[0]?.querySelector?.(".rule-reroll-opt:checked")?.dataset);

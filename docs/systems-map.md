@@ -234,7 +234,10 @@
 mjs`, `roll-mods.mjs`, `test-kind.mjs` (+`test-kind-widget.mjs`), `difficulty.
 mjs`, `extended-test.mjs`, `delegate-test.mjs`, `reroll-pick.mjs`, `assists.
 mjs`, `match-context.mjs`, `situational.mjs`, `initiative.mjs`; `documents/
-combatant.mjs` (бросок Инициативы с Преимуществом).
+combatant.mjs` (бросок Инициативы с Преимуществом). «Провалил на N+ Провала —
+последствие»: общий реестр `rules/fail-degree-triggers.mjs` (порог, область,
+исключение Крит. Провала, Возможность), исполняет `kind-outcome.mjs`
+(`FAIL_DEGREE_HANDLERS`); первая запись — Инфернальная Воля (wdbc-1rno.22).
 
 **Конвейер атаки:** `combat/attack.mjs` (оркестратор) → `attack-weapon.mjs`
 (профиль/хват/боеприпас) → `attack-threshold.mjs` (порог) → `attack-outcome.
@@ -843,6 +846,12 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   economy.mjs`. Машины без воли — возможность `fear.machineMind` (Int вместо
   W; стоит на Черте Сервочереп). Диалог подставляет Inf, рейтинг и «Демон» с
   выделенного источника (`sheets/tabs/disorders.mjs::fearDialogDefaults`).
+  Все пути «игнорировать Страх» (память сцены, автоуспех по Inf/своему
+  Страху, Стальное Сердце) и их отмена «нельзя игнорировать» (Затронутый
+  Варпом 1, свойство теста `unignorable`) — одно место, `rules/fear-ignore.mjs`.
+  Шок без теста Страха — Инфернальная Воля (4+ Провала теста Навыка):
+  `combat/fear.mjs::rollInfernalWillShock`, снижение на Cor —
+  `rules/infernal-will.mjs`.
 - Здравомыслие пилота Дредноута: `rules/dreadnought.mjs`, `sheets/tabs/
   dreadnought-panel.mjs`.
 - Расстройства/Травмы: `data/item/mental-disorder.mjs`, `mental-trauma.mjs`,

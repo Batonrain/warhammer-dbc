@@ -14,10 +14,11 @@
 //    Ярости — не ниже 3 (свой Страх 4 мутация не понижает: она прибавляет
 //    источник Страха, а не отнимает его). Союзник (по диспозиции токенов) —
 //    не враг; без токенов отношение неизвестно, и выделенный игроком
-//    источник угрозы считается врагом. «Не может игнорировать» НЕ сделано:
-//    в книге «игнорировать Страх» — и память сцены (стр. 53), и автоуспех по
-//    Infamy/своему Страху, и Стальное Сердце; какое из них снимается — вопрос
-//    владельцу (wdbc-1rno.26).
+//    источник угрозы считается врагом. «Не может игнорировать»: решение
+//    владельца 02.10.2026 — снимается всё, что книга зовёт игнорированием
+//    Страха (память сцены стр. 53, автоуспех по Infamy/своему Страху,
+//    Стальное Сердце). Диалог ставит тесту свойство unignorable, отмену
+//    считает одно место — rules/fear-ignore.mjs.
 //
 // 10 «Недоверие к Лечению»: «После получения любого лечения, кроме как от
 //    себя, персонаж получает штраф −10 на все тесты, кроме тестов Т на 1
@@ -47,13 +48,23 @@ const HEAL_MISTRUST_PENALTY = -10;
 const HEAL_MISTRUST_LABEL = "🩹 Недоверие к Лечению";
 
 /**
+ * Источник — «враг в Ярости» субмутации 1: в Ярости и не союзник.
+ * Одно условие и для рейтинга (rageFearRating), и для «не может игнорировать»
+ * (sheets/tabs/disorders.mjs::fearDialogDefaults → rules/fear-ignore.mjs).
+ * @param {{sourceInRage:boolean, relation:"ally"|"enemy"|"neutral"}} opts
+ */
+export function isRageFearSource({ sourceInRage = false, relation = "neutral" } = {}) {
+  return !!sourceInRage && relation !== "ally";
+}
+
+/**
  * Рейтинг Страха источника для персонажа с субмутацией 1.
  * @param {number} srcFear собственный рейтинг источника
  * @param {{sourceInRage:boolean, relation:"ally"|"enemy"|"neutral"}} opts
  */
 export function rageFearRating(srcFear, { sourceInRage = false, relation = "neutral" } = {}) {
   const own = Math.max(0, Number(srcFear) || 0);
-  if (!sourceInRage || relation === "ally") return own;
+  if (!isRageFearSource({ sourceInRage, relation })) return own;
   return Math.max(own, RAGE_FEAR_RATING);
 }
 

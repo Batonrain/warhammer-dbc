@@ -24,6 +24,9 @@ import { activeShock, shockFlagPatch, shockRecoveryBlock, SHOCK_FLAG, SHOCK_SCEN
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { rollMoraleTest }                          from "../rules/morale-test.mjs";
 import { applyLordOfExoditesFailPenalty }          from "./lord-of-exodites.mjs";
+import { infernalWillReduction, infernalWillShockTotal } from "../rules/infernal-will.mjs";
+import { SKILLS_DEF, GROUP_SKILLS_DEF }            from "../constants/skills.mjs";
+import { fearIgnore, FEAR_IGNORE_LABELS }          from "../rules/fear-ignore.mjs";
 
 /** Возможность «Абсолютная вера в прошлое» (Мир-кладбище). */
 export const FAITH_FLAG = "fear.faithInThePast";
@@ -61,30 +64,33 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   // «Страх и Машины» (стр. 53): машина без свободы воли бросает на Int.
   const charKey = fearChar(actor);
   const wp = actor.system.characteristics[charKey]?.total ?? 0;
-  // Стальное Сердце (Мутация, wdbc-tsz6): персонаж считает ВСЕ рейтинги
-  // Страха на 1 меньше настоящего — не выдача Страха себе (для этого уже
-  // есть Трейт Fear(X)), а обратное направление: снижение того, как чужой
-  // Страх действует НА персонажа. Рейтинг ушёл в 0 или ниже — Страх
-  // полностью игнорируется (автоуспех), тот же принцип, что у автопасса по
-  // Infamy ниже. 4 god-гейтнутые субмутации (доп. −1 против конкретных типов
-  // целей) не реализованы — _executeFearRoll не получает категорию источника
-  // Страха вовсе, только числовой рейтинг; потребовало бы протащить новый
-  // параметр через весь вызывающий путь (hooks.mjs/disorders.mjs).
-  const steelHeart = hasRuleFlag(actor, "mutation.heartOfSteel");
-  const effectiveKey = steelHeart ? Number(ratingKey) - 1 : Number(ratingKey);
-  const steelHeartIgnored = steelHeart && effectiveKey <= 0;
-  const r  = FEAR_RATINGS[effectiveKey] || FEAR_RATINGS[1];
+  // Все пути «игнорировать Страх» — одним местом, rules/fear-ignore.mjs:
+  //  • Стальное Сердце (Мутация, wdbc-tsz6): все рейтинги Страха на 1 меньше
+  //    настоящего, на 0 — автоуспех. 4 god-гейтнутые субмутации (доп. −1
+  //    против конкретных типов целей) не реализованы — сюда не доходит
+  //    категория источника, только числовой рейтинг;
+  //  • память сцены (стр. 53): «один тест на Страх в Ход — против
+  //    сильнейшего источника, и до конца сцены все прочие источники равного
+  //    или меньшего рейтинга игнорируются». Сравнивается настоящий рейтинг,
+  //    не пониженный Стальным Сердцем; переброс Демона (opts.free) — тот же
+  //    тест, не новая встреча;
+  //  • автоуспех Важного по Infamy или своему Страху (стр. 53) — ниже, в autoPass.
+  // properties.unignorable — «не может игнорировать этот Страх» (Затронутый
+  // Варпом, субмутация 1, wdbc-1rno.26; ставит диалог sheets/tabs/
+  // disorders.mjs) — снимает все три. Едет в properties, а не в opts, чтобы
+  // бесплатный переброс Демона (hooks.mjs, ctx.properties) получил его сам.
   const important = type === "important";
+  const faced = Number(actor.getFlag?.("warhammer-dbc", FEAR_FACED_FLAG)) || 0;
+  const ignore = fearIgnore({
+    rating: ratingKey, important, infamy, faced,
+    ownFear: Number(actor.system.fearRating) || 0,
+    steelHeart: hasRuleFlag(actor, "mutation.heartOfSteel"),
+    free: !!opts.free, unignorable: !!properties.unignorable
+  });
+  const r  = FEAR_RATINGS[ignore.rating] || FEAR_RATINGS[1];
   const ratingMod = important ? r.important : r.normal;
 
-  // «Один тест на Страх в Ход — против сильнейшего источника, и до конца сцены
-  // все прочие источники равного или меньшего рейтинга игнорируются» (стр. 53).
-  // Без этой памяти каждый новый демон той же силы требовал нового теста, и
-  // помнить, кто что уже прошёл, приходилось ГМу. Сравнивается настоящий
-  // рейтинг источника, не пониженный Стальным Сердцем. Переброс Демона
-  // (opts.free) — тот же тест, не новая встреча.
-  const faced = Number(actor.getFlag?.("warhammer-dbc", FEAR_FACED_FLAG)) || 0;
-  if (!opts.free && faced >= Number(ratingKey)) {
+  if (ignore.skip) {
     await postTestCard(actor, {
       title: `Тест Страха — ${esc(actor.name)}`,
       outcome: `<span class="roll-success">Не требуется — в этой сцене уже был тест против Страха ${faced}</span>`,
@@ -92,7 +98,9 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
     });
     return;
   }
-  if (!opts.free) await actor.setFlag?.("warhammer-dbc", FEAR_FACED_FLAG, Number(ratingKey));
+  // Память только растёт: неигнорируемый Страх 3 после теста против Страха 4
+  // проходит мимо памяти сцены и не должен понижать её до 3.
+  if (!opts.free && Number(ratingKey) > faced) await actor.setFlag?.("warhammer-dbc", FEAR_FACED_FLAG, Number(ratingKey));
   // Вид теста/Кубик/Крит из диалога (rules/test-kind-widget.mjs) — только у
   // самого первого броска; бесплатный переброс Демона (opts.free) идёт уже
   // Базовым тестом без tk, это отдельная книжная механика, не общий Кубик.
@@ -115,16 +123,18 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   //
   // Отличие от «Стального Сердца» выше: то лишь снижает воспринимаемый
   // рейтинг на 1, и Страх 3 остаётся Страхом 2 — тест по-прежнему нужен.
+  // Иммунитет — не «игнорирование» (rules/fear-ignore.mjs), поэтому
+  // «нельзя игнорировать» его не снимает.
   //
   // Infamy и собственный Страх (стр. 53) — привилегия Важных персонажей: оба
-  // условия стоят в одной фразе с ними. Собственный рейтинг сравнивается с
-  // настоящим рейтингом источника: «равный или выше, чем у источника».
-  const ownFear = Number(actor.system.fearRating) || 0;
-  const infamyPass = important && infamy >= r.infamy;
-  const ownFearPass = important && ownFear > 0 && ownFear >= Number(ratingKey);
-  const autoPass = steelHeartIgnored || infamyPass || ownFearPass
+  // условия стоят в одной фразе с ними; считает их fearIgnore выше.
+  const autoPass = ignore.autoPass
                    || hasRuleFlag(actor, "sarcophagus.autoPassFear")
                    || hasRuleFlag(actor, FEAR_IMMUNE_FLAG);
+  // Видимая причина: игрок с Infamy 60 иначе не поймёт, почему автоуспеха нет.
+  const ignoreNote = ignore.cancelled.length
+    ? `<div class="roll-threshold">Этот Страх нельзя игнорировать — не действуют: ${ignore.cancelled.map(k => FEAR_IGNORE_LABELS[k]).join(", ")}.</div>`
+    : "";
 
   const reroll = tk.reroll || null;
   const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
@@ -196,7 +206,7 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
     faithCtx: faithCtx ? { ...faithCtx, failUndo } : null, charLabel: charKey === "int" ? "Int" : "W",
     rerollNote, critLine: outcome.critLine, kindLabel: outcome.kindLabel,
     combinedLine: outcome.combinedLine, extendedLine: outcome.extendedLine, opposedLine: outcome.opposedLine,
-    difficulty: tk.difficulty || 0, ruleParts: ruleMods.parts
+    difficulty: tk.difficulty || 0, ruleParts: ruleMods.parts, ignoreNote
   });
 }
 
@@ -313,6 +323,51 @@ export async function applyShockRow(actor, row) {
     </div>`;
   }
   return { html, undo };
+}
+
+/**
+ * Инфернальная Воля (Общие мутации, d100 44; wdbc-1rno.22): тест Навыка
+ * провален на 4+ Провала (не Крит.) — бросок по таблице Шока. Зовёт общий
+ * триггер «N+ Провала» из rules/kind-outcome.mjs (FAIL_DEGREE_HANDLERS),
+ * строка уходит в карточку проваленного теста вместе с critLine.
+ *
+ * Отличия от Шока после теста Страха (_executeFearRoll выше), по решениям
+ * владельца 02.10.2026: Infamy не вычитается; вместо неё — снижение на Cor
+ * (rules/infernal-will.mjs::infernalWillReduction), автоматическое; строки
+ * про «источник Страха» применяются как есть, источник — предмет
+ * проваленного теста. Отката нет: `undo` от applyShockRow не сохраняется, и
+ * провал, засчитанный успехом уже после карточки (Очко Бесчестия → Успех,
+ * Хирургия Легиона) или переброшенный за Очко, Шок не снимает — пробел записан
+ * в label mutation.infernalWill (constants/capabilities.mjs).
+ *
+ * @param {Actor} actor
+ * @param {{deg:number, ctx?:{skill?:string, group?:string, specialty?:string}}} info
+ * @returns {Promise<string>} html для карточки теста
+ */
+export async function rollInfernalWillShock(actor, { deg, ctx = {} } = {}) {
+  const reduction = infernalWillReduction(actor, ctx);
+  const sRoll = await new Roll("1d100").evaluate();
+  const total = infernalWillShockTotal(sRoll.total, deg, reduction.value);
+  const fails = Math.max(1, Number(deg) || 1);
+  const formula = `${sRoll.total}${fails > 1 ? ` + ${10 * (fails - 1)}` : ""}${reduction.value ? ` − ${reduction.value}` : ""} = ${total}`;
+  const head = `<div class="roll-damage-label">🜏 Инфернальная Воля — ${fails} ${_degWord(fails)} теста Навыка, бросок Шока (${formula}):</div>`;
+  // Подпись снижения — всегда, и при нуле: «Навык не дружественный» объясняет,
+  // почему Cor не помог.
+  const why = `<div class="roll-threshold">${esc(reduction.label)}</div>`;
+  if (total <= 0) {
+    return `<div class="roll-damage-section">${head}${why}
+      <div class="roll-outcome"><span class="roll-success">${rollIcon("shield","#4dffa6")}Шок предотвращён (Cor)</span></div></div>`;
+  }
+  const row = lookupTable(SHOCK_TABLE, total);
+  // Q-6: «источник Страха» строк 41–60/81–100 — то, на чём персонаж провалил тест.
+  const skillDef = SKILLS_DEF[ctx.skill] ?? GROUP_SKILLS_DEF[ctx.group];
+  const skillLabel = skillDef ? `${skillDef.label}${ctx.specialty ? `: ${ctx.specialty}` : ""}` : "";
+  const sourceNote = /источник/i.test(row?.text ?? "")
+    ? `<div class="roll-threshold">Источник Страха — предмет проваленного теста${skillLabel ? ` (${esc(skillLabel)})` : ""}.</div>` : "";
+  const applied = await applyShockRow(actor, row);
+  return `<div class="roll-damage-section">${head}${why}
+    <div class="roll-threshold">${row?.text ?? "—"}</div>${sourceNote}
+    ${row?.text ? deathButtonHtml(row.text, actor.uuid) : ""}</div>${applied.html}`;
 }
 
 /**
@@ -471,11 +526,12 @@ export async function rollHeartAttack(actor) {
  */
 export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success, dof, extraHtml, allRolls,
   { properties = {}, rerollCtx = null, faithCtx = null, rerollNote = "", critLine = "", charLabel = "W",
-    kindLabel = null, combinedLine = "", extendedLine = "", opposedLine = "", difficulty = 0, ruleParts = [] } = {}) {
+    kindLabel = null, combinedLine = "", extendedLine = "", opposedLine = "", difficulty = 0, ruleParts = [],
+    ignoreNote = "" } = {}) {
   const dice = (await Promise.all(allRolls.map(r => r.render()))).join("");
   // Свойства источника Страха (напр. Демон) — для будущих эффектов, которые
   // будут цепляться за них (Хатред и т.п.); здесь же дают бесплатный переброс.
-  const propLabels = { demon: "Демон" };
+  const propLabels = { demon: "Демон", unignorable: "Нельзя игнорировать" };
   const activeProps = Object.entries(properties).filter(([, v]) => v).map(([k]) => propLabels[k] || k);
   const propsHtml = activeProps.length
     ? `<div class="roll-threshold">Свойства: <b>${activeProps.join(", ")}</b></div>` : "";
@@ -513,7 +569,7 @@ export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success
   await postTestCard(actor, {
     title: `${header}${kindLabel ? ` · ${kindLabel}` : ""} — ${esc(actor.name)}`,
     threshold: rollStatLine({ prefix: sub, label: charLabel, base: wp, parts, threshold: eff, rv }),
-    lines: [combinedLine, propsHtml],
+    lines: [combinedLine, propsHtml, ignoreNote],
     rerollNote, critLine,
     outcome: success
       ? `<span class="roll-success">Успех — выстоял</span>`

@@ -3076,7 +3076,11 @@ export class WarhammerCharacterSheet
     const outcome = await resolveKindOutcome(effectActor, {
       baseEff, rv, combined: combinedForOutcome, extended, opposed: finalOpposed,
       opposedSelected: opposedKind, opposedSafeSelected,
+      // group/specialty (wdbc-1rno.22): групповой Навык приходит без skill
+      // (onSkillRoll) — без них исход теста принимал бросок Навигации/Ремесла
+      // за тест Характеристики (Инфернальная Воля: «любой тест Навыка»).
       ctx: { actor: effectActor, kind: "skill", char: charKey, skill: skillKey ?? undefined,
+             group: rollContext?.group || undefined, specialty: rollContext?.specialty || undefined,
              morale: isMoraleOpposedSkill(skillKey),
              ...(withSceneTarget ? { targetActor: sceneTarget } : {}) }
     });

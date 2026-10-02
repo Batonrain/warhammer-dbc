@@ -32,6 +32,19 @@ import { HYPNO_SCARS, hypnoScarsStun } from "./replicant.mjs";
 import { PERSONAL_ADAPTATION_CAPABILITY, PERSONAL_ADAPTATION_FLAG,
          personalAdaptationCap, personalAdaptationBonusFor, nextPersonalAdaptationBonuses, personalAdaptationKey }
   from "./personal-adaptation.mjs";
+import { matchFailDegreeTriggers } from "./fail-degree-triggers.mjs";
+
+/**
+ * Последствия общего триггера «N+ Провала» (rules/fail-degree-triggers.mjs,
+ * wdbc-1rno.22) по имени `handler` записи реестра. Каждое возвращает html для
+ * карточки проваленного теста (едет в critLine — её рисуют все вызывающие).
+ * Обвязка — динамическим импортом, как у Гипно-Шрамов ниже: combat/fear.mjs
+ * сам статически импортирует этот файл, а он — чистый конвейер.
+ */
+const FAIL_DEGREE_HANDLERS = {
+  infernalWillShock: async (actor, info) =>
+    (await import("../combat/fear.mjs")).rollInfernalWillShock(actor, info)
+};
 
 /**
  * Виды теста — независимые: любое подмножество combined/extended/opposed
@@ -242,6 +255,20 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   // Автозапуск kind:"script" по Крит.Успеху/Провалу (wdbc-1rno: «Полимат»,
   // «Библиотека Акаши») — после того, как crit уже посчитан для ЭТОГО броска.
   await runScriptTriggers(actor, resolved.scriptTriggers, crit);
+  // «Провалил тест на N+ Провала» (wdbc-1rno.22, Инфернальная Воля) — по
+  // ИТОГОВОЙ степени провала (baseDeg, с failDegMod внутри), после крита: часть
+  // правил исключает Крит. Провал. Ошибка последствия не роняет сам бросок —
+  // тот же принцип, что у авто-скриптов выше.
+  for (const t of matchFailDegreeTriggers({ success, deg: baseDeg, crit }, ctx ?? {},
+    flag => hasRuleFlag(actor, flag))) {
+    const run = FAIL_DEGREE_HANDLERS[t.handler];
+    if (!run) { console.error(`Warhammer DBC | триггер «${t.id}»: нет последствия «${t.handler}»`); continue; }
+    try {
+      critLine += (await run(actor, { deg: baseDeg, ctx: ctx ?? {}, trigger: t })) ?? "";
+    } catch (e) {
+      console.error(`Warhammer DBC | Ошибка последствия «${t.id}»:`, e);
+    }
+  }
 
   let extendedLine = "";
   if (extended) {

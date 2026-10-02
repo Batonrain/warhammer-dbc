@@ -7,7 +7,7 @@
 
 import "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { captured, resetCaptured } from "../support/foundry-stub.mjs";
+import { captured, resetCaptured, fakeHtml } from "../support/foundry-stub.mjs";
 import { openFearDialog, fearDialogDefaults } from "../../module/sheets/tabs/disorders.mjs";
 import { clearRuleSources, registerRuleSource, getRuleSources } from "../../module/rules/sources.mjs";
 
@@ -148,5 +148,66 @@ describe("Затронутый Варпом (1): враг в Ярости — С
     openFearDialog(warpTouched());
     expect(captured.dialog.content).toContain('<option value="3" selected>');
     expect(captured.dialog.content).toContain("Затронутый Варпом");
+  });
+
+  // «…и не может игнорировать этот Страх» — решение владельца 02.10.2026:
+  // снимаются память сцены, автоуспех по Infamy/своему Страху, Стальное Сердце.
+  it("враг в Ярости — этот Страх нельзя игнорировать (и при своём Страхе 4)", () => {
+    expect(fearDialogDefaults(warpTouched(), raging(0), { relation: "enemy" }).unignorable).toBe(true);
+    expect(fearDialogDefaults(warpTouched(), raging(4), { relation: "enemy" }).unignorable).toBe(true);
+  });
+
+  it("союзник в Ярости, спокойный враг, нет субмутации — обычный Страх", () => {
+    const calm = { type: "character", items: [], system: { fearRating: 2, inRage: false } };
+    expect(fearDialogDefaults(warpTouched(), raging(0), { relation: "ally" }).unignorable).toBe(false);
+    expect(fearDialogDefaults(warpTouched(), calm, { relation: "enemy" }).unignorable).toBe(false);
+    expect(fearDialogDefaults(makeActor(), raging(0), { relation: "enemy" }).unignorable).toBe(false);
+    expect(fearDialogDefaults(warpTouched(), null).unignorable).toBe(false);
+  });
+
+  it("диалог: галочка «Нельзя игнорировать» отмечена при враге в Ярости", () => {
+    game.user.targets = new Set([{ actor: raging(0) }]);
+    openFearDialog(warpTouched());
+    expect(captured.dialog.content).toContain('id="fear-prop-unignorable" type="checkbox" checked');
+  });
+
+  it("диалог: у персонажа с субмутацией без цели галочка есть, но не отмечена — ГМ отметит сам", () => {
+    openFearDialog(warpTouched());
+    expect(captured.dialog.content).toContain('id="fear-prop-unignorable" type="checkbox"');
+    expect(captured.dialog.content).not.toContain('id="fear-prop-unignorable" type="checkbox" checked');
+  });
+
+  it("диалог: без субмутации галочки нет", () => {
+    openFearDialog(makeActor());
+    expect(captured.dialog.content).not.toContain("fear-prop-unignorable");
+  });
+
+  it("бросок из диалога с отмеченной галочкой — память сцены не отсекает тест", async () => {
+    const flags = { fearFacedRating: 3 };
+    const actor = { ...warpTouched(), id: "a1", effects: [],
+      system: { ...makeActor().system, fatigue: { value: 0, max: 0 } },
+      getFlag: (_s, k) => flags[k], setFlag: async (_s, k, v) => { flags[k] = v; },
+      update: async () => {}, createEmbeddedDocuments: async () => [] };
+    openFearDialog(actor);
+    captured.nextRoll = 99;
+    await captured.dialog.buttons.roll.callback(fakeHtml({
+      "#fear-rating": "3", "#fear-type": "important", "#fear-infamy": "0", "#fear-mod": "0",
+      "#fear-prop-demon": false, "#fear-prop-unignorable": true
+    }));
+    expect(captured.chat.at(-1).content).not.toContain("Не требуется");
+  });
+
+  it("бросок из диалога без галочки — та же сцена, теста нет (контроль)", async () => {
+    const flags = { fearFacedRating: 3 };
+    const actor = { ...warpTouched(), id: "a1", effects: [],
+      system: { ...makeActor().system, fatigue: { value: 0, max: 0 } },
+      getFlag: (_s, k) => flags[k], setFlag: async (_s, k, v) => { flags[k] = v; },
+      update: async () => {}, createEmbeddedDocuments: async () => [] };
+    openFearDialog(actor);
+    await captured.dialog.buttons.roll.callback(fakeHtml({
+      "#fear-rating": "3", "#fear-type": "important", "#fear-infamy": "0", "#fear-mod": "0",
+      "#fear-prop-demon": false, "#fear-prop-unignorable": false
+    }));
+    expect(captured.chat.at(-1).content).toContain("Не требуется");
   });
 });
