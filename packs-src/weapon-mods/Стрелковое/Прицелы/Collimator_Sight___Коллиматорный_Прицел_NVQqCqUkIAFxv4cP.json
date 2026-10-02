@@ -5,7 +5,7 @@
   "folder": "kbUzIayq4lxfwMlj",
   "system": {
     "description": "(Прицеливание) +5 на попадание.",
-    "notes": "Реализовано (16.09.2026, wdbc-1rno.5, находка 12/12): aimAttackMod:5 в module/data/item/weapon-mod.mjs — читается ТОЛЬКО пока actor.system.aiming не \"none\" (module/sheets/attack-dialog.mjs, отдельная строка «Прицел (пока Прицеливаюсь)» в разборе порога), не задевает бросок без Прицеливания. «Только один прицел за атаку» из шапки книжного раздела честно НЕ гейтится — если на оружии установлено несколько прицелов с числовым бонусом разом, они сложатся (wdbc-1rno.40).",
+    "notes": "Реализовано (16.09.2026, wdbc-1rno.5, находка 12/12): aimAttackMod:5 в module/data/item/weapon-mod.mjs — читается ТОЛЬКО пока actor.system.aiming не \"none\" (module/sheets/attack-dialog.mjs, отдельная строка «Прицел (пока Прицеливаюсь)» в разборе порога), не задевает бросок без Прицеливания. «Только один прицел за атаку» (wdbc-1rno.40) — при двух и больше прицелах на оружии действует только выбранный в окне атаки (список «Прицел», флаг оружия hudSight, module/combat/weapon-mods.mjs::getActiveMods).",
     "category": "ranged",
     "modGroup": "sights",
     "requirement": "Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

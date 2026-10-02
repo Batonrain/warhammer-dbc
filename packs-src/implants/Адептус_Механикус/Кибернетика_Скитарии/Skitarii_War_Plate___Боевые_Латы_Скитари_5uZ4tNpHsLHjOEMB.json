@@ -38,7 +38,8 @@
       "status": "inactive"
     },
     "bookSource": "DoomBC — Основная книга, КИБЕРНЕТИКА СКИТАРИИ (стр. 269)",
-    "techClass": "electric"
+    "techClass": "electric",
+    "availability": 1
   },
   "folder": "dMKBivuVGVBXhhlU",
   "_id": "5uZ4tNpHsLHjOEMB",

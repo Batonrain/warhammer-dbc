@@ -521,6 +521,9 @@ export function buildTargetEffectButtons(props, { hit, ammoName = "", forceActor
         // «При пробитии брони» (Rad/Toxic/…, wdbc-x1nz.2.79) — проверяется
         // в hooks.mjs::_applyWeaponPropEffect по итогу применения урона.
         `data-wp-on-breach="${te.onBreach ? 1 : 0}"`,
+        // Rad (X): урон из рейтинга уходит в T, а не в Раны, и копится «за
+        // бой» (combat/radiation.mjs::applyRadHit, wdbc-x1nz.10).
+        `data-wp-radiation="${te.radiation ? 1 : 0}"`,
         `data-wp-ammo-name="${ammoName}"`,
         // Вид урона и место атаки — для Крит. Эффекта, если доп. урон свойства
         // уведёт цель в минус (wdbc-x1nz.2.85).

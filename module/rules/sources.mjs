@@ -39,6 +39,7 @@ import { hatredRules } from "./hatred.mjs";
 import { legacyWrathRules, legacyExcessRules, legacyGuardianRules, legacyBloodPsychicRules, legacyInstinctiveDisarmRules, legacyDistractingCharSwapRules, legacyQuietAwarenessRules } from "./legacy-weapon.mjs";
 import { devourerPermanentRules } from "./devourer-of-knowledge.mjs";
 import { gallerpoxPoisonPenaltyActive } from "./prophet-of-gallerpox.mjs";
+import { healMistrustRules } from "./warp-touched.mjs";
 import { registerRuleSource } from "./source-registry.mjs";
 
 export { registerRuleSource, getRuleSources, clearRuleSources } from "./source-registry.mjs";
@@ -223,6 +224,12 @@ registerRuleSource("devourerOfKnowledge", a => devourerPermanentRules(a));
 // Считается по времени (game.time.worldTime), не по when: правило действует
 // каждый бросок, пока предмет не даст isAddictionUnsatisfied === false.
 registerRuleSource("addiction", a => addictionPenaltyRules(a));
+
+// Затронутый Варпом, субмутация 10 «Недоверие к Лечению» (wdbc-1rno.26):
+// −10 на все тесты, кроме T, час после чужого лечения — та же схема «правило
+// от времени мира», что у Зависимости выше. Метку ставит combat/warp-touched.mjs.
+registerRuleSource("warpTouchedHealMistrust", a =>
+  healMistrustRules(a, (typeof game !== "undefined" ? game.time?.worldTime : null) ?? 0));
 
 // Пилот Дредноута (Книга Машин, стр. 57-58). Связь хранит сам Дредноут — место
 // экипажа с ролью `pilot` и uuid актора, — поэтому спрашивать приходится не

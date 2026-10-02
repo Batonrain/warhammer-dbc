@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/actor-icons/character.svg",
   "folder": "5CEIgvAa194xkBxP",
   "system": {
-    "bodyType": "male",
+    "bodyType": "other",
     "race": "",
     "subrace": "",
     "ynnariPast": "",
@@ -1226,7 +1226,11 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "mountRarity": 1
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

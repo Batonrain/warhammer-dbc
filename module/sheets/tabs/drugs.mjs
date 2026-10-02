@@ -13,11 +13,13 @@ import { computeWoundHealing } from "./wounds.mjs";
 import { woundLossUpdates } from "../../rules/wounds.mjs";
 import { conditionLevelField } from "../../constants/conditions.mjs";
 import { maybeGrantEnjoymentPain } from "../../combat/enjoyment.mjs";
+import { noteHealingFromOther } from "../../combat/warp-touched.mjs";
 import { postTestCard, rollStatLine } from "../../helpers/test-card.mjs";
 import { hasRuleFlag, ruleFlagLabels } from "../../rules/flags.mjs";
 import { DRUG_AFTERMATH_IMMUNE_CAPABILITY, POISON_IMMUNE_CAPABILITY } from "../../rules/naga-traits.mjs";
 import { ALCHEM_MONSTER, alchemDurationFactor, mustRerollSuccess } from "../../rules/replicant.mjs";
 import { isReplicantSerum, takeSerum } from "../../combat/replicant.mjs";
+import { DRUG_DOSES_FLAG, doseKey, logDose, dosesThisWeek, weeklyDoseLimit, addictionCheckFor } from "../../rules/drug-doses.mjs";
 // New Men / Новые Люди (Йигори): срок вдвое, без пост-эффекта, разовый эффект
 // медикамента вдвое (module/rules/new-men.mjs).
 import { newMenDrugDuration, newMenInstantMedicine, halvesInstantMedicine,
@@ -298,8 +300,17 @@ export async function applyDrug(owner, item, recipient = null) {
   const fatRes = drugFatigueChange(actor, fat);
   if (fatRes) Object.assign(actorUpdates, fatRes.fields);
 
+  // Запас здоровья до/после (Критические — Раны в минусе): вылечил ли препарат.
+  const hpOf = w => (Number(w?.value) || 0) - (Number(w?.critical) || 0);
+  const hpBefore = hpOf(actor.system.wounds);
   if (Object.keys(actorUpdates).length > 0) await actor.update(actorUpdates);
   if (fatRes) await announceFatigueChange(actor, fatRes);
+
+  // Затронутый Варпом, «Недоверие к Лечению» (wdbc-1rno.26): Раны вылечил
+  // препарат, вколотый ДРУГИМ, — штраф на час. «Не себе» сверяет сам
+  // noteHealingFromOther (combat/warp-touched.mjs), тем же правилом, что окно Лечения.
+  const mistrustNote = hpOf(actor.system.wounds) > hpBefore
+    ? await noteHealingFromOther(actor, owner) : "";
 
   // Сыворотка Репликанта — отметка приёма у Крючка Сывороток получателя.
   if (isReplicantSerum(item)) await takeSerum(actor);
@@ -392,6 +403,8 @@ export async function applyDrug(owner, item, recipient = null) {
     chatContent += `<div class="roll-threshold">${rollIcon("shield","#4dffa6")}Бонус против ядов: <b>+${fx.bonusVsPoisons}</b></div>`;
   if (fx.customEffect)
     chatContent += `<div class="roll-threshold">${rollIcon("target","#8fd0ff")}${fx.customEffect}</div>`;
+  if (mistrustNote)
+    chatContent += `<div class="roll-threshold">${esc(mistrustNote)}</div>`;
 
   if (sys.hasAfterEffect && ignoresDrugSideEffects(actor)) {
     chatContent += `<div class="roll-threshold">${rollIcon("shield","#4dffa6")}Новые Люди: пост-эффект «${sys.afterEffect || "—"}» не наступит</div>`;
@@ -410,6 +423,28 @@ export async function applyDrug(owner, item, recipient = null) {
   // говорящего, режим броска и звук (wdbc-kuun).
   const allRolls = [...(durationRoll ? [durationRoll] : []), ...extras.rolls];
   await postTestCard(owner, chatContent, { rolls: allRolls });
+  await weeklyDoseCheck(actor, item);
+}
+
+/**
+ * Недельный счётчик доз (wdbc-gyqf2, rules/drug-doses.mjs): доза записывается в
+ * журнал получателя, и если за скользящую неделю набрано минимальное опасное
+ * число применений этого наркотика — тест Зависимости со штрафом −10 за каждое
+ * применение сверх числа. Уже зависимого тест не нужен: он решает, сорвётся ли
+ * (кнопка в панели Зависимостей). Лимит: Репликант ×2, Толерантность +1.
+ */
+export async function weeklyDoseCheck(actor, item) {
+  const add = item?.system?.addiction;
+  if (!actor || !add?.hasAddiction || !(Number(add.minDose) > 0)) return;
+  const now = game.time?.worldTime ?? 0;
+  const key = doseKey(item);
+  const log = logDose(actor.getFlag?.("warhammer-dbc", DRUG_DOSES_FLAG), key, now);
+  try { await actor.setFlag("warhammer-dbc", DRUG_DOSES_FLAG, log); } catch { /* нет прав на лист получателя */ }
+  if (add.isAddicted) return;
+  const limit = weeklyDoseLimit(actor, add.minDose);
+  const check = addictionCheckFor(dosesThisWeek(log, key, now), limit);
+  if (!check) return;
+  await rollAddictionTest(actor, item, (add.testChar || "t").toLowerCase(), (Number(add.testMod) || 0) + check.penalty);
 }
 
 export async function triggerAfterEffect(actor, item) {

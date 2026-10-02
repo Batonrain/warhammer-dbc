@@ -32,6 +32,7 @@ import { _noReactionCard } from "./defense.mjs";
 import { rollIcon }      from "../constants/roll-icons.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
+import { fallDamageSectionHtml } from "./fall-damage.mjs";
 import { SKILL_RANKS }   from "../constants/characteristics.mjs";
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
@@ -691,16 +692,7 @@ export async function applyFall(rider, formula) {
   await postCard(rider, {
     icon: rollIcon("blood", "#ff6b6b"), title: `Выпал из седла — ${esc(rider.name)}`,
     lines: [`<div class="roll-dice">${rollIcon("dice", "#6fe6ff")}${formula}: <b>${roll.total}</b></div>`],
-    sections: [`
-    <div class="roll-damage-section">
-      <div class="roll-damage-label">Урон падения — поглощается как обычно</div>
-      <button class="wh-apply-dmg-btn" type="button"
-        data-damage="${roll.total}" data-penetration="0" data-damage-type="impact"
-        data-hit-location="Торс" data-weapon-name="Падение из седла" data-attacker="—"
-        data-felling="0" data-primitive="0" data-ignore-shield="0" data-warp-soak="0">
-        Применить урон падения: <b>${roll.total}</b>
-      </button>
-    </div>`,
+    sections: [fallDamageSectionHtml(roll.total, "Падение из седла"),
       `<div class="roll-allout-note">Персонаж лежит на земле.</div>`]
   }, [roll]);
 }

@@ -3047,7 +3047,8 @@ export const DURABLE_MECH_KINDS = new Set(["characteristic", "weight", "movement
  * себе (тот же уровень «живости», что у остальной Механики).
  */
 function mechEffectData(entry, sourceItem, actor = null) {
-  const rd = mechRollData(actor);
+  // «rating» — рейтинг самой Черты (Двусоставный (X) → +X к SPD).
+  const rd = { ...mechRollData(actor), rating: Number(sourceItem?.system?.rating) || 0 };
   const num = f => mechFormulaTotalSafe(f, rd);
   const changes = [];
   if (entry.kind === "characteristic") {

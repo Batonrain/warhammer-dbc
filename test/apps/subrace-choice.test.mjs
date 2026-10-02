@@ -145,3 +145,64 @@ describe("Архетип: Благородная Евгеника — выбор
     expect(await promise).toEqual({ chars: ["ag", "fel"], skills: [] });
   });
 });
+
+// task-7b94: игрок мог выбрать одну Характеристику дважды — Set в
+// aptitudeOverrideMechanicsGroup молча схлопывал дубль, и Благородный
+// оставался с одной Дружественной вместо двух.
+describe("Диалог: повтор одного выбора запрещён", () => {
+  /** Подставной <select>: options с флагом disabled, слушатели собираются в handlers. */
+  function fakeSelect(value, keys) {
+    const el = {
+      dataset: {}, value,
+      options: ["", ...keys].map(v => ({ value: v, disabled: false })),
+      handlers: [],
+      addEventListener(type, fn) { if (type === "change") this.handlers.push(fn); }
+    };
+    return el;
+  }
+  const KEYS = ["s", "ag", "fel"];
+
+  it("render: выбранное в одном дропдауне гасится в соседнем и возвращается при смене", () => {
+    resetCaptured();
+    promptArchetypeAptitudeChoice("noble", "Благородный");
+    const a = fakeSelect("", KEYS), b = fakeSelect("", KEYS);
+    const html = fakeHtml({}, { ".sub-apt-char": [a, b], ".sub-apt-skill": [] });
+    captured.dialog.render(html);
+
+    a.value = "ag";
+    a.handlers.forEach(fn => fn());
+    expect(b.options.find(o => o.value === "ag").disabled).toBe(true);
+    expect(a.options.find(o => o.value === "ag").disabled).toBe(false); // свой выбор не гасится
+    expect(b.options.find(o => o.value === "s").disabled).toBe(false);
+
+    a.value = "s";
+    a.handlers.forEach(fn => fn());
+    expect(b.options.find(o => o.value === "ag").disabled).toBe(false);
+    expect(b.options.find(o => o.value === "s").disabled).toBe(true);
+  });
+
+  it("Принять с дублем — отказ с понятным сообщением, окно остаётся открытым (выбор не отдан)", async () => {
+    resetCaptured();
+    const promise = promptArchetypeAptitudeChoice("noble", "Благородный");
+    let settled = false;
+    promise.then(() => { settled = true; });
+    const dup = fakeHtml({}, { ".sub-apt-char": [{ dataset: {}, value: "ag" }, { dataset: {}, value: "ag" }], ".sub-apt-skill": [] });
+    expect(() => captured.dialog.buttons.ok.callback(dup)).toThrow(/дважды|повтор/i);
+    await Promise.resolve();
+    expect(settled).toBe(false);
+    // после исправления выбор проходит
+    const ok = fakeHtml({}, { ".sub-apt-char": [{ dataset: {}, value: "ag" }, { dataset: {}, value: "fel" }], ".sub-apt-skill": [] });
+    captured.dialog.buttons.ok.callback(ok);
+    expect(await promise).toEqual({ chars: ["ag", "fel"], skills: [] });
+  });
+
+  it("дубль среди Навыков тоже отвергается; один и тот же ключ в Характеристиках и Навыках — не дубль", async () => {
+    resetCaptured();
+    const promise = promptSubraceAptitudeChoice("afriel", "Африэль");
+    const dupSkills = fakeHtml({}, { ".sub-apt-char": [], ".sub-apt-skill": [{ dataset: {}, value: "charm" }, { dataset: {}, value: "charm" }] });
+    expect(() => captured.dialog.buttons.ok.callback(dupSkills)).toThrow();
+    const fine = fakeHtml({}, { ".sub-apt-char": [{ dataset: {}, value: "s" }], ".sub-apt-skill": [{ dataset: {}, value: "charm" }] });
+    captured.dialog.buttons.ok.callback(fine);
+    expect(await promise).toEqual({ chars: ["s"], skills: ["charm"] });
+  });
+});

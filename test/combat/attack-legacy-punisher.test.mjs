@@ -77,6 +77,8 @@ describe("Каратель: накопление счётчика по цели"
     weapon.id = "w1";
     const actor = actorFor({ items: [weapon] });
     captured.dice = [10, 5];
-    await expect(_executeAttackRoll(actor, weapon, "bs", 45, "single", null, {})).resolves.toBeUndefined();
+    // Бросок дошёл до конца: _executeAttackRoll отдаёт итог { hit } (Тирантикос,
+    // Sahara 10-2d10-2) — раньше возвращал undefined, суть проверки та же.
+    await expect(_executeAttackRoll(actor, weapon, "bs", 45, "single", null, {})).resolves.toEqual({ hit: true });
   });
 });

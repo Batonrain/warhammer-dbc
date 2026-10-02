@@ -13,9 +13,11 @@ import { isRuleUsageUsed, markRuleUsageUsed,
 import { fatePoolLabel }                 from "./rules/fate-save.mjs";
 import { spendFromInfamyPool }           from "./apps/infamy-points.mjs";
 import { spendInfamyForFailSuccess }     from "./apps/infamy-fail-success.mjs";
+import { knowledgeOfAgesButtonHtml, rollKnowledgeOfAges } from "./apps/knowledge-of-ages.mjs";
 import { onAdroitTraitCreated }          from "./apps/adroit.mjs";
 import { tempInfamyAmount }              from "./rules/temp-infamy.mjs";
 import { inspiringChampionsFor, spendInspiringInfamy } from "./combat/inspiring-presence.mjs";
+import { applyExplosiveActionTurnEnd } from "./combat/explosive-action.mjs";
 import { applyWoundLoss, woundDeathThreshold } from "./rules/wounds.mjs";
 import { fateBonusOutcome, FATE_BONUS }  from "./rules/fate-bonus.mjs";
 import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger, applyMonofilamentHit } from "./combat/damage.mjs";
@@ -118,6 +120,7 @@ import { liftDivineProtection, wakeDivineProtected } from "./sheets/tabs/death.m
 import { processConditionTurnStart, processConditionTurnEnd, sweepApplierTurnEnd } from "./combat/condition-ticks.mjs";
 import { sweepConditionDurations, onConditionEffectExpired } from "./combat/condition-effects.mjs";
 import { conditionExpiryLine, postConditionCard, setBurningDamageFormula } from "./combat/condition-ticks.mjs";
+import { applyRadHit, resolveCombatRadiation } from "./combat/radiation.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart,
          processPreparedRuneCombatStart } from "./rules/sigillite-runes-combat.mjs";
@@ -157,6 +160,7 @@ import { activateFirePoint } from "./combat/fire-point.mjs";
 import { cardOnceUsed, markCardOnce, runCardOnce } from "./combat/card-once.mjs";
 import { hasLegionSurgery, legionSurgeryTestEligible } from "./rules/legion-surgery.mjs";
 import { legionSurgeryOnCard } from "./combat/legion-surgery.mjs";
+import { patronBlocksInfamyAbility } from "./rules/patron-infamy.mjs";
 import { isIntegralAttack } from "./combat/equipped-melee.mjs";
 import { collectTestMods } from "./rules/roll-mods.mjs";
 import { rollD100WithReroll } from "./rules/test-kind-widget.mjs";
@@ -164,7 +168,7 @@ import { poisonResistReroll } from "./rules/squat-traits.mjs";
 import { expireCommandsAtTurnStart, clearCommandsOnCombatEnd, commandMoraleOn } from "./combat/command-state.mjs";
 import { syncArmorFieldShields } from "./combat/armor-field-shield.mjs";
 import { ogrynRegenCombatRound } from "./combat/ogryn-regen.mjs";
-import { decayHaywireFields, onDiscordantFieldEntered } from "./combat/bone-head.mjs";
+import { decayHaywireFields, onDiscordantFieldEntered, onDiscordantFieldLeft } from "./combat/bone-head.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
 // updateCombat ниже) сама отслеживает, чей Ход только что закончился.
@@ -538,6 +542,23 @@ export function registerHooks() {
         if (!actor.isOwner) { ui.notifications?.warn("Тратить Очко Бесчестия может только владелец персонажа."); return; }
         const done = await spendInfamyForFailSuccess(actor, el.dataset.capability || "",
           { testLabel: el.dataset.testLabel || "", message });
+        if (done) el.disabled = true;
+      });
+    });
+
+    // Знания Веков (wdbc-1rno.23, apps/knowledge-of-ages.mjs): 1d10 после
+    // траты Очка на «Усиление»/«Успех»/«Переброс» добытого Навыка. Актор — по
+    // uuid карточки (чьё Очко потрачено). Раз на карточку.
+    html.querySelectorAll(".wh-knowledge-of-ages-btn").forEach(btn => {
+      if (cardOnceUsed(message, "knowledgeOfAgesRolled")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor) { ui.notifications?.warn("Персонаж не найден."); return; }
+        if (!actor.isOwner) { ui.notifications?.warn("Бросать за Знания Веков может только владелец персонажа."); return; }
+        const done = await rollKnowledgeOfAges(actor, { message, temp: el.dataset.temp === "1",
+          tempSource: el.dataset.tempSource || "", tempRestriction: el.dataset.tempRestriction || "" });
         if (done) el.disabled = true;
       });
     });
@@ -1155,6 +1176,8 @@ export function registerHooks() {
           felling:      parseInt(ds.felling || "0"),
           primitive:    ds.primitive    === "1",
           ignoreShield: ds.ignoreShield === "1",
+          // Урон падения (combat/fall-damage.mjs) — броня не учитывается.
+          ignoreArmour: ds.ignoreArmour === "1",
           ignoreDomeShields: ds.ignoreDomeShield === "1",
           // Огонь Души (combat/soulfire.mjs) ставит атрибут, усилив попадание.
           ignoreSubtypeImmunity: ds.ignoreSubtypeImmunity === "1",
@@ -1249,6 +1272,51 @@ export function registerHooks() {
         ev.preventDefault();
         const ds = ev.currentTarget.dataset;
         await applyCancerousHealingFromButton(ds.casterUuid, ds.targetUuid);
+      });
+    });
+
+    // Кхорнгор Мясник (wdbc-gao07): добавить кубики запаса к урону этого попадания —
+    // правится соседняя кнопка «Применить урон» прямо в DOM, тем же приёмом, что
+    // у «обменять урон» (.wh-dmg-swap-btn): сообщение не переписывается.
+    html.querySelectorAll(".wh-butcher-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        // currentTarget живёт только до первого await — читаем до него.
+        const el = ev.currentTarget;
+        const attackerUuid = el.dataset.attackerUuid;
+        const weaponUuid = el.dataset.weaponUuid;
+        const group = el.closest(".roll-dmg-hit-group");
+        const applyBtn = group?.querySelector(".wh-apply-dmg-btn");
+        const doc = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
+        const attacker = doc?.actor ?? doc ?? null;
+        if (!attacker?.isOwner) return ui.notifications.warn("Мясник: потратить кубики может владелец атакующего (или ГМ).");
+        const weapon = weaponUuid ? await fromUuid(weaponUuid).catch(() => null) : null;
+        const { addButcherDice } = await import("./combat/beastman-subrace.mjs");
+        const res = await addButcherDice(attacker, weapon);
+        if (!res) return;
+        if (applyBtn) {
+          const total = (parseInt(applyBtn.dataset.damage) || 0) + res.total;
+          applyBtn.dataset.damage = String(total);
+          if (res.extreme) applyBtn.dataset.hasExtreme = "1";
+          const label = applyBtn.querySelector("b");
+          if (label) label.textContent = String(total);
+        }
+        el.disabled = true;
+        await postTestCard(attacker, {
+          icon: "🩸", title: `Кхорнгор Мясник — ${esc(attacker.name)}`,
+          lines: [`<div class="roll-dice">+${res.n}d${res.faces}: <b>${res.total}</b>${res.extreme ? " — Экстремальный урон" : ""}</div>`]
+        }, { rolls: [res.roll], sound: false });
+      });
+    });
+
+    // Адаптивная Отрава Наги (wdbc-s4ql0): ввести дозу «(яд в клыках)» цели укуса.
+    html.querySelectorAll(".wh-fang-venom-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        // currentTarget живёт только до первого await — читаем до него.
+        const attackerUuid = ev.currentTarget.dataset.attackerUuid;
+        const { injectFangVenom } = await import("./apps/naga-traits.mjs");
+        await injectFangVenom(attackerUuid);
       });
     });
 
@@ -2325,6 +2393,11 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
     }
   }
 
+  // Rad (X) (wdbc-x1nz.10): X урона в T без теста и счёт «10+ за бой» —
+  // combat/radiation.mjs. Ни теста сопротивления, ни Состояния, ни урона в
+  // Раны ниже у этого свойства нет.
+  if (ds.wpRadiation === "1") return applyRadHit(actor, { formula: dmgFormula, label });
+
   // Огонь по Орде («Орды», Психологический урон): Горения у толпы нет —
   // провал теста вместо него стоит психологического урона, равного урону в
   // Магнитуду от этого попадания. Раньше ветка ниже писала Орде несуществующие
@@ -2696,32 +2769,47 @@ function _attachFateContextMenu(message, html) {
     header.textContent = `${ft.plural}${actor ? ` — ${actor.name}` : ""}`;
     menu.appendChild(header);
 
+    // Покровительство (корбук 438): Нургл не может «Переброс», Тзинч — «Усиление».
+    const rerollBan = patronBlocksInfamyAbility(actor, "reroll");
+    const boostBan  = patronBlocksInfamyAbility(actor, "boost");
+
     // Кнопка: Потратить судьбу — переброс
     const btnReroll = _makeFateMenuItem(
       `Переброс (${ft.word}: ${fateVal})`,
-      canSpend,
-      !canSpend ? (actor ? `Нет ${ft.plural}` : "Актор не найден") : ""
+      canSpend && !rerollBan,
+      rerollBan || (!canSpend ? (actor ? `Нет ${ft.plural}` : "Актор не найден") : "")
     );
     menu.appendChild(btnReroll);
 
     // Кнопка: Потратить судьбу — +10
     const btnBonus = _makeFateMenuItem(
       `Добавить +10 (${ft.word}: ${fateVal})`,
-      canSpend,
-      !canSpend ? (actor ? `Нет ${ft.plural}` : "Актор не найден") : ""
+      canSpend && !boostBan,
+      boostBan || (!canSpend ? (actor ? `Нет ${ft.plural}` : "Актор не найден") : "")
     );
     menu.appendChild(btnBonus);
 
     // Вдохновляющее Присутствие (Чемпион, combat/inspiring-presence.mjs):
     // переброс за Очко союзного Чемпиона, в чьём поле зрения бросающий.
+    // «Как если бы они имели Cor и Покровительство Чемпиона»: недостаток Бога
+    // Чемпиона (Нургл — без Переброса, Тзинч — без Усиления) действует и на
+    // одолженное Очко (rules/patron-infamy.mjs, wdbc-r3379).
     const inspireBtns = inspiringChampionsFor(actor).map(ch => {
+      const rerollBanCh = patronBlocksInfamyAbility(ch.actor, "reroll");
+      const boostBanCh  = patronBlocksInfamyAbility(ch.actor, "boost");
       const b = _makeFateMenuItem(
         `Переброс за Очко Бесчестия: ${ch.actor.name} (${ch.pool})`,
-        !ch.reason,
-        ch.reason || "Вдохновляющее Присутствие Чемпиона — можно и после другого переброса"
+        !ch.reason && !rerollBanCh,
+        rerollBanCh || ch.reason || "Вдохновляющее Присутствие Чемпиона — можно и после другого переброса"
       );
       menu.appendChild(b);
-      return { b, ch };
+      const bBonus = _makeFateMenuItem(
+        `Добавить +10 за Очко Бесчестия: ${ch.actor.name} (${ch.pool})`,
+        !ch.reason && !boostBanCh,
+        boostBanCh || ch.reason || "Вдохновляющее Присутствие Чемпиона"
+      );
+      menu.appendChild(bBonus);
+      return { b, bBonus, ch, rerollBanCh, boostBanCh };
     });
     // Атака этой карточки: стрелковая ли (Огневая Точка — только стрелковые)
     // и не переброс ли уже (переброс переброса книга не даёт; повтор атаки
@@ -2773,7 +2861,7 @@ function _attachFateContextMenu(message, html) {
       menu.remove();
       document.removeEventListener("click", closeMenu);
 
-      if (!champion && !canSpend) return;
+      if (!champion && (!canSpend || rerollBan)) return;
 
       // Тратим очко судьбы — временный запас (wdbc-e728) уходит первым.
       const reroll1 = champion
@@ -2848,6 +2936,11 @@ function _attachFateContextMenu(message, html) {
           `если проведёт его в Оглушении полностью, ${ft.one} вернётся сама.</div>`;
       }
 
+      // Знания Веков (wdbc-1rno.23): переброс теста добытого Навыка за своё
+      // Очко — кнопка «бросить 1d10» (apps/knowledge-of-ages.mjs).
+      const koaBtn = champion ? "" : knowledgeOfAgesButtonHtml(actor, {
+        ability: "reroll", spend: reroll1, skillTest });
+
       // Карточка — общим сборщиком (wdbc-fyvv). Порядок строк сохранён: трата
       // Очка стоит выше плашки Броска/Порога (Режима тут нет — исходный тест
       // сюда не передаётся); плашка рисуется и без Порога, если его нет.
@@ -2858,18 +2951,24 @@ function _attachFateContextMenu(message, html) {
             ${ft.word} потрачена${esc(payerNote)} (осталось: ${reroll1.poolValue})
           </div>`,
           rollStatLine({ threshold, rv }),
-          blessedFitsLine
+          blessedFitsLine,
+          koaBtn
         ],
         outcome: outcomeSpan
-      }, { rolls: [newRoll], speaker: message.speaker });
+        // Флаг skillTest исходного теста — переброшенной карточке: это тот же
+        // тест того же Навыка, и «+10» с неё (меню Очков) должно его узнать
+        // (Знания Веков, wdbc-1rno.23). Исход — уже переброшенный.
+      }, { rolls: [newRoll], speaker: message.speaker,
+        flags: skillTest ? { "warhammer-dbc": { skillTest: { ...skillTest, success: hit ?? !!skillTest.success } } } : null });
 
       ui.notifications.info(
         `✨ ${actor.name} тратит ${ft.one} на переброс${payerNote}! Осталось: ${reroll1.poolValue}`
       );
     };
     btnReroll.addEventListener("click", ev2 => doReroll(ev2));
-    for (const { b, ch } of inspireBtns) {
-      if (!ch.reason) b.addEventListener("click", ev2 => doReroll(ev2, ch.actor));
+    for (const { b, bBonus, ch, rerollBanCh, boostBanCh } of inspireBtns) {
+      if (!ch.reason && !rerollBanCh) b.addEventListener("click", ev2 => doReroll(ev2, ch.actor));
+      if (!ch.reason && !boostBanCh) bBonus.addEventListener("click", ev2 => doBonus(ev2, ch.actor));
     }
 
     // ── Огневая Точка: переброс без траты Очка ────────────────────────────
@@ -2896,12 +2995,24 @@ function _attachFateContextMenu(message, html) {
     });
 
     // ── +10 к броску ──────────────────────────────────────────────────────
-    btnBonus.addEventListener("click", async (ev2) => {
+    // champion — Чемпион с Вдохновляющим Присутствием, чьё Очко тратится вместо
+    // своего (null — обычное +10 за своё).
+    const doBonus = async (ev2, champion = null) => {
       ev2.stopPropagation();
       menu.remove();
       document.removeEventListener("click", closeMenu);
 
-      if (!canSpend) return;
+      if (!champion && (!canSpend || boostBan)) return;
+
+      // Списание одного Очка: чужое — у Чемпиона (combat/inspiring-presence.mjs),
+      // своё — с временным запасом первым (wdbc-e728).
+      const spendBonusPoint = async () => {
+        if (champion) return spendInspiringInfamy(champion, actor);
+        const r = await spendFromInfamyPool(actor, 1, "system.fate.value");
+        if (r) await actor.update({ "system.fate.value": r.poolValue });
+        return r;
+      };
+      const payerNote = champion ? ` (Очко Чемпиона ${champion.name} — Вдохновляющее Присутствие)` : "";
 
       const roll = rolls[0];
       if (!roll) return;
@@ -2916,16 +3027,14 @@ function _attachFateContextMenu(message, html) {
         const atkActor = game.actors?.get(atkB.actorId) ?? actor;
         const atkItem  = atkActor?.items?.get(atkB.itemId);
         if (atkItem) {
-          // Временный запас (wdbc-e728) уходит первым.
-          const bonus1 = await spendFromInfamyPool(actor, 1, "system.fate.value");
+          const bonus1 = await spendBonusPoint();
           if (!bonus1) return;
-          await actor.update({ "system.fate.value": bonus1.poolValue });
           await _executeAttackRoll(atkActor, atkItem, atkB.charKey,
             (Number(atkB.threshold) || 0) + FATE_BONUS,
             atkB.rofMode, atkB.aimTarget,
             { ...(atkB.opts || {}), forcedRoll: rv, skipAmmo: true });
           ui.notifications.info(
-            `➕ ${actor.name} тратит ${ft.one}: +10 к атаке! Осталось: ${bonus1.poolValue}`);
+            `➕ ${actor.name} тратит ${ft.one}${payerNote}: +10 к атаке! Осталось: ${bonus1.poolValue}`);
           return;
         }
       }
@@ -2942,14 +3051,17 @@ function _attachFateContextMenu(message, html) {
           "⚠️ В этом сообщении не виден Порог теста — +10 применить не к чему. Используйте переброс.");
       }
 
-      // Временный запас (wdbc-e728) уходит первым.
-      const bonus1 = await spendFromInfamyPool(actor, 1, "system.fate.value");
+      const bonus1 = await spendBonusPoint();
       if (!bonus1) return;
-      await actor.update({ "system.fate.value": bonus1.poolValue });
 
       const outcomeSpan = outcome.success
         ? `<span class="roll-success">Успех — ${outcome.degrees} ${_degWord(outcome.degrees)}</span>`
         : `<span class="roll-failure">Провал — ${outcome.degrees} ${_degWord(outcome.degrees)}</span>`;
+
+      // Знания Веков (wdbc-1rno.23): «Усиление» теста добытого Навыка за своё
+      // Очко — кнопка «бросить 1d10» (apps/knowledge-of-ages.mjs).
+      const koaBtn = champion ? "" : knowledgeOfAgesButtonHtml(actor, {
+        ability: "boost", spend: bonus1, skillTest });
 
       // Карточка — общим сборщиком (wdbc-kuun). Строка Порога здесь своя
       // («было → стало»), и бросок подписан «тот же, куб не перебрасывается» —
@@ -2958,21 +3070,23 @@ function _attachFateContextMenu(message, html) {
         title: `+10 за ${ft.one}`,
         lines: [
           `<div class="roll-damage-meta">
-            ${ft.word} потрачена (осталось: ${bonus1.poolValue})
+            ${ft.word} потрачена${esc(payerNote)} (осталось: ${bonus1.poolValue})
           </div>`,
           `<div class="roll-threshold">
             Порог: <b>${outcome.base}</b> → <b>${outcome.threshold}</b>
             <span style="font-size:0.82em;color:#3a7a3a;">(+${outcome.bonus})</span>
           </div>`,
-          `<div class="roll-dice">Бросок: <b>${rv}</b> <span style="font-size:0.82em;opacity:.75;">— тот же, куб не перебрасывается</span></div>`
+          `<div class="roll-dice">Бросок: <b>${rv}</b> <span style="font-size:0.82em;opacity:.75;">— тот же, куб не перебрасывается</span></div>`,
+          koaBtn
         ],
         outcome: outcomeSpan
       }, { rolls: [roll], sound: false, speaker: message.speaker });
 
       ui.notifications.info(
-        `✨ ${actor.name} тратит ${ft.one} на +10! Осталось: ${bonus1.poolValue}`
+        `✨ ${actor.name} тратит ${ft.one}${payerNote} на +10! Осталось: ${bonus1.poolValue}`
       );
-    });
+    };
+    btnBonus.addEventListener("click", ev2 => doBonus(ev2));
   });
 }
 
@@ -3042,6 +3156,9 @@ function _attachFateContextMenu(message, html) {
   Hooks.on("deleteCombat", async combat => {
     if (!game.user.isGM) return;
     await resolveTrancesForCombat(combat);
+    // Rad (X) (wdbc-x1nz.10): «10+ урона в T от радиации за один бой — после
+    // боя тест T+0 или лучевая болезнь» (combat/radiation.mjs).
+    await resolveCombatRadiation(combat);
     // Командное Присутствие — «до конца боя»; Команды и метки Морали тоже.
     await clearCommandsOnCombatEnd(combat);
     // Божественная Защита: без сознания «до конца сцены или боя».
@@ -3114,6 +3231,10 @@ function _attachFateContextMenu(message, html) {
   // Только у клиента, выдавшего Черту-метку, — иначе Ступор наложил бы каждый.
   Hooks.on("createItem", async (item, options, userId) => {
     if (userId === game.user?.id) await onDiscordantFieldEntered(item);
+  });
+  // BONE-Head: вышел из ауры Дискорданта — Ступор от поля снимается (wdbc-7bm4z).
+  Hooks.on("deleteItem", async (item, options, userId) => {
+    if (userId === game.user?.id) await onDiscordantFieldLeft(item);
   });
 
   // Временные выдачи Черт с ограниченным сроком (rules/temp-grant.mjs,
@@ -3313,6 +3434,8 @@ function _attachFateContextMenu(message, html) {
         // Aim Focus/Фокус на Прицеле (wdbc-1rno.5): «до конца его следующего
         // Хода» — тот же такт, что Стойка выше.
         await applyAimFocusTurnEnd(prevActor);
+        // Взрывное Действие Сплайса (wdbc-tkeh1): расплата за бонусное полудействие.
+        await applyExplosiveActionTurnEnd(prevActor);
         // Конец Хода Подавленного (стр. 33) — предложить тест на преодоление.
         if (prevActor.system.conditions?.pinned) await postSuppressionRecoveryPrompt(prevActor);
         // «Укрепление Морали» (глава «Командование»): сбросить Шок можно и в

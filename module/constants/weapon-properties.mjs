@@ -528,10 +528,14 @@ export const WEAPON_PROPERTIES = {
   },
 
   rad: {
-    key: "rad", label: "Рад", en: "Rad", rating: true, cat: "ranged",
-    desc: "Облучает цель ионизирующей радиацией. Если непоглощённый урон ≥ X — цель проходит тест T. Живые существа получают эффект Радиации.",
-    reminder: "☢️ Рад (X): при непоглощ. уроне ≥X — тест T или Радиация",
-    auto: { targetEffect: { condition: "radiation", testChar: "t", testMod: 0, onBreach: true } }
+    // wdbc-x1nz.10 (core.json, Особые Свойства Оружия): X урона в T при
+    // пробитии брони — без теста; «10+ за бой — тест T+0 после боя» считает
+    // combat/radiation.mjs (applyRadHit/resolveCombatRadiation). X — формула
+    // (книга: Rad (1d5), Rad (2d10+2)…), поэтому ratingDice.
+    key: "rad", label: "Рад", en: "Rad", rating: true, ratingDice: true, cat: "ranged",
+    desc: "Облучает цель ионизирующей радиацией. Если пробило броню цели — она получает X урона в T (без теста; машины не иммунны). Живые существа, получившие за один бой 10+ урона в T от радиации, после боя проходят тест T+0, иначе — лучевая болезнь. Рейтинг — формула (напр. 1d5).",
+    reminder: "☢️ Рад (X): при пробитии — X урона в T; 10+ за бой → тест T+0 после боя",
+    auto: { targetEffect: { radiation: true, damageFromRating: true, onBreach: true } }
   },
 
   razorSharp: {

@@ -144,7 +144,10 @@ function powerScopeApplies(scope, ctx) {
  * пациента (для ЕГО собственных бросков) тайно засчитался бы доктору только
  * потому, что оба читают один и тот же `ctx.skill`.
  */
-function effectAppliesTo(target, ctx) {
+// Экспорт — для общего триггера «N+ Провала» (rules/fail-degree-triggers.mjs,
+// wdbc-1rno.22): та же нотация областей, что у эффектов правил, а не своя
+// вторая — одна область обязана значить одно и то же везде.
+export function effectAppliesTo(target, ctx) {
   // Список областей (wdbc-x1nz.2.89, Ослеплён: «−30 на WS и тесты, что
   // требуют зрения») — эффект срабатывает ОДИН раз, если подходит хоть одна.
   // Нужен там, где книга одним штрафом накрывает пересекающиеся области:
@@ -488,7 +491,9 @@ export function rerollsFromRules(rules, ctx = {}) {
       // target — область, как записана: бросок без диалога (Трудный Ландшафт,
       // combat/movement-terrain.mjs) берёт переброс сам и обязан брать только
       // СВОЙ, а не любой, чья область подошла по Ловкости или «all».
-      out.push({ ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id, mode, rolls, who, target: effect.target });
+      out.push({ ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id, mode, rolls, who, target: effect.target,
+        // limit — ключ ограничителя «раз в Раунд» (rules/roll-mods.mjs::rerollLimiters), пусто — без ограничения.
+        ...(effect.limit ? { limit: effect.limit } : {}) });
     }
   }
   return out;

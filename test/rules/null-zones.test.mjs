@@ -9,7 +9,7 @@ import { describe, it, expect } from "vitest";
 import { packDocById } from "../support/pack-doc.mjs";
 import { packDocuments, PACK_SCAN_TIMEOUT } from "../support/pack-docs.mjs";
 import { inPariahVoid, inDiscordantField, voidBlocksPower, isIndirectPower, corruptionInVoid,
-         weaponTechClass, fieldDisablesWeapon, fieldDisablesImplant,
+         weaponTechClass, fieldDisablesWeapon, fieldForbidsShot, fieldDisablesImplant,
          voidSuppressesMutation, fieldFailsTechPower } from "../../module/rules/null-zones.mjs";
 import { PREDICATES } from "../../module/rules/predicates.mjs";
 import { NULL_ZONE_RULES } from "../../module/rules/library/null-zones.mjs";
@@ -121,6 +121,13 @@ describe("Поле Дискорданта", () => {
     expect(fieldDisablesWeapon(inside, las)).toBe(true);
     expect(fieldDisablesWeapon(actor([]), las)).toBe(false);
     expect(fieldDisablesWeapon(inside, { system: { techClass: "mechanical" } })).toBe(false);
+  });
+  it("стрелять нельзя только электрическим и только не в рукопашной (task-be12)", () => {
+    const las = { system: { techClass: "electric" } };
+    expect(fieldForbidsShot(inside, las, false)).toBe(true);
+    expect(fieldForbidsShot(inside, las, true)).toBe(false);
+    expect(fieldForbidsShot(actor([]), las, false)).toBe(false);
+    expect(fieldForbidsShot(inside, { system: { techClass: "mechanical" } }, false)).toBe(false);
   });
   it("импланты: электроника гаснет, органы — нет", () => {
     expect(fieldDisablesImplant(inside, { system: { techClass: "electric" } })).toBe(true);

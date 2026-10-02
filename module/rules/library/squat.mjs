@@ -25,6 +25,20 @@ const FINE_WORK = ["skill:trade", "skill:techuse", "skill:security"];
 
 export const SQUAT_TRAIT_RULES = [
   {
+    // Void in Veins / Пустота в Венах: «Он может использовать I вместо A для
+    // всех тестов для ориентации и передвижения в невесомости или
+    // микро-гравитации, и получает Преимущество на все такие тесты». Переброс
+    // (лучший из 2) предлагается галочкой на тестах Ловкости и Акробатики, но
+    // только пока сцена в невесомости (окно «Окружающая Среда», предикат
+    // weightlessScene); относится ли тест к ориентации/передвижению, решает
+    // игрок. «I вместо A» — «Бросок с:» в том же диалоге (wdbc-9tpng).
+    id: "squat.voidInVeins",
+    label: "Пустота в Венах: Преимущество в невесомости (ориентация/передвижение)",
+    when: { hasTrait: "Void in Veins", weightlessScene: true },
+    effects: [{ kind: "rollMode", target: ["char:ag", "skill:acrobatics"], mode: "keepBest", rolls: 2,
+                label: "Пустота в Венах: Преимущество в невесомости" }]
+  },
+  {
     id: "squat.cleverHands.fine",
     label: "Умелые Руки: тонкая работа",
     when: { hasTrait: "Clever Hands" },

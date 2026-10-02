@@ -402,7 +402,12 @@ async function activateToxicRadFruit(actor, item, tokenDoc) {
   if (!data) return ui.notifications?.warn(`Плод Плоти: шаблон «${RAD_GRENADE_NAME}» не найден в компендиуме оружия.`);
   data.name = `${RAD_GRENADE_NAME} (Плод Плоти)`;
   data.system.weaponProps = data.system.weaponProps.map(wp => wp.key === "blast" ? { ...wp, rating: blastRating } : wp);
-  if (radRating > 0) data.system.weaponProps = data.system.weaponProps.map(wp => wp.key === "rad" ? { ...wp, rating: radRating } : wp);
+  // Книга: «Rad (Xd10), где X равно десяткам … урона в Т от радиации, снятого
+  // мутацией» — рейтинг Рад теперь формула урона в T (wdbc-x1nz.10). Радиации
+  // не снято (X = 0) — Рад шаблона (штатная граната, Rad (2d10)) не переносится.
+  data.system.weaponProps = radRating > 0
+    ? data.system.weaponProps.map(wp => wp.key === "rad" ? { ...wp, rating: `${radRating}d10` } : wp)
+    : data.system.weaponProps.filter(wp => wp.key !== "rad");
   if (anyPoison) data.system.weaponProps.push({ key: "toxic", rating: 1 });
   await actor.createEmbeddedDocuments("Item", [data]);
 
@@ -411,7 +416,7 @@ async function activateToxicRadFruit(actor, item, tokenDoc) {
     title: `Плод Плоти — ${esc(item.name)}`,
     lines: [
       `<div class="roll-threshold">Снято с: ${names.map(esc).join(", ")}.</div>`,
-      `<div class="roll-threshold">Граната Blast(${blastRating})${radRating ? ` Rad(${radRating})` : ""}${anyPoison ? " Toxic(1)" : ""} добавлена в инвентарь. Rad-рейтинг в этой системе не масштабирует эффект (нет testPerRating у "rad" — то же ограничение у штатной гранаты Rad компендиума), число только описательное.</div>`
+      `<div class="roll-threshold">Граната Blast(${blastRating})${radRating ? ` Rad(${radRating}d10)` : ""}${anyPoison ? " Toxic(1)" : ""} добавлена в инвентарь.</div>`
     ]
   }, { sound: false });
 }

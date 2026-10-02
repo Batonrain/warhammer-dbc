@@ -273,11 +273,12 @@ const DEVIATIONS = {
     // wdbc-x1nz.2.100): лежит в system.lostLimbs, а не в conditions.lostX —
     // флаг и *Count теперь ПРОИЗВОДНЫЕ (derivedLimbLossConditions,
     // rules/character.mjs), своего хранимого поля в схеме у них больше нет.
+    // regenAt — таймер отрастания Йигори (New Men, wdbc-yffxj), заведён позже template.json.
     lostLimbs: Object.fromEntries(
       ["rightHand", "leftHand", "rightArm", "leftArm", "rightFoot", "leftFoot",
        "rightLeg", "leftLeg", "rightEye", "leftEye",
        // «Пальцы» мутации Потеря Конечности (wdbc-1rno.6.1) — без Состояния.
-       "rightFingers", "leftFingers"].map(k => [k, { lost: false, gangreneAt: 0, mutation: false }])
+       "rightFingers", "leftFingers"].map(k => [k, { lost: false, gangreneAt: 0, regenAt: 0, mutation: false }])
     ),
     // Стр. 12 («Борьба») — связаны Захватом, заведено гораздо позже template.json.
     "conditions.grappling": false,

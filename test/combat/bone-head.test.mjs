@@ -9,7 +9,7 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import {
-  applyHaywireToBoneHead, decayHaywireFields, haywireFieldClock, onDiscordantFieldEntered
+  applyHaywireToBoneHead, decayHaywireFields, haywireFieldClock, onDiscordantFieldEntered, onDiscordantFieldLeft
 } from "../../module/combat/bone-head.mjs";
 import { HAYWIRE_FIELD_FLAG } from "../../module/rules/bone-head.mjs";
 
@@ -118,5 +118,42 @@ describe("вход в поле Дискорданта (Haywire 7)", () => {
     await onDiscordantFieldEntered({ name: "Fanatic / Фанатик", type: "trait", parent: a });
     expect(a.system.conditions.dazed).toBeUndefined();
     expect(captured.chat).toHaveLength(0);
+  });
+});
+
+describe("выход из поля Дискорданта снимает Ступор от поля (wdbc-7bm4z)", () => {
+  const marker = parent => ({ name: "In the Discordant's Field / В Поле Дискорданта", type: "trait", parent });
+
+  it("вышел раньше, чем прошёл Раунд — Ступор снят, карточка", async () => {
+    const a = makeActor();
+    // Эффект Ступора в фикстуре снимается через delete() — как настоящий ActiveEffect.
+    a.createEmbeddedDocuments = async (_t, docs) => { docs.forEach(d => { d.delete = async () => {}; }); a.effects.push(...docs); return docs; };
+    globalThis.game.time = { worldTime: 1000 };
+    await onDiscordantFieldEntered(marker(a));
+    expect(a.system.conditions.dazed).toBe(true);
+    resetCaptured();
+    await onDiscordantFieldLeft(marker(a));
+    expect(a.system.conditions.dazed).toBe(false);
+    expect(captured.chat.at(-1).content).toContain("вышел из поля Дискорданта");
+  });
+
+  it("вышел, когда Раунд уже прошёл — чужой Ступор не трогаем", async () => {
+    const a = makeActor();
+    globalThis.game.time = { worldTime: 1000 };
+    await onDiscordantFieldEntered(marker(a));
+    globalThis.game.time = { worldTime: 1000 + 600 };
+    resetCaptured();
+    await onDiscordantFieldLeft(marker(a));
+    expect(a.system.conditions.dazed).toBe(true);
+    expect(captured.chat).toHaveLength(0);
+  });
+
+  it("не Огрин или нет метки о Ступоре от поля — ничего", async () => {
+    const human = makeActor([]);
+    await onDiscordantFieldLeft(marker(human));
+    const a = makeActor();
+    a.system.conditions.dazed = true;
+    await onDiscordantFieldLeft(marker(a));
+    expect(a.system.conditions.dazed).toBe(true);
   });
 });

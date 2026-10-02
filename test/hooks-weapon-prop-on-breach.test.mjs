@@ -73,3 +73,72 @@ describe("эффект «при пробитии брони»", () => {
     expect(captured.rolls.length).toBeGreaterThan(0);
   });
 });
+
+// wdbc-x1nz.10: Rad (X) по книге (core.json, Особые Свойства Оружия): «Если
+// оно пробило броню цели, она получает X урона в T» — без теста T и без
+// порога «непоглощённый урон ≥ X», которых в книге нет.
+describe("Rad (X): X урона в T при пробитии, без теста", () => {
+  function radTarget({ lastBreach = { messageId: "msg1", breached: true }, type = "character" } = {}) {
+    const flags = { lastBreach };
+    const actor = {
+      uuid: "Actor.r1", name: "Облучаемый", isOwner: true, type, items: [],
+      system: { characteristics: { t: { total: 40 } }, charLoss: { t: 0 }, charLossAt: {}, conditions: {} },
+      getFlag: (_s, k) => flags[k],
+      update: async (changes) => {
+        captured.updates.push(changes);
+        if ("system.charLoss.t" in changes) actor.system.charLoss.t = changes["system.charLoss.t"];
+      }
+    };
+    return actor;
+  }
+  const radBtn = (actor, damage = "1d5") => ({
+    wpForceActorUuid: actor.uuid, wpLabel: "Рад", wpKey: "rad",
+    wpRadiation: "1", wpDamage: damage, wpOnBreach: "1"
+  });
+
+  it("свойство: рейтинг — формула, ни теста, ни Состояния", () => {
+    const def = WEAPON_PROPERTIES.rad;
+    expect(def.ratingDice).toBe(true);
+    const te = def.auto.targetEffect;
+    expect(te.radiation).toBe(true);
+    expect(te.damageFromRating).toBe(true);
+    expect(te.testChar).toBeUndefined();
+    expect(te.condition).toBeUndefined();
+    expect(def.desc).not.toMatch(/непоглощ/u);
+  });
+
+  it("кнопка несёт формулу X и признак радиации", async () => {
+    const { buildTargetEffectButtons } = await import("../module/combat/weapon-properties.mjs");
+    const html = buildTargetEffectButtons([{ def: WEAPON_PROPERTIES.rad, rating: "2d10" }], { hit: true });
+    expect(html).toContain('data-wp-damage="2d10"');
+    expect(html).toContain('data-wp-radiation="1"');
+    expect(html).toContain('data-wp-test-char=""');
+  });
+
+  it("броня пробита — бросается только X, урон уходит в T, Ран не трогает", async () => {
+    const actor = radTarget();
+    globalThis.fromUuid = async () => actor;
+    captured.dice = [4];
+    await _applyWeaponPropEffect(radBtn(actor), { messageId: "msg1" });
+    expect(captured.rolls).toEqual(["1d5"]);
+    expect(actor.system.charLoss.t).toBe(4);
+    expect(captured.updates.some(u => Object.keys(u).some(k => k.startsWith("system.wounds")))).toBe(false);
+    expect(captured.updates.some(u => Object.keys(u).some(k => k.startsWith("system.conditions")))).toBe(false);
+  });
+
+  it("броня не пробита — урона в T нет", async () => {
+    const actor = radTarget({ lastBreach: { messageId: "msg1", breached: false } });
+    globalThis.fromUuid = async () => actor;
+    await _applyWeaponPropEffect(radBtn(actor), { messageId: "msg1" });
+    expect(captured.rolls.length).toBe(0);
+    expect(actor.system.charLoss.t).toBe(0);
+  });
+
+  it("рейтинг X не задан у оружия — предупреждение, без броска", async () => {
+    const actor = radTarget();
+    globalThis.fromUuid = async () => actor;
+    await _applyWeaponPropEffect(radBtn(actor, ""), { messageId: "msg1" });
+    expect(captured.rolls.length).toBe(0);
+    expect(captured.warnings.some(w => w.includes("Рад"))).toBe(true);
+  });
+});

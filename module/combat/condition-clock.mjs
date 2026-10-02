@@ -35,6 +35,8 @@ import { haywireFieldClock } from "./bone-head.mjs";
 import { extraWoundDailyClock } from "../apps/naga-traits.mjs";
 import { charLossClockStep, actorRecoveryPolicy, charLossPortions, charLossPortionsStep } from "../rules/char-loss.mjs";
 import { serumHookClock } from "./replicant.mjs";
+import { limbRegenClock } from "./limb-regen.mjs";
+import { sceneRadiationClock } from "./radiation-scene.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -157,6 +159,11 @@ export const CONDITION_CLOCK_HANDLERS = [
   { id: "suffocationRest", run: suffocationRestClock },
   // Бесполезные Конечности: 2×T.b ч без помощи, лубок, Гангрена (wdbc-x1nz.2.99).
   { id: "uselessLimbs", run: uselessLimbsClock },
+  // Регенерация Йигори: потерянные глаз/конечность отрастают по срокам (wdbc-yffxj).
+  // Регенерация Йигори: потерянные глаз/конечность отрастают по срокам (wdbc-yffxj).
+  { id: "limbRegen",    run: limbRegenClock },
+  // Радиация сцены: фон окна «Окружение» минус защита, тик 1 урона в T (wdbc-c5vf0).
+  { id: "sceneRadiation", run: sceneRadiationClock },
   // Естественное лечение: сутки / 8 ч под уходом, режим с листа (wdbc-x1nz.2.104).
   { id: "healing", run: healingClock },
   // Физиология Громилы (Огрин): 1 Рана в минуту / 10 минут / час по уровню

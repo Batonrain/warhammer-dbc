@@ -146,3 +146,27 @@ describe("Безграничное Тщеславие: змееподобные"
     expect(RACES.naga.rules).toBe(NAGA_RULES);
   });
 });
+
+// wdbc-s4ql0: кнопка «Ввести яд клыков» — признак Укуса и карточка с готовым именем дозы.
+import { isBiteAttack } from "../../module/rules/naga-traits.mjs";
+import { attackCard } from "../../module/combat/attack-card.mjs";
+
+describe("Адаптивная Отрава: кнопка ввода яда клыков (wdbc-s4ql0)", () => {
+  it("Укус распознаётся по названию", () => {
+    expect(isBiteAttack("Bite (Deadly Natural Weapons) / Укус (Смертельное Естественное Оружие)")).toBe(true);
+    expect(isBiteAttack("Укус")).toBe(true);
+    expect(isBiteAttack("Болтер")).toBe(false);
+    expect(isBiteAttack("Bitterness Blade")).toBe(false);
+  });
+
+  it("карточка попадания с готовым именем дозы рисует кнопку; без дозы — нет", () => {
+    const base = {
+      actorName: "Нага", weaponName: "Укус", wp: {}, threshold: 45, rv: 23, modeLine: "Одиночный",
+      hit: true, deg: 2, hitsCount: 1, hits: [{ total: 8, loc: "Торс" }], hitLocLabel: "Торс", locRoll: 32,
+      dtLabel: "Рубящий", pen: 0, attackerUuid: "Actor.naga", isMelee: true
+    };
+    expect(attackCard({ ...base, fangVenomDose: "Яд (яд в клыках)" })).toContain("wh-fang-venom-btn");
+    expect(attackCard({ ...base, fangVenomDose: "Яд (яд в клыках)" })).toContain('data-attacker-uuid="Actor.naga"');
+    expect(attackCard(base)).not.toContain("wh-fang-venom-btn");
+  });
+});

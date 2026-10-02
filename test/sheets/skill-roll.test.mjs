@@ -8,6 +8,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured, sheetOf, fakeForm, checkbox } from "../support/foundry-stub.mjs";
+import { packDocById } from "../support/pack-doc.mjs";
 
 // Динамический импорт: глобали Foundry должны быть на месте раньше листа.
 const { WarhammerCharacterSheet } = await import("../../module/sheets/actor-sheet.mjs");
@@ -847,5 +848,35 @@ describe("Уравнитель / The Equalizer (wdbc-1rno.1): навязанны
     }));
     await promise;
     expect(captured.rolls).toEqual(["1d100"]);
+  });
+});
+
+// Инфернальная Воля (wdbc-1rno.22): «любой тест Навыка» — и групповой тоже.
+// Групповой Навык приходит на лист как {group, specialty} без skill
+// (onSkillRoll), и исход теста должен это знать — иначе бросок Навыка
+// Навигации выглядел бы для общего исхода как тест Характеристики Int.
+describe("Инфернальная Воля: групповой Навык на листе — тест Навыка (wdbc-1rno.22)", () => {
+  const doc =packDocById("packs-src/mutations/Общие_мутации", "vOiGjH4Hhao5ChM1");
+  const mutation = { id: "m1", type: "mutation", name: doc.name, system: doc.system, flags: doc.flags,
+    getFlag: (scope, key) => doc.flags?.[scope]?.[key] };
+
+  async function rollNavigation(roll) {
+    const s = sheet({ items: [mutation], patronGod: "khorne", corruption: { value: 0 } });
+    const promise = s._rollSkill("Навигация: Surface", 45, "int", { group: "navigation", specialty: "Surface" });
+    captured.nextRoll = roll;
+    await captured.press("roll", fakeForm({
+      "#skill-target": "45", "#skill-char-select": "int", "#skill-modifier": "0"
+    }));
+    await promise;
+    return captured.chat.at(-1)?.content ?? "";
+  }
+
+  it("4 Провала группового Навыка — в карточке бросок Шока", async () => {
+    // 80 против 45 → 4 Провала; тот же 80 уходит в бросок Шока.
+    expect(await rollNavigation(80)).toContain("Инфернальная Воля");
+  });
+
+  it("3 Провала — Шока нет", async () => {
+    expect(await rollNavigation(74)).not.toContain("Инфернальная Воля");
   });
 });

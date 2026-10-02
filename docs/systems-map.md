@@ -114,6 +114,13 @@
   `flags.warhammer-dbc.lastBreach` цели с id карточки атаки. Эффекты свойств с
   `targetEffect.onBreach` (Rad, Toxic, Сновидение, Погибель) проверяют его в
   `hooks.mjs::_applyWeaponPropEffect`; Shift-клик — наложить вручную.
+- Rad (X) (wdbc-x1nz.10): `combat/radiation.mjs::applyRadHit` — X урона в T без
+  теста, счёт «10+ за бой» флагом `combatRadiation`, тест T+0 по концу боя
+  (`resolveCombatRadiation`, `rules/radiation-combat.mjs`). Решения владельца
+  02.10.2026: Демоны/Демоны-Принцы тест после боя не бросают
+  (`radiationTestExempt`; «Машину» не исключали — решения нет); по Технике
+  радиация бьёт экипаж и пассажиров (`system.stations[].uuid`), один бросок X,
+  тот же урон в T каждому; пробитие брони Техники система не проверяет.
 - Подвиды урона в скобках книги (I(Cr)/X(Fr)/E(El)/E(Fl)/E(Ls)/C(Tx), wdbc-q0q8,
   12.09.2026) — на уровень точнее широкого `damageType`: `system.damageSubtype`
   у оружия (`data/item/weapon.mjs`), психосилы и её `profiles[]`, техночуда,
@@ -227,7 +234,10 @@
 mjs`, `roll-mods.mjs`, `test-kind.mjs` (+`test-kind-widget.mjs`), `difficulty.
 mjs`, `extended-test.mjs`, `delegate-test.mjs`, `reroll-pick.mjs`, `assists.
 mjs`, `match-context.mjs`, `situational.mjs`, `initiative.mjs`; `documents/
-combatant.mjs` (бросок Инициативы с Преимуществом).
+combatant.mjs` (бросок Инициативы с Преимуществом). «Провалил на N+ Провала —
+последствие»: общий реестр `rules/fail-degree-triggers.mjs` (порог, область,
+исключение Крит. Провала, Возможность), исполняет `kind-outcome.mjs`
+(`FAIL_DEGREE_HANDLERS`); первая запись — Инфернальная Воля (wdbc-1rno.22).
 
 **Конвейер атаки:** `combat/attack.mjs` (оркестратор) → `attack-weapon.mjs`
 (профиль/хват/боеприпас) → `attack-threshold.mjs` (порог) → `attack-outcome.
@@ -592,8 +602,19 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `module/combat/weapon-properties.mjs` — движок автоматизации Свойств,
   центральный для атаки/защиты/урона; `weapon-profiles.mjs`, `weapon-mods.mjs`,
   `reload.mjs`.
+- Модификации оружия — какие действуют: `combat/weapon-mods.mjs::getActiveMods`
+  (его читают getModEffects, окно атаки, гасители штрафов, бюджет рук).
+  Отсекает мод, «бесполезный без» надетого/установленного предмета
+  (`system.requiresWorn`, Целеуказатель/Омни-Прицел, wdbc-1rno.38; дисплей,
+  ВСТРОЕННЫЙ в броню/маску/имплант, засчитывается меткой «Возможность»
+  `device.retinalDisplay` на самом предмете, task-1a59), и все
+  прицелы (`modGroup:"sights"`), кроме выбранного в окне атаки — «один прицел
+  за атаку», флаг оружия `hudSight` (wdbc-1rno.40). Бонус попадания по режиму
+  огня — `effects.rof{Single,Semi,Full}AttackMod` (не путать с
+  `rofSemiMod/rofFullMod` — число выстрелов).
 - `module/rules/dual-wield.mjs` + `dual-wield-talents.mjs` — два оружия и
-  ветка Талантов сверх базового штрафа; `weapon-training.mjs` (Арсенал);
+  ветка Талантов сверх базового штрафа (сюда же элитный Тирантикос: −10 к
+  парной стрельбе, +2d10 второй тяжёлой по цели Размера 2+); `weapon-training.mjs` (Арсенал);
   `improvised-weapon.mjs` (импровизированное/метание).
 - Оружие Наследия: `constants/legacy-weapon.mjs`, `rules/legacy-weapon.mjs`,
   `apps/legacy-weapon.mjs` (блок «Наследие» на листе оружия, включая кнопки
@@ -825,6 +846,12 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   economy.mjs`. Машины без воли — возможность `fear.machineMind` (Int вместо
   W; стоит на Черте Сервочереп). Диалог подставляет Inf, рейтинг и «Демон» с
   выделенного источника (`sheets/tabs/disorders.mjs::fearDialogDefaults`).
+  Все пути «игнорировать Страх» (память сцены, автоуспех по Inf/своему
+  Страху, Стальное Сердце) и их отмена «нельзя игнорировать» (Затронутый
+  Варпом 1, свойство теста `unignorable`) — одно место, `rules/fear-ignore.mjs`.
+  Шок без теста Страха — Инфернальная Воля (4+ Провала теста Навыка):
+  `combat/fear.mjs::rollInfernalWillShock`, снижение на Cor —
+  `rules/infernal-will.mjs`.
 - Здравомыслие пилота Дредноута: `rules/dreadnought.mjs`, `sheets/tabs/
   dreadnought-panel.mjs`.
 - Расстройства/Травмы: `data/item/mental-disorder.mjs`, `mental-trauma.mjs`,
@@ -847,7 +874,11 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   subraceCost/xpShort, `race-library.mjs::subraceCostAt`); уровень —
   `system.subraceTier`, в формулах Механики `subtier` (Затупленный 1–4);
   максимум Бесчестия Хаосита Inf.b ± `system.infamyMaxMod` (poolMax с целью
-  «infamy», `apps/infamy-points.mjs::infamyMaxWithMod`); закрытые Архетипы
+  «infamy», `apps/infamy-points.mjs::infamyMaxWithMod`; «+1 к максимуму
+  Судьбы» Эльданара, Избранного Судьбой и Предсказания «Не спрашивай почему
+  ты служишь» — ПАРА записей poolMax, «fate» + «infamy»: fate.max читает
+  только не-Хаосит, infamyMaxMod — только Хаосит, условие «Когда» не нужно);
+  закрытые Архетипы
   (`apps/archetypes.mjs::archetypesForRace`); выбор мутации из списка
   (`equipChoiceIds`, фильтр `ids`) и строки субмутации
   (`apps/submutations.mjs::chooseSubmutation`); дружественная одна
@@ -1455,6 +1486,44 @@ AGENTS.md).
 - `apps/cogitator.mjs` — Когитаторы (постоянные терминалы-консоли).
 - `apps/compendium-browser.mjs` + `compendium-filters.mjs` — Обозреватель
   компендиумов.
+
+---
+
+## 28. Разбор «Разобрать» #530 (01.10.2026): что появилось
+
+Точечно — чтобы не искать заново:
+
+- **Урон в Характеристики:** надбавки Генетического Угасания/Нестабильного
+  Генома — одна функция `rules/char-damage-bonus.mjs` (её зовут
+  `applyCharDamage`, Импровизированная Руна, Прижигание).
+- **Падение:** кнопка урона `combat/fall-damage.mjs` (броня игнорируется,
+  T.b поглощает, Лежачий); Двусоставный +5×X на Группирование —
+  `rules/digitigrade.mjs`.
+- **Лечение:** Hardy → `rules/healing-clock.mjs::healLevel` (для лечения всегда
+  «лёгкое»).
+- **Очки Бесчестия:** запреты Покровителя (Нургл — Переброс, Тзинч —
+  Усиление) в меню карточки — `rules/patron-infamy.mjs`; +10 и переброс за
+  Очко Чемпиона — `hooks.mjs::_attachFateContextMenu`.
+- **Йигори:** Охотники на Ангелов раз в Раунд и переброс стаи —
+  `combat/angel-hunters.mjs` (+ `rules/roll-mods.mjs::registerRerollLimiter`);
+  регенерация частей тела — `combat/limb-regen.mjs`, `rules/limb-loss.mjs`.
+- **Скват/среда сцены:** радиация по Календарю —
+  `combat/radiation-scene.mjs`, `rules/radiation-scene.mjs` (укрытие в окне
+  «Окружение»); невесомость → предикат `weightlessScene`; Преимущество против
+  яда — `rules/squat-traits.mjs::poisonResistReroll`.
+- **Яды/наркотики:** недельный счётчик доз и тест Зависимости —
+  `rules/drug-doses.mjs`, `sheets/tabs/drugs.mjs::weeklyDoseCheck`; яд клыков
+  Наги кнопкой — `apps/naga-traits.mjs::injectFangVenom`; Toxic (X) —
+  запись «Свойство атаки» с `apRating:"rating"`.
+- **Субрасы Зверолюда:** Кхорнгор/Мясник/Плакальщик —
+  `combat/beastman-subrace.mjs`; Взрывное Действие Сплайса —
+  `combat/explosive-action.mjs`.
+- **Приёмы:** +1 Успех от Боя Один На Один/Искусного в Захвате и приёмах —
+  `combat/extra-successes.mjs`.
+- **Огрин:** выход из ауры Дискорданта снимает Ступор —
+  `combat/bone-head.mjs::onDiscordantFieldLeft`.
+- **Создание персонажа:** Скакун Дикаря из Бестиария —
+  `apps/mount-grant.mjs` (Редкость в `flags.warhammer-dbc.mountRarity`).
 
 ---
 

@@ -149,6 +149,8 @@ const TYPES = {
     defaults: {
       description: "", notes: "", category: "ranged", modGroup: "other",
       requirement: "", installedOn: "", weight: 0, availability: 0, quality: "common",
+      // «Бесполезен без ретинального дисплея…» (wdbc-1rno.38) — пусто, условия нет.
+      requiresWorn: [],
       // «Книга-источник» (wdbc-eu1d): у модификаций поля не было вовсе, и на
       // вопрос «из какой она книги» ответить было нечем — источник писали в
       // заметки текстом.
@@ -157,6 +159,7 @@ const TYPES = {
       effects: {
         attackMod: 0, damageMod: 0, penMod: 0, rangeMod: 0, rangeMult: 1,
         clipMod: 0, clipMult: 1, rofSemiMod: 0, rofFullMod: 0, reliabilityMod: 0,
+        rofSingleAttackMod: 0, rofSemiAttackMod: 0, rofFullAttackMod: 0,
         balanceMod: 0, weightPct: 0,
         grantsGrip: "", gripRangeMult: 1,
         hipFireSemiMod: 0, hipFireFullMod: 0, hipFireSuppressionMod: 0,

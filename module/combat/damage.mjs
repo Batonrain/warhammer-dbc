@@ -37,6 +37,8 @@ import { redirectHitLocationForHeadless } from "../rules/headless.mjs";
 import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
 import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG } from "./pacifism.mjs";
 import { QUICK_TO_ANGER_CAPABILITY, rollQuickToAngerTest } from "../rules/quick-to-anger.mjs";
+import { scourgeOfChampionsCap, recordScourgeOfChampions, applyPredestined } from "./strange-invulnerability.mjs";
+import { khorngorRageTest, mournerOffer, mournerTb } from "./beastman-subrace.mjs";
 import { maybeGrantEnjoymentPain } from "./enjoyment.mjs";
 import { isMercuryElectrified, maybeMarkMercuryLocation } from "./mercury-reaction.mjs";
 import { ADAPTATION_CAPABILITY, maybeGrantAdaptationBonus, adaptationBonusFor } from "./adaptation.mjs";
@@ -691,6 +693,8 @@ export async function applyDamageToActor(actor, damageData) {
   if (hasRuleFlag(actor, QUICK_TO_ANGER_CAPABILITY) && !actor.system.inRage) {
     await rollQuickToAngerTest(actor);
   }
+  // Кхорнгор: «получая урон, оскорбления или угрозы — W+10, или Ярость» (wdbc-gao07).
+  await khorngorRageTest(actor);
   // Прицеливание (wdbc-1rno.5, module/rules/aiming.mjs): получение урона
   // сбивает незавершённое Прицеливание — тратится впустую, без бонуса.
   if (actor.system?.aiming && actor.system.aiming !== "none") {
@@ -925,6 +929,8 @@ export async function applyDamageToActor(actor, damageData) {
       tb -= Math.min(felling, Math.max(0, unnaturalT));
       tb  = Math.max(0, tb);
     }
+    // Пестигор Плакальщик: T.b ×2 в течение 1 Раунда после применения (wdbc-gao07).
+    tb = mournerTb(actor, tb);
     // Hollow Bones / Пустые Кости (Гарпия): T.b вдвое (окр.▲) против I(Cr).
     ({ tb, halved: hollowBonesHalved } = hollowBonesTb(actor, tb, damageSubtype));
     if (ignoreArmour) {
@@ -1183,6 +1189,29 @@ export async function applyDamageToActor(actor, damageData) {
     }
   }
 
+  // Странная Неуязвимость (wdbc-1rno.24, combat/strange-invulnerability.mjs) —
+  // после минимума Экстремального Урона, до Плакальщика: тот не должен
+  // тратить «раз за бой» на урон, который мутация и так срежет.
+  //  • «Бич Чемпионов»: враг, уже ранивший в этом бою, — не больше 1
+  //    непоглощённого с попадания.
+  //  • «Предначертание»: атака персонажа выпавшего пола не опускает Раны ниже
+  //    половины. Не при приёме Оглушить — тот Ран не трогает вовсе.
+  const scourge = await scourgeOfChampionsCap(actor, attackerUuid, netDamage);
+  netDamage = scourge.net;
+  const predestined = stunManeuver ? { net: netDamage, note: "" }
+    : await applyPredestined(actor, attackerUuid, netDamage);
+  netDamage = predestined.net;
+
+  // Пестигор Плакальщик (wdbc-gao07): «раз за бой после получения непоглощённого
+  // урона — уменьшить его до 1 и на 1 Раунд удвоить T.b» — после всех слоёв
+  // поглощения, до Ран.
+  let mournerNote = "";
+  if (netDamage > 1) {
+    const m = await mournerOffer(actor, netDamage);
+    netDamage = m.net;
+    mournerNote = m.note;
+  }
+
   // Приём Оглушить (стр. 14, wdbc-x1nz.2.66.3): «непоглощённый урон
   // игнорируется, вместо этого цель Оглушается на 1 Ход за каждый нечётный
   // урон» — читается как ⌈netDamage/2⌉ Раундов Оглушения. Урон дальше НЕ
@@ -1199,6 +1228,10 @@ export async function applyDamageToActor(actor, damageData) {
     else stunRoundsApplied = 0; // иммунитет к Оглушению — не наложилось, note ниже не врёт
     netDamage = 0;
   }
+
+  // «Бич Чемпионов»: враг запоминается, только если попадание дошло до Ран —
+  // урон, проигнорированный приёмом Оглушить, не «нанесён».
+  await recordScourgeOfChampions(actor, attackerUuid, netDamage);
 
   const { currentWounds, newWounds, newCritical, gotCritical } =
     await applyWoundLoss(actor, netDamage);
@@ -1385,6 +1418,12 @@ export async function applyDamageToActor(actor, damageData) {
 
   if (resisted) propEffectNotes.push(`<div class="dmg-tb-note">⚡ Сопротивление к ${damageSubtype === "electrical" ? "E(El)" : damageSubtype}: урон после поглощения вдвое.</div>`);
   if (electricRegenNote) propEffectNotes.push(electricRegenNote);
+  // Странная Неуязвимость (wdbc-1rno.24) — здесь, а не в propNotes: те видны
+  // только у обычного поглощения, а срезанный урон от Варп-Оружия тоже
+  // должен объясняться в карточке.
+  for (const note of [scourge.note, predestined.note]) {
+    if (note) propEffectNotes.push(`<div class="dmg-tb-note">${esc(note)}</div>`);
+  }
 
   // ── Сообщение в чат ──────────────────────────────────────────────────────
   const dtLabel  = DAMAGE_TYPES[damageType] || damageType;
@@ -1395,6 +1434,7 @@ export async function applyDamageToActor(actor, damageData) {
   if (felling > 0) propNotes.push(`Разящее ${felling}: −Сверхъест. T`);
   if (touchOfPainIgnoreTb) propNotes.push("Касание Боли: T.b Поглощения проигнорирован");
   if (hollowBonesHalved) propNotes.push("Пустые Кости: T.b вдвое (окр.▲) против I(Cr)");
+  if (mournerNote) propNotes.push(mournerNote);
   if (adaptBonus > 0) propNotes.push(`Адаптация: +${adaptBonus} Поглощения`);
   if (ignoreShield && !warpSoak) propNotes.push("Омывание: щит проигнорирован");
   if (ignoreArmour && !warpSoak) propNotes.push("Приём Борьбы: броня проигнорирована");

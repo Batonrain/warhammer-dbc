@@ -75,14 +75,15 @@ import { suffersBlindness } from "../rules/blindness.mjs";
 import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { isBiteName } from "../rules/integral-rating.mjs";
-import { VENOM_BITE_CAPABILITY, venomBiteDamage } from "../rules/naga-traits.mjs";
-import { fieldDisablesWeapon } from "../rules/null-zones.mjs";
+import { VENOM_BITE_CAPABILITY, venomBiteDamage, isBiteAttack, ADAPTIVE_VENOM_DOSE_FLAG } from "../rules/naga-traits.mjs";
+import { fieldDisablesWeapon, fieldForbidsShot } from "../rules/null-zones.mjs";
 import { isHeadHit } from "./armor-properties.mjs";
 import { COLD_KILLER } from "../rules/cold-killer.mjs";
 import { LEGIONNAIRE_VIRTUOSO, isLegionRangedWeapon } from "../rules/legionnaire-virtuoso.mjs";
 import { SKY_PREDATOR, activeDieResults, isChargeFromFlight, swapDiceFor } from "../rules/die-swap.mjs";
 import { IN_FLIGHT_ALTITUDES } from "./movement-actions.mjs";
 import { singleCombatBonus } from "./single-combat.mjs";
+import { butcherStatus } from "./beastman-subrace.mjs";
 
 /**
  * Экстремальный урон (стр. 166-170): куб урона выбросил Х+ — порог берётся из
@@ -228,6 +229,17 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // WS, но считался стрельбой — без прибавки S.b к урону и с кнопками защиты
   // из стрелковой ветки.
   const isMelee = attackIsMelee(sys, { forceMelee: opts.forceMelee, profile: opts.profile });
+  // Поле Дискорданта: электрическое стрелковое не стреляет. Окно атаки
+  // отказывает раньше, но не все пути идут через него (огонь с листа техники,
+  // оружие класса «рукопашное» со стрелковым профилем — task-be12): отказ
+  // здесь, до патронов и броска, чтобы ничего не списалось. Только для НОВОГО
+  // выстрела: перерасчёт уже сделанного (переброс за Очко, +10 за Очко, Огневая
+  // Точка, Горжет, сдвиг места — все идут со skipAmmo) отказывать не должен, их
+  // вызывающие уже списали Очко/кнопку и не узнали бы, что выстрела не вышло.
+  if (!opts.skipAmmo && fieldForbidsShot(actor, item, isMelee)) {
+    ui.notifications?.warn(`⚠️ «${item.name}»: в поле Дискорданта электрическое оружие не стреляет.`);
+    return;
+  }
   // Выбранный профиль атаки (стр. 207-221) и хват (стр. 39) переопределяют урон.
   const P = opts.profile || null;
   const gripDmgFlat = Number(opts.gripDmgFlat) || 0;
@@ -1087,6 +1099,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     weapon: item, actor, hit, isOwnTurn: isActorsOwnTurn(actor)
   });
   const deadlyTrapLegacyDelta = deadlyTrapLegacyEligible ? legacyDeadlyTrapDamageDelta(actor) : 0;
+  // Кхорнгор Мясник (wdbc-gao07): сколько кубиков запаса можно добавить к урону этого попадания.
+  const butcherDice = (hit && isMelee) ? butcherStatus(actor).left : 0;
+  // Адаптивная Отрава Наги (wdbc-s4ql0): укус при попадании и доза «(яд в клыках)» на листе.
+  const fangVenomDose = (hit && isBiteAttack(item?.name))
+    ? ([...(actor.items ?? [])].find(i => i.getFlag?.("warhammer-dbc", ADAPTIVE_VENOM_DOSE_FLAG))?.name ?? "")
+    : "";
   const flatBonus = (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + invocationAdd.dmg + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus;
   if (earlyDeathBonus) await markEarlyDeathLegacyUsed(actor, item, hit);
   if (soulboundLegacyBonus) await consumeSoulboundLegacyBonus(actor, item, hit);
@@ -1106,7 +1124,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Доп. кубы урона: Меткое (одиночный, по СУ, ТОЛЬКО с Прицеливанием — книга
   // «При одиночных выстрелах С Прицеливанием»), Рассеивание (кор. дист.),
   // Максимальный режим (+1d10). Эти кубы НЕ вызывают Экстремальный урон.
-  const bonusDice = (focusFireBonusOn && hit ? 2 : 0) + bonusDamageDice({
+  // Тирантикос (Sahara 10-2d10-2): окно атаки решило всё, что знало до броска
+  // второй руки (rules/dual-wield-talents.mjs::tyranthikosSecondAttackDice),
+  // здесь остаётся «попала и вторая». Кубы — к первому попаданию, как в книге.
+  const tyranthikosDice = hit ? Math.max(0, Number(opts.tyranthikosDice) || 0) : 0;
+  const bonusDice = (focusFireBonusOn && hit ? 2 : 0) + tyranthikosDice + bonusDamageDice({
     wp, rofMode, hit, deg, shortRange, maximal: maximalOn, band,
     ammoDice: ammoSys?.damageDiceMod,
     aimed,
@@ -1574,6 +1596,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       grappleCoverHits,
       regroupLegacyActive,
       deadlyTrapLegacyDelta,
+      fangVenomDose,
+      butcherDice,
       reactionKnockdownReason,
       sabreSecondAttackNote,
       sabreSecondAttackItemId,
@@ -1646,7 +1670,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
           ? `Цель прикрыта Ордой «${shelter.hordeToken.name ?? shelter.horde?.name}»: `
             + `${shelter.count} из ${hitsCount} попадан${shelter.count === 1 ? "ия уходит" : "ий уходят"} в толпу.`
           : "",
-        attack:    opts.attackNote,
+        attack:    tyranthikosDice
+          ? [opts.attackNote, `Тирантикос: обе тяжёлые попали по цели Размера 2+ — первое попадание этой атаки +${tyranthikosDice}d10 Dmg (уже в уроне).`]
+              .filter(Boolean).join(" · ")
+          : opts.attackNote,
         // Строки о Состоянии цели. Ослеплённая (wdbc-x1nz.2.89) — сюда же:
         // defense.note карточка не рисует, а игрок должен видеть, ПОЧЕМУ
         // кнопки защиты заперты «не засечена».
@@ -1721,7 +1748,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // т.п.) по-прежнему создаётся новое сообщение, как раньше.
   if (updateMessageId) {
     const existing = game.messages.get(updateMessageId);
-    if (existing) { await existing.update(messageData); return; }
+    if (existing) { await existing.update(messageData); return { hit }; }
   }
   await ChatMessage.create(messageData);
   // Командование (глава «Командование»): метка Концентрации огня гасится
@@ -1737,4 +1764,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   }
   // Automated Animations (если установлен и включён) — см. module/integrations/autoanimations.mjs.
   triggerAttackAnimation({ actor, item, hit });
+  // Итог броска наружу: окну атаки нужно знать, попала ли основная рука, чтобы
+  // решить про вторую (Тирантикос). Ранние отказы выше отдают undefined —
+  // броска не было, «попал/промахнулся» о нём не скажешь.
+  return { hit };
 }
