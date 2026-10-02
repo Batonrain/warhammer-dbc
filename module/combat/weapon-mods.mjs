@@ -7,6 +7,7 @@
 import { fullyArmedReliabilityBonus } from "./fully-armed.mjs";
 import { runtRifleIsLong } from "../rules/runt.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
+import { itemHasKey } from "../rules/item-marker.mjs";
 import { isItemActive } from "../apps/effects.mjs";
 
 /** Все установленные на данное оружие модификации (среди предметов актора). */
@@ -26,16 +27,27 @@ export function getInstalledMods(actor, weapon) {
  *
  * Сравнение по имени (rules/predicates.mjs::itemHasName, любая половина
  * двуязычного) — тот же приём, что у Респиратора/Противогаза
- * (wearsGasProtection): отдельного ключа «это ретинальный дисплей» у
- * предметов нет. Предметы, где ретинальный дисплей ВСТРОЕН (силовая/эльдарская
- * броня, Маска Шпиона, Всевидящее Око…), сюда пока не засчитываются — вопрос
- * владельцу, см. отчёт wdbc-1rno-38-x.
+ * (wearsGasProtection).
+ *
+ * Дисплей, ВСТРОЕННЫЙ в предмет (силовая/эльдарская броня, Маска Шпиона,
+ * Всевидящее Око…), отдельного предмета «Ретинальный Дисплей» не создаёт, и по
+ * имени его не найти. Такие предметы несут метку «Возможность»
+ * RETINAL_DISPLAY_CAPABILITY (Конструктор, данные пака; решение владельца
+ * 02.10.2026, task-1a59). Метка засчитывается ЛЮБОМУ требованию, где назван
+ * ретинальный дисплей (Целеуказатель, Омни-Прицел), и никакому другому: мод,
+ * требующий только Бионический Глаз или MIU, броне с дисплеем не обрадуется.
+ * Активность предмета с меткой спрашивается так же, как у предмета по имени.
  */
+export const RETINAL_DISPLAY_CAPABILITY = "device.retinalDisplay";
+const RETINAL_DISPLAY_NAME = { name: "Retinal Display / Ретинальный Дисплей" };
+
 export function modWornRequirementMet(actor, mod) {
   const need = (mod?.system?.requiresWorn ?? []).filter(n => typeof n === "string" && n.trim());
   if (!need.length) return true;
+  const wantsDisplay = need.some(n => itemHasName(RETINAL_DISPLAY_NAME, n));
   return [...(actor?.items ?? [])].some(i =>
-    need.some(n => itemHasName(i, n)) && isItemActive(i));
+    (need.some(n => itemHasName(i, n)) || (wantsDisplay && itemHasKey(i, RETINAL_DISPLAY_CAPABILITY)))
+    && isItemActive(i));
 }
 
 // ── Один прицел за атаку (wdbc-1rno.40) ────────────────────────────────────

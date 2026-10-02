@@ -602,7 +602,9 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - Модификации оружия — какие действуют: `combat/weapon-mods.mjs::getActiveMods`
   (его читают getModEffects, окно атаки, гасители штрафов, бюджет рук).
   Отсекает мод, «бесполезный без» надетого/установленного предмета
-  (`system.requiresWorn`, Целеуказатель/Омни-Прицел, wdbc-1rno.38), и все
+  (`system.requiresWorn`, Целеуказатель/Омни-Прицел, wdbc-1rno.38; дисплей,
+  ВСТРОЕННЫЙ в броню/маску/имплант, засчитывается меткой «Возможность»
+  `device.retinalDisplay` на самом предмете, task-1a59), и все
   прицелы (`modGroup:"sights"`), кроме выбранного в окне атаки — «один прицел
   за атаку», флаг оружия `hudSight` (wdbc-1rno.40). Бонус попадания по режиму
   огня — `effects.rof{Single,Semi,Full}AttackMod` (не путать с
