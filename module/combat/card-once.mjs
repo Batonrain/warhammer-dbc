@@ -16,7 +16,9 @@
 const NS = "warhammer-dbc";
 
 /** Ключи флагов, которые ГМ ставит по просьбе игрока (белый список сокета). */
-export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legionSurgeryUsed"];
+export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legionSurgeryUsed",
+  // 1d10 Знаний Веков после траты Очка (apps/knowledge-of-ages.mjs, wdbc-1rno.23).
+  "knowledgeOfAgesRolled"];
 
 const local = new Set();
 const localKey = (message, key) => `${message?.id}:${key}`;

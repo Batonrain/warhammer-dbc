@@ -13,6 +13,7 @@ import { isRuleUsageUsed, markRuleUsageUsed,
 import { fatePoolLabel }                 from "./rules/fate-save.mjs";
 import { spendFromInfamyPool }           from "./apps/infamy-points.mjs";
 import { spendInfamyForFailSuccess }     from "./apps/infamy-fail-success.mjs";
+import { knowledgeOfAgesButtonHtml, rollKnowledgeOfAges } from "./apps/knowledge-of-ages.mjs";
 import { onAdroitTraitCreated }          from "./apps/adroit.mjs";
 import { tempInfamyAmount }              from "./rules/temp-infamy.mjs";
 import { inspiringChampionsFor, spendInspiringInfamy } from "./combat/inspiring-presence.mjs";
@@ -541,6 +542,23 @@ export function registerHooks() {
         if (!actor.isOwner) { ui.notifications?.warn("Тратить Очко Бесчестия может только владелец персонажа."); return; }
         const done = await spendInfamyForFailSuccess(actor, el.dataset.capability || "",
           { testLabel: el.dataset.testLabel || "", message });
+        if (done) el.disabled = true;
+      });
+    });
+
+    // Знания Веков (wdbc-1rno.23, apps/knowledge-of-ages.mjs): 1d10 после
+    // траты Очка на «Усиление»/«Успех»/«Переброс» добытого Навыка. Актор — по
+    // uuid карточки (чьё Очко потрачено). Раз на карточку.
+    html.querySelectorAll(".wh-knowledge-of-ages-btn").forEach(btn => {
+      if (cardOnceUsed(message, "knowledgeOfAgesRolled")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor) { ui.notifications?.warn("Персонаж не найден."); return; }
+        if (!actor.isOwner) { ui.notifications?.warn("Бросать за Знания Веков может только владелец персонажа."); return; }
+        const done = await rollKnowledgeOfAges(actor, { message, temp: el.dataset.temp === "1",
+          tempSource: el.dataset.tempSource || "", tempRestriction: el.dataset.tempRestriction || "" });
         if (done) el.disabled = true;
       });
     });
@@ -2918,6 +2936,11 @@ function _attachFateContextMenu(message, html) {
           `если проведёт его в Оглушении полностью, ${ft.one} вернётся сама.</div>`;
       }
 
+      // Знания Веков (wdbc-1rno.23): переброс теста добытого Навыка за своё
+      // Очко — кнопка «бросить 1d10» (apps/knowledge-of-ages.mjs).
+      const koaBtn = champion ? "" : knowledgeOfAgesButtonHtml(actor, {
+        ability: "reroll", spend: reroll1, skillTest });
+
       // Карточка — общим сборщиком (wdbc-fyvv). Порядок строк сохранён: трата
       // Очка стоит выше плашки Броска/Порога (Режима тут нет — исходный тест
       // сюда не передаётся); плашка рисуется и без Порога, если его нет.
@@ -2928,10 +2951,15 @@ function _attachFateContextMenu(message, html) {
             ${ft.word} потрачена${esc(payerNote)} (осталось: ${reroll1.poolValue})
           </div>`,
           rollStatLine({ threshold, rv }),
-          blessedFitsLine
+          blessedFitsLine,
+          koaBtn
         ],
         outcome: outcomeSpan
-      }, { rolls: [newRoll], speaker: message.speaker });
+        // Флаг skillTest исходного теста — переброшенной карточке: это тот же
+        // тест того же Навыка, и «+10» с неё (меню Очков) должно его узнать
+        // (Знания Веков, wdbc-1rno.23). Исход — уже переброшенный.
+      }, { rolls: [newRoll], speaker: message.speaker,
+        flags: skillTest ? { "warhammer-dbc": { skillTest: { ...skillTest, success: hit ?? !!skillTest.success } } } : null });
 
       ui.notifications.info(
         `✨ ${actor.name} тратит ${ft.one} на переброс${payerNote}! Осталось: ${reroll1.poolValue}`
@@ -3030,6 +3058,11 @@ function _attachFateContextMenu(message, html) {
         ? `<span class="roll-success">Успех — ${outcome.degrees} ${_degWord(outcome.degrees)}</span>`
         : `<span class="roll-failure">Провал — ${outcome.degrees} ${_degWord(outcome.degrees)}</span>`;
 
+      // Знания Веков (wdbc-1rno.23): «Усиление» теста добытого Навыка за своё
+      // Очко — кнопка «бросить 1d10» (apps/knowledge-of-ages.mjs).
+      const koaBtn = champion ? "" : knowledgeOfAgesButtonHtml(actor, {
+        ability: "boost", spend: bonus1, skillTest });
+
       // Карточка — общим сборщиком (wdbc-kuun). Строка Порога здесь своя
       // («было → стало»), и бросок подписан «тот же, куб не перебрасывается» —
       // обе идут своими строками, чтобы вид не поменялся.
@@ -3043,7 +3076,8 @@ function _attachFateContextMenu(message, html) {
             Порог: <b>${outcome.base}</b> → <b>${outcome.threshold}</b>
             <span style="font-size:0.82em;color:#3a7a3a;">(+${outcome.bonus})</span>
           </div>`,
-          `<div class="roll-dice">Бросок: <b>${rv}</b> <span style="font-size:0.82em;opacity:.75;">— тот же, куб не перебрасывается</span></div>`
+          `<div class="roll-dice">Бросок: <b>${rv}</b> <span style="font-size:0.82em;opacity:.75;">— тот же, куб не перебрасывается</span></div>`,
+          koaBtn
         ],
         outcome: outcomeSpan
       }, { rolls: [roll], sound: false, speaker: message.speaker });
