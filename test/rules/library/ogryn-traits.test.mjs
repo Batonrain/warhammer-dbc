@@ -16,7 +16,7 @@ describe("паки Огрина против книги", () => {
     const names = race.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries).map(e => e.sourceName);
     expect(names).toContain("Brute Physiology / Физиология Громилы");
     expect(names).toContain("BONE-Head / Костеголов");
-    expect(names).not.toContain("Clever Hands / Умные Руки");
+    expect(names).not.toContain("Clever Hands / Умелые Руки");
     expect(names).not.toContain("Hard as Stone / Крепкий как Камень");
   });
 

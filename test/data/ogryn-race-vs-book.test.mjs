@@ -66,7 +66,7 @@ describe("Огрин: данные расы", () => {
 
   it("Черты Сквата у Огрина не выдаются", () => {
     const names = entries(RACE).filter(e => e.kind === "trait").map(e => e.sourceName);
-    expect(names).not.toContain("Clever Hands / Умные Руки");
+    expect(names).not.toContain("Clever Hands / Умелые Руки");
     expect(names).not.toContain("Hard as Stone / Крепкий как Камень");
     expect(names).toEqual(expect.arrayContaining([
       "Fanatic / Фанатик", "Brute Physiology / Физиология Громилы", "BONE-Head / Костеголов"
