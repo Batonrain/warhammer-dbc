@@ -9,6 +9,8 @@
 import { describe, it, expect } from "vitest";
 import "../../support/foundry-stub.mjs";
 import { packDocById } from "../../support/pack-doc.mjs";
+import { hasRuleFlag } from "../../../module/rules/flags.mjs";
+import { isImmuneToCondition } from "../../../module/rules/condition-guards.mjs";
 
 describe("паки Огрина против книги", () => {
   it("у расы нет Черт Сквата (Clever Hands, Hard as Stone)", () => {
@@ -27,5 +29,28 @@ describe("паки Огрина против книги", () => {
     const keys = t.effects.flatMap(e => e.system.changes.map(c => c.key));
     expect(keys.some(k => k.endsWith(".bonusFx"))).toBe(false);
     expect(keys).toContain("system.characteristics.s.totalFx");
+  });
+});
+
+describe("Brute Physiology — возможности по Черте, не по расе (Миньон без расы)", () => {
+  // Миньон с комплексным Трейтом «Ogryn» получает Черту без расы — всё, что
+  // Черта несёт записями Механики, обязано работать так же, как у персонажа.
+  const BRUTE = packDocById("packs-src/traits", "ZM5JfxTzLTfByO46");
+  const minion = { system: { race: "", characteristics: {}, conditions: {} }, items: [BRUTE], getFlag: () => undefined };
+
+  it.each([
+    "weapons.ogryn", "brutePhysiology.passiveRegen", "brutePhysiology.bleedingNoDeath", "brutePhysiology.shakeOffStun"
+  ])("Миньон с Чертой получает %s", flag => {
+    expect(hasRuleFlag(minion, flag)).toBe(true);
+  });
+
+  it("без Черты — ничего", () => {
+    const bare = { ...minion, items: [] };
+    expect(hasRuleFlag(bare, "brutePhysiology.bleedingNoDeath")).toBe(false);
+  });
+
+  it("иммунитет к Обескровливанию — запись Механики самой Черты", () => {
+    expect(isImmuneToCondition(minion, "haemorrhaging")).toBe(true);
+    expect(isImmuneToCondition(minion, "bleeding")).toBe(false);
   });
 });
