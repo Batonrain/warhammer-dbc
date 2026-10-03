@@ -5275,7 +5275,7 @@ export const CAPABILITIES = {
   },
   "trait.cleverHands": {
     label: "Умелые Руки: +15 на тесты Крафта, ремонта и обслуживания, требующие тонкой работы, +30 в экстремальных ситуациях. Галочки +15/+15 в диалоге Ремесла/Техпользования/Безопасности — правила module/rules/library/squat.mjs (по Черте, не по флагу); Расклин (экстремальная ситуация по книге) — +30 сам. Мастерская (окно Крафта) бонус не видит — отдельная задача.",
-    source: "Clever Hands / Умные Руки",
+    source: "Clever Hands / Умелые Руки",
     reader: "module/rules/squat-traits.mjs cleverHandsClearJamBonus() — module/combat/clear-jam.mjs::rollClearJam"
   },
   "trait.clovenOne": {
