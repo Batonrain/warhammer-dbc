@@ -1,5 +1,5 @@
 {
-  "name": "Hellbound / Адосвязанный",
+  "name": "Hellbound / Адсвязанный",
   "type": "talent",
   "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
   "folder": "StAWZZpsNEO4ALHA",
@@ -24,7 +24,7 @@
       "fearRating": 0,
       "speedMod": 0
     },
-    "bookSource": "Домашнее правило (не из официальной книги)"
+    "bookSource": "DoomBC — Основная книга"
   },
   "_id": "zijw7nlgVcxApnAC",
   "effects": [],

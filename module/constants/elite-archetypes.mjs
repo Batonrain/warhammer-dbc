@@ -256,7 +256,7 @@ export const ELITE_ARCHETYPES = [
     freeTalents: "Hatred (Dark Mechanicum, Adeptus Mechanicus, Vehicles)",
     gear: "Hell Stalker (оболочка)",
     traits: ["Machine Spirit Thief / Вор Духов Машины", "Corrupted Noosphere / Порченная Ноосфера", "Daemonic Uplink / Демоническое Подключение"],
-    talents: ["Discordant Duo / Дискордантный Дуэт", "Stalkersmith / Кузнец Сталкеров", "Hellbound / Адосвязанный", "Tortured Spirit / Истерзанный Дух"]
+    talents: ["Discordant Duo / Дискордантный Дуэт", "Stalkersmith / Кузнец Сталкеров", "Hellbound / Адсвязанный", "Tortured Spirit / Истерзанный Дух"]
   },
   {
     name: "Чемпион-Терминатор", god: "Неделимый", race: "Космодесантник",
@@ -266,7 +266,7 @@ export const ELITE_ARCHETYPES = [
     gear: "Terminator Armour (только при старте с Архетипом)",
     note: "Все преимущества, Трейты и Таланты этого Архетипа работают только когда персонаж носит Терминаторскую броню.",
     traits: ["Graceful Giant / Изящный Гигант", "Legendary Plate / Легендарные Латы"],
-    talents: ["Anointed / Помазанник", "Atramentar / Атрамэнтар", "Death Shroud / Саван Смерти", "Devourer / Поглотитель", "Justaerin / Юстаэринец", "Lernean / Лернеец", "Phoenician / Фениксиец", "Tyranthikos / Тирантикос"]
+    talents: ["Anointed / Помазанник", "Atramentar / Атраментар", "Death Shroud / Саван Смерти", "Devourer / Поглотитель", "Justaerin / Юстаэринец", "Lernean / Лернеец", "Phoenician / Фениксиец", "Tyranthikos / Тирантикос"]
   },
   {
     name: "Ветеран Долгой Войны", god: "Неделимый", race: "Космодесантник",

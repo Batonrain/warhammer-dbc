@@ -3334,18 +3334,6 @@ export const CAPABILITIES = {
     reader: "module/rules/simultaneous-action.mjs (reactingOrderCharTotal), module/combat/overwatch.mjs (offerOverwatchShot — hasVigilance → simultaneousActionWinner)"
   },
   // ── . — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
-  "elite..atramentar": {
-    label: "Убив противника в ближнем бою, Терминатор может потратить Реакцию или ещё не использованную Атаку другой рукой,",
-    source: "Atramentar / Атраментар", reader: ""
-  },
-  "elite..hellbound": {
-    label: "За смену работы может отметить машину дополнительными рунами связывания (не более ½W.b (окр.",
-    source: "Hellbound / Адсвязанный", reader: ""
-  },
-  "elite..savantImmaterial": {
-    label: "Изучая любую психосилу, может сразу же без траты опыта изучить ещё одну психосилу, которая стоит в 2 раза меньше опыта или меньше.",
-    source: "Savant Immaterial / Савант Имматериал", reader: ""
-  },
   "elite..voltageistBlast": {
     label: "Совершая Натиск с Техночудом Voltageist Shield в Процессах, может в конце своего Хода потратить 3⚙,",
     source: "Voltagheist Blast / Вольтагейст Взрыв", reader: ""
@@ -4545,7 +4533,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.lordDiskordant.hellbound": {
     label: "Сделки с Кузницей Душ дают доступ к продвинутым ритуалам связывания демона с машиной. Может за смену работы отметить машину доп.",
-    source: "Hellbound / Адосвязанный", reader: ""
+    source: "Hellbound / Адсвязанный", reader: ""
   },
   "elite.elitnyeArhetipy.lordDiskordant.stalkersmith": {
     label: "Даже лишённый скакуна легко его заменит за счёт рутин создания оболочки и ритуала вселения. Делает тесты Крафта оболочки Адского Сталкера,",
@@ -4989,7 +4977,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.chempionTerminator.atramentar": {
     label: "Убив противника в ближнем бою, может потратить Реакцию или ещё не использованную Атаку другой рукой,",
-    source: "Atramentar / Атрамэнтар", reader: ""
+    source: "Atramentar / Атраментар", reader: ""
   },
   "elite.elitnyeArhetipy.chempionTerminator.deathShroud": {
     label: "Если вооружён древковым оружием в двуручном хвате, может за полное действие совершить Стандартную Базовую атаку по всем противникам в радиус…",
