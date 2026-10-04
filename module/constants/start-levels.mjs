@@ -69,3 +69,33 @@ export function startLevelValues({ level, astartes = false,
     capped:      infamyRaw > START_CAP || corRaw > START_CAP
   };
 }
+
+/**
+ * Строка таблицы для заданного опыта — высшая, до которой этот опыт дотягивает
+ * (по колонке своей расы). Ниже первой строки — первая: у неё бонусы нулевые.
+ *
+ * Книга про Влияние и Порчу новичка, входящего в идущую игру, молчит: даёт
+ * только «получает столько опыта, сколько у наименее опытного». Берём бонусы
+ * строки, которой этот опыт соответствует, — тот же смысл, что у таблицы.
+ */
+export function levelForXp(xp, astartes = false) {
+  const n = Number(xp) || 0;
+  let found = START_LEVELS[0];
+  for (const l of START_LEVELS) if ((astartes ? l.astartes : l.mortal) <= n) found = l;
+  return found;
+}
+
+/**
+ * Какой базовый опыт (до «Ловит на Лету») нужен, чтобы после процента на счёт
+ * лёг ровно `target` — новичок получает столько же, сколько у наименее
+ * опытного, а не на четверть больше.
+ */
+export function baseXpForTarget(target, fastLearnerPct = 0) {
+  const want = Math.max(0, Math.round(Number(target) || 0));
+  const pct = Math.max(0, Number(fastLearnerPct) || 0);
+  if (!pct) return want;
+  const gross = base => Math.ceil(base * (1 + pct / 100));
+  let base = Math.floor(want / (1 + pct / 100));
+  while (gross(base) < want) base++;
+  return base;
+}

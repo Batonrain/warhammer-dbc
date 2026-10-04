@@ -87,7 +87,7 @@ export async function refreshPackCaches() {
       const pack = game.packs.get(packId);
       if (!pack) continue;
       const index = await pack.getIndex({
-        fields: ["system.key", "system.roll", "system.table", "system.n", "system.mods", "system.description", "system.effect"]
+        fields: ["system.key", "system.roll", "system.table", "system.n", "system.mods", "system.description", "system.effect", "flags.warhammer-dbc.charPick"]
       });
       CACHE.set(tag, index.contents.map(e => ({
         key:  e.system?.key || e._id,
@@ -100,6 +100,9 @@ export async function refreshPackCaches() {
         // Предсказания хранят текст эффекта в system.effect, не description —
         // нужен для предпросмотра в дропдауне (наведение на option до выбора).
         effect: e.system?.effect || "",
+        // Правило выбора Характеристик (Стремление «Совершенство», флаг charPick):
+        // по нему лист видит, что запись просит ответа игрока.
+        charPick: e.flags?.["warhammer-dbc"]?.charPick ?? null,
         uuid: e.uuid
       })).sort((a, b) =>
         (a.table || "").localeCompare(b.table || "") ||

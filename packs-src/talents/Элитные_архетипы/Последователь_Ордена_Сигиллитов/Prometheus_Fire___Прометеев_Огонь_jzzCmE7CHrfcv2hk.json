@@ -1,19 +1,19 @@
 {
-  "name": "Rune Calculator / Вычислитель Рун",
+  "name": "Prometheus Fire / Прометеев Огонь",
   "type": "talent",
   "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
   "system": {
-    "description": "<p>Вычисляя своим разумом множество формул рун и способ их сотворения, он открывает себе невероятный тактический потенциал.</p>",
+    "description": "<p>Последователь изучает особый вид сотворения рун, воруя чужую мощь — даже если это обычно невозможно. Повторяя подвиг Прометея из древних легенд, он открывает себе пламя новых сил.</p>",
     "notes": "",
-    "benefit": "При наступлении первого хода псайкера в бою он получает дополнительно +I.b рун. Этот талант можно взять до 3 раз.",
+    "benefit": "Персонаж получает возможность создавать руны Божественных психосил и Либрария, игнорируя все уникальные требования (вроде Генное Наследие, необходимость в Покровительстве, Метке или Cor), но изучение таких рун требует на +50 опыта больше.",
     "bookSource": "DoomBC — Психокеры-Жабы (Toad Psykers), стр. 101-102",
     "tier": 3,
-    "requirement": "I 50",
+    "requirement": "I 40",
     "aptitudes": [],
     "aptSource": "",
     "aspirations": [],
     "god": "",
-    "specialization": "",
+    "specialization": "Элитный архетип: Sigillite / Последователь Ордена Сигиллитов",
     "hasRating": false,
     "rating": 0,
     "targets": [],
@@ -27,7 +27,7 @@
       "speedMod": 0
     }
   },
-  "_id": "DVy6SwECXoHzNC9x",
+  "_id": "jzzCmE7CHrfcv2hk",
   "effects": [],
   "folder": "WVmP04GaWbHgfDpV",
   "sort": 0,
@@ -38,7 +38,7 @@
     "warhammer-dbc": {
       "mechanics": [
         {
-          "id": "RNx3POzGwFGW2CBo",
+          "id": "2p1NVdTDnzH6RAij",
           "operator": "AND",
           "entries": [
             {
@@ -80,7 +80,7 @@
               "modScope": "all",
               "modValueMode": "flat",
               "modCharBonus": "inf",
-              "capabilityKey": "rune.sigillites.calculator",
+              "capabilityKey": "rune.sigillites.prometheusFire",
               "fatigueAction": "threshold",
               "fatigueThresholdChar": "t",
               "equipMode": "direct",
@@ -126,7 +126,7 @@
                 "conditions": []
               },
               "kind": "capability",
-              "id": "NwhGAdiNo4AFhpxv"
+              "id": "C0InvrftoSimb7j8"
             }
           ]
         }
@@ -145,5 +145,5 @@
     "modifiedTime": 1789000000000,
     "lastModifiedBy": "4Q6l1C4FQOMQVofr"
   },
-  "_key": "!items!DVy6SwECXoHzNC9x"
+  "_key": "!items!jzzCmE7CHrfcv2hk"
 }

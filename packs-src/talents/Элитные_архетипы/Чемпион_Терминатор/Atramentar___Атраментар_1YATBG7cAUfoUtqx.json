@@ -2,17 +2,18 @@
   "name": "Atramentar / Атраментар",
   "type": "talent",
   "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "yZG5ZRAC9obmDWOJ",
   "system": {
     "description": "",
     "notes": "Не смоделировано: эффект тратит/даёт игровой ресурс (Очки Бесчестия/Судьбы/Боли/Когниции/Реакцию) на разовое действие — не тестовый модификатор Навыка/Характеристики.",
-    "benefit": "Убив противника в ближнем бою, Терминатор может потратить Реакцию или ещё не использованную Атаку другой рукой, чтобы получить рейтинг Страха 3 против всех врагов, что видели это убийство, до конца сцены.",
+    "benefit": "Убив противника в ближнем бою, может потратить Реакцию или ещё не использованную Атаку другой рукой, чтобы получить рейтинг Страха 3 против всех врагов, кто видели это убийство, до конца сцены.",
     "tier": 3,
     "requirement": "Intimidate+10",
     "aptitudes": [],
     "aptSource": "",
     "aspirations": [],
     "god": "Неделимый",
-    "specialization": "",
+    "specialization": "Элитный архетип: Чемпион-Терминатор",
     "cost": 0,
     "purchased": false,
     "granted": false,
@@ -23,14 +24,14 @@
       "fearRating": 0,
       "speedMod": 0
     },
-    "bookSource": ""
+    "bookSource": "DoomBC — Основная книга"
   },
-  "_id": "CVzCVIQ0Zog501Q9",
+  "_id": "1YATBG7cAUfoUtqx",
   "effects": [],
-  "folder": null,
   "sort": 0,
   "ownership": {
-    "default": 0
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
   },
   "flags": {
     "warhammer-dbc": {
@@ -41,12 +42,12 @@
     "compendiumSource": null,
     "duplicateSource": null,
     "exportSource": null,
-    "coreVersion": "14.367",
+    "coreVersion": "14.365",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
-    "createdTime": 1788391702932,
-    "modifiedTime": 1788391702932,
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121963693,
     "lastModifiedBy": "4Q6l1C4FQOMQVofr"
   },
-  "_key": "!items!CVzCVIQ0Zog501Q9"
+  "_key": "!items!1YATBG7cAUfoUtqx"
 }

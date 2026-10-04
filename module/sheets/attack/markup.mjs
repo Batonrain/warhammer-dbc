@@ -29,6 +29,7 @@ export function buildAttackContent(v) {
     attackerMount,
     autoCoverMod,
     autoHitAvailable,
+    hateAttackAvailable,
     autoMountRangedMod,
     dualWieldHtml,
     badgesHtml,
@@ -191,6 +192,7 @@ return `
                соответствующий Талант) — см. MELEE_MANEUVERS.swift/lightning. -->
           <label class="attack-mod-check"><input type="checkbox" id="atk-allout"/><span>Атака всем телом (+20, теряет Уклонение)</span></label>
           ${autoHitAvailable ? `<label class="attack-mod-check"><input type="checkbox" id="atk-autohit"/><span>Локус Неизбежности: авто-попадание (1 Успех, −10 до след. Хода)</span></label>` : ""}
+          ${hateAttackAvailable ? `<label class="attack-mod-check" title="Покровительство Кхорна: за Очко Бесчестия тест WS/BS засчитывается успешным с 1 Успехом. Только до броска."><input type="checkbox" id="atk-hate"/><span>Атака Ненависти: −1 Очко Бесчестия, авто-попадание (1 Успех)</span></label>` : ""}
         </div>
       </div>
     </details>

@@ -13,6 +13,7 @@ import { DP_INFAMY_ABILITIES, DP_PATRON_ABILITIES, DP_PATRONAGE, DP_GODS_MAP } f
 import { esc } from "../helpers/utils.mjs";
 import { conditionRemoveFields, fatigueChangeFields, announceFatigueChange } from "../sheets/tabs/conditions.mjs";
 import { tempInfamyInfo, tempInfamyAmount, spendTempInfamy } from "../rules/temp-infamy.mjs";
+import { chaosPatronMeta } from "../constants/chaos-patron.mjs";
 import { inPariahVoid } from "../rules/null-zones.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { infamyBoostNotes } from "../rules/infamy-fail-success.mjs";
@@ -179,8 +180,40 @@ export async function restoreInfamy(actor, ipFullPath, ipMax, meta) {
   }, rollMode));
 }
 
+// Особые траты Покровительства живут не на полосе, а там, где срабатывают.
+const PATRON_CONTEXT_HINTS = {
+  khorneHatred: "Атака Ненависти: отметьте её в окне атаки перед броском WS/BS — Очко потратится вместе с атакой.",
+  slaaneshCrit: "Сладкое Страдание: кнопка появляется на карточке Критического Эффекта — Очко потратится при нажатии."
+};
+
+/** Есть ли чем платить за способность: обычный пул или временный запас. */
+export function actorHasInfamyPoint(actor) {
+  return actorInfamyValue(actor) >= 1 || tempInfamyAmount(actor) >= 1;
+}
+
+/**
+ * Потратить Очко на способность Покровительства из её момента (окно атаки,
+ * карточка урона). Пул и потолок — те же, что у листа и полосы.
+ * @returns {Promise<boolean>} true — Очко потрачено
+ */
+export async function spendPatronAbility(actor, key) {
+  const godKey = actor?.system?.patronGod || "undivided";
+  const p = chaosPatronMeta(godKey);
+  return (await spendInfamy(actor, key, {
+    godKey, ipFullPath: actorInfamyPath(actor), ipMax: actorInfamyMax(actor),
+    meta: { gc: p.color, gc2: p.gc2, sigil: p.sigil }, contextual: true
+  })) === true;
+}
+
 // Трата Очка Бесчестия на способность (корбук 438).
-export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta }) {
+export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta, contextual = false }) {
+  // Атака Ненависти и Сладкое Страдание срабатывают в своём моменте: до броска
+  // атаки (окно атаки) и на карточке Критического Эффекта. Кнопка на полосе
+  // тратила бы Очко впустую — вместо этого подсказываем, где способность живёт.
+  if (!contextual && PATRON_CONTEXT_HINTS[key]) {
+    ui.notifications.info(PATRON_CONTEXT_HINTS[key]);
+    return false;
+  }
   const s = actor.system;
   const cor = s.corruption?.value ?? 0;
   const patron = DP_PATRONAGE[godKey] || DP_PATRONAGE.undivided;
@@ -246,4 +279,5 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta 
         : `<span style="font-size:0.82em;opacity:0.8;">Осталось Очков Бесчестия: <b>${spend.poolValue}</b> / ${ipMax}.</span>`]),
     rolls, sound: rolls.length ? CONFIG.sounds.dice : undefined
   }, rollMode));
+  return true;
 }

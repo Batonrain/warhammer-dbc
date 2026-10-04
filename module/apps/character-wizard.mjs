@@ -53,12 +53,13 @@ import { allowedMethods, effectiveBonusRolls, pointBuyPool, effectiveShifts, poi
          defaultPointBuy, checkPointBuy, canStepPointBuy, applyShifts, completeShifts,
          POINTBUY_MIN, POINTBUY_MAX, SHIFT_STEP } from "../rules/starting-characteristics.mjs";
 import { worldCreationMethod } from "../constants/creation-method.mjs";
-import { CHAOS_PATRONS } from "../constants/chaos-patron.mjs";
+import { CHAOS_PATRONS, godAttentionTip } from "../constants/chaos-patron.mjs";
 import { effectivePricingMode, charStereotypesFor } from "../constants/patronage.mjs";
 import { ASPIRATION_TABLES } from "../constants/aspirations.mjs";
-import { aspirationOptions, aspirationByKey } from "./aspirations.mjs";
+import { aspirationOptions, aspirationByKey, aspirationPickState } from "./aspirations.mjs";
 import { activateAspirationListeners } from "../sheets/tabs/aspirations.mjs";
-import { START_LEVELS, START_CAP, startLevelValues } from "../constants/start-levels.mjs";
+import { START_LEVELS, START_CAP, startLevelValues, levelForXp, baseXpForTarget } from "../constants/start-levels.mjs";
+import { leastExperienced } from "../rules/party-xp.mjs";
 import { resolveCultureFx } from "../constants/legions.mjs";
 import { splitTopLevel } from "../helpers/utils.mjs";
 import { archetypeEntries, archetypesForRace, applyArchetype, actorArchetypeItem } from "./archetypes.mjs";
@@ -70,15 +71,17 @@ import { openCompendiumBrowser, weaponTypeFolderIds } from "./compendium-browser
 import {
   splitGearTopLevel, gearChoiceOptions, parseGearEntry, parseGearItem, describeGearSpec,
   matchEquipPointsBonus, matchGearSizeRule, matchStandardSystemsCount, constructorCoverage,
-  namedLookupKeys, pickNamedCandidate, needsLegionProp, normName, compactKey,
+  needsLegionProp, normName,
   qualityForAvailability, defaultQualityPlan
 } from "../rules/creation-gear.mjs";
 import { actorFactionsContext, activateFactionFieldListeners } from "./actor-factions.mjs";
+import { buildGearIndex, findGearNamed, gearObjects } from "./gear-grant.mjs";
 import { EQUIP_SHOP_ROWS, EQUIP_SHOP_ROW_BY_KEY, EQUIP_SHOP_PACKS, equipPointsTotal, equipPointsLeft,
-         canAffordRow, startingAmmoQuantity, SACRIFICE_MOD_COUNT, SACRIFICE_MOD_MAX_AVAILABILITY }
+         equipPointsInfBonus, EQUIP_POINTS_PENALTY_CAPABILITY, canAffordRow, planStartingAmmo, sacrificeModPack, SACRIFICE_MOD_COUNT, SACRIFICE_MOD_MAX_AVAILABILITY }
   from "../rules/equip-shop.mjs";
 import { ITEM_QUALITY_LIST, capUpgradeQuality, normQuality } from "../constants/quality.mjs";
 import { pastRaceKey, raceMatches } from "../rules/race.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 
 // Текст расы Астартес («Power Armour Mk III-VII» в race.gear) называет
 // ДИАПАЗОН марок, а не одну фиксированную вещь — игрок выбирает одну марку
@@ -118,6 +121,8 @@ const EQUIP_STACKABLE_TYPES = new Set(["weapon", "gear", "ammo", "drug", "tool"]
 // именных строк) нельзя в принципе, и повторный заход в Мастера спрашивал их
 // заново и выдавал вторую пачку (wdbc-27ig).
 const GEAR_LEDGER_FLAG = "creationGear";
+/** Стартовые боеприпасы уже выданы персонажу — защита от повторного прохода Мастера. */
+const STARTING_AMMO_FLAG = "startingAmmoGranted";
 
 /** Следующая ступень Качества вверх по ITEM_QUALITY_LIST; на «Высшем» и выше остаётся на месте (не выпрыгивает в Arts.Q апгрейдом). */
 function nextQuality(q) {
@@ -966,7 +971,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       const options = aspirationOptions(t.key).map(e => ({ id: e.key, name: e.name, mods: e.mods }));
       if (a && a.custom) return { idx, label: t.label, options, custom: true, id: "", name: a.name || "", mods: a.mods || "" };
       const e = aspirationByKey(a?.id || a);
-      return { idx, label: t.label, options, custom: false, id: a?.id || a || "", name: e?.name || "", mods: e?.mods || "" };
+      return { idx, label: t.label, options, custom: false, id: a?.id || a || "", noMods: !!a?.noMods, pickState: a?.noMods ? "none" : aspirationPickState(actor, idx, e), name: e?.name || "", mods: e?.mods || "" };
     });
 
     const pac = this.pendingAspirationChoice;
@@ -985,6 +990,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       startIsAstartes: sys.race === "astartes",
       startSubrace: this._startSubraceInfo(),
       // Ловит на Лету (X): +X% к стартовому опыту — подсказка, откуда лишний опыт.
+      startNewcomer: this._newcomerBar(),
       startFastLearner: (() => {
         const pct = Number(sys.fastLearnerBonus) || 0;
         const res = pct ? this._startLevelResult() : null;
@@ -1037,6 +1043,39 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     }
     await actor.update(upd);
     return true;
+  }
+
+  /**
+   * Планка новичка (стр. 23): наименее опытный из персонажей игроков, кроме
+   * самого новичка. null — сравнивать не с кем (первый персонаж партии).
+   */
+  _newcomerBar() {
+    const mine = this.actor.id;
+    const entries = (game.actors?.contents ?? [])
+      .filter(a => a.type === "character" && a.id !== mine && a.system?.experience
+        && Object.entries(a.ownership ?? {}).some(([id, lvl]) => lvl === 3
+          && game.users.get(id) && !game.users.get(id).isGM))
+      .map(a => ({ id: a.id, name: a.name, total: a.system.experience.total }));
+    return leastExperienced(entries, mine);
+  }
+
+  /**
+   * «Взять как стартовый»: уровень таблицы по опыту планки, остаток — в «сверх
+   * того». С Ловит на Лету база подбирается так, чтобы на счёт лёг ровно опыт
+   * планки, а не на процент больше.
+   */
+  _takeNewcomerXp() {
+    const bar = this._newcomerBar();
+    if (!bar) return;
+    const sys = this.actor.system;
+    const astartes = sys.race === "astartes";
+    const row = levelForXp(bar.xp, astartes);
+    const base = baseXpForTarget(bar.xp, Number(sys.fastLearnerBonus) || 0);
+    this.startLevelKey = row.key;
+    this.startExtraXp = base - (astartes ? row.astartes : row.mortal);
+    this.startExtraInf = 0;
+    this.startExtraCor = 0;
+    this.render(false);
   }
 
   /** Подпись субрасы с уровнем, если она покупается уровнями: «Затупленный (2)». */
@@ -1214,7 +1253,8 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       usesAptitudes: this._pricingMode !== "patronage",
       usesPatron: this._pricingMode === "patronage" || this._pricingMode === "mixed",
       patronReady: this._patronReady(),
-      patronGods: CHAOS_PATRONS.map(p => ({ key: p.key, label: p.label, selected: p.key === this.pickedPatronGod })),
+      patronGods: CHAOS_PATRONS.map(p => ({ key: p.key, label: p.label, selected: p.key === this.pickedPatronGod, tip: godAttentionTip(p.key) })),
+      patronGodTip: godAttentionTip(this.pickedPatronGod),
       // "undivided" (Неделимый) не имеет записей в CHAR_STEREOTYPES — стереотип
       // для него не существует, строка выбора должна скрываться целиком.
       usesPatronStereotype: !!this.pickedPatronGod && this.pickedPatronGod !== "undivided",
@@ -1463,28 +1503,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   async _loadGearIndex() {
     if (this._gearIndex) return this._gearIndex;
-    // "traits" — в строке снаряжения попадаются и Черты («Mechanicum Implants»
-    // Технодесантника); моды — для надстроек «(+Mono)», «(+Pistol Grip)».
-    const packNames = ["weapons", "armor", "gear", "ammunition", "shields", "tools", "armour-systems",
-      "traits", "implants", "weapon-mods", "armor-mods"];
-    const index = new Map();
-    const folderNames = new Map();
-    for (const p of packNames) {
-      const pk = game.packs?.get?.(`warhammer-dbc.${p}`);
-      if (!pk) continue;
-      for (const f of pk.folders?.contents ?? []) folderNames.set(f.id, f.name);
-      for (const e of await pk.getIndex()) {
-        const folder = typeof e.folder === "string" ? e.folder : (e.folder?.id ?? null);
-        for (const part of String(e.name).split("/")) {
-          const k0 = normName(part);
-          if (!k0) continue;
-          for (const k of new Set([k0, compactKey(k0)])) {
-            if (!index.has(k)) index.set(k, []);
-            index.get(k).push({ pack: pk, packId: p, id: e._id, name: e.name, folder });
-          }
-        }
-      }
-    }
+    const { index, folderNames } = await buildGearIndex();
     this._gearIndex = index;
     this._gearFolderNames = folderNames;
     return index;
@@ -1502,12 +1521,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /** Именная заявка → кандидат индекса (с учётом «L.» и гранат) или null. */
   _findGearNamed(spec, index = this._gearIndex) {
-    if (!index) return null;
-    for (const k of namedLookupKeys(spec)) {
-      const c = index.get(k);
-      if (c?.length) return pickNamedCandidate(c, spec);
-    }
-    return null;
+    return findGearNamed(spec, index);
   }
 
   /** Раскладка текста снаряжения на layout (фикс/выбор) + сами группы выбора. Без резолва в предметы. */
@@ -1568,7 +1582,10 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
    * истины сам актор (Inf.b) и накопленный this._equipSpent, а не снимок.
    */
   _equipShopContext() {
-    const infBonus = this.actor.system.characteristics?.inf?.bonus ?? 0;
+    const infBonusFull = this.actor.system.characteristics?.inf?.bonus ?? 0;
+    // «Растраты» (стр. 22): −1 Inf.b в расчёте стартового снаряжения.
+    const infPenalty = hasRuleFlag(this.actor, EQUIP_POINTS_PENALTY_CAPABILITY) ? 1 : 0;
+    const infBonus = equipPointsInfBonus(infBonusFull, infPenalty);
     // Третье слагаемое пула — надбавка из текста Расы («+2 очка стартового
     // снаряжения» у Сквата, wdbc-yobj): считается заново при каждом рендере,
     // как и всё остальное здесь, потому что Раса может смениться на Этапе 1.
@@ -1576,7 +1593,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     const total = equipPointsTotal(infBonus, this._equipBonusPoints, raceBonus);
     const left = equipPointsLeft(total, this._equipSpent);
     return {
-      infBonus, bonusPoints: this._equipBonusPoints, raceBonus, total, spent: this._equipSpent, left,
+      infBonus, infBonusFull, infPenalty, bonusPoints: this._equipBonusPoints, raceBonus, total, spent: this._equipSpent, left,
       rows: EQUIP_SHOP_ROWS.map(r => ({ ...r, disabled: !canAffordRow(r, left) || this._confirmingEquipShop })),
       sacrificing: this._confirmingEquipShop,
       sacrificeCount: SACRIFICE_MOD_COUNT
@@ -1588,28 +1605,8 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
    * Легион, «Рунический» и количество. Расходуемые типы (EQUIP_STACKABLE_TYPES)
    * — одним предметом с quantity, прочие — отдельными копиями.
    */
-  _gearObjects(doc, { quality = null, legion = false, runic = false, qty = 1 } = {}) {
-    const make = () => {
-      const obj = doc.toObject();
-      const sys = obj.system ?? (obj.system = {});
-      // Качество — поле system.quality (constants/quality.mjs); ставим только
-      // там, где оно есть у типа, как и Конструктор (apps/mechanics.mjs).
-      if (quality && quality !== "common" && "quality" in sys) sys.quality = quality;
-      if (legion && obj.type === "weapon") {
-        const props = Array.isArray(sys.weaponProps) ? sys.weaponProps : [];
-        if (!props.some(p => p?.key === "legion")) props.push({ key: "legion" });
-        sys.weaponProps = props;
-      }
-      if (runic && obj.type === "weapon") sys.daemonWeapon = { ...(sys.daemonWeapon || {}), runic: true };
-      return obj;
-    };
-    const n = Math.max(1, Number(qty) || 1);
-    if (n > 1 && EQUIP_STACKABLE_TYPES.has(doc.type)) {
-      const obj = make();
-      obj.system.quantity = (Number(obj.system.quantity) || 1) * n;
-      return [obj];
-    }
-    return Array.from({ length: n }, make);
+  _gearObjects(doc, opts = {}) {
+    return gearObjects(doc, opts);
   }
 
   /** Надстройки «(+Mono)», «(+Void)» — мод из компендиума, сразу установленный на выданный предмет. */
@@ -2002,7 +1999,10 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       const picked = await this._pickOwnedItems(candidates, "Пожертвовать за 3 модификации (Редкость ≤2)", 1);
       if (!picked.length) return;
       const sacrificed = picked[0];
-      const modsPack = sacrificed.type === "armor" ? "armor-mods" : "weapon-mods";
+      // Модификации «для брони или оружия» (стр. 24): у брони и оружия — свои, у
+      // кибернетики и имплантов книга оставляет выбор игроку.
+      const modsPack = sacrificeModPack(sacrificed.type) ?? await this._askSacrificeModKind(sacrificed.name);
+      if (!modsPack) return;
       const uuids = await openCompendiumBrowser(false, {
         pack: modsPack, filters: { maxAvailability: SACRIFICE_MOD_MAX_AVAILABILITY },
         count: SACRIFICE_MOD_COUNT,
@@ -2018,6 +2018,22 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       this._confirmingEquipShop = false;
       this.render(false);
     }
+  }
+
+  /** Для чего брать модификации за кибернетику/имплант: "weapon-mods" | "armor-mods" | null (отмена). */
+  async _askSacrificeModKind(name) {
+    const kind = await foundry.applications.api.DialogV2.wait({
+      window: { title: "Очки Снаряжения" },
+      classes: ["warhammer-dbc", "wh-holo"],
+      content: `<p>Жертва «${esc(name)}»: модификации для брони или для оружия?</p>`,
+      rejectClose: false,
+      buttons: [
+        { action: "weapon-mods", label: "Для оружия", default: true },
+        { action: "armor-mods", label: "Для брони" },
+        { action: "cancel", label: "Отмена" }
+      ]
+    });
+    return kind === "weapon-mods" || kind === "armor-mods" ? kind : null;
   }
 
   /**
@@ -2079,13 +2095,15 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /**
    * Боеприпасы после завершения выбора снаряжения (стр. 24): 4 полных
-   * магазина или 20 стандартных — что больше, для каждого оружия на листе.
-   * Только оружие, которое реально расходует боеприпас (magazineMax>0) и у
-   * которого ещё нет заряженного/подходящего боеприпаса — повторный проход
-   * Мастера (напр. переоткрытый на готовом персонаже) не сыплет новыми пачками.
+   * магазина или 20 стандартных — что больше, для КАЖДОГО оружия с магазином
+   * (rules/equip-shop.mjs::planStartingAmmo). Выдаются всегда, независимо от
+   * того, что уже лежит на листе: купленное за Очки Снаряжения и выданное
+   * Архетипом — сверх. От повторного прохода Мастера (переоткрытого на готовом
+   * персонаже) защищает флаг на акторе, а не наличие боеприпасов.
    */
   async _grantStartingAmmo() {
     const actor = this.actor;
+    if (actor.getFlag?.("warhammer-dbc", STARTING_AMMO_FLAG)) return;
     const weapons = actor.items.filter(it => it.type === "weapon" && (Number(it.system?.magazineMax) || 0) > 0);
     if (!weapons.length) return;
     let ammoLib = [];
@@ -2094,25 +2112,21 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       if (pack) ammoLib = await pack.getDocuments();
     } catch (e) { /* пак недоступен — пропускаем автовыдачу молча, не блокируем Готово */ }
     if (!ammoLib.length) return;
+    const plan = planStartingAmmo(
+      weapons.map(w => ({ weaponType: w.system?.weaponType || "", magazineMax: w.system.magazineMax })),
+      ammoLib.map(a => ({ key: a.id, weaponTypes: a.system.weaponTypes, attackMod: a.system.attackMod,
+        damageMod: a.system.damageMod, penetrationMod: a.system.penetrationMod, rangeMod: a.system.rangeMod })));
     const objs = [];
-    for (const w of weapons) {
-      const already = actor.items.some(it => it.type === "ammo" &&
-        (it.system?.weaponTypes || []).includes(w.system?.weaponType || w.type));
-      if (already) continue;
-      // «Стандартный» боеприпас — без модификаторов профиля (не спецбоеприпас),
-      // подходящий по weaponTypes; первый совпавший, порядок пака — по алфавиту.
-      const wt = w.system?.weaponType || "";
-      const std = ammoLib.find(a =>
-        (a.system.weaponTypes || []).includes(wt) &&
-        !a.system.attackMod && !a.system.damageMod && !a.system.penetrationMod && !a.system.rangeMod);
-      if (!std) continue;
-      const need = startingAmmoQuantity(w.system.magazineMax);
-      const obj = std.toObject();
+    for (const [id, quantity] of plan) {
+      const obj = ammoLib.find(a => a.id === id)?.toObject();
+      if (!obj) continue;
       delete obj._id;
-      obj.system.quantity = need;
+      obj.system.quantity = quantity;
       objs.push(obj);
     }
-    if (objs.length) await actor.createEmbeddedDocuments("Item", objs);
+    if (!objs.length) return;
+    await actor.createEmbeddedDocuments("Item", objs);
+    await actor.setFlag?.("warhammer-dbc", STARTING_AMMO_FLAG, true);
   }
 
   _onRender(context, options) {
@@ -2410,6 +2424,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       this._resolveAspirationChoice({ kind: "skip", value: null });
     });
     on(".wiz-start-level", "change", ev => { this.startLevelKey = ev.currentTarget.value; this.render(false); });
+    on(".wiz-start-newcomer", "click", ev => { ev.preventDefault(); this._takeNewcomerXp(); });
     // Перерисовка — только ради строки цены субрасы («на счёт N XP»).
     on(".wiz-start-xp",  "change", ev => {
       this.startExtraXp  = parseInt(ev.currentTarget.value)  || 0;

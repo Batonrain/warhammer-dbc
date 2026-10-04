@@ -161,6 +161,9 @@ export function readAttackForm(form, ammoConds) {
     allOut,
     extraBonus: allOut ? 20 : 0,
     autoHit: on("#atk-autohit"),
+    // Атака Ненависти (Кхорн, корбук 438): отметка «до теста» — на броске
+    // тратит Очко Бесчестия и засчитывает WS/BS с 1 Успехом.
+    hateAttack: on("#atk-hate"),
     shortRange: on("#atk-shortrange"),
     // Карабин (wdbc-z56a): нужен на исполнении броска, чтобы дать цели +10
     // вместо +30 на Уклонение — см. #atk-melee-shot в specificMods выше.

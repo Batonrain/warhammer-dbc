@@ -439,3 +439,17 @@ describe("Опоры разбора в packs-src", () => {
     expect([...missing].sort()).toEqual(["Ammo Selector", "Void Suit Helmet"]);
   });
 });
+
+describe("normName: «Armour» и «Armor» — одно слово (живая проверка 04.10.2026)", () => {
+  it("«Ghostplate Armor» из текста находит «Ghostplate Armour / Призрачная Броня» из пака", () => {
+    const fromText = normName("Ghostplate Armor");
+    const fromPack = String("Ghostplate Armour / Призрачная Броня").split("/").map(normName);
+    expect(fromPack).toContain(fromText);
+  });
+
+  it("сворачивается только целое слово, а не кусок другого", () => {
+    expect(normName("Armoured Vest")).toBe("armoured vest");
+    expect(normName("Power Armour")).toBe("power armor");
+    expect(normName("ARMOUR")).toBe("armor");
+  });
+});

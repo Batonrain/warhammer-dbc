@@ -1,9 +1,9 @@
 <div class="tab advance-cog {{#if (eq tab "advance")}}active{{/if}}" data-tab="advance" data-group="primary"> <div class="advance-top"> {{#if usesAptitudes}}<div class="stat-panel advance-aptitudes" data-collapse-key="advance-aptitudes"> <div class="panel-title" data-action="panelCollapse"> СКЛОННОСТИ
-        <button type="button" class="apt-char-add-btn" title="Добавить склонность (нужно 8; «Общая» есть у всех)">＋</button> </div> <div class="panel-scroll"> <table class="items-table"> <tbody>
+        <button type="button" class="apt-char-add-btn" title="Добавить склонность (по книге {{aptitudeTotal}}, сейчас {{aptitudeCount}}; «Общая» есть у всех). Сверх {{aptitudeTotal}} — только от расы или Пути">＋</button> </div> <div class="panel-scroll"> <table class="items-table"> <tbody>
             <tr class="apt-general-row"><td colspan="2"><span class="apt-general" title="Всегда, по умолчанию">Общая</span></td></tr>
             {{#if system.aptitudes.length}}
             {{#each system.aptitudes as |apt idx|}}
-            <tr> <td class="apt-char-name-cell"> <select data-index="{{idx}}" class="apt-char-select">{{#each ../aptitudeChoices as |c|}}<option value="{{c.key}}" {{#if (eq c.key apt)}}selected{{/if}}>{{c.label}}</option>{{/each}}</select> </td> <td class="apt-char-del-cell"> <button type="button" class="apt-char-remove" data-index="{{idx}}" title="Удалить">✕</button> </td> </tr> {{/each}}
+            <tr> <td class="apt-char-name-cell"> <select data-index="{{idx}}" class="apt-char-select" title="Сменить Склонность: выбери другую в списке, опыт пересчитается сам. По книге — раз за историю (стр. 24)">{{#each ../aptitudeChoices as |c|}}<option value="{{c.key}}" {{#if (eq c.key apt)}}selected{{/if}}>{{c.label}}</option>{{/each}}</select> </td> <td class="apt-char-del-cell"> {{#if ../aptitudeCanRemove}}<button type="button" class="apt-char-remove" data-index="{{idx}}" title="Убрать лишнюю (нужно {{../aptitudeTotal}}, сейчас {{../aptitudeCount}})">✕</button>{{/if}} </td> </tr> {{/each}}
           {{else}}
             <tr class="items-empty"><td colspan="2"><em>Добавь 8 склонностей кнопкой ＋</em></td></tr> {{/if}}
         </tbody> </table> </div> </div>{{/if}} <div class="stat-panel advance-talents" data-collapse-key="advance-talents"> <div class="panel-title" data-action="panelCollapse"> ТАЛАНТЫ
@@ -37,7 +37,7 @@
     <div class="panel-title" data-action="panelCollapse" title="Выбор Бога окрашивает лист и определяет преимущество/недостаток Очков Бесчестия (корбук 438); в режиме Покровительства/Смешанной — ещё и цену Продвижения ниже.">ПОКРОВИТЕЛЬ ХАОСА</div>
     <div class="chaos-patron-grid">
       {{#each chaosPatrons as |p|}}
-      <label class="chaos-patron-opt {{#if p.selected}}sel{{/if}}" title="{{p.label}}" style="--pg:{{p.color}};--pgs:{{p.gc2}};--pgl:{{p.glow}}">
+      <label class="chaos-patron-opt {{#if p.selected}}sel{{/if}}" title="{{p.tip}}" style="--pg:{{p.color}};--pgs:{{p.gc2}};--pgl:{{p.glow}}">
         <input type="radio" name="system.patronGod" value="{{p.key}}" {{#if p.selected}}checked{{/if}}/>
         <span class="chaos-patron-sigil" style="-webkit-mask:url('{{p.sigil}}') center/contain no-repeat;mask:url('{{p.sigil}}') center/contain no-repeat"></span>
         <span class="chaos-patron-name">{{p.label}}</span>

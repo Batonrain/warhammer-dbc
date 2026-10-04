@@ -16,6 +16,18 @@
 import { CHARACTERISTICS } from "./characteristics.mjs";
 
 export const CAPABILITIES = {
+  // ── Мастерская Крафта: Исследования (Стремление «Инновация») ────────────────
+  "craft.researchBonus": {
+    label: "+10 на тесты Исследований в Мастерской Крафта: каждая смена проекта-Исследования идёт с Пределом на 10 выше (Инновация, стр. 22). Пометка «Для Исследований»: отдельной механики исследований и привязки к Навыку пока нет (решение владельца 04.10.2026, сделаем позже) — бонус живёт только в Мастерской Крафта",
+    source: "Стремление (Мотивация): Инновация / Innovation (корбук стр. 22)",
+    reader: "module/rules/craft-advantage.mjs researchBonus() — module/apps/craft-workshop.mjs _rollShift"
+  },
+  // ── Создание персонажа: штраф к пулу Очков Снаряжения ───────────────────────
+  "creation.equipPointsPenalty": {
+    label: "Растраты: −1 Inf.b в расчёте стартового снаряжения — Очки Снаряжения (стр. 24) считаются от Inf.b на 1 меньше (не ниже 0)",
+    source: "Стремление (Позор): Растраты / Squandering (корбук стр. 22)",
+    reader: "module/rules/equip-shop.mjs equipPointsInfBonus() — module/apps/character-wizard.mjs _equipShopContext()"
+  },
   // ── Иммунитет к свойствам оружия (wdbc-plsf) ────────────────────────────
   // Восемь свойств из ревизии Мутаций/Даров: Corrosive/Crippling/Flame
   // (Burning)/Toxic/Piercing/Haywire/Shocking/Snare. Ключ — сам ключ свойства
@@ -3322,18 +3334,6 @@ export const CAPABILITIES = {
     reader: "module/rules/simultaneous-action.mjs (reactingOrderCharTotal), module/combat/overwatch.mjs (offerOverwatchShot — hasVigilance → simultaneousActionWinner)"
   },
   // ── . — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
-  "elite..atramentar": {
-    label: "Убив противника в ближнем бою, Терминатор может потратить Реакцию или ещё не использованную Атаку другой рукой,",
-    source: "Atramentar / Атраментар", reader: ""
-  },
-  "elite..hellbound": {
-    label: "За смену работы может отметить машину дополнительными рунами связывания (не более ½W.b (окр.",
-    source: "Hellbound / Адсвязанный", reader: ""
-  },
-  "elite..savantImmaterial": {
-    label: "Изучая любую психосилу, может сразу же без траты опыта изучить ещё одну психосилу, которая стоит в 2 раза меньше опыта или меньше.",
-    source: "Savant Immaterial / Савант Имматериал", reader: ""
-  },
   "elite..voltageistBlast": {
     label: "Совершая Натиск с Техночудом Voltageist Shield в Процессах, может в конце своего Хода потратить 3⚙,",
     source: "Voltagheist Blast / Вольтагейст Взрыв", reader: ""
@@ -4533,7 +4533,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.lordDiskordant.hellbound": {
     label: "Сделки с Кузницей Душ дают доступ к продвинутым ритуалам связывания демона с машиной. Может за смену работы отметить машину доп.",
-    source: "Hellbound / Адосвязанный", reader: ""
+    source: "Hellbound / Адсвязанный", reader: ""
   },
   "elite.elitnyeArhetipy.lordDiskordant.stalkersmith": {
     label: "Даже лишённый скакуна легко его заменит за счёт рутин создания оболочки и ритуала вселения. Делает тесты Крафта оболочки Адского Сталкера,",
@@ -4977,7 +4977,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.chempionTerminator.atramentar": {
     label: "Убив противника в ближнем бою, может потратить Реакцию или ещё не использованную Атаку другой рукой,",
-    source: "Atramentar / Атрамэнтар", reader: ""
+    source: "Atramentar / Атраментар", reader: ""
   },
   "elite.elitnyeArhetipy.chempionTerminator.deathShroud": {
     label: "Если вооружён древковым оружием в двуручном хвате, может за полное действие совершить Стандартную Базовую атаку по всем противникам в радиус…",
@@ -7220,9 +7220,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "mutation.polymath": {
-    label: "+10 на тесты Крафта и Исследований — двумя путями: Мастерская Крафта (свой пакетный расчёт, не общий конвейер теста) берёт его напрямую (module/rules/craft-advantage.mjs::polymathBonus, читает module/apps/craft-workshop.mjs::_rollShift); обычный ручной бросок Навыка (Ремесло/Запретные Знания вне Мастерской) — отдельными записями kind:\"testMod\" (skillKey:trade/forbiddenLore) на этом же предмете. Крит на таком тесте — 1d5 Усталости + доп. тест немедленно — смоделирован ТОЛЬКО для ручного пути (по одной записи kind:\"script\" со scriptTrigger:critSuccess на каждую из двух групп, wdbc-1rno); Мастерская Крафта свой бросок такому крюку не подвергает — крит там не даёт доп. теста. Capability покрывает только нарративный остаток без чисел: определение дистанций/пропорций на глаз, точное воспроизведение чертежей по разобранному механизму",
+    label: "+10 на тесты Крафта и Исследований — двумя путями: Мастерская Крафта (свой пакетный расчёт, не общий конвейер теста) берёт его напрямую (module/rules/craft-advantage.mjs::polymathBonus, читает module/apps/craft-workshop.mjs::_rollShift); обычный ручной бросок Навыка группы Ремесло (Trade) — записью kind:\"testMod\" (skillKey:trade) на этом же предмете; на Запретные Знания вне Мастерской бонус НЕ действует (решение владельца 04.10.2026, выравнивание с Инновацией). Крит на тесте Ремесла — 1d5 Усталости + доп. тест немедленно — смоделирован ТОЛЬКО для ручного пути (запись kind:\"script\" со scriptTrigger:critSuccess, wdbc-1rno); Мастерская Крафта свой бросок такому крюку не подвергает — крит там не даёт доп. теста. Capability покрывает только нарративный остаток без чисел: определение дистанций/пропорций на глаз, точное воспроизведение чертежей по разобранному механизму",
     source: "Мутация: Polymath (Общие мутации)",
-    reader: "module/rules/craft-advantage.mjs::polymathBonus, module/apps/craft-workshop.mjs (Мастерская); packs-src testMod/script записи (ручной бросок Ремесла/Запретных Знаний)"
+    reader: "module/rules/craft-advantage.mjs::polymathBonus, module/apps/craft-workshop.mjs (Мастерская); packs-src testMod/script записи (ручной бросок Ремесла)"
   },
   "mutation.soulSeer": {
     label: "Реализовано (wdbc-1rno): кнопка kind:\"script\" (без троттла/цены — видение постоянное, не разовый ресурс) выводит в чат список актёров в радиусе 10м, распознанных как человек/дух машины/демон (типы character/vehicle/daemon+demonPrince), сквозь преграды — LOS через стены в системе не реализован вообще ни для чего, обычный радиус и есть «сквозь преграды», доп. код не нужен. Штраф «мешает читать мимику/детали, особенно на сильных псайкерах» — ЧЕСТНО не смоделирован: книга не даёт формулы (только направление усиления у сильных псайкеров, без числа) — придумывать её было бы моей выдумкой, не книжным правилом.",

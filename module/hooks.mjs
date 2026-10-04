@@ -11,7 +11,8 @@ import { _executeFearRoll, FAITH_FLAG, rollShockRecovery, postShockRecoveryPromp
 import { isRuleUsageUsed, markRuleUsageUsed,
          isRoundCapabilityAvailable, markRoundCapabilityUsed } from "./apps/game-session.mjs";
 import { fatePoolLabel }                 from "./rules/fate-save.mjs";
-import { spendFromInfamyPool }           from "./apps/infamy-points.mjs";
+import { spendFromInfamyPool, spendPatronAbility } from "./apps/infamy-points.mjs";
+import { dimIgnoredEffects } from "./combat/sweet-suffering.mjs";
 import { spendInfamyForFailSuccess }     from "./apps/infamy-fail-success.mjs";
 import { onAdroitTraitCreated }          from "./apps/adroit.mjs";
 import { tempInfamyAmount }              from "./rules/temp-infamy.mjs";
@@ -1573,6 +1574,27 @@ export function registerHooks() {
           sourceDamage: ds.sourceDamage != null && ds.sourceDamage !== "" ? Number(ds.sourceDamage) : null,
           side: ds.side || "", healMod: Number(ds.healMod) || 0
         });
+      });
+    });
+
+    // Сладкое Страдание (Покровительство Слаанеш, корбук 438): Очко Бесчестия
+    // за игнорирование всех эффектов Критического Эффекта, кроме потери
+    // конечностей, смерти и Оглушения (combat/sweet-suffering.mjs).
+    html.querySelectorAll(".wh-sweet-suffering-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        const target = actor?.actor ?? actor;
+        if (!target?.isOwner) {
+          return ui.notifications.warn("Сладкое Страдание тратит владелец цели (или ГМ).");
+        }
+        el.disabled = true;
+        if (!(await spendPatronAbility(target, "slaaneshCrit"))) { el.disabled = false; return; }
+        const n = dimIgnoredEffects(el.closest(".dmg-critical-block"));
+        ui.notifications.info(n
+          ? `Сладкое Страдание: проигнорировано эффектов — ${n}.`
+          : "Сладкое Страдание: игнорировать нечего, кроме потери конечностей, смерти и Оглушения.");
       });
     });
 

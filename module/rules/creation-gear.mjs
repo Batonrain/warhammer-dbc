@@ -571,9 +571,14 @@ const fixHomoglyphs = w => (/[a-z]/u.test(w) && /[а-яё]/u.test(w))
  * Ключ имени для поиска: нижний регистр, всё кроме букв/цифр — пробел,
  * смешанные по алфавиту слова приведены к латинице. Им же Мастер строит
  * индекс компендиумов — одна функция по обе стороны сравнения.
+ *
+ * «Armour»/«Armor» — одно слово: в тексте снаряжения Элитных Архетипов стоит
+ * «Ghostplate Armor», а в компендиуме «Ghostplate Armour / Призрачная Броня»
+ * (живая проверка 04.10.2026). Свёртка действует на обе стороны сравнения сразу.
  */
+const ARMOUR_RE = /(^|\s)armour(?=\s|$)/gu;
 export const normName = s => String(s || "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim()
-  .split(" ").map(fixHomoglyphs).join(" ");
+  .split(" ").map(fixHomoglyphs).join(" ").replace(ARMOUR_RE, "$1armor");
 
 /**
  * Совпадает ли вариант строки текста с записью kind:"equipment" Конструктора.
