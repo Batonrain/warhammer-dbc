@@ -175,6 +175,23 @@ describe("склонности персонажа", () => {
     expect(a.system.aptitudes).toEqual(["bs"]);
   });
 
+  it("＋ и ✕ пересчитывают цены купленного, как и смена в списке (стр. 24)", async () => {
+    const a = actor({
+      aptitudes: ["bs", "finesse"],
+      characteristics: { ws: { improvement: "simple", cost: 999 } },
+      items: [talent({ id: "t1", aptitudes: ["ws", "offence"], tier: 1, cost: 999 })]
+    });
+
+    await addAptitude(a);                       // первая свободная — ws
+    expect(a.system.aptitudes).toEqual(["bs", "finesse", "ws"]);
+    expect(a.system.characteristics.ws.cost).toBe(250);   // одно совпадение — Нейтральная, +5
+    expect(a.itemUpdates.at(-1)).toEqual({ _id: "t1", "system.cost": 250 });
+
+    await removeAptitude(a, 2);                 // ws ушла — снова Враждебная
+    expect(a.system.characteristics.ws.cost).toBe(500);
+    expect(a.itemUpdates.at(-1)).toEqual({ _id: "t1", "system.cost": 400 });
+  });
+
   it("список, сохранённый объектом, читается как массив", async () => {
     const a = actor({ aptitudes: { 0: "ws", 1: "bs" } });
 

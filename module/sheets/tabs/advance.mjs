@@ -84,13 +84,15 @@ export async function addAptitude(actor) {
   const used = new Set(arr);
   const free = Object.keys(APTITUDES).find(k => k !== "general" && !used.has(k)) || "ws";
   arr.push(free);
-  await actor.update({ "system.aptitudes": arr });
+  // Через setAptitudes, а не голым update: новая Склонность меняет категорию
+  // цены у уже купленного, и книга (стр. 24) требует пересчёта.
+  await setAptitudes(actor, arr);
 }
 
 export async function removeAptitude(actor, index) {
   const arr = aptitudesOf(actor);
   arr.splice(index, 1);
-  await actor.update({ "system.aptitudes": arr });
+  await setAptitudes(actor, arr);
 }
 
 /**
