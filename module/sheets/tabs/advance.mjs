@@ -6,7 +6,8 @@
 //  Функции принимают актора, а не лист.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { APTITUDES } from "../../constants/characteristics.mjs";
+import { APTITUDES, CHARACTERISTICS } from "../../constants/characteristics.mjs";
+import { confirmXpSpend } from "../../apps/xp-afford.mjs";
 import { charAptitudeSet, charCostXP, skillCostXP, talentCostXP,
          resolveTalentAptitudes } from "../../constants/advancement.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../../constants/skills.mjs";
@@ -161,8 +162,12 @@ export async function setGroupEntryField(actor, group, index, field, value) {
   const entry   = entries[index];
   if (entry) {
     if (field === "rank") {
+      const newCost = skillCumCost(actor, GROUP_SKILLS_DEF[group], value, entry.char, entry.grantedRank || "untrained", group, entry.specialty, null, entry.aptitudes);
+      // Нехватка опыта — вопрос (стр. 23); отказ оставляет запись как была.
+      if (!(await confirmXpSpend(actor, newCost - (Number(entry.cost) || 0),
+          entry.specialty || GROUP_SKILLS_DEF[group]?.label || group))) return false;
       entry.rank = value;
-      entry.cost = skillCumCost(actor, GROUP_SKILLS_DEF[group], value, entry.char, entry.grantedRank || "untrained", group, entry.specialty, null, entry.aptitudes);
+      entry.cost = newCost;
       // Цену поставила эта ветка, а не ГМ (wdbc-rcr9) — см. recalcAllAdvanceCosts.
       entry.costManual = false;
     } else if (field === "cost") {
@@ -177,6 +182,7 @@ export async function setGroupEntryField(actor, group, index, field, value) {
     }
   }
   await writeEntries(actor, group, entries);
+  return true;
 }
 
 export async function renameGroupEntry(actor, group, index, name) {
@@ -311,13 +317,22 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
       [`system.characteristics.${el.dataset.char}.${el.dataset.field}`]: parseInt(el.value) || 0
     });
   });
-  html.find(".char-improvement-select").change(ev => {
+  html.find(".char-improvement-select").change(async ev => {
     const el = ev.currentTarget;
     const charKey = el.dataset.char;
+    const cur = actor.system.characteristics?.[charKey] || {};
+    const newCost = charImpCost(actor, charKey, el.value);
+    // Нехватка опыта — вопрос, а не запрет (стр. 23, rules/xp-shortfall.mjs).
+    // Спрашиваем про ПРИРОСТ цены: на листе лежит накопленная сумма уровней.
+    if (!(await confirmXpSpend(actor, newCost - (Number(cur.cost) || 0),
+        CHARACTERISTICS[charKey]?.label || charKey))) {
+      el.value = cur.improvement || "none";
+      return;
+    }
     // Ставим уровень И авто-цену (можно затем поправить вручную в поле «Цена»).
     actor.update({
       [`system.characteristics.${charKey}.improvement`]: el.value,
-      [`system.characteristics.${charKey}.cost`]: charImpCost(actor, charKey, el.value),
+      [`system.characteristics.${charKey}.cost`]: newCost,
       // Цену ставит сама эта ветка — оставить пометку «вписано руками» значило
       // бы навсегда исключить строку из пересчёта с чужим числом (wdbc-rcr9).
       [`system.characteristics.${charKey}.costManual`]: false
@@ -362,13 +377,20 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
   });
 
   // ── Навыки: ранг и цена ───────────────────────────────────────────────────
-  html.find(".skill-rank-select").change(ev => {
+  html.find(".skill-rank-select").change(async ev => {
     const el = ev.currentTarget;
     const key = el.dataset.skill;
-    const granted = actor.system.skills?.[key]?.grantedRank || "untrained";
+    const cur = actor.system.skills?.[key] || {};
+    const granted = cur.grantedRank || "untrained";
+    const newCost = skillCumCost(actor, SKILLS_DEF[key], el.value, null, granted, null, "", key);
+    if (!(await confirmXpSpend(actor, newCost - (Number(cur.cost) || 0),
+        SKILLS_DEF[key]?.label || key))) {
+      el.value = cur.rank || "untrained";
+      return;
+    }
     actor.update({
       [`system.skills.${key}.rank`]: el.value,
-      [`system.skills.${key}.cost`]: skillCumCost(actor, SKILLS_DEF[key], el.value, null, granted, null, "", key),
+      [`system.skills.${key}.cost`]: newCost,
       [`system.skills.${key}.costManual`]: false
     });
   });
@@ -469,10 +491,12 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
       // costManual снимается вместе с ★: обе ветки ставят цену сами, и оставить
       // талант помеченным «цена вручную» значило бы навсегда исключить его из
       // пересчёта по Склонностям — с числом, которое ГМ руками не вписывал.
+      const boughtCost = talentCostXP(item.system.tier, a, apts, talentCategory(actor, item.name),
+        { name: item.name, patron: actor.system.patronGod, actor });
+      if (!(await confirmXpSpend(actor, boughtCost, item.name))) return;
       await item.update({
         "system.granted": false, "system.purchased": true, "system.costManual": false,
-        "system.cost": talentCostXP(item.system.tier, a, apts, talentCategory(actor, item.name),
-          { name: item.name, patron: actor.system.patronGod, actor })
+        "system.cost": boughtCost
       });
     } else {
       await item.update({ "system.granted": true, "system.purchased": false,
@@ -536,7 +560,11 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
 
   const entryField = field => async ev => {
     const el = ev.currentTarget;
-    await setGroupEntryField(actor, el.dataset.group, parseInt(el.dataset.index), field, el.value);
+    const done = await setGroupEntryField(actor, el.dataset.group, parseInt(el.dataset.index), field, el.value);
+    // Отказ при нехватке опыта: возвращаем в списке прежний ранг.
+    if (done === false && field === "rank") {
+      el.value = actor.system.groupSkills?.[el.dataset.group]?.[parseInt(el.dataset.index)]?.rank || "untrained";
+    }
   };
   html.find(".group-skill-rank-select").change(entryField("rank"));
   html.find(".group-skill-cost-input").change(entryField("cost"));

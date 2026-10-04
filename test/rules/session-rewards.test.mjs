@@ -8,10 +8,10 @@
 // проверить без запущенной игры.
 
 import { describe, it, expect } from "vitest";
-import { partyXp, actorXp, parseRewardAmount, buildRewardRows,
+import { partyXp, actorXp, actorRefund, parseRewardAmount, buildRewardRows,
   infamyRoom, infamyGain, permanentInfamy, INFAMY_PATH, INFAMY_CAP , sessionXpWithFastLearner }
   from "../../module/rules/session-rewards.mjs";
-import { XP_CATEGORIES, PARTY_KEYS, EACH_KEYS }
+import { XP_CATEGORIES, PARTY_KEYS, EACH_KEYS, REFUND_KEYS, outsideBookRange }
   from "../../module/constants/session-rewards.mjs";
 
 describe("книжная таблица разобрана", () => {
@@ -30,6 +30,70 @@ describe("книжная таблица разобрана", () => {
 
   it("у каждой категории есть пояснение книги", () => {
     for (const c of XP_CATEGORIES) expect(c.hint, c.key).toBeTruthy();
+  });
+});
+
+describe("вилки книги вводятся числом (сверка «Опыт», 04.10.2026)", () => {
+  const cat = key => XP_CATEGORIES.find(c => c.key === key);
+
+  it("вилки совпадают с корбуком", () => {
+    expect(cat("unknown").range).toEqual({ from: 50, to: 250 });
+    expect(cat("creative").range).toEqual({ from: 25, to: 100 });
+    expect(cat("roleplay").range).toEqual({ from: 10, to: 50 });
+    expect(cat("finale").range).toEqual({ from: 250, to: 750 });
+    // «На Ошибках»: 50–250, а за «умер» за сессию — до 500.
+    expect(cat("mistakes").range).toEqual({ from: 50, to: 500 });
+  });
+
+  it("«Преодоление Трудностей» остаётся списком — у книги дискретные ступени", () => {
+    expect(cat("hardship").range).toBeUndefined();
+    expect(cat("hardship").steps.length).toBe(6);
+  });
+
+  it("подсказки не повторяют значение: иначе выбор показывал бы чужую подпись", () => {
+    for (const c of XP_CATEGORIES) {
+      const values = (c.suggest ?? []).map(s => s.value);
+      expect(new Set(values).size, c.key).toBe(values.length);
+    }
+  });
+
+  it("любое число принимается, вне вилки — только помечается", () => {
+    const unknown = cat("unknown");
+    expect(partyXp({ unknown: 100 })).toBe(100);
+    expect(outsideBookRange(unknown, 100)).toBe(false);
+    expect(outsideBookRange(unknown, 300)).toBe(true);
+    expect(outsideBookRange(unknown, 10)).toBe(true);
+    // Ноль — «не выдавать», а не нарушение вилки.
+    expect(outsideBookRange(unknown, 0)).toBe(false);
+    expect(partyXp({ unknown: 300 })).toBe(300);
+  });
+
+  it("у возмещения вилки нет — не помечается никогда", () => {
+    expect(outsideBookRange(cat("organic"), 5000)).toBe(false);
+  });
+});
+
+describe("возмещение («Органичное Продвижение»)", () => {
+  it("личная категория, входит в сумму персонажа", () => {
+    expect(EACH_KEYS).toContain("organic");
+    expect(actorXp({ hardship: 500 }, { organic: 120 })).toBe(620);
+  });
+
+  it("выделяется отдельно: «Ловит на Лету» на возврат не действует", () => {
+    expect(REFUND_KEYS).toEqual(["organic"]);
+    expect(actorRefund({ organic: 120, roleplay: 50 })).toBe(120);
+    expect(actorRefund({ roleplay: 50 })).toBe(0);
+  });
+
+  it("число, вписанное руками, заменяет расчёт — и возмещения отдельно нет", () => {
+    expect(actorRefund({ organic: 120 }, 999)).toBe(0);
+  });
+
+  it("строка итога несёт возмещение", () => {
+    const [row] = buildRewardRows([{ id: "a1", name: "Первый" }],
+      { party: { hardship: 100 }, personal: { a1: { organic: 80 } } });
+    expect(row.xp).toBe(180);
+    expect(row.refund).toBe(80);
   });
 });
 

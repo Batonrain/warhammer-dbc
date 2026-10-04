@@ -6,7 +6,7 @@
 // и он же режет ручную добавку.
 
 import { describe, it, expect } from "vitest";
-import { START_LEVELS, START_CAP, startLevelValues } from "../../module/constants/start-levels.mjs";
+import { START_LEVELS, START_CAP, startLevelValues, levelForXp, baseXpForTarget } from "../../module/constants/start-levels.mjs";
 
 describe("таблица Уровней старта", () => {
   it("восемь строк, как в книге", () => {
@@ -79,5 +79,49 @@ describe("startLevelValues", () => {
 
   it("без субрасы — как раньше", () => {
     expect(startLevelValues({ level: "l2" })).toMatchObject({ xp: 7500, subraceCost: 0, xpShort: false });
+  });
+});
+
+describe("опыт новичка: строка таблицы по опыту (стр. 23)", () => {
+  it("высшая строка, до которой дотягивает опыт, по колонке своей расы", () => {
+    expect(levelForXp(7500).key).toBe("l2");
+    expect(levelForXp(7499).key).toBe("l1");
+    // Десанту та же строка достаётся с меньшим опытом.
+    expect(levelForXp(6000, true).key).toBe("l2");
+    expect(levelForXp(6000, false).key).toBe("l1");
+  });
+
+  it("ниже первой строки — первая, с нулевыми бонусами", () => {
+    expect(levelForXp(100)).toMatchObject({ key: "l1", infamy: 0, corruption: 0 });
+    expect(levelForXp(undefined).key).toBe("l1");
+  });
+
+  it("выше последней — последняя", () => {
+    expect(levelForXp(999999).key).toBe("l8");
+  });
+});
+
+describe("опыт новичка: база под «Ловит на Лету»", () => {
+  const gross = (base, pct) => Math.ceil(base * (1 + pct / 100));
+
+  it("без Черты база равна цели", () => {
+    expect(baseXpForTarget(8000)).toBe(8000);
+    expect(baseXpForTarget(8000, 0)).toBe(8000);
+  });
+
+  it("с Чертой на счёт ложится цель, а не цель плюс процент", () => {
+    for (const pct of [10, 15, 20, 25]) {
+      for (const target of [3750, 7500, 8123, 18750]) {
+        const base = baseXpForTarget(target, pct);
+        expect(gross(base, pct), `${pct}% / ${target}`).toBeGreaterThanOrEqual(target);
+        // И не больше, чем на единицу выше: база минимальная.
+        expect(gross(base - 1, pct), `${pct}% / ${target}`).toBeLessThan(target);
+      }
+    }
+  });
+
+  it("мусор не роняет", () => {
+    expect(baseXpForTarget(undefined, 25)).toBe(0);
+    expect(baseXpForTarget(-50, 25)).toBe(0);
   });
 });
