@@ -359,6 +359,15 @@ describe("activateAdvanceListeners", () => {
     expect(a.system.advanceTalents).toEqual([{ name: "Пилот", cost: 300 }]);
   });
 
+  it("смена Склонности на уже выбранную отклоняется: набор не сжимается до семи", async () => {
+    const a = actor({ aptitudes: ["ws", "bs", "s", "t", "ag", "int", "per", "wp"] });
+    const handlers = wire(a, {
+      elements: { ".apt-char-select": ["ws", "ws", "s", "t", "ag", "int", "per", "wp"].map(value => ({ value })) }
+    });
+    await handlers[".apt-char-select:change"](ev());
+    expect(a.system.aptitudes).toEqual(["ws", "bs", "s", "t", "ag", "int", "per", "wp"]);
+  });
+
   it("ПКМ по записи Группы Навыков даёт переименование и удаление", async () => {
     const a = actor({
       groupSkills: { scholasticLore: [{ specialty: "Тактика", rank: "untrained", cost: 0 }] }

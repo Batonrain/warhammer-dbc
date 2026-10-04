@@ -24,7 +24,7 @@ import { PSY_DISCIPLINES, TECH_DISCIPLINES, canHaveFocusDiscipline } from "../co
 import { effectiveFocusDisciplines, ownFocusDisciplines, grantedFocusDisciplines } from "../rules/psy-focus.mjs";
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
 import { TALENT_LIBRARY }                            from "../constants/talents-library.mjs";
-import { charAptitudeSet } from "../constants/advancement.mjs";
+import { charAptitudeSet, APTITUDES_TOTAL } from "../constants/advancement.mjs";
 import { canClearJam }                                from "../combat/weapon-properties.mjs";
 import { isBraced }                                   from "../combat/brace-weapon.mjs";
 import { ASPIRATION_TABLES } from "../constants/aspirations.mjs";
@@ -1047,6 +1047,15 @@ function buildGetDataUncached(actor) {
   context.aptitudeChoices = Object.entries(APTITUDES)
     .filter(([k]) => k !== "general")
     .map(([key, label]) => ({ key, label }));
+  // Книга: «выбрать 8 Склонностей» (стр. 24), потом их только МЕНЯЮТ — одну на
+  // другую. ＋/✕ нужны, лишь пока число не равно восьми (старый лист, NPC).
+  const aptList  = (Array.isArray(system.aptitudes) ? system.aptitudes : Object.values(system.aptitudes || {})).filter(Boolean);
+  const aptCount = new Set(aptList).size;
+  context.aptitudeTotal     = APTITUDES_TOTAL;
+  context.aptitudeCount     = aptCount;
+  context.aptitudeCanAdd    = aptCount < APTITUDES_TOTAL;
+  // Повтор в списке тоже лишний: он считается за одну Склонность.
+  context.aptitudeCanRemove = aptList.length > APTITUDES_TOTAL || aptList.length > aptCount;
 
   // Стремления (стр. 22): ЖЁСТКО фиксированные 3 слота, по одному на таблицу
   // (Гордыня/Позор/Мотивация) — раньше был свободный список до 3 из любой
