@@ -69,7 +69,7 @@ export function talentCost(actor, talent) {
   const cat = resolveAptitudeOverride(actor, "talent", talent?.name || "", sys.specialization || "")
     ?? cultureCat("talent", talent?.name || "", sys.specialization || "", cultFxOf(actor));
   return talentCostXP(sys.tier, sys.aptitudes || [], apts, cat,
-    { name: talent?.name, patron: actor.system?.patronGod, actor });
+    { name: talent?.name, patron: actor.system?.patronGod, actor, specialization: sys.specialization });
 }
 
 /**

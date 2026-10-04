@@ -10,6 +10,7 @@ import { confirmXpSpend } from "../apps/xp-afford.mjs";
 import { talentCostXP, charAptitudeSet, ALIGN_LABEL,
          raceAllyTalent, dynamicAptKind, CHAR_APTITUDES,
          resolveTalentAptitudes, resolveCharCat, resolveSkillCat, resolveTalentCat } from "../constants/advancement.mjs";
+import { isEliteTalent } from "../constants/patronage.mjs";
 import { cultureCat, resolveCultureFx } from "../constants/legions.mjs";
 import { resolveAptitudeOverride } from "../rules/aptitude-overrides.mjs";
 import { checkRequirement } from "../constants/talent-requirements.mjs";
@@ -377,10 +378,14 @@ export async function openItemPicker(actor, kind) {
             cost = `<span class="pick-cost cost-dyn" title="Склонности «как у ${dyn === "char" ? "Характеристики" : "Навыка"}» — цена зависит от выбора при покупке (стр. 62)">${range} XP</span>`;
           } else {
             const forced = talentCategory(actor, d.name, d.folder);
-            const cat = forced || resolveTalentCat(d.name, d.system.aptitudes || [], charApts, actor);
+            const cat = forced || resolveTalentCat(d.name, d.system.aptitudes || [], charApts, actor,
+              { specialization: d.system.specialization });
             const xp  = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts, forced,
-              { name: d.name, patron: actor.system.patronGod, actor });
-            cost = `<span class="pick-cost cost-${cat}" title="${ALIGN_LABEL[cat]} — совпадений склонностей: ${(d.system.aptitudes||[]).filter(a=>charApts.has(a)).length}">${xp} XP</span>`;
+              { name: d.name, patron: actor.system.patronGod, actor, specialization: d.system.specialization });
+            const why = isEliteTalent(d.name, d.system.specialization)
+              ? "Таланты Элитных Архетипов нейтральны по Склонностям (стр. 24)"
+              : `совпадений склонностей: ${(d.system.aptitudes||[]).filter(a=>charApts.has(a)).length}`;
+            cost = `<span class="pick-cost cost-${cat}" title="${ALIGN_LABEL[cat]} — ${why}">${xp} XP</span>`;
           }
         }
         const lock = g.lock || talentRowLock(actor, kind, d.name);
@@ -474,7 +479,7 @@ export async function openItemPicker(actor, kind) {
             const minionApts = resolveTalentAptitudes(d.name, d.system.aptitudes || [], obj.system.aptSource);
             obj.system.cost = talentCostXP(pick.talentTier, minionApts, charApts,
               talentCategory(actor, d.name, d.folder),
-              { name: d.name, patron: actor.system.patronGod });
+              { name: d.name, patron: actor.system.patronGod, actor, specialization: d.system.specialization });
           } else if (dyn) {
             // Mastery / Beyond Human: сначала выбор привязки (стр. 62), затем
             // цена по склонностям выбранной Характеристики/Навыка (стр. 23-24).
@@ -494,7 +499,7 @@ export async function openItemPicker(actor, kind) {
             obj.system.specialization = category;
             obj.system.cost = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts,
               talentCategory(actor, d.name, d.folder),
-              { name: d.name, patron: actor.system.patronGod });
+              { name: d.name, patron: actor.system.patronGod, actor, specialization: d.system.specialization });
           } else if (itemIs(d, "talent", CAP_TWO_WEAPON, "Two Weapon Wielder")) {
             // «Два Оружия» (стр. 62, wdbc-3jlm): Талант берётся отдельно на
             // рукопашную и на стрелковую руку — пара клинков требует одной
@@ -506,11 +511,11 @@ export async function openItemPicker(actor, kind) {
             obj.system.specialization = side;
             obj.system.cost = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts,
               talentCategory(actor, d.name, d.folder),
-              { name: d.name, patron: actor.system.patronGod });
+              { name: d.name, patron: actor.system.patronGod, actor, specialization: d.system.specialization });
           } else {
             obj.system.cost = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts,
               talentCategory(actor, d.name, d.folder),
-              { name: d.name, patron: actor.system.patronGod });
+              { name: d.name, patron: actor.system.patronGod, actor, specialization: d.system.specialization });
           }
           obj.system.purchased = true;
         }

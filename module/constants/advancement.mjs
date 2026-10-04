@@ -9,8 +9,13 @@
 
 import { specChar } from "./skill-specializations.mjs";
 import { objectAptitudes } from "../rules/aptitude-binding.mjs";
-import { effectivePricingMode, charPatronCat, skillPatronCat, talentPatronCat, mixedCat }
+import { effectivePricingMode, charPatronCat, skillPatronCat, talentPatronCat, mixedCat, isEliteTalent }
   from "./patronage.mjs";
+
+// «Персонаж при создании должен выбрать 8 Склонностей» (стр. 24); «Общая» — 9-я,
+// есть у всех и в эти 8 не входит. Мастер создания сверх книги просит 4+4
+// (см. APT_PICK в apps/creation.mjs), а лист следит только за общим числом.
+export const APTITUDES_TOTAL = 8;
 
 // Склонности характеристик (стр. 24): Хар → [склонность хар-ки, склонность спец.].
 export const CHAR_APTITUDES = {
@@ -121,8 +126,14 @@ export function resolveSkillCat(skillKey, specialty, itemApts, charApts, actor, 
   const patron = () => skillPatronCat(skillKey, specialty, actor.system?.patronGod);
   return mode === "patronage" ? patron() : mixedCat(apt(), patron());
 }
-export function resolveTalentCat(talentName, itemApts, charApts, actor) {
-  const apt = () => aptitudeCat(charApts, itemApts);
+export function resolveTalentCat(talentName, itemApts, charApts, actor, opts = {}) {
+  // «Все Таланты Элитных Архетипов считаются нейтральными в системе
+  // Склонностей» (стр. 24). Их собственных Склонностей в паке нет, и обычный
+  // подсчёт совпадений делал бы их Враждебными. В Смешанной системе это та же
+  // «половина Склонностей» — нейтральная, а Покровительство считается как всегда.
+  const apt = () => isEliteTalent(talentName, opts.specialization)
+    ? "neutral"
+    : aptitudeCat(charApts, itemApts);
   const mode = actor ? effectivePricingMode(actor) : "aptitude";
   if (mode === "aptitude" || !talentName) return apt();
   const patron = () => talentPatronCat(talentName, actor.system?.patronGod);
@@ -132,7 +143,8 @@ export function resolveTalentCat(talentName, itemApts, charApts, actor) {
 export function talentCostXP(tier, itemApts, charApts, cultCat = null, opts = {}) {
   const fixed = fixedTalentCost(opts.name, opts.patron);
   if (fixed !== null) return fixed;
-  const cat = cultCat || resolveTalentCat(opts.name, itemApts, charApts, opts.actor);
+  const cat = cultCat || resolveTalentCat(opts.name, itemApts, charApts, opts.actor,
+    { specialization: opts.specialization });
   return TALENT_COST[cat][clampIdx((parseInt(tier) || 1) - 1, 2)];
 }
 export function charCostXP(stepIndex, charKey, charApts, cultCat = null, opts = {}) {

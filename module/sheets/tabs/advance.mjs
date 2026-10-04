@@ -139,7 +139,8 @@ export async function recalcAllAdvanceCosts(actor) {
         ? resolveTalentAptitudes(it.name, it.system.aptitudes || [], it.system.aptSource, defs)
         : (it.system.aptitudes || []);
       return { _id: it.id, "system.cost": talentCostXP(it.system.tier, a, apts,
-        talentCategory(actor, it.name), { name: it.name, patron: actor.system.patronGod, actor }) };
+        talentCategory(actor, it.name), { name: it.name, patron: actor.system.patronGod, actor,
+          specialization: it.system.specialization }) };
     });
   if (talUpd.length) await actor.updateEmbeddedDocuments("Item", talUpd);
 }
@@ -492,7 +493,7 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
       // талант помеченным «цена вручную» значило бы навсегда исключить его из
       // пересчёта по Склонностям — с числом, которое ГМ руками не вписывал.
       const boughtCost = talentCostXP(item.system.tier, a, apts, talentCategory(actor, item.name),
-        { name: item.name, patron: actor.system.patronGod, actor });
+        { name: item.name, patron: actor.system.patronGod, actor, specialization: item.system.specialization });
       if (!(await confirmXpSpend(actor, boughtCost, item.name))) return;
       await item.update({
         "system.granted": false, "system.purchased": true, "system.costManual": false,
@@ -532,7 +533,7 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
     await item.update({
       "system.costManual": false,
       "system.cost": talentCostXP(item.system.tier, a, apts, talentCategory(actor, item.name),
-        { name: item.name, patron: actor.system.patronGod, actor })
+        { name: item.name, patron: actor.system.patronGod, actor, specialization: item.system.specialization })
     });
   });
 
@@ -611,6 +612,12 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
   html.find(".apt-char-select").on("change", async () => {
     const arr = [];
     html.find(".apt-char-select").each((_, el) => arr.push(el.value));
+    // Склонности не повторяются: повтор тихо сжал бы набор до семи.
+    if (new Set(arr).size !== arr.length) {
+      ui.notifications?.warn("Эта Склонность у персонажа уже есть — выбери другую.");
+      actor.sheet?.render?.(false);
+      return;
+    }
     await setAptitudes(actor, arr);
   });
 
