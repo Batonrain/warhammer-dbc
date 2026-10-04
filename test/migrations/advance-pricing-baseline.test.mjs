@@ -5,14 +5,18 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-const recalc = vi.fn(async () => {});
+// Заглушка запоминает режим мира В МОМЕНТ пересчёта: закрепление режима обязано
+// идти ДО пересчёта, иначе цены посчитались бы по Покровительству и так бы и остались.
+const modeAtRecalc = [];
+const recalc = vi.fn(async () => { modeAtRecalc.push(game.__mode); });
 vi.mock("../../module/sheets/tabs/advance.mjs", () => ({ recalcAllAdvanceCosts: (a) => recalc(a) }));
 
 import { migrateAdvancePricing, advancePricingSaved } from "../../module/migrations/advance-pricing-baseline.mjs";
 
 function stubGame({ saved, actors, isGM = true }) {
-  const set = vi.fn(async () => {});
+  const set = vi.fn(async (_s, _k, v) => { game.__mode = v; });
   vi.stubGlobal("game", {
+    __mode: "patronage",
     user: { isGM },
     actors,
     packs: { get: () => null },
@@ -26,7 +30,7 @@ function stubGame({ saved, actors, isGM = true }) {
 }
 const chars = (n) => Array.from({ length: n }, (_, i) => ({ type: "character", name: `Перс ${i}` }));
 
-beforeEach(() => recalc.mockClear());
+beforeEach(() => { recalc.mockClear(); modeAtRecalc.length = 0; });
 afterEach(() => vi.unstubAllGlobals());
 
 describe("закрепление режима цен мира", () => {
@@ -35,6 +39,12 @@ describe("закрепление режима цен мира", () => {
     const r = await migrateAdvancePricing();
     expect(set).toHaveBeenCalledWith("warhammer-dbc", "advancePricingMode", "aptitude");
     expect(r).toMatchObject({ pinned: true, fixed: 2, failed: 0 });
+  });
+
+  it("режим закрепляется ДО пересчёта: заглушка видит «Склонности»", async () => {
+    stubGame({ saved: false, actors: chars(2) });
+    await migrateAdvancePricing();
+    expect(modeAtRecalc).toEqual(["aptitude", "aptitude"]);
   });
 
   it("новый пустой мир остаётся на книжном умолчании", async () => {
