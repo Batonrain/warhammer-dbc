@@ -1,11 +1,11 @@
 {
-  "name": "Improvised Rune / Импровизированная Руна",
+  "name": "Rune Library / Библиотека Рун",
   "type": "talent",
   "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
   "system": {
-    "description": "<p>В пылу боя может быть необходимо создать ранее неизведанную руну, которая может спасти ситуацию. Перебирая сотни вариантов, последователь создаёт руну, но ранит своё тело и свой рассудок в процессе.</p>",
+    "description": "<p>Последователь хранит в своём разуме сотни рун, которые он готов сразу же применить в бою.</p>",
     "notes": "",
-    "benefit": "Персонаж может создавать руны любых психосил, даже чьи руны он не изучил, но взамен получая 1 непоглощаемого R Dmg в руку и 1 урона в S, A и W, что восстанавливает 1 за 8 часов и не может быть восстановлен психосилами, очками судьбы/бесчестия или медитацией.",
+    "benefit": "Псайкер увеличивает максимальный лимит рун на +I.b и ещё на +1 за каждую ступень навыка Forbidden Lore (Archeotech). Этот талант можно взять до 3 раз.",
     "bookSource": "DoomBC — Психокеры-Жабы (Toad Psykers), стр. 101-102",
     "tier": 3,
     "requirement": "I 40",
@@ -13,7 +13,7 @@
     "aptSource": "",
     "aspirations": [],
     "god": "",
-    "specialization": "Элитный архетип: Sigillite / Последователь Ордена Сигилли",
+    "specialization": "Элитный архетип: Sigillite / Последователь Ордена Сигиллитов",
     "hasRating": false,
     "rating": 0,
     "targets": [],
@@ -27,7 +27,7 @@
       "speedMod": 0
     }
   },
-  "_id": "yWtWgPzGaw37mUwr",
+  "_id": "dG1SWT692CowLGkA",
   "effects": [],
   "folder": "WVmP04GaWbHgfDpV",
   "sort": 0,
@@ -38,7 +38,7 @@
     "warhammer-dbc": {
       "mechanics": [
         {
-          "id": "xambCPcFwPAiAQg6",
+          "id": "qygoZzug1DIG5N7Y",
           "operator": "AND",
           "entries": [
             {
@@ -80,7 +80,7 @@
               "modScope": "all",
               "modValueMode": "flat",
               "modCharBonus": "inf",
-              "capabilityKey": "rune.sigillites.improvised",
+              "capabilityKey": "rune.sigillites.library",
               "fatigueAction": "threshold",
               "fatigueThresholdChar": "t",
               "equipMode": "direct",
@@ -126,7 +126,7 @@
                 "conditions": []
               },
               "kind": "capability",
-              "id": "Wcarf9xNIPkCfCip"
+              "id": "yPQEW2AbsGSIGxNd"
             }
           ]
         }
@@ -145,5 +145,5 @@
     "modifiedTime": 1789000000000,
     "lastModifiedBy": "4Q6l1C4FQOMQVofr"
   },
-  "_key": "!items!yWtWgPzGaw37mUwr"
+  "_key": "!items!dG1SWT692CowLGkA"
 }

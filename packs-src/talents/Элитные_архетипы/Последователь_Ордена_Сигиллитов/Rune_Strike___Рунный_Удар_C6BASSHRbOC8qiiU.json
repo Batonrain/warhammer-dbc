@@ -1,19 +1,19 @@
 {
-  "name": "Rune Calculator / Вычислитель Рун",
+  "name": "Rune Strike / Рунный Удар",
   "type": "talent",
   "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
   "system": {
-    "description": "<p>Вычисляя своим разумом множество формул рун и способ их сотворения, он открывает себе невероятный тактический потенциал.</p>",
+    "description": "<p>Наделяя свои психосилы дополнительным фундаментом, Последователь способен сотворять их с необычайным могуществом.</p>",
     "notes": "",
-    "benefit": "При наступлении первого хода псайкера в бою он получает дополнительно +I.b рун. Этот талант можно взять до 3 раз.",
+    "benefit": "При манифестации любой психосилы персонаж может потратить дополнительно четыре руны, добавив ей +1 эPR в расчёте всех эффектов. Персонаж может тратить руны несколько раз. Этот талант применяется до манифестации, но если манифестация была провальной, псайкер может вернуть I.b рун.",
     "bookSource": "DoomBC — Психокеры-Жабы (Toad Psykers), стр. 101-102",
     "tier": 3,
-    "requirement": "I 50",
+    "requirement": "I 40",
     "aptitudes": [],
     "aptSource": "",
     "aspirations": [],
     "god": "",
-    "specialization": "Элитный архетип: Sigillite / Последователь Ордена Сигилли",
+    "specialization": "Элитный архетип: Sigillite / Последователь Ордена Сигиллитов",
     "hasRating": false,
     "rating": 0,
     "targets": [],
@@ -27,7 +27,7 @@
       "speedMod": 0
     }
   },
-  "_id": "DVy6SwECXoHzNC9x",
+  "_id": "C6BASSHRbOC8qiiU",
   "effects": [],
   "folder": "WVmP04GaWbHgfDpV",
   "sort": 0,
@@ -38,7 +38,7 @@
     "warhammer-dbc": {
       "mechanics": [
         {
-          "id": "RNx3POzGwFGW2CBo",
+          "id": "folhGz1EaUUlFHbX",
           "operator": "AND",
           "entries": [
             {
@@ -80,7 +80,7 @@
               "modScope": "all",
               "modValueMode": "flat",
               "modCharBonus": "inf",
-              "capabilityKey": "rune.sigillites.calculator",
+              "capabilityKey": "rune.sigillites.strike",
               "fatigueAction": "threshold",
               "fatigueThresholdChar": "t",
               "equipMode": "direct",
@@ -126,7 +126,7 @@
                 "conditions": []
               },
               "kind": "capability",
-              "id": "NwhGAdiNo4AFhpxv"
+              "id": "7DRjKLQRQCHzUOJj"
             }
           ]
         }
@@ -145,5 +145,5 @@
     "modifiedTime": 1789000000000,
     "lastModifiedBy": "4Q6l1C4FQOMQVofr"
   },
-  "_key": "!items!DVy6SwECXoHzNC9x"
+  "_key": "!items!C6BASSHRbOC8qiiU"
 }

@@ -1048,12 +1048,12 @@ function buildGetDataUncached(actor) {
     .filter(([k]) => k !== "general")
     .map(([key, label]) => ({ key, label }));
   // Книга: «выбрать 8 Склонностей» (стр. 24), потом их только МЕНЯЮТ — одну на
-  // другую. ＋/✕ нужны, лишь пока число не равно восьми (старый лист, NPC).
+  // другую. ＋ виден всегда — девятую даёт раса или Путь (Аэльдари-Изгой), —
+  // но сверх восьми предупреждает; ✕ нужен, лишь когда их больше восьми.
   const aptList  = (Array.isArray(system.aptitudes) ? system.aptitudes : Object.values(system.aptitudes || {})).filter(Boolean);
   const aptCount = new Set(aptList).size;
   context.aptitudeTotal     = APTITUDES_TOTAL;
   context.aptitudeCount     = aptCount;
-  context.aptitudeCanAdd    = aptCount < APTITUDES_TOTAL;
   // Повтор в списке тоже лишний: он считается за одну Склонность.
   context.aptitudeCanRemove = aptList.length > APTITUDES_TOTAL || aptList.length > aptCount;
 

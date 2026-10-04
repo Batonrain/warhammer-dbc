@@ -8,7 +8,7 @@
 
 import { APTITUDES, CHARACTERISTICS } from "../../constants/characteristics.mjs";
 import { confirmXpSpend } from "../../apps/xp-afford.mjs";
-import { charAptitudeSet, charCostXP, skillCostXP, talentCostXP,
+import { charAptitudeSet, charCostXP, skillCostXP, talentCostXP, APTITUDES_TOTAL,
          resolveTalentAptitudes } from "../../constants/advancement.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../../constants/skills.mjs";
 import { charAdvanceCat, skillAdvanceCat } from "../../rules/advance-category.mjs";
@@ -79,6 +79,8 @@ function aptitudesOf(actor) {
 export async function addAptitude(actor) {
   const arr = aptitudesOf(actor);
   // Первая незанятая склонность из списка (чтобы не плодить дубли/пустышки).
+  if (new Set(arr).size >= APTITUDES_TOTAL)
+    ui.notifications?.warn(`По книге Склонностей ${APTITUDES_TOTAL}; больше — только от расы или Пути (стр. 24).`);
   const used = new Set(arr);
   const free = Object.keys(APTITUDES).find(k => k !== "general" && !used.has(k)) || "ws";
   arr.push(free);
@@ -612,8 +614,10 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
   html.find(".apt-char-select").on("change", async () => {
     const arr = [];
     html.find(".apt-char-select").each((_, el) => arr.push(el.value));
-    // Склонности не повторяются: повтор тихо сжал бы набор до семи.
-    if (new Set(arr).size !== arr.length) {
+    // Склонности не повторяются: повтор тихо сжал бы набор. Старый повтор,
+    // уже лежащий в списке, смене других строк не мешает — отказ только если
+    // число РАЗНЫХ Склонностей уменьшилось.
+    if (new Set(arr).size < new Set(aptitudesOf(actor)).size) {
       ui.notifications?.warn("Эта Склонность у персонажа уже есть — выбери другую.");
       actor.sheet?.render?.(false);
       return;

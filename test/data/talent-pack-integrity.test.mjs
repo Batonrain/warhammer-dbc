@@ -45,3 +45,19 @@ describe("пак talents: целостность", () => {
     expect(dead).toEqual([]);
   });
 });
+
+describe("папки Талантов Элитных Архетипов отпираются архетипом с тем же именем", () => {
+  // Замок папки в пикере (sheets/item-picker.mjs::talentGroupLock) сверяет имя
+  // папки с именем Элитного Архетипа на листе. Папка «Сигиллит» при архетипе
+  // «Последователь Ордена Сигиллитов» не открывалась никому.
+  it("для каждой папки есть архетип, у которого она открывается", async () => {
+    const { hasEliteArchetype } = await import("../../module/rules/predicates.mjs");
+    const names = jsonFiles(join(ROOT, "packs-src/elite-archetypes")).map(read)
+      .filter(j => j.type === "eliteArchetype").map(j => j.name);
+    const base = join(ROOT, "packs-src/talents/Элитные_архетипы");
+    const folders = readdirSync(base, { withFileTypes: true }).filter(e => e.isDirectory())
+      .map(e => read(join(base, e.name, "_Folder.json")).name);
+    const locked = folders.filter(f => !names.some(n => hasEliteArchetype({ system: { eliteArchetype: n } }, f)));
+    expect(locked).toEqual([]);
+  });
+});

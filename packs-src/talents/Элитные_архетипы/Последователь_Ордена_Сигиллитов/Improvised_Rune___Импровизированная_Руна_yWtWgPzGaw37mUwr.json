@@ -1,19 +1,19 @@
 {
-  "name": "Prepared Rune / Заготовленная Руна",
+  "name": "Improvised Rune / Импровизированная Руна",
   "type": "talent",
   "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
   "system": {
-    "description": "<p>Последователь оттачивает мастерство определённой для него руны, после чего получает возможность сотворять её за считанные мгновения.</p>",
+    "description": "<p>В пылу боя может быть необходимо создать ранее неизведанную руну, которая может спасти ситуацию. Перебирая сотни вариантов, последователь создаёт руну, но ранит своё тело и свой рассудок в процессе.</p>",
     "notes": "",
-    "benefit": "В начале боя персонаж может выбрать одну руну, чья стоимость сотворения в первый раз падает на I.b персонажа, но не ниже 1.",
+    "benefit": "Персонаж может создавать руны любых психосил, даже чьи руны он не изучил, но взамен получая 1 непоглощаемого R Dmg в руку и 1 урона в S, A и W, что восстанавливает 1 за 8 часов и не может быть восстановлен психосилами, очками судьбы/бесчестия или медитацией.",
     "bookSource": "DoomBC — Психокеры-Жабы (Toad Psykers), стр. 101-102",
     "tier": 3,
-    "requirement": "A 40, I 40",
+    "requirement": "I 40",
     "aptitudes": [],
     "aptSource": "",
     "aspirations": [],
     "god": "",
-    "specialization": "Элитный архетип: Sigillite / Последователь Ордена Сигилли",
+    "specialization": "Элитный архетип: Sigillite / Последователь Ордена Сигиллитов",
     "hasRating": false,
     "rating": 0,
     "targets": [],
@@ -27,7 +27,7 @@
       "speedMod": 0
     }
   },
-  "_id": "QvDyjnjAdRHBkeFw",
+  "_id": "yWtWgPzGaw37mUwr",
   "effects": [],
   "folder": "WVmP04GaWbHgfDpV",
   "sort": 0,
@@ -38,7 +38,7 @@
     "warhammer-dbc": {
       "mechanics": [
         {
-          "id": "F2qspOLWQhsi4eFh",
+          "id": "xambCPcFwPAiAQg6",
           "operator": "AND",
           "entries": [
             {
@@ -80,7 +80,7 @@
               "modScope": "all",
               "modValueMode": "flat",
               "modCharBonus": "inf",
-              "capabilityKey": "rune.sigillites.prepared",
+              "capabilityKey": "rune.sigillites.improvised",
               "fatigueAction": "threshold",
               "fatigueThresholdChar": "t",
               "equipMode": "direct",
@@ -126,7 +126,7 @@
                 "conditions": []
               },
               "kind": "capability",
-              "id": "pGPf0jTLFY0sknft"
+              "id": "Wcarf9xNIPkCfCip"
             }
           ]
         }
@@ -145,5 +145,5 @@
     "modifiedTime": 1789000000000,
     "lastModifiedBy": "4Q6l1C4FQOMQVofr"
   },
-  "_key": "!items!QvDyjnjAdRHBkeFw"
+  "_key": "!items!yWtWgPzGaw37mUwr"
 }

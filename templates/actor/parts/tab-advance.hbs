@@ -1,5 +1,5 @@
 <div class="tab advance-cog {{#if (eq tab "advance")}}active{{/if}}" data-tab="advance" data-group="primary"> <div class="advance-top"> {{#if usesAptitudes}}<div class="stat-panel advance-aptitudes" data-collapse-key="advance-aptitudes"> <div class="panel-title" data-action="panelCollapse"> СКЛОННОСТИ
-        {{#if aptitudeCanAdd}}<button type="button" class="apt-char-add-btn" title="Добавить склонность (нужно {{aptitudeTotal}}, сейчас {{aptitudeCount}}; «Общая» есть у всех)">＋</button>{{/if}} </div> <div class="panel-scroll"> <table class="items-table"> <tbody>
+        <button type="button" class="apt-char-add-btn" title="Добавить склонность (по книге {{aptitudeTotal}}, сейчас {{aptitudeCount}}; «Общая» есть у всех). Сверх {{aptitudeTotal}} — только от расы или Пути">＋</button> </div> <div class="panel-scroll"> <table class="items-table"> <tbody>
             <tr class="apt-general-row"><td colspan="2"><span class="apt-general" title="Всегда, по умолчанию">Общая</span></td></tr>
             {{#if system.aptitudes.length}}
             {{#each system.aptitudes as |apt idx|}}

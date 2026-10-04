@@ -148,6 +148,7 @@ import { migrateNimbleRating } from "./module/migrations/nimble-rating.mjs";
 import { migrateSightAngle } from "./module/migrations/sight-angle.mjs";
 import { migrateStringListRestore } from "./module/migrations/string-list-restore.mjs";
 import { migrateLimbLossSides } from "./module/migrations/limb-loss-sides.mjs";
+import { migrateAdvancePricing } from "./module/migrations/advance-pricing-baseline.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
 import { runMigrationGate } from "./module/migrations/unlinked-tokens.mjs";
 import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
@@ -609,6 +610,12 @@ Hooks.once("init", () => {
   // Версия записи потери конечностей по сторонам (system.lostLimbs) у уже
   // покалеченных — прежние conditions.lostX схема вычищает (приёмка #518-#526)
   game.settings.register("warhammer-dbc", "limbLossSidesVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия закрепления режима цен мира и пересчёта цен Продвижения после
+  // сверки «Склонности» 04.10.2026 (одноразовая, migrations/advance-pricing-baseline.mjs)
+  game.settings.register("warhammer-dbc", "advancePricingBaselineVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -1089,7 +1096,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -1321,6 +1328,23 @@ Hooks.once("ready", async () => {
     if (!result?.failed) await game.settings.set("warhammer-dbc", "limbLossSidesVersion", VERSION);
     else console.warn("Warhammer DBC | Потеря конечностей: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
   } catch (e) { console.error("Warhammer DBC | Потеря конечностей:", e); }
+});
+
+// ── Одноразово: режим цен мира закрепляется на «Склонностях», если ГМ его ни
+// разу не сохранял (умолчание сменили на Покровительство), и пересчитываются
+// цены купленного — Таланты Элитных Архетипов стали Нейтральными, цена покупки
+// считается по режиму персонажа. Идемпотентна. Версия — только при полном
+// успехе, как у соседних миграций.
+// Ручной перезапуск: game.warhammerDBC.migrateAdvancePricing()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "advancePricingBaselineVersion") || 0) >= VERSION) return;
+  try {
+    const result = await migrateAdvancePricing();
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "advancePricingBaselineVersion", VERSION);
+    else console.warn("Warhammer DBC | Цены Продвижения: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
+  } catch (e) { console.error("Warhammer DBC | Цены Продвижения:", e); }
 });
 
 // ── Одноразовая доливка: биоимпланты, выданные до появления Доступности ──────
