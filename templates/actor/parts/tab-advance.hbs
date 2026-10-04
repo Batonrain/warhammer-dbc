@@ -37,7 +37,7 @@
     <div class="panel-title" data-action="panelCollapse" title="Выбор Бога окрашивает лист и определяет преимущество/недостаток Очков Бесчестия (корбук 438); в режиме Покровительства/Смешанной — ещё и цену Продвижения ниже.">ПОКРОВИТЕЛЬ ХАОСА</div>
     <div class="chaos-patron-grid">
       {{#each chaosPatrons as |p|}}
-      <label class="chaos-patron-opt {{#if p.selected}}sel{{/if}}" title="{{p.label}}" style="--pg:{{p.color}};--pgs:{{p.gc2}};--pgl:{{p.glow}}">
+      <label class="chaos-patron-opt {{#if p.selected}}sel{{/if}}" title="{{p.tip}}" style="--pg:{{p.color}};--pgs:{{p.gc2}};--pgl:{{p.glow}}">
         <input type="radio" name="system.patronGod" value="{{p.key}}" {{#if p.selected}}checked{{/if}}/>
         <span class="chaos-patron-sigil" style="-webkit-mask:url('{{p.sigil}}') center/contain no-repeat;mask:url('{{p.sigil}}') center/contain no-repeat"></span>
         <span class="chaos-patron-name">{{p.label}}</span>

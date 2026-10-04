@@ -72,7 +72,7 @@ import { spendCapabilityCost } from "../combat/capability-cost.mjs";
 import { runMechScriptEntry } from "../apps/mechanics.mjs";
 import { applyTouchedByFates } from "../rules/daemon-locus.mjs";
 import { promptStatAdd } from "../apps/stat-log.mjs";
-import { CHAOS_PATRONS, chaosPatronMeta } from "../constants/chaos-patron.mjs";
+import { CHAOS_PATRONS, chaosPatronMeta, godAttentionTip } from "../constants/chaos-patron.mjs";
 import { charStereotypesFor, effectivePricingMode, worldAdvancePricingMode, PRICING_MODES } from "../constants/patronage.mjs";
 import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
@@ -1051,7 +1051,7 @@ export class WarhammerCharacterSheet
       // подставляет Неделимого, когда Бог не выбран, и селектор показывал бы
       // выбранным то, чего в акторе нет (wdbc-osz).
       const patronChosen = this.actor.system.patronGod || "";
-      context.chaosPatrons = CHAOS_PATRONS.map(p => ({ ...p, selected: p.key === patronChosen,
+      context.chaosPatrons = CHAOS_PATRONS.map(p => ({ ...p, selected: p.key === patronChosen, tip: godAttentionTip(p.key) || p.label,
         favor: Number(foundry.utils.getProperty(this.actor, `system.patronFavor.${p.key}`)) || 0 }));
       // Селектор Бога в ЗАПИСЯХ — только там, где патрон не выбирается иначе.
       // У Демон-Принца патрон = «Патрон» в шапке (allegiance) → селектор скрыт.

@@ -8,6 +8,7 @@ import { LOCATION_TO_SIDE } from "../rules/useless-limbs.mjs";
 import { secondaryCritHtml, ARMOR_KEY_TO_LOCATION } from "./secondary-crit.mjs";
 import { critCharDamageHtml } from "./char-damage-button.mjs";
 import { parseCritEffectPills, critPillsHtml, deathButtonHtml, dropButtonHtml, textAssertsDeath } from "./crit-effect-parser.mjs";
+import { sweetSufferingHtml } from "./sweet-suffering.mjs";
 import { SHIELD_STATUS }  from "../constants/shields.mjs";
 import { applyDamageToVehicle } from "./vehicle.mjs";
 import { applyDamageToHorde }   from "./horde-damage.mjs";
@@ -1486,6 +1487,8 @@ export async function applyDamageToActor(actor, damageData) {
       ${critPillsHtml(critPills, actor.uuid, netDamage, { side: LOCATION_TO_SIDE[hitLocation] || "" })}
       ${critEffect ? critCharDamageHtml(critEffect, actor.uuid) : ""}
       ${critEffect ? dropButtonHtml(critEffect, actor.uuid, LOCATION_TO_SIDE[hitLocation] || "") : ""}
+      ${critEffect ? sweetSufferingHtml(actor, { pills: critPills, hasCharDamage: /урона\s+в\s+[A-Za-z]/u.test(critEffect),
+          hasDrop: !!dropButtonHtml(critEffect, actor.uuid, LOCATION_TO_SIDE[hitLocation] || "") }) : ""}
       ${maggotParasiteHtml || kissOfMimicHtml || (castOutOfDeathBlocksDeath
         ? `<div class="wh-crit-pills roll-threshold">💀 Изгнанный из Смерти: не может умереть от этого — Раны сами вернутся к −7 в течение 7ч (Календарь).</div>`
         : (critEffect ? deathButtonHtml(critEffect, actor.uuid, weaponUuid) : ""))}

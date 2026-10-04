@@ -16,6 +16,7 @@
 
 import { getCriticalEffect } from "../../critical-tables.mjs";
 import { parseCritEffectPills, critPillsHtml, deathButtonHtml, dropButtonHtml } from "./crit-effect-parser.mjs";
+import { sweetSufferingHtml } from "./sweet-suffering.mjs";
 import { LOCATION_TO_SIDE } from "../rules/useless-limbs.mjs";
 import { critCharDamageHtml } from "./char-damage-button.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
@@ -55,6 +56,8 @@ export async function secondaryCritHtml(actor, { gotCritical, newCritical } = {}
     ${critPillsHtml(pills, actor.uuid, 0, { side })}
     ${critEffect ? critCharDamageHtml(critEffect, actor.uuid) : ""}
     ${critEffect ? dropButtonHtml(critEffect, actor.uuid, side) : ""}
+    ${critEffect ? sweetSufferingHtml(actor, { pills, hasCharDamage: /урона\s+в\s+[A-Za-z]/u.test(critEffect),
+        hasDrop: !!dropButtonHtml(critEffect, actor.uuid, side) }) : ""}
     ${critEffect ? deathButtonHtml(critEffect, actor.uuid, "") : ""}
   </div>`;
 }

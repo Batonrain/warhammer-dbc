@@ -18,6 +18,7 @@ import { checkEliteRequirements, eliteWho, eliteCost, eliteCostNote }
   from "../rules/elite-requirements.mjs";
 import { isFatedElite, fatedEliteCost, eliteTakenForPrice, FATED_DISCOUNT } from "../rules/fated-path.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { grantEliteGear } from "./gear-grant.mjs";
 
 /**
  * Цена архетипа именно для этого персонажа, с множителем за уже взятые.
@@ -117,6 +118,12 @@ export async function buyEliteArchetype(actor, doc) {
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `<p><b>Элитный архетип:</b> ${esc(doc.name)}${cost ? ` — потрачено <b>${cost}</b> опыта${note ? ` (${esc(note)})` : ""}` : ""}.</p>`
   });
+
+  // Снаряжение архетипа — часть стартового (стр. 24): что найдётся в
+  // компендиумах по имени, ложится на лист, остальное — шёпотом ГМу. Сбой
+  // выдачи не отменяет уже оплаченную покупку.
+  try { await grantEliteGear(actor, doc); }
+  catch (err) { console.error("Warhammer DBC | снаряжение Элитного Архетипа не выдано", err); }
 
   return item;
 }

@@ -316,10 +316,10 @@
         <div class="wiz-gen-lbl" title="По ним считается цена Характеристик, Навыков и Талантов (система «Покровительство», корбук стр. 23) — Бог задаёт цену Навыков/Талантов, стереотип — Характеристик.">Бог задаёт цену Навыков/Талантов, стереотип — Характеристик:</div>
         <div class="apt-group">
           <div class="apt-group-lbl">Бог-покровитель</div>
-          <select class="wiz-patron-god">
+          <select class="wiz-patron-god" title="{{patronGodTip}}">
             <option value="">— не выбран —</option>
             {{#each patronGods as |p|}}
-            <option value="{{p.key}}" {{#if p.selected}}selected{{/if}}>{{p.label}}</option>
+            <option value="{{p.key}}" title="{{p.tip}}" {{#if p.selected}}selected{{/if}}>{{p.label}}</option>
             {{/each}}
           </select>
         </div>
@@ -475,6 +475,12 @@
         <div class="cstart-hint">Опыт этому персонажу уже выдавался — повторное «Далее» его не тронет.</div>
         {{else}}
         <div class="cstart-hint">Бесчестие и Порча стартового персонажа не превышают {{startCap}}.</div>
+        {{#if startNewcomer}}
+        <div class="cstart-hint cstart-newcomer" title="Стр. 23: при вводе нового персонажа в текущую игру он получает столько опыта, сколько есть у наименее опытного из текущих персонажей. Уровень таблицы берётся по этому опыту, Влияние и Порча — его строки.">
+          В партии наименее опытный — <b>{{startNewcomer.name}}</b>, {{startNewcomer.xp}} XP.
+          <button type="button" class="wiz-start-newcomer">Взять как стартовый</button>
+        </div>
+        {{/if}}
         <table class="items-table cstart-table{{#if startIsAstartes}} cstart-astartes{{/if}}">
           <thead><tr>
             <th></th><th class="cstart-col-astartes">XP Десантника</th>

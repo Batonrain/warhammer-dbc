@@ -1,8 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   godRelationCat, skillGodOf, skillPatronCat, talentGodKeyOf, talentPatronCat,
   CHAR_STEREOTYPES, charStereotypesFor, charPatronCat, mixedCat, PRICING_MODES,
-  worldAdvancePricingMode, effectivePricingMode
+  worldAdvancePricingMode, effectivePricingMode, DEFAULT_PRICING_MODE, registerAdvancePricingSettings
 } from "../../module/constants/patronage.mjs";
 
 describe("матрица отношений Богов", () => {
@@ -104,11 +104,22 @@ describe("Смешанная система — таблица комбинац�
 });
 
 describe("режим цены — мировой и per-actor", () => {
+  afterEach(() => vi.unstubAllGlobals());
   it("PRICING_MODES перечисляет три режима", () => {
     expect(Object.keys(PRICING_MODES).sort()).toEqual(["aptitude", "mixed", "patronage"]);
   });
   it("без game.settings — фолбэк на Склонности (прежнее единственное поведение)", () => {
     expect(worldAdvancePricingMode()).toBe("aptitude");
+  });
+  it("мировое умолчание — Покровительство, как в книге (решение 04.10.2026)", () => {
+    expect(DEFAULT_PRICING_MODE).toBe("patronage");
+    const register = vi.fn();
+    vi.stubGlobal("game", { settings: { register } });
+    registerAdvancePricingSettings();
+    const [scope, key, cfg] = register.mock.calls[0];
+    expect([scope, key]).toEqual(["warhammer-dbc", "advancePricingMode"]);
+    expect(cfg.default).toBe("patronage");
+    expect(Object.keys(cfg.choices)).toContain(cfg.default);
   });
   it("effectivePricingMode: personal-оверрайд важнее мирового", () => {
     const actor = { system: { pricingModeOverride: "patronage" } };

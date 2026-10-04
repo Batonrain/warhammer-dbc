@@ -21,11 +21,21 @@
       {{#each partyCats as |c|}}
       <div class="wh-sr-row" title="{{c.hint}}">
         <label class="wh-sr-lbl">{{c.label}}</label>
+        {{#if c.typed}}
+        <input type="number" min="0" step="5" class="wh-sr-party{{#if c.outside}} wh-sr-warn{{/if}}" data-cat="{{c.key}}"
+               list="wh-sr-dl-{{c.key}}" value="{{#if c.chosen}}{{c.chosen}}{{/if}}" placeholder="0"
+               title="{{c.bookRange}}{{#if c.outside}} — число вне вилки книги{{/if}}"/>
+        <span class="wh-sr-dim">{{c.bookRange}}</span>
+        <datalist id="wh-sr-dl-{{c.key}}">
+          {{#each c.suggest as |s|}}<option value="{{s.value}}">{{s.label}}</option>{{/each}}
+        </datalist>
+        {{else}}
         <select class="wh-sr-party" data-cat="{{c.key}}">
           {{#each c.steps as |s|}}
           <option value="{{s.value}}" {{#if (eq s.value c.chosen)}}selected{{/if}}>{{s.label}}</option>
           {{/each}}
         </select>
+        {{/if}}
       </div>
       {{/each}}
     </div>
@@ -48,13 +58,12 @@
           {{#each rows as |r|}}
           <tr>
             <td class="wh-sr-name">{{r.name}}<span class="wh-sr-dim"> · сейчас {{r.xpNow}} xp</span></td>
-            {{#each ../eachCats as |c|}}
+            {{#each r.cells as |c|}}
             <td>
-              <select class="wh-sr-personal" data-actor="{{r.id}}" data-cat="{{c.key}}">
-                {{#each c.steps as |s|}}
-                <option value="{{s.value}}" {{#if (eq s.value (lookup r.personal c.key))}}selected{{/if}}>{{s.label}}</option>
-                {{/each}}
-              </select>
+              <input type="number" min="0" step="5" class="wh-sr-personal{{#if c.outside}} wh-sr-warn{{/if}}"
+                     data-actor="{{r.id}}" data-cat="{{c.key}}"
+                     {{#if c.suggest.length}}list="wh-sr-dl-{{c.key}}"{{/if}} value="{{c.value}}" placeholder="0"
+                     title="{{c.bookRange}}{{#if c.outside}} — число вне вилки книги{{/if}}"/>
             </td>
             {{/each}}
             <td class="wh-sr-xp">
@@ -73,6 +82,13 @@
           {{/each}}
         </tbody>
       </table>
+      {{#each eachCats as |c|}}
+      {{#if c.suggest.length}}
+      <datalist id="wh-sr-dl-{{c.key}}">
+        {{#each c.suggest as |s|}}<option value="{{s.value}}">{{s.label}}</option>{{/each}}
+      </datalist>
+      {{/if}}
+      {{/each}}
       {{else}}
       <div class="wh-sr-dim">Никто не отмечен — отметьте, кому раздавать.</div>
       {{/if}}

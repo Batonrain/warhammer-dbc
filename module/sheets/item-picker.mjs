@@ -6,6 +6,7 @@
 
 import { CHARACTERISTICS, APTITUDES } from "../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
+import { confirmXpSpend } from "../apps/xp-afford.mjs";
 import { talentCostXP, charAptitudeSet, ALIGN_LABEL,
          raceAllyTalent, dynamicAptKind, CHAR_APTITUDES,
          resolveTalentAptitudes, resolveCharCat, resolveSkillCat, resolveTalentCat } from "../constants/advancement.mjs";
@@ -516,6 +517,8 @@ export async function openItemPicker(actor, kind) {
         // Многократный Талант (system.hasRating — Enemy, стр. 62, и подобные),
         // уже лежащий на листе, не задваивается второй копией: ранг существующего
         // предмета поднимается на 1. Остальные Таланты, Черты и Мутации — как раньше.
+        // Нехватка опыта — вопрос, а не запрет (стр. 23, rules/xp-shortfall.mjs).
+        if (kind === "talent" && hasXP && !(await confirmXpSpend(actor, obj.system?.cost, d.name))) return;
         const { ranked, rating } = await createOrRankTalent(actor, obj);
         const verb = ranked ? `Ранг поднят до ${rating}` : "Куплено";
         ui.notifications.info(kind === "talent" && obj.system?.cost

@@ -82,9 +82,25 @@
 - `module/apps/xp-log.mjs` — Журнал опыта, живое окно.
 - `module/sheets/tabs/advance.mjs` — вкладка Развитие на листе.
 - Награды за сессию: `constants/session-rewards.mjs`, `rules/session-rewards.
-  mjs`, `apps/session-rewards-app.mjs` (окно «Итоги Сессии»).
+  mjs`, `apps/session-rewards-app.mjs` (окно «Итоги Сессии»): вилки книги
+  вводятся числом с подсказками, колонка «Возмещение» (Органичное
+  Продвижение) без «Ловит на Лету».
 - `module/constants/start-levels.mjs` — стартовый опыт/Бесчестие/Порча по
-  уровню игры.
+  уровню игры; `rules/party-xp.mjs` — планка новичка (наименее опытный из
+  персонажей игроков), кнопка «Взять как стартовый» на Этапе 4 Мастера.
+- `module/rules/xp-shortfall.mjs` + `apps/xp-afford.mjs` — «Взять всё
+  равно?» при нехватке опыта на покупку Характеристики/Навыка/Таланта
+  (Элитные и Психосилы спрашивают у себя).
+- Особые траты Покровительства: `rules/patron-abilities.mjs` — «Атака Ненависти»
+  (Кхорн, галочка в окне атаки, `fixedSuccessDeg`) и «Сладкое Страдание»
+  (Слаанеш, кнопка на карточке Критического Эффекта, `combat/sweet-suffering.mjs`);
+  тексты «Бог обращает внимание на…» — `GOD_ATTENTION` в `constants/chaos-patron.mjs`.
+- Снаряжение Элитного Архетипа при покупке — `apps/gear-grant.mjs` (`grantEliteGear`,
+  `planEliteGear`): именное — на лист, выбор/категория/ненайденное — шёпотом ГМу;
+  стартовые боеприпасы — `rules/equip-shop.mjs::planStartingAmmo` (всегда, флаг
+  `startingAmmoGranted`), жертва кибернетики — `sacrificeModPack` (спрашивает оружие/броня).
+- Мировая система цен продвижения по умолчанию — Покровительство
+  (`constants/patronage.mjs`, DEFAULT_PRICING_MODE).
 
 ## 3. Раны, Смерть, Лечение, Аблативный пул
 
