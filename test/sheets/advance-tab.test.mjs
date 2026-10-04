@@ -25,11 +25,11 @@ function applyPath(target, path, value) {
 }
 
 function talent({ id = "tal-1", name = "Меткий стрелок", tier = 1,
-                  aptitudes = [], purchased = true, cost = 0 } = {}) {
+                  aptitudes = [], purchased = true, cost = 0, specialization = "" } = {}) {
   const t = {
     id, name,
     type: "talent",
-    system: { tier, aptitudes, purchased, cost },
+    system: { tier, aptitudes, purchased, cost, specialization },
     deleted: false,
     delete: async () => { t.deleted = true; }
   };
@@ -359,6 +359,31 @@ describe("activateAdvanceListeners", () => {
     expect(a.system.advanceTalents).toEqual([{ name: "Пилот", cost: 300 }]);
   });
 
+  it("Талант Элитного Архетипа пересчитывается как Нейтральный; обычный с теми же полями — Враждебный (стр. 24)", async () => {
+    const elite  = talent({ id: "e", name: "Любой Элитный", tier: 2, cost: 999, specialization: "Элитный архетип: Архимаг" });
+    const common = talent({ id: "c", name: "Любой Обычный", tier: 2, cost: 999 });
+    const a = actor({ aptitudes: ["ws", "bs"], items: [elite, common] });
+
+    await recalcAllAdvanceCosts(a);
+
+    expect(a.itemUpdates).toEqual([
+      { _id: "e", "system.cost": 500 },   // Нейтральная, 2-я ступень
+      { _id: "c", "system.cost": 750 }    // Враждебная, 2-я ступень
+    ]);
+  });
+
+  it("в Смешанной системе Элитный Талант — Нейтральный по Склонностям, Покровительство считается как всегда", async () => {
+    const elite = talent({ id: "e", name: "Любой Элитный", tier: 2, cost: 999, specialization: "Элитный архетип: Архимаг" });
+    const a = actor({ aptitudes: ["ws", "bs"], items: [elite] });
+    a.system.pricingModeOverride = "mixed";
+    a.system.patronGod = "khorne"; // Бог Таланта не записан → Неделимый → Нейтральный
+
+    await recalcAllAdvanceCosts(a);
+
+    // mixedCat(neutral, neutral) = neutral → 500; при Враждебной половине было бы 750
+    expect(a.itemUpdates).toEqual([{ _id: "e", "system.cost": 500 }]);
+  });
+
   it("смена Склонности на уже выбранную отклоняется: набор не сжимается до семи", async () => {
     const a = actor({ aptitudes: ["ws", "bs", "s", "t", "ag", "int", "per", "wp"] });
     const handlers = wire(a, {
@@ -366,6 +391,15 @@ describe("activateAdvanceListeners", () => {
     });
     await handlers[".apt-char-select:change"](ev());
     expect(a.system.aptitudes).toEqual(["ws", "bs", "s", "t", "ag", "int", "per", "wp"]);
+  });
+
+  it("повтор, уже лежащий в старом списке, не блокирует смену другой строки", async () => {
+    const a = actor({ aptitudes: ["ws", "ws", "s", "t", "ag", "int", "per", "wp"] });
+    const handlers = wire(a, {
+      elements: { ".apt-char-select": ["ws", "ws", "s", "t", "ag", "int", "per", "fel"].map(value => ({ value })) }
+    });
+    await handlers[".apt-char-select:change"](ev());
+    expect(a.system.aptitudes).toEqual(["ws", "ws", "s", "t", "ag", "int", "per", "fel"]);
   });
 
   it("ПКМ по записи Группы Навыков даёт переименование и удаление", async () => {

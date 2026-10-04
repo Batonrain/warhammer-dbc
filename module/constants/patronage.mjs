@@ -101,7 +101,7 @@ function fallbackEliteTalentNames() {
   return new Set(TALENT_LIBRARY.filter(t => isEliteSpecialization(t.system?.specialization)).map(t => t.name));
 }
 
-async function _refreshTalentGodIndex() {
+export async function refreshTalentGodIndex() {
   const pack = (typeof game !== "undefined") ? game.packs?.get?.(TALENT_PACK_ID) : null;
   if (!pack) { _talentGodByName = fallbackTalentGodIndex(); _eliteTalentNames = fallbackEliteTalentNames(); return; }
   try {
@@ -125,9 +125,9 @@ async function _refreshTalentGodIndex() {
  * обновляет его при правках компендиума warhammer-dbc.talents. До первого
  * построения (или в тестах без game.packs) используется прямой запасной путь. */
 export function initTalentGodIndex() {
-  Hooks.once("ready", () => _refreshTalentGodIndex());
+  Hooks.once("ready", () => refreshTalentGodIndex());
   for (const h of ["createItem", "deleteItem", "updateItem"])
-    Hooks.on(h, doc => { if (doc?.pack === TALENT_PACK_ID) _refreshTalentGodIndex(); });
+    Hooks.on(h, doc => { if (doc?.pack === TALENT_PACK_ID) refreshTalentGodIndex(); });
 }
 
 /** Ключ Бога Таланта по имени (как оно лежит в компендиуме/библиотеке), или

@@ -127,3 +127,24 @@ describe("режим цены — мировой и per-actor", () => {
     expect(effectivePricingMode({ system: { pricingModeOverride: "" } })).toBe("aptitude");
   });
 });
+
+describe("кэш Талантов Элитных Архетипов (isEliteTalent)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  it("по специализации самого предмета — без кэша", async () => {
+    const { isEliteTalent } = await import("../../module/constants/patronage.mjs");
+    expect(isEliteTalent("Любой", "Элитный архетип: Архимаг")).toBe(true);
+    expect(isEliteTalent("Любой", "Melee")).toBe(false);
+  });
+  it("по имени из индекса пака, когда специализации у предмета нет", async () => {
+    const { isEliteTalent, refreshTalentGodIndex } = await import("../../module/constants/patronage.mjs");
+    const getIndex = vi.fn(async () => [
+      { name: "Elite Only / Только Элитный", system: { god: "", specialization: "Элитный архетип: Тест" } },
+      { name: "Plain / Обычный", system: { god: "", specialization: "" } }
+    ]);
+    vi.stubGlobal("game", { packs: { get: () => ({ getIndex }) } });
+    await refreshTalentGodIndex();
+    expect(getIndex).toHaveBeenCalledWith({ fields: ["system.god", "system.specialization"] });
+    expect(isEliteTalent("Elite Only / Только Элитный")).toBe(true);
+    expect(isEliteTalent("Plain / Обычный")).toBe(false);
+  });
+});
