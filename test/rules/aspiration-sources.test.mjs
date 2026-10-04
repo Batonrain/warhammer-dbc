@@ -7,7 +7,7 @@
 // ошибки и подсказки. Проверяется именно сведение источников.
 
 import { describe, it, expect } from "vitest";
-import { aspirationChoices, findAspiration, worldAspirationKey, WORLD_KEY_PREFIX }
+import { aspirationChoices, aspirationByRoll, findAspiration, worldAspirationKey, WORLD_KEY_PREFIX }
   from "../../module/rules/aspiration-sources.mjs";
 
 /** Запись библиотеки: ключ вида «таблица:номер» проставляет она сама. */
@@ -17,6 +17,27 @@ const lib = (key, name, table, mods = "") => ({ key, name, table, mods, descript
 const worldItem = (id, name, table, extra = {}) => ({
   id, name, type: "aspiration",
   system: { table, n: 0, mods: "", description: "", key: "", ...extra }
+});
+
+describe("бросок d10 по таблице Стремлений", () => {
+  const table = [1, 2, 3, 10].map(n => ({ key: `pride:${n}`, name: `№${n}`, n }));
+
+  it("результат броска — запись с этим номером", () => {
+    expect(aspirationByRoll(table, 3).key).toBe("pride:3");
+    expect(aspirationByRoll(table, 10).key).toBe("pride:10");
+  });
+
+  it("нет записи с таким номером или бросок кривой — null", () => {
+    expect(aspirationByRoll(table, 7)).toBeNull();
+    expect(aspirationByRoll(table, 0)).toBeNull();
+    expect(aspirationByRoll(table, 2.5)).toBeNull();
+    expect(aspirationByRoll(table, "x")).toBeNull();
+  });
+
+  it("запись мира без номера броском не выпадает", () => {
+    expect(aspirationByRoll([{ key: "world:a", name: "Своё", n: null }], 0)).toBeNull();
+    expect(aspirationByRoll([{ key: "world:a", name: "Своё", n: null }], 1)).toBeNull();
+  });
 });
 
 describe("источники Стремлений", () => {

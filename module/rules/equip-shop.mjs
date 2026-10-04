@@ -51,6 +51,28 @@ export const EQUIP_SHOP_ROW_BY_KEY = Object.fromEntries(EQUIP_SHOP_ROWS.map(r =>
 export const EQUIP_SHOP_PACKS = ["weapons", "armor", "gear", "ammunition", "implants", "tools", "shields"];
 
 /**
+ * Значение `equipCategoryPack` у записи Конструктора «Снаряжение: выбор»,
+ * означающее «любой физический предмет» — те же категории, что у магазина
+ * Очков Снаряжения (EQUIP_SHOP_PACKS). Нужно, когда книга говорит просто
+ * «снаряжение» (Стремление «Богатство»: +1 доп. снаряжение с R 4), а не
+ * называет категорию.
+ */
+export const EQUIP_ANY_PACK = "physical";
+export const EQUIP_ANY_LABEL = "Любой предмет снаряжения";
+
+/** Имя возможности «−1 Inf.b в расчёте стартового снаряжения» (Стремление «Растраты»). */
+export const EQUIP_POINTS_PENALTY_CAPABILITY = "creation.equipPointsPenalty";
+
+/**
+ * Inf.b, от которого считается пул: штраф Стремления «Растраты» (−1 Inf.b в
+ * расчёте стартового снаряжения, стр. 22) — на сам Inf.b, а не на итог, поэтому
+ * надбавки Расы и ГМа его не гасят. Ниже нуля Inf.b не уходит.
+ */
+export function equipPointsInfBonus(infBonus, penalty = 0) {
+  return Math.max(0, (Number(infBonus) || 0) - Math.max(0, Number(penalty) || 0));
+}
+
+/**
  * Пул: Inf.b + любое число надбавок. Надбавки бывают двух видов и обе
  * законные: ручной бонус ГМа (стр. 24 щедрости не запрещает) и надбавка из
  * текста Расы — «+2 очка стартового снаряжения» у Сквата (wdbc-yobj); раньше

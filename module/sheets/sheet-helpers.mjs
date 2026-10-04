@@ -28,7 +28,7 @@ import { charAptitudeSet } from "../constants/advancement.mjs";
 import { canClearJam }                                from "../combat/weapon-properties.mjs";
 import { isBraced }                                   from "../combat/brace-weapon.mjs";
 import { ASPIRATION_TABLES } from "../constants/aspirations.mjs";
-import { aspirationOptions, aspirationByKey } from "../apps/aspirations.mjs";
+import { aspirationOptions, aspirationByKey, aspirationPickState } from "../apps/aspirations.mjs";
 import { supportsInfoguard } from "../apps/infoguard.mjs";
 import { gearRequiresWearing } from "../apps/effects.mjs";
 import { xpLogEntries } from "../apps/xp-log.mjs";
@@ -1066,7 +1066,7 @@ function buildGetDataUncached(actor) {
     const options = aspirationOptions(t.key).map(e => ({ id: e.key, name: e.name, mods: e.mods }));
     if (a && a.custom) return { idx, table: t.key, label: t.label, options, custom: true, id: "", name: a.name || "", mods: a.mods || "", desc: a.desc || "" };
     const e = aspirationByKey(a?.id || a);
-    return { idx, table: t.key, label: t.label, options, custom: false, id: a?.id || a || "", name: e?.name || "", mods: e?.mods || "", desc: e?.desc || "" };
+    return { idx, table: t.key, label: t.label, options, custom: false, id: a?.id || a || "", noMods: !!a?.noMods, pickState: a?.noMods ? "none" : aspirationPickState(actor, idx, e), name: e?.name || "", mods: e?.mods || "", desc: e?.desc || "" };
   });
 
   // Доп. элитные архетипы (кнопка «+» в шапке, поверх основного eliteArchetype).

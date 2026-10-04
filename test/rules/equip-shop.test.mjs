@@ -6,7 +6,7 @@
 
 import { describe, it, expect } from "vitest";
 import { EQUIP_SHOP_ROWS, EQUIP_SHOP_ROW_BY_KEY, equipPointsTotal, equipPointsLeft,
-         canAffordRow, startingAmmoQuantity, SACRIFICE_MOD_COUNT, SACRIFICE_MOD_MAX_AVAILABILITY }
+         canAffordRow, equipPointsInfBonus, EQUIP_ANY_PACK, EQUIP_SHOP_PACKS, EQUIP_POINTS_PENALTY_CAPABILITY, startingAmmoQuantity, SACRIFICE_MOD_COUNT, SACRIFICE_MOD_MAX_AVAILABILITY }
   from "../../module/rules/equip-shop.mjs";
 
 describe("Очки Снаряжения: таблица трат", () => {
@@ -94,5 +94,34 @@ describe("Пожертвовать снаряжением за модифика�
   it("3 модификации Редкостью не более 2 — константы книги", () => {
     expect(SACRIFICE_MOD_COUNT).toBe(3);
     expect(SACRIFICE_MOD_MAX_AVAILABILITY).toBe(2);
+  });
+});
+
+describe("«Растраты»: −1 Inf.b в расчёте стартового снаряжения (стр. 22)", () => {
+  it("штраф снимает очко с Inf.b, не с итога", () => {
+    expect(equipPointsInfBonus(4, 1)).toBe(3);
+    // Надбавки Расы и ГМа считаются поверх уже сниженного Inf.b.
+    expect(equipPointsTotal(equipPointsInfBonus(4, 1), 2, 1)).toBe(6);
+  });
+  it("Inf.b не уходит ниже нуля", () => {
+    expect(equipPointsInfBonus(0, 1)).toBe(0);
+    expect(equipPointsInfBonus(1, 5)).toBe(0);
+  });
+  it("без штрафа — как раньше", () => {
+    expect(equipPointsInfBonus(3)).toBe(3);
+    expect(equipPointsInfBonus(3, 0)).toBe(3);
+  });
+  it("отрицательный «штраф» в данных бонусом не становится", () => {
+    expect(equipPointsInfBonus(3, -2)).toBe(3);
+  });
+  it("имя возможности — то, что несёт запись пака Растрат", () => {
+    expect(EQUIP_POINTS_PENALTY_CAPABILITY).toBe("creation.equipPointsPenalty");
+  });
+});
+
+describe("«Любой предмет снаряжения» (Богатство)", () => {
+  it("совпадает по категориям с магазином Очков Снаряжения", () => {
+    expect(EQUIP_ANY_PACK).toBe("physical");
+    expect(EQUIP_SHOP_PACKS).toEqual(["weapons", "armor", "gear", "ammunition", "implants", "tools", "shields"]);
   });
 });

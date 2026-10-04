@@ -436,8 +436,11 @@
               <option value="__custom__">Своё…</option>
             </select>
             {{/if}}
+            <button type="button" class="aspir-roll" data-index="{{a.idx}}" title="Бросить d10 по таблице «{{a.label}}»">🎲</button>
             <button type="button" class="aspir-remove" data-index="{{a.idx}}" title="Очистить">✕</button>
           </div>
+          {{#if (eq a.pickState "needed")}}<button type="button" class="aspir-repick aspir-repick-needed" data-index="{{a.idx}}" title="Для этого Стремления ещё не выбраны Характеристики: бонус и штрафы пока не применены">⚠ Выбрать Характеристики</button>{{else if (eq a.pickState "chosen")}}<button type="button" class="aspir-repick" data-index="{{a.idx}}" title="Изменить выбор Характеристик">✎ Изменить выбор</button>{{/if}}
+          {{#if a.id}}<label class="aspir-nomods-lbl" title="Стремление остаётся скелетом характера, но бонусы и штрафы к Характеристикам не применяются (стр. 22)"><input type="checkbox" class="aspir-nomods" data-index="{{a.idx}}" {{#if a.noMods}}checked{{/if}}/> без модификаторов</label>{{/if}}
         </div>
         {{/each}}
       </div>
@@ -541,7 +544,7 @@
     <div class="wiz-panel">
       <div class="wiz-panel-title">Очки Снаряжения</div>
       <div class="wiz-gen wiz-equip-shop">
-        <div class="wiz-gen-lbl" title="После «Готово» на оружие с магазином автоматически довыдадутся боеприпасы (4 полных магазина или 20 штук, что больше).">Потрачено {{equipShop.spent}} из {{equipShop.total}} (Inf.b {{equipShop.infBonus}}{{#if equipShop.raceBonus}} + {{equipShop.raceBonus}} от Расы{{/if}} + бонус)</div>
+        <div class="wiz-gen-lbl" title="После «Готово» на оружие с магазином автоматически довыдадутся боеприпасы (4 полных магазина или 20 штук, что больше).">Потрачено {{equipShop.spent}} из {{equipShop.total}} (Inf.b {{equipShop.infBonusFull}}{{#if equipShop.infPenalty}} −{{equipShop.infPenalty}} от «Растрат»{{/if}}{{#if equipShop.raceBonus}} + {{equipShop.raceBonus}} от Расы{{/if}} + бонус)</div>
         <div class="wiz-row"><label>Бонусные очки (по решению ГМ):</label>
           <input type="number" class="wiz-equip-bonus" value="{{equipShop.bonusPoints}}" min="0"/>
         </div>
