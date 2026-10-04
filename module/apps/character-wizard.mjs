@@ -56,7 +56,7 @@ import { worldCreationMethod } from "../constants/creation-method.mjs";
 import { CHAOS_PATRONS } from "../constants/chaos-patron.mjs";
 import { effectivePricingMode, charStereotypesFor } from "../constants/patronage.mjs";
 import { ASPIRATION_TABLES } from "../constants/aspirations.mjs";
-import { aspirationOptions, aspirationByKey } from "./aspirations.mjs";
+import { aspirationOptions, aspirationByKey, aspirationPickState } from "./aspirations.mjs";
 import { activateAspirationListeners } from "../sheets/tabs/aspirations.mjs";
 import { START_LEVELS, START_CAP, startLevelValues } from "../constants/start-levels.mjs";
 import { resolveCultureFx } from "../constants/legions.mjs";
@@ -75,10 +75,11 @@ import {
 } from "../rules/creation-gear.mjs";
 import { actorFactionsContext, activateFactionFieldListeners } from "./actor-factions.mjs";
 import { EQUIP_SHOP_ROWS, EQUIP_SHOP_ROW_BY_KEY, EQUIP_SHOP_PACKS, equipPointsTotal, equipPointsLeft,
-         canAffordRow, startingAmmoQuantity, SACRIFICE_MOD_COUNT, SACRIFICE_MOD_MAX_AVAILABILITY }
+         equipPointsInfBonus, EQUIP_POINTS_PENALTY_CAPABILITY, canAffordRow, startingAmmoQuantity, SACRIFICE_MOD_COUNT, SACRIFICE_MOD_MAX_AVAILABILITY }
   from "../rules/equip-shop.mjs";
 import { ITEM_QUALITY_LIST, capUpgradeQuality, normQuality } from "../constants/quality.mjs";
 import { pastRaceKey, raceMatches } from "../rules/race.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 
 // Текст расы Астартес («Power Armour Mk III-VII» в race.gear) называет
 // ДИАПАЗОН марок, а не одну фиксированную вещь — игрок выбирает одну марку
@@ -966,7 +967,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       const options = aspirationOptions(t.key).map(e => ({ id: e.key, name: e.name, mods: e.mods }));
       if (a && a.custom) return { idx, label: t.label, options, custom: true, id: "", name: a.name || "", mods: a.mods || "" };
       const e = aspirationByKey(a?.id || a);
-      return { idx, label: t.label, options, custom: false, id: a?.id || a || "", name: e?.name || "", mods: e?.mods || "" };
+      return { idx, label: t.label, options, custom: false, id: a?.id || a || "", noMods: !!a?.noMods, pickState: a?.noMods ? "none" : aspirationPickState(actor, idx, e), name: e?.name || "", mods: e?.mods || "" };
     });
 
     const pac = this.pendingAspirationChoice;
@@ -1568,7 +1569,10 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
    * истины сам актор (Inf.b) и накопленный this._equipSpent, а не снимок.
    */
   _equipShopContext() {
-    const infBonus = this.actor.system.characteristics?.inf?.bonus ?? 0;
+    const infBonusFull = this.actor.system.characteristics?.inf?.bonus ?? 0;
+    // «Растраты» (стр. 22): −1 Inf.b в расчёте стартового снаряжения.
+    const infPenalty = hasRuleFlag(this.actor, EQUIP_POINTS_PENALTY_CAPABILITY) ? 1 : 0;
+    const infBonus = equipPointsInfBonus(infBonusFull, infPenalty);
     // Третье слагаемое пула — надбавка из текста Расы («+2 очка стартового
     // снаряжения» у Сквата, wdbc-yobj): считается заново при каждом рендере,
     // как и всё остальное здесь, потому что Раса может смениться на Этапе 1.
@@ -1576,7 +1580,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     const total = equipPointsTotal(infBonus, this._equipBonusPoints, raceBonus);
     const left = equipPointsLeft(total, this._equipSpent);
     return {
-      infBonus, bonusPoints: this._equipBonusPoints, raceBonus, total, spent: this._equipSpent, left,
+      infBonus, infBonusFull, infPenalty, bonusPoints: this._equipBonusPoints, raceBonus, total, spent: this._equipSpent, left,
       rows: EQUIP_SHOP_ROWS.map(r => ({ ...r, disabled: !canAffordRow(r, left) || this._confirmingEquipShop })),
       sacrificing: this._confirmingEquipShop,
       sacrificeCount: SACRIFICE_MOD_COUNT

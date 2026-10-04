@@ -16,6 +16,18 @@
 import { CHARACTERISTICS } from "./characteristics.mjs";
 
 export const CAPABILITIES = {
+  // ── Мастерская Крафта: Исследования (Стремление «Инновация») ────────────────
+  "craft.researchBonus": {
+    label: "+10 на тесты Исследований в Мастерской Крафта: каждая смена проекта-Исследования идёт с Пределом на 10 выше (Инновация, стр. 22). Пометка «Для Исследований»: отдельной механики исследований и привязки к Навыку пока нет (решение владельца 04.10.2026, сделаем позже) — бонус живёт только в Мастерской Крафта",
+    source: "Стремление (Мотивация): Инновация / Innovation (корбук стр. 22)",
+    reader: "module/rules/craft-advantage.mjs researchBonus() — module/apps/craft-workshop.mjs _rollShift"
+  },
+  // ── Создание персонажа: штраф к пулу Очков Снаряжения ───────────────────────
+  "creation.equipPointsPenalty": {
+    label: "Растраты: −1 Inf.b в расчёте стартового снаряжения — Очки Снаряжения (стр. 24) считаются от Inf.b на 1 меньше (не ниже 0)",
+    source: "Стремление (Позор): Растраты / Squandering (корбук стр. 22)",
+    reader: "module/rules/equip-shop.mjs equipPointsInfBonus() — module/apps/character-wizard.mjs _equipShopContext()"
+  },
   // ── Иммунитет к свойствам оружия (wdbc-plsf) ────────────────────────────
   // Восемь свойств из ревизии Мутаций/Даров: Corrosive/Crippling/Flame
   // (Burning)/Toxic/Piercing/Haywire/Shocking/Snare. Ключ — сам ключ свойства

@@ -8,7 +8,7 @@
     "table": "pride",
     "n": 10,
     "mods": "+1 доп. снаряжение с R4, −3 W",
-    "description": "Определяет себя своим имуществом, гордясь его качеством.",
+    "description": "Еретик определяет себя своим имуществом, гордясь превосходным качеством своего снаряжения.",
     "bookSource": "Black Crusade — Стремления (стр. 22)",
     "notes": "Снаряжение: категория «Прочее» и Availability ≤4 — приблизительно, «с R4» книга не уточняет категорию."
   },
@@ -76,7 +76,7 @@
               "equipSourceUuid": "",
               "equipSourceName": "",
               "equipSourceImg": "",
-              "equipCategoryPack": "gear",
+              "equipCategoryPack": "physical",
               "equipWeaponType": "",
               "equipWeaponProp": "",
               "equipArmorType": "",

@@ -35,6 +35,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "./predicates.mjs";
+import { hasRuleFlag } from "./flags.mjs";
 import { isHaemonculus } from "../constants/haemonculus.mjs";
 
 const hasItem = (actor, type, name) =>
@@ -62,6 +63,17 @@ export function darkMuseAssistBonus(assistantActor) {
  */
 export function polymathBonus(crafter) {
   return hasPolymath(crafter) ? 10 : 0;
+}
+
+/** Имя возможности «+10 на тесты Исследований» (Стремление «Инновация»). */
+export const RESEARCH_BONUS_CAPABILITY = "craft.researchBonus";
+
+/**
+ * +10 от Инновации — только на смены проектов-ИССЛЕДОВАНИЙ (`mode:"research"`),
+ * в отличие от Полимата, который даёт то же на Крафт и Исследования разом.
+ */
+export function researchBonus(crafter, mode) {
+  return mode === "research" && hasRuleFlag(crafter, RESEARCH_BONUS_CAPABILITY) ? 10 : 0;
 }
 
 /** Киберпроповедник применяется к ЭТОМУ проекту (категория «Бионика и Мехадендриты»)? */

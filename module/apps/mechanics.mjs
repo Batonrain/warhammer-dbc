@@ -449,6 +449,7 @@ import { isThrottleReady, markThrottleUsed,
          throttleCount, isThrottleCountAvailable, incrementThrottleCount } from "../rules/cooldown.mjs";
 import { squadRoleOf, findMemberSquad } from "../rules/squad-roles.mjs";
 import { TERRAIN_PROPS }                      from "../regions/difficult-terrain.mjs";
+import { EQUIP_ANY_PACK, EQUIP_ANY_LABEL, EQUIP_SHOP_PACKS } from "../rules/equip-shop.mjs";
 import { openCompendiumBrowser, GRANTABLE_CATEGORIES, coreWeaponTypeFolders, weaponTypeFolderIds } from "./compendium-browser.mjs";
 import { AVAILABILITY, DAMAGE_TYPES, DAMAGE_SUBTYPES } from "../constants/items.mjs";
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
@@ -1339,7 +1340,8 @@ export function describeMechEntry(entry) {
         // Подпись автора («Ген-Сплайс: Сенсорная адаптация») понятнее
         // «выбор — «Черты» ×1» — её и видит игрок в окне выбора.
         if (entry.label) return entry.label;
-        const cat = GRANTABLE_CATEGORIES.find(c => c.pack === entry.equipCategoryPack)?.label ?? entry.equipCategoryPack;
+        const cat = entry.equipCategoryPack === EQUIP_ANY_PACK ? EQUIP_ANY_LABEL
+          : GRANTABLE_CATEGORIES.find(c => c.pack === entry.equipCategoryPack)?.label ?? entry.equipCategoryPack;
         const bits = [];
         if (entry.equipCategoryPack === "weapons" && entry.equipWeaponType)
           bits.push(coreWeaponTypeFolders().find(f => f.id === entry.equipWeaponType)?.name);
@@ -2217,7 +2219,7 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
       // поле только в JSON пака, редактора в Конструкторе пока нет.
       const budget = normalizeBudget({ mode: entry.equipBudgetMode, value: entry.equipBudgetValue, min: entry.equipBudgetMin });
       const picked = await openCompendiumBrowser(false, {
-        pack: entry.equipCategoryPack, filters, budget,
+        pack: entry.equipCategoryPack === EQUIP_ANY_PACK ? EQUIP_SHOP_PACKS : entry.equipCategoryPack, filters, budget,
         prompt: describeMechEntry(entry),
         // Цена в опыте считается для ЭТОГО актора: у Талантов она зависит от
         // Склонностей и культуры, а не лежит в записи компендиума.
@@ -3911,7 +3913,8 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       </select>`;
     } else {
       const cat = ent.equipCategoryPack || "weapons";
-      const catOpts = GRANTABLE_CATEGORIES.map(c => optHtml(c.pack, c.label, cat === c.pack)).join("");
+      const catOpts = GRANTABLE_CATEGORIES.map(c => optHtml(c.pack, c.label, cat === c.pack)).join("")
+        + optHtml(EQUIP_ANY_PACK, EQUIP_ANY_LABEL, cat === EQUIP_ANY_PACK);
       out += `<select class="mech-equip-cat" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${catOpts}</select>`;
       if (cat === "weapons") {
         // «Тип» — папка компендиума корбука (Авто и стаб/Дробовики/Автопушки/

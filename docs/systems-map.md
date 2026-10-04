@@ -1435,7 +1435,23 @@ AGENTS.md).
 
 - `constants/aspirations.mjs`, `data/item/aspiration.mjs`, `apps/aspirations.
   mjs`, `sheets/tabs/aspirations.mjs` — три фиксированных слота
-  Гордыня/Позор/Мотивация (Black Crusade).
+  Гордость/Мотивация/Позор (Black Crusade, стр. 22; порядок `ASPIRATION_TABLES`).
+- Бонусы применяет НЕ вкладка, а Механика записей пака `packs-src/aspirations`:
+  выбор в слоте выдаёт актору копию Стремления (`grantAspiration`), Конструктор
+  считает её как у Расы. Сторож пака — `test/data/aspirations-pack.test.mjs`
+  (Механика = строка модификаторов; описание = текст книги из core.json).
+- Особые записи (04.10.2026): «Совершенство» — флаг `charPick` вместо готовых
+  записей, диалог «+5 одной, −3 двум другим» при выдаче
+  (`rules/aspiration-char-pick.mjs`); «Растраты» — возможность
+  `creation.equipPointsPenalty` (−1 Inf.b в пул Очков Снаряжения,
+  `rules/equip-shop.mjs::equipPointsInfBonus`); «Инновация» — Навык Ученые
+  знания +10 и возможность `craft.researchBonus` (Мастерская, режим
+  Исследование, `rules/craft-advantage.mjs::researchBonus`); «Богатство» —
+  `equipCategoryPack:"physical"` («любой предмет снаряжения», те же семь
+  категорий, что у магазина Очков Снаряжения).
+- Слот можно пометить `noMods` («без модификаторов», книга: «игнорируя
+  модификаторы») — запись остаётся, носитель Механики не выдаётся; кнопка 🎲
+  бросает d10 по таблице слота (`rules/aspiration-sources.mjs::aspirationByRoll`).
 
 ## 26. Подключаемые подсистемы (флаги в Настройках)
 

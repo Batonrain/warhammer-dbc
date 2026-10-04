@@ -437,6 +437,28 @@ describe("Стремления (три жёстких слота)", () => {
 
     expect(sheet.actor.system.aspirations.profitFactor).toBe(45);
   });
+
+  it("«без модификаторов» помечает слот и оставляет запись на месте", async () => {
+    const sheet = sheetFor({ aspirations: { slots: [{ id: "pride:1" }, { id: "" }, { id: "" }] } });
+    const handlers = wire(sheet);
+
+    await handlers[".aspir-nomods:change"]({
+      preventDefault: () => {}, currentTarget: { dataset: { index: "0" }, checked: true }
+    });
+
+    expect(sheet.actor.system.aspirations.slots[0]).toEqual({ id: "pride:1", noMods: true });
+  });
+
+  it("выбор другой записи в помеченном слоте не снимает пометку, а пустой слот её не несёт", async () => {
+    const sheet = sheetFor({ aspirations: { slots: [{ id: "pride:1", noMods: true }, { id: "" }, { id: "" }] } });
+    const handlers = wire(sheet);
+
+    await handlers[".aspir-select:change"](ev({ index: "0" }, "pride:2"));
+    expect(sheet.actor.system.aspirations.slots[0]).toEqual({ id: "pride:2", noMods: true });
+
+    await handlers[".aspir-select:change"](ev({ index: "0" }, ""));
+    expect(sheet.actor.system.aspirations.slots[0]).toEqual({ id: "" });
+  });
 });
 
 describe("Пути Аэльдари", () => {

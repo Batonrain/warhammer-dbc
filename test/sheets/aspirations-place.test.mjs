@@ -29,6 +29,23 @@ describe("место Стремлений на листе", () => {
     expect(NOTES).toContain("СТРЕМЛЕНИЯ");
   });
 
+  it("бросок d10 и «без модификаторов» есть и на листе, и в Мастере (стр. 22)", () => {
+    const WIZARD = read("templates/apps/character-wizard.hbs");
+    for (const tpl of [NOTES, WIZARD]) {
+      expect(tpl).toContain("aspir-roll");
+      expect(tpl).toContain("aspir-nomods");
+    }
+  });
+
+  it("«Выбрать Характеристики» есть и на листе, и в Мастере", () => {
+    for (const tpl of [NOTES, read("templates/apps/character-wizard.hbs")]) expect(tpl).toContain("aspir-repick");
+  });
+
+  it("подсказка не велит применять модификаторы руками — их применяет Механика", () => {
+    expect(NOTES).not.toContain("применяются к Базе вручную");
+    expect(read("templates/item/parts/aspiration.hbs")).not.toContain("сам движок их не считает");
+  });
+
   it("в шапке Стремлений не осталось вовсе", () => {
     expect(HEADER).not.toContain("aspir");
     expect(HEADER).not.toContain("aspirationSlots");
