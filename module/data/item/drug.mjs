@@ -38,6 +38,9 @@ export class DrugData extends foundry.abstract.TypeDataModel {
       deliveryMethod: new StringField({ initial: "injection", label: "Способ приёма" }),
       quantity:       num(1, "Количество"),
       weight:         num(0, "Вес"),
+      // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке; см.
+      // комментарий в data/item/weapon.mjs.
+      stored:         new BooleanField({ initial: false, label: "Хранится (не при себе)" }),
       availability:   num(0, "Доступность"),
       quality:        new StringField({ initial: "common", label: "Качество" }),
       duration:       text("Срок действия"),

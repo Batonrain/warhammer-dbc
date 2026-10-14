@@ -27,6 +27,26 @@
   flex: 1;
 }
 
+/* Постинг предмета в чат (wdbc-6rj) — «В чат» (карточка с цифрами) / «Описание» (без них). */
+.item-header-chat-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.item-post-chat-btn {
+  padding: 2px 8px;
+  font-size: 0.78em;
+  white-space: nowrap;
+  cursor: pointer;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-red, #6b1a1a);
+  border-radius: 3px;
+  color: var(--wh-text, inherit);
+}
+.item-post-chat-btn:hover { background: var(--wh-red, #6b1a1a); color: #fff; }
+
 .item-name-label {
   color: var(--wh-text-light, #e8e0d0);
   font-size: 0.85em;

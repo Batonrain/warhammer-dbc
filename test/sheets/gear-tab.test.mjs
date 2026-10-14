@@ -368,3 +368,23 @@ describe("gear tab listeners", () => {
     expect(calls[5][1]).toBe(a);
   });
 });
+
+// Три статуса снаряжения (wdbc-6rj): «Хранится» — общий тумблер для всех
+// каррируемых типов (оружие/броня/снаряжение/препараты/инструменты/боеприпасы),
+// отдельная ось от Экипировано/Надето — не учитывается в Нагрузке.
+describe("item-stored-cb: Хранится не при себе", () => {
+  it("ставит/снимает system.stored по клику, без доп. проверок (в отличие от equipItem)", async () => {
+    const root = listenerRoot();
+    const handlers = root.handlers;
+    const gearItem = item({ id: "gear-1" });
+    const a = actor([gearItem]);
+
+    activateGearListeners(root, a);
+
+    await handlers[".item-stored-cb:change"](event({ itemId: "gear-1", checked: true }));
+    expect(gearItem.updates).toContainEqual({ "system.stored": true });
+
+    await handlers[".item-stored-cb:change"](event({ itemId: "gear-1", checked: false }));
+    expect(gearItem.updates).toContainEqual({ "system.stored": false });
+  });
+});

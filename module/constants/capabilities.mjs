@@ -3171,7 +3171,8 @@ export const CAPABILITIES = {
   },
   "rangedCore.core.bulgingBiceps": {
     label: "Персонаж не получает штрафов за стрельбу из тяжёлого оружия без Закрепления.",
-    source: "Bulging Biceps / Бугрящиеся Мышцы", reader: ""
+    source: "Bulging Biceps / Бугрящиеся Мышцы",
+    reader: "module/sheets/attack/mods.mjs (bulgingBicepsActive, situationalMods — снимает штраф «Тяжёлое оружие: без Закрепления»); Конструктор МЕХАНИКА таланта (packs-src/talents/Стрелок/Bulging_Biceps___Бугрящиеся_Мышцы)"
   },
   "rangedCore.core.cageFiring": {
     label: "Совершая Широкую Длинную Очередь по одиночной цели, персонаж может уменьшить эффективный RoF ещё на 3,",

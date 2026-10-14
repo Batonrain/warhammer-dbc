@@ -120,6 +120,24 @@
   text-align: center;
 }
 
+/* Хранится не при себе (wdbc-6rj) — тот же вид, что у Экип. */
+.gear-stored-th {
+  width: 40px;
+  text-align: center;
+}
+
+.gear-stored-cell {
+  text-align: center;
+  width: 36px;
+}
+
+.gear-stored-cell input[type="checkbox"] {
+  accent-color: var(--wh-red);
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
 .gear-ap-cell {
   text-align: center;
   font-size: 0.9em;

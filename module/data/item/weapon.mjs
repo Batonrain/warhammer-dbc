@@ -84,6 +84,10 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
       bookSource:   new StringField({ initial: "", label: "Книга-источник" }),
       availability: num(0, "Доступность"),
       weight:       num(0, "Вес"),
+      // Хранится не при себе (wdbc-6rj) — склад/кузов/каюта: не учитывается в
+      // Нагрузке (rules/character.mjs), в отличие от «Снаряжено»/«Носится»
+      // выше/ниже — те по-прежнему весят, просто не дают эффектов.
+      stored:       new BooleanField({ initial: false, label: "Хранится (не при себе)" }),
       // Расходное оружие (гранаты и т.п.) — тот же приём, что у Снаряжения/
       // Боеприпасов (data/item/gear.mjs, ammo.mjs): несколько одинаковых
       // предметов лежат ОДНОЙ записью с числом, а не N раздельными.

@@ -9,6 +9,10 @@
     <input name="name" type="text" value="{{item.name}}"
            placeholder="Название предмета" class="item-name-input"/>
   </div>
+  <div class="item-header-chat-actions">
+    <button type="button" class="item-post-chat-btn" data-action="postItemChatFull" title="Выложить в чат: название, ключевые цифры по типу предмета и Описание">📋 В чат</button>
+    <button type="button" class="item-post-chat-btn" data-action="postItemChatShort" title="Выложить в чат только название и Описание, без цифр">💬 Описание</button>
+  </div>
 </header>
 
 {{!-- Навигация не собирается циклом по TABS: у двух вкладок в подписи счётчик. --}}

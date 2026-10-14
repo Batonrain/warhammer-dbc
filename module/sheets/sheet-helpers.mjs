@@ -168,7 +168,8 @@ export function buildShieldData(actor) {
       statusCss:         status.css,
       needsRepair:       (s.status === "overloaded" || s.status === "damaged"),
       weight:            s.weight             ?? (i.system.weight ?? 0),
-      quality:           s.quality            || i.system.quality || "common"
+      quality:           s.quality            || i.system.quality || "common",
+      stored:            !!i.system.stored
     };
   });
 
@@ -276,6 +277,7 @@ function _buildDrugData(item) {
     quantity:        s.quantity         ?? 0,
     weight:          s.weight           ?? 0,
     totalWeight:     Math.round((s.weight || 0) * (s.quantity || 0) * 100) / 100,
+    stored:          !!s.stored,
     duration:        s.duration         || "",
     // Основной эффект
     effect:          s.effect           || "",
@@ -707,7 +709,7 @@ function buildGetDataUncached(actor) {
     .map(a => ({ id: a.id, name: a.name, equipped: a.system.equipped ?? false }));
 
   context.gearWeapons = gearWeaponItems.map(i => ({
-    id: i.id, name: i.name, equipped: i.system.equipped ?? false,
+    id: i.id, name: i.name, equipped: i.system.equipped ?? false, stored: !!i.system.stored,
     weaponClass: WEAPON_CLASSES[i.system.weaponClass] ?? i.system.weaponClass,
     weaponType:  i.system.weaponType,
     damage:      i.system.damage,
@@ -729,13 +731,15 @@ function buildGetDataUncached(actor) {
     weaponTypes: (i.system.weaponTypes || []).join(", "),
     quantity:    i.system.quantity,
     weight:      i.system.weight,
-    totalWeight: Math.round((i.system.weight || 0) * (i.system.quantity || 0) * 100) / 100
+    totalWeight: Math.round((i.system.weight || 0) * (i.system.quantity || 0) * 100) / 100,
+    stored:      !!i.system.stored
   }));
 
   context.gearArmor = armorItems.map(i => ({
     id:        i.id,
     name:      i.name,
     equipped:  i.system.equipped   ?? false,
+    stored:    !!i.system.stored,
     armorType: i.system.armorType  ?? "simple",
     isPower:   ["power", "aspect"].includes(i.system.armorType),
     head:      i.system.head       ?? 0,
@@ -835,6 +839,7 @@ function buildGetDataUncached(actor) {
     quantity:    i.system.quantity,
     weight:      i.system.weight,
     totalWeight: Math.round((i.system.weight || 0) * (i.system.quantity || 0) * 100) / 100,
+    stored:      !!i.system.stored,
     // Носимое (заполнено «Как носится») спрашивает «надето ли» — от этого
     // зависит, действует ли его Механика (wdbc-9h7g, gearRequiresWearing в
     // apps/effects.mjs). Прочему снаряжению тумблер не показывается вовсе.
@@ -853,6 +858,7 @@ function buildGetDataUncached(actor) {
     id: i.id, name: i.name,
     quantity: i.system.quantity,
     weight:   i.system.weight,
+    stored:   !!i.system.stored,
     activatable: !!i.system.activatable,
     active:      !!i.system.active,
     // Гололит (стр. 256, wdbc-x1nz.2): «час подготовки → +10 Command» — тест

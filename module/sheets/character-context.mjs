@@ -97,6 +97,7 @@ import { hasActionEconomy, isEncounterActive, effectiveDefenseReactionMax,
          effectiveActionPointsMax,
          apSpendGate, reactionSpendGate }         from "../combat/action-economy.mjs";
 import { recoilRemaining, recoilLimit }           from "../combat/recoil-pool.mjs";
+import { attackActionLimit }                      from "../combat/attack-limit.mjs";
 import { sustainedActionRows }                    from "../rules/sustained-action.mjs";
 import { hasSpiritTalk, spiritTalkGate } from "../combat/spirit-talk.mjs";
 import { hasDeadlyEffectiveness, deadlyEffectivenessGate } from "../combat/deadly-effectiveness.mjs";
@@ -187,7 +188,17 @@ export function characterContext(actor) {
       // Отскок (стр. 12, wdbc-9wvm): дистанция за Раунд, тот же честный
       // «∞ вне боя» принцип, что у остальной экономики действий —
       // recoilRemaining/recoilLimit сами отдают Infinity вне Encounter.
-      recoil: { value: recoilRemaining(actor), max: recoilLimit(actor) }
+      recoil: { value: recoilRemaining(actor), max: recoilLimit(actor) },
+      // Лимит Атак за Ход (combat/attack-limit.mjs, стр. 12) — max считает
+      // книжную базу/Решительность Сражаться/ГМ-надбавку; bonus — то самое
+      // редактируемое поле (system.attackLimitBonus, wdbc-6rj), отдельно от
+      // value/max, чтобы галочка «Решительность Сражаться» и правка ГМа не
+      // перепутались в одном числе на листе.
+      attacks: {
+        value: Number(actor.getFlag("warhammer-dbc", "attackActionsThisTurn")) || 0,
+        max: attackActionLimit(actor),
+        bonus: Number(system.attackLimitBonus) || 0
+      }
     };
     // Гейт кнопок ДО клика (wdbc-qjnk): движение (Полушаг/Шаг/Бег — Натиск
     // ОД на объявлении не тратит, см. apSpendGate) и ручная трата ae-spend-btn

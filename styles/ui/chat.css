@@ -67,6 +67,10 @@
 .wh-roll-result .roll-threshold,
 .wh-roll-result .roll-dice { margin-bottom: 3px; font-size: 0.96em; }
 
+/* Карточка предмета в чате (wdbc-6rj, «В чат»/«Описание» на листе предмета) */
+.wh-item-chat-card .roll-item-icon { vertical-align: middle; margin-right: 4px; border-radius: 3px; }
+.wh-item-chat-card .roll-item-description { margin-top: 4px; font-size: 0.94em; line-height: 1.35; }
+
 .wh-roll-result .roll-dice b,
 .wh-roll-result .roll-threshold b { color: #2a1606; }
 
