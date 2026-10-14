@@ -54,7 +54,10 @@
               "capabilityAptAlign": "ally",
               "capabilityCostPool": "",
               "capabilityCostAmount": 1,
-              "when": { "negate": false, "conditions": [] }
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             }
           ]
         }
