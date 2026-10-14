@@ -214,6 +214,15 @@ export function activateGearListeners(root, actor, {
     await equipItem(actor.items.get(itemId), equipped);
   });
 
+  // Три статуса снаряжения (wdbc-6rj): «Хранится» — отдельная ось от
+  // Экипировано/Надето выше, не учитывается в Нагрузке (rules/character.mjs).
+  // Оружие/Броня/Снаряжение/Препараты/Инструменты/Боеприпасы — общий тумблер,
+  // без своих проверок рук/ОД, в отличие от equipItem.
+  on(root, ".item-stored-cb", "change", async ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) await item.update({ "system.stored": ev.currentTarget.checked });
+  });
+
   // ── Ручные щиты (стр. 215) ───────────────────────────────────────────
   // Рука определяет, какая «Р1» в зонах защиты; «поднять щит» включает зоны,
   // указанные в скобках (они прикрываются лишь осознанным движением).

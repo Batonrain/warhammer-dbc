@@ -79,4 +79,21 @@ describe("Тяжёлое оружие: галочка «без Закрепле�
 
     expect(modLine("Тяжёлое оружие: без Закрепления")).toMatchObject({ checked: false });
   });
+
+  // Bulging Biceps/Бугрящиеся Мышцы (стр. 12, capabilities.mjs::
+  // rangedCore.core.bulgingBiceps): «не получает штрафов за стрельбу из
+  // тяжёлого оружия без Закрепления» — штраф снят целиком, даже не Закреплено.
+  it("Bulging Biceps/Бугрящиеся Мышцы: штраф снят целиком, даже не Закреплено", () => {
+    const weapon = weaponFor({ weaponClass: "heavy" }, { id: "w1" });
+    const talent = {
+      type: "talent", name: "Bulging Biceps / Бугрящиеся Мышцы",
+      flags: { "warhammer-dbc": { mechanics: [{ operator: "AND", entries: [
+        { kind: "capability", capabilityKey: "rangedCore.core.bulgingBiceps", label: "" }
+      ] }] } }
+    };
+    const actor = braceActor({ items: [weapon, talent], fatigue: { value: 0 }, aiming: "none" });
+    showAttackDialog(actor, weapon);
+
+    expect(modLine("Тяжёлое оружие: без Закрепления")).toMatchObject({ value: 0, checked: false });
+  });
 });

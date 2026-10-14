@@ -102,6 +102,10 @@ export function situationalMods(v) {
   const tgtSurprisedRound1 = !!tgt?.system?.conditions?.surprised
     && (typeof game !== "undefined" ? game.combat?.round : null) === 1;
   const tgtStunnedAuto = isStunnedOrDazed(tgt);
+  // Bulging Biceps/Бугрящиеся Мышцы (стр. 12, capabilities.mjs::
+  // rangedCore.core.bulgingBiceps) — снимает штраф «Тяжёлое оружие: без
+  // Закрепления» целиком, см. ниже у этой строки.
+  const bulgingBicepsActive = hasRuleFlag(actor, "rangedCore.core.bulgingBiceps");
   const commonMods = [
     ...(tgtAntiAim ? [{ label: "Антиприцел цели", value: 0, autofail: true, autoCheck: aimingOn,
       note: aimingOn ? "вы прицелились — атака автоматически промахивается (Странная Неуязвимость)"
@@ -552,9 +556,16 @@ export function situationalMods(v) {
     // полностью снимает второе (стр. 168). Закрепление (стр. 35, wdbc-x1nz.2.56)
     // теперь настоящее Действие с состоянием (combat/brace-weapon.mjs) —
     // галочка сама снимается, пока оружие реально Закреплено этим же токеном.
-    { label: "Тяжёлое оружие: без Закрепления", value: wp.gyroStabilized ? -10 : -30,
-      autoCheck: weapon?.system?.weaponClass === "heavy" && !isBraced(actor, weapon),
-      note: wp.gyroStabilized ? "Гиро-стаб.: –30 снижено до –10"
+    // Bulging Biceps/Бугрящиеся Мышцы (wdbc-6rj, capabilities.mjs::
+    // rangedCore.core.bulgingBiceps): «не получает штрафов за стрельбу из
+    // тяжёлого оружия без Закрепления» — снимает именно эту строку целиком,
+    // «стрельба на ходу» ниже книга с этим Талантом не связывает.
+    { label: "Тяжёлое оружие: без Закрепления",
+      value: bulgingBicepsActive ? 0 : (wp.gyroStabilized ? -10 : -30),
+      immune: bulgingBicepsActive,
+      autoCheck: !bulgingBicepsActive && weapon?.system?.weaponClass === "heavy" && !isBraced(actor, weapon),
+      note: bulgingBicepsActive ? "снято: Bulging Biceps/Бугрящиеся Мышцы"
+          : wp.gyroStabilized ? "Гиро-стаб.: –30 снижено до –10"
           : (weapon?.system?.weaponClass === "heavy" && isBraced(actor, weapon) ? "Закреплено" : undefined) },
     { label: "Тяжёлое оружие: стрельба на ходу", value: wp.gyroStabilized ? 0 : -10, immune: wp.gyroStabilized,
       note: wp.gyroStabilized ? "снято: Гиро-стаб." : undefined }

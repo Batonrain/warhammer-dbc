@@ -44,7 +44,7 @@
     <div class="gear-cat-body">
       <table class="items-table gear-table">
         <thead><tr>
-          <th class="gear-equip-th">Экип.</th><th>Оружие</th><th>Класс</th><th>Тип</th>
+          <th class="gear-equip-th">Экип.</th><th class="gear-stored-th" title="Хранится — не при себе (склад/кузов/каюта), не учитывается в Нагрузке">Хран.</th><th>Оружие</th><th>Класс</th><th>Тип</th>
           <th>Урон</th><th>Тип урона</th><th>Маг.</th><th>Вес</th><th title="Успехи Инфограждения">Инфогр.</th>
         </tr></thead>
         <tbody>
@@ -52,6 +52,7 @@
             {{#each gearWeapons as |w|}}
             <tr class="item-row gear-host-row {{#if w.mods.length}}has-mods{{/if}}" data-item-id="{{w.id}}">
               <td class="gear-equip-cell"><input type="checkbox" class="weapon-equip-cb" data-item-id="{{w.id}}" {{#if w.equipped}}checked{{/if}}/></td>
+              <td class="gear-stored-cell"><input type="checkbox" class="item-stored-cb" data-item-id="{{w.id}}" title="Хранится не при себе" {{#if w.stored}}checked{{/if}}/></td>
               <td class="item-name-cell">{{w.name}}{{#if w.mods.length}} <button type="button" class="gear-mods-toggle" data-action="gearModsToggle" data-host-id="{{w.id}}" title="Свернуть/развернуть улучшения"><span class="gmt-chevron">▾</span>⚙{{w.mods.length}}</button>{{/if}}{{#if (eq w.weaponType "grenade")}} <button type="button" class="weapon-grenade-pin-btn" data-item-id="{{w.id}}" title="Сорвать чеку и детонировать на месте (стр. 27): Полудействие, не атака, Уклонения нет.">💣</button>{{/if}}</td>
               <td>{{w.weaponClass}}</td><td>{{w.weaponType}}</td>
               <td>{{w.damage}}</td><td>{{w.damageType}}</td>
@@ -73,11 +74,11 @@
               </td>
               <td colspan="2">{{m.weight}}</td>
             </tr>
-            <tr class="ability-detail-row" data-item-id="{{m.id}}" data-host-id="{{w.id}}" style="display:none;"><td colspan="9"><div class="ability-detail-text">{{#if m.benefit}}{{m.benefit}}{{else}}—{{/if}}</div></td></tr>
+            <tr class="ability-detail-row" data-item-id="{{m.id}}" data-host-id="{{w.id}}" style="display:none;"><td colspan="10"><div class="ability-detail-text">{{#if m.benefit}}{{m.benefit}}{{else}}—{{/if}}</div></td></tr>
             {{/each}}
             {{/each}}
           {{else}}
-            <tr class="items-empty"><td colspan="9"><em>Нет оружия</em></td></tr>
+            <tr class="items-empty"><td colspan="10"><em>Нет оружия</em></td></tr>
           {{/if}}
         </tbody>
       </table>
@@ -120,7 +121,7 @@
     <div class="gear-cat-body">
       <table class="items-table gear-table">
         <thead><tr>
-          <th class="gear-equip-th">Экип.</th><th>Броня</th><th>Тип</th>
+          <th class="gear-equip-th">Экип.</th><th class="gear-stored-th" title="Хранится — не при себе, не учитывается в Нагрузке">Хран.</th><th>Броня</th><th>Тип</th>
           <th title="Голова">Гол.</th><th title="Корпус">Корп.</th>
           <th title="Левая рука">Л.Р.</th><th title="Правая рука">П.Р.</th>
           <th title="Левая нога">Л.Н.</th><th title="Правая нога">П.Н.</th><th>Вес</th>
@@ -131,6 +132,7 @@
             {{#each gearArmor as |a|}}
             <tr class="item-row gear-host-row {{#if a.equipped}}item-row-equipped{{/if}} {{#if a.mods.length}}has-mods{{/if}}" data-item-id="{{a.id}}">
               <td class="gear-equip-cell"><input type="checkbox" class="armor-equip-cb" data-item-id="{{a.id}}" {{#if a.equipped}}checked{{/if}}/></td>
+              <td class="gear-stored-cell"><input type="checkbox" class="item-stored-cb" data-item-id="{{a.id}}" title="Хранится не при себе" {{#if a.stored}}checked{{/if}}/></td>
               <td class="item-name-cell">{{a.name}}{{#if a.mods.length}} <button type="button" class="gear-mods-toggle" data-action="gearModsToggle" data-host-id="{{a.id}}" title="Свернуть/развернуть модификации и системы"><span class="gmt-chevron">▾</span>⚙{{a.mods.length}}</button>{{/if}}</td>
               <td class="gear-armor-type">
                 {{#if (eq a.armorType "simple")}}Простая{{/if}}
@@ -168,11 +170,11 @@
               </td>
               <td colspan="2">{{m.weight}}</td>
             </tr>
-            <tr class="ability-detail-row" data-item-id="{{m.id}}" data-host-id="{{a.id}}" style="display:none;"><td colspan="11"><div class="ability-detail-text">{{#if m.benefit}}{{m.benefit}}{{else}}—{{/if}}</div></td></tr>
+            <tr class="ability-detail-row" data-item-id="{{m.id}}" data-host-id="{{a.id}}" style="display:none;"><td colspan="12"><div class="ability-detail-text">{{#if m.benefit}}{{m.benefit}}{{else}}—{{/if}}</div></td></tr>
             {{/each}}
             {{/each}}
           {{else}}
-            <tr class="items-empty"><td colspan="11"><em>Нет брони</em></td></tr>
+            <tr class="items-empty"><td colspan="12"><em>Нет брони</em></td></tr>
           {{/if}}
         </tbody>
       </table>
@@ -269,14 +271,14 @@
     </div>
     <div class="gear-cat-body">
       <table class="items-table gear-table">
-        <thead><tr><th>Боеприпасы</th><th>Оружие</th><th>Кол-во</th><th>Вес</th><th>Всего</th></tr></thead>
+        <thead><tr><th class="gear-stored-th" title="Хранится — не при себе, не учитывается в Нагрузке">Хран.</th><th>Боеприпасы</th><th>Оружие</th><th>Кол-во</th><th>Вес</th><th>Всего</th></tr></thead>
         <tbody>
           {{#if gearAmmo.length}}
             {{#each gearAmmo as |a|}}
-            <tr class="item-row" data-item-id="{{a.id}}"><td class="item-name-cell">{{a.name}}</td><td>{{a.weaponTypes}}</td><td>{{a.quantity}}</td><td>{{a.weight}}</td><td>{{a.totalWeight}}</td></tr>
+            <tr class="item-row" data-item-id="{{a.id}}"><td class="gear-stored-cell"><input type="checkbox" class="item-stored-cb" data-item-id="{{a.id}}" title="Хранится не при себе" {{#if a.stored}}checked{{/if}}/></td><td class="item-name-cell">{{a.name}}</td><td>{{a.weaponTypes}}</td><td>{{a.quantity}}</td><td>{{a.weight}}</td><td>{{a.totalWeight}}</td></tr>
             {{/each}}
           {{else}}
-            <tr class="items-empty"><td colspan="5"><em>Нет боеприпасов</em></td></tr>
+            <tr class="items-empty"><td colspan="6"><em>Нет боеприпасов</em></td></tr>
           {{/if}}
         </tbody>
       </table>
@@ -292,20 +294,20 @@
     </div>
     <div class="gear-cat-body">
       <table class="items-table gear-table">
-        <thead><tr><th title="Надето — только надетая вещь даёт свою механику">Надето</th><th>Снаряжение</th><th>Описание</th><th>Кол-во</th><th>Вес</th><th>Всего</th><th title="Успехи Инфограждения">Инфогр.</th></tr></thead>
+        <thead><tr><th title="Надето — только надетая вещь даёт свою механику">Надето</th><th class="gear-stored-th" title="Хранится — не при себе, не учитывается в Нагрузке">Хран.</th><th>Снаряжение</th><th>Описание</th><th>Кол-во</th><th>Вес</th><th>Всего</th><th title="Успехи Инфограждения">Инфогр.</th></tr></thead>
         <tbody>
           {{#if gearGear.length}}
             {{#each gearGear as |g|}}
             {{!-- Носимое снаряжение (у предмета заполнено «Как носится») работает
                   только надетым — wdbc-9h7g. Прочему тумблер не рисуется вовсе. --}}
-            <tr class="item-row {{#if g.equipped}}item-row-equipped{{/if}}" data-item-id="{{g.id}}"><td class="gear-equip-cell">{{#if g.wearable}}<input type="checkbox" class="gear-equip-cb" data-item-id="{{g.id}}" title="Надето: {{g.worn}}" {{#if g.equipped}}checked{{/if}}/>{{else}}—{{/if}}</td><td class="item-name-cell">{{g.name}}{{#if g.activatable}} <button type="button" class="armormod-active-toggle gear-modsub-power {{#if g.active}}is-on{{/if}}" data-item-id="{{g.id}}" title="Включить/выключить (бонус требует активного применения, не просто владения)">{{#if g.active}}ВКЛ{{else}}выкл{{/if}}</button>{{/if}} <button type="button" class="improvised-swing-btn" data-item-id="{{g.id}}" title="Замахнуться как Дубиной — ≤¼ Веса Ношения (стр. 27). Нужна отмеченная цель.">🏏</button><button type="button" class="improvised-throw-btn" data-item-id="{{g.id}}" title="Метнуть — тир по весу, до полного Веса Ношения (стр. 28). Нужна отмеченная цель.">🎯</button></td><td></td><td>{{g.quantity}}</td><td>{{g.weight}}</td><td>{{g.totalWeight}}</td><td class="gear-infoguard-cell" title="Успехи Инфограждения">
+            <tr class="item-row {{#if g.equipped}}item-row-equipped{{/if}}" data-item-id="{{g.id}}"><td class="gear-equip-cell">{{#if g.wearable}}<input type="checkbox" class="gear-equip-cb" data-item-id="{{g.id}}" title="Надето: {{g.worn}}" {{#if g.equipped}}checked{{/if}}/>{{else}}—{{/if}}</td><td class="gear-stored-cell"><input type="checkbox" class="item-stored-cb" data-item-id="{{g.id}}" title="Хранится не при себе" {{#if g.stored}}checked{{/if}}/></td><td class="item-name-cell">{{g.name}}{{#if g.activatable}} <button type="button" class="armormod-active-toggle gear-modsub-power {{#if g.active}}is-on{{/if}}" data-item-id="{{g.id}}" title="Включить/выключить (бонус требует активного применения, не просто владения)">{{#if g.active}}ВКЛ{{else}}выкл{{/if}}</button>{{/if}} <button type="button" class="improvised-swing-btn" data-item-id="{{g.id}}" title="Замахнуться как Дубиной — ≤¼ Веса Ношения (стр. 27). Нужна отмеченная цель.">🏏</button><button type="button" class="improvised-throw-btn" data-item-id="{{g.id}}" title="Метнуть — тир по весу, до полного Веса Ношения (стр. 28). Нужна отмеченная цель.">🎯</button></td><td></td><td>{{g.quantity}}</td><td>{{g.weight}}</td><td>{{g.totalWeight}}</td><td class="gear-infoguard-cell" title="Успехи Инфограждения">
                 {{#if g.infoguard}}🛡 {{g.infoguard}} <button type="button" class="gear-infoguard-roll-btn" data-item-id="{{g.id}}" title="½ смены, тест Tech-Use+0. Успехи делятся пополам (окр.▲).">🎲</button><button type="button" class="gear-infoguard-delegate-btn" data-item-id="{{g.id}}" title="Попросить другого игрока наложить Инфограждение своим Tech-Use — Успехи лягут на этот предмет">📨</button>
                 {{else if (eq g.infoguard 0)}}0 <button type="button" class="gear-infoguard-roll-btn" data-item-id="{{g.id}}" title="½ смены, тест Tech-Use+0. Успехи делятся пополам (окр.▲).">🎲</button><button type="button" class="gear-infoguard-delegate-btn" data-item-id="{{g.id}}" title="Попросить другого игрока наложить Инфограждение своим Tech-Use — Успехи лягут на этот предмет">📨</button>
                 {{else}}—{{/if}}
               </td></tr>
             {{/each}}
           {{else}}
-            <tr class="items-empty"><td colspan="7"><em>Нет снаряжения</em></td></tr>
+            <tr class="items-empty"><td colspan="8"><em>Нет снаряжения</em></td></tr>
           {{/if}}
         </tbody>
       </table>
@@ -321,14 +323,14 @@
     </div>
     <div class="gear-cat-body">
       <table class="items-table gear-table">
-        <thead><tr><th>Препараты</th><th>Описание</th><th>Кол-во</th><th>Вес</th><th>Всего</th></tr></thead>
+        <thead><tr><th class="gear-stored-th" title="Хранится — не при себе, не учитывается в Нагрузке">Хран.</th><th>Препараты</th><th>Описание</th><th>Кол-во</th><th>Вес</th><th>Всего</th></tr></thead>
         <tbody>
           {{#if gearDrugs.length}}
             {{#each gearDrugs as |d|}}
-            <tr class="item-row" data-item-id="{{d.id}}"><td class="item-name-cell">{{d.name}}</td><td></td><td>{{d.quantity}}</td><td>{{d.weight}}</td><td>{{d.totalWeight}}</td></tr>
+            <tr class="item-row" data-item-id="{{d.id}}"><td class="gear-stored-cell"><input type="checkbox" class="item-stored-cb" data-item-id="{{d.id}}" title="Хранится не при себе" {{#if d.stored}}checked{{/if}}/></td><td class="item-name-cell">{{d.name}}</td><td></td><td>{{d.quantity}}</td><td>{{d.weight}}</td><td>{{d.totalWeight}}</td></tr>
             {{/each}}
           {{else}}
-            <tr class="items-empty"><td colspan="5"><em>Нет препаратов</em></td></tr>
+            <tr class="items-empty"><td colspan="6"><em>Нет препаратов</em></td></tr>
           {{/if}}
         </tbody>
       </table>
@@ -344,18 +346,18 @@
     </div>
     <div class="gear-cat-body">
       <table class="items-table gear-table">
-        <thead><tr><th>Инструменты</th><th>Описание</th><th>Кол-во</th><th>Вес</th><th title="Успехи Инфограждения">Инфогр.</th></tr></thead>
+        <thead><tr><th class="gear-stored-th" title="Хранится — не при себе, не учитывается в Нагрузке">Хран.</th><th>Инструменты</th><th>Описание</th><th>Кол-во</th><th>Вес</th><th title="Успехи Инфограждения">Инфогр.</th></tr></thead>
         <tbody>
           {{#if gearTools.length}}
             {{#each gearTools as |t|}}
-            <tr class="item-row" data-item-id="{{t.id}}"><td class="item-name-cell">{{t.name}}{{#if t.activatable}} <button type="button" class="armormod-active-toggle gear-modsub-power {{#if t.active}}is-on{{/if}}" data-item-id="{{t.id}}" title="Включить/выключить (бонус требует активного применения, не просто владения)">{{#if t.active}}ВКЛ{{else}}выкл{{/if}}</button>{{/if}}{{#if t.isHololith}} <button type="button" class="hololith-briefing-btn" data-item-id="{{t.id}}" title="Час подготовки, тест Tech-Use+0 (стр. 256) — успех даёт +10 Command на следующий подходящий тест.">📽️ Брифинг</button>{{/if}}</td><td></td><td>{{t.quantity}}</td><td>{{t.weight}}</td><td class="gear-infoguard-cell" title="Успехи Инфограждения">
+            <tr class="item-row" data-item-id="{{t.id}}"><td class="gear-stored-cell"><input type="checkbox" class="item-stored-cb" data-item-id="{{t.id}}" title="Хранится не при себе" {{#if t.stored}}checked{{/if}}/></td><td class="item-name-cell">{{t.name}}{{#if t.activatable}} <button type="button" class="armormod-active-toggle gear-modsub-power {{#if t.active}}is-on{{/if}}" data-item-id="{{t.id}}" title="Включить/выключить (бонус требует активного применения, не просто владения)">{{#if t.active}}ВКЛ{{else}}выкл{{/if}}</button>{{/if}}{{#if t.isHololith}} <button type="button" class="hololith-briefing-btn" data-item-id="{{t.id}}" title="Час подготовки, тест Tech-Use+0 (стр. 256) — успех даёт +10 Command на следующий подходящий тест.">📽️ Брифинг</button>{{/if}}</td><td></td><td>{{t.quantity}}</td><td>{{t.weight}}</td><td class="gear-infoguard-cell" title="Успехи Инфограждения">
                 {{#if t.infoguard}}🛡 {{t.infoguard}} <button type="button" class="gear-infoguard-roll-btn" data-item-id="{{t.id}}" title="½ смены, тест Tech-Use+0. Успехи делятся пополам (окр.▲).">🎲</button><button type="button" class="gear-infoguard-delegate-btn" data-item-id="{{t.id}}" title="Попросить другого игрока наложить Инфограждение своим Tech-Use — Успехи лягут на этот предмет">📨</button>
                 {{else if (eq t.infoguard 0)}}0 <button type="button" class="gear-infoguard-roll-btn" data-item-id="{{t.id}}" title="½ смены, тест Tech-Use+0. Успехи делятся пополам (окр.▲).">🎲</button><button type="button" class="gear-infoguard-delegate-btn" data-item-id="{{t.id}}" title="Попросить другого игрока наложить Инфограждение своим Tech-Use — Успехи лягут на этот предмет">📨</button>
                 {{else}}—{{/if}}
               </td></tr>
             {{/each}}
           {{else}}
-            <tr class="items-empty"><td colspan="5"><em>Нет инструментов</em></td></tr>
+            <tr class="items-empty"><td colspan="6"><em>Нет инструментов</em></td></tr>
           {{/if}}
         </tbody>
       </table>

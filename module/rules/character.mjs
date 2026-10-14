@@ -969,6 +969,11 @@ export function prepareCharacterDerived(actor, system) {
     let selfCarriedArmourWeight = 0;
     for (const item of actor.items) {
       const s = item.system;
+      // Хранится не при себе (wdbc-6rj, stored): склад/кузов/каюта — вне
+      // Нагрузки целиком, не только «несёт себя сама» ниже. «Используется»/
+      // «Носится» (equipped=true/false без stored) по-прежнему весят —
+      // только само отсутствие рядом с телом снимает вес.
+      if (s.stored) continue;
       const w = parseFloat(s.weight) || 0;
       if (item.type === "armor" && s.equipped && ((s.armorType === "power" && s.active) || s.weightless)) {
         selfCarriedArmourWeight += w;

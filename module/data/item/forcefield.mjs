@@ -24,6 +24,9 @@ export class ForcefieldData extends foundry.abstract.TypeDataModel {
       quality:           new StringField({ initial: "common", label: "Качество" }),
       availability:      new NumberField({ initial: 2, integer: true, nullable: false, label: "Доступность" }),
       weight:            new NumberField({ initial: 0, nullable: false, label: "Вес" }),
+      // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке; см.
+      // комментарий в data/item/weapon.mjs.
+      stored:            new BooleanField({ initial: false, label: "Хранится (не при себе)" }),
       drukhari:          new BooleanField({ initial: false, label: "Друкхари" }),
       // Укрытие по подвиду урона, пока поле активно (Mistshield/Туманный Щит,
       // wdbc-q0q8) — не срабатывание самого щита (см. combat/damage.mjs
