@@ -194,7 +194,12 @@ section.settings button, .settings-sidebar button, #game-settings button,
 
 /* ── Контролы трея костей (нижняя панель) ── */
 #chat-controls, .chat-control-icon { color: var(--wh-cg-dim) !important; }
-/* Режим броска (Публичный/ГМ/Слепой/Себе): подсветить ВЫБРАННЫЙ */
+/* Режим сообщения (Публичный/ГМ/Слепой/Себе/Не-в-игре): подсветить ВЫБРАННЫЙ.
+   Актуальная разметка v13+ — #message-modes button[aria-pressed="true"]
+   (старый алиас #roll-privacy указывает на тот же узел, см. chat.mjs);
+   .active/[data-roll-mode] ничему не соответствуют и оставлены на случай
+   более старой сборки. */
+#message-modes button[aria-pressed="true"],
 #chat-controls a.active, #chat-controls .active,
 #roll-privacy label.active, #roll-privacy .active,
 .roll-type-select .active, [data-roll-mode].active, button[data-roll-mode][aria-pressed="true"] {
