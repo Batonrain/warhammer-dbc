@@ -62,7 +62,7 @@ async function rollCare(actor, key) {
   const roll = await new Roll("1d100").evaluate();
   const ok = roll.total <= eff;
   const gain = key === "critical" ? "лечится как тяжёлый" : "следующее лечение через 8 ч";
-  const line = `Мед. уход (${esc(medic.name)}): Медика${mod ? mod : "+0"} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${ok
+  const line = `Мед. уход (${esc(medic.name)}): Медицина${mod ? mod : "+0"} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${ok
     ? `<span class="roll-success">Успех, ${gain}</span>` : `<span class="roll-failure">Провал</span>`}`;
   return { ok, line, roll };
 }

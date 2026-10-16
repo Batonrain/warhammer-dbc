@@ -80,7 +80,7 @@ describe("rollInfernalWillShock — бросок по таблице Шока", 
     const a = makeActor({ patronGod: "", cor: 45 });
     const html = await rollInfernalWillShock(a, { deg: 4, ctx: { skill: "charm" } });
     expect(html).toMatch(/Источник Страха — предмет проваленного теста/);
-    expect(html).toContain("Обаяние");
+    expect(html).toContain("Очарование");
   });
 
   it("Бог-Покровитель, дружественный Навык: полный Cor уводит итог в 0 — Шока нет", async () => {

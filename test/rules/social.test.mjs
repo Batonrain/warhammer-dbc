@@ -2,7 +2,7 @@
 //
 // Что вкладка СОЦИУМ считает «социальным». Отбор идёт по следу в данных, а не
 // по списку предметов: правило живёт в эффекте, и любой предмет, что двигает
-// Обаяние, Общительность, Лояльность или Сплочённость, попадает в блок
+// Очарование, Общительность, Лояльность или Сплочённость, попадает в блок
 // «Модификаторы» сам, без ручной пометки.
 
 import { describe, it, expect } from "vitest";
@@ -38,7 +38,7 @@ describe("isSocialKey", () => {
 
 describe("socialChangeLabel", () => {
   it("называет правку по-человечески", () => {
-    expect(socialChangeLabel("system.skills.charm.total", 10)).toBe("Обаяние +10");
+    expect(socialChangeLabel("system.skills.charm.total", 10)).toBe("Очарование +10");
     expect(socialChangeLabel("system.characteristics.fel.total", 5)).toBe("Общительность +5");
     expect(socialChangeLabel("system.loyalty.max", 2)).toBe("Лояльность +2");
     expect(socialChangeLabel("system.cohesion.value", -1)).toBe("Сплочённость -1");
@@ -57,7 +57,7 @@ describe("socialMentions", () => {
   });
 
   it("ловит английские и обходит похожие слова", () => {
-    expect(socialMentions("Gain +10 to Charm tests")).toEqual(["Обаяние"]);
+    expect(socialMentions("Gain +10 to Charm tests")).toEqual(["Очарование"]);
     expect(socialMentions("Fellowship bonus")).toEqual(["Общительность"]);
     // Felling — свойство оружия, к Общительности отношения не имеет.
     expect(socialMentions("Felling (2) ignores Unnatural Toughness")).toEqual([]);
@@ -75,11 +75,11 @@ describe("socialReasons", () => {
     const reasons = socialReasons(
       { changes: [{ key: "system.skills.charm.total", value: 10 }] },
       "Что-то про Командование");
-    expect(reasons).toEqual(["Обаяние +10"]);
+    expect(reasons).toEqual(["Очарование +10"]);
   });
 
   it("без машинного следа берётся текст правила", () => {
-    expect(socialReasons({}, "Даёт +10 на тесты Дознания")).toEqual(["Дознание"]);
+    expect(socialReasons({}, "Даёт +10 на тесты Расспроса")).toEqual(["Расспрос"]);
   });
 
   it("совсем не социальный Талант не попадает никуда", () => {

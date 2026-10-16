@@ -127,7 +127,7 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   // самого сравнения (opposedLine ниже) ещё не происходит.
   const oppSelected = !!opposed || opposedSelected;
   const oppSafe = opposed ? !!opposed.safe : opposedSafeSelected;
-  // kindLabel — только для шапки карточки («Медика · Комбинированный,
+  // kindLabel — только для шапки карточки («Медицина · Комбинированный,
   // Расширенный»), список активных Видов через запятую, а не единственное
   // значение: их теперь может быть сколько угодно разом.
   const kindLabel = [

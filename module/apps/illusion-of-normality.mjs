@@ -3,7 +3,7 @@
 //  Мутация «Illusion of Normality / Иллюзия Нормальности» (wdbc-zbc0):
 //  «Персонаж не привлекает к себе внимания... Любые внешние проявления
 //  мутаций игнорируются наблюдателями... работает как активно поддерживаемая
-//  психосила и может быть замечена тестом Пси-чутья (Психонаука) с бонусом
+//  психосила и может быть замечена тестом Пси-чутья (Психочутьё) с бонусом
 //  +5 за каждую прочую мутацию персонажа. Псайкеры, что засекли действие
 //  этой мутации, могут пройти тест на W+0, чтобы увидеть сквозь иллюзию, но
 //  не более одной попытки за бой/сцену.»
@@ -93,7 +93,7 @@ async function postIllusionCard({ actor, headerIcon, header, threshold, roll, su
 }
 
 /**
- * Наблюдатель (текущая цель) тестирует Психонауку (Пси-чутьё), чтобы вообще
+ * Наблюдатель (текущая цель) тестирует Психочутьё, чтобы вообще
  * заметить активную иллюзию ЭТОГО мутанта. actor — владелец Мутации.
  */
 export async function attemptNoticeIllusion(item, actor) {
@@ -119,9 +119,9 @@ export async function attemptNoticeIllusion(item, actor) {
   await postIllusionCard({
     actor: observer,
     headerIcon: rollIcon("target", "#8fd0ff"),
-    header: `Психонаука — замечает иллюзию (${actor.name})`,
+    header: `Психочутьё — замечает иллюзию (${actor.name})`,
     threshold: rollStatLine({
-      label: "Психонаука", base: skill,
+      label: "Психочутьё", base: skill,
       parts: [`+ 5×Прочие мутации(${otherMutationCount(actor, item.id)}) = ${bonus}`, ...ruleMods.parts],
       threshold, rv
     }),
@@ -196,7 +196,7 @@ export function illusionOfNormalityHtml(item, actor) {
     ${maintainToggle}
     <div class="illusion-of-normality-status">${status}</div>
     <button type="button" class="illusion-notice-btn" data-item-id="${item.id}">
-      ${rollIcon("target", "#8fd0ff")}Наблюдатель пытается заметить (Психонаука)
+      ${rollIcon("target", "#8fd0ff")}Наблюдатель пытается заметить (Психочутьё)
     </button>
     <button type="button" class="illusion-see-through-btn" data-item-id="${item.id}">
       ${rollIcon("warp", "#c9a8ff")}Увидеть сквозь иллюзию (W+0)

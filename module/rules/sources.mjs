@@ -204,7 +204,7 @@ registerRuleSource("legacyInstinctiveDisarm", a => legacyInstinctiveDisarmRules(
 registerRuleSource("legacyDistractingCharSwap", a => legacyDistractingCharSwapRules(a));
 
 // Тихое, Оружие Наследия (wdbc-1rno.35/skilled 1-2, стр. 427): тест на
-// Бдительность с целью — носителем этого оружия — получает −30. Обратное
+// Внимательность с целью — носителем этого оружия — получает −30. Обратное
 // направление (проверяет СНАРЯЖЕНИЕ ЦЕЛИ, не роллящего), см. заголовок
 // rules/legacy-weapon.mjs::legacyQuietAwarenessRules.
 registerRuleSource("legacyQuietAwareness", (a, ctx) => legacyQuietAwarenessRules(a, ctx));

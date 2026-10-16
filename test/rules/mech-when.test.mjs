@@ -31,7 +31,7 @@ describe("entryWhenOk: Талант+специализация (wdbc-ta4y)", () 
   // itemHasName сравнивает wanted с КАЖДОЙ билингвальной половиной имени
   // предмета по отдельности (rules/predicates.mjs) — значит и в when.talentSpec.name
   // должна лежать ОДНА половина ("Мастерство"), а не полная строка со слэшем.
-  const entry = { when: { talentSpec: { name: "Мастерство", specialization: "Психонаука" } } };
+  const entry = { when: { talentSpec: { name: "Мастерство", specialization: "Психочутьё" } } };
 
   it("нет актора (превью) — условие пройдено", () => {
     expect(entryWhenOk(null, entry)).toBe(true);
@@ -50,18 +50,18 @@ describe("entryWhenOk: Талант+специализация (wdbc-ta4y)", () 
 
   it("Талант с нужной специализацией — true", () => {
     const actor = actorWithItems([
-      { type: "talent", name: "Mastery / Мастерство", system: { specialization: "Психонаука" } }
+      { type: "talent", name: "Mastery / Мастерство", system: { specialization: "Психочутьё" } }
     ]);
     expect(entryWhenOk(actor, entry)).toBe(true);
   });
 
   // Сравнение СТРОГОЕ, а не подстрокой. Специализацию автор записи выбирает
   // сам, из поля, и вправе ждать точного совпадения: иначе условие «только с
-  // Мастерством (Психонаука)» срабатывало бы у того, у кого записано
-  // «Психонаука и Телепатия», — бонус там, где книга его не даёт.
+  // Мастерством (Психочутьё)» срабатывало бы у того, у кого записано
+  // «Психочутьё и Телепатия», — бонус там, где книга его не даёт.
   it("специализация лишь СОДЕРЖИТ искомую — false", () => {
     const actor = actorWithItems([
-      { type: "talent", name: "Mastery / Мастерство", system: { specialization: "Психонаука и Телепатия" } }
+      { type: "talent", name: "Mastery / Мастерство", system: { specialization: "Психочутьё и Телепатия" } }
     ]);
     expect(entryWhenOk(actor, entry)).toBe(false);
   });
@@ -70,7 +70,7 @@ describe("entryWhenOk: Талант+специализация (wdbc-ta4y)", () 
   // так её хранит часть старых записей (Резчик по Плоти), — но тоже строгий.
   it("специализация в скобках имени — true при точном совпадении", () => {
     const actor = actorWithItems([
-      { type: "talent", name: "Mastery / Мастерство (Психонаука)", system: {} }
+      { type: "talent", name: "Mastery / Мастерство (Психочутьё)", system: {} }
     ]);
     expect(entryWhenOk(actor, entry)).toBe(true);
   });
@@ -79,20 +79,20 @@ describe("entryWhenOk: Талант+специализация (wdbc-ta4y)", () 
     const actor = actorWithItems([
       { type: "talent", name: "Mastery / Мастерство", system: { specialization: "  психонаука  " } }
     ]);
-    expect(entryWhenOk(actor, { when: { talentSpec: { name: "мастерство", specialization: "Психонаука" } } }))
+    expect(entryWhenOk(actor, { when: { talentSpec: { name: "мастерство", specialization: "Психочутьё" } } }))
       .toBe(true);
   });
 
   it("годится и Черта (trait), не только Талант", () => {
     const actor = actorWithItems([
-      { type: "trait", name: "Mastery / Мастерство", system: { specialization: "Психонаука" } }
+      { type: "trait", name: "Mastery / Мастерство", system: { specialization: "Психочутьё" } }
     ]);
     expect(entryWhenOk(actor, entry)).toBe(true);
   });
 
   it("negateTalent переворачивает результат", () => {
     const withTalent = actorWithItems([
-      { type: "talent", name: "Mastery / Мастерство", system: { specialization: "Психонаука" } }
+      { type: "talent", name: "Mastery / Мастерство", system: { specialization: "Психочутьё" } }
     ]);
     const without = actorWithItems([]);
     const negated = { when: { talentSpec: entry.when.talentSpec, negateTalent: true } };
@@ -119,7 +119,7 @@ describe("entryWhenOk: гейты независимы и складываютс
     const entry = {
       when: {
         negate: false, conditions: [{ legion: "I" }],
-        talentSpec: { name: "Мастерство", specialization: "Психонаука" }
+        talentSpec: { name: "Мастерство", specialization: "Психочутьё" }
       }
     };
     expect(entryWhenOk(actor, entry)).toBe(false);

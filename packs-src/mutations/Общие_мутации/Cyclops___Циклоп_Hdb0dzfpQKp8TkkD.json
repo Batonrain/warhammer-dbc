@@ -211,7 +211,7 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "−5 Бдительность (тесты зрения)",
+              "label": "−5 Внимательность (тесты зрения)",
               "code": "",
               "when": {
                 "negate": false,

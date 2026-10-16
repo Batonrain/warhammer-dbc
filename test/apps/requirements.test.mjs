@@ -299,8 +299,8 @@ describe("движок Требований", () => {
         group("AND", skill("awareness", "knows"), skill("charm", "veteran"))
       ]);
       expect(res.ok).toBe(false);
-      expect(res.failed[0]).toContain("Обаяние");
-      expect(res.failed[0]).not.toContain("Бдительность");
+      expect(res.failed[0]).toContain("Очарование");
+      expect(res.failed[0]).not.toContain("Внимательность");
     });
   });
 });

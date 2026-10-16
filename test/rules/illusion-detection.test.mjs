@@ -1,7 +1,7 @@
 // test/rules/illusion-detection.test.mjs
 //
 // module/rules/illusion-detection.mjs (wdbc-zbc0) — чистая формула бонуса
-// теста Психонауки и билдеры составных ключей флагов «заметил»/«потратил
+// теста Психочутья и билдеры составных ключей флагов «заметил»/«потратил
 // попытку увидеть сквозь», переиспользуемые apps/illusion-of-normality.mjs.
 
 import { describe, it, expect } from "vitest";

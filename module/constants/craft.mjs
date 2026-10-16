@@ -134,7 +134,7 @@ const LORE_GROUPS = ["forbiddenLore", "scholasticLore", "commonLore"];
 // research=true — оставляем только Навыки исследования (Tech-Use, Medicae,
 // Linguistics, Forbidden/Scholastic Lore).
 // Крафт учитывает только релевантные Навыки: плоские Tech-Use/Survival/Medicae и
-// групповые Ремесло + Знания. Исследование — Tech-Use/Medicae + Знания/Лингвистика.
+// групповые Ремесло + Знания. Исследование — Tech-Use/Medicae + Знания/Язык.
 const CRAFT_FLAT    = ["survival", "techUse", "medicae"];
 const CRAFT_GROUPS  = ["trade", "forbiddenLore", "scholasticLore"];
 const RESEARCH_FLAT = ["techUse", "medicae"];

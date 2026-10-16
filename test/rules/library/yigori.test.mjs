@@ -68,7 +68,7 @@ describe("Pheromone Glands / Феромонные Железы", () => {
   };
   const valuesFor = ctx => resolveTest({ actor: withGlands(), ...ctx }).mods.map(m => m.value).sort((a, b) => a - b);
 
-  it("Обаяние: галочки +10 (феромоны) и +20 (Соблазнение) — вместе +30", () => {
+  it("Очарование: галочки +10 (феромоны) и +20 (Соблазнение) — вместе +30", () => {
     expect(valuesFor({ kind: "skill", skill: "charm", char: "fel" })).toEqual([10, 20]);
   });
 

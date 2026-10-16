@@ -68,15 +68,15 @@ describe("приоритет override над cultureCat легиона", () => {
     // тоже дал бы enemy — до фикса это совпадение маскировало баг).
     const cost = (a) => skillStepsCost(a, "charm", [0]);
     expect(cost(actorWithLegion("I"))).toBe(SKILL_COST.enemy[0]);
-    overrideRule("skill", "Обаяние", "ally");
+    overrideRule("skill", "Очарование", "ally");
     expect(cost(actorWithLegion("I"))).toBe(SKILL_COST.ally[0]);
   });
 
   it("wdbc-ko14: cultureCat теперь реально матчит Навыки легиона — Scrutiny у Легиона I дружественнен по культуре, не по Склонностям", () => {
-    // Контроль бага: до фикса SKILLS_DEF.scrutiny.label = "Проницательность"
+    // Контроль бага: до фикса SKILLS_DEF.scrutiny.label = "Пристальность"
     // (кириллица) никогда не совпадал с CULT.I.fS=["Scrutiny"], и пустые
     // Склонности (apts=[]) давали enemy вместо книжного ally.
-    const def = { label: "Проницательность", en: "Scrutiny", char: "per" };
+    const def = { label: "Пристальность", en: "Scrutiny", char: "per" };
     expect(skillCumCost(actorWithLegion("I"), def, "knows")).toBe(SKILL_COST.ally[0]);
   });
 

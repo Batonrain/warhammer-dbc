@@ -34,12 +34,12 @@ beforeEach(() => {
   globalThis.game.combat = undefined;
 });
 
-describe("awarenessOnWs — тренировка Бдительности, перенесённая с Per на WS", () => {
-  it("нетренированная Бдительность — голый WS", () => {
+describe("awarenessOnWs — тренировка Внимательности, перенесённая с Per на WS", () => {
+  it("нетренированная Внимательность — голый WS", () => {
     expect(awarenessOnWs(actorWith({ ws: 45, per: 40 }))).toBe(45);
   });
 
-  it("тренированная Бдительность (Per 40 → total 60, +20 надбавка) — та же +20 надбавка поверх WS", () => {
+  it("тренированная Внимательность (Per 40 → total 60, +20 надбавка) — та же +20 надбавка поверх WS", () => {
     expect(awarenessOnWs(actorWith({ ws: 45, per: 40, awarenessTotal: 60 }))).toBe(65); // 45 + (60-40)
   });
 });

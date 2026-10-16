@@ -94,7 +94,7 @@ describe("Черты несут свои возможности (данные п
   });
 });
 
-describe("Умелые Руки — галочки +15/+15 на Ремесло, Техпользование, Безопасность", () => {
+describe("Умелые Руки — галочки +15/+15 на Ремесло, Технология, Безопасность", () => {
   const a = actor([CLEVER]);
   const labels = ctx => resolveTest({ actor: a, ...ctx }).mods.filter(m => /Умелые Руки/.test(m.label));
 
@@ -104,7 +104,7 @@ describe("Умелые Руки — галочки +15/+15 на Ремесло, 
     expect(mods.every(m => m.askOnly)).toBe(true);
   });
 
-  it("на Техпользовании и Безопасности — тоже", () => {
+  it("на Технологии и Безопасности — тоже", () => {
     expect(labels({ kind: "skill", skill: "techUse", char: "int" })).toHaveLength(2);
     expect(labels({ kind: "skill", skill: "security", char: "ag" })).toHaveLength(2);
   });
@@ -180,7 +180,7 @@ describe("Крепкий как Камень", () => {
 });
 
 describe("Надёжная Поступь", () => {
-  it("Трудный Ландшафт: берёт лучшее из Ловкости и Бдительности", () => {
+  it("Трудный Ландшафт: берёт лучшее из Ловкости и Внимательности", () => {
     const a = actor([TREAD], { characteristics: { ag: { total: 20 } }, skills: { awareness: { total: 35 } } });
     expect(sureTreadTerrainBase(a)).toMatchObject({ base: 35, char: "per", skill: "awareness" });
     const b = actor([TREAD], { characteristics: { ag: { total: 40 } }, skills: { awareness: { total: 35 } } });
