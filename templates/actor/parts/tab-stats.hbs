@@ -41,7 +41,7 @@
     <div class="skill-groups-grid"> {{#if skillGroupBoxes.length}}
         {{#each skillGroupBoxes as |grp|}}
         <div class="skill-group-box">
-          <div class="skill-group-header">{{grp.label}}</div>
+          <div class="skill-group-header" data-tooltip="{{grp.tip}}">{{grp.label}}</div>
           <div class="skill-group-body"> {{#each grp.entries as |e|}}
             <div class="skill-row skill-row-grouped"> <a class="skill-roll skill-name skill-name-specialty" data-action="skillRoll" data-skill="group" data-group="true" data-groupkey="{{grp.groupKey}}" data-index="{{e.entryIndex}}" data-tooltip="{{e.tip}}">{{e.specialty}}</a> <input type="number" class="skill-mod group-skill-mod-input" data-group="{{grp.groupKey}}" data-index="{{e.entryIndex}}" value="{{e.mod}}" data-tooltip="Постоянный модификатор Навыка: прибавляется к Итогу и подставляется в Порог любого броска этого Навыка. Разовую прибавку на один бросок вписывайте в поле «Модификатор» в самом окне броска."/> <span class="skill-total {{#if (lt e.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{e.total}}</span> </div> {{/each}}
           </div>
