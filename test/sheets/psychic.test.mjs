@@ -43,7 +43,7 @@ function actor({ race = "human", items = [], fatigue = 0, system = {} } = {}) {
       race,
       fatigue: { value: fatigue },
       psyker: { rating: 3, currentRating: 3, sustain: 0, class: "bound" },
-      skills: { psyniscience: { total: 52 } },
+      skills: { psyniscience: { rank: "veteran", total: 52 } },
       corruption: { value: 12 },
       corruptionBonus: 1,
       wounds: { value: 8, max: 10, critical: 0 },

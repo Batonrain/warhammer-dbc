@@ -19,7 +19,9 @@ export const SKILLS_DEF = {
   logic:         { label: "Логика",           en: "Logic",          char: "int", apt2: "knowledge"  },
   medicae:       { label: "Медика",           en: "Medicae",        char: "int", apt2: "fieldcraft" },
   parry:         { label: "Парирование",      en: "Parry",          char: "ws",  apt2: "defence"    },
-  psyniscience:  { label: "Психонаука",       en: "Psyniscience",   char: "per", apt2: "psyker"     },
+  // cannotUntrained (стр. 57, сноска ²) — тест вообще недоступен без
+  // изучения, не просто −20 как у обычного неизученного Навыка.
+  psyniscience:  { label: "Психонаука",       en: "Psyniscience",   char: "per", apt2: "psyker",     cannotUntrained: true },
   scrutiny:      { label: "Проницательность", en: "Scrutiny",       char: "per", apt2: "general"    },
   security:      { label: "Безопасность",     en: "Security",       char: "int", apt2: "tech"       },
   sleightOfHand: { label: "Ловкость рук",     en: "Sleight of Hand",char: "ag",  apt2: "finesse"    },
@@ -36,7 +38,9 @@ export const SKILLS_DEF = {
 // содержит «forbidden lore» целиком, специализацию указывать не нужно.
 export const GROUP_SKILLS_DEF = {
   commonLore:     { label: "Общие знания",     en: "Common Lore",     char: "int", apt2: "general",   alwaysAlly: true },
-  forbiddenLore:  { label: "Запретные знания", en: "Forbidden Lore",  char: "int", apt2: "knowledge" },
+  // cannotUntrained — та же сноска ², относится ко всей группе (не к
+  // отдельным специализациям) в отличие от Operate, где она точечная.
+  forbiddenLore:  { label: "Запретные знания", en: "Forbidden Lore",  char: "int", apt2: "knowledge", cannotUntrained: true },
   scholasticLore: { label: "Ученые знания",    en: "Scholastic Lore", char: "int", apt2: "knowledge" },
   linguistics:    { label: "Лингвистика",      en: "Linguistics",     char: "int", apt2: "general"   },
   navigation:     { label: "Навигация",        en: "Navigation",      char: "int", apt2: "fieldcraft"},

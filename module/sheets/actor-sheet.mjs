@@ -642,13 +642,26 @@ export function onSkillRoll(event, target) {
     const entry    = this.actor.system.groupSkills?.[groupKey]?.[idx];
     const def      = GROUP_SKILLS_DEF[groupKey];
     if (!entry || !def) return;
+    const spec = entry.specKey ? specDef(groupKey, entry.specKey) : null;
+    if (blockedUntrained(def.cannotUntrained || spec?.cannotUntrained, entry.rank, `${def.label}: ${entry.specialty}`)) return;
     return this._rollSkill(`${def.label}: ${entry.specialty}`, entry.total ?? -20, entry.char || def.char,
       { group: groupKey, specialty: entry.specialty });
   }
   const key = target.dataset.skill;
   const def = SKILLS_DEF[key];
   const sk  = this.actor.system.skills?.[key];
+  if (blockedUntrained(def?.cannotUntrained, sk?.rank, def?.label ?? key)) return;
   return this._rollSkill(def?.label ?? key, sk?.total ?? -20, def?.char ?? "ag", { skill: key });
+}
+
+// Сноска ² (книга, стр. 57): у некоторых Навыков/специализаций (Forbidden
+// Lore, Psyniscience, Operate — Aeronautica/Voidship) тест вообще
+// недоступен без изучения — не просто −20, как у обычного неизученного
+// Навыка. rank по умолчанию "untrained", если поле ещё не выставлено.
+function blockedUntrained(cannotUntrained, rank, label) {
+  if (!cannotUntrained || (rank ?? "untrained") !== "untrained") return false;
+  ui.notifications.warn(`${label}: нельзя использовать неизученным.`);
+  return true;
 }
 
 // ── Расширенные тесты (стр. 25, wdbc-nysl): панель на вкладке ПОКАЗАТЕЛИ ──
@@ -668,6 +681,7 @@ export function onExtendedTestReroll(event, target) {
   if (refKind === "skill") {
     const def = SKILLS_DEF[refKey];
     const sk  = this.actor.system.skills?.[refKey];
+    if (blockedUntrained(def?.cannotUntrained, sk?.rank, def?.label ?? refKey)) return;
     return this._rollSkill(def?.label ?? refKey, sk?.total ?? -20, def?.char ?? "ag", { skill: refKey },
       { defaultKind: "extended", extendedPreset });
   }

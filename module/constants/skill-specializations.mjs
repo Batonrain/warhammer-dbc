@@ -83,10 +83,12 @@ export const SKILL_SPECIALIZATIONS = {
   ],
 
   // ── Вождение — три отдельных навыка со своими Характеристиками ────────
+  // Aeronautica/Voidship — сноска ² (стр. 57): нельзя использовать
+  // неизученным, в отличие от Surface.
   operate: [
     S("surface",     "Surface",     "Наземное", { char: "ag" }),
-    S("aeronautica", "Aeronautica", "Полёт",    { char: "ag" }),
-    S("voidship",    "Voidship",    "Корабль",  { char: "int" })
+    S("aeronautica", "Aeronautica", "Полёт",    { char: "ag", cannotUntrained: true }),
+    S("voidship",    "Voidship",    "Корабль",  { char: "int", cannotUntrained: true })
   ],
 
   // ── Учёные Знания (I) ─────────────────────────────────────────────────
