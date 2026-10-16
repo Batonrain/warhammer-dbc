@@ -23,13 +23,21 @@
 //  которую можно было бы обосновать/заработать курсом, и «обучение Пути» не
 //  является видом цели этого движка (только skill/group/talent).
 //
-//  Klaivex и Interpreter (найдены в capabilities.mjs как заглушки на эту же
-//  механику) — СОЗНАТЕЛЬНО не подключены в этом файле: Klaivex снижает цену
-//  Элитного архетипа Инкуб (другая покупка — module/apps/elite-buy.mjs, не
-//  Навык/Талант через module/sheets/tabs/advance.mjs), Interpreter даёт
-//  Преимущество на тесты «Транскрипции» — такой механики в коде нет вовсе
-//  (grep по всему module/ — ни одного вызова, только текст в capabilities.mjs
-//  и elite-archetypes.mjs). Оба — отдельные находки, не часть этого прохода.
+//  Klaivex (capabilities.mjs: elite.elitnyeArhetipy.inkub.klaivex) — курс на
+//  цель «Элитный архетип Инкуб» (kind:"archetype") доступен ученику ТОЛЬКО
+//  когда учитель — Клэйвекс (module/constants/training.mjs::
+//  buildTeachableTargets); при успехе финального теста курса ученик получает
+//  скидку вдвое на покупку архетипа Инкуб (module/rules/training.mjs::
+//  grantEliteDiscount, применяется в module/apps/elite-buy.mjs::eliteCostFor)
+//  — это НЕ xp-запас, обычная механика Обучения (consumeTrainingEarmark) тут
+//  не участвует.
+//
+//  Interpreter (найден в capabilities.mjs как заглушка на эту же механику) —
+//  СОЗНАТЕЛЬНО не подключён: даёт Преимущество на тесты «Транскрипции», такой
+//  механики в коде нет вовсе (grep по всему module/ — ни одного вызова, только
+//  текст в capabilities.mjs и elite-archetypes.mjs). См. bd «Разобрать»
+//  (wdbc-5yafq) — отдельная находка, построить саму механику Транскрипции
+//  нужно раньше, чем подключать сюда бонус.
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "./predicates.mjs";
@@ -39,6 +47,7 @@ const hasItem = (actor, type, name) =>
 const hasTalent = (actor, name) => hasItem(actor, "talent", name);
 
 export const hasTeacherTalent = actor => hasTalent(actor, "Teacher");
+export const hasKlaivexTalent = actor => hasTalent(actor, "Klaivex");
 // Clear Mind — Трейт, не Талант: capabilities.mjs::trait.treytyRas.clearMind
 // числится в capability-reachable-ratchet.test.mjs как ALLOWED-исключение
 // («включается по имени Черты», как trait.sonarSense/trait.flyer) — анализатор

@@ -5,6 +5,10 @@
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "./skills.mjs";
 import { findGroupEntry } from "./skill-specializations.mjs";
 import { SKILL_RANKS } from "./characteristics.mjs";
+import { hasKlaivexTalent } from "../rules/training-advantage.mjs";
+
+/** Элитный архетип, на скидку к которому ведёт курс Клэйвекса (книга, стр. 22). */
+export const KLAIVEX_DISCOUNT_ARCHETYPE = "Incubus / Инкуб";
 
 export const TRAINING_SESSIONS_PER_COURSE = 8;
 
@@ -61,6 +65,12 @@ export function buildTeachableTargets(teacher) {
     if (item.type === "talent")
       out.push({ value: `talent:${item.name}`, label: item.name, kind: "talent", key: item.name });
   }
+  // Клэйвекс учит не Навыку/Таланту, а искусству Инкубов — отдельная цель,
+  // не производная от того, что у него есть на листе (buildTeachableTargets
+  // перебирает ранги/Таланты, Элитный архетип в этот список не попадает).
+  if (hasKlaivexTalent(teacher))
+    out.push({ value: `archetype:${KLAIVEX_DISCOUNT_ARCHETYPE}`, label: "Искусство Инкубов (скидка на архетип Инкуб)",
+               kind: "archetype", key: KLAIVEX_DISCOUNT_ARCHETYPE });
   return out;
 }
 
