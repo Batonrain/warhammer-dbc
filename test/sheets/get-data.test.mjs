@@ -569,6 +569,59 @@ describe("тултип специализации группового Навы�
     expect(entry.tip).toContain("практические навыки и знания персонажа в определённой профессии");
   });
 
+  it("строка Вождения (Корабль) называет Основой Интеллект, а не Ловкость группы", async () => {
+    const sheet = sheetOf(WarhammerCharacterSheet, {
+      characteristics: {}, skills: {},
+      groupSkills: { operate: [{ specialty: "Voidship", char: "int", total: -10 }] }
+    });
+    sheet.actor.items.contents = sheet.actor.items;
+
+    const ctx   = await sheet._prepareContext({});
+    const box   = ctx.skillGroupBoxes.find(b => b.groupKey === "operate");
+    expect(box.entries[0].tip).toContain("Основа: Интеллект");
+    expect(box.entries[0].tip).not.toContain("Основа: Ловкость");
+    expect(box.tip).toContain("своя у каждой специализации");
+    expect(box.entries[0].tip).toContain("Действие: Обычно Полное или Расширенное действие");
+  });
+
+  it("Навык несёт строку книги «Действие» последним абзацем", async () => {
+    const sheet = sheetOf(WarhammerCharacterSheet, { characteristics: {}, skills: {}, groupSkills: {} });
+    sheet.actor.items.contents = sheet.actor.items;
+
+    const ctx = await sheet._prepareContext({});
+    const allSkills = [...ctx.skillsCol1, ...ctx.skillsCol2, ...ctx.skillsCol3, ...ctx.skillsCol4];
+    const dodge = allSkills.find(s => s.key === "dodge");
+    expect(dodge.tip.endsWith("Действие: Реакция.")).toBe(true);
+  });
+
+  it("заголовок плитки группы несёт описание группы без списка специализаций", async () => {
+    const groups = {
+      commonLore:     [{ specialty: "Administratum", total: -10 }],
+      forbiddenLore:  [{ specialty: "Daemons", total: -10 }],
+      scholasticLore: [{ specialty: "Occult", total: -10 }],
+      linguistics:    [{ specialty: "Low Gothic", total: -10 }],
+      navigation:     [{ specialty: "Warp", total: -10 }],
+      operate:        [{ specialty: "Surface", total: -10 }],
+      trade:          [{ specialty: "Chymist", total: -10 }]
+    };
+    const sheet = sheetOf(WarhammerCharacterSheet, { characteristics: {}, skills: {}, groupSkills: groups });
+    sheet.actor.items.contents = sheet.actor.items;
+
+    const ctx = await sheet._prepareContext({});
+    expect(ctx.skillGroupBoxes.length).toBe(7);
+    for (const box of ctx.skillGroupBoxes) {
+      expect(box.tip, box.groupKey).toContain("Группа Навыков");
+      expect(box.tip, box.groupKey).toContain("Основа:");
+      expect(box.tip, box.groupKey).not.toContain("Бросок:");
+      // Названия специализаций в подсказке группы не перечисляются — у каждой
+      // строки плитки свой тултип.
+      for (const spec of ["Administratum", "Daemons", "Occult", "Low Gothic", "Surface", "Chymist",
+        "Администратум", "Механикум", "Астромантия", "Оккультизм", "Оружейник", "Aeronautica", "Voidship"]) {
+        expect(box.tip, `${box.groupKey}: ${spec}`).not.toContain(spec);
+      }
+    }
+  });
+
   it("обычный (не групповой) Навык работает как раньше — тултип из общего описания Навыка", async () => {
     const sheet = sheetOf(WarhammerCharacterSheet, { characteristics: {}, skills: {}, groupSkills: {} });
     sheet.actor.items.contents = sheet.actor.items;

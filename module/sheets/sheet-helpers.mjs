@@ -7,6 +7,8 @@ import { getHeldHand } from "../rules/hands.mjs";
 import { withRulesCache } from "../rules/collect.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }              from "../constants/skills.mjs";
 import { SKILL_DESCRIPTIONS }                        from "../constants/skill-descriptions.mjs";
+import { SKILL_SPECIALIZATIONS }                     from "../constants/skill-specializations.mjs";
+import { skillActionOf }                             from "../constants/skill-actions.mjs";
 import { SKILL_SPECIALTY_DESCRIPTIONS }               from "../constants/skill-specialty-descriptions.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES,
          DRUG_CATEGORIES, DRUG_DELIVERY,
@@ -115,10 +117,13 @@ export { CONDITIONS_DEF };
  * подсказывает химика, а не пересказ всей группы «Ремесло», и никогда не
  * остаётся пустым, если под конкретную специализацию текста ещё не набрано.
  */
-function skillTip(key, def, rollLabel, specialty, mod = 0) {
+function skillTip(key, def, rollLabel, specialty, mod = 0, charKey = def?.char) {
   if (!def) return "";
-  const ch   = CHARACTERISTICS[def.char];
-  const base = ch ? `${ch.label} (${ch.abbr})` : def.char;
+  // charKey — своя Характеристика записи группы (entry.char: Вождение (Корабль) —
+  // Интеллект, Ремесло (Каллиграф) — Ловкость), та же, что берёт бросок и расчёт
+  // Итога; иначе строка Корабля заявила бы Основу группы — Ловкость.
+  const ch   = CHARACTERISTICS[charKey];
+  const base = ch ? `${ch.label} (${ch.abbr})` : charKey;
   const apt2 = APTITUDES[def.apt2] || def.apt2;
   // Постоянный модификатор (wdbc-q4wb) виден в Итоге, но по одному числу не
   // понять, откуда оно — поэтому названо в тултипе, и только когда не ноль.
@@ -126,7 +131,34 @@ function skillTip(key, def, rollLabel, specialty, mod = 0) {
   const head = `Бросок: ${rollLabel} · Основа: ${base} · Склонность: ${apt2}${modStr}`;
   const desc = (specialty && SKILL_SPECIALTY_DESCRIPTIONS[key]?.[specialty])
     || SKILL_DESCRIPTIONS[key];
-  return desc ? `${head}<br><br>${desc}` : head;
+  // Строка книги «Действие:» (skill-actions.mjs) — последней, отдельным абзацем.
+  const action = skillActionOf(key, specialty);
+  const body = [desc, action].filter(Boolean).join("<br><br>");
+  return body ? `${head}<br><br>${body}` : head;
+}
+
+/**
+ * Подсказка на заголовок плитки группового Навыка («Общие знания», «Ремесло»…).
+ * Это сама группа, а не строка со специализацией: броска у неё нет, поэтому
+ * шапка без «Бросок:» — только Основа и Склонность, а ниже общее описание
+ * группы из SKILL_DESCRIPTIONS БЕЗ списка специализаций (у каждой строки
+ * плитки свой тултип, см. skillTip). Основа группы — не всегда основа её
+ * специализации: у Вождения своя Характеристика у каждой (Корабль — Интеллект,
+ * остальные — Ловкость), у Ремесла — у отдельных. Поэтому группа, где свои
+ * Характеристики у всех специализаций, Основу не называет вовсе, а где у части —
+ * называет с оговоркой; точная Основа видна в тултипе самой строки.
+ */
+function groupTip(key, def) {
+  const ch   = CHARACTERISTICS[def.char];
+  const specs = SKILL_SPECIALIZATIONS[key] || [];
+  const ownChar = specs.filter(s => s.char).length;
+  const base = ownChar && ownChar === specs.length
+    ? "своя у каждой специализации"
+    : `${ch ? `${ch.label} (${ch.abbr})` : def.char}${ownChar ? " (у отдельных специализаций своя)" : ""}`;
+  const apt2 = APTITUDES[def.apt2] || def.apt2;
+  const head = `Основа: ${base} · Склонность: ${apt2}`;
+  const body = [SKILL_DESCRIPTIONS[key], skillActionOf(key)].filter(Boolean).join("<br><br>");
+  return body ? `${head}<br><br>${body}` : head;
 }
 
 export function buildSkillDisplay(key, system) {
@@ -443,12 +475,13 @@ function buildGetDataUncached(actor) {
     context.skillGroupBoxes.push({
       groupKey,
       label: def.label,
+      tip:   groupTip(groupKey, def),
       entries: entries.map((entry, idx) => ({
         entryIndex: idx,
         specialty:  entry.specialty,
         total:      entry.total ?? -20,
         mod:        Number(entry.mod) || 0,
-        tip:        skillTip(groupKey, def, `${def.label}: ${entry.specialty}`, entry.specialty, Number(entry.mod) || 0)
+        tip:        skillTip(groupKey, def, `${def.label}: ${entry.specialty}`, entry.specialty, Number(entry.mod) || 0, entry.char || def.char)
       }))
     });
   }
