@@ -62,8 +62,14 @@
 
 - `module/constants/characteristics.mjs` — Характеристики и ступени Улучшения.
 - `module/constants/skills.mjs` (+ `skill-descriptions.mjs`,
-  `skill-specializations.mjs`, `skill-specialty-descriptions.mjs`) — Навыки и
-  групповые специализации.
+  `skill-specializations.mjs`, `skill-specialty-descriptions.mjs`,
+  `skill-actions.mjs`) — Навыки и групповые специализации; подписи — как в книге
+  (Глава 3), старые названия (Бдительность, Обаяние…) сводит к нынешним
+  `currentSkillName` при сравнении (правила рас, Мастерство). Тултипы Навыка,
+  группы и специализации собирает `skillTip`/`groupTip` в
+  `sheets/sheet-helpers.mjs`. Склонность General выдаётся всем автоматически
+  (`charAptitudeSet`). Сторожа: `test/constants/skills-book-table.test.mjs`,
+  `skill-names-book.test.mjs`.
 - `module/constants/advancement.mjs` — таблицы цены Характеристик/Навыков/
   Талантов по Склонностям.
 - `module/rules/advance-category.mjs` — категория цены (Дружественная/
