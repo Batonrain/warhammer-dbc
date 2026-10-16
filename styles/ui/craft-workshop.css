@@ -117,6 +117,18 @@
 
 .wh-craft-mats summary { cursor: pointer; }
 
+/* Итог Исследования: доп. поля под «Тип результата» + Журнал */
+.wh-craft-sub { display: flex; flex-direction: column; gap: 3px; margin-top: 7px; width: 100%; }
+.wh-craft-journal summary { cursor: pointer; }
+.wh-journal-open { padding: 3px 9px; font-weight: normal; }
+
+/* Обучение: строка ученика (имя + тест + лимит месяца + убрать) */
+.wh-training { display: flex; flex-direction: column; gap: 10px; }
+.wh-training-student { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.wh-training-sname { flex: 0 0 auto; min-width: 90px; font-weight: bold; color: #bdf0d6; }
+.wh-training-student .wh-craft-select { flex: 1 1 auto; width: auto; }
+.wh-training-student .wh-craft-hint { flex: 0 0 auto; margin: 0; }
+
 /* Чат-сообщение смены */
 .wh-craft-msg { border: 1px solid rgba(120,255,190,0.35); border-radius: 5px; padding: 6px 8px; background: rgba(8,24,17,0.4); }
 .wh-craft-msg-head { font-weight: bold; color: #8cf0a0; margin-bottom: 4px; }

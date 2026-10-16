@@ -94,7 +94,14 @@ const ALLOWED = {
   // Скорость полёта (Гарпия, глава I): как Sonar Sense — включатель ИМЯ Черты
   // Flyer/Hoverer (rules/flight-speed.mjs, combat/movement-actions.mjs держат
   // имена массивом, литерала в вызове itemHasName анализатор не видит).
-  "trait.flyer": "включается по имени Черты (Flyer / Летун, Hoverer / Парящий) — сотни носителей в паках, ключ Конструктора не нужен"
+  "trait.flyer": "включается по имени Черты (Flyer / Летун, Hoverer / Парящий) — сотни носителей в паках, ключ Конструктора не нужен",
+
+  // Чистый Разум (module/rules/training-advantage.mjs::hasClearMind, курс
+  // Обучения): включатель — имя Черты через itemHasName внутри hasItem(actor,
+  // "trait", "Clear Mind"), не через hasTalent — анализатор ищет литерал
+  // только в вызовах itemHasName/hasAbility/hasTalent/hasItemNamed/hasNamed
+  // напрямую, этот вызов другой формы не распознаёт, хотя за столом работает.
+  "trait.treytyRas.clearMind": "включается по имени Черты (Clear Mind / Чистый Разум) — вызов другой формы (hasItem), анализатор такой не распознаёт"
 };
 
 describe("возможности с читателем должны быть достижимы из игры", () => {

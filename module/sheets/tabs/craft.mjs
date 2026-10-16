@@ -27,6 +27,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { CraftWorkshop, newCraftProject } from "../../apps/craft-workshop.mjs";
+import { RESEARCH_JOURNAL_FLAG } from "../../rules/research-findings.mjs";
 import { on } from "../../helpers/utils.mjs";
 
 /** Модель вкладки — та же форма данных, что у CraftWorkshop.projects, но своя
@@ -50,14 +51,23 @@ function craftModel(sheet) {
 export async function craftTabContext(sheet) {
   const model = craftModel(sheet);
   const ctx = await CraftWorkshop.prototype._prepareContext.call(model, {});
+  // Журнал Исследований (module/rules/research-findings.mjs) — ТОЛЬКО здесь,
+  // не в отдельном окне «Мастерская»: журнал принадлежит одному актору
+  // (владельцу этого листа), а окно — партийный инструмент без одного
+  // владельца (см. заголовок module/apps/craft-workshop.mjs). Новое сверху.
+  const journal = sheet.actor?.getFlag?.("warhammer-dbc", RESEARCH_JOURNAL_FLAG) ?? [];
+  const craftResearchJournal = [...journal].reverse().map(j => ({
+    ...j, hasItem: !!j.itemId && !!sheet.actor?.items?.get(j.itemId)
+  }));
   return {
     craftProjects: ctx.projects,
     craftMultiple: ctx.multiple,
     craftMaterials: ctx.materials,
+    craftResearchJournal,
     icoCraft: ctx.icoCraft, icoResearch: ctx.icoResearch, icoCrafter: ctx.icoCrafter,
     icoTools: ctx.icoTools, icoShift: ctx.icoShift, icoQuality: ctx.icoQuality,
     icoMaterial: ctx.icoMaterial, icoBio: ctx.icoBio, icoBiomass: ctx.icoBiomass,
-    icoSolution: ctx.icoSolution, icoTemplate: ctx.icoTemplate
+    icoSolution: ctx.icoSolution, icoTemplate: ctx.icoTemplate, icoTeach: ctx.icoTeach
   };
 }
 
@@ -96,7 +106,9 @@ export function activateCraftListeners(root, sheet) {
   on(craftRoot, "[data-cat]", "click", e => upd(e.currentTarget, p => { p.categoryKey = e.currentTarget.dataset.cat; p.skillChoices = {}; p.baseBank = null; }));
   on(craftRoot, "[data-slot]", "change", e => upd(e.currentTarget, p => p.skillChoices[Number(e.currentTarget.dataset.slot)] = e.target.value));
 
-  on(craftRoot, "[name=research-kind]", "change", e => upd(e.currentTarget, p => p.researchKind = e.target.value));
+  on(craftRoot, "[name=research-kind]", "change", e => upd(e.currentTarget, p => { p.researchKind = e.target.value; p.skillChoices = {}; }));
+  on(craftRoot, "[name=psychic-result-type]", "change", e => upd(e.currentTarget, p => p.psychicResultType = e.target.value));
+  on(craftRoot, "[name=study-target]", "change", e => upd(e.currentTarget, p => p.studyTarget = e.target.value));
   on(craftRoot, "[name=rarity]", "change", e => upd(e.currentTarget, p => { p.rarity = num(e.target.value); p.baseBank = null; }));
   on(craftRoot, "[name=quality]", "change", e => upd(e.currentTarget, p => p.quality = e.target.value));
   on(craftRoot, "[name=tool]", "change", e => upd(e.currentTarget, p => p.toolKey = e.target.value));
@@ -120,4 +132,27 @@ export function activateCraftListeners(root, sheet) {
 
   on(craftRoot, "[data-act=shift]", "click", e => model._rollShift(pidOf(e.currentTarget)));
   on(craftRoot, "[data-act=reset]", "click", e => upd(e.currentTarget, p => p.project = { accumulated: 0, shifts: 0, fatigue: 0 }));
+
+  // Обучение (книга, стр. 22).
+  on(craftRoot, "[name=training-target]", "change", e => upd(e.currentTarget, p => p.trainingTarget = e.target.value));
+  on(craftRoot, "[name=social-key]", "change", e => upd(e.currentTarget, p => p.socialKey = e.target.value));
+  on(craftRoot, "[name=student-add]", "change", e => upd(e.currentTarget, p => {
+    if (e.target.value) p.students = [...(p.students || []), { id: e.target.value, testKey: "char:int" }];
+  }));
+  on(craftRoot, "[data-act=remove-student]", "click", e => upd(e.currentTarget, p => {
+    const idx = Number(e.currentTarget.dataset.sidx);
+    p.students = (p.students || []).filter((_, i) => i !== idx);
+  }));
+  on(craftRoot, "[data-sidx] [name=student-test]", "change", e => upd(e.currentTarget, p => {
+    const idx = Number(e.currentTarget.closest("[data-sidx]")?.dataset.sidx);
+    if (p.students?.[idx]) p.students[idx].testKey = e.target.value;
+  }));
+  on(craftRoot, "[data-act=session]", "click", e => model._rollTrainingSession(pidOf(e.currentTarget)));
+  on(craftRoot, "[data-act=finish-course]", "click", e => model._finishTrainingCourse(pidOf(e.currentTarget)));
+
+  // Журнал Исследований: открыть предмет-находку на листе.
+  on(craftRoot, "[data-act=open-finding]", "click", e => {
+    const item = sheet.actor?.items?.get(e.currentTarget.dataset.itemId);
+    item?.sheet?.render(true);
+  });
 }
