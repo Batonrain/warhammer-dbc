@@ -64,6 +64,13 @@
 - `module/constants/skills.mjs` (+ `skill-descriptions.mjs`,
   `skill-specializations.mjs`, `skill-specialty-descriptions.mjs`) — Навыки и
   групповые специализации.
+- `cannotUntrained` (стр. 57, сноска ², сверка 16.10.2026) — Psyniscience,
+  Forbidden Lore и Operate (Aeronautica/Voidship) вообще недоступны
+  неизученными (не просто −20); блокировка в `onSkillRoll`/
+  `onExtendedTestReroll` (sheets/actor-sheet.mjs) и `rollPsyniscience`
+  (sheets/tabs/psychic.mjs). Делегированные/эффект-триггерные пути броска
+  (hooks.mjs::genericTest/opposedResponse, horde-sheet.mjs) этой блокировкой
+  НЕ накрыты — осознанно оставлено как хвост.
 - `module/constants/advancement.mjs` — таблицы цены Характеристик/Навыков/
   Талантов по Склонностям.
 - `module/rules/advance-category.mjs` — категория цены (Дружественная/
