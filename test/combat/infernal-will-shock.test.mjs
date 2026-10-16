@@ -15,6 +15,7 @@ import { packDocById } from "../support/pack-doc.mjs";
 import { rollInfernalWillShock } from "../../module/combat/fear.mjs";
 import { resolveKindOutcome } from "../../module/rules/kind-outcome.mjs";
 import { hasRuleFlag } from "../../module/rules/flags.mjs";
+import { SKILLS_DEF } from "../../module/constants/skills.mjs";
 
 const MUTATION = packDocById("packs-src/mutations/Общие_мутации", "vOiGjH4Hhao5ChM1");
 
@@ -80,7 +81,9 @@ describe("rollInfernalWillShock — бросок по таблице Шока", 
     const a = makeActor({ patronGod: "", cor: 45 });
     const html = await rollInfernalWillShock(a, { deg: 4, ctx: { skill: "charm" } });
     expect(html).toMatch(/Источник Страха — предмет проваленного теста/);
-    expect(html).toContain("Очарование");
+    // Подпись Навыка берём из таблицы, а не пишем словом: название менялось (Обаяние → Очарование,
+    // PR #538), и тест не должен зависеть от того, какой из PR влит раньше.
+    expect(html).toContain(SKILLS_DEF.charm.label);
   });
 
   it("Бог-Покровитель, дружественный Навык: полный Cor уводит итог в 0 — Шока нет", async () => {
