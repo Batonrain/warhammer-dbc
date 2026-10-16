@@ -1242,6 +1242,12 @@ function fruitLeftSustainRange(casterActor, bearerActor, power) {
 export function rollPsyniscience(actor, rollSkill) {
   const def = SKILLS_DEF.psyniscience;
   const sk  = actor.system.skills?.psyniscience;
+  // cannotUntrained (книга, стр. 57, сноска ²): тест вообще недоступен без
+  // изучения — минуя .psy-sense-btn (onSkillRoll сюда не вызывается).
+  if (def?.cannotUntrained && (sk?.rank ?? "untrained") === "untrained") {
+    ui.notifications.warn(`${def.label}: нельзя использовать неизученным.`);
+    return;
+  }
   return rollSkill(def?.label ?? "Пси-чутьё", sk?.total ?? -20, def?.char ?? "per", { skill: "psyniscience" });
 }
 

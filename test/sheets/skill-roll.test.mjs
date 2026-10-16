@@ -11,7 +11,7 @@ import { captured, resetCaptured, sheetOf, fakeForm, checkbox } from "../support
 import { packDocById } from "../support/pack-doc.mjs";
 
 // Динамический импорт: глобали Foundry должны быть на месте раньше листа.
-const { WarhammerCharacterSheet } = await import("../../module/sheets/actor-sheet.mjs");
+const { WarhammerCharacterSheet, onSkillRoll } = await import("../../module/sheets/actor-sheet.mjs");
 
 const sheet = system => sheetOf(WarhammerCharacterSheet, {
   characteristics: { int: { total: 40 }, ag: { total: 35 }, fel: { total: 30 }, t: { total: 45, bonus: 4 } },
@@ -878,5 +878,72 @@ describe("Инфернальная Воля: групповой Навык на 
 
   it("3 Провала — Шока нет", async () => {
     expect(await rollNavigation(74)).not.toContain("Инфернальная Воля");
+  });
+});
+
+// Сноска ² (книга, стр. 57): Psyniscience, Forbidden Lore и Operate
+// (Aeronautica/Voidship) вообще недоступны неизученными — не просто −20,
+// как у обычного Навыка (Operate (Surface) сноски ² не несёт и катается как
+// любой другой). onSkillRoll — единственная точка входа с клика по строке
+// Навыка/специализации на листе; клавиатурный dataset подставлен вручную,
+// как и в extended-tests-panel.test.mjs::rowButton.
+describe("сноска ²: нельзя использовать неизученным (стр. 57)", () => {
+  const singleTarget = key => ({ dataset: { skill: key } });
+  const groupTarget  = (groupkey, index) => ({ dataset: { group: "true", groupkey, index: String(index) } });
+
+  it("Психочутьё неизученной (rank по умолчанию) — бросок не открывается, предупреждение в чат не идёт", () => {
+    const s = sheet({ skills: { psyniscience: { rank: "untrained", total: -20 } } });
+    onSkillRoll.call(s, {}, singleTarget("psyniscience"));
+    expect(captured.dialog).toBeNull();
+    expect(captured.warnings.some(w => w.includes("нельзя использовать неизученным"))).toBe(true);
+  });
+
+  it("Психочутьё изученной (rank veteran) — бросок открывается как обычно", () => {
+    const s = sheet({ skills: { psyniscience: { rank: "veteran", total: 50 } } });
+    onSkillRoll.call(s, {}, singleTarget("psyniscience"));
+    expect(captured.dialog).not.toBeNull();
+    expect(captured.warnings).toHaveLength(0);
+  });
+
+  it("обычный Навык (Медицина) без rank — штраф −20, но бросок всё равно доступен", () => {
+    const s = sheet({ skills: { medicae: { total: -20 } } });
+    onSkillRoll.call(s, {}, singleTarget("medicae"));
+    expect(captured.dialog).not.toBeNull();
+    expect(captured.warnings).toHaveLength(0);
+  });
+
+  it("Forbidden Lore (группа) неизученная специализация — блокируется", () => {
+    const s = sheet({ groupSkills: { forbiddenLore: [
+      { specialty: "Archeotech", specKey: "archeotech", rank: "untrained", total: -20 }
+    ] } });
+    onSkillRoll.call(s, {}, groupTarget("forbiddenLore", 0));
+    expect(captured.dialog).toBeNull();
+    expect(captured.warnings.some(w => w.includes("нельзя использовать неизученным"))).toBe(true);
+  });
+
+  it("Forbidden Lore изученная (rank trained) — бросок доступен", () => {
+    const s = sheet({ groupSkills: { forbiddenLore: [
+      { specialty: "Archeotech", specKey: "archeotech", rank: "trained", total: 50 }
+    ] } });
+    onSkillRoll.call(s, {}, groupTarget("forbiddenLore", 0));
+    expect(captured.dialog).not.toBeNull();
+  });
+
+  it("Operate (Aeronautica), специализация группы Operate — неизученная блокируется", () => {
+    const s = sheet({ groupSkills: { operate: [
+      { specialty: "Aeronautica", specKey: "aeronautica", rank: "untrained", total: -20, char: "ag" }
+    ] } });
+    onSkillRoll.call(s, {}, groupTarget("operate", 0));
+    expect(captured.dialog).toBeNull();
+    expect(captured.warnings.some(w => w.includes("нельзя использовать неизученным"))).toBe(true);
+  });
+
+  it("Operate (Surface) — та же группа, но без сноски ²: неизученная всё равно катается", () => {
+    const s = sheet({ groupSkills: { operate: [
+      { specialty: "Surface", specKey: "surface", rank: "untrained", total: -20, char: "ag" }
+    ] } });
+    onSkillRoll.call(s, {}, groupTarget("operate", 0));
+    expect(captured.dialog).not.toBeNull();
+    expect(captured.warnings).toHaveLength(0);
   });
 });
