@@ -24,6 +24,14 @@ import { SECONDS_PER_MONTH } from "../constants/imperial-calendar.mjs";
 export const TRAINING_EARMARK_FLAG = "trainingEarmarks";
 /** Флаг actor — журнал завершённых курсов (для месячного лимита ученика). */
 export const TRAINING_COURSE_LOG_FLAG = "trainingCourseLog";
+/**
+ * Флаг actor — скидки на Элитный архетип от курса Обучения (Klaivex: книга,
+ * стр. 22 — «помогать в обучении искусству Инкубов, снижая цену архетипа
+ * Инкуб вдвое»). НЕ xp-запас: это список имён архетипов, на которые получена
+ * скидка — module/apps/elite-buy.mjs::eliteCostFor халвит цену по наличию
+ * имени в списке, consumeEliteDiscount снимает ОДНУ запись при покупке.
+ */
+export const TRAINING_ELITE_DISCOUNT_FLAG = "trainingEliteDiscounts";
 
 /** Канонический ключ цели обучения — тот же формат на выдаче xp и на покупке. */
 export function trainingTargetKey({ kind, key, specialty } = {}) {
@@ -32,7 +40,30 @@ export function trainingTargetKey({ kind, key, specialty } = {}) {
   if (kind === "skill") return `skill:${k}`;
   if (kind === "group") return `group:${k}:${String(specialty || "").trim().toLowerCase()}`;
   if (kind === "talent") return `talent:${k}`;
+  if (kind === "archetype") return `archetype:${k}`;
   return "";
+}
+
+/** Есть ли у actor неиспользованная скидка на архетип с этим именем. */
+export function hasEliteDiscount(list, archetypeName) {
+  const name = String(archetypeName || "").trim();
+  return !!name && (Array.isArray(list) ? list : []).includes(name);
+}
+
+/** Выдать скидку курсом (Klaivex) — просто добавить имя архетипа в список. */
+export function grantEliteDiscount(list, archetypeName) {
+  const name = String(archetypeName || "").trim();
+  if (!name) return Array.isArray(list) ? list : [];
+  return [...(Array.isArray(list) ? list : []), name];
+}
+
+/** Снять ОДНУ запись скидки при покупке архетипа — вернуть {discounted, nextList}. */
+export function consumeEliteDiscount(list, archetypeName) {
+  const arr = Array.isArray(list) ? list : [];
+  const name = String(archetypeName || "").trim();
+  const idx = name ? arr.indexOf(name) : -1;
+  if (idx < 0) return { discounted: false, nextList: arr };
+  return { discounted: true, nextList: [...arr.slice(0, idx), ...arr.slice(idx + 1)] };
 }
 
 /** Сумма накопленного запаса по этой цели. */
