@@ -12,7 +12,8 @@
 
 import { describe, it, expect } from "vitest";
 import "../support/foundry-stub.mjs";
-import { activateCraftListeners } from "../../module/sheets/tabs/craft.mjs";
+import { activateCraftListeners, craftTabContext } from "../../module/sheets/tabs/craft.mjs";
+import { RESEARCH_JOURNAL_FLAG } from "../../module/rules/research-findings.mjs";
 
 function fakeButton() {
   const handlers = {};
@@ -63,5 +64,42 @@ describe("activateCraftListeners: селектор вкладки не пута�
 
     expect(s._craftModel.projects).toHaveLength(2);
     expect(s.renders).toBe(1);
+  });
+});
+
+// Журнал Исследований (module/rules/research-findings.mjs) — читается ТОЛЬКО
+// на вкладке листа, не в отдельном окне «Мастерская» (у того нет одного
+// владельца-актора). Новое сверху; hasItem — находка жива в инвентаре этого
+// актора прямо сейчас (не просто ID в старой записи).
+describe("craftTabContext: Журнал Исследований", () => {
+  function actorWithJournal(log, ownedItemIds = []) {
+    const items = { get: id => (ownedItemIds.includes(id) ? { id } : null) };
+    return {
+      id: "actor-1", items,
+      getFlag: (scope, key) => (scope === "warhammer-dbc" && key === RESEARCH_JOURNAL_FLAG ? log : undefined)
+    };
+  }
+
+  it("пустой Журнал — пустой список, без падения", async () => {
+    const s = { actor: actorWithJournal(undefined) };
+    const ctx = await craftTabContext(s);
+    expect(ctx.craftResearchJournal).toEqual([]);
+  });
+
+  it("записи — новые сверху, hasItem только у реально живущих в инвентаре", async () => {
+    const log = [
+      { kind: "blueprint", kindLabel: "Чертёж", title: "Первая", itemId: "it1", itemName: "Первая" },
+      { kind: "lore", kindLabel: "Изучение", studyTarget: "Logic → Scholastic Lore (Xenos)", itemId: null, itemName: "" },
+      { kind: "blueprint", kindLabel: "Чертёж", title: "Третья", itemId: "it-gone", itemName: "Третья" }
+    ];
+    const s = { actor: actorWithJournal(log, ["it1"]) };
+    const ctx = await craftTabContext(s);
+
+    expect(ctx.craftResearchJournal).toHaveLength(3);
+    expect(ctx.craftResearchJournal[0].title).toBe("Третья");
+    expect(ctx.craftResearchJournal[0].hasItem).toBe(false); // it-gone больше не на акторе
+    expect(ctx.craftResearchJournal[2].itemName).toBe("Первая");
+    expect(ctx.craftResearchJournal[2].hasItem).toBe(true);
+    expect(ctx.craftResearchJournal[1].studyTarget).toBe("Logic → Scholastic Lore (Xenos)");
   });
 });

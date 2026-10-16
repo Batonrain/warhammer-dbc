@@ -1304,6 +1304,38 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `constants/craft.mjs` (движок Крафта/Исследований) + `craft-icons.mjs`,
   `apps/craft-workshop.mjs` (отдельное окно), `sheets/tabs/craft.mjs`
   (то же на листе), `rules/craft-advantage.mjs` (Преимущество на тестах).
+- Итог проекта-Исследования (книга — глава «Исследование», стр. 21-22):
+  `rules/research-findings.mjs`, вызывается из `craft-workshop.mjs::
+  _finishResearch` при заполнении Банка. Чертёж/Истинное имя/Иное — предмет
+  `gear`; Психосила/ритуал/вязь — `psychicPower`/`ritual`/`runicWeave` по
+  выбору игрока (книга называет все три подряд); «Изучение» (Logic «вместо
+  создания знаний») — без предмета, только запись в Журнале. Все виды
+  фиксируются в Журнале Исследований (флаг `warhammer-dbc.researchJournal`
+  на крафтере) — показан ТОЛЬКО на вкладке КРАФТ листа персонажа
+  (`sheets/tabs/craft.mjs::craftTabContext`), не в отдельном окне
+  «Мастерская» (party-инструмент без одного владельца-актора). Гейтинг
+  Крафта по владению Чертежом — НЕ сделан (решение владельца: книга отдаёт
+  это целиком ГМу, не формализуем).
+- Обучение (книга, стр. 22) — 4-й режим проекта Мастерской (`mode:"training"`):
+  `constants/training.mjs` (данные/UI-выборки), `rules/training.mjs` (чистая
+  логика — целевой запас xp, месячный журнал курсов по игровому календарю,
+  combined-тест учителя, формула xp), `rules/training-advantage.mjs` (Teacher/
+  Учитель, Clear Mind/Чистый Разум), вызывается из `craft-workshop.mjs::
+  _rollTrainingSession`/`_finishTrainingCourse`. Учитель + до I.b учеников
+  (10×I.b — Teacher), каждый сеанс = смена Крафта для Усталости/монотонности;
+  по 8 сеансам — ОДИН combined-тест учителя Trade(Instructor)(I)+10 (+
+  Charm/Logic/Intimidate при выборе) и у каждого ученика свой тест I/Logic;
+  xp = 5×(Успехи учителя+ученика, Провалы не вычитаются) уходит ТОЛЬКО в
+  целевой запас (флаг `warhammer-dbc.trainingEarmarks` на ученике) — тратится
+  автоматически и только на покупку именно той цели (`sheets/tabs/advance.mjs`,
+  4 точки покупки: Характеристика/Навык/Групповой Навык/Талант), излишек сверх
+  цены теряется. Месячный лимит ученика (½I.b, окр.▲; 2×I.b учителя — NPC у
+  Teacher) — флаг `warhammer-dbc.trainingCourseLog`, скользящее окно по
+  `SECONDS_PER_MONTH`. НЕ подключено: Klaivex (скидка на Элитный архетип
+  Инкуб — другая покупка, `apps/elite-buy.mjs`) и Interpreter (Преимущество
+  на тесты «Транскрипции» — такой механики в коде нет вовсе), первая половина
+  Clear Mind (обучение Пути — Пути Аэльдари не покупаются за опыт) — все три
+  честно задокументированы в `capabilities.mjs`, см. bd `wdbc-5yafq`.
 - `constants/quality.mjs` — движок Качества снаряжения (Poor…Artisan).
 - `constants/rig.mjs` + `apps/rig-manager.mjs` — Разгрузка (слотовая модель).
 
