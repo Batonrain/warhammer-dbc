@@ -264,7 +264,7 @@ export async function grantCreationSkills(actor, { race, past, sub, arch }) {
     if (cur.trim()) out.push(cur);
     return out.map(s => s.trim()).filter(Boolean);
   };
-  // Русское имя опции навыка для диалога («Linguistics (Battle Cant) +10» → «Лингвистика (Боевой Язык) +10»).
+  // Русское имя опции навыка для диалога («Linguistics (Battle Cant) +10» → «Язык (Боевой Язык) +10»).
   const skillOptRu = (opt) => {
     const m = String(opt).match(/\+\d+/); const suf = m ? " " + m[0] : "";
     let s = String(opt).replace(/\+\d+/, "").trim();

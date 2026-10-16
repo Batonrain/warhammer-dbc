@@ -1101,7 +1101,7 @@ describe("psychic roll helpers", () => {
 
     rollPsyniscience(actor(), (...args) => calls.push(args));
 
-    expect(calls[0]).toEqual(["Психонаука", 52, "per", { skill: "psyniscience" }]);
+    expect(calls[0]).toEqual(["Психочутьё", 52, "per", { skill: "psyniscience" }]);
   });
 
   it("rollPsyWpTest пишет карточку W + PR×5", async () => {
@@ -1152,7 +1152,7 @@ describe("psychic sheet listeners", () => {
     handlers[".psy-soulburn-btn:click"]();
     handlers[".psy-rating-input:change"]({ currentTarget: { value: "4" } });
 
-    expect(calls.rolls[0]).toEqual(["Психонаука", 52, "per", { skill: "psyniscience" }]);
+    expect(calls.rolls[0]).toEqual(["Психочутьё", 52, "per", { skill: "psyniscience" }]);
     expect(calls.soulBurn).toEqual(["actor-1"]);
     expect(a.updates.at(-1)).toEqual({ "system.psyker.rating": 4 });
   });

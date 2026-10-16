@@ -184,7 +184,7 @@ npm test
 
 Файл книги в [module/rules/library/](../module/rules/library/), по образцу
 [astartes.mjs](../module/rules/library/astartes.mjs). Пример — вымышленная
-Черта новой расы «Хищный Нюх», текст которой «+10 к тестам Бдительности, пока
+Черта новой расы «Хищный Нюх», текст которой «+10 к тестам Внимательности, пока
 Размер персонажа не больше 3»:
 
 ```js
@@ -248,7 +248,7 @@ it("не собирается у людей", () => {
   expect(collectRules(actor({ race: "human" }))).toEqual([]);
 });
 
-it("даёт +10 к Бдительности только при Размере ≤3", () => {
+it("даёт +10 к Внимательности только при Размере ≤3", () => {
   expect(collectRules(actor({ race: "azuriane", size: 3 })).flatMap(r => r.effects))
     .toContainEqual({ kind: "rollBonus", target: "skill:awareness", value: 10 });
   expect(collectRules(actor({ race: "azuriane", size: 4 }))).toEqual([]);

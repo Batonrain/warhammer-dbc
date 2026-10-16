@@ -60,7 +60,7 @@ describe("_performUnseenDetect", () => {
     expect(note).toContain("Провал");
   });
 
-  it("Сокрытая Угроза: penalty −50 — Психонаука 60, бросок 15 (< 60−50=10? нет) — провал", async () => {
+  it("Сокрытая Угроза: penalty −50 — Психочутьё 60, бросок 15 (< 60−50=10? нет) — провал", async () => {
     captured.nextRoll = 15;
     const { success } = await _performUnseenDetect(actor({ psyniscience: { total: 60 } }), "psyniscience", { penalty: -50 });
     expect(success).toBe(false);

@@ -544,7 +544,7 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
              </button>`
           : unseenLocked
           ? `<button class="wh-dodge-btn wh-unseen-locked" type="button" disabled data-extra-mod="${dodgeMod}" data-extra-mod-recoil="${dodgeModRecoil ?? dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-item-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-melee="${isMelee ? 1 : 0}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-attack-id="${attackId}"
-               title="Незримая атака (стр. 32): Уклонение недоступно, пока не засечена альтернативными методами — Психонаукой/Техпользованием (кнопки ниже).">
+               title="Незримая атака (стр. 32): Уклонение недоступно, пока не засечена альтернативными методами — Психочутьем/Технологиям (кнопки ниже).">
                Уклонение${dodgeMod !== 0 ? ` (${signed(dodgeMod)})` : ""} — не засечена
              </button>`
           : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-extra-mod-recoil="${dodgeModRecoil ?? dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-item-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-melee="${isMelee ? 1 : 0}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-attack-id="${attackId}">
@@ -557,7 +557,7 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
              </button>`
           : unseenLocked
           ? `<button class="wh-parry-btn wh-unseen-locked" type="button" disabled data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-attacker-weapon-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-melee="${isMelee ? 1 : 0}" data-attack-id="${attackId}"
-               title="Незримая атака (стр. 32): Парирование недоступно, пока не засечена альтернативными методами — Психонаукой/Техпользованием (кнопки ниже).">
+               title="Незримая атака (стр. 32): Парирование недоступно, пока не засечена альтернативными методами — Психочутьем/Технологиям (кнопки ниже).">
                Парирование${parryMod !== 0 ? ` (${signed(parryMod)})` : ""} — не засечена
              </button>`
           : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-attacker-weapon-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-melee="${isMelee ? 1 : 0}" data-attack-id="${attackId}"${isMelee ? "" : ` title="Стрельбу без Базового контакта со стрелком парирует только Талант «Щит Клинков» оружием с Балансом 1+ (стр. 62) — право проверится при нажатии"`}>
@@ -597,11 +597,11 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
           : ""}
         ${unseenLocked
           ? `<button class="wh-unseen-detect-btn" type="button" data-attacker-uuid="${attackerUuid}" data-skill="psyniscience" data-penalty="${unseenPenalty}"
-               title="Незримая атака (стр. 32): тест Психонауки (Пси-чутьё)${unseenPenalty ? ` ${signed(unseenPenalty)}` : ""} — не Реакция; Успех открывает Уклонение/Парирование от ЭТОЙ атаки выше.">
+               title="Незримая атака (стр. 32): тест Психочутья${unseenPenalty ? ` ${signed(unseenPenalty)}` : ""} — не Реакция; Успех открывает Уклонение/Парирование от ЭТОЙ атаки выше.">
                🔮 Засечь (Пси-чутьё${unseenPenalty ? ` ${signed(unseenPenalty)}` : ""})
              </button>
              <button class="wh-unseen-detect-btn" type="button" data-attacker-uuid="${attackerUuid}" data-skill="techUse" data-penalty="${unseenPenalty}"
-               title="Незримая атака (стр. 32): тест Техпользования (Ноосканирование)${unseenPenalty ? ` ${signed(unseenPenalty)}` : ""} — не Реакция; Успех открывает Уклонение/Парирование от ЭТОЙ атаки выше.">
+               title="Незримая атака (стр. 32): тест Технологии (Ноосканирование)${unseenPenalty ? ` ${signed(unseenPenalty)}` : ""} — не Реакция; Успех открывает Уклонение/Парирование от ЭТОЙ атаки выше.">
                🔮 Засечь (Ноосканирование${unseenPenalty ? ` ${signed(unseenPenalty)}` : ""})
              </button>`
           : ""}

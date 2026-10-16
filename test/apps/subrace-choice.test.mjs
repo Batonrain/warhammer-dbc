@@ -39,7 +39,7 @@ describe("aptitudeOverrideMechanicsGroup: чистая функция", () => {
     expect(charEntries.map(e => e.capabilityAptMatch).sort()).toEqual(["ag", "s"]);
     const skillEntries = group.entries.filter(e => e.capabilityAptScope === "skill");
     expect(skillEntries).toHaveLength(1);
-    expect(skillEntries[0].capabilityAptMatch).toBe("Обаяние"); // SKILLS_DEF.charm.label
+    expect(skillEntries[0].capabilityAptMatch).toBe("Очарование"); // SKILLS_DEF.charm.label
     for (const e of group.entries) {
       expect(e.kind).toBe("capability");
       expect(e.capabilityMode).toBe("aptOverride");

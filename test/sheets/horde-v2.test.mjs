@@ -81,7 +81,7 @@ describe("_prepareContext", () => {
     expect(ctx.skills.find(s => s.key === "dodge"))
       .toEqual({ key: "dodge", label: "Уклонение", rank: "trained", total: 45 });
     expect(ctx.skills.find(s => s.key === "awareness"))
-      .toEqual({ key: "awareness", label: "Бдительность", rank: "untrained", total: -20 });
+      .toEqual({ key: "awareness", label: "Внимательность", rank: "untrained", total: -20 });
     expect(ctx.skillRanks.map(r => r.key)).toContain("veteran");
   });
 

@@ -1,4 +1,4 @@
-// Гермафродит / Hermaphrodite (Дар Слаанеш, wdbc-1rno): +30 Обаяние на тесты
+// Гермафродит / Hermaphrodite (Дар Слаанеш, wdbc-1rno): +30 Очарование на тесты
 // соблазнения (book: "получая бонус +30 на тесты соблазнения") — миграция из
 // capability-заглушки в реальную запись kind:"testMod", skillKey:"charm".
 // Остаток (доступ к обычно иммунным целям, возврат либидо) сознательно не
@@ -11,7 +11,7 @@ import { packDocByFileHint } from "../support/pack-doc.mjs";
 
 const SYSTEM = "warhammer-dbc";
 
-describe("Hermaphrodite: +30 Обаяние механизирован (wdbc-1rno)", () => {
+describe("Hermaphrodite: +30 Очарование механизирован (wdbc-1rno)", () => {
   it("kind:\"testMod\" даёт rollBonus skill:charm +30", () => {
     const data = packDocByFileHint("packs-src/mutations/Дары_Богов/Слаанеш/Hermaphrodite___Гермафродит_KFkKkRuN2SKahOEh.json");
     const mechanics = data.flags[SYSTEM].mechanics;

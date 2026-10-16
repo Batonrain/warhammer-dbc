@@ -52,8 +52,8 @@ describe("Отвращение к Порядку", () => {
     const apts = charAptitudeSet([]);
     for (const g of ["commonLore", "forbiddenLore", "scholasticLore", "trade"])
       expect(skillAdvanceCat(a, GROUP_SKILLS_DEF[g], { group: g, specialty: "x" }, apts), g).toBe("enemy");
-    // Лингвистика — не Lore.
-    expect(resolveAptitudeOverride(a, "skill", "Лингвистика", "linguistics")).toBeNull();
+    // Язык — не Lore.
+    expect(resolveAptitudeOverride(a, "skill", "Язык", "linguistics")).toBeNull();
   });
 
   it("Символ Власти Шамана снимает враждебность Lore/Trade и штраф за импланты", () => {

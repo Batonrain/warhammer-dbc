@@ -304,7 +304,7 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "+10 Проницательность (базовый лик, без учёта союзников)",
+              "label": "+10 Пристальность (базовый лик, без учёта союзников)",
               "code": "",
               "when": {
                 "negate": false,
@@ -593,7 +593,7 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "+30 Проницательность (против союзников, вместо +10 выше)",
+              "label": "+30 Пристальность (против союзников, вместо +10 выше)",
               "code": "",
               "when": {
                 "negate": false,

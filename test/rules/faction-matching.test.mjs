@@ -159,7 +159,7 @@ describe("область social", () => {
     expect(modsFor({ kind: "skill", skill: "athletics" })).toHaveLength(0);
   });
 
-  it("Проницательность в книге не социальная — и здесь тоже", () => {
+  it("Пристальность в книге не социальная — и здесь тоже", () => {
     expect(modsFor({ kind: "skill", skill: "scrutiny" })).toHaveLength(0);
   });
 

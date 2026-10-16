@@ -502,7 +502,7 @@ describe("applyHealing: мод. Талантов ПАЦИЕНТА к тесту 
 
   it("тот же Талант БЕЗ суффикса :recipient (свои тесты пациента) не подмешивается в тест доктора", () => {
     registerRuleSource("test-patient-mod", () => [
-      { id: "self-only", label: "Своя Медика",
+      { id: "self-only", label: "Своя Медицина",
         effects: [{ kind: "rollBonus", target: "skill:medicae", value: 10 }] }
     ]);
     const medic = person({ medicae: 40 });
@@ -518,7 +518,7 @@ describe("applyHealing: мод. Талантов ПАЦИЕНТА к тесту 
 });
 
 describe("applyHealing: disease (Лечение болезней)", () => {
-  it("модификатор ухода складывается с Медикой, текст лечения болезни попадает в чат", async () => {
+  it("модификатор ухода складывается с Медициной, текст лечения болезни попадает в чат", async () => {
     const medic = person({ medicae: 40 });
     const d = disease("dis-1");
     const patient = person({ items: [d] });

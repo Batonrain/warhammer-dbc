@@ -1096,7 +1096,7 @@ export async function markLegacyDeadlyTrapUsed(actor) {
  * Тихое/skilled 1-2 (wdbc-1rno.35, стр. 427): «Тесты на нахождение персонажа,
  * базированные на звуке оружия и криках раненных и убитых им, получают штраф
  * −30.» Область действия (решение пользователя 21.09.2026): тесты на
- * Бдительность/Awareness с выбранной целью — носителем этого оружия. Читает
+ * Внимательность/Awareness с выбранной целью — носителем этого оружия. Читает
  * ЦЕЛЬ теста (ctx.targetActor), не самого бросающего — обратное направление,
  * тот же примитив, что «Уравнитель» (rules/item-rules.mjs::
  * opposedTargetRerollRules): правило регистрируется на роллящего, но
@@ -1108,7 +1108,7 @@ export function legacyQuietAwarenessRules(actor, ctx = {}) {
   if (!equippedLegacyWeaponWithMutation(target, "Тихое")) return [];
   return [{
     id: "legacyQuiet.awarenessPenalty",
-    label: "Тихое: цель труднее найти по звуку её оружия — Бдительность −30",
+    label: "Тихое: цель труднее найти по звуку её оружия — Внимательность −30",
     when: { skill: "awareness" },
     effects: [{ kind: "rollBonus", target: "all", value: -30, auto: true }]
   }];

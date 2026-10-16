@@ -457,7 +457,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Ослеплённая цель (wdbc-x1nz.2.89, «Раны и Урон», «Статусы»):
   // «Ослепленный персонаж считает все атаки Незримыми» — со всеми
   // последствиями Незримого ниже: Уклонение/Парирование заперты, пока атаку
-  // не засекли (Психонаука/Ноосфера/Варп-Зрение), Бой Вслепую (−20 в
+  // не засекли (Психочутьё/Ноосфера/Варп-Зрение), Бой Вслепую (−20 в
   // рукопашной), Шестое Чувство и т.п. Sonar Sense/Unnatural Senses цели
   // снимают это вместе с остальными штрафами слепоты (rules/blindness.mjs).
   const targetBlindedUnseen = !!defenderActor && suffersBlindness(defenderActor);

@@ -98,7 +98,7 @@ describe("сложение галочек в диалоге броска", () =>
     const targetActor = { items: [{ type: "mutation", name: "Synesthesia" }] };
     globalThis.game.user = { ...globalThis.game.user, targets: new Set([{ actor: targetActor }]) };
     try {
-      sheet({})._showSkillRollDialog("Проницательность", 45, "per", false, { skill: "scrutiny" });
+      sheet({})._showSkillRollDialog("Пристальность", 45, "per", false, { skill: "scrutiny" });
       expect(captured.dialog.content).toContain('data-value="-20"');
     } finally {
       globalThis.game.user = { ...globalThis.game.user, targets: new Set() };
@@ -118,7 +118,7 @@ describe("сложение галочек в диалоге броска", () =>
     ]);
     globalThis.game.user = { ...globalThis.game.user, targets: new Set() };
     try {
-      sheet({})._showSkillRollDialog("Проницательность", 45, "per", false, { skill: "scrutiny" });
+      sheet({})._showSkillRollDialog("Пристальность", 45, "per", false, { skill: "scrutiny" });
       expect(captured.dialog.content).not.toContain("Синэстезия: цель");
     } finally {
       clearRuleSources();
@@ -291,7 +291,7 @@ describe("Вид теста: любой тест можно переключит
     });
     // Столбец А: 45. Столбец Б: 50+10=60 → min(45,60)=45, тест успешен на 60.
     expect(content).toContain("итоговый Порог <b>45</b>");
-    expect(content).toContain("Медика");
+    expect(content).toContain("Медицина");
     expect(content).toContain("Провал"); // 60 > 45
   });
 

@@ -18,8 +18,9 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { collectRules } from "./collect.mjs";
+import { currentSkillName } from "../constants/skills.mjs";
 
-const norm = s => String(s ?? "").toLowerCase().trim();
+const norm = s => currentSkillName(String(s ?? "").toLowerCase().trim());
 
 /**
  * Совпадение по подстроке имени или по целой «группе:Имя» (тот же приём, что
