@@ -19,6 +19,7 @@ import { disabledArmourOverloadTier, disabledArmourWeight } from "../../combat/a
 import { hasRuleFlag } from "../flags.mjs";
 import { SURE_TREAD, sureTreadMovementCap } from "../squat-traits.mjs";
 import { flightSpeedOf } from "../flight-speed.mjs";
+import { hasSpeedTalent, speedTalentDistances } from "../speed-talents.mjs";
 import { mechRollData } from "../mech-formula.mjs";
 
 // Высоты «в воздухе» — те же, что combat/movement-actions.mjs::IN_FLIGHT_ALTITUDES
@@ -176,10 +177,24 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   const sureTread = hasRuleFlag(actor, SURE_TREAD);
   if (sureTread) ({ halfMove, move, charge, run } = sureTreadMovementCap({ halfMove, move, charge, run }));
 
+  // Таланты Скорости (rules/speed-talents.mjs): Запредельная Скорость — Натиск
+  // на дистанцию Бега; Спринт — Полное Движение на дистанцию Натиска и Бег на
+  // двойную дистанцию (sprintRun; сам run не удваивается — «в отношении других
+  // механик»). Надёжная Поступь Сквата («не более 3×SPD пешком») сильнее обоих.
+  let sprintRun = 0;
+  if (!sureTread) {
+    ({ move, charge, sprintRun } = speedTalentDistances({ move, charge, run }, {
+      preternatural: hasSpeedTalent(actor, "preternaturalSpeed"),
+      sprint:        hasSpeedTalent(actor, "sprint")
+    }));
+  }
+
   system.movement.halfMove = halfMove;
   system.movement.move     = move;
   system.movement.charge   = charge;
   system.movement.run      = run;
+  // Не в схеме (производное, как spdBreakdown ниже): дальность Бега Спринтом.
+  system.movement.sprintRun = sprintRun;
   // Откуда число (wdbc-zbiz): те же слагаемые, что складываются выше —
   // Черты/импланты, Конструктор (kind:"movement"), Перевес брони, Piercing,
   // Пружинящая Стойка. Полушаг = SPD×1, поэтому его breakdown суммируется в

@@ -1909,48 +1909,58 @@ export const CAPABILITIES = {
   },
   // ── Скорость
   "speed.core.breacher": {
-    label: "Когда персонаж вооружён щитом в одной руке и находится в защитной стойке, он может одним полным действием совершить Полудвижение и Атаку (в…",
-    source: "Breacher / Прорыватель", reader: ""
+    label: "Реализовано (сверка главы 3, решение владельца 17.10.2026): пункт «Прорыв» в меню Движения (виден при Таланте, экипированном ручном щите и Защитной Стойке) — Полудвижение за 0 ОД, раз в Ход (combat/movement-actions.mjs::declareBreach); 2 ОД, которые в Защитной Стойке стоит сама Атака, оплачивают и движение. НЕ покрыто: система не проверяет, что Атака в этом Ходу действительно будет, и порядок «до/после»; «щит в одной руке» понимается как любой экипированный ручной щит.",
+    source: "Breacher / Прорыватель",
+    reader: "module/combat/movement-actions.mjs (actorCanBreach, declareBreach, пункт «Прорыв»); module/rules/speed-talents.mjs (breacherReady)"
   },
   "speed.core.halfStep": {
     label: "В Ход, когда персонаж не совершает других движений, он может раз за свободное действие подвигаться на до ½ SPD,",
     source: "Half-Step / Полушаг", reader: ""
   },
   "speed.core.jumper": {
-    label: "Персонаж может проводить Прыжки за полудействие или как часть Натиска.",
-    source: "Jumper / Прыгун", reader: ""
+    label: "Реализовано (сверка главы 3): Прыжок стоит 1 ОД вместо 2; в диалоге «Прыжок» у носителя есть галочка «Как часть Натиска» (стоит сама, если Натиск уже объявлен) — тогда 0 ОД, Натиск уже оплачен (combat/movement-actions.mjs::_resolveJump, rules/speed-talents.mjs::jumpApCost). НЕ покрыто: галочка на честном слове — система не проверяет, что прыжок действительно внутри Натиска.",
+    source: "Jumper / Прыгун",
+    reader: "module/combat/movement-actions.mjs (showJumpDialog, _resolveJump); module/rules/speed-talents.mjs (jumpApCost)"
   },
   "speed.core.leapUp": {
-    label: "Персонаж может автоматически Встать за свободное действие.",
-    source: "Leap Up / Вскочить", reader: ""
+    label: "Реализовано (сверка главы 3): с Талантом пункт «Встать» в меню Движения сразу снимает Состояние «Повален» за 0 ОД, без выбора способа (combat/movement-actions.mjs::declareStandUp/_standUpPlain, rules/speed-talents.mjs::standUpApCost). НЕ покрыто: запрет Вскочить после успешного Оглушения при сбивании с ног (condition.denyLeapUp.afterStunProne) — это правило только описано, читателя у него нет; Шагоход встаёт по своей карточке (combat/walker.mjs), где «Вскочить — полудействие» лишь напоминание текстом.",
+    source: "Leap Up / Вскочить",
+    reader: "module/rules/speed-talents.mjs (standUpApCost); module/combat/movement-actions.mjs (declareStandUp, _standUpPlain)"
   },
   "speed.core.preternaturalSpeed": {
-    label: "Персонаж может совершать Натиск на дистанцию Бега.",
-    source: "Preternatural Speed / Запредельная Скорость", reader: ""
+    label: "Реализовано (сверка главы 3): дальность Натиска на листе равна дальности Бега, SPD×6 (rules/character/movement.mjs, rules/speed-talents.mjs::speedTalentDistances); подсветка и карточка Натиска показывают её. Надёжная Поступь Сквата («не более 3×SPD пешком») сильнее — при ней дальность не меняется.",
+    source: "Preternatural Speed / Запредельная Скорость",
+    reader: "module/rules/character/movement.mjs; module/rules/speed-talents.mjs (speedTalentDistances)"
   },
   "speed.core.quickDraw": {
-    label: "Персонаж может Взять метательное оружие, пистолет, винтовку, одноручное рукопашное оружие или одноручный инструмент за свободное действие.",
-    source: "Quick Draw / Быстрое Выхватывание", reader: ""
+    label: "Реализовано (сверка главы 3): тумблер «Экипировано» у подходящего оружия (метательное, пистолет, «Ручное» = винтовка, рукопашное в одну руку) берёт его за 0 ОД вместо 1 (combat/quick-draw.mjs, sheets/tabs/gear.mjs::equipItem). Из неудобной Разгрузки или слота не действует (constants/rig.mjs::inAwkwardRigLocation; Забирай Всё это снимает); не размещённое в Разгрузке не штрафуется. Чеку гранаты на Разгрузке можно сорвать бесплатно один раз в Ход (combat/draw-action.mjs, флаг quickDrawPinThisTurn). НЕ покрыто: «инструмент в одной руке» — у инструментов в системе нет цены Взять; «винтовка» понимается как весь класс «Ручное» (допущение).",
+    source: "Quick Draw / Быстрое Выхватывание",
+    reader: "module/combat/quick-draw.mjs; module/sheets/tabs/gear.mjs (equipItem); module/constants/rig.mjs (inAwkwardRigLocation); module/combat/draw-action.mjs (чека гранаты)"
   },
   "speed.core.quickStore": {
-    label: "Персонаж может Сложить метательное оружие, пистолет, винтовку, одноручное рукопашное оружие или одноручный инструмент за свободное действие.",
-    source: "Quick Store / Быстрое Складывание", reader: ""
+    label: "Реализовано (сверка главы 3): снятие галочки «Экипировано» у подходящего оружия (тот же перечень, что у Быстрого Выхватывания) стоит 0 ОД вместо 1 (combat/quick-draw.mjs, sheets/tabs/gear.mjs::equipItem). Неудобная Разгрузка Складывание не ограничивает — книга оговорки не делает. НЕ покрыто: инструменты (у них в системе нет цены Сложить).",
+    source: "Quick Store / Быстрое Складывание",
+    reader: "module/combat/quick-draw.mjs; module/sheets/tabs/gear.mjs (equipItem)"
   },
   "speed.core.rapidReload": {
-    label: "Время перезарядки любого оружия снижается вдвое (окр.▼). Если оружие можно было перезарядить полудействием,",
-    source: "Rapid Reload / Быстрая Перезарядка", reader: ""
+    label: "Реализовано (сверка главы 3, решение владельца 17.10.2026): ОД перезарядки делятся пополам вниз — «½» (1 ОД) → бесплатно, «1» (2 ОД) → 1 ОД, «2» (4 ОД) → 2 ОД (combat/reload.mjs, rules/speed-talents.mjs::rapidReloadApCost); на карточке перезарядки строка «Быстрая Перезарядка». Перезарядки без числа ОД («–», «†», «¼», N×M) и так бесплатны. НЕ покрыто: «пустой магазин выбрасывается под ноги» — в системе нет предметов на земле; скидка Fully Armed (−1 ОД) по-прежнему не подключена.",
+    source: "Rapid Reload / Быстрая Перезарядка",
+    reader: "module/combat/reload.mjs (_reloadWeapon); module/rules/speed-talents.mjs (rapidReloadApCost)"
   },
   "speed.core.reposition": {
-    label: "В начале боя сразу после бросков Инициативы персонаж может подвигаться на Полудвижение. Если несколько персонажей имеют этот Талант,",
-    source: "Reposition / Смена Позиции", reader: ""
+    label: "Реализовано (сверка главы 3, решение владельца 17.10.2026): при начале боя в чат падает карточка с носителями Таланта в порядке Инициативы (combat/movement-actions.mjs::postRepositionCard, hooks.mjs combatStart); пункт «Смена Позиции» в меню Движения — Полудвижение за 0 ОД, один раз за бой, пока идёт первый Раунд (кольцо SPD×1 на карте). НЕ покрыто: токен двигает игрок сам; «сразу после бросков Инициативы, до первого Хода» не проверяется — пункт доступен весь первый Раунд.",
+    source: "Reposition / Смена Позиции",
+    reader: "module/combat/movement-actions.mjs (actorCanReposition, declareReposition, postRepositionCard); module/hooks.mjs (combatStart); module/rules/speed-talents.mjs (repositionAvailable)"
   },
   "speed.core.sprint": {
-    label: "Персонаж может совершать Полное Движение на дистанцию Натиска и Бег на двойную дистанцию Бега.",
-    source: "Sprint / Спринт", reader: ""
+    label: "Реализовано (сверка главы 3, решение владельца 17.10.2026): Полное Движение на листе — SPD×3 (дистанция Натиска, по таблице главы 3); при объявлении Бега диалог «побежите дальше SPD×6?» — «да» даёт кольцо до SPD×12 (system.movement.sprintRun), сам run для прочих механик не удваивается. Дальний Бег два Раунда подряд в одном бою → +1 Усталости в конце второго Хода автоматически (combat/movement-actions.mjs::applySprintTurnEnd). НЕ покрыто: сколько игрок реально пробежал, система не меряет — верит ответу; у носителя Запредельной Скорости Полное Движение считается от обычного Натиска SPD×3, а не от SPD×6 (допущение); Надёжная Поступь Сквата отменяет Спринт.",
+    source: "Sprint / Спринт",
+    reader: "module/rules/character/movement.mjs (move, sprintRun); module/combat/movement-actions.mjs (declareRun, applySprintTurnEnd); module/hooks.mjs (updateCombat); module/rules/speed-talents.mjs (speedTalentDistances, sprintFatigueDue)"
   },
   "speed.core.technicalKnock": {
-    label: "Ритуальным обращением и жестами персонаж может провести Расклин за полудействие.",
-    source: "Technical Knock / Технический Трюк", reader: ""
+    label: "Реализовано (сверка главы 3): Расклин стоит 1 ОД (Полудействие) вместо 2 (combat/clear-jam.mjs::rollClearJam, rules/speed-talents.mjs::clearJamApCost); тест Tech-Use / Trade(Weaponsmith) остаётся прежним.",
+    source: "Technical Knock / Технический Трюк",
+    reader: "module/combat/clear-jam.mjs (rollClearJam); module/rules/speed-talents.mjs (clearJamApCost)"
   },
   // ── Миньоны
   // «Игнорирует требования по Inf для Миньонов-<группы>» — Черты Архетипов
@@ -5419,7 +5429,7 @@ export const CAPABILITIES = {
     source: "From Beyond / Не От Мира Сего", reader: ""
   },
   "trait.fullyArmed": {
-    label: "Не-тяжёлое стрелковое оружие с модом Custom Grip считается удобным: +1 надёжность и ½ веса (окр.▼) такого оружия в расчёте Разгрузки. Смоделировано (wdbc-1rno): module/combat/fully-armed.mjs (детект Черты+мода по имени «Персональный Хват»), подключено в module/combat/weapon-mods.mjs::getModEffects (Надёжность) и module/constants/rig.mjs (вес). Прежняя пометка «мод Custom Grip не заведён нигде в системе» была ошибочной — мод существовал под русским переводом «Персональный Хват» (packs-src/weapon-mods/Стрелковое/Прочие/Personal_Grip и .../Рукопашное/Разное/Personal_Grip__Melee), найден по книжному тексту, а не по литеральной строке «Custom Grip». НЕ смоделировано: −1 ОД (до ½) к перезарядке — system.reload свободная строка («1»/«полн.»/«2 полн.»), в системе нет числового движка экономии действий, который бы её читал (тот же честный пробел у Rapid Reload с идентичной формулировкой, capabilities.mjs «Время перезарядки... вдвое»).",
+    label: "Не-тяжёлое стрелковое оружие с модом Custom Grip считается удобным: +1 надёжность и ½ веса (окр.▼) такого оружия в расчёте Разгрузки. Смоделировано (wdbc-1rno): module/combat/fully-armed.mjs (детект Черты+мода по имени «Персональный Хват»), подключено в module/combat/weapon-mods.mjs::getModEffects (Надёжность) и module/constants/rig.mjs (вес). Прежняя пометка «мод Custom Grip не заведён нигде в системе» была ошибочной — мод существовал под русским переводом «Персональный Хват» (packs-src/weapon-mods/Стрелковое/Прочие/Personal_Grip и .../Рукопашное/Разное/Personal_Grip__Melee), найден по книжному тексту, а не по литеральной строке «Custom Grip». НЕ смоделировано: −1 ОД (до ½) к перезарядке — system.reload свободная строка («1»/«полн.»/«2 полн.»), в системе нет числового движка экономии действий, который бы её читал (У Rapid Reload с идентичной формулировкой движок уже подключён — combat/reload.mjs, ОД делятся пополам; скидка Fully Armed поверх него по-прежнему не подключена).",
     source: "Fully Armed / Во Всеоружии", reader: "module/combat/fully-armed.mjs"
   },
   "trait.geneticDecay": {

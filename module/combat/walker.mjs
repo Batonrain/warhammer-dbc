@@ -376,7 +376,7 @@ export async function standUpFromTipOver(vehicle) {
   await postTestCard(vehicle, {
     icon: rollIcon("run", "#4dffa6"), title: `Опрокидывание — ${esc(vehicle.name)}`,
     outcome: outcomeHtml(true, "Шагоход поднимается на ноги."),
-    sections: [`<div class="roll-allout-note">Полное действие; с Талантом Leap Up / Быстрый Подъём — полудействие.</div>`]
+    sections: [`<div class="roll-allout-note">Полное действие; с Талантом Leap Up / Вскочить — полудействие.</div>`]
   }, { sound: false });
 }
 

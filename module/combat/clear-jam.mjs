@@ -30,6 +30,7 @@ import { canClearJam } from "./weapon-properties.mjs";
 import { spendActionPoints } from "./action-economy.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { cleverHandsClearJamBonus } from "../rules/squat-traits.mjs";
+import { hasSpeedTalent, clearJamApCost } from "../rules/speed-talents.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
@@ -52,7 +53,7 @@ export function clearJamOption(actor) {
 }
 
 /**
- * «Расклин»: Полное действие (2 ОД), тест Tech-Use+0 или Trade(Weaponsmith)+0
+ * «Расклин»: Полное действие (2 ОД; с Техническим Трюком — Полудействие, 1 ОД), тест Tech-Use+0 или Trade(Weaponsmith)+0
  * (автовыбор лучшего). Успех снимает Клин; провал тратит действие впустую —
  * книга не даёт иных последствий провала.
  */
@@ -61,8 +62,11 @@ export async function rollClearJam(actor, item) {
   if (!canClearJam(item)) {
     return ui.notifications?.warn(`${item.name}: заклинивание пока не расклинить — заблокировано до конца этого Раунда.`);
   }
-  if (!await spendActionPoints(actor, 2, { physical: true })) {
-    return ui.notifications?.warn("⚠️ Не хватает ОД на Расклин (Полное действие).");
+  // Технический Трюк: Расклин за Полудействие вместо Полного.
+  const knock = hasSpeedTalent(actor, "technicalKnock");
+  const apCost = clearJamApCost(knock);
+  if (!await spendActionPoints(actor, apCost, { physical: true })) {
+    return ui.notifications?.warn(`⚠️ Не хватает ОД на Расклин (${knock ? "Полудействие" : "Полное действие"}).`);
   }
 
   const { skillKey, label, base } = clearJamOption(actor);

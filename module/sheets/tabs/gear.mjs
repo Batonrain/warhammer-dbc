@@ -15,6 +15,7 @@ import { useDetonateGrenadeInRig } from "../../combat/draw-action.mjs";
 import { useHololithBriefing } from "../../combat/hololith-briefing.mjs";
 import { useSwingItem, useThrowItem } from "../../combat/improvised-item.mjs";
 import { spendActionPoints } from "../../combat/action-economy.mjs";
+import { quickDrawFree } from "../../combat/quick-draw.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { postTestCard } from "../../helpers/test-card.mjs";
 
@@ -92,7 +93,11 @@ export async function equipItem(item, equipped) {
     ui.notifications?.warn(`⚠️ В Захвате: ${isDraw ? "Взять" : "Сложить"} недоступно — только действия Цели (стр. 12).`);
     return;
   }
-  if ((isDraw || isStow) && item.parent && !await spendActionPoints(item.parent, 1, { physical: true })) {
+  // Быстрое Выхватывание / Быстрое Складывание (Таланты Скорости): подходящее
+  // оружие берётся/складывается свободным действием (combat/quick-draw.mjs).
+  const quick = (isDraw || isStow) && item.parent && quickDrawFree(item.parent, item, isDraw ? "draw" : "stow");
+  if (quick) ui.notifications?.info(`${item.name}: ${isDraw ? "Быстрое Выхватывание" : "Быстрое Складывание"} — свободное действие, 0 ОД.`);
+  if ((isDraw || isStow) && item.parent && !quick && !await spendActionPoints(item.parent, 1, { physical: true })) {
     ui.notifications?.warn(`⚠️ Не хватает ОД, чтобы ${isDraw ? "Взять" : "Сложить"} оружие (Полудействие, стр. 27).`);
     return;
   }

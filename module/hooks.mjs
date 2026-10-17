@@ -146,7 +146,7 @@ import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
 import { WC_CODE } from "./constants/ship.mjs";
 import { registerDelegatedTestOpener, openDelegatedTest, activeOwnerOf, requestDelegatedTest, openDelegatedTestDirect } from "./rules/delegate-test.mjs";
-import { skillTotal, resolveVaultContestClick, declareLegacyBraveHeartMove, resolveLegacyBraveDisengageContest } from "./combat/movement-actions.mjs";
+import { skillTotal, resolveVaultContestClick, declareLegacyBraveHeartMove, resolveLegacyBraveDisengageContest, postRepositionCard, applySprintTurnEnd } from "./combat/movement-actions.mjs";
 import { showHealingDialog } from "./sheets/tabs/healing.mjs";
 import { rollInfoguard } from "./apps/infoguard.mjs";
 import { CHARACTERISTICS } from "./constants/characteristics.mjs";
@@ -3502,6 +3502,9 @@ function _attachFateContextMenu(message, html) {
     // одну руну» — диалог выбора, тем же тактом и тем же GM-гейтом, что и
     // соседи по этому хуку (Колдовское Лезвие/Руны Сигиллитов выше).
     if (game.user.isGM) await processPreparedRuneCombatStart(combat);
+    // Смена Позиции (Талант Скорости): карточка «кто может подвигаться на
+    // Полудвижение сразу после Инициативы» — тем же GM-гейтом, что соседи.
+    if (game.user.isGM) await postRepositionCard(combat);
   });
 
   Hooks.on("updateCombat", async (combat, changed) => {
@@ -3519,6 +3522,8 @@ function _attachFateContextMenu(message, html) {
         await applyAimFocusTurnEnd(prevActor);
         // Взрывное Действие Сплайса (wdbc-tkeh1): расплата за бонусное полудействие.
         await applyExplosiveActionTurnEnd(prevActor);
+        // Спринт (Талант Скорости): второй Ход подряд дальнего Бега — +1 Усталости.
+        await applySprintTurnEnd(prevActor);
         // Конец Хода Подавленного (стр. 33) — предложить тест на преодоление.
         if (prevActor.system.conditions?.pinned) await postSuppressionRecoveryPrompt(prevActor);
         // «Укрепление Морали» (глава «Командование»): сбросить Шок можно и в
