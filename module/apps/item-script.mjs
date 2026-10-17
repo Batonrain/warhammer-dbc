@@ -58,6 +58,7 @@ import { useExplosiveAction } from "../combat/explosive-action.mjs";
 import { emergencyMaintenance } from "../combat/emergency-maintenance.mjs";
 import { scroungeSupplies } from "./scrounge.mjs";
 import { grantStartingDisorder } from "../sheets/tabs/disorders.mjs";
+import { shareCombatFormation } from "../combat/combat-formation.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -173,6 +174,9 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *    повреждения; throw при отказе — Очко Бесчестия записи не списывается.
  *  - `scroungeSupplies` (apps/scrounge.mjs) — Наскрести Изгоя: 2d10
  *    расходников до R2 Обозревателем компендиумов.
+ *  - `shareCombatFormation` (combat/combat-formation.mjs) — Боевое Построение:
+ *    отметить выбранных (T) соратников — им +1 к Инициативе и I.b вместо A.b
+ *    до конца боя (стр. 62).
  *  - `grantStartingDisorder` (sheets/tabs/disorders.mjs) — стартовое
  *    случайное расстройство от источника с «неизлечимо» и пределом Тяжести
  *    (Архетип Беглый Псайкер: не ниже −2); повторно не выдаёт.
@@ -206,7 +210,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "attemptPossessionAttack", "leavePossessionHost", "useAdaptiveVenom", "useExplosiveAction",
     "activateBattleForm", "endBattleForm",
     "emergencyMaintenance", "scroungeSupplies",
-    "grantStartingDisorder",
+    "grantStartingDisorder", "shareCombatFormation",
     ...extraNames,
     code
   );
@@ -226,7 +230,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     attemptPossessionAttack, leavePossessionHost, useAdaptiveVenom, useExplosiveAction,
     activateBattleForm, endBattleForm,
     emergencyMaintenance, scroungeSupplies,
-    grantStartingDisorder,
+    grantStartingDisorder, shareCombatFormation,
     ...extraNames.map(k => extra[k])
   );
 }

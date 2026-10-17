@@ -18,6 +18,7 @@ import { characterContext, charLabel } from "./character-context.mjs";
 import { showAttackDialog } from "./attack-dialog.mjs";
 import { rollMutationOrGift, openMutationPicker } from "./tabs/mutations.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { masteryCrit, MASTERY_CRIT_LINE } from "../rules/mastery.mjs";
 import { payIntTestAction } from "../combat/bone-head.mjs";
 import { applyOnTargetFailConditions } from "../rules/on-target-fail.mjs";
 import { createDisorderItem, activateDisorderListeners,
@@ -3099,6 +3100,11 @@ export class WarhammerCharacterSheet
     // степень от Ассистентов: книга «не больше 1 Успеха» не делает исключений.
     const assisted = assistDegrees(outcome.deg, effectiveAssistCount, outcome.success);
     const deg      = outcome.degCap != null ? Math.min(outcome.degCap, assisted) : assisted;
+    // Мастерство: Ассистенты дотянули степень до 5+ уже после расчёта исхода —
+    // строку крита дорисовываем здесь (сам исход её не видел).
+    const masteryAssistCrit = (!outcome.masteryCrit && !outcome.crit?.success && masteryCrit(effectActor,
+      { skill: skillKey ?? "", group: rollContext?.group ?? "", specialty: rollContext?.specialty ?? "" },
+      { success: outcome.success, deg })) ? MASTERY_CRIT_LINE : "";
     const outcomeHtml = outcome.success
       ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
       : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`;
@@ -3146,7 +3152,7 @@ export class WarhammerCharacterSheet
         outcome.personalAdaptationLine,
         assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${(outcome.success && effectiveAssistCount === assistCount) ? `, +${assistCount} к степени` : ""})</div>` : ""
       ],
-      rerollNote, critLine: outcome.critLine, outcome: outcomeHtml,
+      rerollNote, critLine: outcome.critLine + masteryAssistCrit, outcome: outcomeHtml,
       sections: [outcome.extendedLine, outcome.opposedLine, pendingOpponentNote, onFailNote,
         // Провал → Очко Бесчестия → Успех на 1 Успех (Змеиный Язык и т.п.,
         // rules/infamy-fail-success.mjs) — кнопка только у Черт, покрывающих
@@ -3159,7 +3165,10 @@ export class WarhammerCharacterSheet
       // Medicae / For.Lore (Astartes Implants) → успех с 1 Успехом).
       flags: { "warhammer-dbc": { skillTest: {
         skill: skillKey ?? "", group: rollContext?.group ?? "", specialty: rollContext?.specialty ?? "",
-        label, success: !!outcome.success
+        label, success: !!outcome.success,
+        // Для меню Очков: Мастерство (автоуспех: Характеристика, поправки не
+        // хуже +0, уже набранные Успехи) и За Гранью Человека (Характеристика).
+        char: charKey, mod: baseEff - target, deg
       } } }
     });
 

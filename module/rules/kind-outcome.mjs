@@ -33,6 +33,7 @@ import { PERSONAL_ADAPTATION_CAPABILITY, PERSONAL_ADAPTATION_FLAG,
          personalAdaptationCap, personalAdaptationBonusFor, nextPersonalAdaptationBonuses, personalAdaptationKey }
   from "./personal-adaptation.mjs";
 import { matchFailDegreeTriggers } from "./fail-degree-triggers.mjs";
+import { masteryCrit, MASTERY_CRIT_LINE } from "./mastery.mjs";
 
 /**
  * Последствия общего триггера «N+ Провала» (rules/fail-degree-triggers.mjs,
@@ -254,12 +255,20 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
     : "";
   // Автозапуск kind:"script" по Крит.Успеху/Провалу (wdbc-1rno: «Полимат»,
   // «Библиотека Акаши») — после того, как crit уже посчитан для ЭТОГО броска.
-  await runScriptTriggers(actor, resolved.scriptTriggers, crit);
+  // Мастерство (стр. 62): «5+ Успехов в тесте на выбранный Навык» считается
+  // Критическим Успехом — для карточки и для скриптов по Крит.Успеху тоже.
+  // Здесь степень без Ассистентов (их прибавляет лист позже); если Ассистенты
+  // дотянули до 5, лист дорисовывает строку сам (sheets/actor-sheet.mjs).
+  const masteryHit = !crit.success && masteryCrit(actor,
+    { skill: ctx?.skill, group: ctx?.group, specialty: ctx?.specialty }, { success, deg: baseDeg });
+  const critEff = masteryHit ? { ...crit, success: true } : crit;
+  if (masteryHit) critLine += MASTERY_CRIT_LINE;
+  await runScriptTriggers(actor, resolved.scriptTriggers, critEff);
   // «Провалил тест на N+ Провала» (wdbc-1rno.22, Инфернальная Воля) — по
   // ИТОГОВОЙ степени провала (baseDeg, с failDegMod внутри), после крита: часть
   // правил исключает Крит. Провал. Ошибка последствия не роняет сам бросок —
   // тот же принцип, что у авто-скриптов выше.
-  for (const t of matchFailDegreeTriggers({ success, deg: baseDeg, crit }, ctx ?? {},
+  for (const t of matchFailDegreeTriggers({ success, deg: baseDeg, crit: critEff }, ctx ?? {},
     flag => hasRuleFlag(actor, flag))) {
     const run = FAIL_DEGREE_HANDLERS[t.handler];
     if (!run) { console.error(`Warhammer DBC | триггер «${t.id}»: нет последствия «${t.handler}»`); continue; }
@@ -327,7 +336,7 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
 
   // degCapLine едет в unnaturalLine: вызывающие карточки уже рисуют её рядом
   // со степенью, отдельного поля они не знают (как autoFailLine в critLine).
-  return { eff, success, deg: baseDeg, crit, critLine, kindLabel, combinedLine, combinedAssistCount,
+  return { eff, success, deg: baseDeg, crit: critEff, masteryCrit: masteryHit, critLine, kindLabel, combinedLine, combinedAssistCount,
            personalAdaptationLine, extendedLine, opposedLine, unnaturalLine: unnaturalLine + degCapLine,
            degCap, degCapLine };
 }

@@ -1464,32 +1464,39 @@ export const CAPABILITIES = {
   },
   // ── Общие (DoomBC — Основная книга, Таланты)
   "general.core.beyondHuman": {
-    label: "Персонаж превзошёл пределы человеческих возможностей. Он получает Трейт Unnatural Characteristic (+1) для соответствующей Характеристики и п…",
-    source: "Beyond Human / За Гранью Человека", reader: ""
+    label: "Реализовано (сверка главы 3): Unnatural (+1) на привязанной при покупке Характеристике (лист, rules/character.mjs; рейтинг для степеней — rules/unnatural-characteristic.mjs); при переброске теста или атаки за Очко на карточке есть кнопка «оставить первый результат» с возвратом Очка (combat/beyond-human.mjs). Требование «Характеристика 70» проверяется по выбранной привязке (пикер), только девять Характеристик книги. НЕ покрыто: Очко Чемпиона (Вдохновляющее Присутствие) не возвращается — оно чужое; переброс из галочки окна броска не трогается — там уже есть выбор результата (стр. 26).",
+    source: "Beyond Human / За Гранью Человека",
+    reader: "module/rules/beyond-human.mjs; module/rules/character.mjs (Unnatural +1); module/rules/unnatural-characteristic.mjs; module/combat/beyond-human.mjs, module/hooks.mjs (doReroll + кнопка .wh-beyond-human-keep-btn); module/sheets/item-picker.mjs (привязка и требование)"
   },
   "general.core.combatFormation": {
-    label: "Персонаж тщательно планирует расстановку в бою. Персонаж и все его соратники, с которыми он поделился планами,",
-    source: "Combat Formation / Боевое Построение", reader: ""
+    label: "Реализовано (wdbc-7zzr, сверка главы 3): носителю +1 к Инициативе (эффект) и I.b вместо A.b (combat.initiativeChar.int). Соратникам — кнопка «Поделиться планом»: выбранным (T) токенам ставится отметка combatFormation, лист даёт +1 и I.b до конца боя. Кому рассказал план — решение игрока (выбор токенов); срок «до конца боя» — допущение.",
+    source: "Combat Formation / Боевое Построение",
+    reader: "module/rules/initiative.mjs (initiativeCharKey); module/rules/combat-formation.mjs; module/rules/character.mjs (+1 по отметке); module/combat/combat-formation.mjs; module/apps/item-script.mjs (shareCombatFormation); module/hooks.mjs (deleteCombat)"
   },
   "general.core.combatSense": {
-    label: "Персонаж может использовать P.b вместо A.b при броске на Инициативу.",
-    source: "Combat Sense / Чувство Боя", reader: ""
+    label: "Реализовано (wdbc-7zzr): P.b вместо A.b при броске Инициативы — возможность combat.initiativeChar.per, берётся лучшая из разрешённых.",
+    source: "Combat Sense / Чувство Боя",
+    reader: "module/rules/initiative.mjs (initiativeCharKey)"
   },
   "general.core.fastestHand": {
-    label: "Когда персонаж вооружён только ножами и/или пистолетами, он получает бонус к Инициативе, равный WS.b или BS.",
-    source: "Fastest Hand / Самая Быстрая Рука", reader: ""
+    label: "Реализовано (wdbc-7zzr): +WS.b/BS.b к Инициативе, пока в руках только ножи и/или пистолеты (rules/hands.mjs); любое другое оружие в руках отменяет надбавку.",
+    source: "Fastest Hand / Самая Быстрая Рука",
+    reader: "module/rules/initiative.mjs (fastestHandBonus); module/rules/hands.mjs"
   },
   "general.core.lightningReflexes": {
-    label: "Персонаж бросает на Инициативу 2 раза и выбирает больший результат.",
-    source: "Lightning Reflexes / Молниеносные Рефлексы", reader: ""
+    label: "Реализовано (wdbc-7zzr): +1 бросок Инициативы (combat.initiativeExtraRoll), берётся лучший; складывается с «трижды» Эльдарского Тела (4 броска).",
+    source: "Lightning Reflexes / Молниеносные Рефлексы",
+    reader: "module/rules/initiative.mjs (initiativeRolls); module/documents/combatant.mjs"
   },
   "general.core.mastery": {
-    label: "Персонаж может потратить Очко Бесчестия, чтобы автоматически пройти тест на выбранный Навык с финальным модификатором +0 или легче с количес…",
-    source: "Mastery / Мастерство", reader: ""
+    label: "Реализовано (сверка главы 3): привязка к Навыку при покупке (пикер, требование «Навык+30»); автоуспех за Очко Бесчестия — пункт меню Очков на карточке теста, Успехи = Бонус Характеристики, поправки не хуже +0 (combat/mastery.mjs); 5+ Успехов в тесте Навыка — строка «Критический Успех» (rules/kind-outcome.mjs). НЕ покрыто: выбор до 3 стандартных эффектов Крит. Успеха с разрешения ГМа — за столом; автоуспех предлагается после броска (допущение).",
+    source: "Mastery / Мастерство",
+    reader: "module/rules/mastery.mjs; module/combat/mastery.mjs; module/hooks.mjs (меню Очков); module/rules/kind-outcome.mjs, module/sheets/actor-sheet.mjs (крит 5+); module/sheets/item-picker.mjs (привязка и требование)"
   },
   "general.core.paranoia": {
-    label: "Персонаж получает бонус +2 к Инициативе. ГМ может тайно провести Тест на P или Awareness, чтобы узнать, ощутил ли персонаж скрытую угрозу.",
-    source: "Paranoia / Паранойя", reader: ""
+    label: "Реализовано (сверка главы 3): +2 к Инициативе (эффект); кнопка «Тайный тест на угрозу» бросает d100 за персонажа против лучшего из P и Awareness и шепчет результат только ГМу. КОГДА проводить проверку — решает ГМ.",
+    source: "Paranoia / Паранойя",
+    reader: "запись kind:\"script\" на самом Таланте (packs-src/talents/Общие/Paranoia); эффект system.initiative"
   },
   "general.core.rapidReaction": {
     label: "РЕАЛИЗОВАНО (wdbc-1rno.3): реакция на Состояние conditions.surprised (стр. 12, начало боя) — кнопка-приглашение в начале Хода, тест A+0, успех восстанавливает ОД/Реакции этого Хода. Про per-attack «Цель Врасплох» (стр. 32) эта находка не была — то другой книжный пункт.",

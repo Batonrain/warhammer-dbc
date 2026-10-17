@@ -159,6 +159,11 @@ import { weaponProfiles, attackIsMelee } from "./combat/weapon-profiles.mjs";
 import { firePointFreeReroll, firePointActivatesOnPaidReroll } from "./rules/fire-point.mjs";
 import { activateFirePoint } from "./combat/fire-point.mjs";
 import { cardOnceUsed, markCardOnce, runCardOnce } from "./combat/card-once.mjs";
+import { clearCombatFormationOnCombatEnd } from "./combat/combat-formation.mjs";
+import { masteryAutoSuccessOffer } from "./rules/mastery.mjs";
+import { masteryAutoSuccessOnCard, masteryHasPoint } from "./combat/mastery.mjs";
+import { beyondHumanRerollData, beyondHumanDataOf, keepFirstButtonHtml, keepFirstResult,
+         BEYOND_HUMAN_FLAG } from "./combat/beyond-human.mjs";
 import { hasLegionSurgery, legionSurgeryTestEligible } from "./rules/legion-surgery.mjs";
 import { legionSurgeryOnCard } from "./combat/legion-surgery.mjs";
 import { patronBlocksInfamyAbility } from "./rules/patron-infamy.mjs";
@@ -546,6 +551,26 @@ export function registerHooks() {
         if (done) el.disabled = true;
       });
     });
+
+    // За Гранью Человека (стр. 62, combat/beyond-human.mjs): карточка переброса
+    // за Очко несёт данные в флагах (тест — свои, атака — в опциях атаки);
+    // кнопка «оставить первый результат» дорисовывается здесь и тоже раз на
+    // карточку. Данные кладутся только если у бросающего есть Талант на эту
+    // Характеристику, поэтому у остальных карточек кнопки нет.
+    {
+      const bhData = beyondHumanDataOf(message);
+      const card = html.querySelector(".wh-roll-result");
+      if (bhData && card && !card.querySelector(".wh-beyond-human-keep-btn")) {
+        card.insertAdjacentHTML("beforeend", keepFirstButtonHtml(bhData, { used: cardOnceUsed(message, "beyondHumanKept") }));
+      }
+      html.querySelectorAll(".wh-beyond-human-keep-btn").forEach(btn => {
+        btn.addEventListener("click", async ev => {
+          ev.preventDefault();
+          const el = ev.currentTarget;
+          if (await keepFirstResult(message)) el.disabled = true;
+        });
+      });
+    }
 
     // Знания Веков (wdbc-1rno.23, apps/knowledge-of-ages.mjs): 1d10 после
     // траты Очка на «Усиление»/«Успех»/«Переброс» добытого Навыка. Актор — по
@@ -2862,6 +2887,16 @@ function _attachFateContextMenu(message, html) {
       : null;
     if (btnLegionSurgery) menu.appendChild(btnLegionSurgery);
 
+    // Мастерство (стр. 62, combat/mastery.mjs): автоуспех за Очко Бесчестия
+    // на тест выбранного Навыка, если поправки не хуже +0. Раз на карточку.
+    const masteryOffer = (actor && skillTest && !cardOnceUsed(message, "masteryAutoSuccessUsed"))
+      ? masteryAutoSuccessOffer(actor, skillTest) : null;
+    const btnMastery = masteryOffer
+      ? _makeFateMenuItem(`Мастерство — автоуспех (${masteryOffer.deg} Успех., Очко Бесчестия)`,
+          masteryHasPoint(actor), !masteryHasPoint(actor) ? "Нет Очков Бесчестия" : "")
+      : null;
+    if (btnMastery) menu.appendChild(btnMastery);
+
     document.body.appendChild(menu);
 
     // Закрытие по клику вне меню
@@ -2900,8 +2935,16 @@ function _attachFateContextMenu(message, html) {
         const atkActor = game.actors?.get(atk.actorId) ?? actor;
         const atkItem  = atkActor?.items?.get(atk.itemId);
         if (atkItem) {
+          // За Гранью Человека: данные о первом результате едут в опциях атаки
+          // (они ложатся во флаги новой карточки). Старую метку убираем —
+          // переброс переброшенной карточки считается от неё самой.
+          const bhAtk = beyondHumanRerollData(atkActor, {
+            charKey: atk.charKey, firstRv: atk.rv, threshold: atk.threshold,
+            spend: champion ? null : reroll1 });
+          const atkOpts = { ...(atk.opts || {}) };
+          delete atkOpts[BEYOND_HUMAN_FLAG];
           await _executeAttackRoll(atkActor, atkItem, atk.charKey, atk.threshold,
-            atk.rofMode, atk.aimTarget, { ...(atk.opts || {}), skipAmmo: true });
+            atk.rofMode, atk.aimTarget, { ...atkOpts, skipAmmo: true, ...(bhAtk ? { [BEYOND_HUMAN_FLAG]: bhAtk } : {}) });
           // Исходная карточка переброшена — бесплатный переброс Огневой Точки
           // с неё больше не предлагается (переброс переброса).
           await markCardOnce(message, "attackRerolled");
@@ -2930,6 +2973,11 @@ function _attachFateContextMenu(message, html) {
       // Извлекаем порог из старого сообщения
       const thresholdMatch = message.content.match(/Порог.*?<b>(\d+)<\/b>/);
       const threshold = thresholdMatch ? parseInt(thresholdMatch[1]) : null;
+
+      // За Гранью Человека: первый результат этого теста (его Характеристика
+      // известна по флагу карточки Навыка/Характеристики с листа).
+      const bhTest = skillTest?.char ? beyondHumanRerollData(actor, {
+        charKey: skillTest.char, firstRv: roll.total, threshold, spend: champion ? null : reroll1 }) : null;
 
       const rv  = newRoll.total;
       const hit = threshold !== null ? rv <= threshold : null;
@@ -2981,7 +3029,10 @@ function _attachFateContextMenu(message, html) {
         // тест того же Навыка, и «+10» с неё (меню Очков) должно его узнать
         // (Знания Веков, wdbc-1rno.23). Исход — уже переброшенный.
       }, { rolls: [newRoll], speaker: message.speaker,
-        flags: skillTest ? { "warhammer-dbc": { skillTest: { ...skillTest, success: hit ?? !!skillTest.success } } } : null });
+        flags: (skillTest || bhTest) ? { "warhammer-dbc": {
+          ...(skillTest ? { skillTest: { ...skillTest, success: hit ?? !!skillTest.success, deg: deg ?? skillTest.deg } } : {}),
+          ...(bhTest ? { [BEYOND_HUMAN_FLAG]: bhTest } : {})
+        } } : null });
 
       ui.notifications.info(
         `✨ ${actor.name} тратит ${ft.one} на переброс${payerNote}! Осталось: ${reroll1.poolValue}`
@@ -3014,6 +3065,14 @@ function _attachFateContextMenu(message, html) {
       document.removeEventListener("click", closeMenu);
       if (!canSpend) return;
       await legionSurgeryOnCard(actor, skillTest.label || "Тест", message);
+    });
+
+    // ── Мастерство: автоуспех ─────────────────────────────────────────────
+    btnMastery?.addEventListener("click", async (ev2) => {
+      ev2.stopPropagation();
+      menu.remove();
+      document.removeEventListener("click", closeMenu);
+      await masteryAutoSuccessOnCard(actor, skillTest, message);
     });
 
     // ── +10 к броску ──────────────────────────────────────────────────────
@@ -3183,6 +3242,8 @@ function _attachFateContextMenu(message, html) {
     await resolveCombatRadiation(combat);
     // Командное Присутствие — «до конца боя»; Команды и метки Морали тоже.
     await clearCommandsOnCombatEnd(combat);
+    // Боевое Построение, раздача соратникам (стр. 62) — отметка до конца боя.
+    await clearCombatFormationOnCombatEnd(combat);
     // Божественная Защита: без сознания «до конца сцены или боя».
     await wakeDivineProtected(combat.combatants?.map?.(c => c.actor) ?? []);
     // Метка Аватара Резни живёт «до конца боя» — снять со всех комбатантов.

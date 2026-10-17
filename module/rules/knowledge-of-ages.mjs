@@ -23,8 +23,7 @@
 //  flags/system. Кнопка и бросок — apps/knowledge-of-ages.mjs.
 // ════════════════════════════════════════════════════════════════════════
 
-import { masteryTarget, masteryTargets } from "./mastery-targets.mjs";
-import { specOptions } from "../constants/skill-specializations.mjs";
+import { masteryKeyOf, masteryCoversTest } from "./mastery.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -66,15 +65,6 @@ function carriesKnowledgeOfAges(item) {
     e?.kind === "capability" && e.capabilityKey === KNOWLEDGE_OF_AGES_CAPABILITY));
 }
 
-/** Ключ привязки Mastery: aptSource, либо обратный поиск по подписи. */
-function masteryKeyOf(talent) {
-  const apt = String(talent?.system?.aptSource ?? "").trim();
-  if (apt && masteryTarget(apt)) return apt;
-  const label = String(talent?.system?.specialization ?? "").trim();
-  if (!label) return "";
-  return masteryTargets().find(t => t.label === label)?.key ?? "";
-}
-
 /**
  * Ключи Навыков (формата masteryTargets), добытых Знаниями Веков.
  * @param {Iterable<object>} items предметы актора (массив или Коллекция)
@@ -96,30 +86,11 @@ export function knowledgeOfAgesSkillKeys(items) {
   return [...keys];
 }
 
-const norm = s => String(s ?? "").trim().toLowerCase();
-
-/** Подпись строки группового Навыка — та ли это специализация. */
-function specialtyMatches(group, spec, specialty) {
-  const want = norm(specialty);
-  if (!want) return false;
-  const opt = specOptions(group).find(o => o.key === spec);
-  if (!opt) return want === norm(spec);
-  return [opt.key, opt.label, opt.ru, opt.display].some(v => v && norm(v) === want);
-}
-
 /**
  * Тот ли это Навык. `ctx` — флаг skillTest карточки теста с листа
- * (sheets/actor-sheet.mjs::_runTest): {skill, group, specialty}.
+ * (sheets/actor-sheet.mjs::_runTest): {skill, group, specialty}. Разбор —
+ * общий с Талантом Мастерство (rules/mastery.mjs).
  * @param {string[]} keys результат knowledgeOfAgesSkillKeys
  * @param {{skill?:string, group?:string, specialty?:string}|null} ctx
  */
-export function knowledgeOfAgesCoversTest(keys, ctx) {
-  if (!ctx || !Array.isArray(keys) || !keys.length) return false;
-  return keys.some(key => {
-    const t = masteryTarget(key);
-    if (!t) return false;
-    if (!t.group) return !!ctx.skill && ctx.skill === t.key;
-    if (ctx.group !== t.group) return false;
-    return !t.spec || specialtyMatches(t.group, t.spec, ctx.specialty);
-  });
-}
+export const knowledgeOfAgesCoversTest = masteryCoversTest;

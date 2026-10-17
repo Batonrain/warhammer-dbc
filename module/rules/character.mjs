@@ -54,6 +54,8 @@ import { woundsMaxMods as runtWoundsMaxMods } from "./runt.mjs";
 import { prepareFinalPools } from "./character/final-pools.mjs";
 import { prepareMovementDerived } from "./character/movement.mjs";
 import { prepareArmourDerived } from "./character/armour.mjs";
+import { sharedFormationInitBonus } from "./combat-formation.mjs";
+import { isBeyondHuman, beyondHumanCharKey, BEYOND_HUMAN_UNNATURAL } from "./beyond-human.mjs";
 import { LIMITED_LIFT_CAPABILITY, flightStrengthBonus, limitedLiftStatus } from "./limited-lift.mjs";
 
 /**
@@ -216,6 +218,7 @@ export function prepareCharacterDerived(actor, system) {
     // калькуляцию size/calcMovement ниже). Входит только в sizeTotal.
     let traitSizeModNoSpd = 0;
     let traitInitMod = 0;
+    const beyondHumanSeen = new Set(); // две копии на одну Характеристику не складываются
     let traitSpeedMod = 0;
     // Навыки, у которых Черта/Талант/Имплант ополовинивает штрафы (Конструктор
     // МЕХАНИКА, kind:"testMod" + modValueMode:"halvePenalty") — сам штраф теста
@@ -301,6 +304,17 @@ export function prepareCharacterDerived(actor, system) {
 
         if (item.system.ironFocus || mech?.ironFocus)
           techFocusInstalled.push({ name: item.name, quality: q, mod: ironModForQuality(q) });
+      }
+      // За Гранью Человека (стр. 62): Трейт Unnatural Characteristic (+1) для
+      // той Характеристики, к которой Талант привязан при покупке.
+      // Считается здесь, а не эффектом предмета: привязка выбирается в пикере
+      // и лежит в aptSource, а не в записи пака.
+      if (isBeyondHuman(item)) {
+        const bhKey = beyondHumanCharKey(item);
+        if (bhKey && !beyondHumanSeen.has(bhKey)) {
+          beyondHumanSeen.add(bhKey);
+          traitCharBonus[bhKey] = (traitCharBonus[bhKey] || 0) + BEYOND_HUMAN_UNNATURAL;
+        }
       }
       // Мигрированные предметы несут ту же механику как embedded ActiveEffect
       // (см. migrations/item-effects.mjs) — читать старое поле тоже
@@ -419,6 +433,8 @@ export function prepareCharacterDerived(actor, system) {
     system.traitCharBonus      = traitCharBonus;
     system.traitCharValueBonus = traitCharValueBonus;
     system.fearRating     = traitFearRating;
+    // Боевое Построение, раздача соратникам (стр. 62): +1 по отметке на листе.
+    traitInitMod += sharedFormationInitBonus(actor);
     system.talentInitMod  = traitInitMod;
     system.traitSpeedMod  = traitSpeedMod;
 

@@ -34,6 +34,7 @@ import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { ruleFlags, hasRuleFlag, ruleFlagLabels } from "./flags.mjs";
 import { handHeldItems } from "./hands.mjs";
 import { isIntegralAttack } from "../combat/equipped-melee.mjs";
+import { sharedFormation, COMBAT_FORMATION_CHAR } from "./combat-formation.mjs";
 
 export { INITIATIVE_CHAR_PREFIX, INITIATIVE_CHAR_KEYS };
 
@@ -71,8 +72,11 @@ export function initiativeCharKey(actor, chars = {}) {
   const flags = ruleFlags(actor);
   let best = INITIATIVE_DEFAULT_CHAR;
   let bestBonus = bonusOf(chars, INITIATIVE_DEFAULT_CHAR);
+  // Боевое Построение соратника (rules/combat-formation.mjs): I.b вместо A.b
+  // по отметке на листе — тот же выбор «лучшей», что и у собственной возможности.
+  const shared = sharedFormation(actor) ? COMBAT_FORMATION_CHAR : null;
   for (const key of INITIATIVE_CHAR_KEYS) {
-    if (!flags.has(INITIATIVE_CHAR_PREFIX + key)) continue;
+    if (!flags.has(INITIATIVE_CHAR_PREFIX + key) && key !== shared) continue;
     const bonus = bonusOf(chars, key);
     if (bonus > bestBonus) { best = key; bestBonus = bonus; }
   }
