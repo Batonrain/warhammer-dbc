@@ -461,7 +461,8 @@ function reactionKnockdownSection(reason, { actorUuid }) {
  *   документов Foundry не касается (см. шапку файла).
  */
 export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, targetIsWalker = false, note = "",
-                          forcedDefenceReroll = "", dodgeModRecoil = null }, { wp, attackerUuid = "", itemUuid = "", hitsCount = 1, pool = null,
+                          forcedDefenceReroll = "", dodgeModRecoil = null,
+                          grapple = false, chomper = false, bodyguards = [], allyName = "" }, { wp, attackerUuid = "", itemUuid = "", hitsCount = 1, pool = null,
                           swarm = null, unseen = false, unseenDetected = false, unseenPenalty = 0,
                           sixthSenseBypassAvailable = false, musicOfBattleBypassAvailable = false,
                           isMelee = false, burst = false, attackerIsHorde = false, hitLocLabel = "" }) {
@@ -559,7 +560,7 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
                title="Незримая атака (стр. 32): Уклонение недоступно, пока не засечена альтернативными методами — Психонаукой/Техпользованием (кнопки ниже).">
                Уклонение${dodgeMod !== 0 ? ` (${signed(dodgeMod)})` : ""} — не засечена
              </button>`
-          : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-extra-mod-recoil="${dodgeModRecoil ?? dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-item-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-melee="${isMelee ? 1 : 0}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-attack-id="${attackId}">
+          : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-extra-mod-recoil="${dodgeModRecoil ?? dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-item-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-melee="${isMelee ? 1 : 0}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-attack-id="${attackId}" data-grapple="${grapple ? 1 : 0}">
                Уклонение${dodgeMod !== 0 ? ` (${signed(dodgeMod)})` : ""}
              </button>`
         }
@@ -576,6 +577,18 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
                Парирование${parryMod !== 0 ? ` (${signed(parryMod)})` : ""}
              </button>`
         }
+        ${chomper && !cannotParry && !unseenLocked && isMelee
+          ? `<button class="wh-parry-btn wh-chomper-parry-btn" type="button" data-chomper="1" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-attacker-weapon-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-melee="1" data-attack-id="${attackId}"
+               title="Кусака: парировать укусом как оружием с Балансом 0; непарированные попадания идут в голову, затем можно обезоружить">
+               Парировать укусом (Кусака)
+             </button>`
+          : ""}
+        ${!cannotParry && !unseenLocked
+          ? (bodyguards ?? []).map(b => `<button class="wh-parry-btn wh-bodyguard-btn" type="button" data-bodyguard-uuid="${b.uuid}" data-for-ally="${esc(allyName)}" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-attacker-weapon-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-melee="${isMelee ? 1 : 0}" data-attack-id="${attackId}"
+               title="Телохранитель: ${esc(b.name)} парирует эту атаку за союзника (его Реакция, его оружие)">
+               Телохранитель: ${esc(b.name)}
+             </button>`).join("")
+          : ""}
         ${targetIsVehicle
           ? `<button class="wh-swerve-btn" type="button" data-extra-mod="0" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-attack-id="${attackId}"
                title="Техника: Operate − Размер×10. Реакция водителя (Книга Машин).">Вираж</button>`

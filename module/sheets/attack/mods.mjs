@@ -32,6 +32,7 @@ import { longRangeImmunityReason } from "../../rules/range-penalty-immunity.mjs"
 import { lightPenaltyImmunityReason, smokePenaltyImmunityReason } from "../../rules/vision-penalty-immunity.mjs";
 import { hasBlindFighting } from "../../rules/unseen-talents.mjs";
 import { hasDodgeTalent } from "../../rules/dodge-talents.mjs";
+import { flourishPenaltyAgainst } from "../../combat/flourish-dance.mjs";
 import { halvePenalty } from "../../rules/awareness-talents.mjs";
 // Действующие моды (wdbc-1rno.38/.40): без «бесполезных без X» и без
 // невыбранных прицелов — тот же список, что у getModEffects и окна атаки.
@@ -575,6 +576,15 @@ export function situationalMods(v) {
       note: wp.gyroStabilized ? "снято: Гиро-стаб." : undefined }
   ];
 
+  // Размашистый Танец у ЦЕЛИ (глава 3): атакующий, которого он закружил, бьёт со
+  // штрафом −5 за каждый Успех танцора до начала его следующего Хода.
+  {
+    const dancePenalty = attackCtx.targetActor ? flourishPenaltyAgainst(attackCtx.targetActor, actor) : 0;
+    if (dancePenalty) {
+      commonMods.push({ label: "Размашистый Танец цели", value: dancePenalty, autoCheck: true,
+        note: `${attackCtx.targetActor.name}: -5 за каждый Успех танцора` });
+    }
+  }
   // Мастер Боя у ЦЕЛИ (глава 3): строки «Числ. перевес» (specificMods) гасятся.
   // По имени Таланта, а не через immuneFlag: так работает и на персонажах,
   // получивших Талант до того, как в компендиуме у него появилась запись

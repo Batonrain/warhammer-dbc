@@ -151,7 +151,8 @@ import { rollInfoguard } from "./apps/infoguard.mjs";
 import { CHARACTERISTICS } from "./constants/characteristics.mjs";
 import { SKILLS_DEF } from "./constants/skills.mjs";
 import { performUnarmedRiposte, UNARMED_RIPOSTE_USED_FLAG } from "./combat/unarmed-combat.mjs";
-import { resolveResistClick } from "./combat/opposed-contest.mjs";
+import { resolveResistClick, resolvePirouetteClick } from "./combat/opposed-contest.mjs";
+import { flipTriggered, offerFlip, rollFlip } from "./combat/flip.mjs";
 import { maybeAutoReleaseGrapple, grappleReleaseTriggered } from "./combat/grapple.mjs";
 import { weaponProfiles, attackIsMelee } from "./combat/weapon-profiles.mjs";
 // Огневая Точка (Хавок) и Хирургия Легиона (Апотекарий) — пункты меню Очков карточки.
@@ -456,7 +457,7 @@ export function registerHooks() {
           const handled = await showMountedDodgeDialog(actor, extraMod, hitsCount, attackerUuid, attackId);
           if (handled !== null) return;
         }
-        await _performDodge(actor, { extraMod, forcedReroll: ds.forceReroll || "", hitsCount, attackerUuid, isMelee: ds.melee === "1", burst, attackerIsHorde, attackId, itemUuid });
+        await _performDodge(actor, { extraMod, forcedReroll: ds.forceReroll || "", hitsCount, attackerUuid, isMelee: ds.melee === "1", burst, attackerIsHorde, attackId, itemUuid, grappleAttack: ds.grapple === "1" });
       });
     });
 
@@ -746,10 +747,19 @@ export function registerHooks() {
     html.querySelectorAll(".wh-parry-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
-        const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
-        if (!actor) return;
         // dataset снимается ДО await — см. объяснение у кнопки Уклонения выше.
         const ds = { ...ev.currentTarget.dataset };
+        // Телохранитель (глава 3): парирует тот, чья кнопка нажата, а не
+        // выбранный токен — его Реакция и его оружие.
+        let actor;
+        if (ds.bodyguardUuid) {
+          actor = await fromUuid(ds.bodyguardUuid).catch(() => null);
+          if (!actor) return ui.notifications.warn("⚠️ Телохранитель не найден.");
+          if (!game.user.isGM && !actor.isOwner) return ui.notifications.warn(`⚠️ Нет прав на «${actor.name}».`);
+        } else {
+          actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
+          if (!actor) return;
+        }
         const extraMod = parseInt(ds.extraMod || "0");
         const hitsCount = parseInt(ds.hitsCount || "1");
         const burst = ds.burst === "1";
@@ -760,7 +770,36 @@ export function registerHooks() {
         const isMelee = ds.melee !== "0";
         if (!await confirmHordeDefense(actor, "Парирование")) return;
         if (!await confirmHordeHitEvasion(actor, ds.hordeHit === "1", "Парирование")) return;
-        await _performParry(actor, { extraMod, attackerUuid: ds.attackerUuid || "", hitsCount, burst, attackerIsHorde, isMelee, attackerWeaponUuid: ds.attackerWeaponUuid || "", attackId: ds.attackId || "" });
+        await _performParry(actor, { extraMod, attackerUuid: ds.attackerUuid || "", hitsCount, burst, attackerIsHorde, isMelee, attackerWeaponUuid: ds.attackerWeaponUuid || "", attackId: ds.attackId || "",
+          chomper: ds.chomper === "1", forAlly: ds.bodyguardUuid ? (ds.forAlly || "") : "" });
+      });
+    });
+
+    // Кувырок (Талант Избегания, глава 3): кнопка на карточке-предложении.
+    html.querySelectorAll(".wh-flip-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        el.disabled = true;
+        const actor = el.dataset.actorUuid ? (await fromUuid(el.dataset.actorUuid).catch(() => null)) : null;
+        if (!actor) return ui.notifications.warn("⚠️ Персонаж не найден.");
+        if (!game.user.isGM && !actor.isOwner) return ui.notifications.warn(`⚠️ Нет прав на «${actor.name}».`);
+        await rollFlip(actor);
+      });
+    });
+
+    // Кусака: сразу после парирования укусом — Обезоруживание против атакующего
+    // (глава 3). Актор — с карточки парирования, как у контратаки.
+    html.querySelectorAll(".wh-chomper-disarm-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const attackerUuid = el.dataset.attackerUuid;
+        const cardUuid = el.closest(".wh-roll-result")?.dataset.actorUuid;
+        const actor = cardUuid ? (await fromUuid(cardUuid).catch(() => null)) : null;
+        const attacker = attackerUuid ? (await fromUuid(attackerUuid).catch(() => null)) : null;
+        if (!actor || !attacker) return ui.notifications.warn("⚠️ Парировавший или атакующий не найден.");
+        await _showContestDialog(actor, { ...MELEE_CONTESTS.disarm, opponents: () => [attacker] });
       });
     });
 
@@ -2058,6 +2097,14 @@ export function registerHooks() {
 
     // Встречный тест приёма (wdbc-x1nz.2.73): противник бросает сам по
     // кнопке в карточке инициатора — combat/opposed-contest.mjs.
+    html.querySelectorAll(".wh-contest-pirouette-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        el.disabled = true;
+        await resolvePirouetteClick({ ...el.dataset });
+      });
+    });
     html.querySelectorAll(".wh-contest-resist-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
@@ -3698,6 +3745,13 @@ function _attachFateContextMenu(message, html) {
     if (game.user.id !== userId) return;
     if (!grappleReleaseTriggered(changes)) return;
     await maybeAutoReleaseGrapple(actor);
+  });
+  // Кувырок (Талант Избегания, глава 3): сбит с ног — предложить Acrobatics+0.
+  // Тот же userId-гвард: карточку пишет только клиент, поставивший Состояние.
+  Hooks.on("updateActor", async (actor, changes, options, userId) => {
+    if (game.user.id !== userId) return;
+    if (!flipTriggered(changes, options)) return;
+    await offerFlip(actor);
   });
   Hooks.on("updateActor", async (actor, changes, options, userId) => {
     if (game.user.id !== userId) return;

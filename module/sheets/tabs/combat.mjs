@@ -37,6 +37,7 @@ import { resplendentRaimentAvailable } from "../../combat/resplendent-raiment.mj
 import { showResplendentRaimentDialog } from "../../apps/resplendent-raiment-dialog.mjs";
 import { adrenalineRushAvailable, applyAdrenalineRush } from "../../combat/adrenaline-rush.mjs";
 import { applyCaution } from "../../combat/caution.mjs";
+import { applyFlourishDance } from "../../combat/flourish-dance.mjs";
 import { boneSongAvailable, applyBoneSongSingle, applyBoneSongArea } from "../../combat/bone-song.mjs";
 import {
   primalHowlAvailable, applyPrimalHowl,
@@ -192,6 +193,11 @@ export function activateCombatListeners(root, actor) {
       return ui.notifications.warn("Прилив Адреналина уже использован в этом бою/сцене.");
     }
     await applyAdrenalineRush(actor);
+  });
+
+  // ── Размашистый Танец (Талант Избегания, module/combat/flourish-dance.mjs) ──
+  on(root, ".flourish-dance-btn", "click", async () => {
+    await applyFlourishDance(actor);
   });
 
   // ── Осторожность (Талант Избегания, module/combat/caution.mjs) ──────────

@@ -17,6 +17,10 @@ import { spendActionPoints } from "./action-economy.mjs";
 import { canTakeAttackAction, takeAttackAction } from "./attack-limit.mjs";
 import { commitRerollUse } from "./angel-hunters.mjs";
 import { extraSuccessDegrees } from "./extra-successes.mjs";
+import { escapeArtistRelief } from "../rules/dodge-talents.mjs";
+import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
+
+const SLIP_AWAY_FLAG = "dodge.core.slipAway";
 
 export async function _showContestDialog(actor, techDef) {
   // Повалить и Напролом — Athletics(S) vs Athletics(S), Финт/Давление — WS vs WS.
@@ -95,6 +99,19 @@ export async function _showContestDialog(actor, techDef) {
        </div>`
     : "";
 
+  // Ускользнуть (Талант Избегания): раз в Раунд на тесте A в Борьбе — +30 или
+  // переброс. Книга даёт решить переброс ПОСЛЕ броска; здесь выбор делается в
+  // окне до броска, переброс = два d100, лучший (допущение, как у Ненависти).
+  const slipAwayReady = !!techDef.slipAway && isThrottleReady(actor, SLIP_AWAY_FLAG, "round");
+  const slipAwayHtml = slipAwayReady
+    ? `<div class="atk-dlg-row" style="flex-direction:column;align-items:flex-start;">
+         <label>Ускользнуть (раз в Раунд):</label>
+         <label><input type="radio" name="slip-away" value="none" checked/> нет</label>
+         <label><input type="radio" name="slip-away" value="bonus"/> +30 на этот тест</label>
+         <label><input type="radio" name="slip-away" value="reroll"/> переброс (бросить дважды, лучший)</label>
+       </div>`
+    : "";
+
   const stanceBonusNote = stanceWsBonus
     ? `<div style="font-size:0.85em;color:#8fd0ff;margin-bottom:6px;">
          ${rollIcon("sword")}Стойка: ${MELEE_STANCES[stanceKey].label} (${stanceWsBonus >= 0 ? "+" : ""}${stanceWsBonus}), уже в WS выше
@@ -169,6 +186,7 @@ export async function _showContestDialog(actor, techDef) {
           <span id="contest-total-display">${baseVal}</span>
         </div>
         ${rr.html}
+        ${slipAwayHtml}
         ${danceFreeActionHtml}
       </form>`,
     buttons: {
@@ -190,7 +208,24 @@ export async function _showContestDialog(actor, techDef) {
           const ruleMods = collectTestMods(actor, danceOpt
             ? { kind: "skill", char: danceOpt.charKey, skill: danceOpt.skillKey }
             : sideContext(side));
-          const eff      = selfVal + mod + ruleMods.total;
+          let eff        = selfVal + mod + ruleMods.total;
+          // Таланты Избегания: Освобождение от Пут и Ускользнуть.
+          const talentParts = [];
+          let talentAdvantage = "";
+          let doubleSuccesses = false;
+          if (techDef.escapeArtist) {
+            const ab = Number(actor.system?.characteristics?.ag?.bonus) || 0;
+            const { penalty, relief, reroll } = escapeArtistRelief(
+              [Math.min(0, Number(techDef.extraBonus) || 0), mod, ...ruleMods.list.map(m => Number(m.value) || 0)], ab);
+            if (relief > 0) { eff += relief; talentParts.push(`Освобождение от Пут: штраф ${-penalty} смягчён на ${relief}`); }
+            doubleSuccesses = true;
+            talentParts.push("Освобождение от Пут: Успехи ×2");
+            if (reroll) talentAdvantage = `Освобождение от Пут (штраф меньше A.b×3): переброс, лучший из двух`;
+          }
+          const slipChoice = slipAwayReady ? (html.find('input[name="slip-away"]:checked').val() || "none") : "none";
+          if (slipChoice === "bonus") { eff += 30; talentParts.push("Ускользнуть +30"); }
+          if (slipChoice === "reroll" && !talentAdvantage) talentAdvantage = "Ускользнуть: переброс, лучший из двух";
+          if (slipChoice !== "none") await markThrottleUsed(actor, SLIP_AWAY_FLAG, "round");
 
           // Встречный тест (wdbc-x1nz.2.73): без противника сравнивать не с
           // чем — бросок не делается вовсе, ОД не тратятся.
@@ -246,13 +281,14 @@ export async function _showContestDialog(actor, techDef) {
           // складывается (оба — «выбрать лучший из нескольких»).
           const extraRolls = Math.max(1, Number(techDef.rollCount) || 1);
           const rolled = [];
-          const nRolls = useReroll ? Math.max(2, extraRolls) : extraRolls;
+          const nRolls = (useReroll || talentAdvantage) ? Math.max(2, extraRolls) : extraRolls;
           for (let i = 0; i < nRolls; i++) rolled.push(await new Roll("1d100").evaluate());
           const picked = pickReroll(rolled.map(r => r.total), useReroll ? mode : "keepBest");
           const rv     = picked.value;
           const { success: hit, deg: rolledDeg } = testOutcome(rv, eff);
           // Бой Один На Один / Искусный: +1 Успех к успешному тесту приёма (wdbc-r3379).
-          const deg = rolledDeg + extraSuccessDegrees(actor, { success: hit, charKey });
+          let deg = rolledDeg + extraSuccessDegrees(actor, { success: hit, charKey });
+          if (doubleSuccesses && hit) deg *= 2;
           const outcome  = hit
             ? outcomeHtml(true,  `Успех — ${deg} ${_degWord(deg)}`)
             : outcomeHtml(false, `Провал — ${deg} ${_degWord(deg)}`);
@@ -262,10 +298,11 @@ export async function _showContestDialog(actor, techDef) {
           // Командовании и Ударе Ассасина.
           const modParts = [
             mod !== 0 ? `${mod >= 0 ? "+" : ""}${mod}` : "",
-            ...ruleMods.parts
+            ...ruleMods.parts,
+            ...talentParts
           ];
           const rerollLabel = useReroll ? rr.rerolls?.[rerollIdx]?.label
-            : (extraRolls > 1 ? `Лишние руки в Захвате, лучший из ${extraRolls}` : "");
+            : (extraRolls > 1 ? `Лишние руки в Захвате, лучший из ${extraRolls}` : talentAdvantage);
           const rerollNote = picked.dropped.length
             ? `<div class="roll-defense-note">${rerollLabel || "Переброс"}: отброшено ${picked.dropped.join(", ")}</div>`
             : "";

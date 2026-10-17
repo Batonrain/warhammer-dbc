@@ -73,3 +73,82 @@ describe("Живой Щит: сектор укрытия Борьбы", () => {
     expect(grappleCoverHalfAngle(true)).toBe(90);
   });
 });
+
+// ── Второй проход ───────────────────────────────────────────────────────────
+import {
+  escapeArtistRelief, deflectableProjectile, isGrenadeProjectile, DEFLECT_BACK_DEGREES,
+  flourishPenalty, bodyguardTokens
+} from "../../module/rules/dodge-talents.mjs";
+
+describe("Освобождение от Пут: escapeArtistRelief", () => {
+  it("штраф −30 при A.b 4: возвращает 20 (A.b×5), переброса нет (30 ≥ A.b×3 = 12)", () => {
+    expect(escapeArtistRelief([-20, -10, 5], 4)).toEqual({ penalty: 30, relief: 20, reroll: false });
+  });
+  it("мелкий штраф −5 возвращается целиком и разрешает переброс (5 < 12)", () => {
+    expect(escapeArtistRelief([-5], 4)).toEqual({ penalty: 5, relief: 5, reroll: true });
+  });
+  it("плюсы штрафом не считаются; без штрафа — переброс допустим", () => {
+    expect(escapeArtistRelief([20, 10], 4)).toEqual({ penalty: 0, relief: 0, reroll: true });
+    expect(escapeArtistRelief(undefined, 4).penalty).toBe(0);
+  });
+  it("штраф ровно A.b×3 — переброса нет (нужно «ниже»)", () => {
+    expect(escapeArtistRelief([-12], 4).reroll).toBe(false);
+    expect(escapeArtistRelief([-11], 4).reroll).toBe(true);
+  });
+  it("A.b = 0 — ничего не возвращает", () => {
+    expect(escapeArtistRelief([-10], 0)).toEqual({ penalty: 10, relief: 0, reroll: false });
+  });
+});
+
+describe("Отбить Выстрел: deflectableProjectile", () => {
+  it("метательное, луки/арбалеты, ракеты и пусковые — да", () => {
+    expect(deflectableProjectile({ weaponClass: "thrown", weaponType: "grenade" })).toBe(true);
+    expect(deflectableProjectile({ weaponClass: "basic", weaponType: "lowtech" })).toBe(true);
+    expect(deflectableProjectile({ weaponClass: "pistol", weaponType: "lowtech" })).toBe(true);
+    expect(deflectableProjectile({ weaponClass: "launcher", weaponType: "rocket" })).toBe(true);
+    expect(deflectableProjectile({ weaponClass: "heavy", weaponType: "launcher" })).toBe(true);
+  });
+  it("лазеры, болтеры, плазма, рукопашное, пусто — нет", () => {
+    for (const weaponType of ["laser", "bolt", "plasma", "solid"]) {
+      expect(deflectableProjectile({ weaponClass: "basic", weaponType })).toBe(false);
+    }
+    expect(deflectableProjectile({ weaponClass: "melee", weaponType: "lowtech" })).toBe(false);
+    expect(deflectableProjectile(undefined)).toBe(false);
+  });
+  it("граната: метательное класса grenade/explosive; нож — нет", () => {
+    expect(isGrenadeProjectile({ weaponClass: "thrown", weaponType: "grenade" })).toBe(true);
+    expect(isGrenadeProjectile({ weaponClass: "thrown", weaponType: "explosive" })).toBe(true);
+    expect(isGrenadeProjectile({ weaponClass: "thrown", weaponType: "lowtech" })).toBe(false);
+    expect(isGrenadeProjectile(null)).toBe(false);
+    expect(DEFLECT_BACK_DEGREES).toBe(5);
+  });
+});
+
+describe("Размашистый Танец: flourishPenalty", () => {
+  it("−5 за каждый Успех, не выше нуля", () => {
+    expect(flourishPenalty(3)).toBe(-15);
+    expect(flourishPenalty(0)).toBe(0);
+    expect(flourishPenalty(-2)).toBe(0);
+    expect(flourishPenalty(undefined)).toBe(0);
+  });
+});
+
+describe("Телохранитель: bodyguardTokens", () => {
+  const base = { hasTalent: true, inContact: true, disposition: 1 };
+  const ctx = { targetId: "T", attackerId: "A", targetDisposition: 1 };
+  it("носитель в контакте на стороне цели — подходит", () => {
+    expect(bodyguardTokens([{ id: "B", ...base }], ctx).map(t => t.id)).toEqual(["B"]);
+  });
+  it("сама цель, атакующий, чужая сторона, без Таланта, вне контакта — нет", () => {
+    const tokens = [
+      { id: "T", ...base }, { id: "A", ...base },
+      { id: "E", ...base, disposition: -1 },
+      { id: "N", ...base, hasTalent: false },
+      { id: "F", ...base, inContact: false }
+    ];
+    expect(bodyguardTokens(tokens, ctx)).toEqual([]);
+  });
+  it("пустой список — пусто", () => {
+    expect(bodyguardTokens(undefined, ctx)).toEqual([]);
+  });
+});

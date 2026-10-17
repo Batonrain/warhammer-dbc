@@ -799,7 +799,8 @@ export async function declareProne(actor) {
   if (actor.system.conditions?.prone) return ui.notifications.warn("⚠️ Уже Повален.");
   const fields = conditionApplyFields("prone", null, actor);
   if (!Object.keys(fields).length) return ui.notifications.warn("⚠️ Иммунитет — Состояние «Повален» не наложено.");
-  await actor.update(fields);
+  // whVoluntaryProne: «сбит с ног» (Кувырок) — только не добровольное падение.
+  await actor.update(fields, { whVoluntaryProne: true });
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#9fb4ff")}${esc(actor.name)} — Лечь</div>
     <div class="roll-threshold">Свободное действие. Состояние «Повален» (стр. 30-31).</div>
