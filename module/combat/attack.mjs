@@ -34,7 +34,9 @@ import { lockingContactTokenDocs, allContactTokenDocs } from "./free-attack.mjs"
 import { feintBlocksEvasion } from "./feint-press.mjs";
 import { resolveGrenadeMeleeFumble, resolveFlailMeleeFumble } from "./draw-action.mjs";
 import { hidingInHordeSplit }                        from "./horde-tokens.mjs";
-import { applyGrappleOnHit }                          from "./grapple.mjs";
+import { applyGrappleOnHit, isBiteWeapon }             from "./grapple.mjs";
+import { bodyguardsFor }                               from "./bodyguard.mjs";
+import { hasDodgeTalent }                              from "../rules/dodge-talents.mjs";
 import { coveringDefendersOf, offerFreeAttack }        from "./free-attack.mjs";
 import { rollOgrynWeaponBreak, ogrynBreakNote }      from "./ogryn-weapon-break.mjs";
 import { getEvasionPool, poolAffordableHits }         from "./evasion-pool.mjs";
@@ -1660,6 +1662,13 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // не только Вираж, но и настоящие Парирование/Уклонение — свои кнопки
         // на карточке, потому что считает их ПИЛОТ, а не машина.
         targetIsVehicle, targetIsWalker,
+        // Таланты Избегания (глава 3): атака Захватом (Ускользнуть), Кусака у
+        // цели, Телохранители рядом с атакующим.
+        grapple: isMelee && techOpts.technique === "grapple",
+        chomper: isMelee && hasDodgeTalent(defenderActor, "chomper")
+          && [...(defenderActor?.items ?? [])].some(i => isBiteWeapon(i)),
+        bodyguards: bodyguardsFor({ attackerToken, targetToken }),
+        allyName: defenderActor?.name ?? "",
         // Бой Вслепую (wdbc-1rno.2): −20 выше уже применён — здесь только
         // подпись, откуда он взялся, чтобы не выглядеть немотивированным штрафом.
         note: [techOpts.chatNote, blindFightingBypass ? "Бой Вслепую: Незримая атака, Уклонение/Парирование в рукопашной −20 без засечения." : ""]

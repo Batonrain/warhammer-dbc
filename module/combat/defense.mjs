@@ -12,7 +12,7 @@ import { hasRuleFlag }    from "../rules/flags.mjs";
 import { uselessCount }   from "../rules/useless-limbs.mjs";
 import { isRoundCapabilityAvailable } from "../apps/game-session.mjs";
 import { equippedMeleeWeapon, isIntegralAttack } from "./equipped-melee.mjs";
-import { grappleDodgeBlockReason } from "./grapple.mjs";
+import { grappleDodgeBlockReason, isBiteWeapon } from "./grapple.mjs";
 import { parryWeaponFor, strikeLocation, locationAcc, rollStrikeOn, ARMED_VS_UNARMED_PARRY_BONUS, UNARMED_RIPOSTE_COST } from "./unarmed-combat.mjs";
 import { withWitchsEdge } from "./witchs-edge.mjs";
 import { spendReaction }  from "./action-economy.mjs";
@@ -42,7 +42,8 @@ import { hasGazeOfInevitability } from "../rules/gaze-of-inevitability.mjs";
 import { isTokenInSight } from "../rules/vision-target.mjs";
 import { combinedThreshold } from "../rules/test-kind.mjs";
 import { singleCombatBonus } from "./single-combat.mjs";
-import { hasDodgeTalent, speedAwarenessPenalty, talentBalance } from "../rules/dodge-talents.mjs";
+import { hasDodgeTalent, speedAwarenessPenalty, talentBalance, deflectableProjectile, isGrenadeProjectile, DEFLECT_BACK_DEGREES } from "../rules/dodge-talents.mjs";
+import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
 import { isHandShield } from "./hand-shield.mjs";
 
 // Контратака (стр. 12, Талант Counter Attack) — «раз в Раунд» ключ учёта,
@@ -155,13 +156,46 @@ async function _speedAwarenessMod(actor) {
   return { value, part: `Скоростная Внимательность: бежал ${meters} м → ${value}` };
 }
 
+const SLIP_AWAY_FLAG = "dodge.core.slipAway";
+
+/**
+ * Ускользнуть (Талант Избегания, глава 3): «раз в Раунд при тесте Уклонения от
+ * атаки Захватом … либо получить бонус +30 на этот тест (нужно решить до
+ * броска), либо перебросить его (можно решить после броска)». Выбор делается
+ * в окне ДО броска — переброс = два d100, лучший (допущение, как у Ненависти).
+ * @returns {Promise<"none"|"bonus"|"reroll"|null>} null — отмена
+ */
+async function _slipAwayChoice(actor) {
+  const choice = await foundry.applications.api.DialogV2.wait({
+    window: { title: `Ускользнуть — ${actor.name}` },
+    classes: ["wh-roll-dialog-window"],
+    position: { width: 340 },
+    content: `<div class="wh-skill-roll-form"><div class="atk-range-info" style="font-size:0.85em;">
+      Уклонение от Захвата. Ускользнуть — раз в Раунд: +30 на этот тест или переброс (бросить дважды, лучший).</div></div>`,
+    buttons: [
+      { action: "none",   label: "Без Таланта", default: true, callback: () => "none" },
+      { action: "bonus",  label: "+30", callback: () => "bonus" },
+      { action: "reroll", label: "Переброс", callback: () => "reroll" },
+      { action: "cancel", label: "Отмена", callback: () => null }
+    ],
+    rejectClose: false
+  });
+  return choice ?? null;
+}
+
+/** Балансовая копия укуса для Кусаки: «как если бы у неё был Баланс 0». */
+function biteAsBalanceZero(bite) {
+  const system = Object.assign(Object.create(bite.system ?? {}), { balance: 0 });
+  return Object.create(bite, { system: { value: system } });
+}
+
 // wdbc-8zi (п.6): Уклонение/Парирование/Вираж/Уклонение верхом расходились
 // порядком одних и тех же позиционных hitsCount/attackerUuid — перестановка
 // двух вызовов молча меняла смысл (не давая ошибки типов), что уже путало
 // правку одного места без остальных. Объект опций делает порядок неважным.
 export async function _performDodge(actor, {
   extraMod = 0, forcedReroll = "", hitsCount = 1, attackerUuid = "",
-  isMelee = false, burst = false, attackerIsHorde = false, attackId = "", itemUuid = ""
+  isMelee = false, burst = false, attackerIsHorde = false, attackId = "", itemUuid = "", grappleAttack = false
 } = {}) {
   // Потеря ног (стр. 30-31, wdbc-r5o7.5): «нельзя Уклоняться» — хватает одной
   // потерянной ноги (книга не требует «обеих», в отличие от полной
@@ -179,12 +213,20 @@ export async function _performDodge(actor, {
   // Скоростная Внимательность: после Бега — спросить дистанцию (до траты Реакции).
   const speedAw = await _speedAwarenessMod(actor);
   if (speedAw === null) return;
+  // Ускользнуть: Уклонение от атаки Захватом, раз в Раунд (+30 или переброс).
+  let slip = "none";
+  if (grappleAttack && hasDodgeTalent(actor, "slipAway") && isThrottleReady(actor, SLIP_AWAY_FLAG, "round")) {
+    slip = await _slipAwayChoice(actor);
+    if (slip === null) return;
+  }
   // «Прикрытие» (Детальная Команда): нет своей Реакции — одолжить у соратника
   // в 3 м; у стаи Йигори (Сознание Стаи) — у члена стаи и без «Прикрытия».
   if (!(await spendReaction(actor, { forDefense: true, attackId }))
       && !(await borrowCoverReaction(actor, { dodge: true }))) return _noReactionCard(actor, "Уклонение");
-  const { agTotal, threshold: baseThreshold, modParts } = dodgeProfile(actor, extraMod + speedAw.value);
+  if (slip !== "none") await markThrottleUsed(actor, SLIP_AWAY_FLAG, "round");
+  const { agTotal, threshold: baseThreshold, modParts } = dodgeProfile(actor, extraMod + speedAw.value + (slip === "bonus" ? 30 : 0));
   if (speedAw.part) modParts.push(speedAw.part);
+  if (slip === "bonus") modParts.push("Ускользнуть +30");
   // Фантомные Копии (Wrapped in Chaos "2-3", wdbc-1rno): штраф Уклонению
   // ЧУЖОЙ рукопашной атаки — направленный модификатор атакующий→защитник,
   // резолвится тем же путём, что Разница Размеров у Парирования ниже
@@ -212,7 +254,8 @@ export async function _performDodge(actor, {
   // Перебежка (стр. 30, wdbc-x1nz.2.38): переброс Избегания до конца Раунда —
   // тот же приём keepBest, что у соседей выше.
   const duckAdvantage   = duckAndCoverAdvantage(actor);
-  const selfAdvantage   = dancerAdvantage || hordeAdvantage || duckAdvantage;
+  const slipReroll      = slip === "reroll";
+  const selfAdvantage   = dancerAdvantage || hordeAdvantage || duckAdvantage || slipReroll;
   const rolled = [];
   for (let i = 0; i < (forcedReroll || selfAdvantage ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
   const picked = pickReroll(rolled.map(r => r.total), forcedReroll || "keepBest");
@@ -244,7 +287,7 @@ export async function _performDodge(actor, {
   const banked = leftover > 0 && await addEvasionSurplus(actor, attackerUuid, leftover, extraMod);
 
   if (picked.dropped.length) {
-    const advLabel = dancerAdvantage ? "Танец Среди Огня" : hordeAdvantage ? "Один Против Сотни" : "Перебежка";
+    const advLabel = dancerAdvantage ? "Танец Среди Огня" : hordeAdvantage ? "Один Против Сотни" : duckAdvantage ? "Перебежка" : "Ускользнуть";
     modParts.push(forcedReroll
       ? `навязанный переброс, отброшено ${picked.dropped.join(", ")}`
       : `${advLabel}: Преимущество, отброшено ${picked.dropped.join(", ")}`);
@@ -561,7 +604,8 @@ async function _applyGazeOfInevitabilityFailure(actor) {
 // вызов при правке было легко.
 export async function _performParry(actor, {
   extraMod = 0, attackerUuid = "", hitsCount = 1, burst = false,
-  attackerIsHorde = false, isMelee = true, attackerWeaponUuid = "", attackId = ""
+  attackerIsHorde = false, isMelee = true, attackerWeaponUuid = "", attackId = "",
+  chomper = false, forAlly = ""
 } = {}) {
   // Резолв атакующего — нужен и для Разницы Размеров (стр. 12, ЛЮБОЙ
   // Парирование), и для контакта при стрельбе ниже. Неизвестный/нерезолвящийся
@@ -638,10 +682,18 @@ export async function _performParry(actor, {
   const attackerUnarmedKnown = !!attackerWeapon && isIntegralAttack(attackerWeapon);
   const parryWith = parryWeaponFor(actor, { attackerUnarmed: isMelee && attackerUnarmedKnown });
   // Скоростная Внимательность: после Бега — спросить дистанцию (до траты Реакции).
+  // Кусака (глава 3): «может пытаться Парировать своей атакой укусом, как если
+  // бы у неё был Баланс 0».
+  let chomperBite = null;
+  if (chomper) {
+    chomperBite = hasDodgeTalent(actor, "chomper") ? [...(actor.items ?? [])].find(i => isBiteWeapon(i)) : null;
+    if (!chomperBite) return _bladeShieldRefusal(actor, "Кусака: нужен Талант Chomper/Кусака и атака укусом.");
+  }
   const speedAw = await _speedAwarenessMod(actor);
   if (speedAw === null) return;
   const { wsTotal, meleeWeapon, balance, balanceMod, threshold: parryProfileThreshold, modParts, pwp, crossblock } =
-    parryProfile(actor, extraMod + speedAw.value, parryWith?.improvisedFrom ? parryWith : null, { useCrossblock });
+    parryProfile(actor, extraMod + speedAw.value,
+      chomperBite ? biteAsBalanceZero(chomperBite) : (parryWith?.improvisedFrom ? parryWith : null), { useCrossblock });
   if (speedAw.part) modParts.push(speedAw.part);
   // Оплот (глава 3): щиты считаются имеющими Баланс 1 для других Талантов
   // (Щит Клинков, Отбить Выстрел); модификатор Баланса самого Парирования — настоящий.
@@ -686,10 +738,18 @@ export async function _performParry(actor, {
   // только одно попадание» — это про парирование БЕЗ контакта дистанционно,
   // не про общее правило рукопашной).
   const contactParry = !isMelee && _inMeleeContactWithAttacker(actor, attackerActor);
-  if (!isMelee && !contactParry) {
+  // Отбить Выстрел (глава 3): дозвуковые снаряды и метательное можно парировать
+  // оружием Баланса 1+ без контакта — и без ограничения «одно попадание».
+  const deflectMode = !isMelee && !contactParry && hasDodgeTalent(actor, "deflectShot")
+    && deflectableProjectile(attackerWeapon?.system);
+  if (deflectMode && talentBal < 1) {
+    return _bladeShieldRefusal(actor,
+      `«Отбить Выстрел» требует оружия с Балансом 1 и выше — у ${meleeWeapon ? `«${esc(meleeWeapon.name)}»` : "голых рук"} Баланс ${balance >= 0 ? "+" : ""}${balance}.`);
+  }
+  if (!isMelee && !contactParry && !deflectMode) {
     if (!hasBladeShield(actor)) {
       return _bladeShieldRefusal(actor,
-        "Стрелковую атаку без Базового контакта со стрелком может парировать только персонаж с Талантом «Щит Клинков» (стр. 62).");
+        "Стрелковую атаку без Базового контакта со стрелком может парировать только персонаж с Талантом «Щит Клинков» (стр. 62) — либо дозвуковой снаряд и метательное «Отбить Выстрел».");
     }
     if (talentBal < 1) {
       return _bladeShieldRefusal(actor,
@@ -763,7 +823,7 @@ export async function _performParry(actor, {
   // СТРЕЛЬБЫ дистанционно, «Щитом Клинков». В рукопашной, включая парирование
   // выстрела В КОНТАКТЕ (contactParry — та же строка стр. 12, что и разрешает
   // сам приём выше), работает общее правило стр. 12 (по попаданию за степень).
-  const effectiveDeg = (isMelee || contactParry) ? deg : Math.min(deg, 1);
+  const effectiveDeg = (isMelee || contactParry || deflectMode) ? deg : Math.min(deg, 1);
   const { total: totalHits, negated, remaining } = negatedHits(passed, effectiveDeg, hitsCount);
   const parried = passed;
   // Излишек Успехов — банкуется на попадания ДРУГИХ атак того же противника
@@ -930,14 +990,29 @@ export async function _performParry(actor, {
       + ` Предел «Парирование невозможно» по Размеру поднят на ${CROSSBLOCK_SIZE_STEPS} ступень.</div>`
     : "";
 
+  // Кусака: непарированные попадания — в голову; сразу после — Обезоруживание.
+  const chomperNote = chomperBite
+    ? `<div class="roll-defense-note">${rollIcon("sword")}Кусака: парирование укусом (Баланс 0). Все попадания этой атаки, которых Парирование не отменило, идут в голову, если не были Избирательными.</div>`
+      + (parried && attackerActor ? `<div class="roll-defense-section">
+           <button class="wh-chomper-disarm-btn" type="button" data-attacker-uuid="${attackerUuid}">
+             ${rollIcon("sword")}Обезоружить атакующего (выбить только парированное оружие)
+           </button></div>` : "")
+    : "";
+  // Отбить Выстрел: 5+ Успехов на гранате — отбить обратно.
+  const deflectNote = deflectMode
+    ? `<div class="roll-defense-note">${rollIcon("sword")}Отбить Выстрел: ${passed ? "снаряд отбит в сторону или уничтожен" : "не удалось"}.${
+        passed && deg >= DEFLECT_BACK_DEGREES && isGrenadeProjectile(attackerWeapon?.system)
+          ? " 5+ Успехов — гранату можно отбить обратно в противника." : ""}</div>`
+    : "";
+
   await postTestCard(actor, {
-    icon: rollIcon("sword"), title: `Парирование — ${esc(actor.name)}`, actorUuid: actor.uuid,
+    icon: rollIcon("sword"), title: `Парирование — ${esc(actor.name)}${forAlly ? ` (за ${esc(forAlly)})` : ""}`, actorUuid: actor.uuid,
     threshold: rollStatLine({ label: "WS", base: wsTotal, parts: modParts, threshold, rv }),
     lines: [meleeWeapon
       ? `<div style="font-size:0.82em;color:#5a4a30;margin-bottom:2px;">Оружие: ${esc(meleeWeapon.name)} (Баланс ${balance >= 0 ? "+" : ""}${balance})</div>`
       : ""],
     outcome: outcomeHtml,
-    sections: [leftoverNote, powerFieldNote, unarmedPowerFieldNote, crossblockNote, counterAttackHtml, riposteHtml]
+    sections: [leftoverNote, powerFieldNote, unarmedPowerFieldNote, crossblockNote, chomperNote, deflectNote, counterAttackHtml, riposteHtml]
   }, { rolls: allRolls });
 }
 

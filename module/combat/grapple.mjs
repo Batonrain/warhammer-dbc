@@ -483,6 +483,11 @@ export function grappleTechDef(actor, def) {
     extraBonus: (def.extraBonus ?? 0) + mods.reduce((n, m) => n + m.value, 0),
     extraBonusLabel: mods.map(m => m.label).join(", ") || def.extraBonusLabel,
     rollCount: isGrappleAttacker(actor) ? grappleHands(actor) : 1,
+    // Таланты Избегания (глава 3): Освобождение от Пут — штрафы вычитаются,
+    // Успехи ×2 (только Выкрутиться); Ускользнуть — +30 или переброс раз в
+    // Раунд на любом тесте A в Борьбе (combat/techniques.mjs).
+    escapeArtist: def.label === "Выкрутиться" && hasDodgeTalent(actor, "escapeArtist"),
+    slipAway: char === "ag" && hasDodgeTalent(actor, "slipAway"),
     resistMods: (opp, me) => grappleTestMods(opp, me),
     resistRolls: opp => (isGrappleAttacker(opp) ? grappleHands(opp) : 1)
   };

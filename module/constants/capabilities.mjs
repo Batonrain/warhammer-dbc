@@ -2782,8 +2782,9 @@ export const CAPABILITIES = {
     reader: "module/combat/adrenaline-rush.mjs (wdbc-ks1r/wdbc-2b93) — hasAdrenalineRush/adrenalineRushAvailable/applyAdrenalineRush восстанавливают Реакции И сбрасывают пул дистанции Отскока (recoil-pool.mjs::resetRecoilPool)"
   },
   "dodge.core.bladeReader": {
-    label: "Персонаж может перебрасывать встречные тесты против Финта; переброс (но не начальный бросок) делается через Scrutiny(WS). Не работает,",
-    source: "Blade Reader / Чтец Клинков", reader: ""
+    label: "Реализовано (сверка главы 3): когда Финт удался против носителя, при сопротивлении предлагается переброс через Scrutiny(WS) (WS + Ранг Scrutiny); второй результат заменяет первый (combat/opposed-contest.mjs::resolveResistClick). НЕ покрыто: условие «Финт экзотическим оружием без Таланта на него» (Arms Master его снимает) система не проверяет — об этом предупреждает окно подтверждения.",
+    source: "Blade Reader / Чтец Клинков",
+    reader: "module/combat/opposed-contest.mjs (resolveResistClick)"
   },
   "dodge.core.bladeShield": {
     label: "Вооружённый оружием с Балансом 1+, персонаж может парировать им стрелковую атаку. Успех всегда блокирует только одно попадание независимо от…",
@@ -2804,8 +2805,9 @@ export const CAPABILITIES = {
     reader: "module/combat/blade-shield.mjs canParryPsychic() — вместе с system.quality «poor»"
   },
   "dodge.core.bodyguard": {
-    label: "Персонаж может парировать атаки по союзнику, если атакующий на расстоянии удара от персонажа.",
-    source: "Bodyguard / Телохранитель", reader: ""
+    label: "Реализовано (сверка главы 3, решение владельца 18.10.2026): на карточке атаки по союзнику у носителя, стоящего в контакте с атакующим (на одной стороне с целью — по Disposition токена), появляется кнопка «Телохранитель: имя» — обычное Парирование носителя его Реакцией и его оружием, в карточке «за союзника». Парирование стрельбы проверяется уже относительно телохранителя: контакт со стрелком либо Талант на парирование стрельбы (Щит Клинков, Отбить Выстрел) — combat/bodyguard.mjs, combat/attack-card.mjs, combat/attack.mjs, hooks.mjs. НЕ покрыто: «союзник» = та же Disposition токена (допущение); без токенов кнопок нет; снятые попадания система не переносит на карточку цели — как у обычного Парирования, исход читается по тексту карточки.",
+    source: "Bodyguard / Телохранитель",
+    reader: "module/combat/bodyguard.mjs; module/combat/attack-card.mjs (defenseSection); module/combat/attack.mjs; module/hooks.mjs (.wh-parry-btn); module/combat/defense.mjs (_performParry, forAlly)"
   },
   "dodge.core.bulwark": {
     label: "Реализовано (сверка главы 3): Парирование ручным щитом получает Преимущество (бросок ×2, лучший — тот же приём, что «может перебрасывать» у Ненависти); Баланс щита для проверок Щита Клинков и Отбить Выстрел считается не ниже 1, сам модификатор Баланса Парирования остаётся настоящим (combat/defense.mjs::_performParry, parryProfile; rules/dodge-talents.mjs). НЕ покрыто: «двигаться с каплевидными щитами как с круглыми, с башенными как с каплевидными» — ограничения подвижности щитов в системе не моделируются, решает стол.",
@@ -2823,8 +2825,9 @@ export const CAPABILITIES = {
     reader: "module/combat/caution.mjs; module/sheets/tabs/combat.mjs; module/sheets/character-context.mjs; templates/actor/parts/tab-combat.hbs"
   },
   "dodge.core.chomper": {
-    label: "Персонаж может пытаться Парировать своей атакой укусом (если она есть), как если бы у неё был Баланс 0,",
-    source: "Chomper / Кусака", reader: ""
+    label: "Реализовано (сверка главы 3): если у цели есть Талант и атака Укус, на карточке рукопашной атаки кнопка «Парировать укусом (Кусака)» — Парирование оружием укуса, как будто у него Баланс 0 (combat/defense.mjs::_performParry, biteAsBalanceZero). После удачного — строка про попадания в голову и кнопка «Обезоружить атакующего» (открывает Состязание «Обезоружить» против него). НЕ покрыто: попадания, не отменённые Парированием, система сама в голову не переносит (карточка атаки уже написана) — подсказка в карточке; «выбить только парированное оружие» решает стол; общие правила безоружного Парирования (штраф против вооружённого атакующего) не отключаются — книга для Кусаки исключения не называет (допущение).",
+    source: "Chomper / Кусака",
+    reader: "module/combat/defense.mjs (_performParry, biteAsBalanceZero); module/combat/attack-card.mjs; module/hooks.mjs (.wh-chomper-disarm-btn)"
   },
   "dodge.core.combatMaster": {
     label: "Реализовано (сверка главы 3): в окне рукопашной атаки по носителю строки «Числ. перевес 2к1» (+10) и «3к1» (+20) гасятся (sheets/attack/mods.mjs — общий механизм immuneFlag цели, возможность dodge.core.combatMaster). Прочие бонусы атаки не затронуты. Пилот Шагохода с этим Талантом поворачивает машину чаще — это отдельное правило (combat/walker.mjs, rules/walker.mjs).",
@@ -2832,24 +2835,29 @@ export const CAPABILITIES = {
     reader: "module/sheets/attack/mods.mjs (гашение строк «Числ. перевес»)"
   },
   "dodge.core.counterfeint": {
-    label: "Персонаж может использовать Awareness(P) вместо WS во встречных тестах против Финтов, но тогда не получает бонусы на этот тест от оружия.",
-    source: "Counterfeint / Контрфинт", reader: ""
+    label: "Реализовано (сверка главы 3): в карточке Финта против носителя среди вариантов сопротивления появляется Awareness(P) (combat/opposed-contest.mjs::registerContest). НЕ покрыто: «не получает бонусы на этот тест от оружия» — бонусы оружия во встречные тесты Состязаний система вообще не добавляет, отключать нечего.",
+    source: "Counterfeint / Контрфинт",
+    reader: "module/combat/opposed-contest.mjs (registerContest)"
   },
   "dodge.core.deflectShot": {
-    label: "Вооружённый оружием с Балансом 1+, персонаж может парировать им дозвуковые снаряды (стрелы, ракеты) и метательное оружие (ножи, гранаты),",
-    source: "Deflect Shot / Отбить Выстрел", reader: ""
+    label: "Реализовано (сверка главы 3, решение владельца 18.10.2026): кнопка Парирования на карточке стрелковой атаки без контакта со стрелком работает у носителя с оружием Баланса 1+ (щиты с Оплотом считаются Баланса 1), если снаряд подходит — метательное (класс thrown), луки/арбалеты (lowtech, не рукопашное), ракеты и пусковые (rocket/launcher); степени снимают попадания как у обычного Парирования (не «одно попадание» Щита Клинков); 5+ Успехов на гранате — строка «отбить обратно» (combat/defense.mjs::_performParry, rules/dodge-talents.mjs::deflectableProjectile). НЕ покрыто: признака «дозвуковой» в данных нет — классификация по классу/типу оружия; бросок гранаты обратно — вручную.",
+    source: "Deflect Shot / Отбить Выстрел",
+    reader: "module/combat/defense.mjs (_performParry, deflectMode); module/rules/dodge-talents.mjs (deflectableProjectile)"
   },
   "dodge.core.escapeArtist": {
-    label: "Используя А против Snare или чтобы Выкрутиться из Борьбы, персонаж уменьшает штрафы на этот тест (в т.ч. от Сжать) на A.",
-    source: "Escape Artist / Освобождение от Пут", reader: ""
+    label: "Реализовано (сверка главы 3): в окне Состязания «Выкрутиться» штрафы теста (Размер, Сжать и прочие, что видит окно) уменьшаются на A.b×5, Успехи удваиваются, а при штрафе ниже A.b×3 тест бросается дважды, берётся лучший (combat/techniques.mjs, combat/grapple.mjs::grappleTechDef, rules/dodge-talents.mjs::escapeArtistRelief). НЕ покрыто: «тесты против Snare» — собственного теста против Snare в системе нет (только свойство оружия); «переброс» реализован как «бросить дважды, лучший» (допущение).",
+    source: "Escape Artist / Освобождение от Пут",
+    reader: "module/combat/techniques.mjs (_showContestDialog); module/combat/grapple.mjs (grappleTechDef); module/rules/dodge-talents.mjs (escapeArtistRelief)"
   },
   "dodge.core.flip": {
-    label: "Когда персонаж сбивается с ног, он может пройти тест Acrobatics+0, чтобы сразу встать.",
-    source: "Flip / Кувырок", reader: ""
+    label: "Реализовано (сверка главы 3): когда у носителя Состояние «Повален» появляется (сбили Повалить, Напролом, критом, падением на Трудном Ландшафте), в чат падает карточка с кнопкой «Кувырок: Acrobatics+0» — успех снимает Повален без траты действия (combat/flip.mjs, hooks.mjs updateActor). «Лечь» по своей воле Кувырок не предлагает. НЕ покрыто: «продолжить движение, как будто тест Трудного Ландшафта пройден» — токен двигает игрок, это на столе.",
+    source: "Flip / Кувырок",
+    reader: "module/combat/flip.mjs; module/hooks.mjs (updateActor, .wh-flip-btn); module/combat/movement-actions.mjs (declareProne)"
   },
   "dodge.core.flourishDance": {
-    label: "Нося плащ и имея свободную руку, персонаж за полудействие (или как часть полу-/полного движения) берёт плащ и проходит тест Dancer (A)+0 vs…",
-    source: "Flourish Dance / Размашистый Танец", reader: ""
+    label: "Реализовано (сверка главы 3): кнопка «Размашистый Танец» на вкладке БОЙ (цель под прицелом): 1 ОД либо «как часть движения» (0 ОД), система бросает Dancer(A)+0 за танцора и Awareness(P)+0 за цель, при победе на танцоре ставится штраф −5 за каждый его Успех на все атаки цели по танцору до начала его следующего Хода; в окне атаки цели строка «Размашистый Танец цели» (combat/flourish-dance.mjs, sheets/attack/mods.mjs). НЕ покрыто: плащ, свободная рука и «цель в пределах A.b м» — решает стол; штраф действует на атаки именно той цели, против которой танцевали.",
+    source: "Flourish Dance / Размашистый Танец",
+    reader: "module/combat/flourish-dance.mjs; module/sheets/attack/mods.mjs (flourishPenaltyAgainst); module/sheets/tabs/combat.mjs"
   },
   "dodge.core.hardTarget": {
     label: "Когда персонаж совершает Верховую Атаку, Натиск или Бег, вся стрельба по нему получает −10 до начала его следующего Хода. Реализовано (wdbc-1rno.30): метка fastMoveThisTurn (HUD-кнопки Бега/Натиска и бросок атаки с Базой Натиск/Верховая Атака), строка «Трудная Цель −10» в окне стрельбы по носителю; гасят Зенитное, Прицел на Упреждение и Предсказатель Движения. Талант у СКАКУНА при Верховой Атаке всадника не переносится — метку ставит только сам атакующий.",
@@ -2866,8 +2874,9 @@ export const CAPABILITIES = {
     reader: "module/combat/grapple.mjs (grappleCoverPartner, inGrappleCoverArc); module/combat/attack.mjs"
   },
   "dodge.core.pirouette": {
-    label: "Будучи целью Напролом или Тарана, персонаж может пройти тест Acrobatics+0 и пропустить атакующего, не тратя реакции, сместившись в сторону.",
-    source: "Pirouette / Пируэт", reader: ""
+    label: "Реализовано (сверка главы 3): в карточке Состязания «Напролом» против носителя — кнопка «Пируэт: Acrobatics+0, без Реакции»; успех — Напролом против него не удаётся (combat/opposed-contest.mjs::resolvePirouetteClick). НЕ покрыто: Таран машины (combat/vehicle.mjs, без встречного теста) — Пируэт на него не распространён; смещение в сторону — стол.",
+    source: "Pirouette / Пируэт",
+    reader: "module/combat/opposed-contest.mjs (registerContest, resolvePirouetteClick); module/hooks.mjs"
   },
   "dodge.core.salto": {
     label: "Реализовано частично. +P.b к пределу Отскока в Раунде — кодом (wdbc-9wvm, combat/recoil-item-bonuses.mjs). НЕ смоделировано: раз в Ход бесплатное Уклонение от шаблона со свойством Linger — в системе нет события «персонаж пересёк оставшийся шаблон», на которое его можно было бы повесить; уклониться от Linger-шаблона бесплатно игрок и ГМ отмечают сами.",
@@ -2875,8 +2884,9 @@ export const CAPABILITIES = {
     reader: "module/combat/recoil-item-bonuses.mjs (saltoBonus)"
   },
   "dodge.core.slipAway": {
-    label: "Раз в Раунд при тесте Уклонения от Захвата или любом тесте А в Борьбе персонаж может либо получить +30 на этот тест (решить до броска),",
-    source: "Slip Away / Ускользнуть", reader: ""
+    label: "Реализовано (сверка главы 3): раз в Раунд на Уклонении от атаки Захватом (кнопка Уклонения несёт признак атаки Захватом) и на тесте «Выкрутиться» — выбор «+30» либо «переброс» (бросить дважды, лучший); выбор делается до броска (книга позволяет решить переброс после — допущение) — combat/defense.mjs, combat/techniques.mjs, combat/grapple.mjs. НЕ покрыто: «игнорировать авто-ничью из-за Unnatural Characteristic» — встречные тесты Состязаний ничью по Unnatural вообще не разыгрывают, игнорировать нечего.",
+    source: "Slip Away / Ускользнуть",
+    reader: "module/combat/defense.mjs (_slipAwayChoice, _performDodge); module/combat/techniques.mjs; module/combat/grapple.mjs"
   },
   "dodge.core.snapshot": {
     label: "Если в свой Ход персонаж подвигался не больше полудвижения, в конце Хода получает +1 ОД — смоделировано (wdbc-1rno, module/combat/snapshot.mjs, hooks.mjs::updateCombat, читает movement-actions.mjs::moveDegreeThisTurn). НЕ смоделировано: ОД можно потратить только на выстрел по брошенному предмету и игнорируя ограничение атак Задержкой — в системе нет ни earmarked-подмножества ОД, ни кодового понятия «атака Задержкой» вообще, заводить оба под одну находку не оправдано; бонусное ОД тратится как обычное.",
