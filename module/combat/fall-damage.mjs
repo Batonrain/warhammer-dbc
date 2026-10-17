@@ -9,16 +9,16 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 /** Секция чат-карточки с кнопкой урона падения. */
-export function fallDamageSectionHtml(total, weaponName = "Падение") {
+export function fallDamageSectionHtml(total, weaponName = "Падение", location = "Торс") {
   return `
     <div class="roll-damage-section">
       <div class="roll-damage-label">Урон падения — броню игнорирует, Стойкость поглощает</div>
       <button class="wh-apply-dmg-btn" type="button"
         data-damage="${total}" data-penetration="0" data-damage-type="impact"
         data-ignore-armour="1"
-        data-hit-location="Торс" data-weapon-name="${weaponName}" data-attacker="—"
+        data-hit-location="${location}" data-weapon-name="${weaponName}" data-attacker="—"
         data-felling="0" data-primitive="0" data-ignore-shield="0" data-warp-soak="0">
-        Применить урон падения: <b>${total}</b>
+        Применить урон падения: <b>${total}</b>${location !== "Торс" ? ` → ${location}` : ""}
       </button>
     </div>`;
 }

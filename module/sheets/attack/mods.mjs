@@ -31,6 +31,7 @@ import { BODY_SIDES, fingersLostOn } from "../../rules/limb-loss.mjs";
 import { longRangeImmunityReason } from "../../rules/range-penalty-immunity.mjs";
 import { lightPenaltyImmunityReason, smokePenaltyImmunityReason } from "../../rules/vision-penalty-immunity.mjs";
 import { hasBlindFighting } from "../../rules/unseen-talents.mjs";
+import { hasDodgeTalent } from "../../rules/dodge-talents.mjs";
 import { halvePenalty } from "../../rules/awareness-talents.mjs";
 // Действующие моды (wdbc-1rno.38/.40): без «бесполезных без X» и без
 // невыбранных прицелов — тот же список, что у getModEffects и окна атаки.
@@ -431,6 +432,8 @@ export function situationalMods(v) {
     { label: "Трудный ландшафт",       value: -10, autoCheck: !!meleeTerrain?.inTerrain,
       note: meleeTerrain?.inTerrain ? "зона Трудного Ландшафта под атакующим" : undefined },
     { label: "Очень трудный ландшафт", value: -20 },
+    // Мастер Боя (глава 3): «противники не получают бонусов за численное
+    // превосходство для рукопашных атак по нему» — гасится ниже, по Таланту ЦЕЛИ.
     { label: "Числ. перевес 2к1",      value:  10, autoCheck: outnumberCount === 2,
       note: outnumberCount == null ? undefined : `в контакте с целью: ${outnumberCount}` },
     { label: "Числ. перевес 3к1",      value:  20, autoCheck: outnumberCount != null && outnumberCount >= 3,
@@ -571,6 +574,19 @@ export function situationalMods(v) {
     { label: "Тяжёлое оружие: стрельба на ходу", value: wp.gyroStabilized ? 0 : -10, immune: wp.gyroStabilized,
       note: wp.gyroStabilized ? "снято: Гиро-стаб." : undefined }
   ];
+
+  // Мастер Боя у ЦЕЛИ (глава 3): строки «Числ. перевес» (specificMods) гасятся.
+  // По имени Таланта, а не через immuneFlag: так работает и на персонажах,
+  // получивших Талант до того, как в компендиуме у него появилась запись
+  // Возможности.
+  if (isMelee && attackCtx.targetActor && hasDodgeTalent(attackCtx.targetActor, "combatMaster")) {
+    for (const m of specificMods) {
+      if (!String(m.label).startsWith("Числ. перевес")) continue;
+      m.value  = 0;
+      m.immune = true;
+      m.note   = `${attackCtx.targetActor.name}: Мастер Боя — бонуса за численное превосходство нет`;
+    }
+  }
 
   // Низкая высота цели (wdbc-1rno.29): Прицел на Упреждение («следующий
   // выстрел игнорировал все штрафы… за скорость цели, высоту», стр. 62) и

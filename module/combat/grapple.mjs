@@ -50,6 +50,7 @@ import { spendActionPoints, isEncounterActive, hasActionEconomy } from "./action
 import { spdMeters } from "./recoil-pool.mjs";
 import { maxHands, handsOccupied, weaponHandsRequired, twoHandedTestPenalty, TWO_HANDED_PENALTY_LABEL } from "../rules/hands.mjs";
 import { bearingDegrees, relativeBearing } from "../rules/facing.mjs";
+import { hasDodgeTalent, grappleCoverHalfAngle } from "../rules/dodge-talents.mjs";
 import { canTakeAttackAction, takeAttackAction } from "./attack-limit.mjs";
 import {
   CONSTRICTOR_CAPABILITY, GRAPPLE_TAIL_FLAG, CONSTRICTOR_TAIL_HANDS, CONSTRICTOR_ATHLETICS_BONUS,
@@ -1211,11 +1212,11 @@ function _center(token) {
  * Лежит ли атакующий в секторе, который партнёр прикрывает собой.
  * Чистая геометрия: центры токенов.
  */
-export function inGrappleCoverArc(targetPos, partnerPos, attackerPos) {
+export function inGrappleCoverArc(targetPos, partnerPos, attackerPos, halfAngle = 45) {
   if (!targetPos || !partnerPos || !attackerPos) return false;
   const toPartner = bearingDegrees(targetPos, partnerPos);
   const toAttacker = bearingDegrees(targetPos, attackerPos);
-  return Math.abs(relativeBearing(toPartner, toAttacker)) <= 45;
+  return Math.abs(relativeBearing(toPartner, toAttacker)) <= halfAngle;
 }
 
 /**
@@ -1229,8 +1230,14 @@ export function grappleCoverPartner({ attackerToken, targetToken, targetActor, a
   if (!partner || partner.uuid === (attackerToken.actor ?? attackerToken.document?.actor)?.uuid) return null;
   const partnerToken = partner.getActiveTokens?.(false, false)?.[0] ?? null;
   if (!partnerToken) return null;
-  if (!inGrappleCoverArc(_center(targetToken), _center(partnerToken), _center(attackerToken))) return null;
-  if (aimed && sizeOf(targetActor) >= sizeOf(partner)) return null;
+  // Живой Щит (Талант Избегания, глава 3): «когда он держит другого персонажа
+  // в Захвате, все попадания по нему с арки 180° со стороны взятого в Захват
+  // вместо него попадают в этого персонажа» — сектор ±90° и Избирательные
+  // атаки тоже; у остальных — общее правило выше (±45°, только не-Избирательные).
+  const meatShield = isGrappleAttacker(targetActor) && hasDodgeTalent(targetActor, "meatShield");
+  if (!inGrappleCoverArc(_center(targetToken), _center(partnerToken), _center(attackerToken),
+                         grappleCoverHalfAngle(meatShield))) return null;
+  if (aimed && !meatShield && sizeOf(targetActor) >= sizeOf(partner)) return null;
   return partner;
 }
 
