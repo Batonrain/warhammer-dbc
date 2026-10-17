@@ -14,6 +14,10 @@
 //    «Frenzy», «Quick Draw»    — талант (или черта) уже есть
 //    «X или Y», «X / Y»        — достаточно любого из вариантов
 //    «Субраса Слаангор»        — у персонажа эта субраса (Таланты субрас Зверолюда)
+//    «Характеристика 70»       — хоть одна из девяти Характеристик не ниже N
+//                                (За Гранью Человека: привязка выбирается при покупке)
+//    «Навык+30»                — хоть один Навык/специализация продвинуты на +N
+//                                (Мастерство: привязка выбирается при покупке)
 //
 //  Всё, что не разобралось (проза вроде «Создание Персонажа» или «5+ ячеек»),
 //  помечается как unknown и НЕ считается невыполненным: лучше не показать
@@ -25,6 +29,8 @@ import { SKILL_RANKS } from "./characteristics.mjs";
 import { matchSpec, specCovers } from "./skill-specializations.mjs";
 import { itemsNamed } from "../rules/req-atom.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { BEYOND_HUMAN_CHARS } from "../rules/beyond-human.mjs";
+import { specOptions } from "./skill-specializations.mjs";
 
 /** Сокращения характеристик из требований → ключи системы. */
 const CHAR_ALIASES = {
@@ -131,6 +137,16 @@ function splitConjunction(token) {
 function parseAtom(raw) {
   const text = raw.trim();
   if (!text) return { kind: "none", raw };
+
+  // «Характеристика 70» / «Навык+30» — Таланты с привязкой «как у
+  // Характеристики/Навыка» (За Гранью Человека, Мастерство, стр. 62): что
+  // именно проверять, станет ясно только при выборе привязки, поэтому строка
+  // карточки показывает «есть ли вообще чем купить», а точную проверку по
+  // выбранной цели делает пикер (checkMasteryTarget/checkBeyondHumanChar).
+  let m0 = /^характеристика\s*(\d{1,3})\s*\+?$/i.exec(text);
+  if (m0) return { kind: "anyChar", value: Number(m0[1]), raw };
+  m0 = /^навык\s*\+\s*(\d{1,3})$/i.exec(text);
+  if (m0) return { kind: "anySkill", bonus: Number(m0[1]), raw };
 
   // Характеристика: «WS 40», «Inf 40+», «А 35»
   let m = /^([A-Za-zА-Яа-яЁё.]{1,4})\s*(\d{1,3})\s*\+?$/.exec(text);
@@ -320,6 +336,15 @@ function checkAtom(actor, atom) {
     // имя предмета: тогда любой другой источник той же Метки засчитается сам.
     case "mark": return hasRuleFlag(actor, `mark.${atom.key}`);
     case "talent": return hasTalent(actor, atom);
+    case "anyChar": return BEYOND_HUMAN_CHARS.some(k =>
+      (Number(sys.characteristics?.[k]?.total) || 0) >= atom.value);
+    case "anySkill": {
+      const plain = Object.keys(sys.skills ?? {}).some(k =>
+        SKILLS_DEF[k] && rankBonus(sys.skills[k]?.rank) >= atom.bonus);
+      if (plain) return true;
+      return Object.values(sys.groupSkills ?? {}).some(arr =>
+        Array.isArray(arr) && arr.some(e => rankBonus(e?.rank) >= atom.bonus));
+    }
     default: return null;                      // проза — не проверяем
   }
 }
@@ -378,4 +403,34 @@ export function requiredMarks(str) {
     }
   }
   return out;
+}
+
+// ── Привязка «как у Характеристики/Навыка» (стр. 62) ──────────────────────
+
+/**
+ * Хватает ли Характеристики для «За Гранью Человека» («Характеристика 70»).
+ * @returns {boolean|null} null — значения нет на листе
+ */
+export function checkBeyondHumanChar(actor, charKey, min = 70) {
+  const total = actor?.system?.characteristics?.[charKey]?.total;
+  return total == null ? null : Number(total) >= min;
+}
+
+/**
+ * Хватает ли продвижения Навыка для «Мастерства» («Навык+30»).
+ * @param {object} actor
+ * @param {{key:string, group?:string, spec?:string}} target цель из rules/mastery-targets.mjs
+ * @param {number} [bonus=30]
+ * @returns {boolean|null} null — Навыка нет в таблицах (не смогли определить)
+ */
+export function checkMasteryTarget(actor, target, bonus = 30) {
+  if (!actor || !target) return null;
+  if (!target.group) {
+    if (!SKILLS_DEF[target.key]) return null;
+    // Навыка нет на листе — он не изучен (−20), а не «не смогли определить».
+    return rankBonus(actor.system?.skills?.[target.key]?.rank) >= bonus;
+  }
+  const opt = target.spec ? specOptions(target.group).find(o => o.key === target.spec) : null;
+  const specialty = opt ? (opt.label || opt.ru || target.spec) : "";
+  return checkAtom(actor, { kind: "groupSkill", group: target.group, specialty, bonus });
 }

@@ -16,6 +16,8 @@
 // бонус. Единый признак — имя, начинающееся с «Unnatural » (все книжные
 // экземпляры трейта, включая шаблонные «Unnatural Strength (X)»).
 
+import { beyondHumanRating } from "./beyond-human.mjs";
+
 const UNNATURAL_PREFIX = /^unnatural\s/i;
 
 function englishName(name) {
@@ -54,7 +56,9 @@ export function unnaturalRating(actor, charKey) {
       if (cb?.stat === charKey) total += Number(cb.value) || 0;
     }
   }
-  return total;
+  // За Гранью Человека (стр. 62) даёт «Трейт Unnatural Characteristic (+1)» —
+  // отдельным предметом-трейтом он не заводится, привязка лежит в Таланте.
+  return total + beyondHumanRating(actor, charKey);
 }
 
 /** +1 Успех за каждые полные 2 рейтинга (стр. 26) — целочисленное деление вниз. */

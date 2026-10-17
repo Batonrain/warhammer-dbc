@@ -251,7 +251,7 @@ export async function applyRelayedCommandUpdate(data) {
   const allowed = Object.entries(data.update ?? {}).every(([k, v]) =>
     /^system\.(presence|shortCommand|detailCommand|command|cohesion\.value|briefing)\b/.test(k)
     || (/^system\.conditions\.(pinned|shocked)$/.test(k) && v === false)
-    || /^flags\.warhammer-dbc\.(-=)?(commandLost|focusFire|volleyFire|volleyAimUsed)\b/.test(k));
+    || /^flags\.warhammer-dbc\.(-=)?(commandLost|focusFire|volleyFire|volleyAimUsed|combatFormation)\b/.test(k));
   if (!allowed) return console.warn("Warhammer DBC | правка командования отклонена:", data.update);
   await doc.update(data.update);
 }
