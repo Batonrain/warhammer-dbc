@@ -61,6 +61,7 @@ import { MELEE_STANCES } from "../constants/combat.mjs";
 import { twoHandedTestPenalty, TWO_HANDED_PENALTY_LABEL } from "../rules/hands.mjs";
 import { uselessCount } from "../rules/useless-limbs.mjs";
 import { divineProtectionActive } from "../rules/death-save.mjs";
+import { hasDodgeTalent, catfallHeight, catfallLeg, CATFALL_TUCK_BONUS } from "../rules/dodge-talents.mjs";
 import { hasSpeedTalent, standUpApCost, jumpApCost, repositionAvailable, sprintFatigueDue, breacherReady } from "../rules/speed-talents.mjs";
 import { isHandShield } from "./hand-shield.mjs";
 
@@ -907,7 +908,24 @@ export async function _standUpJump(actor) {
  * состоявшимся Уклонением-Реакцией, второй раз не берём).
  */
 async function _rollVaultContest(actor) {
-  const acro = skillTotal(actor, "acrobatics");
+  let acro = skillTotal(actor, "acrobatics");
+  let skillLabel = "Acrobatics";
+  let highGuardNote = "";
+  // Высокая Защитная Стойка (глава 3): «может проводить Вольт, используя
+  // Parry(WS) вместо Acrobatics(A), при этом также используя модификаторы
+  // баланса рукопашного оружия». Динамический импорт — defense.mjs тянет
+  // recoil.mjs, а тот этот файл (круг при статическом импорте).
+  if (hasDodgeTalent(actor, "highGuard")) {
+    const { parryProfile } = await import("./defense.mjs");
+    const prof = parryProfile(actor);
+    if (prof.balanceMod === null) {
+      highGuardNote = `<div class="roll-threshold" style="font-size:0.85em;">Высокая Защитная Стойка: этим оружием парировать нельзя (Баланс ${prof.balance}) — Вольт обычной Acrobatics.</div>`;
+    } else {
+      acro = skillTotal(actor, "parry") + (prof.balanceMod ?? 0);
+      skillLabel = "Parry";
+      highGuardNote = `<div class="roll-threshold" style="font-size:0.85em;">Высокая Защитная Стойка: Parry(WS) вместо Acrobatics(A), Баланс оружия ${prof.balance >= 0 ? "+" : ""}${prof.balance} (${(prof.balanceMod ?? 0) >= 0 ? "+" : ""}${prof.balanceMod ?? 0}).</div>`;
+    }
+  }
   const { rv, passed, deg } = await _d100(acro, actor);
   const moverScore = passed ? deg : -deg;
   const tokenDoc = actor.getActiveTokens?.(false, true)?.[0] ?? null;
@@ -921,7 +939,7 @@ async function _rollVaultContest(actor) {
       Проверить WS: ${esc(enemyActor.name)}
     </button>`;
   }).join("");
-  const statLineHtml = rollStatLine({ label: "Acrobatics", base: acro, threshold: acro, rv });
+  const statLineHtml = rollStatLine({ label: skillLabel, base: acro, threshold: acro, rv }) + highGuardNote;
   const contestSection = contestBtns
     ? `<div class="roll-defense-btns">${contestBtns}</div>`
     : `<div class="roll-threshold" style="font-size:0.85em;">Нет врагов в рукопашной с ним.</div>`;
@@ -1357,13 +1375,17 @@ export async function _resolveSwim(actor, ath, heavy, ext, mod, sb) {
  */
 export async function _resolveFallDamage(actor, height, { tuck = false } = {}) {
   const capped = !hasRuleFlag(actor, "mutation.breeze");
-  const cappedHeight = capped ? Math.min(height, 25) : height;
+  // Кошачье Приземление (глава 3): высота в расчёте урона −A.b, +20 на
+  // Группирование, приземляется на ноги и весь урон идёт в ногу.
+  const catfall = hasDodgeTalent(actor, "catfall");
+  const damageHeight = catfall ? catfallHeight(height, Number(actor.system?.characteristics?.ag?.bonus) || 0) : height;
+  const cappedHeight = capped ? Math.min(damageHeight, 25) : damageHeight;
   const dmgRoll = await new Roll(`1d10 + ${cappedHeight}`).evaluate();
   let reduction = 0, tuckLine = "", perfectLanding = false;
   if (tuck) {
     // Двусоставный (X): +5×X на Группирование (rules/digitigrade.mjs, wdbc-ird9n).
     const digi = digitigradeGroupingBonus(actor);
-    const acro = skillTotal(actor, "acrobatics") + digi;
+    const acro = skillTotal(actor, "acrobatics") + digi + (catfall ? CATFALL_TUCK_BONUS : 0);
     const { rv, passed, deg } = await _d100(acro);
     reduction = passed ? deg : 0;
     // Стр. 30: «Если на Группировании набрано больше Успехов, чем высота
@@ -1372,7 +1394,7 @@ export async function _resolveFallDamage(actor, height, { tuck = false } = {}) {
     // просто вычесть deg из 1d10+высоты (бросок мог бы всё равно дать урон),
     // а обнулить его целиком.
     perfectLanding = passed && deg > height;
-    tuckLine = `<div class="roll-threshold">Группирование (Acrobatics ${acro}${digi ? `, Двусоставный +${digi}` : ""}) · 1d100: <b>${rv}</b> — ${
+    tuckLine = `<div class="roll-threshold">Группирование (Acrobatics ${acro}${digi ? `, Двусоставный +${digi}` : ""}${catfall ? `, Кошачье Приземление +${CATFALL_TUCK_BONUS}` : ""}) · 1d100: <b>${rv}</b> — ${
       passed
         ? (perfectLanding ? `Успех, ${deg} усп. > высоты — приземлился на ноги без урона!` : `Успех, −${deg} урона`)
         : "Провал, без смягчения"}</div>`;
@@ -1383,7 +1405,15 @@ export async function _resolveFallDamage(actor, height, { tuck = false } = {}) {
     : `Урон: <b>${finalDmg}</b> I (Impact), броня не учитывается, Стойкость поглощает.`;
   // «После получения урона от падения персонаж становится Лежачим» (стр. 30).
   let proneLine = "";
-  if (finalDmg > 0) {
+  let catfallLine = "";
+  let hitLocation = "Торс";
+  if (catfall) {
+    // Всегда приземляется на ноги, весь урон — в одну случайную ногу (d2).
+    const legRoll = await new Roll("1d2").evaluate();
+    hitLocation = catfallLeg(legRoll.total);
+    catfallLine = `<div class="roll-threshold">Кошачье Приземление: высота в расчёте урона ${height} → ${damageHeight} (−A.b), приземлился на ноги${finalDmg > 0 ? `, урон — в ${hitLocation.toLowerCase()}` : ""}.</div>`;
+  }
+  if (finalDmg > 0 && !catfall) {
     try {
       await actor.update(conditionApplyFields("prone", null, actor));
       proneLine = `<div class="roll-allout-note">Персонаж лежит на земле.</div>`;
@@ -1396,8 +1426,9 @@ export async function _resolveFallDamage(actor, height, { tuck = false } = {}) {
     <div class="roll-header">${rollIcon("skull","#ff6b6b")}Падение — ${esc(actor.name)}</div>
     <div class="roll-threshold">Высота <b>${height}</b>м${(capped && height > 25) ? " (ограничено терминальной скоростью 25)" : ""}${(!capped && height > 25) ? " (Бриз: терминальная скорость не ограничена)" : ""} · 1d10+${cappedHeight}: <b>${dmgRoll.total}</b></div>
     ${tuckLine}
+    ${catfallLine}
     <div class="roll-outcome"><span class="${finalDmg > 0 ? "roll-failure" : "roll-success"}">${outcomeText}</span></div>
-    ${finalDmg > 0 ? fallDamageSectionHtml(finalDmg) : ""}
+    ${finalDmg > 0 ? fallDamageSectionHtml(finalDmg, "Падение", hitLocation) : ""}
     ${proneLine}
   </div>`);
 }

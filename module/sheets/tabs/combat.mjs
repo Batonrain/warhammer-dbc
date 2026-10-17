@@ -36,6 +36,7 @@ import { showDreadWailDialog } from "../../apps/dread-wail-dialog.mjs";
 import { resplendentRaimentAvailable } from "../../combat/resplendent-raiment.mjs";
 import { showResplendentRaimentDialog } from "../../apps/resplendent-raiment-dialog.mjs";
 import { adrenalineRushAvailable, applyAdrenalineRush } from "../../combat/adrenaline-rush.mjs";
+import { applyCaution } from "../../combat/caution.mjs";
 import { boneSongAvailable, applyBoneSongSingle, applyBoneSongArea } from "../../combat/bone-song.mjs";
 import {
   primalHowlAvailable, applyPrimalHowl,
@@ -202,6 +203,11 @@ export function activateCombatListeners(root, actor) {
       return ui.notifications.warn("Прилив Адреналина уже использован в этом бою/сцене.");
     }
     await applyAdrenalineRush(actor);
+  });
+
+  // ── Осторожность (Талант Избегания, module/combat/caution.mjs) ──────────
+  on(root, ".caution-btn", "click", async () => {
+    await applyCaution(actor);
   });
 
   // ── Певцы Кости (wdbc-sk8s, module/combat/{bone-song,preservation,song-of-swiftness}.mjs) ──

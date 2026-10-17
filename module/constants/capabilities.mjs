@@ -2808,24 +2808,28 @@ export const CAPABILITIES = {
     source: "Bodyguard / Телохранитель", reader: ""
   },
   "dodge.core.bulwark": {
-    label: "Персонаж может перебрасывать тесты Парирования щитом и считает щиты имеющими Баланс 1 для других Талантов.",
-    source: "Bulwark / Оплот", reader: ""
+    label: "Реализовано (сверка главы 3): Парирование ручным щитом получает Преимущество (бросок ×2, лучший — тот же приём, что «может перебрасывать» у Ненависти); Баланс щита для проверок Щита Клинков и Отбить Выстрел считается не ниже 1, сам модификатор Баланса Парирования остаётся настоящим (combat/defense.mjs::_performParry, parryProfile; rules/dodge-talents.mjs). НЕ покрыто: «двигаться с каплевидными щитами как с круглыми, с башенными как с каплевидными» — ограничения подвижности щитов в системе не моделируются, решает стол.",
+    source: "Bulwark / Оплот",
+    reader: "module/combat/defense.mjs (_performParry, parryProfile); module/rules/dodge-talents.mjs (talentBalance)"
   },
   "dodge.core.catfall": {
-    label: "Персонаж автоматически уменьшает высоту падения в расчёте урона на A.b и получает +20 на тесты Группирования. Даже получив урон от падения,",
-    source: "Catfall / Кошачье Приземление", reader: ""
+    label: "Реализовано (сверка главы 3, решение владельца 18.10.2026): в Падении высота в расчёте урона уменьшается на A.b, Группирование получает +20, носитель не становится Лежачим, а весь урон падения идёт в одну случайную ногу (d2, кнопка применения урона с локацией) — combat/movement-actions.mjs::_resolveFallDamage, combat/fall-damage.mjs, rules/dodge-talents.mjs. НЕ покрыто: книга не называет, одна нога или обе, — «в одну ногу» выбрано владельцем; проверка «Успехов Группирования больше высоты — без урона» идёт по полной высоте падения, а не по уменьшенной (допущение).",
+    source: "Catfall / Кошачье Приземление",
+    reader: "module/combat/movement-actions.mjs (_resolveFallDamage); module/combat/fall-damage.mjs; module/rules/dodge-talents.mjs"
   },
   "dodge.core.caution": {
-    label: "Раз в Ход за ментальное полудействие, считающееся Концентрацией, персонаж может получить 1 Реакцию.",
-    source: "Caution / Осторожность", reader: ""
+    label: "Реализовано (сверка главы 3): кнопка «Осторожность» на вкладке БОЙ: ментальное полудействие (1 ОД), считается Концентрацией (лимит Концентраций за Ход), раз в Ход даёт +1 универсальную Реакцию (combat/caution.mjs, rules/dodge-talents.mjs). НЕ покрыто: Реакция не «временная» — книга срока не называет, она лежит в общем пуле до конца Раунда как любая другая.",
+    source: "Caution / Осторожность",
+    reader: "module/combat/caution.mjs; module/sheets/tabs/combat.mjs; module/sheets/character-context.mjs; templates/actor/parts/tab-combat.hbs"
   },
   "dodge.core.chomper": {
     label: "Персонаж может пытаться Парировать своей атакой укусом (если она есть), как если бы у неё был Баланс 0,",
     source: "Chomper / Кусака", reader: ""
   },
   "dodge.core.combatMaster": {
-    label: "Противники не получают бонусов за численное превосходство для рукопашных атак по персонажу.",
-    source: "Combat Master / Мастер Боя", reader: ""
+    label: "Реализовано (сверка главы 3): в окне рукопашной атаки по носителю строки «Числ. перевес 2к1» (+10) и «3к1» (+20) гасятся (sheets/attack/mods.mjs — общий механизм immuneFlag цели, возможность dodge.core.combatMaster). Прочие бонусы атаки не затронуты. Пилот Шагохода с этим Талантом поворачивает машину чаще — это отдельное правило (combat/walker.mjs, rules/walker.mjs).",
+    source: "Combat Master / Мастер Боя",
+    reader: "module/sheets/attack/mods.mjs (гашение строк «Числ. перевес»)"
   },
   "dodge.core.counterfeint": {
     label: "Персонаж может использовать Awareness(P) вместо WS во встречных тестах против Финтов, но тогда не получает бонусы на этот тест от оружия.",
@@ -2852,20 +2856,23 @@ export const CAPABILITIES = {
     source: "Hard Target / Трудная Цель", reader: "module/rules/hard-target.mjs — hardTargetPenalty; module/sheets/attack-dialog.mjs (hardTargetMod)"
   },
   "dodge.core.highGuard": {
-    label: "Персонаж может проводить Вольт, используя Parry(WS) вместо Acrobatics(A), используя при этом модификаторы баланса рукопашного оружия.",
-    source: "High Guard / Высокая Защитная Стойка", reader: ""
+    label: "Реализовано (сверка главы 3): Вольт (кнопка «Вольт» и Отскок из рукопашной) бросает Parry(WS) вместо Acrobatics(A) и прибавляет модификатор Баланса экипированного рукопашного оружия; в карточке подпись «Высокая Защитная Стойка». Если оружием нельзя парировать (Баланс −2), Вольт идёт обычной Acrobatics (combat/movement-actions.mjs::_rollVaultContest, rules/dodge-talents.mjs). НЕ покрыто: прочие бонусы Парирования (Стойка, Защитное и т. п.) в Вольт не входят — книга говорит только о модификаторах Баланса.",
+    source: "High Guard / Высокая Защитная Стойка",
+    reader: "module/combat/movement-actions.mjs (_rollVaultContest, declareVault, rollRecoilVault); module/rules/dodge-talents.mjs"
   },
   "dodge.core.meatShield": {
-    label: "Держа другого персонажа в Захвате, все попадания по нему с арки 180° со стороны захваченного вместо него попадают в этого захваченного.",
-    source: "Meat Shield / Живой Щит", reader: ""
+    label: "Реализовано (сверка главы 3): когда носитель держит другого в Захвате (он Атакующий), все попадания по нему из сектора 180° (±90°) со стороны захваченного — и Избирательные тоже — достаются захваченному (combat/grapple.mjs::grappleCoverPartner, inGrappleCoverArc). Общее правило Борьбы (укрытие друг для друга ±45° и только для не-Избирательных) осталось для остальных. НЕ покрыто: сектор считается по центрам токенов; без токенов на сцене перенаправления нет.",
+    source: "Meat Shield / Живой Щит",
+    reader: "module/combat/grapple.mjs (grappleCoverPartner, inGrappleCoverArc); module/combat/attack.mjs"
   },
   "dodge.core.pirouette": {
     label: "Будучи целью Напролом или Тарана, персонаж может пройти тест Acrobatics+0 и пропустить атакующего, не тратя реакции, сместившись в сторону.",
     source: "Pirouette / Пируэт", reader: ""
   },
   "dodge.core.salto": {
-    label: "Персонаж увеличивает максимальную дистанцию отскока в Раунд на P.b м. Раз в Ход он может без траты Реакции Уклониться от шаблона со свойство…",
-    source: "Salto / Сальто", reader: ""
+    label: "Реализовано частично. +P.b к пределу Отскока в Раунде — кодом (wdbc-9wvm, combat/recoil-item-bonuses.mjs). НЕ смоделировано: раз в Ход бесплатное Уклонение от шаблона со свойством Linger — в системе нет события «персонаж пересёк оставшийся шаблон», на которое его можно было бы повесить; уклониться от Linger-шаблона бесплатно игрок и ГМ отмечают сами.",
+    source: "Salto / Сальто",
+    reader: "module/combat/recoil-item-bonuses.mjs (saltoBonus)"
   },
   "dodge.core.slipAway": {
     label: "Раз в Раунд при тесте Уклонения от Захвата или любом тесте А в Борьбе персонаж может либо получить +30 на этот тест (решить до броска),",
@@ -2876,12 +2883,14 @@ export const CAPABILITIES = {
     source: "Snapshot / Выстрел Навскидку", reader: "module/combat/snapshot.mjs"
   },
   "dodge.core.speedAwareness": {
-    label: "Персонаж может совершать Избегания после Бега, но получает −5 на эти Избегания за каждые полные P.b метров, которые он пробежал.",
-    source: "Speed Awareness / Скоростная Внимательность", reader: ""
+    label: "Реализовано (сверка главы 3, решение владельца 18.10.2026): после Бега Реакции обычно закрыты до начала следующего Хода; у носителя Уклонение и Парирование (Избегания) остаются доступны, а при каждом таком Избегании спрашивается «сколько метров пробежал» (по умолчанию — полный Бег) и штраф −5 за каждые полные P.b м ставится сам (combat/defense.mjs, combat/action-economy.mjs::canSpendReaction, rules/dodge-talents.mjs). НЕ покрыто: сколько метров на самом деле пробежал персонаж, система не меряет — верит ответу игрока.",
+    source: "Speed Awareness / Скоростная Внимательность",
+    reader: "module/combat/defense.mjs (_speedAwarenessMod, _performDodge, _performParry); module/combat/action-economy.mjs (canSpendReaction)"
   },
   "dodge.core.stepAside": {
-    label: "Персонаж получает 1 дополнительную Реакцию, которую может потратить только на Избегание.",
-    source: "Step Aside / Шаг в Сторону", reader: ""
+    label: "РЕАЛИЗОВАНО: эффект предмета system.reactions.defenseMax +1 — одна дополнительная Реакция, которую можно потратить только на Избегание (Уклонение/Парирование); восполняется в начале Хода (combat/action-economy.mjs::resetActionEconomy, effectiveDefenseReactionMax).",
+    source: "Step Aside / Шаг в Сторону",
+    reader: "module/combat/action-economy.mjs (resetActionEconomy, effectiveDefenseReactionMax); эффект предмета system.reactions.defenseMax +1"
   },
   // ── Стойкость
   "resilience.core.ablativeHardening": {

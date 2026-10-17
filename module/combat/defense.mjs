@@ -42,6 +42,8 @@ import { hasGazeOfInevitability } from "../rules/gaze-of-inevitability.mjs";
 import { isTokenInSight } from "../rules/vision-target.mjs";
 import { combinedThreshold } from "../rules/test-kind.mjs";
 import { singleCombatBonus } from "./single-combat.mjs";
+import { hasDodgeTalent, speedAwarenessPenalty, talentBalance } from "../rules/dodge-talents.mjs";
+import { isHandShield } from "./hand-shield.mjs";
 
 // Контратака (стр. 12, Талант Counter Attack) — «раз в Раунд» ключ учёта,
 // тот же примитив, что у Локуса Сокрушения (constants/capabilities.mjs).
@@ -120,6 +122,39 @@ export function dodgeProfile(actor, extraMod = 0) {
   return { agTotal, rankBonus, stBonus, cloneBonus, ruleMods, threshold, modParts };
 }
 
+/**
+ * Скоростная Внимательность (Талант Избегания, глава 3): «может совершать
+ * Избегания после Бега, но получает штраф −5 за каждые полные P.b метров,
+ * которые он пробежал». Бег закрывает Реакции (action-economy.mjs::
+ * canSpendReaction); у носителя Избегания остаются, а дистанцию система не
+ * меряет — спрашиваем у игрока (по умолчанию — полный Бег). Диалог ДО траты
+ * Реакции: отмена ничего не стоит.
+ * @returns {Promise<{value:number, part:string}|null>} null — игрок отказался
+ */
+async function _speedAwarenessMod(actor) {
+  if (!actor.getFlag?.("warhammer-dbc", "running") || !hasDodgeTalent(actor, "speedAwareness")) {
+    return { value: 0, part: "" };
+  }
+  const pb = Number(actor.system?.characteristics?.per?.bonus) || 0;
+  const fullRun = Number(actor.system?.movement?.sprintRun || actor.system?.movement?.run) || 0;
+  const meters = await foundry.applications.api.DialogV2.wait({
+    window: { title: `Скоростная Внимательность — ${actor.name}` },
+    classes: ["wh-roll-dialog-window"],
+    position: { width: 340 },
+    content: `<div class="wh-skill-roll-form"><div class="roll-dlg-row"><label>Сколько метров пробежал (штраф −5 за каждые полные ${pb} м):</label>
+      <input type="number" name="meters" value="${fullRun}" min="0" step="1"></div></div>`,
+    buttons: [
+      { action: "go", label: "Избегать", default: true,
+        callback: (event, button) => Math.max(0, parseInt(button.form.querySelector('[name="meters"]')?.value) || 0) },
+      { action: "cancel", label: "Отмена", callback: () => null }
+    ],
+    rejectClose: false
+  });
+  if (meters == null) return null;
+  const value = speedAwarenessPenalty(meters, pb);
+  return { value, part: `Скоростная Внимательность: бежал ${meters} м → ${value}` };
+}
+
 // wdbc-8zi (п.6): Уклонение/Парирование/Вираж/Уклонение верхом расходились
 // порядком одних и тех же позиционных hitsCount/attackerUuid — перестановка
 // двух вызовов молча меняла смысл (не давая ошибки типов), что уже путало
@@ -141,11 +176,15 @@ export async function _performDodge(actor, {
   // тяжелее и не меньше цели. Реакция не тратится — как и без ног выше.
   const grappleNoDodge = grappleDodgeBlockReason(actor);
   if (grappleNoDodge) return _bladeShieldRefusal(actor, grappleNoDodge, "Уклонение");
+  // Скоростная Внимательность: после Бега — спросить дистанцию (до траты Реакции).
+  const speedAw = await _speedAwarenessMod(actor);
+  if (speedAw === null) return;
   // «Прикрытие» (Детальная Команда): нет своей Реакции — одолжить у соратника
   // в 3 м; у стаи Йигори (Сознание Стаи) — у члена стаи и без «Прикрытия».
   if (!(await spendReaction(actor, { forDefense: true, attackId }))
       && !(await borrowCoverReaction(actor, { dodge: true }))) return _noReactionCard(actor, "Уклонение");
-  const { agTotal, threshold: baseThreshold, modParts } = dodgeProfile(actor, extraMod);
+  const { agTotal, threshold: baseThreshold, modParts } = dodgeProfile(actor, extraMod + speedAw.value);
+  if (speedAw.part) modParts.push(speedAw.part);
   // Фантомные Копии (Wrapped in Chaos "2-3", wdbc-1rno): штраф Уклонению
   // ЧУЖОЙ рукопашной атаки — направленный модификатор атакующий→защитник,
   // резолвится тем же путём, что Разница Размеров у Парирования ниже
@@ -598,8 +637,16 @@ export async function _performParry(actor, {
   // безоружен» не включает.
   const attackerUnarmedKnown = !!attackerWeapon && isIntegralAttack(attackerWeapon);
   const parryWith = parryWeaponFor(actor, { attackerUnarmed: isMelee && attackerUnarmedKnown });
+  // Скоростная Внимательность: после Бега — спросить дистанцию (до траты Реакции).
+  const speedAw = await _speedAwarenessMod(actor);
+  if (speedAw === null) return;
   const { wsTotal, meleeWeapon, balance, balanceMod, threshold: parryProfileThreshold, modParts, pwp, crossblock } =
-    parryProfile(actor, extraMod, parryWith?.improvisedFrom ? parryWith : null, { useCrossblock });
+    parryProfile(actor, extraMod + speedAw.value, parryWith?.improvisedFrom ? parryWith : null, { useCrossblock });
+  if (speedAw.part) modParts.push(speedAw.part);
+  // Оплот (глава 3): щиты считаются имеющими Баланс 1 для других Талантов
+  // (Щит Клинков, Отбить Выстрел); модификатор Баланса самого Парирования — настоящий.
+  const bulwarkShield = hasDodgeTalent(actor, "bulwark") && isHandShield(meleeWeapon);
+  const talentBal = talentBalance(balance, { bulwark: hasDodgeTalent(actor, "bulwark"), isShield: isHandShield(meleeWeapon) });
 
   // Безоружное Парирование / Кулак.Б (core.json, раздел «Безоружный Бой»):
   // «Невооруженный персонаж получает штраф –20 на Парирование полноценного
@@ -644,7 +691,7 @@ export async function _performParry(actor, {
       return _bladeShieldRefusal(actor,
         "Стрелковую атаку без Базового контакта со стрелком может парировать только персонаж с Талантом «Щит Клинков» (стр. 62).");
     }
-    if (balance < 1) {
+    if (talentBal < 1) {
       return _bladeShieldRefusal(actor,
         `«Щит Клинков» требует оружия с Балансом 1 и выше — у ${meleeWeapon ? `«${esc(meleeWeapon.name)}»` : "голых рук"} Баланс ${balance >= 0 ? "+" : ""}${balance}.`);
     }
@@ -689,7 +736,9 @@ export async function _performParry(actor, {
   const maineGauche     = maineGaucheParryReroll(actor, meleeWeapon, attackedPrevTurn(actor));
   // Перебежка (стр. 30, wdbc-x1nz.2.38) — тот же переброс, что у Уклонения выше.
   const duckAdvantage   = duckAndCoverAdvantage(actor);
-  const selfAdvantage   = dancerAdvantage || hordeAdvantage || maineGauche || duckAdvantage;
+  // Оплот: «может перебрасывать тесты Парирования щитом» — тот же приём, что
+  // «может перебрасывать» у Ненависти: бросок ×2, лучший.
+  const selfAdvantage   = dancerAdvantage || hordeAdvantage || maineGauche || duckAdvantage || bulwarkShield;
   const rolled = [];
   for (let i = 0; i < (selfAdvantage ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
   const picked   = pickReroll(rolled.map(r => r.total), "keepBest");
@@ -732,7 +781,8 @@ export async function _performParry(actor, {
       dancerAdvantage ? `Танец Среди Огня: Преимущество, отброшено ${picked.dropped.join(", ")}`
       : hordeAdvantage ? `Один Против Сотни: Преимущество, отброшено ${picked.dropped.join(", ")}`
       : duckAdvantage ? `Перебежка: Преимущество, отброшено ${picked.dropped.join(", ")}`
-      : `Мэн-Гош: переброс ножом, отброшено ${picked.dropped.join(", ")}`);
+      : maineGauche ? `Мэн-Гош: переброс ножом, отброшено ${picked.dropped.join(", ")}`
+      : `Оплот: переброс парирования щитом, отброшено ${picked.dropped.join(", ")}`);
   }
 
   let outcomeHtml;
