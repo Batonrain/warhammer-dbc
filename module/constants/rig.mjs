@@ -13,6 +13,7 @@
 
 import { ITEM_TYPES } from "./items.mjs";
 import { fullyArmedWeight } from "../combat/fully-armed.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 
 // Что можно разместить на разгрузке (броня носится, не стоуится; моды — часть оружия/брони).
 export const STOWABLE_TYPES = ["weapon", "ammo", "gear", "tool", "drug", "forcefield"];
@@ -143,6 +144,23 @@ const FLAG = "stowage";
  * считает общий Перевес (combat/encumbrance.mjs).
  */
 export const TAKE_EVERYTHING_FLAG = "trait.takeEverything";
+
+/**
+ * Лежит ли предмет в НЕУДОБНОЙ разгрузке или слоте — оттуда Quick Draw
+ * (Быстрое Выхватывание) не действует (RIG_COMFORT_HINT.awkward). Предмет,
+ * не размещённый в Разгрузке вовсе, не штрафуется — слоты система не
+ * навязывает. Забирай Всё (Пират) неудобство снимает.
+ */
+export function inAwkwardRigLocation(actor, item) {
+  const loc = (actor?.getFlag?.(NS, FLAG) || {})[item?.id];
+  if (!loc || hasRuleFlag(actor, TAKE_EVERYTHING_FLAG)) return false;
+  const isBackpack = loc.startsWith("bp:");
+  const rig = actor.items?.get?.(isBackpack ? loc.slice(3) : loc.split(":")[0]);
+  if (!rig) return false;
+  if ((rig.system?.rig?.comfort || "normal") !== "normal") return true;
+  if (isBackpack) return false;
+  return !!expandSlots(rig).find(sl => sl.id === loc)?.awkward;
+}
 
 // Мелочь, надетая прямо на другой предмет (визор на шлеме, крепление на
 // броне) — system.wornOn у gear указывает на существующий предмет-носитель

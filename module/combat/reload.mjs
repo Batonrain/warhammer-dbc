@@ -1,6 +1,7 @@
 import { _buildAmmoModString, _buildAmmoModDetails, _getAmmoSpent, esc } from "../helpers/utils.mjs";
 import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { spendActionPoints } from "./action-economy.mjs";
+import { hasSpeedTalent, rapidReloadApCost } from "../rules/speed-talents.mjs";
 import { profileHasOwnFire, sysWithProfileFire, profileFireUpdate } from "./weapon-profiles.mjs";
 
 /**
@@ -148,7 +149,10 @@ export async function _reloadWeapon(actor, weapon, { profileIdx = null } = {}) {
 
   // Стр. 35, wdbc-x1nz.2.54: ОД списываются ПОСЛЕ выбора боеприпаса — отмена
   // диалога выбора выше ничего не стоит, только реально начатая перезарядка.
-  const apCost = reloadApCost(sys.reload);
+  // Быстрая Перезарядка: время перезарядки вдвое (окр.▼) — в ОД, ½ → свободно.
+  const baseCost = reloadApCost(sys.reload);
+  const rapid = baseCost > 0 && hasSpeedTalent(actor, "rapidReload");
+  const apCost = rapid ? rapidReloadApCost(baseCost) : baseCost;
   if (apCost > 0 && !await spendActionPoints(actor, apCost, { physical: true })) {
     return ui.notifications.warn(`⚠️ ${barrel}: не хватает ОД на перезарядку (нужно ${apCost}).`);
   }
@@ -167,7 +171,8 @@ export async function _reloadWeapon(actor, weapon, { profileIdx = null } = {}) {
     title: `Перезарядка — ${esc(barrel)}`,
     lines: [`<div class="roll-damage-meta">
           Боеприпасы: <b>${esc(preferredAmmo.name)}</b>
-        </div>`],
+        </div>`,
+        ...(rapid ? [`<div class="roll-damage-meta">Быстрая Перезарядка: ${baseCost} → ${apCost} ОД. Пустой магазин выброшен под ноги.</div>`] : [])],
     outcome: outcomeHtml(true, `
             Вставлен магазин · Заряд <b>${newMag}/${maxMag}</b> · В запасе: <b>${newQty}</b> маг.
           `),

@@ -13,8 +13,8 @@
 // здесь: с wdbc-x1nz.2.54 у system.reload (module/data/item/weapon.mjs)
 // наконец есть числовой движок — combat/reload.mjs::reloadApCost (½ → 1 ОД,
 // целое N → 2N ОД) — но САМА скидка Fully Armed поверх него ещё не подключена.
-// Тот же остаток у общего Таланта с идентичной формулировкой ("вдвое, окр.▼",
-// talents-library.mjs:84/capabilities.mjs:1420).
+// Общий Талант с идентичной формулировкой ("вдвое, окр.▼") — Rapid Reload —
+// уже подключён к этому движку (reload.mjs, сверка главы 3, 17.10.2026).
 
 import { itemHasName } from "../rules/predicates.mjs";
 import { hasAbility } from "../rules/ability-by-key.mjs";

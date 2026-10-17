@@ -61,6 +61,8 @@ import { MELEE_STANCES } from "../constants/combat.mjs";
 import { twoHandedTestPenalty, TWO_HANDED_PENALTY_LABEL } from "../rules/hands.mjs";
 import { uselessCount } from "../rules/useless-limbs.mjs";
 import { divineProtectionActive } from "../rules/death-save.mjs";
+import { hasSpeedTalent, standUpApCost, jumpApCost, repositionAvailable, sprintFatigueDue, breacherReady } from "../rules/speed-talents.mjs";
+import { isHandShield } from "./hand-shield.mjs";
 
 // Захват (стр. 12, wdbc-x1nz.2.31): «только действия Борьбы или не-Физические»
 // — Движение Физическое (см. тип действия «Физическое», стр. 12), поэтому
@@ -341,7 +343,7 @@ export async function declareFullMove(actor) {
   _showReachRing(actor, actor.system.movement?.move);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Полное Движение</div>
-    <div class="roll-threshold">Полное действие (2 ОД). Перемещение до SPD×2.</div>
+    <div class="roll-threshold">Полное действие (2 ОД). Перемещение до ${hasSpeedTalent(actor, "sprint") ? "SPD×3 (Спринт — на дистанцию Натиска)" : "SPD×2"}.</div>
     <div class="roll-threshold" style="font-size:0.85em;">Можно ещё полудействие (не атаку) — но его тесты, если есть, получают Помеху (стр. 32). Для следующего Карабканья/Прыжка/Плавания в этом Ходу — уже автоматически.</div>
   </div>`);
 }
@@ -378,7 +380,7 @@ export async function declareCharge(actor) {
   _showReachRing(actor, actor.system.movement?.charge);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("sword","#ff9d4d")}${esc(actor.name)} — Натиск</div>
-    <div class="roll-threshold">Перемещение до SPD×3 (не менее 4м), заканчивая в контакте с противником.</div>
+    <div class="roll-threshold">Перемещение до ${hasSpeedTalent(actor, "preternaturalSpeed") ? "SPD×6 (Запредельная Скорость — на дистанцию Бега)" : "SPD×3"} (не менее 4м), заканчивая в контакте с противником.</div>
     <div class="roll-threshold" style="font-size:0.85em;">База «Натиск» выбрана — рукопашный приём +20, 2 ОД спишутся на броске атаки.</div>
   </div>`);
 }
@@ -543,6 +545,15 @@ export async function declareRun(actor) {
   if (MELEE_STANCES[runStanceKey]?.noRun) {
     return ui.notifications.warn(`⚠️ Недоступно в Стойке «${MELEE_STANCES[runStanceKey].label}».`);
   }
+  // Спринт: Бег на двойную дистанцию Бега. Спрашиваем ДО траты ОД — отмена
+  // диалога ничего не стоит. Дальше SPD×6 — повод для Усталости (см. ниже).
+  const sprint = hasSpeedTalent(actor, "sprint");
+  let sprintFar = false;
+  if (sprint) {
+    const far = await _askSprintFar(actor);
+    if (far === null) return;
+    sprintFar = far;
+  }
   if (!await spendActionPoints(actor, 2, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
   // wdbc-x1nz.2.97 п.4: Бег без обеих стоп — тот же бросок (раньше не было).
   if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Бег")) return;
@@ -550,11 +561,66 @@ export async function declareRun(actor) {
   await actor.setFlag("warhammer-dbc", FAST_MOVE_FLAG, true);
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
-  _showReachRing(actor, actor.system.movement?.run);
+  _showReachRing(actor, sprintFar ? (actor.system.movement?.sprintRun || actor.system.movement?.run) : actor.system.movement?.run);
+  const sprintNote = sprintFar ? await _noteSprintFar(actor) : "";
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Бег</div>
-    <div class="roll-threshold">Полное действие (2 ОД). Перемещение до SPD×6.</div>
+    <div class="roll-threshold">Полное действие (2 ОД). Перемещение до ${sprintFar ? "SPD×12 (Спринт)" : "SPD×6"}.</div>${sprintNote}
     <div class="roll-threshold" style="font-size:0.85em;">До начала следующего Хода: нельзя Реакции, вся Стрельба по персонажу −20, вся Рукопашная по нему +20.</div>
+  </div>`);
+}
+
+const SPRINT_FAR_FLAG = "sprintFar";
+const SPRINT_FATIGUE_FLAG = "sprintFatigueDue";
+
+/**
+ * Спринт: «Бег на двойную дистанцию Бега». Дистанцию система не меряет —
+ * спрашиваем, побежит ли игрок дальше обычных SPD×6. null — отмена.
+ */
+async function _askSprintFar(actor) {
+  const run = Number(actor.system.movement?.run) || 0;
+  const far = Number(actor.system.movement?.sprintRun) || run * 2;
+  const answer = await foundry.applications.api.DialogV2.wait({
+    window: { title: `Спринт — ${actor.name}` },
+    classes: ["wh-roll-dialog-window"],
+    position: { width: 360 },
+    content: `<div class="wh-skill-roll-form"><div class="atk-range-info" style="font-size:0.85em;">
+      Со Спринтом Бег — до ${far} м (SPD×12). Обычный Бег — до ${run} м (SPD×6).
+      Если бежать дальше обычного два Хода подряд, в конце второго Хода +1 Усталости.
+      Побежите дальше ${run} м?</div></div>`,
+    buttons: [
+      { action: "far",    label: `Да, дальше ${run} м`, callback: () => true },
+      { action: "normal", label: "Нет, обычный Бег", default: true, callback: () => false },
+      { action: "cancel", label: "Отмена", callback: () => null }
+    ],
+    rejectClose: false
+  });
+  return answer ?? null;
+}
+
+/**
+ * Запомнить «дальний» Бег этого Раунда. Если такой же был в прошлом Раунде
+ * этого боя — Усталость взводится на конец Хода (applySprintTurnEnd).
+ * @returns {Promise<string>} строка для карточки Бега
+ */
+async function _noteSprintFar(actor) {
+  const combat = game.combat;
+  const current = { combatId: combat?.id ?? "", round: Number(combat?.round) || 0 };
+  const due = sprintFatigueDue(actor.getFlag("warhammer-dbc", SPRINT_FAR_FLAG), current);
+  await actor.setFlag("warhammer-dbc", SPRINT_FAR_FLAG, current);
+  if (!due) return `<div class="roll-threshold" style="font-size:0.85em;">Дальний Бег отмечен. Если и в следующем Раунде побежите дальше SPD×6 — в конце того Хода +1 Усталости.</div>`;
+  await actor.setFlag("warhammer-dbc", SPRINT_FATIGUE_FLAG, true);
+  return `<div class="roll-threshold" style="color:#ffb86b;">⚠️ Второй Ход подряд дальше обычного Бега — в конце этого Хода +1 Усталости (автоматически).</div>`;
+}
+
+/** Конец Хода: расплата за второй подряд дальний Бег со Спринтом. Звать из updateCombat. */
+export async function applySprintTurnEnd(actor) {
+  if (!actor?.getFlag?.("warhammer-dbc", SPRINT_FATIGUE_FLAG)) return;
+  await actor.unsetFlag("warhammer-dbc", SPRINT_FATIGUE_FLAG);
+  await addFatigue(actor, 1);
+  await _postCard(actor, `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("run","#c0392b")}${esc(actor.name)} — Спринт</div>
+    <div class="roll-threshold">Два Хода подряд бежал дальше обычного Бега — +1 Усталости.</div>
   </div>`);
 }
 
@@ -620,6 +686,105 @@ export async function declareHalfStep(actor) {
   </div>`);
 }
 
+// ── Смена Позиции и Прорыв (Таланты Скорости, глава 3) ──────────────────────
+const REPOSITION_FLAG = "movement.reposition";
+const BREACHER_FLAG = "movement.breacher";
+
+/**
+ * Смена Позиции (Reposition): «В начале боя сразу после бросков Инициативы
+ * персонаж может подвигаться на Полудвижение». Один раз за бой, пока идёт
+ * первый Раунд. Бесплатно (0 ОД) — это не действие Хода.
+ */
+export function actorCanReposition(actor) {
+  if (!hasSpeedTalent(actor, "reposition")) return false;
+  const combat = game.combat;
+  return repositionAvailable({
+    combatId: combat?.id, round: combat?.round,
+    ready: isThrottleReady(actor, REPOSITION_FLAG, "battle")
+  });
+}
+
+export async function declareReposition(actor) {
+  if (!actor) return;
+  if (!hasSpeedTalent(actor, "reposition")) return ui.notifications.warn("⚠️ Нужен Талант Reposition/Смена Позиции.");
+  if (_blockedByGrapple(actor, { move: true })) return;
+  if (_bothLegsLost(actor)) return ui.notifications.warn("⚠️ Нет обеих ног (или они бесполезны) — Движение недоступно.");
+  if (!actorCanReposition(actor)) {
+    return ui.notifications.warn("⚠️ Смена Позиции — один раз за бой, в начале боя (первый Раунд).");
+  }
+  if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Смена Позиции")) {
+    await markThrottleUsed(actor, REPOSITION_FLAG, "battle");
+    return;
+  }
+  await markThrottleUsed(actor, REPOSITION_FLAG, "battle");
+  _showReachRing(actor, actor.system.movement?.halfMove);
+  await _postCard(actor, `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Смена Позиции</div>
+    <div class="roll-threshold">В начале боя, 0 ОД. Полудвижение: перемещение до SPD×1. Остальные носители Таланта двигаются по порядку Инициативы.</div>
+  </div>`);
+}
+
+/**
+ * Карточка на старте боя: у кого есть Смена Позиции, в порядке Инициативы.
+ * Сам шаг делается пунктом меню Движения («Смена Позиции»).
+ */
+export async function postRepositionCard(combat) {
+  const holders = [...(combat?.combatants ?? [])]
+    .filter(c => c.actor && hasSpeedTalent(c.actor, "reposition"))
+    .sort((a, b) => (Number(b.initiative) || -Infinity) - (Number(a.initiative) || -Infinity));
+  if (!holders.length) return;
+  const rows = holders.map(c => `<li>${esc(c.name || c.actor.name)}${Number.isFinite(Number(c.initiative)) ? ` (Инициатива ${esc(String(c.initiative))})` : ""}</li>`).join("");
+  await ChatMessage.create({
+    speaker: { alias: "Начало боя" },
+    content: `<div class="wh-roll-result">
+      <div class="roll-header">${rollIcon("run","#b0a080")}Смена Позиции</div>
+      <div class="roll-threshold">Сразу после бросков Инициативы можно подвигаться на Полудвижение (бесплатно) — по порядку Инициативы:</div>
+      <ol style="margin:4px 0 0 18px;">${rows}</ol>
+      <div class="roll-threshold" style="font-size:0.85em;">Пункт «Смена Позиции» в меню Движения.</div>
+    </div>`
+  });
+}
+
+/** Прорыватель: Талант, щит в руке и Защитная Стойка (стр. 15). */
+export function actorCanBreach(actor) {
+  return breacherReady({
+    talent: hasSpeedTalent(actor, "breacher"),
+    shield: !!actor?.items?.some?.(i => i.system?.equipped && isHandShield(i)),
+    stance: actor?.system?.meleeStance || "standard"
+  });
+}
+
+/**
+ * Прорыв (Breacher): «Полудвижение и Атака одним Полным действием (в любой
+ * последовательности)». Атака в Защитной Стойке уже стоит Полное действие
+ * (2 ОД) — оно оплачивает и Полудвижение, поэтому само Полудвижение
+ * бесплатно, раз в Ход. Что Атака в этом Ходу действительно будет, система
+ * не проверяет — это на игроке.
+ */
+export async function declareBreach(actor) {
+  if (!actor) return;
+  if (!actorCanBreach(actor)) {
+    return ui.notifications.warn("⚠️ Прорыв: нужен Талант Breacher, щит в руке и Защитная Стойка.");
+  }
+  if (_blockedByGrapple(actor, { move: true })) return;
+  if (_bothLegsLost(actor)) return ui.notifications.warn("⚠️ Нет обеих ног (или они бесполезны) — Движение недоступно.");
+  if (!isThrottleReady(actor, BREACHER_FLAG, "round")) {
+    return ui.notifications.warn("⚠️ Прорыв уже использован в этом Ходу.");
+  }
+  if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Прорыв")) {
+    await markThrottleUsed(actor, BREACHER_FLAG, "round");
+    return;
+  }
+  await markThrottleUsed(actor, BREACHER_FLAG, "round");
+  await markMovedThisTurn(actor);
+  await markMoveDegreeThisTurn(actor, "half");
+  _showReachRing(actor, actor.system.movement?.halfMove);
+  await _postCard(actor, `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Прорыв</div>
+    <div class="roll-threshold">Полудвижение (до SPD×1) бесплатно — оно входит в то же Полное действие, что и Атака. Атака в Защитной Стойке стоит 2 ОД (до или после движения).</div>
+  </div>`);
+}
+
 // ── Лечь (стр. 30, wdbc-x1nz.2.36) ─────────────────────────────────────────
 /**
  * Лечь: Свободное действие — накладывает Состояние «Повален» (стр. 30-31,
@@ -653,6 +818,8 @@ export async function declareStandUp(actor) {
   if (!actor) return;
   if (_blockedByGrapple(actor)) return;
   if (!actor.system.conditions?.prone) return ui.notifications.warn("⚠️ Персонаж не Повален — вставать не с чего.");
+  // Вскочить: «может автоматически Встать за свободное действие» — выбирать нечего.
+  if (hasSpeedTalent(actor, "leapUp")) return _standUpPlain(actor);
   return new Promise(resolve => {
     new Dialog({
       title: `Встать — ${actor.name}`,
@@ -673,11 +840,13 @@ export async function declareStandUp(actor) {
 }
 
 export async function _standUpPlain(actor) {
-  if (!await spendActionPoints(actor, 1, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  const leapUp = hasSpeedTalent(actor, "leapUp");
+  const cost = standUpApCost(leapUp);
+  if (cost > 0 && !await spendActionPoints(actor, cost, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
   await actor.update(conditionRemoveFields("prone"));
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#9fb4ff")}${esc(actor.name)} — Встать</div>
-    <div class="roll-threshold">Полудействие (1 ОД). Встал обычным способом.</div>
+    <div class="roll-threshold">${leapUp ? "Свободное действие (0 ОД) — Вскочить. Встал автоматически." : "Полудействие (1 ОД). Встал обычным способом."}</div>
   </div>`);
 }
 
@@ -1062,7 +1231,8 @@ export function showJumpDialog(actor) {
         </div>
         <div class="atk-dlg-row"><label>Acrobatics (A):</label><input id="jp-acro" type="number" value="${acro}"/></div>
         <div class="atk-dlg-row"><label>Доп. мод:</label><input id="jp-mod" type="number" value="0"/></div>
-        <div class="atk-range-info" style="font-size:0.82em;">Мин. дистанция разбега 4м (стр. 29-30).</div>
+        ${hasSpeedTalent(actor, "jumper") ? `<div class="atk-dlg-row"><label>Как часть Натиска (Прыгун, 0 ОД):</label><input id="jp-charge" type="checkbox"${actor.system.meleeBase === "charge" ? " checked" : ""}/></div>` : ""}
+        <div class="atk-range-info" style="font-size:0.82em;">Мин. дистанция разбега 4м (стр. 29-30).${hasSpeedTalent(actor, "jumper") ? " Прыгун: Полудействие вместо Полного." : ""}</div>
       </form>`,
     buttons: {
       roll: { icon: '<i class="fas fa-dice-d10"></i>', label: "Тест!",
@@ -1071,7 +1241,7 @@ export function showJumpDialog(actor) {
           const runup = parseInt(html.find("#jp-runup").val()) || 0;
           const acroV = parseInt(html.find("#jp-acro").val()) || 0;
           const md    = parseInt(html.find("#jp-mod").val()) || 0;
-          await _resolveJump(actor, type, acroV, runup, md, sb);
+          await _resolveJump(actor, type, acroV, runup, md, sb, { partOfCharge: html.find("#jp-charge").is(":checked") });
         } },
       cancel: { label: "Отмена" }
     },
@@ -1079,9 +1249,11 @@ export function showJumpDialog(actor) {
   }, { classes: ["dialog", "wh-attack-dialog"], width: 420 }).render(true);
 }
 
-export async function _resolveJump(actor, type, acro, runup, mod, sb) {
+export async function _resolveJump(actor, type, acro, runup, mod, sb, { partOfCharge = false } = {}) {
   // Стр. 29, wdbc-x1nz.2.34: то же самое — Полное действие, ОД раньше не списывались.
-  if (!await spendActionPoints(actor, 2, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  // Прыгун: Полудействие, а как часть Натиска — без отдельной платы.
+  const cost = jumpApCost({ jumper: hasSpeedTalent(actor, "jumper"), partOfCharge });
+  if (cost > 0 && !await spendActionPoints(actor, cost, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
   // Штрафы состояния тела — общим сбором, как у Карабканья выше (wdbc-kuun).
   const bodyMods = collectTestMods(actor, { kind: "skill", skill: "acrobatics", char: "ag" });
   const threshold = acro + runup + mod + bodyMods.total;
@@ -1647,6 +1819,13 @@ export function movementMenuItems(actor) {
     items.push({ key: "duckAndCover", label: "Перебежка", cost: "2 ОД", action: () => declareDuckAndCover(actor) });
     if (actorHasHalfStep(actor)) {
       items.push({ key: "halfstep", label: "Полушаг", cost: "Талант", action: () => declareHalfStep(actor) });
+    }
+    // Таланты Скорости: пункт виден, только когда применим (тот же приём).
+    if (actorCanReposition(actor)) {
+      items.push({ key: "reposition", label: "Смена Позиции", cost: "Талант, 0 ОД", action: () => declareReposition(actor) });
+    }
+    if (actorCanBreach(actor)) {
+      items.push({ key: "breach", label: "Прорыв", cost: "Талант, 0 ОД", action: () => declareBreach(actor) });
     }
     // Лечь/Встать (стр. 30, wdbc-x1nz.2.36) — взаимоисключающие по текущему
     // Состоянию «Повален»: лежачему нет смысла предлагать «Лечь», стоящему —
