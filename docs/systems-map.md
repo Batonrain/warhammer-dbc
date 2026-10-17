@@ -73,6 +73,26 @@
 - `module/rules/aptitude-overrides.mjs` — расовое/субрасовое переопределение
   Склонности («у Африэль это всегда Дружественная»).
 - `module/rules/mastery-targets.mjs` — к чему привязывается Талант «Мастерство».
+- Общие Таланты (стр. 62, сверка главы 3, 17.10.2026): девять Талантов группы
+  «Общие» сверены с книгой — полный текст в `system.benefit`, честные `notes`.
+  Инициативные (Боевое Построение, Чувство Боя, Молниеносные Рефлексы,
+  Самая Быстрая Рука, Паранойя) — `rules/initiative.mjs`; Боевое Построение
+  соратникам — кнопка-скрипт `shareCombatFormation` (`combat/combat-formation.mjs`,
+  отметка `flags.warhammer-dbc.combatFormation`, +1 и I.b вместо A.b до конца
+  боя, `rules/combat-formation.mjs`); Паранойя — скрипт «Тайный тест на угрозу»
+  (шёпот ГМу). Быстрая Реакция — `rules/rapid-reaction.mjs`,
+  `combat/rapid-reaction.mjs`. **За Гранью Человека**:
+  `rules/beyond-human.mjs` — привязка к Характеристике (девять книжных, без
+  Влияния) в `aptSource`; Unnatural (+1) считает `rules/character.mjs` и
+  `rules/unnatural-characteristic.mjs`; на карточке переброса за Очко кнопка
+  «оставить первый результат» (`combat/beyond-human.mjs`, данные в флагах
+  карточки или в опциях атаки, гасит карточку и возвращает Очко).
+  **Мастерство**: `rules/mastery.mjs` — автоуспех за Очко Бесчестия (пункт
+  меню Очков на карточке теста, `combat/mastery.mjs`; Успехи = Бонус
+  Характеристики, поправки не хуже +0) и «5+ Успехов = Критический Успех»
+  (`rules/kind-outcome.mjs`). Требования «Характеристика 70» / «Навык+30»
+  разбираются как `anyChar` / `anySkill` в `constants/talent-requirements.mjs`;
+  по выбранной привязке их проверяет пикер (`dynamicRequirementGap`).
 - `module/rules/duplicate-grants.mjs` + `apps/duplicate-refund.mjs` — что
   делать с повторной выдачей уже взятого Навыка/Таланта (возврат опыта).
 - `module/rules/pick-xp-cost.mjs`, `pick-budget.mjs` — цена/бюджет выбора из

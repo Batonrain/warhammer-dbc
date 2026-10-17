@@ -54,6 +54,7 @@ describe("executeItemCode — стандартные помощники в об�
       seen.activateBattleForm = typeof activateBattleForm;
       seen.endBattleForm = typeof endBattleForm;
       seen.grantStartingDisorder = typeof grantStartingDisorder;
+      seen.shareCombatFormation = typeof shareCombatFormation;
     `, null, { seen });
     expect(seen).toEqual({
       woundLossUpdates: "function", isTokenInSight: "function",
@@ -70,7 +71,8 @@ describe("executeItemCode — стандартные помощники в об�
       attemptPossessionAttack: "function", leavePossessionHost: "function",
       useAdaptiveVenom: "function",
       emergencyMaintenance: "function", scroungeSupplies: "function",
-      activateBattleForm: "function", endBattleForm: "function", grantStartingDisorder: "function"
+      activateBattleForm: "function", endBattleForm: "function", grantStartingDisorder: "function",
+      shareCombatFormation: "function"
     });
   });
 
