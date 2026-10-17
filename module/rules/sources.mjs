@@ -36,6 +36,7 @@ import { situationalRules } from "./situational.mjs";
 import { psychicSustainTargetRules } from "./psychic-sustain-target.mjs";
 import { pathRulesFor } from "./library/paths.mjs";
 import { hatredRules } from "./hatred.mjs";
+import { awarenessTalentRules } from "./awareness-talents.mjs";
 import { legacyWrathRules, legacyExcessRules, legacyGuardianRules, legacyBloodPsychicRules, legacyInstinctiveDisarmRules, legacyDistractingCharSwapRules, legacyQuietAwarenessRules } from "./legacy-weapon.mjs";
 import { devourerPermanentRules } from "./devourer-of-knowledge.mjs";
 import { gallerpoxPoisonPenaltyActive } from "./prophet-of-gallerpox.mjs";
@@ -172,6 +173,11 @@ registerRuleSource("synesthesia", () => SYNESTHESIA_RULES);
 // переброс встречного социального теста против цели, которую персонаж
 // выбрал Ненавистной при получении Таланта. См. заголовок rules/hatred.mjs.
 registerRuleSource("hatred", (a, ctx) => hatredRules(a, ctx));
+
+// Таланты Внимательности (глава 3, сверка 17.10.2026): галочки Усиленных
+// Чувств, Дегустатора, Воролова, Службы Безопасности и Аналитического Взгляда,
+// штраф Ослепления вдвое у Боя Вслепую. См. заголовок rules/awareness-talents.mjs.
+registerRuleSource("awarenessTalents", (a, ctx) => awarenessTalentRules(a, ctx));
 
 // Наследие Ярости/Rage, Оружие Наследия (wdbc-1rno.35, стр. 427): штраф −10
 // на I/P, пока экипировано Оружие Наследия с этой Историей. См. заголовок

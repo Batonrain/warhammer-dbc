@@ -87,7 +87,7 @@ import { conditionRulesFor, ALT_SENSES_CAPABILITIES } from "./library/conditions
  * носитель самой Возможности.
  */
 const CAPABILITY_OVERRIDES = Object.fromEntries(
-  ALT_SENSES_CAPABILITIES.map(key => [key, ["conditions.blinded"]]));
+  ALT_SENSES_CAPABILITIES.map(key => [key, ["conditions.blinded", "conditions.blinded.blindFighting"]]));
 
 const SYSTEM = "warhammer-dbc";
 

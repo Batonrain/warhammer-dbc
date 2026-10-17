@@ -82,6 +82,7 @@ import { EXCESS_LEGACY_RULE_ID } from "../rules/legacy-weapon.mjs";
 import { rollExcessLegacyRiskTest } from "../combat/legacy-weapon-excess.mjs";
 import { commitRerollUse } from "../combat/angel-hunters.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
+import { awarenessTalentDegrees } from "../rules/awareness-talents.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { infamyFailSuccessButtonsHtml } from "../apps/infamy-fail-success.mjs";
 import { isMoraleOpposedSkill, resolveTest } from "../rules/resolve-test.mjs";
@@ -2614,6 +2615,21 @@ export class WarhammerCharacterSheet
             autoRow.hidden = false;
           }
         }
+        // Галочка с data-set-char (Аналитический Взгляд: I вместо P) переключает
+        // «Бросок с:» на эту Характеристику, а при снятии возвращает прежнюю.
+        if (charSelectEl) {
+          let charBeforeTick = null;
+          root.querySelectorAll(".rule-mod[data-set-char]").forEach(cb => cb.addEventListener("change", () => {
+            if (cb.checked) {
+              charBeforeTick = charSelectEl.value;
+              charSelectEl.value = cb.dataset.setChar;
+            } else if (charBeforeTick != null) {
+              charSelectEl.value = charBeforeTick;
+              charBeforeTick = null;
+            }
+            charSelectEl.dispatchEvent(new Event("change"));
+          }));
+        }
         root.querySelector("#skill-target")?.addEventListener("input", updateAutoOutcomeNote);
         root.querySelector("#skill-modifier")?.addEventListener("input", updateAutoOutcomeNote);
         root.querySelectorAll(".hw-mod, .item-mod, .rule-mod, .armor-mod, .armor-aspect-mod").forEach(cb =>
@@ -3098,7 +3114,13 @@ export class WarhammerCharacterSheet
       ? outcome.combinedAssistCount : assistCount;
     // Потолок Успехов (BONE-Head Огрина, successDegMax) режет ИТОГ — в т.ч.
     // степень от Ассистентов: книга «не больше 1 Успеха» не делает исключений.
-    const assisted = assistDegrees(outcome.deg, effectiveAssistCount, outcome.success);
+    // Таланты Внимательности (rules/awareness-talents.mjs): отмеченные галочки
+    // Аналитического Взгляда (×2), Воролова и Службы Безопасности меняют Успехи
+    // теста ДО Ассистентов.
+    const awarenessDeg = skillKey === "awareness"
+      ? awarenessTalentDegrees(effectActor, { checkedRuleIds, success: outcome.success, deg: outcome.deg, charKey })
+      : { deg: outcome.deg, lines: [] };
+    const assisted = assistDegrees(awarenessDeg.deg, effectiveAssistCount, outcome.success);
     const deg      = outcome.degCap != null ? Math.min(outcome.degCap, assisted) : assisted;
     // Мастерство: Ассистенты дотянули степень до 5+ уже после расчёта исхода —
     // строку крита дорисовываем здесь (сам исход её не видел).
@@ -3149,6 +3171,7 @@ export class WarhammerCharacterSheet
       lines: [
         outcome.combinedLine,
         outcome.unnaturalLine,
+        ...awarenessDeg.lines.map(l => `<div class="roll-threshold">${esc(l)}</div>`),
         outcome.personalAdaptationLine,
         assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${(outcome.success && effectiveAssistCount === assistCount) ? `, +${assistCount} к степени` : ""})</div>` : ""
       ],

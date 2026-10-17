@@ -1812,33 +1812,37 @@ export const CAPABILITIES = {
   },
   // ── Внимательность
   "awareness.core.analyticalEye": {
-    label: "Персонаж может использовать I вместо P для тестов Awareness, не проводимых как свободное действие,",
-    source: "Analytical Eye / Аналитический Взгляд", reader: ""
+    label: "Реализовано (сверка главы 3, решение владельца 17.10.2026): в окне теста Awareness у носителя галочка «Аналитический Взгляд: осмотр не свободным действием» — переключает «Бросок с:» на I (при снятии возвращает прежнюю Характеристику); при Успехе Успехи теста удваиваются (до Ассистентов), на карточке строка (rules/awareness-talents.mjs, sheets/actor-sheet.mjs). НЕ покрыто: свободное ли это действие — решает игрок галочкой; порядок «×2 до Ассистентов и до прибавок Воролова/Службы Безопасности» — допущение, книга порядок не называет.",
+    source: "Analytical Eye / Аналитический Взгляд",
+    reader: "module/rules/awareness-talents.mjs (правило-галочка, awarenessTalentDegrees); module/sheets/actor-sheet.mjs (data-set-char, Успехи ×2); module/rules/roll-mods.mjs, module/rules/resolve-test.mjs (setChar)"
   },
   "awareness.core.blindFighting": {
-    label: "РЕАЛИЗОВАНО ЧАСТИЧНО (wdbc-1rno.2): вторая половина (не в label выше, полный текст пака) — «может Избегать от Незримых атак в рукопашной со штрафом −20» — реализована: Уклонение/Парирование рендерятся обычными (не disabled), но с доп. −20, без теста засечения. Первая половина — «уменьшает вдвое штрафы на рукопашные Атаки/Избегания от слепоты, тьмы и сниженной видимости» — НЕ реализована (отдельная механика штрафов видимости, вне объёма wdbc-1rno.2).",
+    label: "Реализовано (сверка главы 3): Избегание Незримых рукопашных атак с −20 сделано раньше (wdbc-1rno.2, rules/unseen-talents.mjs). Штрафы вдвое: в окне рукопашной атаки (и безоружной) Ослеплён −30 → −15, Тьма −20 → −10, Дым/туман −10 → −5 (sheets/attack/mods.mjs, sheets/attack-dialog.mjs); на тестах WS Ослеплённого (Парирование) −30 → −15 (rules/awareness-talents.mjs). Awareness/Scrutiny/Survival Ослеплённого Талант не смягчает. НЕ покрыто: Уклонение (A) от рукопашных атак — штрафов слепоты у него в системе нет, делить нечего; Слабый свет в рукопашной и так без штрафа.",
     source: "Blind Fighting / Бой Вслепую",
-    reader: "module/rules/unseen-talents.mjs (hasBlindFighting), module/combat/attack.mjs (blindFightingBypass → −20 в dodgeMod/parryMod, unseenDetected=true)"
+    reader: "module/rules/unseen-talents.mjs (hasBlindFighting), module/combat/attack.mjs (blindFightingBypass → −20 в dodgeMod/parryMod, unseenDetected=true); module/sheets/attack/mods.mjs, module/sheets/attack-dialog.mjs (штрафы вдвое в рукопашной); module/rules/awareness-talents.mjs (WS-тесты Ослеплённого)"
   },
   "awareness.core.blindsight": {
-    label: "Когда персонаж не носит шлем, он получает Трейт Unnatural Senses (P.b). Когда его глаза закрыты или он ослеплён,",
-    source: "Blindsight / Слепое Зрение", reader: ""
+    label: "Реализовано (сверка главы 3, решение владельца 17.10.2026): без шлема — нет экипированной брони с AP головы, либо у силовой брони шлем снят — носитель считается имеющим альтернативные чувства: штрафы Ослепления не действуют (тесты, окно атаки, Трудный Ландшафт, «атаки по ослеплённому Незримые»; rules/predicates.mjs::blindsightActive, rules/blindness.mjs, rules/library/conditions.mjs). В шлеме — как обычный Ослеплённый. НЕ покрыто: дальность P.b / 3×P.b м (система дальность чувств не меряет), «глаза закрыты» отдельно не различается, круговой обзор токена (угол sight в самом токене) настраивается вручную.",
+    source: "Blindsight / Слепое Зрение",
+    reader: "module/rules/predicates.mjs (helmetWorn, blindsightActive); module/rules/blindness.mjs (hasAlternativeSenses); module/rules/library/conditions.mjs (conditions.blinded.altSenses)"
   },
   "awareness.core.heightenedSenses": {
-    label: "Одно из пяти чувств развито лучше: +10 ко всем Тестам, связанным с этим чувством. Усиленные Чувства (Зрение) не даёт бонусов к тестам BS.",
-    source: "Heightened Senses / Усиленные Чувства", reader: ""
+    label: "Реализовано (сверка главы 3, решение владельца 17.10.2026): в окне теста Awareness и Scrutiny галочка «Усиленные Чувства (чувство) +10» на каждое чувство, выбранное при покупке (rules/awareness-talents.mjs::heightenedSensesOf). Связан ли тест с этим чувством — решает игрок. НЕ покрыто: тесты других Навыков и Характеристик — по решению владельца только Awareness и Scrutiny; бонус Зрения к BS не даётся (галочки на атаке нет).",
+    source: "Heightened Senses / Усиленные Чувства",
+    reader: "module/rules/awareness-talents.mjs (heightenedSensesOf, awarenessTalentRules)"
   },
   "awareness.core.lightSleeper": {
-    label: "При тестах на P или Awareness персонаж всегда считается бодрствующим, даже если спит.",
+    label: "Не смоделировано (сверка главы 3): в системе нет Состояния «Спит» и штрафов P/Awareness за сон — Таланту нечего отменять. Текст лежит как есть; появится сон как Состояние — Чуткий Сон снимет его штраф для тестов P и Awareness.",
     source: "Light Sleeper / Чуткий Сон", reader: ""
   },
   "awareness.core.lipReading": {
-    label: "Если персонаж чётко видит губы другого, он может понять, о чём тот говорит, даже не слыша слов. Тесты обычно не требуются;",
+    label: "Не смоделировано (сверка главы 3): чтение по губам — повествование, тесты обычно не нужны, а когда ГМ их просит, это обычный тест Awareness без особых последствий. Автоматизировать нечего.",
     source: "Lip Reading / Чтение По Губам", reader: ""
   },
   "awareness.core.securityDetail": {
-    label: "При любом тесте Awareness для поиска спрятавшихся существ, скрытого оружия, мин, ловушек и т.д.",
-    source: "Security Detail / Служба Безопасности", reader: ""
+    label: "Реализовано (сверка главы 3): в окне теста Awareness галочка «Служба Безопасности: …»; при Успехе и броске P добавляется +1 Успех (Unnatural P +2 даёт ⌊2/2⌋; с уже имеющимся Unnatural считается разница), на карточке строка (rules/awareness-talents.mjs). Если бросали не P — Успехи не добавляются. НЕ покрыто: сами +2 к Бонусу P (на Успехи этого теста они больше ни на что не влияют); что ищут — решает игрок.",
+    source: "Security Detail / Служба Безопасности",
+    reader: "module/rules/awareness-talents.mjs (awarenessTalentRules, awarenessTalentDegrees); module/sheets/actor-sheet.mjs"
   },
   "awareness.core.sentry": {
     label: "Преимущество на Awareness механизировано (wdbc-u0by, kind:\"reroll\") — появляется опциональной радиокнопкой в ЛЮБОМ тесте Awareness (тот же честный принцип самоподтверждения, что у всех перебросов Локусов): условие «как свободное действие» не проверяется программно, решает игрок/стол",
@@ -1851,12 +1855,14 @@ export const CAPABILITIES = {
     reader: "module/rules/unseen-talents.mjs (hasSixthSense), module/combat/attack.mjs (sixthSenseBypassAvailable), module/combat/attack-card.mjs (кнопка wh-unseen-bypass-btn), module/combat/unseen-attack.mjs (_performUnseenBypass, persistent:true), module/hooks.mjs (обработчик)"
   },
   "awareness.core.taster": {
-    label: "Персонаж получает +20 на тесты нюха и +40 на тесты вкуса для распознания ядов. Распознав яд на вкус, он может безопасно его сплюнуть.",
-    source: "Taster / Дегустатор", reader: ""
+    label: "Реализовано (сверка главы 3): в окне теста Awareness две галочки — «Дегустатор: распознать яд на нюх» +20 и «… на вкус» +40 (rules/awareness-talents.mjs). Что тест именно на распознание яда и каким чувством, решает игрок; с Усиленными Чувствами (Обоняние/Вкус) галочки складываются. НЕ покрыто: «безопасно сплюнуть» и оценка качества еды (обычный Awareness (P)+0) — повествование.",
+    source: "Taster / Дегустатор",
+    reader: "module/rules/awareness-talents.mjs (awarenessTalentRules)"
   },
   "awareness.core.thiefcatcher": {
-    label: "При Успехе на любом тесте Awareness, чтобы распознать изменённую внешность, слияние с толпой или движения, скрытые Sleight of Hands,",
-    source: "Thiefcatcher / Воролов", reader: ""
+    label: "Реализовано (сверка главы 3): в окне теста Awareness галочка «Воролов: …»; при Успехе к Успехам добавляется ½ P.b, округляя вверх, на карточке строка (rules/awareness-talents.mjs::awarenessTalentDegrees). Маскировка это, толпа или Sleight of Hand — решает игрок.",
+    source: "Thiefcatcher / Воролов",
+    reader: "module/rules/awareness-talents.mjs (awarenessTalentRules, awarenessTalentDegrees); module/sheets/actor-sheet.mjs"
   },
   // ── Арсенал
   "arsenal.core.ancientWarrior": {

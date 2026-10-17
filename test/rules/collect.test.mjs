@@ -133,7 +133,7 @@ describe("источники по умолчанию", () => {
     // warpTouchedHealMistrust (wdbc-1rno.26, 02.10.2026) — Затронутый Варпом,
     // субмутация 10: −10 на все тесты, кроме T, час после чужого лечения.
     expect([...getRuleSources().map(([key]) => key)].sort())
-      .toEqual(["addiction", "adjutant", "beastmanShaman", "conditions", "core",
+      .toEqual(["addiction", "adjutant", "awarenessTalents", "beastmanShaman", "conditions", "core",
                 "daemonInevitability", "devourerOfKnowledge", "dreadnought", "hatred", "homeworld", "items",
                 "legacyBloodPsychic", "legacyDistractingCharSwap", "legacyExcess", "legacyGuardian",
                 "legacyInstinctiveDisarm", "legacyQuietAwareness", "legacyWrath", "nullZones",

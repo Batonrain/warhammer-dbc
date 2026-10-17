@@ -273,6 +273,34 @@ export function isBlindedActor(actor) {
   return !!(c?.blinded || (Number(c?.lostEyesCount) || 0) >= 2);
 }
 
+/**
+ * Носит ли актор шлем: экипированная броня с AP головы и шлем не снят
+ * (флаг «Шлем снят» силовой брони). Для Слепого Зрения — «когда он не носит
+ * шлем» (решение владельца 17.10.2026: шлем = броня с защитой головы).
+ */
+export function helmetWorn(actor) {
+  const s = actor?.system;
+  if (s?.helmetlessActive) return false;
+  let head = s?.gearHeadAP;
+  if (head == null) {
+    head = 0;
+    for (const i of actor?.items ?? []) {
+      if (i?.type === "armor" && i.system?.equipped) head = Math.max(head, Number(i.system?.head) || 0);
+    }
+  }
+  return (Number(head) || 0) > 0;
+}
+
+/**
+ * Слепое Зрение (Талант): Unnatural Senses (P.b), пока шлема нет. Только по
+ * имени — этот предикат вызывается из отбора правил, спросить Возможности
+ * отсюда нельзя (рекурсия).
+ */
+export function blindsightActive(actor) {
+  const has = [...(actor?.items ?? [])].some(i => i?.type === "talent" && itemHasName(i, "Blindsight"));
+  return has && !helmetWorn(actor);
+}
+
 /** Хирургически установленный (не просто лежащий в инвентаре) имплант с этим именем. */
 function hasInstalledImplant(actor, name) {
   return (actor?.items ?? []).some(i => i?.type === "implant" && itemHasName(i, name) &&
@@ -491,6 +519,10 @@ export const PREDICATES = {
   // иначе Возможность Конструктора пришлось бы спрашивать изнутри отбора
   // правил — рекурсия collectRules → предикат → collectRules.
   isBlinded: (actor, ctx, value) => isBlindedActor(actor) === (value !== false),
+
+  // Слепое Зрение без шлема — альтернативные чувства (Talent Blindsight):
+  // входит в anyOf правила conditions.blinded.altSenses.
+  blindsightActive: (actor, ctx, value) => blindsightActive(actor) === (value !== false),
 
   // «Рядовой» (корбук стр. 4, system.rankAndFile): `true` — Рядовой, `false` —
   // чемпион. Гейт записей, которых у Рядовых по книге нет (Черты Человека).

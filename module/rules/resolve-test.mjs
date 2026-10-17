@@ -422,7 +422,9 @@ export function rollModsFromRules(rules, ctx = {}, { auto = false } = {}) {
         const value = effectValue(effect, ctx, rule.id);
         // askOnly — модификатор только для галочки в диалоге: без диалога
         // (rules/roll-mods.mjs::collectTestMods) его не складывают.
-        if (value !== null) mods.push({ ruleId: rule.id, label, value, halvePenalty: false, ...(effect.askOnly ? { askOnly: true } : {}) });
+        // setChar — галочка переключает «Бросок с:» на эту Характеристику
+        // (Аналитический Взгляд: I вместо P), диалог навыка читает data-set-char.
+        if (value !== null) mods.push({ ruleId: rule.id, label, value, halvePenalty: false, ...(effect.askOnly ? { askOnly: true } : {}), ...(effect.setChar ? { setChar: effect.setChar } : {}) });
         continue;
       }
       // Диалог умеет только ополовинить штраф — другого множителя в нём нет.
