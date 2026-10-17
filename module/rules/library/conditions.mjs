@@ -198,6 +198,17 @@ export const CONDITION_RULES = [
     ]
   },
   {
+    // Бой Вслепую (Талант, глава 3): «уменьшает штрафы на рукопашные Атаки и
+    // Избегания рукопашных атак от слепоты … в 2 раза». Окно рукопашной атаки
+    // считает свою строку «Ослеплён» само (sheets/attack/mods.mjs); здесь —
+    // тесты WS (Парирование): половина штрафа −30 возвращается. Альтернативные
+    // чувства снимают всё вместе (overrides ниже и в item-rules.mjs).
+    id: "conditions.blinded.blindFighting",
+    label: "Бой Вслепую: штраф Ослепления вдвое",
+    when: { hasTalent: "Blind Fighting", hasCondition: ["blinded", "lostEyes"], isBlinded: true },
+    effects: [{ kind: "rollBonus", target: "basedon:ws", value: 15, label: "Бой Вслепую: штраф Ослепления вдвое", auto: true }]
+  },
+  {
     // «Если персонаж способен ориентироваться и определять цели
     // альтернативными чувствами (обычно через Трейты Sonar Sense и Unnatural
     // Senses), все штрафы Ослепления игнорируются» — вытеснение, а не
@@ -208,9 +219,9 @@ export const CONDITION_RULES = [
     // CAPABILITY_OVERRIDES).
     id: "conditions.blinded.altSenses",
     label: "Альтернативные чувства (Sonar Sense / Unnatural Senses)",
-    when: { anyOf: ALT_SENSES_TRAITS.map(name => ({ hasTrait: name })) },
+    when: { anyOf: [...ALT_SENSES_TRAITS.map(name => ({ hasTrait: name })), { blindsightActive: true }] },
     effects: [],
-    overrides: ["conditions.blinded"]
+    overrides: ["conditions.blinded", "conditions.blinded.blindFighting"]
   },
   {
     // «Раны и Урон», «Статусы», wdbc-x1nz.2.92: «За каждый уровень

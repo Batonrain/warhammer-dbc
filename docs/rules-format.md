@@ -93,6 +93,7 @@ when: {
 | `targetHasCondition` | массив ключей `CONDITIONS_DEF` | то же про цель броска | да |
 | `targetLacksCondition` | массив ключей `CONDITIONS_DEF` | у цели нет НИ ОДНОГО из перечисленных Состояний | да |
 | `isBlinded` | `true`/`false` | актор Ослеплён: свой флаг или потеряны оба глаза (Sonar Sense/Unnatural Senses снимаются вытеснением, не здесь) | да |
+| `blindsightActive` | `true`/`false` | у актора Талант «Слепое Зрение» и нет шлема (нет экипированной брони с AP головы либо шлем силовой брони снят; `rules/predicates.mjs::helmetWorn`) — альтернативные чувства, часть `conditions.blinded.altSenses` | нет |
 | `rankAndFile` | `true`/`false` | актор — «Рядовой» (`system.rankAndFile`, корбук стр. 4); у чемпионских Черт расы стоит `false` | да |
 | `inPariahVoid` | `true`/`false` | актор в ауре Парии — у него Черта-метка «In the Pariah's Void» (rules/null-zones.mjs); по Черте, не по флагу, чтобы не зациклить сбор правил | нет |
 | `haywireFieldMin` | число | актор стоит в поле Haywire не слабее `value`: флаг `haywireField` (попадание Haywire по носителю BONE-Head, гаснет на 2 за Раунд — combat/bone-head.mjs) или Черта-метка «In the Discordant's Field» (= 7); BONE-Head Огрина | нет |

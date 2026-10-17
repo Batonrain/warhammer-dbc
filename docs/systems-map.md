@@ -85,6 +85,22 @@
   (`APT_PICK`, apps/creation.mjs). Смена Склонности — выпадающий список панели
   на «Развитии», пересчёт `recalcAllAdvanceCosts`; лимита «раз за историю» нет.
 - `module/rules/mastery-targets.mjs` — к чему привязывается Талант «Мастерство».
+- Таланты Внимательности (стр. 62, сверка главы 3, 17.10.2026): одиннадцать
+  Талантов сверены с книгой — полный текст в `system.benefit`, честные `notes`,
+  ключи `awareness.core.*`. Всё, что зависит от вида теста Awareness, подано
+  галочками в окне теста (источник правил `awarenessTalents`,
+  `rules/awareness-talents.mjs`): Усиленные Чувства (+10 на Awareness и
+  Scrutiny по выбранному чувству), Дегустатор (+20 нюх / +40 вкус), Воролов,
+  Служба Безопасности, Аналитический Взгляд; Успехи после броска меняет
+  `awarenessTalentDegrees` (вызывает `sheets/actor-sheet.mjs`), галочка
+  Аналитического Взгляда переключает «Бросок с:» на I (`data-set-char`).
+  Бой Вслепую — штрафы слепоты/тьмы/дыма в рукопашной вдвое (`sheets/attack/
+  mods.mjs`, `sheets/attack-dialog.mjs`, WS-тесты — `awarenessTalentRules`);
+  Слепое Зрение — `rules/predicates.mjs::blindsightActive` (Талант и нет шлема:
+  `helmetWorn`) входит в «альтернативные чувства» (`rules/blindness.mjs`,
+  `conditions.blinded.altSenses`). Шестое Чувство и Избегание Незримых — раньше
+  (`rules/unseen-talents.mjs`), Часовой — Конструктор (`kind:"reroll"`). Чуткий
+  Сон и Чтение По Губам — честный текст (нет Состояния «Спит»; повествование).
 - Таланты Скорости (стр. 62, сверка главы 3, 17.10.2026): одиннадцать Талантов
   сверены с книгой — полный текст в `system.benefit`, честные `notes`, ключи
   Возможностей `speed.core.*`. Чистая логика — `rules/speed-talents.mjs`

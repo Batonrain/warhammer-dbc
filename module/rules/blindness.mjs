@@ -12,7 +12,7 @@
 // (combat/attack.mjs). Три последних спрашивают ЭТОТ файл — один ответ на
 // вопрос «страдает ли актор от слепоты», а не три копии проверки Черт.
 
-import { isBlindedActor, itemHasName } from "./predicates.mjs";
+import { isBlindedActor, itemHasName, blindsightActive } from "./predicates.mjs";
 import { hasRuleFlag } from "./flags.mjs";
 import { ALT_SENSES_TRAITS, ALT_SENSES_CAPABILITIES } from "./library/conditions.mjs";
 
@@ -27,6 +27,8 @@ export function hasAlternativeSenses(actor) {
     (i?.type === "trait" || i?.type === "talent" || i?.type === "mutation")
     && ALT_SENSES_TRAITS.some(name => itemHasName(i, name)));
   if (named) return true;
+  // Слепое Зрение (Талант): Unnatural Senses (P.b), пока на персонаже нет шлема.
+  if (blindsightActive(actor)) return true;
   return ALT_SENSES_CAPABILITIES.some(flag => hasRuleFlag(actor, flag));
 }
 

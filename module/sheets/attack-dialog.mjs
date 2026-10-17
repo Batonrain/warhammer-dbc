@@ -37,6 +37,8 @@ import { hasRuleFlag }                        from "../rules/flags.mjs";
 import { khornePatron }                       from "../rules/patron-abilities.mjs";
 import { isStunnedOrDazed }    from "../rules/predicates.mjs";
 import { suffersBlindness } from "../rules/blindness.mjs";
+import { hasBlindFighting } from "../rules/unseen-talents.mjs";
+import { halvePenalty } from "../rules/awareness-talents.mjs";
 import { shieldRaisedToHead } from "../combat/hand-shield.mjs";
 import { isHallucinatingCannotAttack }         from "../combat/hallucinogenic.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
@@ -1726,7 +1728,8 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
   // (wdbc-x1nz.2.97 п.6); Ослеплённый бьёт с −30 WS, как строка «Ослеплён»
   // окна (wdbc-x1nz.2.89) — здесь галочек нет, поэтому сразу в Порог.
   const { proneMod, stunnedMod } = targetConditionAttackMods(targetActor, true);
-  const blindMod = suffersBlindness(actor) ? -30 : 0;
+  // Бой Вслепую: штраф слепоты в рукопашной вдвое.
+  const blindMod = suffersBlindness(actor) ? (hasBlindFighting(actor) ? halvePenalty(-30) : -30) : 0;
   // WS уже включает мод препаратов (см. prepareDerivedData)
   const final    = ws + techDef.wsBonus + baseBon + stBon + fatigue + proneMod + stunnedMod + blindMod;
 

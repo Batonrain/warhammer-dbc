@@ -30,6 +30,8 @@ import { getHeldHand, weaponHandsRequired } from "../../rules/hands.mjs";
 import { BODY_SIDES, fingersLostOn } from "../../rules/limb-loss.mjs";
 import { longRangeImmunityReason } from "../../rules/range-penalty-immunity.mjs";
 import { lightPenaltyImmunityReason, smokePenaltyImmunityReason } from "../../rules/vision-penalty-immunity.mjs";
+import { hasBlindFighting } from "../../rules/unseen-talents.mjs";
+import { halvePenalty } from "../../rules/awareness-talents.mjs";
 // Действующие моды (wdbc-1rno.38/.40): без «бесполезных без X» и без
 // невыбранных прицелов — тот же список, что у getModEffects и окна атаки.
 import { getActiveMods } from "../../combat/weapon-mods.mjs";
@@ -317,6 +319,16 @@ export function situationalMods(v) {
       m.value  = 0;
       m.immune = true;
       m.note   = `${reason}: штрафа нет`;
+    }
+  }
+  // Бой Вслепую (глава 3, Внимательность): «уменьшает штрафы на рукопашные
+  // Атаки … от слепоты, тьмы и уменьшенной видимости в 2 раза» — Дым/Тьма и
+  // Ослеплён в рукопашной вдвое меньше (то, что уже погашено, остаётся нулём).
+  if (isMelee && hasBlindFighting(actor)) {
+    for (const m of commonMods) {
+      if (!(m.visionPenalty || m.label === "Ослеплён") || m.immune || !(m.value < 0)) continue;
+      m.value = halvePenalty(m.value);
+      m.note  = "Бой Вслепую: штраф вдвое";
     }
   }
   // Aspect (wdbc-8b5/wdbc-28ld, стр. 168): без соответствующего Пути — −30 на
