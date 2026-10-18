@@ -40,7 +40,8 @@ describe("каркас module/rules", () => {
     // haywireFieldMin — поле Haywire вокруг BONE-Head Огрина (rules/bone-head.mjs).
     // targetSerpentine — змееподобная цель, Безграничное Тщеславие Наги (rules/naga-traits.mjs).
     // targetIsPsyker — цель-псайкер без демонов (Рога Кровожада, wdbc-1rno.10).
-    expect(Object.keys(predicates.PREDICATES)).toHaveLength(42);
+    // hasLodgedHorn — рог Чумоноса в ране (rules/lodged-horn.mjs, wdbc-1rno.10).
+    expect(Object.keys(predicates.PREDICATES)).toHaveLength(43);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);
     expect(typeof sources.registerRuleSource).toBe("function");

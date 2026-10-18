@@ -189,7 +189,11 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   const autoFail = (resolved.autoFail ?? []).length > 0;
   const outcome0 = testOutcome(rv, eff, { autoSuccess: autoSuccess && !autoFail });
   const success = autoFail ? false : outcome0.success;
-  const rawDeg = (autoFail && outcome0.success) ? 1 : outcome0.deg;
+  // Минимум Провалов от правила (эффект autoFail.degrees, по умолчанию 1): если
+  // бросок и так провален глубже — остаётся он, иначе берётся минимум.
+  const autoFailDeg = Math.max(1, ...(resolved.autoFail ?? []).map(a => a.degrees || 1));
+  const rawDeg = !autoFail ? outcome0.deg
+    : outcome0.success ? autoFailDeg : Math.max(outcome0.deg, autoFailDeg);
   const crit = criticalOutcome(rv, resolved.crit);
   const autoFailLine = autoFail
     ? `<div class="roll-threshold">⛔ Автопровал: ${resolved.autoFail.map(a => esc(a.label)).join(", ")}</div>`

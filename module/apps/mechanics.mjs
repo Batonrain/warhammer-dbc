@@ -251,7 +251,8 @@
 //      естественных атак, которые книга называет прямо в записи расы
 //      («Natural Weapons (1, Рога, Укус, Когти, Копыта)»): выданная Черта
 //      получает готовый выбор integralChosen, окно с галочками не всплывает.
-//    integralAttack: { equipSourceUuid, equipSourceName, equipSourceImg }
+//    integralAttack: { equipSourceUuid, equipSourceName, equipSourceImg,
+//                      integralRating? — формула X образца, если у источника нет рейтинга }
 //      → ВСТРОЕННАЯ АТАКА: то же создание предмета-оружия на акторе, что и у
 //      equipment режима "direct", но с двумя отличиями, ради которых она и
 //      заведена отдельным видом. Первое: выданное оружие сразу
@@ -2656,7 +2657,12 @@ async function buildIntegralAttackData(entry, sourceItem) {
   // Профиль от рейтинга источника (Укус (X) и т.п., wdbc-o368c): «X» в уроне
   // образца подставляется, образец помнится для пересчёта при смене X.
   const template = ratingTemplateOf(data.system, data.flags?.[FLAG]);
-  const rating = sourceRating(sourceItem.system);
+  // integralRating — формула X самой записи (Рог Чумоноса: «½Cor.b (окр.▼)»),
+  // когда у источника нет своего рейтинга (Мутация не Черта); считается от
+  // владельца на момент выдачи и пересчитывается при пересинхронизации.
+  const ratingFormula = String(entry.integralRating ?? "").trim();
+  const rating = sourceRating(sourceItem.system)
+    ?? (ratingFormula ? mechFormulaTotalSafe(ratingFormula, mechRollData(sourceItem.parent)) : null);
   const rated = !!template && rating !== null;
   if (rated) Object.assign(data.system, applyRatingTemplate(template, rating));
   // equipSourceUuid — устойчивый идентификатор вида удара (кулак/пинок/…):
@@ -2665,7 +2671,8 @@ async function buildIntegralAttackData(entry, sourceItem) {
   data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}),
     grantedByItem: sourceItem.id, equipEntryId: entry.id, integralAttack: true,
     equipSourceUuid: entry.equipSourceUuid,
-    ...(rated ? { [RATING_TEMPLATE_FLAG]: template } : {}) } };
+    ...(rated ? { [RATING_TEMPLATE_FLAG]: template } : {}),
+    ...(rated && ratingFormula && sourceRating(sourceItem.system) === null ? { integralRatingFormula: ratingFormula } : {}) } };
   return data;
 }
 
@@ -2831,12 +2838,16 @@ export async function syncGrantedEquipment(sourceItem) {
  * system.rating (warhammer-dbc.mjs).
  */
 async function syncIntegralRatings(sourceItem, granted) {
-  const rating = sourceRating(sourceItem.system);
-  if (rating === null) return;
+  const sourceR = sourceRating(sourceItem.system);
   const updates = [];
   for (const w of granted) {
     const template = w.getFlag?.(FLAG, RATING_TEMPLATE_FLAG);
     if (!template) continue;
+    // Рейтинг от формулы записи (integralRating), а не от самого источника.
+    const formula = w.getFlag?.(FLAG, "integralRatingFormula");
+    const rating = sourceR !== null ? sourceR
+      : formula ? mechFormulaTotalSafe(formula, mechRollData(sourceItem.parent)) : null;
+    if (rating === null) continue;
     const want = applyRatingTemplate(template, rating);
     const patch = {};
     if (want.damage !== w.system?.damage) patch["system.damage"] = want.damage;
@@ -3931,7 +3942,9 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       <option value="">— выберите оружие —</option>
       ${equipmentOptionsHtml(ent.equipSourceUuid, ["weapons"])}
     </select>
-    <label class="mech-cc-check" title="Все такие записи предмета предлагаются галочками в одном окне при получении (напр. Естественное Оружие: Когти, Рога, Укус...)"><input type="checkbox" class="mech-integral-optional" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.equipOptional ? "checked" : ""} ${dis}/> по выбору</label>`;
+    <label class="mech-cc-check" title="Все такие записи предмета предлагаются галочками в одном окне при получении (напр. Естественное Оружие: Когти, Рога, Укус...)"><input type="checkbox" class="mech-integral-optional" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.equipOptional ? "checked" : ""} ${dis}/> по выбору</label>
+    <input type="text" class="mech-integral-rating" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.integralRating ?? "")}"
+           placeholder="X, напр. floor(cor/2)" title="Рейтинг X образца (1d10+X, Pen X), если у источника своего рейтинга нет. ${esc(MECH_FORMULA_HINT)}" ${dis}/>`;
   }
 
   if (ent.kind === "equipment") {

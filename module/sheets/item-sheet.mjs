@@ -2464,6 +2464,7 @@ export class WarhammerItemSheet
     mechField(".mech-ap-key",     (e, v) => { e.apKey = v; });
     mechField(".mech-ap-rating",  (e, v) => { e.apRating = String(v ?? "").trim(); });
     mechField(".mech-ap-rating2", (e, v) => { e.apRating2 = String(v ?? "").trim(); });
+    mechField(".mech-integral-rating", (e, v) => { e.integralRating = String(v ?? "").trim(); });
     on(".mech-ap-target-psyker", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);

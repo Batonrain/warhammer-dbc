@@ -8,6 +8,7 @@
 import { actorFactionKeys, anySameOrDescendant, isSameOrDescendant, getFactionIndex }
   from "./factions.mjs";
 import { raceMatches } from "./race.mjs";
+import { hasLodgedHorn } from "./lodged-horn.mjs";
 import { hordeSizeFor } from "./horde-damage.mjs";
 import { hasPathGrade } from "../constants/aeldari-paths.mjs";
 import { anyTargetMatches } from "./talent-targets.mjs";
@@ -417,6 +418,10 @@ export const PREDICATES = {
     const hit = !!t && ((Number(t.system?.psyker?.rating) || 0) >= 1 || isDaemonActor(t));
     return hit === (value !== false);
   },
+
+  // В ране актора торчит рог Чумоноса (Majestic Horns, 7, wdbc-1rno.10): метка
+  // на акторе плюс неизвлечённое Проникающее в её локации — rules/lodged-horn.mjs.
+  hasLodgedHorn: (actor, ctx, value) => hasLodgedHorn(actor) === (value !== false),
 
   // Цель броска — именно псайкер, БЕЗ демонов (Рога Кровожада: «Flame (3d10)
   // против псайкеров», wdbc-1rno.10). Признак тот же, что у листа (hud.mjs) и
