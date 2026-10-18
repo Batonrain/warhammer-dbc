@@ -638,7 +638,10 @@ export function autoFailFromRules(rules, ctx = {}) {
     for (const effect of rule?.effects ?? []) {
       if (effect?.kind !== "autoFail") continue;
       if (!effectAppliesTo(effect.target, ctx)) continue;
-      out.push({ ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id });
+      // degrees — сколько Провалов проставить (Рог Чумоноса: «автоматически
+      // проваливает тесты T с 3 Провалами»); без поля — один, как у Ослеплённого.
+      out.push({ ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id,
+                 degrees: Math.max(1, Math.trunc(Number(effect.degrees)) || 1) });
     }
   }
   return out;

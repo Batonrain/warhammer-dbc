@@ -484,6 +484,8 @@ describe("общее требование к предикатам", () => {
     targetIsAstartes: true,
     // Цель — псайкер, без демонов (Рога Кровожада, wdbc-1rno.10).
     targetIsPsyker: true,
+    // Рог Чумоноса в ране (wdbc-1rno.10) — читает метку и ранения актора, значение из when не участвует.
+    hasLodgedHorn: undefined,
     haywireFieldMin: 3,
     charNotIn: ["t", "inf", "cor"],
     charIn: ["int", "per", "wp", "fel", "inf"],

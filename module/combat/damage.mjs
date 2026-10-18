@@ -19,6 +19,7 @@ import { postTestCard, outcomeHtml, rollStatLine } from "../helpers/test-card.mj
 import { ablativeDamage, mountRangedApBonus } from "../rules/mount.mjs";
 import { LAST_DAMAGE_WEAPON_FLAG } from "./blood-flame.mjs";
 import { divineProtectionActive } from "../rules/death-save.mjs";
+import { lodgesHorn, LODGED_HORN_FLAG, HORN_REGROW_FLAG, HORN_REGROW_SECONDS, NS as HORN_NS } from "../rules/lodged-horn.mjs";
 import { resolveArmorAbsorptionAP, breachArmorAtLocation, armorBreachOutcome } from "./armor-properties.mjs";
 import { applyWoundLoss, ablativeAbsorb } from "../rules/wounds.mjs";
 import { computeWoundHealing } from "../sheets/tabs/wounds.mjs";
@@ -139,6 +140,22 @@ async function _applyPiercing(actor, armorKey, hitLocation) {
 }
 
 /**
+ * «Обломить Рог» (Рог Чумоноса, Majestic Horns 7, wdbc-1rno.10): если это
+ * попадание оружием с меткой lodgesHorn оставило Проникающее в ране, рог
+ * застрял там — цель метится (rules/lodged-horn.mjs: пока рана не очищена,
+ * тесты T автопровалены с 3 Провалами), а у владельца рог отрастает 3 часа.
+ * Возвращает подпись для карточки урона либо "" — это не обломок.
+ */
+async function _applyLodgedHorn(actor, armorKey, { weaponUuid = "", attackerUuid = "" } = {}) {
+  const weapon = weaponUuid ? await fromUuid(weaponUuid).catch(() => null) : null;
+  if (!lodgesHorn(weapon)) return "";
+  await actor.setFlag?.(HORN_NS, LODGED_HORN_FLAG, { armorKey });
+  const owner = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
+  if (owner) await owner.setFlag?.(HORN_NS, HORN_REGROW_FLAG, (Number(game.time?.worldTime) || 0) + HORN_REGROW_SECONDS);
+  return `<div class="dmg-tb-note">🦴 Рог Чумоноса остался в ране (${ARMOR_KEY_TO_LOCATION[armorKey] || armorKey}): цель автоматически проваливает тесты T с 3 Провалами, пока рог не извлечён. Рог владельца отрастёт через 3 часа.</div>`;
+}
+
+/**
  * Извлекает застрявший снаряд Проникающего: полудействие, +1 непоглощаемый
  * R Dmg в ту же часть, снимает штраф/рану. Дёргается кнопкой в чате
  * (.wh-piercing-extract-btn, hooks.mjs) из заметки _applyPiercing выше.
@@ -148,6 +165,8 @@ export async function extractPiercingWound(actor, armorKey) {
     return ui.notifications?.info(`${actor.name}: в этой части тела нет застрявшего снаряда.`);
   }
   await actor.update({ [`system.piercingWounds.${armorKey}`]: 0 });
+  // Если в ране был рог Чумоноса — метка уходит вместе с ним (rules/lodged-horn.mjs).
+  if (actor.getFlag?.(HORN_NS, LODGED_HORN_FLAG)?.armorKey === armorKey) await actor.unsetFlag?.(HORN_NS, LODGED_HORN_FLAG);
   const loss = await applyWoundLoss(actor, 1);
   const { currentWounds, newWounds, newCritical, gotCritical } = loss;
   const crit = await secondaryCritHtml(actor, loss, { damageType: "rending", hitLocation: ARMOR_KEY_TO_LOCATION[armorKey] || "Торс" });
@@ -429,6 +448,12 @@ async function _applyShieldOverload(shieldItem, actor, s, { attackerUuid = "", i
   return { overloadRolls, overloadExtraHtml };
 }
 
+/** Прикрывает ли щит эту метку попадания (flags.warhammer-dbc.shieldHitLocations; нет флага — всё тело). */
+export function _shieldCoversLocation(shieldItem, hitLocation) {
+  const locs = shieldItem?.getFlag?.("warhammer-dbc", "shieldHitLocations");
+  return !Array.isArray(locs) || !locs.length || locs.includes(hitLocation);
+}
+
 async function _rollActiveShield(actor, { skipWarp = false, melee = false, damageSubtype = "", hitLocation = "", attackerUuid = "", isRetaliation = false, ignoreDomeShields = false } = {}) {
   // Ищем самый мощный активный щит (по currentRating). Освящённое оружие
   // (skipWarp) пропускает чародейские (варп-природные) щиты. Кровопомазанник
@@ -455,6 +480,11 @@ async function _rollActiveShield(actor, { skipWarp = false, melee = false, damag
       i.system.status === "active" &&
       !(skipWarp && (i.system.shieldNature || "technological") === "warp") &&
       !(melee && i.getFlag?.("warhammer-dbc", "turnStateShieldRangedOnly")) &&
+      // Щит одной части тела (Рог-Дефлектор Однорогого, wdbc-1rno.10: «от
+      // попаданий в голову, но не в глаза»): флаг — список меток попадания, на
+      // которые щит вообще отзывается; попадание в Глаз — своя метка, в
+      // «Голова» не входит. Нет флага — щит защищает всё тело, как раньше.
+      _shieldCoversLocation(i, hitLocation) &&
       !(damageSubtype && _shieldSubtypeEntries(i).some(e => e.shieldSubtypeMode === "exclude" && e.shieldSubtypeKey === damageSubtype)) &&
       !(_hasShieldArmorGate(i) && (!_hasHardArmorAtBody(actor) || Number(wornOnly[hitArmorKey]) <= 0)) &&
       // Приём Пила (стр. 14, wdbc-x1nz.2.67): «игнорирует силовые щиты-купола»
@@ -1507,6 +1537,8 @@ export async function applyDamageToActor(actor, damageData) {
   }
   if (piercing && netDamage > 0 && !hasWeaponPropertyImmunity(actor, "piercing")) {
     propEffectNotes.push(await _applyPiercing(actor, armorKey, hitLocation));
+    const hornNote = await _applyLodgedHorn(actor, armorKey, { weaponUuid, attackerUuid });
+    if (hornNote) propEffectNotes.push(hornNote);
   }
   if (cripplingRating > 0 && netDamage > 0 && !hasWeaponPropertyImmunity(actor, "crippling")) {
     propEffectNotes.push(await _applyCrippling(actor, armorKey, hitLocation, damageType, cripplingRating));

@@ -861,6 +861,72 @@
               }
             },
             {
+              "id": "majestichorns-1-shield",
+              "kind": "equipment",
+              "equipMode": "direct",
+              "equipQty": 1,
+              "equipSourceUuid": "Compendium.warhammer-dbc.shields.Item.NXVolJ8jj4rI18dA",
+              "equipSourceName": "Single Horn Deflector / Рог-Дефлектор Однорогого",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "1"
+                ],
+                "negateSub": false
+              }
+            },
+            {
+              "id": "majestichorns-7-horn",
+              "kind": "integralAttack",
+              "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.sH9dDNM8LIXVcDxw",
+              "equipSourceName": "Horns (Plaguebearer) / Рог Чумоноса",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+              "integralRating": "floor(cor/2)",
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "7"
+                ],
+                "negateSub": false
+              }
+            },
+            {
+              "id": "majestichorns-7-breakoff",
+              "kind": "integralAttack",
+              "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.QL8XzDdndPfW3C0a",
+              "equipSourceName": "Horns (Break Off) / Обломить Рог",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+              "integralRating": "floor(cor/2)",
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "7"
+                ],
+                "negateSub": false
+              }
+            },
+            {
+              "id": "majestichorns-9-no-vision-aids",
+              "kind": "capability",
+              "capabilityKey": "mutation.majesticHorns.noVisionAids",
+              "capabilityMode": "flag",
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "9"
+                ],
+                "negateSub": false
+              }
+            },
+            {
               "id": "majestichorns-10-crown",
               "kind": "integralAttack",
               "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.CCDdNzbbq0tmRBPM",

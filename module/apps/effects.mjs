@@ -8,6 +8,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { toggleParentId, isToggleOn } from "../rules/toggle-abilities.mjs";
+import { visionAidBlocked } from "../rules/vision-aids.mjs";
 import { activeRunicWeaveId, siblingRunicWeaves } from "../rules/runic-weave.mjs";
 
 /**
@@ -42,6 +43,13 @@ export function gearRequiresWearing(sys) {
 }
 
 export function isItemActive(item) {
+  // Зрящие Рога (Majestic Horns 9, wdbc-1rno.10): авточувства и визоры
+  // не действуют, пока такая мутация на акторе (rules/vision-aids.mjs).
+  if (visionAidBlocked(item)) return false;
+  return isItemActiveBase(item);
+}
+
+function isItemActiveBase(item) {
   const sys = item.system || {};
   // Подспособность переключаемой способности (Локус Герольда и подобные,
   // module/rules/toggle-abilities.mjs) активна ровно тогда, когда её включили

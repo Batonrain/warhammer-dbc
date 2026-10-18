@@ -15,6 +15,7 @@
 // любой другой (Приём зависит от Базы, Стойка/Приём/Хват — от Профиля через
 // категорию оружия, categoryFor/trainingFor ниже).
 
+import { isPlagueHorn, hornRegrowLeft, regrowLabel } from "../rules/lodged-horn.mjs";
 import { hardTargetPenalty } from "../rules/hard-target.mjs";
 import { CHARACTERISTICS }                    from "../constants/characteristics.mjs";
 import { DAMAGE_TYPES }                       from "../constants/items.mjs";
@@ -100,6 +101,12 @@ import { runtForbidsOneHand } from "../rules/runt.mjs";
  */
 
 export async function showAttackDialog(actor, item, techniqueOpts = {}) {
+  // Рог Чумоноса (Majestic Horns 7, wdbc-1rno.10): обломанный рог отрастает 3
+  // игровых часа — все это время рогами бить нельзя (rules/lodged-horn.mjs).
+  if (isPlagueHorn(item)) {
+    const left = hornRegrowLeft(actor, game.time?.worldTime);
+    if (left > 0) return ui.notifications.warn(`⚠️ ${item.name}: рог обломан, отрастёт через ${regrowLabel(left)}.`);
+  }
   // Галлюцинации, грань «Я маленький...» (стр. 168, wdbc-r5o7.8): «не может
   // совершать Атаки» — жёсткий запрет, тот же приём, что Повален блокирует
   // Натиск/Бег (movement-actions.mjs).

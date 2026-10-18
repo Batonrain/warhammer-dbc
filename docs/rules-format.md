@@ -100,6 +100,7 @@ when: {
 | `isDaemon` | `true`/`false` | актор — демон: тип `daemon`/`demonPrince` или Черта Daemonic | нет |
 | `wearsFootwear` | `true`/`false` | актор обут: надета броня с AP на ноге или Маг-Сапоги; `false` — «босиком» (Barefoot / Босоногий Ратлинга) | да |
 | `targetPsykerOrDaemon` | `true`/`false` | цель броска — псайкер (Пси-Рейтинг ≥ 1) или демон | да |
+| `hasLodgedHorn` | `true`/`false` | в ране актора торчит рог Чумоноса (метка + неизвлечённое Проникающее в той же локации) — `rules/lodged-horn.mjs` | нет |
 | `targetIsPsyker` | `true`/`false` | цель броска — псайкер (Пси-Рейтинг ≥ 1 или флаг `isPsyker`), демоны не считаются; Flame Рогов Кровожада «против псайкеров» (запись «Свойство атаки» с галкой «только по псайкерам») | да |
 | `targetIsAstartes` | `true`/`false` | цель (или источник теста Морали — тот же `ctx.targetActor`) — Космодесантник: раса или Черта «Astartes» (Angel Hunters Йигори) | да |
 | `weightlessScene` | `true`/`false` | сцена актора (токен, иначе активная) в невесомости или микро-гравитации: гравитация окна «Окружающая Среда» < 0,2 G (Пустота в Венах Сквата) | нет |
@@ -192,7 +193,7 @@ export const PREDICATES = {
 | `grantWeaponProp` | `target`, `propKey`, `rating`, `rating2` | доп. Особое Свойство Оружия на эту атаку, см. ниже |
 | `failDegMod` | `target`, `value` | доп. степени провала (`value`, может быть отрицательным), суммируются, только если тест УЖЕ провален |
 | `scriptTrigger` | `target`, `side`, `itemId`, `entryId` | автозапуск записи `kind:"script"` по исходу теста; `side`: `critSuccess` или `critFailure` |
-| `autoFail` | `target` | тест в этой области провален без учёта броска (Ослеплён — `basedon:bs`); применяет общий исход теста `rules/kind-outcome.mjs` |
+| `autoFail` | `target` (+ `degrees`) | тест в этой области провален без учёта броска (Ослеплён — `basedon:bs`); `degrees` — минимум Провалов (Рог Чумоноса — 3, по умолчанию 1; если бросок провален глубже, остаётся он); применяет общий исход теста `rules/kind-outcome.mjs` |
 | `successDegMax` | `target`, `value` | потолок степени УСПЕХА (провал не трогает); несколько — берётся наименьший; режет итог после Сверхъестественной Характеристики и Ассистентов (BONE-Head Огрина: `basedon:int`, 1) — `rules/kind-outcome.mjs`, `sheets/actor-sheet.mjs` |
 | `script` | `code` | аварийный выход, см. предупреждение ниже |
 
