@@ -1530,7 +1530,8 @@ export const CAPABILITIES = {
   },
   "courage.core.unshakeableWill": {
     label: "Персонаж может перебрасывать тесты Морали.",
-    source: "Unshakeable Will / Несокрушимая Воля", reader: ""
+    source: "Unshakeable Will / Несокрушимая Воля",
+    reader: "Конструктор МЕХАНИКА (packs-src/talents/Смелость/Unshakeable_Will) — kind:\"reroll\", rerollScope «morale»; module/rules/item-rules.mjs::scopeTarget, module/rules/resolve-test.mjs::effectAppliesTo"
   },
   // ── Скитарии
   "skitarii.core.boonOfOmnissiah": {
