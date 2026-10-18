@@ -628,6 +628,9 @@ Hooks.once("init", () => {
   // Версия простановки метки встроенного ретинального дисплея броне, маскам и
   // имплантам, выданным до правки пака 02.10.2026 (одноразовая, task-9b5f)
   game.settings.register("warhammer-dbc", "retinalDisplayMarkVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
   // Версия закрепления режима цен мира и пересчёта цен Продвижения после
   // сверки «Склонности» 04.10.2026 (одноразовая, migrations/advance-pricing-baseline.mjs)
   game.settings.register("warhammer-dbc", "advancePricingBaselineVersion", {
@@ -1118,8 +1121,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateRetinalDisplayMark, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateRetinalDisplayMark, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -1378,6 +1380,8 @@ Hooks.once("ready", async () => {
     key: "retinalDisplayMarkVersion", tokensKey: "retinalDisplayMarkTokensVersion", label: "Встроенный ретинальный дисплей",
     full: () => migrateRetinalDisplayMark(), tokensOnly: () => migrateRetinalDisplayMark({ tokensOnly: true })
   });
+});
+
 // ── Одноразово: режим цен мира закрепляется на «Склонностях», если ГМ его ни
 // разу не сохранял (умолчание сменили на Покровительство), и пересчитываются
 // цены купленного — Таланты Элитных Архетипов стали Нейтральными, цена покупки
