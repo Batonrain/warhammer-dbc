@@ -34,6 +34,7 @@ import { mergeExtraProps } from "../combat/attack-weapon.mjs";
 import { getModEffects, mergeWeaponPropEntries, getActiveMods, getInstalledMods, isSightMod,
          activeSightId, modWornRequirementMet } from "../combat/weapon-mods.mjs";
 import { hasRuleFlag }                        from "../rules/flags.mjs";
+import { khornePatron }                       from "../rules/patron-abilities.mjs";
 import { isStunnedOrDazed }    from "../rules/predicates.mjs";
 import { suffersBlindness } from "../rules/blindness.mjs";
 import { hasBlindFighting } from "../rules/unseen-talents.mjs";
@@ -633,6 +634,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const autoHitAvailable = isMelee
     && hasRuleFlag(actor, AUTO_HIT_CAPABILITY)
     && isRoundCapabilityAvailable(actor, AUTO_HIT_CAPABILITY);
+  // Атака Ненависти (Покровительство Кхорна, корбук 438): галочка нужна и в
+  // рукопашной, и в стрелковой атаке; подходит ли выбранная Характеристика,
+  // проверяет бросок — её можно сменить в самом окне.
+  const hateAttackAvailable = khornePatron(actor);
   // forceBase — нейтральная стартовая База вместо персистентной (Контратака,
   // стр. 12: это атака со штрафом −10, персистентная «Полная Атака» +30 сюда
   // протекать не должна). Игрок волен сменить её в окне, как обычно.
@@ -1427,6 +1432,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     attackerMount,
     autoCoverMod,
     autoHitAvailable,
+    hateAttackAvailable,
     autoMountRangedMod,
     badgesHtml,
     bandHtml,
@@ -1649,6 +1655,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     oneVsHundred,
     fanningActive,
     autoHitAvailable,
+    hateAttackAvailable,
     fullAttackForced,
     forcedDefenceReroll,
     helplessAutoMelee,

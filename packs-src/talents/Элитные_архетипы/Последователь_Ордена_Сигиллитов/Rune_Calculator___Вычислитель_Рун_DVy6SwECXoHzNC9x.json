@@ -1,19 +1,19 @@
 {
-  "name": "Rune Library / Библиотека Рун",
+  "name": "Rune Calculator / Вычислитель Рун",
   "type": "talent",
   "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
   "system": {
-    "description": "<p>Последователь хранит в своём разуме сотни рун, которые он готов сразу же применить в бою.</p>",
+    "description": "<p>Вычисляя своим разумом множество формул рун и способ их сотворения, он открывает себе невероятный тактический потенциал.</p>",
     "notes": "",
-    "benefit": "Псайкер увеличивает максимальный лимит рун на +I.b и ещё на +1 за каждую ступень навыка Forbidden Lore (Archeotech). Этот талант можно взять до 3 раз.",
+    "benefit": "При наступлении первого хода псайкера в бою он получает дополнительно +I.b рун. Этот талант можно взять до 3 раз.",
     "bookSource": "DoomBC — Психокеры-Жабы (Toad Psykers), стр. 101-102",
     "tier": 3,
-    "requirement": "I 40",
+    "requirement": "I 50",
     "aptitudes": [],
     "aptSource": "",
     "aspirations": [],
     "god": "",
-    "specialization": "",
+    "specialization": "Элитный архетип: Sigillite / Последователь Ордена Сигиллитов",
     "hasRating": false,
     "rating": 0,
     "targets": [],
@@ -27,7 +27,7 @@
       "speedMod": 0
     }
   },
-  "_id": "dG1SWT692CowLGkA",
+  "_id": "DVy6SwECXoHzNC9x",
   "effects": [],
   "folder": "WVmP04GaWbHgfDpV",
   "sort": 0,
@@ -38,7 +38,7 @@
     "warhammer-dbc": {
       "mechanics": [
         {
-          "id": "qygoZzug1DIG5N7Y",
+          "id": "RNx3POzGwFGW2CBo",
           "operator": "AND",
           "entries": [
             {
@@ -80,7 +80,7 @@
               "modScope": "all",
               "modValueMode": "flat",
               "modCharBonus": "inf",
-              "capabilityKey": "rune.sigillites.library",
+              "capabilityKey": "rune.sigillites.calculator",
               "fatigueAction": "threshold",
               "fatigueThresholdChar": "t",
               "equipMode": "direct",
@@ -126,7 +126,7 @@
                 "conditions": []
               },
               "kind": "capability",
-              "id": "yPQEW2AbsGSIGxNd"
+              "id": "NwhGAdiNo4AFhpxv"
             }
           ]
         }
@@ -145,5 +145,5 @@
     "modifiedTime": 1789000000000,
     "lastModifiedBy": "4Q6l1C4FQOMQVofr"
   },
-  "_key": "!items!dG1SWT692CowLGkA"
+  "_key": "!items!DVy6SwECXoHzNC9x"
 }

@@ -71,6 +71,17 @@ export function aspirationChoices(packEntries = [], worldItems = [], table = "")
   return out;
 }
 
+/**
+ * Запись таблицы по результату d10 (стр. 22: Стремления можно получить броском
+ * по каждой из трёх таблиц). Ищет по номеру в таблице; у записи мира номера
+ * обычно нет — броском она не выпадает, выбирается только руками.
+ */
+export function aspirationByRoll(tableChoices = [], roll = 0) {
+  const n = Number(roll);
+  if (!Number.isInteger(n)) return null;
+  return tableChoices.find(e => e?.n != null && Number(e.n) === n) || null;
+}
+
 /** Поиск записи по ключу среди обоих источников — для показа выбранного. */
 export function findAspiration(packEntries = [], worldItems = [], key = "") {
   if (!key) return null;

@@ -351,6 +351,13 @@
 }
 .wh-crit-apply-btn:hover { background: #ecdfba; }
 .wh-crit-apply-btn:disabled { opacity: 0.55; cursor: default; }
+.wh-crit-ignored { text-decoration: line-through; opacity: 0.4 !important; }
+.wh-sweet-suffering-btn {
+  background: #f6e3f3; border: 1px solid #b14fa3; color: #5a1f52; border-radius: 3px;
+  padding: 2px 8px; cursor: pointer; font-size: 0.85em;
+}
+.wh-sweet-suffering-btn:hover { background: #f0d0eb; }
+.wh-sweet-suffering-btn:disabled { opacity: 0.55; cursor: default; }
 .wh-crit-apply-btn svg { width: 1em; height: 1em; }
 
 /* ── Просмотр кубов (разворачиваемый блок) ─────────────────── */

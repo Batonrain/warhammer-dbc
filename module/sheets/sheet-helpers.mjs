@@ -24,11 +24,11 @@ import { PSY_DISCIPLINES, TECH_DISCIPLINES, canHaveFocusDiscipline } from "../co
 import { effectiveFocusDisciplines, ownFocusDisciplines, grantedFocusDisciplines } from "../rules/psy-focus.mjs";
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
 import { TALENT_LIBRARY }                            from "../constants/talents-library.mjs";
-import { charAptitudeSet } from "../constants/advancement.mjs";
+import { charAptitudeSet, APTITUDES_TOTAL } from "../constants/advancement.mjs";
 import { canClearJam }                                from "../combat/weapon-properties.mjs";
 import { isBraced }                                   from "../combat/brace-weapon.mjs";
 import { ASPIRATION_TABLES } from "../constants/aspirations.mjs";
-import { aspirationOptions, aspirationByKey } from "../apps/aspirations.mjs";
+import { aspirationOptions, aspirationByKey, aspirationPickState } from "../apps/aspirations.mjs";
 import { supportsInfoguard } from "../apps/infoguard.mjs";
 import { gearRequiresWearing } from "../apps/effects.mjs";
 import { xpLogEntries } from "../apps/xp-log.mjs";
@@ -1047,6 +1047,15 @@ function buildGetDataUncached(actor) {
   context.aptitudeChoices = Object.entries(APTITUDES)
     .filter(([k]) => k !== "general")
     .map(([key, label]) => ({ key, label }));
+  // Книга: «выбрать 8 Склонностей» (стр. 24), потом их только МЕНЯЮТ — одну на
+  // другую. ＋ виден всегда — девятую даёт раса или Путь (Аэльдари-Изгой), —
+  // но сверх восьми предупреждает; ✕ нужен, лишь когда их больше восьми.
+  const aptList  = (Array.isArray(system.aptitudes) ? system.aptitudes : Object.values(system.aptitudes || {})).filter(Boolean);
+  const aptCount = new Set(aptList).size;
+  context.aptitudeTotal     = APTITUDES_TOTAL;
+  context.aptitudeCount     = aptCount;
+  // Повтор в списке тоже лишний: он считается за одну Склонность.
+  context.aptitudeCanRemove = aptList.length > APTITUDES_TOTAL || aptList.length > aptCount;
 
   // Стремления (стр. 22): ЖЁСТКО фиксированные 3 слота, по одному на таблицу
   // (Гордыня/Позор/Мотивация) — раньше был свободный список до 3 из любой
@@ -1066,7 +1075,7 @@ function buildGetDataUncached(actor) {
     const options = aspirationOptions(t.key).map(e => ({ id: e.key, name: e.name, mods: e.mods }));
     if (a && a.custom) return { idx, table: t.key, label: t.label, options, custom: true, id: "", name: a.name || "", mods: a.mods || "", desc: a.desc || "" };
     const e = aspirationByKey(a?.id || a);
-    return { idx, table: t.key, label: t.label, options, custom: false, id: a?.id || a || "", name: e?.name || "", mods: e?.mods || "", desc: e?.desc || "" };
+    return { idx, table: t.key, label: t.label, options, custom: false, id: a?.id || a || "", noMods: !!a?.noMods, pickState: a?.noMods ? "none" : aspirationPickState(actor, idx, e), name: e?.name || "", mods: e?.mods || "", desc: e?.desc || "" };
   });
 
   // Доп. элитные архетипы (кнопка «+» в шапке, поверх основного eliteArchetype).

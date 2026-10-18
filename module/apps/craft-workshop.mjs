@@ -33,7 +33,7 @@ import { pickReroll } from "../rules/reroll-pick.mjs";
 import { critLineHtml } from "../rules/test-kind-widget.mjs";
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
-import { hasSlowShiftTalent, cyberpreacherApplies, effectiveDiceMode, slowShiftBonus, polymathBonus, darkMuseAssistBonus, haemonculusLabBonus } from "../rules/craft-advantage.mjs";
+import { hasSlowShiftTalent, cyberpreacherApplies, effectiveDiceMode, slowShiftBonus, polymathBonus, researchBonus, darkMuseAssistBonus, haemonculusLabBonus } from "../rules/craft-advantage.mjs";
 
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 
@@ -414,7 +414,9 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     const polyBonus = polymathBonus(crafter);
     // Лаборатория Гемункула (wdbc-6nl9): +60 безусловно на Крафт И Исследования.
     const labBonus = haemonculusLabBonus(crafter);
-    const limit = R.combined.limit + mono + assistBonus + slowBonus + polyBonus + labBonus;
+    // Инновация (Стремление): +10 только на Исследования.
+    const innovationBonus = researchBonus(crafter, proj.mode);
+    const limit = R.combined.limit + mono + assistBonus + slowBonus + polyBonus + labBonus + innovationBonus;
 
     // Комбинированный тест — ОДНА проверка против наименьшего/итогового Предела
     // (свой книжный расчёт, не общий combinedThreshold — см. computeCombined).
@@ -462,6 +464,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
           ${assist ? `<div class="wh-craft-roll-line ok">Ассистенты (${assist}): +${assistBonus} к тесту, +${assist} успеха${darkMuseBonus ? ` (вкл. Тёмную Музу +${darkMuseBonus})` : ""}</div>` : ""}
           ${polyBonus ? `<div class="wh-craft-roll-line ok">Полимат: +${polyBonus} к тесту</div>` : ""}
           ${labBonus ? `<div class="wh-craft-roll-line ok">Лаборатория Гемункула: +${labBonus} к тесту</div>` : ""}
+          ${innovationBonus ? `<div class="wh-craft-roll-line ok">Инновация: +${innovationBonus} к тесту</div>` : ""}
           <div class="wh-craft-msg-sum ${gain > 0 ? "ok" : "fail"}">Итог смены: <b>+${gain}</b> · Прогресс: <b>${proj.project.accumulated}</b>/${R.bank}${done ? " · <b style='color:#8cf0a0'>ГОТОВО!</b>" : ""}</div>
           <div class="wh-craft-msg-foot">Смена №${proj.project.shifts} · Усталость +1 (крафтеру)${mono ? " · монотонность −30" : ""}</div>
         </div>`,
