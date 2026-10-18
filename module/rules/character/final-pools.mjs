@@ -16,7 +16,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { psyRatingFromTalents } from "../psyker.mjs";
-import { hasRuleFlag } from "../flags.mjs";
+import { hasRuleFlag, ruleFlagLabels } from "../flags.mjs";
 import { initiativeCharKey, fastestHandBonus, initiativeHint,
          INITIATIVE_DEFAULT_CHAR } from "../initiative.mjs";
 import { legacyInstinctiveInitiativeBonus, legacyForewarnedInitiativeBonus } from "../legacy-weapon.mjs";
@@ -67,18 +67,29 @@ export function prepareFinalPools(actor, system, { chars, agBonus, traitInitMod,
 
   // ── Когниция (Техножрец) ───────────────────────────────────────────────
   // Пул Когниции = Int.bonus; в начале Хода восстанавливается ½ Int.b.
+  // Virtual Memory / Виртуальная Память (technomystic.core.virtualMemory):
+  // подключённый к Ноосфере — +2 к максимуму за каждое взятие (до 3 раз,
+  // книга); «лишняя» при отключении не хранится отдельно — просто падает
+  // максимум, как и говорит Талант.
   if (system.cognition) {
     const ib = chars.int?.bonus ?? 0;
-    system.cognition.max   = ib;
+    const virtualMemoryCopies = system.noosphereConnected
+      ? Math.min(3, ruleFlagLabels(actor, "technomystic.core.virtualMemory").length) : 0;
+    system.cognition.max   = ib + virtualMemoryCopies * 2;
     system.cognition.regen = Math.ceil(ib / 2);
   }
 
   // ── Энергия (Катушка Потенции) + Техночудеса Кибернетики Механикум ──────
   // energy.max — база (ручной ввод); maxTotal = база + бонусы имплантов
   // (Мотивные Банки +5 и т.п.). Активация/зарядка используют maxTotal.
+  // Power Cache / Силовой Заряд (technomystic.core.powerCache): +½I.b
+  // (окр.▲) к максимальному заряду — НЕ действует на Катушку Апокрифу (та
+  // не входит в system.energy вовсе, см. apocryphaCoil — отдельный пул).
   if (system.energy) {
-    system.energy.bonusMax = implantEnergyMax;
-    system.energy.maxTotal = Math.max(0, (system.energy.max || 0) + implantEnergyMax);
+    const powerCacheBonus = hasRuleFlag(actor, "technomystic.core.powerCache")
+      ? Math.ceil((chars.int?.bonus ?? 0) / 2) : 0;
+    system.energy.bonusMax = implantEnergyMax + powerCacheBonus;
+    system.energy.maxTotal = Math.max(0, (system.energy.max || 0) + implantEnergyMax + powerCacheBonus);
     if ((system.energy.value || 0) > system.energy.maxTotal)
       system.energy.value = system.energy.maxTotal;
   }
