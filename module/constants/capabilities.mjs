@@ -1986,7 +1986,8 @@ export const CAPABILITIES = {
   },
   "minion.core.belovedLeader": {
     label: "Миньоны персонажа получают +10 Лояльности.",
-    source: "Beloved Leader / Обожаемый Лидер", reader: ""
+    source: "Beloved Leader / Обожаемый Лидер",
+    reader: "module/rules/minion-build.mjs::minionLoyalty"
   },
   "minion.core.betrayer": {
     label: "Раз в сессию персонаж может убить собственного Миньона, чтобы получить +20 (+10 если Миньон легко заменим) к следующему тесту Inf или восста…",
@@ -2006,7 +2007,8 @@ export const CAPABILITIES = {
   },
   "minion.core.tyrant": {
     label: "Стартовая Лояльность Миньонов персонажа может использовать Inf.",
-    source: "Tyrant / Тиран", reader: ""
+    source: "Tyrant / Тиран",
+    reader: "module/rules/minion-build.mjs::minionLoyalty (большее из обычной характеристики и Inf)"
   },
   "minion.core.unholyDevotion": {
     label: "Получив попадание, любой Миньон персонажа в пределах Полудвижения может пройти А+0 и получить попадание вместо него (+30,",

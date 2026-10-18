@@ -101,7 +101,15 @@ const ALLOWED = {
   // "trait", "Clear Mind"), не через hasTalent — анализатор ищет литерал
   // только в вызовах itemHasName/hasAbility/hasTalent/hasItemNamed/hasNamed
   // напрямую, этот вызов другой формы не распознаёт, хотя за столом работает.
-  "trait.treytyRas.clearMind": "включается по имени Черты (Clear Mind / Чистый Разум) — вызов другой формы (hasItem), анализатор такой не распознаёт"
+  "trait.treytyRas.clearMind": "включается по имени Черты (Clear Mind / Чистый Разум) — вызов другой формы (hasItem), анализатор такой не распознаёт",
+
+  // Melee Training / Weapon Training (Арсенал, гл. 3, wdbc-8r2iv): читаются
+  // rules/weapon-training.mjs по ИМЕНИ Таланта (regex /^Melee Training\b/,
+  // /^Weapon Training\b/) + system.specialization, не по capabilityKey —
+  // анализатор ищет литерал ключа, этот вид выдачи не распознаёт, хотя за
+  // столом способность есть у любого персонажа с купленным Талантом.
+  "arsenal.core.meleeTraining":  "включается по имени Таланта (Melee Training) + system.specialization, rules/weapon-training.mjs — анализатор такой вид выдачи не распознаёт",
+  "arsenal.core.weaponTraining": "включается по имени Таланта (Weapon Training) + system.specialization, rules/weapon-training.mjs — анализатор такой вид выдачи не распознаёт"
 };
 
 describe("возможности с читателем должны быть достижимы из игры", () => {
