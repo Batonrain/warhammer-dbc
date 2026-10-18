@@ -94,7 +94,14 @@ const ALLOWED = {
   // Скорость полёта (Гарпия, глава I): как Sonar Sense — включатель ИМЯ Черты
   // Flyer/Hoverer (rules/flight-speed.mjs, combat/movement-actions.mjs держат
   // имена массивом, литерала в вызове itemHasName анализатор не видит).
-  "trait.flyer": "включается по имени Черты (Flyer / Летун, Hoverer / Парящий) — сотни носителей в паках, ключ Конструктора не нужен"
+  "trait.flyer": "включается по имени Черты (Flyer / Летун, Hoverer / Парящий) — сотни носителей в паках, ключ Конструктора не нужен",
+
+  // Cybernetic Excellence / Кибернетическое Превосходство (Механикум, гл. 3,
+  // wdbc-wyu40): включатель — regex NAME_RE.test(item.name) внутри именованной
+  // функции isCyberneticExcellence (rules/cybernetic-excellence.mjs), не
+  // прямой вызов itemHasName/hasAbility/hasTalent — анализатор такую обёртку
+  // не распознаёт, хотя за столом способность работает.
+  "mechanicum.core.cyberneticExcellence": "включается по имени Таланта через regex в isCyberneticExcellence (rules/cybernetic-excellence.mjs) — анализатор такую обёртку не распознаёт"
 };
 
 describe("возможности с читателем должны быть достижимы из игры", () => {

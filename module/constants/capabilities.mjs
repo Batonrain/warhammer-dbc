@@ -2281,7 +2281,8 @@ export const CAPABILITIES = {
   },
   "mechanicum.core.cyberneticExcellence": {
     label: "Персонаж может установить дополнительную бионическую руку, получая Трейт Multiple Arms (+1). Можно брать до ½I.b+1 (окр.▼) раз.",
-    source: "Cybernetic Excellence / Кибернетическое Превосходство", reader: ""
+    source: "Cybernetic Excellence / Кибернетическое Превосходство",
+    reader: "module/rules/cybernetic-excellence.mjs (isCyberneticExcellence/cyberneticExcellencePurchases/cyberneticExcellenceCap — по имени, не capabilityKey), module/apps/cybernetic-excellence.mjs (синхронизация Трейта Multiple Arms на акторе)"
   },
   "mechanicum.core.cyberneticRebirth": {
     label: "Персонаж получает Трейт Machine(2).",
@@ -3081,7 +3082,8 @@ export const CAPABILITIES = {
   },
   "psyker.core.psyRating": {
     label: "Можно брать множество раз; за каждое взятие +1 PR. Максимум PR = W.b + Cor.b (не-Хаоситы — только до W.b).",
-    source: "Psy Rating / Пси-Рейтинг", reader: ""
+    source: "Psy Rating / Пси-Рейтинг",
+    reader: "module/rules/psyker.mjs::psyRatingFromTalents (сумма +1 за каждую копию, по имени Таланта) + module/rules/character/final-pools.mjs::prepareFinalPools (замещает system.psyker.rating). Потолок W.b(+Cor.b) — НЕ enforcement, подсказка стола, как у прочих повторяемых Талантов."
   },
   "psyker.core.psychicLocus": {
     label: "Изучая потоки Варпа 8 часов, персонаж проходит Psyniscience+0 и при Успехе запоминает местность (запишите Успехи). Не дальше P.",
