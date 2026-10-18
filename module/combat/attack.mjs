@@ -637,7 +637,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // на выбранной WS/BS. Только когда исход решил бросок (autoHitKind пуст):
   // Распыление и «ровно N Успехов» тестом Характеристики не являются.
   const adroitBonus = autoHitKind ? 0 : adroitDegreeBonus(actor, charKey, hit);
-  const deg = rolledDeg + savageBonus + excessBonus + singleCombatDeg + adroitBonus;
+  // Bolter Drill / Болтерная Муштра (weaponsmith.core.bolterDrill): «Успешные
+  // тесты на стрельбу Болт оружием получают +1 Успех».
+  const bolterDrillBonus = (hit && charKey === "bs" && item?.system?.weaponType === "bolt"
+    && hasRuleFlag(actor, "weaponsmith.core.bolterDrill")) ? 1 : 0;
+  const deg = rolledDeg + savageBonus + excessBonus + singleCombatDeg + adroitBonus + bolterDrillBonus;
   // Посох/Крюк (core.json, «Типы Рукопашного Оружия»): «При Избирательном
   // попадании в Ногу [Посохом]... может потратить Реакцию, чтобы провести
   // против цели прием Повалить» / «На 3+ Успеха на попадание [Крюком]...».

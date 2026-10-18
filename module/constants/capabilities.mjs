@@ -2543,7 +2543,8 @@ export const CAPABILITIES = {
   },
   "weaponsmith.core.fanning": {
     label: "Вооружённый револьвером в одной руке со свободной второй, персонаж может использовать револьвер в режиме длинной очереди с модификатором +0…",
-    source: "Fanning / Быстрый Курок", reader: ""
+    source: "Fanning / Быстрый Курок",
+    reader: "Дубликат ключа — пак-предмет реально несёт capabilityKey weapon.fanningRevolver (см. эту запись выше), а не этот. Реализовано там: module/sheets/attack-dialog.mjs (fanningActive), module/rules/hands.mjs, module/combat/attack.mjs (opts.rofCapOverride)."
   },
   "weaponsmith.core.fieldAssembly": {
     label: "За полное действие персонаж может пересобрать один пистолет, винтовку или дл. винтовку, поменяв штык, прицел или комби-подствольник.",
