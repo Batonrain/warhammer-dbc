@@ -31,7 +31,7 @@ import { spendReaction }  from "./action-economy.mjs";
 import { _noReactionCard } from "./defense.mjs";
 import { rollIcon }      from "../constants/roll-icons.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
-import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
+import { statusApplyFields } from "./status-resist.mjs";
 import { fallDamageSectionHtml } from "./fall-damage.mjs";
 import { SKILL_RANKS }   from "../constants/characteristics.mjs";
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
@@ -686,14 +686,18 @@ function fallSection(rider, mount, speedKey) {
 /** Урон падения плюс состояние «лежит»: выпавший из седла оказывается на земле. */
 export async function applyFall(rider, formula) {
   const roll = await new Roll(formula || "1d10").evaluate();
-  await rider.update(conditionApplyFields("prone", null, rider));
+  // Стена (Талант Стойкости): сброшенный всадник-носитель вправе пройти S+0 и остаться на ногах
+  // (урон падения при этом остаётся). Падение с высоты (movement-actions) не «сбивают» — не подключено.
+  const { fields: proneFields, resisted: stayedUp, note: stayNote } = await statusApplyFields(rider, "prone", null,
+    { source: "падение из седла" });
+  if (Object.keys(proneFields).length) await rider.update(proneFields);
   // Строка броска здесь своя: это не бросок теста (Порога нет), а формула
   // урона падения — «1d10+2: 9», а не «Бросок: 9».
   await postCard(rider, {
     icon: rollIcon("blood", "#ff6b6b"), title: `Выпал из седла — ${esc(rider.name)}`,
     lines: [`<div class="roll-dice">${rollIcon("dice", "#6fe6ff")}${formula}: <b>${roll.total}</b></div>`],
     sections: [fallDamageSectionHtml(roll.total, "Падение из седла"),
-      `<div class="roll-allout-note">Персонаж лежит на земле.</div>`]
+      stayedUp ? `<div class="roll-allout-note">${esc(stayNote)}</div>` : `<div class="roll-allout-note">Персонаж лежит на земле.</div>`]
   }, [roll]);
 }
 

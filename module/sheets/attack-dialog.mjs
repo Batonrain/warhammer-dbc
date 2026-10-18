@@ -24,6 +24,7 @@ import { rollIcon }                           from "../constants/roll-icons.mjs"
 import { openAttackDialog } from "./attack/dialog.mjs";
 import { buildAttackContent } from "./attack/markup.mjs";
 import { situationalMods } from "./attack/mods.mjs";
+import { attackFatigueApplies } from "../rules/situational.mjs";
 import { buildSelection } from "./attack/selection.mjs";
 import { AUTO_HIT_CAPABILITY, FULL_ATTACK_CAPABILITY } from "./attack/form.mjs";
 import { qualityEffects }                     from "../constants/quality.mjs";
@@ -762,7 +763,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
   // Штраф усталости (мод препаратов уже учтён в char.total)
   // fatigue.effective — с +1 неснимаемой от Гангрены (wdbc-x1nz.2.96).
-  const hasFatigue = (actor.system.fatigue?.effective ?? actor.system.fatigue?.value ?? 0) >= 1;
+  // Через attackFatigueApplies (fatiguePenalty), а не голым «Усталость ≥ 1»: порог
+  // терпимости (Мент. Стойкость, Стойкий, Происхождение) и Неутомимый (нет штрафа
+  // на WS/BS) гасят галочку «Усталость» так же, как строку в конвейере правил.
+  const hasFatigue = attackFatigueApplies(actor, charKey);
   // Ослеплён (стр. 30-31, wdbc-r5o7.4): автопровал BS, −30 WS. При
   // реальном Ослеплении галочка отмечена и заперта (wdbc-x1nz.2.89, решение
   // владельца 4 — снять руками нельзя, sheets/attack/mods.mjs); без него

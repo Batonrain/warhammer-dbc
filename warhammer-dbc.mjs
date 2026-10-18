@@ -44,6 +44,7 @@ import { WarhammerFormationSheet }    from "./module/sheets/formation-sheet.mjs"
 import { WarhammerItemSheet }         from "./module/sheets/item-sheet.mjs";
 import { WarhammerActiveEffectConfig } from "./module/sheets/active-effect-config.mjs";
 import { refreshCalendarWidget, initTimeFlow, checkCalendarWatchTriggers } from "./module/apps/imperial-calendar.mjs";
+import { sweepStaleArmourMonger } from "./module/combat/armour-monger.mjs";
 import { sweepSweetMistExpiry } from "./module/apps/wrapped-in-chaos.mjs";
 import { sweepLimbLossGangrene } from "./module/combat/limb-loss.mjs";
 import { sweepAllConditionClocks } from "./module/combat/condition-clock.mjs";
@@ -1485,6 +1486,8 @@ Hooks.on("updateScene", (scene) => {
 //    поэтому Duration (Seconds) у эффектов синхронна с прокруткой без доп. кода) ──
 Hooks.once("ready", () => refreshCalendarWidget());
 Hooks.once("ready", () => initTimeFlow());
+// Бронник (Талант Стойкости, глава 3): метка «броня обслужена сегодня» с прошлых суток снимается на загрузке.
+Hooks.once("ready", () => sweepStaleArmourMonger());
 Hooks.on("updateWorldTime", (worldTime, dt) => {
   checkCalendarWatchTriggers(worldTime);
   refreshCalendarWidget();

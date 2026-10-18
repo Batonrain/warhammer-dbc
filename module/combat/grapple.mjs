@@ -40,6 +40,7 @@ import { worldTimeRemaining, markWorldTimeCooldownUsed } from "../rules/cooldown
 import { tentacleBonusSuppressed } from "../rules/tentacle-hand-form.mjs";
 import { MELEE_STANCES, MELEE_BASES } from "../constants/combat.mjs";
 import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
+import { statusApplyFields } from "./status-resist.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { extraSuccessDegrees } from "./extra-successes.mjs";
@@ -535,10 +536,13 @@ export async function _resolveOverpowerSuccess(actor, { deg = 1 } = {}) {
   });
   if (!choice) return;
   if (choice === "prone") {
-    await partner.update(conditionApplyFields("prone", null, partner));
+    // Стена (Талант Стойкости): повалить носителя — рукопашный приём, S+0 и, на 5+ Успехов, ответный сбив.
+    const { fields, resisted, note } = await statusApplyFields(partner, "prone", null,
+      { attacker: actor, melee: true, source: "Пересилить" });
+    if (Object.keys(fields).length) await partner.update(fields);
     await postTestCard(actor, {
-      icon: rollIcon("sword","#e08a3a"), title: "Пересилить: Повален",
-      outcome: `${esc(partner.name)} повален на землю (Захват сохраняется).`
+      icon: rollIcon("sword","#e08a3a"), title: resisted ? "Пересилить: устоял" : "Пересилить: Повален",
+      outcome: resisted ? esc(note) : `${esc(partner.name)} повален на землю (Захват сохраняется).`
     }, { sound: false });
     return;
   }

@@ -31,6 +31,7 @@ import { dropFromHand } from "./limb-loss.mjs";
 import { isImmuneToCondition } from "../rules/condition-guards.mjs";
 import { isItemActive } from "../apps/effects.mjs";
 import { USELESS_SIDES, SIDE_LABELS, pickSide, uselessApplyFields } from "../rules/useless-limbs.mjs";
+import { offerStatusResist } from "./status-resist.mjs";
 
 /** Пилюли Бесполезной конечности (wdbc-x1nz.2.99) — не Состояния, а запись в system.uselessLimbs. */
 const USELESS_KEYS = { uselessArm: "arm", uselessLeg: "leg" };
@@ -243,6 +244,39 @@ export function deathButtonHtml(text, actorUuid, weaponUuid = "") {
   </div>`;
 }
 
+/**
+ * «Цель должна пройти тест на T+0, или умереть от шока» (11 строк critical-tables.mjs)
+ * и «…или умирает от остановки сердца» (C/Торс 9) — УСЛОВНАЯ смерть. textAssertsDeath
+ * её намеренно не ловит (кнопка «Констатировать смерть» была бы враньём: смерть зависит
+ * от броска), поэтому у условной смерти своя кнопка — с самим тестом, а не с приговором.
+ * @returns {?{char:string, mod:number, cause:string}} char — ключ характеристики теста
+ */
+export function parseShockDeathTest(text) {
+  if (!text) return null;
+  const m = /тест\s+(?:на\s+)?([TТ])\s*([+−–-])\s*(\d+)[,.]?\s+или\s+(?:умереть|умира[а-яё]*)\s+от\s+(шока|остановки\s+сердца)/iu.exec(text);
+  if (!m) return null;
+  const mod = (m[2] === "+" ? 1 : -1) * Number(m[3]);
+  return { char: "t", mod, cause: m[4].replace(/\s+/g, " ").toLowerCase() };
+}
+
+/**
+ * Кнопка «Тест T+0 (смерть от шока)» под текстом крит-эффекта — для ЛЮБОГО персонажа
+ * (правило мира, не Талант): проваленный тест убивает, а Крепкий Орешек перебрасывает
+ * (combat/shock-death.mjs). blocked — цель не может умереть от Критического Эффекта
+ * (Изгнанный из Смерти): тест тогда ничего бы не решал.
+ */
+export function shockDeathButtonHtml(text, actorUuid, { blocked = false } = {}) {
+  const t = parseShockDeathTest(text);
+  if (!t || !actorUuid || blocked) return "";
+  const sign = t.mod > 0 ? `+${t.mod}` : t.mod < 0 ? `${t.mod}` : "+0";
+  return `<div class="wh-crit-pills">
+    <button type="button" class="wh-shock-death-btn" data-actor-uuid="${esc(actorUuid)}"
+      data-char="${t.char}" data-mod="${t.mod}" data-cause="${esc(t.cause)}"
+      title="Книга: пройти тест, или умереть от ${esc(t.cause)}. Провал — смерть констатируется сама.">
+      ${rollIcon("skull", "#ff6b6b")} Тест T${sign} (смерть от ${esc(t.cause)})</button>
+  </div>`;
+}
+
 /** Пилюля со значением уровня/раундов? Иначе — просто булев флаг. */
 function formulaIsDice(formula) {
   return !!formula && /d/i.test(formula);
@@ -302,6 +336,21 @@ export function critPillsHtml(pills, actorUuid, hitNetDamage = null, { side = ""
 export async function applyCritEffectPill(actor, { key, formula, permanent, sourceDamage = null, side = "", healMod = 0 } = {}) {
   const def = CONDITIONS_DEF[key];
   if (!actor || !def) return;
+  // Стальная Челюсть / Стена (Таланты Стойкости): Оглушение и «сбит с ног» из Критического
+  // Эффекта носитель вправе проигнорировать тестом (combat/status-resist.mjs).
+  if (key === "stunned" || key === "prone") {
+    const r = await offerStatusResist(actor, key, { source: "Критический Эффект" });
+    if (r.resisted) {
+      await ChatMessage.create(ChatMessage.applyRollMode({
+        speaker: ChatMessage.getSpeaker({ actor }),
+        content: `<div class="wh-roll-result">
+      <div class="roll-header">${rollIcon("warn", "#8fd0ff")}Крит-эффект → ${esc(actor.name)}</div>
+      <div class="roll-threshold">${esc(r.note)}</div>
+    </div>`
+      }, game.settings.get("core", "rollMode")));
+      return;
+    }
+  }
   if (USELESS_KEYS[key]) return applyUselessLimbPill(actor, { key, formula, side, healMod });
   if (LIMB_LOSS_KEYS.includes(key)) return applyLimbLossPill(actor, { key, side });
 

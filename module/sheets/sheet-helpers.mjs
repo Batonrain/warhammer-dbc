@@ -81,6 +81,7 @@ import { parseRangeMeters, rangeVerdict }            from "../rules/psy-range.mj
 import { measureTokens }                             from "../combat/tactical-map.mjs";
 import { mechFormulaTotalSafe }                      from "../rules/mech-formula.mjs";
 import { grappleOnlyHidden, isBiteName } from "../rules/integral-rating.mjs";
+import { hasResilienceTalent } from "../rules/resilience-talents.mjs";
 
 // Определение всех Состояний листа — реестр constants/conditions.mjs
 // (wdbc-w88h): label/desc/иконка/счётчик собраны там, здесь только реэкспорт
@@ -783,6 +784,9 @@ function buildGetDataUncached(actor) {
     rightLeg:  i.system.rightLeg   ?? 0,
     weight:    i.system.weight     ?? 0,
     stacks:    i.system.stacks     ?? false,
+    // Аблативное Укрепление (Талант Стойкости): заряды прочности и кнопка «Обслужить (1 ч)» — только носителю.
+    hardeningCharges: i.system.hardeningCharges ?? 0,
+    canHarden: hasResilienceTalent(actor, "ablativeHardening"),
     infoguard: supportsInfoguard(i) ? (i.system.infoguard || 0) : null,
     mods:      allArmorMods.filter(m => m.system.installedOn === i.id).map(armorModView)
   }));

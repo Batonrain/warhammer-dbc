@@ -69,6 +69,7 @@ import { secondaryCritHtml } from "./secondary-crit.mjs";
 // New Men / Новые Люди (Йигори): d20 на тике Кровотечения и тест T+0 в начале
 // Хода, чтобы его затянуть.
 import { bleedingDieFormula, canSelfStaunch } from "../rules/new-men.mjs";
+import { bleedingRollCount, bestBleedingRoll } from "../rules/resilience-talents.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -688,20 +689,29 @@ export async function processConditionTurnEnd(actor) {
   } else if (conds.bleeding) {
     // «Бросает d20 вместо d10 на тестах Кровотечения» (New Men, Йигори).
     const die = bleedingDieFormula(actor);
-    const roll = await new Roll(die).evaluate();
+    let roll = await new Roll(die).evaluate();
+    // Крепкий Орешек (Талант Стойкости): «перебрасывает тесты на Кровотечение» — кубик
+    // бросается дважды, берётся лучший. Лучший здесь БОЛЬШИЙ: ≤0 после Обескровливания — смерть.
+    let dieHardNote = "";
+    if (bleedingRollCount(actor) > 1) {
+      const second = await new Roll(die).evaluate();
+      const best = bestBleedingRoll([roll.total, second.total]);
+      dieHardNote = ` (Крепкий Орешек: ${roll.total} и ${second.total} → берётся ${best})`;
+      if (second.total > roll.total) roll = second;
+    }
     const level = Number(conds.haemorrhagingLevel) || 0;
     const eff = roll.total - level;
     if (eff <= 0 && hasRuleFlag(actor, "brutePhysiology.bleedingNoDeath")) {
       // Физиология Громилы (Огрин): «не может умереть от Кровотечения».
-      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: ${die} <b>${roll.total}</b> − Обескровливание ${level} = <b>${eff}</b> → смерть, но <b>Физиология Громилы</b>: от Кровотечения не умирает</div>`);
+      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: ${die} <b>${roll.total}</b>${dieHardNote} − Обескровливание ${level} = <b>${eff}</b> → смерть, но <b>Физиология Громилы</b>: от Кровотечения не умирает</div>`);
     } else if (eff <= 0) {
-      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: ${die} <b>${roll.total}</b> − Обескровливание ${level} = <b>${eff}</b> → <span class="roll-failure"><b>СМЕРТЬ</b> (независимо от количества Ран)</span></div>`);
+      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: ${die} <b>${roll.total}</b>${dieHardNote} − Обескровливание ${level} = <b>${eff}</b> → <span class="roll-failure"><b>СМЕРТЬ</b> (независимо от количества Ран)</span></div>`);
       await killByCondition(actor, "bleeding");
     } else if (eff <= 5 && !Object.keys(conditionAdjustFields(actor, "haemorrhaging", 1)).length) {
       // Иммунитет к Обескровливанию (запись Конструктора, напр. Физиология
       // Громилы) — единая точка наложения вернула пустой патч; писать
       // «+1 Обескровливание» значило бы врать в карточке.
-      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: ${die} <b>${roll.total}</b> − ${level} = <b>${eff}</b> → Обескровливание не набирается (иммунитет)</div>`);
+      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: ${die} <b>${roll.total}</b>${dieHardNote} − ${level} = <b>${eff}</b> → Обескровливание не набирается (иммунитет)</div>`);
     } else if (eff <= 5) {
       const newLevel = level + 1;
       const upd = conditionAdjustFields(actor, "haemorrhaging", 1);
@@ -711,9 +721,9 @@ export async function processConditionTurnEnd(actor) {
         upd[`flags.${NS}.${HAEMORRHAGE_HOUR_FLAG}`] = Number(globalThis.game?.time?.worldTime) || 0;
       }
       await actor.update(upd);
-      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: ${die} <b>${roll.total}</b> − ${level} = <b>${eff}</b> → +1 Обескровливание (<b>${newLevel}</b>)</div>`);
+      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: ${die} <b>${roll.total}</b>${dieHardNote} − ${level} = <b>${eff}</b> → +1 Обескровливание (<b>${newLevel}</b>)</div>`);
     } else {
-      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: ${die} <b>${roll.total}</b> − ${level} = <b>${eff}</b> → обошлось</div>`);
+      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: ${die} <b>${roll.total}</b>${dieHardNote} − ${level} = <b>${eff}</b> → обошлось</div>`);
     }
   }
 

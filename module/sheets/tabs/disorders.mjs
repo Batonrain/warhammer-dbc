@@ -111,7 +111,7 @@ export function openFearDialog(actor) {
   // Машина без свободы воли (стр. 53) проходит Страх на Int — и галочки,
   // и предпросмотр Порога считаются по той же характеристике, что бросок.
   const char = fearChar(actor);
-  const ctx = { kind: "skill", char, morale: true, targetActor };
+  const ctx = { kind: "skill", char, morale: true, fearTest: true, targetActor };
   // Враг ли выделенный источник — по диспозициям токенов (Затронутый
   // Варпом, субмутация 1: «всех врагов в Ярости»).
   const ownToken = actor.getActiveTokens?.()?.[0] ?? null;
@@ -188,7 +188,7 @@ export function openFearDialog(actor) {
           // Предпросмотр обязан совпадать с тем, что посчитает сам бросок
           // (combat/fear.mjs), иначе игрок видит один Порог, а получает другой.
           return wp + ratingMod + mod + difficulty
-            + autoTestMods(actor, { kind: "skill", char, morale: true, targetActor }).total;
+            + autoTestMods(actor, { kind: "skill", char, morale: true, fearTest: true, targetActor }).total;
         }
       });
       root.querySelectorAll("#fear-rating, #fear-type, #fear-mod, .rule-mod").forEach(el =>

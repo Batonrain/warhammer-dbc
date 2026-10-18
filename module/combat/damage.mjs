@@ -7,7 +7,9 @@ import { getCriticalEffect } from "../../critical-tables.mjs";
 import { LOCATION_TO_SIDE } from "../rules/useless-limbs.mjs";
 import { secondaryCritHtml, ARMOR_KEY_TO_LOCATION } from "./secondary-crit.mjs";
 import { critCharDamageHtml } from "./char-damage-button.mjs";
-import { parseCritEffectPills, critPillsHtml, deathButtonHtml, dropButtonHtml, textAssertsDeath } from "./crit-effect-parser.mjs";
+import { parseCritEffectPills, critPillsHtml, deathButtonHtml, dropButtonHtml, textAssertsDeath,
+         shockDeathButtonHtml } from "./crit-effect-parser.mjs";
+import { critTalentsHtml } from "./crit-talents.mjs";
 import { sweetSufferingHtml } from "./sweet-suffering.mjs";
 import { SHIELD_STATUS }  from "../constants/shields.mjs";
 import { applyDamageToVehicle } from "./vehicle.mjs";
@@ -29,6 +31,12 @@ import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { conditionLevelField } from "../constants/conditions.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { hardenedSoulSoakBonus, hasResilienceTalent, trueGritDamage, HUNKER_DOWN_FLAG } from "../rules/resilience-talents.mjs";
+import { headGuardOffer } from "./head-guard.mjs";
+import { hellishResilienceOffer } from "./hellish-resilience.mjs";
+import { applyEyeOfTheGods } from "./eye-of-the-gods.mjs";
+import { offerHardeningSpend } from "./ablative-hardening.mjs";
+import { statusApplyFields } from "./status-resist.mjs";
 import { hollowBonesTb } from "../rules/hollow-bones.mjs";
 import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
 import { inPariahVoid } from "../rules/null-zones.mjs";
@@ -80,7 +88,11 @@ async function _applyCorrosive(actor, armorKey, hitLocation, rating, { bodyImmun
   const existing  = Number(actor.system.armorCorrosion?.[armorKey]) || 0;
   const lost      = Math.min(rating, currentAP);
   const overflow  = rating - lost;
-  await actor.update({ [`system.armorCorrosion.${armorKey}`]: existing + lost });
+  // Аблативное Укрепление (Талант Стойкости): потеря AP — «эффект, снижающий АР»; заряд
+  // прочности её гасит. Остаток сверх AP (overflow) — отдельный урон телу, его не гасит.
+  const hardened = lost > 0 && await offerHardeningSpend(actor, { armorKey,
+    reason: `Разъедающее (${rating}) снимет ${lost} AP брони (${hitLocation})` });
+  if (!hardened) await actor.update({ [`system.armorCorrosion.${armorKey}`]: existing + lost });
 
   let overflowNote = "";
   if (overflow > 0 && bodyImmune) {
@@ -92,7 +104,9 @@ async function _applyCorrosive(actor, armorKey, hitLocation, rating, { bodyImmun
     // Остаток — непоглощаемый C Dmg: в минус он тоже даёт Крит. Эффект (wdbc-x1nz.2.85).
     overflowNote += await secondaryCritHtml(actor, loss, { damageType: "chemical", hitLocation });
   }
-  return `<div class="dmg-tb-note">🧪 Разъедающее: −${lost} AP брони (${hitLocation})${overflowNote}</div>`;
+  return `<div class="dmg-tb-note">🧪 Разъедающее: ${hardened
+    ? `−0 AP брони (${hitLocation}; Аблативное Укрепление: заряд прочности потрачен, потеря ${lost} AP проигнорирована)`
+    : `−${lost} AP брони (${hitLocation})`}${overflowNote}</div>`;
 }
 
 /**
@@ -815,7 +829,8 @@ export async function applyDamageToActor(actor, damageData) {
   // ДАЛЬШЕ (AP, крит-таблица) как попадание в Руку/Голову — редирект целиком,
   // одной точкой, а не патчем каждого места, читающего hitLocation.
   // Безголовый (wdbc-1rno.20, rules/headless.mjs): голова и глаз — в торс.
-  const hitLocation = redirectHitLocationForHeadless(redirectHitLocationForMachine(rawHitLocation, actor), actor);
+  // let: Прикрытие Головы (Талант Стойкости) ниже может перенести попадание на руку.
+  let hitLocation = redirectHitLocationForHeadless(redirectHitLocationForMachine(rawHitLocation, actor), actor);
 
   // ── Бросок щита (если есть активный) ─────────────────────────────────────
   // ignoreShield (Flush/Варп) — щит не катится совсем; sanctified — катится, но
@@ -857,6 +872,13 @@ export async function applyDamageToActor(actor, damageData) {
   if (damageSubtype && !ignoreSubtypeImmunity
       && hasRuleFlag(actor, `damageImmunity.subtype.${damageSubtype}`)) return;
 
+  // Прикрытие Головы (Талант Стойкости): раз в Раунд попадание в голову можно
+  // перенести на руку. Здесь, а не раньше: попадание, которое щит аннулировал или
+  // иммунитет проигнорировал, Раунд не тратит; и до armorKey/поглощения — от места
+  // зависят AP брони, укрытие и таблица Критического Эффекта.
+  const headGuard = await headGuardOffer(actor, hitLocation);
+  hitLocation = headGuard.hitLocation;
+
   const absorption = system.absorption || {};
   const armorKey  = LOCATION_TO_ARMOR[hitLocation] || "body";
   // Замена Крови, субмутация «Ртуть» (wdbc-q0q8): часть тела, отмеченная
@@ -883,6 +905,7 @@ export async function applyDamageToActor(actor, damageData) {
 
   let tb, armorAP, effArmorAP, totalAbsorption;
   let hollowBonesHalved = false;
+  let hardenedSoulBonus = 0;
   // Адаптация (wdbc-q0q8): бонус, накопленный ПРЕДЫДУЩИМИ попаданиями этого
   // же вида урона — читается напрямую (см. adaptation.mjs, почему не через
   // vsType/vsSubtype листа). Книга: «+1 к Поглощению», а не к AP брони —
@@ -891,8 +914,13 @@ export async function applyDamageToActor(actor, damageData) {
   const adaptBonus = adaptationBonusFor(actor, damageType, damageSubtype);
   let runesBonus = 0;
   let coverBonus = 0;
+  let coverHunkered = false;   // Залегание повлияло на AP укрытия — для подписи в карточке
   // Касание Энтропии: сколько AP съедено этим попаданием — для подписи в карточке.
   let entropyLost = 0;
+  // Аблативное Укрепление (Талант Стойкости): заметки о потраченных зарядах прочности.
+  const hardeningNotes = [];
+  // Стальная Челюсть: заметка, что Оглушение приёма проигнорировано (иначе карточка говорила бы «Урон поглощён полностью»).
+  const statusNotes = [];
   // Подпись в карточке: пришёл ли AP от ОБЪЯВЛЕННОГО Отскока или от ручного
   // поля Укрытия на листе — писать «Отскок» про второе было бы враньём.
   let coverFromRecoil = false;
@@ -917,7 +945,10 @@ export async function applyDamageToActor(actor, damageData) {
         ? Math.floor(warpArmorAP / 2)
         : 0;
     effArmorAP = armorAP;
-    totalAbsorption = (system.characteristics?.wp?.bonus ?? 0) + armorAP + ablativeShieldBefore + adaptBonus;
+    // Укреплённая Душа (Талант Стойкости): «+½ I.b (окр.▲) к поглощению урона от варп-оружия».
+    hardenedSoulBonus = hardenedSoulSoakBonus(actor);
+    totalAbsorption = (system.characteristics?.wp?.bonus ?? 0) + armorAP + ablativeShieldBefore + adaptBonus
+      + hardenedSoulBonus;
   } else {
     // T.b — не игнорируется пробитием. Разящее снижает Сверхъест. часть Стойкости.
     tb = absorption.toughnessBonus ?? 0;
@@ -1002,6 +1033,12 @@ export async function applyDamageToActor(actor, damageData) {
       if (entropyRating > 0) {
         const apNow = Math.max(0, Number(absorption.armorOnly?.[armorKey]) || 0);
         entropyLost = entropyArmourLoss(apNow, entropyRating);
+        // Аблативное Укрепление: потеря AP — «эффект, снижающий АР»; заряд прочности её гасит.
+        if (entropyLost > 0 && await offerHardeningSpend(actor, { armorKey,
+              reason: `Касание Энтропии снимет ${entropyLost} AP брони (${hitLocation}) ещё до поглощения` })) {
+          hardeningNotes.push(`Аблативное Укрепление: заряд прочности потрачен — Касание Энтропии (−${entropyLost} AP) проигнорировано.`);
+          entropyLost = 0;
+        }
         if (entropyLost > 0) {
           const existing = Number(system.armorCorrosion?.[armorKey]) || 0;
           actorUpdate[`system.armorCorrosion.${armorKey}`] = existing + entropyLost;
@@ -1037,10 +1074,13 @@ export async function applyDamageToActor(actor, damageData) {
         ? coverRegionForShot(await resolveAttackerToken(attackerUuid), targetToken) : null;
       const regionAp = regionCover?.ap ?? 0;
       const manualCover = coverApForLocation(system.cover, armorKey, 0);
+      // Залегание (Талант Стойкости): метка до начала следующего Хода — расчётный AP
+      // укрытия ×2, выглядывающим частям тела — обычное AP (rules/cover-locations.mjs).
+      const hunker = !!actor.getFlag?.("warhammer-dbc", HUNKER_DOWN_FLAG);
       // Больший, а не сумма: это одна и та же стена, и сложить её с собой
       // значило бы дать двойную защиту тому, кто и стоял за ней, и отскочил в неё.
       const declaredCover = Math.max(recoilCover, regionAp);
-      const combinedCoverBase = Math.max(coverApForLocation(system.cover, armorKey, declaredCover), manualCover);
+      const combinedCoverBase = Math.max(coverApForLocation(system.cover, armorKey, declaredCover, { hunker }), manualCover);
       coverFromRecoil = recoilCover > 0 && combinedCoverBase === recoilCover && manualCover < recoilCover && regionAp < recoilCover;
       // Взрывы и Окружение (стр. 36, wdbc-x1nz.2.63): укрытие вдвое эффективнее
       // против любого Взрывного, втрое — против взрывов X Dmg, вчетверо —
@@ -1051,6 +1091,7 @@ export async function applyDamageToActor(actor, damageData) {
         ? (damageSubtype === "fragmentation" ? 4 : damageType === "blast" ? 3 : 2)
         : 1;
       coverBonus = combinedCoverBase * blastCoverMult;
+      coverHunkered = hunker && coverBonus > 0;
       if (coverBonus > 0) armorAP += coverBonus;
       // Щит Ненависти/vigilant 9-9, Оружие Наследия (wdbc-1rno.35, стр. 427):
       // временный +½Inf.b(окр.▲) AP на руке(ах), держащей оружие с этой
@@ -1136,7 +1177,17 @@ export async function applyDamageToActor(actor, damageData) {
 
   // wdbc-bxw6: аблативные AP-моды брони и аблативный AP-щит теряют ровно 1
   // заряд с ЭТОГО попадания — независимо от нанесённого урона (rules/ablative-ap.mjs).
-  const ablativeMods = activeAblativeArmorMods(actor);
+  // Аблативное Укрепление (Талант Стойкости): потеря заряда аблативной брони — тоже
+  // «эффект, снижающий АР»; носитель может погасить её зарядом прочности той брони,
+  // на которой стоит мод.
+  const ablativeMods = [];
+  for (const mod of activeAblativeArmorMods(actor)) {
+    const host = actor.items.get?.(mod.system?.installedOn) ?? null;
+    if (host && await offerHardeningSpend(actor, { armor: host,
+          reason: `аблативный мод «${mod.name}» потеряет 1 заряд, его AP уменьшится` })) {
+      hardeningNotes.push(`Аблативное Укрепление: заряд прочности потрачен — «${mod.name}» не теряет заряд.`);
+    } else ablativeMods.push(mod);
+  }
   if (ablativeMods.length) {
     await actor.updateEmbeddedDocuments("Item", ablativeMods.map(m => ({
       _id: m.id, "system.ablativeCharge": ablativeApAfterHit(m.system.ablativeCharge)
@@ -1213,6 +1264,17 @@ export async function applyDamageToActor(actor, damageData) {
     mournerNote = m.note;
   }
 
+  // Адская Живучесть (Талант Стойкости): получив непоглощённый урон, можно
+  // потратить Очко Бесчестия на +Cor.b поглощения (против этого урона и до конца
+  // своего следующего Хода). После Плакальщика (тот бесплатный и раз за бой), до
+  // Ран; приём Оглушить Ран не трогает вовсе — ему бонус ни к чему.
+  let hellishNote = "";
+  if (netDamage > 0 && !stunManeuver) {
+    const h = await hellishResilienceOffer(actor, netDamage);
+    netDamage = h.net;
+    hellishNote = h.note;
+  }
+
   // Приём Оглушить (стр. 14, wdbc-x1nz.2.66.3): «непоглощённый урон
   // игнорируется, вместо этого цель Оглушается на 1 Ход за каждый нечётный
   // урон» — читается как ⌈netDamage/2⌉ Раундов Оглушения. Урон дальше НЕ
@@ -1224,11 +1286,36 @@ export async function applyDamageToActor(actor, damageData) {
     stunRoundsApplied = Math.ceil(netDamage / 2);
     const stunLevelField = conditionLevelField("stunned");
     const curStunRounds = stunLevelField ? (actor.system.conditions?.[stunLevelField] ?? 0) : 0;
-    const stunFields = conditionApplyFields("stunned", Math.max(curStunRounds, stunRoundsApplied), actor);
+    // Стальная Челюсть (Талант Стойкости): носитель вправе пройти T+0 и не получить Оглушение
+    // (combat/status-resist.mjs — единая точка наложения).
+    const stun = await statusApplyFields(actor, "stunned", Math.max(curStunRounds, stunRoundsApplied),
+      { attacker: null, melee: true, source: "приём Оглушить" });
+    const stunFields = stun.fields;
+    if (stun.note) statusNotes.push(stun.note);
     if (Object.keys(stunFields).length) await actor.update(stunFields);
-    else stunRoundsApplied = 0; // иммунитет к Оглушению — не наложилось, note ниже не врёт
+    else stunRoundsApplied = 0; // иммунитет к Оглушению или Стальная Челюсть — не наложилось, note ниже не врёт
     netDamage = 0;
   }
+
+  // Настоящая Выдержка (Талант Стойкости): пока Раны ниже 0 — урон −T.b, не
+  // меньше 1; попадание, пересекающее ноль, всё равно доводит Раны хотя бы до −1.
+  let trueGritReduced = 0;
+  if (netDamage > 0 && hasResilienceTalent(actor, "trueGrit")) {
+    const w = system.wounds ?? {};
+    const tg = trueGritDamage({
+      net: netDamage, tb: system.characteristics?.t?.bonus,
+      value: w.value, critical: w.critical, ablative: w.ablative
+    });
+    netDamage = tg.net;
+    trueGritReduced = tg.reduced;
+  }
+
+  // Взор Богов (Талант Стойкости): не больше 10 потерянных Ран за промежуток от
+  // начала Хода носителя до начала следующего — от всех рядовых вместе и от
+  // каждого значимого отдельно. Последним в цепочке: считается то, что реально
+  // уйдёт в Раны; игнор щитов/Освящённое Талант обходят.
+  const eye = await applyEyeOfTheGods(actor, attackerUuid, netDamage, { ignoreShield, sanctified });
+  netDamage = eye.net;
 
   // «Бич Чемпионов»: враг запоминается, только если попадание дошло до Ран —
   // урон, проигнорированный приёмом Оглушить, не «нанесён».
@@ -1315,6 +1402,9 @@ export async function applyDamageToActor(actor, damageData) {
   const castOutOfDeathBlocksDeath = !!critEffect && textAssertsDeath(critEffect)
     && !warpSoak && hasRuleFlag(actor, CAST_OUT_OF_DEATH_CAPABILITY);
 
+  // Тест «смерть от шока» не нужен тому, кто от Критического Эффекта умереть не может.
+  const castOutOfDeathBlocksShockDeath = !!critEffect && !warpSoak && hasRuleFlag(actor, CAST_OUT_OF_DEATH_CAPABILITY);
+
   // Volunteer Actor/Доброволец Актёр (wdbc-ux8a): вместо «Констатировать
   // смерть» — кнопка «Поцелуй Мимика», когда крит-эффект утверждает смерть,
   // атакующий несёт Талант и удар нанесён именно Поцелуем Арлекина. Silent
@@ -1397,6 +1487,10 @@ export async function applyDamageToActor(actor, damageData) {
   // Гейт capability weaponPropertyImmunity.<key> — Мутации/Дары («Пылающее
   // Тело», «Щит Чистоты» и т.п.) дают его через Механику (kind: "capability").
   const propEffectNotes = [];
+  if (headGuard.note) propEffectNotes.push(`<div class="dmg-tb-note">${esc(headGuard.note)}</div>`);
+  for (const note of [...hardeningNotes, hellishNote, eye.note, ...statusNotes]) {
+    if (note) propEffectNotes.push(`<div class="dmg-tb-note">${esc(note)}</div>`);
+  }
   if (butcherBleedNote) propEffectNotes.push(butcherBleedNote);
   // Касание Энтропии сработала ВЫШЕ, до расчёта поглощения (см. там) — здесь
   // только подпись, чтобы игрок видел, почему броня вдруг не удержала.
@@ -1467,7 +1561,7 @@ export async function applyDamageToActor(actor, damageData) {
       propNotes.push(pfNote.isPowerArmor ? "Силовой шлем: 4 AP на глаза" : "Глаз: AP шлема проигнорирован");
     if (primitive && pfNote.blocksPrimitiveDouble)    propNotes.push("Примитивная броня: без бонуса AP примитивного оружия");
     if (runesBonus > 0) propNotes.push(`Защитные Руны: +${runesBonus} AP (см. бросок выше)`);
-    if (coverBonus > 0) propNotes.push(`${coverFromRecoil ? "Отскок в Укрытие" : "Укрытие"}: +${coverBonus} AP`);
+    if (coverBonus > 0) propNotes.push(`${coverFromRecoil ? "Отскок в Укрытие" : "Укрытие"}: +${coverBonus} AP${coverHunkered ? " (Залегание)" : ""}`);
     if (coverWearNote) propNotes.push(coverWearNote);
   }
 
@@ -1482,7 +1576,7 @@ export async function applyDamageToActor(actor, damageData) {
 
   const armorBreakdown = warpSoak
     ? `<div class="dmg-absorption-detail">
-        ${rollIcon("warp","#c98bff")}Варп-Оружие: игнор брони/T.b — поглощение = W.b <b>${totalAbsorption}</b>
+        ${rollIcon("warp","#c98bff")}Варп-Оружие: игнор брони/T.b — поглощение = W.b <b>${totalAbsorption}</b>${hardenedSoulBonus > 0 ? ` (в т.ч. Укреплённая Душа +${hardenedSoulBonus})` : ""}
         ${reductionNote}
         ${ablativeShieldNote}
       </div>`
@@ -1506,9 +1600,12 @@ export async function applyDamageToActor(actor, damageData) {
 
   const woundsLine = stunManeuver && stunRoundsApplied > 0
     ? `Приём Оглушить: урон проигнорирован — цель Оглушена на <b>${stunRoundsApplied}</b> Ход(ов)`
+    : stunManeuver && statusNotes.length
+    ? `Приём Оглушить: урон проигнорирован — Оглушение не наложено`
     : netDamage > 0
     ? `Раны: <b>${currentWounds}</b> → <b>${newWounds}</b>${
         ablated ? ` <span class="dmg-tb-note">(Аблативное Бронирование: ${rawNet} → 1)</span>` : ""}${
+        trueGritReduced > 0 ? ` <span class="dmg-tb-note">(Настоящая Выдержка: −${trueGritReduced} урона)</span>` : ""}${
         extremeFloorApplied ? ` <span class="dmg-tb-note">(Экстремальный Урон: поглощено полностью, но ${
           opportunistFloorRoll ? `Оппортунист — 1d10−2: ${opportunistFloorRoll.total} (мин.1)` : "1 непоглощаемого урона всё равно проходит, стр. 34"
         })</span>` : ""}`
@@ -1532,6 +1629,8 @@ export async function applyDamageToActor(actor, damageData) {
       ${maggotParasiteHtml || kissOfMimicHtml || (castOutOfDeathBlocksDeath
         ? `<div class="wh-crit-pills roll-threshold">💀 Изгнанный из Смерти: не может умереть от этого — Раны сами вернутся к −7 в течение 7ч (Календарь).</div>`
         : (critEffect ? deathButtonHtml(critEffect, actor.uuid, weaponUuid) : ""))}
+      ${critEffect ? shockDeathButtonHtml(critEffect, actor.uuid, { blocked: castOutOfDeathBlocksShockDeath }) : ""}
+      ${critEffect ? critTalentsHtml(actor, { level: newCritical, damageType, hitLocation, netDamage }) : ""}
       ${eaterOfPainButtons ? `<div class="wh-crit-pills">${eaterOfPainButtons}</div>` : ""}
     </div>` : "";
 
@@ -1606,7 +1705,10 @@ export async function applyMonofilamentHit(actor, { rating, damage, weaponName =
   for (const key of Object.keys(corrosion)) {
     armorUpdate[`system.armorCorrosion.${key}`] = (Number(corrosion[key]) || 0) + 1;
   }
-  if (Object.keys(armorUpdate).length) await actor.update(armorUpdate);
+  // Аблативное Укрепление (Талант Стойкости): −1 AP на всех участках — «эффект,
+  // снижающий АР»; один заряд (любой надетой брони) гасит его целиком.
+  const hardened = await offerHardeningSpend(actor, { reason: `Моносеть (${weaponName || "оружие"}) снимет по 1 AP брони на всех участках` });
+  if (!hardened && Object.keys(armorUpdate).length) await actor.update(armorUpdate);
 
   const jointRoll = await new Roll("1d5").evaluate();
   const isJoint = jointRoll.total <= rating;

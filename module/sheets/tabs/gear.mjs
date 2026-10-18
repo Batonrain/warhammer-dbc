@@ -16,6 +16,7 @@ import { useHololithBriefing } from "../../combat/hololith-briefing.mjs";
 import { useSwingItem, useThrowItem } from "../../combat/improvised-item.mjs";
 import { spendActionPoints } from "../../combat/action-economy.mjs";
 import { quickDrawFree } from "../../combat/quick-draw.mjs";
+import { maintainArmorForHardening } from "../../combat/ablative-hardening.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { postTestCard } from "../../helpers/test-card.mjs";
 
@@ -299,6 +300,12 @@ export function activateGearListeners(root, actor, {
   on(root, ".gear-mod-uninstall", "click", async ev => {
     ev.preventDefault(); ev.stopPropagation();
     await uninstallGearMod(actor.items.get(ev.currentTarget.dataset.itemId));
+  });
+
+  // Аблативное Укрепление (Талант Стойкости): «Обслужить (1 ч)» — заряды прочности брони = I.b.
+  on(root, ".armor-hardening-btn", "click", async ev => {
+    ev.preventDefault(); ev.stopPropagation();
+    await maintainArmorForHardening(actor, actor.items.get(ev.currentTarget.dataset.itemId));
   });
 
   on(root, ".armormod-active-toggle", "click", async ev => {

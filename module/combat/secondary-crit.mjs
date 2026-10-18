@@ -15,7 +15,8 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { getCriticalEffect } from "../../critical-tables.mjs";
-import { parseCritEffectPills, critPillsHtml, deathButtonHtml, dropButtonHtml } from "./crit-effect-parser.mjs";
+import { parseCritEffectPills, critPillsHtml, deathButtonHtml, dropButtonHtml, shockDeathButtonHtml } from "./crit-effect-parser.mjs";
+import { critTalentsHtml } from "./crit-talents.mjs";
 import { sweetSufferingHtml } from "./sweet-suffering.mjs";
 import { LOCATION_TO_SIDE } from "../rules/useless-limbs.mjs";
 import { critCharDamageHtml } from "./char-damage-button.mjs";
@@ -59,5 +60,7 @@ export async function secondaryCritHtml(actor, { gotCritical, newCritical } = {}
     ${critEffect ? sweetSufferingHtml(actor, { pills, hasCharDamage: /урона\s+в\s+[A-Za-z]/u.test(critEffect),
         hasDrop: !!dropButtonHtml(critEffect, actor.uuid, side) }) : ""}
     ${critEffect ? deathButtonHtml(critEffect, actor.uuid, "") : ""}
+    ${critEffect ? shockDeathButtonHtml(critEffect, actor.uuid, { blocked: hasRuleFlag(actor, CAST_OUT_OF_DEATH_CAPABILITY) }) : ""}
+    ${critEffect ? critTalentsHtml(actor, { level: newCritical, damageType, hitLocation }) : ""}
   </div>`;
 }

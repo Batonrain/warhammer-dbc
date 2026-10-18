@@ -60,6 +60,7 @@ import { shockPenalty, shockFleeing } from "./shock.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
 import { fatigueGraceForActor } from "./fatigue-grace.mjs";
+import { tirelessExempt } from "./resilience-talents.mjs";
 import { disabledArmourPenalty } from "./armour-penalty.mjs";
 import { inventoryOverloadPenalty } from "./encumbrance.mjs";
 import { isItemActive } from "../apps/effects.mjs";
@@ -145,6 +146,8 @@ export function fatiguePenalty(actor, charKey) {
   // Действующая, а не хранимая: +1 Гангрены тоже даёт штраф (wdbc-x1nz.2.96).
   if (effectiveFatigue(actor) < 1 + grace) return 0;
   if (FATIGUE_EXEMPT.includes(String(charKey ?? "").toLowerCase())) return 0;
+  // Неутомимый (глава 3): нет штрафа на WS, BS, S, T, A — по характеристике теста.
+  if (tirelessExempt(actor, charKey)) return 0;
 
   // Feels No Pain / Не Чувствует Боли (wdbc-1rno): «не получает штраф −10 от
   // Усталости» — полный иммунитет, а не отсрочка порога (в отличие от grace
@@ -153,6 +156,21 @@ export function fatiguePenalty(actor, charKey) {
   // Desiccated / Иссушенный (wdbc-1rno): «Усталость накладывает на персонажа
   // штраф −20 вместо обычного −10».
   return actorHasCapability(actor, "mutation.desiccated") ? -20 : -10;
+}
+
+/**
+ * Нужна ли в окне атаки галочка «Усталость −10» (sheets/attack/mods.mjs).
+ * Окно атаки считает Порог своими строками, поэтому штраф из конвейера правил
+ * ему не доезжает (sheets/attack-dialog.mjs фильтрует situational.fatigue —
+ * иначе задвоение); решение «штрафовать ли» берётся ТЕМ ЖЕ fatiguePenalty, что
+ * у остальных тестов: порог терпимости (Мент. Стойкость, Стойкий,
+ * Происхождение) и Неутомимый (нет штрафа на WS/BS) гасят галочку тоже.
+ * @param {object} actor
+ * @param {string} charKey  "ws" — рукопашная, "bs" — стрелковая
+ */
+export function attackFatigueApplies(actor, charKey) {
+  const fatigue = Number(actor?.system?.fatigue?.effective ?? actor?.system?.fatigue?.value) || 0;
+  return fatigue >= 1 && fatiguePenalty(actor, charKey) !== 0;
 }
 
 /**
