@@ -896,6 +896,13 @@ export function prepareCharacterDerived(actor, system) {
       wornOnly,
       vsType:         armorVsType,
       vsSubtype:      armorVsSubtype,
+      // AP против подвида в ОДНОЙ локации (Укреплённые Рога, wdbc-1rno.10) и
+      // броня глаз (Зрящие Рога). Нули заводятся здесь: эффект фазы final
+      // (constants/effect-keys.mjs) «add» к несуществующему полю не ложится.
+      // Читает combat/damage.mjs.
+      vsSubtypeAt:    Object.fromEntries(Object.keys(AP_LOCATIONS).map(loc =>
+        [loc, Object.fromEntries(Object.keys(armorVsSubtype).map(st => [st, 0]))])),
+      eyeBonus:       0,
       propFlags:      propFlagsByLoc,
       // Слои носимой брони и лучшее из прочего носимого AP (ручное поле, пол,
       // щит) — для обнуления по предмету, а не по локации (wdbc-x1nz.2.81).

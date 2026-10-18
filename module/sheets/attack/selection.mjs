@@ -258,8 +258,12 @@ export function buildSelection(v) {
       ? [{ idx: -1, label: sys.profileLabel || "Основной", dmg: sys.damage || "", allowed: true }]
       : []),
     ...atkProfiles.map((p, i) => {
-      const allowed = !p.requiresCapability || hasRuleFlag(actor, p.requiresCapability);
-      const reason  = allowed ? "" : `Нужно: ${CAPABILITIES[p.requiresCapability]?.source || p.requiresCapability}`;
+      // «a+b» — нужны ВСЕ перечисленные способности сразу (Безоружный Воин И
+      // Укреплённые Рога: оба меняют кубик Удара головой, wdbc-1rno.10).
+      const needed  = String(p.requiresCapability || "").split("+").map(k => k.trim()).filter(Boolean);
+      const missing = needed.filter(k => !hasRuleFlag(actor, k));
+      const allowed = !missing.length;
+      const reason  = allowed ? "" : `Нужно: ${missing.map(k => CAPABILITIES[k]?.source || k).join(" + ")}`;
       return { idx: i, label: p.label || `Проф. ${i + 1}`, dmg: p.damage || "", allowed, reason,
                kind: attackIsMelee(sys, { profile: p }) };
     }).filter(o => o.kind === isMelee || o.idx === profIdx)

@@ -968,7 +968,11 @@ export async function applyDamageToActor(actor, damageData) {
       armorAP = resolveArmorAbsorptionAP({
         baseArmorAP,
         vsTypeBonus: absorption.vsType?.[damageType] ?? 0,
-        subtypeBonus: absorption.vsSubtype?.[damageSubtype] ?? 0,
+        // vsSubtypeAt — бонус только этой локации (Укреплённые Рога: Cor.b AP
+        // против I(Cr) в голову, wdbc-1rno.10), складывается с общим vsSubtype.
+        subtypeBonus: (absorption.vsSubtype?.[damageSubtype] ?? 0)
+                    + (absorption.vsSubtypeAt?.[armorKey]?.[damageSubtype] ?? 0),
+        eyeBonus: absorption.eyeBonus ?? 0,
         damageType, damageSubtype, melee, hitLocation, primitive, frontArcHit,
         flags: effLocFlags,
         wornAP: absorption.wornOnly?.[armorKey],

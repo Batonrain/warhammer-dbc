@@ -63,6 +63,20 @@ for (const [key, label] of Object.entries(AP_VS_TYPES)) {
 for (const [key, label] of Object.entries(AP_VS_SUBTYPES)) {
   EFFECT_KEY_LABELS[`system.absorption.vsSubtype.${key}`] = `AP против ${label}`;
 }
+// AP против подвида урона ТОЛЬКО в одной локации (wdbc-1rno.10: Укреплённые
+// Рога — «+Cor.b AP против I(Cr) попаданий в голову»). vsSubtype выше
+// действует на все шесть локаций разом, поэтому для узкого бонуса нужна
+// отдельная таблица локация → подвид; читает combat/damage.mjs.
+for (const [loc, locLabel] of Object.entries(AP_LOCATIONS)) {
+  for (const [key, label] of Object.entries(AP_VS_SUBTYPES)) {
+    EFFECT_KEY_LABELS[`system.absorption.vsSubtypeAt.${loc}.${key}`] = `AP (${locLabel}) против ${label}`;
+  }
+}
+// Броня глаз (wdbc-1rno.10: Зрящие Рога) — отдельное поле, а не седьмая
+// локация AP_LOCATIONS: попадание в Глаз — попадание в голову, игнорирующее
+// шлем (damage.mjs / armor-properties.mjs), и своей клетки AP на листе нет.
+export const EYE_ARMOUR_KEY = "system.absorption.eyeBonus";
+EFFECT_KEY_LABELS[EYE_ARMOUR_KEY] = "AP: Глаза";
 Object.assign(EFFECT_KEY_LABELS, {
   "system.corruptionBonus": "Cor.b (бонус Порчи, Unnatural)",
   "system.fearRating":  "Рейтинг Страха",

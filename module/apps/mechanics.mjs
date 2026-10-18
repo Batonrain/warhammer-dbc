@@ -147,7 +147,9 @@
 //      его так же, как Черты/Таланты. Отмена диалога выбора (choice) — просто
 //      ничего не выдаётся, без ошибки.
 //    armour: { armourLocation:"all"|"head"|"body"|"leftArm"|"rightArm"|
-//               "leftLeg"|"rightLeg", op:"add"|"subtract", armourValue }
+//               "leftLeg"|"rightLeg"|"eye", op:"add"|"subtract", armourValue }
+//      "eye" (wdbc-1rno.10, Зрящие Рога) — не локация AP, а броня самих глаз:
+//      эффект на system.absorption.eyeBonus, действует только на попадание в Глаз.
 //      → ActiveEffect НА ПРЕДМЕТЕ на system.armorBonus.<локация> — ту самую
 //      СКЛАДЫВАЕМУЮ надбавку AP, которой пользуются Естественная Броня и
 //      подкожные импланты (см. AP_LOCATIONS в constants/effect-keys.mjs). Фаза
@@ -159,7 +161,8 @@
 //      было нечем: rescaleTraitByRating масштабирует значение, но не сужает
 //      набор локаций.
 //    absorption: { absorptionTarget:"vsType:<energy|impact|rending|blast|chemical>"|
-//                   "vsSubtype:<crushing|fragmentation|electrical|flame|laser|toxic>",
+//                   "vsSubtype:<crushing|fragmentation|electrical|flame|laser|toxic>"|
+//                   "vsSubtypeAt:<локация>:<подвид>" (бонус ОДНОЙ локации, wdbc-1rno.10),
 //                   op:"add"|"subtract", absorptionValue }
 //      → ActiveEffect НА ПРЕДМЕТЕ на system.absorption.vsType.<тип> или
 //      system.absorption.vsSubtype.<подвид> (module/combat/damage.mjs, wdbc-q0q8)
@@ -385,7 +388,7 @@
 //      общего диалога встречных тестов ради одной строки правила, честный
 //      диагноз зафиксирован тикетом, не форсировался обходной путь.
 //    attackProp: { apScope:"unarmed"|"melee"|"ranged"|"attack", apKey,
-//                  apRating, apRating2 }
+//                  apRating, apRating2, apTargetPsyker }
 //      → СВОЙСТВО АТАКИ (wdbc-rmrm9, Electric Arc/Электродуга): атаки
 //      владельца выбранной области получают Особое Свойство Оружия из
 //      constants/weapon-properties.mjs::WEAPON_PROPERTIES (apKey — ключ
@@ -454,7 +457,7 @@ import { AVAILABILITY, DAMAGE_TYPES, DAMAGE_SUBTYPES } from "../constants/items.
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { isItemActive, syncItemEffectsDisabled } from "./effects.mjs";
 import { setMutationsSuppressed as _setMutationsSuppressed } from "../rules/mutation-suppression.mjs";
-import { expectedPhase, AP_LOCATIONS }        from "../constants/effect-keys.mjs";
+import { expectedPhase, AP_LOCATIONS, EYE_ARMOUR_KEY } from "../constants/effect-keys.mjs";
 import { raceEntries, raceDef }               from "./race-library.mjs";
 import { ELITE_ARCHETYPES }                   from "../constants/elite-archetypes.mjs";
 import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
@@ -501,6 +504,22 @@ const OP_OPTIONS = [
   { value: "add",        label: "+ прибавить" },
   { value: "subtract",   label: "− вычесть" }
 ];
+/**
+ * Цель записи kind:"absorption": "vsType:<тип>" | "vsSubtype:<подвид>" |
+ * "vsSubtypeAt:<локация>:<подвид>" (wdbc-1rno.10: Укреплённые Рога —
+ * «+Cor.b AP против I(Cr) в голову», бонус одной локации, а не всех шести).
+ * @returns {{scope:string, key:string, loc:string, path:string}|null} path —
+ *   ключ ActiveEffect; null — цель не выбрана или локация неизвестна.
+ */
+export function parseAbsorptionTarget(target) {
+  const [scope, a, b] = String(target || "").split(":");
+  if ((scope === "vsType" || scope === "vsSubtype") && a)
+    return { scope, key: a, loc: "", path: `system.absorption.${scope}.${a}` };
+  if (scope === "vsSubtypeAt" && a && b && Object.hasOwn(AP_LOCATIONS, a))
+    return { scope, key: b, loc: a, path: `system.absorption.vsSubtypeAt.${a}.${b}` };
+  return null;
+}
+
 const OP_SIGN = { add: "+", subtract: "−", multiply: "×", divide: "÷", divideUp: "÷↑", divideDown: "÷↓" };
 const CORRUPTION_OP_OPTIONS = [
   { value: "add",      label: "+ добавить" },
@@ -1007,7 +1026,8 @@ export function blankMechEntry(kind = "characteristic") {
     // момент атаки владельца (module/rules/item-rules.mjs), при получении
     // предмета ничего не делает. apRating/apRating2 — число или формула
     // (та же нотация, что у ccDamage — MECH_FORMULA_HINT/CC_DAMAGE_HINT).
-    apScope: "unarmed", apKey: "", apRating: "", apRating2: "",
+    // apTargetPsyker — свойство только против цели-псайкера (wdbc-1rno.10).
+    apScope: "unarmed", apKey: "", apRating: "", apRating2: "", apTargetPsyker: false,
     // charRecovery — «Восстановление урона в Характеристики» (wdbc-x1nz.2.83):
     // живой запрос, читается rules/char-loss.mjs::actorRecoveryPolicy() через
     // rules/item-rules.mjs, при получении предмета ничего не делает.
@@ -1189,16 +1209,19 @@ export function describeMechEntry(entry) {
       return `Движение: ${label} ${sign}${entry.movementValue}`;
     }
     case "armour": {
-      const loc = entry.armourLocation === "all"
-        ? "все локации" : (AP_LOCATIONS[entry.armourLocation] ?? entry.armourLocation);
+      const loc = entry.armourLocation === "all" ? "все локации"
+        : entry.armourLocation === "eye" ? "Глаза"
+        : (AP_LOCATIONS[entry.armourLocation] ?? entry.armourLocation);
       if (entry.armourValue === "" || entry.armourValue == null) return `Очки Брони: ${loc} (не задано)`;
       const sign = OP_SIGN[entry.op] ?? "+";
       return `Очки Брони: ${loc} ${sign}${entry.armourValue}`;
     }
     case "absorption": {
-      const [scope, absKey] = String(entry.absorptionTarget || "").split(":");
-      const label = scope === "vsType" ? (DAMAGE_TYPES[absKey] || absKey)
-                  : scope === "vsSubtype" ? (DAMAGE_SUBTYPES[absKey]?.label || absKey) : "";
+      const abs = parseAbsorptionTarget(entry.absorptionTarget);
+      const absKey = abs?.key;
+      const label = !abs ? ""
+                  : abs.scope === "vsType" ? (DAMAGE_TYPES[absKey] || absKey)
+                  : (DAMAGE_SUBTYPES[absKey]?.label || absKey) + (abs.loc ? ` (${AP_LOCATIONS[abs.loc]})` : "");
       if (!label) return "AP против типа/подвида урона (не задано)";
       if (entry.absorptionValue === "" || entry.absorptionValue == null) return `AP против ${label} (не задано)`;
       const sign = OP_SIGN[entry.op] ?? "+";
@@ -1245,7 +1268,8 @@ export function describeMechEntry(entry) {
       if (!def) return `Свойство атаки: ${scopeLabel} — (свойство не выбрано)`;
       const ratings = [entry.apRating, entry.apRating2].filter(v => String(v ?? "").trim() !== "");
       const ratingStr = ratings.length ? ` (${ratings.join("/")})` : "";
-      return `Свойство атаки: ${scopeLabel} — ${def.label}${ratingStr}`;
+      const vsPsyker = entry.apTargetPsyker ? " (только по псайкерам)" : "";
+      return `Свойство атаки: ${scopeLabel} — ${def.label}${ratingStr}${vsPsyker}`;
     }
     case "charRecovery": {
       if (!Array.isArray(entry.crTargets) || !entry.crTargets.length) return "Восстановление урона в Характеристики: (не выбрано)";
@@ -1477,10 +1501,8 @@ function isEntryComplete(e) {
       return !!e.movementTarget && formulaOk(e.movementValue);
     case "armour":
       return !!e.armourLocation && formulaOk(e.armourValue);
-    case "absorption": {
-      const [scope, absKey] = String(e.absorptionTarget || "").split(":");
-      return (scope === "vsType" || scope === "vsSubtype") && !!absKey && formulaOk(e.absorptionValue);
-    }
+    case "absorption":
+      return !!parseAbsorptionTarget(e.absorptionTarget) && formulaOk(e.absorptionValue);
     case "shieldSubtype":
       if (!e.shieldSubtypeKey) return false;
       return e.shieldSubtypeMode === "override" ? Number(e.shieldSubtypeRatingMax) > 0 : true;
@@ -3079,8 +3101,15 @@ function mechEffectData(entry, sourceItem, actor = null) {
     changes.push({ key, type: "add", value: num(entry.value),
                    phase: expectedPhase(key), priority: 0 });
   } else if (entry.kind === "armour") {
-    const locs = entry.armourLocation === "all"
-      ? Object.keys(AP_LOCATIONS) : [entry.armourLocation];
+    // «eye» — броня глаз (Зрящие Рога): не локация AP_LOCATIONS, а своё поле
+    // absorption.eyeBonus, которое читает только попадание в Глаз.
+    if (entry.armourLocation === "eye") {
+      changes.push({ key: EYE_ARMOUR_KEY, type: entry.op === "subtract" ? "subtract" : "add",
+                     value: num(entry.armourValue),
+                     phase: expectedPhase(EYE_ARMOUR_KEY), priority: 0 });
+    }
+    const locs = entry.armourLocation === "eye" ? []
+      : entry.armourLocation === "all" ? Object.keys(AP_LOCATIONS) : [entry.armourLocation];
     for (const loc of locs) {
       const key = `system.armorBonus.${loc}`;
       changes.push({ key, type: entry.op === "subtract" ? "subtract" : "add",
@@ -3088,9 +3117,9 @@ function mechEffectData(entry, sourceItem, actor = null) {
                      phase: expectedPhase(key), priority: 0 });
     }
   } else if (entry.kind === "absorption") {
-    const [scope, absKey] = String(entry.absorptionTarget || "").split(":");
-    if ((scope === "vsType" || scope === "vsSubtype") && absKey) {
-      const key = `system.absorption.${scope}.${absKey}`;
+    const abs = parseAbsorptionTarget(entry.absorptionTarget);
+    if (abs) {
+      const key = abs.path;
       changes.push({ key, type: entry.op === "subtract" ? "subtract" : "add",
                      value: num(entry.absorptionValue),
                      phase: expectedPhase(key), priority: 0 });
@@ -3537,7 +3566,8 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
   if (ent.kind === "armour") {
     const locOpts = [optHtml("all", "Все локации", (ent.armourLocation || "body") === "all")]
       .concat(Object.entries(AP_LOCATIONS)
-        .map(([k, l]) => optHtml(k, l, (ent.armourLocation || "body") === k))).join("");
+        .map(([k, l]) => optHtml(k, l, (ent.armourLocation || "body") === k)))
+      .concat(optHtml("eye", "Глаза (только попадание в Глаз)", ent.armourLocation === "eye")).join("");
     const opOpts = CORRUPTION_OP_OPTIONS.map(o => optHtml(o.value, o.label, (ent.op || "add") === o.value)).join("");
     return `<select class="mech-armour-loc" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${locOpts}</select>
       <select class="mech-armour-op" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opOpts}</select>
@@ -3549,11 +3579,16 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       .map(([k, l]) => optHtml(`vsType:${k}`, `Тип: ${l}`, ent.absorptionTarget === `vsType:${k}`)).join("");
     const subtypeOpts = Object.entries(DAMAGE_SUBTYPES)
       .map(([k, d]) => optHtml(`vsSubtype:${k}`, `Подвид: ${d.label}`, ent.absorptionTarget === `vsSubtype:${k}`)).join("");
+    const atOpts = Object.entries(AP_LOCATIONS).map(([loc, locLabel]) =>
+      `<optgroup label="Подвид только в локации: ${locLabel}">${Object.entries(DAMAGE_SUBTYPES)
+        .map(([k, d]) => optHtml(`vsSubtypeAt:${loc}:${k}`, `${locLabel}: ${d.label}`,
+          ent.absorptionTarget === `vsSubtypeAt:${loc}:${k}`)).join("")}</optgroup>`).join("");
     const opOpts = CORRUPTION_OP_OPTIONS.map(o => optHtml(o.value, o.label, (ent.op || "add") === o.value)).join("");
     return `<select class="mech-absorption-target" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
         <option value="" ${ent.absorptionTarget ? "" : "selected"}>— выберите —</option>
         <optgroup label="Широкий тип">${typeOpts}</optgroup>
         <optgroup label="Подвид (в скобках книги)">${subtypeOpts}</optgroup>
+        ${atOpts}
       </select>
       <select class="mech-absorption-op" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opOpts}</select>
       <input type="text" class="mech-absorption-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.absorptionValue ?? "")}" placeholder="напр. 1 или ceil(cor/2)" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`;
@@ -3638,7 +3673,8 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       <select class="mech-ap-scope" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${scopeOpts}</select>
       <select class="mech-ap-key" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
         <option value="" ${ent.apKey ? "" : "selected"}>— свойство —</option>${propOpts}
-      </select>${ratingHtml}${rating2Html}`;
+      </select>${ratingHtml}${rating2Html}
+      <label class="mech-cc-check"><input type="checkbox" class="mech-ap-target-psyker" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.apTargetPsyker ? "checked" : ""} ${dis}/> только по псайкерам</label>`;
   }
 
   if (ent.kind === "charRecovery") {

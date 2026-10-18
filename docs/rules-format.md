@@ -99,6 +99,7 @@ when: {
 | `isDaemon` | `true`/`false` | актор — демон: тип `daemon`/`demonPrince` или Черта Daemonic | нет |
 | `wearsFootwear` | `true`/`false` | актор обут: надета броня с AP на ноге или Маг-Сапоги; `false` — «босиком» (Barefoot / Босоногий Ратлинга) | да |
 | `targetPsykerOrDaemon` | `true`/`false` | цель броска — псайкер (Пси-Рейтинг ≥ 1) или демон | да |
+| `targetIsPsyker` | `true`/`false` | цель броска — псайкер (Пси-Рейтинг ≥ 1 или флаг `isPsyker`), демоны не считаются; Flame Рогов Кровожада «против псайкеров» (запись «Свойство атаки» с галкой «только по псайкерам») | да |
 | `targetIsAstartes` | `true`/`false` | цель (или источник теста Морали — тот же `ctx.targetActor`) — Космодесантник: раса или Черта «Astartes» (Angel Hunters Йигори) | да |
 | `targetSerpentine` | `true` | цель броска — змееподобное существо: Нага, Сслит или мутант со змеиной субмутацией (Центавр/Животный Гибрид: Змея) — `rules/naga-traits.mjs::isSerpentine` | да |
 

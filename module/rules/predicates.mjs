@@ -329,7 +329,7 @@ export const CTX_DEPENDENT_PREDICATES = new Set([
   "targetHasSize", "targetKeepsNimbleInArmour", "targetHasFaction",
   "targetHasFieldPsyMod", "targetLacksSealedArmour", "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus", "hasHatredTarget",
   "targetSerpentine",
-  "legacyGuardianMarked", "targetPsykerOrDaemon", "targetIsAstartes"
+  "legacyGuardianMarked", "targetPsykerOrDaemon", "targetIsAstartes", "targetIsPsyker"
 ]);
 
 export const PREDICATES = {
@@ -415,6 +415,16 @@ export const PREDICATES = {
   targetPsykerOrDaemon: (actor, ctx, value) => {
     const t = ctx?.targetActor;
     const hit = !!t && ((Number(t.system?.psyker?.rating) || 0) >= 1 || isDaemonActor(t));
+    return hit === (value !== false);
+  },
+
+  // Цель броска — именно псайкер, БЕЗ демонов (Рога Кровожада: «Flame (3d10)
+  // против псайкеров», wdbc-1rno.10). Признак тот же, что у листа (hud.mjs) и
+  // rules/talent-targets.mjs: флаг system.isPsyker либо Пси-Рейтинг ≥ 1 —
+  // NPC бестиария часто несёт только один из двух.
+  targetIsPsyker: (actor, ctx, value) => {
+    const t = ctx?.targetActor;
+    const hit = !!t && (!!t.system?.isPsyker || (Number(t.system?.psyker?.rating) || 0) >= 1);
     return hit === (value !== false);
   },
 

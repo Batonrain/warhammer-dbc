@@ -380,7 +380,10 @@ function ruleFromEntry(item, entry, groupId = null) {
     if (!key) return null;
     const scope = String(entry.apScope || "attack").trim();
     const target = scope === "attack" ? "attack" : `weapon:${scope}`;
-    return { id, label: entry.label || item.name, when: {},
+    // apTargetPsyker — «только по псайкерам» (Рога Кровожада: Flame (3d10)
+    // против псайкеров, wdbc-1rno.10): предикат цели в `when` ПРАВИЛА, а не
+    // записи — цель известна только в момент самой атаки (ctx.targetActor).
+    return { id, label: entry.label || item.name, when: entry.apTargetPsyker ? { targetIsPsyker: true } : {},
              effects: [{ kind: "grantWeaponProp", target, propKey: key,
                          rating: entry.apRating ?? 0, rating2: entry.apRating2 ?? 0 }] };
   }
