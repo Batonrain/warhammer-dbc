@@ -2245,7 +2245,8 @@ export const CAPABILITIES = {
   },
   "technomystic.core.powerCache": {
     label: "Персонаж увеличивает максимальный заряд Катушки Потенции на ½I.b (окр.▲). Не действует на Катушку Апокрифу.",
-    source: "Power Cache / Силовой Заряд", reader: ""
+    source: "Power Cache / Силовой Заряд",
+    reader: "module/rules/character/final-pools.mjs::prepareFinalPools — +½I.b (окр.▲) к system.energy.maxTotal"
   },
   "technomystic.core.recompile": {
     label: "За ментальное полудействие персонаж может потратить 1 Когницию, чтобы заменить одно скомпилированное Славословие другим равного или меньшего…",
@@ -2253,7 +2254,8 @@ export const CAPABILITIES = {
   },
   "technomystic.core.virtualMemory": {
     label: "Подключённый к Ноосфере, персонаж увеличивает максимум Когниции на 2 (при отключении «лишняя» теряется).",
-    source: "Virtual Memory / Виртуальная Память", reader: ""
+    source: "Virtual Memory / Виртуальная Память",
+    reader: "module/rules/character/final-pools.mjs::prepareFinalPools — +2 к system.cognition.max за копию (до 3), только при system.noosphereConnected"
   },
   "technomystic.core.votiveMass": {
     label: "Персонаж может скомпилировать Славословие за полное ментальное действие вместо <Рейтинг>×5 минут, потратив <Рейтинг>×4 Когниции.",
