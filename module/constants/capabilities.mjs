@@ -1716,7 +1716,8 @@ export const CAPABILITIES = {
   },
   "rogue.core.knifeFighter": {
     label: "Персонаж может перебрасывать броски на урон от ножей, а ножи, наносящие d10 урона, в его руках получают свойство Extreme (9).",
-    source: "Knife Fighter / Боец на Ножах", reader: ""
+    source: "Knife Fighter / Боец на Ножах",
+    reader: "module/combat/attack.mjs _executeAttackRoll() — wp.extremeThreshold снижается до 9 для ножа (isKnifeWeapon) с d10 в формуле урона. «Перебрасывать броски на урон» не читается — нет общего примитива «переброс урона» (тот же разрыв у medic.core.poisoner)."
   },
   "rogue.core.razorSEdge": {
     label: "Если Инициатива персонажа выше, чем у цели, при использовании ножей он добавляет разницу в Инициативе к Dmg (максимум +10;",
