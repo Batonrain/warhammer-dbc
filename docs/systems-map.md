@@ -1285,6 +1285,23 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   opposedTargetRerollRules`) дореализован целиком — вторая половина
   (противник-инициатор встречного теста) теперь тоже форсирует переброс,
   точка принуждения добавлена в `sheets/actor-sheet.mjs::_runTest`.
+- Majestic Horns / Величественные Рога (wdbc-1rno.10, 18-19.10.2026) — все
+  субмутации, по кусочкам общих примитивов: Корона Рогов — интегральная
+  атака; Рога Кровожада — `kind:"attackProp"` (`name:Рога`) с галкой «только
+  по псайкерам» (предикат `targetIsPsyker`) и `when.requireRage`;
+  Укреплённые Рога — AP против подвида в одной локации (цель `absorption`
+  `vsSubtypeAt:<loc>:<подвид>` → `system.absorption.vsSubtypeAt`, читает
+  `combat/damage.mjs`) и профили Удара головой с `requiresCapability` вида
+  «a+b»; Зрящие Рога — броня глаз (`armour` с `armourLocation:"eye"` →
+  `absorption.eyeBonus`, `combat/armor-properties.mjs`) и запрет
+  авточувств/визоров (`rules/vision-aids.mjs` ← `apps/effects.mjs::
+  isItemActive`); Однорогий — щит одной части тела (флаг
+  `shieldHitLocations` на предмете-forcefield, `damage.mjs::
+  _shieldCoversLocation`); Рог Чумоноса — `rules/lodged-horn.mjs`: «Обломить
+  Рог» ставит метку поверх Проникающего, правило `core.lodgedHorn`
+  (`autoFail` с `degrees:3`), отрастание рога 3 ч (`hornRegrowAt`) блокирует
+  атаку в `sheets/attack-dialog.mjs`; `integralAttack` умеет формулу рейтинга
+  `integralRating`.
 
 ## 13. Демонология: Демоны, Демон-Принц, Одержимость
 
