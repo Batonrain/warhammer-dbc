@@ -3175,7 +3175,8 @@ export const CAPABILITIES = {
   },
   "meleeCore.core.everythingAWeapon": {
     label: "Персонаж не получает штрафы на попадание за импровизированное оружие (в т.ч. стрелковое как рукопашное),",
-    source: "Everything a Weapon / Всё – Оружие", reader: ""
+    source: "Everything a Weapon / Всё – Оружие",
+    reader: "module/combat/improvised-item.mjs useSwingItem() — снимает штраф −20 «Дубина» у обычных предметов. Стрелковое как рукопашное и снятие Primitive на торс-попаданиях не читаются (нет отдельного пути для этих случаев)."
   },
   "meleeCore.core.falseAdvance": {
     label: "Заканчивая Полудвижение или Полное движение в контакте с врагом, персонаж может провести против него один Финт или Давление за свободное дей…",
