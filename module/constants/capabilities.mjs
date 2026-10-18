@@ -1908,11 +1908,13 @@ export const CAPABILITIES = {
   },
   "arsenal.core.meleeTraining": {
     label: "Если персонаж не владеет этим Талантом для выбранного оружия, он может использовать только Обычную Атаку как приём,",
-    source: "Melee Training / Рукопашная Тренировка", reader: ""
+    source: "Melee Training / Рукопашная Тренировка",
+    reader: "module/rules/weapon-training.mjs::meleeTrainingStatus — читает по ИМЕНИ Таланта и system.specialization, не по этому capabilityKey; module/sheets/attack-dialog.mjs (предупреждение, не запрет — см. план «Таланты Арсенал»)"
   },
   "arsenal.core.weaponTraining": {
     label: "Персонаж может использовать всё оружие классов выбранной специализации без штрафов. Без Таланта на владение — штраф −20 на соответствующие т…",
-    source: "Weapon Training / Оружейная Тренировка", reader: ""
+    source: "Weapon Training / Оружейная Тренировка",
+    reader: "module/rules/weapon-training.mjs::weaponTrainingPenalty — читает по ИМЕНИ Таланта и system.specialization, не по этому capabilityKey; «настоящие» экзотические предметы (weaponType:\"exotic\") не проверяются (нет доп. данных)."
   },
   // ── Скорость
   "speed.core.breacher": {
