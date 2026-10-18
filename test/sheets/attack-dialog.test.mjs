@@ -1071,6 +1071,30 @@ describe("Арсенал: доступность Стойки/Хвата/Баз�
     expect(html).not.toMatch(/name="atk-profile" value="0"[^>]*disabled/);
   });
 
+  it("requiresCapability «a+b» — профиль виден только при ОБЕИХ способностях (Укреплённые Рога + Воин, wdbc-1rno.10)", () => {
+    const head = weaponFor({
+      weaponClass: "melee", meleeCategory: "Природное", grips: "Гол",
+      profiles: [{ label: "Воин + Рога", damage: "1d10+2",
+        requiresCapability: "unarmed.warriorProfile+mutation.majesticHorns.reinforced" }]
+    }, { name: "Headbutt / Удар головой" });
+    const flags = keys => registerRuleSource("test", () => [{ id: "a", label: "Тест",
+      effects: keys.map(k => ({ kind: "grantFlag", target: k })) }]);
+
+    flags(["unarmed.warriorProfile"]);
+    showAttackDialog(attacker({ items: [head] }), head);
+    expect(captured.dialog.content).not.toMatch(/name="atk-profile" value="0"/);
+
+    resetCaptured();
+    flags(["mutation.majesticHorns.reinforced"]);
+    showAttackDialog(attacker({ items: [head] }), head);
+    expect(captured.dialog.content).not.toMatch(/name="atk-profile" value="0"/);
+
+    resetCaptured();
+    flags(["unarmed.warriorProfile", "mutation.majesticHorns.reinforced"]);
+    showAttackDialog(attacker({ items: [head] }), head);
+    expect(captured.dialog.content).toMatch(/name="atk-profile" value="0"/);
+  });
+
   it("Приём завязан на текущую Базу (стр. 14) — Оглушить доступен только с совместимой Базой", () => {
     // Оглушить: «База: Стандартная Атака, Натиск, Полная Атака» (MELEE_MANEUVERS.stun.bases).
     const hammer = weaponFor({ weaponClass: "melee", meleeCategory: "Молот" });

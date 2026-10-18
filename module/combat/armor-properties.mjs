@@ -273,12 +273,14 @@ export function isHeadHit(hitLocation) {
  *   (ручное поле, пол, щит) — с ним сравнивается остаток слоёв.
  * @param {boolean} locationNulled  обнулить локацию целиком (Ртуть: вся часть
  *   тела «электропроводна», не один предмет).
+ * @param {number}  eyeBonus  броня самих глаз (absorption.eyeBonus): прибавляется
+ *   только при попадании в Глаз.
  */
 export function resolveArmorAbsorptionAP({
   baseArmorAP, vsTypeBonus = 0, damageType, subtypeBonus = 0, damageSubtype = "",
   melee = false, hitLocation = "",
   primitive = false, flags = null, frontArcHit = false, wornAP = null,
-  layers = null, otherWornAP = 0, locationNulled = false
+  layers = null, otherWornAP = 0, locationNulled = false, eyeBonus = 0
 }) {
   const pf = flags || emptyArmorLocFlags();
   const hit = { damageType, damageSubtype, melee, hitLocation, frontArcHit };
@@ -301,7 +303,10 @@ export function resolveArmorAbsorptionAP({
   // Естественная броня (Черты, импланты) — не шлем, она остаётся.
   if (hitLocation === "Глаз (Голова)") {
     const natural = wornAP == null ? 0 : Math.max(0, baseArmorAP - (Number(wornAP) || 0));
-    return halveHead(natural + (pf.isPowerArmor ? 4 : 0));
+    // eyeBonus — броня самих глаз от Мутации (Зрящие Рога, wdbc-1rno.10): не
+    // шлем, поэтому остаётся, как и естественная броня. subtypeBonus сюда
+    // не входит сознательно — это AP тела/головы, а не глаз.
+    return halveHead(natural + (pf.isPowerArmor ? 4 : 0) + Math.max(0, Number(eyeBonus) || 0));
   }
 
   let ap = halveHead(baseArmorAP + vsTypeBonus + subtypeBonus);
