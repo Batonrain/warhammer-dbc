@@ -109,7 +109,14 @@ const ALLOWED = {
   // анализатор ищет литерал ключа, этот вид выдачи не распознаёт, хотя за
   // столом способность есть у любого персонажа с купленным Талантом.
   "arsenal.core.meleeTraining":  "включается по имени Таланта (Melee Training) + system.specialization, rules/weapon-training.mjs — анализатор такой вид выдачи не распознаёт",
-  "arsenal.core.weaponTraining": "включается по имени Таланта (Weapon Training) + system.specialization, rules/weapon-training.mjs — анализатор такой вид выдачи не распознаёт"
+  "arsenal.core.weaponTraining": "включается по имени Таланта (Weapon Training) + system.specialization, rules/weapon-training.mjs — анализатор такой вид выдачи не распознаёт",
+
+  // Cybernetic Excellence / Кибернетическое Превосходство (Механикум, гл. 3,
+  // wdbc-wyu40): включатель — regex NAME_RE.test(item.name) внутри именованной
+  // функции isCyberneticExcellence (rules/cybernetic-excellence.mjs), не
+  // прямой вызов itemHasName/hasAbility/hasTalent — анализатор такую обёртку
+  // не распознаёт, хотя за столом способность работает.
+  "mechanicum.core.cyberneticExcellence": "включается по имени Таланта через regex в isCyberneticExcellence (rules/cybernetic-excellence.mjs) — анализатор такую обёртку не распознаёт"
 };
 
 describe("возможности с читателем должны быть достижимы из игры", () => {
