@@ -9,9 +9,10 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
 import { useSwingItem, useThrowItem } from "../../module/combat/improvised-item.mjs";
 
-function actor({ ws = 40, s = 40, sb = 4, bs = 40, ag = 40, carry = 100 } = {}) {
+function actor({ ws = 40, s = 40, sb = 4, bs = 40, ag = 40, carry = 100, items = [] } = {}) {
   return {
     id: "a1", name: "Гвардеец", uuid: "Actor.a1",
+    items,
     system: {
       characteristics: { ws: { total: ws }, s: { total: s, bonus: sb }, bs: { total: bs }, a: { total: ag } },
       encumbrance: { carry },
@@ -20,6 +21,14 @@ function actor({ ws = 40, s = 40, sb = 4, bs = 40, ag = 40, carry = 100 } = {}) 
     update: async () => {}
   };
 }
+
+// Everything a Weapon / Всё – Оружие (meleeCore.core.everythingAWeapon).
+const everythingAWeaponItem = () => ({
+  id: "eaw", name: "Everything a Weapon / Всё – Оружие", type: "talent", system: {},
+  flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+    { id: "e", kind: "capability", capabilityKey: "meleeCore.core.everythingAWeapon", label: "" }
+  ] }] } }
+});
 
 function target(name = "Цель") {
   return { id: `t-${name}`, name, uuid: `Actor.${name}` };
@@ -67,6 +76,24 @@ describe("useSwingItem", () => {
     await useSwingItem(a, item("Труба", 10));
     expect(captured.chat[0].content).toContain("Промах");
     expect(captured.chat[0].content).not.toContain("wh-apply-dmg-btn");
+  });
+
+  it("Everything a Weapon — без штрафа −20 на импровизированное оружие", async () => {
+    captured.nextRoll = 35; // без Таланта: WS 40−20=20 → провал; с Талантом: WS 40 → успех
+    const a = actor({ ws: 40, carry: 100, items: [everythingAWeaponItem()] });
+    globalThis.game.user.targets = [{ actor: target("Орк") }];
+    await useSwingItem(a, item("Труба", 10));
+    expect(captured.chat[0].content).toContain("Попадание");
+    expect(captured.chat[0].content).toContain("Дубина +0 (Всё – Оружие)");
+  });
+
+  it("без Таланта тот же бросок — штраф −20 остаётся и даёт провал", async () => {
+    captured.nextRoll = 35;
+    const a = actor({ ws: 40, carry: 100 });
+    globalThis.game.user.targets = [{ actor: target("Орк") }];
+    await useSwingItem(a, item("Труба", 10));
+    expect(captured.chat[0].content).toContain("Промах");
+    expect(captured.chat[0].content).toContain("Дубина −20");
   });
 });
 

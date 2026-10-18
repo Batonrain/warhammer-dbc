@@ -23,6 +23,7 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { _targetDamageSection } from "./grapple.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 
 const TIER_LABEL = { light: "лёгкий", medium: "средний", heavy: "тяжёлый" };
 
@@ -41,7 +42,11 @@ export async function useSwingItem(actor, item) {
   const baseBon = MELEE_BASES[baseKey]?.wsBonus ?? 0;
   const ruleMods = collectTestMods(actor, { kind: "skill", char: "ws" });
   const ws    = actor.system.characteristics.ws?.total ?? 0;
-  const final = ws - 20 + baseBon + stBon + ruleMods.total;
+  // Everything a Weapon / Всё – Оружие (Талант, meleeCore.core.everythingAWeapon):
+  // не получает штраф на попадание за импровизированное оружие.
+  const noImprovisedPenalty = hasRuleFlag(actor, "meleeCore.core.everythingAWeapon");
+  const cudgelPenalty = noImprovisedPenalty ? 0 : -20;
+  const final = ws + cudgelPenalty + baseBon + stBon + ruleMods.total;
 
   const roll = await new Roll("1d100").evaluate();
   const { success: hit, deg } = testOutcome(roll.total, final);
@@ -58,7 +63,7 @@ export async function useSwingItem(actor, item) {
       label: "WS", base: ws,
       parts: [`база ${baseBon >= 0 ? "+" : ""}${baseBon}`,
         ...(stBon !== 0 ? [`стойка ${stBon >= 0 ? "+" : ""}${stBon}`] : []),
-        "Дубина −20", ...ruleMods.parts],
+        noImprovisedPenalty ? "Дубина +0 (Всё – Оружие)" : "Дубина −20", ...ruleMods.parts],
       threshold: final, rv: roll.total
     }),
     outcome: outcomeHtml(hit, hit
