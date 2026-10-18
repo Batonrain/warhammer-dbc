@@ -488,6 +488,15 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     && hasBackstab(actor) && isKnifeWeapon(item);
   if (backstabDoubled) wp.doubleDice = true;
 
+  // Knife Fighter / Боец на Ножах (rogue.core.knifeFighter): «ножи, наносящие
+  // d10 урона, в его руках получают свойство Extreme (9)». «Перебрасывать
+  // броски на урон от ножей» — не сделано (нет общего примитива «переброс
+  // урона», тот же разрыв у Poisoner/Медик — wdbc-obo8v).
+  if (isMelee && isKnifeWeapon(item) && /d10/i.test(String(item?.system?.damage ?? ""))
+    && hasRuleFlag(actor, "rogue.core.knifeFighter")) {
+    wp.extremeThreshold = Math.min(wp.extremeThreshold, 9);
+  }
+
   // Quiet Elimination / Тихое Устранение (wdbc-1rno.3, rules/quiet-
   // elimination.mjs): «Если персонаж атакует противника врасплох — +1 куб
   // урона, цель не издаёт звука при гибели». Завязано на per-attack галочку
