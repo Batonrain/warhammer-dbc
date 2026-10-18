@@ -66,9 +66,6 @@ describe("weaponTrainingPenalty", () => {
     expect(weaponTrainingPenalty({ actor: actor(), weaponType: "bolt", isGrenade: true }).total).toBe(0);
   });
 
-  it("категория без соответствия weaponType («настоящая» экзотика) не проверяется — 0", () => {
-    expect(weaponTrainingPenalty({ actor: actor(), weaponType: "exotic" }).total).toBe(0);
-  });
 
   it("грав-оружие без Weapon Training (Grav) — штраф −20", () => {
     const out = weaponTrainingPenalty({ actor: actor(), weaponType: "grav" });
@@ -131,8 +128,9 @@ describe("weaponTrainingPenalty", () => {
     }]);
     expect(weaponTrainingPenalty({ actor: a, weaponType: "plasma" }).total).toBe(0);
     expect(weaponTrainingPenalty({ actor: a, weaponType: "grav" }).total).toBe(0);
-    // «Настоящая» экзотика системой вообще не проверяется — уже 0 и без флага.
-    expect(weaponTrainingPenalty({ actor: a, weaponType: "exotic" }).total).toBe(0);
+    // «Настоящая» экзотика — ОТДЕЛЬНЫЙ от Weapon Training Талант (wdbc-3-65ff),
+    // блочные обходы Weapon Training её не покрывают — штраф остаётся.
+    expect(weaponTrainingPenalty({ actor: a, weaponType: "exotic", weaponName: "Plasma Caster" }).total).toBe(-20);
   });
 
   it("блочный обход (Legion) снимает штраф для любой покрытой категории", () => {
@@ -144,5 +142,47 @@ describe("weaponTrainingPenalty", () => {
       ] }] } }
     }]);
     expect(weaponTrainingPenalty({ actor: a, weaponType: "plasma" }).total).toBe(0);
+  });
+});
+
+// ── Exotic Weapon Training (wdbc-3-65ff) ───────────────────────────────────
+// Специализация — имя конкретного экзотического оружия/группы, связывается с
+// предметом эвристикой (подстрока в названии), не точной категорией.
+describe("weaponTrainingPenalty — weaponType exotic (Exotic Weapon Training)", () => {
+  it("без Таланта — штраф −20", () => {
+    const out = weaponTrainingPenalty({ actor: actor(), weaponType: "exotic", weaponName: "Sonic Blaster / Звуковой Бластер" });
+    expect(out.total).toBe(-20);
+    expect(out.parts[0].label).toContain("Exotic");
+  });
+
+  it("специализация совпадает подстрокой с названием предмета — штрафа нет", () => {
+    const a = actor([talent("Exotic Weapon Training / Экзотическая Оружейная Тренировка", "Sonic")]);
+    expect(weaponTrainingPenalty({ actor: a, weaponType: "exotic", weaponName: "Sonic Blaster / Звуковой Бластер" }).total).toBe(0);
+  });
+
+  it("специализация другого экзотического оружия не покрывает это", () => {
+    const a = actor([talent("Exotic Weapon Training / Экзотическая Оружейная Тренировка", "Plague")]);
+    expect(weaponTrainingPenalty({ actor: a, weaponType: "exotic", weaponName: "Sonic Blaster / Звуковой Бластер" }).total).toBe(-20);
+  });
+
+  it("регистр специализации и названия не важен", () => {
+    const a = actor([talent("Exotic Weapon Training / Экзотическая Оружейная Тренировка", "sonic")]);
+    expect(weaponTrainingPenalty({ actor: a, weaponType: "exotic", weaponName: "SONIC BLASTER" }).total).toBe(0);
+  });
+
+  it("несколько специализаций через запятую (непорезолвленный шаблон)", () => {
+    const a = actor([talent("Exotic Weapon Training / Экзотическая Оружейная Тренировка", "Rad, Arc, Needle")]);
+    expect(weaponTrainingPenalty({ actor: a, weaponType: "exotic", weaponName: "Rad Carbine" }).total).toBe(0);
+    expect(weaponTrainingPenalty({ actor: a, weaponType: "exotic", weaponName: "Arc Rifle" }).total).toBe(0);
+    expect(weaponTrainingPenalty({ actor: a, weaponType: "exotic", weaponName: "Flechette Blaster" }).total).toBe(-20);
+  });
+
+  it("пустая специализация непорезолвленного шаблона не считается совпадением со всем подряд", () => {
+    const a = actor([talent("Exotic Weapon Training / Экзотическая Оружейная Тренировка", "")]);
+    expect(weaponTrainingPenalty({ actor: a, weaponType: "exotic", weaponName: "Sonic Blaster" }).total).toBe(-20);
+  });
+
+  it("гранаты экзотического типа не штрафуются", () => {
+    expect(weaponTrainingPenalty({ actor: actor(), weaponType: "exotic", isGrenade: true }).total).toBe(0);
   });
 });

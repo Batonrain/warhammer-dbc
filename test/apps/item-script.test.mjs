@@ -51,6 +51,7 @@ describe("executeItemCode — стандартные помощники в об�
       seen.useAdaptiveVenom = typeof useAdaptiveVenom;
       seen.emergencyMaintenance = typeof emergencyMaintenance;
       seen.scroungeSupplies = typeof scroungeSupplies;
+      seen.grantCursedHeirloom = typeof grantCursedHeirloom;
       seen.activateBattleForm = typeof activateBattleForm;
       seen.endBattleForm = typeof endBattleForm;
       seen.grantStartingDisorder = typeof grantStartingDisorder;
@@ -70,7 +71,7 @@ describe("executeItemCode — стандартные помощники в об�
       activateWrappedInChaos: "function",
       attemptPossessionAttack: "function", leavePossessionHost: "function",
       useAdaptiveVenom: "function",
-      emergencyMaintenance: "function", scroungeSupplies: "function",
+      emergencyMaintenance: "function", scroungeSupplies: "function", grantCursedHeirloom: "function",
       activateBattleForm: "function", endBattleForm: "function", grantStartingDisorder: "function",
       shareCombatFormation: "function"
     });

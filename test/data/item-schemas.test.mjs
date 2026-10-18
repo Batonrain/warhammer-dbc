@@ -456,7 +456,11 @@ const TYPES = {
     pack: "armor",
     defaults: {
       description: "", notes: "", infoguard: 0, armorType: "simple", stacks: false,
-      maxAgility: 100, propRatings: {}, apSecond: {}, equipped: false,
+      maxAgility: 100,
+      // Штраф к A (wdbc-3-65ff) — отдельное от Max.A число (стр. 235,
+      // Terminator Aegis), в template.json не было.
+      agilityPenalty: 0,
+      propRatings: {}, apSecond: {}, equipped: false,
       // `largeBase` (wdbc-8k0i) — пока надета, токен носителя 3×3, в template.json не было.
       largeBase: false,
       head: 0, body: 0, leftArm: 0, rightArm: 0, leftLeg: 0, rightLeg: 0,

@@ -43,6 +43,11 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
       armorType:    new StringField({ initial: "simple", label: "Тип брони" }),
       stacks:       new BooleanField({ initial: false, label: "Складывается" }),
       maxAgility:   num(100, "Потолок Ловкости"),
+      // Отдельное от потолка число (стр. 235, Terminator Aegis — колонки A и
+      // Max.A разные): сколько брони ВЫЧИТАЕТ из A, пока носитель её не
+      // ослабил Тренировкой в Броне (rules/armour-training.mjs). 0 — у брони
+      // такого штрафа нет вовсе, книга говорит «если есть».
+      agilityPenalty: num(0, "Штраф к A"),
       // Рейтинги свойств и второй профиль AP: ключи задаёт сам предмет.
       propRatings:  new ObjectField({ label: "Рейтинги свойств" }),
       apSecond:     new ObjectField({ label: "Второй профиль AP" }),

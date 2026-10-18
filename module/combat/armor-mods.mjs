@@ -13,6 +13,7 @@ import { SECONDS_PER_HOUR } from "../constants/imperial-calendar.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { addFatigue } from "../sheets/tabs/conditions.mjs";
 import { worldTimeRemaining, markWorldTimeCooldownUsed } from "../rules/cooldown.mjs";
+import { armourTrainingAgilityBonus } from "../rules/armour-training.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 
@@ -157,10 +158,14 @@ export function armorAgilityCap(actor) {
     // === false, не !active: пропавшее поле (старые/тестовые данные без
     // схемы Foundry, где initial:true не подставляется сам) — это «включена»,
     // а не «выключена».
+    // Armour Training (wdbc-3-65ff): +10 Max.A этого вида брони — только пока
+    // броня реально работает, выключенную силовую не трогает (тот фиксированный
+    // штраф 35/10 — отдельное книжное правило, не базовый maxAgility предмета).
     const value = (item.system.armorType === "power" && item.system.active === false)
       ? (forced10 ? 10 : DISABLED_POWER_ARMOUR_MAX_AGILITY)
       : (Number.isFinite(Number(item.system.maxAgility)) ? Number(item.system.maxAgility) : 100)
-        + getArmorModEffects(actor, item).maxAgilityMod;
+        + getArmorModEffects(actor, item).maxAgilityMod
+        + armourTrainingAgilityBonus(actor, item.system.armorType);
     cap = cap === null ? value : Math.min(cap, value);
   }
   return cap;

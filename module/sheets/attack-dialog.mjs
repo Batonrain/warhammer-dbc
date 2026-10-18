@@ -49,7 +49,7 @@ import { mountPairFor, mountSelectiveMod, SELECTIVE_MODS,
 import { vehicleCoverMod } from "../rules/vehicle.mjs";
 import { ARMOUR_SIDES } from "../constants/vehicle.mjs";
 import { isWalkerVehicle } from "../rules/walker.mjs";
-import { legionAttackPenalty, LEGION_FIT_FLAG, OVERSIZED_FIT_FLAG } from "../rules/legion-fit.mjs";
+import { legionAttackPenalty, LEGION_FIT_FLAG, OVERSIZED_FIT_FLAG, GIANTS_ARMS_FLAG, wearsPowerArmour } from "../rules/legion-fit.mjs";
 import { ogrynAttackPenalty, OGRYN_FIT_FLAG } from "../rules/ogryn-fit.mjs";
 import { meleeTrainingStatus, weaponTrainingPenalty } from "../rules/weapon-training.mjs";
 import { extendedReachCells, meleeContactDisplay } from "../rules/weapon-length.mjs";
@@ -336,7 +336,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     isGrenade:  sys.weaponType === "grenade",
     // Best.Q Откатная Перчатка (wdbc-vsma): человек берёт легионное оружие без
     // штрафов за Размер и Силу, «неудобная форма» −10 остаётся.
-    ignoresSizeStrength: hasRuleFlag(actor, OVERSIZED_FIT_FLAG)
+    ignoresSizeStrength: hasRuleFlag(actor, OVERSIZED_FIT_FLAG),
+    // Giant's Arms / Оружие Гигантов (wdbc-3-65ff): в НАДЕТОЙ силовой броне
+    // снимает все три слагаемых разом, не только Размер/Силу — «неудобная
+    // форма» тоже уходит.
+    ignoresHandFit: hasRuleFlag(actor, GIANTS_ARMS_FLAG) && wearsPowerArmour(actor)
   });
   // Огрины (wdbc-flai): свойство Ogrynized устроено как Legion выше — чужак не
   // сладит с огринским хватом, а Огрин не пролезет пальцем в человеческую
@@ -356,7 +360,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Арсенал (стр. 62): без Weapon Training на класс оружия — штраф −20.
   const weaponTraining = weaponTrainingPenalty({
     actor, weaponType: sys.weaponType, weaponClass: sys.weaponClass,
-    isGrenade: sys.weaponType === "grenade"
+    isGrenade: sys.weaponType === "grenade", weaponName: item.name
   });
 
   // ── Тактическая карта (wdbc-8k0i): дистанция/контакт/Укрытие по токенам ───

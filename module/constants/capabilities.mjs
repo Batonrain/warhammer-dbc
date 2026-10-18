@@ -1885,11 +1885,13 @@ export const CAPABILITIES = {
   },
   "arsenal.core.armourTraining": {
     label: "Персонаж увеличивает Max.A этого вида брони на 10 и уменьшает её штраф к А на 5 (если есть).",
-    source: "Armour Training / Тренировка в Броне", reader: ""
+    source: "Armour Training / Тренировка в Броне",
+    reader: "module/rules/armour-training.mjs — hasArmourTraining/armourTrainingAgilityBonus/armourTrainingPenaltyReduction (читает system.specialization купленного Таланта, как Melee/Weapon Training). Max.A: module/combat/armor-mods.mjs — armorAgilityCap. Штраф к A: новое поле module/data/item/armor.mjs::agilityPenalty (стр. 235 «Terminator Aegis» — отдельное число от Max.A, схема его раньше не хранила), вычитается в module/rules/character.mjs — armorCharBonus.ag. Специализация «экзотическая» не имеет соответствующего system.armorType в данных пака (нет предметов armorType:\"exotic\") — честно никогда не сработает; armorType \"mesh\"/\"aspect\" книжный список специализаций этого Таланта не упоминает вовсе."
   },
   "arsenal.core.cursedHeirloom": {
     label: "Персонаж может выбрать получить одно оружие с Редкостью до 4. Оно не может быть уничтожено (в т.ч.",
-    source: "Cursed Heirloom / Проклятое Наследство", reader: ""
+    source: "Cursed Heirloom / Проклятое Наследство",
+    reader: "kind:\"script\" на самом предмете (grantCursedHeirloom, module/apps/cursed-heirloom.mjs) — выбор оружия до R4 Обозревателем компендиумов, бросок d5 (module/rules/cursed-heirloom.mjs), проклятье записывается текстом на созданный предмет (flags.warhammer-dbc.cursedHeirloom). «Не может быть уничтожено»/«всегда возвращается» — текст, системе нечему противостоять (нет теста на уничтожение снаряжения). Честно НЕ реализован механический ТРИГГЕР ни одного из пяти проклятий — ни одно не имеет готового хука (переброс-движок системы весь добровольный, не принудительный; трата Очков Бесчестия идёт минимум тремя разными путями в apps/infamy-points.mjs; реакция по радиусу на чужой Крит-Промах и вынужденная атака по трупу нигде в системе не смоделированы) — отыгрывается столом по тексту на предмете."
   },
   "arsenal.core.excessiveWealth": {
     label: "Персонаж получает +10 на тесты Inf для получения снаряжения и тесты Commerce, если тратит время и ресурсы для демонстрации своего богатства…",
@@ -1897,11 +1899,13 @@ export const CAPABILITIES = {
   },
   "arsenal.core.exoticWeaponTraining": {
     label: "Берясь за экзотическое оружие без Таланта на владение им, персонаж получает −20 на соответствующие тесты WS/BS.",
-    source: "Exotic Weapon Training / Экзотическая Оружейная Тренировка", reader: ""
+    source: "Exotic Weapon Training / Экзотическая Оружейная Тренировка",
+    reader: "module/rules/weapon-training.mjs — weaponTrainingPenalty(weaponType:\"exotic\"), подключено в module/sheets/attack-dialog.mjs. Специализация (имя конкретного экзотического оружия/группы — «Sonic», «Rad» и т.п.) сверяется ЭВРИСТИКОЙ — подстрокой в названии предмета, не точным совпадением категории, как у Melee/Weapon Training: в схеме weaponType:\"exotic\" нет отдельного поля-тега под эту специализацию, подстрока в названии — единственная рабочая связка. Может ошибочно не сработать на предмете с нетипичным названием."
   },
   "arsenal.core.giantSArms": {
     label: "Нося силовую броню, персонаж может использовать оружие и снаряжение Легиона без обычных штрафов.",
-    source: "Giant's Arms / Оружие Гигантов", reader: ""
+    source: "Giant's Arms / Оружие Гигантов",
+    reader: "module/rules/legion-fit.mjs — legionAttackPenalty(ignoresHandFit), GIANTS_ARMS_FLAG, wearsPowerArmour(actor); подключено в module/sheets/attack-dialog.mjs. В отличие от weapon.oversizedIgnoreSizeStrength снимает все три слагаемых штрафа разом, только пока броня НАДЕТА (equipped, включённость armorType:\"power\" роли не играет — книга говорит «нося»). Снаряжение Легиона (не только оружие) система свойством Legion не считает вовсе — только атаки, это честный дополнительный пробел книжного текста."
   },
   "arsenal.core.lordOfWar": {
     label: "Персонаж уменьшает Редкость всего Экзотического снаряжения и Кибернетики на 1 и получает +20 на тесты Inf для получения снаряжения и тесты C…",

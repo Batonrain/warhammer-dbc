@@ -111,6 +111,18 @@ const ALLOWED = {
   "arsenal.core.meleeTraining":  "включается по имени Таланта (Melee Training) + system.specialization, rules/weapon-training.mjs — анализатор такой вид выдачи не распознаёт",
   "arsenal.core.weaponTraining": "включается по имени Таланта (Weapon Training) + system.specialization, rules/weapon-training.mjs — анализатор такой вид выдачи не распознаёт",
 
+  // Armour Training / Тренировка в Броне (Арсенал, гл. 3, wdbc-3-65ff): тот же
+  // приём, что у Melee/Weapon Training выше — читается rules/armour-training.mjs
+  // по ИМЕНИ Таланта (regex /^Armour Training\b/) + system.specialization, не
+  // по capabilityKey — анализатор такой вид выдачи не распознаёт, хотя за
+  // столом способность есть у любого персонажа с купленным Талантом.
+  "arsenal.core.armourTraining": "включается по имени Таланта (Armour Training) + system.specialization, rules/armour-training.mjs — анализатор такой вид выдачи не распознаёт",
+
+  // Exotic Weapon Training (Арсенал, гл. 3, wdbc-3-65ff): тот же приём —
+  // читается rules/weapon-training.mjs по ИМЕНИ Таланта + system.specialization
+  // (подстрокой в названии предмета), не по capabilityKey.
+  "arsenal.core.exoticWeaponTraining": "включается по имени Таланта (Exotic Weapon Training) + system.specialization (подстрокой в названии предмета), rules/weapon-training.mjs — анализатор такой вид выдачи не распознаёт",
+
   // Cybernetic Excellence / Кибернетическое Превосходство (Механикум, гл. 3,
   // wdbc-wyu40): включатель — regex NAME_RE.test(item.name) внутри именованной
   // функции isCyberneticExcellence (rules/cybernetic-excellence.mjs), не

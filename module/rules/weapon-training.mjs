@@ -14,6 +14,17 @@
 //
 //  Приём по духу: module/rules/legion-fit.mjs (legionAttackPenalty) — тот же
 //  паттерн «штраф за не то оружие», уже подключённый в attack-dialog.mjs.
+//
+//  Exotic Weapon Training (wdbc-3-65ff): по книге специализация — имя
+//  КОНКРЕТНОГО экзотического предмета/группы («Sonic», «Rad», «Galvanic» и
+//  т.п., constants/weapon-categories.mjs уже объясняет, почему это не
+//  фиксированный список). Предмет с weaponType:"exotic" такого тега не несёт
+//  нигде в схеме (ни отдельного поля, ни properties[]) — единственная
+//  надёжная связка оказалась подстрокой: слово специализации почти всегда
+//  входит в название предмета («Sonic» → «Sonic Blaster», «Rad» → «Rad
+//  Carbine», «Needle» → «Needler Pistol»). Эвристика, не точное совпадение
+//  sameCategory() у остальных категорий — заведомо может промахнуться на
+//  предмете с нетипичным названием.
 // ════════════════════════════════════════════════════════════════════════════
 
 import { hasRuleFlag } from "./flags.mjs";
@@ -21,6 +32,7 @@ import { MELEE_TRAINING_EXEMPT, WEAPON_TYPE_TO_TRAINING, sameCategory } from "..
 
 const MELEE_TRAINING_NAME  = /^Melee Training\b/i;
 const WEAPON_TRAINING_NAME = /^Weapon Training\b/i;
+const EXOTIC_WEAPON_TRAINING_NAME = /^Exotic Weapon Training\b/i;
 
 /** Специализации купленных Талантов с этим именем (через запятую — на случай непорезолвленного шаблона). */
 function ownedSpecs(actor, nameRe) {
@@ -63,8 +75,19 @@ export function meleeTrainingStatus(actor, category) {
  * т.п.) идут через Melee Training по форме оружия, а не через эту функцию,
  * иначе обычный меч требовал бы разом двух разных Талантов.
  */
-export function weaponTrainingPenalty({ actor, weaponType, weaponClass, isGrenade = false } = {}) {
+export function weaponTrainingPenalty({ actor, weaponType, weaponClass, isGrenade = false, weaponName = "" } = {}) {
   if (isGrenade) return { total: 0, parts: [] };
+  // «Настоящая» экзотика — отдельная ветка: нет общей категории, специализация
+  // привязана к КОНКРЕТНОМУ предмету по подстроке в названии (см. шапку файла).
+  // Блочные обходы (Legion/Eldar/Drukhari/allRanged) сюда намеренно не входят:
+  // Exotic Weapon Training — отдельный от Weapon Training Талант, книга не
+  // объединяет их владение.
+  if (String(weaponType || "").toLowerCase() === "exotic") {
+    const specs = ownedSpecs(actor, EXOTIC_WEAPON_TRAINING_NAME);
+    const name = String(weaponName || "").toLowerCase();
+    if (specs.some(s => name.includes(s.toLowerCase()))) return { total: 0, parts: [] };
+    return { total: -20, parts: [{ label: "Не владеет экзотическим оружием (Exotic)", value: -20 }] };
+  }
   const category = WEAPON_TYPE_TO_TRAINING[String(weaponType || "").toLowerCase()];
   if (!category) return { total: 0, parts: [] };
   if (category === "Primary" && weaponClass === "melee") return { total: 0, parts: [] };

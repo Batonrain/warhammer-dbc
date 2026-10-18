@@ -55,6 +55,7 @@ import { soundConstitutionWoundsMods, hasResilienceTalent, armourMongerBonus } f
 import { prepareFinalPools } from "./character/final-pools.mjs";
 import { prepareMovementDerived } from "./character/movement.mjs";
 import { prepareArmourDerived } from "./character/armour.mjs";
+import { armourTrainingPenaltyReduction } from "./armour-training.mjs";
 import { sharedFormationInitBonus } from "./combat-formation.mjs";
 import { isBeyondHuman, beyondHumanCharKey, BEYOND_HUMAN_UNNATURAL } from "./beyond-human.mjs";
 import { LIMITED_LIFT_CAPABILITY, flightStrengthBonus, limitedLiftStatus } from "./limited-lift.mjs";
@@ -464,11 +465,17 @@ export function prepareCharacterDerived(actor, system) {
     // ── Бонусы от надетой брони к характеристикам ───────────────────────────
     // Силовая броня → +S; Аспектная броня Аэльдари → +S и +W (Сила Воли).
     // Прибавляются к значению характеристики (total), пока броня надета.
-    const armorCharBonus = { s: 0, wp: 0 };
+    // Штраф к A (armor.mjs::agilityPenalty, стр. 235 «Terminator Aegis», −15)
+    // — отдельное от Max.A число, вычитается, Armour Training (wdbc-3-65ff)
+    // уменьшает его на 5 за надетую единицу, но не ниже 0.
+    const armorCharBonus = { s: 0, wp: 0, ag: 0 };
     for (const item of actor.items) {
       if (item.type !== "armor" || !item.system.equipped) continue;
       armorCharBonus.s  += item.system.strengthBonus || 0;
       armorCharBonus.wp += item.system.wpBonus       || 0;
+      const penalty = Math.max(0, (item.system.agilityPenalty || 0)
+        - armourTrainingPenaltyReduction(actor, item.system.armorType));
+      armorCharBonus.ag -= penalty;
     }
     system.armorCharBonus = armorCharBonus;
 
