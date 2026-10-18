@@ -37,6 +37,8 @@ import { resplendentRaimentAvailable } from "../../combat/resplendent-raiment.mj
 import { showResplendentRaimentDialog } from "../../apps/resplendent-raiment-dialog.mjs";
 import { adrenalineRushAvailable, applyAdrenalineRush } from "../../combat/adrenaline-rush.mjs";
 import { applyCaution } from "../../combat/caution.mjs";
+import { toggleArmourMonger } from "../../combat/armour-monger.mjs";
+import { applyHunkerDown } from "../../combat/hunker-down.mjs";
 import { applyFlourishDance } from "../../combat/flourish-dance.mjs";
 import { boneSongAvailable, applyBoneSongSingle, applyBoneSongArea } from "../../combat/bone-song.mjs";
 import {
@@ -209,6 +211,16 @@ export function activateCombatListeners(root, actor) {
   // ── Размашистый Танец (Талант Избегания, module/combat/flourish-dance.mjs) ──
   on(root, ".flourish-dance-btn", "click", async () => {
     await applyFlourishDance(actor);
+  });
+
+  // ── Бронник: тумблер «Броня обслужена сегодня» (module/combat/armour-monger.mjs) ──
+  on(root, ".armour-monger-btn", "click", async () => {
+    await toggleArmourMonger(actor);
+  });
+
+  // ── Залегание (Талант Стойкости, module/combat/hunker-down.mjs) ─────────
+  on(root, ".hunker-down-btn", "click", async () => {
+    await applyHunkerDown(actor);
   });
 
   // ── Осторожность (Талант Избегания, module/combat/caution.mjs) ──────────

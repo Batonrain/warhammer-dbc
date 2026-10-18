@@ -112,7 +112,9 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   // Именно autoMods, а НЕ collectTestMods: галочки правил у Страха уже свои —
   // их показывает диалог (sheets/tabs/disorders.mjs::openFearDialog) и
   // складывает в `mod`. Общий сбор добавил бы отмеченную галочку второй раз.
-  const ruleMods = autoTestMods(actor, { kind: "skill", char: charKey, morale: true });
+  // fearTest — тег именно Страха (не Запугивания/Пыток/Подавления): на него
+  // даёт +10 Талант Сопротивление (Fear), rules/resilience-talents.mjs.
+  const ruleMods = autoTestMods(actor, { kind: "skill", char: charKey, morale: true, fearTest: true });
   const baseEff  = wp + ratingMod + mod + (tk.difficulty || 0) + ruleMods.total;
   // Саркофаг Дредноута (стр. 57, wdbc-drn): пилот, отключённый от чувств,
   // автоматически проходит тесты Страха независимо от Infamy.
@@ -141,7 +143,7 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
 
   const outcome = await resolveKindOutcome(actor, {
     baseEff, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed,
-    ctx: { actor, kind: "skill", char: charKey, morale: true }, autoSuccess: autoPass
+    ctx: { actor, kind: "skill", char: charKey, morale: true, fearTest: true }, autoSuccess: autoPass
   });
   const { eff, success, deg } = outcome;
   const dof      = success ? 0 : deg;

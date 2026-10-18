@@ -21,7 +21,12 @@ export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legi
   "knowledgeOfAgesRolled",
   // Мастерство: автоуспех за Очко (combat/mastery.mjs) и «За Гранью Человека»:
   // оставить первый результат переброса (combat/beyond-human.mjs).
-  "masteryAutoSuccessUsed", "beyondHumanKept"];
+  "masteryAutoSuccessUsed", "beyondHumanKept",
+  // Таланты Стойкости на карточке Критического Эффекта (crit-talents.mjs, shock-death.mjs):
+  // Последний Рывок, Не Умирать, Боль — Лишь Иллюзия и тест «смерть от шока».
+  "finalPushUsed", "neverDieUsed", "painIllusionUsed", "finalPushApplied",
+  // Ключи попыток без итога (runCardOnce с persist:false) флагом не пишутся, но стыковочный тест требует их в списке.
+  "finalPushTried", "painTried", "shockDeathRolled"];
 
 const local = new Set();
 const localKey = (message, key) => `${message?.id}:${key}`;
@@ -50,7 +55,7 @@ export async function markCardOnce(message, key) {
  * @param {string} [usedWarning]
  * @returns {Promise<boolean>} состоялось ли действие
  */
-export async function runCardOnce(message, key, run, usedWarning = "С этой карточки это уже сделано.") {
+export async function runCardOnce(message, key, run, usedWarning = "С этой карточки это уже сделано.", { persist = true } = {}) {
   if (cardOnceUsed(message, key)) { ui.notifications?.warn(usedWarning); return false; }
   if (!message.isOwner && !game.users?.activeGM) {
     ui.notifications?.warn("Карточка не ваша, а Мастера нет в игре — отметить её некому, действие не выполнено.");
@@ -61,6 +66,8 @@ export async function runCardOnce(message, key, run, usedWarning = "С этой 
   let done = false;
   try { done = !!(await run()); }
   finally { if (!done) local.delete(k); }
-  if (done) await markCardOnce(message, key);
+  // persist:false — отметка только на этом клиенте: флаг на сообщении перерисовал бы карточку у всех и
+  // снова включил бы уже нажатые кнопки эффектов (они гаснут лишь в DOM) — см. combat/crit-talents.mjs.
+  if (done && persist) await markCardOnce(message, key);
   return done;
 }

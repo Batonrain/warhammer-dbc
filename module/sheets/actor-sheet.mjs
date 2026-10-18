@@ -120,6 +120,7 @@ import { actorHasAspectPath } from "../constants/aeldari-paths.mjs";
 import { zeroBlankNumbers } from "../helpers/blank-zero.mjs";
 import { clearHololithBriefing } from "../combat/hololith-briefing.mjs";
 import { ignoresWeight, IGNORE_WEIGHT_FLAG } from "../rules/encumbrance.mjs";
+import { isNotableCharacter, NOTABLE_FLAG } from "../rules/resilience-talents.mjs";
 import { convertActorToMinion } from "../apps/minion-convert.mjs";
 
 /** Книжная пара Склонностей Навыка — [char, apt2] его определения. */
@@ -1263,6 +1264,23 @@ export class WarhammerCharacterSheet
     };
   }
 
+  /**
+   * «Значимый персонаж» (Взор Богов, Талант Стойкости): ГМ отмечает, что этот актор —
+   * не рядовой враг, а значимая фигура, у которой свой лимит 10 Ран за Раунд против
+   * носителя Таланта (combat/eye-of-the-gods.mjs). Флаг актора, а не поле схемы:
+   * нужен только ГМу и только этому правилу. Пункт видит только ГМ.
+   */
+  _notableEntries() {
+    if (!game.user?.isGM) return [];
+    const on = isNotableCharacter(this.actor);
+    return [{
+      cls: "wh-ctx-tog-notable", label: "★ Значимый персонаж (Взор Богов)", checkbox: true, checked: on,
+      onClick: () => (on
+        ? this.actor.unsetFlag("warhammer-dbc", NOTABLE_FLAG)
+        : this.actor.setFlag("warhammer-dbc", NOTABLE_FLAG, true))
+    }];
+  }
+
   _sheetToggleEntries(keys) {
     const sys = this.actor.system;
     const toggle = (key) => this.actor.update({ [`system.${key}`]: !sys[key] });
@@ -1739,22 +1757,22 @@ export class WarhammerCharacterSheet
         this._advancePricingSubmenu(), { sep: true },
         this._accessSubmenu(accessKeys),
         ...this._sheetToggleEntries(["craftAvailable", ...(aeldari ? [] : ["isRogueTrader"])]),
-        this._ignoreWeightEntry(),
+        this._ignoreWeightEntry(), ...this._notableEntries(),
         horde, minion
       ].filter(Boolean);
     }
     if (type === "daemon") {
-      return [...this._sheetToggleEntries(["isPsyker", "craftAvailable"]), this._ignoreWeightEntry(), horde, minion];
+      return [...this._sheetToggleEntries(["isPsyker", "craftAvailable"]), this._ignoreWeightEntry(), ...this._notableEntries(), horde, minion];
     }
     if (type === "demonPrince") {
-      return [...this._sheetToggleEntries(["isRogueTrader", "isPsyker", "craftAvailable"]), this._ignoreWeightEntry(), minion];
+      return [...this._sheetToggleEntries(["isRogueTrader", "isPsyker", "craftAvailable"]), this._ignoreWeightEntry(), ...this._notableEntries(), minion];
     }
     if (type === "minion") {
       return [
         this._accessSubmenu(["isPsyker", "possessed", "isTechpriest"]),
         horde, this._bodyTypeSubmenu(),
         ...this._sheetToggleEntries(["craftAvailable"]),
-        this._ignoreWeightEntry()
+        this._ignoreWeightEntry(), ...this._notableEntries()
       ].filter(Boolean);
     }
     return [];
@@ -3140,7 +3158,8 @@ export class WarhammerCharacterSheet
       const applied = await applyOnTargetFailConditions(onFailItemUuid, effectActor);
       if (applied.length) {
         onFailNote = `<div class="roll-threshold">${applied.map(a =>
-          a.applied ? `Состояние наложено: <b>${esc(a.label)}</b>` : `Иммунитет — <b>${esc(a.label)}</b> не наложено`
+          a.applied ? `Состояние наложено: <b>${esc(a.label)}</b>`
+            : a.resisted ? esc(a.note) : `Иммунитет — <b>${esc(a.label)}</b> не наложено`
         ).join("<br/>")}</div>`;
       }
     }
@@ -3253,10 +3272,12 @@ export class WarhammerCharacterSheet
    */
   async _rollCharacteristic(label, abbr, threshold, charKey, hideCharSelect = false, {
     effectTargetActor = null, opposedRequest = null, presetModifier = 0, onFailItemUuid = null,
-    defaultKind = "base", extendedPreset = null
+    defaultKind = "base", extendedPreset = null, rollContext = null
   } = {}) {
     return this._runTest(label, threshold, charKey, {
       hideCharSelect, effectTargetActor, opposedRequest, presetModifier, onFailItemUuid, defaultKind, extendedPreset,
+      // rollContext — теги теста для сбора правил (psychicThreat у сопротивления психосиле).
+      rollContext,
       headerAbbr: abbr, targetLabel: "Цель",
       // Тест Характеристики не клал цель сцены в контекст исхода, тест Навыка
       // клал. Не выравниваем заодно с объединением: правила с условием по цели

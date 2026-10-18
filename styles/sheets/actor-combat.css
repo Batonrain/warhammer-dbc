@@ -391,6 +391,9 @@
 
 .technique-btn:active { background: rgba(139, 26, 26, 0.12); }
 
+/* Кнопка-тумблер (Бронник: «Броня обслужена сегодня») во включённом состоянии. */
+.technique-btn.active { border-color: var(--wh-red); background: var(--wh-input-bg); }
+
 .tech-name {
   font-weight: bold;
   font-size: 0.85em;

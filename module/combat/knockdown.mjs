@@ -17,7 +17,7 @@
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
-import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
+import { statusApplyFields } from "./status-resist.mjs";
 import { sizeOf } from "../rules/predicates.mjs";
 
 /**
@@ -58,11 +58,16 @@ export async function resolveKnockdownSuccess(actor, { deg, target } = {}) {
   if (!target) {
     return ui.notifications?.warn(`${actor.name}: цель Повалить не выцелена на сцене — эффект не наложен.`);
   }
-  const fields = conditionApplyFields("prone", null, target);
+  // Стена (Талант Стойкости): носитель вправе пройти S+0 и устоять; на 5+ Успехов
+  // против рукопашного приёма — ещё и сбить нападающего (combat/status-resist.mjs).
+  const { fields, resisted, note } = await statusApplyFields(target, "prone", null,
+    { attacker: actor, melee: true, source: "Повалить" });
   if (Object.keys(fields).length) await target.update(fields);
 
   const sections = [
-    `<div class="roll-threshold">${esc(target.name)} сбит(а) с ног (Ничком).</div>`
+    resisted
+      ? `<div class="roll-threshold">${esc(note)}</div>`
+      : `<div class="roll-threshold">${esc(target.name)} сбит(а) с ног (Ничком).</div>`
   ];
 
   if (deg >= 5) {

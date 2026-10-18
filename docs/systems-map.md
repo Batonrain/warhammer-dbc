@@ -120,6 +120,70 @@
   `conditions.blinded.altSenses`). Шестое Чувство и Избегание Незримых — раньше
   (`rules/unseen-talents.mjs`), Часовой — Конструктор (`kind:"reroll"`). Чуткий
   Сон и Чтение По Губам — честный текст (нет Состояния «Спит»; повествование).
+- Таланты Стойкости (стр. 62, сверка главы 3, 18.10.2026): двадцать три Таланта
+  сверены с книгой — текст в `system.benefit`, ключи Возможностей
+  `resilience.core.*`. Чистая логика — `rules/resilience-talents.mjs`
+  (`hasResilienceTalent`, числа; источник правил `resilienceTalents` даёт
+  Сопротивление и Декаданс). Пакет A: Крепкое Телосложение — +1 Рана за копию в
+  `wounds.maxMods` (`rules/character.mjs`, потолок T.b, +2 не-Космодесантнику);
+  Неутомимый — `situational.mjs::fatiguePenalty`/`attackFatigueApplies` (WS, BS,
+  S, T, A без штрафа Усталости; окно атаки `attack-dialog.mjs`); Ментальная
+  Стойкость — запись «Усталость» (`fatigue-grace.mjs`) и порог обморока
+  `resilience-talents.mjs::fatigueFaintThreshold` (расчёт актора, вкладка
+  Состояний, лист); Бронник — тумблер на вкладке БОЙ (`combat/armour-monger.mjs`),
+  +2 AP через `system.armorBonus` в `rules/character.mjs`, сброс в полночь —
+  часы Состояний (`combat/condition-clock.mjs`); Укреплённая Душа — поглощение
+  варп-оружия в `combat/damage.mjs` и кубики Выжигания Души в
+  `hooks.mjs::_executeSoulBurn`; Настоящая Выдержка — `combat/damage.mjs`
+  (`trueGritDamage`); Падай и Перекатывайся — `combat/extinguish.mjs` (тушение
+  без теста); Пожиратель Змей — Toxic в `hooks.mjs` и яды/пост-эффекты в
+  `sheets/tabs/drugs.mjs`; Сопротивление — теги `fearTest` (`combat/fear.mjs`),
+  `poisonTest`/`stunTest` (`hooks.mjs`), `psychicThreat` (сопротивление психосиле
+  и Выжигание Души); Декаданс — тег `addictionTest` (`drugs.mjs::rollAddictionTest`);
+  Громыхатель — только Преимущество (`kind:"reroll"`). Тесты —
+  `test/rules/resilience-talents.test.mjs`, `test/documents/resilience-talents-derived.test.mjs`,
+  `test/combat/resilience-damage.test.mjs`, `armour-monger.test.mjs`,
+  `fear-resilience.test.mjs`, `extinguish.test.mjs`, `test/sheets/drugs-resilience.test.mjs`.
+  Пакет B (там же, `rules/resilience-talents.mjs`): Прикрытие Головы —
+  `combat/head-guard.mjs`, окно переноса попадания в голову на руку перед
+  поглощением (`combat/damage.mjs`), раз в Раунд (`apps/game-session.mjs`);
+  Адская Живучесть — `combat/hellish-resilience.mjs`: Очко Бесчестия → +Cor.b
+  поглощения в `damage.mjs`, ActiveEffect на `system.incomingDamageReduction` со
+  счётчиком концов Хода (`hooks.mjs`, `updateCombat`/`deleteCombat`); Взор Богов —
+  `combat/eye-of-the-gods.mjs`: корзины «рядовые»/«значимый» (флаг актора
+  `notableCharacter`, пункт «Значимый персонаж» в «Настройках листа»,
+  `sheets/actor-sheet.mjs::_notableEntries`), сброс окна в начале Хода носителя;
+  Залегание — `combat/hunker-down.mjs` (кнопка на вкладке БОЙ, метка в
+  `rules/turn-flags.mjs`) и `rules/cover-locations.mjs::coverApForLocation`
+  (`{ hunker }`: прикрытые части ×2, выглядывающие — обычное AP); Аблативное
+  Укрепление — `combat/ablative-hardening.mjs`: поле брони `hardeningCharges`
+  (`data/item/armor.mjs`), кнопка «Обслужить (1 ч)» на вкладке СНАРЯЖЕНИЕ
+  (`sheets/tabs/gear.mjs`), расход в `damage.mjs` (Разъедающее, Касание Энтропии,
+  аблативный мод, Моносеть). Тесты — `test/rules/resilience-talents-b.test.mjs`,
+  `test/combat/resilience-b-damage.test.mjs`, `resilience-b-wiring.test.mjs`.
+  Пакет C (там же, `rules/resilience-talents.mjs`): Стальная Челюсть (T+0 против
+  Оглушения) и Стена (S+0 против падения, на 5+ Успехов против рукопашного приёма —
+  ответный сбив) — единая асинхронная точка наложения Состояний
+  `combat/status-resist.mjs` (`statusApplyFields`/`offerStatusResist`: берёт патч у
+  `conditionApplyFields`, значит иммунитет учтён; спрашивает только когда Состояние
+  реально накладывается). Подключена к приёму «Оглушить» (`damage.mjs`), пилюлям
+  Критического Эффекта (`crit-effect-parser.mjs::applyCritEffectPill`), свойствам
+  оружия (`hooks.mjs::_applyWeaponPropEffect`), Грозному Воплю, Повалить/Напролому/
+  Пересилить, падению из седла (`mount.mjs`), Состояниям психосил
+  (`rules/on-target-fail.mjs`); НЕ подключена к ручному наложению, добровольному
+  падению, падению с высоты, тикам. «Насильно перемещают» не автоматизировано (нет
+  принудительного сдвига токена). Последний Рывок / Не Умирать / Боль — Лишь
+  Иллюзия — кнопки на карточке Критического Эффекта (`combat/crit-talents.mjs`
+  разметка и гашение, `crit-talents-actions.mjs` действия, обработчики в
+  `hooks.mjs`; раз на карточку — флаги `combat/card-once.mjs`); Последний Рывок
+  откладывает кнопки до конца Хода носителя (`hooks.mjs`, `updateCombat`). Тест
+  «смерть от шока» (правило мира, любой персонаж) — `crit-effect-parser.mjs::
+  parseShockDeathTest`/`shockDeathButtonHtml`, бросок и смерть —
+  `combat/shock-death.mjs` (`killByCondition`); Крепкий Орешек перебрасывает его и
+  бросает кубик Кровотечения дважды (`combat/condition-ticks.mjs`). Общий бросок
+  «тест +0» — `combat/resilience-test.mjs`. Тесты —
+  `test/rules/resilience-talents-c.test.mjs`, `test/combat/resilience-c-status.test.mjs`,
+  `resilience-c-crit.test.mjs`, `resilience-c-wiring.test.mjs`.
 - Таланты Скорости (стр. 62, сверка главы 3, 17.10.2026): одиннадцать Талантов
   сверены с книгой — полный текст в `system.benefit`, честные `notes`, ключи
   Возможностей `speed.core.*`. Чистая логика — `rules/speed-talents.mjs`

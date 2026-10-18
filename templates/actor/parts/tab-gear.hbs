@@ -133,7 +133,7 @@
             <tr class="item-row gear-host-row {{#if a.equipped}}item-row-equipped{{/if}} {{#if a.mods.length}}has-mods{{/if}}" data-item-id="{{a.id}}">
               <td class="gear-equip-cell"><input type="checkbox" class="armor-equip-cb" data-item-id="{{a.id}}" {{#if a.equipped}}checked{{/if}}/></td>
               <td class="gear-stored-cell"><input type="checkbox" class="item-stored-cb" data-item-id="{{a.id}}" title="Хранится не при себе" {{#if a.stored}}checked{{/if}}/></td>
-              <td class="item-name-cell">{{a.name}}{{#if a.mods.length}} <button type="button" class="gear-mods-toggle" data-action="gearModsToggle" data-host-id="{{a.id}}" title="Свернуть/развернуть модификации и системы"><span class="gmt-chevron">▾</span>⚙{{a.mods.length}}</button>{{/if}}</td>
+              <td class="item-name-cell">{{a.name}}{{#if a.canHarden}} <span class="gear-hardening-charges" title="Заряды прочности (Аблативное Укрепление): каждый гасит один эффект, снижающий AP брони">🛡 {{a.hardeningCharges}}</span> <button type="button" class="armor-hardening-btn" data-item-id="{{a.id}}" title="Час обслуживания брони: заряды прочности становятся равны I.b (Аблативное Укрепление). Час работы система не меряет.">Обслужить (1 ч)</button>{{/if}}{{#if a.mods.length}} <button type="button" class="gear-mods-toggle" data-action="gearModsToggle" data-host-id="{{a.id}}" title="Свернуть/развернуть модификации и системы"><span class="gmt-chevron">▾</span>⚙{{a.mods.length}}</button>{{/if}}</td>
               <td class="gear-armor-type">
                 {{#if (eq a.armorType "simple")}}Простая{{/if}}
                 {{#if (eq a.armorType "flak")}}Флак{{/if}}

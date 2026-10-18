@@ -37,6 +37,7 @@ import { psychicSustainTargetRules } from "./psychic-sustain-target.mjs";
 import { pathRulesFor } from "./library/paths.mjs";
 import { hatredRules } from "./hatred.mjs";
 import { awarenessTalentRules } from "./awareness-talents.mjs";
+import { resilienceTalentRules } from "./resilience-talents.mjs";
 import { legacyWrathRules, legacyExcessRules, legacyGuardianRules, legacyBloodPsychicRules, legacyInstinctiveDisarmRules, legacyDistractingCharSwapRules, legacyQuietAwarenessRules } from "./legacy-weapon.mjs";
 import { devourerPermanentRules } from "./devourer-of-knowledge.mjs";
 import { gallerpoxPoisonPenaltyActive } from "./prophet-of-gallerpox.mjs";
@@ -178,6 +179,11 @@ registerRuleSource("hatred", (a, ctx) => hatredRules(a, ctx));
 // Чувств, Дегустатора, Воролова, Службы Безопасности и Аналитического Взгляда,
 // штраф Ослепления вдвое у Боя Вслепую. См. заголовок rules/awareness-talents.mjs.
 registerRuleSource("awarenessTalents", (a, ctx) => awarenessTalentRules(a, ctx));
+
+// Таланты Стойкости (глава 3, сверка 18.10.2026): +10 Сопротивления на тесты
+// своей специализации (Страх, Яд, Психосилы, Оглушение) и +10 Декаданса на тесты
+// Зависимости. См. заголовок rules/resilience-talents.mjs.
+registerRuleSource("resilienceTalents", (a, ctx) => resilienceTalentRules(a, ctx));
 
 // Наследие Ярости/Rage, Оружие Наследия (wdbc-1rno.35, стр. 427): штраф −10
 // на I/P, пока экипировано Оружие Наследия с этой Историей. См. заголовок

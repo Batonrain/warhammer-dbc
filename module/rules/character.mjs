@@ -51,6 +51,7 @@ import { itemHasName, giftNamesOf } from "./predicates.mjs";
 import { applyParasiteFusion, fusedParasite, fuseParasiteCharacteristic } from "./parasite-trait.mjs";
 import { woundLevel } from "./wound-tier.mjs";
 import { woundsMaxMods as runtWoundsMaxMods } from "./runt.mjs";
+import { soundConstitutionWoundsMods, hasResilienceTalent, armourMongerBonus } from "./resilience-talents.mjs";
 import { prepareFinalPools } from "./character/final-pools.mjs";
 import { prepareMovementDerived } from "./character/movement.mjs";
 import { prepareArmourDerived } from "./character/armour.mjs";
@@ -602,9 +603,12 @@ export function prepareCharacterDerived(actor, system) {
     system.insanityBonus   = Math.floor((system.insanity?.value   || 0) / 10);
     system.corruptionBonus = Math.floor((system.corruption?.value || 0) / 10);
 
-    // Порог Усталости = T.b + W.b (потеря сознания при превышении).
+    // Порог Усталости = T.b + W.b (потеря сознания при превышении); у
+    // Ментальной Стойкости T.b + 2×W.b (rules/resilience-talents.mjs — то же
+    // число читают вкладка Состояний и контекст листа).
     if (system.fatigue) {
-      system.fatigue.max = (chars.t?.bonus ?? 0) + (chars.wp?.bonus ?? 0);
+      system.fatigue.max = (chars.t?.bonus ?? 0) + (chars.wp?.bonus ?? 0)
+        + (hasResilienceTalent(actor, "mentalFortitude") ? (chars.wp?.bonus ?? 0) : 0);
     }
 
     // Гангрена («Раны и Урон» → «Статусы», wdbc-x1nz.2.96): «получает 1
@@ -786,6 +790,9 @@ export function prepareCharacterDerived(actor, system) {
       const woundsMods = [
         ...(hasRuleFlag(actor, DREADNOUGHT_PILOT_FLAG) ? [{ label: "Саркофаг Дредноута", value: SARCOPHAGUS.woundsMax }] : []),
         ...runtWoundsMaxMods(actor),
+        // Крепкое Телосложение (глава 3, rules/resilience-talents.mjs): +1 Рана
+        // за каждую копию Таланта, потолок T.b (+2 не-Космодесантнику).
+        ...soundConstitutionWoundsMods(actor, tb),
         // Отвращение к Порядку (Зверолюд): −2 Раны за каждую бионику/кибернетику (выше).
         ...(system.orderRejection?.wounds ? [{ label: "Отвращение к Порядку", value: system.orderRejection.wounds }] : [])
       ];
@@ -875,7 +882,15 @@ export function prepareCharacterDerived(actor, system) {
     // в фазе "initial", то есть ДО этого расчёта, тем же приёмом, что и
     // encumbrance.indexBonus. Ложится рядом с traitArmourAll: после снятия
     // шлема, поэтому естественная броня головы вместе с ним не теряется.
-    const fxArmor = system.armorBonus || {};
+    const baseFxArmor = system.armorBonus || {};
+    // Бронник (глава 3, rules/resilience-talents.mjs): пока отмечено «броня
+    // обслужена сегодня» (флаг гаснет в полночь по Календарю), +2 AP на всех
+    // участках — тем же складываемым каналом, что надбавка эффектов, без
+    // отдельного читателя в расчёте поглощения.
+    const mongerAP = armourMongerBonus(actor, globalThis.game?.time?.worldTime ?? null);
+    const fxArmor = mongerAP
+      ? Object.fromEntries(Object.keys(AP_LOCATIONS).map(k => [k, (Number(baseFxArmor[k]) || 0) + mongerAP]))
+      : baseFxArmor;
     // Свойство оружия Corrosive (wdbc-plsf): стойкая потеря AP в месте
     // попадания, пока броню не починят (combat/damage.mjs пишет сюда).
     const corrosion = system.armorCorrosion || {};

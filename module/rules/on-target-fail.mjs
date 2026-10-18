@@ -31,6 +31,7 @@
 
 import { CONDITIONS_DEF } from "../constants/conditions.mjs";
 import { applyConditionWithDuration } from "../combat/condition-effects.mjs";
+import { offerStatusResist } from "../combat/status-resist.mjs";
 import { conditionEntryTerm, conditionHasLevelInput } from "./condition-duration.mjs";
 import { mechFormulaTotalSafe, mechRollData } from "./mech-formula.mjs";
 import { entryWhenOk } from "./mech-when.mjs";
@@ -97,6 +98,13 @@ export async function applyOnTargetFailConditions(itemUuid, effectTargetActor) {
     const key = entry.condKey;
     const level = conditionHasLevelInput(key) ? num(entry.condLevel) : null;
     const term = conditionEntryTerm(entry);
+    // Стальная Челюсть / Стена (Таланты Стойкости): цель-носитель, провалившая сопротивление,
+    // вправе пройти ещё и тест на Оглушение / падение (combat/status-resist.mjs).
+    const resist = await offerStatusResist(effectTargetActor, key, { attacker: casterActor, source: item.name });
+    if (resist.resisted) {
+      out.push({ label: CONDITIONS_DEF[key]?.label ?? key, applied: false, resisted: true, note: resist.note });
+      continue;
+    }
     const applied = await applyConditionWithDuration(effectTargetActor, key, {
       level, value: term.unit ? num(term.value) : 0, unit: term.unit
     });

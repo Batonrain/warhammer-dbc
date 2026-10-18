@@ -53,6 +53,7 @@ import { resolveVeilContainer, currentScene, veilShift,
 import { esc } from "../helpers/utils.mjs";
 import { addFatigue } from "../sheets/tabs/conditions.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { fatigueFaintThreshold } from "../rules/resilience-talents.mjs";
 import { postTestCard, testCardHtml, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 export { veilShift };
@@ -297,8 +298,7 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     // Усталость Проводника (wdbc-r0w9) — только для показа; сам счётчик живёт
     // на акторе (system.fatigue.value), не в journey.
     const fatigue = Number(nav?.system?.fatigue?.value) || 0;
-    const fatigueThreshold = nav
-      ? (nav.system?.characteristics?.t?.bonus || 0) + (nav.system?.characteristics?.wp?.bonus || 0) : 0;
+    const fatigueThreshold = nav ? fatigueFaintThreshold(nav) : 0;
 
     // Вид Проводника (раздел «Проводники», wdbc-r0w9) — навигатор, психоактивный,
     // демон, одержимый или принц демона; каждый по своим правилам.

@@ -104,6 +104,9 @@ import { sustainedActionRows }                    from "../rules/sustained-actio
 import { hasSpiritTalk, spiritTalkGate } from "../combat/spirit-talk.mjs";
 import { hasDeadlyEffectiveness, deadlyEffectivenessGate } from "../combat/deadly-effectiveness.mjs";
 import { hasBowToAudience, bowToAudienceGate } from "../combat/bow-to-audience.mjs";
+import { fatigueFaintThreshold } from "../rules/resilience-talents.mjs";
+import { hasArmourMonger, armourMongerOn } from "../combat/armour-monger.mjs";
+import { hasHunkerDown, hunkerDownOn } from "../combat/hunker-down.mjs";
 
 // Метка характеристики с учётом мировоззрения: у Хаосита «Влияние» → «Бесчестие».
 export function charLabel(key, alignment) {
@@ -520,6 +523,12 @@ export function characterContext(actor) {
   context.hasAdrenalineRush = hasAdrenalineRush(actor);
   // Кнопка «Осторожность» на вкладке БОЙ (глава 3) — только владельцам Таланта.
   context.hasCaution = hasCaution(actor);
+  // Тумблер «Броня обслужена сегодня» Бронника (глава 3) — только владельцам Таланта.
+  context.hasArmourMonger = hasArmourMonger(actor);
+  context.armourMongerOn = context.hasArmourMonger && armourMongerOn(actor);
+  // Кнопка «Залегание» на вкладке БОЙ (глава 3) — только владельцам Таланта.
+  context.hasHunkerDown = hasHunkerDown(actor);
+  context.hunkerDownOn = context.hasHunkerDown && hunkerDownOn(actor);
   // Кнопка «Размашистый Танец» на вкладке БОЙ (глава 3) — только владельцам Таланта.
   context.hasFlourishDance = hasFlourishDance(actor);
   // Кнопки Певцов Кости на вкладке БОЙ (wdbc-sk8s) — только владельцам соответствующего Таланта.
@@ -641,9 +650,7 @@ export function characterContext(actor) {
 
   context.fateLabel = fateTerm(system).plural;
 
-  const tb = system.characteristics?.t?.bonus ?? 0;
-  const wb = system.characteristics?.wp?.bonus ?? 0;
-  const fatigueThreshold = tb + wb;
+  const fatigueThreshold = fatigueFaintThreshold(actor);   // Ментальная Стойкость: T.b + 2×W.b (rules/resilience-talents.mjs)
   context.fatigueThreshold = fatigueThreshold;
   context.fatigueValue     = system.fatigue?.value ?? 0;
   context.fatigueMax       = system.fatigue?.max   ?? fatigueThreshold;

@@ -477,6 +477,8 @@ const TYPES = {
       weightless: false,
       active: true,
       breached: false,
+      // Аблативное Укрепление (Талант Стойкости, глава 3): заряды прочности брони.
+      hardeningCharges: 0,
       wraithbone: false, wraithboneImmune: false
     }
   },

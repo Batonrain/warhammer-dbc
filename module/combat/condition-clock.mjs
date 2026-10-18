@@ -37,6 +37,7 @@ import { charLossClockStep, actorRecoveryPolicy, charLossPortions, charLossPorti
 import { serumHookClock } from "./replicant.mjs";
 import { limbRegenClock } from "./limb-regen.mjs";
 import { sceneRadiationClock } from "./radiation-scene.mjs";
+import { armourMongerClock } from "./armour-monger.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -182,6 +183,9 @@ export const CONDITION_CLOCK_HANDLERS = [
   // каждые 8 ч (combat/replicant.mjs). После charLoss: урон этого отрезка не
   // должен тут же «восстановиться» тем же шагом.
   { id: "serumHook", run: serumHookClock },
+  // Бронник (Талант Стойкости): метка «броня обслужена сегодня» гаснет в
+  // полночь по Календарю — combat/armour-monger.mjs.
+  { id: "armourMonger", run: armourMongerClock },
 ];
 
 async function charLossClock(actor, { to }) {

@@ -11,6 +11,14 @@ import { _executeFearRoll, FAITH_FLAG, rollShockRecovery, postShockRecoveryPromp
 import { isRuleUsageUsed, markRuleUsageUsed,
          isRoundCapabilityAvailable, markRoundCapabilityUsed } from "./apps/game-session.mjs";
 import { fatePoolLabel }                 from "./rules/fate-save.mjs";
+import { hardenedSoulDice, hasResilienceTalent, snakeEaterHalve } from "./rules/resilience-talents.mjs";
+import { hellishResilienceTurnEnd, clearHellishResilience } from "./combat/hellish-resilience.mjs";
+import { offerStatusResist } from "./combat/status-resist.mjs";
+import { useFinalPush, useNeverDie, usePainIllusion, finalPushTurnEnd, finalPushCombatEnd,
+         applyDeferredEffects } from "./combat/crit-talents-actions.mjs";
+import { applyCritTalentState, collectCritEffects } from "./combat/crit-talents.mjs";
+import { rollShockDeath } from "./combat/shock-death.mjs";
+import { resetEyeOfTheGodsWindow } from "./combat/eye-of-the-gods.mjs";
 import { spendFromInfamyPool, spendPatronAbility } from "./apps/infamy-points.mjs";
 import { dimIgnoredEffects } from "./combat/sweet-suffering.mjs";
 import { spendInfamyForFailSuccess }     from "./apps/infamy-fail-success.mjs";
@@ -226,7 +234,7 @@ export function registerHooks() {
   // этого класса, отсюда явная проверка вместо слепого вызова.
   registerDelegatedTestOpener("genericTest", (executorActor, effectTargetActor, payload) => {
     const sheet = executorActor.sheet;
-    const { testKind, skillKey, charKey, label, hideCharSelect, presetModifier, onFailItemUuid } = payload;
+    const { testKind, skillKey, charKey, label, hideCharSelect, presetModifier, onFailItemUuid, psychicThreat } = payload;
     if (testKind === "characteristic") {
       if (typeof sheet?._rollCharacteristic !== "function") {
         return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — тест характеристики так не открыть.`);
@@ -239,7 +247,8 @@ export function registerHooks() {
       // onFailItemUuid (wdbc-tqfj) — тот же предмет, только для условного
       // наложения Состояния цели ПРИ ПРОВАЛЕ (Choir of Poxes), см. _runTest.
       return sheet._rollCharacteristic(label, meta?.abbr ?? charKey, total, charKey, !!hideCharSelect,
-        { effectTargetActor, presetModifier: Number(presetModifier) || 0, onFailItemUuid: onFailItemUuid || null });
+        { effectTargetActor, presetModifier: Number(presetModifier) || 0, onFailItemUuid: onFailItemUuid || null,
+          rollContext: psychicThreat ? { psychicThreat: true } : null });
     }
     if (typeof sheet?._rollSkill !== "function") {
       return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — тест навыка так не открыть.`);
@@ -364,7 +373,10 @@ export function registerHooks() {
         const extra = {
           testKind: "characteristic", charKey: d.charKey, label: d.label,
           hideCharSelect: true, presetModifier: Number(d.mod) || 0,
-          onFailItemUuid: d.itemUuid || ""
+          onFailItemUuid: d.itemUuid || "",
+          // Тег «тест против психической угрозы» (rules/resolve-test.mjs, scope
+          // "psychicthreat") — Сопротивление (Psychic Powers) даёт на него +10.
+          psychicThreat: true
         };
         if (activeOwnerOf(targetActor)) {
           await requestDelegatedTest({
@@ -1709,6 +1721,84 @@ export function registerHooks() {
       });
     });
 
+    // Таланты Стойкости на карточке Критического Эффекта (combat/crit-talents*.mjs):
+    // сперва привести показанную карточку в соответствие с флагами сообщения (что уже
+    // потрачено/отложено/заменено), затем навесить клики. Каждое действие — раз на карточку.
+    applyCritTalentState(message, html);
+    const talentActorOf = async el => {
+      const doc = await fromUuid(el.dataset.actorUuid).catch(() => null);
+      const target = doc?.actor ?? doc;
+      if (!target?.isOwner) { ui.notifications.warn("Таланты Стойкости использует владелец цели (или ГМ)."); return null; }
+      return target;
+    };
+    html.querySelectorAll(".wh-final-push-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const target = await talentActorOf(el);
+        if (!target) return;
+        el.disabled = true;
+        if (!(await useFinalPush(target, { message, block: el.closest(".dmg-critical-block") }))) el.disabled = false;
+      });
+    });
+    html.querySelectorAll(".wh-never-die-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const target = await talentActorOf(el);
+        if (!target) return;
+        el.disabled = true;
+        if (!(await useNeverDie(target, { message, block: el.closest(".dmg-critical-block") }))) el.disabled = false;
+      });
+    });
+    html.querySelectorAll(".wh-pain-illusion-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const target = await talentActorOf(el);
+        if (!target) return;
+        el.disabled = true;
+        const ds = el.dataset;
+        if (!(await usePainIllusion(target, {
+          message, block: el.closest(".dmg-critical-block"), level: Number(ds.level) || 0,
+          damageType: ds.damageType || "", hitLocation: ds.hitLocation || "", netDamage: Number(ds.netDamage) || 0
+        }))) el.disabled = false;
+      });
+    });
+    // «Применить отложенные эффекты» (Последний Рывок): напоминание в конце Хода носителя.
+    html.querySelectorAll(".wh-final-push-apply-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const target = await talentActorOf(el);
+        if (!target) return;
+        el.disabled = true;
+        const holder = el.closest(".wh-roll-result")?.querySelector(".wh-final-push-deferred");
+        let n = 0;
+        // Раз на карточку: флаг сообщения гасит кнопки у всех клиентов (applyCritTalentState).
+        const ran = await runCardOnce(message, "finalPushApplied", async () => {
+          n = await applyDeferredEffects(target, collectCritEffects(holder));
+          for (const b of holder?.querySelectorAll(".wh-crit-apply-btn, .wh-char-dmg-btn, .wh-crit-drop-btn") ?? []) b.disabled = true;
+          return true;
+        }, "Отложенные эффекты с этой карточки уже применены.");
+        if (!ran) return;
+        ui.notifications.info(n ? `Последний Рывок: применено отложенных эффектов — ${n}.` : "Последний Рывок: применять нечего (смерть — отдельными кнопками).");
+      });
+    });
+    // Тест «смерть от шока» (правило мира, любой персонаж): провал — смерть; Крепкий Орешек перебрасывает.
+    html.querySelectorAll(".wh-shock-death-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const doc = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        const target = doc?.actor ?? doc;
+        if (!target?.isOwner) return ui.notifications.warn("Тест на смерть от шока бросает владелец цели (или ГМ).");
+        el.disabled = true;
+        const ds = el.dataset;
+        if (!(await rollShockDeath(target, { char: ds.char || "t", mod: Number(ds.mod) || 0, cause: ds.cause || "шока", message }))) el.disabled = false;
+      });
+    });
+
     // Сладкое Страдание (Покровительство Слаанеш, корбук 438): Очко Бесчестия
     // за игнорирование всех эффектов Критического Эффекта, кроме потери
     // конечностей, смерти и Оглушения (combat/sweet-suffering.mjs).
@@ -2541,7 +2631,10 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
     // кидается «тест против яда» — только у condition==="poisoned" (Toxic),
     // остальные свойства оружия (Concussive/Flame/…) идут тем же кодом с
     // другим condition и этот флаг не несут.
-    const resistMods = collectTestMods(actor, { kind: "skill", char: testChar, poisonTest: condition === "poisoned" });
+    // stunTest (Талант Сопротивление, Stun): Оглушающее/Concussive и прочие
+    // свойства, накладывающие Оглушение, — тот же единственный тест на Оглушение.
+    const resistMods = collectTestMods(actor, { kind: "skill", char: testChar,
+      poisonTest: condition === "poisoned", stunTest: condition === "stunned" });
     const threshold = charTotal + testMod + resistMods.total;
     // Преимущество против яда (Крепкий как Камень, rules/squat-traits.mjs):
     // дважды, берётся лучший — тот же бросок, что у Кубика диалога.
@@ -2592,6 +2685,8 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
     // отдаёт ПУСТОЙ патч, и об этом надо сказать вслух — иначе ГМ решит, что
     // свойство оружия сломалось.
     const immune = [];
+    const resistedNotes = [];
+    const resistedConds = [];
     for (const cond of conditionsToApply) {
       const levelField = conditionLevelField(cond);
       const lvl = levelField ? (perDoP ? deg : (fixedRnd || 1)) : null;
@@ -2603,6 +2698,11 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
         immune.push(CONDITIONS_DEF[cond]?.label || label);
         continue;
       }
+      // Стальная Челюсть / Стена (Таланты Стойкости): Оглушение и «сбит с ног» носитель
+      // вправе проигнорировать тестом (combat/status-resist.mjs); нападающий свойства
+      // оружия карточке неизвестен — ответный сбив Стеной тут не предлагается.
+      const resist = await offerStatusResist(actor, cond, { source: label });
+      if (resist.resisted) { resistedNotes.push(resist.note); resistedConds.push(cond); continue; }
       Object.assign(update, fields);
       applied.push(levelField
         ? `${label} (${useRounds ? "раундов" : "ур."}: ${lvl})`
@@ -2611,10 +2711,12 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
     if (Object.keys(update).length) await actor.update(update);
     if (applied.length) appliedNote = `<div class="roll-threshold">Состояние: <b>${applied.join(", ")}</b></div>`;
     if (immune.length) appliedNote += `<div class="roll-threshold">Иммунитет: <b>${immune.join(", ")}</b> — не накладывается</div>`;
+    for (const n of resistedNotes) appliedNote += `<div class="roll-threshold">${esc(n)}</div>`;
     // Enjoyment/Наслаждение (wdbc-sk8s): Усталость/Отравление/Кровотечение/
     // Оглушение от противника — 1 Боли раз за бой, без траты Реакции.
     const ENJOYMENT_CONDITIONS = new Set(["fatigued", "poisoned", "bleeding", "stunned"]);
-    if (conditionsToApply.some(cond => ENJOYMENT_CONDITIONS.has(cond))) {
+    // Отбитое Стальной Челюстью/Стеной Оглушение не «получено» — Боль за него не начисляется.
+    if (conditionsToApply.some(cond => ENJOYMENT_CONDITIONS.has(cond) && !resistedConds.includes(cond))) {
       await maybeGrantEnjoymentPain(actor);
     }
     // Галлюцинации (Hallucinogenic (X), стр. 168, wdbc-r5o7.8): книга требует
@@ -2640,10 +2742,13 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
   if (!resisted && dmgFormula) {
     const dmgRoll = await new Roll(dmgFormula).evaluate();
     allRolls.push(dmgRoll);
-    const dmg = dmgRoll.total;
+    // Пожиратель Змей (Талант Стойкости): «получаемый урон от ядов вдвое меньше (окр.▲)».
+    const rolledDmg = dmgRoll.total;
+    const dmg = condition === "poisoned" ? snakeEaterHalve(actor, rolledDmg) : rolledDmg;
+    const snakeNote = dmg !== rolledDmg ? ` (Пожиратель Змей: ${rolledDmg} → ${dmg})` : "";
     const loss = await applyWoundLoss(actor, dmg);
     const { currentWounds, newWounds, newCritical, gotCritical } = loss;
-    dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Доп. урон (минуя броню): <b>${dmg}</b> → Раны ${currentWounds} → ${newWounds}${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>`
+    dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Доп. урон (минуя броню): <b>${dmg}</b>${snakeNote} → Раны ${currentWounds} → ${newWounds}${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>`
       + await secondaryCritHtml(actor, loss, critCtx);
     // Горение (wdbc-3pv5): у Огня (Flame) этот же dmg — рейтинг-бросок
     // свойства (damageFromRating), ровно то число, с которым Cooler/Морозное
@@ -2672,10 +2777,12 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
   } else if (!resisted && isProvaly) {
     // «X+Провалы» (Bane, Vibro и т.п.): не кубик, а рейтинг×mult + add + Провалы
     // проваленного теста сопротивления — уже посчитано выше как deg.
-    const dmg = rating * provalyMult + provalyAdd + deg;
+    const rolledDmg = rating * provalyMult + provalyAdd + deg;
+    const dmg = condition === "poisoned" ? snakeEaterHalve(actor, rolledDmg) : rolledDmg;
+    const snakeNote = dmg !== rolledDmg ? ` (Пожиратель Змей: ${rolledDmg} → ${dmg})` : "";
     const loss = await applyWoundLoss(actor, dmg);
     const { currentWounds, newWounds, newCritical, gotCritical } = loss;
-    dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Доп. урон (минуя броню, ${rating}×${provalyMult}+${provalyAdd}+${deg} Провалы): <b>${dmg}</b> → Раны ${currentWounds} → ${newWounds}${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>`
+    dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Доп. урон (минуя броню, ${rating}×${provalyMult}+${provalyAdd}+${deg} Провалы): <b>${dmg}</b>${snakeNote} → Раны ${currentWounds} → ${newWounds}${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>`
       + await secondaryCritHtml(actor, loss, critCtx);
   }
 
@@ -2756,7 +2863,11 @@ export async function _executeSoulBurn(attacker, target) {
 
   let dmgNote = "";
   if (burned) {
-    const dRoll = await new Roll(`${net}d10`).evaluate(); allRolls.push(dRoll);
+    // Укреплённая Душа (Талант Стойкости): проигравший тест уменьшает кубики
+    // урона на ½ I.b (окр.▲), минимум 1 кубик.
+    const dice  = hasResilienceTalent(target, "hardenedSoul")
+      ? hardenedSoulDice(net, target.system.characteristics?.int?.bonus) : net;
+    const dRoll = await new Roll(`${dice}d10`).evaluate(); allRolls.push(dRoll);
     const dmg   = dRoll.total;
     // Непоглощаемый урон напрямую в Раны (затем в Критические)
     const { currentWounds, newWounds, newCritical, maxWounds, gotCritical } =
@@ -2765,7 +2876,7 @@ export async function _executeSoulBurn(attacker, target) {
     const soulDestroyed = newCritical >= woundDeathThreshold(maxWounds);
     dmgNote = `
       <div class="roll-damage-section">
-        <div class="roll-damage-label">${rollIcon("fire","#ff8a3a")}Непоглощаемый E урон: <b>${dmg}</b> (${net}d10 за ${net} Успех(ов))</div>
+        <div class="roll-damage-label">${rollIcon("fire","#ff8a3a")}Непоглощаемый E урон: <b>${dmg}</b> (${dice}d10 за ${net} Успех(ов)${dice !== net ? `, Укреплённая Душа: −${net - dice} куб.` : ""})</div>
         <div class="roll-threshold">Раны: <b>${currentWounds}</b> → <b>${newWounds}</b>${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>
         ${soulDestroyed ? `<div class="roll-threshold" style="color:#8b0000;"><b>${rollIcon("skull","#ff6b6b")}Душа разорвана на куски — цель уничтожена!</b></div>` : ""}
       </div>`;
@@ -3295,6 +3406,10 @@ function _attachFateContextMenu(message, html) {
     await wakeDivineProtected(combat.combatants?.map?.(c => c.actor) ?? []);
     // Метка Аватара Резни живёт «до конца боя» — снять со всех комбатантов.
     await clearAvatarOfSlaughterMarks(combat);
+    // Адская Живучесть (Талант Стойкости): бонус «до конца Хода» не переживает бой.
+    await clearHellishResilience(combat);
+    // Последний Рывок: отложенное, не дожившее до конца Хода, не пропадает молча.
+    await finalPushCombatEnd(combat);
     // Бонусы Песни Стремительности (wdbc-sk8s) — та же логика «до конца боя».
     await clearSongOfSwiftnessBuffs(combat);
     // Пул неизрасходованных Успехов Избегания (wdbc-8zi) — валиден только
@@ -3606,6 +3721,12 @@ function _attachFateContextMenu(message, html) {
         // (геометрия рукопашного контакта, combat/free-attack.mjs), Щиту
         // Праздности — нет, поэтому передаётся всегда, вторым необязательным.
         await processTurnStateShieldsTurnEnd(prevActor, prevCombatant.token);
+        // Адская Живучесть (Талант Стойкости): бонус «до конца своего следующего
+        // Хода» — счётчик концов Хода носителя убывает, на нуле эффект снимается.
+        await hellishResilienceTurnEnd(prevActor);
+        // Последний Рывок (Талант Стойкости): отложенные Критические Эффекты — напоминанием
+        // в конце Хода носителя.
+        await finalPushTurnEnd(prevActor);
       }
     }
     if (nextCombatant?.actor) {
@@ -3614,6 +3735,9 @@ function _attachFateContextMenu(message, html) {
       // проверять уже нечего (см. combat/rapid-reaction.mjs).
       const wasSurprised = !!nextCombatant.actor.system?.conditions?.surprised;
       await resetActionEconomy(nextCombatant.actor);
+      // Взор Богов (Талант Стойкости): окно «от начала своего Хода до начала
+      // следующего» начинается заново — счёт потерянных Ран обнуляется.
+      await resetEyeOfTheGodsWindow(nextCombatant.actor);
       // Короткая/Детальная Команда отдающего гаснут «до начала следующего
       // Хода Командира»; Брифинг — на новом Раунде (combat/command-state.mjs).
       await expireCommandsAtTurnStart(combat);

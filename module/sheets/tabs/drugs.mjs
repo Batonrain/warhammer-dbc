@@ -19,6 +19,9 @@ import { hasRuleFlag, ruleFlagLabels } from "../../rules/flags.mjs";
 import { DRUG_AFTERMATH_IMMUNE_CAPABILITY, POISON_IMMUNE_CAPABILITY } from "../../rules/naga-traits.mjs";
 import { ALCHEM_MONSTER, alchemDurationFactor, mustRerollSuccess } from "../../rules/replicant.mjs";
 import { isReplicantSerum, takeSerum } from "../../combat/replicant.mjs";
+// Snake Eater / Пожиратель Змей (Талант Стойкости, глава 3): урон ядов и
+// длительность ядов/пост-эффектов вдвое меньше (окр.▲).
+import { snakeEaterHalve, hasResilienceTalent } from "../../rules/resilience-talents.mjs";
 import { DRUG_DOSES_FLAG, doseKey, logDose, dosesThisWeek, weeklyDoseLimit, addictionCheckFor } from "../../rules/drug-doses.mjs";
 // New Men / Новые Люди (Йигори): срок вдвое, без пост-эффекта, разовый эффект
 // медикамента вдвое (module/rules/new-men.mjs).
@@ -100,7 +103,7 @@ function rollTermsText(roll, total) {
  * Применяет «доп.» (мульти-) эффекты блока к цели: снятие Обескровливания,
  * лечение по формуле, доп. Усталость, непоглощаемый урон в Раны.
  */
-export async function applyEffectExtras(target, fx, { halveHeal = false } = {}) {
+export async function applyEffectExtras(target, fx, { halveHeal = false, poisonSource = false } = {}) {
   const updates = {};
   const lines = [];
   const rolls = [];
@@ -139,8 +142,10 @@ export async function applyEffectExtras(target, fx, { halveHeal = false } = {}) 
     try {
       const r = await new Roll(resolveCharFormula(fx.woundDamage, chars)).evaluate();
       rolls.push(r);
-      Object.assign(updates, woundLossUpdates(target.system, r.total));
-      lines.push(`${rollIcon("burst","#ff6b6b")}Непоглощаемый урон в Раны: <b>${fx.woundDamage}</b> = <b style="color:#8b0000;">${r.total}</b>`);
+      // Пожиратель Змей: «получаемый урон от ядов вдвое меньше (окр.▲)» — урон яда (категория poison).
+      const dealt = poisonSource ? snakeEaterHalve(target, r.total) : r.total;
+      Object.assign(updates, woundLossUpdates(target.system, dealt));
+      lines.push(`${rollIcon("burst","#ff6b6b")}Непоглощаемый урон в Раны: <b>${fx.woundDamage}</b> = <b style="color:#8b0000;">${r.total}</b>${dealt !== r.total ? ` → Пожиратель Змей: <b style="color:#8b0000;">${dealt}</b>` : ""}`);
     } catch(e) {
       console.error("woundDamage:", e);
     }
@@ -209,6 +214,16 @@ export async function applyDrug(owner, item, recipient = null) {
     } catch(e) {
       console.warn(`Не удалось бросить формулу длительности: ${sys.duration}`, e);
       durationRollStr = sys.duration;
+    }
+  }
+
+  // Пожиратель Змей: «длительность Отравления, эффектов ядов … вдвое меньше
+  // (окр.▲)» — срок яда режется у ПОЛУЧАТЕЛЯ.
+  if (sys.drugCategory === "poison" && resolvedRounds && hasResilienceTalent(actor, "snakeEater")) {
+    const halvedSnake = snakeEaterHalve(actor, resolvedRounds);
+    if (halvedSnake !== resolvedRounds) {
+      durationRollStr += ` → Пожиратель Змей: вдвое (окр.▲) = ${halvedSnake}`;
+      resolvedRounds = halvedSnake;
     }
   }
 
@@ -294,7 +309,7 @@ export async function applyDrug(owner, item, recipient = null) {
     }
   }
 
-  const extras = await applyEffectExtras(actor, fx, { halveHeal });
+  const extras = await applyEffectExtras(actor, fx, { halveHeal, poisonSource: sys.drugCategory === "poison" });
   Object.assign(actorUpdates, extras.updates);
   if (extras.fatigueDelta) { fat.delta += extras.fatigueDelta; fat.touched = true; }
   const fatRes = drugFatigueChange(actor, fat);
@@ -494,7 +509,7 @@ export async function triggerAfterEffect(actor, item) {
     }
   }
 
-  const extras = await applyEffectExtras(actor, fx);
+  const extras = await applyEffectExtras(actor, fx, { poisonSource: sys.drugCategory === "poison" });
   Object.assign(actorUpdates, extras.updates);
   if (extras.fatigueDelta) { fat.delta += extras.fatigueDelta; fat.touched = true; }
   const fatRes = drugFatigueChange(actor, fat);
@@ -562,10 +577,13 @@ export async function triggerAfterEffect(actor, item) {
       const resolvedFormula = resolveCharFormula(sys.afterEffectDice, chars, actor.system.corruptionBonus ?? 0);
       const roll = await new Roll(resolvedFormula).evaluate();
       const diceStr = rollTermsExpression(roll, resolvedFormula);
+      // Пожиратель Змей: «пост-эффектов стимуляторов … вдвое меньше (окр.▲)» —
+      // длительность пост-эффекта (бросок «Кубы пост-эффекта») режется вдвое.
+      const afterTotal = snakeEaterHalve(actor, roll.total);
 
       chatContent += `<div class="roll-threshold">
         ${rollIcon("dice","#6fe6ff")}Формула: <b>${sys.afterEffectDice}</b> → ${diceStr} =
-        <b style="color:#8b0000;">${roll.total}</b>
+        <b style="color:#8b0000;">${roll.total}</b>${afterTotal !== roll.total ? ` → Пожиратель Змей: вдвое (окр.▲) = <b style="color:#8b0000;">${afterTotal}</b>` : ""}
       </div>`;
 
       if (fx.removesBleedingLevels > 0)
@@ -688,7 +706,8 @@ export async function rollAddictionTest(actor, item, charKey = "t", testMod = 0)
   }
   const charTotal = actor.system.characteristics[charKey]?.total ?? 0;
   // Общий сбор модификаторов (wdbc-ct65.2) — см. tabs/tech.mjs, тот же перевод.
-  const ruleMods = collectTestMods(actor, { kind: "skill", char: charKey });
+  // addictionTest — тег теста Зависимости: на него даёт +10 Декаданс (Талант Стойкости).
+  const ruleMods = collectTestMods(actor, { kind: "skill", char: charKey, addictionTest: true });
   const eff = charTotal + testMod + ruleMods.total;
   const wasAddicted = item?.system?.addiction?.isAddicted || false;
 
