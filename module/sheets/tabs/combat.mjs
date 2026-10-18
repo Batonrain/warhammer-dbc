@@ -60,6 +60,7 @@ import { useRadiationSicknessTest } from "../../combat/radiation.mjs";
 import { repairArmorCorrosion, extractPiercingWound, applyCripplingTrigger } from "../../combat/damage.mjs";
 import { rollClearJam, rollRestoreJammedAmmo } from "../../combat/clear-jam.mjs";
 import { declareBrace } from "../../combat/brace-weapon.mjs";
+import { showDamageOnlyDialog } from "../../combat/damage-only-roll.mjs";
 import { spendActionPoints, spendReaction, resetActionEconomy } from "../../combat/action-economy.mjs";
 import { attackedThisTurn } from "../../rules/turn-flags.mjs";
 import { resolveFeintSuccess, resolvePressSuccess } from "../../combat/feint-press.mjs";
@@ -107,6 +108,16 @@ export function activateCombatListeners(root, actor) {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);
     if (!item) return;
     showAttackDialog(actor, item);
+  });
+
+  // Урон напрямую, мимо броска атаки (wdbc-6rj): с целью (из выбранных
+  // токенов или вручную) или без, со своим модификатором и числом попаданий —
+  // см. заголовок combat/damage-only-roll.mjs про то, чего эта кнопка
+  // сознательно НЕ считает.
+  on(root, ".weapon-damage-roll", "click", ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (!item) return;
+    showDamageOnlyDialog(actor, item);
   });
 
   // ── Лечение и Очки Боли ──────────────────────────────────────────────────

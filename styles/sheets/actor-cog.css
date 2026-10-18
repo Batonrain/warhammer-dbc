@@ -104,6 +104,7 @@
 .warhammer-dbc .gear-cog .gear-table tbody td:last-child { color: #9fe0c0; text-align: right; }
 .warhammer-dbc .gear-cog .item-row-equipped { background: rgba(77,255,166,0.09) !important; box-shadow: inset 3px 0 0 var(--cg); }
 .warhammer-dbc .gear-cog .gear-equip-cell input { accent-color: var(--cg); }
+.warhammer-dbc .gear-cog .gear-stored-cell input { accent-color: var(--cg-fire); }
 .warhammer-dbc .gear-cog .gear-ap-cell { text-align: center; color: #7fbf9c; }
 .warhammer-dbc .gear-cog .gear-ap-active { color: var(--cg); text-shadow: 0 0 7px rgba(77,255,166,0.45); font-weight: 700; }
 .warhammer-dbc .gear-cog .items-empty td { color: #6f9a84; font-style: italic; text-align: center; padding: 10px 8px; }

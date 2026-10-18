@@ -31,9 +31,15 @@ import { determinationToFightExtraAttack } from "../rules/determination-to-fight
 const FLAG_SCOPE = "warhammer-dbc";
 const FLAG_KEY = "attackActionsThisTurn";
 
-/** Лимит Атак за Ход — 1, Решительность Сражаться при отрицательных Ранах поднимает до 2 (стр. 62). */
+/**
+ * Лимит Атак за Ход — 1, Решительность Сражаться при отрицательных Ранах
+ * поднимает до 2 (стр. 62), плюс ручная ГМ-надбавка system.attackLimitBonus
+ * (wdbc-6rj) — редактируется прямо на листе, для исключений без своей записи
+ * Конструктора.
+ */
 export function attackActionLimit(actor) {
-  return 1 + (determinationToFightExtraAttack(actor) ? 1 : 0);
+  return 1 + (determinationToFightExtraAttack(actor) ? 1 : 0)
+    + (Number(actor?.system?.attackLimitBonus) || 0);
 }
 
 /** Хватит ли лимита ещё на одну Атаку в этом Ходу — вне боя лимит не считается вовсе. */

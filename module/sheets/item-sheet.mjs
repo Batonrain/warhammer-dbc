@@ -12,6 +12,7 @@ import { shipQualityMods, qualityOptionsFor, effectiveWeapon, clampQuality, QUAL
   from "../constants/ship-quality.mjs";
 import { availableFieldModes, fieldSuitFor } from "../constants/drukhari-armor-fields.mjs";
 import { isAutoAnimationsActive } from "../integrations/autoanimations.mjs";
+import { postItemFullCard, postItemShortCard } from "../apps/item-chat-card.mjs";
 // module/sheets/item-sheet.mjs
 
 import { ARMOR_PROPERTIES,
@@ -168,6 +169,9 @@ function onOpenAutoAnimations() {
 
 // ── Эффекты (Active Effect Foundry) — общая вкладка для всех типов ──
 function onEffectCreate() { return createBlankEffect(this.item); }
+
+function onPostItemChatFull() { return postItemFullCard(this.item); }
+function onPostItemChatShort() { return postItemShortCard(this.item); }
 
 function onEffectEdit(event, target) {
   this.item.effects.get(target.dataset.effectId)?.sheet?.render(true);
@@ -607,6 +611,8 @@ export class WarhammerItemSheet
       fieldMode: onFieldMode,
       openAutoAnimations: onOpenAutoAnimations,
       effectCreate: onEffectCreate,
+      postItemChatFull: onPostItemChatFull,
+      postItemChatShort: onPostItemChatShort,
       effectEdit: onEffectEdit,
       effectDelete: onEffectDelete,
       grantGroupAdd: onGrantGroupAdd,

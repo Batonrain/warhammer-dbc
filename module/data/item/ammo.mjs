@@ -19,6 +19,9 @@ export class AmmoData extends foundry.abstract.TypeDataModel {
       rarity:             num(0, "Редкость"),
       quantity:           num(0, "Количество"),
       weight:             num(0, "Вес"),
+      // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке; см.
+      // комментарий в data/item/weapon.mjs.
+      stored:             new BooleanField({ initial: false, label: "Хранится (не при себе)" }),
       availability:       num(0, "Доступность"),
       attackMod:          num(0, "Меткость"),
       damageMod:          num(0, "Урон"),

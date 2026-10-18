@@ -70,6 +70,9 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
       bookSource:   new StringField({ initial: "", label: "Книга-источник" }),
       availability: num(0, "Доступность"),
       weight:       num(0, "Вес"),
+      // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке; см.
+      // комментарий в data/item/weapon.mjs.
+      stored:       new BooleanField({ initial: false, label: "Хранится (не при себе)" }),
       // Ключи свойств брони — строки (data/string-list.mjs, wdbc-x1nz.2.81).
       properties:   stringList("Свойства"),
       strengthBonus: num(0, "Бонус Силы"),

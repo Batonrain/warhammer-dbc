@@ -41,6 +41,18 @@ describe("attackActionLimit", () => {
   it("отрицательные Раны без Таланта — лимит остаётся 1", () => {
     expect(attackActionLimit(actorFor({ wounds: { tier: "dying" } }))).toBe(1);
   });
+
+  it("ГМ-надбавка system.attackLimitBonus складывается с книжным лимитом (wdbc-6rj)", () => {
+    expect(attackActionLimit(actorFor({ attackLimitBonus: 2 }))).toBe(3);
+  });
+
+  it("ГМ-надбавка складывается и с Решительностью Сражаться", () => {
+    const actor = actorFor({
+      wounds: { tier: "dying" }, attackLimitBonus: 1,
+      items: [{ type: "talent", name: "Determination To Fight / Решительность Сражаться" }]
+    });
+    expect(attackActionLimit(actor)).toBe(3);
+  });
 });
 
 describe("canTakeAttackAction / takeAttackAction", () => {
