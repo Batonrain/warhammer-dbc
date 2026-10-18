@@ -2614,7 +2614,8 @@ export const CAPABILITIES = {
   },
   "medic.core.butAScratch": {
     label: "Персонаж автоматически проходит тесты на Первую Помощь легко раненным персонажам.",
-    source: "But a Scratch / Просто Царапина", reader: ""
+    source: "But a Scratch / Просто Царапина",
+    reader: "module/sheets/tabs/healing.mjs applyHealing() — autoPass в режиме firstAid, когда lvl.key === \"light\""
   },
   "medic.core.butcher": {
     label: "Персонаж автоматически проходит тесты на лечение бесполезных конечностей и ампутацию при помощи Нартеция.",

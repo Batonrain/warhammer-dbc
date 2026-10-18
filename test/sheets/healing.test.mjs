@@ -739,4 +739,46 @@ describe("Первая Помощь и отдых по книге (wdbc-x1nz.2.1
     await applyHealing(person(), patient, { mode: "firstAid", mod: 0, bonus: 0 });
     expect(patient.system.wounds.value).toBe(5);
   });
+
+  // But a Scratch / Просто Царапина (Талант Медика, гл. 3) — автоуспех
+  // Первой Помощи легко раненным, возможность medic.core.butAScratch.
+  describe("But a Scratch / Просто Царапина (medic.core.butAScratch)", () => {
+    const scratchItem = () => ({
+      id: "bas", name: "But a Scratch / Просто Царапина", type: "talent", system: {},
+      flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+        { id: "e", kind: "capability", capabilityKey: "medic.core.butAScratch", label: "" }
+      ] }] } }
+    });
+
+    it("Лёгкое ранение — автоуспех даже при заведомо провальном броске", async () => {
+      const medic = person({ items: [scratchItem()] });
+      const patient = person();
+      patient.system.wounds = { value: 5, max: 10, critical: 0 }; // лёгкое: потеряно 5 ≤ T.b×2=8
+      captured.nextRoll = 99;
+      await applyHealing(medic, patient, { mode: "firstAid", mod: 0, bonus: 0 });
+      expect(captured.chat[0].content).toContain("Успех");
+      expect(captured.chat[0].content).toContain("автоуспех");
+      expect(patient.system.wounds.value).toBeGreaterThan(5);
+    });
+
+    it("тот же бросок без Таланта — провал (мутация: автоуспех не безусловный)", async () => {
+      const medic = person();
+      const patient = person();
+      patient.system.wounds = { value: 5, max: 10, critical: 0 };
+      captured.nextRoll = 99;
+      await applyHealing(medic, patient, { mode: "firstAid", mod: 0, bonus: 0 });
+      expect(captured.chat[0].content).toContain("Провал");
+      expect(patient.system.wounds.value).toBe(5);
+    });
+
+    it("Тяжёлое ранение — Талант не действует (мутация: только light)", async () => {
+      const medic = person({ items: [scratchItem()] });
+      const patient = person({ t: 40 });
+      patient.system.wounds = { value: 1, max: 20, critical: 0 }; // потеряно 19 > T.b×2=8 — тяжёлое
+      captured.nextRoll = 99;
+      await applyHealing(medic, patient, { mode: "firstAid", mod: 0, bonus: 0 });
+      expect(captured.chat[0].content).toContain("Провал");
+      expect(patient.system.wounds.value).toBe(1);
+    });
+  });
 });

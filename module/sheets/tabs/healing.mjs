@@ -1042,10 +1042,13 @@ export async function applyHealing(medic, patient, opts) {
     const roll = await new Roll("1d100").evaluate();
     rolls.push(roll);
     const rv = roll.total;
-    const rolled = rv <= eff;
-    const deg = Math.floor(Math.abs(rolled ? eff - rv : rv - eff) / 10) + 1;
+    // «Просто Царапина» (Талант Медика): автоуспех Первой Помощи легко
+    // раненным — возможность medic.core.butAScratch.
+    const autoPass = lvl.key === "light" && hasRuleFlag(medic, "medic.core.butAScratch");
+    const rolled = autoPass || rv <= eff;
+    const deg = autoPass ? 1 : Math.floor(Math.abs(rolled ? eff - rv : rv - eff) / 10) + 1;
     const baseHeal = { light: medic.system.characteristics?.int?.bonus ?? 0, heavy: 2, critical: 1 }[lvl.key];
-    lines.push(`${rollIcon("heart","#ff8a8a")}<b>Первая Помощь</b> (${lvl.label}): Медицина ${skill}${testMod >= 0 ? "+" : ""}${testMod} → порог <b>${eff}</b>, бросок <b>${rv}</b> — ${rolled ? `<span class="roll-success">Успех (${deg})</span>` : `<span class="roll-failure">Провал (${deg})</span>`}`);
+    lines.push(`${rollIcon("heart","#ff8a8a")}<b>Первая Помощь</b> (${lvl.label}): Медицина ${skill}${testMod >= 0 ? "+" : ""}${testMod} → порог <b>${eff}</b>, бросок <b>${rv}</b> — ${rolled ? `<span class="roll-success">Успех (${deg})</span>` : `<span class="roll-failure">Провал (${deg})</span>`}${autoPass ? ' <i>(Просто Царапина — автоуспех)</i>' : ""}`);
     // Хирургия Легиона (Апотекарий): провал за Очко Бесчестия — успех с 1
     // Успехом; лечение Первой Помощи от числа Успехов не зависит.
     const ls = await legionSurgeryPass(medic, rolled, "Первая Помощь");
