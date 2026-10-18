@@ -2488,7 +2488,8 @@ export const CAPABILITIES = {
   },
   "social.core.disturbingVoice": {
     label: "Персонаж получает +10 на тесты Intimidate, но −10 на все социальные взаимодействия (кроме запугивания) с пугливыми персонажами (большинство…",
-    source: "Disturbing Voice / Пугающий Голос", reader: ""
+    source: "Disturbing Voice / Пугающий Голос",
+    reader: "Конструктор МЕХАНИКА (packs-src/talents/Социальные/Disturbing_Voice) — testMod +10 Intimidate, безусловный. −10 с «пугливыми» не читается — нет классификатора таких целей."
   },
   "social.core.enemy": {
     label: "Уровень: 1–3. Персонаж получает −10 ко всем социальным взаимодействиям с этой группой за уровень Таланта.",
