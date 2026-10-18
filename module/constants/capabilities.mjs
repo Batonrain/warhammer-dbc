@@ -2274,7 +2274,8 @@ export const CAPABILITIES = {
   },
   "mechanicum.core.calculusLogi": {
     label: "Персонаж может перебрасывать тесты на Logic, способен невероятно быстро подсчитывать вещи в поле зрения и проводить сложные вычисления в уме…",
-    source: "Calculus Logi / Калькулюс Логи", reader: ""
+    source: "Calculus Logi / Калькулюс Логи",
+    reader: "Конструктор МЕХАНИКА (packs-src/talents/Механикум/Calculus_Logi) — kind:\"reroll\", rerollScope «skill», skillKey «logic»"
   },
   "mechanicum.core.cyberMantleCalibration": {
     label: "Персонаж увеличивает максимум своих мехадендритов на 1. Можно брать до I.b раз.",
