@@ -94,7 +94,15 @@ const ALLOWED = {
   // Скорость полёта (Гарпия, глава I): как Sonar Sense — включатель ИМЯ Черты
   // Flyer/Hoverer (rules/flight-speed.mjs, combat/movement-actions.mjs держат
   // имена массивом, литерала в вызове itemHasName анализатор не видит).
-  "trait.flyer": "включается по имени Черты (Flyer / Летун, Hoverer / Парящий) — сотни носителей в паках, ключ Конструктора не нужен"
+  "trait.flyer": "включается по имени Черты (Flyer / Летун, Hoverer / Парящий) — сотни носителей в паках, ключ Конструктора не нужен",
+
+  // Melee Training / Weapon Training (Арсенал, гл. 3, wdbc-8r2iv): читаются
+  // rules/weapon-training.mjs по ИМЕНИ Таланта (regex /^Melee Training\b/,
+  // /^Weapon Training\b/) + system.specialization, не по capabilityKey —
+  // анализатор ищет литерал ключа, этот вид выдачи не распознаёт, хотя за
+  // столом способность есть у любого персонажа с купленным Талантом.
+  "arsenal.core.meleeTraining":  "включается по имени Таланта (Melee Training) + system.specialization, rules/weapon-training.mjs — анализатор такой вид выдачи не распознаёт",
+  "arsenal.core.weaponTraining": "включается по имени Таланта (Weapon Training) + system.specialization, rules/weapon-training.mjs — анализатор такой вид выдачи не распознаёт"
 };
 
 describe("возможности с читателем должны быть достижимы из игры", () => {

@@ -18,6 +18,7 @@ import { MINION_GROUPS, MINION_TIERS, GROUP_CHAR_LIMITS, MINION_INFAMY_CAP,
          MINION_TALENT_NAMES, tierBudget } from "../constants/minions.mjs";
 import { MINION_TRAITS, MANDATORY_BY_GROUP } from "../constants/minion-traits.mjs";
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
+import { hasRuleFlag } from "./flags.mjs";
 
 const num = v => Number(v) || 0;
 
@@ -341,11 +342,22 @@ export function minionCorruption(group) {
   return group === "daemon" ? DAEMON_CORRUPTION : 0;
 }
 
-/** Базовая Лояльность — ЗНАЧЕНИЕ характеристики Хозяина, не бонус (стр. 113). */
+/**
+ * Базовая Лояльность — ЗНАЧЕНИЕ характеристики Хозяина, не бонус (стр. 113).
+ * Tyrant / Тиран (minion.core.tyrant): «Стартовая Лояльность может
+ * использовать Inf» — берётся большее из обычной характеристики и Inf.
+ * Beloved Leader / Обожаемый Лидер (minion.core.belovedLeader): безусловное
+ * +10 Лояльности.
+ */
 export function minionLoyalty(master, group) {
   const charKey = MINION_GROUPS[group]?.masterChar;
   if (!charKey) return 0;
-  return num(master?.system?.characteristics?.[charKey]?.total);
+  let value = num(master?.system?.characteristics?.[charKey]?.total);
+  if (hasRuleFlag(master, "minion.core.tyrant")) {
+    value = Math.max(value, num(master?.system?.characteristics?.inf?.total));
+  }
+  if (hasRuleFlag(master, "minion.core.belovedLeader")) value += 10;
+  return value;
 }
 
 /**
