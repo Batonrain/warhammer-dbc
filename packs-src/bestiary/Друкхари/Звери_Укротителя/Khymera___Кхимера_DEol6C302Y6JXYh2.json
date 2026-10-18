@@ -880,13 +880,13 @@
       "_key": "!actors.items!DEol6C302Y6JXYh2.W0EJo0AHwhomVMs9"
     },
     {
-      "name": "Daemonic Presence (10/20) / Демоническое Присутствие",
+      "name": "Daemonic Presence / Демоническое Присутствие (10/20)",
       "type": "trait",
       "img": "icons/svg/item-bag.svg",
       "system": {
         "description": "",
         "notes": "Штраф врагам через движок Ауры (module/regions/auras.mjs, wdbc-995w): радиус 20м, штраф −10 к тестам W через грант-предмет «Daemonic Dread (−10 W)». Иммунитет по трейту (Daemonic/From Beyond/Machine/Stuff of Nightmares) учтён движком (auraImmuneTraits). X/Y теперь также хранятся структурно (rating/rating2), не только в имени.",
-        "benefit": "Аура ужаса вокруг существа.",
+        "benefit": "Все недружественные персонажи в радиусе 20 м получают штраф −10 на тесты W; иммунны персонажи с Трейтами Daemonic, From Beyond, Machine, Stuff of Nightmares.",
         "source": "раса",
         "hasRating": true,
         "rating": 10,
@@ -1352,13 +1352,13 @@
       "_key": "!actors.items!DEol6C302Y6JXYh2.P1qq1RdLwW42mijm"
     },
     {
-      "name": "Stuff of Nightmares / Плоть Кошмаров",
+      "name": "Stuff of Nightmares / Существо из Кошмаров",
       "type": "trait",
       "img": "icons/svg/item-bag.svg",
       "system": {
         "description": "",
         "notes": "Список из ~9 разных иммунитетов (Усталость/яды/болезни/радиация/темп./вакуум/Кровотечение/Оглушение/старение) — не сводится к одному числовому полю; каждый иммунитет — отдельная подсистема без общего «флага иммунитета».",
-        "benefit": "Не чувствует боли, игнорирует критические эффекты.",
+        "benefit": "Иммунитет к Усталости (кроме от своих действий), ядам/болезням/радиации/экстремальным температурам/вакууму, Кровотечению и Обескровливанию; не может быть Оглушён; не стареет; игнорирует Критэффекты кроме смерти.",
         "source": "раса",
         "hasRating": false,
         "rating": 0,
