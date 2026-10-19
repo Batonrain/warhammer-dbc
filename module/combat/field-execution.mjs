@@ -38,6 +38,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
 import { applyBraveryNow } from "./command-state.mjs";
 import { rootEl } from "../sheets/v2-helpers.mjs";
+import { anyRadiantPresenceHolderExists, anyIntoTheJawsOfHellHolderExists, intoTheJawsOfHellActive } from "../rules/leadership-talents.mjs";
 
 /** Intimidate(W) исполнителя — та же формула ранга/правок, что обычный Intimidate(F), характеристика заменена на W. */
 function fieldExecutionAttackerThreshold(attacker, mod = 0) {
@@ -52,15 +53,18 @@ function fieldExecutionAttackerThreshold(attacker, mod = 0) {
  * Публикует карточку результата с кнопкой «Казнена» при успехе.
  * @returns {Promise<{winner:"mine"|"theirs"|null, margin:number}>}
  */
-export async function rollFieldExecutionContest(attacker, target, { attackerMod = 0, targetMod = 0 } = {}) {
+export async function rollFieldExecutionContest(attacker, target, { attackerMod = 0, targetMod = 0,
+                                                                       radiantPresence = false, intoTheJawsOfHell = false } = {}) {
   const atkMods = collectTestMods(attacker, { kind: "skill", skill: "intimidate", char: "wp", morale: true });
-  const tgtMods = collectTestMods(target, { kind: "skill", char: "wp", morale: true });
+  // radiantPresence — галочка диалога (решение стола), только на стороне цели.
+  const tgtMods = collectTestMods(target, { kind: "skill", char: "wp", morale: true, radiantPresence });
   const atkThreshold = fieldExecutionAttackerThreshold(attacker, attackerMod) + atkMods.total;
   const tgtThreshold = moraleThreshold(target, targetMod) + tgtMods.total;
   const atkRoll = await new Roll("1d100").evaluate();
   const tgtRoll = await new Roll("1d100").evaluate();
+  // Into the Jaws of Hell/В Самое Пекло — та же галочка, авто-успех цели.
   const atkOutcome = testOutcome(atkRoll.total, atkThreshold);
-  const tgtOutcome = testOutcome(tgtRoll.total, tgtThreshold);
+  const tgtOutcome = testOutcome(tgtRoll.total, tgtThreshold, { autoSuccess: intoTheJawsOfHellActive(intoTheJawsOfHell) });
   const { winner, margin } = resolveOpposed(
     { ...atkOutcome, threshold: atkThreshold }, { ...tgtOutcome, threshold: tgtThreshold });
   const success = winner === "mine";
@@ -110,6 +114,10 @@ export async function fieldExecutionDialog(actor, target) {
   if (!target) return;
   const base = fieldExecutionAttackerThreshold(actor);
   const targetBase = moraleThreshold(target);
+  const radiantPresenceHtml = anyRadiantPresenceHolderExists(game.actors ?? [])
+    ? `<div class="atk-dlg-row"><label title="Цель видит или слышит союзника/нейтрального с Блистательным Присутствием — +10 на её тест Морали"><input id="fex-radiant" type="checkbox"/> Блистательное Присутствие (+10 цели)</label></div>` : "";
+  const jawsOfHellHtml = anyIntoTheJawsOfHellHolderExists(game.actors ?? [])
+    ? `<div class="atk-dlg-row"><label title="Рядом с целью сражается её командующий с В Самое Пекло — тест цели проходит автоматически"><input id="fex-jaws" type="checkbox"/> В Самое Пекло (авто-успех цели)</label></div>` : "";
 
   const picked = await foundry.applications.api.DialogV2.prompt({
     window: { title: `Полевая Казнь — ${actor.name} → ${target.name}` },
@@ -119,12 +127,16 @@ export async function fieldExecutionDialog(actor, target) {
       <div class="atk-dlg-row"><label>Модификатор:</label><input id="fex-atk-mod" type="number" value="0"/></div>
       <div class="atk-dlg-row"><label>W+0 (${esc(target.name)}):</label><span><b>${targetBase}</b></span></div>
       <div class="atk-dlg-row"><label>Модификатор цели:</label><input id="fex-tgt-mod" type="number" value="0"/></div>
+      ${radiantPresenceHtml}
+      ${jawsOfHellHtml}
     </div>`,
     ok: {
       label: "Бросок!", icon: "fas fa-dice-d10",
       callback: (event, button) => ({
         attackerMod: parseInt(button.form.querySelector("#fex-atk-mod")?.value) || 0,
-        targetMod: parseInt(button.form.querySelector("#fex-tgt-mod")?.value) || 0
+        targetMod: parseInt(button.form.querySelector("#fex-tgt-mod")?.value) || 0,
+        radiantPresence: !!button.form.querySelector("#fex-radiant")?.checked,
+        intoTheJawsOfHell: !!button.form.querySelector("#fex-jaws")?.checked
       })
     }
   }).catch(() => null);

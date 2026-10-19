@@ -20,6 +20,7 @@ import { attackIsMelee, FIRED_BRACED_FLAG, firedBracedHeavyIds,
 import { isBraced } from "./brace-weapon.mjs";
 import { isIntegralAttack } from "./equipped-melee.mjs";
 import { grappleCoverPartner } from "./grapple.mjs";
+import { fanaticInterceptCandidates, backToBackFreeUseAvailable } from "./fanatic-redirect.mjs";
 import { ammoIsFree } from "../rules/ammo-free.mjs";
 import { attackCard, jamCard }                      from "./attack-card.mjs";
 import { rollScatter }                               from "./scatter.mjs";
@@ -1311,6 +1312,15 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     }
   }
 
+  // Спиной к Спине/Back to Back (combat/fanatic-redirect.mjs): носители
+  // Fanatic в базовом контакте с целью — только показ кандидатов и остатка
+  // «раз в Раунд без Реакции» в карточке, перенос урона остаётся выбором
+  // стола через обычную кнопку «Применить урон» (выделить токен Фанатика).
+  const fanaticIntercepts = hits.length
+    ? fanaticInterceptCandidates(targetToken, game.actors ?? [], { excludeUuids: [defenderActor?.uuid] })
+        .map(a => ({ uuid: a.uuid, name: a.name, freeUse: backToBackFreeUseAvailable(a) }))
+    : [];
+
   // Промах по цели, Связанной в Рукопашной (стр. 30, wdbc-x1nz.2.64):
   // одиночный выстрел, промахнувший на 1-2 Провала, попадает в случайного
   // персонажа в контакте с целью (враг или союзник); Короткая/Длинная
@@ -1613,6 +1623,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       misfireHits,
       betrayalHits,
       grappleCoverHits,
+      fanaticIntercepts,
       regroupLegacyActive,
       deadlyTrapLegacyDelta,
       fangVenomDose,

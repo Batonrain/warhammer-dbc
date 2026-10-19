@@ -24,6 +24,7 @@ import { _degWord, esc } from "../../helpers/utils.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { degreesOfSuccess } from "../../constants/craft.mjs";
 import { hasLordOfExodites, unnaturalFHint, clearMoraleConditions, rallyExoditeSquad } from "../../combat/lord-of-exodites.mjs";
+import { commandTargetLimit, hasAirOfAuthority } from "../../rules/leadership-talents.mjs";
 import { collectTestMods } from "../../rules/roll-mods.mjs";
 import { postTestCard, testCardHtml, outcomeHtml, rollStatLine } from "../../helpers/test-card.mjs";
 import { GENERAL_COMMAND_KINDS, generalKindLabel, detailSpentOf, trainingSuccessCap } from "../../rules/command-effects.mjs";
@@ -139,7 +140,11 @@ export function commandContext(actor) {
     commandedHordes: rows.filter(r => r.isHorde && !r.missing),
     // Lord of the Exodites (wdbc-zepq) — доп. кнопки владельцу Черты.
     exoditeLord: hasLordOfExodites(actor),
-    exoditeGroupLimit: Number(actor.system?.characteristics?.fel?.bonus) || 0
+    exoditeGroupLimit: Number(actor.system?.characteristics?.fel?.bonus) || 0,
+    // Лимит целей Command/Intimidate «на подчинённых» (rules/leadership-
+    // talents.mjs::commandTargetLimit) — F.b, ×20 с Air of Authority.
+    commandTargetLimit: commandTargetLimit(actor),
+    hasAirOfAuthority: hasAirOfAuthority(actor)
   };
 }
 

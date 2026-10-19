@@ -1602,6 +1602,26 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   Дрессировка — флаг `system.command.training` на панели «Под моим
   Присутствием»: Survival(P), P.b животных, лимит Успехов 2+продвижения.
   Потолок Успехов по Риску действует и на Координатора.
+- Таланты «Лидерство» (глава 3, Sahara 3-ac78, 19.10.2026, доработка тем же
+  днём по разбору «почему частичные заглушки»): 19 из 19 имеют код в
+  `rules/leadership-talents.mjs` (Rancor, Bravado, Camaraderie, Eloquence,
+  Duty Above All, Iron Discipline, Air of Authority (лимит целей
+  Command/Intimidate F.b/×20, показан на вкладке Социум), Frontline
+  Commander, Protege, Radiant Presence и Into the Jaws of Hell (галочки
+  диалога во всех 3 тестах Морали — Страх/Подавление/Запугивание, плюс
+  Полевая Казнь на стороне цели, не геометрия сцены), Living Legend, War
+  Chant (переброс Морали Лидеру/подпевающему подчинённому, +3 Intimidate за
+  подпевающего, +1 Успех Команде против подпевающего — раздача 3 эффектов
+  Присутствия и лимит W.b×2/×20 получателей честно не смоделированы), Rally,
+  Bring It Down! — часть полная, часть честно частичная, см. notes каждого
+  Таланта в `packs-src/talents/Лидерство/`) + `combat/field-execution.mjs`
+  (Field Execution — опосредованный тест Intimidate(W) vs W+0) +
+  `combat/fanatic-redirect.mjs` (Back to Back — раздача Трейта Fanatic;
+  карточка атаки сама находит носителей Fanatic в базовом контакте с целью
+  и считает «раз в Раунд без Реакции» через `rules/cooldown.mjs`, сам
+  перенос урона — ручная кнопка «Применить урон» по выделенному токену, как
+  и раньше — см. bd wdbc-3w7lo).
+  Живая проверка не пройдена — bd wdbc-veuno (расширен список проверки).
 
 ## 18. Техника (Vehicles)
 

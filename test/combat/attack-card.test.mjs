@@ -582,3 +582,37 @@ describe("Незримое: гейт Уклонения/Парирования �
     expect(html).not.toContain("wh-unseen-bypass-btn");
   });
 });
+
+describe("Спиной к Спине/Back to Back: показ носителей Fanatic в контакте с целью", () => {
+  it("пусто без кандидатов", () => {
+    const html = card({ fanaticIntercepts: [] });
+    expect(html).not.toContain("wh-back-to-back-mark-used");
+    expect(html).not.toContain("носитель Fanatic");
+  });
+
+  it("свободный перехват — имя кандидата и кнопка «Отметить»", () => {
+    const html = card({ fanaticIntercepts: [{ uuid: "Actor.f1", name: "Телохранитель", freeUse: true }] });
+    expect(html).toContain("носитель Fanatic");
+    expect(html).toContain("Телохранитель");
+    expect(html).toContain('class="wh-back-to-back-mark-used"');
+    expect(html).toContain('data-fanatic-uuid="Actor.f1"');
+    expect(html).not.toContain("уже отмечен использованным");
+  });
+
+  it("бесплатный перехват уже потрачен этим Раундом — без кнопки «Отметить»", () => {
+    const html = card({ fanaticIntercepts: [{ uuid: "Actor.f1", name: "Телохранитель", freeUse: false }] });
+    expect(html).toContain("уже отмечен использованным");
+    expect(html).not.toContain("wh-back-to-back-mark-used");
+  });
+
+  it("несколько кандидатов — каждый своей строкой", () => {
+    const html = card({ fanaticIntercepts: [
+      { uuid: "Actor.f1", name: "Первый", freeUse: true },
+      { uuid: "Actor.f2", name: "Второй", freeUse: false }
+    ] });
+    expect(html).toContain("Первый");
+    expect(html).toContain("Второй");
+    expect(html).toContain('data-fanatic-uuid="Actor.f1"');
+    expect(html).not.toContain('data-fanatic-uuid="Actor.f2"');
+  });
+});

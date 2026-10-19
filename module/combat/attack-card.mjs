@@ -397,6 +397,25 @@ function betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype 
 }
 
 /**
+ * Спиной к Спине/Back to Back (combat/fanatic-redirect.mjs): носители
+ * Fanatic в базовом контакте с целью уже найдены геометрией attack.mjs —
+ * показ кандидатов и остатка «раз в Раунд без Реакции» (rules/cooldown.mjs).
+ * Сам перенос урона — выделить токен названного носителя и нажать обычную
+ * «Применить урон» выше; кнопка здесь только отмечает бесплатный перехват
+ * потраченным, когда стол решил им воспользоваться.
+ */
+function fanaticInterceptSection(fanaticIntercepts) {
+  if (!fanaticIntercepts.length) return "";
+  const rows = fanaticIntercepts.map(f => `
+    <div class="sq-chat-note">${rollIcon("shield", "#ffb347")}Рядом (в базовом контакте) носитель Fanatic — <b>${esc(f.name)}</b>: выделите его токен и примените урон туда вместо цели.
+      ${f.freeUse
+        ? `Раз в Раунд это не стоит ему Реакции (Спиной к Спине) — <button type="button" class="wh-back-to-back-mark-used" data-fanatic-uuid="${f.uuid}">Отметить бесплатный перехват</button>`
+        : `Бесплатный перехват этим Раундом уже отмечен использованным — обычный перехват Fanatic (за Реакцию) всё ещё доступен.`}
+    </div>`).join("");
+  return rows;
+}
+
+/**
  * Перегруппировка/vigilant 1-2, Оружие Наследия (wdbc-1rno.35, стр. 427):
  * «После успешной атаки этим оружием (даже если цель Избежала её) персонаж
  * может потратить Очко Бесчестия, чтобы перебросить свою Инициативу начиная
@@ -763,6 +782,12 @@ export function attackCard({
   // Борьба как укрытие (стр. 12, wdbc-x1nz.2.77): попадания по сцепившемуся,
   // перехваченные партнёром, — та же форма, что betrayalHits.
   grappleCoverHits = [],
+  // Спиной к Спине/Back to Back (combat/fanatic-redirect.mjs): носители
+  // Fanatic в базовом контакте с целью — уже найдены геометрией attack.mjs
+  // ([{uuid, name, freeUse}]); перенос урона — выбор стола через обычную
+  // кнопку «Применить урон» (эта секция только показывает кандидатов и
+  // остаток «раз в Раунд без Реакции», ничего не переносит сама).
+  fanaticIntercepts = [],
   // Перегруппировка, Оружие Наследия (wdbc-1rno.35, стр. 427): доступность
   // кнопки «потратить Очко Бесчестия» уже посчитана attack.mjs (hit &&
   // Мутация на оружии) — см. regroupLegacySection ниже.
@@ -878,6 +903,19 @@ export function attackCard({
 
   // Стр. 35: ГМ распределяет попадания по случайным целям в секторе, поэтому
   // урон не бросается автоматически — карточка подсказывает их число.
+  //
+  // Radiant Presence/Блистательное Присутствие и Into the Jaws of Hell/
+  // В Самое Пекло (Sahara 3-ac78, 19.10.2026) — решение владельца: галочки
+  // на самой карточке, тем же приёмом, что «Заведомо безопасно» выше — ГМ
+  // решает «видит/слышит союзника с Талантом» или «рядом сражается
+  // командующий с Талантом» на глаз, код только переносит флаг в бросок.
+  const leadershipCheckboxesHtml = `
+      <label class="wh-suppression-safe-label" title="Блистательное Присутствие: цель видит или слышит союзника/нейтрального, обладающего этим Талантом — +10 на этот тест Морали. Решает ГМ.">
+        <input type="checkbox" class="wh-radiant-presence-cb"/> Блистательное Присутствие (+10)
+      </label>
+      <label class="wh-suppression-safe-label" title="В Самое Пекло: рядом с целью сражается её командующий, обладающий этим Талантом — тест Морали проходит автоматически. Решает ГМ.">
+        <input type="checkbox" class="wh-jaws-of-hell-cb"/> В Самое Пекло (авто-успех)
+      </label>`;
   const suppressionHtml = suppression ? `<div class="roll-suppression">
       Подавление: все в секторе 45°, прямой видимости, Короткой/Боевой дистанции —
       тест Подавление (${suppression.testMod >= 0 ? "+" : ""}${suppression.testMod})<br>
@@ -888,7 +926,7 @@ export function attackCard({
       </button>
       <label class="wh-suppression-safe-label" title="Стр. 33: если персонаж уверен, что обстрел не может нанести ему больше 3 урона после Поглощения — тест проходит автоматически. Точный расчёт требует брони цели по локации и урона конкретного выстрела — решает ГМ.">
         <input type="checkbox" class="wh-suppression-safe-cb"/> Заведомо безопасно (≤3 урона)
-      </label>
+      </label>${leadershipCheckboxesHtml}
     </div>` : "";
 
   // Вторичные цели Короткой/Длинной Очереди (стр. 35, wdbc-x1nz.2.55):
@@ -913,7 +951,7 @@ export function attackCard({
       </button>
       <label class="wh-suppression-safe-label" title="Стр. 33: если персонаж уверен, что обстрел не может нанести ему больше 3 урона после Поглощения — тест проходит автоматически. Точный расчёт требует брони цели по локации и урона конкретного выстрела — решает ГМ.">
         <input type="checkbox" class="wh-suppression-safe-cb"/> Заведомо безопасно (≤3 урона)
-      </label>
+      </label>${leadershipCheckboxesHtml}
     </div>` : "";
 
   return testCardHtml({
@@ -1033,6 +1071,7 @@ export function attackCard({
       betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid }),
       betrayalHitsSection(grappleCoverHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid },
         "🤼 Борьба: партнёр по Захвату прикрывает цель с этой стороны — попадание уходит в него (стр. 12):"),
+      fanaticInterceptSection(fanaticIntercepts),
       regroupLegacySection(regroupLegacyActive, { actorUuid: attackerUuid }),
       reactionKnockdownSection(reactionKnockdownReason, { actorUuid: attackerUuid }),
       sabreSecondAttackNote ? `<div class="roll-wprop-effects"><div class="roll-defense-note">${esc(sabreSecondAttackNote)}</div>${sabreSecondAttackItemId

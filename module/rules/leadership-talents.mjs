@@ -10,20 +10,19 @@
 //  узлов (Risk/riskCap, cohesion.start, group-skills, cross-actor
 //  commandersOf, COHESION_EVENTS), без новой подсистемы:
 //  Rancor, Bravado, Camaraderie, Eloquence, Duty Above All, Iron Discipline,
-//  Air of Authority (частично), Frontline Commander, Protege, Radiant
-//  Presence (частично), Into the Jaws of Hell (частично), Living Legend,
-//  War Chant (частично), Rally.
-//  Не реализованы (bd wdbc-3w7lo — каждому нужна НОВАЯ механика/UI, не
-//  довесок): Back to Back (блокирован отсутствующим каркасом у самого
-//  Трейта Fanatic), Field Execution (новый опосредованный тест + кнопка
-//  казни), Bring It Down! (новый выбор в диалоге Короткой Команды).
+//  Air of Authority, Frontline Commander, Protege, Radiant Presence, Into the
+//  Jaws of Hell, Living Legend, War Chant (частично — см. ниже), Rally.
+//  Ещё 3 реализованы отдельным проходом (bd wdbc-3w7lo, 19.10.2026) — у каждого
+//  была новая механика/UI, не довесок: Back to Back (Трейт Fanatic,
+//  combat/fanatic-redirect.mjs), Field Execution (combat/field-execution.mjs),
+//  Bring It Down! (bringItDownStacks на shortCommand, command-effects.mjs).
 //
 //  ctx.targetActor Команды/Морали — выделенный на сцене токен или источник
 //  угрозы теста в момент броска, тем же приёмом, что Тест Страха
 //  (sheets/tabs/disorders.mjs::openFearDialog) и Ненависть (rules/hatred.mjs).
 //
-//  Геометрия сцены (myToken/tokenDistance/inMeleeContact/isTokenInSight) —
-//  СВОИ копии, НЕ импорт из combat/facing.mjs / rules/vision-target.mjs /
+//  Геометрия сцены (myToken/tokenDistance/inMeleeContact) — СВОИ копии, НЕ
+//  импорт из combat/facing.mjs / rules/vision-target.mjs /
 //  combat/rig-steal.mjs: все трое транзитивно тянут обратно до rules/
 //  sources.mjs (через regions/auras.mjs → apps/mechanics.mjs → rules/
 //  flags.mjs → collect.mjs, либо через rules/roll-mods.mjs напрямую) — этот
@@ -46,11 +45,10 @@ import { relationByDisposition } from "./warp-touched.mjs";
 // дотягиваются обратно до collect.mjs → sources.mjs → этот файл — тот же
 // класс кругового импорта, что у Адъютанта (см. заголовок rules/adjutant.mjs).
 // Поэтому вся нужная здесь геометрия — свои копии той же арифметики, что
-// tokenDocDistance/isTokenInSight (вторых копий в проекте по возможности
-// быть не должно, но здесь это единственный способ не замкнуть круг).
+// tokenDocDistance (вторых копий в проекте по возможности быть не должно, но
+// здесь это единственный способ не замкнуть круг).
 
 const MELEE_REACH_MULT = 1.5;
-const FALLBACK_SIGHT_RANGE_M = 30;
 
 function gridOf() {
   return {
@@ -80,37 +78,36 @@ function inMeleeContact(tokenA, tokenB) {
   return d != null && d <= gridOf().distance * MELEE_REACH_MULT;
 }
 
-/** Дальность обзора наблюдателя — sight.range, иначе приближение «человеческое зрение» (rules/vision-target.mjs::sightRangeOf). */
-function sightRangeOf(observerDoc) {
-  const range = Number(observerDoc?.sight?.range) || 0;
-  return range > 0 ? range : FALLBACK_SIGHT_RANGE_M;
-}
-
-/** В поле зрения ли targetToken у observerToken — дальность + сектор (rules/vision-target.mjs::isTokenInSight). */
-function isTokenInSight(observerToken, targetToken) {
-  const observerDoc = observerToken?.document ?? observerToken, targetDoc = targetToken?.document ?? targetToken;
-  if (!observerDoc || !targetDoc) return false;
-  const { size } = gridOf();
-  const distance = tokenDistance(observerToken, targetToken);
-  if (distance == null || distance > sightRangeOf(observerDoc)) return false;
-
-  const angle = Number(observerDoc?.sight?.angle);
-  if (!angle || angle >= 360) return true;
-
-  const oc = tokenCenterPx(observerDoc, size), tc = tokenCenterPx(targetDoc, size);
-  if (oc.x === tc.x && oc.y === tc.y) return true;
-
-  const toTargetDeg = (Math.atan2(tc.y - oc.y, tc.x - oc.x) * 180 / Math.PI + 360) % 360;
-  const facingDeg = (((Number(observerDoc?.rotation) || 0) - 90) % 360 + 360) % 360;
-  let diff = Math.abs(toTargetDeg - facingDeg);
-  if (diff > 180) diff = 360 - diff;
-  return diff <= angle / 2;
-}
-
 /** Есть ли у актора Талант этой группы по любой половине двуязычного имени. */
 function hasLeadershipTalent(actor, names) {
   return [...(actor?.items ?? [])].some(i =>
     i?.type === "talent" && names.some(n => itemHasName(i, n)));
+}
+
+// ── Air of Authority / Аура Власти ───────────────────────────────────────────
+// Книжный текст: «Он может применять Command (и Intimidate на подчинённых)
+// на до F.b×20 целей одновременно. Его Миньоны-люди также получают +10
+// Лояльности.» Базовый лимит целей Command/Intimidate «на подчинённых» —
+// F.b (решение владельца 19.10.2026, тот же приём уже есть в коде —
+// exoditeGroupLimit у Lord of the Exodites, sheets/tabs/command.mjs:142);
+// Air of Authority не прибавляет, а ЗАМЕНЯЕТ множитель на ×20. Отдельно от
+// followerCount/bossCap (F.b×2) — тот лимит про СТРУКТУРНОЕ число
+// подчинённых, этот — про сколько из них накрывает ОДНО применение
+// Command/Intimidate. Пока только отображается (sheets/tabs/command.mjs::
+// commandContext → tab-social.hbs) — само применение Command/Intimidate
+// подчинённым сейчас не считает получателей количественно (бьёт по всему
+// составу безусловно), поэтому принудительного урезания пока нет.
+
+const AIR_OF_AUTHORITY_NAMES = ["Air of Authority", "Аура Власти"];
+
+export function hasAirOfAuthority(actor) {
+  return hasLeadershipTalent(actor, AIR_OF_AUTHORITY_NAMES);
+}
+
+/** Лимит целей Command/Intimidate «на подчинённых» — F.b, ×20 с Air of Authority. */
+export function commandTargetLimit(actor) {
+  const felBonus = Math.max(0, Number(actor?.system?.characteristics?.fel?.bonus) || 0);
+  return hasAirOfAuthority(actor) ? felBonus * 20 : felBonus;
 }
 
 // ── Rancor / Злопамятность ───────────────────────────────────────────────────
@@ -517,11 +514,17 @@ export function protegeActivationPatch(actor, recipientUuid) {
 
 // ── Radiant Presence / Блистательное Присутствие ─────────────────────────────
 // Книжный текст: «Все союзники, способные видеть или слышать персонажа,
-// получают +10 на тесты Морали, кроме вызванных самим персонажем.» —
-// «Видеть» проверяется (rules/vision-target.mjs::isTokenInSight); «слышать»
-// книга не даёт радиуса — выдумывать число не стали бы и для остальных
-// находок (та же честная граница, что у направления атаки/защиты Ненависти),
-// поэтому слух остаётся ручной пометкой ГМа.
+// получают +10 на тесты Морали, кроме вызванных самим персонажем.»
+//
+// РЕШЕНИЕ ВЛАДЕЛЬЦА 19.10.2026: вместо автоматического скана поля зрения —
+// галочка в самих диалогах тестов Морали (Страх/Подавление/встречная часть
+// Запугивания), тем же приёмом, что уже существующие ручные условия там
+// («Демон», «Заведомо безопасно» — ГМ решает на глаз, код не переизобретает
+// геометрию). «Видит ИЛИ слышит союзника/нейтрального с этим Талантом» —
+// целиком решение стола за галочкой, код просто прибавляет +10, когда она
+// отмечена. anyRadiantPresenceHolderExists — только чтобы решить, показывать
+// ли галочку вообще (нет смысла предлагать её, если ни у кого в мире нет
+// этого Таланта).
 
 const RADIANT_PRESENCE_NAMES = ["Radiant Presence", "Блистательное Присутствие"];
 
@@ -529,39 +532,26 @@ export function hasRadiantPresence(actor) {
   return hasLeadershipTalent(actor, RADIANT_PRESENCE_NAMES);
 }
 
-function radiantPresenceHoldersInSight(actor, allActors) {
-  const token = myToken(actor);
-  if (!token) return [];
-  return sceneTokensRelatedTo(token, "ally")
-    .filter(t => isTokenInSight(token, t))
-    .map(t => t.actor)
-    .filter(a => a && hasRadiantPresence(a) && allActors.some(x => x.uuid === a.uuid));
+/** Есть ли хоть один носитель в мире — только для показа галочки, не для её логики. */
+export function anyRadiantPresenceHolderExists(allActors) {
+  return (allActors ?? []).some(hasRadiantPresence);
 }
 
-function radiantPresenceRules(actor, ctx, allActors) {
-  if (typeof canvas === "undefined" || !allActors?.length) return [];
-  const sourceUuid = ctx?.targetActor?.uuid ?? null;
-  const holders = radiantPresenceHoldersInSight(actor, allActors).filter(a => a.uuid !== sourceUuid);
-  if (!holders.length) return [];
-  return [{
-    id: "radiantPresence.morale", label: "Блистательное Присутствие", when: {},
-    effects: [{ kind: "rollBonus", target: "morale", value: 10, label: "Блистательное Присутствие" }]
-  }];
+/** +10 на тест Морали — вся логика «видит/слышит» уже решена галочкой диалога. */
+export function radiantPresenceBonus(checked) {
+  return checked ? 10 : 0;
 }
 
 // ── Into the Jaws of Hell / В Самое Пекло ────────────────────────────────────
 // Книжный текст: «Если персонаж сражается рядом с подчинёнными, все они
-// автоматически проходят тесты Морали, кроме вызванных им самим.» —
-// «рядом» = базовый контакт (как «связан в рукопашной» у Frontline
-// Commander/Bodyguard — книжный стандарт дистанции, не придуманное число).
-// Авто-успех — не эффект реестра (rollBonus/rollMode туда не ложится), а
-// прямая проверка в combat/suppression.mjs и combat/intimidate.mjs рядом с
-// их собственным sarcophagus.autoPassFear. combat/fear.mjs СОЗНАТЕЛЬНО не
-// трогается: у Теста Страха (sheets/tabs/disorders.mjs::openFearDialog) нет
-// надёжного источника угрозы в момент _executeFearRoll (та же граница, что
-// у galочки-переброса Ненависти там же, см. заголовок rules/hatred.mjs) —
-// исключение «кроме вызванных им самим» нечем проверить, а без него
-// авто-успех мог бы молча накрыть и тесты, которые должен был исключить.
+// автоматически проходят тесты Морали, кроме вызванных им самим.»
+//
+// РЕШЕНИЕ ВЛАДЕЛЬЦА 19.10.2026: та же галочка, что у Radiant Presence выше —
+// во ВСЕХ трёх диалогах тестов Морали (Страх/Подавление/Запугивание),
+// включая Тест Страха, который раньше был честно пропущен за неимением
+// надёжного источника угрозы в коде: галочка снимает саму причину пропуска —
+// «кроме вызванных им самим» теперь тоже решает ГМ, отмечая галочку, а не
+// код, вычисляющий источник.
 
 const INTO_THE_JAWS_NAMES = ["Into the Jaws of Hell", "В Самое Пекло"];
 
@@ -569,22 +559,14 @@ export function hasIntoTheJawsOfHell(actor) {
   return hasLeadershipTalent(actor, INTO_THE_JAWS_NAMES);
 }
 
-/**
- * Авто-успех Подавления/Запугивания для actor — рядом (в базовом контакте)
- * сражается командующий с Into the Jaws of Hell, и этот командующий не сам
- * источник теста (sourceActor).
- */
-export function intoTheJawsOfHellActive(actor, allActors, sourceActor = null) {
-  if (typeof canvas === "undefined") return false;
-  const sourceUuid = sourceActor?.uuid ?? null;
-  const commanders = commandersOf(actor, allActors).filter(hasIntoTheJawsOfHell).filter(c => c.uuid !== sourceUuid);
-  if (!commanders.length) return false;
-  const own = myToken(actor);
-  if (!own) return false;
-  return commanders.some(c => {
-    const cToken = myToken(c);
-    return cToken && inMeleeContact(own, cToken);
-  });
+/** Есть ли хоть один носитель в мире — только для показа галочки. */
+export function anyIntoTheJawsOfHellHolderExists(allActors) {
+  return (allActors ?? []).some(hasIntoTheJawsOfHell);
+}
+
+/** Авто-успех теста Морали — решение стола уже принято галочкой диалога. */
+export function intoTheJawsOfHellActive(checked) {
+  return !!checked;
 }
 
 // ── Living Legend / Живая Легенда ────────────────────────────────────────────
@@ -622,35 +604,53 @@ export function livingLegendCommandBonus(actor, ctx = {}) {
 }
 
 // ── War Chant / Боевая Песнь ─────────────────────────────────────────────────
-// Книжный текст: «В начале Хода Лидер может распевать боевую песнь: раздаёт
-// все 3 эффекта Командного Присутствия всем подчинённым, что слышат песнь
-// (макс. W.b×2, W.b×20 с Air of Authority), и может перебрасывать тесты
-// Морали. Подпевающий подчинённый тоже перебрасывает Мораль, а успешные
-// Command против него получают +1 Успех. За каждого поющего Лидер получает
-// +3 на Intimidate против слышащих. Поющие не могут общаться устно.»
+// Книжный текст (сверено заново 19.10.2026, Sahara 3-ac78, core.json): «Лидер
+// отряда может в начале своего Хода выбрать распевать боевую песнь: пока он
+// это делает, он раздаёт все 3 эффекта Командного Присутствия всем
+// подчинённым, что слышат песнь (макс. W.b×2, W.b×20 с Air of Authority), и
+// может перебрасывать ВСЕ тесты Морали [СВОИ, не чужие — см. ниже]. Каждый
+// подчинённый, получающий Командное Присутствие от песни, может выбрать
+// подпевать — тогда он тоже может перебрасывать тесты Морали, а все успешные
+// тесты Command против него получают +1 Успех (после лимитов от Риска). За
+// каждого поющего подчинённого Лидер получает +3 на Intimidate против
+// слышащих. Поющие не могут общаться (и отдавать Команды) устно.»
 //
-// Реализовано ТОЛЬКО «может перебрасывать тесты Морали» — переключатель
-// «распевает» (actor-флаг, ставится/снимается вручную — книжное «в начале
-// Хода» не превращено в авто-тик, Командное Присутствие само по себе уже
-// ручной выбор на листе) даёт переброс Морали подчинённым, что «видят»
-// Лидера — тот же приём, что Radiant Presence/Блистательное Присутствие
-// выше (target "morale", effectAppliesTo сам отбирает тесты Морали).
+// ИСПРАВЛЕНА ошибка предыдущего прохода: переброс Морали раньше выдавался
+// ЛЮБОМУ союзнику в поле зрения поющего командующего — книга даёт его только
+// (а) самому Лидеру, пока он поёт, и (б) подчинённому, который сам выбрал
+// «подпевать» (свой флаг WAR_CHANT_SING_ALONG_FLAG, галочка на листе любого
+// актора — см. actor-sheet.mjs::_warChantSingAlongEntry). Геометрия
+// «видит/слышит» снова не формализована (та же честная граница, что у
+// Radiant Presence/Into the Jaws of Hell выше) — «подпевать» доступно, пока
+// у actor есть хоть один командующий, который сейчас поёт, без проверки
+// линии видимости/дистанции (решает стол).
 //
-// НЕ реализовано (честно, после проверки): «раздаёт все 3 эффекта
-// Командного Присутствия» — это НЕ правило общего реестра (rollBonus/
-// rollMode/grantFlag), а отдельный путь commandNodesFor (combat/
-// command-state.mjs) → effectivePresence (rules/command-effects.mjs:54-63),
-// который уже умеет такой трюк для Сознания Стаи (node.pack), но только
-// читая ОТРЯД (Squad actor), а не произвольного ближайшего союзника с
-// Талантом — подключить сюда ещё один источник узла потребовало бы менять
-// саму commandNodesFor, более глубокая правка, чем это правило реестра.
-// Лимит W.b×2/×20 получателей, подпевание (отдельный флаг на каждом
-// подчинённом, +1 Успех Команде против него, +3 Intimidate Лидеру за
-// каждого поющего, запрет устного общения поющим) — тоже не тронуты,
-// отдельная находка на будущий проход.
+// Реализовано этим проходом: переброс Морали (Лидеру и подпевающим), +3
+// Intimidate Лидеру за каждого подпевающего подчинённого (rollBonus
+// "skill:intimidate" — warChantIntimidateRules).
+//
+// НЕ реализовано (честно, после проверки):
+//  1. «Раздаёт все 3 эффекта Командного Присутствия» — не правило общего
+//     реестра (rollBonus/rollMode), а отдельный путь commandNodesFor
+//     (combat/command-state.mjs) → effectivePresence (rules/command-
+//     effects.mjs:54-63), который умеет такой трюк только для Сознания Стаи
+//     (node.pack) по ОТРЯДУ (Squad actor), не по произвольному соседнему
+//     актору с Талантом — подключение потребовало бы менять саму
+//     commandNodesFor, более глубокая правка, чем правило реестра. Как
+//     следствие, лимит получателей W.b×2/×20 тоже не считается — «подпевать»
+//     доступно без проверки, попал ли actor в этот лимит.
+//  2. «+1 Успех Команде против подпевающего» — сама степень успеха (sux)
+//     обычного теста Команды считается не через реестр rollBonus/rollMode
+//     (которые правят только Порог/переброс), а напрямую в
+//     sheets/squad-sheet.mjs::_executeCommand. Добавлена ТАМ отдельной
+//     строкой (warChantSingAlongBonus, после капа от Риска — книжный порядок),
+//     не как правило этого файла.
+//  3. «Не могут общаться устно» — чистое ролевое ограничение, нечего
+//     автоматизировать (нет механики «запрет на устную Команду» как таковой).
 
 const WAR_CHANT_NAMES = ["War Chant", "Боевая Песнь"];
 export const WAR_CHANT_FLAG = "warChantSinging";
+export const WAR_CHANT_SING_ALONG_FLAG = "warChantSingAlong";
 
 export function hasWarChant(actor) {
   return hasLeadershipTalent(actor, WAR_CHANT_NAMES);
@@ -665,24 +665,50 @@ export function warChantSinging(actor) {
   return hasWarChant(actor) && flagOn(actor, WAR_CHANT_FLAG);
 }
 
-/** Поющие Лидеры actor (книга: «подчинённым», не любым союзникам) в поле зрения. */
-function warChantLeadersInSight(actor, allActors) {
-  const token = myToken(actor);
-  if (!token) return [];
-  const myCommanders = new Set(commandersOf(actor, allActors).map(c => c.uuid));
-  return sceneTokensRelatedTo(token, "ally")
-    .filter(t => isTokenInSight(token, t))
-    .map(t => t.actor)
-    .filter(a => a && myCommanders.has(a.uuid) && warChantSinging(a));
+/** Командующие actor, что сейчас поют (подмножество commandersOf). */
+function singingCommandersOf(actor, allActors) {
+  return commandersOf(actor, allActors ?? []).filter(warChantSinging);
 }
 
-function warChantRules(actor, ctx, allActors) {
-  if (typeof canvas === "undefined" || !allActors?.length) return [];
-  const sourceUuid = ctx?.targetActor?.uuid ?? null;
-  if (!warChantLeadersInSight(actor, allActors).some(a => a.uuid !== sourceUuid)) return [];
+/** Подпевает ли actor сейчас — своя галочка + хоть один поющий командующий. Таланта не требует (книга: любой подчинённый). */
+export function warChantSingAlongActive(actor, allActors) {
+  return !!actor && flagOn(actor, WAR_CHANT_SING_ALONG_FLAG) && singingCommandersOf(actor, allActors).length > 0;
+}
+
+/** Подчинённые leaderActor, что сейчас подпевают именно ЕМУ (для +3 Intimidate). */
+function warChantSingersOf(leaderActor, allActors) {
+  if (!warChantSinging(leaderActor)) return [];
+  return (allActors ?? []).filter(a => a?.uuid && a.uuid !== leaderActor?.uuid
+    && flagOn(a, WAR_CHANT_SING_ALONG_FLAG)
+    && singingCommandersOf(a, allActors).some(c => c.uuid === leaderActor.uuid));
+}
+
+/** +3 Intimidate за каждого подпевающего подчинённого, пока actor сам поёт. */
+export function warChantIntimidateBonus(actor, allActors) {
+  return 3 * warChantSingersOf(actor, allActors ?? []).length;
+}
+
+/** +1 Успех Команде против targetActor, если он сейчас подпевает (применяется ПОСЛЕ капа от Риска — sheets/squad-sheet.mjs::_executeCommand). */
+export function warChantSingAlongBonus(targetActor, allActors) {
+  return targetActor && warChantSingAlongActive(targetActor, allActors) ? 1 : 0;
+}
+
+/** Переброс теста Морали: Лидеру, пока поёт, и подпевающему подчинённому, пока подпевает. */
+function warChantMoraleRerollRules(actor, allActors) {
+  if (!warChantSinging(actor) && !warChantSingAlongActive(actor, allActors)) return [];
   return [{
     id: "warChant.moraleReroll", label: "Боевая Песнь", when: {},
     effects: [{ kind: "rollMode", target: "morale", mode: "keepBest", rolls: 2, label: "Боевая Песнь" }]
+  }];
+}
+
+/** +3 Intimidate Лидеру за каждого подпевающего подчинённого. */
+function warChantIntimidateRules(actor, allActors) {
+  const bonus = warChantIntimidateBonus(actor, allActors);
+  if (bonus <= 0) return [];
+  return [{
+    id: "warChant.intimidate", label: `Боевая Песнь: +${bonus} Intimidate`, when: {},
+    effects: [{ kind: "rollBonus", target: "skill:intimidate", value: bonus, label: "Боевая Песнь" }]
   }];
 }
 
@@ -797,7 +823,18 @@ export function leadershipTalentRules(actor, ctx = {}, allActors = []) {
   }
   rules.push(...ironDisciplineRerollRules(actor, allActors, ctx));
   rules.push(...frontlineCommanderRerollRules(actor, allActors));
-  rules.push(...radiantPresenceRules(actor, ctx, allActors));
-  rules.push(...warChantRules(actor, ctx, allActors));
+  // Radiant Presence/Блистательное Присутствие: ctx.radiantPresence —
+  // галочка диалога теста Морали (Страх/Подавление/Запугивание), не скан
+  // сцены. auto:true — галочка САМА и есть подтверждение «видит/слышит»,
+  // второй галочки в общем списке модификаторов не нужно.
+  const radiantBonus = radiantPresenceBonus(ctx?.radiantPresence);
+  if (radiantBonus > 0) {
+    rules.push({
+      id: "radiantPresence.morale", label: "Блистательное Присутствие", when: {},
+      effects: [{ kind: "rollBonus", target: "morale", value: radiantBonus, label: "Блистательное Присутствие", auto: true }]
+    });
+  }
+  rules.push(...warChantMoraleRerollRules(actor, allActors));
+  rules.push(...warChantIntimidateRules(actor, allActors));
   return rules;
 }

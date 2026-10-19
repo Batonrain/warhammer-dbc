@@ -121,7 +121,8 @@ import { zeroBlankNumbers } from "../helpers/blank-zero.mjs";
 import { clearHololithBriefing } from "../combat/hololith-briefing.mjs";
 import { ignoresWeight, IGNORE_WEIGHT_FLAG } from "../rules/encumbrance.mjs";
 import { isNotableCharacter, NOTABLE_FLAG } from "../rules/resilience-talents.mjs";
-import { hasWarChant, warChantSinging, WAR_CHANT_FLAG } from "../rules/leadership-talents.mjs";
+import { hasWarChant, warChantSinging, WAR_CHANT_FLAG,
+         WAR_CHANT_SING_ALONG_FLAG, commandersOf } from "../rules/leadership-talents.mjs";
 import { convertActorToMinion } from "../apps/minion-convert.mjs";
 
 /** Книжная пара Склонностей Навыка — [char, apt2] его определения. */
@@ -1313,6 +1314,28 @@ export class WarhammerCharacterSheet
     }];
   }
 
+  /**
+   * War Chant/Боевая Песнь — «подпевать» (книга: доступно любому
+   * подчинённому, получающему Присутствие от песни, не только носителю
+   * Таланта). Пункт виден, пока у actor есть командующий с этим Талантом —
+   * не только пока тот ПРЯМО СЕЙЧАС поёт, чтобы галочка не исчезала с листа
+   * между Ходами; механический эффект (переброс Морали, +1 Успех Команде
+   * против него, +3 Intimidate Лидеру) включается только когда командующий
+   * реально поёт — warChantSingAlongActive в rules/leadership-talents.mjs.
+   */
+  _warChantSingAlongEntry() {
+    const allActors = game.actors ?? [];
+    if (!commandersOf(this.actor, allActors).some(hasWarChant)) return [];
+    const on = !!(this.actor.getFlag?.("warhammer-dbc", WAR_CHANT_SING_ALONG_FLAG)
+      ?? this.actor.flags?.["warhammer-dbc"]?.[WAR_CHANT_SING_ALONG_FLAG]);
+    return [{
+      cls: "wh-ctx-tog-warchant-singalong", label: "🎶 Подпевает Боевой Песне", checkbox: true, checked: on,
+      onClick: () => (on
+        ? this.actor.unsetFlag("warhammer-dbc", WAR_CHANT_SING_ALONG_FLAG)
+        : this.actor.setFlag("warhammer-dbc", WAR_CHANT_SING_ALONG_FLAG, true))
+    }];
+  }
+
   _sheetToggleEntries(keys) {
     const sys = this.actor.system;
     const toggle = (key) => this.actor.update({ [`system.${key}`]: !sys[key] });
@@ -1790,6 +1813,7 @@ export class WarhammerCharacterSheet
         this._accessSubmenu(accessKeys),
         ...this._sheetToggleEntries(["craftAvailable", ...(aeldari ? [] : ["isRogueTrader"])]),
         this._ignoreWeightEntry(), ...this._notableEntries(), ...this._warChantEntry(),
+        ...this._warChantSingAlongEntry(),
         horde, minion
       ].filter(Boolean);
     }

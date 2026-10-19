@@ -28,6 +28,7 @@ import { collectTestMods } from "../../rules/roll-mods.mjs";
 import { severityTestMod, effectiveSeverity, stepSeverity } from "../../rules/disorder-severity.mjs";
 import { commitRerollUse } from "../../combat/angel-hunters.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
+import { anyRadiantPresenceHolderExists, anyIntoTheJawsOfHellHolderExists } from "../../rules/leadership-talents.mjs";
 import { RAGE_FEAR_CAPABILITY, rageFearRating, isRageFearSource, relationByDisposition } from "../../rules/warp-touched.mjs";
 
 /** Сумма отмеченных галочек «Правила» диалога — общий приём с _showSkillRollDialog. */
@@ -125,6 +126,16 @@ export function openFearDialog(actor) {
   const unignorableHtml = hasRuleFlag(actor, RAGE_FEAR_CAPABILITY)
     ? `<div class="atk-dlg-row"><label title="Затронутый Варпом: Страх врага в Ярости нельзя игнорировать — не действуют память сцены, автоуспех по Infamy или своему Страху, Стальное Сердце"><input id="fear-prop-unignorable" type="checkbox"${pre.unignorable ? " checked" : ""}/> Нельзя игнорировать (враг в Ярости)</label></div>`
     : "";
+  // Radiant Presence/Блистательное Присутствие и Into the Jaws of Hell/
+  // В Самое Пекло (Sahara 3-ac78, 19.10.2026) — решение владельца: галочки
+  // тем же приёмом, что «Нельзя игнорировать» выше — ГМ решает на глаз,
+  // показываются только если в мире вообще есть носитель (иначе незачем).
+  const radiantPresenceHtml = anyRadiantPresenceHolderExists(game.actors ?? [])
+    ? `<div class="atk-dlg-row"><label title="Видит или слышит союзника/нейтрального с Блистательным Присутствием — +10 на этот тест"><input id="fear-prop-radiant" type="checkbox"/> Блистательное Присутствие (+10)</label></div>`
+    : "";
+  const jawsOfHellHtml = anyIntoTheJawsOfHellHolderExists(game.actors ?? [])
+    ? `<div class="atk-dlg-row"><label title="Рядом сражается командующий с В Самое Пекло — тест проходит автоматически"><input id="fear-prop-jaws" type="checkbox"/> В Самое Пекло (авто-успех)</label></div>`
+    : "";
   const rm = ruleRollModsHtml(actor, ctx);
   const rr = ruleRerollsHtml(actor, ctx);
   new Dialog({
@@ -140,6 +151,8 @@ export function openFearDialog(actor) {
         <div class="atk-dlg-section">Свойства</div>
         <div class="atk-dlg-row"><label><input id="fear-prop-demon" type="checkbox"${pre.demon ? " checked" : ""}/> Демон</label></div>
         ${unignorableHtml}
+        ${radiantPresenceHtml}
+        ${jawsOfHellHtml}
         ${rm.html}
         ${rr.html}
         ${testKindHtml({ label: "Тест Страха" })}
@@ -161,7 +174,9 @@ export function openFearDialog(actor) {
           // «Нельзя игнорировать» — тоже свойство: переброс Демона (hooks.mjs)
           // берёт properties из флагов карточки и получит его сам.
           const properties = { demon: html.find("#fear-prop-demon").is(":checked"),
-                               unignorable: html.find("#fear-prop-unignorable").is(":checked") };
+                               unignorable: html.find("#fear-prop-unignorable").is(":checked"),
+                               radiantPresence: html.find("#fear-prop-radiant").is(":checked"),
+                               intoTheJawsOfHell: html.find("#fear-prop-jaws").is(":checked") };
           const tk = readTestKind(val, checkedOf(html), { label: "Тест Страха" });
           tk.reroll = mergeReroll(namedReroll(html[0]), readDiceChoice(val));
           await commitRerollUse(actor, html[0]?.querySelector?.(".rule-reroll-opt:checked")?.dataset);
@@ -187,11 +202,12 @@ export function openFearDialog(actor) {
           // `mod` строкой выше (checkedRuleMods) — общий сбор задвоил бы их.
           // Предпросмотр обязан совпадать с тем, что посчитает сам бросок
           // (combat/fear.mjs), иначе игрок видит один Порог, а получает другой.
+          const radiantPresence = !!root.querySelector("#fear-prop-radiant")?.checked;
           return wp + ratingMod + mod + difficulty
-            + autoTestMods(actor, { kind: "skill", char, morale: true, fearTest: true, targetActor }).total;
+            + autoTestMods(actor, { kind: "skill", char, morale: true, fearTest: true, targetActor, radiantPresence }).total;
         }
       });
-      root.querySelectorAll("#fear-rating, #fear-type, #fear-mod, .rule-mod").forEach(el =>
+      root.querySelectorAll("#fear-rating, #fear-type, #fear-mod, #fear-prop-radiant, .rule-mod").forEach(el =>
         el.addEventListener("change", updateAutoOutcomeNote));
     }
   }, { classes: ["dialog", "wh-attack-dialog"], width: 380 }).render(true);
