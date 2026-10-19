@@ -39,6 +39,7 @@ import { enemyContactTokenDocs } from "./free-attack.mjs";
 import { coverApForToken } from "./cover.mjs";
 import { suppressionBonus } from "../rules/command.mjs";
 import { WEAKENED_WP_PENALTY } from "../rules/horde-damage.mjs";
+import { intoTheJawsOfHellActive } from "../rules/leadership-talents.mjs";
 
 /**
  * Надбавки Орды к любому тесту Подавления — и к самому тесту, и к его
@@ -114,8 +115,12 @@ export async function rollSuppressionTest(actor, { mod = 0, sourceLabel = "", so
     sourceActor, selfAdvantage: duckAndCoverAdvantage(actor), selfAdvantageLabel: "Перебежка"
   });
   // Саркофаг Дредноута (стр. 57, wdbc-drn): автоматически проходит тесты
-  // Подавления независимо от броска.
-  const success   = rolledSuccess || hasRuleFlag(actor, "sarcophagus.autoPassFear");
+  // Подавления независимо от броска. Into the Jaws of Hell/В Самое Пекло
+  // (Sahara 3-ac78, 19.10.2026): то же авто-прохождение, если рядом (в
+  // базовом контакте) сражается командующий с этим Талантом — кроме случая,
+  // когда стрелок (sourceActor) — он же.
+  const success   = rolledSuccess || hasRuleFlag(actor, "sarcophagus.autoPassFear")
+    || intoTheJawsOfHellActive(actor, game.actors ?? [], sourceActor);
 
   if (!success) await actor.update(conditionApplyFields("pinned", null, actor));
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });

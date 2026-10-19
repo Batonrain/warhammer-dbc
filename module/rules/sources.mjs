@@ -187,9 +187,12 @@ registerRuleSource("awarenessTalents", (a, ctx) => awarenessTalentRules(a, ctx))
 registerRuleSource("resilienceTalents", (a, ctx) => resilienceTalentRules(a, ctx));
 
 // Таланты Лидерства (глава 3, повторная разведка 19.10.2026 — Sahara 3-ac78
-// ошибочно считала подсистему Команд/Слаженности неисследованной): Rancor —
-// +10 на Команду против цели Ненависти. См. заголовок rules/leadership-talents.mjs.
-registerRuleSource("leadershipTalents", (a, ctx) => leadershipTalentRules(a, ctx));
+// ошибочно считала подсистему Команд/Слаженности неисследованной): Rancor,
+// Eloquence — бонусы на Команду; Iron Discipline — cross-actor переброс
+// Морали подчинённым (allActors нужен только ему — game.actors вне игры
+// нет, возвращает []). См. заголовок rules/leadership-talents.mjs.
+registerRuleSource("leadershipTalents", (a, ctx) =>
+  leadershipTalentRules(a, ctx, typeof game !== "undefined" ? game.actors ?? [] : []));
 
 // Наследие Ярости/Rage, Оружие Наследия (wdbc-1rno.35, стр. 427): штраф −10
 // на I/P, пока экипировано Оружие Наследия с этой Историей. См. заголовок

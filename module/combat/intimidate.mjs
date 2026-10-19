@@ -28,6 +28,7 @@ import { esc, _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { rootEl } from "../sheets/v2-helpers.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { intoTheJawsOfHellActive } from "../rules/leadership-talents.mjs";
 
 /** Порог Intimidate нападающего — обычный тест Навыка (уже посчитан листом). */
 export function intimidateThreshold(attacker, mod = 0) {
@@ -68,9 +69,13 @@ export async function rollIntimidateContest(attacker, target, { attackerMod = 0,
   const atkRv = atkRoll.total, tgtRv = tgtRoll.total;
 
   // Несломляемая Орда (immuneFear) «автоматически проходит тесты против
-  // Запугивания» — тот же автопасс, что у Саркофага.
+  // Запугивания» — тот же автопасс, что у Саркофага. Into the Jaws of
+  // Hell/В Самое Пекло (Sahara 3-ac78, 19.10.2026): то же, если рядом (в
+  // базовом контакте) сражается командующий цели с этим Талантом — кроме
+  // случая, когда запугивает он же (attacker).
   const autoPass = hasRuleFlag(target, "sarcophagus.autoPassFear")
-    || (target?.type === "horde" && !!target.system?.immuneFear);
+    || (target?.type === "horde" && !!target.system?.immuneFear)
+    || intoTheJawsOfHellActive(target, game.actors ?? [], attacker);
   const atkOutcome = testOutcome(atkRv, atkThreshold);
   const tgtOutcome = testOutcome(tgtRv, tgtThreshold, { autoSuccess: autoPass });
 

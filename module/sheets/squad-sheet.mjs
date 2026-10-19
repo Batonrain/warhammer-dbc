@@ -20,7 +20,7 @@ import { rollMoraleTest } from "../rules/morale-test.mjs";
 import { GENERAL_COMMAND_KINDS, generalKindLabel, detailSpentOf } from "../rules/command-effects.mjs";
 import { issueStamp, declareFocusFire, applyBraveryNow, grantTacticTalent, removeTacticGrants, TACTIC_TALENTS, packOf } from "../combat/command-state.mjs";
 import { hasPlagueShepherd, plagueShepherdGrant, plagueShepherdFreeCommandActive } from "../rules/plague-shepherd.mjs";
-import { hasActionEconomy, apCostForActionType, spendActionPoints, apSpendGate } from "../combat/action-economy.mjs";
+import { hasActionEconomy, apCostForActionType, spendActionPoints, apSpendGate, spendReaction } from "../combat/action-economy.mjs";
 import { voiceOfGodAvailable, applyVoiceOfGod } from "../combat/voice-of-god.mjs";
 import { tempInfamyInfo, clearTempInfamy } from "../rules/temp-infamy.mjs";
 import { degreesOfSuccess } from "../constants/craft.mjs";
@@ -33,7 +33,10 @@ import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 import { WarhammerStructuralSheet } from "./structural-sheet.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
-import { rancorRiskCapBonus } from "../rules/leadership-talents.mjs";
+import { rancorRiskCapBonus, eloquenceRiskCapBonus, bravadoRiskLevel,
+         camaraderieStartCohesion, dutyAboveAllBlocks,
+         protegeFreeCommandActive, protegePenalty, protegeActivationPatch,
+         frontlineCommanderMeleeFree, rallyAvailable } from "../rules/leadership-talents.mjs";
 import { testKindHtml, diceModeHtml, difficultyHtml, readDifficulty, critLineHtml,
          readTestKind, readDiceChoice, mergeReroll, wireTestKindLive,
          rollD100WithReroll } from "../rules/test-kind-widget.mjs";
@@ -587,9 +590,21 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
 
   // ── Слаженность ───────────────────────────────────────────────────────────
 
-  /** Изменение текущей Слаженности с записью события в чат. */
+  /**
+   * Изменение текущей Слаженности с записью события в чат.
+   *
+   * Duty Above All/Долг Превыше Всего (rules/leadership-talents.mjs): у
+   * Лидера с этим Талантом пресет «Конфликт между членами отряда» молчит —
+   * произвольный шаг кнопками ±5/±10 и остальные пресеты действуют как раньше.
+   */
   async _changeCohesion(delta, label = "") {
     if (!delta) return;
+    const leaderDoc = this._resolve(this._postData("leader").uuid);
+    if (dutyAboveAllBlocks(delta, label, leaderDoc)) return;
+    // Rally/Сплотить (rules/leadership-talents.mjs): падение Слаженности у
+    // Лидера с Риском 3+ — за Реакцию Command(W)+0, при успехе потеря отменяется.
+    if (delta < 0 && rallyAvailable(leaderDoc, this.actor.system.risk)
+        && await this._rallyAttempt(leaderDoc, delta, label)) return;
     const coh = this.actor.system.cohesion || {};
     const before = Number(coh.value) || 0;
     const after  = Math.max(-COHESION_LIMIT, Math.min(COHESION_LIMIT, before + delta));
@@ -611,20 +626,56 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     });
   }
 
-  /** Начало миссии: текущая и стартовая Слаженность приравниваются базовой. */
+  /**
+   * Rally/Сплотить (rules/leadership-talents.mjs::rallyAvailable уже
+   * проверил условие): подтверждение, Реакция Лидера, Command(W)+0 — при
+   * успехе возвращает true (отмена потери), при провале/отказе/нехватке
+   * Реакции — false (потеря применяется как обычно).
+   */
+  async _rallyAttempt(leaderDoc, delta, label) {
+    const ok = await foundry.applications.api.DialogV2.confirm({
+      window: { title: "Rally / Сплотить" },
+      content: `<p>Слаженность отряда падает${label ? ` (${esc(label)})` : ""} на ${Math.abs(delta)} —`
+        + ` Лидер (${esc(leaderDoc?.name || "?")}) может за Реакцию пройти Command(W)+0, чтобы отменить потерю. Попробовать?</p>`
+    });
+    if (!ok || !leaderDoc) return false;
+    if (!await spendReaction(leaderDoc, { physical: false })) return false;
+
+    const base = Number(leaderDoc.system?.characteristics?.wp?.total) || 0;
+    const ruleMods = collectTestMods(leaderDoc, { kind: "skill", skill: "command", char: "wp" });
+    const threshold = base + ruleMods.total;
+    const { rv, rerollNote } = await rollD100WithReroll(null);
+    const success = rv <= Math.max(0, threshold);
+    await postTestCard(leaderDoc, {
+      icon: rollIcon("crown", success ? "#4dffa6" : "#ff8a8a"),
+      title: `Rally / Сплотить → ${esc(this.actor.name)}`,
+      threshold: rollStatLine({ label: "Command(W)", base, parts: ruleMods.parts, threshold, rv, rerollNote }),
+      outcome: outcomeHtml(success,
+        success ? "Успех — Слаженность не теряется." : "Провал — Слаженность теряется как обычно.")
+    });
+    return success;
+  }
+
+  /**
+   * Начало миссии: текущая и стартовая Слаженность приравниваются базовой.
+   *
+   * Camaraderie/Дружество (rules/leadership-talents.mjs): у Лидера с этим
+   * Талантом не ниже +20, даже если базовая меньше — поднимает, не прибавляет.
+   */
   async _startMission() {
-    const base = Number(this.actor.system.cohesion?.base) || 0;
+    const base  = Number(this.actor.system.cohesion?.base) || 0;
+    const start = camaraderieStartCohesion(base, this._resolve(this._postData("leader").uuid));
     const ok = await foundry.applications.api.DialogV2.confirm({
       window: { title: "Начало миссии" },
-      content: `<p>Сбросить Слаженность отряда к базовой (<b>${base >= 0 ? "+" : ""}${base}</b>) и снять отметки потери Командования?</p>`
+      content: `<p>Сбросить Слаженность отряда к ${start !== base ? "" : "базовой "}(<b>${start >= 0 ? "+" : ""}${start}</b>)${start !== base ? " — Дружество поднимает базовую с " + (base >= 0 ? "+" : "") + base : ""} и снять отметки потери Командования?</p>`
     });
     if (!ok) return;
     await clearVoiceOfGodTemp(this);
     const members = foundry.utils.deepClone(this.actor.system.members || []);
     members.forEach(m => { m.moraleLost = false; });
     await this.actor.update({
-      "system.cohesion.start": base,
-      "system.cohesion.value": base,
+      "system.cohesion.start": start,
+      "system.cohesion.value": start,
       "system.members": members,
       "system.presence.active": false,
       "system.shortCommand.active": false,
@@ -652,9 +703,12 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
    * Уровень Риска с учётом снятого шлема командующего: книга даёт +1, если
    * немодифицированный Риск равен 2+. Выше 5 не поднимается.
    *
-   * Rancor/Злопамятность (rules/leadership-talents.mjs): +1 к максимуму
-   * Успехов у отдающего, когда выделенная цель — Ненавистная ему; без
-   * потолка (cap === null) добавлять нечего.
+   * Bravado/Бравада (rules/leadership-talents.mjs): отдающий считает СВОЙ
+   * уровень на 1 выше (если он не 1) ДО подстановки в риск-таблицу — отсюда
+   * возможен скачок потолка больше чем на 1, таблица RISK_LEVELS нелинейна.
+   * Rancor/Злопамятность: +1 к максимуму Успехов, когда выделенная цель —
+   * Ненавистная отдающему. Eloquence/Красноречие: +1, когда Linguistics
+   * отдающего на +30. Оба — только если потолок уже есть (cap !== null).
    */
   _effectiveRisk(postKey = null) {
     const base = Math.max(1, Math.min(5, Number(this.actor.system.risk) || 1));
@@ -662,12 +716,13 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     // Без указания поста смотрим на того, кто фактически командует.
     const who = post || (this._postData("commander").filled ? this._postData("commander")
                                                             : this._postData("leader"));
+    const whoDoc = this._resolve(who?.uuid);
     const bonus = (who?.helmetOff && base >= 2) ? 1 : 0;
-    const value = Math.min(5, base + bonus);
+    const value = bravadoRiskLevel(Math.min(5, base + bonus), whoDoc);
     const cap = riskCap(value);
-    const rancorBonus = cap == null ? 0 : rancorRiskCapBonus(this._resolve(who?.uuid),
-      { kind: "skill", skill: "command", targetActor: this._commandTargetActor() });
-    return { base, bonus, value, cap: cap == null ? null : cap + rancorBonus, who: who?.name || "" };
+    const ctx = { kind: "skill", skill: "command", targetActor: this._commandTargetActor() };
+    const capBonus = cap == null ? 0 : rancorRiskCapBonus(whoDoc, ctx) + eloquenceRiskCapBonus(whoDoc);
+    return { base, bonus, value, cap: cap == null ? null : cap + capBonus, who: who?.name || "" };
   }
 
   /**
@@ -855,6 +910,14 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     const ruleMods = this._commandRuleMods(roller.uuid);
     threshold += ruleMods.total;
 
+    // Личная Команда любимчику/не любимчику — recipientUuid известен уже
+    // здесь (структурное поле, выбранное до броска в UI Листа Отряда).
+    const recipientUuid = extra.shortKey === "personal" ? (sys.shortCommand?.recipientUuid || null) : null;
+    const rollerDocForPatch = this._resolve(roller.uuid);
+    // Protege/Протеже (rules/leadership-talents.mjs): −30 другим Командам,
+    // если пенальти уже включено этим боем — не любимчику.
+    if (kind === "short") threshold += protegePenalty(rollerDocForPatch, recipientUuid);
+
     // Экономика действий (wdbc-w8ws): Короткая/Детальная Команда списывают ОД
     // ФАКТИЧЕСКИ выбранного отдающего по-настоящему — Присутствие свободно
     // всегда (title листа), сюда не заходит. Списывается ДО броска (действие
@@ -862,14 +925,20 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     // triggerBowToAudience (combat/bow-to-audience.mjs). hasActionEconomy/
     // isEncounterActive внутри spendActionPoints сами не спишут ничего у
     // Орды/вне боя — здесь достаточно звать безусловно.
+    let protegeTriggered = false;
     if (kind !== "presence" && !extra.free) {
-      const rollerDoc = this._resolve(roller.uuid);
-      const { actionType, cost } = this._commandApCost(kind, rollerDoc);
+      const rollerDoc = rollerDocForPatch;
+      const { actionType, cost } = this._commandApCost(kind, rollerDoc, recipientUuid);
+      protegeTriggered = kind === "short" && protegeFreeCommandActive(rollerDoc, recipientUuid);
       // physical:false — приказ голосом, см. shortApGate выше (wdbc-x1nz.2.88).
       if (!await spendActionPoints(rollerDoc, cost, { physical: false })) {
         ui.notifications.warn(`${roller.name || "Отдающий"}: не хватает ОД на ${actionType} (нужно ${cost}).`);
         return;
       }
+      // Протеже закрепляет любимчика (если ещё не выбран) и пенальти −30
+      // другим — списывается сразу после траты ОД, независимо от исхода
+      // броска (действие потрачено в любом случае).
+      if (protegeTriggered) await rollerDoc.update(protegeActivationPatch(rollerDoc, recipientUuid));
     }
 
     // Переброс/Кубик — тот же путь, что у общего диалога Навыка/Характеристики.
@@ -1046,11 +1115,24 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
    * rollerDoc — ФАКТИЧЕСКИЙ отдающий (может быть Координатором, не только
    * activeCommander предварительного гейта в _prepareContext).
    */
-  _commandApCost(kind, rollerDoc) {
+  /**
+   * recipientUuid — только у Личной Команды (extra.shortKey==="personal"),
+   * известен лишь на реальном исполнении (_executeCommand); превью в
+   * _prepareContext зовёт без него — Protege/Frontline Commander там не
+   * показываются заранее, экономика ОД на самом броске всё равно верна.
+   */
+  _commandApCost(kind, rollerDoc, recipientUuid = null) {
     const base = kind === "detail" ? "Полное действие" : "Полудействие";
     const discounted = { "Полное действие": "Полудействие", "Полудействие": "Свободное действие" };
-    const actionType = plagueShepherdFreeCommandActive(rollerDoc, this._commandReachableMemberDocs())
+    let actionType = plagueShepherdFreeCommandActive(rollerDoc, this._commandReachableMemberDocs())
       ? discounted[base] : base;
+    // Protege/Протеже: Личная Команда любимчику — свободное действие, раз в Ход.
+    if (kind === "short" && protegeFreeCommandActive(rollerDoc, recipientUuid)) actionType = "Свободное действие";
+    // Frontline Commander/Фронтовой Командир: связан в рукопашной — Короткая
+    // свободна, Детальная — полудействие (не ниже, даже если уже дешевле).
+    if (frontlineCommanderMeleeFree(rollerDoc)) {
+      actionType = kind === "detail" ? "Полудействие" : "Свободное действие";
+    }
     return { actionType, cost: apCostForActionType(actionType) };
   }
 

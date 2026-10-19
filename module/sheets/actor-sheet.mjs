@@ -121,6 +121,7 @@ import { zeroBlankNumbers } from "../helpers/blank-zero.mjs";
 import { clearHololithBriefing } from "../combat/hololith-briefing.mjs";
 import { ignoresWeight, IGNORE_WEIGHT_FLAG } from "../rules/encumbrance.mjs";
 import { isNotableCharacter, NOTABLE_FLAG } from "../rules/resilience-talents.mjs";
+import { hasWarChant, warChantSinging, WAR_CHANT_FLAG } from "../rules/leadership-talents.mjs";
 import { convertActorToMinion } from "../apps/minion-convert.mjs";
 
 /** Книжная пара Склонностей Навыка — [char, apt2] его определения. */
@@ -1281,6 +1282,23 @@ export class WarhammerCharacterSheet
     }];
   }
 
+  /**
+   * War Chant/Боевая Песнь (Талант Лидерства, Sahara 3-ac78, 19.10.2026):
+   * «распевает» — ручной переключатель (флаг актора), книжное «в начале
+   * Хода» не превращено в авто-тик (см. заголовок rules/leadership-talents.mjs).
+   * Пункт виден только носителю Таланта.
+   */
+  _warChantEntry() {
+    if (!hasWarChant(this.actor)) return [];
+    const on = warChantSinging(this.actor);
+    return [{
+      cls: "wh-ctx-tog-warchant", label: "🎵 Распевает (Боевая Песнь)", checkbox: true, checked: on,
+      onClick: () => (on
+        ? this.actor.unsetFlag("warhammer-dbc", WAR_CHANT_FLAG)
+        : this.actor.setFlag("warhammer-dbc", WAR_CHANT_FLAG, true))
+    }];
+  }
+
   _sheetToggleEntries(keys) {
     const sys = this.actor.system;
     const toggle = (key) => this.actor.update({ [`system.${key}`]: !sys[key] });
@@ -1757,7 +1775,7 @@ export class WarhammerCharacterSheet
         this._advancePricingSubmenu(), { sep: true },
         this._accessSubmenu(accessKeys),
         ...this._sheetToggleEntries(["craftAvailable", ...(aeldari ? [] : ["isRogueTrader"])]),
-        this._ignoreWeightEntry(), ...this._notableEntries(),
+        this._ignoreWeightEntry(), ...this._notableEntries(), ...this._warChantEntry(),
         horde, minion
       ].filter(Boolean);
     }

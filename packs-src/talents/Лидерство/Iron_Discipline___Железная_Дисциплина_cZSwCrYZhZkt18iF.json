@@ -5,7 +5,7 @@
   "folder": "8GybVcvQhfdrQVXK",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект в первую очередь адресован ДРУГИМ персонажам (подчинённым/союзникам/миньонам/отряду), не самому обладателю Таланта — testMod на предмете действует только на тесты владельца.",
+    "notes": "Реализовано (19.10.2026, Sahara 3-ac78): rules/leadership-talents.mjs::ironDisciplineRerollRules, cross-actor источник правил «leadershipTalents» (rules/sources.mjs) — commandersOf (обратное направление от rules/adjutant.mjs::subordinatesOf) ищет, кто эффективно командует подчинённым; «кроме вызванных самим персонажем» — тот же приём, что rules/hatred.mjs (ctx.targetActor как источник угрозы теста).",
     "benefit": "Все подчинённые персонажа могут перебрасывать проваленные тесты Морали, кроме вызванных самим персонажем. Работает даже без персонажа рядом.",
     "tier": 2,
     "requirement": "F 30",
