@@ -128,7 +128,20 @@ const ALLOWED = {
   // функции isCyberneticExcellence (rules/cybernetic-excellence.mjs), не
   // прямой вызов itemHasName/hasAbility/hasTalent — анализатор такую обёртку
   // не распознаёт, хотя за столом способность работает.
-  "mechanicum.core.cyberneticExcellence": "включается по имени Таланта через regex в isCyberneticExcellence (rules/cybernetic-excellence.mjs) — анализатор такую обёртку не распознаёт"
+  "mechanicum.core.cyberneticExcellence": "включается по имени Таланта через regex в isCyberneticExcellence (rules/cybernetic-excellence.mjs) — анализатор такую обёртку не распознаёт",
+
+  // Таланты Оккультиста (перепроверка Sahara 3-2a39, 19.10.2026): тот же
+  // приём, что у Melee/Weapon/Armour Training выше — module/rules/
+  // occultist-talents.mjs::hasOccultistTalent читает имя Таланта через
+  // itemHasName(i, n), где n приходит из модульного массива имён
+  // (ERUDITE_INFERNAL_NAMES и т.п.), а не строковым литералом прямо в
+  // вызове — анализатор такую форму не распознаёт, хотя Таланты с этими
+  // именами есть в packs-src/talents/Оккультист и способность за столом
+  // работает у любого персонажа, купившего нужный Талант.
+  "occultist.core.eruditeInfernal": "включается по имени Таланта (Erudite-Infernal) через модульный массив имён в occultist-talents.mjs::hasOccultistTalent — анализатор такую форму не распознаёт",
+  "occultist.core.infernalMaster": "включается по имени Таланта (Infernal Master) через модульный массив имён в occultist-talents.mjs::hasOccultistTalent — анализатор такую форму не распознаёт",
+  "occultist.core.gloriousPurpose": "включается по имени Таланта (Glorious Purpose) через модульный массив имён в occultist-talents.mjs::hasOccultistTalent — анализатор такую форму не распознаёт",
+  "occultist.core.ritePuzzler": "включается по имени Таланта (Rite Puzzler) через модульный массив имён в occultist-talents.mjs::hasOccultistTalent — анализатор такую форму не распознаёт"
 };
 
 describe("возможности с читателем должны быть достижимы из игры", () => {
