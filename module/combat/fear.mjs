@@ -114,7 +114,10 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   // складывает в `mod`. Общий сбор добавил бы отмеченную галочку второй раз.
   // fearTest — тег именно Страха (не Запугивания/Пыток/Подавления): на него
   // даёт +10 Талант Сопротивление (Fear), rules/resilience-talents.mjs.
-  const ruleMods = autoTestMods(actor, { kind: "skill", char: charKey, morale: true, fearTest: true });
+  // Radiant Presence/Блистательное Присутствие (Sahara 3-ac78, 19.10.2026):
+  // та же галочка диалога, что остальные свойства — properties.radiantPresence,
+  // не отдельный сбор (иначе задвоило бы, как и у остальных галочек здесь).
+  const ruleMods = autoTestMods(actor, { kind: "skill", char: charKey, morale: true, fearTest: true, radiantPresence: !!properties.radiantPresence });
   const baseEff  = wp + ratingMod + mod + (tk.difficulty || 0) + ruleMods.total;
   // Саркофаг Дредноута (стр. 57, wdbc-drn): пилот, отключённый от чувств,
   // автоматически проходит тесты Страха независимо от Infamy.
@@ -130,9 +133,12 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   //
   // Infamy и собственный Страх (стр. 53) — привилегия Важных персонажей: оба
   // условия стоят в одной фразе с ними; считает их fearIgnore выше.
+  // Into the Jaws of Hell/В Самое Пекло (Sahara 3-ac78, 19.10.2026) — та же
+  // галочка диалога, решение стола: рядом сражается командующий с Талантом.
   const autoPass = ignore.autoPass
                    || hasRuleFlag(actor, "sarcophagus.autoPassFear")
-                   || hasRuleFlag(actor, FEAR_IMMUNE_FLAG);
+                   || hasRuleFlag(actor, FEAR_IMMUNE_FLAG)
+                   || !!properties.intoTheJawsOfHell;
   // Видимая причина: игрок с Infamy 60 иначе не поймёт, почему автоуспеха нет.
   const ignoreNote = ignore.cancelled.length
     ? `<div class="roll-threshold">Этот Страх нельзя игнорировать — не действуют: ${ignore.cancelled.map(k => FEAR_IGNORE_LABELS[k]).join(", ")}.</div>`

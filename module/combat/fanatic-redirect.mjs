@@ -12,25 +12,69 @@
 //  полудвижения, и если это позволяет встать на пути атаки — получает это
 //  попадание и урон от него вместо союзника.»
 //
-//  УРЕЗАННАЯ ВЕРСИЯ (решение владельца 19.10.2026): движение и геометрия
-//  «встал на пути атаки» не моделируются — но и не нужны отдельным кодом.
-//  module/combat/attack-card.mjs::applyDamageSection уже умеет применять
-//  урон НЕ той цели, по которой стреляли: кнопка «Применить урон» (кроме
-//  случаев с data-force-target — Орда/рикошет/встречная атака, где цель
-//  известна на 100%) резолвит актора из нацеленных/выделенных токенов СЦЕНЫ
-//  В МОМЕНТ КЛИКА (hooks.mjs, тот же общий механизм, что у любого применения
-//  урона). Поэтому «перенести попадание на Fanatic» ничем не отличается от
-//  обычного ручного решения ГМа: выделить токен носителя Fanatic вместо
-//  исходной цели и нажать существующую кнопку — то же самое, что стол решал
-//  бы и без Таланта, только показывает, у кого сейчас есть Fanatic (ниже).
-//  Здесь — только раздача самого Трейта (grantFanaticTrait) и опознание
-//  носителей; «раз в Раунд без траты Реакции» не отслеживается — перехват в
-//  этой версии вообще не завязан на экономику действий.
+//  Перенос самого попадания остаётся ручным решением стола: movement и
+//  геометрия «встал на пути атаки» не моделируются — но и не нужны отдельным
+//  кодом. module/combat/attack-card.mjs::applyDamageSection уже умеет
+//  применять урон НЕ той цели, по которой стреляли: кнопка «Применить урон»
+//  (кроме случаев с data-force-target — Орда/рикошет/встречная атака, где
+//  цель известна на 100%) резолвит актора из нацеленных/выделенных токенов
+//  СЦЕНЫ В МОМЕНТ КЛИКА (hooks.mjs, тот же общий механизм, что у любого
+//  применения урона). Поэтому «перенести попадание на Fanatic» ничем не
+//  отличается от обычного ручного решения ГМа: выделить токен носителя
+//  Fanatic вместо исходной цели и нажать существующую кнопку.
+//
+//  УСИЛЕННАЯ АВТОМАТИЗАЦИЯ (19.10.2026, решение владельца — «нужно сильнее
+//  автоматизировать»): раньше ГМ должен был САМ заметить, что рядом с целью
+//  есть носитель Fanatic, и САМ считать «раз в Раунд» на бумаге — теперь
+//  обоих не нужно.
+//   1. fanaticInterceptCandidates — геометрия базового контакта (своя копия
+//      той же арифметики, что combat/rig-steal.mjs::inMeleeContact — НЕ
+//      импорт оттуда: rig-steal.mjs тянет rules/roll-mods.mjs →
+//      resolve-test.mjs → collect.mjs → sources.mjs, тяжеленный путь, что
+//      ломает лёгкие тесты этого файла без foundry-stub.mjs; тот же класс
+//      проблемы, что у геометрии в rules/leadership-talents.mjs, см.
+//      заголовок того файла) теперь считается автоматически в attack.mjs и
+//      показывается прямо в карточке атаки (attack-card.mjs) — список
+//      кандидатов не нужно искать на сцене глазами.
+//   2. «Раз в Раунд без траты Реакции» — теперь настоящий счётчик
+//      (rules/cooldown.mjs::isCapabilityAvailable/markCapabilityUsed, unit
+//      "round", тот же механизм, что у Assassin Strike/Соблазнения Стаи).
+//      Карточка показывает, свободен ли перехват у каждого кандидата, и
+//      даёт кнопку «Отметить перехват» — отмечает счётчик потраченным, когда
+//      стол воспользовался бесплатным перехватом (сам перенос урона всё
+//      равно через обычную кнопку «Применить урон», см. выше — две кнопки
+//      не связаны программно, связь — только в том, что делает стол).
+//      Исчерпанный бесплатный перехват НЕ блокирует Трейт Fanatic как
+//      таковой — обычная версия (за Реакцию) всегда доступна, это
+//      ограничение только добавки от Таланта.
 // ════════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
 import { hasBackToBack, backToBackGrantCap } from "../rules/leadership-talents.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { isCapabilityAvailable, markCapabilityUsed } from "../rules/cooldown.mjs";
+
+const BACK_TO_BACK_FREE_USE_FLAG = "backToBackFreeUse";
+const MELEE_REACH_MULT = 1.5; // combat/rig-steal.mjs::inMeleeContact — своя копия, см. заголовок файла.
+
+/** Евклидова дистанция центров двух токенов в метрах сцены (своя копия combat/facing.mjs::tokenDistance). */
+function tokenDistance(tokenA, tokenB) {
+  const docA = tokenA?.document ?? tokenA, docB = tokenB?.document ?? tokenB;
+  if (!docA || !docB) return null;
+  const size = (typeof canvas !== "undefined" && canvas?.grid?.size) || 100;
+  const unit = (typeof canvas !== "undefined" && (canvas?.scene?.grid?.distance ?? canvas?.grid?.distance)) || 1;
+  const cx = doc => (Number(doc.x) || 0) + (Number(doc.width) || 1) * size / 2;
+  const cy = doc => (Number(doc.y) || 0) + (Number(doc.height) || 1) * size / 2;
+  return Math.hypot(cx(docA) - cx(docB), cy(docA) - cy(docB)) / size * unit;
+}
+
+/** В базовом контакте ли два токена — 1.5 клетки сцены (своя копия combat/rig-steal.mjs::inMeleeContact). */
+function inMeleeContact(tokenA, tokenB) {
+  if (!tokenA || !tokenB) return false;
+  const unit = (typeof canvas !== "undefined" && (canvas?.scene?.grid?.distance ?? canvas?.grid?.distance)) || 1;
+  const d = tokenDistance(tokenA, tokenB);
+  return d != null && d <= unit * MELEE_REACH_MULT;
+}
 
 const NS = "warhammer-dbc";
 const FANATIC_GRANT_FLAG = "fanaticGrant";
@@ -114,4 +158,29 @@ export function backToBackGrantSectionHtml(rollerActor) {
 export function fanaticCandidates(allActors, { excludeUuids = [] } = {}) {
   const exclude = new Set(excludeUuids.filter(Boolean));
   return (allActors ?? []).filter(a => a?.uuid && !exclude.has(a.uuid) && hasFanatic(a));
+}
+
+/**
+ * Носители Fanatic (кроме excludeUuids), чей активный токен сейчас в
+ * базовом контакте с targetToken — геометрия вместо «искать глазами на
+ * сцене». Нет targetToken (атака не в рукопашной/токен не выделен) —
+ * список пуст: перехват в базовом контакте не книжный случай для дистанции.
+ */
+export function fanaticInterceptCandidates(targetToken, allActors, { excludeUuids = [] } = {}) {
+  if (!targetToken) return [];
+  const exclude = new Set(excludeUuids.filter(Boolean));
+  return fanaticCandidates(allActors, { excludeUuids: [...exclude] }).filter(a => {
+    const token = a.getActiveTokens?.()[0];
+    return token && token !== targetToken && inMeleeContact(token, targetToken);
+  });
+}
+
+/** Свободен ли у actor бесплатный (без Реакции) перехват этим Раундом — Спиной к Спине. */
+export function backToBackFreeUseAvailable(actor) {
+  return isCapabilityAvailable(actor, BACK_TO_BACK_FREE_USE_FLAG, "round");
+}
+
+/** Отметить бесплатный перехват actor потраченным в этом Раунде. */
+export async function markBackToBackFreeUseUsed(actor) {
+  await markCapabilityUsed(actor, BACK_TO_BACK_FREE_USE_FLAG, "round");
 }

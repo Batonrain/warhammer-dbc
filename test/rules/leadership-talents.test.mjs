@@ -19,9 +19,12 @@ import {
   hasIronDiscipline, commandersOf,
   hasFrontlineCommander, frontlineCommanderDistanceOk, frontlineCommanderMeleeFree,
   hasProtege, protegeFavoriteUuid, protegeFreeCommandActive, protegePenalty, protegeActivationPatch,
-  hasRadiantPresence, hasIntoTheJawsOfHell, intoTheJawsOfHellActive,
+  hasRadiantPresence, anyRadiantPresenceHolderExists, radiantPresenceBonus,
+  hasIntoTheJawsOfHell, anyIntoTheJawsOfHellHolderExists, intoTheJawsOfHellActive,
+  hasAirOfAuthority, commandTargetLimit,
   hasLivingLegend, livingLegendCommandBonus,
   hasWarChant, warChantSinging, WAR_CHANT_FLAG,
+  warChantSingAlongActive, WAR_CHANT_SING_ALONG_FLAG, warChantIntimidateBonus, warChantSingAlongBonus,
   hasRally, rallyAvailable,
   hasBringItDown, bringItDownAccuracyPenalty, bringItDownMaxStacks, bringItDownStacksFor,
   BRING_IT_DOWN_PENALTY_PER_STACK,
@@ -357,68 +360,73 @@ describe("Protege/Протеже: свободное действие любим
   });
 });
 
-describe("Radiant Presence/Блистательное Присутствие — опознание Таланта", () => {
+describe("Air of Authority/Аура Власти — лимит целей Command/Intimidate", () => {
+  it("hasAirOfAuthority — по любой половине имени", () => {
+    expect(hasAirOfAuthority({ items: [talentOf("Air of Authority")] })).toBe(true);
+    expect(hasAirOfAuthority({ items: [talentOf("Аура Власти")] })).toBe(true);
+    expect(hasAirOfAuthority({ items: [] })).toBe(false);
+  });
+
+  it("commandTargetLimit — F.b без Таланта, F.b×20 с ним", () => {
+    const actor = (bonus, talents = []) => ({ items: talents, system: { characteristics: { fel: { bonus } } } });
+    expect(commandTargetLimit(actor(3))).toBe(3);
+    expect(commandTargetLimit(actor(3, [talentOf("Air of Authority")]))).toBe(60);
+    expect(commandTargetLimit(actor(0, [talentOf("Air of Authority")]))).toBe(0);
+  });
+
+  it("commandTargetLimit — отрицательный F.b не уходит в минус", () => {
+    expect(commandTargetLimit({ items: [], system: { characteristics: { fel: { bonus: -1 } } } })).toBe(0);
+  });
+});
+
+describe("Radiant Presence/Блистательное Присутствие — галочка диалога, не скан сцены", () => {
   it("hasRadiantPresence — по любой половине имени", () => {
     expect(hasRadiantPresence({ items: [talentOf("Radiant Presence")] })).toBe(true);
     expect(hasRadiantPresence({ items: [talentOf("Блистательное Присутствие")] })).toBe(true);
     expect(hasRadiantPresence({ items: [] })).toBe(false);
   });
+
+  it("anyRadiantPresenceHolderExists — хоть один носитель в списке", () => {
+    expect(anyRadiantPresenceHolderExists([{ items: [talentOf("Radiant Presence")] }, { items: [] }])).toBe(true);
+    expect(anyRadiantPresenceHolderExists([{ items: [] }])).toBe(false);
+    expect(anyRadiantPresenceHolderExists([])).toBe(false);
+    expect(anyRadiantPresenceHolderExists(undefined)).toBe(false);
+  });
+
+  it("radiantPresenceBonus — +10, если галочка отмечена, иначе 0", () => {
+    expect(radiantPresenceBonus(true)).toBe(10);
+    expect(radiantPresenceBonus(false)).toBe(0);
+    expect(radiantPresenceBonus(undefined)).toBe(0);
+  });
+
+  it("leadershipTalentRules отдаёт rollBonus на morale по ctx.radiantPresence", () => {
+    const actor = { items: [] };
+    expect(leadershipTalentRules(actor, { radiantPresence: true })).toEqual([
+      { id: "radiantPresence.morale", label: "Блистательное Присутствие", when: {},
+        effects: [{ kind: "rollBonus", target: "morale", value: 10, label: "Блистательное Присутствие", auto: true }] }
+    ]);
+    expect(leadershipTalentRules(actor, { radiantPresence: false })).toEqual([]);
+    expect(leadershipTalentRules(actor, {})).toEqual([]);
+  });
 });
 
-describe("Into the Jaws of Hell/В Самое Пекло: авто-успех рядом с командующим", () => {
-  const token = (x, y, disposition = 1) => ({ document: { x, y, width: 1, height: 1, rotation: 0, disposition } });
-  const withToken = (t, uuid, items = []) => ({ uuid, items, getActiveTokens: () => (t ? [t] : []) });
-  const squad = (uuid, posts) => ({ type: "squad", uuid, system: { posts, members: [] } });
-
-  beforeEach(() => { globalThis.canvas = { grid: { size: 100 }, scene: { grid: { distance: 1 } } }; });
-
+describe("Into the Jaws of Hell/В Самое Пекло: галочка диалога, не скан сцены", () => {
   it("hasIntoTheJawsOfHell — по любой половине имени", () => {
     expect(hasIntoTheJawsOfHell({ items: [talentOf("Into the Jaws of Hell")] })).toBe(true);
     expect(hasIntoTheJawsOfHell({ items: [talentOf("В Самое Пекло")] })).toBe(true);
+    expect(hasIntoTheJawsOfHell({ items: [] })).toBe(false);
   });
 
-  it("true — командующий с Талантом в базовом контакте, без источника угрозы", () => {
-    const subToken = token(0, 0);
-    const cmdrToken = token(0, 0);
-    const sub = withToken(subToken, "sub");
-    const cmdr = withToken(cmdrToken, "cmdr", [talentOf("Into the Jaws of Hell")]);
-    const sq = squad("sq1", { commander: { uuid: "cmdr" } });
-    sq.system.members = [{ uuid: "sub" }];
-    globalThis.canvas.tokens = { placeables: [subToken, cmdrToken] };
-    expect(intoTheJawsOfHellActive(sub, [sub, cmdr, sq], null)).toBe(true);
+  it("anyIntoTheJawsOfHellHolderExists — хоть один носитель в списке", () => {
+    expect(anyIntoTheJawsOfHellHolderExists([{ items: [talentOf("В Самое Пекло")] }])).toBe(true);
+    expect(anyIntoTheJawsOfHellHolderExists([{ items: [] }])).toBe(false);
+    expect(anyIntoTheJawsOfHellHolderExists(undefined)).toBe(false);
   });
 
-  it("false — источник угрозы это он же, единственный командующий с Талантом", () => {
-    const subToken = token(0, 0);
-    const cmdrToken = token(0, 0);
-    const sub = withToken(subToken, "sub");
-    const cmdr = withToken(cmdrToken, "cmdr", [talentOf("Into the Jaws of Hell")]);
-    const sq = squad("sq1", { commander: { uuid: "cmdr" } });
-    sq.system.members = [{ uuid: "sub" }];
-    globalThis.canvas.tokens = { placeables: [subToken, cmdrToken] };
-    expect(intoTheJawsOfHellActive(sub, [sub, cmdr, sq], cmdr)).toBe(false);
-  });
-
-  it("false — командующий с Талантом далеко (не в базовом контакте)", () => {
-    const subToken = token(0, 0);
-    const cmdrToken = token(0, 1000);
-    const sub = withToken(subToken, "sub");
-    const cmdr = withToken(cmdrToken, "cmdr", [talentOf("Into the Jaws of Hell")]);
-    const sq = squad("sq1", { commander: { uuid: "cmdr" } });
-    sq.system.members = [{ uuid: "sub" }];
-    globalThis.canvas.tokens = { placeables: [subToken, cmdrToken] };
-    expect(intoTheJawsOfHellActive(sub, [sub, cmdr, sq], null)).toBe(false);
-  });
-
-  it("false — без командующего с Талантом", () => {
-    const subToken = token(0, 0);
-    const cmdrToken = token(0, 0);
-    const sub = withToken(subToken, "sub");
-    const cmdr = withToken(cmdrToken, "cmdr");
-    const sq = squad("sq1", { commander: { uuid: "cmdr" } });
-    sq.system.members = [{ uuid: "sub" }];
-    globalThis.canvas.tokens = { placeables: [subToken, cmdrToken] };
-    expect(intoTheJawsOfHellActive(sub, [sub, cmdr, sq], null)).toBe(false);
+  it("intoTheJawsOfHellActive — ровно значение галочки, приведённое к boolean", () => {
+    expect(intoTheJawsOfHellActive(true)).toBe(true);
+    expect(intoTheJawsOfHellActive(false)).toBe(false);
+    expect(intoTheJawsOfHellActive(undefined)).toBe(false);
   });
 });
 
@@ -456,18 +464,14 @@ describe("Living Legend/Живая Легенда: Inf вместо F", () => {
   });
 });
 
-describe("War Chant/Боевая Песнь: переброс Морали поющим подчинённым", () => {
-  const token = (x, y, disposition = 1) => {
-    const t = { document: { x, y, width: 1, height: 1, rotation: 0, disposition } };
-    t.actor = { uuid: `tok-${x}-${y}` };
-    return t;
-  };
+describe("War Chant/Боевая Песнь: переброс Морали (Лидер/подпевающий) и +3 Intimidate", () => {
   const leader = (uuid, flags = {}, items = [talentOf("War Chant / Боевая Песнь")]) => ({
     uuid, items, flags: { "warhammer-dbc": flags }, getFlag: (_s, k) => flags[k]
   });
-  const squad = (uuid, posts) => ({ type: "squad", uuid, system: { posts, members: [] } });
-
-  beforeEach(() => { globalThis.canvas = { grid: { size: 100 }, scene: { grid: { distance: 1 } } }; });
+  const sub = (uuid, flags = {}) => ({
+    uuid, items: [], flags: { "warhammer-dbc": flags }, getFlag: (_s, k) => flags[k]
+  });
+  const squad = (uuid, posts, members = []) => ({ type: "squad", uuid, system: { posts, members } });
 
   it("hasWarChant — по любой половине имени", () => {
     expect(hasWarChant({ items: [talentOf("War Chant")] })).toBe(true);
@@ -480,37 +484,82 @@ describe("War Chant/Боевая Песнь: переброс Морали по�
     expect(warChantSinging(leader("l1", { [WAR_CHANT_FLAG]: true }, []))).toBe(false);
   });
 
-  it("leadershipTalentRules даёт переброс Морали подчинённому поющего Лидера в поле зрения", () => {
-    const subToken = token(0, 0);
-    const leaderToken = token(0, 0);
-    const sub = { uuid: "sub", items: [], getActiveTokens: () => [subToken] };
-    subToken.actor = sub;
+  it("warChantSingAlongActive — своя галочка + хоть один поющий командующий", () => {
     const l = leader("l1", { [WAR_CHANT_FLAG]: true });
-    leaderToken.actor = l;
-    l.getActiveTokens = () => [leaderToken];
-    const sq = squad("sq1", { leader: { uuid: "l1" } });
-    sq.system.members = [{ uuid: "sub" }];
-    globalThis.canvas.tokens = { placeables: [subToken, leaderToken] };
+    const s = sub("sub", { [WAR_CHANT_SING_ALONG_FLAG]: true });
+    const sq = squad("sq1", { leader: { uuid: "l1" } }, [{ uuid: "sub" }]);
+    expect(warChantSingAlongActive(s, [s, l, sq])).toBe(true);
+    // Командующий перестал петь — подпевание тут же неактивно.
+    const lSilent = leader("l1");
+    expect(warChantSingAlongActive(s, [s, lSilent, sq])).toBe(false);
+    // Своей галочки нет — неактивно, даже если командующий поёт.
+    const sNoFlag = sub("sub2");
+    expect(warChantSingAlongActive(sNoFlag, [sNoFlag, l, squad("sq2", { leader: { uuid: "l1" } }, [{ uuid: "sub2" }])])).toBe(false);
+  });
 
-    const rules = leadershipTalentRules(sub, {}, [sub, l, sq]);
+  it("leadershipTalentRules — переброс Морали самому поющему Лидеру", () => {
+    const l = leader("l1", { [WAR_CHANT_FLAG]: true });
+    const rules = leadershipTalentRules(l, {}, [l]);
     expect(rules).toEqual([
       { id: "warChant.moraleReroll", label: "Боевая Песнь", when: {},
         effects: [{ kind: "rollMode", target: "morale", mode: "keepBest", rolls: 2, label: "Боевая Песнь" }] }
     ]);
   });
 
-  it("пусто, если Лидер не поёт", () => {
-    const subToken = token(0, 0);
-    const leaderToken = token(0, 0);
-    const sub = { uuid: "sub", items: [], getActiveTokens: () => [subToken] };
-    subToken.actor = sub;
+  it("leadershipTalentRules — переброс Морали подпевающему подчинённому, не просто ЛЮБОМУ подчинённому", () => {
+    const l = leader("l1", { [WAR_CHANT_FLAG]: true });
+    const singer = sub("singer", { [WAR_CHANT_SING_ALONG_FLAG]: true });
+    const silent = sub("silent");
+    const sq = squad("sq1", { leader: { uuid: "l1" } }, [{ uuid: "singer" }, { uuid: "silent" }]);
+    const allActors = [l, singer, silent, sq];
+
+    expect(leadershipTalentRules(singer, {}, allActors)).toEqual([
+      { id: "warChant.moraleReroll", label: "Боевая Песнь", when: {},
+        effects: [{ kind: "rollMode", target: "morale", mode: "keepBest", rolls: 2, label: "Боевая Песнь" }] }
+    ]);
+    // Подчинённый без своей галочки «подпевать» — ничего не получает, даже в том же Отряде.
+    expect(leadershipTalentRules(silent, {}, allActors)).toEqual([]);
+  });
+
+  it("пусто, если Лидер не поёт — даже с галочкой «подпевать» у подчинённого", () => {
     const l = leader("l1");
-    leaderToken.actor = l;
-    l.getActiveTokens = () => [leaderToken];
-    const sq = squad("sq1", { leader: { uuid: "l1" } });
-    sq.system.members = [{ uuid: "sub" }];
-    globalThis.canvas.tokens = { placeables: [subToken, leaderToken] };
-    expect(leadershipTalentRules(sub, {}, [sub, l, sq])).toEqual([]);
+    const singer = sub("singer", { [WAR_CHANT_SING_ALONG_FLAG]: true });
+    const sq = squad("sq1", { leader: { uuid: "l1" } }, [{ uuid: "singer" }]);
+    expect(leadershipTalentRules(singer, {}, [l, singer, sq])).toEqual([]);
+    expect(leadershipTalentRules(l, {}, [l, singer, sq])).toEqual([]);
+  });
+
+  it("warChantIntimidateBonus — +3 за каждого подпевающего подчинённого, пока Лидер поёт", () => {
+    const l = leader("l1", { [WAR_CHANT_FLAG]: true });
+    const s1 = sub("s1", { [WAR_CHANT_SING_ALONG_FLAG]: true });
+    const s2 = sub("s2", { [WAR_CHANT_SING_ALONG_FLAG]: true });
+    const silent = sub("s3");
+    const sq = squad("sq1", { leader: { uuid: "l1" } }, [{ uuid: "s1" }, { uuid: "s2" }, { uuid: "s3" }]);
+    const allActors = [l, s1, s2, silent, sq];
+    expect(warChantIntimidateBonus(l, allActors)).toBe(6);
+    expect(warChantIntimidateBonus(leader("l1"), allActors)).toBe(0); // не поёт — бонуса нет
+  });
+
+  it("leadershipTalentRules — rollBonus skill:intimidate Лидеру за подпевающих", () => {
+    const l = leader("l1", { [WAR_CHANT_FLAG]: true });
+    const s1 = sub("s1", { [WAR_CHANT_SING_ALONG_FLAG]: true });
+    const sq = squad("sq1", { leader: { uuid: "l1" } }, [{ uuid: "s1" }]);
+    const rules = leadershipTalentRules(l, {}, [l, s1, sq]);
+    expect(rules).toContainEqual(
+      { id: "warChant.intimidate", label: "Боевая Песнь: +3 Intimidate", when: {},
+        effects: [{ kind: "rollBonus", target: "skill:intimidate", value: 3, label: "Боевая Песнь" }] }
+    );
+  });
+
+  it("warChantSingAlongBonus — +1, если цель Команды сейчас подпевает, иначе 0", () => {
+    const l = leader("l1", { [WAR_CHANT_FLAG]: true });
+    const singer = sub("singer", { [WAR_CHANT_SING_ALONG_FLAG]: true });
+    const silent = sub("silent");
+    const sq = squad("sq1", { leader: { uuid: "l1" } }, [{ uuid: "singer" }, { uuid: "silent" }]);
+    const allActors = [l, singer, silent, sq];
+    expect(warChantSingAlongBonus(singer, allActors)).toBe(1);
+    expect(warChantSingAlongBonus(silent, allActors)).toBe(0);
+    expect(warChantSingAlongBonus(null, allActors)).toBe(0);
   });
 });
 

@@ -2078,8 +2078,12 @@ export function registerHooks() {
         // «Заведомо безопасно» (стр. 33, wdbc-x1nz.2.62) — галочка рядом с
         // кнопкой в этой же карточке, решает ГМ на глаз (см. title галочки).
         const safeOverride = !!el.closest(".roll-suppression")?.querySelector(".wh-suppression-safe-cb")?.checked;
+        // Radiant Presence/Into the Jaws of Hell (Sahara 3-ac78, 19.10.2026) —
+        // галочки той же карточки, решение стола (combat/attack-card.mjs).
+        const radiantPresence = !!el.closest(".roll-suppression")?.querySelector(".wh-radiant-presence-cb")?.checked;
+        const intoTheJawsOfHell = !!el.closest(".roll-suppression")?.querySelector(".wh-jaws-of-hell-cb")?.checked;
         const sourceActor = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
-        await rollSuppressionTest(actor, { mod, sourceLabel: "Стрельба на подавление", sourceActor, safeOverride });
+        await rollSuppressionTest(actor, { mod, sourceLabel: "Стрельба на подавление", sourceActor, safeOverride, radiantPresence, intoTheJawsOfHell });
       });
     });
     // Огонь из Всех Орудий (стр. 62, wdbc-pb60): обе очереди пары по одной
@@ -2094,8 +2098,10 @@ export function registerHooks() {
         if (!actor) return;
         const mod = parseInt(el.dataset.testMod || "0");
         const safeOverride = !!el.closest(".roll-suppression")?.querySelector(".wh-suppression-safe-cb")?.checked;
+        const radiantPresence = !!el.closest(".roll-suppression")?.querySelector(".wh-radiant-presence-cb")?.checked;
+        const intoTheJawsOfHell = !!el.closest(".roll-suppression")?.querySelector(".wh-jaws-of-hell-cb")?.checked;
         const sourceActor = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
-        await rollSuppressionTest(actor, { mod, sourceLabel: "Огонь из Всех Орудий", sourceActor, safeOverride });
+        await rollSuppressionTest(actor, { mod, sourceLabel: "Огонь из Всех Орудий", sourceActor, safeOverride, radiantPresence, intoTheJawsOfHell });
       });
     });
     html.querySelectorAll(".wh-suppression-recovery-btn").forEach(btn => {
@@ -2186,6 +2192,23 @@ export function registerHooks() {
         ui.notifications.info(freed.length
           ? `Полевая Казнь: Шок/Подавление снято у ${freed.join(", ")}.`
           : "Полевая Казнь: снимать было не с кого.");
+      });
+    });
+    // Спиной к Спине: отметить бесплатный (без Реакции) перехват Fanatic
+    // потраченным этим Раундом (module/combat/fanatic-redirect.mjs). Сам
+    // перенос урона — обычная кнопка «Применить урон» выше в этой же
+    // карточке, выделением токена носителя; эта кнопка не трогает урон.
+    html.querySelectorAll(".wh-back-to-back-mark-used").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const fanatic = await fromUuid(el.dataset.fanaticUuid || "").catch(() => null);
+        if (!fanatic) return ui.notifications.warn("⚠️ Носитель Fanatic не найден.");
+        if (!fanatic.isOwner) return ui.notifications.warn("Отметить может владелец носителя (или ГМ).");
+        el.disabled = true;
+        const { markBackToBackFreeUseUsed } = await import("./combat/fanatic-redirect.mjs");
+        await markBackToBackFreeUseUsed(fanatic);
+        ui.notifications.info(`Спиной к Спине: бесплатный перехват ${fanatic.name} отмечен использованным в этом Раунде.`);
       });
     });
     // Синхронный Натиск: Давление свободным действием, +10 за соратника в контакте.

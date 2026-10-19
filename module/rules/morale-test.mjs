@@ -30,6 +30,9 @@ import { testOutcome } from "./roll-outcome.mjs";
  *   false — выход из Шока: книга оговаривает, что его провал Команд не снимает.
  * @param {string} [opts.char="wp"] — характеристика теста: машина без свободы
  *   воли проходит Страх и Шок на Int (стр. 53, «Страх и Машины»).
+ * @param {boolean} [opts.radiantPresence] — галочка «видит/слышит союзника
+ *   с Radiant Presence» (rules/leadership-talents.mjs) — решение стола,
+ *   код просто передаёт её в ctx для источника «leadershipTalents».
  * @returns {Promise<{eff:number, bonus:number, roll:Roll, rv:number, rolls:Roll[],
  *   rerollNote:string, success:boolean, dof:number, usedReroll:boolean}>}
  *   deg — степень исхода (Успехов при успехе, Провалов при провале);
@@ -37,8 +40,8 @@ import { testOutcome } from "./roll-outcome.mjs";
  *   применён переброс из реестра правил (для applyLordOfExoditesFailPenalty);
  *   parts — подписи применённых модификаторов для карточки.
  */
-export async function rollMoraleTest(actor, baseThreshold, { sourceActor = null, selfAdvantage = false, selfAdvantageLabel = "Преимущество", affectsCommand = true, char = "wp" } = {}) {
-  const resolved = resolveTest({ actor, kind: "skill", char, morale: true, targetActor: sourceActor });
+export async function rollMoraleTest(actor, baseThreshold, { sourceActor = null, selfAdvantage = false, selfAdvantageLabel = "Преимущество", affectsCommand = true, char = "wp", radiantPresence = false } = {}) {
+  const resolved = resolveTest({ actor, kind: "skill", char, morale: true, targetActor: sourceActor, radiantPresence });
   // autoMods наравне с mods (wdbc-ct65.1): Усталость и прочие штрафы состояния
   // тела — такие же правила реестра, просто без галочки. Спрашивать всё равно
   // негде: тест катается одной кнопкой.

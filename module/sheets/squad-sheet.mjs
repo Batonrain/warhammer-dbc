@@ -38,7 +38,7 @@ import { rancorRiskCapBonus, eloquenceRiskCapBonus, bravadoRiskLevel,
          protegeFreeCommandActive, protegePenalty, protegeActivationPatch,
          frontlineCommanderMeleeFree, rallyAvailable,
          hasBringItDown, bringItDownAccuracyPenalty, bringItDownMaxStacks,
-         BRING_IT_DOWN_PENALTY_PER_STACK } from "../rules/leadership-talents.mjs";
+         BRING_IT_DOWN_PENALTY_PER_STACK, warChantSingAlongBonus } from "../rules/leadership-talents.mjs";
 import { backToBackGrantSectionHtml } from "../combat/fanatic-redirect.mjs";
 import { testKindHtml, diceModeHtml, difficultyHtml, readDifficulty, critLineHtml,
          readTestKind, readDiceChoice, mergeReroll, wireTestKindLive,
@@ -986,7 +986,11 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     const eRisk  = this._effectiveRisk(rollerKey);
     const cap    = eRisk.cap;
     const capped = ok && cap != null && deg > cap;
-    const sux    = ok ? (capped ? cap : deg) : 0;
+    // War Chant/Боевая Песнь (rules/leadership-talents.mjs): +1 Успех против
+    // подпевающей цели — книга «после лимитов от Риска», поэтому добавлен
+    // ПОСЛЕ capped, не участвует в самом капе.
+    const singAlongBonus = ok ? warChantSingAlongBonus(this._commandTargetActor(), game.actors ?? []) : 0;
+    const sux    = (ok ? (capped ? cap : deg) : 0) + singAlongBonus;
 
     let effect = "", update = {};
 
