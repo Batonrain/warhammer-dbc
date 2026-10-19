@@ -4,7 +4,7 @@
 // таблица d5 проклятий — чистая часть, Foundry-обвязка в apps/cursed-heirloom.mjs.
 
 import { describe, it, expect } from "vitest";
-import { CURSE_TABLE, curseForRoll, CURSED_HEIRLOOM_MAX_AVAILABILITY } from "../../module/rules/cursed-heirloom.mjs";
+import { CURSE_TABLE, curseForRoll, CURSED_HEIRLOOM_MAX_AVAILABILITY, notesWithCurse } from "../../module/rules/cursed-heirloom.mjs";
 
 describe("CURSE_TABLE", () => {
   it("ровно пять проклятий, по одному на каждую грань d5", () => {
@@ -40,5 +40,20 @@ describe("curseForRoll", () => {
 describe("CURSED_HEIRLOOM_MAX_AVAILABILITY", () => {
   it("потолок Редкости — 4, как в книге", () => {
     expect(CURSED_HEIRLOOM_MAX_AVAILABILITY).toBe(4);
+  });
+});
+
+// Проклятье должно быть видно на листе предмета — флаг лист не показывает,
+// поэтому текст дописывается в «Заметки» оружия (HTMLField).
+describe("notesWithCurse", () => {
+  const curse = curseForRoll(2);
+  it("дописывает имя и текст проклятья к заметкам предмета", () => {
+    const html = notesWithCurse("<p>Старые заметки</p>", curse);
+    expect(html.startsWith("<p>Старые заметки</p>")).toBe(true);
+    expect(html).toContain(curse.name);
+    expect(html).toContain(curse.text);
+  });
+  it("пустые заметки — только проклятье", () => {
+    expect(notesWithCurse("", curse)).toContain(curse.name);
   });
 });

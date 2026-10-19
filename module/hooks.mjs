@@ -3458,6 +3458,9 @@ function _attachFateContextMenu(message, html) {
     await clearCommandsOnCombatEnd(combat);
     // Боевое Построение, раздача соратникам (стр. 62) — отметка до конца боя.
     await clearCombatFormationOnCombatEnd(combat);
+    // Спиной к Спине: розданный Fanatic — тоже до конца боя.
+    const { clearFanaticGrants } = await import("./combat/fanatic-redirect.mjs");
+    await clearFanaticGrants(game.actors ?? []);
     // Божественная Защита: без сознания «до конца сцены или боя».
     await wakeDivineProtected(combat.combatants?.map?.(c => c.actor) ?? []);
     // Метка Аватара Резни живёт «до конца боя» — снять со всех комбатантов.

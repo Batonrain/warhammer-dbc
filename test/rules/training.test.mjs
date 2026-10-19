@@ -7,7 +7,8 @@ import { describe, it, expect } from "vitest";
 import {
   trainingTargetKey, earmarkTotal, addTrainingEarmark, consumeTrainingEarmark,
   logCourse, coursesThisMonth, studentCapFromBonus, studentMonthlyCap,
-  teacherCombinedLimit, studentBonusFromTeacherCombo, trainingXpGain
+  teacherCombinedLimit, studentBonusFromTeacherCombo, trainingXpGain,
+  hasEliteDiscount, grantEliteDiscount, consumeEliteDiscount
 } from "../../module/rules/training.mjs";
 import { SECONDS_PER_MONTH } from "../../module/constants/imperial-calendar.mjs";
 
@@ -18,6 +19,39 @@ describe("trainingTargetKey", () => {
     expect(trainingTargetKey({ kind: "group", key: "forbiddenLore", specialty: " Mechanicum " }))
       .toBe("group:forbiddenlore:mechanicum");
     expect(trainingTargetKey({ kind: "char", key: "int" })).toBe("char:int");
+  });
+
+  it("archetype — отдельный вид цели (Клэйвекс, wdbc-5yafq)", () => {
+    expect(trainingTargetKey({ kind: "archetype", key: "Incubus / Инкуб" })).toBe("archetype:incubus / инкуб");
+  });
+});
+
+// Скидка Клэйвекса на Элитный архетип — НЕ xp-запас: список имён архетипов,
+// на которые ученик получил скидку, module/apps/elite-buy.mjs::eliteCostFor
+// читает его и халвит цену, покупка снимает ровно одну запись.
+describe("скидка на Элитный архетип (Клэйвекс)", () => {
+  it("hasEliteDiscount — есть запись с этим именем", () => {
+    expect(hasEliteDiscount(["Incubus / Инкуб"], "Incubus / Инкуб")).toBe(true);
+    expect(hasEliteDiscount(["Incubus / Инкуб"], "Другой")).toBe(false);
+    expect(hasEliteDiscount([], "Incubus / Инкуб")).toBe(false);
+    expect(hasEliteDiscount(undefined, "Incubus / Инкуб")).toBe(false);
+  });
+
+  it("grantEliteDiscount добавляет имя, пустое имя не добавляет", () => {
+    expect(grantEliteDiscount([], "Incubus / Инкуб")).toEqual(["Incubus / Инкуб"]);
+    expect(grantEliteDiscount(["Incubus / Инкуб"], "Incubus / Инкуб")).toEqual(["Incubus / Инкуб", "Incubus / Инкуб"]);
+    expect(grantEliteDiscount([], "")).toEqual([]);
+  });
+
+  it("consumeEliteDiscount снимает ровно ОДНУ запись, другие архетипы не задевает", () => {
+    const list = grantEliteDiscount(grantEliteDiscount([], "Incubus / Инкуб"), "Incubus / Инкуб");
+    const { discounted, nextList } = consumeEliteDiscount(list, "Incubus / Инкуб");
+    expect(discounted).toBe(true);
+    expect(nextList).toEqual(["Incubus / Инкуб"]); // осталась вторая запись, не обе списались
+
+    const noDiscount = consumeEliteDiscount([], "Incubus / Инкуб");
+    expect(noDiscount.discounted).toBe(false);
+    expect(noDiscount.nextList).toEqual([]);
   });
 });
 

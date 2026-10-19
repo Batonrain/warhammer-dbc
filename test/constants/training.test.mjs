@@ -1,7 +1,8 @@
 // test/constants/training.test.mjs
 import { describe, it, expect } from "vitest";
 import {
-  buildTeachableTargets, buildStudentTestOptions, instructorOption, socialSkillOption
+  buildTeachableTargets, buildStudentTestOptions, instructorOption, socialSkillOption,
+  KLAIVEX_DISCOUNT_ARCHETYPE
 } from "../../module/constants/training.mjs";
 
 function actorStub(over = {}) {
@@ -31,6 +32,21 @@ describe("buildTeachableTargets: только то, что учитель реа
     expect(targets.find(x => x.value === "skill:logic")).toBeTruthy();
     expect(targets.find(x => x.value === "group:forbiddenLore:Mechanicum")).toBeTruthy();
     expect(targets.find(x => x.value === "talent:Teacher / Учитель")).toBeTruthy();
+  });
+
+  // wdbc-5yafq: Клэйвекс учит не Навыку, а «искусству Инкубов» — цель
+  // появляется от самого Таланта, не от рангов/записей на листе учителя.
+  it("учитель-Клэйвекс получает цель «Искусство Инкубов», обычный учитель — нет", () => {
+    const plain = actorStub();
+    expect(buildTeachableTargets(plain).some(x => x.kind === "archetype")).toBe(false);
+
+    const klaivex = actorStub();
+    klaivex.items = [{ type: "talent", name: "Klaivex / Клэйвекс" }];
+    const targets = buildTeachableTargets(klaivex);
+    const found = targets.find(x => x.kind === "archetype");
+    expect(found).toBeTruthy();
+    expect(found.key).toBe(KLAIVEX_DISCOUNT_ARCHETYPE);
+    expect(found.value).toBe(`archetype:${KLAIVEX_DISCOUNT_ARCHETYPE}`);
   });
 });
 

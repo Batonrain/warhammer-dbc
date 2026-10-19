@@ -54,8 +54,8 @@ export const GIANTS_ARMS_FLAG = "arsenal.core.giantSArms";
  * @param {boolean} o.ignoresSizeStrength  носитель снимает штрафы за Размер и
  *        Бонус Силы (Best.Q Откатная Перчатка, OVERSIZED_FIT_FLAG) — «неудобная
  *        форма» при этом остаётся.
- * @param {boolean} o.ignoresHandFit  носитель снимает «неудобную форму» —
- *        Giant's Arms в надетой силовой броне (GIANTS_ARMS_FLAG выше).
+ * @param {boolean} o.ignoresHandFit  Giant's Arms в надетой силовой броне
+ *        (GIANTS_ARMS_FLAG выше) — снимает все три слагаемых, Размер и Силу тоже.
  * @returns {{total: number, parts: {label: string, value: number}[]}}
  */
 export function legionAttackPenalty({ hasLegion = false, fitsLegion = false,
@@ -65,8 +65,8 @@ export function legionAttackPenalty({ hasLegion = false, fitsLegion = false,
   const parts = [];
 
   if (hasLegion && !fitsLegion) {
-    if (!ignoresSizeStrength && (Number(size)   || 0) < 1) parts.push({ label: "Легион: Размер меньше 1",   value: LEGION_STEP });
-    if (!ignoresSizeStrength && (Number(sBonus) || 0) < 7) parts.push({ label: "Легион: Бонус Силы меньше 7", value: LEGION_STEP });
+    if (!ignoresSizeStrength && !ignoresHandFit && (Number(size)   || 0) < 1) parts.push({ label: "Легион: Размер меньше 1",   value: LEGION_STEP });
+    if (!ignoresSizeStrength && !ignoresHandFit && (Number(sBonus) || 0) < 7) parts.push({ label: "Легион: Бонус Силы меньше 7", value: LEGION_STEP });
     // Руки под Астартес — то же сложение, что даёт fitsLegion; раз его нет,
     // хват не подогнан. Оружие можно доработать (R 0), и тогда предмет просто
     // теряет свойство Legion — отдельного признака для этого не нужно.

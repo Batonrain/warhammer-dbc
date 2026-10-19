@@ -9,7 +9,7 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { hasFanatic, fanaticCandidates, backToBackGrantSectionHtml,
-  fanaticInterceptCandidates, backToBackFreeUseAvailable, markBackToBackFreeUseUsed
+  fanaticInterceptCandidates, backToBackFreeUseAvailable, markBackToBackFreeUseUsed, clearFanaticGrants
 } from "../../module/combat/fanatic-redirect.mjs";
 
 const trait = (name) => ({ type: "trait", name, system: {} });
@@ -54,6 +54,26 @@ describe("backToBackGrantSectionHtml", () => {
     expect(html).toContain("wh-back-to-back-grant");
     expect(html).toContain('data-commander-uuid="cmd1"');
     expect(html).toContain("до 2 подчинённых");
+  });
+});
+
+// Книга: Fanatic даётся «до конца боя» — розданный Трейт снимается, свой остаётся.
+describe("clearFanaticGrants", () => {
+  const granted = (id) => ({ id, type: "trait", name: "Fanatic", flags: { "warhammer-dbc": { fanaticGrant: { source: "cmd1" } } } });
+  const owned = (uuid, items) => {
+    const a = { uuid, items, isOwner: true, deleted: [] };
+    a.deleteEmbeddedDocuments = async (type, ids) => { a.deleted.push(...ids); };
+    return a;
+  };
+
+  it("снимает розданные Fanatic у всех, свой Трейт не трогает", async () => {
+    const cmd = owned("cmd1", [granted("g1")]);
+    const sub = owned("a2", [granted("g2"), { id: "own", type: "trait", name: "Fanatic", flags: {} }]);
+    const none = owned("a3", []);
+    await clearFanaticGrants([cmd, sub, none]);
+    expect(cmd.deleted).toEqual(["g1"]);
+    expect(sub.deleted).toEqual(["g2"]);
+    expect(none.deleted).toEqual([]);
   });
 });
 

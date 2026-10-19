@@ -10,7 +10,9 @@ import { describe, it, expect, beforeEach } from "vitest";
 import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { CraftWorkshop } from "../../module/apps/craft-workshop.mjs";
-import { TRAINING_EARMARK_FLAG, TRAINING_COURSE_LOG_FLAG, trainingTargetKey } from "../../module/rules/training.mjs";
+import { TRAINING_EARMARK_FLAG, TRAINING_COURSE_LOG_FLAG, TRAINING_ELITE_DISCOUNT_FLAG,
+         trainingTargetKey } from "../../module/rules/training.mjs";
+import { KLAIVEX_DISCOUNT_ARCHETYPE } from "../../module/constants/training.mjs";
 
 function flagActor(over = {}) {
   const flags = {};
@@ -167,6 +169,38 @@ describe("_finishTrainingCourse: Teacher/Учитель", () => {
     captured.nextRoll = 10;
     await app2._finishTrainingCourse("p1");
     expect(captured.warnings.some(w => w.includes("Слишком много"))).toBe(false);
+  });
+});
+
+// Klaivex (wdbc-5yafq): цель курса «Искусство Инкубов» — не xp-запас, при
+// успехе финального теста ученик получает скидку на архетип Инкуб
+// (TRAINING_ELITE_DISCOUNT_FLAG), а не запись в TRAINING_EARMARK_FLAG.
+describe("_finishTrainingCourse: Klaivex — скидка на архетип Инкуб", () => {
+  beforeEach(() => {
+    teacher.items = [{ type: "talent", name: "Klaivex / Клэйвекс" }];
+  });
+
+  it("успешный финальный тест — ученику ставится скидка, НЕ xp-запас", async () => {
+    const app = newTrainingApp({
+      teacher, over: { sessionCount: 8, trainingTarget: `archetype:${KLAIVEX_DISCOUNT_ARCHETYPE}` }
+    });
+    captured.nextRoll = 10; // низкий бросок — успех у всех
+    await app._finishTrainingCourse("p1");
+
+    expect(student.getFlag("warhammer-dbc", TRAINING_ELITE_DISCOUNT_FLAG)).toEqual([KLAIVEX_DISCOUNT_ARCHETYPE]);
+    expect(student.getFlag("warhammer-dbc", TRAINING_EARMARK_FLAG)).toBeUndefined();
+    expect(captured.chat[0].content).toContain("скидка вдвое");
+  });
+
+  it("провал финального теста (0 успехов обеих сторон) — скидка не даётся", async () => {
+    const app = newTrainingApp({
+      teacher, over: { sessionCount: 8, trainingTarget: `archetype:${KLAIVEX_DISCOUNT_ARCHETYPE}` }
+    });
+    captured.nextRoll = 99; // высокий бросок — провал у всех
+    await app._finishTrainingCourse("p1");
+
+    expect(student.getFlag("warhammer-dbc", TRAINING_ELITE_DISCOUNT_FLAG)).toBeUndefined();
+    expect(captured.chat[0].content).toContain("скидка не получена");
   });
 });
 

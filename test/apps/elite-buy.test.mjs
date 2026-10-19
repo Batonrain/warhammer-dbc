@@ -9,9 +9,11 @@
 
 import "../support/foundry-stub.mjs";
 
-import { describe, it, expect } from "vitest";
-import { eliteCostFor } from "../../module/apps/elite-buy.mjs";
+import { describe, it, expect, beforeEach } from "vitest";
+import { captured, resetCaptured } from "../support/foundry-stub.mjs";
+import { eliteCostFor, buyEliteArchetype } from "../../module/apps/elite-buy.mjs";
 import { eliteAvailability } from "../../module/sheets/elite-picker.mjs";
+import { grantEliteDiscount, TRAINING_ELITE_DISCOUNT_FLAG } from "../../module/rules/training.mjs";
 
 /** Актор-заглушка: покупке хватает system и items. */
 const actor = (over = {}) => ({
@@ -22,6 +24,29 @@ const actor = (over = {}) => ({
 });
 
 const elite = (name, system = {}) => ({ name, type: "eliteArchetype", system });
+
+// Klaivex (wdbc-5yafq): скидка вдвое на архетип Инкуб от курса Обучения —
+// флаг actor, не experience. Этот актор умеет getFlag/setFlag/
+// createEmbeddedDocuments — нужно для buyEliteArchetype (не только для
+// превью цены, как голый actor() выше).
+function flagActor(over = {}) {
+  const flags = { "warhammer-dbc": {} };
+  return {
+    system: { race: "drukhari", subrace: "", patronGod: "", characteristics: {}, skills: {},
+              groupSkills: {}, corruption: { value: 0 }, experience: { total: 1000, spent: 0, current: 1000 },
+              ...over.system },
+    items: over.items ?? [],
+    getFlag: (scope, key) => flags[scope]?.[key],
+    setFlag: async (scope, key, value) => { (flags[scope] ??= {})[key] = value; },
+    update: async () => {},
+    createEmbeddedDocuments: async (type, docs) => docs.map(d => ({ ...d, id: "new1" }))
+  };
+}
+
+const eliteDoc = (name, system = {}) => ({
+  name, type: "eliteArchetype", system,
+  toObject() { return { name: this.name, type: this.type, system: { ...this.system } }; }
+});
 
 describe("цена Элитного архетипа при покупке", () => {
   it("первый — по книге, каждый следующий вдвое дороже", () => {
@@ -90,6 +115,45 @@ describe("отбор архетипов для списка", () => {
     const res = eliteAvailability(actor({ system: { corruption: { value: 0 } } }), doc);
     expect(res.available).toBe(true);
     expect(res.check.warn).toBe(true);
+  });
+});
+
+// Klaivex (wdbc-5yafq): курс Обучения «Искусство Инкубов» при успехе ставит
+// скидку вдвое на архетип Инкуб (флаг, не experience) — eliteCostFor её
+// читает для превью, buyEliteArchetype снимает ровно одну запись при покупке.
+describe("скидка Клэйвекса на Элитный архетип", () => {
+  beforeEach(resetCaptured);
+
+  it("eliteCostFor халвит цену, когда есть неиспользованная скидка на это имя", () => {
+    const doc = eliteDoc("Incubus / Инкуб", { cost: 2001 });
+    const a = flagActor({ system: { experience: { total: 0, current: 0 } } });
+    expect(eliteCostFor(a, doc).cost).toBe(2001);
+
+    a.setFlag("warhammer-dbc", TRAINING_ELITE_DISCOUNT_FLAG, grantEliteDiscount([], "Incubus / Инкуб"));
+    const discounted = eliteCostFor(a, doc);
+    expect(discounted.cost).toBe(1001); // ceil(2001/2)
+    expect(discounted.note).toMatch(/Клэйвекс/);
+  });
+
+  it("скидка на ДРУГОЙ архетип эту покупку не задевает", () => {
+    const doc = eliteDoc("Incubus / Инкуб", { cost: 2000 });
+    const a = flagActor();
+    a.setFlag("warhammer-dbc", TRAINING_ELITE_DISCOUNT_FLAG, grantEliteDiscount([], "Другой Архетип"));
+    expect(eliteCostFor(a, doc).cost).toBe(2000);
+  });
+
+  it("buyEliteArchetype берёт со скидкой и снимает ровно одну запись флага", async () => {
+    const doc = eliteDoc("Incubus / Инкуб", { cost: 2000, requirements: { primary: [], secondary: [] } });
+    const a = flagActor();
+    await a.setFlag("warhammer-dbc", TRAINING_ELITE_DISCOUNT_FLAG,
+      grantEliteDiscount(grantEliteDiscount([], "Incubus / Инкуб"), "Incubus / Инкуб"));
+
+    const item = await buyEliteArchetype(a, doc);
+
+    expect(item.system.paidCost).toBe(1000); // 2000/2
+    expect(captured.chat[0].content).toContain("1000");
+    // одна запись скидки осталась (их было две) — покупка снимает ровно одну
+    expect(a.getFlag("warhammer-dbc", TRAINING_ELITE_DISCOUNT_FLAG)).toEqual(["Incubus / Инкуб"]);
   });
 });
 

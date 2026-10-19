@@ -15,7 +15,7 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { openCompendiumBrowser } from "./compendium-browser.mjs";
-import { CURSED_HEIRLOOM_MAX_AVAILABILITY, curseForRoll } from "../rules/cursed-heirloom.mjs";
+import { CURSED_HEIRLOOM_MAX_AVAILABILITY, curseForRoll, notesWithCurse } from "../rules/cursed-heirloom.mjs";
 
 /**
  * Кнопка Таланта: выбрать оружие до R4, бросить d5, получить проклятье.
@@ -47,6 +47,7 @@ export async function grantCursedHeirloom(actor) {
   delete data._id;
   foundry.utils.setProperty(data, "flags.warhammer-dbc.cursedHeirloom",
     { key: curse.key, name: curse.name, text: curse.text });
+  foundry.utils.setProperty(data, "system.notes", notesWithCurse(data.system?.notes, curse));
   const [created] = await actor.createEmbeddedDocuments("Item", [data]);
 
   await postTestCard(actor, {

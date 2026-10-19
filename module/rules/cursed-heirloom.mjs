@@ -28,9 +28,11 @@
 //     точка входа, а минимум три (module/apps/infamy-points.mjs) плюс прямые
 //     правки system.fate.value в обход них в разных местах кода.
 //  Текст проклятья сохраняется на самом предмете (flags.warhammer-dbc.
-//  cursedHeirloom) и виден игроку/ГМу — отыгрывается столом вручную, как и
+//  cursedHeirloom, и дописан в «Заметки» — notesWithCurse) и виден игроку/ГМу — отыгрывается столом вручную, как и
 //  было до этой правки, только теперь само проклятье не нужно помнить/искать.
 // ════════════════════════════════════════════════════════════════════════════
+
+import { esc } from "../helpers/utils.mjs";
 
 export const CURSED_HEIRLOOM_MAX_AVAILABILITY = 4;
 
@@ -50,4 +52,9 @@ export const CURSE_TABLE = [
 /** Проклятье по результату d5 (1-5) — null вне диапазона. */
 export function curseForRoll(roll) {
   return CURSE_TABLE.find(c => c.roll === Number(roll)) ?? null;
+}
+
+/** «Заметки» оружия (HTML) с дописанным проклятьем — флаг лист предмета не показывает. */
+export function notesWithCurse(notes, curse) {
+  return `${notes ?? ""}<p><b>Проклятое Наследство — ${esc(curse.name)}:</b> ${esc(curse.text)}</p>`;
 }

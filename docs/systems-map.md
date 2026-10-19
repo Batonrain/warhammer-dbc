@@ -70,6 +70,13 @@
   `sheets/sheet-helpers.mjs`. Склонность General выдаётся всем автоматически
   (`charAptitudeSet`). Сторожа: `test/constants/skills-book-table.test.mjs`,
   `skill-names-book.test.mjs`.
+- `cannotUntrained` (стр. 57, сноска ², сверка 16.10.2026) — Psyniscience,
+  Forbidden Lore и Operate (Aeronautica/Voidship) вообще недоступны
+  неизученными (не просто −20); блокировка в `onSkillRoll`/
+  `onExtendedTestReroll` (sheets/actor-sheet.mjs) и `rollPsyniscience`
+  (sheets/tabs/psychic.mjs). Делегированные/эффект-триггерные пути броска
+  (hooks.mjs::genericTest/opposedResponse, horde-sheet.mjs) этой блокировкой
+  НЕ накрыты — осознанно оставлено как хвост.
 - `module/constants/advancement.mjs` — таблицы цены Характеристик/Навыков/
   Талантов по Склонностям.
 - `module/rules/advance-category.mjs` — категория цены (Дружественная/
@@ -1512,11 +1519,15 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   4 точки покупки: Характеристика/Навык/Групповой Навык/Талант), излишек сверх
   цены теряется. Месячный лимит ученика (½I.b, окр.▲; 2×I.b учителя — NPC у
   Teacher) — флаг `warhammer-dbc.trainingCourseLog`, скользящее окно по
-  `SECONDS_PER_MONTH`. НЕ подключено: Klaivex (скидка на Элитный архетип
-  Инкуб — другая покупка, `apps/elite-buy.mjs`) и Interpreter (Преимущество
-  на тесты «Транскрипции» — такой механики в коде нет вовсе), первая половина
-  Clear Mind (обучение Пути — Пути Аэльдари не покупаются за опыт) — все три
-  честно задокументированы в `capabilities.mjs`, см. bd `wdbc-5yafq`.
+  `SECONDS_PER_MONTH`. Klaivex подключён 16.10.2026: учитель с этим Талантом
+  получает в списке «Чему учим» отдельную цель «Искусство Инкубов»
+  (kind:"archetype"), при успехе финального теста курса ставит флаг
+  `warhammer-dbc.trainingEliteDiscounts` (НЕ xp-запас, список имён архетипов),
+  `apps/elite-buy.mjs::eliteCostFor` халвит цену архетипа Инкуб, покупка
+  снимает одну запись. НЕ подключено: Interpreter (Преимущество на тесты
+  «Транскрипции» — такой механики в коде нет вовсе), первая половина Clear
+  Mind (обучение Пути — Пути Аэльдари не покупаются за опыт) — обе честно
+  задокументированы в `capabilities.mjs`, см. bd `wdbc-5yafq`.
 - `constants/quality.mjs` — движок Качества снаряжения (Poor…Artisan).
 - `constants/rig.mjs` + `apps/rig-manager.mjs` — Разгрузка (слотовая модель).
 

@@ -122,6 +122,18 @@ async function clearPreviousGrant(commanderActor, allActors) {
 }
 
 /**
+ * Конец боя (книга: Fanatic — «до конца боя»): снять все розданные Fanatic.
+ * ponytail: снимает гранты любого источника на конце любого боя — при двух
+ * боях разом сгорят и гранты второго; станет важно — сверять source с комбатантами.
+ */
+export async function clearFanaticGrants(allActors) {
+  for (const doc of allActors ?? []) {
+    const ids = [...(doc.items ?? [])].filter(i => i.flags?.[NS]?.[FANATIC_GRANT_FLAG]).map(i => i.id);
+    if (ids.length && doc.isOwner) await doc.deleteEmbeddedDocuments("Item", ids);
+  }
+}
+
+/**
  * Раздать Fanatic себе и до backToBackGrantCap(commanderActor) подчинённых.
  * @returns {string[]} имена, кто получил
  */

@@ -40,7 +40,8 @@ import { TRAINING_SOCIAL_OPTIONS, TRAINING_SESSIONS_PER_COURSE, buildTeachableTa
          buildStudentTestOptions, findStudentTestOption, instructorOption, socialSkillOption } from "../constants/training.mjs";
 import { trainingTargetKey, addTrainingEarmark, logCourse, coursesThisMonth,
          studentCapFromBonus, studentMonthlyCap, teacherCombinedLimit, studentBonusFromTeacherCombo,
-         trainingXpGain, TRAINING_EARMARK_FLAG, TRAINING_COURSE_LOG_FLAG } from "../rules/training.mjs";
+         trainingXpGain, grantEliteDiscount, TRAINING_EARMARK_FLAG, TRAINING_COURSE_LOG_FLAG,
+         TRAINING_ELITE_DISCOUNT_FLAG } from "../rules/training.mjs";
 import { hasTeacherTalent, clearMindTeachBonus } from "../rules/training-advantage.mjs";
 
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
@@ -741,16 +742,30 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
       const dos = degreesOfSuccess(roll.total, limit);
       const xp = trainingXpGain(teacherDos, dos, { doubleTeacher: T.teacherTalent });
 
-      const targetKey = trainingTargetKey(T.target);
+      // Цель «Элитный архетип» (Клэйвекс) — не xp-запас: при успехе курса
+      // ученик получает скидку вдвое на архетип, а не накопление xp (ticket
+      // wdbc-5yafq). Остальные цели (Навык/Таланту/Характеристика) — как раньше.
+      const isArchetype = T.target.kind === "archetype";
       try {
-        const earmarkLog = s.actor.getFlag?.("warhammer-dbc", TRAINING_EARMARK_FLAG) ?? [];
-        await s.actor.setFlag("warhammer-dbc", TRAINING_EARMARK_FLAG, addTrainingEarmark(earmarkLog, targetKey, T.target.label, xp));
+        if (isArchetype) {
+          if (xp > 0) {
+            const discountLog = s.actor.getFlag?.("warhammer-dbc", TRAINING_ELITE_DISCOUNT_FLAG) ?? [];
+            await s.actor.setFlag("warhammer-dbc", TRAINING_ELITE_DISCOUNT_FLAG, grantEliteDiscount(discountLog, T.target.key));
+          }
+        } else {
+          const targetKey = trainingTargetKey(T.target);
+          const earmarkLog = s.actor.getFlag?.("warhammer-dbc", TRAINING_EARMARK_FLAG) ?? [];
+          await s.actor.setFlag("warhammer-dbc", TRAINING_EARMARK_FLAG, addTrainingEarmark(earmarkLog, targetKey, T.target.label, xp));
+        }
         const courseLog = s.actor.getFlag?.("warhammer-dbc", TRAINING_COURSE_LOG_FLAG);
         await s.actor.setFlag("warhammer-dbc", TRAINING_COURSE_LOG_FLAG, logCourse(courseLog, "course", now));
       } catch (e) { console.warn("warhammer-dbc | training earmark/course log", e); }
 
-      results.push({ name: s.actor.name, xp });
-      lines.push(`<div class="wh-craft-roll-line ${dos > 0 ? "ok" : "fail"}">${esc(s.actor.name)} — ${esc(opt.label)}: <b>${roll.total}</b> vs ${limit} → ${dos > 0 ? `+${dos} успеха` : `${dos} (провал)`}${clearMindBonus ? ` (Чистый Разум +${clearMindBonus})` : ""} — <b>+${xp} xp</b> на «${esc(T.target.label)}»</div>`);
+      results.push({ name: s.actor.name, xp, discount: isArchetype && xp > 0 });
+      const outcome = isArchetype
+        ? (xp > 0 ? `скидка вдвое на «${esc(T.target.label)}»` : "скидка не получена")
+        : `<b>+${xp} xp</b> на «${esc(T.target.label)}»`;
+      lines.push(`<div class="wh-craft-roll-line ${dos > 0 ? "ok" : "fail"}">${esc(s.actor.name)} — ${esc(opt.label)}: <b>${roll.total}</b> vs ${limit} → ${dos > 0 ? `+${dos} успеха` : `${dos} (провал)`}${clearMindBonus ? ` (Чистый Разум +${clearMindBonus})` : ""} — ${outcome}</div>`);
     }
 
     proj.courseLog = [...(proj.courseLog || []), { target: T.target.label, teacherDos, students: results }].slice(-10);
