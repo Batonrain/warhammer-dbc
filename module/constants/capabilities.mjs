@@ -36,6 +36,18 @@ export const CAPABILITIES = {
     source: "Силовая броня Астартес (кроме Мк V; броня смертных — не проставлена), броня Стража/Пустотная/Аспектная (Эльдар), Кабалитская/Призрачная/Латы Инкуба/Психокостяной Костюм (Друкхари), Маска Шпиона, Анимус Спекулюм, Всевидящее Око",
     reader: "module/combat/weapon-mods.mjs modWornRequirementMet() (RETINAL_DISPLAY_CAPABILITY)"
   },
+  // ── Мастерская Крафта: Исследования (Стремление «Инновация») ────────────────
+  "craft.researchBonus": {
+    label: "+10 на тесты Исследований в Мастерской Крафта: каждая смена проекта-Исследования идёт с Пределом на 10 выше (Инновация, стр. 22). Пометка «Для Исследований»: отдельной механики исследований и привязки к Навыку пока нет (решение владельца 04.10.2026, сделаем позже) — бонус живёт только в Мастерской Крафта",
+    source: "Стремление (Мотивация): Инновация / Innovation (корбук стр. 22)",
+    reader: "module/rules/craft-advantage.mjs researchBonus() — module/apps/craft-workshop.mjs _rollShift"
+  },
+  // ── Создание персонажа: штраф к пулу Очков Снаряжения ───────────────────────
+  "creation.equipPointsPenalty": {
+    label: "Растраты: −1 Inf.b в расчёте стартового снаряжения — Очки Снаряжения (стр. 24) считаются от Inf.b на 1 меньше (не ниже 0)",
+    source: "Стремление (Позор): Растраты / Squandering (корбук стр. 22)",
+    reader: "module/rules/equip-shop.mjs equipPointsInfBonus() — module/apps/character-wizard.mjs _equipShopContext()"
+  },
   // ── Иммунитет к свойствам оружия (wdbc-plsf) ────────────────────────────
   // Восемь свойств из ревизии Мутаций/Даров: Corrosive/Crippling/Flame
   // (Burning)/Toxic/Piercing/Haywire/Shocking/Snare. Ключ — сам ключ свойства
@@ -5360,7 +5372,7 @@ export const CAPABILITIES = {
   },
   "trait.cleverHands": {
     label: "Умелые Руки: +15 на тесты Крафта, ремонта и обслуживания, требующие тонкой работы, +30 в экстремальных ситуациях. Галочки +15/+15 в диалоге Ремесла/Технологии/Безопасности — правила module/rules/library/squat.mjs (по Черте, не по флагу); Расклин (экстремальная ситуация по книге) — +30 сам. Мастерская (окно Крафта) бонус не видит — отдельная задача.",
-    source: "Clever Hands / Умные Руки",
+    source: "Clever Hands / Умелые Руки",
     reader: "module/rules/squat-traits.mjs cleverHandsClearJamBonus() — module/combat/clear-jam.mjs::rollClearJam"
   },
   "trait.clovenOne": {
