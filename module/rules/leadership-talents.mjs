@@ -285,6 +285,63 @@ export function commandersOf(actor, allActors) {
   return out;
 }
 
+// ── Bring It Down! / Валите Это! ─────────────────────────────────────────────
+// Книжный текст: «Давая Короткую Команду на бонус к попаданию по цели
+// Размером 2+, персонаж может уменьшить бонус на 20, чтобы дать +1d10 Dmg по
+// этой цели, в т.ч. несколько раз (40 → +2d10).» — читается как «давая
+// Общую Короткую Команду с видом «Атаки», отдающий может пожертвовать 20
+// её бонуса за стек +1d10 урона по ОДНОЙ выбранной крупной цели» (не про
+// направленность самого бонуса — Общая Команда всегда даётся всему отряду).
+//
+// Стеки/цель хранятся прямо на system.shortCommand (squad) — bringItDownStacks
+// /bringItDownTargetUuid, рядом с остальными полями Короткой Команды,
+// заполняются в sheets/squad-sheet.mjs::_commandRoll("short") тем же
+// приёмом, что recipientUuid у Личной Команды.
+//   1. Срез бонуса попадания — пересчитан прямо в rules/command-effects.mjs::
+//      shortCommandBonus (case "general"), не отдельное правило реестра.
+//   2. +1d10 урона по цели — bringItDownStacksFor читает shortCommand
+//      ОТРЯДА атакующего (squadsOf выше) и сверяет bringItDownTargetUuid с
+//      целью ЭТОЙ атаки; дальше идёт как opts.bringItDownDice в
+//      module/combat/attack.mjs, тем же способом, что Тирантикос/
+//      Концентрация огня (bonusDice).
+//
+// «Размером 2+» — честно НЕ проверяется кодом автоматически при назначении
+// стеков (украшение числом из system.size возможно, но решение оставлено
+// игроку/ГМу в моменте выбора цели — та же вольность, что направление
+// атаки/защиты у Ненависти).
+
+const BRING_IT_DOWN_NAMES = ["Bring It Down!", "Валите Это!"];
+export const BRING_IT_DOWN_PENALTY_PER_STACK = 20;
+export const BRING_IT_DOWN_DICE_PER_STACK = 1;
+
+export function hasBringItDown(actor) {
+  return hasLeadershipTalent(actor, BRING_IT_DOWN_NAMES);
+}
+
+/** Срез бонуса попадания Общей/Атака Короткой Команды — 20 за стек (может уйти ниже нуля, выбор игрока). */
+export function bringItDownAccuracyPenalty(short) {
+  if (!short?.active || short.key !== "general" || short.testKind !== "attack") return 0;
+  const stacks = Math.max(0, Math.floor(Number(short.bringItDownStacks) || 0));
+  return stacks > 0 ? -BRING_IT_DOWN_PENALTY_PER_STACK * stacks : 0;
+}
+
+/** Максимум стеков, которые можно назначить, не опуская бонус попадания ниже нуля. */
+export function bringItDownMaxStacks(successes) {
+  return Math.max(0, Math.floor((Number(successes) || 0) * 3 / BRING_IT_DOWN_PENALTY_PER_STACK));
+}
+
+/** +1d10×стеки урона по designated-цели этой Общей/Атака Короткой Команды — 0, если атака не по ней. */
+export function bringItDownStacksFor(attackerActor, targetActor, allActors) {
+  if (!targetActor?.uuid) return 0;
+  for (const squad of squadsOf(attackerActor, allActors)) {
+    const sc = squad.system?.shortCommand;
+    if (sc?.active && sc.key === "general" && sc.testKind === "attack" && sc.bringItDownTargetUuid === targetActor.uuid) {
+      return Math.max(0, Math.floor(Number(sc.bringItDownStacks) || 0)) * BRING_IT_DOWN_DICE_PER_STACK;
+    }
+  }
+  return 0;
+}
+
 /**
  * Переброс провалов Морали, если хоть один командующий actor (кроме источника
  * угрозы этого теста — ctx.targetActor, тем же приёмом, что hatred.mjs) имеет
@@ -646,6 +703,63 @@ export function hasRally(actor) {
 /** Доступен ли Rally прямо сейчас — у Лидера Талант и Риск Отряда 3+. */
 export function rallyAvailable(leaderActor, squadRisk) {
   return hasRally(leaderActor) && Number(squadRisk) >= 3;
+}
+
+// ── Field Execution / Полевая Казнь ──────────────────────────────────────────
+// Книжный текст: «Когда подчинённый в Шоке/Подавлен/запуган/отступает,
+// персонаж может пройти Intimidate(W)+0 vs W+0 против него и при успехе
+// атаковать его как Беспомощного. Если атака убивает его или опускает в
+// Отрицательные Раны, все остальные подчинённые немедленно выходят из
+// Шока/Подавления, сбрасывают запугивание/панику и прекращают отступление.»
+//
+// «Запуган»/«отступает» — НЕ хранимые состояния системы (сам этот же файл,
+// Запугивание, уже решает их исход текстом карточки «решает ГМ», см.
+// module/combat/intimidate.mjs::_postIntimidateMsg) — eligibility и снятие
+// статусов честно ограничены двумя РЕАЛЬНЫМИ полями, Шоком и Подавлением.
+// Сам встречный тест и бросок — module/combat/field-execution.mjs (Intimidate
+// характеристикой W вместо обычного F — книжное исключение этого Таланта).
+
+const FIELD_EXECUTION_NAMES = ["Field Execution", "Полевая Казнь"];
+
+export function hasFieldExecution(actor) {
+  return hasLeadershipTalent(actor, FIELD_EXECUTION_NAMES);
+}
+
+/** Подчинённый сейчас в Шоке или Подавлен — проверяемая половина книжного условия. */
+export function fieldExecutionEligible(target) {
+  const c = target?.system?.conditions ?? {};
+  return !!(c.shocked || c.pinned);
+}
+
+// ── Back to Back / Спиной к Спине ────────────────────────────────────────────
+// Книжный текст: «Успешно совершив Команду, персонаж может получить Трейт
+// Fanatic и дать его до ½F.b (окр.▲) подчинённых до конца боя (или до
+// повторного использования). Получивший Fanatic персонаж в базовом контакте
+// с целью атаки может раз в Раунд использовать его без траты Реакции.»
+//
+// Урезанная версия (решение владельца 19.10.2026, bd wdbc-3w7lo): сам Трейт
+// Fanatic/Фанатик у этого прохода остался без каркаса «перенаправить атаку
+// на себя геометрически» — вместо движения/проверки «встал на пути атаки»
+// module/combat/fanatic-redirect.mjs даёт РУЧНУЮ кнопку на карточке
+// результата атаки: игрок/ГМ сам решает, достижим ли перехват (как решал бы
+// и без кода), кнопка только переносит сам урон на выбранного носителя
+// Fanatic. «Раз в Раунд без Реакции» — тоже не отслеживается: перехват не
+// привязан к экономике действий в этой версии, решает стол, как и
+// достижимость.
+//
+// Здесь — только опознание Таланта и лимит получателей гранта; сам грант
+// (раздача Trait-предмета) и кнопка переноса урона — в
+// module/combat/fanatic-redirect.mjs (Foundry-зависимый код, вне rules/).
+
+const BACK_TO_BACK_NAMES = ["Back to Back", "Спиной к Спине"];
+
+export function hasBackToBack(actor) {
+  return hasLeadershipTalent(actor, BACK_TO_BACK_NAMES);
+}
+
+/** До ½F.b (окр.▲) подчинённых, которым можно дать Fanatic в придачу к самому commander'у. */
+export function backToBackGrantCap(actor) {
+  return Math.max(0, Math.ceil((Number(actor?.system?.characteristics?.fel?.bonus) || 0) / 2));
 }
 
 // ── Источник правил реестра (rules/sources.mjs) ──────────────────────────────

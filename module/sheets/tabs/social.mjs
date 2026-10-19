@@ -15,6 +15,8 @@ import { RELATION_SKILLS, RELATION_STEPS, relationLabel, relationStep,
 import { SOCIAL_SKILL_KEYS, socialEffectsOf, socialReasons } from "../../rules/social.mjs";
 import { commandContext, activateCommandListeners } from "./command.mjs";
 import { activateIntimidateListeners } from "../../combat/intimidate.mjs";
+import { activateFieldExecutionListeners } from "../../combat/field-execution.mjs";
+import { hasFieldExecution } from "../../rules/leadership-talents.mjs";
 import { rootEl } from "../v2-helpers.mjs";
 
 /** Акторы, к которым вообще бывают Отношения. */
@@ -196,6 +198,9 @@ export function socialContext(actor, actors = []) {
     // wdbc-drn) — своя мини-панель ниже Навыков, кнопка берёт цель из
     // нацеленных/выделенных токенов сцены.
     intimidateTotal: system.skills?.intimidate?.total ?? -20,
+    // Полевая Казнь (Талант Лидерства, Sahara 3-ac78, bd wdbc-3w7lo) — та же
+    // мини-панель и цель, что Запугивание, видна только носителю Таланта.
+    hasFieldExecution: hasFieldExecution(actor),
     // Командование вне Отряда — своя панель со своим модулем (tabs/command.mjs):
     // список подчинённых, Присутствие и Команды живут не в Отряде, а здесь.
     ...commandContext(actor)
@@ -265,6 +270,8 @@ export function activateSocialListeners(root, actor, { editable = true, resolveO
   activateCommandListeners(el, actor, { editable });
   // Запугивание — своя мини-панель, свои слушатели (module/combat/intimidate.mjs).
   activateIntimidateListeners(el, actor, { editable, resolveOtherTargetActor });
+  // Полевая Казнь — та же мини-панель, своя (module/combat/field-execution.mjs).
+  activateFieldExecutionListeners(el, actor, { editable, resolveOtherTargetActor });
 
   // Переходы: предмет актора и другой актор по uuid.
   el.querySelectorAll(".social-open-item").forEach(node =>

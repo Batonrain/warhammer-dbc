@@ -36,7 +36,10 @@ import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
 import { rancorRiskCapBonus, eloquenceRiskCapBonus, bravadoRiskLevel,
          camaraderieStartCohesion, dutyAboveAllBlocks,
          protegeFreeCommandActive, protegePenalty, protegeActivationPatch,
-         frontlineCommanderMeleeFree, rallyAvailable } from "../rules/leadership-talents.mjs";
+         frontlineCommanderMeleeFree, rallyAvailable,
+         hasBringItDown, bringItDownAccuracyPenalty, bringItDownMaxStacks,
+         BRING_IT_DOWN_PENALTY_PER_STACK } from "../rules/leadership-talents.mjs";
+import { backToBackGrantSectionHtml } from "../combat/fanatic-redirect.mjs";
 import { testKindHtml, diceModeHtml, difficultyHtml, readDifficulty, critLineHtml,
          readTestKind, readDiceChoice, mergeReroll, wireTestKindLive,
          rollD100WithReroll } from "../rules/test-kind-widget.mjs";
@@ -801,7 +804,12 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
       <div class="atk-dlg-row"><label>Отдаёт:</label>
         <select id="sq-roller">${rollerOpts}</select></div>
       ${kind === "short" ? `<div class="atk-dlg-row"><label>Команда:</label><select id="sq-kind">${shortOpts}</select></div>
-      <div class="atk-dlg-row sq-general-row"><label>Вид тестов (Общая):</label><select id="sq-general">${generalOpts}</select></div>` : ""}
+      <div class="atk-dlg-row sq-general-row"><label>Вид тестов (Общая):</label><select id="sq-general">${generalOpts}</select></div>
+      <div class="atk-dlg-row sq-bid-row" style="display:none">
+        <label>Валите Это! (стеков):</label>
+        <input id="sq-bid-stacks" type="number" min="0" step="1" value="0"/>
+        <span class="sq-cmd-coh">цель — выделенный токен</span>
+      </div>` : ""}
       ${kind === "presence" ? `<div class="atk-dlg-row"><label>Преимущество:</label><select id="sq-benefit">${presenceOpts}</select></div>` : ""}
       <div class="atk-dlg-row"><label>Command(F):</label><input id="sq-base" type="number" value="${pool[0].command ?? -20}"/></div>
       <div class="atk-dlg-row"><label>Слаженность:</label><span id="sq-coh" class="sq-cmd-coh">${cohesionBonus(coh, pool[0].key === "coordinator") >= 0 ? "+" : ""}${cohesionBonus(coh, pool[0].key === "coordinator")}</span></div>
@@ -831,7 +839,9 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
             const isCo  = key === "coordinator";
             const extra = { benefit: form.querySelector("#sq-benefit")?.value,
                             shortKey: form.querySelector("#sq-kind")?.value,
-                            testKind: form.querySelector("#sq-general")?.value };
+                            testKind: form.querySelector("#sq-general")?.value,
+                            bringItDownStacks: parseInt(form.querySelector("#sq-bid-stacks")?.value) || 0,
+                            bringItDownTargetUuid: this._commandTargetActor()?.uuid || null };
             const checked = sel => !!form.querySelector(sel)?.checked;
             const tk = readTestKind(val, checked, { label: title });
             const reroll = mergeReroll(null, readDiceChoice(val));
@@ -883,6 +893,20 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
         const showGen = () => { if (genRow) genRow.style.display = kindSel?.value === "general" ? "" : "none"; };
         kindSel?.addEventListener("change", showGen);
         showGen();
+        // Валите Это!/Bring It Down! — только Общая Команда на Атаки, у
+        // отдающего Талант. Клик вне поля сам обновит доступные стеки.
+        const generalSel = form.querySelector("#sq-general");
+        const bidRow  = form.querySelector(".sq-bid-row");
+        const showBid = () => {
+          if (!bidRow) return;
+          const rollerDoc = this._resolve(pool.find(p => p.key === roller?.value)?.uuid);
+          const eligible = kindSel?.value === "general" && generalSel?.value === "attack" && hasBringItDown(rollerDoc);
+          bidRow.style.display = eligible ? "" : "none";
+        };
+        kindSel?.addEventListener("change", showBid);
+        generalSel?.addEventListener("change", showBid);
+        roller?.addEventListener("change", showBid);
+        showBid();
         upd();
       }
     });
@@ -976,19 +1000,31 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     else if (kind === "short") {
       const cKey = extra.shortKey || sys.shortCommand?.key || "inspire";
       const c    = SHORT_COMMANDS.find(x => x.key === cKey) || SHORT_COMMANDS[0];
-      const bonus = sux * c.mult;
+      const testKind = extra.testKind || sys.shortCommand?.testKind || "attack";
+      // Bring It Down!/Валите Это! (rules/leadership-talents.mjs): стеки,
+      // заявленные в диалоге, клэмпятся по РЕАЛЬНЫМ Успехам этого броска —
+      // игрок мог целиться на бОльшее, чем в итоге выпало.
+      const bidEligible = ok && cKey === "general" && testKind === "attack" && hasBringItDown(rollerActor);
+      const bidStacks = bidEligible
+        ? Math.min(Math.max(0, parseInt(extra.bringItDownStacks) || 0), bringItDownMaxStacks(sux)) : 0;
+      const bidTargetUuid = bidStacks > 0 ? (extra.bringItDownTargetUuid || "") : "";
+      const bonus = sux * c.mult + bringItDownAccuracyPenalty({ active: true, key: cKey, testKind, bringItDownStacks: bidStacks });
       if (ok) update = {
         "system.shortCommand.active": true, "system.shortCommand.key": cKey,
         "system.shortCommand.successes": sux,
-        ...(cKey === "general" ? { "system.shortCommand.testKind": extra.testKind || sys.shortCommand?.testKind || "attack" } : {}),
+        ...(cKey === "general" ? { "system.shortCommand.testKind": testKind } : {}),
+        "system.shortCommand.bringItDownStacks": bidStacks,
+        "system.shortCommand.bringItDownTargetUuid": bidTargetUuid,
         ...stampFields("system.shortCommand.", issueStamp(roller.uuid)),
         // Короткая Команда даёт и все преимущества Командного Присутствия.
         ...(isCo ? {} : { "system.presence.active": true })
       };
-      const kindLabel = cKey === "general" ? generalKindLabel(extra.testKind || sys.shortCommand?.testKind || "attack") : "";
-      effect = `<div class="sq-chat-effect"><b>${esc(c.label)}</b>${kindLabel ? ` (${esc(kindLabel)})` : ""} — бонус <b class="sq-chat-big">+${bonus}</b> (${sux}×${c.mult})
+      const kindLabel = cKey === "general" ? generalKindLabel(testKind) : "";
+      const bidNote = bidStacks > 0
+        ? `<div class="sq-chat-note">${rollIcon("target", "#ff8a8a")}Валите Это!: −${bidStacks * BRING_IT_DOWN_PENALTY_PER_STACK} к бонусу попадания → +${bidStacks}d10 урона по выбранной цели.</div>` : "";
+      effect = `<div class="sq-chat-effect"><b>${esc(c.label)}</b>${kindLabel ? ` (${esc(kindLabel)})` : ""} — бонус <b class="sq-chat-big">+${bonus}</b> (${sux}×${c.mult}${bidStacks ? ` −${bidStacks * BRING_IT_DOWN_PENALTY_PER_STACK}` : ""})
         <div class="sq-chat-desc">${esc(c.desc)}</div>
-        ${ok ? `<div class="sq-chat-note">Бонус сам учитывается в бросках подчинённых до начала следующего Хода отдающего.</div>` : ""}</div>`;
+        ${ok ? `<div class="sq-chat-note">Бонус сам учитывается в бросках подчинённых до начала следующего Хода отдающего.</div>` : ""}${bidNote}</div>`;
 
       // Voice of God/Глас Божий (wdbc-sk8s): успешная Личная Команда,
       // отдана Командиром (не Координатором — тот лишь советует, см.
@@ -1030,6 +1066,9 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     // Присутствие (мутация прямо называет «Команду», Присутствие — отдельный
     // книжный термин).
     const plague = (ok && kind !== "presence") ? await this._applyPlagueShepherd(roller.uuid, sux) : "";
+    // Back to Back/Спиной к Спине (bd wdbc-3w7lo): после ЛЮБОЙ успешной
+    // Команды — кнопка раздачи Fanatic себе и подчинённым.
+    const backToBack = ok ? backToBackGrantSectionHtml(rollerActor) : "";
 
     // Класс sq-chat — корневой класс карточек Отряда, за него цепляется вёрстка
     // блоков команды (styles/sheets/squad-sheet.css). В чат идут ВСЕ кубики, а
@@ -1057,7 +1096,7 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
       outcome: ok
         ? outcomeHtml(true, `Успех — ${deg} ${_degWord(deg)}${capped ? `, срезано Риском ${sys.risk} до ${cap}` : ""}`)
         : outcomeHtml(false, `Провал — ${deg} ${_degWord(deg)}`),
-      sections: [outcome.extendedLine, outcome.opposedLine, effect, missed, plague]
+      sections: [outcome.extendedLine, outcome.opposedLine, effect, missed, plague, backToBack]
     }), { rolls });
   }
 

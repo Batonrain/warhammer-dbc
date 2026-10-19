@@ -1143,7 +1143,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // второй руки (rules/dual-wield-talents.mjs::tyranthikosSecondAttackDice),
   // здесь остаётся «попала и вторая». Кубы — к первому попаданию, как в книге.
   const tyranthikosDice = hit ? Math.max(0, Number(opts.tyranthikosDice) || 0) : 0;
-  const bonusDice = (focusFireBonusOn && hit ? 2 : 0) + tyranthikosDice + bonusDamageDice({
+  // Bring It Down!/Валите Это! (rules/leadership-talents.mjs): окно атаки
+  // решило, что цель — та самая, назначенная Короткой Командой
+  // (sheets/attack/dialog.mjs), сюда приезжает уже готовое число кубов.
+  const bringItDownDice = hit ? Math.max(0, Number(opts.bringItDownDice) || 0) : 0;
+  const bonusDice = (focusFireBonusOn && hit ? 2 : 0) + tyranthikosDice + bringItDownDice + bonusDamageDice({
     wp, rofMode, hit, deg, shortRange, maximal: maximalOn, band,
     ammoDice: ammoSys?.damageDiceMod,
     aimed,

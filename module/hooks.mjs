@@ -2155,6 +2155,39 @@ export function registerHooks() {
         await concealCowardice(message, skill);
       });
     });
+    // Спиной к Спине (Талант Лидерства, Sahara 3-ac78, bd wdbc-3w7lo):
+    // раздать Fanatic себе и подчинённым после успешной Команды.
+    html.querySelectorAll(".wh-back-to-back-grant").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const commander = await fromUuid(el.dataset.commanderUuid || "").catch(() => null);
+        if (!commander) return ui.notifications.warn("⚠️ Отдающий Команду не найден.");
+        if (!commander.isOwner) return ui.notifications.warn("Раздать может владелец отдающего (или ГМ).");
+        el.disabled = true;
+        const { grantFanaticTrait } = await import("./combat/fanatic-redirect.mjs");
+        const given = await grantFanaticTrait(commander, game.actors ?? []);
+        ui.notifications.info(given.length ? `Fanatic получили: ${given.join(", ")}.` : "Fanatic: некому раздавать.");
+      });
+    });
+    // Полевая Казнь (Талант Лидерства, Sahara 3-ac78, bd wdbc-3w7lo): «казнена»
+    // жмёт сам игрок, увидев исход атаки — снимает Шок/Подавление у отряда
+    // исполнителя (module/combat/field-execution.mjs::applyFieldExecutionClear).
+    html.querySelectorAll(".wh-field-execution-clear").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const executioner = await fromUuid(el.dataset.executionerUuid || "").catch(() => null);
+        if (!executioner) return ui.notifications.warn("⚠️ Исполнитель не найден.");
+        if (!executioner.isOwner) return ui.notifications.warn("Снять статусы может владелец исполнителя (или ГМ).");
+        el.disabled = true;
+        const { applyFieldExecutionClear } = await import("./combat/field-execution.mjs");
+        const freed = await applyFieldExecutionClear(executioner, game.actors ?? []);
+        ui.notifications.info(freed.length
+          ? `Полевая Казнь: Шок/Подавление снято у ${freed.join(", ")}.`
+          : "Полевая Казнь: снимать было не с кого.");
+      });
+    });
     // Синхронный Натиск: Давление свободным действием, +10 за соратника в контакте.
     html.querySelectorAll(".wh-cmd-sync-press").forEach(btn => {
       btn.addEventListener("click", async (ev) => {

@@ -22,7 +22,11 @@ import {
   hasRadiantPresence, hasIntoTheJawsOfHell, intoTheJawsOfHellActive,
   hasLivingLegend, livingLegendCommandBonus,
   hasWarChant, warChantSinging, WAR_CHANT_FLAG,
-  hasRally, rallyAvailable
+  hasRally, rallyAvailable,
+  hasBringItDown, bringItDownAccuracyPenalty, bringItDownMaxStacks, bringItDownStacksFor,
+  BRING_IT_DOWN_PENALTY_PER_STACK,
+  hasFieldExecution, fieldExecutionEligible,
+  hasBackToBack, backToBackGrantCap
 } from "../../module/rules/leadership-talents.mjs";
 import { raceTarget } from "../../module/rules/talent-targets.mjs";
 
@@ -527,5 +531,86 @@ describe("Rally/Сплотить: доступность", () => {
   it("rallyAvailable — false без Таланта или без актора", () => {
     expect(rallyAvailable({ items: [] }, 4)).toBe(false);
     expect(rallyAvailable(null, 4)).toBe(false);
+  });
+});
+
+describe("Bring It Down!/Валите Это!: срез бонуса попадания на кубы урона", () => {
+  it("hasBringItDown — по любой половине имени", () => {
+    expect(hasBringItDown({ items: [talentOf("Bring It Down!")] })).toBe(true);
+    expect(hasBringItDown({ items: [talentOf("Валите Это!")] })).toBe(true);
+    expect(hasBringItDown({ items: [] })).toBe(false);
+  });
+
+  it("bringItDownAccuracyPenalty — 0 вне Общей Команды на Атаки или без стеков", () => {
+    expect(bringItDownAccuracyPenalty({ active: true, key: "inspire", testKind: "attack", bringItDownStacks: 2 })).toBe(0);
+    expect(bringItDownAccuracyPenalty({ active: true, key: "general", testKind: "evasion", bringItDownStacks: 2 })).toBe(0);
+    expect(bringItDownAccuracyPenalty({ active: true, key: "general", testKind: "attack", bringItDownStacks: 0 })).toBe(0);
+    expect(bringItDownAccuracyPenalty(null)).toBe(0);
+  });
+
+  it("bringItDownAccuracyPenalty — 20 за стек", () => {
+    expect(bringItDownAccuracyPenalty({ active: true, key: "general", testKind: "attack", bringItDownStacks: 1 }))
+      .toBe(-BRING_IT_DOWN_PENALTY_PER_STACK);
+    expect(bringItDownAccuracyPenalty({ active: true, key: "general", testKind: "attack", bringItDownStacks: 2 }))
+      .toBe(-2 * BRING_IT_DOWN_PENALTY_PER_STACK);
+  });
+
+  it("bringItDownMaxStacks — не больше, чем позволяет бонус (Успехи×3)", () => {
+    expect(bringItDownMaxStacks(0)).toBe(0);
+    expect(bringItDownMaxStacks(6)).toBe(0); // 6*3=18 < 20
+    expect(bringItDownMaxStacks(7)).toBe(1); // 7*3=21 >= 20
+    expect(bringItDownMaxStacks(14)).toBe(2); // 14*3=42 -> 2 стека (40)
+  });
+
+  it("bringItDownStacksFor — 0 без цели/вне назначенной Общей Команды", () => {
+    const squad = (uuid, posts, sc) => ({ type: "squad", uuid, system: { posts, members: [], shortCommand: sc } });
+    const attacker = { uuid: "att" };
+    const target = { uuid: "trg" };
+    expect(bringItDownStacksFor(attacker, null, [])).toBe(0);
+    expect(bringItDownStacksFor(attacker, target, [])).toBe(0);
+    const sq = squad("sq1", { leader: { uuid: "boss" } },
+      { active: true, key: "general", testKind: "attack", bringItDownStacks: 2, bringItDownTargetUuid: "other" });
+    sq.system.members = [{ uuid: "att" }];
+    expect(bringItDownStacksFor(attacker, target, [attacker, sq])).toBe(0);
+  });
+
+  it("bringItDownStacksFor — бонусные кубы, когда цель совпала с назначенной", () => {
+    const squad = (uuid, posts, sc) => ({ type: "squad", uuid, system: { posts, members: [{ uuid: "att" }], shortCommand: sc } });
+    const attacker = { uuid: "att" };
+    const target = { uuid: "trg" };
+    const sq = squad("sq1", { leader: { uuid: "boss" } },
+      { active: true, key: "general", testKind: "attack", bringItDownStacks: 2, bringItDownTargetUuid: "trg" });
+    expect(bringItDownStacksFor(attacker, target, [attacker, sq])).toBe(2);
+  });
+});
+
+describe("Field Execution/Полевая Казнь: опознание и eligibility", () => {
+  it("hasFieldExecution — по любой половине имени", () => {
+    expect(hasFieldExecution({ items: [talentOf("Field Execution")] })).toBe(true);
+    expect(hasFieldExecution({ items: [talentOf("Полевая Казнь")] })).toBe(true);
+    expect(hasFieldExecution({ items: [] })).toBe(false);
+  });
+
+  it("fieldExecutionEligible — Шок или Подавление, не любое другое состояние", () => {
+    expect(fieldExecutionEligible({ system: { conditions: { shocked: true } } })).toBe(true);
+    expect(fieldExecutionEligible({ system: { conditions: { pinned: true } } })).toBe(true);
+    expect(fieldExecutionEligible({ system: { conditions: { prone: true } } })).toBe(false);
+    expect(fieldExecutionEligible({ system: { conditions: {} } })).toBe(false);
+    expect(fieldExecutionEligible(null)).toBe(false);
+  });
+});
+
+describe("Back to Back/Спиной к Спине: опознание и лимит получателей", () => {
+  it("hasBackToBack — по любой половине имени", () => {
+    expect(hasBackToBack({ items: [talentOf("Back to Back")] })).toBe(true);
+    expect(hasBackToBack({ items: [talentOf("Спиной к Спине")] })).toBe(true);
+    expect(hasBackToBack({ items: [] })).toBe(false);
+  });
+
+  it("backToBackGrantCap — ½F.b, округление вверх", () => {
+    expect(backToBackGrantCap({ system: { characteristics: { fel: { bonus: 4 } } } })).toBe(2);
+    expect(backToBackGrantCap({ system: { characteristics: { fel: { bonus: 5 } } } })).toBe(3);
+    expect(backToBackGrantCap({ system: { characteristics: { fel: { bonus: 0 } } } })).toBe(0);
+    expect(backToBackGrantCap(null)).toBe(0);
   });
 });

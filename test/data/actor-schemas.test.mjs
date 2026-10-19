@@ -111,6 +111,10 @@ const DEVIATIONS = {
     // отдающего), Успехи в «Прикрытии» и Талант «Особой Тактики».
     "shortCommand.testKind": "", "shortCommand.giverUuid": "",
     "shortCommand.combatId": "", "shortCommand.round": 0,
+    // Bring It Down!/Валите Это! (Sahara 3-ac78, 19.10.2026) — тоже позже
+    // template.json: срез бонуса попадания Общей/Атака Команды на бонусные
+    // кубы урона по одной выбранной крупной цели.
+    "shortCommand.bringItDownStacks": 0, "shortCommand.bringItDownTargetUuid": "",
     "detailCommand.coverSuccesses": 0, "detailCommand.tactic": "",
     "detailCommand.giverUuid": "", "detailCommand.combatId": "", "detailCommand.round": 0
   },

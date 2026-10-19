@@ -39,6 +39,7 @@ import { AIM_FOCUS_EXTENDED_FLAG } from "../../rules/aim-focus.mjs";
 import { commitRerollUse } from "../../combat/angel-hunters.mjs";
 import { isSabre, sabreSecondAttackBlockFor, armSabreSecondAttack, consumeSabreSecondAttack } from "../../combat/sabre-second-attack.mjs";
 import { ACTIVE_SIGHT_FLAG } from "../../combat/weapon-mods.mjs";
+import { bringItDownStacksFor } from "../../rules/leadership-talents.mjs";
 
 /**
  * Два условия книги на парную атаку (стр. 62, wdbc-3jlm), которые до этого
@@ -377,6 +378,11 @@ export function openAttackDialog(ctx) {
           // Атака Ненависти тратится реальным броском, как и Локус выше.
           if (hateUsed && !(await spendPatronAbility(actor, "khorneHatred"))) return false;
 
+          // Bring It Down!/Валите Это! (rules/leadership-talents.mjs): Отряд
+          // атакующего мог срезать бонус Общей Команды на бонусные кубы урона
+          // именно по ЭТОЙ цели — считается раз на оба хвата одной атаки.
+          const bringItDownDice = bringItDownStacksFor(actor, targetActor, game.actors ?? []);
+
           // Приём выбран в этом же окне — свежий techniqueOpts под конкретный
           // выбор (targetDodgeMod/targetParryMod/chatNote и т.п. зависят от него).
           const finalTechniqueOpts = isMelee ? {
@@ -409,6 +415,7 @@ export function openAttackDialog(ctx) {
             {
               forceHit: helplessAutoHit, doubleDamage: helplessAutoHit,
               fixedSuccessDeg: (autoHitUsed || hateUsed) ? 1 : undefined,
+              bringItDownDice,
               // Прицеливание (wdbc-1rno.5): actor.system.aiming уже сброшен в
               // "none" выше (actorUpdates), значение для Меткого/bonusDamageDice
               // нужно явным параметром, захваченным ДО сброса.
@@ -566,6 +573,7 @@ export function openAttackDialog(ctx) {
                   + ")",
                 allGunsBlazingMod: agbMod,
                 tyranthikosDice,
+                bringItDownDice,
                 // Прицеливание положено на вторую руку (wdbc-x1nz.2.41) — метка едет сюда, не основной.
                 aimingLabel: (currentAiming !== "none" && !wp.noAim && f.aimHand === "off")
                   ? (currentAiming === "half" ? `Полу-прицеливание (+${aimingBonus})` : `Полное прицеливание (+${aimingBonus})`)
