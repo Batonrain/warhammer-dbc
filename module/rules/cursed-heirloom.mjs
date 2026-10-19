@@ -32,6 +32,8 @@
 //  было до этой правки, только теперь само проклятье не нужно помнить/искать.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { esc } from "../helpers/utils.mjs";
+
 export const CURSED_HEIRLOOM_MAX_AVAILABILITY = 4;
 
 export const CURSE_TABLE = [
@@ -54,5 +56,5 @@ export function curseForRoll(roll) {
 
 /** «Заметки» оружия (HTML) с дописанным проклятьем — флаг лист предмета не показывает. */
 export function notesWithCurse(notes, curse) {
-  return `${notes ?? ""}<p><b>Проклятое Наследство — ${curse.name}:</b> ${curse.text}</p>`;
+  return `${notes ?? ""}<p><b>Проклятое Наследство — ${esc(curse.name)}:</b> ${esc(curse.text)}</p>`;
 }
