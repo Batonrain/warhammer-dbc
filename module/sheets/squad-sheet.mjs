@@ -33,6 +33,7 @@ import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 import { WarhammerStructuralSheet } from "./structural-sheet.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
+import { rancorRiskCapBonus } from "../rules/leadership-talents.mjs";
 import { testKindHtml, diceModeHtml, difficultyHtml, readDifficulty, critLineHtml,
          readTestKind, readDiceChoice, mergeReroll, wireTestKindLive,
          rollD100WithReroll } from "../rules/test-kind-widget.mjs";
@@ -637,8 +638,23 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
   // ── Команды ───────────────────────────────────────────────────────────────
 
   /**
+   * Выделенный на сцене токен в момент броска Команды — тот же приём, что
+   * Тест Страха (sheets/tabs/disorders.mjs::openFearDialog): книга не
+   * привязывает Команду к конкретному токену жёстко, но если цель выделена —
+   * cross-actor правила (Rancor/Злопамятность) её читают. Без выделенной
+   * цели — null, ведёт себя как раньше.
+   */
+  _commandTargetActor() {
+    return [...(game.user?.targets ?? [])][0]?.actor ?? null;
+  }
+
+  /**
    * Уровень Риска с учётом снятого шлема командующего: книга даёт +1, если
    * немодифицированный Риск равен 2+. Выше 5 не поднимается.
+   *
+   * Rancor/Злопамятность (rules/leadership-talents.mjs): +1 к максимуму
+   * Успехов у отдающего, когда выделенная цель — Ненавистная ему; без
+   * потолка (cap === null) добавлять нечего.
    */
   _effectiveRisk(postKey = null) {
     const base = Math.max(1, Math.min(5, Number(this.actor.system.risk) || 1));
@@ -648,20 +664,24 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
                                                             : this._postData("leader"));
     const bonus = (who?.helmetOff && base >= 2) ? 1 : 0;
     const value = Math.min(5, base + bonus);
-    return { base, bonus, value, cap: riskCap(value), who: who?.name || "" };
+    const cap = riskCap(value);
+    const rancorBonus = cap == null ? 0 : rancorRiskCapBonus(this._resolve(who?.uuid),
+      { kind: "skill", skill: "command", targetActor: this._commandTargetActor() });
+    return { base, bonus, value, cap: cap == null ? null : cap + rancorBonus, who: who?.name || "" };
   }
 
   /**
    * Модификаторы реестра правил на тест Командования конкретного отдающего
    * (Command — социальный навык: сюда доезжают Усталость, «−30 на устные
-   * социальные тесты» Оглохшего, Черты на само Командование). Недоступный
-   * пост — без модификаторов.
+   * социальные тесты» Оглохшего, Черты на само Командование, Rancor).
+   * Недоступный пост — без модификаторов.
    */
   _commandRuleMods(uuid) {
     const doc = this._resolve(uuid);
     if (!doc) return { total: 0, parts: [] };
     try {
-      return collectTestMods(doc, { kind: "skill", skill: "command", char: "fel" });
+      return collectTestMods(doc,
+        { kind: "skill", skill: "command", char: "fel", targetActor: this._commandTargetActor() });
     } catch (e) {
       console.warn("Warhammer DBC | модификаторы Команды:", e);
       return { total: 0, parts: [] };
@@ -862,7 +882,7 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     const outcome = await resolveKindOutcome(testActor, {
       baseEff: threshold, rv,
       combined: tk.combined, extended: tk.extended, opposed: tk.opposed,
-      ctx: { actor: testActor, kind: "skill", skill: "command", char: "fel" }
+      ctx: { actor: testActor, kind: "skill", skill: "command", char: "fel", targetActor: this._commandTargetActor() }
     });
     const ok  = outcome.success;
     const deg = outcome.deg;

@@ -132,12 +132,15 @@ describe("источники по умолчанию", () => {
     // не-Нурглитам на сцене заражённого Vehicle/Ship-актора.
     // resilienceTalents (глава 3, 18.10.2026) — Сопротивление и Декаданс: +10 на
     // тесты своей специализации / Зависимости.
+    // leadershipTalents (глава 3, 19.10.2026) — Rancor/Злопамятность: +10 на
+    // Команду против цели Ненависти (+1 к максимуму Успехов от Риска — вне
+    // реестра, чистая функция rancorRiskCapBonus в sheets/squad-sheet.mjs).
     // warpTouchedHealMistrust (wdbc-1rno.26, 02.10.2026) — Затронутый Варпом,
     // субмутация 10: −10 на все тесты, кроме T, час после чужого лечения.
     expect([...getRuleSources().map(([key]) => key)].sort())
       .toEqual(["addiction", "adjutant", "awarenessTalents", "beastmanShaman", "conditions", "core",
                 "daemonInevitability", "devourerOfKnowledge", "dreadnought", "hatred", "homeworld", "items",
-                "legacyBloodPsychic", "legacyDistractingCharSwap", "legacyExcess", "legacyGuardian",
+                "leadershipTalents", "legacyBloodPsychic", "legacyDistractingCharSwap", "legacyExcess", "legacyGuardian",
                 "legacyInstinctiveDisarm", "legacyQuietAwareness", "legacyWrath", "nullZones",
                 "opposedTarget", "paths", "patron", "prophetOfGallerpox",
                 "psychicSustainTarget", "race", "resilienceTalents", "serumHook", "situational", "synesthesia",

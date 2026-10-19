@@ -38,6 +38,7 @@ import { pathRulesFor } from "./library/paths.mjs";
 import { hatredRules } from "./hatred.mjs";
 import { awarenessTalentRules } from "./awareness-talents.mjs";
 import { resilienceTalentRules } from "./resilience-talents.mjs";
+import { leadershipTalentRules } from "./leadership-talents.mjs";
 import { legacyWrathRules, legacyExcessRules, legacyGuardianRules, legacyBloodPsychicRules, legacyInstinctiveDisarmRules, legacyDistractingCharSwapRules, legacyQuietAwarenessRules } from "./legacy-weapon.mjs";
 import { devourerPermanentRules } from "./devourer-of-knowledge.mjs";
 import { gallerpoxPoisonPenaltyActive } from "./prophet-of-gallerpox.mjs";
@@ -184,6 +185,11 @@ registerRuleSource("awarenessTalents", (a, ctx) => awarenessTalentRules(a, ctx))
 // своей специализации (Страх, Яд, Психосилы, Оглушение) и +10 Декаданса на тесты
 // Зависимости. См. заголовок rules/resilience-talents.mjs.
 registerRuleSource("resilienceTalents", (a, ctx) => resilienceTalentRules(a, ctx));
+
+// Таланты Лидерства (глава 3, повторная разведка 19.10.2026 — Sahara 3-ac78
+// ошибочно считала подсистему Команд/Слаженности неисследованной): Rancor —
+// +10 на Команду против цели Ненависти. См. заголовок rules/leadership-talents.mjs.
+registerRuleSource("leadershipTalents", (a, ctx) => leadershipTalentRules(a, ctx));
 
 // Наследие Ярости/Rage, Оружие Наследия (wdbc-1rno.35, стр. 427): штраф −10
 // на I/P, пока экипировано Оружие Наследия с этой Историей. См. заголовок
