@@ -40,6 +40,7 @@ import { awarenessTalentRules } from "./awareness-talents.mjs";
 import { resilienceTalentRules } from "./resilience-talents.mjs";
 import { leadershipTalentRules } from "./leadership-talents.mjs";
 import { occultistTalentRules } from "./occultist-talents.mjs";
+import { commandSubstitutionRules } from "./command-substitution.mjs";
 import { legacyWrathRules, legacyExcessRules, legacyGuardianRules, legacyBloodPsychicRules, legacyInstinctiveDisarmRules, legacyDistractingCharSwapRules, legacyQuietAwarenessRules } from "./legacy-weapon.mjs";
 import { devourerPermanentRules } from "./devourer-of-knowledge.mjs";
 import { gallerpoxPoisonPenaltyActive } from "./prophet-of-gallerpox.mjs";
@@ -201,6 +202,13 @@ registerRuleSource("leadershipTalents", (a, ctx) =>
 // — тем же rollBonus-приёмом разницы итогов, что Living Legend выше. См.
 // заголовок rules/occultist-talents.mjs.
 registerRuleSource("occultistTalents", (a, ctx) => occultistTalentRules(a, ctx));
+
+// Подмена Командования — Living Legend (Inf вместо F) и Infernal Master
+// (Forbidden Lore(Daemons)(W) вместо Command) конкурируют за один навык;
+// выбор лучшей из двух — отдельный источник, не сумма двух rollBonus на
+// skill:command (фикс 19.10.2026, независимое ревью). См. заголовок
+// rules/command-substitution.mjs.
+registerRuleSource("commandSubstitution", (a, ctx) => commandSubstitutionRules(a, ctx));
 
 // Наследие Ярости/Rage, Оружие Наследия (wdbc-1rno.35, стр. 427): штраф −10
 // на I/P, пока экипировано Оружие Наследия с этой Историей. См. заголовок

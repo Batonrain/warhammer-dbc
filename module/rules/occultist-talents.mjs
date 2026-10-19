@@ -29,13 +29,26 @@
 //    module/sheets/tabs/rituals.mjs::activateRitualListeners, открывает
 //    Обозреватель без проверок) — поэтому здесь только число для теста,
 //    сам тест и перенос предмета на лист — за столом, как и у остальных
-//    находок главы без выделенной кнопки.
+//    находок главы без выделенной кнопки. [фикс 19.10.2026, независимое
+//    ревью] Это честная заглушка (ritePuzzlerLearnMod нигде в module/ не
+//    вызывается), не «реализовано» — module/constants/capabilities.mjs
+//    переведён на reader: "" + «ПОДТВЕРЖДЕНО ЧЕСТНОЙ ЗАГЛУШКОЙ» тем же
+//    приёмом, что Scapegoat/Warprod, функция и тесты оставлены как
+//    справочный расчёт для стола.
 //
-//  [допущение] Подмена характеристики/навыка выбрана БЕЗУСЛОВНО, а не как
-//  выбор игрока «только если выгоднее» — тот же риск (редкий отрицательный
-//  итог, если «своя» характеристика выше замещающей), который Сергей уже
-//  принял для Living Legend по той же причине (один rollBonus на разницу
-//  безопаснее точечной правки char в каждом месте расчёта).
+//  [фикс 19.10.2026, независимое ревью] «Может использовать X вместо Y» — это
+//  выбор игрока, не обязательная замена: gloriousPurposeBonus/
+//  infernalMasterCommandBonus обёрнуты в Math.max(0, …), отрицательный итог
+//  не применяется. Living Legend (leadership-talents.mjs) этот риск
+//  сознательно сохраняет — там отрицательный итог редок (Inf ниже Fel), а
+//  здесь был обычным случаем, поэтому разница.
+//
+//  [фикс 19.10.2026] Infernal Master и Living Legend — обе подмены теста
+//  Командования одной и той же характеристикой-заменителем — СКЛАДЫВАЛИСЬ,
+//  если у персонажа были оба Таланта разом (двойная подмена одного навыка).
+//  Выбор лучшей подмены теперь считает один источник —
+//  module/rules/command-substitution.mjs, "skill:command" rollBonus из
+//  occultistTalentRules/leadershipTalentRules убран.
 //
 //  [допущение] «Демонхост», «демоническая машина» и «Одержимый с
 //  доминирующей личностью демона» (книжный список целей Infernal Master)
@@ -97,13 +110,13 @@ function wieldsDaemonWeapon(actor) {
 // — честно покрыта только прямая характеристика; Навыки на W/F (Scrutiny,
 // Intimidate и т.п.) НЕ подхватывают эту разницу.
 
-/** Разница Inf−char для Glorious Purpose: 0, если условия не выполнены. */
+/** Разница Inf−char для Glorious Purpose: 0, если условия не выполнены или своя характеристика выше (выбор, не замена). */
 export function gloriousPurposeBonus(actor, ctx = {}, char) {
   if (char !== "wp" && char !== "fel") return 0;
   if (!hasGloriousPurpose(actor)) return 0;
   if (!wieldsDaemonWeapon(actor)) return 0;
   if (!isDaemonActor(ctx?.targetActor)) return 0;
-  return charTotal(actor, "inf") - charTotal(actor, char);
+  return Math.max(0, charTotal(actor, "inf") - charTotal(actor, char));
 }
 
 // ── Infernal Master / Инфернальный Владыка ───────────────────────────────────
@@ -128,7 +141,7 @@ function forbiddenLoreDaemonsOnWillpower(actor) {
   return charTotal(actor, "wp") + rankPlusMod;
 }
 
-/** Разница FL(Daemons)(W)−Command для теста Команды против демона: 0, если условия не выполнены. */
+/** Разница FL(Daemons)(W)−Command для теста Команды против демона: 0, если условия не выполнены или свой Command выше (выбор, не замена). */
 export function infernalMasterCommandBonus(actor, ctx = {}) {
   if (!hasInfernalMaster(actor)) return 0;
   if (!isDaemonActor(ctx?.targetActor)) return 0;
@@ -137,7 +150,7 @@ export function infernalMasterCommandBonus(actor, ctx = {}) {
   // нечем, Талант не спасает от незнания Навыка, который он замещает.
   if (flTotal == null) return 0;
   const commandTotal = Number(actor?.system?.skills?.command?.total) || 0;
-  return flTotal - commandTotal;
+  return Math.max(0, flTotal - commandTotal);
 }
 
 // ── Rite Puzzler / Разгадыватель Ритуалов ────────────────────────────────────
@@ -159,6 +172,11 @@ export function ritePuzzlerLearnMod(actor, wasPresent) {
  * leadership-talents.mjs::leadershipTalentRules: пушим rollBonus только
  * когда он реально ненулевой, иначе пустая строка «+0: Талант» мусорила бы
  * карточку теста без надобности.
+ *
+ * Подмена Командования (Infernal Master) сюда не входит — она конкурирует
+ * с той же заменой у Living Legend (leadership-talents.mjs) за один навык,
+ * и выбор лучшей из двух теперь считает отдельный источник,
+ * module/rules/command-substitution.mjs (см. фикс 19.10.2026 в шапке файла).
  */
 export function occultistTalentRules(actor, ctx = {}) {
   const rules = [];
@@ -170,13 +188,6 @@ export function occultistTalentRules(actor, ctx = {}) {
         effects: [{ kind: "rollBonus", target: `char:${char}`, value: bonus, label: "Славное Назначение" }]
       });
     }
-  }
-  const commandBonus = infernalMasterCommandBonus(actor, ctx);
-  if (commandBonus) {
-    rules.push({
-      id: "infernalMaster.command", label: "Инфернальный Владыка", when: {},
-      effects: [{ kind: "rollBonus", target: "skill:command", value: commandBonus, label: "Инфернальный Владыка" }]
-    });
   }
   return rules;
 }

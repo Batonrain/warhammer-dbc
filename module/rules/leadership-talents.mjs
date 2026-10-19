@@ -581,6 +581,12 @@ export function intoTheJawsOfHellActive(checked) {
 // ОДНИМ rollBonus-правилом реестра — разницей Inf−F, а не правкой char;
 // действует на всех шести местах разом, раз все они собирают модификаторы
 // через ту же цепочку collectTestMods → resolveTest → эта функция.
+//
+// [фикс 19.10.2026, независимое ревью] Само правило реестра переехало из
+// leadershipTalentRules в module/rules/command-substitution.mjs — оно
+// конкурирует за один навык с той же подменой у Infernal Master
+// (occultist-talents.mjs), и обе складывались при обоих Талантах разом.
+// livingLegendCommandBonus здесь — чистый расчёт разницы, не её применение.
 
 const LIVING_LEGEND_NAMES = ["Living Legend", "Живая Легенда"];
 
@@ -812,15 +818,11 @@ export function leadershipTalentRules(actor, ctx = {}, allActors = []) {
       effects: [{ kind: "rollBonus", target: "skill:command", value: eloquenceBonus, label: "Красноречие" }]
     });
   }
-  const livingLegendBonus = livingLegendCommandBonus(actor, ctx);
-  if (livingLegendBonus !== 0) {
-    rules.push({
-      id: "livingLegend.command",
-      label: `Живая Легенда: Inf вместо F (${livingLegendBonus >= 0 ? "+" : ""}${livingLegendBonus})`,
-      when: {},
-      effects: [{ kind: "rollBonus", target: "skill:command", value: livingLegendBonus, label: "Живая Легенда" }]
-    });
-  }
+  // Подмена Командования Живой Легендой (Inf вместо F) сюда не входит — она
+  // конкурирует с той же заменой у Infernal Master (occultist-talents.mjs) за
+  // один навык, и при обоих Талантах разом они СКЛАДЫВАЛИСЬ (фикс 19.10.2026,
+  // независимое ревью). Выбор лучшей из двух теперь считает отдельный
+  // источник, module/rules/command-substitution.mjs.
   rules.push(...ironDisciplineRerollRules(actor, allActors, ctx));
   rules.push(...frontlineCommanderRerollRules(actor, allActors));
   // Radiant Presence/Блистательное Присутствие: ctx.radiantPresence —
