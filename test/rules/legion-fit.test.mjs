@@ -73,10 +73,11 @@ describe("legionAttackPenalty: ignoresHandFit (Giant's Arms в силовой б
     expect(out).toEqual({ total: 0, parts: [] });
   });
 
-  it("одного ignoresHandFit без ignoresSizeStrength недостаточно — Размер и Сила остаются", () => {
+  // Окно атаки передаёт одно ignoresHandFit (без ignoresSizeStrength — тот
+  // только у Откатной Перчатки), поэтому оно само обязано снять все три.
+  it("одного ignoresHandFit достаточно — Размер и Сила тоже снимаются", () => {
     const out = legionAttackPenalty({ hasLegion: true, ...human, ignoresHandFit: true });
-    expect(out.total).toBe(2 * LEGION_STEP);
-    expect(out.parts.some(p => /руки/i.test(p.label))).toBe(false);
+    expect(out).toEqual({ total: 0, parts: [] });
   });
 
   it("на штраф Астартес за НЕлегионное оружие не влияет", () => {
