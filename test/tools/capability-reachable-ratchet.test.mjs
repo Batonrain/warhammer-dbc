@@ -138,10 +138,15 @@ const ALLOWED = {
   // вызове — анализатор такую форму не распознаёт, хотя Таланты с этими
   // именами есть в packs-src/talents/Оккультист и способность за столом
   // работает у любого персонажа, купившего нужный Талант.
+  //
+  // Rite Puzzler сюда НЕ входит (фикс 19.10.2026, независимое ревью): эта
+  // фраза для него была неправдой — ritePuzzlerLearnMod нигде не вызывается,
+  // Талант не включает никакой проверяемой автоматизации. Честная заглушка
+  // (reader: "" + «ПОДТВЕРЖДЕНО ЧЕСТНОЙ ЗАГЛУШКОЙ» в capabilities.mjs) не
+  // попадает в withReader вовсе — строка-исключение ему не нужна.
   "occultist.core.eruditeInfernal": "включается по имени Таланта (Erudite-Infernal) через модульный массив имён в occultist-talents.mjs::hasOccultistTalent — анализатор такую форму не распознаёт",
   "occultist.core.infernalMaster": "включается по имени Таланта (Infernal Master) через модульный массив имён в occultist-talents.mjs::hasOccultistTalent — анализатор такую форму не распознаёт",
-  "occultist.core.gloriousPurpose": "включается по имени Таланта (Glorious Purpose) через модульный массив имён в occultist-talents.mjs::hasOccultistTalent — анализатор такую форму не распознаёт",
-  "occultist.core.ritePuzzler": "включается по имени Таланта (Rite Puzzler) через модульный массив имён в occultist-talents.mjs::hasOccultistTalent — анализатор такую форму не распознаёт"
+  "occultist.core.gloriousPurpose": "включается по имени Таланта (Glorious Purpose) через модульный массив имён в occultist-talents.mjs::hasOccultistTalent — анализатор такую форму не распознаёт"
 };
 
 describe("возможности с читателем должны быть достижимы из игры", () => {

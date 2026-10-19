@@ -4,7 +4,15 @@
 // Purpose и половина Infernal Master через rollBonus-приём разницы итогов,
 // тот же, что Living Legend (test/rules/leadership-talents.test.mjs). Rite
 // Puzzler — только число теста (ritePuzzlerLearnMod), система не привязывает
-// предмет-ритуал к «следам» на месте.
+// предмет-ритуал к «следам» на месте; capabilities.mjs честно помечает его
+// заглушкой (reader: ""), тесты ниже — только арифметика функции.
+//
+// [фикс 19.10.2026, независимое ревью] gloriousPurposeBonus/
+// infernalMasterCommandBonus теперь не опускаются ниже 0 («может
+// использовать вместо» — выбор, не обязательная замена). Подмена
+// Командования у Infernal Master больше не входит в occultistTalentRules —
+// она конкурирует с той же подменой у Living Legend за один навык, и выбор
+// лучшей считает отдельный источник, test/rules/command-substitution.test.mjs.
 
 import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
@@ -70,6 +78,11 @@ describe("gloriousPurposeBonus: Inf вместо W/F против демона �
     const a = actor(60, 30, 20, [talentOf("Glorious Purpose"), weaponOf(true, true)]);
     expect(gloriousPurposeBonus(a, { targetActor: daemonTarget }, "int")).toBe(0);
   });
+
+  it("0, а не отрицательное число, если своя характеристика выше Inf (выбор, не замена)", () => {
+    const a = actor(20, 60, 50, [talentOf("Glorious Purpose"), weaponOf(true, true)]);
+    expect(gloriousPurposeBonus(a, { targetActor: daemonTarget }, "wp")).toBe(0);
+  });
 });
 
 describe("infernalMasterCommandBonus: Forbidden Lore(Daemons)(W) вместо Command против демона", () => {
@@ -105,6 +118,14 @@ describe("infernalMasterCommandBonus: Forbidden Lore(Daemons)(W) вместо Co
       [talentOf("Инфернальный Владыка")]);
     expect(infernalMasterCommandBonus(a, { targetActor: daemonTarget })).toBe(50);
   });
+
+  it("0, а не отрицательное число, если свой Command выше подмены (выбор, не замена)", () => {
+    // FL(Daemons) на Int даёт total 30 (int 10 + ранг+мод 20). На W (10) тот
+    // же ранг+мод даёт 10+20=30. Command 90 — выше подмены.
+    const a = actor(10, 10, 90, { specialty: "Daemons", char: "int", total: 30 },
+      [talentOf("Infernal Master")]);
+    expect(infernalMasterCommandBonus(a, { targetActor: daemonTarget })).toBe(0);
+  });
 });
 
 describe("ritePuzzlerLearnMod: I−20, или I+0 если присутствовал", () => {
@@ -127,13 +148,13 @@ describe("occultistTalentRules: правила реестра (rules/sources.mjs
     expect(occultistTalentRules(a, {})).toEqual([]);
   });
 
-  it("собирает Glorious Purpose (char:wp) и Infernal Master (skill:command) разом", () => {
+  it("собирает оба char-правила Glorious Purpose (char:wp/char:fel) разом", () => {
     const a = {
-      items: [talentOf("Glorious Purpose"), talentOf("Infernal Master"), weaponOf(true, true)],
+      items: [talentOf("Glorious Purpose"), weaponOf(true, true)],
       system: {
         characteristics: { inf: { total: 60 }, wp: { total: 30 }, fel: { total: 20 }, int: { total: 30 } },
         skills: { command: { total: 20 } },
-        groupSkills: { forbiddenLore: [{ specialty: "Daemons", char: "int", total: 50 }] }
+        groupSkills: { forbiddenLore: [] }
       }
     };
     const rules = occultistTalentRules(a, { targetActor: daemonTarget });
@@ -141,9 +162,18 @@ describe("occultistTalentRules: правила реестра (rules/sources.mjs
     // Inf 60: W 30 → +30, Fel 20 → +40 — оба char-правила ненулевые и оба в списке.
     expect(byTarget["char:wp"]).toBe(30);
     expect(byTarget["char:fel"]).toBe(40);
-    // FL(Daemons) на Int даёт 50 (int 30 + ранг+мод 20); на W (30) тот же
-    // ранг+мод даёт 30+20=50; Command 20 → разница 50-20=30.
-    expect(byTarget["skill:command"]).toBe(30);
-    expect(rules.length).toBe(3);
+    expect(rules.length).toBe(2);
+  });
+
+  it("не отдаёт skill:command сама — подмену Командования считает command-substitution.mjs", () => {
+    const a = {
+      items: [talentOf("Infernal Master")],
+      system: {
+        characteristics: { wp: { total: 30 }, int: { total: 30 } },
+        skills: { command: { total: 20 } },
+        groupSkills: { forbiddenLore: [{ specialty: "Daemons", char: "int", total: 50 }] }
+      }
+    };
+    expect(occultistTalentRules(a, { targetActor: daemonTarget })).toEqual([]);
   });
 });
