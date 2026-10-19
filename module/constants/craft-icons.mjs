@@ -88,6 +88,8 @@ export const CRAFT_ICONS = {
   // ─────────────── РЕЖИМЫ И ПАНЕЛИ ───────────────
   craft:      wrap(`<path d="M14 4l6 6-2 2-6-6z"/><path d="M12 8l-8 8 2 2 8-8"/><path d="M4 20h6"/>`),
   research:   wrap(`<path d="M4 5a2 2 0 012-2h8v14H6a2 2 0 00-2 2z"/><path d="M14 3h4v14h-4"/><circle cx="17" cy="17" r="3"/><path d="M19.5 19.5L22 22"/>`),
+  // Обучение: академическая шапочка (учитель/курс).
+  teach:      wrap(`<path d="M12 4l9 4-9 4-9-4z"/><path d="M6 10v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/><path d="M21 8v6"/>`),
   shift:      wrap(`<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>`),
   crafter:    wrap(`<circle cx="12" cy="8" r="4"/><path d="M5 20a7 7 0 0114 0"/>`),
   material:   wrap(`<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 3v18M4 7.5l8 4.5 8-4.5"/>`),

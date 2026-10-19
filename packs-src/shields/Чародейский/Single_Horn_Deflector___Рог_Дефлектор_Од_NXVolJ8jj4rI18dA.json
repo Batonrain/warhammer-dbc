@@ -1,0 +1,48 @@
+{
+  "name": "Single Horn Deflector / Рог-Дефлектор Однорогого",
+  "type": "forcefield",
+  "folder": "IRQ8ooDLYqL9rtA6",
+  "system": {
+    "description": "Рог, укреплённый струящейся сквозь него порчей, искажает часть лица и отклоняет удары по голове. Не перегружается. Не защищает глаза.",
+    "notes": "Часть тела, не снаряжение: выдаётся Мутацией «Величественные Рога», субмутация 1 (Однорогий), и всегда включена. Срабатывает только на попадания в Голову — флаг shieldHitLocations (combat/damage.mjs::_rollActiveShield); попадание в Глаз его не вызывает.",
+    "shieldNature": "warp",
+    "shieldType": "deflector",
+    "ratingMin": 1,
+    "ratingMax": 50,
+    "overloadThreshold": 0,
+    "currentRating": 50,
+    "isSpecialRating": false,
+    "equipped": true,
+    "status": "active",
+    "quality": "common",
+    "availability": 0,
+    "weight": 0,
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Мутации», стр. 440-452)"
+  },
+  "_id": "NXVolJ8jj4rI18dA",
+  "img": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "shieldHitLocations": [
+        "Голова"
+      ]
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!NXVolJ8jj4rI18dA"
+}

@@ -40,6 +40,34 @@ describe("Амортизирующее поле: Protective и Flak доходя
     expect(on.system.absorption.vsType.chemical - off.system.absorption.vsType.chemical).toBe(4);
   });
 
+  // Решение владельца 02.10.2026 (protective-4-protective-4): Protective (4) поля и
+  // Protective (4) самой брони — одноимённая особенность из двух источников, они
+  // НЕ складываются, действует больший. Общее правило, а не частность Ghostplate.
+  const withProtective = (x, over = {}) => {
+    const s = suit(over);
+    s.system.properties = ["protective"];
+    s.system.propRatings = { protective: x };
+    return s;
+  };
+
+  it("Protective (4) поля и Protective (4) самой брони не складываются: 4, а не 8", () => {
+    const on  = prepared([withProtective(4, { fieldMode: "damping" })]);
+    const off = prepared([withProtective(4)]);
+    expect(off.system.absorption.vsType.chemical).toBe(4);
+    expect(on.system.absorption.vsType.chemical).toBe(4);
+  });
+
+  it("берётся больший: броня 6 + поле 4 → 6; броня 2 + поле 4 → 4", () => {
+    expect(prepared([withProtective(6, { fieldMode: "damping" })]).system.absorption.vsType.chemical).toBe(6);
+    expect(prepared([withProtective(2, { fieldMode: "damping" })]).system.absorption.vsType.chemical).toBe(4);
+  });
+
+  it("два надетых предмета с Protective — тоже больший, не сумма", () => {
+    const a = withProtective(2, { id: "p1" });
+    const b = withProtective(3, { id: "p2" });
+    expect(prepared([a, b]).system.absorption.vsType.chemical).toBe(3);
+  });
+
   it("Flak появляется у всех закрытых локаций, пока поле включено", () => {
     const on  = prepared([suit({ fieldMode: "damping" })]);
     const off = prepared([suit()]);

@@ -38,7 +38,8 @@
         "rating": 4
       },
       {
-        "key": "rad"
+        "key": "rad",
+        "rating": "1d5"
       }
     ],
     "needsRecharge": false,

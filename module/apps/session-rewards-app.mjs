@@ -35,7 +35,7 @@
 //  Расчёт — в module/rules/session-rewards.mjs, здесь только окно и запись.
 // ════════════════════════════════════════════════════════════════════════
 
-import { XP_CATEGORIES, PARTY_KEYS, EACH_KEYS } from "../constants/session-rewards.mjs";
+import { XP_CATEGORIES, PARTY_KEYS, EACH_KEYS, outsideBookRange } from "../constants/session-rewards.mjs";
 import { buildRewardRows, parseRewardAmount, infamyRoom, infamyGain, INFAMY_PATH,
          sessionXpWithFastLearner }
   from "../rules/session-rewards.mjs";
@@ -112,7 +112,11 @@ export class SessionRewardsApp extends HandlebarsApplicationMixin(ApplicationV2)
     return {
       isGM: game.user.isGM,
       partyCats: XP_CATEGORIES.filter(c => PARTY_KEYS.includes(c.key))
-        .map(c => ({ ...c, chosen: Number(this.picks.party[c.key]) || 0 })),
+        .map(c => {
+          const chosen = Number(this.picks.party[c.key]) || 0;
+          return { ...c, chosen, typed: !!c.range || !c.steps, outside: outsideBookRange(c, chosen),
+                   bookRange: this._rangeLabel(c) };
+        }),
       eachCats: XP_CATEGORIES.filter(c => EACH_KEYS.includes(c.key)),
       candidates: this.candidates.map(a => ({ id: a.id, name: a.name, on: this.chosen.has(a.id) })),
       rows: rows.map(r => {
@@ -120,6 +124,13 @@ export class SessionRewardsApp extends HandlebarsApplicationMixin(ApplicationV2)
         return {
           ...r,
           personal: this.picks.personal[r.id] ?? {},
+          // Ячейки личных категорий: у вилок книги — поле числа с подсказками,
+          // у остальных (возмещение — без вилки) — просто число.
+          cells: XP_CATEGORIES.filter(c => EACH_KEYS.includes(c.key)).map(c => {
+            const value = Number(this.picks.personal[r.id]?.[c.key]) || 0;
+            return { ...c, value: value || "", outside: outsideBookRange(c, value),
+                     bookRange: this._rangeLabel(c) };
+          }),
           override: this.picks.xpOverride[r.id] ?? "",
           corruptionRaw: this.picks.corruption[r.id] ?? "",
           infamyRaw: this.picks.infamy[r.id] ?? "",
@@ -145,6 +156,11 @@ export class SessionRewardsApp extends HandlebarsApplicationMixin(ApplicationV2)
     };
   }
 
+  /** Подпись вилки книги для подсказки поля: «вилка книги 50–250». */
+  _rangeLabel(c) {
+    return c.range ? `вилка книги ${c.range.from}–${c.range.to}` : "число на усмотрение ГМ";
+  }
+
   _onRender(context, options) {
     super._onRender?.(context, options);
     const el = this.element;
@@ -158,6 +174,17 @@ export class SessionRewardsApp extends HandlebarsApplicationMixin(ApplicationV2)
       const { actor, cat } = ev.currentTarget.dataset;
       (this.picks.personal[actor] ??= {})[cat] = Number(ev.currentTarget.value) || 0;
       this.render();
+    });
+    // Поля числа: итог живой, без перерисовки на каждую клавишу (см. ниже про
+    // wdbc-9jkq — иначе фокус уходит из поля прямо во время набора).
+    on(".wh-sr-party[type=number]", "input", ev => {
+      this.picks.party[ev.currentTarget.dataset.cat] = Number(ev.currentTarget.value) || 0;
+      this._recalcTotal();
+    });
+    on(".wh-sr-personal[type=number]", "input", ev => {
+      const { actor, cat } = ev.currentTarget.dataset;
+      (this.picks.personal[actor] ??= {})[cat] = Number(ev.currentTarget.value) || 0;
+      this._recalcTotal();
     });
     on(".wh-sr-override", "change", ev => {
       this.picks.xpOverride[ev.currentTarget.dataset.actor] = ev.currentTarget.value;
@@ -278,9 +305,15 @@ export class SessionRewardsApp extends HandlebarsApplicationMixin(ApplicationV2)
           // Округление вверх — то же, что в apps/stat-log.mjs, чтобы одна и та
           // же Черта не давала разные числа из двух окон.
           const pct  = Number(actor.system?.fastLearnerBonus) || 0;
-          const gain = sessionXpWithFastLearner(actor, row.xp);
+          // Возмещение («Органичное Продвижение») — возврат уже полученного,
+          // не новое обучение: процент Черты на него не действует.
+          const refund = Math.min(row.refund ?? 0, row.xp);
+          const learned = row.xp - refund;
+          const learnedGain = sessionXpWithFastLearner(actor, learned);
+          const gain = learnedGain + refund;
           const log = Array.isArray(exp.log) ? foundry.utils.deepClone(exp.log) : [];
-          log.push({ at: Date.now(), amount: gain, kind: "session", reason: "Итоги Сессии" });
+          if (learnedGain > 0) log.push({ at: Date.now(), amount: learnedGain, kind: "session", reason: "Итоги Сессии" });
+          if (refund > 0) log.push({ at: Date.now(), amount: refund, kind: "grant", reason: "Возмещение (Органичное Продвижение)" });
           // system.experience.current не пишется: оно производное
           // (character.mjs — total минус потраченное) и пересчитывается на
           // каждом prepareDerivedData, так что запись сюда лишь оставляла бы
@@ -289,9 +322,11 @@ export class SessionRewardsApp extends HandlebarsApplicationMixin(ApplicationV2)
             "system.experience.total": (Number(exp.total) || 0) + gain,
             "system.experience.log":   log
           });
-          parts.push(gain !== row.xp
-            ? `<b>${gain}</b> опыта (${row.xp} +${pct}% «Ловит на Лету»)`
-            : `<b>${gain}</b> опыта`);
+          const flText = learnedGain !== learned
+            ? `${learned} +${pct}% «Ловит на Лету»` : "";
+          const refundText = refund > 0 ? `возмещение ${refund}` : "";
+          const extra = [flText, refundText].filter(Boolean).join(", ");
+          parts.push(extra ? `<b>${gain}</b> опыта (${extra})` : `<b>${gain}</b> опыта`);
         }
 
         const cor = await this._amount(row.corruption, rolls);

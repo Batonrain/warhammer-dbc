@@ -35,6 +35,7 @@
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
 import { commandReachFor, PRESENCE_ORDER } from "./command.mjs";
 import { ORDER_NO_BRIEFING, actorCarriesCapability } from "./aversion-to-order.mjs";
+import { bringItDownAccuracyPenalty } from "./leadership-talents.mjs";
 
 /**
  * Pack Consciousness / Сознание Стаи (Йигори, корбук глава I): узел-стая
@@ -134,7 +135,11 @@ export function shortCommandBonus(short, actor, ctx, ids = new Set([actor?.uuid]
   if (sux <= 0 || !shortCommandEligible(ctx)) return 0;
   switch (short.key) {
     case "inspire":  return sux;
-    case "general":  return matchesGeneralKind(short.testKind, ctx) ? sux * 3 : 0;
+    // Bring It Down!/Валите Это! (rules/leadership-talents.mjs): срезает до
+    // 20 за стек с бонуса Общей/Атака Команды в обмен на бонусные кубы урона
+    // по одной выбранной цели — сам срез независим от получателя ЭТОГО
+    // броска, поэтому считается здесь же, не отдельным правилом.
+    case "general":  return matchesGeneralKind(short.testKind, ctx) ? sux * 3 + bringItDownAccuracyPenalty(short) : 0;
     case "personal": return short.recipientUuid && ids.has(short.recipientUuid) ? sux * 5 : 0;
     case "morale":   return isMoraleCtx(ctx) ? sux * 5 : 0;
     default:         return 0;

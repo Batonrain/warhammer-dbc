@@ -56,7 +56,7 @@ describe("devourerPermanentRules", () => {
     expect(rules[0].effects).toEqual([
       { kind: "grantAptitudeOverride", scope: "skill", match: "Допрос", align: "ally" }
     ]);
-    expect(rules[1].effects[0].match).toBe("Медика");
+    expect(rules[1].effects[0].match).toBe("Медицина");
   });
 
   it("id правила уникален по ключу Навыка (не задваивается при повторном вызове)", () => {
@@ -88,7 +88,7 @@ describe("devourerPermanentRules — сквозная проверка чере�
     const actor = { system: {}, items: [], getFlag: () => ["interrogate"] };
     clearRuleSources();
     registerRuleSource("test", a => devourerPermanentRules(a));
-    expect(resolveAptitudeOverride(actor, "skill", "Медика")).toBeNull();
+    expect(resolveAptitudeOverride(actor, "skill", "Медицина")).toBeNull();
   });
 });
 

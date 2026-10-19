@@ -36,6 +36,8 @@ export const REDUCTION_STEP = 10;
 
 export const CAP_TWO_WEAPON   = "dualWield.core.twoWeaponWielder";
 export const CAP_AMBIDEXTROUS = "dualWield.core.ambidextrous";
+/** Тирантикос (элитный Талант Чемпиона-Терминатора, core.json стр. 123-124). */
+export const CAP_TYRANTHIKOS  = "elite.elitnyeArhetipy.chempionTerminator.tyranthikos";
 
 /** Скидки −10 к парному штрафу: возможность → когда действует. */
 const REDUCTIONS = [
@@ -53,10 +55,18 @@ const REDUCTIONS = [
     when: (a, b) => (cls(a) === "pistol" && cls(b) === "melee")
                  || (cls(b) === "pistol" && cls(a) === "melee") },
   { cap: "dualWield.core.sideblade", label: "Запасной Клинок",
-    when: (a, b) => melee(a, "Нож") || melee(b, "Нож") }
+    when: (a, b) => melee(a, "Нож") || melee(b, "Нож") },
+  // «Уменьшает штраф за стрельбу из любой пары стрелкового оружия на 10, в
+  // том числе двух тяжёлых» — не только тяжёлое: любая пара стволов.
+  { cap: CAP_TYRANTHIKOS, label: "Тирантикос",
+    when: (a, b) => gun(a) && gun(b) }
 ];
 
 const cls   = w => String(w?.system?.weaponClass ?? "");
+// «Стрелковое» для Тирантикоса — всё, кроме рукопашного и метательного:
+// метательное книга держит отдельным классом со своей скидкой (Веер Ножей)
+// и в описании разводит «метательное оружие» и «снаряды стрелкового».
+const gun   = w => !["melee", "thrown", ""].includes(cls(w));
 const melee = (w, category) => cls(w) === "melee"
   && String(w?.system?.meleeCategory ?? "").trim().toLowerCase() === category.toLowerCase();
 

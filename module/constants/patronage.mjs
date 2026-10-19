@@ -88,30 +88,46 @@ const TALENT_GOD_LABEL_KEY = {
 const TALENT_PACK_ID = "warhammer-dbc.talents";
 
 let _talentGodByName = null; // null = ещё не строился
+let _eliteTalentNames = null; // имена Талантов Элитных Архетипов, строится вместе с Богами
+
+// Талант Элитного Архетипа помечен в «Специализации»: «Элитный архетип: Архимаг».
+const ELITE_SPECIALIZATION = /^\s*Элитный архетип:/i;
+const isEliteSpecialization = (spec) => ELITE_SPECIALIZATION.test(String(spec ?? ""));
+
 function fallbackTalentGodIndex() {
   return new Map(TALENT_LIBRARY.map(t => [t.name, t.system?.god || ""]));
 }
+function fallbackEliteTalentNames() {
+  return new Set(TALENT_LIBRARY.filter(t => isEliteSpecialization(t.system?.specialization)).map(t => t.name));
+}
 
-async function _refreshTalentGodIndex() {
+export async function refreshTalentGodIndex() {
   const pack = (typeof game !== "undefined") ? game.packs?.get?.(TALENT_PACK_ID) : null;
-  if (!pack) { _talentGodByName = fallbackTalentGodIndex(); return; }
+  if (!pack) { _talentGodByName = fallbackTalentGodIndex(); _eliteTalentNames = fallbackEliteTalentNames(); return; }
   try {
-    const index = await pack.getIndex({ fields: ["system.god"] });
+    const index = await pack.getIndex({ fields: ["system.god", "system.specialization"] });
     const byName = new Map(index.map(e => [e.name, e.system?.god || ""]));
+    const elite  = new Set(index.filter(e => isEliteSpecialization(e.system?.specialization)).map(e => e.name));
     // Константа как подстраховка: то, чего в паке ещё нет (новые записи,
     // добавленные мимо сборки), не должно тихо потерять Бога.
     for (const [name, god] of fallbackTalentGodIndex()) if (!byName.has(name)) byName.set(name, god);
+    for (const name of fallbackEliteTalentNames()) elite.add(name);
     _talentGodByName = byName;
-  } catch (e) { console.warn("Warhammer DBC | кэш Бога Таланта не построился, работает библиотека", e); _talentGodByName = fallbackTalentGodIndex(); }
+    _eliteTalentNames = elite;
+  } catch (e) {
+    console.warn("Warhammer DBC | кэш Бога Таланта не построился, работает библиотека", e);
+    _talentGodByName = fallbackTalentGodIndex();
+    _eliteTalentNames = fallbackEliteTalentNames();
+  }
 }
 
 /** Регистрируется в warhammer-dbc.mjs — строит кэш после готовности мира и
  * обновляет его при правках компендиума warhammer-dbc.talents. До первого
  * построения (или в тестах без game.packs) используется прямой запасной путь. */
 export function initTalentGodIndex() {
-  Hooks.once("ready", () => _refreshTalentGodIndex());
+  Hooks.once("ready", () => refreshTalentGodIndex());
   for (const h of ["createItem", "deleteItem", "updateItem"])
-    Hooks.on(h, doc => { if (doc?.pack === TALENT_PACK_ID) _refreshTalentGodIndex(); });
+    Hooks.on(h, doc => { if (doc?.pack === TALENT_PACK_ID) refreshTalentGodIndex(); });
 }
 
 /** Ключ Бога Таланта по имени (как оно лежит в компендиуме/библиотеке), или
@@ -123,6 +139,21 @@ export function talentGodKeyOf(talentName) {
   const index = _talentGodByName;
   const label = index.get(talentName) || "";
   return TALENT_GOD_LABEL_KEY[label.toLowerCase()] || "undivided";
+}
+
+/**
+ * Талант Элитного Архетипа? «Все Таланты Элитных Архетипов считаются
+ * нейтральными в системе Склонностей» (стр. 24) — у них в паке пустой список
+ * Склонностей, и без этого признака подсчёт совпадений делал их Враждебными.
+ *
+ * Признак берётся с самого предмета (`specialization`, если вызывающий её
+ * знает — так видны и Таланты, заведённые руками), а иначе по имени из кэша
+ * компендиума.
+ */
+export function isEliteTalent(talentName, specialization = "") {
+  if (isEliteSpecialization(specialization)) return true;
+  _eliteTalentNames ??= fallbackEliteTalentNames();
+  return _eliteTalentNames.has(talentName);
 }
 
 export function talentPatronCat(talentName, patronGod) {
@@ -172,15 +203,29 @@ export function mixedCat(aptCat, patronCat) {
 }
 
 // ── Настройка ГМ: режим на весь мир ──────────────────────────────────────────
+/**
+ * Мировое умолчание — Покровительство: в книге (стр. 23) это основная система
+ * цен, Склонности — альтернатива. Так решил владелец при сверке «Опыт»
+ * 04.10.2026 (до того умолчанием были Склонности).
+ *
+ * Действует на миры, где настройку никогда не сохраняли; сохранённый выбор ГМ
+ * остаётся. Цены, уже записанные на листах, пересчитаются при ближайшей смене
+ * Склонностей/Покровителя или режима (hooks.mjs, recalcAllAdvanceCosts).
+ */
+export const DEFAULT_PRICING_MODE = "patronage";
+
 export function registerAdvancePricingSettings() {
   game.settings.register(SYSTEM_ID, "advancePricingMode", {
     name: "Система цен Продвижения",
-    hint: "Как считать цену покупки Характеристик/Навыков/Талантов за опыт — по Склонностям (стр. 24, альтернативная система), по Покровительству одного из Богов Хаоса (стр. 23, система по умолчанию в правилах) или по обеим сразу (Смешанная, стр. 24). Персонажу можно задать свою систему отдельно через «Настройки листа».",
+    hint: "Как считать цену покупки Характеристик/Навыков/Талантов за опыт — по Покровительству одного из Богов Хаоса (стр. 23, основная система книги — умолчание), по Склонностям (стр. 24, альтернативная система) или по обеим сразу (Смешанная, стр. 24). Персонажу можно задать свою систему отдельно через «Настройки листа».",
     scope: "world", config: true, type: String,
-    choices: PRICING_MODES, default: "aptitude"
+    choices: PRICING_MODES, default: DEFAULT_PRICING_MODE
   });
 }
 
+// Фолбэк «Склонности» — НЕ умолчание мира (его задаёт DEFAULT_PRICING_MODE), а
+// поведение там, где настроек нет вовсе: тесты без game и самый ранний рендер.
+// Цены там по-прежнему считаются по Склонностям.
 export function worldAdvancePricingMode() {
   try { return game.settings.get(SYSTEM_ID, "advancePricingMode") || "aptitude"; }
   catch (e) { return "aptitude"; }

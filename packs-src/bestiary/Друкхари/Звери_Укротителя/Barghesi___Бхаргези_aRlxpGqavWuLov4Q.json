@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/actor-icons/character.svg",
   "folder": "SPc6Zcw3RItswEM5",
   "system": {
-    "bodyType": "male",
+    "bodyType": "other",
     "race": "",
     "subrace": "",
     "ynnariPast": "",
@@ -1248,13 +1248,13 @@
       "_key": "!actors.items!aRlxpGqavWuLov4Q.MnRQi838Q1N10tEi"
     },
     {
-      "name": "Sturdy / Кряжистый",
+      "name": "Sturdy / Надёжный",
       "type": "trait",
       "img": "icons/svg/item-bag.svg",
       "system": {
         "description": "",
         "notes": "+20/+30 против конкретных категорий эффектов (Захват/Оглушение/сбивание/отбрасывание) — это встречные тесты ДРУГИХ действий против носителя, не тест самого носителя; testMod применяется к СВОИМ тестам, не входящим воздействиям.",
-        "benefit": "Устойчив к сбиванию с ног и отбрасыванию.",
+        "benefit": "+20 на тестах сопротивления Борьбе и Оглушению; +30 на тестах сопротивления сбиванию с ног или отбрасыванию.",
         "source": "раса",
         "hasRating": false,
         "rating": 0,

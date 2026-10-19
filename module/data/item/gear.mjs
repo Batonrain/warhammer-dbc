@@ -43,6 +43,9 @@ export class GearData extends foundry.abstract.TypeDataModel {
       // см. gearRequiresWearing): хим-лаборатории и анализатору «надеть» не
       // предлагается — они работают фактом применения, а не ношением.
       equipped:     new BooleanField({ initial: false, label: "Надето" }),
+      // Хранится не при себе (wdbc-6rj) — склад/кузов/каюта: не учитывается в
+      // Нагрузке (rules/character.mjs), в отличие от equipped/active выше.
+      stored:       new BooleanField({ initial: false, label: "Хранится (не при себе)" }),
       // Включаемая/включена (wdbc-x1nz.2) — тот же тумблер, что у armorMod/
       // weaponMod: бонус Конструктора действует, только пока active=true.
       // Отдельная ось от equipped выше — «активировал прямо сейчас»

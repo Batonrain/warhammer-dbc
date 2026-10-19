@@ -32,7 +32,8 @@ import { hasRuleFlag } from "../rules/flags.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
-import { conditionApplyFields, addFatigue } from "../sheets/tabs/conditions.mjs";
+import { addFatigue } from "../sheets/tabs/conditions.mjs";
+import { statusApplyFields } from "./status-resist.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const FLAG = "dreadWail";
@@ -116,8 +117,11 @@ async function applyWaveEffect(targetActor, effectKey) {
   }
   if (effectKey === "stunned") {
     const curRounds = Number(targetActor.system.conditions?.stunnedRounds) || 0;
-    await targetActor.update(conditionApplyFields("stunned", Math.max(curRounds, 2), targetActor));
-    return "Оглушение на 2 Раунда";
+    // Стальная Челюсть (Талант Стойкости): носитель вправе пройти T+0 и не получить Оглушение.
+    const { fields, resisted, note } = await statusApplyFields(targetActor, "stunned", Math.max(curRounds, 2),
+      { source: "Грозный Вопль" });
+    if (Object.keys(fields).length) await targetActor.update(fields);
+    return resisted ? note : "Оглушение на 2 Раунда";
   }
   // "fear" — информационная метка, см. заголовок файла (не интегрирована в
   // производный system.fearRating).

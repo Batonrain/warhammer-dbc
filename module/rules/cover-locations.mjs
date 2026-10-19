@@ -37,11 +37,18 @@ export function hasCoveredLocations(cover = {}) {
  * @param {string} location   ключ локации: head/leftArm/rightArm/body/leftLeg/rightLeg
  * @param {number} declaredAp AP из ОБЪЯВЛЕННОГО источника — сейчас это бонус
  *   Отскока в укрытие (0, если Отскока не было)
+ * @param {object} [opts]
+ * @param {boolean} [opts.hunker] Залегание (Талант Стойкости): «удваивает расчётный AP
+ *   укрытия и даёт выглядывающим из укрытия частям тела обычное AP укрытия».
+ *   Прикрытые части (отмеченные) — ×2; когда отметки есть, неотмеченные — те самые
+ *   «выглядывающие» — получают обычное AP вместо 0; отметок нет вовсе (укрытие общее) — ×2 везде.
  * @returns {number} 0, если эта часть тела не прикрыта
  */
-export function coverApForLocation(cover = {}, location = "", declaredAp = 0) {
+export function coverApForLocation(cover = {}, location = "", declaredAp = 0, { hunker = false } = {}) {
   const ap = Math.max(Number(cover?.ap) || 0, Number(declaredAp) || 0);
   if (ap <= 0) return 0;
-  if (!hasCoveredLocations(cover)) return ap;   // укрытие общее — как раньше
-  return cover?.[location] ? ap : 0;
+  const doubled = hunker ? ap * 2 : ap;
+  if (!hasCoveredLocations(cover)) return doubled;   // укрытие общее — как раньше
+  if (cover?.[location]) return doubled;
+  return hunker ? ap : 0;                            // выглядывающая часть: только при Залегании
 }

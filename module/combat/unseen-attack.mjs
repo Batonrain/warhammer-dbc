@@ -1,7 +1,7 @@
 // module/combat/unseen-attack.mjs
 //
 // Незримое (стр. 32, wdbc-1rno.2) — реактивный тест защищающегося на
-// засечение Незримой атаки (Психонаука/Пси-чутьё или Техпользование/
+// засечение Незримой атаки (Психочутьё/Пси-чутьё или Технология/
 // Ноосканирование), кнопка в той же карточке, что Уклонение/Парирование
 // (module/combat/attack-card.mjs::defenseSection). Обобщение узкого
 // module/combat/hidden-threat.mjs (wdbc-1rno.1: тот же тест, но с
@@ -23,8 +23,8 @@ import { actorInfamyValue, actorInfamyPath, spendFromInfamyPool } from "../apps/
 import { markUnseenDetectedUntilNextTurn } from "../rules/unseen-attack.mjs";
 
 const SKILLS = {
-  psyniscience: { label: "Психонаука (Пси-чутьё)", char: "per" },
-  techUse:      { label: "Техпользование (Ноосканирование)", char: "int" }
+  psyniscience: { label: "Психочутьё", char: "per" },
+  techUse:      { label: "Технология (Ноосканирование)", char: "int" }
 };
 
 /**

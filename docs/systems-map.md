@@ -62,8 +62,21 @@
 
 - `module/constants/characteristics.mjs` — Характеристики и ступени Улучшения.
 - `module/constants/skills.mjs` (+ `skill-descriptions.mjs`,
-  `skill-specializations.mjs`, `skill-specialty-descriptions.mjs`) — Навыки и
-  групповые специализации.
+  `skill-specializations.mjs`, `skill-specialty-descriptions.mjs`,
+  `skill-actions.mjs`) — Навыки и групповые специализации; подписи — как в книге
+  (Глава 3), старые названия (Бдительность, Обаяние…) сводит к нынешним
+  `currentSkillName` при сравнении (правила рас, Мастерство). Тултипы Навыка,
+  группы и специализации собирает `skillTip`/`groupTip` в
+  `sheets/sheet-helpers.mjs`. Склонность General выдаётся всем автоматически
+  (`charAptitudeSet`). Сторожа: `test/constants/skills-book-table.test.mjs`,
+  `skill-names-book.test.mjs`.
+- `cannotUntrained` (стр. 57, сноска ², сверка 16.10.2026) — Psyniscience,
+  Forbidden Lore и Operate (Aeronautica/Voidship) вообще недоступны
+  неизученными (не просто −20); блокировка в `onSkillRoll`/
+  `onExtendedTestReroll` (sheets/actor-sheet.mjs) и `rollPsyniscience`
+  (sheets/tabs/psychic.mjs). Делегированные/эффект-триггерные пути броска
+  (hooks.mjs::genericTest/opposedResponse, horde-sheet.mjs) этой блокировкой
+  НЕ накрыты — осознанно оставлено как хвост.
 - `module/constants/advancement.mjs` — таблицы цены Характеристик/Навыков/
   Талантов по Склонностям.
 - `module/rules/advance-category.mjs` — категория цены (Дружественная/
@@ -72,7 +85,171 @@
   какие две Склонности привязаны к объекту, с ручным переопределением с листа.
 - `module/rules/aptitude-overrides.mjs` — расовое/субрасовое переопределение
   Склонности («у Африэль это всегда Дружественная»).
+- Склонности (стр. 24, сверка 04.10.2026): Таланты Элитных Архетипов нейтральны —
+  `constants/patronage.mjs::isEliteTalent` (по «Специализации» «Элитный архетип: …»
+  или по имени из кэша пака), читает `constants/advancement.mjs::resolveTalentCat`;
+  число Склонностей — `APTITUDES_TOTAL` (8), деление 4+4 в Мастере — хоумрул
+  (`APT_PICK`, apps/creation.mjs). Смена Склонности — выпадающий список панели
+  на «Развитии», пересчёт `recalcAllAdvanceCosts`; лимита «раз за историю» нет.
 - `module/rules/mastery-targets.mjs` — к чему привязывается Талант «Мастерство».
+- Таланты Избегания (стр. 62, сверка главы 3, 18.10.2026): двадцать три Таланта
+  сверены с книгой — текст в `system.benefit`, честные `notes`, ключи
+  `dodge.core.*`. Логика — `rules/dodge-talents.mjs` (`hasDodgeTalent`, числа).
+  Первый проход: Мастер Боя — строки «Числ. перевес» в окне рукопашной атаки
+  гасятся по Таланту цели (`sheets/attack/mods.mjs`); Живой Щит — сектор укрытия
+  Борьбы 180° и Избирательные атаки (`combat/grapple.mjs::grappleCoverPartner`);
+  Кошачье Приземление — `movement-actions.mjs::_resolveFallDamage` (высота −A.b,
+  +20 Группирование, не Лежачий, урон в ногу d2); Высокая Защитная Стойка — Вольт
+  через Parry(WS) (`_rollVaultContest`); Осторожность — кнопка вкладки БОЙ
+  (`combat/caution.mjs`); Оплот — Преимущество Парирования щитом и Баланс 1 для
+  Щита Клинков (`combat/defense.mjs`); Скоростная Внимательность — Избегание
+  после Бега со штрафом, дистанцию спрашивает диалог (`defense.mjs::
+  _speedAwarenessMod`, `action-economy.mjs::canSpendReaction`). Шаг в Сторону —
+  эффект `defenseMax` +1. Прилив Адреналина, Трудная Цель, Щит Клинков, Сальто,
+  Выстрел Навскидку — сделаны раньше. Второй проход: Освобождение от Пут и
+  Ускользнуть — в окне Состязания «Выкрутиться» (`combat/techniques.mjs`; флаги
+  `escapeArtist`/`slipAway` ставит `grapple.mjs::grappleTechDef`), Ускользнуть
+  ещё и на Уклонении от атаки Захватом (`defense.mjs`, `data-grapple` на кнопке);
+  Контрфинт, Чтец Клинков и Пируэт — в `combat/opposed-contest.mjs` (варианты
+  сопротивления Финту, переброс через Scrutiny(WS), кнопка Пируэта на Напроломе);
+  Отбить Выстрел и Кусака — в `defense.mjs::_performParry`
+  (`rules/dodge-talents.mjs::deflectableProjectile`, кнопка «Парировать укусом»);
+  Телохранитель — кнопки на карточке атаки (`combat/bodyguard.mjs`); Размашистый
+  Танец — `combat/flourish-dance.mjs` (кнопка БОЙ, штраф в окне атаки цели);
+  Кувырок — `combat/flip.mjs` (updateActor: Повален стал истиной).
+- Таланты Внимательности (стр. 62, сверка главы 3, 17.10.2026): одиннадцать
+  Талантов сверены с книгой — полный текст в `system.benefit`, честные `notes`,
+  ключи `awareness.core.*`. Всё, что зависит от вида теста Awareness, подано
+  галочками в окне теста (источник правил `awarenessTalents`,
+  `rules/awareness-talents.mjs`): Усиленные Чувства (+10 на Awareness и
+  Scrutiny по выбранному чувству), Дегустатор (+20 нюх / +40 вкус), Воролов,
+  Служба Безопасности, Аналитический Взгляд; Успехи после броска меняет
+  `awarenessTalentDegrees` (вызывает `sheets/actor-sheet.mjs`), галочка
+  Аналитического Взгляда переключает «Бросок с:» на I (`data-set-char`).
+  Бой Вслепую — штрафы слепоты/тьмы/дыма в рукопашной вдвое (`sheets/attack/
+  mods.mjs`, `sheets/attack-dialog.mjs`, WS-тесты — `awarenessTalentRules`);
+  Слепое Зрение — `rules/predicates.mjs::blindsightActive` (Талант и нет шлема:
+  `helmetWorn`) входит в «альтернативные чувства» (`rules/blindness.mjs`,
+  `conditions.blinded.altSenses`). Шестое Чувство и Избегание Незримых — раньше
+  (`rules/unseen-talents.mjs`), Часовой — Конструктор (`kind:"reroll"`). Чуткий
+  Сон и Чтение По Губам — честный текст (нет Состояния «Спит»; повествование).
+- Таланты Стойкости (стр. 62, сверка главы 3, 18.10.2026): двадцать три Таланта
+  сверены с книгой — текст в `system.benefit`, ключи Возможностей
+  `resilience.core.*`. Чистая логика — `rules/resilience-talents.mjs`
+  (`hasResilienceTalent`, числа; источник правил `resilienceTalents` даёт
+  Сопротивление и Декаданс). Пакет A: Крепкое Телосложение — +1 Рана за копию в
+  `wounds.maxMods` (`rules/character.mjs`, потолок T.b, +2 не-Космодесантнику);
+  Неутомимый — `situational.mjs::fatiguePenalty`/`attackFatigueApplies` (WS, BS,
+  S, T, A без штрафа Усталости; окно атаки `attack-dialog.mjs`); Ментальная
+  Стойкость — запись «Усталость» (`fatigue-grace.mjs`) и порог обморока
+  `resilience-talents.mjs::fatigueFaintThreshold` (расчёт актора, вкладка
+  Состояний, лист); Бронник — тумблер на вкладке БОЙ (`combat/armour-monger.mjs`),
+  +2 AP через `system.armorBonus` в `rules/character.mjs`, сброс в полночь —
+  часы Состояний (`combat/condition-clock.mjs`); Укреплённая Душа — поглощение
+  варп-оружия в `combat/damage.mjs` и кубики Выжигания Души в
+  `hooks.mjs::_executeSoulBurn`; Настоящая Выдержка — `combat/damage.mjs`
+  (`trueGritDamage`); Падай и Перекатывайся — `combat/extinguish.mjs` (тушение
+  без теста); Пожиратель Змей — Toxic в `hooks.mjs` и яды/пост-эффекты в
+  `sheets/tabs/drugs.mjs`; Сопротивление — теги `fearTest` (`combat/fear.mjs`),
+  `poisonTest`/`stunTest` (`hooks.mjs`), `psychicThreat` (сопротивление психосиле
+  и Выжигание Души); Декаданс — тег `addictionTest` (`drugs.mjs::rollAddictionTest`);
+  Громыхатель — только Преимущество (`kind:"reroll"`). Тесты —
+  `test/rules/resilience-talents.test.mjs`, `test/documents/resilience-talents-derived.test.mjs`,
+  `test/combat/resilience-damage.test.mjs`, `armour-monger.test.mjs`,
+  `fear-resilience.test.mjs`, `extinguish.test.mjs`, `test/sheets/drugs-resilience.test.mjs`.
+  Пакет B (там же, `rules/resilience-talents.mjs`): Прикрытие Головы —
+  `combat/head-guard.mjs`, окно переноса попадания в голову на руку перед
+  поглощением (`combat/damage.mjs`), раз в Раунд (`apps/game-session.mjs`);
+  Адская Живучесть — `combat/hellish-resilience.mjs`: Очко Бесчестия → +Cor.b
+  поглощения в `damage.mjs`, ActiveEffect на `system.incomingDamageReduction` со
+  счётчиком концов Хода (`hooks.mjs`, `updateCombat`/`deleteCombat`); Взор Богов —
+  `combat/eye-of-the-gods.mjs`: корзины «рядовые»/«значимый» (флаг актора
+  `notableCharacter`, пункт «Значимый персонаж» в «Настройках листа»,
+  `sheets/actor-sheet.mjs::_notableEntries`), сброс окна в начале Хода носителя;
+  Залегание — `combat/hunker-down.mjs` (кнопка на вкладке БОЙ, метка в
+  `rules/turn-flags.mjs`) и `rules/cover-locations.mjs::coverApForLocation`
+  (`{ hunker }`: прикрытые части ×2, выглядывающие — обычное AP); Аблативное
+  Укрепление — `combat/ablative-hardening.mjs`: поле брони `hardeningCharges`
+  (`data/item/armor.mjs`), кнопка «Обслужить (1 ч)» на вкладке СНАРЯЖЕНИЕ
+  (`sheets/tabs/gear.mjs`), расход в `damage.mjs` (Разъедающее, Касание Энтропии,
+  аблативный мод, Моносеть). Тесты — `test/rules/resilience-talents-b.test.mjs`,
+  `test/combat/resilience-b-damage.test.mjs`, `resilience-b-wiring.test.mjs`.
+  Пакет C (там же, `rules/resilience-talents.mjs`): Стальная Челюсть (T+0 против
+  Оглушения) и Стена (S+0 против падения, на 5+ Успехов против рукопашного приёма —
+  ответный сбив) — единая асинхронная точка наложения Состояний
+  `combat/status-resist.mjs` (`statusApplyFields`/`offerStatusResist`: берёт патч у
+  `conditionApplyFields`, значит иммунитет учтён; спрашивает только когда Состояние
+  реально накладывается). Подключена к приёму «Оглушить» (`damage.mjs`), пилюлям
+  Критического Эффекта (`crit-effect-parser.mjs::applyCritEffectPill`), свойствам
+  оружия (`hooks.mjs::_applyWeaponPropEffect`), Грозному Воплю, Повалить/Напролому/
+  Пересилить, падению из седла (`mount.mjs`), Состояниям психосил
+  (`rules/on-target-fail.mjs`); НЕ подключена к ручному наложению, добровольному
+  падению, падению с высоты, тикам. «Насильно перемещают» не автоматизировано (нет
+  принудительного сдвига токена). Последний Рывок / Не Умирать / Боль — Лишь
+  Иллюзия — кнопки на карточке Критического Эффекта (`combat/crit-talents.mjs`
+  разметка и гашение, `crit-talents-actions.mjs` действия, обработчики в
+  `hooks.mjs`; раз на карточку — флаги `combat/card-once.mjs`); Последний Рывок
+  откладывает кнопки до конца Хода носителя (`hooks.mjs`, `updateCombat`). Тест
+  «смерть от шока» (правило мира, любой персонаж) — `crit-effect-parser.mjs::
+  parseShockDeathTest`/`shockDeathButtonHtml`, бросок и смерть —
+  `combat/shock-death.mjs` (`killByCondition`); Крепкий Орешек перебрасывает его и
+  бросает кубик Кровотечения дважды (`combat/condition-ticks.mjs`). Общий бросок
+  «тест +0» — `combat/resilience-test.mjs`. Тесты —
+  `test/rules/resilience-talents-c.test.mjs`, `test/combat/resilience-c-status.test.mjs`,
+  `resilience-c-crit.test.mjs`, `resilience-c-wiring.test.mjs`.
+- Таланты Скорости (стр. 62, сверка главы 3, 17.10.2026): одиннадцать Талантов
+  сверены с книгой — полный текст в `system.benefit`, честные `notes`, ключи
+  Возможностей `speed.core.*`. Чистая логика — `rules/speed-talents.mjs`
+  (`hasSpeedTalent`, стоимости, дистанции). Вскочить — «Встать» за 0 ОД
+  (`movement-actions.mjs::declareStandUp`); Технический Трюк — Расклин 1 ОД
+  (`combat/clear-jam.mjs`); Быстрая Перезарядка — ОД перезарядки пополам вниз
+  (`combat/reload.mjs`); Быстрое Выхватывание/Складывание — Взять/Сложить оружие
+  за 0 ОД (`combat/quick-draw.mjs`, неудобная Разгрузка — `constants/rig.mjs::
+  inAwkwardRigLocation`, чека гранаты раз в Ход); Прыгун — Прыжок 1 ОД или 0 как
+  часть Натиска; Запредельная Скорость и Спринт — дистанции на листе
+  (`rules/character/movement.mjs`: Натиск = Бег; Полное = SPD×3,
+  `movement.sprintRun` = SPD×12; Усталость за два дальних Бега подряд —
+  `movement-actions.mjs::applySprintTurnEnd`); Смена Позиции — карточка на старте
+  боя и пункт меню Движения; Прорыв (Прорыватель) — пункт меню, Полудвижение за
+  0 ОД в Защитной Стойке со щитом. Полушаг сделан раньше (wdbc-9wvm).
+- Трейты существ (стр. 107, сверка главы 3, 18.10.2026): все 53 трейта A-Z
+  из таблицы книги сверены с `packs-src/books/core.json`. У всех уже был
+  канонический предмет в `packs-src/traits/*.json`, кроме Warp Sight (создан
+  заново) — правка текста в 22 канонических предметах (знаки/условия
+  перепутаны, выдуманные пункты, пропущенные книжные клаузы — например
+  Blunted: было «игнорирует Warp Weapon», а книга и код
+  `rules/blunted.mjs::bluntedAppliesToPower` говорят обратное — защита
+  работает ТОЛЬКО против психострельбы С Warp Weapon). Пропагировано на 40
+  embedded-копий в `packs-src/bestiary/**` для 5 самых разошедшихся (Stuff of
+  Nightmares, Daemonic Presence, Sturdy, Sycophant, Bestial) — остальные
+  embedded-копии не проходили полным сплошным проходом. Половина трейтов
+  (`constants/capabilities.mjs`, `reader:""`) без механики — не трогал: каждый
+  кандидат (Quadruped ×2 SPD/Ношение, Sturdy встречные тесты, Fanatic
+  перемещение+перехват и т.п.) тянет на отдельный `dbc-capability-cycle`
+  проход, список — в комментарии к задаче Sahara `wdbc-x1nz-3-iii`. Два
+  трейта (`Bestial`/`Sturdy`) на части акторов несли чужое правило под
+  книжным именем — по решению владельца оставлены как есть, задокументировано
+  в `notes`.
+- Общие Таланты (стр. 62, сверка главы 3, 17.10.2026): девять Талантов группы
+  «Общие» сверены с книгой — полный текст в `system.benefit`, честные `notes`.
+  Инициативные (Боевое Построение, Чувство Боя, Молниеносные Рефлексы,
+  Самая Быстрая Рука, Паранойя) — `rules/initiative.mjs`; Боевое Построение
+  соратникам — кнопка-скрипт `shareCombatFormation` (`combat/combat-formation.mjs`,
+  отметка `flags.warhammer-dbc.combatFormation`, +1 и I.b вместо A.b до конца
+  боя, `rules/combat-formation.mjs`); Паранойя — скрипт «Тайный тест на угрозу»
+  (шёпот ГМу). Быстрая Реакция — `rules/rapid-reaction.mjs`,
+  `combat/rapid-reaction.mjs`. **За Гранью Человека**:
+  `rules/beyond-human.mjs` — привязка к Характеристике (девять книжных, без
+  Влияния) в `aptSource`; Unnatural (+1) считает `rules/character.mjs` и
+  `rules/unnatural-characteristic.mjs`; на карточке переброса за Очко кнопка
+  «оставить первый результат» (`combat/beyond-human.mjs`, данные в флагах
+  карточки или в опциях атаки, гасит карточку и возвращает Очко).
+  **Мастерство**: `rules/mastery.mjs` — автоуспех за Очко Бесчестия (пункт
+  меню Очков на карточке теста, `combat/mastery.mjs`; Успехи = Бонус
+  Характеристики, поправки не хуже +0) и «5+ Успехов = Критический Успех»
+  (`rules/kind-outcome.mjs`). Требования «Характеристика 70» / «Навык+30»
+  разбираются как `anyChar` / `anySkill` в `constants/talent-requirements.mjs`;
+  по выбранной привязке их проверяет пикер (`dynamicRequirementGap`).
 - `module/rules/duplicate-grants.mjs` + `apps/duplicate-refund.mjs` — что
   делать с повторной выдачей уже взятого Навыка/Таланта (возврат опыта).
 - `module/rules/pick-xp-cost.mjs`, `pick-budget.mjs` — цена/бюджет выбора из
@@ -82,9 +259,25 @@
 - `module/apps/xp-log.mjs` — Журнал опыта, живое окно.
 - `module/sheets/tabs/advance.mjs` — вкладка Развитие на листе.
 - Награды за сессию: `constants/session-rewards.mjs`, `rules/session-rewards.
-  mjs`, `apps/session-rewards-app.mjs` (окно «Итоги Сессии»).
+  mjs`, `apps/session-rewards-app.mjs` (окно «Итоги Сессии»): вилки книги
+  вводятся числом с подсказками, колонка «Возмещение» (Органичное
+  Продвижение) без «Ловит на Лету».
 - `module/constants/start-levels.mjs` — стартовый опыт/Бесчестие/Порча по
-  уровню игры.
+  уровню игры; `rules/party-xp.mjs` — планка новичка (наименее опытный из
+  персонажей игроков), кнопка «Взять как стартовый» на Этапе 4 Мастера.
+- `module/rules/xp-shortfall.mjs` + `apps/xp-afford.mjs` — «Взять всё
+  равно?» при нехватке опыта на покупку Характеристики/Навыка/Таланта
+  (Элитные и Психосилы спрашивают у себя).
+- Особые траты Покровительства: `rules/patron-abilities.mjs` — «Атака Ненависти»
+  (Кхорн, галочка в окне атаки, `fixedSuccessDeg`) и «Сладкое Страдание»
+  (Слаанеш, кнопка на карточке Критического Эффекта, `combat/sweet-suffering.mjs`);
+  тексты «Бог обращает внимание на…» — `GOD_ATTENTION` в `constants/chaos-patron.mjs`.
+- Снаряжение Элитного Архетипа при покупке — `apps/gear-grant.mjs` (`grantEliteGear`,
+  `planEliteGear`): именное — на лист, выбор/категория/ненайденное — шёпотом ГМу;
+  стартовые боеприпасы — `rules/equip-shop.mjs::planStartingAmmo` (всегда, флаг
+  `startingAmmoGranted`), жертва кибернетики — `sacrificeModPack` (спрашивает оружие/броня).
+- Мировая система цен продвижения по умолчанию — Покровительство
+  (`constants/patronage.mjs`, DEFAULT_PRICING_MODE).
 
 ## 3. Раны, Смерть, Лечение, Аблативный пул
 
@@ -114,6 +307,13 @@
   `flags.warhammer-dbc.lastBreach` цели с id карточки атаки. Эффекты свойств с
   `targetEffect.onBreach` (Rad, Toxic, Сновидение, Погибель) проверяют его в
   `hooks.mjs::_applyWeaponPropEffect`; Shift-клик — наложить вручную.
+- Rad (X) (wdbc-x1nz.10): `combat/radiation.mjs::applyRadHit` — X урона в T без
+  теста, счёт «10+ за бой» флагом `combatRadiation`, тест T+0 по концу боя
+  (`resolveCombatRadiation`, `rules/radiation-combat.mjs`). Решения владельца
+  02.10.2026: Демоны/Демоны-Принцы тест после боя не бросают
+  (`radiationTestExempt`; «Машину» не исключали — решения нет); по Технике
+  радиация бьёт экипаж и пассажиров (`system.stations[].uuid`), один бросок X,
+  тот же урон в T каждому; пробитие брони Техники система не проверяет.
 - Подвиды урона в скобках книги (I(Cr)/X(Fr)/E(El)/E(Fl)/E(Ls)/C(Tx), wdbc-q0q8,
   12.09.2026) — на уровень точнее широкого `damageType`: `system.damageSubtype`
   у оружия (`data/item/weapon.mjs`), психосилы и её `profiles[]`, техночуда,
@@ -174,7 +374,18 @@
 - `module/rules/movement.mjs` + `character/movement.mjs` — таблица SPD×1/2/3/6
   для Персонажа/Демона/Миньона/Принца/Орды.
 - `module/rules/encumbrance.mjs` — общий Перевес инвентаря.
+- **Три статуса снаряжения (wdbc-6rj, 14.10.2026):** «Используется»
+  (equipped/active — эффекты применяются, уже было), «Носится» (при себе,
+  без эффектов, умолчание) и «Хранится» (`system.stored`, чекбокс «Хран.» в
+  таблицах вкладки Снаряжение — оружие/броня/снаряжение/препараты/
+  инструменты/боеприпасы/моды) — вес «Хранится» не входит в Нагрузку
+  (`rules/character.mjs`, цикл `totalWeight`), в отличие от первых двух.
+  UI-чекбокс есть не у всех типов (Силовые поля/моды — только поле схемы).
 - `module/combat/action-economy.mjs` — 2 ОД + 1 Реакция за Ход.
+- **Лимит Атак за Ход (стр. 12, wdbc-x1nz.2.30):** `combat/attack-limit.mjs`
+  — база 1, Решительность Сражаться при отрицательных Ранах +1, плюс
+  редактируемая ГМ-надбавка `system.attackLimitBonus` (строка «Атаки» в
+  экономике действий на вкладке БОЙ, wdbc-6rj).
 - `module/combat/movement-actions.mjs` — Полудвижение/Полное/Натиск/Бег/Выход.
 - `module/combat/movement-terrain.mjs` — Трудный Ландшафт при Беге/Натиске.
 - **Полёт (стр. 30, wdbc-x1nz.2, 18.09.2026):** `combat/movement-actions.mjs`
@@ -227,7 +438,10 @@
 mjs`, `roll-mods.mjs`, `test-kind.mjs` (+`test-kind-widget.mjs`), `difficulty.
 mjs`, `extended-test.mjs`, `delegate-test.mjs`, `reroll-pick.mjs`, `assists.
 mjs`, `match-context.mjs`, `situational.mjs`, `initiative.mjs`; `documents/
-combatant.mjs` (бросок Инициативы с Преимуществом).
+combatant.mjs` (бросок Инициативы с Преимуществом). «Провалил на N+ Провала —
+последствие»: общий реестр `rules/fail-degree-triggers.mjs` (порог, область,
+исключение Крит. Провала, Возможность), исполняет `kind-outcome.mjs`
+(`FAIL_DEGREE_HANDLERS`); первая запись — Инфернальная Воля (wdbc-1rno.22).
 
 **Конвейер атаки:** `combat/attack.mjs` (оркестратор) → `attack-weapon.mjs`
 (профиль/хват/боеприпас) → `attack-threshold.mjs` (порог) → `attack-outcome.
@@ -592,8 +806,19 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `module/combat/weapon-properties.mjs` — движок автоматизации Свойств,
   центральный для атаки/защиты/урона; `weapon-profiles.mjs`, `weapon-mods.mjs`,
   `reload.mjs`.
+- Модификации оружия — какие действуют: `combat/weapon-mods.mjs::getActiveMods`
+  (его читают getModEffects, окно атаки, гасители штрафов, бюджет рук).
+  Отсекает мод, «бесполезный без» надетого/установленного предмета
+  (`system.requiresWorn`, Целеуказатель/Омни-Прицел, wdbc-1rno.38; дисплей,
+  ВСТРОЕННЫЙ в броню/маску/имплант, засчитывается меткой «Возможность»
+  `device.retinalDisplay` на самом предмете, task-1a59), и все
+  прицелы (`modGroup:"sights"`), кроме выбранного в окне атаки — «один прицел
+  за атаку», флаг оружия `hudSight` (wdbc-1rno.40). Бонус попадания по режиму
+  огня — `effects.rof{Single,Semi,Full}AttackMod` (не путать с
+  `rofSemiMod/rofFullMod` — число выстрелов).
 - `module/rules/dual-wield.mjs` + `dual-wield-talents.mjs` — два оружия и
-  ветка Талантов сверх базового штрафа; `weapon-training.mjs` (Арсенал);
+  ветка Талантов сверх базового штрафа (сюда же элитный Тирантикос: −10 к
+  парной стрельбе, +2d10 второй тяжёлой по цели Размера 2+); `weapon-training.mjs` (Арсенал);
   `improvised-weapon.mjs` (импровизированное/метание).
 - Оружие Наследия: `constants/legacy-weapon.mjs`, `rules/legacy-weapon.mjs`,
   `apps/legacy-weapon.mjs` (блок «Наследие» на листе оружия, включая кнопки
@@ -825,6 +1050,12 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   economy.mjs`. Машины без воли — возможность `fear.machineMind` (Int вместо
   W; стоит на Черте Сервочереп). Диалог подставляет Inf, рейтинг и «Демон» с
   выделенного источника (`sheets/tabs/disorders.mjs::fearDialogDefaults`).
+  Все пути «игнорировать Страх» (память сцены, автоуспех по Inf/своему
+  Страху, Стальное Сердце) и их отмена «нельзя игнорировать» (Затронутый
+  Варпом 1, свойство теста `unignorable`) — одно место, `rules/fear-ignore.mjs`.
+  Шок без теста Страха — Инфернальная Воля (4+ Провала теста Навыка):
+  `combat/fear.mjs::rollInfernalWillShock`, снижение на Cor —
+  `rules/infernal-will.mjs`.
 - Здравомыслие пилота Дредноута: `rules/dreadnought.mjs`, `sheets/tabs/
   dreadnought-panel.mjs`.
 - Расстройства/Травмы: `data/item/mental-disorder.mjs`, `mental-trauma.mjs`,
@@ -847,7 +1078,11 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   subraceCost/xpShort, `race-library.mjs::subraceCostAt`); уровень —
   `system.subraceTier`, в формулах Механики `subtier` (Затупленный 1–4);
   максимум Бесчестия Хаосита Inf.b ± `system.infamyMaxMod` (poolMax с целью
-  «infamy», `apps/infamy-points.mjs::infamyMaxWithMod`); закрытые Архетипы
+  «infamy», `apps/infamy-points.mjs::infamyMaxWithMod`; «+1 к максимуму
+  Судьбы» Эльданара, Избранного Судьбой и Предсказания «Не спрашивай почему
+  ты служишь» — ПАРА записей poolMax, «fate» + «infamy»: fate.max читает
+  только не-Хаосит, infamyMaxMod — только Хаосит, условие «Когда» не нужно);
+  закрытые Архетипы
   (`apps/archetypes.mjs::archetypesForRace`); выбор мутации из списка
   (`equipChoiceIds`, фильтр `ids`) и строки субмутации
   (`apps/submutations.mjs::chooseSubmutation`); дружественная одна
@@ -1057,6 +1292,23 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   opposedTargetRerollRules`) дореализован целиком — вторая половина
   (противник-инициатор встречного теста) теперь тоже форсирует переброс,
   точка принуждения добавлена в `sheets/actor-sheet.mjs::_runTest`.
+- Majestic Horns / Величественные Рога (wdbc-1rno.10, 18-19.10.2026) — все
+  субмутации, по кусочкам общих примитивов: Корона Рогов — интегральная
+  атака; Рога Кровожада — `kind:"attackProp"` (`name:Рога`) с галкой «только
+  по псайкерам» (предикат `targetIsPsyker`) и `when.requireRage`;
+  Укреплённые Рога — AP против подвида в одной локации (цель `absorption`
+  `vsSubtypeAt:<loc>:<подвид>` → `system.absorption.vsSubtypeAt`, читает
+  `combat/damage.mjs`) и профили Удара головой с `requiresCapability` вида
+  «a+b»; Зрящие Рога — броня глаз (`armour` с `armourLocation:"eye"` →
+  `absorption.eyeBonus`, `combat/armor-properties.mjs`) и запрет
+  авточувств/визоров (`rules/vision-aids.mjs` ← `apps/effects.mjs::
+  isItemActive`); Однорогий — щит одной части тела (флаг
+  `shieldHitLocations` на предмете-forcefield, `damage.mjs::
+  _shieldCoversLocation`); Рог Чумоноса — `rules/lodged-horn.mjs`: «Обломить
+  Рог» ставит метку поверх Проникающего, правило `core.lodgedHorn`
+  (`autoFail` с `degrees:3`), отрастание рога 3 ч (`hornRegrowAt`) блокирует
+  атаку в `sheets/attack-dialog.mjs`; `integralAttack` умеет формулу рейтинга
+  `integralRating`.
 
 ## 13. Демонология: Демоны, Демон-Принц, Одержимость
 
@@ -1215,7 +1467,8 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   Путь Силы `PSY_PATHS.sigillite` поверх обычного конвейера
   (`sheets/tabs/psychic.mjs`), ячейка «Руны N/M» в шапке листа. Включается
   Чертой «Магия Сигиллитов»; контент — `packs-src/traits/Элитные_архетипы/
-  Сигиллит/` и Таланты в той же папке Талантов. Не Состояние: у записи
+  Сигиллит/`, Таланты — `packs-src/talents/Элитные_архетипы/Последователь_Ордена_Сигиллитов/`
+  (папка названа по имени архетипа: замок папки в пикере сверяет имя). Не Состояние: у записи
   реестра Состояний нет поля под растущий максимум.
   Сделано и подтверждено живой проверкой 12.09.2026 (wdbc-fsl9 закрыт,
   чек-лист wdbc-lx57 — 9 из 9 без расхождений). Числами подключены три
@@ -1239,6 +1492,42 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `constants/craft.mjs` (движок Крафта/Исследований) + `craft-icons.mjs`,
   `apps/craft-workshop.mjs` (отдельное окно), `sheets/tabs/craft.mjs`
   (то же на листе), `rules/craft-advantage.mjs` (Преимущество на тестах).
+- Итог проекта-Исследования (книга — глава «Исследование», стр. 21-22):
+  `rules/research-findings.mjs`, вызывается из `craft-workshop.mjs::
+  _finishResearch` при заполнении Банка. Чертёж/Истинное имя/Иное — предмет
+  `gear`; Психосила/ритуал/вязь — `psychicPower`/`ritual`/`runicWeave` по
+  выбору игрока (книга называет все три подряд); «Изучение» (Logic «вместо
+  создания знаний») — без предмета, только запись в Журнале. Все виды
+  фиксируются в Журнале Исследований (флаг `warhammer-dbc.researchJournal`
+  на крафтере) — показан ТОЛЬКО на вкладке КРАФТ листа персонажа
+  (`sheets/tabs/craft.mjs::craftTabContext`), не в отдельном окне
+  «Мастерская» (party-инструмент без одного владельца-актора). Гейтинг
+  Крафта по владению Чертежом — НЕ сделан (решение владельца: книга отдаёт
+  это целиком ГМу, не формализуем).
+- Обучение (книга, стр. 22) — 4-й режим проекта Мастерской (`mode:"training"`):
+  `constants/training.mjs` (данные/UI-выборки), `rules/training.mjs` (чистая
+  логика — целевой запас xp, месячный журнал курсов по игровому календарю,
+  combined-тест учителя, формула xp), `rules/training-advantage.mjs` (Teacher/
+  Учитель, Clear Mind/Чистый Разум), вызывается из `craft-workshop.mjs::
+  _rollTrainingSession`/`_finishTrainingCourse`. Учитель + до I.b учеников
+  (10×I.b — Teacher), каждый сеанс = смена Крафта для Усталости/монотонности;
+  по 8 сеансам — ОДИН combined-тест учителя Trade(Instructor)(I)+10 (+
+  Charm/Logic/Intimidate при выборе) и у каждого ученика свой тест I/Logic;
+  xp = 5×(Успехи учителя+ученика, Провалы не вычитаются) уходит ТОЛЬКО в
+  целевой запас (флаг `warhammer-dbc.trainingEarmarks` на ученике) — тратится
+  автоматически и только на покупку именно той цели (`sheets/tabs/advance.mjs`,
+  4 точки покупки: Характеристика/Навык/Групповой Навык/Талант), излишек сверх
+  цены теряется. Месячный лимит ученика (½I.b, окр.▲; 2×I.b учителя — NPC у
+  Teacher) — флаг `warhammer-dbc.trainingCourseLog`, скользящее окно по
+  `SECONDS_PER_MONTH`. Klaivex подключён 16.10.2026: учитель с этим Талантом
+  получает в списке «Чему учим» отдельную цель «Искусство Инкубов»
+  (kind:"archetype"), при успехе финального теста курса ставит флаг
+  `warhammer-dbc.trainingEliteDiscounts` (НЕ xp-запас, список имён архетипов),
+  `apps/elite-buy.mjs::eliteCostFor` халвит цену архетипа Инкуб, покупка
+  снимает одну запись. НЕ подключено: Interpreter (Преимущество на тесты
+  «Транскрипции» — такой механики в коде нет вовсе), первая половина Clear
+  Mind (обучение Пути — Пути Аэльдари не покупаются за опыт) — обе честно
+  задокументированы в `capabilities.mjs`, см. bd `wdbc-5yafq`.
 - `constants/quality.mjs` — движок Качества снаряжения (Poor…Artisan).
 - `constants/rig.mjs` + `apps/rig-manager.mjs` — Разгрузка (слотовая модель).
 
@@ -1313,6 +1602,26 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   Дрессировка — флаг `system.command.training` на панели «Под моим
   Присутствием»: Survival(P), P.b животных, лимит Успехов 2+продвижения.
   Потолок Успехов по Риску действует и на Координатора.
+- Таланты «Лидерство» (глава 3, Sahara 3-ac78, 19.10.2026, доработка тем же
+  днём по разбору «почему частичные заглушки»): 19 из 19 имеют код в
+  `rules/leadership-talents.mjs` (Rancor, Bravado, Camaraderie, Eloquence,
+  Duty Above All, Iron Discipline, Air of Authority (лимит целей
+  Command/Intimidate F.b/×20, показан на вкладке Социум), Frontline
+  Commander, Protege, Radiant Presence и Into the Jaws of Hell (галочки
+  диалога во всех 3 тестах Морали — Страх/Подавление/Запугивание, плюс
+  Полевая Казнь на стороне цели, не геометрия сцены), Living Legend, War
+  Chant (переброс Морали Лидеру/подпевающему подчинённому, +3 Intimidate за
+  подпевающего, +1 Успех Команде против подпевающего — раздача 3 эффектов
+  Присутствия и лимит W.b×2/×20 получателей честно не смоделированы), Rally,
+  Bring It Down! — часть полная, часть честно частичная, см. notes каждого
+  Таланта в `packs-src/talents/Лидерство/`) + `combat/field-execution.mjs`
+  (Field Execution — опосредованный тест Intimidate(W) vs W+0) +
+  `combat/fanatic-redirect.mjs` (Back to Back — раздача Трейта Fanatic;
+  карточка атаки сама находит носителей Fanatic в базовом контакте с целью
+  и считает «раз в Раунд без Реакции» через `rules/cooldown.mjs`, сам
+  перенос урона — ручная кнопка «Применить урон» по выделенному токену, как
+  и раньше — см. bd wdbc-3w7lo).
+  Живая проверка не пройдена — bd wdbc-veuno (расширен список проверки).
 
 ## 18. Техника (Vehicles)
 
@@ -1435,7 +1744,23 @@ AGENTS.md).
 
 - `constants/aspirations.mjs`, `data/item/aspiration.mjs`, `apps/aspirations.
   mjs`, `sheets/tabs/aspirations.mjs` — три фиксированных слота
-  Гордыня/Позор/Мотивация (Black Crusade).
+  Гордость/Мотивация/Позор (Black Crusade, стр. 22; порядок `ASPIRATION_TABLES`).
+- Бонусы применяет НЕ вкладка, а Механика записей пака `packs-src/aspirations`:
+  выбор в слоте выдаёт актору копию Стремления (`grantAspiration`), Конструктор
+  считает её как у Расы. Сторож пака — `test/data/aspirations-pack.test.mjs`
+  (Механика = строка модификаторов; описание = текст книги из core.json).
+- Особые записи (04.10.2026): «Совершенство» — флаг `charPick` вместо готовых
+  записей, диалог «+5 одной, −3 двум другим» при выдаче
+  (`rules/aspiration-char-pick.mjs`); «Растраты» — возможность
+  `creation.equipPointsPenalty` (−1 Inf.b в пул Очков Снаряжения,
+  `rules/equip-shop.mjs::equipPointsInfBonus`); «Инновация» — Навык Ученые
+  знания +10 и возможность `craft.researchBonus` (Мастерская, режим
+  Исследование, `rules/craft-advantage.mjs::researchBonus`); «Богатство» —
+  `equipCategoryPack:"physical"` («любой предмет снаряжения», те же семь
+  категорий, что у магазина Очков Снаряжения).
+- Слот можно пометить `noMods` («без модификаторов», книга: «игнорируя
+  модификаторы») — запись остаётся, носитель Механики не выдаётся; кнопка 🎲
+  бросает d10 по таблице слота (`rules/aspiration-sources.mjs::aspirationByRoll`).
 
 ## 26. Подключаемые подсистемы (флаги в Настройках)
 
@@ -1455,6 +1780,44 @@ AGENTS.md).
 - `apps/cogitator.mjs` — Когитаторы (постоянные терминалы-консоли).
 - `apps/compendium-browser.mjs` + `compendium-filters.mjs` — Обозреватель
   компендиумов.
+
+---
+
+## 28. Разбор «Разобрать» #530 (01.10.2026): что появилось
+
+Точечно — чтобы не искать заново:
+
+- **Урон в Характеристики:** надбавки Генетического Угасания/Нестабильного
+  Генома — одна функция `rules/char-damage-bonus.mjs` (её зовут
+  `applyCharDamage`, Импровизированная Руна, Прижигание).
+- **Падение:** кнопка урона `combat/fall-damage.mjs` (броня игнорируется,
+  T.b поглощает, Лежачий); Двусоставный +5×X на Группирование —
+  `rules/digitigrade.mjs`.
+- **Лечение:** Hardy → `rules/healing-clock.mjs::healLevel` (для лечения всегда
+  «лёгкое»).
+- **Очки Бесчестия:** запреты Покровителя (Нургл — Переброс, Тзинч —
+  Усиление) в меню карточки — `rules/patron-infamy.mjs`; +10 и переброс за
+  Очко Чемпиона — `hooks.mjs::_attachFateContextMenu`.
+- **Йигори:** Охотники на Ангелов раз в Раунд и переброс стаи —
+  `combat/angel-hunters.mjs` (+ `rules/roll-mods.mjs::registerRerollLimiter`);
+  регенерация частей тела — `combat/limb-regen.mjs`, `rules/limb-loss.mjs`.
+- **Скват/среда сцены:** радиация по Календарю —
+  `combat/radiation-scene.mjs`, `rules/radiation-scene.mjs` (укрытие в окне
+  «Окружение»); невесомость → предикат `weightlessScene`; Преимущество против
+  яда — `rules/squat-traits.mjs::poisonResistReroll`.
+- **Яды/наркотики:** недельный счётчик доз и тест Зависимости —
+  `rules/drug-doses.mjs`, `sheets/tabs/drugs.mjs::weeklyDoseCheck`; яд клыков
+  Наги кнопкой — `apps/naga-traits.mjs::injectFangVenom`; Toxic (X) —
+  запись «Свойство атаки» с `apRating:"rating"`.
+- **Субрасы Зверолюда:** Кхорнгор/Мясник/Плакальщик —
+  `combat/beastman-subrace.mjs`; Взрывное Действие Сплайса —
+  `combat/explosive-action.mjs`.
+- **Приёмы:** +1 Успех от Боя Один На Один/Искусного в Захвате и приёмах —
+  `combat/extra-successes.mjs`.
+- **Огрин:** выход из ауры Дискорданта снимает Ступор —
+  `combat/bone-head.mjs::onDiscordantFieldLeft`.
+- **Создание персонажа:** Скакун Дикаря из Бестиария —
+  `apps/mount-grant.mjs` (Редкость в `flags.warhammer-dbc.mountRarity`).
 
 ---
 

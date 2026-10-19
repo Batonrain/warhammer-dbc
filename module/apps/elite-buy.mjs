@@ -17,12 +17,19 @@
 import { checkEliteRequirements, eliteWho, eliteCost, eliteCostNote }
   from "../rules/elite-requirements.mjs";
 import { isFatedElite, fatedEliteCost, eliteTakenForPrice, FATED_DISCOUNT } from "../rules/fated-path.mjs";
+import { hasEliteDiscount, consumeEliteDiscount, TRAINING_ELITE_DISCOUNT_FLAG } from "../rules/training.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { grantEliteGear } from "./gear-grant.mjs";
 
 /**
  * Цена архетипа именно для этого персонажа, с множителем за уже взятые.
  * Предначертанный Путь (Черта Нумена, rules/fated-path.mjs): избранный —
  * базовая цена минус 1000 без множителя, и сам в множитель прочих не входит.
+ *
+ * Klaivex (training.mjs — курс «Искусство Инкубов», wdbc-5yafq): скидка
+ * вдвое на архетип Инкуб, если курс уже завершён успешно. Только читает флаг
+ * (превью цены в elite-picker.mjs вызывается многократно без покупки) — сам
+ * флаг снимается в buyEliteArchetype при реальной покупке.
  */
 export function eliteCostFor(actor, doc) {
   const taken = eliteTakenForPrice(actor);
@@ -30,7 +37,13 @@ export function eliteCostFor(actor, doc) {
     return { cost: fatedEliteCost(doc?.system?.cost), taken, fated: true,
              note: `Предначертанный Путь: −${FATED_DISCOUNT}, всегда базовая цена` };
   }
-  return { cost: eliteCost(doc?.system?.cost, taken), taken, fated: false, note: eliteCostNote(taken) };
+  const base = eliteCost(doc?.system?.cost, taken);
+  const discountLog = actor?.getFlag?.("warhammer-dbc", TRAINING_ELITE_DISCOUNT_FLAG) ?? [];
+  if (hasEliteDiscount(discountLog, doc?.name)) {
+    return { cost: Math.ceil(base / 2), taken, fated: false, klaivex: true,
+             note: [eliteCostNote(taken), "Клэйвекс: курс отходил, цена вдвое дешевле"].filter(Boolean).join("; ") };
+  }
+  return { cost: base, taken, fated: false, note: eliteCostNote(taken) };
 }
 
 /**
@@ -69,7 +82,7 @@ export async function buyEliteArchetype(actor, doc) {
   if (!actor || !doc) return null;
 
   const check = checkEliteRequirements(doc.system?.requirements, eliteWho(actor));
-  const { cost, note, fated } = eliteCostFor(actor, doc);
+  const { cost, note, fated, klaivex } = eliteCostFor(actor, doc);
   // Избранному Предначертанного Пути сюжетные условия («проверяет ГМ»)
   // выполняются сами — окно о них не спрашивает (rules/fated-path.mjs).
   if (fated) check.manual = [];
@@ -113,10 +126,26 @@ export async function buyEliteArchetype(actor, doc) {
   }
   if (Object.keys(upd).length) await actor.update(upd);
 
+  // Скидка Клэйвекса — одноразовая: снять ровно ОДНУ запись за эту покупку,
+  // даже если по какой-то причине их накопилось больше.
+  if (klaivex) {
+    try {
+      const discountLog = actor.getFlag?.("warhammer-dbc", TRAINING_ELITE_DISCOUNT_FLAG) ?? [];
+      const { nextList } = consumeEliteDiscount(discountLog, doc.name);
+      await actor.setFlag("warhammer-dbc", TRAINING_ELITE_DISCOUNT_FLAG, nextList);
+    } catch (e) { console.warn("warhammer-dbc | klaivex elite discount consume", e); }
+  }
+
   await ChatMessage.create({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `<p><b>Элитный архетип:</b> ${esc(doc.name)}${cost ? ` — потрачено <b>${cost}</b> опыта${note ? ` (${esc(note)})` : ""}` : ""}.</p>`
   });
+
+  // Снаряжение архетипа — часть стартового (стр. 24): что найдётся в
+  // компендиумах по имени, ложится на лист, остальное — шёпотом ГМу. Сбой
+  // выдачи не отменяет уже оплаченную покупку.
+  try { await grantEliteGear(actor, doc); }
+  catch (err) { console.error("Warhammer DBC | снаряжение Элитного Архетипа не выдано", err); }
 
   return item;
 }

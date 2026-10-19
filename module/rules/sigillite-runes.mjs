@@ -67,6 +67,7 @@ import { hasRuleFlag } from "./flags.mjs";
 import { PSY_DISCIPLINES } from "../constants/disciplines.mjs";
 import { woundLossUpdates } from "./wounds.mjs";
 import { charLossPortionsAddFields } from "./char-loss.mjs";
+import { charDamageWithBonuses } from "./char-damage-bonus.mjs";
 
 /** Базовый потолок Рун из книги: «У персонажа может быть максимум 20 рун». */
 export const RUNE_BASE_MAX = 20;
@@ -419,7 +420,7 @@ export function improvisedRuneCostUpdates(actor) {
   // Единый конвейер урона в Характеристики (wdbc-x1nz.2.83): пол 0. Темп —
   // книжный, у самой порции: 1 за 8 ч, не лечится сверхъестественным (task 1-8).
   const entries = IMPROVISED_RUNE_CHARS.map(key => ({
-    key, amount: IMPROVISED_RUNE_CHAR_DAMAGE, hours: 8, noMagic: true,
+    key, amount: charDamageWithBonuses(actor, IMPROVISED_RUNE_CHAR_DAMAGE).amount, hours: 8, noMagic: true,
     source: "Импровизированная Руна Сигиллита"
   }));
   Object.assign(updates, charLossPortionsAddFields(actor?.system, entries, globalThis.game?.time?.worldTime ?? 0).patch);

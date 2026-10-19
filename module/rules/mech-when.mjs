@@ -43,7 +43,7 @@
 // Третий независимый гейт (wdbc-ta4y): «у актора есть Талант/Черта с этим
 // именем И этой специализацией» — {name, specialization}, ОДИН вариант, не
 // список (в отличие от Геносемени: пока нужен только один конкретный случай —
-// «Mastery (Психонаука)» у Серого Человека, а не набор ИЛИ-альтернатив).
+// «Mastery (Психочутьё)» у Серого Человека, а не набор ИЛИ-альтернатив).
 // specialization сравнивается тем же способом, что имя (itemHasName,
 // rules/predicates.mjs) — по обеим билингвальным половинам, без учёта
 // регистра: у выданного через Механику Mastery специализация — это
@@ -143,6 +143,7 @@
 
 import { PREDICATES, CTX_DEPENDENT_PREDICATES } from "./predicates.mjs";
 import { itemsNamed } from "./req-atom.mjs";
+import { currentSkillName } from "../constants/skills.mjs";
 
 /** Заполненные ключи Бога-покровителя из entry.when.patronGod. */
 export function whenPatronGod(when) {
@@ -185,7 +186,9 @@ export function whenChosenEffect(when) {
   return (when?.chosenEffect || []).filter(Boolean);
 }
 
-const normSpec = s => String(s ?? "").trim().toLowerCase();
+// currentSkillName: специализация Таланта (Мастерство) хранит название Навыка, а в снимках на
+// живых акторах оно старое («Психонаука») — см. constants/skills.mjs.
+const normSpec = s => currentSkillName(String(s ?? "").trim().toLowerCase());
 
 /**
  * Есть ли у актора Талант/Черта с этим именем И этой специализацией

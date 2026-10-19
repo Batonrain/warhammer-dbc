@@ -30,7 +30,13 @@ import { getHeldHand, weaponHandsRequired } from "../../rules/hands.mjs";
 import { BODY_SIDES, fingersLostOn } from "../../rules/limb-loss.mjs";
 import { longRangeImmunityReason } from "../../rules/range-penalty-immunity.mjs";
 import { lightPenaltyImmunityReason, smokePenaltyImmunityReason } from "../../rules/vision-penalty-immunity.mjs";
-import { getInstalledMods } from "../../combat/weapon-mods.mjs";
+import { hasBlindFighting } from "../../rules/unseen-talents.mjs";
+import { hasDodgeTalent } from "../../rules/dodge-talents.mjs";
+import { flourishPenaltyAgainst } from "../../combat/flourish-dance.mjs";
+import { halvePenalty } from "../../rules/awareness-talents.mjs";
+// Действующие моды (wdbc-1rno.38/.40): без «бесполезных без X» и без
+// невыбранных прицелов — тот же список, что у getModEffects и окна атаки.
+import { getActiveMods } from "../../combat/weapon-mods.mjs";
 
 /**
  * Атака оружием в руке без пальцев (мутация Потеря Конечности, субмутации
@@ -100,6 +106,10 @@ export function situationalMods(v) {
   const tgtSurprisedRound1 = !!tgt?.system?.conditions?.surprised
     && (typeof game !== "undefined" ? game.combat?.round : null) === 1;
   const tgtStunnedAuto = isStunnedOrDazed(tgt);
+  // Bulging Biceps/Бугрящиеся Мышцы (стр. 12, capabilities.mjs::
+  // rangedCore.core.bulgingBiceps) — снимает штраф «Тяжёлое оружие: без
+  // Закрепления» целиком, см. ниже у этой строки.
+  const bulgingBicepsActive = hasRuleFlag(actor, "rangedCore.core.bulgingBiceps");
   const commonMods = [
     ...(tgtAntiAim ? [{ label: "Антиприцел цели", value: 0, autofail: true, autoCheck: aimingOn,
       note: aimingOn ? "вы прицелились — атака автоматически промахивается (Странная Неуязвимость)"
@@ -299,7 +309,7 @@ export function situationalMods(v) {
   // rules/vision-penalty-immunity.mjs) — тем же приёмом, что Чёрные Глаза:
   // Слабый свет/Тьма и Дым гасятся раздельно.
   {
-    const mods = weapon ? getInstalledMods(actor, weapon) : [];
+    const mods = weapon ? getActiveMods(actor, weapon) : [];
     const aiming = actor?.system?.aiming;
     const why = {
       light: lightPenaltyImmunityReason(actor, mods, { aiming }),
@@ -311,6 +321,16 @@ export function situationalMods(v) {
       m.value  = 0;
       m.immune = true;
       m.note   = `${reason}: штрафа нет`;
+    }
+  }
+  // Бой Вслепую (глава 3, Внимательность): «уменьшает штрафы на рукопашные
+  // Атаки … от слепоты, тьмы и уменьшенной видимости в 2 раза» — Дым/Тьма и
+  // Ослеплён в рукопашной вдвое меньше (то, что уже погашено, остаётся нулём).
+  if (isMelee && hasBlindFighting(actor)) {
+    for (const m of commonMods) {
+      if (!(m.visionPenalty || m.label === "Ослеплён") || m.immune || !(m.value < 0)) continue;
+      m.value = halvePenalty(m.value);
+      m.note  = "Бой Вслепую: штраф вдвое";
     }
   }
   // Aspect (wdbc-8b5/wdbc-28ld, стр. 168): без соответствующего Пути — −30 на
@@ -417,6 +437,8 @@ export function situationalMods(v) {
     { label: "Трудный ландшафт",       value: -10, autoCheck: !!meleeTerrain?.inTerrain,
       note: meleeTerrain?.inTerrain ? "зона Трудного Ландшафта под атакующим" : undefined },
     { label: "Очень трудный ландшафт", value: -20 },
+    // Мастер Боя (глава 3): «противники не получают бонусов за численное
+    // превосходство для рукопашных атак по нему» — гасится ниже, по Таланту ЦЕЛИ.
     { label: "Числ. перевес 2к1",      value:  10, autoCheck: outnumberCount === 2,
       note: outnumberCount == null ? undefined : `в контакте с целью: ${outnumberCount}` },
     { label: "Числ. перевес 3к1",      value:  20, autoCheck: outnumberCount != null && outnumberCount >= 3,
@@ -550,13 +572,42 @@ export function situationalMods(v) {
     // полностью снимает второе (стр. 168). Закрепление (стр. 35, wdbc-x1nz.2.56)
     // теперь настоящее Действие с состоянием (combat/brace-weapon.mjs) —
     // галочка сама снимается, пока оружие реально Закреплено этим же токеном.
-    { label: "Тяжёлое оружие: без Закрепления", value: wp.gyroStabilized ? -10 : -30,
-      autoCheck: weapon?.system?.weaponClass === "heavy" && !isBraced(actor, weapon),
-      note: wp.gyroStabilized ? "Гиро-стаб.: –30 снижено до –10"
+    // Bulging Biceps/Бугрящиеся Мышцы (wdbc-6rj, capabilities.mjs::
+    // rangedCore.core.bulgingBiceps): «не получает штрафов за стрельбу из
+    // тяжёлого оружия без Закрепления» — снимает именно эту строку целиком,
+    // «стрельба на ходу» ниже книга с этим Талантом не связывает.
+    { label: "Тяжёлое оружие: без Закрепления",
+      value: bulgingBicepsActive ? 0 : (wp.gyroStabilized ? -10 : -30),
+      immune: bulgingBicepsActive,
+      autoCheck: !bulgingBicepsActive && weapon?.system?.weaponClass === "heavy" && !isBraced(actor, weapon),
+      note: bulgingBicepsActive ? "снято: Bulging Biceps/Бугрящиеся Мышцы"
+          : wp.gyroStabilized ? "Гиро-стаб.: –30 снижено до –10"
           : (weapon?.system?.weaponClass === "heavy" && isBraced(actor, weapon) ? "Закреплено" : undefined) },
     { label: "Тяжёлое оружие: стрельба на ходу", value: wp.gyroStabilized ? 0 : -10, immune: wp.gyroStabilized,
       note: wp.gyroStabilized ? "снято: Гиро-стаб." : undefined }
   ];
+
+  // Размашистый Танец у ЦЕЛИ (глава 3): атакующий, которого он закружил, бьёт со
+  // штрафом −5 за каждый Успех танцора до начала его следующего Хода.
+  {
+    const dancePenalty = attackCtx.targetActor ? flourishPenaltyAgainst(attackCtx.targetActor, actor) : 0;
+    if (dancePenalty) {
+      commonMods.push({ label: "Размашистый Танец цели", value: dancePenalty, autoCheck: true,
+        note: `${attackCtx.targetActor.name}: -5 за каждый Успех танцора` });
+    }
+  }
+  // Мастер Боя у ЦЕЛИ (глава 3): строки «Числ. перевес» (specificMods) гасятся.
+  // По имени Таланта, а не через immuneFlag: так работает и на персонажах,
+  // получивших Талант до того, как в компендиуме у него появилась запись
+  // Возможности.
+  if (isMelee && attackCtx.targetActor && hasDodgeTalent(attackCtx.targetActor, "combatMaster")) {
+    for (const m of specificMods) {
+      if (!String(m.label).startsWith("Числ. перевес")) continue;
+      m.value  = 0;
+      m.immune = true;
+      m.note   = `${attackCtx.targetActor.name}: Мастер Боя — бонуса за численное превосходство нет`;
+    }
+  }
 
   // Низкая высота цели (wdbc-1rno.29): Прицел на Упреждение («следующий
   // выстрел игнорировал все штрафы… за скорость цели, высоту», стр. 62) и
@@ -569,7 +620,7 @@ export function situationalMods(v) {
     const tracking = !!(actor?.getFlag?.("warhammer-dbc", "trackingAimActive")
       ?? actor?.flags?.["warhammer-dbc"]?.trackingAimActive);
     const predictor = !!aiming && aiming !== "none" && weapon
-      && getInstalledMods(actor, weapon).some(m => !!m.system?.effects?.aimIgnoresRunning);
+      && getActiveMods(actor, weapon).some(m => !!m.system?.effects?.aimIgnoresRunning);
     const why = tracking ? "Прицел на Упреждение" : predictor ? "Предсказатель Движения" : null;
     const row = why && specificMods.find(m => m.label === "Низкая высота цели" && !m.immune);
     if (row) { row.value = 0; row.immune = true; row.note = `снято: ${why}`; }
@@ -578,7 +629,7 @@ export function situationalMods(v) {
   // и оптические прицелы при Прицеливании снимают оба штрафа — тем же
   // приёмом, что Зенитное гасит «Цель бежит» (выше).
   if (!isMelee) {
-    const why = longRangeImmunityReason(actor, weapon ? getInstalledMods(actor, weapon) : [],
+    const why = longRangeImmunityReason(actor, weapon ? getActiveMods(actor, weapon) : [],
                                         { aiming: actor?.system?.aiming });
     if (why) {
       for (const m of specificMods) {

@@ -42,6 +42,46 @@
           }
         ],
         "requiresCapability": "mutation.burningHead"
+      },
+      {
+        "label": "Укреплённые Рога",
+        "range": "",
+        "damage": "1d10-1",
+        "damageType": "impact",
+        "penetration": 0,
+        "weaponProps": [
+          {
+            "key": "cheapShot"
+          },
+          {
+            "key": "imprecise"
+          },
+          {
+            "key": "primitive"
+          }
+        ],
+        "requiresCapability": "mutation.majesticHorns.reinforced",
+        "damageSubtype": "crushing"
+      },
+      {
+        "label": "Unarmed Warrior + Укреплённые Рога",
+        "range": "",
+        "damage": "1d10+2",
+        "damageType": "impact",
+        "penetration": 0,
+        "weaponProps": [
+          {
+            "key": "cheapShot"
+          },
+          {
+            "key": "imprecise"
+          },
+          {
+            "key": "primitive"
+          }
+        ],
+        "requiresCapability": "unarmed.warriorProfile+mutation.majesticHorns.reinforced",
+        "damageSubtype": "crushing"
       }
     ],
     "reload": "–",

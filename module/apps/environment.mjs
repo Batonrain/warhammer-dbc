@@ -12,6 +12,8 @@ import {
 import { resolveEnvContainer, readEnvForScene, primaryGroupForScene, envSceneHasOverride } from "../constants/scene-nexus.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollTempHazardTest } from "../combat/temperature-hazard.mjs";
+import { radiationExposure, shelterOptions } from "../combat/radiation-scene.mjs";
+import { RAD_SHELTER_FLAG } from "../rules/radiation-scene.mjs";
 
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 function currentScene() { return canvas?.scene ?? game.scenes?.current ?? null; }
@@ -75,8 +77,28 @@ export class EnvironmentApp extends HandlebarsApplicationMixin(ApplicationV2) {
       radLevels: [0, ...RAD_TABLE.map(r => r.lvl)].map(l => ({ l, selected: v.rad.value === l })),
       radTable: RAD_TABLE,
       radProtection: RAD_PROTECTION,
+      radTokens: isGM ? this._radTokens(scene) : [],
       note: v.note
     };
+  }
+
+  /** Персонажи сцены с их защитой и укрытием — радиация сцены считается по ним (wdbc-c5vf0). */
+  _radTokens(scene) {
+    const out = [];
+    const seen = new Set();
+    for (const t of scene?.tokens ?? []) {
+      const actor = t.actor;
+      if (!actor || actor.type !== "character" || seen.has(t.id)) continue;
+      seen.add(t.id);
+      const ex = radiationExposure(actor);
+      out.push({
+        tokenId: t.id, name: t.name || actor.name,
+        protection: ex?.protection.immune ? "иммунитет" : (ex?.protection.parts.join(", ") || "—"),
+        effective: ex?.effective ?? 0,
+        shelters: shelterOptions(actor.getFlag("warhammer-dbc", RAD_SHELTER_FLAG))
+      });
+    }
+    return out;
   }
 
   async _patch(patch) {
@@ -128,6 +150,14 @@ export class EnvironmentApp extends HandlebarsApplicationMixin(ApplicationV2) {
     // Радиация
     el.querySelectorAll("[data-rad]").forEach(b => b.addEventListener("click", () => this._patch({ rad: Number(b.dataset.rad) })));
     el.querySelector("[name=radRange]")?.addEventListener("change", e => this._patch({ rad: Number(e.target.value) || 0 }));
+
+    // Укрытие персонажа (здание/бункер) — часть защиты от радиации сцены.
+    el.querySelectorAll("[data-rad-shelter]").forEach(sel => sel.addEventListener("change", async e => {
+      const token = currentScene()?.tokens?.get(sel.dataset.radShelter);
+      if (!token?.actor) return;
+      await token.actor.setFlag("warhammer-dbc", RAD_SHELTER_FLAG, e.target.value);
+      this.render(false);
+    }));
 
     // Заметка ГМа (видна игрокам в виджете)
     el.querySelector("[name=note]")?.addEventListener("change", e => this._patch({ note: e.target.value.trim() }));

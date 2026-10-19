@@ -111,6 +111,10 @@ const DEVIATIONS = {
     // отдающего), Успехи в «Прикрытии» и Талант «Особой Тактики».
     "shortCommand.testKind": "", "shortCommand.giverUuid": "",
     "shortCommand.combatId": "", "shortCommand.round": 0,
+    // Bring It Down!/Валите Это! (Sahara 3-ac78, 19.10.2026) — тоже позже
+    // template.json: срез бонуса попадания Общей/Атака Команды на бонусные
+    // кубы урона по одной выбранной крупной цели.
+    "shortCommand.bringItDownStacks": 0, "shortCommand.bringItDownTargetUuid": "",
     "detailCommand.coverSuccesses": 0, "detailCommand.tactic": "",
     "detailCommand.giverUuid": "", "detailCommand.combatId": "", "detailCommand.round": 0
   },
@@ -190,6 +194,9 @@ const DEVIATIONS = {
     // Хаосита от субрасы (Наследник +1, Затупленный −уровень) — сверка главы
     // I, 26.09.2026, гораздо позже template.json.
     subraceTier: 1, infamyMaxMod: 0,
+    // Ручная ГМ-надбавка к Лимиту Атак за Ход (combat/attack-limit.mjs,
+    // wdbc-6rj) — заведена гораздо позже template.json.
+    attackLimitBonus: 0,
     // Три слота Стремлений. Раньше писались прямо в `aspirations`, но то поле
     // объявлено объектом (там Фактор Прибыли), и массив схема отбрасывала —
     // выбор не сохранялся вовсе. Теперь у слотов своё поле.
@@ -273,11 +280,12 @@ const DEVIATIONS = {
     // wdbc-x1nz.2.100): лежит в system.lostLimbs, а не в conditions.lostX —
     // флаг и *Count теперь ПРОИЗВОДНЫЕ (derivedLimbLossConditions,
     // rules/character.mjs), своего хранимого поля в схеме у них больше нет.
+    // regenAt — таймер отрастания Йигори (New Men, wdbc-yffxj), заведён позже template.json.
     lostLimbs: Object.fromEntries(
       ["rightHand", "leftHand", "rightArm", "leftArm", "rightFoot", "leftFoot",
        "rightLeg", "leftLeg", "rightEye", "leftEye",
        // «Пальцы» мутации Потеря Конечности (wdbc-1rno.6.1) — без Состояния.
-       "rightFingers", "leftFingers"].map(k => [k, { lost: false, gangreneAt: 0, mutation: false }])
+       "rightFingers", "leftFingers"].map(k => [k, { lost: false, gangreneAt: 0, regenAt: 0, mutation: false }])
     ),
     // Стр. 12 («Борьба») — связаны Захватом, заведено гораздо позже template.json.
     "conditions.grappling": false,

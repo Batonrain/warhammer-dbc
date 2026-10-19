@@ -115,3 +115,51 @@ describe("привязка Склонностей к объекту — то, ч
     expect(skillCostXP(0, ["int", "knowledge"], apts)).toBe(SKILL_COST.ally[0]);
   });
 });
+
+// ── Таланты Элитных Архетипов (Склонности, стр. 24) ─────────────────────────
+// «Все Таланты Элитных Архетипов считаются нейтральными в системе Склонностей.»
+// В паке у них пустой список Склонностей — без отдельного правила подсчёт
+// совпадений давал 0 и делал их Враждебными (Талант 2 ступени — 750 вместо 500).
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { talentCostXP, resolveTalentCat, TALENT_COST } from "../../module/constants/advancement.mjs";
+import { isEliteTalent } from "../../module/constants/patronage.mjs";
+
+describe("Таланты Элитных Архетипов нейтральны по Склонностям", () => {
+  const apts = charAptitudeSet(["ws", "bs", "s", "t", "offence", "defence", "finesse", "fieldcraft"]);
+
+  it("Талант Элитного Архетипа без своих Склонностей — Нейтральный, не Враждебный", () => {
+    const spec = "Элитный архетип: Архимаг";
+    expect(resolveTalentCat("Любой Талант", [], apts, null, { specialization: spec })).toBe("neutral");
+    expect(talentCostXP(2, [], apts, null, { name: "Любой Талант", specialization: spec }))
+      .toBe(TALENT_COST.neutral[1]);
+  });
+
+  it("обычный Талант с пустым списком Склонностей по-прежнему Враждебный", () => {
+    expect(resolveTalentCat("Обычный Талант", [], apts, null)).toBe("enemy");
+  });
+
+  it("признак читается и из bilingual-названия архетипа", () => {
+    expect(isEliteTalent("X", "Элитный архетип: Felarch / Феларх")).toBe(true);
+    expect(isEliteTalent("X", "Melee, Ranged")).toBe(false);
+    expect(isEliteTalent("X", "")).toBe(false);
+  });
+
+  it("каждый Талант папки «Элитные архетипы» в паке помечен — иначе станет Враждебным", () => {
+    const root = join(fileURLToPath(new URL("../..", import.meta.url)), "packs-src/talents/Элитные_архетипы");
+    const bad = [];
+    const walk = (dir) => {
+      for (const e of readdirSync(dir, { withFileTypes: true })) {
+        const p = join(dir, e.name);
+        if (e.isDirectory()) walk(p);
+        else if (e.name.endsWith(".json") && e.name !== "_Folder.json") {
+          const j = JSON.parse(readFileSync(p, "utf8"));
+          if (!isEliteTalent(j.name, j.system?.specialization)) bad.push(j.name);
+        }
+      }
+    };
+    walk(root);
+    expect(bad).toEqual([]);
+  });
+});

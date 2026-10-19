@@ -15,6 +15,8 @@ import { useDetonateGrenadeInRig } from "../../combat/draw-action.mjs";
 import { useHololithBriefing } from "../../combat/hololith-briefing.mjs";
 import { useSwingItem, useThrowItem } from "../../combat/improvised-item.mjs";
 import { spendActionPoints } from "../../combat/action-economy.mjs";
+import { quickDrawFree } from "../../combat/quick-draw.mjs";
+import { maintainArmorForHardening } from "../../combat/ablative-hardening.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { postTestCard } from "../../helpers/test-card.mjs";
 
@@ -92,7 +94,11 @@ export async function equipItem(item, equipped) {
     ui.notifications?.warn(`⚠️ В Захвате: ${isDraw ? "Взять" : "Сложить"} недоступно — только действия Цели (стр. 12).`);
     return;
   }
-  if ((isDraw || isStow) && item.parent && !await spendActionPoints(item.parent, 1, { physical: true })) {
+  // Быстрое Выхватывание / Быстрое Складывание (Таланты Скорости): подходящее
+  // оружие берётся/складывается свободным действием (combat/quick-draw.mjs).
+  const quick = (isDraw || isStow) && item.parent && quickDrawFree(item.parent, item, isDraw ? "draw" : "stow");
+  if (quick) ui.notifications?.info(`${item.name}: ${isDraw ? "Быстрое Выхватывание" : "Быстрое Складывание"} — свободное действие, 0 ОД.`);
+  if ((isDraw || isStow) && item.parent && !quick && !await spendActionPoints(item.parent, 1, { physical: true })) {
     ui.notifications?.warn(`⚠️ Не хватает ОД, чтобы ${isDraw ? "Взять" : "Сложить"} оружие (Полудействие, стр. 27).`);
     return;
   }
@@ -214,6 +220,15 @@ export function activateGearListeners(root, actor, {
     await equipItem(actor.items.get(itemId), equipped);
   });
 
+  // Три статуса снаряжения (wdbc-6rj): «Хранится» — отдельная ось от
+  // Экипировано/Надето выше, не учитывается в Нагрузке (rules/character.mjs).
+  // Оружие/Броня/Снаряжение/Препараты/Инструменты/Боеприпасы — общий тумблер,
+  // без своих проверок рук/ОД, в отличие от equipItem.
+  on(root, ".item-stored-cb", "change", async ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) await item.update({ "system.stored": ev.currentTarget.checked });
+  });
+
   // ── Ручные щиты (стр. 215) ───────────────────────────────────────────
   // Рука определяет, какая «Р1» в зонах защиты; «поднять щит» включает зоны,
   // указанные в скобках (они прикрываются лишь осознанным движением).
@@ -285,6 +300,12 @@ export function activateGearListeners(root, actor, {
   on(root, ".gear-mod-uninstall", "click", async ev => {
     ev.preventDefault(); ev.stopPropagation();
     await uninstallGearMod(actor.items.get(ev.currentTarget.dataset.itemId));
+  });
+
+  // Аблативное Укрепление (Талант Стойкости): «Обслужить (1 ч)» — заряды прочности брони = I.b.
+  on(root, ".armor-hardening-btn", "click", async ev => {
+    ev.preventDefault(); ev.stopPropagation();
+    await maintainArmorForHardening(actor, actor.items.get(ev.currentTarget.dataset.itemId));
   });
 
   on(root, ".armormod-active-toggle", "click", async ev => {

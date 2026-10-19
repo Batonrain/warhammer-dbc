@@ -5,7 +5,7 @@
 // главное — предметы и эффекты, которые эти Навыки правят.
 //
 // Отбор идёт по СЛЕДУ в данных, а не по списку «социальных» предметов: правило
-// живёт в эффекте, и любой предмет, что двигает Обаяние, Общительность,
+// живёт в эффекте, и любой предмет, что двигает Очарование, Общительность,
 // Лояльность или Сплочённость, попадает сюда сам, без ручной пометки.
 
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
@@ -34,7 +34,7 @@ export function isSocialKey(key = "") {
   return /loyalty|cohesion/i.test(k);
 }
 
-/** Человеческая подпись правки: «Обаяние +10», «Общительность +5». */
+/** Человеческая подпись правки: «Очарование +10», «Общительность +5». */
 export function socialChangeLabel(key = "", value = "") {
   const k = String(key);
   const skill = SOCIAL_SKILL_KEYS.find(s => k.includes(`skills.${s}`));
@@ -83,13 +83,15 @@ export function isSocialSource(src = {}) {
 const term = (...words) => new RegExp(`(^|[^\\p{L}])(${words.join("|")})([^\\p{L}]|$)`, "iu");
 
 const SOCIAL_TERMS = [
-  { label: "Обаяние",       re: term("Обаяни\\p{L}*", "Charm") },
+  // Старые названия Навыков (Обаяние, Дознание, Коммерция) остаются в разборе:
+  // текст предметов в паках и у игроков мог быть написан по ним.
+  { label: "Очарование",    re: term("Очарован\\p{L}*", "Обаяни\\p{L}*", "Charm") },
   { label: "Командование",  re: term("Командовани\\p{L}*", "Command", "Commands") },
   { label: "Обман",         re: term("Обман\\p{L}*", "Deceive") },
   { label: "Запугивание",   re: term("Запугивани\\p{L}*", "Intimidate") },
-  { label: "Дознание",      re: term("Дознани\\p{L}*", "Inquiry") },
+  { label: "Расспрос",      re: term("Расспрос\\p{L}*", "Дознани\\p{L}*", "Inquiry") },
   { label: "Допрос",        re: term("Допрос\\p{L}*", "Interrogate") },
-  { label: "Коммерция",     re: term("Коммерци\\p{L}*", "Commerce") },
+  { label: "Торговля",      re: term("Торговл\\p{L}*", "Коммерци\\p{L}*", "Commerce") },
   { label: "Общительность", re: term("Общительност\\p{L}*", "Fellowship", "Fel", "F\\.b") },
   { label: "Лояльность",    re: term("Лояльност\\p{L}*", "Loyalty") },
   { label: "Сплочённость",  re: term("Сплочённост\\p{L}*", "Сплоченност\\p{L}*", "Слаженност\\p{L}*", "Cohesion") }

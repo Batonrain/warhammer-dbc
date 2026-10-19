@@ -39,6 +39,7 @@ import { enemyContactTokenDocs } from "./free-attack.mjs";
 import { coverApForToken } from "./cover.mjs";
 import { suppressionBonus } from "../rules/command.mjs";
 import { WEAKENED_WP_PENALTY } from "../rules/horde-damage.mjs";
+import { intoTheJawsOfHellActive } from "../rules/leadership-talents.mjs";
 
 /**
  * Надбавки Орды к любому тесту Подавления — и к самому тесту, и к его
@@ -85,8 +86,12 @@ function actorInCoverNow(actor) {
  * Морали; без него ведёт себя как раньше.
  * safeOverride (стр. 33, wdbc-x1nz.2.62) — ГМ отметил галочку «Заведомо
  * безопасно» на карточке атаки: тест проходит автоматически, без броска.
+ * radiantPresence/intoTheJawsOfHell (Sahara 3-ac78, 19.10.2026) — галочки
+ * на карточке атаки (combat/attack-card.mjs), решение стола — код только
+ * переносит их в бросок, не вычисляет сам.
  */
-export async function rollSuppressionTest(actor, { mod = 0, sourceLabel = "", sourceActor = null, safeOverride = false } = {}) {
+export async function rollSuppressionTest(actor, { mod = 0, sourceLabel = "", sourceActor = null, safeOverride = false,
+                                                     radiantPresence = false, intoTheJawsOfHell = false } = {}) {
   // Рукопашный контакт (стр. 33): тест не катается вовсе, Подавление не
   // накладывается — не «авто-успех» теста, а иммунитет к самому тесту.
   if (actorMeleeContactNow(actor)) {
@@ -111,11 +116,14 @@ export async function rollSuppressionTest(actor, { mod = 0, sourceLabel = "", so
   const horde = hordeSuppressionMods(actor);
   // Перебежка (стр. 30, wdbc-x1nz.2.38): переброс Подавления до конца Раунда.
   const { eff: threshold, parts, roll, rv, rerollNote, success: rolledSuccess, dof, usedReroll } = await rollMoraleTest(actor, wpTotal + mod + horde.total, {
-    sourceActor, selfAdvantage: duckAndCoverAdvantage(actor), selfAdvantageLabel: "Перебежка"
+    sourceActor, selfAdvantage: duckAndCoverAdvantage(actor), selfAdvantageLabel: "Перебежка", radiantPresence
   });
   // Саркофаг Дредноута (стр. 57, wdbc-drn): автоматически проходит тесты
-  // Подавления независимо от броска.
-  const success   = rolledSuccess || hasRuleFlag(actor, "sarcophagus.autoPassFear");
+  // Подавления независимо от броска. Into the Jaws of Hell/В Самое Пекло
+  // (Sahara 3-ac78, 19.10.2026): то же авто-прохождение — решение стола по
+  // галочке на карточке атаки, не вычисление «рядом ли».
+  const success   = rolledSuccess || hasRuleFlag(actor, "sarcophagus.autoPassFear")
+    || intoTheJawsOfHellActive(intoTheJawsOfHell);
 
   if (!success) await actor.update(conditionApplyFields("pinned", null, actor));
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });

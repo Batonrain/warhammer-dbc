@@ -35,11 +35,15 @@ describe("каркас module/rules", () => {
     // rankAndFile («Рядовой», корбук стр. 4, task-ce3a).
     // inPariahVoid/isDaemon/targetPsykerOrDaemon — Пустота Парии (rules/null-zones.mjs).
     // targetIsAstartes — Охотники на Ангелов (Йигори, rules/library/yigori.mjs).
+    // weightlessScene — сцена в невесомости/микро-гравитации (Пустота в Венах Сквата, wdbc-9tpng).
     // wearsFootwear — обут ли (Barefoot / Босоногий Ратлинга).
     // lacksTrait — «нет Черты» (Символ Власти против Отвращения к Порядку).
     // haywireFieldMin — поле Haywire вокруг BONE-Head Огрина (rules/bone-head.mjs).
     // targetSerpentine — змееподобная цель, Безграничное Тщеславие Наги (rules/naga-traits.mjs).
-    expect(Object.keys(predicates.PREDICATES)).toHaveLength(41);
+    // blindsightActive — Талант Слепое Зрение без шлема (rules/predicates.mjs::blindsightActive).
+    // targetIsPsyker — цель-псайкер без демонов (Рога Кровожада, wdbc-1rno.10).
+    // hasLodgedHorn — рог Чумоноса в ране (rules/lodged-horn.mjs, wdbc-1rno.10).
+    expect(Object.keys(predicates.PREDICATES)).toHaveLength(45);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);
     expect(typeof sources.registerRuleSource).toBe("function");

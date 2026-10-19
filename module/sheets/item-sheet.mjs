@@ -12,6 +12,7 @@ import { shipQualityMods, qualityOptionsFor, effectiveWeapon, clampQuality, QUAL
   from "../constants/ship-quality.mjs";
 import { availableFieldModes, fieldSuitFor } from "../constants/drukhari-armor-fields.mjs";
 import { isAutoAnimationsActive } from "../integrations/autoanimations.mjs";
+import { postItemFullCard, postItemShortCard } from "../apps/item-chat-card.mjs";
 // module/sheets/item-sheet.mjs
 
 import { ARMOR_PROPERTIES,
@@ -168,6 +169,9 @@ function onOpenAutoAnimations() {
 
 // ── Эффекты (Active Effect Foundry) — общая вкладка для всех типов ──
 function onEffectCreate() { return createBlankEffect(this.item); }
+
+function onPostItemChatFull() { return postItemFullCard(this.item); }
+function onPostItemChatShort() { return postItemShortCard(this.item); }
 
 function onEffectEdit(event, target) {
   this.item.effects.get(target.dataset.effectId)?.sheet?.render(true);
@@ -607,6 +611,8 @@ export class WarhammerItemSheet
       fieldMode: onFieldMode,
       openAutoAnimations: onOpenAutoAnimations,
       effectCreate: onEffectCreate,
+      postItemChatFull: onPostItemChatFull,
+      postItemChatShort: onPostItemChatShort,
       effectEdit: onEffectEdit,
       effectDelete: onEffectDelete,
       grantGroupAdd: onGrantGroupAdd,
@@ -2464,6 +2470,12 @@ export class WarhammerItemSheet
     mechField(".mech-ap-key",     (e, v) => { e.apKey = v; });
     mechField(".mech-ap-rating",  (e, v) => { e.apRating = String(v ?? "").trim(); });
     mechField(".mech-ap-rating2", (e, v) => { e.apRating2 = String(v ?? "").trim(); });
+    mechField(".mech-integral-rating", (e, v) => { e.integralRating = String(v ?? "").trim(); });
+    on(".mech-ap-target-psyker", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.apTargetPsyker = !!ev.currentTarget.checked; saveMech(arr); }
+    });
 
     // Восстановление урона в Характеристики (kind:"charRecovery", wdbc-x1nz.2.83)
     // — мультивыбор, как .mech-terrain-ignore выше (не mechField: нужен массив

@@ -67,6 +67,10 @@
 .wh-roll-result .roll-threshold,
 .wh-roll-result .roll-dice { margin-bottom: 3px; font-size: 0.96em; }
 
+/* Карточка предмета в чате (wdbc-6rj, «В чат»/«Описание» на листе предмета) */
+.wh-item-chat-card .roll-item-icon { vertical-align: middle; margin-right: 4px; border-radius: 3px; }
+.wh-item-chat-card .roll-item-description { margin-top: 4px; font-size: 0.94em; line-height: 1.35; }
+
 .wh-roll-result .roll-dice b,
 .wh-roll-result .roll-threshold b { color: #2a1606; }
 
@@ -351,6 +355,13 @@
 }
 .wh-crit-apply-btn:hover { background: #ecdfba; }
 .wh-crit-apply-btn:disabled { opacity: 0.55; cursor: default; }
+.wh-crit-ignored { text-decoration: line-through; opacity: 0.4 !important; }
+.wh-sweet-suffering-btn {
+  background: #f6e3f3; border: 1px solid #b14fa3; color: #5a1f52; border-radius: 3px;
+  padding: 2px 8px; cursor: pointer; font-size: 0.85em;
+}
+.wh-sweet-suffering-btn:hover { background: #f0d0eb; }
+.wh-sweet-suffering-btn:disabled { opacity: 0.55; cursor: default; }
 .wh-crit-apply-btn svg { width: 1em; height: 1em; }
 
 /* ── Просмотр кубов (разворачиваемый блок) ─────────────────── */

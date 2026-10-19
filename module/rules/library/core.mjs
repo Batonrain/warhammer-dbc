@@ -63,6 +63,17 @@ export const CORE_RULES = [
     effects: [{ kind: "rollBonus", target: "skill:survival", value: 40 }]
   },
   {
+    // Рог Чумоноса (Majestic Horns, 7, wdbc-1rno.10): «пока рог остаётся в
+    // ране, цель автоматически проваливает все тесты T с 3 Провалами». Правило
+    // на самом пострадавшем: метку ставит попадание «Обломить Рог»
+    // (combat/damage.mjs), снимает извлечение Проникающего (rules/lodged-horn.mjs).
+    id: "core.lodgedHorn",
+    label: "Рог Чумоноса в ране",
+    when: { hasLodgedHorn: true },
+    effects: [{ kind: "autoFail", target: "basedon:t", degrees: 3,
+                label: "🦴 Рог Чумоноса в ране — тесты T (3 Провала)" }]
+  },
+  {
     // Подавляющее поле друкхарийской брони (Психокостяной Тканый Костюм −10,
     // Призрачная Броня −20; constants/drukhari-armor-fields.mjs, wdbc-j8cn):
     // «вражеские психотесты против него получают −X». Как и Nimble — правило

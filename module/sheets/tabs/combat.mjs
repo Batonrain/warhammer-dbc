@@ -36,6 +36,10 @@ import { showDreadWailDialog } from "../../apps/dread-wail-dialog.mjs";
 import { resplendentRaimentAvailable } from "../../combat/resplendent-raiment.mjs";
 import { showResplendentRaimentDialog } from "../../apps/resplendent-raiment-dialog.mjs";
 import { adrenalineRushAvailable, applyAdrenalineRush } from "../../combat/adrenaline-rush.mjs";
+import { applyCaution } from "../../combat/caution.mjs";
+import { toggleArmourMonger } from "../../combat/armour-monger.mjs";
+import { applyHunkerDown } from "../../combat/hunker-down.mjs";
+import { applyFlourishDance } from "../../combat/flourish-dance.mjs";
 import { boneSongAvailable, applyBoneSongSingle, applyBoneSongArea } from "../../combat/bone-song.mjs";
 import {
   primalHowlAvailable, applyPrimalHowl,
@@ -58,6 +62,7 @@ import { useRadiationSicknessTest } from "../../combat/radiation.mjs";
 import { repairArmorCorrosion, extractPiercingWound, applyCripplingTrigger } from "../../combat/damage.mjs";
 import { rollClearJam, rollRestoreJammedAmmo } from "../../combat/clear-jam.mjs";
 import { declareBrace } from "../../combat/brace-weapon.mjs";
+import { showDamageOnlyDialog } from "../../combat/damage-only-roll.mjs";
 import { spendActionPoints, spendReaction, resetActionEconomy } from "../../combat/action-economy.mjs";
 import { attackedThisTurn } from "../../rules/turn-flags.mjs";
 import { resolveFeintSuccess, resolvePressSuccess } from "../../combat/feint-press.mjs";
@@ -105,6 +110,16 @@ export function activateCombatListeners(root, actor) {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);
     if (!item) return;
     showAttackDialog(actor, item);
+  });
+
+  // Урон напрямую, мимо броска атаки (wdbc-6rj): с целью (из выбранных
+  // токенов или вручную) или без, со своим модификатором и числом попаданий —
+  // см. заголовок combat/damage-only-roll.mjs про то, чего эта кнопка
+  // сознательно НЕ считает.
+  on(root, ".weapon-damage-roll", "click", ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (!item) return;
+    showDamageOnlyDialog(actor, item);
   });
 
   // ── Лечение и Очки Боли ──────────────────────────────────────────────────
@@ -191,6 +206,26 @@ export function activateCombatListeners(root, actor) {
       return ui.notifications.warn("Прилив Адреналина уже использован в этом бою/сцене.");
     }
     await applyAdrenalineRush(actor);
+  });
+
+  // ── Размашистый Танец (Талант Избегания, module/combat/flourish-dance.mjs) ──
+  on(root, ".flourish-dance-btn", "click", async () => {
+    await applyFlourishDance(actor);
+  });
+
+  // ── Бронник: тумблер «Броня обслужена сегодня» (module/combat/armour-monger.mjs) ──
+  on(root, ".armour-monger-btn", "click", async () => {
+    await toggleArmourMonger(actor);
+  });
+
+  // ── Залегание (Талант Стойкости, module/combat/hunker-down.mjs) ─────────
+  on(root, ".hunker-down-btn", "click", async () => {
+    await applyHunkerDown(actor);
+  });
+
+  // ── Осторожность (Талант Избегания, module/combat/caution.mjs) ──────────
+  on(root, ".caution-btn", "click", async () => {
+    await applyCaution(actor);
   });
 
   // ── Певцы Кости (wdbc-sk8s, module/combat/{bone-song,preservation,song-of-swiftness}.mjs) ──

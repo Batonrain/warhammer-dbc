@@ -5,7 +5,7 @@
   "folder": "8GybVcvQhfdrQVXK",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано (19.10.2026, Sahara 3-ac78), решение владельца — ручная галочка стола, не геометрия сцены («рядом» не формализовано книгой до числа клеток, а «кроме вызванных им самим» не из чего детектировать автоматически). module/rules/leadership-talents.mjs::intoTheJawsOfHellActive — авто-успех теста Морали по галочке. Доступна во всех трёх тестах Морали — Страх (module/combat/fear.mjs, module/sheets/tabs/disorders.mjs), Подавление (module/combat/suppression.mjs, module/combat/attack-card.mjs) и Запугивание (module/combat/intimidate.mjs) — и в Полевой Казни (module/combat/field-execution.mjs) на стороне цели; видна только если на сцене есть хотя бы один носитель Таланта (module/rules/leadership-talents.mjs::anyIntoTheJawsOfHellHolderExists).",
     "benefit": "Если персонаж сражается рядом с подчинёнными, все они автоматически проходят тесты Морали, кроме вызванных им самим.",
     "tier": 3,
     "requirement": "F 50, Iron Discipline",

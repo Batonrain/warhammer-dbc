@@ -66,7 +66,7 @@ describe("Огрин: данные расы", () => {
 
   it("Черты Сквата у Огрина не выдаются", () => {
     const names = entries(RACE).filter(e => e.kind === "trait").map(e => e.sourceName);
-    expect(names).not.toContain("Clever Hands / Умные Руки");
+    expect(names).not.toContain("Clever Hands / Умелые Руки");
     expect(names).not.toContain("Hard as Stone / Крепкий как Камень");
     expect(names).toEqual(expect.arrayContaining([
       "Fanatic / Фанатик", "Brute Physiology / Физиология Громилы", "BONE-Head / Костеголов"
@@ -101,7 +101,7 @@ describe("Огрин: Физиология Громилы — числа про�
     expect(OGRYN_REGEN_PERIOD).toEqual({ light: 60, heavy: 600, critical: 3600 });
   });
 
-  it("−20 на тонкую манипуляцию — одна галочка (askOnly) на Ремесле, Техпользовании, Безопасности, Ловкости Рук", () => {
+  it("−20 на тонкую манипуляцию — одна галочка (askOnly) на Ремесле, Технологии, Безопасности, Ловкости Рук", () => {
     expect(ogrynSection).toContain("штраф –20 на все тесты тонкой манипуляции");
     for (const ctx of [
       { kind: "skill", group: "trade", char: "int" },
@@ -128,7 +128,7 @@ describe("Огрин: Физиология Громилы — числа про�
     }
   });
 
-  it("сторож: и на Техпользовании без диалога (Расклин) −20 само не складывается", () => {
+  it("сторож: и на Технологии без диалога (Расклин) −20 само не складывается", () => {
     expect(collectTestMods(OGRYN, { kind: "skill", skill: "techUse", char: "int" }).total).toBe(0);
   });
 

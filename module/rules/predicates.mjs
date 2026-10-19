@@ -8,10 +8,12 @@
 import { actorFactionKeys, anySameOrDescendant, isSameOrDescendant, getFactionIndex }
   from "./factions.mjs";
 import { raceMatches } from "./race.mjs";
+import { hasLodgedHorn } from "./lodged-horn.mjs";
 import { hordeSizeFor } from "./horde-damage.mjs";
 import { hasPathGrade } from "../constants/aeldari-paths.mjs";
 import { anyTargetMatches } from "./talent-targets.mjs";
 import { isSerpentine } from "./naga-traits.mjs";
+import { readEnvForScene } from "../constants/scene-nexus.mjs";
 
 /** Значение условия к списку: строка считается списком из одного элемента. */
 const list = v => (v == null ? [] : Array.isArray(v) ? v : [v]);
@@ -110,7 +112,7 @@ export function haywireFieldIntensity(actor) {
   return Math.max(0, stored, aura);
 }
 
-function isDaemonActor(actor) {
+export function isDaemonActor(actor) {
   if (!actor) return false;
   if (actor.type === "daemon" || actor.type === "demonPrince") return true;
   return hasNamed(actor, "Daemonic");
@@ -272,6 +274,34 @@ export function isBlindedActor(actor) {
   return !!(c?.blinded || (Number(c?.lostEyesCount) || 0) >= 2);
 }
 
+/**
+ * Носит ли актор шлем: экипированная броня с AP головы и шлем не снят
+ * (флаг «Шлем снят» силовой брони). Для Слепого Зрения — «когда он не носит
+ * шлем» (решение владельца 17.10.2026: шлем = броня с защитой головы).
+ */
+export function helmetWorn(actor) {
+  const s = actor?.system;
+  if (s?.helmetlessActive) return false;
+  let head = s?.gearHeadAP;
+  if (head == null) {
+    head = 0;
+    for (const i of actor?.items ?? []) {
+      if (i?.type === "armor" && i.system?.equipped) head = Math.max(head, Number(i.system?.head) || 0);
+    }
+  }
+  return (Number(head) || 0) > 0;
+}
+
+/**
+ * Слепое Зрение (Талант): Unnatural Senses (P.b), пока шлема нет. Только по
+ * имени — этот предикат вызывается из отбора правил, спросить Возможности
+ * отсюда нельзя (рекурсия).
+ */
+export function blindsightActive(actor) {
+  const has = [...(actor?.items ?? [])].some(i => i?.type === "talent" && itemHasName(i, "Blindsight"));
+  return has && !helmetWorn(actor);
+}
+
 /** Хирургически установленный (не просто лежащий в инвентаре) имплант с этим именем. */
 function hasInstalledImplant(actor, name) {
   return (actor?.items ?? []).some(i => i?.type === "implant" && itemHasName(i, name) &&
@@ -329,8 +359,11 @@ export const CTX_DEPENDENT_PREDICATES = new Set([
   "targetHasSize", "targetKeepsNimbleInArmour", "targetHasFaction",
   "targetHasFieldPsyMod", "targetLacksSealedArmour", "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus", "hasHatredTarget",
   "targetSerpentine",
-  "legacyGuardianMarked", "targetPsykerOrDaemon", "targetIsAstartes"
+  "legacyGuardianMarked", "targetPsykerOrDaemon", "targetIsAstartes", "targetIsPsyker"
 ]);
+
+/** Гравитация ниже этого значения (G) считается невесомостью/микро-гравитацией: ниже самой малой строки таблицы книги (0,2 G). */
+export const WEIGHTLESS_BELOW_G = 0.2;
 
 export const PREDICATES = {
   race:    (actor, ctx, value) => list(value).includes(actor?.system?.race),
@@ -418,6 +451,20 @@ export const PREDICATES = {
     return hit === (value !== false);
   },
 
+  // В ране актора торчит рог Чумоноса (Majestic Horns, 7, wdbc-1rno.10): метка
+  // на акторе плюс неизвлечённое Проникающее в её локации — rules/lodged-horn.mjs.
+  hasLodgedHorn: (actor, ctx, value) => hasLodgedHorn(actor) === (value !== false),
+
+  // Цель броска — именно псайкер, БЕЗ демонов (Рога Кровожада: «Flame (3d10)
+  // против псайкеров», wdbc-1rno.10). Признак тот же, что у листа (hud.mjs) и
+  // rules/talent-targets.mjs: флаг system.isPsyker либо Пси-Рейтинг ≥ 1 —
+  // NPC бестиария часто несёт только один из двух.
+  targetIsPsyker: (actor, ctx, value) => {
+    const t = ctx?.targetActor;
+    const hit = !!t && (!!t.system?.isPsyker || (Number(t.system?.psyker?.rating) || 0) >= 1);
+    return hit === (value !== false);
+  },
+
   // Цель (или источник) теста — Космодесантник: раса с учётом Прошлого или
   // Черта «Astartes» — тот же признак, что rules/legacy-weapon.mjs::isAstartes.
   // Источник теста Морали (Страх) едет в том же ctx.targetActor
@@ -428,6 +475,16 @@ export const PREDICATES = {
     const hit = !!t && (raceMatches(t.system, "astartes")
       || [...(t.items ?? [])].some(i => i?.type === "trait" && itemHasName(i, "Astartes")));
     return hit === (value !== false);
+  },
+
+  // Сцена актора в невесомости или микро-гравитации (окно «Окружающая Среда»,
+  // гравитация < WEIGHTLESS_BELOW_G): Пустота в Венах Сквата (wdbc-9tpng) —
+  // «для тестов ориентации и передвижения в невесомости или микро-гравитации».
+  // Сцена — токена актора, иначе текущая; нет сцены — не невесомость.
+  weightlessScene: (actor, ctx, value) => {
+    const scene = actor?.token?.parent ?? globalThis.canvas?.scene ?? globalThis.game?.scenes?.current ?? null;
+    const g = scene ? Number(readEnvForScene(scene).gravity) : 1;
+    return (Number.isFinite(g) && g < WEIGHTLESS_BELOW_G) === (value !== false);
   },
 
   weaponClass: (actor, ctx, value) => list(value).includes(ctx?.weapon?.system?.weaponClass),
@@ -477,6 +534,10 @@ export const PREDICATES = {
   // иначе Возможность Конструктора пришлось бы спрашивать изнутри отбора
   // правил — рекурсия collectRules → предикат → collectRules.
   isBlinded: (actor, ctx, value) => isBlindedActor(actor) === (value !== false),
+
+  // Слепое Зрение без шлема — альтернативные чувства (Talent Blindsight):
+  // входит в anyOf правила conditions.blinded.altSenses.
+  blindsightActive: (actor, ctx, value) => blindsightActive(actor) === (value !== false),
 
   // «Рядовой» (корбук стр. 4, system.rankAndFile): `true` — Рядовой, `false` —
   // чемпион. Гейт записей, которых у Рядовых по книге нет (Черты Человека).

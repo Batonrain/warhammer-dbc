@@ -163,7 +163,7 @@ describe("правило «Оглох»", () => {
     expect(CONDITION_RULES.map(r => r.id)).toContain("conditions.deafened");
   });
 
-  it("−30 на социальный навык (Обаяние)", () => {
+  it("−30 на социальный навык (Очарование)", () => {
     const { mods } = resolveTest({ actor: actor({ deafened: true }), skill: "charm", char: "fel" });
     expect(mods).toEqual([expect.objectContaining({ ruleId: "conditions.deafened", value: -30 })]);
   });

@@ -51,6 +51,28 @@ export const EQUIP_SHOP_ROW_BY_KEY = Object.fromEntries(EQUIP_SHOP_ROWS.map(r =>
 export const EQUIP_SHOP_PACKS = ["weapons", "armor", "gear", "ammunition", "implants", "tools", "shields"];
 
 /**
+ * Значение `equipCategoryPack` у записи Конструктора «Снаряжение: выбор»,
+ * означающее «любой физический предмет» — те же категории, что у магазина
+ * Очков Снаряжения (EQUIP_SHOP_PACKS). Нужно, когда книга говорит просто
+ * «снаряжение» (Стремление «Богатство»: +1 доп. снаряжение с R 4), а не
+ * называет категорию.
+ */
+export const EQUIP_ANY_PACK = "physical";
+export const EQUIP_ANY_LABEL = "Любой предмет снаряжения";
+
+/** Имя возможности «−1 Inf.b в расчёте стартового снаряжения» (Стремление «Растраты»). */
+export const EQUIP_POINTS_PENALTY_CAPABILITY = "creation.equipPointsPenalty";
+
+/**
+ * Inf.b, от которого считается пул: штраф Стремления «Растраты» (−1 Inf.b в
+ * расчёте стартового снаряжения, стр. 22) — на сам Inf.b, а не на итог, поэтому
+ * надбавки Расы и ГМа его не гасят. Ниже нуля Inf.b не уходит.
+ */
+export function equipPointsInfBonus(infBonus, penalty = 0) {
+  return Math.max(0, (Number(infBonus) || 0) - Math.max(0, Number(penalty) || 0));
+}
+
+/**
  * Пул: Inf.b + любое число надбавок. Надбавки бывают двух видов и обе
  * законные: ручной бонус ГМа (стр. 24 щедрости не запрещает) и надбавка из
  * текста Расы — «+2 очка стартового снаряжения» у Сквата (wdbc-yobj); раньше
@@ -86,4 +108,46 @@ export const SACRIFICE_MOD_MAX_AVAILABILITY = 2;
 export function startingAmmoQuantity(magazineMax) {
   const cap = Math.max(0, Number(magazineMax) || 0);
   return Math.max(4 * cap, 20);
+}
+
+/**
+ * Из какого компендиума модификаций брать «3 модификации для брони или
+ * оружия» за пожертвованный предмет (стр. 24). Броня и оружие дают свои;
+ * кибернетика и импланты — null: книга позволяет взять модификации и для того,
+ * и для другого, решает игрок, и Мастер его спрашивает.
+ * @param {string} itemType  тип пожертвованного предмета
+ * @returns {"armor-mods"|"weapon-mods"|null}
+ */
+export function sacrificeModPack(itemType) {
+  if (itemType === "armor") return "armor-mods";
+  if (itemType === "weapon") return "weapon-mods";
+  return null;
+}
+
+/**
+ * Стартовые боеприпасы (стр. 24): «4 полных магазина или 20 стандартных
+ * боеприпасов для КАЖДОГО оружия, что больше». Каждому оружию с магазином —
+ * свой комплект, независимо от того, что у персонажа уже лежит из боеприпасов
+ * (купленное за Очки Снаряжения или выданное Архетипом — сверх, а не вместо).
+ * Оружие одного типа складывается в одну стопку: два лазгана — 40 зарядов, а не
+ * две отдельные пачки по 20.
+ *
+ * @param {{weaponType?:string, magazineMax?:number}[]} weapons оружие персонажа
+ * @param {{key:string, weaponTypes?:string[], attackMod?:number, damageMod?:number,
+ *          penetrationMod?:number, rangeMod?:number}[]} ammoLib боеприпасы компендиума
+ * @returns {Map<string, number>} ключ боеприпаса → сколько выдать
+ */
+export function planStartingAmmo(weapons, ammoLib) {
+  const out = new Map();
+  for (const w of weapons ?? []) {
+    if (!(Number(w?.magazineMax) > 0)) continue;
+    // «Стандартный» боеприпас — без модификаторов профиля (не спецбоеприпас),
+    // подходящий по типу оружия; первый совпавший, порядок компендиума.
+    const std = (ammoLib ?? []).find(a =>
+      (a.weaponTypes || []).includes(w.weaponType || "") &&
+      !a.attackMod && !a.damageMod && !a.penetrationMod && !a.rangeMod);
+    if (!std) continue;
+    out.set(std.key, (out.get(std.key) || 0) + startingAmmoQuantity(w.magazineMax));
+  }
+  return out;
 }

@@ -55,7 +55,7 @@ export async function resolveBurnedSenses(actor, item) {
   } else {
     lines.push(`<div class="roll-threshold">Теряет: <b>${esc(lostLabel)}</b>${condKey ? " (перманентно наложено)" : " — механики этой потери в системе нет, отыгрывается за столом"}</div>`);
     lines.push(`<div class="roll-threshold">Усиливает: <b>${esc(boostedLabel)}</b> — «+20 и переброс провалов» не подключить ни к одному чувству: ` +
-      `Бдительность в системе один общий Навык на все чувства, отдельного теста на каждое нет. Бонус отыгрывается по решению ГМа.</div>`);
+      `Внимательность в системе один общий Навык на все чувства, отдельного теста на каждое нет. Бонус отыгрывается по решению ГМа.</div>`);
   }
 
   await ChatMessage.create(ChatMessage.applyRollMode({

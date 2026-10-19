@@ -54,9 +54,12 @@ import { activateWrappedInChaos } from "./wrapped-in-chaos.mjs";
 import { attemptPossessionAttack, leavePossessionHost } from "./possession-attack.mjs";
 import { activateBattleForm, endBattleForm } from "./battle-forms.mjs";
 import { useAdaptiveVenom } from "./naga-traits.mjs";
+import { useExplosiveAction } from "../combat/explosive-action.mjs";
 import { emergencyMaintenance } from "../combat/emergency-maintenance.mjs";
 import { scroungeSupplies } from "./scrounge.mjs";
+import { grantCursedHeirloom } from "./cursed-heirloom.mjs";
 import { grantStartingDisorder } from "../sheets/tabs/disorders.mjs";
+import { shareCombatFormation } from "../combat/combat-formation.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -165,11 +168,19 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *  - `useAdaptiveVenom` (apps/naga-traits.mjs) — Адаптивная Отрава Наги:
  *    выбор яда (вектор рана/инъекция/еда, Редкость ≤2/3/4 за 1/3/5 Очков
  *    Бесчестия) и одна доза «яда в клыках» на листе.
+ *  - `useExplosiveAction` (combat/explosive-action.mjs) — Взрывное Действие
+ *    Сплайса: бонусное полудействие раз в Ход, расплата в конце Хода.
  *  - `emergencyMaintenance` (combat/emergency-maintenance.mjs) — Экстренное
  *    Обслуживание Технодесантника: полное действие, выбор и починка
  *    повреждения; throw при отказе — Очко Бесчестия записи не списывается.
  *  - `scroungeSupplies` (apps/scrounge.mjs) — Наскрести Изгоя: 2d10
  *    расходников до R2 Обозревателем компендиумов.
+ *  - `grantCursedHeirloom` (apps/cursed-heirloom.mjs) — Проклятое Наследство
+ *    (Арсенал): выбор оружия до R4 Обозревателем, бросок d5, запись
+ *    проклятья текстом на созданный предмет.
+ *  - `shareCombatFormation` (combat/combat-formation.mjs) — Боевое Построение:
+ *    отметить выбранных (T) соратников — им +1 к Инициативе и I.b вместо A.b
+ *    до конца боя (стр. 62).
  *  - `grantStartingDisorder` (sheets/tabs/disorders.mjs) — стартовое
  *    случайное расстройство от источника с «неизлечимо» и пределом Тяжести
  *    (Архетип Беглый Псайкер: не ниже −2); повторно не выдаёт.
@@ -200,10 +211,10 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "resolveBurnedSenses", "buildCountenanceFearFlag", "purityOfBattleWave", "devouredSkillRank",
     "nextDevourerStreak", "pruneDevourerStreaks",
     "activateFruitOfFlesh", "eatHealFruit", "useSoulSeer", "activateWrappedInChaos",
-    "attemptPossessionAttack", "leavePossessionHost", "useAdaptiveVenom",
+    "attemptPossessionAttack", "leavePossessionHost", "useAdaptiveVenom", "useExplosiveAction",
     "activateBattleForm", "endBattleForm",
-    "emergencyMaintenance", "scroungeSupplies",
-    "grantStartingDisorder",
+    "emergencyMaintenance", "scroungeSupplies", "grantCursedHeirloom",
+    "grantStartingDisorder", "shareCombatFormation",
     ...extraNames,
     code
   );
@@ -220,10 +231,10 @@ export async function executeItemCode(item, code, event, extra = {}) {
     resolveBurnedSenses, buildCountenanceFearFlag, purityOfBattleWave, devouredSkillRank,
     nextDevourerStreak, pruneDevourerStreaks,
     activateFruitOfFlesh, eatHealFruit, useSoulSeer, activateWrappedInChaos,
-    attemptPossessionAttack, leavePossessionHost, useAdaptiveVenom,
+    attemptPossessionAttack, leavePossessionHost, useAdaptiveVenom, useExplosiveAction,
     activateBattleForm, endBattleForm,
-    emergencyMaintenance, scroungeSupplies,
-    grantStartingDisorder,
+    emergencyMaintenance, scroungeSupplies, grantCursedHeirloom,
+    grantStartingDisorder, shareCombatFormation,
     ...extraNames.map(k => extra[k])
   );
 }

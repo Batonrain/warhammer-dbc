@@ -5,7 +5,7 @@
   "folder": "DHU6OF9bbD7dLzp3",
   "system": {
     "description": "",
-    "notes": "Реализовано ЧАСТИЧНО (16.09.2026, wdbc-1rno.5, находка 10/12): capabilityKey psychicPower.tzeentch.blessingOfMagnus — module/rules/blessing-of-magnus.mjs (hasActiveBlessingOfMagnus/actorHasEquippedForceWeapon/blessingOfMagnusFreeHalfAim), module/rules/aiming.mjs::aimApCost. Пока сила поддерживается (item.system.isSustained) И актор тяжело/критически ранен (woundTier heavy/dying) И носит экипированное психосиловое оружие (weaponProp key:\"force\") — Полу-Прицеливание свободным действием (только Полу-, книга Полное не упоминает). «+5×PR на тесты W» и «действие Пси-Капюшон без капюшона» честно НЕ реализованы — отдельный тикет wdbc-1rno.34.",
+    "notes": "Реализовано ЧАСТИЧНО (wdbc-1rno.5 / wdbc-1rno.34): capabilityKey psychicPower.tzeentch.blessingOfMagnus — module/rules/blessing-of-magnus.mjs (hasActiveBlessingOfMagnus/actorHasEquippedForceWeapon/blessingOfMagnusFreeHalfAim), module/rules/aiming.mjs::aimApCost. Пока сила поддерживается (item.system.isSustained) И актор тяжело/критически ранен (woundTier heavy/dying) И носит экипированное психосиловое оружие (weaponProp key:\"force\") — Полу-Прицеливание свободным действием (только Полу-, книга Полное не упоминает). «+5×PR на все тесты W» — запись testMod (область: тесты W, charBonus pr ×5, when.woundTier heavy/dying): PR фиксируется при манифестации (sustainedEpr, wdbc-1wvn), пока сила не поддерживается — источник неактивен. «Действие Пси-Капюшон без капюшона» НЕ требует кода: кнопка .psy-hood-btn капюшона не проверяет вовсе.",
     "cost": 400,
     "discipline": "tzeentch",
     "subtype": "",
@@ -143,6 +143,24 @@
               "weaponPropNewValue2": "0",
               "label": "",
               "code": ""
+            },
+            {
+              "id": "eYBlessingMagnusWp5",
+              "kind": "testMod",
+              "modScope": "char",
+              "rerollChar": "wp",
+              "modValueMode": "charBonus",
+              "modCharBonus": "pr",
+              "modCharBonusMultiplier": 5,
+              "label": "Благословение Магнуса: +5×PR к тестам W",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "woundTier": [
+                  "heavy",
+                  "dying"
+                ]
+              }
             }
           ]
         }

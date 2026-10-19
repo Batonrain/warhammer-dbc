@@ -37,7 +37,7 @@ export function hasBowToAudience(actor) {
   return hasAbility(actor, "ability.bowToTheAudience", "Bow to the Audience", "talent");
 }
 
-/** Итог Бдительности (с учётом Тренировки) — умолчание на P, если записи Навыка на акторе нет вовсе. */
+/** Итог Внимательности (с учётом Тренировки) — умолчание на P, если записи Навыка на акторе нет вовсе. */
 function awarenessTotal(actor) {
   const sk = actor.system.skills?.awareness;
   if (sk?.total != null) return sk.total;

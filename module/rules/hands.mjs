@@ -16,7 +16,7 @@
 
 import { parseGrips, RANGED_GRIPS } from "../constants/combat.mjs";
 import { resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properties.mjs";
-import { getModEffects, mergeWeaponPropEntries, getInstalledMods } from "../combat/weapon-mods.mjs";
+import { getModEffects, mergeWeaponPropEntries, getActiveMods } from "../combat/weapon-mods.mjs";
 import { isHandShield } from "../combat/hand-shield.mjs";
 import { isMultipleArmsTrait } from "./cybernetic-excellence.mjs";
 import { isFusedByHandOfDeath } from "./hand-of-death.mjs";
@@ -90,7 +90,8 @@ function availableRangedGrips(item, actor, auto) {
   // Хват от модификации (Pistol Grip и подобные, wdbc-8vp1): system.effects.
   // grantsGrip установленной weaponMod — то же поле, что читает attack-dialog.mjs
   // (modGrantedGrips).
-  for (const mod of getInstalledMods(actor, item)) addExtra(mod.system?.effects?.grantsGrip);
+  // Действующие моды — тот же список, что у окна атаки (getActiveMods).
+  for (const mod of getActiveMods(actor, item)) addExtra(mod.system?.effects?.grantsGrip);
   // Commando/Коммандо (wdbc-eduq): карабин держат одной рукой, как пистолет.
   if (auto?.carbine && hasRuleFlag(actor, "weapon.commandoCarbine")) addExtra("1р");
   // Double Grip/Двуручный хват пистолета (wdbc-mu6v): пистолет двумя руками.

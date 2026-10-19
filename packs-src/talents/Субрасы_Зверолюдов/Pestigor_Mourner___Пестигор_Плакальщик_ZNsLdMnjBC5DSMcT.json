@@ -5,7 +5,7 @@
   "folder": "1fZN0jHzRRbKwVbq",
   "system": {
     "description": "Раз за бой или сцену: непоглощённый урон → 1, на 1 Раунд T.b в поглощении удвоен.",
-    "notes": "Доступ — только Пестигору (Требование «Субраса Пестигор»). Кнопка на панели «ВОЗМОЖНОСТИ СЕЙЧАС» отмечает использование раз за бой/сцену и пишет напоминание; вернуть лишние Раны и удвоить T.b на Раунд — вручную (в конвейере урона нет точки «уменьшить уже полученный урон задним числом»).",
+    "notes": "Автоматизировано (wdbc-gao07): после расчёта непоглощённого урона (combat/damage.mjs) движок предлагает уменьшить его до 1 — раз за бой; T.b удваивается в поглощении на 1 Раунд (combat/beastman-subrace.mjs). Доступ — только Пестигору (Требование «Субраса Пестигор»).",
     "benefit": "Благословения Бога Жизни и Смерти струятся в крови Пестигора, и он может потянуться к ним, чтобы на краткое время придать своей плоти невероятную стойкость. Раз за бой или сцену после получения непоглощенного урона он может уменьшить его до 1 и на 1 Раунд удвоить свой T.b в расчете поглощения.",
     "tier": 3,
     "requirement": "Субраса Пестигор, Cor 30, Inf 30",
@@ -41,8 +41,8 @@
           "operator": "AND",
           "entries": [
             {
-              "id": "Y4LwH25JuAI4g2Oc",
-              "kind": "script",
+              "id": "mdGlc6sCjHo9wmVt",
+              "kind": "capability",
               "group": null,
               "corruptionValue": "1",
               "woundsValue": "1",
@@ -89,7 +89,7 @@
               "modValueMode": "flat",
               "modCharBonus": "inf",
               "rerollWho": "self",
-              "capabilityKey": "",
+              "capabilityKey": "talent.beastmanSubrace.pestigorMourner",
               "capabilityCostPool": "",
               "capabilityCostAmount": 1,
               "capabilityMode": "flag",
@@ -141,10 +141,10 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "Плакальщик: урон до 1",
-              "code": "await ChatMessage.create({ speaker, content: `<div class=\"wh-roll-result\"><div class=\"roll-header\">Пестигор Плакальщик — ${actor.name}</div><div class=\"roll-threshold\">Непоглощённый урон уменьшен до 1; на 1 Раунд T.b удваивается в расчёте поглощения. Раз за бой или сцену.</div></div>` });",
+              "label": "Раз за бой: непоглощённый урон → 1, T.b ×2 на Раунд",
+              "code": "",
               "scriptThrottleUnit": "battle",
-              "scriptThrottleMax": 1,
+              "scriptThrottleMax": 0,
               "scriptTrigger": "",
               "when": {
                 "negate": false,

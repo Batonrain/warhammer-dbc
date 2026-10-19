@@ -26,6 +26,10 @@
 //   • Огонь из Всех Орудий — module/sheets/attack-dialog.mjs (свой выбор
 //     режима огня второй руки, по умолчанию Одиночный) + module/combat/
 //     attack.mjs и attack-card.mjs (кнопка теста Подавления цели, wdbc-pb60).
+//   • Тирантикос (элитный, Чемпион-Терминатор; Sahara 10-2d10-2) —
+//     module/sheets/attack/dialog.mjs решает по попаданию первой руки,
+//     module/combat/attack.mjs кладёт +2d10 на первое попадание второй.
+//     Его же скидка −10 к парному штрафу — в rules/dual-wield.mjs (REDUCTIONS).
 //
 //  ── Почему проверка «чем вооружён» живёт здесь, а не в каждом месте ────────
 //  Все шесть требуют определённой ПАРЫ в руках («две рукопашные с Балансом
@@ -38,6 +42,8 @@
 
 import { hasRuleFlag } from "./flags.mjs";
 import { handHeldItems } from "./hands.mjs";
+import { hitSizeOf } from "./predicates.mjs";
+import { CAP_TYRANTHIKOS } from "./dual-wield.mjs";
 
 export const CAP_CROSSBLOCK       = "dualWield.core.crossblock";
 export const CAP_MAINE_GAUCHE     = "dualWield.core.maineGauche";
@@ -174,4 +180,37 @@ export function allGunsBlazingMod(actor, mainRofMode, offRofMode) {
   if (!hasRuleFlag(actor, CAP_ALL_GUNS_BLAZING)) return null;
   if (!BURST_ROF_MODES.has(mainRofMode) || !BURST_ROF_MODES.has(offRofMode)) return null;
   return (mainRofMode === "full" && offRofMode === "full") ? -20 : 0;
+}
+
+/** Кубы урона Тирантикоса и минимальный Размер цели под них. */
+export const TYRANTHIKOS_BONUS_DICE = 2;
+export const TYRANTHIKOS_MIN_SIZE   = 2;
+
+/**
+ * Тирантикос: «Если он вооружён двумя тяжёлыми оружиями, стреляет из обоих в
+ * одну цель Размером 2 и более и попадает из обоих, цель получает +2d10 Dmg от
+ * первого попадания второй атаки».
+ *
+ * Здесь всё, что известно ДО броска второй руки: Талант, обе тяжёлые, Размер
+ * цели и попала ли первая рука. Последнее условие — «попала и вторая» — знает
+ * только сам бросок (combat/attack.mjs кладёт кубы лишь при попадании), туда
+ * и уходит ответ. «В одну цель» выполняется построением: обе руки окна атаки
+ * бьют первую выбранную цель (game.user.targets[0]).
+ *
+ * Размер — hitSizeOf, а не sizeOf: у Орды «в расчёте атак по ней» книга
+ * (стр. 30) считает Размер по Магнитуде, это расчёт атаки по ней.
+ *
+ * @param {object} actor
+ * @param {object} main оружие основной руки
+ * @param {object} off  оружие второй руки
+ * @param {?object} target актор цели
+ * @param {boolean} firstHit попала ли основная рука
+ * @returns {number} сколько d10 добавить к первому попаданию второй руки (0 — нисколько)
+ */
+export function tyranthikosSecondAttackDice(actor, main, off, target, firstHit) {
+  if (!firstHit || !target) return 0;
+  if (cls(main) !== "heavy" || cls(off) !== "heavy") return 0;
+  if (hitSizeOf(target) < TYRANTHIKOS_MIN_SIZE) return 0;
+  if (!hasRuleFlag(actor, CAP_TYRANTHIKOS)) return 0;
+  return TYRANTHIKOS_BONUS_DICE;
 }

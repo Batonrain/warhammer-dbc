@@ -94,7 +94,41 @@ const ALLOWED = {
   // Скорость полёта (Гарпия, глава I): как Sonar Sense — включатель ИМЯ Черты
   // Flyer/Hoverer (rules/flight-speed.mjs, combat/movement-actions.mjs держат
   // имена массивом, литерала в вызове itemHasName анализатор не видит).
-  "trait.flyer": "включается по имени Черты (Flyer / Летун, Hoverer / Парящий) — сотни носителей в паках, ключ Конструктора не нужен"
+  "trait.flyer": "включается по имени Черты (Flyer / Летун, Hoverer / Парящий) — сотни носителей в паках, ключ Конструктора не нужен",
+
+  // Чистый Разум (module/rules/training-advantage.mjs::hasClearMind, курс
+  // Обучения): включатель — имя Черты через itemHasName внутри hasItem(actor,
+  // "trait", "Clear Mind"), не через hasTalent — анализатор ищет литерал
+  // только в вызовах itemHasName/hasAbility/hasTalent/hasItemNamed/hasNamed
+  // напрямую, этот вызов другой формы не распознаёт, хотя за столом работает.
+  "trait.treytyRas.clearMind": "включается по имени Черты (Clear Mind / Чистый Разум) — вызов другой формы (hasItem), анализатор такой не распознаёт",
+
+  // Melee Training / Weapon Training (Арсенал, гл. 3, wdbc-8r2iv): читаются
+  // rules/weapon-training.mjs по ИМЕНИ Таланта (regex /^Melee Training\b/,
+  // /^Weapon Training\b/) + system.specialization, не по capabilityKey —
+  // анализатор ищет литерал ключа, этот вид выдачи не распознаёт, хотя за
+  // столом способность есть у любого персонажа с купленным Талантом.
+  "arsenal.core.meleeTraining":  "включается по имени Таланта (Melee Training) + system.specialization, rules/weapon-training.mjs — анализатор такой вид выдачи не распознаёт",
+  "arsenal.core.weaponTraining": "включается по имени Таланта (Weapon Training) + system.specialization, rules/weapon-training.mjs — анализатор такой вид выдачи не распознаёт",
+
+  // Armour Training / Тренировка в Броне (Арсенал, гл. 3, wdbc-3-65ff): тот же
+  // приём, что у Melee/Weapon Training выше — читается rules/armour-training.mjs
+  // по ИМЕНИ Таланта (regex /^Armour Training\b/) + system.specialization, не
+  // по capabilityKey — анализатор такой вид выдачи не распознаёт, хотя за
+  // столом способность есть у любого персонажа с купленным Талантом.
+  "arsenal.core.armourTraining": "включается по имени Таланта (Armour Training) + system.specialization, rules/armour-training.mjs — анализатор такой вид выдачи не распознаёт",
+
+  // Exotic Weapon Training (Арсенал, гл. 3, wdbc-3-65ff): тот же приём —
+  // читается rules/weapon-training.mjs по ИМЕНИ Таланта + system.specialization
+  // (подстрокой в названии предмета), не по capabilityKey.
+  "arsenal.core.exoticWeaponTraining": "включается по имени Таланта (Exotic Weapon Training) + system.specialization (подстрокой в названии предмета), rules/weapon-training.mjs — анализатор такой вид выдачи не распознаёт",
+
+  // Cybernetic Excellence / Кибернетическое Превосходство (Механикум, гл. 3,
+  // wdbc-wyu40): включатель — regex NAME_RE.test(item.name) внутри именованной
+  // функции isCyberneticExcellence (rules/cybernetic-excellence.mjs), не
+  // прямой вызов itemHasName/hasAbility/hasTalent — анализатор такую обёртку
+  // не распознаёт, хотя за столом способность работает.
+  "mechanicum.core.cyberneticExcellence": "включается по имени Таланта через regex в isCyberneticExcellence (rules/cybernetic-excellence.mjs) — анализатор такую обёртку не распознаёт"
 };
 
 describe("возможности с читателем должны быть достижимы из игры", () => {

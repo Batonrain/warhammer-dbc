@@ -6,8 +6,9 @@
 //  Функции принимают актора, а не лист.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { APTITUDES } from "../../constants/characteristics.mjs";
-import { charAptitudeSet, charCostXP, skillCostXP, talentCostXP,
+import { APTITUDES, CHARACTERISTICS } from "../../constants/characteristics.mjs";
+import { confirmXpSpend } from "../../apps/xp-afford.mjs";
+import { charAptitudeSet, charCostXP, skillCostXP, talentCostXP, APTITUDES_TOTAL,
          resolveTalentAptitudes } from "../../constants/advancement.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../../constants/skills.mjs";
 import { charAdvanceCat, skillAdvanceCat } from "../../rules/advance-category.mjs";
@@ -15,6 +16,26 @@ import { talentCategory } from "../item-picker.mjs";
 import { openContextMenu, closeContextMenus } from "../context-menu.mjs";
 import { esc } from "../../helpers/utils.mjs";
 import { costFromCompendium } from "../../migrations/tech-power-costs.mjs";
+import { trainingTargetKey, consumeTrainingEarmark, TRAINING_EARMARK_FLAG } from "../../rules/training.mjs";
+
+/**
+ * Целевой запас xp от курсов Обучения (книга, стр. 22; module/rules/
+ * training.mjs) — списывается ЗДЕСЬ, в момент самой покупки, а не когда
+ * курс завершился: xp «только на то, чему учили» — до этой покупки его
+ * вообще некуда было потратить. Списывается ВЕСЬ запас цели сразу (книга:
+ * «лишние xp теряются» — излишек сверх цены НЕ откладывается на будущее,
+ * даже если сейчас потратить его больше не на что). Возвращает финальную
+ * (уже со скидкой) цену при подтверждении игроком, иначе null — запас,
+ * как и раньше, не трогаем (отказ не должен его расходовать).
+ */
+async function confirmXpSpendTrained(actor, targetKey, rawCost, priorCost, label) {
+  const log = actor.getFlag?.("warhammer-dbc", TRAINING_EARMARK_FLAG) ?? [];
+  const { discount, nextLog } = consumeTrainingEarmark(log, targetKey, rawCost);
+  const finalCost = Math.max(0, rawCost - discount);
+  if (!(await confirmXpSpend(actor, finalCost - priorCost, label))) return null;
+  if (discount > 0) await actor.setFlag("warhammer-dbc", TRAINING_EARMARK_FLAG, nextLog);
+  return finalCost;
+}
 
 // Шаги продвижения характеристики (+5..+25) и ранги навыка — индексы в таблицах цен.
 // CHAR_IMP_STEPS экспортирован — им же на вкладке ПОКАЗАТЕЛИ считается ряд из
@@ -78,16 +99,20 @@ function aptitudesOf(actor) {
 export async function addAptitude(actor) {
   const arr = aptitudesOf(actor);
   // Первая незанятая склонность из списка (чтобы не плодить дубли/пустышки).
+  if (new Set(arr).size >= APTITUDES_TOTAL)
+    ui.notifications?.warn(`По книге Склонностей ${APTITUDES_TOTAL}; больше — только от расы или Пути (стр. 24).`);
   const used = new Set(arr);
   const free = Object.keys(APTITUDES).find(k => k !== "general" && !used.has(k)) || "ws";
   arr.push(free);
-  await actor.update({ "system.aptitudes": arr });
+  // Через setAptitudes, а не голым update: новая Склонность меняет категорию
+  // цены у уже купленного, и книга (стр. 24) требует пересчёта.
+  await setAptitudes(actor, arr);
 }
 
 export async function removeAptitude(actor, index) {
   const arr = aptitudesOf(actor);
   arr.splice(index, 1);
-  await actor.update({ "system.aptitudes": arr });
+  await setAptitudes(actor, arr);
 }
 
 /**
@@ -138,7 +163,8 @@ export async function recalcAllAdvanceCosts(actor) {
         ? resolveTalentAptitudes(it.name, it.system.aptitudes || [], it.system.aptSource, defs)
         : (it.system.aptitudes || []);
       return { _id: it.id, "system.cost": talentCostXP(it.system.tier, a, apts,
-        talentCategory(actor, it.name), { name: it.name, patron: actor.system.patronGod, actor }) };
+        talentCategory(actor, it.name), { name: it.name, patron: actor.system.patronGod, actor,
+          specialization: it.system.specialization }) };
     });
   if (talUpd.length) await actor.updateEmbeddedDocuments("Item", talUpd);
 }
@@ -161,8 +187,14 @@ export async function setGroupEntryField(actor, group, index, field, value) {
   const entry   = entries[index];
   if (entry) {
     if (field === "rank") {
+      const newCost = skillCumCost(actor, GROUP_SKILLS_DEF[group], value, entry.char, entry.grantedRank || "untrained", group, entry.specialty, null, entry.aptitudes);
+      // Нехватка опыта — вопрос (стр. 23); отказ оставляет запись как была.
+      const targetKey = trainingTargetKey({ kind: "group", key: group, specialty: entry.specialty });
+      const finalCost = await confirmXpSpendTrained(actor, targetKey, newCost, Number(entry.cost) || 0,
+        entry.specialty || GROUP_SKILLS_DEF[group]?.label || group);
+      if (finalCost === null) return false;
       entry.rank = value;
-      entry.cost = skillCumCost(actor, GROUP_SKILLS_DEF[group], value, entry.char, entry.grantedRank || "untrained", group, entry.specialty, null, entry.aptitudes);
+      entry.cost = finalCost;
       // Цену поставила эта ветка, а не ГМ (wdbc-rcr9) — см. recalcAllAdvanceCosts.
       entry.costManual = false;
     } else if (field === "cost") {
@@ -177,6 +209,7 @@ export async function setGroupEntryField(actor, group, index, field, value) {
     }
   }
   await writeEntries(actor, group, entries);
+  return true;
 }
 
 export async function renameGroupEntry(actor, group, index, name) {
@@ -311,13 +344,24 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
       [`system.characteristics.${el.dataset.char}.${el.dataset.field}`]: parseInt(el.value) || 0
     });
   });
-  html.find(".char-improvement-select").change(ev => {
+  html.find(".char-improvement-select").change(async ev => {
     const el = ev.currentTarget;
     const charKey = el.dataset.char;
+    const cur = actor.system.characteristics?.[charKey] || {};
+    const newCost = charImpCost(actor, charKey, el.value);
+    // Нехватка опыта — вопрос, а не запрет (стр. 23, rules/xp-shortfall.mjs).
+    // Спрашиваем про ПРИРОСТ цены: на листе лежит накопленная сумма уровней.
+    const targetKey = trainingTargetKey({ kind: "char", key: charKey });
+    const finalCost = await confirmXpSpendTrained(actor, targetKey, newCost, Number(cur.cost) || 0,
+      CHARACTERISTICS[charKey]?.label || charKey);
+    if (finalCost === null) {
+      el.value = cur.improvement || "none";
+      return;
+    }
     // Ставим уровень И авто-цену (можно затем поправить вручную в поле «Цена»).
     actor.update({
       [`system.characteristics.${charKey}.improvement`]: el.value,
-      [`system.characteristics.${charKey}.cost`]: charImpCost(actor, charKey, el.value),
+      [`system.characteristics.${charKey}.cost`]: finalCost,
       // Цену ставит сама эта ветка — оставить пометку «вписано руками» значило
       // бы навсегда исключить строку из пересчёта с чужим числом (wdbc-rcr9).
       [`system.characteristics.${charKey}.costManual`]: false
@@ -362,13 +406,21 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
   });
 
   // ── Навыки: ранг и цена ───────────────────────────────────────────────────
-  html.find(".skill-rank-select").change(ev => {
+  html.find(".skill-rank-select").change(async ev => {
     const el = ev.currentTarget;
     const key = el.dataset.skill;
-    const granted = actor.system.skills?.[key]?.grantedRank || "untrained";
+    const cur = actor.system.skills?.[key] || {};
+    const granted = cur.grantedRank || "untrained";
+    const newCost = skillCumCost(actor, SKILLS_DEF[key], el.value, null, granted, null, "", key);
+    const finalCost = await confirmXpSpendTrained(actor, trainingTargetKey({ kind: "skill", key }),
+      newCost, Number(cur.cost) || 0, SKILLS_DEF[key]?.label || key);
+    if (finalCost === null) {
+      el.value = cur.rank || "untrained";
+      return;
+    }
     actor.update({
       [`system.skills.${key}.rank`]: el.value,
-      [`system.skills.${key}.cost`]: skillCumCost(actor, SKILLS_DEF[key], el.value, null, granted, null, "", key),
+      [`system.skills.${key}.cost`]: finalCost,
       [`system.skills.${key}.costManual`]: false
     });
   });
@@ -469,10 +521,14 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
       // costManual снимается вместе с ★: обе ветки ставят цену сами, и оставить
       // талант помеченным «цена вручную» значило бы навсегда исключить его из
       // пересчёта по Склонностям — с числом, которое ГМ руками не вписывал.
+      const boughtCost = talentCostXP(item.system.tier, a, apts, talentCategory(actor, item.name),
+        { name: item.name, patron: actor.system.patronGod, actor, specialization: item.system.specialization });
+      const finalCost = await confirmXpSpendTrained(actor, trainingTargetKey({ kind: "talent", key: item.name }),
+        boughtCost, 0, item.name);
+      if (finalCost === null) return;
       await item.update({
         "system.granted": false, "system.purchased": true, "system.costManual": false,
-        "system.cost": talentCostXP(item.system.tier, a, apts, talentCategory(actor, item.name),
-          { name: item.name, patron: actor.system.patronGod, actor })
+        "system.cost": finalCost
       });
     } else {
       await item.update({ "system.granted": true, "system.purchased": false,
@@ -508,7 +564,7 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
     await item.update({
       "system.costManual": false,
       "system.cost": talentCostXP(item.system.tier, a, apts, talentCategory(actor, item.name),
-        { name: item.name, patron: actor.system.patronGod, actor })
+        { name: item.name, patron: actor.system.patronGod, actor, specialization: item.system.specialization })
     });
   });
 
@@ -536,7 +592,11 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
 
   const entryField = field => async ev => {
     const el = ev.currentTarget;
-    await setGroupEntryField(actor, el.dataset.group, parseInt(el.dataset.index), field, el.value);
+    const done = await setGroupEntryField(actor, el.dataset.group, parseInt(el.dataset.index), field, el.value);
+    // Отказ при нехватке опыта: возвращаем в списке прежний ранг.
+    if (done === false && field === "rank") {
+      el.value = actor.system.groupSkills?.[el.dataset.group]?.[parseInt(el.dataset.index)]?.rank || "untrained";
+    }
   };
   html.find(".group-skill-rank-select").change(entryField("rank"));
   html.find(".group-skill-cost-input").change(entryField("cost"));
@@ -583,6 +643,14 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
   html.find(".apt-char-select").on("change", async () => {
     const arr = [];
     html.find(".apt-char-select").each((_, el) => arr.push(el.value));
+    // Склонности не повторяются: повтор тихо сжал бы набор. Старый повтор,
+    // уже лежащий в списке, смене других строк не мешает — отказ только если
+    // число РАЗНЫХ Склонностей уменьшилось.
+    if (new Set(arr).size < new Set(aptitudesOf(actor)).size) {
+      ui.notifications?.warn("Эта Склонность у персонажа уже есть — выбери другую.");
+      actor.sheet?.render?.(false);
+      return;
+    }
     await setAptitudes(actor, arr);
   });
 

@@ -3,7 +3,7 @@
 // entry.when.talentSpec (wdbc-ta4y) — третий независимый гейт «Когда», общий
 // для ЛЮБОГО вида записи Конструктора, тот же принцип, что «Когда Геносемя»/
 // «Когда субмутация» (см. mechanics-geneseed-when.test.mjs). Пример из жизни:
-// Серый Человек с Талантом Mastery (Психонаука) получает Черту Warp Sight.
+// Серый Человек с Талантом Mastery (Психочутьё) получает Черту Warp Sight.
 
 import "../support/foundry-stub.mjs";
 
@@ -70,11 +70,11 @@ beforeEach(() => {
 // Черты через реальный конвейер Механики, а не голый entryWhenOk).
 
 describe("applyItemMechanics — гейт на разовой выдаче Черты по talentSpec", () => {
-  it("Mastery (Психонаука) есть — Warp Sight выдаётся", async () => {
+  it("Mastery (Психочутьё) есть — Warp Sight выдаётся", async () => {
     const item = itemOnActor({
-      mechanics: [andGroup(traitEntry("e1", whenTalent("Мастерство", "Психонаука")))],
+      mechanics: [andGroup(traitEntry("e1", whenTalent("Мастерство", "Психочутьё")))],
       actorItems: [{ id: "mastery-1", type: "talent", name: "Mastery / Мастерство",
-                     system: { specialization: "Психонаука" } }]
+                     system: { specialization: "Психочутьё" } }]
     });
     await applyItemMechanics(item);
     expect(item.parent.items.map(i => i.name)).toContain("Warp Sight / Варп-Зрение");
@@ -82,7 +82,7 @@ describe("applyItemMechanics — гейт на разовой выдаче Че�
 
   it("Mastery на другой Навык — Warp Sight не выдаётся", async () => {
     const item = itemOnActor({
-      mechanics: [andGroup(traitEntry("e1", whenTalent("Мастерство", "Психонаука")))],
+      mechanics: [andGroup(traitEntry("e1", whenTalent("Мастерство", "Психочутьё")))],
       actorItems: [{ id: "mastery-1", type: "talent", name: "Mastery / Мастерство",
                      system: { specialization: "Уклонение" } }]
     });
@@ -92,7 +92,7 @@ describe("applyItemMechanics — гейт на разовой выдаче Че�
 
   it("Mastery нет вовсе — Warp Sight не выдаётся", async () => {
     const item = itemOnActor({
-      mechanics: [andGroup(traitEntry("e1", whenTalent("Мастерство", "Психонаука")))],
+      mechanics: [andGroup(traitEntry("e1", whenTalent("Мастерство", "Психочутьё")))],
       actorItems: []
     });
     await applyItemMechanics(item);
@@ -101,14 +101,14 @@ describe("applyItemMechanics — гейт на разовой выдаче Че�
 
   it("Талант взяли уже ПОСЛЕ первого прогона Механики — повтор его подхватывает", async () => {
     const item = itemOnActor({
-      mechanics: [andGroup(traitEntry("e1", whenTalent("Мастерство", "Психонаука")))],
+      mechanics: [andGroup(traitEntry("e1", whenTalent("Мастерство", "Психочутьё")))],
       actorItems: []
     });
     await applyItemMechanics(item);
     expect(item.parent.items.map(i => i.name)).not.toContain("Warp Sight / Варп-Зрение");
 
     item.parent.items.push({ id: "mastery-1", type: "talent", name: "Mastery / Мастерство",
-                             system: { specialization: "Психонаука" } });
+                             system: { specialization: "Психочутьё" } });
     await applyItemMechanics(item);
     expect(item.parent.items.map(i => i.name)).toContain("Warp Sight / Варп-Зрение");
   });

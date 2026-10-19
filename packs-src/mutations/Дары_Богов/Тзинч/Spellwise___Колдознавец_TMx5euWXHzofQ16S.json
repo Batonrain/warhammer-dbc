@@ -308,7 +308,7 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "Психонаука (Psyniscience) всегда Дружественный Навык, даже не будучи псайкером",
+              "label": "Психочутьё (Psyniscience) всегда Дружественный Навык, даже не будучи псайкером",
               "code": "",
               "when": {
                 "negate": false,
@@ -316,7 +316,7 @@
               },
               "capabilityMode": "aptOverride",
               "capabilityAptScope": "skill",
-              "capabilityAptMatch": "Психонаука",
+              "capabilityAptMatch": "Психочутьё",
               "capabilityAptAlign": "ally"
             }
           ]

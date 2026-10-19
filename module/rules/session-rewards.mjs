@@ -11,7 +11,7 @@
 //  именно её проверяют тесты, а не диалог.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { XP_CATEGORIES, PARTY_KEYS, EACH_KEYS } from "../constants/session-rewards.mjs";
+import { XP_CATEGORIES, PARTY_KEYS, EACH_KEYS, REFUND_KEYS } from "../constants/session-rewards.mjs";
 
 const int = (v) => {
   const n = Math.round(Number(v));
@@ -37,6 +37,17 @@ export function actorXp(party = {}, personal = {}, override = null) {
   if (override != null && String(override).trim() !== "") return Math.max(0, int(override));
   const own = EACH_KEYS.reduce((sum, key) => sum + Math.max(0, int(personal[key])), 0);
   return partyXp(party) + own;
+}
+
+/**
+ * Часть опыта персонажа, которая есть возмещение («Органичное Продвижение»).
+ * Это возврат уже полученного, а не новое обучение, поэтому «Ловит на Лету» на
+ * него не действует. Число, вписанное в поле «Опыт» руками, заменяет расчёт
+ * целиком — тогда возмещения как отдельной части нет.
+ */
+export function actorRefund(personal = {}, override = null) {
+  if (override != null && String(override).trim() !== "") return 0;
+  return REFUND_KEYS.reduce((sum, key) => sum + Math.max(0, int(personal[key])), 0);
 }
 
 /**
@@ -84,6 +95,7 @@ export function buildRewardRows(actors, form = {}) {
     id: a.id,
     name: a.name,
     xp: actorXp(party, personal[a.id] ?? {}, xpOverride[a.id]),
+    refund: actorRefund(personal[a.id] ?? {}, xpOverride[a.id]),
     corruption: parseRewardAmount(corruption[a.id]),
     infamy: parseRewardAmount(infamy[a.id])
   }));

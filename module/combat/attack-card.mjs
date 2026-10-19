@@ -102,7 +102,7 @@ function hitLines(hits, { blastRating = 0 } = {}) {
  */
 function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", weaponName, actorName, vehicleSide,
                                     isMelee = false, burst = false, weaponRange = 0,
-                                    attackerUuid = "", itemUuid = "", hordeHits = null, deadlyTrapLegacyDelta = 0 }) {
+                                    attackerUuid = "", itemUuid = "", hordeHits = null, deadlyTrapLegacyDelta = 0, fangVenomDose = "", butcherDice = 0 }) {
   if (!hits.length) return "";
   // Взрывное/Распыление — разовый Шаблон (Region-плейсмент, module/combat/
   // templates.mjs): круг радиусом blastRating или конус 30° длиной Rng.
@@ -185,6 +185,13 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
       </button>
       <div class="roll-defense-note">Свободное действие, Реакция не тратится. Если шаблон полностью накрывает Базу цели — годится только Отскок в исходе теста, не сама отмена (стр. 12).</div>
     </div>` : "";
+  // Адаптивная Отрава Наги (wdbc-s4ql0): попав Укусом, ввести цели дозу «(яд в
+  // клыках)» одной кнопкой — доза лежит на листе укусившей (apps/naga-traits.mjs).
+  // Имя дозы приходит готовым (attack.mjs): карточка документов не читает.
+  const fangVenomBtn = fangVenomDose ? `
+    <button class="wh-fang-venom-btn" type="button" data-attacker-uuid="${attackerUuid}">
+      🐍 Ввести яд клыков цели: ${esc(fangVenomDose)}
+    </button>` : "";
   // Дым (wdbc-wlwf) — отдельная кнопка: не накрывает целей, не зависит от
   // Взрывного/Распыления (может быть у оружия без них).
   const smokeBtn = (wp.smokeRating > 0) ? `
@@ -305,7 +312,11 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
   </button>${wp.warpSoak ? `
   <button class="wh-pain-absorb-btn" type="button" data-damage="${d.total}" title="Друкхари с Очками Боли: выбранный токен цели поглощает урон Болью вместо Ран (3 урона за 1 Боль)">
     🔥 Поглотить Болью ${i + 1}: <b>${d.total}</b>
-  </button>` : ""}${swapBtn}${deadlyTrapBtn}</span>`;
+  </button>` : ""}${swapBtn}${deadlyTrapBtn}${butcherDice > 0 ? `
+  <button class="wh-butcher-btn" type="button" data-attacker-uuid="${attackerUuid}" data-weapon-uuid="${itemUuid}"
+    title="Кхорнгор Мясник: потратить кубики запаса — по кубику урона оружия за каждый (до ½W.b), после броска урона, до щитов">
+    🩸 Мясник: +кубики к урону ${i + 1} (до ${butcherDice})
+  </button>` : ""}</span>`;
   }).join("");
   return `
   <div class="roll-apply-dmg-section">
@@ -314,6 +325,7 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
     ${smokeBtn}
     <div class="roll-section-head">Применить к цели <span class="roll-head-hint">— выберите токен</span></div>
     ${buttons}
+    ${fangVenomBtn}
     ${arcBtn}
   </div>`;
 }
@@ -385,6 +397,25 @@ function betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype 
 }
 
 /**
+ * Спиной к Спине/Back to Back (combat/fanatic-redirect.mjs): носители
+ * Fanatic в базовом контакте с целью уже найдены геометрией attack.mjs —
+ * показ кандидатов и остатка «раз в Раунд без Реакции» (rules/cooldown.mjs).
+ * Сам перенос урона — выделить токен названного носителя и нажать обычную
+ * «Применить урон» выше; кнопка здесь только отмечает бесплатный перехват
+ * потраченным, когда стол решил им воспользоваться.
+ */
+function fanaticInterceptSection(fanaticIntercepts) {
+  if (!fanaticIntercepts.length) return "";
+  const rows = fanaticIntercepts.map(f => `
+    <div class="sq-chat-note">${rollIcon("shield", "#ffb347")}Рядом (в базовом контакте) носитель Fanatic — <b>${esc(f.name)}</b>: выделите его токен и примените урон туда вместо цели.
+      ${f.freeUse
+        ? `Раз в Раунд это не стоит ему Реакции (Спиной к Спине) — <button type="button" class="wh-back-to-back-mark-used" data-fanatic-uuid="${f.uuid}">Отметить бесплатный перехват</button>`
+        : `Бесплатный перехват этим Раундом уже отмечен использованным — обычный перехват Fanatic (за Реакцию) всё ещё доступен.`}
+    </div>`).join("");
+  return rows;
+}
+
+/**
  * Перегруппировка/vigilant 1-2, Оружие Наследия (wdbc-1rno.35, стр. 427):
  * «После успешной атаки этим оружием (даже если цель Избежала её) персонаж
  * может потратить Очко Бесчестия, чтобы перебросить свою Инициативу начиная
@@ -449,7 +480,8 @@ function reactionKnockdownSection(reason, { actorUuid }) {
  *   документов Foundry не касается (см. шапку файла).
  */
 export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, targetIsWalker = false, note = "",
-                          forcedDefenceReroll = "", dodgeModRecoil = null }, { wp, attackerUuid = "", itemUuid = "", hitsCount = 1, pool = null,
+                          forcedDefenceReroll = "", dodgeModRecoil = null,
+                          grapple = false, chomper = false, bodyguards = [], allyName = "" }, { wp, attackerUuid = "", itemUuid = "", hitsCount = 1, pool = null,
                           swarm = null, unseen = false, unseenDetected = false, unseenPenalty = 0,
                           sixthSenseBypassAvailable = false, musicOfBattleBypassAvailable = false,
                           isMelee = false, burst = false, attackerIsHorde = false, hitLocLabel = "" }) {
@@ -544,10 +576,10 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
              </button>`
           : unseenLocked
           ? `<button class="wh-dodge-btn wh-unseen-locked" type="button" disabled data-extra-mod="${dodgeMod}" data-extra-mod-recoil="${dodgeModRecoil ?? dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-item-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-melee="${isMelee ? 1 : 0}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-attack-id="${attackId}"
-               title="Незримая атака (стр. 32): Уклонение недоступно, пока не засечена альтернативными методами — Психонаукой/Техпользованием (кнопки ниже).">
+               title="Незримая атака (стр. 32): Уклонение недоступно, пока не засечена альтернативными методами — Психочутьем/Технологиям (кнопки ниже).">
                Уклонение${dodgeMod !== 0 ? ` (${signed(dodgeMod)})` : ""} — не засечена
              </button>`
-          : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-extra-mod-recoil="${dodgeModRecoil ?? dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-item-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-melee="${isMelee ? 1 : 0}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-attack-id="${attackId}">
+          : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-extra-mod-recoil="${dodgeModRecoil ?? dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-item-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-melee="${isMelee ? 1 : 0}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-attack-id="${attackId}" data-grapple="${grapple ? 1 : 0}">
                Уклонение${dodgeMod !== 0 ? ` (${signed(dodgeMod)})` : ""}
              </button>`
         }
@@ -557,13 +589,25 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
              </button>`
           : unseenLocked
           ? `<button class="wh-parry-btn wh-unseen-locked" type="button" disabled data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-attacker-weapon-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-melee="${isMelee ? 1 : 0}" data-attack-id="${attackId}"
-               title="Незримая атака (стр. 32): Парирование недоступно, пока не засечена альтернативными методами — Психонаукой/Техпользованием (кнопки ниже).">
+               title="Незримая атака (стр. 32): Парирование недоступно, пока не засечена альтернативными методами — Психочутьем/Технологиям (кнопки ниже).">
                Парирование${parryMod !== 0 ? ` (${signed(parryMod)})` : ""} — не засечена
              </button>`
           : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-attacker-weapon-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-melee="${isMelee ? 1 : 0}" data-attack-id="${attackId}"${isMelee ? "" : ` title="Стрельбу без Базового контакта со стрелком парирует только Талант «Щит Клинков» оружием с Балансом 1+ (стр. 62) — право проверится при нажатии"`}>
                Парирование${parryMod !== 0 ? ` (${signed(parryMod)})` : ""}
              </button>`
         }
+        ${chomper && !cannotParry && !unseenLocked && isMelee
+          ? `<button class="wh-parry-btn wh-chomper-parry-btn" type="button" data-chomper="1" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-attacker-weapon-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-melee="1" data-attack-id="${attackId}"
+               title="Кусака: парировать укусом как оружием с Балансом 0; непарированные попадания идут в голову, затем можно обезоружить">
+               Парировать укусом (Кусака)
+             </button>`
+          : ""}
+        ${!cannotParry && !unseenLocked
+          ? (bodyguards ?? []).map(b => `<button class="wh-parry-btn wh-bodyguard-btn" type="button" data-bodyguard-uuid="${b.uuid}" data-for-ally="${esc(allyName)}" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-attacker-weapon-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-melee="${isMelee ? 1 : 0}" data-attack-id="${attackId}"
+               title="Телохранитель: ${esc(b.name)} парирует эту атаку за союзника (его Реакция, его оружие)">
+               Телохранитель: ${esc(b.name)}
+             </button>`).join("")
+          : ""}
         ${targetIsVehicle
           ? `<button class="wh-swerve-btn" type="button" data-extra-mod="0" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-attack-id="${attackId}"
                title="Техника: Operate − Размер×10. Реакция водителя (Книга Машин).">Вираж</button>`
@@ -597,11 +641,11 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
           : ""}
         ${unseenLocked
           ? `<button class="wh-unseen-detect-btn" type="button" data-attacker-uuid="${attackerUuid}" data-skill="psyniscience" data-penalty="${unseenPenalty}"
-               title="Незримая атака (стр. 32): тест Психонауки (Пси-чутьё)${unseenPenalty ? ` ${signed(unseenPenalty)}` : ""} — не Реакция; Успех открывает Уклонение/Парирование от ЭТОЙ атаки выше.">
+               title="Незримая атака (стр. 32): тест Психочутья${unseenPenalty ? ` ${signed(unseenPenalty)}` : ""} — не Реакция; Успех открывает Уклонение/Парирование от ЭТОЙ атаки выше.">
                🔮 Засечь (Пси-чутьё${unseenPenalty ? ` ${signed(unseenPenalty)}` : ""})
              </button>
              <button class="wh-unseen-detect-btn" type="button" data-attacker-uuid="${attackerUuid}" data-skill="techUse" data-penalty="${unseenPenalty}"
-               title="Незримая атака (стр. 32): тест Техпользования (Ноосканирование)${unseenPenalty ? ` ${signed(unseenPenalty)}` : ""} — не Реакция; Успех открывает Уклонение/Парирование от ЭТОЙ атаки выше.">
+               title="Незримая атака (стр. 32): тест Технологии (Ноосканирование)${unseenPenalty ? ` ${signed(unseenPenalty)}` : ""} — не Реакция; Успех открывает Уклонение/Парирование от ЭТОЙ атаки выше.">
                🔮 Засечь (Ноосканирование${unseenPenalty ? ` ${signed(unseenPenalty)}` : ""})
              </button>`
           : ""}
@@ -738,6 +782,12 @@ export function attackCard({
   // Борьба как укрытие (стр. 12, wdbc-x1nz.2.77): попадания по сцепившемуся,
   // перехваченные партнёром, — та же форма, что betrayalHits.
   grappleCoverHits = [],
+  // Спиной к Спине/Back to Back (combat/fanatic-redirect.mjs): носители
+  // Fanatic в базовом контакте с целью — уже найдены геометрией attack.mjs
+  // ([{uuid, name, freeUse}]); перенос урона — выбор стола через обычную
+  // кнопку «Применить урон» (эта секция только показывает кандидатов и
+  // остаток «раз в Раунд без Реакции», ничего не переносит сама).
+  fanaticIntercepts = [],
   // Перегруппировка, Оружие Наследия (wdbc-1rno.35, стр. 427): доступность
   // кнопки «потратить Очко Бесчестия» уже посчитана attack.mjs (hit &&
   // Мутация на оружии) — см. regroupLegacySection ниже.
@@ -747,6 +797,10 @@ export function attackCard({
   // attack.mjs (актор/своя-очередь-Хода/раз-в-бой там, не здесь) — карточка
   // только рисует кнопку рядом с «Применить урон» (applyDamageSection ниже).
   deadlyTrapLegacyDelta = 0,
+  // Адаптивная Отрава Наги (wdbc-s4ql0): название дозы «(яд в клыках)» — кнопка ввода цели.
+  fangVenomDose = "",
+  // Кхорнгор Мясник (wdbc-gao07): сколько кубиков запаса можно добавить к урону попадания.
+  butcherDice = 0,
   // Посох/Крюк (core.json, «Типы Рукопашного Оружия»): непустая строка —
   // Реакция «Повалить» доступна, её текст объясняет почему (уже посчитано
   // attack.mjs — Избирательное попадание Посохом в Ногу / 3+ Успеха Крюком).
@@ -849,6 +903,19 @@ export function attackCard({
 
   // Стр. 35: ГМ распределяет попадания по случайным целям в секторе, поэтому
   // урон не бросается автоматически — карточка подсказывает их число.
+  //
+  // Radiant Presence/Блистательное Присутствие и Into the Jaws of Hell/
+  // В Самое Пекло (Sahara 3-ac78, 19.10.2026) — решение владельца: галочки
+  // на самой карточке, тем же приёмом, что «Заведомо безопасно» выше — ГМ
+  // решает «видит/слышит союзника с Талантом» или «рядом сражается
+  // командующий с Талантом» на глаз, код только переносит флаг в бросок.
+  const leadershipCheckboxesHtml = `
+      <label class="wh-suppression-safe-label" title="Блистательное Присутствие: цель видит или слышит союзника/нейтрального, обладающего этим Талантом — +10 на этот тест Морали. Решает ГМ.">
+        <input type="checkbox" class="wh-radiant-presence-cb"/> Блистательное Присутствие (+10)
+      </label>
+      <label class="wh-suppression-safe-label" title="В Самое Пекло: рядом с целью сражается её командующий, обладающий этим Талантом — тест Морали проходит автоматически. Решает ГМ.">
+        <input type="checkbox" class="wh-jaws-of-hell-cb"/> В Самое Пекло (авто-успех)
+      </label>`;
   const suppressionHtml = suppression ? `<div class="roll-suppression">
       Подавление: все в секторе 45°, прямой видимости, Короткой/Боевой дистанции —
       тест Подавление (${suppression.testMod >= 0 ? "+" : ""}${suppression.testMod})<br>
@@ -859,7 +926,7 @@ export function attackCard({
       </button>
       <label class="wh-suppression-safe-label" title="Стр. 33: если персонаж уверен, что обстрел не может нанести ему больше 3 урона после Поглощения — тест проходит автоматически. Точный расчёт требует брони цели по локации и урона конкретного выстрела — решает ГМ.">
         <input type="checkbox" class="wh-suppression-safe-cb"/> Заведомо безопасно (≤3 урона)
-      </label>
+      </label>${leadershipCheckboxesHtml}
     </div>` : "";
 
   // Вторичные цели Короткой/Длинной Очереди (стр. 35, wdbc-x1nz.2.55):
@@ -884,7 +951,7 @@ export function attackCard({
       </button>
       <label class="wh-suppression-safe-label" title="Стр. 33: если персонаж уверен, что обстрел не может нанести ему больше 3 урона после Поглощения — тест проходит автоматически. Точный расчёт требует брони цели по локации и урона конкретного выстрела — решает ГМ.">
         <input type="checkbox" class="wh-suppression-safe-cb"/> Заведомо безопасно (≤3 урона)
-      </label>
+      </label>${leadershipCheckboxesHtml}
     </div>` : "";
 
   return testCardHtml({
@@ -999,11 +1066,12 @@ export function attackCard({
             sixthSenseBypassAvailable, musicOfBattleBypassAvailable, isMelee, burst, attackerIsHorde, hitLocLabel }) : "",
       applyDamageSection(hit ? hits : [], { wp, pen, damageType, damageSubtype, weaponName, actorName,
                                             vehicleSide, isMelee, burst, weaponRange,
-                                            attackerUuid, itemUuid, hordeHits, deadlyTrapLegacyDelta }),
+                                            attackerUuid, itemUuid, hordeHits, deadlyTrapLegacyDelta, fangVenomDose, butcherDice }),
       misfireHitsSection(misfireHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid }),
       betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid }),
       betrayalHitsSection(grappleCoverHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid },
         "🤼 Борьба: партнёр по Захвату прикрывает цель с этой стороны — попадание уходит в него (стр. 12):"),
+      fanaticInterceptSection(fanaticIntercepts),
       regroupLegacySection(regroupLegacyActive, { actorUuid: attackerUuid }),
       reactionKnockdownSection(reactionKnockdownReason, { actorUuid: attackerUuid }),
       sabreSecondAttackNote ? `<div class="roll-wprop-effects"><div class="roll-defense-note">${esc(sabreSecondAttackNote)}</div>${sabreSecondAttackItemId

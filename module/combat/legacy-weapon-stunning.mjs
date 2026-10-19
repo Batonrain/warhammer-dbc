@@ -64,7 +64,9 @@ export async function rollStunningLegacyCheck(item, defenderActor) {
   const armorAP = resolveArmorAbsorptionAP({
     baseArmorAP: (absorption[armorKey] ?? 0) - (absorption.toughnessBonus ?? 0),
     vsTypeBonus: absorption.vsType?.[damageType] ?? 0,
-    subtypeBonus: absorption.vsSubtype?.[damageSubtype] ?? 0,
+    subtypeBonus: (absorption.vsSubtype?.[damageSubtype] ?? 0)
+                + (absorption.vsSubtypeAt?.[armorKey]?.[damageSubtype] ?? 0),
+    eyeBonus: absorption.eyeBonus ?? 0,
     damageType, damageSubtype, melee: false, hitLocation: hitLoc,
     primitive: !!wp.primitive, flags: absorption.propFlags?.[armorKey],
     layers: absorption.layers?.[armorKey] ?? null, otherWornAP: absorption.otherWorn?.[armorKey] ?? 0

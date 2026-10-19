@@ -1,0 +1,99 @@
+{
+  "name": "Horns (Plaguebearer) / Рог Чумоноса",
+  "type": "weapon",
+  "system": {
+    "description": "Часть тела, не снаряжение: выдаётся Мутацией «Величественные Рога», субмутация 7 (Рог Чумоноса, Нургл). Deadly Natural Weapons (½Cor.b окр.▼, Рога) со свойством Toxic (4), но 1d10 вместо 2d10. Рога можно использовать только в Ход, когда персонаж совершал Натиск.",
+    "notes": "",
+    "grips": "1р",
+    "profileLabel": "",
+    "profiles": [],
+    "reload": "–",
+    "magazineCur": 0,
+    "magazineMax": 0,
+    "rof_single": 0,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "quality": "common",
+    "availability": 0,
+    "weight": 0,
+    "attackBonus": 0,
+    "special": "Обычный удар рогом. Обломить рог в ране цели — отдельная атака «Обломить Рог».",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "reinforced"
+      },
+      {
+        "key": "toxic",
+        "rating": 4
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Мутации», стр. 440-452)",
+    "weaponClass": "melee",
+    "weaponType": "primitive",
+    "range": 0,
+    "rangeMin": 0,
+    "balance": -2,
+    "damage": "1d10+X",
+    "damageType": "rending",
+    "damageSubtype": "",
+    "penetration": 0,
+    "meleeCategory": "",
+    "meleeSubtype": "",
+    "techClass": "none"
+  },
+  "_id": "sH9dDNM8LIXVcDxw",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "penetrationFromRating": true,
+      "plagueHorn": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "folder": "mCeNfRO1LB6dGxU3",
+  "_key": "!items!sH9dDNM8LIXVcDxw"
+}

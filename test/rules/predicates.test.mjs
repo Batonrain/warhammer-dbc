@@ -428,6 +428,31 @@ describe("hexMarkedPreyAllyBonus", () => {
   });
 });
 
+describe("targetIsPsyker (Рога Кровожада, wdbc-1rno.10)", () => {
+  const isPsyker = (t, v) => PREDICATES.targetIsPsyker({}, { targetActor: t }, v);
+
+  it("Пси-Рейтинг ≥ 1 или флаг isPsyker — псайкер", () => {
+    expect(isPsyker({ system: { psyker: { rating: 1 } } })).toBe(true);
+    expect(isPsyker({ system: { isPsyker: true } })).toBe(true);
+  });
+
+  it("без Пси-Рейтинга и флага, без цели — не псайкер", () => {
+    expect(isPsyker({ system: { psyker: { rating: 0 } } })).toBe(false);
+    expect(isPsyker({ system: {} })).toBe(false);
+    expect(PREDICATES.targetIsPsyker({}, {}, true)).toBe(false);
+  });
+
+  it("демон без Пси-Рейтинга — не псайкер (в отличие от targetPsykerOrDaemon)", () => {
+    const daemon = { type: "daemon", system: { psyker: { rating: 0 } } };
+    expect(isPsyker(daemon)).toBe(false);
+  });
+
+  it("value:false инвертирует", () => {
+    expect(isPsyker({ system: { isPsyker: true } }, false)).toBe(false);
+    expect(isPsyker({ system: {} }, false)).toBe(true);
+  });
+});
+
 describe("общее требование к предикатам", () => {
   const value = {
     race: ["human"], subrace: ["navigator"], geneSeedLegion: ["VIII"], psyRatingMin: 1,
@@ -448,12 +473,19 @@ describe("общее требование к предикатам", () => {
     hasCondition: "prone", targetHasCondition: "prone",
     // Ослеплён по-настоящему (wdbc-x1nz.2.89): свой флаг ИЛИ оба глаза.
     isBlinded: true,
+    // Слепое Зрение без шлема (Талант Внимательности) — читает Таланты и броню
+    // актора, значение из `when` только включает/выключает.
+    blindsightActive: true,
     rankAndFile: false,
     // Пустота Парии / демон / цель-псайкер или демон (rules/null-zones.mjs,
     // сверка главы I, 26.09.2026).
     inPariahVoid: true, isDaemon: true, targetPsykerOrDaemon: true,
     // Цель/источник — Космодесантник (Angel Hunters, Йигори, сверка главы I).
     targetIsAstartes: true,
+    // Цель — псайкер, без демонов (Рога Кровожада, wdbc-1rno.10).
+    targetIsPsyker: true,
+    // Рог Чумоноса в ране (wdbc-1rno.10) — читает метку и ранения актора, значение из when не участвует.
+    hasLodgedHorn: undefined,
     haywireFieldMin: 3,
     charNotIn: ["t", "inf", "cor"],
     charIn: ["int", "per", "wp", "fel", "inf"],
@@ -484,6 +516,8 @@ describe("общее требование к предикатам", () => {
     targetLacksSealedArmour: undefined,
     // Обут ли (Barefoot / Босоногий Ратлинга): false — «босиком».
     wearsFootwear: false,
+    // Сцена в невесомости/микро-гравитации (Пустота в Венах Сквата, wdbc-9tpng).
+    weightlessScene: true,
     // Змееподобная цель (Безграничное Тщеславие Наги) — читает ЦЕЛЬ.
     targetSerpentine: true
   };

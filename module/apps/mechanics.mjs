@@ -147,7 +147,9 @@
 //      его так же, как Черты/Таланты. Отмена диалога выбора (choice) — просто
 //      ничего не выдаётся, без ошибки.
 //    armour: { armourLocation:"all"|"head"|"body"|"leftArm"|"rightArm"|
-//               "leftLeg"|"rightLeg", op:"add"|"subtract", armourValue }
+//               "leftLeg"|"rightLeg"|"eye", op:"add"|"subtract", armourValue }
+//      "eye" (wdbc-1rno.10, Зрящие Рога) — не локация AP, а броня самих глаз:
+//      эффект на system.absorption.eyeBonus, действует только на попадание в Глаз.
 //      → ActiveEffect НА ПРЕДМЕТЕ на system.armorBonus.<локация> — ту самую
 //      СКЛАДЫВАЕМУЮ надбавку AP, которой пользуются Естественная Броня и
 //      подкожные импланты (см. AP_LOCATIONS в constants/effect-keys.mjs). Фаза
@@ -159,7 +161,8 @@
 //      было нечем: rescaleTraitByRating масштабирует значение, но не сужает
 //      набор локаций.
 //    absorption: { absorptionTarget:"vsType:<energy|impact|rending|blast|chemical>"|
-//                   "vsSubtype:<crushing|fragmentation|electrical|flame|laser|toxic>",
+//                   "vsSubtype:<crushing|fragmentation|electrical|flame|laser|toxic>"|
+//                   "vsSubtypeAt:<локация>:<подвид>" (бонус ОДНОЙ локации, wdbc-1rno.10),
 //                   op:"add"|"subtract", absorptionValue }
 //      → ActiveEffect НА ПРЕДМЕТЕ на system.absorption.vsType.<тип> или
 //      system.absorption.vsSubtype.<подвид> (module/combat/damage.mjs, wdbc-q0q8)
@@ -248,7 +251,8 @@
 //      естественных атак, которые книга называет прямо в записи расы
 //      («Natural Weapons (1, Рога, Укус, Когти, Копыта)»): выданная Черта
 //      получает готовый выбор integralChosen, окно с галочками не всплывает.
-//    integralAttack: { equipSourceUuid, equipSourceName, equipSourceImg }
+//    integralAttack: { equipSourceUuid, equipSourceName, equipSourceImg,
+//                      integralRating? — формула X образца, если у источника нет рейтинга }
 //      → ВСТРОЕННАЯ АТАКА: то же создание предмета-оружия на акторе, что и у
 //      equipment режима "direct", но с двумя отличиями, ради которых она и
 //      заведена отдельным видом. Первое: выданное оружие сразу
@@ -385,7 +389,7 @@
 //      общего диалога встречных тестов ради одной строки правила, честный
 //      диагноз зафиксирован тикетом, не форсировался обходной путь.
 //    attackProp: { apScope:"unarmed"|"melee"|"ranged"|"attack", apKey,
-//                  apRating, apRating2 }
+//                  apRating, apRating2, apTargetPsyker }
 //      → СВОЙСТВО АТАКИ (wdbc-rmrm9, Electric Arc/Электродуга): атаки
 //      владельца выбранной области получают Особое Свойство Оружия из
 //      constants/weapon-properties.mjs::WEAPON_PROPERTIES (apKey — ключ
@@ -449,12 +453,13 @@ import { isThrottleReady, markThrottleUsed,
          throttleCount, isThrottleCountAvailable, incrementThrottleCount } from "../rules/cooldown.mjs";
 import { squadRoleOf, findMemberSquad } from "../rules/squad-roles.mjs";
 import { TERRAIN_PROPS }                      from "../regions/difficult-terrain.mjs";
+import { EQUIP_ANY_PACK, EQUIP_ANY_LABEL, EQUIP_SHOP_PACKS } from "../rules/equip-shop.mjs";
 import { openCompendiumBrowser, GRANTABLE_CATEGORIES, coreWeaponTypeFolders, weaponTypeFolderIds } from "./compendium-browser.mjs";
 import { AVAILABILITY, DAMAGE_TYPES, DAMAGE_SUBTYPES } from "../constants/items.mjs";
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { isItemActive, syncItemEffectsDisabled } from "./effects.mjs";
 import { setMutationsSuppressed as _setMutationsSuppressed } from "../rules/mutation-suppression.mjs";
-import { expectedPhase, AP_LOCATIONS }        from "../constants/effect-keys.mjs";
+import { expectedPhase, AP_LOCATIONS, EYE_ARMOUR_KEY } from "../constants/effect-keys.mjs";
 import { raceEntries, raceDef }               from "./race-library.mjs";
 import { ELITE_ARCHETYPES }                   from "../constants/elite-archetypes.mjs";
 import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
@@ -501,6 +506,22 @@ const OP_OPTIONS = [
   { value: "add",        label: "+ прибавить" },
   { value: "subtract",   label: "− вычесть" }
 ];
+/**
+ * Цель записи kind:"absorption": "vsType:<тип>" | "vsSubtype:<подвид>" |
+ * "vsSubtypeAt:<локация>:<подвид>" (wdbc-1rno.10: Укреплённые Рога —
+ * «+Cor.b AP против I(Cr) в голову», бонус одной локации, а не всех шести).
+ * @returns {{scope:string, key:string, loc:string, path:string}|null} path —
+ *   ключ ActiveEffect; null — цель не выбрана или локация неизвестна.
+ */
+export function parseAbsorptionTarget(target) {
+  const [scope, a, b] = String(target || "").split(":");
+  if ((scope === "vsType" || scope === "vsSubtype") && a)
+    return { scope, key: a, loc: "", path: `system.absorption.${scope}.${a}` };
+  if (scope === "vsSubtypeAt" && a && b && Object.hasOwn(AP_LOCATIONS, a))
+    return { scope, key: b, loc: a, path: `system.absorption.vsSubtypeAt.${a}.${b}` };
+  return null;
+}
+
 const OP_SIGN = { add: "+", subtract: "−", multiply: "×", divide: "÷", divideUp: "÷↑", divideDown: "÷↓" };
 const CORRUPTION_OP_OPTIONS = [
   { value: "add",      label: "+ добавить" },
@@ -709,7 +730,7 @@ const REROLL_SCOPES = [
   // Импланты Механикум (сверка Архетипов 28.09.2026): «тесты работы с
   // Ноосферой» (Ноосферное Подключение) и «тесты зарядки» Катушки Потенции
   // (Электу-Индукторы) — свои ctx-флаги, как у Карабканья: оба идут по
-  // Tech-Use, а «skill:techUse» подхватил бы любой тест Техпользования.
+  // Tech-Use, а «skill:techUse» подхватил бы любой тест Технологии.
   ["noosphere",  "тесты работы с Ноосферой"],
   ["coilCharge", "зарядка Катушки Потенции"],
   // Манифестация психосилы (wdbc-4bxa) — «power» само по себе уже область
@@ -1007,7 +1028,8 @@ export function blankMechEntry(kind = "characteristic") {
     // момент атаки владельца (module/rules/item-rules.mjs), при получении
     // предмета ничего не делает. apRating/apRating2 — число или формула
     // (та же нотация, что у ccDamage — MECH_FORMULA_HINT/CC_DAMAGE_HINT).
-    apScope: "unarmed", apKey: "", apRating: "", apRating2: "",
+    // apTargetPsyker — свойство только против цели-псайкера (wdbc-1rno.10).
+    apScope: "unarmed", apKey: "", apRating: "", apRating2: "", apTargetPsyker: false,
     // charRecovery — «Восстановление урона в Характеристики» (wdbc-x1nz.2.83):
     // живой запрос, читается rules/char-loss.mjs::actorRecoveryPolicy() через
     // rules/item-rules.mjs, при получении предмета ничего не делает.
@@ -1189,16 +1211,19 @@ export function describeMechEntry(entry) {
       return `Движение: ${label} ${sign}${entry.movementValue}`;
     }
     case "armour": {
-      const loc = entry.armourLocation === "all"
-        ? "все локации" : (AP_LOCATIONS[entry.armourLocation] ?? entry.armourLocation);
+      const loc = entry.armourLocation === "all" ? "все локации"
+        : entry.armourLocation === "eye" ? "Глаза"
+        : (AP_LOCATIONS[entry.armourLocation] ?? entry.armourLocation);
       if (entry.armourValue === "" || entry.armourValue == null) return `Очки Брони: ${loc} (не задано)`;
       const sign = OP_SIGN[entry.op] ?? "+";
       return `Очки Брони: ${loc} ${sign}${entry.armourValue}`;
     }
     case "absorption": {
-      const [scope, absKey] = String(entry.absorptionTarget || "").split(":");
-      const label = scope === "vsType" ? (DAMAGE_TYPES[absKey] || absKey)
-                  : scope === "vsSubtype" ? (DAMAGE_SUBTYPES[absKey]?.label || absKey) : "";
+      const abs = parseAbsorptionTarget(entry.absorptionTarget);
+      const absKey = abs?.key;
+      const label = !abs ? ""
+                  : abs.scope === "vsType" ? (DAMAGE_TYPES[absKey] || absKey)
+                  : (DAMAGE_SUBTYPES[absKey]?.label || absKey) + (abs.loc ? ` (${AP_LOCATIONS[abs.loc]})` : "");
       if (!label) return "AP против типа/подвида урона (не задано)";
       if (entry.absorptionValue === "" || entry.absorptionValue == null) return `AP против ${label} (не задано)`;
       const sign = OP_SIGN[entry.op] ?? "+";
@@ -1245,7 +1270,8 @@ export function describeMechEntry(entry) {
       if (!def) return `Свойство атаки: ${scopeLabel} — (свойство не выбрано)`;
       const ratings = [entry.apRating, entry.apRating2].filter(v => String(v ?? "").trim() !== "");
       const ratingStr = ratings.length ? ` (${ratings.join("/")})` : "";
-      return `Свойство атаки: ${scopeLabel} — ${def.label}${ratingStr}`;
+      const vsPsyker = entry.apTargetPsyker ? " (только по псайкерам)" : "";
+      return `Свойство атаки: ${scopeLabel} — ${def.label}${ratingStr}${vsPsyker}`;
     }
     case "charRecovery": {
       if (!Array.isArray(entry.crTargets) || !entry.crTargets.length) return "Восстановление урона в Характеристики: (не выбрано)";
@@ -1339,7 +1365,8 @@ export function describeMechEntry(entry) {
         // Подпись автора («Ген-Сплайс: Сенсорная адаптация») понятнее
         // «выбор — «Черты» ×1» — её и видит игрок в окне выбора.
         if (entry.label) return entry.label;
-        const cat = GRANTABLE_CATEGORIES.find(c => c.pack === entry.equipCategoryPack)?.label ?? entry.equipCategoryPack;
+        const cat = entry.equipCategoryPack === EQUIP_ANY_PACK ? EQUIP_ANY_LABEL
+          : GRANTABLE_CATEGORIES.find(c => c.pack === entry.equipCategoryPack)?.label ?? entry.equipCategoryPack;
         const bits = [];
         if (entry.equipCategoryPack === "weapons" && entry.equipWeaponType)
           bits.push(coreWeaponTypeFolders().find(f => f.id === entry.equipWeaponType)?.name);
@@ -1477,10 +1504,8 @@ function isEntryComplete(e) {
       return !!e.movementTarget && formulaOk(e.movementValue);
     case "armour":
       return !!e.armourLocation && formulaOk(e.armourValue);
-    case "absorption": {
-      const [scope, absKey] = String(e.absorptionTarget || "").split(":");
-      return (scope === "vsType" || scope === "vsSubtype") && !!absKey && formulaOk(e.absorptionValue);
-    }
+    case "absorption":
+      return !!parseAbsorptionTarget(e.absorptionTarget) && formulaOk(e.absorptionValue);
     case "shieldSubtype":
       if (!e.shieldSubtypeKey) return false;
       return e.shieldSubtypeMode === "override" ? Number(e.shieldSubtypeRatingMax) > 0 : true;
@@ -2217,7 +2242,7 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
       // поле только в JSON пака, редактора в Конструкторе пока нет.
       const budget = normalizeBudget({ mode: entry.equipBudgetMode, value: entry.equipBudgetValue, min: entry.equipBudgetMin });
       const picked = await openCompendiumBrowser(false, {
-        pack: entry.equipCategoryPack, filters, budget,
+        pack: entry.equipCategoryPack === EQUIP_ANY_PACK ? EQUIP_SHOP_PACKS : entry.equipCategoryPack, filters, budget,
         prompt: describeMechEntry(entry),
         // Цена в опыте считается для ЭТОГО актора: у Талантов она зависит от
         // Склонностей и культуры, а не лежит в записи компендиума.
@@ -2634,7 +2659,12 @@ async function buildIntegralAttackData(entry, sourceItem) {
   // Профиль от рейтинга источника (Укус (X) и т.п., wdbc-o368c): «X» в уроне
   // образца подставляется, образец помнится для пересчёта при смене X.
   const template = ratingTemplateOf(data.system, data.flags?.[FLAG]);
-  const rating = sourceRating(sourceItem.system);
+  // integralRating — формула X самой записи (Рог Чумоноса: «½Cor.b (окр.▼)»),
+  // когда у источника нет своего рейтинга (Мутация не Черта); считается от
+  // владельца на момент выдачи и пересчитывается при пересинхронизации.
+  const ratingFormula = String(entry.integralRating ?? "").trim();
+  const rating = sourceRating(sourceItem.system)
+    ?? (ratingFormula ? mechFormulaTotalSafe(ratingFormula, mechRollData(sourceItem.parent)) : null);
   const rated = !!template && rating !== null;
   if (rated) Object.assign(data.system, applyRatingTemplate(template, rating));
   // equipSourceUuid — устойчивый идентификатор вида удара (кулак/пинок/…):
@@ -2643,7 +2673,8 @@ async function buildIntegralAttackData(entry, sourceItem) {
   data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}),
     grantedByItem: sourceItem.id, equipEntryId: entry.id, integralAttack: true,
     equipSourceUuid: entry.equipSourceUuid,
-    ...(rated ? { [RATING_TEMPLATE_FLAG]: template } : {}) } };
+    ...(rated ? { [RATING_TEMPLATE_FLAG]: template } : {}),
+    ...(rated && ratingFormula && sourceRating(sourceItem.system) === null ? { integralRatingFormula: ratingFormula } : {}) } };
   return data;
 }
 
@@ -2809,12 +2840,16 @@ export async function syncGrantedEquipment(sourceItem) {
  * system.rating (warhammer-dbc.mjs).
  */
 async function syncIntegralRatings(sourceItem, granted) {
-  const rating = sourceRating(sourceItem.system);
-  if (rating === null) return;
+  const sourceR = sourceRating(sourceItem.system);
   const updates = [];
   for (const w of granted) {
     const template = w.getFlag?.(FLAG, RATING_TEMPLATE_FLAG);
     if (!template) continue;
+    // Рейтинг от формулы записи (integralRating), а не от самого источника.
+    const formula = w.getFlag?.(FLAG, "integralRatingFormula");
+    const rating = sourceR !== null ? sourceR
+      : formula ? mechFormulaTotalSafe(formula, mechRollData(sourceItem.parent)) : null;
+    if (rating === null) continue;
     const want = applyRatingTemplate(template, rating);
     const patch = {};
     if (want.damage !== w.system?.damage) patch["system.damage"] = want.damage;
@@ -3047,7 +3082,8 @@ export const DURABLE_MECH_KINDS = new Set(["characteristic", "weight", "movement
  * себе (тот же уровень «живости», что у остальной Механики).
  */
 function mechEffectData(entry, sourceItem, actor = null) {
-  const rd = mechRollData(actor);
+  // «rating» — рейтинг самой Черты (Двусоставный (X) → +X к SPD).
+  const rd = { ...mechRollData(actor), rating: Number(sourceItem?.system?.rating) || 0 };
   const num = f => mechFormulaTotalSafe(f, rd);
   const changes = [];
   if (entry.kind === "characteristic") {
@@ -3079,8 +3115,15 @@ function mechEffectData(entry, sourceItem, actor = null) {
     changes.push({ key, type: "add", value: num(entry.value),
                    phase: expectedPhase(key), priority: 0 });
   } else if (entry.kind === "armour") {
-    const locs = entry.armourLocation === "all"
-      ? Object.keys(AP_LOCATIONS) : [entry.armourLocation];
+    // «eye» — броня глаз (Зрящие Рога): не локация AP_LOCATIONS, а своё поле
+    // absorption.eyeBonus, которое читает только попадание в Глаз.
+    if (entry.armourLocation === "eye") {
+      changes.push({ key: EYE_ARMOUR_KEY, type: entry.op === "subtract" ? "subtract" : "add",
+                     value: num(entry.armourValue),
+                     phase: expectedPhase(EYE_ARMOUR_KEY), priority: 0 });
+    }
+    const locs = entry.armourLocation === "eye" ? []
+      : entry.armourLocation === "all" ? Object.keys(AP_LOCATIONS) : [entry.armourLocation];
     for (const loc of locs) {
       const key = `system.armorBonus.${loc}`;
       changes.push({ key, type: entry.op === "subtract" ? "subtract" : "add",
@@ -3088,9 +3131,9 @@ function mechEffectData(entry, sourceItem, actor = null) {
                      phase: expectedPhase(key), priority: 0 });
     }
   } else if (entry.kind === "absorption") {
-    const [scope, absKey] = String(entry.absorptionTarget || "").split(":");
-    if ((scope === "vsType" || scope === "vsSubtype") && absKey) {
-      const key = `system.absorption.${scope}.${absKey}`;
+    const abs = parseAbsorptionTarget(entry.absorptionTarget);
+    if (abs) {
+      const key = abs.path;
       changes.push({ key, type: entry.op === "subtract" ? "subtract" : "add",
                      value: num(entry.absorptionValue),
                      phase: expectedPhase(key), priority: 0 });
@@ -3537,7 +3580,8 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
   if (ent.kind === "armour") {
     const locOpts = [optHtml("all", "Все локации", (ent.armourLocation || "body") === "all")]
       .concat(Object.entries(AP_LOCATIONS)
-        .map(([k, l]) => optHtml(k, l, (ent.armourLocation || "body") === k))).join("");
+        .map(([k, l]) => optHtml(k, l, (ent.armourLocation || "body") === k)))
+      .concat(optHtml("eye", "Глаза (только попадание в Глаз)", ent.armourLocation === "eye")).join("");
     const opOpts = CORRUPTION_OP_OPTIONS.map(o => optHtml(o.value, o.label, (ent.op || "add") === o.value)).join("");
     return `<select class="mech-armour-loc" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${locOpts}</select>
       <select class="mech-armour-op" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opOpts}</select>
@@ -3549,11 +3593,16 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       .map(([k, l]) => optHtml(`vsType:${k}`, `Тип: ${l}`, ent.absorptionTarget === `vsType:${k}`)).join("");
     const subtypeOpts = Object.entries(DAMAGE_SUBTYPES)
       .map(([k, d]) => optHtml(`vsSubtype:${k}`, `Подвид: ${d.label}`, ent.absorptionTarget === `vsSubtype:${k}`)).join("");
+    const atOpts = Object.entries(AP_LOCATIONS).map(([loc, locLabel]) =>
+      `<optgroup label="Подвид только в локации: ${locLabel}">${Object.entries(DAMAGE_SUBTYPES)
+        .map(([k, d]) => optHtml(`vsSubtypeAt:${loc}:${k}`, `${locLabel}: ${d.label}`,
+          ent.absorptionTarget === `vsSubtypeAt:${loc}:${k}`)).join("")}</optgroup>`).join("");
     const opOpts = CORRUPTION_OP_OPTIONS.map(o => optHtml(o.value, o.label, (ent.op || "add") === o.value)).join("");
     return `<select class="mech-absorption-target" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
         <option value="" ${ent.absorptionTarget ? "" : "selected"}>— выберите —</option>
         <optgroup label="Широкий тип">${typeOpts}</optgroup>
         <optgroup label="Подвид (в скобках книги)">${subtypeOpts}</optgroup>
+        ${atOpts}
       </select>
       <select class="mech-absorption-op" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opOpts}</select>
       <input type="text" class="mech-absorption-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.absorptionValue ?? "")}" placeholder="напр. 1 или ceil(cor/2)" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`;
@@ -3638,7 +3687,8 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       <select class="mech-ap-scope" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${scopeOpts}</select>
       <select class="mech-ap-key" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
         <option value="" ${ent.apKey ? "" : "selected"}>— свойство —</option>${propOpts}
-      </select>${ratingHtml}${rating2Html}`;
+      </select>${ratingHtml}${rating2Html}
+      <label class="mech-cc-check"><input type="checkbox" class="mech-ap-target-psyker" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.apTargetPsyker ? "checked" : ""} ${dis}/> только по псайкерам</label>`;
   }
 
   if (ent.kind === "charRecovery") {
@@ -3895,7 +3945,9 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       <option value="">— выберите оружие —</option>
       ${equipmentOptionsHtml(ent.equipSourceUuid, ["weapons"])}
     </select>
-    <label class="mech-cc-check" title="Все такие записи предмета предлагаются галочками в одном окне при получении (напр. Естественное Оружие: Когти, Рога, Укус...)"><input type="checkbox" class="mech-integral-optional" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.equipOptional ? "checked" : ""} ${dis}/> по выбору</label>`;
+    <label class="mech-cc-check" title="Все такие записи предмета предлагаются галочками в одном окне при получении (напр. Естественное Оружие: Когти, Рога, Укус...)"><input type="checkbox" class="mech-integral-optional" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.equipOptional ? "checked" : ""} ${dis}/> по выбору</label>
+    <input type="text" class="mech-integral-rating" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.integralRating ?? "")}"
+           placeholder="X, напр. floor(cor/2)" title="Рейтинг X образца (1d10+X, Pen X), если у источника своего рейтинга нет. ${esc(MECH_FORMULA_HINT)}" ${dis}/>`;
   }
 
   if (ent.kind === "equipment") {
@@ -3911,7 +3963,8 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       </select>`;
     } else {
       const cat = ent.equipCategoryPack || "weapons";
-      const catOpts = GRANTABLE_CATEGORIES.map(c => optHtml(c.pack, c.label, cat === c.pack)).join("");
+      const catOpts = GRANTABLE_CATEGORIES.map(c => optHtml(c.pack, c.label, cat === c.pack)).join("")
+        + optHtml(EQUIP_ANY_PACK, EQUIP_ANY_LABEL, cat === EQUIP_ANY_PACK);
       out += `<select class="mech-equip-cat" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${catOpts}</select>`;
       if (cat === "weapons") {
         // «Тип» — папка компендиума корбука (Авто и стаб/Дробовики/Автопушки/

@@ -7,6 +7,8 @@ import { getHeldHand } from "../rules/hands.mjs";
 import { withRulesCache } from "../rules/collect.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }              from "../constants/skills.mjs";
 import { SKILL_DESCRIPTIONS }                        from "../constants/skill-descriptions.mjs";
+import { SKILL_SPECIALIZATIONS }                     from "../constants/skill-specializations.mjs";
+import { skillActionOf }                             from "../constants/skill-actions.mjs";
 import { SKILL_SPECIALTY_DESCRIPTIONS }               from "../constants/skill-specialty-descriptions.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES,
          DRUG_CATEGORIES, DRUG_DELIVERY,
@@ -24,11 +26,11 @@ import { PSY_DISCIPLINES, TECH_DISCIPLINES, canHaveFocusDiscipline } from "../co
 import { effectiveFocusDisciplines, ownFocusDisciplines, grantedFocusDisciplines } from "../rules/psy-focus.mjs";
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
 import { TALENT_LIBRARY }                            from "../constants/talents-library.mjs";
-import { charAptitudeSet } from "../constants/advancement.mjs";
+import { charAptitudeSet, APTITUDES_TOTAL } from "../constants/advancement.mjs";
 import { canClearJam }                                from "../combat/weapon-properties.mjs";
 import { isBraced }                                   from "../combat/brace-weapon.mjs";
 import { ASPIRATION_TABLES } from "../constants/aspirations.mjs";
-import { aspirationOptions, aspirationByKey } from "../apps/aspirations.mjs";
+import { aspirationOptions, aspirationByKey, aspirationPickState } from "../apps/aspirations.mjs";
 import { supportsInfoguard } from "../apps/infoguard.mjs";
 import { gearRequiresWearing } from "../apps/effects.mjs";
 import { xpLogEntries } from "../apps/xp-log.mjs";
@@ -79,6 +81,7 @@ import { parseRangeMeters, rangeVerdict }            from "../rules/psy-range.mj
 import { measureTokens }                             from "../combat/tactical-map.mjs";
 import { mechFormulaTotalSafe }                      from "../rules/mech-formula.mjs";
 import { grappleOnlyHidden, isBiteName } from "../rules/integral-rating.mjs";
+import { hasResilienceTalent } from "../rules/resilience-talents.mjs";
 
 // Определение всех Состояний листа — реестр constants/conditions.mjs
 // (wdbc-w88h): label/desc/иконка/счётчик собраны там, здесь только реэкспорт
@@ -115,10 +118,13 @@ export { CONDITIONS_DEF };
  * подсказывает химика, а не пересказ всей группы «Ремесло», и никогда не
  * остаётся пустым, если под конкретную специализацию текста ещё не набрано.
  */
-function skillTip(key, def, rollLabel, specialty, mod = 0) {
+function skillTip(key, def, rollLabel, specialty, mod = 0, charKey = def?.char) {
   if (!def) return "";
-  const ch   = CHARACTERISTICS[def.char];
-  const base = ch ? `${ch.label} (${ch.abbr})` : def.char;
+  // charKey — своя Характеристика записи группы (entry.char: Вождение (Корабль) —
+  // Интеллект, Ремесло (Каллиграф) — Ловкость), та же, что берёт бросок и расчёт
+  // Итога; иначе строка Корабля заявила бы Основу группы — Ловкость.
+  const ch   = CHARACTERISTICS[charKey];
+  const base = ch ? `${ch.label} (${ch.abbr})` : charKey;
   const apt2 = APTITUDES[def.apt2] || def.apt2;
   // Постоянный модификатор (wdbc-q4wb) виден в Итоге, но по одному числу не
   // понять, откуда оно — поэтому названо в тултипе, и только когда не ноль.
@@ -126,7 +132,34 @@ function skillTip(key, def, rollLabel, specialty, mod = 0) {
   const head = `Бросок: ${rollLabel} · Основа: ${base} · Склонность: ${apt2}${modStr}`;
   const desc = (specialty && SKILL_SPECIALTY_DESCRIPTIONS[key]?.[specialty])
     || SKILL_DESCRIPTIONS[key];
-  return desc ? `${head}<br><br>${desc}` : head;
+  // Строка книги «Действие:» (skill-actions.mjs) — последней, отдельным абзацем.
+  const action = skillActionOf(key, specialty);
+  const body = [desc, action].filter(Boolean).join("<br><br>");
+  return body ? `${head}<br><br>${body}` : head;
+}
+
+/**
+ * Подсказка на заголовок плитки группового Навыка («Общие знания», «Ремесло»…).
+ * Это сама группа, а не строка со специализацией: броска у неё нет, поэтому
+ * шапка без «Бросок:» — только Основа и Склонность, а ниже общее описание
+ * группы из SKILL_DESCRIPTIONS БЕЗ списка специализаций (у каждой строки
+ * плитки свой тултип, см. skillTip). Основа группы — не всегда основа её
+ * специализации: у Вождения своя Характеристика у каждой (Корабль — Интеллект,
+ * остальные — Ловкость), у Ремесла — у отдельных. Поэтому группа, где свои
+ * Характеристики у всех специализаций, Основу не называет вовсе, а где у части —
+ * называет с оговоркой; точная Основа видна в тултипе самой строки.
+ */
+function groupTip(key, def) {
+  const ch   = CHARACTERISTICS[def.char];
+  const specs = SKILL_SPECIALIZATIONS[key] || [];
+  const ownChar = specs.filter(s => s.char).length;
+  const base = ownChar && ownChar === specs.length
+    ? "своя у каждой специализации"
+    : `${ch ? `${ch.label} (${ch.abbr})` : def.char}${ownChar ? " (у отдельных специализаций своя)" : ""}`;
+  const apt2 = APTITUDES[def.apt2] || def.apt2;
+  const head = `Основа: ${base} · Склонность: ${apt2}`;
+  const body = [SKILL_DESCRIPTIONS[key], skillActionOf(key)].filter(Boolean).join("<br><br>");
+  return body ? `${head}<br><br>${body}` : head;
 }
 
 export function buildSkillDisplay(key, system) {
@@ -168,7 +201,8 @@ export function buildShieldData(actor) {
       statusCss:         status.css,
       needsRepair:       (s.status === "overloaded" || s.status === "damaged"),
       weight:            s.weight             ?? (i.system.weight ?? 0),
-      quality:           s.quality            || i.system.quality || "common"
+      quality:           s.quality            || i.system.quality || "common",
+      stored:            !!i.system.stored
     };
   });
 
@@ -276,6 +310,7 @@ function _buildDrugData(item) {
     quantity:        s.quantity         ?? 0,
     weight:          s.weight           ?? 0,
     totalWeight:     Math.round((s.weight || 0) * (s.quantity || 0) * 100) / 100,
+    stored:          !!s.stored,
     duration:        s.duration         || "",
     // Основной эффект
     effect:          s.effect           || "",
@@ -441,12 +476,13 @@ function buildGetDataUncached(actor) {
     context.skillGroupBoxes.push({
       groupKey,
       label: def.label,
+      tip:   groupTip(groupKey, def),
       entries: entries.map((entry, idx) => ({
         entryIndex: idx,
         specialty:  entry.specialty,
         total:      entry.total ?? -20,
         mod:        Number(entry.mod) || 0,
-        tip:        skillTip(groupKey, def, `${def.label}: ${entry.specialty}`, entry.specialty, Number(entry.mod) || 0)
+        tip:        skillTip(groupKey, def, `${def.label}: ${entry.specialty}`, entry.specialty, Number(entry.mod) || 0, entry.char || def.char)
       }))
     });
   }
@@ -707,7 +743,7 @@ function buildGetDataUncached(actor) {
     .map(a => ({ id: a.id, name: a.name, equipped: a.system.equipped ?? false }));
 
   context.gearWeapons = gearWeaponItems.map(i => ({
-    id: i.id, name: i.name, equipped: i.system.equipped ?? false,
+    id: i.id, name: i.name, equipped: i.system.equipped ?? false, stored: !!i.system.stored,
     weaponClass: WEAPON_CLASSES[i.system.weaponClass] ?? i.system.weaponClass,
     weaponType:  i.system.weaponType,
     damage:      i.system.damage,
@@ -729,13 +765,15 @@ function buildGetDataUncached(actor) {
     weaponTypes: (i.system.weaponTypes || []).join(", "),
     quantity:    i.system.quantity,
     weight:      i.system.weight,
-    totalWeight: Math.round((i.system.weight || 0) * (i.system.quantity || 0) * 100) / 100
+    totalWeight: Math.round((i.system.weight || 0) * (i.system.quantity || 0) * 100) / 100,
+    stored:      !!i.system.stored
   }));
 
   context.gearArmor = armorItems.map(i => ({
     id:        i.id,
     name:      i.name,
     equipped:  i.system.equipped   ?? false,
+    stored:    !!i.system.stored,
     armorType: i.system.armorType  ?? "simple",
     isPower:   ["power", "aspect"].includes(i.system.armorType),
     head:      i.system.head       ?? 0,
@@ -746,6 +784,9 @@ function buildGetDataUncached(actor) {
     rightLeg:  i.system.rightLeg   ?? 0,
     weight:    i.system.weight     ?? 0,
     stacks:    i.system.stacks     ?? false,
+    // Аблативное Укрепление (Талант Стойкости): заряды прочности и кнопка «Обслужить (1 ч)» — только носителю.
+    hardeningCharges: i.system.hardeningCharges ?? 0,
+    canHarden: hasResilienceTalent(actor, "ablativeHardening"),
     infoguard: supportsInfoguard(i) ? (i.system.infoguard || 0) : null,
     mods:      allArmorMods.filter(m => m.system.installedOn === i.id).map(armorModView)
   }));
@@ -835,6 +876,7 @@ function buildGetDataUncached(actor) {
     quantity:    i.system.quantity,
     weight:      i.system.weight,
     totalWeight: Math.round((i.system.weight || 0) * (i.system.quantity || 0) * 100) / 100,
+    stored:      !!i.system.stored,
     // Носимое (заполнено «Как носится») спрашивает «надето ли» — от этого
     // зависит, действует ли его Механика (wdbc-9h7g, gearRequiresWearing в
     // apps/effects.mjs). Прочему снаряжению тумблер не показывается вовсе.
@@ -853,6 +895,7 @@ function buildGetDataUncached(actor) {
     id: i.id, name: i.name,
     quantity: i.system.quantity,
     weight:   i.system.weight,
+    stored:   !!i.system.stored,
     activatable: !!i.system.activatable,
     active:      !!i.system.active,
     // Гололит (стр. 256, wdbc-x1nz.2): «час подготовки → +10 Command» — тест
@@ -1047,6 +1090,15 @@ function buildGetDataUncached(actor) {
   context.aptitudeChoices = Object.entries(APTITUDES)
     .filter(([k]) => k !== "general")
     .map(([key, label]) => ({ key, label }));
+  // Книга: «выбрать 8 Склонностей» (стр. 24), потом их только МЕНЯЮТ — одну на
+  // другую. ＋ виден всегда — девятую даёт раса или Путь (Аэльдари-Изгой), —
+  // но сверх восьми предупреждает; ✕ нужен, лишь когда их больше восьми.
+  const aptList  = (Array.isArray(system.aptitudes) ? system.aptitudes : Object.values(system.aptitudes || {})).filter(Boolean);
+  const aptCount = new Set(aptList).size;
+  context.aptitudeTotal     = APTITUDES_TOTAL;
+  context.aptitudeCount     = aptCount;
+  // Повтор в списке тоже лишний: он считается за одну Склонность.
+  context.aptitudeCanRemove = aptList.length > APTITUDES_TOTAL || aptList.length > aptCount;
 
   // Стремления (стр. 22): ЖЁСТКО фиксированные 3 слота, по одному на таблицу
   // (Гордыня/Позор/Мотивация) — раньше был свободный список до 3 из любой
@@ -1066,7 +1118,7 @@ function buildGetDataUncached(actor) {
     const options = aspirationOptions(t.key).map(e => ({ id: e.key, name: e.name, mods: e.mods }));
     if (a && a.custom) return { idx, table: t.key, label: t.label, options, custom: true, id: "", name: a.name || "", mods: a.mods || "", desc: a.desc || "" };
     const e = aspirationByKey(a?.id || a);
-    return { idx, table: t.key, label: t.label, options, custom: false, id: a?.id || a || "", name: e?.name || "", mods: e?.mods || "", desc: e?.desc || "" };
+    return { idx, table: t.key, label: t.label, options, custom: false, id: a?.id || a || "", noMods: !!a?.noMods, pickState: a?.noMods ? "none" : aspirationPickState(actor, idx, e), name: e?.name || "", mods: e?.mods || "", desc: e?.desc || "" };
   });
 
   // Доп. элитные архетипы (кнопка «+» в шапке, поверх основного eliteArchetype).

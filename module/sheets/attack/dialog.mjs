@@ -26,15 +26,20 @@ import { delayBlocksAttack } from "../../combat/delay-action.mjs";
 import { deathDanceNextCost, markDeathDanceUsed } from "../../combat/death-dance.mjs";
 import { markRoundCapabilityUsed } from "../../apps/game-session.mjs";
 import { AUTO_HIT_CAPABILITY, FULL_ATTACK_CAPABILITY, readAttackForm } from "./form.mjs";
+import { hateAttackApplies } from "../../rules/patron-abilities.mjs";
+import { actorHasInfamyPoint, spendPatronAbility } from "../../apps/infamy-points.mjs";
 import { dualWieldMods, dualWieldActionType, missingSpecs, targetSpreadExceeded,
          SPEC_LABELS, TARGET_SPREAD_LIMIT_M } from "../../rules/dual-wield.mjs";
-import { allGunsBlazingMod } from "../../rules/dual-wield-talents.mjs";
+import { allGunsBlazingMod, tyranthikosSecondAttackDice } from "../../rules/dual-wield-talents.mjs";
 import { measureTokens } from "../../combat/tactical-map.mjs";
 import { attackIsMelee, profileHasOwnFire, weaponProfiles as atkProfilesOf } from "../../combat/weapon-profiles.mjs";
 import { weaponThresholdPart } from "../../combat/attack-threshold.mjs";
 import { withEyeOfEnvy } from "../../rules/eye-of-envy.mjs";
 import { AIM_FOCUS_EXTENDED_FLAG } from "../../rules/aim-focus.mjs";
+import { commitRerollUse } from "../../combat/angel-hunters.mjs";
 import { isSabre, sabreSecondAttackBlockFor, armSabreSecondAttack, consumeSabreSecondAttack } from "../../combat/sabre-second-attack.mjs";
+import { ACTIVE_SIGHT_FLAG } from "../../combat/weapon-mods.mjs";
+import { bringItDownStacksFor } from "../../rules/leadership-talents.mjs";
 
 /**
  * Два условия книги на парную атаку (стр. 62, wdbc-3jlm), которые до этого
@@ -92,6 +97,7 @@ export function openAttackDialog(ctx) {
     oneVsHundred,
     fanningActive,
     autoHitAvailable,
+    hateAttackAvailable,
     fullAttackForced,
     forcedDefenceReroll,
     helplessAutoMelee,
@@ -130,6 +136,8 @@ export function openAttackDialog(ctx) {
         action: "roll", label: "Бросок!", icon: "fas fa-dice-d10", class: "roll", default: true,
         callback: async (event, button) => {
           const f = readAttackForm(button.form, ammoConds);
+          // «Раз в Раунд» (Охотники на Ангелов): выбранный переброс потрачен.
+          await commitRerollUse(actor, button.form.querySelector(".rule-reroll-opt:checked")?.dataset);
 
           if (f.autoFail) {
             await ChatMessage.create({
@@ -220,6 +228,14 @@ export function openAttackDialog(ctx) {
                   <span class="roll-failure">${rollIcon("ban","#ff6b6b")}Лимит Атак за этот Ход исчерпан (стр. 12).</span>
                 </div></div>`
             });
+            return false;
+          }
+
+          // Атака Ненависти (Кхорн): Очко проверяется ДО списания ОД, чтобы
+          // отказ не стоил действия; само списание — перед броском ниже.
+          const hateUsed = !!(hateAttackAvailable && f.hateAttack && hateAttackApplies(f.char));
+          if (hateUsed && !actorHasInfamyPoint(actor)) {
+            ui.notifications.warn("⚠️ Нет Очков Бесчестия для Атаки Ненависти.");
             return false;
           }
 
@@ -359,6 +375,14 @@ export function openAttackDialog(ctx) {
             await actor.setFlag("warhammer-dbc", "inevitabilityPenalty", true);
           }
 
+          // Атака Ненависти тратится реальным броском, как и Локус выше.
+          if (hateUsed && !(await spendPatronAbility(actor, "khorneHatred"))) return false;
+
+          // Bring It Down!/Валите Это! (rules/leadership-talents.mjs): Отряд
+          // атакующего мог срезать бонус Общей Команды на бонусные кубы урона
+          // именно по ЭТОЙ цели — считается раз на оба хвата одной атаки.
+          const bringItDownDice = bringItDownStacksFor(actor, targetActor, game.actors ?? []);
+
           // Приём выбран в этом же окне — свежий techniqueOpts под конкретный
           // выбор (targetDodgeMod/targetParryMod/chatNote и т.п. зависят от него).
           const finalTechniqueOpts = isMelee ? {
@@ -383,13 +407,15 @@ export function openAttackDialog(ctx) {
           // снимает его ПОСЛЕ, если персонаж не потратил (см. rules/eye-of-
           // envy.mjs). Без Дара/без совпадения — no-op, поведение то же, что
           // раньше.
-          await withEyeOfEnvy(actor, targetActor, f.char, () => _executeAttackRoll(
+          // Итог основной руки нужен второй (Тирантикос: «попадает из обоих»).
+          const mainResult = await withEyeOfEnvy(actor, targetActor, f.char, () => _executeAttackRoll(
             actor, item, f.char, thresholdOf(f) - (f.aimHand === "off" ? aimAdjust : 0),
             f.rofMode || rofModes[0]?.value,
             aimTargets.find(t => t.value === f.aimVal),
             {
               forceHit: helplessAutoHit, doubleDamage: helplessAutoHit,
-              fixedSuccessDeg: autoHitUsed ? 1 : undefined,
+              fixedSuccessDeg: (autoHitUsed || hateUsed) ? 1 : undefined,
+              bringItDownDice,
               // Прицеливание (wdbc-1rno.5): actor.system.aiming уже сброшен в
               // "none" выше (actorUpdates), значение для Меткого/bonusDamageDice
               // нужно явным параметром, захваченным ДО сброса.
@@ -525,6 +551,13 @@ export function openAttackDialog(ctx) {
             // атаки пары нужны для условия, а второй карточке они обе уже
             // известны (f.rofMode — первая рука, offRofMode — вторая).
             const agbMod = allGunsBlazingMod(actor, f.rofMode, offRofMode);
+            // Тирантикос (Sahara 10-2d10-2): +2d10 первому попаданию второй
+            // руки, если обе тяжёлые, цель Размера 2+ и первая рука попала;
+            // «попала и вторая» досчитывает сам бросок (combat/attack.mjs).
+            // «Стреляет из обоих»: удар тяжёлым оружием как дубиной (профиль
+            // «Ударить оружием») выстрелом не считается.
+            const tyranthikosDice = tyranthikosSecondAttackDice(
+              actor, item, dualOff, targetActor, !!mainResult?.hit && !isMelee && !offMelee);
             // Eye of Envy (wdbc-1rno) — вторая рука та же цель, своя
             // Характеристика (offChar), свой независимый бросок.
             await withEyeOfEnvy(actor, targetActor, offChar, () => _executeAttackRoll(
@@ -539,6 +572,8 @@ export function openAttackDialog(ctx) {
                   + (dw.reductions.length ? `; убавили: ${dw.reductions.map(r => r.label).join(", ")}` : "")
                   + ")",
                 allGunsBlazingMod: agbMod,
+                tyranthikosDice,
+                bringItDownDice,
                 // Прицеливание положено на вторую руку (wdbc-x1nz.2.41) — метка едет сюда, не основной.
                 aimingLabel: (currentAiming !== "none" && !wp.noAim && f.aimHand === "off")
                   ? (currentAiming === "half" ? `Полу-прицеливание (+${aimingBonus})` : `Полное прицеливание (+${aimingBonus})`)
@@ -784,6 +819,18 @@ export function openAttackDialog(ctx) {
         vehicleSideEl.addEventListener("change", refreshVehicleRear);
         refreshVehicleRear();
       }
+
+      // Один прицел за атаку (wdbc-1rno.40): выбор пишется флагом ОРУЖИЯ
+      // (combat/weapon-mods.mjs::ACTIVE_SIGHT_FLAG) — его же читают бросок и
+      // лист — и окно переоткрывается тем же путём, что при смене ствола
+      // комби-оружия: бонусы прицела посчитаны при открытии, а не на лету.
+      const sightEl = form.querySelector("#atk-sight");
+      sightEl?.addEventListener("change", async ev => {
+        ev.stopPropagation();
+        await item.setFlag?.("warhammer-dbc", ACTIVE_SIGHT_FLAG, sightEl.value);
+        dialog.close();
+        reopenWithProfile?.(lastProfIdx);
+      });
 
       // Один слушатель на форму вместо списка селекторов: события всплывают,
       // и новая галочка в разметке не требует правки этого места.

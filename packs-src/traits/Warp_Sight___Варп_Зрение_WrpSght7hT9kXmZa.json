@@ -1,0 +1,52 @@
+{
+  "name": "Warp Sight / Варп-Зрение",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "Видит течения Варпа с той же лёгкостью, как другие видят свет, и защищён от безумия, обычно вызываемого незащищённым взглядом в Эмпиреи. Видит потоки Варпа вокруг себя по обе стороны Барьера и автоматически засекает все психосилы и прочие Варп-эффекты, видя их как потоки света и тьмы — в том числе автоматически засекает Незримые психические атаки. Это отдельное чувство, независимое от обычного зрения: шлемы и доспехи не ограничивают его обзор, мешают только психические барьеры. Чтобы разобрать далёкие (не огромные) потоки Варпа, ГМ может потребовать тест Awareness со штрафом от расстояния. Персонаж всё ещё должен иметь нужные Навыки группы Forbidden Lore, чтобы понимать значение увиденных потоков.",
+    "notes": "В паке не было отдельного компендиумного предмета (только embedded-копии на акторах, ~33 вхождения с разнобоем текста) — создан по книге (сверка гл.3 Трейтов). Автоматизировано: авто-засечение Незримых психических атак (rules/unseen-attack.mjs::hasWarpSight, по совпадению имени Трейта/Таланта «Warp Sight»/«Варп-Зрение») и альтернативный тест Awareness+20−10×X вместо Psyniscience против Blunted (rules/blunted.mjs). НЕ автоматизированы: собственно видение всех потоков/эффектов Варпа как света и тьмы, направленность чувства и штраф Awareness по дальности.",
+    "benefit": "Шестое чувство засекает потоки Варпа; авто-засечение Незримых психических атак.",
+    "source": "биология/Варп",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "WrpSght7hT9kXmZa",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786121962500,
+    "modifiedTime": 1786121962500,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!WrpSght7hT9kXmZa"
+}

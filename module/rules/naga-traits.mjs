@@ -28,6 +28,14 @@ export const EXTRA_WOUND_DAILY_CAPABILITY = "healing.extraWoundDaily";
 /** «…может в начале своего Хода затянуть свое Кровотечение тестом T+0». */
 export const SELF_STANCH_CAPABILITY = "bleeding.selfStanchTurnStart";
 
+/** Метка на предмете-дозе «(яд в клыках)» — её кладёт Адаптивная Отрава (apps/naga-traits.mjs). */
+export const ADAPTIVE_VENOM_DOSE_FLAG = "adaptiveVenomDose";
+
+/** Атака Укусом: по названию оружия (Bite / Укус, в т.ч. «Смертельное Естественное Оружие»). */
+export function isBiteAttack(weaponName) {
+  return /\bbite\b|укус/i.test(String(weaponName ?? ""));
+}
+
 /** Метка на акторе: worldTime, от которого отсчитываются сутки доп. лечения. */
 export const EXTRA_WOUND_DAILY_FLAG = "extraWoundDailyAt";
 export const SECONDS_PER_DAY = 86400;

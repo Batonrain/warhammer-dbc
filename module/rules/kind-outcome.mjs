@@ -32,6 +32,20 @@ import { HYPNO_SCARS, hypnoScarsStun } from "./replicant.mjs";
 import { PERSONAL_ADAPTATION_CAPABILITY, PERSONAL_ADAPTATION_FLAG,
          personalAdaptationCap, personalAdaptationBonusFor, nextPersonalAdaptationBonuses, personalAdaptationKey }
   from "./personal-adaptation.mjs";
+import { matchFailDegreeTriggers } from "./fail-degree-triggers.mjs";
+import { masteryCrit, MASTERY_CRIT_LINE } from "./mastery.mjs";
+
+/**
+ * Последствия общего триггера «N+ Провала» (rules/fail-degree-triggers.mjs,
+ * wdbc-1rno.22) по имени `handler` записи реестра. Каждое возвращает html для
+ * карточки проваленного теста (едет в critLine — её рисуют все вызывающие).
+ * Обвязка — динамическим импортом, как у Гипно-Шрамов ниже: combat/fear.mjs
+ * сам статически импортирует этот файл, а он — чистый конвейер.
+ */
+const FAIL_DEGREE_HANDLERS = {
+  infernalWillShock: async (actor, info) =>
+    (await import("../combat/fear.mjs")).rollInfernalWillShock(actor, info)
+};
 
 /**
  * Виды теста — независимые: любое подмножество combined/extended/opposed
@@ -114,7 +128,7 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   // самого сравнения (opposedLine ниже) ещё не происходит.
   const oppSelected = !!opposed || opposedSelected;
   const oppSafe = opposed ? !!opposed.safe : opposedSafeSelected;
-  // kindLabel — только для шапки карточки («Медика · Комбинированный,
+  // kindLabel — только для шапки карточки («Медицина · Комбинированный,
   // Расширенный»), список активных Видов через запятую, а не единственное
   // значение: их теперь может быть сколько угодно разом.
   const kindLabel = [
@@ -189,7 +203,11 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   const autoFail = (resolved.autoFail ?? []).length > 0;
   const outcome0 = testOutcome(rv, eff, { autoSuccess: autoSuccess && !autoFail });
   const success = autoFail ? false : outcome0.success;
-  const rawDeg = (autoFail && outcome0.success) ? 1 : outcome0.deg;
+  // Минимум Провалов от правила (эффект autoFail.degrees, по умолчанию 1): если
+  // бросок и так провален глубже — остаётся он, иначе берётся минимум.
+  const autoFailDeg = Math.max(1, ...(resolved.autoFail ?? []).map(a => a.degrees || 1));
+  const rawDeg = !autoFail ? outcome0.deg
+    : outcome0.success ? autoFailDeg : Math.max(outcome0.deg, autoFailDeg);
   const crit = criticalOutcome(rv, resolved.crit);
   const autoFailLine = autoFail
     ? `<div class="roll-threshold">⛔ Автопровал: ${resolved.autoFail.map(a => esc(a.label)).join(", ")}</div>`
@@ -241,7 +259,29 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
     : "";
   // Автозапуск kind:"script" по Крит.Успеху/Провалу (wdbc-1rno: «Полимат»,
   // «Библиотека Акаши») — после того, как crit уже посчитан для ЭТОГО броска.
-  await runScriptTriggers(actor, resolved.scriptTriggers, crit);
+  // Мастерство (стр. 62): «5+ Успехов в тесте на выбранный Навык» считается
+  // Критическим Успехом — для карточки и для скриптов по Крит.Успеху тоже.
+  // Здесь степень без Ассистентов (их прибавляет лист позже); если Ассистенты
+  // дотянули до 5, лист дорисовывает строку сам (sheets/actor-sheet.mjs).
+  const masteryHit = !crit.success && masteryCrit(actor,
+    { skill: ctx?.skill, group: ctx?.group, specialty: ctx?.specialty }, { success, deg: baseDeg });
+  const critEff = masteryHit ? { ...crit, success: true } : crit;
+  if (masteryHit) critLine += MASTERY_CRIT_LINE;
+  await runScriptTriggers(actor, resolved.scriptTriggers, critEff);
+  // «Провалил тест на N+ Провала» (wdbc-1rno.22, Инфернальная Воля) — по
+  // ИТОГОВОЙ степени провала (baseDeg, с failDegMod внутри), после крита: часть
+  // правил исключает Крит. Провал. Ошибка последствия не роняет сам бросок —
+  // тот же принцип, что у авто-скриптов выше.
+  for (const t of matchFailDegreeTriggers({ success, deg: baseDeg, crit: critEff }, ctx ?? {},
+    flag => hasRuleFlag(actor, flag))) {
+    const run = FAIL_DEGREE_HANDLERS[t.handler];
+    if (!run) { console.error(`Warhammer DBC | триггер «${t.id}»: нет последствия «${t.handler}»`); continue; }
+    try {
+      critLine += (await run(actor, { deg: baseDeg, ctx: ctx ?? {}, trigger: t })) ?? "";
+    } catch (e) {
+      console.error(`Warhammer DBC | Ошибка последствия «${t.id}»:`, e);
+    }
+  }
 
   let extendedLine = "";
   if (extended) {
@@ -300,7 +340,7 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
 
   // degCapLine едет в unnaturalLine: вызывающие карточки уже рисуют её рядом
   // со степенью, отдельного поля они не знают (как autoFailLine в critLine).
-  return { eff, success, deg: baseDeg, crit, critLine, kindLabel, combinedLine, combinedAssistCount,
+  return { eff, success, deg: baseDeg, crit: critEff, masteryCrit: masteryHit, critLine, kindLabel, combinedLine, combinedAssistCount,
            personalAdaptationLine, extendedLine, opposedLine, unnaturalLine: unnaturalLine + degCapLine,
            degCap, degCapLine };
 }

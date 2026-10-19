@@ -48,6 +48,11 @@ export class SquadData extends foundry.abstract.TypeDataModel {
         recipientUuid: str("Получатель"),
         // Вид тестов Общей Команды (rules/command-effects.mjs::GENERAL_COMMAND_KINDS).
         testKind:  str("Вид тестов"),
+        // Bring It Down!/Валите Это! (rules/leadership-talents.mjs): срез
+        // бонуса попадания Общей/Атака Команды в обмен на бонусные кубы
+        // урона по ОДНОЙ выбранной крупной цели — стеки и сама цель.
+        bringItDownStacks: num(0, "Валите Это!: стеков"),
+        bringItDownTargetUuid: str("Валите Это!: цель"),
         // Кто и когда отдал: Команда гаснет в начале следующего Хода отдающего,
         // Брифинг (giverUuid "briefing") — на смене Раунда
         // (combat/command-state.mjs::expireCommandsAtTurnStart).

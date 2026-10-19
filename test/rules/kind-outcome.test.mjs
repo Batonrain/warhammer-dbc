@@ -612,3 +612,58 @@ describe("resolveKindOutcome — failDegMod (wdbc-1rno, Sentient Cyst)", () => {
     expect(out.deg).toBe(1);
   });
 });
+
+describe("resolveKindOutcome — Мастерство: 5+ Успехов = Критический Успех (стр. 62)", () => {
+  const mastery = aptSource => ({ type: "talent", name: "Mastery / Мастерство", system: { aptSource, specialization: "" } });
+  const test = (a, rv, baseEff = 80, extra = {}) => resolveKindOutcome(a, {
+    kind: "base", baseEff, rv, ctx: { actor: a, kind: "skill", char: "ag", skill: "dodge", ...extra } });
+
+  it("5 Успехов на выбранном Навыке — критический успех, даже при обычном броске", async () => {
+    const a = actorWithItems([mastery("dodge")]);
+    // Предел 80, бросок 35 → ⌊45/10⌋+1 = 5 Успехов, а натуральный 35 — не 1–5.
+    const o = await test(a, 35);
+    expect(o.deg).toBe(5);
+    expect(o.masteryCrit).toBe(true);
+    expect(o.crit.success).toBe(true);
+    expect(o.critLine).toContain("Критический Успех");
+    expect(o.critLine).toContain("Мастерство");
+  });
+
+  it("4 Успеха — ещё не критический", async () => {
+    const a = actorWithItems([mastery("dodge")]);
+    const o = await test(a, 45);
+    expect(o.deg).toBe(4);
+    expect(o.masteryCrit).toBe(false);
+    expect(o.crit.success).toBe(false);
+  });
+
+  it("без Мастерства на этот Навык — обычный исход", async () => {
+    const a = actorWithItems([mastery("parry")]);
+    const o = await test(a, 20);
+    expect(o.masteryCrit).toBe(false);
+    expect(o.critLine).not.toContain("Мастерство");
+  });
+
+  it("натуральный крит 1–5 не дублируется строкой Мастерства", async () => {
+    const a = actorWithItems([mastery("dodge")]);
+    const o = await test(a, 3);
+    expect(o.crit.success).toBe(true);
+    expect(o.masteryCrit).toBe(false);
+    expect(o.critLine.match(/Критический Успех/g)).toHaveLength(1);
+  });
+
+  it("групповой Навык: Мастерство на специализацию", async () => {
+    const a = actorWithItems([mastery("forbiddenLore:daemons")]);
+    const hit = await test(a, 35, 80, { skill: undefined, group: "forbiddenLore", specialty: "Daemons" });
+    expect(hit.masteryCrit).toBe(true);
+    const miss = await test(a, 35, 80, { skill: undefined, group: "forbiddenLore", specialty: "Heresy" });
+    expect(miss.masteryCrit).toBe(false);
+  });
+
+  it("провал с большой степенью — не критический успех", async () => {
+    const a = actorWithItems([mastery("dodge")]);
+    const o = await test(a, 99, 20);
+    expect(o.success).toBe(false);
+    expect(o.masteryCrit).toBe(false);
+  });
+});

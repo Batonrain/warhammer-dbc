@@ -63,6 +63,10 @@ export function prepareArmourDerived(actor, system) {
   };
 
   const layersByLoc = { head: [], body: [], leftArm: [], rightArm: [], leftLeg: [], rightLeg: [] };
+  // Бонусы AP против типа урона от ИМЕНОВАННЫХ особенностей (Protective): по
+  // типу — максимум среди всех источников, не сумма. Добавляются в armorVsType
+  // после цикла, поверх сумм от модов брони.
+  const namedBonusMax = {};
 
   for (const item of actor.items) {
     if (item.type !== "armor" || !item.system.equipped) continue;
@@ -94,11 +98,14 @@ export function prepareArmourDerived(actor, system) {
     for (const k of Object.keys(ap)) {
       if (ap[k] > 0) propFlagsByLoc[k] = mergeArmorLocFlags(propFlagsByLoc[k], propAuto);
     }
-    // Protective (wdbc-8b5): +X AP против DAMAGE_TYPES.chemical, суммируется
-    // с остальными vsType-бонусами ниже (та же неточность по локации, что и
-    // у остальных armorVsType — см. комментарий у объявления armorVsType).
+    // Protective (wdbc-8b5): +X AP против DAMAGE_TYPES.chemical. Одноимённая
+    // особенность из РАЗНЫХ источников (свойство брони, поле друкхари, второй
+    // надетый предмет) не складывается — берётся больший (решение владельца
+    // 02.10.2026, protective-4-protective-4). Копим максимум по типу и
+    // прибавляем к armorVsType один раз после цикла (та же неточность по
+    // локации, что и у остальных armorVsType — см. объявление выше).
     for (const [t, x] of Object.entries(propAuto.apBonusByType)) {
-      armorVsType[t] = (armorVsType[t] || 0) + x;
+      namedBonusMax[t] = Math.max(namedBonusMax[t] || 0, x);
     }
     for (const [st, x] of Object.entries(propAuto.apBonusBySubtype)) {
       armorVsSubtype[st] = (armorVsSubtype[st] || 0) + x;
@@ -128,8 +135,8 @@ export function prepareArmourDerived(actor, system) {
     // (rules/library/core.mjs); shield — встроенный щит,
     // combat/armor-field-shield.mjs.
     if (fld.protective) {
-      system.fieldProtective = fld.protective;
-      armorVsType.chemical += fld.protective;
+      system.fieldProtective = Math.max(system.fieldProtective || 0, fld.protective);
+      namedBonusMax.chemical = Math.max(namedBonusMax.chemical || 0, fld.protective);
     }
     if (fld.nimble != null)  system.fieldNimble  = fld.nimble;
     if (fld.blunted != null) system.fieldBlunted = fld.blunted;
@@ -164,6 +171,10 @@ export function prepareArmourDerived(actor, system) {
     for (const k of Object.keys(ap)) {
       if (ap[k] > 0) layersByLoc[k].push({ ap: ap[k], stacks: !!s.stacks, nullers });
     }
+  }
+
+  for (const [t, x] of Object.entries(namedBonusMax)) {
+    armorVsType[t] = (armorVsType[t] || 0) + x;
   }
 
   // Укрытие по подвиду урона от активного Защитного поля (Mistshield/Туманный

@@ -98,3 +98,69 @@ describe("extinguishBurning", () => {
     expect(captured.rolls).toHaveLength(0);
   });
 });
+
+// Падай и Перекатывайся (Талант Стойкости, глава 3): «за полудействие
+// автоматически тушит себя или согласного (или паникующего) персонажа на
+// расстоянии касания, сбивая себя или потушенного (соответственно) с ног».
+describe("extinguishBurning: Падай и Перекатывайся", () => {
+  const withTalent = actor => {
+    actor.items.push({ type: "talent", name: "Drop and Roll / Падай и Перекатывайся", system: {}, flags: {} });
+    return actor;
+  };
+
+  it("себя: тушение без броска и без теста, носитель ложится", async () => {
+    const a = withTalent(makeActor("Носитель", { conditions: { burning: true } }));
+    const res = await extinguishBurning(a);
+    expect(captured.rolls).toHaveLength(0);
+    expect(res.success).toBe(true);
+    expect(res.auto).toBe(true);
+    expect(a.system.conditions.burning).toBe(false);
+    expect(a.system.conditions.prone).toBe(true);
+    expect(captured.chat[0].content).toContain("Падай и Перекатывайся");
+  });
+
+  it("себя: автоуспех даже там, где Ag−20 почти не проходит (Критический Провал невозможен)", async () => {
+    const a = withTalent(makeActor("Носитель", { ag: 10, conditions: { burning: true } }));
+    captured.nextRoll = 99;   // обычный тест провалился бы с Критическим Провалом
+    const res = await extinguishBurning(a);
+    expect(res.success).toBe(true);
+    expect(res.critFail).toBe(false);
+    expect(a.system.conditions.burning).toBe(false);
+  });
+
+  it("другого: без броска, потушенный ложится, носитель на ногах и не загорается", async () => {
+    const helper = withTalent(makeActor("Носитель"));
+    const victim = makeActor("Горящий", { conditions: { burning: true } });
+    const res = await extinguishBurning(helper, victim);
+    expect(captured.rolls).toHaveLength(0);
+    expect(res.success).toBe(true);
+    expect(victim.system.conditions.burning).toBe(false);
+    expect(victim.system.conditions.prone).toBe(true);
+    expect(helper.system.conditions.prone).toBeUndefined();
+    expect(helper.system.conditions.burning).toBeUndefined();
+  });
+
+  it("формула урона Горения гасится вместе с пламенем", async () => {
+    const a = withTalent(makeActor("Носитель", { conditions: { burning: true } }));
+    await a.setFlag("warhammer-dbc", "burningDamageFormula", "2d10");
+    await extinguishBurning(a);
+    expect(a.getFlag("warhammer-dbc", "burningDamageFormula")).toBeUndefined();
+  });
+
+  it("можно отказаться от Таланта: dropAndRoll:false — обычный тест Ag−20", async () => {
+    const a = withTalent(makeActor("Носитель", { conditions: { burning: true } }));
+    captured.nextRoll = 15;   // 40−20 = 20
+    const res = await extinguishBurning(a, a, { dropAndRoll: false });
+    expect(captured.rolls).toHaveLength(1);
+    expect(res.eff).toBe(20);
+    expect(res.auto).toBeFalsy();
+  });
+
+  it("без Таланта поведение прежнее: бросок есть", async () => {
+    const a = makeActor("Обычный", { conditions: { burning: true } });
+    captured.nextRoll = 15;
+    const res = await extinguishBurning(a);
+    expect(captured.rolls).toHaveLength(1);
+    expect(res.auto).toBeFalsy();
+  });
+});

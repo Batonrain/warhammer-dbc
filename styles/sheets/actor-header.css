@@ -220,6 +220,26 @@
   border: 1px solid var(--wh-border); border-radius: 3px; font-size: 0.72em;
 }
 .warhammer-dbc .header-cell-aspir .aspir-remove:hover { background: #7a2e2e; color: #ffb0b0; border-color: #7a2e2e; }
+/* Бросок d10 по таблице слота — рядом с крестиком очистки. Высоту не задаём:
+   ниже пола ядра (28px) она всё равно не применилась бы (храповик кнопок). */
+.warhammer-dbc .aspir-roll {
+  flex: 0 0 auto; width: 20px; padding: 0; line-height: 1; cursor: pointer;
+  background: var(--wh-input-dark); color: var(--wh-text-mid);
+  border: 1px solid var(--wh-border); border-radius: 3px; font-size: 0.72em;
+}
+.warhammer-dbc .aspir-roll:hover { background: var(--wh-border); color: var(--wh-text); }
+/* «Без модификаторов»: мелкая галочка под строкой модификаторов. */
+.warhammer-dbc .aspir-nomods-lbl {
+  display: flex; align-items: center; gap: 4px; font-size: 0.72em; color: var(--wh-text-mid); cursor: pointer;
+}
+.warhammer-dbc .aspir-nomods-lbl input { margin: 0; }
+/* «Выбрать Характеристики» (Совершенство): мелкая кнопка-ссылка под строкой. */
+.warhammer-dbc .aspir-repick {
+  align-self: flex-start; padding: 0 4px; cursor: pointer; font-size: 0.72em;
+  background: none; border: 1px dashed var(--wh-border); border-radius: 3px; color: var(--wh-text-mid);
+}
+.warhammer-dbc .aspir-repick-needed { color: var(--wh-red); border-color: var(--wh-red); }
+.warhammer-dbc .aspir-mods-line.aspir-mods-off { text-decoration: line-through; opacity: 0.6; }
 .warhammer-dbc .header-cell-aspir .aspir-mods-line {
   font-size: 0.72em; color: var(--wh-text-mid); min-height: 1em; line-height: 1.35;
 }

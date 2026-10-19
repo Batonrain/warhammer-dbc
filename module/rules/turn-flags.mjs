@@ -68,6 +68,11 @@ export const TURN_SCOPED_FLAGS = {
   countenanceOfGods: "Лик <Бога> (Дары Богов, wdbc-1rno; снятие — wdbc-4umq): рейтинг Страха 3 «до начала своего следующего Хода» (rules/countenance-of-gods.mjs::COUNTENANCE_FLAG)",
   firedBracedHeavy: "Безоружный Бой (core.json, wdbc-x1nz.2.71): стрелял из Закреплённого тяжёлого — им «безоружен до начала своего следующего Хода» (combat/weapon-profiles.mjs::braceBlocksMelee)",
   shockHalfAction: "Шок, строка 1–20 (стр. 53): «только одно Полудействие в свой следующий Ход» — resetActionEconomy читает до сброса (1 ОД) и гаснет",
+  flourishDance: "Размашистый Танец (Талант Избегания): штраф −5 за Успех на атаки выбранной цели по танцору — до начала его следующего Хода (combat/flourish-dance.mjs)",
+  cautionThisTurn: "Осторожность (Талант Избегания): +1 Реакция за ментальное полудействие — раз в Ход (combat/caution.mjs)",
+  quickDrawPinThisTurn: "Быстрое Выхватывание (Талант Скорости): чеку гранаты свободным действием можно выдернуть только раз в Ход (combat/draw-action.mjs)",
+  sprintFatigueDue: "Спринт (Талант Скорости): второй Ход подряд дальнего Бега — +1 Усталости в конце Хода (combat/movement-actions.mjs::applySprintTurnEnd); здесь страховка на случай пропущенного конца Хода",
+  hunkerDown: "Залегание (Талант Стойкости): AP укрытия ×2, выглядывающим частям — обычное AP, до начала следующего Хода (combat/hunker-down.mjs)",
   legacyHatredShield: "Щит Ненависти, Оружие Наследия (wdbc-1rno.35, vigilant 9-9, стр. 427): временный AP-щит руки(рук) и торса — держится до начала следующего своего Хода, не тратится отдельным попаданием"
 };
 

@@ -5,7 +5,7 @@
 // было памяткой (auto: attackMod 0) и на порог не влияло вовсе.
 
 import { describe, it, expect } from "vitest";
-import { legionAttackPenalty, LEGION_STEP } from "../../module/rules/legion-fit.mjs";
+import { legionAttackPenalty, LEGION_STEP, wearsPowerArmour } from "../../module/rules/legion-fit.mjs";
 
 const human   = { size: 0, sBonus: 3, fitsLegion: false };
 const astartes = { size: 1, sBonus: 8, fitsLegion: true };
@@ -60,5 +60,50 @@ describe("legionAttackPenalty: снятие штрафов за Размер и 
   it("на штраф Астартес за НЕлегионное оружие не влияет — там другая причина", () => {
     const out = legionAttackPenalty({ hasLegion: false, ...astartes, ignoresSizeStrength: true });
     expect(out.total).toBe(LEGION_STEP);
+  });
+});
+
+// ── Giant's Arms / Оружие Гигантов (wdbc-3-65ff) ───────────────────────────
+// «Нося силовую броню, персонаж может использовать оружие и снаряжение
+// Легиона без обычных штрафов» — снимает все ТРИ слагаемых разом, не два,
+// как у Откатной Перчатки.
+describe("legionAttackPenalty: ignoresHandFit (Giant's Arms в силовой броне)", () => {
+  it("человек без штрафов вовсе", () => {
+    const out = legionAttackPenalty({ hasLegion: true, ...human, ignoresSizeStrength: true, ignoresHandFit: true });
+    expect(out).toEqual({ total: 0, parts: [] });
+  });
+
+  // Окно атаки передаёт одно ignoresHandFit (без ignoresSizeStrength — тот
+  // только у Откатной Перчатки), поэтому оно само обязано снять все три.
+  it("одного ignoresHandFit достаточно — Размер и Сила тоже снимаются", () => {
+    const out = legionAttackPenalty({ hasLegion: true, ...human, ignoresHandFit: true });
+    expect(out).toEqual({ total: 0, parts: [] });
+  });
+
+  it("на штраф Астартес за НЕлегионное оружие не влияет", () => {
+    const out = legionAttackPenalty({ hasLegion: false, ...astartes, ignoresHandFit: true });
+    expect(out.total).toBe(LEGION_STEP);
+  });
+});
+
+describe("wearsPowerArmour", () => {
+  it("надетая силовая броня", () => {
+    const actor = { items: [{ type: "armor", system: { equipped: true, armorType: "power" } }] };
+    expect(wearsPowerArmour(actor)).toBe(true);
+  });
+
+  it("силовая броня есть, но не надета", () => {
+    const actor = { items: [{ type: "armor", system: { equipped: false, armorType: "power" } }] };
+    expect(wearsPowerArmour(actor)).toBe(false);
+  });
+
+  it("надета, но не силовая", () => {
+    const actor = { items: [{ type: "armor", system: { equipped: true, armorType: "flak" } }] };
+    expect(wearsPowerArmour(actor)).toBe(false);
+  });
+
+  it("нет актора/предметов", () => {
+    expect(wearsPowerArmour(null)).toBe(false);
+    expect(wearsPowerArmour({})).toBe(false);
   });
 });

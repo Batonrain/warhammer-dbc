@@ -87,7 +87,7 @@ import { conditionRulesFor, ALT_SENSES_CAPABILITIES } from "./library/conditions
  * носитель самой Возможности.
  */
 const CAPABILITY_OVERRIDES = Object.fromEntries(
-  ALT_SENSES_CAPABILITIES.map(key => [key, ["conditions.blinded"]]));
+  ALT_SENSES_CAPABILITIES.map(key => [key, ["conditions.blinded", "conditions.blinded.blindFighting"]]));
 
 const SYSTEM = "warhammer-dbc";
 
@@ -259,6 +259,16 @@ function collectMitigations(items, isActive, actor) {
   return byKey;
 }
 
+/**
+ * Рейтинг свойства атаки: число/строка записи как есть, а «rating» — рейтинг
+ * самой Черты-источника (Токсичный (X) даёт естественному оружию Toxic (X),
+ * wdbc-ird9n): у каждого носителя Черты он свой.
+ */
+function attackPropRating(raw, item) {
+  if (String(raw ?? "").trim().toLowerCase() === "rating") return Number(item?.system?.rating) || 0;
+  return raw ?? 0;
+}
+
 /** Запись → правило. Неизвестный вид молча пропускается: он не про броски. */
 function ruleFromEntry(item, entry, groupId = null) {
   const id = `item.${item.name}.${entry?.id}`;
@@ -380,9 +390,12 @@ function ruleFromEntry(item, entry, groupId = null) {
     if (!key) return null;
     const scope = String(entry.apScope || "attack").trim();
     const target = scope === "attack" ? "attack" : `weapon:${scope}`;
-    return { id, label: entry.label || item.name, when: {},
+    // apTargetPsyker — «только по псайкерам» (Рога Кровожада: Flame (3d10)
+    // против псайкеров, wdbc-1rno.10): предикат цели в `when` ПРАВИЛА, а не
+    // записи — цель известна только в момент самой атаки (ctx.targetActor).
+    return { id, label: entry.label || item.name, when: entry.apTargetPsyker ? { targetIsPsyker: true } : {},
              effects: [{ kind: "grantWeaponProp", target, propKey: key,
-                         rating: entry.apRating ?? 0, rating2: entry.apRating2 ?? 0 }] };
+                         rating: attackPropRating(entry.apRating, item), rating2: attackPropRating(entry.apRating2, item) }] };
   }
 
   if (entry?.kind === "charRecovery") {

@@ -294,6 +294,46 @@ describe("applyDrug", () => {
     expect(captured.chat[0].content).toContain("Цель");
   });
 
+  // Warp-Touched / Затронутый Варпом, субмутация 10 (wdbc-1rno.26): медикамент,
+  // вылечивший Раны, вколол ДРУГОЙ — это «лечение не от себя».
+  describe("Недоверие к Лечению (Затронутый Варпом, 10)", () => {
+    const healer = () => drug({ system: {
+      quantity: 2, drugCategory: "medicine", specialEffects: { removesWounds: 3 }, activeEffect: {}
+    } });
+    const withFlags = a => {
+      const flags = {};
+      a.getFlag = (ns, k) => flags[`${ns}.${k}`];
+      a.setFlag = async (ns, k, v) => { flags[`${ns}.${k}`] = v; };
+      return a;
+    };
+
+    it("вколол другой — метка на час и строка в карточке", async () => {
+      const item = healer();
+      const owner = withFlags(actor({ items: [item] }));
+      const target = withFlags(actor({ items: [capabilityItem("mutation.warpTouched.healMistrust")] }));
+      await applyDrug(owner, item, target);
+      expect(target.system.wounds.value).toBe(8);
+      expect(target.getFlag("warhammer-dbc", "healMistrustUntil")).toBe(123 + 3600);
+      expect(captured.chat[0].content).toContain("Недоверие к Лечению");
+    });
+
+    it("вколол себе — метки нет", async () => {
+      const item = healer();
+      const self = withFlags(actor({ items: [item, capabilityItem("mutation.warpTouched.healMistrust")] }));
+      await applyDrug(self, item);
+      expect(self.system.wounds.value).toBe(8);
+      expect(self.getFlag("warhammer-dbc", "healMistrustUntil")).toBeUndefined();
+    });
+
+    it("препарат другого без лечения Ран — метки нет", async () => {
+      const item = drug({ system: { quantity: 2, drugCategory: "narcotic", specialEffects: {}, activeEffect: {} } });
+      const owner = withFlags(actor({ items: [item] }));
+      const target = withFlags(actor({ items: [capabilityItem("mutation.warpTouched.healMistrust")] }));
+      await applyDrug(owner, item, target);
+      expect(target.getFlag("warhammer-dbc", "healMistrustUntil")).toBeUndefined();
+    });
+  });
+
   it("не применяет препарат с нулевым запасом", async () => {
     const item = drug({ system: { quantity: 0, specialEffects: {}, activeEffect: {} } });
     const a = actor({ items: [item] });

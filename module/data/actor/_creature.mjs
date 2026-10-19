@@ -451,6 +451,7 @@ export function creatureSchema({ granted = false } = {}) {
     lostLimbs: new SchemaField(Object.fromEntries([...LOST_SIDE_KEYS, ...FINGER_SIDE_KEYS].map(sideKey => [sideKey, new SchemaField({
       lost:       bool(false, "Потеряна"),
       gangreneAt: num(0, "worldTime: проверка Гангрены обрубка"),
+      regenAt:    num(0, "worldTime: часть тела отрастёт (Йигори, New Men)"),
       mutation:   bool(false, "Потеряна мутацией (только Best.Q бионика)")
     }, { label: sideKey })])), { label: "Потерянные конечности" }),
     // Бесполезные Конечности (wdbc-x1nz.2.99, «Бесполезные Конечности и
@@ -590,6 +591,11 @@ export function creatureSchema({ granted = false } = {}) {
       defenseValue: num(0, "Текущие (только Избегание)"),
       defenseMax:   num(0, "Максимум (только Избегание)")
     }, { label: "Реакции" }),
+    // Ручная надбавка к Лимиту Атак за Ход (combat/attack-limit.mjs, стр. 12):
+    // книжная база — 1, Решительность Сражаться поднимает до 2 автоматически;
+    // это поле — ГМ-правка сверх обоих для исключений, которых правило не
+    // покрывает (houserule/способность существа без своей записи Конструктора).
+    attackLimitBonus: num(0, "Надбавка к Лимиту Атак"),
     aptitudes:        strList("Склонности"),
     advanceTalents:   objList("Таланты в Развитии"),
     paths:            objList("Пути"),

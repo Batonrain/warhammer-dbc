@@ -179,3 +179,28 @@ describe("initiativeHint: подсказка на листе объясняет 
     expect(initiativeHint(actor, CHARS)).toContain("бросков 4");
   });
 });
+
+describe("Боевое Построение, раздача соратникам (стр. 62)", () => {
+  const withFormation = (actor, mark = { from: "Actor.cf", name: "Командир" }) => {
+    actor.getFlag = (ns, key) => (ns === "warhammer-dbc" && key === "combatFormation" ? mark : undefined);
+    return actor;
+  };
+
+  it("соратник с отметкой считает Инициативу по I.b, если оно выше A.b", () => {
+    expect(initiativeCharKey(withFormation(actorWith()), CHARS)).toBe("int");
+  });
+
+  it("если I.b хуже A.b — остаётся Ловкость: книга разрешает, а не обязывает", () => {
+    const chars = { ...CHARS, int: { bonus: 2 } };
+    expect(initiativeCharKey(withFormation(actorWith()), chars)).toBe("ag");
+  });
+
+  it("без отметки Ловкость", () => {
+    expect(initiativeCharKey(actorWith(), CHARS)).toBe("ag");
+  });
+
+  it("отметка и Чувство Боя вместе — берётся лучшая", () => {
+    const actor = withFormation(actorWith([`${INITIATIVE_CHAR_PREFIX}per`]));
+    expect(initiativeCharKey(actor, { ...CHARS, per: { bonus: 9 } })).toBe("per");
+  });
+});

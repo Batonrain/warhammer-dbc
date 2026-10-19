@@ -41,21 +41,26 @@
 .warhammer-dbc .wounds-ablative-max { font-size: 0.9em; opacity: 0.75; }
 .warhammer-dbc .wounds-ablative-row label { color: var(--cg, inherit); }
 
-.warhammer-dbc .wounds-heal-row { justify-content: center !important; padding-top: 6px !important; gap: 6px; }
+.warhammer-dbc .wounds-heal-row { justify-content: center !important; padding-top: 6px !important; gap: 6px; flex-wrap: wrap; }
 .warhammer-dbc .wounds-heal-btn,
-.warhammer-dbc .wounds-request-heal-btn {
-  flex: 1 1 0;
+.warhammer-dbc .wounds-request-heal-btn,
+.warhammer-dbc .wounds-extinguish-btn,
+.warhammer-dbc .wounds-suffocation-mode-btn {
+  flex: 1 1 100%;
   padding: 4px 6px;
   font-size: 0.85em;
   font-weight: bold;
   cursor: pointer;
+  white-space: normal;
   background: var(--wh-input-bg);
   border: 1px solid var(--wh-border);
   border-radius: 3px;
   color: var(--wh-text, inherit);
 }
 .warhammer-dbc .wounds-heal-btn:hover,
-.warhammer-dbc .wounds-request-heal-btn:hover { background: var(--wh-accent, #7a1f1f); color: #fff; }
+.warhammer-dbc .wounds-request-heal-btn:hover,
+.warhammer-dbc .wounds-extinguish-btn:hover,
+.warhammer-dbc .wounds-suffocation-mode-btn:hover { background: var(--wh-accent, #7a1f1f); color: #fff; }
 
 /* ── Экономика действий: ОД / Реакции (стр. 12) ── */
 .warhammer-dbc .action-economy-bar {
@@ -203,7 +208,7 @@
 }
 
 .warhammer-dbc .armor-arms-row,
-.warhammer-dbc .armor-legs-row { display: flex; gap: 8px; }
+.warhammer-dbc .armor-legs-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 
 .warhammer-dbc .armor-diagram label {
   font-size: 0.7em;
@@ -385,6 +390,9 @@
 }
 
 .technique-btn:active { background: rgba(139, 26, 26, 0.12); }
+
+/* Кнопка-тумблер (Бронник: «Броня обслужена сегодня») во включённом состоянии. */
+.technique-btn.active { border-color: var(--wh-red); background: var(--wh-input-bg); }
 
 .tech-name {
   font-weight: bold;
@@ -781,7 +789,8 @@
 .armor-formula-legend {
   display: flex;
   align-items: center;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 4px 6px;
   font-size: 0.8em;
   padding: 3px 6px;
   margin-bottom: 4px;
@@ -844,7 +853,8 @@
 .armor-legend-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 4px 6px;
   font-size: 0.78em;
   margin-top: 6px;
   padding: 2px 4px;

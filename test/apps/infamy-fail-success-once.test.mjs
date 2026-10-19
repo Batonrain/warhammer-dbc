@@ -65,8 +65,8 @@ describe("провал → успех: одна карточка — одно О
     const actor = fakeActor();
     const message = fakeMessage();
     const res = await Promise.all([
-      spendInfamyForFailSuccess(actor, CAP, { testLabel: "Обаяние", message }),
-      spendInfamyForFailSuccess(actor, CAP, { testLabel: "Обаяние", message })
+      spendInfamyForFailSuccess(actor, CAP, { testLabel: "Очарование", message }),
+      spendInfamyForFailSuccess(actor, CAP, { testLabel: "Очарование", message })
     ]);
     expect(res.filter(Boolean)).toHaveLength(1);
     expect(actor.updates).toEqual([{ "system.fate.value": 1 }]);

@@ -130,13 +130,21 @@ describe("источники по умолчанию", () => {
     // ПЕРМАНЕНТНО (9 дней подряд), считаются Дружественными для Продвижения.
     // prophetOfGallerpox (wdbc-1rno.1, 15.09.2026) — штраф −30 против ядов
     // не-Нурглитам на сцене заражённого Vehicle/Ship-актора.
+    // resilienceTalents (глава 3, 18.10.2026) — Сопротивление и Декаданс: +10 на
+    // тесты своей специализации / Зависимости.
+    // leadershipTalents (глава 3, 19.10.2026) — Rancor/Злопамятность: +10 на
+    // Команду против цели Ненависти (+1 к максимуму Успехов от Риска — вне
+    // реестра, чистая функция rancorRiskCapBonus в sheets/squad-sheet.mjs).
+    // warpTouchedHealMistrust (wdbc-1rno.26, 02.10.2026) — Затронутый Варпом,
+    // субмутация 10: −10 на все тесты, кроме T, час после чужого лечения.
     expect([...getRuleSources().map(([key]) => key)].sort())
-      .toEqual(["addiction", "adjutant", "beastmanShaman", "conditions", "core",
+      .toEqual(["addiction", "adjutant", "awarenessTalents", "beastmanShaman", "conditions", "core",
                 "daemonInevitability", "devourerOfKnowledge", "dreadnought", "hatred", "homeworld", "items",
-                "legacyBloodPsychic", "legacyDistractingCharSwap", "legacyExcess", "legacyGuardian",
+                "leadershipTalents", "legacyBloodPsychic", "legacyDistractingCharSwap", "legacyExcess", "legacyGuardian",
                 "legacyInstinctiveDisarm", "legacyQuietAwareness", "legacyWrath", "nullZones",
                 "opposedTarget", "paths", "patron", "prophetOfGallerpox",
-                "psychicSustainTarget", "race", "serumHook", "situational", "synesthesia", "yigori"]);
+                "psychicSustainTarget", "race", "resilienceTalents", "serumHook", "situational", "synesthesia",
+                "warpTouchedHealMistrust", "yigori"]);
   });
 
   // Наполнена пока одна раса (этап 3 плана), у остальных поле rules пустое.

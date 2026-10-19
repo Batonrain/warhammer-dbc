@@ -78,7 +78,9 @@ const TYPES = {
       folderPath: [],
       // Инфограждение (module/apps/infoguard.mjs) — Успехи встречного теста.
       infoguard: 0,
-      malfunctioning: false, wraithbone: false, wraithboneImmune: false
+      malfunctioning: false, wraithbone: false, wraithboneImmune: false,
+      // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке.
+      stored: false
     }
   },
   tool: {
@@ -88,6 +90,8 @@ const TYPES = {
       quality: "common", toolCategory: "general", linkedWeapon: "", effect: "",
       reminder: "", qualityEffects: { poor: "", good: "", best: "" },
       bonuses: [], drukhari: false, bookSource: "", infoguard: 0,
+      // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке.
+      stored: false,
       // Включаемая/включена (wdbc-x1nz.2) — см. тот же комментарий у gear выше.
       activatable: false, active: false,
       // Размер на разгрузке (wdbc-x1nz.2) — см. тот же комментарий у weapon ниже.
@@ -149,6 +153,10 @@ const TYPES = {
     defaults: {
       description: "", notes: "", category: "ranged", modGroup: "other",
       requirement: "", installedOn: "", weight: 0, availability: 0, quality: "common",
+      // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке.
+      stored: false,
+      // «Бесполезен без ретинального дисплея…» (wdbc-1rno.38) — пусто, условия нет.
+      requiresWorn: [],
       // «Книга-источник» (wdbc-eu1d): у модификаций поля не было вовсе, и на
       // вопрос «из какой она книги» ответить было нечем — источник писали в
       // заметки текстом.
@@ -157,6 +165,7 @@ const TYPES = {
       effects: {
         attackMod: 0, damageMod: 0, penMod: 0, rangeMod: 0, rangeMult: 1,
         clipMod: 0, clipMult: 1, rofSemiMod: 0, rofFullMod: 0, reliabilityMod: 0,
+        rofSingleAttackMod: 0, rofSemiAttackMod: 0, rofFullAttackMod: 0,
         balanceMod: 0, weightPct: 0,
         grantsGrip: "", gripRangeMult: 1,
         hipFireSemiMod: 0, hipFireFullMod: 0, hipFireSuppressionMod: 0,
@@ -174,6 +183,8 @@ const TYPES = {
     defaults: {
       description: "", notes: "", category: "armor", modGroup: "general",
       requirement: "", installedOn: "", weight: 0, availability: 0, quality: "common",
+      // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке.
+      stored: false,
       bookSource: "",
       infoguard: 0,
       // Модификация вживлена, не лежит в Разгрузке отдельно (wdbc-e2lt).
@@ -275,6 +286,8 @@ const TYPES = {
     defaults: {
       description: "", notes: "", drugCategory: "medicine",
       deliveryMethod: "injection", quantity: 1, weight: 0, availability: 0,
+      // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке.
+      stored: false,
       quality: "common", duration: "", effect: "", afterEffect: "",
       afterEffectDice: "", afterEffectCharDamage: { stat: "", formula: "" },
       hasAfterEffect: false,
@@ -390,6 +403,8 @@ const TYPES = {
       // и weapon, и weaponMod (wdbc-eu1d).
       bookSource: "",
       availability: 0, weight: 0, quantity: 1, attackBonus: 0, special: "", equipped: false,
+      // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке.
+      stored: false,
       loadedAmmoId: "", weaponProps: [], needsRecharge: false, rechargeTurnsRemaining: 0, prismaCharge: 0, legacyWeapon: false,
       sacred: false,
       daemonWeapon: {
@@ -424,6 +439,8 @@ const TYPES = {
     defaults: {
       description: "", notes: "", weaponTypes: [], ammoCategory: "bullets",
       rarity: 0, quantity: 0, weight: 0, availability: 0, attackMod: 0,
+      // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке.
+      stored: false,
       damageMod: 0, damageDiceMod: 0, damageTypeOverride: "", damageSubtypeOverride: "", penetrationMod: 0,
       rangeMod: 0, rangeMultiplier: 1, special: "", properties: [], condMods: [],
       // Свойства, которые боеприпас у оружия отнимает (Инферно Тзинча — Tearing):
@@ -439,11 +456,17 @@ const TYPES = {
     pack: "armor",
     defaults: {
       description: "", notes: "", infoguard: 0, armorType: "simple", stacks: false,
-      maxAgility: 100, propRatings: {}, apSecond: {}, equipped: false,
+      maxAgility: 100,
+      // Штраф к A (wdbc-3-65ff) — отдельное от Max.A число (стр. 235,
+      // Terminator Aegis), в template.json не было.
+      agilityPenalty: 0,
+      propRatings: {}, apSecond: {}, equipped: false,
       // `largeBase` (wdbc-8k0i) — пока надета, токен носителя 3×3, в template.json не было.
       largeBase: false,
       head: 0, body: 0, leftArm: 0, rightArm: 0, leftLeg: 0, rightLeg: 0,
       quality: "common", availability: 0, weight: 0, properties: [],
+      // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке.
+      stored: false,
       bookSource: "",
       strengthBonus: 0, wpBonus: 0, drukhari: false, fieldMode: "",
       isRig: false, rig: { comfort: "normal", backSlot: false, slots: [], magLocks: [] },
@@ -458,6 +481,8 @@ const TYPES = {
       weightless: false,
       active: true,
       breached: false,
+      // Аблативное Укрепление (Талант Стойкости, глава 3): заряды прочности брони.
+      hardeningCharges: 0,
       wraithbone: false, wraithboneImmune: false
     }
   },
@@ -654,6 +679,8 @@ const TYPES = {
       ratingMin: 1, ratingMax: 35, overloadThreshold: 10, currentRating: 0,
       isSpecialRating: false, equipped: false, status: "inactive",
       quality: "common", availability: 2, weight: 0, drukhari: false,
+      // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке.
+      stored: false,
       coverVsSubtype: "", coverVsSubtypeAP: 0,
       overloadDamageFormula: "", overloadFatigueFormula: "", overloadRepairTest: "",
       overloadRetaliateFormula: "", overloadRetaliatePen: 0,

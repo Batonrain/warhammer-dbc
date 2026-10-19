@@ -1713,6 +1713,9 @@ body.wh-aiming #board, body.wh-aiming canvas {
 .warhammer-dbc.wh-session-rewards .wh-sr-table th { font-weight: 600; opacity: .8; }
 .warhammer-dbc.wh-session-rewards .wh-sr-name { white-space: nowrap; }
 .warhammer-dbc.wh-session-rewards .wh-sr-table input[type="text"] { width: 72px; text-align: center; }
+.warhammer-dbc.wh-session-rewards .wh-sr-table input[type="number"] { width: 64px; text-align: center; }
+.warhammer-dbc.wh-session-rewards .wh-sr-row input[type="number"] { flex: 0 0 90px; text-align: center; }
+.warhammer-dbc.wh-session-rewards .wh-sr-warn { outline: 1px solid #ffb84d; }
 /* Непонятая формула — видно сразу, а не после «Раздать». */
 .warhammer-dbc.wh-session-rewards .wh-sr-bad { outline: 1px solid #ff6b6b; }
 .warhammer-dbc.wh-session-rewards .wh-sr-toolbar {

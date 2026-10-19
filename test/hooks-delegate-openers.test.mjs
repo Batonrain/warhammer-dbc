@@ -86,6 +86,19 @@ describe("registerHooks() реально подключает делегиров
     expect(total).toBe(35);
     expect(charKey).toBe("ws");
     expect(opts.effectTargetActor).toBe(target);
+    expect(opts.rollContext).toBeNull();
+  });
+
+  it("genericTest — сопротивление психосиле несёт тег psychicThreat в rollContext (Талант Сопротивление)", async () => {
+    const executor = actorWithSheet({ characteristics: { wp: { total: 40 } } });
+    const target = { id: "t1", name: "Цель" };
+
+    await openDelegatedTestDirect("genericTest", executor, target, {
+      testKind: "characteristic", charKey: "wp", label: "Сопротивление", psychicThreat: true
+    });
+
+    const opts = executor.sheet._rollCharacteristic.mock.calls[0][5];
+    expect(opts.rollContext).toEqual({ psychicThreat: true });
   });
 
   it("genericTest — навык зовёт sheet._rollSkill с целью", async () => {

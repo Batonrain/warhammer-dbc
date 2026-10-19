@@ -258,6 +258,36 @@ describe("готовый Миньон", () => {
     expect(minionLoyalty(master(), "")).toBe(0);
   });
 
+  // Tyrant / Тиран и Beloved Leader / Обожаемый Лидер (minion.core.*).
+  const withTalent = (capabilityKey, base) => ({
+    ...base,
+    items: [{
+      id: "t", name: capabilityKey, type: "talent", system: {},
+      flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+        { id: "e", kind: "capability", capabilityKey, label: "" }
+      ] }] } }
+    }]
+  });
+
+  it("Tyrant: Лояльность берёт большее из характеристики и Inf", () => {
+    const m = withTalent("minion.core.tyrant", master({ fel: 20, infamy: 60 }));
+    expect(minionLoyalty(m, "human")).toBe(60);
+  });
+
+  it("Tyrant: обычная характеристика выше Inf — она и остаётся", () => {
+    const m = withTalent("minion.core.tyrant", master({ fel: 70, infamy: 20 }));
+    expect(minionLoyalty(m, "human")).toBe(70);
+  });
+
+  it("Beloved Leader: безусловное +10", () => {
+    const m = withTalent("minion.core.belovedLeader", master({ fel: 42 }));
+    expect(minionLoyalty(m, "human")).toBe(52);
+  });
+
+  it("без Талантов — поведение не меняется", () => {
+    expect(minionLoyalty(master({ fel: 42 }), "human")).toBe(42);
+  });
+
   it("речь: молчание при низкой Общительности, команды — при низком Интеллекте", () => {
     expect(speechNote({ fel: 5, int: 30 })).toMatch(/говорить не может/i);
     expect(speechNote({ fel: 20, int: 5 })).toMatch(/только команды/i);

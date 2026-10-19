@@ -62,7 +62,8 @@ export function charAdvanceCat(actor, charKey, charApts) {
 export function skillAdvanceCat(actor, def, { group = "", specialty = "", skillKey = "", entryChar = "", entryApts = null } = {}, charApts) {
   // Расовый «Враждебный» сильнее книжного «всегда Дружественный»: Отвращение
   // к Порядку Зверолюда делает враждебными все Навыки групп Lore и Trade —
-  // и Общие знания с Ремеслом тоже (частное правило расы бьёт общее).
+  // и Общие знания с Ремеслом тоже (частное правило расы бьёт общее). Порядок
+  // подтверждён Сергеем 26.09.2026 (отменяет обратный порядок ревью 07.09.2026).
   const override = resolveAptitudeOverride(actor, "skill", def?.label || def?.name || "", group, { specialty });
   if (override === "enemy") return "enemy";
   if (def?.alwaysAlly) return "ally";

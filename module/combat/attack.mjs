@@ -20,6 +20,7 @@ import { attackIsMelee, FIRED_BRACED_FLAG, firedBracedHeavyIds,
 import { isBraced } from "./brace-weapon.mjs";
 import { isIntegralAttack } from "./equipped-melee.mjs";
 import { grappleCoverPartner } from "./grapple.mjs";
+import { fanaticInterceptCandidates, backToBackFreeUseAvailable } from "./fanatic-redirect.mjs";
 import { ammoIsFree } from "../rules/ammo-free.mjs";
 import { attackCard, jamCard }                      from "./attack-card.mjs";
 import { rollScatter }                               from "./scatter.mjs";
@@ -34,7 +35,9 @@ import { lockingContactTokenDocs, allContactTokenDocs } from "./free-attack.mjs"
 import { feintBlocksEvasion } from "./feint-press.mjs";
 import { resolveGrenadeMeleeFumble, resolveFlailMeleeFumble } from "./draw-action.mjs";
 import { hidingInHordeSplit }                        from "./horde-tokens.mjs";
-import { applyGrappleOnHit }                          from "./grapple.mjs";
+import { applyGrappleOnHit, isBiteWeapon }             from "./grapple.mjs";
+import { bodyguardsFor }                               from "./bodyguard.mjs";
+import { hasDodgeTalent }                              from "../rules/dodge-talents.mjs";
 import { coveringDefendersOf, offerFreeAttack }        from "./free-attack.mjs";
 import { rollOgrynWeaponBreak, ogrynBreakNote }      from "./ogryn-weapon-break.mjs";
 import { getEvasionPool, poolAffordableHits }         from "./evasion-pool.mjs";
@@ -75,14 +78,15 @@ import { suffersBlindness } from "../rules/blindness.mjs";
 import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { isBiteName } from "../rules/integral-rating.mjs";
-import { VENOM_BITE_CAPABILITY, venomBiteDamage } from "../rules/naga-traits.mjs";
-import { fieldDisablesWeapon } from "../rules/null-zones.mjs";
+import { VENOM_BITE_CAPABILITY, venomBiteDamage, isBiteAttack, ADAPTIVE_VENOM_DOSE_FLAG } from "../rules/naga-traits.mjs";
+import { fieldDisablesWeapon, fieldForbidsShot } from "../rules/null-zones.mjs";
 import { isHeadHit } from "./armor-properties.mjs";
 import { COLD_KILLER } from "../rules/cold-killer.mjs";
 import { LEGIONNAIRE_VIRTUOSO, isLegionRangedWeapon } from "../rules/legionnaire-virtuoso.mjs";
 import { SKY_PREDATOR, activeDieResults, isChargeFromFlight, swapDiceFor } from "../rules/die-swap.mjs";
 import { IN_FLIGHT_ALTITUDES } from "./movement-actions.mjs";
 import { singleCombatBonus } from "./single-combat.mjs";
+import { butcherStatus } from "./beastman-subrace.mjs";
 
 /**
  * Экстремальный урон (стр. 166-170): куб урона выбросил Х+ — порог берётся из
@@ -228,6 +232,17 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // WS, но считался стрельбой — без прибавки S.b к урону и с кнопками защиты
   // из стрелковой ветки.
   const isMelee = attackIsMelee(sys, { forceMelee: opts.forceMelee, profile: opts.profile });
+  // Поле Дискорданта: электрическое стрелковое не стреляет. Окно атаки
+  // отказывает раньше, но не все пути идут через него (огонь с листа техники,
+  // оружие класса «рукопашное» со стрелковым профилем — task-be12): отказ
+  // здесь, до патронов и броска, чтобы ничего не списалось. Только для НОВОГО
+  // выстрела: перерасчёт уже сделанного (переброс за Очко, +10 за Очко, Огневая
+  // Точка, Горжет, сдвиг места — все идут со skipAmmo) отказывать не должен, их
+  // вызывающие уже списали Очко/кнопку и не узнали бы, что выстрела не вышло.
+  if (!opts.skipAmmo && fieldForbidsShot(actor, item, isMelee)) {
+    ui.notifications?.warn(`⚠️ «${item.name}»: в поле Дискорданта электрическое оружие не стреляет.`);
+    return;
+  }
   // Выбранный профиль атаки (стр. 207-221) и хват (стр. 39) переопределяют урон.
   const P = opts.profile || null;
   const gripDmgFlat = Number(opts.gripDmgFlat) || 0;
@@ -457,7 +472,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Ослеплённая цель (wdbc-x1nz.2.89, «Раны и Урон», «Статусы»):
   // «Ослепленный персонаж считает все атаки Незримыми» — со всеми
   // последствиями Незримого ниже: Уклонение/Парирование заперты, пока атаку
-  // не засекли (Психонаука/Ноосфера/Варп-Зрение), Бой Вслепую (−20 в
+  // не засекли (Психочутьё/Ноосфера/Варп-Зрение), Бой Вслепую (−20 в
   // рукопашной), Шестое Чувство и т.п. Sonar Sense/Unnatural Senses цели
   // снимают это вместе с остальными штрафами слепоты (rules/blindness.mjs).
   const targetBlindedUnseen = !!defenderActor && suffersBlindness(defenderActor);
@@ -473,6 +488,15 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const backstabDoubled = unseen && isMelee && !!aimTarget?.value
     && hasBackstab(actor) && isKnifeWeapon(item);
   if (backstabDoubled) wp.doubleDice = true;
+
+  // Knife Fighter / Боец на Ножах (rogue.core.knifeFighter): «ножи, наносящие
+  // d10 урона, в его руках получают свойство Extreme (9)». «Перебрасывать
+  // броски на урон от ножей» — не сделано (нет общего примитива «переброс
+  // урона», тот же разрыв у Poisoner/Медик — wdbc-obo8v).
+  if (isMelee && isKnifeWeapon(item) && /d10/i.test(String(item?.system?.damage ?? ""))
+    && hasRuleFlag(actor, "rogue.core.knifeFighter")) {
+    wp.extremeThreshold = Math.min(wp.extremeThreshold, 9);
+  }
 
   // Quiet Elimination / Тихое Устранение (wdbc-1rno.3, rules/quiet-
   // elimination.mjs): «Если персонаж атакует противника врасплох — +1 куб
@@ -614,7 +638,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // на выбранной WS/BS. Только когда исход решил бросок (autoHitKind пуст):
   // Распыление и «ровно N Успехов» тестом Характеристики не являются.
   const adroitBonus = autoHitKind ? 0 : adroitDegreeBonus(actor, charKey, hit);
-  const deg = rolledDeg + savageBonus + excessBonus + singleCombatDeg + adroitBonus;
+  // Bolter Drill / Болтерная Муштра (weaponsmith.core.bolterDrill): «Успешные
+  // тесты на стрельбу Болт оружием получают +1 Успех».
+  const bolterDrillBonus = (hit && charKey === "bs" && item?.system?.weaponType === "bolt"
+    && hasRuleFlag(actor, "weaponsmith.core.bolterDrill")) ? 1 : 0;
+  const deg = rolledDeg + savageBonus + excessBonus + singleCombatDeg + adroitBonus + bolterDrillBonus;
   // Посох/Крюк (core.json, «Типы Рукопашного Оружия»): «При Избирательном
   // попадании в Ногу [Посохом]... может потратить Реакцию, чтобы провести
   // против цели прием Повалить» / «На 3+ Успеха на попадание [Крюком]...».
@@ -1087,6 +1115,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     weapon: item, actor, hit, isOwnTurn: isActorsOwnTurn(actor)
   });
   const deadlyTrapLegacyDelta = deadlyTrapLegacyEligible ? legacyDeadlyTrapDamageDelta(actor) : 0;
+  // Кхорнгор Мясник (wdbc-gao07): сколько кубиков запаса можно добавить к урону этого попадания.
+  const butcherDice = (hit && isMelee) ? butcherStatus(actor).left : 0;
+  // Адаптивная Отрава Наги (wdbc-s4ql0): укус при попадании и доза «(яд в клыках)» на листе.
+  const fangVenomDose = (hit && isBiteAttack(item?.name))
+    ? ([...(actor.items ?? [])].find(i => i.getFlag?.("warhammer-dbc", ADAPTIVE_VENOM_DOSE_FLAG))?.name ?? "")
+    : "";
   const flatBonus = (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + invocationAdd.dmg + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus;
   if (earlyDeathBonus) await markEarlyDeathLegacyUsed(actor, item, hit);
   if (soulboundLegacyBonus) await consumeSoulboundLegacyBonus(actor, item, hit);
@@ -1106,7 +1140,15 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Доп. кубы урона: Меткое (одиночный, по СУ, ТОЛЬКО с Прицеливанием — книга
   // «При одиночных выстрелах С Прицеливанием»), Рассеивание (кор. дист.),
   // Максимальный режим (+1d10). Эти кубы НЕ вызывают Экстремальный урон.
-  const bonusDice = (focusFireBonusOn && hit ? 2 : 0) + bonusDamageDice({
+  // Тирантикос (Sahara 10-2d10-2): окно атаки решило всё, что знало до броска
+  // второй руки (rules/dual-wield-talents.mjs::tyranthikosSecondAttackDice),
+  // здесь остаётся «попала и вторая». Кубы — к первому попаданию, как в книге.
+  const tyranthikosDice = hit ? Math.max(0, Number(opts.tyranthikosDice) || 0) : 0;
+  // Bring It Down!/Валите Это! (rules/leadership-talents.mjs): окно атаки
+  // решило, что цель — та самая, назначенная Короткой Командой
+  // (sheets/attack/dialog.mjs), сюда приезжает уже готовое число кубов.
+  const bringItDownDice = hit ? Math.max(0, Number(opts.bringItDownDice) || 0) : 0;
+  const bonusDice = (focusFireBonusOn && hit ? 2 : 0) + tyranthikosDice + bringItDownDice + bonusDamageDice({
     wp, rofMode, hit, deg, shortRange, maximal: maximalOn, band,
     ammoDice: ammoSys?.damageDiceMod,
     aimed,
@@ -1269,6 +1311,15 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       hits.length = 0;
     }
   }
+
+  // Спиной к Спине/Back to Back (combat/fanatic-redirect.mjs): носители
+  // Fanatic в базовом контакте с целью — только показ кандидатов и остатка
+  // «раз в Раунд без Реакции» в карточке, перенос урона остаётся выбором
+  // стола через обычную кнопку «Применить урон» (выделить токен Фанатика).
+  const fanaticIntercepts = hits.length
+    ? fanaticInterceptCandidates(targetToken, game.actors ?? [], { excludeUuids: [defenderActor?.uuid] })
+        .map(a => ({ uuid: a.uuid, name: a.name, freeUse: backToBackFreeUseAvailable(a) }))
+    : [];
 
   // Промах по цели, Связанной в Рукопашной (стр. 30, wdbc-x1nz.2.64):
   // одиночный выстрел, промахнувший на 1-2 Провала, попадает в случайного
@@ -1572,8 +1623,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       misfireHits,
       betrayalHits,
       grappleCoverHits,
+      fanaticIntercepts,
       regroupLegacyActive,
       deadlyTrapLegacyDelta,
+      fangVenomDose,
+      butcherDice,
       reactionKnockdownReason,
       sabreSecondAttackNote,
       sabreSecondAttackItemId,
@@ -1636,6 +1690,13 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // не только Вираж, но и настоящие Парирование/Уклонение — свои кнопки
         // на карточке, потому что считает их ПИЛОТ, а не машина.
         targetIsVehicle, targetIsWalker,
+        // Таланты Избегания (глава 3): атака Захватом (Ускользнуть), Кусака у
+        // цели, Телохранители рядом с атакующим.
+        grapple: isMelee && techOpts.technique === "grapple",
+        chomper: isMelee && hasDodgeTalent(defenderActor, "chomper")
+          && [...(defenderActor?.items ?? [])].some(i => isBiteWeapon(i)),
+        bodyguards: bodyguardsFor({ attackerToken, targetToken }),
+        allyName: defenderActor?.name ?? "",
         // Бой Вслепую (wdbc-1rno.2): −20 выше уже применён — здесь только
         // подпись, откуда он взялся, чтобы не выглядеть немотивированным штрафом.
         note: [techOpts.chatNote, blindFightingBypass ? "Бой Вслепую: Незримая атака, Уклонение/Парирование в рукопашной −20 без засечения." : ""]
@@ -1646,7 +1707,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
           ? `Цель прикрыта Ордой «${shelter.hordeToken.name ?? shelter.horde?.name}»: `
             + `${shelter.count} из ${hitsCount} попадан${shelter.count === 1 ? "ия уходит" : "ий уходят"} в толпу.`
           : "",
-        attack:    opts.attackNote,
+        attack:    tyranthikosDice
+          ? [opts.attackNote, `Тирантикос: обе тяжёлые попали по цели Размера 2+ — первое попадание этой атаки +${tyranthikosDice}d10 Dmg (уже в уроне).`]
+              .filter(Boolean).join(" · ")
+          : opts.attackNote,
         // Строки о Состоянии цели. Ослеплённая (wdbc-x1nz.2.89) — сюда же:
         // defense.note карточка не рисует, а игрок должен видеть, ПОЧЕМУ
         // кнопки защиты заперты «не засечена».
@@ -1721,7 +1785,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // т.п.) по-прежнему создаётся новое сообщение, как раньше.
   if (updateMessageId) {
     const existing = game.messages.get(updateMessageId);
-    if (existing) { await existing.update(messageData); return; }
+    if (existing) { await existing.update(messageData); return { hit }; }
   }
   await ChatMessage.create(messageData);
   // Командование (глава «Командование»): метка Концентрации огня гасится
@@ -1737,4 +1801,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   }
   // Automated Animations (если установлен и включён) — см. module/integrations/autoanimations.mjs.
   triggerAttackAnimation({ actor, item, hit });
+  // Итог броска наружу: окну атаки нужно знать, попала ли основная рука, чтобы
+  // решить про вторую (Тирантикос). Ранние отказы выше отдают undefined —
+  // броска не было, «попал/промахнулся» о нём не скажешь.
+  return { hit };
 }

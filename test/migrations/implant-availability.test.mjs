@@ -80,7 +80,10 @@ describe("implantAvailabilityPatch", () => {
 // ориентироваться при закупке. Умолчание стало null («не указано в книге»),
 // и два ЗАКОННЫХ нуля (импланты с «R 0.» в описании) при этом сохраняются.
 describe("данные паков: заполнено ровно там, где книга это говорит", () => {
-  it("ключ availability присутствует ровно у 79 имплантов, из них два — законный 0", async () => {
+  // wdbc-zaesd (01.10.2026): к 79 биоимплантам Друкхари добавлено ещё 125 — Редкость взята из
+  // раздела «Бионика и кибернетика» основной книги («R: N»); у остальных 65 (геносемя Астартес,
+  // биоимпланты Друкхари из другой книги, стартовая кибернетика архетипов) в книге Редкости нет.
+  it("ключ availability присутствует ровно у 204 имплантов, из них 17 — законный 0", async () => {
     const fs = await import("node:fs");
     const path = await import("node:path");
     const root = path.resolve(import.meta.dirname, "../../packs-src/implants");
@@ -102,8 +105,8 @@ describe("данные паков: заполнено ровно там, где 
       if (sys.availability === 0) zeros++;
     }
     expect(files.length).toBeGreaterThan(250);
-    expect(withKey).toBe(79);
-    expect(zeros).toBe(2);
+    expect(withKey).toBe(204);
+    expect(zeros).toBe(17);
   });
 });
 

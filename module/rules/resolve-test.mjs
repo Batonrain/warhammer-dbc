@@ -28,11 +28,11 @@ import { mechFormulaTotalSafe, mechRollData } from "./mech-formula.mjs";
 
 /**
  * Социальный ли навык. Своего перечня здесь нет намеренно: признак уже лежит
- * в таблице навыков (constants/skills.mjs, apt2:"social") — Обаяние,
- * Командование, Коммерция, Обман, Дознание, Допрос, Запугивание. Заведи мы
+ * в таблице навыков (constants/skills.mjs, apt2:"social") — Очарование,
+ * Командование, Торговля, Обман, Расспрос, Допрос, Запугивание. Заведи мы
  * второй список, он разошёлся бы с первым при добавлении навыка.
  *
- * Проницательность (scrutiny) помечена «общей» и сюда не входит — так в книге.
+ * Пристальность (scrutiny) помечена «общей» и сюда не входит — так в книге.
  */
 export function isSocialSkill(skill) {
   return SKILLS_DEF?.[String(skill ?? "")]?.apt2 === "social";
@@ -135,20 +135,23 @@ function powerScopeApplies(scope, ctx) {
  *
  * Суффикс `:recipient` (wdbc-uez7 — делегированный тест) — правило с
  * Предмета/Таланта ПОЛУЧАТЕЛЯ чужого теста (пациент при Лечении, а не сам
- * медик): «Высокий болевой порог» пациента должно влиять на Медику ДОКТОРА
+ * медик): «Высокий болевой порог» пациента должно влиять на Медицину ДОКТОРА
  * над ним, а не на собственные броски пациента. Требует `ctx.asRecipient`
  * — вызывающий код собирает правила С САМОГО получателя (`resolveTest({
  * actor: patient, ..., asRecipient: true })`) отдельным проходом от обычных
  * правил бросающего. Без суффикса эффект остаётся «про свои тесты» и в
- * режиме получателя не подмешивается — иначе Талант «+10 Медика» самого
+ * режиме получателя не подмешивается — иначе Талант «+10 Медицина» самого
  * пациента (для ЕГО собственных бросков) тайно засчитался бы доктору только
  * потому, что оба читают один и тот же `ctx.skill`.
  */
-function effectAppliesTo(target, ctx) {
+// Экспорт — для общего триггера «N+ Провала» (rules/fail-degree-triggers.mjs,
+// wdbc-1rno.22): та же нотация областей, что у эффектов правил, а не своя
+// вторая — одна область обязана значить одно и то же везде.
+export function effectAppliesTo(target, ctx) {
   // Список областей (wdbc-x1nz.2.89, Ослеплён: «−30 на WS и тесты, что
   // требуют зрения») — эффект срабатывает ОДИН раз, если подходит хоть одна.
   // Нужен там, где книга одним штрафом накрывает пересекающиеся области:
-  // Бдительность Ослеплённого бывает и на WS (Распознать Стойку,
+  // Внимательность Ослеплённого бывает и на WS (Распознать Стойку,
   // combat/recognize-stance.mjs) — два отдельных эффекта «basedon:ws» и
   // «skill:awareness» сложились бы в −60.
   if (Array.isArray(target)) return target.some(t => effectAppliesTo(t, ctx));
@@ -419,7 +422,9 @@ export function rollModsFromRules(rules, ctx = {}, { auto = false } = {}) {
         const value = effectValue(effect, ctx, rule.id);
         // askOnly — модификатор только для галочки в диалоге: без диалога
         // (rules/roll-mods.mjs::collectTestMods) его не складывают.
-        if (value !== null) mods.push({ ruleId: rule.id, label, value, halvePenalty: false, ...(effect.askOnly ? { askOnly: true } : {}) });
+        // setChar — галочка переключает «Бросок с:» на эту Характеристику
+        // (Аналитический Взгляд: I вместо P), диалог навыка читает data-set-char.
+        if (value !== null) mods.push({ ruleId: rule.id, label, value, halvePenalty: false, ...(effect.askOnly ? { askOnly: true } : {}), ...(effect.setChar ? { setChar: effect.setChar } : {}) });
         continue;
       }
       // Диалог умеет только ополовинить штраф — другого множителя в нём нет.
@@ -488,7 +493,9 @@ export function rerollsFromRules(rules, ctx = {}) {
       // target — область, как записана: бросок без диалога (Трудный Ландшафт,
       // combat/movement-terrain.mjs) берёт переброс сам и обязан брать только
       // СВОЙ, а не любой, чья область подошла по Ловкости или «all».
-      out.push({ ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id, mode, rolls, who, target: effect.target });
+      out.push({ ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id, mode, rolls, who, target: effect.target,
+        // limit — ключ ограничителя «раз в Раунд» (rules/roll-mods.mjs::rerollLimiters), пусто — без ограничения.
+        ...(effect.limit ? { limit: effect.limit } : {}) });
     }
   }
   return out;
@@ -631,7 +638,10 @@ export function autoFailFromRules(rules, ctx = {}) {
     for (const effect of rule?.effects ?? []) {
       if (effect?.kind !== "autoFail") continue;
       if (!effectAppliesTo(effect.target, ctx)) continue;
-      out.push({ ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id });
+      // degrees — сколько Провалов проставить (Рог Чумоноса: «автоматически
+      // проваливает тесты T с 3 Провалами»); без поля — один, как у Ослеплённого.
+      out.push({ ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id,
+                 degrees: Math.max(1, Math.trunc(Number(effect.degrees)) || 1) });
     }
   }
   return out;

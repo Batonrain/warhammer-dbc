@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/actor-icons/character.svg",
   "folder": "5CEIgvAa194xkBxP",
   "system": {
-    "bodyType": "male",
+    "bodyType": "other",
     "race": "",
     "subrace": "",
     "ynnariPast": "",
@@ -456,7 +456,7 @@
       "system": {
         "description": "Дикий зверь: авто-успех тестов Survival на родном биоме, не плутает; не совершает сложных действий; чтобы покинуть зону опасности — тест W+0 (если есть причина).",
         "notes": "«Авто-Survival» неоднозначно в тексте (авто-успех теста или просто профильное владение навыком?) + поведенческое ограничение «не использует сложные действия» — ни одно не имеет однозначного числового поля.",
-        "benefit": "Авто Survival; не использует сложные действия.",
+        "benefit": "Авто-успех тестов Survival в родном биоме (даже без владения Навыком); при встрече с опасностью — тест W+0, при провале убегает, если может.",
         "source": "животное",
         "hasRating": false,
         "rating": 0,
@@ -979,7 +979,11 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "mountRarity": 0
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

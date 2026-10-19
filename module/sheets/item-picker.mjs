@@ -6,15 +6,18 @@
 
 import { CHARACTERISTICS, APTITUDES } from "../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
+import { confirmXpSpend } from "../apps/xp-afford.mjs";
 import { talentCostXP, charAptitudeSet, ALIGN_LABEL,
          raceAllyTalent, dynamicAptKind, CHAR_APTITUDES,
          resolveTalentAptitudes, resolveCharCat, resolveSkillCat, resolveTalentCat } from "../constants/advancement.mjs";
+import { isEliteTalent } from "../constants/patronage.mjs";
 import { cultureCat, resolveCultureFx } from "../constants/legions.mjs";
 import { resolveAptitudeOverride } from "../rules/aptitude-overrides.mjs";
-import { checkRequirement } from "../constants/talent-requirements.mjs";
+import { checkRequirement, checkBeyondHumanChar, checkMasteryTarget } from "../constants/talent-requirements.mjs";
+import { isBeyondHuman, BEYOND_HUMAN_CHARS, BEYOND_HUMAN_MIN_CHAR } from "../rules/beyond-human.mjs";
 import { createOrRankTalent } from "../rules/duplicate-grants.mjs";
 import { DREADNOUGHT_PILOT_FLAG } from "../rules/dreadnought.mjs";
-import { masteryTargets, masteryAptitudes } from "../rules/mastery-targets.mjs";
+import { masteryTargets, masteryTarget, masteryAptitudes } from "../rules/mastery-targets.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { ORDER_NO_FORMATION_TALENTS, isFormationTalent } from "../rules/aversion-to-order.mjs";
 import { isPossessed, hasEliteArchetype } from "../rules/predicates.mjs";
@@ -191,8 +194,12 @@ export function dynamicTalentOptions(actor, doc, kind, charApts) {
   // «Мастерство» владеет не абстрактным Навыком, а конкретным: у групп это
   // специализация («Запретные знания (Демоны)»), и склонности берутся у неё —
   // у Навигации (Варп) первая склонность Воля, а не Интеллект группы.
+  // За Гранью Человека — девять специализаций книги, без Влияния (стр. 62).
+  const bh   = isBeyondHuman(doc);
   const src  = kind === "char"
-    ? Object.entries(CHAR_APTITUDES).map(([k]) => [k, CHARACTERISTICS[k]?.label || k.toUpperCase()])
+    ? Object.entries(CHAR_APTITUDES)
+        .filter(([k]) => !bh || BEYOND_HUMAN_CHARS.includes(k))
+        .map(([k]) => [k, CHARACTERISTICS[k]?.label || k.toUpperCase()])
     : masteryTargets().map(t => [t.key, t.label]);
   return src.map(([key, label]) => {
     const apts = kind === "char"
@@ -208,8 +215,31 @@ export function dynamicTalentOptions(actor, doc, kind, charApts) {
       const [groupKey, spec] = String(key).split(":");
       cat = resolveSkillCat(groupKey, spec || "", apts, charApts, actor);
     }
-    return { key, label, apts, cat, cost: talentCostXP(tier, apts, charApts, cat) };
-  }).sort((a, b) => a.cost - b.cost || a.label.localeCompare(b.label, "ru"));
+    // Требование Таланта — «Характеристика 70» / «Навык+30» — относится к
+    // ВЫБРАННОЙ привязке, а не к листу целиком (стр. 62). Миньон Хаоса
+    // ходит тем же путём, но требований такого рода не несёт.
+    const unmet = dynamicRequirementGap(actor, doc, kind, key);
+    return { key, label, apts, cat, cost: talentCostXP(tier, apts, charApts, cat), unmet };
+  }).sort((a, b) => (a.unmet ? 1 : 0) - (b.unmet ? 1 : 0)
+                    || a.cost - b.cost || a.label.localeCompare(b.label, "ru"));
+}
+
+/**
+ * Чего не хватает выбранной привязке Mastery / Beyond Human: пустая строка —
+ * требование выполнено (или не определилось, ложное предупреждение хуже
+ * молчания, как в checkRequirement).
+ */
+export function dynamicRequirementGap(actor, doc, kind, key) {
+  if (kind === "char" && isBeyondHuman(doc)) {
+    if (checkBeyondHumanChar(actor, key, BEYOND_HUMAN_MIN_CHAR) !== false) return "";
+    const total = Number(actor?.system?.characteristics?.[key]?.total) || 0;
+    return `${CHARACTERISTICS[key]?.abbr ?? key} ${total} < ${BEYOND_HUMAN_MIN_CHAR}`;
+  }
+  if (kind === "skill") {
+    if (checkMasteryTarget(actor, masteryTarget(key), 30) !== false) return "";
+    return "Навык ниже +30";
+  }
+  return "";
 }
 
 /** Компактная запись «мин–макс XP» для бейджа в пикере. */
@@ -229,7 +259,7 @@ export function promptDynamicAptTalent(actor, doc, kind, charApts) {
   const what = kind === "char" ? "Характеристика" : "Навык";
   const rows = opts.map(o =>
     `<option value="${esc(o.key)}" data-cost="${o.cost}" data-cat="${o.cat}">
-       ${esc(o.label)} — ${o.cost} XP (${ALIGN_LABEL[o.cat]})
+       ${o.unmet ? "⚠ " : ""}${esc(o.label)} — ${o.cost} XP (${ALIGN_LABEL[o.cat]})${o.unmet ? ` — не хватает: ${esc(o.unmet)}` : ""}
      </option>`).join("");
 
   return new Promise(resolve => {
@@ -263,7 +293,8 @@ export function promptDynamicAptTalent(actor, doc, kind, charApts) {
           if (!o) return;
           html.find("#dyn-preview").html(
             `<span class="pick-cost cost-${o.cat}">${o.cost} XP</span>
-             <span class="dyn-apts">склонности: ${o.apts.map(a => APTITUDES[a] || a).join(" + ")}</span>`);
+             <span class="dyn-apts">склонности: ${o.apts.map(a => APTITUDES[a] || a).join(" + ")}</span>` +
+            (o.unmet ? `<div class="dyn-unmet" style="color:#ff8a8a">⚠ Требование Таланта не выполнено: ${esc(o.unmet)}</div>` : ""));
         };
         html.find("#dyn-apt-sel").on("change", upd);
         upd();
@@ -376,10 +407,14 @@ export async function openItemPicker(actor, kind) {
             cost = `<span class="pick-cost cost-dyn" title="Склонности «как у ${dyn === "char" ? "Характеристики" : "Навыка"}» — цена зависит от выбора при покупке (стр. 62)">${range} XP</span>`;
           } else {
             const forced = talentCategory(actor, d.name, d.folder);
-            const cat = forced || resolveTalentCat(d.name, d.system.aptitudes || [], charApts, actor);
+            const cat = forced || resolveTalentCat(d.name, d.system.aptitudes || [], charApts, actor,
+              { specialization: d.system.specialization });
             const xp  = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts, forced,
-              { name: d.name, patron: actor.system.patronGod, actor });
-            cost = `<span class="pick-cost cost-${cat}" title="${ALIGN_LABEL[cat]} — совпадений склонностей: ${(d.system.aptitudes||[]).filter(a=>charApts.has(a)).length}">${xp} XP</span>`;
+              { name: d.name, patron: actor.system.patronGod, actor, specialization: d.system.specialization });
+            const why = isEliteTalent(d.name, d.system.specialization)
+              ? "Таланты Элитных Архетипов нейтральны по Склонностям (стр. 24)"
+              : `совпадений склонностей: ${(d.system.aptitudes||[]).filter(a=>charApts.has(a)).length}`;
+            cost = `<span class="pick-cost cost-${cat}" title="${ALIGN_LABEL[cat]} — ${why}">${xp} XP</span>`;
           }
         }
         const lock = g.lock || talentRowLock(actor, kind, d.name);
@@ -473,12 +508,24 @@ export async function openItemPicker(actor, kind) {
             const minionApts = resolveTalentAptitudes(d.name, d.system.aptitudes || [], obj.system.aptSource);
             obj.system.cost = talentCostXP(pick.talentTier, minionApts, charApts,
               talentCategory(actor, d.name, d.folder),
-              { name: d.name, patron: actor.system.patronGod });
+              { name: d.name, patron: actor.system.patronGod, actor, specialization: d.system.specialization });
           } else if (dyn) {
             // Mastery / Beyond Human: сначала выбор привязки (стр. 62), затем
             // цена по склонностям выбранной Характеристики/Навыка (стр. 23-24).
             const pick = await promptDynamicAptTalent(actor, d, dyn, charApts);
             if (!pick) return;                       // отмена — ничего не покупаем
+            // Требование («Характеристика 70», «Навык+30») — вопрос, а не запрет,
+            // как и нехватка опыта (стр. 23): ГМ мог разрешить исключение.
+            if (pick.unmet) {
+              const ok = await foundry.applications.api.DialogV2.confirm({
+                window: { title: `${d.name}: требование не выполнено` },
+                content: `<p>Для «${esc(pick.label)}» не хватает: ${esc(pick.unmet)}. Всё равно купить?</p>`,
+                yes: { label: "Да" },
+                no: { label: "Нет", default: true },
+                rejectClose: false
+              });
+              if (ok !== true) return;
+            }
             obj.system.specialization = pick.label;
             obj.system.aptitudes      = pick.apts;   // фиксируем на предмете
             obj.system.aptSource      = pick.key;    // ключ Х-ки/навыка для пересчёта
@@ -493,7 +540,7 @@ export async function openItemPicker(actor, kind) {
             obj.system.specialization = category;
             obj.system.cost = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts,
               talentCategory(actor, d.name, d.folder),
-              { name: d.name, patron: actor.system.patronGod });
+              { name: d.name, patron: actor.system.patronGod, actor, specialization: d.system.specialization });
           } else if (itemIs(d, "talent", CAP_TWO_WEAPON, "Two Weapon Wielder")) {
             // «Два Оружия» (стр. 62, wdbc-3jlm): Талант берётся отдельно на
             // рукопашную и на стрелковую руку — пара клинков требует одной
@@ -505,17 +552,19 @@ export async function openItemPicker(actor, kind) {
             obj.system.specialization = side;
             obj.system.cost = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts,
               talentCategory(actor, d.name, d.folder),
-              { name: d.name, patron: actor.system.patronGod });
+              { name: d.name, patron: actor.system.patronGod, actor, specialization: d.system.specialization });
           } else {
             obj.system.cost = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts,
               talentCategory(actor, d.name, d.folder),
-              { name: d.name, patron: actor.system.patronGod });
+              { name: d.name, patron: actor.system.patronGod, actor, specialization: d.system.specialization });
           }
           obj.system.purchased = true;
         }
         // Многократный Талант (system.hasRating — Enemy, стр. 62, и подобные),
         // уже лежащий на листе, не задваивается второй копией: ранг существующего
         // предмета поднимается на 1. Остальные Таланты, Черты и Мутации — как раньше.
+        // Нехватка опыта — вопрос, а не запрет (стр. 23, rules/xp-shortfall.mjs).
+        if (kind === "talent" && hasXP && !(await confirmXpSpend(actor, obj.system?.cost, d.name))) return;
         const { ranked, rating } = await createOrRankTalent(actor, obj);
         const verb = ranked ? `Ранг поднят до ${rating}` : "Куплено";
         ui.notifications.info(kind === "talent" && obj.system?.cost

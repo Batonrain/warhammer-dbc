@@ -24,7 +24,8 @@
 //  между броском и ответом — ожидание пропало, карточка честно об этом скажет.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { CHARACTERISTICS } from "../constants/characteristics.mjs";
+import { CHARACTERISTICS, SKILL_RANKS } from "../constants/characteristics.mjs";
+import { hasDodgeTalent } from "../rules/dodge-talents.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
@@ -106,17 +107,26 @@ export function registerContest(actor, techDef, result, opponents) {
   PENDING.set(id, { techDef, actorUuid: actor.uuid, result, done: new Set() });
   const opts = resistOptions(techDef, result.side);
   const how = opts.map(sideLabel).join(" или ");
+  // Контрфинт (глава 3): против Финта защитник может сопротивляться
+  // Awareness(P) вместо WS — вариант добавляется только ему.
+  const optsFor = o => (techDef.label === "Финт" && hasDodgeTalent(o, "counterfeint"))
+    ? [...opts, { skill: "awareness", char: "", mod: 0 }] : opts;
   const buttons = opponents.map(o => `
     <button type="button" class="wh-contest-resist-btn"
       data-contest-id="${id}" data-user-id="${game.user.id}"
       data-actor-uuid="${actor.uuid}" data-opponent-uuid="${o.uuid}"
       data-label="${esc(techDef.label)}"
       data-success="${result.success ? 1 : 0}" data-deg="${result.deg}" data-threshold="${result.threshold}"
-      data-resist='${esc(JSON.stringify(opts))}'
+      data-resist='${esc(JSON.stringify(optsFor(o)))}'
       data-resist-mods='${esc(JSON.stringify(result.resistMods?.[o.uuid] ?? []))}'
       data-rolls="${result.resistRolls?.[o.uuid] ?? 1}">
-      ${rollIcon("shield")}${esc(o.name)}: Сопротивляться (${esc(how)})
-    </button>`).join("");
+      ${rollIcon("shield")}${esc(o.name)}: Сопротивляться (${esc(optsFor(o).map(sideLabel).join(" или "))})
+    </button>${(techDef.label === "Напролом" && hasDodgeTalent(o, "pirouette")) ? `
+    <button type="button" class="wh-contest-pirouette-btn"
+      data-contest-id="${id}" data-user-id="${game.user.id}"
+      data-actor-uuid="${actor.uuid}" data-opponent-uuid="${o.uuid}" data-label="${esc(techDef.label)}">
+      ${rollIcon("run")}${esc(o.name)}: Пируэт (Acrobatics+0, без Реакции)
+    </button>` : ""}`).join("");
   return `<div class="roll-defense-section">
     <div class="roll-threshold" style="font-size:0.85em;">Встречный тест: ${opponents.length > 1 ? "каждый противник бросает" : "противник бросает"} ${esc(how)}. Приём удаётся, только если бросок выше выигран.</div>
     ${buttons}
@@ -185,8 +195,67 @@ export async function resolveResistClick(ds) {
       : outcomeHtml(true, `${esc(opponent.name)} отбивается (${theirs.success ? "Успех" : "Провал"} ${theirs.deg} ${_degWord(theirs.deg)}) — «${esc(ds.label)}» не удаётся.`)
   }, { rolls: rolled });
 
-  await _deliver(ds, { initiatorWins, margin });
-  return { initiatorWins, margin };
+  // Чтец Клинков (глава 3): «может перебрасывать встречные тесты против
+  // Финта, и переброс (но не начальный бросок) делается через Scrutiny(WS)».
+  // Предлагается, когда Финт удался; второй результат заменяет первый.
+  let finalWins = initiatorWins, finalMargin = margin;
+  if (ds.label === "Финт" && initiatorWins && hasDodgeTalent(opponent, "bladeReader")) {
+    const redo = await foundry.applications.api.DialogV2.confirm({
+      window: { title: "Чтец Клинков" },
+      content: `<p>Перебросить встречный тест через <b>Scrutiny(WS)</b>?</p>
+        <p style="font-size:0.9em;">Не работает, если Финт проведён экзотическим оружием, на которое у вас нет Таланта (Arms Master это ограничение снимает) — тогда откажитесь.</p>`,
+      yes: { label: "Перебросить" }, no: { label: "Оставить" }
+    }).catch(() => false);
+    if (redo) {
+      const ws = Number(opponent.system?.characteristics?.ws?.total) || 0;
+      const rank = SKILL_RANKS[opponent.system?.skills?.scrutiny?.rank ?? "untrained"]?.bonus ?? -20;
+      const reMods = collectTestMods(opponent, { kind: "skill", char: "ws", skill: "scrutiny" });
+      const threshold2 = ws + rank + extraTotal + reMods.total;
+      const roll2 = await new Roll("1d100").evaluate();
+      const theirs2 = testOutcome(roll2.total, threshold2);
+      const res2 = resolveOpposed(mine, { ...theirs2, threshold: threshold2 });
+      finalWins = res2.winner === "mine";
+      finalMargin = res2.margin;
+      await postTestCard(opponent, {
+        icon: rollIcon("shield"), title: `Чтец Клинков: переброс — ${esc(opponent.name)}`, actorUuid: opponent.uuid,
+        threshold: rollStatLine({ label: "Scrutiny(WS)", base: ws + rank, parts: [...reMods.parts], threshold: threshold2, rv: roll2.total }),
+        outcome: finalWins
+          ? outcomeHtml(false, `И после переброса ${esc(actor.name)} побеждает (${theirs2.success ? "Успех" : "Провал"} ${theirs2.deg} ${_degWord(theirs2.deg)}) — «Финт» удаётся.`)
+          : outcomeHtml(true, `Чтец Клинков: ${esc(opponent.name)} отбивается после переброса (${theirs2.success ? "Успех" : "Провал"} ${theirs2.deg} ${_degWord(theirs2.deg)}) — «Финт» не удаётся.`)
+      }, { rolls: [roll2] });
+    }
+  }
+
+  await _deliver(ds, { initiatorWins: finalWins, margin: finalMargin });
+  return { initiatorWins: finalWins, margin: finalMargin };
+}
+
+/**
+ * Пируэт (Талант Избегания, глава 3): «Когда он является целью Напролома …
+ * он может пройти тест Acrobatics+0 и пропустить атакующего, не тратя
+ * реакции, также смещаясь в сторону». Успех — Напролом против него не
+ * удаётся; провал ничего не решает, остаётся обычное «Сопротивляться».
+ */
+export async function resolvePirouetteClick(ds) {
+  const opponent = ds.opponentUuid ? await fromUuid(ds.opponentUuid).catch(() => null) : null;
+  const actor = ds.actorUuid ? await fromUuid(ds.actorUuid).catch(() => null) : null;
+  if (!opponent || !actor) return ui.notifications.warn("⚠️ Участник встречного теста не найден.");
+  if (!game.user.isGM && !opponent.isOwner) return ui.notifications.warn(`⚠️ Пируэт за ${opponent.name} может только его владелец или ГМ.`);
+  const side = { skill: "acrobatics" };
+  const ruleMods = collectTestMods(opponent, sideContext(side));
+  const base = sideValue(opponent, side);
+  const threshold = base + ruleMods.total;
+  const roll = await new Roll("1d100").evaluate();
+  const { success, deg } = testOutcome(roll.total, threshold);
+  await postTestCard(opponent, {
+    icon: rollIcon("run"), title: `Пируэт — ${esc(opponent.name)}`, actorUuid: opponent.uuid,
+    threshold: rollStatLine({ label: sideLabel(side), base, parts: ruleMods.parts, threshold, rv: roll.total }),
+    outcome: success
+      ? outcomeHtml(true, `Успех — ${deg} ${_degWord(deg)}. ${esc(opponent.name)} пропускает ${esc(actor.name)} и смещается в сторону, не тратя Реакцию — «${esc(ds.label)}» не удаётся.`)
+      : outcomeHtml(false, `Провал — ${deg} ${_degWord(deg)}. Пируэт не удался; остаётся обычное сопротивление.`)
+  }, { rolls: [roll] });
+  if (success) await _deliver(ds, { initiatorWins: false, margin: 0 });
+  return { success };
 }
 
 /** Эффект — у клиента инициатора: локально или по сокету. */

@@ -502,7 +502,7 @@ describe("applyHealing: мод. Талантов ПАЦИЕНТА к тесту 
 
   it("тот же Талант БЕЗ суффикса :recipient (свои тесты пациента) не подмешивается в тест доктора", () => {
     registerRuleSource("test-patient-mod", () => [
-      { id: "self-only", label: "Своя Медика",
+      { id: "self-only", label: "Своя Медицина",
         effects: [{ kind: "rollBonus", target: "skill:medicae", value: 10 }] }
     ]);
     const medic = person({ medicae: 40 });
@@ -518,7 +518,7 @@ describe("applyHealing: мод. Талантов ПАЦИЕНТА к тесту 
 });
 
 describe("applyHealing: disease (Лечение болезней)", () => {
-  it("модификатор ухода складывается с Медикой, текст лечения болезни попадает в чат", async () => {
+  it("модификатор ухода складывается с Медициной, текст лечения болезни попадает в чат", async () => {
     const medic = person({ medicae: 40 });
     const d = disease("dis-1");
     const patient = person({ items: [d] });
@@ -670,11 +670,115 @@ describe("Первая Помощь и отдых по книге (wdbc-x1nz.2.1
     expect(patient.system.wounds.value).toBe(9);
   });
 
+  // Warp-Touched / Затронутый Варпом, субмутация 10 (wdbc-1rno.26): «после
+  // получения любого лечения, кроме как от себя, −10 на все тесты, кроме T,
+  // на 1 час» — метка на пациенте, штраф считает реестр правил.
+  describe("Недоверие к Лечению (Затронутый Варпом, 10)", () => {
+    const mistrustItem = () => ({
+      id: "wt", name: "Warp Touched / Затронутый Варпом", type: "mutation", system: {},
+      flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+        { id: "e", kind: "capability", capabilityKey: "mutation.warpTouched.healMistrust", label: "" }
+      ] }] } }
+    });
+
+    it("Первая Помощь от другого — метка на час и строка в карточке", async () => {
+      const patient = person({ items: [mistrustItem()] });
+      patient.system.wounds = { value: 5, max: 10, critical: 0, lostSinceFirstAid: null };
+      captured.nextRoll = 5;
+      await applyHealing(person(), patient, { mode: "firstAid", mod: 0, bonus: 0 });
+      expect(patient.getFlag("warhammer-dbc", "healMistrustUntil")).toBe(1_000_000 + 3600);
+      expect(captured.chat[0].content).toContain("Недоверие к Лечению");
+    });
+
+    it("лечит сам себя — метки нет", async () => {
+      const patient = person({ items: [mistrustItem()] });
+      patient.system.wounds = { value: 5, max: 10, critical: 0, lostSinceFirstAid: null };
+      captured.nextRoll = 5;
+      await applyHealing(patient, patient, { mode: "firstAid", mod: 0, bonus: 0 });
+      expect(patient.getFlag("warhammer-dbc", "healMistrustUntil")).toBeUndefined();
+    });
+
+    it("Первая Помощь провалена — Раны не восстановлены, метки нет", async () => {
+      const patient = person({ items: [mistrustItem()] });
+      patient.system.wounds = { value: 5, max: 10, critical: 0, lostSinceFirstAid: null };
+      captured.nextRoll = 99;
+      await applyHealing(person(), patient, { mode: "firstAid", mod: 0, bonus: 0 });
+      expect(patient.getFlag("warhammer-dbc", "healMistrustUntil")).toBeUndefined();
+    });
+
+    it("Отдых без ухода, кнопку нажал другой — тело лечится само, метки нет", async () => {
+      const patient = person({ items: [mistrustItem()] });
+      patient.system.wounds = { value: 9, max: 10, critical: 0 }; // Лёгкое — отдых лечит без теста
+      await applyHealing(person(), patient, { mode: "rest", mod: 0, bonus: 0 });
+      expect(patient.system.wounds.value).toBeGreaterThan(9);
+      expect(patient.getFlag("warhammer-dbc", "healMistrustUntil")).toBeUndefined();
+    });
+
+    it("Мед. уход другого при отдыхе — метка есть", async () => {
+      const patient = person({ items: [mistrustItem()] });
+      patient.system.wounds = { value: 9, max: 10, critical: 0 };
+      captured.nextRoll = 5;
+      await applyHealing(person(), patient, { mode: "rest", care: true, mod: 0, bonus: 0 });
+      expect(patient.system.wounds.value).toBeGreaterThan(9);
+      expect(patient.getFlag("warhammer-dbc", "healMistrustUntil")).toBe(1_000_000 + 3600);
+    });
+
+    it("без субмутации — метки нет", async () => {
+      const patient = person();
+      patient.system.wounds = { value: 5, max: 10, critical: 0, lostSinceFirstAid: null };
+      captured.nextRoll = 5;
+      await applyHealing(person(), patient, { mode: "firstAid", mod: 0, bonus: 0 });
+      expect(patient.getFlag("warhammer-dbc", "healMistrustUntil")).toBeUndefined();
+    });
+  });
+
   it("Саркофаг: лечение не поднимает Раны выше effectiveMax", async () => {
     const patient = person();
     patient.system.wounds = { value: 3, max: 10, effectiveMax: 5, critical: 0 };
     captured.nextRoll = 5;
     await applyHealing(person(), patient, { mode: "firstAid", mod: 0, bonus: 0 });
     expect(patient.system.wounds.value).toBe(5);
+  });
+
+  // But a Scratch / Просто Царапина (Талант Медика, гл. 3) — автоуспех
+  // Первой Помощи легко раненным, возможность medic.core.butAScratch.
+  describe("But a Scratch / Просто Царапина (medic.core.butAScratch)", () => {
+    const scratchItem = () => ({
+      id: "bas", name: "But a Scratch / Просто Царапина", type: "talent", system: {},
+      flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+        { id: "e", kind: "capability", capabilityKey: "medic.core.butAScratch", label: "" }
+      ] }] } }
+    });
+
+    it("Лёгкое ранение — автоуспех даже при заведомо провальном броске", async () => {
+      const medic = person({ items: [scratchItem()] });
+      const patient = person();
+      patient.system.wounds = { value: 5, max: 10, critical: 0 }; // лёгкое: потеряно 5 ≤ T.b×2=8
+      captured.nextRoll = 99;
+      await applyHealing(medic, patient, { mode: "firstAid", mod: 0, bonus: 0 });
+      expect(captured.chat[0].content).toContain("Успех");
+      expect(captured.chat[0].content).toContain("автоуспех");
+      expect(patient.system.wounds.value).toBeGreaterThan(5);
+    });
+
+    it("тот же бросок без Таланта — провал (мутация: автоуспех не безусловный)", async () => {
+      const medic = person();
+      const patient = person();
+      patient.system.wounds = { value: 5, max: 10, critical: 0 };
+      captured.nextRoll = 99;
+      await applyHealing(medic, patient, { mode: "firstAid", mod: 0, bonus: 0 });
+      expect(captured.chat[0].content).toContain("Провал");
+      expect(patient.system.wounds.value).toBe(5);
+    });
+
+    it("Тяжёлое ранение — Талант не действует (мутация: только light)", async () => {
+      const medic = person({ items: [scratchItem()] });
+      const patient = person({ t: 40 });
+      patient.system.wounds = { value: 1, max: 20, critical: 0 }; // потеряно 19 > T.b×2=8 — тяжёлое
+      captured.nextRoll = 99;
+      await applyHealing(medic, patient, { mode: "firstAid", mod: 0, bonus: 0 });
+      expect(captured.chat[0].content).toContain("Провал");
+      expect(patient.system.wounds.value).toBe(1);
+    });
   });
 });

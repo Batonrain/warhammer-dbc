@@ -9,7 +9,7 @@
 //  видимости), тот же честный предел, что у остальных «выцелите цель»
 //  механик этого файла: цель берётся из game.user.targets, как везде.
 //
-//  «Awareness(WS)» — Навык Бдительность (обычно keyed на Per, module/
+//  «Awareness(WS)» — Навык Внимательность (обычно keyed на Per, module/
 //  constants/skills.mjs) здесь заменяет свою характеристику на WS. Общей
 //  инфраструктуры «тот же Навык, другая характеристика» в системе нет —
 //  переносится ТРЕНИРОВОЧНАЯ надбавка (skillTotal − raw Per), а не весь
@@ -29,7 +29,7 @@ import { MELEE_STANCES } from "../constants/combat.mjs";
 
 export const RECOGNIZE_STANCE_CAPABILITY = "recognizeStance";
 
-/** Awareness(WS)+0 — тренировочная надбавка Бдительности, перенесённая с Per на WS. */
+/** Awareness(WS)+0 — тренировочная надбавка Внимательности, перенесённая с Per на WS. */
 export function awarenessOnWs(actor) {
   const ws  = Number(actor?.system?.characteristics?.ws?.total) || 0;
   const per = Number(actor?.system?.characteristics?.per?.total) || 0;

@@ -26,8 +26,18 @@ export class WeaponModData extends foundry.abstract.TypeDataModel {
       infoguard:    infoguardField(),
       modGroup:     new StringField({ initial: "other", label: "Группа" }),
       requirement:  new StringField({ initial: "", label: "Требование" }),
+      // «Интегрируется с X и бесполезен без них» (wdbc-1rno.38: Целеуказатель,
+      // Омни-Прицел) — имена предметов (любая половина двуязычного), из которых
+      // на персонаже должен быть активен ХОТЯ БЫ ОДИН: снаряжение надето,
+      // имплант установлен. Пусто — мод работает без условий. Гейтит ВЕСЬ мод
+      // (combat/weapon-mods.mjs::modWornRequirementMet), не отдельное поле.
+      // Не путать с requirement выше — то текст «на что ставится/как установить».
+      requiresWorn: stringList("Работает, только пока на персонаже есть"),
       installedOn:  new StringField({ initial: "", label: "Установлена на" }),
       weight:       new NumberField({ initial: 0, nullable: false, label: "Вес" }),
+      // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке; см.
+      // комментарий в data/item/weapon.mjs.
+      stored:       new BooleanField({ initial: false, label: "Хранится (не при себе)" }),
       availability: new NumberField({ initial: 0, integer: true, nullable: false, label: "Доступность" }),
       quality:      new StringField({ initial: "common", label: "Качество" }),
       bookSource:   new StringField({ initial: "", label: "Книга-источник" }),
@@ -41,6 +51,13 @@ export class WeaponModData extends foundry.abstract.TypeDataModel {
         clipMult:       new NumberField({ initial: 1, nullable: false, label: "Ёмкость, множитель" }),
         rofSemiMod:     new NumberField({ initial: 0, nullable: false, label: "Очередь, короткая" }),
         rofFullMod:     new NumberField({ initial: 0, nullable: false, label: "Очередь, полная" }),
+        // Бонус к ПОПАДАНИЮ в конкретном режиме огня (wdbc-1rno.38, Целеуказатель:
+        // «+5 на короткие очереди и +10 на длинные») — в отличие от rofSemiMod/
+        // rofFullMod выше, которые меняют ЧИСЛО выстрелов (RoF на листе,
+        // sheets/sheet-helpers.mjs). Читаются пилюлями режима в attack-dialog.mjs.
+        rofSingleAttackMod: new NumberField({ initial: 0, nullable: false, label: "Попадание: одиночный выстрел" }),
+        rofSemiAttackMod:   new NumberField({ initial: 0, nullable: false, label: "Попадание: короткая очередь" }),
+        rofFullAttackMod:   new NumberField({ initial: 0, nullable: false, label: "Попадание: длинная очередь" }),
         reliabilityMod: new NumberField({ initial: 0, nullable: false, label: "Надёжность" }),
         balanceMod:     new NumberField({ initial: 0, nullable: false, label: "Баланс" }),
         weightPct:      new NumberField({ initial: 0, nullable: false, label: "Вес, %" }),
@@ -88,6 +105,7 @@ export class WeaponModData extends foundry.abstract.TypeDataModel {
    * @override
    */
   static migrateData(source) {
+    repairStringListAt(source, "requiresWorn");
     repairStringListAt(source, "effects.removeProps");
     repairStringListAt(source, "effects.mechRemoveProps");
     return migrateCharBonusPair(source);

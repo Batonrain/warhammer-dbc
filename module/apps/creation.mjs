@@ -38,6 +38,9 @@ export const CREATION_ROLL_CHARS = ["ws", "bs", "s", "t", "ag", "int", "per", "w
 // ── Склонности (стр. 23-24) ─────────────────────────────────────────────────
 // Персонаж выбирает четыре Характеристики и четыре прочих. «Общее» есть у всех
 // и в выбор не входит — charAptitudeSet добавляет его сам.
+// ВНИМАНИЕ: деление 4+4 — решение владельца (сверка «Склонности», 04.10.2026),
+// а не книга: книга говорит только «выбрать 8 Склонностей» (стр. 24) и не делит
+// их на Характеристики и прочие. Общее число — APTITUDES_TOTAL (advancement.mjs).
 // Влияние (inf) в выбор не входит: Склонности «Влияние» нет ни в книге, ни в
 // APTITUDES (constants/characteristics.mjs), ни в CHAR_APTITUDES — фишка с
 // таким ключом рисовалась с пустой подписью (APTITUDES.inf === undefined).
@@ -264,7 +267,7 @@ export async function grantCreationSkills(actor, { race, past, sub, arch }) {
     if (cur.trim()) out.push(cur);
     return out.map(s => s.trim()).filter(Boolean);
   };
-  // Русское имя опции навыка для диалога («Linguistics (Battle Cant) +10» → «Лингвистика (Боевой Язык) +10»).
+  // Русское имя опции навыка для диалога («Linguistics (Battle Cant) +10» → «Язык (Боевой Язык) +10»).
   const skillOptRu = (opt) => {
     const m = String(opt).match(/\+\d+/); const suf = m ? " " + m[0] : "";
     let s = String(opt).replace(/\+\d+/, "").trim();

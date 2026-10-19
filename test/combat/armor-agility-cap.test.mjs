@@ -29,6 +29,9 @@ const mod = (id, installedOn, maxAgilityMod) => ({
   getFlag: () => undefined
 });
 
+const armourTraining = (specialization) =>
+  ({ type: "talent", name: "Armour Training / Тренировка в Броне", system: { specialization } });
+
 describe("потолок Ловкости от брони", () => {
   it("без брони потолка нет", () => {
     expect(armorAgilityCap(actorWith())).toBe(null);
@@ -75,5 +78,20 @@ describe("потолок Ловкости от брони", () => {
     const a = actorWith(disabled);
     a.getFlag = () => true;
     expect(armorAgilityCap(a)).toBe(10);
+  });
+
+  it("Armour Training (силовая) поднимает потолок своего armorType на 10 (wdbc-3-65ff)", () => {
+    expect(armorAgilityCap(actorWith(armor("a1", 25), armourTraining("силовая")))).toBe(35);
+  });
+
+  it("Armour Training на ЧУЖОЙ armorType потолок не двигает", () => {
+    expect(armorAgilityCap(actorWith(armor("a1", 25), armourTraining("флак")))).toBe(25);
+  });
+
+  it("Armour Training на выключенную силовую (фиксированный штраф 35) не влияет", () => {
+    const disabled = { id: "a1", type: "armor", system: { equipped: true, armorType: "power", active: false } };
+    const a = actorWith(disabled, armourTraining("силовая"));
+    a.getFlag = () => undefined;
+    expect(armorAgilityCap(a)).toBe(35);
   });
 });

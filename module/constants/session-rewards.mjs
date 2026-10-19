@@ -27,7 +27,12 @@
  * @property {string} label    заголовок из книги
  * @property {string} scope    "party" — одно число всем; "each" — своё каждому
  * @property {string} [hint]   пояснение книги, идёт в подсказку
- * @property {{value:number,label:string}[]} steps  ступени книги
+ * @property {{value:number,label:string}[]} [steps]  дискретные ступени книги
+ *   (список выбора) — только у «Преодоления Трудностей»
+ * @property {{from:number,to:number}|null} [range]  вилка книги «от и до»:
+ *   число вводится руками, любое; вне вилки окно лишь помечает его
+ * @property {{value:number,label:string}[]} [suggest]  подсказки к полю числа
+ * @property {boolean} [refund]  это возврат потраченного, а не новое обучение
  */
 
 /** Ступени «Преодоления Трудностей» (стр. корбука «ОПЫТ»), дословно. */
@@ -40,15 +45,10 @@ const HARDSHIP_STEPS = [
   { value: 1000, label: "1000 — смертельно опасное, что должно было быть не по силам" }
 ];
 
-/** Диапазон «от и до» превращается в ступени, чтобы выбор был кликом. */
-function range(from, to, note = "") {
+/** Подсказки для вилки «от и до»: край, середина, край — клик вместо ввода. */
+function suggest(from, to) {
   const mid = Math.round((from + to) / 2 / 5) * 5;
-  return [
-    { value: 0,   label: "— не выдавать" },
-    { value: from, label: `${from}${note ? ` — ${note}` : ""}` },
-    { value: mid,  label: `${mid}` },
-    { value: to,   label: `${to}` }
-  ];
+  return [from, mid, to].map(value => ({ value, label: String(value) }));
 }
 
 /** Категории опыта из книги, в порядке книги. */
@@ -61,27 +61,37 @@ export const XP_CATEGORIES = [
   {
     key: "unknown", label: "Неизведанное", scope: "party",
     hint: "Персонажи встретились с чем-то новым и неизведанным для себя — 50–250 в зависимости от редкости пережитого.",
-    steps: range(50, 250)
+    range: { from: 50, to: 250 }, suggest: suggest(50, 250)
   },
   {
     key: "mistakes", label: "На Ошибках Учатся", scope: "each",
     hint: "Персонаж совершил большую ошибку или провалил особенно важный тест — 50–250. Если персонаж «умирает» за сессию — 250–500.",
-    steps: [...range(50, 250), { value: 250, label: "250 — «умер» за сессию" }, { value: 500, label: "500 — «умер» за сессию" }]
+    range: { from: 50, to: 500 },
+    suggest: [...suggest(50, 250), { value: 500, label: "500 — «умер» за сессию" }]
   },
   {
     key: "creative", label: "Креативный Подход", scope: "each",
     hint: "Необычные и изобретательные решения, делающие игру интереснее — 25–100.",
-    steps: range(25, 100)
+    range: { from: 25, to: 100 }, suggest: suggest(25, 100)
   },
   {
     key: "roleplay", label: "Отыгрыш и Этикет", scope: "each",
     hint: "Хороший отыгрыш, действия согласно Стремлениям, отказ пользоваться знанием игрока — 10–50.",
-    steps: range(10, 50)
+    range: { from: 10, to: 50 }, suggest: suggest(10, 50)
   },
   {
     key: "finale", label: "Финал", scope: "party",
     hint: "Последняя сессия истории, завершающей серию миссий — 250–750 в зависимости от масштаба.",
-    steps: range(250, 750)
+    range: { from: 250, to: 750 }, suggest: suggest(250, 750)
+  },
+  {
+    // «Органичное Продвижение»: книга разрешает вернуть игроку ЧАСТЬ
+    // потраченного на сюжетно оправданные продвижения, но доли не называет —
+    // поэтому вилки нет, число ГМ вписывает сам. Это возврат уже полученного
+    // опыта, а не новое обучение: «Ловит на Лету» на него не действует.
+    key: "organic", label: "Возмещение", scope: "each", refund: true,
+    hint: "Органичное Продвижение: ГМ возвращает часть опыта, потраченного на Навыки и Таланты, которые персонаж органично подобрал по сюжету. Доли в книге нет — число на усмотрение ГМ. «Ловит на Лету» на возврат не действует.",
+    range: null, suggest: []
   }
 ];
 
@@ -93,3 +103,13 @@ export const EACH_KEYS = XP_CATEGORIES.filter(c => c.scope === "each").map(c => 
 
 /** Книжная вилка «от 100 до 1000 за сессию» — для подсказки о переборе. */
 export const SESSION_XP_HINT = { from: 100, to: 1000 };
+
+/** Категории-возмещения: опыт, который «Ловит на Лету» не увеличивает. */
+export const REFUND_KEYS = XP_CATEGORIES.filter(c => c.refund).map(c => c.key);
+
+/** Число вне вилки книги — не ошибка (ГМ вправе), но окно это помечает. */
+export function outsideBookRange(category, value) {
+  const n = Number(value) || 0;
+  if (!n || !category?.range) return false;
+  return n < category.range.from || n > category.range.to;
+}

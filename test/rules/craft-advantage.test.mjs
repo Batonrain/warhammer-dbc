@@ -8,7 +8,7 @@ import { describe, it, expect } from "vitest";
 import {
   hasCyberpreacher, hasSlowShiftTalent, cyberpreacherApplies,
   effectiveDiceMode, slowShiftBonus, hasPolymath, polymathBonus,
-  hasJourneyman, hasDarkMuse, darkMuseAssistBonus, haemonculusLabBonus
+  hasJourneyman, hasDarkMuse, darkMuseAssistBonus, haemonculusLabBonus, researchBonus
 } from "../../module/rules/craft-advantage.mjs";
 
 const actorWith = (...talentNames) => ({
@@ -190,5 +190,27 @@ describe("hasDarkMuse / darkMuseAssistBonus", () => {
   it("нет актора — false/0, не падает", () => {
     expect(hasDarkMuse(null)).toBe(false);
     expect(darkMuseAssistBonus(undefined)).toBe(0);
+  });
+});
+
+// Инновация (Стремление, стр. 22): «+10 на тесты Исследований». Читается
+// записью Конструктора «Возможность» craft.researchBonus на предмете актора.
+describe("researchBonus (Инновация)", () => {
+  const innovation = {
+    id: "innov", name: "Innovation / Инновация", type: "aspiration",
+    flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+      { id: "e", kind: "capability", capabilityKey: "craft.researchBonus", label: "" }] }] } }
+  };
+  const crafter = (...items) => ({ items });
+
+  it("+10 только на проект-Исследование", () => {
+    expect(researchBonus(crafter(innovation), "research")).toBe(10);
+  });
+  it("Крафт и Биолаборатория без бонуса — в отличие от Полимата", () => {
+    expect(researchBonus(crafter(innovation), "craft")).toBe(0);
+    expect(researchBonus(crafter(innovation), "bio")).toBe(0);
+  });
+  it("без Стремления — ноль", () => {
+    expect(researchBonus(crafter(), "research")).toBe(0);
   });
 });

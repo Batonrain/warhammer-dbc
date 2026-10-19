@@ -37,6 +37,7 @@ import { meleeStrengthBonus, damageFormulaFor, hitLocation } from "./attack-outc
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
+import { hasSpeedTalent } from "../rules/speed-talents.mjs";
 
 /**
  * Общее ядро «граната взрывается прямо на/у стрелка»: один бросок урона,
@@ -121,12 +122,18 @@ async function resolveGrenadeSelfDamage(actor, item, { title, warnLine, sound = 
  */
 export async function useDetonateGrenadeInRig(actor, item) {
   if (!actor || !item || item.type !== "weapon" || item.system?.weaponType !== "grenade") return;
-  if (!await spendActionPoints(actor, 1, { physical: true })) {
+  // Быстрое Выхватывание: чеку этим Талантом можно выдернуть только раз в Ход —
+  // тогда бесплатно (свободное действие), во второй раз — обычным Полудействием.
+  const quick = hasSpeedTalent(actor, "quickDraw") && !actor.getFlag?.("warhammer-dbc", "quickDrawPinThisTurn");
+  if (!quick && !await spendActionPoints(actor, 1, { physical: true })) {
     return ui.notifications.warn("⚠️ Не хватает ОД, чтобы вырвать чеку.");
   }
+  if (quick) await actor.setFlag("warhammer-dbc", "quickDrawPinThisTurn", true);
   await resolveGrenadeSelfDamage(actor, item, {
     title: `${esc(actor.name)} — Вырвать чеку: ${item.name}`,
-    warnLine: "Не считается атакой — Уклонение недоступно (стр. 27). Полудействие."
+    warnLine: quick
+      ? "Не считается атакой — Уклонение недоступно (стр. 27). Свободное действие — Быстрое Выхватывание (раз в Ход)."
+      : "Не считается атакой — Уклонение недоступно (стр. 27). Полудействие."
   });
 }
 

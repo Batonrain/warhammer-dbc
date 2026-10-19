@@ -86,6 +86,8 @@ import { hasAvatarOfSlaughter }                  from "../combat/avatar-of-slaug
 import { hasDreadWail }                          from "../combat/dread-wail.mjs";
 import { hasResplendentRaiment }                 from "../combat/resplendent-raiment.mjs";
 import { hasAdrenalineRush }                     from "../combat/adrenaline-rush.mjs";
+import { hasCaution }                            from "../combat/caution.mjs";
+import { hasFlourishDance }                      from "../combat/flourish-dance.mjs";
 import { hasBoneSong }                           from "../combat/bone-song.mjs";
 import { hasPreservation }                       from "../combat/preservation.mjs";
 import { hasSongOfSwiftness }                    from "../combat/song-of-swiftness.mjs";
@@ -97,10 +99,14 @@ import { hasActionEconomy, isEncounterActive, effectiveDefenseReactionMax,
          effectiveActionPointsMax,
          apSpendGate, reactionSpendGate }         from "../combat/action-economy.mjs";
 import { recoilRemaining, recoilLimit }           from "../combat/recoil-pool.mjs";
+import { attackActionLimit }                      from "../combat/attack-limit.mjs";
 import { sustainedActionRows }                    from "../rules/sustained-action.mjs";
 import { hasSpiritTalk, spiritTalkGate } from "../combat/spirit-talk.mjs";
 import { hasDeadlyEffectiveness, deadlyEffectivenessGate } from "../combat/deadly-effectiveness.mjs";
 import { hasBowToAudience, bowToAudienceGate } from "../combat/bow-to-audience.mjs";
+import { fatigueFaintThreshold } from "../rules/resilience-talents.mjs";
+import { hasArmourMonger, armourMongerOn } from "../combat/armour-monger.mjs";
+import { hasHunkerDown, hunkerDownOn } from "../combat/hunker-down.mjs";
 
 // Метка характеристики с учётом мировоззрения: у Хаосита «Влияние» → «Бесчестие».
 export function charLabel(key, alignment) {
@@ -187,7 +193,17 @@ export function characterContext(actor) {
       // Отскок (стр. 12, wdbc-9wvm): дистанция за Раунд, тот же честный
       // «∞ вне боя» принцип, что у остальной экономики действий —
       // recoilRemaining/recoilLimit сами отдают Infinity вне Encounter.
-      recoil: { value: recoilRemaining(actor), max: recoilLimit(actor) }
+      recoil: { value: recoilRemaining(actor), max: recoilLimit(actor) },
+      // Лимит Атак за Ход (combat/attack-limit.mjs, стр. 12) — max считает
+      // книжную базу/Решительность Сражаться/ГМ-надбавку; bonus — то самое
+      // редактируемое поле (system.attackLimitBonus, wdbc-6rj), отдельно от
+      // value/max, чтобы галочка «Решительность Сражаться» и правка ГМа не
+      // перепутались в одном числе на листе.
+      attacks: {
+        value: Number(actor.getFlag("warhammer-dbc", "attackActionsThisTurn")) || 0,
+        max: attackActionLimit(actor),
+        bonus: Number(system.attackLimitBonus) || 0
+      }
     };
     // Гейт кнопок ДО клика (wdbc-qjnk): движение (Полушаг/Шаг/Бег — Натиск
     // ОД на объявлении не тратит, см. apSpendGate) и ручная трата ae-spend-btn
@@ -505,6 +521,16 @@ export function characterContext(actor) {
   context.hasResplendentRaiment = hasResplendentRaiment(actor);
   // Кнопка «Прилив Адреналина» на вкладке БОЙ (wdbc-ks1r) — только владельцам Таланта.
   context.hasAdrenalineRush = hasAdrenalineRush(actor);
+  // Кнопка «Осторожность» на вкладке БОЙ (глава 3) — только владельцам Таланта.
+  context.hasCaution = hasCaution(actor);
+  // Тумблер «Броня обслужена сегодня» Бронника (глава 3) — только владельцам Таланта.
+  context.hasArmourMonger = hasArmourMonger(actor);
+  context.armourMongerOn = context.hasArmourMonger && armourMongerOn(actor);
+  // Кнопка «Залегание» на вкладке БОЙ (глава 3) — только владельцам Таланта.
+  context.hasHunkerDown = hasHunkerDown(actor);
+  context.hunkerDownOn = context.hasHunkerDown && hunkerDownOn(actor);
+  // Кнопка «Размашистый Танец» на вкладке БОЙ (глава 3) — только владельцам Таланта.
+  context.hasFlourishDance = hasFlourishDance(actor);
   // Кнопки Певцов Кости на вкладке БОЙ (wdbc-sk8s) — только владельцам соответствующего Таланта.
   context.hasBoneSong = hasBoneSong(actor);
   context.hasPreservation = hasPreservation(actor);
@@ -624,9 +650,7 @@ export function characterContext(actor) {
 
   context.fateLabel = fateTerm(system).plural;
 
-  const tb = system.characteristics?.t?.bonus ?? 0;
-  const wb = system.characteristics?.wp?.bonus ?? 0;
-  const fatigueThreshold = tb + wb;
+  const fatigueThreshold = fatigueFaintThreshold(actor);   // Ментальная Стойкость: T.b + 2×W.b (rules/resilience-talents.mjs)
   context.fatigueThreshold = fatigueThreshold;
   context.fatigueValue     = system.fatigue?.value ?? 0;
   context.fatigueMax       = system.fatigue?.max   ?? fatigueThreshold;

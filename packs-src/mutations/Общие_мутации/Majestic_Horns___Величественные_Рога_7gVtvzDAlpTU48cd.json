@@ -814,6 +814,169 @@
                 ],
                 "negateSub": false
               }
+            },
+            {
+              "id": "majestichorns-23-ap-head",
+              "kind": "absorption",
+              "op": "add",
+              "absorptionTarget": "vsSubtypeAt:head:crushing",
+              "absorptionValue": "Cor.b",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "2-3"
+                ],
+                "negateSub": false
+              }
+            },
+            {
+              "id": "majestichorns-23-headbutt",
+              "kind": "capability",
+              "capabilityKey": "mutation.majesticHorns.reinforced",
+              "capabilityMode": "flag",
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "2-3"
+                ],
+                "negateSub": false
+              }
+            },
+            {
+              "id": "majestichorns-9-eye-ap",
+              "kind": "armour",
+              "op": "add",
+              "armourLocation": "eye",
+              "armourValue": "floor(Cor.b / 2)",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "9"
+                ],
+                "negateSub": false
+              }
+            },
+            {
+              "id": "majestichorns-1-shield",
+              "kind": "equipment",
+              "equipMode": "direct",
+              "equipQty": 1,
+              "equipSourceUuid": "Compendium.warhammer-dbc.shields.Item.NXVolJ8jj4rI18dA",
+              "equipSourceName": "Single Horn Deflector / Рог-Дефлектор Однорогого",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "1"
+                ],
+                "negateSub": false
+              }
+            },
+            {
+              "id": "majestichorns-7-horn",
+              "kind": "integralAttack",
+              "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.sH9dDNM8LIXVcDxw",
+              "equipSourceName": "Horns (Plaguebearer) / Рог Чумоноса",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+              "integralRating": "floor(cor/2)",
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "7"
+                ],
+                "negateSub": false
+              }
+            },
+            {
+              "id": "majestichorns-7-breakoff",
+              "kind": "integralAttack",
+              "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.QL8XzDdndPfW3C0a",
+              "equipSourceName": "Horns (Break Off) / Обломить Рог",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+              "integralRating": "floor(cor/2)",
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "7"
+                ],
+                "negateSub": false
+              }
+            },
+            {
+              "id": "majestichorns-9-no-vision-aids",
+              "kind": "capability",
+              "capabilityKey": "mutation.majesticHorns.noVisionAids",
+              "capabilityMode": "flag",
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "9"
+                ],
+                "negateSub": false
+              }
+            },
+            {
+              "id": "majestichorns-10-crown",
+              "kind": "integralAttack",
+              "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.CCDdNzbbq0tmRBPM",
+              "equipSourceName": "Crown of Horns / Корона Рогов",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "10"
+                ],
+                "negateSub": false
+              }
+            },
+            {
+              "id": "majestichorns-8-concussive",
+              "kind": "attackProp",
+              "label": "Рога Кровожада: Concussive (0)",
+              "apScope": "name:Рога",
+              "apKey": "concussive",
+              "apRating": "0",
+              "apRating2": "",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "8"
+                ],
+                "negateSub": false
+              }
+            },
+            {
+              "id": "majestichorns-8-flame",
+              "kind": "attackProp",
+              "label": "Рога Кровожада: Flame (3d10) в Ярости против псайкеров",
+              "apScope": "name:Рога",
+              "apKey": "flame",
+              "apRating": "3d10",
+              "apRating2": "",
+              "apTargetPsyker": true,
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "8"
+                ],
+                "negateSub": false,
+                "requireRage": true
+              }
             }
           ]
         },

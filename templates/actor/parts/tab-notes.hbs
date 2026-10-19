@@ -43,9 +43,12 @@
             <option value="__custom__">Своё…</option>
           </select>
           {{/if}}
+          <button type="button" class="aspir-roll" data-index="{{a.idx}}" title="Бросить d10 по таблице «{{a.label}}»">🎲</button>
           <button type="button" class="aspir-remove" data-index="{{a.idx}}" title="Очистить">✕</button>
         </div>
-        <div class="aspir-mods-line" title="Модификаторы — справка: применяются к Базе вручную">{{#if a.mods}}{{a.mods}}{{else}}&nbsp;{{/if}}</div>
+        <div class="aspir-mods-line {{#if a.noMods}}aspir-mods-off{{/if}}" title="{{#if a.noMods}}Модификаторы не применяются: запись служит только скелетом характера{{else}}Модификаторы применяются к Характеристикам автоматически при выборе{{/if}}">{{#if a.mods}}{{a.mods}}{{else}}&nbsp;{{/if}}</div>
+        {{#if (eq a.pickState "needed")}}<button type="button" class="aspir-repick aspir-repick-needed" data-index="{{a.idx}}" title="Для этого Стремления ещё не выбраны Характеристики: бонус и штрафы пока не применены">⚠ Выбрать Характеристики</button>{{else if (eq a.pickState "chosen")}}<button type="button" class="aspir-repick" data-index="{{a.idx}}" title="Изменить выбор Характеристик">✎ Изменить выбор</button>{{/if}}
+        {{#if a.id}}<label class="aspir-nomods-lbl" title="Стремление остаётся скелетом характера, но бонусы и штрафы к Характеристикам не применяются (стр. 22)"><input type="checkbox" class="aspir-nomods" data-index="{{a.idx}}" {{#if a.noMods}}checked{{/if}}/> без модификаторов</label>{{/if}}
       </div>
       {{/each}}
     </div>

@@ -51,9 +51,13 @@ import { itemHasName, giftNamesOf } from "./predicates.mjs";
 import { applyParasiteFusion, fusedParasite, fuseParasiteCharacteristic } from "./parasite-trait.mjs";
 import { woundLevel } from "./wound-tier.mjs";
 import { woundsMaxMods as runtWoundsMaxMods } from "./runt.mjs";
+import { soundConstitutionWoundsMods, hasResilienceTalent, armourMongerBonus } from "./resilience-talents.mjs";
 import { prepareFinalPools } from "./character/final-pools.mjs";
 import { prepareMovementDerived } from "./character/movement.mjs";
 import { prepareArmourDerived } from "./character/armour.mjs";
+import { armourTrainingPenaltyReduction } from "./armour-training.mjs";
+import { sharedFormationInitBonus } from "./combat-formation.mjs";
+import { isBeyondHuman, beyondHumanCharKey, BEYOND_HUMAN_UNNATURAL } from "./beyond-human.mjs";
 import { LIMITED_LIFT_CAPABILITY, flightStrengthBonus, limitedLiftStatus } from "./limited-lift.mjs";
 
 /**
@@ -216,6 +220,7 @@ export function prepareCharacterDerived(actor, system) {
     // калькуляцию size/calcMovement ниже). Входит только в sizeTotal.
     let traitSizeModNoSpd = 0;
     let traitInitMod = 0;
+    const beyondHumanSeen = new Set(); // две копии на одну Характеристику не складываются
     let traitSpeedMod = 0;
     // Навыки, у которых Черта/Талант/Имплант ополовинивает штрафы (Конструктор
     // МЕХАНИКА, kind:"testMod" + modValueMode:"halvePenalty") — сам штраф теста
@@ -301,6 +306,17 @@ export function prepareCharacterDerived(actor, system) {
 
         if (item.system.ironFocus || mech?.ironFocus)
           techFocusInstalled.push({ name: item.name, quality: q, mod: ironModForQuality(q) });
+      }
+      // За Гранью Человека (стр. 62): Трейт Unnatural Characteristic (+1) для
+      // той Характеристики, к которой Талант привязан при покупке.
+      // Считается здесь, а не эффектом предмета: привязка выбирается в пикере
+      // и лежит в aptSource, а не в записи пака.
+      if (isBeyondHuman(item)) {
+        const bhKey = beyondHumanCharKey(item);
+        if (bhKey && !beyondHumanSeen.has(bhKey)) {
+          beyondHumanSeen.add(bhKey);
+          traitCharBonus[bhKey] = (traitCharBonus[bhKey] || 0) + BEYOND_HUMAN_UNNATURAL;
+        }
       }
       // Мигрированные предметы несут ту же механику как embedded ActiveEffect
       // (см. migrations/item-effects.mjs) — читать старое поле тоже
@@ -419,6 +435,8 @@ export function prepareCharacterDerived(actor, system) {
     system.traitCharBonus      = traitCharBonus;
     system.traitCharValueBonus = traitCharValueBonus;
     system.fearRating     = traitFearRating;
+    // Боевое Построение, раздача соратникам (стр. 62): +1 по отметке на листе.
+    traitInitMod += sharedFormationInitBonus(actor);
     system.talentInitMod  = traitInitMod;
     system.traitSpeedMod  = traitSpeedMod;
 
@@ -447,11 +465,17 @@ export function prepareCharacterDerived(actor, system) {
     // ── Бонусы от надетой брони к характеристикам ───────────────────────────
     // Силовая броня → +S; Аспектная броня Аэльдари → +S и +W (Сила Воли).
     // Прибавляются к значению характеристики (total), пока броня надета.
-    const armorCharBonus = { s: 0, wp: 0 };
+    // Штраф к A (armor.mjs::agilityPenalty, стр. 235 «Terminator Aegis», −15)
+    // — отдельное от Max.A число, вычитается, Armour Training (wdbc-3-65ff)
+    // уменьшает его на 5 за надетую единицу, но не ниже 0.
+    const armorCharBonus = { s: 0, wp: 0, ag: 0 };
     for (const item of actor.items) {
       if (item.type !== "armor" || !item.system.equipped) continue;
       armorCharBonus.s  += item.system.strengthBonus || 0;
       armorCharBonus.wp += item.system.wpBonus       || 0;
+      const penalty = Math.max(0, (item.system.agilityPenalty || 0)
+        - armourTrainingPenaltyReduction(actor, item.system.armorType));
+      armorCharBonus.ag -= penalty;
     }
     system.armorCharBonus = armorCharBonus;
 
@@ -586,9 +610,12 @@ export function prepareCharacterDerived(actor, system) {
     system.insanityBonus   = Math.floor((system.insanity?.value   || 0) / 10);
     system.corruptionBonus = Math.floor((system.corruption?.value || 0) / 10);
 
-    // Порог Усталости = T.b + W.b (потеря сознания при превышении).
+    // Порог Усталости = T.b + W.b (потеря сознания при превышении); у
+    // Ментальной Стойкости T.b + 2×W.b (rules/resilience-talents.mjs — то же
+    // число читают вкладка Состояний и контекст листа).
     if (system.fatigue) {
-      system.fatigue.max = (chars.t?.bonus ?? 0) + (chars.wp?.bonus ?? 0);
+      system.fatigue.max = (chars.t?.bonus ?? 0) + (chars.wp?.bonus ?? 0)
+        + (hasResilienceTalent(actor, "mentalFortitude") ? (chars.wp?.bonus ?? 0) : 0);
     }
 
     // Гангрена («Раны и Урон» → «Статусы», wdbc-x1nz.2.96): «получает 1
@@ -770,6 +797,9 @@ export function prepareCharacterDerived(actor, system) {
       const woundsMods = [
         ...(hasRuleFlag(actor, DREADNOUGHT_PILOT_FLAG) ? [{ label: "Саркофаг Дредноута", value: SARCOPHAGUS.woundsMax }] : []),
         ...runtWoundsMaxMods(actor),
+        // Крепкое Телосложение (глава 3, rules/resilience-talents.mjs): +1 Рана
+        // за каждую копию Таланта, потолок T.b (+2 не-Космодесантнику).
+        ...soundConstitutionWoundsMods(actor, tb),
         // Отвращение к Порядку (Зверолюд): −2 Раны за каждую бионику/кибернетику (выше).
         ...(system.orderRejection?.wounds ? [{ label: "Отвращение к Порядку", value: system.orderRejection.wounds }] : [])
       ];
@@ -859,7 +889,15 @@ export function prepareCharacterDerived(actor, system) {
     // в фазе "initial", то есть ДО этого расчёта, тем же приёмом, что и
     // encumbrance.indexBonus. Ложится рядом с traitArmourAll: после снятия
     // шлема, поэтому естественная броня головы вместе с ним не теряется.
-    const fxArmor = system.armorBonus || {};
+    const baseFxArmor = system.armorBonus || {};
+    // Бронник (глава 3, rules/resilience-talents.mjs): пока отмечено «броня
+    // обслужена сегодня» (флаг гаснет в полночь по Календарю), +2 AP на всех
+    // участках — тем же складываемым каналом, что надбавка эффектов, без
+    // отдельного читателя в расчёте поглощения.
+    const mongerAP = armourMongerBonus(actor, globalThis.game?.time?.worldTime ?? null);
+    const fxArmor = mongerAP
+      ? Object.fromEntries(Object.keys(AP_LOCATIONS).map(k => [k, (Number(baseFxArmor[k]) || 0) + mongerAP]))
+      : baseFxArmor;
     // Свойство оружия Corrosive (wdbc-plsf): стойкая потеря AP в месте
     // попадания, пока броню не починят (combat/damage.mjs пишет сюда).
     const corrosion = system.armorCorrosion || {};
@@ -896,6 +934,13 @@ export function prepareCharacterDerived(actor, system) {
       wornOnly,
       vsType:         armorVsType,
       vsSubtype:      armorVsSubtype,
+      // AP против подвида в ОДНОЙ локации (Укреплённые Рога, wdbc-1rno.10) и
+      // броня глаз (Зрящие Рога). Нули заводятся здесь: эффект фазы final
+      // (constants/effect-keys.mjs) «add» к несуществующему полю не ложится.
+      // Читает combat/damage.mjs.
+      vsSubtypeAt:    Object.fromEntries(Object.keys(AP_LOCATIONS).map(loc =>
+        [loc, Object.fromEntries(Object.keys(armorVsSubtype).map(st => [st, 0]))])),
+      eyeBonus:       0,
       propFlags:      propFlagsByLoc,
       // Слои носимой брони и лучшее из прочего носимого AP (ручное поле, пол,
       // щит) — для обнуления по предмету, а не по локации (wdbc-x1nz.2.81).
@@ -969,6 +1014,11 @@ export function prepareCharacterDerived(actor, system) {
     let selfCarriedArmourWeight = 0;
     for (const item of actor.items) {
       const s = item.system;
+      // Хранится не при себе (wdbc-6rj, stored): склад/кузов/каюта — вне
+      // Нагрузки целиком, не только «несёт себя сама» ниже. «Используется»/
+      // «Носится» (equipped=true/false без stored) по-прежнему весят —
+      // только само отсутствие рядом с телом снимает вес.
+      if (s.stored) continue;
       const w = parseFloat(s.weight) || 0;
       if (item.type === "armor" && s.equipped && ((s.armorType === "power" && s.active) || s.weightless)) {
         selfCarriedArmourWeight += w;

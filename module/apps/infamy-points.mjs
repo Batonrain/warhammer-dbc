@@ -13,9 +13,13 @@ import { DP_INFAMY_ABILITIES, DP_PATRON_ABILITIES, DP_PATRONAGE, DP_GODS_MAP } f
 import { esc } from "../helpers/utils.mjs";
 import { conditionRemoveFields, fatigueChangeFields, announceFatigueChange } from "../sheets/tabs/conditions.mjs";
 import { tempInfamyInfo, tempInfamyAmount, spendTempInfamy } from "../rules/temp-infamy.mjs";
+import { chaosPatronMeta } from "../constants/chaos-patron.mjs";
 import { inPariahVoid } from "../rules/null-zones.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { infamyBoostNotes } from "../rules/infamy-fail-success.mjs";
+// Взаимный импорт с knowledge-of-ages.mjs (тот берёт changeActorInfamy):
+// обе стороны зовут друг друга только внутри функций, не при загрузке.
+import { knowledgeOfAgesButtonHtml } from "./knowledge-of-ages.mjs";
 
 /**
  * Текущие Очки Бесчестия актора — тот же путь, что и лист (actor-sheet.mjs
@@ -139,7 +143,7 @@ export async function changeInfamy(actor, ipFullPath, ipMax, delta) {
  * временного запаса выполняется здесь же (actor.setFlag/unsetFlag); обычный
  * пул только СЧИТАЕТСЯ — запись делает вызывающий код вместе с остальными
  * полями своего update().
- * @returns {{tempSpent:number, poolSpent:number, poolValue:number}}
+ * @returns {{tempSpent:number, poolSpent:number, poolValue:number, tempSource:string, tempRestriction:string}}
  *   poolValue — новое значение обычного пула после вычета poolSpent.
  */
 export async function spendFromInfamyPool(actor, amount, poolFullPath, { forced = false } = {}) {
@@ -154,9 +158,14 @@ export async function spendFromInfamyPool(actor, amount, poolFullPath, { forced 
   const cur = Math.max(0, Number(foundry.utils.getProperty(actor, poolFullPath)) || 0);
   const haveTemp = tempInfamyAmount(actor);
   const tempSpent = Math.min(haveTemp, amount);
+  // Источник временного Очка — ДО списания: последнее списанное снимает флаг
+  // целиком, а возврату Очка (Знания Веков, apps/knowledge-of-ages.mjs) нужно
+  // вернуть его с тем же источником — по нему запас и сгорает.
+  const tempInfo = tempSpent > 0 ? tempInfamyInfo(actor) : null;
   if (tempSpent > 0) await spendTempInfamy(actor, tempSpent);
   const poolSpent = amount - tempSpent;
-  return { tempSpent, poolSpent, poolValue: Math.max(0, cur - poolSpent) };
+  return { tempSpent, poolSpent, poolValue: Math.max(0, cur - poolSpent),
+    tempSource: tempInfo?.source ?? "", tempRestriction: tempInfo?.restriction ?? "" };
 }
 
 function ipCard(meta, title, lines) {
@@ -179,8 +188,40 @@ export async function restoreInfamy(actor, ipFullPath, ipMax, meta) {
   }, rollMode));
 }
 
+// Особые траты Покровительства живут не на полосе, а там, где срабатывают.
+const PATRON_CONTEXT_HINTS = {
+  khorneHatred: "Атака Ненависти: отметьте её в окне атаки перед броском WS/BS — Очко потратится вместе с атакой.",
+  slaaneshCrit: "Сладкое Страдание: кнопка появляется на карточке Критического Эффекта — Очко потратится при нажатии."
+};
+
+/** Есть ли чем платить за способность: обычный пул или временный запас. */
+export function actorHasInfamyPoint(actor) {
+  return actorInfamyValue(actor) >= 1 || tempInfamyAmount(actor) >= 1;
+}
+
+/**
+ * Потратить Очко на способность Покровительства из её момента (окно атаки,
+ * карточка урона). Пул и потолок — те же, что у листа и полосы.
+ * @returns {Promise<boolean>} true — Очко потрачено
+ */
+export async function spendPatronAbility(actor, key) {
+  const godKey = actor?.system?.patronGod || "undivided";
+  const p = chaosPatronMeta(godKey);
+  return (await spendInfamy(actor, key, {
+    godKey, ipFullPath: actorInfamyPath(actor), ipMax: actorInfamyMax(actor),
+    meta: { gc: p.color, gc2: p.gc2, sigil: p.sigil }, contextual: true
+  })) === true;
+}
+
 // Трата Очка Бесчестия на способность (корбук 438).
-export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta }) {
+export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta, contextual = false }) {
+  // Атака Ненависти и Сладкое Страдание срабатывают в своём моменте: до броска
+  // атаки (окно атаки) и на карточке Критического Эффекта. Кнопка на полосе
+  // тратила бы Очко впустую — вместо этого подсказываем, где способность живёт.
+  if (!contextual && PATRON_CONTEXT_HINTS[key]) {
+    ui.notifications.info(PATRON_CONTEXT_HINTS[key]);
+    return false;
+  }
   const s = actor.system;
   const cor = s.corruption?.value ?? 0;
   const patron = DP_PATRONAGE[godKey] || DP_PATRONAGE.undivided;
@@ -234,6 +275,12 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta 
     // взаимодействиях, rules/infamy-fail-success.mjs) — напоминанием в карточке.
     if (key === "boost") lines.push(...infamyBoostNotes(flag => hasRuleFlag(actor, flag)));
   }
+  // Знания Веков (wdbc-1rno.23): «Усиление»/«Успех»/«Переброс» — кнопка
+  // «бросить 1d10». Тест здесь неизвестен (трата с полосы, не с карточки
+  // броска) — кнопка называет добытый Навык, решает игрок. Пусто для прочих
+  // способностей и без мутации. Ветка «Вспышка Гения» выше — тоже «Успех».
+  const koaBtn = knowledgeOfAgesButtonHtml(actor, { ability: key, spend });
+  if (koaBtn) lines.push(koaBtn);
 
   await actor.update(upd);
   if (fatRes) await announceFatigueChange(actor, fatRes);
@@ -246,4 +293,5 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta 
         : `<span style="font-size:0.82em;opacity:0.8;">Осталось Очков Бесчестия: <b>${spend.poolValue}</b> / ${ipMax}.</span>`]),
     rolls, sound: rolls.length ? CONFIG.sounds.dice : undefined
   }, rollMode));
+  return true;
 }

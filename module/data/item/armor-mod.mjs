@@ -30,6 +30,9 @@ export class ArmorModData extends foundry.abstract.TypeDataModel {
       requirement:  new StringField({ initial: "", label: "Требование" }),
       installedOn:  new StringField({ initial: "", label: "Установлена на" }),
       weight:       new NumberField({ initial: 0, nullable: false, label: "Вес" }),
+      // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке; см.
+      // комментарий в data/item/weapon.mjs.
+      stored:       new BooleanField({ initial: false, label: "Хранится (не при себе)" }),
       availability: new NumberField({ initial: 0, integer: true, nullable: false, label: "Доступность" }),
       quality:      new StringField({ initial: "common", label: "Качество" }),
       bookSource:   new StringField({ initial: "", label: "Книга-источник" }),

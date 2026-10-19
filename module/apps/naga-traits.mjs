@@ -15,7 +15,7 @@
 import { hasRuleFlag, ruleFlagLabels } from "../rules/flags.mjs";
 import {
   POISON_IMMUNE_CAPABILITY, EXTRA_WOUND_DAILY_CAPABILITY, EXTRA_WOUND_DAILY_FLAG,
-  extraWoundDailyPlan, adaptiveVenomCandidates,
+  extraWoundDailyPlan, adaptiveVenomCandidates, ADAPTIVE_VENOM_DOSE_FLAG,
   LOCKED_SLAANESH_CAPABILITY, LOCKED_PATRON, patronChangeBlocked,
   DARK_PRINCE_MILESTONE_CAPABILITY, DARK_PRINCE_TAKEN_FLAG, DARK_PRINCE_ARMS,
   DARK_PRINCE_INFAMY_MAX, darkPrinceMilestonesDue
@@ -107,7 +107,7 @@ export async function useAdaptiveVenom(actor) {
   if (!spent) return;
   if (spent.poolSpent > 0) await actor.update({ [path]: spent.poolValue });
 
-  const old = actor.items.filter(i => i.getFlag?.(NS, "adaptiveVenomDose"));
+  const old = actor.items.filter(i => i.getFlag?.(NS, ADAPTIVE_VENOM_DOSE_FLAG));
   if (old.length) await actor.deleteEmbeddedDocuments("Item", old.map(i => i.id));
   const data = chosen.doc.toObject();
   delete data._id;
@@ -124,6 +124,25 @@ export async function useAdaptiveVenom(actor) {
       <div class="roll-threshold" style="font-size:0.85em;">На 1 укус или 1 дозу в еду: примените дозу «${esc(data.name)}» к укушенной цели кнопкой препарата.</div>
     </div>`
   });
+}
+
+/**
+ * Ввести цели укуса дозу «(яд в клыках)» (wdbc-s4ql0): цель — отмеченный
+ * (targeted) токен, иначе выделенный не-укусивший; применение — обычный
+ * applyDrug с получателем, после него израсходованная доза убирается с листа.
+ */
+export async function injectFangVenom(attackerUuid) {
+  const doc = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
+  const attacker = doc?.actor ?? doc ?? null;
+  const dose = [...(attacker?.items ?? [])].find(i => i.getFlag?.(NS, ADAPTIVE_VENOM_DOSE_FLAG));
+  if (!attacker || !dose) return ui.notifications.warn("Яд клыков: доза не найдена на листе укусившей.");
+  const token = [...(game.user?.targets ?? [])][0]
+    ?? (canvas?.tokens?.controlled ?? []).find(t => t.actor && t.actor.id !== attacker.id);
+  const target = token?.actor;
+  if (!target) return ui.notifications.warn("Яд клыков: отметьте цель (T) или выделите её токен.");
+  const { applyDrug } = await import("../sheets/tabs/drugs.mjs");
+  await applyDrug(attacker, dose, target);
+  if ((Number(dose.system?.quantity) || 0) <= 0) await attacker.deleteEmbeddedDocuments("Item", [dose.id]).catch(() => {});
 }
 
 // ── Дитя Тёмного Принца ─────────────────────────────────────────────────────

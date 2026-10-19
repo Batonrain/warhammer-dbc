@@ -22,17 +22,16 @@ import { classifyImplant } from "../../constants/body-map.mjs";
 import { SIDE_LABELS, STATE_LABELS, settableSides, setLimbOutcome, clearSideFields, recoveryFields } from "../../rules/useless-limbs.mjs";
 import { BODY_SIDE_SHORT, isLostOn, pickLostSide, lostSideFields, clearStumpTimerFields, stumpSidesWithTimer, lostByMutation } from "../../rules/limb-loss.mjs";
 import { collectTestMods } from "../../rules/roll-mods.mjs";
-import { regimenHeal, healPeriodSeconds } from "../../rules/healing-clock.mjs";
-import { killByCondition } from "../../combat/condition-death.mjs";
-import { charLossAddFields } from "../../rules/char-loss.mjs";
+import { regimenHeal, healPeriodSeconds, healLevel } from "../../rules/healing-clock.mjs";
+import { applyCharDamage } from "../../combat/char-damage.mjs";
 // New Men / Новые Люди (Йигори): штраф операции и восстановление вдвое,
 // лубок вчетверо короче (module/rules/new-men.mjs).
 import { newMenSurgeryPenalty, newMenRecoveryDays, splintDays } from "../../rules/new-men.mjs";
 
-/** «Медика−30» / «Медика−15 (Новые Люди)» — подпись порога операции. */
-const surgeryLabel = pen => `Медика−${-pen}${pen !== -30 ? " (Новые Люди: штраф вдвое)" : ""}`;
-import { unstableGenomeBonus } from "../../rules/splice-adaptations.mjs";
+/** «Медицина−30» / «Медицина−15 (Новые Люди)» — подпись порога операции. */
+const surgeryLabel = pen => `Медицина−${-pen}${pen !== -30 ? " (Новые Люди: штраф вдвое)" : ""}`;
 import { legionSurgeryPass, offerSusAnWake } from "../../combat/legion-surgery.mjs";
+import { noteHealingFromOther } from "../../combat/warp-touched.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -81,7 +80,7 @@ export function butcherAutoPass(medic, narthecium) {
 /** Уход при лечении болезней (стр. 232) — модификатор к тесту Medicae. */
 const DISEASE_CARE_MOD = { bedRest: 0, rest: -20, none: -40 };
 
-/** Бонус Медики медика — общий для всех режимов теста. */
+/** Бонус Медицины медика — общий для всех режимов теста. */
 function medicSkill(medic) {
   return medic.system.skills?.medicae?.total
     ?? ((medic.system.characteristics?.int?.total ?? 20) - 20);
@@ -91,7 +90,7 @@ function medicSkill(medic) {
  * Модификатор от Талантов/Черт ПАЦИЕНТА к тесту Лечения над ним (wdbc-uez7,
  * делегированный тест — «Высокий болевой порог» и т.п.) — эффекты с
  * `target:"skill:medicae:recipient"` (resolve-test.mjs::effectAppliesTo).
- * Отдельно от Медики самого медика (его собственный бонус уже целиком в
+ * Отдельно от Медицины самого медика (его собственный бонус уже целиком в
  * `medic.system.skills.medicae.total` — постоянные бонусы от снаряжения и
  * Талантов туда уже включены пайплайном производных полей; ситуативных
  * записей с этой областью в паках пока нет, поэтому диалог не показывает под
@@ -105,7 +104,7 @@ function patientHealingMod(patient) {
   return { total, lines };
 }
 
-/** Итоговый Порог теста Медики: медик + автоматический мод. от пациента + свой довесок режима. */
+/** Итоговый Порог теста Медицины: медик + автоматический мод. от пациента + свой довесок режима. */
 export function medicaeEff(medic, patient, extra = 0) {
   return medicSkill(medic) + patientHealingMod(patient).total + extra;
 }
@@ -165,7 +164,7 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
       </div>
       <div class="atk-dlg-row"><label>Режим:</label>
         <select id="heal-mode">
-          <option value="firstAid">Первая Помощь (тест Медики)</option>
+          <option value="firstAid">Первая Помощь (тест Медицины)</option>
           <option value="rest">Отдых (сутки)</option>
           <option value="bedRest">Постельный режим (сутки)</option>
           <option value="passive">Пассивное (сутки)</option>
@@ -262,6 +261,7 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
       `<b>Пациент:</b> ${esc(patient.name)}`,
       `<b>Уровень ранения:</b> ${lvl.label} (потеряно ${lvl.lost}${lvl.crit ? `, крит ${lvl.crit}` : ""}, T.b ${lvl.tb})`
     ];
+    if (healLevel(patient, patient.system).hardy) parts.push("<i>Hardy / Крепкий: для лечения всегда считается легко раненным.</i>");
     if (hasRuleFlag(patient, "healing.astartes")) parts.push("<i>Физиология Астартес: всегда считается отдыхающим.</i>");
     if (patient.system.wounds?.firstAidUsed) parts.push('<span style="color:#a33;">⚠ Первая Помощь уже оказана (нужен новый урон).</span>');
     const mode = form.querySelector("#heal-mode")?.value;
@@ -404,16 +404,11 @@ async function applyCauterize(medic, patient, { restrained, limb = "", bodySide 
   const dmgRoll = await new Roll("1d10").evaluate();
   rolls.push(dmgRoll);
 
-  // Урон в T — единый конвейер (wdbc-x1nz.2.83): пол 0, отходит по 1 в час.
-  // Нестабильный Геном Сплайса — та же надбавка, что в combat/char-damage.mjs.
-  const genome = unstableGenomeBonus(patient);
-  const loss = charLossAddFields(patient.system, "t", dmgRoll.total + genome, game.time?.worldTime ?? 0);
-  const tBefore = loss.before;
-  const tAfter = loss.after;
-  const updates = { ...loss.patch };
-  const lines = [
-    `${rollIcon("fire","#ff8a3a")}<b>Прижигание</b>: Усталость <b>${fatigueRoll.total}</b>, урон в T <b>${dmgRoll.total}</b>${genome ? ` (+${genome} Нестабильный Геном)` : ""} (T ${tBefore}→${tAfter}).`
-  ];
+  // Урон в T — единый конвейер (wdbc-x1nz.2.83, applyCharDamage): пол 0,
+  // отходит по 1 в час, надбавки Угасания/Генома, смерть при T ≤ 0. Он пишется
+  // одним actor.update вместе с остальными правками ниже (параметр extra).
+  const updates = {};
+  const lines = [];
   if (patient.system.conditions?.bleeding) {
     Object.assign(updates, conditionRemoveFields("bleeding"));
     lines.push("Кровотечение остановлено.");
@@ -429,11 +424,14 @@ async function applyCauterize(medic, patient, { restrained, limb = "", bodySide 
   } else if (waiting.length > 1) {
     lines.push(`${rollIcon("warn","#ffb84d")}Необработанных обрубков несколько — выберите часть тела, чтобы прижечь обрубок.`);
   }
+  let dmg = null;
   try {
-    await patient.update(updates);
+    dmg = await applyCharDamage(patient, "t", dmgRoll.total, { extra: updates });
   } catch {
     lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — примените вручную.`);
   }
+  const bonus = dmg ? [dmg.decay ? `+${dmg.decay} Генетическое Угасание` : "", dmg.genome ? `+${dmg.genome} Нестабильный Геном` : ""].filter(Boolean).join(", ") : "";
+  lines.unshift(`${rollIcon("fire","#ff8a3a")}<b>Прижигание</b>: Усталость <b>${fatigueRoll.total}</b>, урон в T <b>${dmgRoll.total}</b>${bonus ? ` (${bonus})` : ""}${dmg ? ` (T ${dmg.before}→${dmg.after})` : ""}.`);
 
   if (!restrained) {
     const t = await charTest(patient, "wp", -20);
@@ -443,8 +441,8 @@ async function applyCauterize(medic, patient, { restrained, limb = "", bodySide 
 
   try { await addFatigue(patient, fatigueRoll.total); } catch {}
 
-  if (tAfter <= 0 && await killByCondition(patient)) {
-    lines.push(`${rollIcon("skull","#ff6b6b")}Стойкость упала до ${tAfter} — <b>${esc(patient.name)} умирает</b>.`);
+  if (dmg?.died) {
+    lines.push(`${rollIcon("skull","#ff6b6b")}Стойкость упала до ${dmg.after} — <b>${esc(patient.name)} умирает</b>.`);
   }
   await sendHealChatMsg(medic, patient, rollIcon("fire","#ff8a3a"), "Прижигание", lines, rolls);
 }
@@ -477,7 +475,7 @@ async function applyAmputate(medic, patient, { mod, limb, narthecium, bodySide =
     rolls.push(roll);
     const butcher = butcherAutoPass(medic, narthecium);
     success = butcher || roll.total <= eff;
-    lines.push(`${rollIcon("blood","#ff6b6b")}<b>Ампутация</b> (${def.label}): Медика−10${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`);
+    lines.push(`${rollIcon("blood","#ff6b6b")}<b>Ампутация</b> (${def.label}): Медицина−10${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`);
     if (butcher) lines.push("Мясник с Нартецием — тест пройден автоматически.");
     const ls = await legionSurgeryPass(medic, success, "Ампутация");
     success = ls.success;
@@ -537,7 +535,7 @@ async function applySetLimb(medic, patient, { mod, side, narthecium }) {
   const modTxt = [limbMod ? `${limbMod} (конечность)` : "", mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""].filter(Boolean).join(" ");
   const lines = [
     ...pMod.lines,
-    `${rollIcon("wrench","#d9a066")}<b>Фиксация</b> (${SIDE_LABELS[side]}): Медика+0${modTxt ? ` ${modTxt}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${rolled ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}${butcher ? " (Мясник с Нартецием — автоматически)" : ""}`,
+    `${rollIcon("wrench","#d9a066")}<b>Фиксация</b> (${SIDE_LABELS[side]}): Медицина+0${modTxt ? ` ${modTxt}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${rolled ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}${butcher ? " (Мясник с Нартецием — автоматически)" : ""}`,
     ls.line
   ].filter(Boolean);
   let days = 1;
@@ -633,7 +631,7 @@ async function applyStumpCare(medic, patient, { mod, limb, bodySide = "" }) {
   const success = ls.success;
   const lines = [
     ...pMod.lines,
-    `${rollIcon("blood","#ff6b6b")}<b>Обработка обрубка</b> (${def.label}${sideTag(side)}): Медика−10${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${rolled ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`,
+    `${rollIcon("blood","#ff6b6b")}<b>Обработка обрубка</b> (${def.label}${sideTag(side)}): Медицина−10${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${rolled ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`,
     ls.line
   ].filter(Boolean);
   if (success) {
@@ -702,7 +700,7 @@ async function applyStopBleeding(medic, patient, { mod, tourniquet, patientActiv
   ].filter(Boolean).join(", ");
   const lines = [
     ...pMod.lines,
-    `${rollIcon("blood","#ff6b6b")}<b>Остановить Кровотечение</b> (${tourniquet ? "полное действие" : "полудействие"}): Медика ${why} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${rolled ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`,
+    `${rollIcon("blood","#ff6b6b")}<b>Остановить Кровотечение</b> (${tourniquet ? "полное действие" : "полудействие"}): Медицина ${why} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${rolled ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`,
     ls.line
   ].filter(Boolean);
   if (success) {
@@ -754,7 +752,7 @@ async function applyGangreneSurgery(medic, patient, { mod, limb, theatre, bodySi
   const success = ls.success;
   const lines = [
     ...pMod.lines,
-    `${rollIcon("skull","#7a8a4d")}<b>Операция от Гангрены</b> (операционная, смена работы): Медика−30${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${rolled ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`,
+    `${rollIcon("skull","#7a8a4d")}<b>Операция от Гангрены</b> (операционная, смена работы): Медицина−30${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${rolled ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`,
     ls.line
   ].filter(Boolean);
   if (!success) {
@@ -819,7 +817,7 @@ async function applyComaWake(medic, patient, { mod }) {
   const success = ls.success;
   const lines = [
     ...pMod.lines,
-    `${rollIcon("spark","#4dffa6")}<b>Вывод из комы</b>: Медика−40${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${rolled ? `<span class="roll-success">Успех — пациент приходит в себя</span>` : `<span class="roll-failure">Провал</span>`}`,
+    `${rollIcon("spark","#4dffa6")}<b>Вывод из комы</b>: Медицина−40${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${rolled ? `<span class="roll-success">Успех — пациент приходит в себя</span>` : `<span class="roll-failure">Провал</span>`}`,
     ls.line
   ].filter(Boolean);
   try { await patient.setFlag(NS, "comaTestAt", game.time.worldTime); } catch {}
@@ -846,7 +844,7 @@ async function applyDiseaseCure(medic, patient, { mod, diseaseCare, diseaseId })
   const lines = [
     ...pMod.lines,
     disease ? `Болезнь: <b>${esc(disease.name)}</b>` : null,
-    `${rollIcon("skull","#9fd08a")}<b>Лечение болезни</b> (${careLabel}): Медика${careMod ? `${careMod >= 0 ? "+" : ""}${careMod}` : ""}${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${rolled ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`,
+    `${rollIcon("skull","#9fd08a")}<b>Лечение болезни</b> (${careLabel}): Медицина${careMod ? `${careMod >= 0 ? "+" : ""}${careMod}` : ""}${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${rolled ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`,
     ls.line || null,
     disease?.system?.cure ? `<span style="font-size:0.85em;">Лечение по тексту болезни: ${esc(disease.system.cure)}</span>` : null
   ].filter(Boolean);
@@ -1017,7 +1015,7 @@ export async function applyHealing(medic, patient, opts) {
   if (mode === "coma")      return applyComaWake(medic, patient, opts);
   if (mode === "disease")   return applyDiseaseCure(medic, patient, opts);
 
-  const lvl = woundLevel(patient.system);
+  const lvl = healLevel(patient, patient.system);
   const tb = lvl.tb;
   // Физиология Астартес — возможность от правил, а не раса пациента.
   const isAstartes = hasRuleFlag(patient, "healing.astartes");
@@ -1044,10 +1042,13 @@ export async function applyHealing(medic, patient, opts) {
     const roll = await new Roll("1d100").evaluate();
     rolls.push(roll);
     const rv = roll.total;
-    const rolled = rv <= eff;
-    const deg = Math.floor(Math.abs(rolled ? eff - rv : rv - eff) / 10) + 1;
+    // «Просто Царапина» (Талант Медика): автоуспех Первой Помощи легко
+    // раненным — возможность medic.core.butAScratch.
+    const autoPass = lvl.key === "light" && hasRuleFlag(medic, "medic.core.butAScratch");
+    const rolled = autoPass || rv <= eff;
+    const deg = autoPass ? 1 : Math.floor(Math.abs(rolled ? eff - rv : rv - eff) / 10) + 1;
     const baseHeal = { light: medic.system.characteristics?.int?.bonus ?? 0, heavy: 2, critical: 1 }[lvl.key];
-    lines.push(`${rollIcon("heart","#ff8a8a")}<b>Первая Помощь</b> (${lvl.label}): Медика ${skill}${testMod >= 0 ? "+" : ""}${testMod} → порог <b>${eff}</b>, бросок <b>${rv}</b> — ${rolled ? `<span class="roll-success">Успех (${deg})</span>` : `<span class="roll-failure">Провал (${deg})</span>`}`);
+    lines.push(`${rollIcon("heart","#ff8a8a")}<b>Первая Помощь</b> (${lvl.label}): Медицина ${skill}${testMod >= 0 ? "+" : ""}${testMod} → порог <b>${eff}</b>, бросок <b>${rv}</b> — ${rolled ? `<span class="roll-success">Успех (${deg})</span>` : `<span class="roll-failure">Провал (${deg})</span>`}${autoPass ? ' <i>(Просто Царапина — автоуспех)</i>' : ""}`);
     // Хирургия Легиона (Апотекарий): провал за Очко Бесчестия — успех с 1
     // Успехом; лечение Первой Помощи от числа Успехов не зависит.
     const ls = await legionSurgeryPass(medic, rolled, "Первая Помощь");
@@ -1081,10 +1082,10 @@ export async function applyHealing(medic, patient, opts) {
       const ok = ls.success;
       careSucceeded = ok;
       if (lvl.key === "critical") {
-        lines.push(`${rollIcon("heart","#ff8a8a")}<b>Мед. уход</b> (крит): Медика−10${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${ok ? `<span class="roll-success">Успех — лечится как тяжёлый</span>` : `<span class="roll-failure">Провал</span>`}`);
+        lines.push(`${rollIcon("heart","#ff8a8a")}<b>Мед. уход</b> (крит): Медицина−10${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${ok ? `<span class="roll-success">Успех — лечится как тяжёлый</span>` : `<span class="roll-failure">Провал</span>`}`);
         if (ok) key = "heavy";
       } else {
-        lines.push(`${rollIcon("heart","#ff8a8a")}<b>Мед. уход</b>: Медика+0${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${ok ? `<span class="roll-success">Успех — период до 8 часов</span>` : `<span class="roll-failure">Провал</span>`}`);
+        lines.push(`${rollIcon("heart","#ff8a8a")}<b>Мед. уход</b>: Медицина+0${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${ok ? `<span class="roll-success">Успех — период до 8 часов</span>` : `<span class="roll-failure">Провал</span>`}`);
       }
       if (ls.line) lines.push(ls.line);
     }
@@ -1122,6 +1123,18 @@ export async function applyHealing(medic, patient, opts) {
       lines.push(`${rollIcon("heart","#ff8a8a")}Восстановлено Ран: <b>${applied}</b>${applied < heal ? " (ограничено нехваткой)" : ""}.`);
     } catch {
       lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — восстановите <b>${applied}</b> Ран вручную (нужен ГМ).`);
+    }
+    // Затронутый Варпом, «Недоверие к Лечению» (wdbc-1rno.26): лечил другой —
+    // штраф на час (combat/warp-touched.mjs). Лечением «от другого» считается
+    // то, где медик реально лечил своим тестом: Первая Помощь и Мед. уход.
+    // Отдых/Постельный режим/Пассивное без ухода — тело лечится само, кто бы
+    // ни нажал кнопку. Отдельно от try выше: отказ в правах на метку не
+    // должен выдавать себя за невылеченные Раны.
+    try {
+      const mistrust = (mode === "firstAid" || care) ? await noteHealingFromOther(patient, medic) : "";
+      if (mistrust) lines.push(mistrust);
+    } catch {
+      lines.push(`${rollIcon("warn","#ffb84d")}Недоверие к Лечению: нет прав на лист цели — штраф −10 (кроме T) на 1 час отметить вручную (нужен ГМ).`);
     }
   }
   // Хирургия Легиона: «Если он Первой помощью поднял Раны вошедшего в

@@ -20,6 +20,9 @@ export class ToolData extends foundry.abstract.TypeDataModel {
       bookSource:   new StringField({ initial: "", label: "Книга-источник" }),
       quantity:     new NumberField({ initial: 1, integer: true, nullable: false, label: "Количество" }),
       weight:       new NumberField({ initial: 0, nullable: false, label: "Вес" }),
+      // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке; см.
+      // комментарий в data/item/weapon.mjs.
+      stored:       new BooleanField({ initial: false, label: "Хранится (не при себе)" }),
       availability: new NumberField({ initial: 0, integer: true, nullable: false, label: "Доступность" }),
       quality:      new StringField({ initial: "common", label: "Качество" }),
       toolCategory: new StringField({ initial: "general", label: "Категория" }),

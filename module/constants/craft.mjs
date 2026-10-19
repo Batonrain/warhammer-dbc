@@ -134,18 +134,22 @@ const LORE_GROUPS = ["forbiddenLore", "scholasticLore", "commonLore"];
 // research=true — оставляем только Навыки исследования (Tech-Use, Medicae,
 // Linguistics, Forbidden/Scholastic Lore).
 // Крафт учитывает только релевантные Навыки: плоские Tech-Use/Survival/Medicae и
-// групповые Ремесло + Знания. Исследование — Tech-Use/Medicae + Знания/Лингвистика.
+// групповые Ремесло + Знания. Исследование — Tech-Use/Medicae + Знания/Язык.
 const CRAFT_FLAT    = ["survival", "techUse", "medicae"];
 const CRAFT_GROUPS  = ["trade", "forbiddenLore", "scholasticLore"];
 const RESEARCH_FLAT = ["techUse", "medicae"];
 const RESEARCH_GRPS = ["linguistics", "forbiddenLore", "scholasticLore"];
+// Изучение (книга: «с помощью Навыка Logic ВМЕСТО создания знаний») — своя,
+// более узкая пара: только Логика, никаких групповых Знаний (studyOnly).
+const STUDY_FLAT    = ["logic"];
+const STUDY_GRPS    = [];
 
-export function buildAvailableSkills(actor, research = false) {
+export function buildAvailableSkills(actor, research = false, studyOnly = false) {
   const out = [];
   const chars = actor?.system?.characteristics || {};
   const untr = (charKey) => (chars[charKey]?.total ?? 0) - 20;
-  const flatOk  = research ? RESEARCH_FLAT : CRAFT_FLAT;
-  const groupOk = research ? RESEARCH_GRPS : CRAFT_GROUPS;
+  const flatOk  = studyOnly ? STUDY_FLAT  : (research ? RESEARCH_FLAT : CRAFT_FLAT);
+  const groupOk = studyOnly ? STUDY_GRPS  : (research ? RESEARCH_GRPS : CRAFT_GROUPS);
 
   const rank = (r) => SKILL_RANKS[r ?? "untrained"]?.bonus ?? -20;
 

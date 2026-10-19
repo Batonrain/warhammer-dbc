@@ -154,6 +154,30 @@ export function promptArchetypeAptitudeChoice(archetypeKey, label) {
   return promptAptitudeChoice(ARCHETYPE_APTITUDE_CHOICES[archetypeKey], label);
 }
 
+/** Есть ли в списке выбранных значений повтор (пустые уже отброшены). */
+function hasDuplicates(values) {
+  return new Set(values).size !== values.length;
+}
+
+/**
+ * Гасит в каждом дропдауне группы то, что выбрано в соседних: дубль выбрать
+ * нельзя, а не «выбрал — и он молча пропал» (task-7b94). Свой выбор не гасится,
+ * иначе дропдаун не показал бы собственное значение.
+ */
+function wireDistinctSelects($selects) {
+  const els = [];
+  $selects.each((_, el) => els.push(el));
+  if (els.length < 2) return;
+  const refresh = () => {
+    for (const el of els) {
+      const taken = new Set(els.filter(o => o !== el && o.value).map(o => o.value));
+      for (const opt of Array.from(el.options)) opt.disabled = !!opt.value && taken.has(opt.value);
+    }
+  };
+  for (const el of els) el.addEventListener("change", refresh);
+  refresh();
+}
+
 function promptAptitudeChoice(cfg, label) {
   if (!cfg) return Promise.resolve(null);
 
@@ -166,8 +190,9 @@ function promptAptitudeChoice(cfg, label) {
         ok: {
           icon: '<i class="fas fa-check"></i>', label: "Принять",
           callback: h => {
-            if (done) return; done = true;
+            if (done) return;
             if (cfg.skillOptions?.length) {
+              done = true;
               const i = Number(h.find(".sub-apt-opt:checked").val());
               const opt = cfg.skillOptions[i];
               resolve(opt ? { chars: [], skills: [], matches: [opt.match] } : null);
@@ -176,12 +201,25 @@ function promptAptitudeChoice(cfg, label) {
             const chars = [], skills = [];
             h.find(".sub-apt-char").each((_, el) => { if (el.value) chars.push(el.value); });
             h.find(".sub-apt-skill").each((_, el) => { if (el.value) skills.push(el.value); });
+            // Дубль не пропускаем: Set в aptitudeOverrideMechanicsGroup схлопнул бы его
+            // молча, и вместо двух Дружественных осталась бы одна (task-7b94).
+            // Исключение (а не return) оставляет окно открытым: Dialog закрывается
+            // после любого колбэка, который не бросил, а текст исключения он сам
+            // показывает игроку уведомлением. Сюда доходит только в обход render
+            // (дропдауны и так не дают выбрать повтор) — это страховка.
+            if (hasDuplicates(chars) || hasDuplicates(skills)) {
+              throw new Error("Один и тот же пункт выбран дважды — выберите разные.");
+            }
+            done = true;
             resolve({ chars, skills });
           }
         },
         cancel: { label: "Пропустить", callback: () => { if (!done) { done = true; resolve(null); } } }
       },
       default: "ok",
+      render: h => {
+        for (const sel of [".sub-apt-char", ".sub-apt-skill"]) wireDistinctSelects(h.find(sel));
+      },
       close: () => { if (!done) { done = true; resolve(null); } }
     }, { classes: ["dialog", "warhammer-dbc", "wh-holo", "hw-choice-dialog"], width: 420 }).render(true);
   });

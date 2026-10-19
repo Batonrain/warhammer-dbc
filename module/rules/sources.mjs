@@ -36,9 +36,13 @@ import { situationalRules } from "./situational.mjs";
 import { psychicSustainTargetRules } from "./psychic-sustain-target.mjs";
 import { pathRulesFor } from "./library/paths.mjs";
 import { hatredRules } from "./hatred.mjs";
+import { awarenessTalentRules } from "./awareness-talents.mjs";
+import { resilienceTalentRules } from "./resilience-talents.mjs";
+import { leadershipTalentRules } from "./leadership-talents.mjs";
 import { legacyWrathRules, legacyExcessRules, legacyGuardianRules, legacyBloodPsychicRules, legacyInstinctiveDisarmRules, legacyDistractingCharSwapRules, legacyQuietAwarenessRules } from "./legacy-weapon.mjs";
 import { devourerPermanentRules } from "./devourer-of-knowledge.mjs";
 import { gallerpoxPoisonPenaltyActive } from "./prophet-of-gallerpox.mjs";
+import { healMistrustRules } from "./warp-touched.mjs";
 import { registerRuleSource } from "./source-registry.mjs";
 
 export { registerRuleSource, getRuleSources, clearRuleSources } from "./source-registry.mjs";
@@ -172,6 +176,24 @@ registerRuleSource("synesthesia", () => SYNESTHESIA_RULES);
 // выбрал Ненавистной при получении Таланта. См. заголовок rules/hatred.mjs.
 registerRuleSource("hatred", (a, ctx) => hatredRules(a, ctx));
 
+// Таланты Внимательности (глава 3, сверка 17.10.2026): галочки Усиленных
+// Чувств, Дегустатора, Воролова, Службы Безопасности и Аналитического Взгляда,
+// штраф Ослепления вдвое у Боя Вслепую. См. заголовок rules/awareness-talents.mjs.
+registerRuleSource("awarenessTalents", (a, ctx) => awarenessTalentRules(a, ctx));
+
+// Таланты Стойкости (глава 3, сверка 18.10.2026): +10 Сопротивления на тесты
+// своей специализации (Страх, Яд, Психосилы, Оглушение) и +10 Декаданса на тесты
+// Зависимости. См. заголовок rules/resilience-talents.mjs.
+registerRuleSource("resilienceTalents", (a, ctx) => resilienceTalentRules(a, ctx));
+
+// Таланты Лидерства (глава 3, повторная разведка 19.10.2026 — Sahara 3-ac78
+// ошибочно считала подсистему Команд/Слаженности неисследованной): Rancor,
+// Eloquence — бонусы на Команду; Iron Discipline — cross-actor переброс
+// Морали подчинённым (allActors нужен только ему — game.actors вне игры
+// нет, возвращает []). См. заголовок rules/leadership-talents.mjs.
+registerRuleSource("leadershipTalents", (a, ctx) =>
+  leadershipTalentRules(a, ctx, typeof game !== "undefined" ? game.actors ?? [] : []));
+
 // Наследие Ярости/Rage, Оружие Наследия (wdbc-1rno.35, стр. 427): штраф −10
 // на I/P, пока экипировано Оружие Наследия с этой Историей. См. заголовок
 // rules/legacy-weapon.mjs::legacyWrathRules.
@@ -203,7 +225,7 @@ registerRuleSource("legacyInstinctiveDisarm", a => legacyInstinctiveDisarmRules(
 registerRuleSource("legacyDistractingCharSwap", a => legacyDistractingCharSwapRules(a));
 
 // Тихое, Оружие Наследия (wdbc-1rno.35/skilled 1-2, стр. 427): тест на
-// Бдительность с целью — носителем этого оружия — получает −30. Обратное
+// Внимательность с целью — носителем этого оружия — получает −30. Обратное
 // направление (проверяет СНАРЯЖЕНИЕ ЦЕЛИ, не роллящего), см. заголовок
 // rules/legacy-weapon.mjs::legacyQuietAwarenessRules.
 registerRuleSource("legacyQuietAwareness", (a, ctx) => legacyQuietAwarenessRules(a, ctx));
@@ -223,6 +245,12 @@ registerRuleSource("devourerOfKnowledge", a => devourerPermanentRules(a));
 // Считается по времени (game.time.worldTime), не по when: правило действует
 // каждый бросок, пока предмет не даст isAddictionUnsatisfied === false.
 registerRuleSource("addiction", a => addictionPenaltyRules(a));
+
+// Затронутый Варпом, субмутация 10 «Недоверие к Лечению» (wdbc-1rno.26):
+// −10 на все тесты, кроме T, час после чужого лечения — та же схема «правило
+// от времени мира», что у Зависимости выше. Метку ставит combat/warp-touched.mjs.
+registerRuleSource("warpTouchedHealMistrust", a =>
+  healMistrustRules(a, (typeof game !== "undefined" ? game.time?.worldTime : null) ?? 0));
 
 // Пилот Дредноута (Книга Машин, стр. 57-58). Связь хранит сам Дредноут — место
 // экипажа с ролью `pilot` и uuid актора, — поэтому спрашивать приходится не

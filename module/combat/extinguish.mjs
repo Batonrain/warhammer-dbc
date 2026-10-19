@@ -21,6 +21,16 @@
 //   - Критический Провал — натуральные 96–100 (rules/roll-outcome.mjs::
 //     criticalOutcome); он же всегда провал тушения.
 //
+//  Падай и Перекатывайся (Талант Стойкости, глава 3): «за полудействие
+//  автоматически тушит себя или согласного (или паникующего) персонажа на
+//  расстоянии касания, сбивая себя или потушенного (соответственно) с ног» —
+//  у носителя тушение БЕЗ теста (автоуспех, Критического Провала нет), тот же
+//  контакт и то же полудействие; ложится тот, кого потушили: себя — сам
+//  носитель, другого — потушенный (rules/resilience-talents.mjs::
+//  dropAndRollProneTarget, [допущение: «соответственно»]). Согласие
+//  потушенного и «паникующий» система не проверяет — решает стол. Носитель
+//  может отказаться (dropAndRoll:false / галочка в окне) и тушить обычным тестом.
+//
 //  Кнопка — вкладка БОЙ, строка «Лечение» (templates/actor/parts/tab-combat.hbs,
 //  sheets/tabs/combat.mjs). Для макроса: showExtinguishDialog(actor) или
 //  extinguishBurning(actor, patient, {mod}).
@@ -33,6 +43,7 @@ import { spendActionPoints } from "./action-economy.mjs";
 import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { rollConditionCharTest, BURNING_FORMULA_FLAG } from "./condition-ticks.mjs";
+import { hasResilienceTalent, dropAndRollProneTarget } from "../rules/resilience-talents.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -58,10 +69,11 @@ async function inContactWith(actor, patient) {
 
 /**
  * Потушить Горение: себя (A−20, ложится) или другого в контакте (A+0, при
- * Критическом Провале загорается сам). Полудействие.
- * @returns {Promise<null|{success:boolean, critFail:boolean, eff:number, rv:number}>}
+ * Критическом Провале загорается сам). Полудействие. С Талантом Падай и
+ * Перекатывайся (и без `dropAndRoll:false`) — автоуспех без теста, ложится потушенный.
+ * @returns {Promise<null|{success:boolean, critFail:boolean, eff:?number, rv:?number, auto?:boolean}>}
  */
-export async function extinguishBurning(actor, patient = actor, { mod = 0 } = {}) {
+export async function extinguishBurning(actor, patient = actor, { mod = 0, dropAndRoll } = {}) {
   if (!actor || !patient) return null;
   if (!patient.system?.conditions?.burning) {
     ui.notifications.warn(`${patient.name}: не горит.`);
@@ -77,9 +89,13 @@ export async function extinguishBurning(actor, patient = actor, { mod = 0 } = {}
     return null;
   }
 
+  const auto = dropAndRoll !== false && hasResilienceTalent(actor, "dropAndRoll");
   const bookMod = extinguishBookMod(self);
-  const t = await rollConditionCharTest(actor, "ag", bookMod + (Number(mod) || 0));
-  const critFail = criticalOutcome(t.rv).failure;
+  // Без теста: автоуспех, Критический Провал (загорается помогающий) исключён.
+  const t = auto
+    ? { base: 0, eff: null, rv: null, parts: [], roll: null, success: true }
+    : await rollConditionCharTest(actor, "ag", bookMod + (Number(mod) || 0));
+  const critFail = auto ? false : criticalOutcome(t.rv).failure;
   const success = t.success && !critFail;
 
   const lines = [];
@@ -95,6 +111,13 @@ export async function extinguishBurning(actor, patient = actor, { mod = 0 } = {}
       await actor.update(prone);
       lines.push(`<div class="roll-threshold">Упал на землю и катался — Повален (встать — действие «Встать»).</div>`);
     }
+  } else if (auto && dropAndRollProneTarget(false) === "patient") {
+    // Падай и Перекатывайся: потушенного сбивают с ног.
+    const prone = patient.system?.conditions?.prone ? {} : conditionApplyFields("prone", null, patient);
+    if (Object.keys(prone).length) {
+      await patient.update(prone);
+      lines.push(`<div class="roll-threshold">Потушенного сбили с ног — ${esc(patient.name)} Повален (встать — действие «Встать»).</div>`);
+    }
   } else if (critFail) {
     const ignite = conditionApplyFields("burning", null, actor);
     if (Object.keys(ignite).length) {
@@ -108,13 +131,15 @@ export async function extinguishBurning(actor, patient = actor, { mod = 0 } = {}
   await postTestCard(actor, {
     icon: rollIcon("fire", "#ff8a3a"),
     title: self ? `Потушить себя — ${esc(actor.name)}` : `Потушить ${esc(patient.name)} — ${esc(actor.name)}`,
-    threshold: rollStatLine({ label: self ? "Ag−20" : "Ag+0", base: t.base, parts, threshold: t.eff, rv: t.rv }),
+    threshold: auto
+      ? `<div class="roll-threshold">Падай и Перекатывайся: тушение автоматически, без теста.</div>`
+      : rollStatLine({ label: self ? "Ag−20" : "Ag+0", base: t.base, parts, threshold: t.eff, rv: t.rv }),
     lines,
     outcome: outcomeHtml(success, success
       ? `Пламя сбито — ${esc(patient.name)} больше не горит (полудействие).`
       : `Не удалось — ${esc(patient.name)} всё ещё горит (полудействие потрачено).`)
-  }, { rolls: [t.roll] });
-  return { success, critFail, eff: t.eff, rv: t.rv };
+  }, { rolls: auto ? [] : [t.roll], sound: !auto });
+  return { success, critFail, eff: t.eff, rv: t.rv, auto };
 }
 
 /**
@@ -131,8 +156,11 @@ export async function showExtinguishDialog(actor) {
     ui.notifications.warn(`Никто не горит: ни ${actor.name}, ни выбранная цель.`);
     return null;
   }
+  const dropAndRoll = hasResilienceTalent(actor, "dropAndRoll");
   const content = `
     <div class="wh-wizard-form" style="padding:6px;">
+      ${dropAndRoll ? `<div class="atk-dlg-row"><label title="Талант: тушение без теста за полудействие; потушенного сбивает с ног. Снимите галочку, чтобы тушить обычным тестом.">
+        <input type="checkbox" id="ext-drop" checked/> Падай и Перекатывайся (без теста)</label></div>` : ""}
       <div class="atk-dlg-row"><label>Кого:</label>
         <select id="ext-who">
           ${selfBurning ? `<option value="self">${esc(actor.name)} (себя, Ag−20, ляжет)</option>` : ""}
@@ -154,7 +182,8 @@ export async function showExtinguishDialog(actor) {
           const form = button.form;
           const who = form.querySelector("#ext-who")?.value;
           const mod = parseInt(form.querySelector("#ext-mod")?.value) || 0;
-          return extinguishBurning(actor, who === "target" ? tgt : actor, { mod });
+          const drop = dropAndRoll ? !!form.querySelector("#ext-drop")?.checked : false;
+          return extinguishBurning(actor, who === "target" ? tgt : actor, { mod, dropAndRoll: drop });
         }
       },
       { action: "cancel", label: "Отмена" }

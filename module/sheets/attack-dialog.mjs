@@ -15,6 +15,7 @@
 // любой другой (Приём зависит от Базы, Стойка/Приём/Хват — от Профиля через
 // категорию оружия, categoryFor/trainingFor ниже).
 
+import { isPlagueHorn, hornRegrowLeft, regrowLabel } from "../rules/lodged-horn.mjs";
 import { hardTargetPenalty } from "../rules/hard-target.mjs";
 import { CHARACTERISTICS }                    from "../constants/characteristics.mjs";
 import { DAMAGE_TYPES }                       from "../constants/items.mjs";
@@ -24,6 +25,7 @@ import { rollIcon }                           from "../constants/roll-icons.mjs"
 import { openAttackDialog } from "./attack/dialog.mjs";
 import { buildAttackContent } from "./attack/markup.mjs";
 import { situationalMods } from "./attack/mods.mjs";
+import { attackFatigueApplies } from "../rules/situational.mjs";
 import { buildSelection } from "./attack/selection.mjs";
 import { AUTO_HIT_CAPABILITY, FULL_ATTACK_CAPABILITY } from "./attack/form.mjs";
 import { qualityEffects }                     from "../constants/quality.mjs";
@@ -31,10 +33,14 @@ import { _degWord, _buildAmmoModString, resolveCharFormula, esc } from "../helpe
 import { attackThreshold }                    from "../combat/attack-threshold.mjs";
 import { resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properties.mjs";
 import { mergeExtraProps } from "../combat/attack-weapon.mjs";
-import { getModEffects, mergeWeaponPropEntries, getInstalledMods } from "../combat/weapon-mods.mjs";
+import { getModEffects, mergeWeaponPropEntries, getActiveMods, getInstalledMods, isSightMod,
+         activeSightId, modWornRequirementMet } from "../combat/weapon-mods.mjs";
 import { hasRuleFlag }                        from "../rules/flags.mjs";
+import { khornePatron }                       from "../rules/patron-abilities.mjs";
 import { isStunnedOrDazed }    from "../rules/predicates.mjs";
 import { suffersBlindness } from "../rules/blindness.mjs";
+import { hasBlindFighting } from "../rules/unseen-talents.mjs";
+import { halvePenalty } from "../rules/awareness-talents.mjs";
 import { shieldRaisedToHead } from "../combat/hand-shield.mjs";
 import { isHallucinatingCannotAttack }         from "../combat/hallucinogenic.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
@@ -43,7 +49,7 @@ import { mountPairFor, mountSelectiveMod, SELECTIVE_MODS,
 import { vehicleCoverMod } from "../rules/vehicle.mjs";
 import { ARMOUR_SIDES } from "../constants/vehicle.mjs";
 import { isWalkerVehicle } from "../rules/walker.mjs";
-import { legionAttackPenalty, LEGION_FIT_FLAG, OVERSIZED_FIT_FLAG } from "../rules/legion-fit.mjs";
+import { legionAttackPenalty, LEGION_FIT_FLAG, OVERSIZED_FIT_FLAG, GIANTS_ARMS_FLAG, wearsPowerArmour } from "../rules/legion-fit.mjs";
 import { ogrynAttackPenalty, OGRYN_FIT_FLAG } from "../rules/ogryn-fit.mjs";
 import { meleeTrainingStatus, weaponTrainingPenalty } from "../rules/weapon-training.mjs";
 import { extendedReachCells, meleeContactDisplay } from "../rules/weapon-length.mjs";
@@ -71,7 +77,7 @@ import { legacyWrathEffectiveRof, takenMutationNames } from "../rules/legacy-wea
 import { actorInfamyValue } from "../apps/infamy-points.mjs";
 import { isSabre, NS as SABRE_NS, SABRE_PENDING_FLAG } from "../combat/sabre-second-attack.mjs";
 import { isZeroedByLoss, ZERO_EFFECTS } from "../rules/char-loss.mjs";
-import { fieldDisablesWeapon } from "../rules/null-zones.mjs";
+import { fieldDisablesWeapon, fieldForbidsShot } from "../rules/null-zones.mjs";
 import { runtForbidsOneHand } from "../rules/runt.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
@@ -95,6 +101,12 @@ import { runtForbidsOneHand } from "../rules/runt.mjs";
  */
 
 export async function showAttackDialog(actor, item, techniqueOpts = {}) {
+  // Рог Чумоноса (Majestic Horns 7, wdbc-1rno.10): обломанный рог отрастает 3
+  // игровых часа — все это время рогами бить нельзя (rules/lodged-horn.mjs).
+  if (isPlagueHorn(item)) {
+    const left = hornRegrowLeft(actor, game.time?.worldTime);
+    if (left > 0) return ui.notifications.warn(`⚠️ ${item.name}: рог обломан, отрастёт через ${regrowLabel(left)}.`);
+  }
   // Галлюцинации, грань «Я маленький...» (стр. 168, wdbc-r5o7.8): «не может
   // совершать Атаки» — жёсткий запрет, тот же приём, что Повален блокирует
   // Натиск/Бег (movement-actions.mjs).
@@ -102,7 +114,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     return ui.notifications.warn("⚠️ Галлюцинации («Я маленький...») — не может совершать Атаки.");
   // Поле Дискорданта (rules/null-zones.mjs, как Haywire (7)): электрическое
   // стрелковое оружие не стреляет; рукопашное бьёт выключенным (ниже).
-  if (fieldDisablesWeapon(actor, item) && item.system?.weaponClass !== "melee")
+  if (fieldForbidsShot(actor, item, item.system?.weaponClass === "melee"))
     return ui.notifications.warn(`⚠️ «${item.name}»: в поле Дискорданта электрическое оружие не стреляет.`);
   // Наследие Ярости/Rage, ranged-ветка (wdbc-1rno.35, стр. 427): «+1 к
   // наибольшей RoF, или S/2− вместо S/−/−» — клон sys с этой точки, реальный
@@ -216,7 +228,26 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   //   Pistol Grip (weaponMod.grantsGrip, wdbc-8vp1), Commando (карабин 1р как
   //   пистолет, wdbc-eduq) и Double Grip (пистолет 2р, wdbc-mu6v) — их самих
   //   на предмете нет, добавляются здесь.
-  const installedMods   = isMelee ? [] : getInstalledMods(actor, item);
+  // Только ДЕЙСТВУЮЩИЕ моды (combat/weapon-mods.mjs::getActiveMods): «бесполезный
+  // без X» мод (Целеуказатель без ретинального дисплея, wdbc-1rno.38) не даёт
+  // ни Хвата, ни бонусов Прицеливания — тот же список, что у getModEffects.
+  const installedMods   = isMelee ? [] : getActiveMods(actor, item);
+  // Один прицел за атаку (wdbc-1rno.40): при двух и больше установленных
+  // прицелах — выпадающий список. Смена пишет флаг оружия и переоткрывает
+  // окно (sheets/attack/dialog.mjs): от прицела зависят числа, посчитанные
+  // при открытии (Коллиматорный +5, гасители бега/дистанции/света).
+  const sightMods = isMelee ? [] : getInstalledMods(actor, item).filter(isSightMod);
+  const sightIdNow = sightMods.length ? activeSightId(actor, item) : null;
+  const sightHtml = sightMods.length > 1 ? `
+    <div class="av-row" title="На оружии может стоять несколько прицелов, но для каждой атаки можно пользоваться только одним">
+      <label>Прицел</label>
+      <select id="atk-sight" class="av-input av-wide">${sightMods.map(m => {
+        const need = m.system?.requiresWorn ?? [];
+        const dead = modWornRequirementMet(actor, m) ? "" : ` — бесполезен без: ${need.join(" / ")}`;
+        const name = String(m.name ?? "").split("/").pop().trim();
+        return `<option value="${esc(m.id)}" ${m.id === sightIdNow ? "selected" : ""}>${esc(name + dead)}</option>`;
+      }).join("")}</select>
+    </div>` : "";
   // Эффекты модификации лежат во ВЛОЖЕННОМ system.effects (схема
   // module/data/item/weapon-mod.mjs), как их и читает getModEffects
   // (combat/weapon-mods.mjs:38). Здесь они раньше читались плоско из
@@ -305,7 +336,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     isGrenade:  sys.weaponType === "grenade",
     // Best.Q Откатная Перчатка (wdbc-vsma): человек берёт легионное оружие без
     // штрафов за Размер и Силу, «неудобная форма» −10 остаётся.
-    ignoresSizeStrength: hasRuleFlag(actor, OVERSIZED_FIT_FLAG)
+    ignoresSizeStrength: hasRuleFlag(actor, OVERSIZED_FIT_FLAG),
+    // Giant's Arms / Оружие Гигантов (wdbc-3-65ff): в НАДЕТОЙ силовой броне
+    // снимает все три слагаемых разом, не только Размер/Силу — «неудобная
+    // форма» тоже уходит.
+    ignoresHandFit: hasRuleFlag(actor, GIANTS_ARMS_FLAG) && wearsPowerArmour(actor)
   });
   // Огрины (wdbc-flai): свойство Ogrynized устроено как Legion выше — чужак не
   // сладит с огринским хватом, а Огрин не пролезет пальцем в человеческую
@@ -325,7 +360,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Арсенал (стр. 62): без Weapon Training на класс оружия — штраф −20.
   const weaponTraining = weaponTrainingPenalty({
     actor, weaponType: sys.weaponType, weaponClass: sys.weaponClass,
-    isGrenade: sys.weaponType === "grenade"
+    isGrenade: sys.weaponType === "grenade", weaponName: item.name
   });
 
   // ── Тактическая карта (wdbc-8k0i): дистанция/контакт/Укрытие по токенам ───
@@ -611,6 +646,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const autoHitAvailable = isMelee
     && hasRuleFlag(actor, AUTO_HIT_CAPABILITY)
     && isRoundCapabilityAvailable(actor, AUTO_HIT_CAPABILITY);
+  // Атака Ненависти (Покровительство Кхорна, корбук 438): галочка нужна и в
+  // рукопашной, и в стрелковой атаке; подходит ли выбранная Характеристика,
+  // проверяет бросок — её можно сменить в самом окне.
+  const hateAttackAvailable = khornePatron(actor);
   // forceBase — нейтральная стартовая База вместо персистентной (Контратака,
   // стр. 12: это атака со штрафом −10, персистентная «Полная Атака» +30 сюда
   // протекать не должна). Игрок волен сменить её в окне, как обычно.
@@ -735,7 +774,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
   // Штраф усталости (мод препаратов уже учтён в char.total)
   // fatigue.effective — с +1 неснимаемой от Гангрены (wdbc-x1nz.2.96).
-  const hasFatigue = (actor.system.fatigue?.effective ?? actor.system.fatigue?.value ?? 0) >= 1;
+  // Через attackFatigueApplies (fatiguePenalty), а не голым «Усталость ≥ 1»: порог
+  // терпимости (Мент. Стойкость, Стойкий, Происхождение) и Неутомимый (нет штрафа
+  // на WS/BS) гасят галочку «Усталость» так же, как строку в конвейере правил.
+  const hasFatigue = attackFatigueApplies(actor, charKey);
   // Ослеплён (стр. 30-31, wdbc-r5o7.4): автопровал BS, −30 WS. При
   // реальном Ослеплении галочка отмечена и заперта (wdbc-x1nz.2.89, решение
   // владельца 4 — снять руками нельзя, sheets/attack/mods.mjs); без него
@@ -765,8 +807,15 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     // здесь только один вариант без своего бонуса, чтобы не задваивать.
     rofModes.push({ value: "melee",  label: "Рукопашная атака",      bonus: 0  });
   } else {
+    // Модификации с бонусом к попаданию в своём режиме огня (wdbc-1rno.38,
+    // Целеуказатель: +5 короткой / +10 длинной) — modFx уже отфильтрован по
+    // действующим модам (требование «носит RD/глаз/MIU», combat/weapon-mods.mjs).
+    const modSingle = Number(modFx.rofSingleAttackMod) || 0;
+    const modSemi   = Number(modFx.rofSemiAttackMod)   || 0;
+    const modFull   = Number(modFx.rofFullAttackMod)   || 0;
+    const modHint   = n => n ? `, модиф. ${n > 0 ? "+" : "−"}${Math.abs(n)}` : "";
     if (sys.rof_single > 0)
-      rofModes.push({ value: "single", label: "Одиночный выстрел (+10)", bonus: 10 });
+      rofModes.push({ value: "single", label: `Одиночный выстрел (+${10 + modSingle}${modHint(modSingle)})`, bonus: 10 + modSingle });
     // Импульсное (стр. 73 Книги Аэльдари): +10 к очередям, вдвое (+20/+10),
     // если сам стрелок не двигался в этом Ходу — flags.warhammer-dbc.
     // movedThisTurn ставят Действия Движения и реальное перемещение токена
@@ -789,17 +838,19 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const extraHint = (hip, dg) => [hip ? `от бедра ${fmtMod(hip)}` : "", dg ? `Double Grip ${fmtMod(dg)}` : ""]
       .filter(Boolean).map(s => `, ${s}`).join("");
     if (sys.rof_semi > 0) {
-      const semiBonus = impulseBonus + hipFireSemi + dgSemi;
-      rofModes.push({ value: "semi", label: `Короткая очередь (${fmtMod(semiBonus)}${impulseHint}${extraHint(hipFireSemi, dgSemi)}, ${sys.rof_semi} выстр.)`, bonus: semiBonus });
+      const semiBonus = impulseBonus + hipFireSemi + dgSemi + modSemi;
+      rofModes.push({ value: "semi", label: `Короткая очередь (${fmtMod(semiBonus)}${impulseHint}${extraHint(hipFireSemi, dgSemi)}${modHint(modSemi)}, ${sys.rof_semi} выстр.)`, bonus: semiBonus });
     }
     if (sys.rof_full > 0) {
       // Fanning / Быстрый Курок (wdbc-fy33, стр. 39): револьвер "1р" со
       // свободной второй рукой — Длинная очередь БЕЗ обычного штрафа −10,
       // вместо обычного расчёта (RoF 2..BS.b по выбору не смоделирован).
-      const fullBonus = fanningActive ? 0 : (impulseBonus - 10 + hipFireFull + dgFull);
+      // Бонус модификации (Целеуказатель) — свойство самого оружия, а не
+      // обычного расчёта очереди, поэтому остаётся и при Быстром Курке.
+      const fullBonus = (fanningActive ? 0 : (impulseBonus - 10 + hipFireFull + dgFull)) + modFull;
       const label = fanningActive
-        ? `Длинная очередь — Быстрый Курок (${fmtMod(fullBonus)}, RoF 2..BS.b по выбору, без бонуса Прицеливания)`
-        : `Длинная очередь (${fmtMod(fullBonus)}${impulseHint}${extraHint(hipFireFull, dgFull)}, ${sys.rof_full} выстр.)`;
+        ? `Длинная очередь — Быстрый Курок (${fmtMod(fullBonus)}${modHint(modFull)}, RoF 2..BS.b по выбору, без бонуса Прицеливания)`
+        : `Длинная очередь (${fmtMod(fullBonus)}${impulseHint}${extraHint(hipFireFull, dgFull)}${modHint(modFull)}, ${sys.rof_full} выстр.)`;
       rofModes.push({ value: "full", label, bonus: fullBonus });
     }
     if (sys.rof_semi > 0 || sys.rof_full > 0) {
@@ -1390,11 +1441,13 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     aimHtml,
     aimLocked,
     aimingBadgeHtml,
+    sightHtml,
     ammoCondHtml,
     ammoDialogHtml,
     attackerMount,
     autoCoverMod,
     autoHitAvailable,
+    hateAttackAvailable,
     autoMountRangedMod,
     badgesHtml,
     bandHtml,
@@ -1617,6 +1670,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     oneVsHundred,
     fanningActive,
     autoHitAvailable,
+    hateAttackAvailable,
     fullAttackForced,
     forcedDefenceReroll,
     helplessAutoMelee,
@@ -1689,7 +1743,8 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
   // (wdbc-x1nz.2.97 п.6); Ослеплённый бьёт с −30 WS, как строка «Ослеплён»
   // окна (wdbc-x1nz.2.89) — здесь галочек нет, поэтому сразу в Порог.
   const { proneMod, stunnedMod } = targetConditionAttackMods(targetActor, true);
-  const blindMod = suffersBlindness(actor) ? -30 : 0;
+  // Бой Вслепую: штраф слепоты в рукопашной вдвое.
+  const blindMod = suffersBlindness(actor) ? (hasBlindFighting(actor) ? halvePenalty(-30) : -30) : 0;
   // WS уже включает мод препаратов (см. prepareDerivedData)
   const final    = ws + techDef.wsBonus + baseBon + stBon + fatigue + proneMod + stunnedMod + blindMod;
 

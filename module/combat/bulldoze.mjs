@@ -22,7 +22,7 @@
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
-import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
+import { statusApplyFields } from "./status-resist.mjs";
 import { sizeOf } from "../rules/predicates.mjs";
 
 /** Разница в Размере (мовер − цель); >0 — цель МЕНЬШЕ. */
@@ -58,9 +58,13 @@ export async function resolveBulldozeSuccess(actor, { deg, target } = {}) {
     `<div class="roll-threshold">Персонаж проходит мимо ${esc(target.name)}, не получая от неё Свободной Атаки.</div>`
   ];
   if (deg >= 5) {
-    const fields = conditionApplyFields("prone", null, target);
+    // Стена (Талант Стойкости): сбиваемый носитель вправе пройти S+0 и устоять.
+    const { fields, resisted, note } = await statusApplyFields(target, "prone", null,
+      { attacker: actor, melee: true, source: "Напролом" });
     if (Object.keys(fields).length) await target.update(fields);
-    sections.push(`<div class="roll-threshold">5+ Успехов: ${esc(target.name)} сбит(а) с ног и получает попадание Пинком или оружием на ноге персонажа — разыграйте обычной рукопашной атакой этим оружием (стр. 40).</div>`);
+    sections.push(resisted
+      ? `<div class="roll-threshold">5+ Успехов: ${esc(note)} Попадание Пинком или оружием на ноге — по-прежнему на усмотрение стола (стр. 40).</div>`
+      : `<div class="roll-threshold">5+ Успехов: ${esc(target.name)} сбит(а) с ног и получает попадание Пинком или оружием на ноге персонажа — разыграйте обычной рукопашной атакой этим оружием (стр. 40).</div>`);
   }
   await postTestCard(actor, {
     icon: rollIcon("sword", "#e08a3a"),

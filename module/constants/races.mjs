@@ -257,7 +257,7 @@ export const RACES = {
       { name: "Unnatural Strength (2) / Сверхъестественная Сила (2)", benefit:"+2 к Бонусу Силы.", rating:2, hasRating:true, effects:{ charBonusStat:"s", charBonusValue:2 } },
       { name: "Unnatural Toughness (4) / Сверхъестественная Стойкость (4)", benefit:"+4 к Бонусу Стойкости.", rating:4, hasRating:true, effects:{ charBonusStat:"t", charBonusValue:4 } },
       { name: "Fast Learner / Ловит на Лету", benefit:"+10% к стартовому опыту и опыту за сессию." },
-      { name: "Clever Hands / Умные Руки", benefit:"+15 на тесты Крафта, ремонта и обслуживания, требующие тонкой работы; +30 в экстремальных ситуациях." },
+      { name: "Clever Hands / Умелые Руки", benefit:"+15 на тесты Крафта, ремонта и обслуживания, требующие тонкой работы; +30 в экстремальных ситуациях." },
       { name: "Hard as Stone / Крепкий как Камень", benefit:"Лечится и мутирует как Космодесантник; Преимущество против ядов, болезней и вакуума; защита от радиации −3; 3 ч сна, без сна до 3 суток." },
       { name: "Sure Tread / Надёжная Поступь", benefit:"−1 SPD, пешком не больше 3×SPD за Ход; Awareness (P) вместо A на Трудном Ландшафте, 3+ Успеха — не замедляет." },
       { name: "Void in Veins / Пустота в Венах", benefit:"I вместо A и Преимущество на тесты ориентации и передвижения в невесомости." }

@@ -16,6 +16,7 @@ import { isItemActive } from "../../apps/effects.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { effectiveFatigue, gangreneFatigueExtra } from "../../rules/situational.mjs";
+import { fatigueFaintThreshold } from "../../rules/resilience-talents.mjs";
 import { raceMatches } from "../../rules/race.mjs";
 import { LIMB_LOSS_KEYS, BODY_SIDES, lostCount, lostCountFields, lostSideFields } from "../../rules/limb-loss.mjs";
 import { esc, on } from "../../helpers/utils.mjs";
@@ -28,7 +29,8 @@ function fatigueThreshold(actor) {
   const system = actor.system || {};
   const tb = system.characteristics?.t?.bonus ?? 0;
   const wb = system.characteristics?.wp?.bonus ?? 0;
-  return { tb, wb, threshold: tb + wb };
+  // Ментальная Стойкость: T.b + 2×W.b вместо T.b + W.b (rules/resilience-talents.mjs).
+  return { tb, wb, threshold: fatigueFaintThreshold(actor) };
 }
 
 /** Книга: «теряет сознание на 10–T.b минут, до минимума в 1 минуту». */

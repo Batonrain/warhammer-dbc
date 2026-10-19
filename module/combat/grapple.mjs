@@ -40,8 +40,10 @@ import { worldTimeRemaining, markWorldTimeCooldownUsed } from "../rules/cooldown
 import { tentacleBonusSuppressed } from "../rules/tentacle-hand-form.mjs";
 import { MELEE_STANCES, MELEE_BASES } from "../constants/combat.mjs";
 import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
+import { statusApplyFields } from "./status-resist.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
+import { extraSuccessDegrees } from "./extra-successes.mjs";
 import { postTestCard, outcomeHtml, rollStatLine } from "../helpers/test-card.mjs";
 import { bodyWeightOf, totalWeightOf, throwTier, canWieldAsCudgel, footingRequirement }
   from "../rules/improvised-weapon.mjs";
@@ -49,6 +51,7 @@ import { spendActionPoints, isEncounterActive, hasActionEconomy } from "./action
 import { spdMeters } from "./recoil-pool.mjs";
 import { maxHands, handsOccupied, weaponHandsRequired, twoHandedTestPenalty, TWO_HANDED_PENALTY_LABEL } from "../rules/hands.mjs";
 import { bearingDegrees, relativeBearing } from "../rules/facing.mjs";
+import { hasDodgeTalent, grappleCoverHalfAngle } from "../rules/dodge-talents.mjs";
 import { canTakeAttackAction, takeAttackAction } from "./attack-limit.mjs";
 import {
   CONSTRICTOR_CAPABILITY, GRAPPLE_TAIL_FLAG, CONSTRICTOR_TAIL_HANDS, CONSTRICTOR_ATHLETICS_BONUS,
@@ -481,6 +484,11 @@ export function grappleTechDef(actor, def) {
     extraBonus: (def.extraBonus ?? 0) + mods.reduce((n, m) => n + m.value, 0),
     extraBonusLabel: mods.map(m => m.label).join(", ") || def.extraBonusLabel,
     rollCount: isGrappleAttacker(actor) ? grappleHands(actor) : 1,
+    // Таланты Избегания (глава 3): Освобождение от Пут — штрафы вычитаются,
+    // Успехи ×2 (только Выкрутиться); Ускользнуть — +30 или переброс раз в
+    // Раунд на любом тесте A в Борьбе (combat/techniques.mjs).
+    escapeArtist: def.label === "Выкрутиться" && hasDodgeTalent(actor, "escapeArtist"),
+    slipAway: char === "ag" && hasDodgeTalent(actor, "slipAway"),
     resistMods: (opp, me) => grappleTestMods(opp, me),
     resistRolls: opp => (isGrappleAttacker(opp) ? grappleHands(opp) : 1)
   };
@@ -528,10 +536,13 @@ export async function _resolveOverpowerSuccess(actor, { deg = 1 } = {}) {
   });
   if (!choice) return;
   if (choice === "prone") {
-    await partner.update(conditionApplyFields("prone", null, partner));
+    // Стена (Талант Стойкости): повалить носителя — рукопашный приём, S+0 и, на 5+ Успехов, ответный сбив.
+    const { fields, resisted, note } = await statusApplyFields(partner, "prone", null,
+      { attacker: actor, melee: true, source: "Пересилить" });
+    if (Object.keys(fields).length) await partner.update(fields);
     await postTestCard(actor, {
-      icon: rollIcon("sword","#e08a3a"), title: "Пересилить: Повален",
-      outcome: `${esc(partner.name)} повален на землю (Захват сохраняется).`
+      icon: rollIcon("sword","#e08a3a"), title: resisted ? "Пересилить: устоял" : "Пересилить: Повален",
+      outcome: resisted ? esc(note) : `${esc(partner.name)} повален на землю (Захват сохраняется).`
     }, { sound: false });
     return;
   }
@@ -963,7 +974,9 @@ async function _doSwing(actor) {
   const final   = ws + profile.wsBonus + baseBon + stBon + ruleMods.total;
 
   const roll = await new Roll("1d100").evaluate();
-  const { success: hit, deg } = testOutcome(roll.total, final);
+  const { success: hit, deg: rolledDeg } = testOutcome(roll.total, final);
+  // Бой Один На Один / Искусный: +1 Успех к успешному тесту (wdbc-r3379).
+  const deg = rolledDeg + extraSuccessDegrees(actor, { success: hit, charKey: "ws" });
   const dmgRoll = await new Roll(`${profile.diceCount}d10`).evaluate();
   const dmgTotal = dmgRoll.total;
 
@@ -1084,7 +1097,8 @@ async function _doThrow(actor) {
   const throwMods = _withTwoHandedGrapplePenalty(collectTestMods(actor, { kind: "skill", char: profile.testChar }), actor);
   const final   = charVal + profile.testBonus + throwMods.total;
   const roll = await new Roll("1d100").evaluate();
-  const { success: hit, deg } = testOutcome(roll.total, final);
+  const { success: hit, deg: rolledDeg } = testOutcome(roll.total, final);
+  const deg = rolledDeg + extraSuccessDegrees(actor, { success: hit, charKey: profile.testChar });
   const knockNote = knockedDown
     ? `<div class="roll-threshold" style="font-size:0.85em;">Без надёжной опоры: ${esc(actor.name)} сбит(а) с ног (Повален), дальность и урон уменьшены вдвое.</div>` : "";
 
@@ -1207,11 +1221,11 @@ function _center(token) {
  * Лежит ли атакующий в секторе, который партнёр прикрывает собой.
  * Чистая геометрия: центры токенов.
  */
-export function inGrappleCoverArc(targetPos, partnerPos, attackerPos) {
+export function inGrappleCoverArc(targetPos, partnerPos, attackerPos, halfAngle = 45) {
   if (!targetPos || !partnerPos || !attackerPos) return false;
   const toPartner = bearingDegrees(targetPos, partnerPos);
   const toAttacker = bearingDegrees(targetPos, attackerPos);
-  return Math.abs(relativeBearing(toPartner, toAttacker)) <= 45;
+  return Math.abs(relativeBearing(toPartner, toAttacker)) <= halfAngle;
 }
 
 /**
@@ -1225,8 +1239,14 @@ export function grappleCoverPartner({ attackerToken, targetToken, targetActor, a
   if (!partner || partner.uuid === (attackerToken.actor ?? attackerToken.document?.actor)?.uuid) return null;
   const partnerToken = partner.getActiveTokens?.(false, false)?.[0] ?? null;
   if (!partnerToken) return null;
-  if (!inGrappleCoverArc(_center(targetToken), _center(partnerToken), _center(attackerToken))) return null;
-  if (aimed && sizeOf(targetActor) >= sizeOf(partner)) return null;
+  // Живой Щит (Талант Избегания, глава 3): «когда он держит другого персонажа
+  // в Захвате, все попадания по нему с арки 180° со стороны взятого в Захват
+  // вместо него попадают в этого персонажа» — сектор ±90° и Избирательные
+  // атаки тоже; у остальных — общее правило выше (±45°, только не-Избирательные).
+  const meatShield = isGrappleAttacker(targetActor) && hasDodgeTalent(targetActor, "meatShield");
+  if (!inGrappleCoverArc(_center(targetToken), _center(partnerToken), _center(attackerToken),
+                         grappleCoverHalfAngle(meatShield))) return null;
+  if (aimed && !meatShield && sizeOf(targetActor) >= sizeOf(partner)) return null;
   return partner;
 }
 

@@ -36,7 +36,7 @@ describe("onExtendedTestReroll", () => {
     const row = rowWith({ ".extended-test-target": { value: "skill:medicae" } });
     onExtendedTestReroll.call(s, {}, rowButton("вязь_зарока", row));
 
-    expect(captured.dialog.window.title).toBe("Проверка: Медика");
+    expect(captured.dialog.window.title).toBe("Проверка: Медицина");
     expect(captured.dialog.content).toContain('id="extended-label" type="text" value="Вязь Зарока"');
     expect(captured.dialog.content).toContain('id="extended-goal" type="number" value="30"');
     expect(captured.dialog.content).toContain('id="kind-extended" checked');

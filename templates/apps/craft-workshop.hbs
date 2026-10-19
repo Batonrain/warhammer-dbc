@@ -20,11 +20,12 @@
           <button type="button" data-mode="craft" class="wh-craft-modebtn {{#if p.isCraft}}active{{/if}}">{{{../icoCraft}}}<span>Крафт</span></button>
           <button type="button" data-mode="research" class="wh-craft-modebtn {{#if p.isResearch}}active{{/if}}">{{{../icoResearch}}}<span>Исследование</span></button>
           <button type="button" data-mode="bio" class="wh-craft-modebtn {{#if p.isBio}}active{{/if}}">{{{../icoBio}}}<span>Биолаборатория</span></button>
+          <button type="button" data-mode="training" class="wh-craft-modebtn {{#if p.isTraining}}active{{/if}}">{{{../icoTeach}}}<span>Обучение</span></button>
         </div>
 
-        {{!-- Крафтер --}}
+        {{!-- Крафтер / Учитель --}}
         <div class="wh-craft-panel">
-          <div class="wh-craft-ptitle">{{{../icoCrafter}}} Крафтер</div>
+          <div class="wh-craft-ptitle">{{{../icoCrafter}}} {{#if p.isTraining}}Учитель{{else}}Крафтер{{/if}}</div>
           {{#if p.noCrafters}}
             <div class="wh-craft-hint">Нет доступных крафтеров. На листе персонажа (ЗАМЕТКИ → СТАТУС) отметьте «Доступен для крафта».</div>
           {{else}}
@@ -36,7 +37,7 @@
         </div>
 
         {{!-- Что создаём --}}
-        {{#if p.isBio}}{{else}}{{#if p.isCraft}}
+        {{#if (or p.isBio p.isTraining)}}{{else}}{{#if p.isCraft}}
         <div class="wh-craft-panel">
           <div class="wh-craft-ptitle">{{{../icoCraft}}} Категория предмета</div>
           <div class="wh-craft-catgrid">
@@ -52,11 +53,25 @@
           <select name="research-kind" class="wh-craft-select">
             {{#each p.researchKinds as |k|}}<option value="{{k.key}}" {{#if k.selected}}selected{{/if}}>{{k.label}}</option>{{/each}}
           </select>
+          {{#if p.showPsychicResultType}}
+          <label class="wh-craft-sub"><span class="wh-craft-lbl">Какой предмет создать</span>
+            <select name="psychic-result-type" class="wh-craft-select">
+              {{#each p.psychicResultTypes as |t|}}<option value="{{t.key}}" {{#if t.selected}}selected{{/if}}>{{t.label}}</option>{{/each}}
+            </select>
+          </label>
+          {{/if}}
+          {{#if p.isStudy}}
+          <label class="wh-craft-sub"><span class="wh-craft-lbl">Для какого Навыка — обоснование</span>
+            <input type="text" name="study-target" value="{{p.studyTarget}}" placeholder="например: Scholastic Lore (Xenos)" class="wh-craft-select"/>
+          </label>
+          <div class="wh-craft-hint">Изучение (книга): Логика «вместо создания знаний» — служит ГМу основанием продвинуть экзотический Навык группы Lore, без учителя/литературы. Предмет не создаётся.</div>
+          {{else}}
           <div class="wh-craft-hint">Исследование не использует Trade/Common Lore. Навык выбирается ниже из Знаний крафтера.</div>
+          {{/if}}
         </div>
         {{/if}}{{/if}}
 
-        {{#unless p.isBio}}
+        {{#unless (or p.isBio p.isTraining)}}
         {{!-- Параметры --}}
         <div class="wh-craft-panel">
           <div class="wh-craft-ptitle">{{{../icoQuality}}} Сложность и Банк</div>
@@ -144,6 +159,74 @@
           </div>
         </div>
         {{/unless}}
+
+        {{#if p.isTraining}}
+        {{!-- ═══════════ ОБУЧЕНИЕ (книга, стр. 22) ═══════════ --}}
+        <div class="wh-training">
+
+          <div class="wh-craft-panel">
+            <div class="wh-craft-ptitle">{{{../icoTeach}}} Чему учим</div>
+            {{#if p.training.noTargets}}
+            <div class="wh-craft-hint">Учитель не знает ни одного обученного Навыка/Таланта — книга: учить можно только тому, что знаешь сам, и не выше своего уровня.</div>
+            {{else}}
+            <select name="training-target" class="wh-craft-select">
+              {{#each p.training.targets as |t|}}<option value="{{t.value}}" {{#if t.selected}}selected{{/if}}>{{t.label}}{{#if t.rankLabel}} ({{t.rankLabel}}){{/if}}</option>{{/each}}
+            </select>
+            {{/if}}
+            <div class="wh-craft-hint">Trade (Instructor) учителя: <b>{{p.training.instructorTotal}}</b>{{#unless p.training.instructorFound}} (необученная Int — специализации нет){{/unless}}</div>
+            <label class="wh-craft-sub"><span class="wh-craft-lbl">Комбинировать тест учителя с</span>
+              <select name="social-key" class="wh-craft-select">
+                {{#each p.training.socialOptions as |o|}}<option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.label}}</option>{{/each}}
+              </select>
+            </label>
+            <div class="wh-craft-hint">При успехе комбинированного теста — всем ученикам +5×Успехи к Пределу их теста (книга).</div>
+            <div class="wh-craft-limitrow">Предел учителя: <b class="wh-craft-{{#if (gte p.training.teacherLimit 50)}}good{{else}}mid{{/if}}">{{p.training.teacherLimit}}</b>
+              {{#if p.training.teacherTalent}}<span class="wh-craft-syn">Учитель: Успехи ×2 в формуле xp, без Усталости/монотонности за сеанс</span>{{/if}}</div>
+            <label class="wh-craft-check"><input type="checkbox" name="monotony" {{#if p.monotony}}checked{{/if}}/> Монотонность (−30 всем тестам курса при завершении)</label>
+          </div>
+
+          <div class="wh-craft-panel">
+            <div class="wh-craft-ptitle">{{{../icoCrafter}}} Ученики</div>
+            <div class="wh-craft-hint">До <b>{{p.training.studentCap}}</b> учеников в курсе (I.b учителя{{#if p.training.teacherTalent}} ×10 — Учитель{{/if}}){{#if p.training.overCap}} — <b style="color:#f0968a">сейчас больше, курс не завершить</b>{{/if}}</div>
+            {{#each p.training.studentRows as |s|}}
+            <div class="wh-training-student" data-sidx="{{s.idx}}">
+              <span class="wh-training-sname">{{s.name}}</span>
+              <select name="student-test" class="wh-craft-select">
+                {{#each s.testOptions as |o|}}<option value="{{o.value}}" {{#if o.selected}}selected{{/if}}>{{o.label}} ({{o.total}})</option>{{/each}}
+              </select>
+              <span class="wh-craft-hint">курсов в месяце: {{s.monthlyUsed}}/{{s.monthlyCap}}{{#if s.overMonthlyCap}} — лимит исчерпан{{/if}}</span>
+              <button type="button" class="wh-craft-premove" data-act="remove-student" data-sidx="{{s.idx}}" title="Убрать ученика">✕</button>
+            </div>
+            {{/each}}
+            <select name="student-add" class="wh-craft-select">
+              <option value="">— добавить ученика —</option>
+              {{#each p.training.studentChoices as |a|}}<option value="{{a.id}}">{{a.name}}</option>{{/each}}
+            </select>
+          </div>
+
+          <div class="wh-craft-panel wh-craft-progress">
+            <div class="wh-craft-bankrow">
+              <div class="wh-craft-bank">Сеансы курса: <b>{{p.training.sessionCount}}</b> / {{p.training.sessionsNeeded}}</div>
+              <div class="wh-craft-shifts">{{{../icoShift}}} Усталость — каждый сеанс, учителю{{#if p.training.teacherTalent}} (КРОМЕ Учителя){{/if}} и ученикам</div>
+            </div>
+            <div class="wh-craft-bar"><div class="wh-craft-bar-fill{{#if p.training.canFinish}} done{{/if}}" style="width:{{p.training.sessionPct}}%"></div><span class="wh-craft-bar-txt">{{p.training.sessionCount}} / {{p.training.sessionsNeeded}}</span></div>
+            <div class="wh-craft-actions">
+              <button type="button" class="wh-craft-btn primary" data-act="session" {{#unless p.hasCrafter}}disabled{{/unless}}>{{{../icoShift}}} Отработать сеанс</button>
+              <button type="button" class="wh-craft-btn primary" data-act="finish-course" {{#unless p.training.canFinish}}disabled{{/unless}}>{{{../icoTeach}}} Завершить курс</button>
+            </div>
+          </div>
+
+          {{#if p.training.courseLog.length}}
+          <div class="wh-craft-panel">
+            <div class="wh-craft-ptitle">Журнал курсов (этот проект)</div>
+            {{#each p.training.courseLog as |c|}}
+            <div class="wh-craft-hint">«{{c.target}}»: {{#each c.students as |s|}}{{s.name}} +{{s.xp}}xp{{#unless @last}}, {{/unless}}{{/each}}</div>
+            {{/each}}
+          </div>
+          {{/if}}
+
+        </div>
+        {{/if}}
 
         {{#if p.isBio}}
         {{!-- ═══════════ БИОЛАБОРАТОРИЯ ДРУКХАРИ ═══════════ --}}

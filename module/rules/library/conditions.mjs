@@ -172,8 +172,8 @@ export const CONDITION_RULES = [
     // «Раны и Урон», «Статусы», wdbc-x1nz.2.89: «Ослепленный персонаж …
     // автоматически проваливает тесты на BS и получает штраф –30 на тесты WS
     // и прочие тесты, что требуют зрения». Решение владельца (4): «прочие
-    // тесты со зрением» — Бдительность, Проницательность, Выживание
-    // (навыки от Per; Психонаука — не зрение, не затронута).
+    // тесты со зрением» — Внимательность, Пристальность, Выживание
+    // (навыки от Per; Психочутьё — не зрение, не затронута).
     //
     // Тут — только тесты Навыков/Характеристик. Атаку считает окно атаки своей
     // строкой «Ослеплён» (sheets/attack/mods.mjs: автопровал BS, −30 WS), и
@@ -186,7 +186,7 @@ export const CONDITION_RULES = [
     // Потеря глаз) — по нему «Смягчение» Конструктора находит это правило
     // (conditionRulesFor); isBlinded сужает «Потерю глаз» до обоих глаз.
     //
-    // Один эффект на список областей, а не четыре эффекта: Бдительность
+    // Один эффект на список областей, а не четыре эффекта: Внимательность
     // бывает и на WS (Распознать Стойку) — иначе −60.
     id: "conditions.blinded",
     label: "Ослеплён",
@@ -196,6 +196,17 @@ export const CONDITION_RULES = [
       { kind: "rollBonus", target: ["basedon:ws", "skill:awareness", "skill:scrutiny", "skill:survival"],
         value: -30, label: "🙈 Ослеплён", auto: true }
     ]
+  },
+  {
+    // Бой Вслепую (Талант, глава 3): «уменьшает штрафы на рукопашные Атаки и
+    // Избегания рукопашных атак от слепоты … в 2 раза». Окно рукопашной атаки
+    // считает свою строку «Ослеплён» само (sheets/attack/mods.mjs); здесь —
+    // тесты WS (Парирование): половина штрафа −30 возвращается. Альтернативные
+    // чувства снимают всё вместе (overrides ниже и в item-rules.mjs).
+    id: "conditions.blinded.blindFighting",
+    label: "Бой Вслепую: штраф Ослепления вдвое",
+    when: { hasTalent: "Blind Fighting", hasCondition: ["blinded", "lostEyes"], isBlinded: true },
+    effects: [{ kind: "rollBonus", target: "basedon:ws", value: 15, label: "Бой Вслепую: штраф Ослепления вдвое", auto: true }]
   },
   {
     // «Если персонаж способен ориентироваться и определять цели
@@ -208,9 +219,9 @@ export const CONDITION_RULES = [
     // CAPABILITY_OVERRIDES).
     id: "conditions.blinded.altSenses",
     label: "Альтернативные чувства (Sonar Sense / Unnatural Senses)",
-    when: { anyOf: ALT_SENSES_TRAITS.map(name => ({ hasTrait: name })) },
+    when: { anyOf: [...ALT_SENSES_TRAITS.map(name => ({ hasTrait: name })), { blindsightActive: true }] },
     effects: [],
-    overrides: ["conditions.blinded"]
+    overrides: ["conditions.blinded", "conditions.blinded.blindFighting"]
   },
   {
     // «Раны и Урон», «Статусы», wdbc-x1nz.2.92: «За каждый уровень

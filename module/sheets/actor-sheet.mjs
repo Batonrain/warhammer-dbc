@@ -18,6 +18,7 @@ import { characterContext, charLabel } from "./character-context.mjs";
 import { showAttackDialog } from "./attack-dialog.mjs";
 import { rollMutationOrGift, openMutationPicker } from "./tabs/mutations.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { masteryCrit, MASTERY_CRIT_LINE } from "../rules/mastery.mjs";
 import { payIntTestAction } from "../combat/bone-head.mjs";
 import { applyOnTargetFailConditions } from "../rules/on-target-fail.mjs";
 import { createDisorderItem, activateDisorderListeners,
@@ -72,14 +73,16 @@ import { spendCapabilityCost } from "../combat/capability-cost.mjs";
 import { runMechScriptEntry } from "../apps/mechanics.mjs";
 import { applyTouchedByFates } from "../rules/daemon-locus.mjs";
 import { promptStatAdd } from "../apps/stat-log.mjs";
-import { CHAOS_PATRONS, chaosPatronMeta } from "../constants/chaos-patron.mjs";
+import { CHAOS_PATRONS, chaosPatronMeta, godAttentionTip } from "../constants/chaos-patron.mjs";
 import { charStereotypesFor, effectivePricingMode, worldAdvancePricingMode, PRICING_MODES } from "../constants/patronage.mjs";
 import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml, ruleAutoModsHtml, autoModsTotal } from "../rules/roll-mods.mjs";
 import { EXCESS_LEGACY_RULE_ID } from "../rules/legacy-weapon.mjs";
 import { rollExcessLegacyRiskTest } from "../combat/legacy-weapon-excess.mjs";
+import { commitRerollUse } from "../combat/angel-hunters.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
+import { awarenessTalentDegrees } from "../rules/awareness-talents.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { infamyFailSuccessButtonsHtml } from "../apps/infamy-fail-success.mjs";
 import { isMoraleOpposedSkill, resolveTest } from "../rules/resolve-test.mjs";
@@ -117,6 +120,9 @@ import { actorHasAspectPath } from "../constants/aeldari-paths.mjs";
 import { zeroBlankNumbers } from "../helpers/blank-zero.mjs";
 import { clearHololithBriefing } from "../combat/hololith-briefing.mjs";
 import { ignoresWeight, IGNORE_WEIGHT_FLAG } from "../rules/encumbrance.mjs";
+import { isNotableCharacter, NOTABLE_FLAG } from "../rules/resilience-talents.mjs";
+import { hasWarChant, warChantSinging, WAR_CHANT_FLAG,
+         WAR_CHANT_SING_ALONG_FLAG, commandersOf } from "../rules/leadership-talents.mjs";
 import { convertActorToMinion } from "../apps/minion-convert.mjs";
 
 /** Книжная пара Склонностей Навыка — [char, apt2] его определения. */
@@ -642,13 +648,26 @@ export function onSkillRoll(event, target) {
     const entry    = this.actor.system.groupSkills?.[groupKey]?.[idx];
     const def      = GROUP_SKILLS_DEF[groupKey];
     if (!entry || !def) return;
+    const spec = entry.specKey ? specDef(groupKey, entry.specKey) : null;
+    if (blockedUntrained(def.cannotUntrained || spec?.cannotUntrained, entry.rank, `${def.label}: ${entry.specialty}`)) return;
     return this._rollSkill(`${def.label}: ${entry.specialty}`, entry.total ?? -20, entry.char || def.char,
       { group: groupKey, specialty: entry.specialty });
   }
   const key = target.dataset.skill;
   const def = SKILLS_DEF[key];
   const sk  = this.actor.system.skills?.[key];
+  if (blockedUntrained(def?.cannotUntrained, sk?.rank, def?.label ?? key)) return;
   return this._rollSkill(def?.label ?? key, sk?.total ?? -20, def?.char ?? "ag", { skill: key });
+}
+
+// Сноска ² (книга, стр. 57): у некоторых Навыков/специализаций (Forbidden
+// Lore, Psyniscience, Operate — Aeronautica/Voidship) тест вообще
+// недоступен без изучения — не просто −20, как у обычного неизученного
+// Навыка. rank по умолчанию "untrained", если поле ещё не выставлено.
+function blockedUntrained(cannotUntrained, rank, label) {
+  if (!cannotUntrained || (rank ?? "untrained") !== "untrained") return false;
+  ui.notifications.warn(`${label}: нельзя использовать неизученным.`);
+  return true;
 }
 
 // ── Расширенные тесты (стр. 25, wdbc-nysl): панель на вкладке ПОКАЗАТЕЛИ ──
@@ -668,6 +687,7 @@ export function onExtendedTestReroll(event, target) {
   if (refKind === "skill") {
     const def = SKILLS_DEF[refKey];
     const sk  = this.actor.system.skills?.[refKey];
+    if (blockedUntrained(def?.cannotUntrained, sk?.rank, def?.label ?? refKey)) return;
     return this._rollSkill(def?.label ?? refKey, sk?.total ?? -20, def?.char ?? "ag", { skill: refKey },
       { defaultKind: "extended", extendedPreset });
   }
@@ -1051,7 +1071,7 @@ export class WarhammerCharacterSheet
       // подставляет Неделимого, когда Бог не выбран, и селектор показывал бы
       // выбранным то, чего в акторе нет (wdbc-osz).
       const patronChosen = this.actor.system.patronGod || "";
-      context.chaosPatrons = CHAOS_PATRONS.map(p => ({ ...p, selected: p.key === patronChosen,
+      context.chaosPatrons = CHAOS_PATRONS.map(p => ({ ...p, selected: p.key === patronChosen, tip: godAttentionTip(p.key) || p.label,
         favor: Number(foundry.utils.getProperty(this.actor, `system.patronFavor.${p.key}`)) || 0 }));
       // Селектор Бога в ЗАПИСЯХ — только там, где патрон не выбирается иначе.
       // У Демон-Принца патрон = «Патрон» в шапке (allegiance) → селектор скрыт.
@@ -1258,6 +1278,62 @@ export class WarhammerCharacterSheet
         ? this.actor.unsetFlag("warhammer-dbc", IGNORE_WEIGHT_FLAG)
         : this.actor.setFlag("warhammer-dbc", IGNORE_WEIGHT_FLAG, true))
     };
+  }
+
+  /**
+   * «Значимый персонаж» (Взор Богов, Талант Стойкости): ГМ отмечает, что этот актор —
+   * не рядовой враг, а значимая фигура, у которой свой лимит 10 Ран за Раунд против
+   * носителя Таланта (combat/eye-of-the-gods.mjs). Флаг актора, а не поле схемы:
+   * нужен только ГМу и только этому правилу. Пункт видит только ГМ.
+   */
+  _notableEntries() {
+    if (!game.user?.isGM) return [];
+    const on = isNotableCharacter(this.actor);
+    return [{
+      cls: "wh-ctx-tog-notable", label: "★ Значимый персонаж (Взор Богов)", checkbox: true, checked: on,
+      onClick: () => (on
+        ? this.actor.unsetFlag("warhammer-dbc", NOTABLE_FLAG)
+        : this.actor.setFlag("warhammer-dbc", NOTABLE_FLAG, true))
+    }];
+  }
+
+  /**
+   * War Chant/Боевая Песнь (Талант Лидерства, Sahara 3-ac78, 19.10.2026):
+   * «распевает» — ручной переключатель (флаг актора), книжное «в начале
+   * Хода» не превращено в авто-тик (см. заголовок rules/leadership-talents.mjs).
+   * Пункт виден только носителю Таланта.
+   */
+  _warChantEntry() {
+    if (!hasWarChant(this.actor)) return [];
+    const on = warChantSinging(this.actor);
+    return [{
+      cls: "wh-ctx-tog-warchant", label: "🎵 Распевает (Боевая Песнь)", checkbox: true, checked: on,
+      onClick: () => (on
+        ? this.actor.unsetFlag("warhammer-dbc", WAR_CHANT_FLAG)
+        : this.actor.setFlag("warhammer-dbc", WAR_CHANT_FLAG, true))
+    }];
+  }
+
+  /**
+   * War Chant/Боевая Песнь — «подпевать» (книга: доступно любому
+   * подчинённому, получающему Присутствие от песни, не только носителю
+   * Таланта). Пункт виден, пока у actor есть командующий с этим Талантом —
+   * не только пока тот ПРЯМО СЕЙЧАС поёт, чтобы галочка не исчезала с листа
+   * между Ходами; механический эффект (переброс Морали, +1 Успех Команде
+   * против него, +3 Intimidate Лидеру) включается только когда командующий
+   * реально поёт — warChantSingAlongActive в rules/leadership-talents.mjs.
+   */
+  _warChantSingAlongEntry() {
+    const allActors = game.actors ?? [];
+    if (!commandersOf(this.actor, allActors).some(hasWarChant)) return [];
+    const on = !!(this.actor.getFlag?.("warhammer-dbc", WAR_CHANT_SING_ALONG_FLAG)
+      ?? this.actor.flags?.["warhammer-dbc"]?.[WAR_CHANT_SING_ALONG_FLAG]);
+    return [{
+      cls: "wh-ctx-tog-warchant-singalong", label: "🎶 Подпевает Боевой Песне", checkbox: true, checked: on,
+      onClick: () => (on
+        ? this.actor.unsetFlag("warhammer-dbc", WAR_CHANT_SING_ALONG_FLAG)
+        : this.actor.setFlag("warhammer-dbc", WAR_CHANT_SING_ALONG_FLAG, true))
+    }];
   }
 
   _sheetToggleEntries(keys) {
@@ -1736,22 +1812,23 @@ export class WarhammerCharacterSheet
         this._advancePricingSubmenu(), { sep: true },
         this._accessSubmenu(accessKeys),
         ...this._sheetToggleEntries(["craftAvailable", ...(aeldari ? [] : ["isRogueTrader"])]),
-        this._ignoreWeightEntry(),
+        this._ignoreWeightEntry(), ...this._notableEntries(), ...this._warChantEntry(),
+        ...this._warChantSingAlongEntry(),
         horde, minion
       ].filter(Boolean);
     }
     if (type === "daemon") {
-      return [...this._sheetToggleEntries(["isPsyker", "craftAvailable"]), this._ignoreWeightEntry(), horde, minion];
+      return [...this._sheetToggleEntries(["isPsyker", "craftAvailable"]), this._ignoreWeightEntry(), ...this._notableEntries(), horde, minion];
     }
     if (type === "demonPrince") {
-      return [...this._sheetToggleEntries(["isRogueTrader", "isPsyker", "craftAvailable"]), this._ignoreWeightEntry(), minion];
+      return [...this._sheetToggleEntries(["isRogueTrader", "isPsyker", "craftAvailable"]), this._ignoreWeightEntry(), ...this._notableEntries(), minion];
     }
     if (type === "minion") {
       return [
         this._accessSubmenu(["isPsyker", "possessed", "isTechpriest"]),
         horde, this._bodyTypeSubmenu(),
         ...this._sheetToggleEntries(["craftAvailable"]),
-        this._ignoreWeightEntry()
+        this._ignoreWeightEntry(), ...this._notableEntries()
       ].filter(Boolean);
     }
     return [];
@@ -2464,6 +2541,7 @@ export class WarhammerCharacterSheet
               ? { mode: rerollEl.dataset.mode, rolls: parseInt(rerollEl.dataset.rolls) || 2,
                   label: rerollEl.parentElement?.textContent?.trim() || "Переброс" }
               : null;
+            if (namedReroll) commitRerollUse(this.actor, rerollEl.dataset);
             const reroll = mergeReroll(namedReroll, readDiceChoice(val));
             // Виды теста — независимые галочки (стр. 25-26, wdbc-y9i8): любое
             // подмножение Расширенный/Комбинированный/Встречный(+vss) может
@@ -2610,6 +2688,21 @@ export class WarhammerCharacterSheet
               : `🎲 Бросить за «${targetActor.name}» автоматически`;
             autoRow.hidden = false;
           }
+        }
+        // Галочка с data-set-char (Аналитический Взгляд: I вместо P) переключает
+        // «Бросок с:» на эту Характеристику, а при снятии возвращает прежнюю.
+        if (charSelectEl) {
+          let charBeforeTick = null;
+          root.querySelectorAll(".rule-mod[data-set-char]").forEach(cb => cb.addEventListener("change", () => {
+            if (cb.checked) {
+              charBeforeTick = charSelectEl.value;
+              charSelectEl.value = cb.dataset.setChar;
+            } else if (charBeforeTick != null) {
+              charSelectEl.value = charBeforeTick;
+              charBeforeTick = null;
+            }
+            charSelectEl.dispatchEvent(new Event("change"));
+          }));
         }
         root.querySelector("#skill-target")?.addEventListener("input", updateAutoOutcomeNote);
         root.querySelector("#skill-modifier")?.addEventListener("input", updateAutoOutcomeNote);
@@ -3074,7 +3167,11 @@ export class WarhammerCharacterSheet
     const outcome = await resolveKindOutcome(effectActor, {
       baseEff, rv, combined: combinedForOutcome, extended, opposed: finalOpposed,
       opposedSelected: opposedKind, opposedSafeSelected,
+      // group/specialty (wdbc-1rno.22): групповой Навык приходит без skill
+      // (onSkillRoll) — без них исход теста принимал бросок Навигации/Ремесла
+      // за тест Характеристики (Инфернальная Воля: «любой тест Навыка»).
       ctx: { actor: effectActor, kind: "skill", char: charKey, skill: skillKey ?? undefined,
+             group: rollContext?.group || undefined, specialty: rollContext?.specialty || undefined,
              morale: isMoraleOpposedSkill(skillKey),
              ...(withSceneTarget ? { targetActor: sceneTarget } : {}) }
     });
@@ -3091,8 +3188,19 @@ export class WarhammerCharacterSheet
       ? outcome.combinedAssistCount : assistCount;
     // Потолок Успехов (BONE-Head Огрина, successDegMax) режет ИТОГ — в т.ч.
     // степень от Ассистентов: книга «не больше 1 Успеха» не делает исключений.
-    const assisted = assistDegrees(outcome.deg, effectiveAssistCount, outcome.success);
+    // Таланты Внимательности (rules/awareness-talents.mjs): отмеченные галочки
+    // Аналитического Взгляда (×2), Воролова и Службы Безопасности меняют Успехи
+    // теста ДО Ассистентов.
+    const awarenessDeg = skillKey === "awareness"
+      ? awarenessTalentDegrees(effectActor, { checkedRuleIds, success: outcome.success, deg: outcome.deg, charKey })
+      : { deg: outcome.deg, lines: [] };
+    const assisted = assistDegrees(awarenessDeg.deg, effectiveAssistCount, outcome.success);
     const deg      = outcome.degCap != null ? Math.min(outcome.degCap, assisted) : assisted;
+    // Мастерство: Ассистенты дотянули степень до 5+ уже после расчёта исхода —
+    // строку крита дорисовываем здесь (сам исход её не видел).
+    const masteryAssistCrit = (!outcome.masteryCrit && !outcome.crit?.success && masteryCrit(effectActor,
+      { skill: skillKey ?? "", group: rollContext?.group ?? "", specialty: rollContext?.specialty ?? "" },
+      { success: outcome.success, deg })) ? MASTERY_CRIT_LINE : "";
     const outcomeHtml = outcome.success
       ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
       : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`;
@@ -3106,7 +3214,8 @@ export class WarhammerCharacterSheet
       const applied = await applyOnTargetFailConditions(onFailItemUuid, effectActor);
       if (applied.length) {
         onFailNote = `<div class="roll-threshold">${applied.map(a =>
-          a.applied ? `Состояние наложено: <b>${esc(a.label)}</b>` : `Иммунитет — <b>${esc(a.label)}</b> не наложено`
+          a.applied ? `Состояние наложено: <b>${esc(a.label)}</b>`
+            : a.resisted ? esc(a.note) : `Иммунитет — <b>${esc(a.label)}</b> не наложено`
         ).join("<br/>")}</div>`;
       }
     }
@@ -3137,10 +3246,11 @@ export class WarhammerCharacterSheet
       lines: [
         outcome.combinedLine,
         outcome.unnaturalLine,
+        ...awarenessDeg.lines.map(l => `<div class="roll-threshold">${esc(l)}</div>`),
         outcome.personalAdaptationLine,
         assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${(outcome.success && effectiveAssistCount === assistCount) ? `, +${assistCount} к степени` : ""})</div>` : ""
       ],
-      rerollNote, critLine: outcome.critLine, outcome: outcomeHtml,
+      rerollNote, critLine: outcome.critLine + masteryAssistCrit, outcome: outcomeHtml,
       sections: [outcome.extendedLine, outcome.opposedLine, pendingOpponentNote, onFailNote,
         // Провал → Очко Бесчестия → Успех на 1 Успех (Змеиный Язык и т.п.,
         // rules/infamy-fail-success.mjs) — кнопка только у Черт, покрывающих
@@ -3153,7 +3263,10 @@ export class WarhammerCharacterSheet
       // Medicae / For.Lore (Astartes Implants) → успех с 1 Успехом).
       flags: { "warhammer-dbc": { skillTest: {
         skill: skillKey ?? "", group: rollContext?.group ?? "", specialty: rollContext?.specialty ?? "",
-        label, success: !!outcome.success
+        label, success: !!outcome.success,
+        // Для меню Очков: Мастерство (автоуспех: Характеристика, поправки не
+        // хуже +0, уже набранные Успехи) и За Гранью Человека (Характеристика).
+        char: charKey, mod: baseEff - target, deg
       } } }
     });
 
@@ -3215,10 +3328,12 @@ export class WarhammerCharacterSheet
    */
   async _rollCharacteristic(label, abbr, threshold, charKey, hideCharSelect = false, {
     effectTargetActor = null, opposedRequest = null, presetModifier = 0, onFailItemUuid = null,
-    defaultKind = "base", extendedPreset = null
+    defaultKind = "base", extendedPreset = null, rollContext = null
   } = {}) {
     return this._runTest(label, threshold, charKey, {
       hideCharSelect, effectTargetActor, opposedRequest, presetModifier, onFailItemUuid, defaultKind, extendedPreset,
+      // rollContext — теги теста для сбора правил (psychicThreat у сопротивления психосиле).
+      rollContext,
       headerAbbr: abbr, targetLabel: "Цель",
       // Тест Характеристики не клал цель сцены в контекст исхода, тест Навыка
       // клал. Не выравниваем заодно с объединением: правила с условием по цели

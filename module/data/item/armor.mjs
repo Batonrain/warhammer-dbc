@@ -43,6 +43,11 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
       armorType:    new StringField({ initial: "simple", label: "Тип брони" }),
       stacks:       new BooleanField({ initial: false, label: "Складывается" }),
       maxAgility:   num(100, "Потолок Ловкости"),
+      // Отдельное от потолка число (стр. 235, Terminator Aegis — колонки A и
+      // Max.A разные): сколько брони ВЫЧИТАЕТ из A, пока носитель её не
+      // ослабил Тренировкой в Броне (rules/armour-training.mjs). 0 — у брони
+      // такого штрафа нет вовсе, книга говорит «если есть».
+      agilityPenalty: num(0, "Штраф к A"),
       // Рейтинги свойств и второй профиль AP: ключи задаёт сам предмет.
       propRatings:  new ObjectField({ label: "Рейтинги свойств" }),
       apSecond:     new ObjectField({ label: "Второй профиль AP" }),
@@ -70,6 +75,9 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
       bookSource:   new StringField({ initial: "", label: "Книга-источник" }),
       availability: num(0, "Доступность"),
       weight:       num(0, "Вес"),
+      // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке; см.
+      // комментарий в data/item/weapon.mjs.
+      stored:       new BooleanField({ initial: false, label: "Хранится (не при себе)" }),
       // Ключи свойств брони — строки (data/string-list.mjs, wdbc-x1nz.2.81).
       properties:   stringList("Свойства"),
       strengthBonus: num(0, "Бонус Силы"),
@@ -103,6 +111,10 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
       // Sealed («теряется при пробитии»), сам смысл потери решает читатель,
       // не этот флаг.
       breached:     new BooleanField({ initial: false, label: "Пробита" }),
+      // Аблативное Укрепление (Талант Стойкости, глава 3): заряды прочности брони.
+      // Выставляются кнопкой «Обслужить (1 ч)» (= I.b носителя), тратятся на то, чтобы
+      // проигнорировать эффект, снижающий AP (combat/ablative-hardening.mjs).
+      hardeningCharges: num(0, "Заряды прочности (Аблативное Укрепление)"),
       // «Нейтрализует собственный вес в расчёте переносимого веса» (стр. 233) —
       // на самом деле общее правило ВСЕЙ силовой брони (см. комментарий у
       // расчёта веса в documents/actor.mjs), сейчас применяется напрямую по

@@ -36,6 +36,7 @@ import { shockApLocked, shockHalfAction } from "../rules/shock.mjs";
 import { turnStartFlagClears, turnStartAttackCarryOver, turnStartSqueezeCarryOver } from "../rules/turn-flags.mjs";
 import { rollLegacyChangeBonus, tickLegacyExcessBoost } from "../rules/legacy-weapon.mjs";
 import { implantDisrupted, mentalApCost } from "../rules/bone-head.mjs";
+import { hasDodgeTalent } from "../rules/dodge-talents.mjs";
 
 /** Типы акторов, несущих экономику действий (общая часть — _creature.mjs). */
 export const ACTION_ECONOMY_ACTOR_TYPES = ["character", "daemon", "demonPrince", "minion", "horde"];
@@ -440,7 +441,8 @@ export function canSpendReaction(actor, { forDefense = false, attackId = "", phy
   // самому Состоянию в любой момент Раунда, а не только с начала своего Хода.
   if (actionBlockReason(actor, { physical })) return false;
   // Бег (стр. 32): до начала следующего Хода бегущий не может Реакции.
-  if (actor.getFlag("warhammer-dbc", "running")) return false;
+  // Скоростная Внимательность (глава 3): Избегания после Бега остаются (со штрафом, defense.mjs).
+  if (actor.getFlag("warhammer-dbc", "running") && !(forDefense && hasDodgeTalent(actor, "speedAwareness"))) return false;
   // Орда («Орды», Действия): Реакции есть, но тратить их она может «только в
   // свой Ход» — на особые действия вроде атаки мехадендритами или Furious
   // Assault. Свободные Атаки, Избегания и прочие ответы в чужой Ход ей закрыты.
