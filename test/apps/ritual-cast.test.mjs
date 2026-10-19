@@ -304,6 +304,44 @@ describe("порог и гейт требований (ritualThreshold)", () => 
     expect(d.rows.some(r => r.label === "Модификаторы ритуала")).toBe(false);
   });
 
+  // Erudite-Infernal / Эрудит-Инфернал (occultist-talents.mjs, Sahara
+  // 3-2a39): «игнорирует штрафы за недостаточные знания о демоне» —
+  // littleKnown/nothingKnown/falseKnow (RITUAL_SUMMON_MODS) гасятся
+  // безусловно, пока Талант есть.
+  const withTalent = (name, base) => ({ ...base, items: [{ type: "talent", name, system: {} }] });
+
+  it("без Таланта штраф «ничего не знает» считается как обычно", () => {
+    const d = ritualThreshold(baseR({ summon: { nothingKnown: true } }), actor(), null);
+    expect(d.threshold).toBe(-20 - 20 - 30);
+  });
+
+  it("Erudite-Infernal гасит «ничего не знает»/«ложные знания»/«мало знает»", () => {
+    const a = withTalent("Erudite-Infernal", actor());
+    const d1 = ritualThreshold(baseR({ summon: { nothingKnown: true } }), a, null);
+    const d2 = ritualThreshold(baseR({ summon: { falseKnow: true } }), a, null);
+    const d3 = ritualThreshold(baseR({ summon: { littleKnown: true } }), a, null);
+    expect(d1.threshold).toBe(-20 - 20);
+    expect(d2.threshold).toBe(-20 - 20);
+    expect(d3.threshold).toBe(-20 - 20);
+  });
+
+  it("Erudite-Инфернал не гасит положительные строки Призыва", () => {
+    const a = withTalent("Эрудит-Инфернал", actor());
+    const d = ritualThreshold(baseR({ summon: { trueName: true, nothingKnown: true } }), a, null);
+    expect(d.threshold).toBe(-20 - 20 + 30);
+  });
+
+  it("Erudite-Infernal не гасит штраф на ритуалах не-призыва (type!==summon-like)", () => {
+    // Талант по книге — именно про Модификаторы ПРИЗЫВА (summon/dominion/
+    // binding/gate); на Проклятьях свои Факторы Знакомства/Симпатии, и
+    // RITUAL_SUMMON_MODS там штатно не выставляются (R.summon остаётся
+    // пустым из формы) — здесь нарочно выставлен вручную, чтобы проверить
+    // границу гейта, а не реальный сценарий игры.
+    const a = withTalent("Erudite-Infernal", actor());
+    const d = ritualThreshold(baseR({ type: "curse", summon: { nothingKnown: true } }), a, null);
+    expect(d.threshold).toBe(-20 - 20 - 30);
+  });
+
   // Бестиарий скрыт от игрока — Inf демона вписывается вручную (ГМ называет
   // его за столом), но модификатор всё равно должен уйти в порог и подпись.
   it("Inf призываемого демона уходит штрафом −Inf в порог и в разбивку с именем", () => {

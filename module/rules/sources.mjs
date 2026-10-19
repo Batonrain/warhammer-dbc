@@ -39,6 +39,7 @@ import { hatredRules } from "./hatred.mjs";
 import { awarenessTalentRules } from "./awareness-talents.mjs";
 import { resilienceTalentRules } from "./resilience-talents.mjs";
 import { leadershipTalentRules } from "./leadership-talents.mjs";
+import { occultistTalentRules } from "./occultist-talents.mjs";
 import { legacyWrathRules, legacyExcessRules, legacyGuardianRules, legacyBloodPsychicRules, legacyInstinctiveDisarmRules, legacyDistractingCharSwapRules, legacyQuietAwarenessRules } from "./legacy-weapon.mjs";
 import { devourerPermanentRules } from "./devourer-of-knowledge.mjs";
 import { gallerpoxPoisonPenaltyActive } from "./prophet-of-gallerpox.mjs";
@@ -193,6 +194,13 @@ registerRuleSource("resilienceTalents", (a, ctx) => resilienceTalentRules(a, ctx
 // нет, возвращает []). См. заголовок rules/leadership-talents.mjs.
 registerRuleSource("leadershipTalents", (a, ctx) =>
   leadershipTalentRules(a, ctx, typeof game !== "undefined" ? game.actors ?? [] : []));
+
+// Таланты Оккультиста (перепроверка Sahara 3-2a39, 19.10.2026): Glorious
+// Purpose (Inf вместо W/F против демона в демоническом оружии) и половина
+// Infernal Master (Forbidden Lore(Daemons)(W) вместо Command против демона)
+// — тем же rollBonus-приёмом разницы итогов, что Living Legend выше. См.
+// заголовок rules/occultist-talents.mjs.
+registerRuleSource("occultistTalents", (a, ctx) => occultistTalentRules(a, ctx));
 
 // Наследие Ярости/Rage, Оружие Наследия (wdbc-1rno.35, стр. 427): штраф −10
 // на I/P, пока экипировано Оружие Наследия с этой Историей. См. заголовок
