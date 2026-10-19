@@ -36,6 +36,7 @@ import { isHerdSpiritsRitual } from "./herd-spirits-summon.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { hasDominator, isOwnArmiger } from "../rules/dominator.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
+import { hasEruditeInfernal } from "../rules/occultist-talents.mjs";
 import { DARK_SEER_FLAG, darkSeerAdvantage } from "../rules/dark-seer.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard, testCardHtml, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
@@ -135,7 +136,13 @@ export function ritualThreshold(R, actor, item) {
   // Меткой это +30, а не +50 (раньше две отмеченные пилюли давали +50).
   const auto = isSummonLike ? autoSummonMods(actor, R.demonGod) : null;
   const marked = !!(auto?.mark || R.summon?.mark);
+  // Эрудит-Инфернал (occultist-talents.mjs): «игнорирует штрафы за
+  // недостаточные знания о призываемом или покоряемом демоне» — три строки
+  // Модификаторов Призыва про незнание демона, гасятся безусловно.
+  const KNOWLEDGE_PENALTY_KEYS = ["littleKnown", "nothingKnown", "falseKnow"];
+  const eruditeInfernal = isSummonLike && hasEruditeInfernal(actor);
   const summonOn = key => {
+    if (eruditeInfernal && KNOWLEDGE_PENALTY_KEYS.includes(key)) return false;
     if (key === "mark") return marked;
     // Строка Покровительства читается «но не метку» — с Меткой её нет вовсе.
     if (key === "patronage") return !marked && !!(auto?.patronage || R.summon?.patronage);

@@ -288,6 +288,25 @@ describe("готовый Миньон", () => {
     expect(minionLoyalty(master({ fel: 42 }), "human")).toBe(42);
   });
 
+  // Infernal Master / Инфернальный Владыка (occultist-talents.mjs, Sahara
+  // 3-2a39): «Его Миньоны-демоны получают +10 Лояльности» — по имени
+  // Таланта (itemHasName), не по capability-ключу — talents этой группы
+  // не несут Constructor-записей capability.
+  const withInfernalMaster = base => ({
+    ...base,
+    items: [{ id: "im", type: "talent", name: "Infernal Master / Инфернальный Владыка", system: {} }]
+  });
+
+  it("Infernal Master: +10 Лояльности только у группы daemon", () => {
+    const m = withInfernalMaster(master({ wp: 35 }));
+    expect(minionLoyalty(m, "daemon")).toBe(45);
+    expect(minionLoyalty(m, "human")).toBe(40); // fel по умолчанию из master() — без бонуса
+  });
+
+  it("Infernal Master: без самого Таланта — поведение не меняется", () => {
+    expect(minionLoyalty(master({ wp: 35 }), "daemon")).toBe(35);
+  });
+
   it("речь: молчание при низкой Общительности, команды — при низком Интеллекте", () => {
     expect(speechNote({ fel: 5, int: 30 })).toMatch(/говорить не может/i);
     expect(speechNote({ fel: 20, int: 5 })).toMatch(/только команды/i);
