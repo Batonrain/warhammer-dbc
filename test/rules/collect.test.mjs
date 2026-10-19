@@ -137,12 +137,20 @@ describe("источники по умолчанию", () => {
     // реестра, чистая функция rancorRiskCapBonus в sheets/squad-sheet.mjs).
     // warpTouchedHealMistrust (wdbc-1rno.26, 02.10.2026) — Затронутый Варпом,
     // субмутация 10: −10 на все тесты, кроме T, час после чужого лечения.
+    // occultistTalents (глава 3, перепроверка Sahara 3-2a39, 19.10.2026) —
+    // Glorious Purpose (Inf вместо W/F против демона) и половина Infernal
+    // Master (FL(Daemons)(W) вместо Command против демона).
+    // commandSubstitution (фикс 19.10.2026, независимое ревью) — Living
+    // Legend и Infernal Master конкурируют за skill:command, действует
+    // только бо́льшая подмена; "skill:command" убран из leadershipTalents и
+    // occultistTalents.
     expect([...getRuleSources().map(([key]) => key)].sort())
-      .toEqual(["addiction", "adjutant", "awarenessTalents", "beastmanShaman", "conditions", "core",
+      .toEqual(["addiction", "adjutant", "awarenessTalents", "beastmanShaman", "commandSubstitution",
+                "conditions", "core",
                 "daemonInevitability", "devourerOfKnowledge", "dreadnought", "hatred", "homeworld", "items",
                 "leadershipTalents", "legacyBloodPsychic", "legacyDistractingCharSwap", "legacyExcess", "legacyGuardian",
                 "legacyInstinctiveDisarm", "legacyQuietAwareness", "legacyWrath", "nullZones",
-                "opposedTarget", "paths", "patron", "prophetOfGallerpox",
+                "occultistTalents", "opposedTarget", "paths", "patron", "prophetOfGallerpox",
                 "psychicSustainTarget", "race", "resilienceTalents", "serumHook", "situational", "synesthesia",
                 "warpTouchedHealMistrust", "yigori"]);
   });
