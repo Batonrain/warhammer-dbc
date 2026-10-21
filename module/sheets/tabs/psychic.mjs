@@ -12,6 +12,7 @@ import { isMentalActionBlocked } from "../../rules/predicates.mjs";
 import { requiredMarks, MARK_LABELS } from "../../constants/talent-requirements.mjs";
 import { dreadnoughtOf, hasOsirisMatrix } from "../../rules/dreadnought.mjs";
 import { highSorceryManifestBlocked } from "../../rules/perfect-sorcerer.mjs";
+import { focusQualityEffect, focusRollResult } from "../../rules/psy-focus.mjs";
 import { PSY_NATURES, PSY_MODES, PSY_PATHS, PSY_POWER_TYPES, subPathTotals } from "../../constants/psyker.mjs";
 import { PSY_DISCIPLINES } from "../../constants/disciplines.mjs";
 import { getPhenomenon, getPeril } from "../../constants/psyker-tables.mjs";
@@ -668,6 +669,10 @@ export async function executePsychotest(actor, item, opts) {
 
   // Психофокус: отдельный тест W+0 (свободное действие, 1/ход). Успех → +10,
   // крит. успех (дубль на успехе) → +15, крит. провал (дубль на провале) → −10.
+  // Качество привязанного предмета-Психофокуса (rules/psy-focus.mjs): Good.Q
+  // +5 к полученному бонусу на силах резонирующей Дисциплины, Best.Q ещё и
+  // снимает штраф крит. провала. Не у всякого Пути с focusTest есть предмет
+  // (Руны Сигиллитов «считаются Best.Q» без предмета — там эффект пустой).
   let focusMod = 0, focusNote = "", focusRoll = null;
   if (PATH.focusTest) {
     const wpv = actor.system.characteristics?.wp?.total ?? 0;
@@ -675,12 +680,15 @@ export async function executePsychotest(actor, item, opts) {
     const fv      = focusRoll.total;
     const fPass   = fv <= wpv;
     const fDouble = (fv % 11 === 0) || fv === 100;
-    if (fPass && fDouble) focusMod = 15;
-    else if (fPass)       focusMod = 10;
-    else if (fDouble)     focusMod = -10;
+    const fEffect = focusQualityEffect(actor, item);
+    const fResult = focusRollResult({ pass: fPass, double: fDouble }, fEffect);
+    focusMod = fResult.mod;
     const fWord = (fPass && fDouble) ? "крит. успех" : fPass ? "успех" : fDouble ? "крит. провал" : "провал";
     const fCls  = focusMod >= 0 ? "roll-success" : "roll-failure";
-    focusNote = `<div class="roll-defense-note">${rollIcon("spark","#c98bff")}Психофокус (W ${wpv}): бросок <b>${fv}</b> → <span class="${fCls}">${fWord}${focusMod ? `, ${focusMod > 0 ? "+" : ""}${focusMod}` : ", без бонуса"}</span> к психотесту. <i>(свободное действие, 1/ход, в свой Ход)</i></div>`;
+    const fItem = fEffect.item
+      ? ` <i>[${esc(fEffect.item.name)}${fResult.itemBonus ? `: +${fResult.itemBonus} резонанс` : ""}${fResult.critFailIgnored ? ": штраф крит. провала игнорируется" : ""}]</i>`
+      : "";
+    focusNote = `<div class="roll-defense-note">${rollIcon("spark","#c98bff")}Психофокус (W ${wpv}): бросок <b>${fv}</b> → <span class="${fCls}">${fWord}${focusMod ? `, ${focusMod > 0 ? "+" : ""}${focusMod}` : ", без бонуса"}</span> к психотесту.${fItem} <i>(свободное действие, 1/ход, в свой Ход)</i></div>`;
   }
   const pathTestMod = (PATH.testMod || 0) + pathDynMod + focusMod + subTotals.testMod;
   // Заметка в карточку — только если хоть одна суб-механика реально отмечена
@@ -1393,6 +1401,18 @@ export function activatePsychicListeners(html, actor, { rollSkill, resolveSoulBu
     const own = Array.isArray(actor.system.psyker?.focusDisciplines) ? actor.system.psyker.focusDisciplines : [];
     const next = own.includes(key) ? own.filter(k => k !== key) : [...own, key];
     actor.update({ "system.psyker.focusDisciplines": next });
+  });
+
+  // Предмет-Психофокус и его резонанс (rules/psy-focus.mjs::focusQualityEffect).
+  // Смена предмета сбрасывает резонанс: он выбирался под другой фокус.
+  html.find(".psy-focus-item-select").change(ev => {
+    actor.update({
+      "system.psyker.focusItemId": ev.currentTarget.value,
+      "system.psyker.focusResonance": ""
+    });
+  });
+  html.find(".psy-focus-resonance-select").change(ev => {
+    actor.update({ "system.psyker.focusResonance": ev.currentTarget.value });
   });
 
   html.find(".psy-add-btn").click(async ev => {
