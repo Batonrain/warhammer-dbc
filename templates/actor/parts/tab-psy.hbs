@@ -88,6 +88,28 @@
       </div>
     </div>
 
+    {{!-- Предмет-Психофокус: его качество читает Путь Силы «Психофокус»
+          (rules/psy-focus.mjs::focusQualityEffect). Good.Q — +5 к бонусу на
+          силах резонирующей Дисциплины; Best.Q — ещё и без штрафа крит. провала. --}}
+    <div class="psy-focus-row psy-focus-item-row" title="Предмет, который сейчас служит Психофокусом. Его качество работает на Пути Силы «Психофокус»: Good.Q — +5 к бонусу психофокуса для сил резонирующей Дисциплины; Best.Q — то же и без штрафа за Крит. провал психофокуса (книга, стр.243).">
+      <span class="psy-rf-lbl">Психофокус (предмет)</span>
+      <select class="psy-focus-item-select">
+        <option value="">— не привязан —</option>
+        {{#each psyFocusItem.options as |o|}}
+        <option value="{{o.id}}" {{#if o.selected}}selected{{/if}}>{{o.name}}{{#if o.qualityLabel}} ({{o.qualityLabel}}){{/if}}</option>
+        {{/each}}
+      </select>
+      {{#if psyFocusItem.showResonance}}
+      <span class="psy-rf-lbl">Резонанс</span>
+      <select class="psy-focus-resonance-select" title="Дисциплина, с которой резонирует этот Психофокус">
+        <option value="">— не выбрана —</option>
+        {{#each psyFocusItem.disciplines as |d|}}
+        <option value="{{d.key}}" {{#if d.selected}}selected{{/if}}>{{d.label}}</option>
+        {{/each}}
+      </select>
+      {{/if}}
+    </div>
+
     <div class="psy-hint">
       <b>бPR</b> = уровень Таланта Psy Rating. <b>тPR</b> = бPR − поддерживаемые силы (при 0 нельзя манифестировать новые). <b>эPR</b> — эффективный PR силы при манифестации (по умолчанию = тPR; его можно снизить независимо для психотеста, урона и дальности, минимум 1 — задаётся в окне манифестации). Психотест: <b>+5×эPR</b> по дару <b>{{psyker.natureLabel}}</b>. Режим и Путь Силы выбираются при манифестации.
     </div>

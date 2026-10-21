@@ -23,7 +23,8 @@ import { getLegion, getChapter, buildChapterOptions,
 import { TECH_MIRACLE_TYPES, TECH_ACTIONS, NOOSPHERE_ACTIONS } from "../constants/tech.mjs";
 import { COIL_FATIGUE_COST } from "../rules/potentia-coil.mjs";
 import { PSY_DISCIPLINES, TECH_DISCIPLINES, canHaveFocusDiscipline } from "../constants/disciplines.mjs";
-import { effectiveFocusDisciplines, ownFocusDisciplines, grantedFocusDisciplines } from "../rules/psy-focus.mjs";
+import { effectiveFocusDisciplines, ownFocusDisciplines, grantedFocusDisciplines,
+         activeFocusItem, psyFocusCandidates } from "../rules/psy-focus.mjs";
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
 import { TALENT_LIBRARY }                            from "../constants/talents-library.mjs";
 import { charAptitudeSet, APTITUDES_TOTAL } from "../constants/advancement.mjs";
@@ -1453,6 +1454,29 @@ function buildGetDataUncached(actor) {
       }))
       .sort((a, b) => a.label.localeCompare(b.label, "ru"));
     context.psyFocus = { chips, hasAny: chips.some(c => c.active) };
+  }
+
+  // ── Предмет-Психофокус (Psy Focus / Психофокус, стр.243) ──────────────────
+  // Привязка выбирается явно: система не гадает, какой из предметов в руке.
+  // Резонансная Дисциплина спрашивается только там, где она что-то даёт —
+  // у Good.Q и Best.Q.
+  {
+    const QUALITY_LABEL = { poor: "Poor.Q", common: "Comm.Q", good: "Good.Q", best: "Best.Q" };
+    const chosen = activeFocusItem(actor);
+    const resonance = actor.system?.psyker?.focusResonance || "";
+    const showResonance = chosen?.system?.quality === "good" || chosen?.system?.quality === "best";
+    context.psyFocusItem = {
+      options: psyFocusCandidates(actor).map(i => ({
+        id: i.id, name: i.name, selected: i === chosen,
+        qualityLabel: QUALITY_LABEL[i.system?.quality] || ""
+      })),
+      selectedId: chosen?.id ?? "",
+      showResonance,
+      resonance,
+      disciplines: Object.entries(PSY_DISCIPLINES)
+        .map(([key, d]) => ({ key, label: d.label, selected: key === resonance }))
+        .sort((a, b) => a.label.localeCompare(b.label, "ru"))
+    };
   }
 
   context.abilityTechPowers = allItems.filter(i => i.type === "techPower").map(i => ({
