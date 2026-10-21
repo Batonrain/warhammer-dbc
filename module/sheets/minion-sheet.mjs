@@ -123,4 +123,9 @@ export class WarhammerMinionSheet extends WarhammerCharacterSheet {
 
     return context;
   }
+
+  async _setAvatar(path) {
+    await this.actor.update({ img: path, "prototypeToken.texture.src": path });
+    for (const t of this.actor.getActiveTokens()) await t.document.update({ "texture.src": path });
+  }
 }
