@@ -102,6 +102,23 @@ describe("runMechScriptEntry: throttleUnit=\"day\" (worldTime) и провал �
     // Кулдаун не заведён провалом — флаг перезарядки не появился на предмете.
     expect(item.getFlag("warhammer-dbc", "mechScript-e1")).toBeUndefined();
   });
+
+  // runmechscriptentry: код сам отклоняет попытку (не свой Ход, нет цели и
+  // т.п.) устоявшимся в проекте приёмом `return ui.notifications.warn(...)`
+  // БЕЗ throw (см. combat/explosive-action.mjs::useExplosiveAction) — такой
+  // самоотказ тоже не должен тратить попытку.
+  it("код сам отклоняет попытку через return ui.notifications.warn(...) — попытка НЕ тратится", async () => {
+    globalThis.game.time = { worldTime: 100000 };
+    const item = itemWithScript({ id: "e1", kind: "script", scriptThrottleUnit: "day",
+      code: 'return ui.notifications.warn("только в свой Ход.");' });
+    await runMechScriptEntry(item, "g1", "e1");
+    expect(captured.warnings).toEqual(["только в свой Ход."]);
+    expect(item.getFlag("warhammer-dbc", "mechScript-e1")).toBeUndefined();
+
+    // Повторный клик в тот же день — снова не заблокирован кулдауном.
+    await runMechScriptEntry(item, "g1", "e1");
+    expect(captured.warnings.length).toBe(2);
+  });
 });
 
 describe("runMechScriptEntry: scriptThrottleMax > 1 — счётчик «до N раз» (Bone Song и подобные)", () => {
