@@ -142,7 +142,18 @@ export function fastestHandBonus(actor, chars = {}) {
 export function initiativeHint(actor, chars = {}) {
   const key   = initiativeCharKey(actor, chars);
   const parts = [`1d10 + ${CHARACTERISTICS[key]?.abbr ?? "Ag"}.Бонус + модификатор`];
-  if (key !== INITIATIVE_DEFAULT_CHAR) parts.push(`вместо Ag.Бонуса — ${labelsFor(actor, INITIATIVE_CHAR_PREFIX + key)}`);
+  if (key !== INITIATIVE_DEFAULT_CHAR) {
+    // Боевое Построение соратника (combat-formation.mjs): у соратника нет
+    // именованной возможности, только отметка-флаг {from,name} — labelsFor()
+    // (ruleFlagLabels) её не видит и пишет «источник не назван» (i-b, живая
+    // проверка 22.10.2026). Носитель самого Таланта по-прежнему идёт через
+    // labelsFor — у него есть настоящая возможность с подписью.
+    const shared = sharedFormation(actor);
+    const label = (shared && key === COMBAT_FORMATION_CHAR)
+      ? `Боевое Построение (${shared.name})`
+      : labelsFor(actor, INITIATIVE_CHAR_PREFIX + key);
+    parts.push(`вместо Ag.Бонуса — ${label}`);
+  }
   const fastest = fastestHandBonus(actor, chars);
   if (fastest) parts.push(`+${fastest} за ножи/пистолеты в руках (${labelsFor(actor, FASTEST_HAND_CAPABILITY)})`);
   const rolls = initiativeRolls(actor);
