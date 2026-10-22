@@ -241,6 +241,28 @@ export function eloquenceRiskCapBonus(actor) {
 // обход (а не adjutant.mjs::subordinatesOf), потому что он идёт по Отрядам
 // ЦЕЛИ (кто ею командует), а не по Отрядам командира (кем он командует).
 
+/**
+ * Все uuid, под которыми этот боец может встретиться в списках Отряда
+ * (посты/состав/«кто отдал»). Токены персонажей по умолчанию НЕсвязанные
+ * (actorLink:false): бросок/выделение цели идёт от актора токена
+ * (Scene.x.Token.y.Actor.z), а в списки Отряда обычно кладут мирового
+ * актора — и наоборот. Без этого бонусы Команды молча не находили Отряд
+ * (squadsof-commandersof-actorlink-false, живая проверка 21.10.2026).
+ * Локальная копия combat/command-state.mjs::actorIdentityUuids — импортировать
+ * оттуда нельзя, см. заголовок файла про замкнутый круг импортов.
+ */
+function identityUuids(actor) {
+  const ids = new Set();
+  if (!actor) return ids;
+  if (actor.uuid) ids.add(actor.uuid);
+  if (actor.isToken) {
+    const base = actor.token?.baseActor ?? game.actors?.get?.(actor.id);
+    if (base?.uuid) ids.add(base.uuid);
+  }
+  for (const t of actor.getActiveTokens?.() ?? []) if (t.actor?.uuid) ids.add(t.actor.uuid);
+  return ids;
+}
+
 const IRON_DISCIPLINE_NAMES = ["Iron Discipline", "Железная Дисциплина"];
 
 export function hasIronDiscipline(actor) {
@@ -254,26 +276,26 @@ function effectiveCommanderUuid(squad) {
 
 /** Отряды, где actor состоит — на посту (Лидер/Координатор/Командир) или в составе. */
 function squadsOf(actor, allActors) {
-  const uuid = actor?.uuid;
-  if (!uuid) return [];
+  const ids = identityUuids(actor);
+  if (!ids.size) return [];
   return (allActors ?? []).filter(a => {
     if (a?.type !== "squad") return false;
     const posts = a.system?.posts ?? {};
-    if (posts.leader?.uuid === uuid || posts.coordinator?.uuid === uuid || posts.commander?.uuid === uuid) return true;
-    return (a.system?.members ?? []).some(m => m.uuid === uuid);
+    if (ids.has(posts.leader?.uuid) || ids.has(posts.coordinator?.uuid) || ids.has(posts.commander?.uuid)) return true;
+    return (a.system?.members ?? []).some(m => ids.has(m.uuid));
   });
 }
 
 /** Командующие над actor (эффективный командующий + Координатор каждого Отряда, где он состоит), кроме него самого. */
 export function commandersOf(actor, allActors) {
-  const myUuid = actor?.uuid;
+  const myIds = identityUuids(actor);
   const index = new Map();
-  for (const a of allActors ?? []) if (a?.uuid) index.set(a.uuid, a);
+  for (const a of allActors ?? []) for (const u of identityUuids(a)) index.set(u, a);
   const out = [], seen = new Set();
   for (const squad of squadsOf(actor, allActors)) {
     const uuids = [effectiveCommanderUuid(squad), squad.system?.posts?.coordinator?.uuid].filter(Boolean);
     for (const uuid of uuids) {
-      if (uuid === myUuid || seen.has(uuid)) continue;
+      if (myIds.has(uuid) || seen.has(uuid)) continue;
       seen.add(uuid);
       const found = index.get(uuid);
       if (found) out.push(found);
@@ -400,24 +422,24 @@ function nearestEnemyDistance(token) {
 
 /** Отряды, где actor занимает пост Командира. */
 function squadsCommandedByLocal(commanderActor, allActors) {
-  const uuid = commanderActor?.uuid;
-  if (!uuid) return [];
-  return (allActors ?? []).filter(a => a?.type === "squad" && a.system?.posts?.commander?.uuid === uuid);
+  const ids = identityUuids(commanderActor);
+  if (!ids.size) return [];
+  return (allActors ?? []).filter(a => a?.type === "squad" && ids.has(a.system?.posts?.commander?.uuid));
 }
 
 /** Все подчинённые (любой пост/членство) во всех Отрядах, которыми командует actor, кроме него самого. */
 function subordinatesOfLocal(commanderActor, allActors) {
-  const myUuid = commanderActor?.uuid;
+  const myIds = identityUuids(commanderActor);
   const out = [], seen = new Set();
   const index = new Map();
-  for (const a of allActors ?? []) if (a?.uuid) index.set(a.uuid, a);
+  for (const a of allActors ?? []) for (const u of identityUuids(a)) index.set(u, a);
   for (const squad of squadsCommandedByLocal(commanderActor, allActors)) {
     const uuids = [
       squad.system?.posts?.leader?.uuid, squad.system?.posts?.coordinator?.uuid,
       ...(squad.system?.members ?? []).map(m => m.uuid)
     ].filter(Boolean);
     for (const uuid of uuids) {
-      if (uuid === myUuid || seen.has(uuid)) continue;
+      if (myIds.has(uuid) || seen.has(uuid)) continue;
       seen.add(uuid);
       const found = index.get(uuid);
       if (found) out.push(found);
@@ -684,9 +706,10 @@ export function warChantSingAlongActive(actor, allActors) {
 /** Подчинённые leaderActor, что сейчас подпевают именно ЕМУ (для +3 Intimidate). */
 function warChantSingersOf(leaderActor, allActors) {
   if (!warChantSinging(leaderActor)) return [];
-  return (allActors ?? []).filter(a => a?.uuid && a.uuid !== leaderActor?.uuid
+  const leaderIds = identityUuids(leaderActor);
+  return (allActors ?? []).filter(a => a?.uuid && !leaderIds.has(a.uuid)
     && flagOn(a, WAR_CHANT_SING_ALONG_FLAG)
-    && singingCommandersOf(a, allActors).some(c => c.uuid === leaderActor.uuid));
+    && singingCommandersOf(a, allActors).some(c => leaderIds.has(c.uuid)));
 }
 
 /** +3 Intimidate за каждого подпевающего подчинённого, пока actor сам поёт. */

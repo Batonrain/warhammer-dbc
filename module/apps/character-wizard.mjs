@@ -863,7 +863,10 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
   async _advanceArchetypeStep() {
     const actor = this.actor;
     const archKey = actor.system.archetype || "";
-    if (!archKey) return false;
+    if (!archKey) {
+      ui.notifications?.warn("Выберите Архетип.");
+      return false;
+    }
 
     if (!this._archetypeApplyPromise && actorArchetypeItem(actor)) {
       // Архетип уже применён в ПРОШЛЫЙ РАЗ (напр. другой экземпляр Мастера,

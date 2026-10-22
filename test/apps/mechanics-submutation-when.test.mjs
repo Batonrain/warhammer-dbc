@@ -37,6 +37,10 @@ const traitEntry = (id, w) => ({
 });
 const charEntry = (id, value, w) =>
   ({ id, kind: "characteristic", charKey: "t", field: "bonus", op: "add", value, when: w });
+const equipEntry = (id, w) => ({
+  id, kind: "equipment", equipMode: "direct", equipQty: 1,
+  equipSourceUuid: "Compendium.warhammer-dbc.gear.Item.def456", equipSourceName: "Claws / Когти", when: w
+});
 
 /** Мутация-предмет на акторе, с собственной таблицей субмутаций в тексте. */
 function mutationOnActor({ mechanics = [], submutation = {} } = {}) {
@@ -50,6 +54,10 @@ function mutationOnActor({ mechanics = [], submutation = {} } = {}) {
                                   getFlag: (_s2, k) => d.flags?.[FLAG]?.[k] }));
     actor.items.push(...made);
     return made;
+  };
+  actor.deleteEmbeddedDocuments = async (_t, ids) => {
+    actor.items = actor.items.filter(i => !ids.includes(i.id));
+    return ids;
   };
 
   const item = {
@@ -171,6 +179,58 @@ describe("applyItemMechanics — гейт на разовой выдаче Че�
     await item.update({ "system.submutation.label": "4" });
     await applyItemMechanics(item);
     expect(item.parent.items.map(i => i.name)).toContain("Dark Sight / Ночное Зрение");
+  });
+
+  // task-8cfb: раньше смена субмутации только ДОБАВЛЯЛА новые гранты, не
+  // снимая старые — Dark Sight от «Кошки» остался бы навсегда, даже после
+  // переброса на «Змею». Живая проверка 22.10.2026 (Majestic Horns).
+  it("выпала «Кошка», затем переброс на «Змею» — Dark Sight снимается, не копится", async () => {
+    const item = mutationOnActor({
+      mechanics: [andGroup(traitEntry("e1", when(["4"])))],
+      submutation: { label: "4" }
+    });
+    await applyItemMechanics(item);
+    expect(item.parent.items.map(i => i.name)).toContain("Dark Sight / Ночное Зрение");
+
+    await item.update({ "system.submutation.label": "6" });
+    await applyItemMechanics(item);
+    expect(item.parent.items.map(i => i.name)).not.toContain("Dark Sight / Ночное Зрение");
+    expect(item.parent.items).toHaveLength(0);
+  });
+
+  it("выпала «Кошка», обратно на «Кошку» — Dark Sight не задваивается", async () => {
+    const item = mutationOnActor({
+      mechanics: [andGroup(traitEntry("e1", when(["4"])))],
+      submutation: { label: "4" }
+    });
+    await applyItemMechanics(item);
+    await item.update({ "system.submutation.label": "6" });
+    await applyItemMechanics(item);
+    await item.update({ "system.submutation.label": "4" });
+    await applyItemMechanics(item);
+    expect(item.parent.items.filter(i => i.name === "Dark Sight / Ночное Зрение")).toHaveLength(1);
+  });
+});
+
+describe("applyItemMechanics — гейт на разовой выдаче снаряжения (kind:equipment) по субмутации", () => {
+  it("выпала «Кошка» — Когти выданы; переброс на «Змею» — снимаются, не копятся (task-8cfb)", async () => {
+    const item = mutationOnActor({
+      mechanics: [andGroup(equipEntry("e1", when(["4"])))],
+      submutation: { label: "4" }
+    });
+    await applyItemMechanics(item);
+    expect(item.parent.items.map(i => i.name)).toContain("Claws / Когти");
+
+    await item.update({ "system.submutation.label": "6" });
+    await applyItemMechanics(item);
+    expect(item.parent.items).toHaveLength(0);
+
+    // Обратно на «Кошку» — Когти возвращаются (syncGrantedEquipment пересчитывает
+    // haveIds заново из actor.items на каждый прогон, независимо от applyMechEntry's
+    // одноразового `applied` — в отличие от Черт/Талантов, тут раунд-трип уже работал).
+    await item.update({ "system.submutation.label": "4" });
+    await applyItemMechanics(item);
+    expect(item.parent.items.filter(i => i.name === "Claws / Когти")).toHaveLength(1);
   });
 });
 

@@ -2684,7 +2684,7 @@ async function buildIntegralAttackData(entry, sourceItem) {
 // ИЛИ-ветки сознательно пропускаются — там выбор делается ОДИН РАЗ диалогом
 // в момент выдачи (showMechChoiceDialog/applyMechEntry), переигрывать его
 // при каждой пересинхронизации активности источника не нужно и не должно.
-function collectDirectEquipmentEntries(groups, actor = null, item = null) {
+function collectDirectEquipmentEntries(groups, actor = null, item = null, { ignoreWhen = false } = {}) {
   const out = [];
   const walk = (entries, operator) => {
     if (operator === "OR") return;
@@ -2697,7 +2697,7 @@ function collectDirectEquipmentEntries(groups, actor = null, item = null) {
     }
   };
   for (const g of groups) walk(g.entries || [], g.operator);
-  return out.filter(e => entryWhenOk(actor, e, item));
+  return ignoreWhen ? out : out.filter(e => entryWhenOk(actor, e, item));
 }
 
 // Записи kind:"aura" из АНД-цепочек — та же оговорка про ИЛИ-ветки, что и у
@@ -2798,8 +2798,9 @@ export async function syncAuraFlag(item) {
 export async function syncGrantedEquipment(sourceItem) {
   const actor = sourceItem.parent;
   if (!(actor instanceof Actor)) return;
-  const entries = collectDirectEquipmentEntries(getItemMechanics(sourceItem), actor, sourceItem);
-  if (!entries.length) return;
+  const all = collectDirectEquipmentEntries(getItemMechanics(sourceItem), actor, sourceItem, { ignoreWhen: true });
+  if (!all.length) return;
+  const entries = all.filter(e => entryWhenOk(actor, e, sourceItem));
 
   const grantedNow = actor.items.filter(i =>
     i.getFlag(FLAG, "grantedByItem") === sourceItem.id && i.getFlag(FLAG, "equipEntryId"));
@@ -2809,7 +2810,20 @@ export async function syncGrantedEquipment(sourceItem) {
     return;
   }
 
-  const haveIds = new Set(grantedNow.map(i => i.getFlag(FLAG, "equipEntryId")));
+  // Условие «Когда» записи больше не выполняется (смена субмутации и
+  // подобное) — выданное ею снаряжение/интегральная атака снимается, тем же
+  // приёмом, что уже делает syncGrantedAbilities для Черт/Талантов
+  // (task-8cfb, живая проверка 22.10.2026: раньше копилось навсегда).
+  const allIds = new Set(all.map(e => e.id));
+  const passingIds = new Set(entries.map(e => e.id));
+  const stale = grantedNow.filter(i => {
+    const id = i.getFlag(FLAG, "equipEntryId");
+    return allIds.has(id) && !passingIds.has(id);
+  });
+  if (stale.length) await actor.deleteEmbeddedDocuments("Item", stale.map(i => i.id));
+  const live = grantedNow.filter(i => !stale.includes(i));
+
+  const haveIds = new Set(live.map(i => i.getFlag(FLAG, "equipEntryId")));
   const toCreate = [];
   for (const e of entries) {
     if (haveIds.has(e.id)) continue;
@@ -2830,7 +2844,7 @@ export async function syncGrantedEquipment(sourceItem) {
     toCreate.push(data);
   }
   if (toCreate.length) await actor.createEmbeddedDocuments("Item", toCreate);
-  await syncIntegralRatings(sourceItem, grantedNow);
+  await syncIntegralRatings(sourceItem, live);
 }
 
 /**
@@ -2989,6 +3003,45 @@ export async function syncGrantedAbilities(sourceItem) {
     toCreate.push(data);
   }
   if (toCreate.length) await actor.createEmbeddedDocuments("Item", toCreate);
+}
+
+/**
+ * Снимает Черты/Таланты, выданные И-цепочками sourceItem, чей гейт «Когда»
+ * больше не проходит (смена субмутации/Геносемени/Мастерства и т.п.) —
+ * та же половина логики, что в syncGrantedAbilities выше, НО без её гейта по
+ * isItemActive(sourceItem): тот решает другой вопрос («включён ли сам
+ * источник» — напр. установлен ли Имплант) и раньше для kind:"trait"/
+ * "talent" вообще не проверялся (applyMechEntry выдаёт их безусловно при
+ * первом применении) — заводить этот гейт здесь заодно значило бы менять
+ * поведение не по теме задачи. Зовётся из _applyItemMechanics на КАЖДОЕ
+ * применение Механики, не только по toggle-источникам (task-8cfb, живая
+ * проверка 22.10.2026: мусор от Majestic Horns копился при каждой смене
+ * субмутации, потому что это не вызывалось вовсе).
+ *
+ * Снятую запись убираем и из `applied` (persisted вызывающим как
+ * mechanicsApplied) — иначе обещание строки applyMechEntry «не пройдено
+ * «Когда» — пропускаем БЕЗ отметки applied, чтобы остаться кандидатом на
+ * будущее» не сдержится: единожды отмеченную запись applyMechEntry больше не
+ * трогает никогда, даже если снятая здесь субмутация потом выпадет снова.
+ */
+async function removeStaleAbilityGrants(sourceItem, applied) {
+  const actor = sourceItem.parent;
+  if (!(actor instanceof Actor)) return;
+  const all = collectDirectAbilityEntries(getItemMechanics(sourceItem), actor, sourceItem, { ignoreWhen: true });
+  if (!all.length) return;
+  const allIds = new Set(all.map(e => e.id));
+  const passingIds = new Set(all.filter(e => entryWhenOk(actor, e, sourceItem)).map(e => e.id));
+  // actor.items не всегда задан (лёгкие фикстуры/превью) — тем же приёмом,
+  // что duplicate-grants.mjs::findSameTalent(items = []).
+  const grantedNow = (actor.items ?? []).filter(i =>
+    i.getFlag(FLAG, "grantedByItem") === sourceItem.id && i.getFlag(FLAG, "abilityEntryId"));
+  const stale = grantedNow.filter(i => {
+    const id = i.getFlag(FLAG, "abilityEntryId");
+    return allIds.has(id) && !passingIds.has(id);
+  });
+  if (!stale.length) return;
+  await actor.deleteEmbeddedDocuments("Item", stale.map(i => i.id));
+  for (const i of stale) applied?.delete(i.getFlag(FLAG, "abilityEntryId"));
 }
 
 /**
@@ -3433,7 +3486,12 @@ async function _applyItemMechanics(item) {
   if (!(actor instanceof Actor)) return;
 
   const applied = appliedEntryIds(item);
-  const before  = applied.size;
+  // Снимок СОДЕРЖИМОГО, не только размера: removeStaleAbilityGrants может
+  // снять id в ТОМ ЖЕ прогоне, где applyGroupEntries добавил другой — размер
+  // не изменится, хотя набор поменялся, и правка потеряется без записи флага
+  // (task-8cfb, живая проверка 22.10.2026 — возврат к прежней субмутации не
+  // перевыдавал снятое).
+  const before = [...applied].sort().join(",");
   // Верхнеуровневые группы Механики предмета независимы друг от друга — то
   // же самое «И» между соседями, что и entries ВНУТРИ одной группы. Заворачиваем
   // их в синтетическую И-группу kind:"group", чтобы пройти через ОБЩИЙ путь
@@ -3456,13 +3514,21 @@ async function _applyItemMechanics(item) {
   // Интегральные атаки «по выбору» (wdbc-o368c) — окно с галочками один раз,
   // сами предметы выдаёт syncGrantedEquipment ниже по записанному выбору.
   await resolveOptionalIntegralChoice(item);
+  // Условие «Когда» выдачи Черты/Таланта больше не выполняется (смена
+  // субмутации и подобное) — снимаем её, тем же приёмом, что уже есть у
+  // syncGrantedAbilities, но БЕЗ её гейта по isItemActive(sourceItem): тот
+  // решает другой вопрос (активен ли сам источник — напр. установлен ли
+  // Имплант) и не должен задним числом начать гасить гранты kind:"trait"/
+  // "talent" у источников, что раньше этот гейт на них не трогал
+  // (task-8cfb, живая проверка 22.10.2026 — только про когда-гейт).
+  await removeStaleAbilityGrants(item, applied);
   // Источник мог родиться неактивным (напр. Имплант создан ещё не
   // установленным) — откатывает то, что applyMechEntry(equipment) уже
   // успел выдать выше, чтобы конечное состояние сразу было верным.
   await syncGrantedEquipment(item);
   // Пишем, только если что-то действительно отыгралось: иначе каждый прогон
   // правил бы предмет и будил хук updateItem по кругу.
-  if (applied.size !== before) await item.setFlag(FLAG, "mechanicsApplied", [...applied]);
+  if ([...applied].sort().join(",") !== before) await item.setFlag(FLAG, "mechanicsApplied", [...applied]);
 }
 
 // ── HTML-разметка вкладки (собирается в JS, не в .hbs — см. обоснование в

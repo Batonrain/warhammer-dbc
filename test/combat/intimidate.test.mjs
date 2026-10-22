@@ -86,6 +86,33 @@ describe("rollIntimidateContest: встречная проверка", () => {
     expect(card).not.toContain("Саркофаг Дредноута");
   });
 
+  // task-284f: переброс области "morale" (Unshakeable Will/Несокрушимая Воля
+  // и подобные) раньше молча не доходил — оба броска шли мимо resolveTest.
+  it("переброс области morale доходит на стороне цели — два кубика, лучший выбран", async () => {
+    clearRuleSources();
+    registerRuleSource("test", (a) => a?.name === "Жертва" ? [
+      { id: "test.reroll", when: {},
+        effects: [{ kind: "rollMode", target: "morale", mode: "keepBest", rolls: 2, label: "Несокрушимая Воля" }] }
+    ] : []);
+    captured.dice = [10, 95, 5]; // атака: 10 (один бросок); цель: 95 и 5 — keepBest берёт меньший, 5
+    const atk = actor({ name: "Герой", intimidate: 50 });
+    const tgt = actor({ name: "Жертва", wp: 30 });
+    await rollIntimidateContest(atk, tgt);
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("Несокрушимая Воля");
+    expect(card).toContain("отброшено 95");
+    clearRuleSources();
+  });
+
+  it("без правила с областью morale — переброса на стороне цели нет (регресс)", async () => {
+    captured.dice = [10, 60];
+    const atk = actor({ name: "Герой", intimidate: 50 });
+    const tgt = actor({ name: "Жертва", wp: 30 });
+    await rollIntimidateContest(atk, tgt);
+    const card = captured.chat.at(-1).content;
+    expect(card).not.toContain("Несокрушимая Воля");
+  });
+
   it("карточка называет обе стороны и учитывает модификаторы в порогах", async () => {
     captured.dice = [10, 60];
     const atk = actor({ name: "Дредноут", intimidate: 50 });
