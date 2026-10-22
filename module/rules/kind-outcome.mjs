@@ -109,12 +109,17 @@ async function runScriptTriggers(actor, triggers, crit) {
     const code = (entry.code || "").trim();
     if (!code) continue;
     if (!scriptRunReady(item, entry)) continue;
+    let result;
     try {
-      await executeItemCode(item, code, null);
+      result = await executeItemCode(item, code, null);
     } catch (e) {
       console.error(`Warhammer DBC | Ошибка авто-скрипта Механики «${entry.label || entry.id}» предмета «${item.name}»:`, e);
       continue;
     }
+    // Самоотказ кода (truthy — см. комментарий executeItemCode) — троттлинг
+    // не трогаем, тем же приёмом, что apps/mechanics.mjs::runMechScriptEntry
+    // (runmechscriptentry).
+    if (result) continue;
     if (entry.scriptThrottleUnit) await markScriptRunUsed(item, entry);
   }
 }

@@ -118,6 +118,14 @@ export async function _showContestDialog(actor, techDef) {
        </div>`
     : "";
 
+  // Выделенная на сцене цель (game.user.targets) — тем же приёмом, что
+  // диалоги атаки/навыка/Страха (module/sheets/attack-dialog.mjs,
+  // actor-sheet.mjs::_showSkillRollDialog, tabs/disorders.mjs::openFearDialog):
+  // нужна ДО сборки перебросов ниже, чтобы правила с when.target* (Angel
+  // Hunters и подобные) могли сработать и здесь, не только в тех трёх местах
+  // (angel-hunters-showcontestdialog-targetactor, живая проверка 21.10.2026).
+  const target = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+
   // Опциональные перебросы правил (wdbc-u0by, Truth-Seer/Defiance) — этот
   // диалог раньше вообще не читал реестр правил (та же дыра, что была у
   // Парирования до фикса, module/combat/defense.mjs). Список считается по
@@ -125,7 +133,7 @@ export async function _showContestDialog(actor, techDef) {
   // общего диалога теста Навыка (mods не пересчитываются реактивно при
   // смене дропдауна): честное самоподтверждение игрока всё равно решает,
   // применять ли галочку, форма Состязания не проверяет роль/условие сама.
-  const rr = ruleRerollsHtml(actor, sideContext(sideFor(defaultChar)));
+  const rr = ruleRerollsHtml(actor, { ...sideContext(sideFor(defaultChar)), targetActor: target });
 
   const extraBonusNote = extraBonus
     ? `<div style="font-size:0.85em;color:#8fd0ff;margin-bottom:6px;">
@@ -137,7 +145,6 @@ export async function _showContestDialog(actor, techDef) {
   // 4-5) — предупреждение, не блокировка: тот же принцип «галочка, не тихий
   // запрет», что и у прочих модификаторов (resolve-test.mjs). Бросок можно
   // всё равно сделать (цель может смениться, или стол решит иначе).
-  const target = [...(game.user?.targets ?? [])][0]?.actor ?? null;
   const immune = techDef.targetImmunityFlag && target && hasRuleFlag(target, techDef.targetImmunityFlag);
   const immuneLabels = immune ? ruleFlagLabels(target, techDef.targetImmunityFlag).join(", ") : "";
   const immunityNote = immune
@@ -206,8 +213,8 @@ export async function _showContestDialog(actor, techDef) {
           // как у обычного броска Навыка (actor-sheet.mjs::_rollSkill).
           const side = danceOpt ? { skill: danceOpt.skillKey } : sideFor(charKey);
           const ruleMods = collectTestMods(actor, danceOpt
-            ? { kind: "skill", char: danceOpt.charKey, skill: danceOpt.skillKey }
-            : sideContext(side));
+            ? { kind: "skill", char: danceOpt.charKey, skill: danceOpt.skillKey, targetActor: target }
+            : { ...sideContext(side), targetActor: target });
           let eff        = selfVal + mod + ruleMods.total;
           // Таланты Избегания: Освобождение от Пут и Ускользнуть.
           const talentParts = [];

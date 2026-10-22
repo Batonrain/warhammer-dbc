@@ -36,12 +36,27 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { raceMatches } from "../rules/race.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
-import { collectTestMods } from "../rules/roll-mods.mjs";
+import { resolveTest } from "../rules/resolve-test.mjs";
+import { rollD100WithReroll } from "../rules/test-kind-widget.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { EATER_OF_PAIN_CAPABILITY, eaterOfPainChoiceButtonsHtml } from "../rules/eater-of-pain.mjs";
 import { charHealAllFields } from "../rules/char-loss.mjs";
 
 const FLAG = "skillfulTorture";
+
+/**
+ * Модификаторы и переброс стороны — тем же приёмом, что combat/intimidate.mjs
+ * ::_sideModsAndReroll: оба бросают здесь без промежуточного диалога-галочки,
+ * так что переброс области "morale" (Unshakeable Will и подобные) применяется
+ * автоматически, не чекбоксом (task-284f, живая проверка 22.10.2026).
+ */
+function _sideModsAndReroll(resolved) {
+  const list = [...resolved.autoMods, ...resolved.mods.filter(m => !m.askOnly)];
+  const total = list.reduce((sum, m) => sum + (Number(m.value) || 0), 0);
+  const parts = list.map(m => `${m.label} ${Number(m.value) >= 0 ? "+" : ""}${m.value}`);
+  const reroll = resolved.rerolls.find(r => r.who !== "target");
+  return { total, parts, reroll: reroll ? { mode: reroll.mode, rolls: reroll.rolls, label: reroll.label } : null };
+}
 
 /** Владеет ли актор Талантом Skillful Torture / Искусная Пытка. */
 export function hasSkillfulTorture(actor) {
@@ -139,8 +154,8 @@ export async function showSkillfulTortureDialog(torturer) {
   // это два теста, каждый со своими Чертами и своим состоянием тела. Допрос
   // книга называет тестом Морали (rules/resolve-test.mjs::isMoraleOpposedSkill),
   // жертва отвечает тем же.
-  const torturerMods = collectTestMods(torturer, { kind: "skill", skill: "interrogate", char: "int", morale: true });
-  const targetMods   = collectTestMods(target, { kind: "skill", char: "wp", morale: true });
+  const torturerMods = _sideModsAndReroll(resolveTest({ actor: torturer, kind: "skill", skill: "interrogate", char: "int", morale: true, targetActor: target }));
+  const targetMods   = _sideModsAndReroll(resolveTest({ actor: target, kind: "skill", char: "wp", morale: true, targetActor: torturer }));
   const torturerThreshold = interrogateIntTotal(torturer) - 20 + torturerMods.total;
   const targetThreshold   = (target.system.characteristics?.wp?.total ?? 0) + targetMods.total;
 
@@ -162,16 +177,18 @@ export async function showSkillfulTortureDialog(torturer) {
       {
         action: "go", label: "Пытать", icon: "fas fa-skull", default: true,
         callback: async () => {
-          const torturerRoll = await new Roll("1d100").evaluate();
-          const targetRoll   = await new Roll("1d100").evaluate();
-          const mine   = { ...testOutcome(torturerRoll.total, torturerThreshold), threshold: torturerThreshold };
-          const theirs = { ...testOutcome(targetRoll.total, targetThreshold), threshold: targetThreshold };
+          const { rv: torturerRv, rerollNote: torturerRerollNote } = await rollD100WithReroll(torturerMods.reroll);
+          const { rv: targetRv, rerollNote: targetRerollNote } = await rollD100WithReroll(targetMods.reroll);
+          const mine   = { ...testOutcome(torturerRv, torturerThreshold), threshold: torturerThreshold };
+          const theirs = { ...testOutcome(targetRv, targetThreshold), threshold: targetThreshold };
           const { winner, margin } = resolveOpposed(mine, theirs);
 
           const lines = [
-            `${rollIcon("target","#c98bff")}${esc(torturer.name)}: <b>${torturerRoll.total}</b> vs ${torturerThreshold}${torturerMods.parts.length ? ` (${torturerMods.parts.join(", ")})` : ""} ${mine.success ? "(успех)" : "(провал)"}`,
-            `${rollIcon("target","#8a8a8a")}${esc(target.name)}: <b>${targetRoll.total}</b> vs ${targetThreshold}${targetMods.parts.length ? ` (${targetMods.parts.join(", ")})` : ""} ${theirs.success ? "(успех)" : "(провал)"}`
-          ];
+            `${rollIcon("target","#c98bff")}${esc(torturer.name)}: <b>${torturerRv}</b> vs ${torturerThreshold}${torturerMods.parts.length ? ` (${torturerMods.parts.join(", ")})` : ""} ${mine.success ? "(успех)" : "(провал)"}`,
+            torturerRerollNote,
+            `${rollIcon("target","#8a8a8a")}${esc(target.name)}: <b>${targetRv}</b> vs ${targetThreshold}${targetMods.parts.length ? ` (${targetMods.parts.join(", ")})` : ""} ${theirs.success ? "(успех)" : "(провал)"}`,
+            targetRerollNote
+          ].filter(Boolean);
 
           if (winner !== "mine") {
             lines.push(`<b>Жертва выстояла</b> — пытка не принесла пользы.`);

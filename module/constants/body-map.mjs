@@ -1017,7 +1017,7 @@ const WOUND_STAGES = [
  */
 export function woundStatus(system = {}) {
   const w    = system.wounds || {};
-  const max  = Math.max(0, Number(w.max) || 0);
+  const max  = Math.max(0, Number(w.effectiveMax ?? w.max) || 0);
   const val  = Math.max(0, Number(w.value) || 0);
   const crit = Math.max(0, Number(w.critical) || 0);
   // Раны считаем «сколько осталось»: value — текущее, max — предел.
