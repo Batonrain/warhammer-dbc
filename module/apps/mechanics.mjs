@@ -4671,15 +4671,22 @@ export async function runMechScriptEntry(item, groupId, entryId) {
     const gate = capabilityCostGate(item.actor, cost);
     if (gate.disabled) return ui.notifications.warn(`⚠️ ${gate.title}`);
   }
+  let result;
   try {
     // setMutationsSuppressed (wdbc-1rno) — доступна ЛЮБОЙ ручной кнопке
     // «▶ Запустить», не только Pure Form: обычным записям она просто не
     // нужна, лишний параметр в области видимости их кода не касается.
-    await executeItemCode(item, code, null, { setMutationsSuppressed });
+    result = await executeItemCode(item, code, null, { setMutationsSuppressed });
   } catch (e) {
     console.error(`Warhammer DBC | Ошибка скрипта Механики «${entry.label || entry.id}» предмета «${item.name}»:`, e);
     return ui.notifications.error(`Скрипт «${entry.label || item.name}»: ${e.message}`);
   }
+  // Код сам отклонил попытку (вернул truthy — обычно результат собственного
+  // ui.notifications.warn(...), см. комментарий executeItemCode) — не наш
+  // троттлинг/цена здесь ни при чём, тратить их не за что (runmechscriptentry,
+  // живая проверка 22.10.2026: клик не в свой Ход сжигал лимит «раз-в-Раунд»,
+  // хотя Взрывное Действие ни разу не сработало).
+  if (result) return;
   if (unit) await markScriptRunUsed(item, entry);
   if (cost) await spendCapabilityCost(item.actor, cost, entry.label || item.name);
 }

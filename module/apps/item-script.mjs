@@ -192,6 +192,15 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  * уже импортирует executeItemCode отсюда — обратный import создал бы цикл).
  * Старые вызовы без `extra` работают как раньше — ключи просто не
  * появляются в области видимости кода.
+ *
+ * @returns {*} то, что вернул сам код записи — используется вызывающим
+ *   (runMechScriptEntry, runScriptTriggers) как сигнал самоотказа: код не
+ *   бросает исключение, а молча отклоняет попытку через
+ *   `return ui.notifications?.warn(...)` (устоявшийся в проекте приём, см.
+ *   combat/explosive-action.mjs, apps/soul-seer.mjs) — результат этого
+ *   warn() truthy, в отличие от обычного «успешно дошёл до конца» (undefined).
+ *   Без прокидывания значения наружу троттлинг/цена списывались даже при
+ *   самоотказе (runmechscriptentry, живая проверка 22.10.2026).
  */
 export async function executeItemCode(item, code, event, extra = {}) {
   const actor = item.actor ?? null;
@@ -218,7 +227,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     ...extraNames,
     code
   );
-  await fn(
+  return await fn(
     item, actor, token, speaker, game, ui, ChatMessage, event ?? null,
     woundLossUpdates, isTokenInSight, tokensThatCanSee,
     actorFactionKeys, anySameOrDescendant, getFactionIndex, talentGroupOf,
