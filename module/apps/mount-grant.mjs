@@ -59,7 +59,7 @@ export async function grantMount(rider, maxRarity, deps = {}) {
   const chosen = Number.isInteger(idx) ? options[idx] : null;
   if (!chosen) return null;
 
-  const mount = await game.actors.importFromCompendium(pack, chosen.id, { ownership: rider.ownership ?? undefined });
+  const mount = await game.actors.importFromCompendium(pack, chosen.id, { ownership: rider.ownership ?? undefined }, { clearOwnership: false });
   if (!mount) return null;
   await rider.update({ "system.mount.uuid": mount.uuid, "system.mount.skidUsed": false, "system.mount.bladesUsed": 0 });
   return mount;

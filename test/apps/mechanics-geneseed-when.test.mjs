@@ -47,6 +47,12 @@ function itemOnActor({ mechanics = [], geneSeed = {} } = {}) {
     actor.items.push(...made);
     return made;
   };
+  // syncGrantedAbilities (её теперь тоже зовёт applyItemMechanics, task-8cfb)
+  // снимает устаревшие гранты этим же методом — настоящий Actor его несёт.
+  actor.deleteEmbeddedDocuments = async (_t, ids) => {
+    actor.items = actor.items.filter(i => !ids.includes(i.id));
+    return ids;
+  };
 
   const item = {
     id: "item-1", type: "implant", name: "Оккулоб", img: "icons/svg/aura.svg",
