@@ -700,11 +700,26 @@ export function constructorCoverage(rowOptions, groups, folderOf = null, folderN
 /** Слитный ключ имени: «plasma gun» → «plasmagun». */
 export const compactKey = k => String(k || "").replace(/\s+/gu, "");
 
+/**
+ * Строка книги → предмет пака, когда книга называет вещь, которой отдельной записью
+ * нет. Псевдоним идёт ПОСЛЕ родного имени: заведут настоящий предмет — найдётся он.
+ *  - «Void Suit Helmet» (стартовый набор Пирата, стр. IV «Арсенал» шлема не знает):
+ *    решение владельца 23.10.2026 (void-suit-helmet-wdbc-zaesd) — выдавать целый
+ *    «Void Suit» 1/2/2/2 (Open, Sealed, Soft, Void). Рядом идёт Xeno Mesh(+Void)
+ *    с AP 4/5/4/4: броня одного слота не складывается (stacks:false), в каждой
+ *    локации действует лучшее, так что Void Suit даёт Пирату свойства (Open, Soft,
+ *    встроенные Маг-Сапоги), а не AP.
+ */
+const NAME_ALIASES = {
+  "void suit helmet": "void suit"
+};
+
 /** Ключи, под которыми искать именную заявку в индексе компендиумов. */
 export function namedLookupKeys(spec) {
   const base = normName(spec?.name);
   if (!base) return [];
   const keys = [base];
+  if (NAME_ALIASES[base]) keys.push(NAME_ALIASES[base]);
   if (spec.legion) keys.unshift(`${base} астартес`, `legion ${base}`, `astartes ${base}`);
   if (spec.grenade) keys.push(base.replace(/\s*grenades?$/u, ""));
   // «Plasma Gun» книги — «Plasmagun» пака: слитное написание тоже ключ

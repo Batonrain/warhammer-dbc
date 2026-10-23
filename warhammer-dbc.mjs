@@ -920,6 +920,13 @@ Hooks.once("ready", () => {
         await applyRelayedCommandUpdate(data);
         return;
       }
+      // Вырубание (Takedown): игрок сбивает с ног чужую цель — писать в неё
+      // может только ГМ; module/combat/takedown.mjs::applyTakedownRelay.
+      if (data.action === "takedownKnockdown") {
+        const { applyTakedownRelay } = await import("./module/combat/takedown.mjs");
+        await applyTakedownRelay(data, requester);
+        return;
+      }
       if (data.action === "inspiringPresenceSpend") {
         // Вдохновляющее Присутствие (Чемпион): союзник тратит Очко чужого
         // Чемпиона — module/combat/inspiring-presence.mjs сверяет Черту,

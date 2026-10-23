@@ -27,6 +27,7 @@
     "damageType": "energy",
     "penetration": 0,
     "effect": "[Железо: Respirator Unit · Цена: 1К · Процесс: ½ (У) · Тип: —] Треб.: Medicae+0, Feedback Screech. Инфразвук: все в дальности −3×I.b на встречные тесты против Страха/Подавления/Паники/Запугивания/Допроса/устыжения. Импланты Механикум — иммунны. 1 Энергия — направленный.",
+    "harmful": true,
     "effects": {
       "charBonusStat": "",
       "charBonusValue": 0,

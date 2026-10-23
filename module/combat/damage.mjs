@@ -38,6 +38,7 @@ import { hellishResilienceOffer } from "./hellish-resilience.mjs";
 import { applyEyeOfTheGods } from "./eye-of-the-gods.mjs";
 import { offerHardeningSpend } from "./ablative-hardening.mjs";
 import { statusApplyFields } from "./status-resist.mjs";
+import { takedownSection } from "./takedown.mjs";
 import { hollowBonesTb } from "../rules/hollow-bones.mjs";
 import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
 import { inPariahVoid } from "../rules/null-zones.mjs";
@@ -1688,6 +1689,13 @@ export async function applyDamageToActor(actor, damageData) {
       🎯 Пробило насквозь — найти следующую цель по линии огня (${throughShotReductionDie(1) ? `−${throughShotReductionDie(1)}` : "флэт −1"} к урону)
     </button>` : "";
 
+  // Вырубание (Takedown, Рукопашные гл. 3): «При успешном Оглушении он может
+  // выбрать также сбить цель с ног» — кнопка только если Оглушение реально
+  // наложилось (stunRoundsApplied > 0: не иммунитет, не Стальная Челюсть) и у
+  // атакующего есть Талант (combat/takedown.mjs).
+  const takedownBtn = (stunManeuver && stunRoundsApplied > 0)
+    ? await takedownSection(attackerUuid, actor) : "";
+
   // Карточка УРОНА, а не теста — родня attack-card.mjs (своя большая разметка
   // поглощения, Ран, крита и пилюль Крит. Эффекта): от общего сборщика
   // (wdbc-kuun) взяты разметка и публикация. Говорит от лица «Системы», а не
@@ -1717,6 +1725,7 @@ export async function applyDamageToActor(actor, damageData) {
       critLine,
       propEffectNotes.join(""),
       throughShotBtn,
+      takedownBtn,
       reaperSection,
       braveHeartSection
     ]

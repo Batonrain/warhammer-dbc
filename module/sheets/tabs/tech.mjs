@@ -28,11 +28,16 @@ import { pickReroll } from "../../rules/reroll-pick.mjs";
 import { markUnseenDetectedUntilNextTurn } from "../../rules/unseen-attack.mjs";
 import { testOutcome } from "../../rules/roll-outcome.mjs";
 import { fieldFailsTechPower } from "../../rules/null-zones.mjs";
+import { techActivationCost } from "../../rules/digital-hatred.mjs";
 
 /** Активация Техночуда: Когниция + Энергия + тест Tech-Use (Ментальное) + урон. */
 export async function activateTechMiracle(actor, item) {
   const sys      = item.system;
-  const cogCost  = sys.cognitionCost || 0;
+  // Цифровая Ненависть (rules/digital-hatred.mjs, Sahara 3-2501): −1 ⚙ к цене
+  // активации (не Процессов) вредящего Техночуда, если ВСЕ цели — Ненавистные.
+  // Цели — Foundry-таргет, тот же источник, что у Императива ниже.
+  const hatredTargets = [...(game.user?.targets ?? [])].map(t => t.actor ?? null);
+  const { cost: cogCost, discount: hatredDiscount } = techActivationCost(actor, item, hatredTargets);
   let   enCost   = sys.energyCost || 0;
   const cog      = actor.system.cognition || { value: 0, max: 0 };
   const en       = actor.system.energy || { value: 0, max: 0 };
@@ -252,7 +257,9 @@ export async function activateTechMiracle(actor, item) {
   const cogIco = techIcon("cognition");
   const enIco  = techIcon("energy");
   const costLine = [
-    cogCost ? `${cogIco} Когниция −<b>${cogCost}</b>` : "",
+    cogCost ? `${cogIco} Когниция −<b>${cogCost}</b>${hatredDiscount ? ` <span title="Цифровая Ненависть: все цели — Ненавистные">(Цифровая Ненависть −${hatredDiscount})</span>` : ""}` : "",
+    // Цена дошла до 0 только благодаря скидке — без подсказки игрок не поймёт, куда делась Когниция.
+    (!cogCost && hatredDiscount) ? `${cogIco} Когниция −<b>0</b> <span title="Цифровая Ненависть: все цели — Ненавистные">(Цифровая Ненависть −${hatredDiscount})</span>` : "",
     enCost  ? `${enIco} Энергия −<b>${enCost}</b>`    : "",
     (sys.sustained && sys.sustainCost) ? `Поддержание ${sys.sustainCost} ${cogIco}/Ход` : ""
   ].filter(Boolean).join(" | ");

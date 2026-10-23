@@ -24,6 +24,7 @@ import { tentacleBonusSuppressed } from "../../rules/tentacle-hand-form.mjs";
 import { legacySlaughterThresholdDelta } from "../../rules/legacy-weapon.mjs";
 import { divineProtectionActive } from "../../rules/death-save.mjs";
 import { berserkChargeBonus } from "../../rules/berserker-talents.mjs";
+import { stunUnrestricted } from "../../rules/takedown.mjs";
 
 /**
  * @param {object} v оружие, профиль, состояние актора и уже посчитанные бонусы
@@ -169,7 +170,9 @@ export function buildSelection(v) {
     const category = categoryFor(pIdx);
     const trained  = trainingFor(pIdx).trained;
     return Object.entries(MELEE_MANEUVERS).map(([key, def]) => {
-      const categoryOk = key === "standard" || key === "freeattack" || !def.categories || !category || def.categories.includes(category);
+      // Вырубание (Takedown, rules/takedown.mjs): «приём Оглушить с любым оружием» — снимает список категорий.
+      const categoryOk = key === "standard" || key === "freeattack" || !def.categories || !category || def.categories.includes(category)
+        || (key === "stun" && stunUnrestricted(actor));
       const baseOk     = !def.bases || def.bases.includes(baseKeyNow);
       const trainingOk = trained || key === "standard" || key === "freeattack";
       const balanceOk  = def.minBalance == null || ((sys.balance ?? 0) >= def.minBalance);

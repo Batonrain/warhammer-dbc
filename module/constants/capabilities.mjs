@@ -835,8 +835,11 @@ export const CAPABILITIES = {
     source: "Siphon Pain / Сифон Боли", reader: ""
   },
   "condition.denyLeapUp.afterStunProne": {
-    label: "Цель успешного Оглушения при сбивании с ног не может использовать Leap Up; подъём без него стоит +1 действие",
-    source: "That's Not All / Ещё Не Всё", reader: ""
+    label: "Цель успешного Оглушения при сбивании с ног не может использовать Leap Up; подъём без него стоит +1 действие. " +
+      "Реализовано (23.10.2026): носитель, сбивая цель кнопкой Вырубания, ставит на неё метку (флаг leapUpDenied); пока цель Повалена, Вскочить на неё не действует, а любое вставание (обычным способом и прыжком) стоит +1 ОД сверх обычного — «всем помеченным +1 ОД» (толкование владельца: книга «а если его нет, то +1 ОД» двусмысленна). Метка уходит вместе с Состоянием «Повален». " +
+      "Кувырок (Flip, Талант Избегания) тоже стоит помеченному +1 ОД (combat/flip.mjs); при нехватке ОД остаётся Повален. НЕ покрыто: Шагоход встаёт по своей карточке (combat/walker.mjs).",
+    source: "That's Not All / Ещё Не Всё",
+    reader: "module/rules/takedown.mjs (leapUpDenied, standUpExtraApCost); module/combat/takedown.mjs (метка ставится при сбивании кнопкой Вырубания); module/combat/movement-actions.mjs (declareStandUp, _standUpPlain, _standUpJump, пункт меню «Встать»); module/combat/flip.mjs (rollFlip); module/sheets/tabs/conditions.mjs (conditionRemoveFields('prone') снимает метку)"
   },
   "pain.absorbRange.perceptionScaling": {
     label: "Дальность поглощения Боли растёт на P.b м за каждое взятие (до 3 раз, по ступеням Psyniscience)",
@@ -1948,7 +1951,7 @@ export const CAPABILITIES = {
     reader: "module/combat/movement-actions.mjs (showJumpDialog, _resolveJump); module/rules/speed-talents.mjs (jumpApCost)"
   },
   "speed.core.leapUp": {
-    label: "Реализовано (сверка главы 3): с Талантом пункт «Встать» в меню Движения сразу снимает Состояние «Повален» за 0 ОД, без выбора способа (combat/movement-actions.mjs::declareStandUp/_standUpPlain, rules/speed-talents.mjs::standUpApCost). НЕ покрыто: запрет Вскочить после успешного Оглушения при сбивании с ног (condition.denyLeapUp.afterStunProne) — это правило только описано, читателя у него нет; Шагоход встаёт по своей карточке (combat/walker.mjs), где «Вскочить — полудействие» лишь напоминание текстом.",
+    label: "Реализовано (сверка главы 3): с Талантом пункт «Встать» в меню Движения сразу снимает Состояние «Повален» за 0 ОД, без выбора способа (combat/movement-actions.mjs::declareStandUp/_standUpPlain, rules/speed-talents.mjs::standUpApCost). Запрет Вскочить после успешного Оглушения при сбивании с ног (Ещё Не Всё, condition.denyLeapUp.afterStunProne) читается: помеченному Вскочить не помогает, любое вставание +1 ОД (rules/takedown.mjs). НЕ покрыто: Шагоход встаёт по своей карточке (combat/walker.mjs), где «Вскочить — полудействие» лишь напоминание текстом.",
     source: "Leap Up / Вскочить",
     reader: "module/rules/speed-talents.mjs (standUpApCost); module/combat/movement-actions.mjs (declareStandUp, _standUpPlain)"
   },
@@ -2162,9 +2165,9 @@ export const CAPABILITIES = {
     source: "Bastion of Iron Will / Бастион Железной Воли", reader: ""
   },
   "psyResist.core.defiance": {
-    label: "Преимущество на встречные тесты против психосил (кроме непрямых), выжигания души, атак одержимостью и прочих Варп-эффектов, вызванных Ненавистными врагами. Смоделирована часть «тест Сопротивления психосиле»: переброс «лучший из двух» (опциональная радиокнопка в окне теста) предлагается, только если кастер — цель Таланта Hatred; Непрямые силы исключены. Раньше запись была kind:\"reroll\" с областью «любой тест» — шире книги (3-defiance). Выжигание Души (бросок без диалога), Одержимость и «прочие Варп-эффекты» не смоделированы — Преимущество там ведёт стол.",
+    label: "Преимущество на встречные тесты против психосил (кроме непрямых), выжигания души, атак одержимостью и прочих Варп-эффектов, вызванных Ненавистными врагами. Смоделирована часть «тест Сопротивления психосиле»: переброс «лучший из двух» (опциональная радиокнопка в окне теста) предлагается, только если кастер — цель Таланта Hatred; Непрямые силы исключены. Раньше запись была kind:\"reroll\" с областью «любой тест» — шире книги (3-defiance). Выжигание Души (бросок без диалога): цель с Неповиновением против псайкера из Ненавистных бросает Волю дважды и берёт лучший сама (psychic-resist-reroll.mjs). Одержимость и «прочие Варп-эффекты» не смоделированы — Преимущество там ведёт стол.",
     source: "Defiance / Неповиновение",
-    reader: "module/rules/hatred.mjs — hatredRules (правило hatred.defiance, область psychicThreat); module/hooks.mjs — genericTest (кастер → ctx.targetActor)"
+    reader: "module/rules/hatred.mjs — hatredRules (правило hatred.defiance, область psychicThreat); module/hooks.mjs — genericTest (кастер → ctx.targetActor); module/rules/psychic-resist-reroll.mjs + module/hooks.mjs::_executeSoulBurn (Выжигание Души, авто-переброс)"
   },
   "psyResist.core.divineProtection": {
     label: "Раз в Раунд, получая эффект психосилы, демонического дара, варп-оружия, выжигания души или иной полагающийся на Варп эффект,",
@@ -2228,8 +2231,9 @@ export const CAPABILITIES = {
     source: "Decompile / Декомпиляция", reader: ""
   },
   "technomystic.core.digitalHatred": {
-    label: "Персонаж уменьшает цену активации (но не Процессов) своих негативно воздействующих Техночудес на 1 Когницию,",
-    source: "Digital Hatred / Цифровая Ненависть", reader: ""
+    label: "Персонаж уменьшает цену активации (но не Процессов) своих негативно воздействующих Техночудес на 1 Когницию, если они действуют только на его Ненавистных врагов. «Негативно воздействующее» — поле Техночуда harmful (проставлено в паке по книге); «только на Ненавистных» — все цели Foundry-таргета подходят под цели Таланта Hatred; без целей скидки нет.",
+    source: "Digital Hatred / Цифровая Ненависть",
+    reader: "module/rules/digital-hatred.mjs::techActivationCost ← module/sheets/tabs/tech.mjs::activateTechMiracle (−1 к cognitionCost, не ниже 0; Процессы не трогаются)"
   },
   "technomystic.core.digitalRevelation": {
     label: "Персонаж уменьшает суммарную цену всех своих Процессов на 1 Когницию. Можно брать до 3 раз (2-й требует For.Lore (Mechanicum)+20,",
@@ -3287,8 +3291,11 @@ export const CAPABILITIES = {
     source: "Sure Strike / Верный Удар", reader: ""
   },
   "meleeCore.core.takedown": {
-    label: "Персонаж может совершать приём Оглушить с любым оружием и не-Избирательной атакой. При успешном Оглушении он может также сбить цель с ног.",
-    source: "Takedown / Вырубание", reader: ""
+    label: "Персонаж может совершать приём Оглушить с любым оружием и не-Избирательной атакой. При успешном Оглушении он может также сбить цель с ног. " +
+      "Реализовано (23.10.2026): у носителя приём Оглушить не ограничен категориями оружия и окно не запирает прицел в Голову (можно целиться, как хочешь); при успешном Оглушении (Оглушение реально наложилось) в карточке урона появляется кнопка «Вырубание: сбить с ног» — цель получает «Повален» через общую точку наложения (иммунитет, Стена), раз на карточку. " +
+      "НЕ покрыто: описание приёма в окне атаки по-прежнему говорит «Избирательная атака в голову»; Рукопашная Тренировка на категорию оружия для приёма по-прежнему нужна (книга Тренировки не снимает).",
+    source: "Takedown / Вырубание",
+    reader: "module/rules/takedown.mjs (stunUnrestricted, stunForcedAim); module/sheets/attack/selection.mjs (computeManeuverOptions); module/sheets/attack-dialog.mjs + module/sheets/attack/dialog.mjs (прицел не форсирован); module/combat/damage.mjs + module/combat/takedown.mjs (кнопка сбивания); module/hooks.mjs (.wh-takedown-btn)"
   },
   "meleeCore.core.tenacity": {
     label: "Совершив только одну одиночную рукопашную атаку в Ход, не нанёсшую урона (промах, Избегание, поглощение, щиты),",

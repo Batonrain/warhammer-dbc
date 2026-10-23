@@ -52,7 +52,13 @@ export class TechPowerData extends foundry.abstract.TypeDataModel {
       // и подобное для техночудес не считались вовсе — только текстом в «Эффекте».
       weaponProps:   list("Свойства атаки"),
       effect:        new StringField({ initial: "", label: "Эффект" }),
-      effects:       new ObjectField({ initial: emptyEffects, label: "Механика" }),
+      // «Негативно воздействующее» Техночудо (Digital Hatred / Цифровая
+      // Ненависть, Sahara 3-2501): урон, помеха, отключение или иное вредящее
+      // воздействие на цель. Проставляется в паке по книге; читает
+      // rules/digital-hatred.mjs. false по умолчанию — пользовательское чудо
+      // скидки не получает, пока автор не отметил его вредящим.
+      harmful:       new BooleanField({ initial: false, label: "Вредит цели" }),
+      effects:      new ObjectField({ initial: emptyEffects, label: "Механика" }),
       bookSource:    new StringField({ initial: "", label: "Книга-источник" })
     };
   }

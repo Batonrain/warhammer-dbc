@@ -81,6 +81,7 @@ import { isSabre, NS as SABRE_NS, SABRE_PENDING_FLAG } from "../combat/sabre-sec
 import { isZeroedByLoss, ZERO_EFFECTS } from "../rules/char-loss.mjs";
 import { fieldDisablesWeapon, fieldForbidsShot } from "../rules/null-zones.mjs";
 import { runtForbidsOneHand } from "../rules/runt.mjs";
+import { stunForcedAim } from "../rules/takedown.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -909,7 +910,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // независимо от disabled (тот же приём, что у пилюль). Live-переключение
   // Приёма ПОСЛЕ открытия окна — то же самое делает dialog.mjs::updateTotal
   // (aimEl.value/.disabled), этот select строится только при первом рендере.
-  const forcedAimValue = dyn0.maneuverKey === "stun" ? "head"
+  const forcedAimValue = dyn0.maneuverKey === "stun" ? stunForcedAim(actor)   // Вырубание снимает форс (rules/takedown.mjs)
     : dyn0.maneuverKey === "sweep" ? ""
     : null;
   const aimLocked = forcedAimValue !== null;

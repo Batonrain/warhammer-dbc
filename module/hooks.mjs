@@ -168,6 +168,7 @@ import { weaponProfiles, attackIsMelee } from "./combat/weapon-profiles.mjs";
 import { firePointFreeReroll, firePointActivatesOnPaidReroll } from "./rules/fire-point.mjs";
 import { activateFirePoint } from "./combat/fire-point.mjs";
 import { cardOnceUsed, markCardOnce, runCardOnce } from "./combat/card-once.mjs";
+import { takedownKnockdown, TAKEDOWN_CARD_FLAG } from "./combat/takedown.mjs";
 import { clearCombatFormationOnCombatEnd } from "./combat/combat-formation.mjs";
 import { masteryAutoSuccessOffer } from "./rules/mastery.mjs";
 import { masteryAutoSuccessOnCard, masteryHasPoint } from "./combat/mastery.mjs";
@@ -180,6 +181,7 @@ import { isIntegralAttack } from "./combat/equipped-melee.mjs";
 import { collectTestMods } from "./rules/roll-mods.mjs";
 import { rollD100WithReroll } from "./rules/test-kind-widget.mjs";
 import { poisonResistReroll } from "./rules/squat-traits.mjs";
+import { psychicResistReroll } from "./rules/psychic-resist-reroll.mjs";
 import { expireCommandsAtTurnStart, clearCommandsOnCombatEnd, commandMoraleOn } from "./combat/command-state.mjs";
 import { syncArmorFieldShields } from "./combat/armor-field-shield.mjs";
 import { ogrynRegenCombatRound } from "./combat/ogryn-regen.mjs";
@@ -618,6 +620,19 @@ export function registerHooks() {
         if (!actor.isOwner) { ui.notifications?.warn("Бросать за Знания Веков может только владелец персонажа."); return; }
         const done = await rollKnowledgeOfAges(actor, { message, temp: el.dataset.temp === "1",
           tempSource: el.dataset.tempSource || "", tempRestriction: el.dataset.tempRestriction || "" });
+        if (done) el.disabled = true;
+      });
+    });
+
+    // Вырубание (Takedown, combat/takedown.mjs): «сбить с ног» с карточки урона
+    // после успешного Оглушения. Раз на карточку; носитель «Ещё Не Всё» заодно
+    // ставит цели метку запрета Вскочить.
+    html.querySelectorAll(".wh-takedown-btn").forEach(btn => {
+      if (cardOnceUsed(message, TAKEDOWN_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const done = await takedownKnockdown(message, el.dataset.attackerUuid, el.dataset.targetUuid);
         if (done) el.disabled = true;
       });
     });
@@ -2926,9 +2941,14 @@ export async function _executeSoulBurn(attacker, target) {
   const pSucc = pRv <= pEff;
   const pDoS  = pSucc ? Math.floor((pEff - pRv) / 10) + 1 : 0;
 
-  // Встречный бросок цели
-  const tRoll = await new Roll("1d100").evaluate(); allRolls.push(tRoll);
-  const tRv   = tRoll.total;
+  // Встречный бросок цели. Диалога с галочками у Выжигания Души нет, поэтому
+  // Неповиновение (Defiance: Преимущество на встречные тесты против выжигания
+  // души от Ненавистных врагов, 3-defiance) берётся само — «лучший из двух»
+  // (rules/psychic-resist-reroll.mjs, тем же rollD100WithReroll, что и прочие
+  // перебросы). Без Defiance или с не-Ненавистным псайкером — один бросок.
+  const defianceReroll = psychicResistReroll(target, attacker);
+  const { rolls: tRolls, rv: tRv, rerollNote } = await rollD100WithReroll(defianceReroll);
+  allRolls.push(...tRolls);
   const tSucc = tRv <= tEff;
   const tDoS  = tSucc ? Math.floor((tEff - tRv) / 10) + 1 : 0;
 
@@ -2973,6 +2993,7 @@ export async function _executeSoulBurn(attacker, target) {
       ? `<span class="roll-failure">Душа выжжена — ${net} чист. Успех(ов)!</span>`
       : `<span class="roll-success">Цель устояла</span>`,
     sections: [
+      rerollNote,
       dmgNote,
       `<details class="roll-dice-details"><summary>Показать кубы</summary>${(await Promise.all(allRolls.map(r => r.render()))).join("")}</details>`
     ]

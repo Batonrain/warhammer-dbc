@@ -13,6 +13,8 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { hasDodgeTalent } from "../rules/dodge-talents.mjs";
+import { standUpExtraApCost } from "../rules/takedown.mjs";
+import { spendActionPoints } from "./action-economy.mjs";
 import { skillTotal } from "./movement-actions.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
@@ -50,13 +52,22 @@ export async function rollFlip(actor) {
   const threshold = base + mods.total;
   const roll = await new Roll("1d100").evaluate();
   const { success, deg } = testOutcome(roll.total, threshold);
-  if (success) await actor.update(conditionRemoveFields("prone"));
+  // «Ещё Не Всё» (rules/takedown.mjs): сбитый Вырубанием помеченный платит +1 ОД за ЛЮБОЙ
+  // способ встать, и Кувырок не исключение (решение владельца 23.10.2026). Считается до снятия
+  // «Повален» — вместе с ним уходит и метка.
+  const extra = success ? standUpExtraApCost(actor) : 0;
+  const unpaid = extra > 0 && !await spendActionPoints(actor, extra, { physical: true });
+  if (success && !unpaid) await actor.update(conditionRemoveFields("prone"));
   await postTestCard(actor, {
     icon: rollIcon("run", "#9fb4ff"), title: `Кувырок — ${esc(actor.name)}`, actorUuid: actor.uuid,
     threshold: rollStatLine({ label: "Acrobatics", base, parts: mods.parts, threshold, rv: roll.total }),
-    outcome: success
-      ? outcomeHtml(true, `Успех — ${deg} ${_degWord(deg)}. Перекатился и вскочил на ноги, не потратив действия.`)
+    outcome: success && unpaid
+      ? outcomeHtml(false, `Успех — ${deg} ${_degWord(deg)}, но «Ещё Не Всё»: встать стоит +${extra} ОД, а их не хватает — остаётся Повален.`)
+      : success
+      ? outcomeHtml(true, extra > 0
+        ? `Успех — ${deg} ${_degWord(deg)}. Перекатился и вскочил на ноги, заплатив ${extra} ОД («Ещё Не Всё»).`
+        : `Успех — ${deg} ${_degWord(deg)}. Перекатился и вскочил на ноги, не потратив действия.`)
       : outcomeHtml(false, `Провал — ${deg} ${_degWord(deg)}. Остаётся Повален (подняться можно обычным способом).`)
   }, { rolls: [roll] });
-  return { success };
+  return { success: success && !unpaid };
 }

@@ -479,11 +479,35 @@ describe("Опоры разбора в packs-src", () => {
       if (!find(spec)) missing.add(spec.name);
       for (const a of spec.attach || []) if (!find({ name: a })) missing.add(`+${a}`);
     }
-    // Этого предмета в компендиумах нет: Мастер откроет по нему Обозреватель
-    // с угаданной вкладкой, а в отчёт ушла задача завести его в пак. Ammo Selector
-    // заведён (мод «Селектор Патронов» переименован с Cartridge Selector, wdbc-zaesd);
-    // Void Suit Helmet в основной книге отдельной строкой нет — только в снаряжении Пирата.
-    expect([...missing].sort()).toEqual(["Void Suit Helmet"]);
+    // Пробелов контента не осталось. Ammo Selector заведён (мод «Селектор Патронов»
+    // переименован с Cartridge Selector, wdbc-zaesd); «Void Suit Helmet» из снаряжения
+    // Пирата отдельным предметом не заводился — решение владельца 23.10.2026
+    // (void-suit-helmet-wdbc-zaesd): Мастер выдаёт целый «Void Suit» (см. NAME_ALIASES
+    // и тест ниже). Будущий пробел сюда не вписывать молча — завести предмет или
+    // псевдоним с причиной.
+    expect([...missing].sort()).toEqual([]);
+  });
+
+  it("«Void Suit Helmet» Пирата выдаётся целым «Void Suit» — псевдоним имени (void-suit-helmet-wdbc-zaesd)", () => {
+    const spec = parseGearItem("Void Suit Helmet");
+    expect(namedLookupKeys(spec)).toContain("void suit");
+    // сам «Void Suit Helmet» остаётся в ключах первым: появится отдельный шлем — найдётся он
+    expect(namedLookupKeys(spec)[0]).toBe("void suit helmet");
+    const cands = [{ name: "Void Suit / Пустотный Скафандр", folder: "x" }];
+    expect(pickNamedCandidate(cands, spec).name).toBe("Void Suit / Пустотный Скафандр");
+    // обычный «Void Suit» (без Helmet) псевдонимов не получает
+    expect(namedLookupKeys(parseGearItem("Void Suit"))).toEqual(["void suit", "voidsuit"]);
+  });
+
+  it("весь «Void Suit Helmet» в пак-индексе находится по ключам имени (Xeno Mesh + Void Suit у Пирата — две выдачи)", () => {
+    const keys = new Set();
+    for (const d of packDocs("armor")) {
+      if (String(d._key).startsWith("!folders")) continue;
+      for (const part of String(d.name).split("/")) { const k = normName(part); keys.add(k); keys.add(compactKey(k)); }
+    }
+    const pirate = parseGearEntry("Xeno Mesh(+Void) + Void Suit Helmet");
+    expect(pirate).toHaveLength(2);
+    for (const spec of pirate) expect(namedLookupKeys(spec).some(k => keys.has(k)), spec.name).toBe(true);
   });
 });
 

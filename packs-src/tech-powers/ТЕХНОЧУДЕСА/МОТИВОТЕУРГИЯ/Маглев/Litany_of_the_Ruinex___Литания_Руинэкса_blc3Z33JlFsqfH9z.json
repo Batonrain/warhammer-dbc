@@ -27,6 +27,7 @@
     "damageType": "energy",
     "penetration": 0,
     "effect": "[Железо: Maglev Coils · Цена: 3К+2Э · Процесс: 1 , 1 (У) · Тип: Компенсатор (0), Славословие (1)] Треб.: For.Lore (Mechanicum)+20. Аура I.b×1м с эффектом Haywire 7-8 «Мёртвая Зона». Исключает себя и до I.b союзников (меняет выбор в начале Хода).",
+    "harmful": true,
     "effects": {
       "charBonusStat": "",
       "charBonusValue": 0,

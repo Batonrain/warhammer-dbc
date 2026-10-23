@@ -27,6 +27,7 @@
     "damageType": "energy",
     "penetration": 0,
     "effect": "[Железо: Noospheric Emitter · Цена: 2К · Процесс: 1 · Тип: —] Треб.: Tech-Use+10, Vox Warding. Вся вокс-связь в дальности — только помехи/белый шум. Всегда в открытом канале, авто-засекается Ноосферным Сканированием.",
+    "harmful": true,
     "effects": {
       "charBonusStat": "",
       "charBonusValue": 0,

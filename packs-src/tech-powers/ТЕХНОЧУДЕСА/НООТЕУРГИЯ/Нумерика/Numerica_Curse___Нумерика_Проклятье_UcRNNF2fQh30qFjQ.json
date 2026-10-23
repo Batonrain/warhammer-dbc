@@ -27,6 +27,7 @@
     "damageType": "energy",
     "penetration": 0,
     "effect": "[Железо: Hasta Numerica · Цена: 3К · Процесс: Нет · Тип: —] Tech-Use(I)−10 vs Tech-Use(I)+0 (Инфограждение/пользователь). При победе отключает оружие/броню/снаряжение на ½I.b(окр.▲) Раундов. Пользователь полудействием Tech-Use(I)+0 (больше Успехов) включает обратно.",
+    "harmful": true,
     "effects": {
       "charBonusStat": "",
       "charBonusValue": 0,
