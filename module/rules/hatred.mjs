@@ -54,8 +54,36 @@
 //      вывод, что «лимит одной атаки в Ход» у Решительности Сражаться,
 //      wdbc-1rno 03.09.2026).
 
-import { hatredTargetsOf } from "./predicates.mjs";
+import { hatredTargetsOf, itemHasName } from "./predicates.mjs";
 import { anyTargetMatches } from "./talent-targets.mjs";
+
+/**
+ * Defiance / Неповиновение (глава 3, «Пси-Стойкость», Sahara 3-defiance):
+ * «Преимущество на все встречные тесты против психосил (кроме непрямых),
+ * выжигания души, атак одержимостью и прочих Варп-эффектов, вызванных
+ * Ненавистными врагами». Требование самого Таланта — Hatred, поэтому живёт
+ * здесь, у источника Ненависти: «Ненавистность» кастера решает ctx.targetActor.
+ *
+ * Область — psychicThreat (тест Сопротивления психосиле, resolve-test.mjs).
+ * Это узкая половина книжной фразы: тест против психосилы. Выжигание Души
+ * бросается автоматически без диалога (hooks.mjs::_executeSoulBurn) — там то же
+ * правило берётся само (rules/psychic-resist-reroll.mjs, решение владельца
+ * 23.10.2026); атаки Одержимостью и «прочие Варп-эффекты» своего теста в
+ * системе не имеют — там Преимущество ведёт стол.
+ *
+ * Опознаётся по имени (долг wdbc-iadw): записи Конструктора здесь не хватает —
+ * условие «кастер — Ненавистная цель» читает ctx, а запись предмета
+ * вычисляется вне броска (mech-when.mjs::predicateOk отвергает такие условия).
+ * «Кроме непрямых»: контекст несёт psychicIndirect (hooks.mjs, кнопка
+ * сопротивления у карточки манифестации).
+ */
+function hasDefiance(actor) {
+  for (const item of actor?.items ?? []) {
+    if (item?.type !== "talent") continue;
+    if (itemHasName(item, "Defiance") || itemHasName(item, "Неповиновение")) return true;
+  }
+  return false;
+}
 
 /**
  * Правила от Ненависти для ТЕКУЩЕГО теста — источник sources.mjs::"hatred".
@@ -70,7 +98,7 @@ export function hatredRules(actor, ctx = {}) {
   const targets = hatredTargetsOf(actor);
   if (!targets.length || !anyTargetMatches(targets, ctx)) return [];
 
-  return [
+  const rules = [
     {
       id: "hatred.meleeBonus", label: "Ненависть: рукопашная атака по Ненавистной цели",
       when: {},
@@ -87,4 +115,13 @@ export function hatredRules(actor, ctx = {}) {
       effects: [{ kind: "rollMode", target: "morale", mode: "keepBest", rolls: 2, who: "self" }]
     }
   ];
+
+  if (ctx.psychicThreat && !ctx.psychicIndirect && hasDefiance(actor)) {
+    rules.push({
+      id: "hatred.defiance", label: "Неповиновение: сопротивление психосиле Ненавистного",
+      when: {},
+      effects: [{ kind: "rollMode", target: "psychicThreat", mode: "keepBest", rolls: 2, who: "self" }]
+    });
+  }
+  return rules;
 }

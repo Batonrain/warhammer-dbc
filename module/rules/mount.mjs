@@ -358,10 +358,11 @@ export function skidInfo(speedKey, rider, mount, opts = {}) {
  * Штраф стрелковой атаки с седла по скорости в текущем Ходу (стр. 478).
  * Интегрированное оружие штрафа не получает вовсе; турель в Коляске срезает
  * его на 20; демоническое свойство «Стабилизированный» снимает целиком.
+ * Рысь (`trot`, см. trotApplies) снимает штраф скорости на малом ходу.
  */
 export function rangedPenalty(speedKey, { integral = false, sidecarTurret = false,
-                                          stabilized = false } = {}) {
-  if (integral || stabilized) return 0;
+                                          stabilized = false, trot = false } = {}) {
+  if (integral || stabilized || trot) return 0;
   const base = MOUNT_SPEEDS[speedKey]?.ranged ?? 0;
   return sidecarTurret ? Math.min(0, base + 20) : base;
 }
@@ -371,7 +372,24 @@ export function rangedPenalty(speedKey, { integral = false, sidecarTurret = fals
  * снимает штраф скорости само, и спрашивать о нём диалоги не должны.
  */
 export function mountRangedPenalty(speedKey, mount, opts = {}) {
-  return rangedPenalty(speedKey, { ...opts, stabilized: !!possessionOf(mount)?.stabilized });
+  const { rider = null, ...rest } = opts;
+  return rangedPenalty(speedKey, {
+    ...rest, stabilized: !!possessionOf(mount)?.stabilized,
+    trot: rest.trot || trotApplies(rider, speedKey)
+  });
+}
+
+/**
+ * Trot / Рысь (Талант Всадника, стр. 112): «Когда он двигается не более SPD в
+ * Ход, скакун или байк игнорируют Трудный Ландшафт и не дают штрафов на
+ * действия всадника или пассажира». SPD — дистанция полудвижения (таблица
+ * «Движение в бою», стр. 29: Полудвижение = SPD, Полное = 2×SPD), поэтому
+ * Рысь — это «без движения» и «полудвижение»; Полное, Натиск и Бег — нет.
+ */
+export const TROT_SPEEDS = ["still", "half"];
+
+export function trotApplies(rider, speedKey) {
+  return TROT_SPEEDS.includes(speedKey) && hasTalent(rider, "Trot", "Рысь");
 }
 
 /** Избирательная атака по этому скакуну: «Укрытие» демона учитывается само. */

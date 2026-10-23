@@ -69,6 +69,7 @@ import { TALENT_ALIAS, TALENT_CHOICE_SEP } from "../sheets/actor-sheet.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { testCardHtml } from "../helpers/test-card.mjs";
 import { openCompendiumBrowser, weaponTypeFolderIds } from "./compendium-browser.mjs";
+import { isUnrated } from "./compendium-filters.mjs";
 import {
   splitGearTopLevel, gearChoiceOptions, parseGearEntry, parseGearItem, describeGearSpec,
   matchEquipPointsBonus, matchGearSizeRule, matchStandardSystemsCount, constructorCoverage,
@@ -157,6 +158,24 @@ export function sacrificeCandidates(items) {
     ["weapon", "armor", "cybernetic", "implant"].includes(it?.type)
     && !it.getFlag?.("warhammer-dbc", "integralAttack")
     && it.system?.category !== "astartes");
+}
+
+/**
+ * Что на листе можно «улучшить на ступень Качества» за Очки Снаряжения:
+ * предметы с Редкостью в пределах строки таблицы. Предмет БЕЗ Редкости (Имплант
+ * без книжной Редкости, r0 23.10.2026) не R0 — его нет в продаже, и поднимать ему
+ * Качество «как R0» нельзя; тот же отбор, что у потолка Обозревателя (isUnrated).
+ * @param {Iterable<object>} items  предметы актора
+ * @param {{maxAvailability:number, minAvailability?:?number}} row  строка магазина
+ */
+export function upgradeQualityCandidates(items, row) {
+  return [...(items ?? [])].filter(it => {
+    if (!["weapon", "armor", "gear", "tool", "ammo", "drug", "forcefield", "cybernetic", "implant"].includes(it?.type)) return false;
+    const availability = it.system?.availability;
+    if (isUnrated({ type: it.type, availability })) return false;
+    const av = Number(availability) || 0;
+    return av <= row.maxAvailability && (row.minAvailability == null || av >= row.minAvailability);
+  });
 }
 
 export const WIZARD_STEPS = [
@@ -863,7 +882,10 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
   async _advanceArchetypeStep() {
     const actor = this.actor;
     const archKey = actor.system.archetype || "";
-    if (!archKey) return false;
+    if (!archKey) {
+      ui.notifications?.warn("Выберите Архетип.");
+      return false;
+    }
 
     if (!this._archetypeApplyPromise && actorArchetypeItem(actor)) {
       // Архетип уже применён в ПРОШЛЫЙ РАЗ (напр. другой экземпляр Мастера,
@@ -1403,7 +1425,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
    * По ключевым словам в строке текста снаряжения (английская военная
    * номенклатура архетипов/рас, изредка русский) угадывает ОДИН пак
    * Обозревателя — запасной путь для именной строки, чьё имя в компендиумах не
-   * нашлось («Void Suit Helmet»): игрок выбирает сам, но не из всех вкладок.
+   * нашлось: игрок выбирает сам, но не из всех вкладок.
    * Не угадал — null, Обозреватель откроется без сужения.
    *
    * Границы слова у кириллицы пишутся lookaround'ами по буквам обоих
@@ -1632,6 +1654,8 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
   _gearPickFilters(spec) {
     const filters = {};
     if (spec.maxAvailability != null) filters.maxAvailability = spec.maxAvailability;
+    // Нижняя граница — Записи Ритуалов (wdbc-zaesd): Ритуал без Записи не берётся.
+    if (spec.minAvailability != null) filters.minAvailability = spec.minAvailability;
     if (spec.folders?.length) {
       filters.folderId = spec.packs.includes("weapons")
         ? [...new Set(spec.folders.flatMap(id => weaponTypeFolderIds(id)))]
@@ -1809,6 +1833,9 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
         const picked = await openCompendiumBrowser(false, {
           pack: spec.packs.length === 1 ? spec.packs[0] : spec.packs,
           filters: this._gearPickFilters(spec), count: spec.count,
+          // Бюджет «на суммарную Редкость N» (Записи Ритуалов); у остальных строк
+          // его нет — тогда Обозреватель считает штуки по count, как раньше.
+          ...(spec.budget ? { budget: spec.budget } : {}),
           prompt: `Стартовое снаряжение: ${spec.raw} (${describeGearSpec(spec)}).${slotHint}`
         });
         const uuids = Array.isArray(picked) ? picked : (picked ? [picked] : []);
@@ -1948,10 +1975,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /** Строки "quality" — поднять Качество уже полученных предметов на row.steps ступеней. */
   async _equipUpgradeQuality(row) {
-    const candidates = this.actor.items.filter(it =>
-      ["weapon", "armor", "gear", "tool", "ammo", "drug", "forcefield", "cybernetic", "implant"].includes(it.type)
-      && (Number(it.system?.availability) || 0) <= row.maxAvailability
-      && (row.minAvailability == null || (Number(it.system?.availability) || 0) >= row.minAvailability));
+    const candidates = upgradeQualityCandidates(this.actor.items, row);
     if (!candidates.length) { ui.notifications.warn("На листе нет подходящих по Редкости предметов для этой траты."); return false; }
     const picked = await this._pickOwnedItems(candidates, row.label, row.count);
     if (!picked.length) return false;

@@ -36,9 +36,13 @@ import { situationalRules } from "./situational.mjs";
 import { psychicSustainTargetRules } from "./psychic-sustain-target.mjs";
 import { pathRulesFor } from "./library/paths.mjs";
 import { hatredRules } from "./hatred.mjs";
+import { rageRules } from "./rage.mjs";
+import { socialTalentRules } from "./social-talents.mjs";
 import { awarenessTalentRules } from "./awareness-talents.mjs";
 import { resilienceTalentRules } from "./resilience-talents.mjs";
 import { leadershipTalentRules } from "./leadership-talents.mjs";
+import { occultistTalentRules } from "./occultist-talents.mjs";
+import { commandSubstitutionRules } from "./command-substitution.mjs";
 import { legacyWrathRules, legacyExcessRules, legacyGuardianRules, legacyBloodPsychicRules, legacyInstinctiveDisarmRules, legacyDistractingCharSwapRules, legacyQuietAwarenessRules } from "./legacy-weapon.mjs";
 import { devourerPermanentRules } from "./devourer-of-knowledge.mjs";
 import { gallerpoxPoisonPenaltyActive } from "./prophet-of-gallerpox.mjs";
@@ -176,6 +180,19 @@ registerRuleSource("synesthesia", () => SYNESTHESIA_RULES);
 // выбрал Ненавистной при получении Таланта. См. заголовок rules/hatred.mjs.
 registerRuleSource("hatred", (a, ctx) => hatredRules(a, ctx));
 
+// Ярость / Frenzy (Берсерк, Sahara 3-861e): −20 на тесты BS, I и F, пока
+// system.inRage. Читает СОСТОЯНИЕ, а не Талант — Ярость приходит и от
+// Кхорнгора, галлюциногенов, Иконы Богохульства. Остальные числа Ярости
+// (+10 WS/S/W, Усталость, Оглушение, Мораль) считаются в своих местах — см.
+// заголовок rules/rage.mjs.
+registerRuleSource("rage", a => rageRules(a));
+
+// Peer/Связи, Good Reputation/Хорошая Репутация, Enemy/Враг (глава 3,
+// «Социальные», Sahara peer-ancient-warrior-… ч. «а» и 3-5e84): +10 / +10 /
+// −10×Уровень на социальные тесты против группы из talent.system.targets —
+// тот же приём, что Hatred выше. См. заголовок rules/social-talents.mjs.
+registerRuleSource("socialTalents", (a, ctx) => socialTalentRules(a, ctx));
+
 // Таланты Внимательности (глава 3, сверка 17.10.2026): галочки Усиленных
 // Чувств, Дегустатора, Воролова, Службы Безопасности и Аналитического Взгляда,
 // штраф Ослепления вдвое у Боя Вслепую. См. заголовок rules/awareness-talents.mjs.
@@ -193,6 +210,20 @@ registerRuleSource("resilienceTalents", (a, ctx) => resilienceTalentRules(a, ctx
 // нет, возвращает []). См. заголовок rules/leadership-talents.mjs.
 registerRuleSource("leadershipTalents", (a, ctx) =>
   leadershipTalentRules(a, ctx, typeof game !== "undefined" ? game.actors ?? [] : []));
+
+// Таланты Оккультиста (перепроверка Sahara 3-2a39, 19.10.2026): Glorious
+// Purpose (Inf вместо W/F против демона в демоническом оружии) и половина
+// Infernal Master (Forbidden Lore(Daemons)(W) вместо Command против демона)
+// — тем же rollBonus-приёмом разницы итогов, что Living Legend выше. См.
+// заголовок rules/occultist-talents.mjs.
+registerRuleSource("occultistTalents", (a, ctx) => occultistTalentRules(a, ctx));
+
+// Подмена Командования — Living Legend (Inf вместо F) и Infernal Master
+// (Forbidden Lore(Daemons)(W) вместо Command) конкурируют за один навык;
+// выбор лучшей из двух — отдельный источник, не сумма двух rollBonus на
+// skill:command (фикс 19.10.2026, независимое ревью). См. заголовок
+// rules/command-substitution.mjs.
+registerRuleSource("commandSubstitution", (a, ctx) => commandSubstitutionRules(a, ctx));
 
 // Наследие Ярости/Rage, Оружие Наследия (wdbc-1rno.35, стр. 427): штраф −10
 // на I/P, пока экипировано Оружие Наследия с этой Историей. См. заголовок

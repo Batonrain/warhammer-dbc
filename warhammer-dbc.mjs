@@ -52,7 +52,9 @@ import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
          saveItemMechanics, mechanicsRelevantChange, syncGrantedEquipment,
-         syncNullZoneSuppression, syncGrantedAbilities, hasWhenGatedAbilityGrant } from "./module/apps/mechanics.mjs";
+         syncNullZoneSuppression, syncGrantedAbilities, hasWhenGatedAbilityGrant,
+         getItemMechanics, findMechEntryById } from "./module/apps/mechanics.mjs";
+import { entryWhenOk } from "./module/rules/mech-when.mjs";
 import { isItemActive, syncOrphanedModEffects } from "./module/apps/effects.mjs";
 import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
 import { applyRace, applySubrace, SKIP_MECHANICS_HOOK } from "./module/apps/races.mjs";
@@ -918,6 +920,13 @@ Hooks.once("ready", () => {
         await applyRelayedCommandUpdate(data);
         return;
       }
+      // Вырубание (Takedown): игрок сбивает с ног чужую цель — писать в неё
+      // может только ГМ; module/combat/takedown.mjs::applyTakedownRelay.
+      if (data.action === "takedownKnockdown") {
+        const { applyTakedownRelay } = await import("./module/combat/takedown.mjs");
+        await applyTakedownRelay(data, requester);
+        return;
+      }
       if (data.action === "inspiringPresenceSpend") {
         // Вдохновляющее Присутствие (Чемпион): союзник тратит Очко чужого
         // Чемпиона — module/combat/inspiring-presence.mjs сверяет Черту,
@@ -1392,9 +1401,12 @@ Hooks.once("ready", async () => {
 Hooks.once("ready", async () => {
   if (!game.user.isGM) return;
   // Идемпотентна (метку, которая уже есть, не дописывает), проход по
-  // несвязанным токенам повторять безопасно.
+  // несвязанным токенам повторять безопасно. Версия 2 (task-1a59): метку
+  // получила ещё силовая броня смертных (4 записи) — в мирах, где версия 1
+  // уже стоит, без подъёма их копии на акторах остались бы без метки.
   await runMigrationGate({
     key: "retinalDisplayMarkVersion", tokensKey: "retinalDisplayMarkTokensVersion", label: "Встроенный ретинальный дисплей",
+    version: 2, tokensVersion: 2,
     full: () => migrateRetinalDisplayMark(), tokensOnly: () => migrateRetinalDisplayMark({ tokensOnly: true })
   });
 });
@@ -2774,6 +2786,14 @@ function _integralProtected(item) {
   const optional = optionalIntegralEntries(source.getFlag?.("warhammer-dbc", "mechanics") || [])
     .find(e => e.id === entryId);
   if (optional && !integralEntrySelected(optional, source.getFlag("warhammer-dbc", INTEGRAL_CHOSEN_FLAG))) return false;
+  // Условие «Когда» самой записи (смена субмутации и подобное) перестало
+  // проходить — это тоже штатный откат (syncGrantedEquipment,
+  // removeStaleAbilityGrants), источник при этом остаётся активен как целая
+  // Мутация/Имплант: без этой проверки хук считал бы атаку защищённой вечно,
+  // пока жив сам источник, и блокировал её законное снятие (task-8cfb,
+  // живая проверка 22.10.2026 — субмутация 10→8 не снимала Crown of Horns).
+  const entry = entryId ? findMechEntryById(getItemMechanics(source), entryId) : null;
+  if (entry && !entryWhenOk(actor, entry, source)) return false;
   return isItemActive(source);
 }
 

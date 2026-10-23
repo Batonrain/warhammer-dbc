@@ -783,7 +783,11 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 `touch-of-entropy.mjs`, `turn-state-shield.mjs`, `unseen-beggar.mjs`,
 `voice-of-god.mjs`, `vulture.mjs`, `witchs-edge.mjs`, `hallucinogenic.mjs`,
 `ogryn-weapon-break.mjs`, `frenzy.mjs` (Ярость — переключатель,
-`system.inRage`), `fully-armed.mjs`.
+`system.inRage`; лимит повторного входа), `rules/rage.mjs` (числа Ярости по
+состоянию `inRage`: +10 WS/S/W, −20 тесты BS/I/F, Раненный Зверь, Холодная
+Ярость; Усталость/Оглушение/Мораль — `situational.mjs`, `condition-guards.mjs`,
+`morale-test.mjs`, `fear.mjs`; Sahara 3-861e), `rules/berserker-talents.mjs`
+(Натиск Берсерка: +10 к приёму при Натиске, `meleeBaseBonus`), `fully-armed.mjs`.
 
 - Гасители штрафов окна атаки (sheets/attack/mods.mjs, 26.09.2026):
   дальняя/экстремальная дистанция — `rules/range-penalty-immunity.mjs`
@@ -1459,6 +1463,16 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   последствий: книжный эффект Фокуса (изучение психосилы без «изучения», только
   за опыт; обучение других) висит на ещё не существующей в системе механике
   изучения психосил (wdbc-1rno) — когда она появится, читает отсюда же.
+- **Предмет-Психофокус и его качество (21.10.2026, PR #550) — это ДРУГОЕ, не
+  Фокус Дисциплины выше.** Вещь Psy Focus / Психофокус (core.json стр.243),
+  ради которой работает Путь Силы «Психофокус» (`constants/psyker.mjs::PSY_PATHS.
+  psychofocus`, свободный тест W+0 в `sheets/tabs/psychic.mjs::executePsychotest`).
+  Игрок привязывает предмет на вкладке МИСТИКА (`system.psyker.focusItemId`,
+  Дисциплина резонанса — `…focusResonance`); читатель —
+  `rules/psy-focus.mjs::focusQualityEffect/focusRollResult`: Good.Q +5 к бонусу
+  фокуса на силах резонирующей Дисциплины (только при успехе), Best.Q ещё и
+  без штрафа крит. провала. Руны Сигиллитов («считается Best.Q») этого не
+  получают — wdbc-b8n4f.
 - Руны Сигиллитов: `rules/sigillite-runes.mjs` (пул `system.sigilliteRunes`,
   производный максимум 20 + Библиотека Рун × Бонус Интеллекта + ступени
   Forbidden Lore (Archeotech), цена манифестации бPR×2, Рунный Удар),

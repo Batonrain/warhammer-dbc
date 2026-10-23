@@ -367,6 +367,9 @@ const DEVIATIONS = {
     // Фокус Дисциплины (wdbc-l6zg, стр.293) — выбор игрока при создании
     // персонажа, заведён гораздо позже template.json.
     "psyker.focusDisciplines": [],
+    // Предмет-Психофокус и его резонанс (качество Good.Q+, стр.243).
+    "psyker.focusItemId": "",
+    "psyker.focusResonance": "",
     ...Object.fromEntries(Object.keys(CHARACTERISTICS)
       .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]])),
     // Постоянный модификатор Навыка (wdbc-q4wb) — поле на листе рядом с Итогом,

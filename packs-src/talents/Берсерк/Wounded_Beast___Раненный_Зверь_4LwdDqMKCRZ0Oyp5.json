@@ -5,7 +5,7 @@
   "folder": "GD2SVUHWSvG5UbRH",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: в Ярости к WS и S добавляется +5 при лёгком ранении и +10 при тяжёлом или критическом — итого +15/+20 вместе с +10 Ярости (module/rules/rage.mjs::woundedBeastBonus, отдельный проход в rules/character.mjs после расчёта Уровня Ранения; Талант опознаётся по имени и по capabilityKey berserker.core.woundedBeast). Меняется значение характеристики, поэтому растёт и Бонус (урон). W не растёт — книга называет только WS и S.",
     "benefit": "Если персонаж легко ранен, он увеличивает бонусы к WS и S от Ярости до +15; если тяжело или критически ранен — до +20.",
     "tier": 2,
     "requirement": "Frenzy",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "GBrS3NOmoxPkkCBE",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "6RhuI50BPzZ4XAOA",
+              "capabilityKey": "berserker.core.woundedBeast",
+              "label": "Раненный Зверь: +5/+10 к WS и S от Ярости при лёгком/тяжёлом ранении",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

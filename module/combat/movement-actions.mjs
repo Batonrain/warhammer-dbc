@@ -63,6 +63,7 @@ import { uselessCount } from "../rules/useless-limbs.mjs";
 import { divineProtectionActive } from "../rules/death-save.mjs";
 import { hasDodgeTalent, catfallHeight, catfallLeg, CATFALL_TUCK_BONUS } from "../rules/dodge-talents.mjs";
 import { hasSpeedTalent, standUpApCost, jumpApCost, repositionAvailable, sprintFatigueDue, breacherReady } from "../rules/speed-talents.mjs";
+import { leapUpDenied, standUpExtraApCost } from "../rules/takedown.mjs";
 import { isHandShield } from "./hand-shield.mjs";
 
 // Захват (стр. 12, wdbc-x1nz.2.31): «только действия Борьбы или не-Физические»
@@ -821,18 +822,22 @@ export async function declareStandUp(actor) {
   if (_blockedByGrapple(actor)) return;
   if (!actor.system.conditions?.prone) return ui.notifications.warn("⚠️ Персонаж не Повален — вставать не с чего.");
   // Вскочить: «может автоматически Встать за свободное действие» — выбирать нечего.
-  if (hasSpeedTalent(actor, "leapUp")) return _standUpPlain(actor);
+  // Не для сбитого Вырубанием носителя «Ещё Не Всё» (rules/takedown.mjs): ему Вскочить запрещён.
+  const denied = leapUpDenied(actor);
+  if (hasSpeedTalent(actor, "leapUp") && !denied) return _standUpPlain(actor);
+  const extra = standUpExtraApCost(actor);
   return new Promise(resolve => {
     new Dialog({
       title: `Встать — ${actor.name}`,
       content: `<div class="atk-range-info" style="font-size:0.85em;padding:4px 2px;">
+        ${denied ? `<b>«Ещё Не Всё»: Вскочить не помогает, любое вставание стоит ещё +1 ОД.</b><br/>` : ""}
         Обычным способом — Полудействие, всегда удаётся.<br/>
         Прыжком — тест Acrobatics(A)+0: Успех встаёт Свободным действием;
         Провал даёт всем врагам в рукопашной с ним Свободную Атаку, но он
         всё равно встаёт (Полудействием), стр. 30.
       </div>`,
       buttons: {
-        plain: { label: "Обычным способом (1 ОД)", callback: () => resolve(_standUpPlain(actor)) },
+        plain: { label: `Обычным способом (${1 + extra} ОД)`, callback: () => resolve(_standUpPlain(actor)) },
         jump:  { label: "Прыжком (тест Acrobatics)", callback: () => resolve(_standUpJump(actor)) },
         cancel: { label: "Отмена", callback: () => resolve(null) }
       },
@@ -842,13 +847,18 @@ export async function declareStandUp(actor) {
 }
 
 export async function _standUpPlain(actor) {
-  const leapUp = hasSpeedTalent(actor, "leapUp");
-  const cost = standUpApCost(leapUp);
+  // «Ещё Не Всё» (rules/takedown.mjs): помеченному Вскочить не помогает, а любое
+  // вставание стоит +1 ОД сверх обычного. extra считается ДО снятия «Повален»:
+  // вместе с ним уходит и метка.
+  const extra = standUpExtraApCost(actor);
+  const leapUp = hasSpeedTalent(actor, "leapUp") && !leapUpDenied(actor);
+  const cost = standUpApCost(leapUp) + extra;
   if (cost > 0 && !await spendActionPoints(actor, cost, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
   await actor.update(conditionRemoveFields("prone"));
+  const notAll = extra ? ` «Ещё Не Всё»: Вскочить не помогает, ещё +${extra} ОД (всего ${cost} ОД).` : "";
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#9fb4ff")}${esc(actor.name)} — Встать</div>
-    <div class="roll-threshold">${leapUp ? "Свободное действие (0 ОД) — Вскочить. Встал автоматически." : "Полудействие (1 ОД). Встал обычным способом."}</div>
+    <div class="roll-threshold">${leapUp ? "Свободное действие (0 ОД) — Вскочить. Встал автоматически." : `Полудействие (1 ОД). Встал обычным способом.${notAll}`}</div>
   </div>`);
 }
 
@@ -856,13 +866,23 @@ export async function _standUpJump(actor) {
   const acro = skillTotal(actor, "acrobatics");
   const { rv, passed, deg } = await _d100(acro, actor);
   const statLineHtml = rollStatLine({ label: "Acrobatics", base: acro, threshold: acro, rv });
+  // «Ещё Не Всё» (rules/takedown.mjs): помеченный платит +1 ОД за ЛЮБОЙ способ встать.
+  // Считается до снятия «Повален» — вместе с ним уходит и метка.
+  const extra = standUpExtraApCost(actor);
 
   if (passed) {
+    if (extra > 0 && !await spendActionPoints(actor, extra, { physical: true })) {
+      return _postCard(actor, `<div class="wh-roll-result">
+        <div class="roll-header">${rollIcon("run","#9fb4ff")}${esc(actor.name)} — Встать (прыжком)</div>
+        ${statLineHtml}
+        <div class="roll-outcome"><span class="roll-failure">Успех — ${deg} ${_degWord(deg)}, но «Ещё Не Всё»: встать стоит +${extra} ОД, а их не хватает — остаётся Повален.</span></div>
+      </div>`);
+    }
     await actor.update(conditionRemoveFields("prone"));
     return _postCard(actor, `<div class="wh-roll-result">
       <div class="roll-header">${rollIcon("run","#9fb4ff")}${esc(actor.name)} — Встать (прыжком)</div>
       ${statLineHtml}
-      <div class="roll-outcome"><span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Вскочил Свободным действием.</span></div>
+      <div class="roll-outcome"><span class="roll-success">Успех — ${deg} ${_degWord(deg)}. ${extra > 0 ? `Вскочил, заплатив ${extra} ОД («Ещё Не Всё»).` : "Вскочил Свободным действием."}</span></div>
     </div>`);
   }
 
@@ -875,7 +895,7 @@ export async function _standUpJump(actor) {
       await offerFreeAttack(enemyDoc, tokenDoc);
     }
   }
-  if (!await spendActionPoints(actor, 1, { physical: true })) {
+  if (!await spendActionPoints(actor, 1 + extra, { physical: true })) {
     return _postCard(actor, `<div class="wh-roll-result">
       <div class="roll-header">${rollIcon("run","#9fb4ff")}${esc(actor.name)} — Встать (прыжком)</div>
       ${statLineHtml}
@@ -886,7 +906,7 @@ export async function _standUpJump(actor) {
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#9fb4ff")}${esc(actor.name)} — Встать (прыжком)</div>
     ${statLineHtml}
-    <div class="roll-outcome"><span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Враги в рукопашной получают Свободную Атаку — но встал Полудействием.</span></div>
+    <div class="roll-outcome"><span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Враги в рукопашной получают Свободную Атаку — но встал Полудействием${extra > 0 ? ` и ещё +${extra} ОД («Ещё Не Всё»)` : ""}.</span></div>
   </div>`);
 }
 
@@ -1864,7 +1884,8 @@ export function movementMenuItems(actor) {
     // «Встать» (тот же приём, что actorHasHalfStep выше — пункт меню виден,
     // только когда применим).
     if (actor.system.conditions?.prone) {
-      items.push({ key: "standup", label: "Встать", cost: "", action: () => declareStandUp(actor) });
+      // «Ещё Не Всё» (rules/takedown.mjs): помеченному Вскочить не помогает, +1 ОД к любому способу.
+      items.push({ key: "standup", label: "Встать", cost: standUpExtraApCost(actor) ? "+1 ОД" : "", action: () => declareStandUp(actor) });
     } else {
       items.push({ key: "prone", label: "Лечь", cost: "Своб.", action: () => declareProne(actor) });
     }

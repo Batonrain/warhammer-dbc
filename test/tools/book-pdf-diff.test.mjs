@@ -15,9 +15,9 @@
 // делает для соседнего инструмента конвейера книг.
 
 import { describe, it, expect } from "vitest";
-import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import process from "node:process";
+import { spawnPython } from "../helpers/python.mjs";
 
 const TOOL = join(import.meta.dirname, "../../tools/book-pdf-diff.py");
 
@@ -50,7 +50,7 @@ print(json.dumps(out, ensure_ascii=False))
 const run = () => {
   // PYTHONIOENCODING=utf-8: на Windows консольная кодировка иначе портит
   // кириллицу в stdout (та же оговорка есть в шапке самого book-pdf-diff.py).
-  const r = spawnSync("python3", ["-c", PY], {
+  const r = spawnPython(["-c", PY], {
     encoding: "utf8",
     env: { ...process.env, PYTHONIOENCODING: "utf-8" },
   });

@@ -62,6 +62,23 @@ describe("Штраф стрельбы с седла — автоподстано
     expect(fieldValue()).toBe(-30);
   });
 
+  // Trot / Рысь: «не более SPD в Ход … не дают штрафов на действия всадника» —
+  // на полудвижении штраф −10 снят; на полном движении Рысь не действует.
+  it("верхом, Полудвижение: −10, а с Рысью — 0", () => {
+    showAttackDialog(mountedRider("half"), weaponFor({ rof_single: 1 }));
+    expect(fieldValue()).toBe(-10);
+    resetCaptured();
+    const trotter = mountedRider("half", { items: [{ type: "talent", name: "Trot / Рысь", system: {}, flags: {} }] });
+    showAttackDialog(trotter, weaponFor({ rof_single: 1 }));
+    expect(fieldValue()).toBe(0);
+  });
+
+  it("верхом, Полное движение с Рысью — всё равно −20", () => {
+    const trotter = mountedRider("full", { items: [{ type: "talent", name: "Trot / Рысь", system: {}, flags: {} }] });
+    showAttackDialog(trotter, weaponFor({ rof_single: 1 }));
+    expect(fieldValue()).toBe(-20);
+  });
+
   it("рукопашное оружие верхом — поля нет (штраф только стрелковый)", () => {
     const actor = mountedRider("full");
     showAttackDialog(actor, weaponFor({ weaponClass: "melee" }));

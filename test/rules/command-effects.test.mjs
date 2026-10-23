@@ -6,7 +6,8 @@
 import { describe, it, expect } from "vitest";
 import { commandRulesFor, shortCommandEligible, matchesGeneralKind,
          braveryActive, moraleCommandActive, detailSpentOf, commandEffectNode,
-         syncAssaultBonus, volleySuppressionMod, trainingSuccessCap } from "../../module/rules/command-effects.mjs";
+         syncAssaultBonus, volleySuppressionMod, trainingSuccessCap,
+         effectivePresence } from "../../module/rules/command-effects.mjs";
 import { DETAIL_COMMANDS } from "../../module/constants/squad.mjs";
 
 const soldier = (over = {}) => ({
@@ -203,5 +204,73 @@ describe("стая Йигори (node.pack)", () => {
   it("Оглох — до бойца стаи тоже ничего не доходит", () => {
     const n = pack();
     expect(commandEffectNode(soldier({ conditions: { deafened: true } }), [n], "presence:focus")).toBe(null);
+  });
+});
+
+// War Chant / Боевая Песнь (Лидер, Талант главы 3): «раздаёт все 3 эффекта
+// Командного Присутствия всем подчинённым, что слышат песнь (макс. W.b×2, W.b×20
+// с Air of Authority)». Узел помечает combat/command-state.mjs::commandNodesFor
+// (node.chant = {wp, cap, over}: W певца, лимит, этот боец сверх лимита) — здесь
+// чистая часть. От стаи отличается тем, что бонусы Команд НЕ удваиваются.
+describe("Боевая Песнь (node.chant)", () => {
+  const chant = (over = {}, chantOver = {}) => node({ chant: { wp: 45, cap: 10, over: false, ...chantOver }, presenceWp: null, ...over });
+
+  it("effectivePresence: все три эффекта и наибольшая W, пока боец в лимите", () => {
+    const p = effectivePresence(chant());
+    expect(p.active).toBe(true);
+    expect(p.benefits).toEqual(["extreme", "focus", "morale"]);
+    expect(p.wp).toBe(45);
+  });
+
+  it("effectivePresence: W — большая из W командира узла и W певца", () => {
+    expect(effectivePresence(chant({ presenceWp: 60 })).wp).toBe(60);
+    expect(effectivePresence(chant({ presenceWp: 30 })).wp).toBe(45);
+  });
+
+  it("сверх лимита W.b×2 — песня не доходит, остаётся обычное Присутствие узла", () => {
+    const p = effectivePresence(chant({ presence: { active: true, benefit: "morale" }, presenceWp: 50 }, { over: true }));
+    expect(p).toEqual({ active: true, benefits: ["morale"], wp: 50 });
+    expect(effectivePresence(chant({}, { over: true })).active).toBe(false);
+  });
+
+  it("Концентрация огня и Экстр. урон — эффекты Присутствия есть, хотя Командир ничего не выбирал", () => {
+    const n = chant();
+    expect(commandEffectNode(soldier(), [n], "presence:focus")).toBe(n);
+    expect(commandEffectNode(soldier(), [n], "presence:extreme")).toBe(n);
+    expect(commandEffectNode(soldier(), [n], "presence:morale")).toBe(n);
+  });
+
+  it("Воля певца идёт к тесту Морали: W 45 против своей 30 → +15", () => {
+    const rules = commandRulesFor(soldier(), [chant()], MORALE);
+    expect(rules.find(r => r.id === "command.presenceWill")?.effects[0].value).toBe(15);
+  });
+
+  it("бонусы Короткой Команды и Прикрытия НЕ удваиваются (в отличие от стаи Йигори)", () => {
+    const s = chant({ short: { active: true, key: "inspire", successes: 4 } });
+    expect(bonusOf(commandRulesFor(soldier(), [s], ATTACK))).toBe(4);
+    const c = chant({ detail: { active: true, picks: ["cover"], coverSuccesses: 3 } });
+    expect(bonusOf(commandRulesFor(soldier(), [c], DODGE))).toBe(9);
+  });
+
+  it("сверх лимита — эффектов Присутствия нет", () => {
+    const n = chant({}, { over: true });
+    expect(commandEffectNode(soldier(), [n], "presence:focus")).toBe(null);
+    expect(commandRulesFor(soldier(), [n], MORALE).some(r => r.id === "command.presenceWill")).toBe(false);
+  });
+
+  it("лимит F.b×2 самого командования сильнее песни: overCapacity — ничего не доходит", () => {
+    const n = chant({ overCapacity: true });
+    expect(commandEffectNode(soldier(), [n], "presence:focus")).toBe(null);
+    expect(commandRulesFor(soldier(), [n], MORALE)).toEqual([]);
+  });
+
+  it("Оглох — песню не слышит", () => {
+    expect(commandEffectNode(soldier({ conditions: { deafened: true } }), [chant()], "presence:focus")).toBe(null);
+  });
+
+  it("Орда получает от песни только эффекты 1 и 3 (как от обычного Присутствия)", () => {
+    const horde = { ...soldier(), type: "horde" };
+    expect(commandEffectNode(horde, [chant()], "presence:focus")).toBe(null);
+    expect(commandEffectNode(horde, [chant()], "presence:extreme")).toBeTruthy();
   });
 });

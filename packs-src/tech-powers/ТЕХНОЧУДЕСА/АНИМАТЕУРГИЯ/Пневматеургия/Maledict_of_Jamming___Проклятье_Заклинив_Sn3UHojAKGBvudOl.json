@@ -27,6 +27,7 @@
     "damageType": "energy",
     "penetration": 0,
     "effect": "[Железо: Noospheric Uplink · Цена: 3К · Процесс: 1 · Тип: Анима, Славословие (1)] Треб.: For.Lore (Mechanicum)+20. Шаблон I.b м. Высокотехнологичное оружие внутри −20 к Пределу Крит. Провала (и Заклинивания/Перегрева). Не на Демоническое/Наследие.",
+    "harmful": true,
     "effects": {
       "charBonusStat": "",
       "charBonusValue": 0,

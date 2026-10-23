@@ -23,7 +23,17 @@
 /** Чем меряется бюджет. */
 export const BUDGET_COUNT = "count";
 export const BUDGET_XP    = "xp";
+// Суммарная Редкость (wdbc-zaesd): «Записи Ритуалов на суммарную Редкость 11, но
+// не выше R3 каждый» — каждая взятая запись весит свою Редкость (поле
+// `availability` узла Обозревателя), а не штуку и не опыт. Считается как опыт:
+// недобор можно подтвердить (ровно 11 набрать удаётся не всегда), перебор нельзя.
+export const BUDGET_AVAILABILITY = "availability";
 
+// Режимы, которые автор выбирает в Конструкторе (mechanics.mjs, «Бюджет»).
+// BUDGET_AVAILABILITY сюда НЕ входит намеренно: он нужен пока одной выдаче —
+// стартовым Записям Ритуалов (rules/creation-gear.mjs) — и задаётся кодом, а не
+// выбором в выпадающем списке; в Конструкторе вес «Редкость» у «Выбора» не
+// обработан (equipBudgetMode читают только count/xp).
 export const BUDGET_MODES = [
   { key: BUDGET_COUNT, label: "Штуками" },
   { key: BUDGET_XP,    label: "Опытом"  }
@@ -31,10 +41,15 @@ export const BUDGET_MODES = [
 
 const num = v => Number(v) || 0;
 
+/** Режимы, где бюджет — сумма весов, а не счёт штук (ноль законен, недобор подтверждается). */
+const isSumMode = mode => mode === BUDGET_XP || mode === BUDGET_AVAILABILITY;
+
 /** Бюджет в рабочем виде. Пустой/битый — «одна штука», а не «сколько угодно». */
 export function normalizeBudget(budget) {
-  const mode = budget?.mode === BUDGET_XP ? BUDGET_XP : BUDGET_COUNT;
-  const value = Math.max(mode === BUDGET_XP ? 0 : 1, num(budget?.value) || (mode === BUDGET_XP ? 0 : 1));
+  const mode = budget?.mode === BUDGET_XP ? BUDGET_XP
+    : budget?.mode === BUDGET_AVAILABILITY ? BUDGET_AVAILABILITY
+    : BUDGET_COUNT;
+  const value = Math.max(isSumMode(mode) ? 0 : 1, num(budget?.value) || (isSumMode(mode) ? 0 : 1));
   // min (только штуками) — «до N» вместо «ровно N»: Сплайс берёт от 0 до 3
   // дополнительных адаптаций. Нет поля — прежнее «ровно N».
   const hasMin = mode === BUDGET_COUNT && budget?.min !== undefined && budget?.min !== null && budget?.min !== "";
@@ -50,6 +65,8 @@ export function normalizeBudget(budget) {
 export function entryWeight(item, budget, xpCost) {
   const b = normalizeBudget(budget);
   if (b.mode === BUDGET_COUNT) return 1;
+  // Редкость < 0 («Повсеместно») запись не удешевляет: остаток бюджета от неё не растёт.
+  if (b.mode === BUDGET_AVAILABILITY) return Math.max(0, num(item?.availability));
   return Math.max(0, num(xpCost ? xpCost(item) : item?.cost));
 }
 
@@ -83,6 +100,7 @@ export function budgetFits(chosen, item, budget, xpCost) {
 /** Подпись счётчика для шапки Обозревателя. */
 export function budgetLabel(chosen, budget, xpCost) {
   const st = budgetState(chosen, budget, xpCost);
+  if (st.mode === BUDGET_AVAILABILITY) return `Сумма Редкости ${st.spent} из ${st.value}`;
   return st.mode === BUDGET_XP
     ? `Потрачено ${st.spent} из ${st.value} опыта`
     : `Выбрано ${st.spent} из ${st.min !== undefined ? "(до) " : ""}${st.value}`;
@@ -97,7 +115,7 @@ export function budgetLabel(chosen, budget, xpCost) {
  */
 export function budgetReady(chosen, budget, xpCost) {
   const st = budgetState(chosen, budget, xpCost);
-  if (st.mode === BUDGET_XP) return !st.over && st.spent > 0;
+  if (isSumMode(st.mode)) return !st.over && st.spent > 0;
   if (st.min !== undefined) return !st.over && st.spent >= st.min;
   return st.done;
 }

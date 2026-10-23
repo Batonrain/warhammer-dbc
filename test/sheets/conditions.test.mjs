@@ -218,7 +218,11 @@ describe("condition rows", () => {
 
     await removeCondition(a, "prone");
 
-    expect(a.updates[0]).toEqual({ "system.conditions.prone": false });
+    // Повален уносит с собой метку запрета Вскочить («Ещё Не Всё», rules/takedown.mjs) — счётчика нет.
+    expect(a.updates[0]).toEqual({
+      "system.conditions.prone": false,
+      "flags.warhammer-dbc.-=leapUpDenied": null
+    });
   });
 
   it("setConditionLevel пишет уровень и молчит для состояний без счётчика", async () => {

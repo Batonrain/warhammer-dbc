@@ -5,7 +5,7 @@
   "folder": "iSsQmZ2gkxraxksi",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано частично: при Усиленной манифестации эPR получает +1 сверх Усиления природы дара (module/rules/psyker.mjs::CHILD_OF_THE_WARP_PUSH_BONUS, читает module/sheets/tabs/psychic.mjs; Талант опознаётся по имени). К модификатору Феноменов это +1 не добавляется — он считается от самого Усиления. Не смоделировано: постоянный малый феномен вокруг персонажа — его определяет ГМ при взятии Таланта.",
     "benefit": "Персонаж получает +1 PR при Усиленной манифестации, но его постоянно окружает незначительный постоянный феномен (определяется ГМом при взятии Таланта).",
     "tier": 2,
     "requirement": "PR 1",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g1ChildOfWarp001",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "e1ChildOfWarp001",
+              "capabilityKey": "psyker.core.childOfTheWarp",
+              "label": "Дитя Варпа: +1 эPR при Усиленной манифестации",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

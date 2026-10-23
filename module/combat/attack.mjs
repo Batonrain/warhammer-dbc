@@ -77,6 +77,8 @@ import { invocationNaturalAdd } from "../rules/invocation-natural.mjs";
 import { suffersBlindness } from "../rules/blindness.mjs";
 import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { balearicSbBonus } from "../rules/throwing-talents.mjs";
+import { crushingBlowBonus, mightyShotDamage, plasmaExpertiseReliability, plasmaMasteryBonus } from "../rules/damage-talents.mjs";
 import { isBiteName } from "../rules/integral-rating.mjs";
 import { VENOM_BITE_CAPABILITY, venomBiteDamage, isBiteAttack, ADAPTIVE_VENOM_DOSE_FLAG } from "../rules/naga-traits.mjs";
 import { fieldDisablesWeapon, fieldForbidsShot } from "../rules/null-zones.mjs";
@@ -514,6 +516,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   //   (Мод теста для рукопашного применяется в _showAttackDialog → threshold.)
   const qAuto = qualityEffects(item).auto;
   if (!isMelee) wp.reliabilityScore += qAuto.reliabilityMod || 0;
+  // Plasma Expertise / Эксперт Плазмы (weaponsmith.core.plasmaExpertise): +1
+  // Надёжность плазме со свойством Overheats (rules/damage-talents.mjs).
+  const plasmaExpertiseRel = plasmaExpertiseReliability(actor, { isMelee, sys, wProps });
+  wp.reliabilityScore += plasmaExpertiseRel;
   if (qAuto.losesPrimitive) wp.primitive = false;
   // Наследие Бойни (H1, стр. 426), стрелковая ветка: «Понижает СВОЮ Надёжность
   // ДО −2 при стрельбе нелетальными боеприпасами» — абсолютное значение, не
@@ -982,9 +988,13 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Естественное оружие Даров Одержимости (wdbc-o368c): рейтинг DNW от
   // Проявления по Порче — rules/invocation-natural.mjs.
   const invocationAdd = invocationNaturalAdd(wp, actor);
+  // Plasma Mastery / Мастерство Плазмы (weaponsmith.core.plasmaMastery): в
+  // Максимальном режиме плазмы ещё +2 Pen (здесь) и +2 Dmg (flatBonus ниже) —
+  // после удвоений, тем же местом, что собственные +2 Pen Maximal.
+  const plasmaMastery = plasmaMasteryBonus(actor, { isMelee, sys, maximalOn });
   const pen = attackPenetration({
     base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen + deadlyNaturalCorBAdd + invocationAdd.pen,
-    wp: penWp, hit, deg, shortRange, maximal: maximalOn, band, forceBonus
+    wp: penWp, hit, deg, shortRange, maximal: maximalOn, band, forceBonus: forceBonus + plasmaMastery.pen
   });
 
   const corVal   = Number(actor.system?.corruption?.value ?? 0);
@@ -1023,7 +1033,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Метательное (стр. 40, wdbc-x1nz.2.58): «+S.b к урону» — даже брошенное
   // (не рукопашное использование), в отличие от прочего стрелкового, которое
   // S.b к урону никогда не получает.
-  const thrownSbBonus = (!isMelee && sys.weaponClass === "thrown") ? sbEff : 0;
+  // Балеарец (3-8318): ½A.b (окр.▲) прибавляется к САМОМУ S.b, поэтому идёт
+  // под те же множители/обнуление, что и S.b (Могучее ×2, Сдержанное = 0) —
+  // а не отдельным слагаемым сверху.
+  const balearicSb = (!isMelee && sys.weaponClass === "thrown") ? balearicSbBonus(actor, chars.ag?.bonus) : 0;
+  const thrownSbBonus = (!isMelee && sys.weaponClass === "thrown")
+    ? (balearicSb ? meleeStrengthBonus({ sb: sb + balearicSb, wp, sbHalf }) : sbEff) : 0;
   // aimed читает opts.aiming — actor.system.aiming к этому моменту уже сброшен
   // в "none" диалогом (attack/dialog.mjs:217, ДО этого вызова), поэтому
   // значение приходит явным параметром, захваченным до сброса (wdbc-1rno.5).
@@ -1121,7 +1136,29 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const fangVenomDose = (hit && isBiteAttack(item?.name))
     ? ([...(actor.items ?? [])].find(i => i.getFlag?.("warhammer-dbc", ADAPTIVE_VENOM_DOSE_FLAG))?.name ?? "")
     : "";
-  const flatBonus = (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + invocationAdd.dmg + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus;
+  // Crushing Blow / Крушащий Удар (+½WS.b рукопашному урону) и Mighty Shot /
+  // Могучий Выстрел (+½BS.b стрелковому, кроме урона по площади) — Таланты
+  // «Рукопашные»/«Стрелок» (rules/damage-talents.mjs, Sahara 3-8dc5/3-5fbf).
+  // Прибавка стоит прямо во flatBonus: она идёт к броску урона каждого
+  // попадания, как S.b, и видна в формуле карточки. Пути урона вне этой
+  // функции (Захват: когти/укус, Быстрый Выхват, Орда, ответ на Парирование)
+  // считают свою формулу сами и Таланты не видят.
+  // Без привязки к попаданию: та же dmgFormula бросается и для шальных пуль
+  // промаха по цели в рукопашной (misfireHits), а «ко всему урону» их включает.
+  const crushingBlow = crushingBlowBonus(actor, { isMelee, wsBonus: chars.ws?.bonus });
+  const mightyShot = mightyShotDamage(actor, { isMelee, bsBonus: chars.bs?.bonus, wp });
+  const flatBonus = crushingBlow + mightyShot.bonus + plasmaMastery.dmg + (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + invocationAdd.dmg + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus;
+  // Строки карточки: игрок должен видеть, ОТКУДА взялась прибавка, а не искать
+  // лишние очки в формуле (цель проекта — видимая причина).
+  const damageTalentNotes = [
+    (hit && crushingBlow) ? `🗡️ Крушащий Удар: +${crushingBlow} к урону (½WS.b, уже в формуле).` : "",
+    (hit && mightyShot.bonus) ? `🎯 Могучий Выстрел: +${mightyShot.bonus} к урону (½BS.b, уже в формуле).` : "",
+    (hit && mightyShot.centerBonus)
+      ? `🎯 Могучий Выстрел: цель в центре шаблона Взрыва получает +${mightyShot.centerBonus} к урону — прибавьте вручную; остальным в радиусе бонуса нет.` : "",
+    (hit && plasmaMastery.dmg)
+      ? "⚡ Мастерство Плазмы: в Максимальном режиме +2 Dmg и +2 Pen (уже учтено). +2 к радиусу Взрыва — на выбор стрелка, вручную." : "",
+    plasmaExpertiseRel ? "♨️ Эксперт Плазмы: Надёжность +1 — Перегрев не понижает её." : ""
+  ].filter(Boolean).join("<br>");
   if (earlyDeathBonus) await markEarlyDeathLegacyUsed(actor, item, hit);
   if (soulboundLegacyBonus) await consumeSoulboundLegacyBonus(actor, item, hit);
   let dmgFormula = damageFormulaFor({
@@ -1726,6 +1763,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         quietElimination: (quietEliminationActive && hit)
           ? "🔇 Тихое Устранение: +1 куб урона (уже в формуле); при гибели цель не издаёт звука."
           : "",
+        // Таланты боевых бонусов (rules/damage-talents.mjs): Крушащий Удар, Могучий
+        // Выстрел, Эксперт/Мастерство Плазмы.
+        damageTalents: damageTalentNotes,
         technique: { label: techOpts.techniqueLabel, stance: techOpts.stanceLabel, note: techOpts.chatNote },
         aiming:    opts.aimingLabel,
         aim:       aimTarget?.value ? aimTarget.label.replace(/\s*\(.*\)/, "") : "",

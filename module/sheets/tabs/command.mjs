@@ -142,7 +142,7 @@ export function commandContext(actor) {
     exoditeLord: hasLordOfExodites(actor),
     exoditeGroupLimit: Number(actor.system?.characteristics?.fel?.bonus) || 0,
     // Лимит целей Command/Intimidate «на подчинённых» (rules/leadership-
-    // talents.mjs::commandTargetLimit) — F.b, ×20 с Air of Authority.
+    // talents.mjs::commandTargetLimit) — F.b×2, F.b×20 с Air of Authority.
     commandTargetLimit: commandTargetLimit(actor),
     hasAirOfAuthority: hasAirOfAuthority(actor)
   };

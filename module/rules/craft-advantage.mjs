@@ -37,6 +37,7 @@
 import { itemHasName } from "./predicates.mjs";
 import { hasRuleFlag } from "./flags.mjs";
 import { isHaemonculus } from "../constants/haemonculus.mjs";
+import { POLYMATH_CHAIN_MAX } from "../constants/craft.mjs";
 
 const hasItem = (actor, type, name) =>
   !!actor?.items?.some(i => i.type === type && itemHasName(i, name));
@@ -56,13 +57,72 @@ export function darkMuseAssistBonus(assistantActor) {
 
 /**
  * +10 от Полимата — безусловно на ЛЮБОЙ тест Крафта И Исследования (книга не
- * ограничивает категорией/навыком, в отличие от Киберпроповедника). Не
- * покрыто (см. capabilities.mjs): Крит на тесте Крафта/Исследования даёт
- * бесплатный второй тест — нужен отдельный крюк на исход броска, не входит
- * в этот флат-бонус.
+ * ограничивает категорией/навыком, в отличие от Киберпроповедника). Крит на
+ * смене — отдельно, polymathCrit() ниже: это не флат-бонус, а крюк на исход
+ * броска.
  */
 export function polymathBonus(crafter) {
   return hasPolymath(crafter) ? 10 : 0;
+}
+
+/**
+ * Критический Успех Полимата в Мастерской (task-b6b8): «1d5 Усталости и сразу
+ * же ещё один тест, по сути работа двух смен в одну». Условие в тексте одно —
+ * Критический Успех (натуральные 1–5, стр. 25), мастерство/5+ Успехов не
+ * требуется.
+ *
+ * `step` — номер смены в цепочке (1 — та, что бросил игрок). `capped` — это
+ * последняя разрешённая смена цепочки: Усталость за крит она получает, но
+ * новой смены не запускает (POLYMATH_CHAIN_MAX — страховка от бесконечной
+ * цепочки, см. constants/craft.mjs).
+ *
+ * @returns {{triggered:boolean, capped:boolean}}
+ */
+export function polymathCrit(crafter, critSuccess, step = 1) {
+  const triggered = !!critSuccess && hasPolymath(crafter);
+  return { triggered, capped: triggered && step >= POLYMATH_CHAIN_MAX };
+}
+
+/** Workaholic / Трудоголик (3-3a64) — Талант Крафта. */
+export const hasWorkaholic = actor => hasTalent(actor, "Workaholic");
+/** Fabricator / Фабрикатор (3-3a64) — Талант Крафта. */
+export const hasFabricator = actor => hasTalent(actor, "Fabricator");
+/** Master Engineseer / Мастер-Технопровидец (3-cc96, п.11) — Талант Механикума. */
+export const hasMasterEngineseer = actor => hasTalent(actor, "Master Engineseer");
+
+/**
+ * Штраф за монотонный Крафт (галочка «Монотонная работа» проекта): −30, а у
+ * Трудоголика нет вовсе (книга: «не получает штрафы за занятие одним и тем же
+ * Крафтом несколько смен подряд»). Сама галочка по-прежнему на слове стола —
+ * система не считает, сколько смен подряд одно и то же.
+ */
+export function monotonyPenalty(actor, monotonyChecked) {
+  return monotonyChecked && !hasWorkaholic(actor) ? -30 : 0;
+}
+
+/**
+ * Фабрикатор удваивает БОНУСЫ от инструментов на тесты Крафта. Штраф за плохие
+ * инструменты (отрицательный модификатор) не удваивается — книга говорит
+ * именно о бонусах. «И ремонта» не реализовано: ремонта в Мастерской нет.
+ */
+export function fabricatorToolMod(actor, toolMod) {
+  const mod = Number(toolMod) || 0;
+  return mod > 0 && hasFabricator(actor) ? mod * 2 : mod;
+}
+
+/**
+ * Мастер-Технопровидец: «+10 к Tech-Use на Крафт и ремонт». Бонус к Навыку, а
+ * не к тесту вообще, поэтому работает, когда Tech-Use — ведущий Навык
+ * комбинированного теста (его total и задаёт Предел); если ведущий другой
+ * (Ремесло, Знание), Tech-Use даёт только бонус ранга и +10 к его total
+ * Предел не меняет. Только Крафт: Исследования и Биолаборатория в тексте не
+ * названы. Автоуспех за Очко Бесчестия — отдельная часть Таланта, не здесь.
+ *
+ * @param {string} mode        режим проекта ("craft"/"research"/"bio"/…)
+ * @param {string} primaryValue value ведущего Навыка ("skill:techUse", …)
+ */
+export function masterEngineseerBonus(crafter, mode, primaryValue) {
+  return mode === "craft" && primaryValue === "skill:techUse" && hasMasterEngineseer(crafter) ? 10 : 0;
 }
 
 /** Имя возможности «+10 на тесты Исследований» (Стремление «Инновация»). */

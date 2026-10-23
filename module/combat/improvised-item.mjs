@@ -17,7 +17,8 @@ import { canWieldItemAsCudgel, itemWeightOf, throwTier, footingRequirement, body
   from "../rules/improvised-weapon.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
-import { MELEE_STANCES, MELEE_BASES } from "../constants/combat.mjs";
+import { MELEE_STANCES } from "../constants/combat.mjs";
+import { meleeBaseBonus } from "../rules/berserker-talents.mjs";
 import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
@@ -39,7 +40,7 @@ export async function useSwingItem(actor, item) {
   const stance  = actor.system.meleeStance || "standard";
   const stBon   = MELEE_STANCES[stance]?.wsBonus ?? 0;
   const baseKey = actor.system.meleeBase || "standard";
-  const baseBon = MELEE_BASES[baseKey]?.wsBonus ?? 0;
+  const baseBon = meleeBaseBonus(actor, baseKey);   // + Натиск Берсерка (rules/berserker-talents.mjs)
   const ruleMods = collectTestMods(actor, { kind: "skill", char: "ws" });
   const ws    = actor.system.characteristics.ws?.total ?? 0;
   // Everything a Weapon / Всё – Оружие (Талант, meleeCore.core.everythingAWeapon):

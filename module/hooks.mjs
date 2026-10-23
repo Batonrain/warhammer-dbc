@@ -168,6 +168,7 @@ import { weaponProfiles, attackIsMelee } from "./combat/weapon-profiles.mjs";
 import { firePointFreeReroll, firePointActivatesOnPaidReroll } from "./rules/fire-point.mjs";
 import { activateFirePoint } from "./combat/fire-point.mjs";
 import { cardOnceUsed, markCardOnce, runCardOnce } from "./combat/card-once.mjs";
+import { takedownKnockdown, TAKEDOWN_CARD_FLAG } from "./combat/takedown.mjs";
 import { clearCombatFormationOnCombatEnd } from "./combat/combat-formation.mjs";
 import { masteryAutoSuccessOffer } from "./rules/mastery.mjs";
 import { masteryAutoSuccessOnCard, masteryHasPoint } from "./combat/mastery.mjs";
@@ -180,6 +181,7 @@ import { isIntegralAttack } from "./combat/equipped-melee.mjs";
 import { collectTestMods } from "./rules/roll-mods.mjs";
 import { rollD100WithReroll } from "./rules/test-kind-widget.mjs";
 import { poisonResistReroll } from "./rules/squat-traits.mjs";
+import { psychicResistReroll } from "./rules/psychic-resist-reroll.mjs";
 import { expireCommandsAtTurnStart, clearCommandsOnCombatEnd, commandMoraleOn } from "./combat/command-state.mjs";
 import { syncArmorFieldShields } from "./combat/armor-field-shield.mjs";
 import { ogrynRegenCombatRound } from "./combat/ogryn-regen.mjs";
@@ -232,9 +234,22 @@ export function registerHooks() {
   // у ВСЕХ типов актора (Отряд/Техника/Корабль/Демон/Орда/Формирование/
   // Звёздная система — свои классы листов) есть _rollSkill/_rollCharacteristic
   // этого класса, отсюда явная проверка вместо слепого вызова.
-  registerDelegatedTestOpener("genericTest", (executorActor, effectTargetActor, payload) => {
+  registerDelegatedTestOpener("genericTest", async (executorActor, effectTargetActor, payload) => {
     const sheet = executorActor.sheet;
-    const { testKind, skillKey, charKey, label, hideCharSelect, presetModifier, onFailItemUuid, psychicThreat } = payload;
+    const { testKind, skillKey, charKey, label, hideCharSelect, presetModifier, onFailItemUuid, psychicThreat,
+            casterUuid, psychicIndirect } = payload;
+    // Контекст Сопротивления психосиле (rules/resolve-test.mjs, область psychicThreat).
+    // Кастер едет как ctx.targetActor — «против кого» этот тест: иначе диалог
+    // сопротивляющегося подставил бы первую цель сцены, и условие «Ненавистный
+    // враг» Неповиновения (rules/hatred.mjs) сверялось бы не с тем актором.
+    // Кастер не найден (удалён с тех пор) — остаётся прежний контекст и цель сцены.
+    let psyContext = null;
+    if (psychicThreat) {
+      psyContext = { psychicThreat: true };
+      if (psychicIndirect) psyContext.psychicIndirect = true;
+      const caster = casterUuid ? await fromUuid(casterUuid).catch(() => null) : null;
+      if (caster) psyContext.targetActor = caster;
+    }
     if (testKind === "characteristic") {
       if (typeof sheet?._rollCharacteristic !== "function") {
         return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — тест характеристики так не открыть.`);
@@ -248,7 +263,7 @@ export function registerHooks() {
       // наложения Состояния цели ПРИ ПРОВАЛЕ (Choir of Poxes), см. _runTest.
       return sheet._rollCharacteristic(label, meta?.abbr ?? charKey, total, charKey, !!hideCharSelect,
         { effectTargetActor, presetModifier: Number(presetModifier) || 0, onFailItemUuid: onFailItemUuid || null,
-          rollContext: psychicThreat ? { psychicThreat: true } : null });
+          rollContext: psyContext });
     }
     if (typeof sheet?._rollSkill !== "function") {
       return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — тест навыка так не открыть.`);
@@ -376,7 +391,11 @@ export function registerHooks() {
           onFailItemUuid: d.itemUuid || "",
           // Тег «тест против психической угрозы» (rules/resolve-test.mjs, scope
           // "psychicthreat") — Сопротивление (Psychic Powers) даёт на него +10.
-          psychicThreat: true
+          psychicThreat: true,
+          // Кастер и Непрямая сила — для Неповиновения (rules/hatred.mjs):
+          // «Ненавистный» ли кастер и не «непрямая» ли сила.
+          casterUuid: d.casterUuid || "",
+          psychicIndirect: d.psyIndirect === "1"
         };
         if (activeOwnerOf(targetActor)) {
           await requestDelegatedTest({
@@ -524,7 +543,10 @@ export function registerHooks() {
         ev.preventDefault();
         const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
         if (!actor) return;
-        await _performSprayCancel(actor);
+        // Sprayer / Распылитель (3-8318): штраф −20 зависит от стрелка, не от цели.
+        const attackerUuid = ev.currentTarget.dataset.attackerUuid;
+        const attacker = attackerUuid ? (await fromUuid(attackerUuid).catch(() => null)) : null;
+        await _performSprayCancel(actor, { attacker });
       });
     });
 
@@ -598,6 +620,19 @@ export function registerHooks() {
         if (!actor.isOwner) { ui.notifications?.warn("Бросать за Знания Веков может только владелец персонажа."); return; }
         const done = await rollKnowledgeOfAges(actor, { message, temp: el.dataset.temp === "1",
           tempSource: el.dataset.tempSource || "", tempRestriction: el.dataset.tempRestriction || "" });
+        if (done) el.disabled = true;
+      });
+    });
+
+    // Вырубание (Takedown, combat/takedown.mjs): «сбить с ног» с карточки урона
+    // после успешного Оглушения. Раз на карточку; носитель «Ещё Не Всё» заодно
+    // ставит цели метку запрета Вскочить.
+    html.querySelectorAll(".wh-takedown-btn").forEach(btn => {
+      if (cardOnceUsed(message, TAKEDOWN_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const done = await takedownKnockdown(message, el.dataset.attackerUuid, el.dataset.targetUuid);
         if (done) el.disabled = true;
       });
     });
@@ -2906,9 +2941,14 @@ export async function _executeSoulBurn(attacker, target) {
   const pSucc = pRv <= pEff;
   const pDoS  = pSucc ? Math.floor((pEff - pRv) / 10) + 1 : 0;
 
-  // Встречный бросок цели
-  const tRoll = await new Roll("1d100").evaluate(); allRolls.push(tRoll);
-  const tRv   = tRoll.total;
+  // Встречный бросок цели. Диалога с галочками у Выжигания Души нет, поэтому
+  // Неповиновение (Defiance: Преимущество на встречные тесты против выжигания
+  // души от Ненавистных врагов, 3-defiance) берётся само — «лучший из двух»
+  // (rules/psychic-resist-reroll.mjs, тем же rollD100WithReroll, что и прочие
+  // перебросы). Без Defiance или с не-Ненавистным псайкером — один бросок.
+  const defianceReroll = psychicResistReroll(target, attacker);
+  const { rolls: tRolls, rv: tRv, rerollNote } = await rollD100WithReroll(defianceReroll);
+  allRolls.push(...tRolls);
   const tSucc = tRv <= tEff;
   const tDoS  = tSucc ? Math.floor((tEff - tRv) / 10) + 1 : 0;
 
@@ -2953,6 +2993,7 @@ export async function _executeSoulBurn(attacker, target) {
       ? `<span class="roll-failure">Душа выжжена — ${net} чист. Успех(ов)!</span>`
       : `<span class="roll-success">Цель устояла</span>`,
     sections: [
+      rerollNote,
       dmgNote,
       `<details class="roll-dice-details"><summary>Показать кубы</summary>${(await Promise.all(allRolls.map(r => r.render()))).join("")}</details>`
     ]

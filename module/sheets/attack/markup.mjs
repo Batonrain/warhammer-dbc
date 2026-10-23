@@ -31,6 +31,7 @@ export function buildAttackContent(v) {
     autoHitAvailable,
     hateAttackAvailable,
     autoMountRangedMod,
+    mountRangedNote = "",
     dualWieldHtml,
     badgesHtml,
     bandHtml,
@@ -134,7 +135,7 @@ return `
     <div class="av-row">
       <label>Штраф стрельбы с седла</label>
       <input id="atk-mount-ranged" class="av-input av-num" type="number" value="${autoMountRangedMod}"
-             title="Авто по скорости скакуна/байка на панели «ВЕРХОМ» (0 при Гиро-Стабилизированном) — для Интегрированного Оружия (0) или турели Коляски (сниженный штраф) поправьте вручную"/>
+             title="Авто по скорости скакуна/байка на панели «ВЕРХОМ» (0 при Гиро-Стабилизированном) — для Интегрированного Оружия (0) или турели Коляски (сниженный штраф) поправьте вручную${mountRangedNote ? ` · ${mountRangedNote}` : ""}"/>
     </div>` : ""}
 
     ${techSectionsHtml}

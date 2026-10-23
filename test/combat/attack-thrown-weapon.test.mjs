@@ -4,8 +4,9 @@
 // (не только в рукопашной), и «При Критическом Промахе... не Заклинивает»
 // (общий механизм Заклинивания по Надёжности его не касается вовсе).
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
+import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 import { actorFor, weaponFor, setTargets } from "../support/combat-fixtures.mjs";
 import { _executeAttackRoll } from "../../module/combat/attack.mjs";
 
@@ -34,6 +35,56 @@ describe("Метательное оружие: +S.b к урону при бро�
 
     await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, {});
 
+    expect(card()).toContain('data-damage="5"');
+  });
+});
+
+// Balearic / Балеарец (3-8318, стр. 108): «добавляет ½A.b (окр.▲) к S.b в
+// расчёте дальности и урона метательного…» — здесь только урон; дальность
+// (S.b×3 м) и «примитивное стрелковое» не трогаем (в системе S.b к урону
+// получает только класс «thrown»).
+describe("Метательное оружие: Балеарец — +½A.b (окр.▲) к S.b урона (3-8318)", () => {
+  const grantBalearic = () => registerRuleSource("test-balearic", () => [
+    { id: "balearic", effects: [{ kind: "grantFlag", target: "throwing.core.balearic" }] }]);
+  const chars = ab => ({ s: { total: 40, bonus: 4 }, ag: { total: ab * 10, bonus: ab } });
+  const DEFAULT_SOURCES = getRuleSources();
+  afterEach(() => {
+    clearRuleSources();
+    for (const [key, fn] of DEFAULT_SOURCES) registerRuleSource(key, fn);
+  });
+
+  it("A.b 5 → +3 (½ от 5 вверх): 5 + S.b 4 + 3 = 12", async () => {
+    grantBalearic();
+    const weapon = weaponFor({ weaponClass: "thrown", damage: "1d10", rof_single: 1 });
+    const actor  = actorFor({ items: [weapon], characteristics: chars(5) });
+    captured.dice = [10, 5];
+    await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, {});
+    expect(card()).toContain('data-damage="12"');
+  });
+
+  it("A.b 4 → +2: 5 + 4 + 2 = 11", async () => {
+    grantBalearic();
+    const weapon = weaponFor({ weaponClass: "thrown", damage: "1d10", rof_single: 1 });
+    const actor  = actorFor({ items: [weapon], characteristics: chars(4) });
+    captured.dice = [10, 5];
+    await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, {});
+    expect(card()).toContain('data-damage="11"');
+  });
+
+  it("без Таланта — прежние 5 + S.b 4 = 9", async () => {
+    const weapon = weaponFor({ weaponClass: "thrown", damage: "1d10", rof_single: 1 });
+    const actor  = actorFor({ items: [weapon], characteristics: chars(5) });
+    captured.dice = [10, 5];
+    await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, {});
+    expect(card()).toContain('data-damage="9"');
+  });
+
+  it("обычное стрелковое с Талантом — ни S.b, ни Балеарец не добавляются", async () => {
+    grantBalearic();
+    const weapon = weaponFor({ weaponClass: "basic", damage: "1d10", rof_single: 1 });
+    const actor  = actorFor({ items: [weapon], characteristics: chars(5) });
+    captured.dice = [10, 5];
+    await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, {});
     expect(card()).toContain('data-damage="5"');
   });
 });

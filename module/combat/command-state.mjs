@@ -21,6 +21,7 @@ import { registerRuleSource } from "../rules/source-registry.mjs";
 import { commandRulesFor, braveryActive, moraleCommandActive, commandEffectNode,
          syncAssaultBonus, volleySuppressionMod } from "../rules/command-effects.mjs";
 import { commandReachFor } from "../rules/command.mjs";
+import { commandCapacity, warChantSinging } from "../rules/leadership-talents.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { isItemActive } from "../apps/effects.mjs";
@@ -152,6 +153,23 @@ export function packOf(squad) {
   return { wp: Math.max(...docs.map(d => Number(d.system?.characteristics?.wp?.total) || 0)) };
 }
 
+/**
+ * War Chant / Боевая Песнь: поёт ли командующий узла и достаёт ли песня бойца
+ * на месте idx списка подчинённых («макс. W.b×2, ×20 с Air of Authority»;
+ * кого брать сверх лимита — по порядку списка, как у F.b×2 Командования). Лимит
+ * считается отдельно от overCapacity: это разные лимиты, и бойца сверх F.b×2
+ * команды не слышат вовсе. «Слышит» (геометрию) решает стол — как у «подпевать».
+ * Флаг мог лечь на мирового актора или на актора его токена — смотрим оба.
+ * @returns {?{wp:number, cap:number, over:boolean}} null — не поёт
+ */
+function chantFor(singer, idx) {
+  if (!singer) return null;
+  const doc = identityDocs(singer).find(warChantSinging);
+  if (!doc) return null;
+  const cap = commandCapacity(doc, "wp");
+  return { wp: Number(doc.system?.characteristics?.wp?.total) || 0, cap, over: idx >= cap };
+}
+
 /** Провалил ли актор тест Морали недавно: этот и следующий Раунд того же боя. */
 export function commandLostActive(actor, combat = game.combat) {
   const f = actor?.getFlag?.(NS, COMMAND_LOST_FLAG);
@@ -177,7 +195,8 @@ export function commandNodesFor(actor) {
     const idx = members.findIndex(m => sameActor(actor, m.uuid));
     if (idx < 0) continue;
     const { active, willOf } = squadGiver(squad);
-    const cap = active ? (Number(active.system?.characteristics?.fel?.bonus) || 0) * 2 : Infinity;
+    // F.b×2, с Air of Authority F.b×20 (rules/leadership-talents.mjs::commandCapacity).
+    const cap = active ? commandCapacity(active, "fel") : Infinity;
     // Стая Йигори — только для бойца, у которого Черта есть сама (packOf
     // проверяет весь состав, включая его, но спросить дешевле с него).
     const pack = hasRuleFlag(actor, PACK_CAPABILITY) ? packOf(squad) : null;
@@ -190,7 +209,10 @@ export function commandNodesFor(actor) {
       detail: squad.system.detailCommand ?? {},
       moraleLost: !!members[idx].moraleLost,
       overCapacity: idx >= cap,
-      pack
+      pack,
+      // Боевая Песнь поющего командующего (Командир, иначе Лидер) — тот же
+      // «эффективный командующий», что у «подпевать» (rules/leadership-talents.mjs).
+      chant: chantFor(active, idx)
     });
   }
   const by = actor.getFlag?.(NS, "commandedBy");
@@ -199,10 +221,11 @@ export function commandNodesFor(actor) {
   const fIdx = followers.findIndex(f => sameActor(actor, f.uuid));
   if (boss && fIdx >= 0) {
     const cmd = boss.system.command ?? {};
-    // Дрессировка: «максимум подчинённых животных — P.b» вместо F.b×2.
+    // Дрессировка: «максимум подчинённых животных — P.b» вместо F.b×2
+    // (Air of Authority эту ветку не меняет — он про Command, не про зверей).
     const bossCap = cmd.training
       ? (Number(boss.system?.characteristics?.per?.bonus) || 0)
-      : (Number(boss.system?.characteristics?.fel?.bonus) || 0) * 2;
+      : commandCapacity(boss, "fel");
     nodes.push({
       sourceUuid: boss.uuid,
       label: boss.name,
@@ -210,7 +233,8 @@ export function commandNodesFor(actor) {
       presenceWp: boss.system?.characteristics?.wp?.total ?? null,
       short: cmd.shortCommand ?? {},
       detail: cmd.detailCommand ?? {},
-      overCapacity: fIdx >= bossCap
+      overCapacity: fIdx >= bossCap,
+      chant: chantFor(boss, fIdx)
     });
   }
   return nodes;

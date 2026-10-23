@@ -87,27 +87,41 @@ function hasLeadershipTalent(actor, names) {
 // ── Air of Authority / Аура Власти ───────────────────────────────────────────
 // Книжный текст: «Он может применять Command (и Intimidate на подчинённых)
 // на до F.b×20 целей одновременно. Его Миньоны-люди также получают +10
-// Лояльности.» Базовый лимит целей Command/Intimidate «на подчинённых» —
-// F.b (решение владельца 19.10.2026, тот же приём уже есть в коде —
-// exoditeGroupLimit у Lord of the Exodites, sheets/tabs/command.mjs:142);
-// Air of Authority не прибавляет, а ЗАМЕНЯЕТ множитель на ×20. Отдельно от
-// followerCount/bossCap (F.b×2) — тот лимит про СТРУКТУРНОЕ число
-// подчинённых, этот — про сколько из них накрывает ОДНО применение
-// Command/Intimidate. Пока только отображается (sheets/tabs/command.mjs::
-// commandContext → tab-social.hbs) — само применение Command/Intimidate
-// подчинённым сейчас не считает получателей количественно (бьёт по всему
-// составу безусловно), поэтому принудительного урезания пока нет.
+// Лояльности.» Базовый лимит Command — «до F.b×2» подчинённых (книга; прежнее
+// F.b от 19.10.2026 было неверным — 23.10.2026 сверено с лимитом Отряда в
+// combat/command-state.mjs); Air of Authority не прибавляет, а ЗАМЕНЯЕТ
+// множитель ×2 на ×20. Если подчинённых больше — выбирает игрок (порядок
+// списка, command-state.mjs::commandNodesFor → overCapacity).
+//
+// ОДИН хелпер ёмкости на всех: commandCapacity(actor, "fel") — Command/
+// Intimidate (лист Отряда, значок вкладки Социум, overCapacity узла);
+// commandCapacity(actor, "wp") — получатели Боевой Песни (W.b×2, ×20 с Air of
+// Authority). Живёт здесь, а не в combat/command-state.mjs: command-state
+// импортирует этот файл (не наоборот), а этот файл тянет sources.mjs — обратный
+// импорт замкнул бы круг (см. шапку и AGENTS.md, «Источники правил»).
+// Ветка Дрессировки (P.b вместо F.b×2) хелпера не касается.
 
 const AIR_OF_AUTHORITY_NAMES = ["Air of Authority", "Аура Власти"];
+const COMMAND_CAPACITY_MULT = 2;
+const AIR_OF_AUTHORITY_CAPACITY_MULT = 20;
 
 export function hasAirOfAuthority(actor) {
   return hasLeadershipTalent(actor, AIR_OF_AUTHORITY_NAMES);
 }
 
-/** Лимит целей Command/Intimidate «на подчинённых» — F.b, ×20 с Air of Authority. */
+/**
+ * Сколько подчинённых накрывает одно Командование: бонус Характеристики
+ * (F — Command/Intimidate, W — Боевая Песнь) × 2, с Air of Authority × 20.
+ * Отрицательный/отсутствующий бонус — 0.
+ */
+export function commandCapacity(actor, charKey = "fel") {
+  const bonus = Math.max(0, Number(actor?.system?.characteristics?.[charKey]?.bonus) || 0);
+  return bonus * (hasAirOfAuthority(actor) ? AIR_OF_AUTHORITY_CAPACITY_MULT : COMMAND_CAPACITY_MULT);
+}
+
+/** Лимит целей Command/Intimidate «на подчинённых» — F.b×2, F.b×20 с Air of Authority. */
 export function commandTargetLimit(actor) {
-  const felBonus = Math.max(0, Number(actor?.system?.characteristics?.fel?.bonus) || 0);
-  return hasAirOfAuthority(actor) ? felBonus * 20 : felBonus;
+  return commandCapacity(actor, "fel");
 }
 
 // ── Rancor / Злопамятность ───────────────────────────────────────────────────
@@ -241,6 +255,28 @@ export function eloquenceRiskCapBonus(actor) {
 // обход (а не adjutant.mjs::subordinatesOf), потому что он идёт по Отрядам
 // ЦЕЛИ (кто ею командует), а не по Отрядам командира (кем он командует).
 
+/**
+ * Все uuid, под которыми этот боец может встретиться в списках Отряда
+ * (посты/состав/«кто отдал»). Токены персонажей по умолчанию НЕсвязанные
+ * (actorLink:false): бросок/выделение цели идёт от актора токена
+ * (Scene.x.Token.y.Actor.z), а в списки Отряда обычно кладут мирового
+ * актора — и наоборот. Без этого бонусы Команды молча не находили Отряд
+ * (squadsof-commandersof-actorlink-false, живая проверка 21.10.2026).
+ * Локальная копия combat/command-state.mjs::actorIdentityUuids — импортировать
+ * оттуда нельзя, см. заголовок файла про замкнутый круг импортов.
+ */
+function identityUuids(actor) {
+  const ids = new Set();
+  if (!actor) return ids;
+  if (actor.uuid) ids.add(actor.uuid);
+  if (actor.isToken) {
+    const base = actor.token?.baseActor ?? game.actors?.get?.(actor.id);
+    if (base?.uuid) ids.add(base.uuid);
+  }
+  for (const t of actor.getActiveTokens?.() ?? []) if (t.actor?.uuid) ids.add(t.actor.uuid);
+  return ids;
+}
+
 const IRON_DISCIPLINE_NAMES = ["Iron Discipline", "Железная Дисциплина"];
 
 export function hasIronDiscipline(actor) {
@@ -254,26 +290,26 @@ function effectiveCommanderUuid(squad) {
 
 /** Отряды, где actor состоит — на посту (Лидер/Координатор/Командир) или в составе. */
 function squadsOf(actor, allActors) {
-  const uuid = actor?.uuid;
-  if (!uuid) return [];
+  const ids = identityUuids(actor);
+  if (!ids.size) return [];
   return (allActors ?? []).filter(a => {
     if (a?.type !== "squad") return false;
     const posts = a.system?.posts ?? {};
-    if (posts.leader?.uuid === uuid || posts.coordinator?.uuid === uuid || posts.commander?.uuid === uuid) return true;
-    return (a.system?.members ?? []).some(m => m.uuid === uuid);
+    if (ids.has(posts.leader?.uuid) || ids.has(posts.coordinator?.uuid) || ids.has(posts.commander?.uuid)) return true;
+    return (a.system?.members ?? []).some(m => ids.has(m.uuid));
   });
 }
 
 /** Командующие над actor (эффективный командующий + Координатор каждого Отряда, где он состоит), кроме него самого. */
 export function commandersOf(actor, allActors) {
-  const myUuid = actor?.uuid;
+  const myIds = identityUuids(actor);
   const index = new Map();
-  for (const a of allActors ?? []) if (a?.uuid) index.set(a.uuid, a);
+  for (const a of allActors ?? []) for (const u of identityUuids(a)) index.set(u, a);
   const out = [], seen = new Set();
   for (const squad of squadsOf(actor, allActors)) {
     const uuids = [effectiveCommanderUuid(squad), squad.system?.posts?.coordinator?.uuid].filter(Boolean);
     for (const uuid of uuids) {
-      if (uuid === myUuid || seen.has(uuid)) continue;
+      if (myIds.has(uuid) || seen.has(uuid)) continue;
       seen.add(uuid);
       const found = index.get(uuid);
       if (found) out.push(found);
@@ -400,24 +436,24 @@ function nearestEnemyDistance(token) {
 
 /** Отряды, где actor занимает пост Командира. */
 function squadsCommandedByLocal(commanderActor, allActors) {
-  const uuid = commanderActor?.uuid;
-  if (!uuid) return [];
-  return (allActors ?? []).filter(a => a?.type === "squad" && a.system?.posts?.commander?.uuid === uuid);
+  const ids = identityUuids(commanderActor);
+  if (!ids.size) return [];
+  return (allActors ?? []).filter(a => a?.type === "squad" && ids.has(a.system?.posts?.commander?.uuid));
 }
 
 /** Все подчинённые (любой пост/членство) во всех Отрядах, которыми командует actor, кроме него самого. */
 function subordinatesOfLocal(commanderActor, allActors) {
-  const myUuid = commanderActor?.uuid;
+  const myIds = identityUuids(commanderActor);
   const out = [], seen = new Set();
   const index = new Map();
-  for (const a of allActors ?? []) if (a?.uuid) index.set(a.uuid, a);
+  for (const a of allActors ?? []) for (const u of identityUuids(a)) index.set(u, a);
   for (const squad of squadsCommandedByLocal(commanderActor, allActors)) {
     const uuids = [
       squad.system?.posts?.leader?.uuid, squad.system?.posts?.coordinator?.uuid,
       ...(squad.system?.members ?? []).map(m => m.uuid)
     ].filter(Boolean);
     for (const uuid of uuids) {
-      if (uuid === myUuid || seen.has(uuid)) continue;
+      if (myIds.has(uuid) || seen.has(uuid)) continue;
       seen.add(uuid);
       const found = index.get(uuid);
       if (found) out.push(found);
@@ -581,6 +617,12 @@ export function intoTheJawsOfHellActive(checked) {
 // ОДНИМ rollBonus-правилом реестра — разницей Inf−F, а не правкой char;
 // действует на всех шести местах разом, раз все они собирают модификаторы
 // через ту же цепочку collectTestMods → resolveTest → эта функция.
+//
+// [фикс 19.10.2026, независимое ревью] Само правило реестра переехало из
+// leadershipTalentRules в module/rules/command-substitution.mjs — оно
+// конкурирует за один навык с той же подменой у Infernal Master
+// (occultist-talents.mjs), и обе складывались при обоих Талантах разом.
+// livingLegendCommandBonus здесь — чистый расчёт разницы, не её применение.
 
 const LIVING_LEGEND_NAMES = ["Living Legend", "Живая Легенда"];
 
@@ -629,16 +671,16 @@ export function livingLegendCommandBonus(actor, ctx = {}) {
 // Intimidate Лидеру за каждого подпевающего подчинённого (rollBonus
 // "skill:intimidate" — warChantIntimidateRules).
 //
+// Реализовано 23.10.2026 (Sahara war-chant-3-w-b-2-20): «раздаёт все 3
+//  эффекта Командного Присутствия» — не правило общего реестра, а путь
+//  commandNodesFor (combat/command-state.mjs, узел получает node.chant =
+//  {wp, cap, over}) → effectivePresence (rules/command-effects.mjs: как у
+//  node.pack — все три эффекта и W певца, но без удвоения бонусов Команд).
+//  Лимит получателей — commandCapacity(певец, "wp"): W.b×2, ×20 с Air of
+//  Authority, по порядку списка Отряда/сброда. «Слышит» (геометрия) — за
+//  столом, как и у «подпевать»: «подпевать» по-прежнему не зависит от лимита.
+//
 // НЕ реализовано (честно, после проверки):
-//  1. «Раздаёт все 3 эффекта Командного Присутствия» — не правило общего
-//     реестра (rollBonus/rollMode), а отдельный путь commandNodesFor
-//     (combat/command-state.mjs) → effectivePresence (rules/command-
-//     effects.mjs:54-63), который умеет такой трюк только для Сознания Стаи
-//     (node.pack) по ОТРЯДУ (Squad actor), не по произвольному соседнему
-//     актору с Талантом — подключение потребовало бы менять саму
-//     commandNodesFor, более глубокая правка, чем правило реестра. Как
-//     следствие, лимит получателей W.b×2/×20 тоже не считается — «подпевать»
-//     доступно без проверки, попал ли actor в этот лимит.
 //  2. «+1 Успех Команде против подпевающего» — сама степень успеха (sux)
 //     обычного теста Команды считается не через реестр rollBonus/rollMode
 //     (которые правят только Порог/переброс), а напрямую в
@@ -678,9 +720,10 @@ export function warChantSingAlongActive(actor, allActors) {
 /** Подчинённые leaderActor, что сейчас подпевают именно ЕМУ (для +3 Intimidate). */
 function warChantSingersOf(leaderActor, allActors) {
   if (!warChantSinging(leaderActor)) return [];
-  return (allActors ?? []).filter(a => a?.uuid && a.uuid !== leaderActor?.uuid
+  const leaderIds = identityUuids(leaderActor);
+  return (allActors ?? []).filter(a => a?.uuid && !leaderIds.has(a.uuid)
     && flagOn(a, WAR_CHANT_SING_ALONG_FLAG)
-    && singingCommandersOf(a, allActors).some(c => c.uuid === leaderActor.uuid));
+    && singingCommandersOf(a, allActors).some(c => leaderIds.has(c.uuid)));
 }
 
 /** +3 Intimidate за каждого подпевающего подчинённого, пока actor сам поёт. */
@@ -812,15 +855,11 @@ export function leadershipTalentRules(actor, ctx = {}, allActors = []) {
       effects: [{ kind: "rollBonus", target: "skill:command", value: eloquenceBonus, label: "Красноречие" }]
     });
   }
-  const livingLegendBonus = livingLegendCommandBonus(actor, ctx);
-  if (livingLegendBonus !== 0) {
-    rules.push({
-      id: "livingLegend.command",
-      label: `Живая Легенда: Inf вместо F (${livingLegendBonus >= 0 ? "+" : ""}${livingLegendBonus})`,
-      when: {},
-      effects: [{ kind: "rollBonus", target: "skill:command", value: livingLegendBonus, label: "Живая Легенда" }]
-    });
-  }
+  // Подмена Командования Живой Легендой (Inf вместо F) сюда не входит — она
+  // конкурирует с той же заменой у Infernal Master (occultist-talents.mjs) за
+  // один навык, и при обоих Талантах разом они СКЛАДЫВАЛИСЬ (фикс 19.10.2026,
+  // независимое ревью). Выбор лучшей из двух теперь считает отдельный
+  // источник, module/rules/command-substitution.mjs.
   rules.push(...ironDisciplineRerollRules(actor, allActors, ctx));
   rules.push(...frontlineCommanderRerollRules(actor, allActors));
   // Radiant Presence/Блистательное Присутствие: ctx.radiantPresence —

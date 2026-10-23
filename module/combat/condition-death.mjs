@@ -20,17 +20,37 @@
 
 import { setDeceased } from "../sheets/tabs/body.mjs";
 import { divineProtectionActive, DEATH_CAUSE_FLAG } from "../rules/death-save.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
+import { addFatigue } from "../sheets/tabs/conditions.mjs";
+
+/**
+ * Пусть Льётся / Let It Flow (Геносемя, гл. 3): «Когда он умирает от
+ * Кровотечения, вместо этого персонаж только получает 1 Усталости». Спасает
+ * ТОЛЬКО от Кровотечения — Удушье и Гангрена убивают как обычно. Отдельной
+ * функцией, чтобы карточка конца Хода (condition-ticks.mjs) назвала Талант, а
+ * не писала «СМЕРТЬ» над живым персонажем.
+ */
+export function letItFlowSaves(actor, cause) {
+  return cause === "bleeding"
+    && !actor?.getFlag?.("warhammer-dbc", "deceased")
+    && !divineProtectionActive(actor)
+    && hasRuleFlag(actor, "geneseed.core.letItFlow");
+}
 
 /**
  * Констатировать смерть актора от Состояния.
  * @param {Actor} actor
  * @param {string|null} cause ключ Состояния-причины ("bleeding"/"suffocating"/"gangrene")
- * @returns {Promise<boolean>} true — актор умер сейчас, false — уже был мёртв/нет актора/под Защитой
+ * @returns {Promise<boolean>} true — актор умер сейчас, false — уже был мёртв/нет актора/под Защитой/спасён Талантом «Пусть Льётся» (тогда +1 Усталости)
  */
 export async function killByCondition(actor, cause = null) {
   if (!actor) return false;
   if (actor.getFlag?.("warhammer-dbc", "deceased")) return false;
   if (divineProtectionActive(actor)) return false;
+  if (letItFlowSaves(actor, cause)) {
+    await addFatigue(actor, 1);
+    return false;
+  }
   if (cause) await actor.setFlag("warhammer-dbc", DEATH_CAUSE_FLAG, cause);
   await setDeceased(actor, true);
   const deadId = globalThis.CONFIG?.specialStatusEffects?.DEFEATED;

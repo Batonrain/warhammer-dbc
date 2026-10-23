@@ -40,6 +40,7 @@ import { commitRerollUse } from "../../combat/angel-hunters.mjs";
 import { isSabre, sabreSecondAttackBlockFor, armSabreSecondAttack, consumeSabreSecondAttack } from "../../combat/sabre-second-attack.mjs";
 import { ACTIVE_SIGHT_FLAG } from "../../combat/weapon-mods.mjs";
 import { bringItDownStacksFor } from "../../rules/leadership-talents.mjs";
+import { stunForcedAim } from "../../rules/takedown.mjs";
 
 /**
  * Два условия книги на парную атаку (стр. 62, wdbc-3jlm), которые до этого
@@ -633,7 +634,7 @@ export function openAttackDialog(ctx) {
         // же, если игрок переключил Приём ПОСЛЕ открытия окна — тот же select,
         // что и при первом рендере (attack-dialog.mjs::aimLocked/forcedAimValue),
         // просто без перестройки списка опций (обе цели уже есть в нём).
-        const forcedAim = sel.maneuverKey === "stun" ? "head" : sel.maneuverKey === "sweep" ? "" : null;
+        const forcedAim = sel.maneuverKey === "stun" ? stunForcedAim(actor) : sel.maneuverKey === "sweep" ? "" : null;
         if (aimEl) {
           aimEl.disabled = forcedAim !== null;
           if (forcedAim !== null) aimEl.value = forcedAim;

@@ -27,6 +27,7 @@
     "damageType": "energy",
     "penetration": 8,
     "effect": "[Железо: Repository of Moravec · Цена: 3К · Процесс: Нет · Тип: Анима, Атака, Стрельба] Треб.: I 50, For.Lore(Warp)+20, Moravec Locus. Как длинная очередь (1 попадание за Успех): I×1м, 1d10+I.b E, Pen 8, Corrosive (2), Extreme (8), Tearing.",
+    "harmful": true,
     "effects": {
       "charBonusStat": "",
       "charBonusValue": 0,

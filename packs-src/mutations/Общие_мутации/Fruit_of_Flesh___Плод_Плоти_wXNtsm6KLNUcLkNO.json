@@ -215,7 +215,7 @@
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
               "label": "Активировать Плод Плоти (по выпавшей субмутации)",
-              "code": "// Fruit of Flesh/Плод Плоти (Общие Мутации, wdbc-1rno) — диспетчер по\n// выпавшей субмутации (item.system.submutation.label/multi,\n// rules/submutations.mjs). 11 из 12 субмутаций реализованы (Плод Исцеления,\n// ЭМИ, Дым, Пламя, Оглушение/Беспомощность/Стазис, Яд-Радиация, Заточение\n// Силы, Осколки, Тройной Плод). Остаётся честной заглушкой: Пси-атака с\n// уроном (архитектурно блокирована — module/apps/fruit-of-flesh.mjs).\nawait activateFruitOfFlesh(actor, item, token);",
+              "code": "// Fruit of Flesh/Плод Плоти (Общие Мутации, wdbc-1rno) — диспетчер по\n// выпавшей субмутации (item.system.submutation.label/multi,\n// rules/submutations.mjs). 11 из 12 субмутаций реализованы (Плод Исцеления,\n// ЭМИ, Дым, Пламя, Оглушение/Беспомощность/Стазис, Яд-Радиация, Заточение\n// Силы, Осколки, Тройной Плод). Остаётся честной заглушкой: Пси-атака с\n// уроном (архитектурно блокирована — module/apps/fruit-of-flesh.mjs).\nreturn await activateFruitOfFlesh(actor, item, token);",
               "scriptThrottleUnit": "day",
               "scriptThrottleMax": 1,
               "when": {

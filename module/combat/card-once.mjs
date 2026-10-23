@@ -26,7 +26,9 @@ export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legi
   // Последний Рывок, Не Умирать, Боль — Лишь Иллюзия и тест «смерть от шока».
   "finalPushUsed", "neverDieUsed", "painIllusionUsed", "finalPushApplied",
   // Ключи попыток без итога (runCardOnce с persist:false) флагом не пишутся, но стыковочный тест требует их в списке.
-  "finalPushTried", "painTried", "shockDeathRolled"];
+  "finalPushTried", "painTried", "shockDeathRolled",
+  // Вырубание: «сбить с ног» с карточки урона при успешном Оглушении (combat/takedown.mjs).
+  "takedownKnockdown"];
 
 const local = new Set();
 const localKey = (message, key) => `${message?.id}:${key}`;

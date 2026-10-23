@@ -44,7 +44,7 @@ import {
   mountTraits, isBike, riderControl, testMod, turnOptions, skidInfo,
   fallFromSaddle, acrobaticsStayMod, spliceBonus, hasTalent, passengerCount,
   hitTarget, mountSpd, mountSelectiveMod, mountControlSkill, skillValue, BLADES_TIER_USES,
-  mountAutoTerrain} from "../rules/mount.mjs";
+  mountAutoTerrain, trotApplies } from "../rules/mount.mjs";
 
 const sgn = n => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -454,8 +454,21 @@ export async function showMountTerrainDialog(rider) {
     });
   }
 
-  // Вездеход снимает верховой штраф −20; Талант «Рысь» снимает сам тест, если
-  // скакун прошёл не больше SPD за Ход.
+  // Рысь (стр. 112): «Когда он двигается не более SPD в Ход, скакун или байк
+  // игнорируют Трудный Ландшафт» — на скорости «без движения»/«полудвижение»
+  // (rules/mount.mjs::trotApplies) теста нет вовсе, как у автопрохода Рыцаря
+  // Нургла выше. Скорость — ручной переключатель панели ВЕРХОМ, не измеренный
+  // путь: честность «не больше SPD за Ход» остаётся за столом.
+  if (trotApplies(rider, speedKeyOf(rider))) {
+    return postCard(rider, {
+      icon: rollIcon("burst", "#b0a080"),
+      title: `Трудный Ландшафт верхом — ${esc(rider.name)}`,
+      outcome: `<span class="roll-success">Рысь: ${esc(mount.name)} идёт не быстрее полудвижения (≤ SPD) — Трудный Ландшафт игнорируется, тест не нужен.</span>`
+    });
+  }
+
+  // Вездеход снимает верховой штраф −20; на полном движении и быстрее Рысь не
+  // действует — подсказка в диалоге напоминает об этом.
   const allTerrain = "allTerrain" in traits;
   const trot = hasTalent(rider, "Trot", "Рысь");
   const terrainMod = allTerrain ? 0 : MOUNT_TERRAIN_MOD;
@@ -471,7 +484,7 @@ export async function showMountTerrainDialog(rider) {
         <div class="atk-range-info" style="font-size:0.82em;">
           ${bike ? "Ландшафт не уменьшает SPD байка." : "Всадник выбирает: штраф −20 или половина SPD, как обычно."}
           Провал: 1 непоглощаемого I(Cr) скакуну и тест ${bike ? "Operate−10" : "Survival+0"} — или выпадение из седла.
-          ${trot ? "<br>Талант «Рысь»: двигаясь не более SPD в Ход, скакун игнорирует Трудный Ландшафт вовсе." : ""}
+          ${trot ? "<br>Талант «Рысь» действует только на скорости «без движения»/«полудвижение» (≤ SPD в Ход); на полном движении, Натиске и Беге тест нужен." : ""}
         </div>
         ${testKindHtml({ label: "Трудный Ландшафт верхом" })}
         ${diceModeHtml()}

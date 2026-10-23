@@ -27,6 +27,7 @@ import { applyLordOfExoditesFailPenalty }          from "./lord-of-exodites.mjs"
 import { infernalWillReduction, infernalWillShockTotal } from "../rules/infernal-will.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }            from "../constants/skills.mjs";
 import { fearIgnore, FEAR_IGNORE_LABELS }          from "../rules/fear-ignore.mjs";
+import { isInRage }                                from "../rules/rage.mjs";
 
 /** Возможность «Абсолютная вера в прошлое» (Мир-кладбище). */
 export const FAITH_FLAG = "fear.faithInThePast";
@@ -135,7 +136,10 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   // условия стоят в одной фразе с ними; считает их fearIgnore выше.
   // Into the Jaws of Hell/В Самое Пекло (Sahara 3-ac78, 19.10.2026) — та же
   // галочка диалога, решение стола: рядом сражается командующий с Талантом.
+  // Ярость (Frenzy, стр. 62): «автоматически проходит тесты Морали» — тест
+  // Страха это тест Морали (morale:true выше), поэтому тоже без броска.
   const autoPass = ignore.autoPass
+                   || isInRage(actor)
                    || hasRuleFlag(actor, "sarcophagus.autoPassFear")
                    || hasRuleFlag(actor, FEAR_IMMUNE_FLAG)
                    || !!properties.intoTheJawsOfHell;

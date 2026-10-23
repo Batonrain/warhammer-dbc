@@ -11,6 +11,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { CraftWorkshop } from "../../module/apps/craft-workshop.mjs";
+import { POLYMATH_CHAIN_MAX } from "../../module/constants/craft.mjs";
 
 function crafterActor(over = {}) {
   return {
@@ -260,6 +261,241 @@ describe("_rollShift: Полимат (wdbc-1rno)", () => {
     await app._rollShift("p1");
 
     expect(captured.chat[0].content).not.toContain("Полимат");
+  });
+});
+
+/** Крафтер, у которого update() реально пишет в system (по точечным ключам) —
+ *  чтобы Усталость, начисленная через addFatigue, была видна следующей смене цепочки. */
+function writableCrafter(over = {}) {
+  const actor = crafterActor(over);
+  actor.update = async fields => {
+    for (const [path, value] of Object.entries(fields)) {
+      const keys = path.replace(/^system\./, "").split(".");
+      let node = actor.system;
+      for (const k of keys.slice(0, -1)) node = (node[k] ??= {});
+      node[keys.at(-1)] = value;
+    }
+  };
+  return actor;
+}
+const shiftCards = () => captured.chat.filter(c => String(c.content).includes("Смена №"));
+
+// Polymath, крит в Мастерской (task-b6b8): «при Критическом Успехе — 1d5
+// Усталости и сразу ещё один тест, по сути работа двух смен в одну».
+describe("_rollShift: крит Полимата — 1d5 Усталости и ещё одна смена (task-b6b8)", () => {
+  beforeEach(() => {
+    currentCrafter = writableCrafter();
+    currentCrafter.items = [{ type: "mutation", name: "Polymath / Полимат" }];
+  });
+
+  it("Критический Успех: +1d5 Усталости (через addFatigue) и вторая смена того же проекта", async () => {
+    const app = newApp("crafter-1");
+    app.projects[0].baseBank = 1000;
+    captured.dice = [4, 3, 40]; // смена 1 (крит), 1d5 Усталости = 3, смена 2
+    await app._rollShift("p1");
+
+    expect(captured.rolls).toEqual(["1d100", "1d5", "1d100"]);
+    expect(shiftCards()).toHaveLength(2);
+    expect(app.projects[0].project.shifts).toBe(2);
+    // 1 (смена 1) + 3 (1d5 Полимата) + 1 (смена 2) = 5
+    expect(currentCrafter.system.fatigue.value).toBe(5);
+    expect(shiftCards()[0].content).toContain("Полимат: Критический Успех");
+    expect(shiftCards()[0].content).toContain("+3 Усталости");
+    expect(shiftCards()[1].content).toContain("Дополнительная смена Полимата");
+  });
+
+  it("без крита (бросок 40) — одна смена, 1d5 не бросается", async () => {
+    const app = newApp("crafter-1");
+    captured.nextRoll = 40;
+    await app._rollShift("p1");
+
+    expect(captured.rolls).toEqual(["1d100"]);
+    expect(shiftCards()).toHaveLength(1);
+    expect(currentCrafter.system.fatigue.value).toBe(1);
+    expect(shiftCards()[0].content).not.toContain("Дополнительная смена");
+  });
+
+  it("крит без Полимата — одна смена, как раньше", async () => {
+    currentCrafter.items = [];
+    const app = newApp("crafter-1");
+    captured.nextRoll = 4;
+    await app._rollShift("p1");
+
+    expect(captured.rolls).toEqual(["1d100"]);
+    expect(shiftCards()).toHaveLength(1);
+    expect(currentCrafter.system.fatigue.value).toBe(1);
+  });
+
+  it("цепочка крит за критом упирается в лимит POLYMATH_CHAIN_MAX и это сказано в карточке", async () => {
+    const app = newApp("crafter-1");
+    app.projects[0].baseBank = 1000; // чтобы проект не закрылся раньше предела
+    captured.nextRoll = 4; // любой бросок = 4: каждая смена — крит, 1d5 = 4
+    await app._rollShift("p1");
+
+    expect(shiftCards()).toHaveLength(POLYMATH_CHAIN_MAX);
+    expect(app.projects[0].project.shifts).toBe(POLYMATH_CHAIN_MAX);
+    const last = shiftCards().at(-1).content;
+    expect(last).toContain("лимит цепочки");
+    expect(shiftCards()[0].content).not.toContain("лимит цепочки");
+    // 1d5 — за каждый крит, в том числе на последней смене цепочки (Усталость
+    // идёт вместе с критом); не запускается только следующая смена.
+    expect(captured.rolls.filter(f => f === "1d5")).toHaveLength(POLYMATH_CHAIN_MAX);
+    expect(last).toContain("вручную");
+  });
+
+  it("проект закрылся этой же сменой — второй смены и 1d5 нет (работать больше не над чем)", async () => {
+    const app = newApp("crafter-1");
+    app.projects[0].baseBank = 1;
+    captured.nextRoll = 4;
+    await app._rollShift("p1");
+
+    expect(captured.rolls).toEqual(["1d100"]);
+    expect(shiftCards()).toHaveLength(1);
+    expect(currentCrafter.system.fatigue.value).toBe(1);
+    expect(shiftCards()[0].content).toContain("проект готов");
+  });
+
+  it("крафтер потерял сознание от Усталости — цепочка не продолжается", async () => {
+    currentCrafter = writableCrafter({
+      characteristics: { int: { total: 40 }, t: { bonus: 3 }, wp: { bonus: 3 } },
+      fatigue: { value: 4 } // порог 6: Усталость смены 1 даёт 5, 1d5 (=4) — обморок
+    });
+    currentCrafter.items = [{ type: "mutation", name: "Polymath / Полимат" }];
+    const app = newApp("crafter-1");
+    app.projects[0].baseBank = 1000;
+    captured.dice = [4, 4];
+    await app._rollShift("p1");
+
+    expect(shiftCards()).toHaveLength(1);
+    expect(shiftCards()[0].content).toContain("без сознания");
+    expect(app.projects[0].project.shifts).toBe(1);
+  });
+});
+
+// Workaholic / Трудоголик (3-3a64): штраф монотонности −30 с владельца снят.
+describe("_rollShift: Трудоголик снимает штраф монотонности", () => {
+  const limitOf = () => Number(captured.chat.at(-1).content.match(/vs Предел (-?\d+)/)[1]);
+
+  it("монотонная работа без Таланта: Предел −30, в карточке пометка", async () => {
+    const plain = newApp("crafter-1");
+    captured.nextRoll = 40;
+    await plain._rollShift("p1");
+    const baseLimit = limitOf();
+
+    resetCaptured();
+    const app = newApp("crafter-1");
+    app.projects[0].monotony = true;
+    captured.nextRoll = 40;
+    await app._rollShift("p1");
+    expect(limitOf()).toBe(baseLimit - 30);
+    expect(captured.chat.at(-1).content).toContain("монотонность −30");
+  });
+
+  it("с Талантом: Предел как без монотонности, в карточке сказано, почему штрафа нет", async () => {
+    const plain = newApp("crafter-1");
+    captured.nextRoll = 40;
+    await plain._rollShift("p1");
+    const baseLimit = limitOf();
+
+    resetCaptured();
+    currentCrafter.items = [{ type: "talent", name: "Workaholic / Трудоголик" }];
+    const app = newApp("crafter-1");
+    app.projects[0].monotony = true;
+    captured.nextRoll = 40;
+    await app._rollShift("p1");
+    expect(limitOf()).toBe(baseLimit);
+    expect(captured.chat.at(-1).content).not.toContain("монотонность −30");
+    expect(captured.chat.at(-1).content).toContain("Трудоголик: штраф за монотонность не применяется");
+  });
+
+  it("Талант есть, но галочки монотонности нет — пометки нет", async () => {
+    currentCrafter.items = [{ type: "talent", name: "Workaholic / Трудоголик" }];
+    const app = newApp("crafter-1");
+    captured.nextRoll = 40;
+    await app._rollShift("p1");
+    expect(captured.chat.at(-1).content).not.toContain("Трудоголик");
+  });
+});
+
+// Fabricator / Фабрикатор (3-3a64): бонусы от инструментов удваиваются.
+describe("Фабрикатор удваивает бонус инструментов", () => {
+  it("_resolve: Качественные инструменты +10 → +20 у владельца, у остальных +10", () => {
+    const app = newApp("crafter-1");
+    app.projects[0].toolKey = "good";
+    expect(app._resolve(app.projects[0]).mods.toolMod).toBe(10);
+
+    currentCrafter.items = [{ type: "talent", name: "Fabricator / Фабрикатор" }];
+    expect(app._resolve(app.projects[0]).mods.toolMod).toBe(20);
+  });
+
+  it("штраф за плохие инструменты не удваивается", () => {
+    currentCrafter.items = [{ type: "talent", name: "Fabricator / Фабрикатор" }];
+    const app = newApp("crafter-1");
+    app.projects[0].toolKey = "primit"; // −10
+    expect(app._resolve(app.projects[0]).mods.toolMod).toBe(-10);
+  });
+
+  it("Исследование: инструменты книга для Крафта — не удваиваются", () => {
+    currentCrafter.items = [{ type: "talent", name: "Fabricator / Фабрикатор" }];
+    const app = newApp("crafter-1");
+    app.projects[0].toolKey = "good";
+    app.projects[0].mode = "research";
+    expect(app._resolve(app.projects[0]).mods.toolMod).toBe(10);
+  });
+
+  it("смена: Предел выше ровно на бонус инструментов (+20 мастерский набор → +40)", async () => {
+    const run = async () => {
+      resetCaptured();
+      const app = newApp("crafter-1");
+      app.projects[0].toolKey = "best"; // +20
+      captured.nextRoll = 40;
+      await app._rollShift("p1");
+      return Number(captured.chat.at(-1).content.match(/vs Предел (-?\d+)/)[1]);
+    };
+    const base = await run();
+    currentCrafter.items = [{ type: "talent", name: "Fabricator / Фабрикатор" }];
+    expect(await run()).toBe(base + 20);
+  });
+});
+
+// Master Engineseer / Мастер-Технопровидец (3-cc96 п.11, часть «+10 Tech-Use на Крафт»).
+describe("_rollShift: Мастер-Технопровидец +10 к Tech-Use на Крафт", () => {
+  const limitOf = () => Number(captured.chat.at(-1).content.match(/vs Предел (-?\d+)/)[1]);
+
+  it("Tech-Use ведущий: +10 к Пределу и строка в карточке", async () => {
+    const plain = newApp("crafter-1");
+    captured.nextRoll = 40;
+    await plain._rollShift("p1");
+    const baseLimit = limitOf();
+
+    resetCaptured();
+    currentCrafter.items = [{ type: "talent", name: "Master Engineseer / Мастер-Технопровидец" }];
+    const app = newApp("crafter-1");
+    captured.nextRoll = 40;
+    await app._rollShift("p1");
+    expect(limitOf()).toBe(baseLimit + 10);
+    expect(captured.chat.at(-1).content).toContain("Мастер-Технопровидец: +10 к тесту");
+  });
+
+  it("ведущий Навык — Ремесло (Tech-Use лишь вторичный): бонуса нет", async () => {
+    currentCrafter = crafterActor({
+      groupSkills: { trade: [{ specialty: "Armourer", total: 70, rank: "trained", char: "ag" }] }
+    });
+    currentCrafter.items = [{ type: "talent", name: "Master Engineseer / Мастер-Технопровидец" }];
+    const app = newApp("crafter-1", { categoryKey: "powerArmor" }); // Armourer + Tech-Use
+    captured.nextRoll = 40;
+    await app._rollShift("p1");
+    expect(captured.chat.at(-1).content).not.toContain("Мастер-Технопровидец");
+  });
+
+  it("Исследование: бонуса нет (книга — Крафт и ремонт)", async () => {
+    currentCrafter.items = [{ type: "talent", name: "Master Engineseer / Мастер-Технопровидец" }];
+    const app = newApp("crafter-1");
+    app.projects[0].mode = "research";
+    app.projects[0].skillChoices = { 0: "skill:techUse" };
+    captured.nextRoll = 40;
+    await app._rollShift("p1");
+    expect(captured.chat.at(-1).content).not.toContain("Мастер-Технопровидец");
   });
 });
 

@@ -520,7 +520,12 @@ export function creatureSchema({ granted = false } = {}) {
       // wdbc-l6zg: Фокус Дисциплины — выбор игрока при создании персонажа
       // (core.json стр.293), ключи PSY_DISCIPLINES. Читатель:
       // module/rules/psy-focus.mjs::effectiveFocusDisciplines.
-      focusDisciplines: strList("Фокусы Дисциплин")
+      focusDisciplines: strList("Фокусы Дисциплин"),
+      // Предмет-Психофокус, который сейчас в деле (Psy Focus / Психофокус,
+      // core.json стр.243), и Дисциплина, с которой он «резонирует» (Good.Q+).
+      // Читатель: module/rules/psy-focus.mjs::focusQualityEffect.
+      focusItemId:      str("", "Предмет-Психофокус"),
+      focusResonance:   str("", "Резонанс Психофокуса (Дисциплина)")
     }, { label: "Псайкер" }),
     cognition: new SchemaField({
       value: num(0, "Текущая"), max: num(0, "Максимум"), regen: num(0, "Восстановление")

@@ -5,7 +5,7 @@
   "folder": "HfTlTkQPDwQ9Yqqn",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано частично: capabilityKey weaponsmith.core.plasmaMastery — module/combat/attack.mjs (flatBonus и Pen ← module/rules/damage-talents.mjs::plasmaMasteryBonus): в Максимальном режиме плазмы ещё +2 Dmg и +2 Pen поверх собственных +1d10/+2 Pen свойства Maximal. НЕ сделано: +2 к радиусу Blast и «Blast (2), если Blast не было» — необязательный выбор стрелка, в окне атаки его нет, а собственные +2 к радиусу Maximal движок тоже пока не считает.",
     "benefit": "При стрельбе из плазменного оружия с активированным Maximal оно получает ещё +2 к Dmg, Pen, и персонаж может дать +2 к радиусу Blast. Если оружие не имело Blast — может дать ему Blast (2) в режиме Maximal.",
     "tier": 2,
     "requirement": "I 45, Plasma Expertise",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "yPinL5eu8Rw3lOlx",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "E9osN3TZ3AK0J5Wx",
+              "capabilityKey": "weaponsmith.core.plasmaMastery",
+              "label": "Мастерство Плазмы: в режиме Maximal ещё +2 Dmg и +2 Pen",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

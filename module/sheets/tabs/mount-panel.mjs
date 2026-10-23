@@ -19,7 +19,8 @@ import { MOUNT_SPEEDS, MOUNT_ROLES, MOUNT_TRAIT_DEFS, RIDER_ACTOR_TYPES,
          MOUNT_ACTOR_TYPES, isBike, mountTraits, riderControl, testMod, STAY_MOD,
          handsNeeded, bonusHalfAction, sizeFits, pairInitiative, passengerCount,
          maneuverMods, skidInfo, mountRangedPenalty, isBroken,
-         possessionOf, isPossessed, mountControlSkill, skillValue, BLADES_TIER_USES} from "../../rules/mount.mjs";
+         possessionOf, isPossessed, mountControlSkill, skillValue, BLADES_TIER_USES,
+         hasTalent} from "../../rules/mount.mjs";
 import { spendActionPoints } from "../../combat/action-economy.mjs";
 import { esc } from "../../helpers/utils.mjs";
 
@@ -93,7 +94,7 @@ export function mountPanelContext(actor, actors = []) {
     // Штраф стрельбы показывается для ОБЫЧНОГО оружия: интегрированное и
     // турель в Коляске считаются от своего оружия, а не от седла, и подставлять
     // их в общую строку значило бы обещать скидку всему арсеналу.
-    mountRanged: mountRangedPenalty(speedKey, mount),
+    mountRanged: mountRangedPenalty(speedKey, mount, { rider: actor }),
     mountPossession: possessed ? possessionOf(mount) : null,
     mountHands: hands,
     mountBonusAction: bonusHalfAction(actor, mount, traits),
@@ -134,9 +135,17 @@ const roleOptions = current => Object.entries(MOUNT_ROLES).map(([key, def]) => (
 // ── Правка связи ──────────────────────────────────────────────────────────
 
 /**
- * Сесть в седло (стр. 477, wdbc-x1nz.2.35: Полудействие) — Размер проверяется,
- * но не запрещает: решение за столом. ОД проверяется ДО связи, чтобы
- * заблокированная попытка не оставляла актора наполовину «оседлавшим».
+ * Saddle Jump / Прыжок в Седло (Талант Всадника, стр. 112): «Он может
+ * Оседлать/Спешиться за свободное действие» — вместо Полудействия (стр. 477),
+ * то есть ОД не тратится ни на то, ни на другое.
+ */
+export const hasSaddleJump = actor => hasTalent(actor, "Saddle Jump", "Прыжок в Седло");
+
+/**
+ * Сесть в седло (стр. 477, wdbc-x1nz.2.35: Полудействие; с Прыжком в Седло —
+ * свободное действие) — Размер проверяется, но не запрещает: решение за
+ * столом. ОД проверяется ДО связи, чтобы заблокированная попытка не оставляла
+ * актора наполовину «оседлавшим».
  */
 export async function setMount(actor, target) {
   if (!target) return;
@@ -146,7 +155,7 @@ export async function setMount(actor, target) {
   if (target.uuid === actor.uuid) {
     return ui.notifications?.warn("Сесть верхом на самого себя нельзя.");
   }
-  if (!await spendActionPoints(actor, 1, { physical: true })) {
+  if (!hasSaddleJump(actor) && !await spendActionPoints(actor, 1, { physical: true })) {
     return ui.notifications?.warn("⚠️ Не хватает ОД (Оседлать — полудействие, стр. 477).");
   }
   if (!sizeFits(actor, target)) {
@@ -171,9 +180,12 @@ async function gmDismountCorrection(actor) {
   });
 }
 
-/** Спешиться (стр. 477, wdbc-x1nz.2.35: Полудействие): связь снимается, скорость возвращается к стоянке. */
+/**
+ * Спешиться (стр. 477, wdbc-x1nz.2.35: Полудействие; с Прыжком в Седло —
+ * свободное действие): связь снимается, скорость возвращается к стоянке.
+ */
 export async function clearMount(actor) {
-  if (!await spendActionPoints(actor, 1, { physical: true }) && !await gmDismountCorrection(actor)) {
+  if (!hasSaddleJump(actor) && !await spendActionPoints(actor, 1, { physical: true }) && !await gmDismountCorrection(actor)) {
     return ui.notifications?.warn("⚠️ Не хватает ОД (Спешиться — полудействие, стр. 477).");
   }
   await actor.update({

@@ -116,7 +116,8 @@ export async function rollSuppressionTest(actor, { mod = 0, sourceLabel = "", so
   const horde = hordeSuppressionMods(actor);
   // Перебежка (стр. 30, wdbc-x1nz.2.38): переброс Подавления до конца Раунда.
   const { eff: threshold, parts, roll, rv, rerollNote, success: rolledSuccess, dof, usedReroll } = await rollMoraleTest(actor, wpTotal + mod + horde.total, {
-    sourceActor, selfAdvantage: duckAndCoverAdvantage(actor), selfAdvantageLabel: "Перебежка", radiantPresence
+    sourceActor, selfAdvantage: duckAndCoverAdvantage(actor), selfAdvantageLabel: "Перебежка", radiantPresence,
+    suppression: true   // область «suppression» (Стальные Нервы), не Страх/Шок
   });
   // Саркофаг Дредноута (стр. 57, wdbc-drn): автоматически проходит тесты
   // Подавления независимо от броска. Into the Jaws of Hell/В Самое Пекло

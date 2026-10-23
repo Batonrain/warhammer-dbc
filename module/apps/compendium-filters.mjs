@@ -18,6 +18,47 @@
 
 import { normalizeBudget, BUDGET_COUNT } from "../rules/pick-budget.mjs";
 
+/**
+ * Редкость записи индекса компендиума (для узла дерева Обозревателя).
+ *
+ * У Ритуала своего system.availability нет: Редкость Записи ритуала — это
+ * system.record (wdbc-zaesd; core.json, «Анатомия ритуала»: «X в Записи
+ * отображает Редкость ритуала аналогична Редкости снаряжения»). record 0 —
+ * Ритуал без требования «Запись»: Записи, которую можно добыть реквизицией, у
+ * него нет, значит и Редкости нет — null, а не «R 0 Дефицит» (иначе такие
+ * Ритуалы проходили бы потолок и весили ноль в сумме Редкости).
+ * У остальных типов — собственное поле как было (undefined/null/0 не меняются).
+ *
+ * @param {{type?:string, system?:object}} entry  запись индекса компендиума
+ */
+export function indexAvailability(entry) {
+  if (entry?.type === "ritual") {
+    const record = Number(entry.system?.record) || 0;
+    return record > 0 ? record : null;
+  }
+  return entry?.system?.availability;
+}
+
+/**
+ * Типы, у которых «нет Редкости» — законное состояние, а не R0 (r0, 23.10.2026).
+ * Имплант без книжной Редкости (26 штук: стартовая кибернетика людей и органы
+ * геносемени Астартес) в продаже не стоит; Ритуал без Записи (record 0) Редкости
+ * не имеет. Отдельный список, а не «поля нет — значит нет Редкости»: у Талантов,
+ * Психосил, Черт и Мутаций поля Редкости нет вовсе, а выбор Конструктора кладёт
+ * им потолок 5 («Любая») — для них пустое значение должно по-прежнему проходить.
+ */
+export const UNRATED_TYPES = new Set(["implant", "ritual"]);
+
+/**
+ * У записи «нет Редкости» (в отличие от настоящего R0)? Принимает узел
+ * Обозревателя или `{type, availability}` предмета на листе.
+ * @param {{type?:string, availability?:*}} it
+ */
+export function isUnrated(it) {
+  const av = it?.availability;
+  return UNRATED_TYPES.has(it?.type) && (av == null || av === "");
+}
+
 export const ITEM_FILTERS = {
   /** Тип предмета: "faction" либо список ["weapon","ammo"]. */
   type: (it, want) => (Array.isArray(want) ? want : [want]).includes(it?.type),
@@ -30,10 +71,10 @@ export const ITEM_FILTERS = {
   weaponProp: (it, want) => (it?.properties || []).some(p => p?.key === want),
   /** Тип брони (system.armorType). */
   armorType: (it, want) => it?.armorType === want,
-  /** Доступность не выше указанной. */
-  maxAvailability: (it, want) => (Number(it?.availability) || 0) <= Number(want),
+  /** Доступность не выше указанной. Предмет без Редкости (isUnrated) потолок не проходит. */
+  maxAvailability: (it, want) => !isUnrated(it) && (Number(it?.availability) || 0) <= Number(want),
   /** Доступность не ниже указанной — для диапазона («Редкость 2-4» — Очки Снаряжения, стр. 24). */
-  minAvailability: (it, want) => (Number(it?.availability) || 0) >= Number(want),
+  minAvailability: (it, want) => !isUnrated(it) && (Number(it?.availability) || 0) >= Number(want),
   /** Ступень Таланта: «7 талантов 1 уровня» — это ступень, а не цена. */
   talentTier: (it, want) => Number(it?.tier) === Number(want),
   /** Категория импланта: «Мехадендрит» — это system.category, а не папка.

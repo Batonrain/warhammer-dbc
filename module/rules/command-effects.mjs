@@ -47,16 +47,34 @@ import { bringItDownAccuracyPenalty } from "./leadership-talents.mjs";
 export const PACK_BONUS_MULT = 2;
 
 /**
+ * War Chant / Боевая Песнь (Талант Лидерства): пока командующий узла поёт,
+ * он «раздаёт все 3 эффекта Командного Присутствия всем подчинённым, что
+ * слышат песнь, максимум W.b×2 (×20 с Air of Authority)». Узел помечает
+ * combat/command-state.mjs::commandNodesFor: node.chant = {wp, cap, over} —
+ * W певца, лимит получателей и «этот боец сверх лимита по порядку списка».
+ * Как у стаи — все три эффекта и W певца, но БЕЗ PACK_BONUS_MULT: удвоение
+ * бонусов Команд — отдельная Черта Йигори, песня его не даёт.
+ */
+export function chantReaches(node) {
+  return !!node?.chant && !node.chant.over;
+}
+
+/** Все три эффекта Присутствия сразу, без выбора Командира: стая или дошедшая песня. */
+export function givesAllPresence(node) {
+  return !!node?.pack || chantReaches(node);
+}
+
+/**
  * Какое Присутствие действует у узла: отданное Командиром — одно выбранное
- * преимущество; у стаи — все три всегда, W — большая из W Командира и
- * наибольшей W стаи.
+ * преимущество; у стаи и у дошедшей Боевой Песни — все три всегда, W — большая
+ * из W Командира и наибольшей W стаи / W певца.
  * @returns {{active:boolean, benefits:string[], wp:?number}}
  */
 export function effectivePresence(node) {
-  if (node?.pack) {
+  if (givesAllPresence(node)) {
     const own = node.presenceWp == null ? null : Number(node.presenceWp);
-    const packWp = Number(node.pack.wp);
-    const wp = [own, Number.isFinite(packWp) ? packWp : null].filter(v => v != null);
+    const finite = v => (Number.isFinite(Number(v)) && v != null ? Number(v) : null);
+    const wp = [own, finite(node.pack?.wp), chantReaches(node) ? finite(node.chant.wp) : null].filter(v => v != null);
     return { active: true, benefits: [...PRESENCE_ORDER], wp: wp.length ? Math.max(...wp) : null };
   }
   const p = node?.presence ?? {};
@@ -159,6 +177,8 @@ const SHORT_LABEL = { inspire: "Воодушевление", general: "Обща�
  * @property {object} detail      detailCommand (+coverSuccesses)
  * @property {boolean} [moraleLost] метка записи Отряда
  * @property {boolean} [overCapacity] сверх F.b×2 подчинённых командира
+ * @property {?{wp:number, cap:number, over:boolean}} [chant] поёт Боевую Песню
+ *   (см. chantReaches); over — боец сверх W.b×2 получателей песни
  */
 
 /**
@@ -189,8 +209,8 @@ export function commandRulesFor(actor, nodes, ctx = {}, { commandLost = false, i
     // Стая: все три преимущества сразу — доходимость каждого проверяется
     // ниже по списку reach.presence, а не по одному выбранному ключу.
     const pres = effectivePresence(node);
-    const mult = node.pack ? PACK_BONUS_MULT : 1;
-    const reach = commandReachFor(actor.type, node.pack ? "" : (node.presence?.benefit || ""), actor,
+    const mult = node.pack ? PACK_BONUS_MULT : 1;     // песня бонусы не удваивает — только стая
+    const reach = commandReachFor(actor.type, givesAllPresence(node) ? "" : (node.presence?.benefit || ""), actor,
       { moraleLost: !!node.moraleLost || commandLost });
     // Проваливший Мораль (не Оглох/не без сознания, не Орда) слышит только
     // «Укрепление Морали» и «Храбрость».

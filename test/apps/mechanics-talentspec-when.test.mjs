@@ -28,7 +28,10 @@ function itemOnActor({ mechanics = [], actorItems = [] } = {}) {
   const own = { mechanics };
   const actor = new Actor();
   actor.system = { geneSeed: {} };
-  actor.items = actorItems;
+  // getFlag — syncGrantedAbilities (её теперь тоже зовёт applyItemMechanics,
+  // task-8cfb) читает его у КАЖДОГО предмета актора, не только у своих
+  // грантов; настоящий Item его несёт всегда.
+  actor.items = actorItems.map(i => ({ getFlag: () => undefined, ...i }));
   let seq = 0;
   actor.createEmbeddedDocuments = async (_t, docs) => {
     const made = docs.map(d => ({ id: `it-${seq++}`, name: d.name, type: d.type,
@@ -108,7 +111,7 @@ describe("applyItemMechanics — гейт на разовой выдаче Че�
     expect(item.parent.items.map(i => i.name)).not.toContain("Warp Sight / Варп-Зрение");
 
     item.parent.items.push({ id: "mastery-1", type: "talent", name: "Mastery / Мастерство",
-                             system: { specialization: "Психочутьё" } });
+                             system: { specialization: "Психочутьё" }, getFlag: () => undefined });
     await applyItemMechanics(item);
     expect(item.parent.items.map(i => i.name)).toContain("Warp Sight / Варп-Зрение");
   });

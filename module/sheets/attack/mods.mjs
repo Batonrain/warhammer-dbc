@@ -34,6 +34,8 @@ import { hasBlindFighting } from "../../rules/unseen-talents.mjs";
 import { hasDodgeTalent } from "../../rules/dodge-talents.mjs";
 import { flourishPenaltyAgainst } from "../../combat/flourish-dance.mjs";
 import { halvePenalty } from "../../rules/awareness-talents.mjs";
+import { hasDamageTalent } from "../../rules/damage-talents.mjs";
+import { isInRage, RAGE_TEST_PENALTY } from "../../rules/rage.mjs";
 // Действующие моды (wdbc-1rno.38/.40): без «бесполезных без X» и без
 // невыбранных прицелов — тот же список, что у getModEffects и окна атаки.
 import { getActiveMods } from "../../combat/weapon-mods.mjs";
@@ -110,11 +112,24 @@ export function situationalMods(v) {
   // rangedCore.core.bulgingBiceps) — снимает штраф «Тяжёлое оружие: без
   // Закрепления» целиком, см. ниже у этой строки.
   const bulgingBicepsActive = hasRuleFlag(actor, "rangedCore.core.bulgingBiceps");
+  // Таланты глав «Рукопашные»/«Стрелок» (rules/damage-talents.mjs; Sahara
+  // 3-8dc5/3-5fbf): Надёжная Стойка и Гурьбой — строки рукопашных модификаторов,
+  // Выбор Целей — строка стрелковых ниже. Имя ИЛИ ключ (hasAbility): персонаж, купивший
+  // Талант до записи Конструктора в паке, ключа не несёт.
+  const steadyFootwork  = isMelee  && hasDamageTalent(actor, "steadyFootwork");
+  const doubleTeam      = isMelee  && hasDamageTalent(actor, "doubleTeam");
+  const targetSelection = !isMelee && hasDamageTalent(actor, "targetSelection");
   const commonMods = [
     ...(tgtAntiAim ? [{ label: "Антиприцел цели", value: 0, autofail: true, autoCheck: aimingOn,
       note: aimingOn ? "вы прицелились — атака автоматически промахивается (Странная Неуязвимость)"
                      : "атаки с Прицеливанием по этой цели автоматически промахиваются" }] : []),
     { label: "Усталость",     value: -10, autoCheck: hasFatigue },
+    // Ярость (Frenzy, стр. 62): «штраф −20 на все тесты BS» — стрельба. Окно
+    // атаки собирает порог само (правила rollBonus сюда не доезжают, см.
+    // attack-dialog.mjs::ruleAutoMods), поэтому строка своя, как у Усталости.
+    // WS в Ярости не падает — там +10 к значению (rules/character.mjs).
+    ...(!isMelee && isInRage(actor)
+      ? [{ label: "Ярость: −20 BS", value: RAGE_TEST_PENALTY, autoCheck: true }] : []),
     { label: "Цель в Борьбе (не ваш Захват)", value: 20, autoCheck: vsGrappled,
       note: vsGrappled ? "стр. 12: +20 на атаки по сцепившимся" : undefined },
     // visionPenalty (wdbc-1rno.1, Чёрные Глаза/Black Eyes, Cor 60+) — три
@@ -434,15 +449,32 @@ export function situationalMods(v) {
       label: "Прикрывающая Стойка союзника рядом", value: -20, autoCheck: true,
       note: `${coveringDefenders.map(d => d.name).join(", ")} прикрывает цель (стр. 15)`
     }] : []),
-    { label: "Трудный ландшафт",       value: -10, autoCheck: !!meleeTerrain?.inTerrain,
-      note: meleeTerrain?.inTerrain ? "зона Трудного Ландшафта под атакующим" : undefined },
-    { label: "Очень трудный ландшафт", value: -20 },
+    // Steady Footwork/Надёжная Стойка (meleeCore.core.steadyFootwork): «не
+    // получает штрафов к тестам WS от Трудного ландшафта» — обе строки ландшафта
+    // обнуляются с подписью, а не прячутся: исчезнувшая галочка выглядела бы багом.
+    { label: "Трудный ландшафт",       value: steadyFootwork ? 0 : -10, immune: steadyFootwork,
+      autoCheck: !steadyFootwork && !!meleeTerrain?.inTerrain,
+      note: steadyFootwork ? "снято: Steady Footwork/Надёжная Стойка"
+          : meleeTerrain?.inTerrain ? "зона Трудного Ландшафта под атакующим" : undefined },
+    { label: "Очень трудный ландшафт", value: steadyFootwork ? 0 : -20, immune: steadyFootwork,
+      note: steadyFootwork ? "снято: Steady Footwork/Надёжная Стойка" : undefined },
     // Мастер Боя (глава 3): «противники не получают бонусов за численное
     // превосходство для рукопашных атак по нему» — гасится ниже, по Таланту ЦЕЛИ.
     { label: "Числ. перевес 2к1",      value:  10, autoCheck: outnumberCount === 2,
       note: outnumberCount == null ? undefined : `в контакте с целью: ${outnumberCount}` },
     { label: "Числ. перевес 3к1",      value:  20, autoCheck: outnumberCount != null && outnumberCount >= 3,
       note: outnumberCount == null ? undefined : `в контакте с целью: ${outnumberCount}` },
+    // Double Team/Гурьбой (meleeCore.core.doubleTeam): «ещё +10 на попадание в
+    // ближнем бою за численное превосходство 2 к 1 или выше» — ПОВЕРХ строк
+    // выше (книга: «ещё»), поэтому отдельная строка, а не правка их значений.
+    // Название начинается с «Числ. перевес» намеренно: Мастер Боя у ЦЕЛИ гасит
+    // «бонусы за численное превосходство» по этому префиксу (ниже), и Гурьбой —
+    // такой же бонус.
+    ...(doubleTeam ? [{
+      label: "Числ. перевес: Гурьбой", value: 10, autoCheck: outnumberCount != null && outnumberCount >= 2,
+      note: outnumberCount == null ? "Гурьбой: ещё +10 при перевесе 2к1 и выше"
+        : `Гурьбой: ещё +10 при перевесе 2к1 и выше (в контакте с целью: ${outnumberCount})`
+    }] : []),
     // Адаптивное у ЦЕЛИ, третья ступень (стр. 428, wdbc-bjy1.13): «когда 3к1 —
     // враги получают −10 на рукопашные атаки по персонажу».
     ...(adaptiveLegacyDefenderPenalty({ targetActor: attackCtx.targetActor, targetContactCount: outnumberCount, isMelee }) ? [{
@@ -506,9 +538,16 @@ export function situationalMods(v) {
     // Стрельба ПО цели в рукопашной с ТРЕТЬИМ лицом (стр. 30) — отдельно от
     // «Стрельба в рукопашную» выше (та про самого стрелка, с исключением для
     // Пистолета): здесь исключения нет, стрелок сам не в этой рукопашной.
-    { label: "Цель связана в рукопашной (с другим персонажем)", value: -20,
-      autoCheck: targetLocked,
-      note: targetLocked ? "стр. 30 — штраф без исключений, даже Пистолету" : undefined },
+    // Target Selection/Выбор Целей (rangedCore.core.targetSelection), первая
+    // половина: «может стрелять в цели, связанные в ближнем бою, без штрафов» —
+    // строка обнуляется с подписью. Вторая («промахи никогда не попадают в
+    // союзников») не сделана: рикошет промаха (attack.mjs, misfireHits) не
+    // умеет исключать союзников. «Стрельба в рукопашную» выше (стрелок САМ в
+    // этой рукопашной) Талантом не тронута — ручная галочка, см. отчёт сессии.
+    { label: "Цель связана в рукопашной (с другим персонажем)", value: targetSelection ? 0 : -20,
+      immune: targetSelection, autoCheck: !targetSelection && targetLocked,
+      note: targetSelection ? "снято: Target Selection/Выбор Целей"
+          : targetLocked ? "стр. 30 — штраф без исключений, даже Пистолету" : undefined },
     // Тяжёлое оружие и Длинная Винтовка (стр. 40, wdbc-x1nz.2.57): «не может
     // использоваться для стрельбы в ближнем бою» вовсе — в отличие от
     // Пистолета/Винтовки выше, это не штраф, а полный запрет самого выстрела

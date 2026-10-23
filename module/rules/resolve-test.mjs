@@ -174,6 +174,13 @@ export function effectAppliesTo(target, ctx) {
   // диалога) — общего ctx.kind/ctx.skill на них нет, поэтому вызывающий код
   // сам проставляет ctx.morale=true там, где RAW называет тест тестом Морали.
   if (scope === "morale") return ctx.morale === true;
+  // Только тест на Подавление (стр. 33: «тест на W+0 и тест Морали») — Стальные
+  // Нервы (Sahara 3-scope): «может перебрасывать тесты на Подавление», а не
+  // Страх/Шок/Панику, которые «morale» тоже ловит. Флаг ставит
+  // rules/morale-test.mjs по opts.suppression из combat/suppression.mjs. Имя
+  // НЕ «suppression»: ctx.suppression в rules/match-context.mjs — «Подавление
+  // Травм и Расстройств» (Мир-сад/Мир удовольствий), другая механика.
+  if (scope === "suppression") return ctx.suppressionTest === true;
   // Встречный тест демона против Экзорцизма/Чистой Демонологии (Локус Цепей,
   // wdbc-smc, daemon-sheet.mjs::_rollVsExorcism) — узкий вид теста, а не любой
   // "opposed": книга даёт бонус именно этому конкретному тесту, не всем

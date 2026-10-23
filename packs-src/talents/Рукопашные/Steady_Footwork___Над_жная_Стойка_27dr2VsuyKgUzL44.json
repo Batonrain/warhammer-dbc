@@ -5,7 +5,7 @@
   "folder": "XeycnCsRlazxEDgr",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: в системе нет штрафа к тестам WS от Трудного ландшафта вовсе (regions/difficult-terrain.mjs и combat/movement-terrain.mjs считают только скорость/движение, не WS) — нечего отменять.",
+    "notes": "Реализовано: capabilityKey meleeCore.core.steadyFootwork — module/sheets/attack/mods.mjs (situationalMods): строки «Трудный ландшафт» (−10, отмечается сама, когда атакующий стоит в зоне Трудного Ландшафта) и «Очень трудный ландшафт» (−20) в окне рукопашной атаки обнуляются с подписью. Скорость и тесты движения по ландшафту Талант не затрагивает (книга говорит про тесты WS).",
     "benefit": "Персонаж не получает штрафов к тестам WS от Трудного ландшафта.",
     "tier": 1,
     "requirement": "WS 35",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "yJvrDp4ZPdywME4u",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "5EIUixrCfcvAX0kB",
+              "capabilityKey": "meleeCore.core.steadyFootwork",
+              "label": "Надёжная Стойка: нет штрафов WS от Трудного ландшафта",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

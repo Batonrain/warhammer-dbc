@@ -65,7 +65,7 @@
 
     <div class="header-checks sq-header-checks">
       <div class="sq-header-chips">
-        <span class="sq-chip {{#if capacityOver}}sq-chip-warn{{/if}}" title="Command воздействует одновременно не более чем на F.b × 2 подчинённых">
+        <span class="sq-chip {{#if capacityOver}}sq-chip-warn{{/if}}" title="Command воздействует одновременно не более чем на F.b × 2 подчинённых (F.b × 20 с Air of Authority)">
           Под Командованием: <b>{{memberCount}}</b>{{#if capacity}} / {{capacity}}{{/if}}
         </span>
         {{#if presenceActive}}<span class="sq-chip sq-chip-on" title="Командное Присутствие активно">Присутствие</span>{{/if}}
@@ -110,7 +110,7 @@
                   <span title="Товарищество">F {{#if p.fel}}{{p.fel}}{{else}}—{{/if}}</span>
                   <span title="Командование">Cmd {{#if p.command}}{{p.command}}{{else}}—{{/if}}</span>
                   <span title="Воля">W {{#if p.wp}}{{p.wp}}{{else}}—{{/if}}</span>
-                  <span class="sq-post-cap" title="Максимум подчинённых под одновременным Командованием: F.b × 2">≤{{p.capacity}}</span>
+                  <span class="sq-post-cap" title="Максимум подчинённых под одновременным Командованием: F.b × 2 (F.b × 20 с Air of Authority)">≤{{p.capacity}}</span>
                   {{#if p.helmetOff}}<span class="sq-post-helmet" title="Шлем силовой брони снят: Риск +1, если немодифицированный Риск 2+">без шлема</span>{{/if}}
                 </div>
               </div>

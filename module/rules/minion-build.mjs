@@ -19,6 +19,7 @@ import { MINION_GROUPS, MINION_TIERS, GROUP_CHAR_LIMITS, MINION_INFAMY_CAP,
 import { MINION_TRAITS, MANDATORY_BY_GROUP } from "../constants/minion-traits.mjs";
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { hasInfernalMaster } from "./occultist-talents.mjs";
 
 const num = v => Number(v) || 0;
 
@@ -89,12 +90,18 @@ export function slotUsage(items = [], minions = []) {
  * Сколько Миньонов Хозяин может держать одновременно: бонус характеристики
  * своей группы, а при нескольких группах — наименьший из бонусов. Считаем по
  * группам, которые у него есть на руках: уйдёт человек — потолок поднимется.
+ *
+ * Lord of Chaos / Лорд Хаоса (minion.core.lordOfChaos, стр. 112): «увеличивает
+ * максимум своих Миньонов на 50% (окр.▼)» — к ИТОГОВОМУ максимуму (наименьшему
+ * из бонусов), округление вниз: 5 → 7, 3 → 4, 1 → 1. Копии Таланта не
+ * накапливаются: книга даёт возможность, а не рейтинг.
  */
 export function minionCapacity(master, groups = []) {
   const used = [...new Set(groups.filter(g => MINION_GROUPS[g]))];
   if (!used.length) return 0;
   const chars = master?.system?.characteristics ?? {};
-  return Math.min(...used.map(g => bonusOf(chars[MINION_GROUPS[g].masterChar]?.total)));
+  const cap = Math.min(...used.map(g => bonusOf(chars[MINION_GROUPS[g].masterChar]?.total)));
+  return hasRuleFlag(master, "minion.core.lordOfChaos") ? Math.floor(cap * 1.5) : cap;
 }
 
 /** Сколько Миньонов какой группы у Хозяина — для шапки блока СОЦИУМа. */
@@ -348,6 +355,9 @@ export function minionCorruption(group) {
  * использовать Inf» — берётся большее из обычной характеристики и Inf.
  * Beloved Leader / Обожаемый Лидер (minion.core.belovedLeader): безусловное
  * +10 Лояльности.
+ * Infernal Master / Инфернальный Владыка (occultist-talents.mjs, Sahara
+ * 3-2a39): «Его Миньоны-демоны получают +10 Лояльности» — тем же
+ * безусловным приёмом, что Beloved Leader, но только для группы "daemon".
  */
 export function minionLoyalty(master, group) {
   const charKey = MINION_GROUPS[group]?.masterChar;
@@ -357,6 +367,7 @@ export function minionLoyalty(master, group) {
     value = Math.max(value, num(master?.system?.characteristics?.inf?.total));
   }
   if (hasRuleFlag(master, "minion.core.belovedLeader")) value += 10;
+  if (group === "daemon" && hasInfernalMaster(master)) value += 10;
   return value;
 }
 

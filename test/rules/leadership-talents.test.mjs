@@ -21,7 +21,7 @@ import {
   hasProtege, protegeFavoriteUuid, protegeFreeCommandActive, protegePenalty, protegeActivationPatch,
   hasRadiantPresence, anyRadiantPresenceHolderExists, radiantPresenceBonus,
   hasIntoTheJawsOfHell, anyIntoTheJawsOfHellHolderExists, intoTheJawsOfHellActive,
-  hasAirOfAuthority, commandTargetLimit,
+  hasAirOfAuthority, commandTargetLimit, commandCapacity,
   hasLivingLegend, livingLegendCommandBonus,
   hasWarChant, warChantSinging, WAR_CHANT_FLAG,
   warChantSingAlongActive, WAR_CHANT_SING_ALONG_FLAG, warChantIntimidateBonus, warChantSingAlongBonus,
@@ -37,6 +37,16 @@ const hatredTalent = (targets, name = "Hatred / Ненависть") => ({ type:
 const rancorTalent = (name = "Rancor / Злопамятность") => ({ type: "talent", name, system: {} });
 const talentOf = (name) => ({ type: "talent", name, system: {} });
 const actorWith = (...items) => ({ items });
+
+// Пара «мировой актор / актор его НЕсвязанного токена (actorLink:false)» —
+// воспроизводит squadsof-commandersof-actorlink-false: Отряд хранит мирового
+// актора в постах/составе, а бросок в бою обычно идёт через актора токена.
+function identityPair(worldUuid, tokenUuid) {
+  const tokenActor = { uuid: tokenUuid, isToken: true, token: { baseActor: null }, getActiveTokens: () => [] };
+  const worldActor = { uuid: worldUuid, isToken: false, getActiveTokens: () => [{ actor: tokenActor }] };
+  tokenActor.token.baseActor = worldActor;
+  return { worldActor, tokenActor };
+}
 
 const orkTarget = raceTarget("ork", "Орк");
 const orkActor = { system: { race: "ork" } };
@@ -367,15 +377,30 @@ describe("Air of Authority/Аура Власти — лимит целей Comma
     expect(hasAirOfAuthority({ items: [] })).toBe(false);
   });
 
-  it("commandTargetLimit — F.b без Таланта, F.b×20 с ним", () => {
+  it("commandTargetLimit — F.b×2 без Таланта, F.b×20 с ним", () => {
     const actor = (bonus, talents = []) => ({ items: talents, system: { characteristics: { fel: { bonus } } } });
-    expect(commandTargetLimit(actor(3))).toBe(3);
+    expect(commandTargetLimit(actor(3))).toBe(6);
     expect(commandTargetLimit(actor(3, [talentOf("Air of Authority")]))).toBe(60);
     expect(commandTargetLimit(actor(0, [talentOf("Air of Authority")]))).toBe(0);
   });
 
   it("commandTargetLimit — отрицательный F.b не уходит в минус", () => {
     expect(commandTargetLimit({ items: [], system: { characteristics: { fel: { bonus: -1 } } } })).toBe(0);
+  });
+
+  it("commandCapacity — общая ёмкость: бонус нужной Характеристики × (Air of Authority ? 20 : 2)", () => {
+    const actor = (chars, talents = []) => ({ items: talents, system: { characteristics: chars } });
+    const aoa = [talentOf("Аура Власти")];
+    expect(commandCapacity(actor({ fel: { bonus: 4 } }), "fel")).toBe(8);
+    expect(commandCapacity(actor({ fel: { bonus: 4 } }, aoa), "fel")).toBe(80);
+    // По умолчанию — F; Воля берётся тем же правилом (Боевая Песнь).
+    expect(commandCapacity(actor({ fel: { bonus: 4 } }))).toBe(8);
+    expect(commandCapacity(actor({ wp: { bonus: 5 } }), "wp")).toBe(10);
+    expect(commandCapacity(actor({ wp: { bonus: 5 } }, aoa), "wp")).toBe(100);
+    // Нет Характеристики / отрицательный бонус — 0, не NaN и не минус.
+    expect(commandCapacity(actor({}), "wp")).toBe(0);
+    expect(commandCapacity(actor({ wp: { bonus: -2 } }, aoa), "wp")).toBe(0);
+    expect(commandCapacity(null, "wp")).toBe(0);
   });
 });
 
@@ -561,6 +586,18 @@ describe("War Chant/Боевая Песнь: переброс Морали (Ли
     expect(warChantSingAlongBonus(silent, allActors)).toBe(0);
     expect(warChantSingAlongBonus(null, allActors)).toBe(0);
   });
+
+  it("warChantSingAlongBonus — доходит, когда цель Команды передана актором НЕсвязанного токена (actorLink:false)", () => {
+    const l = leader("l1", { [WAR_CHANT_FLAG]: true });
+    const { worldActor: singerWorld, tokenActor: singerToken } = identityPair("singer-world", "singer-token");
+    singerToken.flags = { "warhammer-dbc": { [WAR_CHANT_SING_ALONG_FLAG]: true } };
+    singerToken.getFlag = (_s, k) => singerToken.flags["warhammer-dbc"][k];
+    singerWorld.flags = singerToken.flags;
+    singerWorld.getFlag = singerToken.getFlag;
+    singerWorld.items = [];
+    const sq = squad("sq1", { leader: { uuid: "l1" } }, [{ uuid: "singer-world" }]);
+    expect(warChantSingAlongBonus(singerToken, [l, singerWorld, sq])).toBe(1);
+  });
 });
 
 describe("Rally/Сплотить: доступность", () => {
@@ -630,6 +667,19 @@ describe("Bring It Down!/Валите Это!: срез бонуса попад�
     const sq = squad("sq1", { leader: { uuid: "boss" } },
       { active: true, key: "general", testKind: "attack", bringItDownStacks: 2, bringItDownTargetUuid: "trg" });
     expect(bringItDownStacksFor(attacker, target, [attacker, sq])).toBe(2);
+  });
+
+  it("bringItDownStacksFor — бонус доходит, когда атакующий передан актором НЕсвязанного токена (actorLink:false)", () => {
+    const { worldActor, tokenActor } = identityPair("att-world", "att-token");
+    const target = { uuid: "trg" };
+    const sq = {
+      type: "squad", uuid: "sq1",
+      system: {
+        posts: { leader: { uuid: "boss" } }, members: [{ uuid: "att-world" }],
+        shortCommand: { active: true, key: "general", testKind: "attack", bringItDownStacks: 2, bringItDownTargetUuid: "trg" }
+      }
+    };
+    expect(bringItDownStacksFor(tokenActor, target, [worldActor, sq])).toBe(2);
   });
 });
 

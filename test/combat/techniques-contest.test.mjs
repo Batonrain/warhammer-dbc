@@ -103,6 +103,54 @@ describe("_showContestDialog — опциональные перебросы п�
   });
 });
 
+// angel-hunters-showcontestdialog-targetactor: диалог Состязания не передавал
+// targetActor в sideContext — любое правило с when.target* (Angel Hunters и
+// подобные) молча не срабатывало здесь, хотя срабатывало в атаке/навыке/
+// Страхе (те три места уже брали game.user.targets). Тот же приём проверки,
+// что test/sheets/skill-roll.test.mjs::"targetHasTrait доходит до галочки...".
+describe("_showContestDialog — targetActor доходит до перебросов правил (angel-hunters-showcontestdialog-targetactor)", () => {
+  it("правило с when.targetHasTrait доходит до галочки, когда есть выбранный таргет", async () => {
+    const { registerRuleSource, clearRuleSources, getRuleSources } =
+      await import("../../module/rules/sources.mjs");
+    const saved = getRuleSources();
+    clearRuleSources();
+    registerRuleSource("test", (_actor, ctx) => (ctx?.targetActor?.items?.some(i => i.name === "Marine")) ? [
+      { id: "x", label: "Охотники на Ангелов: цель", when: {},
+        effects: [{ kind: "rollMode", target: "all", mode: "keepBest", rolls: 2, label: "Охотники на Ангелов" }] }
+    ] : []);
+    const target = { items: [{ type: "trait", name: "Marine" }] };
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set([{ actor: target }]) };
+    try {
+      await _showContestDialog(actorFor({}), MELEE_CONTESTS.feint);
+      expect(captured.dialog.content).toContain("rule-reroll-opt");
+      expect(captured.dialog.content).toContain("Охотники на Ангелов");
+    } finally {
+      globalThis.game.user = { ...globalThis.game.user, targets: new Set() };
+      clearRuleSources();
+      for (const [key, fn] of saved) registerRuleSource(key, fn);
+    }
+  });
+
+  it("без выбранного таргета та же галочка не появляется", async () => {
+    const { registerRuleSource, clearRuleSources, getRuleSources } =
+      await import("../../module/rules/sources.mjs");
+    const saved = getRuleSources();
+    clearRuleSources();
+    registerRuleSource("test", (_actor, ctx) => (ctx?.targetActor?.items?.some(i => i.name === "Marine")) ? [
+      { id: "x", label: "Охотники на Ангелов: цель", when: {},
+        effects: [{ kind: "rollMode", target: "all", mode: "keepBest", rolls: 2, label: "Охотники на Ангелов" }] }
+    ] : []);
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set() };
+    try {
+      await _showContestDialog(actorFor({}), MELEE_CONTESTS.feint);
+      expect(captured.dialog.content).not.toContain("Охотники на Ангелов");
+    } finally {
+      clearRuleSources();
+      for (const [key, fn] of saved) registerRuleSource(key, fn);
+    }
+  });
+});
+
 // wdbc-vkwe: плоский бонус источника, не завязанного на Стойку/характеристику
 // (Мутация Tentacle/Щупальце — +20 на тесты Борьбы, module/combat/
 // grapple.mjs::tentacleTechDef). Проверяется здесь, в общем механизме

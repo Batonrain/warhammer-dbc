@@ -180,7 +180,7 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
   // токен на сцене и кликнуть, до того как жать «Применить урон» этому токену.
   const sprayCancelBtn = (!isMelee && wp.spray) ? `
     <div class="roll-defense-section">
-      <button class="wh-spray-cancel-btn" type="button">
+      <button class="wh-spray-cancel-btn" type="button" data-attacker-uuid="${attackerUuid}">
         ${rollIcon("run")} Тест на отмену (Распыление, Acrobatics A+0) — выберите токен цели
       </button>
       <div class="roll-defense-note">Свободное действие, Реакция не тратится. Если шаблон полностью накрывает Базу цели — годится только Отскок в исходе теста, не сама отмена (стр. 12).</div>
@@ -1004,6 +1004,7 @@ export function attackCard({
     </button>` : "",
       notes.helpless ? `<div class="roll-allout-note">${notes.helpless}</div>` : "",
       notes.quietElimination ? `<div class="roll-allout-note">${notes.quietElimination}</div>` : "",
+      notes.damageTalents ? `<div class="roll-allout-note">${notes.damageTalents}</div>` : "",
       hit && hitsCount > 0
         ? `<div class="roll-location">Место попадания: <b>${hitLocLabel}</b> (${locRoll})</div>`
         : "",

@@ -31,6 +31,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { moraleThreshold } from "./intimidate.mjs";
+import { isInRage } from "../rules/rage.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { resolveOpposed } from "../rules/test-kind.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
@@ -63,8 +64,11 @@ export async function rollFieldExecutionContest(attacker, target, { attackerMod 
   const atkRoll = await new Roll("1d100").evaluate();
   const tgtRoll = await new Roll("1d100").evaluate();
   // Into the Jaws of Hell/В Самое Пекло — та же галочка, авто-успех цели.
+  // Ярость цели (Frenzy, стр. 62): «автоматически проходит тесты Морали» —
+  // встречный тест Полевой Казни это тест Морали (как у Запугивания).
   const atkOutcome = testOutcome(atkRoll.total, atkThreshold);
-  const tgtOutcome = testOutcome(tgtRoll.total, tgtThreshold, { autoSuccess: intoTheJawsOfHellActive(intoTheJawsOfHell) });
+  const tgtOutcome = testOutcome(tgtRoll.total, tgtThreshold,
+    { autoSuccess: intoTheJawsOfHellActive(intoTheJawsOfHell) || isInRage(target) });
   const { winner, margin } = resolveOpposed(
     { ...atkOutcome, threshold: atkThreshold }, { ...tgtOutcome, threshold: tgtThreshold });
   const success = winner === "mine";

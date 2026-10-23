@@ -23,6 +23,8 @@ import { attackIsMelee }           from "../../combat/weapon-profiles.mjs";
 import { tentacleBonusSuppressed } from "../../rules/tentacle-hand-form.mjs";
 import { legacySlaughterThresholdDelta } from "../../rules/legacy-weapon.mjs";
 import { divineProtectionActive } from "../../rules/death-save.mjs";
+import { berserkChargeBonus } from "../../rules/berserker-talents.mjs";
+import { stunUnrestricted } from "../../rules/takedown.mjs";
 
 /**
  * @param {object} v оружие, профиль, состояние актора и уже посчитанные бонусы
@@ -168,7 +170,9 @@ export function buildSelection(v) {
     const category = categoryFor(pIdx);
     const trained  = trainingFor(pIdx).trained;
     return Object.entries(MELEE_MANEUVERS).map(([key, def]) => {
-      const categoryOk = key === "standard" || key === "freeattack" || !def.categories || !category || def.categories.includes(category);
+      // Вырубание (Takedown, rules/takedown.mjs): «приём Оглушить с любым оружием» — снимает список категорий.
+      const categoryOk = key === "standard" || key === "freeattack" || !def.categories || !category || def.categories.includes(category)
+        || (key === "stun" && stunUnrestricted(actor));
       const baseOk     = !def.bases || def.bases.includes(baseKeyNow);
       const trainingOk = trained || key === "standard" || key === "freeattack";
       const balanceOk  = def.minBalance == null || ((sys.balance ?? 0) >= def.minBalance);
@@ -296,7 +300,11 @@ export function buildSelection(v) {
     // выбора, как Локус Сокрушения фиксирует «Полную Атаку».
     const baseKey = fullAttackForced ? "fullatk" : (forcedBaseKey ?? (cheapShotActive ? "standard" : (sel.baseKey ?? meleeBaseKey)));
     const bDef    = MELEE_BASES[baseKey] || MELEE_BASES.standard;
-    const baseBon = isMelee ? (bDef.wsBonus ?? 0) : 0;
+    // Натиск Берсерка (стр. 62): «еще +10 на рукопашные приемы при Натиске» —
+    // считается здесь, по Базе, выбранной в ЭТОМ окне, а не по system.meleeBase:
+    // правила собираются один раз при открытии окна (rules/berserker-talents.mjs).
+    const berserkBon = isMelee ? berserkChargeBonus(actor, baseKey) : 0;
+    const baseBon = isMelee ? (bDef.wsBonus ?? 0) + berserkBon : 0;
 
     const maneuverKey = isMelee ? (sel.maneuverKey ?? maneuverKeyDefault) : "standard";
     const mDef        = MELEE_MANEUVERS[maneuverKey] || MELEE_MANEUVERS.standard;
@@ -390,6 +398,7 @@ export function buildSelection(v) {
       prof ? `Профиль: ${prof.label || "доп."}${prof.damage ? ` (${prof.damage})` : ""}` : "",
       gDef ? `Хват: ${gDef.label}${gDef.ws ? ` · WS ${gDef.ws >= 0 ? "+" : ""}${gDef.ws}` : ""}${gDef.dmgFlat ? ` · урон ${gDef.dmgFlat >= 0 ? "+" : ""}${gDef.dmgFlat}` : ""}${gDef.sbHalf ? " · ½S.b" : ""} — ${gDef.note}` : "",
       reverseGripThrust ? `Выпад в Обратном хвате: без штрафа WS${reverseThrustFullAtk ? ", Полная Атака — полный S.b + ещё ½S.b (окр.▲) урона сверху" : ""}` : "",
+      berserkBon ? `Натиск Берсерка: +${berserkBon} к приёму при Натиске (уже в Базе)` : "",
       maneuverCapBonus ? `Щупальце: +${maneuverCapBonus} на приём Захват` : "",
       gripManeuverBon ? `Хват: +${gripManeuverBon} на приём «${mDef.label}»` : "",
       slaughterBon ? `Наследие Бойни: ${slaughterBon > 0 ? "+" : ""}${slaughterBon} — заряжено убийством этим оружием` : "",
