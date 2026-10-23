@@ -104,7 +104,7 @@ const BOOK_TABLE = [
   ["Люди · Демонолог", "2×Unholy Tomes (на разные темы)",
     [["выдаётся сам, 2 шт."]]],
   ["Люди · Демонолог", "Записи Ритуалов на суммарную Редкость 11, но не выше R3 каждый.",
-    [["Записи Ритуалов на сумму Редкости 11 (каждая ≤ R3): у Ритуалов в компендиуме нет Редкости — выберите на вкладке «Ритуалы» вручную"]]],
+    [["список: Ритуалы · на сумму Редкости 11 · Редкость ≤ 3"]]],
   ["Люди · Ренегат", "Lasgun (Best.Q) или Bolter (Good.Q) или Plasma Gun или Heavy Flamer",
     [["выдаётся сам · Высшее"],["выдаётся сам · Хорошее"],["выдаётся сам"],["выдаётся сам"]]],
   ["Люди · Ренегат", "Combi-Flamer или Auxiliary Grenade Launcher или Long-Las",
@@ -266,6 +266,51 @@ describe("Нынешние тексты паков (до правки агент
     ["3 Splinter Pistol", [["выдаётся сам, 3 шт."]]]
   ])("«%s»", (row, expected) => {
     expect(plan(row)).toEqual(expected);
+  });
+});
+
+// wdbc-zaesd (23.10.2026): «Записи Ритуалов на суммарную Редкость 11, но не выше
+// R3 каждый» (Демонолог; тот же текст у Певца Камня и Фарсиера) раньше был
+// kind:"manual" — «у Ритуалов нет Редкости». Редкость Записи есть: это
+// system.record Ритуала (core.json, «Анатомия ритуала»: «X в Записи отображает
+// Редкость ритуала аналогична Редкости снаряжения»), так что выдача — обычный
+// выбор из компендиума с бюджетом «сумма Редкости».
+describe("Записи Ритуалов: выбор с суммой Редкости (wdbc-zaesd)", () => {
+  const ROW = "Записи Ритуалов на суммарную Редкость 11, но не выше R3 каждый.";
+
+  it("это выбор из пака Ритуалов, а не указание ГМу", () => {
+    const [spec] = parseGearEntry(ROW);
+    expect(spec.kind).toBe("pick");
+    expect(spec.packs).toEqual(["rituals"]);
+    expect(spec.budget).toEqual({ mode: "availability", value: 11 });
+    expect(spec.maxAvailability).toBe(3);
+  });
+
+  // Ритуал без требования «Запись» (record 0) Записью не является: добыть её
+  // реквизицией нельзя, а весила бы она ноль — Демонолог набрал бы их сколько
+  // угодно. Нижняя граница отсекает их.
+  it("берутся только Ритуалы, у которых Запись есть (Редкость ≥ 1)", () => {
+    expect(parseGearEntry(ROW)[0].minAvailability).toBe(1);
+  });
+
+  it("числа берутся из строки: другая сумма и потолок (Лорд-Чародей, 18 и R4) читаются так же", () => {
+    const [spec] = parseGearEntry("Записи Ритуалов на суммарную Редкость 18, но не выше R4 каждый");
+    expect(spec.budget).toEqual({ mode: "availability", value: 18 });
+    expect(spec.maxAvailability).toBe(4);
+  });
+
+  it("настоящие Демонолог и Певец Камня из packs-src разбираются в тот же выбор", () => {
+    const root = path.resolve(import.meta.dirname, "../../packs-src/archetypes");
+    const load = rel => JSON.parse(fs.readFileSync(path.join(root, rel), "utf8")).system.gear;
+    const files = fs.readdirSync(path.join(root, "Люди")).filter(f => f.startsWith("Heresiarch___"));
+    expect(files).toHaveLength(1);
+    for (const text of [load(path.join("Люди", files[0])),
+      load(path.join("Экзодиты", fs.readdirSync(path.join(root, "Экзодиты")).find(f => f.startsWith("Stone_Singer___"))))]) {
+      const specs = splitGearTopLevel(text).flatMap(e => parseGearEntry(e));
+      const rit = specs.filter(s => s.packs?.includes("rituals"));
+      expect(rit).toHaveLength(1);
+      expect(rit[0]).toMatchObject({ kind: "pick", budget: { mode: "availability", value: 11 }, maxAvailability: 3 });
+    }
   });
 });
 

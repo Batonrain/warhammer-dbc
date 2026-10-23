@@ -83,6 +83,43 @@ describe("Крепкое Телосложение: +1 Рана за копию, 
     const a = actorWith([...Array(6).fill("Sound Constitution"), { type: "trait", name: "Astartes", system: {}, flags: {} }]);
     expect(soundConstitutionWoundsMods(a, 4)[0].value).toBe(4);
   });
+
+  // Steel Ratio / Стальное Сечение (Механикум, стр. 112): «увеличивает максимальное
+  // количество изучения Таланта Sound Constitution на I.b» — потолок + I.b.
+  describe("Стальное Сечение: потолок копий + I.b", () => {
+    const copies = n => Array(n).fill("Sound Constitution");
+    const steel = { type: "talent", name: "Steel Ratio / Стальное Сечение", system: {}, flags: {} };
+
+    it("потолок: третий аргумент прибавляется к T.b (+2)", () => {
+      expect(soundConstitutionCap(4, true, 5)).toBe(9);
+      expect(soundConstitutionCap(4, false, 5)).toBe(11);
+      expect(soundConstitutionCap(4, false)).toBe(6);        // без поправки — прежнее
+      expect(soundConstitutionCap(4, false, -3)).toBe(6);    // отрицательный I.b потолок не режет
+    });
+    it("Космодесантник, T.b 4, I.b 5: десять копий дают +9, а не +4", () => {
+      const a = actorWith([...copies(10), steel], { race: "astartes" });
+      expect(soundConstitutionWoundsMods(a, 4)[0].value).toBe(9);
+    });
+    it("человек, T.b 4, I.b 5: потолок 11", () => {
+      expect(soundConstitutionWoundsMods(actorWith([...copies(12), steel]), 4)[0].value).toBe(11);
+    });
+    it("без Стального Сечения потолок прежний (страж)", () => {
+      expect(soundConstitutionWoundsMods(actorWith(copies(12)), 4)[0].value).toBe(6);
+    });
+    it("Стальное Сечение само по себе Ран не даёт (нет копий Крепкого Телосложения)", () => {
+      expect(soundConstitutionWoundsMods(actorWith([steel]), 4)).toEqual([]);
+    });
+    it("опознаётся и по записи Конструктора kind:capability", () => {
+      const holder = { type: "talent", name: "Что-то", flags: { "warhammer-dbc": { mechanics: [{ entries: [
+        { kind: "capability", capabilityKey: "mechanicum.core.steelRatio" }] }] } } };
+      const a = actorWith([...copies(8), holder], { race: "astartes" });
+      expect(soundConstitutionWoundsMods(a, 4)[0].value).toBe(8);
+    });
+    it("I.b берётся с актора: I.b 2 — потолок T.b+2", () => {
+      const a = actorWith([...copies(9), steel], { race: "astartes", characteristics: { t: { bonus: 4 }, int: { bonus: 2 } } });
+      expect(soundConstitutionWoundsMods(a, 4)[0].value).toBe(6);
+    });
+  });
 });
 
 describe("Неутомимый: нет штрафа Усталости на WS, BS, S, T, A", () => {

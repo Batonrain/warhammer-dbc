@@ -38,7 +38,8 @@ import { rancorRiskCapBonus, eloquenceRiskCapBonus, bravadoRiskLevel,
          protegeFreeCommandActive, protegePenalty, protegeActivationPatch,
          frontlineCommanderMeleeFree, rallyAvailable,
          hasBringItDown, bringItDownAccuracyPenalty, bringItDownMaxStacks,
-         BRING_IT_DOWN_PENALTY_PER_STACK, warChantSingAlongBonus } from "../rules/leadership-talents.mjs";
+         BRING_IT_DOWN_PENALTY_PER_STACK, warChantSingAlongBonus,
+         commandCapacity } from "../rules/leadership-talents.mjs";
 import { backToBackGrantSectionHtml } from "../combat/fanatic-redirect.mjs";
 import { testKindHtml, diceModeHtml, difficultyHtml, readDifficulty, critLineHtml,
          readTestKind, readDiceChoice, mergeReroll, wireTestKindLive,
@@ -266,8 +267,10 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
         ?? (sys.characteristics?.int?.total != null ? Math.floor(sys.characteristics.int.total / 10) : null),
       command: sys.skills?.command?.total ?? null,
       logic:   sys.skills?.logic?.total ?? null,
-      // Command может воздействовать одновременно на F.b × 2 подчинённых.
-      capacity: felB * 2,
+      // Command может воздействовать одновременно на F.b × 2 подчинённых
+      // (F.b × 20 с Air of Authority) — тот же хелпер, что считает узел
+      // командования в combat/command-state.mjs.
+      capacity: commandCapacity(doc, "fel"),
       // Снятый шлем силовой брони поднимает уровень Риска командующего.
       helmetOff: !!doc?.system?.helmetlessActive && isFeatureEnabled("helmetless")
     };

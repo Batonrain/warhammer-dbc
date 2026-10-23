@@ -5,7 +5,7 @@
   "folder": "V0Wfgl0aycRFPfu2",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey rangedCore.core.mightyShot — module/combat/attack.mjs (flatBonus ← module/rules/damage-talents.mjs::mightyShotDamage): +½BS.b (окр.▲) к урону стрелковой атаки, строка в карточке. Распыление — без бонуса. Взрывное — бонус НЕ входит в число урона (оно уходит всем в шаблоне), карточка напоминает прибавить его цели в центре шаблона вручную. Урон вне окна атаки (Орды и т.п.) Талант не видит.",
     "benefit": "Персонаж добавляет +½BS.b (окр.▲) ко всему своему стрелковому урону, кроме урона по площади (Blast/Spray); прямые попадания по цели в центре шаблона Blast получают бонус.",
     "tier": 3,
     "requirement": "BS 40",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "Ptf6KULgFitfns3J",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "2bLB3BrTSpNN8OI1",
+              "capabilityKey": "rangedCore.core.mightyShot",
+              "label": "Могучий Выстрел: +½BS.b (окр.▲) к стрелковому урону, кроме урона по площади",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

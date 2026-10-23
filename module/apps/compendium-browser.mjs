@@ -21,8 +21,8 @@
 //  Деревья кэшируются на сессию (_treeCache) — компендиумы меняются редко;
 //  кнопка «↻ Обновить» в шапке диалога форсирует пересборку.
 // ════════════════════════════════════════════════════════════════════════
-import { matchesFilters, normalizePick } from "./compendium-filters.mjs";
-import { budgetLabel, budgetReady, budgetFits, budgetState, BUDGET_XP } from "../rules/pick-budget.mjs";
+import { matchesFilters, normalizePick, indexAvailability } from "./compendium-filters.mjs";
+import { budgetLabel, budgetReady, budgetFits, budgetState, BUDGET_XP, BUDGET_AVAILABILITY } from "../rules/pick-budget.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { disciplineDescByFolderName } from "../constants/disciplines.mjs";
 
@@ -98,7 +98,8 @@ async function buildPackTree(pack) {
     // здесь тот же текст нужен ДО покупки — стрелочка есть только в pickMode
     // (renderItemsHtml), но поле читаем для всех категорий разом, второй
     // проход по компендиуму дороже лишних двух строк в индексе.
-    fields: ["system.armorType", "system.availability", "system.properties",
+    // system.record — Редкость Записи Ритуала (indexAvailability, wdbc-zaesd).
+    fields: ["system.armorType", "system.availability", "system.record", "system.properties",
              "system.tier", "system.cost", "system.aptitudes", "system.category",
              "system.benefit", "system.description", "system.weaponTypes"]
   });
@@ -132,7 +133,7 @@ async function buildPackTree(pack) {
         // боковую панель, и с чужим родом дроп молча ничего не делает.
         doc: pack.metadata?.type || "Item",
         folderId, armorType: it.system?.armorType,
-        availability: it.system?.availability, properties: it.system?.properties || [],
+        availability: indexAvailability(it), properties: it.system?.properties || [],
         tier: it.system?.tier, cost: it.system?.cost, aptitudes: it.system?.aptitudes || [],
         category: it.system?.category,
         // Типы оружия боеприпаса — фильтр ammoType («магазины болтов»).
@@ -592,7 +593,9 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
           const st = budgetState(picked(), budget, xpCost);
           ui.notifications.warn(st.mode === BUDGET_XP
             ? `Не хватает опыта: осталось ${st.left} из ${st.value}.`
-            : `Уже выбрано ${st.value} — снимите лишнее, чтобы выбрать другое.`);
+            : st.mode === BUDGET_AVAILABILITY
+              ? `Сумма Редкости выйдет за ${st.value}: осталось ${st.left}.`
+              : `Уже выбрано ${st.value} — снимите лишнее, чтобы выбрать другое.`);
         };
         const addOne = uuid => {
           if (!budgetFits(picked(), byUuid.get(uuid), budget, xpCost)) return warnBudget(uuid);

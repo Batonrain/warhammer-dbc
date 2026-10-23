@@ -7,7 +7,7 @@
 import { describe, it, expect } from "vitest";
 import {
   normalizeBudget, entryWeight, budgetState, budgetFits, budgetLabel, budgetReady,
-  BUDGET_COUNT, BUDGET_XP
+  BUDGET_COUNT, BUDGET_XP, BUDGET_AVAILABILITY
 } from "../../module/rules/pick-budget.mjs";
 
 const talent = (cost) => ({ name: `Талант ${cost}`, cost });
@@ -98,5 +98,56 @@ describe("штуки «до N» (min)", () => {
   });
   it("подпись говорит «до»", () => {
     expect(budgetLabel([talent(0)], UP_TO_3)).toBe("Выбрано 1 из (до) 3");
+  });
+});
+
+// wdbc-zaesd (23.10.2026): «Записи Ритуалов на суммарную Редкость 11, но не выше
+// R3 каждый» (Демонолог; Певец Камня, Фарсиер) — бюджет считается СУММОЙ Редкости
+// взятых записей, а не штуками и не опытом. Редкость Записи ритуала — это
+// system.record Ритуала (core.json, «Анатомия ритуала»: «X в Записи отображает
+// Редкость ритуала аналогична Редкости снаряжения»); в узле Обозревателя она
+// лежит в поле availability.
+describe("сумма Редкости (availability)", () => {
+  const rec = (availability) => ({ name: `Запись R${availability}`, availability });
+  const SUM11 = { mode: BUDGET_AVAILABILITY, value: 11 };
+
+  it("режим не схлопывается в штуки", () => {
+    expect(normalizeBudget(SUM11)).toEqual({ mode: BUDGET_AVAILABILITY, value: 11 });
+  });
+
+  it("вес записи — её Редкость; нет Редкости — ноль", () => {
+    expect(entryWeight(rec(3), SUM11)).toBe(3);
+    expect(entryWeight({ name: "без поля" }, SUM11)).toBe(0);
+    expect(entryWeight({ availability: null }, SUM11)).toBe(0);
+    // Отрицательная Редкость снаряжения («Повсеместно») не увеличивает остаток.
+    expect(entryWeight(rec(-2), SUM11)).toBe(0);
+  });
+
+  it("цена в опыте на этот режим не влияет", () => {
+    expect(entryWeight({ availability: 2, cost: 999 }, SUM11, () => 777)).toBe(2);
+  });
+
+  it("сумма считается по Редкости, остаток не уходит ниже нуля незаметно", () => {
+    const taken = [rec(3), rec(3), rec(3)];
+    expect(budgetState(taken, SUM11)).toMatchObject({ spent: 9, left: 2, over: false, done: false });
+    expect(budgetFits(taken, rec(2), SUM11)).toBe(true);
+    expect(budgetFits(taken, rec(3), SUM11)).toBe(false);
+  });
+
+  // Как с опытом: набрать ровно 11 удаётся не всегда (записи R1..R3), поэтому
+  // недобор подтверждается, а перерасход — нет; пустой выбор не подтверждается.
+  it("недобор подтверждается, перерасход и пустой выбор нет", () => {
+    expect(budgetReady([rec(3), rec(3), rec(3)], SUM11)).toBe(true);
+    expect(budgetReady([], SUM11)).toBe(false);
+    expect(budgetReady([rec(3), rec(3), rec(3), rec(3)], SUM11)).toBe(false);
+    expect(budgetReady([rec(3), rec(3), rec(3), rec(2)], SUM11)).toBe(true);
+  });
+
+  it("подпись говорит про Редкость", () => {
+    expect(budgetLabel([rec(3), rec(2)], SUM11)).toBe("Сумма Редкости 5 из 11");
+  });
+
+  it("ноль в бюджете Редкости — не «одна штука»", () => {
+    expect(normalizeBudget({ mode: BUDGET_AVAILABILITY, value: 0 }).value).toBe(0);
   });
 });

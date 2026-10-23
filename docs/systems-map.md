@@ -783,7 +783,11 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 `touch-of-entropy.mjs`, `turn-state-shield.mjs`, `unseen-beggar.mjs`,
 `voice-of-god.mjs`, `vulture.mjs`, `witchs-edge.mjs`, `hallucinogenic.mjs`,
 `ogryn-weapon-break.mjs`, `frenzy.mjs` (Ярость — переключатель,
-`system.inRage`), `fully-armed.mjs`.
+`system.inRage`; лимит повторного входа), `rules/rage.mjs` (числа Ярости по
+состоянию `inRage`: +10 WS/S/W, −20 тесты BS/I/F, Раненный Зверь, Холодная
+Ярость; Усталость/Оглушение/Мораль — `situational.mjs`, `condition-guards.mjs`,
+`morale-test.mjs`, `fear.mjs`; Sahara 3-861e), `rules/berserker-talents.mjs`
+(Натиск Берсерка: +10 к приёму при Натиске, `meleeBaseBonus`), `fully-armed.mjs`.
 
 - Гасители штрафов окна атаки (sheets/attack/mods.mjs, 26.09.2026):
   дальняя/экстремальная дистанция — `rules/range-penalty-immunity.mjs`

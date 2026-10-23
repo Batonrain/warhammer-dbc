@@ -26,6 +26,9 @@
 //  в регулярках»), поэтому окончания пишутся `\S*`/`[а-яё]*`, границы — явно.
 // ════════════════════════════════════════════════════════════════════════════
 
+// pick-budget.mjs — лист графа импортов (своих импортов нет), цикла не замкнуть.
+import { BUDGET_AVAILABILITY } from "./pick-budget.mjs";
+
 /**
  * Папки компендиумов, на которые ссылаются категории книги. id постоянны
  * (packs-src/**\/_Folder…json), сверяются тестом test/rules/creation-gear.test.mjs
@@ -481,17 +484,35 @@ export function parseGearItem(text) {
     };
     if (cat.rituals) {
       // «Записи Ритуалов на суммарную Редкость 11, но не выше R3 каждый» —
-      // бюджет суммой Редкости. У Ритуалов в компендиуме поля Редкости нет
-      // вовсе (module/data/item/ritual.mjs), так что ни потолок, ни сумму
-      // Обозреватель проверить не может: честно — указание игроку/ГМу.
+      // бюджет суммой Редкости (rules/pick-budget.mjs, режим availability).
+      // Редкость Записи — это system.record Ритуала: core.json, «Анатомия
+      // ритуала»: «X в Записи отображает Редкость ритуала аналогична Редкости
+      // снаряжения — записи можно добывать реквизицией и торговлей». В узле
+      // Обозревателя она лежит как availability (compendium-filters.mjs,
+      // indexAvailability). До 23.10.2026 строка была kind:"manual" с пометкой
+      // «у Ритуалов нет Редкости» — это посылка, не подтвердившаяся по книге
+      // (wdbc-zaesd).
+      //
+      // minAvailability:1 — Ритуал с record 0 не имеет требования «Запись»,
+      // то есть Записи, которую выдают или покупают, у него нет; без нижней
+      // границы такие Ритуалы весили бы ноль и набирались без счёта.
       const sum = /суммарн[а-яё]*\s+редкост[а-яё]*\s+(\d+)/iu.exec(afterL);
       const cap = /не\s+выше\s+R\s*(\d+)/iu.exec(afterL);
+      if (sum) {
+        return {
+          ...spec, count: 1, packs: ["rituals"],
+          budget: { mode: BUDGET_AVAILABILITY, value: Number(sum[1]) },
+          maxAvailability: cap ? Number(cap[1]) : null,
+          minAvailability: 1
+        };
+      }
+      // Сумма не названа — бюджета нет, безлимитный выбор был бы кражей
+      // (pick-budget.mjs): остаётся указанием игроку/ГМу, как раньше.
       return {
-        kind: "manual", raw, count: null, packs: ["rituals"],
-        budget: sum ? { mode: "availability", value: Number(sum[1]) } : null,
+        kind: "manual", raw, count: null, packs: ["rituals"], budget: null,
         maxAvailability: cap ? Number(cap[1]) : null,
-        note: `Записи Ритуалов${sum ? ` на сумму Редкости ${sum[1]}` : ""}${cap ? ` (каждая ≤ R${cap[1]})` : ""}: `
-          + "у Ритуалов в компендиуме нет Редкости — выберите на вкладке «Ритуалы» вручную"
+        note: `Записи Ритуалов${cap ? ` (каждая ≤ R${cap[1]})` : ""}: сумма Редкости в книге не названа — `
+          + "выберите на вкладке «Ритуалы» вручную"
       };
     }
     return spec;

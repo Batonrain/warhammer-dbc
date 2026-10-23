@@ -122,6 +122,43 @@ describe("максимум Миньонов", () => {
     expect(minionCapacity(master(), [])).toBe(0);
   });
 
+  // Lord of Chaos / Лорд Хаоса (minion.core.lordOfChaos): «увеличивает максимум
+  // своих Миньонов на 50% (окр.▼)» — округление ВНИЗ от 1,5×максимум.
+  describe("Лорд Хаоса: +50% к максимуму, округление вниз", () => {
+    const lord = base => ({
+      ...base,
+      items: [{
+        id: "lc", name: "Lord of Chaos / Лорд Хаоса", type: "talent", system: {},
+        flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+          { id: "e", kind: "capability", capabilityKey: "minion.core.lordOfChaos", label: "" }
+        ] }] } }
+      }]
+    });
+
+    it("чётный максимум: 4 → 6", () => {
+      expect(minionCapacity(lord(master({ int: 40 })), ["machine"])).toBe(6);
+    });
+
+    it("нечётный максимум округляется вниз: 5 → 7 (а не 8), 3 → 4 (а не 5)", () => {
+      expect(minionCapacity(lord(master({ int: 55 })), ["machine"])).toBe(7);
+      expect(minionCapacity(lord(master({ int: 35 })), ["machine"])).toBe(4);
+    });
+
+    it("поправка идёт к наименьшему из бонусов групп, не к каждому", () => {
+      expect(minionCapacity(lord(master({ int: 55, fel: 35 })), ["machine", "human"])).toBe(4);
+    });
+
+    it("максимум 1 → 1 (1,5 вниз); 0 и «нет групп» остаются нулём", () => {
+      expect(minionCapacity(lord(master({ int: 15 })), ["machine"])).toBe(1);
+      expect(minionCapacity(lord(master({ int: 5 })), ["machine"])).toBe(0);
+      expect(minionCapacity(lord(master()), [])).toBe(0);
+    });
+
+    it("без Таланта максимум прежний (страж)", () => {
+      expect(minionCapacity(master({ int: 55 }), ["machine"])).toBe(5);
+    });
+  });
+
   it("счётчик по группам — для шапки блока", () => {
     expect(groupTally([minion("human", "lesser"), minion("human", "greater"), minion("daemon", "horde")]))
       .toEqual({ human: 2, daemon: 1 });

@@ -232,9 +232,22 @@ export function registerHooks() {
   // у ВСЕХ типов актора (Отряд/Техника/Корабль/Демон/Орда/Формирование/
   // Звёздная система — свои классы листов) есть _rollSkill/_rollCharacteristic
   // этого класса, отсюда явная проверка вместо слепого вызова.
-  registerDelegatedTestOpener("genericTest", (executorActor, effectTargetActor, payload) => {
+  registerDelegatedTestOpener("genericTest", async (executorActor, effectTargetActor, payload) => {
     const sheet = executorActor.sheet;
-    const { testKind, skillKey, charKey, label, hideCharSelect, presetModifier, onFailItemUuid, psychicThreat } = payload;
+    const { testKind, skillKey, charKey, label, hideCharSelect, presetModifier, onFailItemUuid, psychicThreat,
+            casterUuid, psychicIndirect } = payload;
+    // Контекст Сопротивления психосиле (rules/resolve-test.mjs, область psychicThreat).
+    // Кастер едет как ctx.targetActor — «против кого» этот тест: иначе диалог
+    // сопротивляющегося подставил бы первую цель сцены, и условие «Ненавистный
+    // враг» Неповиновения (rules/hatred.mjs) сверялось бы не с тем актором.
+    // Кастер не найден (удалён с тех пор) — остаётся прежний контекст и цель сцены.
+    let psyContext = null;
+    if (psychicThreat) {
+      psyContext = { psychicThreat: true };
+      if (psychicIndirect) psyContext.psychicIndirect = true;
+      const caster = casterUuid ? await fromUuid(casterUuid).catch(() => null) : null;
+      if (caster) psyContext.targetActor = caster;
+    }
     if (testKind === "characteristic") {
       if (typeof sheet?._rollCharacteristic !== "function") {
         return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — тест характеристики так не открыть.`);
@@ -248,7 +261,7 @@ export function registerHooks() {
       // наложения Состояния цели ПРИ ПРОВАЛЕ (Choir of Poxes), см. _runTest.
       return sheet._rollCharacteristic(label, meta?.abbr ?? charKey, total, charKey, !!hideCharSelect,
         { effectTargetActor, presetModifier: Number(presetModifier) || 0, onFailItemUuid: onFailItemUuid || null,
-          rollContext: psychicThreat ? { psychicThreat: true } : null });
+          rollContext: psyContext });
     }
     if (typeof sheet?._rollSkill !== "function") {
       return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — тест навыка так не открыть.`);
@@ -376,7 +389,11 @@ export function registerHooks() {
           onFailItemUuid: d.itemUuid || "",
           // Тег «тест против психической угрозы» (rules/resolve-test.mjs, scope
           // "psychicthreat") — Сопротивление (Psychic Powers) даёт на него +10.
-          psychicThreat: true
+          psychicThreat: true,
+          // Кастер и Непрямая сила — для Неповиновения (rules/hatred.mjs):
+          // «Ненавистный» ли кастер и не «непрямая» ли сила.
+          casterUuid: d.casterUuid || "",
+          psychicIndirect: d.psyIndirect === "1"
         };
         if (activeOwnerOf(targetActor)) {
           await requestDelegatedTest({
@@ -524,7 +541,10 @@ export function registerHooks() {
         ev.preventDefault();
         const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
         if (!actor) return;
-        await _performSprayCancel(actor);
+        // Sprayer / Распылитель (3-8318): штраф −20 зависит от стрелка, не от цели.
+        const attackerUuid = ev.currentTarget.dataset.attackerUuid;
+        const attacker = attackerUuid ? (await fromUuid(attackerUuid).catch(() => null)) : null;
+        await _performSprayCancel(actor, { attacker });
       });
     });
 

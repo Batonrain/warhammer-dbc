@@ -1394,9 +1394,12 @@ Hooks.once("ready", async () => {
 Hooks.once("ready", async () => {
   if (!game.user.isGM) return;
   // Идемпотентна (метку, которая уже есть, не дописывает), проход по
-  // несвязанным токенам повторять безопасно.
+  // несвязанным токенам повторять безопасно. Версия 2 (task-1a59): метку
+  // получила ещё силовая броня смертных (4 записи) — в мирах, где версия 1
+  // уже стоит, без подъёма их копии на акторах остались бы без метки.
   await runMigrationGate({
     key: "retinalDisplayMarkVersion", tokensKey: "retinalDisplayMarkTokensVersion", label: "Встроенный ретинальный дисплей",
+    version: 2, tokensVersion: 2,
     full: () => migrateRetinalDisplayMark(), tokensOnly: () => migrateRetinalDisplayMark({ tokensOnly: true })
   });
 });

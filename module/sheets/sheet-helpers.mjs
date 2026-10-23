@@ -14,7 +14,8 @@ import { WEAPON_CLASSES, DAMAGE_TYPES,
          DRUG_CATEGORIES, DRUG_DELIVERY,
          DRUG_CHAR_KEYS, WEAPON_MOD_GROUPS,
          ARMOR_MOD_GROUPS }                          from "../constants/items.mjs";
-import { MELEE_STANCES, MELEE_BASES }                from "../constants/combat.mjs";
+import { MELEE_STANCES }                             from "../constants/combat.mjs";
+import { meleeBaseBonus }                            from "../rules/berserker-talents.mjs";
 import { PSY_POWER_TYPES, PSY_ACTIONS, PSY_NATURES } from "../constants/psyker.mjs";
 import { isAeldariRace }                             from "../apps/race-library.mjs";
 import { shieldCoverageLabel }                        from "../combat/hand-shield.mjs";
@@ -594,7 +595,7 @@ function buildGetDataUncached(actor) {
     // складывается в общий порог: без неё колонка «Порог» врала бы на −10
     // против того, что реально покажет диалог атаки (Стандартная Атака +10).
     const meleeBaseKey = system.meleeBase || "standard";
-    const baseBon = melee ? (MELEE_BASES[meleeBaseKey]?.wsBonus ?? 0) : 0;
+    const baseBon = melee ? meleeBaseBonus(actor, meleeBaseKey) : 0;   // + Натиск Берсерка (rules/berserker-talents.mjs)
 
     const compatAmmo = melee ? [] : allItems
       .filter(item =>

@@ -18,6 +18,27 @@
 
 import { normalizeBudget, BUDGET_COUNT } from "../rules/pick-budget.mjs";
 
+/**
+ * Редкость записи индекса компендиума (для узла дерева Обозревателя).
+ *
+ * У Ритуала своего system.availability нет: Редкость Записи ритуала — это
+ * system.record (wdbc-zaesd; core.json, «Анатомия ритуала»: «X в Записи
+ * отображает Редкость ритуала аналогична Редкости снаряжения»). record 0 —
+ * Ритуал без требования «Запись»: Записи, которую можно добыть реквизицией, у
+ * него нет, значит и Редкости нет — null, а не «R 0 Дефицит» (иначе такие
+ * Ритуалы проходили бы потолок и весили ноль в сумме Редкости).
+ * У остальных типов — собственное поле как было (undefined/null/0 не меняются).
+ *
+ * @param {{type?:string, system?:object}} entry  запись индекса компендиума
+ */
+export function indexAvailability(entry) {
+  if (entry?.type === "ritual") {
+    const record = Number(entry.system?.record) || 0;
+    return record > 0 ? record : null;
+  }
+  return entry?.system?.availability;
+}
+
 export const ITEM_FILTERS = {
   /** Тип предмета: "faction" либо список ["weapon","ammo"]. */
   type: (it, want) => (Array.isArray(want) ? want : [want]).includes(it?.type),

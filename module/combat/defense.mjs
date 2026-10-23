@@ -341,7 +341,15 @@ export async function _performDodge(actor, {
 // шаблоном код не отслеживает (тот же honest-compromise, что у blastRecoilNote
 // в attack-card.mjs) — Отскок предлагается кнопкой на любом успехе, без гейта
 // кодом; читающий карточку сам решает по столу, обязателен ли он здесь.
-export async function _performSprayCancel(actor) {
+// Sprayer / Распылитель (3-8318, стр. 108): стрелок с Талантом даёт целям
+// шаблона Spray −20 на ЭТОТ тест; полноценное Уклонение Талант не трогает
+// (книга: «Это не влияет на полноценные тесты Избегания»), поэтому штраф живёт
+// только здесь, а не в _performDodge. Читается у АТАКУЮЩЕГО (attacker), а не у
+// цели; без attacker (старая кнопка без uuid в чате) штрафа нет.
+export const SPRAYER_CAPABILITY = "flamer.core.sprayer";
+export const SPRAYER_CANCEL_PENALTY = -20;
+
+export async function _performSprayCancel(actor, { attacker = null } = {}) {
   const agTotal   = actor.system.characteristics.ag?.total ?? 0;
   const acroSkill = actor.system.skills?.acrobatics;
   const rankBonus = SKILL_RANKS[acroSkill?.rank ?? "untrained"]?.bonus ?? -20;
@@ -351,7 +359,8 @@ export async function _performSprayCancel(actor) {
   // а не реакционный −40: REACTION_SKILLS знает только Dodge/Parry, а ключ
   // навыка здесь другой. Ветвить это руками не нужно, сбор различает сам.
   const ruleMods  = collectTestMods(actor, { kind: "skill", skill: "acrobatics", char: "ag" });
-  const threshold = agTotal + rankBonus + cloneBonus + ruleMods.total;
+  const sprayerMod = (attacker && hasRuleFlag(attacker, SPRAYER_CAPABILITY)) ? SPRAYER_CANCEL_PENALTY : 0;
+  const threshold = agTotal + rankBonus + cloneBonus + ruleMods.total + sprayerMod;
 
   const roll = await new Roll("1d100").evaluate();
   const rv     = roll.total;
@@ -364,6 +373,7 @@ export async function _performSprayCancel(actor) {
   if (rankBonus !== -20) modParts.push(`навык ${rankBonus >= 0 ? "+" : ""}${rankBonus}`);
   if (cloneBonus !== 0)  modParts.push(`клон-поле +${cloneBonus}`);
   modParts.push(...ruleMods.parts);
+  if (sprayerMod) modParts.push(`Sprayer / Распылитель ${SPRAYER_CANCEL_PENALTY}`);
 
   const outcomeHtml = passed
     ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}! Попадание отменено (если шаблон не накрывает Базу целиком — иначе годится только Отскок ниже, стр. 12).</span>`

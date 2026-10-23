@@ -60,6 +60,8 @@ import { scroungeSupplies } from "./scrounge.mjs";
 import { grantCursedHeirloom } from "./cursed-heirloom.mjs";
 import { grantStartingDisorder } from "../sheets/tabs/disorders.mjs";
 import { shareCombatFormation } from "../combat/combat-formation.mjs";
+import { tzeentchMarkBindUpdate } from "../rules/psyker.mjs";
+import { useShapeshift } from "../combat/shapeshift.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -184,6 +186,13 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *  - `grantStartingDisorder` (sheets/tabs/disorders.mjs) — стартовое
  *    случайное расстройство от источника с «неизлечимо» и пределом Тяжести
  *    (Архетип Беглый Псайкер: не ниже −2); повторно не выдаёт.
+ *  - `tzeentchMarkBindUpdate` (rules/psyker.mjs) — Метка Тзинча (task-0469-
+ *    bc1b): патч `{ "system.psyker.class": "bound" }` для актора, который до
+ *    этой Метки не был псайкером (нет `system.isPsyker` и нет Трейта Psyker не
+ *    от самой Метки), иначе null — класс Несвязанного не переписывается.
+ *  - `useShapeshift` (combat/shapeshift.mjs) — «Сменить облик» Адаптации
+ *    Сплайса «Перевертыш» (wdbc-tkeh1): полудействие, тест A+20, строка
+ *    таблицы Полиморфина (стр. 283) по числу Успехов.
  *
  * `extra` — необязательный набор ДОПОЛНИТЕЛЬНЫХ именованных функций для
  * конкретного вызывающего (например, runMechScriptEntry добавляет
@@ -223,7 +232,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "attemptPossessionAttack", "leavePossessionHost", "useAdaptiveVenom", "useExplosiveAction",
     "activateBattleForm", "endBattleForm",
     "emergencyMaintenance", "scroungeSupplies", "grantCursedHeirloom",
-    "grantStartingDisorder", "shareCombatFormation",
+    "grantStartingDisorder", "shareCombatFormation", "tzeentchMarkBindUpdate", "useShapeshift",
     ...extraNames,
     code
   );
@@ -243,7 +252,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     attemptPossessionAttack, leavePossessionHost, useAdaptiveVenom, useExplosiveAction,
     activateBattleForm, endBattleForm,
     emergencyMaintenance, scroungeSupplies, grantCursedHeirloom,
-    grantStartingDisorder, shareCombatFormation,
+    grantStartingDisorder, shareCombatFormation, tzeentchMarkBindUpdate, useShapeshift,
     ...extraNames.map(k => extra[k])
   );
 }

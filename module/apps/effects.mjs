@@ -9,6 +9,7 @@
 
 import { toggleParentId, isToggleOn } from "../rules/toggle-abilities.mjs";
 import { visionAidBlocked } from "../rules/vision-aids.mjs";
+import { diseaseEffectsSuppressed } from "../rules/disease-immunity.mjs";
 import { activeRunicWeaveId, siblingRunicWeaves } from "../rules/runic-weave.mjs";
 
 /**
@@ -46,6 +47,11 @@ export function isItemActive(item) {
   // Зрящие Рога (Majestic Horns 9, wdbc-1rno.10): авточувства и визоры
   // не действуют, пока такая мутация на акторе (rules/vision-aids.mjs).
   if (visionAidBlocked(item)) return false;
+  // Метка Нургла (defence.diseaseEffectsImmune, task-0469-c5ab): «иммунитет к
+  // негативным эффектам болезней» — болезнь у носителя не действует (её записи
+  // charRecovery и эффекты гаснут). Возможность читается с предметов актора
+  // напрямую, не через hasRuleFlag: этот вызов делает сам сбор правил.
+  if (diseaseEffectsSuppressed(item, isItemActive)) return false;
   return isItemActiveBase(item);
 }
 

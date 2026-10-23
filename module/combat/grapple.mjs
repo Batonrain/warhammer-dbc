@@ -38,7 +38,8 @@ import { damageFormulaFor, meleeStrengthBonus } from "./attack-outcome.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { worldTimeRemaining, markWorldTimeCooldownUsed } from "../rules/cooldown.mjs";
 import { tentacleBonusSuppressed } from "../rules/tentacle-hand-form.mjs";
-import { MELEE_STANCES, MELEE_BASES } from "../constants/combat.mjs";
+import { MELEE_STANCES } from "../constants/combat.mjs";
+import { meleeBaseBonus } from "../rules/berserker-talents.mjs";
 import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { statusApplyFields } from "./status-resist.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
@@ -965,7 +966,7 @@ async function _doSwing(actor) {
   const stance  = actor.system.meleeStance || "standard";
   const stBon   = MELEE_STANCES[stance]?.wsBonus ?? 0;
   const baseKey = actor.system.meleeBase || "standard";
-  const baseBon = MELEE_BASES[baseKey]?.wsBonus ?? 0;
+  const baseBon = meleeBaseBonus(actor, baseKey);   // + Натиск Берсерка (rules/berserker-talents.mjs)
   // Общий сбор модификаторов (wdbc-ct65.1): раньше здесь стояла одна
   // Усталость, а Черты/Таланты на Оружейное Мастерство в приёмы Борьбы не
   // попадали вовсе — этот путь шёл мимо реестра правил.

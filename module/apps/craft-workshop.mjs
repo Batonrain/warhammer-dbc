@@ -19,7 +19,7 @@
 import { CRAFT_CATEGORIES, CRAFT_QUALITY, CRAFT_TOOLS, RARITY_LABELS, RARITY_ORDER,
          RESEARCH_KINDS, CRAFT_MATERIALS, bankFromTable,
          buildAvailableSkills, findSkillOption, suggestOption,
-         computeCombined, bankFor, degreesOfSuccess, reqSkillLabel } from "../constants/craft.mjs";
+         computeCombined, bankFor, degreesOfSuccess, reqSkillLabel, POLYMATH_CHAIN_MAX } from "../constants/craft.mjs";
 import { craftIcon } from "../constants/craft-icons.mjs";
 import { VAT_QUALITY, BIO_TARGET_QUALITY, BIO_TEST_SKILLS, BIO_OUTCOMES,
          VAT_ENTRY_REQ, TEMPLATE_RESEARCH, vatPlan, failQuality,
@@ -33,7 +33,8 @@ import { pickReroll } from "../rules/reroll-pick.mjs";
 import { critLineHtml } from "../rules/test-kind-widget.mjs";
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
-import { hasSlowShiftTalent, cyberpreacherApplies, effectiveDiceMode, slowShiftBonus, polymathBonus, researchBonus, darkMuseAssistBonus, haemonculusLabBonus } from "../rules/craft-advantage.mjs";
+import { hasSlowShiftTalent, cyberpreacherApplies, effectiveDiceMode, slowShiftBonus, polymathBonus, polymathCrit, researchBonus, darkMuseAssistBonus, haemonculusLabBonus,
+         monotonyPenalty, fabricatorToolMod, masterEngineseerBonus } from "../rules/craft-advantage.mjs";
 import { researchFindingItemData, researchJournalEntry, appendResearchJournal,
          researchKindLabel, RESEARCH_JOURNAL_FLAG, PSYCHIC_RESULT_TYPES } from "../rules/research-findings.mjs";
 import { TRAINING_SOCIAL_OPTIONS, TRAINING_SESSIONS_PER_COURSE, buildTeachableTargets, findTeachableTarget,
@@ -176,7 +177,10 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     });
     const selectedOpts = slots.map(s => findSkillOption(available, s.value));
 
-    const toolMod = (CRAFT_TOOLS.find(t => t.key === proj.toolKey)?.mod) ?? 0;
+    const baseToolMod = (CRAFT_TOOLS.find(t => t.key === proj.toolKey)?.mod) ?? 0;
+    // Фабрикатор (Талант, 3-3a64): бонусы инструментов вдвое — на тесты Крафта,
+    // не Исследований (книга: «на тесты Крафта и ремонта»; ремонта в Мастерской нет).
+    const toolMod = proj.mode === "craft" ? fabricatorToolMod(crafter, baseToolMod) : baseToolMod;
     // Редкость и Качество НЕ модифицируют бросок (только Банк). К Пределу — инструменты,
     // ГМ-мод и −20 за Улучшение.
     const mods = { toolMod, gmMod: Number(proj.gmMod || 0), improveMod: proj.improve ? -20 : 0 };
@@ -515,7 +519,12 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     this.render(false);
   }
 
-  async _rollShift(pid) {
+  /**
+   * Одна смена проекта. `chain` — номер смены в цепочке Полимата (1 — бросок
+   * игрока, дальше идут дополнительные смены за Критический Успех, task-b6b8;
+   * см. polymathCrit и POLYMATH_CHAIN_MAX).
+   */
+  async _rollShift(pid, chain = 1) {
     const proj = this._proj(pid);
     if (!proj) return;
     const crafter = this._crafter(proj);
@@ -523,7 +532,9 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     const R = this._resolve(proj);
     if (R.combined.limit == null) { ui.notifications?.warn("Выберите навык(и) для теста."); return; }
 
-    const mono = proj.monotony ? -30 : 0;
+    // Трудоголик (Талант, 3-3a64) штрафа за монотонную работу не получает.
+    const mono = monotonyPenalty(crafter, proj.monotony);
+    const workaholicNote = proj.monotony && !mono;
     // Именованный ассистент (wdbc-1rno) — ОДИН актор из assistants, чей
     // инвентарь Талантов/Даров теперь реально проверяется (Journeyman/
     // Подмастерье, Dark Muse/Тёмная Муза), а не берётся на слово стола.
@@ -544,7 +555,10 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     const labBonus = haemonculusLabBonus(crafter);
     // Инновация (Стремление): +10 только на Исследования.
     const innovationBonus = researchBonus(crafter, proj.mode);
-    const limit = R.combined.limit + mono + assistBonus + slowBonus + polyBonus + labBonus + innovationBonus;
+    // Мастер-Технопровидец (Талант, 3-cc96 п.11): +10 к Tech-Use на Крафт — когда
+    // Tech-Use ведущий Навык теста (см. masterEngineseerBonus).
+    const engineseerBonus = masterEngineseerBonus(crafter, proj.mode, R.combined.primary?.value);
+    const limit = R.combined.limit + mono + assistBonus + slowBonus + polyBonus + labBonus + innovationBonus + engineseerBonus;
 
     // Комбинированный тест — ОДНА проверка против наименьшего/итогового Предела
     // (свой книжный расчёт, не общий combinedThreshold — см. computeCombined).
@@ -563,7 +577,9 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     const diceNote = diceMode
       ? `<div class="wh-craft-roll-line">${effMode === "advantage" ? "Преимущество" : "Помеха"}${effMode !== proj.diceMode ? " (Талант)" : ""}: отброшено ${picked.dropped.join(", ")}</div>`
       : "";
-    const critLine = critLineHtml(criticalOutcome(rv, resolveTest({ actor: crafter, kind: "skill" }).crit));
+    const crit = criticalOutcome(rv, resolveTest({ actor: crafter, kind: "skill" }).crit);
+    const critLine = critLineHtml(crit);
+    const poly = polymathCrit(crafter, crit.success, chain);
 
     const gain = Math.max(0, dos) + assist;
     const wasDone = proj.project.accumulated >= R.bank;
@@ -578,6 +594,30 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     try {
       await addFatigue(crafter, 1);
     } catch (e) { console.warn("warhammer-dbc | craft fatigue", e); }
+
+    // Крит Полимата (task-b6b8): 1d5 Усталости (тоже через addFatigue) и ещё
+    // одна смена — но только если работать есть над чем (проект не закрылся
+    // этой же сменой), цепочка не упёрлась в предел, а мастер ещё на ногах:
+    // Усталость и «вторая смена» книга привязывает к самой работе, а не к крику
+    // кубика, поэтому за несуществующую смену Усталость не берём.
+    let polyNote = "", polyFatigueRoll = null, polyContinue = false;
+    if (poly.triggered) {
+      if (done) {
+        polyNote = "Полимат: Критический Успех, но проект готов — вторая смена не нужна, Усталость не начисляется.";
+      } else {
+        polyFatigueRoll = await new Roll("1d5").evaluate();
+        proj.project.fatigue += polyFatigueRoll.total;
+        try {
+          await addFatigue(crafter, polyFatigueRoll.total);
+        } catch (e) { console.warn("warhammer-dbc | craft polymath fatigue", e); }
+        const faint = !!crafter.system?.conditions?.unconscious;
+        polyContinue = !poly.capped && !faint;
+        polyNote = `Полимат: Критический Успех — +${polyFatigueRoll.total} Усталости` + (
+          faint ? ", мастер без сознания — вторая смена не проводится."
+          : poly.capped ? `, лимит цепочки (${POLYMATH_CHAIN_MAX} смен подряд) исчерпан — вторую смену проведите кнопкой «Смена» вручную.`
+          : `; вторая смена идёт сразу (${chain + 1}-я в цепочке из ${POLYMATH_CHAIN_MAX} возможных).`);
+      }
+    }
 
     // Итог Исследования (module/rules/research-findings.mjs) — ровно один
     // раз, когда Банк заполнился ИМЕННО этой сменой (wasDone предохраняет от
@@ -604,16 +644,23 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
           ${critLine}
           ${assist ? `<div class="wh-craft-roll-line ok">Ассистенты (${assist}): +${assistBonus} к тесту, +${assist} успеха${darkMuseBonus ? ` (вкл. Тёмную Музу +${darkMuseBonus})` : ""}</div>` : ""}
           ${polyBonus ? `<div class="wh-craft-roll-line ok">Полимат: +${polyBonus} к тесту</div>` : ""}
+          ${chain > 1 ? `<div class="wh-craft-roll-line ok">Дополнительная смена Полимата (за Критический Успех предыдущей), ${chain}-я в цепочке</div>` : ""}
+          ${polyNote ? `<div class="wh-craft-roll-line ok">${polyNote}</div>` : ""}
           ${labBonus ? `<div class="wh-craft-roll-line ok">Лаборатория Гемункула: +${labBonus} к тесту</div>` : ""}
           ${innovationBonus ? `<div class="wh-craft-roll-line ok">Инновация: +${innovationBonus} к тесту</div>` : ""}
+          ${engineseerBonus ? `<div class="wh-craft-roll-line ok">Мастер-Технопровидец: +${engineseerBonus} к тесту (Tech-Use)</div>` : ""}
+          ${workaholicNote ? `<div class="wh-craft-roll-line ok">Трудоголик: штраф за монотонность не применяется</div>` : ""}
           ${findingNote ? `<div class="wh-craft-roll-line ok">${findingNote}</div>` : ""}
           <div class="wh-craft-msg-sum ${gain > 0 ? "ok" : "fail"}">Итог смены: <b>+${gain}</b> · Прогресс: <b>${proj.project.accumulated}</b>/${R.bank}${done ? " · <b style='color:#8cf0a0'>ГОТОВО!</b>" : ""}</div>
           <div class="wh-craft-msg-foot">Смена №${proj.project.shifts} · Усталость +1 (крафтеру)${mono ? " · монотонность −30" : ""}</div>
         </div>`,
-      rolls: [roll], sound: CONFIG.sounds.dice
+      rolls: polyFatigueRoll ? [roll, polyFatigueRoll] : [roll], sound: CONFIG.sounds.dice
     }, rollMode);
     await ChatMessage.create(msg);
     this.render(false);
+
+    // Вторая смена — после карточки первой, чтобы в чате они шли по порядку.
+    if (polyContinue) await this._rollShift(pid, chain + 1);
   }
 
   /**
@@ -717,12 +764,13 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
       }
     }
 
-    const mono = proj.monotony ? -30 : 0;
     const socialDef = TRAINING_SOCIAL_OPTIONS.find(o => o.key === proj.socialKey);
     // Teacher/Учитель: освобождён от штрафа за монотонную работу — ТОЛЬКО сам,
-    // учеников книга не упоминает.
+    // учеников книга не упоминает. Трудоголик (3-3a64) — Талант самого
+    // персонажа, поэтому снимает штраф с того, у кого он есть: учителя или
+    // конкретного ученика (monotonyPenalty смотрит инвентарь актора).
     const teacherRoll = await new Roll("1d100").evaluate();
-    const teacherLimit = T.teacherLimit + (T.teacherTalent ? 0 : mono);
+    const teacherLimit = T.teacherLimit + (T.teacherTalent ? 0 : monotonyPenalty(T.teacher, proj.monotony));
     const teacherDos = degreesOfSuccess(teacherRoll.total, teacherLimit);
     const comboBonus = proj.socialKey ? studentBonusFromTeacherCombo(teacherDos) : 0;
 
@@ -736,7 +784,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
       const opts = buildStudentTestOptions(s.actor);
       const opt = findStudentTestOption(opts, s.testKey) || opts[0];
       const clearMindBonus = clearMindTeachBonus(T.teacher, s.actor);
-      const limit = opt.total + comboBonus + clearMindBonus + mono;
+      const limit = opt.total + comboBonus + clearMindBonus + monotonyPenalty(s.actor, proj.monotony);
       const roll = await new Roll("1d100").evaluate();
       rolls.push(roll);
       const dos = degreesOfSuccess(roll.total, limit);

@@ -64,6 +64,7 @@ import { tirelessExempt } from "./resilience-talents.mjs";
 import { disabledArmourPenalty } from "./armour-penalty.mjs";
 import { inventoryOverloadPenalty } from "./encumbrance.mjs";
 import { isItemActive } from "../apps/effects.mjs";
+import { isInRage } from "./rage.mjs";
 
 /**
  * Тесты, которых Усталость не касается. Книга («Раны и Урон» → «Статусы»,
@@ -135,6 +136,10 @@ function actorHasCapability(actor, key) {
  * отдохнувшего персонажа (обычный случай) всё решает первое же сравнение.
  */
 export function fatiguePenalty(actor, charKey) {
+  // Ярость (Frenzy, стр. 62): «игнорирует штраф −10 от Усталости» — целиком,
+  // и −20 Иссушенного тоже: это штраф Усталости, не её порог. Первой строкой —
+  // дешевле всего и снимает остальные проверки.
+  if (isInRage(actor)) return 0;
   // Добывающий мир, «Потом и кровью»: штрафы начинаются лишь после T.b Усталости.
   const hw = HOMEWORLD_BY_KEY[actorHomeworldKey(actor)];
   const hwGrace = hw?.fatigueGrace === "tBonus" ? (actor?.system?.characteristics?.t?.bonus ?? 0) : 0;

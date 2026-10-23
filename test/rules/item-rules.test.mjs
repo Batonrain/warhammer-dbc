@@ -216,11 +216,11 @@ describe("wdbc-u0by: реальные pack-файлы «Преимущество
     expect(rules[0].effects[0]).toMatchObject({ kind: "rollMode", target: "social", mode: "keepBest" });
   });
 
-  it("Defiance / Неповиновение — опциональный переброс на ЛЮБОЙ тест (scope:\"opposed\" оказался мёртвой областью — effectAppliesTo её нигде не матчит, — честно заменено на \"all\", wdbc-u0by)", () => {
+  it("Defiance / Неповиновение — НЕ переброс на любой тест (3-defiance: запись была шире книги); переброс выдаёт rules/hatred.mjs, здесь только возможность", () => {
     const mechanics = readMechanics("packs-src/talents/Пси_стойкость/Defiance___Неповиновение_HY6YCo2KkCztt329.json");
     const rules = rulesFromItemMechanics([asItem("Defiance", mechanics)]);
-    expect(rules).toHaveLength(1);
-    expect(rules[0].effects[0]).toMatchObject({ kind: "rollMode", target: "all", mode: "keepBest" });
+    expect(rules.flatMap(r => r.effects).some(e => e.kind === "rollMode")).toBe(false);
+    expect(rules.flatMap(r => r.effects)).toEqual([{ kind: "grantFlag", target: "psyResist.core.defiance" }]);
   });
 
   it("Truth-Seer / Правдовидец — опциональный переброс на тесты WS (диалог Состязаний, wdbc-u0by), плюс прежние capability-записи целы", () => {

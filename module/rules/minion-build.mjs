@@ -90,12 +90,18 @@ export function slotUsage(items = [], minions = []) {
  * Сколько Миньонов Хозяин может держать одновременно: бонус характеристики
  * своей группы, а при нескольких группах — наименьший из бонусов. Считаем по
  * группам, которые у него есть на руках: уйдёт человек — потолок поднимется.
+ *
+ * Lord of Chaos / Лорд Хаоса (minion.core.lordOfChaos, стр. 112): «увеличивает
+ * максимум своих Миньонов на 50% (окр.▼)» — к ИТОГОВОМУ максимуму (наименьшему
+ * из бонусов), округление вниз: 5 → 7, 3 → 4, 1 → 1. Копии Таланта не
+ * накапливаются: книга даёт возможность, а не рейтинг.
  */
 export function minionCapacity(master, groups = []) {
   const used = [...new Set(groups.filter(g => MINION_GROUPS[g]))];
   if (!used.length) return 0;
   const chars = master?.system?.characteristics ?? {};
-  return Math.min(...used.map(g => bonusOf(chars[MINION_GROUPS[g].masterChar]?.total)));
+  const cap = Math.min(...used.map(g => bonusOf(chars[MINION_GROUPS[g].masterChar]?.total)));
+  return hasRuleFlag(master, "minion.core.lordOfChaos") ? Math.floor(cap * 1.5) : cap;
 }
 
 /** Сколько Миньонов какой группы у Хозяина — для шапки блока СОЦИУМа. */

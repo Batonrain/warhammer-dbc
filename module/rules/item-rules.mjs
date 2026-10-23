@@ -110,7 +110,8 @@ function scopeTarget(rawScope, entry, ruleId, what) {
   // morale — тесты Морали по книге (Страх/Шок/Паника от Горения/Подавление/
   // встречные Запугивание и Пытки, core.json «Мораль и Потеря
   // Командования»), см. resolve-test.mjs::effectAppliesTo — wdbc-zepq, Lord
-  // of the Exodites. climbing — только тесты Карабканья
+  // of the Exodites. suppression — только тест на Подавление (Стальные Нервы,
+  // Sahara 3-scope), уже «morale», но без Страха/Шока/Паники. climbing — только тесты Карабканья
   // (module/combat/movement-actions.mjs::showClimbDialog), отдельно от
   // «skill:athletics», чтобы не задваиваться с тестами Борьбы, тоже идущими
   // по Athletics(S) (wdbc-egll). vsExorcism — УЖЕ узнан вид теста, не общий
@@ -122,7 +123,7 @@ function scopeTarget(rawScope, entry, ruleId, what) {
   // combat/movement-terrain.mjs, ctx.terrain): Barefoot / Босоногий Ратлинга —
   // «+20 и переброс», Cloven One / Копытный Зверолюда — «+20». Не «char:ag»:
   // тот ловил бы любой тест Ловкости.
-  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "morale", "climbing", "terrain", "vsExorcism", "noosphere", "coilCharge"].includes(scope)) return scope;
+  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "morale", "suppression", "climbing", "terrain", "vsExorcism", "noosphere", "coilCharge"].includes(scope)) return scope;
   if (scope === "char") {
     const key = String(entry.rerollChar || "").trim();
     if (key) return `char:${key.toLowerCase()}`;

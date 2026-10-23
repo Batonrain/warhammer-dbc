@@ -5,7 +5,7 @@
   "folder": "V0Wfgl0aycRFPfu2",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey rangedCore.core.dragoon — module/rules/damage-talents.mjs::unstablePlatformPenalty ← module/sheets/attack-dialog.mjs (поле «Штраф стрельбы с седла»): штраф уменьшается на 10 (не выше 0) для класса «Пистолет» и «Ручное» (винтовки, длинные винтовки); тяжёлое, метательное и прочее не затрагивает. Единственный источник «нестабильной платформы» в системе — верховая езда (панель «ВЕРХОМ»); стрельба с техники штрафа не считает.",
     "benefit": "Персонаж уменьшает на 10 штраф на стрельбу из пистолетов, винтовок и дл. винтовок за нестабильную платформу.",
     "tier": 2,
     "requirement": "BS 45",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "xD3zBCFEuQ5Gvw7x",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "GovSXcN8VSOZqZxx",
+              "capabilityKey": "rangedCore.core.dragoon",
+              "label": "Драгун: штраф нестабильной платформы меньше на 10",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

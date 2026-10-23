@@ -29,6 +29,7 @@
 
 import { entryWhenOk } from "./mech-when.mjs";
 import { flattenMechEntries } from "./fatigue-grace.mjs";
+import { isInRage } from "./rage.mjs";
 
 const FLAG_SCOPE = "warhammer-dbc";
 
@@ -95,6 +96,10 @@ export function conditionImmunities(actor, isActive = () => true) {
 /** Невосприимчив ли актор к этому Состоянию (гасит ЛЮБОЙ путь наложения). */
 export function isImmuneToCondition(actor, key, isActive = () => true) {
   if (!actor || !key) return false;
+  // Ярость (Frenzy, стр. 62): «не может быть Оглушен» — иммунитет от состояния,
+  // а не от предмета, поэтому здесь, а не записью Конструктора: Ярость бывает и
+  // без Таланта Frenzy (rules/rage.mjs).
+  if (key === "stunned" && isInRage(actor)) return true;
   return conditionImmunities(actor, isActive).has(key);
 }
 

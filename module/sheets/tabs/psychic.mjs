@@ -33,6 +33,7 @@ import { woundLossUpdates } from "../../rules/wounds.mjs";
 import { autoModsTotal, autoTestMods } from "../../rules/roll-mods.mjs";
 import { resolveTest } from "../../rules/resolve-test.mjs";
 import { getPsychicVessel } from "../../rules/psychic-vessel.mjs";
+import { manifestEprFlags, safeModeEpr, CHILD_OF_THE_WARP_PUSH_BONUS } from "../../rules/psyker.mjs";
 import { hasRuneMagic, runeMax, runeValue, runeCostForPower, runeCostTotal,
          runeStrikeMax, runeStrikeRefund, runeUpdate,
          RUNE_STRIKE_COST, isRuneLearned, hasImprovisedRune,
@@ -320,8 +321,12 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
   // есть свои (ruleRollModsHtml ниже) и приезжают отдельным числом из
   // диалога — общий сбор сложил бы их второй раз.
   const fatigue = autoModsTotal(resolveTest({ actor, kind: "power", power: item, char: cast.key }).autoMods);
+  // Сдержанность (Безопасный) и Дитя Варпа (Усиленный) — Таланты, меняющие эПР;
+  // тот же расчёт, что в executePsychotest (rules/psyker.mjs), иначе окно и
+  // бросок разошлись бы в числе.
+  const eprTalents = manifestEprFlags(actor);
   const psyMeta = { charVal, charAbbr, powerMod, natData, pathData, dynBonus, variantMods, isEldar, fatigue,
-                    runeBase };
+                    runeBase, ...eprTalents };
 
   // Правила реестра. Манифестация — такой же тест конвейера, как бросок навыка
   // и атака: вид теста «power», область эффекта «power» или «power:<имя>». Сама
@@ -508,14 +513,14 @@ export function wirePsyManifestPreview(html, m) {
     const pMR = Math.max(0, mPR0 + prMod);
 
     let ePR = pMR, phenText = "", eprSuffix = "";
-    if (mode === "safe") { ePR = Math.ceil(pMR / 2); phenText = "Феноменов нет"; }
+    if (mode === "safe") { ePR = safeModeEpr(pMR, { restraint: !!m.restraint }); phenText = "Феноменов нет"; }
     else if (mode === "normal") { ePR = pMR; phenText = m.isEldar ? "Феномен: дубль 66 / крит-провал" : "Феномен: дубль / 99"; }
     else {
       let pb = 0;
       if (m.natData.pushBonusType === "choice" || m.isEldar) pb = parseInt($("#psy-push-bonus")?.value) || 1;
       else if (m.natData.pushBonusType === "roll") { pb = 0; eprSuffix = `+${m.natData.pushFormula || "1d5"}`; }
       else pb = m.natData.pushBonus || 0;
-      ePR = pMR + pb;
+      ePR = pMR + pb + (m.childOfWarp ? CHILD_OF_THE_WARP_PUSH_BONUS : 0);
       phenText = "Феномен гарантирован";
     }
     const pd = m.pathData[path] || { ePR: 0, testMod: 0, phenMod: 0, dyn: "" };
@@ -622,8 +627,9 @@ export async function executePsychotest(actor, item, opts) {
   let ePR = mPR;
   let pushBonus = 0;
   let phenMod = 0;
+  const eprTalents = manifestEprFlags(actor);
   if (opts.mode === "safe") {
-    ePR = Math.ceil(mPR / 2);
+    ePR = safeModeEpr(mPR, { restraint: eprTalents.restraint });
   } else if (opts.mode === "normal") {
     ePR = mPR;
     phenMod = NAT.normalPhenMod;
@@ -634,7 +640,10 @@ export async function executePsychotest(actor, item, opts) {
     } else if (NAT.pushBonusType === "choice") {
       pushBonus = Math.max(1, Math.min(NAT.pushChoiceMax || 4, opts.pushChoice || 1));
     } else pushBonus = NAT.pushBonus;
-    ePR = mPR + pushBonus;
+    // Дитя Варпа: «+1 PR при Усиленной манифестации» — сверх Усиления природы.
+    // К модификатору Феноменов не добавляется: он считается от самого Усиления
+    // (pushBonus), а этот +1 — отдельная прибавка Таланта.
+    ePR = mPR + pushBonus + (eprTalents.childOfWarp ? CHILD_OF_THE_WARP_PUSH_BONUS : 0);
     phenMod = NAT.pushPhenType === "flat"
       ? NAT.pushPhenValue
       : NAT.pushPhenValue * pushBonus;

@@ -1635,6 +1635,8 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
   _gearPickFilters(spec) {
     const filters = {};
     if (spec.maxAvailability != null) filters.maxAvailability = spec.maxAvailability;
+    // Нижняя граница — Записи Ритуалов (wdbc-zaesd): Ритуал без Записи не берётся.
+    if (spec.minAvailability != null) filters.minAvailability = spec.minAvailability;
     if (spec.folders?.length) {
       filters.folderId = spec.packs.includes("weapons")
         ? [...new Set(spec.folders.flatMap(id => weaponTypeFolderIds(id)))]
@@ -1812,6 +1814,9 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
         const picked = await openCompendiumBrowser(false, {
           pack: spec.packs.length === 1 ? spec.packs[0] : spec.packs,
           filters: this._gearPickFilters(spec), count: spec.count,
+          // Бюджет «на суммарную Редкость N» (Записи Ритуалов); у остальных строк
+          // его нет — тогда Обозреватель считает штуки по count, как раньше.
+          ...(spec.budget ? { budget: spec.budget } : {}),
           prompt: `Стартовое снаряжение: ${spec.raw} (${describeGearSpec(spec)}).${slotHint}`
         });
         const uuids = Array.isArray(picked) ? picked : (picked ? [picked] : []);

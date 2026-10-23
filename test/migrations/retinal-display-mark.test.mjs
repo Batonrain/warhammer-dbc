@@ -3,7 +3,8 @@
 // Встроенный ретинальный дисплей (task-9b5f). Метку «Возможность»
 // device.retinalDisplay (task-1a59) получили 33 записи пака — силовая броня
 // Астартес, эльдарская и друкхарская броня, Маска Шпиона, Анимус Спекулюм,
-// Всевидящее Око. Копии на уже созданных акторах — снимки момента выдачи, метки
+// Всевидящее Око; затем ещё 4 — силовая броня смертных (Лёгкая, Саббат,
+// обычная, Драконья Чешуя), итого 37. Копии на уже созданных акторах — снимки момента выдачи, метки
 // у них нет, и Целеуказатель/Омни-Прицел молча «бесполезны без дисплея»
 // (combat/weapon-mods.mjs::modWornRequirementMet). Миграция догоняет копии.
 //
@@ -59,14 +60,35 @@ const targeter = { id: "m1", type: "weaponMod", name: "Target Designator", syste
 const actorWith = items => ({ id: "a1", items: [...items] });
 
 describe("Носители метки в паке", () => {
-  it("33 записи — броня, снаряжение и имплант", () => {
-    expect(CARRIERS).toHaveLength(33);
+  it("37 записей — броня, снаряжение и имплант", () => {
+    expect(CARRIERS).toHaveLength(37);
     expect(new Set(CARRIERS.map(d => d.type))).toEqual(new Set(["armor", "gear", "implant"]));
+  }, PACK_SCAN_TIMEOUT);
+
+  // task-1a59: книга, общий раздел «Силовая броня» (core, стр. 233) —
+  // «Вся силовая броня… Имеет ретинальный дисплей в шлеме». Четыре силовых
+  // доспеха смертных (Лёгкая, Саббат, обычная, Драконья Чешуя) — не исключение.
+  it("силовая броня смертных несёт метку (общий раздел «Силовая броня» корбука)", () => {
+    for (const en of ["Light Power Armour", "Sabbat Power Armour", "Power Armour", "Dragon Scale"]) {
+      const doc = byEn(en);
+      expect(doc, en).toBeTruthy();
+      expect(itemHasKey(doc, RETINAL_DISPLAY_CAPABILITY), en).toBe(true);
+    }
+  }, PACK_SCAN_TIMEOUT);
+
+  // Врантин — отдельные правила («Врантин» описана без дисплея, свои системы
+  // разнесены по броне): метку не получает до отдельного решения владельца.
+  it("Мк V Ересь и Броня Врантин метку не несут", () => {
+    for (const en of ["Mk V Heresy", "Vrantine Armour"]) {
+      const doc = byEn(en);
+      expect(doc, en).toBeTruthy();
+      expect(itemHasKey(doc, RETINAL_DISPLAY_CAPABILITY), en).toBe(false);
+    }
   }, PACK_SCAN_TIMEOUT);
 });
 
 describe("Копия, выданная до правки пака", () => {
-  it("каждая из 33 копий (по uuid источника) получает метку", () => {
+  it("каждая из 37 копий (по uuid источника) получает метку", () => {
     for (const doc of CARRIERS) {
       const item = staleCopy(doc);
       expect(itemHasKey(item, RETINAL_DISPLAY_CAPABILITY), doc.name).toBe(false);
@@ -103,8 +125,8 @@ describe("Копия, выданная до правки пака", () => {
     expect(retinalMarkPatch(item, INDEX)).not.toBeNull();
   });
 
-  it("Мк V Ересь и броня смертных метку не получают (в паке её у них нет)", () => {
-    for (const en of ["Mk V Heresy", "Power Armour", "Light Power Armour"]) {
+  it("Мк V Ересь и Броня Врантин метку не получают (в паке её у них нет)", () => {
+    for (const en of ["Mk V Heresy", "Vrantine Armour"]) {
       const doc = byEn(en);
       expect(doc, en).toBeTruthy();
       expect(retinalMarkPatch(staleCopy(doc), INDEX), en).toBeNull();

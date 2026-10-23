@@ -37,7 +37,8 @@
       "equipped": false,
       "status": "inactive"
     },
-    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)"
+    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)",
+    "availability": 3
   },
   "folder": "ZNIOTvbgAcs0DbLd",
   "_id": "F0sXqY8bXxU2EPL1",

@@ -87,27 +87,41 @@ function hasLeadershipTalent(actor, names) {
 // ── Air of Authority / Аура Власти ───────────────────────────────────────────
 // Книжный текст: «Он может применять Command (и Intimidate на подчинённых)
 // на до F.b×20 целей одновременно. Его Миньоны-люди также получают +10
-// Лояльности.» Базовый лимит целей Command/Intimidate «на подчинённых» —
-// F.b (решение владельца 19.10.2026, тот же приём уже есть в коде —
-// exoditeGroupLimit у Lord of the Exodites, sheets/tabs/command.mjs:142);
-// Air of Authority не прибавляет, а ЗАМЕНЯЕТ множитель на ×20. Отдельно от
-// followerCount/bossCap (F.b×2) — тот лимит про СТРУКТУРНОЕ число
-// подчинённых, этот — про сколько из них накрывает ОДНО применение
-// Command/Intimidate. Пока только отображается (sheets/tabs/command.mjs::
-// commandContext → tab-social.hbs) — само применение Command/Intimidate
-// подчинённым сейчас не считает получателей количественно (бьёт по всему
-// составу безусловно), поэтому принудительного урезания пока нет.
+// Лояльности.» Базовый лимит Command — «до F.b×2» подчинённых (книга; прежнее
+// F.b от 19.10.2026 было неверным — 23.10.2026 сверено с лимитом Отряда в
+// combat/command-state.mjs); Air of Authority не прибавляет, а ЗАМЕНЯЕТ
+// множитель ×2 на ×20. Если подчинённых больше — выбирает игрок (порядок
+// списка, command-state.mjs::commandNodesFor → overCapacity).
+//
+// ОДИН хелпер ёмкости на всех: commandCapacity(actor, "fel") — Command/
+// Intimidate (лист Отряда, значок вкладки Социум, overCapacity узла);
+// commandCapacity(actor, "wp") — получатели Боевой Песни (W.b×2, ×20 с Air of
+// Authority). Живёт здесь, а не в combat/command-state.mjs: command-state
+// импортирует этот файл (не наоборот), а этот файл тянет sources.mjs — обратный
+// импорт замкнул бы круг (см. шапку и AGENTS.md, «Источники правил»).
+// Ветка Дрессировки (P.b вместо F.b×2) хелпера не касается.
 
 const AIR_OF_AUTHORITY_NAMES = ["Air of Authority", "Аура Власти"];
+const COMMAND_CAPACITY_MULT = 2;
+const AIR_OF_AUTHORITY_CAPACITY_MULT = 20;
 
 export function hasAirOfAuthority(actor) {
   return hasLeadershipTalent(actor, AIR_OF_AUTHORITY_NAMES);
 }
 
-/** Лимит целей Command/Intimidate «на подчинённых» — F.b, ×20 с Air of Authority. */
+/**
+ * Сколько подчинённых накрывает одно Командование: бонус Характеристики
+ * (F — Command/Intimidate, W — Боевая Песнь) × 2, с Air of Authority × 20.
+ * Отрицательный/отсутствующий бонус — 0.
+ */
+export function commandCapacity(actor, charKey = "fel") {
+  const bonus = Math.max(0, Number(actor?.system?.characteristics?.[charKey]?.bonus) || 0);
+  return bonus * (hasAirOfAuthority(actor) ? AIR_OF_AUTHORITY_CAPACITY_MULT : COMMAND_CAPACITY_MULT);
+}
+
+/** Лимит целей Command/Intimidate «на подчинённых» — F.b×2, F.b×20 с Air of Authority. */
 export function commandTargetLimit(actor) {
-  const felBonus = Math.max(0, Number(actor?.system?.characteristics?.fel?.bonus) || 0);
-  return hasAirOfAuthority(actor) ? felBonus * 20 : felBonus;
+  return commandCapacity(actor, "fel");
 }
 
 // ── Rancor / Злопамятность ───────────────────────────────────────────────────
@@ -657,16 +671,16 @@ export function livingLegendCommandBonus(actor, ctx = {}) {
 // Intimidate Лидеру за каждого подпевающего подчинённого (rollBonus
 // "skill:intimidate" — warChantIntimidateRules).
 //
+// Реализовано 23.10.2026 (Sahara war-chant-3-w-b-2-20): «раздаёт все 3
+//  эффекта Командного Присутствия» — не правило общего реестра, а путь
+//  commandNodesFor (combat/command-state.mjs, узел получает node.chant =
+//  {wp, cap, over}) → effectivePresence (rules/command-effects.mjs: как у
+//  node.pack — все три эффекта и W певца, но без удвоения бонусов Команд).
+//  Лимит получателей — commandCapacity(певец, "wp"): W.b×2, ×20 с Air of
+//  Authority, по порядку списка Отряда/сброда. «Слышит» (геометрия) — за
+//  столом, как и у «подпевать»: «подпевать» по-прежнему не зависит от лимита.
+//
 // НЕ реализовано (честно, после проверки):
-//  1. «Раздаёт все 3 эффекта Командного Присутствия» — не правило общего
-//     реестра (rollBonus/rollMode), а отдельный путь commandNodesFor
-//     (combat/command-state.mjs) → effectivePresence (rules/command-
-//     effects.mjs:54-63), который умеет такой трюк только для Сознания Стаи
-//     (node.pack) по ОТРЯДУ (Squad actor), не по произвольному соседнему
-//     актору с Талантом — подключение потребовало бы менять саму
-//     commandNodesFor, более глубокая правка, чем правило реестра. Как
-//     следствие, лимит получателей W.b×2/×20 тоже не считается — «подпевать»
-//     доступно без проверки, попал ли actor в этот лимит.
 //  2. «+1 Успех Команде против подпевающего» — сама степень успеха (sux)
 //     обычного теста Команды считается не через реестр rollBonus/rollMode
 //     (которые правят только Порог/переброс), а напрямую в

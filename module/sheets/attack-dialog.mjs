@@ -19,7 +19,8 @@ import { isPlagueHorn, hornRegrowLeft, regrowLabel } from "../rules/lodged-horn.
 import { hardTargetPenalty } from "../rules/hard-target.mjs";
 import { CHARACTERISTICS }                    from "../constants/characteristics.mjs";
 import { DAMAGE_TYPES }                       from "../constants/items.mjs";
-import { MELEE_STANCES, MELEE_BASES, parseGrips, meleeEffectiveRange } from "../constants/combat.mjs";
+import { MELEE_STANCES, parseGrips, meleeEffectiveRange } from "../constants/combat.mjs";
+import { meleeBaseBonus } from "../rules/berserker-talents.mjs";
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { rollIcon }                           from "../constants/roll-icons.mjs";
 import { openAttackDialog } from "./attack/dialog.mjs";
@@ -36,6 +37,7 @@ import { mergeExtraProps } from "../combat/attack-weapon.mjs";
 import { getModEffects, mergeWeaponPropEntries, getActiveMods, getInstalledMods, isSightMod,
          activeSightId, modWornRequirementMet } from "../combat/weapon-mods.mjs";
 import { hasRuleFlag }                        from "../rules/flags.mjs";
+import { unstablePlatformPenalty }            from "../rules/damage-talents.mjs";
 import { khornePatron }                       from "../rules/patron-abilities.mjs";
 import { isStunnedOrDazed }    from "../rules/predicates.mjs";
 import { suffersBlindness } from "../rules/blindness.mjs";
@@ -397,11 +399,17 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const mountSpeedKey   = actor.system.mount?.speed in MOUNT_SPEEDS ? actor.system.mount.speed : "still";
   // Гиро-Стабилизированное (wdbc-z56a, стр. 168): «игнорирует штрафы... за
   // нестабильную платформу (в т.ч. верхом)» — тот же штраф, что и «стрельба с
-  // седла» выше (Dragoon правит эту же цифру по книге, только на -10, а не
-  // до нуля — тот Талант не автоматизирован, здесь трогать нечего).
-  const autoMountRangedMod = attackerMount
-    ? (wp.gyroStabilized ? 0 : mountRangedPenalty(mountSpeedKey, attackerMount))
+  // седла» выше. Драгун правит эту же цифру на 10 (−20 → −10), Мастер-Драгун
+  // обнуляет — для пистолетов, винтовок и длинных винтовок (rules/damage-talents.mjs,
+  // Sahara 3-5fbf); Гиро-Стабилизированное идёт первым и не зависит от Таланта.
+  const baseMountRangedMod = attackerMount
+    ? (wp.gyroStabilized ? 0 : mountRangedPenalty(mountSpeedKey, attackerMount, { rider: actor }))
     : 0;
+  const mountPlatform = (attackerMount && !wp.gyroStabilized)
+    ? unstablePlatformPenalty(actor, { weaponClass: sys.weaponClass, base: baseMountRangedMod })
+    : { value: baseMountRangedMod, note: "" };
+  const autoMountRangedMod = mountPlatform.value;
+  const mountRangedNote = mountPlatform.note;
   // Рука на поводьях/руле (стр. 477, wdbc-3xqh): пока едет со скоростью,
   // требующей управления руками (не Стойка/Связь/Боевая Тренировка вне
   // Натиска-Бега — handsNeeded уже учитывает все три исключения), одна рука
@@ -1449,6 +1457,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     autoHitAvailable,
     hateAttackAvailable,
     autoMountRangedMod,
+    mountRangedNote,
     badgesHtml,
     bandHtml,
     charKey,
@@ -1724,7 +1733,7 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
     && isRoundCapabilityAvailable(actor, FULL_ATTACK_CAPABILITY);
   if (fullAttackForced) await markRoundCapabilityUsed(actor, FULL_ATTACK_CAPABILITY);
   const meleeBaseKey = fullAttackForced ? "fullatk" : (actor.system.meleeBase || "standard");
-  const baseBon  = MELEE_BASES[meleeBaseKey]?.wsBonus ?? 0;
+  const baseBon  = meleeBaseBonus(actor, meleeBaseKey);   // + Натиск Берсерка (rules/berserker-talents.mjs)
   // Штрафы состояния тела — из конвейера (wdbc-kuun): раньше считалась одна
   // Усталость, а выключенная силовая броня и Перевес инвентаря до приёма без
   // оружия не доезжали, хотя это физическое действие.

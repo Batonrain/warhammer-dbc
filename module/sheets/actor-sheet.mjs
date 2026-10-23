@@ -18,7 +18,6 @@ import { characterContext, charLabel } from "./character-context.mjs";
 import { showAttackDialog } from "./attack-dialog.mjs";
 import { rollMutationOrGift, openMutationPicker } from "./tabs/mutations.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
-import { masteryCrit, MASTERY_CRIT_LINE } from "../rules/mastery.mjs";
 import { payIntTestAction } from "../combat/bone-head.mjs";
 import { applyOnTargetFailConditions } from "../rules/on-target-fail.mjs";
 import { createDisorderItem, activateDisorderListeners,
@@ -81,7 +80,7 @@ import { ruleRollModsHtml, ruleRerollsHtml, ruleAutoModsHtml, autoModsTotal } fr
 import { EXCESS_LEGACY_RULE_ID } from "../rules/legacy-weapon.mjs";
 import { rollExcessLegacyRiskTest } from "../combat/legacy-weapon-excess.mjs";
 import { commitRerollUse } from "../combat/angel-hunters.mjs";
-import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
+import { resolveKindOutcome, applyAssistedMasteryCrit } from "../rules/kind-outcome.mjs";
 import { awarenessTalentDegrees } from "../rules/awareness-talents.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { infamyFailSuccessButtonsHtml } from "../apps/infamy-fail-success.mjs";
@@ -3197,10 +3196,10 @@ export class WarhammerCharacterSheet
     const assisted = assistDegrees(awarenessDeg.deg, effectiveAssistCount, outcome.success);
     const deg      = outcome.degCap != null ? Math.min(outcome.degCap, assisted) : assisted;
     // Мастерство: Ассистенты дотянули степень до 5+ уже после расчёта исхода —
-    // строку крита дорисовываем здесь (сам исход её не видел).
-    const masteryAssistCrit = (!outcome.masteryCrit && !outcome.crit?.success && masteryCrit(effectActor,
-      { skill: skillKey ?? "", group: rollContext?.group ?? "", specialty: rollContext?.specialty ?? "" },
-      { success: outcome.success, deg })) ? MASTERY_CRIT_LINE : "";
+    // строку крита дорисовываем здесь (сам исход её не видел) и запускаем
+    // скрипты «по Крит. Успеху» (62-3093 п.3) — всё в applyAssistedMasteryCrit.
+    const masteryAssistCrit = await applyAssistedMasteryCrit(effectActor, outcome,
+      { skill: skillKey ?? "", group: rollContext?.group ?? "", specialty: rollContext?.specialty ?? "" }, deg);
     const outcomeHtml = outcome.success
       ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
       : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`;

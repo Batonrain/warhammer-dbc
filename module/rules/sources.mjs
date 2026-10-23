@@ -36,6 +36,8 @@ import { situationalRules } from "./situational.mjs";
 import { psychicSustainTargetRules } from "./psychic-sustain-target.mjs";
 import { pathRulesFor } from "./library/paths.mjs";
 import { hatredRules } from "./hatred.mjs";
+import { rageRules } from "./rage.mjs";
+import { socialTalentRules } from "./social-talents.mjs";
 import { awarenessTalentRules } from "./awareness-talents.mjs";
 import { resilienceTalentRules } from "./resilience-talents.mjs";
 import { leadershipTalentRules } from "./leadership-talents.mjs";
@@ -177,6 +179,19 @@ registerRuleSource("synesthesia", () => SYNESTHESIA_RULES);
 // переброс встречного социального теста против цели, которую персонаж
 // выбрал Ненавистной при получении Таланта. См. заголовок rules/hatred.mjs.
 registerRuleSource("hatred", (a, ctx) => hatredRules(a, ctx));
+
+// Ярость / Frenzy (Берсерк, Sahara 3-861e): −20 на тесты BS, I и F, пока
+// system.inRage. Читает СОСТОЯНИЕ, а не Талант — Ярость приходит и от
+// Кхорнгора, галлюциногенов, Иконы Богохульства. Остальные числа Ярости
+// (+10 WS/S/W, Усталость, Оглушение, Мораль) считаются в своих местах — см.
+// заголовок rules/rage.mjs.
+registerRuleSource("rage", a => rageRules(a));
+
+// Peer/Связи, Good Reputation/Хорошая Репутация, Enemy/Враг (глава 3,
+// «Социальные», Sahara peer-ancient-warrior-… ч. «а» и 3-5e84): +10 / +10 /
+// −10×Уровень на социальные тесты против группы из talent.system.targets —
+// тот же приём, что Hatred выше. См. заголовок rules/social-talents.mjs.
+registerRuleSource("socialTalents", (a, ctx) => socialTalentRules(a, ctx));
 
 // Таланты Внимательности (глава 3, сверка 17.10.2026): галочки Усиленных
 // Чувств, Дегустатора, Воролова, Службы Безопасности и Аналитического Взгляда,

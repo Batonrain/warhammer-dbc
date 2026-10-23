@@ -101,6 +101,38 @@ describe("registerHooks() реально подключает делегиров
     expect(opts.rollContext).toEqual({ psychicThreat: true });
   });
 
+  // Defiance / Неповиновение (3-defiance): правило сверяет Ненавистность
+  // кастера по ctx.targetActor, а в диалоге сопротивляющегося это «первая
+  // цель сцены» — не кастер. Поэтому кастер едет в rollContext.targetActor.
+  it("genericTest — кастер психосилы становится ctx.targetActor сопротивления", async () => {
+    const executor = actorWithSheet({ characteristics: { wp: { total: 40 } } });
+    const target = { id: "t1", name: "Цель" };
+    const caster = { id: "c1", name: "Кастер", uuid: "Actor.c1" };
+    globalThis.fromUuid = vi.fn(async uuid => (uuid === "Actor.c1" ? caster : null));
+
+    await openDelegatedTestDirect("genericTest", executor, target, {
+      testKind: "characteristic", charKey: "wp", label: "Сопротивление", psychicThreat: true,
+      casterUuid: "Actor.c1"
+    });
+
+    const opts = executor.sheet._rollCharacteristic.mock.calls[0][5];
+    expect(opts.rollContext).toEqual({ psychicThreat: true, targetActor: caster });
+  });
+
+  it("genericTest — Непрямая сила помечает контекст psychicIndirect", async () => {
+    const executor = actorWithSheet({ characteristics: { wp: { total: 40 } } });
+    const target = { id: "t1", name: "Цель" };
+    globalThis.fromUuid = vi.fn(async () => null);
+
+    await openDelegatedTestDirect("genericTest", executor, target, {
+      testKind: "characteristic", charKey: "wp", label: "Сопротивление", psychicThreat: true,
+      casterUuid: "Actor.gone", psychicIndirect: true
+    });
+
+    const opts = executor.sheet._rollCharacteristic.mock.calls[0][5];
+    expect(opts.rollContext).toEqual({ psychicThreat: true, psychicIndirect: true });
+  });
+
   it("genericTest — навык зовёт sheet._rollSkill с целью", async () => {
     const executor = actorWithSheet({ skills: { dodge: { total: 40 } } });
     const target = { id: "t1", name: "Цель" };

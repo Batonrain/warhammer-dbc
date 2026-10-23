@@ -54,7 +54,7 @@ import { sweepConditionDurations, hasConditionDuration, conditionDurationEffects
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 // Смерть от Состояния (wdbc-x1nz.2.92/.94): Кровотечение «на 0 и ниже он
 // умирает», Удушье «умирает от удушья через T.b Раундов» — общий путь.
-import { killByCondition } from "./condition-death.mjs";
+import { killByCondition, letItFlowSaves } from "./condition-death.mjs";
 import { applyCharDamage } from "./char-damage.mjs";
 // Тесты внутри тиков (T+0 против жара/удушья, W+0 Обескровливания) — с
 // модификаторами персонажа, как любой тест без диалога (rules/roll-mods.mjs::
@@ -705,7 +705,12 @@ export async function processConditionTurnEnd(actor) {
       // Физиология Громилы (Огрин): «не может умереть от Кровотечения».
       lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: ${die} <b>${roll.total}</b>${dieHardNote} − Обескровливание ${level} = <b>${eff}</b> → смерть, но <b>Физиология Громилы</b>: от Кровотечения не умирает</div>`);
     } else if (eff <= 0) {
-      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: ${die} <b>${roll.total}</b>${dieHardNote} − Обескровливание ${level} = <b>${eff}</b> → <span class="roll-failure"><b>СМЕРТЬ</b> (независимо от количества Ран)</span></div>`);
+      // Пусть Льётся (Геносемя): вместо смерти — 1 Усталости (killByCondition
+      // начисляет её сама), карточка не должна кричать «СМЕРТЬ» над живым.
+      const flows = letItFlowSaves(actor, "bleeding");
+      lines.push(flows
+        ? `<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: ${die} <b>${roll.total}</b>${dieHardNote} − Обескровливание ${level} = <b>${eff}</b> → смерть, но <b>Пусть Льётся</b>: вместо неё 1 Усталости</div>`
+        : `<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: ${die} <b>${roll.total}</b>${dieHardNote} − Обескровливание ${level} = <b>${eff}</b> → <span class="roll-failure"><b>СМЕРТЬ</b> (независимо от количества Ран)</span></div>`);
       await killByCondition(actor, "bleeding");
     } else if (eff <= 5 && !Object.keys(conditionAdjustFields(actor, "haemorrhaging", 1)).length) {
       // Иммунитет к Обескровливанию (запись Конструктора, напр. Физиология

@@ -21,7 +21,7 @@ import {
   hasProtege, protegeFavoriteUuid, protegeFreeCommandActive, protegePenalty, protegeActivationPatch,
   hasRadiantPresence, anyRadiantPresenceHolderExists, radiantPresenceBonus,
   hasIntoTheJawsOfHell, anyIntoTheJawsOfHellHolderExists, intoTheJawsOfHellActive,
-  hasAirOfAuthority, commandTargetLimit,
+  hasAirOfAuthority, commandTargetLimit, commandCapacity,
   hasLivingLegend, livingLegendCommandBonus,
   hasWarChant, warChantSinging, WAR_CHANT_FLAG,
   warChantSingAlongActive, WAR_CHANT_SING_ALONG_FLAG, warChantIntimidateBonus, warChantSingAlongBonus,
@@ -377,15 +377,30 @@ describe("Air of Authority/Аура Власти — лимит целей Comma
     expect(hasAirOfAuthority({ items: [] })).toBe(false);
   });
 
-  it("commandTargetLimit — F.b без Таланта, F.b×20 с ним", () => {
+  it("commandTargetLimit — F.b×2 без Таланта, F.b×20 с ним", () => {
     const actor = (bonus, talents = []) => ({ items: talents, system: { characteristics: { fel: { bonus } } } });
-    expect(commandTargetLimit(actor(3))).toBe(3);
+    expect(commandTargetLimit(actor(3))).toBe(6);
     expect(commandTargetLimit(actor(3, [talentOf("Air of Authority")]))).toBe(60);
     expect(commandTargetLimit(actor(0, [talentOf("Air of Authority")]))).toBe(0);
   });
 
   it("commandTargetLimit — отрицательный F.b не уходит в минус", () => {
     expect(commandTargetLimit({ items: [], system: { characteristics: { fel: { bonus: -1 } } } })).toBe(0);
+  });
+
+  it("commandCapacity — общая ёмкость: бонус нужной Характеристики × (Air of Authority ? 20 : 2)", () => {
+    const actor = (chars, talents = []) => ({ items: talents, system: { characteristics: chars } });
+    const aoa = [talentOf("Аура Власти")];
+    expect(commandCapacity(actor({ fel: { bonus: 4 } }), "fel")).toBe(8);
+    expect(commandCapacity(actor({ fel: { bonus: 4 } }, aoa), "fel")).toBe(80);
+    // По умолчанию — F; Воля берётся тем же правилом (Боевая Песнь).
+    expect(commandCapacity(actor({ fel: { bonus: 4 } }))).toBe(8);
+    expect(commandCapacity(actor({ wp: { bonus: 5 } }), "wp")).toBe(10);
+    expect(commandCapacity(actor({ wp: { bonus: 5 } }, aoa), "wp")).toBe(100);
+    // Нет Характеристики / отрицательный бонус — 0, не NaN и не минус.
+    expect(commandCapacity(actor({}), "wp")).toBe(0);
+    expect(commandCapacity(actor({ wp: { bonus: -2 } }, aoa), "wp")).toBe(0);
+    expect(commandCapacity(null, "wp")).toBe(0);
   });
 });
 

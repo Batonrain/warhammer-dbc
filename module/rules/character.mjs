@@ -50,6 +50,7 @@ import { spliceExtraAdaptations, fastLearnerWithAdaptations } from "./splice-ada
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
 import { applyParasiteFusion, fusedParasite, fuseParasiteCharacteristic } from "./parasite-trait.mjs";
 import { woundLevel } from "./wound-tier.mjs";
+import { rageCharBonus, woundedBeastBonus } from "./rage.mjs";
 import { woundsMaxMods as runtWoundsMaxMods } from "./runt.mjs";
 import { soundConstitutionWoundsMods, hasResilienceTalent, armourMongerBonus } from "./resilience-talents.mjs";
 import { prepareFinalPools } from "./character/final-pools.mjs";
@@ -537,6 +538,7 @@ export function prepareCharacterDerived(actor, system) {
       const valueMod  = traitCharValueBonus[key] || 0; // импланты/черты — к значению
       const dmgMod    = charDamage[key]     || 0; // ручной Мод. к Итогу (знаковый: + прибавляет, − вычитает)
       const vitalMod  = vitalMods[key]      || 0; // Голод/Жажда — авто-дебафф
+      const rageMod   = rageCharBonus(actor, key); // Ярость: +10 WS/S/W (rules/rage.mjs)
       char.drugMod    = drugMod;
       char.charDamage = dmgMod;
       char.vitalMod   = vitalMod;
@@ -548,7 +550,7 @@ export function prepareCharacterDerived(actor, system) {
       char.charLoss   = lossMod;
       const orderMod  = key === "t" ? orderRejection.t : 0;
       char.total   = (char.base || 0) + (char.advance || 0) + impBonus + drugMod + armorMod + valueMod
-                   + (char.totalFx || 0) + dmgMod - vitalMod + orderMod;
+                   + (char.totalFx || 0) + dmgMod - vitalMod + orderMod + rageMod;
       // «Характеристика не может опускаться ниже 0» — пол только для урона:
       // остальные слагаемые ведут себя как раньше.
       const beforeLoss = char.total;
@@ -575,6 +577,7 @@ export function prepareCharacterDerived(actor, system) {
       if (lossMod) breakdown.push({ label: "Урон в Характеристику (отходит по 1 в час)", value: char.total - beforeLoss });
       if (vitalMod) breakdown.push({ label: "Голод/Жажда", value: -vitalMod });
       if (orderMod) breakdown.push({ label: `Отвращение к Порядку: бионика/кибернетика ×${orderRejection.count}`, value: orderMod });
+      if (rageMod) breakdown.push({ label: "Ярость", value: rageMod });
       if (cappedByArmor) breakdown.push({ label: "Потолок Ловкости (броня)", value: null, cap: agilityCap });
       char.totalBreakdown = breakdown;
 
@@ -819,6 +822,25 @@ export function prepareCharacterDerived(actor, system) {
       system.wounds.tier = wLvl.displayKey;
       system.wounds.tierLabel = wLvl.displayLabel;
       system.wounds.tierLost = wLvl.lost;
+      // Раненный Зверь (Берсерк, стр. 62): +5/+10 к WS и S поверх +10 Ярости.
+      // Зависит от Уровня Ранения, а он считается только здесь — после цикла
+      // характеристик (ему нужен T.b), поэтому добавка идёт отдельным проходом:
+      // значение и Бонус сдвигаются разницей, прочие слагаемые не пересчитываются.
+      // WS и S до этого места никто не читает: навыки и перенос считаются ниже.
+      let beastApplied = false;
+      for (const key of ["ws", "s"]) {
+        const extra = woundedBeastBonus(actor, key);
+        const ch = chars[key];
+        if (!extra || !ch) continue;
+        const before = ch.total;
+        ch.total = before + extra;
+        ch.bonus += Math.floor(ch.total / 10) - Math.floor(before / 10);
+        ch.totalBreakdown.push({ label: "Раненный Зверь", value: extra });
+        beastApplied = true;
+      }
+      // Правила с условием «Бонус Силы не ниже N» (charBonusMin), собранные
+      // выше по старому S.b, в кэше устарели — как после цикла характеристик.
+      if (beastApplied) invalidateRulesCacheFor(actor);
       // Аблативный пул не переживает свой источник (wdbc-smy7): ablativeMax
       // приходит ActiveEffect'ом kind:"poolMax" и может пропасть/просесть в
       // любой момент, а накопленное .ablative само по себе не откатывается —

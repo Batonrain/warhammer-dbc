@@ -11,6 +11,7 @@
 import { resolveTest } from "./resolve-test.mjs";
 import { rollD100WithReroll } from "./test-kind-widget.mjs";
 import { testOutcome } from "./roll-outcome.mjs";
+import { isInRage } from "./rage.mjs";
 
 /**
  * @param {Actor} actor
@@ -33,6 +34,9 @@ import { testOutcome } from "./roll-outcome.mjs";
  * @param {boolean} [opts.radiantPresence] — галочка «видит/слышит союзника
  *   с Radiant Presence» (rules/leadership-talents.mjs) — решение стола,
  *   код просто передаёт её в ctx для источника «leadershipTalents».
+ * @param {boolean} [opts.suppression] — это именно тест на Подавление (не
+ *   Страх/Шок/Паника): едет в ctx как suppressionTest — область «suppression»
+ *   правил (Стальные Нервы). Тест на ПРЕОДОЛЕНИЕ Подавления флаг не ставит.
  * @returns {Promise<{eff:number, bonus:number, roll:Roll, rv:number, rolls:Roll[],
  *   rerollNote:string, success:boolean, dof:number, usedReroll:boolean}>}
  *   deg — степень исхода (Успехов при успехе, Провалов при провале);
@@ -40,8 +44,9 @@ import { testOutcome } from "./roll-outcome.mjs";
  *   применён переброс из реестра правил (для applyLordOfExoditesFailPenalty);
  *   parts — подписи применённых модификаторов для карточки.
  */
-export async function rollMoraleTest(actor, baseThreshold, { sourceActor = null, selfAdvantage = false, selfAdvantageLabel = "Преимущество", affectsCommand = true, char = "wp", radiantPresence = false } = {}) {
-  const resolved = resolveTest({ actor, kind: "skill", char, morale: true, targetActor: sourceActor, radiantPresence });
+export async function rollMoraleTest(actor, baseThreshold, { sourceActor = null, selfAdvantage = false, selfAdvantageLabel = "Преимущество", affectsCommand = true, char = "wp", radiantPresence = false, suppression = false } = {}) {
+  const resolved = resolveTest({ actor, kind: "skill", char, morale: true, targetActor: sourceActor, radiantPresence,
+    ...(suppression ? { suppressionTest: true } : {}) });
   // autoMods наравне с mods (wdbc-ct65.1): Усталость и прочие штрафы состояния
   // тела — такие же правила реестра, просто без галочки. Спрашивать всё равно
   // негде: тест катается одной кнопкой.
@@ -58,7 +63,14 @@ export async function rollMoraleTest(actor, baseThreshold, { sourceActor = null,
     ? { mode: ruleReroll.mode, rolls: ruleReroll.rolls, label: ruleReroll.label }
     : (selfAdvantage ? { mode: "keepBest", rolls: 2, label: selfAdvantageLabel } : null);
   const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
-  const { success, deg } = testOutcome(rv, eff);
+  const outcome = testOutcome(rv, eff);
+  // Ярость (Frenzy, стр. 62): «автоматически проходит тесты Морали» — бросок
+  // остаётся на карточке, но провал не засчитывается; причина — строкой в
+  // подписях модификаторов. Успешный бросок идёт как есть (со своей степенью).
+  const rageAutoPass = isInRage(actor) && !outcome.success;
+  const success = outcome.success || rageAutoPass;
+  const deg = rageAutoPass ? 1 : outcome.deg;
+  if (rageAutoPass) parts.push("😡 Ярость: автоуспех");
   // Провал теста Морали снимает Командование («Мораль и Потеря Командования»):
   // с подчинённого — его преимущества, с Командира — все отданные Команды.
   // Импорт ленивый: command-state тянет источники правил, а этот модуль
