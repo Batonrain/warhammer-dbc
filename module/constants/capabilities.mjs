@@ -109,9 +109,9 @@ export const CAPABILITIES = {
     reader: "module/sheets/tabs/disorders.mjs::fearDialogDefaults/openFearDialog + module/rules/warp-touched.mjs::rageFearRating/isRageFearSource + module/rules/fear-ignore.mjs::fearIgnore (module/combat/fear.mjs::_executeFearRoll, properties.unignorable)"
   },
   "mutation.warpTouched.healMistrust": {
-    label: "Недоверие к Лечению: после лечения Ран другим персонажем — −10 на все тесты, кроме тестов T, на 1 час игрового времени (сам, без галочки). Считается лечением от другого: Первая Помощь и Мед. уход из окна Лечения, где медик — не сам пациент, и медикамент, вколотый другим. Отдых/Постельный режим/Пассивное без ухода — тело лечится само, не считается. По Календарю — период, в котором Раны восстановлены под успешным Мед. уходом медика (combat/healing-clock.mjs), час — от момента лечения. Не засекает: психосилы, способности и Дары, лечащие чужие Раны своим кодом, лечение Состояний без восстановления Ран",
+    label: "Недоверие к Лечению: после лечения Ран другим персонажем — −10 на все тесты, кроме тестов T, на 1 час игрового времени (сам, без галочки). Считается лечением от другого: Первая Помощь и Мед. уход из окна Лечения, где медик — не сам пациент, и медикамент, вколотый другим. Отдых/Постельный режим/Пассивное без ухода — тело лечится само, не считается. По Календарю — период, в котором Раны восстановлены под успешным Мед. уходом медика (combat/healing-clock.mjs), час — от момента лечения. Также: оживление трупа Дыханием Жизни и Талантом «Реанимировать», касание Раковым Исцелением (выданный аблатив), скрипт предмета через healActor. Единая точка — combat/heal-target.mjs (решение владельца 24.10.2026). Самолечение (регенерация, Плод Исцеления, Сус-ан, Неутомимый Воин, Исцеление Покровителя) не считается: лечащий — сам пациент. Не засекает: лечение Состояний без восстановления Ран (остановить кровотечение, вправить конечность, прижечь, вылечить болезнь) — книга лечением в этом смысле не определяет",
     source: "Warp-Touched / Затронутый Варпом, субмутация 10 (wdbc-1rno.26)",
-    reader: "module/combat/warp-touched.mjs::noteHealingFromOther (sheets/tabs/healing.mjs::applyHealing, sheets/tabs/drugs.mjs::applyDrug, combat/healing-clock.mjs::healingClock) + module/rules/warp-touched.mjs::healMistrustRules (источник реестра warpTouchedHealMistrust, rules/sources.mjs)"
+    reader: "module/combat/heal-target.mjs::noteWoundsRestored/healActor → module/combat/warp-touched.mjs::noteHealingFromOther (sheets/tabs/healing.mjs::applyHealing, sheets/tabs/drugs.mjs::applyDrug, combat/healing-clock.mjs::healingClock, apps/breath-of-life.mjs::useBreathOfLife, combat/reanimate.mjs::runReanimate, apps/cancerous-healing.mjs::applyCancerousHealingEffect, apps/item-script.mjs healActor) + module/rules/warp-touched.mjs::healMistrustRules (источник реестра warpTouchedHealMistrust, rules/sources.mjs)"
   },
   "weaponPropertyImmunity.crippling": {
     label: "Иммунитет к свойству оружия Crippling (не получает рану с шипами)",
@@ -1674,7 +1674,7 @@ export const CAPABILITIES = {
   "geneseed.core.temperedCocoon": {
     label: "Десантник получает ещё +10 на все тесты против жара, холода и вакуума, и вместо переброса этих тестов от Мукраноида получает на них Преимуще…",
     source: "Tempered Cocoon / Закалённый Кокон",
-    reader: "module/rules/situational.mjs temperedCocoonBonus (+10, теги heatTest/coldTest/vacuumTest) + module/combat/temperature-hazard.mjs rollTempHazardTest (сбор модификаторов, Преимущество — два броска). Вакуум тестом не заведён"
+    reader: "module/rules/situational.mjs temperedCocoonBonus (+10, теги heatTest/coldTest/vacuumTest) + module/combat/temperature-hazard.mjs rollTempHazardTest и module/combat/vacuum.mjs rollVacuumTest (сбор модификаторов, Преимущество — два броска)"
   },
   // ── Всадник
   "rider.core.defensiveRider": {
@@ -1862,8 +1862,9 @@ export const CAPABILITIES = {
     source: "Instructor / Инструктор", reader: ""
   },
   "occultist.core.ritePuzzler": {
-    label: "Персонаж может добывать ритуалы, требующие Записи, как если бы их Редкость была на 1 ниже. На месте проведения ритуала с его следами он может пройти I−20, чтобы выучить ритуал (I+0, если присутствовал на нём). ПОДТВЕРЖДЕНО ЧЕСТНОЙ ЗАГЛУШКОЙ (независимое ревью, 19.10.2026): module/rules/occultist-talents.mjs::ritePuzzlerLearnMod верно считает модификатор (I−20/I+0), но его результат нигде в module/ не читается — ни кнопки, ни подсказки на листе. Сам предмет-ритуал система не привязывает к «следам» на месте, получение ритуала уже ничем не гейтится (sheets/tabs/rituals.mjs::activateRitualListeners, «＋» открывает Обозреватель без проверок) — тест и перенос числа ведёт стол сам, функция — справочный расчёт, не автоматизация. Редкость −1 при добыче НЕ смоделирована — статичное поле предмета, тот же класс пробела, что у Ancient Warrior/Lord of War (wdbc-8r2iv).",
-    source: "Rite Puzzler / Разгадыватель Ритуалов", reader: ""
+    label: "Персонаж может добывать ритуалы, требующие Записи, как если бы их Редкость была на 1 ниже. На месте проведения ритуала с его следами он может пройти I−20, чтобы выучить ритуал (I+0, если присутствовал на нём). ПОДТВЕРЖДЕНО ЧЕСТНОЙ ЗАГЛУШКОЙ (независимое ревью, 19.10.2026): module/rules/occultist-talents.mjs::ritePuzzlerLearnMod верно считает модификатор (I−20/I+0), но его результат нигде в module/ не читается — ни кнопки, ни подсказки на листе. Сам предмет-ритуал система не привязывает к «следам» на месте, получение ритуала уже ничем не гейтится (sheets/tabs/rituals.mjs::activateRitualListeners, «＋» открывает Обозреватель без проверок) — тест и перенос числа ведёт стол сам, функция — справочный расчёт, не автоматизация. Редкость −1 при добыче РЕАЛИЗОВАНА (25.10.2026): тест «Достать снаряжение» считает Редкость Записи ритуала (system.record) на 1 ниже.",
+    source: "Rite Puzzler / Разгадыватель Ритуалов",
+    reader: "ЧАСТИЧНО: module/rules/requisition.mjs::rarityShifts — Редкость Записи −1 при добыче реквизицией (module/apps/requisition.mjs); I−20/I+0 — справочный расчёт module/rules/occultist-talents.mjs::ritePuzzlerLearnMod"
   },
   "occultist.core.scapegoat": {
     label: "Потратив смену работы на ритуальную подготовку другого разумного существа для определённого ритуала, при Успехе цена или цена ошибки, применявшиеся бы к ритуалисту, применяются к этой жертве. ПОДТВЕРЖДЕНО ЧЕСТНОЙ ЗАГЛУШКОЙ (перепроверка Sahara 3-2a39, 19.10.2026): «цена»/«цена ошибки» — текстовые поля предмета-ритуала (system.cost/failureCost, module/data/item/ritual.mjs), книга даёт разную прозу на каждый ритуал, числа для переноса в системе нет и не планируется.",
@@ -1931,7 +1932,7 @@ export const CAPABILITIES = {
   "arsenal.core.ancientWarrior": {
     label: "Персонаж уменьшает Редкость всего Легион снаряжения на 1 и получает +10 на все социальные взаимодействия с обладателями этого Таланта и Косм…",
     source: "Ancient Warrior / Древний Воин",
-    reader: "ЧАСТИЧНО: module/rules/minion-build.mjs::minionLoyalty — +10 Лояльности Миньонам с system.isAstartes; «−1 Редкость» и +10 соц. взаимодействиям с Космодесантниками Хаоса — ждут теста «Реквизиция»"
+    reader: "ЧАСТИЧНО: module/rules/minion-build.mjs::minionLoyalty — +10 Лояльности Миньонам с system.isAstartes; module/rules/requisition.mjs::rarityShifts — «−1 Редкость» снаряжения со свойством Legion в тесте «Достать снаряжение» (module/apps/requisition.mjs); +10 соц. взаимодействиям с носителями Таланта и Космодесантниками Хаоса — НЕ сделано"
   },
   "arsenal.core.armourTraining": {
     label: "Персонаж увеличивает Max.A этого вида брони на 10 и уменьшает её штраф к А на 5 (если есть).",
@@ -1945,7 +1946,8 @@ export const CAPABILITIES = {
   },
   "arsenal.core.excessiveWealth": {
     label: "Персонаж получает +10 на тесты Inf для получения снаряжения и тесты Commerce, если тратит время и ресурсы для демонстрации своего богатства…",
-    source: "Excessive Wealth / Чрезмерное Богатство", reader: ""
+    source: "Excessive Wealth / Чрезмерное Богатство",
+    reader: "module/rules/requisition-talents.mjs::requisitionTalentRules — галочка +10 в тесте «Достать снаряжение» (module/apps/requisition.mjs) и в тесте Commerce; прибавку сверх +10 по решению ГМа вписывают вручную в «Модификатор»"
   },
   "arsenal.core.exoticWeaponTraining": {
     label: "Берясь за экзотическое оружие без Таланта на владение им, персонаж получает −20 на соответствующие тесты WS/BS.",
@@ -1959,7 +1961,8 @@ export const CAPABILITIES = {
   },
   "arsenal.core.lordOfWar": {
     label: "Персонаж уменьшает Редкость всего Экзотического снаряжения и Кибернетики на 1 и получает +20 на тесты Inf для получения снаряжения и тесты C…",
-    source: "Lord of War / Повелитель Войны", reader: ""
+    source: "Lord of War / Повелитель Войны",
+    reader: "module/rules/requisition.mjs::rarityShifts — Редкость Экзотики и Кибернетики −1 при реквизиции; module/rules/requisition-talents.mjs::requisitionTalentRules — +20 (авто в «Достать снаряжение» при Редкости 0 и ниже и Количестве 1001+, галочкой в тесте Commerce)"
   },
   "arsenal.core.meleeTraining": {
     label: "Если персонаж не владеет этим Талантом для выбранного оружия, он может использовать только Обычную Атаку как приём,",
@@ -2017,7 +2020,7 @@ export const CAPABILITIES = {
     reader: "module/combat/movement-actions.mjs (actorCanReposition, declareReposition, postRepositionCard); module/hooks.mjs (combatStart); module/rules/speed-talents.mjs (repositionAvailable)"
   },
   "speed.core.sprint": {
-    label: "Реализовано (сверка главы 3, решение владельца 17.10.2026): Полное Движение на листе — SPD×3 (дистанция Натиска, по таблице главы 3); при объявлении Бега диалог «побежите дальше SPD×6?» — «да» даёт кольцо до SPD×12 (system.movement.sprintRun), сам run для прочих механик не удваивается. Дальний Бег два Раунда подряд в одном бою → +1 Усталости в конце второго Хода автоматически (combat/movement-actions.mjs::applySprintTurnEnd). НЕ покрыто: сколько игрок реально пробежал, система не меряет — верит ответу; у носителя Запредельной Скорости Полное Движение считается от обычного Натиска SPD×3, а не от SPD×6 (допущение); Надёжная Поступь Сквата отменяет Спринт.",
+    label: "Реализовано (сверка главы 3, решение владельца 17.10.2026): Полное Движение на листе — SPD×3 (дистанция Натиска, по таблице главы 3); при объявлении Бега диалог «побежите дальше SPD×6?» — «да» даёт кольцо до SPD×12 (system.movement.sprintRun), сам run для прочих механик не удваивается. Дальний Бег два Раунда подряд в одном бою → +1 Усталости в конце второго Хода автоматически (combat/movement-actions.mjs::applySprintTurnEnd). Дальность теперь держит измеритель пути (wdbc-l2urs): ответ «нет» — токен не пустят дальше SPD×6, «да» — дальше SPD×12 (combat/path-limit.mjs). НЕ покрыто: Усталость по-прежнему идёт от ОТВЕТА игрока, а не от пройденного (ответил «да», но пробежал меньше SPD×6 — Усталость всё равно взведётся); у носителя Запредельной Скорости Полное Движение считается от обычного Натиска SPD×3, а не от SPD×6 (допущение); Надёжная Поступь Сквата отменяет Спринт.",
     source: "Sprint / Спринт",
     reader: "module/rules/character/movement.mjs (move, sprintRun); module/combat/movement-actions.mjs (declareRun, applySprintTurnEnd); module/hooks.mjs (updateCombat); module/rules/speed-talents.mjs (speedTalentDistances, sprintFatigueDue)"
   },
@@ -2583,11 +2586,12 @@ export const CAPABILITIES = {
   },
   "social.core.contactNetwork": {
     label: "Используя Сеть Контактов, персонаж может использовать F вместо Inf для тестов Реквизиции, делая бросок по каждому миру с ячейкой отдельно,",
-    source: "Contact Network / Сеть Контактов", reader: ""
+    source: "Contact Network / Сеть Контактов",
+    reader: "module/rules/requisition-talents.mjs::requisitionTalentRules — галочка «F вместо Inf» (setChar fel) в тесте «Достать снаряжение»; бросок по каждому миру с ячейкой ведёт стол"
   },
   "social.core.coverUp": {
     label: "Персонаж может потратить Inf (Характеристику, не Очки), чтобы организовать ячейку тайных агентов с сетью информаторов. Inf 1 → ср.",
-    source: "Cover Up / Работа под Прикрытием", reader: ""
+    source: "Cover Up / Работа под Прикрытием", reader: "" // ячейки агентов и «Уровень Реквизиции» — структура без правила в книге, ведёт стол (Sahara 3-5e84)
   },
   "social.core.demagogue": {
     label: "Персонаж может воздействовать на до F.b×100 персонажей одновременно своими речами.",
@@ -3025,13 +3029,13 @@ export const CAPABILITIES = {
     reader: "module/combat/defense.mjs (_slipAwayChoice, slipRerollSectionHtml, _performDodge slipReroll), module/hooks.mjs (.wh-slip-reroll-btn); module/combat/techniques.mjs; module/combat/grapple.mjs"
   },
   "dodge.core.snapshot": {
-    label: "Если в свой Ход персонаж подвигался не больше полудвижения, в конце Хода получает +1 ОД — смоделировано (wdbc-1rno, module/combat/snapshot.mjs, hooks.mjs::updateCombat, читает movement-actions.mjs::moveDegreeThisTurn). НЕ смоделировано: ОД можно потратить только на выстрел по брошенному предмету и игнорируя ограничение атак Задержкой — в системе нет ни earmarked-подмножества ОД, ни кодового понятия «атака Задержкой» вообще, заводить оба под одну находку не оправдано; бонусное ОД тратится как обычное.",
+    label: "Если в свой Ход персонаж подвигался не больше полудвижения, в конце Хода получает +1 ОД — смоделировано (wdbc-1rno, module/combat/snapshot.mjs, hooks.mjs::updateCombat, читает movement-actions.mjs::moveDegreeThisTurn). Категорию Хода ставят и кнопки Действий Движения, и честно измеренный путь токена: перетащил дальше Полудвижения — «подвигался больше» без всякого объявления (wdbc-l2urs, combat/path-limit.mjs::onMoveToken). НЕ смоделировано: ОД можно потратить только на выстрел по брошенному предмету и игнорируя ограничение атак Задержкой — в системе нет ни earmarked-подмножества ОД, ни кодового понятия «атака Задержкой» вообще, заводить оба под одну находку не оправдано; бонусное ОД тратится как обычное.",
     source: "Snapshot / Выстрел Навскидку", reader: "module/combat/snapshot.mjs"
   },
   "dodge.core.speedAwareness": {
-    label: "Реализовано (сверка главы 3, решение владельца 18.10.2026): после Бега Реакции обычно закрыты до начала следующего Хода; у носителя Уклонение и Парирование (Избегания) остаются доступны, а при каждом таком Избегании спрашивается «сколько метров пробежал» (по умолчанию — полный Бег) и штраф −5 за каждые полные P.b м ставится сам (combat/defense.mjs, combat/action-economy.mjs::canSpendReaction, rules/dodge-talents.mjs). НЕ покрыто: сколько метров на самом деле пробежал персонаж, система не меряет — верит ответу игрока.",
+    label: "Реализовано (сверка главы 3, решение владельца 18.10.2026): после Бега Реакции обычно закрыты до начала следующего Хода; у носителя Уклонение и Парирование (Избегания) остаются доступны, а при каждом таком Избегании спрашивается «сколько метров пробежал» (по умолчанию — полный Бег) и штраф −5 за каждые полные P.b м ставится сам (combat/defense.mjs, combat/action-economy.mjs::canSpendReaction, rules/dodge-talents.mjs). Сколько метров пробежал, теперь подставляет измеритель пути (wdbc-l2urs): токен перетащили при Беге — в диалоге уже стоит измеренное число (его можно поправить). НЕ покрыто: токен не двигали мышью (подвинули ГМ-скриптом, пробежали «в уме») — тогда по-прежнему полный Бег.",
     source: "Speed Awareness / Скоростная Внимательность",
-    reader: "module/combat/defense.mjs (_speedAwarenessMod, _performDodge, _performParry); module/combat/action-economy.mjs (canSpendReaction)"
+    reader: "module/combat/defense.mjs (_speedAwarenessMod, _performDodge, _performParry); module/combat/action-economy.mjs (canSpendReaction); module/combat/path-limit.mjs (onMoveToken, ranMetersThisTurn)"
   },
   "dodge.core.stepAside": {
     label: "РЕАЛИЗОВАНО: эффект предмета system.reactions.defenseMax +1 — одна дополнительная Реакция, которую можно потратить только на Избегание (Уклонение/Парирование); восполняется в начале Хода (combat/action-economy.mjs::resetActionEconomy, effectiveDefenseReactionMax).",
@@ -3120,7 +3124,7 @@ export const CAPABILITIES = {
     reader: "module/combat/crit-talents-actions.mjs (usePainIllusion); module/combat/crit-talents.mjs (critTalentsHtml); module/rules/resilience-talents.mjs (painIllusionLevel); module/combat/damage.mjs; module/combat/secondary-crit.mjs; module/hooks.mjs (.wh-pain-illusion-btn); module/combat/resilience-test.mjs"
   },
   "resilience.core.resistance": {
-    label: "Реализовано частично (сверка главы 3): +10 к Порогу автоматически на тесты своей специализации — Fear (тест Страха, тег fearTest отдельно от прочих тестов Морали), Poison (сопротивление яду Toxic), Psychic Powers (сопротивление психосиле и встречный тест против Выжигания Души), Stun (сопротивление Оглушению свойств оружия: Concussive и др.). Специализации читаются из поля Таланта через запятую и из скобок в имени; полный перечень в поле (не выбрано) бонуса не даёт. НЕ покрыто: Cold, Heat, Disease, Blindness, Deafness — таких тестов сопротивления в системе нет (честная заглушка).",
+    label: "Реализовано частично (сверка главы 3): +10 к Порогу автоматически на тесты своей специализации — Fear (тест Страха, тег fearTest отдельно от прочих тестов Морали), Poison (сопротивление яду Toxic), Psychic Powers (сопротивление психосиле и встречный тест против Выжигания Души), Stun (сопротивление Оглушению свойств оружия: Concussive и др.). Специализации читаются из поля Таланта через запятую и из скобок в имени; полный перечень в поле (не выбрано) бонуса не даёт. Cold/Heat — тест Жары/Холода Окружения, Disease — тест заражения (кнопка «Заражение» на болезни). НЕ покрыто: Blindness, Deafness — таких тестов сопротивления в системе нет (честная заглушка).",
     source: "Resistance / Сопротивление",
     reader: "module/rules/resilience-talents.mjs::resistanceBonus; module/rules/resilience-talents.mjs::resilienceTalentRules; module/combat/fear.mjs (fearTest); module/hooks.mjs (poisonTest, stunTest, psychicThreat); module/combat/temperature-hazard.mjs (coldTest/heatTest — Cold и Heat, 3-edc4 п.7)"
   },
@@ -3835,7 +3839,8 @@ export const CAPABILITIES = {
   },
   "elite.knigaPustoty.pustohod.theFactotumCase": {
     label: "При приобретении узлов и реквизиции на обслуживание пустолёта персонаж получает +10.",
-    source: "The Factotum Case / Дело Фактотума", reader: ""
+    source: "The Factotum Case / Дело Фактотума",
+    reader: "ЧАСТИЧНО: module/rules/requisition-talents.mjs::requisitionTalentRules — галочка +10 «реквизиция на обслуживание пустолёта» в тесте «Достать снаряжение»; приобретение узлов не подключено"
   },
   "elite.knigaPustoty.pustohod.thirstForDesecration": {
     label: "При проведении ритуала Осквернения Пустотного Титана персонаж получает +10 к тестам.",
@@ -5661,14 +5666,19 @@ export const CAPABILITIES = {
     source: "Gene-Splice / Ген-Сплайс", reader: ""
   },
   "trait.hardAsStone": {
-    label: "Крепкий как Камень: Преимущество на тест против яда (сопротивление Toxic); без сна до 3 суток без штрафа (лестница Сна), подсказка длительности сна 3 ч +3 ч за бессонные сутки (до 9). Лечение и мутации — отдельные возможности healing.astartes и mutations.asAstartes той же Черты. Тестов против болезней и вакуума в системе нет — Преимущество там берётся Кубиком диалога; защита от радиации −3 учитывается в радиации сцены: module/rules/radiation-scene.mjs::radProtectionOf (строка «Крепкий как Камень −3», вычитается из уровня фона).",
+    label: "Крепкий как Камень: Преимущество на тест против яда (сопротивление Toxic), на тест заражения болезнью (кнопка «Заражение» на болезни) и на тест вакуума (начало Хода в вакууме) — бросок дважды, берётся лучший; без сна до 3 суток без штрафа (лестница Сна), подсказка длительности сна 3 ч +3 ч за бессонные сутки (до 9). Лечение и мутации — отдельные возможности healing.astartes и mutations.asAstartes той же Черты. Защита от радиации −3 учитывается в радиации сцены: module/rules/radiation-scene.mjs::radProtectionOf (строка «Крепкий как Камень −3», вычитается из уровня фона).",
     source: "Hard as Stone / Крепкий как Камень",
-    reader: "module/rules/squat-traits.mjs poisonResistReroll() — module/hooks.mjs (_applyWeaponPropEffect); module/rules/squat-traits.mjs sleepGraceDays() — module/rules/character.mjs (vitalCtx) и module/sheets/sheet-helpers.mjs (life)"
+    reader: "module/rules/squat-traits.mjs poisonResistReroll() — module/hooks.mjs (_applyWeaponPropEffect); diseaseResistReroll() — module/combat/disease-infection.mjs; vacuumResistReroll() — module/combat/vacuum.mjs; module/rules/squat-traits.mjs sleepGraceDays() — module/rules/character.mjs (vitalCtx) и module/sheets/sheet-helpers.mjs (life)"
   },
   "resist.poisonAdvantage": {
-    label: "Преимущество на тест против яда (сопротивление Toxic): бросок дважды, берётся лучший. Адаптация Сплайса «Живучесть». Тестов против болезней, Усталости и Оглушения в системе нет — текстом.",
+    label: "Преимущество на тест против яда (сопротивление Toxic): бросок дважды, берётся лучший. Адаптация Сплайса «Живучесть». Преимущество против болезней — отдельная возможность resist.diseaseAdvantage той же Адаптации; Усталость и Оглушение — текстом.",
     source: "Adaptation: Resilience / Адаптация: Живучесть",
     reader: "module/rules/squat-traits.mjs poisonResistReroll() — module/hooks.mjs (_applyWeaponPropEffect, сопротивление Toxic)"
+  },
+  "resist.diseaseAdvantage": {
+    label: "Преимущество на тест заражения болезнью (кнопка «Заражение» на болезни): бросок дважды, берётся лучший. Адаптация Сплайса «Живучесть». Усталость и Оглушение — текстом.",
+    source: "Adaptation: Resilience / Адаптация: Живучесть",
+    reader: "module/rules/squat-traits.mjs diseaseResistReroll() — module/combat/disease-infection.mjs (rollInfectionTest)"
   },
   "mutations.asAstartes": {
     label: "Получает мутации как Космодесантник, а не человек: пороги Мутации 10/30/60/90 вместо 10/20/40/60/80 (поблажка лоялистам-Астартес сюда не входит — она про их геносемя)",
@@ -5978,9 +5988,9 @@ export const CAPABILITIES = {
     source: "Sturdy / Надёжный", reader: ""
   },
   "trait.sureTread": {
-    label: "Надёжная Поступь: пешком не больше 3×SPD за Ход (Бег урезан до Натиска); тест Трудного Ландшафта по лучшему из Ловкости и Awareness (P); 3+ Успеха — Ландшафт не замедляет. −1 SPD — запись Движения той же Черты.",
+    label: "Надёжная Поступь: пешком не больше 3×SPD за Ход — Бег урезан до Натиска на листе, а реально пройденный токеном путь за Ход меряет ядро Foundry и сверяет с потолком (wdbc-l2urs, 25.10.2026): дальше токен не сдвинется («Лимит пути исчерпан»; ГМ, принудительные сдвиги и телепорт проходят, настройка мира «Лимит пути за Ход в бою»); тест Трудного Ландшафта по лучшему из Ловкости и Awareness (P); 3+ Успеха — Ландшафт не замедляет (проверяется только в живой сцене). −1 SPD — запись Движения той же Черты. НЕ покрыто: Трудный Ландшафт зоны (Движение вдвое дороже) в измеренный путь не входит.",
     source: "Sure Tread / Надёжная Поступь",
-    reader: "module/rules/squat-traits.mjs sureTreadMovementCap() — module/rules/character/movement.mjs; module/rules/squat-traits.mjs sureTreadTerrainBase() и sureTreadIgnoresTerrain() — module/combat/movement-terrain.mjs"
+    reader: "module/rules/squat-traits.mjs sureTreadMovementCap() — module/rules/character/movement.mjs; sureTreadWalkCeiling() — module/combat/path-limit.mjs, module/rules/movement-path.mjs; module/rules/squat-traits.mjs sureTreadTerrainBase() и sureTreadIgnoresTerrain() — module/combat/movement-terrain.mjs"
   },
   "trait.survivor": {
     label: "При провале не-атакующего теста S/T/A/P (и Навыка через них) — кнопка на карточке теста: потратить Очко Бесчестия и преуспеть на 1 Успех. ",
@@ -8321,9 +8331,9 @@ export const CAPABILITIES = {
   // Возможность читается напрямую с предметов актора, не через hasRuleFlag —
   // isItemActive зовёт сам сбор правил (приём rules/vision-aids.mjs).
   "defence.diseaseEffectsImmune": {
-    label: "Иммунитет к негативным эффектам болезней: предметы-болезни у носителя не действуют (записи Конструктора и эффекты болезни выключены, сам предмет остаётся на листе)",
-    source: "Метка Нургла (корбук)",
-    reader: "module/rules/disease-immunity.mjs diseaseEffectsSuppressed() — module/apps/effects.mjs isItemActive() (болезнь не активна → rulesFromItemMechanics её записи, в т.ч. charRecovery, не собирает)"
+    label: "Иммунитет к негативным эффектам болезней: предметы-болезни у носителя не действуют (записи Конструктора и эффекты болезни выключены, сам предмет остаётся на листе), и носитель не заражается — кнопка «Заражение» на болезни тест не бросает. Метка Нургла — всегда; Струп — пока препарат принят (основной эффект, до «Эффект завершён»: срок «1 час» препараты сами не считают).",
+    source: "Метка Нургла (корбук); Scab / Струп (корбук, стр. 279)",
+    reader: "module/rules/disease-immunity.mjs diseaseEffectsSuppressed() — module/apps/effects.mjs isItemActive() (болезнь не активна → rulesFromItemMechanics её записи, в т.ч. charRecovery, не собирает; препарат активен, пока activeEffect.isActive без пост-эффекта); заражение — module/rules/disease-infection.mjs infectionBlockedBy() → module/combat/disease-infection.mjs"
   },
   // Кровь и трупы не считаются Трудным Ландшафтом и не дают штрафа от брызг
   // (Метка Кхорна). Ландшафт покрывается записью kind:"terrainIgnore" самого

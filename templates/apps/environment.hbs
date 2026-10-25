@@ -126,6 +126,34 @@
       </details>
       {{/if}}
 
+      {{#if isVacuum}}
+      <h3 class="wh-env-h">🌌 Вакуум <span class="wh-env-h-val" style="color:{{env.vacuum.tone}}">{{#if env.vacuum.active}}воздуха нет{{else}}воздух есть{{/if}}</span></h3>
+      {{#if isGM}}
+      <div class="wh-env-rad-ctl">
+        <button type="button" class="{{#unless env.vacuum.active}}sel{{/unless}}" data-vacuum="off" style="width:auto;padding:0 10px">Воздух есть</button>
+        <button type="button" class="{{#if env.vacuum.active}}sel{{/if}}" data-vacuum="on" style="width:auto;padding:0 10px">Вакуум</button>
+      </div>
+      {{/if}}
+      <div class="wh-env-fx" style="--c:{{env.vacuum.tone}}">
+        {{#if env.vacuum.active}}
+          <div class="wh-env-fx-zone">{{env.vacuum.label}}</div>
+          <div class="wh-env-fx-mech">Начало Хода без пустотной брони — тест <b>T+0</b> (<b>Trade (Voidfarer)(T)+10</b>) · каждый Ход</div>
+          <div class="wh-env-fx-note">{{env.vacuum.note}}</div>
+        {{else}}
+          <div class="wh-env-fx-zone ok">Воздух есть — тесты вакуума не нужны.</div>
+        {{/if}}
+      </div>
+      {{#if isGM}}
+      <div class="wh-env-radtok">
+        <div class="wh-env-radtok-h">Взрывная Декомпрессия: шаблон радиусом 10 × ширина пробоя, 2d10 непоглощаемого X всем без пустотной брони</div>
+        <div class="wh-env-radprot-row">
+          <label>Ширина пробоя, м: <input type="number" name="breachWidth" value="1" min="0.1" step="0.1" style="width:70px"/></label>
+          <button type="button" data-act="decompress" title="Поставить шаблон на сцене и нанести урон накрытым без пустотной брони">💥 Декомпрессия</button>
+        </div>
+      </div>
+      {{/if}}
+      {{/if}}
+
     </section>
   </div>
 </div>

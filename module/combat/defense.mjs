@@ -51,6 +51,7 @@ import { singleCombatBonus } from "./single-combat.mjs";
 import { hasDodgeTalent, speedAwarenessPenalty, talentBalance, deflectableProjectile, isGrenadeProjectile, DEFLECT_BACK_DEGREES } from "../rules/dodge-talents.mjs";
 import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
 import { isHandShield } from "./hand-shield.mjs";
+import { RAN_METERS_FLAG } from "../rules/movement-path.mjs";
 
 // Контратака (стр. 12, Талант Counter Attack) — «раз в Раунд» ключ учёта,
 // тот же примитив, что у Локуса Сокрушения (constants/capabilities.mjs).
@@ -144,12 +145,18 @@ async function _speedAwarenessMod(actor) {
   }
   const pb = Number(actor.system?.characteristics?.per?.bonus) || 0;
   const fullRun = Number(actor.system?.movement?.sprintRun || actor.system?.movement?.run) || 0;
+  // Сколько пробежал на самом деле, мерит система (wdbc-l2urs, путь токена за
+  // Бег — combat/path-limit.mjs); не мерила (токен не двигали мышью) — полный Бег.
+  const measured = Number(actor.getFlag?.("warhammer-dbc", RAN_METERS_FLAG)) || 0;
+  // Вниз: штраф идёт за ПОЛНЫЕ P.b м, а floor(floor(x)/n) = floor(x/n) — дробная
+  // диагональ (7,5 м при P.b 4) не должна округлиться в лишние −5.
+  const suggested = measured > 0 ? Math.floor(measured) : fullRun;
   const meters = await foundry.applications.api.DialogV2.wait({
     window: { title: `Скоростная Внимательность — ${actor.name}` },
     classes: ["wh-roll-dialog-window"],
     position: { width: 340 },
-    content: `<div class="wh-skill-roll-form"><div class="roll-dlg-row"><label>Сколько метров пробежал (штраф −5 за каждые полные ${pb} м):</label>
-      <input type="number" name="meters" value="${fullRun}" min="0" step="1"></div></div>`,
+    content: `<div class="wh-skill-roll-form"><div class="roll-dlg-row"><label>Сколько метров пробежал (штраф −5 за каждые полные ${pb} м)${measured > 0 ? ", измерено по токену" : ""}:</label>
+      <input type="number" name="meters" value="${suggested}" min="0" step="1"></div></div>`,
     buttons: [
       { action: "go", label: "Избегать", default: true,
         callback: (event, button) => Math.max(0, parseInt(button.form.querySelector('[name="meters"]')?.value) || 0) },

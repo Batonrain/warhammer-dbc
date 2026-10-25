@@ -27,6 +27,7 @@ import { woundLossUpdates, woundDeathThreshold } from "../rules/wounds.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { resolveOpposed } from "../rules/test-kind.mjs";
 import { computeWoundHealing } from "../sheets/tabs/wounds.mjs";
+import { healActor } from "../combat/heal-target.mjs";
 import { isTokenInSight, tokensThatCanSee } from "../rules/vision-target.mjs";
 import { actorFactionKeys, anySameOrDescendant, getFactionIndex } from "../rules/factions.mjs";
 import { talentGroupOf } from "../rules/duplicate-grants.mjs";
@@ -122,6 +123,12 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *    (сперва Критические, потом обычные Раны, клэмп к максимуму) — та же
  *    формула, что уже даёт вкладка Ран на листе (Поцелуй Смерти: «исцеляет
  *    1d10+W.b жертвы Ран» себе после убийства).
+ *  - `healActor` (combat/heal-target.mjs) — лечение Ран ЦЕЛИ «под ключ»:
+ *    `await healActor(цель, сколько, { healer: actor })`. Если скрипт лечит
+ *    ДРУГОГО, писать Раны через неё, а не через `actor.update(
+ *    computeWoundHealing(...))`: общая точка лечения отмечает «лечил другой»
+ *    для «Недоверия к Лечению» (Затронутый Варпом, wdbc-1rno.26). Самолечение
+ *    (себя) можно по-старому через computeWoundHealing — штрафа по книге нет.
  *  - `grantExtraTurn`/`hasExtraTurn` (combat/extra-turn.mjs) — доп. Ход в
  *    том же бою (доп. Combatant того же актора), уже несёт Last Actor/
  *    Последнего Актёра; здесь — Пожиратель Времени (Тзинч, wdbc-1rno):
@@ -224,7 +231,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "changeActorInfamy", "actorInfamyValue", "actorInfamyMax",
     "startEyeOfChallenge", "clearEyeOfChallenge", "eyeOfChallengeInfo",
     "canSpendActionPoints", "spendActionPoints", "nearestVisiblePsyker", "defaultSpawnHunterHoundFn",
-    "nearestVisibleHatredTarget", "testOutcome", "resolveOpposed", "woundDeathThreshold", "computeWoundHealing",
+    "nearestVisibleHatredTarget", "testOutcome", "resolveOpposed", "woundDeathThreshold", "computeWoundHealing", "healActor",
     "grantExtraTurn", "hasExtraTurn", "endOfOrderInitiative", "mergedVictimUuids", "grantArmourOfTheGods",
     "resolveBurnedSenses", "buildCountenanceFearFlag", "purityOfBattleWave", "devouredSkillRank",
     "nextDevourerStreak", "pruneDevourerStreaks",
@@ -244,7 +251,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     changeActorInfamy, actorInfamyValue, actorInfamyMax,
     startEyeOfChallenge, clearEyeOfChallenge, eyeOfChallengeInfo,
     canSpendActionPoints, spendActionPoints, nearestVisiblePsyker, defaultSpawnHunterHoundFn,
-    nearestVisibleHatredTarget, testOutcome, resolveOpposed, woundDeathThreshold, computeWoundHealing,
+    nearestVisibleHatredTarget, testOutcome, resolveOpposed, woundDeathThreshold, computeWoundHealing, healActor,
     grantExtraTurn, hasExtraTurn, endOfOrderInitiative, mergedVictimUuids, grantArmourOfTheGods,
     resolveBurnedSenses, buildCountenanceFearFlag, purityOfBattleWave, devouredSkillRank,
     nextDevourerStreak, pruneDevourerStreaks,

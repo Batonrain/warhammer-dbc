@@ -238,6 +238,8 @@ export const PREDICATES = {
 | `psychicMind` | сопротивление психосиле по Воле (`ctx.psychicThreat` и `ctx.char = wp`): Непреклонный («влияющие на разум», решение владельца 25.10.2026, шире книги) |
 | `psychicDirect` | сопротивление психосиле, кроме Непрямых (`ctx.psychicThreat` без `ctx.psychicIndirect`; Выжигание Души входит): Солипсизм |
 | `interrogation` | сопротивление допросу (`ctx.interrogation`): встречный тест Воли жертвы в диалоге пытки (`apps/torture.mjs`), Ортопрокси |
+| `disease` | тест заражения болезнью (`ctx.diseaseTest`): кнопка «Заражение» на болезни (`combat/disease-infection.mjs`), Порог T±N из `system.vectorTests`; Преимущество Крепкого как Камень и Живучести Сплайса — `rules/squat-traits.mjs::diseaseResistReroll` |
+| `vacuum` | тест вакуума (`ctx.vacuumTest`): начало Хода без пустотной брони на сцене с флагом «вакуум» (`combat/vacuum.mjs`), T+0 или Trade (Voidfarer)(T)+10; Преимущество Сквата — `vacuumResistReroll` |
 
 Области манифестации, появившиеся на шаге 5.4:
 

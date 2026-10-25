@@ -136,6 +136,7 @@ import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { liftDivineProtection, wakeDivineProtected } from "./sheets/tabs/death.mjs";
 import { processConditionTurnStart, processConditionTurnEnd, sweepApplierTurnEnd } from "./combat/condition-ticks.mjs";
+import { processVacuumTurnStart } from "./combat/vacuum.mjs";
 import { sweepConditionDurations, onConditionEffectExpired } from "./combat/condition-effects.mjs";
 import { conditionExpiryLine, postConditionCard, setBurningDamageFormula, rollConditionCharTest } from "./combat/condition-ticks.mjs";
 import { applyRadHit, resolveCombatRadiation } from "./combat/radiation.mjs";
@@ -4485,6 +4486,10 @@ function _attachFateContextMenu(message, html) {
       // wdbc-j3yf) — «в начале своего Хода», отдельно от Кровотечения/
       // Горения выше (у тех книга явно говорит «в конце»).
       await processConditionTurnStart(nextCombatant.actor);
+      // Вакуум (стр. 483): начало Хода на сцене «без воздуха» без пустотной
+      // брони — тест T+0 (Voidfarer T+10), провал — непоглощаемый урон; открытые
+      // глаза — Blinding(0). Молча ничего не делает вне вакуумной сцены.
+      await processVacuumTurnStart(nextCombatant.actor, nextCombatant.token);
       // Регенерация Аблативных Ран (wdbc-smy7) — «1 за Ход», тем же тактом.
       await processAblativeWoundsTurnStart(nextCombatant.actor);
       // Руны Сигиллитов (wdbc-fsl9) — «в начале своего хода псайкер получает

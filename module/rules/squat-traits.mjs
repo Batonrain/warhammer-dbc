@@ -26,12 +26,18 @@
 //     — защита от радиации −3: считает rules/radiation-scene.mjs (радиация
 //       сцены по часам Календаря, combat/radiation-scene.mjs, wdbc-c5vf0);
 //     — Преимущество против ядов — poisonResistReroll (Живучесть Сплайса —
-//       та же функция, resist.poisonAdvantage); тестов против болезней и
-//       вакуума в системе нет, Преимущество на них — текстом.
+//       та же функция, resist.poisonAdvantage);
+//     — Преимущество против болезней — diseaseResistReroll (тест заражения,
+//       combat/disease-infection.mjs; Живучесть Сплайса — resist.diseaseAdvantage);
+//     — Преимущество против вакуума — vacuumResistReroll (тест вакуума,
+//       combat/vacuum.mjs; у Живучести Сплайса вакуума в тексте нет).
 //   Sure Tread / Надёжная Поступь (trait.sureTread):
 //     — −1 SPD — запись Конструктора kind:"movement" на самой Черте;
 //     — «не может двигаться пешком более 3×SPD в Ход» — Бег урезан до
-//       Натиска (rules/character/movement.mjs, sureTreadMovementCap);
+//       Натиска (rules/character/movement.mjs, sureTreadMovementCap), а
+//       пройденный за Ход путь токена не может превысить эту дальность
+//       (sureTreadWalkCeiling; измеряет и блокирует combat/path-limit.mjs,
+//       правило rules/movement-path.mjs, wdbc-l2urs);
 //     — Трудный Ландшафт: Awareness (P) вместо A, 3+ Успеха — не замедляет
 //       (combat/movement-terrain.mjs, sureTreadTerrainBase/
 //       sureTreadIgnoresTerrain).
@@ -50,6 +56,8 @@ export const SURE_TREAD            = "trait.sureTread";
 export const MUTATIONS_AS_ASTARTES = "mutations.asAstartes";
 /** Преимущество на тест против яда от записи Черты/Адаптации (Живучесть Сплайса). */
 export const POISON_ADVANTAGE      = "resist.poisonAdvantage";
+/** Преимущество на тест заражения болезнью от Адаптации (Живучесть Сплайса). */
+export const DISEASE_ADVANTAGE     = "resist.diseaseAdvantage";
 
 /** Расклин — «экстремальная ситуация» по тексту Черты: +30 вместо +15. */
 export function cleverHandsClearJamBonus(actor) {
@@ -69,6 +77,33 @@ export function poisonResistReroll(actor, condition) {
   // Адаптация Сплайса «Живучесть»: «Преимущество на все тесты против ядов…» (wdbc-dbveg).
   if (hasRuleFlag(actor, POISON_ADVANTAGE))
     return { rolls: 2, mode: "keepBest", label: "Преимущество против яда" };
+  return null;
+}
+
+/**
+ * Преимущество на тест заражения болезнью (combat/disease-infection.mjs):
+ * Крепкий как Камень («на все тесты против… болезней») и Живучесть Сплайса —
+ * та же форма, что у яда выше (бросок дважды, лучший).
+ * @returns {?{rolls:number, mode:"keepBest", label:string}}
+ */
+export function diseaseResistReroll(actor) {
+  if (!actor) return null;
+  if (hasRuleFlag(actor, HARD_AS_STONE))
+    return { rolls: 2, mode: "keepBest", label: "Преимущество (Крепкий как Камень)" };
+  if (hasRuleFlag(actor, DISEASE_ADVANTAGE))
+    return { rolls: 2, mode: "keepBest", label: "Преимущество против болезней" };
+  return null;
+}
+
+/**
+ * Преимущество на тест вакуума (combat/vacuum.mjs): Крепкий как Камень —
+ * «на все тесты против… вакуума».
+ * @returns {?{rolls:number, mode:"keepBest", label:string}}
+ */
+export function vacuumResistReroll(actor) {
+  if (!actor) return null;
+  if (hasRuleFlag(actor, HARD_AS_STONE))
+    return { rolls: 2, mode: "keepBest", label: "Преимущество (Крепкий как Камень)" };
   return null;
 }
 
@@ -116,4 +151,18 @@ export function sureTreadIgnoresTerrain(actor, passed, degrees) {
  */
 export function sureTreadMovementCap({ halfMove, move, charge, run }) {
   return { halfMove, move, charge, run: Math.min(run, charge) };
+}
+
+/**
+ * Тот же потолок «не более 3×SPD пешком в Ход», но на РЕАЛЬНО пройденный
+ * путь, а не на цифру Бега в листе (wdbc-l2urs): сумма Движений за Ход
+ * (Натиск 9 м + ещё Полудвижение 3 м у SPD 3) не может перевалить за дальность
+ * Натиска. Берётся уже посчитанный charge (после Поваленного, потери ног и
+ * Стойки), поэтому потолок опускается вместе с ним. Нулевой/неизвестный charge
+ * потолка не даёт (Infinity): не знаем скорость — не режем вслепую.
+ * @returns {number} метры; Infinity — потолка нет
+ */
+export function sureTreadWalkCeiling({ charge } = {}) {
+  const c = Number(charge);
+  return Number.isFinite(c) && c > 0 ? c : Infinity;
 }

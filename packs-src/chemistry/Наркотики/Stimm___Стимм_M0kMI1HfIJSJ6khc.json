@@ -27,7 +27,8 @@
       "testChar": "t",
       "testMod": 10,
       "frequency": "3 дня",
-      "penalty": "−20 на все тесты S, T и Ag"
+      "penalty": "−20 на все тесты S, T и Ag",
+      "penaltyMods": "basedon:s=-20; basedon:t=-20; basedon:ag=-20"
     },
     "statMods": {
       "ws": 0,

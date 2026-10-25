@@ -125,8 +125,8 @@ function foresightBonus(actor, charKey) {
 
 // Закалённый Кокон (Талант Геносемени, geneseed.core.temperedCocoon; 3-b530):
 // «ещё +10 на все тесты против жара, холода и вакуума». Теги теста ставит
-// combat/temperature-hazard.mjs (heatTest / coldTest); вакуум в системе тестом
-// не заведён (отдельная задача) — тег vacuumTest уже учтён.
+// combat/temperature-hazard.mjs (heatTest / coldTest) и combat/vacuum.mjs
+// (vacuumTest, Преимущество там же).
 export const TEMPERED_COCOON_CAP = "geneseed.core.temperedCocoon";
 function temperedCocoonBonus(actor, ctx) {
   if (!(ctx?.heatTest || ctx?.coldTest || ctx?.vacuumTest)) return 0;

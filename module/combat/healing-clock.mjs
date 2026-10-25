@@ -25,7 +25,7 @@ import { computeWoundHealing } from "../sheets/tabs/wounds.mjs";
 import { medicaeEff } from "../sheets/tabs/healing.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
-import { noteHealingFromOther } from "./warp-touched.mjs";
+import { noteWoundsRestored } from "./heal-target.mjs";
 import {
   REGIMEN_HEAL_LABELS, astartesRegimen, regimenHeal, careTestMod,
   healPeriodSeconds, effectiveHealKey, isWounded, healLevel
@@ -156,7 +156,9 @@ export async function healingClock(actor, { from, to }) {
   // последнего лечения под уходом, не от конца прыжка Календаря.
   const caregiver = caredHealAt != null ? caregiverOf(actor) : null;
   if (caregiver) {
-    const mistrust = await noteHealingFromOther(actor, caregiver, { at: caredHealAt });
+    // Общая точка лечения Ран (combat/heal-target.mjs): healed — всё, что
+    // восстановлено за прыжок; час считается от последнего лечения под уходом.
+    const mistrust = await noteWoundsRestored(actor, caregiver, healed, { at: caredHealAt });
     if (mistrust) lines.push(mistrust);
   }
   if (!periods && !rolls.length) return;

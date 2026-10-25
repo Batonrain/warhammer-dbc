@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/drug-narcotic.svg",
   "system": {
     "description": "Жёлто-зелёная жидкость из гноя (Метки Нургла): иммунитет к болезням ценой здоровья.",
-    "notes": "",
+    "notes": "Считает система: пока препарат действует (после приёма, до «Эффект завершён»), носитель получает иммунитет к негативным эффектам болезней и не заражается (кнопка «Заражение» на болезни: тест не нужен) — возможность defence.diseaseEffectsImmune, как у Метки Нургла. Срок «1 час» препараты не считают сами — действие снимают кнопкой «Эффект завершён». Не автоматизировано: Трейты Unnatural T (+2) и Stuff of Nightmares, пост-эффект.",
     "drugCategory": "narcotic",
     "deliveryMethod": "smoke",
     "quantity": 1,
@@ -109,7 +109,25 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "mechanics": [
+        {
+          "id": "vyCwJo7lMFXpVtTh",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "iD346ro2ovqdupR9",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "defence.diseaseEffectsImmune",
+              "label": "Иммунитет к негативным эффектам болезней (на время действия Струпа)"
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

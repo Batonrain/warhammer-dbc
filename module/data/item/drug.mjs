@@ -58,8 +58,24 @@ export class DrugData extends foundry.abstract.TypeDataModel {
         minDose:      num(0, "Доз до зависимости"),
         testChar:     new StringField({ initial: "t", label: "Характеристика теста" }),
         testMod:      num(0, "Модификатор теста"),
+        // Комбинированный тест Зависимости («Комб.Т+40/W+50», Рекаф/Алкоголь/Лхо):
+        // вторая Характеристика со своим модификатором; "" — тест обычный, одиночный.
+        // Бросок один, против наименьшего из двух Пределов (rules/drug-withdrawal.mjs).
+        testChar2:    new StringField({ initial: "", label: "Вторая характеристика теста (комбинированный)" }),
+        testMod2:     num(0, "Модификатор второй характеристики"),
         frequency:    text("Периодичность"),
         penalty:      text("Штраф"),
+        // Штраф без дозы ДАННЫМИ (penalty выше остаётся описанием для игрока):
+        // «область=значение; …», см. rules/drug-withdrawal.mjs::parsePenaltyMods.
+        penaltyMods:  text("Штраф без дозы (область=значение; …)"),
+        // Доп. модификатор теста на срыв (Смах: «–20 на тесты избавления от зависимости»).
+        breakMod:     num(0, "Доп. модификатор теста на срыв"),
+        // Урон в Характеристику «в начале каждого периода частоты приема»
+        // (Тиск: 1d5–1 в P; Сатрофин: 1d5 в W) — combat/drug-withdrawal.mjs.
+        periodCharDamage: new SchemaField({
+          stat:    text("Характеристика"),
+          formula: text("Формула")
+        }, { label: "Урон в Характеристику за период без дозы" }),
         // Какие Характеристики не восстанавливают урон, пока зависимость есть
         // (task-56da; нотация rules/char-loss.mjs::recoveryTargets: "int,per,wp,fel").
         blocksRecovery: new StringField({ initial: "", label: "Не восстанавливает урон в (при зависимости)" })

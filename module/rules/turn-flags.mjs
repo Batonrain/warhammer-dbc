@@ -52,6 +52,8 @@ export const TURN_SCOPED_FLAGS = {
   movedThisTurn:     "Импульсное: «не двигался с прошлого раунда» начинается заново каждым Ходом",
   recoilPool:        "Отскок: суммарная дистанция за Раунд (combat/recoil-pool.mjs)",
   moveDegreeThisTurn:"Выстрел Навскидку: категория перемещения этого Хода",
+  ranMetersThisTurn: "Скоростная Внимательность (wdbc-l2urs): сколько метров токен реально пробежал за Бег этого Хода — штраф −5 за каждые P.b м читает combat/defense.mjs; нужна до начала следующего Хода, ядро Foundry стирает историю пути раньше (combat/path-limit.mjs::onMoveToken)",
+  moveAllowanceThisTurn: "Лимит пути (wdbc-l2urs): сумма дистанций Действий Движения, объявленных в этом Ходу — сколько метров токен может пройти (combat/movement-actions.mjs::grantMoveAllowance, rules/movement-path.mjs)",
   physicalApSpentThisTurn:   "Калечащее: счётчик физических ОД этого Хода",
   cripplingTriggeredThisTurn:"Калечащее: защёлка «уже сработало в этом Ходу»",
   reactedAttackIds:  "Одна Реакция на одно Действие (стр. 12, wdbc-x1nz.2.28): attackId атак, на которые уже отвечали Реакцией",

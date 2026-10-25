@@ -294,6 +294,9 @@ const TYPES = {
       addiction: {
         hasAddiction: false, isAddicted: false, minDose: 0, testChar: "t",
         testMod: 0, frequency: "", penalty: "",
+        // Комбинированный тест, штраф данными, срыв, урон за период (wdbc-gyqf2).
+        testChar2: "", testMod2: 0, penaltyMods: "", breakMod: 0,
+        periodCharDamage: { stat: "", formula: "" },
         // При зависимости не восстанавливается урон в эти Характеристики (task-56da).
         blocksRecovery: ""
       },
@@ -381,7 +384,7 @@ const TYPES = {
     pack: "diseases",
     defaults: {
       diseaseType: "warp", severity: "", god: "nurgle", contagion: "",
-      incubation: "", symptoms: "", vectors: "", cure: "", active: false,
+      incubation: "", symptoms: "", vectors: "", vectorTests: [], cure: "", active: false,
       description: "", notes: "", bookSource: ""
     }
   },

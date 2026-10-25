@@ -86,7 +86,9 @@ import { grappleOnlyHidden, isBiteName } from "../rules/integral-rating.mjs";
 import { hasResilienceTalent } from "../rules/resilience-talents.mjs";
 import { fistBalanceBonus } from "../rules/pugilist-talents.mjs";
 import { isHookedUp, hookUpMinDose } from "../rules/drug-doses.mjs";
+import { addictionTestParts, parseFrequency, readWithdrawalEntries, drugKey, withdrawalStatusLabel } from "../rules/drug-withdrawal.mjs";
 import { hasOverclock } from "../rules/technomystic-talents.mjs";
+import { diseaseVectors, vectorLabel } from "../rules/disease-infection.mjs";
 
 // Определение всех Состояний листа — реестр constants/conditions.mjs
 // (wdbc-w88h): label/desc/иконка/счётчик собраны там, здесь только реэкспорт
@@ -399,8 +401,10 @@ function _buildActiveConditions(system, actor = null) {
 // Показываем только те, у которых hasAddiction === true
 // (независимо от того, активен ли сейчас препарат)
 
-function _buildAddictions(allItems, alchem = false) {
+function _buildAddictions(allItems, alchem = false, actor = null) {
   const result = [];
+  const now = (typeof game !== "undefined" ? game.time?.worldTime : null) ?? 0;
+  const entries = readWithdrawalEntries(actor);
 
   for (const item of allItems) {
     if (item.type !== "drug") continue;
@@ -420,6 +424,11 @@ function _buildAddictions(allItems, alchem = false) {
       testCharKey:  testCharKey,
       testChar:     testCharUpper,
       testMod:      testMod,
+      // «Т+40 / W+50» — комбинированный тест Зависимости одним ярлыком (wdbc-gyqf2).
+      testLabel:    addictionTestParts(add).map(p =>
+        `${CHARACTERISTICS[p.charKey]?.abbr ?? p.charKey.toUpperCase()}${p.mod > 0 ? "+" : ""}${p.mod || ""}`).join(" / "),
+      // Где сейчас зависимость: «до штрафа: 3ч» / «штраф идёт (2-й период); тест на срыв открыт: −50».
+      withdrawal:   withdrawalStatusLabel(entries[drugKey(item)], parseFrequency(add.frequency), now, add.breakMod),
       frequency:    add.frequency || "",
       penalty:      add.penalty   || "",
       // Alchem Monster (Репликант): недельный лимит ×2 — rules/replicant.mjs.
@@ -822,7 +831,7 @@ function buildGetDataUncached(actor) {
 
   // ── Зависимости ───────────────────────────────────────────────────────────
   // Все препараты у которых hasAddiction === true — всегда показываем в блоке
-  context.addictions = _buildAddictions(allItems, hasRuleFlag(actor, ALCHEM_MONSTER));
+  context.addictions = _buildAddictions(allItems, hasRuleFlag(actor, ALCHEM_MONSTER), actor);
 
   // ── Ментальные расстройства ─────────────────────────────────────────────────
   context.mentalDisorders = allItems.filter(i => i.type === "mentalDisorder").map(i => {
@@ -869,7 +878,10 @@ function buildGetDataUncached(actor) {
       godLabel: DIS_GODS[s.god] || "",
       symptoms: s.symptoms || "", vectors: s.vectors || "",
       incubation: s.incubation || "", cure: s.cure || "",
-      active: !!s.active
+      active: !!s.active,
+      // Кнопка «Заражение» (combat/disease-infection.mjs): есть, пока книга дала Порог.
+      infectable: diseaseVectors(i).length > 0,
+      infectTitle: diseaseVectors(i).map(vectorLabel).join("; ")
     };
   });
 

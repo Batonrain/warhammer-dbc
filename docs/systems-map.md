@@ -387,6 +387,17 @@
   редактируемая ГМ-надбавка `system.attackLimitBonus` (строка «Атаки» в
   экономике действий на вкладке БОЙ, wdbc-6rj).
 - `module/combat/movement-actions.mjs` — Полудвижение/Полное/Натиск/Бег/Выход.
+- **Лимит пути токена за Ход (wdbc-l2urs, 25.10.2026):** путь меряет ядро
+  Foundry v14 (история перемещений токена, сбрасывается на начале Хода;
+  `preMoveToken` отдаёт `movement.history.cost` + `movement.passed.cost`).
+  `combat/path-limit.mjs` — обвязка хуков `preMoveToken` (блок «Лимит пути
+  исчерпан») и `moveToken` (категория Хода для Выстрела Навскидку, пробег
+  Бегущего); `rules/movement-path.mjs` — чистая арифметика (бюджет = сумма
+  объявленных Действий Движения, `grantMoveAllowance` в `movement-actions.mjs`;
+  потолок Надёжной Поступи `squat-traits.mjs::sureTreadWalkCeiling`). Настройка
+  мира `movementPathLimit` (off/soft/strict). Не блокируются: ГМ, `api`/`hud`/
+  `undo`, телепорт, не свой Ход, вне боя, Орда/Техника, верховые, актор с
+  флагом `movementLimitOff` (пункт «Лимит пути» в меню Движения, только ГМ).
 - `module/combat/movement-terrain.mjs` — Трудный Ландшафт при Беге/Натиске.
 - **Полёт (стр. 30, wdbc-x1nz.2, 18.09.2026):** `combat/movement-actions.mjs`
   — `actorCanFly`/`actorHasFlyer` (гейт по Черте Flyer/Hoverer — Hoverer БЕЗ
@@ -1709,6 +1720,17 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   radiation.mjs`). Аналогичный по форме штраф за сильный ветер (`WEATHER`,
   ключ "wind") и урон трения атмосферы на входе с орбиты по-прежнему НЕ
   реализованы вообще — ни числа, ни формулы для них в системе нет.
+- **Вакуум и Взрывная Декомпрессия (core стр. 483, 25.10.2026):** флаг сцены
+  `env.vacuum` (категория «Вакуум» окна «Окружение», строка и кнопка 🎲 в
+  виджете). Чистая часть — `rules/vacuum.mjs` (защита `voidArmourOf`: надетая
+  непробитая броня со свойством `void`; Порог T+0 либо Trade (Voidfarer)(T)+10,
+  что выгоднее; задержка дыхания −30 и +1d5; урон = числу Провалов; радиус
+  Декомпрессии 10×ширина пробоя), обвязка — `combat/vacuum.mjs` (тест в начале
+  Хода из `hooks.mjs::updateCombat` и по кнопке виджета; Blinding(0) при
+  открытых глазах; шаблон Декомпрессии через `combat/templates.mjs`, один бросок
+  2d10 на всех накрытых без пустотной брони). Преимущество Крепкого как Камень
+  — `squat-traits.mjs::vacuumResistReroll`; область правил `vacuum`
+  (`ctx.vacuumTest`, `resolve-test.mjs`).
 - `apps/scene-nexus.mjs` + `constants/scene-nexus.mjs` — Нексус Сцен (группы
   сцен, телепортация).
 - `constants/vitals.mjs` — Голод/Жажда/Сон, авто-прогресс по `worldTime`.
@@ -1753,6 +1775,16 @@ AGENTS.md).
 - Химия/наркотики/яды: `data/item/drug.mjs`, `sheets/tabs/drugs.mjs`.
 - Болезни: `data/item/disease.mjs`, `constants/diseases.mjs` (справочник
   богов — сами болезни в компендиуме), `sheets/tabs/diseases.mjs`.
+- **Тест заражения (wdbc-dbveg, 25.10.2026):** у болезни структурное поле
+  `system.vectorTests` [{label, char, mod}] — пути передачи с Порогом T±N
+  (13 из 18 болезней; «на усмотрение МИ» и авто-заражение полей не несут,
+  сверка с текстом — `test/data/disease-vectors-vs-book.test.mjs`). Кнопка 🎲
+  «Заражение» в списке болезней вкладки ЭФФЕКТЫ → `combat/disease-infection.mjs`
+  (`rules/disease-infection.mjs` — чистая часть): провал включает болезнь.
+  Область правил `disease` (`ctx.diseaseTest`); Преимущество Крепкого как
+  Камень и Живучести Сплайса (`resist.diseaseAdvantage`) —
+  `squat-traits.mjs::diseaseResistReroll`; носитель Метки Нургла не заражается
+  (`rules/disease-immunity.mjs`).
 
 ## 25. Стремления (Aspirations)
 
@@ -1794,6 +1826,13 @@ AGENTS.md).
 - `apps/cogitator.mjs` — Когитаторы (постоянные терминалы-консоли).
 - `apps/compendium-browser.mjs` + `compendium-filters.mjs` — Обозреватель
   компендиумов.
+- **Реквизиция («Достать снаряжение», 25.10.2026):** `apps/requisition.mjs`
+  (кнопка 🛒 во вкладке «Снаряжение», тест Inf через `_rollCharacteristic`),
+  чистые таблицы стр. 165 и снижение Редкости Талантами (Повелитель Войны,
+  Древний Воин, Разгадыватель Ритуалов) — `rules/requisition.mjs`; галочки
+  Чрезмерного Богатства / Сети Контактов / Дела Фактотума и авто +20 Повелителя
+  Войны — источник `requisitionTalents` (`rules/requisition-talents.mjs`,
+  область `requisition` в `resolve-test.mjs`).
 
 ---
 
@@ -1820,7 +1859,13 @@ AGENTS.md).
   «Окружение»); невесомость → предикат `weightlessScene`; Преимущество против
   яда — `rules/squat-traits.mjs::poisonResistReroll`.
 - **Яды/наркотики:** недельный счётчик доз и тест Зависимости —
-  `rules/drug-doses.mjs`, `sheets/tabs/drugs.mjs::weeklyDoseCheck`; яд клыков
+  `rules/drug-doses.mjs`, `sheets/tabs/drugs.mjs::weeklyDoseCheck`;
+  комбинированный тест (Рекаф «Т+40/W+50», `addiction.testChar2`), частота
+  приёма, штраф без дозы (`addiction.penaltyMods` → правила броска), урон «в
+  начале периода» (Тиск/Сатрофин), тест на срыв –50 (+10 за период, раз за
+  период, `rollBreakTest`) — `rules/drug-withdrawal.mjs`,
+  `combat/drug-withdrawal.mjs` (часы `drugWithdrawal`), миграция копий
+  `migrations/drug-addiction-fields.mjs`; яд клыков
   Наги кнопкой — `apps/naga-traits.mjs::injectFangVenom`; Toxic (X) —
   запись «Свойство атаки» с `apRating:"rating"`.
 - **Субрасы Зверолюда:** Кхорнгор/Мясник/Плакальщик —

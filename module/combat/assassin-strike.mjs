@@ -31,6 +31,7 @@ import { itemHasName } from "../rules/predicates.mjs";
 import { hasAbility } from "../rules/ability-by-key.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
 import { skillTotal, markMovedThisTurn } from "./movement-actions.mjs";
+import { grantMoveAllowance } from "../rules/movement-path.mjs";
 import { degreesOfSuccess } from "../constants/craft.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
@@ -73,6 +74,7 @@ export async function resolveAssassinStrikeClick(actorUuid) {
 
   if (success) {
     await markMovedThisTurn(actor);
+    await grantMoveAllowance(actor, "assassin", actor.system.movement?.halfMove); // лимит пути (wdbc-l2urs)
     await actor.setFlag("warhammer-dbc", "disengageActive", true);
   }
 

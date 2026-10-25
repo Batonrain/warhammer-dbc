@@ -14,6 +14,7 @@ import { isBreathOfLifeItem, breathOfLifeAvailable, breathOfLifeSelfWounds,
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
+import { noteWoundsRestored, woundsRestored } from "../combat/heal-target.mjs";
 
 export { isBreathOfLifeItem };
 
@@ -36,7 +37,18 @@ export async function useBreathOfLife(actor, item) {
   const selfUpdate = { [`flags.${NS}.${BREATH_SPENT_FLAG}`]: true };
   if (selfWounds !== null) selfUpdate["system.wounds.value"] = selfWounds;
   await actor.update(selfUpdate);
+  const woundsBefore = { value: targetActor.system?.wounds?.value, critical: targetActor.system?.wounds?.critical };
   await targetActor.update(revivedCorpseUpdate());
+
+  // Труп встаёт — это лечение от другого: «Недоверие к Лечению» (Затронутый
+  // Варпом, wdbc-1rno.26) через общую точку лечения Ран (combat/heal-target.mjs).
+  // Отказ записать метку (нет прав на лист цели) не должен ронять карточку.
+  let mistrust = "";
+  try {
+    mistrust = await noteWoundsRestored(targetActor, actor, woundsRestored(woundsBefore, targetActor.system?.wounds));
+  } catch {
+    mistrust = "Недоверие к Лечению: нет прав на лист цели — штраф −10 (кроме T) на 1 час отметить вручную (нужен ГМ).";
+  }
 
   await postTestCard(actor, {
     icon: rollIcon("warp", "#7fd36a"),
@@ -46,6 +58,7 @@ export async function useBreathOfLife(actor, item) {
         ? `<div class="roll-threshold">Раны ${esc(actor.name)}: <b>0</b> — отданы целиком.</div>`
         : `<div class="roll-threshold">Раны ${esc(actor.name)} и так были на нуле или ниже — цена не взята (книга: «если они не были ниже»).</div>`,
       `<div class="roll-threshold">${esc(targetActor.name)} возвращается к жизни с <b>0</b> Ран, отрицательные сняты.</div>`,
+      mistrust ? `<div class="roll-threshold">${esc(mistrust)}</div>` : "",
       `<div class="roll-threshold" style="opacity:.8;">Повторно — только после полного излечения Ран. Срок смерти цели (не более 3 дней) и выбор Тзинчита/Слаанешита «остаться мёртвым либо потерять покровительство» решает стол.</div>`
     ]
   }, { sound: false });

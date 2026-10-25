@@ -51,6 +51,7 @@ import { bodyWeightOf, totalWeightOf, throwTier, canWieldAsCudgel, footingRequir
   from "../rules/improvised-weapon.mjs";
 import { spendActionPoints, isEncounterActive, hasActionEconomy } from "./action-economy.mjs";
 import { spdMeters } from "./recoil-pool.mjs";
+import { grantMoveAllowance } from "../rules/movement-path.mjs";
 import { maxHands, handsOccupied, weaponHandsRequired, twoHandedTestPenalty, TWO_HANDED_PENALTY_LABEL } from "../rules/hands.mjs";
 import { bearingDegrees, relativeBearing } from "../rules/facing.mjs";
 import { hasDodgeTalent, grappleCoverHalfAngle } from "../rules/dodge-talents.mjs";
@@ -659,6 +660,9 @@ export async function _resolveOverpowerSuccess(actor, { deg = 1 } = {}) {
     }, { sound: false });
     return;
   }
+  // Атакующий перемещается вместе с партнёром — это путь его токена на его Ходу
+  // (лимит пути, wdbc-l2urs): без записи он упёрся бы в бюджет.
+  await grantMoveAllowance(actor, "overpower", maxM);
   await postTestCard(actor, {
     icon: rollIcon("sword","#e08a3a"), title: "Пересилить: сдвиг",
     outcome: `${esc(actor.name)} сдвигает ${esc(partner.name)} до <b>${maxM} м</b> в любом направлении, перемещаясь вместе с ней — передвиньте обе фишки.`,

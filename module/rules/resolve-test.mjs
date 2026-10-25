@@ -187,6 +187,11 @@ export function effectAppliesTo(target, ctx) {
   // встречным тестам подряд.
   if (scope === "vsexorcism") return ctx.kind === "vsExorcism";
   if (scope === "social") return isSocialSkill(ctx.skill);
+  // Реквизиция — тест «достать снаряжение» (apps/requisition.mjs): идёт по Inf
+  // (или по F у Сети Контактов), поэтому свой ctx-флаг, а не «char:inf» — тот
+  // подхватил бы любой тест Влияния. Бонус Чрезмерного Богатства «на получение
+  // снаряжения» не должен срабатывать на обычном броске Inf.
+  if (scope === "requisition") return ctx.requisition === true;
   // Любой тест НАВЫКА (обычного или группового), но не Характеристики — тест
   // характеристики не несёт ни ctx.skill, ни ctx.group (см. коммент выше).
   // Пока единственный потребитель — Зависимость (rules/addiction.mjs).
@@ -209,9 +214,17 @@ export function effectAppliesTo(target, ctx) {
   // Тест сопротивления яду (wdbc-1rno.1, Пророк Гэллерпокса): единственный
   // реальный «тест против яда» в системе — сопротивление свойству оружия
   // Toxic (module/hooks.mjs::_applyWeaponPropEffect, condition==="poisoned").
-  // Болезни своего теста не имеют вовсе (type:"disease" — статичные данные,
-  // без броска), поэтому этот scope покрывает только яд, не болезнь.
+  // Болезнь — отдельный scope "disease" ниже, не этот.
   if (scope === "poison") return ctx.poisonTest === true;
+  // Тест заражения болезнью (combat/disease-infection.mjs, wdbc-dbveg):
+  // T±N из векторов болезни. Свой флаг, а не «char:t»: тот ловил бы любой тест
+  // Стойкости (жару, радиацию, яд). Преимущество Крепкого как Камень и
+  // Живучести Сплайса — rules/squat-traits.mjs::diseaseResistReroll.
+  if (scope === "disease") return ctx.diseaseTest === true;
+  // Тест вакуума (combat/vacuum.mjs, trade-voidfarer-10-wdbc-dbveg): T+0 в
+  // начале Хода без пустотной брони. Преимущество Сквата —
+  // squat-traits.mjs::vacuumResistReroll.
+  if (scope === "vacuum") return ctx.vacuumTest === true;
   // Наследие Крови, Оружие Наследия (wdbc-1rno.35, стр. 427, wdbc-1rno.46):
   // «+10 на встречные тесты против психосил/выжигания души» — общий тег
   // «это тест против опасной психической угрозы», протащенный явно через

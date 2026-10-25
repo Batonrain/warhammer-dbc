@@ -26,6 +26,7 @@ import { inPariahVoid } from "../rules/null-zones.mjs";
 import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { setDeceased } from "../sheets/tabs/body.mjs";
 import { DECEASED_AT_FLAG } from "../sheets/tabs/death.mjs";
+import { noteWoundsRestored, woundsRestored } from "./heal-target.mjs";
 
 const NS = "warhammer-dbc";
 /** Метка «раз за сцену» на самом медике (apps/game-session.mjs::markRuleUsageUsed). */
@@ -85,11 +86,25 @@ export async function runReanimate(medic, patient, { reanimateOk = false } = {})
     ago != null ? `Умер ${ago} Раунд(ов) назад (предел Cor.b = ${win.limit}).` : `Момент смерти не записан — допуск по Cor.b (${win.limit}) на совести стола.`,
     "Потрачены: Очко Бесчестия, полное действие."
   ];
+  const woundsBefore = { value: patient.system?.wounds?.value, critical: patient.system?.wounds?.critical };
+  let revived = false;
   try {
     await patient.update(patch);
+    revived = true;
     await setDeceased(patient, false);
   } catch {
     lines.push(`${rollIcon("warn", "#ffb84d")}Нет прав на изменение листа цели — снимите смерть и выставьте Раны 0 вручную (нужен ГМ).`);
+  }
+  // Труп встаёт — это лечение от другого: «Недоверие к Лечению» (Затронутый
+  // Варпом, wdbc-1rno.26) через общую точку лечения Ран (combat/heal-target.mjs).
+  // Только если Раны реально подняты (patient.update прошёл).
+  if (revived) {
+    try {
+      const mistrust = await noteWoundsRestored(patient, medic, woundsRestored(woundsBefore, patient.system?.wounds));
+      if (mistrust) lines.push(mistrust);
+    } catch {
+      lines.push(`${rollIcon("warn", "#ffb84d")}Недоверие к Лечению: нет прав на лист цели — штраф −10 (кроме T) на 1 час отметить вручную (нужен ГМ).`);
+    }
   }
   await post(medic, patient, lines);
   return true;

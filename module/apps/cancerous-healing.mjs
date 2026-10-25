@@ -36,6 +36,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { expectedPhase } from "../constants/effect-keys.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
+import { noteWoundsRestored } from "../combat/heal-target.mjs";
 
 export { isCancerousHealingItem };
 
@@ -179,6 +180,18 @@ export async function applyCancerousHealingEffect(casterActor, target, { forced 
   await target.update(update);
   await syncCancerousHealingPenalty(target);
 
+  // Целительное касание — лечение от другого: «Недоверие к Лечению» (Затронутый
+  // Варпом, wdbc-1rno.26) через общую точку лечения Ран (combat/heal-target.mjs).
+  // «Восстановленным» считаем выданный аблатив (сами Раны здесь не растут):
+  // касание цели без недостающих Ран (granted <= 0) лечением не является.
+  // Отказ записать метку (нет прав на лист цели) не роняет карточку.
+  let mistrust = "";
+  try {
+    mistrust = await noteWoundsRestored(target, casterActor, granted);
+  } catch {
+    mistrust = "Недоверие к Лечению: нет прав на лист цели — штраф −10 (кроме T) на 1 час отметить вручную (нужен ГМ).";
+  }
+
   const penalty = cancerousHealingPenaltyValue(contribution);
   // Результат применения способности, а не тест: своего броска и Порога тут
   // нет (бросок безоружной атаки живёт в своей карточке), звука тоже.
@@ -189,7 +202,8 @@ export async function applyCancerousHealingEffect(casterActor, target, { forced 
       forced ? `<div class="roll-threshold" style="opacity:.8;">Цель не согласна — навязано безоружной атакой.</div>` : "",
       `<div class="roll-threshold">Аблативные Раны: <b>${newAblative}</b>${granted > 0 ? ` (+${granted})` : missing === 0 ? " (цель не ранена)" : " (без изменений — уже не меньше)"}</div>`,
       contribution > 0 ? `<div class="roll-threshold">Штраф от аблативных Ран: A и S <b>−${penalty}</b> каждая</div>` : "",
-      cured.length ? `<div class="roll-threshold">Снято: <b>${esc(cured.join(", "))}</b></div>` : ""
+      cured.length ? `<div class="roll-threshold">Снято: <b>${esc(cured.join(", "))}</b></div>` : "",
+      mistrust ? `<div class="roll-threshold">${esc(mistrust)}</div>` : ""
     ]
   }, { sound: false });
 }

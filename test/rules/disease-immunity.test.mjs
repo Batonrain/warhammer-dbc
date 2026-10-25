@@ -34,7 +34,10 @@ const traitDoc = en => TRAITS.find(d => enName(d) === en);
 /** Копия документа пака на акторе: parent, getFlag, плоский flags — как у живого. */
 function owned(doc, actor, id) {
   const item = {
-    id, name: doc.name, type: doc.type, system: structuredClone(doc.system ?? {}),
+    // Болезнь на этом тесте — «больной»: включена (wdbc-dbveg, isItemActive для
+    // disease возвращает system.active; в паке болезни выдаются выключенными).
+    id, name: doc.name, type: doc.type,
+    system: { ...structuredClone(doc.system ?? {}), ...(doc.type === "disease" ? { active: true } : {}) },
     flags: structuredClone(doc.flags ?? {}), parent: actor
   };
   item.getFlag = (s, k) => item.flags?.[s]?.[k];

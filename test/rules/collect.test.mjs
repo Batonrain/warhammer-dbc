@@ -154,11 +154,14 @@ describe("источники по умолчанию", () => {
     expect([...getRuleSources().map(([key]) => key)].sort())
       .toEqual(["addiction", "adjutant", "awarenessTalents", "beastmanShaman", "commandSubstitution",
                 "conditions", "core",
-                "daemonInevitability", "devourerOfKnowledge", "dreadnought", "hatred", "homeworld", "items",
+                "daemonInevitability", "devourerOfKnowledge", "dreadnought",
+                // drugWithdrawal (wdbc-gyqf2, 25.10.2026) — штраф зависимого наркотика, пока доза просрочена.
+                "drugWithdrawal", "hatred", "homeworld", "items",
                 "leadershipTalents", "legacyBloodPsychic", "legacyDistractingCharSwap", "legacyExcess", "legacyGuardian",
                 "legacyInstinctiveDisarm", "legacyQuietAwareness", "legacyWrath", "nullZones",
                 "occultistTalents", "opposedTarget", "paths", "patron", "prophetOfGallerpox",
-                "psychicSustainTarget", "race", "rage", "resilienceTalents", "serumHook", "situational", "situationalSocialTalents", "socialTalents", "synesthesia",
+                // requisitionTalents (Sahara peer-ancient-warrior-…, 25.10.2026) — галочки и +20 теста «Достать снаряжение».
+                "psychicSustainTarget", "race", "rage", "requisitionTalents", "resilienceTalents", "serumHook", "situational", "situationalSocialTalents", "socialTalents", "synesthesia",
                 "warpTouchedHealMistrust", "yigori"]);
   });
 

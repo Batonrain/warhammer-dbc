@@ -66,6 +66,7 @@ import { activateItemContextMenu, openContextMenu } from "./context-menu.mjs";
 import { _resolveSoulBurn }                 from "../hooks.mjs";
 import { openRigManager }                   from "../apps/rig-manager.mjs";
 import { openXpLog }                        from "../apps/xp-log.mjs";
+import { openRequisition }                 from "../apps/requisition.mjs";
 import { infamyContext, changeInfamy, restoreInfamy, spendInfamy, actorInfamyMaxForSheet } from "../apps/infamy-points.mjs";
 import { tempInfamyInfo } from "../rules/temp-infamy.mjs";
 import { ruleFlagCost } from "../rules/flags.mjs";
@@ -731,6 +732,8 @@ function onRigOpen()  { return openRigManager(this.actor); }
 // Журнал опыта — read-only лента (wdbc-ng7q), доступна и без прав на правку листа.
 function onXpLogOpen() { return openXpLog(this.actor); }
 function onGearLib(event) { event.preventDefault(); return this._openGearPicker(); }
+// «Достать снаряжение» — тест Реквизиции Inf (apps/requisition.mjs, стр. 165).
+function onRequisition(event) { event.preventDefault(); return openRequisition(this.actor, this); }
 
 // Добавление Черт/Талантов — через пикер с листа (группировка по типам, поиск,
 // описание по стрелке). ПКМ — создать пустую (для своих/книжных), см. _onRender.
@@ -872,6 +875,7 @@ export class WarhammerCharacterSheet
       rigOpen: whenEditable(onRigOpen),
       xpLogOpen: onXpLogOpen,
       gearLib: whenEditable(onGearLib),
+      requisition: whenEditable(onRequisition),
       traitAdd: whenEditable(onTraitAdd),
       talentAdd: whenEditable(onTalentAdd),
       mutgiftAdd: whenEditable(onMutgiftAdd),

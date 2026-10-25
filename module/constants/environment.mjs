@@ -146,9 +146,20 @@ export function radEffect(lvl) {
   return { ...row, active: true, tone };
 }
 
+// ── Вакуум (корбук стр. 483): флаг сцены «воздуха нет» ─────────────────────
+// Без пустотной брони в начале Хода — тест T+0 (Trade (Voidfarer)(T)+10), провал —
+// непоглощаемый урон, Blinding(0) при открытых глазах (rules/vacuum.mjs,
+// combat/vacuum.mjs). Таблицы частот у вакуума нет — бьёт каждый Ход.
+export function vacuumEffect(on) {
+  return on
+    ? { active: true, label: "Вакуум", tone: "#8a7fd0",
+        note: "В начале Хода без пустотной брони — тест T+0 (Trade (Voidfarer)(T)+10), провал — непоглощаемый урон в Торс; задержка дыхания −30 и +1d5 при провале; открытые глаза — Blinding(0) каждый Ход." }
+    : { active: false, label: "Воздух есть", tone: "#8fe0b0", note: "" };
+}
+
 // ── Состояние сцены: чтение/запись ────────────────────────────────────────
 export function defaultEnv() {
-  return { weather: "clear", weatherText: "", temp: 20, gravity: 1, rad: 0, note: "" };
+  return { weather: "clear", weatherText: "", temp: 20, gravity: 1, rad: 0, vacuum: false, note: "" };
 }
 export function normalizeEnv(raw) {
   const d = defaultEnv();
@@ -159,6 +170,8 @@ export function normalizeEnv(raw) {
     temp:        Number.isFinite(Number(raw.temp)) ? Number(raw.temp) : d.temp,
     gravity:     Number.isFinite(Number(raw.gravity)) ? Number(raw.gravity) : d.gravity,
     rad:         Math.max(0, Math.min(10, Math.round(Number(raw.rad) || 0))),
+    // Старые сцены поля не знают — undefined → «воздух есть».
+    vacuum:      raw.vacuum === true,
     note:        raw.note || ""
   };
 }
@@ -176,6 +189,7 @@ export function envView(e) {
     temp: { value: e.temp, tone: tempTone(e.temp), testSigned, ...temp },
     gravity: { value: e.gravity, ...grav },
     rad: { value: e.rad, ...rad },
+    vacuum: vacuumEffect(e.vacuum === true),
     note: e.note
   };
 }

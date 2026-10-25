@@ -31,6 +31,7 @@ import { isDreadnoughtPilot, DREADNOUGHT_PILOT_FLAG,
 import { PATRON_RULES } from "./library/patronage.mjs";
 import { BEASTMAN_SHAMAN_RULES } from "./library/beastman-shaman.mjs";
 import { addictionPenaltyRules } from "./addiction.mjs";
+import { withdrawalRulesOf } from "./drug-withdrawal.mjs";
 import { SYNESTHESIA_RULES } from "./library/synesthesia.mjs";
 import { situationalRules } from "./situational.mjs";
 import { psychicSustainTargetRules } from "./psychic-sustain-target.mjs";
@@ -43,6 +44,7 @@ import { situationalSocialRules } from "./situational-social-talents.mjs";
 import { resilienceTalentRules } from "./resilience-talents.mjs";
 import { leadershipTalentRules } from "./leadership-talents.mjs";
 import { occultistTalentRules } from "./occultist-talents.mjs";
+import { requisitionTalentRules } from "./requisition-talents.mjs";
 import { commandSubstitutionRules } from "./command-substitution.mjs";
 import { legacyWrathRules, legacyExcessRules, legacyGuardianRules, legacyBloodPsychicRules, legacyInstinctiveDisarmRules, legacyDistractingCharSwapRules, legacyQuietAwarenessRules } from "./legacy-weapon.mjs";
 import { devourerPermanentRules } from "./devourer-of-knowledge.mjs";
@@ -224,6 +226,13 @@ registerRuleSource("leadershipTalents", (a, ctx) =>
 // заголовок rules/occultist-talents.mjs.
 registerRuleSource("occultistTalents", (a, ctx) => occultistTalentRules(a, ctx));
 
+// Тест «Реквизиция» («Достать снаряжение», apps/requisition.mjs): галочки
+// Чрезмерного Богатства, Сети Контактов (F вместо Inf), Дела Фактотума и
+// авто-бонус Повелителя Войны; те же Богатство и Повелитель Войны — галочками
+// на тесте Commerce. Снижение Редкости Талантами считает rules/requisition.mjs
+// ДО таблицы, не здесь. См. заголовок rules/requisition-talents.mjs.
+registerRuleSource("requisitionTalents", (a, ctx) => requisitionTalentRules(a, ctx));
+
 // Подмена Командования — Living Legend (Inf вместо F) и Infernal Master
 // (Forbidden Lore(Daemons)(W) вместо Command) конкурируют за один навык;
 // выбор лучшей из двух — отдельный источник, не сумма двух rollBonus на
@@ -282,6 +291,13 @@ registerRuleSource("devourerOfKnowledge", a => devourerPermanentRules(a));
 // Считается по времени (game.time.worldTime), не по when: правило действует
 // каждый бросок, пока предмет не даст isAddictionUnsatisfied === false.
 registerRuleSource("addiction", a => addictionPenaltyRules(a));
+
+// Зависимость от НАРКОТИКА (wdbc-gyqf2): штраф системного препарата, пока доза
+// просрочена на частоту приёма. Состояние — флаг актора drugWithdrawal,
+// ведёт его combat/drug-withdrawal.mjs; сам файл-источник — лист графа (только
+// константы календаря), поэтому круга через sources.mjs не замыкает.
+registerRuleSource("drugWithdrawal", a =>
+  withdrawalRulesOf(a, (typeof game !== "undefined" ? game.time?.worldTime : null) ?? 0));
 
 // Затронутый Варпом, субмутация 10 «Недоверие к Лечению» (wdbc-1rno.26):
 // −10 на все тесты, кроме T, час после чужого лечения — та же схема «правило

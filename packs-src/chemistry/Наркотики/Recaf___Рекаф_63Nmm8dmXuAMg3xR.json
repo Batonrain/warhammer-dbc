@@ -27,7 +27,10 @@
       "testChar": "t",
       "testMod": 40,
       "frequency": "8 часов",
-      "penalty": "−10 на социальные взаимодействия"
+      "penalty": "−10 на социальные взаимодействия",
+      "testChar2": "wp",
+      "testMod2": 50,
+      "penaltyMods": "skill:charm,skill:command,skill:commerce,skill:deceive,skill:inquiry,skill:interrogate=-10"
     },
     "statMods": {
       "ws": 0,

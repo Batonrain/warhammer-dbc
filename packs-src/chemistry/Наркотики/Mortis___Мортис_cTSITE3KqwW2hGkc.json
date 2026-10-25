@@ -26,8 +26,9 @@
       "minDose": 2,
       "testChar": "wp",
       "testMod": 40,
-      "frequency": "1 день",
-      "penalty": "−5 на тесты W и F; иначе тест W+0"
+      "frequency": "7 дней",
+      "penalty": "−30 на все тесты W и F; чтобы выйти из боя или убежать от смертельной опасности, нужен успешный тест W+0",
+      "penaltyMods": "basedon:wp=-30; basedon:fel=-30"
     },
     "statMods": {
       "ws": 0,

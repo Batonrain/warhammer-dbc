@@ -38,6 +38,7 @@ import { serumHookClock } from "./replicant.mjs";
 import { limbRegenClock } from "./limb-regen.mjs";
 import { sceneRadiationClock } from "./radiation-scene.mjs";
 import { armourMongerClock } from "./armour-monger.mjs";
+import { drugWithdrawalClock } from "./drug-withdrawal.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -183,6 +184,11 @@ export const CONDITION_CLOCK_HANDLERS = [
   // каждые 8 ч (combat/replicant.mjs). После charLoss: урон этого отрезка не
   // должен тут же «восстановиться» тем же шагом.
   { id: "serumHook", run: serumHookClock },
+  // Зависимость от наркотика: частота приёма, штраф без дозы, урон «в начале
+  // каждого периода», открытие теста на срыв (wdbc-gyqf2, combat/drug-withdrawal.mjs).
+  // После charLoss — тот же довод, что у serumHook: урон этого отрезка не должен
+  // тут же «восстановиться» тем же шагом.
+  { id: "drugWithdrawal", run: drugWithdrawalClock },
   // Бронник (Талант Стойкости): метка «броня обслужена сегодня» гаснет в
   // полночь по Календарю — combat/armour-monger.mjs.
   { id: "armourMonger", run: armourMongerClock },

@@ -730,6 +730,36 @@ describe("Первая Помощь и отдых по книге (wdbc-x1nz.2.1
       await applyHealing(person(), patient, { mode: "firstAid", mod: 0, bonus: 0 });
       expect(patient.getFlag("warhammer-dbc", "healMistrustUntil")).toBeUndefined();
     });
+
+    // Права (общая точка лечения, combat/heal-target.mjs): две разные записи —
+    // Раны и метка, и отказ одной не должен выдавать себя за отказ другой.
+    it("нет прав на метку — Раны вылечены, в карточке отдельная строка про штраф", async () => {
+      const patient = person({ items: [mistrustItem()] });
+      patient.system.wounds = { value: 5, max: 10, critical: 0, lostSinceFirstAid: null };
+      patient.setFlag = async () => { throw new Error("нет прав"); };
+      captured.nextRoll = 5;
+      await applyHealing(person(), patient, { mode: "firstAid", mod: 0, bonus: 0 });
+      expect(patient.system.wounds.value).toBeGreaterThan(5);
+      const text = captured.chat[0].content;
+      expect(text).toContain("Восстановлено Ран");
+      expect(text).toContain("нет прав на лист цели");
+      expect(text).not.toContain("восстановите");
+    });
+
+    it("нет прав на Раны — строка «восстановите вручную», метки нет", async () => {
+      const patient = person({ items: [mistrustItem()] });
+      patient.system.wounds = { value: 5, max: 10, critical: 0, lostSinceFirstAid: null };
+      const realUpdate = patient.update;
+      patient.update = async data => {
+        if ("system.wounds.value" in data) throw new Error("нет прав");
+        return realUpdate(data);
+      };
+      captured.nextRoll = 5;
+      await applyHealing(person(), patient, { mode: "firstAid", mod: 0, bonus: 0 });
+      expect(patient.system.wounds.value).toBe(5);
+      expect(captured.chat[0].content).toContain("восстановите");
+      expect(patient.getFlag("warhammer-dbc", "healMistrustUntil")).toBeUndefined();
+    });
   });
 
   it("Саркофаг: лечение не поднимает Раны выше effectiveMax", async () => {

@@ -238,6 +238,7 @@
       <div class="effect-card effect-card-disease {{#if dis.active}}effect-card-disease-active{{/if}}" data-item-id="{{dis.id}}"> <div class="effect-card-header"> <span class="effect-icon">☣</span> <span class="effect-name disease-name-link" data-item-id="{{dis.id}}" style="cursor:pointer;">{{dis.name}}</span> <span class="effect-category">{{dis.typeLabel}}</span> {{#if dis.severityLabel}}<span class="effect-category">{{dis.severityLabel}}</span>{{/if}}
             {{#if dis.godLabel}}<span class="effect-category disease-god">{{dis.godLabel}}</span>{{/if}}
             {{#if dis.active}}<span class="effect-state-badge effect-state-disease">активна</span>{{/if}}
+            {{#if dis.infectable}}{{#unless dis.active}}<button type="button" class="disease-infect-btn effect-disease-toggle" data-item-id="{{dis.id}}" title="Тест заражения: {{dis.infectTitle}}">🎲</button>{{/unless}}{{/if}}
             <button type="button" class="disease-active-toggle effect-disease-toggle" data-item-id="{{dis.id}}" title="Переключить активность">{{#if dis.active}}⏸{{else}}▶{{/if}}</button> <button type="button" class="disease-remove-btn" data-item-id="{{dis.id}}" title="Снять болезнь">✕</button> </div> {{#if dis.symptoms}}<div class="effect-desc"><b>Симптомы:</b> {{dis.symptoms}}</div>{{/if}}
         {{#if dis.vectors}}<div class="disease-line"><b>Векторы:</b> {{dis.vectors}}</div>{{/if}}
         {{#if dis.incubation}}<div class="disease-line"><b>Инкубация:</b> {{dis.incubation}}</div>{{/if}}
@@ -250,9 +251,11 @@
   {{!-- ── ЗАВИСИМОСТИ ─────────────────────────────────────────────────────── --}}
   {{#if addictions.length}}
   <div class="effects-subsection" data-collapse-key="body-addictions"> <div class="panel-title panel-title-addiction" data-action="panelCollapse">ЗАВИСИМОСТИ</div> <div class="addictions-list"> {{#each addictions as |add|}}
-      <div class="addiction-entry" data-item-id="{{add.id}}"> <div class="addiction-header"> <span class="addiction-icon"></span> <span class="addiction-name">{{add.name}}</span> <span class="addiction-status-on">● зависим</span> <span class="addiction-test">Тест: <b>{{add.testChar}}{{#if add.testMod}}{{signedNum add.testMod}}{{/if}}</b></span> {{#if add.frequency}}<span class="addiction-freq">{{add.frequency}}</span>{{/if}}
-          <button type="button" class="addiction-test-btn" data-item-id="{{add.id}}" data-char="{{add.testCharKey}}" data-mod="{{add.testMod}}" title="Тест на срыв зависимости (успех — избавление)">Тест</button> <button type="button" class="addiction-remove-btn" data-item-id="{{add.id}}" title="Снять зависимость вручную">✕</button> </div> {{#if add.minDose}}
+      <div class="addiction-entry" data-item-id="{{add.id}}"> <div class="addiction-header"> <span class="addiction-icon"></span> <span class="addiction-name">{{add.name}}</span> <span class="addiction-status-on">● зависим</span> <span class="addiction-test" title="{{#if add.testLabel}}Комбинированный тест — один бросок против наименьшего Предела, если указаны две Характеристики{{/if}}">Тест: <b>{{add.testLabel}}</b></span> {{#if add.frequency}}<span class="addiction-freq">{{add.frequency}}</span>{{/if}}
+          <button type="button" class="addiction-test-btn" data-item-id="{{add.id}}" data-char="{{add.testCharKey}}" data-mod="{{add.testMod}}" title="Тест на срыв зависимости: –50, +10 за каждый предыдущий период под штрафом, раз за период (успех — избавление)">Тест</button> <button type="button" class="addiction-remove-btn" data-item-id="{{add.id}}" title="Снять зависимость вручную">✕</button> </div> {{#if add.minDose}}
         <div class="addiction-dose">Мин. опасная доза/нед.: <b>{{add.minDose}}</b>{{#if add.minDoseAlchem}} <span title="Alchem Monster / Алхимическое Чудовище: лимит приёма в неделю удвоен">(×2, Алхимическое Чудовище)</span>{{/if}}</div> {{/if}}
+        {{#if add.withdrawal}}
+        <div class="addiction-dose">Без дозы: <b>{{add.withdrawal}}</b></div> {{/if}}
         {{#if add.penalty}}
         <div class="addiction-penalty">Штраф зависимости: {{add.penalty}}</div> {{/if}}
       </div> {{/each}}

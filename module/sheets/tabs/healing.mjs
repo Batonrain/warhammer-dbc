@@ -6,7 +6,6 @@
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { resolveTest } from "../../rules/resolve-test.mjs";
-import { computeWoundHealing } from "./wounds.mjs";
 import { woundLossUpdates as computeWoundDamage } from "../../rules/wounds.mjs";
 import { woundLevel } from "../../rules/wound-tier.mjs";
 import { esc } from "../../helpers/utils.mjs";
@@ -39,7 +38,7 @@ import { runReanimate } from "../../combat/reanimate.mjs";
 /** «Медицина−30» / «Медицина−15 (Новые Люди)» — подпись порога операции. */
 const surgeryLabel = pen => `Медицина−${-pen}${pen !== -30 ? " (Новые Люди: штраф вдвое)" : ""}`;
 import { legionSurgeryPass, offerSusAnWake } from "../../combat/legion-surgery.mjs";
-import { noteHealingFromOther } from "../../combat/warp-touched.mjs";
+import { healActor } from "../../combat/heal-target.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -1228,22 +1227,18 @@ export async function applyHealing(medic, patient, rawOpts) {
   }
   if (applied > 0) {
     try {
-      await patient.update(computeWoundHealing(patient.system, applied));
+      // Общая точка лечения Ран (combat/heal-target.mjs, wdbc-1rno.26): запись Ран
+      // и отметка «Недоверия к Лечению» (Затронутый Варпом). Лечением «от другого»
+      // считается то, где медик реально лечил своим тестом: Первая Помощь и
+      // Мед. уход. Отдых/Постельный режим/Пассивное без ухода — тело лечится само,
+      // кто бы ни нажал кнопку (лечащий не передаётся). Отказ в правах на метку
+      // не выдаёт себя за невылеченные Раны (mistrustFailed).
+      const res = await healActor(patient, applied, { healer: (mode === "firstAid" || care) ? medic : null });
       lines.push(`${rollIcon("heart","#ff8a8a")}Восстановлено Ран: <b>${applied}</b>${applied < heal ? " (ограничено нехваткой)" : ""}.`);
+      if (res.mistrust) lines.push(res.mistrust);
+      if (res.mistrustFailed) lines.push(`${rollIcon("warn","#ffb84d")}Недоверие к Лечению: нет прав на лист цели — штраф −10 (кроме T) на 1 час отметить вручную (нужен ГМ).`);
     } catch {
       lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — восстановите <b>${applied}</b> Ран вручную (нужен ГМ).`);
-    }
-    // Затронутый Варпом, «Недоверие к Лечению» (wdbc-1rno.26): лечил другой —
-    // штраф на час (combat/warp-touched.mjs). Лечением «от другого» считается
-    // то, где медик реально лечил своим тестом: Первая Помощь и Мед. уход.
-    // Отдых/Постельный режим/Пассивное без ухода — тело лечится само, кто бы
-    // ни нажал кнопку. Отдельно от try выше: отказ в правах на метку не
-    // должен выдавать себя за невылеченные Раны.
-    try {
-      const mistrust = (mode === "firstAid" || care) ? await noteHealingFromOther(patient, medic) : "";
-      if (mistrust) lines.push(mistrust);
-    } catch {
-      lines.push(`${rollIcon("warn","#ffb84d")}Недоверие к Лечению: нет прав на лист цели — штраф −10 (кроме T) на 1 час отметить вручную (нужен ГМ).`);
     }
   }
   // Хирургия Легиона: «Если он Первой помощью поднял Раны вошедшего в

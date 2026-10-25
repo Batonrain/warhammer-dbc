@@ -281,7 +281,7 @@ export const RESISTANCE_SPEC_DEFS = {
 };
 
 /** У каких специализаций в системе есть опознаваемый тест (остальные — честная заглушка). */
-export const RESISTANCE_TESTED = ["fear", "poison", "psychic", "stun", "cold", "heat"];
+export const RESISTANCE_TESTED = ["fear", "poison", "psychic", "stun", "cold", "heat", "disease"];
 
 const specKeyOf = raw => {
   const s = String(raw ?? "").trim().toLowerCase();
@@ -325,6 +325,8 @@ export function resistanceTestSpec(ctx) {
   // Тест на Жару/Холод Окружения (combat/temperature-hazard.mjs, 3-edc4 п.7).
   if (ctx.coldTest) return "cold";
   if (ctx.heatTest) return "heat";
+  // Тест заражения болезнью (combat/disease-infection.mjs, wdbc-dbveg).
+  if (ctx.diseaseTest) return "disease";
   return null;
 }
 

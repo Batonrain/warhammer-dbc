@@ -121,6 +121,8 @@ import { initRigStealHud } from "./module/combat/rig-steal.mjs";
 import { initForceMoveHud } from "./module/combat/force-move-menu.mjs";
 import { initTearOpenHud } from "./module/combat/tear-open.mjs";
 import { initFreeAttackHooks } from "./module/combat/free-attack.mjs";
+import { initPathLimitHooks } from "./module/combat/path-limit.mjs";
+import { PATH_LIMIT_SETTING, PATH_LIMIT_DEFAULT } from "./module/rules/movement-path.mjs";
 import { initSqueezeHooks } from "./module/combat/squeeze.mjs";
 import { initBoneHeadHooks } from "./module/combat/bone-head.mjs";
 import { initOverwatchHooks } from "./module/combat/overwatch.mjs";
@@ -156,6 +158,8 @@ import { migrateLimbLossSides } from "./module/migrations/limb-loss-sides.mjs";
 import { migrateRadRating } from "./module/migrations/rad-rating.mjs";
 import { migrateAdvancePricing } from "./module/migrations/advance-pricing-baseline.mjs";
 import { migrateRetinalDisplayMark } from "./module/migrations/retinal-display-mark.mjs";
+import { migrateDrugAddictionFields } from "./module/migrations/drug-addiction-fields.mjs";
+import { migrateDiseaseActive } from "./module/migrations/disease-active.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
 import { runMigrationGate } from "./module/migrations/unlinked-tokens.mjs";
 import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
@@ -490,10 +494,32 @@ Hooks.once("init", () => {
     "implantAvailabilityTokensVersion",
     "contentSyncBaselineTokensVersion",
     "radRatingTokensVersion",
-    "retinalDisplayMarkTokensVersion"
+    "retinalDisplayMarkTokensVersion",
+    "drugAddictionFieldsTokensVersion",
+    "diseaseActiveTokensVersion"
   ]) {
     game.settings.register("warhammer-dbc", key, { scope: "world", config: false, type: Number, default: 0 });
   }
+
+  // Лимит пути токена за Ход (wdbc-l2urs, решение владельца 24.10.2026:
+  // блокировать, не предупреждать). Действует только в начатом бою на Ходу
+  // самого токена и только для перетаскивания/клавиш игрока; ГМа, принудительные
+  // сдвиги, телепорт, вне боя — не трогает (module/combat/path-limit.mjs).
+  game.settings.register("warhammer-dbc", PATH_LIMIT_SETTING, {
+    name: "Лимит пути за Ход в бою",
+    hint: "Токен не уйдёт дальше, чем позволяют объявленные Действия Движения за Ход "
+      + "(Полудвижение SPD×1, Полное ×2, Натиск ×3, Бег ×6…), а у Сквата с Надёжной Поступью — "
+      + "не дальше 3×SPD пешком. «Мягкий»: пока Движение не объявлено, доступно Полудвижение. "
+      + "«Строгий»: без объявленного Движения ходить нельзя. ГМ не блокируется; принудительные "
+      + "сдвиги и телепорт проходят всегда. Снять лимит одному персонажу — пункт «Лимит пути» "
+      + "в меню Движения токена (только ГМ).",
+    scope: "world", config: true, type: String, default: PATH_LIMIT_DEFAULT,
+    choices: {
+      off:    "Выключен",
+      soft:   "Мягкий: без объявления — Полудвижение",
+      strict: "Строгий: без объявления ходить нельзя"
+    }
+  });
 
   // Настройка: убрать серую рамку у заметок-пинов на сцене.
   game.settings.register("warhammer-dbc", "hideNoteFrame", {
@@ -638,6 +664,18 @@ Hooks.once("init", () => {
   // Версия простановки метки встроенного ретинального дисплея броне, маскам и
   // имплантам, выданным до правки пака 02.10.2026 (одноразовая, task-9b5f)
   game.settings.register("warhammer-dbc", "retinalDisplayMarkVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия доливки полей Зависимости наркотикам, выданным до правки пака
+  // 25.10.2026 (комбинированный тест, штраф без дозы; одноразовая, wdbc-gyqf2)
+  game.settings.register("warhammer-dbc", "drugAddictionFieldsVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия включения («действует») уже выданных болезней с записями Конструктора:
+  // с 25.10.2026 болезнь действует только когда включена (одноразовая, wdbc-dbveg)
+  game.settings.register("warhammer-dbc", "diseaseActiveVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -1142,7 +1180,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateRetinalDisplayMark, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateRetinalDisplayMark, migrateDrugAddictionFields, migrateDiseaseActive, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -1423,6 +1461,34 @@ Hooks.once("ready", async () => {
   });
 });
 
+// ── Одноразовая доливка: поля Зависимости наркотиков (комбинированный тест,
+// штраф без дозы, урон за период) и книжные числа у выданных до правки пака
+// 25.10.2026 копий (wdbc-gyqf2) ──
+// Ручной перезапуск: game.warhammerDBC.migrateDrugAddictionFields()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  // Идемпотентна (заполняет только пустые поля и исправляет только прежние
+  // неверные числа), проход по несвязанным токенам повторять безопасно.
+  await runMigrationGate({
+    key: "drugAddictionFieldsVersion", tokensKey: "drugAddictionFieldsTokensVersion", label: "Зависимость наркотиков",
+    full: () => migrateDrugAddictionFields(), tokensOnly: () => migrateDrugAddictionFields({ tokensOnly: true })
+  });
+});
+
+// ── Одноразово: выданные болезни с записями Конструктора включаются (active:true) —
+// с 25.10.2026 болезнь действует только когда включена, а выдавались они
+// выключенными; без прохода текущие больные потеряли бы эффект (wdbc-dbveg) ──
+// Ручной перезапуск: game.warhammerDBC.migrateDiseaseActive()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  // Повтор безопасен: включённая копия несёт метку diseaseActiveMigrated и больше
+  // не трогается, даже если ГМ её потом выключил (migrations/disease-active.mjs).
+  await runMigrationGate({
+    key: "diseaseActiveVersion", tokensKey: "diseaseActiveTokensVersion", label: "Болезни (действует)",
+    full: () => migrateDiseaseActive(), tokensOnly: () => migrateDiseaseActive({ tokensOnly: true })
+  });
+});
+
 // ── Одноразовая доливка: биоимпланты, выданные до появления Доступности ──────
 // Ручной перезапуск: game.warhammerDBC.migrateImplantAvailability()
 Hooks.once("ready", async () => {
@@ -1487,6 +1553,9 @@ Hooks.once("init", () => initForceMoveHud());
 Hooks.once("init", () => initTearOpenHud());
 Hooks.once("init", () => initMovedFlagTracking());
 Hooks.once("init", () => initFreeAttackHooks());
+// Лимит пути токена за Ход (wdbc-l2urs): блок перемещения сверх объявленного
+// Движения (preMoveToken) и категория Хода для Выстрела Навскидку (moveToken).
+Hooks.once("init", () => initPathLimitHooks());
 Hooks.once("init", () => initSqueezeHooks());
 // BONE-Head (Огрин): вышел из поля Haywire — сбой импланта и Ступор от поля снимаются сами.
 Hooks.once("init", () => initBoneHeadHooks());

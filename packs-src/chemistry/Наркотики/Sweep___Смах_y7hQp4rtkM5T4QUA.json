@@ -27,7 +27,9 @@
       "testChar": "wp",
       "testMod": -20,
       "frequency": "1 день",
-      "penalty": "−10 на тесты A и P"
+      "penalty": "−10 на тесты A и P",
+      "penaltyMods": "basedon:ag=-10; basedon:per=-10",
+      "breakMod": -20
     },
     "statMods": {
       "ws": 0,
