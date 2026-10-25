@@ -5,7 +5,7 @@
   "folder": "SVp8UgK2wdeYtSCR",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey rider.core.unstoppableCharge — рукопашная атака всадника (actor.system.mount.uuid) с Базой Натиск получает свойство Felling (½WS.b, окр.▲); уже имеющийся Felling выше не понижается и не складывается (module/rules/melee-talents.mjs::unstoppableChargeFelling, combat/attack.mjs). Атаки скакуна и лезвий байка бросает не всадник — не затронуты. База берётся ЭТОЙ атаки. Строка 🐎 в карточке.",
     "benefit": "Когда персонаж верхом совершает Натиск, его рукопашные атаки (но не атаки скакуна/лезвий байка) получают Felling (½WS.b (окр.▲)).",
     "tier": 2,
     "requirement": "WS 40",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "XgFV9SAvh4ZQ3upV",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "jSecaH5y73koo2S8",
+              "capabilityKey": "rider.core.unstoppableCharge",
+              "label": "Неостановимый Натиск: верхом на Натиске рукопашные атаки всадника получают Felling (½WS.b)",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

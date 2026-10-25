@@ -125,6 +125,23 @@ export function masterEngineseerBonus(crafter, mode, primaryValue) {
   return mode === "craft" && primaryValue === "skill:techUse" && hasMasterEngineseer(crafter) ? 10 : 0;
 }
 
+/**
+ * Мастер-Технопровидец, вторая половина Таланта: «Может потратить Очко Бесчестия,
+ * чтобы автоматически преуспеть в расширенном тесте Tech-Use на Крафт/ремонт,
+ * получая I.b Успехов за смену». Предложение траты показывается там же, где
+ * действует +10: Крафт, ведущий Навык — Tech-Use. «Ремонта» в Мастерской нет.
+ */
+export function masterEngineseerAutoEligible(crafter, mode, primaryValue) {
+  return mode === "craft" && primaryValue === "skill:techUse" && hasMasterEngineseer(crafter);
+}
+
+/** Успехов за смену автоуспеха — I.b крафтера (не меньше 0). */
+export function masterEngineseerAutoSuccesses(crafter) {
+  const ib = Number(crafter?.system?.characteristics?.int?.bonus);
+  if (Number.isFinite(ib)) return Math.max(0, ib);
+  return Math.max(0, Math.floor((Number(crafter?.system?.characteristics?.int?.total) || 0) / 10));
+}
+
 /** Имя возможности «+10 на тесты Исследований» (Стремление «Инновация»). */
 export const RESEARCH_BONUS_CAPABILITY = "craft.researchBonus";
 

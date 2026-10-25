@@ -334,6 +334,8 @@ const DEVIATIONS = {
     crippledWounds: [],
     // Тумблер «В Ярости» (wdbc-plsf) — заведён гораздо позже template.json.
     inRage: false,
+    // «Кумир рядом» (Идолопоклонник, Sahara 3-scope) — rules/morale-auto.mjs.
+    idolNearby: false,
     // Переопределение привязки Склонностей (wdbc-1pvq) — «у нашего стола
     // Уклонение относится к Интеллекту и Знанию»; свободный объект, пусто =
     // книжная привязка. Заведено гораздо позже template.json.
@@ -354,6 +356,9 @@ const DEVIATIONS = {
     // Предел Первой Помощи (wdbc-x1nz.2.103) и лечение по Календарю
     // (wdbc-x1nz.2.104) — заведены гораздо позже template.json.
     "wounds.lostSinceFirstAid": null,
+    // Перешивание (3-dc87): метка времени и исхода последней Первой Помощи.
+    "wounds.firstAidAt": null,
+    "wounds.firstAidFailed": false,
     healing: { regimen: "active", caregiver: "", nextAt: 0, careOk: false },
     // Урон в Характеристики по книге (wdbc-x1nz.2.83) — отдельно от «Мод.».
     charLoss: Object.fromEntries(Object.keys(CHARACTERISTICS).map(k => [k, 0])),
@@ -461,6 +466,7 @@ describe("типы данных акторов", () => {
     it("добавляет своё: признак, Талант-слот и Магнитуду Орды", () => {
       expect(minion.isMinion).toBe(true);
       expect(minion.slotTalentId).toBe("");
+      expect(minion.isAstartes).toBe(false);
       expect(minion.magnitude).toEqual({ value: 0, max: 0 });
     });
 

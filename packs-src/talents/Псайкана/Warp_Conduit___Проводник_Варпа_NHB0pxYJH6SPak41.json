@@ -5,7 +5,7 @@
   "folder": "iSsQmZ2gkxraxksi",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект тратит/даёт игровой ресурс (Очки Бесчестия/Судьбы/Боли/Когниции/Реакцию) на разовое действие — не тестовый модификатор Навыка/Характеристики.",
+    "notes": "Реализовано: в окне манифестации галочка (Усиленный режим) списывает Очко Бесчестия, +1d5 к эPR эффектов (урон, дальность, поддержание — но не Порог психотеста), +30 к броску Феномена (rules/psyker-talents.mjs, читает sheets/tabs/psychic.mjs). В Обычном и Безопасном режимах не применяется, Очко не тратится.",
     "benefit": "Творя психосилу в Усиленном режиме, персонаж может потратить Очко Бесчестия, чтобы добавить +1d5 к эPR для расчёта окончательных эффектов (но не бонуса на манифестацию). Опасно: +30 на Феномен при использовании.",
     "tier": 2,
     "requirement": "W 50, PR 1, Strong Minded",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g08warpCondCap1",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "e08warpCondCap1",
+              "capabilityKey": "psyker.core.warpConduit",
+              "label": "Проводник Варпа: в Усиленном режиме за Очко Бесчестия +1d5 к эPR эффектов, +30 к Феномену",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

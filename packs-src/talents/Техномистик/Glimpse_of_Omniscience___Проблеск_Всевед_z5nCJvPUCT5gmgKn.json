@@ -5,7 +5,7 @@
   "folder": "Nu4M8EyPNQpHOOjO",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: после проваленного Ноосферного Сканирования (кнопка на вкладке ТЕХ) система спрашивает «потратить 1 ⚙ и перебросить?»; согласие списывает 1 ⚙ и открывает новое Сканирование, его результат заменяет прежний (sheets/tabs/tech.mjs::rollTechScan, rules/technomystic-talents.mjs::hasGlimpseOfOmniscience). После успеха переброс не предлагается.",
     "benefit": "Персонаж может потратить 1 Когницию, чтобы перебросить тест Ноосферного Сканирования.",
     "tier": 1,
     "requirement": "P 40",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g01glimpseOCap1",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "e01glimpseOCap1",
+              "capabilityKey": "technomystic.core.glimpseOfOmniscience",
+              "label": "Проблеск Всеведенья: перебросить Ноосферное Сканирование за 1 ⚙",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

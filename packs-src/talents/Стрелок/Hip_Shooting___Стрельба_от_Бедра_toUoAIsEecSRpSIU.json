@@ -5,7 +5,7 @@
   "folder": "V0Wfgl0aycRFPfu2",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано (трактовка А, владелец 24.10.2026): capabilityKey rangedCore.core.hipShooting — пункт «Стрельба от Бедра» (2 ОД) в меню Движения боевого HUD (module/combat/movement-actions.mjs::declareFullMove, hipShooting) = Полное Движение + метка; в карточке кнопка «Выстрел от бедра» открывает окно атаки (module/combat/free-shot.mjs) только с Одиночным выстрелом, без Прицеливания, не Избирательным, без списания ОД; выстрел считается Атакой Хода. Не длинная винтовка и не тяжёлое. «Выстрел до движения» (порядок «в любом порядке») и Перебежка не моделируются. Пункта нет на панели «Движение» листа персонажа — только в HUD.",
     "benefit": "Персонаж может провести Полное Движение и Одиночный Выстрел (не Избирательный) как одно полное действие (в любом порядке). Не с дл. винтовками и тяжёлым оружием.",
     "tier": 2,
     "requirement": "BS 40, A 40",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "1FJlPrLO52Wuy8Yg",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "E7KCgpH8LkrLI5XO",
+              "capabilityKey": "rangedCore.core.hipShooting",
+              "label": "Стрельба от Бедра: Полное Движение + один Одиночный Выстрел как одно полное действие",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

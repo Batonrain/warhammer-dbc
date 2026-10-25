@@ -176,7 +176,7 @@ export function outcomeHtml(success, text) {
  * @returns {Promise<ChatMessage>}
  */
 export async function postTestCard(actor, card, {
-  rolls = [], sound = true, flags = null, speaker = null, whisper = null, ignoreRollMode = false
+  rolls = [], sound = true, flags = null, speaker = null, whisper = null, ignoreRollMode = false, blind = false
 } = {}) {
   const content = typeof card === "string" ? card : testCardHtml(card);
   const data = {
@@ -185,6 +185,8 @@ export async function postTestCard(actor, card, {
     // отсутствующим актором подставил бы туда текущего пользователя.
     speaker: speaker ?? ChatMessage.getSpeaker({ actor }),
     ...(whisper ? { whisper } : {}),
+    // blind: автор шёпота иначе видит его содержимое (тайный бросок ГМа, Расплавление).
+    ...(blind ? { blind: true } : {}),
     content,
     ...(rolls.length ? { rolls } : {}),
     ...(sound ? { sound: CONFIG.sounds.dice } : {}),

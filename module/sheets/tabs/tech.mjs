@@ -29,6 +29,72 @@ import { markUnseenDetectedUntilNextTurn } from "../../rules/unseen-attack.mjs";
 import { testOutcome } from "../../rules/roll-outcome.mjs";
 import { fieldFailsTechPower } from "../../rules/null-zones.mjs";
 import { techActivationCost } from "../../rules/digital-hatred.mjs";
+import { hasGlimpseOfOmniscience, hasOmnimnesis, hasDecompile, hasOverclock, hasRecompile, hasVotiveMass,
+         COGNITION_REROLL_COST, DECOMPILE_COST, RECOMPILE_COST, OVERCLOCK_ENERGY_COST,
+         OVERCLOCK_SELF_DAMAGE_PER_COG, OVERCLOCK_FLAG, overclockMax, votiveMassCost,
+         recompileSources, processCostTotal, settleProcessCost, PROCESS_PAID_FLAG } from "../../rules/technomystic-talents.mjs";
+import { applyCharDamage } from "../../combat/char-damage.mjs";
+import { isEncounterActive } from "../../combat/action-economy.mjs";
+
+/** Карточка-уведомление Техножреца (компиляция, Разгон, Процессы, Декомпиляция) — ни броска, ни Порога. */
+async function techNote(actor, title, line) {
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `<div class="wh-roll-result"><div class="roll-header">${rollIcon("chart", "#8fd0ff")}${esc(title)}</div><div class="roll-threshold">${line}</div></div>`
+  }, game.settings.get("core", "rollMode")));
+}
+
+/**
+ * Быстрая компиляция Славословия за ⚙ (Sahara 3-2501).
+ *
+ *  - Вотивная Месса: «скомпилировать Славословие за полное ментальное действие,
+ *    вместо <Рейтинг>×5 Минут, потратив <Рейтинг>×4 ⚙»;
+ *  - Рекомпиляция: «за ментальное полудействие потратить 1 ⚙, чтобы заменить
+ *    одно скомпилированное Славословие другим равного или меньшего рейтинга».
+ *
+ * Показывается только если Талант есть и ⚙ хватает. Время действия (полное/
+ * полудействие) система не списывает — Ментальное действие ведёт стол.
+ * @returns {Promise<boolean>} true — Славословие скомпилировано здесь
+ */
+async function offerFastCompile(actor, item, x) {
+  const have = Number(actor.system.cognition?.value) || 0;
+  const votiveCost = votiveMassCost(x);
+  const votive = hasVotiveMass(actor) && have >= votiveCost;
+  const swaps = (hasRecompile(actor) && have >= RECOMPILE_COST) ? recompileSources([...(actor.items ?? [])], item) : [];
+  if (!votive && !swaps.length) return false;
+
+  const buttons = [];
+  if (votive) buttons.push({ action: "votive", label: `Вотивная Месса: −${votiveCost} ⚙, скомпилировать сразу` });
+  for (const p of swaps) buttons.push({ action: `recompile:${p.id}`, label: `Рекомпиляция: заменить «${p.name}» (−${RECOMPILE_COST} ⚙)` });
+  buttons.push({ action: "manual", label: `Обычная компиляция (${x}×5 минут)`, default: true });
+
+  const choice = await foundry.applications.api.DialogV2.wait({
+    window: { title: `Компиляция: ${item.name}` },
+    content: `<p>«${esc(item.name)}» не скомпилировано. Когниции: <b>${have}</b>.</p>`,
+    buttons: buttons.map(b => ({ ...b, callback: () => b.action })),
+    rejectClose: false
+  });
+
+  if (choice === "votive") {
+    await actor.update({ "system.cognition.value": Math.max(0, have - votiveCost) });
+    await item.update({ "system.compiled": true });
+    await techNote(actor, `Вотивная Месса: ${item.name}`,
+      `Скомпилировано за полное ментальное действие: ${techIcon("cognition")} Когниция −<b>${votiveCost}</b> (${x}×4) вместо ${x * 5} минут.`);
+    return true;
+  }
+  const m = /^recompile:(.+)$/.exec(String(choice ?? ""));
+  if (m) {
+    const old = swaps.find(p => p.id === m[1]);
+    if (!old) return false;
+    await actor.update({ "system.cognition.value": Math.max(0, have - RECOMPILE_COST) });
+    await old.update({ "system.compiled": false });
+    await item.update({ "system.compiled": true });
+    await techNote(actor, `Рекомпиляция: ${item.name}`,
+      `Вместо «${esc(old.name)}» скомпилировано «${esc(item.name)}» за ментальное полудействие: ${techIcon("cognition")} Когниция −<b>${RECOMPILE_COST}</b>.`);
+    return true;
+  }
+  return false;
+}
 
 /** Активация Техночуда: Когниция + Энергия + тест Tech-Use (Ментальное) + урон. */
 export async function activateTechMiracle(actor, item) {
@@ -37,7 +103,9 @@ export async function activateTechMiracle(actor, item) {
   // активации (не Процессов) вредящего Техночуда, если ВСЕ цели — Ненавистные.
   // Цели — Foundry-таргет, тот же источник, что у Императива ниже.
   const hatredTargets = [...(game.user?.targets ?? [])].map(t => t.actor ?? null);
-  const { cost: cogCost, discount: hatredDiscount } = techActivationCost(actor, item, hatredTargets);
+  const { cost: baseCogCost, discount: hatredDiscount } = techActivationCost(actor, item, hatredTargets);
+  // Омнимнезис добавляет к цене ⚙ переброса (ниже) — поэтому let.
+  let   cogCost  = baseCogCost;
   let   enCost   = sys.energyCost || 0;
   const cog      = actor.system.cognition || { value: 0, max: 0 };
   const en       = actor.system.energy || { value: 0, max: 0 };
@@ -65,6 +133,11 @@ export async function activateTechMiracle(actor, item) {
   const isSlavo = sys.miracleType === "slavoslovie" || !!slavoExtra;
   if (isSlavo && !sys.compiled) {
     const x = sys.miracleType === "slavoslovie" ? (sys.rating || 1) : (slavoExtra?.x || 1);
+    // Вотивная Месса и Рекомпиляция (rules/technomystic-talents.mjs, Sahara 3-2501):
+    // быстрые способы компиляции за ⚙ вместо X×5 минут. Предлагаются, только если
+    // Талант есть и ⚙ хватает; отказ — обычная компиляция ниже.
+    const compiledNow = await offerFastCompile(actor, item, x);
+    if (compiledNow) return;
     // Уведомление «идёт компиляция», а не карточка теста: ни броска, ни Порога
     // — на общий сборщик helpers/test-card.mjs не переводится (wdbc-kuun).
     await ChatMessage.create(ChatMessage.applyRollMode({
@@ -165,9 +238,33 @@ export async function activateTechMiracle(actor, item) {
   const fieldTarget = [...(game.user?.targets ?? [])][0]?.actor ?? null;
   const fieldFail = fieldFailsTechPower(actor, fieldTarget);
   // Провал — и при пороге ≥ 100, где «100 ≤ порога» иначе прошло бы Успехом.
-  const rv      = fieldFail ? 100 : roll.total;
-  const success = !fieldFail && rv <= eff;
-  const deg     = Math.floor(Math.abs(rv - eff) / 10) + 1;
+  let rv      = fieldFail ? 100 : roll.total;
+  let success = !fieldFail && rv <= eff;
+  let deg     = Math.floor(Math.abs(rv - eff) / 10) + 1;
+
+  // Омнимнезис: «потратить 1 ⚙, чтобы перебросить тест I на активацию Техночуда».
+  // Спрашиваем только после провала (по успеху переброс обычно не нужен) и если
+  // ⚙ хватает на переброс сверх цены активации. Поле Дискорданта перебросом не
+  // обходится — оно не бросок, а автопровал. Переброс заменяет результат.
+  let omnimnesisLine = "";
+  if (!success && !fieldFail && hasOmnimnesis(actor)
+      && (cog.value || 0) - cogCost >= COGNITION_REROLL_COST) {
+    const again = await foundry.applications.api.DialogV2.confirm({
+      window: { title: `Омнимнезис — ${actor.name}` },
+      content: `<p>Активация «${esc(item.name)}» провалена (бросок <b>${rv}</b> при Пороге <b>${eff}</b>). Потратить <b>${COGNITION_REROLL_COST} ⚙</b> и перебросить?</p>`,
+      yes: { label: `Перебросить (−${COGNITION_REROLL_COST} ⚙)` }, no: { label: "Нет" },
+      rejectClose: false
+    });
+    if (again) {
+      const roll2 = await new Roll("1d100").evaluate();
+      allRolls.push(roll2);
+      cogCost += COGNITION_REROLL_COST;
+      omnimnesisLine = `Омнимнезис: −${COGNITION_REROLL_COST} ⚙, переброс ${rv} → ${roll2.total}`;
+      rv = roll2.total;
+      success = rv <= eff;
+      deg = Math.floor(Math.abs(rv - eff) / 10) + 1;
+    }
+  }
 
   // Трата ресурсов: Когниция ⚙ — всегда (до теста), Энергия ⚡ — только при Успехе.
   const resUpd = {};
@@ -328,6 +425,7 @@ export async function activateTechMiracle(actor, item) {
     lines: [
       ironLine ? `<div class="roll-threshold" style="font-size:0.85em;">${ironLine}</div>` : "",
       compLine,
+      omnimnesisLine ? `<div class="roll-threshold" style="font-size:0.85em;">${omnimnesisLine}</div>` : "",
       costLine ? `<div class="roll-threshold">${costLine}</div>` : "",
       sys.range ? `<div class="roll-threshold" style="font-size:0.85em;">Дальность: <b>${sys.range}</b></div>` : ""
     ],
@@ -461,14 +559,131 @@ export async function coilCharge(actor, rollSkill) {
  * Технология предлагаются против ЛЮБОЙ Незримой атаки, не только
  * своего типа источника).
  */
-export function rollTechScan(actor, rollSkill) {
+export async function rollTechScan(actor, rollSkill) {
   const def = SKILLS_DEF.techUse;
   const sk  = actor.system.skills?.techUse;
   // noosphere — «тесты работы с Ноосферой» (Ноосферное Подключение даёт по
   // Качеству −10/+5/+10 записью Конструктора с этой областью).
-  const result = rollSkill("📡 Ноосферное Сканирование (Tech-Use)", sk?.total ?? -20, def?.char ?? "int", { skill: "techUse", noosphere: true });
-  result?.then?.(r => { if (r?.success) markUnseenDetectedUntilNextTurn(actor); });
-  return result;
+  const scan = () => rollSkill("📡 Ноосферное Сканирование (Tech-Use)", sk?.total ?? -20, def?.char ?? "int", { skill: "techUse", noosphere: true });
+  let r = await scan();
+
+  // Проблеск Всеведенья (Sahara 3-2501): «потратить 1 ⚙, чтобы перебросить тест
+  // Ноосферного Сканирования». Предлагаем после провала — по успеху переброс
+  // нужен редко. Переброс — новое Сканирование (новое окно теста), результат
+  // заменяет прежний.
+  const cog = Number(actor.system.cognition?.value) || 0;
+  if (r && !r.success && hasGlimpseOfOmniscience(actor) && cog >= COGNITION_REROLL_COST) {
+    const again = await foundry.applications.api.DialogV2.confirm({
+      window: { title: `Проблеск Всеведенья — ${actor.name}` },
+      content: `<p>Ноосферное Сканирование провалено. Потратить <b>${COGNITION_REROLL_COST} ⚙</b> (есть ${cog}) и перебросить?</p>`,
+      yes: { label: `Перебросить (−${COGNITION_REROLL_COST} ⚙)` }, no: { label: "Нет" },
+      rejectClose: false
+    });
+    if (again) {
+      await actor.update({ "system.cognition.value": cog - COGNITION_REROLL_COST });
+      r = await scan();
+    }
+  }
+
+  if (r?.success) {
+    await markUnseenDetectedUntilNextTurn(actor);
+    // Декомпиляция: «засекая неизвестное Техночудо, потратить 1 ⚙, чтобы распознать
+    // его, как если бы знал сам». Какое чудо засечено — решает ГМ, поэтому спрашиваем
+    // при каждом успешном Сканировании и пишем в чат, что расшифровано.
+    const cogNow = Number(actor.system.cognition?.value) || 0;
+    if (hasDecompile(actor) && cogNow >= DECOMPILE_COST) {
+      const decompile = await foundry.applications.api.DialogV2.confirm({
+        window: { title: `Декомпиляция — ${actor.name}` },
+        content: `<p>Сканирование успешно. Если засечено <b>неизвестное</b> вам Техночудо — потратить <b>${DECOMPILE_COST} ⚙</b> (есть ${cogNow}), чтобы распознать его, как будто вы знаете его сами?</p>`,
+        yes: { label: `Распознать (−${DECOMPILE_COST} ⚙)` }, no: { label: "Нет" },
+        rejectClose: false
+      });
+      if (decompile) {
+        await actor.update({ "system.cognition.value": cogNow - DECOMPILE_COST });
+        await techNote(actor, "Декомпиляция",
+          `${techIcon("cognition")} Когниция −<b>${DECOMPILE_COST}</b>: засечённое неизвестное Техночудо распознано, как если бы ${esc(actor.name)} знал(а) его сам(а) — ГМ раскрывает его название и действие.`);
+      }
+    }
+  }
+  return r;
+}
+
+/**
+ * Разгон (Sahara 3-2501): «Раз в Ход за свободное действие потратить 1 ⚡, чтобы
+ * восстановить себе до I.b ⚙, но за каждую восстановленную ⚙ нанести себе 2
+ * урона в I». Количество ⚙ выбирает игрок; урон ложится в Интеллект сразу
+ * (combat/char-damage.mjs::applyCharDamage, не поглощается). «Раз в Ход» — метка
+ * overclockThisTurn, которую гасит начало следующего Хода (rules/turn-flags.mjs).
+ */
+export async function overclock(actor) {
+  if (!hasOverclock(actor)) return;
+  // «Раз в Ход» следим только в бою: вне Encounter Хода нет, а метку некому погасить.
+  if (isEncounterActive() && actor.getFlag?.("warhammer-dbc", OVERCLOCK_FLAG)) {
+    return ui.notifications.warn("Разгон уже использован в этом Ходу.");
+  }
+  const max = overclockMax(actor);
+  if (max <= 0) {
+    const energy = Number(actor.system.energy?.value) || 0;
+    return ui.notifications.warn(energy < OVERCLOCK_ENERGY_COST
+      ? `Разгон: нужно ${OVERCLOCK_ENERGY_COST} ⚡, в Катушке ${energy}.`
+      : "Разгон: Когниция уже на максимуме (или I.b = 0) — восстанавливать нечего.");
+  }
+  const raw = await foundry.applications.api.DialogV2.wait({
+    window: { title: `Разгон — ${actor.name}` },
+    content: `<p>−${OVERCLOCK_ENERGY_COST} ⚡. Сколько ⚙ восстановить (1–${max})? Каждая стоит ${OVERCLOCK_SELF_DAMAGE_PER_COG} урона в Интеллект.</p>
+      <label>⚙: <input type="number" name="n" value="${max}" min="1" max="${max}" autofocus/></label>`,
+    buttons: [
+      { action: "go", label: "Разогнать", default: true, callback: (_ev, button) => button.form.querySelector('[name="n"]')?.value },
+      { action: "cancel", label: "Отмена", callback: () => null }
+    ],
+    rejectClose: false
+  });
+  if (raw === null || raw === undefined) return;
+  const n = Math.max(1, Math.min(max, parseInt(raw) || 1));
+  const cog = actor.system.cognition;
+  const damage = n * OVERCLOCK_SELF_DAMAGE_PER_COG;
+  await actor.update({
+    "system.energy.value": Math.max(0, (Number(actor.system.energy.value) || 0) - OVERCLOCK_ENERGY_COST),
+    "system.cognition.value": Math.min(Number(cog.max) || 0, (Number(cog.value) || 0) + n)
+  });
+  if (isEncounterActive()) await actor.setFlag("warhammer-dbc", OVERCLOCK_FLAG, true);
+  const hit = await applyCharDamage(actor, "int", damage);
+  await techNote(actor, "Разгон",
+    `${techIcon("energy")} −${OVERCLOCK_ENERGY_COST}, ${techIcon("cognition")} +<b>${n}</b>; самоповреждение: <b>${hit.applied}</b> урона в Интеллект (${hit.before} → ${hit.after}).`);
+}
+
+/**
+ * Начало Хода (кнопка «↻»): +½ I.b ⚙ — и сводка цены Процессов, которую книга
+ * списывает сразу после восстановления («в начале каждого своего Хода, после
+ * восстановления ⚙, персонаж тратит цену Процессов»). С Цифровым Откровением и
+ * Ноосферной Набожностью сумма меньше (rules/technomystic-talents.mjs::
+ * processCostTotal). Решение владельца 25.10.2026: система списывает сумму САМА,
+ * один раз за Ход — в бою это держит метка processCostPaidThisTurn (гаснет с
+ * началом следующего Хода, rules/turn-flags.mjs). Вне боя Хода нет, метки тоже:
+ * каждое «↻» считается началом нового Хода. Не хватило ⚙ — списывается всё, что
+ * есть, остаток назван в карточке: какие Процессы отключить, решает игрок (книга).
+ */
+async function cognitionRest(actor) {
+  const cog = actor.system.cognition || { value: 0, max: 0, regen: 0 };
+  const pc = processCostTotal(actor);
+  const inCombat = isEncounterActive();
+  const alreadyPaid = inCombat && !!actor.getFlag?.("warhammer-dbc", PROCESS_PAID_FLAG);
+  // Повторное «↻» в том же Ходу ничего не восстанавливает: начало Хода уже было (ревью 25.10.2026).
+  const nv  = alreadyPaid ? (cog.value || 0) : Math.min(cog.max || 0, (cog.value || 0) + (cog.regen || 0));
+  const settle = alreadyPaid ? { pay: 0, after: nv, shortfall: 0 } : settleProcessCost(nv, pc.total);
+  await actor.update({ "system.cognition.value": settle.after });
+  if (!alreadyPaid && inCombat && pc.total > 0) await actor.setFlag("warhammer-dbc", PROCESS_PAID_FLAG, true);
+  if (pc.base > 0 || pc.revelation || pc.piety) {
+    const parts = [`Цена Процессов в этот Ход: ${techIcon("cognition")} <b>${pc.total}</b>`];
+    if (pc.revelation) parts.push(`Цифровое Откровение −${pc.revelation}`);
+    if (pc.piety) parts.push(`Ноосферная Набожность −${pc.piety}`);
+    const tail = alreadyPaid
+      ? `Цена в этом Ходу уже списана ранее — Когниция сейчас ${settle.after}.`
+      : `Списано: ${techIcon("cognition")} <b>${settle.pay}</b> (было ${nv}, стало ${settle.after}).`
+        + (settle.shortfall > 0 ? ` Не хватило <b>${settle.shortfall}</b> ⚙ — отключите лишние Процессы.` : "");
+    await techNote(actor, "Начало Хода: Процессы",
+      `${parts.join(", ")}${pc.base !== pc.total ? ` (без Талантов ${pc.base})` : ""}. ${tail}`);
+  }
 }
 
 export function activateTechListeners(html, actor, { rollSkill } = {}) {
@@ -496,9 +711,11 @@ export function activateTechListeners(html, actor, { rollSkill } = {}) {
   });
   html.find(".cognition-rest-btn").click(async ev => {
     ev.preventDefault();
-    const cog = actor.system.cognition || { value: 0, max: 0, regen: 0 };
-    const nv  = Math.min(cog.max || 0, (cog.value || 0) + (cog.regen || 0));
-    await actor.update({ "system.cognition.value": nv });
+    await cognitionRest(actor);
+  });
+  html.find(".cognition-overclock-btn").click(async ev => {
+    ev.preventDefault();
+    await overclock(actor);
   });
   html.find(".tech-scan-btn").click(() => {
     if (rollSkill) rollTechScan(actor, rollSkill);

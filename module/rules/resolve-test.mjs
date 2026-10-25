@@ -217,6 +217,25 @@ export function effectAppliesTo(target, ctx) {
   // «это тест против опасной психической угрозы», протащенный явно через
   // делегированные тесты Сопротивления (psy-resist-request-btn, Soul Burn).
   if (scope === "psychicthreat") return ctx.psychicThreat === true;
+  // «Против психосил» в узком смысле (Бастион Железной Воли, Sahara 3-defiance):
+  // тест Сопротивления психосиле, но НЕ Выжигание Души — у того тот же общий
+  // тег psychicThreat, а книга перечисляет «психосилы» и «выжигание души» через
+  // запятую (Солипсизм). Выжигание Души ставит ctx.soulBurn (hooks.mjs::_executeSoulBurn).
+  if (scope === "psychicpower") return ctx.psychicThreat === true && ctx.soulBurn !== true;
+  // «Влияющие на разум» (Непреклонный, решение владельца 25.10.2026, вариант Б):
+  // книга не размечает психосилы на «влияющие на разум» и прочие, поэтому
+  // считаем таким всякое Сопротивление психосиле, где сопротивляются Волей
+  // (resistChar = wp, ctx.char). Шире буквы книги — решение стола, не ошибка.
+  if (scope === "psychicmind") {
+    return ctx.psychicThreat === true && String(ctx.char ?? "").toLowerCase() === "wp";
+  }
+  // Солипсизм: «встречные тесты против психосил (кроме непрямых), одержимости
+  // или выжигания души» — психическая угроза, но не Непрямая сила
+  // (ctx.psychicIndirect ставит hooks.mjs для делегированного теста).
+  if (scope === "psychicdirect") return ctx.psychicThreat === true && ctx.psychicIndirect !== true;
+  // Сопротивление допросу (Ортопрокси): встречный тест Воли жертвы в диалоге
+  // пытки/допроса (apps/torture.mjs ставит ctx.interrogation).
+  if (scope === "interrogation") return ctx.interrogation === true;
   // «basedon:<хар-ка>» (wdbc-x1nz.2.89/.97/.92) — ЛЮБОЙ тест навыка или
   // характеристики на этой Характеристике: «−20 на броски WS» у Поваленного
   // (Парирование — навык от WS), «−5 на все тесты T» у Обескровленного. Не

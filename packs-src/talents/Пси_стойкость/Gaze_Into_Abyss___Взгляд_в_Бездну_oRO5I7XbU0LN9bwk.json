@@ -5,7 +5,7 @@
   "folder": "eI14Vbl1EBbwi5Rc",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано частично: Порча, которую система начисляет за Варп-Шок манифестации, уменьшается на 1 за каждое взятие Таланта (не ниже 0; предел ½W.b, окр.▼ — ограничение покупки, на действие уже взятых копий не влияет) — rules/defiance-talents.mjs::gazeIntoAbyssReduction, читает sheets/tabs/psychic.mjs. Порча из таблиц Феноменов и Прорывов, Отвращения Варпа, Психосил и Атаки Одержимостью — текст таблиц/статблоков, их начисляет стол с учётом Таланта.",
     "benefit": "Персонаж получает на 1 Порчи меньше от эффектов Феноменов, Прорывов, Варп-Шока, Отвращения Варпа, Психосил и Атаки Одержимостью. Можно брать до ½ W.b (окр.▼) раз.",
     "tier": 1,
     "requirement": "W 40",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g01gazeIntoCap1",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "e01gazeIntoCap1",
+              "capabilityKey": "psyResist.core.gazeIntoAbyss",
+              "label": "Взгляд в Бездну: −1 Порчи от Варп-Шока за взятие (до ½W.b раз)",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

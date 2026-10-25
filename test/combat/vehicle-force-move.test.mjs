@@ -10,11 +10,21 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { pilotOperateThreshold, useVehiclePushContest } from "../../module/combat/vehicle-force-move.mjs";
 
-function actor({ athletics = 40, operate = 40, ap = 2, spd = 4, traits = [] } = {}) {
+// Operate — ГРУППОВОЙ Навык: значения skills.operate.total у актора нет (прежняя
+// фикстура с этим полем скрывала, что штраф пилота всегда был −20). Пилот
+// Шагохода/Техники ведёт Operate (Surface): запись группы groupSkills.operate,
+// её total посчитан расчётом актора (Ag + надбавка ранга + мод).
+// operate: число — total записи Surface; null — записи нет (нетренирован).
+// `extraOperate` — прочие специализации Operate, чтобы тест видел, что берётся именно Surface.
+function actor({ athletics = 40, operate = 40, ag = 40, ap = 2, spd = 4, traits = [], extraOperate = [] } = {}) {
+  const operateEntries = [...extraOperate];
+  if (operate !== null) operateEntries.unshift({ specKey: "surface", specialty: "Surface", rank: "trained", total: operate });
   return {
     id: "a1", name: "Гвардеец", type: "character", items: traits,
     system: {
-      skills: { athletics: { total: athletics }, operate: { total: operate } },
+      characteristics: { ag: { total: ag } },
+      skills: { athletics: { total: athletics } },
+      groupSkills: { operate: operateEntries },
       actionPoints: { value: ap, max: 2 },
       movement: { spd }
     },
@@ -42,6 +52,39 @@ describe("pilotOperateThreshold", () => {
     expect(degreeBonus).toBe(0);
     expect(tempRating).toBe(0);
     expect(ownRating).toBe(0);
+  });
+
+  it("берётся Operate (Surface) пилота, а не других специализаций Operate", () => {
+    const pilot = actor({
+      operate: 45,
+      extraOperate: [
+        { specKey: "aeronautica", specialty: "Aeronautica", rank: "veteran", total: 80 },
+        { specKey: "voidship", specialty: "Voidship", rank: "veteran", total: 70 }
+      ]
+    });
+    const { threshold, base } = pilotOperateThreshold(pilot, 0);
+    expect(base).toBe(45);
+    expect(threshold).toBe(65);
+  });
+
+  it("Surface найдена и по сырой записи без ключа — «Surface» / «Наземное», как у остального кода", () => {
+    for (const specialty of ["Surface", "Наземное"]) {
+      const pilot = actor({ operate: null, extraOperate: [{ specialty, rank: "trained", total: 55 }] });
+      expect(pilotOperateThreshold(pilot, 0).base).toBe(55);
+    }
+  });
+
+  it("записи Surface нет — нетренированный Operate: Ag пилота −20 (а не вечные −20 без Ag)", () => {
+    const pilot = actor({ operate: null, ag: 38 });
+    const { threshold, base } = pilotOperateThreshold(pilot, 0);
+    expect(base).toBe(18);
+    expect(threshold).toBe(38); // 18 + 20 книги
+  });
+
+  it("устаревшее поле skills.operate.total не читается", () => {
+    const pilot = actor({ operate: null, ag: 40 });
+    pilot.system.skills.operate = { total: 99 };
+    expect(pilotOperateThreshold(pilot, 0).base).toBe(20);
   });
 
   it("разница Размеров 2 — временный Unnatural A(4), +2 Успеха на успешный тест", () => {

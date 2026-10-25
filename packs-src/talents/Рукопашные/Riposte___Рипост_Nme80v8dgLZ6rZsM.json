@@ -5,7 +5,7 @@
   "folder": "XeycnCsRlazxEDgr",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey meleeCore.core.riposte — в карточке успешного Парирования кнопка «Рипост «<другое оружие>»»: открывает окно атаки с Базой Стандартная и +0, Избегания (Уклонение И Парирование) цели −20, раз в Раунд (module/rules/melee-talents.mjs::riposteWeapon, combat/defense.mjs, hooks.mjs .wh-riposte-btn, sheets/attack/selection.mjs extraEvasionMod). Нужно держать два оружия, Баланс другого ≥ 0; пистолет годится только с Two Weapon Wielder (Ranged), винтовка — нет; Крестовой Блок запрещает. Реакции и действия кнопка не списывает (как Контратака — окно атаки само ОД не берёт). Для пистолета штраф −20 идёт только в Уклонение.",
     "benefit": "Вооружённый двумя оружиями и успешно парировав атаку, персонаж может тут же атаковать противника базовой атакой +0 другим оружием, если его Баланс не ниже 0. Избегания против неё получают −20. Не тратит реакций/действий, только раз в Раунд. С Two Weapon Wielder (Ranged) можно использовать пистолеты (но не винтовки).",
     "tier": 2,
     "requirement": "Counter Attack, Two Weapon Wielder (Melee)",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "dZBK2JfFkqoRCnv6",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "lmLegRLupywsVgAS",
+              "capabilityKey": "meleeCore.core.riposte",
+              "label": "Рипост: после успешного Парирования — свободная атака +0 другим оружием (Баланс ≥ 0), Избегания цели −20, раз в Раунд",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

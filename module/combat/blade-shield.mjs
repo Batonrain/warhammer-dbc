@@ -48,6 +48,18 @@ export const PSYCHIC_PARRY_WEAK_CAPABILITY = "defence.psychicParryWeakens";
 /** Плохое качество — единственная ступень, для которой книга даёт ослабление. */
 const POOR_QUALITY = "poor";
 
+/** Порог Pen стрелкового оружия, с которого книга считает его имеющим Power Field (стр. 62). */
+export const BLADE_SHIELD_POWER_FIELD_PEN = 6;
+
+/**
+ * Считается ли выстрел с таким Pen имеющим Power Field в расчёте парирования (Щит Клинков).
+ * Чистая функция: Pen приходит числом или строкой из данных оружия, мусор — «нет».
+ */
+export function bladeShieldPenNeedsPowerField(pen) {
+  const n = Number(pen);
+  return Number.isFinite(n) && n >= BLADE_SHIELD_POWER_FIELD_PEN;
+}
+
 /** Есть ли у персонажа сам Талант. */
 export function hasBladeShield(actor) {
   return hasRuleFlag(actor, BLADE_SHIELD_CAPABILITY);

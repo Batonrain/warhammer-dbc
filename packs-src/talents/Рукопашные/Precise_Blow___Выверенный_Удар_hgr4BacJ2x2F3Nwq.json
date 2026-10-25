@@ -5,7 +5,7 @@
   "folder": "XeycnCsRlazxEDgr",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey meleeCore.core.preciseBlow — второй шаг к Верному Удару: штраф рукопашной Избирательной атаки меньше ещё на 10 (selectiveAimReduction) и штраф за Размер цели меньше ещё на 10 (правило core.preciseBlowSize, действует при Размере цели −2 и меньше, пока после Верного Удара штраф не обнулён).",
     "benefit": "Персонаж уменьшает штраф на рукопашные атаки за Избирательные атаки или Размер цели ниже 0 ещё на 10.",
     "tier": 2,
     "requirement": "WS 40, Sure Strike",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "YFOjjeg7xe0lR0J3",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "FtDljB2MlXX0pTB6",
+              "capabilityKey": "meleeCore.core.preciseBlow",
+              "label": "Выверенный Удар: штраф Избирательных рукопашных атак и малого Размера цели меньше ещё на 10",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

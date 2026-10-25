@@ -27,6 +27,14 @@ import { applyCharDamage } from "../../combat/char-damage.mjs";
 // New Men / Новые Люди (Йигори): штраф операции и восстановление вдвое,
 // лубок вчетверо короче (module/rules/new-men.mjs).
 import { newMenSurgeryPenalty, newMenRecoveryDays, splintDays } from "../../rules/new-men.mjs";
+// Таланты Медика (3-dc87): Полевой Хирург, Радикальное Лечение, Быстрые Стежки,
+// Перешивание, Консилиум — чистая арифметика в rules/medic-talents.mjs.
+import {
+  FIELD_SURGEON_CAP, RADICAL_TREATMENT_CAP, FAST_STITCHES_CAP, RESTITCHING_CAP, COUNCILIUM_CAP, REANIMATE_CAP,
+  fieldSurgery, radicalTreatment, fastStitchesIb, restitchingAllowed,
+  healAssistMax, clampHealAssists, healAssistBonus, councilWounds
+} from "../../rules/medic-talents.mjs";
+import { runReanimate } from "../../combat/reanimate.mjs";
 
 /** «Медицина−30» / «Медицина−15 (Новые Люди)» — подпись порога операции. */
 const surgeryLabel = pen => `Медицина−${-pen}${pen !== -30 ? " (Новые Люди: штраф вдвое)" : ""}`;
@@ -104,6 +112,36 @@ function patientHealingMod(patient) {
   return { total, lines };
 }
 
+/**
+ * Полевой Хирург (3-dc87): операция без стационара. `penalty` — −20 «в поле»
+ * при наличии Таланта, `blocked` — Гангрена без операционной и без Таланта,
+ * `line` — строка карточки (null, если Талант ничего не изменил).
+ */
+function fieldSurgeryOf(medic, mode, theatre) {
+  const fs = fieldSurgery({ mode, theatre: !!theatre, hasTalent: hasRuleFlag(medic, FIELD_SURGEON_CAP) });
+  return { ...fs, line: fs.inField ? `${rollIcon("wrench","#8fd0ff")}<i>Полевой Хирург: операция «в поле» — −20.</i>` : null };
+}
+
+/** Перешивание: можно ли повторить Первую Помощь над пациентом (метка времени и результата — на нём). */
+export function canRestitch(medic, patient) {
+  if (!hasRuleFlag(medic, RESTITCHING_CAP)) return false;
+  const w = patient?.system?.wounds ?? {};
+  return restitchingAllowed({
+    used: !!w.firstAidUsed, failed: !!w.firstAidFailed, at: w.firstAidAt,
+    now: game.time?.worldTime ?? 0, ib: medic?.system?.characteristics?.int?.bonus
+  });
+}
+
+/**
+ * Ассистенты теста лечения: число ужимается в максимум (2, с Консилиумом 4) и
+ * сворачивается в «Мод. теста» (+10 каждый). Идемпотентна — `assistFolded`.
+ */
+export function withAssistants(medic, opts = {}) {
+  if (opts.assistFolded) return opts;
+  const assistants = clampHealAssists(opts.assistants, hasRuleFlag(medic, COUNCILIUM_CAP));
+  return { ...opts, assistants, assistFolded: true, mod: (Number(opts.mod) || 0) + healAssistBonus(assistants) };
+}
+
 /** Итоговый Порог теста Медицины: медик + автоматический мод. от пациента + свой довесок режима. */
 export function medicaeEff(medic, patient, extra = 0) {
   return medicSkill(medic) + patientHealingMod(patient).total + extra;
@@ -145,8 +183,9 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
         <b>Потеря конечности (крит/бой)</b>: всегда Кровотечение; обрубок не обработан за T.b дней → 80% Гангрены (розыгрыш сам по виджету Календаря). «Обработка обрубка» — Medicae−10, 5 мин, снимает угрозу.<br/>
         <b>Остановить Кровотечение</b>: полудействие, Medicae−10; −30, если пациент активно действовал в прошлый Ход или кровь останавливают на себе; жгут/ремень/верёвка — полное действие, +40.<br/>
         <b>Лечение Гангрены</b>: операция хотя бы в операционной, смена работы, Medicae−30; даже при Успехе конечность теряется полностью.<br/>
-        <b>Пришивание конечностей</b>: Medicae−30 (нужно качественное снаряжение); успех — восстановление 1d10+3−T.b сут.<br/>
-        <b>Бионика/Кибернетика</b>: установка Medicae−30; провал — 1d10 непогл. R; успех — 1d10+3−T.b сут. адаптации.<br/>
+        <b>Пришивание конечностей</b>: операция в стационаре (без Таланта «Полевой Хирург» — обязательно), Medicae−30 (нужно качественное снаряжение); успех — восстановление 1d10+3−T.b сут.<br/>
+        <b>Бионика/Кибернетика</b>: операция в стационаре (без «Полевого Хирурга» — обязательно), установка Medicae−30; провал — 1d10 непогл. R; успех — 1d10+3−T.b сут. адаптации.<br/>
+        <b>Полевой Хирург</b>: операцию (Гангрена, Пришивание, Бионика) можно провести без стационара «в поле» со штрафом −20.<br/>
         <b>Кома</b>: вывод раз в 10−T.b дней тестом Medicae−40 (нужен уход и питание).<br/>
         <b>Лечение болезней</b>: по умолчанию постельный режим; просто отдых −20, без отдыха −40; тест обычно раз в сутки.
       </div>
@@ -179,12 +218,24 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
           <option value="bionic">Бионика/Кибернетика (Medicae−30)</option>
           <option value="coma">Вывод из комы (Medicae−40)</option>
           <option value="disease">Лечение болезни</option>
+          ${hasRuleFlag(medic, REANIMATE_CAP) ? `<option value="reanimate">Реанимировать труп (1 Очко Бесчестия, полное действие)</option>` : ""}
         </select>
       </div>
+      ${hasRuleFlag(medic, RADICAL_TREATMENT_CAP) ? `<div class="atk-dlg-row" data-mode="firstAid"><label title="Талант «Радикальное Лечение»: дополнительный штраф к тесту Первой Помощи — при Успехе столько же дополнительных Ран">Радикальное Лечение:</label>
+        <select id="heal-radical">
+          <option value="0">— нет —</option>
+          <option value="1">−10 к тесту → +1 Рана</option>
+          <option value="2">−20 к тесту → +2 Раны</option>
+          <option value="3">−30 к тесту → +3 Раны</option>
+        </select>
+      </div>` : ""}
+      ${hasRuleFlag(medic, FAST_STITCHES_CAP) ? `<div class="atk-dlg-row" data-mode="firstAid"><label title="Талант «Быстрые Стежки»: Первая Помощь одним полным действием, но I.b медика считается вдвое ниже (с округлением вверх)"><input type="checkbox" id="heal-fast-stitches"/> Быстрые Стежки (I.b вдвое ниже)</label></div>` : ""}
+      <div class="atk-dlg-row" data-mode="firstAid,setLimb,amputate,reattach,stumpCare,stopBleeding,gangreneSurgery,bionic,coma,disease"><label title="Ассистенты теста лечения: +10 к Порогу за каждого (стр. 25). Максимум ${healAssistMax(false)}; Талант «Консилиум» удваивает максимум, а пациент получает +2 Раны за каждого ассистента.">Ассистентов (макс. ${healAssistMax(hasRuleFlag(medic, COUNCILIUM_CAP))}):</label><input type="number" id="heal-assist" value="0" min="0" max="${healAssistMax(hasRuleFlag(medic, COUNCILIUM_CAP))}" style="width:60px;"/></div>
+      <div class="atk-dlg-row" data-mode="reanimate"><label title="Нельзя реанимировать существо с полностью уничтоженной головой или убитое варп-оружием/Выжиганием Души — система этого не отслеживает, подтвердите сами."><input type="checkbox" id="heal-reanimate-ok"/> Голова цела, смерть не от варп-оружия/Выжигания Души</label></div>
       <div class="atk-dlg-row" data-mode="rest,bedRest,passive"><label title="Medicae: критический лечится как тяжёлый; период до 8 часов"><input type="checkbox" id="heal-care"/> Мед. уход</label></div>
       <div class="atk-dlg-row" data-mode="stopBleeding"><label title="Книга: −30 вместо −10, если пациент активно действовал в свой прошлый Ход (отмечается само по движению/атаке/физическим ОД). На себе — всегда −30."><input type="checkbox" id="heal-patient-active"/> Пациент активно действовал в прошлый Ход</label></div>
       <div class="atk-dlg-row" data-mode="stopBleeding"><label title="Жгут, ремень или тонкая верёвка: полное действие вместо полудействия, +40"><input type="checkbox" id="heal-tourniquet"/> Жгут/ремень/верёвка (+40, полное действие)</label></div>
-      <div class="atk-dlg-row" data-mode="gangreneSurgery"><label title="Книга: сложная операция хотя бы в операционной комнате, занимает смену работы. Даже при Успехе гангренозная конечность теряется полностью — выберите её ниже."><input type="checkbox" id="heal-theatre"/> Есть операционная (обязательно)</label></div>
+      <div class="atk-dlg-row" data-mode="gangreneSurgery,reattach,bionic"><label title="Операции (Гангрена, Пришивание конечности, Бионика) — только в стационаре, хотя бы в операционной комнате (Гангрена занимает смену работы; при Успехе гангренозная конечность теряется полностью — выберите её ниже). Талант «Полевой Хирург» разрешает операцию «в поле» со штрафом −20."><input type="checkbox" id="heal-theatre"/> Есть операционная${hasRuleFlag(medic, FIELD_SURGEON_CAP) ? " (иначе «в поле»: −20)" : " (для операции обязательно)"}</label></div>
       <div class="atk-dlg-row" data-mode="amputate,reattach,stumpCare,bionic,gangreneSurgery,cauterize"><label title="Для Прижигания — какой обрубок прижечь (снимает угрозу Гангрены). Пусто — единственный необработанный, если он один.">Часть тела:</label>
         <select id="heal-limb">
           <option value="">— (для Бионики, если не восстанавливает утраченную часть) —</option>
@@ -263,7 +314,11 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
     ];
     if (healLevel(patient, patient.system).hardy) parts.push("<i>Hardy / Крепкий: для лечения всегда считается легко раненным.</i>");
     if (hasRuleFlag(patient, "healing.astartes")) parts.push("<i>Физиология Астартес: всегда считается отдыхающим.</i>");
-    if (patient.system.wounds?.firstAidUsed) parts.push('<span style="color:#a33;">⚠ Первая Помощь уже оказана (нужен новый урон).</span>');
+    if (patient.system.wounds?.firstAidUsed) {
+      parts.push(canRestitch(medic, patient)
+        ? '<span style="color:#2a7;">Перешивание: прошлая Первая Помощь провалена — повтор разрешён.</span>'
+        : '<span style="color:#a33;">⚠ Первая Помощь уже оказана (нужен новый урон).</span>');
+    }
     const mode = form.querySelector("#heal-mode")?.value;
     // Галочка «активно действовал» проставляется сама по меткам прошлого Хода
     // пациента — только при смене пациента/режима, чтобы не перетирать
@@ -320,10 +375,18 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
             side:        form.querySelector("#heal-useless-side")?.value,
             narthecium:  !!form.querySelector("#heal-narthecium")?.checked,
             chop:        !!form.querySelector("#heal-chop")?.checked,
-            chopEnergy:  !!form.querySelector("#heal-chop-energy")?.checked
+            chopEnergy:  !!form.querySelector("#heal-chop-energy")?.checked,
+            radical:     num("#heal-radical"),
+            fastStitches: !!form.querySelector("#heal-fast-stitches")?.checked,
+            // Скрытая для режима строка не читается (иначе «хвост» от Первой Помощи
+            // давал бы +10 к Порогу и +2 Раны Консилиума отдыху).
+            assistants:  form.querySelector("#heal-assist")?.closest("[data-mode]")?.style.display === "none" ? 0 : num("#heal-assist"),
+            reanimateOk: !!form.querySelector("#heal-reanimate-ok")?.checked
           };
-          if (mode === "bionic") {
-            runBionicInstall(medic, patient, opts);
+          if (mode === "reanimate") {
+            await runReanimate(medic, patient, opts);
+          } else if (mode === "bionic") {
+            runBionicInstall(medic, patient, withAssistants(medic, opts));
           } else {
             await applyHealing(medic, patient, opts);
           }
@@ -563,7 +626,7 @@ async function applySetLimb(medic, patient, { mod, side, narthecium }) {
 }
 
 /** Пришивание конечностей (стр. 231): Medicae−30. */
-async function applyReattach(medic, patient, { mod, limb, bodySide = "" }) {
+async function applyReattach(medic, patient, { mod, limb, bodySide = "", theatre = false }) {
   const def = LIMB_TYPES[limb];
   if (!def) { ui.notifications.warn("Выберите часть тела для пришивания."); return; }
   const side = pickLostSide(patient.system, def.flag, bodySide, { lost: false });
@@ -572,9 +635,14 @@ async function applyReattach(medic, patient, { mod, limb, bodySide = "" }) {
     return;
   }
 
+  const field = fieldSurgeryOf(medic, "reattach", theatre);
+  if (field.blocked) {
+    ui.notifications.warn("Пришивание конечности — операция: нужен стационар (хотя бы операционная). Отметьте её в окне или возьмите Талант «Полевой Хирург».");
+    return;
+  }
   const pMod = patientHealingMod(patient);
   const pen = newMenSurgeryPenalty(patient, -30);
-  const eff = medicaeEff(medic, patient, mod + pen);
+  const eff = medicaeEff(medic, patient, mod + pen + field.penalty);
   const roll = await new Roll("1d100").evaluate();
   const rolls = [roll];
   const rolled = roll.total <= eff;
@@ -582,6 +650,7 @@ async function applyReattach(medic, patient, { mod, limb, bodySide = "" }) {
   const success = ls.success;
   const lines = [
     ...pMod.lines,
+    field.line,
     `${rollIcon("wrench","#8fd0ff")}<b>Пришивание конечности</b> (${def.label}): ${surgeryLabel(pen)}${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`,
     ls.line
   ].filter(Boolean);
@@ -740,18 +809,20 @@ async function applyGangreneSurgery(medic, patient, { mod, limb, theatre, bodySi
     ui.notifications.warn(`${patient.name}: Гангрены нет.`);
     return;
   }
-  if (!theatre) {
-    ui.notifications.warn("Операция от Гангрены требует хотя бы операционной — отметьте её в окне.");
+  const field = fieldSurgeryOf(medic, "gangreneSurgery", theatre);
+  if (field.blocked) {
+    ui.notifications.warn("Операция от Гангрены требует хотя бы операционной — отметьте её в окне (или Талант «Полевой Хирург»).");
     return;
   }
   const pMod = patientHealingMod(patient);
-  const eff = medicaeEff(medic, patient, mod - 30);
+  const eff = medicaeEff(medic, patient, mod - 30 + field.penalty);
   const roll = await new Roll("1d100").evaluate();
   const rolled = roll.total <= eff;
   const ls = await legionSurgeryPass(medic, rolled, "Операция от Гангрены");
   const success = ls.success;
   const lines = [
     ...pMod.lines,
+    field.line,
     `${rollIcon("skull","#7a8a4d")}<b>Операция от Гангрены</b> (операционная, смена работы): Медицина−30${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${rolled ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`,
     ls.line
   ].filter(Boolean);
@@ -859,7 +930,9 @@ async function applyDiseaseCure(medic, patient, { mod, diseaseCare, diseaseId })
  * из своего close() — ждём этот хук вместо переопределения close() на
  * инстансе, чтобы не трогать чужой класс.
  */
-export function runBionicInstall(medic, patient, { mod, limb, bodySide = "" }) {
+export function runBionicInstall(medic, patient, { mod, limb, bodySide = "", theatre = false }) {
+  // Стационар проверяется ДО Хирургеона: иначе имплант встал бы, а тест — нет.
+  if (fieldSurgeryOf(medic, "bionic", theatre).blocked) { warnBionicBlocked(); return; }
   const before = implantSnapshot(patient);
   const app = openSurgeon(patient);
   if (!app) return;
@@ -869,9 +942,13 @@ export function runBionicInstall(medic, patient, { mod, limb, bodySide = "" }) {
     const after = implantSnapshot(patient);
     const side = installedImplantSide(before, after, limb) || bodySide;
     const fresh = newInstalledImplants(before, after, limb);
-    resolveBionicTest(medic, patient, { mod, limb, bodySide: side,
+    resolveBionicTest(medic, patient, { mod, limb, bodySide: side, theatre,
       implantQuality: fresh.length ? (fresh.every(i => i.quality === "best") ? "best" : "lower") : "" });
   });
+}
+
+function warnBionicBlocked() {
+  ui.notifications.warn("Установка бионики/кибернетики — операция: нужен стационар (хотя бы операционная). Отметьте её в окне или возьмите Талант «Полевой Хирург».");
 }
 
 /** Часть тела Лечения → тип импланта Хирургеона (constants/body-map.mjs::classifyImplant). */
@@ -921,14 +998,16 @@ export function newInstalledImplants(before, after, limb) {
  * тела). Пустое значение — обычный имплант не по месту потери конечности
  * (напр. чисто когнитивный), тогда ветка ниже не трогает Состояния вообще.
  */
-export async function resolveBionicTest(medic, patient, { mod, limb, bodySide = "", implantQuality = "" }) {
+export async function resolveBionicTest(medic, patient, { mod, limb, bodySide = "", implantQuality = "", theatre = false }) {
   const def = LIMB_TYPES[limb];
+  const field = fieldSurgeryOf(medic, "bionic", theatre);
+  if (field.blocked) { warnBionicBlocked(); return; }
   // Бионика встаёт на выбранную сторону, если там есть потеря, иначе на
   // первую потерянную (wdbc-x1nz.2.100).
   const side = def ? pickLostSide(patient.system, def.flag, bodySide, { lost: false }) : null;
   const pMod = patientHealingMod(patient);
   const pen = newMenSurgeryPenalty(patient, -30);
-  const eff = medicaeEff(medic, patient, mod + pen);
+  const eff = medicaeEff(medic, patient, mod + pen + field.penalty);
   const roll = await new Roll("1d100").evaluate();
   const rolls = [roll];
   const rolled = roll.total <= eff;
@@ -936,6 +1015,7 @@ export async function resolveBionicTest(medic, patient, { mod, limb, bodySide = 
   const success = ls.success;
   const lines = [
     ...pMod.lines,
+    field.line,
     `${rollIcon("gear","#c98bff")}<b>Установка бионики/кибернетики</b>: ${surgeryLabel(pen)}${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`,
     ls.line
   ].filter(Boolean);
@@ -1002,8 +1082,14 @@ export async function assignCare(medic, patient) {
 }
 
 /** Расчёт и применение лечения к пациенту + сообщение в чат. */
-export async function applyHealing(medic, patient, opts) {
-  const { mode, care, mod, bonus } = opts;
+export async function applyHealing(medic, patient, rawOpts) {
+  // Ассистенты (+10 к Порогу каждый, макс. 2/4) — в «Мод. теста»; Консилиум —
+  // +2 Раны за каждого ассистента любому лечению пациента (3-dc87).
+  const opts = withAssistants(medic, rawOpts);
+  const councilium = hasRuleFlag(medic, COUNCILIUM_CAP);
+  const councilBonus = councilWounds(councilium, opts.assistants);
+  const { mode, care, mod } = opts;
+  const bonus = (Number(opts.bonus) || 0) + councilBonus;
   if (mode === "careAssign") return assignCare(medic, patient);
   if (mode === "cauterize") return applyCauterize(medic, patient, opts);
   if (mode === "setLimb")   return applySetLimb(medic, patient, opts);
@@ -1032,11 +1118,18 @@ export async function applyHealing(medic, patient, opts) {
   const medSkill = () => medicSkill(medic) + pMod.total;
 
   if (mode === "firstAid") {
-    if (patient.system.wounds?.firstAidUsed) {
+    // Перешивание: провалённую Первую Помощь можно повторить в течение I.b минут.
+    const restitch = !!patient.system.wounds?.firstAidUsed && canRestitch(medic, patient);
+    if (patient.system.wounds?.firstAidUsed && !restitch) {
       ui.notifications.warn(`${patient.name}: Первая Помощь уже оказывалась после этого урона.`);
       return;
     }
-    const testMod = ({ light: 10, heavy: 0, critical: -10 }[lvl.key]) + mod;
+    if (restitch) lines.push("<i>Перешивание: повтор после проваленной Первой Помощи.</i>");
+    // Радикальное Лечение: −10/−20/−30 к тесту → +1/+2/+3 Раны при Успехе.
+    const radical = radicalTreatment(hasRuleFlag(medic, RADICAL_TREATMENT_CAP) ? opts.radical : 0);
+    if (radical.level) lines.push(`<i>Радикальное Лечение: ${radical.mod} к тесту, при Успехе +${radical.bonus} Ран.</i>`);
+    if (opts.assistants) lines.push(`<i>Ассистенты: ${opts.assistants} (+${healAssistBonus(opts.assistants)} к Порогу${councilBonus ? `, Консилиум +${councilBonus} Ран` : ""}).</i>`);
+    const testMod = ({ light: 10, heavy: 0, critical: -10 }[lvl.key]) + mod + radical.mod;
     const skill = medSkill();
     const eff = skill + testMod;
     const roll = await new Roll("1d100").evaluate();
@@ -1047,7 +1140,11 @@ export async function applyHealing(medic, patient, opts) {
     const autoPass = lvl.key === "light" && hasRuleFlag(medic, "medic.core.butAScratch");
     const rolled = autoPass || rv <= eff;
     const deg = autoPass ? 1 : Math.floor(Math.abs(rolled ? eff - rv : rv - eff) / 10) + 1;
-    const baseHeal = { light: medic.system.characteristics?.int?.bonus ?? 0, heavy: 2, critical: 1 }[lvl.key];
+    // Быстрые Стежки: I.b медика для эффективности вдвое ниже (окр.▲).
+    const medicIb = medic.system.characteristics?.int?.bonus ?? 0;
+    const fast = !!opts.fastStitches && hasRuleFlag(medic, FAST_STITCHES_CAP);
+    if (fast) lines.push(`<i>Быстрые Стежки: I.b ${medicIb} → ${fastStitchesIb(medicIb)} (вдвое ниже, окр.▲).</i>`);
+    const baseHeal = { light: fast ? fastStitchesIb(medicIb) : medicIb, heavy: 2, critical: 1 }[lvl.key];
     lines.push(`${rollIcon("heart","#ff8a8a")}<b>Первая Помощь</b> (${lvl.label}): Медицина ${skill}${testMod >= 0 ? "+" : ""}${testMod} → порог <b>${eff}</b>, бросок <b>${rv}</b> — ${rolled ? `<span class="roll-success">Успех (${deg})</span>` : `<span class="roll-failure">Провал (${deg})</span>`}${autoPass ? ' <i>(Просто Царапина — автоуспех)</i>' : ""}`);
     // Хирургия Легиона (Апотекарий): провал за Очко Бесчестия — успех с 1
     // Успехом; лечение Первой Помощи от числа Успехов не зависит.
@@ -1055,7 +1152,7 @@ export async function applyHealing(medic, patient, opts) {
     const success = ls.success;
     if (ls.line) lines.push(ls.line);
     firstAidDone = true;
-    heal = success ? Math.max(0, baseHeal + bonus) : 0;
+    heal = success ? Math.max(0, baseHeal + bonus + radical.bonus) : 0;
     if (!success) lines.push("Восстановление: 0 — Первая Помощь израсходована.");
     // «Не может вылечить больше Ран, чем персонаж потерял после предыдущего
     // оказания первой помощи» (wdbc-x1nz.2.103); null — ещё не оказывали.
@@ -1064,7 +1161,19 @@ export async function applyHealing(medic, patient, opts) {
       lines.push(`Ограничено: после прошлой Первой Помощи потеряно только <b>${since}</b> Ран.`);
       heal = since;
     }
-    try { await patient.update({ "system.wounds.firstAidUsed": true, "system.wounds.lostSinceFirstAid": 0 }); } catch {}
+    // Метка времени и результата — для Перешивания (повтор после провала, пока
+    // не прошло I.b минут); каждый новый урон сбрасывает firstAidUsed, метки
+    // читаются только вместе с ним.
+    try {
+      // Предел «потеряно после прошлой помощи» обнуляет только Успех: проваленная
+      // попытка ничего не вылечила, и Перешивание (повтор) не должно лечить
+      // сверх предела, какой был до неё (review 24.10.2026).
+      await patient.update({
+        "system.wounds.firstAidUsed": true,
+        ...(success ? { "system.wounds.lostSinceFirstAid": 0 } : {}),
+        "system.wounds.firstAidAt": game.time?.worldTime ?? 0, "system.wounds.firstAidFailed": !success
+      });
+    } catch {}
   } else {
     let effMode = mode;
     if (isAstartes) {

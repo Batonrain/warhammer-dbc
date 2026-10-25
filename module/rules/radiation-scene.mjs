@@ -14,6 +14,7 @@
 
 import { hasRuleFlag } from "./flags.mjs";
 import { itemHasName } from "./predicates.mjs";
+import { itemHasKey } from "./item-marker.mjs";
 import { SECONDS_PER_ROUND } from "./condition-duration.mjs";
 
 /** Флаг актора: укрытие, в котором он сейчас (ГМ ставит в окне «Окружение»). */
@@ -25,6 +26,15 @@ export const RAD_DOSE_FLAG = "radDose";
 
 /** Крепкий как Камень (Скват): «защита против радиации –3» (rules/squat-traits.mjs). */
 const HARD_AS_STONE = "trait.hardAsStone";
+
+/** Возможность импланта «Меланохром»: «Работающий Меланохром (геносемя) −1» (таблица защиты, стр. 484). */
+export const MELANOCHROME_KEY = "implant.melanochrome";
+/** Возможность Таланта «Чёрная Мантия» (Геносемя): усиленный режим Меланохрома. */
+export const BLACK_MANTLE_KEY = "geneseed.core.blackMantle";
+/** Флаг на самом Таланте: усиленный режим включён (переключает игрок, apps/black-mantle.mjs). */
+export const BLACK_MANTLE_ON_FLAG = "blackMantleOn";
+
+const SYSTEM = "warhammer-dbc";
 
 /** Укрытия из таблицы защиты книги: ключ → { label, protect } (immune — иммунитет). */
 export const RAD_SHELTERS = {
@@ -69,6 +79,39 @@ export function armourRadProtection(actor) {
   return best;
 }
 
+/** Включён ли на Таланте «Чёрная Мантия» усиленный режим (флаг на самом предмете). */
+function blackMantleSwitchedOn(actor) {
+  return items(actor).some(i => i?.type === "talent" && itemHasKey(i, BLACK_MANTLE_KEY)
+    && !!(i.getFlag?.(SYSTEM, BLACK_MANTLE_ON_FLAG) ?? i.flags?.[SYSTEM]?.[BLACK_MANTLE_ON_FLAG]));
+}
+
+/**
+ * Режим Меланохрома: null — импланта нет (или не установлен), "base" — обычный
+ * (защита −1), "enhanced" — усиленный Чёрной Мантией (защита −2 вместо −1 и
+ * −1 к урону Rad). Усиливать можно только работающий Меланохром, поэтому режим
+ * без импланта не существует, сколько бы раз ни щёлкнули тумблер на Таланте.
+ *
+ * НЕ моделируются исключения книги (стр. 486, таблица возрастов): в возрасте
+ * 31–35 лет Меланохром «не работает», у Кархародонов он защиты не даёт
+ * (constants/legions.mjs) — их выставляет мастер, сняв имплант или Талант.
+ */
+export function melanochromeMode(actor) {
+  if (!hasRuleFlag(actor, MELANOCHROME_KEY)) return null;
+  return hasRuleFlag(actor, BLACK_MANTLE_KEY) && blackMantleSwitchedOn(actor) ? "enhanced" : "base";
+}
+
+/**
+ * Урон Rad(X) по существу с усиленным Меланохромом: «уменьшает любой урон в T
+ * от радиации на 1 до минимума в 1». Нулевой урон остаётся нулевым — минимум 1
+ * ограничивает уменьшение, а не создаёт урон из ничего. Тики фона Радиации
+ * сцены (ровно 1) эту функцию не проходят.
+ */
+export function radDamageAfterMelanochrome(actor, amount) {
+  const x = Number(amount) || 0;
+  if (x <= 0 || melanochromeMode(actor) !== "enhanced") return x;
+  return Math.max(1, x - 1);
+}
+
 /**
  * Полная защита актора: броня + Черты + укрытие.
  * @returns {{immune:boolean, total:number, parts:string[]}}
@@ -84,6 +127,11 @@ export function radProtectionOf(actor, shelterKey = "") {
   if (armour.value) { total += armour.value; parts.push(`${armour.label} −${armour.value}`); }
   if (hasTraitNamed(actor, "Machine")) { total += 1; parts.push("Машина −1"); }
   if (hasRuleFlag(actor, HARD_AS_STONE)) { total += 3; parts.push("Крепкий как Камень −3"); }
+  // Меланохром — отдельная строка таблицы книги, складывается с бронёй и укрытием.
+  // Усиленный режим Чёрной Мантии ЗАМЕНЯЕТ −1 на −2 (итог −2, не −3).
+  const melanochrome = melanochromeMode(actor);
+  if (melanochrome === "enhanced") { total += 2; parts.push("Меланохром, усиленный режим −2"); }
+  else if (melanochrome === "base") { total += 1; parts.push("Меланохром −1"); }
   if (shelter.protect) { total += shelter.protect; parts.push(`${shelter.label} −${shelter.protect}`); }
   return { immune: false, total, parts };
 }

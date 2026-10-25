@@ -5,7 +5,7 @@
   "folder": "V0Wfgl0aycRFPfu2",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано как подсказка (решение владельца 24.10.2026): capabilityKey rangedCore.core.appliedPhysics — при попадании оружием со свойством Blast карточка называет предел сдвига шаблона «до ½BS.b (окр.▲) м» (module/combat/attack.mjs ← module/rules/gunner-talents.mjs::appliedPhysicsShift). Сам сдвиг шаблона и повторные Избегания целей, уже уклонившихся от взрыва, ведёт стол.",
     "benefit": "Попадая из оружия со свойством Blast, после Избеганий персонаж может сместить шаблон взрыва на до ½ BS.b (окр.▲) м. Уже уклонившиеся цели могут продолжать Уклоняться, если хватает SPD.",
     "tier": 3,
     "requirement": "BS 50, I 40, Logic+20",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "zv3aNgqPa1Ys6NQa",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "r2cZ9997KA3DF47X",
+              "capabilityKey": "rangedCore.core.appliedPhysics",
+              "label": "Прикладная Физика: подсказка предела сдвига шаблона взрыва ½BS.b",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

@@ -222,6 +222,13 @@ describe("карточка атаки", () => {
     expect(html).toContain("Тест на отмену (Распыление, Acrobatics A+0)");
   });
 
+  it("Пироман: кнопка шаблона Распыления помечена data-pyromaniac (поджог укрытий); без Таланта — нет", () => {
+    const withTalent = card({ isMelee: false, wp: { spray: true, flame: true }, pyromaniac: true });
+    expect(withTalent.match(/<button class="wh-place-template-btn"[^>]*>/)[0]).toContain('data-pyromaniac="1"');
+    const without = card({ isMelee: false, wp: { spray: true, flame: true } });
+    expect(without.match(/<button class="wh-place-template-btn"[^>]*>/)[0]).not.toContain("data-pyromaniac");
+  });
+
   it("без Распыления, в рукопашной или на промахе — кнопки теста на отмену нет", () => {
     expect(card({ isMelee: false, wp: {} })).not.toContain("wh-spray-cancel-btn");
     expect(card({ isMelee: true, wp: { spray: true } })).not.toContain("wh-spray-cancel-btn");

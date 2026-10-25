@@ -102,7 +102,7 @@ function hitLines(hits, { blastRating = 0 } = {}) {
  */
 function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", weaponName, actorName, vehicleSide,
                                     isMelee = false, burst = false, weaponRange = 0,
-                                    attackerUuid = "", itemUuid = "", hordeHits = null, deadlyTrapLegacyDelta = 0, fangVenomDose = "", butcherDice = 0 }) {
+                                    attackerUuid = "", itemUuid = "", hordeHits = null, deadlyTrapLegacyDelta = 0, fangVenomDose = "", butcherDice = 0, pyromaniac = false, torrent = null }) {
   if (!hits.length) return "";
   // Взрывное/Распыление — разовый Шаблон (Region-плейсмент, module/combat/
   // templates.mjs): круг радиусом blastRating или конус 30° длиной Rng.
@@ -159,14 +159,19 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
   // смысле вовсе), их это НЕ касается — там по-прежнему одна кнопка.
   const perHitBlastTemplates = wp.blastRating > 0 && !wp.spray
     && !(wp.lingerRating > 0) && !(wp.shrinkTemplate > 0) && hits.length > 1;
+  // Поток (rules/flamer-talents.mjs): вместо конуса Распыления — круг Blast(Rng/5+1); data-torrent-max —
+  // предел размещения (2×Rng), его проверяет обработчик кнопки (hooks.mjs) вместе с прямой видимостью.
+  const torrentOn = !!torrent && !!wp.spray;
   const templateBtn = (!perHitBlastTemplates && (wp.blastRating > 0 || wp.spray)) ? `
     <button class="wh-place-template-btn" type="button"
-      data-shape="${wp.spray ? "cone" : "circle"}"
-      data-meters="${wp.spray ? weaponRange : wp.blastRating}"
+      data-shape="${wp.spray && !torrentOn ? "cone" : "circle"}"
+      data-meters="${torrentOn ? torrent.radius : (wp.spray ? weaponRange : wp.blastRating)}"${torrentOn ? ` data-torrent-max="${torrent.maxDistance}"` : ""}
       data-weapon-name="${weaponName}"
       data-attacker-uuid="${attackerUuid}"
-      data-item-uuid="${itemUuid}"${lingerAttrs}${gravitonAttrs}>
-      🎯 ${wp.lingerRating > 0
+      data-item-uuid="${itemUuid}"${lingerAttrs}${gravitonAttrs}${pyromaniac ? ` data-pyromaniac="1" data-attacker="${actorName}"` : ""}>
+      🎯 ${torrentOn
+        ? `Поток: разместить шаблон Blast(${torrent.radius} м) — до ${torrent.maxDistance} м, в прямой видимости — и отметить цели`
+        : wp.lingerRating > 0
         ? `Разместить зону «Остаётся» (${wp.lingerRating} раунд.) и отметить цели`
         : wp.shrinkTemplate > 0
           ? "Разместить Гравитонную зону (тает 1м/ход, Ландшафт−30) и отметить цели"
@@ -236,6 +241,17 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
       title="Хищник Небес: на Натиске с полёта Успехами можно заменить до 2 кубиков урона за Ход.">
       🦅 Хищник Небес: ещё кубик ${die}→${d.successes} (−${die} +${d.successes})
     </button>`).join("") : "";
+    // Искры (Талант Оружейника, rules/gunsmith-talents.mjs::sparksSwap): бросок
+    // 2d10 и замена наименьшего кубика урона этого попадания (при дубле —
+    // двух). Правит соседнюю .wh-apply-dmg-btn в DOM, как кнопка выше;
+    // «один раз за атаку» держит обработчик (hooks.mjs, .wh-sparks-btn):
+    // после клика гасит Искры на всех попаданиях этой карточки.
+    const sparksDice = Array.isArray(d.sparksDice) ? d.sparksDice : [];
+    const sparksBtn = sparksDice.length ? `
+    <button class="wh-sparks-btn" type="button" data-dice="${sparksDice.join(",")}"
+      title="Искры: бросить 2d10 и заменить наименьший кубик урона этого попадания на больший из двух (дубль — можно заменить два). Один раз за атаку, на любом попадании.">
+      ⚡ Искры: 2d10 вместо кубика ${Math.min(...sparksDice)}
+    </button>` : "";
     // Смертельная Ловушка (wdbc-1rno.35, vigilant 10-10, стр. 427): правит
     // data-damage соседней .wh-apply-dmg-btn прямо в DOM, тем же приёмом,
     // что и Кубик→Успехи выше — раз за бой, отмечается по клику
@@ -306,13 +322,17 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
     data-through-shot="${wp.throughShot ? 1 : 0}"
     data-has-extreme="${d.hasExtreme ? 1 : 0}"
     data-opportunist-floor="${d.opportunistFloor ? 1 : 0}"
+    data-welder="${wp.welderMark ? 1 : 0}"
+    data-breach-no-double="${wp.breachNoDouble ? 1 : 0}"
+    data-neg-wounds-bonus="${wp.negWoundsBonus ?? 0}"
+    data-cleave-child="${wp.cleaveChild ? 1 : 0}"
     ${toHorde ? `data-force-horde="${toHorde}"` : ""}>
     Применить урон ${i + 1}: <b>${d.total}</b> → ${toHorde ? "Орду (прикрыла цель)" : d.loc}${
       wp.blastRating > 0 ? ` <span class="roll-hit-extra">(отметьте всех в радиусе ${wp.blastRating}м — «Всем»)</span>` : ""}
   </button>${wp.warpSoak ? `
   <button class="wh-pain-absorb-btn" type="button" data-damage="${d.total}" title="Друкхари с Очками Боли: выбранный токен цели поглощает урон Болью вместо Ран (3 урона за 1 Боль)">
     🔥 Поглотить Болью ${i + 1}: <b>${d.total}</b>
-  </button>` : ""}${swapBtn}${deadlyTrapBtn}${butcherDice > 0 ? `
+  </button>` : ""}${swapBtn}${sparksBtn}${deadlyTrapBtn}${butcherDice > 0 ? `
   <button class="wh-butcher-btn" type="button" data-attacker-uuid="${attackerUuid}" data-weapon-uuid="${itemUuid}"
     title="Кхорнгор Мясник: потратить кубики запаса — по кубику урона оружия за каждый (до ½W.b), после броска урона, до щитов">
     🩸 Мясник: +кубики к урону ${i + 1} (до ${butcherDice})
@@ -416,6 +436,22 @@ function fanaticInterceptSection(fanaticIntercepts) {
 }
 
 /**
+ * Нечестивая Преданность/Unholy Devotion (combat/unholy-devotion.mjs): Миньоны
+ * Хозяина, достающие до цели в пределах Полудвижения, уже найдены геометрией
+ * attack.mjs. Кнопка бросает A+0 (+30 при ≤2 м) за Миньона — раз в Раунд на
+ * каждого; перенос урона — выделить токен Миньона и применить урон ему.
+ */
+function unholyDevotionSection(devotionIntercepts, masterUuid) {
+  if (!devotionIntercepts?.length) return "";
+  return devotionIntercepts.map(m => `
+    <div class="sq-chat-note">${rollIcon("shield", "#ffb347")}Нечестивая Преданность: Миньон <b>${esc(m.name)}</b> (${m.distance} м от Хозяина) может принять попадание вместо него — A+0${m.bonus ? ` +${m.bonus} (не дальше 2 м)` : ""}, порог <b>${m.threshold}</b>.
+      ${m.available
+        ? `<button type="button" class="wh-unholy-devotion-btn" data-minion-uuid="${m.uuid}" data-master-uuid="${esc(masterUuid)}" data-distance="${m.rawDistance ?? m.distance}">Принять удар</button>`
+        : `В этом Раунде попытка уже была — один раз в Раунд на Миньона.`}
+    </div>`).join("");
+}
+
+/**
  * Перегруппировка/vigilant 1-2, Оружие Наследия (wdbc-1rno.35, стр. 427):
  * «После успешной атаки этим оружием (даже если цель Избежала её) персонаж
  * может потратить Очко Бесчестия, чтобы перебросить свою Инициативу начиная
@@ -484,7 +520,7 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
                           grapple = false, chomper = false, bodyguards = [], allyName = "" }, { wp, attackerUuid = "", itemUuid = "", hitsCount = 1, pool = null,
                           swarm = null, unseen = false, unseenDetected = false, unseenPenalty = 0,
                           sixthSenseBypassAvailable = false, musicOfBattleBypassAvailable = false,
-                          isMelee = false, burst = false, attackerIsHorde = false, hitLocLabel = "" }) {
+                          isMelee = false, burst = false, attackerIsHorde = false, hitLocLabel = "", razorEdge = false }) {
   // Стр. 12, wdbc-x1nz.2.28: «Одно Действие может вызвать только одну
   // Реакцию» — один attackId на ВСЮ карточку (одна атака = один рендер этой
   // функции), общий для каждой кнопки Избегания ниже (Уклонение/Парирование/
@@ -512,7 +548,10 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
   // Очередь/Быстрая/Молниеносная Атака дают больше одного попадания за
   // атаку — кнопки несут их число, чтобы Уклонение/Парирование/Вираж снимали
   // по одному попаданию за степень успеха, а не всю атаку разом (стр. 12).
-  const hitsNote = hitsCount > 1
+  const hitsNote = razorEdge
+    // На Лезвии Бритвы (Талант Разбойника): урон один, но Избегать надо ВСЕ Успехи атаки.
+    ? `<div class="roll-defense-note">🔪 На Лезвии Бритвы: цель медленнее — чтобы Избежать удара, ей нужно перебить все ${hitsCount} Успех${hitsCount === 1 ? "" : hitsCount < 5 ? "а" : "ов"} атаки (как ${hitsCount} попадани${hitsCount === 1 ? "е" : hitsCount < 5 ? "я" : "й"}).</div>`
+    : hitsCount > 1
     ? `<div class="roll-defense-note">Эта атака даёт ${hitsCount} попаданий — Успех защиты снимает их по одному за степень.</div>`
     : "";
   // Стр. 12 (wdbc-9wvm): от атак, ПОЛНОСТЬЮ накрывающих Базу цели (Взрывное/
@@ -575,11 +614,11 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
                Уклонение (невозможно)
              </button>`
           : unseenLocked
-          ? `<button class="wh-dodge-btn wh-unseen-locked" type="button" disabled data-extra-mod="${dodgeMod}" data-extra-mod-recoil="${dodgeModRecoil ?? dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-item-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-melee="${isMelee ? 1 : 0}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-attack-id="${attackId}"
+          ? `<button class="wh-dodge-btn wh-unseen-locked" type="button" disabled data-extra-mod="${dodgeMod}" data-extra-mod-recoil="${dodgeModRecoil ?? dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-item-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-evade-cost="${wp?.evadeCost ?? 1}" data-melee="${isMelee ? 1 : 0}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-attack-id="${attackId}"
                title="Незримая атака (стр. 32): Уклонение недоступно, пока не засечена альтернативными методами — Психочутьем/Технологиям (кнопки ниже).">
                Уклонение${dodgeMod !== 0 ? ` (${signed(dodgeMod)})` : ""} — не засечена
              </button>`
-          : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-extra-mod-recoil="${dodgeModRecoil ?? dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-item-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-melee="${isMelee ? 1 : 0}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-attack-id="${attackId}" data-grapple="${grapple ? 1 : 0}">
+          : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-extra-mod-recoil="${dodgeModRecoil ?? dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-item-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-evade-cost="${wp?.evadeCost ?? 1}" data-melee="${isMelee ? 1 : 0}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-attack-id="${attackId}" data-grapple="${grapple ? 1 : 0}">
                Уклонение${dodgeMod !== 0 ? ` (${signed(dodgeMod)})` : ""}
              </button>`
         }
@@ -756,12 +795,22 @@ export function attackCard({
   // сработало. Не путать с «Критическим Эффектом» ниже (свойство Extreme).
   critLine = "",
   hitsCount = 0, hits = [],
+  // Сколько «попаданий» учесть кнопкам Избегания вместо hitsCount (На Лезвии Бритвы); null — hitsCount.
+  evasionHits = null,
   hitLocLabel = "", locRoll = 0, locShift = null, gorget = null,
   isMelee = false, dtLabel = "", damageType = "", damageSubtype = "", pen = 0,
   // Assassin Strike / Удар Ассасина (wdbc-qpcg): доступность кнопки уже
   // посчитана вызывающей стороной (module/combat/assassin-strike.mjs —
   // владение Талантом + не потрачен в этом Раунде), карточка только рисует.
   assassinStrike = false,
+  // Охотник на Танки (combat/tank-hunter.mjs): {modelId, targetName, targetUuid} или null.
+  tankHunterOffer = null,
+  // Штыковая Атака (combat/free-shot.mjs::bayonetShotButtonsHtml): готовая разметка кнопок выстрела в упор.
+  bayonetShotHtml = "",
+  // Яростный Штурм (combat/furious-assault.mjs): готовая разметка кнопки доп. атаки.
+  furiousAssaultHtml = "",
+  // Снайпер Ужаса (combat/terror-sniper.mjs): {targetTokenUuid} или null.
+  terrorSniperOffer = null,
   sbEff = 0, sbHalf = false, reverseThrustBonus = 0, taintedAdd = 0, vehicleSide = "",
   ammo = null, band = null, suppression = null, allGunsBlazing = null,
   corVal = 0, corEffects = [],
@@ -788,6 +837,11 @@ export function attackCard({
   // кнопку «Применить урон» (эта секция только показывает кандидатов и
   // остаток «раз в Раунд без Реакции», ничего не переносит сама).
   fanaticIntercepts = [],
+  // Нечестивая Преданность (combat/unholy-devotion.mjs): Миньоны Хозяина-цели,
+  // способные принять попадание ([{uuid, name, distance, bonus, threshold,
+  // available}]) и uuid самого Хозяина — для подписи карточки результата.
+  devotionIntercepts = [],
+  devotionMasterUuid = "",
   // Перегруппировка, Оружие Наследия (wdbc-1rno.35, стр. 427): доступность
   // кнопки «потратить Очко Бесчестия» уже посчитана attack.mjs (hit &&
   // Мутация на оружии) — см. regroupLegacySection ниже.
@@ -801,6 +855,10 @@ export function attackCard({
   fangVenomDose = "",
   // Кхорнгор Мясник (wdbc-gao07): сколько кубиков запаса можно добавить к урону попадания.
   butcherDice = 0,
+  // Пироман (rules/flamer-talents.mjs): шаблон огнемёта (Spray+Flame) поджигает накрытые укрытия — attack.mjs решает, карточка метит кнопку шаблона.
+  pyromaniac = false,
+  // Поток (Талант Огнемётчика): { radius, maxDistance } в метрах, когда он включён и сработал — attack.mjs.
+  torrent = null,
   // Посох/Крюк (core.json, «Типы Рукопашного Оружия»): непустая строка —
   // Реакция «Повалить» доступна, её текст объясняет почему (уже посчитано
   // attack.mjs — Избирательное попадание Посохом в Ногу / 3+ Успеха Крюком).
@@ -1002,6 +1060,18 @@ export function attackCard({
       title="Раз в Раунд после рукопашной атаки (успешной или нет): Acrobatics+0 → Полудвижение свободным действием, не вызывает Свободную Атаку при выходе из рукопашной">
       🗡️ Удар Ассасина — Acrobatics+0
     </button>` : "",
+      !isMelee && tankHunterOffer ? `
+    <button class="wh-tank-hunter-btn" type="button" data-attacker-uuid="${attackerUuid}" data-target-uuid="${esc(tankHunterOffer.targetUuid)}"
+      title="Раз в Ход свободным действием: Common Lore (War)−10 → +2×I.b к Pen стрелкового оружия против этой модели техники до конца боя. 1–3 Провала — можно в следующий Ход, 4+ — до конца боя не вспомнить">
+      🎯 Опознать модель «${esc(tankHunterOffer.targetName)}» — Common Lore (War)−10
+    </button>` : "",
+      isMelee && bayonetShotHtml ? bayonetShotHtml : "",
+      isMelee && furiousAssaultHtml ? furiousAssaultHtml : "",
+      !isMelee && terrorSniperOffer ? `
+    <button class="wh-terror-sniper-btn" type="button" data-attacker-uuid="${attackerUuid}" data-target-token-uuid="${esc(terrorSniperOffer.targetTokenUuid)}"
+      title="Избирательное попадание Accurate-оружием после Прицеливания: Intimidate(BS)+0 → при Успехе враги в радиусе «Успехи» м, видевшие попадание, проходят Подавление (+0, −20 если знают, где стрелок)">
+      💀 Снайпер Ужаса — Intimidate(BS)+0
+    </button>` : "",
       notes.helpless ? `<div class="roll-allout-note">${notes.helpless}</div>` : "",
       notes.quietElimination ? `<div class="roll-allout-note">${notes.quietElimination}</div>` : "",
       notes.damageTalents ? `<div class="roll-allout-note">${notes.damageTalents}</div>` : "",
@@ -1020,10 +1090,17 @@ export function attackCard({
       notes.aim ? `<div class="roll-aim-note">Прицел: <b>${notes.aim}</b></div>` : "",
       notes.blastScatter ? `
     <div class="roll-allout-note">
-      💥 Взрыв мимо цели — смещение <b>${notes.blastScatter.distance}м</b>
-      ${notes.blastScatter.dir.icon} <b>${notes.blastScatter.dir.label}</b>
+      💥 Взрыв мимо цели — смещение ${notes.blastScatter.grenadier ? `<b class="wh-scatter-dist">${notes.blastScatter.distance}</b>м` : `<b>${notes.blastScatter.distance}м</b>`}
+      <span class="wh-scatter-dir-icon">${notes.blastScatter.dir.icon}</span> <b class="wh-scatter-dir">${notes.blastScatter.dir.label}</b>
       (роза, направление ${notes.blastScatter.dir.n}/8) от точки прицела.
       Радиус взрыва <b>${notes.blastScatter.radius}м</b> — проверьте, не задело ли исходную цель или тех, кто рядом.
+      ${notes.blastScatter.grenadier ? `
+      <div class="wh-grenadier-row">
+        <button class="wh-grenadier-reduce-btn" type="button" data-reduce="${notes.blastScatter.grenadier.reduce}"
+          title="Гренадер: промахнувшуюся гранату можно сместить на BS.b ближе к точке прицела">🎯 Гренадер: смещение −${notes.blastScatter.grenadier.reduce} м</button>
+        <button class="wh-grenadier-reroll-btn" type="button"
+          title="Гренадер: если после этого взрыв не задевает врагов или задевает союзников — перебросить направление смещения (d8)">🎲 Гренадер: перебросить направление</button>
+      </div>` : ""}
     </div>` : "",
       notes.mount ? `<div class="roll-aim-note">${notes.mount}</div>` : "",
       damageSection,
@@ -1063,16 +1140,18 @@ export function attackCard({
       // две кнопки сразу — легко сжечь Реакцию там, где платить не надо
       // (wdbc-09t). У рукопашной Spray не бывает, поэтому гейт по autoHit.
       (hit && !isSprayAuto)
-        ? defenseSection(defense, { wp, attackerUuid, itemUuid, hitsCount, pool, swarm, unseen, unseenDetected, unseenPenalty,
+        ? defenseSection(defense, { wp, attackerUuid, itemUuid, hitsCount: evasionHits ?? hitsCount, razorEdge: evasionHits != null,
+            pool, swarm, unseen, unseenDetected, unseenPenalty,
             sixthSenseBypassAvailable, musicOfBattleBypassAvailable, isMelee, burst, attackerIsHorde, hitLocLabel }) : "",
       applyDamageSection(hit ? hits : [], { wp, pen, damageType, damageSubtype, weaponName, actorName,
                                             vehicleSide, isMelee, burst, weaponRange,
-                                            attackerUuid, itemUuid, hordeHits, deadlyTrapLegacyDelta, fangVenomDose, butcherDice }),
+                                            attackerUuid, itemUuid, hordeHits, deadlyTrapLegacyDelta, fangVenomDose, butcherDice, pyromaniac, torrent }),
       misfireHitsSection(misfireHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid }),
       betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid }),
       betrayalHitsSection(grappleCoverHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid },
         "🤼 Борьба: партнёр по Захвату прикрывает цель с этой стороны — попадание уходит в него (стр. 12):"),
       fanaticInterceptSection(fanaticIntercepts),
+      unholyDevotionSection(devotionIntercepts, devotionMasterUuid),
       regroupLegacySection(regroupLegacyActive, { actorUuid: attackerUuid }),
       reactionKnockdownSection(reactionKnockdownReason, { actorUuid: attackerUuid }),
       sabreSecondAttackNote ? `<div class="roll-wprop-effects"><div class="roll-defense-note">${esc(sabreSecondAttackNote)}</div>${sabreSecondAttackItemId

@@ -5,7 +5,7 @@
   "folder": "HfTlTkQPDwQ9Yqqn",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано (трактовка Б, владелец 24.10.2026): capabilityKey weaponsmith.core.welder — Избирательная атака оружием со свойством Melta по технике помечает кнопки урона (module/rules/gunsmith-talents.mjs::welderMarksHit, data-welder), и при непоглощённом уроне module/combat/vehicle.mjs ВСЕГДА добавляет Критический Эффект 1d5+1 в часть машины, куда легло попадание. Выбора части машины в окне атаки у стрелка-существа нет — берётся часть по таблице попадания.",
     "benefit": "Попадая Избирательной атакой из оружия со свойством Melta по машине и нанося непоглощённый урон, персонаж также наносит Критический Эффект 1d5+1 в ту часть машины, в которую целился.",
     "tier": 1,
     "requirement": "BS 40, Weapon Training (Melta)",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "7HAt4Q1XXIjTaO6S",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "AJhrX0uiJIJDDVw4",
+              "capabilityKey": "weaponsmith.core.welder",
+              "label": "Сварщик: Избирательный выстрел Мельтой по технике — ещё Критический Эффект 1d5+1",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

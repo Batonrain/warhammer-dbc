@@ -25,6 +25,9 @@ import { legacySlaughterThresholdDelta } from "../../rules/legacy-weapon.mjs";
 import { divineProtectionActive } from "../../rules/death-save.mjs";
 import { berserkChargeBonus } from "../../rules/berserker-talents.mjs";
 import { stunUnrestricted } from "../../rules/takedown.mjs";
+import { BAYONET_CHARGE, hasBayonetCharge } from "../../rules/run-and-gun.mjs";
+import { grindFullSb, holdsInGrapple } from "../../rules/melee-talents.mjs";
+import { actorIdentityUuids } from "../../combat/command-state.mjs";
 
 /**
  * @param {object} v оружие, профиль, состояние актора и уже посчитанные бонусы
@@ -38,6 +41,7 @@ export function buildSelection(v) {
     categoryFor,
     fullAttackForced,
     forcedBaseKey = null,
+    extraEvasionMod = 0,
     gripKey,
     gripList,
     hasShieldEquipped,
@@ -176,7 +180,10 @@ export function buildSelection(v) {
       const baseOk     = !def.bases || def.bases.includes(baseKeyNow);
       const trainingOk = trained || key === "standard" || key === "freeattack";
       const balanceOk  = def.minBalance == null || ((sys.balance ?? 0) >= def.minBalance);
-      const capOk      = !def.requiresCapability || hasRuleFlag(actor, def.requiresCapability);
+      // Штыковая Атака: Талант опознаётся и по имени — у персонажей со снимком Таланта без записи Конструктора
+      // («ловушка Desiccated») Приём иначе остался бы заперт до «Обновить мир».
+      const capOk      = !def.requiresCapability || hasRuleFlag(actor, def.requiresCapability)
+        || (def.requiresCapability === BAYONET_CHARGE.key && hasBayonetCharge(actor));
       // Требование к свойству самого оружия (Пила: Tearing/Power Field, стр.
       // 14, wdbc-x1nz.2.66.2) — сверяется с уже посчитанным wp (aggregateAuto),
       // тем же приёмом, что categories/minBalance выше.
@@ -307,7 +314,17 @@ export function buildSelection(v) {
     const baseBon = isMelee ? (bDef.wsBonus ?? 0) + berserkBon : 0;
 
     const maneuverKey = isMelee ? (sel.maneuverKey ?? maneuverKeyDefault) : "standard";
-    const mDef        = MELEE_MANEUVERS[maneuverKey] || MELEE_MANEUVERS.standard;
+    const mDefRaw     = MELEE_MANEUVERS[maneuverKey] || MELEE_MANEUVERS.standard;
+    // Перемолоть (rules/melee-talents.mjs, Sahara 3-8dc5): Пила против того, кого носитель
+    // держит в Борьбе, считает ПОЛНЫЙ S.b вместо половины. Снимается только половина самого
+    // приёма — «½S.b» Обратного Хвата (sel.gDef) остаётся его собственным правилом.
+    const grindFull = isMelee && grindFullSb(actor, {
+      maneuverKey,
+      holdsTarget: !!targetActor && holdsInGrapple(actor, actorIdentityUuids(targetActor))
+    });
+    const mDef = grindFull
+      ? { ...mDefRaw, sbHalf: false, chatNote: String(mDefRaw.chatNote ?? "").replace("урон ½S.b (окр.▲)", "Перемолоть: полный S.b (цель в Борьбе)") }
+      : mDefRaw;
 
     // Длина Оружия (wdbc-x1nz.2.67, стр. 39): действующий Rng ЭТОЙ атаки —
     // длина + Хват + Приём (Выпад +1, Пила → 0). Читается диалогом
@@ -388,8 +405,8 @@ export function buildSelection(v) {
     // к тестам Избегания от этой атаки.
     const chargeLengthBonus = (isMelee && baseKey === "charge" && targetActor
       && chargeTargetDodgeBonus(effRange, actorMaxMeleeRange(targetActor))) ? 5 : 0;
-    const targetDodgeMod = (mDef.targetDodgeMod ?? 0) + (stDef.targetDodgeMod ?? 0) - bowMarkedMod + chargeLengthBonus;
-    const targetParryMod = (mDef.targetParryMod ?? 0) + (stDef.targetParryMod ?? 0) - bowMarkedMod;
+    const targetDodgeMod = (mDef.targetDodgeMod ?? 0) + (stDef.targetDodgeMod ?? 0) - bowMarkedMod + chargeLengthBonus + extraEvasionMod;
+    const targetParryMod = (mDef.targetParryMod ?? 0) + (stDef.targetParryMod ?? 0) - bowMarkedMod + extraEvasionMod;
 
     // Защитная Стойка без щита (стр. 15) — персонаж не может атаковать вовсе.
     const blocked = isMelee && stanceKey === "defensive" && stDef.noAttackWithoutShield && !hasShieldEquipped;
@@ -403,6 +420,7 @@ export function buildSelection(v) {
       gripManeuverBon ? `Хват: +${gripManeuverBon} на приём «${mDef.label}»` : "",
       slaughterBon ? `Наследие Бойни: ${slaughterBon > 0 ? "+" : ""}${slaughterBon} — заряжено убийством этим оружием` : "",
       chargeLengthBonus ? `Длина Оружия: цель длиннее на 3+ — Натиск даёт ей +5 Избегание` : "",
+      extraEvasionMod ? `Рипост: Избегания цели ${extraEvasionMod} против этой атаки` : "",
       (hasVariableLength && length !== sys.range) ? `Длина Оружия: выбрана ${length} вместо максимума ${sys.range} — влияет на правила 1/2/4 Длины Оружия (стр. 39)` : "",
       (sizeBonus > 0 && isMelee && !LONG_ARMS_EXCLUDED_GRIPS.has(gKey)) ? `Длинные Руки: Размер +${sizeBonus} к досягаемости (эфф. Rng ${effRange})` : ""
     ].filter(Boolean).join("<br>");

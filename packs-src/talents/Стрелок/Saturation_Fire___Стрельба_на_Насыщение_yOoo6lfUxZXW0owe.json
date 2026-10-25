@@ -5,7 +5,7 @@
   "folder": "V0Wfgl0aycRFPfu2",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано как подсказка (решение владельца 24.10.2026 — только укрытие цели): capabilityKey rangedCore.core.saturationFire — после Короткой/Длинной очереди карточка называет число выстрелов, ушедших в укрытие цели (половина непопавших, окр.▲), и «AP укрытия −N» (module/combat/attack.mjs ← module/rules/gunner-talents.mjs::saturationFireCoverShots). Сам износ укрытия (1 AP за выстрел, если урон выше AP укрытия) ведёт ГМ; другое укрытие в 2 м от цели и подавление — вручную.",
     "benefit": "При длинной/короткой очереди половина непопавших выстрелов (окр.▲) вместо этого попадает в укрытие цели или другое укрытие в 2м по выбору. При огне на подавление каждый промах повреждает укрытие в области подавления.",
     "tier": 2,
     "requirement": "BS 35",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "pF7QuEFgZqrZh961",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "vRiRhE0VAlKSzIIt",
+              "capabilityKey": "rangedCore.core.saturationFire",
+              "label": "Стрельба на Насыщение: половина непопавших выстрелов очереди — в укрытие цели",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

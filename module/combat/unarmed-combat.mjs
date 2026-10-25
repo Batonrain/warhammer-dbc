@@ -32,6 +32,7 @@ import { equippedMeleeWeapon, isIntegralAttack } from "./equipped-melee.mjs";
 import { improvisedMeleeProfile, IMPROVISED_MELEE_LABEL } from "./weapon-profiles.mjs";
 import { resolveWeaponProps, aggregateAuto } from "./weapon-properties.mjs";
 import { damageFormulaFor, meleeStrengthBonus } from "./attack-outcome.mjs";
+import { unarmedLosesPrimitive } from "../rules/pugilist-talents.mjs";
 
 /** «+20 на Парирование безоружных атак» вооружённому. */
 export const ARMED_VS_UNARMED_PARRY_BONUS = 20;
@@ -140,14 +141,19 @@ export function strikeDamageFormula(weapon, sbActor, corruptionBonus = 0) {
  * Бросить и применить такое попадание к `target`.
  * @returns {Promise<{roll: Roll, location: string}>}
  */
-export async function rollStrikeOn(target, { weapon, sbActor, location, source, corruptionBonus = 0 }) {
+export async function rollStrikeOn(target, { weapon, sbActor, location, source, corruptionBonus = 0, wielder = null }) {
   const wp = aggregateAuto(resolveWeaponProps(weapon));
   const roll = await new Roll(strikeDamageFormula(weapon, sbActor, corruptionBonus)).evaluate();
+  // Безоружный Мастер (стр. 62): безоружные атаки теряют Primitive — и когда кулак
+  // бьёт Ответным ударом / в ответ на Силовое поле, а не только основной атакой
+  // (attack.mjs). sbActor здесь — не обязательно хозяин оружия (Ответный удар бьёт
+  // с S.b атакующего), поэтому чьё оружие бьёт, передаёт вызывающий в wielder.
+  const primitive = !!wp.primitive && !unarmedLosesPrimitive(wielder, weapon);
   const { applyDamageToActor } = await import("./damage.mjs");
   await applyDamageToActor(target, {
     rawDamage: roll.total, penetration: Number(weapon?.system?.penetration) || 0,
     damageType: weapon?.system?.damageType || "impact", damageSubtype: weapon?.system?.damageSubtype || "",
-    hitLocation: location, melee: true, primitive: !!wp.primitive, felling: Number(wp.fellingRating) || 0,
+    hitLocation: location, melee: true, primitive, felling: Number(wp.fellingRating) || 0,
     attackerName: source?.name ?? "", attackerUuid: source?.uuid ?? "", weaponName: weapon?.name ?? ""
   });
   return { roll, location };
@@ -186,7 +192,7 @@ export async function performUnarmedRiposte(defender, { weaponId, improvised = f
   await message?.setFlag("warhammer-dbc", UNARMED_RIPOSTE_USED_FLAG, true);
   const location = strikeLocation(attackerWeapon);
   const { roll } = await rollStrikeOn(attacker, {
-    weapon, sbActor: attacker, location, source: defender,
+    weapon, sbActor: attacker, wielder: defender, location, source: defender,
     corruptionBonus: defender.system?.corruptionBonus ?? 0
   });
   const { postTestCard } = await import("../helpers/test-card.mjs");

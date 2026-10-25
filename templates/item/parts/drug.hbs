@@ -539,6 +539,9 @@
     <label class="wr-label">Мин. доз/нед.</label>
     <input type="number" name="system.addiction.minDose"
            value="{{system.addiction.minDose}}" min="0" class="wr-input-xs"/>
+    <label class="wr-label" title="Талант «Крючок»: препарат приготовлен с −30 к крафту — мин. доз/нед. вдвое меньше (окр.▼), принимающие перебрасывают успешный тест Зависимости">
+      <input type="checkbox" class="hook-up-cb" {{#if hookedUp}}checked{{/if}}/> Крючок
+    </label>
     <label class="wr-label">Тест</label>
     <select name="system.addiction.testChar" class="wr-select-sm">
       <option value="t"  {{#if (eq system.addiction.testChar "t")}}selected{{/if}}>T</option>

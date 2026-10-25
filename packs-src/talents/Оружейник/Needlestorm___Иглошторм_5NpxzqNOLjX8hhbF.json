@@ -5,7 +5,7 @@
   "folder": "HfTlTkQPDwQ9Yqqn",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey weaponsmith.core.needlestorm — Стрельба на Подавление из Флешетного и Иглового оружия (тип needler или название «Flechette»/«Needle») стоит Полудействие (1 ОД) вместо Полного (module/sheets/attack/dialog.mjs ← module/rules/gunsmith-talents.mjs::suppressionActionType).",
     "benefit": "Персонаж может совершать Стрельбу на Подавление из Флешетного и Иглового оружия за полудействие вместо полного действия.",
     "tier": 1,
     "requirement": "BS 40, Exotic Weapon Training (Flechette или Needle)",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "1NMFWoJjCRBn2Hwp",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "b8374nrTea9vRNDe",
+              "capabilityKey": "weaponsmith.core.needlestorm",
+              "label": "Иглошторм: Стрельба на Подавление Флешетным/Игловым оружием — Полудействие",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

@@ -60,7 +60,7 @@ async function resolveGrenadeSelfDamage(actor, item, { title, warnLine, sound = 
 
   const dmgRoll = await new Roll(item.system.damage || "0").evaluate();
   const { hasExtreme, extremeLevel, critEffect, exRoll } = await rollExtremeDamage(dmgRoll, {
-    wp, damageType, hitLocation, attacker: actor
+    wp, damageType, hitLocation, attacker: actor, weapon: item
   });
   const rolls = exRoll ? [dmgRoll, exRoll] : [dmgRoll];
 

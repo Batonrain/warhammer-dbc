@@ -28,7 +28,7 @@ import { showExtinguishDialog } from "../../combat/extinguish.mjs";
 import { toggleSuffocationMode } from "../../combat/condition-ticks.mjs";
 import { showDelegateTestPicker } from "../../rules/delegate-test.mjs";
 import { painChange, openPainSoulBurnDialog } from "./pain.mjs";
-import { showSkillfulTortureDialog } from "../../apps/skillful-torture.mjs";
+import { showTortureDialog } from "../../apps/torture.mjs";
 import { frenzyEntryBlocked, markFrenzyExited } from "../../combat/frenzy.mjs";
 import { avatarOfSlaughterAvailable, applyAvatarOfSlaughter } from "../../combat/avatar-of-slaughter.mjs";
 import { dreadWailAvailable } from "../../combat/dread-wail.mjs";
@@ -66,6 +66,7 @@ import { showDamageOnlyDialog } from "../../combat/damage-only-roll.mjs";
 import { spendActionPoints, spendReaction, resetActionEconomy } from "../../combat/action-economy.mjs";
 import { attackedThisTurn } from "../../rules/turn-flags.mjs";
 import { resolveFeintSuccess, resolvePressSuccess } from "../../combat/feint-press.mjs";
+import { fireThreatWeapon } from "../../rules/gunner-talents.mjs";
 import { resolveBulldozeSuccess, bulldozeForbidden, bulldozeSizePenalty } from "../../combat/bulldoze.mjs";
 import { resolveKnockdownSuccess, knockdownForbidden, knockdownSizePenalty, knockdownResistMods } from "../../combat/knockdown.mjs";
 import {
@@ -153,7 +154,9 @@ export function activateCombatListeners(root, actor) {
   on(root, ".pain-absorb-btn", "click", () => painChange(actor, +1, "absorb"));
   on(root, ".pain-spend-btn", "click", () => painChange(actor, -1, "spend"));
   on(root, ".pain-soulburn-btn", "click", () => openPainSoulBurnDialog(actor));
-  on(root, ".skillful-torture-btn", "click", () => showSkillfulTortureDialog(actor));
+  on(root, ".skillful-torture-btn", "click", () => showTortureDialog(actor, { skillful: true }));
+  // Общая Пытка для всех (3-dc87): встречный тест + Мучитель.
+  on(root, ".torture-btn", "click", () => showTortureDialog(actor));
 
   // ── Ярость: лимит повторного входа за бой (wdbc-sk8s, module/combat/frenzy.mjs) ──
   // «Однажды выйдя, нельзя войти снова до конца боя» — Frenzy/Ярость, снимается
@@ -340,7 +343,16 @@ export function activateCombatListeners(root, actor) {
         defaultMod: gripBonus,
         note: gripBonus ? `${base.note} Обратный Хват: +${gripBonus}.` : base.note });
     }
-    if (key === "press")  return _showContestDialog(actor, { ...base, onSuccess: resolvePressSuccess });
+    if (key === "press") {
+      // Огневая Угроза (rules/gunner-talents.mjs): со стрелковым оружием в руках Давление можно вести через BS
+      // вместо WS — тогда следовать за целью нельзя. BS ставится выбором по умолчанию; игрок вправе взять WS.
+      const threatGun = fireThreatWeapon(actor);
+      if (!threatGun) return _showContestDialog(actor, { ...base, onSuccess: resolvePressSuccess });
+      return _showContestDialog(actor, { ...base, defaultChar: "bs",
+        modLabel: "BS vs WS (Огневая Угроза)",
+        note: `${base.note} Огневая Угроза: стрельба по BS из «${threatGun.name}», но за целью следовать нельзя (если выбрана WS — как обычно).`,
+        onSuccess: (a, o) => resolvePressSuccess(a, { ...o, noFollow: o?.side?.char === "bs" }) });
+    }
     if (key === "knockdown") {
       // Повалить (стр. 14, wdbc-x1nz.2.66.5): нельзя против цели на 2+
       // Размера крупнее — диалог не открывается вовсе (тот же принцип, что

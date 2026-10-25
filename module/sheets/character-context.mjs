@@ -87,6 +87,8 @@ import { hasDreadWail }                          from "../combat/dread-wail.mjs"
 import { hasResplendentRaiment }                 from "../combat/resplendent-raiment.mjs";
 import { hasAdrenalineRush }                     from "../combat/adrenaline-rush.mjs";
 import { hasCaution }                            from "../combat/caution.mjs";
+import { hasRuleFlag as hasCourageFlag }         from "../rules/flags.mjs";
+import { IDOLATER_CAP }                          from "../rules/courage-talents.mjs";
 import { hasFlourishDance }                      from "../combat/flourish-dance.mjs";
 import { hasBoneSong }                           from "../combat/bone-song.mjs";
 import { hasPreservation }                       from "../combat/preservation.mjs";
@@ -523,6 +525,8 @@ export function characterContext(actor) {
   context.hasAdrenalineRush = hasAdrenalineRush(actor);
   // Кнопка «Осторожность» на вкладке БОЙ (глава 3) — только владельцам Таланта.
   context.hasCaution = hasCaution(actor);
+  // Галочка «Кумир рядом» на вкладке БОЙ (Sahara 3-scope) — только владельцам Идолопоклонника.
+  context.hasIdolater = hasCourageFlag(actor, IDOLATER_CAP);
   // Тумблер «Броня обслужена сегодня» Бронника (глава 3) — только владельцам Таланта.
   context.hasArmourMonger = hasArmourMonger(actor);
   context.armourMongerOn = context.hasArmourMonger && armourMongerOn(actor);

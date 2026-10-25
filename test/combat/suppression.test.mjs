@@ -359,7 +359,10 @@ describe("rollSuppressionTest: sourceActor едет в ctx.targetActor прав�
   it("с sourceActor — правило видит его как ctx.targetActor", async () => {
     let seenTarget;
     clearRuleSources();
-    registerRuleSource("test", (a, ctx) => { seenTarget = ctx.targetActor; return []; });
+    // Только вызовы самого теста Морали: moraleAutoPass (Бесстрашный/Идолопоклонник)
+    // тоже обходит источники, но с пустым ctx — без этого отбора выигрывал бы
+    // последний вызов и тест читал бы чужой ctx.
+    registerRuleSource("test", (a, ctx) => { if (ctx.morale) seenTarget = ctx.targetActor; return []; });
     captured.nextRoll = 10;
     const shooter = { id: "shooter-1", name: "Стрелок", uuid: "Actor.shooter-1" };
     const a = actor({ wp: 40 });
@@ -370,7 +373,7 @@ describe("rollSuppressionTest: sourceActor едет в ctx.targetActor прав�
   it("без sourceActor — ctx.targetActor null, ведёт себя как раньше", async () => {
     let seenTarget = "непроверено";
     clearRuleSources();
-    registerRuleSource("test", (a, ctx) => { seenTarget = ctx.targetActor; return []; });
+    registerRuleSource("test", (a, ctx) => { if (ctx.morale) seenTarget = ctx.targetActor; return []; });
     captured.nextRoll = 10;
     const a = actor({ wp: 40 });
     await rollSuppressionTest(a, { mod: 0 });

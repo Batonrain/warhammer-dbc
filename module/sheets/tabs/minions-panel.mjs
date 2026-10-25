@@ -21,6 +21,7 @@
 
 import { MINION_GROUPS, MINION_TIERS } from "../../constants/minions.mjs";
 import { minionSlots, slotUsage, minionCapacity, groupTally } from "../../rules/minion-build.mjs";
+import { effectiveMinionGroup } from "../../rules/binary-dominion.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 
 /**
@@ -125,13 +126,15 @@ export function minionsPanelContext(actor, actors = []) {
   if (!slots.length && !minions.length && !canHoldSlotlessMinion(actor))
     return { hasMinionTalent: false, minionRows: [], freeSlots: [] };
 
-  const { free, extra } = slotUsage(items, minions);
+  // Бинарная Паства (rules/binary-dominion.mjs): человек в латах Скитария
+  // считается «Машиной» и в слотах, и в максимуме, и в счётчике шапки.
+  const { free, extra } = slotUsage(items, minions, actor);
 
   // Потолок считается по группам, которые у Хозяина уже есть, и по тем, на
   // которые куплены Таланты: иначе «максимум» рос бы ровно до того мига, когда
   // слуга появится, и тут же падал.
-  const groups = [...minions.map(m => m.system?.minionType || ""), ...slots.map(s => s.group)];
-  const tally  = groupTally(minions);
+  const groups = [...minions.map(m => effectiveMinionGroup(actor, m)), ...slots.map(s => s.group)];
+  const tally  = groupTally(minions, actor);
 
   return {
     hasMinionTalent: true,

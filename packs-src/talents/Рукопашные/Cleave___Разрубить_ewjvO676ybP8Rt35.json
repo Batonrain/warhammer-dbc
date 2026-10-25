@@ -5,7 +5,7 @@
   "folder": "XeycnCsRlazxEDgr",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey meleeCore.core.cleave — в карточке урона рукопашного попадания с 16+ непоглощённого, после которого Раны цели были > 0 и стали ≤ 0, появляется кнопка «Разрубить» (module/rules/melee-talents.mjs::cleaveTriggered, combat/cleave.mjs, combat/damage.mjs, hooks.mjs .wh-cleave-btn): окно атаки тем же оружием, База Стандартная, −10, цели сброшены (сосед выцеливается вручную, «рядом» не меряется). Раз на карточку; сама дополнительная атака (cleave:true → data-cleave-child) новой не порождает. «Вывела из строя» прочитано как «Раны ≤ 0».",
     "benefit": "Если рукопашная атака нанесла цели 16+ непоглощённого урона и вывела её из строя, персонаж может за свободное действие атаковать базовой атакой ещё одного персонажа рядом с целью со штрафом −10. Эта атака не может генерировать новые атаки этим Талантом.",
     "tier": 2,
     "requirement": "WS 45, S 40",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "EI8LRMKR8zkrvtft",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "kzllwmR1mbKqNM0I",
+              "capabilityKey": "meleeCore.core.cleave",
+              "label": "Разрубить: 16+ непоглощённого и цель выведена из строя — свободная атака −10 по другому персонажу рядом",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

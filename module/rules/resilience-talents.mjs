@@ -281,7 +281,7 @@ export const RESISTANCE_SPEC_DEFS = {
 };
 
 /** У каких специализаций в системе есть опознаваемый тест (остальные — честная заглушка). */
-export const RESISTANCE_TESTED = ["fear", "poison", "psychic", "stun"];
+export const RESISTANCE_TESTED = ["fear", "poison", "psychic", "stun", "cold", "heat"];
 
 const specKeyOf = raw => {
   const s = String(raw ?? "").trim().toLowerCase();
@@ -322,6 +322,9 @@ export function resistanceTestSpec(ctx) {
   if (ctx.poisonTest) return "poison";
   if (ctx.psychicThreat) return "psychic";
   if (ctx.stunTest) return "stun";
+  // Тест на Жару/Холод Окружения (combat/temperature-hazard.mjs, 3-edc4 п.7).
+  if (ctx.coldTest) return "cold";
+  if (ctx.heatTest) return "heat";
   return null;
 }
 

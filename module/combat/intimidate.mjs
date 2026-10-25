@@ -22,7 +22,7 @@
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { resolveOpposed } from "../rules/test-kind.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
-import { isInRage } from "../rules/rage.mjs";
+import { moraleAutoPass } from "../rules/morale-auto.mjs";
 import { psychThreshold, applyPsychDamage } from "./horde-psych.mjs";
 import { psychDamageFor } from "../rules/horde-damage.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
@@ -99,7 +99,7 @@ export async function rollIntimidateContest(attacker, target, { attackerMod = 0,
   // Ярость цели (Frenzy, стр. 62): «автоматически проходит тесты Морали» —
   // встречный тест против Запугивания это тест Морали (rules/rage.mjs).
   const autoPass = hasRuleFlag(target, "sarcophagus.autoPassFear")
-    || isInRage(target)
+    || !!moraleAutoPass(target)
     || (target?.type === "horde" && !!target.system?.immuneFear)
     || intoTheJawsOfHellActive(intoTheJawsOfHell);
   const atkOutcome = testOutcome(atkRv, atkThreshold);
@@ -151,7 +151,7 @@ async function _postIntimidateMsg(attacker, target, data) {
           ${atkOutcome.success ? "Успех" : "Провал"} ${atkOutcome.deg} ${_degWord(atkOutcome.deg)}</div>
         ${atkRerollNote}
         <div class="roll-threshold">Тест Морали (${esc(target.name)}): <b>${tgtThreshold}</b>${tgtParts.length ? ` (${tgtParts.join(", ")})` : ""} → бросок <b>${tgtRv}</b> —
-          ${tgtOutcome.success ? "Успех" : "Провал"} ${tgtOutcome.deg} ${_degWord(tgtOutcome.deg)}${sarcophagusSaved ? (target.type === "horde" ? " (Орда не знает страха)" : isInRage(target) ? " (Ярость)" : " (Саркофаг Дредноута)") : ""}</div>
+          ${tgtOutcome.success ? "Успех" : "Провал"} ${tgtOutcome.deg} ${_degWord(tgtOutcome.deg)}${sarcophagusSaved ? (target.type === "horde" ? " (Орда не знает страха)" : moraleAutoPass(target) ? ` (${moraleAutoPass(target).short})` : " (Саркофаг Дредноута)") : ""}</div>
         ${tgtRerollNote}
         <div class="roll-outcome">${outcomeLine}</div>
         ${hordePsych > 0 ? `<div class="roll-threshold">Орда: психологический урон <b>${hordePsych}</b> Магнитуды (Провалы×1)</div>` : ""}

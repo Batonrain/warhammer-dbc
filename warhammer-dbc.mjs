@@ -62,6 +62,8 @@ import { backfillAspirationGrants } from "./module/apps/aspirations.mjs";
 import { backfillMinionAptSource } from "./module/apps/minion-talent.mjs";
 import { syncCyberneticExcellenceArms } from "./module/apps/cybernetic-excellence.mjs";
 import { isCyberneticExcellence } from "./module/rules/cybernetic-excellence.mjs";
+import { syncFleshIsWeak } from "./module/apps/flesh-is-weak.mjs";
+import { isFleshIsWeak, isMachineTrait } from "./module/rules/flesh-is-weak.mjs";
 import { enforceLockedPatron, grantLockedPatron, checkDarkPrinceMilestones, itemGrantsCapability }
   from "./module/apps/naga-traits.mjs";
 import { LOCKED_SLAANESH_CAPABILITY, DARK_PRINCE_MILESTONE_CAPABILITY } from "./module/rules/naga-traits.mjs";
@@ -927,6 +929,13 @@ Hooks.once("ready", () => {
         await applyTakedownRelay(data, requester);
         return;
       }
+      // Пироман: игрок поджёг укрытия под шаблоном огнемёта — зоны сцены правит
+      // только ГМ; combat/burning-cover.mjs::applyBurningCovers сама проверяет, что это Укрытия.
+      if (data.action === "burnCovers") {
+        const { applyBurningCovers } = await import("./module/combat/burning-cover.mjs");
+        await applyBurningCovers(data);
+        return;
+      }
       if (data.action === "inspiringPresenceSpend") {
         // Вдохновляющее Присутствие (Чемпион): союзник тратит Очко чужого
         // Чемпиона — module/combat/inspiring-presence.mjs сверяет Черту,
@@ -1073,9 +1082,12 @@ Hooks.once("ready", () => {
         // разрешаем ровно эти два пути, остальное отклоняем.
         const item = await fromUuid(data.uuid).catch(() => null);
         if (!(item instanceof Item) || !data.data || typeof data.data !== "object") return;
+        // + Саботаж (Талант Разбойника, combat/sabotage.mjs): игрок Клинит оружие чужого NPC —
+        // ровно system.jammed = true на оружии (снять Клин тем же путём нельзя).
         const allowed = Object.keys(data.data).every(k => k === "system.history"
-          || k.startsWith("system.history.") || k === "system.infoguard");
-        if (!allowed) return console.warn("Warhammer DBC | itemUpdate отклонён: путь вне system.history.*/system.infoguard", data.data);
+          || k.startsWith("system.history.") || k === "system.infoguard"
+          || (k === "system.jammed" && data.data[k] === true && item.type === "weapon"));
+        if (!allowed) return console.warn("Warhammer DBC | itemUpdate отклонён: путь вне system.history.*/system.infoguard/system.jammed", data.data);
         await item.update(data.data);
       }
       else if (data.action === "messageDamageBoost") {
@@ -2330,6 +2342,22 @@ Hooks.on("deleteItem", async (item, options, userId) => {
   if (game.user.id !== userId) return;
   if (!isCyberneticExcellence(item) || !(item.parent instanceof Actor)) return;
   await syncCyberneticExcellenceArms(item.parent);
+});
+
+// ── Flesh is Weak / Плоть Слаба (Механикум, Sahara 3-cc96 п.7) — каждая копия
+// Таланта поднимает рейтинг Трейта Machine на 1 (module/apps/flesh-is-weak.mjs
+// держит рейтинг и броню Трейта в согласии с числом копий). Образец — хуки
+// Кибернетического Превосходства выше; userId-гвард тот же. Появилась Machine
+// после Таланта (Перерождение, Раса) — createItem Черты тоже запускает синхронизацию.
+Hooks.on("createItem", async (item, options, userId) => {
+  if (game.user.id !== userId) return;
+  if (!(item.parent instanceof Actor) || !(isFleshIsWeak(item) || isMachineTrait(item))) return;
+  await syncFleshIsWeak(item.parent);
+});
+Hooks.on("deleteItem", async (item, options, userId) => {
+  if (game.user.id !== userId) return;
+  if (!(item.parent instanceof Actor) || !isFleshIsWeak(item)) return;
+  await syncFleshIsWeak(item.parent);
 });
 
 // ── Дитя Тёмного Принца (Нага, module/apps/naga-traits.mjs) ────────────────

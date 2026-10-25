@@ -5,7 +5,7 @@
   "folder": "iSsQmZ2gkxraxksi",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: в окне манифестации выбор X снимает X эPR (не ниже 1), карточка показывает штраф −10×X на засекание и в Безопасном режиме напоминает «успешные тесты на засекание перебрасываются» (rules/psyker-talents.mjs::warpWhisperPenalty, читает sheets/tabs/psychic.mjs). Сам тест засекания и переброс делает чужой игрок/ГМ вручную — система не знает, кто и когда пытается засечь силу.",
     "benefit": "Персонаж может уменьшить эPR психосилы на X, чтобы наложить −10×X на тесты Пси-Чутья для её засекания. В Безопасном режиме успешные тесты на засекание должны быть переброшены.",
     "tier": 2,
     "requirement": "P 50, PR 4, Warp Sense",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g05warpWhisCap1",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "e05warpWhisCap1",
+              "capabilityKey": "psyker.core.warpWhisper",
+              "label": "Варповый Шёпот: −X к эPR силы ради −10×X к тестам Пси-Чутья на её засекание",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

@@ -27,6 +27,7 @@ import { postShockRecoveryPrompt } from "./fear.mjs";
 import { applyLordOfExoditesFailPenalty } from "./lord-of-exodites.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { SELF_STANCH_CAPABILITY } from "../rules/naga-traits.mjs";
+import { FIREMAN_CAP } from "../rules/courage-talents.mjs";
 import { resolveArmorProps } from "./armor-properties.mjs";
 // Морозное Сердце (wdbc-5knb): щит с записью Конструктора
 // kind:"shieldVsCondition" можно бросить против ТИКА Горения, гася его
@@ -527,6 +528,15 @@ export async function rollBurningPanicTest(actor) {
     await postTestCard(actor, {
       icon: rollIcon("fire","#8fd0ff"), title: `Паника от Горения — ${esc(actor.name)}`,
       outcome: `<span class="roll-success">Храбрость: командир держит строй — паники нет</span>`
+    });
+    return { success: true, rv: null, eff: wp };
+  }
+  // Пожарный (Sahara 3-scope): «не паникует от Горения» — теста нет вовсе
+  // (в отличие от автоуспеха Бесстрашного, у которого бросок идёт).
+  if (hasRuleFlag(actor, FIREMAN_CAP)) {
+    await postTestCard(actor, {
+      icon: rollIcon("fire","#8fd0ff"), title: `Паника от Горения — ${esc(actor.name)}`,
+      outcome: `<span class="roll-success">Пожарный: огонь не пугает — паники нет</span>`
     });
     return { success: true, rv: null, eff: wp };
   }

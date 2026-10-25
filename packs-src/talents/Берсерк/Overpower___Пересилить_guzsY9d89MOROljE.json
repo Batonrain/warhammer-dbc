@@ -5,7 +5,7 @@
   "folder": "GD2SVUHWSvG5UbRH",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey berserker.core.overpower — в карточке успешного Парирования Полной Атаки (База берётся с карточки атаки) у атаковавшего носителя кнопка «Пересилить»: общий встречный тест S+0 vs S+0 (module/rules/berserker-talents.mjs::overpowerOffered, combat/overpower.mjs, combat/defense.mjs, hooks.mjs .wh-overpower-btn). Раз на карточку. Победа — карточка «Парирование игнорируется»; урон применяется кнопкой «Применить урон» на карточке атаки (система не привязывает отражённые попадания к ударам).",
     "benefit": "Атакой с базой Полная Атака персонаж может пройти S+0 vs S+0 после успешного парирования этой атаки врагом, чтобы проигнорировать парирование и всё равно нанести попадание.",
     "tier": 3,
     "requirement": "S 50",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "zdNldGRkRc2cGRi3",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "WSPrIrzy0dsEEGVW",
+              "capabilityKey": "berserker.core.overpower",
+              "label": "Пересилить: после успешного Парирования Полной Атаки — S+0 vs S+0, чтобы его игнорировать",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

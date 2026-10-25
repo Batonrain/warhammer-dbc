@@ -13,6 +13,7 @@ import { computeWoundHealing } from "./wounds.mjs";
 import { woundLossUpdates } from "../../rules/wounds.mjs";
 import { conditionLevelField } from "../../constants/conditions.mjs";
 import { maybeGrantEnjoymentPain } from "../../combat/enjoyment.mjs";
+import { isAlcoholItem, applyAlcoholDrink } from "../../combat/alcohol.mjs";
 import { noteHealingFromOther } from "../../combat/warp-touched.mjs";
 import { postTestCard, rollStatLine } from "../../helpers/test-card.mjs";
 import { hasRuleFlag, ruleFlagLabels } from "../../rules/flags.mjs";
@@ -22,7 +23,7 @@ import { isReplicantSerum, takeSerum } from "../../combat/replicant.mjs";
 // Snake Eater / Пожиратель Змей (Талант Стойкости, глава 3): урон ядов и
 // длительность ядов/пост-эффектов вдвое меньше (окр.▲).
 import { snakeEaterHalve, hasResilienceTalent } from "../../rules/resilience-talents.mjs";
-import { DRUG_DOSES_FLAG, doseKey, logDose, dosesThisWeek, weeklyDoseLimit, addictionCheckFor } from "../../rules/drug-doses.mjs";
+import { DRUG_DOSES_FLAG, doseKey, logDose, dosesThisWeek, weeklyDoseLimit, addictionCheckFor, isHookedUp, hookUpMinDose } from "../../rules/drug-doses.mjs";
 // New Men / Новые Люди (Йигори): срок вдвое, без пост-эффекта, разовый эффект
 // медикамента вдвое (module/rules/new-men.mjs).
 import { newMenDrugDuration, newMenInstantMedicine, halvesInstantMedicine,
@@ -438,6 +439,8 @@ export async function applyDrug(owner, item, recipient = null) {
   // говорящего, режим броска и звук (wdbc-kuun).
   const allRolls = [...(durationRoll ? [durationRoll] : []), ...extras.rolls];
   await postTestCard(owner, chatContent, { rolls: allRolls });
+  // Алкоголь: счётчик Провалов опьянения (3-edc4 п.8, Декаданс удваивает пороги).
+  if (isAlcoholItem(item)) await applyAlcoholDrink(actor, item);
   await weeklyDoseCheck(actor, item);
 }
 
@@ -456,7 +459,8 @@ export async function weeklyDoseCheck(actor, item) {
   const log = logDose(actor.getFlag?.("warhammer-dbc", DRUG_DOSES_FLAG), key, now);
   try { await actor.setFlag("warhammer-dbc", DRUG_DOSES_FLAG, log); } catch { /* нет прав на лист получателя */ }
   if (add.isAddicted) return;
-  const limit = weeklyDoseLimit(actor, add.minDose);
+  // «Крючок»: приготовленный с ним препарат — лимит вдвое ниже (окр.▼).
+  const limit = weeklyDoseLimit(actor, isHookedUp(item) ? hookUpMinDose(add.minDose) : add.minDose);
   const check = addictionCheckFor(dosesThisWeek(log, key, now), limit);
   if (!check) return;
   await rollAddictionTest(actor, item, (add.testChar || "t").toLowerCase(), (Number(add.testMod) || 0) + check.penalty);
@@ -716,11 +720,16 @@ export async function rollAddictionTest(actor, item, charKey = "t", testMod = 0)
   // Alchem Monster / Алхимическое Чудовище (Репликант): «должен перебрасывать
   // успешные тесты Зависимости» — один раз, второй бросок окончателен.
   let rerollNote = "";
-  if (mustRerollSuccess(roll.total <= eff, hasRuleFlag(actor, ALCHEM_MONSTER))) {
+  // «Крючок» (Талант Медика): принимающие препарат, приготовленный с ним,
+  // перебрасывают тест Зависимости — прочтено как «успех перебрасывается»,
+  // по образцу Алхимического Чудовища и Отравителя (книга уточнения не даёт).
+  const hooked = isHookedUp(item);
+  if (mustRerollSuccess(roll.total <= eff, hasRuleFlag(actor, ALCHEM_MONSTER) || hooked)) {
     const first = roll.total;
     roll = await new Roll("1d100").evaluate();
     rolls.push(roll);
-    rerollNote = `<div class="roll-threshold">⚗️ Алхимическое Чудовище: успех (${first}) обязательно перебрасывается → <b>${roll.total}</b></div>`;
+    const who = hasRuleFlag(actor, ALCHEM_MONSTER) ? "Алхимическое Чудовище" : "Крючок";
+    rerollNote = `<div class="roll-threshold">⚗️ ${who}: успех (${first}) обязательно перебрасывается → <b>${roll.total}</b></div>`;
   }
   const rv = roll.total;
   const success = rv <= eff;

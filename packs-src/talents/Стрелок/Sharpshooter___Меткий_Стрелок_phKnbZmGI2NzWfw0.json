@@ -5,7 +5,7 @@
   "folder": "V0Wfgl0aycRFPfu2",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey rangedCore.core.sharpshooter — второй шаг В Яблочко: штраф Избирательной стрелковой атаки меньше ещё на 10 (module/rules/gunner-talents.mjs::selectiveAimReduction) и штраф за Размер цели Размера −2 и меньше меньше ещё на 10 (правило core.sharpshooterSize). Выше нуля штраф не поднимается.",
     "benefit": "Персонаж уменьшает штраф на стрелковые атаки за Избирательные атаки или Размер цели ниже 0 ещё на 10.",
     "tier": 2,
     "requirement": "BS 40, Deadeye Shot",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "sc34ha7FZJL9GdXL",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "RCgOUteHUyzyyCsb",
+              "capabilityKey": "rangedCore.core.sharpshooter",
+              "label": "Меткий Стрелок: ещё −10 к тем же штрафам (после В Яблочко)",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

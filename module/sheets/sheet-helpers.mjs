@@ -84,6 +84,9 @@ import { measureTokens }                             from "../combat/tactical-ma
 import { mechFormulaTotalSafe }                      from "../rules/mech-formula.mjs";
 import { grappleOnlyHidden, isBiteName } from "../rules/integral-rating.mjs";
 import { hasResilienceTalent } from "../rules/resilience-talents.mjs";
+import { fistBalanceBonus } from "../rules/pugilist-talents.mjs";
+import { isHookedUp, hookUpMinDose } from "../rules/drug-doses.mjs";
+import { hasOverclock } from "../rules/technomystic-talents.mjs";
 
 // Определение всех Состояний листа — реестр constants/conditions.mjs
 // (wdbc-w88h): label/desc/иконка/счётчик собраны там, здесь только реэкспорт
@@ -420,7 +423,7 @@ function _buildAddictions(allItems, alchem = false) {
       frequency:    add.frequency || "",
       penalty:      add.penalty   || "",
       // Alchem Monster (Репликант): недельный лимит ×2 — rules/replicant.mjs.
-      minDose:      alchemDoseLimit(add.minDose, alchem),
+      minDose:      alchemDoseLimit(isHookedUp(item) ? hookUpMinDose(add.minDose) : add.minDose, alchem),
       minDoseAlchem: alchem && (add.minDose || 0) > 0,
       isAddicted:   add.isAddicted || false
     });
@@ -634,7 +637,7 @@ function buildGetDataUncached(actor) {
       weaponClass:     WEAPON_CLASSES[s.weaponClass] ?? s.weaponClass,
       weaponType:      s.weaponType,
       range:           effRange,
-      balance:         (s.balance || 0) + (modFx.balanceMod || 0),
+      balance:         (s.balance || 0) + (modFx.balanceMod || 0) + fistBalanceBonus(actor, i),
       damage:          (s.damage || "") + dmgSuffix,
       damageType:      DAMAGE_TYPES[s.damageType] ?? s.damageType,
       penetration:     effPen,
@@ -660,8 +663,10 @@ function buildGetDataUncached(actor) {
       // Заклинило (wdbc-vwfk) — блокирует «Атака» тем же приёмом, что magEmpty;
       // «Расклинить» показывается только пока canClearJam не лжив (см.
       // combat/weapon-properties.mjs — блокировка Reformation Song на раунд).
-      jammed:       !melee && !!s.jammed,
-      canClearJam:  !melee && !!s.jammed && canClearJam(i),
+      // Рукопашное тоже: Саботаж (Талант Разбойника) «отключает» высокотехнологичное
+      // рукопашное тем же признаком — до Расклина (combat/sabotage.mjs).
+      jammed:       !!s.jammed,
+      canClearJam:  !!s.jammed && canClearJam(i),
       // Испорченные Клином патроны (стр. 41, wdbc-x1nz.2.61) — кнопка живёт
       // независимо от jammed выше: сам Клин можно уже снять, а патроны
       // остаются испорченными до отдельного теста Trade(Weaponsmith)+10.
@@ -1047,7 +1052,14 @@ function buildGetDataUncached(actor) {
       // Тип (папка корбука) ищется по имени как его записал источник: в
       // библиотеке имя лежит целиком, вместе с «(X)».
       typeGroup:      TALENT_TYPE.byName.get(i.name) || "Прочие",
-      toggles:        toggleRows(allItems, i)
+      toggles:        toggleRows(allItems, i),
+      // Ручной тумблер Таланта (Солипсизм): флаг manualToggle в паке включает
+      // кнопку в строке, manualOff — «Талант сейчас не действует» (effects.mjs).
+      // Предмет у игрока — снимок: флаг из пака к нему мог не доехать («Обновить мир» флаги не
+      // переносит), поэтому Солипсизм узнаётся ещё и по имени.
+      manualToggle:   !!i.flags?.["warhammer-dbc"]?.manualToggle || /solipsism|солипсизм/i.test(String(i.name ?? "")),
+      manualOff:      !!i.flags?.["warhammer-dbc"]?.manualOff,
+      manualItemId:   i.id
     };
   });
   // Группировка талантов по типам корбука (стр. 62-105) для читаемого списка.
@@ -1512,6 +1524,8 @@ function buildGetDataUncached(actor) {
   const cogVal = system.cognition?.value ?? 0, cogMax = system.cognition?.max ?? 0;
   context.cognition = {
     value: cogVal, max: cogMax, regen: system.cognition?.regen ?? 0,
+    // Разгон (Талант Техномистика, Sahara 3-2501): кнопка рядом с «↻».
+    canOverclock: hasOverclock(actor),
     pips: Array.from({ length: Math.min(14, Math.max(0, cogMax)) }, (_, i) => ({ on: (i + 1) <= cogVal }))
   };
   const enVal = system.energy?.value ?? 0;

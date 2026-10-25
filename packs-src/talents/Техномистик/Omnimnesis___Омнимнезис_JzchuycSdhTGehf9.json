@@ -5,7 +5,7 @@
   "folder": "Nu4M8EyPNQpHOOjO",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано частично: после проваленного теста активации Техночуда система спрашивает «потратить 1 ⚙ и перебросить?»; согласие добавляет 1 ⚙ к цене и заменяет результат переброском (sheets/tabs/tech.mjs::activateTechMiracle). Не смоделировано: «встречный тест I против чужого техночуда» — у такого теста в системе нет окна; ведёт стол. Поле Дискорданта перебросом не обходится.",
     "benefit": "Персонаж может потратить 1 Когницию, чтобы перебросить тест I на активацию Техночуда или любой встречный тест I против чужого техночуда.",
     "tier": 3,
     "requirement": "I 50",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g02omnimnesCap1",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "e02omnimnesCap1",
+              "capabilityKey": "technomystic.core.omnimnesis",
+              "label": "Омнимнезис: перебросить тест активации Техночуда за 1 ⚙",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

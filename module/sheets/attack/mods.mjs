@@ -39,6 +39,9 @@ import { isInRage, RAGE_TEST_PENALTY } from "../../rules/rage.mjs";
 // Действующие моды (wdbc-1rno.38/.40): без «бесполезных без X» и без
 // невыбранных прицелов — тот же список, что у getModEffects и окна атаки.
 import { getActiveMods } from "../../combat/weapon-mods.mjs";
+import { jockeyMountedBonus, JOCKEY_ATTACK_BONUS } from "../../combat/jockey.mjs";
+import { closeQuartersMod } from "../../rules/rogue-talents.mjs";
+import { pinDownHoldOf } from "../../rules/pugilist-talents.mjs";
 
 /**
  * Атака оружием в руке без пальцев (мутация Потеря Конечности, субмутации
@@ -76,6 +79,7 @@ export function situationalMods(v) {
     // Штраф за огринское оружие в чужих руках (rules/ogryn-fit.mjs) — число
     // со знаком минус или 0. Нужен, чтобы предложить его снять Закреплением.
     ogrynBracePenalty = 0,
+    pointBlankForced = false,
   } = v;
 
   // Без Предупреждения, Оружие Наследия (wdbc-1rno.35, versatile 9-9, стр.
@@ -97,7 +101,9 @@ export function situationalMods(v) {
   const tgt = attackCtx?.targetActor ?? null;
   const tgtGrappled = !!tgt?.system?.conditions?.grappling;
   const tgtPartnerUuid = tgt?.getFlag?.("warhammer-dbc", "grapplePartnerUuid") ?? tgt?.flags?.["warhammer-dbc"]?.grapplePartnerUuid;
-  const vsGrappled = tgtGrappled && tgtPartnerUuid !== actor?.uuid;
+  // Прижать (Талант Пугилиста, стр. 62): атаки по прижимающему +20 за Борьбу не получают.
+  const vsGrappled = tgtGrappled && tgtPartnerUuid !== actor?.uuid && pinDownHoldOf(tgt) === undefined;
+  const vsJockeyed = jockeyMountedBonus(tgt, actor) > 0;
   // Те же условия, по которым окно атаки само даёт ±20 (attack-dialog.mjs,
   // proneMod/stunnedMod) — wdbc-x1nz.2.97 п.6.
   const tgtProneAuto   = !!tgt?.system?.conditions?.prone;
@@ -132,6 +138,10 @@ export function situationalMods(v) {
       ? [{ label: "Ярость: −20 BS", value: RAGE_TEST_PENALTY, autoCheck: true }] : []),
     { label: "Цель в Борьбе (не ваш Захват)", value: 20, autoCheck: vsGrappled,
       note: vsGrappled ? "стр. 12: +20 на атаки по сцепившимся" : undefined },
+    // Жокей (стр. 62, combat/jockey.mjs): по оседланной цели — половина бонуса Борьбы.
+    ...(vsJockeyed
+      ? [{ label: "Цель оседлана Жокеем (половина бонуса Борьбы)", value: JOCKEY_ATTACK_BONUS, autoCheck: true,
+          note: "стр. 62, Жокей: +10 вместо +20 по цели с наездником" }] : []),
     // visionPenalty (wdbc-1rno.1, Чёрные Глаза/Black Eyes, Cor 60+) — три
     // галочки ниже гасятся у АТАКУЮЩЕГО (не у цели, поэтому не immuneFlag —
     // тот гасит только возможности ЦЕЛИ, см. цикл ниже).
@@ -569,12 +579,16 @@ export function situationalMods(v) {
     // расстояние в диапазоне «в упор» (0–3м), поэтому геометрия сама
     // отличает «просто стреляю с 1м, никого не трогая» (честные +30) от
     // «стреляю в того, с кем сцепился врукопашную» (книжные +0).
-    { label: "Дистанция в упор",
-      value: (!!measured?.contact && measured.contact !== "none") ? 0 : 30,
-      autoCheck: bandKey === "pointBlank",
-      note: (!!measured?.contact && measured.contact !== "none")
-        ? "стрельба в ближнем бою — как боевая дистанция (стр. 40)"
-        : bandNote("pointBlank") },
+    // Штыковая Атака (Талант, rules/run-and-gun.mjs): выстрел «как в упор, +30 за расстояние, несмотря
+    // на то что персонаж связан в ближнем бою» — контакт Баз бонус не обнуляет, строка отмечена сама.
+    // id читает форма (f.pointBlank): Выпуск Батареи не штрафует выстрел в упор (rules/batpack-dump.mjs).
+    { id: "atk-point-blank", label: "Дистанция в упор",
+      value: (!pointBlankForced && !!measured?.contact && measured.contact !== "none") ? 0 : 30,
+      autoCheck: bandKey === "pointBlank" || pointBlankForced,
+      note: pointBlankForced ? "Штыковая Атака: как выстрел в упор, +30 несмотря на связанность"
+        : (!!measured?.contact && measured.contact !== "none")
+          ? "стрельба в ближнем бою — как боевая дистанция (стр. 40)"
+          : bandNote("pointBlank") },
     { label: "Короткая дистанция",      value:  10, autoCheck: bandKey === "short",      note: bandNote("short") },
     { label: "Боевая дистанция",        value:   0, autoCheck: bandKey === "combat",     note: bandNote("combat") },
     { label: "Дальняя дистанция",       value: -10, autoCheck: bandKey === "long",       note: bandNote("long") },
@@ -633,6 +647,20 @@ export function situationalMods(v) {
     if (dancePenalty) {
       commonMods.push({ label: "Размашистый Танец цели", value: dancePenalty, autoCheck: true,
         note: `${attackCtx.targetActor.name}: -5 за каждый Успех танцора` });
+    }
+  }
+  // Бой Вплотную у ЦЕЛИ (Талант Разбойника, стр. 62, rules/rogue-talents.mjs): противники,
+  // начавшие Ход в рукопашной с ним, не получают бонуса за более длинное оружие и бьют
+  // оружием с Rng больше 2 со штрафом −10. «Начал Ход в рукопашной» система не определяет —
+  // галочка по решению владельца (по умолчанию снята); один пункт гасит и −10, и +5 длины.
+  {
+    const attackerRng = isMelee ? meleeAttackerRange : (Number(weapon?.system?.range) || 0);
+    const cq = closeQuartersMod(attackCtx.targetActor, attackerRng, isMelee && longerWeaponAuto);
+    if (cq.value) {
+      commonMods.push({
+        label: "Бой Вплотную цели: я начал Ход в рукопашной с ней", value: cq.value, autoCheck: false,
+        note: `${attackCtx.targetActor.name}: ${cq.penalty ? "−10 (оружие с Rng больше 2)" : ""}${cq.penalty && cq.lengthCancel ? ", " : ""}${cq.lengthCancel ? "бонус +5 за более длинное оружие снимается" : ""}`
+      });
     }
   }
   // Мастер Боя у ЦЕЛИ (глава 3): строки «Числ. перевес» (specificMods) гасятся.

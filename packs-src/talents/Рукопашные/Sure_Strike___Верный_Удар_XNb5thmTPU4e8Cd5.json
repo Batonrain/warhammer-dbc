@@ -5,7 +5,7 @@
   "folder": "XeycnCsRlazxEDgr",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey meleeCore.core.sureStrike — штраф рукопашной Избирательной атаки меньше на 10 (module/sheets/attack-dialog.mjs, aimTargets ← module/rules/gunner-talents.mjs::selectiveAimReduction) и штраф за Размер цели ниже 0 меньше на 10 (правило core.sureStrikeSize, module/rules/library/core.mjs). Выше нуля штраф не поднимается.",
     "benefit": "Персонаж уменьшает штраф на рукопашные атаки за Избирательные атаки или Размер цели ниже 0 на 10.",
     "tier": 1,
     "requirement": "WS 30",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "vjrlhFUguZV2mop1",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "jNHw4mw5wEC3Oube",
+              "capabilityKey": "meleeCore.core.sureStrike",
+              "label": "Верный Удар: штраф Избирательных рукопашных атак и малого Размера цели меньше на 10",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

@@ -5,7 +5,7 @@
   "folder": "GD2SVUHWSvG5UbRH",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект тратит/даёт игровой ресурс (Очки Бесчестия/Судьбы/Боли/Когниции/Реакцию) на разовое действие — не тестовый модификатор Навыка/Характеристики.",
+    "notes": "Реализовано: capabilityKey berserker.core.furiousAssault — на карточке успешной рукопашной Полной Атаки кнопка «Яростный Штурм»: списывает Реакцию и открывает окно атаки тем же оружием, Базой Полная Атака и тем же Приёмом (ОД окно не берёт — свободное действие); раз на карточку; дополнительная атака новой не порождает (module/rules/berserker-talents.mjs::furiousAssaultOffered, combat/furious-assault.mjs, combat/attack.mjs, hooks.mjs .wh-furious-assault-btn). «Даже отменённая Избеганием» — предлагается по броску на попадание.",
     "benefit": "После успешной атаки с базой Полная Атака (даже отменённой Избеганием) персонаж может потратить Реакцию, чтобы провести ещё одну атаку с теми же базой и приёмом за свободное действие.",
     "tier": 2,
     "requirement": "WS 35",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "zrJkSs8OUrf58ntW",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "dVpXWzGmsDgcQzzo",
+              "capabilityKey": "berserker.core.furiousAssault",
+              "label": "Яростный Штурм: после успешной Полной Атаки — ещё одна атака тем же оружием, Базой и Приёмом за Реакцию",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

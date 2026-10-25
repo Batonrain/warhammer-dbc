@@ -33,6 +33,10 @@ import { becomeParasiteHostButtonHtml, becomeParasiteHost } from "../apps/maggot
 import { beginParasiticContactButtonHtml, beginParasiticContact } from "../apps/parasite-trait.mjs";
 import { stabilizeRealityRendingButtonHtml, useStabilizeRealityRending } from "../apps/wrapped-in-chaos.mjs";
 import { gunArmButtonHtml, useGunArm }              from "../apps/gun-arm.mjs";
+import { blackMantleHtml, setBlackMantleOn }        from "../apps/black-mantle.mjs";
+import { isHookedUp, HOOK_UP_FLAG }                 from "../rules/drug-doses.mjs";
+import { talentActionsHtml, runTalentAction }       from "../apps/talent-actions.mjs";
+import { omophageaPanelHtml, runOmophagea }         from "../apps/omophagea.mjs";
 import { illusionOfNormalityHtml, attemptNoticeIllusion, attemptSeeThroughIllusion, setIllusionMaintained }
   from "../apps/illusion-of-normality.mjs";
 import { iconOfBlasphemyButtonHtml, activateIconOfBlasphemy } from "../apps/icon-of-blasphemy.mjs";
@@ -1225,7 +1229,17 @@ export class WarhammerItemSheet
     // Пусто у остальных Талантов — isGunArmGift проверяет ключ Возможности.
     if (this.item.type === "talent") {
       context.gunArmHtml = gunArmButtonHtml(this.item, this.item.parent);
+      // «Чёрная Мантия» (3-b530) — тумблер усиленного Меланохрома; пусто у остальных Талантов.
+      context.blackMantleHtml = blackMantleHtml(this.item, this.item.parent);
+      // Предусмотрительность (3-b530): кнопка «Обдумать 5 мин».
+      context.talentActionsHtml = talentActionsHtml(this.item, this.item.parent);
     }
+
+    // ── Наркотик, приготовленный с «Крючком» (Талант Медика, 3-dc87) ───────
+    if (this.item.type === "drug") context.hookedUp = isHookedUp(this.item);
+
+    // ── Имплант Омофагея: кнопка теста I+0 (3-b530) ─────────────────────────
+    if (this.item.type === "implant") context.omophageaHtml = omophageaPanelHtml(this.item, this.item.parent);
 
     // ── Мутация: кнопки динамических источников Аблативных Ран (wdbc-w8ws) —
     // пусто у остальных Мутаций (isXItem проверяет имя, не capabilityKey).
@@ -2047,6 +2061,29 @@ export class WarhammerItemSheet
       ev.preventDefault();
       const actor = this.item.parent;
       if (actor) await useGunArm(actor, this.item);
+    });
+
+    // ── Талант «Чёрная Мантия»: усиленный режим Меланохрома (3-b530) ───────
+    on(".black-mantle-cb", "change", async ev => {
+      await setBlackMantleOn(this.item, ev.currentTarget.checked);
+    });
+
+    // ── Действия Талантов (3-b530): Предусмотрительность и др. ─────────────
+    on(".talent-action-btn", "click", async ev => {
+      ev.preventDefault();
+      await runTalentAction(ev.currentTarget.dataset.talentAction, this.item, this.item.parent);
+      this.render(false);
+    });
+
+    on(".omophagea-btn", "click", async ev => {
+      ev.preventDefault();
+      await runOmophagea(this.item.parent, this.item);
+      this.render(false);
+    });
+
+    // ── Наркотик с «Крючком»: метка на предмете (rules/drug-doses.mjs) ──────
+    on(".hook-up-cb", "change", async ev => {
+      await this.item.setFlag("warhammer-dbc", HOOK_UP_FLAG, !!ev.currentTarget.checked);
     });
 
     // ── Мутация «Рука Смерти»: слияние с выбранным оружием (wdbc-hftn) ──────

@@ -444,7 +444,7 @@ export function enemyTalentsOf(actor) {
 export const CTX_DEPENDENT_PREDICATES = new Set([
   "weaponClass", "charNotIn", "charIn",
   "targetHasTrait", "targetLacksCondition", "targetHasCondition",
-  "targetHasSize", "targetKeepsNimbleInArmour", "targetHasFaction",
+  "targetHasSize", "targetSizeMax", "targetKeepsNimbleInArmour", "targetHasFaction",
   "targetHasFieldPsyMod", "targetLacksSealedArmour", "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus", "hasHatredTarget",
   "targetSerpentine",
   "legacyGuardianMarked", "targetPsykerOrDaemon", "targetIsAstartes", "targetIsPsyker"
@@ -650,6 +650,11 @@ export const PREDICATES = {
   // против обычного человека, а не только там, где Размер реально что-то даёт.
   hasSize:       (actor, ctx) => hitSizeOf(actor) !== 0,
   targetHasSize: (actor, ctx) => hitSizeOf(ctx?.targetActor) !== 0,
+  // Размер ЦЕЛИ не больше порога (в той же «таблице попадания», что targetHasSize):
+  // `targetSizeMax: -1` — «цель меньше Размера 0». Нужен Талантам В Яблочко/
+  // Меткий Стрелок (Стрелок, Sahara 3-5fbf): они снимают часть штрафа за малый
+  // Размер, поэтому срабатывают только там, где этот штраф вообще есть.
+  targetSizeMax: (actor, ctx, value) => !!ctx?.targetActor && hitSizeOf(ctx.targetActor) <= Number(value),
 
   // «Позволяет сохранять Трейт Nimble в силовой броне» (имплант «Чёрный
   // Панцирь / Black Carapace», DoomBC — ГЕНОСЕМЯ) — без брони условие не

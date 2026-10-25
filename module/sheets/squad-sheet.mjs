@@ -33,6 +33,7 @@ import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 import { WarhammerStructuralSheet } from "./structural-sheet.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
+import { binaryDominionRisk } from "../rules/binary-dominion.mjs";
 import { rancorRiskCapBonus, eloquenceRiskCapBonus, bravadoRiskLevel,
          camaraderieStartCohesion, dutyAboveAllBlocks,
          protegeFreeCommandActive, protegePenalty, protegeActivationPatch,
@@ -724,7 +725,11 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
                                                             : this._postData("leader"));
     const whoDoc = this._resolve(who?.uuid);
     const bonus = (who?.helmetOff && base >= 2) ? 1 : 0;
-    const value = bravadoRiskLevel(Math.min(5, base + bonus), whoDoc);
+    // Binary Dominion / Бинарное Владычество (Sahara 3-cc96 п.1): сервиторы и
+    // роботы — Риск ровно 3, Скитарии — не ниже 3 (rules/binary-dominion.mjs).
+    // Считаем по участникам, до которых Команды вообще доходят.
+    const value = binaryDominionRisk(whoDoc,
+      bravadoRiskLevel(Math.min(5, base + bonus), whoDoc), this._commandReachableMemberDocs());
     const cap = riskCap(value);
     const ctx = { kind: "skill", skill: "command", targetActor: this._commandTargetActor() };
     const capBonus = cap == null ? 0 : rancorRiskCapBonus(whoDoc, ctx) + eloquenceRiskCapBonus(whoDoc);

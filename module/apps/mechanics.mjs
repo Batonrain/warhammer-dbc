@@ -735,6 +735,14 @@ const REROLL_SCOPES = [
   // Tech-Use, а «skill:techUse» подхватил бы любой тест Технологии.
   ["noosphere",  "тесты работы с Ноосферой"],
   ["coilCharge", "зарядка Катушки Потенции"],
+  // Сопротивление психосиле (не Выжигание Души) и сопротивление допросу —
+  // Бастион Железной Воли, Ортопрокси (Sahara 3-defiance).
+  ["psychicPower", "сопротивление психосиле"],
+  // Непреклонный (resistChar = W, «влияющие на разум») и Солипсизм (кроме
+  // непрямых, вкл. Выжигание Души) — решения владельца 25.10.2026.
+  ["psychicMind", "сопротивление психосиле по Воле («на разум»)"],
+  ["psychicDirect", "сопротивление психосиле, кроме непрямых (и Выжигание Души)"],
+  ["interrogation", "сопротивление допросу"],
   // Манифестация психосилы (wdbc-4bxa) — «power» само по себе уже область
   // («любая психосила»), имя (powerName) необязательно сужает до конкретной.
   ["power",      "манифестация психосилы"]
@@ -2236,7 +2244,11 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
       if (entry.equipTalentTier !== "" && entry.equipTalentTier != null)   filters.talentTier = Number(entry.equipTalentTier);
       if (entry.equipMaxPsyRating !== "" && entry.equipMaxPsyRating != null) filters.maxPsyRating = Number(entry.equipMaxPsyRating);
       if (entry.equipCategoryPack === "implants" && entry.equipImplantCategory) filters.implantCategory = entry.equipImplantCategory;
-      if (Number.isFinite(Number(entry.equipMaxAvailability))) filters.maxAvailability = Number(entry.equipMaxAvailability);
+      // «Любая Редкость» = 5 = БЕЗ потолка (как в describeMechEntry выше): фильтр
+      // maxAvailability отбрасывает предметы без Редкости (импланты, Ритуалы —
+      // compendium-filters.mjs), а «любая» обязана их показывать.
+      const availCap = Number(entry.equipMaxAvailability);
+      if (Number.isFinite(availCap) && availCap < 5) filters.maxAvailability = availCap;
       // Закрытый список id (equipChoiceIds): «1 мутация из списка» Мутанта.
       if (Array.isArray(entry.equipChoiceIds) && entry.equipChoiceIds.length) filters.ids = [...entry.equipChoiceIds];
 

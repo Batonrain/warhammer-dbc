@@ -316,7 +316,7 @@ function creatorHtml(state, master) {
              Хозяин: ${esc(master?.name || "?")}</div>
         <div class="mc-derived">
           ${woundsOrMagnitude} ·
-          Лояльность <b>${minionLoyalty(master, state.group)}</b> (${esc(groupDef?.masterChar?.toUpperCase() || "")}) ·
+          Лояльность <b>${minionLoyalty(master, state.group, { slotTalentId: state.talentId })}</b> (${esc(groupDef?.masterChar?.toUpperCase() || "")}) ·
           Бесчестие <b>${minionInfamy(master, state.tier)}</b> ·
           Порча <b>${minionCorruption(state.group)}</b>
         </div>
@@ -394,7 +394,7 @@ function minionSkillFields(state) {
 /** Собрать актора-Миньона по состоянию окна. */
 async function createMinionActor(master, state) {
   const tierDef = MINION_TIERS[state.tier];
-  const loyalty = minionLoyalty(master, state.group);
+  const loyalty = minionLoyalty(master, state.group, { slotTalentId: state.talentId });
 
   // Пишем в `base`: `total` схема считает сама из базы, надбавок и эффектов —
   // записанное туда значение затёрлось бы первым же пересчётом листа.
@@ -669,7 +669,7 @@ export async function onMinionCreate(event) {
   }
 
   const minions = minionsOfActor(actor, [...(game.actors ?? [])]);
-  const { free } = slotUsage(items, minions);
+  const { free } = slotUsage(items, minions, actor);
   if (!free.length) {
     return ui.notifications?.info("Все купленные Таланты уже отыграны — свободных Миньонов нет.");
   }

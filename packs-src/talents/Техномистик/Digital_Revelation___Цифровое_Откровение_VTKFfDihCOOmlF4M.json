@@ -5,7 +5,7 @@
   "folder": "Nu4M8EyPNQpHOOjO",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано (решение владельца 25.10.2026): кнопка «↻» (начало Хода) восстанавливает Когницию и сама списывает цену Процессов с учётом Цифрового Откровения (−1 за взятие, до 3, не ниже 0) и Ноосферной Набожности; в чат — карточка «Цена Процессов в этот Ход: N … Списано …». В бою плата берётся один раз за Ход (метка processCostPaidThisTurn гаснет в начале следующего Хода); вне боя каждое «↻» считается началом нового Хода. Не хватило ⚙ — списывается всё, что есть, остаток назван в карточке, лишние Процессы отключает игрок (sheets/tabs/tech.mjs::cognitionRest, rules/technomystic-talents.mjs::processCostTotal, settleProcessCost).",
     "benefit": "Персонаж уменьшает суммарную цену всех своих Процессов на 1 Когницию. Можно брать до 3 раз (2-й требует For.Lore (Mechanicum)+20, 3-й — +30).",
     "tier": 3,
     "requirement": "Forbidden Lore (Mechanicum)+10",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g07digitalRCap1",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "e07digitalRCap1",
+              "capabilityKey": "technomystic.core.digitalRevelation",
+              "label": "Цифровое Откровение: суммарная цена всех Процессов −1 ⚙ (до 3 раз)",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

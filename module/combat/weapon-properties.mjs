@@ -468,7 +468,7 @@ export function buildPropertyChatBlock(props) {
  * и _applyWeaponPropEffect резолвит актора по uuid вместо requireControlledActor,
  * не спрашивая игрока выцелить токен на сцене заново.
  */
-export function buildTargetEffectButtons(props, { hit, ammoName = "", forceActor = null, deg = null, damageType = "", hitLocation = "" } = {}) {
+export function buildTargetEffectButtons(props, { hit, ammoName = "", forceActor = null, deg = null, damageType = "", hitLocation = "", poisoner = false, pyromaniac = false, pyromaniacAttackerUuid = "", igniter = "" } = {}) {
   if (!hit) return "";
   const btns = [];
 
@@ -525,6 +525,18 @@ export function buildTargetEffectButtons(props, { hit, ammoName = "", forceActor
         // бой» (combat/radiation.mjs::applyRadHit, wdbc-x1nz.10).
         `data-wp-radiation="${te.radiation ? 1 : 0}"`,
         `data-wp-ammo-name="${ammoName}"`,
+        // Отравитель (Талант Медика, medic.core.poisoner): Избирательное попадание
+        // ядом — цель перебрасывает успешные тесты против яда, урон яда бросается
+        // дважды (лучший). Флаг ставит attack.mjs; касается только яда.
+        `data-wp-poisoner="${poisoner && te.condition === "poisoned" ? 1 : 0}"`,
+        // Пироман (Талант Огнемётчика, rules/flamer-talents.mjs): цель перебрасывает УСПЕШНЫЙ тест против
+        // загорания от Spray+Flame, а в укрытии ещё и получает −20 (hooks.mjs::_applyWeaponPropEffect).
+        `data-wp-pyromaniac="${pyromaniac && te.condition === "burning" ? 1 : 0}"`,
+        // −20 в укрытии — только ВРАГАМ стрелка (по расположению токенов), поэтому кнопке нужен сам стрелок.
+        `data-wp-pyromaniac-attacker="${pyromaniac && te.condition === "burning" ? pyromaniacAttackerUuid : ""}"`,
+        // Поджигатель (Талант Оружейника, rules/gunsmith-talents.mjs): зона Избирательного выстрела Фосфорным
+        // оружием — head/torso/arm/leg. Нужна только Ослеплению (голова: мимо визоров) и Горению (торс/рука/нога).
+        `data-wp-igniter="${te.condition === "burning" || te.condition === "blinded" ? igniter : ""}"`,
         // Вид урона и место атаки — для Крит. Эффекта, если доп. урон свойства
         // уведёт цель в минус (wdbc-x1nz.2.85).
         `data-wp-dmg-type="${damageType}"`,

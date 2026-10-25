@@ -5,7 +5,7 @@
   "folder": "V0Wfgl0aycRFPfu2",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано (трактовка А, владелец 24.10.2026): capabilityKey rangedCore.core.doubleTap — галочка «Двойной Выстрел» в окне атаки (module/sheets/attack-dialog.mjs, при Короткой/Длинной очереди без прицела); module/combat/attack.mjs (doubleTapOn ← module/rules/gunner-talents.mjs::doubleTapActive): 1-е попадание карточки — Торс, 2-е — Голова, остальные отбрасываются (промахи). Порядок задан ДО Избеганий: если Уклонение снимет попадания, «торс, голова» остаются за оставшимися (строка в карточке).",
     "benefit": "Совершая любую не-Избирательную очередь, персонаж может нанести первое успешное попадание (после Избеганий) в торс, а второе — в голову, но все дальнейшие считаются промахами.",
     "tier": 1,
     "requirement": "BS 35",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "YL9rWJL5rfyUFJF3",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "qvLU23B3207ad0EE",
+              "capabilityKey": "rangedCore.core.doubleTap",
+              "label": "Двойной Выстрел: галочка в окне не-Избирательной очереди — 1-е попадание в торс, 2-е в голову",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

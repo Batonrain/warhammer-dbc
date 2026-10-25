@@ -20,6 +20,11 @@
 
 import { resolveTest } from "./resolve-test.mjs";
 
+// Области перебросов, пригодные для теста Воли против психической угрозы:
+// психическая угроза вообще (Неповиновение), «влияющее на разум» (Непреклонный)
+// и «кроме непрямых» (Солипсизм) — оба последних решения владельца 25.10.2026.
+const PSYCHIC_RESIST_TARGETS = ["psychicThreat", "psychicMind", "psychicDirect"];
+
 /**
  * Переброс, который цель берёт сама на тесте Воли против данного кастера.
  *
@@ -36,6 +41,6 @@ import { resolveTest } from "./resolve-test.mjs";
 export function psychicResistReroll(target, caster, extraCtx = {}) {
   const ctx = { kind: "skill", char: "wp", psychicThreat: true, targetActor: caster, ...extraCtx };
   const found = (resolveTest({ actor: target, ...ctx }).rerolls || [])
-    .find(r => r.who === "self" && r.target === "psychicThreat" && !r.limit);
+    .find(r => r.who === "self" && PSYCHIC_RESIST_TARGETS.includes(r.target) && !r.limit);
   return found ? { label: found.label, mode: found.mode, rolls: found.rolls } : null;
 }

@@ -5,7 +5,7 @@
   "folder": "HfTlTkQPDwQ9Yqqn",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey weaponsmith.core.lensTuning — две галочки в блоке «Таланты» окна атаки (лаз-оружие): «линзы настроены» задаёт оружию I.b зарядов (флаг lensCharges на предмете), «потратить заряд» тратит один и даёт Felling (I.b) и Precise на эту атаку (module/rules/gunsmith-talents.mjs::lensTuningShot, module/combat/attack.mjs). Precise = скидка +20 к штрафу Избирательной атаки по сочленению и глазу: при отмеченной галочке «потратить заряд» Порог в окне атаки пересчитывается сразу (module/sheets/attack-dialog.mjs, строка «Настройка Линз: Precise»); у оружия, где Precise уже есть, скидка не задваивается.",
     "benefit": "Потратив 5 минут на настройку лаз-оружия, персонаж даёт ему I.b зарядов. Любой атакой он может потратить 1 заряд, чтобы дать оружию свойства Felling(I.b) и Precise на эту атаку.",
     "tier": 2,
     "requirement": "I 40, Weapon Training (Las)",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "yg6MVWnjL9sUhgeO",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "ZF8aGGSzbn6hlKGR",
+              "capabilityKey": "weaponsmith.core.lensTuning",
+              "label": "Настройка Линз: заряды лаз-оружия → Felling (I.b) и Precise на атаку",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

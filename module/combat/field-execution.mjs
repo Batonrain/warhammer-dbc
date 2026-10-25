@@ -31,7 +31,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { moraleThreshold } from "./intimidate.mjs";
-import { isInRage } from "../rules/rage.mjs";
+import { moraleAutoPass } from "../rules/morale-auto.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { resolveOpposed } from "../rules/test-kind.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
@@ -68,7 +68,7 @@ export async function rollFieldExecutionContest(attacker, target, { attackerMod 
   // встречный тест Полевой Казни это тест Морали (как у Запугивания).
   const atkOutcome = testOutcome(atkRoll.total, atkThreshold);
   const tgtOutcome = testOutcome(tgtRoll.total, tgtThreshold,
-    { autoSuccess: intoTheJawsOfHellActive(intoTheJawsOfHell) || isInRage(target) });
+    { autoSuccess: intoTheJawsOfHellActive(intoTheJawsOfHell) || !!moraleAutoPass(target) });
   const { winner, margin } = resolveOpposed(
     { ...atkOutcome, threshold: atkThreshold }, { ...tgtOutcome, threshold: tgtThreshold });
   const success = winner === "mine";

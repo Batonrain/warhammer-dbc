@@ -38,6 +38,7 @@ import { getModEffects, mergeWeaponPropEntries, getActiveMods, getInstalledMods,
          activeSightId, modWornRequirementMet } from "../combat/weapon-mods.mjs";
 import { hasRuleFlag }                        from "../rules/flags.mjs";
 import { unstablePlatformPenalty }            from "../rules/damage-talents.mjs";
+import { RIPOSTE_EVASION_PENALTY }            from "../rules/melee-talents.mjs";
 import { khornePatron }                       from "../rules/patron-abilities.mjs";
 import { isStunnedOrDazed }    from "../rules/predicates.mjs";
 import { suffersBlindness } from "../rules/blindness.mjs";
@@ -82,6 +83,16 @@ import { isZeroedByLoss, ZERO_EFFECTS } from "../rules/char-loss.mjs";
 import { fieldDisablesWeapon, fieldForbidsShot } from "../rules/null-zones.mjs";
 import { runtForbidsOneHand } from "../rules/runt.mjs";
 import { stunForcedAim } from "../rules/takedown.mjs";
+import { fistBalanceBonus, headcrackerHeadReduction, headCalledShotPenalty } from "../rules/pugilist-talents.mjs";
+import { talentTogglesHtml } from "./attack/talent-toggles.mjs";
+import { lensTuningAvailable, LENS_CHARGES_FLAG } from "../rules/gunsmith-talents.mjs";
+import { COVERING_FIRE_PENALTY } from "../rules/gunner-talents.mjs";
+import { selectiveAimReduction, reducedAimPenalty, doubleTapAvailable, onThisMarkAvailable } from "../rules/gunner-talents.mjs";
+import { freeShotLocksAim, freeShotRofModes } from "../rules/run-and-gun.mjs";
+import { fullFireOptions, FULL_FIRE_PENALTY } from "../rules/full-fire.mjs";
+import { hasPowerSetting, powerModeOf, POWER_MODES } from "../rules/power-setting.mjs";
+import { batpackAvailable, batpackRangePenalty } from "../rules/batpack-dump.mjs";
+import { sabotageAimEntries } from "../rules/rogue-talents.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -150,6 +161,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // профиль меняется только на профиль того же вида (profileOptions), а у
   // стрелкового рукопашный профиль один — подмена на входе не разъедется.
   if (startProfile?.generated && startProfile.balance != null) sys = { ...sys, balance: startProfile.balance };
+  // Безоружный Мастер (стр. 62): кулаки с Балансом ниже 0 получают +1 — на
+  // минимальный Баланс Стоек и Приёмов (attack/selection.mjs).
+  { const fb = fistBalanceBonus(actor, item); if (fb) sys = { ...sys, balance: (Number(sys.balance) || 0) + fb }; }
   // Свой ствол профиля (комби-оружие, wdbc-jho9): режимы огня, магазин и
   // боеприпас окна — второго ствола. Смена ствола внутри окна переоткрывает
   // окно (attack/dialog.mjs, reopenWithProfile) — вся сборка ниже считается
@@ -404,7 +418,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // обнуляет — для пистолетов, винтовок и длинных винтовок (rules/damage-talents.mjs,
   // Sahara 3-5fbf); Гиро-Стабилизированное идёт первым и не зависит от Таланта.
   const baseMountRangedMod = attackerMount
-    ? (wp.gyroStabilized ? 0 : mountRangedPenalty(mountSpeedKey, attackerMount, { rider: actor }))
+    ? (wp.gyroStabilized ? 0 : mountRangedPenalty(mountSpeedKey, attackerMount, { rider: actor, actors: [...(game.actors ?? [])] }))
     : 0;
   const mountPlatform = (attackerMount && !wp.gyroStabilized)
     ? unstablePlatformPenalty(actor, { weaponClass: sys.weaponClass, base: baseMountRangedMod })
@@ -723,6 +737,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     wp,
     // Вторая атака Сабли (wdbc-f6j9y): База зафиксирована «Верховая Атака».
     forcedBaseKey: techniqueOpts.sabreSecondAttack ? "mounted" : null,
+    // Рипост (rules/melee-talents.mjs): «Броски на Избегание против этой атаки получают штраф –20».
+    extraEvasionMod: (isMelee && techniqueOpts.riposte) ? RIPOSTE_EVASION_PENALTY : 0,
   });
 
   /**
@@ -872,7 +888,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Точное (Precise): −20 к штрафу Избирательных по сочленениям и глазам
   const csMod = wp.calledShotMod || 0;
   // Локус Подношения (стр. 31, wdbc-smc): штраф Избирательной в голову меньше на 20.
-  const headPenalty = -20 + (hasRuleFlag(actor, "penalty.calledShot.head.reduce20") ? 20 : 0);
+  // Головолом (Талант Пугилиста, стр. 62): удар головой (не рогами) — штраф на 20 меньше; скидки складываются, но выше 0 не поднимают.
+  const headPenalty = headCalledShotPenalty(
+    (hasRuleFlag(actor, "penalty.calledShot.head.reduce20") ? 20 : 0) + headcrackerHeadReduction(actor, item));
   const headPenaltyLabel = headPenalty === 0 ? "0" : `−${-headPenalty}`;
   let aimTargets = [
     { value: "",       label: "— Без прицела —",      penalty:   0 },
@@ -894,6 +912,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   if (wp.blastRating > 0) {
     aimTargets.splice(1, 0, { value: "underfoot", label: "Под цель (Взрывное, −20)", penalty: -20 });
   }
+  // Саботаж (Талант Разбойника, rules/rogue-talents.mjs, стр. 62): нож может бить по
+  // ОРУЖИЮ цели — по строке на каждое её экипированное оружие, со штрафом по его классу.
+  aimTargets.push(...sabotageAimEntries(actor, item, attackCtx.targetActor, { isMelee }));
   // Опарыш-Паразит (wdbc-ux8a): «более не может быть выцелен Избирательной
   // атакой» — жёсткий запрет (книга говорит «не может», не предупреждение),
   // по ЦЕЛИ, а не по оружию — первый такой гейт в этом файле.
@@ -912,13 +933,23 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // (aimEl.value/.disabled), этот select строится только при первом рендере.
   const forcedAimValue = dyn0.maneuverKey === "stun" ? stunForcedAim(actor)   // Вырубание снимает форс (rules/takedown.mjs)
     : dyn0.maneuverKey === "sweep" ? ""
+    : freeShotLocksAim(techniqueOpts.freeShot) ? ""   // Стрельба от Бедра / Огонь с Вытягивания / на Бегу: не Избирательный (combat/free-shot.mjs)
     : null;
   const aimLocked = forcedAimValue !== null;
+  // В Яблочко / Меткий Стрелок (rules/gunner-talents.mjs): штраф стрелковой
+  // Избирательной атаки меньше на 10 / 20 (до нуля). Подпись в скобках у таких
+  // пунктов пересчитывается: статичная «Торс (−10)» после скидки врала бы.
+  const aimTalentCut = selectiveAimReduction(actor, { isMelee });
   const aimHtml = aimTargets.map(t => {
-    const pen = (t.precise && csMod) ? Math.min(0, t.penalty + csMod) : t.penalty;
-    const lbl = t.value && !t.label.includes("(")
-      ? `${t.label} (${pen})`
-      : t.label;
+    let pen = (t.precise && csMod) ? Math.min(0, t.penalty + csMod) : t.penalty;
+    const cutPen = (t.value && aimTalentCut) ? reducedAimPenalty(pen, aimTalentCut) : pen;
+    const talentCut = cutPen !== pen;
+    pen = cutPen;
+    const lbl = talentCut
+      ? `${t.label.replace(/\s*\([^)]*\)\s*$/, "")} (${pen === 0 ? "0" : pen})`
+      : t.value && !t.label.includes("(")
+        ? `${t.label} (${pen})`
+        : t.label;
     const selected = (aimLocked && t.value === forcedAimValue) ? " selected" : "";
     return `<option value="${t.value}" data-penalty="${pen}"${selected}>${lbl}</option>`;
   }).join("");
@@ -1069,6 +1100,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     weapon: item,
     wProps,
     wp,
+    // Штыковая Атака (книга: «как выстрел в упор, +30, несмотря на связанность»): +30 даже в контакте Баз.
+    pointBlankForced: techniqueOpts.freeShot === "bayonetCharge",
     // Закрепление снимает штрафы ЧУЖОЙ стороны правила Огринов (оружие велико
     // и не по руке); обратную сторону — Огрин с человеческим оружием — оно не
     // трогает, там мешает не упор, а сама рукоять.
@@ -1234,6 +1267,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     : "";
 
   // Режим атаки и прицеливание — компактными пилюлями (радио под ними).
+  // Бесплатный выстрел Таланта (combat/free-shot.mjs): только Одиночный выстрел.
+  // Прикрывающий Огонь — наоборот, только Короткая/Длинная очередь (combat/covering-fire.mjs).
+  if (techniqueOpts.freeShot) {
+    const keep = freeShotRofModes(techniqueOpts.freeShot);
+    for (let i = rofModes.length - 1; i >= 0; i--) if (!keep.includes(rofModes[i].value)) rofModes.splice(i, 1);
+  }
   const rofPills = rofModes.map((mm, i) =>
     `<label class="av-pill"><input type="radio" name="atk-rof" value="${mm.value}" data-bonus="${mm.bonus}" ${i === 0 ? "checked" : ""}/><span>${mm.label}</span></label>`
   ).join("");
@@ -1246,6 +1285,17 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const wideBurstHtml = wideBurstAvailable ? `
     <label class="attack-mod-check" title="Стр. 35: у выбранной Очереди (Короткой/Длинной, базовый RoF ≥3) RoF −2, расход патронов — по полному RoF, Уклонению цели от этой атаки −20.">
       <input type="checkbox" id="atk-wide-burst"/> Широкая Очередь (RoF−2, Уклонение цели −20)
+    </label>` : "";
+  // Двойной Выстрел (Талант Стрелка, rules/gunner-talents.mjs): галочка рядом с
+  // Широкой Очередью — тот же блок «Режим атаки», отдельной проводки в разметку нет.
+  // По Этим Координатам (Талант Стрелка): галочка запирает Избирательную атаку и обнуляет Прицеливание.
+  const onThisMarkHtml = onThisMarkAvailable(actor, { isMelee }) ? `
+    <label class="attack-mod-check" title="По Этим Координатам: цель засечена только координатами (ауспекс, Mind Radiance) или по изображению союзника — стреляете без штрафов за невидимость, но выстрел не Избирательный и без бонуса Прицеливания.">
+      <input type="checkbox" id="atk-on-this-mark"/> По Этим Координатам (цель не видна; без прицела и Прицеливания)
+    </label>` : "";
+  const doubleTapHtml = doubleTapAvailable(actor, { isMelee, sys }) ? `
+    <label class="attack-mod-check" title="Двойной Выстрел: у не-Избирательной Короткой/Длинной очереди 1-е попадание идёт в торс, 2-е — в голову, остальные — промахи. Порядок задан до Избеганий.">
+      <input type="checkbox" id="atk-double-tap"/> Двойной Выстрел (торс, потом голова; остальные — промахи; без прицела)
     </label>` : "";
   // Тесное помещение (стр. 36, wdbc-x1nz.2.63): комната ≤4×радиус взрыва —
   // решает ГМ на глаз (система не знает геометрии стен), тем же приёмом, что
@@ -1296,7 +1346,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // База зафиксирована «Верховая Атака», ОД и Лимит Атак не тратятся.
   // Пока вторая атака взведена, первую повторно не предлагаем.
   const sabreSecondMode = !!techniqueOpts.sabreSecondAttack;
-  const sabreSecondAttackAvailable = isMounted && isSabre(sys)
+  // Вторая атака ГУСАРА Саблей сохраняет +20 — галочку «без +20» ей не показываем.
+  const hussarPending = !!actor.getFlag?.(SABRE_NS, SABRE_PENDING_FLAG)?.hussar;
+  const sabreSecondAttackAvailable = isMounted && isSabre(sys) && !(sabreSecondMode && hussarPending)
     && (sabreSecondMode || !actor.getFlag?.(SABRE_NS, SABRE_PENDING_FLAG));
   const sabreSecondAttackHtml = !sabreSecondAttackAvailable ? ""
     : sabreSecondMode ? `
@@ -1440,17 +1492,54 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     </div>` : ""}
     <div class="av-opt-note" id="atk-dual-note"></div>` : "";
 
+  // Настройка Мощности (rules/power-setting.mjs): переключатель режима Усиление/Перегрузка. Режим лежит флагом
+  // оружия, числа читает getModEffects при открытии окна — поэтому смена режима переоткрывает окно (как выбор прицела).
+  const hasPowerSettingNow = !isMelee && hasPowerSetting(item, installedMods);
+  const powerModeNow = powerModeOf(item);
+  const powerModeHtml = hasPowerSettingNow ? `
+    <div class="av-row" title="Настройка Мощности: режим переключается свободным действием. Усиление — Dmg+1, Pen+1, Надёжность−1, Surge (2); Перегрузка — Dmg+2, Pen+2, Надёжность−2, Surge (4).">
+      <label>Настройка Мощности</label>
+      <select id="atk-power-mode" class="av-input av-wide">${Object.values(POWER_MODES).map(m =>
+        `<option value="${m.key}" ${m.key === powerModeNow ? "selected" : ""}>${esc(m.label)}</option>`).join("")}</select>
+    </div>` : "";
+  // Выпуск Батареи (Талант Оружейника, rules/batpack-dump.mjs): длинная очередь RoF 10, +1d10 Dmg, Storm(2),
+  // −30 вне упора и рукопашной, после атаки оружие сломано.
+  const batpackOn = batpackAvailable(actor, { item, isMelee, activeMods: installedMods });
+  const batpackHtml = batpackOn ? `
+    <label class="attack-mod-check" title="Выпуск Батареи: длинная очередь RoF 10, +1d10 Dmg, Storm (2); −30 на всех дистанциях, кроме в упор и в рукопашной; расход зарядов не меньше 20 (умножается Surge, Twin-Linked, Maximal); после атаки оружие ломается — починка занимает смену работы.">
+      <input type="checkbox" id="atk-batpack"/> Выпуск Батареи (RoF 10, +1d10, Storm 2, −30 вне упора; оружие сломается)
+    </label>` : "";
+  // Полный Огонь (Талант Стрелка, rules/full-fire.mjs): два ствола одним нажатием. ОД платит основной выстрел,
+  // Реакция — второй; оба −10. Не сочетается с «Обе руки» и с бесплатными выстрелами Талантов.
+  const fullFireOpts = (techniqueOpts.freeShot || techniqueOpts.sabreSecondAttack)
+    ? [] : fullFireOptions(actor, item, { startProfile, isMelee });
+  const fullFireHtml = fullFireOpts.length ? `
+    <div class="av-row" title="Полный Огонь: потратив Реакцию, стреляете сразу из двух стволов (винтовка и комби-подствольник; ладонь и запястье; тяжёлое и встроенное Тандемом). ОД идёт за основной выстрел, Реакция — за второй, оба выстрела −10.">
+      <label class="attack-mod-check">
+        <input type="checkbox" id="atk-full-fire"/> Полный Огонь (Реакция, оба −10)
+      </label>
+      <select id="atk-full-fire-with" class="av-input">
+        ${fullFireOpts.map(o => `<option value="${esc(o.value)}" data-rof='${esc(JSON.stringify(o.rof))}'>${esc(o.label)}</option>`).join("")}
+      </select>
+    </div>
+    <div class="av-row" id="atk-full-fire-rof-row" title="Режим огня второго ствола — по его собственной скорострельности.">
+      <span class="av-sec-lbl">Режим огня (2-й ствол)</span>
+      <select id="atk-full-fire-rof" class="av-input">
+        ${fullFireOpts[0].rof.map(o => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join("")}
+      </select>
+    </div>` : "";
+
   // Не <form>: содержимое DialogV2 уже лежит внутри его собственной формы, а
   // вложенная форма недопустима — браузер её выбросит вместе с оформлением.
   // Сборка разметки вынесена в sheets/attack/markup.mjs (wdbc-uh56): второй
   // односторонний шов — значения только входят, наружу идёт одна строка.
   const content = buildAttackContent({
     actor,
-    dualWieldHtml,
+    dualWieldHtml: dualWieldHtml + fullFireHtml,
     aimHtml,
     aimLocked,
     aimingBadgeHtml,
-    sightHtml,
+    sightHtml: sightHtml + powerModeHtml,
     ammoCondHtml,
     ammoDialogHtml,
     attackerMount,
@@ -1488,7 +1577,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     specificMods,
     sys,
     techSectionsHtml,
-    wideBurstHtml,
+    wideBurstHtml: wideBurstHtml + doubleTapHtml + onThisMarkHtml + batpackHtml + talentTogglesHtml(actor, item, { isMelee, wProps, sys }),
     confinedSpaceHtml,
     targetAgainstWallHtml,
     rapierIgnoreRngHtml,
@@ -1552,6 +1641,13 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       { label: "Сабля: вторая атака вместо +20",
         value: (isMelee && sys.meleeCategory === "Меч" && sys.meleeSubtype === "Сабля"
           && sel.baseKey === "mounted" && f.sabreSecondAttack) ? -sel.baseBon : 0 },
+      // Настройка Линз (rules/gunsmith-talents.mjs): «потратить заряд» даёт Precise — скидка +20 к штрафу
+      // Избирательной атаки по сочленению и глазу (если у оружия Precise уже есть, скидка в списке цели учтена).
+      { label: "Настройка Линз: Precise", value: (f.talentToggles?.lensUse && !csMod && (f.aimVal === "joint" || f.aimVal === "eye")
+          && lensTuningAvailable(actor, { item, isMelee })
+          && (f.talentToggles?.lensTune || (Number(item.getFlag?.("warhammer-dbc", LENS_CHARGES_FLAG)) || 0) > 0))
+          ? Math.min(20, -(Number(f.aimPenalty) || 0)) : 0 },
+      { label: "Прикрывающий Огонь",  value: techniqueOpts.freeShot === "coveringFire" ? COVERING_FIRE_PENALTY : 0 },
       { label: "Стойка цели",        value: targetStanceMod },
       { label: "Цель раскрыта",      value: exposedMod },
       { label: "Беспомощная цель",   value: helplessRangedMod },
@@ -1579,6 +1675,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       // удвоенный бонус от Прицеливания» — только rofMode==='single', не
       // задевает Длинную/Короткую очередь.
       { label: "Прицеливание",       value: (fanningActive && f.rofMode === "full") ? 0
+        : techniqueOpts.freeShot === "hipShooting" ? 0   // Стрельба от Бедра: «не пользуясь прицелом»
+        : f.onThisMark ? 0   // По Этим Координатам: «не получают преимуществ Прицеливания»
         : wp.noAim ? 0
         : (wp.accurate && f.rofMode === "single") ? aimingBonus * 2
         : aimingBonus },
@@ -1600,7 +1698,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       { label: "Ситуативные",          value: f.sitMods },
       { label: "Боеприпас: условия",   value: f.ammoMods },
       { label: "Спецправила",          value: f.ruleMods },
-      { label: "Режим огня",           value: f.rofBonus },
+      // Выпуск Батареи всегда Длинная очередь: бонус режима — Длинной, даже если её пилюли у оружия нет.
+      { label: "Режим огня",           value: (batpackOn && f.batpackDump) ? (rofModes.find(m => m.value === "full")?.bonus ?? -10) : f.rofBonus },
+      { label: "Выпуск Батареи",       value: batpackOn
+        ? batpackRangePenalty({ batpackOn: f.batpackDump, pointBlank: f.pointBlank, meleeShot: f.meleeShot }) : 0 },
       { label: "Избирательная атака",  value: f.aimPenalty },
       { label: "Верхом",               value: f.mountPenalty },
       // Штраф стрельбы с седла (wdbc-8nz6) — отдельная строка от "Верхом"
@@ -1616,7 +1717,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       // Отдельной строкой, а не в «Доп. мод»: игрок должен видеть, что это
       // посчитала система, и на сколько её убавили его Таланты.
       { label: "Парное оружие",        value: f.dualWield
-        ? dualWieldMods(actor, item, actor.items.get(f.offHandId)).pair : 0 }
+        ? dualWieldMods(actor, item, actor.items.get(f.offHandId)).pair : 0 },
+      // Полный Огонь (rules/full-fire.mjs): −10 каждому из двух выстрелов.
+      { label: "Полный Огонь",         value: (f.fullFire && fullFireOpts.length) ? FULL_FIRE_PENALTY : 0 }
     ];
     const base         = baseParts.reduce((n, p) => n + (Number(p.value) || 0), 0);
     const rawModsSum    = modParts.reduce((n, p) => n + (Number(p.value) || 0), 0);
@@ -1695,6 +1798,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     computeGripOptions,
     computeManeuverOptions,
     computeStanceOptions,
+    fullFireOpts,
+    batpackOn,
     reopenWithProfile: (idx) => showAttackDialog(actor, item, { ...techniqueOpts, profileIdx: idx }),
   });
 }

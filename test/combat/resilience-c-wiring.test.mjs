@@ -41,6 +41,8 @@ describe("единая точка наложения подключена к и�
     // Вырубание (Takedown): «сбить с ног» с карточки урона — чужой эффект, Стена должна спрашиваться.
     "module/combat/takedown.mjs": 'statusApplyFields(target, "prone"',
     "module/combat/bulldoze.mjs": 'statusApplyFields(target, "prone"',
+    // Пинок с Разворота (Пугилист, 3-eddb): отброс дальше ¼A.b — чужое падение, Стена должна спрашиваться.
+    "module/combat/roundhouse.mjs": 'statusApplyFields(target, "prone"',
     "module/combat/grapple.mjs": 'statusApplyFields(partner, "prone"',
     "module/combat/mount.mjs": 'statusApplyFields(rider, "prone"',
     "module/combat/dread-wail.mjs": 'statusApplyFields(targetActor, "stunned"',
@@ -73,7 +75,8 @@ describe("единая точка наложения подключена к и�
     expect(users.sort()).toEqual([
       "module/combat/bulldoze.mjs", "module/combat/crit-effect-parser.mjs", "module/combat/damage.mjs",
       "module/combat/dread-wail.mjs", "module/combat/grapple.mjs", "module/combat/knockdown.mjs",
-      "module/combat/mount.mjs", "module/combat/takedown.mjs", "module/hooks.mjs", "module/rules/on-target-fail.mjs"
+      "module/combat/mount.mjs", "module/combat/roundhouse.mjs", "module/combat/takedown.mjs", "module/hooks.mjs",
+      "module/rules/on-target-fail.mjs"
     ].sort());
   });
 });

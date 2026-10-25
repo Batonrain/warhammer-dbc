@@ -14,8 +14,10 @@
 
 import { esc } from "../helpers/utils.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
-import { spendFromInfamyPool, actorInfamyPath } from "../apps/infamy-points.mjs";
-import { tempInfamyAmount } from "../rules/temp-infamy.mjs";
+import { spendFromInfamyPool, actorInfamyPath, changeActorInfamy } from "../apps/infamy-points.mjs";
+import { tempInfamyAmount, grantTempInfamy } from "../rules/temp-infamy.mjs";
+import { hasCalmWinds, hasFavouredByTheWarp } from "../rules/psyker-talents.mjs";
+import { getPhenomenon } from "../constants/psyker-tables.mjs";
 import { calmWarpAllowed, calmWarpResult, hasImperialSanctioning, offerFreePerilReroll, CALM_WARP_COR }
   from "../rules/calm-warp.mjs";
 
@@ -50,10 +52,10 @@ export function calmWarpButtonsHtml(actor, { phenMod = 0, peril = false, free = 
   return `<div class="roll-threshold wh-owner-only wh-calm-warp" data-actor-uuid="${esc(actor.uuid)}">${btns.join(" ")}</div>`;
 }
 
-function phenHtml(phen, phenTotal, phenMod) {
+function phenHtml(phen, phenTotal, phenMod, note = "") {
   return `
     <div class="psy-phenomenon">
-      <div class="psy-phen-header">⚠️ Психический Феномен (переброс ${phenTotal}${phenMod ? `, мод ${phenMod >= 0 ? "+" : ""}${phenMod}` : ""})</div>
+      <div class="psy-phen-header">⚠️ Психический Феномен (переброс ${phenTotal}${phenMod ? `, мод ${phenMod >= 0 ? "+" : ""}${phenMod}` : ""})${note}</div>
       <div class="psy-phen-name">${phen.label}</div>
       <div class="psy-phen-text">${phen.text}</div>
     </div>`;
@@ -91,6 +93,7 @@ export async function handleCalmWarpClick(message, btn) {
   }
 
   let spentLine = "";
+  let spendResult = null; // что именно списано — Штилю нужно вернуть то же самое
   if (!free) {
     const allowed = calmWarpAllowed(actor);
     if (!allowed.ok) return ui.notifications.warn(allowed.reason);
@@ -99,6 +102,7 @@ export async function handleCalmWarpClick(message, btn) {
     if (cur < 1 && tempInfamyAmount(actor) < 1) return ui.notifications.warn("Нет Очков Бесчестия.");
     const spend = await spendFromInfamyPool(actor, 1, path);
     if (!spend) return;
+    spendResult = spend;
     await actor.update({ [path]: spend.poolValue });
     spentLine = spend.tempSpent
       ? `Потрачено 1 временное Очко Бесчестия. Осталось: <b>${spend.poolValue}</b>.`
@@ -111,12 +115,24 @@ export async function handleCalmWarpClick(message, btn) {
   const rolls = [];
   const sections = [];
   let perilTriggered = false;
+  let newLabel = ""; // что выпало при переброске — Штилю показать выбор «оставить или вернуть»
+  let favouredNote = ""; // Любимец Варпа: пояснение о двух бросках в шапке Феномена
   if (table === "peril") {
     const r = await new Roll("1d100").evaluate(); rolls.push(r);
     const res = calmWarpResult("peril", { perilTotal: r.total });
     sections.push(perilHtml(res.peril, r.total, "ПЕРЕБРОС: "));
+    newLabel = res.peril.label;
   } else {
-    const pr = await new Roll(`1d100 + ${phenMod}`).evaluate(); rolls.push(pr);
+    let pr = await new Roll(`1d100 + ${phenMod}`).evaluate(); rolls.push(pr);
+    // Любимец Варпа: «бросает два кубика на Феномены (но не Прорывы) и может
+    // выбрать любой из них» — и при Усмирении. Выше на таблице хуже, поэтому
+    // берём меньший (как в sheets/tabs/psychic.mjs::executePsychotest).
+    if (hasFavouredByTheWarp(actor)) {
+      const second = await new Roll(`1d100 + ${phenMod}`).evaluate(); rolls.push(second);
+      const [keep, drop] = second.total < pr.total ? [second, pr] : [pr, second];
+      favouredNote = ` <i>(Любимец Варпа: два броска ${pr.total} и ${second.total} — взят меньший, отброшен ${drop.total}: ${esc(getPhenomenon(drop.total).label)})</i>`;
+      pr = keep;
+    }
     let perilTotal = null;
     if (calmWarpResult("phenomenon", { phenTotal: pr.total }).perilTriggered) {
       const r = await new Roll("1d100").evaluate(); rolls.push(r);
@@ -124,9 +140,35 @@ export async function handleCalmWarpClick(message, btn) {
     }
     const res = calmWarpResult("phenomenon", { phenTotal: pr.total, perilTotal });
     perilTriggered = res.perilTriggered;
-    sections.push(phenHtml(res.phen, pr.total, phenMod));
+    sections.push(phenHtml(res.phen, pr.total, phenMod, favouredNote));
     if (res.peril) sections.push(perilHtml(res.peril, perilTotal));
     else sections.push(`<div class="roll-threshold" style="font-size:0.85em;color:#3a7a3a;">Прорыва нет.</div>`);
+    newLabel = `${res.phen.label}${res.peril ? ` → Прорыв: ${res.peril.label}` : ""}`;
+  }
+
+  // Штиль (Талант Псайканы, Sahara 3-28): «может выбрать отменить второй бросок
+  // и вернуть потраченное Очко Бесчестия, чтобы использовать изначальный
+  // результат». Спрашиваем, увидев переброс; отмена возвращает Очко туда, откуда
+  // оно ушло (временный запас — во временный). Бесплатный переброс Прорыва
+  // (Имперское Санкционирование) Очка не стоил — возвращать нечего.
+  if (!free && spendResult && hasCalmWinds(actor)) {
+    const keepOriginal = await foundry.applications.api.DialogV2.confirm({
+      window: { title: `Штиль — ${actor.name}` },
+      content: `<p>Переброс дал: <b>${esc(newLabel)}</b>.</p><p>Штиль: отменить переброс, вернуть Очко Бесчестия и оставить изначальный результат?</p>`,
+      yes: { label: "Отменить переброс, вернуть Очко" }, no: { label: "Оставить переброс" },
+      rejectClose: false
+    });
+    if (keepOriginal) {
+      if (spendResult.tempSpent > 0) {
+        await grantTempInfamy(actor, spendResult.tempSpent, { source: spendResult.tempSource, restriction: spendResult.tempRestriction });
+      }
+      if (spendResult.poolSpent > 0) await changeActorInfamy(actor, spendResult.poolSpent);
+      await postTestCard(actor, {
+        icon: "🌀", title: `Штиль — переброс отменён — ${esc(actor.name)}`,
+        lines: [`<div class="roll-damage-meta">Очко Бесчестия возвращено${spendResult.tempSpent > 0 ? " (временное — во временный запас)" : ""}. Остаётся изначальный результат; выпавшее при переброске (${esc(newLabel)}) не считается.</div>`]
+      }, { rolls });
+      return;
+    }
   }
 
   const sanctioned = hasImperialSanctioning(actor);

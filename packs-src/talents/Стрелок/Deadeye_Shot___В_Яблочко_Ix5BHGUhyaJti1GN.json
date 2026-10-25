@@ -5,7 +5,7 @@
   "folder": "V0Wfgl0aycRFPfu2",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey rangedCore.core.deadeyeShot — штраф Избирательной стрелковой атаки меньше на 10 (module/sheets/attack-dialog.mjs, aimTargets ← module/rules/gunner-talents.mjs::selectiveAimReduction) и штраф за Размер цели ниже 0 меньше на 10 (правило core.deadeyeSize, module/rules/library/core.mjs, предикат targetSizeMax). Выше нуля штраф не поднимается.",
     "benefit": "Персонаж уменьшает штраф на стрелковые атаки за Избирательные атаки или Размер цели ниже 0 на 10.",
     "tier": 1,
     "requirement": "BS 30",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "8VpESLAnUfQF4Kft",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "yHwLnLsdwYz1rVSk",
+              "capabilityKey": "rangedCore.core.deadeyeShot",
+              "label": "В Яблочко: штраф Избирательных стрелковых атак и малого Размера цели меньше на 10",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

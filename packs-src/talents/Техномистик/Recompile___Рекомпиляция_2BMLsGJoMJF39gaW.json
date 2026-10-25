@@ -5,7 +5,7 @@
   "folder": "Nu4M8EyPNQpHOOjO",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: при активации нескомпилированного Славословия, если есть скомпилированное Славословие рейтинга не ниже нового, окно предлагает «Рекомпиляция: заменить «…» (−1 ⚙)» — у старого снимается «Скомпилировано», у нового ставится (sheets/tabs/tech.mjs::offerFastCompile, rules/technomystic-talents.mjs::recompileSources). Ментальное полудействие система не списывает.",
     "benefit": "За ментальное полудействие персонаж может потратить 1 Когницию, чтобы заменить одно скомпилированное Славословие другим равного или меньшего рейтинга.",
     "tier": 2,
     "requirement": "Forbidden Lore (Mechanicum)+20",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g05recompilCap1",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "e05recompilCap1",
+              "capabilityKey": "technomystic.core.recompile",
+              "label": "Рекомпиляция: за 1 ⚙ заменить скомпилированное Славословие другим равного или меньшего рейтинга",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

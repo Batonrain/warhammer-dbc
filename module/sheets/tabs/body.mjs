@@ -9,11 +9,12 @@ import { openSurgeon } from "../../apps/surgeon.mjs";
 import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 import { syncGrantedEquipment } from "../../apps/mechanics.mjs";
 import { on } from "../../helpers/utils.mjs";
-import { showDeathSaveDialog, doResurrect, _deathResolvedFields } from "./death.mjs";
+import { showDeathSaveDialog, doResurrect, _deathResolvedFields, DECEASED_AT_FLAG } from "./death.mjs";
 import { VITAL_TIME_FIELD } from "../../constants/vitals.mjs";
 import { satisfyAddiction, setAddictionSubstance } from "../../rules/addiction.mjs";
 import { registerBloodFlameKill, LAST_DAMAGE_WEAPON_FLAG } from "../../combat/blood-flame.mjs";
 import { registerLegacyDreadfulKill } from "../../combat/legacy-weapon-kill-credit.mjs";
+import { registerVengeanceKill } from "../../combat/vengeance.mjs";
 import { registerLegacySlaughterKill } from "../../rules/legacy-weapon.mjs";
 import { takeSerum, rollLifespan } from "../../combat/replicant.mjs";
 
@@ -64,6 +65,17 @@ export async function satisfyVital(actor, key) {
 export async function setDeceased(actor, deceased) {
   const was = !!actor?.getFlag?.("warhammer-dbc", "deceased");
   await actor.setFlag("warhammer-dbc", "deceased", deceased);
+  // Момент смерти — для Таланта «Реанимировать» («умер не более Cor.b Раундов
+  // назад», combat/reanimate.mjs). Метка гасится вместе с остальными метками
+  // смерти (death.mjs::_deathResolvedFields). Только на переходе «жив → мёртв».
+  if (deceased && !was) {
+    const combat = game.combat;
+    await actor.setFlag("warhammer-dbc", DECEASED_AT_FLAG, {
+      worldTime: game.time?.worldTime ?? 0,
+      combatId: combat?.id ?? null,
+      round: Number.isFinite(combat?.round) ? combat.round : null
+    });
+  }
   // Снятая галочка — та смерть разрешилась (ГМ «оживил» руками): её метки
   // (провал Спасения, попытка Анимации, провал Игрушки Богов, причина) не
   // должны закрывать Спасение и Анимацию на следующую смерть.
@@ -81,6 +93,8 @@ export async function setDeceased(actor, deceased) {
     await registerLegacyDreadfulKill(weapon);
     // Наследие Бойни (H1, стр. 426) — тот же такт.
     await registerLegacySlaughterKill(weapon);
+    // Месть (Талант Берсерка, combat/vengeance.mjs): убит лидер/чемпион Ненавистных в рукопашной.
+    await registerVengeanceKill(actor, weapon);
   }
 }
 

@@ -98,6 +98,11 @@
             </select>
           </div>
 
+          <div class="header-cell">
+            <label title="Слуга — Космодесантник: Древний Воин Хозяина даёт ему +10 к Лояльности. После смены галочки нажмите 🔄 у Лояльности.">Астартес</label>
+            <input type="checkbox" name="system.isAstartes" {{checked system.isAstartes}}/>
+          </div>
+
           <div class="header-cell minion-loyalty-cell">
             <label title="Базовая Лояльность равна Характеристике Хозяина{{#if minion.loyaltyFrom}} ({{minion.loyaltyFrom}}){{/if}} и меняется вместе с ней">Лояльность</label>
             <div class="fate-values">

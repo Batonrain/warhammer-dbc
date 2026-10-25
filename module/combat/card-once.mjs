@@ -19,6 +19,8 @@ const NS = "warhammer-dbc";
 export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legionSurgeryUsed",
   // 1d10 Знаний Веков после траты Очка (apps/knowledge-of-ages.mjs, wdbc-1rno.23).
   "knowledgeOfAgesRolled",
+  // Тест «T+0, или Кровотечение» Критического Эффекта (combat/shock-death.mjs::rollBleedingTest, 3-edc4 п.18).
+  "bleedTestRolled",
   // Мастерство: автоуспех за Очко (combat/mastery.mjs) и «За Гранью Человека»:
   // оставить первый результат переброса (combat/beyond-human.mjs).
   "masteryAutoSuccessUsed", "beyondHumanKept",
@@ -28,7 +30,22 @@ export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legi
   // Ключи попыток без итога (runCardOnce с persist:false) флагом не пишутся, но стыковочный тест требует их в списке.
   "finalPushTried", "painTried", "shockDeathRolled",
   // Вырубание: «сбить с ног» с карточки урона при успешном Оглушении (combat/takedown.mjs).
-  "takedownKnockdown"];
+  "takedownKnockdown",
+  // Снайпер Ужаса: один тест Intimidate(BS)+0 на попадание (combat/terror-sniper.mjs).
+  "terrorSniperRolled",
+  // Таланты Пугилиста: свободные действия с карточек Захвата и Пинка (3-eddb) — Швырнуть
+  // (Метнуть/Замахнуться — одно действие), обе части Наскока и Пинок с Разворота.
+  "slamUsed", "pounceKnockdownUsed", "pounceGrabUsed", "roundhouseUsed",
+  // Саботаж (Талант Разбойника, combat/sabotage.mjs): Клин/отключение оружия цели с карточки удара.
+  "sabotageApplied",
+  // Разрубить (Талант «Рукопашных», combat/cleave.mjs): одна свободная атака с карточки урона.
+  "cleaveUsed",
+  // Пересилить (Талант Берсерка, combat/overpower.mjs): один встречный тест с карточки Парирования.
+  "overpowerUsed",
+  // Яростный Штурм (Талант Берсерка, combat/furious-assault.mjs): одна дополнительная атака за Реакцию с карточки.
+  "furiousAssaultUsed",
+  // Ложный Натиск (hooks.mjs, .wh-false-advance-btn): один Финт или Давление с карточки Движения.
+  "falseAdvanceUsed"];
 
 const local = new Set();
 const localKey = (message, key) => `${message?.id}:${key}`;

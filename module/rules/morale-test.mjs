@@ -11,7 +11,7 @@
 import { resolveTest } from "./resolve-test.mjs";
 import { rollD100WithReroll } from "./test-kind-widget.mjs";
 import { testOutcome } from "./roll-outcome.mjs";
-import { isInRage } from "./rage.mjs";
+import { moraleAutoPass } from "./morale-auto.mjs";
 
 /**
  * @param {Actor} actor
@@ -64,13 +64,17 @@ export async function rollMoraleTest(actor, baseThreshold, { sourceActor = null,
     : (selfAdvantage ? { mode: "keepBest", rolls: 2, label: selfAdvantageLabel } : null);
   const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
   const outcome = testOutcome(rv, eff);
-  // Ярость (Frenzy, стр. 62): «автоматически проходит тесты Морали» — бросок
-  // остаётся на карточке, но провал не засчитывается; причина — строкой в
-  // подписях модификаторов. Успешный бросок идёт как есть (со своей степенью).
-  const rageAutoPass = isInRage(actor) && !outcome.success;
+  // Ярость (Frenzy, стр. 62), Бесстрашный и Идолопоклонник с кумиром рядом:
+  // «автоматически проходит тесты Морали» — бросок остаётся на карточке, но
+  // провал не засчитывается; причина — строкой в подписях модификаторов.
+  // Успешный бросок идёт как есть (со своей степенью). Список причин —
+  // rules/morale-auto.mjs (и преодоление Подавления в конце Хода, и выход из
+  // Шока, и Паника от Горения идут через эту функцию).
+  const auto = moraleAutoPass(actor);
+  const rageAutoPass = !!auto && !outcome.success;
   const success = outcome.success || rageAutoPass;
   const deg = rageAutoPass ? 1 : outcome.deg;
-  if (rageAutoPass) parts.push("😡 Ярость: автоуспех");
+  if (rageAutoPass) parts.push(auto.label);
   // Провал теста Морали снимает Командование («Мораль и Потеря Командования»):
   // с подчинённого — его преимущества, с Командира — все отданные Команды.
   // Импорт ленивый: command-state тянет источники правил, а этот модуль

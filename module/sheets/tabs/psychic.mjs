@@ -34,6 +34,17 @@ import { autoModsTotal, autoTestMods } from "../../rules/roll-mods.mjs";
 import { resolveTest } from "../../rules/resolve-test.mjs";
 import { getPsychicVessel } from "../../rules/psychic-vessel.mjs";
 import { manifestEprFlags, safeModeEpr, CHILD_OF_THE_WARP_PUSH_BONUS } from "../../rules/psyker.mjs";
+import { techniqueFocusFor, TECHNIQUE_FOCUS_TEST_BONUS, TECHNIQUE_FOCUS_PHEN_MOD,
+         psychicSpiteApplies, hasPsychicSpite, normalizeSpiteChoice, PSYCHIC_SPITE_BONUS,
+         manifestPrCeiling, RESURGENCE_FLAG,
+         hasWarpWhisper, warpWhisperPenalty, hasInnumerations, innumerationsMod,
+         hasFavouredByTheWarp, hasWarpConduit, WARP_CONDUIT_FORMULA, WARP_CONDUIT_PHEN_MOD,
+         hasTechniqueFocus, hasPsychicPrecision, isPsychicShooting, precisionCost,
+         PRECISION_COST } from "../../rules/psyker-talents.mjs";
+import { HIT_LOCATIONS } from "../../constants/combat.mjs";
+import { spendCapabilityCost } from "../../combat/capability-cost.mjs";
+import { isEncounterActive } from "../../combat/action-economy.mjs";
+import { gazeIntoAbyssReduction } from "../../rules/defiance-talents.mjs";
 import { hasRuneMagic, runeMax, runeValue, runeCostForPower, runeCostTotal,
          runeStrikeMax, runeStrikeRefund, runeUpdate,
          RUNE_STRIKE_COST, isRuneLearned, hasImprovisedRune,
@@ -219,7 +230,11 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
   // «на любое значение до минимума в 1». `prRequired` — требование ИЗУЧЕНИЯ
   // силы («кроме требований»), а не нижняя граница манифестации, поэтому
   // список не должен им ограничиваться.
-  const maxPR    = Math.max(0, psy.currentRating || 0);
+  // Потолок mPR: тPR, а у Необременённого (на свою силу) и при действующем
+  // Психическом Возрождении — бPR (rules/psyker-talents.mjs::manifestPrCeiling).
+  // Возрождение, ещё не включённое, добавляет верхние пункты за Очко Бесчестия.
+  const ceiling  = manifestPrCeiling(actor, item);
+  const maxPR    = ceiling.max;
   const minPR    = 1;
   const cast     = resolvePsyCastAttr(actor, sys);
   const charAbbr = cast.abbr;
@@ -227,12 +242,17 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
 
   let prOptions = "";
   const top = Math.max(1, maxPR);
-  for (let p = minPR; p <= top; p++)
-    prOptions += `<option value="${p}" ${p === top ? "selected" : ""}>${p}</option>`;
-  // тPR 0 — новые силы манифестировать нельзя (стр. 289).
-  const prWarn = maxPR <= 0
+  const listTop = ceiling.canResurge ? Math.max(top, Number(psy.rating) || 0) : top;
+  for (let p = minPR; p <= listTop; p++)
+    prOptions += `<option value="${p}" ${p === top ? "selected" : ""}>${p}${(ceiling.canResurge && p > maxPR) ? " — Психическое Возрождение (−1 ОБ)" : ""}</option>`;
+  // тPR 0 — новые силы манифестировать нельзя (стр. 289) — кроме Возрождения.
+  const prWarn = maxPR <= 0 && !ceiling.canResurge
     ? `<div class="pm-warn">тPR = 0 (все ${psy.sustain || 0} PR уходят на поддержание) — новые психосилы манифестировать нельзя.</div>`
-    : (psy.sustain ? `<div class="pm-note">тPR ${maxPR} = бPR ${psy.rating || 0} − ${psy.sustain} на поддержание.</div>` : "");
+    : (ceiling.ignored === "unburdened"
+      ? `<div class="pm-note">Необременённый: поддержание (${psy.sustain || 0}) не снижает тPR для «${esc(item.name)}» — доступен весь бPR ${ceiling.max}.</div>`
+      : ceiling.ignored === "resurgence"
+      ? `<div class="pm-note">Психическое Возрождение действует до начала следующего Хода — поддержание не снижает тPR (бPR ${ceiling.max}).</div>`
+      : (psy.sustain ? `<div class="pm-note">тPR ${maxPR} = бPR ${psy.rating || 0} − ${psy.sustain} на поддержание.${ceiling.canResurge ? " Выше тPR — только Психическим Возрождением (−1 Очко Бесчестия, до начала следующего Хода)." : ""}</div>` : ""));
 
   // Путь с полем `flag` (Руны Сигиллитов, wdbc-fsl9) виден только тому, кому
   // возможность реально выдана. Все прочие Пути поля не несут, поэтому у
@@ -325,8 +345,60 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
   // тот же расчёт, что в executePsychotest (rules/psyker.mjs), иначе окно и
   // бросок разошлись бы в числе.
   const eprTalents = manifestEprFlags(actor);
+  // Таланты, меняющие манифестацию (rules/psyker-talents.mjs, Sahara 3-28): Фокус
+  // Техники на ЭТУ силу, Психическая Злоба по Ненавистной цели, Варповый Шёпот,
+  // Проводник Варпа. Строки окна — только у тех, у кого Талант есть.
+  const techFocus = techniqueFocusFor(actor, item);
+  const targetActors = [...(game.user?.targets ?? [])].map(t => t.actor ?? null);
+  const spiteOk = psychicSpiteApplies(actor, targetActors);
+  const whisper = hasWarpWhisper(actor);
+  const conduit = hasWarpConduit(actor);
   const psyMeta = { charVal, charAbbr, powerMod, natData, pathData, dynBonus, variantMods, isEldar, fatigue,
-                    runeBase, ...eprTalents };
+                    runeBase, techFocus, ...eprTalents };
+  const talentRows = [
+    techFocus ? `<div class="pm-note">Фокус Техники: +${TECHNIQUE_FOCUS_TEST_BONUS} к психотесту этой силы, ${TECHNIQUE_FOCUS_PHEN_MOD} к её Феноменам — учтено.</div>`
+      : (hasTechniqueFocus(actor) ? `<div class="pm-note" style="opacity:.75;">Фокус Техники: выбранная сила записана в поле «Специализация» Таланта; для «${esc(item.name)}» не выбрана.</div>` : ""),
+    spiteOk ? `
+        <div class="pm-row">
+          <label title="Психическая Злоба: на Ненавистном враге +${PSYCHIC_SPITE_BONUS} к эPR — в расчёте психотеста, или дальности, или Dmg и Pen (выбрать до психотеста)">Злоба (+${PSYCHIC_SPITE_BONUS} эPR)</label>
+          <select id="psy-spite" class="pm-input pm-wide">
+            <option value="">— нет —</option>
+            <option value="test">в психотесте</option>
+            <option value="range">в дальности</option>
+            <option value="damage">в Dmg и Pen</option>
+          </select>
+        </div>`
+      : (hasPsychicSpite(actor) ? `<div class="pm-note" style="opacity:.75;">Психическая Злоба: наведите таргет (T) на Ненавистного врага — появится выбор +${PSYCHIC_SPITE_BONUS} эPR.</div>` : ""),
+    whisper ? `
+        <div class="pm-row">
+          <label title="Варповый Шёпот: уменьшить эPR на X, чтобы наложить −10×X на тесты Пси-Чутья для засекания силы">Шёпот (−эPR)</label>
+          <select id="psy-whisper" class="pm-input">
+            ${Array.from({ length: Math.max(1, Math.max(maxPR, Number(psy.rating) || 0)) }, (_, i) =>
+              `<option value="${i}">${i ? `−${i} эPR → засекание ${warpWhisperPenalty(i)}` : "— нет —"}</option>`).join("")}
+          </select>
+        </div>`
+      : "",
+    (hasPsychicPrecision(actor) && isPsychicShooting(sys)) ? `
+        <div class="pm-row">
+          <label title="Психическая Точность: стрелковая сила — уменьшить эPR на ${PRECISION_COST.part}, чтобы выбрать часть тела попадания, или на ${PRECISION_COST.fine} — для сочленений/глаз">Точность</label>
+          <select id="psy-precision" class="pm-input">
+            <option value="">— нет —</option>
+            <option value="part">часть тела (−${PRECISION_COST.part} эPR)</option>
+            <option value="fine">сочленение/глаза (−${PRECISION_COST.fine} эPR)</option>
+          </select>
+          <select id="psy-precision-loc" class="pm-input">
+            ${HIT_LOCATIONS.map(l => `<option value="${esc(l.label)}"${l.label === "Голова" ? " selected" : ""}>${esc(l.label)}</option>`).join("")}
+          </select>
+        </div>`
+      : "",
+    conduit ? `
+        <div class="pm-row">
+          <label title="Проводник Варпа: в Усиленном режиме за Очко Бесчестия +${WARP_CONDUIT_FORMULA} к эPR эффектов (не психотеста); +${WARP_CONDUIT_PHEN_MOD} к броску Феномена">
+            <input type="checkbox" id="psy-conduit"/> Проводник Варпа: −1 ОБ, +${WARP_CONDUIT_FORMULA} эPR эффектов, +${WARP_CONDUIT_PHEN_MOD} Феномен (только Усиленный)</label>
+        </div>`
+      : ""
+  ].join("");
+  Object.assign(psyMeta, { spiteBonus: PSYCHIC_SPITE_BONUS, conduitFormula: WARP_CONDUIT_FORMULA });
 
   // Правила реестра. Манифестация — такой же тест конвейера, как бросок навыка
   // и атака: вид теста «power», область эффекта «power» или «power:<имя>». Сама
@@ -405,6 +477,7 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
             ${variants.map((v, i) => `<option value="${i}">${v.label || ("Вариация " + (i + 1))}${v.testMod ? ` (${v.testMod >= 0 ? "+" : ""}${v.testMod})` : ""}</option>`).join("")}
           </select>
         </div>` : `<input type="hidden" id="psy-variant" value="-1"/>`}
+        ${talentRows}
 
         <details class="pm-adv">
           <summary>Дополнительно</summary>
@@ -486,7 +559,12 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
             damagePR: parseInt(html.find("#psy-pr-dmg").val())   || 0,
             rangePR:  parseInt(html.find("#psy-pr-range").val()) || 0,
             profileIdx: parseInt(html.find("#psy-profile").val()) ?? -1,
-            variantIdx: parseInt(html.find("#psy-variant").val()) ?? -1
+            variantIdx: parseInt(html.find("#psy-variant").val()) ?? -1,
+            spite:   html.find("#psy-spite").val() || "",
+            whisper: parseInt(html.find("#psy-whisper").val()) || 0,
+            precision: html.find("#psy-precision").val() || "",
+            precisionLoc: html.find("#psy-precision-loc").val() || "",
+            conduit: html.find("#psy-conduit").is(":checked")
           });
         }
       },
@@ -546,6 +624,15 @@ export function wirePsyManifestPreview(html, m) {
     // исчезает вместе с ценой. Элементов нет ни у кого, кроме Сигиллита.
     const strike = parseInt($("#psy-rune-strike")?.value) || 0;
     if (pd.runeCost) ePR += strike;
+    // Варповый Шёпот, Злоба, Проводник — тот же порядок и те же числа, что в
+    // executePsychotest: Шёпот снимает эPR (не ниже 1), Злоба «в психотесте»
+    // прибавляет только к эPR порога, Проводник — только к эPR эффектов.
+    const whisperX = Math.max(0, parseInt($("#psy-whisper")?.value) || 0);
+    if (whisperX > 0) ePR = Math.max(1, ePR - Math.min(whisperX, Math.max(0, ePR - 1)));
+    ePR -= precisionCost($("#psy-precision")?.value, ePR);
+    const spiteTest = ($("#psy-spite")?.value === "test") ? (m.spiteBonus || 0) : 0;
+    const ePRTest = ePR + spiteTest;
+    if (mode === "push" && $("#psy-conduit")?.checked) eprSuffix += `+${m.conduitFormula || "1d5"}`;
     const runeCostEl = $("#pm-rune-cost");
     if (runeCostEl)
       runeCostEl.textContent = pd.runeCost ? String((m.runeBase || 0) + strike * RUNE_STRIKE_COST) : "—";
@@ -559,13 +646,13 @@ export function wirePsyManifestPreview(html, m) {
       if (cb.dataset.halve === "1") halveRule = true;
     });
     const thr = attackThreshold({
-      base: m.charVal + 5 * ePR,
-      mods: [mod, ruleMod, pathTest, m.powerMod, varMod, m.fatigue],
+      base: m.charVal + 5 * ePRTest,
+      mods: [mod, ruleMod, pathTest, m.powerMod, varMod, m.fatigue, m.techFocus ? TECHNIQUE_FOCUS_TEST_BONUS : 0],
       halvePenalty: halveRule
     });
 
     $("#pm-thr").textContent = thr;
-    $("#pm-epr").textContent = `${ePR}${eprSuffix}`;
+    $("#pm-epr").textContent = `${ePR}${eprSuffix}${spiteTest ? ` (тест ${ePRTest})` : ""}`;
     const phenEl = $("#pm-phen");
     phenEl.textContent = phenText;
     phenEl.classList.toggle("danger", mode === "push");
@@ -624,6 +711,22 @@ export async function executePsychotest(actor, item, opts) {
   // Манифест. PR с учётом модификатора (таланты/ситуации: PR±N), мин. 0.
   const prMod = opts.prMod || 0;
   const mPR   = Math.max(0, (opts.mPR || 0) + prMod);
+  // Психическое Возрождение (rules/psyker-talents.mjs): mPR выше потолка тPR —
+  // только за Очко Бесчестия, метка живёт до начала следующего Хода. Нет Очка —
+  // манифестации нет (spendCapabilityCost уже сказал об этом игроку).
+  const prCeiling = manifestPrCeiling(actor, item);
+  let resurgenceLine = "";
+  if (prCeiling.canResurge && (opts.mPR || 0) > prCeiling.max) {
+    const paid = await spendCapabilityCost(actor, { pool: "infamy", amount: 1 }, "Психическое Возрождение");
+    if (!paid) return;
+    // Метка «до начала следующего Хода» гасится началом Хода В БОЮ; вне боя её
+    // некому погасить, поэтому там Возрождение действует только на эту манифестацию.
+    const inFight = isEncounterActive();
+    if (inFight) await actor.setFlag("warhammer-dbc", RESURGENCE_FLAG, true);
+    resurgenceLine = `<div class="roll-threshold" style="font-size:0.85em;">Психическое Возрождение: −1 Очко Бесчестия, ${inFight ? "поддержание не снижает тPR до начала следующего Хода" : "вне боя — поддержание не снижает тPR только для этой манифестации"}.</div>`;
+  } else if (prCeiling.ignored === "unburdened" && (opts.mPR || 0) > prCeiling.normal) {
+    resurgenceLine = `<div class="roll-threshold" style="font-size:0.85em;">Необременённый: поддержание не снижает тPR для этой силы (тPR ${prCeiling.normal} → бPR ${prCeiling.max}).</div>`;
+  }
   let ePR = mPR;
   let pushBonus = 0;
   let phenMod = 0;
@@ -671,6 +774,56 @@ export async function executePsychotest(actor, item, opts) {
     ? Math.min(Math.max(0, Math.trunc(Number(opts.runeStrike) || 0)), runeStrikeMax(actor, item))
     : 0;
   ePR += runeStrike;
+
+  // ── Таланты манифестации (rules/psyker-talents.mjs, Sahara 3-28) ───────────
+  // Порядок тот же, что в wirePsyManifestPreview: Шёпот снимает эPR, Злоба
+  // прибавляет к одному из аспектов, Проводник — к эPR эффектов, Фокус Техники —
+  // к порогу и к Феноменам.
+  const talentLines = [];
+  const whisperAsked = hasWarpWhisper(actor) ? Math.max(0, Math.trunc(Number(opts.whisper) || 0)) : 0;
+  const whisperX = Math.min(whisperAsked, Math.max(0, ePR - 1));
+  if (whisperX > 0) {
+    ePR -= whisperX;
+    talentLines.push(`<div class="roll-threshold" style="font-size:0.85em;">Варповый Шёпот: эPR −${whisperX}; тесты Пси-Чутья на засекание этой силы <b>${warpWhisperPenalty(whisperX)}</b>${opts.mode === "safe" ? " (Безопасный режим: успешные тесты на засекание перебрасываются)" : ""}.</div>`);
+  }
+  // Психическая Точность: стрелковая сила, −2 эPR за часть тела, −4 за сочленения/глаза.
+  const precisionKey = (hasPsychicPrecision(actor) && isPsychicShooting(sys)) ? String(opts.precision || "") : "";
+  const precisionCut = precisionCost(precisionKey, ePR);
+  let hitLoc = "Торс";
+  if (precisionCut) {
+    ePR -= precisionCut;
+    hitLoc = HIT_LOCATIONS.find(l => l.label === opts.precisionLoc)?.label ?? "Торс";
+    talentLines.push(`<div class="roll-threshold" style="font-size:0.85em;">Психическая Точность: эPR −${precisionCut}, попадание — <b>${esc(hitLoc)}</b>${precisionKey === "fine" ? " (сочленение/глаза)" : ""}.</div>`);
+  } else if (precisionKey) {
+    talentLines.push(`<div class="roll-threshold" style="font-size:0.85em;color:#a33;">Психическая Точность не применена: эPR не хватает (после снятия нужно не меньше 1).</div>`);
+  }
+  const spiteTargets = [...(game.user?.targets ?? [])].map(t => t.actor ?? null);
+  const spiteChoice = psychicSpiteApplies(actor, spiteTargets) ? normalizeSpiteChoice(opts.spite) : "";
+  if (spiteChoice) {
+    const where = { test: "психотеста", range: "дальности", damage: "Dmg и Pen" }[spiteChoice];
+    talentLines.push(`<div class="roll-threshold" style="font-size:0.85em;">Психическая Злоба (Ненавистная цель): +${PSYCHIC_SPITE_BONUS} к эPR ${where}.</div>`);
+  } else if (opts.spite && hasPsychicSpite(actor)) {
+    talentLines.push(`<div class="roll-threshold" style="font-size:0.85em;color:#a33;">Психическая Злоба не применена: цель не из Ненавистных.</div>`);
+  }
+  const eprTest = ePR + (spiteChoice === "test" ? PSYCHIC_SPITE_BONUS : 0);
+  const conduitRolls = [];
+  if (opts.conduit && hasWarpConduit(actor)) {
+    if (opts.mode !== "push") {
+      talentLines.push(`<div class="roll-threshold" style="font-size:0.85em;color:#a33;">Проводник Варпа работает только в Усиленном режиме — не применён.</div>`);
+    } else if (await spendCapabilityCost(actor, { pool: "infamy", amount: 1 }, "Проводник Варпа")) {
+      const cr = await new Roll(WARP_CONDUIT_FORMULA).evaluate();
+      conduitRolls.push(cr);
+      ePR += cr.total;
+      phenMod += WARP_CONDUIT_PHEN_MOD;
+      talentLines.push(`<div class="roll-threshold" style="font-size:0.85em;">Проводник Варпа: −1 Очко Бесчестия, +${cr.total} к эPR эффектов (психотест не затронут), +${WARP_CONDUIT_PHEN_MOD} к броску Феномена.</div>`);
+    }
+  }
+  const techFocus = techniqueFocusFor(actor, item);
+  if (techFocus) {
+    phenMod += TECHNIQUE_FOCUS_PHEN_MOD;
+    talentLines.push(`<div class="roll-threshold" style="font-size:0.85em;">Фокус Техники: +${TECHNIQUE_FOCUS_TEST_BONUS} к психотесту, ${TECHNIQUE_FOCUS_PHEN_MOD} к Феноменам этой силы.</div>`);
+  }
+  if (resurgenceLine) talentLines.push(resurgenceLine);
   const pathLabel = PATH.label || "";
   // Динамический бонус Пути от характеристики (Телесная Конверсия: +T.b)
   const pathDynMod = PATH.dynamicTestMod
@@ -713,10 +866,13 @@ export async function executePsychotest(actor, item, opts) {
   // ── Эффективный PR по аспектам ─────────────────────────────────────────────
   // Псайкер может независимо снизить эPR для урона и дальности (минимум 1),
   // не трогая эPR психотеста. 0 в диалоге = использовать полный эPR.
-  const clampPR  = (v) => (v > 0 ? Math.max(1, Math.min(ePR, v)) : ePR);
-  const damagePR = clampPR(opts.damagePR || 0);
-  const rangePR  = clampPR(opts.rangePR  || 0);
-  const aspectsDiffer = damagePR !== ePR || rangePR !== ePR;
+  // Психическая Злоба прибавляет +2 ровно одному аспекту (дальность либо Dmg и
+  // Pen), поэтому «полный эPR» у них свой; Исчисления ниже пересчитают оба.
+  const clampPR  = (v, bonus = 0) => (v > 0 ? Math.max(1, Math.min(ePR, v)) : ePR) + bonus;
+  const spiteBonusFor = aspect => (spiteChoice === aspect ? PSYCHIC_SPITE_BONUS : 0);
+  let damagePR = clampPR(opts.damagePR || 0, spiteBonusFor("damage"));
+  let rangePR  = clampPR(opts.rangePR  || 0, spiteBonusFor("range"));
+  let aspectsDiffer = damagePR !== ePR || rangePR !== ePR;
 
   // wdbc-5kd/wdbc-ufns: Пробитие основного профиля — формула, не константа
   // («Разрушение» Pen=PR, «Сверхъестественный Шторм» Pen=PR×3, «Вихрь Рока»
@@ -772,9 +928,12 @@ export async function executePsychotest(actor, item, opts) {
   const fatigue = bodyMods.total;
   // Складываем тем же счётчиком, что и атака: галочка «ополовинить штраф»
   // делит сумму, только если она в минус, и округляет в пользу игрока.
+  // Фокус Техники — +10 на психотест выбранной силы (rules/psyker-talents.mjs);
+  // эPR порога — с надбавкой Злобы «в психотесте» (eprTest), без Проводника.
+  const tfMod = techFocus ? TECHNIQUE_FOCUS_TEST_BONUS : 0;
   const threshold = attackThreshold({
-    base: charVal + 5 * ePR,
-    mods: [opts.modifier || 0, opts.ruleMod || 0, pathTestMod, powerMod, variantMod, fatigue],
+    base: charVal + 5 * eprTest,
+    mods: [opts.modifier || 0, opts.ruleMod || 0, pathTestMod, powerMod, variantMod, fatigue, tfMod],
     halvePenalty: !!opts.halveRulePenalty
   });
   const roll = await new Roll("1d100").evaluate();
@@ -782,11 +941,65 @@ export async function executePsychotest(actor, item, opts) {
   let success = rv <= threshold;
   let deg  = Math.floor(Math.abs(rv - threshold) / 10) + 1;
   const allRolls = focusRoll ? [roll, focusRoll] : [roll];
+  allRolls.push(...conduitRolls);
 
   // Аэльдари, Безопасный режим: авто-успех, число успехов = тPR (mPR)
   if (opts.eldar && opts.mode === "safe") {
     success = true;
     deg = Math.max(1, mPR);
+  }
+
+  // ── Будет ли Феномен — решается СРАЗУ после психотеста ────────────────────
+  // Раньше определялось ниже, прямо перед броском Феномена. Вынесено сюда
+  // ради Исчислений (Sahara 3-28): «сразу после психотеста, но до бросков на
+  // Феномен и эффекты психосилы» псайкер может снять 1 эPR и получить модификатор
+  // до −2×I.b на бросок Феномена — эПР эффектов (урон, дальность, поддержание)
+  // должны считаться уже после этого решения.
+  let phenomena = false;
+  const isDouble = (rv % 11 === 0) || rv === 100;
+  if (PATH.phenOnly99) {
+    // Руны Сигиллитов (стр. 101-102): «вызывает феномен только при выпадении
+    // 99». Безопасный режим Феноменов не даёт и здесь — это общее правило
+    // режима, а книжная оговорка Пути его только сужает, тем же приёмом, что
+    // у Рун Судьбы/Битвы ниже.
+    phenomena = (opts.mode === "normal") && rv === 99;
+  } else if (PATH.phenOnly66) {
+    // Руны Судьбы/Битвы: Феномен только на броске 66 в Обычном режиме.
+    phenomena = (opts.mode === "normal") && success && rv === 66;
+  } else if (opts.eldar) {
+    // Эльдарские правила Феноменов по режимам:
+    if (opts.mode === "safe") {
+      phenomena = false;                                   // Безопасный — никогда
+    } else if (opts.mode === "normal") {
+      const critFail = !success && (isDouble || rv === 100);
+      phenomena = (success && rv === 66) || critFail;      // дубль 66 на успехе или крит. провал
+    } else { // push
+      phenomena = !success || (success && isDouble);       // провал или дубль
+    }
+  } else if (MODE.phenomena === "always") {
+    phenomena = true;
+  } else if (MODE.phenomena === "double") {
+    phenomena = (success && isDouble) || rv === 99;
+  }
+
+  // Исчисления: снять 1 эPR ради −2×I.b к броску Феномена. Спрашиваем только
+  // когда Феномен действительно выпал, есть что снимать (эPR ≥ 2) и мод не нулевой.
+  const innumMod = innumerationsMod(actor);
+  if (phenomena && hasInnumerations(actor) && innumMod !== 0 && ePR > 1) {
+    const take = await foundry.applications.api.DialogV2.confirm({
+      window: { title: `Исчисления — ${actor.name}` },
+      content: `<p>«${esc(item.name)}» вызывает Феномен. Исчисления: снять <b>1 эPR</b> силы (эPR эффектов ${ePR} → ${ePR - 1}) ради <b>${innumMod}</b> к броску Феномена?</p>`,
+      yes: { label: `Снять 1 эPR (${innumMod})` }, no: { label: "Нет" },
+      rejectClose: false
+    });
+    if (take) {
+      ePR -= 1;
+      phenMod += innumMod;
+      damagePR = clampPR(opts.damagePR || 0, spiteBonusFor("damage"));
+      rangePR  = clampPR(opts.rangePR  || 0, spiteBonusFor("range"));
+      aspectsDiffer = damagePR !== ePR || rangePR !== ePR;
+      talentLines.push(`<div class="roll-threshold" style="font-size:0.85em;">Исчисления: эPR эффектов −1 (теперь ${ePR}), бросок Феномена ${innumMod}.</div>`);
+    }
   }
 
   // wdbc-8m0x: сохраняем степень успеха НА ПРЕДМЕТЕ — единственное место, где
@@ -880,12 +1093,15 @@ export async function executePsychotest(actor, item, opts) {
   // языком формул, «ceil(СУ/2)») и передаётся дальше через rollOpts.x во ВСЕ
   // резолверы этого предмета. Пусто у sys.xFormula → xValue=null → «Х» нигде
   // не подставляется, поведение любого другого предмета не меняется.
+  // Надбавка Психической Злобы «в Dmg и Pen» идёт только урону и Пробитию — не
+  // рейтингам свойств (Blast, Linger) и не «Х»: их считаем от эPR без неё.
+  const ratingPR = damagePR - spiteBonusFor("damage");
   const xValue = sys.xFormula
-    ? Number(resolvePropRating(sys.xFormula, damagePR, { deg, rollData: mechRollData(actor) })) || 0
+    ? Number(resolvePropRating(sys.xFormula, ratingPR, { deg, rollData: mechRollData(actor) })) || 0
     : null;
   const rollOpts = { deg, rollData: mechRollData(actor), ...(xValue != null ? { x: xValue } : {}) };
   const atkProps   = filterPropsBySuccesses(
-    resolvePropRatings(resolveWeaponPropsList(atk.props), damagePR, rollOpts),
+    resolvePropRatings(resolveWeaponPropsList(atk.props), ratingPR, rollOpts),
     deg
   );
   // wdbc-5kd/wdbc-ufns: тот же резолвер, что у rating выше — Пробитие никогда
@@ -932,7 +1148,7 @@ export async function executePsychotest(actor, item, opts) {
         allRolls.push(dmgRoll);
         if (h === 0) firstHitTotal = dmgRoll.total;
         // Экстремальный урон (стр. 166-170) — тот же расчёт, что у оружия.
-        const ext = await rollExtremeDamage(dmgRoll, { wp, damageType: atk.damageType, hitLocation: "Торс", attacker: actor });
+        const ext = await rollExtremeDamage(dmgRoll, { wp, damageType: atk.damageType, hitLocation: hitLoc, attacker: actor });
         if (ext.exRoll) allRolls.push(ext.exRoll);
         const extStr = ext.hasExtreme ? `
               <div class="roll-extreme-block">
@@ -945,7 +1161,7 @@ export async function executePsychotest(actor, item, opts) {
               <button class="wh-apply-dmg-btn" type="button"
                 data-damage="${dmgRoll.total}" data-penetration="${pen}"
                 data-damage-type="${atk.damageType}" data-damage-subtype="${atk.damageSubtype}"
-                data-hit-location="Торс"
+                data-hit-location="${esc(hitLoc)}"
                 data-weapon-name="${item.name}" data-attacker="${actor.name}" data-attacker-uuid="${actor.uuid}"
                 data-psychic="1" data-psy-power-type="${esc(item.system?.powerType || "")}"
                 data-psy-indirect="${isIndirectPower(item.system) ? 1 : ""}"
@@ -956,7 +1172,7 @@ export async function executePsychotest(actor, item, opts) {
                 data-lance="${wp.lance ? 1 : 0}"
                 data-sanctified="${wp.sanctified ? 1 : 0}"
                 data-has-extreme="${ext.hasExtreme ? 1 : 0}">
-                ${dmgRoll.total} → Торс
+                ${dmgRoll.total} → ${esc(hitLoc)}
               </button>
             </div>${extStr}`);
       }
@@ -1026,43 +1242,28 @@ export async function executePsychotest(actor, item, opts) {
   }
 
   // ── Феномен / Прорыв ──────────────────────────────────────────────────────
-  let phenomena = false;
-  const isDouble = (rv % 11 === 0) || rv === 100;
-  if (PATH.phenOnly99) {
-    // Руны Сигиллитов (стр. 101-102): «вызывает феномен только при выпадении
-    // 99». Безопасный режим Феноменов не даёт и здесь — это общее правило
-    // режима, а книжная оговорка Пути его только сужает, тем же приёмом, что
-    // у Рун Судьбы/Битвы ниже.
-    phenomena = (opts.mode === "normal") && rv === 99;
-  } else if (PATH.phenOnly66) {
-    // Руны Судьбы/Битвы: Феномен только на броске 66 в Обычном режиме.
-    phenomena = (opts.mode === "normal") && success && rv === 66;
-  } else if (opts.eldar) {
-    // Эльдарские правила Феноменов по режимам:
-    if (opts.mode === "safe") {
-      phenomena = false;                                   // Безопасный — никогда
-    } else if (opts.mode === "normal") {
-      const critFail = !success && (isDouble || rv === 100);
-      phenomena = (success && rv === 66) || critFail;      // дубль 66 на успехе или крит. провал
-    } else { // push
-      phenomena = !success || (success && isDouble);       // провал или дубль
-    }
-  } else if (MODE.phenomena === "always") {
-    phenomena = true;
-  } else if (MODE.phenomena === "double") {
-    phenomena = (success && isDouble) || rv === 99;
-  }
-
+  // Будет ли Феномен — решено выше (phenomena), сразу после психотеста.
   let phenSection = "";
   let perilTriggered = false;
   if (phenomena) {
-    const phenRoll = await new Roll(`1d100 + ${phenMod}`).evaluate();
+    let phenRoll = await new Roll(`1d100 + ${phenMod}`).evaluate();
     allRolls.push(phenRoll);
+    // Любимец Варпа: «бросает два кубика на Феномены (но не Прорывы) и может
+    // выбрать любой из них». Выше на таблице — хуже (Прорыв в самом конце), так
+    // что лучший выбор всегда меньший бросок; выбираем его и показываем второй.
+    let favouredNote = "";
+    if (hasFavouredByTheWarp(actor)) {
+      const second = await new Roll(`1d100 + ${phenMod}`).evaluate();
+      allRolls.push(second);
+      const [keep, drop] = second.total < phenRoll.total ? [second, phenRoll] : [phenRoll, second];
+      favouredNote = ` <i>(Любимец Варпа: два броска ${phenRoll.total} и ${second.total} — взят меньший, отброшен ${drop.total}: ${esc(getPhenomenon(drop.total).label)})</i>`;
+      phenRoll = keep;
+    }
     const phenVal = phenRoll.total;
     const phen = getPhenomenon(phenVal);
     phenSection = `
         <div class="psy-phenomenon">
-          <div class="psy-phen-header">⚠️ Психический Феномен (бросок ${phenVal}${phenMod !== 0 ? `, мод ${phenMod >= 0 ? "+" : ""}${phenMod}` : ""})</div>
+          <div class="psy-phen-header">⚠️ Психический Феномен (бросок ${phenVal}${phenMod !== 0 ? `, мод ${phenMod >= 0 ? "+" : ""}${phenMod}` : ""})${favouredNote}</div>
           <div class="psy-phen-name">${phen.label}</div>
           <div class="psy-phen-text">${phen.text}</div>
         </div>`;
@@ -1099,9 +1300,13 @@ export async function executePsychotest(actor, item, opts) {
       allRolls.push(corrRoll);
       corrAmt = corrRoll.total;
     }
+    // Взгляд в Бездну (rules/defiance-talents.mjs): «на 1 Порчи меньше от
+    // эффектов … Варп-Шока» — за каждое взятие, не ниже нуля.
+    const gaze = Math.min(corrAmt, gazeIntoAbyssReduction(actor));
+    corrAmt -= gaze;
     const curCorr = actor.system.corruption?.value || 0;
-    actorUpdates["system.corruption.value"] = curCorr + corrAmt;
-    warpShockSection = `<div class="psy-warpshock">🌀 Варп-Шок: <b>+${corrAmt} Порчи</b>${perilTriggered ? " (1d5 — за Прорыв)" : ""}. Не-Хаоситы в радиусе PR×5 м от Прорыва: тест W+0 или +1 Порчи.</div>`;
+    if (corrAmt > 0) actorUpdates["system.corruption.value"] = curCorr + corrAmt;
+    warpShockSection = `<div class="psy-warpshock">🌀 Варп-Шок: <b>+${corrAmt} Порчи</b>${gaze ? ` (Взгляд в Бездну −${gaze})` : ""}${perilTriggered ? " (1d5 — за Прорыв)" : ""}. Не-Хаоситы в радиусе PR×5 м от Прорыва: тест W+0 или +1 Порчи.</div>`;
   } else if (phenomena && NAT.isChaos) {
     warpShockSection = `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Демонический дар игнорирует негативные эффекты собственных Феноменов (но не Прорывов).</div>`;
   }
@@ -1209,10 +1414,11 @@ export async function executePsychotest(actor, item, opts) {
     threshold: rollStatLine({
       label: charAbbr, base: charVal,
       parts: [
-        `5×${ePR}`,
+        `5×${eprTest}`,
         opts.modifier ? `${opts.modifier >= 0 ? "+" : ""}${opts.modifier}` : "",
         pathTestMod ? `${pathTestMod >= 0 ? "+" : ""}${pathTestMod} (Путь)` : "",
         variantMod ? `${variantMod >= 0 ? "+" : ""}${variantMod} (Вариация)` : "",
+        tfMod ? `+${tfMod} (Фокус Техники)` : "",
         ...bodyMods.parts
       ],
       threshold, rv
@@ -1220,7 +1426,7 @@ export async function executePsychotest(actor, item, opts) {
     lines: [
       `<div class="roll-threshold">Природа: <b>${NAT.label}</b> | Режим: <b>${MODE.label}</b>${pathLabel ? ` | Путь: <b>${pathLabel}</b>` : ""}</div>`,
       `<div class="roll-threshold">mPR <b>${opts.mPR}</b>${prMod ? ` ${prMod >= 0 ? "+" : ""}${prMod} = <b>${mPR}</b>` : ""} → эPR <b>${ePR}</b>${pushBonus ? ` (Усиление +${pushBonus})` : ""}${(PATH.ePR || subTotals.ePR) ? ` (Путь +${(PATH.ePR || 0) + subTotals.ePR})` : ""}</div>`,
-      aspectsDiffer ? `<div class="roll-threshold" style="font-size:0.82em;">эPR по аспектам: тест <b>${ePR}</b>${isDamaging ? ` · урон <b>${damagePR}</b>` : ""} · дальность <b>${rangePR}</b></div>` : "",
+      aspectsDiffer || eprTest !== ePR ? `<div class="roll-threshold" style="font-size:0.82em;">эPR по аспектам: тест <b>${eprTest}</b>${isDamaging ? ` · урон <b>${damagePR}</b>` : ""} · дальность <b>${rangePR}</b></div>` : "",
       sys.range ? `<div class="roll-threshold" style="font-size:0.82em;">Дальность: ${String(sys.range).replace(/\bPR\b/gi, rangePR)}</div>` : "",
       sys.sustainable && sys.sustainRange ? `<div class="roll-threshold" style="font-size:0.82em;">Дальность поддержания (П): ${String(sys.sustainRange).replace(/\bPR\b/gi, rangePR)}</div>` : "",
       variant ? `<div class="roll-threshold" style="font-size:0.82em;">Вариация: <b>${variant.label || "—"}</b>${variant.note ? ` — ${variant.note}` : ""}</div>` : "",
@@ -1229,7 +1435,8 @@ export async function executePsychotest(actor, item, opts) {
       runeNote ? `<div class="roll-threshold" style="font-size:0.82em;color:#7a1010;">${runeNote}</div>` : "",
       runeLine,
       improviseLine,
-      focusNote
+      focusNote,
+      ...talentLines
     ],
     outcome: outcomeHtml(success, success
       ? `Манифестация удалась — ${deg} ${_degWord(deg)}`

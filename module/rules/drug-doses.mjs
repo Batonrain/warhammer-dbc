@@ -17,6 +17,7 @@ import { SECONDS_PER_DAY } from "../constants/imperial-calendar.mjs";
 import { itemHasName } from "./predicates.mjs";
 import { hasRuleFlag } from "./flags.mjs";
 import { alchemDoseLimit, ALCHEM_MONSTER } from "./replicant.mjs";
+import { HOOK_UP_CAP } from "./medic-talents.mjs";
 
 /** Флаг актора: { <название наркотика>: [worldTime, …] } — дозы за последнюю неделю. */
 export const DRUG_DOSES_FLAG = "drugDoses";
@@ -43,6 +44,35 @@ export function logDose(log, key, now) {
 export function dosesThisWeek(log, key, now) {
   const t = Number(now) || 0;
   return (log?.[key] ?? []).filter(x => Number(x) > t - DOSE_WEEK_SECONDS).length;
+}
+
+/** Метка на предмете-наркотике: приготовлен с «Крючком» (Талант Медика, medic.core.hookUp; 3-dc87). */
+export const HOOK_UP_FLAG = "hookUp";
+/** Штраф теста крафта, который берёт на себя «Крючок». */
+export const HOOK_UP_CRAFT_PENALTY = -30;
+
+/** Приготовлен ли препарат с «Крючком» — на предмете метка flags.warhammer-dbc.hookUp. */
+export function isHookedUp(item) {
+  return !!(item?.getFlag?.("warhammer-dbc", HOOK_UP_FLAG) ?? item?.flags?.["warhammer-dbc"]?.[HOOK_UP_FLAG]);
+}
+
+/** Доступен ли «Крючок» проекту крафта: Талант у крафтера, режим Крафт, категория «Химия». */
+export function hookUpAvailable(crafter, proj) {
+  return !!crafter && proj?.mode === "craft" && proj?.categoryKey === "chem" && hasRuleFlag(crafter, HOOK_UP_CAP);
+}
+
+/** Штраф теста крафта от «Крючка»: −30, если доступен и включён галочкой проекта, иначе 0. */
+export function hookUpCraftMod(crafter, proj) {
+  return hookUpAvailable(crafter, proj) && proj.hookUp ? HOOK_UP_CRAFT_PENALTY : 0;
+}
+
+/**
+ * «Крючок»: минимальное опасное количество применений в неделю вдвое меньше
+ * (окр.▼). Ноль означал бы «лимита нет» — предел остаётся хотя бы 1 применением.
+ */
+export function hookUpMinDose(minDose) {
+  const n = Number(minDose) || 0;
+  return n > 0 ? Math.max(1, Math.floor(n / 2)) : 0;
 }
 
 /** Сколько раз взят Талант «Толерантность»: каждая копия — +1 к лимиту. */

@@ -73,7 +73,21 @@ export const TURN_SCOPED_FLAGS = {
   quickDrawPinThisTurn: "Быстрое Выхватывание (Талант Скорости): чеку гранаты свободным действием можно выдернуть только раз в Ход (combat/draw-action.mjs)",
   sprintFatigueDue: "Спринт (Талант Скорости): второй Ход подряд дальнего Бега — +1 Усталости в конце Хода (combat/movement-actions.mjs::applySprintTurnEnd); здесь страховка на случай пропущенного конца Хода",
   hunkerDown: "Залегание (Талант Стойкости): AP укрытия ×2, выглядывающим частям — обычное AP, до начала следующего Хода (combat/hunker-down.mjs)",
-  legacyHatredShield: "Щит Ненависти, Оружие Наследия (wdbc-1rno.35, vigilant 9-9, стр. 427): временный AP-щит руки(рук) и торса — держится до начала следующего своего Хода, не тратится отдельным попаданием"
+  legacyHatredShield: "Щит Ненависти, Оружие Наследия (wdbc-1rno.35, vigilant 9-9, стр. 427): временный AP-щит руки(рук) и торса — держится до начала следующего своего Хода, не тратится отдельным попаданием",
+  coveringFireOffer: "Прикрывающий Огонь (Талант Стрелка, 3-5fbf): враги из контакта на момент Выхода из Боя — кому можно дать очередь (combat/covering-fire.mjs)",
+  coveringFireMarks: "Прикрывающий Огонь (Талант Стрелка, 3-5fbf): метки Подавления +10/+0 для Натиска бывших противников — враги ходят до следующего Хода стрелка (combat/covering-fire.mjs)",
+  hipShootingPending: "Стрельба от Бедра (Талант Стрелка, 3-5fbf): Полное Движение объявлено, одиночный выстрел в этом Ходу ещё не сделан (combat/movement-actions.mjs::declareFullMove, rules/gunner-talents.mjs::HIP_SHOOTING_FLAG)",
+  runAndGunPending: "Стрельба на Бегу (Талант Стрелка, 3-5fbf): Натиск объявлен, свободный выстрел ещё не сделан (combat/movement-actions.mjs::declareCharge, rules/run-and-gun.mjs)",
+  runAndGunFired: "Стрельба на Бегу (Талант Стрелка, 3-5fbf): id оружия, из которого стреляли на Натиске и не сложили — им нельзя стрелять в рукопашной до конца Хода (снимается Сложить, combat/free-shot.mjs)",
+  bayonetChargePending: "Штыковая Атака (Талант Рукопашных, 3-8dc5): попала Приёмом, свободный выстрел в упор ещё не сделан (rules/run-and-gun.mjs)",
+  tankHunterThisTurn: "Охотник на Танки (Талант Стрелка, 3-5fbf): опознавать модель техники можно раз в Ход (combat/tank-hunter.mjs)",
+  chamberInThisTurn: "Досылание (Талант Стрелка, 3-5fbf): патрон досылали в этом Ходу — «раз в Ход» (combat/reload.mjs::chamberInRound)",
+  eyeOfVengeanceWeapon: "Око Мщения (Талант Стрелка, 3-5fbf): id стрелкового оружия, усиленного +Inf.b к Dmg и Pen — «до конца Хода» (rules/gunner-talents.mjs::EYE_OF_VENGEANCE_FLAG); приближение — до начала своего следующего Хода",
+  killingStrikeThisTurn: "Смертельный Удар (Талант Берсерка, 3-861e): «только один раз в Ход» — Очко Бесчестия уже потрачено на автопровал Избеганий (combat/attack.mjs, rules/berserker-talents.mjs::KILLING_STRIKE_FLAG)",
+  overclockThisTurn: "Разгон (Талант Техномистика, Sahara 3-2501): «раз в Ход» — метка гаснет с началом следующего Хода (sheets/tabs/tech.mjs::overclock, rules/technomystic-talents.mjs::OVERCLOCK_FLAG)",
+  processCostPaidThisTurn: "Цена Процессов техномистика (Цифровое Откровение, Ноосферная Набожность, Sahara 3-2501): «↻» в начале Хода списала её — второе нажатие в этом же Ходу не берёт плату (sheets/tabs/tech.mjs::cognitionRest, rules/technomystic-talents.mjs::PROCESS_PAID_FLAG)",
+  psychicResurgenceActive: "Психическое Возрождение (Талант Псайканы, Sahara 3-28): поддержание психосил не снижает тPR — «до начала своего следующего Хода» (rules/psyker-talents.mjs::RESURGENCE_FLAG, sheets/tabs/psychic.mjs)",
+  pinDownHold: "Прижать (Талант Пугилиста, стр. 62, 3-eddb): штраф цели на физические действия и отмена +20 за Борьбу по прижимающему — до начала СЛЕДУЮЩЕГО Хода прижимающего; заодно метка «раз в Ход» (combat/grapple-talents.mjs, rules/situational.mjs)"
 };
 
 /** Ключи реестра — для сторожей и тестов. */

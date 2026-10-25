@@ -209,7 +209,8 @@ export function suggestOption(available, req) {
 // mods: { toolMod, gmMod, improveMod }
 export function computeCombined(selectedOpts, mods) {
   const opts = selectedOpts.filter(Boolean);
-  const external = (mods.toolMod || 0) + (mods.gmMod || 0) + (mods.improveMod || 0);
+  // hookUpMod — «Крючок» (Талант Медика): −30 за право приготовить сильнее вызывающий зависимость наркотик.
+  const external = (mods.toolMod || 0) + (mods.gmMod || 0) + (mods.improveMod || 0) + (mods.hookUpMod || 0);
   if (!opts.length) return { limit: null, external, rows: [] };
 
   const primary = opts.reduce((a, b) => (b.total > a.total ? b : a), opts[0]);

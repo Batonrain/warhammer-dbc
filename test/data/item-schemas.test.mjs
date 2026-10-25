@@ -335,6 +335,8 @@ const TYPES = {
       // Уровень (Enemy 1-3) и цели (Hatred/Peer/Enemy/Good Reputation) —
       // добавлены вместе с деревом фракций, в template.json их не было.
       hasRating: false, rating: 0, targets: [],
+      // Миньон, которому режет Лояльность Пушечное Мясо (3-cross-actor).
+      targetMinion: "",
       // Ручная цена (вкладка «Развитие», wdbc-cct) — тоже позже template.json.
       costManual: false,
       effects: {

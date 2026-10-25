@@ -20,6 +20,8 @@ import { MINION_TRAITS, MANDATORY_BY_GROUP } from "../constants/minion-traits.mj
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
 import { hasRuleFlag } from "./flags.mjs";
 import { hasInfernalMaster } from "./occultist-talents.mjs";
+import { itemHasName } from "./predicates.mjs";
+import { effectiveMinionGroup } from "./binary-dominion.mjs";
 
 const num = v => Number(v) || 0;
 
@@ -66,12 +68,14 @@ export function minionSlots(items = []) {
  * сила»; если пары не совпали ни с одним слотом, он считается сверх плана —
  * такое бывает у миньонов, заведённых руками до покупки Таланта.
  */
-export function slotUsage(items = [], minions = []) {
+export function slotUsage(items = [], minions = [], master = null) {
   const slots = minionSlots(items).map(slot => ({ ...slot, minion: null }));
   const extra = [];
 
   for (const minion of minions) {
-    const group = minion?.system?.minionGroup || minion?.system?.minionType || "";
+    // Бинарная Паства: человек в латах Скитария занимает слот «Машина»
+    // (rules/binary-dominion.mjs); master не передан — группа как записана.
+    const group = master ? effectiveMinionGroup(master, minion) : (minion?.system?.minionGroup || minion?.system?.minionType || "");
     const tier  = minion?.system?.minionTier  || "";
     const exact = slots.find(s => !s.minion && s.group === group && s.tier === tier);
     // Слот без выбранной пары подходит любому: Талант куплен, но чей он —
@@ -105,10 +109,11 @@ export function minionCapacity(master, groups = []) {
 }
 
 /** Сколько Миньонов какой группы у Хозяина — для шапки блока СОЦИУМа. */
-export function groupTally(minions = []) {
+export function groupTally(minions = [], master = null) {
   const tally = {};
   for (const minion of minions) {
-    const group = minion?.system?.minionGroup || minion?.system?.minionType || "";
+    // Бинарная Паства: человек в латах Скитария считается «Машиной» для максимума.
+    const group = master ? effectiveMinionGroup(master, minion) : (minion?.system?.minionGroup || minion?.system?.minionType || "");
     if (!MINION_GROUPS[group]) continue;
     tally[group] = (tally[group] || 0) + 1;
   }
@@ -359,7 +364,7 @@ export function minionCorruption(group) {
  * 3-2a39): «Его Миньоны-демоны получают +10 Лояльности» — тем же
  * безусловным приёмом, что Beloved Leader, но только для группы "daemon".
  */
-export function minionLoyalty(master, group) {
+export function minionLoyalty(master, group, minion = null) {
   const charKey = MINION_GROUPS[group]?.masterChar;
   if (!charKey) return 0;
   let value = num(master?.system?.characteristics?.[charKey]?.total);
@@ -368,7 +373,53 @@ export function minionLoyalty(master, group) {
   }
   if (hasRuleFlag(master, "minion.core.belovedLeader")) value += 10;
   if (group === "daemon" && hasInfernalMaster(master)) value += 10;
-  return value;
+  // Ancient Warrior / Древний Воин (arsenal.core.ancientWarrior): «+10 к
+  // Лояльности Миньонов-Космодесантников» — признак на самом Миньоне
+  // (system.isAstartes), у человека того же group:"human" его не отличить.
+  if (minion?.astartes && hasRuleFlag(master, "arsenal.core.ancientWarrior")) {
+    value += ANCIENT_WARRIOR_LOYALTY_BONUS;
+  }
+  // Cannon Fodder / Пушечное Мясо: −20 именно этому Миньону (minion — {uuid,
+  // slotTalentId}; без него поправка не считается: старые вызовы не меняются).
+  value -= cannonFodderPenalty(master, minion);
+  return Math.max(0, value);
+}
+
+/** «+10 к Лояльности Миньонов-Космодесантников» (Ancient Warrior, корбук стр. 62). */
+export const ANCIENT_WARRIOR_LOYALTY_BONUS = 10;
+
+/** «Миньон теряет 20 Лояльности» (Cannon Fodder, корбук стр. 113). */
+export const CANNON_FODDER_PENALTY = 20;
+
+const CANNON_FODDER_NAME = "Cannon Fodder";
+
+/**
+ * Совпадает ли выбор Таланта (system.targetMinion) с этим Миньоном: uuid
+ * актора-Миньона либо «slot:<id>» слота — Таланта «Миньон Хаоса», который его
+ * купил (слот живёт и до того, как слугу создали, и переживает замену мёртвого).
+ * @param {string} target
+ * @param {?{uuid?:string, slotTalentId?:string}} minion
+ */
+export function minionMatchesTarget(target, minion) {
+  const t = String(target ?? "");
+  if (!t || !minion) return false;
+  if (minion.uuid && t === minion.uuid) return true;
+  return !!minion.slotTalentId && t === `slot:${minion.slotTalentId}`;
+}
+
+/**
+ * Штраф Лояльности Миньона от Пушечного Мяса Хозяина: 20, если хоть одна копия
+ * Таланта выбрала этого Миньона. Копии на одного и того же слугу не складываются
+ * (книга: Талант берётся «для каждого из Миньонов» — по разу на слугу).
+ * Опознание по имени Таланта, как Infernal Master выше: читатель Конструктора
+ * не нужен, копия несёт выбор в своём поле.
+ */
+export function cannonFodderPenalty(master, minion) {
+  if (!minion) return 0;
+  const hit = [...(master?.items ?? [])].some(i =>
+    i?.type === "talent" && itemHasName(i, CANNON_FODDER_NAME)
+    && minionMatchesTarget(i.system?.targetMinion, minion));
+  return hit ? CANNON_FODDER_PENALTY : 0;
 }
 
 /**

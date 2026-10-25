@@ -5,7 +5,7 @@
   "folder": "iSsQmZ2gkxraxksi",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: при манифестации выбранной силы потолок mPR в окне — бPR, а не тPR; если эта сила уже поддерживается, потолок обычный (rules/psyker-talents.mjs::unburdenedApplies/manifestPrCeiling, читает sheets/tabs/psychic.mjs). Выбранная сила — в поле «Специализация» Таланта или в скобках имени. Смена силы (8 часов медитации) — стол.",
     "benefit": "При манифестации выбранной психосилы персонаж игнорирует штраф к тPR от поддержания психосил, если только уже не поддерживает конкретно эту силу. Сменить выбранную силу — 8 часов медитации.",
     "tier": 2,
     "requirement": "Meditation",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g03unburdenCap1",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "e03unburdenCap1",
+              "capabilityKey": "psyker.core.unburdened",
+              "label": "Необременённый: при манифестации выбранной силы поддержание не снижает тPR (кроме уже поддерживаемой)",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

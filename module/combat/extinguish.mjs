@@ -44,6 +44,8 @@ import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/cond
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { rollConditionCharTest, BURNING_FORMULA_FLAG } from "./condition-ticks.mjs";
 import { hasResilienceTalent, dropAndRollProneTarget } from "../rules/resilience-talents.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
+import { FIREMAN_CAP, FIREMAN_EXTINGUISH_BONUS } from "../rules/courage-talents.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -91,10 +93,13 @@ export async function extinguishBurning(actor, patient = actor, { mod = 0, dropA
 
   const auto = dropAndRoll !== false && hasResilienceTalent(actor, "dropAndRoll");
   const bookMod = extinguishBookMod(self);
+  // Пожарный (Sahara 3-scope): «+30 на тесты тушения себя или других» — бонус
+  // тушащему, то есть носителю, а не горящему.
+  const fireman = hasRuleFlag(actor, FIREMAN_CAP) ? FIREMAN_EXTINGUISH_BONUS : 0;
   // Без теста: автоуспех, Критический Провал (загорается помогающий) исключён.
   const t = auto
     ? { base: 0, eff: null, rv: null, parts: [], roll: null, success: true }
-    : await rollConditionCharTest(actor, "ag", bookMod + (Number(mod) || 0));
+    : await rollConditionCharTest(actor, "ag", bookMod + (Number(mod) || 0) + fireman);
   const critFail = auto ? false : criticalOutcome(t.rv).failure;
   const success = t.success && !critFail;
 
@@ -127,7 +132,8 @@ export async function extinguishBurning(actor, patient = actor, { mod = 0, dropA
   }
 
   const parts = [`${self ? "себя" : "другого"} ${bookMod >= 0 ? "+" : ""}${bookMod}`,
-    mod ? `ГМ ${mod >= 0 ? "+" : ""}${mod}` : null, ...t.parts].filter(Boolean);
+    mod ? `ГМ ${mod >= 0 ? "+" : ""}${mod}` : null,
+    fireman ? `Пожарный +${fireman}` : null, ...t.parts].filter(Boolean);
   await postTestCard(actor, {
     icon: rollIcon("fire", "#ff8a3a"),
     title: self ? `Потушить себя — ${esc(actor.name)}` : `Потушить ${esc(patient.name)} — ${esc(actor.name)}`,

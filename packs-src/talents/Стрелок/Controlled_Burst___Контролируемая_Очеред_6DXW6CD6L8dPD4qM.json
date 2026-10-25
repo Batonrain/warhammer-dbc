@@ -5,7 +5,7 @@
   "folder": "V0Wfgl0aycRFPfu2",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey rangedCore.core.controlledBurst — галочка в блоке «Таланты» окна атаки (Короткая/Длинная очередь, не Широкая и не Подавление): расход патронов считается от RoF, уменьшенного до половины (окр.▲), но не меньше числа попаданий+1 без бонусных от Storm/Twin-linked (module/rules/gunner-talents.mjs::controlledBurstRof, module/combat/attack.mjs). «Расчётный RoF» в системе = расход патронов очереди.",
     "benefit": "После Короткой или Длинной очереди (но не Широкой/Подавления) персонаж может уменьшить расчётный RoF оружия вплоть до половины (окр.▲), но не меньше количества попаданий +1 (без бонусных попаданий от свойств).",
     "tier": 1,
     "requirement": "BS 35, P 35",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "QzpGfINt5iB5503r",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "cH1G7zExGkEGEgNt",
+              "capabilityKey": "rangedCore.core.controlledBurst",
+              "label": "Контролируемая Очередь: расход патронов до половины RoF, но не меньше попаданий+1",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

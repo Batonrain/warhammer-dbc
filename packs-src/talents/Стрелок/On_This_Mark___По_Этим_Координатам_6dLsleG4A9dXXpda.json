@@ -5,7 +5,7 @@
   "folder": "V0Wfgl0aycRFPfu2",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано как запрет и подсказка (решение владельца 24.10.2026): capabilityKey rangedCore.core.onThisMark — галочка «По Этим Координатам» в окне атаки (module/sheets/attack-dialog.mjs): запирает выбор Избирательной атаки, обнуляет бонус Прицеливания в Пороге, в карточке — подсказка (module/combat/attack.mjs ← module/rules/gunner-talents.mjs::onThisMarkActive). Ручные строки окна «Дым / туман» и «Тьма» галочка НЕ снимает — что засечено и что мешает, решает стол. Кто и чем засёк цель (ауспекс, Mind Radiance, изображение союзника) — решает стол.",
     "benefit": "Персонаж может без штрафов стрелять по невидимым целям, если засекает их методами, дающими только координаты (ауспекс, Mind Radiance), или получает их изображение с позиции союзника (вокс/телепатия). Эти выстрелы не Избирательны и не получают преимуществ Прицеливания.",
     "tier": 2,
     "requirement": "P 40, Logic+10",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "cMiQp8e9QfIzJmwg",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "DmuOqrTaLl8EVrFe",
+              "capabilityKey": "rangedCore.core.onThisMark",
+              "label": "По Этим Координатам: галочка запрещает Избирательную атаку и Прицеливание",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

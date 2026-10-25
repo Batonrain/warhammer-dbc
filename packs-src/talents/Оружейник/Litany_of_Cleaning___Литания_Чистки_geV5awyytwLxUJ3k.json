@@ -5,7 +5,7 @@
   "folder": "HfTlTkQPDwQ9Yqqn",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект меняет свойства/AP конкретного предмета брони/оружия, а не тестовый модификатор — нет схемного поля под точечные боевые свойства этого класса.",
+    "notes": "Реализовано: capabilityKey weaponsmith.core.litanyOfCleaning — галочка «чищено сегодня (30 минут)» в блоке «Таланты» окна атаки (для оружия того типа, на который выбрана специализация Таланта) ставит метку на актора по типу оружия (флаг litanyCleaned, 24 часа мирового времени); пока метка жива, оружие этого типа получает +1 Надёжность (module/rules/gunsmith-talents.mjs::litanyReliability, module/combat/attack.mjs). Тип оружия выбирается при покупке Таланта через пикер (module/sheets/item-picker.mjs, как у Weapon Training) и берётся из специализации предмета-Таланта или из скобок в названии; невыбранная строка-шаблон со всем списком типа не задаёт — Литания тогда не действует (Талант, купленный раньше, нужно перекупить или вписать тип в специализацию). Метка «чищено» не продлевается выстрелами.",
     "benefit": "Тратя хотя бы 30 минут в сутки на тщательную чистку и смазывание оружия выбранного типа, это оружие получает +1 к Надёжности в руках персонажа.",
     "tier": 1,
     "requirement": "Tech-Use",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "ROE1E4rgQB6dPNuV",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "7yV8TOiZFb1fqWpY",
+              "capabilityKey": "weaponsmith.core.litanyOfCleaning",
+              "label": "Литания Чистки: оружие выбранного типа, чищенное за сутки, получает +1 Надёжность",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

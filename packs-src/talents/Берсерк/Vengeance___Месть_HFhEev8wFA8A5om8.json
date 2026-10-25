@@ -5,7 +5,7 @@
   "folder": "GD2SVUHWSvG5UbRH",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект тратит/даёт игровой ресурс (Очки Бесчестия/Судьбы/Боли/Когниции/Реакцию) на разовое действие — не тестовый модификатор Навыка/Характеристики.",
+    "notes": "Реализовано: capabilityKey berserker.core.vengeance — когда система признаёт смерть цели (галочка/кнопка смерти, sheets/tabs/body.mjs::setDeceased), а ранили её в последний раз рукопашным оружием носителя и цель — Ненавистная (Hatred), носитель получает 1 Очко Бесчестия, а если цель помечена как лорд — 1d5 (module/rules/berserker-talents.mjs::vengeanceReward, combat/vengeance.mjs). Кто «лидер/чемпион» и «лорд» книга не хранит в данных — ГМ отмечает цель в меню «Настройки листа» (флаги leaderOrChampion, lordMight).",
     "benefit": "Убивая лидера/чемпиона Ненавистного врага в рукопашной, персонаж восстанавливает 1 Очко Бесчестия (1d5, если враг был лордом сравнимого или выше могущества).",
     "tier": 2,
     "requirement": "Inf 40, Hatred",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "cq0BvMwXXdr3cyw1",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "gol5lMCgc2X34Mzb",
+              "capabilityKey": "berserker.core.vengeance",
+              "label": "Месть: убив лидера/чемпиона Ненавистного врага в рукопашной — +1 Очко Бесчестия (1d5, если враг — лорд сравнимого или выше могущества)",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

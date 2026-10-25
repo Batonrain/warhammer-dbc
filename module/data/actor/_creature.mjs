@@ -211,7 +211,11 @@ export function creatureSchema({ granted = false } = {}) {
     // Дара Кхорна «Purity of Wrath» (weaponPropertyImmunity.* только в
     // Ярости, wdbc-plsf), см. rules/mech-when.mjs requiresRage.
     inRage:        bool(false, "В Ярости"),
-    aiming:        str("none", "Прицеливание"),
+    // «Кумир рядом» (Идолопоклонник, Sahara 3-scope): пока стоит галочка, носитель
+    // автоматически проходит тесты Морали (rules/morale-auto.mjs). Сбрасывается
+    // вручную; кумир — не ссылка на актора (у Эльдар это целая группа).
+    idolNearby:    bool(false, "Кумир рядом"),
+    aiming:       str("none", "Прицеливание"),
     initiativeMod: num(0, "Модификатор Инициативы"),
     aspirations: new SchemaField({
       pride:        str("", "Гордость"),
@@ -252,6 +256,13 @@ export function creatureSchema({ granted = false } = {}) {
       // documents/actor.mjs::_preUpdate на ЛЮБУЮ потерю Ран (путей урона
       // много), обнуляется Первой Помощью (sheets/tabs/healing.mjs).
       lostSinceFirstAid: new NumberField({ initial: null, nullable: true, integer: true, min: 0, label: "Потеряно после Первой Помощи" }),
+      // Талант «Перешивание» (3-dc87): когда (game.time.worldTime, секунды) и
+      // с каким исходом оказана последняя Первая Помощь — повтор после провала
+      // разрешён, пока не прошло I.b минут. Читается ТОЛЬКО вместе с
+      // firstAidUsed (новый урон его сбрасывает), поэтому в тех местах сброса
+      // не дублируется.
+      firstAidAt:     new NumberField({ initial: null, nullable: true, label: "Время последней Первой Помощи" }),
+      firstAidFailed: bool(false, "Последняя Первая Помощь провалена"),
       // Аблативные Раны (wdbc-smy7) — отдельный пул ПЕРЕД обычными Ранами
       // (напр. Дар Нургла «Абсурдно Толстый»: +10 аблативных, регенерация
       // 1/Ход). ablativeMax — цель kind:"poolMax" Конструктора

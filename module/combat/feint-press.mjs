@@ -67,7 +67,7 @@ export async function clearFeintAtTurnEnd(actor) {
   if (target && flag?.byUuid === actor.uuid) await target.unsetFlag(NS, "feintNoEvade");
 }
 
-export async function resolvePressSuccess(actor, { deg, target } = {}) {
+export async function resolvePressSuccess(actor, { deg, target, noFollow = false } = {}) {
   if (!target) {
     return ui.notifications?.warn(`${actor.name}: цель Давления не выцелена на сцене — эффект не наложен.`);
   }
@@ -78,6 +78,9 @@ export async function resolvePressSuccess(actor, { deg, target } = {}) {
     title: `Давление: ${esc(target.name)}`,
     outcome: outcomeHtml(true, `Можно сдвинуть ${esc(target.name)} до <b>${maxMeters} м</b> в любом направлении`
       + (spd > 0 ? ` (Успехи ${deg}, потолок SPD ${spd})` : ` (Успехи ${deg}, SPD цели неизвестен — потолок не проверен)`)
-      + ` — переместите токен сами; ${esc(actor.name)} может последовать за целью, сохраняя контакт, или остаться на месте (стр. 31).`)
+      + (noFollow
+        // Огневая Угроза: давление стволом — следовать за целью нельзя (rules/gunner-talents.mjs::fireThreatWeapon).
+        ? ` — переместите токен сами; Огневая Угроза: ${esc(actor.name)} за целью НЕ следует, остаётся на месте (стр. 31).`
+        : ` — переместите токен сами; ${esc(actor.name)} может последовать за целью, сохраняя контакт, или остаться на месте (стр. 31).`))
   }, { sound: false });
 }

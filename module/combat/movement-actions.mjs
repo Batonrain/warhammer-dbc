@@ -30,6 +30,9 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { FAST_MOVE_FLAG } from "../rules/hard-target.mjs";
+import { HIP_SHOOTING_FLAG, hipShootingWeapon } from "../rules/gunner-talents.mjs";
+import { RUN_AND_GUN_PENDING_FLAG, hasRunAndGun } from "../rules/run-and-gun.mjs";
+import { runAndGunOfferHtml } from "./free-shot.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
@@ -41,6 +44,7 @@ import { digitigradeGroupingBonus } from "../rules/digitigrade.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { hasAbility } from "../rules/ability-by-key.mjs";
+import { falseAdvanceOffered } from "../rules/melee-talents.mjs";
 import { showMovementRing, clearRangeRings } from "./range-rings.mjs";
 import { clearRangeCells } from "./range-cells.mjs";
 import { showReachableCells } from "./reachable-cells.mjs";
@@ -260,6 +264,19 @@ async function _d100(threshold, actor = null) {
   return { roll, rv, passed, deg };
 }
 
+/**
+ * Ложный Натиск (rules/melee-talents.mjs, Sahara 3-8dc5): после Полудвижения/Полного
+ * движения, закончившегося в контакте с врагом, — один Финт или Давление за свободное
+ * действие. Кнопки на карточке Движения; обработчик — hooks.mjs (.wh-false-advance-btn),
+ * раз на карточку. «В контакте с врагом» система не меряет — подтверждает игрок.
+ */
+export function falseAdvanceHtml(actor) {
+  if (!falseAdvanceOffered(actor)) return "";
+  return `<div class="roll-threshold">🎭 Ложный Натиск: закончили движение в контакте с врагом — один Финт или Давление за свободное действие (один раз на это движение).</div>
+    <button class="wh-false-advance-btn" type="button" data-kind="feint" data-actor-uuid="${actor.uuid}">Финт (свободное действие)</button>
+    <button class="wh-false-advance-btn" type="button" data-kind="press" data-actor-uuid="${actor.uuid}">Давление (свободное действие)</button>`;
+}
+
 async function _postCard(actor, content) {
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
@@ -296,6 +313,7 @@ export async function declareHalfMove(actor) {
     <div class="roll-threshold">${useBonus
       ? "Бонусное полудействие (Локус Стремительности, 0 ОД)."
       : "Полудействие (1 ОД)."} Перемещение до SPD×1.</div>
+    ${falseAdvanceHtml(actor)}
   </div>`);
 }
 
@@ -324,7 +342,7 @@ export async function declareLegacyBraveHeartMove(actor) {
   </div>`);
 }
 
-export async function declareFullMove(actor) {
+export async function declareFullMove(actor, { hipShooting = false } = {}) {
   if (!actor) return;
   if (_blockedByDivineProtection(actor, "Полное Движение")) return;
   if (_blockedByGrapple(actor, { move: true })) return;
@@ -342,11 +360,17 @@ export async function declareFullMove(actor) {
   // Флаг гасится первым же использованием _d100 с actor, а на случай, если
   // не потратится вовсе, есть и turn-scoped safety-net (TURN_SCOPED_FLAGS).
   await actor.setFlag("warhammer-dbc", "fullMoveDisadvantage", true);
+  // Стрельба от Бедра (rules/gunner-talents.mjs, Sahara 3-5fbf): то же Полное Движение за 2 ОД, но одиночный
+  // выстрел этого Хода входит в то же действие — без ОД; метка взводит кнопку выстрела (combat/free-shot.mjs).
+  if (hipShooting) await actor.setFlag("warhammer-dbc", HIP_SHOOTING_FLAG, true);
   _showReachRing(actor, actor.system.movement?.move);
   await _postCard(actor, `<div class="wh-roll-result">
-    <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Полное Движение</div>
+    <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — ${hipShooting ? "Стрельба от Бедра (Полное Движение + Одиночный Выстрел)" : "Полное Движение"}</div>${hipShooting ? `
+    <div class="roll-threshold">Стрельба от Бедра: один Одиночный Выстрел (не Избирательный, без Прицеливания, не длинная винтовка и не тяжёлое) в этом Ходу — без дополнительных ОД.</div>
+    <button class="wh-free-shot-btn" type="button" data-kind="hipShooting" data-actor-uuid="${actor.uuid}">🎯 Выстрел от бедра</button>` : ""}
     <div class="roll-threshold">Полное действие (2 ОД). Перемещение до ${hasSpeedTalent(actor, "sprint") ? "SPD×3 (Спринт — на дистанцию Натиска)" : "SPD×2"}.</div>
     <div class="roll-threshold" style="font-size:0.85em;">Можно ещё полудействие (не атаку) — но его тесты, если есть, получают Помеху (стр. 32). Для следующего Карабканья/Прыжка/Плавания в этом Ходу — уже автоматически.</div>
+    ${falseAdvanceHtml(actor)}
   </div>`);
 }
 
@@ -375,13 +399,21 @@ export async function declareCharge(actor) {
     await spendActionPoints(actor, 2, { physical: true });
     return;
   }
+  // Прикрывающий Огонь (Талант Стрелка): бывшие противники стрелка проходят тест Подавления при Натиске на него;
+  // провал — Натиск не объявляется (проверка ДО отметок Натиска и движения).
+  const { coveringFireChargeCheck } = await import("./covering-fire.mjs");
+  if (!await coveringFireChargeCheck(actor)) {
+    return ui.notifications.warn(`⚠️ ${actor.name}: тест Подавления (Прикрывающий Огонь) провален — Натиск не удался.`);
+  }
   await actor.update({ "system.meleeBase": "charge",
                        [`flags.warhammer-dbc.${FAST_MOVE_FLAG}`]: true });
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
+  // Стрельба на Бегу (Талант Стрелка, rules/run-and-gun.mjs): метка «свободный выстрел на Натиске не сделан».
+  if (hasRunAndGun(actor)) await actor.setFlag("warhammer-dbc", RUN_AND_GUN_PENDING_FLAG, true);
   _showReachRing(actor, actor.system.movement?.charge);
   await _postCard(actor, `<div class="wh-roll-result">
-    <div class="roll-header">${rollIcon("sword","#ff9d4d")}${esc(actor.name)} — Натиск</div>
+    <div class="roll-header">${rollIcon("sword","#ff9d4d")}${esc(actor.name)} — Натиск</div>${runAndGunOfferHtml(actor)}
     <div class="roll-threshold">Перемещение до ${hasSpeedTalent(actor, "preternaturalSpeed") ? "SPD×6 (Запредельная Скорость — на дистанцию Бега)" : "SPD×3"} (не менее 4м), заканчивая в контакте с противником.</div>
     <div class="roll-threshold" style="font-size:0.85em;">База «Натиск» выбрана — рукопашный приём +20, 2 ОД спишутся на броске атаки.</div>
   </div>`);
@@ -414,9 +446,13 @@ export async function declareDisengage(actor) {
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "half");
   _showReachRing(actor, actor.system.movement?.halfMove);
+  // Прикрывающий Огонь (Талант Стрелка, combat/covering-fire.mjs): враги в контакте запоминаются ДО движения.
+  // Динамический импорт — файл сам тянет free-attack/suppression, статический круг не нужен.
+  const { offerCoveringFire } = await import("./covering-fire.mjs");
+  const coverHtml = await offerCoveringFire(actor);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Выход из Боя</div>
-    <div class="roll-threshold">Полное действие (2 ОД). Перемещение до SPD×1, не провоцирует Свободную Атаку.</div>
+    <div class="roll-threshold">Полное действие (2 ОД). Перемещение до SPD×1, не провоцирует Свободную Атаку.</div>${coverHtml}
   </div>`);
 }
 
@@ -1857,6 +1893,10 @@ export function movementMenuItems(actor) {
   if (isEncounterActive()) {
     items.push({ key: "halfmove", label: "Полудвижение", cost: "1 ОД", action: () => declareHalfMove(actor) });
     items.push({ key: "fullmove", label: "Полное движение", cost: "2 ОД", action: () => declareFullMove(actor) });
+    // Стрельба от Бедра (Талант Стрелка): Полное Движение + Одиночный Выстрел одним полным действием.
+    if (hipShootingWeapon(actor)) {
+      items.push({ key: "hipshooting", label: "Стрельба от Бедра", cost: "2 ОД", action: () => declareFullMove(actor, { hipShooting: true }) });
+    }
     items.push({ key: "charge", label: "Натиск", cost: "", action: () => declareCharge(actor) });
     items.push({ key: "run", label: "Бег", cost: "2 ОД", action: () => declareRun(actor) });
     items.push({ key: "disengage", label: "Выход из Боя", cost: "2 ОД", action: () => declareDisengage(actor) });

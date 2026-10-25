@@ -49,6 +49,7 @@ import { minionsPanelContext, activateMinionPanelListeners } from "./tabs/minion
 import { onMinionCreate } from "../apps/minion-creator.mjs";
 import { isMinionTalent, minionSlotOf } from "../rules/minion-build.mjs";
 import { promptMinionSlot, applyMinionSlot } from "../apps/minion-talent.mjs";
+import { isCannonFodder, promptCannonFodderMinion, applyCannonFodderPick } from "../apps/cannon-fodder.mjs";
 import { refundXP, talentCost, talentReason } from "../apps/duplicate-refund.mjs";
 import { activatePathListeners } from "./tabs/paths.mjs";
 import { activateCombatListeners } from "./tabs/combat.mjs";
@@ -118,8 +119,10 @@ import { resolveArmorProps, aggregateArmorSkillMods } from "../combat/armor-prop
 import { actorHasAspectPath } from "../constants/aeldari-paths.mjs";
 import { zeroBlankNumbers } from "../helpers/blank-zero.mjs";
 import { clearHololithBriefing } from "../combat/hololith-briefing.mjs";
+import { clearForesight } from "../apps/talent-actions.mjs";
 import { ignoresWeight, IGNORE_WEIGHT_FLAG } from "../rules/encumbrance.mjs";
 import { isNotableCharacter, NOTABLE_FLAG } from "../rules/resilience-talents.mjs";
+import { LEADER_OR_CHAMPION_FLAG, LORD_MIGHT_FLAG } from "../rules/berserker-talents.mjs";
 import { hasWarChant, warChantSinging, WAR_CHANT_FLAG,
          WAR_CHANT_SING_ALONG_FLAG, commandersOf } from "../rules/leadership-talents.mjs";
 import { convertActorToMinion } from "../apps/minion-convert.mjs";
@@ -768,6 +771,17 @@ async function onMutgiftToggleActive(event, target) {
   await toggleGearModActive(this.actor.items.get(target.dataset.itemId));
 }
 
+// Ручной тумблер Таланта (Солипсизм: «проиграв социальное взаимодействие…
+// Талант перестаёт работать, пока не победит…»): флаг manualOff на предмете,
+// общий рубильник isItemActive (apps/effects.mjs) гасит его правила.
+async function onTalentManualToggle(event, target) {
+  event.preventDefault(); event.stopPropagation();
+  const item = this.actor.items.get(target.dataset.itemId);
+  if (!item) return;
+  const off = !!item.flags?.["warhammer-dbc"]?.manualOff;
+  await item.setFlag("warhammer-dbc", "manualOff", !off);
+}
+
 // ── Раса, Прошлое и легион ── (apps/races.mjs держит применение, лист даёт
 // только разбор текстовых списков колбэком createTraits — его зовёт и Мастер
 // создания персонажа)
@@ -863,6 +877,7 @@ export class WarhammerCharacterSheet
       mutgiftAdd: whenEditable(onMutgiftAdd),
       mutgiftRoll: whenEditable(onMutgiftRoll),
       mutgiftToggleActive: whenEditable(onMutgiftToggleActive),
+      talentManualToggle: whenEditable(onTalentManualToggle),
       ynnariApply:    whenEditable(onYnnariApply),
       harlequinApply: whenEditable(onHarlequinApply),
       racePick:     whenEditable(onRacePick),
@@ -1288,12 +1303,21 @@ export class WarhammerCharacterSheet
   _notableEntries() {
     if (!game.user?.isGM) return [];
     const on = isNotableCharacter(this.actor);
+    // Месть (Талант Берсерка, rules/berserker-talents.mjs): ГМ отмечает лидера/чемпиона и лорда — убийца-
+    // носитель Таланта получает Очки Бесчестия, убив такого Ненавистного врага в рукопашной.
+    const flagToggle = (cls, label, key) => {
+      const checked = !!this.actor.getFlag?.("warhammer-dbc", key);
+      return { cls, label, checkbox: true, checked,
+        onClick: () => (checked ? this.actor.unsetFlag("warhammer-dbc", key) : this.actor.setFlag("warhammer-dbc", key, true)) };
+    };
     return [{
       cls: "wh-ctx-tog-notable", label: "★ Значимый персонаж (Взор Богов)", checkbox: true, checked: on,
       onClick: () => (on
         ? this.actor.unsetFlag("warhammer-dbc", NOTABLE_FLAG)
         : this.actor.setFlag("warhammer-dbc", NOTABLE_FLAG, true))
-    }];
+    },
+    flagToggle("wh-ctx-tog-leader", "⚔ Лидер или чемпион (Месть)", LEADER_OR_CHAMPION_FLAG),
+    flagToggle("wh-ctx-tog-lord", "👑 Лорд сравнимого или выше могущества (Месть: 1d5)", LORD_MIGHT_FLAG)];
   }
 
   /**
@@ -1722,6 +1746,14 @@ export class WarhammerCharacterSheet
       if (!pick) return;                        // отменили — предмет не создаём
       const obj = applyMinionSlot(src.toObject(), pick);
       return this.actor.createEmbeddedDocuments("Item", [obj]);
+    }
+
+    // «Пушечное Мясо» — Талант на хозяине, штраф у выбранного слуги (стр. 113):
+    // перетащенный без выбора он не знал бы, кому резать Лояльность.
+    if (isCannonFodder(src) && !src.system?.targetMinion) {
+      const pick = await promptCannonFodderMinion(this.actor, src);
+      if (!pick) return;
+      return this.actor.createEmbeddedDocuments("Item", [applyCannonFodderPick(src.toObject(), pick)]);
     }
 
     return super._onDropItem(event, data);
@@ -3274,6 +3306,9 @@ export class WarhammerCharacterSheet
     // успех тоже расходует подготовку (тот же принцип, что у прочих
     // «тратится по факту теста» состояний этого файла).
     if (skillKey === "command") await clearHololithBriefing(this.actor);
+    // Предусмотрительность (rules/situational.mjs::foresightBonus): +10 уходит в
+    // СЛЕДУЮЩИЙ тест I и тратится им, каким бы он ни вышел.
+    if (String(charKey ?? "").toLowerCase() === "int") await clearForesight(this.actor);
 
     if (opposedOpponent) {
       await this._sendOpposedRequest(opposedOpponent, {

@@ -27,6 +27,7 @@ import { rollConditionCharTest } from "./condition-ticks.mjs";
 import { isImmuneToCondition } from "../rules/condition-guards.mjs";
 import { isItemActive } from "../apps/effects.mjs";
 import { combatEntryOf, combatOfActor } from "./actor-combat.mjs";
+import { radDamageAfterMelanochrome } from "../rules/radiation-scene.mjs";
 import {
   COMBAT_RAD_FLAG, COMBAT_RAD_TEST_THRESHOLD, combatRadiationAfterHit, combatRadiationDue,
   radiationTestExempt, vehicleOccupantUuids
@@ -112,7 +113,7 @@ export async function applyRadHit(actor, { formula = "", label = "Рад" } = {}
 
   const roll = await new Roll(f).evaluate();
   const amount = Math.max(0, Number(roll.total) || 0);
-  const { applied, before, after, died, counter } = await radDamageToCreature(actor, amount);
+  const { applied, before, after, died, counter, mantle } = await radDamageToCreature(actor, amount);
   let combatNote = `<div class="roll-threshold" style="opacity:.8;">Вне боя — в счёт «10+ за бой» не идёт</div>`;
   if (counter != null) {
     combatNote = `<div class="roll-threshold">За этот бой от радиации: <b>${counter}</b> урона в T${counter >= COMBAT_RAD_TEST_THRESHOLD
@@ -122,7 +123,7 @@ export async function applyRadHit(actor, { formula = "", label = "Рад" } = {}
   await postTestCard(actor, {
     icon: rollIcon("warp", "#ffe14d"), title: `${esc(label)} → ${esc(actor.name)}`,
     lines: [
-      `<div class="roll-threshold">Броня пробита — урон в T без теста: ${esc(f)} = <b>${applied}</b> (T ${before}→${after})${died ? " — <b>умирает</b>" : ""}</div>`,
+      `<div class="roll-threshold">Броня пробита — урон в T без теста: ${esc(f)} = <b>${applied}</b>${mantleNote(mantle)} (T ${before}→${after})${died ? " — <b>умирает</b>" : ""}</div>`,
       combatNote
     ]
   }, { rolls: [roll], sound: false });
@@ -146,6 +147,12 @@ function radSkipReason(actor) {
  */
 async function radDamageToCreature(actor, amount) {
   const combatId = combatOfActor(actor)?.id ?? null;
+  // Чёрная Мантия: усиленный Меланохром гасит 1 из каждого урона Rad (минимум 1).
+  // Именно здесь, а не в applyRadHit: тот же вход у Техники (урон каждому на
+  // борту) — у каждого своё состояние Меланохрома. Тики фона сцены сюда не идут.
+  const rolled = amount;
+  amount = radDamageAfterMelanochrome(actor, amount);
+  const mantle = amount !== rolled;
   const { applied, before, after, died } = await applyCharDamage(actor, "t", amount);
   let counter = null;
   if (combatId) {
@@ -153,8 +160,11 @@ async function radDamageToCreature(actor, amount) {
     await actor.update({ [`flags.${FLAG}.${COMBAT_RAD_FLAG}`]: next });
     counter = next.amount;
   }
-  return { applied, before, after, died, counter };
+  return { applied, before, after, died, counter, mantle: mantle ? { rolled, reduced: amount } : null };
 }
+
+/** Подпись к карточке: усиленный Меланохром сбавил выпавший урон Rad. */
+const mantleNote = m => m ? ` <i>(Чёрная Мантия: ${m.rolled}→${m.reduced})</i>` : "";
 
 /** Кто сидит на местах Техники: актор по uuid места; удалённых и не найденных нет. */
 async function vehicleOccupants(vehicle) {
@@ -198,9 +208,9 @@ async function applyRadHitToVehicle(vehicle, { formula, label }) {
       ? "нет прав на этого персонажа — урон ему применяет ГМ (кнопка от его лица)"
       : radSkipReason(who);
     if (skip) { lines.push(`<div class="roll-threshold" style="opacity:.8;">${esc(who.name)}: ${esc(skip)}</div>`); continue; }
-    const { applied, before, after, died, counter } = await radDamageToCreature(who, amount);
+    const { applied, before, after, died, counter, mantle } = await radDamageToCreature(who, amount);
     const tally = counter == null ? "" : `, за бой ${counter}${counter >= COMBAT_RAD_TEST_THRESHOLD ? " — тест T+0 после боя" : ""}`;
-    lines.push(`<div class="roll-threshold">${esc(who.name)}: <b>${applied}</b> (T ${before}→${after})${died ? " — <b>умирает</b>" : ""}${tally}</div>`);
+    lines.push(`<div class="roll-threshold">${esc(who.name)}: <b>${applied}</b>${mantleNote(mantle)} (T ${before}→${after})${died ? " — <b>умирает</b>" : ""}${tally}</div>`);
   }
   await postTestCard(vehicle, {
     icon: rollIcon("warp", "#ffe14d"), title: `${esc(label)} → ${esc(vehicle.name)} (экипаж)`,

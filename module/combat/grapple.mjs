@@ -38,7 +38,8 @@ import { damageFormulaFor, meleeStrengthBonus } from "./attack-outcome.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { worldTimeRemaining, markWorldTimeCooldownUsed } from "../rules/cooldown.mjs";
 import { tentacleBonusSuppressed } from "../rules/tentacle-hand-form.mjs";
-import { MELEE_STANCES } from "../constants/combat.mjs";
+import { MELEE_STANCES, MELEE_CONTESTS } from "../constants/combat.mjs";
+import { resolveKnockdownSuccess, knockdownResistMods, knockdownSizePenalty } from "./knockdown.mjs";
 import { meleeBaseBonus } from "../rules/berserker-talents.mjs";
 import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { statusApplyFields } from "./status-resist.mjs";
@@ -54,6 +55,10 @@ import { maxHands, handsOccupied, weaponHandsRequired, twoHandedTestPenalty, TWO
 import { bearingDegrees, relativeBearing } from "../rules/facing.mjs";
 import { hasDodgeTalent, grappleCoverHalfAngle } from "../rules/dodge-talents.mjs";
 import { canTakeAttackAction, takeAttackAction } from "./attack-limit.mjs";
+import { hasPugilistTalent, pinDownHoldOf, pinDownPenaltyValue, PIN_DOWN_FLAG } from "../rules/pugilist-talents.mjs";
+import { jockeySizeBlocked, jockeyChoiceOffered, chooseJockeyMode, resolveJockeySuccess } from "./jockey.mjs";
+import { applyChokehold, chokeholdWrenchFatigue, chokeholdGrappleFatigue, slamOffered, pounceOffered, pounceGrabOffered }
+  from "./grapple-talents.mjs";
 import {
   CONSTRICTOR_CAPABILITY, GRAPPLE_TAIL_FLAG, CONSTRICTOR_TAIL_HANDS, CONSTRICTOR_ATHLETICS_BONUS,
   constrictorTailSb, VENOM_BITE_CAPABILITY, venomBiteDamage
@@ -160,13 +165,14 @@ export function grappleSizePenalty(actor, partner) {
  * athletics — тест идёт Athletics (а не Acrobatics «Выкрутиться»): только
  * тогда действует +20 Удава.
  */
-export function grappleTestMods(actor, partner, { athletics = true } = {}) {
+export function grappleTestMods(actor, partner, { athletics = true, ignoreSize = false } = {}) {
   const out = [];
   const t = tentacleBonus(actor);
   if (t) out.push({ label: "Щупальце", value: t });
   const c = athletics ? constrictorAthleticsBonus(actor) : 0;
   if (c) out.push({ label: "Хвост Удава", value: c });
-  const s = grappleSizePenalty(actor, partner);
+  // Жокей (стр. 62): «игнорируя штрафы за разницу в Размерах».
+  const s = ignoreSize ? 0 : grappleSizePenalty(actor, partner);
   if (s) out.push({ label: "меньше Размером", value: s });
   return out;
 }
@@ -199,11 +205,34 @@ export async function applyGrappleOnHit(actor, targetToken, hit, techOpts) {
   const target = targetToken?.actor;
   if (!actor || !target || target === actor) return;
 
-  if (sizeOf(target) - sizeOf(actor) >= 2) {
+  // Жокей (Талант Пугилиста, стр. 62, combat/jockey.mjs): против цели КРУПНЕЕ
+  // Захват идёт через Acrobatics(A) без штрафа Размера, потолок — на 2 Размера
+  // крупнее; победа — «взобрался» на цель вместо обычного Захвата.
+  const sizeDiff = sizeOf(target) - sizeOf(actor);
+  const jockey = hasPugilistTalent(actor, "jockey");
+  if (jockeySizeBlocked(sizeDiff, jockey)) {
     await postTestCard(actor, {
       icon: rollIcon("sword","#e08a3a"), title: `Захват — ${esc(actor.name)} → ${esc(target.name)}`,
-      outcome: outcomeHtml(false, `Захват невозможен: ${esc(target.name)} крупнее на 2+ Размера (стр. 12).`)
+      outcome: outcomeHtml(false, `Захват невозможен: ${esc(target.name)} крупнее на ${jockey ? 3 : 2}+ Размера (стр. ${jockey ? "62, Жокей" : "12"}).`)
     }, { sound: false });
+    return;
+  }
+
+  // Цель на 1 Размер крупнее: обычный Захват ещё разрешён — выбор «Захват / взобраться».
+  // На 2 Размера крупнее обычного Захвата нет, остаётся только вход Жокея.
+  let climb = jockey && sizeDiff > 0;
+  if (climb && jockeyChoiceOffered(sizeDiff)) {
+    const mode = await chooseJockeyMode(actor, target);
+    if (!mode) return;
+    climb = mode === "climb";
+  }
+  if (climb) {
+    await _showContestDialog(actor, grappleTechDef(actor, {
+      label: "Жокей: взобраться", defaultChar: "ag", opponent: target, jockey: true,
+      note: "Acrobatics(A)+0 vs Athletics(S)+0 цели, без штрафа за Размер. Победа: персонаж взбирается на цель (не Борьба): цель не может его атаковать, атаки по ней получают половину бонуса Борьбы.",
+      chatNote: "🐎 Жокей: Acrobatics(A) вместо Athletics(S), штраф Размера не действует",
+      onSuccess: resolveJockeySuccess
+    }));
     return;
   }
 
@@ -216,7 +245,11 @@ export async function applyGrappleOnHit(actor, targetToken, hit, techOpts) {
 }
 
 /** Связывает атакующего и цель Захватом — вызывается onSuccess встречного теста выше при победе атакующего. */
-export async function resolveGrappleSuccess(actor, { target }) {
+export async function resolveGrappleSuccess(actor, { target, margin: rawMargin = 0, deg } = {}) {
+  // «Успехи победы» для Талантов Пугилиста (Швырнуть/Наскок/Удушение): победа
+  // меньшим провалом (deg 0 — свой тест инициатор провалил) бонусов «N+» не даёт
+  // (приёмка #516, opposed-contest.mjs::runContestOutcome).
+  const margin = deg === 0 ? 0 : rawMargin;
   // Состояние и флаг партнёра одним update на актора: каждая отдельная
   // запись — это prepareData + re-render листа и токена у всех клиентов.
   // Удав держит хвостом — «пара рук», руки свободны (attackerHoldFields).
@@ -231,6 +264,32 @@ export async function resolveGrappleSuccess(actor, { target }) {
     outcome: outcomeHtml(true, "Оба персонажа связаны Захватом (состояние «Борьба»)."),
     sections: [`<div class="roll-threshold" style="font-size:0.85em;">Кнопка «Борьба» появилась на вкладке БОЙ у обоих участников.</div>`]
   }, { sound: false });
+  // Швырнуть / Slam (Талант Пугилиста, стр. 62): победа в Захвате на 5+ Успехов —
+  // метнуть цель или ударить ею за свободное действие. Вес/Опору проверяют сами
+  // _doThrow/_doSwing; кнопки — на отдельной карточке (hooks.mjs → slamAction).
+  if (hasPugilistTalent(actor, "slam") && slamOffered(margin)) {
+    await postTestCard(actor, {
+      icon: rollIcon("sword","#e08a3a"), title: `Швырнуть — ${esc(actor.name)}`,
+      sections: [
+        `<div class="roll-threshold" style="font-size:0.85em;">Победа в Захвате на ${margin} Успехов (5+): ${esc(actor.name)} может немедленно, за свободное действие, метнуть ${esc(target.name)} или использовать как импровизированное оружие (если хватает веса подъёма). Выцельте третьего персонажа.</div>`,
+        `<button class="wh-slam-btn" type="button" data-mode="throw" data-actor-uuid="${esc(actor.uuid)}">${rollIcon("sword")}Метнуть (свободное)</button>`,
+        `<button class="wh-slam-btn" type="button" data-mode="swing" data-actor-uuid="${esc(actor.uuid)}">${rollIcon("sword")}Замахнуться (свободное)</button>`
+      ]
+    }, { sound: false });
+  }
+  // Наскок / Pounce (Талант Пугилиста, стр. 62): Захват с Натиска, победа на 3+ Успеха — свободный Повалить.
+  if (hasPugilistTalent(actor, "pounce") && pounceOffered({ baseKey: actor.system?.meleeBase, margin })) {
+    await postTestCard(actor, {
+      icon: rollIcon("sword","#e08a3a"), title: `Наскок — ${esc(actor.name)}`,
+      sections: [
+        `<div class="roll-threshold" style="font-size:0.85em;">Захват с Натиска, победа на ${margin} Успехов (3+): ${esc(actor.name)} может немедленно, за свободное действие, провести против ${esc(target.name)} приём Повалить.</div>`,
+        `<button class="wh-pounce-btn" type="button" data-stage="knockdown" data-actor-uuid="${esc(actor.uuid)}">${rollIcon("sword")}Повалить (свободное)</button>`
+      ]
+    }, { sound: false });
+  }
+  // Удушение (Талант Пугилиста): победа в Захвате на 5+ Успехов — по 1 Усталости за каждые полные 5.
+  const choke = hasPugilistTalent(actor, "chokehold") ? chokeholdGrappleFatigue(margin) : 0;
+  if (choke > 0) await applyChokehold(actor, target, choke, "Захват (победа на 5+ Успехов)");
 }
 
 /** Партнёр по Борьбе (или null, если флаг протух — цель распалась/сменила сцену). */
@@ -250,7 +309,8 @@ function grappleClearFields() {
     [`flags.${NS}.-=${GRAPPLE_HELD_HANDS_FLAG}`]: null,
     [`flags.${NS}.-=${GRAPPLE_TAIL_FLAG}`]: null,
     [`flags.${NS}.-=${SQUEEZE_PENDING_FLAG}`]: null,
-    [`flags.${NS}.-=${SQUEEZE_ACTIVE_FLAG}`]: null
+    [`flags.${NS}.-=${SQUEEZE_ACTIVE_FLAG}`]: null,
+    [`flags.${NS}.-=${PIN_DOWN_FLAG}`]: null
   };
 }
 
@@ -398,12 +458,29 @@ async function _resolveWrenchSuccess(actor) {
 }
 
 // ── Действия Атакующего (стр. 12) ────────────────────────────────────────────
+// Удушение / Chokehold (Талант Пугилиста, combat/grapple-talents.mjs): Заломить
+// наносит Усталость и при победе (по Успехам победы), и при проигрыше (1).
+const _chokeholdWrenchHooks = {
+  async onSuccess(actor, { margin } = {}, inject) {
+    const partner = grapplePartner(actor);
+    if (!partner || !hasPugilistTalent(actor, "chokehold")) return;
+    await applyChokehold(actor, partner, chokeholdWrenchFatigue({ won: true, margin }), "Заломить", inject);
+  },
+  async onFail(actor, _o, inject) {
+    const partner = grapplePartner(actor);
+    if (!partner || !hasPugilistTalent(actor, "chokehold")) return;
+    await applyChokehold(actor, partner, chokeholdWrenchFatigue({ won: false }), "Заломить (проигрыш)", inject);
+  }
+};
+
 const ATTACKER_TESTS = {
   wrench: {
     label: "Заломить", defaultChar: "s", apCost: 1, isAttack: true,
     note: "Полудействие. Athletics(S)+0 vs Athletics(S)+0 партнёра. Победа: на выбор — 1d5+S.b I(Cr) Dmg (игнорирует броню) и/или 1 Усталость цели.",
     chatNote: "🤼 Борьба: Заломить",
-    onSuccess: _resolveWrenchSuccess
+    // Удушение (Талант Пугилиста): Усталость за Успехи победы / 1 за проигрыш.
+    onSuccess: async (a, o) => { await _resolveWrenchSuccess(a); await _chokeholdWrenchHooks.onSuccess(a, o); },
+    onFail: (a, o) => _chokeholdWrenchHooks.onFail(a, o)
   },
   overpower: {
     label: "Пересилить", defaultChar: "s", apCost: 2, isAttack: true,
@@ -473,7 +550,7 @@ export function tentacleTechDef(actor, techDef) {
 export function grappleTechDef(actor, def) {
   const partner = def.opponent ?? grapplePartner(actor);
   const char = def.defaultChar || "s";
-  const mods = grappleTestMods(actor, partner, { athletics: char === "s" });
+  const mods = grappleTestMods(actor, partner, { athletics: char === "s", ignoreSize: !!def.jockey });
   return {
     ...def,
     defaultChar: char,
@@ -489,7 +566,7 @@ export function grappleTechDef(actor, def) {
     // Успехи ×2 (только Выкрутиться); Ускользнуть — +30 или переброс раз в
     // Раунд на любом тесте A в Борьбе (combat/techniques.mjs).
     escapeArtist: def.label === "Выкрутиться" && hasDodgeTalent(actor, "escapeArtist"),
-    slipAway: char === "ag" && hasDodgeTalent(actor, "slipAway"),
+    slipAway: char === "ag" && !def.jockey && hasDodgeTalent(actor, "slipAway"),
     resistMods: (opp, me) => grappleTestMods(opp, me),
     resistRolls: opp => (isGrappleAttacker(opp) ? grappleHands(opp) : 1)
   };
@@ -500,10 +577,11 @@ export function grappleTechDef(actor, def) {
  * Ход — −10 за каждое на Физические действия (wdbc-x1nz.2.76, раньше
  * «накапливается вручную»).
  */
-export async function _doSqueeze(actor) {
+export async function _doSqueeze(actor, { free = false } = {}) {
   const partner = grapplePartner(actor);
   if (!partner) return ui.notifications.warn(`${actor.name}: партнёр по Борьбе не найден (Захват уже разорван?).`);
-  if (!(await spendActionPoints(actor, 1, { physical: true }))) return ui.notifications.warn("⚠️ Сжать: не хватает ОД (Полудействие).");
+  // free — Наскок (Талант Пугилиста): «Сжать ... как свободные действия».
+  if (!free && !(await spendActionPoints(actor, 1, { physical: true }))) return ui.notifications.warn("⚠️ Сжать: не хватает ОД (Полудействие).");
   const n = (Number(flagOf(partner, SQUEEZE_PENDING_FLAG)) || 0) + 1;
   await partner.setFlag(NS, SQUEEZE_PENDING_FLAG, n);
   await postTestCard(actor, {
@@ -511,6 +589,40 @@ export async function _doSqueeze(actor) {
     outcome: `${esc(actor.name)} крепче заламывает ${esc(partner.name)}.`,
     sections: [`<div class="roll-threshold" style="font-size:0.85em;">Полудействие. В свой Ход ${esc(partner.name)} получит <b>−${n * 10}</b> на Физические действия, если всё ещё в Захвате (Сжатий накоплено: ${n}).</div>`]
   }, { sound: false });
+  // Удушение (Талант Пугилиста, combat/grapple-talents.mjs): Сжать наносит цели 1 Усталости.
+  if (hasPugilistTalent(actor, "chokehold")) await applyChokehold(actor, partner, 1, "Сжать");
+}
+
+/**
+ * Прижать / Pin Down (Талант Пугилиста, стр. 62; 3-eddb): «Когда он держит
+ * врага в Борьбе как минимум 2-мя руками, персонаж может раз в Ход за
+ * свободное действие провести против него Сжать, и до начала его следующего
+ * Хода цель получает штраф на все физические действия, равный (<T.b + Размер×3
+ * персонажа> − <T.b + Размер×3 цели>) × 5 (минимум 0), а атаки по самому
+ * персонажу не получают обычный бонус +20 за Борьбу.» Сжатие — обычный счётчик
+ * Сжать без траты ОД; «его следующего Хода» прочитано как Ход прижимающего (по
+ * подлежащему фразы). Штраф читает rules/situational.mjs, отмену +20 —
+ * sheets/attack/mods.mjs.
+ */
+export async function _doPinDown(actor) {
+  const partner = grapplePartner(actor);
+  if (!partner) return ui.notifications.warn(`${actor.name}: партнёр по Борьбе не найден (Захват уже разорван?).`);
+  if (!hasPugilistTalent(actor, "pinDown")) return;
+  if (grappleHands(actor) < 2) return ui.notifications.warn("⚠️ Прижать: нужно держать цель минимум 2 руками.");
+  if (pinDownHoldOf(actor) !== undefined) return ui.notifications.warn("⚠️ Прижать: раз в Ход — уже прижимали.");
+  const n = (Number(flagOf(partner, SQUEEZE_PENDING_FLAG)) || 0) + 1;
+  await partner.setFlag(NS, SQUEEZE_PENDING_FLAG, n);
+  const penalty = pinDownPenaltyValue(actor, partner);
+  await actor.setFlag(NS, PIN_DOWN_FLAG, penalty);
+  await postTestCard(actor, {
+    icon: rollIcon("sword","#e08a3a"), title: "Борьба: Прижать",
+    outcome: `${esc(actor.name)} прижимает ${esc(partner.name)} своим весом.`,
+    sections: [
+      `<div class="roll-threshold" style="font-size:0.85em;">Свободное действие: Сжать без траты ОД (счётчик Сжатия ${n}).</div>`,
+      `<div class="roll-threshold" style="font-size:0.85em;">${esc(partner.name)}: <b>${penalty ? "−" + penalty : "штрафа нет"}</b> на все физические действия до начала следующего Хода ${esc(actor.name)}; атаки по ${esc(actor.name)} не получают +20 за Борьбу.</div>`
+    ]
+  }, { sound: false });
+  if (hasPugilistTalent(actor, "chokehold")) await applyChokehold(actor, partner, 1, "Сжать (Прижать)");
 }
 
 /**
@@ -934,7 +1046,10 @@ export function _withTwoHandedGrapplePenalty(mods, actor) {
   };
 }
 
-async function _payThrowOrSwing(actor, label) {
+async function _payThrowOrSwing(actor, label, free = false) {
+  // Швырнуть / Slam (Талант Пугилиста): «немедленно за свободное действие» —
+  // ни ОД, ни Атака в счётчик Хода не идут.
+  if (free) return true;
   if (!canTakeAttackAction(actor)) {
     ui.notifications.warn(`⚠️ ${label}: Атака в этом Ходу уже была (стр. 12).`);
     return false;
@@ -948,7 +1063,7 @@ async function _payThrowOrSwing(actor, label) {
   return true;
 }
 
-async function _doSwing(actor) {
+async function _doSwing(actor, { free = false } = {}) {
   const partner = grapplePartner(actor);
   if (!partner) {
     ui.notifications.warn(`${actor.name}: партнёр по Борьбе не найден (Захват уже разорван?).`);
@@ -961,7 +1076,7 @@ async function _doSwing(actor) {
   }
   const target = _requireThirdPartyTarget(actor, partner, "замахнётесь");
   if (!target) return;
-  if (!(await _payThrowOrSwing(actor, "Замахнуться"))) return;
+  if (!(await _payThrowOrSwing(actor, "Замахнуться", free))) return;
 
   const stance  = actor.system.meleeStance || "standard";
   const stBon   = MELEE_STANCES[stance]?.wsBonus ?? 0;
@@ -1014,6 +1129,7 @@ async function _doSwing(actor) {
       hit ? _targetDamageSection(dmgTotal, "Замахнуться (Борьба)", actor) : ""
     ]
   }, { rolls: [roll, dmgRoll] });
+  return true;   // действие состоялось (отказы выше — undefined): по этому признаку Швырнуть гасит карточку
 }
 
 // wdbc-0mi1 (08.09.2026): разрывает ли книга Захват при Метании — проверено
@@ -1037,7 +1153,7 @@ async function _doSwing(actor) {
 // токен на сцене тоже не двигается. Решение: endGrapple() сюда НЕ добавлять,
 // текущее поведение (Захват остаётся у обоих) — соответствует книге, не баг.
 /** Метнуть — бросок партнёра в третью цель под прицелом, тир по весу партнёра. */
-async function _doThrow(actor) {
+async function _doThrow(actor, { free = false } = {}) {
   const partner = grapplePartner(actor);
   if (!partner) {
     ui.notifications.warn(`${actor.name}: партнёр по Борьбе не найден (Захват уже разорван?).`);
@@ -1078,7 +1194,7 @@ async function _doThrow(actor) {
     combinedTestRequired = !hasFooting;
   }
   // Оплата — после всех отказов по Опоре: отказ не съедает Ход (приёмка #516).
-  if (!(await _payThrowOrSwing(actor, "Метнуть"))) return;
+  if (!(await _payThrowOrSwing(actor, "Метнуть", free))) return;
 
   let knockedDown = false, halved = false;
   if (combinedTestRequired) {
@@ -1123,7 +1239,7 @@ async function _doThrow(actor) {
       outcome: outcomeHtml(false, `Промах — ${esc(partner.name)} улетает мимо ${esc(target.name)}, ${deg} степеней`),
       sections: [knockNote]
     }, { rolls: [roll] });
-    return;
+    return true;
   }
 
   const sb = Number(actor.system?.characteristics?.s?.bonus) || 0;
@@ -1160,6 +1276,7 @@ async function _doThrow(actor) {
       _targetDamageSection(dmgTotal, "Метнуть (Борьба)", actor)
     ]
   }, { rolls: [roll, dmgRoll] });
+  return true;   // действие состоялось (отказы выше — undefined), см. _doSwing
 }
 
 /** Диалог «Борьба» — вызывается кнопкой из блока Состязаний вкладки БОЙ. */
@@ -1334,6 +1451,7 @@ export function showGrappleDialog(actor) {
         <button type="button" class="wh-grapple-action" data-action="handsUp" style="width:auto;padding:0 8px;">+</button>
         <span style="opacity:0.7;">каждая лишняя — ещё бросок на тесты Борьбы (лучший), обездвиживает 2 руки цели</span></div>
       ${btn("squeeze", "Сжать (полудействие, без броска)")}
+      ${hasPugilistTalent(actor, "pinDown") ? btn("pinDown", "Прижать (Талант: свободное, раз в Ход, держа 2+ руками)") : ""}
       ${btn("wrench", "Заломить")}
       ${btn("overpower", "Пересилить")}
       ${throwP ? btn("throw", `Метнуть (${TIER_LABEL[throwP.tier]} тир, ${throwP.testLabel}) — цель под прицелом`)
@@ -1365,6 +1483,7 @@ export function showGrappleDialog(actor) {
       form.querySelectorAll(".wh-grapple-action").forEach(b => b.addEventListener("click", async () => {
         const key = b.dataset.action;
         if (key === "squeeze") await _doSqueeze(actor);
+        else if (key === "pinDown") await _doPinDown(actor);
         else if (key === "throw") await _doThrow(actor);
         else if (key === "swing") await _doSwing(actor);
         else if (key === "bite") await _doBite(actor);
@@ -1389,4 +1508,68 @@ export function showGrappleDialog(actor) {
 // тестов не проходит (см. шапку test/combat/grapple.test.mjs). Тот же приём,
 // что у vehicle.mjs::_resolveRam. TARGET_TESTS — ради grapple-rules.test.mjs:
 // «Вырваться» настоящей записью, не подставным onSuccess (wdbc-t3c3t.15).
-export { _resolveWrenchSuccess, _doBite, _doCrunch, TARGET_TESTS };
+export { _resolveWrenchSuccess, _doBite, _doCrunch, TARGET_TESTS, _chokeholdWrenchHooks };
+
+/**
+ * Наскок / Pounce (Талант Пугилиста, стр. 62; 3-eddb): «Когда он успешно
+ * проводит Захват с базой Натиск и побеждает во встречном тесте Athletics на
+ * 3+ Успеха, персонаж может немедленно за свободное действие провести против
+ * него прием Повалить. Если он побеждает и в этом приеме на 5+ Успехов,
+ * персонаж может также выбрать схватить цель минимум 2-мя руками, упасть на
+ * землю вместе с ней, и провести против нее сначала Сжать, а потом Заломить
+ * как свободные действия.» stage "knockdown" — свободный Повалить (общее
+ * состязание), stage "grab" — вторая часть (Ничком, 2+ руки, свободное Сжать и
+ * свободный Заломить). Обе — кнопки карточек (hooks.mjs → pounceAction).
+ */
+export async function pounceAction(actor, stage, { claim } = {}) {
+  if (!hasPugilistTalent(actor, "pounce")) return;
+  if (!isGrappleAttacker(actor)) return ui.notifications.warn(`${actor.name}: Наскок — только держащему в Борьбе.`);
+  const partner = grapplePartner(actor);
+  if (!partner) return ui.notifications.warn(`${actor.name}: партнёр по Борьбе не найден (Захват уже разорван?).`);
+  if (stage === "grab") return _pounceGrab(actor, partner, claim);
+  const base = MELEE_CONTESTS.knockdown;
+  return _showContestDialog(actor, {
+    ...base, label: "Наскок: Повалить", opponents: () => [partner],
+    // claim — «раз на карточку» (hooks.mjs, runCardOnce): занимается в момент броска, а не при
+    // открытии окна, чтобы «Отмена» не съедала свободное действие (тот же приём, что pay у Реакции).
+    ...(claim ? { pay: () => claim() } : {}),
+    defaultChar: "s",   // метка не «Повалить» — без этого диалог берёт WS (techniques.mjs)
+    note: `${base.note} Наскок: свободное действие.`,
+    defaultMod: knockdownSizePenalty(actor, partner),
+    resistMods: (opp, me) => knockdownResistMods(me, opp),
+    onSuccess: async (a, o) => {
+      await resolveKnockdownSuccess(a, o);
+      const wonBy = o.deg === 0 ? 0 : o.margin;   // победа меньшим провалом — без «5+»
+      if (pounceGrabOffered(wonBy)) {
+        await postTestCard(a, {
+          icon: rollIcon("sword","#e08a3a"), title: `Наскок — ${esc(a.name)}`,
+          sections: [
+            `<div class="roll-threshold" style="font-size:0.85em;">Повалить удалось на ${wonBy} Успехов (5+): можно схватить ${esc(partner.name)} минимум 2 руками, упасть на землю вместе с ней и провести Сжать, а затем Заломить — свободными действиями.</div>`,
+            `<button class="wh-pounce-btn" type="button" data-stage="grab" data-actor-uuid="${esc(a.uuid)}">${rollIcon("sword")}Схватить, упасть и Сжать + Заломить</button>`
+          ]
+        }, { sound: false });
+      }
+    }
+  });
+}
+
+async function _pounceGrab(actor, partner, claim) {
+  await setGrappleHands(actor, Math.max(2, grappleHands(actor)));
+  if (grappleHands(actor) < 2) {
+    return ui.notifications.warn(`${actor.name}: не хватает свободных рук, чтобы держать ${partner.name} двумя (Наскок).`);
+  }
+  if (claim && !(await claim())) return;   // карточка уже использована — Ничком и Сжать второй раз не ставим
+  // «упасть на землю вместе с ней»: Ничком и у наскочившего (цель уже повалена).
+  await actor.update(conditionApplyFields("prone", null, actor));
+  await _doSqueeze(actor, { free: true });   // Удушение (+1 Усталость) подключено внутри
+  await _showContestDialog(actor, grappleTechDef(actor, { ...ATTACKER_TESTS.wrench, label: "Заломить (Наскок)", apCost: 0, isAttack: false }));
+}
+
+/** Швырнуть: свободный бросок/замах партнёром из кнопки карточки Захвата. */
+export async function slamAction(actor, mode) {
+  if (!hasPugilistTalent(actor, "slam")) return false;
+  if (!isGrappleAttacker(actor)) { ui.notifications.warn(`${actor.name}: Швырнуть — только держащему в Борьбе.`); return false; }
+  // true — бросок/замах состоялся (карточка «Швырнуть» гаснет); отказ по весу/Опоре/цели — false.
+  if (mode === "swing") return !!(await _doSwing(actor, { free: true }));
+  return !!(await _doThrow(actor, { free: true }));
+}

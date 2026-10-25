@@ -170,6 +170,13 @@ function isItemActiveBase(item) {
       if (item.getFlag?.("warhammer-dbc", "nullSuppressed")) return false;
       if (sys.activatable) return !!sys.active;
       return true;
+    // Талант с ручным тумблером (Солипсизм: «проиграв социальное
+    // взаимодействие… Талант перестаёт работать, пока не победит»): состояние
+    // «потерял» ставит игрок/ГМ кнопкой в строке Таланта. Флаг на предмете, а не
+    // поле схемы — тот же приём, что suppressed у Мутации выше. Действует
+    // по умолчанию: без флага manualOff Талант активен как любой другой.
+    case "talent":
+      return !item.flags?.["warhammer-dbc"]?.manualOff;
     default: return true;
   }
 }

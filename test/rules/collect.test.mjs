@@ -145,6 +145,8 @@ describe("источники по умолчанию", () => {
     // группы из system.targets Таланта.
     // rage (Sahara 3-861e, 23.10.2026) — Ярость: −20 на тесты BS, I и F по
     // состоянию system.inRage, без Таланта (rules/rage.mjs).
+    // situationalSocialTalents (Sahara 3-5e84/3-scope, 24.10.2026) — галочки
+    // Лица в Толпе (F вместо A), Жалких Слабаков (±10) и −30 Идолопоклонника.
     // commandSubstitution (фикс 19.10.2026, независимое ревью) — Living
     // Legend и Infernal Master конкурируют за skill:command, действует
     // только бо́льшая подмена; "skill:command" убран из leadershipTalents и
@@ -156,7 +158,7 @@ describe("источники по умолчанию", () => {
                 "leadershipTalents", "legacyBloodPsychic", "legacyDistractingCharSwap", "legacyExcess", "legacyGuardian",
                 "legacyInstinctiveDisarm", "legacyQuietAwareness", "legacyWrath", "nullZones",
                 "occultistTalents", "opposedTarget", "paths", "patron", "prophetOfGallerpox",
-                "psychicSustainTarget", "race", "rage", "resilienceTalents", "serumHook", "situational", "socialTalents", "synesthesia",
+                "psychicSustainTarget", "race", "rage", "resilienceTalents", "serumHook", "situational", "situationalSocialTalents", "socialTalents", "synesthesia",
                 "warpTouchedHealMistrust", "yigori"]);
   });
 

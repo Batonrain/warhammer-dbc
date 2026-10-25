@@ -16,6 +16,8 @@ import { useHololithBriefing } from "../../combat/hololith-briefing.mjs";
 import { useSwingItem, useThrowItem } from "../../combat/improvised-item.mjs";
 import { spendActionPoints } from "../../combat/action-economy.mjs";
 import { quickDrawFree } from "../../combat/quick-draw.mjs";
+import { releaseRunAndGunLock } from "../../combat/free-shot.mjs";
+import { drawFireOfferHtml } from "../../combat/free-shot.mjs";
 import { maintainArmorForHardening } from "../../combat/ablative-hardening.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { postTestCard } from "../../helpers/test-card.mjs";
@@ -103,6 +105,8 @@ export async function equipItem(item, equipped) {
     return;
   }
   await item.update({ "system.equipped": equipped });
+  // Стрельба на Бегу: сложенное оружие снова годится для стрельбы в рукопашной (combat/free-shot.mjs).
+  if (isStow && item.parent) await releaseRunAndGunLock(item.parent, item);
   await syncItemEffectsDisabled(item, equipped);
   // Эффекты установленных модификаций гаснут вместе с носителем (isItemActive),
   // но update пришёл не им — пересчитываем сами.
@@ -111,7 +115,9 @@ export async function equipItem(item, equipped) {
     await postTestCard(item.parent, {
       icon: rollIcon("run", "#b0a080"),
       title: `${esc(item.parent.name)} — ${isDraw ? "Взять" : "Сложить"}`,
-      lines: [`<div class="roll-threshold">${isDraw ? "Берёт в руки" : "Складывает на разгрузку"}: <b>${esc(item.name)}</b> (Полудействие).</div>`]
+      lines: [`<div class="roll-threshold">${isDraw ? "Берёт в руки" : "Складывает на разгрузку"}: <b>${esc(item.name)}</b> (Полудействие).</div>`,
+        // Огонь с Вытягивания (Талант Стрелка): взятый пистолет предлагает бесплатный выстрел (combat/free-shot.mjs).
+        ...(isDraw ? [drawFireOfferHtml(item.parent, item)].filter(Boolean) : [])]
     }, { sound: false });
   }
 }

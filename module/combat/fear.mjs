@@ -27,7 +27,8 @@ import { applyLordOfExoditesFailPenalty }          from "./lord-of-exodites.mjs"
 import { infernalWillReduction, infernalWillShockTotal } from "../rules/infernal-will.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }            from "../constants/skills.mjs";
 import { fearIgnore, FEAR_IGNORE_LABELS }          from "../rules/fear-ignore.mjs";
-import { isInRage }                                from "../rules/rage.mjs";
+import { moraleAutoPass }                          from "../rules/morale-auto.mjs";
+import { JADED_CAP }                               from "../rules/courage-talents.mjs";
 
 /** Возможность «Абсолютная вера в прошлое» (Мир-кладбище). */
 export const FAITH_FLAG = "fear.faithInThePast";
@@ -138,11 +139,21 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   // галочка диалога, решение стола: рядом сражается командующий с Талантом.
   // Ярость (Frenzy, стр. 62): «автоматически проходит тесты Морали» — тест
   // Страха это тест Морали (morale:true выше), поэтому тоже без броска.
+  // Бесстрашный и Идолопоклонник (кумир рядом) — тот же автопроход Морали, что
+  // у Ярости (rules/morale-auto.mjs). Пресыщенный (Sahara 3-scope): галочка
+  // «Земной ужас» в окне Страха (properties.mundaneHorror) — только у носителя
+  // Таланта; сверхъестественные ужасы «пугают как обычно», их различает стол.
+  const moraleAuto = moraleAutoPass(actor);
+  const jadedAuto = !!properties.mundaneHorror && hasRuleFlag(actor, JADED_CAP);
   const autoPass = ignore.autoPass
-                   || isInRage(actor)
+                   || !!moraleAuto
+                   || jadedAuto
                    || hasRuleFlag(actor, "sarcophagus.autoPassFear")
                    || hasRuleFlag(actor, FEAR_IMMUNE_FLAG)
                    || !!properties.intoTheJawsOfHell;
+  const autoParts = [];
+  if (moraleAuto && moraleAuto.by !== "rage") autoParts.push(moraleAuto.label);
+  if (jadedAuto) autoParts.push("Пресыщенный: земной ужас — автоуспех");
   // Видимая причина: игрок с Infamy 60 иначе не поймёт, почему автоуспеха нет.
   const ignoreNote = ignore.cancelled.length
     ? `<div class="roll-threshold">Этот Страх нельзя игнорировать — не действуют: ${ignore.cancelled.map(k => FEAR_IGNORE_LABELS[k]).join(", ")}.</div>`
@@ -218,7 +229,7 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
     faithCtx: faithCtx ? { ...faithCtx, failUndo } : null, charLabel: charKey === "int" ? "Int" : "W",
     rerollNote, critLine: outcome.critLine, kindLabel: outcome.kindLabel,
     combinedLine: outcome.combinedLine, extendedLine: outcome.extendedLine, opposedLine: outcome.opposedLine,
-    difficulty: tk.difficulty || 0, ruleParts: ruleMods.parts, ignoreNote
+    difficulty: tk.difficulty || 0, ruleParts: [...ruleMods.parts, ...autoParts], ignoreNote
   });
 }
 
@@ -543,7 +554,7 @@ export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success
   const dice = (await Promise.all(allRolls.map(r => r.render()))).join("");
   // Свойства источника Страха (напр. Демон) — для будущих эффектов, которые
   // будут цепляться за них (Хатред и т.п.); здесь же дают бесплатный переброс.
-  const propLabels = { demon: "Демон", unignorable: "Нельзя игнорировать" };
+  const propLabels = { demon: "Демон", unignorable: "Нельзя игнорировать", mundaneHorror: "Земной ужас" };
   const activeProps = Object.entries(properties).filter(([, v]) => v).map(([k]) => propLabels[k] || k);
   const propsHtml = activeProps.length
     ? `<div class="roll-threshold">Свойства: <b>${activeProps.join(", ")}</b></div>` : "";

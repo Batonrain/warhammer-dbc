@@ -490,6 +490,7 @@ describe("общее требование к предикатам", () => {
     charNotIn: ["t", "inf", "cor"],
     charIn: ["int", "per", "wp", "fel", "inf"],
     hasSize: undefined, targetHasSize: undefined, targetKeepsNimbleInArmour: undefined,
+    targetSizeMax: -1,
     // Принадлежность к фракции — своя и у цели (дерево фракций).
     hasFaction: "chaos", targetHasFaction: "chaos",
     // Метка Avatar of Slaughter/Аватар Резни (wdbc-sk8s) — читает флаг самого

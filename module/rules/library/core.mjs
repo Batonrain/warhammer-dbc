@@ -103,6 +103,45 @@ export const CORE_RULES = [
     }]
   },
   {
+    // В Яблочко / Deadeye Shot (core.json, «Стрелок»): «Он уменьшает штраф на
+    // стрелковые атаки за Избирательные атаки или Размер цели ниже 0 на 10».
+    // Здесь — половина про Размер (штраф core.sizeToHit при Размере цели ≤ −1
+    // ровно −10·|Размер|, так что +10 его только уменьшает, до нуля); половина
+    // про Избирательные атаки — в окне атаки (sheets/attack-dialog.mjs, aimTargets).
+    id: "core.deadeyeSize",
+    label: "В Яблочко: штраф за малый Размер цели меньше на 10",
+    when: { hasTalent: "Deadeye Shot", targetSizeMax: -1, weaponClass: ["pistol", "basic", "heavy", "launcher", "stationary", "thrown"] },
+    effects: [{ kind: "rollBonus", target: "attack", value: 10 }]
+  },
+  {
+    // Меткий Стрелок / Sharpshooter (core.json, «Стрелок», требует Deadeye
+    // Shot): «…еще на 10». Второй шаг применим, только если после первого
+    // штраф за Размер ещё не обнулён: цель Размера −2 и меньше (штраф ≥ 20).
+    id: "core.sharpshooterSize",
+    label: "Меткий Стрелок: штраф за малый Размер цели меньше ещё на 10",
+    when: { hasTalent: "Sharpshooter", targetSizeMax: -2, weaponClass: ["pistol", "basic", "heavy", "launcher", "stationary", "thrown"] },
+    effects: [{ kind: "rollBonus", target: "attack", value: 10 }]
+  },
+  {
+    // Верный Удар / Sure Strike и Выверенный Удар / Precise Blow (core.json,
+    // «Рукопашные», 3-8dc5): «Он уменьшает штраф на рукопашные атаки за
+    // Избирательные атаки или Размер цели ниже 0 на 10» — тот же шаг, что у
+    // В Яблочко / Меткого Стрелка, только для рукопашного оружия. Половина про
+    // Избирательные атаки — окно атаки (selectiveAimReduction).
+    id: "core.sureStrikeSize",
+    label: "Верный Удар: штраф за малый Размер цели меньше на 10",
+    when: { hasTalent: "Sure Strike", targetSizeMax: -1, weaponClass: ["melee"] },
+    effects: [{ kind: "rollBonus", target: "attack", value: 10 }]
+  },
+  {
+    // Выверенный Удар требует Верный Удар: второй шаг применим, только если
+    // после первого штраф за Размер ещё не обнулён (Размер цели −2 и меньше).
+    id: "core.preciseBlowSize",
+    label: "Выверенный Удар: штраф за малый Размер цели меньше ещё на 10",
+    when: { hasTalent: "Precise Blow", targetSizeMax: -2, weaponClass: ["melee"] },
+    effects: [{ kind: "rollBonus", target: "attack", value: 10 }]
+  },
+  {
     // Та же таблица, обратный столбец: Размер даёт МИНУС к собственным тестам
     // Скрытности (крупнее — заметнее), знак противоположен столбцу попадания.
     id: "core.sizeStealth",

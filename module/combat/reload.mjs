@@ -2,7 +2,10 @@ import { _buildAmmoModString, _buildAmmoModDetails, _getAmmoSpent, esc } from ".
 import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { spendActionPoints } from "./action-economy.mjs";
 import { hasSpeedTalent, rapidReloadApCost } from "../rules/speed-talents.mjs";
+import { fullyArmedReloadApCost } from "./fully-armed.mjs";
 import { profileHasOwnFire, sysWithProfileFire, profileFireUpdate } from "./weapon-profiles.mjs";
+import { chamberInAvailable, chamberInBlockReason, CHAMBER_IN_FLAG } from "../rules/gunner-talents.mjs";
+import { weaponHandsRequired, handsOccupied } from "../rules/hands.mjs";
 
 /**
  * Стоимость Перезарядки в ОД по книжному полю system.reload (стр. 35,
@@ -99,6 +102,72 @@ export async function _showAmmoSelectDialog(weapon, compatAmmo) {
   });
 }
 
+/** Руки, метка «раз в Ход» и запрещающий мод (Буллпап: «Chamber In… не работают») для chamberInBlockReason. */
+function chamberInContext(actor, weapon) {
+  return {
+    handsNeeded: weaponHandsRequired(weapon, actor),
+    freeHands: handsOccupied(actor, { exclude: weapon.id }).free,
+    usedThisTurn: !!actor.getFlag?.("warhammer-dbc", CHAMBER_IN_FLAG),
+    modBlocked: [...(actor.items ?? [])].some(i => i.type === "weaponMod" && i.system?.installedOn === weapon.id
+      && /bullpup|буллпап/i.test(String(i.name ?? "")))
+  };
+}
+
+/**
+ * Досылание (Талант Стрелка «Chamber In», rules/gunner-talents.mjs): +1 патрон в
+ * магазин свободным действием, раз в Ход; запас магазинов НЕ уменьшается
+ * (решение владельца 24.10.2026). Условия рук и типа оружия — chamberInBlockReason.
+ * @returns {Promise<boolean>} досыл состоялся
+ */
+export async function chamberInRound(actor, weapon, { profileIdx = null } = {}) {
+  const pIdx   = Number(profileIdx ?? weapon.getFlag?.("warhammer-dbc", "hudProfile") ?? -1);
+  const prof   = pIdx >= 0 ? weapon.system.profiles?.[pIdx] : null;
+  const ownIdx = profileHasOwnFire(prof) ? pIdx : -1;
+  const sys    = ownIdx >= 0 ? sysWithProfileFire(weapon.system, prof) : weapon.system;
+  const barrel = ownIdx >= 0 ? `${weapon.name} (${prof.label || "второй ствол"})` : weapon.name;
+  if (!chamberInAvailable(actor, weapon)) {
+    ui.notifications.warn(`Досылание: ${barrel} не подходит (нужен Талант и оружие на отдельных патронах).`);
+    return false;
+  }
+  const reason = chamberInBlockReason(weapon, {
+    ...chamberInContext(actor, weapon),
+    magazineCur: sys.magazineCur, magazineMax: sys.magazineMax
+  });
+  if (reason) {
+    ui.notifications.warn(`Досылание: ${reason}.`);
+    return false;
+  }
+  const newMag = (Number(sys.magazineCur) || 0) + 1;
+  await weapon.update(ownIdx >= 0
+    ? profileFireUpdate(weapon, ownIdx, { magazineCur: newMag })
+    : { "system.magazineCur": newMag });
+  await actor.setFlag("warhammer-dbc", CHAMBER_IN_FLAG, true);
+  await postTestCard(actor, {
+    title: `Досылание — ${esc(barrel)}`,
+    lines: [`<div class="roll-damage-meta">Свободное действие, раз в Ход: патрон с бандольера или пояса; запас магазинов не уменьшается.</div>`],
+    outcome: outcomeHtml(true, `Заряд <b>${newMag}/${sys.magazineMax}</b>`)
+  }, { sound: false });
+  return true;
+}
+
+/** Предложить Досылание вместо полной перезарядки (Dialog v1, как выбор боеприпасов выше). */
+function _askChamberIn(barrel, cur, max) {
+  return new Promise(resolve => {
+    let done = false;
+    const finish = v => { if (!done) { done = true; resolve(v); } };
+    new Dialog({
+      title: `Досылание: ${barrel}`,
+      content: `<div style="padding:8px;font-size:0.9em;">Магазин ${cur}/${max}. Дослать один патрон свободным действием (Талант «Досылание», раз в Ход; запас магазинов не тратится) или перезарядить целиком?</div>`,
+      buttons: {
+        chamber: { icon: '<i class="fas fa-bullseye"></i>', label: "Дослать 1 патрон", callback: () => finish("chamber") },
+        reload:  { icon: '<i class="fas fa-redo"></i>', label: "Перезарядить", callback: () => finish("reload") }
+      },
+      default: "chamber",
+      close: () => finish(null)
+    }, { classes: ["dialog"], width: 380 }).render(true);
+  });
+}
+
 /**
  * Перезарядка. У комби-оружия (wdbc-jho9) заряжается ствол, выбранный сейчас
  * профилем в HUD (флаг hudProfile), если у этого профиля свой ствол: свой
@@ -117,6 +186,16 @@ export async function _reloadWeapon(actor, weapon, { profileIdx = null } = {}) {
   if (needed <= 0) {
     ui.notifications.info(`${barrel}: магазин уже полон (${curMag}/${maxMag}).`);
     return;
+  }
+
+  // Досылание: у носителя Таланта и при выполненных условиях (руки, раз в Ход, тип оружия) —
+  // сначала предлагаем дослать один патрон; отказ — обычная перезарядка.
+  if (chamberInAvailable(actor, weapon) && !chamberInBlockReason(weapon, {
+        ...chamberInContext(actor, weapon),
+        magazineCur: curMag, magazineMax: maxMag })) {
+    const choice = await _askChamberIn(barrel, curMag, maxMag);
+    if (choice === null) return;
+    if (choice === "chamber") { await chamberInRound(actor, weapon, { profileIdx: pIdx }); return; }
   }
 
   const compatAmmo = _getCompatibleAmmo(actor, weapon, sys);
@@ -150,9 +229,14 @@ export async function _reloadWeapon(actor, weapon, { profileIdx = null } = {}) {
   // Стр. 35, wdbc-x1nz.2.54: ОД списываются ПОСЛЕ выбора боеприпаса — отмена
   // диалога выбора выше ничего не стоит, только реально начатая перезарядка.
   // Быстрая Перезарядка: время перезарядки вдвое (окр.▼) — в ОД, ½ → свободно.
+  // Во Всеоружии (−1 ОД вплоть до ½) и Быстрая Перезарядка (вдвое) НЕ
+  // складываются — берётся лучшая из двух (решение владельца 24.10.2026, 62-0252 Q3).
   const baseCost = reloadApCost(sys.reload);
-  const rapid = baseCost > 0 && hasSpeedTalent(actor, "rapidReload");
-  const apCost = rapid ? rapidReloadApCost(baseCost) : baseCost;
+  const rapidCost = baseCost > 0 && hasSpeedTalent(actor, "rapidReload") ? rapidReloadApCost(baseCost) : baseCost;
+  const armedCost = fullyArmedReloadApCost(actor, weapon, baseCost);
+  const apCost = Math.min(rapidCost, armedCost);
+  const rapid = rapidCost < baseCost && rapidCost === apCost;
+  const armed = armedCost < baseCost && armedCost === apCost && !rapid;
   if (apCost > 0 && !await spendActionPoints(actor, apCost, { physical: true })) {
     return ui.notifications.warn(`⚠️ ${barrel}: не хватает ОД на перезарядку (нужно ${apCost}).`);
   }
@@ -172,7 +256,8 @@ export async function _reloadWeapon(actor, weapon, { profileIdx = null } = {}) {
     lines: [`<div class="roll-damage-meta">
           Боеприпасы: <b>${esc(preferredAmmo.name)}</b>
         </div>`,
-        ...(rapid ? [`<div class="roll-damage-meta">Быстрая Перезарядка: ${baseCost} → ${apCost} ОД. Пустой магазин выброшен под ноги.</div>`] : [])],
+        ...(rapid ? [`<div class="roll-damage-meta">Быстрая Перезарядка: ${baseCost} → ${apCost} ОД. Пустой магазин выброшен под ноги.</div>`] : []),
+        ...(armed ? [`<div class="roll-damage-meta">Во Всеоружии (Custom Grip): ${baseCost} → ${apCost} ОД.</div>`] : [])],
     outcome: outcomeHtml(true, `
             Вставлен магазин · Заряд <b>${newMag}/${maxMag}</b> · В запасе: <b>${newQty}</b> маг.
           `),

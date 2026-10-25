@@ -372,10 +372,11 @@ export function rangedPenalty(speedKey, { integral = false, sidecarTurret = fals
  * снимает штраф скорости само, и спрашивать о нём диалоги не должны.
  */
 export function mountRangedPenalty(speedKey, mount, opts = {}) {
-  const { rider = null, ...rest } = opts;
+  const { rider = null, actors = [], ...rest } = opts;
   return rangedPenalty(speedKey, {
     ...rest, stabilized: !!possessionOf(mount)?.stabilized,
-    trot: rest.trot || trotApplies(rider, speedKey)
+    // Стреляет пассажир — Рысь берётся у ведущего всадника (leadRiderOf).
+    trot: rest.trot || trotApplies(rider, speedKey, { lead: leadRiderOf(rider, mount, actors) })
   });
 }
 
@@ -388,8 +389,57 @@ export function mountRangedPenalty(speedKey, mount, opts = {}) {
  */
 export const TROT_SPEEDS = ["still", "half"];
 
-export function trotApplies(rider, speedKey) {
-  return TROT_SPEEDS.includes(speedKey) && hasTalent(rider, "Trot", "Рысь");
+export function trotApplies(rider, speedKey, { lead = null } = {}) {
+  return TROT_SPEEDS.includes(speedKey)
+    && (hasTalent(rider, "Trot", "Рысь") || (!!lead && hasTalent(lead, "Trot", "Рысь")));
+}
+
+/**
+ * Ведущий всадник скакуна для ПАССАЖИРА (Sahara trait-stand, п.1): у ведущего
+ * Рысь, и она снимает штрафы «всадника или пассажира». Для самого ведущего и для
+ * того, кто не пассажир, — null: его Рысь проверяется у него самого.
+ */
+export function leadRiderOf(actor, mount, actors = []) {
+  if (actor?.system?.mount?.role !== "passenger") return null;
+  return ridersOf(mount, actors).find(r => r?.system?.mount?.role !== "passenger") ?? null;
+}
+
+/** Iron Mount / Железный Скакун: «не более ½P.b (окр.▲) раз в Раунд». */
+export function ironMountLimit(rider) {
+  return Math.ceil(Math.max(0, num(rider?.system?.characteristics?.per?.bonus)) / 2);
+}
+
+/** Железный Скакун: «на 3+ Успеха также +АР (Успехи−2) скакуну/байку от этой атаки». */
+export function ironMountArmor(successes) {
+  const s = num(successes);
+  return s >= 3 ? s - 2 : 0;
+}
+
+/**
+ * Roadkill / Переехать (стр. 112): «вместо обычного урона получает 2d10+A.b R Dmg,
+ * Pen P.b, Tearing». Tearing — лишний куб, худший отбрасывается: 3d10, два лучших.
+ * A — Ловкость (ag), P — Восприятие (per).
+ */
+export function roadkillDamage(rider) {
+  const ch = rider?.system?.characteristics ?? {};
+  const bonus = num(ch.ag?.bonus);
+  return {
+    dice: 3, keep: 2, bonus, penetration: Math.max(0, num(ch.per?.bonus)),
+    damageType: "rending", tearing: true,
+    formula: `3d10kh2+${bonus}`
+  };
+}
+
+/**
+ * Mount Sense / Чувство Скакуна, второй абзац (стр. 112): «Скакун получает бонус
+ * на тесты Трудного Ландшафта, равный уровню продвижения Survival персонажа».
+ * Уровень продвижения — ранг Навыка; прибавляется его бонус (+10/+20/+30). Ранг
+ * ниже «Знает» (нетренированное −20) бонуса не даёт, а не штраф.
+ */
+export function mountSenseTerrainBonus(rider) {
+  if (!hasTalent(rider, "Mount Sense", "Чувство Скакуна")) return 0;
+  const rank = rider?.system?.skills?.survival?.rank;
+  return Math.max(0, Number(SKILL_RANKS[rank]?.bonus) || 0);
 }
 
 /** Избирательная атака по этому скакуну: «Укрытие» демона учитывается само. */

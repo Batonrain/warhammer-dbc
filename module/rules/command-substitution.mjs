@@ -17,6 +17,7 @@
 import { hasLivingLegend, livingLegendCommandBonus } from "./leadership-talents.mjs";
 import { hasInfernalMaster, infernalMasterCommandBonus } from "./occultist-talents.mjs";
 import { isDaemonActor } from "./predicates.mjs";
+import { binaryDominionCommandBonus } from "./binary-dominion.mjs";
 
 /**
  * Правило реестра (rules/sources.mjs) — максимум одно rollBonus-правило на
@@ -34,9 +35,22 @@ export function commandSubstitutionRules(actor, ctx = {}) {
   const imApplicable = hasInfernalMaster(actor) && isDaemonActor(ctx?.targetActor);
   const llBonus = hasLL ? livingLegendCommandBonus(actor, ctx) : 0;
   const imBonus = imApplicable ? infernalMasterCommandBonus(actor, ctx) : 0;
+  // Binary Dominion / Бинарное Владычество (Sahara 3-cc96 п.1): Tech-Use вместо
+  // Command против сервиторов, роботов и Скитариев. Третья подмена за тот же навык —
+  // берётся лучшая, а не сумма (тот же довод, что у двух выше). Подмена Владычества
+  // «не хуже обычного»: ниже нуля она не опускается (binary-dominion.mjs), поэтому
+  // в соревновании с Легендой/Владыкой нулевая не выигрывает у отрицательной.
+  const bdBonus = binaryDominionCommandBonus(actor, ctx);
 
   const useIM = hasLL && imApplicable ? imBonus >= llBonus : imApplicable;
-  const bonus = useIM ? imBonus : llBonus;
+  const best = useIM ? imBonus : llBonus;
+  if (bdBonus > 0 && bdBonus > best) {
+    return [{
+      id: "binaryDominion.command", label: `Бинарное Владычество: Tech-Use вместо Command (+${bdBonus})`, when: {},
+      effects: [{ kind: "rollBonus", target: "skill:command", value: bdBonus, label: "Бинарное Владычество" }]
+    }];
+  }
+  const bonus = best;
   if (!bonus) return [];
 
   if (useIM) {

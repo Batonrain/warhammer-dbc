@@ -27,7 +27,8 @@
 
 import { _degWord, _hitWord, _leftoverSuccessPhrase, negatedHits, esc } from "../helpers/utils.mjs";
 import { addEvasionSurplus } from "./evasion-pool.mjs";
-import { spendReaction }  from "./action-economy.mjs";
+import { spendReaction, spendActionPoints, canSpendActionPoints }  from "./action-economy.mjs";
+import { DRAGON_KNIGHT_FLAG, dragonKnightValue } from "../rules/dragon-knight.mjs";
 import { _noReactionCard } from "./defense.mjs";
 import { rollIcon }      from "../constants/roll-icons.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
@@ -44,7 +45,7 @@ import {
   mountTraits, isBike, riderControl, testMod, turnOptions, skidInfo,
   fallFromSaddle, acrobaticsStayMod, spliceBonus, hasTalent, passengerCount,
   hitTarget, mountSpd, mountSelectiveMod, mountControlSkill, skillValue, BLADES_TIER_USES,
-  mountAutoTerrain, trotApplies } from "../rules/mount.mjs";
+  mountAutoTerrain, trotApplies, mountSenseTerrainBonus, ironMountLimit, ironMountArmor, isPossessed } from "../rules/mount.mjs";
 
 const sgn = n => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -471,14 +472,16 @@ export async function showMountTerrainDialog(rider) {
   // действует — подсказка в диалоге напоминает об этом.
   const allTerrain = "allTerrain" in traits;
   const trot = hasTalent(rider, "Trot", "Рысь");
-  const terrainMod = allTerrain ? 0 : MOUNT_TERRAIN_MOD;
+  // Чувство Скакуна: ранг Survival всадника — бонус тестам Трудного Ландшафта скакуна.
+  const senseBonus = mountSenseTerrainBonus(rider);
+  const terrainMod = (allTerrain ? 0 : MOUNT_TERRAIN_MOD) + senseBonus;
 
   new Dialog({
     title: `Трудный Ландшафт верхом — ${mount.name}`,
     content: `
       <form class="wh-vehicle-dialog" style="padding:6px;">
         <div class="atk-dlg-row"><label>${control.label}:</label><input id="mtt-skill" type="number" value="${control.value}"/></div>
-        <div class="atk-dlg-row"><label>Верхом:</label><span>${sgn(terrainMod)}${allTerrain ? " — Вездеход" : ""}</span></div>
+        <div class="atk-dlg-row"><label>Верхом:</label><span>${sgn(terrainMod)}${allTerrain ? " — Вездеход" : ""}${senseBonus ? ` — Чувство Скакуна +${senseBonus}` : ""}</span></div>
         <div class="atk-dlg-row"><label>Ландшафт зоны:</label><input id="mtt-zone" type="number" value="0"/></div>
         <div class="atk-dlg-row"><label>Доп. мод:</label><input id="mtt-mod" type="number" value="0"/></div>
         <div class="atk-range-info" style="font-size:0.82em;">
@@ -881,9 +884,158 @@ export async function resolveHitAllocation(rider, rv, { unseen = false } = {}) {
       `<div class="roll-defense-note">Избирательные атаки: по всаднику
       <b>${sgn(mountSelectiveMod("rider", mount))}</b>${
         mountSelectiveMod("rider", mount) === SELECTIVE_MODS.riderCovered ? " (Укрытие)" : ""
-      }, по скакуну <b>${sgn(mountSelectiveMod("mount", mount))}</b>.</div>`
+      }, по скакуну <b>${sgn(mountSelectiveMod("mount", mount))}</b>.</div>`,
+      // Железный Скакун: попадание по всаднику можно перенести на скакуна — только от
+      // засекаемых атак (Незримая кнопки не получает).
+      toRider && !unseen && hasTalent(rider, "Iron Mount", "Железный Скакун")
+        ? `<div class="roll-defense-btns"><button class="wh-iron-mount-btn" type="button" data-actor-uuid="${rider.uuid}"
+             title="Operate−10 или Survival−10: перенести попадание(я) этой атаки на скакуна; на 3+ Успеха скакуну +AP (Успехи−2). ½P.b раз в Раунд.">
+             Железный Скакун — перенести на скакуна (${esc(ctx.control.label)}−10)</button></div>`
+        : ""
     ]
   });
+}
+
+/**
+ * Iron Mount / Железный Скакун (Талант Всадника, Sahara 3-cross-actor-5482):
+ * получив попадание верхом (после Избеганий), всадник проходит Operate−10 или
+ * Survival−10 — тем Навыком управления, что у этой пары (riderControl), — чтобы
+ * перенести попадание(я) ОДНОЙ атаки на скакуна/байк. На 3+ Успеха скакун получает
+ * ещё +AP (Успехи−2) от этой атаки. Не более ½P.b раз в Раунд (в бою; метка на
+ * всаднике держит боевой Раунд); «только от засекаемых атак» — кнопки нет у
+ * Незримых (resolveHitAllocation).
+ *
+ * Сам урон система не переносит: сумма попадания лежит на кнопке «Применить урон»
+ * карточки атаки, а не здесь, поэтому карточка называет, на кого его применить и
+ * сколько AP прибавить скакуну.
+ */
+export async function ironMountTest(rider) {
+  if (!hasTalent(rider, "Iron Mount", "Железный Скакун")) {
+    return ui.notifications.warn("⚠️ Перенос попадания на скакуна — Талант «Железный Скакун».");
+  }
+  const ctx = await mountContext(rider);
+  if (!ctx) return;
+  const { mount, control } = ctx;
+
+  // «Раз в Раунд»: метка хранит боевой Раунд и сколько попыток в нём потрачено.
+  const combat = game.combat?.started ? game.combat : null;
+  const limit = ironMountLimit(rider);
+  const mark = rider.getFlag?.("warhammer-dbc", "ironMount");
+  const used = (combat && mark && mark.combatId === combat.id && mark.round === combat.round) ? mark.used : 0;
+  if (combat && used >= limit) {
+    return ui.notifications.warn(`Железный Скакун: не более ½P.b (${limit}) раз в Раунд — лимит этого Раунда исчерпан.`);
+  }
+  if (combat) await rider.setFlag("warhammer-dbc", "ironMount", { combatId: combat.id, round: combat.round, used: used + 1 });
+
+  const baseEff = control.value - 10;
+  const { roll, rv, rerollNote, outcome } = await rollWithKind(rider, baseEff, { kind: "base", difficulty: 0 },
+    { actor: rider, kind: "skill" });
+  const { success: passed, deg } = outcome;
+  const ap = passed ? ironMountArmor(deg) : 0;
+  const body = passed
+    ? `<div class="roll-outcome"><span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Попадание(я) этой атаки перенесено на скакуна — ${esc(mount.name)}: применяйте урон к его токену.</span></div>
+       ${ap ? `<div class="roll-defense-note">3+ Успеха: скакуну ещё <b>+${ap} AP</b> от этой атаки (Успехи−2) — прибавьте при применении урона.</div>` : ""}`
+    : `<div class="roll-outcome"><span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Попадание остаётся на всаднике.</span></div>`;
+
+  await postCard(rider, {
+    icon: rollIcon("shield", "#8fd0ff"),
+    title: `Железный Скакун — ${esc(rider.name)}`,
+    threshold: rollStatLine({ label: control.label, base: control.value, parts: ["−10"], threshold: baseEff, rv }),
+    lines: [outcome.combinedLine],
+    rerollNote, critLine: outcome.critLine,
+    sections: [body]
+  }, [roll]);
+}
+
+/**
+ * Dragon Knight / Драконий Рыцарь (Талант Всадника, Sahara 3-cross-actor-5482):
+ * «Если персонаж и скакун действуют в одну Инициативу, за полудействие он может
+ * пройти Survival−10, чтобы дать скакуну +3×Успехи на все Атаки или Избегания до
+ * начала их следующего Хода (выбирая до броска)». «В одну Инициативу» — пара «в
+ * ритм скакуна», Чувство Скакуна или одержимый скакун (rules/mount.mjs::
+ * pairInitiative). Метка ложится на скакуна (rules/dragon-knight.mjs), её читает
+ * сбор ситуативных правил; снимает начало следующего Хода всадника.
+ * @returns {Promise<boolean>} true — бонус выдан
+ */
+export async function dragonKnightTest(rider) {
+  if (!hasTalent(rider, "Dragon Knight", "Драконий Рыцарь")) {
+    ui.notifications.warn("⚠️ Бонус скакуну — Талант «Драконий Рыцарь».");
+    return false;
+  }
+  const mount = await mountOf(rider);
+  if (!mount) {
+    ui.notifications.warn("⚠️ Персонаж не верхом: скакун не выбран на панели «ВЕРХОМ».");
+    return false;
+  }
+  const sameInitiative = !!rider.system?.mount?.sync
+    || hasTalent(rider, "Mount Sense", "Чувство Скакуна") || isPossessed(mount);
+  if (!sameInitiative) {
+    ui.notifications.warn("Драконий Рыцарь: всадник и скакун должны действовать в одну Инициативу — включите «в ритм скакуна» на панели ВЕРХОМ или возьмите Чувство Скакуна.");
+    return false;
+  }
+
+  // Нет ОД на полудействие — не спрашиваем «что усилить» зря.
+  if (!canSpendActionPoints(rider, 1, { physical: false })) {
+    ui.notifications.warn(`Драконий Рыцарь: не хватает ОД на полудействие (${rider.name}).`);
+    return false;
+  }
+
+  const mode = await foundry.applications.api.DialogV2.wait({
+    window: { title: `Драконий Рыцарь — ${rider.name}` },
+    content: `<p>Бонус <b>+3×Успехи</b> (тест Выживания−10) достанется скакуну «${esc(mount.name)}» на ВСЕ Атаки или ВСЕ Избегания до начала следующего Хода. Выбирайте до броска.</p>`,
+    buttons: [
+      { action: "attack", label: "Атаки скакуна", default: true, callback: () => "attack" },
+      { action: "evasion", label: "Избегания скакуна", callback: () => "evasion" },
+      { action: "cancel", label: "Отмена", callback: () => null }
+    ],
+    rejectClose: false
+  });
+  if (!mode) return false;
+
+  // Полудействие (Ментальное — голосом/жестом по тексту не уточнено, ставим как обычное действие).
+  if (!(await spendActionPoints(rider, 1, { physical: false }))) return false;
+
+  const survival = Number(rider.system?.skills?.survival?.total);
+  const base = Number.isFinite(survival) ? survival : -20;
+  const baseEff = base - 10;
+  const { roll, rv, rerollNote, outcome } = await rollWithKind(rider, baseEff, { kind: "base", difficulty: 0 },
+    { actor: rider, kind: "skill", skill: "survival" });
+  const { success: passed, deg } = outcome;
+  const value = passed ? dragonKnightValue(deg) : 0;
+
+  let applied = false;
+  if (value > 0) {
+    try {
+      await mount.setFlag("warhammer-dbc", DRAGON_KNIGHT_FLAG, { mode, value, riderUuid: rider.uuid });
+      applied = true;
+    } catch (e) { console.warn("warhammer-dbc | Драконий Рыцарь: метка на скакуне", e); }
+  }
+  const what = mode === "attack" ? "все Атаки" : "все Избегания";
+  const body = !passed
+    ? `<div class="roll-outcome"><span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Скакун бонуса не получает.</span></div>`
+    : applied
+      ? `<div class="roll-outcome"><span class="roll-success">Успех — ${deg} ${_degWord(deg)}. ${esc(mount.name)} получает <b>+${value}</b> на ${what} до начала следующего Хода всадника — подставляется в тесты скакуна само.</span></div>`
+      : `<div class="roll-outcome"><span class="roll-success">Успех — ${deg} ${_degWord(deg)}: <b>+${value}</b> скакуну на ${what}.</span></div>
+         <div class="roll-defense-note">Метку на скакуне поставить не удалось (нет прав на его токен) — впишите бонус вручную.</div>`;
+  await postCard(rider, {
+    icon: rollIcon("shield", "#ffb84d"),
+    title: `Драконий Рыцарь — ${esc(rider.name)}`,
+    threshold: rollStatLine({ label: "Выживание", base, parts: ["−10"], threshold: baseEff, rv }),
+    lines: [outcome.combinedLine],
+    rerollNote, critLine: outcome.critLine,
+    sections: [body]
+  }, [roll]);
+  return applied;
+}
+
+/** Начало Хода всадника: бонус Драконьего Рыцаря на скакуне гаснет («до начала следующего Хода»). */
+export async function clearDragonKnight(rider) {
+  const uuid = rider?.system?.mount?.uuid;
+  if (!uuid) return;
+  const mount = await fromUuid(uuid).catch(() => null);
+  if (mount?.getFlag?.("warhammer-dbc", DRAGON_KNIGHT_FLAG)) {
+    await mount.unsetFlag("warhammer-dbc", DRAGON_KNIGHT_FLAG).catch(() => {});
+  }
 }
 
 /** Ручной диалог (fallback без карточки под рукой) — тот же расчёт, что и кнопка. */

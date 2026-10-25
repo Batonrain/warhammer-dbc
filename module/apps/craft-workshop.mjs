@@ -34,7 +34,10 @@ import { critLineHtml } from "../rules/test-kind-widget.mjs";
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { hasSlowShiftTalent, cyberpreacherApplies, effectiveDiceMode, slowShiftBonus, polymathBonus, polymathCrit, researchBonus, darkMuseAssistBonus, haemonculusLabBonus,
-         monotonyPenalty, fabricatorToolMod, masterEngineseerBonus } from "../rules/craft-advantage.mjs";
+         monotonyPenalty, fabricatorToolMod, masterEngineseerBonus, masterEngineseerAutoEligible,
+         masterEngineseerAutoSuccesses } from "../rules/craft-advantage.mjs";
+import { spendFromInfamyPool, actorInfamyPath } from "./infamy-points.mjs";
+import { tempInfamyAmount } from "../rules/temp-infamy.mjs";
 import { researchFindingItemData, researchJournalEntry, appendResearchJournal,
          researchKindLabel, RESEARCH_JOURNAL_FLAG, PSYCHIC_RESULT_TYPES } from "../rules/research-findings.mjs";
 import { TRAINING_SOCIAL_OPTIONS, TRAINING_SESSIONS_PER_COURSE, buildTeachableTargets, findTeachableTarget,
@@ -44,6 +47,26 @@ import { trainingTargetKey, addTrainingEarmark, logCourse, coursesThisMonth,
          trainingXpGain, grantEliteDiscount, TRAINING_EARMARK_FLAG, TRAINING_COURSE_LOG_FLAG,
          TRAINING_ELITE_DISCOUNT_FLAG } from "../rules/training.mjs";
 import { hasTeacherTalent, clearMindTeachBonus } from "../rules/training-advantage.mjs";
+import { hookUpAvailable, hookUpCraftMod } from "../rules/drug-doses.mjs";
+// Поток (Талант Огнемётчика): смена с Tech-Use над выбранным огнемётом отмечается флагом на самом оружии.
+import { isFlamerWeapon, shiftCountsForTorrent, torrentWorkedShifts, TORRENT_WORKED_FLAG } from "../rules/flamer-talents.mjs";
+
+/**
+ * Огнемёты, над которыми можно «работать смену» (Поток): оружие тех персонажей,
+ * которых пользователь вправе править (владелец / ГМ). Крафтер проекта — первым.
+ */
+function _torrentWeaponChoices(proj) {
+  const out = [];
+  for (const actor of [...(game.actors ?? [])]) {
+    if (!(game.user.isGM || actor.isOwner)) continue;
+    for (const item of actor.items ?? []) {
+      if (!isFlamerWeapon(item)) continue;
+      out.push({ uuid: item.uuid, label: `${actor.name} — ${item.name}`, own: actor.id === proj.crafterId,
+        worked: torrentWorkedShifts(item), selected: item.uuid === proj.torrentWeaponUuid });
+    }
+  }
+  return out.sort((a, b) => (b.own - a.own) || a.label.localeCompare(b.label, "ru"));
+}
 
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 
@@ -85,6 +108,8 @@ export function newCraftProject(preferredCrafterId) {
     categoryKey: CRAFT_CATEGORIES[3].key,
     rarity: 1, quality: "common", toolKey: "common",
     gmMod: 0, assistants: 0, baseBank: null, improve: false, monotony: false, machineSize: 0,
+    // «Крючок» (Талант Медика, 3-dc87): −30 к тесту Химии → наркотик с вдвое меньшим лимитом доз.
+    hookUp: false,
     // Кубик смены (Преимущество/Помеха, стр. 26) — Сложность у Крафта уже
     // есть своя («Модификатор ГМа»), второй дропдаун не заводим.
     diceMode: "normal",
@@ -92,6 +117,8 @@ export function newCraftProject(preferredCrafterId) {
     // выбор игрока за смену; галочка видна только владельцу Таланта
     // (module/rules/craft-advantage.mjs).
     slowShift: false,
+    // Поток (Талант Огнемётчика): огнемёт, над которым идёт работа, — uuid предмета; смена с Tech-Use отмечает его флагом.
+    torrentWeaponUuid: "",
     // Именованный ассистент (wdbc-1rno) — ОДИН актор для проверки Талантов/
     // Даров, зависящих от личности ассистента (Journeyman/Подмастерье,
     // Dark Muse/Тёмная Муза, module/rules/craft-advantage.mjs). Отдельно от
@@ -183,7 +210,8 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     const toolMod = proj.mode === "craft" ? fabricatorToolMod(crafter, baseToolMod) : baseToolMod;
     // Редкость и Качество НЕ модифицируют бросок (только Банк). К Пределу — инструменты,
     // ГМ-мод и −20 за Улучшение.
-    const mods = { toolMod, gmMod: Number(proj.gmMod || 0), improveMod: proj.improve ? -20 : 0 };
+    const mods = { toolMod, gmMod: Number(proj.gmMod || 0), improveMod: proj.improve ? -20 : 0,
+      hookUpMod: hookUpCraftMod(crafter, proj) };
     const combined = computeCombined(selectedOpts, mods);
 
     const tableBank = isResearch ? null : bankFromTable(category, proj.rarity);
@@ -361,12 +389,15 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
       tools: CRAFT_TOOLS.map(t => ({ ...t, selected: t.key === proj.toolKey })),
 
       gmMod: proj.gmMod, assistants: proj.assistants, improve: proj.improve, monotony: proj.monotony,
+      hookUp: !!proj.hookUp, hookUpAvail: hookUpAvailable(R.crafter, proj),
       diceMode: proj.diceMode || "normal",
       // Медленная Смена/Киберпроповедник (wdbc-u0by) — галочка видна только
       // владельцу Таланта; Киберпроповедник ничего не спрашивает — применяется
       // сам, как только категория «Бионика» и Талант у крафтера есть.
       hasSlowShiftTalent: hasSlowShiftTalent(R.crafter),
       slowShift: proj.slowShift,
+      // Работа над огнемётом (Поток): выпадашка только в Крафте и только если в мире есть огнемёты.
+      torrentChoices: proj.mode === "craft" ? _torrentWeaponChoices(proj) : [],
       cyberpreacherActive: cyberpreacherApplies(R.crafter, proj.categoryKey),
       hasAssistants: (Number(proj.assistants) || 0) > 0,
       // Именованный ассистент (wdbc-1rno) — та же выборка акторов, что и у
@@ -430,9 +461,11 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     on("[name=assistants]", "change", e => upd(e.currentTarget, p => p.assistants = Math.max(0, num(e.target.value))));
     on("[name=improve]", "change", e => upd(e.currentTarget, p => p.improve = e.target.checked));
     on("[name=monotony]", "change", e => upd(e.currentTarget, p => p.monotony = e.target.checked));
+    on("[name=hookup]", "change", e => upd(e.currentTarget, p => p.hookUp = e.target.checked));
     on("[name=dicemode]", "change", e => upd(e.currentTarget, p => p.diceMode = e.target.value));
     on("[name=slowshift]", "change", e => upd(e.currentTarget, p => p.slowShift = e.target.checked));
     on("[name=assistant-actor]", "change", e => upd(e.currentTarget, p => p.assistantId = e.target.value));
+    on("[name=torrent-weapon]", "change", e => upd(e.currentTarget, p => p.torrentWeaponUuid = e.target.value));
 
     // Биолаборатория
     on("[name=vat]", "change", e => upd(e.currentTarget, p => p.vatKey = e.target.value));
@@ -566,18 +599,40 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     // учётом Киберпроповедника/Медленной Смены/Подмастерья (wdbc-u0by/
     // wdbc-1rno, craft-advantage.mjs) — Подмастерье теперь проверяется по
     // настоящему инвентарю именованного ассистента, не по галочке.
+    // Мастер-Технопровидец (3-cc96 п.11): «может потратить Очко Бесчестия, чтобы
+    // автоматически преуспеть в расширенном тесте Tech-Use на Крафт, получая I.b
+    // Успехов за смену». Предлагается один раз на смену (в цепочке Полимата
+    // дополнительные смены — не новое решение игрока).
+    // Очко Бесчестия платится ОДИН раз на проект («автоматически преуспеть в расширенном
+    // тесте… теряется при перерыве более суток»): пока с прошлой смены автоуспеха прошло не
+    // больше суток игрового времени, продолжение бесплатно (ревью 25.10.2026).
+    let autoSuccess = null;
+    if (chain === 1 && masterEngineseerAutoEligible(crafter, proj.mode, R.combined.primary?.value)) {
+      const now = Number(game.time?.worldTime) || 0;
+      const held = proj.engineseerAutoAt != null && (now - proj.engineseerAutoAt) <= 86400;
+      autoSuccess = await this._offerEngineseerAutoSuccess(crafter, { free: held });
+      if (autoSuccess) proj.engineseerAutoAt = now;
+      else if (!held) proj.engineseerAutoAt = null;
+    }
+
     const effMode = effectiveDiceMode(proj.diceMode, crafter, proj.categoryKey, proj.slowShift, assistantActor);
-    const diceMode = diceModeFor(effMode);
-    const rollCount = diceMode ? diceMode.rolls : 1;
-    const rolls = [];
-    for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
-    const picked = pickReroll(rolls.map(r => r.total), diceMode?.mode);
-    const roll = rolls[picked.index];
-    const rv = picked.value, dos = degreesOfSuccess(rv, limit);
-    const diceNote = diceMode
-      ? `<div class="wh-craft-roll-line">${effMode === "advantage" ? "Преимущество" : "Помеха"}${effMode !== proj.diceMode ? " (Талант)" : ""}: отброшено ${picked.dropped.join(", ")}</div>`
-      : "";
-    const crit = criticalOutcome(rv, resolveTest({ actor: crafter, kind: "skill" }).crit);
+    let rolls = [], roll = null, rv = null, dos, diceNote = "", crit;
+    if (autoSuccess) {
+      // Броска нет: смена идёт на I.b Успехов, критов нет.
+      dos = autoSuccess.successes;
+      crit = { success: false, failure: false };
+    } else {
+      const diceMode = diceModeFor(effMode);
+      const rollCount = diceMode ? diceMode.rolls : 1;
+      for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
+      const picked = pickReroll(rolls.map(r => r.total), diceMode?.mode);
+      roll = rolls[picked.index];
+      rv = picked.value; dos = degreesOfSuccess(rv, limit);
+      diceNote = diceMode
+        ? `<div class="wh-craft-roll-line">${effMode === "advantage" ? "Преимущество" : "Помеха"}${effMode !== proj.diceMode ? " (Талант)" : ""}: отброшено ${picked.dropped.join(", ")}</div>`
+        : "";
+      crit = criticalOutcome(rv, resolveTest({ actor: crafter, kind: "skill" }).crit);
+    }
     const critLine = critLineHtml(crit);
     const poly = polymathCrit(crafter, crit.success, chain);
 
@@ -625,6 +680,12 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     // ГОТОВО — findingCreated сам по себе уже защищает, wasDone — на случай
     // восстановления проекта с чужим findingCreated=false после ручной
     // правки Банка).
+    // Поток (Талант Огнемётчика): смена с Tech-Use над выбранным огнемётом — «поработал хотя бы 1 смену».
+    let torrentNote = "";
+    if (proj.mode === "craft" && proj.torrentWeaponUuid && shiftCountsForTorrent(R.slots.map(s => s.value))) {
+      torrentNote = await this._markTorrentShift(proj.torrentWeaponUuid);
+    }
+
     let findingNote = "";
     if (proj.mode === "research" && done && !wasDone && !proj.findingCreated) {
       findingNote = await this._finishResearch(proj, crafter, R);
@@ -639,7 +700,9 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
         <div class="wh-craft-msg">
           <div class="wh-craft-msg-head">${rollIcon("wrench","#6fe6ff")}${proj.mode === "research" ? "Смена исследования" : "Смена крафта"} — ${esc(crafter.name)}</div>
           <div class="wh-craft-roll-line">${skillList}</div>
-          <div class="wh-craft-roll-line ${dos > 0 ? "ok" : "fail"}">Комбинированный тест: <b>${rv}</b> vs Предел ${limit} → ${dos > 0 ? `+${dos} успеха` : `${dos} (провал)`}</div>
+          ${autoSuccess
+            ? `<div class="wh-craft-roll-line ok">Мастер-Технопровидец: автоуспех за Очко Бесчестия — <b>+${autoSuccess.successes}</b> успеха (I.b) без броска. ${autoSuccess.spentLine}</div>`
+            : `<div class="wh-craft-roll-line ${dos > 0 ? "ok" : "fail"}">Комбинированный тест: <b>${rv}</b> vs Предел ${limit} → ${dos > 0 ? `+${dos} успеха` : `${dos} (провал)`}</div>`}
           ${diceNote}
           ${critLine}
           ${assist ? `<div class="wh-craft-roll-line ok">Ассистенты (${assist}): +${assistBonus} к тесту, +${assist} успеха${darkMuseBonus ? ` (вкл. Тёмную Музу +${darkMuseBonus})` : ""}</div>` : ""}
@@ -648,19 +711,65 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
           ${polyNote ? `<div class="wh-craft-roll-line ok">${polyNote}</div>` : ""}
           ${labBonus ? `<div class="wh-craft-roll-line ok">Лаборатория Гемункула: +${labBonus} к тесту</div>` : ""}
           ${innovationBonus ? `<div class="wh-craft-roll-line ok">Инновация: +${innovationBonus} к тесту</div>` : ""}
-          ${engineseerBonus ? `<div class="wh-craft-roll-line ok">Мастер-Технопровидец: +${engineseerBonus} к тесту (Tech-Use)</div>` : ""}
+          ${R.mods?.hookUpMod ? `<div class="wh-craft-roll-line">Крючок: ${R.mods.hookUpMod} к тесту — готовый наркотик отметьте «Крючок» на его листе (лимит доз ÷2 ▼, принимающие перебрасывают успешный тест Зависимости).</div>` : ""}
+          ${engineseerBonus ?`<div class="wh-craft-roll-line ok">Мастер-Технопровидец: +${engineseerBonus} к тесту (Tech-Use)</div>` : ""}
           ${workaholicNote ? `<div class="wh-craft-roll-line ok">Трудоголик: штраф за монотонность не применяется</div>` : ""}
           ${findingNote ? `<div class="wh-craft-roll-line ok">${findingNote}</div>` : ""}
+          ${torrentNote ? `<div class="wh-craft-roll-line ok">${torrentNote}</div>` : ""}
           <div class="wh-craft-msg-sum ${gain > 0 ? "ok" : "fail"}">Итог смены: <b>+${gain}</b> · Прогресс: <b>${proj.project.accumulated}</b>/${R.bank}${done ? " · <b style='color:#8cf0a0'>ГОТОВО!</b>" : ""}</div>
           <div class="wh-craft-msg-foot">Смена №${proj.project.shifts} · Усталость +1 (крафтеру)${mono ? " · монотонность −30" : ""}</div>
         </div>`,
-      rolls: polyFatigueRoll ? [roll, polyFatigueRoll] : [roll], sound: CONFIG.sounds.dice
+      rolls: [roll, polyFatigueRoll].filter(Boolean), sound: CONFIG.sounds.dice
     }, rollMode);
     await ChatMessage.create(msg);
     this.render(false);
 
     // Вторая смена — после карточки первой, чтобы в чате они шли по порядку.
     if (polyContinue) await this._rollShift(pid, chain + 1);
+  }
+
+  /**
+   * Предложение Мастера-Технопровидца: потратить Очко Бесчестия и получить I.b Успехов
+   * без броска. null — отказ, нет Очков Бесчестия или I.b = 0 (автоуспех ничего не даст).
+   * @returns {Promise<?{successes:number, spentLine:string}>}
+   */
+  async _offerEngineseerAutoSuccess(crafter, { free = false } = {}) {
+    const successes = masterEngineseerAutoSuccesses(crafter);
+    if (successes <= 0) return null;
+    const path = actorInfamyPath(crafter);
+    const cur = Number(foundry.utils.getProperty(crafter, path)) || 0;
+    if (!free && cur < 1 && tempInfamyAmount(crafter) < 1) return null;
+    const yes = await foundry.applications.api.DialogV2.confirm({
+      window: { title: `Мастер-Технопровидец — ${crafter.name}` },
+      content: free
+        ? `<p>Автоуспех этого проекта ещё держится (перерыв не больше суток; Очко уже потрачено): продолжить без броска, <b>+${successes}</b> успеха (I.b)?</p>`
+        : `<p>Потратить Очко Бесчестия, чтобы автоматически преуспеть в расширенном тесте этого проекта? Без броска, <b>+${successes}</b> успеха (I.b) за смену; продолжение проекта — бесплатно, пока перерыв не больше суток.</p>`,
+      yes: { label: free ? "Продолжить автоуспехом" : "Потратить Очко — автоуспех" }, no: { label: "Бросить кубик" },
+      rejectClose: false
+    });
+    if (!yes) return null;
+    if (free) return { successes, spentLine: "Очко Бесчестия уже потрачено на этот проект." };
+    const spend = await spendFromInfamyPool(crafter, 1, path);
+    if (!spend) return null;
+    await crafter.update({ [path]: spend.poolValue });
+    return { successes, spentLine: spend.tempSpent ? `Потрачено временное Очко Бесчестия (осталось ${spend.poolValue}).` : `Потрачено Очко Бесчестия (осталось ${spend.poolValue}).` };
+  }
+
+  /**
+   * Отметить смену над огнемётом для Потока: +1 к счётчику на самом оружии. Возвращает строку для карточки смены.
+   * Любая смена с Tech-Use считается, исход теста не важен — книга требует лишь «поработал хотя бы 1 смену».
+   */
+  async _markTorrentShift(weaponUuid) {
+    const weapon = await fromUuid(weaponUuid).catch(() => null);
+    if (!weapon || !isFlamerWeapon(weapon)) return "";
+    try {
+      const n = torrentWorkedShifts(weapon) + 1;
+      await weapon.setFlag("warhammer-dbc", TORRENT_WORKED_FLAG, n);
+      return `Поток: над огнемётом «${esc(weapon.name)}» отработана смена (всего ${n}) — Талант Поток для этого оружия доступен.`;
+    } catch (e) {
+      console.warn("warhammer-dbc | torrent shift mark", e);
+      return `Поток: отметить смену на «${esc(weapon.name)}» не удалось (нет прав на оружие) — пусть отметит Мастер.`;
+    }
   }
 
   /**

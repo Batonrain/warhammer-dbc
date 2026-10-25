@@ -94,7 +94,7 @@ export function mountPanelContext(actor, actors = []) {
     // Штраф стрельбы показывается для ОБЫЧНОГО оружия: интегрированное и
     // турель в Коляске считаются от своего оружия, а не от седла, и подставлять
     // их в общую строку значило бы обещать скидку всему арсеналу.
-    mountRanged: mountRangedPenalty(speedKey, mount, { rider: actor }),
+    mountRanged: mountRangedPenalty(speedKey, mount, { rider: actor, actors }),
     mountPossession: possessed ? possessionOf(mount) : null,
     mountHands: hands,
     mountBonusAction: bonusHalfAction(actor, mount, traits),

@@ -21,6 +21,8 @@ vi.mock("../../module/combat/condition-ticks.mjs", () => ({
 }));
 
 import { sceneRadiationClock, radiationExposure } from "../../module/combat/radiation-scene.mjs";
+import { MELANOCHROME_KEY, BLACK_MANTLE_KEY, BLACK_MANTLE_ON_FLAG } from "../../module/rules/radiation-scene.mjs";
+import { clearRuleSources, registerRuleSource, getRuleSources } from "../../module/rules/sources.mjs";
 
 const H = 3600;
 function character({ id = "c1", flags = {}, items = [], type = "character" } = {}) {
@@ -112,5 +114,46 @@ describe("sceneRadiationClock", () => {
     expect(damage.calls).toBe(0);
     await sceneRadiationClock(hero, { from: 30 * 60, to: 70 * 60 });
     expect(damage.calls).toBe(1);
+  });
+});
+
+describe("Меланохром и Чёрная Мантия в радиации сцены (3-b530)", () => {
+  const NS = "warhammer-dbc";
+  const saved = getRuleSources();
+  const cap = key => ({ operator: "AND", entries: [{ kind: "capability", capabilityKey: key }] });
+  const item = (type, name, fl) => { const flags = { [NS]: fl }; return { type, name, system: {}, flags, getFlag: (_s, k) => flags[NS][k] }; };
+  const withKeys = (...keys) => {
+    clearRuleSources();
+    registerRuleSource("test", () => keys.map(k => ({ id: `t.${k}`, when: {}, effects: [{ kind: "grantFlag", target: k }] })));
+  };
+  const melano = () => item("implant", "Меланохром", { installed: true, mechanics: [cap(MELANOCHROME_KEY)] });
+  const mantle = on => item("talent", "Black Mantle", { mechanics: [cap(BLACK_MANTLE_KEY)], ...(on ? { [BLACK_MANTLE_ON_FLAG]: true } : {}) });
+  afterEach(() => { clearRuleSources(); for (const [k, fn] of saved) registerRuleSource(k, fn); });
+
+  it("фон 4, Меланохром: эффективный 3 (тик раз в 2 часа), строка защиты в карточке", async () => {
+    withKeys(MELANOCHROME_KEY);
+    const hero = character({ items: [melano()] });
+    globalThis.canvas = { scene: sceneWith(hero, 4) };
+    expect(radiationExposure(hero)).toMatchObject({ level: 4, effective: 3, interval: 2 * H });
+    await sceneRadiationClock(hero, { from: 0, to: 4 * H });
+    expect(damage.calls).toBe(2);
+    expect(captured.chat.at(-1).content).toContain("Меланохром −1");
+  });
+
+  it("фон 2, усиленный режим: защита −2 гасит радиацию вовсе — ни тиков, ни записей", async () => {
+    withKeys(MELANOCHROME_KEY, BLACK_MANTLE_KEY);
+    const hero = character({ items: [melano(), mantle(true)] });
+    globalThis.canvas = { scene: sceneWith(hero, 2) };
+    await sceneRadiationClock(hero, { from: 0, to: 20 * H });
+    expect(damage.calls).toBe(0);
+    expect(hero.updates).toHaveLength(0);
+  });
+
+  it("тики фона урон не уменьшают: каждый тик — ровно один вызов урона 1 в T, даже в усиленном режиме", async () => {
+    withKeys(MELANOCHROME_KEY, BLACK_MANTLE_KEY);
+    const hero = character({ items: [melano(), mantle(true)] });
+    globalThis.canvas = { scene: sceneWith(hero, 6) };   // 6 − 2 = 4: раз в час
+    await sceneRadiationClock(hero, { from: 0, to: 3 * H });
+    expect(damage.calls).toBe(3);
   });
 });

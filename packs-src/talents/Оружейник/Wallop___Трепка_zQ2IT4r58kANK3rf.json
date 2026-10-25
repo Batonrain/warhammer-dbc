@@ -5,7 +5,7 @@
   "folder": "HfTlTkQPDwQ9Yqqn",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey weaponsmith.core.wallop — module/combat/attack.mjs (wallopOn ← module/rules/gunsmith-talents.mjs::wallopConcussiveRating): Избирательный выстрел со Scatter при галочке «Короткая дистанция» даёт Оглушающее: голова (0), торс или нога (–1), рука (–2). Свойство одно на карточку, поэтому «только на первое попадание после Избеганий» — строка в карточке, применять эффект один раз вручную. Своё Concussive у оружия не заменяется.",
     "benefit": "При Избирательном выстреле с короткой дистанции или ближе из оружия со свойством Scatter оно получает Concussive на первое попадание (после Избеганий) в зависимости от цели: голова — (0), нога/торс — (−1), рука — (−2).",
     "tier": 1,
     "requirement": "BS 40, Weapon Training (SP)",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "JUjhFTPIEkPxW1Qv",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "rYwlol6M9idNfZF8",
+              "capabilityKey": "weaponsmith.core.wallop",
+              "label": "Трепка: Избирательный выстрел со Scatter с короткой дистанции — Оглушающее",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

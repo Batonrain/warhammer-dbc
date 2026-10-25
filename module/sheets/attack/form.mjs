@@ -96,6 +96,10 @@ export function readAttackForm(form, ammoConds) {
     // независимый контрол, по умолчанию «Одиночный» — то же поведение, что
     // было жёстко зашито раньше, просто теперь явное и переключаемое.
     offRofMode: el("#atk-off-rof")?.value || "single",
+    // Полный Огонь (rules/full-fire.mjs): галочка, второй ствол пары и его режим огня.
+    fullFire:     on("#atk-full-fire"),
+    fullFireWith: el("#atk-full-fire-with")?.value || "",
+    fullFireRof:  el("#atk-full-fire-rof")?.value || "single",
     dmgBonus:   parseInt(el("#atk-dmg-bonus")?.value) || 0,
     coverMod:   parseInt(el("#atk-cover")?.value) || 0,
     // Штраф стрельбы с седла (wdbc-8nz6) — раньше нигде не применялся к
@@ -112,6 +116,13 @@ export function readAttackForm(form, ammoConds) {
     // «хочет ли игрок», настоящую проверку (Очередь ли выбрана, хватает ли ей
     // RoF 3) делает attack.mjs по rofMode/sys, не форма.
     wideBurst:  el("#atk-wide-burst")?.checked || false,
+    // Двойной Выстрел (Талант Стрелка): галочка видна только носителю Таланта.
+    doubleTap:  el("#atk-double-tap")?.checked || false,
+    // По Этим Координатам (Талант Стрелка): запрет Избирательной и Прицеливания.
+    onThisMark: el("#atk-on-this-mark")?.checked || false,
+    // Галочки Талантов главы 3 (sheets/attack/talent-toggles.mjs): ключ → bool | значение select.
+    talentToggles: Object.fromEntries(all(".atk-talent-toggle").map(e =>
+      [e.dataset.key, e.type === "checkbox" ? !!e.checked : (e.value || "")])),
     // Тесное помещение (стр. 36, wdbc-x1nz.2.63) — ГМ решает на глаз, галочка
     // видна только у Взрывного (attack-dialog.mjs::confinedSpaceHtml).
     confinedSpace: el("#atk-confined-space")?.checked || false,
@@ -168,6 +179,9 @@ export function readAttackForm(form, ammoConds) {
     // Карабин (wdbc-z56a): нужен на исполнении броска, чтобы дать цели +10
     // вместо +30 на Уклонение — см. #atk-melee-shot в specificMods выше.
     meleeShot:  on("#atk-melee-shot"),
+    // Выстрел в упор (строка «Дистанция в упор») и Выпуск Батареи (rules/batpack-dump.mjs).
+    pointBlank: on("#atk-point-blank"),
+    batpackDump: on("#atk-batpack"),
     // Скрытая атака (стр. 12, wdbc-x1nz.2.29): «Избегание невозможно от
     // атаки, о которой цель не знает» — см. #atk-mod-hidden в commonMods выше.
     hiddenAttack: on("#atk-mod-hidden"),

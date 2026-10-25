@@ -32,6 +32,8 @@ import { applyStructureLoss } from "./vehicle.mjs";
 import { ARMOUR_SIDES, VEHICLE_STATUS_EFFECTS } from "../constants/vehicle.mjs";
 import { isThrottleCountAvailable, incrementThrottleCount, throttleCount } from "../rules/cooldown.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
+import { pilotOperateValue } from "./vehicle-force-move.mjs";
 import {
   WALKER_CREW_ROLES, WALKER_TURN_CAPABILITY, WALKER_CHARGE_BONUS, TIP_OVER_LABEL,
   WALKER_ALL_ARMS_ACTION,
@@ -321,8 +323,47 @@ export async function showTipOverDialog(vehicle) {
   }, { classes: ["dialog", "wh-attack-dialog"], width: 440 }).render(true);
 }
 
+/** Возможность Таланта «Чувство Баланса» (Sense of Balance, Таланты Пилота, 3-37ff). */
+export const SENSE_OF_BALANCE = "pilot.core.senseOfBalance";
+const SENSE_OF_BALANCE_MOD = -10;
+
+/**
+ * Чувство Баланса: «Когда Шагоход получает эффект Опрокидывание, пилот может
+ * пройти тест Operate(P)–10, чтобы отменить его и устоять на ногах». Тест
+ * делает пилот (walkerCrew), Operate — его Operate (Surface), но «(P)» —
+ * Восприятие вместо Ловкости: надбавка ранга и мод листа те же, Характеристика
+ * другая (combat/vehicle-force-move.mjs::pilotOperateValue). Тестирует всегда,
+ * когда Талант есть: «может» — выгода игроку, отказаться от неё незачем.
+ * Уже Опрокинутая машина нового эффекта не получает — отменять нечего.
+ * @returns {Promise<boolean>} true — устояла, Опрокидывания нет вообще
+ */
+async function trySenseOfBalance(vehicle) {
+  if (isTippedOver(vehicle)) return false;
+  const crew = await walkerCrew(vehicle);
+  if (!crew || !hasRuleFlag(crew.actor, SENSE_OF_BALANCE)) return false;
+
+  const ruleMods = collectTestMods(crew.actor, { kind: "skill", skill: "operate", char: "per" });
+  const base = pilotOperateValue(crew.actor, "per");
+  const threshold = base + ruleMods.total + SENSE_OF_BALANCE_MOD;
+  const roll = await new Roll("1d100").evaluate();
+  const { success } = testOutcome(roll.total, threshold);
+  await postTestCard(vehicle, {
+    icon: rollIcon(success ? "run" : "burst", success ? "#4dffa6" : "#ff8a3a"),
+    title: `Чувство Баланса — ${esc(crew.actor.name)} (${esc(vehicle.name)})`,
+    threshold: rollStatLine({
+      label: "Operate(P)−10", base, parts: [...ruleMods.parts, `Чувство Баланса ${SENSE_OF_BALANCE_MOD}`], threshold, rv: roll.total
+    }),
+    outcome: success
+      ? outcomeHtml(true, "Шагоход устоял на ногах — Опрокидывание отменено, урона нет.")
+      : outcomeHtml(false, "Не удержал равновесие — Шагоход опрокидывается."),
+  }, { rolls: [roll], sound: false });
+  return success;
+}
+
 /** Разыграть Опрокидывание: урон по Структуре, состояние «Опрокидывание», памятка экипажу. */
 export async function resolveTipOver(vehicle, { side = "side", ledgeMetres = 0 } = {}) {
+  // Чувство Баланса — ДО урона: успех отменяет Опрокидывание целиком.
+  if (await trySenseOfBalance(vehicle)) return;
   const size  = Number(vehicle.system?.size) || 0;
   const roll  = await new Roll(tipOverDamageFormula(size)).evaluate();
   const ledge = tipOverLedgeBonus(ledgeMetres);

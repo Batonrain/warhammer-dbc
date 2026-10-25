@@ -61,10 +61,12 @@ import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
 import { fatigueGraceForActor } from "./fatigue-grace.mjs";
 import { tirelessExempt } from "./resilience-talents.mjs";
+import { pinDownHoldOf } from "./pugilist-talents.mjs";
 import { disabledArmourPenalty } from "./armour-penalty.mjs";
 import { inventoryOverloadPenalty } from "./encumbrance.mjs";
 import { isItemActive } from "../apps/effects.mjs";
 import { isInRage } from "./rage.mjs";
+import { dragonKnightRules } from "./dragon-knight.mjs";
 
 /**
  * Тесты, которых Усталость не касается. Книга («Раны и Урон» → «Статусы»,
@@ -108,6 +110,36 @@ const HOLOLITH_BRIEFED_FLAG = "hololithBriefed";
 function hololithBriefingBonus(actor, skillKey) {
   if (skillKey !== "command") return 0;
   return actor?.getFlag?.("warhammer-dbc", HOLOLITH_BRIEFED_FLAG) ? 10 : 0;
+}
+
+// Предусмотрительность (Талант Мудреца, sage.core.foresight; 3-b530): 5 минут
+// раздумий → +10 на СЛЕДУЮЩИЙ тест I. Флаг ставит кнопка Таланта
+// (apps/talent-actions.mjs), гасит sheets/actor-sheet.mjs::_runTest после
+// теста Int — тот же приём, что у гололита выше. Флаг читается напрямую
+// (getFlag): чистый файл, цикла импортов нет.
+export const FORESIGHT_READY_FLAG = "foresightReady";
+function foresightBonus(actor, charKey) {
+  if (String(charKey ?? "").toLowerCase() !== "int") return 0;
+  return actor?.getFlag?.("warhammer-dbc", FORESIGHT_READY_FLAG) ? 10 : 0;
+}
+
+// Закалённый Кокон (Талант Геносемени, geneseed.core.temperedCocoon; 3-b530):
+// «ещё +10 на все тесты против жара, холода и вакуума». Теги теста ставит
+// combat/temperature-hazard.mjs (heatTest / coldTest); вакуум в системе тестом
+// не заведён (отдельная задача) — тег vacuumTest уже учтён.
+export const TEMPERED_COCOON_CAP = "geneseed.core.temperedCocoon";
+function temperedCocoonBonus(actor, ctx) {
+  if (!(ctx?.heatTest || ctx?.coldTest || ctx?.vacuumTest)) return 0;
+  return actorHasCapability(actor, TEMPERED_COCOON_CAP) ? 10 : 0;
+}
+
+// Испробовать Душу (Талант Геносемени, geneseed.core.tasteTheSoul; 3-b530):
+// «+½ P (окр.▲) на тесты использования Омофагеи». P — характеристика Восприятия
+// (книга для бонуса пишет «.b»). Тег omophageaTest ставит apps/omophagea.mjs.
+export const TASTE_THE_SOUL_CAP = "geneseed.core.tasteTheSoul";
+function tasteTheSoulBonus(actor, ctx) {
+  if (!ctx?.omophageaTest || !actorHasCapability(actor, TASTE_THE_SOUL_CAP)) return 0;
+  return Math.ceil(Math.max(0, Number(actor?.system?.characteristics?.per?.total) || 0) / 2);
 }
 
 const actorHomeworldKey = actor =>
@@ -254,6 +286,25 @@ function grappleSqueezePenalty(actor, ctx, skillKey) {
   return physical ? -10 * n : 0;
 }
 
+/**
+ * Прижать (Талант Пугилиста, стр. 62, rules/pugilist-talents.mjs): штраф на
+ * все физические действия цели, пока прижимающий её не выпустил или не начался
+ * его следующий Ход. Штраф лежит флагом на ПРИЖИМАЮЩЕМ (его Ход снимает флаг
+ * сам), цель находит его по партнёру Борьбы.
+ */
+function pinDownPenalty(actor, ctx, skillKey) {
+  if (!actor?.system?.conditions?.grappling) return 0;
+  const partnerUuid = actor?.getFlag?.("warhammer-dbc", "grapplePartnerUuid")
+    ?? actor?.flags?.["warhammer-dbc"]?.grapplePartnerUuid;
+  if (!partnerUuid || typeof fromUuidSync !== "function") return 0;
+  let pinner = null;
+  try { pinner = fromUuidSync(partnerUuid); } catch { return 0; }
+  const n = pinDownHoldOf(pinner) || 0;
+  if (!n) return 0;
+  const physical = ctx.kind === "attack" || PHYSICAL_SKILLS.includes(skillKey);
+  return physical ? -n : 0;
+}
+
 export function situationalRules(actor, ctx = {}) {
   if (!actor) return [];
   const charKey  = ctx.char;
@@ -277,12 +328,21 @@ export function situationalRules(actor, ctx = {}) {
       inventoryOverloadPenalty(actor, { charKey, skillKey }));
   add("situational.hololithBriefing", "📽️ Гололит: подготовленный брифинг",
       hololithBriefingBonus(actor, skillKey));
+  add("situational.temperedCocoon", "🧬 Закалённый Кокон: против жара/холода/вакуума",
+      temperedCocoonBonus(actor, ctx));
+  add("situational.tasteTheSoul", "🧠 Испробовать Душу: +½ P на Омофагею",
+      tasteTheSoulBonus(actor, ctx));
+  add("situational.foresight", "🔮 Предусмотрительность: обдуманный курс действий",
+      foresightBonus(actor, charKey));
   add("situational.marchTrackBonus", "🏃 Цель марширует/бежит — легче засечь",
       marchTrackBonus(ctx));
+  // Драконий Рыцарь: метка на скакуне, поставленная тестом всадника (rules/dragon-knight.mjs).
+  rules.push(...dragonKnightRules(actor));
   add("situational.springingStance", "🐸 Пружинящая Стойка",
       springingStrengthPenalty(actor, charKey));
   add("situational.grappleSqueeze", "🤼 Сжат в Захвате",
       grappleSqueezePenalty(actor, ctx, skillKey));
+  add("situational.pinDown", "🤼 Прижат", pinDownPenalty(actor, ctx, skillKey));
   // Шок (стр. 53, rules/shock.mjs): штраф выпавшей строки таблицы.
   add("situational.shock", "😨 Шок", shockPenalty(actor, charKey));
   // «Бежит в панике; если пути к побегу нет — −20» (строка 81–100): есть ли

@@ -18,7 +18,11 @@ import { FAST_MOVE_FLAG } from "../../rules/hard-target.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { esc } from "../../helpers/utils.mjs";
 import { _executeAttackRoll } from "../../combat/attack.mjs";
-import { spendActionPoints, apCostForActionType, spendReaction } from "../../combat/action-economy.mjs";
+import { spendActionPoints, apCostForActionType, spendReaction, canSpendReaction } from "../../combat/action-economy.mjs";
+import { fullFireOptionByValue, fullFireSecondThreshold, fullFireSecondBlockReason } from "../../rules/full-fire.mjs";
+import { weaponTrainingPenalty } from "../../rules/weapon-training.mjs";
+import { BATPACK_ROF } from "../../rules/batpack-dump.mjs";
+import { POWER_MODE_FLAG } from "../../rules/power-setting.mjs";
 import { canTakeAttackAction, takeAttackAction } from "../../combat/attack-limit.mjs";
 import { isGrappled } from "../../rules/predicates.mjs";
 import { grappleAttackBlockReason } from "../../combat/grapple.mjs";
@@ -37,7 +41,12 @@ import { weaponThresholdPart } from "../../combat/attack-threshold.mjs";
 import { withEyeOfEnvy } from "../../rules/eye-of-envy.mjs";
 import { AIM_FOCUS_EXTENDED_FLAG } from "../../rules/aim-focus.mjs";
 import { commitRerollUse } from "../../combat/angel-hunters.mjs";
-import { isSabre, sabreSecondAttackBlockFor, armSabreSecondAttack, consumeSabreSecondAttack } from "../../combat/sabre-second-attack.mjs";
+import { consumeFreeShot, freeShotBlockReason, runAndGunLockedNow } from "../../combat/free-shot.mjs";
+import { freeShotLocksAim, freeShotCountsAsAttack } from "../../rules/run-and-gun.mjs";
+import { applyCoveringFireMarks } from "../../combat/covering-fire.mjs";
+import { suppressionActionType } from "../../rules/gunsmith-talents.mjs";
+import { isSabre, sabreSecondAttackBlockFor, armSabreSecondAttack, consumeSabreSecondAttack,
+         hasHussar, armHussarSecondAttack, NS as SABRE_NS, SABRE_PENDING_FLAG } from "../../combat/sabre-second-attack.mjs";
 import { ACTIVE_SIGHT_FLAG } from "../../combat/weapon-mods.mjs";
 import { bringItDownStacksFor } from "../../rules/leadership-talents.mjs";
 import { stunForcedAim } from "../../rules/takedown.mjs";
@@ -113,6 +122,8 @@ export function openAttackDialog(ctx) {
     computeGripOptions,
     computeManeuverOptions,
     computeStanceOptions,
+    fullFireOpts = [],
+    batpackOn = false,
     reopenWithProfile
   } = ctx;
   // Death Dance / Смертельный Танец (wdbc-shr, находка 2): кнопка в render()
@@ -152,6 +163,14 @@ export function openAttackDialog(ctx) {
             return false;
           }
 
+          // Сломанное оружие (system.destroyed — Выпуск Батареи, Расплавление, Огрин, Песнь Перерождения)
+          // не стреляет и не бьёт, пока его не починят (смена работы).
+          if (item.system?.destroyed) {
+            ui.notifications.warn(`⚠️ «${item.name}» сломано — нужна починка (смена работы).`);
+            return false;
+          }
+          // Выпуск Батареи: галочка окна, гейт — возможность оружия на момент открытия окна.
+          const batpackUsed = !!(batpackOn && f.batpackDump);
           const sel = resolveSelectionSafe(f);
           // Сторона брони техники (wdbc-kp1o) — считается тем же правилом,
           // что и построчный штраф в окне (attack-dialog.mjs::resolveVehicleSide),
@@ -213,6 +232,8 @@ export function openAttackDialog(ctx) {
           // тратит. Условия перепроверяются на броске, а не только на кнопке:
           // пока окно было открыто, Ход мог смениться, а цель — остаться той же.
           const sabreSecond = !!techniqueOpts?.sabreSecondAttack;
+          // Метка до списания: вторая атака Гусара (не Сабли) — карточка называет её «Гусар».
+          const sabrePendingHussar = !!actor.getFlag?.(SABRE_NS, SABRE_PENDING_FLAG)?.hussar;
           if (sabreSecond) {
             const reason = sabreSecondAttackBlockFor(actor, item);
             if (reason) {
@@ -220,7 +241,18 @@ export function openAttackDialog(ctx) {
               return false;
             }
           }
-          if (!sabreSecond && !canTakeAttackAction(actor)) {
+          // Бесплатные выстрелы Талантов (combat/free-shot.mjs): Огонь с Вытягивания «не считается атакой»
+          // и лимит Атак не проверяет; Стрельба от Бедра — обычная Атака Хода, лимит действует.
+          const freeShot = techniqueOpts?.freeShot ?? "";
+          if (freeShot) {
+            const blocked = freeShotBlockReason(actor, freeShot);
+            if (blocked) { ui.notifications.warn(`⚠️ ${blocked}.`); return false; }
+          }
+          // Стрельба на Бегу: оружие, которым стреляли на Натиске и не сложили, в рукопашной этот Ход молчит
+          // (в т.ч. выстрел Штыковой Атаки) — combat/free-shot.mjs.
+          const runAndGunLock = runAndGunLockedNow(actor, item, { isMelee });
+          if (runAndGunLock) { ui.notifications.warn(`⚠️ ${runAndGunLock}.`); return false; }
+          if (!sabreSecond && freeShotCountsAsAttack(freeShot) && !canTakeAttackAction(actor)) {
             await ChatMessage.create({
               speaker: ChatMessage.getSpeaker({ actor: actor }),
               content: `<div class="wh-roll-result">
@@ -244,6 +276,24 @@ export function openAttackDialog(ctx) {
           // «Обе руки». Берётся ДО списания ОД — от него зависит, каким
           // действием считать пару.
           const dualOff = f.dualWield ? (actor.items.get(f.offHandId) ?? null) : null;
+          // Полный Огонь (rules/full-fire.mjs): второй ствол пары; Реакция проверяется ДО списания ОД,
+          // чтобы отказ не стоил действия. Не сочетается с «Обе руки».
+          const fullFireOpt = f.fullFire ? fullFireOptionByValue(fullFireOpts, f.fullFireWith) : null;
+          if (fullFireOpt && dualOff) {
+            ui.notifications.warn("⚠️ Полный Огонь и «Обе руки» одновременно не выбираются — оставьте одно.");
+            return false;
+          }
+          const ffSecondItem = !fullFireOpt ? null : (fullFireOpt.kind === "item" ? actor.items.get(fullFireOpt.itemId) : item);
+          const ffSecondProfile = fullFireOpt?.kind === "profile" ? (atkProfilesOf(item)[fullFireOpt.profileIdx] ?? null) : null;
+          const ffBlock = fullFireOpt ? (ffSecondItem ? fullFireSecondBlockReason(ffSecondItem, ffSecondProfile) : "второй ствол не найден") : "";
+          if (ffBlock) {
+            ui.notifications.warn(`⚠️ Полный Огонь: ${ffBlock}.`);
+            return false;
+          }
+          if (fullFireOpt && !canSpendReaction(actor, { physical: true })) {
+            ui.notifications.warn("⚠️ Полный Огонь: нет Реакции для второго выстрела.");
+            return false;
+          }
           // Прицеливание при «Обе руки» (стр. 12, wdbc-x1nz.2.41): «только
           // ОДНА атака получает бонус» — thresholdOf(f) несёт его в основной
           // руке по построению (thresholdParts включает aimingBonus), вторая
@@ -265,8 +315,8 @@ export function openAttackDialog(ctx) {
           // тратит Реакцию — sel.cheapShotActive уже вынудил Базу быть
           // "standard" (resolveSelection), здесь остаётся только сменить
           // ресурс списания на тот же spendReaction, что у Уклонения/Парирования.
-          if (sabreSecond) {
-            // ничего не списывается — см. выше
+          if (sabreSecond || freeShot) {
+            // ничего не списывается — см. выше (Сабля) и combat/free-shot.mjs (бесплатные выстрелы)
           } else if (isMelee && sel.cheapShotActive) {
             if (!await spendReaction(actor)) {
               ui.notifications.warn("⚠️ Не хватает Реакций (Запрещённый Приём).");
@@ -281,7 +331,8 @@ export function openAttackDialog(ctx) {
             const ownActionType = isMelee
               ? (sel.stDef?.forcesFullAction && sel.bDef.actionType === "Полудействие"
                   ? "Полное действие" : sel.bDef.actionType)
-              : (f.rofMode === "suppression" ? "Полное действие" : "Полудействие");
+              // Иглошторм (rules/gunsmith-talents.mjs): подавление Флешетным/Игловым — Полудействие.
+              : (f.rofMode === "suppression" ? suppressionActionType(actor, item) : "Полудействие");
             // Обе руки одним действием (wdbc-3jlm): пара ударов занимает
             // НАИБОЛЬШЕЕ действие из двух, а не два своих. Ровно в этом смысл
             // Таланта «Два Оружия», и ровно этого не было: после Натиска
@@ -295,14 +346,27 @@ export function openAttackDialog(ctx) {
               return false;
             }
           }
+          // Полный Огонь: ОД списан за основной выстрел, Реакция — за второй (решение владельца 24.10.2026).
+          if (fullFireOpt && !(await spendReaction(actor, { physical: true }))) {
+            ui.notifications.warn("⚠️ Не хватает Реакций (Полный Огонь).");
+            return false;
+          }
           // Ресурс (ОД или Реакция Запрещённого Приёма) списан — атака состоялась,
           // засчитываем её в лимит Хода (стр. 12, wdbc-x1nz.2.30).
-          if (!sabreSecond) await takeAttackAction(actor);
+          if (!sabreSecond && freeShotCountsAsAttack(freeShot)) await takeAttackAction(actor);
+          if (freeShot) await consumeFreeShot(actor, freeShot, item);
+          // Прикрывающий Огонь: очередь сделана — метки Подавления на ВСЕХ бывших противников (combat/covering-fire.mjs).
+          if (freeShot === "coveringFire") await applyCoveringFireMarks(actor, f.rofMode);
           // Сабля: вторая атака расходуется, первая (Верховая с отказом от +20)
           // взводит её до конца Хода — ДО броска, чтобы карточка уже нашла метку.
           if (sabreSecond) await consumeSabreSecondAttack(actor);
           else if (isMelee && f.sabreSecondAttack && sel.baseKey === "mounted" && isSabre(item.system))
             await armSabreSecondAttack(actor, item);
+          // Гусар (Талант Всадника): первая Верховая Атака любым рукопашным оружием взводит
+          // вторую (+20 сохраняется), пока ничего не взведено — combat/sabre-second-attack.mjs.
+          const hussarArmed = !sabreSecond && isMelee && sel.baseKey === "mounted" && hasHussar(actor)
+            && !actor.getFlag?.(SABRE_NS, SABRE_PENDING_FLAG);
+          if (hussarArmed) await armHussarSecondAttack(actor);
 
           // Death Dance / Смертельный Танец (wdbc-shr, находка 2): списание
           // ОС и отметка использования — только теперь, при подтверждённой
@@ -411,7 +475,7 @@ export function openAttackDialog(ctx) {
           // Итог основной руки нужен второй (Тирантикос: «попадает из обоих»).
           const mainResult = await withEyeOfEnvy(actor, targetActor, f.char, () => _executeAttackRoll(
             actor, item, f.char, thresholdOf(f) - (f.aimHand === "off" ? aimAdjust : 0),
-            f.rofMode || rofModes[0]?.value,
+            batpackUsed ? "full" : (f.rofMode || rofModes[0]?.value),
             aimTargets.find(t => t.value === f.aimVal),
             {
               forceHit: helplessAutoHit, doubleDamage: helplessAutoHit,
@@ -462,7 +526,10 @@ export function openAttackDialog(ctx) {
               attackNote: dualOff
                 ? [sel.note, `Обе руки: основная рука, пара с «${dualOff.name}» — одно действие на две атаки`]
                     .filter(Boolean).join(" · ")
-                : sel.note,
+                : fullFireOpt
+                  ? [sel.note, `Полный Огонь: основной ствол, пара — «${fullFireOpt.label}»; ОД за этот выстрел, Реакция за второй, оба −10`]
+                      .filter(Boolean).join(" · ")
+                  : sel.note,
               weaponOff: f.weaponOff, gripKey: sel.gKey,
               gripProps: sel.gDef ? sel.gDef.addProps : [],
               gripDmgFlat: sel.gDef ? sel.gDef.dmgFlat : 0,
@@ -476,10 +543,19 @@ export function openAttackDialog(ctx) {
               reverseThrustBonus: !!(sel.gDef && sel.gDef.reverseThrustBonus),
               // Fanning / Быстрый Курок (wdbc-fy33): RoF 2..BS.b по выбору
               // заменяет фиксированный sys.rof_full только в режиме "full".
-              rofCapOverride: (fanningActive && f.rofMode === "full") ? f.fanningRof : 0,
+              // Выпуск Батареи (rules/batpack-dump.mjs): длинная очередь RoF 10 вместо своей скорострельности.
+              rofCapOverride: batpackUsed ? BATPACK_ROF : ((fanningActive && f.rofMode === "full") ? f.fanningRof : 0),
+              batpackDump: batpackUsed,
               // Широкая Очередь (стр. 35, wdbc-x1nz.2.53) — галочка диалога;
               // применимость к текущему rofMode/RoF проверяет сам attack.mjs.
               wideBurst: f.wideBurst,
+              // Двойной Выстрел (rules/gunner-talents.mjs) — галочка диалога; применимость
+              // (Талант, Очередь, без прицела) проверяет сам attack.mjs.
+              doubleTap: f.doubleTap,
+              onThisMark: f.onThisMark,
+              talentToggles: f.talentToggles,
+              // Бесплатный выстрел Таланта (combat/free-shot.mjs): attack.mjs запирает Избирательную атаку.
+              freeShot: techniqueOpts?.freeShot ?? "",
               // Тесное помещение (стр. 36, wdbc-x1nz.2.63) — галочка диалога,
               // видна только у Взрывного; применимость по damageType/Concussive
               // разбирает сам attack.mjs.
@@ -494,6 +570,8 @@ export function openAttackDialog(ctx) {
               // в карточке (само распределение — за столом).
               sabreSecondAttack: f.sabreSecondAttack,
               sabreSecondAttackIsSecond: sabreSecond,
+              // Гусар: первая атака, взведшая вторую, — карточка рисует кнопку (attack.mjs).
+              hussarSecondAttack: hussarArmed || (sabreSecond && !!sabrePendingHussar),
               legacyCleavingRoll: f.legacyCleavingRoll,
               // Условные эффекты боеприпаса, отмеченные игроком (стр. 203).
               ammoCondProps:  f.ammoSel.flatMap(c => c.wp || []),
@@ -582,6 +660,35 @@ export function openAttackDialog(ctx) {
               }
             ));
           }
+          // Полный Огонь: второй ствол — отдельным броском, Реакция уже потрачена выше. Порог — порог окна
+          // (он несёт −10) с заменой режима огня, оружейной части и Прицеливания на свои: Прицеливание
+          // получает только основной выстрел (стр. 12, «несколько атак одним действием», wdbc-x1nz.2.41).
+          if (fullFireOpt) {
+            const secondItem = ffSecondItem;
+            const secondProfile = ffSecondProfile;
+            if (secondItem) {
+              const trainOf = s => weaponTrainingPenalty({ actor, weaponType: s?.weaponType, weaponClass: s?.weaponClass,
+                isGrenade: s?.weaponType === "grenade" }).total;
+              // Тот же предмет, другой ствол: от оружия отличается только Тренировка по типу ствола.
+              const weaponDelta = secondProfile
+                ? trainOf({ ...item.system, weaponType: secondProfile.weaponType || item.system.weaponType }) - trainOf(item.system)
+                : weaponThresholdPart(actor, secondItem, "bs") - weaponThresholdPart(actor, item, f.char);
+              const aimPart = Number(thresholdParts(f).parts.find(p => p.label === "Прицеливание")?.value) || 0;
+              const secondRof = f.fullFireRof || "single";
+              const secondThreshold = fullFireSecondThreshold({
+                mainThreshold: thresholdOf(f), mainRofBonus: f.rofBonus, secondRof, weaponDelta, aimAdjust: aimPart
+              });
+              await withEyeOfEnvy(actor, targetActor, "bs", () => _executeAttackRoll(
+                actor, secondItem, "bs", secondThreshold, secondRof, undefined,
+                {
+                  ...(secondProfile ? { profile: secondProfile, profileIdx: fullFireOpt.profileIdx } : {}),
+                  attackNote: `Полный Огонь: второй ствол — «${fullFireOpt.label}», пара с «${item.name}»; `
+                    + `Реакция потрачена, ОД уже списаны первым выстрелом, −10 к обоим`,
+                  bringItDownDice
+                }
+              ));
+            }
+          }
           return true;
         }
       },
@@ -634,7 +741,10 @@ export function openAttackDialog(ctx) {
         // же, если игрок переключил Приём ПОСЛЕ открытия окна — тот же select,
         // что и при первом рендере (attack-dialog.mjs::aimLocked/forcedAimValue),
         // просто без перестройки списка опций (обе цели уже есть в нём).
-        const forcedAim = sel.maneuverKey === "stun" ? stunForcedAim(actor) : sel.maneuverKey === "sweep" ? "" : null;
+        const forcedAim = sel.maneuverKey === "stun" ? stunForcedAim(actor)
+          : (sel.maneuverKey === "sweep" || f.onThisMark) ? ""
+          : freeShotLocksAim(techniqueOpts?.freeShot) ? ""   // Бедро / Вытягивание / Бег: не Избирательный
+          : null;
         if (aimEl) {
           aimEl.disabled = forcedAim !== null;
           if (forcedAim !== null) aimEl.value = forcedAim;
@@ -799,6 +909,22 @@ export function openAttackDialog(ctx) {
         offHandEl.addEventListener("change", refreshOffRof);
         refreshOffRof();
       }
+      // Полный Огонь: режимы огня второго ствола зависят от выбранного ствола (data-rof у <option>).
+      const ffWithEl = form.querySelector("#atk-full-fire-with");
+      const ffRofEl  = form.querySelector("#atk-full-fire-rof");
+      const refreshFullFireRof = () => {
+        if (!ffWithEl || !ffRofEl) return;
+        let choices = [];
+        try { choices = JSON.parse(ffWithEl.selectedOptions?.[0]?.dataset?.rof || "[]"); }
+        catch { choices = []; }
+        const prev = ffRofEl.value;
+        ffRofEl.innerHTML = choices.map(o => `<option value="${o.value}">${o.label}</option>`).join("");
+        if (choices.some(o => o.value === prev)) ffRofEl.value = prev;
+      };
+      if (ffWithEl) {
+        ffWithEl.addEventListener("change", refreshFullFireRof);
+        refreshFullFireRof();
+      }
 
       // Сторона брони техники (wdbc-kp1o): Избирательная атака в Корму имеет
       // смысл только «с Лба/Борта» (уже выбранную Корму не в кого целиться
@@ -829,6 +955,16 @@ export function openAttackDialog(ctx) {
       sightEl?.addEventListener("change", async ev => {
         ev.stopPropagation();
         await item.setFlag?.("warhammer-dbc", ACTIVE_SIGHT_FLAG, sightEl.value);
+        dialog.close();
+        reopenWithProfile?.(lastProfIdx);
+      });
+
+      // Настройка Мощности (rules/power-setting.mjs): режим пишется флагом оружия и окно переоткрывается —
+      // Dmg/Pen/Надёжность/Surge режима посчитаны getModEffects при открытии (тот же приём, что у выбора прицела).
+      const powerModeEl = form.querySelector("#atk-power-mode");
+      powerModeEl?.addEventListener("change", async ev => {
+        ev.stopPropagation();
+        await item.setFlag?.("warhammer-dbc", POWER_MODE_FLAG, powerModeEl.value);
         dialog.close();
         reopenWithProfile?.(lastProfIdx);
       });

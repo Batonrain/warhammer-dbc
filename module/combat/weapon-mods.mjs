@@ -9,6 +9,7 @@ import { runtRifleIsLong } from "../rules/runt.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { itemHasKey } from "../rules/item-marker.mjs";
 import { isItemActive } from "../apps/effects.mjs";
+import { powerSettingEffects } from "../rules/power-setting.mjs";
 
 /** Все установленные на данное оружие модификации (среди предметов актора). */
 export function getInstalledMods(actor, weapon) {
@@ -152,6 +153,17 @@ export function getModEffects(actor, weapon) {
     for (const p of (e.mechAddProps || [])) fx.addProps.push(p);
     for (const k of (e.mechRemoveProps || [])) fx.removeProps.push(k);
     fx.names.push(mod.name);
+  }
+
+  // Power Setting / Настройка Мощности (rules/power-setting.mjs): выбранный режим — Усиление или
+  // Перегрузка — даёт Dmg/Pen/Надёжность и Surge поверх обычных эффектов модов.
+  const power = powerSettingEffects(weapon, getActiveMods(actor, weapon));
+  if (power) {
+    fx.damageMod += power.damageMod;
+    fx.penMod += power.penMod;
+    fx.reliabilityMod += power.reliabilityMod;
+    for (const p of power.addProps) fx.addProps.push(p);
+    fx.names.push(power.label);
   }
 
   // ── Усиление от поддерживаемых психосил (Force-оружие, благословения и т.п.) ──

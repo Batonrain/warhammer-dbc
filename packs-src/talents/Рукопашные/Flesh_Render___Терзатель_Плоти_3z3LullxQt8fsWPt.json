@@ -5,7 +5,7 @@
   "folder": "XeycnCsRlazxEDgr",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey meleeCore.core.fleshRender — рукопашное оружие со свойством Tearing бросает на урон ещё один куб сверх Рвущего (1d10 → 3d10, оставить лучший) (module/rules/melee-talents.mjs::fleshRenderExtraDrop, combat/attack.mjs wp.extraDropLowest). Строка 🪚 в карточке. Не видят Захват (когти/укус), Быстрый Выхват, удар в ответ на Парирование и атаки Орд — у них своя формула урона.",
     "benefit": "Персонаж получает +2 кубика на урон рукопашным оружием со свойством Tearing вместо обычного +1 и отбрасывает два наименьших.",
     "tier": 1,
     "requirement": "Нет",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "eqdzgP7HTt9fCxMJ",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "1fhwd9iO0FxAMZiL",
+              "capabilityKey": "meleeCore.core.fleshRender",
+              "label": "Терзатель Плоти: Рвущее рукопашного оружия даёт +2 куба урона вместо +1, два наименьших отбрасываются",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

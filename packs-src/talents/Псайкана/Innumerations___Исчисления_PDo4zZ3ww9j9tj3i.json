@@ -5,7 +5,7 @@
   "folder": "iSsQmZ2gkxraxksi",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: когда манифестация вызвала Феномен, до его броска и до расчёта эффектов система спрашивает «снять 1 эPR ради −2×I.b к броску Феномена?» (rules/psyker-talents.mjs::innumerationsMod, читает sheets/tabs/psychic.mjs); при согласии эPR эффектов (урон, дальность, поддержание) на 1 меньше. Порог психотеста уже брошен и не меняется.",
     "benefit": "Когда манифестация вызывает Феномен, сразу после психотеста, но до бросков на Феномен и эффекты, псайкер может уменьшить эPR силы на 1, чтобы получить модификатор до −2×I.b на бросок Феноменов.",
     "tier": 3,
     "requirement": "I 50, Logic, Forbidden Lore (Warp)+10",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g06innumeraCap1",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "e06innumeraCap1",
+              "capabilityKey": "psyker.core.innumerations",
+              "label": "Исчисления: при Феномене снять 1 эPR ради −2×I.b к броску Феномена",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

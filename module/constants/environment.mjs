@@ -129,6 +129,7 @@ export const RAD_PROTECTION = [
   { label: "Терминаторская броня",                val: "Иммунитет" },
   { label: "Трейт Machine",                       val: "−1" },
   { label: "Работающий Меланохром (геносемя)",    val: "−1" },
+  { label: "Усиленный Меланохром (Талант Black Mantle)", val: "−2 (вместо −1)" },
   { label: "Трейт Stuff of Nightmares",           val: "Иммунитет" },
   { label: "Трейт Hard as Stone (Скват)",         val: "−3" },
   { label: "Внутри жестяного здания",             val: "−1" },

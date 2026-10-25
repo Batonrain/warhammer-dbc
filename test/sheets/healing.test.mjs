@@ -212,7 +212,7 @@ describe("applyHealing: reattach (Пришивание конечности, Med
     const medic = person();
     const patient = person();
 
-    await applyHealing(medic, patient, { mode: "reattach", mod: 0, limb: "arm" });
+    await applyHealing(medic, patient, { mode: "reattach", mod: 0, limb: "arm", theatre: true });
 
     expect(captured.warnings.length).toBe(1);
     expect(patient.updates.length).toBe(0);
@@ -225,7 +225,7 @@ describe("applyHealing: reattach (Пришивание конечности, Med
     patient.system.lostLimbs = { rightArm: { lost: true, gangreneAt: 0 } };
     captured.dice = [10, 6]; // тест (eff 40-30=10, успех), 1d10 суток = 6
 
-    await applyHealing(medic, patient, { mode: "reattach", mod: 0, limb: "arm" });
+    await applyHealing(medic, patient, { mode: "reattach", mod: 0, limb: "arm", theatre: true });
 
     expect(patient.system.lostLimbs.rightArm.lost).toBe(false);
     expect(captured.chat[0].content).toContain("5"); // 6+3-4=5 суток
@@ -238,13 +238,13 @@ describe("applyHealing: reattach (Пришивание конечности, Med
     const hand = person({ t: 40 });
     hand.system.lostLimbs = { leftHand: { lost: true, gangreneAt: 0 } };
     captured.dice = [10, 1]; // 1+3-4=0 → мин. 1 сутки
-    await applyHealing(person({ medicae: 40 }), hand, { mode: "reattach", mod: 0, limb: "hand" });
+    await applyHealing(person({ medicae: 40 }), hand, { mode: "reattach", mod: 0, limb: "hand", theatre: true });
     expect(hand.system.uselessLimbs.leftArm.healAt).toBe(1_000_000 + 86400);
 
     const eye = person({ t: 40 });
     eye.system.lostLimbs = { rightEye: { lost: true, gangreneAt: 0 } };
     captured.dice = [10, 6];
-    await applyHealing(person({ medicae: 40 }), eye, { mode: "reattach", mod: 0, limb: "eye" });
+    await applyHealing(person({ medicae: 40 }), eye, { mode: "reattach", mod: 0, limb: "eye", theatre: true });
     expect(eye.system.uselessLimbs).toBeUndefined();
   });
 
@@ -254,7 +254,7 @@ describe("applyHealing: reattach (Пришивание конечности, Med
     patient.system.lostLimbs = { rightArm: { lost: true, gangreneAt: 0 } };
     captured.nextRoll = 90; // eff 10, провал
 
-    await applyHealing(medic, patient, { mode: "reattach", mod: 0, limb: "arm" });
+    await applyHealing(medic, patient, { mode: "reattach", mod: 0, limb: "arm", theatre: true });
 
     expect(patient.system.lostLimbs.rightArm.lost).toBe(true);
     expect(patient.updates.length).toBe(0);
@@ -325,7 +325,7 @@ describe("New Men / Новые Люди: операции и переломы", 
     patient.system.lostLimbs = { rightArm: { lost: true, gangreneAt: 0 } };
     captured.dice = [25, 10]; // eff 40−15=25 — успех; 1d10=10 → 10+3−4=9 → вдвое 4
 
-    await applyHealing(medic, patient, { mode: "reattach", mod: 0, limb: "arm" });
+    await applyHealing(medic, patient, { mode: "reattach", mod: 0, limb: "arm", theatre: true });
 
     expect(patient.system.lostLimbs.rightArm.lost).toBe(false);
     expect(captured.chat[0].content).toContain("−15");
@@ -337,7 +337,7 @@ describe("New Men / Новые Люди: операции и переломы", 
     const patient = person();
     patient.system.lostLimbs = { rightEye: { lost: true, gangreneAt: 0 } };
     captured.dice = [25, 6];
-    await resolveBionicTest(person({ medicae: 40 }), patient, { mod: 0, limb: "eye" });
+    await resolveBionicTest(person({ medicae: 40 }), patient, { mod: 0, limb: "eye", theatre: true });
     expect(patient.system.lostLimbs.rightEye.lost).toBe(false);
   });
 
@@ -362,7 +362,7 @@ describe("resolveBionicTest: потеряно мутацией Потеря Ко
     patient.system.lostLimbs = { leftArm: { lost: true, gangreneAt: 0, mutation: true } };
     captured.dice = [10, 6];
 
-    await resolveBionicTest(medic, patient, { mod: 0, limb: "arm", bodySide: "left", implantQuality: "lower" });
+    await resolveBionicTest(medic, patient, { mod: 0, limb: "arm", bodySide: "left", implantQuality: "lower", theatre: true });
 
     expect(patient.system.lostLimbs.leftArm.lost).toBe(true);
     expect(captured.chat[0].content).toContain("только Best.Q");
@@ -374,7 +374,7 @@ describe("resolveBionicTest: потеряно мутацией Потеря Ко
     patient.system.lostLimbs = { leftArm: { lost: true, gangreneAt: 0, mutation: true } };
     captured.dice = [10, 6];
 
-    await resolveBionicTest(medic, patient, { mod: 0, limb: "arm", bodySide: "left", implantQuality: "best" });
+    await resolveBionicTest(medic, patient, { mod: 0, limb: "arm", bodySide: "left", implantQuality: "best", theatre: true });
 
     expect(patient.system.lostLimbs.leftArm.lost).toBe(false);
     expect(patient.system.lostLimbs.leftArm.mutation).toBe(false);
@@ -388,7 +388,7 @@ describe("resolveBionicTest: установка бионики (Medicae−30)", 
     patient.system.lostLimbs = { rightEye: { lost: true, gangreneAt: 500000 } };
     captured.dice = [10, 6]; // тест (eff 40-30=10, успех), 1d10 суток адаптации
 
-    await resolveBionicTest(medic, patient, { mod: 0, limb: "eye" });
+    await resolveBionicTest(medic, patient, { mod: 0, limb: "eye", theatre: true });
 
     expect(patient.system.lostLimbs.rightEye.lost).toBe(false);
     expect(patient.system.lostLimbs.rightEye.gangreneAt).toBe(0);
@@ -400,7 +400,7 @@ describe("resolveBionicTest: установка бионики (Medicae−30)", 
     const patient = person();
     captured.dice = [10, 6];
 
-    await resolveBionicTest(medic, patient, { mod: 0, limb: "" });
+    await resolveBionicTest(medic, patient, { mod: 0, limb: "", theatre: true });
 
     expect(patient.updates.length).toBe(0);
     expect(captured.chat[0].content).not.toContain("восстановлена");
@@ -411,7 +411,7 @@ describe("resolveBionicTest: установка бионики (Medicae−30)", 
     const patient = person();
     captured.dice = [10, 6];
 
-    await resolveBionicTest(medic, patient, { mod: 0, limb: "hand" });
+    await resolveBionicTest(medic, patient, { mod: 0, limb: "hand", theatre: true });
 
     expect(patient.updates.length).toBe(0);
     expect(captured.chat[0].content).toContain("нет утраченной");
@@ -424,7 +424,7 @@ describe("resolveBionicTest: установка бионики (Medicae−30)", 
     patient.system.conditions.lostArmsCount = 1;
     captured.dice = [90, 7]; // тест провал, 1d10 урона = 7
 
-    await resolveBionicTest(medic, patient, { mod: 0, limb: "arm" });
+    await resolveBionicTest(medic, patient, { mod: 0, limb: "arm", theatre: true });
 
     expect(patient.system.conditions.lostArmsCount).toBe(1); // не тронуто
     expect(patient.system.conditions.crippling).toBeUndefined();

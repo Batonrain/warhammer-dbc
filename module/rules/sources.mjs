@@ -39,6 +39,7 @@ import { hatredRules } from "./hatred.mjs";
 import { rageRules } from "./rage.mjs";
 import { socialTalentRules } from "./social-talents.mjs";
 import { awarenessTalentRules } from "./awareness-talents.mjs";
+import { situationalSocialRules } from "./situational-social-talents.mjs";
 import { resilienceTalentRules } from "./resilience-talents.mjs";
 import { leadershipTalentRules } from "./leadership-talents.mjs";
 import { occultistTalentRules } from "./occultist-talents.mjs";
@@ -197,6 +198,11 @@ registerRuleSource("socialTalents", (a, ctx) => socialTalentRules(a, ctx));
 // Чувств, Дегустатора, Воролова, Службы Безопасности и Аналитического Взгляда,
 // штраф Ослепления вдвое у Боя Вслепую. См. заголовок rules/awareness-talents.mjs.
 registerRuleSource("awarenessTalents", (a, ctx) => awarenessTalentRules(a, ctx));
+
+// Лицо в Толпе (F вместо A в толпе), Жалкие Слабаки (±10 против слабых) и
+// −30 Идолопоклонника — галочки в окне теста, условие решает стол
+// (Sahara 3-5e84 / 3-scope, 24.10.2026). См. заголовок rules/situational-social-talents.mjs.
+registerRuleSource("situationalSocialTalents", (a, ctx) => situationalSocialRules(a, ctx));
 
 // Таланты Стойкости (глава 3, сверка 18.10.2026): +10 Сопротивления на тесты
 // своей специализации (Страх, Яд, Психосилы, Оглушение) и +10 Декаданса на тесты

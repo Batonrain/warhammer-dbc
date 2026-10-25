@@ -285,7 +285,16 @@ export async function runContestOutcome({ contestId, opponentUuid, initiatorWins
   }
   if (entry.done.has(opponentUuid)) return false;
   entry.done.add(opponentUuid);
-  if (!initiatorWins) return false;
+  if (!initiatorWins) {
+    // Необязательный колбэк на проигрыш (Удушение: Заломить наносит Усталость и
+    // при проигрыше, combat/grapple-talents.mjs). Остальные приёмы его не несут.
+    if (typeof entry.techDef.onFail === "function") {
+      const loser = await fromUuid(entry.actorUuid).catch(() => null);
+      const foe = await fromUuid(opponentUuid).catch(() => null);
+      if (loser) await entry.techDef.onFail(loser, { target: foe, margin });
+    }
+    return false;
+  }
   const actor = await fromUuid(entry.actorUuid).catch(() => null);
   const target = await fromUuid(opponentUuid).catch(() => null);
   if (!actor) return false;
@@ -293,7 +302,8 @@ export async function runContestOutcome({ contestId, opponentUuid, initiatorWins
     // Победа меньшим провалом (оба провалили) — Успехов у инициатора нет:
     // deg провала не должен давать «сдвиг на deg м» / бонус 5+ (приёмка #516).
     const deg = entry.result.success ? entry.result.deg : 0;
-    await entry.techDef.onSuccess(actor, { deg, target, margin });
+    // side — чем бросал инициатор ({char:"bs"} и т.п.): Огневая Угроза различает BS и WS в Давлении.
+    await entry.techDef.onSuccess(actor, { deg, target, margin, side: entry.result.side });
   } else if (entry.techDef.note) {
     await postTestCard(actor, {
       icon: rollIcon("sword"), title: `${esc(entry.techDef.label)}: победа над ${esc(target?.name ?? "?")}`,

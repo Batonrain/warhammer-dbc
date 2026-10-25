@@ -33,8 +33,12 @@ async function onOpenMaster() {
 async function onSyncLoyalty() {
   const master = await fromUuid(this.actor.system?.masterUuid || "").catch(() => null);
   if (!master) return ui.notifications?.warn("Хозяин не назначен или не найден.");
-  const base = minionLoyalty(master, this.actor.system?.minionType);
-  if (!base) return ui.notifications?.warn("У Миньона не выбрана группа — не от чего считать Лояльность.");
+  // Пушечное Мясо Хозяина (Cannon Fodder): −20 Лояльности именно этому слуге.
+  const base = minionLoyalty(master, this.actor.system?.minionType,
+    { uuid: this.actor.uuid, slotTalentId: this.actor.system?.slotTalentId || "",
+      astartes: !!this.actor.system?.isAstartes });
+  // Проверяем группу, а не результат: Пушечное Мясо может честно опустить Лояльность до 0.
+  if (!MINION_GROUPS[this.actor.system?.minionType]?.masterChar) return ui.notifications?.warn("У Миньона не выбрана группа — не от чего считать Лояльность.");
   await this.actor.update({ "system.loyalty.max": base, "system.loyalty.value": base });
 }
 

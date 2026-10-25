@@ -5,7 +5,7 @@
   "folder": "iSsQmZ2gkxraxksi",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект тратит/даёт игровой ресурс (Очки Бесчестия/Судьбы/Боли/Когниции/Реакцию) на разовое действие — не тестовый модификатор Навыка/Характеристики.",
+    "notes": "Реализовано: в окне манифестации пункты mPR выше тPR помечены «Психическое Возрождение (−1 ОБ)»; выбор такого mPR списывает Очко Бесчестия и ставит на псайкера метку, гаснущую в начале его следующего Хода (rules/turn-flags.mjs, psychicResurgenceActive), — пока метка стоит, потолок mPR равен бПР и второе Очко не нужно. Нет Очка — манифестации нет. Временное Очко Бесчестия (Знания Веков и т.п.) на эту трату не идёт: списывается основной запас.",
     "benefit": "Персонаж может потратить Очко Бесчестия, чтобы до начала своего следующего Хода игнорировать штрафы к тPR от поддержания психосил.",
     "tier": 3,
     "requirement": "W 60, PR 6",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g04psychicRCap1",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "e04psychicRCap1",
+              "capabilityKey": "psyker.core.psychicResurgence",
+              "label": "Психическое Возрождение: за Очко Бесчестия поддержание не снижает тPR до начала следующего Хода",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

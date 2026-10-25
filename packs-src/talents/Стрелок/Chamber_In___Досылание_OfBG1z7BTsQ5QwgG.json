@@ -5,7 +5,7 @@
   "folder": "V0Wfgl0aycRFPfu2",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано (решение владельца 24.10.2026): capabilityKey rangedCore.core.chamberIn — при нажатии «Перезарядка» у носителя Таланта (винтовка в двух руках или пистолет при свободной руке, оружие на отдельных патронах: болт, твёрдое, примитив, иглы, пусковое и т.п.) предлагается «Дослать 1 патрон»: +1 в магазин, запас магазинов НЕ уменьшается, раз в Ход (module/combat/reload.mjs::chamberInRound ← module/rules/gunner-talents.mjs::chamberInBlockReason). Топливо и батареи (лазер, плазма, мельта, огнемёты) — не работает. Мод Буллпап запрещает Досылание (описание мода).",
     "benefit": "Держа винтовку/дл. винтовку двумя руками или пистолет со свободной рукой, персонаж раз в Ход свободным действием заряжает в это оружие один патрон со своего бандольера/пояса. Не работает с топливом/батареями.",
     "tier": 1,
     "requirement": "Rapid Reload",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "bMaJmqJf10vIOUtm",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "AoVvnPrOguPTYJoZ",
+              "capabilityKey": "rangedCore.core.chamberIn",
+              "label": "Досылание: +1 патрон в магазин свободным действием, раз в Ход",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

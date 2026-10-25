@@ -5,7 +5,7 @@
   "folder": "XeycnCsRlazxEDgr",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey meleeCore.core.falseAdvance — на карточке Полудвижения и Полного движения у носителя две кнопки «Финт / Давление (свободное действие)» (module/rules/melee-talents.mjs::falseAdvanceOffered, combat/movement-actions.mjs::falseAdvanceHtml, hooks.mjs .wh-false-advance-btn): открывают обычный диалог Состязания, один раз на карточку (отметка в момент броска, «Отмена» её не съедает). ОД не списываются — Состязания Финт/Давление программно ОД и так не берут. «В контакте с врагом» система не меряет — подтверждает игрок.",
     "benefit": "Заканчивая Полудвижение или Полное движение в контакте с врагом, персонаж может провести против него один Финт или Давление за свободное действие.",
     "tier": 2,
     "requirement": "WS 50, A 50",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "faDKgr1kKX6MI3xm",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "uCqlp8kujpTCxELb",
+              "capabilityKey": "meleeCore.core.falseAdvance",
+              "label": "Ложный Натиск: после Полудвижения/Полного движения в контакте с врагом — один Финт или Давление за свободное действие",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {
