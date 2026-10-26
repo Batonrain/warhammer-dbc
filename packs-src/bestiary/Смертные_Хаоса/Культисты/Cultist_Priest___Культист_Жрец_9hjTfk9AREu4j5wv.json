@@ -555,7 +555,8 @@
           "standard": false,
           "reloads": 10
         },
-        "drukhari": false
+        "drukhari": false,
+        "meleeCategory": "Нож"
       },
       "img": "systems/warhammer-dbc/assets/item-icons/weapon-knife.svg",
       "effects": [],
@@ -1155,7 +1156,8 @@
           "vArc": "",
           "standard": false,
           "reloads": 10
-        }
+        },
+        "meleeCategory": "Топор"
       },
       "_id": "HVH14vE81qGM46PS",
       "img": "systems/warhammer-dbc/assets/item-icons/weapon-axe.svg",

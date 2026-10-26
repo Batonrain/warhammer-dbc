@@ -501,7 +501,8 @@
           "standard": false,
           "reloads": 10
         },
-        "drukhari": false
+        "drukhari": false,
+        "meleeCategory": "Меч"
       },
       "img": "systems/warhammer-dbc/assets/item-icons/weapon-whip.svg",
       "effects": [],

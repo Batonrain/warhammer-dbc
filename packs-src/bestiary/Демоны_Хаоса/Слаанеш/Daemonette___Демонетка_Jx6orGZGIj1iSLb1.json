@@ -1268,7 +1268,8 @@
           "standard": false,
           "reloads": 10
         },
-        "drukhari": false
+        "drukhari": false,
+        "meleeCategory": "Когти"
       },
       "_id": "eFpNsDVcA674qqj2",
       "effects": [],

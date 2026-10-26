@@ -1517,7 +1517,8 @@
           "standard": false,
           "reloads": 10
         },
-        "drukhari": false
+        "drukhari": false,
+        "meleeCategory": "Кулаки"
       },
       "_id": "Wsyfq8wvLiQYfP2I",
       "effects": [],
@@ -1607,7 +1608,8 @@
           "standard": false,
           "reloads": 10
         },
-        "drukhari": false
+        "drukhari": false,
+        "meleeCategory": "Когти"
       },
       "_id": "puONiuRNH2CPOTjp",
       "effects": [],
