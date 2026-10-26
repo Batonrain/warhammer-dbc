@@ -168,6 +168,13 @@
             <span class="ae-pool-value">{{actionEconomy.defense.value}}</span><span class="ae-pool-sep">/</span><span class="ae-pool-max">{{actionEconomy.defense.max}}</span>
           </div>
           {{/if}}
+          {{#if actionEconomy.strange}}
+          <div class="ae-pool" title="Странная Техника: доп. Реакция только на атаки вроде хвоста, мехадендритов, бонусных «Повалить» крюком/посохом (не на Избегание, не на Furious Assault). Атака хвостом (Запрещённый Приём) и бонусный «Повалить» крюком/посохом списывают её сами; для мехадендритов — кнопка −1.">
+            <span class="ae-pool-label">Реакция (странные атаки)</span>
+            <span class="ae-pool-value">{{actionEconomy.strange.value}}</span><span class="ae-pool-sep">/</span><span class="ae-pool-max">{{actionEconomy.strange.max}}</span>
+            <button type="button" class="ae-spend-btn" data-ae-spend="strange" data-ae-cost="1" title="Списать странную Реакцию вручную (мехадендриты)">−1</button>
+          </div>
+          {{/if}}
           {{#if actionEconomy.encounterActive}}
           <div class="ae-pool" title="Отскок (стр. 12): SPD м за Раунд суммарно по всем Отскокам вместо нивеляции Уклонения от стрелковой атаки">
             <span class="ae-pool-label">Отскок</span>
@@ -385,6 +392,15 @@
     {{/if}}
     {{#if hasFlourishDance}}
     <button type="button" class="technique-btn flourish-dance-btn" style="margin-top:6px;" title="Размашистый Танец — плащ в свободной руке, Dancer(A) vs Awareness(P) цели под прицелом: −5 на её атаки по вам за каждый Успех"><span class="tech-name">💃 Размашистый Танец</span></button>
+    {{/if}}
+    {{#if bladeBound}}
+    <button type="button" class="technique-btn blade-release-btn" style="margin-top:6px;" title="Сцепление Клинков: оружия сцеплены — атаковать и парировать ими нельзя до начала Хода цепляющего. Разойтись из рукопашной — снять сцепление."><span class="tech-name">⛓ Разойтись (оружия сцеплены)</span></button>
+    {{/if}}
+    {{#if saviorGate}}
+    <button type="button" class="technique-btn savior-btn" style="margin-top:6px;" {{#if saviorGate.disabled}}disabled{{/if}} title="{{saviorGate.title}}"><span class="tech-name">🛡 Спаситель (Реакция)</span></button>
+    {{/if}}
+    {{#if showOffGate}}
+    <button type="button" class="technique-btn show-off-btn" style="margin-top:6px;" {{#if showOffGate.disabled}}disabled{{/if}} title="{{showOffGate.title}}"><span class="tech-name">💃 Рисовка (Полудействие)</span></button>
     {{/if}}
     {{#if hasCaution}}
     <button type="button" class="technique-btn caution-btn" style="margin-top:6px;" title="Осторожность — раз в Ход, ментальное полудействие (1 ОД, Концентрация): +1 Реакция"><span class="tech-name">🛡 Осторожность</span></button>

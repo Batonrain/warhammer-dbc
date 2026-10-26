@@ -326,6 +326,8 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
     data-breach-no-double="${wp.breachNoDouble ? 1 : 0}"
     data-neg-wounds-bonus="${wp.negWoundsBonus ?? 0}"
     data-cleave-child="${wp.cleaveChild ? 1 : 0}"
+    data-hamstring="${wp.hamstring ? 1 : 0}"
+    data-charge-base="${wp.chargeBase ? 1 : 0}"
     ${toHorde ? `data-force-horde="${toHorde}"` : ""}>
     Применить урон ${i + 1}: <b>${d.total}</b> → ${toHorde ? "Орду (прикрыла цель)" : d.loc}${
       wp.blastRating > 0 ? ` <span class="roll-hit-extra">(отметьте всех в радиусе ${wp.blastRating}м — «Всем»)</span>` : ""}
@@ -809,6 +811,8 @@ export function attackCard({
   bayonetShotHtml = "",
   // Яростный Штурм (combat/furious-assault.mjs): готовая разметка кнопки доп. атаки.
   furiousAssaultHtml = "",
+  // Упорство (combat/tenacity.mjs): готовая разметка кнопки повтора.
+  tenacityHtml = "",
   // Снайпер Ужаса (combat/terror-sniper.mjs): {targetTokenUuid} или null.
   terrorSniperOffer = null,
   sbEff = 0, sbHalf = false, reverseThrustBonus = 0, taintedAdd = 0, vehicleSide = "",
@@ -1067,6 +1071,7 @@ export function attackCard({
     </button>` : "",
       isMelee && bayonetShotHtml ? bayonetShotHtml : "",
       isMelee && furiousAssaultHtml ? furiousAssaultHtml : "",
+      isMelee && tenacityHtml ? tenacityHtml : "",
       !isMelee && terrorSniperOffer ? `
     <button class="wh-terror-sniper-btn" type="button" data-attacker-uuid="${attackerUuid}" data-target-token-uuid="${esc(terrorSniperOffer.targetTokenUuid)}"
       title="Избирательное попадание Accurate-оружием после Прицеливания: Intimidate(BS)+0 → при Успехе враги в радиусе «Успехи» м, видевшие попадание, проходят Подавление (+0, −20 если знают, где стрелок)">

@@ -88,6 +88,9 @@ import { hasDreadWail }                          from "../combat/dread-wail.mjs"
 import { hasResplendentRaiment }                 from "../combat/resplendent-raiment.mjs";
 import { hasAdrenalineRush }                     from "../combat/adrenaline-rush.mjs";
 import { hasCaution }                            from "../combat/caution.mjs";
+import { hasSavior, saviorGate }                 from "../combat/savior.mjs";
+import { hasShowOff, showOffGate }               from "../combat/show-off.mjs";
+import { actorHasBinding }                       from "../combat/blade-binding.mjs";
 import { hasRuleFlag as hasCourageFlag }         from "../rules/flags.mjs";
 import { IDOLATER_CAP }                          from "../rules/courage-talents.mjs";
 import { hasFlourishDance }                      from "../combat/flourish-dance.mjs";
@@ -99,7 +102,7 @@ import { hasBeastmanShamanTalent, hasBeastmanShamanTrait } from "../combat/beast
 import { hasConjureWraith }                      from "../combat/conjure-wraith.mjs";
 import { MELEE_BASES, MELEE_CONTESTS, MELEE_STANCES } from "../constants/combat.mjs";
 import { hasActionEconomy, isEncounterActive, effectiveDefenseReactionMax,
-         effectiveActionPointsMax,
+         effectiveActionPointsMax, effectiveStrangeReactionMax,
          apSpendGate, reactionSpendGate }         from "../combat/action-economy.mjs";
 import { recoilRemaining, recoilLimit }           from "../combat/recoil-pool.mjs";
 import { attackActionLimit }                      from "../combat/attack-limit.mjs";
@@ -182,6 +185,7 @@ export function characterContext(actor) {
   // остальные действия тратятся кнопками combat.mjs::activateCombatListeners).
   if (hasActionEconomy(actor)) {
     const defenseMax = effectiveDefenseReactionMax(actor);
+    const strangeMax  = effectiveStrangeReactionMax(actor);
     context.actionEconomy = {
       ap:        { value: system.actionPoints?.value ?? 0, max: effectiveActionPointsMax(actor) },
       reactions: { value: system.reactions?.value ?? 0, max: system.reactions?.max ?? 0 },
@@ -190,6 +194,10 @@ export function characterContext(actor) {
       // отдельная строка на листе была бы пустым шумом.
       defense: (system.reactions?.defenseValue || defenseMax)
         ? { value: system.reactions?.defenseValue ?? 0, max: defenseMax }
+        : null,
+      // «Странная» Реакция Странной Техники (хвост/мехадендриты/бонусный Повалить) — строка только при Таланте.
+      strange: (system.reactions?.strangeValue || strangeMax)
+        ? { value: system.reactions?.strangeValue ?? 0, max: strangeMax }
         : null,
       encounterActive: isEncounterActive(),
       exposed: !!actor.getFlag("warhammer-dbc", "exposedAggressive"),
@@ -529,6 +537,12 @@ export function characterContext(actor) {
   context.hasAdrenalineRush = hasAdrenalineRush(actor);
   // Кнопка «Осторожность» на вкладке БОЙ (глава 3) — только владельцам Таланта.
   context.hasCaution = hasCaution(actor);
+  // Спаситель (Талант «Рукопашных»): кнопка вкладки Боя, доступна в любой момент — гейт только по Реакции.
+  if (hasSavior(actor)) context.saviorGate = saviorGate(actor);
+  // Рисовка (Талант «Рукопашных», combat/show-off.mjs): кнопка вкладки Боя, гейт по ОД на Полудействие.
+  if (hasShowOff(actor)) context.showOffGate = showOffGate(actor);
+  // Сцепление Клинков: кнопка «Разойтись» видна, пока у персонажа есть живое сцепление (его или на нём).
+  context.bladeBound = actorHasBinding(actor);
   // Галочка «Кумир рядом» на вкладке БОЙ (Sahara 3-scope) — только владельцам Идолопоклонника.
   context.hasIdolater = hasCourageFlag(actor, IDOLATER_CAP);
   // Тумблер «Броня обслужена сегодня» Бронника (глава 3) — только владельцам Таланта.

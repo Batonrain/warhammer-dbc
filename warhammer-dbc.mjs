@@ -161,6 +161,7 @@ import { migrateRetinalDisplayMark } from "./module/migrations/retinal-display-m
 import { migrateDrugAddictionFields } from "./module/migrations/drug-addiction-fields.mjs";
 import { migrateDiseaseActive } from "./module/migrations/disease-active.mjs";
 import { migrateDiseaseActiveAll } from "./module/migrations/disease-active-all.mjs";
+import { migrateStrangeTechniqueEffect } from "./module/migrations/strange-technique-effect.mjs";
 import { migrateDrugAddictionFlag } from "./module/migrations/drug-addiction-flag.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
 import { runMigrationGate } from "./module/migrations/unlinked-tokens.mjs";
@@ -500,6 +501,7 @@ Hooks.once("init", () => {
     "drugAddictionFieldsTokensVersion",
     "diseaseActiveTokensVersion",
     "diseaseActiveAllTokensVersion",
+    "strangeTechniqueEffectTokensVersion",
     "drugAddictionFlagTokensVersion"
   ]) {
     game.settings.register("warhammer-dbc", key, { scope: "world", config: false, type: Number, default: 0 });
@@ -686,6 +688,12 @@ Hooks.once("init", () => {
   // Версия включения ВСЕХ уже выданных болезней (в т.ч. без механики): Чумной
   // Пастырь считает заражёнными только действующие (одноразовая, task-3ab7)
   game.settings.register("warhammer-dbc", "diseaseActiveAllVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия снятия общего ActiveEffect «+1 Реакция» у Странной Техники (одноразовая, Sahara 3-8dc5):
+  // теперь отдельный пул «странных» атак
+  game.settings.register("warhammer-dbc", "strangeTechniqueEffectVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -1204,7 +1212,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateRetinalDisplayMark, migrateDrugAddictionFields, migrateDrugAddictionFlag, migrateDiseaseActive, migrateDiseaseActiveAll, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateRetinalDisplayMark, migrateDrugAddictionFields, migrateDrugAddictionFlag, migrateDiseaseActive, migrateDiseaseActiveAll, migrateStrangeTechniqueEffect, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -1526,6 +1534,18 @@ Hooks.once("ready", async () => {
   await runMigrationGate({
     key: "diseaseActiveAllVersion", tokensKey: "diseaseActiveAllTokensVersion", label: "Болезни (все выданные)",
     full: () => migrateDiseaseActiveAll(), tokensOnly: () => migrateDiseaseActiveAll({ tokensOnly: true })
+  });
+});
+
+// ── Одноразово: Странная Техника — снять общий ActiveEffect «+1 Реакция» у выданных копий;
+// Реакция теперь отдельный пул «странных» атак (Sahara 3-8dc5) ──
+// Ручной перезапуск: game.warhammerDBC.migrateStrangeTechniqueEffect()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  // Идемпотентна: нечего снимать — нет записей (migrations/strange-technique-effect.mjs).
+  await runMigrationGate({
+    key: "strangeTechniqueEffectVersion", tokensKey: "strangeTechniqueEffectTokensVersion", label: "Странная Техника (общая Реакция)",
+    full: () => migrateStrangeTechniqueEffect(), tokensOnly: () => migrateStrangeTechniqueEffect({ tokensOnly: true })
   });
 });
 

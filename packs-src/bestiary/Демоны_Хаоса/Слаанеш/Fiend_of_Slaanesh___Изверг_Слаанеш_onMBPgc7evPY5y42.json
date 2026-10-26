@@ -1823,54 +1823,7 @@
         }
       },
       "_id": "iMsnK9rG32bEolTh",
-      "effects": [
-        {
-          "name": "Strange Technique / Странная Техника",
-          "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
-          "system": {
-            "changes": [
-              {
-                "key": "system.reactions.max",
-                "type": "add",
-                "value": 1,
-                "phase": "initial",
-                "priority": 0
-              }
-            ]
-          },
-          "_id": "SkIUOOSl2S0CFm1v",
-          "type": "base",
-          "disabled": false,
-          "start": null,
-          "duration": {
-            "value": null,
-            "units": "seconds",
-            "expiry": null,
-            "expired": false
-          },
-          "description": "Реакция общая (движок не различает узкий список разрешённых атак) — ограничение назначения соблюдается за столом.",
-          "origin": null,
-          "tint": "#ffffff",
-          "transfer": true,
-          "statuses": [],
-          "showIcon": 1,
-          "folder": null,
-          "sort": 0,
-          "flags": {},
-          "_stats": {
-            "coreVersion": "14.365",
-            "systemId": "warhammer-dbc",
-            "systemVersion": "0.1.0",
-            "createdTime": null,
-            "modifiedTime": null,
-            "lastModifiedBy": null,
-            "compendiumSource": null,
-            "duplicateSource": null,
-            "exportSource": null
-          },
-          "_key": "!actors.items.effects!onMBPgc7evPY5y42.iMsnK9rG32bEolTh.SkIUOOSl2S0CFm1v"
-        }
-      ],
+      "effects": [],
       "folder": null,
       "sort": 0,
       "ownership": {

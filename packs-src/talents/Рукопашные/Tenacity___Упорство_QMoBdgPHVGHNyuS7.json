@@ -5,7 +5,7 @@
   "folder": "XeycnCsRlazxEDgr",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey meleeCore.core.tenacity — в карточке рукопашной атаки (одиночная: не Быстрая/Молниеносная и не пара Обеих Рук; единственная в Ходу по счётчику Атак) появляется кнопка «Упорство»: тот же клинок, та же База и Приём, цель не сбрасывается; повтор бесплатный (ни ОД, ни Лимит Атак) и сам не порождает нового. Кнопка закрывается, если рукопашная атака этого Хода уже нанесла непоглощённый урон (метка Хода, combat/damage.mjs → combat/tenacity.mjs); промах/Избегание/поглощение/щиты — отдельного сигнала у системы нет, поэтому «не нанесла урона» = нет метки. Раз на карточку. module/rules/melee-talents.mjs::tenacityOffered/tenacityAvailable, hooks.mjs (.wh-tenacity-btn).",
     "benefit": "Совершив только одну одиночную рукопашную атаку в Ход, не нанёсшую урона (промах, Избегание, поглощение, щиты), персонаж может тут же провести её с той же базой и приёмом по той же цели ещё раз.",
     "tier": 2,
     "requirement": "P 40",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "nkKcfMayeqSxw6ox",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "3pmw9yxtYQC0p9bx",
+              "capabilityKey": "meleeCore.core.tenacity",
+              "label": "Упорство: единственная одиночная рукопашная атака Хода, не нанёсшая урона, — повтор с той же Базой и Приёмом по той же цели",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

@@ -41,6 +41,9 @@ import { offerHardeningSpend } from "./ablative-hardening.mjs";
 import { statusApplyFields } from "./status-resist.mjs";
 import { takedownSection } from "./takedown.mjs";
 import { cleaveSection } from "./cleave.mjs";
+import { hamstringSection } from "./hamstring.mjs";
+import { markLastChargeHit } from "./reaper-chain.mjs";
+import { markMeleeDamageDealt, markMeleeDamageApplied } from "./tenacity.mjs";
 import { hollowBonesTb } from "../rules/hollow-bones.mjs";
 import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
 import { inPariahVoid } from "../rules/null-zones.mjs";
@@ -89,6 +92,14 @@ export const CORROSIVE_BODY_IMMUNITY = "weaponPropertyImmunity.corrosiveBodyOnly
  * субмутация 10 «Кислота», wdbc-1rno.15): броня разъедается как обычно, а
  * остаток на тело не переходит.
  */
+/** uuid токена цели удара: токен синтетического актора, иначе выцеленный токен этого актора, иначе его токен на сцене. */
+function _targetTokenUuid(actor) {
+  if (actor?.token?.uuid) return actor.token.uuid;
+  const targeted = [...(globalThis.game?.user?.targets ?? [])]
+    .find(t => t.actor === actor || (t.actor?.uuid && t.actor.uuid === actor?.uuid));
+  return (targeted?.document ?? actor?.getActiveTokens?.(false, true)?.[0])?.uuid ?? "";
+}
+
 async function _applyCorrosive(actor, armorKey, hitLocation, rating, { bodyImmune = false } = {}) {
   const currentAP = Math.max(0, Number(actor.system.absorption?.armorOnly?.[armorKey]) || 0);
   const existing  = Number(actor.system.armorCorrosion?.[armorKey]) || 0;
@@ -859,10 +870,15 @@ export async function applyDamageToActor(actor, damageData) {
     opportunistFloor = false, // Оппортунист/versatile 10-10 (wdbc-1rno.35): минимум 1d10−2(мин.1) вместо флэт-1
     breachNoDouble = false, // Облучить (Талант Оружейника): пробитие брони Rad без удвоения AP цели
     negWoundsBonus = 0, // Пробивной Удар (rules/gunner-talents.mjs): +N к урону, если Раны уйдут в минус
+    hamstring = false,   // Подрезать Сухожилья (combat/hamstring.mjs): метка атаки — Избирательная в Ногу, не Быстрая/Молниеносная
+    chargeBase = false,  // Жнец (combat/reaper-chain.mjs): удар проведён с Базой «Натиск»
     cleaveChild = false, // Разрубить (combat/cleave.mjs): это сама дополнительная атака Таланта — новых не порождает
     ignoreSubtypeImmunity = false, // Огонь Души (combat/soulfire.mjs): иммунитет к подвиду этого попадания не действует
     sourceMessageId = "" // карточка атаки, с которой пришёл урон — к ней привязан итог пробития (wdbc-x1nz.2.79)
   } = damageData;
+
+  // Упорство (combat/tenacity.mjs): урон по этой карточке применён — повтор больше не переспрашивает.
+  if (melee) await markMeleeDamageApplied(attackerUuid, sourceMessageId);
 
   // Bronze Myrmidon (wdbc-1rno.1, rules/bronze-myrmidon.mjs): у актора с
   // активным Трейтом Machine (Ярость) попадание в Сочленение/Глаз резолвится
@@ -1417,6 +1433,8 @@ export async function applyDamageToActor(actor, damageData) {
   // ранении: «последнее» и есть то, от которого умерли.
   if (weaponUuid && netDamage > 0) {
     await actor.setFlag("warhammer-dbc", LAST_DAMAGE_WEAPON_FLAG, weaponUuid);
+    // Жнец (combat/reaper-chain.mjs): был ли это рукопашный Натиск — решит setDeceased, когда смерть констатируют.
+    await markLastChargeHit(actor, { melee, chargeBase, attackerUuid, targetTokenUuid: _targetTokenUuid(actor) });
   }
 
   // Обескровливание (wdbc-x1nz.2.92): без сознания от него — «пока он не
@@ -1750,6 +1768,16 @@ export async function applyDamageToActor(actor, damageData) {
     woundsBefore: currentWounds, woundsAfter: newWounds, targetName: actor.name
   });
 
+  // Упорство (combat/tenacity.mjs): рукопашная атака нанесла урон — повтор Упорства после этого закрыт.
+  if (melee && netDamage > 0) await markMeleeDamageDealt(attackerUuid);
+
+  // Подрезать Сухожилья (combat/hamstring.mjs): Избирательное попадание в Ногу с непоглощённым уроном →
+  // кнопка встречного теста A+0 vs A+0 (сбить с ног; 5+ Успехов — потеря полудействия).
+  const hamstringBtn = await hamstringSection({
+    attackerUuid, targetUuid: actor.uuid, targetName: actor.name, armed: melee && hamstring, net: netDamage,
+    targetProne: !!actor.system?.conditions?.prone
+  });
+
   // Карточка УРОНА, а не теста — родня attack-card.mjs (своя большая разметка
   // поглощения, Ран, крита и пилюль Крит. Эффекта): от общего сборщика
   // (wdbc-kuun) взяты разметка и публикация. Говорит от лица «Системы», а не
@@ -1781,6 +1809,7 @@ export async function applyDamageToActor(actor, damageData) {
       throughShotBtn,
       takedownBtn,
       cleaveBtn,
+      hamstringBtn,
       reaperSection,
       braveHeartSection
     ]

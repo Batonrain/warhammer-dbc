@@ -15,6 +15,7 @@
 import { hasAbility } from "./ability-by-key.mjs";
 import { heldWeapons } from "./dual-wield-talents.mjs";
 import { talentSpecs } from "./dual-wield.mjs";
+import { fmtMeters, PATH_EPS } from "./movement-path.mjs";
 
 /** Ключи Возможностей (module/constants/capabilities.mjs) и имена Талантов. */
 export const MELEE_TALENTS = Object.freeze({
@@ -25,6 +26,15 @@ export const MELEE_TALENTS = Object.freeze({
   riposte:     { key: "meleeCore.core.riposte",     name: "Riposte" },
   falseAdvance:{ key: "meleeCore.core.falseAdvance", name: "False Advance" },
   cleave:      { key: "meleeCore.core.cleave",       name: "Cleave" },
+  stockGrip:   { key: "meleeCore.core.stockGrip",    name: "Stock Grip" },
+  bladeBinding: { key: "meleeCore.core.bladeBinding", name: "Blade Binding" },
+  reverseStrike: { key: "meleeCore.core.reverseStrike", name: "Reverse Strike" },
+  savior:      { key: "meleeCore.core.savior",       name: "Savior" },
+  tenacity:    { key: "meleeCore.core.tenacity",     name: "Tenacity" },
+  hamstring:   { key: "meleeCore.core.hamstring",    name: "Hamstring" },
+  strangeTechnique: { key: "meleeCore.core.strangeTechnique", name: "Strange Technique" },
+  reaper:      { key: "meleeCore.core.reaper",       name: "Reaper" },
+  showOff:     { key: "meleeCore.core.showOff",      name: "Show-Off" },
   unstoppableCharge: { key: "rider.core.unstoppableCharge", name: "Unstoppable Charge" }
 });
 
@@ -32,6 +42,29 @@ export const MELEE_TALENTS = Object.freeze({
 export function hasMeleeTalent(actor, id) {
   const t = MELEE_TALENTS[id];
   return !!t && hasAbility(actor, t.key, t.name, "talent");
+}
+
+// ── Обратный Удар ───────────────────────────────────────────────────────────
+
+/** Подпись профиля и категория оружия, которыми книга называет «профиль посоха». */
+export const STAFF_PROFILE_LABEL = "Посох";
+export const STAFF_CATEGORY = "Посох";
+
+/**
+ * Профиль посоха для второй атаки Обратного Удара (core.json: «используя профиль посоха»).
+ * Решение владельца 26.10.2026: оружие категории «Посох» без профилей (12 предметов пака) тоже
+ * годится — вторая атака идёт базовым профилем самого оружия.
+ *
+ * @param {object} item      оружие
+ * @param {object[]} [profiles] профили оружия (по умолчанию авторские system.profiles)
+ * @returns {number|null} индекс профиля с подписью «Посох» (≥ 0); -1 — базовый профиль оружия
+ *   категории «Посох» (профиля с такой подписью нет); null — вторая атака невозможна
+ */
+export function reverseStrikeSecondProfileIdx(item, profiles) {
+  const list = Array.isArray(profiles) ? profiles : (Array.isArray(item?.system?.profiles) ? item.system.profiles : []);
+  const idx = list.findIndex(p => String(p?.label ?? "").includes(STAFF_PROFILE_LABEL));
+  if (idx >= 0) return idx;
+  return String(item?.system?.meleeCategory ?? "").trim() === STAFF_CATEGORY ? -1 : null;
 }
 
 // ── Перемолоть ──────────────────────────────────────────────────────────────
@@ -159,6 +192,95 @@ export function cleaveTriggered(actor, { melee, cleaveChild, net, woundsBefore, 
   return hasMeleeTalent(actor, "cleave");
 }
 
+// ── Жнец ────────────────────────────────────────────────────────────────────
+
+/** Флаг Хода: токен (uuid) начальной цели цепочки Жнеца — от него меряется Полудвижение. */
+export const REAPER_CHAIN_FLAG = "reaperInitialTarget";
+
+/**
+ * Жнец / Reaper (core.json, Таланты «Рукопашные»): «Когда он совершает Натиск и убивает цель, но
+ * еще имеет непотраченные атаки, он может продолжить движение до следующей цели и атаковать ее,
+ * но не дальше полной дистанции Натиска и не дальше дистанции полудвижения (SPD) от начальной цели.»
+ *
+ * Решения владельца 26.10.2026: «убивает» — смерть цели констатирована (setDeceased, combat/reaper-chain.mjs::
+ * offerReaperAfterKill); «непотраченные атаки» — сам Талант даёт +1 Атаку цепочки за каждое такое убийство
+ * — это сама карточка «Жнец» (одно убийство = одна карточка = одна Атака, тратится кнопкой), так что обычному
+ * бойцу надбавка к лимиту Атак не нужна и состояния на актора не пишется.
+ * Здесь — условие по самому удару: рукопашный, Базой «Натиск», у убийцы есть Талант.
+ */
+export function reaperTriggered(actor, { melee, chargeBase }) {
+  if (!melee || !chargeBase) return false;
+  return hasMeleeTalent(actor, "reaper");
+}
+
+/**
+ * Замер Жнеца по токенам сцены. Метры приходят измеренными; здесь только вердикт.
+ *
+ * @param {object} p
+ * @param {number} p.charge          дистанция Натиска персонажа (SPD×3, system.movement.charge)
+ * @param {number} p.halfMove        Полудвижение (SPD, system.movement.halfMove)
+ * @param {number} p.walked          сколько метров токен уже прошёл за этот Ход
+ * @param {number} p.initialToNext   от начальной цели цепочки до новой цели (центр — центр)
+ * @param {number} p.attackerToNext  сколько ещё идти атакующему до базового контакта с новой целью
+ * @returns {{ok:boolean, problems:string[], chargeLeft:number}}
+ */
+export function reaperMeasure({ charge, halfMove, walked, initialToNext, attackerToNext }) {
+  const bad = v => v == null || !Number.isFinite(Number(v));
+  const problems = [];
+  if (bad(initialToNext) || bad(attackerToNext) || bad(walked)) {
+    return { ok: false, problems: ["расстояния по токенам не измерены"], chargeLeft: 0 };
+  }
+  if (!(Number(charge) > 0) || !(Number(halfMove) > 0)) {
+    return { ok: false, problems: ["скорость персонажа неизвестна (Натиск или Полудвижение равны нулю)"], chargeLeft: 0 };
+  }
+  const chargeLeft = Math.max(0, Number(charge) - Number(walked));
+  if (Number(initialToNext) > Number(halfMove) + PATH_EPS) {
+    problems.push(`от начальной цели до новой ${fmtMeters(initialToNext)} м — дальше Полудвижения (${fmtMeters(halfMove)} м)`);
+  }
+  if (Number(walked) + Number(attackerToNext) > Number(charge) + PATH_EPS) {
+    problems.push(`Натиск: уже пройдено ${fmtMeters(walked)} м, до новой цели ещё ${fmtMeters(attackerToNext)} м — вместе больше дистанции Натиска (${fmtMeters(charge)} м)`);
+  }
+  return { ok: problems.length === 0, problems, chargeLeft };
+}
+
+// ── Свободные рукопашные атаки Талантов ──────────────────────────────────────
+
+/**
+ * Что снимает окно атаки с атак, порождённых Талантами (опции techniqueOpts окна):
+ * Упорство и Рисовка — свободные и атакой не считаются; Жнец — продолжение Натиска: ОД не
+ * списываются (Натиск уже оплачен), а сама атака — дополнительная Атака Таланта (карточка «Жнец»), в лимит Хода не идёт.
+ * @returns {{noAp:boolean, uncounted:boolean, skipChargeGate:boolean}}
+ */
+export function freeMeleeFlags(opts) {
+  const tenacity = !!opts?.tenacityRepeat, showOff = !!opts?.showOffFree, reaper = !!opts?.reaperFollow;
+  return {
+    noAp: tenacity || showOff || reaper,
+    uncounted: tenacity || showOff || reaper,
+    skipChargeGate: tenacity || showOff || reaper
+  };
+}
+
+/**
+ * Свободные атаки Талантов не должны давать бесплатно поднять Базу или Приём (ОД и лимит с них сняты):
+ * Рисовка — «базовая рукопашная атака» (Стандартная База, Обычная Атака); Упорство — «с той же базой
+ * и приемом»; Жнец — тот же Натиск (Приём свободный).
+ * @param {object} opts  techniqueOpts окна (showOffFree/tenacityRepeat/reaperFollow, forceBase, technique)
+ * @param {{baseKey:string, maneuverKey:string}} sel  выбранное в окне
+ * @returns {string} причина отказа или ""
+ */
+export function freeAttackLockProblem(opts, { baseKey, maneuverKey }) {
+  if (opts?.showOffFree) {
+    if (baseKey !== "standard") return "Рисовка: свободная атака — Стандартная База";
+    if (maneuverKey !== "standard") return "Рисовка: свободная атака — Обычная Атака (без Приёма)";
+  }
+  if (opts?.tenacityRepeat) {
+    if (opts.forceBase && baseKey !== opts.forceBase) return "Упорство: повтор идёт с той же Базой, что и первая атака";
+    if (maneuverKey !== (opts.technique || "standard")) return "Упорство: повтор идёт с тем же Приёмом, что и первая атака";
+  }
+  if (opts?.reaperFollow && baseKey !== "charge") return "Жнец: атака по следующей цели — это тот же Натиск; выберите Базу «Натиск»";
+  return "";
+}
+
 // ── Ложный Натиск ───────────────────────────────────────────────────────────
 
 /**
@@ -246,4 +368,142 @@ export function raptorBonusDice(actor, { chargeFromFlight, deg }) {
 export function fleshRenderExtraDrop(actor, { isMelee, tearing }) {
   if (!isMelee || !tearing) return 0;
   return hasMeleeTalent(actor, "fleshRender") ? 1 : 0;
+}
+
+// ── Прикладный Хват ─────────────────────────────────────────────────────────
+
+/** WS вторичного одноручного хвата штыка с Талантом (вместо –5 как обычно). */
+export const STOCK_GRIP_SECONDARY_WS = -10;
+
+/**
+ * Прикладный Хват / Stock Grip (core.json, Таланты «Рукопашные»): «Он может
+ * использовать штыки в одноручном хвате, это дает –10 на все тесты WS с ними,
+ * а не –5 как обычно.»
+ *
+ * Штык в паке несёт хват «2р (Бл)», одноручного нет, поэтому «1р» ему выдаёт
+ * сам Талант (окно атаки и HUD добавляют его в список хватов), а как
+ * вторичный хват «1р» тянет остальное по таблице хватов без изменений: –1 куб
+ * урона, Баланс –1, +1 Rng. Здесь решается только «Талант есть и это штык».
+ */
+export function stockGripActive(actor, item) {
+  const sys = item?.system;
+  if (!sys || sys.weaponClass !== "melee") return false;
+  if (String(sys.meleeCategory ?? "").trim() !== "Штык") return false;
+  return hasMeleeTalent(actor, "stockGrip");
+}
+
+// ── Странная Техника ────────────────────────────────────────────────────────
+
+export const STRANGE_TECHNIQUE_KEY = MELEE_TALENTS.strangeTechnique.key;
+
+/**
+ * Странная Техника / Strange Technique (core.json, Таланты «Рукопашные»): «Он
+ * получает дополнительную Реакцию, которую он может потратить только на атаки,
+ * вроде атак хвостом, мехадендритами, или бонусных приемов Повалить от попаданий
+ * крюком или посохом, но не для бонусных атак от Таланта Furious Assault.»
+ *
+ * Это отдельный пул (system.reactions.strangeValue, по образцу defenseValue
+ * Защитной Стойки), а не +1 к общему reactions.max, как было раньше: общая
+ * Реакция годилась и на Избегание. Максимум не хранится — читается с Таланта.
+ *
+ * @returns {number} 1 с Талантом, иначе 0
+ */
+export function strangeReactionMax(actor) {
+  return hasMeleeTalent(actor, "strangeTechnique") ? 1 : 0;
+}
+
+// ── Подрезать Сухожилья ─────────────────────────────────────────────────────
+
+/** Метка «раз в Ход» Подрезать Сухожилья (apps/game-session.mjs; Ход = Раунд персонажа, см. ниже). */
+export const HAMSTRING_ROUND_FLAG = "hamstring";
+/** Успехов встречного теста, дающих потерю полудействия в следующий Ход цели. */
+export const HAMSTRING_HALF_ACTION_DEG = 5;
+/** Приёмы, с которыми Талант не работает (книга: «приемами от Талантов Swift Attack и Lightning Attack»). */
+export const HAMSTRING_EXCLUDED_TECHNIQUES = Object.freeze(["swift", "lightning"]);
+
+/**
+ * Подрезать Сухожилья / Hamstring (core.json, Таланты «Рукопашные»): «Раз в Ход,
+ * когда Избирательная рукопашная атака персонажа в ногу наносит непоглощенный
+ * урон по цели, он может пройти встречный тест A+0 vs A+0 и при Успехе сбить цель
+ * с ног. Если персонаж побеждает на 5+ Успехов, цель также теряет одно полудействие
+ * в свой следующий Ход. Этот Талант не работает с приемами от Талантов Swift Attack
+ * и Lightning Attack.»
+ *
+ * Шаг 1 — в момент атаки: попадание рукопашной Избирательной атакой в Ногу не
+ * приёмом Быстрой/Молниеносной Атаки и Талант есть → карточка урона несёт метку.
+ *
+ * @param {string} p.aimValue    aimTarget.value атаки («leg» — Избирательная в Ногу)
+ * @param {string} p.technique   ключ Приёма (MELEE_MANEUVERS)
+ */
+export function hamstringArmed(actor, { isMelee, hit, aimValue, technique }) {
+  if (!isMelee || !hit || aimValue !== "leg") return false;
+  if (HAMSTRING_EXCLUDED_TECHNIQUES.includes(technique)) return false;
+  return hasMeleeTalent(actor, "hamstring");
+}
+
+/**
+ * Шаг 2 — в момент урона: кнопка предлагается, если карточка несёт метку, урон
+ * реально прошёл (непоглощённый > 0), цель ещё на ногах и в этом Раунде Талант не
+ * использован. «Раз в Ход» отмерено Раундом: за Раунд у персонажа один Ход
+ * (отдельной единицы «Ход» в системе нет); внеочередные атаки (Свободная Атака)
+ * делят с ним метку — осторожная сторона.
+ */
+export function hamstringOffered(actor, { armed, net, targetProne, roundAvailable }) {
+  if (!armed || targetProne || !roundAvailable) return false;
+  if (!((Number(net) || 0) > 0)) return false;
+  return hasMeleeTalent(actor, "hamstring");
+}
+
+// ── Упорство ────────────────────────────────────────────────────────────────
+
+/** Метка Хода: рукопашная атака этого персонажа нанесла непоглощённый урон (turn-flags.mjs гасит с началом Хода). */
+export const MELEE_DAMAGE_DEALT_FLAG = "meleeDamageDealtThisTurn";
+/**
+ * Метка Хода: id карточки атаки, ПО КОТОРОЙ урон уже применён к цели (при любом исходе — даже если
+ * всё поглощено). Нужна подтверждению Упорства (решение владельца 26.10.2026): попала, а урон ещё не
+ * применён — повтор спрашивает «повторять?». Ставит combat/damage.mjs через combat/tenacity.mjs.
+ */
+export const MELEE_DAMAGE_APPLIED_FLAG = "meleeDamageAppliedMsg";
+/** Приёмы с несколькими попаданиями — не «одиночная» атака (Быстрая/Молниеносная). */
+export const TENACITY_MULTI_TECHNIQUES = Object.freeze(["swift", "lightning"]);
+
+/**
+ * Упорство / Tenacity (core.json, Таланты «Рукопашные»): «Когда он совершает только
+ * одну одиночную рукопашную атаку в Ход, и та не наносит урона, будь то из-за
+ * промаха, Избегания, поглощения, или щитов, он может тут же провести эту атаку с
+ * той же базой и приемом по той же цели еще раз.»
+ *
+ * Шаг 1 — на карточке атаки: кнопка есть, если атака рукопашная, одиночная (не
+ * Быстрая/Молниеносная и не пара Обеих Рук), единственная в Ходу (счётчик
+ * attackActionsThisTurn уже учёл её самое, поэтому ≤ 1) и сама не является
+ * повтором Таланта.
+ *
+ * @param {number} p.attacksThisTurn  значение attackActionsThisTurn после этой атаки
+ */
+export function tenacityOffered(actor, { isMelee, technique, dual, attacksThisTurn, tenacityChild, showOffChild = false }) {
+  // Свободная атака Рисовки «не считается атакой» — повторять её Упорством нельзя (иначе обходит «только одну атаку в Ход»).
+  if (!isMelee || dual || tenacityChild || showOffChild) return false;
+  if (TENACITY_MULTI_TECHNIQUES.includes(technique)) return false;
+  if ((Number(attacksThisTurn) || 0) > 1) return false;
+  return hasMeleeTalent(actor, "tenacity");
+}
+
+/**
+ * Спрашивать ли подтверждение перед повтором (решение владельца 26.10.2026): атака ПОПАЛА, а урон по
+ * этой карточке ещё не применён к цели — возможно, игрок нажал Упорство раньше времени.
+ */
+export function tenacityNeedsConfirm({ hit, damageApplied }) {
+  return !!hit && !damageApplied;
+}
+
+/**
+ * Шаг 2 — в момент клика: единственная атака Хода и ни одна рукопашная атака этого
+ * Хода не нанесла урона (метка ставится при применении урона, combat/damage.mjs).
+ * Система узнаёт о промахе/Избегании/поглощении не одним сигналом, поэтому «не
+ * нанесла урона» — отсутствие этой метки к моменту клика.
+ */
+export function tenacityAvailable(actor, { attacksThisTurn, damageDealt }) {
+  if (damageDealt) return false;
+  if ((Number(attacksThisTurn) || 0) > 1) return false;
+  return hasMeleeTalent(actor, "tenacity");
 }

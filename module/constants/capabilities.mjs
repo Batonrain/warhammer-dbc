@@ -3304,7 +3304,8 @@ export const CAPABILITIES = {
   },
   "meleeCore.core.bladeBinding": {
     label: "Когда противник успешно парирует атаку персонажа, тот может пройти S+0 vs S+0 и при победе сцепить оружия. Ни персонаж,",
-    source: "Blade Binding / Сцепление Клинков", reader: ""
+    source: "Blade Binding / Сцепление Клинков",
+    reader: "module/rules/blade-binding.mjs (bladeBindingOffered, boundWeaponIds) — module/combat/blade-binding.mjs (встречный тест S+0 vs S+0, запись сцепления через ГМ-релей, «Разойтись»), module/combat/defense.mjs (кнопка на карточке Парирования не против щита; запрет парировать сцепленным), module/sheets/attack-dialog.mjs (запрет атаки сцепленным), module/hooks.mjs (.wh-blade-binding-btn); флаг bladeBindingOwner гаснет с Ходом цепляющего (rules/turn-flags.mjs)"
   },
   "meleeCore.core.blademaster": {
     label: "Раз в Раунд персонаж может перебросить любой неудачный тест на атаку клинковым рукопашным оружием.",
@@ -3360,7 +3361,8 @@ export const CAPABILITIES = {
   },
   "meleeCore.core.hamstring": {
     label: "Раз в Ход, когда Избирательная рукопашная атака персонажа в ногу наносит непоглощённый урон,",
-    source: "Hamstring / Подрезать Сухожилья", reader: ""
+    source: "Hamstring / Подрезать Сухожилья",
+    reader: "module/rules/melee-talents.mjs::hamstringArmed/hamstringOffered — module/combat/attack.mjs (wp.hamstring → data-hamstring в attack-card.mjs), module/combat/damage.mjs (hamstringSection в карточке урона), module/combat/hamstring.mjs (встречный тест A+0 vs A+0, Повален, долг ОД на 5+), module/combat/gm-relay.mjs (op apDebt), module/hooks.mjs (.wh-hamstring-btn)"
   },
   "meleeCore.core.preciseBlow": {
     label: "Персонаж уменьшает штраф на рукопашные атаки за Избирательные атаки или Размер цели ниже 0 ещё на 10.",
@@ -3373,11 +3375,13 @@ export const CAPABILITIES = {
   },
   "meleeCore.core.reaper": {
     label: "Совершая Натиск и убивая цель при непотраченных атаках, персонаж может продолжить движение до следующей цели и атаковать её,",
-    source: "Reaper / Жнец", reader: ""
+    source: "Reaper / Жнец",
+    reader: "module/rules/melee-talents.mjs::reaperTriggered/reaperMeasure — module/combat/reaper-chain.mjs (offerReaperAfterKill: карточка с кнопкой, когда у цели констатирована смерть после рукопашного Натиска — module/sheets/tabs/body.mjs::setDeceased; markLastChargeHit из module/combat/damage.mjs; замер по токенам сцены; окно атаки techniqueOpts.reaperFollow — дополнительная Атака Таланта), module/hooks.mjs (.wh-reaper-btn), module/sheets/attack/dialog.mjs (freeMeleeFlags)"
   },
   "meleeCore.core.reverseStrike": {
     label: "Приём (База: Стандартная/Натиск/Осторожная Атака; Оружие: с профилем посоха, в двуручном хвате). Базовая атака +0 любым профилем,",
-    source: "Reverse Strike / Обратный Удар", reader: ""
+    source: "Reverse Strike / Обратный Удар",
+    reader: "module/constants/combat.mjs (MELEE_MANEUVERS.reverseStrike, requiresCapability/requiresProfileLabel/requiresGrips) — module/rules/melee-talents.mjs::reverseStrikeSecondProfileIdx (оружие категории «Посох» без профилей — базовый профиль), module/sheets/attack/selection.mjs (computeManeuverOptions), module/sheets/attack/dialog.mjs (вторая атака профилем посоха, mainRollOpts), module/combat/attack.mjs (opts.reverseStrikeSecond → Concussive(0))"
   },
   "meleeCore.core.riposte": {
     label: "Вооружённый двумя оружиями и успешно парировав атаку, персонаж может тут же атаковать противника базовой атакой +0 другим оружием,",
@@ -3386,11 +3390,13 @@ export const CAPABILITIES = {
   },
   "meleeCore.core.savior": {
     label: "Оказываясь в базовом контакте с союзником и врагом одновременно, персонаж может потратить Реакцию и немедленно без траты действий провести п…",
-    source: "Savior / Спаситель", reader: ""
+    source: "Savior / Спаситель",
+    reader: "module/combat/savior.mjs (saviorPick: замер контакта по токенам через combat/free-attack.mjs; triggerSavior: Реакция в pay → Давление MELEE_CONTESTS.press) — кнопка вкладки Боя (module/sheets/character-context.mjs saviorGate, module/sheets/tabs/combat.mjs, templates/actor/parts/tab-combat.hbs); rules/melee-talents.mjs hasMeleeTalent(savior)"
   },
   "meleeCore.core.showOff": {
     label: "Действие: Полудействие (Физическое, Рукопашное, Ментальное). В рукопашной персонаж проводит WS+0 vs WS+0 против до F.",
-    source: "Show-Off / Рисовка", reader: ""
+    source: "Show-Off / Рисовка",
+    reader: "module/combat/show-off.mjs (triggerShowOff: цели по токенам в базовом контакте до F.b, один бросок WS vs WS, запрет Командования, свободные атаки на 5+ Успехов) — rules/show-off.mjs, rules/command-suppression.mjs; module/combat/command-state.mjs (commandNodesFor/expireCommandsAtTurnStart), кнопка вкладки Боя (module/sheets/character-context.mjs showOffGate, tabs/combat.mjs, tab-combat.hbs)"
   },
   "meleeCore.core.steadyFootwork": {
     label: "Персонаж не получает штрафов к тестам WS от Трудного ландшафта.",
@@ -3399,11 +3405,13 @@ export const CAPABILITIES = {
   },
   "meleeCore.core.stockGrip": {
     label: "Персонаж может использовать штыки в одноручном хвате; это даёт −10 на все тесты WS с ними, а не −5 как обычно.",
-    source: "Stock Grip / Прикладный Хват", reader: ""
+    source: "Stock Grip / Прикладный Хват",
+    reader: "module/rules/melee-talents.mjs::stockGripActive — module/sheets/attack-dialog.mjs (хват «1р» штыка), module/apps/hud.mjs (пилюля хвата), module/sheets/attack/selection.mjs (WS −10 через gripEffects opts.secWs, constants/combat.mjs)"
   },
   "meleeCore.core.strangeTechnique": {
     label: "Персонаж получает дополнительную Реакцию, которую может потратить только на атаки вроде атак хвостом,",
-    source: "Strange Technique / Странная Техника", reader: ""
+    source: "Strange Technique / Странная Техника",
+    reader: "module/rules/melee-talents.mjs::strangeReactionMax — module/combat/action-economy.mjs (пул system.reactions.strangeValue: effectiveStrangeReactionMax, resetActionEconomy, canSpendReaction/spendReaction strange:true), module/sheets/attack/dialog.mjs (Запрещённый Приём/хвост тратит странную Реакцию), module/hooks.mjs (.wh-reaction-knockdown-btn: бонусный «Повалить» крюком/посохом), строка пула и кнопка «−1» в templates/actor/parts/tab-combat.hbs (мехадендриты — вручную: автотраты Реакции у них в системе нет); module/migrations/strange-technique-effect.mjs"
   },
   "meleeCore.core.sureStrike": {
     label: "Персонаж уменьшает штраф на рукопашные атаки за Избирательные атаки или Размер цели ниже 0 на 10.",
@@ -3418,7 +3426,8 @@ export const CAPABILITIES = {
   },
   "meleeCore.core.tenacity": {
     label: "Совершив только одну одиночную рукопашную атаку в Ход, не нанёсшую урона (промах, Избегание, поглощение, щиты),",
-    source: "Tenacity / Упорство", reader: ""
+    source: "Tenacity / Упорство",
+    reader: "module/rules/melee-talents.mjs::tenacityOffered/tenacityAvailable — module/combat/attack.mjs (tenacityHtml на карточке атаки, attack-card.mjs), module/combat/tenacity.mjs (кнопка; markMeleeDamageDealt из combat/damage.mjs), module/sheets/attack/dialog.mjs (techniqueOpts.tenacityRepeat — повтор без ОД и Лимита Атак), module/hooks.mjs (.wh-tenacity-btn)"
   },
   "meleeCore.core.whirlwindOfDeath": {
     label: "Рукопашные атаки персонажа по Ордам наносят дополнительный урон в Магнитуду, равный ½WS.b (окр.▲).",

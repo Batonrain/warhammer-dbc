@@ -97,10 +97,12 @@ import { POISONER_CAP } from "../rules/medic-talents.mjs";
 import { surgicalPrecisionButtonHtml } from "./surgical-precision.mjs";
 import { balearicSbBonus, grenadierScatterReduce } from "../rules/throwing-talents.mjs";
 import { crushingBlowBonus, mightyShotDamage, plasmaExpertiseReliability, plasmaMasteryBonus } from "../rules/damage-talents.mjs";
-import { fleshRenderExtraDrop, raptorBonusDice, unstoppableChargeFelling } from "../rules/melee-talents.mjs";
+import { COMMAND_SUPPRESSED_FLAG, commandSuppressedNow } from "../rules/command-suppression.mjs";
+import { fleshRenderExtraDrop, raptorBonusDice, unstoppableChargeFelling, hamstringArmed, tenacityOffered } from "../rules/melee-talents.mjs";
 import { hammerBlowEffect, killingStrikeApplies, KILLING_STRIKE_FLAG, furiousAssaultOffered } from "../rules/berserker-talents.mjs";
 import { markFullAttack, markFuriousChild } from "./full-attack-lock.mjs";
 import { furiousAssaultButtonHtml } from "./furious-assault.mjs";
+import { tenacityButtonHtml } from "./tenacity.mjs";
 import { shockerGrantsShocking, wallopConcussiveRating, sparksAvailable, welderMarksHit, irradiateMode,
   lensTuningShot, LENS_CHARGES_FLAG, litanyReliability, litanyCoversWeapon, LITANY_CLEANED_FLAG,
   weaponTechShot, WEAPON_TECH_SPENT_FLAG, igniterZone, IGNITER_NOTES } from "../rules/gunsmith-talents.mjs";
@@ -438,6 +440,13 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     const own = _mergedEntries.find(x => x.key === "concussive");
     if (own) own.rating = Math.max(Number(own.rating) || 0, hammerBlow.concussive);
     else _mergedEntries.push({ key: "concussive", rating: hammerBlow.concussive });
+  }
+  // Обратный Удар (MELEE_MANEUVERS.reverseStrike): вторая атака профилем посоха получает Concussive(0),
+  // если у оружия нет его с более высоким рейтингом.
+  if (opts.reverseStrikeSecond) {
+    const own = _mergedEntries.find(x => x.key === "concussive");
+    if (own) own.rating = Math.max(Number(own.rating) || 0, 0);
+    else _mergedEntries.push({ key: "concussive", rating: 0 });
   }
   const unstoppableFelling = unstoppableChargeFelling(actor, {
     isMelee, baseKey: opts.baseKey, mounted: !!actor.system?.mount?.uuid, wsBonus: talentWsBonus
@@ -836,7 +845,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Концентрация огня (Командное Присутствие, эффект 2; combat/command-state.mjs
   // ::declareFocusFire): атака за тройку подчинённых — попадания получают −20
   // на все тесты Избегания и +2 куба урона. Метка на атакующем, одна атака.
-  const focusFire = actor.getFlag?.("warhammer-dbc", "focusFire");
+  // Рисовка (Талант «Рукопашных»): потерявший Командование эту метку не использует (rules/command-suppression.mjs).
+  const focusFire = commandSuppressedNow(actor.getFlag?.("warhammer-dbc", COMMAND_SUPPRESSED_FLAG), globalThis.game?.combat)
+    ? null : actor.getFlag?.("warhammer-dbc", "focusFire");
   const focusFireOn = !!focusFire && focusFire.weaponName === item.name;
   // «Быстрые и Мёртвые» (Размер < 2): атака «Тройки» для них — атака
   // одиночного персонажа, ни −20, ни +2 куба (rules/horde-single-target.mjs).
@@ -1429,6 +1440,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Калечащий Удар — то же для рукопашной атаки (оба Таланта самоограничены по isMelee).
   // Разрубить (combat/cleave.mjs): дополнительная атака Таланта новых не порождает — метка едет на кнопку урона.
   wp.cleaveChild = !!opts.techniqueOpts?.cleave;
+  // Жнец (combat/reaper-chain.mjs): удар с Базой «Натиск» — метка на кнопку урона (там решает, убила ли атака цель).
+  wp.chargeBase = isMelee && opts.baseKey === "charge";
+  // Подрезать Сухожилья (combat/hamstring.mjs): Избирательное попадание рукопашной в Ногу не Приёмом Быстрой/Молниеносной — метка на кнопку урона.
+  wp.hamstring = hamstringArmed(actor, { isMelee, hit, aimValue: aimTarget?.value,
+    technique: opts.isSwift ? "swift" : opts.isLightning ? "lightning" : opts.techniqueOpts?.technique });
   wp.negWoundsBonus = hit ? crackShotBonus(actor, { isMelee }) + cripplingStrikeBonus(actor, { isMelee }) : 0;
   // Штыковая Атака (rules/run-and-gun.mjs): попадание Приёмом даёт свободный выстрел в упор — метка + кнопки на карточке.
   const bayonetShotOn = hit && isMelee && meleeTech === "bayonetCharge" && hasBayonetCharge(actor);
@@ -1996,6 +2012,14 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       // Яростный Штурм (rules/berserker-talents.mjs): успешная Полная Атака носителя — кнопка доп. атаки за Реакцию.
       furiousAssaultHtml: furiousAssaultOffered(actor, { isMelee, baseKey: opts.baseKey, hit, furiousChild: !!opts.techniqueOpts?.furiousAssault })
         ? furiousAssaultButtonHtml({ attackerUuid: actor.uuid || "", weaponUuid: item.uuid || "", technique: opts.techniqueOpts?.technique || "" })
+        : "",
+      // Упорство (rules/melee-talents.mjs): одиночная единственная рукопашная атака Хода — кнопка повтора, если она не нанесла урона.
+      tenacityHtml: tenacityOffered(actor, {
+        isMelee, technique: opts.isSwift ? "swift" : opts.isLightning ? "lightning" : opts.techniqueOpts?.technique, dual: !!opts.isDual || !!opts.sabreSecondAttackIsSecond,
+        attacksThisTurn: Number(actor.getFlag?.("warhammer-dbc", "attackActionsThisTurn")) || 0,
+        tenacityChild: !!opts.techniqueOpts?.tenacityRepeat, showOffChild: !!opts.techniqueOpts?.showOffFree
+      })
+        ? tenacityButtonHtml({ attackerUuid: actor.uuid || "", weaponUuid: item.uuid || "", baseKey: opts.baseKey || "", technique: opts.techniqueOpts?.technique || "", hit: !!hit })
         : "",
       // Снайпер Ужаса (rules/terror-sniper.mjs): Избирательное попадание Accurate-оружием после Прицеливания.
       terrorSniperOffer: terrorSniperEligible(actor, { isMelee, hit, accurate: wp.accurate, aimValue: aimTarget?.value, aiming: opts.aiming })

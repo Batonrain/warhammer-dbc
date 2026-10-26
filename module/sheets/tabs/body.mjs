@@ -12,6 +12,7 @@ import { on } from "../../helpers/utils.mjs";
 import { showDeathSaveDialog, doResurrect, _deathResolvedFields, DECEASED_AT_FLAG } from "./death.mjs";
 import { VITAL_TIME_FIELD } from "../../constants/vitals.mjs";
 import { satisfyAddiction, setAddictionSubstance } from "../../rules/addiction.mjs";
+import { offerReaperAfterKill } from "../../combat/reaper-chain.mjs";
 import { registerBloodFlameKill, LAST_DAMAGE_WEAPON_FLAG } from "../../combat/blood-flame.mjs";
 import { registerLegacyDreadfulKill } from "../../combat/legacy-weapon-kill-credit.mjs";
 import { registerVengeanceKill } from "../../combat/vengeance.mjs";
@@ -95,6 +96,8 @@ export async function setDeceased(actor, deceased) {
     await registerLegacySlaughterKill(weapon);
     // Месть (Талант Берсерка, combat/vengeance.mjs): убит лидер/чемпион Ненавистных в рукопашной.
     await registerVengeanceKill(actor, weapon);
+    // Жнец (Талант «Рукопашных», combat/reaper-chain.mjs): смерть констатирована после удара Натиском — карточка с кнопкой.
+    await offerReaperAfterKill(actor, weapon);
   }
 }
 

@@ -40,6 +40,16 @@ export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legi
   "sabotageApplied",
   // Разрубить (Талант «Рукопашных», combat/cleave.mjs): одна свободная атака с карточки урона.
   "cleaveUsed",
+  // Подрезать Сухожилья (Талант «Рукопашных», combat/hamstring.mjs): один встречный тест с карточки урона.
+  "hamstringUsed",
+  // Жнец (Талант «Рукопашных», combat/reaper-chain.mjs): один переход к следующей цели с карточки урона.
+  "reaperUsed",
+  // Рисовка (Талант «Рукопашных», combat/show-off.mjs): одна свободная атака по цели с её карточки победы.
+  "showOffAttackUsed",
+  // Упорство (Талант «Рукопашных», combat/tenacity.mjs): один повтор атаки с карточки.
+  "tenacityUsed",
+  // Сцепление Клинков (Талант «Рукопашных», combat/blade-binding.mjs): один встречный тест с карточки Парирования.
+  "bladeBindingUsed",
   // Пересилить (Талант Берсерка, combat/overpower.mjs): один встречный тест с карточки Парирования.
   "overpowerUsed",
   // Яростный Штурм (Талант Берсерка, combat/furious-assault.mjs): одна дополнительная атака за Реакцию с карточки.

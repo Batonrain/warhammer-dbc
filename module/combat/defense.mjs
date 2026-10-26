@@ -16,6 +16,8 @@ import { isRoundCapabilityAvailable } from "../apps/game-session.mjs";
 import { riposteWeapon, RIPOSTE_ROUND_FLAG } from "../rules/melee-talents.mjs";
 import { overpowerOffered } from "../rules/berserker-talents.mjs";
 import { overpowerButtonHtml } from "./overpower.mjs";
+import { bladeBindingOffered } from "../rules/blade-binding.mjs";
+import { bladeBindingButtonHtml, weaponIsBound } from "./blade-binding.mjs";
 import { equippedMeleeWeapon, isIntegralAttack } from "./equipped-melee.mjs";
 import { grappleDodgeBlockReason, isBiteWeapon } from "./grapple.mjs";
 import { hasPugilistTalent, fistBalanceBonus } from "../rules/pugilist-talents.mjs";
@@ -694,6 +696,7 @@ async function _applyGazeOfInevitabilityFailure(actor) {
   const upd = {};
   if ((Number(actor.system.reactions?.value) || 0) !== 0) upd["system.reactions.value"] = 0;
   if ((Number(actor.system.reactions?.defenseValue) || 0) !== 0) upd["system.reactions.defenseValue"] = 0;
+  if ((Number(actor.system.reactions?.strangeValue) || 0) !== 0) upd["system.reactions.strangeValue"] = 0;
   if (Object.keys(upd).length) await actor.update(upd);
 }
 
@@ -800,6 +803,10 @@ export async function _performParry(actor, {
     parryProfile(actor, extraMod + speedAw.value,
       chomperBite ? biteAsBalanceZero(chomperBite) : (parryWith?.improvisedFrom ? parryWith : null), { useCrossblock });
   if (speedAw.part) modParts.push(speedAw.part);
+  // Сцепление Клинков (Талант «Рукопашных»): сцепленным оружием парировать нельзя до начала Хода цепляющего.
+  if (meleeWeapon && weaponIsBound(actor, meleeWeapon.id)) {
+    return _bladeShieldRefusal(actor, `«${esc(meleeWeapon.name)}» сцеплено клинком противника (Сцепление Клинков) — парировать им нельзя до начала Хода цепляющего или пока не разойдутся.`);
+  }
   // Оплот (глава 3): щиты считаются имеющими Баланс 1 для других Талантов
   // (Щит Клинков, Отбить Выстрел); модификатор Баланса самого Парирования — настоящий.
   const bulwarkShield = hasDodgeTalent(actor, "bulwark") && isHandShield(meleeWeapon);
@@ -1120,6 +1127,14 @@ export async function _performParry(actor, {
     ? overpowerButtonHtml({ attackerUuid, defenderUuid: actor.uuid, attackerName: attackerActor.name })
     : "";
 
+  // Сцепление Клинков (Талант «Рукопашных», combat/blade-binding.mjs): у АТАКОВАВШЕГО Талант, Парирование удалось не щитом —
+  // S+0 vs S+0, чтобы сцепить оба оружия (кнопка; обработчик — hooks.mjs).
+  const bladeBindingHtml = (attackerActor && bladeBindingOffered(attackerActor, {
+      parried, parryIsShield: isHandShield(meleeWeapon), hasParryWeapon: !!meleeWeapon && !isIntegralAttack(meleeWeapon),
+      hasAttackWeapon: !!attackerWeapon && !isIntegralAttack(attackerWeapon) }))
+    ? bladeBindingButtonHtml({ attackerUuid, defenderUuid: actor.uuid, attackerWeaponUuid, parryWeaponId: meleeWeapon.id, attackerName: attackerActor.name })
+    : "";
+
   // Что именно даёт Крестовой Блок сверх суммы бонусов — и чего он стоит.
   // Предел Размера (стр. 12, wdbc-1rno) — теперь настоящий расчёт
   // (module/rules/parry-size.mjs, crossblockActive выше), не напоминание
@@ -1154,7 +1169,7 @@ export async function _performParry(actor, {
       ? `<div style="font-size:0.82em;color:#5a4a30;margin-bottom:2px;">Оружие: ${esc(meleeWeapon.name)} (Баланс ${balance >= 0 ? "+" : ""}${balance})</div>`
       : ""],
     outcome: outcomeHtml,
-    sections: [leftoverNote, powerFieldNote, unarmedPowerFieldNote, crossblockNote, chomperNote, deflectNote, counterAttackHtml, talentRiposteHtml, overpowerHtml, riposteHtml]
+    sections: [leftoverNote, powerFieldNote, unarmedPowerFieldNote, crossblockNote, chomperNote, deflectNote, counterAttackHtml, talentRiposteHtml, overpowerHtml, bladeBindingHtml, riposteHtml]
   }, { rolls: allRolls });
 }
 

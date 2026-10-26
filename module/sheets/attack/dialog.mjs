@@ -50,6 +50,7 @@ import { isSabre, sabreSecondAttackBlockFor, armSabreSecondAttack, consumeSabreS
 import { ACTIVE_SIGHT_FLAG } from "../../combat/weapon-mods.mjs";
 import { bringItDownStacksFor } from "../../rules/leadership-talents.mjs";
 import { stunForcedAim } from "../../rules/takedown.mjs";
+import { reverseStrikeSecondProfileIdx, freeMeleeFlags, freeAttackLockProblem } from "../../rules/melee-talents.mjs";
 
 /**
  * Два условия книги на парную атаку (стр. 62, wdbc-3jlm), которые до этого
@@ -232,6 +233,11 @@ export function openAttackDialog(ctx) {
           // тратит. Условия перепроверяются на броске, а не только на кнопке:
           // пока окно было открыто, Ход мог смениться, а цель — остаться той же.
           const sabreSecond = !!techniqueOpts?.sabreSecondAttack;
+          // Упорство (combat/tenacity.mjs): повтор атаки — свободное действие, ни ОД, ни Лимит Атак не тратит.
+          // Рисовка (свободная атака «не считается атакой») — то же; Жнец — продолжение Натиска: ОД не списываются,
+          // но атака в лимите (rules/melee-talents.mjs::freeMeleeFlags).
+          const freeMelee = freeMeleeFlags(techniqueOpts);
+          const uncountedAttack = freeMelee.uncounted;
           // Метка до списания: вторая атака Гусара (не Сабли) — карточка называет её «Гусар».
           const sabrePendingHussar = !!actor.getFlag?.(SABRE_NS, SABRE_PENDING_FLAG)?.hussar;
           if (sabreSecond) {
@@ -252,7 +258,7 @@ export function openAttackDialog(ctx) {
           // (в т.ч. выстрел Штыковой Атаки) — combat/free-shot.mjs.
           const runAndGunLock = runAndGunLockedNow(actor, item, { isMelee });
           if (runAndGunLock) { ui.notifications.warn(`⚠️ ${runAndGunLock}.`); return false; }
-          if (!sabreSecond && freeShotCountsAsAttack(freeShot) && !canTakeAttackAction(actor)) {
+          if (!sabreSecond && !uncountedAttack && freeShotCountsAsAttack(freeShot) && !canTakeAttackAction(actor)) {
             await ChatMessage.create({
               speaker: ChatMessage.getSpeaker({ actor: actor }),
               content: `<div class="wh-roll-result">
@@ -318,17 +324,25 @@ export function openAttackDialog(ctx) {
           // Натиск как База в окне атаки (не HUD-кнопка): те же два хода Талантов Стрелка, что у declareCharge —
           // тест Подавления Прикрывающего Огня ДО списания ОД (провал — атаки нет) и, после списания, Стрельба на Бегу.
           let chargeGate = { ok: true, first: false };
-          if (isMelee && sel.baseKey === "charge" && !sabreSecond && !freeShot) {
+          // Жнец: другая База ломает смысл «продолжения Натиска» — до списания чего бы то ни было.
+          // Рисовка/Упорство: Базу и Приём бесплатной атаки поднять нельзя (rules/melee-talents.mjs::freeAttackLockProblem).
+          const lockProblem = isMelee ? freeAttackLockProblem(techniqueOpts, { baseKey: sel.baseKey, maneuverKey: sel.maneuverKey }) : "";
+          if (lockProblem) {
+            ui.notifications.warn(`⚠️ ${lockProblem}.`);
+            return false;
+          }
+          if (isMelee && sel.baseKey === "charge" && !sabreSecond && !freeShot && !freeMelee.skipChargeGate) {
             chargeGate = await chargeAttackGate(actor);
             if (!chargeGate.ok) {
               ui.notifications.warn(`⚠️ ${actor.name}: тест Подавления (Прикрывающий Огонь) провален — Натиск не удался.`);
               return false;
             }
           }
-          if (sabreSecond || freeShot) {
+          if (sabreSecond || freeShot || freeMelee.noAp) {
             // ничего не списывается — см. выше (Сабля) и combat/free-shot.mjs (бесплатные выстрелы)
           } else if (isMelee && sel.cheapShotActive) {
-            if (!await spendReaction(actor)) {
+            // strange: Запрещённый Приём (хвост, Cheap Shot) — «странная» атака Странной Техники.
+            if (!await spendReaction(actor, { strange: true })) {
               ui.notifications.warn("⚠️ Не хватает Реакций (Запрещённый Приём).");
               return false;
             }
@@ -363,7 +377,7 @@ export function openAttackDialog(ctx) {
           }
           // Ресурс (ОД или Реакция Запрещённого Приёма) списан — атака состоялась,
           // засчитываем её в лимит Хода (стр. 12, wdbc-x1nz.2.30).
-          if (!sabreSecond && freeShotCountsAsAttack(freeShot)) await takeAttackAction(actor);
+          if (!sabreSecond && !uncountedAttack && freeShotCountsAsAttack(freeShot)) await takeAttackAction(actor);
           if (freeShot) await consumeFreeShot(actor, freeShot, item);
           await chargeAttackStarted(actor, chargeGate.first);
           // Прикрывающий Огонь: очередь сделана — метки Подавления на ВСЕХ бывших противников (combat/covering-fire.mjs).
@@ -484,11 +498,13 @@ export function openAttackDialog(ctx) {
           // envy.mjs). Без Дара/без совпадения — no-op, поведение то же, что
           // раньше.
           // Итог основной руки нужен второй (Тирантикос: «попадает из обоих»).
+          // Опции броска держим в переменной: Обратный Удар (Талант «Рукопашных») бросает вторую атаку с теми же.
+          let mainRollOpts;
           const mainResult = await withEyeOfEnvy(actor, targetActor, f.char, () => _executeAttackRoll(
             actor, item, f.char, thresholdOf(f) - (f.aimHand === "off" ? aimAdjust : 0),
             batpackUsed ? "full" : (f.rofMode || rofModes[0]?.value),
             aimTargets.find(t => t.value === f.aimVal),
-            {
+            (mainRollOpts = {
               forceHit: helplessAutoHit, doubleDamage: helplessAutoHit,
               fixedSuccessDeg: (autoHitUsed || hateUsed) ? 1 : undefined,
               bringItDownDice,
@@ -499,6 +515,7 @@ export function openAttackDialog(ctx) {
               // Быстрая/Молниеносная — теперь Приём (стр. 14), а не отдельная
               // галочка: множитель попаданий включается выбором пилюли.
               isSwift: sel.maneuverKey === "swift", isLightning: sel.maneuverKey === "lightning",
+              isDual: !!dualOff || sel.maneuverKey === "reverseStrike",
               isAllOut: f.allOut,
               // База рукопашной («Натиск» и т.п.): rofMode у рукопашной всегда
               // "melee", по нему Brutal Charge не отличить (wdbc-ревью стопки 3).
@@ -608,8 +625,33 @@ export function openAttackDialog(ctx) {
               // подставит "side" сам), иначе Лоб/Борт/Корма из окна — Избира-
               // тельная атака в Корму (−20) уже свела её к "rear" выше.
               vehicleSide: vsel.side
-            }
+            })
           ));
+
+          // Обратный Удар (Талант «Рукопашных», MELEE_MANEUVERS.reverseStrike): «сразу же делает еще одну атаку с теми же
+          // модификаторами, используя профиль посоха» — ОТДЕЛЬНЫЙ бросок и своя карточка (Избегание и Парирование на каждую),
+          // ОД уже списаны первой; Concussive(0) вторая получает в combat/attack.mjs (opts.reverseStrikeSecond).
+          if (isMelee && sel.maneuverKey === "reverseStrike") {
+            // -1 — Посох без профилей: вторая атака базовым профилем оружия (решение владельца 26.10.2026).
+            const staffIdx = reverseStrikeSecondProfileIdx(item, atkProfilesOf(item));
+            if (staffIdx != null) {
+              await withEyeOfEnvy(actor, targetActor, f.char, () => _executeAttackRoll(
+                actor, item, f.char, thresholdOf(f) - (f.aimHand === "off" ? aimAdjust : 0),
+                batpackUsed ? "full" : (f.rofMode || rofModes[0]?.value),
+                aimTargets.find(t => t.value === f.aimVal),
+                {
+                  ...mainRollOpts,
+                  fixedSuccessDeg: undefined,   // автопопадание (Локус/Ненависть) куплено за одну атаку, не за обе
+                  profile: staffIdx >= 0 ? atkProfilesOf(item)[staffIdx] : null, profileIdx: staffIdx,
+                  reverseStrikeSecond: true,
+                  attackNote: `Обратный Удар: вторая атака профилем посоха — те же модификаторы, отдельный бросок; ОД уже списаны первой карточкой (Concussive 0)`,
+                  aimingLabel: ""
+                }
+              ));
+            } else {
+              ui.notifications.warn("⚠️ Обратный Удар: у оружия нет профиля посоха — вторая атака не проведена.");
+            }
+          }
 
           // Вторая рука — тем же действием, отдельным броском (wdbc-3jlm).
           // Своих ОД не тратит: они уже списаны наибольшим действием выше.
@@ -656,6 +698,7 @@ export function openAttackDialog(ctx) {
               offRofMode,
               undefined,
               {
+                isDual: true,   // Упорство: вторая рука пары — не «одиночная» атака
                 attackNote: `Обе руки: вторая рука, пара с «${item.name}» —`
                   + ` ОД уже списаны первой карточкой (${dw.pair} за пару`
                   + (dw.offHand ? `, ${dw.offHand} за неосновную руку` : ", неосновная рука без штрафа")
@@ -731,6 +774,7 @@ export function openAttackDialog(ctx) {
       let lastBaseKey   = dyn0.baseKey;
       let lastProfIdx   = dyn0.pIdx;
       let lastGKey      = dyn0.gKey;
+      let lastManeuverGKey = dyn0.gKey;   // Хват, от которого посчитаны пилюли Приёма (Обратный Удар требует Хват на обе руки)
 
       const updateTotal = () => {
         const f = readAttackForm(form, ammoConds);
@@ -793,8 +837,9 @@ export function openAttackDialog(ctx) {
         }
         // Приём зависит от выбранной Базы (стр. 14, MELEE_MANEUVERS[*].bases) И
         // от категории по Профилю — перерисовываем при смене любого из них.
-        if (maneuverPillsEl && (sel.baseKey !== lastBaseKey || profChanged)) {
-          maneuverPillsEl.innerHTML = pillsHtml("atk-maneuver", computeManeuverOptions(sel.baseKey, sel.pIdx), sel.maneuverKey);
+        if (maneuverPillsEl && (sel.baseKey !== lastBaseKey || profChanged || sel.gKey !== lastManeuverGKey)) {
+          lastManeuverGKey = sel.gKey;
+          maneuverPillsEl.innerHTML = pillsHtml("atk-maneuver", computeManeuverOptions(sel.baseKey, sel.pIdx, sel.gKey), sel.maneuverKey);
         }
         lastBaseKey = sel.baseKey;
         lastProfIdx = sel.pIdx;

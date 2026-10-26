@@ -9,7 +9,10 @@
 //
 //  Хранимые поля — module/data/actor/_creature.mjs:
 //    system.actionPoints.{value,max}
-//    system.reactions.{value,max,defenseValue,defenseMax}
+//    system.reactions.{value,max,defenseValue,defenseMax,strangeValue}
+//  strangeValue — «странная» Реакция Таланта Strange Technique: тратится только на
+//  атаки вроде хвоста/мехадендритов (spendReaction strange:true), максимум не хранится —
+//  читается с самого Таланта (effectiveStrangeReactionMax).
 //  .max — база (2 ОД / 1 Реакция) + надбавка ActiveEffect Таланта (ключи
 //  зарегистрированы в constants/effect-keys.mjs, фаза "initial" — Foundry
 //  прибавляет их к схемному умолчанию ДО того, как это читает функция ниже).
@@ -37,6 +40,7 @@ import { turnStartFlagClears, turnStartAttackCarryOver, turnStartSqueezeCarryOve
 import { rollLegacyChangeBonus, tickLegacyExcessBoost } from "../rules/legacy-weapon.mjs";
 import { implantDisrupted, mentalApCost } from "../rules/bone-head.mjs";
 import { hasDodgeTalent } from "../rules/dodge-talents.mjs";
+import { strangeReactionMax } from "../rules/melee-talents.mjs";
 
 /** Типы акторов, несущих экономику действий (общая часть — _creature.mjs). */
 export const ACTION_ECONOMY_ACTOR_TYPES = ["character", "daemon", "demonPrince", "minion", "horde"];
@@ -83,6 +87,11 @@ function stanceLosesReactionAtTurnEnd(actor) {
  */
 export function effectiveDefenseReactionMax(actor) {
   return (Number(actor.system?.reactions?.defenseMax) || 0) + stanceDefenseReactionBonus(actor);
+}
+
+/** Максимум «странных» Реакций (Странная Техника, rules/melee-talents.mjs). */
+export function effectiveStrangeReactionMax(actor) {
+  return strangeReactionMax(actor);
 }
 
 /**
@@ -140,6 +149,7 @@ export async function resetActionEconomy(actor) {
   // Доп. Реакции «только на Избегание» — тоже Реакции: запрет выше
   // распространяется и на них, не только на универсальный пул.
   const defenseMax     = apLocked ? 0 : defenseMaxBase + defenseBonus;
+  const strangeMax     = apLocked ? 0 : effectiveStrangeReactionMax(actor);
 
   // Один update на всё (значения + снятие флагов через -=): каждая отдельная
   // запись — это раунд-трип в базу и полный re-render листов/токенов у всех
@@ -149,6 +159,8 @@ export async function resetActionEconomy(actor) {
   if ((Number(sys.reactions?.value) || 0) !== reactMax) upd["system.reactions.value"] = reactMax;
   if ((Number(sys.reactions?.defenseValue) || 0) !== defenseMax)
     upd["system.reactions.defenseValue"] = defenseMax;
+  if ((Number(sys.reactions?.strangeValue) || 0) !== strangeMax)
+    upd["system.reactions.strangeValue"] = strangeMax;
   // Флаги, живущие «до начала следующего своего Хода», гасятся ОДНИМ циклом по
   // реестру (wdbc-5uae.1, rules/turn-flags.mjs) — раньше каждый был вписан
   // сюда отдельной строкой по имени. Срок жизни метки это её свойство, и
@@ -435,7 +447,7 @@ async function markReactedToAttack(actor, attackId) {
  * hasReactedToAttack выше. physical — как у ОД (actionBlockReason): Реакции
  * по умолчанию телесные (Уклонение/Парирование, Повалить...).
  */
-export function canSpendReaction(actor, { forDefense = false, attackId = "", physical } = {}) {
+export function canSpendReaction(actor, { forDefense = false, attackId = "", physical, strange = false } = {}) {
   if (!isEncounterActive() || !hasActionEconomy(actor)) return true;
   // Оглушение/Ступор/Без сознания/Беспомощный (wdbc-x1nz.2.87/.88): запрет по
   // самому Состоянию в любой момент Раунда, а не только с начала своего Хода.
@@ -450,12 +462,14 @@ export function canSpendReaction(actor, { forDefense = false, attackId = "", phy
   if (hasReactedToAttack(actor, attackId)) return false;
   const universal = Number(actor.system.reactions?.value) || 0;
   const defense    = forDefense ? (Number(actor.system.reactions?.defenseValue) || 0) : 0;
-  return (universal + defense) > 0;
+  // «Странная» Реакция (Странная Техника) годится только на странную атаку, не на Избегание.
+  const strangePool = strange ? (Number(actor.system.reactions?.strangeValue) || 0) : 0;
+  return (universal + defense + strangePool) > 0;
 }
 
 /** Списать Реакцию: сперва ограниченный пул на Избегание (если applicable), потом универсальный. */
-export async function spendReaction(actor, { forDefense = false, attackId = "", physical } = {}) {
-  if (!canSpendReaction(actor, { forDefense, attackId, physical })) {
+export async function spendReaction(actor, { forDefense = false, attackId = "", physical, strange = false } = {}) {
+  if (!canSpendReaction(actor, { forDefense, attackId, physical, strange })) {
     const reason = isEncounterActive() && hasActionEconomy(actor) ? actionBlockReason(actor, { physical }) : "";
     if (reason) warnBlocked(actor, reason, "Реакция");
     return false;
@@ -463,7 +477,10 @@ export async function spendReaction(actor, { forDefense = false, attackId = "", 
   if (!isEncounterActive() || !hasActionEconomy(actor)) return true;
 
   const defenseValue  = Number(actor.system.reactions?.defenseValue) || 0;
-  if (forDefense && defenseValue > 0) {
+  const strangeValue  = Number(actor.system.reactions?.strangeValue) || 0;
+  if (strange && strangeValue > 0) {
+    await actor.update({ "system.reactions.strangeValue": strangeValue - 1 });
+  } else if (forDefense && defenseValue > 0) {
     await actor.update({ "system.reactions.defenseValue": defenseValue - 1 });
   } else {
     const universal = Number(actor.system.reactions?.value) || 0;

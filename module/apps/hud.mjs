@@ -17,6 +17,7 @@ import { isIntegralAttack } from "../combat/equipped-melee.mjs";
 import { weaponProfiles, canStrikeWithGun, attackIsMelee } from "../combat/weapon-profiles.mjs";
 import { hasActionEconomy, isEncounterActive, apSpendGate } from "../combat/action-economy.mjs";
 import { getHeldHand, weaponHandsRequired } from "../rules/hands.mjs";
+import { stockGripActive } from "../rules/melee-talents.mjs";
 import { movementMenuItems } from "../combat/movement-actions.mjs";
 import { aimMenuItems, aimFocusToggleState, toggleAimFocusPending, trackingAimToggleState, toggleTrackingAimPending } from "../combat/aiming-action.mjs";
 import { overwatchMenuItems, overwatchManualFireItem, isOverwatchActive, overwatchState } from "../combat/overwatch.mjs";
@@ -218,6 +219,8 @@ export function hudData(actor) {
     // Хват и профиль (стр. 39, 207-221) — выбираются кнопками в HUD, хранятся
     // во флагах оружия (hudGrip / hudProfile). Показываем ВСЕ доступные варианты.
     const gripKeys = melee ? parseGrips(g.grips) : [];
+    // Прикладный Хват: штык в «1р» выдаёт Талант (как окно атаки, attack-dialog.mjs).
+    if (melee && !gripKeys.includes("1р") && stockGripActive(actor, w)) gripKeys.push("1р");
     let curGrip = w.getFlag(SYSTEM, "hudGrip");
     if (!GRIPS[curGrip] || !gripKeys.includes(curGrip)) curGrip = gripKeys[0] || "";
     const gripOpts = gripKeys.length > 1

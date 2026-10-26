@@ -5,8 +5,8 @@
   "folder": "XeycnCsRlazxEDgr",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект тратит/даёт игровой ресурс (Очки Бесчестия/Судьбы/Боли/Когниции/Реакцию) на разовое действие — не тестовый модификатор Навыка/Характеристики.",
-    "benefit": "Оказываясь в базовом контакте с союзником и врагом одновременно, персонаж может потратить Реакцию и немедленно без траты действий провести против врага Давление.",
+    "notes": "Реализовано: capabilityKey meleeCore.core.savior — кнопка «Спаситель (Реакция)» на вкладке Боя (доступна в любой момент, в том числе посреди Натиска или Верховой Атаки): система замеряет по токенам, что в базовом контакте есть и союзник, и враг (врагов несколько — нужна цель), списывает Реакцию в момент «Бросок!» и открывает Давление (WS vs WS) против этого врага без траты действий. module/combat/savior.mjs, combat/free-attack.mjs (замер контакта), character-context.mjs, tabs/combat.mjs, tab-combat.hbs.",
+    "benefit": "Оказываясь в базовом контакте с союзником и врагом одновременно (даже посреди другого действия, в том числе Натиска или Верховой Атаки), персонаж может потратить Реакцию и немедленно без траты действий провести против врага Давление.",
     "tier": 1,
     "requirement": "WS 40, A 40",
     "aptitudes": [
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "vlmEWpxKoSIPKPRY",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "YB6OJPjuEAjJOVxx",
+              "capabilityKey": "meleeCore.core.savior",
+              "label": "Спаситель: в базовом контакте с союзником и врагом — Реакция и Давление против врага без действий",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

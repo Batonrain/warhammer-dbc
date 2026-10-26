@@ -26,7 +26,7 @@ import { divineProtectionActive } from "../../rules/death-save.mjs";
 import { berserkChargeBonus } from "../../rules/berserker-talents.mjs";
 import { stunUnrestricted } from "../../rules/takedown.mjs";
 import { BAYONET_CHARGE, hasBayonetCharge } from "../../rules/run-and-gun.mjs";
-import { grindFullSb, holdsInGrapple } from "../../rules/melee-talents.mjs";
+import { grindFullSb, holdsInGrapple, hasMeleeTalent, reverseStrikeSecondProfileIdx, stockGripActive, STOCK_GRIP_SECONDARY_WS } from "../../rules/melee-talents.mjs";
 import { actorIdentityUuids } from "../../combat/command-state.mjs";
 
 /**
@@ -170,7 +170,7 @@ export function buildSelection(v) {
   // из Талантов (Быстрая/Молниеносная Атака) добавляют requiresCapability и
   // minBalance — тот же приём, что у альт-профиля Профиля и у Пружинящей
   // Стойки соответственно.
-  function computeManeuverOptions(baseKeyNow, pIdx) {
+  function computeManeuverOptions(baseKeyNow, pIdx, gKeyNow = gripKey) {
     const category = categoryFor(pIdx);
     const trained  = trainingFor(pIdx).trained;
     return Object.entries(MELEE_MANEUVERS).map(([key, def]) => {
@@ -183,19 +183,29 @@ export function buildSelection(v) {
       // Штыковая Атака: Талант опознаётся и по имени — у персонажей со снимком Таланта без записи Конструктора
       // («ловушка Desiccated») Приём иначе остался бы заперт до «Обновить мир».
       const capOk      = !def.requiresCapability || hasRuleFlag(actor, def.requiresCapability)
-        || (def.requiresCapability === BAYONET_CHARGE.key && hasBayonetCharge(actor));
+        || (def.requiresCapability === BAYONET_CHARGE.key && hasBayonetCharge(actor))
+        || (key === "reverseStrike" && hasMeleeTalent(actor, "reverseStrike"));
       // Требование к свойству самого оружия (Пила: Tearing/Power Field, стр.
       // 14, wdbc-x1nz.2.66.2) — сверяется с уже посчитанным wp (aggregateAuto),
       // тем же приёмом, что categories/minBalance выше.
       const propsOk    = !def.requiresWeaponProps || def.requiresWeaponProps.some(k => wp[k]);
+      // Обратный Удар: у оружия должен быть профиль посоха и Хват на обе руки.
+      // Оружие категории «Посох» без профилей тоже годится (решение владельца 26.10.2026) — вторая атака
+      // идёт его базовым профилем (rules/melee-talents.mjs::reverseStrikeSecondProfileIdx).
+      const profileOk  = !def.requiresProfileLabel
+        || (atkProfiles || []).some(p => String(p?.label ?? "").includes(def.requiresProfileLabel))
+        || (key === "reverseStrike" && reverseStrikeSecondProfileIdx(item, atkProfiles) != null);
+      const gripOk     = !def.requiresGrips || def.requiresGrips.includes(gKeyNow);
       const reason = !trainingOk
         ? `Нужна Рукопашная Тренировка (${category})`
         : (!categoryOk ? `Не подходит категории «${category}»`
           : (!baseOk ? `Только с Базой: ${def.bases.map(b => MELEE_BASES[b]?.label ?? b).join(", ")}`
             : (!balanceOk ? `Нужен Баланс не ниже ${def.minBalance}`
               : (!capOk ? `Нужно: ${CAPABILITIES[def.requiresCapability]?.source || def.requiresCapability}`
-                : (!propsOk ? `Нужно свойство: ${def.requiresWeaponProps.join("/")}` : "")))));
-      return { key, label: def.label, allowed: trainingOk && categoryOk && baseOk && balanceOk && capOk && propsOk, reason };
+                : (!propsOk ? `Нужно свойство: ${def.requiresWeaponProps.join("/")}`
+                  : (!profileOk ? `Нужен профиль «${def.requiresProfileLabel}»`
+                    : (!gripOk ? "Только в Хвате на обе руки" : "")))))));
+      return { key, label: def.label, allowed: trainingOk && categoryOk && baseOk && balanceOk && capOk && propsOk && profileOk && gripOk, reason };
     });
   }
   /**
@@ -295,7 +305,9 @@ export function buildSelection(v) {
 
     const gKey = sel.gripKey ?? gripKey;
     const gDefRaw = isMelee
-      ? (GRIPS[gKey] ? gripEffects(gKey, gKey !== primGrip) : null)
+      ? (GRIPS[gKey] ? gripEffects(gKey, gKey !== primGrip,
+          // Прикладный Хват: штык в «1р» — WS −10 вместо −5
+          (gKey === "1р" && stockGripActive(actor, item)) ? { secWs: STOCK_GRIP_SECONDARY_WS } : {}) : null)
       : (RANGED_GRIPS[gKey] ? rangedGripEffects(gKey) : null);
 
     // Запрещённый Приём (Cheap Shot, стр. 166): тратит Реакцию вместо
@@ -466,7 +478,7 @@ export function buildSelection(v) {
     const stanceKey = fix.stanceKey ?? sel.stanceKey;
     if (!ok(computeBaseOptions(stanceKey, sel.gKey), sel.baseKey)) fix.baseKey = "standard";
     const baseKey = fix.baseKey ?? sel.baseKey;
-    if (!ok(computeManeuverOptions(baseKey, sel.pIdx), sel.maneuverKey)) fix.maneuverKey = "standard";
+    if (!ok(computeManeuverOptions(baseKey, sel.pIdx, sel.gKey), sel.maneuverKey)) fix.maneuverKey = "standard";
     if (gripList.length && !ok(computeGripOptions(sel.pIdx), sel.gKey)) fix.gripKey = primGrip;
     return Object.keys(fix).length ? resolveSelection({ ...f, ...fix }) : sel;
   }

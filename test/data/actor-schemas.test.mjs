@@ -176,7 +176,7 @@ const DEVIATIONS = {
     // Экономика действий («Орды», Действия: «обычный запас ОД», Реакции как у
     // персонажа) — те же поля и умолчания, что у существ.
     actionPoints: { value: 2, max: 2 },
-    reactions: { value: 1, max: 1, defenseValue: 0, defenseMax: 0 }
+    reactions: { value: 1, max: 1, defenseValue: 0, defenseMax: 0, strangeValue: 0 }
   },
   // У трёх существ три набора расхождений сразу, и записаны они по-разному:
   // поля Миньонов и свои поля типа — обычными именами, надбавки характеристик —
@@ -307,7 +307,7 @@ const DEVIATIONS = {
     // Реакции раньше были свободным текстовым полем-памяткой (умолчание ""),
     // теперь структурный пул — см. module/combat/action-economy.mjs.
     actionPoints: { value: 2, max: 2 },
-    reactions: { value: 1, max: 1, defenseValue: 0, defenseMax: 0 },
+    reactions: { value: 1, max: 1, defenseValue: 0, defenseMax: 0, strangeValue: 0 },
     // Точка расширения (wdbc-ls9d): плоское снижение входящего урона от
     // эффектов, заведено гораздо позже template.json — см. combat/damage.mjs.
     incomingDamageReduction: 0,

@@ -79,6 +79,9 @@ import { grantRecoilBonus } from "../../combat/recoil-pool.mjs";
 import { triggerSpiritTalk } from "../../combat/spirit-talk.mjs";
 import { triggerDeadlyEffectiveness } from "../../combat/deadly-effectiveness.mjs";
 import { triggerBowToAudience } from "../../combat/bow-to-audience.mjs";
+import { triggerSavior } from "../../combat/savior.mjs";
+import { triggerShowOff } from "../../combat/show-off.mjs";
+import { releaseBinding } from "../../combat/blade-binding.mjs";
 import {
   declareHalfMove, declareFullMove, declareCharge, declareRun, declareHalfStep,
   showClimbDialog, showJumpDialog, showSwimDialog, showFallDialog, showFlightDialog,
@@ -469,6 +472,9 @@ export function activateCombatListeners(root, actor) {
       if (!await spendActionPoints(actor, cost)) ui.notifications.warn("⚠️ Не хватает ОД.");
     } else if (kind === "reaction") {
       if (!await spendReaction(actor)) ui.notifications.warn("⚠️ Не хватает Реакций.");
+    } else if (kind === "strange") {
+      // Странная Техника: хвост, мехадендриты, бонусный «Повалить» крюком/посохом — авто-траты у них нет, тратит игрок.
+      if (!await spendReaction(actor, { strange: true })) ui.notifications.warn("⚠️ Не хватает Реакций.");
     }
   });
   on(root, ".ae-reset-btn", "click", () => resetActionEconomy(actor));
@@ -528,6 +534,13 @@ export function activateCombatListeners(root, actor) {
   // game.user.targets (та же логика, что Bone Song, wdbc-sk8s) — гейт кнопки
   // сам проверяет их наличие и ОД.
   on(root, ".bow-to-audience-btn", "click", () => triggerBowToAudience(actor));
+
+  // Спаситель (Талант «Рукопашных», combat/savior.mjs): Реакция → Давление против врага, когда рядом союзник и враг.
+  on(root, ".savior-btn", "click", () => triggerSavior(actor));
+  // Рисовка (Талант «Рукопашных», combat/show-off.mjs): Полудействие, один бросок WS против до F.b врагов в контакте.
+  on(root, ".show-off-btn", "click", () => triggerShowOff(actor));
+  // Сцепление Клинков: «Разойтись» снимает сцепление у обоих (combat/blade-binding.mjs).
+  on(root, ".blade-release-btn", "click", () => releaseBinding(actor));
 
   // ── Движение (стр. 28-32): боевые типы + отдельные механики + марши ─────
   // Та же панель кнопок, что открывает Token HUD-кнопка «Движение»

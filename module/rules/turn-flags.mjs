@@ -91,6 +91,10 @@ export const TURN_SCOPED_FLAGS = {
   overclockThisTurn: "Разгон (Талант Техномистика, Sahara 3-2501): «раз в Ход» — метка гаснет с началом следующего Хода (sheets/tabs/tech.mjs::overclock, rules/technomystic-talents.mjs::OVERCLOCK_FLAG)",
   processCostPaidThisTurn: "Цена Процессов техномистика (Цифровое Откровение, Ноосферная Набожность, Sahara 3-2501): «↻» в начале Хода списала её — второе нажатие в этом же Ходу не берёт плату (sheets/tabs/tech.mjs::cognitionRest, rules/technomystic-talents.mjs::PROCESS_PAID_FLAG)",
   psychicResurgenceActive: "Психическое Возрождение (Талант Псайканы, Sahara 3-28): поддержание психосил не снижает тPR — «до начала своего следующего Хода» (rules/psyker-talents.mjs::RESURGENCE_FLAG, sheets/tabs/psychic.mjs)",
+  bladeBindingOwner: "Сцепление Клинков (Талант Рукопашных, 3-8dc5): сцепление держится до начала следующего Хода цепляющего (rules/blade-binding.mjs, combat/blade-binding.mjs)",
+  meleeDamageDealtThisTurn: "Упорство (Талант Рукопашных, 3-8dc5): рукопашная атака этого персонажа нанесла непоглощённый урон — повтор Упорства после этого недоступен (rules/melee-talents.mjs::MELEE_DAMAGE_DEALT_FLAG, combat/tenacity.mjs)",
+  meleeDamageAppliedMsg: "Упорство (Талант Рукопашных, 3-8dc5): id карточки, по которой урон уже применён к цели (любой исход) — повтор Упорства не переспрашивает «урон ещё не применён» (rules/melee-talents.mjs::MELEE_DAMAGE_APPLIED_FLAG, combat/tenacity.mjs)",
+  reaperInitialTarget: "Жнец (Талант Рукопашных, 3-8dc5): uuid токена начальной цели цепочки Натиска — от него меряется Полудвижение следующих целей (rules/melee-talents.mjs::REAPER_CHAIN_FLAG, combat/reaper-chain.mjs)",
   pinDownHold: "Прижать (Талант Пугилиста, стр. 62, 3-eddb): штраф цели на физические действия и отмена +20 за Борьбу по прижимающему — до начала СЛЕДУЮЩЕГО Хода прижимающего; заодно метка «раз в Ход» (combat/grapple-talents.mjs, rules/situational.mjs)"
 };
 

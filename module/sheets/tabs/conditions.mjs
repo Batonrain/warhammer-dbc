@@ -411,6 +411,7 @@ export function conditionApplyFields(key, level = null, actor = null) {
   if (key === "surprised" && actor) {
     fields["system.reactions.value"] = 0;
     fields["system.reactions.defenseValue"] = 0;
+    fields["system.reactions.strangeValue"] = 0;
   }
   // Гангрена (wdbc-x1nz.2.96): «каждые T.b×2 часов 1d10 урона в T» — отсчёт
   // идёт от начала болезни. Метка времени — тот же флаг, что у кнопки

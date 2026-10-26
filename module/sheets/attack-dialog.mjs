@@ -39,7 +39,8 @@ import { getModEffects, mergeWeaponPropEntries, getActiveMods, getInstalledMods,
          activeSightId, modWornRequirementMet } from "../combat/weapon-mods.mjs";
 import { hasRuleFlag }                        from "../rules/flags.mjs";
 import { unstablePlatformPenalty }            from "../rules/damage-talents.mjs";
-import { RIPOSTE_EVASION_PENALTY }            from "../rules/melee-talents.mjs";
+import { RIPOSTE_EVASION_PENALTY, stockGripActive } from "../rules/melee-talents.mjs";
+import { weaponIsBound } from "../combat/blade-binding.mjs";
 import { khornePatron }                       from "../rules/patron-abilities.mjs";
 import { isStunnedOrDazed }    from "../rules/predicates.mjs";
 import { suffersBlindness } from "../rules/blindness.mjs";
@@ -184,6 +185,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // окном — там же разобрано, чем именно.
   const isMelee = attackIsMelee(sys, { forceMelee, profile: startProfile });
   const charKey = isMelee ? "ws" : "bs";
+  // Сцепление Клинков (Талант «Рукопашных»): сцепленным оружием атаковать нельзя (combat/blade-binding.mjs).
+  if (weaponIsBound(actor, item.id))
+    return ui.notifications.warn(`⚠️ «${item.name}» сцеплено клинком противника (Сцепление Клинков) — атаковать им нельзя до начала Хода цепляющего или пока не разойдутся.`);
   // Нулевая WS/BS от урона в Характеристики (wdbc-x1nz.2.83): «не может
   // совершать рукопашные атаки» / «не может стрелять».
   if (isZeroedByLoss(actor.system, charKey))
@@ -288,7 +292,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // не по классу/свойству: во всех шестнадцати книгах такое правило одно.
   const pathOneHandGrip = (!isMelee && isPathOneHandedWeapon(item)
                         && hasRuleFlag(actor, "weapon.oneHandedWarriorPath")) ? "1р" : null;
+  // Прикладный Хват (Sahara 3-8dc5): штык одной рукой — «1р» выдаёт Талант, WS −10 (selection.mjs).
+  const stockGripGrip = (isMelee && stockGripActive(actor, item)) ? "1р" : null;
   const extraGrips = [...modGrantedGrips, ...(commandoGrip ? [commandoGrip] : []),
+                      ...(stockGripGrip ? [stockGripGrip] : []),
                       ...(doubleGripGrip ? [doubleGripGrip] : []),
                       ...(oneHandRifleGrip ? [oneHandRifleGrip] : []),
                       ...(pathOneHandGrip ? [pathOneHandGrip] : [])];
@@ -1404,7 +1411,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     <div class="av-section">
       ${contactBadgeHtml}
       <div class="av-sec-lbl">Приём</div>
-      <div class="av-pills" id="atk-maneuver-pills">${pillsHtml("atk-maneuver", computeManeuverOptions(dyn0.baseKey, dyn0.pIdx), dyn0.maneuverKey)}</div>
+      <div class="av-pills" id="atk-maneuver-pills">${pillsHtml("atk-maneuver", computeManeuverOptions(dyn0.baseKey, dyn0.pIdx, dyn0.gKey), dyn0.maneuverKey)}</div>
       <div class="av-opt-note" id="atk-maneuver-note">${dyn0.mDef.note}</div>
     </div>` : "";
   const stanceBlockHtml = isMelee ? `

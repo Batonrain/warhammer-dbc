@@ -15,6 +15,9 @@
 //    • addFatigue — Усталость хватки Удушения (1…20);
 //    • inspireHatred — по сокету идёт только цель Ненависти, предмет собирает сам
 //      ГМ из шаблона компендиума; нужен Талант Inspire Wrath у инициатора.
+//    • apDebt — Подрезать Сухожилья на 5+ Успехов: цель теряет полудействие в свой следующий Ход
+//      (долг ОД, тот же флаг, что у Пожирателя Времени); полезной нагрузки нет, нужен Талант Hamstring
+//      у инициатора.
 //    • dreadWailFear — Страх 2 до конца боя от звуковой волны Грозного Вопля: клиент
 //      присылает только «вид», эффект и срок собирает ГМ (timed-effects.mjs); нужна
 //      Черта Dread Wail у инициатора.
@@ -31,6 +34,8 @@
 
 import { hasInspireWrath, inspiredHatredData, HATRED_PACK_ID } from "../rules/inspire-wrath.mjs";
 import { hasAbility } from "../rules/ability-by-key.mjs";
+import { hasMeleeTalent } from "../rules/melee-talents.mjs";
+import { DEVOURER_OF_TIME_AP_DEBT_FLAG } from "./devourer-of-time.mjs";
 
 /** Какие поля урона приёма разрешено присылать по сокету и их типы (applyDamage). */
 export const RELAY_DAMAGE_FIELDS = Object.freeze({
@@ -55,7 +60,7 @@ export const TARGET_WRITE_ACTION = "targetActorWrite";
 export const RELAY_TARGET_FLAGS = Object.freeze([
   "grapplePartnerUuid", "grappleRole", "grappleHands", "grappleHeldHands", "grappleTail",
   "grappleSqueezePending", "grappleSqueezeActive", "pinDownHold",
-  "jockeyMountedBy", "jockeyRiding", "leapUpDenied"
+  "jockeyMountedBy", "jockeyRiding", "leapUpDenied", "bladeBindingBy", "bladeBindingWeapon", "bladeBindingOwner"
 ]);
 /** Состояния, которые можно наложить/снять на цель из этих приёмов. */
 export const RELAY_TARGET_CONDITIONS = Object.freeze(["grappling", "prone"]);
@@ -114,6 +119,13 @@ export function checkTargetWrite(op, ctx = {}) {
   if (op.kind === "inspireHatred") {
     if (!hasInspireWrath(ctx.initiator)) return { ok: false, reason: "у инициатора нет Inspire Wrath" };
     if (!validHatredTarget(op.target)) return { ok: false, reason: "недопустимая цель Ненависти" };
+    return { ok: true };
+  }
+
+  // Подрезать Сухожилья (5+ Успехов): +1 ОД долга цели; число и флаг зашиты ниже, клиент не задаёт ничего.
+  if (op.kind === "apDebt") {
+    if (Object.keys(op).some(k => k !== "kind")) return { ok: false, reason: "apDebt: лишние поля" };
+    if (!hasMeleeTalent(ctx.initiator, "hamstring")) return { ok: false, reason: "у инициатора нет Hamstring" };
     return { ok: true };
   }
 
@@ -180,6 +192,10 @@ export async function performTargetWrite(target, op, initiator = null) {
   if (op.kind === "addFatigue") {
     const { addFatigue } = await import("../sheets/tabs/conditions.mjs");
     return addFatigue(target, Number(op.amount));
+  }
+  if (op.kind === "apDebt") {
+    const debt = Number(target.getFlag?.(NS, DEVOURER_OF_TIME_AP_DEBT_FLAG)) || 0;
+    return target.setFlag(NS, DEVOURER_OF_TIME_AP_DEBT_FLAG, debt + 1);
   }
   if (op.kind === "applyDamage") {
     const { applyDamageToActor } = await import("./damage.mjs");

@@ -605,7 +605,10 @@ export function creatureSchema({ granted = false } = {}) {
     reactions: new SchemaField({
       value: num(1, "Текущие"), max: num(1, "Максимум"),
       defenseValue: num(0, "Текущие (только Избегание)"),
-      defenseMax:   num(0, "Максимум (только Избегание)")
+      defenseMax:   num(0, "Максимум (только Избегание)"),
+      // «Странная» Реакция Таланта Strange Technique — только на атаки вроде хвоста/
+      // мехадендритов; максимум читается с Таланта (rules/melee-talents.mjs), не хранится.
+      strangeValue: num(0, "Текущие (только странные атаки)")
     }, { label: "Реакции" }),
     // Ручная надбавка к Лимиту Атак за Ход (combat/attack-limit.mjs, стр. 12):
     // книжная база — 1, Решительность Сражаться поднимает до 2 автоматически;

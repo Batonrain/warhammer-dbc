@@ -5,7 +5,7 @@
   "folder": "XeycnCsRlazxEDgr",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey meleeCore.core.reverseStrike — Приём «Обратный Удар» в окне рукопашной атаки (MELEE_MANEUVERS.reverseStrike): База Стандартная/Натиск/Осторожная, у оружия есть профиль «Посох» ЛИБО само оружие категории «Посох» (без профилей — вторая атака идёт его базовым профилем), хват на обе руки (2р или Мордхау). Первая атака +0 выбранным профилем, затем окно само бросает вторую профилем посоха с теми же модификаторами (отдельный бросок и своя карточка — Избегание и Парирование на каждую); вторая получает Concussive(0), если у оружия нет его выше; ОД списываются один раз; Упорство на такую пару не предлагается. Талант опознаётся и по имени. sheets/attack/selection.mjs, sheets/attack/dialog.mjs, combat/attack.mjs (opts.reverseStrikeSecond).",
     "benefit": "Приём (База: Стандартная/Натиск/Осторожная Атака; Оружие: с профилем посоха, в двуручном хвате). Базовая атака +0 любым профилем, после чего сразу же ещё одна атака с теми же модификаторами профилем посоха. Вторая атака получает Concussive(0), если оружие не имело его выше.",
     "tier": 3,
     "requirement": "WS 45",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "qyAiS3PRjyEDeqVx",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "12yP7lF9CqqRZMUg",
+              "capabilityKey": "meleeCore.core.reverseStrike",
+              "label": "Обратный Удар: Приём — базовая атака +0 любым профилем и сразу вторая профилем посоха (Concussive 0)",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

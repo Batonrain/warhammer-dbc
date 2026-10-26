@@ -178,9 +178,14 @@ import { weaponProfiles, attackIsMelee } from "./combat/weapon-profiles.mjs";
 // Огневая Точка (Хавок) и Хирургия Легиона (Апотекарий) — пункты меню Очков карточки.
 import { firePointFreeReroll, firePointActivatesOnPaidReroll } from "./rules/fire-point.mjs";
 import { CLEAVE_CARD_FLAG, CLEAVE_PENALTY } from "./combat/cleave.mjs";
+import { REAPER_CARD_FLAG, startReaperFollow } from "./combat/reaper-chain.mjs";
+import { SHOW_OFF_CARD_FLAG } from "./combat/show-off.mjs";
+import { HAMSTRING_CARD_FLAG, startHamstring } from "./combat/hamstring.mjs";
+import { TENACITY_CARD_FLAG, confirmTenacityRepeat } from "./combat/tenacity.mjs";
+import { BLADE_BINDING_CARD_FLAG, startBladeBinding } from "./combat/blade-binding.mjs";
 import { OVERPOWER_CARD_FLAG, startOverpower } from "./combat/overpower.mjs";
 import { FURIOUS_ASSAULT_CARD_FLAG } from "./combat/furious-assault.mjs";
-import { blademasterRerollOffered, BLADEMASTER_ROUND_FLAG, RIPOSTE_ROUND_FLAG, RIPOSTE_EVASION_PENALTY } from "./rules/melee-talents.mjs";
+import { blademasterRerollOffered, BLADEMASTER_ROUND_FLAG, RIPOSTE_ROUND_FLAG, RIPOSTE_EVASION_PENALTY, HAMSTRING_ROUND_FLAG, tenacityAvailable, MELEE_DAMAGE_DEALT_FLAG, MELEE_DAMAGE_APPLIED_FLAG } from "./rules/melee-talents.mjs";
 import { activateFirePoint } from "./combat/fire-point.mjs";
 import { cardOnceUsed, markCardOnce, runCardOnce } from "./combat/card-once.mjs";
 import { takedownKnockdown, TAKEDOWN_CARD_FLAG } from "./combat/takedown.mjs";
@@ -705,6 +710,141 @@ export function registerHooks() {
       });
     });
 
+    // Сцепление Клинков (Талант «Рукопашных», combat/blade-binding.mjs): с карточки успешного Парирования —
+    // встречный тест S+0 vs S+0, бросает АТАКОВАВШИЙ. Раз на карточку; отметка — в момент броска.
+    html.querySelectorAll(".wh-blade-binding-btn").forEach(btn => {
+      if (cardOnceUsed(message, BLADE_BINDING_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const attacker = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
+        const defender = await fromUuid(el.dataset.defenderUuid || "").catch(() => null);
+        const binderWeapon = await fromUuid(el.dataset.attackerWeaponUuid || "").catch(() => null);
+        if (!attacker || !defender || !binderWeapon) return ui.notifications.warn("⚠️ Атакующий, парировавший или оружие не найдены.");
+        if (!attacker.isOwner) return ui.notifications.warn("⚠️ Сцепление проводит владелец атакующего (или ГМ).");
+        if (cardOnceUsed(message, BLADE_BINDING_CARD_FLAG)) return ui.notifications.warn("Сцепление с этой карточки уже использовано.");
+        await startBladeBinding(attacker, defender, {
+          binderWeapon, parryWeaponId: el.dataset.parryWeaponId || "",
+          pay: () => runCardOnce(message, BLADE_BINDING_CARD_FLAG, async () => true, "Сцепление с этой карточки уже использовано.")
+        });
+      });
+    });
+
+    // Жнец (Талант «Рукопашных», combat/reaper-chain.mjs): с карточки урона — к следующей цели Натиска. Замер по
+    // токенам сцены (Полудвижение от начальной цели, дистанция Натиска), отметка карточки — только после
+    // успешного замера; окно атаки с Базой «Натиск» без новых ОД, атака идёт в лимит Атак.
+    html.querySelectorAll(".wh-reaper-btn").forEach(btn => {
+      if (cardOnceUsed(message, REAPER_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const attacker = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
+        const weapon = await fromUuid(el.dataset.weaponUuid || "").catch(() => null);
+        if (!attacker || !weapon) return ui.notifications.warn("⚠️ Атакующий или его оружие не найдены.");
+        if (!attacker.isOwner) return ui.notifications.warn("⚠️ Жнеца проводит владелец атакующего (или ГМ).");
+        if (cardOnceUsed(message, REAPER_CARD_FLAG)) return ui.notifications.warn("Жнец с этой карточки уже использован.");
+        const opened = await startReaperFollow(attacker, weapon, {
+          killedTokenUuid: el.dataset.killedTokenUuid || "",
+          combatId: el.dataset.combatId || "", round: Number(el.dataset.round) || 0,
+          claim: () => runCardOnce(message, REAPER_CARD_FLAG, async () => true, "Жнец с этой карточки уже использован.")
+        });
+        if (opened) el.disabled = true;
+      });
+    });
+
+    // Рисовка (Талант «Рукопашных», combat/show-off.mjs): победа на 5+ Успехов — свободная базовая атака по этой
+    // цели. Не считается атакой (ни ОД, ни лимита Атак — techniqueOpts.showOffFree); цель берётся на токен сцены,
+    // старые цели сбрасываются. Раз на карточку.
+    html.querySelectorAll(".wh-show-off-attack-btn").forEach(btn => {
+      if (cardOnceUsed(message, SHOW_OFF_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const attacker = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
+        const weapon = await fromUuid(el.dataset.weaponUuid || "").catch(() => null);
+        const target = await fromUuid(el.dataset.targetUuid || "").catch(() => null);
+        if (!attacker || !weapon) return ui.notifications.warn("⚠️ Атакующий или его оружие не найдены.");
+        if (!attacker.isOwner) return ui.notifications.warn("⚠️ Свободную атаку Рисовки проводит владелец атакующего (или ГМ).");
+        const done = await runCardOnce(message, SHOW_OFF_CARD_FLAG, async () => true, "Свободная атака с этой карточки уже использована.");
+        if (!done) return;
+        el.disabled = true;
+        const token = canvas.tokens?.placeables?.find(t => t.actor?.uuid === target?.uuid);
+        game.user.targets.forEach(t => t.setTarget(false, { user: game.user, releaseOthers: false }));
+        token?.setTarget(true, { user: game.user, releaseOthers: true });
+        await attacker.sheet._showAttackDialog?.(weapon, { forceBase: "standard", showOffFree: true });
+      });
+    });
+
+    // Упорство (Талант «Рукопашных», combat/tenacity.mjs): повтор единственной одиночной рукопашной атаки Хода,
+    // не нанёсшей урона — тем же оружием, с той же Базой и Приёмом, по той же цели (цели не сбрасываются).
+    // Свободное действие: tenacityRepeat снимает ОД и Лимит Атак в окне, и не порождает нового повтора.
+    html.querySelectorAll(".wh-tenacity-btn").forEach(btn => {
+      if (cardOnceUsed(message, TENACITY_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const attacker = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
+        const weapon = await fromUuid(el.dataset.weaponUuid || "").catch(() => null);
+        if (!attacker || !weapon) return ui.notifications.warn("⚠️ Атакующий или его оружие не найдены.");
+        if (!attacker.isOwner) return ui.notifications.warn("⚠️ Упорство проводит владелец атакующего (или ГМ).");
+        const state = {
+          attacksThisTurn: Number(attacker.getFlag("warhammer-dbc", "attackActionsThisTurn")) || 0,
+          damageDealt: !!attacker.getFlag("warhammer-dbc", MELEE_DAMAGE_DEALT_FLAG)
+        };
+        if (!tenacityAvailable(attacker, state)) {
+          return ui.notifications.warn(state.damageDealt
+            ? "⚠️ Упорство: рукопашная атака этого Хода уже нанесла урон."
+            : "⚠️ Упорство: в этом Ходу была не одна атака.");
+        }
+        // Попала, а урон по карточке ещё не применён — спросить (решение владельца 26.10.2026); «Отмена» — ничего.
+        const proceed = await confirmTenacityRepeat({
+          hit: el.dataset.hit === "1",
+          damageApplied: attacker.getFlag("warhammer-dbc", MELEE_DAMAGE_APPLIED_FLAG) === message.id
+        });
+        if (!proceed) return;
+        // Пока висел диалог, урон мог пройти (его применил ГМ) — условие перепроверяется после ответа.
+        if (!tenacityAvailable(attacker, {
+          attacksThisTurn: Number(attacker.getFlag("warhammer-dbc", "attackActionsThisTurn")) || 0,
+          damageDealt: !!attacker.getFlag("warhammer-dbc", MELEE_DAMAGE_DEALT_FLAG)
+        })) return ui.notifications.warn("⚠️ Упорство: пока вы решали, рукопашная атака нанесла урон — повтор закрыт.");
+        const done = await runCardOnce(message, TENACITY_CARD_FLAG, async () => true, "Упорство с этой карточки уже использовано.");
+        if (!done) return;
+        el.disabled = true;
+        const base = el.dataset.base || "";
+        const technique = el.dataset.technique || "";
+        await attacker.sheet._showAttackDialog?.(weapon, {
+          tenacityRepeat: true, ...(base ? { forceBase: base } : {}), ...(technique ? { technique } : {})
+        });
+      });
+    });
+
+    // Подрезать Сухожилья (Талант «Рукопашных», combat/hamstring.mjs): встречный тест A+0 vs A+0 после
+    // Избирательного попадания в Ногу с непоглощённым уроном. Отметки карточки и Раунда ставятся в момент
+    // «Бросок!» окна (pay), «Отмена» их не съедает; цель — выцеленный токен окна встречного теста.
+    html.querySelectorAll(".wh-hamstring-btn").forEach(btn => {
+      if (cardOnceUsed(message, HAMSTRING_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const attacker = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
+        const target = await fromUuid(el.dataset.targetUuid || "").catch(() => null);
+        if (!attacker || !target) return ui.notifications.warn("⚠️ Атакующий или цель не найдены.");
+        if (!attacker.isOwner) return ui.notifications.warn("⚠️ Подрезать Сухожилья проводит владелец атакующего (или ГМ).");
+        if (!isRoundCapabilityAvailable(attacker, HAMSTRING_ROUND_FLAG)) {
+          return ui.notifications.warn("⚠️ Подрезать Сухожилья уже использовано в этом Раунде.");
+        }
+        await startHamstring(attacker, target, {
+          pay: async () => {
+            const claimed = await runCardOnce(message, HAMSTRING_CARD_FLAG, async () => true, "Подрезать Сухожилья с этой карточки уже использовано.");
+            if (!claimed) return false;
+            await markRoundCapabilityUsed(attacker, HAMSTRING_ROUND_FLAG);
+            el.disabled = true;
+            return true;
+          }
+        });
+      });
+    });
+
     // Яростный Штурм (Талант Берсерка, combat/furious-assault.mjs): с карточки успешной Полной Атаки —
     // ещё одна атака тем же оружием, Базой Полная Атака и Приёмом за свободное действие, ценой Реакции.
     // Реакция списывается при клике внутри отметки карточки: нет Реакции — отметка не ставится, клик не потерян.
@@ -782,7 +922,9 @@ export function registerHooks() {
         const sizePenalty = target ? knockdownSizePenalty(actor, target) : 0;
         await _showContestDialog(actor, { ...MELEE_CONTESTS.knockdown, onSuccess: resolveKnockdownSuccess,
           pay: async a => {
-            if (await spendReaction(a)) return true;
+            // strange: бонусный «Повалить» крюком/посохом — «странная» атака Странной Техники
+            // (combat/action-economy.mjs, system.reactions.strangeValue), тратится первой.
+            if (await spendReaction(a, { strange: true })) return true;
             ui.notifications.warn("⚠️ Не хватает Реакций.");
             return false;
           },
@@ -1723,6 +1865,10 @@ export function registerHooks() {
           negWoundsBonus:  parseInt(ds.negWoundsBonus || "0"),
           // Разрубить (combat/cleave.mjs): это дополнительная атака Таланта — новых не порождает.
           cleaveChild:     ds.cleaveChild === "1",
+          // Подрезать Сухожилья (combat/hamstring.mjs): Избирательная атака в Ногу — кнопка в карточке урона.
+          hamstring:       ds.hamstring === "1",
+          // Жнец (combat/reaper-chain.mjs): удар с Базой «Натиск» — карточка урона предложит продолжить к следующей цели.
+          chargeBase:      ds.chargeBase === "1",
           // Карточка, с которой пришёл урон: к ней привязывается итог
           // пробития брони для кнопок Rad/Toxic той же карточки (wdbc-x1nz.2.79).
           sourceMessageId: message?.id ?? ""
