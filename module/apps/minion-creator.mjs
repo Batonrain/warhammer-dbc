@@ -23,8 +23,11 @@ import {
   minionSlots, slotUsage, charLimits, charIssues, charPointsLeft, rollHumanChars,
   skillPointsLeft, talentPointsLeft, traitPointsLeft,
   minionWounds, hordeMagnitude, minionInfamy, minionCorruption, minionLoyalty,
-  availableTraits, traitAvailability, mandatoryTraits, traitEntry, skillRankFor
+  availableTraits, traitAvailability, mandatoryTraits, traitEntry, skillRankFor,
+  talentRequirements, minionInfamyWaiverFlag
 } from "../rules/minion-build.mjs";
+import { hasBinaryFlock, buildCountGroup, FLOCK_MACHINE_FLAG } from "../rules/binary-dominion.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 import { openCompendiumBrowser } from "./compendium-browser.mjs";
 import { minionsOfActor } from "../sheets/tabs/minions-panel.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -42,8 +45,37 @@ function blankState(group, tier, talentId) {
     armedVi: null,                              // взведённый (кликнутый) бросок, ждёт своей Характеристики
     skills: [],                                 // { key, upgraded }
     talents: [], traits: [], gear: [],          // { uuid, name, img, cost, tier, rarity }
-    convert: { talentsToSkills: 0, traitsToTalents: 0, gearToTraits: 0 }
+    convert: { talentsToSkills: 0, traitsToTalents: 0, gearToTraits: 0 },
+    // Бинарная Паства: «считать как машину» — выбор игрока; профиль остаётся человеческим
+    flockMachine: false
   };
+}
+
+/**
+ * Группа счёта Хозяина (Лояльность, требования Таланта): по умолчанию группа
+ * слота; при галочке Бинарной Паствы человеческого профиля — «Машина» (Int/Tech-Use).
+ */
+const countGroupOf = (master, state) => buildCountGroup(master, state.group, state.flockMachine);
+
+/** Строка требований Таланта по группе счёта: чего Хозяину не хватает. */
+function requirementsHtml(master, state) {
+  const group = countGroupOf(master, state);
+  const ignoreInfamy = !!group && hasRuleFlag(master, minionInfamyWaiverFlag(group));
+  const req = talentRequirements(master, group, state.tier, { ignoreInfamy });
+  const miss = req.missing?.length
+    ? `<span class="mc-badge over">не хватает: ${esc(req.missing.join("; "))}</span>`
+    : `<span class="mc-badge exact">выполнены</span>`;
+  return `<div class="mc-hint">Требования Таланта (${esc(MINION_GROUPS[group]?.label || "?")}): ${esc(req.skillNote || "")} · ${miss}</div>`;
+}
+
+/** Галочка Бинарной Паствы: видна только человеческому профилю при Таланте. */
+function flockToggleHtml(master, state) {
+  if (state.group !== "human" || !hasBinaryFlock(master)) return "";
+  return `
+    <label class="mc-line mc-flock" title="Бинарная Паства: человек с Латами Скитария или Mechanicum Implants считается Миньоном-машиной в требованиях и максимуме, но профиль создаётся как у человека.">
+      <input type="checkbox" id="mc-flock" ${state.flockMachine ? "checked" : ""}/>
+      Считать как машину (Бинарная Паства): Лояльность и требования — по Int и Tech-Use
+    </label>`;
 }
 
 // ── Выбор слота ─────────────────────────────────────────────────────────────
@@ -309,17 +341,20 @@ function creatorHtml(state, master) {
     ? `Магнитуда <b>${hordeMagnitude(master)}</b> (Ран у Орды нет)`
     : `Раны <b>${minionWounds({ toughness: state.chars.t, tier: state.tier })}</b>`;
 
+  const countGroup = countGroupOf(master, state);
   return `
     <form class="wh-minion-creator">
       <div class="mc-head">
         <div><b>${esc(groupDef?.label || "?")}</b> · ${esc(tierDef?.label || "?")} ·
              Хозяин: ${esc(master?.name || "?")}</div>
+        ${flockToggleHtml(master, state)}
         <div class="mc-derived">
           ${woundsOrMagnitude} ·
-          Лояльность <b>${minionLoyalty(master, state.group, { slotTalentId: state.talentId })}</b> (${esc(groupDef?.masterChar?.toUpperCase() || "")}) ·
+          Лояльность <b>${minionLoyalty(master, countGroup, { slotTalentId: state.talentId })}</b> (${esc(MINION_GROUPS[countGroup]?.masterChar?.toUpperCase() || "")}) ·
           Бесчестие <b>${minionInfamy(master, state.tier)}</b> ·
           Порча <b>${minionCorruption(state.group)}</b>
         </div>
+        ${requirementsHtml(master, state)}
         <button type="button" class="mc-btn" id="mc-browser">📚 Обозреватель компендиумов</button>
       </div>
       ${charsStepHtml(state)}
@@ -394,7 +429,8 @@ function minionSkillFields(state) {
 /** Собрать актора-Миньона по состоянию окна. */
 async function createMinionActor(master, state) {
   const tierDef = MINION_TIERS[state.tier];
-  const loyalty = minionLoyalty(master, state.group, { slotTalentId: state.talentId });
+  const countGroup = countGroupOf(master, state);
+  const loyalty = minionLoyalty(master, countGroup, { slotTalentId: state.talentId });
 
   // Пишем в `base`: `total` схема считает сама из базы, надбавок и эффектов —
   // записанное туда значение затёрлось бы первым же пересчётом листа.
@@ -428,6 +464,9 @@ async function createMinionActor(master, state) {
     name: `Миньон (${MINION_GROUPS[state.group]?.label || "?"})`,
     type: "minion",
     system,
+    // Выбор «считать как машину» (Бинарная Паства): хранится на слуге, чтобы
+    // слот, максимум и пересчёт Лояльности видели его решение (rules/binary-dominion.mjs).
+    ...(countGroup !== state.group ? { flags: { "warhammer-dbc": { [FLOCK_MACHINE_FLAG]: true } } } : {}),
     // Владение — как у Хозяина: без этого миньона видит только тот, кто
     // нажал «+» (обычно ГМ, готовящий слугу заранее), а игрок-владелец
     // Хозяина не может ни переименовать его, ни поставить токен.
@@ -479,6 +518,11 @@ function openCreator(master, state) {
     box.querySelector("#mc-browser")?.addEventListener("click", ev => {
       ev.preventDefault();
       openCompendiumBrowser(false);
+    });
+
+    box.querySelector("#mc-flock")?.addEventListener("change", ev => {
+      state.flockMachine = !!ev.currentTarget.checked;
+      rebuild();
     });
 
     box.querySelector("#mc-roll")?.addEventListener("click", async ev => {

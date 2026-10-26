@@ -12,6 +12,7 @@ import {
 } from "../../module/sheets/tabs/drugs.mjs";
 import { computeWoundHealing } from "../../module/sheets/tabs/wounds.mjs";
 import { woundLossUpdates } from "../../module/rules/wounds.mjs";
+import { packDocuments } from "../support/pack-docs.mjs";
 
 function drug({ id = "drug-1", name = "Пыльца", system = null } = {}) {
   const updates = [];
@@ -554,6 +555,66 @@ describe("triggerAfterEffect", () => {
   });
 });
 
+// Струп / Scab (Основная книга, стр. 284): «Пост-Эффект: Жидкость выходит из
+// него в потоке рвоты, Оглушая персонажа на 1d10 Раундов. Если персонаж не имеет
+// Покровительства Нургла, за каждый Ход Оглушения он получает 1 Порчи.»
+// Решение владельца 26.10.2026: вместо «1d10 урона в T» — Оглушение на 1d10
+// Раундов; Порча остаётся текстом в карточке (по Ходам Оглушения её считать
+// нечем). Кубы пост-эффекта у препарата с Оглушением задают срок Оглушения.
+describe("Струп: пост-эффект по книге", () => {
+  const realScab = () => {
+    const found = packDocuments("chemistry", "drug").find(({ doc }) => /Scab/.test(doc.name));
+    expect(found).toBeTruthy();
+    const system = structuredClone(found.doc.system);
+    system.activeEffect = { isActive: true, roundsRemaining: 0 };
+    return drug({ name: found.doc.name, system });
+  };
+
+  it("данные пака: кубы 1d10 Оглушению, урона в T нет, Порча — текстом", () => {
+    const { system } = realScab();
+    expect(system.afterEffectDice).toBe("1d10");
+    expect(system.afterEffectSpecial.grantsCondition).toBe("stunned");
+    expect(system.afterEffectCharDamage).toEqual({ stat: "", formula: "" });
+    expect(system.afterEffect).toMatch(/Оглуш\S+ его на 1d10 Раундов/);
+    expect(system.afterEffect).not.toMatch(/урон\S* в T/);
+    expect(system.afterEffectSpecial.customEffect).toMatch(/Покровительств\S* Нургла/);
+    expect(system.afterEffectSpecial.customEffect).toMatch(/1 Порч/);
+  });
+
+  it("пост-эффект: бросок 1d10 = срок Оглушения в Раундах, урона в T нет, один бросок", async () => {
+    const item = realScab();
+    const a = actor({ items: [item] });
+    // Очередь кубов: второй бросок вместо переиспользованного взял бы 3, и карточка разошлась бы с Оглушением.
+    captured.dice = [7, 3];
+    await triggerAfterEffect(a, item);
+    expect(a.updates[0]).toMatchObject({ "system.conditions.stunned": true, "system.conditions.stunnedRounds": 7 });
+    expect(item.updates[0]).toMatchObject({ "system.activeEffect.charDamageStat": "", "system.activeEffect.charDamageAmount": 0 });
+    expect(captured.chat[0].content).toContain("Порч");
+    expect(captured.chat[0].content).toMatch(/<b[^>]*>7<\/b>/);
+    expect(captured.chat[0].content).not.toMatch(/<b[^>]*>3<\/b>/);
+    expect(captured.dice).toEqual([3]);          // взят ровно один кубик
+    expect(captured.chat[0].rolls).toHaveLength(1);
+  });
+
+  it("Оглушение складывается с уже идущим (как уровни у других Состояний)", async () => {
+    const item = realScab();
+    const a = actor({ items: [item] });
+    a.system.conditions = { stunned: true, stunnedRounds: 2 };
+    captured.nextRoll = 4;
+    await triggerAfterEffect(a, item);
+    expect(a.updates[0]["system.conditions.stunnedRounds"]).toBe(6);
+  });
+
+  it("без Кубов пост-эффекта Оглушение даёт прежние grantsConditionLevel Раундов (Шквал, Детокс не меняются)", async () => {
+    const item = drug({ system: { hasAfterEffect: true, afterEffect: "Откат",
+      afterEffectSpecial: { grantsCondition: "stunned", grantsConditionLevel: 1 },
+      activeEffect: { isActive: true, roundsRemaining: 0 } } });
+    const a = actor({ items: [item] });
+    await triggerAfterEffect(a, item);
+    expect(a.updates[0]["system.conditions.stunnedRounds"]).toBe(1);
+  });
+});
+
 // New Men / Новые Люди (Йигори): «уменьшает время действия любого яда,
 // наркотика или медикамента вдвое (окр.▼) и игнорирует побочные эффекты. Если
 // медикамент действует мгновенно или разово, уменьшает эффект вдвое (окр.▼)».
@@ -629,6 +690,8 @@ describe("drug sheet listeners", () => {
     expect(item.updates[0]).toEqual({
       "system.activeEffect.isActive": false,
       "system.activeEffect.isAfterEffect": false,
+      // Отметка конца по игровому времени гасится вместе с эффектом (drug-expiry, Sahara task-3ab7).
+      "system.activeEffect.expiresAt": null,
       "system.activeEffect.roundsRemaining": 0,
       "system.activeEffect.charDamageStat": "",
       "system.activeEffect.charDamageAmount": 0

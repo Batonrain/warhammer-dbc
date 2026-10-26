@@ -44,6 +44,11 @@ export class DrugData extends foundry.abstract.TypeDataModel {
       availability:   num(0, "Доступность"),
       quality:        new StringField({ initial: "common", label: "Качество" }),
       duration:       text("Срок действия"),
+      // Срок по игровому времени, минуты (0 — вручную, кнопкой «Эффект завершён»):
+      // при приёме пишет activeEffect.expiresAt, часы Календаря снимают препарат
+      // сами (rules/drug-expiry.mjs, combat/drug-expiry.mjs). Текстовый duration
+      // выше книга меряет то Раундами, то минутами — его не считаем.
+      gameMinutes:    new NumberField({ initial: 0, integer: true, min: 0, nullable: false, label: "Срок по игровому времени, мин" }),
       effect:         text("Эффект"),
       afterEffect:    text("Пост-эффект"),
       afterEffectDice: text("Кубы пост-эффекта"),

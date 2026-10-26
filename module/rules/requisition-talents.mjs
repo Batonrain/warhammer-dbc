@@ -92,6 +92,27 @@ export function requisitionTalentRules(actor, ctx = {}) {
     });
   }
 
+  // Что Захотите (Иерарх, «Домашнее правило»): «Когда Архонт требует пройти тест
+  // на реквизицию для удовлетворения своих нужд, персонаж получает бонус
+  // F.b×2 + Inf.b Архонта на этот тест». Решение владельца 26.10.2026: F.b — с
+  // листа ПЕРСОНАЖА, Inf.b Архонта вводится числом в окне Реквизиции
+  // (ctx.requisitionArchonInf; токен-Архонт не нужен). Поле пусто — реквизиция
+  // не по требованию Архонта, бонуса нет. Число введено — бонус автоматический:
+  // игрок сам заполнил поле именно для этого.
+  if (requisition && hasRequisitionTalent(actor, "whateverYouWant")) {
+    const raw = ctx.requisitionArchonInf;
+    const archon = raw == null || raw === "" ? NaN : Number(raw);
+    if (Number.isFinite(archon)) {
+      const felBonus = Number(actor?.system?.characteristics?.fel?.bonus) || 0;
+      const infBonus = Math.max(0, Math.round(archon));
+      rules.push({
+        id: T.whateverYouWant.id, when: {},
+        label: `${T.whateverYouWant.label}: F.b×2 (${felBonus * 2}) + Inf.b Архонта (${infBonus})`,
+        effects: [{ kind: "rollBonus", target, value: felBonus * 2 + infBonus, auto: true }]
+      });
+    }
+  }
+
   if (requisition && hasRequisitionTalent(actor, "factotumCase")) {
     rules.push({
       id: T.factotumCase.id, when: {},

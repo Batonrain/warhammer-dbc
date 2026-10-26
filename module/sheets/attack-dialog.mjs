@@ -30,6 +30,7 @@ import { attackFatigueApplies } from "../rules/situational.mjs";
 import { buildSelection } from "./attack/selection.mjs";
 import { AUTO_HIT_CAPABILITY, FULL_ATTACK_CAPABILITY } from "./attack/form.mjs";
 import { qualityEffects }                     from "../constants/quality.mjs";
+import { ironGardenQuality }                  from "../rules/iron-garden.mjs";
 import { _degWord, _buildAmmoModString, resolveCharFormula, esc } from "../helpers/utils.mjs";
 import { attackThreshold }                    from "../combat/attack-threshold.mjs";
 import { resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properties.mjs";
@@ -342,7 +343,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const fanningRofMax = Math.max(2, bsBonus);
 
   // Качество: рукопашное даёт мод на тесты с оружием (Poor −10 / Good +5 / Best +10)
-  const qTestMod     = isMelee ? (qualityEffects(item).auto.testMod || 0) : 0;
+  // Железный Сад: группа одноимённых дендритов бьёт по наименьшему Качеству.
+  const qTestMod     = isMelee ? (qualityEffects(item, ironGardenQuality(actor, item)).auto.testMod || 0) : 0;
   // Легион (стр. 179): своё оружие Астартес берут без штрафа, чужое — со
   // штрафом, и наоборот — не-Астартес не сладит с легионным хватом.
   const legionFit = legionAttackPenalty({
@@ -448,7 +450,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // путём (Усталость — галочкой в sheets/attack/mods.mjs), огулом — задвоение.
   const ruleAutoMods = ruleAutoModsHtml(actor, attackCtx, {
     autoMods: (resolvedAttack.autoMods || []).filter(m =>
-      String(m.ruleId ?? "").startsWith("command.") || m.ruleId === "situational.shock")
+      String(m.ruleId ?? "").startsWith("command.") || m.ruleId === "situational.shock"
+      // Пассажир верхом: «−10 на все физические действия» — атака тоже (rules/mount.mjs::passengerTestMod)
+      || m.ruleId === "situational.passenger")
   });
   // Перебросы от правил (Локус Буйства — «перебросить любой тест атаки»).
   // Отдельным блоком: складывать их не с чем, выбирается один.

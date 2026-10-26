@@ -12,6 +12,7 @@
 import { resolveWeaponPropsList, aggregateAuto } from "./weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries }  from "./weapon-mods.mjs";
 import { qualityEffects }                         from "../constants/quality.mjs";
+import { ironGardenQuality }                      from "../rules/iron-garden.mjs";
 import { weaponTrainingPenalty }                  from "../rules/weapon-training.mjs";
 
 /**
@@ -53,7 +54,7 @@ export function weaponThresholdPart(actor, item, charKey) {
        + (wp.attackMod     || 0)
        + (modFx.attackMod  || 0)
        // Качество даёт мод теста только рукопашному — так же, как в диалоге.
-       + (melee ? (qualityEffects(item).auto.testMod || 0) : 0)
+       + (melee ? (qualityEffects(item, ironGardenQuality(actor, item)).auto.testMod || 0) : 0)
        + weaponTrainingPenalty({ actor, weaponType: sys.weaponType,
                                  weaponClass: sys.weaponClass,
                                  isGrenade: sys.weaponType === "grenade" }).total;

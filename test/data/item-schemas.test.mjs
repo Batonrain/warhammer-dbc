@@ -80,7 +80,10 @@ const TYPES = {
       infoguard: 0,
       malfunctioning: false, wraithbone: false, wraithboneImmune: false,
       // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке.
-      stored: false
+      stored: false,
+      // Снаряжение Легиона (Древний Воин, «−1 Редкость Легион снаряжения»,
+      // реквизиция) — у оружия это свойство Legion, у остального — это поле.
+      legion: false
     }
   },
   tool: {
@@ -95,7 +98,9 @@ const TYPES = {
       // Включаемая/включена (wdbc-x1nz.2) — см. тот же комментарий у gear выше.
       activatable: false, active: false,
       // Размер на разгрузке (wdbc-x1nz.2) — см. тот же комментарий у weapon ниже.
-      itemSize: ""
+      itemSize: "",
+      // Снаряжение Легиона — см. комментарий у gear выше.
+      legion: false
     }
   },
   cybernetic: {
@@ -288,7 +293,7 @@ const TYPES = {
       deliveryMethod: "injection", quantity: 1, weight: 0, availability: 0,
       // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке.
       stored: false,
-      quality: "common", duration: "", effect: "", afterEffect: "",
+      quality: "common", duration: "", gameMinutes: 0, effect: "", afterEffect: "",
       afterEffectDice: "", afterEffectCharDamage: { stat: "", formula: "" },
       hasAfterEffect: false,
       addiction: {
@@ -384,7 +389,7 @@ const TYPES = {
     pack: "diseases",
     defaults: {
       diseaseType: "warp", severity: "", god: "nurgle", contagion: "",
-      incubation: "", symptoms: "", vectors: "", vectorTests: [], cure: "", active: false,
+      incubation: "", symptoms: "", vectors: "", vectorTests: [], infectionEffects: [], cure: "", active: false,
       description: "", notes: "", bookSource: ""
     }
   },
@@ -454,7 +459,9 @@ const TYPES = {
       drukhari: false, bookSource: "",
       // Размер на разгрузке (wdbc-x1nz.2) — магазин тяжёлого оружия 2×1 против
       // умолчания 1×1 у обычного боеприпаса (itemSizeStr(), module/constants/rig.mjs).
-      itemSize: ""
+      itemSize: "",
+      // Снаряжение Легиона — см. комментарий у gear выше.
+      legion: false
     }
   },
   armor: {
@@ -473,6 +480,8 @@ const TYPES = {
       // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке.
       stored: false,
       bookSource: "",
+      // Снаряжение Легиона — см. комментарий у gear выше.
+      legion: false,
       strengthBonus: 0, wpBonus: 0, drukhari: false, fieldMode: "",
       isRig: false, rig: { comfort: "normal", backSlot: false, slots: [], magLocks: [] },
       history: {
@@ -689,7 +698,9 @@ const TYPES = {
       coverVsSubtype: "", coverVsSubtypeAP: 0,
       overloadDamageFormula: "", overloadFatigueFormula: "", overloadRepairTest: "",
       overloadRetaliateFormula: "", overloadRetaliatePen: 0,
-      bookSource: ""
+      bookSource: "",
+      // Снаряжение Легиона — см. комментарий у gear выше.
+      legion: false
     }
   },
 

@@ -67,6 +67,7 @@ import { inventoryOverloadPenalty } from "./encumbrance.mjs";
 import { isItemActive } from "../apps/effects.mjs";
 import { isInRage } from "./rage.mjs";
 import { dragonKnightRules } from "./dragon-knight.mjs";
+import { passengerTestMod } from "./mount.mjs";
 
 /**
  * Тесты, которых Усталость не касается. Книга («Раны и Урон» → «Статусы»,
@@ -338,6 +339,13 @@ export function situationalRules(actor, ctx = {}) {
       marchTrackBonus(ctx));
   // Драконий Рыцарь: метка на скакуне, поставленная тестом всадника (rules/dragon-knight.mjs).
   rules.push(...dragonKnightRules(actor));
+  // Пассажир верхом (стр. 477, rules/mount.mjs::passengerTestMod): −10 на все
+  // физические действия, −20 на Натиске и Беге; Рысь у него или у ведущего
+  // всадника штраф снимает. Скакуна и ведущего ищем среди акторов мира.
+  if (actor?.system?.mount?.role === "passenger") {
+    const world = typeof game !== "undefined" ? [...(game.actors ?? [])] : [];
+    add("situational.passenger", "🐎 Пассажир верхом", passengerTestMod(actor, ctx, { actors: world }));
+  }
   add("situational.springingStance", "🐸 Пружинящая Стойка",
       springingStrengthPenalty(actor, charKey));
   add("situational.grappleSqueeze", "🤼 Сжат в Захвате",

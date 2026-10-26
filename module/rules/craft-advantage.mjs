@@ -103,7 +103,8 @@ export function monotonyPenalty(actor, monotonyChecked) {
 /**
  * Фабрикатор удваивает БОНУСЫ от инструментов на тесты Крафта. Штраф за плохие
  * инструменты (отрицательный модификатор) не удваивается — книга говорит
- * именно о бонусах. «И ремонта» не реализовано: ремонта в Мастерской нет.
+ * именно о бонусах. «И ремонта» — ремонт теперь проект Крафта с галочкой
+ * «Ремонт» (см. masterEngineseerNoParts), на него это удвоение действует само.
  */
 export function fabricatorToolMod(actor, toolMod) {
   const mod = Number(toolMod) || 0;
@@ -133,6 +134,34 @@ export function masterEngineseerBonus(crafter, mode, primaryValue) {
  */
 export function masterEngineseerAutoEligible(crafter, mode, primaryValue) {
   return mode === "craft" && primaryValue === "skill:techUse" && hasMasterEngineseer(crafter);
+}
+
+/**
+ * Ремонт в Мастерской (решение владельца 26.10.2026) — проект Крафта с галочкой
+ * «Ремонт»: тот же расширенный тест Tech-Use («расширенное действие для
+ * создания и ремонта предметов»), поэтому +10 Мастера-Технопровидца, его
+ * автоуспех и удвоение бонусов инструментов Фабрикатором действуют на него
+ * без отдельных веток. Книга Банка Успехов для ремонта не называет — его
+ * вписывает стол в «Базовый Банк» проекта.
+ *
+ * «Чинить механизмы вообще без запчастей под рукой» — Мастер-Технопровидец
+ * отмечает это галочкой проекта-ремонта; система запчастей не ведёт, поэтому
+ * галочка только честно попадает в карточку смены («по внешнему виду будет
+ * заметно, что их чинили без нужных ресурсов»).
+ */
+export function masterEngineseerNoParts(crafter, proj) {
+  return !!proj?.repair && !!proj?.noParts && hasMasterEngineseer(crafter);
+}
+
+/** Сломанное оружие мастера (system.destroyed) — что можно выбрать целью ремонта. */
+export function destroyedWeaponsOf(actor) {
+  return [...(actor?.items ?? [])].filter(i => i?.type === "weapon" && i.system?.destroyed);
+}
+
+/** Заголовок карточки смены: исследование / ремонт / крафт. */
+export function craftShiftTitle(proj) {
+  if (proj?.mode === "research") return "Смена исследования";
+  return proj?.repair ? "Смена ремонта" : "Смена крафта";
 }
 
 /** Успехов за смену автоуспеха — I.b крафтера (не меньше 0). */

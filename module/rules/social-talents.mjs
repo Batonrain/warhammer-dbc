@@ -49,11 +49,53 @@
 // обратно к collect.mjs (hasRuleFlag, resolve-test, combat/facing…) —
 // см. AGENTS.md → «Источники правил» и test/rules/source-registry-acyclic.test.mjs.
 
-import { peerTargetsOf, goodReputationTargetsOf, enemyTalentsOf, enemyLevel, ENEMY_MAX_LEVEL }
+import { peerTargetsOf, goodReputationTargetsOf, enemyTalentsOf, enemyLevel, ENEMY_MAX_LEVEL,
+  itemHasName, PREDICATES }
   from "./predicates.mjs";
 import { anyTargetMatches } from "./talent-targets.mjs";
+import { getFactionIndex, isSameOrDescendant, anySameOrDescendant, actorFactionKeys }
+  from "./factions.mjs";
 
 export { enemyLevel, ENEMY_MAX_LEVEL };
+
+// ── Древний Воин (стр. 62) ──────────────────────────────────────────────────
+// «+10 на все социальные взаимодействия с персонажами, имеющими этот Талант и
+// Космодесантниками Хаоса» (решение владельца 26.10.2026: предикат собеседника
+// через выбор фракции в окне броска). Космодесантники Хаоса в данных — фракция
+// «Легионы предатели» и её роты (packs-src/factions/Хаос) либо Астартес из
+// фракции Хаос; носитель Таланта без токена в сцене выбирается псевдо-пунктом
+// «Носитель Таланта» (ключ ниже — не фракция, дереву он неизвестен и ни одну
+// другую цель не задевает). Читается по ИМЕНИ Таланта, не через Конструктор:
+// запись Конструктора не умеет условия «собеседник из такой-то группы»
+// (mech-when.mjs держит гейты про актора и предмет, не про цель).
+export const ANCIENT_WARRIOR_BONUS = 10;
+export const ANCIENT_WARRIOR_PEER_KEY = "talent:ancient-warrior";
+export const CHAOS_ASTARTES_FACTION = "traitor-legions";
+const CHAOS_FACTION = "chaos";
+
+/** Есть ли у актора Талант «Ancient Warrior / Древний Воин». */
+export function hasAncientWarrior(actor) {
+  return [...(actor?.items ?? [])].some(i => i?.type === "talent" && itemHasName(i, "Ancient Warrior"));
+}
+
+/**
+ * Собеседник ЭТОГО броска — носитель Таланта или Космодесантник Хаоса. Выбор
+ * фракции в окне (ctx.socialFaction) главнее токена — как у Связей
+ * (talent-targets.mjs::targetMatches).
+ */
+export function isAncientWarriorPartner(ctx = {}, byKey = getFactionIndex()) {
+  if (ctx?.socialFaction) {
+    return ctx.socialFaction === ANCIENT_WARRIOR_PEER_KEY
+      || isSameOrDescendant(ctx.socialFaction, CHAOS_ASTARTES_FACTION, byKey);
+  }
+  const target = ctx?.targetActor;
+  if (!target) return false;
+  if (hasAncientWarrior(target)) return true;
+  const keys = actorFactionKeys(target);
+  if (anySameOrDescendant(keys, CHAOS_ASTARTES_FACTION, byKey)) return true;
+  // Астартес с принадлежностью к Хаосу, но без записи своего легиона.
+  return PREDICATES.targetIsAstartes(null, ctx, true) && anySameOrDescendant(keys, CHAOS_FACTION, byKey);
+}
 
 /** Связи: «+10 ко всем социальным взаимодействиям с этой группой». */
 export const PEER_BONUS = 10;
@@ -98,6 +140,13 @@ export function socialTalentRules(actor, ctx = {}) {
     rules.push({
       id: "social.enemy", label: `Враг (ур. ${level}): общение с этой группой`, when: {},
       effects: [social(-ENEMY_PENALTY_PER_LEVEL * level)]
+    });
+  }
+
+  if (hasAncientWarrior(actor) && isAncientWarriorPartner(ctx)) {
+    rules.push({
+      id: "social.ancientWarrior", label: "Древний Воин: носитель Таланта / Космодесантник Хаоса", when: {},
+      effects: [social(ANCIENT_WARRIOR_BONUS)]
     });
   }
 

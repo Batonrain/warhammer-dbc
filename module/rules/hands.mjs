@@ -25,6 +25,7 @@ import { isPathOneHandedWeapon } from "./library/paths.mjs";
 import { uselessCount, isSideUseless } from "./useless-limbs.mjs";
 import { BODY_SIDES, isLostOn } from "./limb-loss.mjs";
 import { runtForbidsOneHand } from "./runt.mjs";
+import { ironGardenHandsDiscount, ironGardenSharesHand } from "./iron-garden.mjs";
 
 const NS = "warhammer-dbc";
 const BASE_HANDS = 2;
@@ -356,7 +357,10 @@ export function handsOccupied(actor, { exclude = null } = {}) {
   const stumps = handStumps(actor);
   const shieldCount = items.filter(i => isHandShield(i)).length;
   const stumpShields = Math.min(shieldCount, stumps);
+  // Железный Сад: одноимённые надетые мехадендриты — «атака с 1 руки» (rules/iron-garden.mjs).
+  // exclude действует и здесь: исключённый дендрит из группы не считается.
   const used  = items.reduce((sum, i) => sum + weaponHandsRequired(i, actor), 0)
+              - ironGardenHandsDiscount(actor, i => weaponHandsRequired(i, actor), { exclude })
               - stumpShields + grappleHandsUsed(actor);
   const max   = maxHands(actor);
   // Запястья: предметы на запястье плюс щиты на обрубках. Без руки запястья нет.
@@ -384,6 +388,8 @@ export function canEquipInHands(actor, item) {
   }
   const need = weaponHandsRequired(item, actor);
   if (need <= 0) return true;
+  // Железный Сад: ещё один одноимённый дендрит к уже надетому — та же «одна рука».
+  if (ironGardenSharesHand(actor, item)) return true;
   const occ = handsOccupied(actor, { exclude: item.id });
   if (isHandShield(item) && occ.freeStumps > 0 && occ.wristUsed + 1 <= occ.wrists) return true;
   return need <= occ.free;

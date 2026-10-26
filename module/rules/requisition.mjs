@@ -80,7 +80,8 @@ export const REQUISITION_TALENTS = Object.freeze({
   ritePuzzler:     { id: "requisition.ritePuzzler",     label: "Разгадыватель Ритуалов", is: i => itemHasName(i, "Rite Puzzler") },
   excessiveWealth: { id: "requisition.excessiveWealth", label: "Чрезмерное Богатство",   is: i => itemHasName(i, "Excessive Wealth") },
   contactNetwork:  { id: "requisition.contactNetwork",  label: "Сеть Контактов",         is: i => itemHasName(i, "Contact Network") },
-  factotumCase:    { id: "requisition.factotumCase",    label: "Дело Фактотума",         is: i => itemHasName(i, "The Factotum Case") }
+  factotumCase:    { id: "requisition.factotumCase",    label: "Дело Фактотума",         is: i => itemHasName(i, "The Factotum Case") },
+  whateverYouWant: { id: "requisition.whateverYouWant", label: "Что Захотите",           is: i => itemHasName(i, "Whatever You Want") }
 });
 
 /** Есть ли у актора Талант из REQUISITION_TALENTS (по имени, как все Таланты-источники правил). */
@@ -159,8 +160,9 @@ const weaponPropKeys = item => (item?.system?.weaponProps ?? [])
  *  • cybernetic — «Кибернетика»: предмет типа cybernetic либо Имплант категории
  *    cybernetic (подпись «Кибернетика» в листе). Бионика и Псибернетика — другие
  *    категории и сюда не входят;
- *  • legion — снаряжение с свойством Legion (system.weaponProps). Своего
- *    признака «Легион» у брони и снаряжения в данных нет — только у оружия;
+ *  • legion — оружие со свойством Legion (system.weaponProps) либо любое
+ *    снаряжение с галочкой `system.legion` (броня, снаряжение, инструмент,
+ *    боеприпас, щит; решение владельца 26.10.2026);
  *  • ritual — Ритуал с Записью (record > 0).
  */
 export function itemClass(item) {
@@ -169,7 +171,7 @@ export function itemClass(item) {
     exotic: item.system?.weaponType === "exotic",
     cybernetic: item.type === "cybernetic"
       || (item.type === "implant" && item.system?.category === "cybernetic"),
-    legion: weaponPropKeys(item).includes("legion"),
+    legion: weaponPropKeys(item).includes("legion") || item.system?.legion === true,
     ritual: item.type === "ritual" && (Number(item.system?.record) || 0) > 0
   };
 }
@@ -270,9 +272,11 @@ export function requisitionThreshold(inf, modifier) {
  * @param {?boolean}[o.consumable]  не задано — определяется по предмету
  * @param {object}  [o.cls]         признаки предмета вручную (поверх itemClass)
  * @param {number}  [o.local]       поправка ГМа
+ * @param {?number} [o.archonInf]   Inf.b Архонта, если реквизиция по его требованию
+ *   (Талант «Что Захотите»); пусто — нет
  */
 export function requisitionPlan(actor, { item = null, name = "", rarity, quantity = 1, quality = "common",
-  consumable, cls, local = 0 } = {}) {
+  consumable, cls, local = 0, archonInf = null } = {}) {
   const baseRaw = rarity === undefined ? itemRarity(item) : rarity;
   const unrated = baseRaw == null;
   const baseRarity = unrated ? 0 : Number(baseRaw) || 0;
@@ -293,7 +297,13 @@ export function requisitionPlan(actor, { item = null, name = "", rarity, quantit
     mods, total: mods.total,
     // Теги теста для сбора правил (rules/requisition-talents.mjs, область
     // "requisition" в resolve-test.mjs).
-    rollContext: { requisition: true, requisitionRarity: eff, requisitionQuantity: q }
+    rollContext: {
+      requisition: true, requisitionRarity: eff, requisitionQuantity: q,
+      // null/пусто/мусор — поля нет вовсе, а не 0: «0» значило бы «Архонт
+      // требует, а его Inf.b нулевой».
+      ...(archonInf !== null && archonInf !== "" && Number.isFinite(Number(archonInf))
+        ? { requisitionArchonInf: Number(archonInf) } : {})
+    }
   };
 }
 

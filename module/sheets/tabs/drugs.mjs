@@ -9,9 +9,10 @@ import { _degWord, resolveCharFormula, esc } from "../../helpers/utils.mjs";
 import { conditionAdjustFields, conditionApplyFields, conditionRemoveFields,
          fatigueChangeFields, announceFatigueChange } from "./conditions.mjs";
 import { collectTestMods } from "../../rules/roll-mods.mjs";
+import { expiryAtFor } from "../../rules/drug-expiry.mjs";
 import { computeWoundHealing } from "./wounds.mjs";
 import { woundLossUpdates } from "../../rules/wounds.mjs";
-import { conditionLevelField } from "../../constants/conditions.mjs";
+import { conditionLevelField, CONDITIONS } from "../../constants/conditions.mjs";
 import { maybeGrantEnjoymentPain } from "../../combat/enjoyment.mjs";
 import { isAlcoholItem, applyAlcoholDrink } from "../../combat/alcohol.mjs";
 import { noteWoundsRestored, woundsRestored } from "../../combat/heal-target.mjs";
@@ -199,6 +200,7 @@ export async function applyDrug(owner, item, recipient = null) {
   }
 
   let resolvedRounds = 0;
+  let rolledRounds = 0;   // срок до поправок получателя — по нему масштабируется срок по часам
   let durationRollStr = "";
   let durationRoll = null;
 
@@ -209,6 +211,7 @@ export async function applyDrug(owner, item, recipient = null) {
     try {
       durationRoll = await new Roll(resolvedFormula).evaluate();
       resolvedRounds = durationRoll.total;
+      rolledRounds = resolvedRounds;
       durationRollStr = rollTermsText(durationRoll, resolvedRounds);
       // Новые Люди: «время действия любого яда, наркотика или медикамента
       // вдвое (окр.▼)» — срок режется у ПОЛУЧАТЕЛЯ, а не у применившего.
@@ -242,11 +245,18 @@ export async function applyDrug(owner, item, recipient = null) {
     durationRollStr = `${durationRollStr} ×${durationFactor} (Алхимическое Чудовище) = ${resolvedRounds}`;
   }
 
+  // Срок по игровому времени (поле gameMinutes, rules/drug-expiry.mjs): те же
+  // поправки получателя, что у срока выше (Новые Люди вдвое, Пожиратель Змей,
+  // Алхимическое Чудовище), — пропорционально ему. null — вручную.
+  const gameMinutes = (Number(sys.gameMinutes) || 0) * (rolledRounds > 0 ? resolvedRounds / rolledRounds : 1);
+  const expiresAt = expiryAtFor({ gameMinutes }, game.time.worldTime);
+
   const itemUpdates = {
     "system.quantity": qty,
     "system.activeEffect.isActive": true,
     "system.activeEffect.isAfterEffect": false,
     "system.activeEffect.appliedAt": game.time.worldTime,
+    "system.activeEffect.expiresAt": expiresAt,
     "system.activeEffect.roundsRemaining": resolvedRounds,
     "system.activeEffect.charDamageStat": "",
     "system.activeEffect.charDamageAmount": 0
@@ -353,7 +363,7 @@ export async function applyDrug(owner, item, recipient = null) {
         isActive: true,
         isAfterEffect: false,
         appliedAt: game.time.worldTime,
-        expiresAt: null,
+        expiresAt,
         roundsRemaining: resolvedRounds,
         charDamageStat: "",
         charDamageAmount: 0
@@ -502,6 +512,23 @@ export async function triggerAfterEffect(actor, item) {
   const fx = sys.afterEffectSpecial || {};
   const actorUpdates = {};
 
+  // Кубы пост-эффекта у препарата, накладывающего Состояние со счётчиком
+  // «Раунды» (Оглушение Струпа: «Оглушая персонажа на 1d10 Раундов», стр. 284),
+  // и есть срок этого Состояния — бросок делается ДО наложения и потом
+  // показывается в карточке тем же результатом (не второй бросок). Для
+  // Состояний с уровнем и препаратов без кубов остаётся grantsConditionLevel.
+  let afterRoll = null, afterRollTotal = 0;
+  if (sys.afterEffectDice && fx.grantsCondition && CONDITIONS[fx.grantsCondition]?.counter === "rounds") {
+    try {
+      const resolved = resolveCharFormula(sys.afterEffectDice, actor.system.characteristics, actor.system.corruptionBonus ?? 0);
+      afterRoll = await new Roll(resolved).evaluate();
+      afterRollTotal = snakeEaterHalve(actor, afterRoll.total);
+    } catch (e) {
+      ui.notifications.warn(`Не удалось бросить формулу пост-эффекта: ${sys.afterEffectDice}`);
+      console.error(e);
+    }
+  }
+
   if (fx.removesBleedingLevels > 0) {
     Object.assign(actorUpdates, conditionAdjustFields(actor, "bleeding", -fx.removesBleedingLevels));
   }
@@ -517,7 +544,7 @@ export async function triggerAfterEffect(actor, item) {
   }
 
   if (fx.grantsCondition) {
-    const lvlToGrant = fx.grantsConditionLevel ?? 1;
+    const lvlToGrant = afterRoll ? Math.max(0, afterRollTotal) : (fx.grantsConditionLevel ?? 1);
     const levelField = conditionLevelField(fx.grantsCondition);
     const curLvl     = levelField ? (actor.system.conditions?.[levelField] || 0) : 0;
     Object.assign(actorUpdates, conditionApplyFields(fx.grantsCondition, levelField ? curLvl + lvlToGrant : null, actor));
@@ -593,7 +620,8 @@ export async function triggerAfterEffect(actor, item) {
     try {
       const chars = actor.system.characteristics;
       const resolvedFormula = resolveCharFormula(sys.afterEffectDice, chars, actor.system.corruptionBonus ?? 0);
-      const roll = await new Roll(resolvedFormula).evaluate();
+      // Бросок уже сделан выше, если он задаёт срок Состояния (Оглушение Струпа).
+      const roll = afterRoll ?? await new Roll(resolvedFormula).evaluate();
       const diceStr = rollTermsExpression(roll, resolvedFormula);
       // Пожиратель Змей: «пост-эффектов стимуляторов … вдвое меньше (окр.▲)» —
       // длительность пост-эффекта (бросок «Кубы пост-эффекта») режется вдвое.
@@ -612,7 +640,9 @@ export async function triggerAfterEffect(actor, item) {
         chatContent += `<div class="roll-threshold">${rollIcon("heart","#ff8a8a")}Снято Ран: <b>${fx.removesWounds}</b></div>`;
       if (fx.grantsCondition) {
         const lvl = fx.grantsConditionLevel ?? 1;
-        chatContent += `<div class="roll-threshold">${rollIcon("warn","#ff6b6b")}Наложено${lvl > 1 ? ` ${lvl} ур.` : ""}: <b>${fx.grantsCondition}</b></div>`;
+        chatContent += afterRoll
+          ? `<div class="roll-threshold">${rollIcon("warn","#ff6b6b")}Наложено на <b>${afterTotal}</b> Раунд.: <b>${fx.grantsCondition}</b></div>`
+          : `<div class="roll-threshold">${rollIcon("warn","#ff6b6b")}Наложено${lvl > 1 ? ` ${lvl} ур.` : ""}: <b>${fx.grantsCondition}</b></div>`;
       }
       if (fx.customEffect)
         chatContent += `<div class="roll-threshold">${rollIcon("target","#8fd0ff")}${fx.customEffect}</div>`;
@@ -644,6 +674,7 @@ export async function deactivateDrugEffect(item) {
   await item.update({
     "system.activeEffect.isActive": false,
     "system.activeEffect.isAfterEffect": false,
+    "system.activeEffect.expiresAt": null,
     "system.activeEffect.roundsRemaining": 0,
     "system.activeEffect.charDamageStat": "",
     "system.activeEffect.charDamageAmount": 0

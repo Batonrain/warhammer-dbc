@@ -118,6 +118,45 @@ describe("Дело Фактотума", () => {
   });
 });
 
+describe("Что Захотите: бонус F.b×2 + Inf.b Архонта", () => {
+  const WYW = "Whatever You Want / Что Захотите";
+  // F.b — с листа персонажа; Inf.b Архонта вводится числом в окне Реквизиции.
+  const hero = fb => ({ type: "character", items: [talent(WYW)],
+    system: { characteristics: { fel: { total: fb * 10 + 5, bonus: fb } } } });
+  const bonus = r => r.autoMods.find(m => m.ruleId === "requisition.whateverYouWant");
+
+  it("число Архонта введено: F.b×2 + Inf.b Архонта автоматически (F.b=4, Inf.b Архонта=5 → +13)", () => {
+    const r = resolveTest({ actor: hero(4), ...reqCtx({ requisitionArchonInf: 5 }) });
+    expect(bonus(r)?.value).toBe(13);
+    expect(bonus(r).label).toMatch(/F\.b×2 \(8\)/);
+    expect(bonus(r).label).toMatch(/Inf\.b Архонта \(5\)/);
+  });
+  it("Inf.b Архонта = 0 тоже запрос Архонта: бонус F.b×2", () => {
+    expect(bonus(resolveTest({ actor: hero(3), ...reqCtx({ requisitionArchonInf: 0 }) }))?.value).toBe(6);
+  });
+  it("число не введено (реквизиция для себя) — бонуса нет", () => {
+    expect(bonus(resolveTest({ actor: hero(4), ...reqCtx() }))).toBeUndefined();
+    expect(bonus(resolveTest({ actor: hero(4), ...reqCtx({ requisitionArchonInf: null }) }))).toBeUndefined();
+  });
+  it("без Таланта — ничего; на тесте Commerce — ничего", () => {
+    const plain = { type: "character", items: [], system: { characteristics: { fel: { bonus: 4 } } } };
+    expect(bonus(resolveTest({ actor: plain, ...reqCtx({ requisitionArchonInf: 5 }) }))).toBeUndefined();
+    expect(bonus(resolveTest({ actor: hero(4), ...commerceCtx, requisitionArchonInf: 5 }))).toBeUndefined();
+  });
+  it("мусорное число (NaN, отрицательное) не превращается в бонус", () => {
+    expect(bonus(resolveTest({ actor: hero(4), ...reqCtx({ requisitionArchonInf: NaN }) }))).toBeUndefined();
+    expect(bonus(resolveTest({ actor: hero(4), ...reqCtx({ requisitionArchonInf: -3 }) }))?.value).toBe(8);
+  });
+  it("план реквизиции переносит число Архонта в контекст теста", () => {
+    const a = hero(4);
+    expect(requisitionPlan(a, { rarity: 0, archonInf: 5 }).rollContext.requisitionArchonInf).toBe(5);
+    expect(requisitionPlan(a, { rarity: 0 }).rollContext.requisitionArchonInf).toBeUndefined();
+    expect(requisitionPlan(a, { rarity: 0, archonInf: "" }).rollContext.requisitionArchonInf).toBeUndefined();
+    const r = resolveTest({ actor: a, kind: "skill", char: "inf", ...requisitionPlan(a, { rarity: 0, archonInf: 5 }).rollContext });
+    expect(bonus(r)?.value).toBe(13);
+  });
+});
+
 describe("requisitionTalentRules напрямую", () => {
   it("на постороннем тесте пусто и не падает без контекста", () => {
     expect(requisitionTalentRules(actorWith(WEALTH, WAR, NETWORK, FACTOTUM), { kind: "skill", skill: "charm" })).toEqual([]);

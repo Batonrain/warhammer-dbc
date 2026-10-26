@@ -4,6 +4,7 @@ import { CHARACTERISTICS, APTITUDES }   from "../constants/characteristics.mjs";
 import { severityTestMod, severityNote } from "../rules/disorder-severity.mjs";
 import { LIMB_LOSS_KEYS, lostSidesLabel } from "../rules/limb-loss.mjs";
 import { getHeldHand } from "../rules/hands.mjs";
+import { ironGardenQuality } from "../rules/iron-garden.mjs";
 import { withRulesCache } from "../rules/collect.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }              from "../constants/skills.mjs";
 import { SKILL_DESCRIPTIONS }                        from "../constants/skill-descriptions.mjs";
@@ -628,7 +629,8 @@ function buildGetDataUncached(actor) {
     const effClipMax = Math.round((s.magazineMax || 0) * (modFx.clipMult || 1)) + (modFx.clipMod || 0);
     const effPen    = (s.penetration || 0) + (modFx.penMod || 0);
     // Качество: рукопашное Best — +1 урон; рукопашное — мод теста (Poor −10/Good +5/Best +10)
-    const qAuto     = qualityEffects(i).auto;
+    // Железный Сад: группа одноимённых дендритов бьёт по наименьшему Качеству — лист показывает те же числа.
+    const qAuto     = qualityEffects(i, melee ? ironGardenQuality(actor, i) : null).auto;
     const qDmgMod   = melee ? (qAuto.damageMod || 0) : 0;
     const qTestMod  = melee ? (qAuto.testMod   || 0) : 0;
     const totalDmgMod = (modFx.damageMod || 0) + qDmgMod;

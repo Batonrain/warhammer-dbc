@@ -17,6 +17,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { actorImmuneToDiseaseEffects } from "./disease-immunity.mjs";
+import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 
 const CHAR_LABELS = { t: "T", wp: "W", s: "S", ag: "Ag", int: "I", per: "P", fel: "F", inf: "Inf", ws: "WS", bs: "BS" };
 
@@ -57,6 +58,81 @@ export function infectionPlan(actor, vector) {
     base, mod: vector.mod, charLabel: CHAR_LABELS[vector.char] ?? vector.char.toUpperCase(),
     threshold: base + vector.mod
   };
+}
+
+// ── Последствия заражения (Sahara task-3ab7) ───────────────────────────────
+
+/**
+ * Виды последствий (system.infectionEffects):
+ *  • charDamage       — «немедленно получает 2d10 урона в А» (Хворь Слабости):
+ *                       при заражении бросается формула и ложится в Характеристику;
+ *  • autoSuccessPoint — «Очки Бесчестия или Судьбы — автоматически проходить этот
+ *                       тест после Провала» (Ходячая Оспа): после провала игроку
+ *                       предлагают потратить Очко, и тест засчитывается.
+ */
+export const EFFECT_KINDS = {
+  charDamage: "Урон в Характеристику при заражении",
+  autoSuccessPoint: "Очко Бесчестия/Судьбы: авто-успех после провала"
+};
+
+const FORMULA_RE = /^\s*\d*d\d+(\s*[+\-]\s*\d+)?\s*$|^\s*\d+\s*$/i;
+
+/**
+ * Последствия болезни — чистый список {kind, label, char, formula}. Отбрасывается
+ * то, что нечем исполнить: неизвестный вид, урон без известной Характеристики или
+ * с неразбираемой формулой (кубы вроде «2d10», «1d5+2» или число).
+ * @param {object} item  предмет типа disease
+ */
+export function infectionEffects(item) {
+  const list = item?.system?.infectionEffects;
+  if (!Array.isArray(list)) return [];
+  const out = [];
+  for (const e of list) {
+    if (!e || typeof e !== "object" || !Object.hasOwn(EFFECT_KINDS, e.kind)) continue;
+    const label = String(e.label ?? "").trim() || EFFECT_KINDS[e.kind];
+    if (e.kind === "charDamage") {
+      const char = String(e.char ?? "").trim().toLowerCase();
+      const formula = String(e.formula ?? "").trim();
+      if (!Object.hasOwn(CHARACTERISTICS, char) || !FORMULA_RE.test(formula)) continue;
+      out.push({ kind: e.kind, label, char, formula });
+    } else {
+      out.push({ kind: e.kind, label, char: "", formula: "" });
+    }
+  }
+  return out;
+}
+
+/** Урон в Характеристики, который болезнь наносит при заражении. */
+export const infectionDamage = item => infectionEffects(item).filter(e => e.kind === "charDamage");
+
+/** Можно ли после провала теста заражения потратить Очко и пройти его автоматически. */
+export const hasAutoSuccess = item => infectionEffects(item).some(e => e.kind === "autoSuccessPoint");
+
+// ── Правка строк на листе болезни (vectorTests, infectionEffects) ───────────
+
+/** Заготовка нового пути передачи: «Стойкость +0», подпись впишет автор болезни. */
+export const BLANK_VECTOR = Object.freeze({ label: "", char: "t", mod: 0 });
+/** Заготовка нового последствия: урон в Ловкость, формулу впишет автор. */
+export const BLANK_EFFECT = Object.freeze({ kind: "charDamage", label: "", char: "ag", formula: "1d5" });
+
+const copyRows = list => (Array.isArray(list) ? list : []).map(r => (r && typeof r === "object" ? { ...r } : r));
+
+/** Добавить строку: исходный массив не меняется, заготовка копируется. */
+export const rowsAdd = (list, blank) => [...copyRows(list), { ...blank }];
+
+/** Убрать строку по индексу; чужой индекс — список без изменений. */
+export const rowsRemove = (list, index) => copyRows(list).filter((_, i) => i !== index);
+
+/**
+ * Изменить одно поле строки. Числовые поля (`numeric`) приводятся к целому,
+ * нечисло — 0; текст остаётся как введён (подчистит читатель). Чужой индекс —
+ * список без изменений.
+ */
+export function rowsPatch(list, index, field, raw, numeric = []) {
+  const out = copyRows(list);
+  if (!out[index]) return out;
+  out[index][field] = numeric.includes(field) ? (parseInt(raw, 10) || 0) : raw;
+  return out;
 }
 
 /**

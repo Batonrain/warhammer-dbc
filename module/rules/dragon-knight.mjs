@@ -22,6 +22,17 @@ const NS = "warhammer-dbc";
 export const dragonKnightValue = successes => 3 * Math.max(0, Math.trunc(Number(successes) || 0));
 
 /**
+ * Бонус на Избегания, который метка Драконьего Рыцаря даёт СКАКУНУ, — для
+ * кода, считающего Уклонение верхом сам, мимо общих правил (combat/mount.mjs::
+ * resolveMountedDodge). 0 — метки нет или она на Атаки.
+ */
+export function dragonKnightEvasionBonus(mount) {
+  const buff = mount?.getFlag?.(NS, DRAGON_KNIGHT_FLAG) ?? mount?.flags?.[NS]?.[DRAGON_KNIGHT_FLAG];
+  if (!buff || buff.mode === "attack") return 0;
+  return Math.max(0, Number(buff.value) || 0);
+}
+
+/**
  * Правило бонуса для актора-скакуна по метке. Атаки — область «attack»; Избегания —
  * Уклонение и Парирование (список областей: срабатывает один раз).
  */

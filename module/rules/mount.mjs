@@ -30,6 +30,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
+import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
 import { findGroupEntry, specChar } from "../constants/skill-specializations.mjs";
 import { itemHasName } from "./predicates.mjs";
 
@@ -453,6 +454,48 @@ export function passengerActionMod(speedKey, rider = null) {
   const base = fast ? PASSENGER_ACTION_MOD.fast : PASSENGER_ACTION_MOD.base;
   // Талант «Оруженосец» смягчает штраф пассажиру на 10.
   return hasTalent(rider, "Squire", "Оруженосец") ? Math.min(0, base + 10) : base;
+}
+
+/**
+ * «Физический» ли тест для штрафа пассажира (стр. 477: «все физические
+ * действия с байка»; решение владельца 26.10.2026, Sahara trait-stand).
+ *
+ * Список не ведётся по именам: атака (любая) — всегда; Навык — по
+ * характеристике, которой его бросают (Ловкость, Сила, Стойкость и WS — из
+ * constants/skills.mjs, когда в броске её нет; на WS бросается Парирование,
+ * решение владельца 26.10.2026); тест самой Характеристики —
+ * Ловкость и Сила. Стойкость без Навыка — не действие, а стойкость к яду,
+ * болезни и спиртному, поэтому там штрафа нет.
+ */
+export function isPhysicalTest(ctx = {}) {
+  if (ctx?.kind === "attack") return true;
+  const key = ctx?.skill ?? ctx?.group;
+  if (key) {
+    const ch = String(ctx?.char ?? (SKILLS_DEF[key] ?? GROUP_SKILLS_DEF[key])?.char ?? "").toLowerCase();
+    return ["ag", "s", "t", "ws"].includes(ch);
+  }
+  return ["ag", "s"].includes(String(ctx?.char ?? "").toLowerCase());
+}
+
+/**
+ * Штраф пассажира на конкретный тест. Скорость — та, что поставлена у самого
+ * пассажира (у каждого седока она своя, как у панели «ВЕРХОМ»). Ноль, если
+ * актор не пассажир, скакун не найден среди `actors` (как на панели: нет
+ * скакуна — не верхом), тест не физический или действует Рысь: у самого
+ * пассажира либо у ведущего всадника на том же скакуне (trotApplies).
+ *
+ * @param {object} actor
+ * @param {object} ctx     контекст теста (kind/skill/group/char)
+ * @param {{actors?: object[]}} [opts]  акторы мира: скакун и ведущий ищутся среди них
+ */
+export function passengerTestMod(actor, ctx = {}, { actors = [] } = {}) {
+  const st = actor?.system?.mount;
+  if (!st?.uuid || st.role !== "passenger" || !isPhysicalTest(ctx)) return 0;
+  const mount = [...actors].find(a => a?.uuid === st.uuid);
+  if (!mount) return 0;
+  const speedKey = st.speed in MOUNT_SPEEDS ? st.speed : "still";
+  if (trotApplies(actor, speedKey, { lead: leadRiderOf(actor, mount, actors) })) return 0;
+  return passengerActionMod(speedKey, actor);
 }
 
 // ── Попадания по всаднику и скакуну ───────────────────────────────────────

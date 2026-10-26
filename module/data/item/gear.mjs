@@ -72,6 +72,11 @@ export class GearData extends foundry.abstract.TypeDataModel {
       bonuses:      new ArrayField(new ObjectField(), { label: "Бонусы" }),
       drukhari:     new BooleanField({ initial: false, label: "Друкхари" }),
       bookSource:   new StringField({ initial: "", label: "Книга-источник" }),
+      // Снаряжение Легиона (Древний Воин: «уменьшает Редкость всего Легион
+      // снаряжения на 1», реквизиция — rules/requisition.mjs::itemClass). У
+      // оружия это свойство Legion, у остального — это поле; общее у gear,
+      // tool, ammo, armor, forcefield.
+      legion:       new BooleanField({ initial: false, label: "Легион (снаряжение Легиона)" }),
       // В template.json объявлено не было, но лежит у 20 предметов пака — след
       // раскладки по папкам компендиума при импорте. Кодом не читается;
       // объявлено, чтобы правка предмета в игре его не стирала.

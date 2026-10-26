@@ -77,7 +77,12 @@ export function slotUsage(items = [], minions = [], master = null) {
     // (rules/binary-dominion.mjs); master не передан — группа как записана.
     const group = master ? effectiveMinionGroup(master, minion) : (minion?.system?.minionGroup || minion?.system?.minionType || "");
     const tier  = minion?.system?.minionTier  || "";
-    const exact = slots.find(s => !s.minion && s.group === group && s.tier === tier);
+    // Слуга, созданный из конкретного слота (system.slotTalentId), занимает его
+    // независимо от группы счёта: человек, отмеченный Бинарной Паствой как
+    // «машина» (isFlockMachineChoice), иначе не нашёл бы свой человеческий слот.
+    const byId  = minion?.system?.slotTalentId
+      && slots.find(s => !s.minion && s.talentId && s.talentId === minion.system.slotTalentId);
+    const exact = byId || slots.find(s => !s.minion && s.group === group && s.tier === tier);
     // Слот без выбранной пары подходит любому: Талант куплен, но чей он —
     // хозяин ещё не решил.
     const any   = exact || slots.find(s => !s.minion && !s.group && !s.tier);

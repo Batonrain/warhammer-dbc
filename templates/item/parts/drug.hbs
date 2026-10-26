@@ -55,6 +55,9 @@
     <label class="wr-label">Длительность</label>
     <input type="text" name="system.duration" value="{{system.duration}}"
            class="wr-input-md" placeholder="напр. 1d5+T.b"/>
+    <label class="wr-label" title="Если задан, Календарь сам заканчивает действие через столько минут игрового времени после приёма (0 — вручную, кнопкой «Эффект завершён»).">Срок по часам, мин</label>
+    <input type="number" name="system.gameMinutes" value="{{system.gameMinutes}}" min="0" step="1"
+           class="wr-input-sm" placeholder="0"/>
     <label class="wr-label">Качество</label>
     <select name="system.quality" class="wr-select-sm">
       <option value="poor"   {{#if (eq system.quality "poor")}}selected{{/if}}>Низкое (Poor.Q)</option>

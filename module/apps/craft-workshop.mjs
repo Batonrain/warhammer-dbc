@@ -35,7 +35,9 @@ import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { hasSlowShiftTalent, cyberpreacherApplies, effectiveDiceMode, slowShiftBonus, polymathBonus, polymathCrit, researchBonus, darkMuseAssistBonus, haemonculusLabBonus,
          monotonyPenalty, fabricatorToolMod, masterEngineseerBonus, masterEngineseerAutoEligible,
-         masterEngineseerAutoSuccesses } from "../rules/craft-advantage.mjs";
+         masterEngineseerAutoSuccesses, masterEngineseerNoParts, hasMasterEngineseer, destroyedWeaponsOf,
+         craftShiftTitle } from "../rules/craft-advantage.mjs";
+import { repairDestroyedWeapon } from "../combat/weapon-repair.mjs";
 import { spendFromInfamyPool, actorInfamyPath } from "./infamy-points.mjs";
 import { tempInfamyAmount } from "../rules/temp-infamy.mjs";
 import { researchFindingItemData, researchJournalEntry, appendResearchJournal,
@@ -119,6 +121,11 @@ export function newCraftProject(preferredCrafterId) {
     slowShift: false,
     // Поток (Талант Огнемётчика): огнемёт, над которым идёт работа, — uuid предмета; смена с Tech-Use отмечает его флагом.
     torrentWeaponUuid: "",
+    // Ремонт (Мастер-Технопровидец, решение владельца 26.10.2026): проект Крафта —
+    // ремонт, а не создание. repairWeaponId — id сломанного оружия крафтера, с
+    // которого готовый ремонт снимет «Уничтожено»; noParts — «без запчастей»
+    // (только Мастер-Технопровидец, строка в карточке). См. craft-advantage.mjs.
+    repair: false, repairWeaponId: "", noParts: false,
     // Именованный ассистент (wdbc-1rno) — ОДИН актор для проверки Талантов/
     // Даров, зависящих от личности ассистента (Journeyman/Подмастерье,
     // Dark Muse/Тёмная Муза, module/rules/craft-advantage.mjs). Отдельно от
@@ -206,7 +213,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const baseToolMod = (CRAFT_TOOLS.find(t => t.key === proj.toolKey)?.mod) ?? 0;
     // Фабрикатор (Талант, 3-3a64): бонусы инструментов вдвое — на тесты Крафта,
-    // не Исследований (книга: «на тесты Крафта и ремонта»; ремонта в Мастерской нет).
+    // не Исследований (книга: «на тесты Крафта и ремонта»; ремонт — тот же Крафт с галочкой «Ремонт»).
     const toolMod = proj.mode === "craft" ? fabricatorToolMod(crafter, baseToolMod) : baseToolMod;
     // Редкость и Качество НЕ модифицируют бросок (только Банк). К Пределу — инструменты,
     // ГМ-мод и −20 за Улучшение.
@@ -398,6 +405,13 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
       slowShift: proj.slowShift,
       // Работа над огнемётом (Поток): выпадашка только в Крафте и только если в мире есть огнемёты.
       torrentChoices: proj.mode === "craft" ? _torrentWeaponChoices(proj) : [],
+      // Ремонт: галочка есть только у Крафта; «без запчастей» — у Мастера-Технопровидца;
+      // цель ремонта — сломанное оружие крафтера.
+      isRepairable: proj.mode === "craft",
+      repair: !!proj.repair, noParts: !!proj.noParts,
+      hasMasterEngineseer: hasMasterEngineseer(R.crafter),
+      repairChoices: proj.mode === "craft" && proj.repair
+        ? destroyedWeaponsOf(R.crafter).map(i => ({ id: i.id, name: i.name, selected: i.id === proj.repairWeaponId })) : [],
       cyberpreacherActive: cyberpreacherApplies(R.crafter, proj.categoryKey),
       hasAssistants: (Number(proj.assistants) || 0) > 0,
       // Именованный ассистент (wdbc-1rno) — та же выборка акторов, что и у
@@ -466,6 +480,9 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     on("[name=slowshift]", "change", e => upd(e.currentTarget, p => p.slowShift = e.target.checked));
     on("[name=assistant-actor]", "change", e => upd(e.currentTarget, p => p.assistantId = e.target.value));
     on("[name=torrent-weapon]", "change", e => upd(e.currentTarget, p => p.torrentWeaponUuid = e.target.value));
+    on("[name=repair]", "change", e => upd(e.currentTarget, p => p.repair = e.target.checked));
+    on("[name=repair-weapon]", "change", e => upd(e.currentTarget, p => p.repairWeaponId = e.target.value));
+    on("[name=noparts]", "change", e => upd(e.currentTarget, p => p.noParts = e.target.checked));
 
     // Биолаборатория
     on("[name=vat]", "change", e => upd(e.currentTarget, p => p.vatKey = e.target.value));
@@ -686,6 +703,18 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
       torrentNote = await this._markTorrentShift(proj.torrentWeaponUuid);
     }
 
+    // Ремонт (Мастер-Технопровидец): готовый проект снимает «Уничтожено» с выбранного оружия.
+    let repairNote = "";
+    if (proj.mode === "craft" && proj.repair && proj.repairWeaponId && done && !wasDone) {
+      const weapon = crafter.items?.get?.(proj.repairWeaponId)
+        ?? [...(crafter.items ?? [])].find(i => i.id === proj.repairWeaponId);
+      if (weapon?.system?.destroyed && await repairDestroyedWeapon(crafter, weapon)) {
+        repairNote = `Ремонт завершён: «${esc(weapon.name)}» починено, метка «Уничтожено» снята.`;
+      }
+    }
+    const noPartsNote = masterEngineseerNoParts(crafter, proj)
+      ? "Мастер-Технопровидец чинит без запчастей под рукой: работает в полную силу, но по виду заметно, что чинили без нужных ресурсов." : "";
+
     let findingNote = "";
     if (proj.mode === "research" && done && !wasDone && !proj.findingCreated) {
       findingNote = await this._finishResearch(proj, crafter, R);
@@ -698,7 +727,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
       speaker: ChatMessage.getSpeaker({ actor: crafter }),
       content: `
         <div class="wh-craft-msg">
-          <div class="wh-craft-msg-head">${rollIcon("wrench","#6fe6ff")}${proj.mode === "research" ? "Смена исследования" : "Смена крафта"} — ${esc(crafter.name)}</div>
+          <div class="wh-craft-msg-head">${rollIcon("wrench","#6fe6ff")}${craftShiftTitle(proj)} — ${esc(crafter.name)}</div>
           <div class="wh-craft-roll-line">${skillList}</div>
           ${autoSuccess
             ? `<div class="wh-craft-roll-line ok">Мастер-Технопровидец: автоуспех за Очко Бесчестия — <b>+${autoSuccess.successes}</b> успеха (I.b) без броска. ${autoSuccess.spentLine}</div>`
@@ -714,6 +743,8 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
           ${R.mods?.hookUpMod ? `<div class="wh-craft-roll-line">Крючок: ${R.mods.hookUpMod} к тесту — готовый наркотик отметьте «Крючок» на его листе (лимит доз ÷2 ▼, принимающие перебрасывают успешный тест Зависимости).</div>` : ""}
           ${engineseerBonus ?`<div class="wh-craft-roll-line ok">Мастер-Технопровидец: +${engineseerBonus} к тесту (Tech-Use)</div>` : ""}
           ${workaholicNote ? `<div class="wh-craft-roll-line ok">Трудоголик: штраф за монотонность не применяется</div>` : ""}
+          ${noPartsNote ? `<div class="wh-craft-roll-line ok">${noPartsNote}</div>` : ""}
+          ${repairNote ? `<div class="wh-craft-roll-line ok">${repairNote}</div>` : ""}
           ${findingNote ? `<div class="wh-craft-roll-line ok">${findingNote}</div>` : ""}
           ${torrentNote ? `<div class="wh-craft-roll-line ok">${torrentNote}</div>` : ""}
           <div class="wh-craft-msg-sum ${gain > 0 ? "ok" : "fail"}">Итог смены: <b>+${gain}</b> · Прогресс: <b>${proj.project.accumulated}</b>/${R.bank}${done ? " · <b style='color:#8cf0a0'>ГОТОВО!</b>" : ""}</div>

@@ -28,7 +28,7 @@
 import { _degWord, _hitWord, _leftoverSuccessPhrase, negatedHits, esc } from "../helpers/utils.mjs";
 import { addEvasionSurplus } from "./evasion-pool.mjs";
 import { spendReaction, spendActionPoints, canSpendActionPoints }  from "./action-economy.mjs";
-import { DRAGON_KNIGHT_FLAG, dragonKnightValue } from "../rules/dragon-knight.mjs";
+import { DRAGON_KNIGHT_FLAG, dragonKnightValue, dragonKnightEvasionBonus } from "../rules/dragon-knight.mjs";
 import { _noReactionCard } from "./defense.mjs";
 import { avoidanceVerdict } from "./full-attack-lock.mjs";
 import { rollIcon }      from "../constants/roll-icons.mjs";
@@ -813,7 +813,11 @@ async function resolveMountedDodge(rider, ctx, target, { extraMod = 0, hitsCount
   // ::performWalkerDodge). По всаднику попадание — обычное Уклонение, Навык
   // управления сюда не примешивается.
   const ctrlThreshold = riderHit ? null : control.value + testMod(STAY_MOD, mount);
-  const threshold = ctrlThreshold === null ? dodgeThreshold : combinedThreshold(dodgeThreshold, ctrlThreshold);
+  // Драконий Рыцарь: метка скакуна «+3×Успехи на все Избегания» (rules/dragon-knight.mjs)
+  // прибавляется к итоговому порогу — это общий для пары бросок, мимо общих правил.
+  const dragonBonus = dragonKnightEvasionBonus(mount);
+  const baseThreshold = ctrlThreshold === null ? dodgeThreshold : combinedThreshold(dodgeThreshold, ctrlThreshold);
+  const threshold = baseThreshold + dragonBonus;
 
   const { roll, rv, passed, deg, critLine } = await rollAgainst(threshold);
   const rolls = [roll];
@@ -849,7 +853,7 @@ async function resolveMountedDodge(rider, ctx, target, { extraMod = 0, hitsCount
       rollStatLine({
         base: `Уклонение ${dodgeBase} ${sgn(dodgeMod + extraMod)} = ${dodgeThreshold}${
           ctrlThreshold !== null ? `, ${control.label} ${control.value} ${sgn(testMod(STAY_MOD, mount))} = ${ctrlThreshold} — Комбинированный (ниже оказался ${lower})` : ""
-        }`,
+        }${dragonBonus ? `; 🐉 Драконий Рыцарь +${dragonBonus} (метка скакуна на Избегания)` : ""}`,
         threshold, rv
       })
     ],

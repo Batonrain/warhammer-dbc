@@ -232,5 +232,11 @@
     <label class="wr-label">Книга</label>
     <input type="text" name="system.bookSource" value="{{system.bookSource}}"
            class="wr-input-md" placeholder="напр. Core, стр. 24"/>
+    {{#unless (eq item.type "cybernetic")}}
+    <label class="drug-fx-cb-label" title="Снаряжение, сделанное для Легиона. Древний Воин уменьшает Редкость такого снаряжения на 1 (тест «Достать снаряжение»).">
+      <input type="checkbox" name="system.legion" {{#if system.legion}}checked{{/if}}/>
+      Легион
+    </label>
+    {{/unless}}
   </div>
 </div>

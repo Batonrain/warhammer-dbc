@@ -68,7 +68,7 @@ import { prismaFireBonus, halvePrismaCharge }         from "./prisma.mjs";
 import { attackEntropyRating } from "./touch-of-entropy.mjs";
 import { touchOfPainActive } from "./touch-of-pain.mjs";
 import { withWitchsEdge }                             from "./witchs-edge.mjs";
-import { ironGardenRating }                           from "../rules/iron-garden.mjs";
+import { ironGardenRating, ironGardenQuality }        from "../rules/iron-garden.mjs";
 import { hasHussar }                                  from "./sabre-second-attack.mjs";
 import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
 import { bloodFlameDamageBonus }                      from "../rules/blood-flame.mjs";
@@ -648,7 +648,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // ── Качество оружия ──────────────────────────────────────────────────────
   //   Стрелковое: ±Надёжность; Рукопашное Best: +1 урон; Best: теряет Primitive.
   //   (Мод теста для рукопашного применяется в _showAttackDialog → threshold.)
-  const qAuto = qualityEffects(item).auto;
+  // Железный Сад: группа дендритов бьёт по наименьшему Качеству (null — своё Качество).
+  const gardenQuality = isMelee ? ironGardenQuality(actor, item) : null;
+  const qAuto = qualityEffects(item, gardenQuality).auto;
   if (!isMelee) wp.reliabilityScore += qAuto.reliabilityMod || 0;
   // Plasma Expertise / Эксперт Плазмы (weaponsmith.core.plasmaExpertise): +1
   // Надёжность плазме со свойством Overheats (rules/damage-talents.mjs).
@@ -2152,7 +2154,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       },
       blocks: {
         props:         buildPropertyChatBlock(cardProps),
-        quality:       buildQualityChatBlock(item),
+        quality:       buildQualityChatBlock(item, gardenQuality),
         splinter:      isSplinter(sys) ? splinterReminders() : "",
         // ammoName (wdbc-utaw) — какой боеприпас заряжен на ЭТОТ выстрел, для
         // спец-боеприпасов, чей эффект зависит от собственной идентичности

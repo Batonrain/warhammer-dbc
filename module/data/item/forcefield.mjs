@@ -55,7 +55,9 @@ export class ForcefieldData extends foundry.abstract.TypeDataModel {
       // их про запас под гипотетический второй щит с другим уроном/типом рано.
       overloadRetaliateFormula: new StringField({ initial: "", label: "Перегрузка: урон в атакующего (формула)" }),
       overloadRetaliatePen:     new NumberField({ initial: 0, integer: true, nullable: false, label: "Перегрузка: Пробитие удара в атакующего" }),
-      bookSource:             new StringField({ initial: "", label: "Книга-источник" })
+      bookSource:             new StringField({ initial: "", label: "Книга-источник" }),
+      // Снаряжение Легиона — см. data/item/gear.mjs.
+      legion:                 new BooleanField({ initial: false, label: "Легион (снаряжение Легиона)" })
     };
   }
 }

@@ -20,7 +20,7 @@ import { MOUNT_SPEEDS, MOUNT_ROLES, MOUNT_TRAIT_DEFS, RIDER_ACTOR_TYPES,
          handsNeeded, bonusHalfAction, sizeFits, pairInitiative, passengerCount,
          maneuverMods, skidInfo, mountRangedPenalty, isBroken,
          possessionOf, isPossessed, mountControlSkill, skillValue, BLADES_TIER_USES,
-         hasTalent} from "../../rules/mount.mjs";
+         hasTalent, passengerTestMod} from "../../rules/mount.mjs";
 import { spendActionPoints } from "../../combat/action-economy.mjs";
 import { esc } from "../../helpers/utils.mjs";
 
@@ -95,6 +95,9 @@ export function mountPanelContext(actor, actors = []) {
     // турель в Коляске считаются от своего оружия, а не от седла, и подставлять
     // их в общую строку значило бы обещать скидку всему арсеналу.
     mountRanged: mountRangedPenalty(speedKey, mount, { rider: actor, actors }),
+    // Штраф самого пассажира на все физические действия (стр. 477); Рысь снимает (0 не показываем).
+    mountPassengerMod: state.role === "passenger"
+      ? passengerTestMod(actor, { kind: "attack" }, { actors }) : 0,
     mountPossession: possessed ? possessionOf(mount) : null,
     mountHands: hands,
     mountBonusAction: bonusHalfAction(actor, mount, traits),

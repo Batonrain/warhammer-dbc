@@ -17,6 +17,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "./predicates.mjs";
+import { itemIs } from "./item-marker.mjs";
 
 const items = actor => [...(actor?.items ?? [])];
 const hasTalent = (actor, pred) => items(actor).some(i => i?.type === "talent" && pred(i));
@@ -32,14 +33,24 @@ export function isMachineMinion(actor) {
     && (actor.system?.minionGroup || actor.system?.minionType) === "machine";
 }
 
+/** Ключи Возможностей меток-Черт «Сервитор» и «Робот» (packs-src/traits, решение владельца 26.10.2026). */
+export const SERVITOR_MARK_CAP = "trait.servitor";
+export const ROBOT_MARK_CAP = "trait.robot";
+
+/** Метка-Черта «Servitor» или «Robot» на предмете: по ключу, пока ключа нет — по имени. */
+export const isServitorRobotMark = item =>
+  itemIs(item, "trait", SERVITOR_MARK_CAP, "Servitor") || itemIs(item, "trait", ROBOT_MARK_CAP, "Robot");
+
+/** Несёт ли актор метку-Черту «Сервитор»/«Робот» (слот Миньона не нужен). */
+export const hasServitorRobotMark = actor => items(actor).some(isServitorRobotMark);
+
 /**
- * Сервитор или робот — Миньон группы «Машина» (стр. 111-113: «Сервиторы, роботы
- * и дроны»). Готовых сервиторов в паках нет, а метки-Черты «Сервитор»/«Робот» в
- * данных тоже не заведено, поэтому сервитор-Персонаж, сделанный ГМом без слота
- * Миньона, отличить от человека нечем — такого система не узнаёт.
+ * Сервитор или робот (стр. 111-113: «Сервиторы, роботы и дроны») — Миньон
+ * группы «Машина» либо актор с меткой-Чертой «Servitor»/«Robot»: так узнаётся
+ * сервитор-Персонаж, сделанный ГМом без слота Миньона.
  */
 export function isServitorOrRobot(actor) {
-  return isMachineMinion(actor);
+  return isMachineMinion(actor) || hasServitorRobotMark(actor);
 }
 
 /** Боевые Латы Скитария: надетая броня либо имплант (так они выдаются Скитарию). */
@@ -109,6 +120,38 @@ export function isFlockEligibleHuman(actor) {
  */
 export function effectiveMinionGroup(master, minion) {
   const group = minion?.system?.minionGroup || minion?.system?.minionType || "";
-  if (group === "human" && hasBinaryFlock(master) && isFlockEligibleHuman(minion)) return "machine";
+  if (group === "human" && hasBinaryFlock(master)
+      && (isFlockMachineChoice(minion) || isFlockEligibleHuman(minion))) return "machine";
   return group;
+}
+
+/**
+ * Отметка выбора игрока «считать как машину» на слуге (флаг актора, не поле
+ * схемы: она нужна только Бинарной Пастве и живёт, пока жив Талант). Ставит её
+ * генератор Миньона (apps/minion-creator.mjs) — решение владельца 26.10.2026:
+ * книга разрешает Паству только для людей в Латах/с Mechanicum Implants, но
+ * решает игрок, и окно не запирает галочку без Лат.
+ */
+export const FLOCK_MACHINE_FLAG = "flockMachine";
+export const isFlockMachineChoice = minion =>
+  minion?.flags?.["warhammer-dbc"]?.[FLOCK_MACHINE_FLAG] === true;
+
+/**
+ * Группа, по которой генератор считает требования Таланта и Лояльность. Профиль
+ * (бюджеты, броски Характеристик, Трейты) строится по группе слота как есть —
+ * «создавая их профили как людей»; галочка меняет только счёт Хозяина и только
+ * у человеческого профиля при наличии Таланта.
+ */
+export function buildCountGroup(master, group, asMachine) {
+  return group === "human" && asMachine && hasBinaryFlock(master) ? "machine" : group;
+}
+
+/**
+ * Группа для пересчёта Лояльности уже готового слуги (кнопка «🔄» на его
+ * листе): отмеченный выбором игрока человек считается по Int, как при создании;
+ * прочие — по собственной группе.
+ */
+export function loyaltyGroupOf(master, minion) {
+  const group = minion?.system?.minionGroup || minion?.system?.minionType || "";
+  return buildCountGroup(master, group, isFlockMachineChoice(minion));
 }

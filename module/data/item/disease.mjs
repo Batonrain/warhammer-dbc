@@ -27,6 +27,17 @@ export class DiseaseData extends foundry.abstract.TypeDataModel {
         char:  new StringField({ initial: "t", label: "Характеристика теста" }),
         mod:   new NumberField({ initial: 0, integer: true, nullable: false, label: "Модификатор" })
       }), { label: "Тесты заражения" }),
+      // Последствия заражения, которые система исполняет сама (Sahara task-3ab7,
+      // rules/disease-infection.mjs::infectionEffects): charDamage — «немедленно
+      // 2d10 урона в А» (Хворь Слабости), autoSuccessPoint — «Очко Бесчестия/
+      // Судьбы после провала = авто-успех» (Ходячая Оспа). Текст книги остаётся
+      // в vectors; пусто — болезнь заражает без последствий.
+      infectionEffects: new ArrayField(new SchemaField({
+        kind:    new StringField({ initial: "charDamage", label: "Вид последствия" }),
+        label:   new StringField({ initial: "", label: "Подпись" }),
+        char:    new StringField({ initial: "ag", label: "Характеристика (для урона)" }),
+        formula: new StringField({ initial: "", label: "Формула урона" })
+      }), { label: "Последствия заражения" }),
       cure:        new StringField({ initial: "", label: "Лечение" }),
       active:      new BooleanField({ initial: false, label: "Действует" }),
       description: new HTMLField({ initial: "", label: "Описание" }),

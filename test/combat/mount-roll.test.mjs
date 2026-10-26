@@ -277,3 +277,41 @@ describe("Уклонение верхом: Огневая Клеть удваи�
     expect(card).toContain("3 попадания всё ещё проходит");
   });
 });
+
+// Драконий Рыцарь (Талант Всадника): метка скакуна «+3×Успехи на все Избегания»
+// (rules/dragon-knight.mjs, mode:"evasion") подставляется и в Уклонение
+// ВСАДНИКА верхом — resolveMountedDodge считает порог сам, мимо общих правил.
+describe("Уклонение верхом: Драконий Рыцарь", () => {
+  const buffedBeast = (mode, value) => ({
+    ...beast(),
+    getFlag: (_s, k) => (k === "dragonKnightBuff" ? { mode, value } : undefined)
+  });
+  async function dodge(mount, target, rv = 22) {
+    resolveMountAs(mount);
+    // Ag 40, Dodge нетренированное −20 = 20; по всаднику −10 → 10.
+    const promise = showMountedDodgeDialog(rider(), 0);
+    await flush();
+    captured.nextRoll = rv;
+    await captured.dialog.buttons.roll.callback(fakeHtml({ "#md-target": target }));
+    await promise;
+    return captured.chat[0].content;
+  }
+
+  it("попадание по всаднику: порог 10 + 12 от метки скакуна = 22 — бросок 22 проходит", async () => {
+    const card = await dodge(buffedBeast("evasion", 12), "rider");
+    expect(card).toContain("<label>Порог</label><b>22</b>");
+    expect(card).toContain("Драконий Рыцарь");
+    expect(card).toContain("Уклонение успешно");
+  });
+
+  it("попадание по скакуну (комбинированный тест): метка тоже прибавляется к итоговому порогу", async () => {
+    const card = await dodge(buffedBeast("evasion", 12), "mount", 32);
+    expect(card).toContain("<label>Порог</label><b>32</b>");   // min(20, 50) + 12
+  });
+
+  it("метка на Атаки или без метки — порог прежний", async () => {
+    expect(await dodge(buffedBeast("attack", 12), "rider")).toContain("<label>Порог</label><b>10</b>");
+    resetCaptured();
+    expect(await dodge(beast(), "rider")).toContain("<label>Порог</label><b>10</b>");
+  });
+});

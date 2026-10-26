@@ -24,7 +24,8 @@ import { ITEM_QUALITY, ITEM_QUALITY_LIST } from "../constants/quality.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { openCompendiumBrowser } from "./compendium-browser.mjs";
 import {
-  REQUISITION_PACKS, itemRarity, isConsumableItem, requisitionPlan, requisitionSummaryLines
+  REQUISITION_PACKS, itemRarity, isConsumableItem, requisitionPlan, requisitionSummaryLines,
+  hasRequisitionTalent
 } from "../rules/requisition.mjs";
 
 /** Сколько отдельных копий создаётся предмету без поля «Количество» (оружие, броня). */
@@ -63,6 +64,9 @@ async function askDetails(actor, item) {
       </fieldset>` : ""}
       <label title="Книга: предмета может не быть в пределах досягаемости контактов, или его мало. Поправка ГМа — число, оно просто прибавится.">
         Поправка ГМа (местная распространённость) <input type="number" name="local" value="0" step="5"/></label>
+      ${hasRequisitionTalent(actor, "whateverYouWant") ? `
+      <label title="Талант «Что Захотите»: когда Архонт требует реквизицию для своих нужд, бонус F.b×2 (с вашего листа) + Inf.b Архонта. Впишите Бонус Влияния Архонта числом; оставьте пустым, если реквизиция не по его требованию.">
+        Inf.b Архонта (реквизиция по требованию Архонта) <input type="number" name="archonInf" value="" min="0" step="1" placeholder="пусто — нет"/></label>` : ""}
       ${item ? `<label><input type="checkbox" name="grant" checked/> При Успехе выдать предмет персонажу</label>` : ""}
     </div>`;
   const get = (f, n) => f.elements.namedItem(n);
@@ -86,6 +90,8 @@ async function askDetails(actor, item) {
             legion: !!get(f, "legion").checked, ritual: !!get(f, "ritual").checked
           } : null,
           local: Number(get(f, "local").value) || 0,
+          // Пусто — не по требованию Архонта (null), число — Inf.b Архонта.
+          archonInf: get(f, "archonInf")?.value?.trim() ? Number(get(f, "archonInf").value) : null,
           grant: !!get(f, "grant")?.checked
         };
       }
@@ -152,7 +158,7 @@ export async function openRequisition(actor, sheet = actor?.sheet) {
 
   const plan = requisitionPlan(actor, {
     item, name: v.name, rarity: v.rarity, quantity: v.quantity, quality: v.quality,
-    consumable: v.consumable, cls: v.cls ?? undefined, local: v.local
+    consumable: v.consumable, cls: v.cls ?? undefined, local: v.local, archonInf: v.archonInf
   });
 
   const inf = Number(actor.system?.characteristics?.inf?.total) || 0;

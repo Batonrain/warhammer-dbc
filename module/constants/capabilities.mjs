@@ -1685,7 +1685,7 @@ export const CAPABILITIES = {
   "rider.core.dragonKnight": {
     label: "Если персонаж и скакун действуют в одну Инициативу, за полудействие он может пройти Survival−10,",
     source: "Dragon Knight / Драконий Рыцарь",
-    reader: "module/combat/mount.mjs::dragonKnightTest — кнопка на листе Таланта (module/apps/talent-actions.mjs): полудействие, Survival−10, метка +3×Успехи на скакуне (module/rules/dragon-knight.mjs, читает module/rules/situational.mjs); снимает начало следующего Хода всадника (clearDragonKnight в module/hooks.mjs)."
+    reader: "module/combat/mount.mjs::dragonKnightTest — кнопка на листе Таланта (module/apps/talent-actions.mjs): полудействие, Survival−10, метка +3×Успехи на скакуне (module/rules/dragon-knight.mjs, читает module/rules/situational.mjs); снимает начало следующего Хода всадника (clearDragonKnight в module/hooks.mjs). Уклонение верхом ВСАДНИКА: module/combat/mount.mjs::resolveMountedDodge прибавляет dragonKnightEvasionBonus(скакун) к итоговому порогу."
   },
   "rider.core.hussar": {
     label: "Совершая Верховую Атаку, персонаж может потратить бонусное верховое полудействие, чтобы провести ещё одну верховую атаку по другой цели на п…",
@@ -1723,7 +1723,7 @@ export const CAPABILITIES = {
   "rider.core.trot": {
     label: "Двигаясь не более SPD в Ход, скакун или байк игнорируют Трудный Ландшафт и не дают штрафов на действия всадника или пассажира.",
     source: "Trot / Рысь",
-    reader: "module/rules/mount.mjs::trotApplies (по имени Таланта; скорости still/half) → combat/mount.mjs::showMountTerrainDialog (тест Ландшафта не бросается) и mountRangedPenalty({rider}) → sheets/attack-dialog.mjs, sheets/tabs/mount-panel.mjs (штраф стрельбы с седла); пассажир — Рысь берётся у ведущего всадника (module/rules/mount.mjs::leadRiderOf)"
+    reader: "module/rules/mount.mjs::trotApplies (по имени Таланта; скорости still/half) → combat/mount.mjs::showMountTerrainDialog (тест Ландшафта не бросается) и mountRangedPenalty({rider}) → sheets/attack-dialog.mjs, sheets/tabs/mount-panel.mjs (штраф стрельбы с седла); пассажир — Рысь берётся у ведущего всадника (module/rules/mount.mjs::leadRiderOf); тот же приём снимает штраф пассажира на физические тесты (module/rules/mount.mjs::passengerTestMod → situational.passenger)"
   },
   "rider.core.unstoppableCharge": {
     label: "Когда персонаж верхом совершает Натиск, его рукопашные атаки (но не атаки скакуна/лезвий байка) получают Felling (½WS.b (окр.▲)).",
@@ -1933,7 +1933,7 @@ export const CAPABILITIES = {
   "arsenal.core.ancientWarrior": {
     label: "Персонаж уменьшает Редкость всего Легион снаряжения на 1 и получает +10 на все социальные взаимодействия с обладателями этого Таланта и Косм…",
     source: "Ancient Warrior / Древний Воин",
-    reader: "ЧАСТИЧНО: module/rules/minion-build.mjs::minionLoyalty — +10 Лояльности Миньонам с system.isAstartes; module/rules/requisition.mjs::rarityShifts — «−1 Редкость» снаряжения со свойством Legion в тесте «Достать снаряжение» (module/apps/requisition.mjs); +10 соц. взаимодействиям с носителями Таланта и Космодесантниками Хаоса — НЕ сделано"
+    reader: "ЧАСТИЧНО: module/rules/minion-build.mjs::minionLoyalty — +10 Лояльности Миньонам с system.isAstartes; module/rules/requisition.mjs::rarityShifts — «−1 Редкость» снаряжения со свойством Legion (оружие) либо галочкой system.legion (броня, снаряжение, инструмент, боеприпас, щит) в тесте «Достать снаряжение» (module/apps/requisition.mjs); +10 соц. взаимодействиям с носителями Таланта и Космодесантниками Хаоса — module/rules/social-talents.mjs::isAncientWarriorPartner (токен-цель из фракции traitor-legions/Астартес-Хаос/носитель Таланта либо выбор собеседника в окне броска, rules/social-faction.mjs)"
   },
   "arsenal.core.armourTraining": {
     label: "Персонаж увеличивает Max.A этого вида брони на 10 и уменьшает её штраф к А на 5 (если есть).",
@@ -2341,12 +2341,12 @@ export const CAPABILITIES = {
   "mechanicum.core.binaryDominion": {
     label: "Персонаж может использовать Tech-Use вместо Command в тестах командования сервиторами, роботами и Скитариями,",
     source: "Binary Dominion / Бинарное Владычество",
-    reader: "module/rules/binary-dominion.mjs::binaryDominionCommandBonus — подмена Command на Tech-Use против сервитора/робота/Скитария (источник module/rules/command-substitution.mjs, берётся лучшая из подмен); binaryDominionRisk — Риск 3 (сервиторы, роботы) или не ниже 3 (Скитарии) в module/sheets/squad-sheet.mjs::_effectiveRisk. Цель берётся из отмеченного токена, как у Живой Легенды."
+    reader: "module/rules/binary-dominion.mjs::binaryDominionCommandBonus — подмена Command на Tech-Use против сервитора/робота/Скитария (источник module/rules/command-substitution.mjs, берётся лучшая из подмен); binaryDominionRisk — Риск 3 (сервиторы, роботы) или не ниже 3 (Скитарии) в module/sheets/squad-sheet.mjs::_effectiveRisk. Цель берётся из отмеченного токена, как у Живой Легенды. Сервитор/робот — Миньон группы «Машина» либо актор с меткой-Чертой «Servitor»/«Robot» (trait.servitor, trait.robot)."
   },
   "mechanicum.core.binaryFlock": {
     label: "Персонаж может брать миньонов-людей с Латами Скитарии или Трейтом Mechanicum Implants как Миньонов-машин (в расчёте требований и максимума М…",
     source: "Binary Flock / Бинарная Паства",
-    reader: "module/rules/binary-dominion.mjs::effectiveMinionGroup — человек в латах Скитария/с Mechanicum Implants считается «Машиной» в module/rules/minion-build.mjs (groupTally, slotUsage) и блоке СОЦИУМ (module/sheets/tabs/minions-panel.mjs); требования Таланта в генераторе Миньона не пересчитываются."
+    reader: "module/rules/binary-dominion.mjs::effectiveMinionGroup — человек в латах Скитария/с Mechanicum Implants считается «Машиной» в module/rules/minion-build.mjs (groupTally, slotUsage) и блоке СОЦИУМ (module/sheets/tabs/minions-panel.mjs); галочка «считать как машину» в генераторе Миньона (module/apps/minion-creator.mjs: buildCountGroup) — Лояльность и требования Таланта по Int/Tech-Use при человеческом профиле; выбор хранится флагом flockMachine на слуге (isFlockMachineChoice) и учитывается слотом, максимумом и кнопкой «🔄 Лояльность» на листе слуги."
   },
   "mechanicum.core.blessingOfSteel": {
     label: "Потратив 5 минут на ритуал, персонаж может благословить оружие или набор брони, увеличив их Качество на 1 до конца следующего боя.",
@@ -2394,12 +2394,12 @@ export const CAPABILITIES = {
   "mechanicum.core.ironGarden": {
     label: "Если у персонажа несколько одноимённых мехадендритов, он может атаковать ими в рукопашной как одним оружием со свойством Multi-strike (X),",
     source: "Iron Garden / Железный Сад",
-    reader: "module/rules/iron-garden.mjs::ironGardenRating — Multi-strike (X) в module/combat/attack.mjs::_executeAttackRoll. «1 Реакция / 1 рука» и «наименьшее Качество» не смоделированы."
+    reader: "module/rules/iron-garden.mjs::ironGardenRating — Multi-strike (X) в module/combat/attack.mjs::_executeAttackRoll; ironGardenQuality — наименьшее Качество группы для броска и урона (attack.mjs, attack-threshold.mjs, sheets/attack-dialog.mjs); ironGardenHandsDiscount/ironGardenSharesHand — группа надетых дендритов занимает одну руку (module/rules/hands.mjs); «1 Реакция» — группа бьёт одним броском, Реакция за атаку списывается один раз."
   },
   "mechanicum.core.masterEngineseer": {
     label: "Персонаж получает +10 к Tech-Use на Крафт и ремонт. Может потратить Очко Бесчестия, чтобы автоматически преуспеть в расширенном тесте Tech-U…",
     source: "Master Engineseer / Мастер-Технопровидец",
-    reader: "module/rules/craft-advantage.mjs masterEngineseerBonus() — module/apps/craft-workshop.mjs _rollShift (+10 Tech-Use на Крафт: бонус действует, когда Tech-Use — ведущий Навык смены в режиме Крафт); module/rules/craft-advantage.mjs masterEngineseerAutoEligible() + module/apps/craft-workshop.mjs::_offerEngineseerAutoSuccess — автоуспех за Очко Бесчестия, I.b Успехов за смену без броска. Ремонт, «чинить без запчастей» и потеря эффекта при перерыве больше суток — вручную."
+    reader: "module/rules/craft-advantage.mjs masterEngineseerBonus() — module/apps/craft-workshop.mjs _rollShift (+10 Tech-Use на Крафт: бонус действует, когда Tech-Use — ведущий Навык смены в режиме Крафт); module/rules/craft-advantage.mjs masterEngineseerAutoEligible() + module/apps/craft-workshop.mjs::_offerEngineseerAutoSuccess — автоуспех за Очко Бесчестия, I.b Успехов за смену без броска. Потеря эффекта при перерыве больше суток — engineseerAutoAt в _rollShift. Ремонт — проект Крафта с галочкой «Ремонт» (craft-advantage.mjs masterEngineseerNoParts/destroyedWeaponsOf/craftShiftTitle; готовый ремонт снимает «Уничтожено» через combat/weapon-repair.mjs); «без запчастей» — галочка проекта-ремонта, строка в карточке. Банк Успехов ремонта книга не называет — вписывает стол."
   },
   "mechanicum.core.mechadendriteUse": {
     label: "Персонаж получил обучение, посвящение и гипнонаставление по использованию конкретного типа мехадендритов.",
@@ -4497,7 +4497,8 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.ierarh.whateverYouWant": {
     label: "Когда Архонт требует пройти тест на реквизицию для удовлетворения своих нужд, персонаж получает бонус F.b×2 + Inf.b Архонта на этот тест.",
-    source: "Whatever You Want / Что Захотите", reader: ""
+    source: "Whatever You Want / Что Захотите",
+    reader: "module/rules/requisition-talents.mjs::requisitionTalentRules (reader: читает по ИМЕНИ Таланта, не по этому capabilityKey) — в окне «Достать снаряжение» (module/apps/requisition.mjs) поле «Inf.b Архонта»: число введено → автоматически +F.b×2 (бонус Fel с листа персонажа) + это число на тест Реквизиции; поле пусто — реквизиция не по требованию Архонта, бонуса нет. Токен-Архонт не нужен (решение владельца 26.10.2026)."
   },
   // ── Элитные_архетипы\Иерофант — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.ierofant.bloodOfMartyrs": {
@@ -5985,6 +5986,16 @@ export const CAPABILITIES = {
     label: "Иммунитет к Усталости/ядам/болезням/радиации/экстрим.температурам/вакууму/Кровотечению/Обескровливанию; не может быть Оглушён; не стареет;",
     source: "Stuff of Nightmares / Существо из Кошмаров",
     reader: "module/rules/stuff-of-nightmares.mjs (hasStuffOfNightmares) — частично: болезни (module/rules/disease-immunity.mjs actorImmuneToDiseaseEffects) и вакуум/Взрывная Декомпрессия (module/rules/vacuum.mjs vacuumApplies/isDecompressionVictim); Усталость, яды, радиация, температуры, Кровотечение/Обескровливание, Оглушение, возраст и Критэффекты — текстом"
+  },
+  "trait.servitor": {
+    label: "Метка «сервитор»: персонаж без слота Миньона узнаётся целью Бинарного Владычества",
+    source: "Servitor / Сервитор (packs-src/traits; корбук стр. 111-113: «Сервиторы, роботы и дроны»)",
+    reader: "module/rules/binary-dominion.mjs::isServitorOrRobot (hasServitorRobotMark)"
+  },
+  "trait.robot": {
+    label: "Метка «робот»: персонаж без слота Миньона узнаётся целью Бинарного Владычества",
+    source: "Robot / Робот (packs-src/traits; корбук стр. 111-113: «Сервиторы, роботы и дроны»)",
+    reader: "module/rules/binary-dominion.mjs::isServitorOrRobot (hasServitorRobotMark)"
   },
   "trait.sturdy": {
     label: "+20 vs Захват/Оглушение, +30 vs сбивание/отбрасывание.",
@@ -8334,7 +8345,7 @@ export const CAPABILITIES = {
   // Возможность читается напрямую с предметов актора, не через hasRuleFlag —
   // isItemActive зовёт сам сбор правил (приём rules/vision-aids.mjs).
   "defence.diseaseEffectsImmune": {
-    label: "Иммунитет к негативным эффектам болезней: предметы-болезни у носителя не действуют (записи Конструктора и эффекты болезни выключены, сам предмет остаётся на листе), и носитель не заражается — кнопка «Заражение» на болезни тест не бросает. Метка Нургла — всегда; Струп — пока препарат принят (основной эффект, до «Эффект завершён»: срок «1 час» препараты сами не считают).",
+    label: "Иммунитет к негативным эффектам болезней: предметы-болезни у носителя не действуют (записи Конструктора и эффекты болезни выключены, сам предмет остаётся на листе), и носитель не заражается — кнопка «Заражение» на болезни тест не бросает. Метка Нургла — всегда; Струп — пока препарат принят (основной эффект; срок «1 час» считает Календарь — поле препарата gameMinutes, module/combat/drug-expiry.mjs — или раньше кнопка «Эффект завершён»).",
     source: "Метка Нургла (корбук); Scab / Струп (корбук, стр. 279)",
     reader: "module/rules/disease-immunity.mjs diseaseEffectsSuppressed() — module/apps/effects.mjs isItemActive() (болезнь не активна → rulesFromItemMechanics её записи, в т.ч. charRecovery, не собирает; препарат активен, пока activeEffect.isActive без пост-эффекта); заражение — module/rules/disease-infection.mjs infectionBlockedBy() → module/combat/disease-infection.mjs"
   },

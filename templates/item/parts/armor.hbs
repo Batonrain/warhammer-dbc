@@ -498,5 +498,11 @@
     <label class="wr-label">Книга</label>
     <input type="text" name="system.bookSource" value="{{system.bookSource}}"
            class="wr-input-md" placeholder="напр. Core, стр. 24"/>
+    {{#if (eq item.type "armor")}}
+    <label class="drug-fx-cb-label" title="Броня, сделанная для Легиона. Древний Воин уменьшает Редкость такого снаряжения на 1 (тест «Достать снаряжение»).">
+      <input type="checkbox" name="system.legion" {{#if system.legion}}checked{{/if}}/>
+      Легион
+    </label>
+    {{/if}}
   </div>
 </div>

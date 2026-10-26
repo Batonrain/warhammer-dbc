@@ -17,6 +17,7 @@
 import { peerTargetsOf, goodReputationTargetsOf, enemyTalentsOf, hatredTargetsOf } from "./predicates.mjs";
 import { isSocialSkill } from "./resolve-test.mjs";
 import { factionKey, factionDepth } from "./factions.mjs";
+import { hasAncientWarrior, ANCIENT_WARRIOR_PEER_KEY, CHAOS_ASTARTES_FACTION } from "./social-talents.mjs";
 
 /** Ключи фракций среди целей всех Талантов, которым нужен собеседник (без повторов, порядок появления). */
 export function socialTalentFactionRefs(actor) {
@@ -30,6 +31,9 @@ export function socialTalentFactionRefs(actor) {
   for (const t of targets) {
     if (t?.kind === "faction" && t.ref && !out.includes(t.ref)) out.push(t.ref);
   }
+  // Древний Воин: «Космодесантники Хаоса» — группа, которую выбирают так же, как
+  // цель Связей (rules/social-talents.mjs).
+  if (hasAncientWarrior(actor) && !out.includes(CHAOS_ASTARTES_FACTION)) out.push(CHAOS_ASTARTES_FACTION);
   return out;
 }
 
@@ -56,6 +60,8 @@ export function socialFactionOptions(actor, byKey) {
   const labelOf = key => String(byKey.get(key)?.name ?? key);
   const ownKeys = socialTalentFactionRefs(actor);
   const own = ownKeys.map(key => ({ key, label: labelOf(key) }));
+  // Носитель Таланта «Древний Воин» — не фракция, а псевдо-пункт выбора.
+  if (hasAncientWarrior(actor)) own.push({ key: ANCIENT_WARRIOR_PEER_KEY, label: "Носитель Таланта «Древний Воин»" });
   const all = [...byKey.values()]
     .map(f => ({ key: factionKey(f), name: String(f.name ?? "") }))
     .filter(f => f.key)

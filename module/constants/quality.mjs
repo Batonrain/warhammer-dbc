@@ -76,9 +76,11 @@ export function qualityCategory(item) {
  *     overloadMod     — модификатор рейтинга Перегрузки (щит), уже с клампом ≥1
  *     losesPrimitive  — предмет теряет Primitive (если имел)
  */
-export function qualityEffects(item) {
+export function qualityEffects(item, qualityOverride = null) {
   const cat  = qualityCategory(item);
-  const q    = normQuality(item?.system?.quality);
+  // qualityOverride — Качество вместо собственного: Железный Сад бьёт группой
+  // дендритов по наименьшему Качеству (rules/iron-garden.mjs::ironGardenQuality).
+  const q    = normQuality(qualityOverride ?? item?.system?.quality);
   const info = ITEM_QUALITY[q];
   const auto = {};
   const reminders = [];
@@ -151,8 +153,8 @@ export function applyShieldOverloadQuality(baseOverload, q) {
  * Читает system.qualityEffects.{poor,good,best} и возвращает строку для текущего
  * качества предмета (или "" если для этого уровня ничего не задано).
  */
-export function itemSpecificQuality(item) {
-  const q = normQuality(item?.system?.quality);
+export function itemSpecificQuality(item, qualityOverride = null) {
+  const q = normQuality(qualityOverride ?? item?.system?.quality);
   const qe = item?.system?.qualityEffects;
   if (!qe) return "";
   return String(qe[q] || "").trim();
@@ -162,14 +164,13 @@ export function itemSpecificQuality(item) {
  * HTML-блок «Качество» для карточки предмета в чате: общий типовой эффект +
  * специфичный для предмета текст текущего уровня качества.
  */
-export function buildQualityChatBlock(item) {
-  const q = normQuality(item?.system?.quality);
-  if (q === "common") {
-    const spec = itemSpecificQuality(item);
-    if (!spec) return "";
-  }
-  const { info, reminders } = qualityEffects(item);
-  const spec = itemSpecificQuality(item);
+export function buildQualityChatBlock(item, qualityOverride = null) {
+  const q = normQuality(qualityOverride ?? item?.system?.quality);
+  // Подмена Качества (Железный Сад): текст «специфичного» Качества берётся у
+  // подставленного уровня, а не у самого предмета.
+  const spec = qualityOverride ? itemSpecificQuality(item, q) : itemSpecificQuality(item);
+  if (q === "common" && !spec) return "";
+  const { info, reminders } = qualityEffects(item, qualityOverride);
   const lines = [];
   for (const r of reminders) lines.push(`<div class="roll-wprop">${r}</div>`);
   if (spec) lines.push(`<div class="roll-wprop"><b>${info.abbr}:</b> ${spec}</div>`);

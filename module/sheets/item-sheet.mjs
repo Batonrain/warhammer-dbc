@@ -104,6 +104,7 @@ import { factionRosterContext, originTreeContext,
 import { ritualTestContext }                         from "./tabs/rituals.mjs";
 import { onTab, whenEditable, linesToArray }         from "./v2-helpers.mjs";
 import { relayItemUpdate, esc }                       from "../helpers/utils.mjs";
+import { rowsAdd, rowsRemove, rowsPatch, BLANK_VECTOR, BLANK_EFFECT, EFFECT_KINDS } from "../rules/disease-infection.mjs";
 
 // Метка типа (в PSY это строки, в TECH — объекты {label})
 function _typeLabel(map, key) {
@@ -480,6 +481,28 @@ function onWrpFeatureRemove(event, target) {
   return this.item.update({ "system.features": (this.item.system.features || []).filter((_, idx) => idx !== i) });
 }
 
+// ── Болезнь: пути передачи и последствия заражения (Sahara task-3ab7) ──
+//  Строки правятся целыми массивами (item.update на весь список): формы
+//  ApplicationV2 с индексированными именами массивов сливаются в объект, а не
+//  в список, поэтому поля строк не имеют `name`, а ловятся change-обработчиками
+//  _onRender по классам (тот же приём, что у профилей оружия и Особенностей).
+/** Номер строки — на её контейнере, а не на самой кнопке. */
+const diseaseRowIdx = el => Number(el.closest("[data-row]")?.dataset.row);
+const diseaseList = (item, field) => foundry.utils.deepClone(item.system[field] ?? []);
+
+function onDiseaseVectorAdd() {
+  return this.item.update({ "system.vectorTests": rowsAdd(diseaseList(this.item, "vectorTests"), BLANK_VECTOR) });
+}
+function onDiseaseVectorRemove(event, target) {
+  return this.item.update({ "system.vectorTests": rowsRemove(diseaseList(this.item, "vectorTests"), diseaseRowIdx(target)) });
+}
+function onDiseaseEffectAdd() {
+  return this.item.update({ "system.infectionEffects": rowsAdd(diseaseList(this.item, "infectionEffects"), BLANK_EFFECT) });
+}
+function onDiseaseEffectRemove(event, target) {
+  return this.item.update({ "system.infectionEffects": rowsRemove(diseaseList(this.item, "infectionEffects"), diseaseRowIdx(target)) });
+}
+
 // ── Оружие: доп. профили ББ (Крюк/Посох, стр. 207-221) ──
 /** Номер профиля — на карточке, а не на самой кнопке. */
 const profileIdx = el => Number(el.closest(".wprofile-card")?.dataset.idx);
@@ -652,6 +675,10 @@ export class WarhammerItemSheet
       psyProfileRemove: whenEditable(onPsyProfileRemove),
       psyVariantAdd: whenEditable(onPsyVariantAdd),
       psyVariantRemove: whenEditable(onPsyVariantRemove),
+      diseaseVectorAdd: whenEditable(onDiseaseVectorAdd),
+      diseaseVectorRemove: whenEditable(onDiseaseVectorRemove),
+      diseaseEffectAdd: whenEditable(onDiseaseEffectAdd),
+      diseaseEffectRemove: whenEditable(onDiseaseEffectRemove),
       wprofileAdd: whenEditable(onWprofileAdd),
       wprofileDel: whenEditable(onWprofileDel),
       wprofilePropRemove: whenEditable(onWprofilePropRemove),
@@ -1224,6 +1251,9 @@ export class WarhammerItemSheet
     // ── Болезнь ─────────────────────────────────────────────────────────────────
     if (this.item.type === "disease") {
       context.diseaseGodOptions = DISEASE_GODS;
+      // Выпадающие списки редакторов строк: Характеристика теста/урона и вид последствия.
+      context.diseaseCharOptions = Object.entries(CHARACTERISTICS).map(([key, d]) => ({ key, label: d.abbr }));
+      context.diseaseEffectKinds = Object.entries(EFFECT_KINDS).map(([key, label]) => ({ key, label }));
     }
 
     // ── Дар «Рука-Пушка»: какое оружие вросло в предплечье (wdbc-spsd).
@@ -3396,6 +3426,20 @@ export class WarhammerItemSheet
       if (!arr[i]) return;
       arr[i][field] = field === "roll" ? (parseInt(ev.currentTarget.value) || 0) : ev.currentTarget.value;
       await this.item.update({ "system.features": arr });
+    });
+
+    // ── Болезнь: строки путей передачи и последствий заражения ───────────────────
+    on(".disease-vector-field", "change", async ev => {
+      if (!this.isEditable) return;
+      const next = rowsPatch(diseaseList(this.item, "vectorTests"), diseaseRowIdx(ev.currentTarget),
+        ev.currentTarget.dataset.field, ev.currentTarget.value, ["mod"]);
+      await this.item.update({ "system.vectorTests": next });
+    });
+    on(".disease-effect-field", "change", async ev => {
+      if (!this.isEditable) return;
+      const next = rowsPatch(diseaseList(this.item, "infectionEffects"), diseaseRowIdx(ev.currentTarget),
+        ev.currentTarget.dataset.field, ev.currentTarget.value);
+      await this.item.update({ "system.infectionEffects": next });
     });
 
     // ── Оружие: доп. профили ББ (Крюк/Посох, стр. 207-221) ──────────────────────

@@ -15,7 +15,11 @@
 //  останавливает заражение до броска.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { diseaseVectors, vectorLabel, infectionPlan, infectionBlockedBy } from "../rules/disease-infection.mjs";
+import { diseaseVectors, vectorLabel, infectionPlan, infectionBlockedBy,
+         infectionDamage, hasAutoSuccess } from "../rules/disease-infection.mjs";
+import { applyCharDamageButton } from "./char-damage-button.mjs";
+import { actorHasInfamyPoint, actorInfamyValue, actorInfamyPath, spendFromInfamyPool } from "../apps/infamy-points.mjs";
+import { tempInfamyAmount } from "../rules/temp-infamy.mjs";
 import { diseaseResistReroll } from "../rules/squat-traits.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
@@ -79,7 +83,13 @@ export async function rollInfectionTest(actor, item, { vector = null } = {}) {
   const threshold = plan.threshold + ruleMods.total;
   const advantage = diseaseResistReroll(actor);
   const { rv, rolls } = await rollD100WithReroll(advantage);
-  const { success } = testOutcome(rv, threshold);
+  const tested = testOutcome(rv, threshold);
+
+  // Ходячая Оспа: «Персонажи могут тратить Очки Бесчестия или Судьбы, чтобы
+  // автоматически проходить этот тест после Провала» (core, стр. 471) — пока
+  // провал не записан, предлагаем игроку потратить Очко.
+  const spent = tested.success ? null : await offerAutoSuccess(actor, item);
+  const success = tested.success || !!spent;
 
   if (!success) {
     await item.update({ "system.active": true });
@@ -89,6 +99,7 @@ export async function rollInfectionTest(actor, item, { vector = null } = {}) {
 
   const sign = picked.mod < 0 ? "−" : "+";
   const notes = [];
+  if (spent) notes.push(`<div class="roll-threshold">${esc(spent)}</div>`);
   if (advantage) notes.push(`<div class="roll-threshold">${esc(advantage.label)}: броски ${rolls.map(r => r.total).join(" и ")}, берётся лучший.</div>`);
   if (!success && item.system?.incubation) notes.push(`<div class="roll-threshold">Инкубация: ${esc(item.system.incubation)}</div>`);
 
@@ -101,8 +112,37 @@ export async function rollInfectionTest(actor, item, { vector = null } = {}) {
       threshold, rv
     }),
     outcome: notes.join("") + (success
-      ? outcomeHtml(true, "Успех — организм отбился, болезнь не прижилась")
+      ? outcomeHtml(true, spent ? "Авто-успех — болезнь не прижилась" : "Успех — организм отбился, болезнь не прижилась")
       : outcomeHtml(false, "Провал — 🦠 заражён, болезнь действует"))
   }, { rolls });
+
+  // Хворь Слабости: «заражается и немедленно получает 2d10 урона в А» —
+  // урон в Характеристику единой точкой (пол 0, отсчёт восстановления).
+  if (!success) {
+    for (const e of infectionDamage(item)) {
+      await applyCharDamageButton(actor, { keys: [e.char], formula: e.formula, source: `${item.name}: заражение` });
+    }
+  }
   return success ? "resisted" : "infected";
+}
+
+/**
+ * Предложить потратить Очко Бесчестия/Судьбы после провала (последствие
+ * `autoSuccessPoint`). Возвращает строку для карточки, если Очко потрачено и тест
+ * засчитан, иначе null: у болезни нет такого последствия, нечем платить, игрок
+ * отказался или трата запрещена (Пустота Парии — spendFromInfamyPool вернул null).
+ */
+async function offerAutoSuccess(actor, item) {
+  if (!hasAutoSuccess(item) || !actorHasInfamyPoint(actor)) return null;
+  const yes = await foundry.applications.api.DialogV2.confirm({
+    window: { title: `Заражение: ${item.name}` },
+    content: `<p>Тест заражения провален. Потратить 1 Очко Бесчестия/Судьбы (осталось: <b>${actorInfamyValue(actor) + tempInfamyAmount(actor)}</b>), чтобы пройти его автоматически?</p>`,
+    yes: { label: "Потратить Очко" }, no: { label: "Остаться заражённым" }
+  });
+  if (!yes) return null;
+  const path = actorInfamyPath(actor);
+  const spend = await spendFromInfamyPool(actor, 1, path);
+  if (!spend) return null;
+  if (spend.poolSpent) await actor.update({ [path]: spend.poolValue });
+  return `Потрачено Очко Бесчестия/Судьбы${spend.tempSpent ? " (из временного запаса)" : ""} — тест засчитан после провала. Осталось: ${actorInfamyValue(actor) + tempInfamyAmount(actor)}.`;
 }

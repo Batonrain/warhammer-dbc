@@ -123,6 +123,9 @@ export function activateCraftListeners(root, sheet) {
   on(craftRoot, "[name=slowshift]", "change", e => upd(e.currentTarget, p => p.slowShift = e.target.checked));
   on(craftRoot, "[name=assistant-actor]", "change", e => upd(e.currentTarget, p => p.assistantId = e.target.value));
   on(craftRoot, "[name=torrent-weapon]", "change", e => upd(e.currentTarget, p => p.torrentWeaponUuid = e.target.value));
+  on(craftRoot, "[name=repair]", "change", e => upd(e.currentTarget, p => p.repair = e.target.checked));
+  on(craftRoot, "[name=repair-weapon]", "change", e => upd(e.currentTarget, p => p.repairWeaponId = e.target.value));
+  on(craftRoot, "[name=noparts]", "change", e => upd(e.currentTarget, p => p.noParts = e.target.checked));
 
   // Биолаборатория
   on(craftRoot, "[name=vat]", "change", e => upd(e.currentTarget, p => p.vatKey = e.target.value));
