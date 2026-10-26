@@ -58,7 +58,7 @@ async function askDetails(actor, item) {
       ${manual ? `
       <fieldset style="border:1px solid #6665;padding:2px 6px;"><legend>Вид предмета (для Талантов, снижающих Редкость)</legend>
         <label><input type="checkbox" name="exotic"/> Экзотическое</label>
-        <label><input type="checkbox" name="cybernetic"/> Кибернетика</label>
+        <label title="Кибернетика, Бионика, Псибернетика, Механикус — вся имплант-техника (Повелитель Войны)"><input type="checkbox" name="cybernetic"/> Кибернетика / Бионика / Механикус</label>
         <label><input type="checkbox" name="legion"/> Легион</label>
         <label><input type="checkbox" name="ritual"/> Запись ритуала</label>
       </fieldset>` : ""}

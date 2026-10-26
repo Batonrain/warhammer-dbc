@@ -83,6 +83,29 @@ describe("признаки предметов на настоящих данны
     expect(rituals.filter(r => itemClass(r).ritual).length).toBeGreaterThan(5);
   }, PACK_SCAN_TIMEOUT);
 
+  it("Повелитель Войны: категории Имплантов в паке делятся на «имплант-техника» и «не входят» — новой категории без решения нет", () => {
+    // Решение владельца 26.10.2026: Кибернетика, Бионика, Псибернетика и
+    // Механикус. Скитарии, Археотех, биоимпланты Друкхари и органы Астартес —
+    // отдельные подписи листа (IMPL_CAT в sheets/sheet-helpers.mjs), не входят.
+    const TECH = ["bionic", "bionic-arm", "bionic-leg", "cybernetic", "mechEnergy", "mechFocus",
+      "mechOther", "mechadendrite", "mechanicus", "psybernetic"];
+    const NOT_TECH = ["astartes", "bioimplant", "skitarii", "archeotech"];
+    const implants = packDocuments("implants", "implant").map(d => d.doc);
+    const byCat = {};
+    for (const i of implants) {
+      const c = i.system?.category ?? "";
+      (byCat[c] ??= { n: 0, flagged: 0 }).n++;
+      if (itemClass(i).cybernetic) byCat[c].flagged++;
+    }
+    for (const [c, v] of Object.entries(byCat)) {
+      if (TECH.includes(c)) expect(v.flagged, `${c}: все импланты`).toBe(v.n);
+      else if (NOT_TECH.includes(c)) expect(v.flagged, `${c}: ни один`).toBe(0);
+      else throw new Error(`новая категория импланта «${c}» — решить, входит ли она в Повелителя Войны`);
+    }
+    // покрытие: каждая категория TECH реально встречается в паке (не мёртвая строка)
+    for (const c of TECH) expect(byCat[c]?.n ?? 0, c).toBeGreaterThan(0);
+  }, PACK_SCAN_TIMEOUT);
+
   it("у каждого оружия, брони и снаряжения Редкость читается числом в −5…+5", () => {
     const bad = [];
     for (const pack of ["weapons", "armor", "gear", "tools", "ammunition", "shields", "chemistry"]) {

@@ -155,11 +155,27 @@ const weaponPropKeys = item => (item?.system?.weaponProps ?? [])
   .map(p => (typeof p === "string" ? p : p?.key));
 
 /**
+ * Категории Имплантов («имплант-техника»), которых касается Повелитель Войны:
+ * Кибернетика, Бионика, Псибернетика и Механикус — решение владельца
+ * 26.10.2026 (книга пишет просто «Кибернетики»). Ключи — те, что стоят в
+ * system.category Имплантов packs-src; подписи — IMPL_CAT листа
+ * (sheets/sheet-helpers.mjs): Механикус = mechanicus/mechEnergy/mechFocus/
+ * mechOther/mechadendrite, Бионика = bionic/bionic-arm/bionic-leg. Сюда
+ * НЕ входят отдельные подписи Скитарии, Археотех, Биоимплант (Друкхари) и
+ * Импланты Астартес. Новая категория в паке — красный
+ * test/rules/requisition-vs-data.test.mjs, пока владелец не решит.
+ */
+export const IMPLANT_TECH_CATEGORIES = Object.freeze([
+  "cybernetic", "bionic", "bionic-arm", "bionic-leg", "psybernetic",
+  "mechanicus", "mechEnergy", "mechFocus", "mechOther", "mechadendrite"
+]);
+
+/**
  * Признаки предмета, на которые смотрят Таланты:
  *  • exotic — Экзотическое оружие (weaponType "exotic");
- *  • cybernetic — «Кибернетика»: предмет типа cybernetic либо Имплант категории
- *    cybernetic (подпись «Кибернетика» в листе). Бионика и Псибернетика — другие
- *    категории и сюда не входят;
+ *  • cybernetic — вся имплант-техника: предмет типа cybernetic либо Имплант
+ *    категории из IMPLANT_TECH_CATEGORIES (Кибернетика, Бионика, Псибернетика,
+ *    Механикус). Имя признака осталось прежним — на нём стоит `cls` окна;
  *  • legion — оружие со свойством Legion (system.weaponProps) либо любое
  *    снаряжение с галочкой `system.legion` (броня, снаряжение, инструмент,
  *    боеприпас, щит; решение владельца 26.10.2026);
@@ -170,7 +186,7 @@ export function itemClass(item) {
   return {
     exotic: item.system?.weaponType === "exotic",
     cybernetic: item.type === "cybernetic"
-      || (item.type === "implant" && item.system?.category === "cybernetic"),
+      || (item.type === "implant" && IMPLANT_TECH_CATEGORIES.includes(item.system?.category)),
     legion: weaponPropKeys(item).includes("legion") || item.system?.legion === true,
     ritual: item.type === "ritual" && (Number(item.system?.record) || 0) > 0
   };
@@ -199,7 +215,8 @@ export function isConsumableItem(item) {
  * складываются (книга о пересечении молчит — вопрос владельцу в отчёте).
  *
  *  • Повелитель Войны — «уменьшает Редкость всего Экзотического снаряжения и
- *    Кибернетики на 1» (стр. 62);
+ *    Кибернетики на 1» (стр. 62); «Кибернетика» понимается как вся
+ *    имплант-техника (IMPLANT_TECH_CATEGORIES, решение владельца 26.10.2026);
  *  • Древний Воин — «уменьшает Редкость всего Легион снаряжения на 1» (стр. 62);
  *  • Разгадыватель Ритуалов — «может добывать ритуалы, требующие Записи, как
  *    если бы их Редкость была на 1 ниже» (Оккультист).
@@ -209,7 +226,7 @@ export function rarityShifts(actor, cls = {}) {
   const out = [];
   const T = REQUISITION_TALENTS;
   if ((cls.exotic || cls.cybernetic) && hasRequisitionTalent(actor, "lordOfWar")) {
-    out.push({ id: T.lordOfWar.id, value: -1, label: `${T.lordOfWar.label}: Экзотика и Кибернетика на 1 легче` });
+    out.push({ id: T.lordOfWar.id, value: -1, label: `${T.lordOfWar.label}: Экзотика и имплант-техника на 1 легче` });
   }
   if (cls.legion && hasRequisitionTalent(actor, "ancientWarrior")) {
     out.push({ id: T.ancientWarrior.id, value: -1, label: `${T.ancientWarrior.label}: снаряжение Легиона на 1 легче` });

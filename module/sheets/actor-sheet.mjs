@@ -55,6 +55,7 @@ import { activatePathListeners } from "./tabs/paths.mjs";
 import { activateCombatListeners } from "./tabs/combat.mjs";
 import { mountPanelContext, activateMountPanelListeners } from "./tabs/mount-panel.mjs";
 import { patronPanelContext, activatePatronPanelListeners } from "./tabs/patron-panel.mjs";
+import { coverUpPanelContext, activateCoverUpPanelListeners } from "./tabs/cover-up-panel.mjs";
 import { dreadnoughtPanelContext } from "./tabs/dreadnought-panel.mjs";
 import { SANITY_RECOVERY_TALENTS, sanityRecoveryTalentsOf, dailyWillTestOutcome,
          electrostimulatorBoost, ferumInfernusActive } from "../rules/dreadnought.mjs";
@@ -1037,6 +1038,10 @@ export class WarhammerCharacterSheet
     // Помазанник(X)): смертный хранит ссылку на Демона-Принца, сам Принц
     // строит свою сторону по оформленным дарам «Помазанник» (wdbc-yo6r).
     Object.assign(context, patronPanelContext(this.actor, [...(game.actors ?? [])]));
+
+    // Блок «ЯЧЕЙКИ АГЕНТОВ» там же — ведомость Таланта Cover Up (флаг актора,
+    // rules/cover-up.mjs); только у носителя Таланта.
+    Object.assign(context, coverUpPanelContext(this.actor));
 
     // Блок «ЗДРАВОМЫСЛИЕ» там же: видим, только если какой-то Дредноут в мире
     // держит этого персонажа своим пилотом (rules/dreadnought.mjs, стр. 57-58).
@@ -2025,6 +2030,9 @@ export class WarhammerCharacterSheet
 
     // ── Блок «ПАТРОН» / «ПРОТЕЖЕ» на СОЦИУМ (wdbc-yo6r) ────────────────────
     activatePatronPanelListeners(root, this.actor, { editable: this.isEditable });
+
+    // ── Блок «ЯЧЕЙКИ АГЕНТОВ» (Cover Up) на СОЦИУМ ─────────────────────────
+    activateCoverUpPanelListeners(root, this.actor, { editable: this.isEditable });
 
     // ── Контекстное меню предметов ────────────────────────────────────────
     activateItemContextMenu(html, this.actor);

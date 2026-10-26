@@ -1963,7 +1963,7 @@ export const CAPABILITIES = {
   "arsenal.core.lordOfWar": {
     label: "Персонаж уменьшает Редкость всего Экзотического снаряжения и Кибернетики на 1 и получает +20 на тесты Inf для получения снаряжения и тесты C…",
     source: "Lord of War / Повелитель Войны",
-    reader: "module/rules/requisition.mjs::rarityShifts — Редкость Экзотики и Кибернетики −1 при реквизиции; module/rules/requisition-talents.mjs::requisitionTalentRules — +20 (авто в «Достать снаряжение» при Редкости 0 и ниже и Количестве 1001+, галочкой в тесте Commerce)"
+    reader: "module/rules/requisition.mjs::rarityShifts — Редкость Экзотики и всей имплант-техники (Кибернетика, Бионика, Псибернетика, Механикус) −1 при реквизиции; module/rules/requisition-talents.mjs::requisitionTalentRules — +20 (авто в «Достать снаряжение» при Редкости 0 и ниже и Количестве 1001+, галочкой в тесте Commerce)"
   },
   "arsenal.core.meleeTraining": {
     label: "Если персонаж не владеет этим Талантом для выбранного оружия, он может использовать только Обычную Атаку как приём,",
@@ -2592,7 +2592,8 @@ export const CAPABILITIES = {
   },
   "social.core.coverUp": {
     label: "Персонаж может потратить Inf (Характеристику, не Очки), чтобы организовать ячейку тайных агентов с сетью информаторов. Inf 1 → ср.",
-    source: "Cover Up / Работа под Прикрытием", reader: "" // ячейки агентов и «Уровень Реквизиции» — структура без правила в книге, ведёт стол (Sahara 3-5e84)
+    source: "Cover Up / Работа под Прикрытием",
+    reader: "module/rules/cover-up.mjs (таблица Inf 1–4 → Х-ки агентов и Уровень Реквизиции, hasCoverUp) + module/sheets/tabs/cover-up-panel.mjs — блок «ЯЧЕЙКИ АГЕНТОВ» на СОЦИУМе, ведомость флагом flags.warhammer-dbc.coverUpCells; Уровень Реквизиции справочный, в тест Реквизиции не входит; Inf персонажа не списывается"
   },
   "social.core.demagogue": {
     label: "Персонаж может воздействовать на до F.b×100 персонажей одновременно своими речами.",

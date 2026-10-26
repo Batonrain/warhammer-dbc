@@ -104,11 +104,19 @@ describe("класс предмета (для Талантов)", () => {
     expect(itemClass(weapon({ weaponType: "exotic" })).exotic).toBe(true);
     expect(itemClass(weapon({ weaponType: "bolt" })).exotic).toBe(false);
   });
-  it("Кибернетика — тип cybernetic или Имплант категории cybernetic; Бионика и Псибернетика — нет", () => {
+  it("имплант-техника — тип cybernetic или Имплант Кибернетики, Бионики, Псибернетики и Механикус (решение владельца 26.10.2026)", () => {
     expect(itemClass({ type: "cybernetic", system: {} }).cybernetic).toBe(true);
-    expect(itemClass({ type: "implant", system: { category: "cybernetic" } }).cybernetic).toBe(true);
-    expect(itemClass({ type: "implant", system: { category: "bionic" } }).cybernetic).toBe(false);
-    expect(itemClass({ type: "implant", system: { category: "psybernetic" } }).cybernetic).toBe(false);
+    for (const category of ["cybernetic", "bionic", "bionic-arm", "bionic-leg", "psybernetic",
+      "mechanicus", "mechEnergy", "mechFocus", "mechOther", "mechadendrite"]) {
+      expect(itemClass({ type: "implant", system: { category } }).cybernetic, category).toBe(true);
+    }
+  });
+  it("органы Астартес, биоимпланты Друкхари, Скитарии и Археотех в имплант-технику не входят", () => {
+    for (const category of ["astartes", "bioimplant", "skitarii", "archeotech", "", undefined]) {
+      expect(itemClass({ type: "implant", system: { category } }).cybernetic, String(category)).toBe(false);
+    }
+    // категория имплант-техники у НЕ-импланта ничего не значит
+    expect(itemClass({ type: "gear", system: { category: "bionic" } }).cybernetic).toBe(false);
   });
   it("Легион — свойство legion в weaponProps оружия", () => {
     expect(itemClass(weapon({ weaponProps: [{ key: "precise" }, { key: "legion" }] })).legion).toBe(true);
