@@ -63,6 +63,48 @@ export async function promptCannonFodderMinion(actor, doc) {
   return { target: value, label: picked?.label || value };
 }
 
+/**
+ * Модель выпадающего списка на листе Таланта: кандидаты + текущий выбор.
+ * Выбор, которого нет среди кандидатов (слот «Миньон Хаоса» пересоздан и его
+ * id сменился, слуга удалён), НЕ теряется молча: он остаётся в списке
+ * пометкой, чтобы игрок увидел, что Талант больше ни на кого не указывает, и
+ * выбрал нового слугу.
+ *
+ * @param {{value:string,label:string}[]} options  cannonFodderOptions(актор)
+ * @param {string} current                         system.targetMinion
+ */
+export function cannonFodderSelectModel(options, current) {
+  const cur = String(current ?? "");
+  const rows = options.map(o => ({ ...o, selected: o.value === cur }));
+  const stale = !!cur && !rows.some(o => o.selected);
+  if (stale) rows.unshift({ value: cur, label: "⚠ слуга не найден — выберите заново", selected: true });
+  else if (!cur) rows.unshift({ value: "", label: "— не выбран —", selected: true });
+  return { rows, stale };
+}
+
+/** Панель «чей Миньон» для листа Таланта; пусто у прочих Талантов и у предмета вне актора. */
+export function cannonFodderPanelHtml(item, actor) {
+  if (!actor || !isCannonFodder(item)) return "";
+  const { rows, stale } = cannonFodderSelectModel(cannonFodderOptions(actor), item.system?.targetMinion);
+  const opts = rows.map(o => `<option value="${esc(o.value)}"${o.selected ? " selected" : ""}>${esc(o.label)}</option>`).join("");
+  return `<div class="talent-action-panel">
+    <div class="talent-action-status">${stale
+      ? "Выбранный слуга больше не найден (слот пересоздан или Миньон удалён) — штраф Лояльности ни к кому не применяется."
+      : "Этот слуга теряет 20 Лояльности (стр. 113)."}</div>
+    <select class="cannon-fodder-pick" data-item-id="${esc(item.id)}">${opts}</select>
+  </div>`;
+}
+
+/** Сменить слугу: поле выбора и подпись для списка Талантов (system.specialization) пишутся вместе. */
+export async function setCannonFodderMinion(item, value) {
+  const actor = item?.parent;
+  const picked = cannonFodderOptions(actor).find(o => o.value === value);
+  // Пометка «слуга не найден»/«не выбран» не выбор: ничего не пишем, прежнее значение остаётся.
+  if (!picked) return false;
+  await item.update({ "system.targetMinion": picked.value, "system.specialization": picked.label });
+  return true;
+}
+
 /** Записать выбор в копию предмета перед созданием на листе. */
 export function applyCannonFodderPick(obj, pick) {
   obj.system = obj.system || {};

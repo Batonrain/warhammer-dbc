@@ -22,6 +22,7 @@ import { hasPugilistTalent, fistBalanceBonus } from "../rules/pugilist-talents.m
 import { parryWeaponFor, strikeLocation, locationAcc, rollStrikeOn, ARMED_VS_UNARMED_PARRY_BONUS, UNARMED_RIPOSTE_COST } from "./unarmed-combat.mjs";
 import { withWitchsEdge } from "./witchs-edge.mjs";
 import { spendReaction }  from "./action-economy.mjs";
+import { avoidanceVerdict } from "./full-attack-lock.mjs";
 import { addEvasionSurplus } from "./evasion-pool.mjs";
 import { recoilButtonHtml } from "./recoil.mjs";
 import { overpenetrationButtonHtml } from "./overpenetration.mjs";
@@ -246,6 +247,12 @@ export async function _performDodge(actor, {
   // тяжелее и не меньше цели. Реакция не тратится — как и без ног выше.
   const grappleNoDodge = grappleDodgeBlockReason(actor);
   if (grappleNoDodge) return _bladeShieldRefusal(actor, grappleNoDodge, "Уклонение");
+  // Полная Атака (core, «Полная Атака»): до начала своего следующего Хода нельзя
+  // совершать Физические Избегания. Реакция не тратится. В Ногу с Моментом
+  // (Разбойник) разрешает Уклонение (не Парирование) со штрафом −10 после Полной
+  // Атаки кулаками/ножами — штраф ложится в порог ниже.
+  const fullAtkLock = avoidanceVerdict(actor, "dodge");
+  if (fullAtkLock.blocked) return _bladeShieldRefusal(actor, fullAtkLock.reason, "Уклонение");
   // Скоростная Внимательность: после Бега — спросить дистанцию (до траты Реакции).
   const speedAw = await _speedAwarenessMod(actor);
   if (speedAw === null) return;
@@ -271,8 +278,9 @@ export async function _performDodge(actor, {
   // Переброс после провала ещё возможен (Талант есть, в этом Раунде не использован, +30 не брали).
   const slipRerollAvailable = !slipReroll && slip === "none" && grappleAttack && hasDodgeTalent(actor, "slipAway")
     && isThrottleReady(actor, SLIP_AWAY_FLAG, "round");
-  const { agTotal, threshold: baseThreshold, modParts } = dodgeProfile(actor, extraMod + speedAw.value + (slip === "bonus" ? 30 : 0));
+  const { agTotal, threshold: baseThreshold, modParts } = dodgeProfile(actor, extraMod + speedAw.value + (slip === "bonus" ? 30 : 0) + fullAtkLock.penalty);
   if (speedAw.part) modParts.push(speedAw.part);
+  if (fullAtkLock.note) modParts.push(fullAtkLock.note);
   if (slip === "bonus") modParts.push("Ускользнуть +30");
   if (slipReroll) modParts.push("Ускользнуть: переброс провала");
   // Фантомные Копии (Wrapped in Chaos "2-3", wdbc-1rno): штраф Уклонению
@@ -698,6 +706,12 @@ export async function _performParry(actor, {
   chomper = false, forAlly = "",
   attackBaseKey = "" // База атаки (opts.baseKey карточки): Пересилить действует только против Полной Атаки
 } = {}) {
+  // Полная Атака (core, «Полная Атака»): Физические Избегания закрыты до начала
+  // следующего Хода. Реакция не тратится. Реприз (Берсерк) открывает Парирование
+  // после успешной дополнительной атаки Яростного Штурма; В Ногу с Моментом
+  // Парирование НЕ открывает (книга: «но не Парирование»).
+  const fullAtkLock = avoidanceVerdict(actor, "parry");
+  if (fullAtkLock.blocked) return _bladeShieldRefusal(actor, fullAtkLock.reason, "Парирование");
   // Резолв атакующего — нужен и для Разницы Размеров (стр. 12, ЛЮБОЙ
   // Парирование), и для контакта при стрельбе ниже. Неизвестный/нерезолвящийся
   // attackerUuid — Размер атакующего считается 0 (нет штрафа), тот же честный

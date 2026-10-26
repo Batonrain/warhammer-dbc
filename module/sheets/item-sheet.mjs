@@ -36,6 +36,7 @@ import { gunArmButtonHtml, useGunArm }              from "../apps/gun-arm.mjs";
 import { blackMantleHtml, setBlackMantleOn }        from "../apps/black-mantle.mjs";
 import { isHookedUp, HOOK_UP_FLAG }                 from "../rules/drug-doses.mjs";
 import { talentActionsHtml, runTalentAction }       from "../apps/talent-actions.mjs";
+import { cannonFodderPanelHtml, setCannonFodderMinion } from "../apps/cannon-fodder.mjs";
 import { omophageaPanelHtml, runOmophagea }         from "../apps/omophagea.mjs";
 import { illusionOfNormalityHtml, attemptNoticeIllusion, attemptSeeThroughIllusion, setIllusionMaintained }
   from "../apps/illusion-of-normality.mjs";
@@ -1233,6 +1234,8 @@ export class WarhammerItemSheet
       context.blackMantleHtml = blackMantleHtml(this.item, this.item.parent);
       // Предусмотрительность (3-b530): кнопка «Обдумать 5 мин».
       context.talentActionsHtml = talentActionsHtml(this.item, this.item.parent);
+      // Пушечное Мясо: выпадающий список «чей Миньон» (Sahara inspire-wrath-cannon-fodder).
+      context.cannonFodderHtml = cannonFodderPanelHtml(this.item, this.item.parent);
     }
 
     // ── Наркотик, приготовленный с «Крючком» (Талант Медика, 3-dc87) ───────
@@ -2072,6 +2075,12 @@ export class WarhammerItemSheet
     on(".talent-action-btn", "click", async ev => {
       ev.preventDefault();
       await runTalentAction(ev.currentTarget.dataset.talentAction, this.item, this.item.parent);
+      this.render(false);
+    });
+
+    // ── Пушечное Мясо: смена слуги выпадающим списком ───────────────────────
+    on(".cannon-fodder-pick", "change", async ev => {
+      await setCannonFodderMinion(this.item, ev.currentTarget.value);
       this.render(false);
     });
 

@@ -411,8 +411,26 @@ describe("Жонглёр Клинком", () => {
     const blade = knife();
     const me = body({ items: [JUGGLER, blade] });
     me.getFlag = (s, k) => (k === BLADE_JUGGLER_USE_FLAG ? true : undefined);
-    expect(await startBladeJuggler(me)).toBe(false);
-    expect(captured.warnings.some(w => w.includes("уже использован"))).toBe(true);
+    // «Раз в Ход» существует только в бою (Sahara riding-the-momentum, п. 3).
+    globalThis.game.combat = { started: true };
+    try {
+      expect(await startBladeJuggler(me)).toBe(false);
+      expect(captured.warnings.some(w => w.includes("уже использован"))).toBe(true);
+    } finally { globalThis.game.combat = undefined; }
+  });
+  it("вне боя «раз в Ход» не блокирует Талант: залипший флаг игнорируется, новый не ставится", async () => {
+    resetCaptured();
+    const me = body({ items: [JUGGLER, knife()], uuid: "Actor.me" });
+    me.system.characteristics.fel = char(30);
+    me.getFlag = (s, k) => (k === BLADE_JUGGLER_USE_FLAG ? true : undefined);
+    setTargets([body({ uuid: "Actor.foe" })]);
+    globalThis.game.combat = undefined;
+    expect(await startBladeJuggler(me)).toBe(true);
+    expect(captured.dialog.content).toContain("Deceive(WS)");
+    let set = 0;
+    me.setFlag = async () => { set++; };
+    await captured.dialog.buttons.roll.callback(fakeHtml({ "#contest-char": "ws", "#contest-self": "20", "#contest-mod": "0" }));
+    expect(set).toBe(0);
   });
   it("кнопка Таланта: открывает встречный тест Deceive(WS); флаг «раз в Ход» ставится по «Бросок!»", async () => {
     resetCaptured();
@@ -421,10 +439,13 @@ describe("Жонглёр Клинком", () => {
     me.system.characteristics.fel = char(30);
     const foe = body({ uuid: "Actor.foe" });
     setTargets([foe]);
-    expect(await startBladeJuggler(me)).toBe(true);
-    expect(captured.dialog.content).toContain("Deceive(WS)");
-    expect(me.getFlag("warhammer-dbc", BLADE_JUGGLER_USE_FLAG)).toBeUndefined();
-    await captured.dialog.buttons.roll.callback(fakeHtml({ "#contest-char": "ws", "#contest-self": "20", "#contest-mod": "0" }));
-    expect(me.getFlag("warhammer-dbc", BLADE_JUGGLER_USE_FLAG)).toBe(true);
+    globalThis.game.combat = { started: true };
+    try {
+      expect(await startBladeJuggler(me)).toBe(true);
+      expect(captured.dialog.content).toContain("Deceive(WS)");
+      expect(me.getFlag("warhammer-dbc", BLADE_JUGGLER_USE_FLAG)).toBeUndefined();
+      await captured.dialog.buttons.roll.callback(fakeHtml({ "#contest-char": "ws", "#contest-self": "20", "#contest-mod": "0" }));
+      expect(me.getFlag("warhammer-dbc", BLADE_JUGGLER_USE_FLAG)).toBe(true);
+    } finally { globalThis.game.combat = undefined; }
   });
 });

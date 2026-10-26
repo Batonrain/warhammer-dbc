@@ -13,6 +13,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasKey, itemIs } from "../rules/item-marker.mjs";
+import { isInspireWrathItem } from "../rules/inspire-wrath.mjs";
 import { FORESIGHT_READY_FLAG } from "../rules/situational.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
@@ -88,6 +89,14 @@ export function talentActionsHtml(item, actor) {
       </button>
     </div>`;
   }
+  if (isInspireWrathItem(item)) {
+    return `<div class="talent-action-panel">
+      <button type="button" class="talent-action-btn" data-talent-action="inspireWrath" data-item-id="${esc(item.id)}"
+        title="Полное Действие: выцельте слушателей, выберите группу — Charm+0. Успех: каждый выцеленный (до F.b×10, с Demagogue F.b×100) получает Талант Hatred против этой группы до конца сцены.">
+        ${rollIcon("skull", "#ff8a8a")}Вдохновить Гнев (Charm+0, выцельте слушателей)
+      </button>
+    </div>`;
+  }
   if (isWarCryItem(item)) {
     return `<div class="talent-action-panel">
       <button type="button" class="talent-action-btn" data-talent-action="warCry" data-item-id="${esc(item.id)}"
@@ -142,15 +151,29 @@ export async function runTalentAction(action, item, actor) {
     const { startTandemEmbed, startTandemExtract } = await import("../combat/tandem.mjs");
     return action === "tandemEmbed" ? startTandemEmbed(actor) : startTandemExtract(actor);
   }
+  if (action === "inspireWrath") {
+    if (!isInspireWrathItem(item)) return false;
+    const { startInspireWrath } = await import("../combat/inspire-wrath.mjs");
+    return !!(await startInspireWrath(actor));
+  }
   if (action === "warCry") {
     if (!isWarCryItem(item)) return false;
     // Усталость — единая точка начисления (учитывает иммунитеты и счётчик).
     const { addFatigue } = await import("../sheets/tabs/conditions.mjs");
     await addFatigue(actor, 1);
     const own = Number(actor.system?.fearRating) || 0;
+    // Настоящий эффект: +1 к рейтингу Страха до начала следующего Хода (combat/timed-effects.mjs).
+    // «Рейтинг 1» при нуле и «+1 к текущему» при ненулевом — одна и та же прибавка.
+    const { grantTimedEffect, WAR_CRY_EFFECT_KEY, WAR_CRY_PRIORITY } = await import("../combat/timed-effects.mjs");
+    await grantTimedEffect(actor, {
+      key: WAR_CRY_EFFECT_KEY, name: "Боевой клич — рейтинг Страха +1", img: "icons/svg/terror.svg",
+      // priority выше, чем у «upgrade» Черты Fear (X) (priority 0): прибавка ложится ПОСЛЕ неё,
+      // иначе Fear (2) + Клич дало бы upgrade до 2 поверх add 1 и итог остался бы 2 вместо 3.
+      changes: [{ key: "system.fearRating", type: "add", value: 1, priority: WAR_CRY_PRIORITY }]
+    });
     await postTestCard(actor, {
       icon: rollIcon("skull", "#ff8a8a"), title: `Боевой клич — ${esc(actor.name)}`,
-      threshold: `<div class="roll-threshold">Свободное действие в начале Хода: рейтинг Страха <b>${own > 0 ? `${own} → ${own + 1}` : "1"}</b> до начала следующего Хода (врагам — тест Страха против него). Усталость <b>+1</b> учтена. Пси-чутьё засекает клич как сверхъестественный.</div>`
+      threshold: `<div class="roll-threshold">Свободное действие в начале Хода: рейтинг Страха <b>${own > 0 ? `${own} → ${own + 1}` : "1"}</b> до начала следующего Хода — учтён на листе временным эффектом (врагам — тест Страха против него). Усталость <b>+1</b> учтена. Пси-чутьё засекает клич как сверхъестественный.</div>`
     }, { sound: false });
     return true;
   }

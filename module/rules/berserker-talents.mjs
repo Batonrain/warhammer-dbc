@@ -37,6 +37,7 @@ export const BERSERKER_TALENTS = Object.freeze({
   overpower:     { key: "berserker.core.overpower",     name: "Overpower" },
   killingStrike: { key: "berserker.core.killingStrike", name: "Killing Strike" },
   furiousAssault:{ key: "berserker.core.furiousAssault", name: "Furious Assault" },
+  reprise:       { key: "berserker.core.reprise",       name: "Reprise" },
   vengeance:     { key: "berserker.core.vengeance",     name: "Vengeance" }
 });
 

@@ -18,6 +18,7 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { statusApplyFields } from "./status-resist.mjs";
+import { writeToTarget } from "./gm-relay.mjs";
 import { sizeOf } from "../rules/predicates.mjs";
 
 /**
@@ -62,7 +63,8 @@ export async function resolveKnockdownSuccess(actor, { deg, target } = {}) {
   // против рукопашного приёма — ещё и сбить нападающего (combat/status-resist.mjs).
   const { fields, resisted, note } = await statusApplyFields(target, "prone", null,
     { attacker: actor, melee: true, source: "Повалить" });
-  if (Object.keys(fields).length) await target.update(fields);
+  // Чужая цель — запись через ГМ (combat/gm-relay.mjs); отказа некому записать — приём не проводится.
+  if (Object.keys(fields).length && !(await writeToTarget(target, { kind: "update", data: fields }, actor))) return;
 
   const sections = [
     resisted
@@ -85,8 +87,7 @@ export async function resolveKnockdownSuccess(actor, { deg, target } = {}) {
         hitLocation: "Торс", melee: true,
         attackerName: actor.name, attackerUuid: actor.uuid, weaponName: "Повалить"
       });
-      const { addFatigue } = await import("../sheets/tabs/conditions.mjs");
-      await addFatigue(target, 1);
+      await writeToTarget(target, { kind: "addFatigue", amount: 1 }, actor);
       sections.push(`<div class="roll-threshold">5+ Успехов: ${esc(target.name)} получает <b>${dmg}</b> I(Cr) Dmg (1d5+S.b, Primitive) и 1 Усталости.</div>`);
     }
   }

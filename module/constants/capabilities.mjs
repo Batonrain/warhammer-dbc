@@ -1768,7 +1768,8 @@ export const CAPABILITIES = {
   },
   "rogue.core.ridingTheMomentum": {
     label: "Персонаж может совершать Уклонение (но не Парирование) со штрафом −10 после Полной Атаки кулаками или ножами в любой комбинации.",
-    source: "Riding the Momentum / В Ногу с Моментом", reader: ""
+    source: "Riding the Momentum / В Ногу с Моментом",
+    reader: "module/rules/full-attack-lock.mjs::physicalAvoidanceVerdict (метка fullAttackLock после Полной Атаки, «лёгкая» — только кулаки/ножи) → module/combat/full-attack-lock.mjs + module/combat/defense.mjs::_performDodge (Уклонение со штрафом −10 в порог и подпись; Парирование остаётся запрещённым); метку ставит module/combat/attack.mjs, гасит rules/turn-flags.mjs; читается по имени Таланта и по этому ключу"
   },
   "rogue.core.sabotage": {
     label: "Персонаж может совершать ножом Избирательные атаки по оружию противника (−10 тяжёлое, −20 винтовки и рукопашное Л+П,",
@@ -2556,7 +2557,7 @@ export const CAPABILITIES = {
   "berserker.core.reprise": {
     label: "После успешной дополнительной атаки от Furious Assault (даже отменённой Избеганием) персонаж может тратить оставшиеся Реакции на Парирование…",
     source: "Reprise / Реприз",
-    reader: ""
+    reader: "module/rules/full-attack-lock.mjs::lockAfterFuriousChild/physicalAvoidanceVerdict → module/combat/attack.mjs (успешная дополнительная атака Яростного Штурма открывает метку repriseOpen) → module/combat/defense.mjs::_performParry (Парирование после Полной Атаки разрешено; Уклонение — нет); читается по имени Таланта и по этому ключу"
   },
   "berserker.core.ridingTheBeast": {
     label: "В Ярости персонаж может пройти W+0, чтобы направить свои атаки на цель по своему выбору вместо ближайшего видимого врага.",
@@ -2605,7 +2606,7 @@ export const CAPABILITIES = {
   "social.core.enemy": {
     label: "Уровень: 1–3. Персонаж получает −10 ко всем социальным взаимодействиям с этой группой за уровень Таланта.",
     source: "Enemy / Враг",
-    reader: "module/rules/social-talents.mjs::socialTalentRules (reader: читает по ИМЕНИ Таланта enemyTalentsOf(), не по этому capabilityKey) — −10 за Уровень (system.rating, 1–3) на социальный тест против цели из system.targets; цель — выделенный токен. Собеседник без токена не читается."
+    reader: "module/rules/social-talents.mjs::socialTalentRules (reader: читает по ИМЕНИ Таланта enemyTalentsOf(), не по этому capabilityKey) — −10 за Уровень (system.rating, 1–3) на социальный тест против цели из system.targets; цель — выделенный токен либо группа, выбранная в окне броска (rules/social-faction.mjs → ctx.socialFaction)."
   },
   "social.core.faceInACrowd": {
     label: "Персонаж может использовать F вместо A для тестов на Stealth в людных местах.",
@@ -2615,11 +2616,12 @@ export const CAPABILITIES = {
   "social.core.goodReputation": {
     label: "Персонаж получает ещё +10 к тестам при работе с этой группой.",
     source: "Good Reputation / Хорошая Репутация",
-    reader: "module/rules/social-talents.mjs::socialTalentRules (reader: читает по ИМЕНИ Таланта goodReputationTargetsOf(), не по этому capabilityKey) — ещё +10 на социальный тест против цели из system.targets (вместе со Связями +20); цель — выделенный токен."
+    reader: "module/rules/social-talents.mjs::socialTalentRules (reader: читает по ИМЕНИ Таланта goodReputationTargetsOf(), не по этому capabilityKey) — ещё +10 на социальный тест против цели из system.targets (вместе со Связями +20); цель — выделенный токен либо группа, выбранная в окне броска (rules/social-faction.mjs)."
   },
   "social.core.inspireWrath": {
     label: "За Полное Действие персонаж может пройти Charm+0, чтобы дать аудитории Талант Hatred против определённой группы. Воздействует на до F.",
-    source: "Inspire Wrath / Вдохновить Гнев", reader: ""
+    source: "Inspire Wrath / Вдохновить Гнев",
+    reader: "module/apps/talent-actions.mjs (кнопка на листе Таланта) → module/combat/inspire-wrath.mjs::startInspireWrath (выцеленные слушатели ≤ F.b×10 / ×100 с Demagogue — rules/inspire-wrath.mjs; Charm+0; успех — временный Hatred слушателям через combat/gm-relay.mjs, читает его rules/hatred.mjs); снятие «до конца сцены» — endInspiredWrathOnSceneEnd в apps/game-session.mjs; срок книга не называет — решение стола"
   },
   "social.core.mimic": {
     label: "Изучив тембр голоса цели как минимум час, персонаж может сойти за неё через встречный Deceive+0 vs Scrutiny−10 (или Scrutiny+0,",
@@ -2628,7 +2630,7 @@ export const CAPABILITIES = {
   "social.core.peer": {
     label: "Персонаж получает +10 ко всем социальным взаимодействиям с выбранной группой.",
     source: "Peer / Связи",
-    reader: "module/rules/social-talents.mjs::socialTalentRules (reader: читает по ИМЕНИ Таланта peerTargetsOf(), не по этому capabilityKey) — +10 на социальный тест против цели из system.targets; цель — выделенный токен. Собеседник без токена не читается."
+    reader: "module/rules/social-talents.mjs::socialTalentRules (reader: читает по ИМЕНИ Таланта peerTargetsOf(), не по этому capabilityKey) — +10 на социальный тест против цели из system.targets; цель — выделенный токен либо группа, выбранная в окне броска (rules/social-faction.mjs → ctx.socialFaction)."
   },
   "social.core.pityTheWeak": {
     label: "Персонаж получает +10 на Command, Commerce, Deceive и Intimidate против целей слабее его в данной ситуации,",
@@ -2650,7 +2652,7 @@ export const CAPABILITIES = {
   "social.core.warCry": {
     label: "В начале Хода персонаж может как Свободное действие провести боевой клич и получить рейтинг Страха 1 (или +1 к текущему) до начала следующег…",
     source: "War Cry / Боевой Клич",
-    reader: "module/apps/talent-actions.mjs (кнопка «Боевой клич» на листе Таланта: +1 Усталости и карточка рейтинга Страха; рейтинг в производные данные не вносится — решает стол)"
+    reader: "module/apps/talent-actions.mjs (кнопка «Боевой клич» на листе Таланта: +1 Усталости и временный ActiveEffect system.fearRating +1 до начала следующего Хода — module/combat/timed-effects.mjs::grantTimedEffect; снятие — onTimedEffectExpired/sweepTimedEffects в module/hooks.mjs); тест Страха врагов запускает стол"
   },
   // ── Оружейник
   "weaponsmith.core.batpackDump": {

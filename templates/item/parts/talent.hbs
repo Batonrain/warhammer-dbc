@@ -8,7 +8,7 @@
            class="wr-input-md" placeholder="напр. Core, стр. 24"/>
   </div>
   <div class="weapon-row">
-    <label class="wr-label">Уровень</label>
+    <label class="wr-label" title="Ступень Таланта в дереве книги (1–3): от неё зависит цена в опыте. Не путать с «Уровнем Таланта» ниже.">Ступень</label>
     <select name="system.tier" class="wr-select-sm">
       <option value="1" {{#if (eqLoose system.tier 1)}}selected{{/if}}>1</option>
       <option value="2" {{#if (eqLoose system.tier 2)}}selected{{/if}}>2</option>
@@ -52,7 +52,7 @@
       Принимает уровень
     </label>
     {{#if system.hasRating}}
-    <label class="wr-label">Уровень</label>
+    <label class="wr-label" title="Сколько раз взят Талант (у Врага — штраф −10 за каждый уровень, 1–3). Это не «Ступень» выше.">Уровень Таланта (повторы)</label>
     <input type="number" name="system.rating" value="{{system.rating}}" class="wr-input-xs"/>
     {{/if}}
   </div>
@@ -169,6 +169,14 @@
 <div class="item-section">
   <div class="item-section-title">ДЕЙСТВИЕ</div>
   {{{talentActionsHtml}}}
+</div>
+{{/if}}
+
+{{!-- Пушечное Мясо: чей Миньон теряет Лояльность (Sahara inspire-wrath-cannon-fodder). --}}
+{{#if cannonFodderHtml}}
+<div class="item-section">
+  <div class="item-section-title">МИНЬОН (ПУШЕЧНОЕ МЯСО)</div>
+  {{{cannonFodderHtml}}}
 </div>
 {{/if}}
 

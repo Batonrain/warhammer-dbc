@@ -3,7 +3,7 @@
 // Яростный Штурм / Furious Assault (Берсерк, Sahara 3-861e): после успешной Полной Атаки
 // (даже если её отменит Избегание) — ещё одна атака за Реакцию тем же оружием, той же Базой и
 // тем же Приёмом. Здесь — кнопка на карточке атаки и метка «дополнительная атака».
-// Реприз (Reprise) механики не имеет — см. шапку combat/furious-assault.mjs.
+// Реприз (Парирование после Штурма) — test/combat/full-attack-lock.test.mjs, шапка combat/furious-assault.mjs.
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";

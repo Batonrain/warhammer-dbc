@@ -37,6 +37,7 @@
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
+import { writeToTarget } from "./gm-relay.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -96,8 +97,9 @@ export async function resolveJockeySuccess(actor, { target } = {}) {
   if (!actor || !target) return;
   // Уже сидел на другой цели — прежняя метка снимается.
   if (actor.getFlag?.(NS, JOCKEY_RIDING_FLAG)) await endJockey(actor);
+  // Сперва цель — через ГМ, если она чужая (combat/gm-relay.mjs); отказ не оставляет «наездника без коня».
+  if (!(await writeToTarget(target, { kind: "update", data: { [`flags.${NS}.${JOCKEY_MOUNTED_FLAG}`]: actor.uuid } }, actor))) return;
   await actor.setFlag(NS, JOCKEY_RIDING_FLAG, target.uuid);
-  await target.setFlag(NS, JOCKEY_MOUNTED_FLAG, actor.uuid);
   await postTestCard(actor, {
     icon: rollIcon("sword", "#e08a3a"),
     title: `Жокей — ${esc(actor.name)} взобрался на ${esc(target.name)}`,
@@ -125,8 +127,10 @@ export async function endJockey(actor) {
   if (targetUuid) await actor.unsetFlag?.(NS, JOCKEY_RIDING_FLAG);
   if (jockeyUuid) await actor.unsetFlag?.(NS, JOCKEY_MOUNTED_FLAG);
   if (other) {
-    if (other.getFlag?.(NS, JOCKEY_MOUNTED_FLAG)) await other.unsetFlag?.(NS, JOCKEY_MOUNTED_FLAG);
-    if (other.getFlag?.(NS, JOCKEY_RIDING_FLAG)) await other.unsetFlag?.(NS, JOCKEY_RIDING_FLAG);
+    const clear = {};
+    if (other.getFlag?.(NS, JOCKEY_MOUNTED_FLAG)) clear[`flags.${NS}.-=${JOCKEY_MOUNTED_FLAG}`] = null;
+    if (other.getFlag?.(NS, JOCKEY_RIDING_FLAG)) clear[`flags.${NS}.-=${JOCKEY_RIDING_FLAG}`] = null;
+    if (Object.keys(clear).length) await writeToTarget(other, { kind: "update", data: clear }, actor);
   }
 }
 

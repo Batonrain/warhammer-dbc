@@ -29,6 +29,7 @@ import { SKILL_RANKS } from "../constants/characteristics.mjs";
 import { TALENT_LIB_PACKS } from "../constants/library-packs.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
 import { TALENT_LIBRARY } from "../constants/talents-library.mjs";
+import { sameTarget } from "./talent-targets.mjs";
 
 const SYSTEM_ID = "warhammer-dbc";
 
@@ -98,7 +99,21 @@ export function rankLabel(rank) {
 export function isSameTalent(a, b) {
   const name = t => String(t?.name || "").trim().toLowerCase();
   const spec = t => String(t?.system?.specialization || "").trim().toLowerCase();
-  return !!name(a) && name(a) === name(b) && spec(a) === spec(b);
+  if (!(!!name(a) && name(a) === name(b) && spec(a) === spec(b))) return false;
+  return sameTargetSets(a?.system?.targets, b?.system?.targets);
+}
+
+/**
+ * Цели Таланта (Враг, Ненависть, Связи…) тоже делают его другим: «Враг» на Хаос
+ * и «Враг» на Инквизицию — две покупки, а не повтор (Sahara task-240a, п. 4).
+ * Сравниваются только когда цели записаны у ОБЕИХ: Талант без целей (свежая
+ * покупка в пикере, цели ещё не выбраны) совпадает с любым одноимённым, как и
+ * раньше, — иначе повторная покупка перестала бы находить свой Талант.
+ */
+function sameTargetSets(ta, tb) {
+  const a = Array.isArray(ta) ? ta : [], b = Array.isArray(tb) ? tb : [];
+  if (!a.length || !b.length) return true;
+  return a.length === b.length && a.every(x => b.some(y => sameTarget(x, y)));
 }
 
 /** Есть ли уже такой Талант среди имеющихся. */

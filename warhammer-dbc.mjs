@@ -967,6 +967,14 @@ Hooks.once("ready", () => {
         await applyTakedownRelay(data, requester);
         return;
       }
+      // Захват, Повал, Жокей, Удушение, Вдохновить Гнев: запись в чужого
+      // актора-цель; combat/gm-relay.mjs сверяет список полей и владение
+      // инициатором (Sahara riding-the-momentum).
+      if (data.action === "targetActorWrite") {
+        const { applyTargetWriteRelay } = await import("./module/combat/gm-relay.mjs");
+        await applyTargetWriteRelay(data, requester);
+        return;
+      }
       // Пироман: игрок поджёг укрытия под шаблоном огнемёта — зоны сцены правит
       // только ГМ; combat/burning-cover.mjs::applyBurningCovers сама проверяет, что это Укрытия.
       if (data.action === "burnCovers") {

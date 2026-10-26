@@ -88,6 +88,23 @@ describe("Талант из второго источника", () => {
     expect(isSameTalent(talent("Weapon Training", "Bolt"), talent("Weapon Training", "bolt"))).toBe(true);
   });
 
+  it("цели различают Таланты: Враг на Хаос и Враг на Инквизицию — разные покупки (Sahara task-240a, п. 4)", () => {
+    const withTargets = (name, targets) => ({ type: "talent", name, system: { specialization: "", targets } });
+    const chaos = { kind: "faction", ref: "chaos", name: "Хаос" };
+    const inq = { kind: "faction", ref: "inquisition", name: "Инквизиция" };
+    expect(isSameTalent(withTargets("Enemy / Враг", [chaos]), withTargets("Enemy / Враг", [inq]))).toBe(false);
+    expect(isSameTalent(withTargets("Enemy / Враг", [chaos]), withTargets("Enemy / Враг", [{ ...chaos, name: "Другая подпись" }]))).toBe(true);
+    expect(isSameTalent(withTargets("Enemy / Враг", [chaos, inq]), withTargets("Enemy / Враг", [inq, chaos]))).toBe(true);
+    expect(isSameTalent(withTargets("Enemy / Враг", [chaos]), withTargets("Enemy / Враг", [chaos, inq]))).toBe(false);
+  });
+
+  it("Талант без записанных целей совпадает с одноимённым, как раньше (свежая покупка в пикере)", () => {
+    const chaos = { kind: "faction", ref: "chaos", name: "Хаос" };
+    const fresh = { type: "talent", name: "Enemy / Враг", system: { targets: [] } };
+    expect(isSameTalent(fresh, { type: "talent", name: "Enemy / Враг", system: { targets: [chaos] } })).toBe(true);
+    expect(isSameTalent(fresh, fresh)).toBe(true);
+  });
+
   it("совпадение ищется только среди Талантов", () => {
     const items = [{ type: "trait", name: "Дуэлист", system: {} }, talent("Дуэлист")];
     expect(findSameTalent(items, talent("Дуэлист"))?.type).toBe("talent");

@@ -138,6 +138,7 @@ import { liftDivineProtection, wakeDivineProtected } from "./sheets/tabs/death.m
 import { processConditionTurnStart, processConditionTurnEnd, sweepApplierTurnEnd } from "./combat/condition-ticks.mjs";
 import { processVacuumTurnStart } from "./combat/vacuum.mjs";
 import { sweepConditionDurations, onConditionEffectExpired } from "./combat/condition-effects.mjs";
+import { sweepTimedEffects, onTimedEffectExpired } from "./combat/timed-effects.mjs";
 import { conditionExpiryLine, postConditionCard, setBurningDamageFormula, rollConditionCharTest } from "./combat/condition-ticks.mjs";
 import { applyRadHit, resolveCombatRadiation } from "./combat/radiation.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
@@ -4035,7 +4036,7 @@ function _attachFateContextMenu(message, html) {
   // доносим исцеление немедленно, а не теряем его молча (module/apps/sus-an-heal.mjs).
   // Срок Состояния «до конца Хода наложившего» (wdbc-x1nz.2.84): ядро
   // помечает его истёкшим — снимаем уже после этой отметки, не наперегонки.
-  Hooks.on("updateActiveEffect", (effect, changes) => { onConditionEffectExpired(effect, changes); });
+  Hooks.on("updateActiveEffect", (effect, changes) => { onConditionEffectExpired(effect, changes); onTimedEffectExpired(effect, changes); });
 
   Hooks.on("deleteCombat", async combat => {
     if (!game.user.isGM) return;
@@ -4482,6 +4483,9 @@ function _attachFateContextMenu(message, html) {
       // Поклон Публике (wdbc-1rno): метка «до начала следующего Хода
       // атакующего» — тот же такт, что усилитель Грозного Вопля.
       await clearBowToAudienceMark(nextCombatant.actor);
+      // Боевой Клич (combat/timed-effects.mjs): рейтинг Страха +1 «до начала
+      // следующего Хода» — страховка к отметке истечения ядра.
+      await sweepTimedEffects(nextCombatant.actor, combat);
       // Декремент счётчиков длительности (Оглушение/Ослепление/Удушье,
       // wdbc-j3yf) — «в начале своего Хода», отдельно от Кровотечения/
       // Горения выше (у тех книга явно говорит «в конце»).

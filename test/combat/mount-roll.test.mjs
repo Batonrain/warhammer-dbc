@@ -173,6 +173,23 @@ describe("Уклонение верхом: не трогаем встречну�
   });
 });
 
+describe("Уклонение верхом после Полной Атаки (запрет Физических Избеганий, Sahara riding-the-momentum)", () => {
+  it("всадник после Полной Атаки не уклоняется верхом: отказ, кубик не брошен", async () => {
+    resolveMountAs(beast());
+    globalThis.game.combat = { started: true, id: "c1" };
+    try {
+      const r = rider();
+      r.getFlag = (_s, k) => (k === "fullAttackLock" ? { light: false, repriseOpen: false, combatId: "c1" } : undefined);
+      const promise = showMountedDodgeDialog(r, 0);
+      await flush();
+      await captured.dialog.buttons.roll.callback(fakeHtml({ "#md-target": "rider" }));
+      await promise;
+      expect(captured.rolls).toEqual([]);
+      expect(captured.chat[0].content).toContain("Физические Избегания");
+    } finally { globalThis.game.combat = undefined; }
+  });
+});
+
 // wdbc-orxf: попадание по скакуну — Комбинированный тест (стр. 25), один
 // бросок против НАИМЕНЬШЕГО из двух Пределов, а не два броска с требованием
 // пройти оба (было расхождение с rules/test-kind.mjs::combinedThreshold).

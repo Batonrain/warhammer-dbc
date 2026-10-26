@@ -30,6 +30,7 @@ import { addEvasionSurplus } from "./evasion-pool.mjs";
 import { spendReaction, spendActionPoints, canSpendActionPoints }  from "./action-economy.mjs";
 import { DRAGON_KNIGHT_FLAG, dragonKnightValue } from "../rules/dragon-knight.mjs";
 import { _noReactionCard } from "./defense.mjs";
+import { avoidanceVerdict } from "./full-attack-lock.mjs";
 import { rollIcon }      from "../constants/roll-icons.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { statusApplyFields } from "./status-resist.mjs";
@@ -783,6 +784,16 @@ export async function showMountedDodgeDialog(rider, extraMod = 0, hitsCount = 1,
 // wdbc-8zi (п.6): объект опций для extraMod/hitsCount/attackerUuid — тот же
 // приём и порядок полей, что у _performDodge/_performParry/_performSwerve.
 async function resolveMountedDodge(rider, ctx, target, { extraMod = 0, hitsCount = 1, attackerUuid = "", attackId = "" } = {}) {
+  // Запрет Физических Избеганий после Полной Атаки действует и верхом (rules/full-attack-lock.mjs);
+  // В Ногу с Моментом даёт −10 к Уклонению и здесь. Реакция при отказе не тратится.
+  const fullAtkLock = avoidanceVerdict(rider, "dodge");
+  if (fullAtkLock.blocked) {
+    return postTestCard(rider, {
+      icon: rollIcon("sword"), title: `Уклонение — ${esc(rider.name)}`, actorUuid: rider.uuid,
+      outcome: `<span class="roll-failure">${rollIcon("ban", "#ff6b6b")}${fullAtkLock.reason}</span>`
+    });
+  }
+  extraMod += fullAtkLock.penalty;
   // Уклонение — Реакция (стр. 12) и верхом тоже: та же трата, что в
   // _performDodge, иначе конный всадник уклонялся бы бесплатно без лимита.
   if (!(await spendReaction(rider, { forDefense: true, attackId }))) return _noReactionCard(rider, "Уклонение");

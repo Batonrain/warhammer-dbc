@@ -33,7 +33,8 @@ export const ROGUE_TALENTS = {
   razorsEdge:    { key: "rogue.core.razorSEdge",    name: "Razor's Edge" },
   coupDeGrace:   { key: "rogue.core.coupDeGrace",   name: "Coup de Grace" },
   streetFighting:{ key: "rogue.core.streetFighting",name: "Street Fighting" },
-  bladeJuggler:  { key: "rogue.core.bladeJuggler",  name: "Blade Juggler" }
+  bladeJuggler:  { key: "rogue.core.bladeJuggler",  name: "Blade Juggler" },
+  ridingTheMomentum: { key: "rogue.core.ridingTheMomentum", name: "Riding the Momentum" }
 };
 
 /** Есть ли у актора этот Талант Разбойника (по имени предмета ИЛИ по ключу Возможности). */

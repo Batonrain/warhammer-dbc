@@ -24,6 +24,15 @@ function wrestler(name, uuid, { tb = 4, size = 4, items = [], grappling = true }
   a.getFlag = (_s, k) => flags[k];
   a.setFlag = async (_s, k, v) => { flags[k] = v; };
   a.unsetFlag = async (_s, k) => { delete flags[k]; };
+  // Запись в партнёра идёт общим update по путям flags.* (combat/gm-relay.mjs::writeToTarget) — как у настоящего документа.
+  a.update = async changes => {
+    for (const [p, v] of Object.entries(changes)) {
+      let m = p.match(/^flags\.[^.]+\.-=(.+)$/);
+      if (m) { delete flags[m[1]]; continue; }
+      m = p.match(/^flags\.[^.]+\.(.+)$/);
+      if (m) flags[m[1]] = v;
+    }
+  };
   a._flags = flags;
   return a;
 }

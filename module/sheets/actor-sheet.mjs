@@ -79,6 +79,8 @@ import { charStereotypesFor, effectivePricingMode, worldAdvancePricingMode, PRIC
 import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml, ruleAutoModsHtml, autoModsTotal } from "../rules/roll-mods.mjs";
+import { socialFactionPickerShown, socialFactionOptions, withSocialFaction } from "../rules/social-faction.mjs";
+import { getFactionIndex } from "../rules/factions.mjs";
 import { EXCESS_LEGACY_RULE_ID } from "../rules/legacy-weapon.mjs";
 import { rollExcessLegacyRiskTest } from "../combat/legacy-weapon-excess.mjs";
 import { commitRerollUse } from "../combat/angel-hunters.mjs";
@@ -2410,6 +2412,20 @@ export class WarhammerCharacterSheet
     // Перебросы (Локусы Герольдов и прочие «перебросить тест X») — отдельным
     // блоком, а не галочкой среди модификаторов: их не с чем складывать.
     const rr = ruleRerollsHtml(this.actor, rollCtx);
+    // Фракция собеседника без токена-цели (Sahara task-240a): Связи, Хорошая
+    // Репутация, Враг и переброс Ненависти работают от rollCtx.socialFaction.
+    // Выбор меняет ctx на лету — строки «Состояние» и переброс пересобираются.
+    const socialPick = socialFactionPickerShown(this.actor, rollCtx)
+      ? socialFactionOptions(this.actor, getFactionIndex()) : null;
+    let socialFaction = "";
+    const socialFactionRowHtml = socialPick ? `<div class="roll-dlg-row" title="Собеседника нет на сцене токеном — укажите, из какой он группы: Связи, Репутация, Враг и Ненависть сработают по ней.">
+        <label>Собеседник:</label>
+        <select id="social-faction-select">
+          <option value="">— не из ваших групп —</option>
+          ${socialPick.own.length ? `<optgroup label="Группы ваших Талантов">${socialPick.own.map(o => `<option value="${esc(o.key)}">${esc(o.label)}</option>`).join("")}</optgroup>` : ""}
+          <optgroup label="Все фракции">${socialPick.all.map(o => `<option value="${esc(o.key)}">${esc(o.label)}</option>`).join("")}</optgroup>
+        </select>
+      </div>` : "";
     const defaultCharTotal = this.actor.system.characteristics[defaultChar]?.total ?? 0;
     const rankBonus        = baseTotal - defaultCharTotal;
 
@@ -2546,6 +2562,7 @@ export class WarhammerCharacterSheet
               </div>
               <div id="assist-dropzone" class="assist-dropzone">Перетащите актора-помощника сюда</div>
               <div id="assist-list" class="assist-list"></div>
+              ${socialFactionRowHtml}
               ${hw.html}
               ${im.html}
               ${rl.html}
@@ -2553,7 +2570,7 @@ export class WarhammerCharacterSheet
               ${am.html}
               ${aa.html}
             </div>
-            ${rr.html}
+            <div id="rule-rerolls-slot">${rr.html}</div>
             ${diceModeHtml()}
             <div class="roll-dlg-row roll-dlg-subrow">
               <label><input type="checkbox" id="confirm-pick"/> Спросить, если Преимущество/Помеха/Переброс дадут выбор (стр. 26)</label>
@@ -2628,6 +2645,8 @@ export class WarhammerCharacterSheet
               target:   parseInt(form.querySelector("#skill-target").value) || 0,
               modifier, difficulty, combined, extended, opposed, opposedAuto,
               checkedRuleIds: checkedRuleIds(form),
+              // Фракция собеседника без токена (Sahara task-240a) — _runTest досчитывает по ней авто-модификаторы.
+              socialFaction: socialFaction || undefined,
               // isOpposed/isSafe — сама галочка «Встречный», отдельно от opposed
               // (которое null, пока Порог/Бросок соперника не введены вручную и
               // авто-резолв ещё не отработал): полтеста без соперника — всё равно
@@ -2707,6 +2726,20 @@ export class WarhammerCharacterSheet
           root.querySelector("#skill-target").value =
             (this.actor.system.characteristics[ev.currentTarget.value]?.total ?? 0) + rankBonus;
           refreshAutoMods();
+          updateAutoOutcomeNote();
+        });
+
+        // Фракция собеседника (Sahara task-240a): смена выбора пересобирает ctx,
+        // строки «Состояние» (Связи/Репутация/Враг — auto) и блок перебросов
+        // (Ненависть) — те же функции, что рисовали их при открытии окна.
+        root.querySelector("#social-faction-select")?.addEventListener("change", ev => {
+          socialFaction = ev.currentTarget.value;
+          if (socialFaction) rollCtx.socialFaction = socialFaction;
+          else delete rollCtx.socialFaction;
+          autoModsCache.clear();
+          refreshAutoMods();
+          const rerollSlot = root.querySelector("#rule-rerolls-slot");
+          if (rerollSlot) rerollSlot.innerHTML = ruleRerollsHtml(this.actor, rollCtx).html;
           updateAutoOutcomeNote();
         });
 
@@ -3136,7 +3169,9 @@ export class WarhammerCharacterSheet
     // что диалог показал строками. Контекст собирается так же, как в диалоге
     // (_showSkillRollDialog выше): разойдись эти два места, показанный Порог не
     // сошёлся бы с брошенным.
-    const autoCtx = { kind: "skill", targetActor: sceneTarget, ...(rollContext || {}), char: charKey };
+    // Фракция собеседника, выбранная в окне (Sahara task-240a): тот же ctx.socialFaction, что видел диалог.
+    const autoCtxBase = { kind: "skill", targetActor: sceneTarget, ...(rollContext || {}), char: charKey };
+    const autoCtx = result.socialFaction ? withSocialFaction(autoCtxBase, result.socialFaction) : autoCtxBase;
     if (isMoraleOpposedSkill(skillKey)) autoCtx.morale = true;
     const autoResolved = resolveTest({ actor: this.actor, ...autoCtx });
     const autoMods = autoResolved.autoMods;
@@ -3192,7 +3227,8 @@ export class WarhammerCharacterSheet
     let combinedForOutcome = combined;
     if (combined) {
       const bCtx = { kind: "skill", targetActor: sceneTarget, char: combined.charKey || defaultChar,
-                     skill: combined.skillKey ?? undefined };
+                     skill: combined.skillKey ?? undefined,
+                     ...(result.socialFaction ? { socialFaction: result.socialFaction } : {}) };
       if (isMoraleOpposedSkill(combined.skillKey)) bCtx.morale = true;
       const bAutoResolved = resolveTest({ actor: this.actor, ...bCtx });
       const bEff = combined.target + combined.modifier + combined.difficulty + autoModsTotal(bAutoResolved.autoMods);

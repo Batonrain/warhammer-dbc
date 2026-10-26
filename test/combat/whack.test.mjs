@@ -184,4 +184,35 @@ describe("_executeAttackRoll: Затрещина урезает Избегани
     expect(html).not.toContain("Парирование (-30)");
     expect(html).not.toContain("Уклонение (-30)");
   });
+
+  it("штраф −30 есть и в Уклонении «с расчётом на Отскок» (dodgeModRecoil), не только в обычном", async () => {
+    // Цель с Императивом Evasion: «Отскок» меняет знак бонуса, поэтому у кнопки два значения порога.
+    const carrier = { type: "trait", name: "Императив", getFlag: (s, k) => (k === "imperativeCarrier" ? true
+      : k === "imperativeBonuses" ? { evasionBonus: 20, evasionRecoilBonus: -20 } : undefined) };
+    const run = async seen => {
+      resetCaptured();
+      const pistol = weaponFor({ weaponClass: "pistol", equipped: true, grips: "1р" }, { id: "gun", name: "Пистолет" });
+      const f = fist();
+      const attacker = withFlags(actorFor({ items: [WHACK, sword(), pistol, f] }));
+      attacker.uuid = "Actor.attacker";
+      const target = actorFor({ items: [carrier] });
+      target.uuid = "Actor.target";
+      target.getFlag = () => undefined; target.setFlag = async () => {};
+      const targetToken = { id: "tgtTok", actor: target, document: tok("tgtTok", 100, 0) };
+      globalThis.canvas = { scene: { tokens: [targetToken.document], grid: { size: 100, distance: 1 } }, grid: { size: 100 } };
+      if (seen) await attacker.setFlag(NS, WHACK_SEEN_FLAG, ["tgtTok"]);
+      globalThis.game.user = { ...globalThis.game.user, targets: new Set([targetToken]) };
+      captured.dice = [10, 3, 3, 3, 3];
+      await _executeAttackRoll(attacker, f, "ws", 45, "melee", null, {});
+      const html = captured.chat.map(m => m.content).join("\n");
+      return {
+        plain: Number(html.match(/class="wh-dodge-btn"[^>]*data-extra-mod="(-?\d+)"/)?.[1]),
+        recoil: Number(html.match(/class="wh-dodge-btn"[^>]*data-extra-mod-recoil="(-?\d+)"/)?.[1])
+      };
+    };
+    const fresh = await run(false), seen = await run(true);
+    expect(Number.isNaN(fresh.recoil)).toBe(false);
+    expect(fresh.recoil).toBe(seen.recoil + WHACK_EVASION_PENALTY);
+    expect(fresh.plain).toBe(seen.plain + WHACK_EVASION_PENALTY);
+  });
 });

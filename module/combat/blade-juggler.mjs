@@ -30,6 +30,7 @@
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
+import { isEncounterActive } from "./action-economy.mjs";
 import { handsOccupied } from "../rules/hands.mjs";
 import { isKnifeWeapon } from "../rules/unseen-talents.mjs";
 import {
@@ -67,7 +68,8 @@ export async function startBladeJuggler(actor) {
     ui.notifications?.warn(`${actor.name}: Жонглёр Клинком — нужна пустая рука (нож перекидывается в неё).`);
     return false;
   }
-  if (bladeJugglerUsedThisTurn(actor)) {
+  // «Раз в Ход» существует только в бою: вне боя Хода нет, флаг некому снять, и он блокировал бы Талант навсегда.
+  if (isEncounterActive() && bladeJugglerUsedThisTurn(actor)) {
     ui.notifications?.warn(`${actor.name}: Жонглёр Клинком уже использован в этом Ходу.`);
     return false;
   }
@@ -83,6 +85,7 @@ export async function startBladeJuggler(actor) {
     resist: [{ skill: "awareness" }],
     // Свободное ментальное действие раз в Ход: отметка — в момент броска, чтобы «Отмена» её не съедала.
     pay: async () => {
+      if (!isEncounterActive()) return true;   // вне боя «раз в Ход» не отмечается (см. выше)
       if (bladeJugglerUsedThisTurn(actor)) {
         ui.notifications?.warn(`${actor.name}: Жонглёр Клинком уже использован в этом Ходу.`);
         return false;

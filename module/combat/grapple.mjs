@@ -43,6 +43,7 @@ import { resolveKnockdownSuccess, knockdownResistMods, knockdownSizePenalty } fr
 import { meleeBaseBonus } from "../rules/berserker-talents.mjs";
 import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { statusApplyFields } from "./status-resist.mjs";
+import { writeToTarget } from "./gm-relay.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { extraSuccessDegrees } from "./extra-successes.mjs";
@@ -66,7 +67,7 @@ import {
 } from "../rules/naga-traits.mjs";
 
 const NS = "warhammer-dbc";
-const PARTNER_FLAG = "grapplePartnerUuid";
+export const PARTNER_FLAG = "grapplePartnerUuid";
 
 // ── Роль и руки в Захвате (wdbc-x1nz.2.75, .77) ─────────────────────────────
 // Книга делит Борьбу на Атакующего (держит) и Цель, и права у них разные:
@@ -83,7 +84,7 @@ const PARTNER_FLAG = "grapplePartnerUuid";
 //   grappleHeldHands — на ЦЕЛИ: сколько её рук обездвижено («за каждую руку...
 //                      обездвиживает 2 руки цели»); читает rules/hands.mjs без
 //                      импорта Борьбы.
-const ROLE_FLAG = "grappleRole";
+export const ROLE_FLAG = "grappleRole";
 export const GRAPPLE_HANDS_FLAG = "grappleHands";
 export const GRAPPLE_HELD_HANDS_FLAG = "grappleHeldHands";
 // Сжать (стр. 12): «В свой Ход цель получит штраф –10 на любые Физические
@@ -255,10 +256,14 @@ export async function resolveGrappleSuccess(actor, { target, margin: rawMargin =
   // запись — это prepareData + re-render листа и токена у всех клиентов.
   // Удав держит хвостом — «пара рук», руки свободны (attackerHoldFields).
   const hold = attackerHoldFields(actor);
+  // Сперва цель — через ГМ, если она чужая (combat/gm-relay.mjs): отказ (ГМа нет в игре)
+  // не должен оставить игрока в Захвате в одиночку.
+  const targetWritten = await writeToTarget(target, { kind: "update", data: {
+    ...conditionApplyFields("grappling", null, target), [`flags.${NS}.${PARTNER_FLAG}`]: actor.uuid,
+    [`flags.${NS}.${ROLE_FLAG}`]: "target", [`flags.${NS}.${GRAPPLE_HELD_HANDS_FLAG}`]: 2 * hold.hands } }, actor);
+  if (!targetWritten) return;
   await actor.update({ ...conditionApplyFields("grappling", null, actor), [`flags.${NS}.${PARTNER_FLAG}`]: target.uuid,
     [`flags.${NS}.${ROLE_FLAG}`]: "attacker", ...hold.fields });
-  await target.update({ ...conditionApplyFields("grappling", null, target), [`flags.${NS}.${PARTNER_FLAG}`]: actor.uuid,
-    [`flags.${NS}.${ROLE_FLAG}`]: "target", [`flags.${NS}.${GRAPPLE_HELD_HANDS_FLAG}`]: 2 * hold.hands });
 
   await postTestCard(actor, {
     icon: rollIcon("sword","#e08a3a"), title: `Захват — ${esc(actor.name)} ↔ ${esc(target.name)}`,
@@ -319,7 +324,7 @@ function grappleClearFields() {
 export async function endGrapple(actor) {
   const partner = grapplePartner(actor);
   await actor.update(grappleClearFields());
-  if (partner) await partner.update(grappleClearFields());
+  if (partner) await writeToTarget(partner, { kind: "update", data: grappleClearFields() }, actor);
 }
 
 /**
@@ -449,8 +454,8 @@ async function _resolveWrenchSuccess(actor) {
     }, { rolls: [roll] });
   }
   if (choice.fat) {
-    const { addFatigue } = await import("../sheets/tabs/conditions.mjs");
-    await addFatigue(partner, 1);
+    // Партнёр обычно чужой NPC — Усталость пишет ГМ (combat/gm-relay.mjs).
+    await writeToTarget(partner, { kind: "addFatigue", amount: 1 }, actor);
     await postTestCard(actor, {
       icon: rollIcon("sword","#e08a3a"), title: "Заломить: Усталость",
       outcome: `${esc(partner.name)} получает 1 Усталость.`
@@ -584,7 +589,7 @@ export async function _doSqueeze(actor, { free = false } = {}) {
   // free — Наскок (Талант Пугилиста): «Сжать ... как свободные действия».
   if (!free && !(await spendActionPoints(actor, 1, { physical: true }))) return ui.notifications.warn("⚠️ Сжать: не хватает ОД (Полудействие).");
   const n = (Number(flagOf(partner, SQUEEZE_PENDING_FLAG)) || 0) + 1;
-  await partner.setFlag(NS, SQUEEZE_PENDING_FLAG, n);
+  await writeToTarget(partner, { kind: "update", data: { [`flags.${NS}.${SQUEEZE_PENDING_FLAG}`]: n } }, actor);
   await postTestCard(actor, {
     icon: rollIcon("sword","#e08a3a"), title: "Борьба: Сжать",
     outcome: `${esc(actor.name)} крепче заламывает ${esc(partner.name)}.`,
@@ -612,7 +617,7 @@ export async function _doPinDown(actor) {
   if (grappleHands(actor) < 2) return ui.notifications.warn("⚠️ Прижать: нужно держать цель минимум 2 руками.");
   if (pinDownHoldOf(actor) !== undefined) return ui.notifications.warn("⚠️ Прижать: раз в Ход — уже прижимали.");
   const n = (Number(flagOf(partner, SQUEEZE_PENDING_FLAG)) || 0) + 1;
-  await partner.setFlag(NS, SQUEEZE_PENDING_FLAG, n);
+  await writeToTarget(partner, { kind: "update", data: { [`flags.${NS}.${SQUEEZE_PENDING_FLAG}`]: n } }, actor);
   const penalty = pinDownPenaltyValue(actor, partner);
   await actor.setFlag(NS, PIN_DOWN_FLAG, penalty);
   await postTestCard(actor, {
@@ -653,7 +658,7 @@ export async function _resolveOverpowerSuccess(actor, { deg = 1 } = {}) {
     // Стена (Талант Стойкости): повалить носителя — рукопашный приём, S+0 и, на 5+ Успехов, ответный сбив.
     const { fields, resisted, note } = await statusApplyFields(partner, "prone", null,
       { attacker: actor, melee: true, source: "Пересилить" });
-    if (Object.keys(fields).length) await partner.update(fields);
+    if (Object.keys(fields).length) await writeToTarget(partner, { kind: "update", data: fields }, actor);
     await postTestCard(actor, {
       icon: rollIcon("sword","#e08a3a"), title: resisted ? "Пересилить: устоял" : "Пересилить: Повален",
       outcome: resisted ? esc(note) : `${esc(partner.name)} повален на землю (Захват сохраняется).`
@@ -691,15 +696,16 @@ export async function _resolveTakeoverSuccess(actor) {
   if (!partner) return ui.notifications.warn(`${actor.name}: партнёр по Борьбе не найден.`);
   const apBack = isEncounterActive() && hasActionEconomy(actor);
   const hold = attackerHoldFields(actor);
+  // Сперва партнёр — через ГМ, если он чужой (combat/gm-relay.mjs): отказ не должен сделать «держащими» обоих.
+  if (!(await writeToTarget(partner, { kind: "update", data: {
+    [`flags.${NS}.${ROLE_FLAG}`]: "target", [`flags.${NS}.${GRAPPLE_HELD_HANDS_FLAG}`]: 2 * hold.hands,
+    [`flags.${NS}.-=${GRAPPLE_HANDS_FLAG}`]: null, [`flags.${NS}.-=${GRAPPLE_TAIL_FLAG}`]: null
+  } }, actor))) return;
   await actor.update({
     [`flags.${NS}.${ROLE_FLAG}`]: "attacker", ...hold.fields,
     [`flags.${NS}.-=${GRAPPLE_HELD_HANDS_FLAG}`]: null,
     [`flags.${NS}.-=${SQUEEZE_PENDING_FLAG}`]: null, [`flags.${NS}.-=${SQUEEZE_ACTIVE_FLAG}`]: null,
     ...(apBack ? { "system.actionPoints.value": (Number(actor.system.actionPoints?.value) || 0) + 1 } : {})
-  });
-  await partner.update({
-    [`flags.${NS}.${ROLE_FLAG}`]: "target", [`flags.${NS}.${GRAPPLE_HELD_HANDS_FLAG}`]: 2 * hold.hands,
-    [`flags.${NS}.-=${GRAPPLE_HANDS_FLAG}`]: null, [`flags.${NS}.-=${GRAPPLE_TAIL_FLAG}`]: null
   });
   await postTestCard(actor, {
     icon: rollIcon("sword","#e08a3a"), title: `Перехватить Контроль — ${esc(actor.name)}`,
@@ -722,7 +728,7 @@ export async function setGrappleHands(actor, n) {
   const limit = Math.max(floor, handsOccupied(actor).free + grappleHands(actor));
   const hands = Math.min(limit, Math.max(floor, Math.round(Number(n) || 1)));
   await actor.setFlag(NS, GRAPPLE_HANDS_FLAG, hands);
-  if (partner) await partner.setFlag(NS, GRAPPLE_HELD_HANDS_FLAG, 2 * hands);
+  if (partner) await writeToTarget(partner, { kind: "update", data: { [`flags.${NS}.${GRAPPLE_HELD_HANDS_FLAG}`]: 2 * hands } }, actor);
   return hands;
 }
 
@@ -1558,11 +1564,17 @@ export async function pounceAction(actor, stage, { claim } = {}) {
 }
 
 async function _pounceGrab(actor, partner, claim) {
+  // Хватит ли рук на две — считаем БЕЗ записи (та же граница, что в setGrappleHands): повторный клик по уже
+  // использованной карточке не должен менять число держащих рук, поэтому claim — раньше записи.
+  const floor = isTailHold(actor) ? CONSTRICTOR_TAIL_HANDS : 1;
+  if (Math.max(floor, handsOccupied(actor).free + grappleHands(actor)) < 2) {
+    return ui.notifications.warn(`${actor.name}: не хватает свободных рук, чтобы держать ${partner.name} двумя (Наскок).`);
+  }
+  if (claim && !(await claim())) return;   // карточка уже использована — руки, Ничком и Сжать второй раз не трогаем
   await setGrappleHands(actor, Math.max(2, grappleHands(actor)));
   if (grappleHands(actor) < 2) {
     return ui.notifications.warn(`${actor.name}: не хватает свободных рук, чтобы держать ${partner.name} двумя (Наскок).`);
   }
-  if (claim && !(await claim())) return;   // карточка уже использована — Ничком и Сжать второй раз не ставим
   // «упасть на землю вместе с ней»: Ничком и у наскочившего (цель уже повалена).
   await actor.update(conditionApplyFields("prone", null, actor));
   await _doSqueeze(actor, { free: true });   // Удушение (+1 Усталость) подключено внутри

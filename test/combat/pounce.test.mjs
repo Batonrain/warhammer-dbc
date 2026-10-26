@@ -109,6 +109,14 @@ describe("pounceAction", () => {
     expect(captured.dialog).toBeFalsy();
   });
 
+  it("claim: grab — повторный клик по занятой карточке НЕ поднимает число держащих рук (Sahara riding-the-momentum, п. 3)", async () => {
+    const { me, foe } = held();
+    me._flags[GRAPPLE_HANDS_FLAG] = 1;
+    await pounceAction(me, "grab", { claim: async () => false });
+    expect(me.getFlag(NS, GRAPPLE_HANDS_FLAG)).toBe(1);
+    expect(foe.getFlag(NS, "grappleHeldHands")).toBeUndefined();
+  });
+
   it("claim: grab — карточка свободна, действие проходит", async () => {
     const { me } = held();
     let claimed = 0;

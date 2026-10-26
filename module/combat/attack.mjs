@@ -99,6 +99,7 @@ import { balearicSbBonus, grenadierScatterReduce } from "../rules/throwing-talen
 import { crushingBlowBonus, mightyShotDamage, plasmaExpertiseReliability, plasmaMasteryBonus } from "../rules/damage-talents.mjs";
 import { fleshRenderExtraDrop, raptorBonusDice, unstoppableChargeFelling } from "../rules/melee-talents.mjs";
 import { hammerBlowEffect, killingStrikeApplies, KILLING_STRIKE_FLAG, furiousAssaultOffered } from "../rules/berserker-talents.mjs";
+import { markFullAttack, markFuriousChild } from "./full-attack-lock.mjs";
 import { furiousAssaultButtonHtml } from "./furious-assault.mjs";
 import { shockerGrantsShocking, wallopConcussiveRating, sparksAvailable, welderMarksHit, irradiateMode,
   lensTuningShot, LENS_CHARGES_FLAG, litanyReliability, litanyCoversWeapon, LITANY_CLEANED_FLAG,
@@ -1929,6 +1930,15 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       await actor.setFlag("warhammer-dbc", "attackedThisTurn", [...already, String(item.id)]);
   }
 
+  // Полная Атака (core, «Полная Атака»): «До начала своего следующего Хода он не
+  // может совершать Физические Избегания» — метка на Ход, независимо от попадания
+  // (combat/defense.mjs отказывает Уклонению и Парированию). Успешная
+  // дополнительная атака Яростного Штурма открывает Реприз (Парирование).
+  if (isMelee && opts.baseKey === "fullatk") {
+    await markFullAttack(actor, item);
+    if (hit && opts.techniqueOpts?.furiousAssault) await markFuriousChild(actor);
+  }
+
   // Закреплённое тяжёлое (core.json, «Безоружный Бой»): «персонаж с таким
   // оружием считается безоружным до начала своего следующего Хода, если он
   // стрелял из него» — метка на Ход (rules/turn-flags.mjs), её читают профиль
@@ -2061,7 +2071,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
             + swiftLegacyMeleeDodgePenalty(item) + swiftLegacyRangedDodgePenalty(item) + whack.penalty - bladeJugglerPenalty,
         dodgeModRecoil: (!hiddenAttack && !feintBlocked && !killingStrikeOn && hasEvasionRecoilImperative(defenderActor))
           ? meleeShotDodgeBonus + evasionImperativeBonus(defenderActor, { planningRecoil: true }) + (blindFightingBypass ? -20 : 0) + critHitPenalty + wideBurstPenalty + sureShotPenalty + focusEvasion
-            + swiftLegacyMeleeDodgePenalty(item) + swiftLegacyRangedDodgePenalty(item) - bladeJugglerPenalty
+            + swiftLegacyMeleeDodgePenalty(item) + swiftLegacyRangedDodgePenalty(item) + whack.penalty - bladeJugglerPenalty
           : null,
         // Unarmed Master (стр. 62): Захват мастера Парировать нельзя — тот же порог −999.
         parryMod: (hiddenAttack || feintBlocked || killingStrikeOn || (isMelee && grappleUnparryable(actor, techOpts.technique))) ? -999 : (techOpts.targetParryMod ?? 0) + (blindFightingBypass ? -20 : 0) + critHitPenalty + focusEvasion + whack.penalty - bladeJugglerPenalty,

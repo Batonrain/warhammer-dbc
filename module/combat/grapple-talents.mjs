@@ -21,6 +21,7 @@
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
+import { writeToTarget } from "./gm-relay.mjs";
 
 /**
  * Швырнуть / Slam (Талант Пугилиста): «При взятии цели в Захват, победе во
@@ -63,8 +64,9 @@ export function chokeholdGrappleFatigue(margin) {
  */
 export async function applyChokehold(actor, partner, amount, reason, { add } = {}) {
   if (!partner || !(amount > 0)) return 0;
-  const addFatigue = add ?? (await import("../sheets/tabs/conditions.mjs")).addFatigue;
-  await addFatigue(partner, amount);
+  // Партнёр обычно чужой NPC — Усталость пишет ГМ (combat/gm-relay.mjs). Отказ (ГМа нет в игре) приём прерывает.
+  const addFatigue = add ?? ((p, n) => writeToTarget(p, { kind: "addFatigue", amount: n }, actor));
+  if ((await addFatigue(partner, amount)) === false) return 0;
   await postTestCard(actor, {
     icon: rollIcon("sword", "#e08a3a"), title: `Удушение: ${esc(reason)}`,
     outcome: `${esc(partner.name)} получает ${amount} Усталости.`,
