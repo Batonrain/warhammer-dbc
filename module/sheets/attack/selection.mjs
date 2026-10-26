@@ -322,9 +322,16 @@ export function buildSelection(v) {
       maneuverKey,
       holdsTarget: !!targetActor && holdsInGrapple(actor, actorIdentityUuids(targetActor))
     });
-    const mDef = grindFull
+    const mDefGrind = grindFull
       ? { ...mDefRaw, sbHalf: false, chatNote: String(mDefRaw.chatNote ?? "").replace("урон ½S.b (окр.▲)", "Перемолоть: полный S.b (цель в Борьбе)") }
       : mDefRaw;
+    // Вырубание (rules/takedown.mjs): Оглушить с любым оружием и БЕЗ обязательной
+    // Избирательной атаки в голову — книжная подпись приёма у носителя неверна.
+    const mDef = isMelee && maneuverKey === "stun" && stunUnrestricted(actor)
+      ? { ...mDefGrind,
+          note: "Вырубание: любое оружие, прицел не обязателен (не-Избирательная атака). Успех → Оглушение вместо урона.",
+          chatNote: "😵 При попадании — Оглушение (Вырубание)" }
+      : mDefGrind;
 
     // Длина Оружия (wdbc-x1nz.2.67, стр. 39): действующий Rng ЭТОЙ атаки —
     // длина + Хват + Приём (Выпад +1, Пила → 0). Читается диалогом

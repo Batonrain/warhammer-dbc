@@ -37,6 +37,7 @@ import { BODY_TYPES }                            from "../constants/body-map.mjs
 import { isHaemonculus }                         from "../constants/haemonculus.mjs";
 import { HELMETLESS_EFFECTS, HELMETLESS_ACTION } from "../constants/power-armour-lore.mjs";
 import { actorCanFly, actorHasHalfStep, narrativeSpeed } from "../combat/movement-actions.mjs";
+import { hipShootingWeapon } from "../rules/gunner-talents.mjs";
 import { flightSpeedOf }                         from "../rules/flight-speed.mjs";
 import { mechRollData }                          from "../rules/mech-formula.mjs";
 import { isFeatureEnabled, disabledRaceKeys }    from "../constants/features.mjs";
@@ -246,6 +247,9 @@ export function characterContext(actor) {
   }
   // Полушаг (wdbc-9wvm) — та же видимость «только с Талантом», что у Полёта.
   context.movementCanHalfStep = actorHasHalfStep(actor);
+  // Стрельба от Бедра (Талант Стрелка): тот же пункт, что в меню Движения Token HUD — только с Талантом и
+  // подходящим экипированным оружием (rules/gunner-talents.mjs::hipShootingWeapon).
+  context.movementCanHipShoot = !!hipShootingWeapon(actor);
 
   // Откуда число (wdbc-zbiz): мод-бейдж Полушага (= SPD×1) — тот же приём,
   // что charTotalTooltip у характеристик; breakdown строит documents/actor.mjs.

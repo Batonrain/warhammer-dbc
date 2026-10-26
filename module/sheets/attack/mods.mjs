@@ -80,6 +80,8 @@ export function situationalMods(v) {
     // со знаком минус или 0. Нужен, чтобы предложить его снять Закреплением.
     ogrynBracePenalty = 0,
     pointBlankForced = false,
+    // Профиль атаки (Тандем: моды встроенного оружия действуют и на гасители штрафов — combat/weapon-mods.mjs).
+    weaponProfile = null,
   } = v;
 
   // Без Предупреждения, Оружие Наследия (wdbc-1rno.35, versatile 9-9, стр.
@@ -334,7 +336,7 @@ export function situationalMods(v) {
   // rules/vision-penalty-immunity.mjs) — тем же приёмом, что Чёрные Глаза:
   // Слабый свет/Тьма и Дым гасятся раздельно.
   {
-    const mods = weapon ? getActiveMods(actor, weapon) : [];
+    const mods = weapon ? getActiveMods(actor, weapon, { profile: weaponProfile }) : [];
     const aiming = actor?.system?.aiming;
     const why = {
       light: lightPenaltyImmunityReason(actor, mods, { aiming }),
@@ -529,9 +531,13 @@ export function situationalMods(v) {
     // Пистолет (стр. 40, wdbc-x1nz.2.57): «может использоваться для стрельбы
     // в ближнем бою без каких-либо штрафов» — ни этого штрафа, ни бонуса
     // Уклонения цели (тот гасится отдельно, attack.mjs::meleeShotDodgeBonus).
+    // Штыковая Атака (pointBlankForced): выстрел «как если бы это был выстрел в упор… невзирая на то что персонаж
+    // связан в ближнем бою» — штрафа за стрельбу в рукопашной нет (Sahara pyromaniac-20 п.3); бонус Уклонения
+    // цели (meleeShotDodgeBonus, attack.mjs) не тронут.
     { id: "atk-melee-shot", label: "Стрельба в рукопашную",
-      value: weapon?.system?.weaponClass === "pistol" ? 0 : -20,
-      note: weapon?.system?.weaponClass === "pistol" ? "Пистолет: без штрафов в рукопашную" : undefined },
+      value: (weapon?.system?.weaponClass === "pistol" || pointBlankForced) ? 0 : -20,
+      note: weapon?.system?.weaponClass === "pistol" ? "Пистолет: без штрафов в рукопашную"
+        : pointBlankForced ? "Штыковая Атака: выстрел как в упор, без штрафа за стрельбу в рукопашной" : undefined },
     // Связан в Рукопашной (стр. 30, wdbc-x1nz.2.64): полный запрет стрелять в
     // цели ВНЕ рукопашной, если стрелок сам заперт врагом с рукопашным
     // оружием/Пистолетом в контакте. Тот же autofail-приём, что у «Тяжёлое/
@@ -687,7 +693,7 @@ export function situationalMods(v) {
     const tracking = !!(actor?.getFlag?.("warhammer-dbc", "trackingAimActive")
       ?? actor?.flags?.["warhammer-dbc"]?.trackingAimActive);
     const predictor = !!aiming && aiming !== "none" && weapon
-      && getActiveMods(actor, weapon).some(m => !!m.system?.effects?.aimIgnoresRunning);
+      && getActiveMods(actor, weapon, { profile: weaponProfile }).some(m => !!m.system?.effects?.aimIgnoresRunning);
     const why = tracking ? "Прицел на Упреждение" : predictor ? "Предсказатель Движения" : null;
     const row = why && specificMods.find(m => m.label === "Низкая высота цели" && !m.immune);
     if (row) { row.value = 0; row.immune = true; row.note = `снято: ${why}`; }
@@ -696,7 +702,7 @@ export function situationalMods(v) {
   // и оптические прицелы при Прицеливании снимают оба штрафа — тем же
   // приёмом, что Зенитное гасит «Цель бежит» (выше).
   if (!isMelee) {
-    const why = longRangeImmunityReason(actor, weapon ? getActiveMods(actor, weapon) : [],
+    const why = longRangeImmunityReason(actor, weapon ? getActiveMods(actor, weapon, { profile: weaponProfile }) : [],
                                         { aiming: actor?.system?.aiming });
     if (why) {
       for (const m of specificMods) {

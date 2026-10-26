@@ -142,6 +142,16 @@ const roleOptions = current => Object.entries(MOUNT_ROLES).map(([key, def]) => (
 export const hasSaddleJump = actor => hasTalent(actor, "Saddle Jump", "Прыжок в Седло");
 
 /**
+ * Stand / Стойка (Черта скакуна, «Трейты скакунов»): «Он может Оседлать /
+ * Спешиться свободным действием вместо полудействия» — то же, что Прыжок в
+ * Седло, но даёт его скакун, а не Талант всадника (Sahara trait-stand, п.2).
+ */
+export const mountHasStand = mount => "stand" in mountTraits(mount);
+
+/** Оседлать/Спешиться бесплатно: Талант всадника «Прыжок в Седло» или Черта скакуна «Стойка». */
+const freeMounting = (actor, mount) => hasSaddleJump(actor) || mountHasStand(mount);
+
+/**
  * Сесть в седло (стр. 477, wdbc-x1nz.2.35: Полудействие; с Прыжком в Седло —
  * свободное действие) — Размер проверяется, но не запрещает: решение за
  * столом. ОД проверяется ДО связи, чтобы заблокированная попытка не оставляла
@@ -155,7 +165,7 @@ export async function setMount(actor, target) {
   if (target.uuid === actor.uuid) {
     return ui.notifications?.warn("Сесть верхом на самого себя нельзя.");
   }
-  if (!hasSaddleJump(actor) && !await spendActionPoints(actor, 1, { physical: true })) {
+  if (!freeMounting(actor, target) && !await spendActionPoints(actor, 1, { physical: true })) {
     return ui.notifications?.warn("⚠️ Не хватает ОД (Оседлать — полудействие, стр. 477).");
   }
   if (!sizeFits(actor, target)) {
@@ -185,7 +195,10 @@ async function gmDismountCorrection(actor) {
  * свободное действие): связь снимается, скорость возвращается к стоянке.
  */
 export async function clearMount(actor) {
-  if (!hasSaddleJump(actor) && !await spendActionPoints(actor, 1, { physical: true }) && !await gmDismountCorrection(actor)) {
+  // Скакуна находим по связи: Стойка — Черта скакуна, а не всадника. Не нашли — считаем как без неё.
+  const mountUuid = actor?.system?.mount?.uuid;
+  const mount = mountUuid ? await globalThis.fromUuid?.(mountUuid)?.catch?.(() => null) : null;
+  if (!freeMounting(actor, mount) && !await spendActionPoints(actor, 1, { physical: true }) && !await gmDismountCorrection(actor)) {
     return ui.notifications?.warn("⚠️ Не хватает ОД (Спешиться — полудействие, стр. 477).");
   }
   await actor.update({

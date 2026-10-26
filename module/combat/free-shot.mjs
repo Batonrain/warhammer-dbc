@@ -24,7 +24,7 @@ import { HIP_SHOOTING_FLAG, DRAW_FIRE_ROUND_FLAG, hipShootingEligibleWeapon, hip
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
 import { inAwkwardRigLocation } from "../constants/rig.mjs";
 import {
-  RUN_AND_GUN_PENDING_FLAG, RUN_AND_GUN_FIRED_FLAG, BAYONET_SHOT_PENDING_FLAG, hasRunAndGun, hasBayonetCharge,
+  RUN_AND_GUN_PENDING_FLAG, RUN_AND_GUN_FIRED_FLAG, BAYONET_SHOT_PENDING_FLAG, CHARGE_CHECKED_FLAG, hasRunAndGun, hasBayonetCharge,
   runAndGunEligibleWeapon, bayonetShotEligibleWeapon, equippedWeaponsWhere, runAndGunLockReason
 } from "../rules/run-and-gun.mjs";
 import { enemyContactTokenDocs } from "./free-attack.mjs";
@@ -46,6 +46,67 @@ export function runAndGunOfferHtml(actor) {
   if (!guns.length) return `<div class="roll-threshold">Стрельба на Бегу: нет экипированного не-тяжёлого оружия для выстрела.</div>`;
   return `<div class="roll-threshold">Стрельба на Бегу: из любой точки Натиска — свободный выстрел из не-тяжёлого оружия (не Избирательный). Не сложите оружие после выстрела — им нельзя стрелять в рукопашной до конца Хода.</div>
     ${guns.map(g => `<button class="wh-free-shot-btn" type="button" data-kind="runAndGun" data-actor-uuid="${actor.uuid}" data-item-id="${g.id}">🏃 Выстрел на Бегу: ${esc(g.name)}</button>`).join("")}`;
+}
+
+/** Метка проверки Натиска этого Раунда: «<id боя>:<раунд>» ("" — вне боя, метка не ставится). */
+function chargeRoundKey() {
+  const c = game.combat;
+  return c?.started ? `${c.id}:${c.round}` : "";
+}
+
+/**
+ * Отметить, что проверка Натиска этого Раунда сделана (HUD-кнопка declareCharge и окно атаки).
+ * Вне боя метки нет — проверка идёт каждый раз.
+ */
+export async function markChargeChecked(actor) {
+  const key = chargeRoundKey();
+  if (key && actor?.setFlag) await actor.setFlag(NS, CHARGE_CHECKED_FLAG, key);
+}
+
+/** Тест Подавления провален: в этом Раунде Натиск не удался, второй попытки (HUD или окно) нет. */
+export async function markChargeFailed(actor) {
+  const key = chargeRoundKey();
+  if (key && actor?.setFlag) await actor.setFlag(NS, CHARGE_CHECKED_FLAG, `${key}:failed`);
+}
+
+/** Натиск уже провален в этом Раунде тестом Подавления (HUD-кнопка не даёт попытаться снова). */
+export function chargeFailedThisRound(actor) {
+  const key = chargeRoundKey();
+  return !!key && actor?.getFlag?.(NS, CHARGE_CHECKED_FLAG) === `${key}:failed`;
+}
+
+/**
+ * Натиск как База в окне атаки (не HUD-кнопка): тот же ход, что у declareCharge, — тест Подавления
+ * Прикрывающего Огня у бывшего противника стрелка. Один раз за Раунд: если Натиск уже объявляли
+ * (HUD или прошлая Атака Натиска этого Раунда), проверку не повторяем.
+ * Зовётся ДО списания ОД: провал — атака не совершается.
+ * @returns {Promise<{ok:boolean, first:boolean}>} ok=false — тест Подавления провален; first=true — проверка шла сейчас
+ */
+export async function chargeAttackGate(actor) {
+  const key = chargeRoundKey();
+  const mark = actor?.getFlag?.(NS, CHARGE_CHECKED_FLAG);
+  if (key && mark === key) return { ok: true, first: false };
+  // Тест Подавления уже провален в этом Раунде (HUD или прошлая попытка) — Натиск не удался, перебрасывать нельзя.
+  if (key && mark === `${key}:failed`) return { ok: false, first: false };
+  const { coveringFireChargeCheck } = await import("./covering-fire.mjs");
+  if (!await coveringFireChargeCheck(actor)) { await markChargeFailed(actor); return { ok: false, first: true }; }
+  await markChargeChecked(actor);
+  return { ok: true, first: true };
+}
+
+/**
+ * Атака Натиска состоялась (ОД списаны): первая за Раунд взводит Стрельбу на Бегу и кладёт в чат
+ * кнопки выстрела — как карточка declareCharge.
+ */
+export async function chargeAttackStarted(actor, first) {
+  if (!first || !hasRunAndGun(actor)) return;
+  await actor.setFlag(NS, RUN_AND_GUN_PENDING_FLAG, true);
+  await ChatMessage.create({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `<div class="wh-roll-result">
+      <div class="roll-header">${esc(actor.name)} — Натиск</div>${runAndGunOfferHtml(actor)}
+    </div>`
+  });
 }
 
 /** Кнопки свободного выстрела Штыковой Атаки для карточки попадания ("" — не предлагать). */

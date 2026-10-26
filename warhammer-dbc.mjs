@@ -160,6 +160,8 @@ import { migrateAdvancePricing } from "./module/migrations/advance-pricing-basel
 import { migrateRetinalDisplayMark } from "./module/migrations/retinal-display-mark.mjs";
 import { migrateDrugAddictionFields } from "./module/migrations/drug-addiction-fields.mjs";
 import { migrateDiseaseActive } from "./module/migrations/disease-active.mjs";
+import { migrateDiseaseActiveAll } from "./module/migrations/disease-active-all.mjs";
+import { migrateDrugAddictionFlag } from "./module/migrations/drug-addiction-flag.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
 import { runMigrationGate } from "./module/migrations/unlinked-tokens.mjs";
 import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
@@ -496,7 +498,9 @@ Hooks.once("init", () => {
     "radRatingTokensVersion",
     "retinalDisplayMarkTokensVersion",
     "drugAddictionFieldsTokensVersion",
-    "diseaseActiveTokensVersion"
+    "diseaseActiveTokensVersion",
+    "diseaseActiveAllTokensVersion",
+    "drugAddictionFlagTokensVersion"
   ]) {
     game.settings.register("warhammer-dbc", key, { scope: "world", config: false, type: Number, default: 0 });
   }
@@ -676,6 +680,18 @@ Hooks.once("init", () => {
   // Версия включения («действует») уже выданных болезней с записями Конструктора:
   // с 25.10.2026 болезнь действует только когда включена (одноразовая, wdbc-dbveg)
   game.settings.register("warhammer-dbc", "diseaseActiveVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия включения ВСЕХ уже выданных болезней (в т.ч. без механики): Чумной
+  // Пастырь считает заражёнными только действующие (одноразовая, task-3ab7)
+  game.settings.register("warhammer-dbc", "diseaseActiveAllVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия переноса зависимости от наркотиков из поля предмета в флаг актора
+  // (одноразовая, task-9717)
+  game.settings.register("warhammer-dbc", "drugAddictionFlagVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -1188,7 +1204,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateRetinalDisplayMark, migrateDrugAddictionFields, migrateDiseaseActive, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateRetinalDisplayMark, migrateDrugAddictionFields, migrateDrugAddictionFlag, migrateDiseaseActive, migrateDiseaseActiveAll, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -1494,6 +1510,38 @@ Hooks.once("ready", async () => {
   await runMigrationGate({
     key: "diseaseActiveVersion", tokensKey: "diseaseActiveTokensVersion", label: "Болезни (действует)",
     full: () => migrateDiseaseActive(), tokensOnly: () => migrateDiseaseActive({ tokensOnly: true })
+  });
+});
+
+// ── Одноразово: ВСЕ выданные болезни (и без механики) включаются — Чумной
+// Пастырь считает заражёнными только действующие, а выдавались болезни
+// выключенными; без прохода «свободная Короткая Команда» у отрядов Нурглитов
+// пропала бы (task-3ab7) ──
+// Ручной перезапуск: game.warhammerDBC.migrateDiseaseActiveAll()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  // Отдельный ключ версии: проход disease-active уже выпущен, его VERSION не
+  // поднимается. Копия с меткой diseaseActiveMigrated не трогается — повтор
+  // безопасен (migrations/disease-active-all.mjs).
+  await runMigrationGate({
+    key: "diseaseActiveAllVersion", tokensKey: "diseaseActiveAllTokensVersion", label: "Болезни (все выданные)",
+    full: () => migrateDiseaseActiveAll(), tokensOnly: () => migrateDiseaseActiveAll({ tokensOnly: true })
+  });
+});
+
+// ── Одноразово: зависимость от наркотиков переносится из поля предмета
+// (system.addiction.isAddicted) в флаг актора drugWithdrawal — иначе удалённый
+// флакон снимает штраф, а доза от другого персонажа пишется не получателю
+// (task-9717) ──
+// Ручной перезапуск: game.warhammerDBC.migrateDrugAddictionFlag()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  // Идемпотентна (копия со сброшенным isAddicted не трогается, метки дозы
+  // существующей записи сохраняются); отдельный ключ — миграция
+  // drug-addiction-fields уже выпущена (wdbc-gbd3).
+  await runMigrationGate({
+    key: "drugAddictionFlagVersion", tokensKey: "drugAddictionFlagTokensVersion", label: "Зависимость наркотиков (флаг актора)",
+    full: () => migrateDrugAddictionFlag(), tokensOnly: () => migrateDrugAddictionFlag({ tokensOnly: true })
   });
 });
 

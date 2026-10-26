@@ -20,6 +20,7 @@
 
 import { itemHasName } from "../rules/predicates.mjs";
 import { bonusHalfAction } from "../rules/mount.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 export const NS = "warhammer-dbc";
 export const SABRE_PENDING_FLAG = "sabreSecondAttackPending";
@@ -113,16 +114,64 @@ export async function clearSabreSecondAttackAtTurnEnd(actor) {
 }
 
 /**
+ * Рукопашное оружие, которым Гусар может провести вторую Верховую Атаку. Книга
+ * («Совершая Верховую Атаку, персонаж может … провести ещё одну верховую атаку по
+ * другой цели на пути») оружие второй атаки не привязывает — решение владельца
+ * 26.10.2026: выбор из рукопашного оружия актора. Только НАДЕТОЕ (system.equipped),
+ * как у остальных мест, где атака выбирает оружие (combat/equipped-melee.mjs): меч
+ * из рюкзака ударить не может. Оружие первой атаки (`firstId`) входит всегда: им
+ * могли ударить в рукопашном профиле комбинированного оружия.
+ */
+export function hussarSecondWeapons(actor, firstId = "") {
+  return [...(actor?.items ?? [])].filter(i => i?.type === "weapon"
+    && ((i.system?.weaponClass === "melee" && i.system?.equipped) || (firstId && i.id === firstId)));
+}
+
+/**
+ * Окно выбора оружия второй атаки Гусара. Одно подходящее оружие — выбор не нужен;
+ * закрытое окно / «Отмена» — null (вторая атака остаётся взведённой, можно открыть
+ * снова). Оружие первой атаки выбрано по умолчанию.
+ * @returns {Promise<?Item>}
+ */
+export async function chooseHussarWeapon(actor, firstId = "") {
+  const list = hussarSecondWeapons(actor, firstId);
+  if (list.length <= 1) return list[0] ?? null;
+  const options = list.map(i =>
+    `<option value="${esc(i.id)}"${i.id === firstId ? " selected" : ""}>${esc(i.name)}${i.id === firstId ? " (первая атака)" : ""}</option>`).join("");
+  const id = await foundry.applications.api.DialogV2.wait({
+    window: { title: `Гусар: вторая Верховая Атака — ${actor.name}` },
+    content: `<p>Вторая Верховая Атака по другой цели — бонусное верховое полудействие. Каким рукопашным оружием?</p>
+      <label>Оружие: <select name="weapon">${options}</select></label>`,
+    buttons: [
+      { action: "go", label: "Атаковать", default: true, callback: (_ev, button) => button.form.querySelector('[name="weapon"]')?.value },
+      { action: "cancel", label: "Отмена", callback: () => null }
+    ],
+    rejectClose: false
+  });
+  return id ? (list.find(i => i.id === id) ?? null) : null;
+}
+
+/**
  * Кнопка карточки первой атаки «Сабля: вторая атака». Открывает обычное
  * окно атаки той же Саблей в режиме второй атаки (attack-dialog.mjs,
  * techniqueOpts.sabreSecondAttack): База «Верховая Атака» без +20, без ОД.
+ * Гусар (метка pending.hussar): оружие второй атаки выбирается из рукопашного
+ * оружия актора (chooseHussarWeapon), а не берётся то же, что у первой.
  */
 export async function activateSabreSecondAttack(actorUuid, itemId) {
   const actor = await fromUuid(actorUuid).catch(() => null);
-  const item = actor?.items?.get(itemId);
+  let item = actor?.items?.get(itemId);
   if (!actor || !item) return ui.notifications?.warn("Сабля: персонаж или оружие не найдены.");
-  const reason = sabreSecondAttackBlockFor(actor, item);
+  // Условия, не зависящие от оружия (цель, Ход, верхом, полудействие), — ДО окна
+  // выбора: незачем выбирать оружие, чтобы потом услышать «выберите цель».
+  let reason = sabreSecondAttackBlockFor(actor, item);
   if (reason) return ui.notifications?.warn(`Сабля: ${reason}.`);
+  if (actor.getFlag?.(NS, SABRE_PENDING_FLAG)?.hussar) {
+    item = await chooseHussarWeapon(actor, itemId);
+    if (!item) return null;
+    reason = sabreSecondAttackBlockFor(actor, item);   // пока выбирали, сцена могла измениться
+    if (reason) return ui.notifications?.warn(`Сабля: ${reason}.`);
+  }
   const { showAttackDialog } = await import("../sheets/attack-dialog.mjs");
   return showAttackDialog(actor, item, { sabreSecondAttack: true, forceBase: "mounted" });
 }

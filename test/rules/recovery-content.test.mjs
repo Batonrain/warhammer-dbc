@@ -55,13 +55,23 @@ describe("болезни Книги Болезней (пак)", () => {
 
 describe("зависимость от препарата (пак)", () => {
   const slaught = packDocById("packs-src/chemistry/Наркотики", "jsJSYQUePrltHspj");
+  // Зависимость — запись флага актора drugWithdrawal (task-9717), а не поле предмета.
+  const key = slaught.name.trim();
+  const entries = { [key]: { addicted: true, name: slaught.name, lastDose: 1, doneTo: 1, tested: 0 } };
   it("без зависимости — ничего не держит", () => {
-    expect(addictionRecoveryRules([asItem(slaught)])).toEqual([]);
+    expect(addictionRecoveryRules([asItem(slaught)], {})).toEqual([]);
+    // Устаревшее поле предмета ничего не значит.
+    const legacy = asItem({ ...slaught, system: { ...slaught.system, addiction: { ...slaught.system.addiction, isAddicted: true } } });
+    expect(addictionRecoveryRules([legacy], {})).toEqual([]);
   });
   it("с зависимостью — блок I, P, W и F", () => {
-    const addicted = asItem({ ...slaught, system: { ...slaught.system, addiction: { ...slaught.system.addiction, isAddicted: true } } });
-    const pol = recoveryPolicy(addictionRecoveryRules([addicted]).flatMap(r => r.effects));
+    const pol = recoveryPolicy(addictionRecoveryRules([asItem(slaught)], entries).flatMap(r => r.effects));
     expect(["int", "per", "wp", "fel"].every(k => pol[k].blocked)).toBe(true);
     expect(pol.t.blocked).toBe(false);
+  });
+  it("препарат удалён: блок держится по снимку настроек в записи", () => {
+    const snap = { [key]: { ...entries[key], addiction: JSON.parse(JSON.stringify(slaught.system.addiction)) } };
+    const pol = recoveryPolicy(addictionRecoveryRules([], snap).flatMap(r => r.effects));
+    expect(["int", "per", "wp", "fel"].every(k => pol[k].blocked)).toBe(true);
   });
 });

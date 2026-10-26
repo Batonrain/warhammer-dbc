@@ -69,13 +69,15 @@ export function doubleReload(reload) {
  * @param {string} name         имя встраиваемого оружия
  * @param {object} [source]     полный снимок предмета (item.toObject()) — для «Извлечь»
  */
-export function buildTandemProfile(guestSys, name, source = null) {
+export function buildTandemProfile(guestSys, name, source = null, guestId = "") {
   const s = guestSys ?? {};
   const n = k => Number(s[k]) || 0;
   return {
     label: `Тандем: ${name}`,
     tandem: true,
     tandemName: name,
+    // id встроенного предмета: его модификации остаются на листе и действуют на выстрел этого профиля (weapon-mods.mjs).
+    tandemGuestId: guestId || source?._id || "",
     tandemWeight: n("weight"),
     ownFire: true,
     range: n("range"),

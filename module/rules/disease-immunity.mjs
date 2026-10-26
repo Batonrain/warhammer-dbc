@@ -27,6 +27,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasKey } from "./item-marker.mjs";
+import { isStuffOfNightmares } from "./stuff-of-nightmares.mjs";
 
 export const DISEASE_IMMUNE_CAP = "defence.diseaseEffectsImmune";
 
@@ -39,6 +40,8 @@ export function actorImmuneToDiseaseEffects(actor, isActive = () => true) {
   for (const it of actor?.items ?? []) {
     if (!it || it.type === "disease") continue;
     if (itemHasKey(it, DISEASE_IMMUNE_CAP) && isActive(it)) return true;
+    // Stuff of Nightmares: «иммунитет к … болезням» (rules/stuff-of-nightmares.mjs).
+    if (isStuffOfNightmares(it) && isActive(it)) return true;
   }
   return false;
 }

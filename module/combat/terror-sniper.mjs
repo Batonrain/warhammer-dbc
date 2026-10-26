@@ -86,11 +86,32 @@ export async function resolveTerrorSniperClick(attackerUuid, targetTokenUuid, me
   }, "Снайпер Ужаса с этого попадания уже пробовали.");
 }
 
-/** Тест Подавления одного врага из карточки Снайпера Ужаса. */
+/** Сколько строк карточки получают свою общую отметку «тест уже брошен» (ключи terrorSuppress0…N в card-once.mjs). */
+export const TERROR_SUPPRESS_ROWS = 20;
+
+/** Ключ отметки на карточке для строки врага номер i ("" — строк больше, чем ключей: отметка только на этом клиенте). */
+export const terrorSuppressKey = i => (Number.isInteger(i) && i >= 0 && i < TERROR_SUPPRESS_ROWS ? `terrorSuppress${i}` : "");
+
+/**
+ * Тест Подавления одного врага из карточки Снайпера Ужаса.
+ * @returns {Promise<boolean>} true — тест брошен (кнопку можно гасить)
+ */
 export async function rollTerrorSniperSuppression(actorUuid, attackerUuid, knows) {
   const actor = await fromUuid(actorUuid).catch(() => null);
-  if (!actor) return ui.notifications.warn("⚠️ Цель не найдена.");
-  if (!actor.isOwner && !game.user?.isGM) return ui.notifications.warn(`⚠️ Нет прав бросать за ${actor.name} — тест проведёт его владелец или ГМ.`);
+  if (!actor) { ui.notifications.warn("⚠️ Цель не найдена."); return false; }
+  if (!actor.isOwner && !game.user?.isGM) { ui.notifications.warn(`⚠️ Нет прав бросать за ${actor.name} — тест проведёт его владелец или ГМ.`); return false; }
   const sourceActor = await fromUuid(attackerUuid || "").catch(() => null);
-  return rollSuppressionTest(actor, { mod: terrorSniperSuppressMod(knows), sourceLabel: "Снайпер Ужаса", sourceActor });
+  await rollSuppressionTest(actor, { mod: terrorSniperSuppressMod(knows), sourceLabel: "Снайпер Ужаса", sourceActor });
+  return true;
+}
+
+/**
+ * Клик «Тест на Подавление» у строки врага: раз на карточку и на врага — отметка лежит во флаге сообщения,
+ * а не только в DOM нажавшего (после F5 и у другого клиента кнопка остаётся погашенной).
+ */
+export function terrorSuppressOnCard(message, rowIndex, actorUuid, attackerUuid, knows) {
+  const key = terrorSuppressKey(rowIndex);
+  const run = () => rollTerrorSniperSuppression(actorUuid, attackerUuid, knows);
+  const warning = "Тест Подавления этого врага с карточки уже брошен.";
+  return key ? runCardOnce(message, key, run, warning) : run();
 }

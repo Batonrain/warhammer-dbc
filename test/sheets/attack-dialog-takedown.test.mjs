@@ -58,6 +58,22 @@ describe("Вырубание: прицел при приёме Оглушить"
     expect(html).not.toMatch(/<option value="head"[^>]*selected>/);
   });
 
+  it("подпись приёма у носителя не говорит «Избирательная атака в голову» (её прицел не форсирован)", () => {
+    const w = sword();
+    showAttackDialog(attacker([w, TRAINING, TAKEDOWN]), w, { technique: "stun" });
+    const note = captured.dialog.content.match(/id="atk-maneuver-note">([^<]*)</)?.[1] ?? "";
+    expect(note).toContain("Вырубание");
+    expect(note).not.toContain("Избирательная атака в голову");
+    expect(note).toContain("Оглушение");
+  });
+
+  it("без Таланта подпись приёма прежняя — Избирательная атака в голову (регрессия)", () => {
+    const w = mace();
+    showAttackDialog(attacker([w]), w, { technique: "stun" });
+    const note = captured.dialog.content.match(/id="atk-maneuver-note">([^<]*)</)?.[1] ?? "";
+    expect(note).toContain("Избирательная атака в голову");
+  });
+
   it("без Таланта — по-прежнему форсирована Голова (регрессия)", () => {
     const w = mace();
     showAttackDialog(attacker([w]), w, { technique: "stun" });

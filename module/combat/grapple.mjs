@@ -43,7 +43,7 @@ import { resolveKnockdownSuccess, knockdownResistMods, knockdownSizePenalty } fr
 import { meleeBaseBonus } from "../rules/berserker-talents.mjs";
 import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { statusApplyFields } from "./status-resist.mjs";
-import { writeToTarget } from "./gm-relay.mjs";
+import { writeToTarget, dealDamageToTarget } from "./gm-relay.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { extraSuccessDegrees } from "./extra-successes.mjs";
@@ -428,27 +428,26 @@ async function _resolveWrenchSuccess(actor) {
       corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee: true
     });
     const roll = await new Roll(dmgFormula).evaluate();
-    const { applyDamageToActor } = await import("./damage.mjs");
-    await applyDamageToActor(partner, {
+    // Партнёр обычно чужой NPC — урон применяет ГМ (combat/gm-relay.mjs::dealDamageToTarget).
+    const clawsDealt = await dealDamageToTarget(partner, {
       rawDamage: roll.total, penetration: Number(claws.system?.penetration) || 0,
       damageType: claws.system?.damageType || "impact", damageSubtype: claws.system?.damageSubtype || "",
       hitLocation: "Торс", melee: true,
       attackerName: actor.name, attackerUuid: actor.uuid, weaponName: claws.name
-    });
-    await postTestCard(actor, {
+    }, actor, "grapple");
+    if (clawsDealt) await postTestCard(actor, {
       icon: rollIcon("sword","#e08a3a"), title: `Заломить: урон ${esc(partner.name)}`,
       lines: [`<div class="roll-dice">Когти (${esc(claws.name)}): <b>${roll.total}</b> Dmg</div>`]
     }, { rolls: [roll] });
   } else if (choice.dmg) {
     const roll = await new Roll("1d5").evaluate();
     const dmg = roll.total + wrenchSb;
-    const { applyDamageToActor } = await import("./damage.mjs");
-    await applyDamageToActor(partner, {
+    const wrenchDealt = await dealDamageToTarget(partner, {
       rawDamage: dmg, penetration: 0, damageType: "impact", damageSubtype: "crushing", ignoreArmour: true,
       hitLocation: "Торс", melee: true,
       attackerName: actor.name, attackerUuid: actor.uuid, weaponName: "Заломить"
-    });
-    await postTestCard(actor, {
+    }, actor, "grapple");
+    if (wrenchDealt) await postTestCard(actor, {
       icon: rollIcon("sword","#e08a3a"), title: `Заломить: урон ${esc(partner.name)}`,
       lines: [`<div class="roll-dice">1d5: <b>${roll.total}</b> + S.b <b>${wrenchSb}</b>${tailHold ? " (хвост Удава)" : ""} = <b>${dmg}</b> I(Cr), броня проигнорирована</div>`]
     }, { rolls: [roll] });
@@ -811,14 +810,13 @@ async function _doBite(actor, { aim = null } = {}) {
     corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee: true
   });
   const dmgRoll = await new Roll(dmgFormula).evaluate();
-  const { applyDamageToActor } = await import("./damage.mjs");
-  await applyDamageToActor(partner, {
+  const biteDealt = await dealDamageToTarget(partner, {
     rawDamage: dmgRoll.total, penetration: (Number(biteWeapon.system?.penetration) || 0) + invocationAdd.pen,
     damageType: biteWeapon.system?.damageType || "impact", damageSubtype: biteWeapon.system?.damageSubtype || "",
     hitLocation: aimDef.loc, melee: true,
     attackerName: actor.name, attackerUuid: actor.uuid, weaponName: biteWeapon.name
-  });
-  await postTestCard(actor, {
+  }, actor, "grapple");
+  if (biteDealt) await postTestCard(actor, {
     icon: rollIcon("sword","#e08a3a"), title: `Борьба: Укус (${esc(biteWeapon.name)})`,
     outcome: `${esc(actor.name)} ${aimRoll ? "попадает" : "автоматически наносит"} ${esc(partner.name)} (${aimDef.loc}): <b>${dmgRoll.total}</b> Dmg.`,
     sections: [`<div class="roll-threshold" style="font-size:0.85em;">Свободное действие${aimRoll ? `. ${aimLine}` : ". Автоматическое попадание в Торс"} — доступно только пока цель удержана Захватом.</div>`]
@@ -848,13 +846,12 @@ async function _doCrunch(actor) {
   }
   const sb  = Number(actor.system?.characteristics?.s?.bonus) || 0;
   const dmg = Math.ceil(sb / 2);
-  const { applyDamageToActor } = await import("./damage.mjs");
-  await applyDamageToActor(partner, {
+  const crunchDealt = await dealDamageToTarget(partner, {
     rawDamage: dmg, penetration: 0, damageType: weapon.system?.damageType || "impact",
     damageSubtype: weapon.system?.damageSubtype || "", hitLocation: "Торс", melee: true,
     attackerName: actor.name, attackerUuid: actor.uuid, weaponName: weapon.name
-  });
-  await postTestCard(actor, {
+  }, actor, "grapple");
+  if (crunchDealt) await postTestCard(actor, {
     icon: rollIcon("sword","#e08a3a"), title: `Борьба: Хруст (${esc(weapon.name)})`,
     outcome: `${esc(actor.name)} автоматически наносит ${esc(partner.name)}: <b>${dmg}</b> Dmg (S.b÷2, окр. вверх).`,
     sections: [`<div class="roll-threshold" style="font-size:0.85em;">Свободное действие. Доступно только пока цель удержана Захватом.</div>`]

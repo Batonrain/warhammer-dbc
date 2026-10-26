@@ -56,7 +56,12 @@ describe("plagueShepherdShrinkToFit: доля не больше, чем реал
 
 describe("isInfected", () => {
   it("есть embedded Item type:disease — заражён", () => {
-    expect(isInfected({ items: [{ type: "disease" }] })).toBe(true);
+    expect(isInfected({ items: [{ type: "disease", system: { active: true } }] })).toBe(true);
+  });
+  it("болезнь выключена (system.active=false, умолчание схемы) — не заражён", () => {
+    expect(isInfected({ items: [{ type: "disease", system: { active: false } }] })).toBe(false);
+    expect(isInfected({ items: [{ type: "disease", system: {} }] })).toBe(false);
+    expect(isInfected({ items: [{ type: "disease", system: { active: false } }, { type: "disease", system: { active: true } }] })).toBe(true);
   });
   it("нет — не заражён", () => {
     expect(isInfected({ items: [{ type: "talent" }] })).toBe(false);
@@ -69,10 +74,10 @@ describe("plagueShepherdFreeCommandActive: Короткая свободным, 
   const shepherd = (infected = true) => ({
     items: [
       { type: "mutation", name: "Plague Shepherd / Чумной Пастырь" },
-      ...(infected ? [{ type: "disease" }] : [])
+      ...(infected ? [{ type: "disease", system: { active: true } }] : [])
     ]
   });
-  const member = infected => ({ items: infected ? [{ type: "disease" }] : [] });
+  const member = infected => ({ items: infected ? [{ type: "disease", system: { active: true } }] : [] });
 
   it("командир и все подчинённые заражены — активно", () => {
     expect(plagueShepherdFreeCommandActive(shepherd(true), [member(true), member(true)])).toBe(true);
@@ -87,7 +92,7 @@ describe("plagueShepherdFreeCommandActive: Короткая свободным, 
   });
 
   it("нет Мутации у командира — неактивно", () => {
-    expect(plagueShepherdFreeCommandActive({ items: [{ type: "disease" }] }, [member(true)])).toBe(false);
+    expect(plagueShepherdFreeCommandActive({ items: [{ type: "disease", system: { active: true } }] }, [member(true)])).toBe(false);
   });
 
   it("нет подчинённых вовсе — неактивно (нечего проверять)", () => {

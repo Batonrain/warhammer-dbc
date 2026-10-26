@@ -61,6 +61,7 @@ import { useGangrenePeriodicTest } from "../../combat/gangrene.mjs";
 import { useRadiationSicknessTest } from "../../combat/radiation.mjs";
 import { repairArmorCorrosion, extractPiercingWound, applyCripplingTrigger } from "../../combat/damage.mjs";
 import { rollClearJam, rollRestoreJammedAmmo } from "../../combat/clear-jam.mjs";
+import { repairDestroyedWeapon } from "../../combat/weapon-repair.mjs";
 import { declareBrace } from "../../combat/brace-weapon.mjs";
 import { showDamageOnlyDialog } from "../../combat/damage-only-roll.mjs";
 import { spendActionPoints, spendReaction, resetActionEconomy } from "../../combat/action-economy.mjs";
@@ -427,6 +428,11 @@ export function activateCombatListeners(root, actor) {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);
     if (item) rollClearJam(actor, item);
   });
+  // Починить уничтоженное оружие (system.destroyed — Выпуск Батареи, Расплавление…): combat/weapon-repair.mjs.
+  on(root, ".wh-sheet-repair-destroyed-btn", "click", ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) repairDestroyedWeapon(actor, item);
+  });
   on(root, ".wh-sheet-restore-ammo-btn", "click", ev => {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);
     if (item) rollRestoreJammedAmmo(actor, item);
@@ -528,6 +534,7 @@ export function activateCombatListeners(root, actor) {
   // (module/combat/movement-actions.mjs).
   const MOVE_ACTIONS = {
     halfmove: declareHalfMove, fullmove: declareFullMove,
+    hipshooting: a => declareFullMove(a, { hipShooting: true }),
     charge: declareCharge,     run: declareRun,     halfstep: declareHalfStep,
     climb: showClimbDialog, jump: showJumpDialog, swim: showSwimDialog,
     fall: showFallDialog,   fly: showFlightDialog,

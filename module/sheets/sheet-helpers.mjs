@@ -86,7 +86,7 @@ import { grappleOnlyHidden, isBiteName } from "../rules/integral-rating.mjs";
 import { hasResilienceTalent } from "../rules/resilience-talents.mjs";
 import { fistBalanceBonus } from "../rules/pugilist-talents.mjs";
 import { isHookedUp, hookUpMinDose } from "../rules/drug-doses.mjs";
-import { addictionTestParts, parseFrequency, readWithdrawalEntries, drugKey, withdrawalStatusLabel } from "../rules/drug-withdrawal.mjs";
+import { addictionTestParts, parseFrequency, readWithdrawalEntries, addictionRecords, withdrawalStatusLabel } from "../rules/drug-withdrawal.mjs";
 import { hasOverclock } from "../rules/technomystic-talents.mjs";
 import { diseaseVectors, vectorLabel } from "../rules/disease-infection.mjs";
 
@@ -345,7 +345,6 @@ function _buildDrugData(item) {
     // Зависимость
     addiction:           s.addiction                       || {},
     hasAddiction:        s.addiction?.hasAddiction         || false,
-    isAddicted:          s.addiction?.isAddicted           || false,
     addictionTestChar:   (s.addiction?.testChar || "t").toLowerCase(),
     addictionTestMod:    s.addiction?.testMod ?? 0,
     // Яды
@@ -406,21 +405,19 @@ function _buildAddictions(allItems, alchem = false, actor = null) {
   const now = (typeof game !== "undefined" ? game.time?.worldTime : null) ?? 0;
   const entries = readWithdrawalEntries(actor);
 
-  for (const item of allItems) {
-    if (item.type !== "drug") continue;
-    const s   = item.system;
-    const add = s.addiction || {};
-    // В панель «Зависимости» попадают только ФАКТИЧЕСКИЕ зависимости персонажа
-    if (!add.hasAddiction || !add.isAddicted) continue;
-
+  // В панель «Зависимости» попадают только ФАКТИЧЕСКИЕ зависимости персонажа —
+  // записи флага актора (task-9717): зависимость от уже удалённого препарата
+  // остаётся в списке, кнопки работают по ключу, а не по id предмета.
+  for (const { key, name, item, add } of addictionRecords(allItems, entries)) {
     const testCharKey   = (add.testChar || "t").toLowerCase();
     const testCharUpper = testCharKey.toUpperCase();
     const testMod       = add.testMod ?? 0;
 
     result.push({
-      id:           item.id,
-      name:         item.name,
-      drugCategory: s.drugCategory || "medicine",
+      key,
+      id:           item?.id ?? "",
+      name,
+      drugCategory: item?.system?.drugCategory || "medicine",
       testCharKey:  testCharKey,
       testChar:     testCharUpper,
       testMod:      testMod,
@@ -428,13 +425,13 @@ function _buildAddictions(allItems, alchem = false, actor = null) {
       testLabel:    addictionTestParts(add).map(p =>
         `${CHARACTERISTICS[p.charKey]?.abbr ?? p.charKey.toUpperCase()}${p.mod > 0 ? "+" : ""}${p.mod || ""}`).join(" / "),
       // Где сейчас зависимость: «до штрафа: 3ч» / «штраф идёт (2-й период); тест на срыв открыт: −50».
-      withdrawal:   withdrawalStatusLabel(entries[drugKey(item)], parseFrequency(add.frequency), now, add.breakMod),
+      withdrawal:   withdrawalStatusLabel(entries[key], parseFrequency(add.frequency), now, add.breakMod),
       frequency:    add.frequency || "",
       penalty:      add.penalty   || "",
       // Alchem Monster (Репликант): недельный лимит ×2 — rules/replicant.mjs.
       minDose:      alchemDoseLimit(isHookedUp(item) ? hookUpMinDose(add.minDose) : add.minDose, alchem),
       minDoseAlchem: alchem && (add.minDose || 0) > 0,
-      isAddicted:   add.isAddicted || false
+      isAddicted:   true
     });
   }
 

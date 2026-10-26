@@ -303,3 +303,71 @@ describe("performTargetWrite", () => {
     expect(await performTargetWrite({ update: () => { throw new Error("не должно быть вызвано"); } }, { kind: "?" })).toBeNull();
   });
 });
+
+// Урон приёмов по чужому NPC (Sahara npc-applydamagetoactor): Заломить, Укус, Хруст, Повалить на 5+ раньше писали урон
+// в цель прямо с клиента игрока и падали на правах Foundry. Теперь урон считает и применяет ГМ — kind "applyDamage".
+describe("applyDamage: урон приёма через ГМа", () => {
+  const dmg = (over = {}) => ({
+    rawDamage: 9, penetration: 0, damageType: "impact", damageSubtype: "crushing", ignoreArmour: true,
+    hitLocation: "Торс", melee: true, attackerName: "Игрок", attackerUuid: "Actor.me", weaponName: "Заломить", ...over
+  });
+  const own = { initiatorOwned: true, initiator: { uuid: "Actor.me", items: [] }, partners: true };
+
+  it("допустимый урон Борьбы от владельца инициатора — можно", () => {
+    expect(checkTargetWrite({ kind: "applyDamage", source: "grapple", damage: dmg() }, own).ok).toBe(true);
+    expect(checkTargetWrite({ kind: "applyDamage", source: "contact", damage: dmg({ primitive: true, ignoreArmour: false, weaponName: "Повалить" }) },
+      { ...own, partners: false }).ok).toBe(true);
+  });
+
+  it("не владелец инициатора — отказ", () => {
+    expect(checkTargetWrite({ kind: "applyDamage", source: "grapple", damage: dmg() }, { ...own, initiatorOwned: false }).ok).toBe(false);
+  });
+
+  it("источник «grapple» требует, чтобы цель была партнёром инициатора по Борьбе", () => {
+    expect(checkTargetWrite({ kind: "applyDamage", source: "grapple", damage: dmg() }, { ...own, partners: false }).ok).toBe(false);
+  });
+
+  it("чужие поля, неверные типы, чужой атакующий и непомерные числа — отказ", () => {
+    for (const bad of [
+      dmg({ evil: 1 }), dmg({ rawDamage: "9" }), dmg({ rawDamage: -1 }), dmg({ rawDamage: 5000 }), dmg({ penetration: 99 }),
+      dmg({ damageType: "godmode" }), dmg({ melee: false }), dmg({ attackerUuid: "Actor.other" }),
+      dmg({ weaponName: "я".repeat(300) }), dmg({ ignoreDomeShields: true }), dmg({ rawDamage: NaN })
+    ]) expect(checkTargetWrite({ kind: "applyDamage", source: "grapple", damage: bad }, own).ok).toBe(false);
+    expect(checkTargetWrite({ kind: "applyDamage", source: "grapple", damage: null }, own).ok).toBe(false);
+    expect(checkTargetWrite({ kind: "applyDamage", source: "nowhere", damage: dmg() }, own).ok).toBe(false);
+    // «contact» не игнорирует броню, не пробивает и не бьёт выше потолка Повалить
+    const contact = d => checkTargetWrite({ kind: "applyDamage", source: "contact", damage: d }, { ...own, partners: false }).ok;
+    expect(contact(dmg({ ignoreArmour: true }))).toBe(false);
+    expect(contact(dmg({ ignoreArmour: false, penetration: 3 }))).toBe(false);
+    expect(contact(dmg({ ignoreArmour: false, rawDamage: 26 }))).toBe(false);
+    expect(contact(dmg({ ignoreArmour: false, rawDamage: 25, primitive: true }))).toBe(true);
+  });
+
+  it("выстраивание: приёмы идут через dealDamageToTarget, а не прямо в applyDamageToActor", async () => {
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const read = rel => fs.readFileSync(path.join(path.resolve(import.meta.dirname, "../.."), rel), "utf8");
+    const g = read("module/combat/grapple.mjs");
+    expect(g).not.toMatch(/applyDamageToActor\(partner/);
+    expect((g.match(/dealDamageToTarget\(partner/g) ?? []).length).toBe(4);
+    const k = read("module/combat/knockdown.mjs");
+    expect(k).not.toMatch(/applyDamageToActor\(target/);
+    expect(k).toMatch(/dealDamageToTarget\(target/);
+  });
+
+  it("чужая цель: игрок отправляет запрос ГМу, локально урон не считается", async () => {
+    const emitted = [];
+    const prev = { socket: globalThis.game.socket, users: globalThis.game.users, user: globalThis.game.user };
+    globalThis.game.socket = { emit: (_c, payload) => emitted.push(payload) };
+    globalThis.game.users = { activeGM: { id: "gm" } };
+    globalThis.game.user = { id: "u1", isGM: false };
+    try {
+      const { dealDamageToTarget } = await import("../../module/combat/gm-relay.mjs");
+      const foe = { uuid: "Actor.foe", name: "NPC", isOwner: false, update: async () => { throw new Error("писать нельзя"); } };
+      expect(await dealDamageToTarget(foe, dmg(), ME, "grapple")).toBe(true);
+      expect(emitted).toHaveLength(1);
+      expect(emitted[0].op).toEqual({ kind: "applyDamage", source: "grapple", damage: dmg() });
+      expect(emitted[0].targetUuid).toBe("Actor.foe");
+    } finally { Object.assign(globalThis.game, prev); }
+  });
+});

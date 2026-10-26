@@ -130,7 +130,7 @@ export const CORE_RULES = [
     // Избирательные атаки — окно атаки (selectiveAimReduction).
     id: "core.sureStrikeSize",
     label: "Верный Удар: штраф за малый Размер цели меньше на 10",
-    when: { hasTalent: "Sure Strike", targetSizeMax: -1, weaponClass: ["melee"] },
+    when: { hasTalent: "Sure Strike", targetSizeMax: -1, attackMelee: true },
     effects: [{ kind: "rollBonus", target: "attack", value: 10 }]
   },
   {
@@ -138,7 +138,7 @@ export const CORE_RULES = [
     // после первого штраф за Размер ещё не обнулён (Размер цели −2 и меньше).
     id: "core.preciseBlowSize",
     label: "Выверенный Удар: штраф за малый Размер цели меньше ещё на 10",
-    when: { hasTalent: "Precise Blow", targetSizeMax: -2, weaponClass: ["melee"] },
+    when: { hasTalent: "Precise Blow", targetSizeMax: -2, attackMelee: true },
     effects: [{ kind: "rollBonus", target: "attack", value: 10 }]
   },
   {

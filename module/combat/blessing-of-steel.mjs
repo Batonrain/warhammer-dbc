@@ -27,6 +27,7 @@ import { postTestCard } from "../helpers/test-card.mjs";
 const SYSTEM = "warhammer-dbc";
 export const BLESSING_FLAG = "blessingOfSteel";
 const STEP_UP = { poor: "common", common: "good", good: "best", best: "best" };
+const STEP_DOWN = { best: "good", good: "common", common: "poor", poor: "poor" };
 
 export const hasBlessingOfSteel = actor =>
   [...(actor?.items ?? [])].some(i => i?.type === "talent"
@@ -49,7 +50,15 @@ export function blessedItem(actor) {
 async function revertItem(item) {
   const mark = item.getFlag(SYSTEM, BLESSING_FLAG);
   if (!mark) return;
-  await item.update({ "system.quality": mark.originalQuality });
+  // Откат — «на ступень вниз», и только если Качество всё ещё то, что поставило
+  // благословение: Песня Изменений откатывает своё «абсолютно» (в deleteCombat
+  // она идёт раньше), и возврат прежнего значения оставил бы оружие на ступень
+  // выше. Метка старого вида (без blessedQuality) откатывается как раньше.
+  if (!mark.blessedQuality) {
+    await item.update({ "system.quality": mark.originalQuality });
+  } else if (normQuality(item.system?.quality) === mark.blessedQuality) {
+    await item.update({ "system.quality": STEP_DOWN[mark.blessedQuality] });
+  }
   await item.unsetFlag(SYSTEM, BLESSING_FLAG);
 }
 
@@ -94,7 +103,7 @@ export async function startBlessingOfSteel(actor) {
   const stepped = target !== original;
   if (stepped) {
     await item.update({ "system.quality": target });
-    await item.setFlag(SYSTEM, BLESSING_FLAG, { originalQuality: original, combatId: game.combat?.id ?? null });
+    await item.setFlag(SYSTEM, BLESSING_FLAG, { originalQuality: original, blessedQuality: target, combatId: game.combat?.id ?? null });
   }
   await postTestCard(actor, {
     icon: rollIcon("wrench", "#ffb84d"), title: `Благословение Стали — ${esc(actor.name)}`,

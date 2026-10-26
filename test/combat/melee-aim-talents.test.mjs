@@ -130,4 +130,17 @@ describe("Размер цели ниже 0 в рукопашной: core.sureStr
   it("стрелковое оружие правилами не затронуто", () => {
     expect(attack([byName(SURE.name)], -1, "basic").map(x => x[0])).not.toContain("core.sureStrikeSize");
   });
+  // Sahara pyromaniac-20: у винтовки есть рукопашный профиль (приклад, штык) — размерный штраф там снимается так же.
+  it("рукопашный профиль СТРЕЛКОВОГО оружия (класс basic, но атака рукопашная) — Верный/Выверенный Удар работают", () => {
+    const rifleMelee = (items, sizeMod) => resolveTest({
+      actor: { system: { race: "human", characteristics: {} }, items },
+      kind: "attack", weaponClass: "basic", weapon: { system: { weaponClass: "basic" } }, isMelee: true, char: "ws", targetActor: target(sizeMod)
+    }).mods.map(m => [m.ruleId, m.value]);
+    const m = rifleMelee([byName(SURE.name), byName(PRECISE.name)], -2);
+    expect(m).toContainEqual(["core.sureStrikeSize", 10]);
+    expect(m).toContainEqual(["core.preciseBlowSize", 10]);
+  });
+  it("выстрел из того же оружия (атака не рукопашная) — по-прежнему не затронут", () => {
+    expect(attack([byName(SURE.name), byName(PRECISE.name)], -2, "basic").map(x => x[0])).not.toContain("core.sureStrikeSize");
+  });
 });

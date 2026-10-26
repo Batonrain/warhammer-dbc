@@ -296,7 +296,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // ── Особые свойства оружия (+ от установленных модификаций) ───────────────
   //   Если выбран доп. профиль со своими свойствами (Крюк/Посох) — берём их
   //   вместо базовых (у профилей разные наборы: Devastating vs Primitive и т.п.).
-  const modFx     = getModEffects(actor, item);
+  const modFx     = getModEffects(actor, item, { profile: P });
   // Заряженный боеприпас нужен уже здесь: он может добавлять свойства оружия.
   const loadedAmmo = sys.loadedAmmoId ? actor.items.get(sys.loadedAmmoId) : null;
   // Тандем: у встроенного оружия свойства СВОИ, даже пустые — иначе оно подхватило бы свойства тяжёлого носителя.
@@ -1791,7 +1791,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // остаток дистанции — иначе диалог открывать не на что.
   const evasionPool = evasionPoolEntry
     ? { successes: evasionPoolEntry.successes,
-        ...poolAffordableHits(evasionPoolEntry, techOpts.targetDodgeMod ?? 0, hitsCount, defenderActor),
+        ...poolAffordableHits(evasionPoolEntry, techOpts.targetDodgeMod ?? 0, hitsCount, defenderActor, wp.evadeCost ?? 1),
         canRecoil: !isMelee && evasionPoolEntry.successes >= 2 && recoilPoolRemaining(defenderActor) > 0,
         // Захват (стр. 12, wdbc-x1nz.2.66.13): «Парируется со штрафом −30
         // (или тратит +3 Успеха от предыдущего Парирования)» — по правилу

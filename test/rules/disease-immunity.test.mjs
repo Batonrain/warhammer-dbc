@@ -78,6 +78,19 @@ describe("actorImmuneToDiseaseEffects / diseaseEffectsSuppressed", () => {
     expect(diseaseEffectsSuppressed(actor.items[0])).toBe(true);
   }, PACK_SCAN_TIMEOUT);
 
+  it("Stuff of Nightmares (Трейт из пака): иммунитет к болезням «иммунитет к ядам/болезням/…», болезнь гасится", () => {
+    const SON = traitDoc("Stuff of Nightmares");
+    expect(SON, "Stuff of Nightmares в packs-src/traits").toBeTruthy();
+    const actor = actorWith([ROT, SON]);
+    expect(actorImmuneToDiseaseEffects(actor)).toBe(true);
+    expect(diseaseEffectsSuppressed(actor.items[0])).toBe(true);
+  }, PACK_SCAN_TIMEOUT);
+
+  it("Stuff of Nightmares у копии в бестиарии без записи Механики опознаётся по имени", () => {
+    const actor = { items: [{ type: "trait", name: "Stuff of Nightmares / Существо из Кошмаров", system: {}, flags: {} }] };
+    expect(actorImmuneToDiseaseEffects(actor)).toBe(true);
+  });
+
   it("Метка Слаанеш (иммунитет к пыткам) болезни не гасит", () => {
     expect(SLAANESH, "Mark of Slaanesh").toBeTruthy();
     const actor = actorWith([ROT, SLAANESH]);

@@ -94,6 +94,64 @@ export async function onTimedEffectExpired(effect, changes) {
   return true;
 }
 
+// ── Грозный Вопль: «рейтинг Страха 2 до конца боя» (Sahara dread-wail-2) ─────
+//
+// Эффект на ЦЕЛИ (чужом акторе — пишет ГМ-релей, gm-relay.mjs::performTargetWrite).
+// Срок — не «до Хода»: метка своя (DREAD_WAIL_FEAR_FLAG), а НЕ timedEffect —
+// sweepTimedEffects снимал бы по метке timedEffect уже на следующем Раунде.
+// Снимается вместе с боем (clearDreadWailFear ← deleteCombat). «upgrade»: два
+// источника Страха не складываются, рейтинг 2 — «не ниже 2» (AGENTS.md).
+export const DREAD_WAIL_FEAR_FLAG = "dreadWailFear";
+
+/** Данные эффекта Страха 2 до конца боя (чистая функция). */
+export function dreadWailFearEffectData(combat = null) {
+  return {
+    name: "Грозный Вопль — рейтинг Страха 2",
+    img: "icons/svg/terror.svg",
+    system: { changes: [{ key: "system.fearRating", type: "upgrade", value: 2, phase: expectedPhase("system.fearRating"), priority: 0 }] },
+    flags: { [NS]: { [DREAD_WAIL_FEAR_FLAG]: { combatId: combat?.id ?? "" } } }
+  };
+}
+
+const dreadWailFearEffectsOf = actor => [...(actor?.effects ?? [])].filter(e =>
+  (e.getFlag?.(NS, DREAD_WAIL_FEAR_FLAG) ?? e.flags?.[NS]?.[DREAD_WAIL_FEAR_FLAG]));
+
+/** Наложить Страх 2 на цель до конца текущего боя; повторное попадание заменяет прежний эффект. */
+export async function grantDreadWailFear(actor) {
+  const combat = globalThis.game?.combat?.started ? globalThis.game.combat : null;
+  const old = dreadWailFearEffectsOf(actor).map(e => e.id).filter(Boolean);
+  if (old.length) await actor.deleteEmbeddedDocuments("ActiveEffect", old);
+  await actor.createEmbeddedDocuments("ActiveEffect", [dreadWailFearEffectData(combat)]);
+  // Метка-Состояние «Страх от вопля» (condition-mirrors.mjs) зеркалит этот флаг.
+  await actor.setFlag(NS, "dreadWailFeared", true);
+}
+
+/**
+ * Конец боя: снять Страх 2 Грозного Вопля у участников и у всех токенов сцены
+ * этого боя (волна бьёт и тех, кто в бой не вписан). Эффект другого боя не
+ * трогается; выданный вне боя (combatId "") уходит с первым же концом боя.
+ */
+export async function clearDreadWailFear(combat) {
+  const actors = new Set();
+  for (const c of combat?.combatants ?? []) if (c?.actor) actors.add(c.actor);
+  for (const t of combat?.scene?.tokens ?? []) if (t?.actor) actors.add(t.actor);
+  for (const actor of actors) {
+    const mine = dreadWailFearEffectsOf(actor).filter(e => {
+      const f = e.getFlag?.(NS, DREAD_WAIL_FEAR_FLAG) ?? e.flags?.[NS]?.[DREAD_WAIL_FEAR_FLAG];
+      return !f?.combatId || f.combatId === combat.id;
+    });
+    // Старая «вечная» метка (до появления эффекта она нигде не снималась) уходит и без эффекта.
+    if (!mine.length) {
+      if (!dreadWailFearEffectsOf(actor).length && actor.getFlag?.(NS, "dreadWailFeared")) await actor.unsetFlag(NS, "dreadWailFeared");
+      continue;
+    }
+    await actor.deleteEmbeddedDocuments("ActiveEffect", mine.map(e => e.id).filter(Boolean));
+    if (!dreadWailFearEffectsOf(actor).length && actor.getFlag?.(NS, "dreadWailFeared")) {
+      await actor.unsetFlag(NS, "dreadWailFeared");
+    }
+  }
+}
+
 /** Начало Хода актора: снять его устаревшие временные эффекты (страховка к onTimedEffectExpired). */
 export async function sweepTimedEffects(actor, combat) {
   const stale = timedEffectsOf(actor).filter(e => {

@@ -18,7 +18,7 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { statusApplyFields } from "./status-resist.mjs";
-import { writeToTarget } from "./gm-relay.mjs";
+import { writeToTarget, dealDamageToTarget } from "./gm-relay.mjs";
 import { sizeOf } from "../rules/predicates.mjs";
 
 /**
@@ -81,14 +81,14 @@ export async function resolveKnockdownSuccess(actor, { deg, target } = {}) {
     if (apply) {
       const roll = await new Roll("1d5").evaluate();
       const dmg = roll.total + sb;
-      const { applyDamageToActor } = await import("./damage.mjs");
-      await applyDamageToActor(target, {
+      // Цель обычно чужой NPC — урон применяет ГМ (combat/gm-relay.mjs::dealDamageToTarget).
+      const dealt = await dealDamageToTarget(target, {
         rawDamage: dmg, penetration: 0, damageType: "impact", primitive: true,
         hitLocation: "Торс", melee: true,
         attackerName: actor.name, attackerUuid: actor.uuid, weaponName: "Повалить"
-      });
-      await writeToTarget(target, { kind: "addFatigue", amount: 1 }, actor);
-      sections.push(`<div class="roll-threshold">5+ Успехов: ${esc(target.name)} получает <b>${dmg}</b> I(Cr) Dmg (1d5+S.b, Primitive) и 1 Усталости.</div>`);
+      }, actor, "contact");
+      if (dealt) await writeToTarget(target, { kind: "addFatigue", amount: 1 }, actor);
+      if (dealt) sections.push(`<div class="roll-threshold">5+ Успехов: ${esc(target.name)} получает <b>${dmg}</b> I(Cr) Dmg (1d5+S.b, Primitive) и 1 Усталости.</div>`);
     }
   }
 

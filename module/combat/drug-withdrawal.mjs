@@ -24,25 +24,40 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { esc } from "../helpers/utils.mjs";
 import {
-  WITHDRAWAL_FLAG, addictedDrugs, drugKey, parseFrequency, periodBoundaries, freshEntry,
+  WITHDRAWAL_FLAG, addictionRecords, addictionSnapshot, drugKey, parseFrequency, periodBoundaries, freshEntry,
   readWithdrawalEntries, breakTestMod, parsePenaltyMods, formatMod
 } from "../rules/drug-withdrawal.mjs";
 
 const NS = "warhammer-dbc";
 
-/** Доза принята (или зависимость только что возникла): отсчёт частоты приёма с нуля. */
+/**
+ * Персонаж зависим от препарата (task-9717): запись флага АКТОРА-получателя, а не
+ * поле предмета — удалённый флакон зависимость не снимает, доза от другого
+ * персонажа ложится на получателя. Отсчёт частоты приёма идёт с `now` с нуля:
+ * это же вызывается, когда доза принята (штраф снят, периоды обнулены).
+ * Снимок настроек Зависимости берётся с предмета, если у него она заведена;
+ * иначе остаётся прежний снимок записи.
+ */
 export async function startWithdrawal(actor, item, now = globalThis.game?.time?.worldTime ?? 0) {
   if (!actor?.setFlag) return;
-  try { await actor.setFlag(NS, WITHDRAWAL_FLAG, { [drugKey(item)]: freshEntry(now) }); }
+  const key = drugKey(item);
+  const prev = readWithdrawalEntries(actor)[key];
+  const add = item?.system?.addiction;
+  const addiction = add?.hasAddiction ? addictionSnapshot(add) : (prev?.addiction ?? {});
+  const entry = { ...freshEntry(now), addicted: true, name: item?.name ?? prev?.name ?? key, addiction };
+  try { await actor.setFlag(NS, WITHDRAWAL_FLAG, { [key]: entry }); }
   catch (e) { console.warn("warhammer-dbc | зависимость: не записать отсчёт частоты приёма", e); }
 }
 
-/** Зависимость снята: запись не нужна. null (а не удаление ключа) — setFlag сливает объекты. */
-export async function endWithdrawal(actor, item) {
-  if (!actor?.setFlag || readWithdrawalEntries(actor)[drugKey(item)] == null) return;
-  // Вторая зависимая стопка того же препарата ещё держит счёт (запись общая по названию).
-  if (addictedDrugs(actor.items).some(i => i.id !== item.id && drugKey(i) === drugKey(item))) return;
-  try { await actor.setFlag(NS, WITHDRAWAL_FLAG, { [drugKey(item)]: null }); }
+/**
+ * Зависимость снята — запись не нужна. `drug` — предмет или ключ препарата (у
+ * зависимости от удалённого препарата предмета уже нет). null (а не удаление
+ * ключа) — setFlag сливает объекты.
+ */
+export async function endWithdrawal(actor, drug) {
+  const key = drugKey(drug);
+  if (!actor?.setFlag || readWithdrawalEntries(actor)[key] == null) return;
+  try { await actor.setFlag(NS, WITHDRAWAL_FLAG, { [key]: null }); }
   catch (e) { console.warn("warhammer-dbc | зависимость: не снять отсчёт", e); }
 }
 
@@ -71,24 +86,17 @@ async function chat(actor, header, body, rolls = []) {
  * недели — несколько периодов, а не один).
  */
 export async function drugWithdrawalClock(actor, { from, to }) {
-  const drugs = addictedDrugs(actor.items);
-  if (!drugs.length) return;
-  const entries = readWithdrawalEntries(actor);
-  const seen = new Set();
-  for (const item of drugs) {
-    const key = drugKey(item);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    const add = item.system.addiction;
+  const records = addictionRecords(actor.items, readWithdrawalEntries(actor));
+  if (!records.length) return;
+  for (const { key, name, entry, add } of records) {
     const period = parseFrequency(add.frequency);
     if (!period) continue;
-    const entry = entries[key];
-    if (!entry) {
-      // Метки дозы нет (зависимость поставлена до часов или вручную): отсчёт — с
-      // КОНЦА этого отрезка. С начала нельзя: после большого сдвига Календаря
-      // штраф включился бы задним числом, а тест на срыв сразу открылся бы с
-      // бонусом +10 за каждый «прожитый» период (ревью wdbc-gyqf2).
-      await startWithdrawal(actor, item, Number(to));
+    if (entry.lastDose == null) {
+      // Метки дозы нет (зависимость перенесена миграцией или поставлена вручную):
+      // отсчёт — с КОНЦА этого отрезка. С начала нельзя: после большого сдвига
+      // Календаря штраф включился бы задним числом, а тест на срыв сразу открылся
+      // бы с бонусом +10 за каждый «прожитый» период (ревью wdbc-gyqf2).
+      await actor.setFlag(NS, WITHDRAWAL_FLAG, { [key]: { ...entry, ...freshEntry(Number(to)) } });
       continue;
     }
     // Бьют только границы позже метки «обработано до»: откат Календаря ничего не
@@ -119,7 +127,7 @@ export async function drugWithdrawalClock(actor, { from, to }) {
       }
     }
     if (!lines.length) continue;
-    await chat(actor, `${rollIcon("warn", "#d9a066")}${esc(actor.name)} — зависимость: ${esc(item.name)}`,
+    await chat(actor, `${rollIcon("warn", "#d9a066")}${esc(actor.name)} — зависимость: ${esc(name)}`,
       lines.map(l => `<div class="roll-threshold">${l}</div>`).join(""), rolls);
   }
 }

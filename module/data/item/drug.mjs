@@ -54,7 +54,11 @@ export class DrugData extends foundry.abstract.TypeDataModel {
       hasAfterEffect: new BooleanField({ initial: false, label: "Есть пост-эффект" }),
       addiction: new SchemaField({
         hasAddiction: new BooleanField({ initial: false, label: "Вызывает зависимость" }),
-        isAddicted:   new BooleanField({ initial: false, label: "Зависимость есть" }),
+        // УСТАРЕЛО (task-9717, 26.10.2026): зависимость персонажа хранится флагом
+        // АКТОРА flags.warhammer-dbc.drugWithdrawal (rules/drug-withdrawal.mjs), поле
+        // никто не читает и не пишет. Оставлено, чтобы миграция
+        // migrations/drug-addiction-flag.mjs увидела старые данные у выданных копий.
+        isAddicted:   new BooleanField({ initial: false, label: "Зависимость есть (устарело)" }),
         minDose:      num(0, "Доз до зависимости"),
         testChar:     new StringField({ initial: "t", label: "Характеристика теста" }),
         testMod:      num(0, "Модификатор теста"),

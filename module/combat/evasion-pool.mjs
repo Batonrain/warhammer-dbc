@@ -89,16 +89,18 @@ export function getEvasionPool(defender, attackerUuid) {
  *  Жизни, см. DANCE_OF_LIFE выше) + 1 за каждые полные −10 штрафа этой атаки
  *  сверх штрафа атаки, породившей пул. `actor` опционален — без него (старые
  *  вызовы/тесты) поведение не меняется, база остаётся 2. */
-export function poolHitCost(basePenalty, thisPenalty, actor = null) {
+export function poolHitCost(basePenalty, thisPenalty, actor = null, evadeCost = 1) {
   const base = actor && hasRuleFlag(actor, DANCE_OF_LIFE) ? 1 : 2;
   const worse = Math.max(0, (basePenalty || 0) - (thisPenalty || 0));
-  return base + Math.floor(worse / 10);
+  // Огневая Клеть (Талант Стрелка): «цель тратит вдвое больше Успехов для Уклонения от этой атаки» —
+  // множитель evadeCost ложится на всю цену попадания, в том числе из пула.
+  return (base + Math.floor(worse / 10)) * Math.max(1, Number(evadeCost) || 1);
 }
 
 /** Сколько попаданий текущей атаки можно снять остатком пула, и по какой цене. */
-export function poolAffordableHits(entry, thisPenalty, hitsCount, actor = null) {
+export function poolAffordableHits(entry, thisPenalty, hitsCount, actor = null, evadeCost = 1) {
   if (!entry) return { hits: 0, cost: 0, perHit: 0 };
-  const perHit = poolHitCost(entry.penalty, thisPenalty, actor);
+  const perHit = poolHitCost(entry.penalty, thisPenalty, actor, evadeCost);
   const hits = Math.min(hitsCount, Math.floor(entry.successes / perHit));
   return { hits, cost: hits * perHit, perHit };
 }
@@ -176,7 +178,9 @@ export async function performPoolSpend(defender, {
   // Штраф, по которому считается цена снятия. Обычно dodgeMod (см. шапку);
   // Захват снимается Парированием — parryMod, где −30 Приёма = +3 Успеха
   // (стр. 12, wdbc-t3c3t.6).
-  costPenalty = dodgeMod
+  costPenalty = dodgeMod,
+  // Огневая Клеть: множитель цены снятия попадания (по умолчанию 1)
+  evadeCost = 1
 } = {}) {
   const entry = getEvasionPool(defender, attackerUuid);
   if (!entry) {
@@ -187,7 +191,7 @@ export async function performPoolSpend(defender, {
     return;
   }
 
-  const { hits: negated, cost, perHit } = poolAffordableHits(entry, costPenalty, hitsCount, defender);
+  const { hits: negated, cost, perHit } = poolAffordableHits(entry, costPenalty, hitsCount, defender, evadeCost);
   await spendFromPool(defender, attackerUuid, cost);
   const remaining = hitsCount - negated;
 

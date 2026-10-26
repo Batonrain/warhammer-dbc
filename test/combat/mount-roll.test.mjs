@@ -251,3 +251,29 @@ describe("Уклонение верхом: несколько попаданий
     expect(card).toContain("2 попадания всё ещё проходит");
   });
 });
+
+// Огневая Клеть (Талант Стрелка, «цель тратит вдвое больше Успехов для Уклонения»,
+// Sahara covering-fire-hip-shooting п.2): цена действует и в Уклонении верхом.
+describe("Уклонение верхом: Огневая Клеть удваивает цену Успеха", () => {
+  async function rollDodge(evadeCost) {
+    resolveMountAs(beast());
+    const r = rider();
+    // Ag 40, untrained −20, по всаднику −10 → Порог 10; rv=5 → 1 степень успеха.
+    const promise = showMountedDodgeDialog(r, 0, 3, "", "", evadeCost);
+    await flush();
+    captured.nextRoll = 5;
+    await captured.dialog.buttons.roll.callback(fakeHtml({ "#md-target": "rider" }));
+    await promise;
+    return captured.chat[0].content;
+  }
+
+  it("обычная цена: 1 степень снимает 1 попадание", async () => {
+    expect(await rollDodge(1)).toContain("снимает 1 из 3 попадания");
+  });
+
+  it("цена 2: той же степени не хватает ни на одно попадание", async () => {
+    const card = await rollDodge(2);
+    expect(card).not.toContain("снимает 1 из 3");
+    expect(card).toContain("3 попадания всё ещё проходит");
+  });
+});

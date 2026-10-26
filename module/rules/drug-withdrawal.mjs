@@ -26,11 +26,20 @@
 //     каждого периода под штрафом, то есть на каждой границе last + j·частота;
 //   • новая доза — зависимость удовлетворена: штраф снят, счёт периодов с нуля.
 //
-//  Состояние — флаг АКТОРА flags.warhammer-dbc.drugWithdrawal: { <название
-//  препарата>: { lastDose, doneTo, tested } } (worldTime, секунды). Ключ — то же
-//  название, что у недельного журнала доз (rules/drug-doses.mjs::doseKey):
-//  стопки одного наркотика считаются вместе. Не поле схемы предмета: предмет
-//  может кончиться и быть удалён, а зависимость остаётся.
+//  Состояние И САМА ЗАВИСИМОСТЬ — флаг АКТОРА flags.warhammer-dbc.drugWithdrawal:
+//  { <название препарата>: { addicted, name, addiction, lastDose, doneTo, tested } }
+//  (worldTime, секунды). Ключ — то же название, что у недельного журнала доз
+//  (rules/drug-doses.mjs::doseKey): стопки одного наркотика считаются вместе.
+//  `addicted: true` — персонаж зависим от этого препарата; `addiction` — снимок
+//  настроек Зависимости препарата на момент возникновения (частота, штраф,
+//  урон за период…), чтобы штраф и часы жили и после того, как предмет кончился
+//  и удалён. Пока предмет на листе, настройки берутся с него (правка ГМа
+//  видна сразу); нет предмета — из снимка.
+//  Раньше зависимость хранилась полем system.addiction.isAddicted ПРЕДМЕТА-
+//  препарата (wdbc-gyqf2): пустой удалённый флакон молча снимал штраф, а доза от
+//  другого персонажа писала зависимость в предмет колющего, а не получателя
+//  (task-9717, решение владельца 26.10.2026). Поле схемы осталось только как
+//  источник для миграции migrations/drug-addiction-flag.mjs.
 //
 //  ЛИСТ: файл импортируется из sources.mjs (правила штрафа), поэтому он не должен
 //  тянуть ничего, что ведёт обратно к реестру источников (AGENTS.md, wdbc-795h):
@@ -54,7 +63,25 @@ const MAX_BOUNDARIES = 50;
  * «a.b» во вложенность), поэтому в самодельных названиях она заменяется; у
  * книжных препаратов точек в названиях нет, ключи совпадают с doseKey.
  */
-export const drugKey = item => String(item?.name ?? "").trim().replace(/\./g, "·");
+export const drugKey = item =>
+  String((typeof item === "string" ? item : item?.name) ?? "").trim().replace(/\./g, "·");
+
+/**
+ * Снимок настроек Зависимости препарата для флага актора: всё, кроме устаревшего
+ * поля isAddicted. Копия через JSON — предмет Foundry отдаёт живые вложенные
+ * объекты, а флаг обязан быть самостоятельным.
+ */
+export function addictionSnapshot(add) {
+  const copy = JSON.parse(JSON.stringify(add ?? {}));
+  delete copy.isAddicted;
+  return copy;
+}
+
+/** Запись состояния — зависимость (а не только остаток отсчёта прежних версий). */
+export const isAddictedEntry = entry => entry?.addicted === true;
+
+/** Зависим ли актор от препарата: `drug` — предмет или ключ; `entries` — флаг актора. */
+export const isAddictedTo = (entries, drug) => isAddictedEntry(entries?.[drugKey(drug)]);
 
 /** Модификатор со знаком для текста карточки: «−50», «+10». */
 export const formatMod = n => (n < 0 ? `−${Math.abs(n)}` : `+${n}`);
@@ -193,9 +220,23 @@ export function parsePenaltyMods(text) {
 
 // ── Правила штрафа для конвейера (источник «drugWithdrawal», sources.mjs) ───
 
-/** Зависимые препараты: type drug, зависимость есть и подтверждена тестом. */
-export const addictedDrugs = items =>
-  [...(items ?? [])].filter(i => i?.type === "drug" && i.system?.addiction?.hasAddiction && i.system?.addiction?.isAddicted);
+/**
+ * Зависимости актора: [{ key, name, entry, add, item }] — по записям флага с
+ * `addicted: true`. `add` — настройки Зависимости: с предмета того же названия на
+ * листе (если у него зависимость заведена), иначе снимок из записи — удалённый
+ * флакон зависимость не снимает. `item` — живой предмет или null. Стопки одного
+ * наркотика — одна зависимость (ключ — название).
+ */
+export function addictionRecords(items, entries) {
+  const list = [...(items ?? [])];
+  const out = [];
+  for (const [key, entry] of Object.entries(entries ?? {})) {
+    if (!isAddictedEntry(entry)) continue;
+    const item = list.find(i => i?.type === "drug" && i.system?.addiction?.hasAddiction && drugKey(i) === key) ?? null;
+    out.push({ key, name: item?.name ?? entry.name ?? key, entry, add: item ? item.system.addiction : (entry.addiction ?? {}), item });
+  }
+  return out;
+}
 
 /**
  * Автоматические модификаторы штрафа: по одному правилу на наркотик, пока доза
@@ -204,18 +245,13 @@ export const addictedDrugs = items =>
  */
 export function withdrawalPenaltyRules(items, entries, now) {
   const out = [];
-  const seen = new Set();
-  for (const item of addictedDrugs(items)) {
-    const key = drugKey(item);
-    if (seen.has(key)) continue;
-    const add = item.system.addiction;
-    if (!isUnderPenalty(entries?.[key], parseFrequency(add.frequency), now)) continue;
+  for (const { key, entry, add } of addictionRecords(items, entries)) {
+    if (!isUnderPenalty(entry, parseFrequency(add.frequency), now)) continue;
     const { mods } = parsePenaltyMods(add.penaltyMods);
     if (!mods.length) continue;
-    seen.add(key);
     const label = `Зависимость (${key}): без дозы`;
     out.push({
-      id: `drug.withdrawal.${item.id ?? key}`, label, when: {},
+      id: `drug.withdrawal.${key}`, label, when: {},
       effects: mods.map(m => ({ kind: "rollBonus", target: m.target, value: m.value, label, auto: true }))
     });
   }

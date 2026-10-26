@@ -15,6 +15,31 @@ import { SCATTER_ROSE } from "./scatter.mjs";
 import { reducedScatterDistance } from "../rules/throwing-talents.mjs";
 import { esc } from "../helpers/utils.mjs";
 
+const NS = "warhammer-dbc";
+/** Флаг сообщения: исправленное смещение { dist, dirLabel, dirIcon } — переживает перерисовку карточки. */
+export const SCATTER_FLAG = "grenadierScatter";
+
+/**
+ * Наложить сохранённое смещение на разметку карточки. Нужно потому, что отметка «раз на карточку»
+ * (card-once.mjs) пишет флаг на сообщение и тем перерисовывает карточку из исходного content —
+ * без этого исправленные дистанция и направление пропадали бы сразу после нажатия.
+ */
+export function applyScatterOverride(root, saved) {
+  if (!saved || !root?.querySelector) return;
+  if (saved.dist != null) { const el = root.querySelector(".wh-scatter-dist"); if (el) el.textContent = String(saved.dist); }
+  if (saved.dirLabel != null) { const el = root.querySelector(".wh-scatter-dir"); if (el) el.textContent = saved.dirLabel; }
+  if (saved.dirIcon != null) { const el = root.querySelector(".wh-scatter-dir-icon"); if (el) el.textContent = saved.dirIcon; }
+}
+
+/** Записать исправленное смещение в сообщение (автору/ГМу; чужому клиенту — только DOM, как раньше). */
+export async function persistScatter(message, patch) {
+  if (!message?.update || message.isOwner === false) return false;
+  const data = {};
+  for (const [k, v] of Object.entries(patch)) data[`flags.${NS}.${SCATTER_FLAG}.${k}`] = v;
+  await message.update(data);
+  return true;
+}
+
 const say = html => ChatMessage.create({
   speaker: ChatMessage.getSpeaker?.() ?? {},
   content: `<div class="wh-roll-result"><div class="roll-outcome">${html}</div></div>`

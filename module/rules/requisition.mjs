@@ -21,10 +21,11 @@
 //    реквизируется с +10 вместо −10)». Пример книги однозначен: ступень
 //    сдвигается к ЛЁГКОЙ стороне на две, упор — первая ступень (+10).
 //
-//  Таблица Редкости → сложность есть и в constants/craft.mjs::rarityDiff
-//  («как реквизиция»), но там формула −10×R — она совпадает с книгой лишь на
-//  −3…+3, а на краях (−5/−4, +4/+5: +70/+50 и −50/−70) нет. Для реквизиции
-//  берётся таблица книги, крафт не трогается.
+//  Таблица Редкости → сложность одна на реквизицию и крафт: она лежит в
+//  constants/craft.mjs (RARITY_DIFFS, rarityDiff) и берётся оттуда. Раньше у
+//  крафта стояла формула −10×R, совпадавшая с книгой лишь на −3…+3 (на краях
+//  книга даёт +70/+50 и −50/−70); исправлено, расхождение стережёт
+//  test/rules/requisition-vs-data.test.mjs.
 //
 //  Чистая логика без Foundry. Файл НЕ источник правил (sources.mjs его не
 //  импортирует): правила-галочки Талантов лежат в rules/requisition-talents.mjs.
@@ -32,6 +33,7 @@
 
 import { itemHasName } from "./predicates.mjs";
 import { ITEM_QUALITY, ITEM_QUALITY_LIST } from "../constants/quality.mjs";
+import { RARITY_DIFFS } from "../constants/craft.mjs";
 import { EQUIP_SHOP_PACKS } from "./equip-shop.mjs";
 
 /**
@@ -45,10 +47,7 @@ export const REQUISITION_PACKS = Object.freeze([
 ]);
 
 /** Редкость (знаковый модификатор system.availability) → модификатор Порога. */
-export const RARITY_MODS = Object.freeze({
-  "-5": 70, "-4": 50, "-3": 30, "-2": 20, "-1": 10, "0": 0,
-  "1": -10, "2": -20, "3": -30, "4": -50, "5": -70
-});
+export const RARITY_MODS = RARITY_DIFFS;
 
 export const RARITY_MIN = -5;
 export const RARITY_MAX = 5;

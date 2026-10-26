@@ -566,7 +566,7 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
          data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}"
          data-dodge-mod="${dodgeMod}" data-dodge-mod-recoil="${dodgeModRecoil ?? ""}" data-parry-mod="${parryMod}"
          data-target-vehicle="${targetIsVehicle ? 1 : 0}" data-flexible="${wp.flexible ? 1 : 0}"
-         data-force-reroll="${forcedDefenceReroll}" data-melee="${isMelee ? 1 : 0}">
+         data-force-reroll="${forcedDefenceReroll}" data-melee="${isMelee ? 1 : 0}" data-evade-cost="${wp?.evadeCost ?? 1}">
          💰 Пул (${pool.successes} Усп.): снять ${pool.hits} из ${hitsCount} за ${pool.cost}
        </button>`
     : "";

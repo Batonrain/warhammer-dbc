@@ -52,7 +52,7 @@ import { resolveFreeAttackClick } from "./combat/free-attack.mjs";
 import { clearOverwatch, resolveOverwatchFireClick, resolveOverwatchHairTriggerClick } from "./combat/overwatch.mjs";
 import { resolveAssassinStrikeClick } from "./combat/assassin-strike.mjs";
 import { resolveTankHunterClick, clearTankHunterMemory } from "./combat/tank-hunter.mjs";
-import { resolveTerrorSniperClick, rollTerrorSniperSuppression } from "./combat/terror-sniper.mjs";
+import { resolveTerrorSniperClick, terrorSuppressOnCard, terrorSuppressKey } from "./combat/terror-sniper.mjs";
 import { pyromaniacCoverPenalty, torrentPlacementProblem } from "./rules/flamer-talents.mjs";
 import { coverApForToken } from "./combat/cover.mjs";
 import { processPrismaTurnStart } from "./combat/prisma.mjs";
@@ -138,7 +138,7 @@ import { liftDivineProtection, wakeDivineProtected } from "./sheets/tabs/death.m
 import { processConditionTurnStart, processConditionTurnEnd, sweepApplierTurnEnd } from "./combat/condition-ticks.mjs";
 import { processVacuumTurnStart } from "./combat/vacuum.mjs";
 import { sweepConditionDurations, onConditionEffectExpired } from "./combat/condition-effects.mjs";
-import { sweepTimedEffects, onTimedEffectExpired } from "./combat/timed-effects.mjs";
+import { sweepTimedEffects, onTimedEffectExpired, clearDreadWailFear } from "./combat/timed-effects.mjs";
 import { conditionExpiryLine, postConditionCard, setBurningDamageFormula, rollConditionCharTest } from "./combat/condition-ticks.mjs";
 import { applyRadHit, resolveCombatRadiation } from "./combat/radiation.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
@@ -200,6 +200,8 @@ import { psychicResistReroll } from "./rules/psychic-resist-reroll.mjs";
 import { expireCommandsAtTurnStart, clearCommandsOnCombatEnd, commandMoraleOn } from "./combat/command-state.mjs";
 import { syncArmorFieldShields } from "./combat/armor-field-shield.mjs";
 import { sparksSwap, igniterFollowUp } from "./rules/gunsmith-talents.mjs";
+import { applyDamageOverrides, recordDamageOverride, DMG_OVERRIDES_FLAG } from "./combat/damage-override.mjs";
+import { applyScatterOverride, SCATTER_FLAG } from "./combat/grenadier.mjs";
 import { ogrynRegenCombatRound } from "./combat/ogryn-regen.mjs";
 import { decayHaywireFields, onDiscordantFieldEntered, onDiscordantFieldLeft } from "./combat/bone-head.mjs";
 
@@ -341,6 +343,13 @@ export function registerHooks() {
 
   // ── Обработчики кнопок в чате ────────────────────────────────────────────
   Hooks.on("renderChatMessageHTML", (message, html, data) => {
+
+    // Правки урона попаданий (Кубик → Успехи, Искры) лежат во флаге сообщения, а не только в DOM нажавшего
+    // клиента: накладываем их ДО привязки обработчиков, чтобы следующая правка считала от исправленного числа
+    // и ГМ, применяющий урон со своей карточки, видел то же число (combat/damage-override.mjs).
+    applyDamageOverrides(html, message?.flags?.["warhammer-dbc"]?.[DMG_OVERRIDES_FLAG]);
+    // Смещение гранаты после Гренадера — тоже из флага сообщения (иначе отметка «раз на карточку» перерисует старое).
+    applyScatterOverride(html, message?.flags?.["warhammer-dbc"]?.[SCATTER_FLAG]);
 
     // Огонь Души (module/combat/soulfire.mjs) — кнопка силы рядом с каждой
     // кнопкой урона E(Fl), если атакующий — свой псайкер с этой силой.
@@ -524,7 +533,7 @@ export function registerHooks() {
         // карточке одна, а знает о седле только сама цель, поэтому развилка
         // здесь: карточка на момент броска ещё не знает, в кого попадут.
         if (actor.system?.mount?.uuid) {
-          const handled = await showMountedDodgeDialog(actor, extraMod, hitsCount, attackerUuid, attackId);
+          const handled = await showMountedDodgeDialog(actor, extraMod, hitsCount, attackerUuid, attackId, parseInt(ds.evadeCost || "1"));
           if (handled !== null) return;
         }
         await _performDodge(actor, { extraMod, forcedReroll: ds.forceReroll || "", hitsCount, attackerUuid, isMelee: ds.melee === "1", burst, attackerIsHorde, attackId, itemUuid, grappleAttack: ds.grapple === "1", evadeCost: parseInt(ds.evadeCost || "1") });
@@ -1182,6 +1191,35 @@ export function registerHooks() {
       });
     });
 
+    // Пируэт против Тарана (Талант Избегания): цель — выбранный токен, таранящий — из карточки.
+    html.querySelectorAll(".wh-ram-pirouette-btn").forEach(btn => {
+      if (cardOnceUsed(message, "ramPirouetteUsed")) btn.disabled = true;
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const attackerUuid = el.dataset.attackerUuid;
+        const actor = requireControlledActor("⚠️ Выберите токен цели Тарана на сцене!");
+        if (!actor) return;
+        const rammer = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
+        if (!rammer) return ui.notifications.warn("⚠️ Таранящая машина не найдена.");
+        const { resolveRamPirouette } = await import("./combat/opposed-contest.mjs");
+        // Один бросок на карточку Тарана (иначе провал можно было бы перебрасывать до успеха).
+        const done = await runCardOnce(message, "ramPirouetteUsed", async () => !!(await resolveRamPirouette(actor, rammer)),
+          "Пируэт против этого Тарана уже проходили.");
+        if (done) el.disabled = true;
+      });
+    });
+
+    // Ускользнуть в Борьбе и Состязаниях: переброс проваленного теста инициатора (combat/techniques.mjs).
+    html.querySelectorAll(".wh-slip-contest-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const { slipAwayContestReroll } = await import("./combat/techniques.mjs");
+        if (await slipAwayContestReroll(el.dataset.contestId)) el.disabled = true;
+      });
+    });
+
     html.querySelectorAll(".wh-swerve-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
@@ -1267,6 +1305,8 @@ export function registerHooks() {
           flexible: el.dataset.flexible === "1",
           forcedDefenceReroll: el.dataset.forceReroll || "",
           isMelee: el.dataset.melee === "1",
+          // Огневая Клеть: цена снятия из пула вдвое выше (attack-card.mjs кладёт data-evade-cost)
+          evadeCost: parseInt(el.dataset.evadeCost || "1"),
           // Захват Парированием (wdbc-t3c3t.6): цена по parryMod, не dodgeMod.
           ...(el.dataset.costByParry === "1" ? { costPenalty: parseInt(el.dataset.parryMod || "0") } : {})
         });
@@ -1322,6 +1362,14 @@ export function registerHooks() {
         if (!actor?.isOwner) {
           return ui.notifications.warn("Тест проходит владелец всадника (или ГМ).");
         }
+        // Кнопка стоит в карточке ДО Избеганий, а Талант работает после них и тратит
+        // попытку из ½P.b за Раунд — нажатая рано, она сожгла бы попытку впустую.
+        const sure = await foundry.applications.api.DialogV2.confirm({
+          window: { title: "Железный Скакун" },
+          content: "<p>Железный Скакун работает ПОСЛЕ Избеганий и тратит одну попытку из ½P.b за Раунд. Избегание уже брошено и попадание всё же пришлось на всадника?</p>",
+          rejectClose: false
+        });
+        if (!sure) return;
         await ironMountTest(actor);
       });
     });
@@ -1511,7 +1559,7 @@ export function registerHooks() {
     // combat/attack-card.mjs уже посчитал итог с учётом Экстремального/
     // Выгорания/доп. кубов, здесь только «кубик минус старое, плюс Успехи».
     html.querySelectorAll(".wh-dmg-swap-btn").forEach(btn => {
-      btn.addEventListener("click", (ev) => {
+      btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
         const el = ev.currentTarget;
         const ds = el.dataset;
@@ -1523,7 +1571,9 @@ export function registerHooks() {
         const b = applyBtn.querySelector("b");
         if (b) b.textContent = String(next);
         el.disabled = true;
-        el.textContent = `🎲 Кубик заменён — новый урон ${next}`;
+        const text = `🎲 Кубик заменён — новый урон ${next}`;
+        el.textContent = text;
+        await recordDamageOverride(message, html, el, "wh-dmg-swap-btn", { damage: next, text });
       });
     });
 
@@ -1552,6 +1602,7 @@ export function registerHooks() {
         const card = el.closest(".wh-roll-result") ?? html;
         card.querySelectorAll(".wh-sparks-btn").forEach(s => { s.disabled = true; });
         el.textContent = text;
+        await recordDamageOverride(message, html, el, "wh-sparks-btn", { damage: next, text, disableCardWide: ".wh-sparks-btn" });
         try {
           await roll.toMessage({ speaker: ChatMessage.getSpeaker?.() ?? {}, flavor: "Искры (Талант Оружейника): 2d10" });
         } catch { /* карточка уже обновлена в DOM; сообщение о броске — прозрачность, не механика */ }
@@ -2875,22 +2926,36 @@ export function registerHooks() {
       const root = el.closest(".roll-allout-note");
       return { distEl: root?.querySelector(".wh-scatter-dist"), dirEl: root?.querySelector(".wh-scatter-dir"), iconEl: root?.querySelector(".wh-scatter-dir-icon") };
     };
+    // «Раз на карточку» держит флаг сообщения (runCardOnce), а не только погашенная кнопка: после F5 и у другого клиента
+    // она остаётся серой (Sahara pyromaniac-20 п.2).
     html.querySelectorAll(".wh-grenadier-reduce-btn").forEach(btn => {
+      if (cardOnceUsed(message, "grenadierReduceUsed")) btn.disabled = true;
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
         const el = ev.currentTarget;
-        el.disabled = true;
-        const { grenadierReduceScatter } = await import("./combat/grenadier.mjs");
-        await grenadierReduceScatter(grenadierNote(el), parseInt(el.dataset.reduce || "0", 10) || 0);
+        const done = await runCardOnce(message, "grenadierReduceUsed", async () => {
+          el.disabled = true;
+          const { grenadierReduceScatter, persistScatter } = await import("./combat/grenadier.mjs");
+          const { to } = await grenadierReduceScatter(grenadierNote(el), parseInt(el.dataset.reduce || "0", 10) || 0);
+          await persistScatter(message, { dist: to });
+          return true;
+        }, "Смещение гранаты с этой карточки уже уменьшали.");
+        if (done) el.disabled = true;
       });
     });
     html.querySelectorAll(".wh-grenadier-reroll-btn").forEach(btn => {
+      if (cardOnceUsed(message, "grenadierRerollUsed")) btn.disabled = true;
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
         const el = ev.currentTarget;
-        el.disabled = true;
-        const { grenadierRerollDirection } = await import("./combat/grenadier.mjs");
-        await grenadierRerollDirection(grenadierNote(el));
+        const done = await runCardOnce(message, "grenadierRerollUsed", async () => {
+          el.disabled = true;
+          const { grenadierRerollDirection, persistScatter } = await import("./combat/grenadier.mjs");
+          const { dir } = await grenadierRerollDirection(grenadierNote(el));
+          await persistScatter(message, { dirLabel: dir.label, dirIcon: dir.icon });
+          return true;
+        }, "Направление смещения с этой карточки уже перебрасывали.");
+        if (done) el.disabled = true;
       });
     });
 
@@ -2905,13 +2970,16 @@ export function registerHooks() {
         if (done) el.disabled = true;
       });
     });
-    html.querySelectorAll(".wh-terror-suppress-btn").forEach(btn => {
+    html.querySelectorAll(".wh-terror-suppress-btn").forEach((btn, rowIndex) => {
+      const rowKey = terrorSuppressKey(rowIndex);
+      if (rowKey && cardOnceUsed(message, rowKey)) btn.disabled = true;
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
         const el = ev.currentTarget;
         const knows = !!el.closest(".wh-terror-row")?.querySelector(".wh-terror-knows-cb")?.checked;
         el.disabled = true;
-        await rollTerrorSniperSuppression(el.dataset.actorUuid, el.dataset.attackerUuid, knows);
+        const done = await terrorSuppressOnCard(message, rowIndex, el.dataset.actorUuid, el.dataset.attackerUuid, knows);
+        if (!done) el.disabled = false;
       });
     });
 
@@ -4091,6 +4159,8 @@ function _attachFateContextMenu(message, html) {
     await clearReformationSongBuffs(combat);
     // Благословение Стали (Sahara 3-cc96 п.3): +1 Качество «до конца следующего боя».
     await clearBlessingOfSteel(combat);
+    // Грозный Вопль (Sahara dread-wail-2): эффект «рейтинг Страха 2 до конца боя» на целях.
+    await clearDreadWailFear(combat);
     // Кровавое Пламя (wdbc-1rno): в отличие от Reformation Song выше, книга
     // прямо ломает оружие по концу боя/сцены — clearBloodFlameBuffs это и
     // делает (не только снимает временные свойства).

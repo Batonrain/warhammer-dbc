@@ -10,7 +10,8 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { actorFor, weaponFor, setTargets, char } from "../support/combat-fixtures.mjs";
 import { _executeAttackRoll } from "../../module/combat/attack.mjs";
-import { hasHussar, sabreSecondAttackBlockReason, armHussarSecondAttack, NS, SABRE_PENDING_FLAG }
+import { hasHussar, sabreSecondAttackBlockReason, armHussarSecondAttack, NS, SABRE_PENDING_FLAG,
+         hussarSecondWeapons, chooseHussarWeapon, activateSabreSecondAttack }
   from "../../module/combat/sabre-second-attack.mjs";
 
 const hussar = () => ({ id: "h", type: "talent", name: "Hussar / Гусар", system: {} });
@@ -81,5 +82,79 @@ describe("Гусар: кнопка второй атаки в карточке �
     captured.dice = [10, 5, 5];
     await _executeAttackRoll(actor, weapon, "ws", 45, "melee", null, { baseKey: "mounted", hussarSecondAttack: true, sabreSecondAttackIsSecond: true });
     expect(card()).not.toContain("wh-sabre-second-attack-btn");
+  });
+});
+
+// Решение владельца 26.10.2026: оружие второй Верховой Атаки Гусара не привязано к
+// оружию первой — окно выбора из рукопашного оружия персонажа.
+describe("Гусар: выбор оружия второй атаки", () => {
+  beforeEach(() => { resetCaptured(); });
+  const melee = (id, name, equipped = true) => ({ id, name, type: "weapon", system: { weaponClass: "melee", equipped } });
+  const bolter = { id: "b", name: "Болтер", type: "weapon", system: { weaponClass: "basic" } };
+  const rider = (...items) => ({ name: "Всадник", items });
+
+  it("кандидаты — рукопашное оружие актора; оружие первой атаки входит всегда", () => {
+    const a = rider(melee("s", "Сабля"), melee("l", "Копьё"), melee("r", "Меч в рюкзаке", false), bolter, hussar());
+    expect(hussarSecondWeapons(a).map(i => i.id)).toEqual(["s", "l"]);       // не надетое оружие не предлагается
+    expect(hussarSecondWeapons(a, "b").map(i => i.id)).toEqual(["s", "l", "b"]);
+    expect(hussarSecondWeapons(rider()).length).toBe(0);
+  });
+
+  it("одно подходящее оружие — окно не нужно; нет оружия — null", async () => {
+    expect((await chooseHussarWeapon(rider(melee("s", "Сабля")), "s")).id).toBe("s");
+    expect(await chooseHussarWeapon(rider(bolter), "")).toBeNull();
+    expect(captured.dialog).toBeNull();
+  });
+
+  it("два и больше — окно с выбором (первое оружие выбрано заранее); выбранное оружие возвращается", async () => {
+    const a = rider(melee("s", "Сабля"), melee("l", "Копьё"));
+    const pending = chooseHussarWeapon(a, "s");
+    await Promise.resolve();
+    expect(captured.dialog.content).toContain('<option value="s" selected>Сабля (первая атака)</option>');
+    expect(captured.dialog.content).toContain('<option value="l">Копьё</option>');
+    await captured.press("go", { querySelector: () => ({ value: "l" }) });
+    expect((await pending).id).toBe("l");
+  });
+
+  it("«Отмена» и закрытое окно — оружие не выбрано (null), вторая атака остаётся взведённой", async () => {
+    const a = rider(melee("s", "Сабля"), melee("l", "Копьё"));
+    const pending = chooseHussarWeapon(a, "s");
+    await Promise.resolve();
+    captured.dismiss();
+    expect(await pending).toBeNull();
+  });
+
+  describe("кнопка карточки", () => {
+    const rider2 = () => {
+      const a = {
+        uuid: "Actor.a", name: "Всадник", items: [melee("s", "Сабля"), melee("l", "Копьё"), hussar()],
+        system: { mount: { uuid: "Actor.horse" } },
+        getFlag: (_s, k) => (k === SABRE_PENDING_FLAG ? { itemId: "", hussar: true, firstTargetUuid: "T1" } : undefined)
+      };
+      a.items.get = id => a.items.find(i => i.id === id);
+      return a;
+    };
+    const aim = uuid => { globalThis.game.user = { ...globalThis.game.user, targets: new Set(uuid ? [{ actor: { type: "character" }, document: { uuid } }] : []) }; };
+
+    it("цель выбрана: у Гусара открывается окно выбора оружия; отказ — атака не открывается", async () => {
+      globalThis.fromUuid = async () => rider2();
+      aim("T2");
+      const pending = activateSabreSecondAttack("Actor.a", "s");
+      await new Promise(r => setTimeout(r, 0));
+      expect(captured.dialog).not.toBeNull();
+      captured.dismiss();
+      expect(await pending).toBeNull();
+      delete globalThis.fromUuid;
+    });
+
+    it("цели нет — отказ ДО окна выбора оружия (незачем выбирать, чтобы услышать «выберите цель»)", async () => {
+      globalThis.fromUuid = async () => rider2();
+      aim(null);
+      await activateSabreSecondAttack("Actor.a", "s");
+      expect(captured.dialog).toBeNull();
+      expect(captured.warnings.join(" ")).toMatch(/выберите цель/);
+      delete globalThis.fromUuid;
+    });
+
   });
 });

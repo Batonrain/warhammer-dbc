@@ -442,7 +442,7 @@ export function enemyTalentsOf(actor) {
  * предикат, читающий ctx, обязан быть здесь.
  */
 export const CTX_DEPENDENT_PREDICATES = new Set([
-  "weaponClass", "charNotIn", "charIn",
+  "weaponClass", "attackMelee", "charNotIn", "charIn",
   "targetHasTrait", "targetLacksCondition", "targetHasCondition",
   "targetHasSize", "targetSizeMax", "targetKeepsNimbleInArmour", "targetHasFaction",
   "targetHasFieldPsyMod", "targetLacksSealedArmour", "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus", "hasHatredTarget",
@@ -650,6 +650,10 @@ export const PREDICATES = {
   // против обычного человека, а не только там, где Размер реально что-то даёт.
   hasSize:       (actor, ctx) => hitSizeOf(actor) !== 0,
   targetHasSize: (actor, ctx) => hitSizeOf(ctx?.targetActor) !== 0,
+  // Атака рукопашная (true) или стрелковая (false) — по режиму самой атаки (ctx.isMelee), а не по классу оружия:
+  // у винтовки есть рукопашный профиль (приклад, штык), и Верный/Выверенный Удар должны работать на нём
+  // (Sahara pyromaniac-20, размерный штраф для рукопашного профиля стрелкового оружия).
+  attackMelee: (actor, ctx, value) => !!ctx?.isMelee === !!value,
   // Размер ЦЕЛИ не больше порога (в той же «таблице попадания», что targetHasSize):
   // `targetSizeMax: -1` — «цель меньше Размера 0». Нужен Талантам В Яблочко/
   // Меткий Стрелок (Стрелок, Sahara 3-5fbf): они снимают часть штрафа за малый

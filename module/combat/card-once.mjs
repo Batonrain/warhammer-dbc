@@ -45,7 +45,14 @@ export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legi
   // Яростный Штурм (Талант Берсерка, combat/furious-assault.mjs): одна дополнительная атака за Реакцию с карточки.
   "furiousAssaultUsed",
   // Ложный Натиск (hooks.mjs, .wh-false-advance-btn): один Финт или Давление с карточки Движения.
-  "falseAdvanceUsed"];
+  "falseAdvanceUsed",
+  // Гренадер (Талант Метания, combat/grenadier.mjs): «уменьшить смещение» и «перебросить направление» — по разу на карточку.
+  "grenadierReduceUsed", "grenadierRerollUsed",
+  // Пируэт против Тарана (combat/opposed-contest.mjs::resolveRamPirouette): один бросок на карточку Тарана.
+  "ramPirouetteUsed",
+  // Снайпер Ужаса: тест Подавления каждого врага из карточки — по разу на врага (строка карточки = номер,
+  // combat/terror-sniper.mjs::terrorSuppressKey; врагов больше TERROR_SUPPRESS_ROWS остаются без общей отметки).
+  ...Array.from({ length: 20 }, (_, i) => `terrorSuppress${i}`)];
 
 const local = new Set();
 const localKey = (message, key) => `${message?.id}:${key}`;

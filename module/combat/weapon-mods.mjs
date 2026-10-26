@@ -95,10 +95,21 @@ export function activeSightId(actor, weapon) {
  * этот список, а не getInstalledMods, — иначе «бесполезный» или невыбранный мод
  * тихо работал бы в одном месте и молчал в другом.
  */
-export function getActiveMods(actor, weapon) {
+export function getActiveMods(actor, weapon, { profile = null } = {}) {
   const sightId = activeSightId(actor, weapon);
-  return getInstalledMods(actor, weapon).filter(m =>
+  let own = getInstalledMods(actor, weapon).filter(m =>
     (!isSightMod(m) || m.id === sightId) && modWornRequirementMet(actor, m));
+  // Тандем (rules/tandem.mjs, Sahara system-destroyed п.2): выстрел из профиля-тандема — это выстрел встроенного
+  // оружия, поэтому его моды (они остались на листе, привязанные к id ушедшего предмета) действуют вместе с модами
+  // тяжёлого носителя. Прицел встроенного выбирается по его собственному сохранённому флагу.
+  const guestId = profile?.tandem ? (profile.tandemGuestId || profile.tandemSource?._id || "") : "";
+  if (!guestId || guestId === weapon?.id) return own;
+  const guestFlags = profile.tandemSource?.flags ?? {};
+  const guest = { id: guestId, flags: guestFlags, getFlag: (scope, key) => guestFlags?.[scope]?.[key] };
+  const guestMods = getActiveMods(actor, guest);
+  // Один прицел за атаку (wdbc-1rno.40): у встроенного оружия свой прицел — прицелы носителя на этот выстрел молчат.
+  if (guestMods.some(isSightMod)) own = own.filter(m => !isSightMod(m));
+  return [...own, ...guestMods];
 }
 
 /**
@@ -114,7 +125,7 @@ export function getActiveMods(actor, weapon) {
  * как остаток старой миграции) — сами поля в ActiveEffect не переносятся
  * вовсе, это отдельная, самостоятельная система «эффектов оружия» (wdbc-ng6c, B4).
  */
-export function getModEffects(actor, weapon) {
+export function getModEffects(actor, weapon, { profile = null } = {}) {
   const fx = {
     attackMod: 0, damageMod: 0, penMod: 0, rangeMod: 0, rangeMult: 1,
     clipMod: 0, clipMult: 1, rofSemiMod: 0, rofFullMod: 0,
@@ -122,7 +133,8 @@ export function getModEffects(actor, weapon) {
     reliabilityMod: 0, balanceMod: 0, weightPct: 0,
     addProps: [], removeProps: [], names: []
   };
-  for (const mod of getActiveMods(actor, weapon)) {
+  const activeMods = getActiveMods(actor, weapon, { profile });
+  for (const mod of activeMods) {
     const e = mod.system.effects || {};
     fx.attackMod      += e.attackMod      || 0;
     // Подстройка под конкретного персонажа (Custom Grip и т.п.): бонус только
@@ -157,7 +169,7 @@ export function getModEffects(actor, weapon) {
 
   // Power Setting / Настройка Мощности (rules/power-setting.mjs): выбранный режим — Усиление или
   // Перегрузка — даёт Dmg/Pen/Надёжность и Surge поверх обычных эффектов модов.
-  const power = powerSettingEffects(weapon, getActiveMods(actor, weapon));
+  const power = powerSettingEffects(weapon, activeMods);
   if (power) {
     fx.damageMod += power.damageMod;
     fx.penMod += power.penMod;

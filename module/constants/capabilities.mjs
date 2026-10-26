@@ -1690,7 +1690,7 @@ export const CAPABILITIES = {
   "rider.core.hussar": {
     label: "Совершая Верховую Атаку, персонаж может потратить бонусное верховое полудействие, чтобы провести ещё одну верховую атаку по другой цели на п…",
     source: "Hussar / Гусар",
-    reader: "module/combat/sabre-second-attack.mjs::armHussarSecondAttack — вторая Верховая Атака по образцу Сабли (кнопка в карточке, module/sheets/attack/dialog.mjs); Devastating (2) по Орде — module/combat/attack.mjs; по той же Орде вторая атака разрешена (sabreSecondAttackBlockReason)."
+    reader: "module/combat/sabre-second-attack.mjs::armHussarSecondAttack — вторая Верховая Атака по образцу Сабли (кнопка в карточке, module/sheets/attack/dialog.mjs); Devastating (2) по Орде — module/combat/attack.mjs; по той же Орде вторая атака разрешена (sabreSecondAttackBlockReason); оружие второй атаки — выбор из рукопашного оружия персонажа (chooseHussarWeapon)."
   },
   "rider.core.ironMount": {
     label: "Получив попадание верхом (после Избеганий), персонаж может пройти Operate−10 или Survival−10,",
@@ -3016,9 +3016,9 @@ export const CAPABILITIES = {
     reader: "module/combat/grapple.mjs (grappleCoverPartner, inGrappleCoverArc); module/combat/attack.mjs"
   },
   "dodge.core.pirouette": {
-    label: "Реализовано (сверка главы 3): в карточке Состязания «Напролом» против носителя — кнопка «Пируэт: Acrobatics+0, без Реакции»; успех — Напролом против него не удаётся (combat/opposed-contest.mjs::resolvePirouetteClick). НЕ покрыто: Пируэт против Тарана машины — у Тарана теперь есть встречный тест Виража (combat/vehicle.mjs::_performSwerve, ramContest), но кнопки Пируэта на карточке Тарана нет; смещение в сторону — стол.",
+    label: "Реализовано (сверка главы 3): в карточке Состязания «Напролом» против носителя — кнопка «Пируэт: Acrobatics+0, без Реакции»; успех — Напролом против него не удаётся (combat/opposed-contest.mjs::resolvePirouetteClick). Против Тарана машины — кнопка «Пируэт (Acrobatics+0)» на карточке Тарана рядом с Виражом (combat/vehicle.mjs::_resolveRam, combat/opposed-contest.mjs::resolveRamPirouette): успех — машина цель не задела (урон со своей карточки не применять). НЕ покрыто: смещение в сторону — стол; применение урона Тарана после успешного Пируэта игрок не применяет сам.",
     source: "Pirouette / Пируэт",
-    reader: "module/combat/opposed-contest.mjs (registerContest, resolvePirouetteClick); module/hooks.mjs"
+    reader: "module/combat/opposed-contest.mjs (registerContest, resolvePirouetteClick, resolveRamPirouette); module/combat/vehicle.mjs (_resolveRam); module/hooks.mjs (.wh-ram-pirouette-btn)"
   },
   "dodge.core.salto": {
     label: "Реализовано частично. +P.b к пределу Отскока в Раунде — кодом (wdbc-9wvm, combat/recoil-item-bonuses.mjs). НЕ смоделировано: раз в Ход бесплатное Уклонение от шаблона со свойством Linger — в системе нет события «персонаж пересёк оставшийся шаблон», на которое его можно было бы повесить; уклониться от Linger-шаблона бесплатно игрок и ГМ отмечают сами.",
@@ -3026,9 +3026,9 @@ export const CAPABILITIES = {
     reader: "module/combat/recoil-item-bonuses.mjs (saltoBonus)"
   },
   "dodge.core.slipAway": {
-    label: "Реализовано (сверка главы 3, доработка 25.10.2026): раз в Раунд на Уклонении от атаки Захватом — «+30» до броска или переброс ПОСЛЕ провала (кнопка на карточке, без второй Реакции); на тесте «Выкрутиться» — выбор «+30» либо «переброс» (бросить дважды, лучший) до броска (допущение) — combat/defense.mjs, combat/techniques.mjs, combat/grapple.mjs. НЕ покрыто: «игнорировать авто-ничью из-за Unnatural Characteristic» — встречные тесты Состязаний ничью по Unnatural вообще не разыгрывают, игнорировать нечего.",
+    label: "Реализовано (сверка главы 3, доработка 25.10.2026): раз в Раунд на Уклонении от атаки Захватом — «+30» до броска или переброс ПОСЛЕ провала (кнопка на карточке, без второй Реакции); в Состязаниях и Борьбе («Выкрутиться» и прочие тесты A) — «+30» до броска либо переброс ПОСЛЕ провала кнопкой на карточке (combat/techniques.mjs::slipAwayContestReroll, раз в Раунд, ОД второй раз не тратятся) — combat/defense.mjs, combat/techniques.mjs, combat/grapple.mjs. НЕ покрыто: «игнорировать авто-ничью из-за Unnatural Characteristic» — встречные тесты Состязаний ничью по Unnatural вообще не разыгрывают, игнорировать нечего.",
     source: "Slip Away / Ускользнуть",
-    reader: "module/combat/defense.mjs (_slipAwayChoice, slipRerollSectionHtml, _performDodge slipReroll), module/hooks.mjs (.wh-slip-reroll-btn); module/combat/techniques.mjs; module/combat/grapple.mjs"
+    reader: "module/combat/defense.mjs (_slipAwayChoice, slipRerollSectionHtml, _performDodge slipReroll), module/hooks.mjs (.wh-slip-reroll-btn, .wh-slip-contest-btn); module/combat/techniques.mjs (slipAwayContestReroll); module/combat/opposed-contest.mjs; module/combat/grapple.mjs"
   },
   "dodge.core.snapshot": {
     label: "Если в свой Ход персонаж подвигался не больше полудвижения, в конце Хода получает +1 ОД — смоделировано (wdbc-1rno, module/combat/snapshot.mjs, hooks.mjs::updateCombat, читает movement-actions.mjs::moveDegreeThisTurn). Категорию Хода ставят и кнопки Действий Движения, и честно измеренный путь токена: перетащил дальше Полудвижения — «подвигался больше» без всякого объявления (wdbc-l2urs, combat/path-limit.mjs::onMoveToken). НЕ смоделировано: ОД можно потратить только на выстрел по брошенному предмету и игнорируя ограничение атак Задержкой — в системе нет ни earmarked-подмножества ОД, ни кодового понятия «атака Задержкой» вообще, заводить оба под одну находку не оправдано; бонусное ОД тратится как обычное.",
@@ -3411,7 +3411,7 @@ export const CAPABILITIES = {
   "meleeCore.core.takedown": {
     label: "Персонаж может совершать приём Оглушить с любым оружием и не-Избирательной атакой. При успешном Оглушении он может также сбить цель с ног. " +
       "Реализовано (23.10.2026): у носителя приём Оглушить не ограничен категориями оружия и окно не запирает прицел в Голову (можно целиться, как хочешь); при успешном Оглушении (Оглушение реально наложилось) в карточке урона появляется кнопка «Вырубание: сбить с ног» — цель получает «Повален» через общую точку наложения (иммунитет, Стена), раз на карточку. " +
-      "НЕ покрыто: описание приёма в окне атаки по-прежнему говорит «Избирательная атака в голову»; Рукопашная Тренировка на категорию оружия для приёма по-прежнему нужна (книга Тренировки не снимает).",
+      "Подпись приёма в окне атаки у носителя своя («Вырубание: любое оружие, прицел не обязателен», sheets/attack/selection.mjs). НЕ покрыто: Рукопашная Тренировка на категорию оружия для приёма по-прежнему нужна (книга Тренировки не снимает).",
     source: "Takedown / Вырубание",
     reader: "module/rules/takedown.mjs (stunUnrestricted, stunForcedAim); module/sheets/attack/selection.mjs (computeManeuverOptions); module/sheets/attack-dialog.mjs + module/sheets/attack/dialog.mjs (прицел не форсирован); module/combat/damage.mjs + module/combat/takedown.mjs (кнопка сбивания); module/hooks.mjs (.wh-takedown-btn)"
   },
@@ -3440,7 +3440,7 @@ export const CAPABILITIES = {
   },
   "rangedCore.core.cageFiring": {
     label: "Совершая Широкую Длинную Очередь по одиночной цели, персонаж может уменьшить эффективный RoF ещё на 3,",
-    source: "Cage Firing / Огневая Клеть", reader: "module/rules/gunner-talents.mjs::cageFiringApplies — module/combat/attack.mjs (hitCountSys, wp.evadeCost), module/combat/defense.mjs (_performDodge: evadeCost)"
+    source: "Cage Firing / Огневая Клеть", reader: "module/rules/gunner-talents.mjs::cageFiringApplies — module/combat/attack.mjs (hitCountSys, wp.evadeCost), module/combat/defense.mjs (_performDodge: evadeCost), module/combat/mount.mjs (resolveMountedDodge: evadeCost), module/combat/evasion-pool.mjs (poolHitCost/performPoolSpend: evadeCost — цена из пула Избегания)"
   },
   "rangedCore.core.chamberIn": {
     label: "Держа винтовку/дл. винтовку двумя руками или пистолет со свободной рукой, персонаж раз в Ход свободным действием заряжает в это оружие один…",
@@ -3527,7 +3527,7 @@ export const CAPABILITIES = {
   "rangedCore.core.runAndGun": {
     label: "Совершая Натиск, персонаж может из любой точки пути за свободное действие выстрелить из не-тяжёлого оружия (не Избирательно),",
     source: "Run and Gun / Стрельба на Бегу",
-    reader: "module/combat/movement-actions.mjs (declareCharge — метка и кнопки выстрела), module/combat/free-shot.mjs (runAndGunOfferHtml, activateFreeShot, consumeFreeShot, runAndGunLockedNow), module/rules/run-and-gun.mjs, module/sheets/attack/dialog.mjs (замок и «не считается Атакой»), module/sheets/tabs/gear.mjs (Сложить снимает замок). Работает при Натиске через HUD-кнопку; База «Натиск» в окне атаки/на листе выстрела не предлагает"
+    reader: "module/combat/movement-actions.mjs (declareCharge — метка и кнопки выстрела), module/combat/free-shot.mjs (runAndGunOfferHtml, activateFreeShot, consumeFreeShot, runAndGunLockedNow), module/rules/run-and-gun.mjs, module/sheets/attack/dialog.mjs (замок и «не считается Атакой»), module/sheets/tabs/gear.mjs (Сложить снимает замок). Работает и при Натиске через HUD-кнопку, и при Базе «Натиск» в окне атаки (combat/free-shot.mjs::chargeAttackGate/chargeAttackStarted, раз в Раунд)"
   },
   "rangedCore.core.saturationFire": {
     label: "При длинной/короткой очереди половина непопавших выстрелов (окр.▲) вместо этого попадает в укрытие цели или другое укрытие в 2м по выбору.",
@@ -5983,7 +5983,8 @@ export const CAPABILITIES = {
   },
   "trait.stuffOfNightmares": {
     label: "Иммунитет к Усталости/ядам/болезням/радиации/экстрим.температурам/вакууму/Кровотечению/Обескровливанию; не может быть Оглушён; не стареет;",
-    source: "Stuff of Nightmares / Существо из Кошмаров", reader: ""
+    source: "Stuff of Nightmares / Существо из Кошмаров",
+    reader: "module/rules/stuff-of-nightmares.mjs (hasStuffOfNightmares) — частично: болезни (module/rules/disease-immunity.mjs actorImmuneToDiseaseEffects) и вакуум/Взрывная Декомпрессия (module/rules/vacuum.mjs vacuumApplies/isDecompressionVictim); Усталость, яды, радиация, температуры, Кровотечение/Обескровливание, Оглушение, возраст и Критэффекты — текстом"
   },
   "trait.sturdy": {
     label: "+20 vs Захват/Оглушение, +30 vs сбивание/отбрасывание.",

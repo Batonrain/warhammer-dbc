@@ -322,6 +322,19 @@ export function litanyTypesOf(actor) {
   return out;
 }
 
+/**
+ * Литании актора, у которых тип оружия так и не выбран (Талант куплен до выбора специализации при покупке:
+ * в specialization лежит весь список типов, litanyWeaponType даёт ""). Механика такой Литании молчит — окно
+ * атаки подсказывает игроку вписать тип (sheets/attack/talent-toggles.mjs).
+ */
+export function litanyUnresolved(actor) {
+  const out = [];
+  for (const i of actor?.items ?? []) {
+    if (i?.type === "talent" && itemHasName(i, GUNSMITH_TALENTS.litanyOfCleaning.name) && !litanyWeaponType(i)) out.push(i);
+  }
+  return out;
+}
+
 /** Талант выбран на тип этого оружия (по имени предмета-Таланта). */
 export function litanyCoversWeapon(actor, item) {
   return !!item?.system?.weaponType && litanyTypesOf(actor).has(item.system.weaponType);

@@ -26,7 +26,7 @@ export async function embedTandem(actor, host, guest) {
   if (tandemProfiles(host).length) { ui.notifications?.warn(`Тандем: в «${host.name}» уже встроено оружие — сначала извлеките его.`); return false; }
 
   const source = guest.toObject();
-  const profile = buildTandemProfile(guest.system, guest.name, source);
+  const profile = buildTandemProfile(guest.system, guest.name, source, guest.id);
   const profiles = [...(Array.isArray(host.system?.profiles) ? host.system.profiles : []), profile];
   await host.update({
     "system.profiles": profiles,
@@ -54,7 +54,7 @@ export async function extractTandem(actor, host, profileIdx) {
   if (!data) { ui.notifications?.warn("Тандем: исходное оружие не сохранено — вернуть нечего."); return false; }
   data.system = { ...(data.system ?? {}), magazineCur: Number(profile.magazineCur) || 0, loadedAmmoId: profile.loadedAmmoId || "", equipped: false };
   // Прежний _id сохраняется: модификации оружия привязаны к нему (system.installedOn), и пока оружие сидело в тандеме,
-  // они остались на листе — после извлечения снова стоят на нём. Моды ВСТРОЕННОГО оружия на выстрел из профиля не действуют.
+  // они остались на листе — после извлечения снова стоят на нём. Моды встроенного оружия действуют на выстрел из профиля-тандема (combat/weapon-mods.mjs::getActiveMods).
   await actor.createEmbeddedDocuments("Item", [data], { keepId: true });
   const profiles = (host.system?.profiles ?? []).filter((_, i) => i !== entry.idx);
   await host.update({

@@ -745,7 +745,7 @@ export async function showMountDamageTest(rider) {
  *  • по всаднику — обычное Уклонение, но со штрафом −10.
  * Поэтому диалог сначала спрашивает, куда пришлось попадание.
  */
-export async function showMountedDodgeDialog(rider, extraMod = 0, hitsCount = 1, attackerUuid = "", attackId = "") {
+export async function showMountedDodgeDialog(rider, extraMod = 0, hitsCount = 1, attackerUuid = "", attackId = "", evadeCost = 1) {
   const ctx = await mountContext(rider);
   if (!ctx) return null;
   const { mount, control } = ctx;
@@ -771,7 +771,7 @@ export async function showMountedDodgeDialog(rider, extraMod = 0, hitsCount = 1,
         roll: { icon: '<i class="fas fa-dice-d10"></i>', label: "Уклонение!",
           callback: async html => {
             const target = html.find("#md-target").val();
-            await resolveMountedDodge(rider, ctx, target, { extraMod, hitsCount, attackerUuid, attackId });
+            await resolveMountedDodge(rider, ctx, target, { extraMod, hitsCount, attackerUuid, attackId, evadeCost });
             resolve(true);
           } },
         cancel: { label: "Отмена", callback: () => resolve(false) }
@@ -783,7 +783,7 @@ export async function showMountedDodgeDialog(rider, extraMod = 0, hitsCount = 1,
 
 // wdbc-8zi (п.6): объект опций для extraMod/hitsCount/attackerUuid — тот же
 // приём и порядок полей, что у _performDodge/_performParry/_performSwerve.
-async function resolveMountedDodge(rider, ctx, target, { extraMod = 0, hitsCount = 1, attackerUuid = "", attackId = "" } = {}) {
+async function resolveMountedDodge(rider, ctx, target, { extraMod = 0, hitsCount = 1, attackerUuid = "", attackId = "", evadeCost = 1 } = {}) {
   // Запрет Физических Избеганий после Полной Атаки действует и верхом (rules/full-attack-lock.mjs);
   // В Ногу с Моментом даёт −10 к Уклонению и здесь. Реакция при отказе не тратится.
   const fullAtkLock = avoidanceVerdict(rider, "dodge");
@@ -819,11 +819,13 @@ async function resolveMountedDodge(rider, ctx, target, { extraMod = 0, hitsCount
   const rolls = [roll];
   const lower = ctrlThreshold !== null && ctrlThreshold < dodgeThreshold ? control.label : "Уклонение";
 
-  const { total: totalHits, negated, remaining } = negatedHits(passed, deg, hitsCount);
+  // Огневая Клеть (Талант Стрелка): каждое снятое попадание стоит cost Успехов — как в _performDodge.
+  const cost = Math.max(1, Number(evadeCost) || 1);
+  const { total: totalHits, negated, remaining } = negatedHits(passed, Math.floor(deg / cost), hitsCount);
   // Излишек Успехов — банкуется на попадания ДРУГИХ атак того же противника
   // в этом Ходу (стр. 12, module/combat/evasion-pool.mjs). Пеналти — extraMod
   // (мод. приёма атаки), а не внутренний −10 «по всаднику»: тот не от атаки.
-  const leftover = passed ? deg - negated : 0;
+  const leftover = passed ? deg - negated * cost : 0;
   const banked = leftover > 0 && await addEvasionSurplus(rider, attackerUuid, leftover, extraMod);
 
   let outcome;

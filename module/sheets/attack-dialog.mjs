@@ -212,7 +212,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const resolvedAttack = resolveTest({ actor, ...attackCtx });
 
   // ── Особые свойства оружия (+ модификации + боеприпас + правило) ─────────
-  const modFx       = getModEffects(actor, item);
+  const modFx       = getModEffects(actor, item, { profile: startProfile });
   let _entries      = mergeWeaponPropEntries(item, modFx);
   // Свойства заряженного боеприпаса (стр. 203) — чтобы порог и памятки в
   // диалоге совпадали с тем, что реально применит бросок.
@@ -248,7 +248,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Только ДЕЙСТВУЮЩИЕ моды (combat/weapon-mods.mjs::getActiveMods): «бесполезный
   // без X» мод (Целеуказатель без ретинального дисплея, wdbc-1rno.38) не даёт
   // ни Хвата, ни бонусов Прицеливания — тот же список, что у getModEffects.
-  const installedMods   = isMelee ? [] : getActiveMods(actor, item);
+  const installedMods   = isMelee ? [] : getActiveMods(actor, item, { profile: startProfile });
   // Один прицел за атаку (wdbc-1rno.40): при двух и больше установленных
   // прицелах — выпадающий список. Смена пишет флаг оружия и переоткрывает
   // окно (sheets/attack/dialog.mjs): от прицела зависят числа, посчитанные
@@ -1102,6 +1102,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     wp,
     // Штыковая Атака (книга: «как выстрел в упор, +30, несмотря на связанность»): +30 даже в контакте Баз.
     pointBlankForced: techniqueOpts.freeShot === "bayonetCharge",
+    weaponProfile: startProfile,
     // Закрепление снимает штрафы ЧУЖОЙ стороны правила Огринов (оружие велико
     // и не по руке); обратную сторону — Огрин с человеческим оружием — оно не
     // трогает, там мешает не упор, а сама рукоять.

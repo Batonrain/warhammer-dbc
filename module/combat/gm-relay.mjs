@@ -15,6 +15,13 @@
 //    • addFatigue — Усталость хватки Удушения (1…20);
 //    • inspireHatred — по сокету идёт только цель Ненависти, предмет собирает сам
 //      ГМ из шаблона компендиума; нужен Талант Inspire Wrath у инициатора.
+//    • dreadWailFear — Страх 2 до конца боя от звуковой волны Грозного Вопля: клиент
+//      присылает только «вид», эффект и срок собирает ГМ (timed-effects.mjs); нужна
+//      Черта Dread Wail у инициатора.
+//    • applyDamage — урон приёма (Заломить, Укус, Хруст, Повалить на 5+): ГМ сам
+//      гоняет applyDamageToActor, клиент присылает только узкий список полей урона;
+//      источник «grapple» требует партнёра по Борьбе, «contact» — рукопашный урон
+//      с потолком (Sahara npc-applydamagetoactor).
 //  Просящий обязан владеть актором-инициатором (ГМ сверяет сам).
 //
 //  Порядок у вызывающего: сперва запись в цель (writeToTarget вернул false —
@@ -23,6 +30,21 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { hasInspireWrath, inspiredHatredData, HATRED_PACK_ID } from "../rules/inspire-wrath.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
+
+/** Какие поля урона приёма разрешено присылать по сокету и их типы (applyDamage). */
+export const RELAY_DAMAGE_FIELDS = Object.freeze({
+  rawDamage: "number", penetration: "number", damageType: "string", damageSubtype: "string", hitLocation: "string",
+  melee: "boolean", ignoreArmour: "boolean", primitive: "boolean",
+  attackerName: "string", attackerUuid: "string", weaponName: "string"
+});
+/** Потолки: Заломить/Укус/Хруст/Повалить дают десятки единиц, не сотни. */
+export const RELAY_DAMAGE_MAX = 80;
+export const RELAY_PEN_MAX = 30;
+/** Потолок урона источника «contact» (Повалить на 5+ — 1d5+S.b). */
+export const RELAY_CONTACT_DAMAGE_MAX = 25;
+const RELAY_DAMAGE_TYPES = ["energy", "impact", "rending", "blast", "chemical"];
+const RELAY_DAMAGE_SOURCES = ["grapple", "contact"];
 
 const NS = "warhammer-dbc";
 
@@ -95,6 +117,41 @@ export function checkTargetWrite(op, ctx = {}) {
     return { ok: true };
   }
 
+  // Грозный Вопль, ветка «Страх 2 до конца боя»: полезной нагрузки нет вовсе — рейтинг, срок
+  // и ключ изменения зашиты в timed-effects.mjs::dreadWailFearEffectData, клиент их задать не может.
+  if (op.kind === "dreadWailFear") {
+    if (Object.keys(op).some(k => k !== "kind")) return { ok: false, reason: "dreadWailFear: лишние поля" };
+    if (!hasAbility(ctx.initiator, "ability.dreadWail", "Dread Wail", "trait")) return { ok: false, reason: "у инициатора нет Dread Wail" };
+    return { ok: true };
+  }
+
+  // Урон приёма по чужой цели: клиент присылает только поля урона, считает и применяет ГМ.
+  if (op.kind === "applyDamage") {
+    if (!RELAY_DAMAGE_SOURCES.includes(op.source)) return { ok: false, reason: "неизвестный источник урона" };
+    if (op.source === "grapple" && !ctx.partners) return { ok: false, reason: "цель не в Борьбе с инициатором" };
+    const d = op.damage;
+    if (!d || typeof d !== "object" || Array.isArray(d)) return { ok: false, reason: "нет урона" };
+    for (const [k, v] of Object.entries(d)) {
+      const type = RELAY_DAMAGE_FIELDS[k];
+      if (!type || typeof v !== type) return { ok: false, reason: `поле урона вне списка: ${k}` };
+      if (type === "string" && v.length > 200) return { ok: false, reason: `слишком длинная строка: ${k}` };
+    }
+    if (!Number.isFinite(d.rawDamage) || d.rawDamage < 0 || d.rawDamage > RELAY_DAMAGE_MAX) return { ok: false, reason: "урон вне 0…80" };
+    if (d.penetration !== undefined && (!Number.isFinite(d.penetration) || d.penetration < 0 || d.penetration > RELAY_PEN_MAX)) {
+      return { ok: false, reason: "проникновение вне 0…30" };
+    }
+    if (d.damageType !== undefined && !RELAY_DAMAGE_TYPES.includes(d.damageType)) return { ok: false, reason: "тип урона вне списка" };
+    if (d.melee !== true) return { ok: false, reason: "по сокету идёт только рукопашный урон приёмов" };
+    // Урон без Борьбы (Повалить на 5+: 1d5+S.b, Primitive, Pen 0) — потолок ниже, броню не игнорирует.
+    if (op.source === "contact") {
+      if (d.ignoreArmour) return { ok: false, reason: "«contact»: броню игнорировать нельзя" };
+      if (d.rawDamage > RELAY_CONTACT_DAMAGE_MAX) return { ok: false, reason: `«contact»: урон выше ${RELAY_CONTACT_DAMAGE_MAX}` };
+      if (d.penetration) return { ok: false, reason: "«contact»: проникновения нет" };
+    }
+    if (ctx.initiator?.uuid && d.attackerUuid !== ctx.initiator.uuid) return { ok: false, reason: "атакующий не совпадает с инициатором" };
+    return { ok: true };
+  }
+
   return { ok: false, reason: `неизвестный вид: ${op.kind}` };
 }
 
@@ -124,11 +181,31 @@ export async function performTargetWrite(target, op, initiator = null) {
     const { addFatigue } = await import("../sheets/tabs/conditions.mjs");
     return addFatigue(target, Number(op.amount));
   }
+  if (op.kind === "applyDamage") {
+    const { applyDamageToActor } = await import("./damage.mjs");
+    return applyDamageToActor(target, op.damage);
+  }
+  if (op.kind === "dreadWailFear") {
+    const { grantDreadWailFear } = await import("./timed-effects.mjs");
+    return grantDreadWailFear(target);
+  }
   if (op.kind === "inspireHatred") {
     const item = inspiredHatredData(op.target, { uuid: initiator?.uuid ?? "", name: initiator?.name ?? "" }, await hatredTemplate());
     return target.createEmbeddedDocuments("Item", [item]);
   }
   return null;
+}
+
+/**
+ * Нанести урон приёма актору-цели: своя/ГМ — применяет сам, чужая — просит активного ГМа.
+ * @param {Actor} target
+ * @param {object} damage    damageData для applyDamageToActor (только поля RELAY_DAMAGE_FIELDS)
+ * @param {Actor} initiator  кто бьёт
+ * @param {"grapple"|"contact"} [source]  «grapple» — цель обязана быть партнёром инициатора по Борьбе
+ * @returns {Promise<boolean>} false — применить некому (нет ГМ в игре)
+ */
+export function dealDamageToTarget(target, damage, initiator, source = "contact") {
+  return writeToTarget(target, { kind: "applyDamage", source, damage }, initiator);
 }
 
 /**
@@ -165,7 +242,10 @@ export async function applyTargetWriteRelay(data, requester) {
   const targetActor = target?.actor ?? target;
   if (!initiator || !targetActor || typeof targetActor.update !== "function") return false;
   const initiatorOwned = !!requester?.isGM || !!initiator.testUserPermission?.(requester, "OWNER");
-  const verdict = checkTargetWrite(data?.op, { initiatorOwned, initiator });
+  // Борьба: цель — партнёр инициатора (флаг на любом из двух), нужно для урона источника «grapple».
+  const partners = initiator.getFlag?.(NS, "grapplePartnerUuid") === targetActor.uuid
+    || targetActor.getFlag?.(NS, "grapplePartnerUuid") === initiator.uuid;
+  const verdict = checkTargetWrite(data?.op, { initiatorOwned, initiator, partners });
   if (!verdict.ok) {
     console.warn(`Warhammer DBC | ${TARGET_WRITE_ACTION} отклонён: ${verdict.reason}`, data?.op);
     return false;

@@ -41,7 +41,7 @@ import { weaponThresholdPart } from "../../combat/attack-threshold.mjs";
 import { withEyeOfEnvy } from "../../rules/eye-of-envy.mjs";
 import { AIM_FOCUS_EXTENDED_FLAG } from "../../rules/aim-focus.mjs";
 import { commitRerollUse } from "../../combat/angel-hunters.mjs";
-import { consumeFreeShot, freeShotBlockReason, runAndGunLockedNow } from "../../combat/free-shot.mjs";
+import { consumeFreeShot, freeShotBlockReason, runAndGunLockedNow, chargeAttackGate, chargeAttackStarted } from "../../combat/free-shot.mjs";
 import { freeShotLocksAim, freeShotCountsAsAttack } from "../../rules/run-and-gun.mjs";
 import { applyCoveringFireMarks } from "../../combat/covering-fire.mjs";
 import { suppressionActionType } from "../../rules/gunsmith-talents.mjs";
@@ -315,6 +315,16 @@ export function openAttackDialog(ctx) {
           // тратит Реакцию — sel.cheapShotActive уже вынудил Базу быть
           // "standard" (resolveSelection), здесь остаётся только сменить
           // ресурс списания на тот же spendReaction, что у Уклонения/Парирования.
+          // Натиск как База в окне атаки (не HUD-кнопка): те же два хода Талантов Стрелка, что у declareCharge —
+          // тест Подавления Прикрывающего Огня ДО списания ОД (провал — атаки нет) и, после списания, Стрельба на Бегу.
+          let chargeGate = { ok: true, first: false };
+          if (isMelee && sel.baseKey === "charge" && !sabreSecond && !freeShot) {
+            chargeGate = await chargeAttackGate(actor);
+            if (!chargeGate.ok) {
+              ui.notifications.warn(`⚠️ ${actor.name}: тест Подавления (Прикрывающий Огонь) провален — Натиск не удался.`);
+              return false;
+            }
+          }
           if (sabreSecond || freeShot) {
             // ничего не списывается — см. выше (Сабля) и combat/free-shot.mjs (бесплатные выстрелы)
           } else if (isMelee && sel.cheapShotActive) {
@@ -355,6 +365,7 @@ export function openAttackDialog(ctx) {
           // засчитываем её в лимит Хода (стр. 12, wdbc-x1nz.2.30).
           if (!sabreSecond && freeShotCountsAsAttack(freeShot)) await takeAttackAction(actor);
           if (freeShot) await consumeFreeShot(actor, freeShot, item);
+          await chargeAttackStarted(actor, chargeGate.first);
           // Прикрывающий Огонь: очередь сделана — метки Подавления на ВСЕХ бывших противников (combat/covering-fire.mjs).
           if (freeShot === "coveringFire") await applyCoveringFireMarks(actor, f.rofMode);
           // Сабля: вторая атака расходуется, первая (Верховая с отказом от +20)

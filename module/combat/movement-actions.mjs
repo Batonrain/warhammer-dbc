@@ -36,7 +36,7 @@
 import { FAST_MOVE_FLAG } from "../rules/hard-target.mjs";
 import { HIP_SHOOTING_FLAG, hipShootingWeapon } from "../rules/gunner-talents.mjs";
 import { RUN_AND_GUN_PENDING_FLAG, hasRunAndGun } from "../rules/run-and-gun.mjs";
-import { runAndGunOfferHtml } from "./free-shot.mjs";
+import { runAndGunOfferHtml, markChargeChecked, markChargeFailed, chargeFailedThisRound } from "./free-shot.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
@@ -431,10 +431,15 @@ export async function declareCharge(actor) {
   }
   // Прикрывающий Огонь (Талант Стрелка): бывшие противники стрелка проходят тест Подавления при Натиске на него;
   // провал — Натиск не объявляется (проверка ДО отметок Натиска и движения).
+  if (chargeFailedThisRound(actor)) {
+    return ui.notifications.warn(`⚠️ ${actor.name}: тест Подавления (Прикрывающий Огонь) в этом Раунде уже провален — Натиск не удался.`);
+  }
   const { coveringFireChargeCheck } = await import("./covering-fire.mjs");
   if (!await coveringFireChargeCheck(actor)) {
+    await markChargeFailed(actor);
     return ui.notifications.warn(`⚠️ ${actor.name}: тест Подавления (Прикрывающий Огонь) провален — Натиск не удался.`);
   }
+  await markChargeChecked(actor);   // окно атаки с Базой «Натиск» в этом Раунде проверку не повторяет
   await actor.update({ "system.meleeBase": "charge",
                        [`flags.warhammer-dbc.${FAST_MOVE_FLAG}`]: true });
   await markMovedThisTurn(actor);

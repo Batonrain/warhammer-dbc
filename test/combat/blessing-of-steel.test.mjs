@@ -104,6 +104,27 @@ describe("Благословение Стали", () => {
     expect(sword.system.quality).toBe("common");
   });
 
+  it("откат на ступень вниз и только если Качество всё ещё равно поставленному (Песня Изменений откатилась раньше)", async () => {
+    // Песня подняла Обычное → Хорошее, благословение — Хорошее → Высшее.
+    const sword = gear("w1", "weapon", "good");
+    const a = actor([talent(), sword]);
+    await bless(a, "w1");
+    expect(sword.system.quality).toBe("best");
+    // Песня раньше в deleteCombat откатывает «абсолютно» к прежнему Обычному.
+    sword.system.quality = "common";
+    await clearBlessingOfSteel({ id: "c9", combatants: [{ actor: a }] });
+    expect(sword.system.quality).toBe("common");              // не «Хорошее» (прежний откат)
+    expect(sword.getFlag("warhammer-dbc", "blessingOfSteel")).toBeUndefined();
+  });
+
+  it("откат при поднятом Песней Качестве: благословлённое Высшее → на ступень вниз", async () => {
+    const sword = gear("w1", "weapon", "good");
+    const a = actor([talent(), sword]);
+    await bless(a, "w1");
+    await clearBlessingOfSteel({ id: "c9", combatants: [{ actor: a }] });
+    expect(sword.system.quality).toBe("good");
+  });
+
   it("без Таланта и без оружия/брони — отказ", async () => {
     expect(hasBlessingOfSteel(actor([]))).toBe(false);
     expect(await startBlessingOfSteel(actor([gear("w1", "weapon", "common")]))).toBe(false);

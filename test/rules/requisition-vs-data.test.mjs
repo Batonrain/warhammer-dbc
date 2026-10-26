@@ -12,6 +12,7 @@ import {
   RARITY_MODS, QUANTITY_TIERS, qualityMod, itemRarity, itemClass, REQUISITION_TALENTS
 } from "../../module/rules/requisition.mjs";
 import { ITEM_QUALITY_LIST } from "../../module/constants/quality.mjs";
+import { rarityDiff, CRAFT_QUALITY } from "../../module/constants/craft.mjs";
 import { allPackDocuments, packDocuments, PACKS_SRC, PACK_SCAN_TIMEOUT } from "../support/pack-docs.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "../..");
@@ -44,6 +45,14 @@ describe("таблицы реквизиции совпадают со стран
     const rows = rarity.slice(1).map(r => [num(r[0]), num(r[2])]);
     expect(rows.length).toBe(11);
     for (const [r, mod] of rows) expect(RARITY_MODS[String(r)], `Редкость ${r}`).toBe(mod);
+  });
+  it("Крафт читает ту же таблицу Редкости и Качества (стр. 165: «сложность … создания и улучшения»), в том числе на краях ±4/±5", () => {
+    const rarity = tables.find(t => t[0]?.includes("Редкость") && t[0]?.includes("Мод."));
+    for (const r of rarity.slice(1)) expect(rarityDiff(num(r[0])), `Редкость ${r[0]}`).toBe(num(r[2]));
+    const quality = tables.find(t => t[0]?.includes("Качество") && t[0]?.includes("Название"));
+    const byAbbr = Object.fromEntries(quality.slice(1).map(r => [r[0], num(r[2])]));
+    expect({ "Poor.Q": CRAFT_QUALITY.poor.diff, "Comm.Q": CRAFT_QUALITY.common.diff,
+      "Good.Q": CRAFT_QUALITY.good.diff, "Best.Q": CRAFT_QUALITY.best.diff }).toEqual(byAbbr);
   });
   it("Количество: те же шесть ступеней", () => {
     const qty = tables.find(t => t[0]?.[0]?.startsWith("Количество"));

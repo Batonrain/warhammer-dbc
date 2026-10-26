@@ -13,7 +13,8 @@ import { describe, it, expect } from "vitest";
 import {
   parseFrequency, addictionTestParts, lowestPart, parsePenaltyMods,
   withdrawalPeriodIndex, isUnderPenalty, completedPeriods, breakTestState, breakTestMod,
-  periodBoundaries, withdrawalPenaltyRules, freshEntry, withdrawalStatusLabel, drugKey
+  periodBoundaries, withdrawalPenaltyRules, freshEntry, withdrawalStatusLabel, drugKey,
+  addictionRecords, isAddictedTo, addictionSnapshot
 } from "../../module/rules/drug-withdrawal.mjs";
 import { doseKey } from "../../module/rules/drug-doses.mjs";
 
@@ -140,9 +141,10 @@ describe("правила штрафа: только пока доза проср
   const P = 8 * H, last = 300 * D;
   const drug = (extra = {}) => ({
     id: "d1", name: " Рекаф ", type: "drug",
-    system: { addiction: { hasAddiction: true, isAddicted: true, frequency: "8 часов", penaltyMods: "social=-10", ...extra } }
+    system: { addiction: { hasAddiction: true, isAddicted: false, frequency: "8 часов", penaltyMods: "social=-10", ...extra } }
   });
-  const entries = { "Рекаф": { lastDose: last, doneTo: last, tested: 0 } };
+  // Зависимость — запись флага актора (task-9717), а не поле предмета.
+  const entries = { "Рекаф": { addicted: true, lastDose: last, doneTo: last, tested: 0 } };
 
   it("в срок — правил нет; просрочено — авто-модификатор к тестам", () => {
     expect(withdrawalPenaltyRules([drug()], entries, last + P - 1)).toEqual([]);
@@ -153,8 +155,10 @@ describe("правила штрафа: только пока доза проср
   });
   it("не зависим, нет зависимости у препарата, нет метки дозы, нет штрафа в данных — правил нет", () => {
     const now = last + 3 * P;
-    expect(withdrawalPenaltyRules([drug({ isAddicted: false })], entries, now)).toEqual([]);
-    expect(withdrawalPenaltyRules([drug({ hasAddiction: false })], entries, now)).toEqual([]);
+    // Не зависим: у записи нет addicted (остаток отсчёта) — штрафа нет, что бы ни говорил предмет.
+    expect(withdrawalPenaltyRules([drug()], { "Рекаф": { lastDose: last, doneTo: last, tested: 0 } }, now)).toEqual([]);
+    expect(withdrawalPenaltyRules([drug({ isAddicted: true })], {}, now)).toEqual([]);   // устаревшее поле предмета ничего не значит
+    expect(withdrawalPenaltyRules([drug({ hasAddiction: false })], entries, now)).toEqual([]);   // предмет без настройки — настройки нет и в снимке
     expect(withdrawalPenaltyRules([drug()], {}, now)).toEqual([]);
     expect(withdrawalPenaltyRules([drug({ penaltyMods: "" })], entries, now)).toEqual([]);
     expect(withdrawalPenaltyRules([{ ...drug(), type: "weapon" }], entries, now)).toEqual([]);
@@ -162,6 +166,29 @@ describe("правила штрафа: только пока доза проср
   it("две стопки одного наркотика дают один штраф, а не два", () => {
     const rules = withdrawalPenaltyRules([drug(), { ...drug(), id: "d2" }], entries, last + 3 * P);
     expect(rules).toHaveLength(1);
+  });
+  it("предмета нет (флакон кончился): штраф идёт по снимку настроек в записи", () => {
+    const snap = { addicted: true, name: "Рекаф", addiction: { hasAddiction: true, frequency: "8 часов", penaltyMods: "social=-10" }, lastDose: last, doneTo: last, tested: 0 };
+    const rules = withdrawalPenaltyRules([], { "Рекаф": snap }, last + P);
+    expect(rules).toHaveLength(1);
+    expect(rules[0].effects[0]).toMatchObject({ target: "social", value: -10 });
+    expect(withdrawalPenaltyRules([], { "Рекаф": snap }, last + P - 1)).toEqual([]);
+  });
+  it("addictionRecords: живой предмет главнее снимка, нет предмета — снимок, ключ строкой работает как предмет", () => {
+    const snap = { addicted: true, name: "Рекаф", addiction: { frequency: "1 день" }, lastDose: 1 };
+    expect(addictionRecords([drug()], { "Рекаф": snap })[0]).toMatchObject({ key: "Рекаф", add: { frequency: "8 часов" } });
+    expect(addictionRecords([], { "Рекаф": snap })[0]).toMatchObject({ key: "Рекаф", name: "Рекаф", item: null, add: { frequency: "1 день" } });
+    expect(isAddictedTo({ "Рекаф": snap }, "Рекаф")).toBe(true);
+    expect(isAddictedTo({ "Рекаф": snap }, { name: " Рекаф " })).toBe(true);
+    expect(isAddictedTo({ "Рекаф": null }, "Рекаф")).toBe(false);
+  });
+  it("снимок настроек не несёт устаревшего isAddicted и не ссылается на предмет", () => {
+    const add = { hasAddiction: true, isAddicted: true, periodCharDamage: { stat: "per", formula: "1d5" } };
+    const snap = addictionSnapshot(add);
+    expect(snap).not.toHaveProperty("isAddicted");
+    expect(snap).toEqual({ hasAddiction: true, periodCharDamage: { stat: "per", formula: "1d5" } });
+    snap.periodCharDamage.stat = "wp";
+    expect(add.periodCharDamage.stat).toBe("per");
   });
 });
 

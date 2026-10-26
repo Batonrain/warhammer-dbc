@@ -30,6 +30,18 @@ function actor({ t = 40, items = [], voidfarer = null } = {}) {
   };
 }
 
+describe("Stuff of Nightmares — иммунитет к вакууму (книга: «иммунитет к ядам/болезням/…/вакууму»)", () => {
+  const son = { type: "trait", name: "Stuff of Nightmares / Существо из Кошмаров", system: {}, flags: {} };
+  it("существо с Трейтом вакуума и Декомпрессии не боится", () => {
+    expect(vacuumApplies(actor({ items: [son] }))).toBe(false);
+    expect(isDecompressionVictim(actor({ items: [son] }))).toBe(false);
+  });
+  it("без Трейта — как обычно", () => {
+    expect(vacuumApplies(actor())).toBe(true);
+    expect(isDecompressionVictim(actor())).toBe(true);
+  });
+});
+
 describe("voidArmourOf — защита пустотной бронёй", () => {
   it("надетая броня со свойством void защищает", () => {
     const a = actor({ items: [armour(["void", "sealed"])] });

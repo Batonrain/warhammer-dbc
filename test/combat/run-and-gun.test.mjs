@@ -225,6 +225,18 @@ describe("Штыковая Атака: выстрел «как в упор», +3
     expect(row({})).toMatchObject({ value: 0 });
     expect(row({ pointBlankForced: true })).toMatchObject({ value: 30, autoCheck: true });
   });
+  // Sahara pyromaniac-20 п.3: книга — «как если бы это был выстрел в упор … невзирая на то что персонаж связан в
+  // ближнем бою»: штраф «Стрельба в рукопашную» −20 (не-Пистолет) к такому выстрелу не применяется.
+  it("штраф «Стрельба в рукопашную» −20: у обычного выстрела винтовки есть, у выстрела Штыковой Атаки снят", () => {
+    const meleeShot = args => situationalMods({
+      actor: { items: [], system: {} }, attackCtx: {}, attackerToken: null, gripRange: 100, hasFatigue: false,
+      hasLostEyes: false, isBlinded: false, isMelee: false, measured: { edgeM: 1, contact: "base" },
+      targetHelpless: false, targetToken: null, weapon: { system: { weaponClass: "basic" } }, wProps: [], wp: {}, ...args
+    }).specificMods.find(m => m.label === "Стрельба в рукопашную");
+    expect(meleeShot({})).toMatchObject({ value: -20 });
+    expect(meleeShot({ pointBlankForced: true })).toMatchObject({ value: 0 });
+    expect(meleeShot({ pointBlankForced: true }).note).toContain("Штыковая Атака");
+  });
   it("окно передаёт признак только для freeShot bayonetCharge", () => {
     const src = fs.readFileSync(path.join(path.resolve(import.meta.dirname, "../.."), "module/sheets/attack-dialog.mjs"), "utf8");
     expect(src).toMatch(/pointBlankForced: techniqueOpts\.freeShot === "bayonetCharge"/);

@@ -32,6 +32,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { ITEM_TYPES } from "../constants/items.mjs";
+import { contribOf } from "../rules/flesh-is-weak.mjs";
 
 const FLAG = "warhammer-dbc";
 const BASELINE_PATH = "contentSync.baseline";
@@ -262,9 +263,21 @@ export function diffItemAgainstPack(item, packDoc) {
   for (const path of [...Object.keys(packDoc.system || {}), MECH_PATH, EFFECTS_PATH]) {
     const packVal = valueAt(packDoc, path);
     const baseVal = baselineFor(item, path);
+    // Рейтинг Machine несёт +N от Таланта «Плоть Слаба» (флаг вклада). Опора рейтинга
+    // бывает трёх видов: значение пака (без +N — её пишет сама сверка), неявная
+    // (текущее значение на предмете — с +N) и снятая миграцией с актора (тоже с +N).
+    // Без поправки рейтинг «не равен опоре» и строка висела бы конфликтом с ГМом при
+    // каждом прогоне, хотя руками рейтинг никто не правил.
+    const fiw = path === "rating" && typeof baseVal === "number" ? contribOf(item) : 0;
     if (sameValue(packVal, baseVal)) continue;
+    // Неявная опора включает +N: пак, равный опоре без +N, не менялся — строки нет.
+    // Только для неявной: у записанной опоры «пак упал ровно на N» — настоящая правка.
+    const explicit = Object.prototype.hasOwnProperty.call(item.flags?.[FLAG]?.contentSync?.baseline ?? {}, path);
+    if (fiw && !explicit && sameValue(packVal, baseVal - fiw)) continue;
     const actorVal = valueAt(item, path);
-    let status = sameValue(actorVal, baseVal) ? "clean" : "conflict";
+    // Чисто, если актёр — это опора (с +N) или опора + вклад Таланта.
+    const status0 = sameValue(actorVal, baseVal) || (fiw > 0 && sameValue(actorVal - fiw, baseVal));
+    let status = status0 ? "clean" : "conflict";
 
     // Эффекты БЕЗ сохранённой опоры — всегда «решает ГМ», даже когда по
     // формуле выходит «чисто» (wdbc-9aj9, найдено живой проверкой).
@@ -381,6 +394,13 @@ function withDeletedStaleKeys(actorVal, packVal) {
 export async function applySyncReport(report, selectedKeys) {
   const byActor = new Map();   // actorId -> Map(itemId -> updateObj)
   const effectJobs = [];       // {actorId, itemId, packUuid} — своя механика применения
+  // Что сверка перезаписала у предмета: нужно, чтобы вернуть вклад Таланта «Плоть
+  // Слаба» в Machine (restoreFleshIsWeakAfterSync). Ключ — "<actorId>::<itemId>".
+  const overwrote = new Map();
+  const mark = (entry, what) => {
+    const k = `${entry.actorId}::${entry.itemId}`;
+    overwrote.set(k, { actorId: entry.actorId, itemId: entry.itemId, ...overwrote.get(k), [what]: true });
+  };
   for (const row of report.rows) {
     for (const entry of row.entries) {
       if (!selectedKeys.has(entry.entryKey)) continue;
@@ -389,8 +409,10 @@ export async function applySyncReport(report, selectedKeys) {
       // применяем ниже пересозданием, тем же приёмом, что миграция эффектов.
       if (row.path === EFFECTS_PATH) {
         effectJobs.push({ actorId: entry.actorId, itemId: entry.itemId, packUuid: row.packUuid });
+        mark(entry, "effectsReplaced");
         continue;
       }
+      if (row.path === "rating") mark(entry, "ratingOverwritten");
       const actorUpdates = byActor.get(entry.actorId) || new Map();
       byActor.set(entry.actorId, actorUpdates);
       const upd = actorUpdates.get(entry.itemId) || { _id: entry.itemId };
@@ -430,6 +452,16 @@ export async function applySyncReport(report, selectedKeys) {
     await replaceItemEffects(item, packDoc);
     touched.add(job.actorId);
     applied += 1;
+  }
+
+  // «Плоть Слаба» (Механикум): рейтинг и броня Machine, перезаписанные паком, теряют
+  // +N от Таланта, а флаг вклада остаётся и сам его не вернёт. Пересчёт — только
+  // здесь, по факту правки сверкой (решение владельца 26.10.2026, вариант B).
+  for (const { actorId, itemId, ratingOverwritten, effectsReplaced } of overwrote.values()) {
+    const item = game.actors.get(actorId)?.items?.get(itemId);
+    if (!item || !contribOf(item)) continue;
+    const { restoreFleshIsWeakAfterSync } = await import("./flesh-is-weak.mjs");
+    await restoreFleshIsWeakAfterSync(item, { ratingOverwritten, effectsReplaced });
   }
   return { actors: touched.size, items: applied };
 }

@@ -13,14 +13,14 @@ import {
 import { computeWoundHealing } from "../../module/sheets/tabs/wounds.mjs";
 import { woundLossUpdates } from "../../module/rules/wounds.mjs";
 
-function drug({ id = "drug-1", addicted = false, system = null } = {}) {
+function drug({ id = "drug-1", name = "Пыльца", system = null } = {}) {
   const updates = [];
   const item = {
     id,
-    name: "Пыльца",
+    name,
     type: "drug",
     updates,
-    system: system ?? { addiction: { hasAddiction: true, isAddicted: addicted } },
+    system: system ?? { addiction: { hasAddiction: true, isAddicted: false } },
     update: async data => {
       updates.push(data);
       for (const [path, value] of Object.entries(data)) {
@@ -50,14 +50,23 @@ function capabilityItem(key, { id = "gift-1", name = "Дар" } = {}) {
   };
 }
 
-function actor({ items = [], fatigue = 0, t = 40, wp = 35 } = {}) {
+/**
+ * `addicted` — препараты, от которых актор уже зависим: зависимость хранится
+ * флагом АКТОРА drugWithdrawal (task-9717), а не полем предмета.
+ */
+function actor({ items = [], fatigue = 0, t = 40, wp = 35, addicted = [] } = {}) {
   const updates = [];
   const list = [...items];
   list.get = id => list.find(i => i.id === id) ?? null;
+  const flags = { "warhammer-dbc": { drugWithdrawal: Object.fromEntries(addicted.map(i =>
+    [i.name, { addicted: true, name: i.name, addiction: {}, lastDose: null, doneTo: 0, tested: 0 }])) } };
   const a = {
     name: "Подставной",
     updates,
     items: list,
+    flags,
+    getFlag: (_s, k) => a.flags["warhammer-dbc"][k],
+    setFlag: async (_s, k, v) => { a.flags["warhammer-dbc"][k] = foundry.utils.mergeObject(a.flags["warhammer-dbc"][k] ?? {}, v, { inplace: false }); },
     system: {
       fatigue: { value: fatigue },
       conditions: {},
@@ -97,41 +106,67 @@ beforeEach(() => {
 });
 
 describe("drug addiction test", () => {
-  it("провал ставит зависимость на препарат и состояние на актора", async () => {
+  it("провал ставит зависимость флагом АКТОРА (предмет не трогается) и состояние на актора", async () => {
     const item = drug();
     const a = actor({ items: [item], fatigue: 1, t: 40 });
     captured.nextRoll = 50;
 
     await rollAddictionTest(a, item, "wp", 0);
 
-    expect(item.updates[0]).toEqual({ "system.addiction.isAddicted": true });
+    expect(item.updates).toEqual([]);
+    expect(a.flags["warhammer-dbc"].drugWithdrawal["Пыльца"]).toMatchObject({ addicted: true, name: "Пыльца", lastDose: 123 });
     expect(a.updates[0]).toEqual({ "system.conditions.addicted": true });
     expect(captured.chat[0].content).toContain("<label>Порог</label><b>25</b>");
     expect(captured.chat[0].content).toContain("Персонаж стал зависим");
   });
 
   it("успех снимает общее состояние, если других зависимостей нет", async () => {
-    const item = drug({ addicted: true });
-    const a = actor({ items: [item], t: 40 });
+    const item = drug();
+    const a = actor({ items: [item], t: 40, addicted: [item] });
     captured.nextRoll = 20;
 
     await rollAddictionTest(a, item, "t", 0);
 
-    expect(item.updates[0]).toEqual({ "system.addiction.isAddicted": false });
+    expect(item.updates).toEqual([]);
+    expect(a.flags["warhammer-dbc"].drugWithdrawal["Пыльца"]).toBeNull();
     expect(a.updates[0]).toEqual({ "system.conditions.addicted": false });
     expect(captured.chat[0].content).toContain("Зависимость преодолена");
   });
 
   it("успех не снимает общее состояние, если есть другая активная зависимость", async () => {
-    const item = drug({ id: "drug-1", addicted: true });
-    const other = drug({ id: "drug-2", addicted: true });
-    const a = actor({ items: [item, other], t: 40 });
+    const item = drug({ id: "drug-1" });
+    const other = drug({ id: "drug-2", name: "Другой" });
+    const a = actor({ items: [item, other], t: 40, addicted: [item, other] });
     captured.nextRoll = 20;
 
     await rollAddictionTest(a, item, "t", 0);
 
-    expect(item.updates[0]).toEqual({ "system.addiction.isAddicted": false });
+    expect(a.flags["warhammer-dbc"].drugWithdrawal["Пыльца"]).toBeNull();
+    expect(a.flags["warhammer-dbc"].drugWithdrawal["Другой"]).toMatchObject({ addicted: true });
     expect(a.updates).toEqual([]);
+  });
+
+  // task-9717: колет ДРУГОЙ персонаж — зависимость пишется получателю, а не в предмет колющего.
+  it("доза от другого персонажа: зависимость ложится на получателя, предмет колющего не меняется", async () => {
+    const medicsItem = drug({ id: "medic-drug" });
+    const patient = actor({ items: [], t: 40 });
+    captured.nextRoll = 99;
+
+    await rollAddictionTest(patient, medicsItem, "t", 0);
+
+    expect(medicsItem.updates).toEqual([]);
+    expect(patient.flags["warhammer-dbc"].drugWithdrawal["Пыльца"]).toMatchObject({ addicted: true });
+  });
+
+  it("зависимость переживает удаление препарата: срыв работает без предмета на листе", async () => {
+    const item = drug();
+    const a = actor({ items: [], t: 40, addicted: [item] });
+    captured.nextRoll = 20;
+
+    await rollAddictionTest(a, item, "t", 0);
+
+    expect(a.flags["warhammer-dbc"].drugWithdrawal["Пыльца"]).toBeNull();
+    expect(captured.chat[0].content).toContain("Зависимость преодолена");
   });
 });
 
@@ -157,20 +192,22 @@ describe("Lord of Sloth / Владыка Праздности (gift.slaanesh.lor
 
     await rollAddictionTest(a, item, "t", 0);
 
-    expect(item.updates[0]).toEqual({ "system.addiction.isAddicted": true });
+    expect(a.flags["warhammer-dbc"].drugWithdrawal["Пыльца"]).toMatchObject({ addicted: true });
     expect(a.updates[0]).toEqual({ "system.conditions.addicted": true });
   });
 
   it("носитель Дара с уже стоящей (по ошибке/наследству) зависимостью — тест всё равно не идёт, флаг не трогается", async () => {
-    const item = drug({ addicted: true });
+    const item = drug();
     const gift = capabilityItem(LORD_OF_SLOTH_CAPABILITY);
-    const a = actor({ items: [item, gift], t: 40 });
+    const a = actor({ items: [item, gift], t: 40, addicted: [item] });
+    const before = structuredClone(a.flags["warhammer-dbc"].drugWithdrawal);
     captured.nextRoll = 1; // лучший возможный бросок — тоже не должен потребоваться
 
     await rollAddictionTest(a, item, "t", 0);
 
     expect(item.updates).toEqual([]);
     expect(a.updates).toEqual([]);
+    expect(a.flags["warhammer-dbc"].drugWithdrawal).toEqual(before);
   });
 });
 
@@ -599,18 +636,19 @@ describe("drug sheet listeners", () => {
   });
 
   it("removeDrugAddiction снимает общее состояние только если других зависимостей нет", async () => {
-    const item = drug({ id: "drug-1", addicted: true });
-    const other = drug({ id: "drug-2", addicted: true });
-    const a = actor({ items: [item, other] });
+    const item = drug({ id: "drug-1" });
+    const other = drug({ id: "drug-2", name: "Другой" });
+    const a = actor({ items: [item, other], addicted: [item, other] });
 
     await removeDrugAddiction(a, item);
 
-    expect(item.updates[0]).toEqual({ "system.addiction.isAddicted": false });
+    expect(a.flags["warhammer-dbc"].drugWithdrawal["Пыльца"]).toBeNull();
     expect(a.updates).toEqual([]);
 
-    await removeDrugAddiction(a, other);
+    // Ключ вместо предмета — зависимость от уже удалённого препарата («✕» в панели).
+    await removeDrugAddiction(a, "Другой");
 
-    expect(other.updates[0]).toEqual({ "system.addiction.isAddicted": false });
+    expect(a.flags["warhammer-dbc"].drugWithdrawal["Другой"]).toBeNull();
     expect(a.updates[0]).toEqual({ "system.conditions.addicted": false });
   });
 

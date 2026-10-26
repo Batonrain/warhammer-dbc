@@ -37,8 +37,12 @@ import { deltaOwnedItems, unlinkedTokens } from "./unlinked-tokens.mjs";
 import { syncItemEffectsDisabled } from "../apps/effects.mjs";
 
 const FLAG = "warhammer-dbc";
-/** Метка на самой копии: проход её уже включил (делает повтор безопасным). */
-const DONE_FLAG = "diseaseActiveMigrated";
+/**
+ * Метка на самой копии: проход её уже включил (делает повтор безопасным). Ту же
+ * метку ставит и проход «все выданные болезни» (migrations/disease-active-all.mjs):
+ * копия с меткой больше никем не включается.
+ */
+export const DONE_FLAG = "diseaseActiveMigrated";
 
 /** Есть ли у предмета записи Конструктора (хотя бы одна запись хотя бы в одной группе). */
 function hasMechanicsEntries(item) {

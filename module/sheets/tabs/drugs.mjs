@@ -25,8 +25,8 @@ import { isReplicantSerum, takeSerum } from "../../combat/replicant.mjs";
 import { snakeEaterHalve, hasResilienceTalent } from "../../rules/resilience-talents.mjs";
 import { DRUG_DOSES_FLAG, doseKey, logDose, dosesThisWeek, weeklyDoseLimit, addictionCheckFor, isHookedUp, hookUpMinDose } from "../../rules/drug-doses.mjs";
 // Зависимость: комбинированный тест, частота приёма, штраф без дозы, срыв (wdbc-gyqf2).
-import { addictionTestParts, lowestPart, parseFrequency, readWithdrawalEntries, drugKey, breakTestState, breakTestMod, addictedDrugs,
-         withdrawalStatusLabel } from "../../rules/drug-withdrawal.mjs";
+import { addictionTestParts, lowestPart, parseFrequency, readWithdrawalEntries, drugKey, breakTestState, breakTestMod, addictionRecords,
+         isAddictedTo, withdrawalStatusLabel } from "../../rules/drug-withdrawal.mjs";
 import { startWithdrawal, endWithdrawal, markBreakTested } from "../../combat/drug-withdrawal.mjs";
 // New Men / Новые Люди (Йигори): срок вдвое, без пост-эффекта, разовый эффект
 // медикамента вдвое (module/rules/new-men.mjs).
@@ -36,7 +36,8 @@ import { newMenDrugDuration, newMenInstantMedicine, halvesInstantMedicine,
 // wdbc-1rno (кластер Дары Богов — Слаанеш): «Владыка Праздности» — «Персонаж
 // приобретает иммунитет к любым пост-эффектам и зависимостям от употребления
 // наркотиков». Тест Зависимости (rollAddictionTest ниже) — единственное место
-// движка, где вообще возникает system.addiction.isAddicted/состояние
+// движка, где вообще возникает зависимость (запись флага актора
+// drugWithdrawal, раньше — system.addiction.isAddicted)/состояние
 // "addicted" — им и гасим: обладатель Дара никогда не проваливает и никогда
 // не остаётся зависимым, каким бы ни был бросок. «Никаких негативных
 // эффектов от еды (включая яды в пище)» и «не набирает вес от обжорства» —
@@ -459,16 +460,16 @@ export async function weeklyDoseCheck(actor, item) {
   const now = game.time?.worldTime ?? 0;
   // Доза — это и есть «удовлетворить зависимость» (книга, поле 3): штраф без
   // дозы снят, отсчёт частоты приёма идёт заново (rules/drug-withdrawal.mjs).
-  // Зависим ли ПОЛУЧАТЕЛЬ от этого наркотика — по записи на его собственных
-  // предметах (ключ — название), а не по флагу `item`: колет, возможно, другой
-  // персонаж, или доза взята из второй стопки того же препарата.
-  const recipientAddicted = addictedDrugs(actor.items).some(i => drugKey(i) === drugKey(item));
+  // Зависим ли ПОЛУЧАТЕЛЬ от этого наркотика — по флагу самого получателя
+  // (ключ — название препарата, task-9717), а не по предмету `item`: колет,
+  // возможно, другой персонаж, или доза взята из второй стопки того же препарата.
+  const recipientAddicted = isAddictedTo(readWithdrawalEntries(actor), item);
   if (recipientAddicted) await startWithdrawal(actor, item, now);
   if (!(Number(add.minDose) > 0)) return;
   const key = doseKey(item);
   const log = logDose(actor.getFlag?.("warhammer-dbc", DRUG_DOSES_FLAG), key, now);
   try { await actor.setFlag("warhammer-dbc", DRUG_DOSES_FLAG, log); } catch { /* нет прав на лист получателя */ }
-  if (add.isAddicted) return;
+  if (recipientAddicted) return;
   // «Крючок»: приготовленный с ним препарат — лимит вдвое ниже (окр.▼).
   const limit = weeklyDoseLimit(actor, isHookedUp(item) ? hookUpMinDose(add.minDose) : add.minDose);
   const check = addictionCheckFor(dosesThisWeek(log, key, now), limit);
@@ -650,15 +651,25 @@ export async function deactivateDrugEffect(item) {
   ui.notifications.info(`Эффект «${item.name}» завершён.`);
 }
 
-export async function removeDrugAddiction(actor, item) {
-  if (item) {
-    await item.update({ "system.addiction.isAddicted": false });
-    await endWithdrawal(actor, item);
-  }
-  const stillAddicted = actor.items.some(i =>
-    i.type === "drug" && i.system.addiction?.hasAddiction && i.system.addiction?.isAddicted
-  );
-  if (!stillAddicted) await actor.update(conditionRemoveFields("addicted"));
+/** Осталась ли у актора хоть одна зависимость от препарата (флаг актора, task-9717). */
+const stillAddicted = actor => addictionRecords(actor.items, readWithdrawalEntries(actor)).length > 0;
+
+/**
+ * Предмет-препарат для зависимости по ключу: живой предмет листа, а если препарат
+ * кончился и предмет удалён — «призрак» из записи актора с теми же настройками.
+ * Нужен кнопкам панели ЗАВИСИМОСТИ: зависимость от удалённого препарата остаётся.
+ */
+export function resolveDrug(actor, key) {
+  const live = actor.items.find(i => i.type === "drug" && drugKey(i) === key && i.system?.addiction?.hasAddiction)
+    ?? actor.items.find(i => i.type === "drug" && drugKey(i) === key);
+  if (live) return live;
+  const rec = addictionRecords(actor.items, readWithdrawalEntries(actor)).find(r => r.key === key);
+  return rec ? { id: null, name: rec.name, type: "drug", system: { addiction: rec.add }, flags: {} } : null;
+}
+
+export async function removeDrugAddiction(actor, drug) {
+  if (drug) await endWithdrawal(actor, drug);
+  if (!stillAddicted(actor)) await actor.update(conditionRemoveFields("addicted"));
 }
 
 export function activateDrugListeners(html, actor, { resolveOtherTargetActor } = {}) {
@@ -700,10 +711,13 @@ export function activateDrugListeners(html, actor, { resolveOtherTargetActor } =
   html.find(".addiction-test-btn").click(async ev => {
     ev.preventDefault();
     ev.stopPropagation();
-    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    // Кнопка панели ЗАВИСИМОСТИ несёт ключ препарата (предмета может уже не быть),
+    // кнопка «Зав.» в списке препаратов — id предмета.
+    const drugKeyAttr = ev.currentTarget.dataset.drugKey;
+    const item = drugKeyAttr ? resolveDrug(actor, drugKeyAttr) : actor.items.get(ev.currentTarget.dataset.itemId);
     // Уже зависим — это тест на срыв (книга: –50, +10 за каждый предыдущий период
     // под штрафом, один раз за период): модификатор считает rollBreakTest, а не кнопка.
-    if (item?.system?.addiction?.isAddicted) { await rollBreakTest(actor, item); return; }
+    if (item && isAddictedTo(readWithdrawalEntries(actor), item)) { await rollBreakTest(actor, item); return; }
     const charKey = ev.currentTarget.dataset.char || "t";
     const mod = parseInt(ev.currentTarget.dataset.mod) || 0;
     // Комбинированный тест (Рекаф): вторая Характеристика берётся с самого препарата.
@@ -714,8 +728,8 @@ export function activateDrugListeners(html, actor, { resolveOtherTargetActor } =
   html.find(".addiction-remove-btn").click(async ev => {
     ev.preventDefault();
     ev.stopPropagation();
-    const item = actor.items.get(ev.currentTarget.dataset.itemId);
-    await removeDrugAddiction(actor, item);
+    const key = ev.currentTarget.dataset.drugKey;
+    await removeDrugAddiction(actor, key ? resolveDrug(actor, key) ?? key : actor.items.get(ev.currentTarget.dataset.itemId));
   });
 }
 
@@ -752,7 +766,9 @@ export async function rollAddictionTest(actor, item, charKey = "t", testMod = 0,
   const combinedNote = second
     ? `<div class="roll-threshold">🔗 Комбинированный тест: ${candidates.map(c => `${c.abbr} <b>${c.eff}</b>`).join(" · ")} → Порог <b>${eff}</b> (наименьший)</div>`
     : "";
-  const wasAddicted = item?.system?.addiction?.isAddicted || false;
+  // Зависимость — запись на ПОЛУЧАТЕЛЕ (флаг актора), а не поле предмета: колет,
+  // возможно, другой персонаж, и предмет мог быть удалён (task-9717).
+  const wasAddicted = !!item && isAddictedTo(readWithdrawalEntries(actor), item);
 
   let roll = await new Roll("1d100").evaluate();
   const rolls = [roll];
@@ -778,23 +794,18 @@ export async function rollAddictionTest(actor, item, charKey = "t", testMod = 0,
   let outcome;
   let cured = false;
   if (success) {
-    if (wasAddicted && item) {
+    if (wasAddicted) {
       // Срыв зависимости — избавление.
       cured = true;
-      await item.update({ "system.addiction.isAddicted": false });
       await endWithdrawal(actor, item);
-      const still = actor.items.some(i =>
-        i.type === "drug" && i.id !== item.id &&
-        i.system.addiction?.hasAddiction && i.system.addiction?.isAddicted
-      );
-      if (!still) await actor.update(conditionRemoveFields("addicted"));
+      if (!stillAddicted(actor)) await actor.update(conditionRemoveFields("addicted"));
       outcome = `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Зависимость преодолена!</span>`;
     } else {
       outcome = `<span class="roll-success">Сопротивление успешно — ${deg} ${_degWord(deg)}</span>`;
     }
   } else {
-    // Провал → персонаж зависим от ЭТОГО препарата.
-    if (item) await item.update({ "system.addiction.isAddicted": true });
+    // Провал → получатель зависим от ЭТОГО препарата. Запись — на нём самом
+    // (флаг актора), а не в предмете: доза могла прийти от другого персонажа.
     await actor.update(conditionApplyFields("addicted", null, actor));
     // Только что стал зависим — отсчёт частоты приёма с этого момента (запись,
     // оставшаяся от прошлой зависимости, дала бы мгновенный штраф).

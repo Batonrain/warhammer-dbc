@@ -12,7 +12,7 @@ import { actorFor, weaponFor, setTargets, char } from "../support/combat-fixture
 import { _executeAttackRoll } from "../../module/combat/attack.mjs";
 import { talentTogglesHtml } from "../../module/sheets/attack/talent-toggles.mjs";
 import { weaponTechShot, lensTuningShot, litanyReliability, litanyWeaponType, litanyCoversWeapon,
-  LITANY_WINDOW_SECONDS } from "../../module/rules/gunsmith-talents.mjs";
+  litanyUnresolved, LITANY_WINDOW_SECONDS } from "../../module/rules/gunsmith-talents.mjs";
 
 const card = () => captured.chat.at(-1)?.content ?? "";
 const damage = () => Number(card().match(/<button class="wh-apply-dmg-btn[^>]*data-damage="(\d+)"/)?.[1]);
@@ -198,6 +198,25 @@ describe("Литания Чистки: +1 Надёжность оружию вы
     expect(litanyWeaponType(litany(raw))).toBe("");
     const a = who([litany(raw)]);
     expect(litanyCoversWeapon(a, gun({ weaponType: "bolt" }, "Болтер"))).toBe(false);
+  });
+
+  // Sahara covering-fire-hip-shooting п.6: Литания, купленная до выбора типа, молчит — окно атаки говорит об этом.
+  it("Литания с нерешённым типом попадает в litanyUnresolved, с выбранным — нет", () => {
+    const raw = "Bolt, Flame, Grav, Las, Launcher, Melta, Solid Projectile, Exotic (1 любой)";
+    expect(litanyUnresolved(who([litany(raw)])).length).toBe(1);
+    expect(litanyUnresolved(who([litany("Las")])).length).toBe(0);
+    expect(litanyUnresolved(who([]))).toEqual([]);
+  });
+
+  it("окно атаки: у оружия с нерешённой Литанией — подсказка вписать тип; при выбранном типе — галочка, без подсказки", () => {
+    const raw = "Bolt, Flame, Grav, Las, Launcher, Melta, Solid Projectile, Exotic (1 любой)";
+    const w = lasgun();
+    const stale = talentTogglesHtml(who([w, litany(raw)]), w, { isMelee: false, wProps: [], sys: {} });
+    expect(stale).toContain("тип оружия не выбран");
+    expect(stale).not.toContain("litanyCleaned");
+    const ok = talentTogglesHtml(who([w, litany("Las")]), w, { isMelee: false, wProps: [], sys: {} });
+    expect(ok).toContain("litanyCleaned");
+    expect(ok).not.toContain("тип оружия не выбран");
   });
 
   it("запертая галочка не продлевает чистку: метка не переписывается, пока жива", async () => {

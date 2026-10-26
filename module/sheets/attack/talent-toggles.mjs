@@ -16,7 +16,7 @@ import { esc } from "../../helpers/utils.mjs";
 import { hasGunnerTalent, eyeOfVengeanceAvailable, EYE_OF_VENGEANCE_FLAG } from "../../rules/gunner-talents.mjs";
 import { killingStrikeOffered } from "../../rules/berserker-talents.mjs";
 import { hasGunsmithTalent, weaponTechAvailable, WEAPON_TECH_SPENT_FLAG, lensTuningAvailable, LENS_CHARGES_FLAG,
-  litanyCoversWeapon, litanyReliability, LITANY_CLEANED_FLAG } from "../../rules/gunsmith-talents.mjs";
+  litanyCoversWeapon, litanyReliability, litanyUnresolved, LITANY_CLEANED_FLAG } from "../../rules/gunsmith-talents.mjs";
 
 import { torrentOffered, torrentWorkedShifts, torrentBlastRadius, torrentMaxDistance } from "../../rules/flamer-talents.mjs";
 
@@ -116,6 +116,12 @@ export function talentTogglesHtml(actor, item, { isMelee, wProps = [], sys = {} 
       active ? "Литания Чистки действует: оружие чищено за последние сутки (+1 Надёжность)" : "Литания Чистки: оружие этого типа чищено сегодня (30 минут) — +1 Надёжность на сутки",
       "Литания Чистки: если в сутки тратить хотя бы 30 минут на чистку оружия выбранного типа, оно получает +1 к Надёжности. Отметка действует 24 часа мирового времени.",
       { checked: active, disabled: active }));
+  }
+
+  // Литания, купленная без выбора типа оружия, молчит — подсказать, как её оживить (иначе игрок не поймёт,
+  // почему галочки нет).
+  if (item?.system?.weaponType && !litanyCoversWeapon(actor, item) && litanyUnresolved(actor).length) {
+    out.push(`<div class="roll-threshold" title="Литания Чистки куплена без выбора типа оружия — механика молчит, пока тип не вписан.">Литания Чистки: тип оружия не выбран — впишите его в специализацию Таланта на листе (Bolt, Las, Melta…), и галочка появится у этого оружия.</div>`);
   }
 
   // Поток: огнемёт, над которым работали смену в Мастерской Крафта (rules/flamer-talents.mjs).

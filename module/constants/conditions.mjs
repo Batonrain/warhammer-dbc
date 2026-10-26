@@ -400,7 +400,7 @@ export const CONDITIONS = {
   },
   dreadWailFeared: {
     label: "Устрашён", icon: "😱", color: "#b48cff", mark: true,
-    desc: "Грозный Вопль: Рейтинг Страха 2 до конца боя. Метка информационная — в производный Рейтинг Страха не входит, ГМ учитывает её сам.",
+    desc: "Грозный Вопль: Рейтинг Страха 2 до конца боя. Сам рейтинг даёт временный эффект на листе (system.fearRating, снимается с концом боя); метка лишь показывает значок.",
     body: `<path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
            d="M8 2.2c-3 0-5.2 2.2-5.2 5 0 1.9 1 3.2 2.2 4v2.4h6V11.2c1.2-.8 2.2-2.1 2.2-4 0-2.8-2.2-5-5.2-5Z"/>
      <circle cx="6.1" cy="7" r="1" fill="currentColor"/><circle cx="9.9" cy="7" r="1" fill="currentColor"/>

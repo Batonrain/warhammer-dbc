@@ -33,6 +33,12 @@ export const BAYONET_CHARGE = Object.freeze({ key: "meleeCore.core.bayonetCharge
 export const RUN_AND_GUN_PENDING_FLAG = "runAndGunPending";
 /** Id оружия, из которого стреляли на Натиске и которое не сложили (turn-scoped). */
 export const RUN_AND_GUN_FIRED_FLAG = "runAndGunFired";
+/**
+ * Проверка Натиска (Подавление Прикрывающего Огня, Стрельба на Бегу) в этом Раунде уже сделана —
+ * строка «<id боя>:<раунд>» (turn-scoped). Ставит и HUD-кнопка Натиска (declareCharge), и окно
+ * атаки с Базой «Натиск», чтобы два пути в сумме не проверяли дважды (combat/free-shot.mjs).
+ */
+export const CHARGE_CHECKED_FLAG = "chargeChecked";
 /** Штыковая Атака попала — свободный выстрел ещё не сделан (turn-scoped). */
 export const BAYONET_SHOT_PENDING_FLAG = "bayonetChargePending";
 

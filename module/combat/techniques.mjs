@@ -12,12 +12,12 @@ import { DANCE_OF_DECEPTION_CAPABILITY, danceOfDeceptionFeintOptions } from "../
 import { phantomCopiesFeintBonus } from "../rules/wrapped-in-chaos.mjs";
 import { spendFromInfamyPool } from "../apps/infamy-points.mjs";
 import { tempInfamyAmount } from "../rules/temp-infamy.mjs";
-import { sideValue, sideContext, registerContest, contestOpponents } from "./opposed-contest.mjs";
+import { sideValue, sideContext, registerContest, contestOpponents, contestEntry, dropContest } from "./opposed-contest.mjs";
 import { spendActionPoints } from "./action-economy.mjs";
 import { canTakeAttackAction, takeAttackAction } from "./attack-limit.mjs";
 import { commitRerollUse } from "./angel-hunters.mjs";
 import { extraSuccessDegrees } from "./extra-successes.mjs";
-import { escapeArtistRelief } from "../rules/dodge-talents.mjs";
+import { escapeArtistRelief, hasDodgeTalent } from "../rules/dodge-talents.mjs";
 import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
 
 const SLIP_AWAY_FLAG = "dodge.core.slipAway";
@@ -99,16 +99,15 @@ export async function _showContestDialog(actor, techDef) {
        </div>`
     : "";
 
-  // Ускользнуть (Талант Избегания): раз в Раунд на тесте A в Борьбе — +30 или
-  // переброс. Книга даёт решить переброс ПОСЛЕ броска; здесь выбор делается в
-  // окне до броска, переброс = два d100, лучший (допущение, как у Ненависти).
+  // Ускользнуть (Талант Избегания): раз в Раунд на тесте A в Борьбе — +30 (решается ДО броска, здесь) или
+  // переброс (решается ПОСЛЕ броска — кнопка на карточке проваленного теста, slipAwayContestReroll ниже).
   const slipAwayReady = !!techDef.slipAway && isThrottleReady(actor, SLIP_AWAY_FLAG, "round");
   const slipAwayHtml = slipAwayReady
     ? `<div class="atk-dlg-row" style="flex-direction:column;align-items:flex-start;">
          <label>Ускользнуть (раз в Раунд):</label>
          <label><input type="radio" name="slip-away" value="none" checked/> нет</label>
          <label><input type="radio" name="slip-away" value="bonus"/> +30 на этот тест</label>
-         <label><input type="radio" name="slip-away" value="reroll"/> переброс (бросить дважды, лучший)</label>
+         <span style="font-size:0.85em;">Переброс — кнопкой на карточке, если тест провалится.</span>
        </div>`
     : "";
 
@@ -231,7 +230,6 @@ export async function _showContestDialog(actor, techDef) {
           }
           const slipChoice = slipAwayReady ? (html.find('input[name="slip-away"]:checked').val() || "none") : "none";
           if (slipChoice === "bonus") { eff += 30; talentParts.push("Ускользнуть +30"); }
-          if (slipChoice === "reroll" && !talentAdvantage) talentAdvantage = "Ускользнуть: переброс, лучший из двух";
           if (slipChoice !== "none") await markThrottleUsed(actor, SLIP_AWAY_FLAG, "round");
 
           // Встречный тест (wdbc-x1nz.2.73): без противника сравнивать не с
@@ -335,6 +333,9 @@ export async function _showContestDialog(actor, techDef) {
                </div>`,
               registerContest(actor, techDef, {
                 success: hit, deg, threshold: eff, rv, side,
+                // Переброс Ускользнуть после провала: всё, что нужно, чтобы повторить тот же бросок (slipAwayContestReroll).
+                slipReroll: slipAwayReady && slipChoice === "none" && !hit,
+                rerollCtx: { label: danceOpt ? danceOpt.label : (charMeta?.abbr ?? charKey), base: selfVal, parts: modParts, charKey, doubleSuccesses },
                 resistMods: Object.fromEntries(opponents.map(o => [o.uuid, techDef.resistMods?.(o, actor) ?? []])),
                 resistRolls: Object.fromEntries(opponents.map(o => [o.uuid, techDef.resistRolls?.(o, actor) ?? 1]))
               }, opponents),
@@ -388,4 +389,44 @@ export async function _showContestDialog(actor, techDef) {
     },
     close: () => {}
   }, { classes: ["dialog", "wh-attack-dialog"], width: 400 }).render(true);
+}
+
+/**
+ * Ускользнуть (Талант Избегания): «перебросить его (можно решить после броска)», раз в Раунд — кнопка на
+ * карточке проваленного теста A в Борьбе (Выкрутиться и прочие Состязания). Бросок повторяется против того же
+ * Порога; ОД и Действие второй раз не тратятся (они списаны первым броском), старый приём снимается с ожидания,
+ * а новая карточка получает свои кнопки «Сопротивляться».
+ * @returns {Promise<boolean>} true — переброс состоялся
+ */
+export async function slipAwayContestReroll(contestId) {
+  const entry = contestEntry(contestId);
+  if (!entry) { ui.notifications?.warn("⚠️ Ожидание приёма потеряно (страница перезагружалась) — Ускользнуть перебросить нельзя."); return false; }
+  const actor = await fromUuid(entry.actorUuid).catch(() => null);
+  if (!actor) { ui.notifications?.warn("⚠️ Персонаж не найден."); return false; }
+  if (!actor.isOwner && !game.user?.isGM) { ui.notifications?.warn(`⚠️ Нет прав на «${actor.name}».`); return false; }
+  if (!hasDodgeTalent(actor, "slipAway") || !isThrottleReady(actor, SLIP_AWAY_FLAG, "round")) {
+    ui.notifications?.warn("⚠️ Ускользнуть в этом Раунде уже использовано (или нет Таланта).");
+    return false;
+  }
+  // Противник уже бросал сопротивление — приём разрешён (эффект применён/не применён), перебрасывать поздно:
+  // новый бросок повторил бы onSuccess/onFail.
+  if (entry.done?.size) { ui.notifications?.warn("⚠️ Противник уже ответил — перебрасывать поздно."); return false; }
+  const { result, techDef, opponentUuids } = entry;
+  const ctx = result.rerollCtx ?? {};
+  await markThrottleUsed(actor, SLIP_AWAY_FLAG, "round");
+  const roll = await new Roll("1d100").evaluate();
+  const rv = roll.total;
+  const { success: hit, deg: rolledDeg } = testOutcome(rv, result.threshold);
+  let deg = rolledDeg + extraSuccessDegrees(actor, { success: hit, charKey: ctx.charKey });
+  if (ctx.doubleSuccesses && hit) deg *= 2;
+  dropContest(contestId);
+  const opponents = (await Promise.all((opponentUuids ?? []).map(u => fromUuid(u).catch(() => null)))).filter(Boolean);
+  const parts = [...(ctx.parts ?? []), "Ускользнуть: переброс провала"];
+  await postTestCard(actor, {
+    icon: rollIcon("run"), title: `${techDef.label}: Ускользнуть — переброс`,
+    threshold: rollStatLine({ label: ctx.label ?? "", base: ctx.base ?? 0, parts, threshold: result.threshold, rv }),
+    outcome: hit ? outcomeHtml(true, `Успех — ${deg} ${_degWord(deg)}`) : outcomeHtml(false, `Провал — ${deg} ${_degWord(deg)}`),
+    sections: [registerContest(actor, techDef, { ...result, success: hit, deg, rv, slipReroll: false }, opponents)]
+  }, { rolls: [roll] });
+  return true;
 }

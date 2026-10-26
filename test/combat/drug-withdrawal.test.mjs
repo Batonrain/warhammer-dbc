@@ -10,17 +10,19 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
 import { drugWithdrawalClock, startWithdrawal, endWithdrawal } from "../../module/combat/drug-withdrawal.mjs";
 import { CONDITION_CLOCK_HANDLERS } from "../../module/combat/condition-clock.mjs";
-import { rollBreakTest, weeklyDoseCheck, removeDrugAddiction } from "../../module/sheets/tabs/drugs.mjs";
+import { rollBreakTest, weeklyDoseCheck, removeDrugAddiction, resolveDrug } from "../../module/sheets/tabs/drugs.mjs";
 import { resolveTest } from "../../module/rules/resolve-test.mjs";
 import { getRuleSources } from "../../module/rules/sources.mjs";
 
 const H = 3600, D = 86400, NS = "warhammer-dbc";
 const T0 = 500 * D;
 
-function drug({ id = "d1", name = "Тиск", addicted = true, add = {} } = {}) {
+// Зависимость хранится флагом АКТОРА (task-9717), а не полем предмета; isAddicted на
+// предмете — устаревшее, оставлено false, чтобы тесты не опирались на него.
+function drug({ id = "d1", name = "Тиск", add = {} } = {}) {
   const item = {
     id, name, type: "drug",
-    system: { addiction: { hasAddiction: true, isAddicted: addicted, minDose: 2, testChar: "t", testMod: 10, frequency: "1 день", ...add } },
+    system: { addiction: { hasAddiction: true, isAddicted: false, minDose: 2, testChar: "t", testMod: 10, frequency: "1 день", ...add } },
     update: async data => {
       for (const [path, value] of Object.entries(data)) {
         const parts = path.split(".");
@@ -53,6 +55,11 @@ function actor(items = [], { t = 40, wp = 35, flags = {} } = {}) {
 }
 
 const entry = a => a.flags[NS].drugWithdrawal;
+/** Зависимость «как после миграции»: запись есть, метки дозы ещё нет. */
+const addictedNoDose = (a, item) => {
+  a.flags[NS].drugWithdrawal = { ...(a.flags[NS].drugWithdrawal ?? {}),
+    [item.name]: { addicted: true, name: item.name, addiction: JSON.parse(JSON.stringify(item.system.addiction)), lastDose: null, doneTo: 0, tested: 0 } };
+};
 
 beforeEach(() => {
   resetCaptured();
@@ -66,39 +73,82 @@ describe("часы зависимости", () => {
 
   it("метки дозы нет — отсчёт с КОНЦА отрезка: штрафа задним числом нет, теста с бонусом +230 тоже", async () => {
     const a = actor([drug()]);
+    addictedNoDose(a, a.items[0]);
     await drugWithdrawalClock(a, { from: T0, to: T0 + 30 * D });
-    expect(entry(a)["Тиск"]).toEqual({ lastDose: T0 + 30 * D, doneTo: T0 + 30 * D, tested: 0 });
+    expect(entry(a)["Тиск"]).toMatchObject({ addicted: true, lastDose: T0 + 30 * D, doneTo: T0 + 30 * D, tested: 0 });
     expect(captured.chat).toHaveLength(0);
     globalThis.game.time.worldTime = T0 + 30 * D;
     expect(await rollBreakTest(a, a.items[0])).toBeNull();   // период ещё не закончился
   });
 
-  it("доза, введённая другим персонажем (у колющего зависимости нет), снимает штраф получателя", async () => {
-    const mine = drug({ addicted: true });
+  it("доза, введённая другим персонажем, снимает штраф получателя (зависимость — на нём самом)", async () => {
+    const mine = drug();
     const a = actor([mine]);
     await startWithdrawal(a, mine, T0);
     globalThis.game.time.worldTime = T0 + 3 * D;
-    const medicsItem = drug({ addicted: false, add: { minDose: 0 } });
+    const medicsItem = drug({ add: { minDose: 0 } });                        // предмет колющего: на нём зависимости нет
     await weeklyDoseCheck(a, medicsItem);
-    expect(entry(a)["Тиск"]).toEqual({ lastDose: T0 + 3 * D, doneTo: T0 + 3 * D, tested: 0 });
+    expect(entry(a)["Тиск"]).toMatchObject({ addicted: true, lastDose: T0 + 3 * D, doneTo: T0 + 3 * D, tested: 0 });
+    expect(medicsItem.system.addiction.isAddicted).toBe(false);              // чужой предмет не тронут
   });
 
-  it("две зависимые стопки: излечение одной не стирает общий счёт", async () => {
+  it("недельный тест не пропускается из-за зависимости ХОЗЯИНА предмета: решает флаг получателя", async () => {
+    const medicsItem = drug({ name: "Рекаф", add: { minDose: 1, testMod: -30 } });
+    medicsItem.system.addiction.isAddicted = true;                           // у колющего зависимость стояла бы в предмете
+    const patient = actor([], { t: 40 });
+    captured.nextRoll = 90;
+    await weeklyDoseCheck(patient, medicsItem);
+    expect(entry(patient)["Рекаф"]).toMatchObject({ addicted: true });       // тест был, получатель зависим
+  });
+
+  it("зависимый получатель недельным тестом не перебрасывается", async () => {
+    const item = drug({ name: "Рекаф", add: { minDose: 1, testMod: -30 } });
+    const a = actor([], { t: 40 });
+    addictedNoDose(a, item);
+    captured.nextRoll = 90;
+    await weeklyDoseCheck(a, item);
+    expect(captured.chat).toHaveLength(0);
+    expect(entry(a)["Рекаф"]).toMatchObject({ addicted: true, lastDose: T0 });
+  });
+
+  it("удалённый пустой флакон не снимает ни штраф, ни часы: настройки берутся из снимка записи", async () => {
+    const flask = drug({ add: { penaltyMods: "basedon:wp=-30", penalty: "−30 на тесты W" } });
+    const a = actor([flask]);
+    await startWithdrawal(a, flask, T0);
+    a.items.length = 0;                                                      // флакон кончился и удалён
+    globalThis.game.time.worldTime = T0 + D;
+    expect(resolveTest({ actor: a, kind: "char", char: "wp" }).autoMods[0]?.value).toBe(-30);
+    await drugWithdrawalClock(a, { from: T0, to: T0 + D });
+    expect(captured.chat).toHaveLength(1);
+    expect(captured.chat[0].content).toContain("начался штраф");
+    expect(captured.chat[0].content).toContain("Тиск");
+  });
+
+  it("зависимость от удалённого препарата: тест на срыв и ручное снятие работают по ключу", async () => {
+    const flask = drug({ add: { testMod: 50 } });
+    const a = actor([flask], { t: 40 });
+    await startWithdrawal(a, flask, T0);
+    a.items.length = 0;
+    globalThis.game.time.worldTime = T0 + 4 * D;                              // 3 периода: –30, Порог 40+50–30 = 60
+    captured.nextRoll = 55;
+    const res = await rollBreakTest(a, resolveDrug(a, "Тиск"));
+    expect(res).toMatchObject({ success: true, cured: true });
+    expect(entry(a)["Тиск"]).toBeNull();
+  });
+
+  it("две стопки одного препарата — одна зависимость: снятие стирает счёт целиком", async () => {
     const s1 = drug({ id: "s1" }), s2 = drug({ id: "s2" });
     const a = actor([s1, s2]);
     await startWithdrawal(a, s1, T0);
-    s1.system.addiction.isAddicted = false;
-    await endWithdrawal(a, s1);
-    expect(entry(a)["Тиск"]).toEqual({ lastDose: T0, doneTo: T0, tested: 0 });
-    s2.system.addiction.isAddicted = false;
+    expect(Object.keys(entry(a))).toEqual(["Тиск"]);
     await endWithdrawal(a, s2);
     expect(entry(a)["Тиск"]).toBeNull();
   });
 
   it("не зависим или нет частоты — часы молчат", async () => {
-    const a = actor([drug({ addicted: false }), drug({ id: "d2", name: "Без частоты", add: { frequency: "" } })]);
-    await startWithdrawal(a, a.items[0], T0);
-    await drugWithdrawalClock(a, { from: T0, to: T0 + 30 * D });
+    const a = actor([drug(), drug({ id: "d2", name: "Без частоты", add: { frequency: "" } })]);
+    await startWithdrawal(a, a.items[1], T0);                                // зависим, но периода нет
+    await drugWithdrawalClock(a, { from: T0, to: T0 + 30 * D });             // от Тиска зависимости нет вовсе
     expect(captured.chat).toHaveLength(0);
   });
 
@@ -184,8 +234,7 @@ describe("тест на срыв зависимости (кнопка «Тест
     const res = await rollBreakTest(a, item);
     expect(res).toMatchObject({ success: false, cured: false });
     expect(captured.chat[0].content).toContain("<label>Порог</label><b>0</b>");
-    expect(item.system.addiction.isAddicted).toBe(true);
-    expect(entry(a)["Тиск"].tested).toBe(1);
+    expect(entry(a)["Тиск"]).toMatchObject({ addicted: true, tested: 1 });
     captured.chat.length = 0; captured.warnings.length = 0;
     expect(await rollBreakTest(a, item)).toBeNull();                          // тот же период
     expect(captured.warnings.join(" ")).toMatch(/уже был/);
@@ -200,7 +249,6 @@ describe("тест на срыв зависимости (кнопка «Тест
     const res = await rollBreakTest(a, item);
     expect(res).toMatchObject({ success: true, cured: true });
     expect(captured.chat[0].content).toContain("<label>Порог</label><b>60</b>");
-    expect(item.system.addiction.isAddicted).toBe(false);
     expect(entry(a)["Тиск"]).toBeNull();
   });
 
@@ -231,7 +279,6 @@ describe("тест на срыв зависимости (кнопка «Тест
     const a = actor([item]);
     await startWithdrawal(a, item, T0);
     await removeDrugAddiction(a, item);
-    expect(item.system.addiction.isAddicted).toBe(false);
     expect(entry(a)["Тиск"]).toBeNull();
     await endWithdrawal(a, item);                                            // повтор безопасен
   });
@@ -244,7 +291,7 @@ describe("доза и тест Зависимости", () => {
     await startWithdrawal(a, item, T0);
     globalThis.game.time.worldTime = T0 + 5 * D;
     await weeklyDoseCheck(a, item);
-    expect(entry(a)["Тиск"]).toEqual({ lastDose: T0 + 5 * D, doneTo: T0 + 5 * D, tested: 0 });
+    expect(entry(a)["Тиск"]).toMatchObject({ addicted: true, lastDose: T0 + 5 * D, doneTo: T0 + 5 * D, tested: 0 });
   });
 
   it("комбинированный тест на лимите доз: Предел = наименьший (T 40+40=80, W 30+50=80 → при W 20 → 70)", async () => {
@@ -263,8 +310,8 @@ describe("доза и тест Зависимости", () => {
     a.flags[NS].drugWithdrawal = { "Рекаф": { lastDose: 1, doneTo: 1, tested: 3 } };   // остаток прошлой зависимости
     captured.nextRoll = 90;
     await weeklyDoseCheck(a, item);
-    expect(item.system.addiction.isAddicted).toBe(true);
-    expect(entry(a)["Рекаф"]).toEqual({ lastDose: T0, doneTo: T0, tested: 0 });
+    expect(item.system.addiction.isAddicted).toBe(false);                    // предмет не трогается
+    expect(entry(a)["Рекаф"]).toMatchObject({ addicted: true, lastDose: T0, doneTo: T0, tested: 0 });
   });
 });
 
@@ -277,7 +324,7 @@ describe("штраф без дозы как правило броска", () => 
   it("пока доза просрочена — автоматический модификатор в Пороге; в срок — нет", () => {
     const item = drug({ name: "Призрак", add: { frequency: "9 часов", penaltyMods: "social=-10" } });
     const a = actor([item]);
-    a.flags[NS].drugWithdrawal = { "Призрак": { lastDose: T0, doneTo: T0, tested: 0 } };
+    a.flags[NS].drugWithdrawal = { "Призрак": { addicted: true, lastDose: T0, doneTo: T0, tested: 0 } };
     const ctx = { actor: a, kind: "skill", skill: "charm", char: "fel" };
     globalThis.game.time.worldTime = T0 + 9 * H - 1;
     expect(resolveTest(ctx).autoMods).toEqual([]);
@@ -294,7 +341,7 @@ describe("штраф без дозы как правило броска", () => 
   it("«на все тесты T»: бьёт тест Навыка на Стойкости и голый тест T, не Ловкость", () => {
     const item = drug({ name: "Стимм", add: { penaltyMods: "basedon:t=-20" } });
     const a = actor([item]);
-    a.flags[NS].drugWithdrawal = { "Стимм": { lastDose: T0, doneTo: T0, tested: 0 } };
+    a.flags[NS].drugWithdrawal = { "Стимм": { addicted: true, lastDose: T0, doneTo: T0, tested: 0 } };
     globalThis.game.time.worldTime = T0 + 2 * D;
     expect(resolveTest({ actor: a, kind: "skill", skill: "survival", char: "t" }).autoMods[0]?.value).toBe(-20);
     expect(resolveTest({ actor: a, kind: "char", char: "t" }).autoMods[0]?.value).toBe(-20);

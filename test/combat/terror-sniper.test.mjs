@@ -189,3 +189,50 @@ describe("клик: Intimidate(BS)+0 и карточка врагов", () => {
     expect(card()).toMatch(/Порог[^0-9]*20/);
   });
 });
+
+// Sahara pyromaniac-20 п.2: «раз на карточку» держит флаг сообщения, а не только погашенная кнопка.
+describe("Подавление врага с карточки Снайпера Ужаса: раз на врага и на карточку", () => {
+  function fakeMessage() {
+    const flags = {};
+    return {
+      id: "mTS", isOwner: true,
+      getFlag: (ns, k) => flags[`${ns}.${k}`],
+      setFlag: async (ns, k, v) => { flags[`${ns}.${k}`] = v; }
+    };
+  }
+  async function setup() {
+    const { terrorSuppressOnCard } = await import("../../module/combat/terror-sniper.mjs");
+    const enemy = actorFor({ characteristics: { wp: char(40) } });
+    enemy.uuid = "Actor.e"; enemy.isOwner = true; enemy.update = async () => {};
+    globalThis.fromUuid = async uuid => (uuid === "Actor.e" ? enemy : null);
+    resetCaptured();
+    return terrorSuppressOnCard;
+  }
+
+  it("второй клик по той же строке (после F5 кнопка снова живая) не бросает тест", async () => {
+    const run = await setup();
+    const msg = fakeMessage();
+    captured.dice = [50];
+    expect(await run(msg, 0, "Actor.e", "", false)).toBe(true);
+    const n = captured.chat.length;
+    expect(await run(msg, 0, "Actor.e", "", false)).toBe(false);
+    expect(captured.chat).toHaveLength(n);
+  });
+
+  it("другая строка карточки (другой враг) бросает свой тест", async () => {
+    const run = await setup();
+    const msg = fakeMessage();
+    captured.dice = [50];
+    await run(msg, 0, "Actor.e", "", false);
+    captured.dice = [50];
+    expect(await run(msg, 1, "Actor.e", "", false)).toBe(true);
+  });
+
+  it("враг не найден — тест не брошен, строка остаётся доступной для повтора", async () => {
+    const run = await setup();
+    const msg = fakeMessage();
+    expect(await run(msg, 2, "Actor.nobody", "", false)).toBe(false);
+    captured.dice = [50];
+    expect(await run(msg, 2, "Actor.e", "", false)).toBe(true);
+  });
+});

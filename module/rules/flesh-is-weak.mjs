@@ -39,9 +39,38 @@ export const fleshIsWeakCopies = items => [...(items ?? [])].filter(isFleshIsWea
 export const fleshIsWeakCap = intBonus => Math.ceil(Math.max(0, Number(intBonus) || 0) / 2);
 
 const ratingOf = trait => Math.max(0, Number(trait?.system?.rating) || 0);
-const contribOf = trait =>
+/** Сколько единиц рейтинга Трейту прибавил сам Талант (флаг вклада на Трейте); 0 — ничего. */
+export const contribOf = trait =>
   Math.max(0, Number(trait?.flags?.["warhammer-dbc"]?.[FIW_CONTRIB_FLAG]
     ?? trait?.getFlag?.("warhammer-dbc", FIW_CONTRIB_FLAG)) || 0);
+
+/**
+ * Что делать с Machine после «Обновить мир» (apps/content-sync.mjs; task решение
+ * владельца 26.10.2026, вариант B). Сверка пишет в Трейт значение пака и затирает
+ * +N от Таланта (рейтинг и броню-эффекты), а флаг вклада остаётся — и
+ * planFleshIsWeak видит «копий столько же, сколько записано», то есть ничего не
+ * возвращает. Пересчёт идёт ТОЛЬКО по факту такой правки, а не на любое
+ * изменение Трейта: реакция на любой updateItem прибавила бы +N второй раз при
+ * ручной правке рейтинга ГМом.
+ *
+ * `ratingOverwritten` — сверка записала рейтинг из пака (теперь он «базовый»);
+ * иначе рейтинг на Трейте прежний, он уже включает +N, а «базовый» — без него.
+ * `effectsReplaced` — сверка пересоздала эффекты Трейта по паку: они посчитаны под
+ * базовый рейтинг и должны быть пересчитаны под базовый + N.
+ * null — делать нечего.
+ * @returns {{newRating:?number, effects:?{from:number,to:number}}|null}
+ */
+export function planFleshIsWeakAfterSync({ rating, contribution, ratingOverwritten = false, effectsReplaced = false }) {
+  const n = Math.max(0, Number(contribution) || 0);
+  if (!n || (!ratingOverwritten && !effectsReplaced)) return null;
+  const current = Math.max(0, Number(rating) || 0);
+  const base = ratingOverwritten ? current : Math.max(0, current - n);
+  const target = base + n;
+  return {
+    newRating: ratingOverwritten ? target : null,
+    effects: effectsReplaced && base !== target ? { from: base, to: target } : null
+  };
+}
 
 /**
  * План синхронизации: на какой Machine и на сколько изменить рейтинг.

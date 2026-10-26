@@ -26,6 +26,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { wraithboneRegenIgnoresBreach } from "./void-air.mjs";
+import { hasStuffOfNightmares } from "./stuff-of-nightmares.mjs";
 import { findGroupEntry } from "../constants/skill-specializations.mjs";
 import { GROUP_SKILLS_DEF } from "../constants/skills.mjs";
 
@@ -62,12 +63,15 @@ export function voidArmourOf(actor) {
 
 /** Накрыт ли актор Взрывной Декомпрессией: существо без пустотной брони. */
 export function isDecompressionVictim(actor) {
-  return !!actor && VACUUM_ACTOR_TYPES.has(actor.type) && !voidArmourOf(actor);
+  return !!actor && VACUUM_ACTOR_TYPES.has(actor.type) && !voidArmourOf(actor) && !hasStuffOfNightmares(actor);
 }
 
-/** Вакуум сцены касается актора: существо без пустотной брони (Техника и корабли — нет). */
+/**
+ * Вакуум сцены касается актора: существо без пустотной брони (Техника и
+ * корабли — нет). Трейт Stuff of Nightmares даёт иммунитет к вакууму.
+ */
 export function vacuumApplies(actor) {
-  return !!actor && VACUUM_ACTOR_TYPES.has(actor.type) && !voidArmourOf(actor);
+  return !!actor && VACUUM_ACTOR_TYPES.has(actor.type) && !voidArmourOf(actor) && !hasStuffOfNightmares(actor);
 }
 
 /**
