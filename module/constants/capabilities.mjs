@@ -4858,7 +4858,7 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Мастер_Казней — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.masterKazney.finalExecution": {
     label: "Обрушивает удары нарастающей мощи. Совершая атаку Казнью, может потратить Очко Трофеев,",
-    source: "Final Execution / Окончательная Казнь", reader: ""
+    source: "Final Execution / Окончательная Казнь", reader: "РЕАЛИЗОВАНО ЧАСТИЧНО (27.10.2026, Sahara task-bbe1): кнопка «Окончательная Казнь» в окне рукопашной атаки — свойства Extreme(9)/Proven(5) первой атаки серии (Раунд), следующие атаки серии: Extreme на 1 ниже, Proven на 1 выше; Очко Трофеев (пул system.trophyPoints (module/rules/trophy-points.mjs, максимум P.b, ячейка «Трофеи» в шапке листа)) списывается при подтверждении атаки, один раз на серию, отказ без Очка — module/combat/final-execution.mjs::commitFinalExecution (окно — module/sheets/attack/dialog.mjs, строка — module/sheets/attack/markup.mjs). Трейт «Казнь» (доп. атаки) и Fear(2) за убийство НЕ смоделированы"
   },
   "elite.elitnyeArhetipy.masterKazney.markedPrey": {
     label: "За свободное действие может потратить очко Трофеев, чтобы отметить достойную трофея цель в прямой видимости или Трейта Unnatural Senses,",
@@ -4878,7 +4878,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.masterKazney.trophiesOfTriumph": {
     label: "Сила Богов позволяет извлекать больше силы из достойных трофеев. Убив достойную трофея цель с Inf 30-59, получает 2 очка Трофеев;",
-    source: "Trophies of Triumph / Трофеи Триумфа", reader: ""
+    source: "Trophies of Triumph / Трофеи Триумфа", reader: "РЕАЛИЗОВАНО ЧАСТИЧНО (27.10.2026, Sahara task-bbe1): сумма за убитую цель по Inf (30–59 — 2, 60–79 — 3, 80+ — 4) считается module/rules/trophy-points.mjs::trophyAwardAmount; кнопка «Трофей» на карточке убийства, решение ГМа (достойна ли цель) — module/combat/trophy-kill.mjs::awardTrophy, пул system.trophyPoints (module/rules/trophy-points.mjs, максимум P.b, ячейка «Трофеи» в шапке листа)"
   },
   // ── Элитные_архетипы\Медуза — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.meduza.alienConsciousnessAlienPowers": {
@@ -6711,7 +6711,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.masterKazney.trophyTaker": {
     label: "Убив вражеского офицера, чемпиона или чудовище (по усмотрению ГМа), получает 1 очко Трофеев (макс. P.b).",
-    source: "Trophy Taker / Собиратель Трофеев", reader: ""
+    source: "Trophy Taker / Собиратель Трофеев", reader: "РЕАЛИЗОВАНО ЧАСТИЧНО (27.10.2026, Sahara task-bbe1): +1 Очко Трофеев за убитого офицера/чемпиона/чудовище — карточка с кнопкой «Трофей» после констатации смерти (module/sheets/tabs/body.mjs::setDeceased → module/combat/trophy-kill.mjs::offerTrophyAfterKill), решение ГМа; пул system.trophyPoints (module/rules/trophy-points.mjs, максимум P.b, ячейка «Трофеи» в шапке листа). Траты как Очков Бесчестия на выслеживание/бой с офицерами — вручную"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Медуза — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.meduza.deadlyNaturalWeapon2Tentacles7Bite": {

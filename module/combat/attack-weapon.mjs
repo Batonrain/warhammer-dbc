@@ -43,7 +43,9 @@ function propEntry(p) {
  * (wdbc-w8z4, rules/resolve-test.mjs::weaponPropsFromRules — цель помечена, у
  * актора есть подходящий Дар/Талант и т.п.).
  *
- * При совпадении ключа остаётся больший рейтинг. Строковый рейтинг — формула
+ * При совпадении ключа остаётся больший рейтинг — кроме Extreme: его рейтинг это ПОРОГ (X–10 на кубе),
+ * чем он ниже, тем сильнее (weapon-properties.mjs::aggregateAuto берёт минимум, рейтинг 0 = 10), поэтому
+ * там остаётся МЕНЬШИЙ — иначе Extreme(9) от Таланта затёр бы Extreme(8) оружия. Строковый рейтинг — формула
  * кубика («1d5» у Взрыва) — в сравнении не участвует: числа с формулой не
  * сравнить, и попытка дала бы NaN.
  *
@@ -70,8 +72,11 @@ export function mergeExtraProps(entries, { gripProps = [], gripKey = "", gripPro
     if (!key) continue;
     const existing = result.find(x => x.key === key);
     if (!existing) { result.push({ key, rating, rating2 }); continue; }
-    if (typeof existing.rating  !== "string" && typeof rating  !== "string")
-      existing.rating  = Math.max(existing.rating  || 0, rating);
+    if (typeof existing.rating  !== "string" && typeof rating  !== "string") {
+      existing.rating = key === "extreme"
+        ? Math.min(existing.rating || 10, rating || 10)
+        : Math.max(existing.rating  || 0, rating);
+    }
     if (typeof existing.rating2 !== "string" && typeof rating2 !== "string")
       existing.rating2 = Math.max(existing.rating2 || 0, rating2);
   }

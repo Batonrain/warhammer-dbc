@@ -13,6 +13,7 @@ import { showDeathSaveDialog, doResurrect, _deathResolvedFields, DECEASED_AT_FLA
 import { VITAL_TIME_FIELD } from "../../constants/vitals.mjs";
 import { satisfyAddiction, setAddictionSubstance } from "../../rules/addiction.mjs";
 import { offerReaperAfterKill } from "../../combat/reaper-chain.mjs";
+import { offerTrophyAfterKill } from "../../combat/trophy-kill.mjs";
 import { registerBloodFlameKill, LAST_DAMAGE_WEAPON_FLAG } from "../../combat/blood-flame.mjs";
 import { registerLegacyDreadfulKill } from "../../combat/legacy-weapon-kill-credit.mjs";
 import { registerVengeanceKill } from "../../combat/vengeance.mjs";
@@ -98,6 +99,8 @@ export async function setDeceased(actor, deceased) {
     await registerVengeanceKill(actor, weapon);
     // Жнец (Талант «Рукопашных», combat/reaper-chain.mjs): смерть констатирована после удара Натиском — карточка с кнопкой.
     await offerReaperAfterKill(actor, weapon);
+    // Трофей (Мастер Казней, combat/trophy-kill.mjs): убийца-носитель Очков Трофеев — карточка с кнопкой «Трофей», решает ГМ.
+    await offerTrophyAfterKill(actor, weapon);
   }
 }
 

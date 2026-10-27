@@ -56,6 +56,8 @@ export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legi
   "hamstringUsed",
   // Жнец (Талант «Рукопашных», combat/reaper-chain.mjs): один переход к следующей цели с карточки урона.
   "reaperUsed",
+  // Трофей (Мастер Казней, combat/trophy-kill.mjs): одно решение ГМа о начислении Очков Трофеев с карточки убийства.
+  "trophyAwarded",
   // Рисовка (Талант «Рукопашных», combat/show-off.mjs): одна свободная атака по цели с её карточки победы.
   "showOffAttackUsed",
   // Упорство (Талант «Рукопашных», combat/tenacity.mjs): один повтор атаки с карточки.

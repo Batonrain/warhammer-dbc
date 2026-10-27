@@ -28,6 +28,7 @@ import { isGrappled } from "../../rules/predicates.mjs";
 import { grappleAttackBlockReason } from "../../combat/grapple.mjs";
 import { delayBlocksAttack } from "../../combat/delay-action.mjs";
 import { deathDanceNextCost, markDeathDanceUsed } from "../../combat/death-dance.mjs";
+import { finalExecutionGate, finalExecutionProps, commitFinalExecution } from "../../combat/final-execution.mjs";
 import { markRoundCapabilityUsed } from "../../apps/game-session.mjs";
 import { AUTO_HIT_CAPABILITY, FULL_ATTACK_CAPABILITY, readAttackForm } from "./form.mjs";
 import { hateAttackApplies } from "../../rules/patron-abilities.mjs";
@@ -138,6 +139,9 @@ export function openAttackDialog(ctx) {
   // означало реально потратить Очко Судьбы и сжечь использование впустую,
   // не бросив ни одной атаки.
   let deathDancePending = null; // { cost, agBonus } — выставлено кликом, читается в колбэке "roll"
+  // Окончательная Казнь (Мастер Казней, combat/final-execution.mjs): тот же приём — кнопка вооружает, Очко Трофеев
+  // списывается только при подтверждении атаки. { n, cost } — номер атаки серии и цена.
+  let finalExecutionPending = null;
   return foundry.applications.api.DialogV2.wait({
     window: { title: `Атака: ${item.name}` },
     classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "wh-atk-dialog"],
@@ -301,6 +305,17 @@ export function openAttackDialog(ctx) {
             ui.notifications.warn("⚠️ Полный Огонь: нет Реакции для второго выстрела.");
             return false;
           }
+          // Окончательная Казнь: шлюз заново ДО любых списаний (ОД, Реакции, лимит Атак) — за время открытого окна
+          // Раунд мог смениться (серия началась заново, цена 1) или Очко уйти. Номер атаки серии берём свежий,
+          // чтобы Extreme/Proven совпали с записью серии.
+          if (finalExecutionPending) {
+            const feGate = finalExecutionGate(actor);
+            if (!feGate.ok) {
+              ui.notifications.warn(`⚠️ Окончательная Казнь: ${feGate.reason}`);
+              return false;
+            }
+            finalExecutionPending = { n: feGate.n, cost: feGate.cost };
+          }
           // Прицеливание при «Обе руки» (стр. 12, wdbc-x1nz.2.41): «только
           // ОДНА атака получает бонус» — thresholdOf(f) несёт его в основной
           // руке по построению (thresholdParts включает aimingBonus), вторая
@@ -410,6 +425,13 @@ export function openAttackDialog(ctx) {
               await actor.update({ "system.fate.value": fateNow - deathDancePending.cost });
             }
             await markDeathDanceUsed(actor);
+          }
+
+          // Окончательная Казнь: Очко Трофеев и шаг серии — только теперь, при подтверждённой атаке. Очко могли
+          // потратить иначе между вооружением и подтверждением — commit проверяет заново и отказывает.
+          if (finalExecutionPending && !await commitFinalExecution(actor)) {
+            ui.notifications.warn("⚠️ Не хватает Очка Трофеев для Окончательной Казни.");
+            return false;
           }
 
           // Прицеливание (wdbc-1rno.5): обычно сбрасывается любой Атакой —
@@ -610,7 +632,9 @@ export function openAttackDialog(ctx) {
               ammoCondLabels: f.ammoSel.map(c => c.label),
               // Свойства оружия от правила (wdbc-w8z4) — уже отобраны по `when`
               // выше (resolvedAttack), attack.mjs только доливает их в _entries.
-              ruleProps: resolvedAttack.weaponProps,
+              ruleProps: finalExecutionPending
+                ? [...(resolvedAttack.weaponProps || []), ...finalExecutionProps(finalExecutionPending.n)]
+                : resolvedAttack.weaponProps,
               aimingLabel: (currentAiming !== "none" && !wp.noAim && f.aimHand !== "off")
                 ? (currentAiming === "half" ? `Полу-прицеливание (+${aimingBonus})` : `Полное прицеливание (+${aimingBonus})`)
                 : "",
@@ -946,6 +970,48 @@ export function openAttackDialog(ctx) {
         form.addEventListener("change", refreshDeathDance);
         form.addEventListener("input",  refreshDeathDance);
         refreshDeathDance();
+      }
+
+      // Окончательная Казнь (Талант Мастера Казней, combat/final-execution.mjs): кнопка вооружает свойства
+      // Extreme/Proven этой атаки; цена и шаг серии — в колбэке "roll" (finalExecutionPending выше).
+      const feBtn    = form.querySelector("#atk-final-execution-btn");
+      const feStatus = form.querySelector("#atk-final-execution-status");
+      if (feBtn) {
+        // Талант применяется «совершая атаку Казнью»: Казнь — двуручное оружие в двуручном хвате (Черта «Казнь»).
+        const twoHanded = () => resolveSelectionSafe(readAttackForm(form, ammoConds)).gKey === "2р";
+        const refreshFinalExecution = () => {
+          if (finalExecutionPending) {
+            feBtn.disabled = true;
+            feBtn.classList.add("av-pill-disabled");
+            const [ex, pr] = finalExecutionProps(finalExecutionPending.n);
+            feStatus.textContent = `— готово: Extreme(${ex.rating}) и Proven(${pr.rating})${finalExecutionPending.cost > 0 ? ", спишет Очко Трофеев при подтверждении" : " (продолжение серии, бесплатно)"}`;
+            return;
+          }
+          const gate = finalExecutionGate(actor);
+          const usable = gate.ok && twoHanded();
+          feBtn.disabled = !usable;
+          feBtn.classList.toggle("av-pill-disabled", !usable);
+          if (!gate.ok) feStatus.textContent = `— ${gate.reason}`;
+          else if (!usable) feStatus.textContent = "— Казнь: только двуручным оружием в двуручном хвате";
+          else {
+            const [ex, pr] = finalExecutionProps(gate.n);
+            feStatus.textContent = gate.cost > 0
+              ? `— 1 Очко Трофеев: Extreme(${ex.rating}), Proven(${pr.rating})`
+              : `— продолжение серии (бесплатно): Extreme(${ex.rating}), Proven(${pr.rating})`;
+          }
+        };
+        feBtn.addEventListener("click", ev => {
+          ev.preventDefault();
+          if (finalExecutionPending) return;
+          const gate = finalExecutionGate(actor);
+          if (!gate.ok) return ui.notifications.warn(`Окончательная Казнь: ${gate.reason}`);
+          if (!twoHanded()) return ui.notifications.warn("Окончательная Казнь: Казнь — двуручное оружие в двуручном хвате.");
+          finalExecutionPending = { n: gate.n, cost: gate.cost };
+          ui.notifications.info("Окончательная Казнь: Extreme/Proven этой атаки — спишется при подтверждении атаки.");
+          refreshFinalExecution();
+        });
+        form.addEventListener("change", refreshFinalExecution);
+        refreshFinalExecution();
       }
 
       // Режим огня второй руки (wdbc-pb60): список вариантов зависит от того,

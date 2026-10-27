@@ -16,6 +16,7 @@ import { WEAPON_CLASSES } from "../../constants/items.mjs";
 import { esc } from "../../helpers/utils.mjs";
 import { diceModeHtml } from "../../rules/test-kind-widget.mjs";
 import { hasDeathDance } from "../../combat/death-dance.mjs";
+import { finalExecutionRowHtml } from "../../combat/final-execution.mjs";
 
 /** @param {object} v готовые куски разметки и значения для подстановки */
 export function buildAttackContent(v) {
@@ -119,6 +120,7 @@ return `
       <button type="button" id="atk-death-dance-btn" class="av-pill av-pill-disabled" disabled><span>+ Brutal Charge</span></button>
       <span class="av-opt-note" id="atk-death-dance-status"></span>
     </div>` : ""}
+    ${finalExecutionRowHtml(actor, { isMelee })}
     ${wp.changeRating ? `
     <div class="av-row">
       <label class="attack-mod-check">

@@ -185,6 +185,7 @@ import { weaponProfiles, attackIsMelee } from "./combat/weapon-profiles.mjs";
 import { firePointFreeReroll, firePointActivatesOnPaidReroll } from "./rules/fire-point.mjs";
 import { CLEAVE_CARD_FLAG, CLEAVE_PENALTY } from "./combat/cleave.mjs";
 import { REAPER_CARD_FLAG, startReaperFollow } from "./combat/reaper-chain.mjs";
+import { TROPHY_CARD_FLAG, awardTrophy } from "./combat/trophy-kill.mjs";
 import { SHOW_OFF_CARD_FLAG } from "./combat/show-off.mjs";
 import { HAMSTRING_CARD_FLAG, startHamstring } from "./combat/hamstring.mjs";
 import { TENACITY_CARD_FLAG, confirmTenacityRepeat } from "./combat/tenacity.mjs";
@@ -766,6 +767,34 @@ export function registerHooks() {
           claim: () => runCardOnce(message, REAPER_CARD_FLAG, async () => true, "Жнец с этой карточки уже использован.")
         });
         if (opened) el.disabled = true;
+      });
+    });
+
+    // Трофей (Мастер Казней, combat/trophy-kill.mjs): кнопка на карточке убийства. Решает ГМ — достойна ли цель
+    // (офицер/чемпион/чудовище); сумму (+1, Трофеи Триумфа 2/3/4 по Inf) и зажим по P.b считает система.
+    // Пишет ГМ прямо в убийцу (права есть, релей не нужен); раз на карточку — отметка только при засчитанном.
+    html.querySelectorAll(".wh-trophy-btn").forEach(btn => {
+      if (cardOnceUsed(message, TROPHY_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        if (!game.user.isGM) return ui.notifications.warn("⚠️ Трофей засчитывает ГМ — достойна ли цель, решает он.");
+        const killer = await fromUuid(el.dataset.killerUuid || "").catch(() => null);
+        if (!killer) return ui.notifications.warn("⚠️ Убийца не найден.");
+        let outcome = null;
+        await runCardOnce(message, TROPHY_CARD_FLAG, async () => {
+          outcome = await awardTrophy(killer, { inf: Number(el.dataset.victimInf) || 0, victimName: el.dataset.victimName || "" });
+          return !!outcome.awarded;
+        }, "Трофей с этой карточки уже засчитан.");
+        if (outcome?.awarded) {
+          el.disabled = true;
+          await postTestCard(killer, {
+            icon: rollIcon("skull", "#c9a24a"),
+            title: `Трофей засчитан — ${killer.name}`,
+            lines: [`<div class="roll-threshold">+${outcome.added} Очков Трофеев (${killer.system?.trophyPoints?.value}/${killer.system?.trophyPoints?.max}).</div>`]
+          }, { sound: false });
+        } else if (outcome?.reason === "full") ui.notifications.warn("⚠️ Пул Очков Трофеев уже полон (максимум P.b).");
+        else if (outcome?.reason === "noPool") ui.notifications.warn("⚠️ У убийцы нет Очков Трофеев.");
       });
     });
 

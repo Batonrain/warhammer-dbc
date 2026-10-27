@@ -60,6 +60,14 @@ describe("кому положены Очки Трофеев (по настоящ
     expect(hasTrophyPoints(characterWith([]))).toBe(false);
   });
 
+  it("тёзка по подстроке не получает пул: «Hex-Marked Prey / Проклятая Метка» (Шаман Зверолюдей) — нет; точное «Marked Prey» — да", () => {
+    const hex = packDoc("talents", "J0Px3fx7v1bttlhg");
+    expect(hex.name).toContain("Hex");
+    expect(hasTrophyPoints(characterWith([hex]))).toBe(false);
+    const marked = { name: "Marked Prey / Отмеченная Добыча", type: "talent", system: {} };
+    expect(hasTrophyPoints(characterWith([marked]))).toBe(true);
+  });
+
   it("тексты в паке действительно говорят про Очки Трофеев (гейт не на пустом месте)", () => {
     for (const d of [TROPHY_TAKER(), MIST_LEAP(), FINAL_EXECUTION()]) {
       expect(String(d.system.benefit)).toMatch(/Очк[а-я]* Трофе|очк[а-я]* Трофе/i);
@@ -96,5 +104,40 @@ describe("trophyUpdate: начисление/трата с зажимом в 0�
 
   it("не носитель — null (пул ему не положен)", () => {
     expect(trophyUpdate(characterWith([CLERK()], { value: 0 }), +1)).toBeNull();
+  });
+});
+
+// ── Начисление за убитую цель (Трофеи Триумфа) ────────────────────────────────────────────────────
+import { hasTrophiesOfTriumph, trophyAwardAmount } from "../../module/rules/trophy-points.mjs";
+const TRIUMPH = () => packDoc("talents", "phgjbXThNP6w7Bhr");
+
+describe("начисление: Собиратель Трофеев +1, Трофеи Триумфа 2/3/4 по Inf цели", () => {
+  it("текст Трофеев Триумфа в паке — те самые пороги (30-59 → 2, 60-79 → 3, 80+ → 4)", () => {
+    const text = String(TRIUMPH().system.benefit);
+    expect(text).toMatch(/30-59[^.]*2 очка/);
+    expect(text).toMatch(/60-79[^.]*3 очка/);
+    expect(text).toMatch(/80\+[^.]*4 очка/);
+  });
+
+  it("hasTrophiesOfTriumph: по Таланту, не по Черте-тёзке", () => {
+    expect(hasTrophiesOfTriumph(characterWith([TRIUMPH()]))).toBe(true);
+    expect(hasTrophiesOfTriumph(characterWith([TROPHY_TAKER()]))).toBe(false);
+    expect(hasTrophiesOfTriumph({ items: [{ type: "trait", name: "Trophies of Triumph / Трофеи Триумфа" }] })).toBe(false);
+  });
+
+  it("без Триумфа всегда 1; с Триумфом по порогам Inf; ниже 30 — прежнее 1", () => {
+    expect(trophyAwardAmount({ triumph: false, inf: 85 })).toBe(1);
+    expect(trophyAwardAmount({ triumph: true, inf: 29 })).toBe(1);
+    expect(trophyAwardAmount({ triumph: true, inf: 30 })).toBe(2);
+    expect(trophyAwardAmount({ triumph: true, inf: 59 })).toBe(2);
+    expect(trophyAwardAmount({ triumph: true, inf: 60 })).toBe(3);
+    expect(trophyAwardAmount({ triumph: true, inf: 79 })).toBe(3);
+    expect(trophyAwardAmount({ triumph: true, inf: 80 })).toBe(4);
+    expect(trophyAwardAmount({ triumph: true, inf: 100 })).toBe(4);
+    expect(trophyAwardAmount({ triumph: true, inf: undefined })).toBe(1);
+  });
+
+  it("носитель только Трофеев Триумфа тоже владеет пулом (Талант входит в список носителей)", () => {
+    expect(hasTrophyPoints(characterWith([TRIUMPH()]))).toBe(true);
   });
 });
