@@ -90,6 +90,18 @@ export async function markCapabilityUsed(actor, flag, unit = "round") {
 }
 
 /**
+ * Вернуть Раз-в-<unit> возможность: отметка использования снимается (Штиль отменил
+ * переброс, ради которого тратилось бесплатное Очко Ключевых Сил). Метку не удаляем, а
+ * переписываем — dotted-ключ в unsetFlag Foundry разбирает не как вложенный путь. setFlag
+ * СЛИВАЕТ объект с прежним, поэтому поле раунда зануляется явно: иначе used:false остался бы
+ * при старом round, и isCapabilityAvailable продолжал бы видеть «уже использовано».
+ */
+export async function releaseCapabilityUsed(actor, flag, unit = "round") {
+  if (!actor) return;
+  await actor.setFlag("warhammer-dbc", `usageLimits.${usageKey(flag)}`, { scope: unit, used: false, [unit]: null });
+}
+
+/**
  * Израсходована ли возможность актора в текущем scope (сцена/сессия — нет
  * живого значения для сравнения, сброс делает явное действие ГМа, см. п.2
  * в заголовке файла).

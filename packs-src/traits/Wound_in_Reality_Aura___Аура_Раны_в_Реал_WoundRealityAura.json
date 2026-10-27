@@ -1,0 +1,51 @@
+{
+  "name": "Wound in Reality Aura / Аура Раны в Реальности",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "Вы в ауре Раны в Реальности: за каждую «бесплатную» психосилу псайкера — −5 на тесты Пси-чутья, +10 на Феномены и +10 на тесты Варп-Нестабильности; за каждые три такие силы Истончение Завесы в ауре +1.",
+    "notes": "Служебная Черта-метка (пачка I2, Sahara 3-28): выдаётся аурой Таланта «Wound In Reality / Рана в Реальности» (module/regions/auras.mjs, kind:\"aura\") каждому в радиусе Cor.b×2 м, включая самого псайкера, и снимается при выходе из радиуса или когда у псайкера не остаётся бесплатных сил. Сама метка чисел не несёт: флаг auraSource хранит источник, а сколько в нём сейчас бесплатных сил и какие числа из этого следуют — считает module/rules/wound-in-reality.mjs в момент броска (источник правил «woundAura», +10 на Феномены — sheets/tabs/psychic.mjs). Не выдаётся персонажу вручную.",
+    "benefit": "−5 на тесты Пси-чутья, +10 на Феномены, +10 на тесты Варп-Нестабильности за каждую бесплатную психосилу псайкера.",
+    "source": "аура",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "WoundRealityAura",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786280000000,
+    "modifiedTime": 1786280000000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!WoundRealityAura"
+}

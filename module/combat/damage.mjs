@@ -41,6 +41,7 @@ import { offerHardeningSpend } from "./ablative-hardening.mjs";
 import { statusApplyFields } from "./status-resist.mjs";
 import { takedownSection } from "./takedown.mjs";
 import { cleaveSection } from "./cleave.mjs";
+import { vampireSection } from "./psychic-vampire.mjs";
 import { hamstringSection } from "./hamstring.mjs";
 import { markLastChargeHit } from "./reaper-chain.mjs";
 import { markMeleeDamageDealt, markMeleeDamageApplied } from "./tenacity.mjs";
@@ -1768,6 +1769,13 @@ export async function applyDamageToActor(actor, damageData) {
     woundsBefore: currentWounds, woundsAfter: newWounds, targetName: actor.name
   });
 
+  // Психический Вампир (Талант Псайканы, combat/psychic-vampire.mjs): психическая атака вывела цель из строя —
+  // кнопка «поглотить душу» (W+0, лечение 1d5 Ран или вся Усталость, доза «наркотика»).
+  const vampireBtn = await vampireSection({
+    attackerUuid, weaponUuid, psychicPowerType: damageData?.psychicPowerType ?? null,
+    net: netDamage, woundsAfter: newWounds, targetName: actor.name
+  });
+
   // Упорство (combat/tenacity.mjs): рукопашная атака нанесла урон — повтор Упорства после этого закрыт.
   if (melee && netDamage > 0) await markMeleeDamageDealt(attackerUuid);
 
@@ -1809,6 +1817,7 @@ export async function applyDamageToActor(actor, damageData) {
       throughShotBtn,
       takedownBtn,
       cleaveBtn,
+      vampireBtn,
       hamstringBtn,
       reaperSection,
       braveHeartSection

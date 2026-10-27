@@ -31,6 +31,14 @@ export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legi
   "finalPushTried", "painTried", "shockDeathRolled",
   // Вырубание: «сбить с ног» с карточки урона при успешном Оглушении (combat/takedown.mjs).
   "takedownKnockdown",
+  // Ключевые Силы (Талант Псайканы, combat/psyker-pools.mjs): бесплатная способность Очка Бесчестия — одна на карточку манифестации.
+  "signatureFreeUsed",
+  // Переброс психотеста Ключевой Силой (combat/psyker-pools.mjs::handlePsyRerollClick): карточка переброшена и заменена.
+  "psyRerolled",
+  // Психический Вампир (Талант Псайканы, combat/psychic-vampire.mjs): одна попытка поглотить душу с карточки урона.
+  "vampireUsed",
+  // Варп-Замок (Талант Псайканы, combat/warp-lock.mjs): одно «аварийное» применение с карточки Феномена/Прорыва.
+  "warpLockUsed",
   // Снайпер Ужаса: один тест Intimidate(BS)+0 на попадание (combat/terror-sniper.mjs).
   "terrorSniperRolled",
   // Таланты Пугилиста: свободные действия с карточек Захвата и Пинка (3-eddb) — Швырнуть
@@ -70,6 +78,12 @@ const localKey = (message, key) => `${message?.id}:${key}`;
 /** Действие с этой карточки уже сделано (флагом или только что на этом клиенте). */
 export function cardOnceUsed(message, key) {
   return !!message?.getFlag?.(NS, key) || local.has(localKey(message, key));
+}
+
+/** Снять отметку (Штиль вернул бесплатное Очко): локальную метку убираем всегда, флаг — если он на сообщении. */
+export async function unmarkCardOnce(message, key) {
+  local.delete(localKey(message, key));
+  if (message?.getFlag?.(NS, key) && message.isOwner) await message.setFlag(NS, key, false);
 }
 
 /** Пометить карточку: своё сообщение — сами, чужое — через активного ГМа. */

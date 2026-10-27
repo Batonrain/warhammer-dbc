@@ -24,6 +24,8 @@
 //
 // Чистая функция, Foundry не нужен — проверяется test/rules/mech-formula.test.mjs.
 
+import { woundFreeCount } from "./wound-in-reality.mjs";
+
 const CHAR_KEYS = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel", "inf"];
 // «Сырые» значения характеристик — «<ключ>v», по образцу уже существовавшего
 // «corv» (см. mechRollData ниже): книга местами задаёт дальности и радиусы
@@ -36,7 +38,9 @@ const RAW_KEYS = CHAR_KEYS.map(k => `${k}v`);
 // рейтинг Blunted и штраф к максимуму Бесчестия задаются одной формулой.
 // «rating» — рейтинг самой Черты-источника записи (Двусоставный (X): +X к SPD, wdbc-ird9n);
 // подставляется в mechEffectData по предмету, в mechRollData(actor) его нет.
-const KEYS = [...CHAR_KEYS, "cor", "pr", "corv", "subtier", "rating", ...RAW_KEYS];
+// «wound» — сколько психосил сейчас бесплатны по Ране в Реальности (rules/wound-in-reality.mjs):
+// радиус её ауры «ceil(wound/(wound+1))*cor*2» равен нулю, пока бесплатных сил нет.
+const KEYS = [...CHAR_KEYS, "cor", "pr", "corv", "subtier", "rating", "wound", ...RAW_KEYS];
 
 // Каноническая нотация системы — «X.b» (resolveCharFormula, module/helpers/
 // utils.mjs: WS.b, Cor.b, однобуквенные A/I/P/W/F как алиасы Ag/Int/Per/WP/Fel).
@@ -68,7 +72,8 @@ export function mechRollData(actor) {
     // wdbc-1rno) — «cor» здесь исторически уже занят под Cor.b (см. шапку
     // файла), поэтому raw-значение получает отдельный ключ.
     corv: Number(actor?.system?.corruption?.value) || 0,
-    subtier: Math.max(1, Number(actor?.system?.subraceTier) || 1)
+    subtier: Math.max(1, Number(actor?.system?.subraceTier) || 1),
+    wound: woundFreeCount(actor)
   };
   for (const k of CHAR_KEYS) {
     data[k] = bonus(k);

@@ -1408,6 +1408,55 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   «Имперское Санкционирование» (`trait.imperialSanctioning`) — бесплатный
   переброс Прорыва после оплаченного переброса Феномена.
 
+- Таланты Псайканы с пулами (Sahara 3-28, пачка I1, 26.10.2026): чистая логика —
+  `rules/psyker-talents.mjs` (Пропускание `channelOutcome`; Быстрое Плетение
+  `fastWeavingGate`/`FAST_WEAVING_FLAG`; Текучее Плетение `fluidWeaveGate`/
+  `fluidWeaveMax`; Ключевые Силы `isSignaturePower`/`signatureToggle`), запись
+  состояния и карточки — `combat/psyker-pools.mjs` (`processFastWeavingCombatStart`
+  из хука `combatStart` в `hooks.mjs`, `manifestActionPlan`/`payManifestAction`, `weaveFluid`,
+  `restoreFluidWeavePoint`, `signatureFreeHtml`, `handleSignatureFreeClick`).
+  Пул Быстрого Плетения (2 ОД) и «раз в Ход» Текучего — метки актора
+  `fastWeavingAp`/`fluidWeaveThisTurn` в реестре `rules/turn-flags.mjs`; очки
+  Текучего Плетения и список ключевых сил лежат флагами на самом Таланте
+  (`fluidWeaveSpent`, `signaturePowers`) — схем и миграций нет. Окно манифестации
+  (`sheets/tabs/psychic.mjs`): галочка пула, строка Пропускания и блок «Ключевая
+  Сила» в карточке; вкладка МИСТИКА (`tab-psy.hbs`): панель пулов, звёздочка и
+  «Переплести» у силы. Бесплатное Очко Ключевых Сил — раз в Раунд
+  (`rules/cooldown.mjs`, ключ `psyker.core.signaturePowers`): переброс психотеста
+  (`handlePsyRerollClick`: карточка своей ключевой силы хранит параметры броска во флаге
+  `psyManifest`, `executePsychotest` повторяется с `reroll:true`, старая карточка помечена `psyRerolled`;
+  прочие перебросы Раунда — 1 Очко Бесчестия), Усмирение Варпа на карточке своей ключевой силы
+  (`combat/calm-warp.mjs`) и способность «Успех» (`apps/infamy-points.mjs::spendFreeInfamyAbility`);
+  сопротивление чужой силе не делается. Манифестация в бою СПИСЫВАЕТ ОД по полю действия силы
+  (`manifestActionPlan`/`payManifestAction`: Полудействие 1, Полное и Длительное 2, Свободное 0, Реакция —
+  Реакцией; не хватает — отказ), пул Быстрого Плетения уменьшает это списание. «Переплести» снимает
+  поддержание (`combat/psychic-sustain.mjs::sustainOffPatch`) и заводит заново с теми же эPR/Успехами/целью. Тесты —
+  `test/rules/psyker-pools.test.mjs`, `test/sheets/psychic-pools.test.mjs`.
+
+- Таланты Псайканы пачки I2 (Sahara 3-28, 26.10.2026): Рана в Реальности, Психический
+  Вампир, Варп-Замок. **Рана в Реальности** — чистая логика `rules/wound-in-reality.mjs`
+  (`woundSustainSplit`: помеченные флагом `woundFree` силы не снижают тПР — одна правка в
+  `rules/character.mjs`; галочка до Cor.b сил, пока платное поддержание 3+ PR —
+  `woundFreeToggleGate`), запись и пересчёт радиуса — `combat/wound-in-reality.mjs`
+  (хуки `updateItem`/`deleteItem`/`updateActor` в `warhammer-dbc.mjs`). Аура — штатный
+  движок `regions/auras.mjs`: на Таланте запись `kind:"aura"` (радиус `ceil(wound/(wound+1))*cor*2`,
+  ключ `wound` добавлен в `rules/mech-formula.mjs`, «на всех, включая себя») клонирует Черту-метку
+  `packs-src/traits/Wound_in_Reality_Aura…`; числа за каждую бесплатную силу считаются живьём по
+  метке: −5 Пси-чутьё и +10 Варп-Нестабильность — источник правил `woundAura` (`rules/sources.mjs`),
+  +10 Феномены — `sheets/tabs/psychic.mjs::executePsychotest`, Завеса +1 за каждые 3 силы — только
+  Демон-Принц (`dpVeilSteps`); Завеса сцены общая. Галочка — в окне манифестации и кнопкой ⌬ в
+  таблице сил; снятие поддержания гасит её (`combat/psychic-sustain.mjs::sustainOffPatch` — общий
+  набор сбросов поддержания). **Психический Вампир** — `rules/psychic-vampire.mjs` +
+  `combat/psychic-vampire.mjs`: кнопка на карточке урона (`combat/damage.mjs`, рядом с «Разрубить»),
+  вопрос о душе, W+0, 1d5 Ран/вся Усталость, доза «наркотика» через
+  `sheets/tabs/drugs.mjs::weeklyDoseCheck` (Зависимость 6 | W+0 | 6 дней — флаг актора
+  `drugWithdrawal`, без нового механизма). **Варп-Замок** — `rules/warp-lock.mjs` +
+  `combat/warp-lock.mjs`: кнопка под Феноменом/Прорывом (манифестация и переброс Усмирения Варпа),
+  «раз в час» по `game.time.worldTime` (флаг `warpLockUses` на Таланте, ручной сброс на вкладке
+  МИСТИКА), метка «не псайкер» `warpLockActive` в реестре `rules/turn-flags.mjs` блокирует
+  манифестацию и включение поддержания. Тесты — `test/rules/{wound-in-reality,psychic-vampire,warp-lock}.test.mjs`,
+  `test/combat/{wound-in-reality,psychic-vampire,warp-lock}.test.mjs`, `test/documents/wound-in-reality-tpr.test.mjs`.
+
 - Психосилы: `data/item/psychic-power.mjs`, `rules/psyker.mjs`, `psy-range.
   mjs` (парсер дальности), `psychic-vessel.mjs` (фамильяр/конструкт-
   манифестация), `constants/{disciplines,psyker,psyker-tables}.mjs`,

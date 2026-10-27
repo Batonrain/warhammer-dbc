@@ -73,6 +73,9 @@ import { processIrradiatedTurnStart } from "./combat/irradiated.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "./combat/weapon-mods.mjs";
 import { fatalismBlocksPower } from "./rules/fatalism.mjs";
 import { handleCalmWarpClick } from "./combat/calm-warp.mjs";
+import { processFastWeavingCombatStart, handleSignatureFreeClick, handlePsyRerollClick } from "./combat/psyker-pools.mjs";
+import { VAMPIRE_CARD_FLAG, handleVampireClick } from "./combat/psychic-vampire.mjs";
+import { WARP_LOCK_CARD_FLAG, handleWarpLockClick } from "./combat/warp-lock.mjs";
 import { everYouthfulBlocksPower } from "./rules/ever-youthful.mjs";
 import { eaterOfPainBenefitUpdate, eaterOfPainChoiceButtonsHtml } from "./rules/eater-of-pain.mjs";
 import { fateTerm, esc, resolveCharFormula } from "./helpers/utils.mjs";
@@ -707,6 +710,17 @@ export function registerHooks() {
         el.disabled = true;
         game.user.targets.forEach(t => t.setTarget(false, { user: game.user, releaseOthers: false }));
         await attacker.sheet._showAttackDialog?.(weapon, { modifier: CLEAVE_PENALTY, forceBase: "standard", cleave: true });
+      });
+    });
+
+    // Психический Вампир (Талант Псайканы, combat/psychic-vampire.mjs): с карточки урона, когда психическая атака
+    // вывела цель из строя. Раз на карточку; отметка ставится в момент броска.
+    html.querySelectorAll(".wh-vampire-btn").forEach(btn => {
+      if (cardOnceUsed(message, VAMPIRE_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        if (await handleVampireClick(message, el)) el.disabled = true;
       });
     });
 
@@ -1613,6 +1627,45 @@ export function registerHooks() {
         await handleCalmWarpClick(message, ev.currentTarget);
       });
     });
+
+    // Варп-Замок (Талант Псайканы, combat/warp-lock.mjs): «игнорировать Феномен/Прорыв» с карточки манифестации.
+    html.querySelectorAll(".wh-warplock-btn").forEach(btn => {
+      if (cardOnceUsed(message, WARP_LOCK_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        if (await handleWarpLockClick(message, el)) el.disabled = true;
+      });
+    });
+
+    // Ключевые Силы (Талант Псайканы, пачка I1): способность Очка Бесчестия с карточки СВОЕЙ
+    // манифестации ключевой силы — без траты Очка, раз в Раунд (combat/psyker-pools.mjs).
+    html.querySelectorAll(".wh-signature-free-btn").forEach(btn => {
+      if (cardOnceUsed(message, "signatureFreeUsed")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        if (await handleSignatureFreeClick(message, el)) el.disabled = true;
+      });
+    });
+
+    // Переброс психотеста Ключевой Силой (пачка I3): кнопка на карточке своей ключевой силы; заменённая
+    // карточка получает пометку и гасит все свои кнопки (урон и броски старого результата больше не действуют).
+    html.querySelectorAll(".wh-psy-reroll-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        if (await handlePsyRerollClick(message, el)) el.disabled = true;
+      });
+    });
+    if (cardOnceUsed(message, "psyRerolled")) {
+      const card = html.querySelector(".wh-roll-result");
+      if (card && !card.querySelector(".wh-psy-replaced")) {
+        card.insertAdjacentHTML("afterbegin",
+          `<div class="roll-threshold wh-psy-replaced" style="color:#a33;font-weight:700;">↻ Результат заменён переброском — действует новая карточка ниже</div>`);
+      }
+      card?.querySelectorAll("button").forEach(b => { b.disabled = true; });
+    }
 
     // Блоки «только для владельца» в карточках чата: карточка одна на всех,
     // поэтому прячем их на клиенте по фактическим правам на актора.
@@ -4548,7 +4601,12 @@ function _attachFateContextMenu(message, html) {
   // а не встроенным геттером.
   // Колдовское Лезвие (стр. 74 Книги Аэльдари): выбор бонуса на весь
   // Encounter — спрашиваем ровно раз, в момент старта боя («Begin Combat»).
-  Hooks.on("combatStart", async (combat) => {
+  Hooks.on("combatStart", async (combat, updateData) => {
+    // Быстрое Плетение (Талант Псайканы, пачка I1): «в начале боя сразу после бросков инициативы
+    // получает 2 полудействия» — отдельный пул 2 ОД до первого Хода; сбрасывается началом Хода.
+    // Первым в обработчике: ниже есть диалоги, и пул, выданный после них, обогнал бы начало
+    // первого Хода (его сброс уже отработал бы, а метка осталась бы до второго Хода).
+    if (game.user.isGM) await processFastWeavingCombatStart(combat, updateData);
     await processWitchsEdgeCombatStart(combat);
     // Last Actor/Последний Актёр (wdbc-1rno): «бросает трижды на
     // инициативу» — 2 доп. Combatant при старте боя, только GM пишет

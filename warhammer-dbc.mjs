@@ -128,6 +128,7 @@ import { initBoneHeadHooks } from "./module/combat/bone-head.mjs";
 import { initOverwatchHooks } from "./module/combat/overwatch.mjs";
 import { initFirePointHooks } from "./module/combat/fire-point.mjs";
 import { checkAuras, clearAuraGrants } from "./module/regions/auras.mjs";
+import { onWoundRelevantItemChange, onWoundRelevantActorChange } from "./module/combat/wound-in-reality.mjs";
 import { redrawAuraRings } from "./module/regions/aura-rings.mjs";
 import { LingerZoneBehaviorType, LINGER_ZONE_TYPE } from "./module/regions/linger-zone.mjs";
 import { GravitonZoneBehaviorType, GRAVITON_ZONE_TYPE } from "./module/regions/graviton-zone.mjs";
@@ -1743,6 +1744,10 @@ Hooks.once("ready", async () => {
 Hooks.on("updateItem", (item) => { if (item?.type === "celestialBody") refreshSystemsOverview(); });
 Hooks.on("createItem", (item) => { if (item?.type === "celestialBody") refreshSystemsOverview(); });
 Hooks.on("deleteItem", (item) => { if (item?.type === "celestialBody") refreshSystemsOverview(); });
+// Рана в Реальности (пачка I2): удалили поддерживаемую силу — радиус ауры пересчитать.
+Hooks.on("deleteItem", async (item, options, userId) => {
+  if (game.user.id === userId) await onWoundRelevantItemChange(item, null);
+});
 Hooks.on("updateActor", (actor) => { if (actor?.type === "starSystem") refreshSystemsOverview(); });
 
 Hooks.on("getSceneControlButtons", (controls) => {
@@ -2244,6 +2249,8 @@ Hooks.on("createItem", async (item, options, userId) => {
 });
 Hooks.on("updateItem", async (item, changed, options, userId) => {
   if (game.user.id !== userId) return;
+  // Рана в Реальности (Талант Псайканы, пачка I2): поддержание/пометка «бесплатно» меняют радиус её ауры.
+  await onWoundRelevantItemChange(item, changed);
   if (changed?.system?.quality === undefined) return;
   if (!(item.parent instanceof Actor) || !needsBestQChoice(item)) return;
   await runBestQChoice(item);
@@ -2457,6 +2464,8 @@ Hooks.on("updateItem", async (item, changed, options, userId) => {
 // userId-гвард — иначе каждый клиент создал бы свою копию Черты.
 Hooks.on("updateActor", async (actor, changed, options, userId) => {
   if (game.user.id !== userId) return;
+  // Рана в Реальности: Порча меняет Cor.b, а с ним радиус ауры (Cor.b×2 м).
+  await onWoundRelevantActorChange(actor, changed);
   const sys = changed?.system;
   if (!sys || (sys.inRage === undefined && sys.wounds === undefined
       && sys.conditions === undefined && sys.patronGod === undefined)) return;

@@ -3,7 +3,7 @@
 //  Таланты Псайканы главы 3, меняющие саму манифестацию (Sahara 3-28): Фокус
 //  Техники, Психическая Злоба, Необременённый, Психическое Возрождение,
 //  Варповый Шёпот, Исчисления, Любимец Варпа, Проводник Варпа, Штиль,
-//  Пропускание не здесь (Проявлений Силы в системе нет).
+//  Пропускание — строкой в карточке (пачка I1, ниже; подсистемы Проявлений нет).
 //
 //  Чистый модуль без Foundry: принимает актора/предмет-силу как duck typing,
 //  счёт чисел отдаёт вызывающему (sheets/tabs/psychic.mjs::executePsychotest и
@@ -156,4 +156,220 @@ export function precisionCost(choice, epr) {
   const cost = PRECISION_COST[choice] ?? 0;
   if (!cost) return 0;
   return (Number(epr) || 0) - cost >= 1 ? cost : 0;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  ПАЧКА I1 (Sahara 3-28, решения владельца 26.10.2026): Таланты с пулами и
+//  экономикой манифестации — Пропускание, Быстрое Плетение, Текучее Плетение,
+//  Ключевые Силы. Здесь — только чистая логика (без Foundry); состояние пишут
+//  combat/psyker-pools.mjs и лист.
+// ════════════════════════════════════════════════════════════════════════════
+
+const flagOf = (doc, key) => doc?.getFlag?.(NS, key) ?? doc?.flags?.[NS]?.[key];
+const intBonus = actor => Math.max(0, Number(actor?.system?.characteristics?.int?.bonus) || 0);
+const isSurprised = actor => !!actor?.system?.conditions?.surprised;
+
+const isChannel      = i => itemHasName(i, "Channel") || itemHasName(i, "Пропускание");
+const isFastWeaving  = i => itemHasName(i, "Fast Weaving") || itemHasName(i, "Быстрое Плетение");
+const isFluidWeave   = i => itemHasName(i, "Fluid Weave") || itemHasName(i, "Текучее Плетение");
+const isSignatureTal = i => itemHasName(i, "Signature Powers") || itemHasName(i, "Ключевые Силы");
+
+// ── Пропускание (Channel) ────────────────────────────────────────────────────
+export function hasChannel(actor) { return talentsWhere(actor, isChannel).length > 0; }
+
+/**
+ * «Когда он манифестирует психосилу Путём Силы «Психофокус» после успешного
+ * теста психофокуса, она не вызывает Проявлений Силы, если только она не
+ * вызывает Феномен». Проявлений как подсистемы в игре нет (решение владельца
+ * 26.10.2026) — Талант даёт строку в карточке манифестации.
+ * @returns {""|"quiet"|"exposed"} "" — строки нет; "quiet" — Проявлений нет;
+ *   "exposed" — Психофокус удался, но Феномен всё равно выдал силу.
+ */
+export function channelOutcome(actor, { path, focusPassed, phenomena }) {
+  if (!hasChannel(actor) || path !== "psychofocus" || !focusPassed) return "";
+  return phenomena ? "exposed" : "quiet";
+}
+
+// ── Тип «Атака» и цена действия психосилы ───────────────────────────────────
+/** Метка «Атака» у психосилы: основной тип «Атака»/«Психострельба» либо доп. тип. */
+export function isAttackPower(sys) {
+  return sys?.powerType === "attack" || sys?.powerType === "psychicShoot"
+    || (sys?.extraTypes ?? []).some(e => e?.type === "attack");
+}
+
+/**
+ * Сколько ОД стоит манифестация по полю действия самой силы (system.action): Полудействие — 1,
+ * Полное и Длительное — 2 (как combat/action-economy.mjs::apCostForActionType), Свободное и Реакция — 0
+ * (Реакция платится Реакцией, не ОД). Поле пусто — по умолчанию Полудействие. В паке у всех 708 сил
+ * поле заполнено, пустых нет; умолчание — на силы, заведённые руками.
+ */
+export function psychicApCost(action) {
+  if (action == null || action === "") return 1;
+  return action === "half" ? 1 : (action === "full" || action === "extended") ? 2 : 0;
+}
+
+// ── Быстрое Плетение (Fast Weaving) ─────────────────────────────────────────
+/** «В начале боя сразу после бросков инициативы персонаж получает 2 полудействия». */
+export const FAST_WEAVING_POOL = 2;
+/** Метка актора с остатком пула; гаснет в начале СВОЕГО Хода (rules/turn-flags.mjs). */
+export const FAST_WEAVING_FLAG = "fastWeavingAp";
+
+export function hasFastWeaving(actor) { return talentsWhere(actor, isFastWeaving).length > 0; }
+
+/** Что выдать в начале боя: 2 ОД, а застигнутому Врасплох и без Таланта — 0. */
+export function fastWeavingStart(actor) {
+  return hasFastWeaving(actor) && !isSurprised(actor) ? FAST_WEAVING_POOL : 0;
+}
+
+/** Остаток пула сейчас. «Если его застали Врасплох — не работает»: пока висит состояние, пул пуст. */
+export function fastWeavingLeft(actor) {
+  if (!hasFastWeaving(actor) || isSurprised(actor)) return 0;
+  return Math.max(0, Math.trunc(Number(flagOf(actor, FAST_WEAVING_FLAG)) || 0));
+}
+
+const FAST_WEAVING_WHY = {
+  "no-talent": "",
+  surprised: "Быстрое Плетение: персонажа застали Врасплох — пул обнулён.",
+  empty: "Быстрое Плетение: пул ОД пуст.",
+  "own-turn": "Быстрое Плетение: пул действует только до начала своего Хода.",
+  attack: "Быстрое Плетение: пул — только на психосилы без типа «Атака».",
+  cost: "Быстрое Плетение: пул покрывает только ОД — у Свободного действия и Реакции платить нечем."
+};
+
+/**
+ * Можно ли оплатить манифестацию силы из пула. ownTurn — идёт ли сейчас Ход
+ * самого псайкера: пул выдан ДО первого Хода, с началом Хода он сбрасывается.
+ * Пул не обязан покрыть всё: он уменьшает реальное списание ОД на min(цена, остаток), остальное
+ * платится из обычных ОД.
+ * @returns {{ok:boolean, code:string, reason:string, cost:number, left:number, cover:number}} cover — сколько ОД покроет пул
+ */
+export function fastWeavingGate(actor, power, { ownTurn = false } = {}) {
+  const cost = psychicApCost(power?.system?.action);
+  const left = fastWeavingLeft(actor);
+  const refuse = code => ({ ok: false, code, reason: FAST_WEAVING_WHY[code], cost, left, cover: 0 });
+  if (!hasFastWeaving(actor)) return refuse("no-talent");
+  if (isSurprised(actor)) return refuse("surprised");
+  if (left <= 0) return refuse("empty");
+  if (ownTurn) return refuse("own-turn");
+  if (isAttackPower(power?.system)) return refuse("attack");
+  if (cost <= 0) return refuse("cost");
+  return { ok: true, code: "ok", reason: "", cost, left, cover: Math.min(cost, left) };
+}
+
+// ── Текучее Плетение (Fluid Weave) ──────────────────────────────────────────
+/** Метка Таланта: сколько очков Плетения уже потрачено (остаток = I.b − это). */
+export const FLUID_WEAVE_SPENT_FLAG = "fluidWeaveSpent";
+/** Метка актора «раз в Ход»: переплетение уже было; гаснет в начале СВОЕГО Хода. */
+export const FLUID_WEAVE_TURN_FLAG = "fluidWeaveThisTurn";
+/** Влияния/Призывы/Психические Клинки — книжный перечень сил, которые можно переплести. */
+export const FLUID_WEAVE_TYPES = ["infusion", "summon", "psychicBlade"];
+
+export function fluidWeaveTalent(actor) { return talentsWhere(actor, isFluidWeave)[0] ?? null; }
+
+/** «Он получает I.b очков Текучего Плетения». */
+export function fluidWeaveMax(actor) { return fluidWeaveTalent(actor) ? intBonus(actor) : 0; }
+
+export function fluidWeaveSpent(actor) {
+  const t = fluidWeaveTalent(actor);
+  if (!t) return 0;
+  return Math.min(fluidWeaveMax(actor), Math.max(0, Math.trunc(Number(flagOf(t, FLUID_WEAVE_SPENT_FLAG)) || 0)));
+}
+
+export function fluidWeaveLeft(actor) { return fluidWeaveMax(actor) - fluidWeaveSpent(actor); }
+
+export function isFluidWeavePower(sys) {
+  return FLUID_WEAVE_TYPES.includes(sys?.powerType)
+    || (sys?.extraTypes ?? []).some(e => FLUID_WEAVE_TYPES.includes(e?.type));
+}
+
+const FLUID_WEAVE_WHY = {
+  "no-talent": "Текучее Плетение: нет Таланта.",
+  type: "Текучее Плетение: переплести можно только Вливание, Призыв или Психический Клинок.",
+  "not-sustained": "Текучее Плетение: развеять можно только поддерживаемую сейчас силу.",
+  empty: "Текучее Плетение: очки Плетения кончились (полное действие концентрации возвращает 1).",
+  "used-this-turn": "Текучее Плетение: раз в Ход — в этом Ходу уже переплетали."
+};
+
+/** Можно ли переплести эту силу сейчас. inCombat — «раз в Ход» считается только в бою. */
+export function fluidWeaveGate(actor, power, { inCombat = false } = {}) {
+  const refuse = code => ({ ok: false, code, reason: FLUID_WEAVE_WHY[code] });
+  if (!fluidWeaveTalent(actor)) return refuse("no-talent");
+  if (!isFluidWeavePower(power?.system)) return refuse("type");
+  if (!power?.system?.isSustained) return refuse("not-sustained");
+  if (fluidWeaveLeft(actor) <= 0) return refuse("empty");
+  if (inCombat && flagOf(actor, FLUID_WEAVE_TURN_FLAG)) return refuse("used-this-turn");
+  return { ok: true, code: "ok", reason: "" };
+}
+
+// ── Ключевые Силы (Signature Powers) ────────────────────────────────────────
+/** Метка Таланта: имена выбранных сил (английская половина имени) — их ставят галочками на листе. */
+export const SIGNATURE_FLAG = "signaturePowers";
+
+export function signatureTalent(actor) { return talentsWhere(actor, isSignatureTal)[0] ?? null; }
+
+/**
+ * I.b без урона в Характеристику: книга — «если их количество превышает I.b (кроме как от
+ * урона в I), псайкер должен отмести лишние», то есть потеря от урона силы не отнимает.
+ */
+function intBonusIgnoringLoss(actor) {
+  const b = intBonus(actor);
+  const loss = Math.max(0, Number(actor?.system?.charLoss?.int) || 0);
+  const total = Number(actor?.system?.characteristics?.int?.total);
+  if (!loss || !Number.isFinite(total)) return b;
+  return Math.max(b, Math.floor((total + loss) / 10));
+}
+
+/** «Выбрать до I.b известных психосил». */
+export function signatureLimit(actor) { return signatureTalent(actor) ? intBonusIgnoringLoss(actor) : 0; }
+
+const sameName = (a, b) => String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+
+function flagNames(talent) {
+  const v = flagOf(talent, SIGNATURE_FLAG);
+  return Array.isArray(v) ? v.map(s => String(s).trim()).filter(Boolean) : [];
+}
+
+/** Всё выбранное: поле «Специализация»/скобки в имени Таланта, затем галочки; без повторов. */
+function signatureAll(talent) {
+  const out = [];
+  for (const n of [...chosenPowerNames(talent), ...flagNames(talent)])
+    if (!out.some(o => sameName(o, n))) out.push(n);
+  return out;
+}
+
+/**
+ * Действующие ключевые силы: выбранные в порядке выбора, но не больше I.b —
+ * «если их количество превышает I.b, псайкер должен отмести лишние».
+ */
+export function signatureNames(actor) {
+  const t = signatureTalent(actor);
+  return t ? signatureAll(t).slice(0, signatureLimit(actor)) : [];
+}
+
+/** Эта психосила — ключевая у актора (по любой половине двуязычного имени). */
+export function isSignaturePower(actor, power) {
+  if (!power) return false;
+  return signatureNames(actor).some(n => itemHasName(power, n));
+}
+
+/** Английская половина имени силы — так её хранит метка (имена сил двуязычны). */
+export const powerKeyName = power => String(power?.name ?? "").split("/")[0].trim();
+
+/**
+ * Что сделает галочка у силы: добавить в список до I.b либо снять.
+ * @returns {{ok:boolean, code:string, reason:string, names:string[]}} names —
+ *   новое значение метки Таланта (только при ok)
+ */
+export function signatureToggle(actor, power) {
+  const t = signatureTalent(actor);
+  if (!t) return { ok: false, code: "no-talent", reason: "Ключевые Силы: нет Таланта.", names: [] };
+  const own = flagNames(t);
+  const key = powerKeyName(power);
+  const inFlag = own.find(n => sameName(n, key) || itemHasName(power, n));
+  if (inFlag) return { ok: true, code: "off", reason: "", names: own.filter(n => n !== inFlag) };
+  if (chosenPowerNames(t).some(n => itemHasName(power, n)))
+    return { ok: false, code: "spec", reason: "Ключевые Силы: эта сила записана в поле «Специализация» Таланта — снимите её там.", names: own };
+  if (signatureAll(t).length >= signatureLimit(actor))
+    return { ok: false, code: "limit", reason: `Ключевые Силы: уже выбрано ${signatureLimit(actor)} (I.b) — сначала снимите другую.`, names: own };
+  return { ok: true, code: "on", reason: "", names: [...own, key] };
 }

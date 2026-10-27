@@ -50,6 +50,7 @@ import { legacyWrathRules, legacyExcessRules, legacyGuardianRules, legacyBloodPs
 import { devourerPermanentRules } from "./devourer-of-knowledge.mjs";
 import { gallerpoxPoisonPenaltyActive } from "./prophet-of-gallerpox.mjs";
 import { healMistrustRules } from "./warp-touched.mjs";
+import { woundAuraRules } from "./wound-in-reality.mjs";
 import { registerRuleSource } from "./source-registry.mjs";
 
 export { registerRuleSource, getRuleSources, clearRuleSources } from "./source-registry.mjs";
@@ -359,6 +360,10 @@ registerRuleSource("dreadnought", (a) => {
 // внутри wdbc-q0q8) — Dragon Scales/Wings of the Phoenix. См. заголовок
 // module/rules/psychic-sustain-target.mjs про соглашение "target:<флаг>".
 registerRuleSource("psychicSustainTarget", a => psychicSustainTargetRules(a));
+
+// Аура Раны в Реальности (Талант Псайканы, пачка I2): −5 Пси-чутьё и +10 Варп-Нестабильность за каждую
+// бесплатную силу псайкера для каждого, на ком лежит метка ауры (rules/wound-in-reality.mjs).
+registerRuleSource("woundAura", a => woundAuraRules(a));
 
 registerRuleSource("daemonInevitability", a => {
   if (!a?.getFlag?.("warhammer-dbc", "inevitabilityPenalty")) return [];

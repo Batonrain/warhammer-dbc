@@ -41,6 +41,7 @@ function actor(items = [], { psyker = {}, fate = 3, cls = "bound" } = {}) {
       race: "human", fatigue: { value: 0 }, fate: { value: fate, max: 5 },
       psyker: { rating: 9, currentRating: 9, sustain: 0, class: cls, ...psyker },
       skills: {}, corruption: { value: 0 }, corruptionBonus: 0,
+      actionPoints: { value: 9, max: 9 },   // манифестация в бою списывает ОД по действию силы (пачка I3)
       wounds: { value: 8, max: 10, critical: 0 },
       characteristics: { wp: { total: 40, value: 40, bonus: 4 }, int: { total: 40, bonus: 4 } }
     },

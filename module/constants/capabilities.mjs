@@ -3181,7 +3181,8 @@ export const CAPABILITIES = {
   },
   "psyker.core.channel": {
     label: "Манифестируя психосилу Путём Силы «Психофокус» после успешного теста психофокуса, она не вызывает Проявлений Силы,",
-    source: "Channel / Пропускание", reader: ""
+    source: "Channel / Пропускание",
+    reader: "module/rules/psyker-talents.mjs::channelOutcome; module/sheets/tabs/psychic.mjs — executePsychotest: строка в карточке манифестации «Психофокус удался: Проявлений Силы нет», когда Феномена нет (подсистемы Проявлений нет — решение владельца 26.10.2026)."
   },
   "psyker.core.childOfTheWarp": {
     label: "Персонаж получает +1 PR при Усиленной манифестации, но его постоянно окружает незначительный постоянный феномен (определяется ГМом при взяти…",
@@ -3198,7 +3199,8 @@ export const CAPABILITIES = {
   },
   "psyker.core.fastWeaving": {
     label: "В начале боя сразу после бросков инициативы персонаж получает 2 полудействия, которые может потратить только на психосилы без типа «Атака».",
-    source: "Fast Weaving / Быстрое Плетение", reader: ""
+    source: "Fast Weaving / Быстрое Плетение",
+    reader: "module/combat/psyker-pools.mjs::processFastWeavingCombatStart (пул 2 ОД в начале боя, хук combatStart в module/hooks.mjs); module/rules/psyker-talents.mjs::fastWeavingGate (только не «Атака», Врасплох обнуляет, свой Ход — пул сброшен, rules/turn-flags.mjs); module/combat/psyker-pools.mjs::manifestActionPlan, ::payManifestAction (манифестация в бою списывает ОД по полю действия силы; пул уменьшает это списание); module/sheets/tabs/psychic.mjs — галочка в окне манифестации."
   },
   "psyker.core.favouredByTheWarp": {
     label: "Персонаж бросает два кубика на Феномены (но не Прорывы) и может выбрать любой из них.",
@@ -3207,7 +3209,8 @@ export const CAPABILITIES = {
   },
   "psyker.core.fluidWeave": {
     label: "Персонаж получает I.b очков Текучего Плетения. Раз в Ход за свободное действие он может развеять одну из своих психосил Вливаний/Призывов/Пс…",
-    source: "Fluid Weave / Текучее Плетение", reader: ""
+    source: "Fluid Weave / Текучее Плетение",
+    reader: "module/combat/psyker-pools.mjs::weaveFluid (кнопка «Переплести» у поддерживаемого Вливания/Призыва/Клинка: поддержание снимается (combat/psychic-sustain.mjs::sustainOffPatch) и заводится заново с теми же эPR, Успехами и целью без психотеста, 1 очко, раз в Ход), ::restoreFluidWeavePoint (полное действие концентрации); module/rules/psyker-talents.mjs::fluidWeaveGate, fluidWeaveMax (пул I.b, лежит на самом Таланте); вкладка МИСТИКА — module/sheets/tabs/psychic.mjs. Новая цель/другие эффекты — вручную."
   },
   "psyker.core.innumerations": {
     label: "Когда манифестация вызывает Феномен, сразу после психотеста, но до бросков на Феномен и эффекты, псайкер может уменьшить эPR силы на 1,",
@@ -3244,7 +3247,8 @@ export const CAPABILITIES = {
   },
   "psyker.core.psychicVampire": {
     label: "Раз в Раунд, убивая обладающее душой существо (но не изгоняя демона) психосилой или психосиловым оружием,",
-    source: "Psychic Vampire / Психический Вампир", reader: ""
+    source: "Psychic Vampire / Психический Вампир",
+    reader: "module/rules/psychic-vampire.mjs::vampireOffered, vampireDrug; module/combat/psychic-vampire.mjs::vampireSection (кнопка на карточке урона в module/combat/damage.mjs, когда психическая атака вывела цель из строя), ::handleVampireClick (вопрос «есть ли душа», раз в Раунд, W+0, 1d5 Ран или вся Усталость; доза «наркотика» — module/sheets/tabs/drugs.mjs::weeklyDoseCheck, флаг актора drugWithdrawal: Зависимость 6 | W+0 | 6 дней). Расстройство «Агрессия 2» — текстом штрафа (автовыдачи расстройств у зависимостей нет)."
   },
   "psyker.core.restraint": {
     label: "Персонаж может рассчитывать свой эPR для манифестации в безопасном режиме как тPR−3 вместо ½тPR как обычно.",
@@ -3257,7 +3261,8 @@ export const CAPABILITIES = {
   },
   "psyker.core.signaturePowers": {
     label: "Персонаж выбирает до I.b известных психосил. Раз в Раунд он может потратить Очко Бесчестия для любого теста,",
-    source: "Signature Powers / Ключевые Силы", reader: ""
+    source: "Signature Powers / Ключевые Силы",
+    reader: "module/rules/psyker-talents.mjs::isSignaturePower, signatureToggle (до I.b сил, звёздочка в таблице психосил, список на Таланте); module/combat/psyker-pools.mjs::signatureFreeHtml, ::handleSignatureFreeClick, ::claimSignatureFree; module/combat/calm-warp.mjs::handleCalmWarpClick — module/combat/psyker-pools.mjs::handlePsyRerollClick (переброс психотеста с карточки: параметры броска лежат во флаге psyManifest); на карточке СВОЕЙ манифестации ключевой силы раз в Раунд бесплатное Очко: переброс психотеста (прочие — за 1 Очко Бесчестия), Усмирение Варпа на Феномен/Прорыв и кнопка «Успех» (+1 к Успехам силы); сопротивление чужой силе — не делается (решение владельца 26.10.2026)."
   },
   "psyker.core.techniqueFocus": {
     label: "Псайкер получает +10 на манифестацию выбранной психосилы и −10 на все вызванные ею Феномены.",
@@ -3276,7 +3281,8 @@ export const CAPABILITIES = {
   },
   "psyker.core.warpLock": {
     label: "Раз в час персонаж может игнорировать выпавший Феномен или Прорыв, но получает 1d5 непоглощаемого E Dmg в голову,",
-    source: "Warp Lock / Варп-Замок", reader: ""
+    source: "Warp Lock / Варп-Замок",
+    reader: "module/rules/warp-lock.mjs::warpLockGate (раз в час по game.time.worldTime, подавление — до W.b раз в час), WARP_LOCK_FLAG (метка «не псайкер», rules/turn-flags.mjs); module/combat/warp-lock.mjs — кнопка под Феноменом/Прорывом (sheets/tabs/psychic.mjs, combat/calm-warp.mjs), applyWarpLock (1d5 непоглощаемого E в голову, combat/psychic-sustain.mjs::dispelAllSustained), панель вкладки МИСТИКА (подавить потенциал, сброс часа, снять метку); блок манифестации и включения поддержания — sheets/tabs/psychic.mjs."
   },
   "psyker.core.warpSense": {
     label: "Персонаж может использовать Варп-Чутьё как свободное действие и применяет его пассивно без концентрации.",
@@ -3289,7 +3295,8 @@ export const CAPABILITIES = {
   },
   "psyker.core.woundInReality": {
     label: "Тратя как минимум 3 PR на поддержание психосил, персонаж может не тратить тPR на поддержание новых манифестаций (ограничиваясь изначальными…",
-    source: "Wound In Reality / Рана в Реальности", reader: ""
+    source: "Wound In Reality / Рана в Реальности",
+    reader: "module/rules/wound-in-reality.mjs::woundSustainSplit (бесплатные силы не снижают тPR — module/rules/character.mjs), ::woundFreeToggleGate (галочка до Cor.b сил, пока платного поддержания 3+ PR); module/combat/wound-in-reality.mjs::setWoundFree, ::syncWoundAura (радиус ауры — запись kind:\"aura\" Таланта, ключ «wound» формулы, apps/mechanics.mjs::syncAuraFlag + regions/auras.mjs клонирует Черту-метку packs-src/traits «Wound in Reality Aura»); числа ауры за каждую силу — источник правил woundAura (rules/sources.mjs: −5 Пси-чутьё, +10 Варп-Нестабильность), +10 Феномены — sheets/tabs/psychic.mjs::executePsychotest, Завеса +1 за каждые 3 силы — sheets/demon-prince-sheet.mjs::dpVeilSteps."
   },
   // ── Рукопашные
   "meleeCore.core.assassinStrike": {

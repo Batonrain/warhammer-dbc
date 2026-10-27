@@ -27,6 +27,11 @@ import { COIL_FATIGUE_COST } from "../rules/potentia-coil.mjs";
 import { PSY_DISCIPLINES, TECH_DISCIPLINES, canHaveFocusDiscipline } from "../constants/disciplines.mjs";
 import { effectiveFocusDisciplines, ownFocusDisciplines, grantedFocusDisciplines,
          activeFocusItem, psyFocusCandidates } from "../rules/psy-focus.mjs";
+import { hasWarpLock, warpLockActive, warpLockGate, warpLockUses, WARP_LOCK_PERIOD, warpLockHourLabel } from "../rules/warp-lock.mjs";
+import { hasWoundInReality, woundSustainSplit, woundFreeLimit, woundFreeToggleGate, WOUND_FREE_FLAG } from "../rules/wound-in-reality.mjs";
+import { fluidWeaveTalent, fluidWeaveMax, fluidWeaveLeft, fluidWeaveGate, isFluidWeavePower,
+         signatureTalent, signatureNames, signatureLimit, isSignaturePower,
+         hasFastWeaving, fastWeavingLeft, FAST_WEAVING_POOL } from "../rules/psyker-talents.mjs";
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
 import { TALENT_LIBRARY }                            from "../constants/talents-library.mjs";
 import { charAptitudeSet, APTITUDES_TOTAL } from "../constants/advancement.mjs";
@@ -1306,6 +1311,12 @@ function buildGetDataUncached(actor) {
   // characterContext (см. test/sheets/psychic-sigillite-runes.test.mjs).
   const _sigilliteRunes = hasRuneMagic(actor);
   const _psyFocus = effectiveFocusDisciplines(actor);
+  // Таланты с пулами (пачка I1): галочка «ключевая сила» и кнопка «переплести» — только у носителей.
+  const _hasSignature = !!signatureTalent(actor);
+  const _hasFluid = !!fluidWeaveTalent(actor);
+  const _inCombat = !!game.combat?.started;
+  // Рана в Реальности (пачка I2): «бесплатно» у поддерживаемой силы — только носителям Таланта.
+  const _wound = hasWoundInReality(actor) ? woundSustainSplit(actor) : null;
   context.psyPowers = allItems.filter(i => i.type === "psychicPower").map(i => {
     const s = i.system;
     // Порог считаем только для тестов по характеристике (не Порча/Псинаука-навык).
@@ -1341,6 +1352,21 @@ function buildGetDataUncached(actor) {
       sustainedDegree: s.sustainedDegree ?? null,
       sustainCost:  s.sustainCost ?? 1,
       sustainActionLabel: PSY_ACTIONS[s.sustainAction] ?? s.sustainAction ?? "Свободное",
+      isSignature:  _hasSignature && isSignaturePower(actor, i),
+      wound:        (_wound && s.isSustained) ? (() => {
+        const on = !!i.getFlag?.("warhammer-dbc", WOUND_FREE_FLAG);
+        const g = woundFreeToggleGate(actor, i, { off: on });
+        const effective = on && _wound.freeIds.includes(i.id);
+        return { on, effective, ok: g.ok,
+          title: on
+            ? (effective ? "Рана в Реальности: поддерживается бесплатно (тPR не снижается). Клик — вернуть платное поддержание"
+                         : `Рана в Реальности: помечена, но не действует — платного поддержания меньше 3 PR или сверх Cor.b (${woundFreeLimit(actor)}). Клик — снять пометку`)
+            : (g.ok ? "Рана в Реальности: поддерживать эту силу бесплатно (до Cor.b сил, пока на платное уходит 3+ PR)" : g.reason) };
+      })() : null,
+      weave:        (_hasFluid && isFluidWeavePower(s))
+        ? (() => { const g = fluidWeaveGate(actor, i, { inCombat: _inCombat });
+            return { ok: g.ok, title: g.ok ? "Текучее Плетение: развеять и тут же наложить вновь с теми же эPR и Успехами, без психотеста — 1 очко Плетения, раз в Ход, свободное действие" : g.reason }; })()
+        : null,
       damage:       s.damage || "",
       damageType:   DAMAGE_TYPES[s.damageType] ?? s.damageType ?? "",
       // wdbc-5kd: penetration теперь формула строкой («PR», «PR*3»…), как и
@@ -1501,6 +1527,39 @@ function buildGetDataUncached(actor) {
         .map(([key, d]) => ({ key, label: d.label, selected: key === resonance }))
         .sort((a, b) => a.label.localeCompare(b.label, "ru"))
     };
+  }
+
+  // ── Пулы Талантов Псайканы (пачка I1) ────────────────────────────────────────
+  {
+    const fluid = fluidWeaveTalent(actor);
+    const sig = signatureTalent(actor);
+    const fast = hasFastWeaving(actor);
+    // Пул существует только в бою: метка могла остаться от прошлого боя.
+    const fastLeft = _inCombat ? fastWeavingLeft(actor) : 0;
+    const pips = (left, max) => "●".repeat(Math.max(0, left)) + "○".repeat(Math.max(0, max - left));
+    // Варп-Замок (пачка I2): панель только носителям Таланта (или пока висит метка «не псайкер»).
+    const warp = (hasWarpLock(actor) || warpLockActive(actor)) ? (() => {
+      const t = Number(game.time?.worldTime) || 0;
+      const sup = warpLockGate(actor, "suppress", t), emg = warpLockGate(actor, "emergency", t);
+      const uses = warpLockUses(actor);
+      const usedHour = uses.suppressAt.filter(x => t - x < WARP_LOCK_PERIOD && t - x >= 0).length;
+      const wb = Math.max(0, Number(actor.system?.characteristics?.wp?.bonus) || 0);
+      return {
+        active: warpLockActive(actor), hasTalent: hasWarpLock(actor),
+        suppressOk: sup.ok, suppressTitle: sup.ok ? "Подавить психопотенциал в начале своего Хода без урона: развеять все поддерживаемые силы, до начала следующего Хода вы не псайкер" : sup.reason,
+        suppressUsed: usedHour, suppressMax: wb,
+        emergencyLabel: emg.ok ? "готов" : (emg.code === "cooldown" ? warpLockHourLabel(emg.remaining) : (emg.code === "active" ? "—" : "")),
+        canReset: uses.emergencyAt != null || uses.suppressAt.length > 0
+      };
+    })() : null;
+    context.psyPools = (fluid || sig || fast || warp) ? {
+      warpLock: warp,
+      fluid: fluid ? { left: fluidWeaveLeft(actor), max: fluidWeaveMax(actor),
+        pips: pips(fluidWeaveLeft(actor), fluidWeaveMax(actor)), canRestore: fluidWeaveLeft(actor) < fluidWeaveMax(actor) } : null,
+      signature: sig ? { count: signatureNames(actor).length, limit: signatureLimit(actor) } : null,
+      fast: fast ? { left: fastLeft, max: FAST_WEAVING_POOL,
+        pips: pips(fastLeft, FAST_WEAVING_POOL), surprised: !!actor.system?.conditions?.surprised } : null
+    } : null;
   }
 
   context.abilityTechPowers = allItems.filter(i => i.type === "techPower").map(i => ({

@@ -23,6 +23,8 @@ import { aimMenuItems, aimFocusToggleState, toggleAimFocusPending, trackingAimTo
 import { overwatchMenuItems, overwatchManualFireItem, isOverwatchActive, overwatchState } from "../combat/overwatch.mjs";
 import { applyDrug, deactivateDrugEffect } from "../sheets/tabs/drugs.mjs";
 import { grappleOnlyHidden, isBiteName } from "../rules/integral-rating.mjs";
+import { warpLockBlocksManifest } from "../rules/warp-lock.mjs";
+import { sustainOffPatch } from "../combat/psychic-sustain.mjs";
 import { actorInfamyMax } from "./infamy-points.mjs";
 
 const SYSTEM = "warhammer-dbc";
@@ -626,7 +628,14 @@ function wire(el, actor) {
       ev.preventDefault();
       if (!own) return;
       const p = actor.items.get(b.dataset.psy);
-      if (p?.system?.sustainable) await p.update({ "system.isSustained": !p.system.isSustained });
+      if (!p?.system?.sustainable) return;
+      // Варп-Замок: под меткой «не псайкер» поддержание не включить; снятие — общим набором сбросов
+      // (в нём «бесплатно» Раны в Реальности, цель, степень успеха), как галочка на листе (пачка I2).
+      if (!p.system.isSustained && warpLockBlocksManifest(actor)) {
+        ui.notifications.warn("Варп-Замок: до начала следующего Хода вы не псайкер — поддержание не включить.");
+        return;
+      }
+      await p.update(p.system.isSustained ? sustainOffPatch(p) : { "system.isSustained": true });
     });
   });
 

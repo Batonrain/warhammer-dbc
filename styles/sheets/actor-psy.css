@@ -134,6 +134,33 @@
   cursor: help;
 }
 
+/* ── Пулы Талантов Псайканы (пачка I1): Текучее/Быстрое Плетение, Ключевые Силы ── */
+.warhammer-dbc .psy-pool { font-size: 0.8em; font-weight: 700; letter-spacing: 0.06em; color: color-mix(in srgb, var(--pc) 70%, #e7eefb); cursor: help; }
+.warhammer-dbc .psy-fluid-restore-btn,
+.warhammer-dbc .psy-weave-btn {
+  font-size: 0.72em; padding: 1px 8px; border-radius: 10px; cursor: pointer; white-space: nowrap;
+  color: #9fb0c4; background: rgba(0,0,0,0.3); border: 1px solid color-mix(in srgb, var(--pc) 25%, transparent);
+}
+.warhammer-dbc .psy-fluid-restore-btn:hover:not(:disabled),
+.warhammer-dbc .psy-weave-btn:hover:not(:disabled) { border-color: var(--pc); color: #e7eefb; }
+.warhammer-dbc .psy-fluid-restore-btn:disabled,
+.warhammer-dbc .psy-weave-btn:disabled { cursor: help; opacity: 0.5; }
+.warhammer-dbc .psy-signature-toggle {
+  background: none; border: none; padding: 0 2px; cursor: pointer; font-size: 1.05em; line-height: 1;
+  color: #7d8da2;
+}
+.warhammer-dbc .psy-signature-toggle.is-on { color: color-mix(in srgb, var(--pc) 70%, #ffd76a); text-shadow: 0 0 6px color-mix(in srgb, var(--pc) 55%, transparent); }
+.warhammer-dbc .psy-signature-toggle:hover { color: #e7eefb; }
+
+/* Рана в Реальности (пачка I2): «бесплатно» у поддерживаемой силы */
+.warhammer-dbc .psy-wound-free-toggle {
+  background: none; border: none; padding: 0 2px; cursor: pointer; font-size: 1.05em; line-height: 1; color: #7d8da2;
+}
+.warhammer-dbc .psy-wound-free-toggle.is-on { color: #c98bff; opacity: 0.7; }
+.warhammer-dbc .psy-wound-free-toggle.is-effective { opacity: 1; text-shadow: 0 0 6px color-mix(in srgb, var(--pc) 55%, transparent); }
+.warhammer-dbc .psy-wound-free-toggle:hover:not(:disabled) { color: #e7eefb; }
+.warhammer-dbc .psy-wound-free-toggle:disabled { cursor: help; opacity: 0.35; }
+
 /* ── Подсказки ──────────────────────────────────────────── */
 .warhammer-dbc .psy-hint { position: relative; z-index: 1; font-size: 0.8em; line-height: 1.55; color: #aab6c8; padding: 6px 12px 2px; }
 .warhammer-dbc .psy-hint b { color: color-mix(in srgb, var(--pc) 60%, #d6e2f2); }

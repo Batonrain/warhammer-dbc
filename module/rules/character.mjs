@@ -60,6 +60,7 @@ import { armourTrainingPenaltyReduction } from "./armour-training.mjs";
 import { sharedFormationInitBonus } from "./combat-formation.mjs";
 import { isBeyondHuman, beyondHumanCharKey, BEYOND_HUMAN_UNNATURAL } from "./beyond-human.mjs";
 import { LIMITED_LIFT_CAPABILITY, flightStrengthBonus, limitedLiftStatus } from "./limited-lift.mjs";
+import { woundSustainSplit } from "./wound-in-reality.mjs";
 
 /**
  * Именованный вклад предметов-носителей Механики (Архетип/Раса/Субраса/
@@ -1160,6 +1161,9 @@ export function prepareCharacterDerived(actor, system) {
         case "eliteArchetype": autoEliteCost += (parseInt(it.system?.paidCost) || 0); break;
       }
     }
+    // Рана в Реальности (Талант Псайканы, пачка I2): психосилы, помеченные «бесплатными», не снижают
+    // тPR — платится только то, что осталось (rules/wound-in-reality.mjs). Без Таланта — не меняет ничего.
+    if (sustainedCost > 0) sustainedCost = woundSustainSplit(actor).paid;
     system.experience.spentTalents = autoTalentCost;
     system.experience.spentPsy = autoPsyCost;
     system.experience.spentTech = autoTechCost;

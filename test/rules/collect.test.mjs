@@ -162,7 +162,8 @@ describe("источники по умолчанию", () => {
                 "occultistTalents", "opposedTarget", "paths", "patron", "prophetOfGallerpox",
                 // requisitionTalents (Sahara peer-ancient-warrior-…, 25.10.2026) — галочки и +20 теста «Достать снаряжение».
                 "psychicSustainTarget", "race", "rage", "requisitionTalents", "resilienceTalents", "serumHook", "situational", "situationalSocialTalents", "socialTalents", "synesthesia",
-                "warpTouchedHealMistrust", "yigori"]);
+                // woundAura (Рана в Реальности, Sahara 3-28, пачка I2, 26.10.2026) — −5 Пси-чутьё и +10 Варп-Нестабильность в ауре.
+                "warpTouchedHealMistrust", "woundAura", "yigori"]);
   });
 
   // Наполнена пока одна раса (этап 3 плана), у остальных поле rules пустое.
