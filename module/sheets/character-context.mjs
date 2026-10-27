@@ -21,6 +21,7 @@ import { charAdvanceCat, advanceCatSource }     from "../rules/advance-category.
 
 import { fateTerm }                              from "../helpers/utils.mjs";
 import { hasRuneMagic }                          from "../rules/sigillite-runes.mjs";
+import { hasTrophyPoints }                       from "../rules/trophy-points.mjs";
 import { ignoresWeight }                         from "../rules/encumbrance.mjs";
 import { raceEntries, raceDef, subracesOf,
          isAeldariRace, raceGroupList,
@@ -58,13 +59,14 @@ import { raceMatches } from "../rules/race.mjs";
  * сложилось число: разборку строит documents/actor.mjs (тот же проход, что и
  * сам total/halfMove — char.totalBreakdown, system.movement.spdBreakdown).
  */
-function charTotalTooltip(total, breakdown) {
+export function charTotalTooltip(total, breakdown) {
   const lines = (breakdown || []).map(b => {
     if (b.cap != null)   return `${b.label}: не выше ${b.cap}`;
     if (b.floor != null) return `${b.label}: не ниже ${b.floor}`;
     if (b.halved)         return `${b.label}: ÷2`;
     if (b.halvedFloor)    return `${b.label}: ÷2 (окр. вниз)`;
     if (b.immobile)       return `${b.label}: не может ходить`;
+    if (b.info)           return b.note ? `${b.label} (${b.note})` : b.label;
     if (b.label === "База") return `${b.label}: ${b.value}${b.note ? ` (${b.note})` : ""}`;
     const sign = b.value > 0 ? "+" : "−";
     return `${b.label}: ${sign}${Math.abs(b.value)}`;
@@ -261,14 +263,18 @@ export function characterContext(actor) {
 
   // Откуда число (wdbc-zbiz): мод-бейдж Полушага (= SPD×1) — тот же приём,
   // что charTotalTooltip у характеристик; breakdown строит documents/actor.mjs.
-  context.spdTooltip = charTotalTooltip(system.movement?.halfMove, system.movement?.spdBreakdown);
+  // SPD без множителей Черт (Почитатели Танца и др., rules/speed-multipliers.mjs): Полудвижение с множителем
+  // здесь дало бы завышенное «Итого», нарративную скорость и Карабканье.
+  const _spd = system.movement?.spdNow ?? system.movement?.halfMove;
+  context.spdTooltip = charTotalTooltip(_spd, system.movement?.spdBreakdown);
+  context.movementSpd = _spd; // подсказки листа: SPD без множителей Черт
 
   // Дистанции-превью на кнопках вкладки БОЙ (стр. 29): базовая часть
   // формулы без бросков (Карабканье — SPD/2, Плавание — ½S.b, те же
   // формулы, что показывает сам диалог в movement-actions.mjs); Прыжок и
   // Падение зависят от выбора в диалоге/броска — превью для них не строим.
   {
-    const _halfMove = Number(system.movement?.halfMove) || 0;
+    const _halfMove = Number(_spd) || 0;
     const _sBonus = Number(system.characteristics?.s?.bonus) || 0;
     context.movementDist = {
       climb: (_halfMove / 2).toFixed(1),
@@ -278,7 +284,7 @@ export function characterContext(actor) {
   // Базовая нарративная скорость (таблица «Движение в нарративном
   // времени», стр. 29) — строка-подсказка над кнопками маршей: марши
   // умножают именно эту базу (×2/×3/как обычно).
-  context.movementNarrative = narrativeSpeed(system.movement?.halfMove);
+  context.movementNarrative = narrativeSpeed(_spd);
 
   // ── Снаряжение: сенсор нагрузки (когитатор) ─────────────────────────────
   const _enc = system.encumbrance || {};
@@ -456,6 +462,8 @@ export function characterContext(actor) {
   // не расовый (Элитный Архетип доступен любой расе), а возможность из
   // реестра — тот же приём, что hasRuleFlag вместо system.race === "…".
   context.hasSigilliteRunes = hasRuneMagic(actor);
+  // Очки Трофеев (Мастер Казней, Sahara task-bbe1) — ячейка шапки только носителю.
+  context.hasTrophyPoints = hasTrophyPoints(actor);
   // Фактор Прибыли (Вольный Торговец): бонус = ФП ÷ 10 (как у характеристик)
   context.profitFactorBonus = Math.floor((Number(system.aspirations?.profitFactor) || 0) / 10);
   // Иннари: выбор «Прошлого» (бывшей расы) и её бонусы + Черты Иннари.

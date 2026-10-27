@@ -46,6 +46,7 @@ import { MUTATIONS_AS_ASTARTES, sleepGraceDays } from "./squat-traits.mjs";
 import { ORDER_REJECTS_BIONICS, rejectedImplants, bionicsRejection } from "./aversion-to-order.mjs";
 import { invalidateRulesCacheFor } from "./collect.mjs";
 import { runeMax } from "./sigillite-runes.mjs";
+import { trophyMax } from "./trophy-points.mjs";
 import { spliceExtraAdaptations, fastLearnerWithAdaptations } from "./splice-adaptations.mjs";
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
 import { applyParasiteFusion, fusedParasite, fuseParasiteCharacteristic } from "./parasite-trait.mjs";
@@ -727,6 +728,13 @@ export function prepareCharacterDerived(actor, system) {
       system.sigilliteRunes.max = runeMax(actor);
       if ((system.sigilliteRunes.value ?? 0) > system.sigilliteRunes.max)
         system.sigilliteRunes.value = system.sigilliteRunes.max;
+    }
+
+    // Очки Трофеев (Мастер Казней, rules/trophy-points.mjs): максимум = P.b у носителя, 0 у остальных.
+    if (system.trophyPoints) {
+      system.trophyPoints.max = trophyMax(actor);
+      if ((system.trophyPoints.value ?? 0) > system.trophyPoints.max)
+        system.trophyPoints.value = system.trophyPoints.max;
     }
 
     // ── Очки Боли (Друкхари) ───────────────────────────────────────────────

@@ -19,18 +19,27 @@
 //
 //  Что НЕ блокируется (чтобы не ломать сцену): ГМ (перебор только отмечается
 //  уведомлением); перемещение не по воле игрока — Foundry подписывает такое
-//  method="api" (телепорт, принудительные сдвиги Роундхауса/Грависта/толчки,
-//  перевозки, макросы), "hud", "undo", "paste"; не-свой Ход (Реакции: Фанатик,
-//  Отскок…); вне боя; Орда/Техника/Отряд; верховые (идут на скорости скакуна,
-//  которой лист всадника не знает); актор с флагом movementLimitOff.
-//  Настройка мира movementPathLimit (off/soft/strict) выключает или ужесточает.
+//  method="api" (телепорт, сдвиги системы, макросы), "hud", "undo", "paste";
+//  сдвиг, помеченный `options.whDBC.forcedMove` (rules/movement-path.mjs::
+//  displaceToken — так система двигает токен сама, task-bbe1); не-свой Ход
+//  (Реакции: Фанатик, Отскок…); вне боя; Орда/Техника/Отряд; верховые (идут на
+//  скорости скакуна, которой лист всадника не знает); актор с флагом
+//  movementLimitOff. Настройка мира movementPathLimit (off/soft/strict)
+//  выключает или ужесточает.
+//
+//  Принудительные сдвиги (толчок Роундхауса, перевозка, Пересилить партнёра):
+//  система токены сама НЕ двигает — их тянет стол руками (method="dragging"),
+//  отличить такой шаг от хода игрока нельзя. Руками ГМ — не едят бюджет (ГМ
+//  отфильтрован); руками игрока — выбрать в HUD «Телепорт» (blink) или снять
+//  лимит актору (меню Движения, ГМ). Если система начнёт двигать чужой токен
+//  программно — только через displaceToken.
 // ════════════════════════════════════════════════════════════════════════
 
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { SURE_TREAD, sureTreadWalkCeiling } from "../rules/squat-traits.mjs";
 import {
   PATH_LIMIT_SETTING, PATH_LIMIT_DEFAULT, PATH_LIMIT_ACTOR_TYPES, PATH_LIMITED_METHODS,
-  MOVE_ALLOWANCE_FLAG, PATH_LIMIT_OFF_FLAG, RAN_METERS_FLAG,
+  MOVE_ALLOWANCE_FLAG, PATH_LIMIT_OFF_FLAG, RAN_METERS_FLAG, isForcedMove,
   normalizePathLimitMode, evaluatePath, moveDegreeFromPath, fmtMeters, pathLimitMessage, walkedMeters
 } from "../rules/movement-path.mjs";
 import { IN_FLIGHT_ALTITUDES, markMoveDegreeThisTurn } from "./movement-actions.mjs";
@@ -117,7 +126,8 @@ function walkCeilingOf(actor) {
  * (не тот тип актора, верхом, нет актора).
  * @param {TokenDocument} tokenDoc
  * @param {object} movement  TokenPreMovementOperation
- * @param {{mode?:string, gm?:boolean, actions?:object}} [env]
+ * @param {{mode?:string, gm?:boolean, actions?:object, forced?:boolean}} [env]  forced — сдвиг помечен
+ *   принудительным (isForcedMove по 3-му аргументу preMoveToken — опциям апдейта)
  */
 export function checkPreMove(tokenDoc, movement, env = {}) {
   const actor = tokenDoc?.actor;
@@ -131,6 +141,7 @@ export function checkPreMove(tokenDoc, movement, env = {}) {
     gm: !!env.gm,
     actorOff: !!actor.getFlag?.(NS, PATH_LIMIT_OFF_FLAG),
     method: movement.method,
+    forced: !!env.forced,
     teleport: isTeleportOnly(movement, actions),
     recorded: !!movement.recorded,
     ownTurn,
@@ -145,11 +156,16 @@ export function checkPreMove(tokenDoc, movement, env = {}) {
   return { ...verdict, allowance, actorName: tokenDoc.name || actor.name };
 }
 
-/** Хук preMoveToken: false — перемещение запрещено (лимит пути исчерпан). */
-export function onPreMoveToken(tokenDoc, movement) {
+/**
+ * Хук preMoveToken: false — перемещение запрещено (лимит пути исчерпан).
+ * @param {TokenDocument} tokenDoc
+ * @param {object} movement  TokenPreMovementOperation
+ * @param {object} [options] опции апдейта (client/documents/token.mjs: Hooks.call("preMoveToken", doc, move, options))
+ */
+export function onPreMoveToken(tokenDoc, movement, options) {
   const mode = pathLimitMode();
   if (mode === "off") return;
-  const verdict = checkPreMove(tokenDoc, movement, { mode, gm: !!game.user?.isGM });
+  const verdict = checkPreMove(tokenDoc, movement, { mode, gm: !!game.user?.isGM, forced: isForcedMove(options) });
   if (!verdict?.applies) return;
   if (verdict.gmBypass) {
     // ГМ не блокируется (двигает за игрока, обходит правило намеренно), но
@@ -171,6 +187,7 @@ export function onPreMoveToken(tokenDoc, movement) {
 export async function onMoveToken(tokenDoc, movement, operation, user) {
   if (!user || user.id !== game.user?.id) return;
   if (!PATH_LIMITED_METHODS.includes(movement?.method) || !movement.recorded) return;
+  if (isForcedMove(operation)) return; // толкнули/перевезли — своего пути токен не прошёл
   const actor = tokenDoc?.actor;
   if (!isPathLimitedActor(actor)) return;
   if (!turnState(tokenDoc).ownTurn) return;

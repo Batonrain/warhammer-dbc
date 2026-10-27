@@ -166,6 +166,42 @@ describe("processTokenMove: разрыв контакта", () => {
   });
 });
 
+// Принудительный сдвиг (Sahara task-bbe1, решение владельца 27.10.2026): толчок, перевозка — токен
+// не уходит по своей воле, Свободную Атаку это не провоцирует. Флаг — options.whDBC.forcedMove.
+describe("processTokenMove: принудительный сдвиг не провоцирует Свободную Атаку", () => {
+  it("forced: контакт разорван, но предложения нет, broken пуст", async () => {
+    const enemy = token({ id: "e", x: 2, y: 0, disposition: HOSTILE, actor: fakeActor({ type: "character" }) });
+    const mover = token({ id: "m", x: 20, y: 20, disposition: FRIENDLY, actor: fakeActor({ type: "character" }) });
+    canvas.tokens.placeables = [mover, enemy];
+
+    const broken = await processTokenMove(mover.document, new Set(["e"]), { forced: true });
+
+    expect(broken).toEqual([]);
+    expect(captured.chat.length).toBe(0);
+    // тот же сдвиг не по принуждению — предложение есть (проверка, что тест не пустой)
+    const broken2 = await processTokenMove(mover.document, new Set(["e"]));
+    expect(broken2.map(d => d.id)).toEqual(["e"]);
+  });
+
+  it("forced не съедает разовый флаг disengageActive (он про добровольный Выход из Боя)", async () => {
+    const moverActor = fakeActor({ type: "character", flags: { "warhammer-dbc": { disengageActive: true } } });
+    const enemy = token({ id: "e", x: 2, y: 0, disposition: HOSTILE, actor: fakeActor({ type: "character" }) });
+    const mover = token({ id: "m", x: 20, y: 20, disposition: FRIENDLY, actor: moverActor });
+    canvas.tokens.placeables = [mover, enemy];
+    await processTokenMove(mover.document, new Set(["e"]), { forced: true });
+    expect(moverActor.getFlag("warhammer-dbc", "disengageActive")).toBe(true);
+  });
+
+  it("forced: новый контакт всё равно снимает Подавление (это не про провокацию)", async () => {
+    const moverActor = fakeActor({ type: "character", conditions: { pinned: true } });
+    const enemy = token({ id: "e", x: 2, y: 0, disposition: HOSTILE, actor: fakeActor({ type: "character" }) });
+    const mover = token({ id: "m", x: 0, y: 0, disposition: FRIENDLY, actor: moverActor });
+    canvas.tokens.placeables = [mover, enemy];
+    await processTokenMove(mover.document, new Set(), { forced: true });
+    expect(moverActor.system.conditions.pinned).toBe(false);
+  });
+});
+
 // Подавление (стр. 33, wdbc-x1nz.2.62): «персонажи в рукопашной ...
 // автоматически преодолевают Подавление, когда оказываются в рукопашной» —
 // новый (появившийся этим перемещением) контакт снимает conditions.pinned у
@@ -338,6 +374,23 @@ describe("initFreeAttackHooks: подписка на Foundry-хуки", () => {
 
     expect(captured.chat.length).toBe(1);
     expect(captured.chat[0].content).toContain("Свободная атака");
+  });
+
+  it("полный цикл через хуки: сдвиг помечен whDBC.forcedMove — Свободной атаки нет; без пометки — есть", async () => {
+    globalThis.game.combat = { started: true, round: 1 };
+    const mkEnemy = () => token({ id: "e", x: 2, y: 0, disposition: HOSTILE, name: "Культист", actor: fakeActor({
+      type: "character", uuid: "Actor.enemy", name: "Культист", reactions: { value: 1, max: 1, defenseValue: 0, defenseMax: 0 } }) });
+    const forced = { whDBC: { forcedMove: true } };
+    for (const [options, expected] of [[forced, 0], [{}, 1]]) {
+      resetCaptured();
+      const enemy = mkEnemy();
+      const mover = token({ id: "m", x: 0, y: 0, disposition: FRIENDLY, actor: fakeActor({ type: "character" }), name: "Герой" });
+      canvas.tokens.placeables = [mover, enemy];
+      fire("preUpdateToken", mover.document, { x: 20, y: 20 }, options);
+      mover.document.x = 20; mover.document.y = 20;
+      await fire("updateToken", mover.document, { x: 20, y: 20 }, options, "u1");
+      expect(captured.chat.length).toBe(expected);
+    }
   });
 
   it("deleteToken чистит запись ДО апдейта (п.3) — отменённый драг не всплывает контактом", async () => {

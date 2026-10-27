@@ -106,7 +106,7 @@
           {{/if}}
         </div>
         <div class="movement-col">
-          <div class="movement-col-note" title="Неспешный темп по свободному ландшафту при текущем SPD ({{system.movement.halfMove}}) — стр. 29, таблица «Движение в нарративном времени». Марши ниже умножают эту базу.">
+          <div class="movement-col-note" title="Неспешный темп по свободному ландшафту при текущем SPD ({{movementSpd}}) — стр. 29, таблица «Движение в нарративном времени». Марши ниже умножают эту базу.">
             Баз. скорость: {{movementNarrative.perMinute}}м/мин · {{movementNarrative.perHour}}км/ч · {{movementNarrative.perDay}}км/день
           </div>
           <div class="movement-item"> <button type="button" class="wh-move-btn" data-move-action="march-accelerated" title="Ускоренный марш (стр. 29): ×2 базовой скорости, до T.b часов без теста, дальше — тест T каждый час.">Ускоренный марш</button> <span class="mv-box mv-box-wide">{{movementNarrative.perDayX2}}км/день</span> </div>

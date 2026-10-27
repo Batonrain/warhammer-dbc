@@ -13,7 +13,7 @@ import { packDocById } from "../support/pack-doc.mjs";
 import {
   pathLimitMode, isPathLimitedActor, checkPreMove, onPreMoveToken, onMoveToken, _resetPathLimitNotices
 } from "../../module/combat/path-limit.mjs";
-import { MOVE_ALLOWANCE_FLAG, PATH_LIMIT_OFF_FLAG, RAN_METERS_FLAG } from "../../module/rules/movement-path.mjs";
+import { MOVE_ALLOWANCE_FLAG, PATH_LIMIT_OFF_FLAG, RAN_METERS_FLAG, forcedMoveOptions } from "../../module/rules/movement-path.mjs";
 
 const SPD3 = { halfMove: 3, move: 6, charge: 9, run: 18, altitude: "landed" };
 const ACTIONS = { walk: {}, fly: {}, blink: { teleport: true }, displace: { teleport: true } };
@@ -267,6 +267,63 @@ describe("onPreMoveToken: блок и уведомление", () => {
     globalThis.__mode = "strict";
     expect(onPreMoveToken(fakeToken({ ownTurn: false }), move({ step: 50 }))).toBeUndefined();
     expect(onPreMoveToken(fakeToken(), move({ step: 50, method: "api" }))).toBeUndefined();
+  });
+});
+
+describe("принудительный сдвиг: флаг whDBC.forcedMove из опций апдейта (task-bbe1, п.3)", () => {
+  // Третий аргумент хука preMoveToken — опции апдейта (client/documents/token.mjs:
+  // Hooks.call("preMoveToken", this, move, options)); moveToken получает их же как operation.
+  const forced = forcedMoveOptions();
+
+  it("перетаскивание за лимитом блокируется; с флагом принудительного — пропускается молча", () => {
+    const over = move({ used: 3, step: 5 });
+    expect(onPreMoveToken(fakeToken(), over, {})).toBe(false);
+    captured.warnings.length = 0;
+    expect(onPreMoveToken(fakeToken(), over, forced)).toBeUndefined();
+    expect(captured.warnings).toEqual([]);
+    expect(infos).toEqual([]);
+  });
+
+  it("без третьего аргумента хук работает как раньше (старые вызовы и тесты)", () => {
+    expect(onPreMoveToken(fakeToken(), move({ used: 3, step: 5 }))).toBe(false);
+  });
+
+  it("чужой ключ в опциях (не whDBC.forcedMove) сдвигом не считается", () => {
+    expect(onPreMoveToken(fakeToken(), move({ used: 3, step: 5 }), { forcedMove: true })).toBe(false);
+    expect(onPreMoveToken(fakeToken(), move({ used: 3, step: 5 }), { whDBC: { forcedMove: false } })).toBe(false);
+  });
+
+  it("ГМ: принудительный сдвиг не вызывает и напоминания о переборе", () => {
+    globalThis.game.user = { id: "gm", isGM: true };
+    expect(onPreMoveToken(fakeToken(), move({ used: 3, step: 5 }), forced)).toBeUndefined();
+    expect(infos).toEqual([]);
+  });
+
+  it("checkPreMove: вердикт «forced» — лимит не применялся", () => {
+    expect(checkPreMove(fakeToken(), move({ used: 3, step: 5 }), { actions: ACTIONS, forced: true }))
+      .toMatchObject({ applies: false, reason: "forced" });
+  });
+
+  it("moveToken: сдвиг, помеченный принудительным, не ставит категорию Хода и не пишет пробег", async () => {
+    const actor = fakeActor({ flags: { running: true } });
+    await onMoveToken(fakeToken({ actor }), move({ used: 2, step: 9, method: "dragging" }), forced, { id: "u1" });
+    expect(actor.getFlag("warhammer-dbc", "moveDegreeThisTurn")).toBeUndefined();
+    expect(actor.getFlag("warhammer-dbc", RAN_METERS_FLAG)).toBeUndefined();
+    // тот же сдвиг без флага — пишет (проверка, что тест не пустой)
+    const actor2 = fakeActor({ flags: { running: true } });
+    await onMoveToken(fakeToken({ actor: actor2 }), move({ used: 2, step: 9, method: "dragging" }), {}, { id: "u1" });
+    expect(actor2.getFlag("warhammer-dbc", "moveDegreeThisTurn")).toBe("full");
+  });
+
+  it("сдвиг displace в истории чужого токена не съедает бюджет его следующего перетаскивания", () => {
+    // Игрок u1 сдвинул токен принудительно на 8 м (ядро: displace, но даже с «ненулевой» ценой) и потом тянет сам 2 м.
+    const hist = [wp(0, 0), wp(800, 0, { cost: 8, action: "displace", userId: "u1" })];
+    const v = checkPreMove(fakeToken(), moveWp({ history: hist, passed: [wp(1000, 0, { cost: 2 })] }), { mode: "soft", actions: ACTIONS2 });
+    expect(v).toMatchObject({ used: 0, step: 2, allowed: true });
+    // а тот же сдвиг, записанный как ходьба (старое поведение api-update), блокирует
+    const hist2 = [wp(0, 0), wp(800, 0, { cost: 8, action: "walk", userId: "u1" })];
+    const v2 = checkPreMove(fakeToken(), moveWp({ history: hist2, passed: [wp(1000, 0, { cost: 2 })] }), { mode: "soft", actions: ACTIONS2 });
+    expect(v2).toMatchObject({ used: 8, allowed: false });
   });
 });
 

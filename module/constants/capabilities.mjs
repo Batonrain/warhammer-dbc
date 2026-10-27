@@ -763,7 +763,7 @@ export const CAPABILITIES = {
   "movement.outOfCombatSpdBonus": {
     label: "+2 SPD вне боя; в бою — бонус к движению по итогам прошлого раунда (см. текст таланта)",
     source: "Speed of the Faolchú / Скорость Сокола",
-    reader: ""
+    reader: "РЕАЛИЗОВАНО ЧАСТИЧНО (27.10.2026, Sahara task-bbe1): ТОЛЬКО Движение за Реакции (Полудвижение за 1, Полное за 2, без Свободной Атаки; условие «не двигался» меряется флагом movedThisTurn, ГМ обходит) — module/rules/talent-moves.mjs → module/combat/talent-move.mjs::declareTalentMove, пункт «Движение по Таланту» (module/combat/movement-actions.mjs::movementMenuItems); +2 SPD вне боя и бонус к движению по итогам прошлого раунда НЕ смоделированы"
   },
   "combat.parryCounterDisarm.acrobaticsSwap": {
     label: "Acrobatics(A) вместо Parry(WS)/WS; после Парирования+Контратаки — цепочка тестов на разоружение",
@@ -1325,7 +1325,7 @@ export const CAPABILITIES = {
   },
   "exodite.warDancer.danceOfCarnage": {
     label: "Преуспев в рукопашной атаке на +5 успехов, персонаж может совершить движение до полудвижения; войдя в контакт с противником(ами),",
-    source: "Dance of Carnage / Танец Рассечения", reader: ""
+    source: "Dance of Carnage / Танец Рассечения", reader: "РЕАЛИЗОВАНО ЧАСТИЧНО (27.10.2026, Sahara task-bbe1, только Движение): рывок на Полудвижение пишется в бюджет пути; условие «5+ Успехов» и свободную атаку −30 подтверждает/делает игрок. module/rules/talent-moves.mjs (таблица: Движение, дистанция, цена, частота) → module/combat/talent-move.mjs::declareTalentMove, ::showTalentMoveDialog — пункт «Движение по Таланту» в меню Движения (module/combat/movement-actions.mjs::movementMenuItems); бюджет пути — module/rules/movement-path.mjs::grantMoveAllowance"
   },
   "exodite.warDancer.incessantDance": {
     label: "Атакуя одного и того же противника, за каждую совершённую по нему атаку (не обязательно попавшую) персонаж получает +10 на атаки (до +60;",
@@ -1341,7 +1341,7 @@ export const CAPABILITIES = {
   },
   "exodite.warDancer.worshippersOfDance": {
     label: "Черта Танцора Войны. Полудвижение SPD×2, Полное Движение SPD×3, Натиск SPD×6, Бег SPD×12. +1 реакция.",
-    source: "Worshippers of Dance / Почитатели Танца", reader: ""
+    source: "Worshippers of Dance / Почитатели Танца", reader: "РЕАЛИЗОВАНО ЧАСТИЧНО (27.10.2026, Sahara task-bbe1, только дальность Движения): Полудвижение SPD×2, Полное ×3, Натиск ×6, Бег ×12 считает ЛИСТ (system.movement.*); +1 Реакция, безлимитные атаки и прочие эффекты Черты НЕ смоделированы. module/rules/speed-multipliers.mjs (таблица множителей) → module/rules/character/movement.mjs::prepareMovementDerived"
   },
   // ── Экзодиты — Лесной Владыка
   "exodite.forestLord.chosenVictim": {
@@ -4866,7 +4866,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.masterKazney.mistLeap": {
     label: "За полное действие может потратить очко Трофеев и телепортироваться Трейтом Mistwalker в базовый контакт с достойной трофея добычей в предел…",
-    source: "Mist Leap / Туманный Прыжок", reader: ""
+    source: "Mist Leap / Туманный Прыжок", reader: "РЕАЛИЗОВАНО ЧАСТИЧНО (27.10.2026, Sahara task-bbe1, только Движение): телепорт токена (стены учитываются, бюджет пути не трогается), 2 ОД; Очко Трофеев и базовый контакт с добычей — вручную. module/rules/talent-moves.mjs (таблица: Движение, дистанция, цена, частота) → module/combat/talent-move.mjs::declareTalentMove, ::showTalentMoveDialog — пункт «Движение по Таланту» в меню Движения (module/combat/movement-actions.mjs::movementMenuItems); бюджет пути — module/rules/movement-path.mjs::grantMoveAllowance"
   },
   "elite.elitnyeArhetipy.masterKazney.mistSavior": {
     label: "Служащие телохранителями Мастера Казней подменяют собой союзников. Приняв на себя удар Трейтом Fanatic, может поменяться с целью местами,",
@@ -6131,7 +6131,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Трейты_рас — Фаза 2, capability-документация ──
   "trait.treytyRas.acrobaticMastery": {
     label: "Полудвижение SPD×2, Полное SPD×4, Натиск SPD×8, Бег SPD×14 (со Sprint — удвоение самого Бега, SPD×28). +2 Реакции.",
-    source: "Acrobatic Mastery / Акробатическое Мастерство", reader: ""
+    source: "Acrobatic Mastery / Акробатическое Мастерство", reader: "РЕАЛИЗОВАНО ЧАСТИЧНО (27.10.2026, Sahara task-bbe1, только дальность Движения): Полудвижение SPD×2, Полное ×4, Натиск ×8, Бег ×14 (со Спринтом Бег ×28 — sprintRun) считает ЛИСТ (system.movement.*); прочие эффекты Черты НЕ смоделированы. module/rules/speed-multipliers.mjs (таблица множителей) → module/rules/character/movement.mjs::prepareMovementDerived"
   },
   "trait.treytyRas.clearMind": {
     label: "При обучении Пути от более опытного: +30 к тесту I/Logic в конце и ×2 успехи. При обучении других: +60 к Trade(Instructor)(I) (÷2, если ученик не на том же Пути). Реализована ТОЛЬКО вторая половина (учитель обучает Навыку/Таланту — обычный курс Обучения). ПЕРВАЯ половина («обучение Пути») НЕ реализована: Пути Аэльдари (module/constants/aeldari-paths.mjs, system.paths) не покупаются за опыт вообще — нет цены, которую мог бы обосновать/оплатить этот курс, и «Путь» не входит в виды цели движка Обучения (только Навык/Талант/Характеристика).",
@@ -6375,7 +6375,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.vedma.strikingPerformance": {
     label: "Полное Движение на SPD×3, Натиск на SPD×6, Бег на SPD×12. Не ограничена полудвижением при движении через Reaper,",
-    source: "Striking Performance / Разящее Представление", reader: ""
+    source: "Striking Performance / Разящее Представление", reader: "РЕАЛИЗОВАНО ЧАСТИЧНО (27.10.2026, Sahara task-bbe1, только дальность Движения): Полное Движение SPD×3, Натиск ×6, Бег ×12 считает ЛИСТ (system.movement.*); снятие ограничения Жнеца и прочие эффекты Черты НЕ смоделированы. module/rules/speed-multipliers.mjs (таблица множителей) → module/rules/character/movement.mjs::prepareMovementDerived"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Ветеран_Долгой_Войны — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.veteranDolgoyVoyny.adaptation": {
@@ -6551,7 +6551,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Инкуб — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.inkub.mercenaryOfTheMatter": {
     label: "Не отдаётся желанию пытать жертв, убивая их быстрыми ударами. В первом раунде имеет бесплатное Полное Движение,",
-    source: "Mercenary of the Matter / Наёмник Дела", reader: ""
+    source: "Mercenary of the Matter / Наёмник Дела", reader: "РЕАЛИЗОВАНО ЧАСТИЧНО (27.10.2026, Sahara task-bbe1, только Движение): бесплатное Полное Движение в 1-м Раунде, раз за бой; остальные эффекты Черты НЕ смоделированы. module/rules/talent-moves.mjs (таблица: Движение, дистанция, цена, частота) → module/combat/talent-move.mjs::declareTalentMove, ::showTalentMoveDialog — пункт «Движение по Таланту» в меню Движения (module/combat/movement-actions.mjs::movementMenuItems); бюджет пути — module/rules/movement-path.mjs::grantMoveAllowance"
   },
   "trait.elitnyeArhetipy.inkub.mercenaryOfTheWord": {
     label: "Лишается всех Hatred и не имеет штрафов на общение с кем-либо, пока этот кто-то может быть потенциальным нанимателем.",
@@ -6703,7 +6703,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.masterKazney.mistwalker": {
     label: "Раз в Раунд за свободное действие может разбиться на облако тумана и собраться обратно, телепортируясь на P.",
-    source: "Mistwalker / Туманоходец", reader: ""
+    source: "Mistwalker / Туманоходец", reader: "РЕАЛИЗОВАНО ЧАСТИЧНО (27.10.2026, Sahara task-bbe1, только Движение): телепорт на P.b м раз в Раунд (стены учитываются, бюджет пути не трогается); выход из Захвата и снятие пут — вручную. module/rules/talent-moves.mjs (таблица: Движение, дистанция, цена, частота) → module/combat/talent-move.mjs::declareTalentMove, ::showTalentMoveDialog — пункт «Движение по Таланту» в меню Движения (module/combat/movement-actions.mjs::movementMenuItems); бюджет пути — module/rules/movement-path.mjs::grantMoveAllowance"
   },
   "trait.elitnyeArhetipy.masterKazney.singleMindedHunter": {
     label: "Ритуалы перманентно изменяют разум. Получает ментальное расстройство «Психопатия» на Тяжести 0, и его Тяжесть не может опуститься ниже 0.",

@@ -20,6 +20,7 @@ import { hasRuleFlag } from "../flags.mjs";
 import { SURE_TREAD, sureTreadMovementCap } from "../squat-traits.mjs";
 import { flightSpeedOf } from "../flight-speed.mjs";
 import { hasSpeedTalent, speedTalentDistances } from "../speed-talents.mjs";
+import { speedMultiplierTraitsOf, speedMultipliersFor } from "../speed-multipliers.mjs";
 import { mechRollData } from "../mech-formula.mjs";
 
 // Высоты «в воздухе» — те же, что combat/movement-actions.mjs::IN_FLIGHT_ALTITUDES
@@ -177,6 +178,22 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   const sureTread = hasRuleFlag(actor, SURE_TREAD);
   if (sureTread) ({ halfMove, move, charge, run } = sureTreadMovementCap({ halfMove, move, charge, run }));
 
+  // Текущий SPD (после Размера, Перевеса, Стойки, Поваленного, потери ног) — ДО множителей Черт ниже.
+  // Разбор SPD и подсказки листа сверяются с ним, а не с Полудвижением, которое множитель может поднять.
+  const spdNow = halfMove;
+  // Множители дальности от Черт (rules/speed-multipliers.mjs): Почитатели Танца, Акробатическое
+  // Мастерство, Разящее Представление задают дистанции Движения СВОИМИ множителями SPD. Лучший
+  // множитель каждой дистанции против таблицы SPD×1/2/3/6; до Спринта и Запредельной Скорости,
+  // чтобы Спринт удвоил уже умноженный Бег (Акробатическое Мастерство: ×28).
+  const multTraits = sureTread ? [] : speedMultiplierTraitsOf(actor);
+  if (multTraits.length) {
+    const mult = speedMultipliersFor(actor);
+    if (mult.half)   halfMove = Math.max(halfMove, spdNow * mult.half);
+    if (mult.move)   move     = Math.max(move,     spdNow * mult.move);
+    if (mult.charge) charge   = Math.max(charge,   spdNow * mult.charge);
+    if (mult.run)    run      = Math.max(run,      spdNow * mult.run);
+  }
+
   // Таланты Скорости (rules/speed-talents.mjs): Запредельная Скорость — Натиск
   // на дистанцию Бега; Спринт — Полное Движение на дистанцию Натиска и Бег на
   // двойную дистанцию (sprintRun; сам run не удваивается — «в отношении других
@@ -190,6 +207,9 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   }
 
   system.movement.halfMove = halfMove;
+  // Не в схеме (производное): текущий SPD без множителей Черт — для подсказок листа (нарративная
+  // скорость, Карабканье), где Полудвижение с множителем дало бы завышенное число.
+  system.movement.spdNow = spdNow;
   system.movement.move     = move;
   system.movement.charge   = charge;
   system.movement.run      = run;
@@ -228,7 +248,10 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
     spdBreakdown.push({ label: uselessLegs ? "Потеря стопы/ноги или нога бесполезна" : "Потеря стопы/ноги", value: null, halvedFloor: true });
     expectedHalfMove = Math.floor(expectedHalfMove / 2);
   }
-  if (expectedHalfMove !== halfMove) spdBreakdown.push({ label: "Минимум SPD", value: null, floor: 0.5 });
+  if (multTraits.length) {
+    spdBreakdown.push({ label: `Множители Черт: ${multTraits.map(t => t.label).join(", ")}`, value: null, info: true, note: "дистанции Движения — SPD × множитель Черты" });
+  }
+  if (expectedHalfMove !== spdNow) spdBreakdown.push({ label: "Минимум SPD", value: null, floor: 0.5 });
   if (sureTread) spdBreakdown.push({ label: "Надёжная Поступь: Бег (пешком ≤3×SPD)", value: null, cap: run });
   system.movement.spdBreakdown = spdBreakdown;
 

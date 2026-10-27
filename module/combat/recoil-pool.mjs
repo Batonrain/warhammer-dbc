@@ -32,12 +32,16 @@
 
 import { isEncounterActive, hasActionEconomy } from "./action-economy.mjs";
 import { recoilItemBonus, recoilItemMultiplier } from "./recoil-item-bonuses.mjs";
+import { spdOfMovement } from "../rules/speed-multipliers.mjs";
 
 const FLAG = "recoilPool";
 
-/** SPD м (SPD×1) — module/combat/movement-actions.mjs использует то же поле. */
+/**
+ * SPD м (SPD×1) — module/combat/movement-actions.mjs использует то же поле. Берётся spdNow (SPD без
+ * множителей Черт): у Почитателей Танца halfMove — уже SPD×2 (rules/speed-multipliers.mjs).
+ */
 export function spdMeters(actor) {
-  return Number(actor?.system?.movement?.halfMove) || 0;
+  return spdOfMovement(actor?.system?.movement);
 }
 
 function tracked(actor) {

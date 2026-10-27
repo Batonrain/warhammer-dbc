@@ -171,7 +171,7 @@ import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
 import { WC_CODE } from "./constants/ship.mjs";
 import { registerDelegatedTestOpener, openDelegatedTest, activeOwnerOf, requestDelegatedTest, openDelegatedTestDirect } from "./rules/delegate-test.mjs";
-import { skillTotal, resolveVaultContestClick, declareLegacyBraveHeartMove, resolveLegacyBraveDisengageContest, postRepositionCard, applySprintTurnEnd } from "./combat/movement-actions.mjs";
+import { skillTotal, resolveVaultContestClick, declareLegacyBraveHeartMove, resolveLegacyBraveDisengageContest, postRepositionCard, applySprintTurnEnd, clearStaleMovedFlags } from "./combat/movement-actions.mjs";
 import { showHealingDialog } from "./sheets/tabs/healing.mjs";
 import { rollInfoguard } from "./apps/infoguard.mjs";
 import { CHARACTERISTICS } from "./constants/characteristics.mjs";
@@ -4627,6 +4627,8 @@ function _attachFateContextMenu(message, html) {
   // Колдовское Лезвие (стр. 74 Книги Аэльдари): выбор бонуса на весь
   // Encounter — спрашиваем ровно раз, в момент старта боя («Begin Combat»).
   Hooks.on("combatStart", async (combat, updateData) => {
+    // Флаги «двигался» от расстановки токенов до боя (Скорость Сокола, Импульсное оружие) — снять первыми.
+    if (game.user.isGM) await clearStaleMovedFlags(combat);
     // Быстрое Плетение (Талант Псайканы, пачка I1): «в начале боя сразу после бросков инициативы
     // получает 2 полудействия» — отдельный пул 2 ОД до первого Хода; сбрасывается началом Хода.
     // Первым в обработчике: ниже есть диалоги, и пул, выданный после них, обогнал бы начало

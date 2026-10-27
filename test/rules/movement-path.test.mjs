@@ -10,7 +10,8 @@ import {
   PATH_LIMIT_MODES, PATH_LIMIT_DEFAULT, PATH_LIMIT_ACTOR_TYPES, PATH_LIMITED_METHODS,
   normalizePathLimitMode, emptyAllowance, readAllowance, addAllowance,
   pathBudget, evaluatePath, moveDegreeFromPath, exceedsNormalRun,
-  fmtMeters, pathLimitMessage, walkedMeters, actionCostMultiplier
+  fmtMeters, pathLimitMessage, walkedMeters, actionCostMultiplier,
+  forcedMoveOptions, isForcedMove, displaceToken, TELEPORT_ACTION, DISPLACE_ACTION
 } from "../../module/rules/movement-path.mjs";
 
 // SPD 3: Полудвижение 3, Полное 6, Натиск 9, Бег 18 (таблица «Движение в бою»).
@@ -246,6 +247,99 @@ describe("walkedMeters: путь по отрезкам ядра", () => {
     expect(walkedMeters([w(0, 0, 0), w(500, 0, 5, { action: "blink" })], { actions })).toBe(0);
     expect(walkedMeters([w(0, 0, 0), w(0, 0, 10, { elevation: 10 })], { actions })).toBe(0);
     expect(walkedMeters([w(0, 0, 0), w(0, 100, 4, { action: "climb" })], { actions })).toBe(2);
+  });
+});
+
+// Принудительные и «особые» сдвиги токена (Sahara task-bbe1, п.3): сдвиг, сделанный не по воле
+// владельца токена, не должен ни блокироваться лимитом, ни съедать чужой бюджет пути.
+describe("принудительный сдвиг: флаг в опциях апдейта и action displace", () => {
+  // Форма CONFIG.Token.movement.actions v14 (client/config.mjs): displace — teleport, cost ×0.
+  const ACTIONS_CORE = {
+    walk: {}, blink: { teleport: true },
+    displace: { teleport: true, measure: false, walls: null, costMultiplier: 0 }
+  };
+  const w = (x, y, cost, extra = {}) => ({ x, y, cost, action: "walk", userId: "p", ...extra });
+
+  it("forcedMoveOptions кладёт whDBC.forcedMove; isForcedMove читает только его", () => {
+    expect(forcedMoveOptions()).toEqual({ whDBC: { forcedMove: true } });
+    expect(isForcedMove(forcedMoveOptions())).toBe(true);
+    expect(isForcedMove({ whDBC: { forcedMove: true, other: 1 } })).toBe(true);
+    // чужие ключи, пустое и мусор — не «принудительно»
+    for (const op of [undefined, null, {}, { forcedMove: true }, { whDBC: {} }, { whDBC: { forcedMove: false } }, { whDBC: "yes" }]) {
+      expect(isForcedMove(op)).toBe(false);
+    }
+  });
+
+  it("forcedMoveOptions не затирает чужие опции whDBC", () => {
+    expect(forcedMoveOptions({ whDBC: { source: "roundhouse" } })).toEqual({ whDBC: { source: "roundhouse", forcedMove: true } });
+  });
+
+  it("evaluatePath: сдвиг помечен принудительным — лимита нет, даже если это «перетаскивание» за лимитом", () => {
+    const over = base({ method: "dragging", used: 3, step: 99 });
+    expect(evaluatePath(over)).toMatchObject({ applies: true, allowed: false });
+    expect(evaluatePath({ ...over, forced: true })).toMatchObject({ applies: false, allowed: true, reason: "forced" });
+  });
+
+  it("отрезок displace от игрока (не ГМ) бюджет не ест, а ходьба рядом — ест", () => {
+    // Ядро пишет displace со стоимостью 0, но защищаемся и от ненулевой: действие — телепорт.
+    const forced = [w(0, 0, 0), w(500, 0, 5, { action: "displace" })];
+    expect(walkedMeters(forced, { actions: ACTIONS_CORE })).toBe(0);
+    expect(walkedMeters(forced, { actions: ACTIONS_CORE, isGMUser: () => false })).toBe(0);
+    const walked = [w(0, 0, 0), w(500, 0, 5)];
+    expect(walkedMeters(walked, { actions: ACTIONS_CORE, isGMUser: () => false })).toBe(5);
+    // смесь: 2 м ногами, сдвиг на 7 м, ещё 1 м ногами — всего 3
+    const mixed = [w(0, 0, 0), w(200, 0, 2), w(900, 0, 7, { action: "displace" }), w(1000, 0, 1)];
+    expect(walkedMeters(mixed, { actions: ACTIONS_CORE })).toBe(3);
+  });
+});
+
+describe("displaceToken: система двигает токен — как именно", () => {
+  function fakeTokenDoc(result = true) {
+    const calls = [];
+    return { calls, move: async (destination, options) => { calls.push({ destination, options }); return result; } };
+  }
+
+  it("принудительный сдвиг: action blink (телепорт ядра, СТЕНЫ учитываются), method api и флаг whDBC.forcedMove", async () => {
+    const tok = fakeTokenDoc();
+    const ok = await displaceToken(tok, { x: 300, y: 400 });
+    expect(ok).toBe(true);
+    expect(tok.calls).toHaveLength(1);
+    expect(tok.calls[0].destination).toEqual({ x: 300, y: 400, action: TELEPORT_ACTION });
+    expect(TELEPORT_ACTION).toBe("blink");
+    expect(tok.calls[0].options).toMatchObject({ method: "api", whDBC: { forcedMove: true } });
+  });
+
+  it("walls:false — action displace: ядро стены не проверяет (walls:null), токен встаёт ровно в точку", async () => {
+    const tok = fakeTokenDoc();
+    await displaceToken(tok, { x: 5, y: 6 }, { walls: false });
+    expect(tok.calls[0].destination).toEqual({ x: 5, y: 6, action: DISPLACE_ACTION });
+    expect(DISPLACE_ACTION).toBe("displace");
+  });
+
+  it("собственный телепорт (forced:false): blink для истории, но без флага принудительного", async () => {
+    const tok = fakeTokenDoc();
+    await displaceToken(tok, { x: 10, y: 20, hidden: false }, { forced: false });
+    expect(tok.calls[0].destination).toEqual({ x: 10, y: 20, hidden: false, action: "blink" });
+    expect(isForcedMove(tok.calls[0].options)).toBe(false);
+    expect(tok.calls[0].options.method).toBe("api");
+  });
+
+  it("action из destination затирается: сдвиг не может «идти пешком» и съесть бюджет", async () => {
+    const tok = fakeTokenDoc();
+    await displaceToken(tok, { x: 1, y: 1, action: "walk" });
+    expect(tok.calls[0].destination.action).toBe("blink");
+  });
+
+  it("лишние опции вызывающего доезжают, не затирая флаг; результат move возвращается как есть", async () => {
+    const tok = fakeTokenDoc(false);
+    const ok = await displaceToken(tok, { x: 1, y: 2 }, { options: { animate: false, whDBC: { source: "x" } } });
+    expect(ok).toBe(false);
+    expect(tok.calls[0].options).toMatchObject({ animate: false, method: "api", whDBC: { source: "x", forcedMove: true } });
+  });
+
+  it("нет токена или у него нет move — false, ничего не падает", async () => {
+    expect(await displaceToken(null, { x: 1, y: 1 })).toBe(false);
+    expect(await displaceToken({}, { x: 1, y: 1 })).toBe(false);
   });
 });
 

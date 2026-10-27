@@ -53,7 +53,7 @@ import { showMovementRing, clearRangeRings } from "./range-rings.mjs";
 import { clearRangeCells } from "./range-cells.mjs";
 import { showReachableCells } from "./reachable-cells.mjs";
 import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
-import { spendRecoil, recoilRemaining } from "./recoil-pool.mjs";
+import { spendRecoil, recoilRemaining, spdMeters } from "./recoil-pool.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
@@ -73,7 +73,8 @@ import { hasDodgeTalent, catfallHeight, catfallLeg, CATFALL_TUCK_BONUS } from ".
 import { hasSpeedTalent, standUpApCost, jumpApCost, repositionAvailable, sprintFatigueDue, breacherReady } from "../rules/speed-talents.mjs";
 import { leapUpDenied, standUpExtraApCost } from "../rules/takedown.mjs";
 import { isHandShield } from "./hand-shield.mjs";
-import { PATH_LIMIT_OFF_FLAG, grantMoveAllowance } from "../rules/movement-path.mjs";
+import { PATH_LIMIT_OFF_FLAG, grantMoveAllowance, isForcedMove } from "../rules/movement-path.mjs";
+import { talentMoveDefsFor } from "../rules/talent-moves.mjs";
 
 // Захват (стр. 12, wdbc-x1nz.2.31): «только действия Борьбы или не-Физические»
 // — Движение Физическое (см. тип действия «Физическое», стр. 12), поэтому
@@ -216,6 +217,26 @@ export async function markMoveDegreeThisTurn(actor, degree) {
 // Движение состоялось, — запрещённое или проваленное ничего не даёт. Гасится
 // в начале следующего Хода владельца (реестр rules/turn-flags.mjs).
 export { grantMoveAllowance };
+
+// Внутренние гейты/кольцо дальности — для combat/talent-move.mjs (Движение по Таланту, task-bbe1).
+export { _blockedByGrapple as blockedByGrapple, _showReachRing as showReachRing, _bothLegsLost as bothLegsLost };
+
+/**
+ * Начало боя: флаги «двигался» (movedThisTurn, moveDegreeThisTurn) остались от расстановки токенов ДО боя
+ * (initMovedFlagTracking метит любое перемещение, и вне боя тоже), а гасит их только начало СВОЕГО Хода.
+ * Без этой чистки Скорость Сокола («не двигался») ложно отказывала бы до первого Хода, а Импульсное оружие
+ * считало бы расстановку движением. Зовёт ГМ из combatStart (hooks.mjs).
+ * @param {Combat} combat
+ */
+export async function clearStaleMovedFlags(combat) {
+  for (const combatant of combat?.combatants ?? []) {
+    const actor = combatant?.actor;
+    if (!actor?.getFlag) continue;
+    for (const key of ["movedThisTurn", "moveDegreeThisTurn"]) {
+      if (actor.getFlag("warhammer-dbc", key) !== undefined) await actor.unsetFlag("warhammer-dbc", key);
+    }
+  }
+}
 
 /** ГМ: снять/вернуть лимит пути конкретному персонажу (особый случай, сломавшаяся история). */
 export async function togglePathLimitOff(actor) {
@@ -724,7 +745,7 @@ export async function declareHalfStep(actor) {
   if (!isThrottleReady(actor, HALF_STEP_FLAG, "round")) {
     return ui.notifications.warn("⚠️ Полушаг уже использован в этом Ходу.");
   }
-  const half = Number(actor.system.movement?.halfMove) || 0;
+  const half = spdMeters(actor); // SPD, не Полудвижение с множителем Черты
   const maxMeters = Math.min(half / 2, recoilRemaining(actor));
   if (maxMeters <= 0) {
     return ui.notifications.warn("⚠️ Нет остатка дистанции Отскока в этом Раунде — Полушагом двигаться нечем.");
@@ -1057,7 +1078,13 @@ async function _rollVaultContest(actor) {
  */
 export function vaultHalfMove(actor) {
   const halfMove = actor.system.movement?.halfMove;
-  return actor.system?.meleeStance === "springing" ? (Number(halfMove) || 0) + 4 : halfMove;
+  // Поправка +4 привязана к SPD (−2 Стойки уже в нём): множитель Черты Полудвижения её бы сломал.
+  return actor.system?.meleeStance === "springing" ? spdMeters(actor) + 4 : halfMove;
+}
+
+/** Перебежка: SPD×2 от самого SPD, а не от Полного Движения (у Черт-множителей оно SPD×3 и больше). */
+export function duckAndCoverMeters(actor) {
+  return spdMeters(actor) * 2;
 }
 
 export async function declareVault(actor) {
@@ -1158,9 +1185,9 @@ export async function declareDuckAndCover(actor) {
   if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Перебежка")) return; // wdbc-x1nz.2.97 п.4
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
-  await grantMoveAllowance(actor, "duck", actor.system.movement?.move);
+  await grantMoveAllowance(actor, "duck", duckAndCoverMeters(actor));
   await actor.setFlag("warhammer-dbc", "duckAndCoverActive", true);
-  _showReachRing(actor, actor.system.movement?.move);
+  _showReachRing(actor, duckAndCoverMeters(actor));
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#9fe8b0")}${esc(actor.name)} — Перебежка</div>
     <div class="roll-threshold">Полное действие (2 ОД). Перемещение до SPD×2, старт/финиш в укрытии.</div>
@@ -1177,7 +1204,7 @@ export function showClimbDialog(actor) {
   if (!actor) return;
   const ath  = skillTotal(actor, "athletics");
   const acro = skillTotal(actor, "acrobatics");
-  const spd  = Number(actor.system.movement?.halfMove) || 0;
+  const spd  = spdMeters(actor); // SPD, не Полудвижение с множителем Черты
 
   // Бонусы источников со scopeTarget «climbing» (wdbc-egll) — испольщик
   // жмёт "Тест!", а не отдельная галочка: тот же неопросный приём, что и у
@@ -1978,6 +2005,12 @@ export function movementMenuItems(actor) {
     if (actorCanBreach(actor)) {
       items.push({ key: "breach", label: "Прорыв", cost: "Талант, 0 ОД", action: () => declareBreach(actor) });
     }
+    // Таланты/Черты с Движением без своей механики (rules/talent-moves.mjs): общий пункт, цену и дистанцию
+    // берёт из таблицы; talent-move.mjs грузится лениво — он сам импортирует этот файл.
+    if (talentMoveDefsFor(actor).length) {
+      items.push({ key: "talentMove", label: "Движение по Таланту", cost: "Талант",
+        action: async () => (await import("./talent-move.mjs")).showTalentMoveDialog(actor) });
+    }
     // Лечь/Встать (стр. 30, wdbc-x1nz.2.36) — взаимоисключающие по текущему
     // Состоянию «Повален»: лежачему нет смысла предлагать «Лечь», стоящему —
     // «Встать» (тот же приём, что actorHasHalfStep выше — пункт меню виден,
@@ -2096,6 +2129,7 @@ export function initMovedFlagTracking() {
     // free-attack.mjs).
     if (userId !== game.user.id) return;
     if (!_movesPosition(changes)) return;
+    if (isForcedMove(options)) return; // толкнули/перевезли — сам токен не двигался (task-bbe1)
     const actor = tokenDoc.actor;
     if (!actor || MOVEMENT_MENU_EXCLUDED_TYPES.includes(actor.type)) return;
     await markMovedThisTurn(actor);

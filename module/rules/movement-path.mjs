@@ -48,11 +48,72 @@ export const PATH_LIMIT_ACTOR_TYPES = Object.freeze(["character", "daemon", "dem
 /**
  * Какие способы перемещения — «по воле игрока». Foundry сам подписывает
  * перемещение (movement.method): dragging — перетащил мышью, keyboard —
- * клавиши; всё прочее (api — скрипты и ВСЕ принудительные сдвиги системы:
- * Роундхаус, Гравист, толчки, перевозки; hud, undo, paste, config) лимитом
- * не стопорится — токен не по своей воле двигаться обязан.
+ * клавиши; всё прочее (api — скрипты и сдвиги, которые делает сама система
+ * через displaceToken; hud, undo, paste, config) лимитом не стопорится.
+ * ВАЖНО: толчок Роундхауса, перевозка и т.п. руками стола — это обычное
+ * перетаскивание (method «dragging»), система его не отличит; ГМ не
+ * блокируется и бюджета не ест (walkedMeters с isGMUser), а игроку на такой
+ * сдвиг нужно выбрать в HUD действие «Телепорт» (blink) либо ГМ снимает лимит.
  */
 export const PATH_LIMITED_METHODS = Object.freeze(["dragging", "keyboard"]);
+
+// ── Принудительные и «особые» сдвиги токена (Sahara task-bbe1, п.3) ─────────
+//
+// История ядра (TokenDocument#movementHistory) хранит у отрезка только action,
+// userId, movementId, cost — НЕ способ (method) и не опции апдейта: по записи
+// «игрок с userId двинул токен» принудительный сдвиг от шага ногами не отличить.
+// Поэтому система, двигая токен сама, делает две вещи:
+//  1. action = «blink» (телепорт ядра, СТЕНЫ учитываются: токен встанет у стены) или,
+//     если стены не нужны, «displace» (walls:null, cost 0) — walkedMeters оба
+//     пропускает как телепорт; action переживает перезагрузку и виден любому
+//     клиенту, в отличие от опции;
+//  2. флаг в опциях апдейта `{ whDBC: { forcedMove: true } }` — его видит хук
+//     preMoveToken (3-й аргумент) и moveToken (operation) на клиенте инициатора:
+//     лимит пути такой сдвиг не блокирует и не метит «подвигался».
+// Двигать токен системе — только через displaceToken.
+
+/** Ключ опций апдейта, под которым система кладёт свои пометки о перемещении. */
+export const MOVE_OPTION_KEY = "whDBC";
+
+/** Телепорт ядра со стенами: токен упирается в стену (client/config.mjs: walls по умолчанию "move"). */
+export const TELEPORT_ACTION = "blink";
+/** Телепорт ядра БЕЗ стен (walls:null, cost ×0) — сквозь стены, токен встаёт ровно в точку. */
+export const DISPLACE_ACTION = "displace";
+
+/** Опции апдейта «это принудительный сдвиг» (с сохранением чужих полей whDBC). */
+export function forcedMoveOptions(options = {}) {
+  const prev = options?.[MOVE_OPTION_KEY];
+  return { ...options, [MOVE_OPTION_KEY]: { ...(prev && typeof prev === "object" ? prev : {}), forcedMove: true } };
+}
+
+/** Помечен ли сдвиг принудительным (опции апдейта / operation из хуков moveToken). */
+export function isForcedMove(options) {
+  return options?.[MOVE_OPTION_KEY]?.forcedMove === true;
+}
+
+/**
+ * Сдвинуть токен системой: игрок это не «шагал», и бюджет пути он не ест.
+ * Тот же TokenDocument#move, что вызывает ядро для API-перемещений, но с
+ * action «blink» (в истории — телепорт; стены ядро проверяет) либо «displace»
+ * (walls:false — сквозь стены) и, при `forced`, с флагом
+ * принудительного сдвига в опциях. Двигать токен прямым `update({x, y})`
+ * нельзя: ядро запишет его обычной ходьбой со стоимостью, и позже эти метры
+ * съедят бюджет владельца токена.
+ * @param {TokenDocument} tokenDoc
+ * @param {object} destination  { x, y, … } — можно с обычными полями токена (hidden…)
+ * @param {object} [o]
+ * @param {boolean} [o.forced=true]  сдвиг не по воле владельца (толчок, перевозка);
+ *   false — токен переносит сам владелец своей способностью (Тень): не «принудительно»
+ * @param {boolean} [o.walls=true]   учитывать стены: токен остановится у стены (false — сквозь)
+ * @param {object} [o.options]       доп. опции апдейта (animate…)
+ * @returns {Promise<boolean>}  true — токен дошёл до точки; false — ядро/хук отклонили или токен
+ *   остановлен стеной на полпути (положение сверяйте по tokenDoc.x/y), нет токена
+ */
+export async function displaceToken(tokenDoc, destination, { forced = true, walls = true, options = {} } = {}) {
+  if (!tokenDoc || typeof tokenDoc.move !== "function") return false;
+  const opts = forced ? forcedMoveOptions(options) : { ...options };
+  return !!(await tokenDoc.move({ ...destination, action: walls ? TELEPORT_ACTION : DISPLACE_ACTION }, { method: "api", ...opts }));
+}
 
 /** Допуск на дробный шум сетки (диагонали 1,5 м), метры. */
 export const PATH_EPS = 0.01;
@@ -233,6 +294,7 @@ export function pathBudget({ allowance = null, movement = null, mode = PATH_LIMI
  * @param {string}  i.mode      off | soft | strict
  * @param {boolean} i.gm        инициатор — ГМ (его не блокируем)
  * @param {boolean} i.actorOff  у актора флаг «без лимита»
+ * @param {boolean} i.forced    сдвиг помечен принудительным (isForcedMove по опциям апдейта)
  * @param {string}  i.method    movement.method из preMoveToken
  * @param {boolean} i.teleport  все пройденные отрезки — телепорт
  * @param {boolean} i.recorded  движение пишется в историю (токен в начатом бою)
@@ -251,6 +313,7 @@ export function evaluatePath(i = {}) {
   const skip = reason => ({ applies: false, allowed: true, gmBypass: false, reason });
   if (i.mode === "off") return skip("off");
   if (i.actorOff) return skip("actorOff");
+  if (i.forced) return skip("forced");
   if (!PATH_LIMITED_METHODS.includes(i.method)) return skip("method");
   if (i.teleport) return skip("teleport");
   if (!i.recorded) return skip("notRecorded");
