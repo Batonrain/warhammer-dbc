@@ -710,7 +710,7 @@ const TYPES = {
     defaults: {
       description: "", notes: "", source: "", bookSource: "",
       ritualType: "summon", failureType: "", record: 0, assistMin: 0, assistMax: 0,
-      aversionPerFail: 5,
+      veilMin: 0, aversionPerFail: 5,
       noTest: false, asMinion: false, asWeapon: false, asMount: false, veilThinner: false, startDestabilize: false,
       demonName: "", demonInf: 0, demonGod: "",
       procedure: "", result: "", cost: "", failureCost: "",

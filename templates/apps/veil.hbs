@@ -175,6 +175,9 @@
             {{#each reqFailed}}<div>{{this}}</div>{{/each}}
           </div>
           {{/unless}}
+          {{#if veilWarn}}
+          <div class="wv-rit-unmet"><b>{{veilWarn}}</b></div>
+          {{/if}}
           <div class="wv-rit-row">
             <label class="wv-rit-lbl">Название</label>
             <input type="text" name="ritName" class="wv-rit-wide" value="{{name}}" placeholder="напр. Призыв Низшего Демона"/>
@@ -324,7 +327,7 @@
       <div class="wv-nav-roll">
         <div class="wv-nav-stat">
           <span>Навигация: <b>{{#if navSkillTotal}}{{navSkillTotal}}{{else}}—{{/if}}</b></span>
-          <span class="wv-nav-turb">Турбулентность завесы: <b>{{#if (gt navMod 0)}}+{{/if}}{{navMod}}</b> ({{levelLabel}})</span>
+          <span class="wv-nav-turb">Турбулентность завесы: <b>{{#if (gt navMod 0)}}+{{/if}}{{navMod}}</b> ({{navLevelLabel}}{{#if navAura}}, аура Раны в Реальности +{{navAura}}{{/if}})</span>
         </div>
         <button type="button" class="wv-nav-btn" data-act="navRoll">{{{veilIcon "compass"}}}Проложить курс сквозь Варп</button>
       </div>

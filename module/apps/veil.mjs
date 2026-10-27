@@ -22,7 +22,7 @@
 //  рукописный список стал чистым дублированием.
 // ════════════════════════════════════════════════════════════════════════
 
-import { VEIL_FACTORS, VEIL_EVENTS, WARP_GODS, warpGod, defaultVeil, veilTotal, veilLevelInfo, veilNavMod }
+import { VEIL_FACTORS, VEIL_EVENTS, WARP_GODS, warpGod, defaultVeil, veilTotal, veilLevelInfo }
   from "../constants/veil.mjs";
 import { RITUAL_TYPES, TEST_CHARS, RITUAL_SUMMON_MODS, CURSE_FAMILIARITY, CURSE_SYMPATHY,
          NUMEROLOGY, SUMMON_FORMS, buildRitualSkills, applyRitualItem } from "../constants/rituals.mjs";
@@ -51,6 +51,7 @@ import { refreshVeilOverlay } from "./veil-overlay.mjs";
 import { resolveVeilContainer, currentScene, veilShift,
          readVeilForScene as readVeil, writeVeilForScene as writeVeil } from "../constants/scene-nexus.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { navigationVeil, ritualVeilGate, ritualVeilMessage } from "../rules/veil-steps.mjs";
 import { addFatigue } from "../sheets/tabs/conditions.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { fatigueFaintThreshold } from "../rules/resilience-talents.mjs";
@@ -208,6 +209,8 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const d = ritualThreshold(R, actor, ritualItem);
     const sgn = n => (n >= 0 ? "+" : "") + n;
+    // Книжное «только при Истончении Завесы +N» (Sahara task-df48): castRitual проверит то же самое.
+    const veilGate = ritualVeilGate(ritualItem, actor);
 
     return {
       actors, hasActor: !!actor, ritualistName: actor?.name || "",
@@ -226,6 +229,7 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
       ritualItems: ritualItems.map(i => ({ id: i.id, name: i.name, selected: i.id === R.itemId })),
       hasRitualItems: ritualItems.length > 0,
       reqOk: d.reqOk, reqFailed: d.reqFailed,
+      veilWarn: veilGate.ok ? "" : ritualVeilMessage(veilGate),
       rows: d.rows, threshold: d.threshold, thresholdSigned: sgn(d.threshold),
       aversionPerFail: R.aversionPerFail
     };
@@ -365,6 +369,8 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const navActor = navs.find(a => a.id === navId) || null;
     const journeyData = this._journeyData(); // сначала — чтобы навык навигации выбрался
     const navSkillTot = this._jSkillTotal(navActor, this.journey.navSkill);
+    // Турбулентность по Завесе ИМЕННО навигатора: сцена + аура Раны в Реальности, накрывающая его.
+    const navVeil = navigationVeil(navActor, { scene });
     const navPowers = navActor
       ? navActor.items.filter(i => i.type === "navigatorPower").map(i => ({
           id: i.id, name: i.name,
@@ -409,7 +415,9 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
       navName: navActor?.name || "",
       navHouse: navActor?.system?.navigatorHouse || "",
       navSkillTotal: navSkillTot,
-      navMod: veilNavMod(total),
+      navMod: navVeil.mod,
+      navLevelLabel: veilLevelInfo(navVeil.total).label,
+      navAura: navVeil.aura,
       navPowers,
       navPowerCount: navPowers.length
     };
@@ -1090,8 +1098,8 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const actor = navs.find(a => a.id === (this.uiState.navId || navs[0]?.id));
     if (!actor) { ui.notifications?.warn("Навигация: выберите навигатора."); return; }
     const base = this._jSkillTotal(actor, this.journey.navSkill) ?? -20;
-    const total = veilTotal(readVeil(currentScene()));
-    const mod = veilNavMod(total);
+    // Завеса навигатора: сцена + аура Раны в Реальности, накрывающая его (Sahara task-df48).
+    const { total, aura, mod } = navigationVeil(actor);
     // Общий сбор модификаторов (wdbc-ct65.3): тест Навигации шёл мимо реестра
     // правил. Навигация — групповой навык, ключ едет в ctx.group (обычный
     // ctx.skill его не поймает, см. rules/resolve-test.mjs::effectAppliesTo).
@@ -1110,7 +1118,7 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
       title: `Навигация в Варпе — ${esc(actor.name)}`,
       threshold: rollStatLine({
         label: "Навигация", base,
-        parts: [`завеса ${info.label} ${mod >= 0 ? "+" : ""}${mod}`, ...ruleMods.parts],
+        parts: [`завеса ${info.label}${aura ? `, аура +${aura}` : ""} ${mod >= 0 ? "+" : ""}${mod}`, ...ruleMods.parts],
         threshold: eff, rv
       }),
       outcome: outcomeHtml(success, success

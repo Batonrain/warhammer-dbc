@@ -1468,9 +1468,15 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   `rules/veil-steps.mjs` (`sceneVeilSteps` — Завеса сцены/группы сцен, `veilStepsFor(actor)` — плюс
   аура Раны в Реальности, `woundAuraVeil`); читают лист Демон-Принца (`dpVeilSteps`, длительность
   Манифестации) и Призыв демона (`apps/demon-summon.mjs` — срок дестабилизации Рыцаря Бога по Завесе
-  там, где стоит призывающий). Ступени Завесы в расчёты больше входят только в тесте Навигации
-  (`apps/veil.mjs::_rollNavigation`, `veilNavMod`) — он берёт Завесу сцены БЕЗ ауры, это сознательно не тронуто;
-  `apps/ritual-cast.mjs` (Феномен провала ритуала бросает 1d100 + провалы) и таблица Феноменов Завесу не читают вовсе.
+  там, где стоит призывающий). Позже (Sahara task-df48, 27.10.2026, решение владельца) к тому же помощнику
+  подключены ещё двое: тест Навигации (`apps/veil.mjs::_rollNavigation` и подпись модификатора на вкладке
+  «Навигация» — `veilNavMod` по Завесе навигатора с его аурой, `rules/veil-steps.mjs::navigationVeil`) и
+  книжное «ритуал проводится только при Истончении Завесы +N или выше» (`rules/veil-steps.mjs::ritualVeilGate`,
+  число N — поле `system.veilMin` предмета-ритуала: «Призыв Демонического Владыки» +3, «Ритуал Тумана
+  Безумия» 1; гейт стоит первым в `apps/ritual-cast.mjs::castRitual`, до требований и броска — ГМу вопрос
+  «Завеса слишком плотна (N)… Продолжить?», игроку отказ без траты; предупреждение видно заранее в окне
+  «Провести ритуал» и во вкладке «Ритуалы» окна Завесы). Феномен провала ритуала (1d100 + провалы) и таблица
+  Феноменов Завесу по-прежнему не читают — книга влияния Завесы на них не даёт.
   (2) **«Агрессия 2» Психического Вампира** — выдаётся само СРАЗУ при возникновении зависимости и держится до её срыва (I5, решение
   владельца 27.10.2026; новая доза его не снимает): поле
   `penaltyDisorder: {name, severity}` в настройках Зависимости (`rules/psychic-vampire.mjs::VAMPIRE_ADDICTION`),
@@ -1569,7 +1575,8 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   `data/actor/_creature.mjs`). Подключено в шаги окна «Навигация»
   (`apps/veil.mjs`) — см. также §19 (привязка к Звёздной системе).
 - Ритуалы: `data/item/ritual.mjs`, `apps/ritual-cast.mjs`,
-  `sheets/tabs/rituals.mjs`, `sheets/ritual-cast-dialog.mjs`.
+  `sheets/tabs/rituals.mjs`, `sheets/ritual-cast-dialog.mjs`. Минимальная Завеса ритуала —
+  `system.veilMin` + `rules/veil-steps.mjs::ritualVeilGate` (см. «Доделки пачки I4» выше).
 - Рунические Вязи: `data/item/runic-weave.mjs`, `constants/runic-weaves.mjs`,
   `rules/runic-weave.mjs`, `regions/runic-weave-zone.mjs`.
 - Таро Императора: `constants/{tarot,tarot-images}.mjs`.

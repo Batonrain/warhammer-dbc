@@ -25,6 +25,7 @@ import { WARP_GODS, WARP_GODS_MAP } from "../constants/veil.mjs";
 import { godRelationCat } from "../constants/patronage.mjs";
 import { MARK_LABELS } from "../constants/talent-requirements.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { ritualVeilGate, ritualVeilMessage } from "../rules/veil-steps.mjs";
 import { veilShift } from "../constants/scene-nexus.mjs";
 import { checkRequirements, getItemRequirements } from "./mechanics.mjs";
 import { veilIcon } from "../constants/veil-icons.mjs";
@@ -218,6 +219,18 @@ export async function confirmUnmetRequirements(actor, failed) {
 }
 
 /**
+ * Завеса слишком плотна для ритуала — спросить ГМа, продолжать ли (дефолтный confirmVeil).
+ * DialogV2: старый Dialog в v14 устарел (так же сделано в остальных новых окнах системы).
+ */
+export async function confirmVeilTooThick(gate, ritualName) {
+  return foundry.applications.api.DialogV2.confirm({
+    window: { title: "Завеса слишком плотна" },
+    content: `<p>${esc(ritualVeilMessage(gate, ritualName))}</p><p>Продолжить?</p>`,
+    rejectClose: false
+  });
+}
+
+/**
  * Состояния (CONDITIONS_DEF), которые предмет-Ритуал накладывает при
  * успехе (item.system.conditionsGranted) — пилюлями с draggable=true.
  * Ритуал редко имеет фиксированную цель на листе (демон/жертва/третье лицо
@@ -286,15 +299,30 @@ async function ritualFailure(R, failures, prMax, allRolls, veilShiftFn) {
  * Провести ритуал: гейт требований → бросок 1d100 → резолюция провала →
  * карточка в чат. `item` нужен для гейта требований (checkRequirements);
  * без него (совместимость со старым «руками, без предмета») гейт молчит.
+ *
+ * Гейт Завесы идёт ПЕРВЫМ, до требований и до любой траты (Sahara task-df48): если книга ставит
+ * ритуалу минимальное Истончение (item.system.veilMin — «Призыв Демонического Владыки» +3), а
+ * Завеса там, где стоит ритуалист (сцена + аура Раны в Реальности), тоньше не стала — ГМу
+ * показывается вопрос «Продолжить?» (confirmVeil), игроку — отказ без вопроса: Завесу двигает
+ * ГМ, он же может провести ритуал вопреки. Феномен провала Завесу не читает — как и раньше.
  * @returns {Promise<{success:boolean, deg:number, threshold:number, roll:number}|null>}
- *   null — отменено подтверждением требований.
+ *   null — отменено отказом Завесы или подтверждением требований.
  */
 export async function castRitual(R, actor, {
   item = null, confirmUnmet = confirmUnmetRequirements, veilShiftFn = defaultVeilShiftFn,
   spawnDemonFn = defaultSpawnDemonFn, bindWeaponFn = defaultBindArmigerWeaponFn,
-  bindMountFn = defaultBindDemonMountFn, isOwnArmigerFn = isOwnArmiger
+  bindMountFn = defaultBindDemonMountFn, isOwnArmigerFn = isOwnArmiger,
+  veilGateFn = ritualVeilGate, confirmVeil = confirmVeilTooThick
 } = {}) {
   if (!actor) { ui.notifications?.warn("Ритуал: не выбран Ритуалист."); return null; }
+  const veilGate = veilGateFn(item, actor);
+  if (!veilGate.ok) {
+    if (!game.user?.isGM) {
+      ui.notifications?.warn(`${ritualVeilMessage(veilGate, item?.name)} Попросите Мастера изменить Завесу или провести ритуал за вас.`);
+      return null;
+    }
+    if (!await confirmVeil(veilGate, item?.name)) return null;
+  }
   const d = ritualThreshold(R, actor, item);
   if (!d.reqOk) {
     const proceed = await confirmUnmet(actor, d.reqFailed);
