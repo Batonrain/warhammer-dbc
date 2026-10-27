@@ -26,7 +26,8 @@
 //    −20 BS/I/F        источник правил «rage» (rageRules, sources.mjs) — штраф
 //                      к ТЕСТАМ, а не к значению: Бонус BS/I/F не падает.
 //                      Атака стрельбой собирает порог сама, строка — в
-//                      sheets/attack/mods.mjs.
+//                      sheets/attack/mods.mjs. Штраф BS снимает возможность
+//                      RAGE_NO_BS_PENALTY (Модуль Агрессии Скитария Best.Q).
 //    Усталость −10     rules/situational.mjs::fatiguePenalty.
 //    не Оглушается     rules/condition-guards.mjs::isImmuneToCondition.
 //    Мораль            rules/morale-test.mjs и combat/fear.mjs.
@@ -53,6 +54,18 @@ export const RAGE_CHAR_BONUS = Object.freeze({ ws: 10, s: 10, wp: 10 });
 
 /** Штраф к ТЕСТАМ BS, I и F в Ярости (книга: «штраф −20 на все тесты BS, I и F»). */
 export const RAGE_TEST_PENALTY = -20;
+
+/**
+ * Возможность «в Ярости нет штрафа −20 к BS» (Модуль Агрессии Best.Q: «убирает
+ * штраф к BS в Ярости»). Читателей два, оба здесь не спрашивают hasRuleFlag
+ * (файл — источник правил, круг импортов): тесты на BS — вытеснением правила
+ * RAGE_BS_RULE_ID (rules/item-rules.mjs::CAPABILITY_OVERRIDES), строка окна
+ * стрельбы — sheets/attack/mods.mjs.
+ */
+export const RAGE_NO_BS_PENALTY = "rage.noBsPenalty";
+
+/** Id правила штрафа BS из rageRules — то, что вытесняет RAGE_NO_BS_PENALTY. */
+export const RAGE_BS_RULE_ID = "rage.penalty.bs";
 
 /** Характеристики штрафа (ключи актора) и их подписи в книге. */
 const RAGE_PENALTY_CHARS = Object.freeze({ bs: "BS", int: "I", fel: "F" });

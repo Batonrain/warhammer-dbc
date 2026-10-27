@@ -11,6 +11,7 @@ import { toggleParentId, isToggleOn } from "../rules/toggle-abilities.mjs";
 import { visionAidBlocked } from "../rules/vision-aids.mjs";
 import { diseaseEffectsSuppressed } from "../rules/disease-immunity.mjs";
 import { activeRunicWeaveId, siblingRunicWeaves } from "../rules/runic-weave.mjs";
+import { isImplantActive } from "../rules/item-gates.mjs";
 
 /**
  * Активен ли предмет прямо сейчас (по его собственным полям состояния) —
@@ -116,10 +117,9 @@ function isItemActiveBase(item) {
     }
     case "navigatorPower": return !!sys.isSustained;
     case "implant":
-      // nullSuppressed — электроника в поле Дискорданта (rules/null-zones.mjs,
-      // apps/mechanics.mjs::syncNullZoneSuppression).
-      return !!item.getFlag("warhammer-dbc", "installed") && !item.getFlag("warhammer-dbc", "disabled")
-        && !item.getFlag("warhammer-dbc", "nullSuppressed");
+      // Правило одно, в rules/item-gates.mjs: его же спрашивает прямой скан
+      // Возможностей в rules/predicates.mjs (hasColdFury от Модуля Агрессии).
+      return isImplantActive(item);
     case "runicWeave": {
       // "region" (помещение/стены) — не читается отсюда вовсе: живой пересчёт
       // там клонирует предмет-источник тем, чей токен стоит в Region (см.

@@ -144,6 +144,7 @@
 import { PREDICATES, CTX_DEPENDENT_PREDICATES } from "./predicates.mjs";
 import { itemsNamed } from "./req-atom.mjs";
 import { currentSkillName } from "../constants/skills.mjs";
+import { entryQualityOk } from "./item-gates.mjs";
 
 /** Заполненные ключи Бога-покровителя из entry.when.patronGod. */
 export function whenPatronGod(when) {
@@ -336,13 +337,9 @@ export function entryWhenOk(actor, entry, item = null) {
     sealedOk = entry.when.negateSealedArmour ? !sealed : sealed;
   }
 
-  let qualOk = true;
-  if (quals.length && item) {
-    // Пустое/непроставленное качество — «Обычное», как в схемах предметов.
-    const q = item.system?.quality || "common";
-    const matches = quals.includes(q);
-    qualOk = entry.when.negateQuality ? !matches : matches;
-  }
+  // Гейт Качества живёт в rules/item-gates.mjs — его же спрашивает прямой скан
+  // Возможностей в rules/predicates.mjs (там мы импортировать отсюда не можем).
+  const qualOk = entryQualityOk(entry, item);
 
   let predOk = true;
   if (preds.length && actor) predOk = preds.every(([key, value]) => predicateOk(key, actor, value));

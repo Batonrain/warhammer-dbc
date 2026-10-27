@@ -76,6 +76,7 @@
 
 import { isKnownCapability } from "../constants/capabilities.mjs";
 import { entryWhenOk } from "./mech-when.mjs";
+import { RAGE_NO_BS_PENALTY, RAGE_BS_RULE_ID } from "./rage.mjs";
 import { conditionRulesFor, ALT_SENSES_CAPABILITIES } from "./library/conditions.mjs";
 // Лист-модуль (только константы календаря): круга импортов не замыкает (wdbc-795h).
 import { addictionRecords, readWithdrawalEntries } from "./drug-withdrawal.mjs";
@@ -88,8 +89,13 @@ import { addictionRecords, readWithdrawalEntries } from "./drug-withdrawal.mjs";
  * `when` Возможность не спросить (рекурсия отбора), поэтому вытесняет
  * носитель самой Возможности.
  */
-const CAPABILITY_OVERRIDES = Object.fromEntries(
-  ALT_SENSES_CAPABILITIES.map(key => [key, ["conditions.blinded", "conditions.blinded.blindFighting"]]));
+const CAPABILITY_OVERRIDES = {
+  ...Object.fromEntries(
+    ALT_SENSES_CAPABILITIES.map(key => [key, ["conditions.blinded", "conditions.blinded.blindFighting"]])),
+  // Модуль Агрессии Best.Q: «убирает штраф к BS в Ярости» — гасит только
+  // BS-строку Ярости; штрафы к I и F (последний снимает Cold Fury) остаются.
+  [RAGE_NO_BS_PENALTY]: [RAGE_BS_RULE_ID]
+};
 
 const SYSTEM = "warhammer-dbc";
 

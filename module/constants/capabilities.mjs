@@ -2507,7 +2507,7 @@ export const CAPABILITIES = {
   },
   "berserker.core.coldFury": {
     label: "Персонаж может свободно говорить и совершать ментальные действия в Ярости и не получает штрафа к F от Ярости;",
-    source: "Cold Fury / Холодная Ярость", reader: "module/rules/rage.mjs::rageRules — в Ярости нет штрафа −20 к F, псайкеру −10 на психотесты; rules/predicates.mjs::isMentalActionBlocked — Ярость не блокирует Ментальные действия и манифестацию; читается по ИМЕНИ Таланта (hasColdFury). НЕ смоделировано: переброс попытки выйти из Ярости и сопротивления нападению на союзника (самого выхода из Ярости в системе нет — тумблер), свободная речь"
+    source: "Cold Fury / Холодная Ярость; Aggression Module / Модуль Агрессии, Good.Q и Best.Q", reader: "module/rules/rage.mjs::rageRules — в Ярости нет штрафа −20 к F, псайкеру −10 на психотесты; rules/predicates.mjs::isMentalActionBlocked — Ярость не блокирует Ментальные действия и манифестацию; читается по ИМЕНИ Таланта ИЛИ по записи Конструктора (hasColdFury; запись Модуля Агрессии Good/Best считается только у установленного импланта нужного Качества — rules/item-gates.mjs). НЕ смоделировано: переброс попытки выйти из Ярости и сопротивления нападению на союзника (самого выхода из Ярости в системе нет — тумблер), свободная речь"
   },
   "berserker.core.fireInBlood": {
     label: "Персонаж может войти в Ярость за полудействие.",
@@ -8224,8 +8224,14 @@ export const CAPABILITIES = {
   },
   "ability.frenzy": {
     label: "Ярость: вход в Ярость и выход по тесту W",
-    source: "Frenzy / Ярость (packs-src/talents/Берсерк)",
+    source: "Frenzy / Ярость (packs-src/talents/Берсерк); Aggression Module / Модуль Агрессии (имплант Скитариев, любое Качество)",
     reader: "module/combat/frenzy.mjs hasFrenzyTalent()"
+  },
+  // ── Ярость: снятие штрафа −20 к BS (Модуль Агрессии Best.Q, focused-wrath-20-bs п.3) ──
+  "rage.noBsPenalty": {
+    label: "В Ярости нет штрафа −20 к тестам BS (стрельба и прочие тесты на BS); штрафы к I и F Ярости остаются, F снимает Cold Fury",
+    source: "Aggression Module / Модуль Агрессии, Best.Q: «убирает штраф к BS в Ярости» (корбук, Бионика и Кибернетика, стр. 263-275)",
+    reader: "module/rules/rage.mjs RAGE_NO_BS_PENALTY — вытесняет правило rage.penalty.bs (module/rules/item-rules.mjs CAPABILITY_OVERRIDES: тесты на BS через конвейер правил); module/sheets/attack/mods.mjs — строка «Ярость: −20 BS» окна стрельбы"
   },
   "ability.fullyArmed": {
     label: "Во Всеоружии: своя механика владения оружием",

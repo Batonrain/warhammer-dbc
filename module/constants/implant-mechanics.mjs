@@ -134,7 +134,7 @@ export const IMPLANT_MECH = [
     note: "Органы/мозг → машинные аналоги. Unnatural S (+2), Unnatural T (+2), Machine (+2)." },
   { re: /iron fist|железн\w* кулак/i, traits: ["Multiple Arms (+1)"], note: "Освобождает ресурс на ещё одну конечность. В комплекте — бионич. рука с универс. портом." },
   { re: /pteraxii talons|когти птераксии/i, note: "Стопы → когти. Атака ногами: Когти.Р 1d10+2 R, Pen 4, Reinforced; хват ногами; −2 SPD пешком." },
-  { re: /aggression module|модуль агрессии/i, traits: ["Frenzy"], note: "Избегания в Ярости без ограничений, авто-выход из Ярости. Good: + Cold Fury, Fire in Blood. Best: без штрафа BS в Ярости." },
+  { re: /aggression module|модуль агрессии/i, traits: ["Frenzy"], note: "Избегания в Ярости без ограничений, авто-выход из Ярости. Good: + Cold Fury, Fire in Blood. Best: без штрафа BS в Ярости. Frenzy, Cold Fury (Good+) и снятие штрафа BS (Best) считает сама запись Конструктора на импланте (packs-src, rules/rage.mjs); эта строка — только текст на листе." },
   { re: /target focus module|модуль прицельн\w* фокус/i, un: { bs: 2 }, note: "Unnatural BS (+2), 1×Ход переброс BS. −30 на пассивные Awareness." },
   { re: /protector servomatrix|сервоматрица протектор/i, traits: ["Fanatic"], note: "+10 Ран (Good 13/Best 16), Fanatic (обязан при атаке на командира), +1 Реакция на Fanatic." },
   { re: /marshal crown|корона маршала/i, traits: ["Binary Dominion"], note: "Как Импланты Механикум для Binary Dominion; +1 полудействие/Ход на Командование, но −20 на атаки при использовании." },
