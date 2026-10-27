@@ -20,6 +20,14 @@
 //  выдаётся — узел ставят на корабль сами; «+10» Дела Фактотума цепляется
 //  автоматически (rules/requisition-talents.mjs).
 //
+//  Место (27.10.2026, Sahara 10-4eac): в режиме «Узел корабля» окно показывает
+//  выпадающий список «Место» — «Таблица Модификаторов реквизиции» Книги Пустоты
+//  (constants/requisition-places.mjs, расчёт — rules/requisition-places.mjs):
+//  сдвиг Редкости узла на шаг, −10 к тесту на станциях, недоступность (Дикий/
+//  феодальный, нет Peer, Ксенотех на Улье) — отказом с причиной, кнопка «К тесту
+//  Inf» гаснет. Что система узнать не может (сюзерен, Peer контролирующей
+//  фракции, решение МИ), — галочки под списком; прочее — «Поправка ГМа».
+//
 //  Книга о сроках Реквизиции молчит («тест на Inf+0») — времени и ограничения
 //  числа попыток здесь нет, их ведёт стол. Срок установки узла (Книга Пустоты:
 //  от 2 недель, +1 неделя за каждое SP) тоже не ведётся — решение владельца
@@ -36,6 +44,8 @@ import {
   REQUISITION_PACKS, NODE_PACKS, NODE_TYPES, nodeTypeOf, itemRarity, isConsumableItem, requisitionPlan,
   requisitionSummaryLines, hasRequisitionTalent
 } from "../rules/requisition.mjs";
+import { REQUISITION_PLACES, DEFAULT_PLACE } from "../constants/requisition-places.mjs";
+import { placeEffect } from "../rules/requisition-places.mjs";
 
 /** Сколько отдельных копий создаётся предмету без поля «Количество» (оружие, броня). */
 const MAX_COPIES = 10;
@@ -43,6 +53,41 @@ const MAX_COPIES = 10;
 const optionsHtml = (entries, selected) => entries
   .map(([value, label]) => `<option value="${esc(String(value))}"${String(value) === String(selected) ? " selected" : ""}>${esc(label)}</option>`)
   .join("");
+
+/** Условия мест (галочки «Покупает сюзерен», «Peer контролирующей фракции»…) — все в форме, показывается нужное. */
+const PLACE_FLAGS = REQUISITION_PLACES.flatMap(p => (p.flags ?? []).map(f => ({ ...f, place: p.key })));
+
+const readPlaceFlags = form => Object.fromEntries(
+  PLACE_FLAGS.map(f => [f.key, !!form.elements.namedItem(`pf-${f.key}`)?.checked]));
+
+/**
+ * Живая сводка по выбранному месту: правило книги, что оно делает с этим узлом,
+ * причина отказа. Недоступное место гасит кнопку «К тесту Inf». Тот же расчёт,
+ * что у requisitionPlan (rules/requisition-places.mjs), — второй копии нет.
+ */
+function wirePlaceForm(dialog, actor, item) {
+  const root = dialog.element;
+  const form = root.querySelector("form");
+  if (!form) return;
+  const note = form.querySelector(".wh-place-note");
+  const ok = root.querySelector('button[data-action="ok"]');
+  const sync = () => {
+    const key = form.elements.namedItem("place").value;
+    for (const label of form.querySelectorAll("[data-place]")) label.style.display = label.dataset.place === key ? "" : "none";
+    const eff = placeEffect(key, { item, actor, flags: readPlaceFlags(form) });
+    const lines = [`<i>Книга: ${esc(eff.place.rule)}</i>`];
+    if (eff.blocked) lines.push(`<b style="color:#c0392b;">Недоступно: ${esc(eff.blocked)}</b>`);
+    else {
+      for (const s of eff.shifts) lines.push(esc(s.label));
+      if (eff.testMod) lines.push(`Тест реквизиции: ${eff.testMod > 0 ? "+" : "−"}${Math.abs(eff.testMod)}`);
+      for (const n of eff.notes) lines.push(esc(n));
+    }
+    note.innerHTML = lines.join("<br>");
+    if (ok) ok.disabled = !!eff.blocked;
+  };
+  form.addEventListener("change", sync);
+  sync();
+}
 
 /**
  * Окно «Редкость / Качество / Количество». null — отмена.
@@ -55,6 +100,13 @@ async function askDetails(actor, item, { node = false } = {}) {
   const hint = item && rarity == null
     ? `<p class="hint" style="margin:2px 0 6px;">⚠ У предмета нет Редкости (импланты без книжной Редкости, Ритуалы без Записи не продаются). Укажите её вручную, если ГМ разрешает.</p>`
     : "";
+  // Место (Книга Пустоты, «Таблица Модификаторов реквизиции») — только у узла корабля.
+  const placeBlock = node ? `
+      <label title="Книга Пустоты, «Таблица Модификаторов реквизиции»: сдвиг Редкости узла, штраф теста или недоступность считаются сами. Срок установки не ведётся.">
+        Место <select name="place">${optionsHtml(REQUISITION_PLACES.map(p => [p.key, p.label]), DEFAULT_PLACE)}</select></label>
+      ${PLACE_FLAGS.map(f => `<label data-place="${esc(f.place)}" title="${esc(f.hint)}" style="display:none;">
+        <input type="checkbox" name="pf-${esc(f.key)}"/> ${esc(f.label)}</label>`).join("")}
+      <div class="wh-place-note" style="font-size:0.85em;opacity:.85;"></div>` : "";
   const content = `
     <div class="wh-requisition-form" style="display:grid;gap:6px;min-width:340px;">
       ${hint}
@@ -67,7 +119,8 @@ async function askDetails(actor, item, { node = false } = {}) {
         <select name="quality">${optionsHtml(ITEM_QUALITY_LIST.map(k => [k, `${ITEM_QUALITY[k].abbr} · ${ITEM_QUALITY[k].label}`]), node ? (item?.system?.quality ?? "common") : "common")}</select></label>
       ${node ? `
       <label title="Книга Пустоты, таблица Реквизиции узлов (вместо Количества). Спорные узлы — двигатели, Поля Геллера, астропатические, окулумы, мостики — считаются структурными; ГМ может выбрать иначе.">
-        Тип узла <select name="nodeType">${optionsHtml(Object.entries(NODE_TYPES).map(([k, t]) => [k, `${t.label} (${t.mod > 0 ? "+" : (t.mod < 0 ? "−" : "")}${Math.abs(t.mod)})`]), nodeTypeOf(item))}</select></label>` : `
+        Тип узла <select name="nodeType">${optionsHtml(Object.entries(NODE_TYPES).map(([k, t]) => [k, `${t.label} (${t.mod > 0 ? "+" : (t.mod < 0 ? "−" : "")}${Math.abs(t.mod)})`]), nodeTypeOf(item))}</select></label>
+      ${placeBlock}` : `
       <label>Количество <input type="number" name="quantity" value="1" min="1" step="1"/></label>
       <label title="Гранаты, магазины, медикаменты: книга считает их на 2 ступени Количества легче (стр. 165)">
         <input type="checkbox" name="consumable"${(item ? isConsumableItem(item) : false) ? " checked" : ""}/> Расходное (гранаты, магазины, медикаменты)</label>`}
@@ -91,6 +144,7 @@ async function askDetails(actor, item, { node = false } = {}) {
     classes: ["warhammer-dbc", "wh-holo"],
     content,
     rejectClose: false,
+    ...(node ? { render: (_ev, dialog) => wirePlaceForm(dialog, actor, item) } : {}),
     ok: {
       label: "К тесту Inf",
       callback: (_ev, btn) => {
@@ -102,6 +156,8 @@ async function askDetails(actor, item, { node = false } = {}) {
           quantity: Number(get(f, "quantity")?.value) || 1,
           consumable: !!get(f, "consumable")?.checked,
           nodeType: get(f, "nodeType")?.value ?? null,
+          place: get(f, "place")?.value ?? null,
+          placeFlags: node ? readPlaceFlags(f) : {},
           cls: manual ? {
             exotic: !!get(f, "exotic").checked, cybernetic: !!get(f, "cybernetic").checked,
             legion: !!get(f, "legion").checked, ritual: !!get(f, "ritual").checked
@@ -179,8 +235,11 @@ export async function openRequisition(actor, sheet = actor?.sheet) {
   const plan = requisitionPlan(actor, {
     item, name: v.name, rarity: v.rarity, quantity: v.quantity, quality: v.quality,
     consumable: v.consumable, cls: v.cls ?? undefined, local: v.local, archonInf: v.archonInf,
-    node, nodeType: node ? v.nodeType : undefined
+    node, nodeType: node ? v.nodeType : undefined,
+    place: node ? v.place : undefined, placeFlags: node ? v.placeFlags : undefined
   });
+  // Страховка к погашенной кнопке окна: недоступное место — отказ с причиной до броска.
+  if (plan.blocked) return ui.notifications.warn(`Реквизиция узла: ${plan.blocked}`);
 
   const inf = Number(actor.system?.characteristics?.inf?.total) || 0;
   // label вставляется в шапку окна и карточки теста Inf как есть, без экранирования.

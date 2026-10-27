@@ -35,6 +35,7 @@ import { itemHasName } from "./predicates.mjs";
 import { ITEM_QUALITY, ITEM_QUALITY_LIST } from "../constants/quality.mjs";
 import { RARITY_DIFFS } from "../constants/craft.mjs";
 import { EQUIP_SHOP_PACKS } from "./equip-shop.mjs";
+import { placeEffect } from "./requisition-places.mjs";
 
 /**
  * Паки, из которых окно «Достать снаряжение» предлагает выбор: категории
@@ -304,7 +305,7 @@ export function effectiveRarity(rarity, shifts = []) {
  * указать вручную (или ГМ решит, что предмета в обороте нет).
  */
 export function requisitionModifier({ rarity = 0, quantity = 1, quality = "common", consumable = false, local = 0,
-  node = null } = {}) {
+  node = null, placeMod = 0, placeLabel = "" } = {}) {
   const unrated = rarity == null;
   const r = unrated ? 0 : Number(rarity) || 0;
   const rMod = rarityMod(r);
@@ -315,6 +316,8 @@ export function requisitionModifier({ rarity = 0, quantity = 1, quality = "commo
   const qtyMod = nodeKey ? NODE_TYPES[nodeKey].mod : tier.mod;
   const qMod = qualityMod(quality);
   const lMod = Math.round(Number(local)) || 0;
+  // Место (таблица Модификаторов реквизиции): штраф самого теста, например «−10 к тестам реквизиции».
+  const pMod = Math.round(Number(placeMod)) || 0;
 
   const parts = [];
   if (rMod) parts.push(`Редкость R${r}: ${sgn(rMod)}`);
@@ -322,10 +325,11 @@ export function requisitionModifier({ rarity = 0, quantity = 1, quality = "commo
   else if (tier.mod) parts.push(`Количество (${tier.label}${tier.shifted ? ", расходное — на 2 ступени легче" : ""}): ${sgn(tier.mod)}`);
   else if (tier.shifted) parts.push(`Количество (${tier.label}, расходное): 0`);
   if (qMod) parts.push(`Качество ${ITEM_QUALITY[quality]?.abbr ?? quality}: ${sgn(qMod)}`);
+  if (pMod) parts.push(`Место (${placeLabel || "таблица мест"}): ${sgn(pMod)}`);
   if (lMod) parts.push(`ГМ (местная распространённость): ${sgn(lMod)}`);
 
-  return { rarityMod: rMod, quantityMod: qtyMod, qualityMod: qMod, localMod: lMod,
-    total: rMod + qtyMod + qMod + lMod, unrated, tier, node: nodeKey, parts };
+  return { rarityMod: rMod, quantityMod: qtyMod, qualityMod: qMod, localMod: lMod, placeMod: pMod,
+    total: rMod + qtyMod + qMod + pMod + lMod, unrated, tier, node: nodeKey, parts };
 }
 
 /** Порог теста Inf: характеристика плюс модификатор таблиц (Таланты-галочки добавляет окно броска). */
@@ -351,14 +355,19 @@ export function requisitionThreshold(inf, modifier) {
  * @param {boolean} [o.node]        режим «Узел корабля» (Книга Пустоты): вместо Количества —
  *   строка таблицы по типу узла; Количество и «расходное» игнорируются
  * @param {string}  [o.nodeType]    тип узла вручную (ГМ решил иначе); по умолчанию — по виду компонента
+ * @param {string}  [o.place]       место реквизиции узла (ключ из constants/requisition-places.mjs,
+ *   «Таблица Модификаторов реквизиции»); только в режиме узла; не задано — Цивилизованный мир
+ * @param {object}  [o.placeFlags]  условия места, отмеченные в окне ({suzerain: true, …})
  */
 export function requisitionPlan(actor, { item = null, name = "", rarity, quantity = 1, quality = "common",
-  consumable, cls, local = 0, archonInf = null, node = false, nodeType } = {}) {
+  consumable, cls, local = 0, archonInf = null, node = false, nodeType, place, placeFlags = {} } = {}) {
   const baseRaw = rarity === undefined ? itemRarity(item) : rarity;
   const unrated = baseRaw == null;
   const baseRarity = unrated ? 0 : Number(baseRaw) || 0;
   const klass = { ...itemClass(item), ...(cls ?? {}) };
-  const shifts = rarityShifts(actor, klass);
+  // Место — только у узла корабля: таблица говорит «Редкость … узлов» и «Узлы недоступны».
+  const where = node ? placeEffect(place, { item, actor, flags: placeFlags }) : null;
+  const shifts = [...rarityShifts(actor, klass), ...(where?.shifts ?? [])];
   const eff = effectiveRarity(baseRarity, shifts);
   // Узлу Количество не нужно: один узел — одна покупка, ступень даёт тип узла.
   const isConsumable = node ? false : (consumable ?? isConsumableItem(item));
@@ -366,11 +375,15 @@ export function requisitionPlan(actor, { item = null, name = "", rarity, quantit
   const qual = ITEM_QUALITY_LIST.includes(quality) ? quality : "common";
   const nodeKey = node ? normNodeType(nodeType ?? nodeTypeOf(item)) : null;
   const mods = requisitionModifier({ rarity: unrated ? null : eff, quantity: q, quality: qual,
-    consumable: isConsumable, local, node: nodeKey });
+    consumable: isConsumable, local, node: nodeKey, placeMod: where?.testMod ?? 0, placeLabel: where?.place.label });
   const title = name || item?.name || (node ? "узел корабля" : "снаряжение");
   return {
     label: node ? title : `${title} ×${q}`,
     cls: klass, shifts, unrated, node: nodeKey,
+    // null — не узел (места нет); иначе строка таблицы мест и её итог для узла
+    place: where ? { key: where.place.key, label: where.place.label, notes: where.notes } : null,
+    // Причина отказа («Узлы недоступны», нет Peer, Ксенотех на Улье…) — окно не пускает к броску.
+    blocked: where?.blocked ?? null,
     baseRarity, rarity: eff,
     quantity: q, quality: qual, consumable: isConsumable,
     mods, total: mods.total,
@@ -401,6 +414,7 @@ export function requisitionSummaryLines(plan) {
     lines.push(`Редкость R${plan.baseRarity} → R${plan.rarity}: ${plan.shifts.map(s => s.label).join("; ")}`);
   }
   lines.push(...plan.mods.parts);
+  if (plan.place?.notes?.length) lines.push(...plan.place.notes);
   lines.push(plan.node
     ? `Модификатор Реквизиции узла (Книга Пустоты, таблицы Реквизиции узлов; Редкость и Качество — стр. 165): ${sgn(plan.total)}`
     : `Модификатор таблиц книги (стр. 165): ${sgn(plan.total)}`);
