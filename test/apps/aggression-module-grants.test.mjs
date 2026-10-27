@@ -112,7 +112,9 @@ describe("Модуль Агрессии: записи в паке", () => {
   it("выданные Таланты не дублируются Возможностями (нет двойного Frenzy/Cold Fury)", () => {
     const keys = DOC.flags[FLAG].mechanics.flatMap(g => g.entries).filter(e => e.kind === "capability")
       .map(e => e.capabilityKey);
-    expect(keys).toEqual(["rage.noBsPenalty"]);
+    // Возможности — только собственные правила Модуля (не Таланты): штраф BS и, с пачки «поведение Ярости»,
+    // Избегания без запрета и автоуспех выхода (test/rules/rage-behavior.test.mjs).
+    expect(keys).toEqual(["rage.noBsPenalty", "rage.avoidWithoutLimit", "rage.exitAutoSuccess"]);
   });
 
   it("Poor.Q: −10 к I — запись «Характеристика» с гейтом по Качеству", () => {

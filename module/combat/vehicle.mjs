@@ -20,6 +20,7 @@ import { welderCritLevel } from "../rules/gunsmith-talents.mjs";
 import { resolveAttackerToken, tokenDistance } from "./facing.mjs";
 import { resolveOpposed } from "../rules/test-kind.mjs";
 import { apCostForActionType, canSpendActionPoints, spendActionPoints, spendReaction } from "./action-economy.mjs";
+import { rageAvoidanceRefusal } from "./rage-behavior.mjs";
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -58,6 +59,8 @@ export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attac
   // тратилась вовсе. Экипаж не назначен (стол ведёт машину без станций) —
   // Вираж по Operate машины, как было, с честной пометкой в карточке.
   const driver = await swerveDriver(actor);
+  // Ярость водителя: «не может совершать Избегания» — Вираж тоже Избегание (Реакция не тратится).
+  if (driver && await rageAvoidanceRefusal(driver, "evade", "Вираж")) return;
   if (driver && !(await spendReaction(driver, { forDefense: true, attackId }))) {
     return postTestCard(actor, {
       icon: rollIcon("warp", "#8fd0ff"), title: `Вираж — ${esc(actor.name)}`,

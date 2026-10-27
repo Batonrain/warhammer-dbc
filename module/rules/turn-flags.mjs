@@ -101,6 +101,7 @@ export const TURN_SCOPED_FLAGS = {
   meleeDamageDealtThisTurn: "Упорство (Талант Рукопашных, 3-8dc5): рукопашная атака этого персонажа нанесла непоглощённый урон — повтор Упорства после этого недоступен (rules/melee-talents.mjs::MELEE_DAMAGE_DEALT_FLAG, combat/tenacity.mjs)",
   meleeDamageAppliedMsg: "Упорство (Талант Рукопашных, 3-8dc5): id карточки, по которой урон уже применён к цели (любой исход) — повтор Упорства не переспрашивает «урон ещё не применён» (rules/melee-talents.mjs::MELEE_DAMAGE_APPLIED_FLAG, combat/tenacity.mjs)",
   reaperInitialTarget: "Жнец (Талант Рукопашных, 3-8dc5): uuid токена начальной цели цепочки Натиска — от него меряется Полудвижение следующих целей (rules/melee-talents.mjs::REAPER_CHAIN_FLAG, combat/reaper-chain.mjs)",
+  rageExitTried: "Ярость (Frenzy, Sahara focused-wrath-20-bs п.2): «не более одной попытки выйти из Ярости в Ход» — метка попытки гаснет с началом СВОЕГО Хода; вне боя «Ход» — 6 с игрового времени (rules/rage-behavior.mjs::rageExitAttemptAllowed, combat/rage-behavior.mjs::attemptRageExit)",
   pinDownHold: "Прижать (Талант Пугилиста, стр. 62, 3-eddb): штраф цели на физические действия и отмена +20 за Борьбу по прижимающему — до начала СЛЕДУЮЩЕГО Хода прижимающего; заодно метка «раз в Ход» (combat/grapple-talents.mjs, rules/situational.mjs)"
 };
 

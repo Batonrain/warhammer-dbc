@@ -894,7 +894,24 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 (`rules/item-rules.mjs`) и строку «Ярость: −20 BS» окна атаки. Имплант с Талантом «по
 Качеству» ведётся живой выдачей — `apps/mechanics.mjs::syncLiveGrants` (установка/извлечение в
 Хирургиконе, смена Качества — `onItemQualityChanged` в хуке updateItem, получение предмета);
-ворота «установлен»/«Качество» — лист `rules/item-gates.mjs`; Sahara focused-wrath-20-bs п.3), `rules/berserker-talents.mjs`
+ворота «установлен»/«Качество» — лист `rules/item-gates.mjs`; Sahara focused-wrath-20-bs п.3;
+плюс записи `rage.avoidWithoutLimit` и `rage.exitAutoSuccess` на любом Качестве — Избегания в Ярости без
+запрета и автоуспех выхода). **Поведение Ярости** (Sahara focused-wrath-20-bs п.2, решения владельца
+27.10.2026): `rules/rage-behavior.mjs` (чистые правила) + `combat/rage-behavior.mjs` (Foundry-обвязка).
+Избегания закрыты без траты Реакции — `combat/full-attack-lock.mjs::avoidanceVerdict` (Уклонение,
+Парирование, верхом) и `rageAvoidanceRefusal` (Парирование психосилы, Сжатие, Вираж, Шагоход, отмена
+Spray); Парирование открывает только Боевой Гнев. Ментальные траты ОД/Реакций (`physical:false`) —
+`action-economy.mjs::actionBlockReason`; манифестация — `predicates.mjs::isMentalActionBlocked`
+(Холодная Ярость: можно, −10 на психотесты — `rage.mjs::rageRules`). Социальные тесты кроме Запугивания
+проваливаются сами — `actor-sheet.mjs::_runTest` → `rageSocialRefusal`; ответчик во встречном тесте — минимальный провал
+(`RAGE_AUTOFAIL_SIDE`), сравнение публикуется (`_maybePostOpposedComparison`, NPC-соперник — `_resolveOpposedAuto`). Начало Хода
+(`hooks.mjs::updateCombat` → `processRageTurnStart`): тест W+0 на сохранение поддержания (провал —
+`dispelAllSustained`; у Холодной Ярости теста нет) и напоминание «двигаться к ближайшему видимому врагу» по токенам сцены (диспозиция,
+`isTokenInSight`). Кнопка «Выйти из Ярости» (вкладка «Бой», HUD) — `attemptRageExit`: тест W+0, +10 за Ход
+после боя (`rageAfterCombat` ставит `deleteCombat`; Ход вне боя — 6 с `worldTime`), +30 Боевого Гнева по
+галочке ГМа, одна попытка в Ход (метка Хода `rageExitTried`), успех снимает Ярость и закрывает
+повторный вход (`frenzy.mjs`), провал — метка `rageExitFailed`; переброс Холодной Ярости — кнопка
+на карточке (`card-once` `rageExitRerolled`). Принуждения токена нет — только напоминание), `rules/berserker-talents.mjs`
 (Натиск Берсерка: +10 к приёму при Натиске, `meleeBaseBonus`), `fully-armed.mjs`.
 
 - Гасители штрафов окна атаки (sheets/attack/mods.mjs, 26.09.2026):

@@ -195,6 +195,8 @@ import { FURIOUS_ASSAULT_CARD_FLAG } from "./combat/furious-assault.mjs";
 import { blademasterRerollOffered, BLADEMASTER_ROUND_FLAG, RIPOSTE_ROUND_FLAG, RIPOSTE_EVASION_PENALTY, HAMSTRING_ROUND_FLAG, tenacityAvailable, MELEE_DAMAGE_DEALT_FLAG, MELEE_DAMAGE_APPLIED_FLAG } from "./rules/melee-talents.mjs";
 import { activateFirePoint } from "./combat/fire-point.mjs";
 import { cardOnceUsed, markCardOnce, runCardOnce } from "./combat/card-once.mjs";
+import { processRageTurnStart, stampRageCombatEnd, rerollRageExit, clearRageStatePatch } from "./combat/rage-behavior.mjs";
+import { RAGE_EXIT_REROLL_CARD_FLAG } from "./rules/rage-behavior.mjs";
 import { takedownKnockdown, TAKEDOWN_CARD_FLAG } from "./combat/takedown.mjs";
 import { clearCombatFormationOnCombatEnd } from "./combat/combat-formation.mjs";
 import { masteryAutoSuccessOffer } from "./rules/mastery.mjs";
@@ -1757,6 +1759,17 @@ export function registerHooks() {
             <div class="roll-threshold">Потрачено Очко ${fatePoolLabel(actor)} · Порча +1</div>
           </div>`
         });
+      });
+    });
+
+    // Холодная Ярость: переброс неудачной попытки выйти из Ярости — раз на карточку (combat/rage-behavior.mjs).
+    html.querySelectorAll(".wh-rage-exit-reroll-btn").forEach(btn => {
+      if (cardOnceUsed(message, RAGE_EXIT_REROLL_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const done = await runCardOnce(message, RAGE_EXIT_REROLL_CARD_FLAG, () => rerollRageExit(message),
+          "Переброс с этой карточки уже сделан.");
+        if (done) btn.disabled = true;
       });
     });
 
@@ -4375,6 +4388,8 @@ function _attachFateContextMenu(message, html) {
   Hooks.on("deleteCombat", async combat => {
     if (!game.user.isGM) return;
     await resolveTrancesForCombat(combat);
+    // Ярость, пережившая бой: от этого момента считаются «Ходы после боя» (+10 на выход из Ярости за каждый).
+    await stampRageCombatEnd(combat);
     // Rad (X) (wdbc-x1nz.10): «10+ урона в T от радиации за один бой — после
     // боя тест T+0 или лучевая болезнь» (combat/radiation.mjs).
     await resolveCombatRadiation(combat);
@@ -4820,6 +4835,10 @@ function _attachFateContextMenu(message, html) {
       // wdbc-j3yf) — «в начале своего Хода», отдельно от Кровотечения/
       // Горения выше (у тех книга явно говорит «в конце»).
       await processConditionTurnStart(nextCombatant.actor);
+      // Ярость (Frenzy): тест W+0 на сохранение поддержания психосил и напоминание «двигаться к
+      // ближайшему видимому противнику» (combat/rage-behavior.mjs); после resetActionEconomy —
+      // метка «попытка выхода была» уже снята.
+      await processRageTurnStart(nextCombatant.actor, nextCombatant.token);
       // Вакуум (стр. 483): начало Хода на сцене «без воздуха» без пустотной
       // брони — тест T+0 (Voidfarer T+10), провал — непоглощаемый урон; открытые
       // глаза — Blinding(0). Молча ничего не делает вне вакуумной сцены.
@@ -4853,6 +4872,14 @@ function _attachFateContextMenu(message, html) {
   // prepareDerivedData — любое изменение паразита (сам актор, его предметы и
   // эффекты) пересчитывает хостов. На каждом клиенте: пересчёт локальный.
   Hooks.on("updateActor", actor => { refreshParasiteHosts(actor); });
+
+  // Ярость кончилась любым путём (тумблер листа, HUD токена, кнопка выхода) — метки «провалил выход» и
+  // «Ходы после боя» гаснут. Пишет тот, кто снял Ярость: у него есть права на актора (module/combat/rage-behavior.mjs).
+  Hooks.on("updateActor", async (actor, changes, options, userId) => {
+    if (game.user?.id !== userId || changes?.system?.inRage !== false) return;
+    const patch = clearRageStatePatch(actor);
+    if (Object.keys(patch).length) await actor.update(patch);
+  });
   for (const hook of ["createItem", "updateItem", "deleteItem", "createActiveEffect", "updateActiveEffect", "deleteActiveEffect"]) {
     Hooks.on(hook, doc => {
       const owner = doc?.parent?.documentName === "Actor" ? doc.parent

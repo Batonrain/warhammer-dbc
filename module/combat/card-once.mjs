@@ -43,6 +43,8 @@ export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legi
   "vampireUsed",
   // Варп-Замок (Талант Псайканы, combat/warp-lock.mjs): одно «аварийное» применение с карточки Феномена/Прорыва.
   "warpLockUsed",
+  // Холодная Ярость (combat/rage-behavior.mjs::rerollRageExit): переброс неудачной попытки выйти из Ярости — один на карточку.
+  "rageExitRerolled",
   // Снайпер Ужаса: один тест Intimidate(BS)+0 на попадание (combat/terror-sniper.mjs).
   "terrorSniperRolled",
   // Таланты Пугилиста: свободные действия с карточек Захвата и Пинка (3-eddb) — Швырнуть

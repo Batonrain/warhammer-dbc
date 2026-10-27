@@ -27,6 +27,7 @@ import { spendActionPoints } from "./action-economy.mjs";
 import { writeToTarget } from "./gm-relay.mjs";
 import { sameTarget, targetLabel } from "../rules/talent-targets.mjs";
 import { unlinkedTokens } from "../migrations/unlinked-tokens.mjs";
+import { rageSocialRefusal } from "./rage-behavior.mjs";
 import {
   hasInspireWrath, inspireWrathAudience, isInspiredHatred, inspireWrathOutcome,
   hasDemagogue, INSPIRED_WRATH_FLAG
@@ -108,6 +109,8 @@ async function promptHatredGroup(speaker) {
  * @returns {Promise<string|null>} "granted" | "failed" | null — не начато
  */
 export async function startInspireWrath(actor, inject = {}) {
+  // Ярость: «общаться иначе, чем нечленораздельными воплями» — приказ/речь проваливаются сами (Холодная Ярость говорить разрешает).
+  if (await rageSocialRefusal(actor, { skill: "charm", label: "Вдохновить Гнев" })) return null;
   if (!hasInspireWrath(actor)) { ui.notifications?.warn("Вдохновить Гнев: у персонажа нет такого Таланта."); return null; }
   const limit = inspireWrathAudience(actor);
   if (limit < 1) { ui.notifications?.warn("Вдохновить Гнев: бонус Fel нулевой — аудитории нет."); return null; }

@@ -364,14 +364,17 @@
   <div class="combat-section-panel" data-collapse-key="combat-stance"> <div class="panel-title" data-action="panelCollapse">СТОЙКА{{#if stanceLocked}} <span class="rwc-recharge-badge" title="Стр. 31: Смену Стойки нельзя проводить после рукопашной атаки — снимется на следующем Ходу">🔒 заблокировано</span>{{/if}}</div> <div class="combat-collapse-body">
     <div class="technique-grid"> {{#each combatStanceOptions as |s|}}<button type="button" class="technique-btn technique-btn-stance {{#if s.active}}is-on{{/if}}" data-stance="{{s.key}}" title="{{#if ../stanceLocked}}Стр. 31: нельзя менять Стойку после рукопашной атаки в этом Ходу{{else}}{{s.desc}}{{/if}}" {{#if ../stanceLocked}}disabled{{/if}}> <span class="tech-name">{{s.label}}</span> </button> {{/each}}
     </div>
-    {{!-- Ярость (wdbc-plsf) — простой тумблер состояния боя, тем же приёмом,
-          что helmetOff: сама механика Ярости (+10 WS/S/W, −20 BS/I/F и т.п.,
-          стр. 15) не реализована, поле нужно только как гейт для условных
-          возможностей вроде Дара Кхорна «Purity of Wrath». --}}
-    <label class="simple-toggle rage-toggle" title="Тумблер состояния «В Ярости» — только гейт для условных возможностей (напр. Дар Кхорна Purity of Wrath), сама механика Ярости не реализована.">
+    {{!-- Ярость (wdbc-plsf) — тумблер состояния боя. Числа Ярости (+10 WS/S/W,
+          −20 BS/I/F, стр. 15) считает rules/rage.mjs по этому полю, поведение
+          (запрет Избеганий/речи/психосил, напоминание в начале Хода, тест выхода) —
+          combat/rage-behavior.mjs. Кнопка «Выйти из Ярости» — тест W+0. --}}
+    <label class="simple-toggle rage-toggle" title="Состояние «В Ярости»: +10 WS/S/W, −20 на тесты BS/I/F, нет Усталости/Оглушения/Морали. Нельзя Избегать (Парирование — с Боевым Гневом), совершать Ментальные действия и говорить (социальные тесты, кроме Запугивания, проваливаются сами). Выйти — кнопкой справа (тест W+0).">
       <input type="checkbox" name="system.inRage" {{checked system.inRage}}/>
       <span class="simple-toggle-label">В Ярости</span>
     </label>
+    {{#if system.inRage}}
+    <button type="button" class="technique-btn rage-exit-btn" style="margin-top:6px;" title="Выйти из Ярости: тест W+0 (одна попытка в Ход). +10 за каждый Ход после боя, +30 Боевого Гнева — с позволения ГМа (отмечается в окне). Холодная Ярость — переброс неудачи; Модуль Агрессии — автоуспех. Успех снимает Ярость и закрывает повторный вход до конца боя."><span class="tech-name">😤 Выйти из Ярости</span></button>
+    {{/if}}
     {{#if hasIdolater}}
     <label class="simple-toggle idol-nearby-toggle" title="Идолопоклонник: пока кумир рядом — тесты Морали проходятся автоматически, а на встречные против Команд и соц. взаимодействия кумира −30 (галочка в окне броска). Если вы видите, как кумир теряет Командование от проваленного теста Морали, — эффект теряется до конца сцены: снимите галочку вручную.">
       <input type="checkbox" name="system.idolNearby" {{checked system.idolNearby}}/>

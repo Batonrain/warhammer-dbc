@@ -19,6 +19,8 @@ import { showAttackDialog } from "./attack-dialog.mjs";
 import { rollMutationOrGift, openMutationPicker } from "./tabs/mutations.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { payIntTestAction } from "../combat/bone-head.mjs";
+import { rageSocialRefusal } from "../combat/rage-behavior.mjs";
+import { rageSocialAutoFail, RAGE_AUTOFAIL_SIDE } from "../rules/rage-behavior.mjs";
 import { applyOnTargetFailConditions } from "../rules/on-target-fail.mjs";
 import { createDisorderItem, activateDisorderListeners,
          openFearDialog, openTraumaDialog, rollDisorder } from "./tabs/disorders.mjs";
@@ -3035,6 +3037,9 @@ export class WarhammerCharacterSheet
       return { opposed: null, opponentActor: null };
     }
     if (activeOwnerOf(opponentActor)) return { opposed: null, opponentActor };
+    // Ярость соперника-NPC: социальный ответ — автопровал (Порог 0, бросок 1 = минимальный провал, без кубика).
+    if (rageSocialAutoFail(opponentActor, { skill: skillKey, char: charKey }))
+      return { opposed: { threshold: 0, roll: 1, rageAutoFail: true }, opponentActor: null };
     const threshold = skillKey ? skillTotal(opponentActor, skillKey) : (opponentActor.system.characteristics?.[charKey]?.total ?? 0);
     const roll = await new Roll("1d100").evaluate();
     // unnatural (стр. 26, wdbc-y9i8) — соперник известен по документу здесь,
@@ -3066,8 +3071,19 @@ export class WarhammerCharacterSheet
 
   /** Ответ соперника (opposedRequest пришёл через опенер "opposedResponse") —
    *  публикует готовую карточку сравнения, видимую обеим сторонам. */
-  async _maybePostOpposedComparison(opposedRequest, { label, baseEff, rv, outcome, skillKey = null, charKey = null }) {
+  async _maybePostOpposedComparison(opposedRequest, { label, baseEff, rv, outcome, skillKey = null, charKey = null, rageAutoFail = false }) {
     if (!opposedRequest) return;
+    // Ответчик в Ярости: социальный ответ — автопровал без броска (sheets/actor-sheet.mjs::_runTest). Сравнение
+    // публикуется всё равно: ответчик — минимальный провал (RAGE_AUTOFAIL_SIDE), инициатор выигрывает по обычным правилам.
+    if (rageAutoFail) {
+      const result = resolveOpposed(opposedRequest.initiatorSide, RAGE_AUTOFAIL_SIDE, { safe: opposedRequest.safe });
+      const content = opposedComparisonHtml({
+        label, mineName: opposedRequest.initiatorName, mine: opposedRequest.initiatorSide,
+        theirsName: this.actor.name, theirs: { threshold: RAGE_AUTOFAIL_SIDE.threshold, roll: "автопровал (Ярость)" }, result
+      });
+      await ChatMessage.create({ content, speaker: ChatMessage.getSpeaker({ actor: this.actor }), sound: CONFIG.sounds.dice });
+      return;
+    }
     // Personal Adaptation/Персональная Адаптация (Тзинч, wdbc-1rno): здесь
     // this.actor — ОТВЕЧАЮЩАЯ сторона, initiatorUuid (module/hooks.mjs::
     // "opposedResponse") — её оппонент. Тот же приём, что kind-outcome.mjs
@@ -3154,6 +3170,16 @@ export class WarhammerCharacterSheet
     // общаться», тесты на Общительности недоступны.
     if (defaultChar === "fel" && this.actor.system?.conditions?.mute)
       return ui.notifications.warn(`${this.actor.name}: Немота (Общительность 0 от урона) — не может общаться.`);
+    // Ярость (Frenzy): «автоматически проваливая все тесты на социальные взаимодействия, кроме
+    // Запугивания» — карточка вместо диалога и броска; Холодная Ярость говорить разрешает.
+    // Общительность без Навыка считается социальной, кроме групповых Навыков (там char — не признак).
+    // Проверка синхронная: лишний await на обычном пути сдвинул бы открытие диалога на тик.
+    const rageSocial = { skill: rollContext?.skill ?? null, char: rollContext?.group ? null : defaultChar, label };
+    if (rageSocialAutoFail(this.actor, rageSocial)) {
+      await rageSocialRefusal(this.actor, rageSocial);
+      await this._maybePostOpposedComparison(opposedRequest, { label, skillKey: rageSocial.skill, charKey: defaultChar, rageAutoFail: true });
+      return;
+    }
     const result = await this._showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect,
       rollContext, defaultKind, { effectTargetActor, opposedRequest, presetModifier, extendedPreset });
     if (!result) return;

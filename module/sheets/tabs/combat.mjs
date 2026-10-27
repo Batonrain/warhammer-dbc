@@ -30,6 +30,7 @@ import { showDelegateTestPicker } from "../../rules/delegate-test.mjs";
 import { painChange, openPainSoulBurnDialog } from "./pain.mjs";
 import { showTortureDialog } from "../../apps/torture.mjs";
 import { frenzyEntryBlocked, markFrenzyExited } from "../../combat/frenzy.mjs";
+import { attemptRageExit } from "../../combat/rage-behavior.mjs";
 import { avatarOfSlaughterAvailable, applyAvatarOfSlaughter } from "../../combat/avatar-of-slaughter.mjs";
 import { dreadWailAvailable } from "../../combat/dread-wail.mjs";
 import { showDreadWailDialog } from "../../apps/dread-wail-dialog.mjs";
@@ -180,6 +181,8 @@ export function activateCombatListeners(root, actor) {
     }
     if (!checked) await markFrenzyExited(actor);
   });
+  // Кнопка «Выйти из Ярости»: тест W+0 с бонусами книги (combat/rage-behavior.mjs::attemptRageExit).
+  on(root, ".rage-exit-btn", "click", ev => { ev.preventDefault(); return attemptRageExit(actor); });
 
   // ── Аватар Резни (wdbc-sk8s, module/combat/avatar-of-slaughter.mjs) ──────
   on(root, ".avatar-of-slaughter-btn", "click", async () => {

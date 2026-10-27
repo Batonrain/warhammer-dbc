@@ -48,6 +48,7 @@ import { contactType } from "../rules/tactical-map.mjs";
 import { handOfKhorneAttackSizeBonus } from "../rules/hand-of-khorne.mjs";
 import { phantomCopiesDodgePenalty } from "../rules/wrapped-in-chaos.mjs";
 import { hasGazeOfInevitability } from "../rules/gaze-of-inevitability.mjs";
+import { rageAvoidanceRefusal } from "./rage-behavior.mjs";
 import { isTokenInSight } from "../rules/vision-target.mjs";
 import { combinedThreshold } from "../rules/test-kind.mjs";
 import { singleCombatBonus } from "./single-combat.mjs";
@@ -435,7 +436,9 @@ export function _tokenRelationshipOf(attacker, defender) {
 }
 
 export async function _performSprayCancel(actor, { attacker = null } = {}) {
-  const agTotal   = actor.system.characteristics.ag?.total ?? 0;
+  // Ярость: «не может совершать Избегания» — отмена попадания Акробатикой тоже Избегание.
+  if (await rageAvoidanceRefusal(actor, "evade", "Отмена попадания (Spray)")) return;
+  const agTotal  = actor.system.characteristics.ag?.total ?? 0;
   const acroSkill = actor.system.skills?.acrobatics;
   const rankBonus = SKILL_RANKS[acroSkill?.rank ?? "untrained"]?.bonus ?? -20;
   const cloneBonus = actor.system.cloneField?.bonus ?? 0;
@@ -1189,6 +1192,8 @@ export async function _performParry(actor, {
  * попадания атак того же противника, а психосила попаданий не раздаёт.
  */
 export async function _performPsychicParry(actor, { powerName = "", ePR = 0, extraMod = 0 } = {}) {
+  // Ярость: Парирование открывает только Боевой Гнев (rules/rage-behavior.mjs); Реакция не тратится.
+  if (await rageAvoidanceRefusal(actor, "parry", "Парирование психосилы")) return;
   const { ok, tool, weakens, reason } = canParryPsychic(actor);
   if (!ok) {
     return postTestCard(actor, {
@@ -1260,6 +1265,7 @@ export async function _performCompression(actor, location, attackerUuid = "", at
         </div>`
     }, rollMode));
   }
+  if (await rageAvoidanceRefusal(actor, "evade", "Сжатие")) return;
   if (!(await spendReaction(actor, { forDefense: true, attackId }))) return _noReactionCard(actor, "Сжатие");
 
   const current = actor.getFlag("warhammer-dbc", "compressedParts") ?? [];

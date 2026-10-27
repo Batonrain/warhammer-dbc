@@ -35,6 +35,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { determinationToFightApBonus } from "../rules/determination-to-fight.mjs";
 import { isStunnedOrDazed } from "../rules/predicates.mjs";
+import { rageBlocksMental } from "../rules/rage.mjs";
 import { shockApLocked, shockHalfAction } from "../rules/shock.mjs";
 import { turnStartFlagClears, turnStartAttackCarryOver, turnStartSqueezeCarryOver } from "../rules/turn-flags.mjs";
 import { rollLegacyChangeBonus, tickLegacyExcessBoost } from "../rules/legacy-weapon.mjs";
@@ -296,6 +297,11 @@ export function actionBlockReason(actor, { physical } = {}) {
   if (c.dazed)       return "в Ступоре";
   if (shockApLocked(actor)) return "замер от ужаса (Шок)";
   if (c.helpless && physical !== false) return "Беспомощен (не может совершать Физические действия)";
+  // Ярость (Frenzy): «не может совершать Ментальные действия и общаться иначе,
+  // чем нечленораздельными воплями». physical:false — как раз Ментальное/голосовое
+  // (Командование, психический ритуал, тест I, ментальная Реакция псайкера).
+  // Холодная Ярость запрет снимает. Sahara focused-wrath-20-bs, п.2.
+  if (physical === false && rageBlocksMental(actor)) return "в Ярости (Ментальные действия и речь недоступны; снимает Холодная Ярость)";
   return "";
 }
 

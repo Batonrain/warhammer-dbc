@@ -9,6 +9,7 @@ import { DAMAGE_TYPES } from "../../constants/items.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { isPossessedByParasite } from "../../rules/parasite-trait.mjs";
 import { isMentalActionBlocked } from "../../rules/predicates.mjs";
+import { rageBlocksMental } from "../../rules/rage.mjs";
 import { requiredMarks, MARK_LABELS } from "../../constants/talent-requirements.mjs";
 import { dreadnoughtOf, hasOsirisMatrix } from "../../rules/dreadnought.mjs";
 import { highSorceryManifestBlocked } from "../../rules/perfect-sorcerer.mjs";
@@ -230,7 +231,11 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
   // когда разум расфокусирован (пьян/галлюцинирует/в Ярости)» — тот же
   // гейт-приём, что у мононити/Паразита выше.
   if (isMentalActionBlocked(actor)) {
-    ui.notifications.warn(`«${item.name}»: разум расфокусирован (Ярость/Галлюцинации/Опьянение) — манифестация недоступна (стр. 12).`);
+    // Ярость называем отдельно: «Псайкеры не способны манифестировать психосилы, находясь в Ярости»
+    // (Frenzy); снимает запрет Талант Холодная Ярость — с ним манифестация идёт со штрафом −10 на психотест.
+    ui.notifications.warn(rageBlocksMental(actor)
+      ? `«${item.name}»: в Ярости разум расфокусирован — псайкер не может манифестировать психосилы (Талант Холодная Ярость / Cold Fury разрешает, со штрафом −10 на психотесты).`
+      : `«${item.name}»: разум расфокусирован (Ярость/Галлюцинации/Опьянение) — манифестация недоступна (стр. 12).`);
     return;
   }
   const sys      = item.system;

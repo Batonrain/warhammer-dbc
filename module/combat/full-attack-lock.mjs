@@ -19,6 +19,7 @@ import { hasActionEconomy, isEncounterActive } from "./action-economy.mjs";
 import {
   FULL_ATTACK_LOCK_FLAG, fullAttackLockOf, lockAfterFullAttack, lockAfterFuriousChild, physicalAvoidanceVerdict
 } from "../rules/full-attack-lock.mjs";
+import { rageAvoidanceVerdict } from "../rules/rage-behavior.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -41,8 +42,15 @@ export async function markFuriousChild(actor) {
   return true;
 }
 
-/** Можно ли сейчас Уклоняться/Парировать: { blocked, penalty, reason, note }. */
+/**
+ * Можно ли сейчас Уклоняться/Парировать: { blocked, penalty, reason, note }.
+ * Два запрета, оба до траты Реакции: Ярость (Избегания закрыты, Парирование
+ * открывает Боевой Гнев — rules/rage-behavior.mjs; действует и вне боя) и
+ * Полная Атака (только в бою).
+ */
 export function avoidanceVerdict(actor, kind) {
+  const rage = rageAvoidanceVerdict(actor, kind);
+  if (rage.blocked) return { blocked: true, penalty: 0, reason: rage.reason, note: "" };
   if (!isEncounterActive()) return { blocked: false, penalty: 0, reason: "", note: "" };
   return physicalAvoidanceVerdict(actor, kind, game.combat?.id ?? "");
 }

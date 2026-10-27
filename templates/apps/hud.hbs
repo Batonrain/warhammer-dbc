@@ -95,6 +95,12 @@
           <a class="wh-hud-aim-btn active" data-overwatch-fire>Стрелять из Караула</a>
         </div>
         {{/if}}
+        {{#if inRage}}
+        <div class="wh-hud-aiming">
+          <a class="wh-hud-aim-btn" data-rage-exit
+             data-tooltip="Выйти из Ярости: тест W+0, одна попытка в Ход. +10 за каждый Ход после боя; +30 Боевого Гнева — в окне, с позволения ГМа.">😤 Выйти из Ярости</a>
+        </div>
+        {{/if}}
         {{#if lamps.length}}
         <div class="wh-hud-lamps">
           {{#each lamps as |l|}}<span class="wh-hud-lamp {{#if l.bad}}bad{{/if}}">{{l.label}}</span>{{/each}}

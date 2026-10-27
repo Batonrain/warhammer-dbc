@@ -32,6 +32,7 @@ import { applyStructureLoss } from "./vehicle.mjs";
 import { ARMOUR_SIDES, VEHICLE_STATUS_EFFECTS } from "../constants/vehicle.mjs";
 import { isThrottleCountAvailable, incrementThrottleCount, throttleCount } from "../rules/cooldown.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { rageAvoidanceRefusal } from "./rage-behavior.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { pilotOperateValue } from "./vehicle-force-move.mjs";
 import {
@@ -109,6 +110,8 @@ export async function performWalkerParry(vehicle, { extraMod = 0, attackerUuid =
   const crew = await walkerCrew(vehicle);
   if (!crew) return refusal(vehicle, "Парирование",
     "В машине нет пилота/мехвода — Парировать некому (посадите экипаж на вкладке «Экипаж»).");
+  // Ярость пилота: Парирование — только с Боевым Гневом (rules/rage-behavior.mjs); Реакция не тратится.
+  if (await rageAvoidanceRefusal(crew.actor, "parry", "Парирование (Шагоход)")) return;
   const weapon = walkerMeleeWeapon(vehicle);
   if (!weapon) return refusal(vehicle, "Парирование",
     "У машины нет рукопашного орудия — Парировать нечем (добавьте орудие класса «Рукопашное»).");
@@ -162,6 +165,8 @@ export async function performWalkerDodge(vehicle, { extraMod = 0, attackerUuid =
   const crew = await walkerCrew(vehicle);
   if (!crew) return refusal(vehicle, "Уклонение",
     "В машине нет пилота/мехвода — Уклоняться некому (посадите экипаж на вкладке «Экипаж»).");
+  // Ярость пилота: «не может совершать Избегания» (Модуль Агрессии — без запрета); Реакция не тратится.
+  if (await rageAvoidanceRefusal(crew.actor, "dodge", "Уклонение (Шагоход)")) return;
 
   // Опрокинутый Шагоход «сбит с ног» (Книга Машин, Опрокидывание) — как
   // Повален у персонажа: −20 к Уклонению (rules/library/conditions.mjs,

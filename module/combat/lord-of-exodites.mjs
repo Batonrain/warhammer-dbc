@@ -22,6 +22,7 @@ import { esc, _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { rageSocialRefusal } from "./rage-behavior.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 const DISGRACE_FLAG = "lordOfExoditesDisgraced";
@@ -95,6 +96,8 @@ export function exoditeSquadmatesOf(lord, allActors) {
  * уместность решает стол (тот же принцип, что бонус Подавления «если тихо»).
  */
 export async function rallyExoditeSquad(actor, { mod = -10 } = {}) {
+  // Ярость: «общаться иначе, чем нечленораздельными воплями» — приказ/речь проваливаются сами (Холодная Ярость говорить разрешает).
+  if (await rageSocialRefusal(actor, { skill: "command", label: "Командование" })) return null;
   if (!squadsCommandedBy(actor, game.actors ?? []).length) {
     return ui.notifications?.warn("⚠️ Персонаж не Командир ни одного Отряда.");
   }

@@ -25,6 +25,7 @@ import { applyDrug, deactivateDrugEffect } from "../sheets/tabs/drugs.mjs";
 import { grappleOnlyHidden, isBiteName } from "../rules/integral-rating.mjs";
 import { warpLockBlocksManifest } from "../rules/warp-lock.mjs";
 import { sustainOffPatch } from "../combat/psychic-sustain.mjs";
+import { attemptRageExit } from "../combat/rage-behavior.mjs";
 import { actorInfamyMax } from "./infamy-points.mjs";
 
 const SYSTEM = "warhammer-dbc";
@@ -447,6 +448,8 @@ export function hudData(actor) {
       };
     })(),
     lamps,
+    // Ярость: кнопка «Выйти из Ярости» (тест W+0, combat/rage-behavior.mjs::attemptRageExit).
+    inRage: !!sys.inRage,
     hands, showOff,
     zeroHand,
     hasWeapon: !!(mainId || offId),
@@ -698,6 +701,12 @@ function wire(el, actor) {
     const item = actor.items.get(b.dataset.drugDeactivate);
     if (item) await deactivateDrugEffect(item);
   }));
+
+  // Ярость: тот же тест выхода, что кнопка на вкладке «Бой» листа.
+  el.querySelector("[data-rage-exit]")?.addEventListener("click", ev => {
+    ev.preventDefault();
+    if (own) attemptRageExit(actor);
+  });
 
   // Открыть лист.
   el.querySelectorAll("[data-open-sheet]").forEach(b =>

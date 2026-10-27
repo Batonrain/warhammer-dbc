@@ -2499,7 +2499,8 @@ export const CAPABILITIES = {
   // ── Берсерк
   "berserker.core.battleRage": {
     label: "В Ярости персонаж может совершать Парирование. Кроме того, когда Ярость движет его в почти верную гибель,",
-    source: "Battle Rage / Боевой Гнев", reader: ""
+    source: "Battle Rage / Боевой Гнев",
+    reader: "module/rules/rage-behavior.mjs::rageAvoidanceVerdict (Парирование в Ярости открыто только с этим Талантом: combat/full-attack-lock.mjs::avoidanceVerdict → _performParry, верхом; combat/rage-behavior.mjs::rageAvoidanceRefusal → Парирование психосилы и Шагохода) и ::rageExitParts (+30 на тест выхода из Ярости — галочка «с позволения ГМа» в окне теста, combat/rage-behavior.mjs::attemptRageExit); читается по ИМЕНИ Таланта ИЛИ по этому ключу. «Заведомо превосходящий противник» — решает ГМ галочкой, не автоматически"
   },
   "berserker.core.berserkCharge": {
     label: "Персонаж получает ещё +10 на рукопашные приёмы при Натиске.",
@@ -2507,7 +2508,7 @@ export const CAPABILITIES = {
   },
   "berserker.core.coldFury": {
     label: "Персонаж может свободно говорить и совершать ментальные действия в Ярости и не получает штрафа к F от Ярости;",
-    source: "Cold Fury / Холодная Ярость; Aggression Module / Модуль Агрессии, Good.Q и Best.Q", reader: "module/rules/rage.mjs::rageRules — в Ярости нет штрафа −20 к F, псайкеру −10 на психотесты; rules/predicates.mjs::isMentalActionBlocked — Ярость не блокирует Ментальные действия и манифестацию; читается по ИМЕНИ Таланта ИЛИ по записи Конструктора (hasColdFury). Модуль Агрессии Good/Best выдаёт настоящий Талант (живая выдача по установке и Качеству — apps/mechanics.mjs::syncLiveGrants), hasColdFury видит его по имени. НЕ смоделировано: переброс попытки выйти из Ярости и сопротивления нападению на союзника (самого выхода из Ярости в системе нет — тумблер), свободная речь"
+    source: "Cold Fury / Холодная Ярость; Aggression Module / Модуль Агрессии, Good.Q и Best.Q", reader: "module/rules/rage.mjs::rageRules — в Ярости нет штрафа −20 к F, псайкеру −10 на психотесты; rules/predicates.mjs::isMentalActionBlocked — Ярость не блокирует Ментальные действия и манифестацию; читается по ИМЕНИ Таланта ИЛИ по записи Конструктора (hasColdFury). Модуль Агрессии Good/Best выдаёт настоящий Талант (живая выдача по установке и Качеству — apps/mechanics.mjs::syncLiveGrants), hasColdFury видит его по имени. Свободная речь: социальные тесты в Ярости не проваливаются сами (combat/rage-behavior.mjs::rageSocialRefusal ← sheets/actor-sheet.mjs::_runTest); Ментальные траты ОД и Реакций открыты (combat/action-economy.mjs::actionBlockReason); психосилы манифестируются с −10 на психотесты и поддерживаются без теста W+0 в начале Хода (решение владельца 27.10.2026: тест Frenzy на сохранение поддержания этому Таланту не нужен, цена — только −10 психотестов); переброс неудачной попытки выйти из Ярости — кнопка на карточке, раз на карточку (combat/rage-behavior.mjs::rerollRageExit, card-once rageExitRerolled). НЕ смоделировано: переброс сопротивления нападению на союзника (в системе нет такого теста)"
   },
   "berserker.core.fireInBlood": {
     label: "Персонаж может войти в Ярость за полудействие.",
@@ -2520,7 +2521,7 @@ export const CAPABILITIES = {
   },
   "berserker.core.frenzy": {
     label: "За полное действие персонаж входит в боевую ярость: +10 к WS, S и W; −20 на все тесты BS, I и F; игнорирует −10 от Усталости;",
-    source: "Frenzy / Ярость", reader: "module/rules/rage.mjs — РЕАЛЬНО по состоянию system.inRage (не по Таланту): +10 WS/S/W в характеристиках (rules/character.mjs), −20 на тесты BS/I/F (источник правил «rage»; стрельба — строка sheets/attack/mods.mjs), игнор Усталости (rules/situational.mjs), нельзя Оглушить (rules/condition-guards.mjs), автоуспех Морали (rules/morale-test.mjs, combat/fear.mjs, combat/intimidate.mjs, combat/field-execution.mjs); module/combat/frenzy.mjs — лимит повторного входа за бой (wdbc-sk8s). Ментальные действия и манифестация заблокированы (rules/predicates.mjs::isMentalActionBlocked, wdbc-x1nz.2.32). НЕ смоделировано: обязанность идти к ближайшему врагу и атаковать, запрет Избеганий/речи, автопровал соц. тестов, тест W+0 на выход и бонус +10 после боя, W+0 на поддержание психосил"
+    source: "Frenzy / Ярость", reader: "module/rules/rage.mjs — РЕАЛЬНО по состоянию system.inRage (не по Таланту): +10 WS/S/W в характеристиках (rules/character.mjs), −20 на тесты BS/I/F (источник правил «rage»; стрельба — строка sheets/attack/mods.mjs), игнор Усталости (rules/situational.mjs), нельзя Оглушить (rules/condition-guards.mjs), автоуспех Морали (rules/morale-test.mjs, combat/fear.mjs, combat/intimidate.mjs, combat/field-execution.mjs); module/combat/frenzy.mjs — лимит повторного входа за бой (wdbc-sk8s). Ментальные действия и манифестация заблокированы (rules/predicates.mjs::isMentalActionBlocked, wdbc-x1nz.2.32). Поведение (rules/rage-behavior.mjs, combat/rage-behavior.mjs, Sahara focused-wrath-20-bs п.2): Избегания закрыты без траты Реакции, Парирование — только с Боевым Гневом (combat/full-attack-lock.mjs::avoidanceVerdict, defense.mjs, mount.mjs, vehicle.mjs, walker.mjs); социальные тесты кроме Запугивания проваливаются сами (sheets/actor-sheet.mjs::_runTest); траты ОД/Реакций, помеченные physical:false (Ментальные), отказывают (combat/action-economy.mjs::actionBlockReason); в начале Хода — тест W+0 на сохранение поддержания психосил (провал снимает все через dispelAllSustained; у Холодной Ярости теста нет) и напоминание в чат «двигаться к ближайшему видимому противнику» с именем и дистанцией по токенам сцены (hooks.mjs::updateCombat → processRageTurnStart); кнопка «Выйти из Ярости» (лист/вкладка «Бой», HUD): тест W+0 (W с +10 самой Ярости) + 10 за каждый Ход после боя (считается от конца боя по игровому времени, 6 с = Ход; бонус теряется галочкой «союзники/пленники напали») + 30 Боевого Гнева, одна попытка в Ход (метка rageExitTried), успех снимает Ярость и закрывает повторный вход (combat/frenzy.mjs), провал — «обязан атаковать других» (метка rageExitFailed, напоминание меняется). НЕ делается: принуждение токена двигаться/атаковать (только напоминание), приоритет «сдавшиеся/обезоруженные» (по токенам различаются лишь беспомощные), потеря сознания при провале выхода"
   },
   "berserker.core.furiousAssault": {
     label: "После успешной атаки с базой Полная Атака (даже отменённой Избеганием) персонаж может потратить Реакцию,",
@@ -8232,6 +8233,16 @@ export const CAPABILITIES = {
     label: "В Ярости нет штрафа −20 к тестам BS (стрельба и прочие тесты на BS); штрафы к I и F Ярости остаются, F снимает Cold Fury",
     source: "Aggression Module / Модуль Агрессии, Best.Q: «убирает штраф к BS в Ярости» (корбук, Бионика и Кибернетика, стр. 263-275)",
     reader: "module/rules/rage.mjs RAGE_NO_BS_PENALTY — вытесняет правило rage.penalty.bs (module/rules/item-rules.mjs CAPABILITY_OVERRIDES: тесты на BS через конвейер правил); module/sheets/attack/mods.mjs — строка «Ярость: −20 BS» окна стрельбы"
+  },
+  "rage.avoidWithoutLimit": {
+    label: "В Ярости персонаж может совершать Избегания без обычных ограничений (Уклонение и Парирование не закрыты Яростью)",
+    source: "Aggression Module / Модуль Агрессии: «способность совершать Избегания в Ярости без обычных ограничений» (корбук, Бионика и Кибернетика, стр. 263-275)",
+    reader: "module/rules/rage-behavior.mjs::hasFreeRageAvoidance → rageAvoidanceVerdict — снимает запрет Избеганий Ярости (combat/full-attack-lock.mjs::avoidanceVerdict, combat/rage-behavior.mjs::rageAvoidanceRefusal)"
+  },
+  "rage.exitAutoSuccess": {
+    label: "Тест выхода из Ярости проходится автоматически (без броска)",
+    source: "Aggression Module / Модуль Агрессии: «автоматический Успех на тестах для выхода из Ярости» (корбук, Бионика и Кибернетика, стр. 263-275)",
+    reader: "module/rules/rage-behavior.mjs::hasRageExitAutoSuccess → combat/rage-behavior.mjs::attemptRageExit — кнопка «Выйти из Ярости» снимает Ярость без броска (одна попытка в Ход действует и здесь)"
   },
   "ability.fullyArmed": {
     label: "Во Всеоружии: своя механика владения оружием",
