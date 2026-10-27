@@ -268,11 +268,30 @@ export function signatureFreeHtml(actor, power, { success, rerollable = false, f
 }
 
 /**
+ * Снять Порчу Варп-Шока, которую начислила прежняя карточка манифестации (решение владельца 27.10.2026:
+ * переброс заменяет результат целиком, значит и его Порчу). Снимается ровно то, что карточка записала
+ * при начислении (psyManifest.warpShock), а не пересчёт: Порча из других источников и ручные правки не
+ * трогаются, ниже нуля не уходит. Один раз на карточку — отметка psyWarpShockReturned, чтобы повторный клик
+ * после сорванного переброса не снял Порчу второй раз. Варп-Замок этим не пользуется: его Порча остаётся.
+ * @returns {Promise<number>} сколько Порчи снято (0 — нечего снимать или уже снято)
+ */
+export async function returnWarpShock(actor, message, saved) {
+  const amount = Math.max(0, Math.trunc(Number(saved?.warpShock) || 0));
+  if (!amount || cardOnceUsed(message, "psyWarpShockReturned")) return 0;
+  const cur = Math.max(0, Number(actor.system?.corruption?.value) || 0);
+  const back = Math.min(amount, cur);
+  if (back > 0) await actor.update({ "system.corruption.value": cur - back });
+  await markCardOnce(message, "psyWarpShockReturned");
+  return back;
+}
+
+/**
  * Переброс психотеста с карточки СВОЕЙ ключевой силы. Параметры броска лежат во флаге карточки
  * (psyManifest.opts); тест повторяется целиком с ними (executePsychotest с reroll:true): те же
  * модификаторы, поддержание и Феномен пересчитываются новым результатом, а разовые траты первой
  * попытки — ОД, пул Быстрого Плетения, Очко Возрождения/Проводника, Руны, Раны Конверсии — не
- * платятся заново. Первый переброс Раунда бесплатный, прочие — 1 Очко Бесчестия (как переброс с полосы
+ * платятся заново. Порча Варп-Шока прежнего результата снимается, новый результат начисляет свою.
+ * Первый переброс Раунда бесплатный, прочие — 1 Очко Бесчестия (как переброс с полосы
  * Очков). Старая карточка помечается заменённой (флаг psyRerolled, хук гасит её кнопки).
  */
 export async function handlePsyRerollClick(message, btn) {
@@ -312,6 +331,9 @@ export async function handlePsyRerollClick(message, btn) {
       await actor.update({ [path]: spend.poolValue });
       note = `−1 Очко Бесчестия, осталось ${spend.poolValue}`;
     }
+    // Порча Варп-Шока прежнего результата уходит вместе с ним — новый результат начислит свою заново.
+    const returned = await returnWarpShock(actor, message, saved);
+    if (returned) note += `; Порча Варп-Шока прежнего результата (−${returned}) снята, новый результат начисляет заново`;
     const { executePsychotest } = await import("../sheets/tabs/psychic.mjs");
     await executePsychotest(actor, power, { ...foundry.utils.deepClone(saved.opts), reroll: true, rerollNote: note,
       rolled: saved.rolled ?? null, signatureFreeSpent: freeSpent });

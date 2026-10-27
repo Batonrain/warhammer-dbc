@@ -17,6 +17,8 @@ const NS = "warhammer-dbc";
 
 /** Ключи флагов, которые ГМ ставит по просьбе игрока (белый список сокета). */
 export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legionSurgeryUsed",
+  // Трата Очка «Успех» из меню карточки теста (apps/infamy-success.mjs): +Успех дописан в эту карточку.
+  "infamySuccessAdded",
   // 1d10 Знаний Веков после траты Очка (apps/knowledge-of-ages.mjs, wdbc-1rno.23).
   "knowledgeOfAgesRolled",
   // Тест «T+0, или Кровотечение» Критического Эффекта (combat/shock-death.mjs::rollBleedingTest, 3-edc4 п.18).
@@ -35,6 +37,8 @@ export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legi
   "signatureFreeUsed",
   // Переброс психотеста Ключевой Силой (combat/psyker-pools.mjs::handlePsyRerollClick): карточка переброшена и заменена.
   "psyRerolled",
+  // Порча Варп-Шока прежнего результата при переброске снята (combat/psyker-pools.mjs::returnWarpShock) — один раз на карточку.
+  "psyWarpShockReturned",
   // Психический Вампир (Талант Псайканы, combat/psychic-vampire.mjs): одна попытка поглотить душу с карточки урона.
   "vampireUsed",
   // Варп-Замок (Талант Псайканы, combat/warp-lock.mjs): одно «аварийное» применение с карточки Феномена/Прорыва.

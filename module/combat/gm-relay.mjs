@@ -25,6 +25,11 @@
 //      гоняет applyDamageToActor, клиент присылает только узкий список полей урона;
 //      источник «grapple» требует партнёра по Борьбе, «contact» — рукопашный урон
 //      с потолком (Sahara npc-applydamagetoactor).
+//    • grantCognition / grantEnergy — Облачная Когниция (до 2 ⚙) и Мотивное
+//      Причастие (до 3 ⚡), пачка J (Sahara 3-2501): клиент присылает только число,
+//      ГМ сам пересчитывает по данным цели (свободное место, потолок ½I.b за Раунд,
+//      Апокрифа цели); нужен соответствующий Талант у инициатора, а для ⚙ — цель,
+//      подключённая к Ноосфере. Расстояние и согласие цели ведёт стол.
 //  Просящий обязан владеть актором-инициатором (ГМ сверяет сам).
 //
 //  Порядок у вызывающего: сперва запись в цель (writeToTarget вернул false —
@@ -36,6 +41,9 @@ import { hasInspireWrath, inspiredHatredData, HATRED_PACK_ID } from "../rules/in
 import { hasAbility } from "../rules/ability-by-key.mjs";
 import { hasMeleeTalent } from "../rules/melee-talents.mjs";
 import { DEVOURER_OF_TIME_AP_DEBT_FLAG } from "./devourer-of-time.mjs";
+import { hasCloudCognition, hasMotiveEucharist, hasApocryphaCoil, planCloudCognition, planMotiveEucharist,
+         cloudCognitionCap, receivedNow, receivedFlagValue, CLOUD_COGNITION_MAX, MOTIVE_EUCHARIST_MAX, CLOUD_COGNITION_RECEIVED_FLAG }
+  from "../rules/technomystic-resources.mjs";
 
 /** Какие поля урона приёма разрешено присылать по сокету и их типы (applyDamage). */
 export const RELAY_DAMAGE_FIELDS = Object.freeze({
@@ -137,6 +145,24 @@ export function checkTargetWrite(op, ctx = {}) {
     return { ok: true };
   }
 
+  // Облачная Когниция / Мотивное Причастие: полезная нагрузка — одно целое число; сколько реально
+  // дойдёт (место у цели, потолок Раунда, Апокрифа), ГМ пересчитывает по данным цели в performTargetWrite.
+  if (op.kind === "grantCognition" || op.kind === "grantEnergy") {
+    if (Object.keys(op).some(k => k !== "kind" && k !== "amount")) return { ok: false, reason: `${op.kind}: лишние поля` };
+    const cognition = op.kind === "grantCognition";
+    const max = cognition ? CLOUD_COGNITION_MAX : MOTIVE_EUCHARIST_MAX;
+    if (!Number.isInteger(op.amount) || op.amount < 1 || op.amount > max) return { ok: false, reason: `${op.kind}: число вне 1…${max}` };
+    if (!(cognition ? hasCloudCognition(ctx.initiator) : hasMotiveEucharist(ctx.initiator))) {
+      return { ok: false, reason: `у инициатора нет ${cognition ? "Cloud Cognition" : "Motive Eucharist"}` };
+    }
+    if (cognition && !ctx.target?.system?.noosphereConnected) return { ok: false, reason: "цель не подключена к Ноосфере" };
+    // «Если он подключен к Ноосфере»: тумблер передающего ГМ сверяет сам. Запас ⚙/⚡ передающего и метку
+    // «раз в Ход» ГМ не сверяет: к моменту обработки запроса клиент уже мог списать свой запас, и сверка
+    // отвергала бы честную передачу — степень доверия та же, что у addFatigue/apDebt.
+    if (cognition && !ctx.initiator?.system?.noosphereConnected) return { ok: false, reason: "инициатор не подключён к Ноосфере" };
+    return { ok: true };
+  }
+
   // Урон приёма по чужой цели: клиент присылает только поля урона, считает и применяет ГМ.
   if (op.kind === "applyDamage") {
     if (!RELAY_DAMAGE_SOURCES.includes(op.source)) return { ok: false, reason: "неизвестный источник урона" };
@@ -201,6 +227,33 @@ export async function performTargetWrite(target, op, initiator = null) {
     const { applyDamageToActor } = await import("./damage.mjs");
     return applyDamageToActor(target, op.damage);
   }
+  if (op.kind === "grantCognition") {
+    // Потолок ½I.b за Раунд считается только в бою: вне боя Раунда нет (как «раз в Ход» у Разгона).
+    const { isEncounterActive } = await import("./action-economy.mjs");
+    const inCombat = isEncounterActive();
+    const flagNow = target.getFlag?.(NS, CLOUD_COGNITION_RECEIVED_FLAG);
+    const received = inCombat ? receivedNow(flagNow, game.combat?.id) : 0;
+    const plan = planCloudCognition({ amount: op.amount, giverCognition: op.amount, receiver: target.system?.cognition,
+      received, cap: cloudCognitionCap(target) });
+    if (!plan.ok) return null;
+    return target.update({
+      "system.cognition.value": (Number(target.system.cognition.value) || 0) + plan.moved,
+      ...(inCombat ? { [`${FLAG_PREFIX}${CLOUD_COGNITION_RECEIVED_FLAG}`]: receivedFlagValue(flagNow, game.combat?.id, plan.moved) } : {})
+    });
+  }
+  if (op.kind === "grantEnergy") {
+    const en = target.system?.energy;
+    const ap = target.system?.apocryphaEnergy;
+    const plan = planMotiveEucharist({ amount: op.amount, giverEnergy: op.amount, receiver: {
+      main: { value: en?.value, max: en?.maxTotal ?? en?.max },
+      apoc: hasApocryphaCoil(target) && (Number(ap?.max) || 0) > 0 ? { value: ap.value, max: ap.max } : null
+    } });
+    if (!plan.ok) return null;
+    return target.update({
+      "system.energy.value": (Number(en.value) || 0) + plan.toMain,
+      ...(plan.toApoc ? { "system.apocryphaEnergy.value": (Number(ap.value) || 0) + plan.toApoc } : {})
+    });
+  }
   if (op.kind === "dreadWailFear") {
     const { grantDreadWailFear } = await import("./timed-effects.mjs");
     return grantDreadWailFear(target);
@@ -261,7 +314,7 @@ export async function applyTargetWriteRelay(data, requester) {
   // Борьба: цель — партнёр инициатора (флаг на любом из двух), нужно для урона источника «grapple».
   const partners = initiator.getFlag?.(NS, "grapplePartnerUuid") === targetActor.uuid
     || targetActor.getFlag?.(NS, "grapplePartnerUuid") === initiator.uuid;
-  const verdict = checkTargetWrite(data?.op, { initiatorOwned, initiator, partners });
+  const verdict = checkTargetWrite(data?.op, { initiatorOwned, initiator, partners, target: targetActor });
   if (!verdict.ok) {
     console.warn(`Warhammer DBC | ${TARGET_WRITE_ACTION} отклонён: ${verdict.reason}`, data?.op);
     return false;

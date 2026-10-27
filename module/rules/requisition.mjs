@@ -62,6 +62,53 @@ export const QUANTITY_TIERS = Object.freeze([
   { min: 1001, max: Infinity, mod: -60, label: "1001+ предметов" }
 ]);
 
+// ── Узлы корабля ────────────────────────────────────────────────────────────
+//
+//  Книга Пустоты, «Реквизиция узлов» (void.json): «когда персонажи захотят
+//  обзавестись новыми узлами для своего корабля … примените обычные
+//  модификаторы за Редкость и Качество, а вместо модификатора за количество —
+//  модификатор из таблицы Реквизиции узлов». Решение владельца 26.10.2026
+//  (Sahara 10-4eac): режим «Узел корабля» окна «Достать снаряжение»; спорные
+//  виды узлов — структурные по сноске книги; срок установки не ведётся.
+
+/** Пак узлов корабля: из него окно предлагает выбор в режиме «Узел корабля». */
+export const NODE_PACKS = Object.freeze(["ship-components"]);
+
+/**
+ * Таблица Реквизиции узлов (порядок строк — как в книге). Первая запись —
+ * самая тяжёлая; `structural` — запасной тип для всего, что не классифицируется.
+ */
+export const NODE_TYPES = Object.freeze({
+  weapon:     { mod: -30, label: "оружейные" },       // макробатареи, лэнсы, торпеды, ангары, нова-орудия
+  ethereal:   { mod: -20, label: "эфирные" },         // авгуры, воксы, средства связи
+  energy:     { mod: -10, label: "энергетические" },  // генераториумы, пустотные щиты, варп-двигатели
+  structural: { mod:   0, label: "структурные" }      // отсеки, обсерватории, броня и прочее †
+});
+
+/**
+ * Вид компонента (system.kind пака ship-components) → строка таблицы. Здесь
+ * только то, что книга называет прямо: орудия (включая торпеды, ангары, нову —
+ * все они kind:"weapon"), авгуры, пустотные щиты и варп-двигатели. Остальное —
+ * двигатели drive, Поля Геллера, астропатические, окулумы, мостики, трюмы,
+ * жилые отсеки, жизнеобеспечение и «Дополнительные» — структурные: сноска
+ * книги и решение владельца 26.10.2026 для спорных. Новый вид в паке краснит
+ * test/rules/requisition-node.test.mjs, пока его не классифицируют.
+ */
+export const NODE_KIND_TYPE = Object.freeze({
+  weapon: "weapon", augur: "ethereal", voidShield: "energy", warp: "energy"
+});
+
+/** Компонент корабля (не корпус и не груз): то, что ставят на судно. */
+export const isShipNode = item => item?.type === "component";
+
+/** Тип узла по таблице книги; неизвестное и не-узел — структурный. */
+export function nodeTypeOf(item) {
+  return NODE_KIND_TYPE[item?.system?.kind] ?? "structural";
+}
+
+/** Ключ типа узла из ввода (окно, ГМ): неизвестное — структурный. */
+const normNodeType = key => (Object.hasOwn(NODE_TYPES, key) ? key : "structural");
+
 /** На сколько ступеней расходное снаряжение считается легче (стр. 165). */
 export const CONSUMABLE_TIER_SHIFT = 2;
 
@@ -134,7 +181,9 @@ export function quantityTier(quantity, { consumable = false } = {}) {
 // ── Что за предмет ──────────────────────────────────────────────────────────
 
 /**
- * Редкость предмета для реквизиции. Ритуал: Редкость Записи — system.record
+ * Редкость предмета для реквизиции. Узел корабля (component): system.rarity
+ * (режим «Узел корабля»; у остальных предметов поле называется availability).
+ * Ритуал: Редкость Записи — system.record
  * (wdbc-zaesd), record 0 — Записи в обороте нет. Остальные — availability;
  * пустое поле — «нет Редкости» (null), а не R0 (решение r0, 23.10.2026).
  * Тот же смысл, что у compendium-filters.mjs::indexAvailability — здесь для
@@ -142,6 +191,8 @@ export function quantityTier(quantity, { consumable = false } = {}) {
  */
 export function itemRarity(item) {
   if (!item) return null;
+  // Узел корабля: Редкость — system.rarity (число, пустого не бывает).
+  if (item.type === "component") return Number(item.system?.rarity) || 0;
   if (item.type === "ritual") {
     const record = Number(item.system?.record) || 0;
     return record > 0 ? record : null;
@@ -156,18 +207,18 @@ const weaponPropKeys = item => (item?.system?.weaponProps ?? [])
 
 /**
  * Категории Имплантов («имплант-техника»), которых касается Повелитель Войны:
- * Кибернетика, Бионика, Псибернетика и Механикус — решение владельца
+ * Кибернетика, Бионика, Псибернетика, Механикус и Скитарии — решение владельца
  * 26.10.2026 (книга пишет просто «Кибернетики»). Ключи — те, что стоят в
  * system.category Имплантов packs-src; подписи — IMPL_CAT листа
  * (sheets/sheet-helpers.mjs): Механикус = mechanicus/mechEnergy/mechFocus/
- * mechOther/mechadendrite, Бионика = bionic/bionic-arm/bionic-leg. Сюда
- * НЕ входят отдельные подписи Скитарии, Археотех, Биоимплант (Друкхари) и
- * Импланты Астартес. Новая категория в паке — красный
+ * mechOther/mechadendrite, Бионика = bionic/bionic-arm/bionic-leg, Скитарии =
+ * skitarii (кибернетика Скитариев, 19 имплантов). Сюда НЕ входят отдельные
+ * подписи Археотех, Биоимплант (Друкхари) и Импланты Астартес. Новая категория в паке — красный
  * test/rules/requisition-vs-data.test.mjs, пока владелец не решит.
  */
 export const IMPLANT_TECH_CATEGORIES = Object.freeze([
   "cybernetic", "bionic", "bionic-arm", "bionic-leg", "psybernetic",
-  "mechanicus", "mechEnergy", "mechFocus", "mechOther", "mechadendrite"
+  "mechanicus", "mechEnergy", "mechFocus", "mechOther", "mechadendrite", "skitarii"
 ]);
 
 /**
@@ -252,23 +303,29 @@ export function effectiveRarity(rarity, shifts = []) {
  * нет Редкости: в расчёт идёт 0, но `unrated` сообщает окну, что Редкость надо
  * указать вручную (или ГМ решит, что предмета в обороте нет).
  */
-export function requisitionModifier({ rarity = 0, quantity = 1, quality = "common", consumable = false, local = 0 } = {}) {
+export function requisitionModifier({ rarity = 0, quantity = 1, quality = "common", consumable = false, local = 0,
+  node = null } = {}) {
   const unrated = rarity == null;
   const r = unrated ? 0 : Number(rarity) || 0;
   const rMod = rarityMod(r);
-  const tier = quantityTier(quantity, { consumable });
+  // Узел корабля: вместо ступени Количества — строка таблицы Реквизиции узлов
+  // (quantityMod несёт именно эту замену, чтобы сумма считалась одним путём).
+  const nodeKey = node == null ? null : normNodeType(node);
+  const tier = nodeKey ? null : quantityTier(quantity, { consumable });
+  const qtyMod = nodeKey ? NODE_TYPES[nodeKey].mod : tier.mod;
   const qMod = qualityMod(quality);
   const lMod = Math.round(Number(local)) || 0;
 
   const parts = [];
   if (rMod) parts.push(`Редкость R${r}: ${sgn(rMod)}`);
-  if (tier.mod) parts.push(`Количество (${tier.label}${tier.shifted ? ", расходное — на 2 ступени легче" : ""}): ${sgn(tier.mod)}`);
+  if (nodeKey) parts.push(`Тип узла (${NODE_TYPES[nodeKey].label}): ${sgn(qtyMod)}`);
+  else if (tier.mod) parts.push(`Количество (${tier.label}${tier.shifted ? ", расходное — на 2 ступени легче" : ""}): ${sgn(tier.mod)}`);
   else if (tier.shifted) parts.push(`Количество (${tier.label}, расходное): 0`);
   if (qMod) parts.push(`Качество ${ITEM_QUALITY[quality]?.abbr ?? quality}: ${sgn(qMod)}`);
   if (lMod) parts.push(`ГМ (местная распространённость): ${sgn(lMod)}`);
 
-  return { rarityMod: rMod, quantityMod: tier.mod, qualityMod: qMod, localMod: lMod,
-    total: rMod + tier.mod + qMod + lMod, unrated, tier, parts };
+  return { rarityMod: rMod, quantityMod: qtyMod, qualityMod: qMod, localMod: lMod,
+    total: rMod + qtyMod + qMod + lMod, unrated, tier, node: nodeKey, parts };
 }
 
 /** Порог теста Inf: характеристика плюс модификатор таблиц (Таланты-галочки добавляет окно броска). */
@@ -291,31 +348,39 @@ export function requisitionThreshold(inf, modifier) {
  * @param {number}  [o.local]       поправка ГМа
  * @param {?number} [o.archonInf]   Inf.b Архонта, если реквизиция по его требованию
  *   (Талант «Что Захотите»); пусто — нет
+ * @param {boolean} [o.node]        режим «Узел корабля» (Книга Пустоты): вместо Количества —
+ *   строка таблицы по типу узла; Количество и «расходное» игнорируются
+ * @param {string}  [o.nodeType]    тип узла вручную (ГМ решил иначе); по умолчанию — по виду компонента
  */
 export function requisitionPlan(actor, { item = null, name = "", rarity, quantity = 1, quality = "common",
-  consumable, cls, local = 0, archonInf = null } = {}) {
+  consumable, cls, local = 0, archonInf = null, node = false, nodeType } = {}) {
   const baseRaw = rarity === undefined ? itemRarity(item) : rarity;
   const unrated = baseRaw == null;
   const baseRarity = unrated ? 0 : Number(baseRaw) || 0;
   const klass = { ...itemClass(item), ...(cls ?? {}) };
   const shifts = rarityShifts(actor, klass);
   const eff = effectiveRarity(baseRarity, shifts);
-  const isConsumable = consumable ?? isConsumableItem(item);
-  const q = normQuantity(quantity);
+  // Узлу Количество не нужно: один узел — одна покупка, ступень даёт тип узла.
+  const isConsumable = node ? false : (consumable ?? isConsumableItem(item));
+  const q = node ? 1 : normQuantity(quantity);
   const qual = ITEM_QUALITY_LIST.includes(quality) ? quality : "common";
+  const nodeKey = node ? normNodeType(nodeType ?? nodeTypeOf(item)) : null;
   const mods = requisitionModifier({ rarity: unrated ? null : eff, quantity: q, quality: qual,
-    consumable: isConsumable, local });
-  const title = name || item?.name || "снаряжение";
+    consumable: isConsumable, local, node: nodeKey });
+  const title = name || item?.name || (node ? "узел корабля" : "снаряжение");
   return {
-    label: `${title} ×${q}`,
-    cls: klass, shifts, unrated,
+    label: node ? title : `${title} ×${q}`,
+    cls: klass, shifts, unrated, node: nodeKey,
     baseRarity, rarity: eff,
     quantity: q, quality: qual, consumable: isConsumable,
     mods, total: mods.total,
     // Теги теста для сбора правил (rules/requisition-talents.mjs, область
     // "requisition" в resolve-test.mjs).
     rollContext: {
-      requisition: true, requisitionRarity: eff, requisitionQuantity: q,
+      requisition: true, requisitionRarity: eff,
+      // У узла Количества нет: ключа нет вовсе (оптовый бонус Повелителя Войны
+      // про штуки снаряжения и на узел не распространяется).
+      ...(nodeKey ? { requisitionNode: true, requisitionNodeType: nodeKey } : { requisitionQuantity: q }),
       // null/пусто/мусор — поля нет вовсе, а не 0: «0» значило бы «Архонт
       // требует, а его Inf.b нулевой».
       ...(archonInf !== null && archonInf !== "" && Number.isFinite(Number(archonInf))
@@ -336,7 +401,9 @@ export function requisitionSummaryLines(plan) {
     lines.push(`Редкость R${plan.baseRarity} → R${plan.rarity}: ${plan.shifts.map(s => s.label).join("; ")}`);
   }
   lines.push(...plan.mods.parts);
-  lines.push(`Модификатор таблиц книги (стр. 165): ${sgn(plan.total)}`);
+  lines.push(plan.node
+    ? `Модификатор Реквизиции узла (Книга Пустоты, таблицы Реквизиции узлов; Редкость и Качество — стр. 165): ${sgn(plan.total)}`
+    : `Модификатор таблиц книги (стр. 165): ${sgn(plan.total)}`);
   if (plan.unrated) lines.push("У предмета нет Редкости — взята R0; доступность решает ГМ.");
   return lines;
 }

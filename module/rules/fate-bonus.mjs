@@ -32,3 +32,14 @@ export function fateBonusOutcome({ rv, threshold, bonus = FATE_BONUS } = {}) {
   const degrees = Math.floor(Math.abs(raised - roll) / 10) + 1;
   return { base, bonus: add, threshold: raised, rv: roll, success, degrees };
 }
+
+/**
+ * Итог успешного теста после траты Очка «Успех»: к степеням прибавляются Успехи. Провал не лечится
+ * («+1 Успех к УСПЕШНОМУ тесту») — тогда null. Куб и порог не меняются.
+ */
+export function successBonusOutcome({ rv, threshold, extra = 1 } = {}) {
+  const base = fateBonusOutcome({ rv, threshold, bonus: 0 });
+  if (!base?.success) return null;
+  const add = Math.max(0, Math.trunc(Number(extra) || 0));
+  return { ...base, extra: add, degrees: base.degrees + add };
+}

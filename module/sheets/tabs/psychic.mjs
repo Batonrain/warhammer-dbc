@@ -1391,6 +1391,10 @@ export async function executePsychotest(actor, item, opts) {
 
   // ── Варп-Шок: не-Хаоситы получают Порчу при Феномене (1d5 при Прорыве) ──────
   let warpShockSection = "";
+  // Сколько Порчи эта карточка добавила (после Взгляда в Бездну; ниже, после записи, сверено с фактом): переброс психотеста Ключевой Силой
+  // снимает ровно столько (combat/psyker-pools.mjs::returnWarpShock), а не пересчитывает заново — Порча других
+  // источников и прежние ручные правки не трогаются.
+  let warpShockApplied = 0;
   if (phenomena && !NAT.isChaos) {
     let corrAmt = 1;
     if (perilTriggered) {
@@ -1403,7 +1407,7 @@ export async function executePsychotest(actor, item, opts) {
     const gaze = Math.min(corrAmt, gazeIntoAbyssReduction(actor));
     corrAmt -= gaze;
     const curCorr = actor.system.corruption?.value || 0;
-    if (corrAmt > 0) actorUpdates["system.corruption.value"] = curCorr + corrAmt;
+    if (corrAmt > 0) { actorUpdates["system.corruption.value"] = curCorr + corrAmt; warpShockApplied = corrAmt; }
     warpShockSection = `<div class="psy-warpshock">🌀 Варп-Шок: <b>+${corrAmt} Порчи</b>${gaze ? ` (Взгляд в Бездну −${gaze})` : ""}${perilTriggered ? " (1d5 — за Прорыв)" : ""}. Не-Хаоситы в радиусе PR×5 м от Прорыва: тест W+0 или +1 Порчи.</div>`;
   } else if (phenomena && NAT.isChaos) {
     warpShockSection = `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Демонический дар игнорирует негативные эффекты собственных Феноменов (но не Прорывов).</div>`;
@@ -1499,7 +1503,13 @@ export async function executePsychotest(actor, item, opts) {
     : "";
 
   // Применяем накопленные изменения (Раны/Порча)
+  const corrBefore = Number(actor.system?.corruption?.value) || 0;
   if (Object.keys(actorUpdates).length) await actor.update(actorUpdates);
+  // Запоминаем то, что Порча РЕАЛЬНО выросла: перехватчики обновления актора (Пустота Парии, Серый Человек)
+  // могут отменить рост, и тогда переброс не должен снимать чужую, уже набранную Порчу.
+  if (warpShockApplied > 0) {
+    warpShockApplied = Math.max(0, Math.min(warpShockApplied, (Number(actor.system?.corruption?.value) || 0) - corrBefore));
+  }
 
   // wdbc-fyvv: Порог психотеста — книжная формула «хар-ка + 5×эPR» с
   // приписками Пути/Вариации, но это те же база+слагаемые, что и у прочих
@@ -1547,7 +1557,8 @@ export async function executePsychotest(actor, item, opts) {
     // Параметры броска — чтобы кнопка «Переброс» с карточки повторила тест с теми же модификаторами.
     // JSON-круг выкидывает функции (onResult и т.п.): во флаге только данные.
     ? { "warhammer-dbc": { psyManifest: { actorUuid: actor.uuid, powerUuid: item.uuid, opts: JSON.parse(JSON.stringify(opts)),
-        rolled: { focusRoll: rolledFocus, pushBonus: pushBonus || null, conduit: rolledConduit } } } }
+        rolled: { focusRoll: rolledFocus, pushBonus: pushBonus || null, conduit: rolledConduit },
+        warpShock: warpShockApplied } } }
     : null });
   // Бесплатное Очко Ключевых Сил этого переброса уже занято (вне боя Раунда нет — иначе новая карточка дала бы второе).
   if (opts.signatureFreeSpent && manifestCard) await markCardOnce(manifestCard, "signatureFreeUsed");

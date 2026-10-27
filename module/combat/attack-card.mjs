@@ -323,6 +323,7 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
     data-has-extreme="${d.hasExtreme ? 1 : 0}"
     data-opportunist-floor="${d.opportunistFloor ? 1 : 0}"
     data-welder="${wp.welderMark ? 1 : 0}"
+    data-welder-part="${esc(wp.welderPart || "")}"
     data-breach-no-double="${wp.breachNoDouble ? 1 : 0}"
     data-neg-wounds-bonus="${wp.negWoundsBonus ?? 0}"
     data-cleave-child="${wp.cleaveChild ? 1 : 0}"

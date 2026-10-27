@@ -22,7 +22,7 @@
               <input type="checkbox" name="system.noosphereConnected" {{#if system.noosphereConnected}}checked{{/if}}/> Ноосфера
             </label>
             <button type="button" class="cognition-rest-btn" title="Начало Хода: +½ Int.b Когниции (карточка покажет цену Процессов)">↻ +{{system.cognition.regen}}</button>
-            {{#if cognition.canOverclock}}<button type="button" class="cognition-overclock-btn" title="Разгон: раз в Ход, свободное действие — 1 ⚡ → до I.b ⚙, за каждую ⚙ 2 урона в Интеллект">Разгон</button>{{/if}}</div>
+            {{#if cognition.canOverclock}}<button type="button" class="cognition-overclock-btn" title="Разгон: раз в Ход, свободное действие — 1 ⚡ → до I.b ⚙, за каждую ⚙ 2 урона в Интеллект">Разгон</button>{{/if}}{{#if cognition.canCloud}}<button type="button" class="cognition-cloud-btn" title="Облачная Когниция: отметьте цель; раз в Ход, свободное действие, Tech-Use+0 — до 2 ⚙ подключённому к Ноосфере в радиусе I×2 м (цель получит не больше ½I.b за Раунд)">Облако ⚙</button>{{/if}}</div>
           <div class="tg-body">
             <div class="tg-readout"><input type="number" class="cognition-input" value="{{system.cognition.value}}" min="0"/><span class="tg-slash">/</span><span class="tg-max" title="Пул = Int.b">{{system.cognition.max}}</span></div>
             <div class="tg-pips">{{#each cognition.pips as |p|}}<i class="tg-pip cog {{#if p.on}}on{{/if}}"></i>{{/each}}{{#unless cognition.pips.length}}<span class="tg-empty">— пул 0 —</span>{{/unless}}</div>
@@ -35,10 +35,21 @@
             <div class="tg-readout"><input type="number" class="energy-input" value="{{system.energy.value}}" min="0"/><span class="tg-slash">/</span><input type="number" class="energy-max-input tg-maxinput" value="{{system.energy.max}}" min="0" title="Бонусный макс. Энергии — вручную, сверх автобонуса от имплантов (Катушка Потенции и т.п.)"/></div>
             <div class="tg-maxcap">Бонусный макс. Энергии</div>
             <div class="tg-coil">{{#each energy.pips as |p|}}<i class="tg-cell {{#if p.on}}on{{/if}}"></i>{{/each}}{{#unless energy.pips.length}}<span class="tg-empty">— катушка не установлена —</span>{{/unless}}</div>
-            {{#if (or energy.canRelieveFatigue energy.canCharge)}}
+            {{#if (or energy.canRelieveFatigue energy.canCharge energy.canMotive)}}
             <div class="tg-coil-actions">
               {{#if energy.canRelieveFatigue}}<button type="button" class="coil-fatigue-btn" title="Катушка Потенции: снять 1 Усталость за {{energy.fatigueCost}} заряда (потребность во сне остаётся)">−1 Усталость ({{energy.fatigueCost}}⚡)</button>{{/if}}
               {{#if energy.canCharge}}<button type="button" class="coil-charge-btn" title="Электу-Индукторы: полное действие, Tech-Use+0 — 1 заряд за каждый Успех до максимума (мощность сети/батареи — решение ГМа)">⚡ Зарядка (Tech-Use)</button>{{/if}}
+              {{#if energy.canMotive}}<button type="button" class="coil-motive-btn" title="Мотивное Причастие: отметьте цель в базовом контакте; раз в Ход, свободное действие — до 3 своих ⚡ в её Катушки Потенции">Причастие ⚡</button>{{/if}}
+            </div>
+            {{/if}}
+            {{#if apocrypha}}
+            <div class="tg-apoc">
+              <div class="tg-head"><span class="tg-lbl">КАТУШКА АПОКРИФА</span><span class="tg-bonus" title="Максимум — база основной Катушки без бонусов Талантов. Заряды напрямую не тратятся: их только переносят в основную Катушку и обратно.">{{apocrypha.value}} / {{apocrypha.max}}</span></div>
+              <div class="tg-coil">{{#each apocrypha.pips as |p|}}<i class="tg-cell {{#if p.on}}on{{/if}}"></i>{{/each}}{{#unless apocrypha.pips.length}}<span class="tg-empty">— катушка не установлена —</span>{{/unless}}</div>
+              <div class="tg-coil-actions">
+                {{#if apocrypha.canTransfer}}<button type="button" class="coil-apoc-transfer-btn" title="Катушка Апокрифа: перенос ⚡ между основной Катушкой и Апокрифой — полудействие, без теста">⇄ Перенос</button>{{/if}}
+                {{#if apocrypha.canCharge}}<button type="button" class="coil-apoc-charge-btn" title="Электу-Индукторы: полное действие, Tech-Use+0 — 1 заряд за каждый Успех в Катушку Апокрифа (вместо основной)">⚡ Зарядить Апокрифу</button>{{/if}}
+              </div>
             </div>
             {{/if}}
           </div>

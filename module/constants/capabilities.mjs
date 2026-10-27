@@ -1574,8 +1574,9 @@ export const CAPABILITIES = {
     reader: "module/apps/talent-actions.mjs (кнопка «Обдумать 5 мин» на листе Таланта) + module/rules/situational.mjs foresightBonus (+10 на следующий тест I) + sheets/actor-sheet.mjs _runTest (clearForesight)"
   },
   "sage.core.infusedKnowledge": {
-    label: "Персонаж считается имеющим все Common Lore и Scholastic Lore на +0. Он не получает их в расчёте продвижений и должен изучать как обычно,",
-    source: "Infused Knowledge / Вложенные Знания", reader: ""
+    label: "Персонаж считается имеющим все Common Lore и Scholastic Lore на +0. Он не получает их в расчёте продвижений и должен изучать как обычно, чтобы продвинуть на +10 и выше или для изучения другого Таланта. Смоделировано (решение владельца 24.10.2026): +0 только для тестов — итог записи не ниже +0; ступень и пороги Талантов не меняются.",
+    source: "Infused Knowledge / Вложенные Знания",
+    reader: "module/rules/character.mjs — расчёт групповых Навыков (loreFloor: итог entry.total Common/Scholastic Lore не ниже +0); constants/talent-requirements.mjs читает ступень (rank), поэтому пороги не затронуты. Опознаётся по имени Таланта."
   },
   "sage.core.totalRecall": {
     label: "Всегда дружественный для Космодесантников. Персонаж способен вспоминать мельчайшие детали прошедших событий без тестов и запоминать массивы…",
@@ -1963,7 +1964,7 @@ export const CAPABILITIES = {
   "arsenal.core.lordOfWar": {
     label: "Персонаж уменьшает Редкость всего Экзотического снаряжения и Кибернетики на 1 и получает +20 на тесты Inf для получения снаряжения и тесты C…",
     source: "Lord of War / Повелитель Войны",
-    reader: "module/rules/requisition.mjs::rarityShifts — Редкость Экзотики и всей имплант-техники (Кибернетика, Бионика, Псибернетика, Механикус) −1 при реквизиции; module/rules/requisition-talents.mjs::requisitionTalentRules — +20 (авто в «Достать снаряжение» при Редкости 0 и ниже и Количестве 1001+, галочкой в тесте Commerce)"
+    reader: "module/rules/requisition.mjs::rarityShifts — Редкость Экзотики и всей имплант-техники (Кибернетика, Бионика, Псибернетика, Механикус, Скитарии) −1 при реквизиции; module/rules/requisition-talents.mjs::requisitionTalentRules — +20 (авто в «Достать снаряжение» при Редкости 0 и ниже и Количестве 1001+, галочкой в тесте Commerce)"
   },
   "arsenal.core.meleeTraining": {
     label: "Если персонаж не владеет этим Талантом для выбранного оружия, он может использовать только Обычную Атаку как приём,",
@@ -2267,12 +2268,14 @@ export const CAPABILITIES = {
   },
   // ── Техномистик
   "technomystic.core.apocryphaCoil": {
-    label: "Персонаж может установить в себя ещё одну Катушку Потенции (добывается отдельно). Её заряды нельзя использовать напрямую,",
-    source: "Apocrypha Coil / Катушка Апокрифа", reader: ""
+    label: "Персонаж может установить в себя ещё одну Катушку Потенции (добывается отдельно). Её заряды нельзя использовать напрямую, но за полудействие можно переносить ⚡ между основной Катушкой и Апокрифой без тестов; заряжать Апокрифу через Электу-Индукторы за полное действие. Таланты и Трейты, увеличивающие максимум основной Катушки, на Апокрифу не влияют. Смоделировано (решение владельца 26.10.2026): поле system.apocryphaEnergy {value,max}; максимум — ручная база + только имплант «Катушка Потенции» (без Мотивных Банков и бонусов Талантов, решение 27.10.2026); кнопки «⇄ Перенос» (1 ОД) и «⚡ Зарядить Апокрифу» на вкладке ТЕХ.",
+    source: "Apocrypha Coil / Катушка Апокрифа",
+    reader: "module/rules/character/final-pools.mjs::prepareFinalPools (system.apocryphaEnergy.max) + module/rules/technomystic-resources.mjs::planCoilTransfer + module/sheets/tabs/tech.mjs::apocryphaTransfer / apocryphaCharge (кнопки .coil-apoc-transfer-btn, .coil-apoc-charge-btn; templates/actor/parts/tab-tech.hbs)"
   },
   "technomystic.core.cloudCognition": {
-    label: "Подключённый к Ноосфере, раз в Ход за свободное действие персонаж может пройти Tech-Use(I)+0,",
-    source: "Cloud Cognition / Облачная Когниция", reader: ""
+    label: "Подключённый к Ноосфере, раз в Ход за свободное действие персонаж может пройти Tech-Use(I)+0, чтобы передать до 2 своей Когниции (⚙) любому согласному подключённому к Ноосфере существу в радиусе I×2 м; цель не может восстановить так более ½I.b (окр.▲) ⚙ в Раунд. Смоделировано (решение владельца 26.10.2026): кнопка «Облако ⚙» на вкладке ТЕХ, запись в цель через ГМ-релей, потолок — ½I.b ЦЕЛИ (решение 27.10.2026); счётчик Раунда — флаг cloudCognitionReceived на цели {бой, число}, гаснет с её Ходом и не переживает бой.",
+    source: "Cloud Cognition / Облачная Когниция",
+    reader: "module/sheets/tabs/tech.mjs::cloudCognition (кнопка .cognition-cloud-btn) + module/rules/technomystic-resources.mjs::planCloudCognition + module/combat/gm-relay.mjs (вид grantCognition)"
   },
   "technomystic.core.decompile": {
     label: "Засекая Ноосферным Сканированием неизвестное себе Техночудо, персонаж может потратить 1 Когницию, чтобы распознать его,",
@@ -2299,8 +2302,9 @@ export const CAPABILITIES = {
     reader: "module/sheets/tabs/tech.mjs::rollTechScan — запрос «перебросить за 1 ⚙» после проваленного Сканирования (rules/technomystic-talents.mjs::hasGlimpseOfOmniscience)."
   },
   "technomystic.core.motiveEucharist": {
-    label: "Подключаясь Электу-Индукторами к портам другого техножреца, раз в Ход за свободное действие персонаж может передать до 3 Когниции любому сог…",
-    source: "Motive Eucharist / Мотивное Причастие", reader: ""
+    label: "Подключаясь Электу-Индукторами к портам другого техножреца, раз в Ход за свободное действие персонаж может передать до 3 своей Энергии (⚡) любому согласному персонажу в базовом контакте, подпитывая его Катушки Потенции. Передаётся Энергия, а не Когниция (книга). Смоделировано (решение владельца 26.10.2026): кнопка «Причастие ⚡» на вкладке ТЕХ, запись в цель через ГМ-релей; сперва основная Катушка цели, излишек — в её Апокрифу.",
+    source: "Motive Eucharist / Мотивное Причастие",
+    reader: "module/sheets/tabs/tech.mjs::motiveEucharist (кнопка .coil-motive-btn) + module/rules/technomystic-resources.mjs::planMotiveEucharist + module/combat/gm-relay.mjs (вид grantEnergy)"
   },
   "technomystic.core.noosphericPiety": {
     label: "Персонаж уменьшает суммарную стоимость Процессов своих скомпилированных Славословий на 1 Когницию (только готовых к активации,",
@@ -2510,8 +2514,9 @@ export const CAPABILITIES = {
     source: "Fire in Blood / Огонь в Крови", reader: ""
   },
   "berserker.core.focusedWrath": {
-    label: "Используя Очко Бесчестия для рукопашной атаки по Ненавистной цели, персонаж усиливает эффект: Усиление +20 вместо +10;",
-    source: "Focused Wrath / Сфокусированный Гнев", reader: ""
+    label: "Используя Очко Бесчестия для рукопашной атаки по Ненавистной цели, персонаж усиливает эффект: Усиление +20 вместо +10; Переброс также даёт Преимущество; Успех — ещё +1 Успех; Атака Ненависти — Inf.b Успехов вместо 1 (мин.1). Смоделировано: Усиление и Переброс — в меню карточки атаки, Атака Ненависти — в окне атаки; Успех — пункт «Успех» меню карточки теста дописывает Успех в карточку (решение 27.10.2026), с Талантом +1 ещё.",
+    source: "Focused Wrath / Сфокусированный Гнев",
+    reader: "module/rules/focused-wrath.mjs (focusedWrathApplies: рукопашная + цель из Hatred) ← module/combat/focused-wrath.mjs::focusedWrathOnAttack ← module/hooks.mjs (doBonus: +20; doReroll: opts.reroll keepBest); module/sheets/attack/dialog.mjs (hateAttackDegrees: Inf.b Успехов); module/apps/infamy-success.mjs (Успех: +1 Успех и ещё +1); module/apps/infamy-points.mjs (focusedWrathBarNote — памятки Усиления/Переброса с полосы)"
   },
   "berserker.core.frenzy": {
     label: "За полное действие персонаж входит в боевую ярость: +10 к WS, S и W; −20 на все тесты BS, I и F; игнорирует −10 от Усталости;",
@@ -2737,7 +2742,7 @@ export const CAPABILITIES = {
   },
   "weaponsmith.core.welder": {
     label: "Попадая Избирательной атакой из оружия со свойством Melta по машине и нанося непоглощённый урон,",
-    source: "Welder / Сварщик", reader: "module/rules/gunsmith-talents.mjs::welderMarksHit — module/combat/attack.mjs (welderOn), module/combat/vehicle.mjs (welderLine): доп. Критический Эффект 1d5+1"
+    source: "Welder / Сварщик", reader: "module/rules/gunsmith-talents.mjs::welderMarksHit — module/combat/attack.mjs (welderOn, welderPart), module/combat/vehicle.mjs (welderLine): доп. Критический Эффект 1d5+1 в выбранную часть машины; выбор части — module/sheets/attack-dialog.mjs (прицел по VEHICLE_AIM_TARGETS при цели-технике, aimTarget.vehiclePart)"
   },
   // ── Медик
   "medic.core.antivenom": {
@@ -3248,7 +3253,7 @@ export const CAPABILITIES = {
   "psyker.core.psychicVampire": {
     label: "Раз в Раунд, убивая обладающее душой существо (но не изгоняя демона) психосилой или психосиловым оружием,",
     source: "Psychic Vampire / Психический Вампир",
-    reader: "module/rules/psychic-vampire.mjs::vampireOffered, vampireDrug; module/combat/psychic-vampire.mjs::vampireSection (кнопка на карточке урона в module/combat/damage.mjs, когда психическая атака вывела цель из строя), ::handleVampireClick (вопрос «есть ли душа», раз в Раунд, W+0, 1d5 Ран или вся Усталость; доза «наркотика» — module/sheets/tabs/drugs.mjs::weeklyDoseCheck, флаг актора drugWithdrawal: Зависимость 6 | W+0 | 6 дней). Расстройство «Агрессия 2» — текстом штрафа (автовыдачи расстройств у зависимостей нет)."
+    reader: "module/rules/psychic-vampire.mjs::vampireOffered, vampireDrug; module/combat/psychic-vampire.mjs::vampireSection (кнопка на карточке урона в module/combat/damage.mjs, когда психическая атака вывела цель из строя), ::handleVampireClick (вопрос «есть ли душа», раз в Раунд, W+0, 1d5 Ран или вся Усталость; доза «наркотика» — module/sheets/tabs/drugs.mjs::weeklyDoseCheck, флаг актора drugWithdrawal: Зависимость 6 | W+0 | 6 дней). Расстройство «Агрессия» тяжести 2 выдаётся само сразу при возникновении зависимости и держится до её срыва (новая доза не снимает): настройка penaltyDisorder в rules/psychic-vampire.mjs::VAMPIRE_ADDICTION, rules/drug-withdrawal.mjs::withdrawalDisorders, module/combat/drug-withdrawal.mjs::syncWithdrawalDisorders (возникновение зависимости, часы Календаря, срыв); если у персонажа уже есть своя «Агрессия» — её тяжесть поднимается на 2 (исходная запоминается во флаге withdrawalBoost) и возвращается при срыве; своё расстройство не дублируется и не удаляется."
   },
   "psyker.core.restraint": {
     label: "Персонаж может рассчитывать свой эPR для манифестации в безопасном режиме как тPR−3 вместо ½тPR как обычно.",
@@ -3262,7 +3267,7 @@ export const CAPABILITIES = {
   "psyker.core.signaturePowers": {
     label: "Персонаж выбирает до I.b известных психосил. Раз в Раунд он может потратить Очко Бесчестия для любого теста,",
     source: "Signature Powers / Ключевые Силы",
-    reader: "module/rules/psyker-talents.mjs::isSignaturePower, signatureToggle (до I.b сил, звёздочка в таблице психосил, список на Таланте); module/combat/psyker-pools.mjs::signatureFreeHtml, ::handleSignatureFreeClick, ::claimSignatureFree; module/combat/calm-warp.mjs::handleCalmWarpClick — module/combat/psyker-pools.mjs::handlePsyRerollClick (переброс психотеста с карточки: параметры броска лежат во флаге psyManifest); на карточке СВОЕЙ манифестации ключевой силы раз в Раунд бесплатное Очко: переброс психотеста (прочие — за 1 Очко Бесчестия), Усмирение Варпа на Феномен/Прорыв и кнопка «Успех» (+1 к Успехам силы); сопротивление чужой силе — не делается (решение владельца 26.10.2026)."
+    reader: "module/rules/psyker-talents.mjs::isSignaturePower, signatureToggle (до I.b сил, звёздочка в таблице психосил, список на Таланте); module/combat/psyker-pools.mjs::signatureFreeHtml, ::handleSignatureFreeClick, ::claimSignatureFree; module/combat/calm-warp.mjs::handleCalmWarpClick — module/combat/psyker-pools.mjs::handlePsyRerollClick (переброс психотеста с карточки: параметры броска лежат во флаге psyManifest); на карточке СВОЕЙ манифестации ключевой силы раз в Раунд бесплатное Очко: переброс психотеста (прочие — за 1 Очко Бесчестия), Усмирение Варпа на Феномен/Прорыв и кнопка «Успех» (+1 к Успехам силы); при переброске Порча Варп-Шока, начисленная прежней карточкой (psyManifest.warpShock), снимается — module/combat/psyker-pools.mjs::returnWarpShock, и новый результат начисляет заново (решение владельца 27.10.2026); сопротивление чужой силе — не делается (решение владельца 26.10.2026)."
   },
   "psyker.core.techniqueFocus": {
     label: "Псайкер получает +10 на манифестацию выбранной психосилы и −10 на все вызванные ею Феномены.",
@@ -3296,7 +3301,7 @@ export const CAPABILITIES = {
   "psyker.core.woundInReality": {
     label: "Тратя как минимум 3 PR на поддержание психосил, персонаж может не тратить тPR на поддержание новых манифестаций (ограничиваясь изначальными…",
     source: "Wound In Reality / Рана в Реальности",
-    reader: "module/rules/wound-in-reality.mjs::woundSustainSplit (бесплатные силы не снижают тPR — module/rules/character.mjs), ::woundFreeToggleGate (галочка до Cor.b сил, пока платного поддержания 3+ PR); module/combat/wound-in-reality.mjs::setWoundFree, ::syncWoundAura (радиус ауры — запись kind:\"aura\" Таланта, ключ «wound» формулы, apps/mechanics.mjs::syncAuraFlag + regions/auras.mjs клонирует Черту-метку packs-src/traits «Wound in Reality Aura»); числа ауры за каждую силу — источник правил woundAura (rules/sources.mjs: −5 Пси-чутьё, +10 Варп-Нестабильность), +10 Феномены — sheets/tabs/psychic.mjs::executePsychotest, Завеса +1 за каждые 3 силы — sheets/demon-prince-sheet.mjs::dpVeilSteps."
+    reader: "module/rules/wound-in-reality.mjs::woundSustainSplit (бесплатные силы не снижают тPR — module/rules/character.mjs), ::woundFreeToggleGate (галочка до Cor.b сил, пока платного поддержания 3+ PR); module/combat/wound-in-reality.mjs::setWoundFree, ::syncWoundAura (радиус ауры — запись kind:\"aura\" Таланта, ключ «wound» формулы, apps/mechanics.mjs::syncAuraFlag + regions/auras.mjs клонирует Черту-метку packs-src/traits «Wound in Reality Aura»); числа ауры за каждую силу — источник правил woundAura (rules/sources.mjs: −5 Пси-чутьё, +10 Варп-Нестабильность), +10 Феномены — sheets/tabs/psychic.mjs::executePsychotest, Завеса +1 за каждые 3 силы — rules/wound-in-reality.mjs::woundAuraVeil через общий rules/veil-steps.mjs::veilStepsFor (Завеса сцены + аура): лист Демон-Принца (sheets/demon-prince-sheet.mjs::dpVeilSteps) и Призыв демона (apps/demon-summon.mjs — срок дестабилизации Рыцаря Бога по Завесе там, где стоит призывающий)."
   },
   // ── Рукопашные
   "meleeCore.core.assassinStrike": {
@@ -3859,7 +3864,7 @@ export const CAPABILITIES = {
   "elite.knigaPustoty.pustohod.theFactotumCase": {
     label: "При приобретении узлов и реквизиции на обслуживание пустолёта персонаж получает +10.",
     source: "The Factotum Case / Дело Фактотума",
-    reader: "ЧАСТИЧНО: module/rules/requisition-talents.mjs::requisitionTalentRules — галочка +10 «реквизиция на обслуживание пустолёта» в тесте «Достать снаряжение»; приобретение узлов не подключено"
+    reader: "module/rules/requisition-talents.mjs::requisitionTalentRules — +10 автоматически при приобретении узла корабля (режим «Узел корабля» окна «Достать снаряжение», ctx.requisitionNode; Книга Пустоты, «Реквизиция узлов») и галочкой +10 «реквизиция на обслуживание пустолёта» в обычном тесте «Достать снаряжение»"
   },
   "elite.knigaPustoty.pustohod.thirstForDesecration": {
     label: "При проведении ритуала Осквернения Пустотного Титана персонаж получает +10 к тестам.",

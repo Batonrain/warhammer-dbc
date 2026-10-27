@@ -14,8 +14,7 @@ import { DP_GODS, dpGodMeta, DP_ASCENSION, DP_IMMORTALITY, DP_RETINUE,
          DP_FAVOR_RULES, dpGiftsFor, dpGiftCost, DP_GIFT_NOTE,
          dpDivineTrait, DEMON_FORMS, DEMON_KEY_TRAITS, DEMON_WEAPON_PROPS,
          DP_NATURE_TRAITS, DP_MIGHT, dpManifest } from "../constants/demon-prince.mjs";
-import { veilTotal } from "../constants/veil.mjs";
-import { woundAuraVeil } from "../rules/wound-in-reality.mjs";
+import { veilStepsFor } from "../rules/veil-steps.mjs";
 import { infamyContext } from "../apps/infamy-points.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
@@ -33,15 +32,10 @@ const DP_CHAR_LABELS = { ws:"Ближний бой (WS)", bs:"Стрельба (
 
 // Эффективное Истончение Завесы на текущей сцене + Якори в Реальности Принца.
 function dpVeilSteps(actor) {
-  let t = 0;
-  try {
-    const scene = canvas?.scene ?? game.scenes?.current ?? null;
-    if (scene) t = veilTotal(scene.getFlag("warhammer-dbc", "veil"));
-  } catch (_e) { /* сцена не готова */ }
   const anchors = (actor.system.dp?.gifts || []).filter(g => g.key === "realityAnchor").length;
-  // Аура Раны в Реальности (Талант Псайканы): «Истончение Завесы в этой ауре +1» за каждые 3 бесплатные силы — только
-  // для того, кто стоит в ауре; Завеса сцены (Конструкция Завесы, apps/veil.mjs) остаётся общей.
-  return t + anchors + woundAuraVeil(actor);
+  // Завеса сцены + аура Раны в Реальности (Талант Псайканы: «Истончение Завесы в этой ауре +1» за каждые 3
+  // бесплатные силы — только для того, кто стоит в ауре); общий помощник с Призывом демона (rules/veil-steps.mjs).
+  return veilStepsFor(actor).total + anchors;
 }
 
 // Действия листа Демон-Принца; общие — от листа персонажа (ApplicationV2

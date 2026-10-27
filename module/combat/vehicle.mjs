@@ -542,7 +542,10 @@ export async function applyDamageToVehicle(actor, damageData) {
   if (damageData.welder && net > 0) {
     const wRoll = await new Roll("1d5").evaluate();
     const wLevel = welderCritLevel(wRoll.total);
-    const wKey = LOCATION_LABEL_TO_KEY[vehicleLocation] || "hull";
+    // Книга: «в ту часть машины, в которую он целился» — выбранная в окне атаки (welderPart);
+    // нет её (старая карточка) — часть, куда легло попадание.
+    const wPart = LOCATION_LABEL_TO_KEY[damageData.welderPart] ? damageData.welderPart : vehicleLocation;
+    const wKey = LOCATION_LABEL_TO_KEY[wPart] || "hull";
     const wCe = getVehicleCrit(wKey, wLevel);
     welderLine = `
     <div class="dmg-critical-block">

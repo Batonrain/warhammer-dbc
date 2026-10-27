@@ -22,13 +22,94 @@
 import { applyCharDamage } from "./char-damage.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
+import { DISORDER_LIBRARY } from "../constants/fear-tables.mjs";
 import { esc } from "../helpers/utils.mjs";
 import {
   WITHDRAWAL_FLAG, addictionRecords, addictionSnapshot, drugKey, parseFrequency, periodBoundaries, freshEntry,
-  readWithdrawalEntries, breakTestMod, parsePenaltyMods, formatMod
+  readWithdrawalEntries, breakTestMod, parsePenaltyMods, formatMod, withdrawalDisorders
 } from "../rules/drug-withdrawal.mjs";
 
 const NS = "warhammer-dbc";
+/** Флаг предмета-расстройства, выданного зависимостью: ключ препарата. По нему расстройство и снимается. */
+export const WITHDRAWAL_DISORDER_FLAG = "withdrawalDisorder";
+
+/**
+ * Флаг СВОЕГО предмета-расстройства игрока, тяжесть которого зависимость подняла: { key, from, applied } —
+ * ключ препарата, исходная тяжесть, тяжесть после прибавки. Запоминается при выдаче, а не пересчитывается.
+ */
+export const WITHDRAWAL_BOOST_FLAG = "withdrawalBoost";
+
+const flagOf = (i, key) => i?.getFlag?.(NS, key) ?? i?.flags?.[NS]?.[key];
+const isMine = i => i?.type === "mentalDisorder" && !!flagOf(i, WITHDRAWAL_DISORDER_FLAG);
+const SEV_MIN = -5, SEV_MAX = 5;
+const clampSeverity = n => Math.max(SEV_MIN, Math.min(SEV_MAX, Math.trunc(Number(n) || 0)));
+
+/**
+ * Привести расстройства зависимости в соответствие с её состоянием (Психический Вампир: «Агрессия» тяжести 2
+ * — сразу при возникновении зависимости и до срыва; решение владельца 27.10.2026). Идемпотентно — зовётся из
+ * часов Календаря, при приёме дозы, при возникновении и снятии зависимости, повторный вызов ничего не плодит.
+ *  • нет такого расстройства у персонажа — выдаётся обычное (sheets/tabs/disorders.mjs::createDisorderItem),
+ *    помеченное ключом препарата; зависимости нет — снимается только такое, помеченное;
+ *  • есть СВОЁ расстройство с этим названием — не дублируется и не удаляется: его тяжесть поднимается на
+ *    тяжесть штрафа (с обрезкой по потолку), исходная тяжесть пишется во флаг withdrawalBoost; при срыве
+ *    зависимости снимается ровно фактическая прибавка (текущая − (applied − from)): если игрок за это время
+ *    менял тяжесть сам, его правка сохраняется.
+ * @returns {Promise<{granted:{key:string,name:string,severity:number}[], boosted:{name:string,from:number,to:number}[],
+ *   removed:string[], restored:{name:string,to:number}[]}>}
+ */
+export async function syncWithdrawalDisorders(actor) {
+  const out = { granted: [], boosted: [], removed: [], restored: [] };
+  if (!actor?.items) return out;
+  const wanted = withdrawalDisorders(actor.items, readWithdrawalEntries(actor));
+  const isWanted = key => wanted.some(w => w.key === key);
+  const all = () => [...actor.items];
+  const mine = all().filter(isMine);
+
+  const stale = mine.filter(i => !isWanted(flagOf(i, WITHDRAWAL_DISORDER_FLAG)));
+  if (stale.length) {
+    try {
+      await actor.deleteEmbeddedDocuments("Item", stale.map(i => i.id));
+      out.removed.push(...stale.map(i => i.name));
+    } catch (e) { console.warn("warhammer-dbc | зависимость: не снять расстройство", e); }
+  }
+
+  // Своё расстройство, поднятое зависимостью, которой больше нет, — вернуть тяжесть и убрать метку.
+  for (const item of all().filter(i => i?.type === "mentalDisorder" && flagOf(i, WITHDRAWAL_BOOST_FLAG))) {
+    const b = flagOf(item, WITHDRAWAL_BOOST_FLAG);
+    if (isWanted(b.key)) continue;
+    const to = clampSeverity((Number(item.system?.severity) || 0) - ((Number(b.applied) || 0) - (Number(b.from) || 0)));
+    try {
+      await item.update({ "system.severity": to, [`flags.${NS}.-=${WITHDRAWAL_BOOST_FLAG}`]: null });
+      out.restored.push({ name: item.name, to });
+    } catch (e) { console.warn("warhammer-dbc | зависимость: не вернуть тяжесть расстройства", e); }
+  }
+
+  for (const w of wanted) {
+    if (mine.some(i => flagOf(i, WITHDRAWAL_DISORDER_FLAG) === w.key)) continue;
+    const own = all().find(i => i?.type === "mentalDisorder" && i.name === w.name);
+    if (own) {
+      // Уже поднято этой зависимостью — вторая прибавка не нужна.
+      if (flagOf(own, WITHDRAWAL_BOOST_FLAG)?.key === w.key) continue;
+      const from = Number(own.system?.severity) || 0;
+      const applied = clampSeverity(from + w.severity);
+      try {
+        await own.update({ "system.severity": applied, [`flags.${NS}.${WITHDRAWAL_BOOST_FLAG}`]: { key: w.key, from, applied } });
+        out.boosted.push({ name: own.name, from, to: applied });
+      } catch (e) { console.warn("warhammer-dbc | зависимость: не поднять тяжесть расстройства", e); }
+      continue;
+    }
+    const entry = DISORDER_LIBRARY.find(d => d.name === w.name) ?? { name: w.name, desc: "", testMod: 0 };
+    try {
+      const { createDisorderItem } = await import("../sheets/tabs/disorders.mjs");
+      const item = await createDisorderItem(actor, entry, {
+        system: { severity: w.severity },
+        flags: { [NS]: { [WITHDRAWAL_DISORDER_FLAG]: w.key } }
+      });
+      if (item) out.granted.push(w);
+    } catch (e) { console.warn("warhammer-dbc | зависимость: не выдать расстройство", e); }
+  }
+  return out;
+}
 
 /**
  * Персонаж зависим от препарата (task-9717): запись флага АКТОРА-получателя, а не
@@ -47,6 +128,21 @@ export async function startWithdrawal(actor, item, now = globalThis.game?.time?.
   const entry = { ...freshEntry(now), addicted: true, name: item?.name ?? prev?.name ?? key, addiction };
   try { await actor.setFlag(NS, WITHDRAWAL_FLAG, { [key]: entry }); }
   catch (e) { console.warn("warhammer-dbc | зависимость: не записать отсчёт частоты приёма", e); }
+  // Зависимость возникла (или доза принята — расстройство от дозы не уходит): расстройство-эффект выдаётся сразу.
+  await notifyDisorders(await syncWithdrawalDisorders(actor));
+}
+
+/**
+ * Сообщения игроку о выданном, поднятом, снятом и возвращённом расстройстве зависимости — оно не должно ни
+ * появляться, ни меняться, ни исчезать молча.
+ */
+async function notifyDisorders({ granted, boosted, removed, restored }) {
+  const ntf = globalThis.ui?.notifications;
+  const info = m => ntf?.info?.(m);
+  for (const g of granted) info(`Зависимость: на лист добавлено ментальное расстройство «${g.name}» (тяжесть ${g.severity}); оно останется, пока зависимость не будет сорвана.`);
+  for (const b of boosted) info(`Зависимость: тяжесть расстройства «${b.name}» ${b.from} → ${b.to}; после срыва зависимости вернётся.`);
+  for (const name of removed) info(`Расстройство «${name}» снято: зависимость сорвана.`);
+  for (const r of restored) info(`Расстройство «${r.name}»: зависимость сорвана, тяжесть возвращена (${r.to}).`);
 }
 
 /**
@@ -59,6 +155,8 @@ export async function endWithdrawal(actor, drug) {
   if (!actor?.setFlag || readWithdrawalEntries(actor)[key] == null) return;
   try { await actor.setFlag(NS, WITHDRAWAL_FLAG, { [key]: null }); }
   catch (e) { console.warn("warhammer-dbc | зависимость: не снять отсчёт", e); }
+  // Зависимость сорвана — выданное ею расстройство снимается, поднятая тяжесть своего возвращается.
+  await notifyDisorders(await syncWithdrawalDisorders(actor));
 }
 
 /** За закончившийся период пробовали сорвать зависимость — второй попытки на тот же период нет. */
@@ -85,7 +183,14 @@ async function chat(actor, header, body, rolls = []) {
  * препарату наверстывает ВСЕ границы периодов в отрезке (прыжок Календаря на
  * недели — несколько периодов, а не один).
  */
-export async function drugWithdrawalClock(actor, { from, to }) {
+export async function drugWithdrawalClock(actor, range) {
+  // Расстройство зависимости сверяется ПОСЛЕДНИМ шагом и всегда: зависимостей нет — снимается то, что выдавалось;
+  // зависимость есть, а расстройство удалили руками — возвращается (и игроку об этом сказано).
+  try { await withdrawalClockBody(actor, range); }
+  finally { await notifyDisorders(await syncWithdrawalDisorders(actor)); }
+}
+
+async function withdrawalClockBody(actor, { from, to }) {
   const records = addictionRecords(actor.items, readWithdrawalEntries(actor));
   if (!records.length) return;
   for (const { key, name, entry, add } of records) {

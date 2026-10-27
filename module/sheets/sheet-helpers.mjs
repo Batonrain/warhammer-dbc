@@ -94,6 +94,7 @@ import { fistBalanceBonus } from "../rules/pugilist-talents.mjs";
 import { isHookedUp, hookUpMinDose } from "../rules/drug-doses.mjs";
 import { addictionTestParts, parseFrequency, readWithdrawalEntries, addictionRecords, withdrawalStatusLabel } from "../rules/drug-withdrawal.mjs";
 import { hasOverclock } from "../rules/technomystic-talents.mjs";
+import { hasApocryphaCoil, hasCloudCognition, hasMotiveEucharist } from "../rules/technomystic-resources.mjs";
 import { diseaseVectors, vectorLabel } from "../rules/disease-infection.mjs";
 
 // Определение всех Состояний листа — реестр constants/conditions.mjs
@@ -1596,6 +1597,8 @@ function buildGetDataUncached(actor) {
     value: cogVal, max: cogMax, regen: system.cognition?.regen ?? 0,
     // Разгон (Талант Техномистика, Sahara 3-2501): кнопка рядом с «↻».
     canOverclock: hasOverclock(actor),
+    // Облачная Когниция (пачка J): кнопка «Облако» рядом с «Разгон».
+    canCloud: hasCloudCognition(actor),
     pips: Array.from({ length: Math.min(14, Math.max(0, cogMax)) }, (_, i) => ({ on: (i + 1) <= cogVal }))
   };
   const enVal = system.energy?.value ?? 0;
@@ -1613,8 +1616,19 @@ function buildGetDataUncached(actor) {
     canRelieveFatigue: enMaxTotal > 0,
     canCharge: enMaxTotal > 0 && allItems.some(i => i.type === "implant"
       && i.getFlag?.("warhammer-dbc", "installed") && !i.getFlag?.("warhammer-dbc", "disabled")
-      && /electoo|электу/i.test(i.name))
+      && /electoo|электу/i.test(i.name)),
+    // Мотивное Причастие (пачка J): кнопка «Причастие ⚡» — свои ⚡ в Катушки цели.
+    canMotive: hasMotiveEucharist(actor) && enVal > 0
   };
+  // Катушка Апокрифа (пачка J): вторая полоса и две кнопки, только с Талантом. Максимум считает
+  // расчёт актора (rules/character/final-pools.mjs); заряды напрямую не тратятся.
+  const apVal = system.apocryphaEnergy?.value ?? 0, apMax = system.apocryphaEnergy?.max ?? 0;
+  context.apocrypha = hasApocryphaCoil(actor) ? {
+    value: apVal, max: apMax,
+    pips: Array.from({ length: Math.min(16, Math.max(0, apMax)) }, (_, i) => ({ on: (i + 1) <= apVal })),
+    canTransfer: apMax > 0 && (apVal > 0 || enVal > 0),
+    canCharge: context.energy.canCharge
+  } : null;
   context.noosphereActions = NOOSPHERE_ACTIONS;
 
   // ── Инфограждение: сводка по высокотехнологичному снаряжению персонажа ────

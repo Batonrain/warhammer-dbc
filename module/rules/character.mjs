@@ -231,6 +231,9 @@ export function prepareCharacterDerived(actor, system) {
     const skillPenaltyHalved = new Set();
     // ── Кибернетика Механикум: авто-автоматизация Техночудес ────────────────
     let implantEnergyMax   = 0;   // +N к максимуму Катушки Потенции (Manipulus и т.п.)
+    // Только сам имплант «Катушка Потенции» — база для Катушки Апокрифа (решение владельца 27.10.2026:
+    // Мотивные Банки и прочие импланты, поднимающие Катушку, в её максимум не входят).
+    let implantCoilEnergyMax = 0;
     let implantCompBonus   = 0;   // лучший бонус к тесту Компенсатора среди имплантов
     const techFocusInstalled = []; // Технофокусы (Железо): {name, quality, mod}
     // Черты, импланты и таланты дают авто-эффекты всегда; психосилы — пока
@@ -299,9 +302,12 @@ export function prepareCharacterDerived(actor, system) {
         const hasSchemaComp = sysComp && Object.values(sysComp).some(v => v);
         const mech = implantMech(item.name);
 
-        if (hasSchemaEnergy) implantEnergyMax += sysEnergy[q] ?? 0;
-        else if (mech?.energyMax) implantEnergyMax += typeof mech.energyMax === "object"
+        let itemEnergy = 0;
+        if (hasSchemaEnergy) itemEnergy = sysEnergy[q] ?? 0;
+        else if (mech?.energyMax) itemEnergy = typeof mech.energyMax === "object"
           ? (mech.energyMax[q] ?? 0) : mech.energyMax;
+        implantEnergyMax += itemEnergy;
+        if (itemHasName(item, "Potentia Coil") || itemHasName(item, "Катушка Потенции")) implantCoilEnergyMax += itemEnergy;
 
         const compBonus = hasSchemaComp ? (sysComp[q] ?? 0) : (mech?.compensator?.[q] ?? 0);
         if (compBonus > implantCompBonus) implantCompBonus = compBonus;
@@ -993,9 +999,18 @@ export function prepareCharacterDerived(actor, system) {
 
     // ── Групповые навыки ──────────────────────────────────────────────────
     const groupSkills = system.groupSkills || {};
+    // Infused Knowledge / Вложенные Знания (sage.core.infusedKnowledge, пачка J, решение
+    // владельца 24.10.2026): «считается имеющим все Common Lore и Scholastic Lore
+    // изученными на +0» — только для ТЕСТОВ: итог записи не ниже +0. Ступень (entry.rank)
+    // не трогаем: пороги Талантов и требования Lore (constants/talent-requirements.mjs) и
+    // стоимость продвижения смотрят на неё, а не на итог. Опознаётся по имени — копия
+    // на акторе до «Обновить мир» ещё без записи Конструктора.
+    const infusedKnowledge = [...actor.items].some(i => i.type === "talent"
+      && (itemHasName(i, "Infused Knowledge") || itemHasName(i, "Вложенные Знания")));
     for (const [groupKey, entries] of Object.entries(groupSkills)) {
       if (!Array.isArray(entries)) continue;
       const def     = GROUP_SKILLS_DEF[groupKey];
+      const loreFloor = infusedKnowledge && (groupKey === "commonLore" || groupKey === "scholasticLore");
       for (const entry of entries) {
         // Спец-навык может иметь свою базовую характеристику (entry.char),
         // иначе берётся характеристика группы по умолчанию.
@@ -1003,6 +1018,7 @@ export function prepareCharacterDerived(actor, system) {
         const charVal   = entryChar ? (chars[entryChar]?.total ?? 0) : 0;
         let gRankBonus  = SKILL_RANKS[entry.rank]?.bonus ?? -20;
         if (gRankBonus < 0 && skillPenaltyHalved.has(groupKey)) gRankBonus = Math.ceil(gRankBonus / 2);
+        if (loreFloor && gRankBonus < 0) gRankBonus = 0;
         // Постоянный модификатор специализации (wdbc-q4wb) — то же поле, что
         // у обычных Навыков, только хранится в записи списка, а не в схеме
         // (групповые Навыки — свободный список специализаций).
@@ -1190,7 +1206,7 @@ export function prepareCharacterDerived(actor, system) {
     // Хвост пересчёта — Инициатива, Когниция, Энергия, Пси-Рейтинг — вынесен
     // в rules/character/final-pools.mjs (wdbc-neez): он последний в функции и
     // считается из уже готовых чисел, поэтому выносится без риска для порядка.
-    prepareFinalPools(actor, system, { chars, agBonus, traitInitMod, implantEnergyMax,
+    prepareFinalPools(actor, system, { chars, agBonus, traitInitMod, implantEnergyMax, implantCoilEnergyMax,
                                        sustainedCost, implantCompBonus, techFocusInstalled });
     // Parasite/Паразит (Трейт — общий, wdbc-ux8a): Инициатива паразита —
     // после prepareFinalPools, иначе её перезапишут. Характеристики

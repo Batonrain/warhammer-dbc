@@ -258,6 +258,26 @@ export function withdrawalPenaltyRules(items, entries, now) {
   return out;
 }
 
+/**
+ * Расстройства, которые зависимость кладёт на персонажа, пока она есть (эффект зависимости — книга, поле 4, —
+ * бывает ментальным расстройством: Психический Вампир «Агрессия» тяжести 2). Решение владельца 27.10.2026
+ * (I5): расстройство выдаётся СРАЗУ при возникновении зависимости и держится до её срыва — новая доза его не
+ * снимает и срок дозы не важен (в отличие от штрафа к броскам `penaltyMods`, который идёт только без дозы).
+ * Описание лежит в настройках Зависимости — `penaltyDisorder: { name, severity }`; препарат без поля
+ * расстройства не даёт.
+ * @returns {{key:string, name:string, severity:number}[]} по одному на препарат
+ */
+export function withdrawalDisorders(items, entries) {
+  const out = [];
+  for (const { key, add } of addictionRecords(items, entries)) {
+    const d = add.penaltyDisorder;
+    const name = String(d?.name ?? "").trim();
+    if (!name) continue;
+    out.push({ key, name, severity: Math.max(-5, Math.min(5, Math.trunc(Number(d.severity) || 0))) });
+  }
+  return out;
+}
+
 /** Записи состояния актора: { <ключ>: { lastDose, doneTo, tested } }. */
 export function readWithdrawalEntries(actor) {
   return actor?.getFlag?.(NS, WITHDRAWAL_FLAG) ?? actor?.flags?.[NS]?.[WITHDRAWAL_FLAG] ?? {};

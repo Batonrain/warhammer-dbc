@@ -85,11 +85,12 @@ describe("признаки предметов на настоящих данны
 
   it("Повелитель Войны: категории Имплантов в паке делятся на «имплант-техника» и «не входят» — новой категории без решения нет", () => {
     // Решение владельца 26.10.2026: Кибернетика, Бионика, Псибернетика и
-    // Механикус. Скитарии, Археотех, биоимпланты Друкхари и органы Астартес —
+    // Механикус; того же дня добавлены Скитарии (кибернетика Скитариев —
+    // тоже имплант-техника). Археотех, биоимпланты Друкхари и органы Астартес —
     // отдельные подписи листа (IMPL_CAT в sheets/sheet-helpers.mjs), не входят.
     const TECH = ["bionic", "bionic-arm", "bionic-leg", "cybernetic", "mechEnergy", "mechFocus",
-      "mechOther", "mechadendrite", "mechanicus", "psybernetic"];
-    const NOT_TECH = ["astartes", "bioimplant", "skitarii", "archeotech"];
+      "mechOther", "mechadendrite", "mechanicus", "psybernetic", "skitarii"];
+    const NOT_TECH = ["astartes", "bioimplant", "archeotech"];
     const implants = packDocuments("implants", "implant").map(d => d.doc);
     const byCat = {};
     for (const i of implants) {

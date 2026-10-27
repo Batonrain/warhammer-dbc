@@ -189,5 +189,7 @@ describe("Психический Вампир: клик по кнопке", () =
     const entry = psy._store[`${NS}.${WITHDRAWAL_FLAG}`]?.[VAMPIRE_DRUG_NAME];
     expect(entry?.addicted).toBe(true);
     expect(entry?.addiction?.frequency).toBe("6 дней");
+    // «Агрессия 2» едет вместе с зависимостью: через 6 дней без дозы её выдадут часы Календаря сами.
+    expect(entry?.addiction?.penaltyDisorder).toEqual({ name: "Агрессия", severity: 2 });
   });
 });

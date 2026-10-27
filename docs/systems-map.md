@@ -1443,8 +1443,8 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   ключ `wound` добавлен в `rules/mech-formula.mjs`, «на всех, включая себя») клонирует Черту-метку
   `packs-src/traits/Wound_in_Reality_Aura…`; числа за каждую бесплатную силу считаются живьём по
   метке: −5 Пси-чутьё и +10 Варп-Нестабильность — источник правил `woundAura` (`rules/sources.mjs`),
-  +10 Феномены — `sheets/tabs/psychic.mjs::executePsychotest`, Завеса +1 за каждые 3 силы — только
-  Демон-Принц (`dpVeilSteps`); Завеса сцены общая. Галочка — в окне манифестации и кнопкой ⌬ в
+  +10 Феномены — `sheets/tabs/psychic.mjs::executePsychotest`, Завеса +1 за каждые 3 силы — для
+  всех в ауре, через общий `rules/veil-steps.mjs::veilStepsFor` (см. пачку I4 ниже); Завеса сцены общая. Галочка — в окне манифестации и кнопкой ⌬ в
   таблице сил; снятие поддержания гасит её (`combat/psychic-sustain.mjs::sustainOffPatch` — общий
   набор сбросов поддержания). **Психический Вампир** — `rules/psychic-vampire.mjs` +
   `combat/psychic-vampire.mjs`: кнопка на карточке урона (`combat/damage.mjs`, рядом с «Разрубить»),
@@ -1456,6 +1456,29 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   МИСТИКА), метка «не псайкер» `warpLockActive` в реестре `rules/turn-flags.mjs` блокирует
   манифестацию и включение поддержания. Тесты — `test/rules/{wound-in-reality,psychic-vampire,warp-lock}.test.mjs`,
   `test/combat/{wound-in-reality,psychic-vampire,warp-lock}.test.mjs`, `test/documents/wound-in-reality-tpr.test.mjs`.
+
+- Доделки пачки I4 (Sahara 3-28, 27.10.2026, решения владельца): (1) **Завеса персонажа** —
+  `rules/veil-steps.mjs` (`sceneVeilSteps` — Завеса сцены/группы сцен, `veilStepsFor(actor)` — плюс
+  аура Раны в Реальности, `woundAuraVeil`); читают лист Демон-Принца (`dpVeilSteps`, длительность
+  Манифестации) и Призыв демона (`apps/demon-summon.mjs` — срок дестабилизации Рыцаря Бога по Завесе
+  там, где стоит призывающий). Ступени Завесы в расчёты больше входят только в тесте Навигации
+  (`apps/veil.mjs::_rollNavigation`, `veilNavMod`) — он берёт Завесу сцены БЕЗ ауры, это сознательно не тронуто;
+  `apps/ritual-cast.mjs` (Феномен провала ритуала бросает 1d100 + провалы) и таблица Феноменов Завесу не читают вовсе.
+  (2) **«Агрессия 2» Психического Вампира** — выдаётся само СРАЗУ при возникновении зависимости и держится до её срыва (I5, решение
+  владельца 27.10.2026; новая доза его не снимает): поле
+  `penaltyDisorder: {name, severity}` в настройках Зависимости (`rules/psychic-vampire.mjs::VAMPIRE_ADDICTION`),
+  чистое `rules/drug-withdrawal.mjs::withdrawalDisorders`, обвязка `combat/drug-withdrawal.mjs::syncWithdrawalDisorders`
+  (из часов Календаря, `startWithdrawal`, `endWithdrawal`): обычный предмет `mentalDisorder` через
+  `sheets/tabs/disorders.mjs::createDisorderItem`, помеченный флагом `withdrawalDisorder` = ключ препарата. Своё
+  расстройство игрока с тем же названием не дублируется и не удаляется: его тяжесть растёт на `severity` штрафа
+  (потолок 5), исходная пишется во флаг предмета `withdrawalBoost` {key, from, applied}, при срыве снимается ровно
+  фактическая прибавка (`текущая − (applied − from)`, правка игрока за это время сохраняется). Общего «расстройства у зависимости» для
+  обычных наркотиков нет — поле читает любой препарат, у которого оно заведено (сейчас только Вампир).
+  (3) **Переброс психотеста Ключевой Силой откатывает Порчу Варп-Шока** — карточка запоминает начисленное
+  (`psyManifest.warpShock`, `sheets/tabs/psychic.mjs`), `combat/psyker-pools.mjs::returnWarpShock` снимает ровно
+  столько (не ниже нуля, один раз — отметка `psyWarpShockReturned`), новый результат начисляет заново; Варп-Замок
+  Порчу по-прежнему не откатывает. Тесты — `test/rules/veil-steps.test.mjs`, `test/apps/demon-summon.test.mjs`,
+  `test/combat/drug-withdrawal-disorder.test.mjs`, `test/sheets/psychic-pools.test.mjs`.
 
 - Психосилы: `data/item/psychic-power.mjs`, `rules/psyker.mjs`, `psy-range.
   mjs` (парсер дальности), `psychic-vessel.mjs` (фамильяр/конструкт-
@@ -1920,11 +1943,19 @@ AGENTS.md).
   Чрезмерного Богатства / Сети Контактов / Дела Фактотума и авто +20 Повелителя
   Войны — источник `requisitionTalents` (`rules/requisition-talents.mjs`,
   область `requisition` в `resolve-test.mjs`). «Кибернетика» Повелителя Войны —
-  вся имплант-техника (Кибернетика, Бионика, Псибернетика, Механикус:
-  `IMPLANT_TECH_CATEGORIES`, решение владельца 26.10.2026); Скитарии, Археотех,
-  биоимпланты Друкхари и органы Астартес не входят. Реквизиции УЗЛОВ корабля
-  (Книга Пустоты: Редкость, Качество, тип узла вместо Количества) в системе
-  нет — Дело Фактотума действует только на реквизицию снаряжения.
+  вся имплант-техника (Кибернетика, Бионика, Псибернетика, Механикус,
+  Скитарии: `IMPLANT_TECH_CATEGORIES`, решение владельца 26.10.2026);
+  Археотех, биоимпланты Друкхари и органы Астартес не входят. **Режим «Узел
+  корабля»** (27.10.2026, Книга Пустоты, «Реквизиция узлов»): третья кнопка
+  первого окна «Достать снаряжение» → выбор компонента из `ship-components`,
+  Редкость — `system.rarity` узла, Качество, вместо Количества — таблица по типу
+  узла (`NODE_TYPES`/`NODE_KIND_TYPE`/`nodeTypeOf` в `rules/requisition.mjs`:
+  оружейные −30 = все `kind:"weapon"`, эфирные −20 = `augur`, энергетические
+  −10 = `voidShield` и `warp`, структурные 0 = всё остальное, в т.ч. спорные
+  `drive`/`gellar`/`astropathic`/`occulum`/`bridge`); контекст теста
+  `requisitionNode`/`requisitionNodeType`; +10 Дела Фактотума цепляется сам.
+  Узел персонажу не выдаётся (ставят на корабль сами), срок установки не
+  ведётся (решение владельца 26.10.2026). Тесты — `test/rules/requisition-node.test.mjs`.
 - **Cover Up / Работа под Прикрытием (26.10.2026):** блок «ЯЧЕЙКИ АГЕНТОВ» на
   вкладке СОЦИУМ у носителя Таланта — `sheets/tabs/cover-up-panel.mjs` +
   `rules/cover-up.mjs` (таблица книги Inf 1–4 → Х-ки агентов и Уровень

@@ -34,7 +34,14 @@ import { hasGlimpseOfOmniscience, hasOmnimnesis, hasDecompile, hasOverclock, has
          OVERCLOCK_SELF_DAMAGE_PER_COG, OVERCLOCK_FLAG, overclockMax, votiveMassCost,
          recompileSources, processCostTotal, settleProcessCost, PROCESS_PAID_FLAG } from "../../rules/technomystic-talents.mjs";
 import { applyCharDamage } from "../../combat/char-damage.mjs";
-import { isEncounterActive } from "../../combat/action-economy.mjs";
+import { isEncounterActive, spendActionPoints } from "../../combat/action-economy.mjs";
+import { tokenDistance } from "../../combat/facing.mjs";
+import { inMeleeContact } from "../../combat/rig-steal.mjs";
+import { writeToTarget } from "../../combat/gm-relay.mjs";
+import { hasApocryphaCoil, hasCloudCognition, hasMotiveEucharist, planCoilTransfer, planCloudCognition,
+         planMotiveEucharist, cloudCognitionCap, receivedNow, CLOUD_COGNITION_MAX, MOTIVE_EUCHARIST_MAX,
+         CLOUD_COGNITION_TURN_FLAG, MOTIVE_EUCHARIST_TURN_FLAG, CLOUD_COGNITION_RECEIVED_FLAG }
+  from "../../rules/technomystic-resources.mjs";
 
 /** Карточка-уведомление Техножреца (компиляция, Разгон, Процессы, Декомпиляция) — ни броска, ни Порога. */
 async function techNote(actor, title, line) {
@@ -529,21 +536,192 @@ export async function coilRelieveFatigue(actor) {
  * галочкой в диалоге); мощность источника
  * и разряд батареи — решение ГМа.
  */
-export async function coilCharge(actor, rollSkill) {
+export async function coilCharge(actor, rollSkill, { apocrypha = false } = {}) {
+  // Катушка Апокрифа (Талант Техномистика, пачка J): «заряжать саму Катушку Апокрифу
+  // через Электу-Индукторы за полное действие как обычно, вместо основной».
+  if (apocrypha && !hasApocryphaCoil(actor)) return;
   const def = SKILLS_DEF.techUse;
   const sk  = actor.system.skills?.techUse;
-  const r = await rollSkill("⚡ Зарядка Катушки Потенции (Tech-Use)", sk?.total ?? -20, def?.char ?? "int",
-    { skill: "techUse", coilCharge: true });
+  const r = await rollSkill(apocrypha ? "⚡ Зарядка Катушки Апокрифа (Tech-Use)" : "⚡ Зарядка Катушки Потенции (Tech-Use)",
+    sk?.total ?? -20, def?.char ?? "int", { skill: "techUse", coilCharge: true });
   if (!r) return;
-  const en = actor.system.energy || { value: 0 };
-  const max = en.maxTotal ?? en.max ?? 0;
+  const en = (apocrypha ? actor.system.apocryphaEnergy : actor.system.energy) || { value: 0 };
+  const max = apocrypha ? (en.max ?? 0) : (en.maxTotal ?? en.max ?? 0);
   const gain = electooChargeGain({ success: r.success, deg: r.deg, energy: en.value, max });
   if (gain <= 0) {
-    if (r.success) ui.notifications.info("Катушка Потенции уже заполнена.");
+    if (r.success) ui.notifications.info(apocrypha ? "Катушка Апокрифа уже заполнена." : "Катушка Потенции уже заполнена.");
     return;
   }
-  await actor.update({ "system.energy.value": (Number(en.value) || 0) + gain });
-  await energyNote(actor, `Электу-Индукторы: +${gain} ⚡ (${r.deg} ${_degWord(r.deg)}, максимум ${max}).`);
+  await actor.update({ [apocrypha ? "system.apocryphaEnergy.value" : "system.energy.value"]: (Number(en.value) || 0) + gain });
+  await energyNote(actor, `Электу-Индукторы${apocrypha ? " → Катушка Апокрифа" : ""}: +${gain} ⚡ (${r.deg} ${_degWord(r.deg)}, максимум ${max}).`);
+}
+
+// ── Таланты Техномистика, перекладывающие ресурсы (пачка J, Sahara 3-2501) ───
+
+/** Одна цель Foundry-таргета: { token, actor } либо null (нет цели / целей несколько). */
+function singleTargetOf() {
+  const targets = [...(game.user?.targets ?? [])];
+  if (targets.length !== 1) return null;
+  const token = targets[0];
+  const tActor = token.actor ?? token.document?.actor ?? null;
+  return tActor ? { token, actor: tActor } : null;
+}
+
+/** Диалог «сколько?» с одной кнопкой «go» и числом n (1…max). Возвращает число либо null. */
+async function askAmount(actor, title, text, max) {
+  const raw = await foundry.applications.api.DialogV2.wait({
+    window: { title: `${title} — ${actor.name}` },
+    content: `<p>${text}</p><label>Сколько (1–${max}): <input type="number" name="n" value="${max}" min="1" max="${max}" autofocus/></label>`,
+    buttons: [
+      { action: "go", label: "Передать", default: true, callback: (_ev, button) => button.form.querySelector('[name="n"]')?.value },
+      { action: "cancel", label: "Отмена", callback: () => null }
+    ],
+    rejectClose: false
+  });
+  if (raw === null || raw === undefined || raw === "cancel") return null;
+  return Math.max(1, Math.min(max, parseInt(raw) || 1));
+}
+
+/**
+ * Катушка Апокрифа: перенос ⚡ между основной Катушкой и Апокрифой «за полудействие
+ * без всяких тестов». Направление и число выбирает игрок; ОД списываются только
+ * когда есть что переносить. Заряды Апокрифы напрямую не тратятся: Усталость,
+ * Техночудеса и Разгон берут только из основной Катушки.
+ */
+export async function apocryphaTransfer(actor) {
+  if (!hasApocryphaCoil(actor)) return;
+  const en = actor.system.energy || { value: 0, max: 0 };
+  const ap = actor.system.apocryphaEnergy || { value: 0, max: 0 };
+  const mainMax = en.maxTotal ?? en.max ?? 0;
+  const cap = Math.max(1, Math.max(Number(en.value) || 0, Number(ap.value) || 0, Number(ap.max) || 0));
+  const pick = await foundry.applications.api.DialogV2.wait({
+    window: { title: `Перенос ⚡ — ${actor.name}` },
+    content: `<p>Полудействие, без теста. Основная Катушка: <b>${en.value ?? 0}</b> / ${mainMax}; Апокрифа: <b>${ap.value ?? 0}</b> / ${ap.max ?? 0}.</p>
+      <label>⚡: <input type="number" name="n" value="1" min="1" max="${cap}" autofocus/></label>`,
+    buttons: [
+      { action: "toApocrypha", label: "→ в Апокрифу", default: true,
+        callback: (_ev, button) => ({ direction: "toApocrypha", n: button.form.querySelector('[name="n"]')?.value }) },
+      { action: "fromApocrypha", label: "← в основную",
+        callback: (_ev, button) => ({ direction: "fromApocrypha", n: button.form.querySelector('[name="n"]')?.value }) },
+      { action: "cancel", label: "Отмена", callback: () => null }
+    ],
+    rejectClose: false
+  });
+  if (!pick || typeof pick !== "object") return;
+  const plan = planCoilTransfer({ direction: pick.direction, amount: parseInt(pick.n) || 1,
+    main: { value: en.value, max: mainMax }, apoc: { value: ap.value, max: ap.max } });
+  if (!plan.ok) {
+    ui.notifications.warn(plan.reason === "source" ? "Перенос: в Катушке-источнике нет зарядов."
+      : plan.reason === "full" ? "Перенос: в приёмной Катушке нет свободного места (она полна)."
+      : "Перенос: укажите число ⚡ от 1.");
+    return;
+  }
+  if (!await spendActionPoints(actor, 1)) { ui.notifications.warn("Перенос ⚡ — полудействие: не хватает ОД."); return; }
+  await actor.update({ "system.energy.value": plan.main, "system.apocryphaEnergy.value": plan.apoc });
+  const dirText = pick.direction === "toApocrypha" ? "основная → Апокрифа" : "Апокрифа → основная";
+  await energyNote(actor, `Катушка Апокрифа, перенос (${dirText}): <b>${plan.moved}</b> ⚡. Основная ${plan.main} / ${mainMax}, Апокрифа ${plan.apoc} / ${ap.max ?? 0}.`);
+}
+
+/** Цель вне досягаемости / в Ноосфере? Возвращает текст отказа либо "". */
+function transferBlock(actor, tgt, { radius = null, contact = false } = {}) {
+  if (!tgt) return "Отметьте ровно одну цель (Foundry-таргет).";
+  if (tgt.actor === actor || tgt.actor?.uuid === actor.uuid) return "Цель — не вы сами.";
+  const mine = actor.getActiveTokens?.()[0] ?? null;
+  if (mine) {
+    if (contact && !inMeleeContact(mine, tgt.token)) return "Цель не в базовом контакте.";
+    if (radius != null) {
+      const d = tokenDistance(mine, tgt.token);
+      if (d != null && d > radius) return `Цель вне радиуса ${radius} м (до неё ≈ ${Math.round(d)} м).`;
+    }
+  }
+  return "";
+}
+
+/**
+ * Облачная Когниция: «Если он подключен к Ноосфере, раз в Ход за свободное действие
+ * пройти тест Tech-Use(I)+0, чтобы передать до 2 своей ⚙ любому согласному
+ * подключенному к Ноосфере существу в радиусе I×2м. Цель не может восстановить
+ * так более ½I.b (окр.▲) ⚙ в Раунд». Запись в цель — через ГМ-релей
+ * (combat/gm-relay.mjs); «раз в Ход» следим только в бою (как Разгон).
+ */
+export async function cloudCognition(actor, rollSkill) {
+  if (!hasCloudCognition(actor)) return;
+  const warn = text => ui.notifications.warn(`Облачная Когниция: ${text}`);
+  if (!actor.system.noosphereConnected) return warn("вы не подключены к Ноосфере (тумблер на вкладке ТЕХ).");
+  if (isEncounterActive() && actor.getFlag?.("warhammer-dbc", CLOUD_COGNITION_TURN_FLAG)) return warn("уже использована в этом Ходу.");
+  const tgt = singleTargetOf();
+  const radius = Math.max(0, Number(actor.system.characteristics?.int?.total) || 0) * 2;
+  const block = transferBlock(actor, tgt, { radius });
+  if (block) return warn(block);
+  if (!tgt.actor.system?.noosphereConnected) return warn(`${tgt.actor.name} не подключён к Ноосфере.`);
+  const cap = cloudCognitionCap(tgt.actor);
+  const inCombat = isEncounterActive();
+  const receivedOf = () => inCombat ? receivedNow(tgt.actor.getFlag?.("warhammer-dbc", CLOUD_COGNITION_RECEIVED_FLAG), game.combat?.id) : 0;
+  const planNow = amount => planCloudCognition({ amount, giverCognition: actor.system.cognition?.value,
+    receiver: tgt.actor.system.cognition, received: receivedOf(), cap });
+  const pre = planNow(CLOUD_COGNITION_MAX);
+  if (!pre.ok) {
+    return warn(pre.reason === "giver" ? "у вас нет Когниции для передачи."
+      : pre.reason === "full" ? `у ${tgt.actor.name} Когниция уже полна.`
+      : `${tgt.actor.name} уже получил(а) потолок ½I.b (${cap}) ⚙ в этом Раунде.`);
+  }
+  const n = await askAmount(actor, "Облачная Когниция",
+    `Передать ⚙ → <b>${esc(tgt.actor.name)}</b> (Tech-Use+0; цель получит не больше ${pre.moved} ⚙).`, pre.moved);
+  if (n == null) return;
+  const def = SKILLS_DEF.techUse;
+  const sk  = actor.system.skills?.techUse;
+  const r = await rollSkill("☁ Облачная Когниция (Tech-Use)", sk?.total ?? -20, def?.char ?? "int",
+    { skill: "techUse", noosphere: true });
+  if (!r) return;
+  // Попытка потрачена, даже если тест провален («раз в Ход» — на каждую попытку).
+  if (inCombat) await actor.setFlag("warhammer-dbc", CLOUD_COGNITION_TURN_FLAG, true);
+  if (!r.success) {
+    await techNote(actor, "Облачная Когниция", `Tech-Use+0 провален (${r.deg} ${_degWord(r.deg)}) — ${techIcon("cognition")} ${esc(tgt.actor.name)} ничего не получил(а).`);
+    return;
+  }
+  const plan = planNow(n);   // свежие числа: пока шёл тест, кто-то мог и поменять
+  if (!plan.ok) return warn("передать уже нечего (цель заполнилась или потолок Раунда исчерпан).");
+  if (!await writeToTarget(tgt.actor, { kind: "grantCognition", amount: plan.moved }, actor)) return;
+  await actor.update({ "system.cognition.value": (Number(actor.system.cognition.value) || 0) - plan.moved });
+  await techNote(actor, "Облачная Когниция",
+    `${techIcon("cognition")} −<b>${plan.moved}</b> у ${esc(actor.name)}, +<b>${plan.moved}</b> у ${esc(tgt.actor.name)} (потолок Раунда цели ${cap}).`);
+}
+
+/**
+ * Мотивное Причастие: «раз в Ход за свободное действие передать до 3 своей ⚡
+ * любому согласному персонажу в базовом контакте» — подпитывая его Катушки
+ * Потенции. Основная Катушка цели заполняется первой, излишек — в Апокрифу.
+ */
+export async function motiveEucharist(actor) {
+  if (!hasMotiveEucharist(actor)) return;
+  const warn = text => ui.notifications.warn(`Мотивное Причастие: ${text}`);
+  if (isEncounterActive() && actor.getFlag?.("warhammer-dbc", MOTIVE_EUCHARIST_TURN_FLAG)) return warn("уже использовано в этом Ходу.");
+  const tgt = singleTargetOf();
+  const block = transferBlock(actor, tgt, { contact: true });
+  if (block) return warn(block);
+  const tEn = tgt.actor.system?.energy;
+  const receiver = () => ({
+    main: { value: tgt.actor.system.energy?.value, max: tgt.actor.system.energy?.maxTotal ?? tgt.actor.system.energy?.max },
+    apoc: hasApocryphaCoil(tgt.actor) && (Number(tgt.actor.system.apocryphaEnergy?.max) || 0) > 0
+      ? { value: tgt.actor.system.apocryphaEnergy.value, max: tgt.actor.system.apocryphaEnergy.max } : null
+  });
+  if (!tEn) return warn(`у ${tgt.actor.name} нет Катушки Потенции.`);
+  const planNow = amount => planMotiveEucharist({ amount, giverEnergy: actor.system.energy?.value, receiver: receiver() });
+  const pre = planNow(MOTIVE_EUCHARIST_MAX);
+  if (!pre.ok) {
+    return warn(pre.reason === "giver" ? "в вашей Катушке нет ⚡ для передачи."
+      : `Катушки ${tgt.actor.name} полны — подпитывать нечего (или Катушка не установлена).`);
+  }
+  const n = await askAmount(actor, "Мотивное Причастие",
+    `Передать ⚡ → <b>${esc(tgt.actor.name)}</b> (свободное действие; цель примет не больше ${pre.moved} ⚡).`, pre.moved);
+  if (n == null) return;
+  const plan = planNow(n);
+  if (!plan.ok) return warn("передать уже нечего.");
+  if (!await writeToTarget(tgt.actor, { kind: "grantEnergy", amount: plan.moved }, actor)) return;
+  await actor.update({ "system.energy.value": (Number(actor.system.energy.value) || 0) - plan.moved });
+  if (isEncounterActive()) await actor.setFlag("warhammer-dbc", MOTIVE_EUCHARIST_TURN_FLAG, true);
+  await energyNote(actor, `Мотивное Причастие: −<b>${plan.moved}</b> ⚡ у ${esc(actor.name)}, +<b>${plan.moved}</b> ⚡ у ${esc(tgt.actor.name)}`
+    + `${plan.toApoc ? ` (из них ${plan.toApoc} — в его Катушку Апокрифа)` : ""}.`);
 }
 
 /**
@@ -724,6 +902,11 @@ export function activateTechListeners(html, actor, { rollSkill } = {}) {
   // Электу-Индукторы заряжают её тестом Tech-Use (rules/potentia-coil.mjs).
   html.find(".coil-fatigue-btn").click(ev => { ev.preventDefault(); coilRelieveFatigue(actor); });
   html.find(".coil-charge-btn").click(ev => { ev.preventDefault(); if (rollSkill) coilCharge(actor, rollSkill); });
+  // Таланты Техномистика, перекладывающие ресурсы (пачка J): Катушка Апокрифа, Облачная Когниция, Мотивное Причастие.
+  html.find(".coil-apoc-transfer-btn").click(ev => { ev.preventDefault(); apocryphaTransfer(actor); });
+  html.find(".coil-apoc-charge-btn").click(ev => { ev.preventDefault(); if (rollSkill) coilCharge(actor, rollSkill, { apocrypha: true }); });
+  html.find(".cognition-cloud-btn").click(ev => { ev.preventDefault(); if (rollSkill) cloudCognition(actor, rollSkill); });
+  html.find(".coil-motive-btn").click(ev => { ev.preventDefault(); motiveEucharist(actor); });
   html.find(".tech-infoguard-roll-btn").click(ev => {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);
     if (item) rollInfoguard(item);

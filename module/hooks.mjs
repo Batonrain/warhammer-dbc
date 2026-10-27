@@ -29,6 +29,9 @@ import { inspiringChampionsFor, spendInspiringInfamy } from "./combat/inspiring-
 import { applyExplosiveActionTurnEnd } from "./combat/explosive-action.mjs";
 import { applyWoundLoss, woundDeathThreshold } from "./rules/wounds.mjs";
 import { fateBonusOutcome, FATE_BONUS }  from "./rules/fate-bonus.mjs";
+import { attackBoostFor, wrathRerollOpts } from "./rules/focused-wrath.mjs";
+import { focusedWrathOnAttack }            from "./combat/focused-wrath.mjs";
+import { successTarget, spendSuccessOnCard } from "./apps/infamy-success.mjs";
 import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger, applyMonofilamentHit } from "./combat/damage.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./combat/facing.mjs";
 import { rollPacifismTest } from "./combat/pacifism.mjs";
@@ -1911,6 +1914,8 @@ export function registerHooks() {
           // Сварщик (rules/gunsmith-talents.mjs): Избирательное попадание Мельтой
           // по технике — доп. Критический Эффект 1d5+1, если дойдёт непоглощённый урон.
           welder:          ds.welder === "1",
+          // Часть машины, в которую целился стрелок: туда ляжет Критический Эффект Сварщика.
+          welderPart:      ds.welderPart || "",
           // Облучить (rules/gunsmith-talents.mjs): пробитие брони для Rad без удвоения AP цели.
           breachNoDouble:  ds.breachNoDouble === "1",
           // Пробивной Удар (Талант Стрелка): +N к урону, если попадание уводит Раны
@@ -3892,6 +3897,14 @@ function _attachFateContextMenu(message, html) {
     );
     menu.appendChild(btnBonus);
 
+    // Успех (корбук 438): «+1 Успех к успешному тесту» — пункт меню карточки, как «Переброс» и «+10»
+    // (apps/infamy-success.mjs); только у успешного теста и раз на карточку. Пороги Порчи проверяет сама трата.
+    const successTgt = successTarget(message);
+    const btnSuccess = successTgt
+      ? _makeFateMenuItem(`Успех: +1 Успех к тесту (${ft.word}: ${fateVal})`, canSpend, !canSpend ? `Нет ${ft.plural}` : "")
+      : null;
+    if (btnSuccess) menu.appendChild(btnSuccess);
+
     // Вдохновляющее Присутствие (Чемпион, combat/inspiring-presence.mjs):
     // переброс за Очко союзного Чемпиона, в чьём поле зрения бросающий.
     // «Как если бы они имели Cor и Покровительство Чемпиона»: недостаток Бога
@@ -4005,7 +4018,11 @@ function _attachFateContextMenu(message, html) {
           const bhAtk = beyondHumanRerollData(atkActor, {
             charKey: atk.charKey, firstRv: atk.rv, threshold: atk.threshold,
             spend: champion ? null : reroll1 });
-          const atkOpts = { ...(atk.opts || {}) };
+          // Сфокусированный Гнев: переброс рукопашной атаки по Ненавистной цели «также дает
+          // Преимущество» — два броска d100, остаётся лучший (rules/focused-wrath.mjs::wrathRerollOpts).
+          const wrathApplies = await focusedWrathOnAttack(atkActor, atk, atkIsMelee);
+          const atkOpts = wrathRerollOpts(atk.opts, wrathApplies);
+          const wrathReroll = wrathApplies && !atk.opts?.reroll;
           delete atkOpts[BEYOND_HUMAN_FLAG];
           await _executeAttackRoll(atkActor, atkItem, atk.charKey, atk.threshold,
             atk.rofMode, atk.aimTarget, { ...atkOpts, skipAmmo: true, ...(bhAtk ? { [BEYOND_HUMAN_FLAG]: bhAtk } : {}) });
@@ -4013,7 +4030,7 @@ function _attachFateContextMenu(message, html) {
           // с неё больше не предлагается (переброс переброса).
           await markCardOnce(message, "attackRerolled");
           ui.notifications.info(
-            `✨ ${actor.name} тратит ${ft.one} на переброс атаки${payerNote}! Осталось: ${reroll1.poolValue}`);
+            `✨ ${actor.name} тратит ${ft.one} на переброс атаки${payerNote}${wrathReroll ? " (Сфокусированный Гнев: с Преимуществом)" : ""}! Осталось: ${reroll1.poolValue}`);
           // Огневая Точка (Хавок): «Когда Хавок тратит Очко Бесчестия на
           // переброс стрелковой атаки…» — точка занята с этого момента.
           if (firePointActivatesOnPaidReroll(atkActor, { isMelee: atkIsMelee })) {
@@ -4193,12 +4210,14 @@ function _attachFateContextMenu(message, html) {
         if (atkItem) {
           const bonus1 = await spendBonusPoint();
           if (!bonus1) return;
+          // Сфокусированный Гнев: рукопашная атака по Ненавистной цели — Усиление +20 вместо +10.
+          const boost = attackBoostFor(await focusedWrathOnAttack(atkActor, atkB, atkIsMelee));
           await _executeAttackRoll(atkActor, atkItem, atkB.charKey,
-            (Number(atkB.threshold) || 0) + FATE_BONUS,
+            (Number(atkB.threshold) || 0) + boost,
             atkB.rofMode, atkB.aimTarget,
             { ...(atkB.opts || {}), forcedRoll: rv, skipAmmo: true });
           ui.notifications.info(
-            `➕ ${actor.name} тратит ${ft.one}${payerNote}: +10 к атаке! Осталось: ${bonus1.poolValue}`);
+            `➕ ${actor.name} тратит ${ft.one}${payerNote}: +${boost} к атаке${boost > FATE_BONUS ? " (Сфокусированный Гнев)" : ""}! Осталось: ${bonus1.poolValue}`);
           return;
         }
       }
@@ -4251,6 +4270,12 @@ function _attachFateContextMenu(message, html) {
       );
     };
     btnBonus.addEventListener("click", ev2 => doBonus(ev2));
+    btnSuccess?.addEventListener("click", async ev2 => {
+      ev2.stopPropagation();
+      menu.remove();
+      document.removeEventListener("click", closeMenu);
+      if (canSpend) await spendSuccessOnCard(actor, message);
+    });
   });
 }
 

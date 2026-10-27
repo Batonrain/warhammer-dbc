@@ -814,7 +814,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // тесты на стрельбу Болт оружием получают +1 Успех».
   const bolterDrillBonus = (hit && charKey === "bs" && item?.system?.weaponType === "bolt"
     && hasRuleFlag(actor, "weaponsmith.core.bolterDrill")) ? 1 : 0;
-  const deg = rolledDeg + savageBonus + excessBonus + singleCombatDeg + adroitBonus + bolterDrillBonus;
+  // Очко Бесчестия «Успех» из меню карточки (apps/infamy-success.mjs): атака переигрывается тем же кубом
+  // с дописанными Успехами — только к успешному попаданию.
+  const infamySuccessDeg = hit ? Math.max(0, Math.trunc(Number(opts.extraDeg) || 0)) : 0;
+  const deg = rolledDeg + savageBonus + excessBonus + singleCombatDeg + adroitBonus + bolterDrillBonus + infamySuccessDeg;
   // Посох/Крюк (core.json, «Типы Рукопашного Оружия»): «При Избирательном
   // попадании в Ногу [Посохом]... может потратить Реакцию, чтобы провести
   // против цели прием Повалить» / «На 3+ Успеха на попадание [Крюком]...».
@@ -1435,6 +1438,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Искры: кнопка «Искры» на каждом попадании дугового оружия (attack-card.mjs).
   const sparksOn = hit && sparksAvailable(actor, { item, isMelee });
   wp.welderMark = welderOn;
+  // Часть машины, в которую целился стрелок: Сварщик кладёт доп. Критический Эффект именно в неё
+  // (а не туда, куда легло конкретное попадание очереди, — третье и дальнейшие идут в Корпус).
+  wp.welderPart = welderOn ? (aimTarget?.vehiclePart || "") : "";
   // Пробивной Удар (rules/gunner-talents.mjs): +2 к урону, если попадание уведёт Раны
   // цели в минус — решает damage.mjs при применении (там известны Раны цели).
   // Калечащий Удар — то же для рукопашной атаки (оба Таланта самоограничены по isMelee).
@@ -2216,6 +2222,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   messageData.flags = foundry.utils.mergeObject(messageData.flags || {}, {
     "warhammer-dbc": { attack: {
       actorId: actor.id, itemId: item.id, charKey, rv,
+      // Цель этой атаки: +10 за Очко и Переброс сверяют её с Ненавистью (Сфокусированный Гнев,
+      // combat/focused-wrath.mjs) — выделение на сцене к клику по меню могло смениться.
+      targetUuid: defenderActor?.uuid ?? null,
+      // Фактическое попадание карточки (Длань Кхорна, Атака Ненависти, беспомощная цель меняют его против куба):
+      // от него зависит, принимает ли карточка «Успех» за Очко (apps/infamy-success.mjs).
+      hit: !!hit,
       threshold, rofMode, aimTarget: aimTarget ?? null, opts: storedOpts
     } }
   });

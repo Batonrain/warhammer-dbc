@@ -323,6 +323,9 @@ const DEVIATIONS = {
     // Тумблер «подключён к Ноосфере» (вкладка ТЕХ) — заведён гораздо позже
     // template.json, читают Таланты вида «Виртуальная Память».
     noosphereConnected: false,
+    // Катушка Апокрифа (Талант Техномистика, пачка J) — вторая Катушка Потенции,
+    // заведена гораздо позже template.json (rules/technomystic-resources.mjs).
+    apocryphaEnergy: { value: 0, max: 0 },
     // Свойства оружия Corrosive/Piercing/Crippling (wdbc-plsf) — заведены
     // гораздо позже template.json, см. combat/damage.mjs.
     armorCorrosion: { head: 0, leftArm: 0, rightArm: 0, body: 0, leftLeg: 0, rightLeg: 0 },

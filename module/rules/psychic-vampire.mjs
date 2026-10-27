@@ -19,8 +19,10 @@
 //   • успешное применение — доза «наркотика» по недельному счётчику (sheets/tabs/drugs.mjs::
 //     weeklyDoseCheck): на шестой за неделю — тест Зависимости W+0, провал даёт зависимость с
 //     частотой 6 дней, штраф и срыв — те же, что у настоящих наркотиков (флаг актора
-//     drugWithdrawal). Расстройство «Агрессия» — текст штрафа (отыгрыш/ГМ): автовыдачи
-//     расстройств у зависимостей в системе нет.
+//     drugWithdrawal). Расстройство «Агрессия» тяжести 2 (I4, решение владельца 27.10.2026) выдают
+//     сразу при возникновении зависимости и держат до её срыва (I5; новая доза не снимает), — настройка `penaltyDisorder` в VAMPIRE_ADDICTION
+//     ниже и combat/drug-withdrawal.mjs::syncWithdrawalDisorders; общей подсистемы расстройств у
+//     зависимостей нет — это поле читает только эта пара функций.
 //
 //  Чистый модуль без Foundry; Foundry-обвязка — combat/psychic-vampire.mjs.
 // ════════════════════════════════════════════════════════════════════════════
@@ -49,6 +51,10 @@ export const VAMPIRE_ADDICTION = Object.freeze({
   frequency: "6 дней",
   penalty: "Ментальное расстройство Агрессия тяжести 2",
   penaltyMods: "",
+  // Расстройство выдаётся само сразу при возникновении зависимости (rules/drug-withdrawal.mjs::withdrawalDisorders,
+  // combat/drug-withdrawal.mjs::syncWithdrawalDisorders) и снимается только срывом зависимости. Своя «Агрессия»
+  // игрока не дублируется: её тяжесть поднимается на severity и после срыва возвращается.
+  penaltyDisorder: Object.freeze({ name: "Агрессия", severity: 2 }),
   breakMod: 0,
   periodCharDamage: Object.freeze({ stat: "", formula: "" }),
   blocksRecovery: ""

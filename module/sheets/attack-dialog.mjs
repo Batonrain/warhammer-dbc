@@ -52,7 +52,7 @@ import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/gam
 import { mountPairFor, mountSelectiveMod, SELECTIVE_MODS,
          mountRangedPenalty, MOUNT_SPEEDS, mountTraits, handsNeeded } from "../rules/mount.mjs";
 import { vehicleCoverMod } from "../rules/vehicle.mjs";
-import { ARMOUR_SIDES } from "../constants/vehicle.mjs";
+import { ARMOUR_SIDES, VEHICLE_AIM_TARGETS } from "../constants/vehicle.mjs";
 import { isWalkerVehicle } from "../rules/walker.mjs";
 import { legionAttackPenalty, LEGION_FIT_FLAG, OVERSIZED_FIT_FLAG, GIANTS_ARMS_FLAG, wearsPowerArmour } from "../rules/legion-fit.mjs";
 import { ogrynAttackPenalty, OGRYN_FIT_FLAG } from "../rules/ogryn-fit.mjs";
@@ -903,7 +903,13 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const headPenalty = headCalledShotPenalty(
     (hasRuleFlag(actor, "penalty.calledShot.head.reduce20") ? 20 : 0) + headcrackerHeadReduction(actor, item));
   const headPenaltyLabel = headPenalty === 0 ? "0" : `−${-headPenalty}`;
-  let aimTargets = [
+  // Цель — техника: прицел идёт по ЧАСТЯМ МАШИНЫ (перечень VEHICLE_AIM_TARGETS, тот же, что в
+  // стрельбе самой машины, sheets/vehicle-sheet.mjs), а не по частям тела. Выбранная часть едет в
+  // атаку как aimTarget.vehiclePart: туда ложится попадание и доп. Критический Эффект Сварщика
+  // (Welder, решение владельца 26.10.2026).
+  let aimTargets = attackCtx.targetActor?.type === "vehicle"
+    ? VEHICLE_AIM_TARGETS.map(t => ({ value: t.value, label: t.label, penalty: t.penalty, vehiclePart: t.part }))
+    : [
     { value: "",       label: "— Без прицела —",      penalty:   0 },
     { value: "torso",  label: "Торс (−10)",            penalty: -10 },
     { value: "leg",    label: "Нога (−15)",             penalty: -15 },

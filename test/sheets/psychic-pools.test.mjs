@@ -902,3 +902,125 @@ describe("Ключевые Силы: переброс психотеста с к
     expect(CARD_ONCE_FLAGS).toContain("psyRerolled");
   });
 });
+
+// ── Переброс откатывает Порчу Варп-Шока своей карточки (пачка I4, решение владельца 27.10.2026) ───────
+describe("Ключевые Силы: переброс снимает Порчу Варп-Шока, начисленную этой же карточкой", () => {
+  // Неограниченный псайкер: Усиление — бросок d5 (первый кубик очереди), как в соседних тестах переброса.
+  const sigActor = (opt = {}) => actor([talent(SIG, { [SIGNATURE_FLAG]: ["Aegis"] })], { cls: "unbound", ...opt });
+  let seq = 0;
+  const messageOf = card => {
+    const f = { ...(card?.flags?.["warhammer-dbc"] ?? {}) };
+    return { id: `ws${++seq}`, isOwner: true, flags: { "warhammer-dbc": f }, getFlag: (s, k) => f[k], setFlag: async (s, k, v) => { f[k] = v; } };
+  };
+  const lastCard = () => captured.chat.filter(c => c.flags).at(-1);
+  const btn = (a, p) => ({ dataset: { actorUuid: a.uuid, powerUuid: p.uuid }, disabled: false });
+  const wire = (a, p) => { globalThis.fromUuid = async uuid => (uuid === a.uuid ? a : uuid === p.uuid ? p : null); };
+  const corr = a => a.system.corruption.value;
+  // Первый бросок: Усиление d5 = 4, провал психотеста (95), Феномен 95 → Варп-Прорыв (перил 50), Порча за Прорыв — d5 = 3.
+  const PERIL = () => [4, 95, 95, 50, 3];   // свежий массив: очередь кубов заглушка съедает
+
+  it("карточка запоминает величину начисленной Порчи во флаге", async () => {
+    const a = sigActor({ cor: 10 }), p = power();
+    await cast(a, p, opts(9, "push"), PERIL());
+    expect(corr(a)).toBe(13);
+    expect(lastCard().flags["warhammer-dbc"].psyManifest.warpShock).toBe(3);
+  });
+
+  it("рост Порчи отменён перехватчиком (Пустота Парии): карточка помнит 0, переброс чужую Порчу не снимает", async () => {
+    const a = sigActor({ fate: 3, cor: 10 }), p = power();
+    wire(a, p);
+    const realUpdate = a.update;
+    a.update = async d => realUpdate(Object.fromEntries(Object.entries(d).filter(([k]) => k !== "system.corruption.value")));
+    await cast(a, p, opts(9, "push"), PERIL());
+    expect(corr(a)).toBe(10);
+    const card = lastCard();
+    expect(card.flags["warhammer-dbc"].psyManifest.warpShock).toBe(0);
+    const old = messageOf(card);
+    captured.dice = [30, 20];
+    await handlePsyRerollClick(old, btn(a, p));
+    expect(corr(a)).toBe(10);                               // ни отката, ни начисления: перехватчик всё так же отменяет рост
+  });
+
+  it("переброс снимает прежние +3 и начисляет заново по новому результату", async () => {
+    const a = sigActor({ fate: 3, cor: 10 }), p = power();
+    wire(a, p);
+    await cast(a, p, opts(9, "push"), PERIL());
+    const old = messageOf(lastCard());
+    captured.chat.length = 0; captured.rolls.length = 0;
+    captured.dice = [30, 20];                               // психотест 30, Феномен 20 (обычный: +1 Порчи)
+    expect(await handlePsyRerollClick(old, btn(a, p))).toBe(true);
+    expect(corr(a)).toBe(10 + 1);                           // 10 + 3 − 3 + 1; без отката было бы 14
+    expect(plain()).toContain("Порча Варп-Шока прежнего результата");
+  });
+
+  it("новый результат без Феномена: Порча возвращается к исходной", async () => {
+    const a = sigActor({ fate: 3, cor: 10 }), p = power();
+    wire(a, p);
+    await cast(a, p, opts(9, "normal"), [99, 20]);          // «нормальный» режим: Феномен только на 99 (или дубле при успехе), Феномен 20
+    const given = corr(a) - 10;
+    expect(given).toBeGreaterThan(0);
+    const old = messageOf(lastCard());
+    captured.dice = [30];
+    await handlePsyRerollClick(old, btn(a, p));
+    expect(corr(a)).toBe(10);
+  });
+
+  it("Порча из других источников не откатывается", async () => {
+    const a = sigActor({ fate: 3, cor: 10 }), p = power();
+    wire(a, p);
+    await cast(a, p, opts(9, "push"), PERIL());               // 13
+    a.system.corruption.value += 5;                         // между попытками персонаж получил Порчу из другого источника: 18
+    const old = messageOf(lastCard());
+    captured.dice = [30, 20];
+    await handlePsyRerollClick(old, btn(a, p));
+    expect(corr(a)).toBe(18 - 3 + 1);
+  });
+
+  it("если Порча с тех пор упала ниже начисленного — уходит не глубже нуля", async () => {
+    const a = sigActor({ fate: 3, cor: 0 }), p = power();
+    wire(a, p);
+    await cast(a, p, opts(9, "push"), PERIL());               // 3
+    a.system.corruption.value = 1;                          // сняли вручную
+    const old = messageOf(lastCard());
+    captured.dice = [30, 20];
+    await handlePsyRerollClick(old, btn(a, p));
+    expect(corr(a)).toBe(0 + 1);                            // снято только то, что было (1), затем +1
+  });
+
+  it("карточка без Феномена (Порча не начислялась) — откатывать нечего", async () => {
+    const a = sigActor({ fate: 3, cor: 10 }), p = power();
+    wire(a, p);
+    await cast(a, p, opts(9, "normal"), [95]);
+    expect(corr(a)).toBe(10);
+    const old = messageOf(lastCard());
+    captured.dice = [30];
+    await handlePsyRerollClick(old, btn(a, p));
+    expect(corr(a)).toBe(10);
+    expect(plain()).not.toContain("Порча Варп-Шока прежнего результата");
+  });
+
+  it("откат делается один раз на карточку, даже если переброс не состоялся с первой попытки", async () => {
+    const { returnWarpShock } = await import("../../module/combat/psyker-pools.mjs");
+    const a = sigActor({ fate: 3, cor: 10 }), p = power();
+    wire(a, p);
+    await cast(a, p, opts(9, "push"), PERIL());               // 13
+    const old = messageOf(lastCard());
+    const saved = old.getFlag("warhammer-dbc", "psyManifest");
+    expect(await returnWarpShock(a, old, saved)).toBe(3);
+    expect(corr(a)).toBe(10);
+    expect(await returnWarpShock(a, old, saved)).toBe(0);   // повторный клик после сбоя не снимает второй раз
+    expect(corr(a)).toBe(10);
+  });
+
+  it("отметка отката разрешена для ГМа (белый список сокета)", async () => {
+    const { CARD_ONCE_FLAGS } = await import("../../module/combat/card-once.mjs");
+    expect(CARD_ONCE_FLAGS).toContain("psyWarpShockReturned");
+  });
+
+  it("Варп-Замок остаётся как был: Порча Замком не откатывается", async () => {
+    const fsm = await import("node:fs");
+    const lock = fsm.readFileSync(new URL("../../module/combat/warp-lock.mjs", import.meta.url), "utf8");
+    expect(lock).not.toContain("returnWarpShock");
+    expect(lock).toContain("остаётся");
+  });
+});

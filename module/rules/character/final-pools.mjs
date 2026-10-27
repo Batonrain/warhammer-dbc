@@ -20,6 +20,7 @@ import { hasRuleFlag, ruleFlagLabels } from "../flags.mjs";
 import { initiativeCharKey, fastestHandBonus, initiativeHint,
          INITIATIVE_DEFAULT_CHAR } from "../initiative.mjs";
 import { legacyInstinctiveInitiativeBonus, legacyForewarnedInitiativeBonus } from "../legacy-weapon.mjs";
+import { apocryphaMax, hasApocryphaCoil } from "../technomystic-resources.mjs";
 
 /**
  * @param {object} actor            актор — для возможностей (hasRuleFlag) и предметов
@@ -29,12 +30,13 @@ import { legacyInstinctiveInitiativeBonus, legacyForewarnedInitiativeBonus } fro
  * @param {number} deps.agBonus     бонус Ловкости
  * @param {number} deps.traitInitMod вклад Черт в Инициативу (легаси-петля)
  * @param {number} deps.implantEnergyMax прибавка имплантов к максимуму Энергии
+ * @param {number} deps.implantCoilEnergyMax часть её, что даёт сам имплант «Катушка Потенции» (база Апокрифы)
  * @param {number} deps.sustainedCost стоимость поддерживаемых психосил
  * @param {number} deps.implantCompBonus прибавка имплантов к Совместимости
  * @param {boolean} deps.techFocusInstalled установлен ли Техно-Фокус
  */
 export function prepareFinalPools(actor, system, { chars, agBonus, traitInitMod,
-                                                   implantEnergyMax, sustainedCost,
+                                                   implantEnergyMax, implantCoilEnergyMax = 0, sustainedCost,
                                                    implantCompBonus, techFocusInstalled }) {
   // ── Инициатива ────────────────────────────────────────────────────────
   // Хранит Ag.bonus + модификаторы Талантов (Combat Formation, Paranoia).
@@ -92,6 +94,18 @@ export function prepareFinalPools(actor, system, { chars, agBonus, traitInitMod,
     system.energy.maxTotal = Math.max(0, (system.energy.max || 0) + implantEnergyMax + powerCacheBonus);
     if ((system.energy.value || 0) > system.energy.maxTotal)
       system.energy.value = system.energy.maxTotal;
+    // Катушка Апокрифа (technomystic.core.apocryphaCoil, пачка J, решения
+    // владельца 26.10 и 27.10.2026): максимум — ручная база + ТОЛЬКО имплант «Катушка
+    // Потенции» (Мотивные Банки и прочие импланты, Силовой Заряд и Таланты не входят). Талант опознаётся по
+    // возможности ИЛИ по имени: копия на акторе до «Обновить мир» ещё без записи.
+    if (system.apocryphaEnergy) {
+      const hasCoil = hasRuleFlag(actor, "technomystic.core.apocryphaCoil") || hasApocryphaCoil(actor);
+      system.apocryphaEnergy.max = hasCoil
+        ? apocryphaMax({ manualMax: system.energy.max, implantMax: implantCoilEnergyMax }) : 0;
+      // Заряд обрезаем только при Таланте: снятый Талант не должен стирать хранимое число.
+      if (hasCoil && (system.apocryphaEnergy.value || 0) > system.apocryphaEnergy.max)
+        system.apocryphaEnergy.value = system.apocryphaEnergy.max;
+    }
   }
   // Бонус к тесту Компенсатора (лучший среди имплантов) и установленные
   // Технофокусы (Железо) — для активации Техночудес и показа на листе.

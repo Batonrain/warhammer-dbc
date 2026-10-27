@@ -547,6 +547,11 @@ export function creatureSchema({ granted = false } = {}) {
     // читать это поле, а не заводить свой флаг каждому Таланту.
     noosphereConnected: bool(false, "Подключён к Ноосфере"),
     energy: pool("Энергия"),
+    // Катушка Апокрифа (Талант Техномистика, Sahara 3-2501, пачка J): вторая
+    // Катушка Потенции. value — хранимый заряд; max пересчитывает расчёт актора
+    // (rules/character/final-pools.mjs) — база основной Катушки без бонусов
+    // Талантов, заряды напрямую не тратятся (rules/technomystic-resources.mjs).
+    apocryphaEnergy: pool("Катушка Апокрифа"),
     geneSeed: new SchemaField({
       origin:         str("", "Происхождение"),
       legion:         str("", "Легион"),

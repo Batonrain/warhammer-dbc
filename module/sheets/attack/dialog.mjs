@@ -31,6 +31,7 @@ import { deathDanceNextCost, markDeathDanceUsed } from "../../combat/death-dance
 import { markRoundCapabilityUsed } from "../../apps/game-session.mjs";
 import { AUTO_HIT_CAPABILITY, FULL_ATTACK_CAPABILITY, readAttackForm } from "./form.mjs";
 import { hateAttackApplies } from "../../rules/patron-abilities.mjs";
+import { hateAttackDegrees } from "../../rules/focused-wrath.mjs";
 import { actorHasInfamyPoint, spendPatronAbility } from "../../apps/infamy-points.mjs";
 import { dualWieldMods, dualWieldActionType, missingSpecs, targetSpreadExceeded,
          SPEC_LABELS, TARGET_SPREAD_LIMIT_M } from "../../rules/dual-wield.mjs";
@@ -506,7 +507,9 @@ export function openAttackDialog(ctx) {
             aimTargets.find(t => t.value === f.aimVal),
             (mainRollOpts = {
               forceHit: helplessAutoHit, doubleDamage: helplessAutoHit,
-              fixedSuccessDeg: (autoHitUsed || hateUsed) ? 1 : undefined,
+              // Атака Ненависти — 1 Успех; с Сфокусированным Гневом по Ненавистной цели в рукопашной —
+              // Inf.b Успехов (мин. 1, rules/focused-wrath.mjs).
+              fixedSuccessDeg: hateUsed ? hateAttackDegrees(actor, { isMelee, targetActor }) : (autoHitUsed ? 1 : undefined),
               bringItDownDice,
               // Прицеливание (wdbc-1rno.5): actor.system.aiming уже сброшен в
               // "none" выше (actorUpdates), значение для Меткого/bonusDamageDice
