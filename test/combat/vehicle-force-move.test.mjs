@@ -9,14 +9,17 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { pilotOperateThreshold, useVehiclePushContest } from "../../module/combat/vehicle-force-move.mjs";
+import { realCreature } from "../support/real-creature.mjs";
 
 // Operate — ГРУППОВОЙ Навык: значения skills.operate.total у актора нет (прежняя
 // фикстура с этим полем скрывала, что штраф пилота всегда был −20). Пилот
 // Шагохода/Техники ведёт Operate (Surface): запись группы groupSkills.operate,
 // её total посчитан расчётом актора (Ag + надбавка ранга + мод).
 // operate: число — total записи Surface; null — записи нет (нетренирован).
+// Эта фикстура — ПИЛОТ (и атакующий в тестах, где SPD не читается); у атакующего, чей SPD задаёт
+// дальность, фикстура — realCreature (test/support/real-creature.mjs).
 // `extraOperate` — прочие специализации Operate, чтобы тест видел, что берётся именно Surface.
-function actor({ athletics = 40, operate = 40, ag = 40, ap = 2, spd = 4, traits = [], extraOperate = [] } = {}) {
+function actor({ athletics = 40, operate = 40, ag = 40, ap = 2, traits = [], extraOperate = [] } = {}) {
   const operateEntries = [...extraOperate];
   if (operate !== null) operateEntries.unshift({ specKey: "surface", specialty: "Surface", rank: "trained", total: operate });
   return {
@@ -25,8 +28,7 @@ function actor({ athletics = 40, operate = 40, ag = 40, ap = 2, spd = 4, traits 
       characteristics: { ag: { total: ag } },
       skills: { athletics: { total: athletics } },
       groupSkills: { operate: operateEntries },
-      actionPoints: { value: ap, max: 2 },
-      movement: { spd }
+      actionPoints: { value: ap, max: 2 }
     },
     update: async () => {}
   };
@@ -113,9 +115,13 @@ describe("useVehiclePushContest", () => {
 
   it("атакующий выигрывает — карточка с исходом и дистанцией", async () => {
     captured.nextRoll = 5; // и атакующий, и пилот берут этот же nextRoll (без dice-очереди)
-    const attacker = actor({ athletics: 90, spd: 10 }); // высокий Athletics → много Успехов
+    // Атакующий — НАСТОЯЩИЙ персонаж (схема + пересчёт листа): прежняя фикстура с выдуманным
+    // `movement.spd` скрывала, что потолок Толкания всегда 0 (Sahara spd-0).
+    const attacker = realCreature({ athletics: 90, spd: 10 }); // высокий Athletics → много Успехов
     const pilot = actor({ operate: 10 }); // низкий Operate+20=30, тот же rv=5 даёт меньше Успехов
     await useVehiclePushContest(attacker, pilot, { mode: "push" });
     expect(captured.chat.length).toBe(1);
+    // 9 Успехов (Порог 90, бросок 5) × 0,5м = 4,5м при SPD 10 — потолок не режет, но и не 0м
+    expect(captured.chat[0].content).toContain("сдвинуто на 4.5м");
   });
 });

@@ -24,7 +24,7 @@
 //  «дном» у конкретной модели техники.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { forceMoveThreshold, forceMoveDistance } from "./force-move.mjs";
+import { forceMoveThreshold, forceMoveDistance, forceMoveSpd } from "./force-move.mjs";
 import { spendActionPoints } from "./action-economy.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
@@ -105,8 +105,7 @@ export async function useVehiclePushContest(actor, pilot, { mode = "push", sizeD
   // Стр. 26: во встречном тесте выигрывает больший Успех; оба провалили —
   // никто не продавил технику. Атакующий выигрывает только реальным успехом.
   const win = atkOutcome.success && atkDeg > defDeg;
-  const spd = actor.system?.movement?.spd ?? 0;
-  const distance = win ? forceMoveDistance(mode, atkDeg, spd) : 0;
+  const distance = win ? forceMoveDistance(mode, atkDeg, forceMoveSpd(actor)) : 0;
 
   const dice = await atkRoll.roll.render();
   const defDice = await defRoll.render();

@@ -10,18 +10,17 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { jointMoveCapacity, excessAssistCount, jointMoveSummary, useJointMove }
   from "../../module/combat/joint-move.mjs";
+import { realCreature } from "../support/real-creature.mjs";
 
+// Настоящая схема существа и настоящий пересчёт листа (test/support/real-creature.mjs) — фикстура с
+// выдуманным `movement.spd` скрывала, что потолок Толкания всегда 0 (Sahara spd-0). Весовые лимиты
+// группы — прямые поля encumbrance, которые тест задаёт сам, поверх пересчёта.
 function actor({ push = 0, lift = 0, athletics = 40, ap = 2 } = {}) {
-  return {
-    id: `a-${Math.random()}`, name: "Участник", type: "character",
-    system: {
-      encumbrance: { push, lift },
-      skills: { athletics: { total: athletics } },
-      actionPoints: { value: ap, max: 2 },
-      movement: { spd: 4 }
-    },
-    update: async () => {}
-  };
+  const a = realCreature({ spd: 4, athletics, ap });
+  a.name = "Участник";
+  a.system.encumbrance.push = push;
+  a.system.encumbrance.lift = lift;
+  return a;
 }
 
 beforeEach(() => {
@@ -102,5 +101,11 @@ describe("useJointMove", () => {
     await useJointMove(lead, [a1, a2], { mode: "lift", weight: 20 });
     expect(captured.chat.length).toBe(1);
     expect(captured.chat[0].content).toContain("Успех");
+  });
+
+  it("Толкание: дальность не нулевая — потолок SPD ведущего с настоящего листа (spd-0)", async () => {
+    captured.nextRoll = 10; // Athletics 40 → 4 Усп. = 2м, SPD 4 не режет
+    await useJointMove(actor({ push: 100, athletics: 40 }), [], { mode: "push", weight: 50 });
+    expect(captured.chat.at(-1).content).toContain("сдвинуто на 2м");
   });
 });
