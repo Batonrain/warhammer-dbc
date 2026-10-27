@@ -2507,7 +2507,7 @@ export const CAPABILITIES = {
   },
   "berserker.core.coldFury": {
     label: "Персонаж может свободно говорить и совершать ментальные действия в Ярости и не получает штрафа к F от Ярости;",
-    source: "Cold Fury / Холодная Ярость; Aggression Module / Модуль Агрессии, Good.Q и Best.Q", reader: "module/rules/rage.mjs::rageRules — в Ярости нет штрафа −20 к F, псайкеру −10 на психотесты; rules/predicates.mjs::isMentalActionBlocked — Ярость не блокирует Ментальные действия и манифестацию; читается по ИМЕНИ Таланта ИЛИ по записи Конструктора (hasColdFury; запись Модуля Агрессии Good/Best считается только у установленного импланта нужного Качества — rules/item-gates.mjs). НЕ смоделировано: переброс попытки выйти из Ярости и сопротивления нападению на союзника (самого выхода из Ярости в системе нет — тумблер), свободная речь"
+    source: "Cold Fury / Холодная Ярость; Aggression Module / Модуль Агрессии, Good.Q и Best.Q", reader: "module/rules/rage.mjs::rageRules — в Ярости нет штрафа −20 к F, псайкеру −10 на психотесты; rules/predicates.mjs::isMentalActionBlocked — Ярость не блокирует Ментальные действия и манифестацию; читается по ИМЕНИ Таланта ИЛИ по записи Конструктора (hasColdFury). Модуль Агрессии Good/Best выдаёт настоящий Талант (живая выдача по установке и Качеству — apps/mechanics.mjs::syncLiveGrants), hasColdFury видит его по имени. НЕ смоделировано: переброс попытки выйти из Ярости и сопротивления нападению на союзника (самого выхода из Ярости в системе нет — тумблер), свободная речь"
   },
   "berserker.core.fireInBlood": {
     label: "Персонаж может войти в Ярость за полудействие.",
@@ -8224,7 +8224,7 @@ export const CAPABILITIES = {
   },
   "ability.frenzy": {
     label: "Ярость: вход в Ярость и выход по тесту W",
-    source: "Frenzy / Ярость (packs-src/talents/Берсерк); Aggression Module / Модуль Агрессии (имплант Скитариев, любое Качество)",
+    source: "Frenzy / Ярость (packs-src/talents/Берсерк); у Модуля Агрессии (имплант Скитариев) выдаётся настоящим Талантом — несёт эту же запись",
     reader: "module/combat/frenzy.mjs hasFrenzyTalent()"
   },
   // ── Ярость: снятие штрафа −20 к BS (Модуль Агрессии Best.Q, focused-wrath-20-bs п.3) ──

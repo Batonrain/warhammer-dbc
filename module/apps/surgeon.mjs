@@ -10,7 +10,7 @@
 import { buildBodyState, buildBodyLayers, buildImplantsSvg,
          classifyImplant, implantCatColor } from "../constants/body-map.mjs";
 import { syncItemEffectsDisabled } from "./effects.mjs";
-import { syncGrantedEquipment } from "./mechanics.mjs";
+import { syncGrantedEquipment, syncLiveGrants } from "./mechanics.mjs";
 import { planBothSidesInstall } from "./surgeon-plan.mjs";
 
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
@@ -206,6 +206,7 @@ export class SurgeonWindow extends HandlebarsApplicationMixin(ApplicationV2) {
           // Установлен — довыдаём его Механику (эффекты + связанные атаки/снаряжение).
           await syncItemEffectsDisabled(item, true);
           await syncGrantedEquipment(item);
+          await syncLiveGrants(item);   // Таланты «по Качеству» (Модуль Агрессии)
           ui.notifications?.info(`🔧 Имплантировано: ${item.name}`);
         }
       } else if (src === "lib") {
@@ -271,6 +272,7 @@ export class SurgeonWindow extends HandlebarsApplicationMixin(ApplicationV2) {
           await item.setFlag(NS, "bodySide", sides[idx]);
           await syncItemEffectsDisabled(item, true);
           await syncGrantedEquipment(item);
+          await syncLiveGrants(item);
         }
       }
       if (installedName) ui.notifications?.info(`🔧 Имплантировано на обе стороны: ${installedName}`);
@@ -285,6 +287,7 @@ export class SurgeonWindow extends HandlebarsApplicationMixin(ApplicationV2) {
       // вместе с ним, пока не установят обратно.
       await syncItemEffectsDisabled(item, false);
       await syncGrantedEquipment(item);
+      await syncLiveGrants(item);   // выданные им Таланты уходят вместе с ним
       ui.notifications?.info(`Имплант извлечён (в снаряжении): ${item.name}`);
       this.render(false);
     }));

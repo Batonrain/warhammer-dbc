@@ -14,7 +14,6 @@ import { hasPathGrade } from "../constants/aeldari-paths.mjs";
 import { anyTargetMatches } from "./talent-targets.mjs";
 import { isSerpentine } from "./naga-traits.mjs";
 import { readEnvForScene } from "../constants/scene-nexus.mjs";
-import { isImplantActive, entryQualityOk } from "./item-gates.mjs";
 
 /** Значение условия к списку: строка считается списком из одного элемента. */
 const list = v => (v == null ? [] : Array.isArray(v) ? v : [v]);
@@ -267,25 +266,14 @@ export function isMentalActionBlocked(actor) {
   return !!(rageBlocks || c?.hallucinogenic || c?.intoxicated);
 }
 
-/**
- * Есть ли на акторе ДЕЙСТВУЮЩИЙ предмет с записью Конструктора kind:"capability"
- * с этим ключом (прямой скан: hasRuleFlag тут замкнул бы круг импортов).
- *
- * Скан честно проходит те же ворота, что и сборка правил, но только два, и оба
- * из листа rules/item-gates.mjs: имплант должен быть установлен (isImplantActive)
- * и Качество должно подходить записи (when.quality). Остальные гейты `when`
- * (Геносемя, Ярость, предикаты) сюда не доезжают — Талант Cold Fury / Wounded
- * Beast их не несёт. Без этих двух ворот Cold Fury от Модуля Агрессии (Good и
- * выше) считался бы у Common-копии и у импланта в сумке.
- */
+/** Есть ли на акторе предмет с записью Конструктора kind:"capability" с этим ключом (прямой скан: hasRuleFlag тут замкнул бы круг импортов). */
 function holdsCapabilityKey(actor, key) {
   for (const item of actor?.items ?? []) {
     const groups = item?.flags?.["warhammer-dbc"]?.mechanics;
     if (!Array.isArray(groups)) continue;
-    if (item.type === "implant" && !isImplantActive(item)) continue;
     for (const g of groups) {
       for (const e of g?.entries ?? []) {
-        if (e?.kind === "capability" && e.capabilityKey === key && entryQualityOk(e, item)) return true;
+        if (e?.kind === "capability" && e.capabilityKey === key) return true;
       }
     }
   }

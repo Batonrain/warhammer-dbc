@@ -19,9 +19,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { abs } from "../../tools/packs.mjs";
-import { hasColdFury, isMentalActionBlocked } from "../../module/rules/predicates.mjs";
-import { hasAbility } from "../../module/rules/ability-by-key.mjs";
-import { hasRuleFlag } from "../../module/rules/flags.mjs";
 import { rageRules, RAGE_BS_RULE_ID, RAGE_NO_BS_PENALTY } from "../../module/rules/rage.mjs";
 import { isKnownCapability } from "../../module/constants/capabilities.mjs";
 import { resolveTest } from "../../module/rules/resolve-test.mjs";
@@ -74,11 +71,10 @@ describe("Модуль Агрессии: настоящий документ п�
     expect(DOC.system.category).toBe("skitarii");
     const entries = DOC.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries);
     expect(entries.length).toBeGreaterThan(0);
-    expect(entries.every(e => e.kind === "capability")).toBe(true);
   });
 
-  it("все ключи записей известны реестру Возможностей (опечатка в ключе молча ничего не даст)", () => {
-    for (const e of DOC.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries)) {
+  it("все ключи записей-Возможностей известны реестру (опечатка в ключе молча ничего не даст)", () => {
+    for (const e of DOC.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries).filter(x => x.kind === "capability")) {
       expect(isKnownCapability(e.capabilityKey), e.capabilityKey).toBe(true);
     }
   });
@@ -88,57 +84,6 @@ describe("Модуль Агрессии: настоящий документ п�
     expect(ids).toContain(RAGE_BS_RULE_ID);
     const keys = DOC.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries).map(e => e.capabilityKey);
     expect(keys).toContain(RAGE_NO_BS_PENALTY);
-  });
-});
-
-describe("Модуль Агрессии: Frenzy от импланта (по Качествам)", () => {
-  for (const quality of ["poor", "common", "good", "best"]) {
-    it(`${quality}: Талант Frenzy есть (hasFrenzyTalent читает ключ ability.frenzy)`, () => {
-      const a = actor([moduleItem({ quality })]);
-      expect(hasAbility(a, "ability.frenzy", "Frenzy", "talent")).toBe(true);
-    });
-  }
-
-  it("без импланта Frenzy нет", () => {
-    expect(hasAbility(actor(), "ability.frenzy", "Frenzy", "talent")).toBe(false);
-  });
-
-  it("неустановленный имплант в сумке Frenzy не даёт", () => {
-    const a = actor([moduleItem({ quality: "best", installed: false })]);
-    expect(hasAbility(a, "ability.frenzy", "Frenzy", "talent")).toBe(false);
-  });
-});
-
-describe("Модуль Агрессии: Cold Fury — только Good и Best", () => {
-  it("Poor и Common: Cold Fury нет", () => {
-    expect(hasColdFury(actor([moduleItem({ quality: "poor" })]))).toBe(false);
-    expect(hasColdFury(actor([moduleItem({ quality: "common" })]))).toBe(false);
-  });
-
-  it("Good и Best: Cold Fury есть", () => {
-    expect(hasColdFury(actor([moduleItem({ quality: "good" })]))).toBe(true);
-    expect(hasColdFury(actor([moduleItem({ quality: "best" })]))).toBe(true);
-  });
-
-  it("неустановленный, отключённый и подавленный (поле Дискорданта) имплант Cold Fury не даёт", () => {
-    expect(hasColdFury(actor([moduleItem({ quality: "good", installed: false })]))).toBe(false);
-    expect(hasColdFury(actor([moduleItem({ quality: "good", disabled: true })]))).toBe(false);
-    expect(hasColdFury(actor([moduleItem({ quality: "good", nullSuppressed: true })]))).toBe(false);
-  });
-
-  it("Cold Fury снимает штраф к F в Ярости и разрешает Ментальные действия", () => {
-    const common = actor([moduleItem({ quality: "common" })]);
-    const good = actor([moduleItem({ quality: "good" })]);
-    expect(ratesPenaltyOn(common, "fel")).toBe(true);
-    expect(ratesPenaltyOn(good, "fel")).toBe(false);
-    expect(isMentalActionBlocked(common)).toBe(true);
-    expect(isMentalActionBlocked(good)).toBe(false);
-  });
-
-  it("запись Fire in Blood выдана тоже, но только Good и Best", () => {
-    for (const [quality, want] of [["poor", false], ["common", false], ["good", true], ["best", true]]) {
-      expect(hasRuleFlag(actor([moduleItem({ quality })]), "berserker.core.fireInBlood"), quality).toBe(want);
-    }
   });
 });
 
@@ -154,10 +99,9 @@ describe("Модуль Агрессии: штраф BS в Ярости снят 
     expect(rageBsPenalty(actor([moduleItem({ quality: "best" })]))).toHaveLength(0);
   });
 
-  it("Best снимает ТОЛЬКО BS: штраф к I остаётся (Cold Fury снимает F, но не I)", () => {
+  it("Best снимает ТОЛЬКО BS: штраф к I остаётся (штраф к F снимает отдельно выданный Cold Fury — test/apps/aggression-module-grants)", () => {
     const a = actor([moduleItem({ quality: "best" })]);
     expect(ratesPenaltyOn(a, "int")).toBe(true);
-    expect(ratesPenaltyOn(a, "fel")).toBe(false);
   });
 
   it("неустановленный Best (в сумке) штраф BS не снимает", () => {

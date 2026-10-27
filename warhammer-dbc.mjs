@@ -51,7 +51,7 @@ import { sweepAllConditionClocks } from "./module/combat/condition-clock.mjs";
 import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
-         saveItemMechanics, mechanicsRelevantChange, syncGrantedEquipment,
+         saveItemMechanics, mechanicsRelevantChange, syncGrantedEquipment, onItemQualityChanged,
          syncNullZoneSuppression, syncGrantedAbilities, hasWhenGatedAbilityGrant,
          getItemMechanics, findMechEntryById } from "./module/apps/mechanics.mjs";
 import { entryWhenOk } from "./module/rules/mech-when.mjs";
@@ -2449,6 +2449,10 @@ Hooks.on("createItem", handleItemCreated);
 // нет.
 Hooks.on("updateItem", async (item, changed, options, userId) => {
   if (game.user.id !== userId) return;
+  // Качество сменили — записи с гейтом «Когда Качество» (эффекты, Таланты
+  // импланта: Модуль Агрессии) пересобираются сразу; поле system.quality под
+  // «правку Механики» ниже не попадает.
+  await onItemQualityChanged(item, changed);
   // Рейтинг Черты сменили (Укус (1) → (3)) — пересчитать урон выданных ею
   // интегральных атак (wdbc-o368c); полное применение Механики тут не нужно.
   if (changed?.system?.rating !== undefined && item.parent instanceof Actor

@@ -2357,6 +2357,10 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
   }
 
   if (entry.kind === "trait" || entry.kind === "talent") {
+    // Имплант с Талантом «по Качеству» (Модуль Агрессии) ведёт выдачу живьём —
+    // syncLiveGrants: разовая выдача здесь не знала ни «установлен ли», ни
+    // Качества, ни возврата опыта за совпадающий Талант не должна печатать.
+    if (hasLiveSyncedGrants(sourceItem)) return;
     const src = await resolveMechSource(entry);
     const data = src ? src.toObject() : {
       name: entry.sourceName || "?", type: entry.kind,
@@ -2960,6 +2964,58 @@ export function hasWhenGatedAbilityGrant(item) {
 }
 
 /**
+ * Имплант выдаёт Таланты/Черты «по Качеству» (запись с условием «Когда
+ * Качество»: Модуль Агрессии — Cold Fury и Fire in Blood только на Good/Best) —
+ * такой имплант ведётся ЖИВОЙ синхронизацией (syncLiveGrants): выдача следует
+ * за установкой, извлечением и сменой Качества. Остальные импланты выдают
+ * по-старому, разово при получении (Астартес-органы и т.п.): им живая сверка
+ * сняла бы выданное у органа без флага «установлен».
+ */
+export function hasLiveSyncedGrants(item) {
+  if (item?.type !== "implant") return false;
+  return collectDirectAbilityEntries(getItemMechanics(item), null, item, { ignoreWhen: true })
+    .some(e => whenQuality(e.when).length > 0);
+}
+
+// Очередь живых сверок по предмету — тот же приём, что _mechRuns/_syncRuns:
+// два хука updateItem подряд (стрелка ↓↓ по списку Качества) иначе оба видели
+// бы «Cold Fury ещё нет» и оба его создали — дубль остался бы до извлечения.
+const _liveGrantRuns = new Map();
+
+/** Живая сверка выдачи Талантов импланта (см. hasLiveSyncedGrants); прочим предметам — ничего. */
+export function syncLiveGrants(item) {
+  if (!hasLiveSyncedGrants(item)) return Promise.resolve();
+  const key = item?.uuid || item?.id;
+  if (!key) return syncGrantedAbilities(item);
+  const run = (_liveGrantRuns.get(key) ?? Promise.resolve())
+    .catch(() => {})
+    .then(() => syncGrantedAbilities(item));
+  _liveGrantRuns.set(key, run);
+  run.catch(() => {}).finally(() => { if (_liveGrantRuns.get(key) === run) _liveGrantRuns.delete(key); });
+  return run;
+}
+
+/** Есть ли в Механике предмета запись любого вида с условием «Когда Качество». */
+function hasQualityGatedEntry(item) {
+  const walk = entries => (entries || []).some(e =>
+    e?.kind === "group" ? walk(e.group?.entries) : whenQuality(e?.when).length > 0);
+  return getItemMechanics(item).some(g => walk(g.entries));
+}
+
+/**
+ * Качество предмета на акторе сменили: записи с гейтом «Когда Качество»
+ * пересобираются сразу — эффекты (Poor.Q −10 к I) и выданные Таланты.
+ * Хук updateItem зовёт это ДО проверки «правка Механики»: Качество — поле
+ * system, под mechanicsRelevantChange оно не попадает.
+ */
+export async function onItemQualityChanged(item, changed) {
+  if (changed?.system?.quality === undefined) return;
+  if (!(item?.parent instanceof Actor) || !hasQualityGatedEntry(item)) return;
+  await syncMechanicsEffects(item);
+  await syncLiveGrants(item);
+}
+
+/**
  * Живая пересинхронизация выдачи Черт и Талантов с активностью источника —
  * сестра syncGrantedEquipment выше, и заведена ровно тогда, когда у источника
  * появилось выключаемое состояние: подспособность переключаемой способности
@@ -3002,6 +3058,7 @@ export async function syncGrantedAbilities(sourceItem) {
   if (stale.length) await actor.deleteEmbeddedDocuments("Item", stale.map(i => i.id));
 
   const haveIds = new Set(grantedNow.map(i => i.getFlag(FLAG, "abilityEntryId")));
+  const live = hasLiveSyncedGrants(sourceItem);
   const toCreate = [];
   for (const e of entries) {
     if (haveIds.has(e.id)) continue;
@@ -3011,6 +3068,16 @@ export async function syncGrantedAbilities(sourceItem) {
       img: e.sourceImg || "icons/svg/aura.svg", system: {}
     };
     delete data._id;
+    if (e.kind === "talent" && live) {
+      // У персонажа этот Талант уже есть (куплен, или дан другим источником) —
+      // второй копии «в подарок» не кладём: она задваивала бы строку и, будучи
+      // бесплатной, не нужна. Снимать при извлечении импланта тоже нечего.
+      const same = findSameTalent(actor.items, { name: data.name,
+        system: { specialization: e.specialization || data.system?.specialization || "" } });
+      if (same && same.getFlag(FLAG, "grantedByItem") !== sourceItem.id) continue;
+      // Дар, а не покупка — как у applyMechEntry: цена 0, опыта не стоит.
+      data.system = { ...(data.system || {}), granted: true, purchased: false, cost: 0 };
+    }
     if (e.kind === "trait" && e.rating !== "" && e.rating != null && "rating" in (data.system || {})) {
       data.system.rating = mechFormulaTotalSafe(e.rating, mechRollData(actor));
     }
@@ -3539,6 +3606,8 @@ async function _applyItemMechanics(item) {
   // "talent" у источников, что раньше этот гейт на них не трогал
   // (task-8cfb, живая проверка 22.10.2026 — только про когда-гейт).
   await removeStaleAbilityGrants(item, applied);
+  // Имплант с Талантами «по Качеству»: выдача (и возврат неустановленному) — тут.
+  await syncLiveGrants(item);
   // Источник мог родиться неактивным (напр. Имплант создан ещё не
   // установленным) — откатывает то, что applyMechEntry(equipment) уже
   // успел выдать выше, чтобы конечное состояние сразу было верным.

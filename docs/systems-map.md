@@ -798,11 +798,13 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 состоянию `inRage`: +10 WS/S/W, −20 тесты BS/I/F, Раненный Зверь, Холодная
 Ярость; Усталость/Оглушение/Мораль — `situational.mjs`, `condition-guards.mjs`,
 `morale-test.mjs`, `fear.mjs`; Sahara 3-861e; Модуль Агрессии Скитария — записи
-Конструктора на самом импланте: Frenzy, Cold Fury/Fire in Blood на Good+, возможность
+Конструктора на самом импланте: настоящие Таланты Frenzy / Cold Fury / Fire in Blood (последние
+два на Good+), Poor.Q −10 к I (характеристика с `when.quality`), возможность
 `rage.noBsPenalty` на Best гасит правило `rage.penalty.bs` через `CAPABILITY_OVERRIDES`
-(`rules/item-rules.mjs`) и строку «Ярость: −20 BS» окна атаки; ворота «имплант
-установлен» и «Качество» для прямого скана `hasColdFury` — лист `rules/item-gates.mjs`,
-Sahara focused-wrath-20-bs п.3), `rules/berserker-talents.mjs`
+(`rules/item-rules.mjs`) и строку «Ярость: −20 BS» окна атаки. Имплант с Талантом «по
+Качеству» ведётся живой выдачей — `apps/mechanics.mjs::syncLiveGrants` (установка/извлечение в
+Хирургиконе, смена Качества — `onItemQualityChanged` в хуке updateItem, получение предмета);
+ворота «установлен»/«Качество» — лист `rules/item-gates.mjs`; Sahara focused-wrath-20-bs п.3), `rules/berserker-talents.mjs`
 (Натиск Берсерка: +10 к приёму при Натиске, `meleeBaseBonus`), `fully-armed.mjs`.
 
 - Гасители штрафов окна атаки (sheets/attack/mods.mjs, 26.09.2026):

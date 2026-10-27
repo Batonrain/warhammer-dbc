@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R:2.",
-    "notes": "Автоматизировано (записи Конструктора, только у УСТАНОВЛЕННОГО импланта): Талант Frenzy — любое Качество; Cold Fury и Fire in Blood — Good.Q и Best.Q (Cold Fury: нет штрафа −20 к F в Ярости, Ментальные действия разрешены, психотесты −10; Fire in Blood — только метка, механики входа в Ярость за полудействие нет); Best.Q — нет штрафа −20 к BS в Ярости (стрельба в окне атаки и тесты на BS), штрафы к I и F остаются по общим правилам Ярости (F снимает Cold Fury). НЕ автоматизировано: Poor.Q −10 к I; Избегания в Ярости без ограничений; авто-успех на тест выхода из Ярости (выхода как теста в системе нет — тумблер). Poor.Q −10 к I можно записать характеристикой с условием «Когда Качество» (when.quality), но живой пересчёт эффекта при смене Качества не проверен — не заведено.",
+    "notes": "Автоматизировано (записи Конструктора, только у УСТАНОВЛЕННОГО импланта, живая выдача — при установке, извлечении и смене Качества): настоящие Таланты Frenzy — любое Качество; Cold Fury и Fire in Blood — Good.Q и Best.Q (Cold Fury: нет штрафа −20 к F в Ярости, Ментальные действия разрешены, психотесты −10; Fire in Blood — только Талант, механики входа в Ярость за полудействие нет); Best.Q — нет штрафа −20 к BS в Ярости (стрельба в окне атаки и тесты на BS), штраф к I остаётся по общим правилам Ярости; Poor.Q — −10 к I (значение). Если у персонажа уже есть такой же Талант, копия не добавляется и при извлечении импланта не снимается. НЕ автоматизировано: Избегания в Ярости без ограничений; авто-успех на тест выхода из Ярости (выхода как теста в системе нет — тумблер).",
     "category": "skitarii",
     "quality": "common",
     "effect": "Талант Frenzy, Избегания в Ярости без ограничений, авто-успех на выход из Ярости. Poor.Q: −10 I; Good.Q: + Таланты Cold Fury и Fire in Blood; Best.Q: + убирает штраф к BS в Ярости.",
@@ -59,23 +59,27 @@
           "entries": [
             {
               "id": "aggrFrenzy0001",
-              "kind": "capability",
+              "kind": "talent",
               "group": null,
-              "capabilityKey": "ability.frenzy",
-              "capabilityCostPool": "",
-              "capabilityCostAmount": 1,
-              "capabilityMode": "flag",
-              "label": "Frenzy / Ярость (Модуль Агрессии)"
+              "sourceUuid": "Compendium.warhammer-dbc.talents.Item.FP1xN9yNXHr9vWw8",
+              "sourceName": "Frenzy / Ярость",
+              "sourceImg": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "label": "Модуль Агрессии: Frenzy"
             },
             {
               "id": "aggrColdFury01",
-              "kind": "capability",
+              "kind": "talent",
               "group": null,
-              "capabilityKey": "berserker.core.coldFury",
-              "capabilityCostPool": "",
-              "capabilityCostAmount": 1,
-              "capabilityMode": "flag",
-              "label": "Cold Fury / Холодная Ярость (Модуль Агрессии, Good.Q)",
+              "sourceUuid": "Compendium.warhammer-dbc.talents.Item.pj2nKLs8aBfjAQof",
+              "sourceName": "Cold Fury / Холодная Ярость",
+              "sourceImg": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "label": "Модуль Агрессии (Good.Q): Cold Fury",
               "when": {
                 "negate": false,
                 "conditions": [],
@@ -88,13 +92,15 @@
             },
             {
               "id": "aggrFireBlood01",
-              "kind": "capability",
+              "kind": "talent",
               "group": null,
-              "capabilityKey": "berserker.core.fireInBlood",
-              "capabilityCostPool": "",
-              "capabilityCostAmount": 1,
-              "capabilityMode": "flag",
-              "label": "Fire in Blood / Огонь в Крови (Модуль Агрессии, Good.Q)",
+              "sourceUuid": "Compendium.warhammer-dbc.talents.Item.vFq3iMo77WiRapsd",
+              "sourceName": "Fire in Blood / Огонь в Крови",
+              "sourceImg": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "label": "Модуль Агрессии (Good.Q): Fire in Blood",
               "when": {
                 "negate": false,
                 "conditions": [],
@@ -119,6 +125,24 @@
                 "conditions": [],
                 "quality": [
                   "best"
+                ],
+                "negateQuality": false
+              }
+            },
+            {
+              "id": "aggrPoorInt0001",
+              "kind": "characteristic",
+              "group": null,
+              "charKey": "int",
+              "field": "total",
+              "op": "subtract",
+              "value": 10,
+              "label": "Модуль Агрессии (Poor.Q): −10 к I",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "quality": [
+                  "poor"
                 ],
                 "negateQuality": false
               }

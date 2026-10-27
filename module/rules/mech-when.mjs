@@ -337,8 +337,7 @@ export function entryWhenOk(actor, entry, item = null) {
     sealedOk = entry.when.negateSealedArmour ? !sealed : sealed;
   }
 
-  // Гейт Качества живёт в rules/item-gates.mjs — его же спрашивает прямой скан
-  // Возможностей в rules/predicates.mjs (там мы импортировать отсюда не можем).
+  // Гейт Качества живёт в листе rules/item-gates.mjs (одно правило на всех читателей).
   const qualOk = entryQualityOk(entry, item);
 
   let predOk = true;

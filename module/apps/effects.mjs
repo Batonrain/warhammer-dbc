@@ -117,8 +117,7 @@ function isItemActiveBase(item) {
     }
     case "navigatorPower": return !!sys.isSustained;
     case "implant":
-      // Правило одно, в rules/item-gates.mjs: его же спрашивает прямой скан
-      // Возможностей в rules/predicates.mjs (hasColdFury от Модуля Агрессии).
+      // Правило одно, в листе rules/item-gates.mjs (общее с остальными читателями).
       return isImplantActive(item);
     case "runicWeave": {
       // "region" (помещение/стены) — не читается отсюда вовсе: живой пересчёт
