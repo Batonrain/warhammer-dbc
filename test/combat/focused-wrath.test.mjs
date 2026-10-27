@@ -160,7 +160,7 @@ describe("проводка в hooks.mjs и данные пака", () => {
     const hooks = fs.readFileSync(new URL("../../module/hooks.mjs", import.meta.url), "utf8");
     expect(hooks).toContain("focusedWrathOnAttack(");
     expect(hooks).toContain("attackBoostFor(await focusedWrathOnAttack(");
-    expect(hooks).toContain("wrathRerollOpts(atk.opts, wrathApplies)");
+    expect(hooks).toContain("wrathRerollOpts(withoutBoughtSuccess(atk.opts), wrathApplies)");
   });
 
   it("Талант в паке несёт запись Конструктора, читатель назван", () => {

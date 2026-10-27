@@ -175,3 +175,19 @@ describe("проводка в hooks.mjs", () => {
     expect(hooks).toContain("spendSuccessOnCard(actor, message)");
   });
 });
+
+describe("Переброс сбрасывает купленный Успех (решение владельца 27.10.2026)", () => {
+  it("опции переброса не несут extraDeg; остальное сохраняется, исходный объект цел", async () => {
+    const { withoutBoughtSuccess } = await import("../../module/rules/fate-bonus.mjs");
+    const opts = { extraDeg: 2, skipAmmo: true, baseKey: "charge" };
+    expect(withoutBoughtSuccess(opts)).toEqual({ skipAmmo: true, baseKey: "charge" });
+    expect(opts.extraDeg).toBe(2);
+    expect(withoutBoughtSuccess(undefined)).toEqual({});
+  });
+  it("hooks.mjs: переброс атаки строит опции через withoutBoughtSuccess, а «+10» extraDeg сохраняет", async () => {
+    const fs = await import("node:fs");
+    const hooks = fs.readFileSync(new URL("../../module/hooks.mjs", import.meta.url), "utf8");
+    expect(hooks).toContain("wrathRerollOpts(withoutBoughtSuccess(atk.opts), wrathApplies)");
+    expect(hooks).toContain("...(atkB.opts || {}), forcedRoll: rv");
+  });
+});

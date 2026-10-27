@@ -43,3 +43,13 @@ export function successBonusOutcome({ rv, threshold, extra = 1 } = {}) {
   const add = Math.max(0, Math.trunc(Number(extra) || 0));
   return { ...base, extra: add, degrees: base.degrees + add };
 }
+
+/**
+ * Опции атаки для ПЕРЕБРОСА за Очко: купленный Успех (opts.extraDeg, apps/infamy-success.mjs) относился к
+ * прежнему результату, а переброс — новый бросок (решение владельца 27.10.2026), поэтому его сбрасываем.
+ * «+10» и сдвиг места попадания — тот же результат, там extraDeg сохраняется. Исходный объект не меняется.
+ */
+export function withoutBoughtSuccess(opts) {
+  const { extraDeg: _dropped, ...rest } = opts ?? {};
+  return rest;
+}

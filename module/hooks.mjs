@@ -28,7 +28,7 @@ import { tempInfamyAmount }              from "./rules/temp-infamy.mjs";
 import { inspiringChampionsFor, spendInspiringInfamy } from "./combat/inspiring-presence.mjs";
 import { applyExplosiveActionTurnEnd } from "./combat/explosive-action.mjs";
 import { applyWoundLoss, woundDeathThreshold } from "./rules/wounds.mjs";
-import { fateBonusOutcome, FATE_BONUS }  from "./rules/fate-bonus.mjs";
+import { fateBonusOutcome, FATE_BONUS, withoutBoughtSuccess }  from "./rules/fate-bonus.mjs";
 import { attackBoostFor, wrathRerollOpts } from "./rules/focused-wrath.mjs";
 import { focusedWrathOnAttack }            from "./combat/focused-wrath.mjs";
 import { successTarget, spendSuccessOnCard } from "./apps/infamy-success.mjs";
@@ -4021,7 +4021,7 @@ function _attachFateContextMenu(message, html) {
           // Сфокусированный Гнев: переброс рукопашной атаки по Ненавистной цели «также дает
           // Преимущество» — два броска d100, остаётся лучший (rules/focused-wrath.mjs::wrathRerollOpts).
           const wrathApplies = await focusedWrathOnAttack(atkActor, atk, atkIsMelee);
-          const atkOpts = wrathRerollOpts(atk.opts, wrathApplies);
+          const atkOpts = wrathRerollOpts(withoutBoughtSuccess(atk.opts), wrathApplies);
           const wrathReroll = wrathApplies && !atk.opts?.reroll;
           delete atkOpts[BEYOND_HUMAN_FLAG];
           await _executeAttackRoll(atkActor, atkItem, atk.charKey, atk.threshold,
