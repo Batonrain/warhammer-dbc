@@ -23,6 +23,7 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { statusApplyFields } from "./status-resist.mjs";
+import { writeToTarget } from "./gm-relay.mjs";
 import { sizeOf } from "../rules/predicates.mjs";
 import { hasPugilistTalent } from "../rules/pugilist-talents.mjs";
 import { hasTalent, isBike, roadkillDamage } from "../rules/mount.mjs";
@@ -94,7 +95,9 @@ export async function resolveBulldozeSuccess(actor, { deg, target } = {}) {
     // Стена (Талант Стойкости): сбиваемый носитель вправе пройти S+0 и устоять.
     const { fields, resisted, note } = await statusApplyFields(target, "prone", null,
       { attacker: actor, melee: true, source: "Напролом" });
-    if (Object.keys(fields).length) await target.update(fields);
+    // Цель обычно чужой NPC — запись через ГМа (combat/gm-relay.mjs); без ГМа writeToTarget предупредит сам,
+    // а карточка всё равно нужна: в ней дальность/проход/урон, не только «Ничком».
+    if (Object.keys(fields).length) await writeToTarget(target, { kind: "update", data: fields }, actor);
     const lead = roadkill ? "Переехать (байк)"
       : deg >= 5 ? "5+ Успехов" : "Громовой Натиск (победа считается как 5+ Успехов)";
     if (roadkill) {

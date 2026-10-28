@@ -34,6 +34,7 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { statusApplyFields } from "./status-resist.mjs";
+import { writeToTarget } from "./gm-relay.mjs";
 import { sizeOf } from "../rules/predicates.mjs";
 import { hasPugilistTalent } from "../rules/pugilist-talents.mjs";
 import { isIntegralAttack } from "./equipped-melee.mjs";
@@ -102,7 +103,9 @@ export async function resolveRoundhouseSuccess(actor, { deg, target } = {}) {
     // Стена (Талант Стойкости) вправе остановить падение — общая точка наложения.
     const { fields, resisted, note } = await statusApplyFields(target, "prone", null,
       { attacker: actor, melee: true, source: "Пинок с Разворота" });
-    if (Object.keys(fields).length) await target.update(fields);
+    // Цель обычно чужой NPC — запись через ГМа (combat/gm-relay.mjs); без ГМа writeToTarget предупредит сам,
+    // а карточка всё равно нужна: в ней дальность/проход/урон, не только «Ничком».
+    if (Object.keys(fields).length) await writeToTarget(target, { kind: "update", data: fields }, actor);
     sections.push(resisted
       ? `<div class="roll-threshold">Дальше ¼A.b (${k.knockdownThreshold} м): ${esc(note)}</div>`
       : `<div class="roll-threshold">Отброшена дальше ¼A.b (${k.knockdownThreshold} м) — ${esc(target.name)} сбит(а) с ног.</div>`);

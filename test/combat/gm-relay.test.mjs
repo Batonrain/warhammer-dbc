@@ -18,6 +18,8 @@ import { PIN_DOWN_FLAG } from "../../module/rules/pugilist-talents.mjs";
 import { GRAPPLE_TAIL_FLAG } from "../../module/rules/naga-traits.mjs";
 import { LEAP_UP_DENIED_FLAG } from "../../module/rules/takedown.mjs";
 import { resolveKnockdownSuccess } from "../../module/combat/knockdown.mjs";
+import { resolveRoundhouseSuccess } from "../../module/combat/roundhouse.mjs";
+import { resolveBulldozeSuccess } from "../../module/combat/bulldoze.mjs";
 import { applyChokehold } from "../../module/combat/grapple-talents.mjs";
 import { INSPIRED_WRATH_FLAG } from "../../module/rules/inspire-wrath.mjs";
 import { conditionApplyFields, conditionRemoveFields } from "../../module/sheets/tabs/conditions.mjs";
@@ -264,6 +266,27 @@ describe("приёмы действительно ходят через реле
     expect(emitted).toHaveLength(1);
     expect(emitted[0].op.data["system.conditions.prone"]).toBe(true);
     expect(foe.updates).toEqual([]);
+  });
+
+  // Пинок с Разворота и Напролом писали «Ничком» прямо в цель: у игрока — «lacks permission», и карточки не было.
+  it("Пинок с Разворота по чужому NPC: «Ничком» уходит ГМу, карточка с дальностью есть", async () => {
+    const me = fighter("Игрок", "Actor.me", true), foe = fighter("NPC", "Actor.foe", false);
+    me.system.characteristics = { s: { bonus: 4 } };
+    foe.update = async () => { throw new Error("lacks permission"); };
+    await resolveRoundhouseSuccess(me, { deg: 3, target: foe });
+    expect(emitted).toHaveLength(1);
+    expect(emitted[0].op.data["system.conditions.prone"]).toBe(true);
+    expect(checkTargetWrite(emitted[0].op, { initiatorOwned: true }).ok).toBe(true);
+    expect(captured.chat.at(-1).content).toContain("Пинок с Разворота");
+  });
+
+  it("Напролом на 5+ по чужому NPC: «Ничком» уходит ГМу, карточка есть", async () => {
+    const me = fighter("Игрок", "Actor.me", true), foe = fighter("NPC", "Actor.foe", false);
+    foe.update = async () => { throw new Error("lacks permission"); };
+    await resolveBulldozeSuccess(me, { deg: 5, target: foe });
+    expect(emitted).toHaveLength(1);
+    expect(emitted[0].op.data["system.conditions.prone"]).toBe(true);
+    expect(captured.chat.at(-1).content).toContain("Напролом");
   });
 
   it("Жокей: метка на чужой цели — запрос ГМу, на себя — сразу", async () => {
