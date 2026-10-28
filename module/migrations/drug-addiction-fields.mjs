@@ -16,6 +16,8 @@
 //   • книжные числа — исправляет, только если на копии стоит РОВНО старое
 //     (неверное) значение пака: значит, ГМ его не трогал. Таблица старых значений
 //     — CORRECTIONS ниже.
+//  Тем же правилом «ровно старое → значение пака» чинится пост-эффект Струпа
+//  (ITEM_CORRECTIONS): пак правился тогда же, а препарат без Зависимости.
 //  Всё остальное («Обновить мир», apps/content-sync.mjs) остаётся ГМу.
 //
 //  Идемпотентна: второй прогон ничего не находит (новые поля уже заполнены,
@@ -24,7 +26,7 @@
 //  Подбор записи пака — migrations/pack-source.mjs (uuid источника, затем имя).
 // ════════════════════════════════════════════════════════════════════════════
 
-import { allItemPackDocs } from "../apps/content-sync.mjs";
+import { allItemPackDocs, sameValue } from "../apps/content-sync.mjs";
 import { buildSourceIndex, packValueFor } from "./pack-source.mjs";
 import { deltaOwnedItems, unlinkedTokens } from "./unlinked-tokens.mjs";
 
@@ -49,6 +51,20 @@ export const CORRECTIONS = {
   "Tiresias": { minDose: 4 }
 };
 
+/**
+ * Поля самого препарата (не Зависимости), что в паке стояли неверно: английское
+ * имя → { поле: прежнее значение }. Струп (стр. 284): урона в T у пост-эффекта
+ * нет, кубы пост-эффекта — срок Оглушения, срок действия «1 час» по Календарю.
+ */
+export const ITEM_CORRECTIONS = {
+  "Scab": {
+    afterEffect: "Наносит 1d10 урона в T; в потоке рвоты — Оглушение 1d10 Раундов; иногда 1 Порча.",
+    afterEffectDice: "",
+    afterEffectCharDamage: { stat: "t", formula: "1d10" },
+    gameMinutes: 0
+  }
+};
+
 const isDefault = (field, v) => field === "periodCharDamage" ? !(v?.stat || v?.formula) : (v === "" || v === 0 || v == null);
 const englishHalf = name => String(name ?? "").split("/").map(s => s.trim()).find(h => /^[A-Za-z]/.test(h)) ?? "";
 
@@ -60,9 +76,18 @@ export function addictionOfPackDoc(doc) {
   return Object.fromEntries(keys.map(k => [k, structuredClone(a[k])]));
 }
 
-/** Индекс «копия → поля Зависимости её записи пака». */
+/** Поля препарата из ITEM_CORRECTIONS в записи пака (null — препарат не из таблицы). */
+function itemFieldsOfPackDoc(doc) {
+  const fields = ITEM_CORRECTIONS[englishHalf(doc?.name)];
+  return fields ? Object.fromEntries(Object.keys(fields).map(k => [k, structuredClone(doc.system?.[k])])) : null;
+}
+
+/** Индекс «копия → { addiction, item } её записи пака» (поля Зависимости и поля ITEM_CORRECTIONS). */
 export function buildDrugAddictionIndex(docs) {
-  return buildSourceIndex((docs ?? []).filter(d => d?.type === "drug"), addictionOfPackDoc);
+  return buildSourceIndex((docs ?? []).filter(d => d?.type === "drug"), doc => {
+    const addiction = addictionOfPackDoc(doc), item = itemFieldsOfPackDoc(doc);
+    return addiction || item ? { addiction, item } : null;
+  });
 }
 
 /**
@@ -70,16 +95,22 @@ export function buildDrugAddictionIndex(docs) {
  * Чистая функция: ни Foundry, ни записи.
  */
 export function drugAddictionPatch(item, index) {
-  if (item?.type !== "drug" || !item.system?.addiction?.hasAddiction) return null;
-  const pack = packValueFor(item, index);
-  if (!pack) return null;
-  const cur = item.system.addiction;
+  if (item?.type !== "drug") return null;
+  const found = packValueFor(item, index);
+  if (!found) return null;
   const patch = {};
-  for (const field of NEW_FIELDS) {
-    if (isDefault(field, cur[field]) && !isDefault(field, pack[field])) patch[`system.addiction.${field}`] = structuredClone(pack[field]);
+  const cur = item.system?.addiction, pack = found.addiction;
+  if (cur?.hasAddiction && pack) {
+    for (const field of NEW_FIELDS) {
+      if (isDefault(field, cur[field]) && !isDefault(field, pack[field])) patch[`system.addiction.${field}`] = structuredClone(pack[field]);
+    }
+    for (const [field, was] of Object.entries(CORRECTIONS[englishHalf(item.name)] ?? {})) {
+      if (cur[field] === was && pack[field] !== undefined && pack[field] !== was) patch[`system.addiction.${field}`] = pack[field];
+    }
   }
-  for (const [field, was] of Object.entries(CORRECTIONS[englishHalf(item.name)] ?? {})) {
-    if (cur[field] === was && pack[field] !== undefined && pack[field] !== was) patch[`system.addiction.${field}`] = pack[field];
+  for (const [field, was] of Object.entries(ITEM_CORRECTIONS[englishHalf(item.name)] ?? {})) {
+    const now = found.item?.[field];
+    if (sameValue(item.system?.[field], was) && now !== undefined && !sameValue(now, was)) patch[`system.${field}`] = structuredClone(now);
   }
   return Object.keys(patch).length ? patch : null;
 }
