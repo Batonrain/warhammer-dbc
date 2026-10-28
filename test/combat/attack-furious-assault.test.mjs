@@ -187,6 +187,18 @@ describe("Яростный Штурм: Реакция и отметка карт
     expect(isRoundCapabilityAvailable(a, RIPOSTE_ROUND_FLAG)).toBe(false);
   });
 
+  it("Рипост уже потрачен в этом Раунде — отказ до списания ОД", async () => {
+    const { a, w } = berserk({ ap: 4, attacks: 0 });
+    const { markRoundCapabilityUsed } = await import("../../module/apps/game-session.mjs");
+    await markRoundCapabilityUsed(a, RIPOSTE_ROUND_FLAG);
+    const p = showAttackDialog(a, w, { forceBase: "standard", riposte: true, payOnRoll: { label: "Рипост", roundFlag: RIPOSTE_ROUND_FLAG } });
+    await captured.press("roll", form());
+    expect(attackCards()).toHaveLength(0);
+    expect(a.system.actionPoints.value).toBe(4);
+    captured.dismiss();
+    await p;
+  });
+
   it("за свободное действие с той же Базой и Приёмом", () => {
     expect(freeMeleeFlags({ furiousAssault: true })).toEqual({ noAp: true, uncounted: true, skipChargeGate: true });
     const o = { furiousAssault: true, forceBase: "fullatk", technique: "sweep" };
