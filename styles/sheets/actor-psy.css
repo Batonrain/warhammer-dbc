@@ -137,13 +137,16 @@
 /* ── Пулы Талантов Псайканы (пачка I1): Текучее/Быстрое Плетение, Ключевые Силы ── */
 .warhammer-dbc .psy-pool { font-size: 0.8em; font-weight: 700; letter-spacing: 0.06em; color: color-mix(in srgb, var(--pc) 70%, #e7eefb); cursor: help; }
 .warhammer-dbc .psy-fluid-restore-btn,
+.warhammer-dbc .psy-pool-btn,
 .warhammer-dbc .psy-weave-btn {
   font-size: 0.72em; padding: 1px 8px; border-radius: 10px; cursor: pointer; white-space: nowrap;
   color: #9fb0c4; background: rgba(0,0,0,0.3); border: 1px solid color-mix(in srgb, var(--pc) 25%, transparent);
 }
 .warhammer-dbc .psy-fluid-restore-btn:hover:not(:disabled),
+.warhammer-dbc .psy-pool-btn:hover:not(:disabled),
 .warhammer-dbc .psy-weave-btn:hover:not(:disabled) { border-color: var(--pc); color: #e7eefb; }
 .warhammer-dbc .psy-fluid-restore-btn:disabled,
+.warhammer-dbc .psy-pool-btn:disabled,
 .warhammer-dbc .psy-weave-btn:disabled { cursor: help; opacity: 0.5; }
 .warhammer-dbc .psy-signature-toggle {
   background: none; border: none; padding: 0 2px; cursor: pointer; font-size: 1.05em; line-height: 1;

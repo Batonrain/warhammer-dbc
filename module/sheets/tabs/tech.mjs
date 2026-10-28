@@ -850,7 +850,11 @@ async function cognitionRest(actor) {
   const nv  = alreadyPaid ? (cog.value || 0) : Math.min(cog.max || 0, (cog.value || 0) + (cog.regen || 0));
   const settle = alreadyPaid ? { pay: 0, after: nv, shortfall: 0 } : settleProcessCost(nv, pc.total);
   await actor.update({ "system.cognition.value": settle.after });
-  if (!alreadyPaid && inCombat && pc.total > 0) await actor.setFlag("warhammer-dbc", PROCESS_PAID_FLAG, true);
+  // Метка «↻ уже был в этом Ходу» — и без Процессов: иначе «↻» восстанавливал бы Когницию сколько угодно раз за Ход.
+  if (!alreadyPaid && inCombat) await actor.setFlag("warhammer-dbc", PROCESS_PAID_FLAG, true);
+  if (alreadyPaid && !(pc.base > 0 || pc.revelation || pc.piety)) {
+    ui.notifications?.warn("«↻» уже был в этом Ходу: Когниция восстанавливается раз за Ход.");
+  }
   if (pc.base > 0 || pc.revelation || pc.piety) {
     const parts = [`Цена Процессов в этот Ход: ${techIcon("cognition")} <b>${pc.total}</b>`];
     if (pc.revelation) parts.push(`Цифровое Откровение −${pc.revelation}`);

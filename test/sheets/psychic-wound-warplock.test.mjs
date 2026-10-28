@@ -4,6 +4,8 @@
 // вкладка МИСТИКА: +10 к Феномену от ауры Раны в Реальности, галочка «бесплатная» в окне,
 // кнопка Варп-Замка под Феноменом, панель Варп-Замка на вкладке. Таланты — настоящие записи пака.
 
+import fs from "node:fs";
+import path from "node:path";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured, sheetOf, fakeHtml } from "../support/foundry-stub.mjs";
 import { packDocById } from "../support/pack-doc.mjs";
@@ -212,5 +214,24 @@ describe("вкладка МИСТИКА: панель Варп-Замка и к�
   it("у не-носителя кнопки ⌬ нет", () => {
     const rows = buildGetData(sheetFor([powerDoc("a", "Сила", { isSustained: true })]).actor).psyPowers;
     expect(rows[0].wound).toBeNull();
+  });
+});
+
+// Ревью #554: кнопки Варп-Замка носили класс «+1 ⟳» ради стиля, а обработчик
+// `.psy-fluid-restore-btn` (sheets/tabs/psychic.mjs) возвращает очко Плетения за
+// 2 ОД и Концентрацию — один клик запускал обе траты.
+describe("вкладка МИСТИКА: кнопки Варп-Замка не делят класс с «+1 ⟳» Текучего Плетения", () => {
+  const root = path.resolve(import.meta.dirname, "../..");
+  const hbs = fs.readFileSync(path.join(root, "templates/actor/parts/tab-psy.hbs"), "utf8");
+  const css = fs.readFileSync(path.join(root, "styles/sheets/actor-psy.css"), "utf8");
+  const warpLockBtns = [...hbs.matchAll(/<button[^>]*class="([^"]*psy-warplock-[^"]*)"/g)].map(m => m[1].split(/\s+/));
+
+  it("ни у одной из трёх кнопок нет класса psy-fluid-restore-btn, стиль — свой класс psy-pool-btn", () => {
+    expect(warpLockBtns).toHaveLength(3);
+    for (const cls of warpLockBtns) {
+      expect(cls).not.toContain("psy-fluid-restore-btn");
+      expect(cls).toContain("psy-pool-btn");
+    }
+    expect(css).toMatch(/\.psy-pool-btn\b/);
   });
 });

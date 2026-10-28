@@ -125,9 +125,9 @@
       {{#if psyPools.warpLock}}
       <span class="psy-rf-lbl" title="Варп-Замок: раз в час (по игровому времени) игнорировать Феномен или Прорыв — кнопка под ним на карточке манифестации: 1d5 непоглощаемого E в голову, силы развеяны. В начале Хода можно подавить потенциал без урона, не более W.b раз в час. До начала следующего Хода вы не псайкер и не можете манифестировать.">Варп-Замок</span>
       <span class="psy-pool" title="Подавлений за последний игровой час из W.b · аварийное применение: {{psyPools.warpLock.emergencyLabel}}">{{psyPools.warpLock.suppressUsed}}/{{psyPools.warpLock.suppressMax}} за час{{#if psyPools.warpLock.emergencyLabel}} · аварийный: {{psyPools.warpLock.emergencyLabel}}{{/if}}{{#if psyPools.warpLock.active}} · НЕ ПСАЙКЕР{{/if}}</span>
-      {{#if psyPools.warpLock.hasTalent}}<button type="button" class="psy-fluid-restore-btn psy-warplock-suppress" {{#unless psyPools.warpLock.suppressOk}}disabled{{/unless}} title="{{psyPools.warpLock.suppressTitle}}">Подавить потенциал</button>
-      <button type="button" class="psy-fluid-restore-btn psy-warplock-reset" {{#unless psyPools.warpLock.canReset}}disabled{{/unless}} title="Ручной сброс счётчика часа (игровое время не двигали, но ГМ решил, что час прошёл)">⟲ час</button>{{/if}}
-      {{#if psyPools.warpLock.active}}<button type="button" class="psy-fluid-restore-btn psy-warplock-clear" title="Снять метку «не псайкер» (вне боя Хода нет и гасить её некому)">снять метку</button>{{/if}}
+      {{#if psyPools.warpLock.hasTalent}}<button type="button" class="psy-pool-btn psy-warplock-suppress" {{#unless psyPools.warpLock.suppressOk}}disabled{{/unless}} title="{{psyPools.warpLock.suppressTitle}}">Подавить потенциал</button>
+      <button type="button" class="psy-pool-btn psy-warplock-reset" {{#unless psyPools.warpLock.canReset}}disabled{{/unless}} title="Ручной сброс счётчика часа (игровое время не двигали, но ГМ решил, что час прошёл)">⟲ час</button>{{/if}}
+      {{#if psyPools.warpLock.active}}<button type="button" class="psy-pool-btn psy-warplock-clear" title="Снять метку «не псайкер» (вне боя Хода нет и гасить её некому)">снять метку</button>{{/if}}
       {{/if}}
       {{#if psyPools.fast}}
       <span class="psy-rf-lbl" title="Быстрое Плетение: в начале боя после инициативы — отдельный пул 2 ОД, только на манифестацию психосилы без типа «Атака». Тратится в окне манифестации до первого Хода; с началом своего Хода сбрасывается, Врасплох обнуляет.">Быстрое Плетение</span>

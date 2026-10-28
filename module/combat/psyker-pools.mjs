@@ -23,7 +23,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { isEncounterActive, isOwnTurn, hasActionEconomy, spendActionPoints, apSpendGate, canSpendReaction,
          spendReaction, reactionSpendGate } from "./action-economy.mjs";
-import { PSY_ACTIONS } from "../constants/psyker.mjs";
+import { PSY_ACTIONS, pathManifestAction } from "../constants/psyker.mjs";
 import { sustainOffPatch } from "./psychic-sustain.mjs";
 import { syncItemEffectsDisabled } from "../apps/effects.mjs";
 import { WOUND_FREE_FLAG } from "../rules/wound-in-reality.mjs";
@@ -31,6 +31,8 @@ import { tempInfamyAmount } from "../rules/temp-infamy.mjs";
 import { canTakeConcentrationAction, takeConcentrationAction } from "./concentration-limit.mjs";
 import { runCardOnce, cardOnceUsed, markCardOnce, unmarkCardOnce } from "./card-once.mjs";
 import { spendFreeInfamyAbility, spendFromInfamyPool, actorInfamyPath } from "../apps/infamy-points.mjs";
+import { warpLockBlocksManifest } from "../rules/warp-lock.mjs";
+import { voidBlocksPower } from "../rules/null-zones.mjs";
 import {
   FAST_WEAVING_FLAG, hasFastWeaving, fastWeavingStart, fastWeavingGate, fastWeavingLeft, psychicApCost,
   FLUID_WEAVE_SPENT_FLAG, FLUID_WEAVE_TURN_FLAG, fluidWeaveTalent, fluidWeaveMax, fluidWeaveSpent,
@@ -60,37 +62,46 @@ export async function processFastWeavingCombatStart(combat, updateData = null) {
 }
 
 /** Гейт «сейчас, в этом бою»: свой Ход пул уже сбросил; вне боя пула нет (метка могла остаться от прошлого боя). */
-export function fastWeavingGateNow(actor, power) {
+export function fastWeavingGateNow(actor, power, { action } = {}) {
   if (!isEncounterActive()) return { ok: false, code: "empty", reason: "", cost: 0, left: 0, cover: 0 };
-  return fastWeavingGate(actor, power, { ownTurn: isOwnTurn(actor) });
+  return fastWeavingGate(actor, power, { ownTurn: isOwnTurn(actor), action });
 }
 
 const line = (html, extra = "") => `<div class="roll-threshold" style="font-size:0.85em;${extra}">${html}</div>`;
 
 /**
- * Что манифестация этой силы стоит СЕЙЧАС и чем платится — без побочных эффектов (проверка до броска).
- * Вне боя и у акторов без экономики действий платить нечего. Цена — по полю действия самой силы;
- * пул Быстрого Плетения (fastWeaving — галочка окна) только уменьшает реальное списание ОД.
- * @returns {{ok:boolean, kind:"none"|"free"|"reaction"|"ap", cost:number, cover:number, rest:number, fw:object|null, reason:string}}
+ * Метка актора «в этом Раунде этого боя уже манифестировал» — для Руны Судьбы. Хранит id боя и номер
+ * Раунда: «раз в Раунд» из rules/cooldown.mjs помнит только номер, и Раунд 1 нового боя совпал бы с прежним.
  */
-export function manifestActionPlan(actor, power, { fastWeaving = false } = {}) {
+export const PSY_MANIFEST_ROUND_FLAG = "psyManifestRound";
+const manifestRoundTag = () => `${game.combat?.id}:${game.combat?.round}`;
+
+/**
+ * Что манифестация этой силы стоит СЕЙЧАС и чем платится — без побочных эффектов (проверка до броска).
+ * Вне боя и у акторов без экономики действий платить нечего. Цена — по полю действия самой силы,
+ * сдвинутому Путём Силы (path/subPaths — constants/psyker.mjs::pathManifestAction);
+ * пул Быстрого Плетения (fastWeaving — галочка окна) только уменьшает реальное списание ОД.
+ * @returns {{ok:boolean, kind:"none"|"free"|"reaction"|"ap", action?:string, cost:number, cover:number, rest:number, fw:object|null, reason:string}}
+ */
+export function manifestActionPlan(actor, power, { fastWeaving = false, path = "", subPaths = [] } = {}) {
   const none = { ok: true, kind: "none", cost: 0, cover: 0, rest: 0, fw: null, reason: "" };
   if (!isEncounterActive() || !hasActionEconomy(actor)) return none;
-  const action = power?.system?.action;
+  const action = pathManifestAction(power?.system?.action, path, subPaths,
+    { firstInRound: actor.getFlag?.(NS, PSY_MANIFEST_ROUND_FLAG) !== manifestRoundTag() });
   if (action === "reaction") {
     const ok = canSpendReaction(actor, { physical: false });
-    return { ...none, ok, kind: "reaction", cost: 1, reason: ok ? "" : (reactionSpendGate(actor, { physical: false }).title || "Не хватает Реакций") };
+    return { ...none, ok, kind: "reaction", action, cost: 1, reason: ok ? "" : (reactionSpendGate(actor, { physical: false }).title || "Не хватает Реакций") };
   }
   const cost = psychicApCost(action);
-  if (cost <= 0) return { ...none, kind: "free" };
-  const fw = (fastWeaving && hasFastWeaving(actor)) ? fastWeavingGateNow(actor, power) : null;
+  if (cost <= 0) return { ...none, kind: "free", action };
+  const fw = (fastWeaving && hasFastWeaving(actor)) ? fastWeavingGateNow(actor, power, { action }) : null;
   const cover = fw?.ok ? fw.cover : 0;
   const rest = cost - cover;
   if (rest > 0) {
     const gate = apSpendGate(actor, rest, { physical: false });
-    if (gate.disabled) return { ok: false, kind: "ap", cost, cover, rest, fw, reason: gate.title };
+    if (gate.disabled) return { ok: false, kind: "ap", action, cost, cover, rest, fw, reason: gate.title };
   }
-  return { ok: true, kind: "ap", cost, cover, rest, fw, reason: "" };
+  return { ok: true, kind: "ap", action, cost, cover, rest, fw, reason: "" };
 }
 
 /**
@@ -99,7 +110,7 @@ export function manifestActionPlan(actor, power, { fastWeaving = false } = {}) {
  */
 export async function payManifestAction(actor, power, plan) {
   const lines = [];
-  const label = PSY_ACTIONS[power?.system?.action] ?? PSY_ACTIONS.half;
+  const label = PSY_ACTIONS[plan.action] ?? PSY_ACTIONS.half;
   if (plan.kind === "reaction") {
     if (!(await spendReaction(actor, { physical: false }))) return { ok: false, lines };
     lines.push(line(`Действие: ${label} — списана 1 Реакция.`));
@@ -120,6 +131,9 @@ export async function payManifestAction(actor, power, plan) {
   if (plan.kind === "ap" && plan.fw && !plan.fw.ok && plan.fw.reason) {
     lines.push(line(`${esc(plan.fw.reason)} Манифестация без пула.`, "color:#a33;"));
   }
+  // Пишется только первой манифестацией Раунда — остальные не тратят лишнюю запись в базу.
+  const tag = manifestRoundTag();
+  if (plan.kind !== "none" && actor.getFlag?.(NS, PSY_MANIFEST_ROUND_FLAG) !== tag) await actor.setFlag(NS, PSY_MANIFEST_ROUND_FLAG, tag);
   return { ok: true, lines };
 }
 
@@ -304,11 +318,21 @@ export async function handlePsyRerollClick(message, btn) {
   const saved = message.getFlag?.(NS, "psyManifest");
   if (!saved?.opts || saved.powerUuid !== powerUuid) { ui.notifications?.warn("Карточка не хранит параметры броска — перебросить нельзя."); return false; }
   if (!isSignaturePower(actor, power)) { ui.notifications?.warn("Эта сила не выбрана ключевой."); return false; }
+  // Переброс — новая манифестация, а гейты окна (sheets/tabs/psychic.mjs::showManifestDialog) с карточки
+  // не пройдены: Варп-Замок или Пустота, наступившие после карточки, запрещают и её.
+  if (warpLockBlocksManifest(actor)) {
+    ui.notifications?.warn(`«${power.name}»: Варп-Замок — до начала следующего Хода вы не псайкер и не можете манифестировать психосилы.`);
+    return false;
+  }
+  if (voidBlocksPower(actor, power)) {
+    ui.notifications?.warn(`«${power.name}»: в Пустоте Парии психосилы развеиваются (кроме Непрямых).`);
+    return false;
+  }
   // Покровительство Нургла: «Принятие Судьбы» — способность Переброса недоступна (constants/demon-prince.mjs).
   if (actor.system?.patronGod === "nurgle") { ui.notifications?.warn("Принятие Судьбы (Нургл): Переброс недоступен."); return false; }
-  // Надпись кнопки «бесплатно» ставится при выпуске карточки; если Очко Раунда с тех пор ушло в другое место,
-  // молча платить Очком нельзя — переспрашиваем.
-  if (btn.dataset.free === "1" && !signatureFreeAvailable(actor, power)) {
+  // Надпись кнопки «бесплатно» ставится при выпуске карточки; если Очко Раунда (или, вне боя, Очко этой
+  // карточки) с тех пор ушло в другое место, молча платить Очком нельзя — переспрашиваем.
+  if (btn.dataset.free === "1" && (!signatureFreeAvailable(actor, power) || cardOnceUsed(message, SIGNATURE_CARD_FLAG))) {
     const ok = await foundry.applications.api.DialogV2.confirm({
       window: { title: `Переброс — ${actor.name}` },
       content: "<p>Бесплатное Очко Ключевых Сил в этом Раунде уже ушло. Перебросить психотест за <b>1 Очко Бесчестия</b>?</p>",
@@ -354,14 +378,16 @@ export async function handleSignatureFreeClick(message, btn) {
     ui.notifications?.warn("В этом Раунде бесплатное Очко Ключевых Сил уже использовано.");
     return false;
   }
-  return runCardOnce(message, "signatureFreeUsed", async () => {
+  return runCardOnce(message, SIGNATURE_CARD_FLAG, async () => {
     if (!SIGNATURE_ABILITIES.some(a => a.key === ability)) return false;
-    const ok = await spendFreeInfamyAbility(actor, ability);
+    const out = {};
+    const ok = await spendFreeInfamyAbility(actor, ability, out);
     if (ok) {
       await markCapabilityUsed(actor, SIGNATURE_USAGE_KEY, "round");
-      // «Успех»: +1 Успех удавшейся манифестации — тот же счёт, с которого потом переплетают.
+      // «Успех»: +1 Успех удавшейся манифестации (у Тзинча — бросок Вспышки Гения) — тот же счёт,
+      // с которого потом переплетают.
       const deg = power.system?.sustainedDegree;
-      if (ability === "success" && deg != null) await power.update({ "system.sustainedDegree": Number(deg) + 1 });
+      if (ability === "success" && deg != null) await power.update({ "system.sustainedDegree": Number(deg) + (out.successBonus ?? 1) });
     }
     return ok;
   }, "С этой карточки бесплатное Очко уже потрачено.");

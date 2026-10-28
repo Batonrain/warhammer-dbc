@@ -252,7 +252,7 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
   // Потолок mPR: тPR, а у Необременённого (на свою силу) и при действующем
   // Психическом Возрождении — бPR (rules/psyker-talents.mjs::manifestPrCeiling).
   // Возрождение, ещё не включённое, добавляет верхние пункты за Очко Бесчестия.
-  const ceiling  = manifestPrCeiling(actor, item);
+  const ceiling  = manifestPrCeiling(actor, item, { combatId: isEncounterActive() ? game.combat.id : null });
   const maxPR    = ceiling.max;
   const minPR    = 1;
   const cast     = resolvePsyCastAttr(actor, sys);
@@ -374,8 +374,17 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
   const conduit = hasWarpConduit(actor);
   // Быстрое Плетение (пачка I1): отдельный пул 2 ОД — строка окна есть только у носителя Таланта.
   const fwGate = hasFastWeaving(actor) ? fastWeavingGateNow(actor, item) : null;
+  // Цена действия в бою и покрытие пулом Быстрого Плетения — тем же планом, что спишет executePsychotest:
+  // Путь Силы двигает ступень, поэтому окно пересчитывает их при смене Пути (wirePsyManifestPreview).
+  const apPreview = (path = "", subPaths = []) => {
+    const plan = manifestActionPlan(actor, item, { path, subPaths, fastWeaving: true });
+    const cover = plan.cover;
+    if (plan.kind === "none") return { text: "", cover };
+    if (plan.kind === "reaction") return { text: `Действие силы — Реакция: в бою стоит 1 Реакцию (есть ${Number(actor.system.reactions?.value) || 0}).`, cover };
+    return { text: `Действие силы (${PSY_ACTIONS[plan.action] ?? PSY_ACTIONS.half}) в бою стоит ${plan.cost} ОД (есть ${Number(actor.system.actionPoints?.value) || 0}).`, cover };
+  };
   const psyMeta = { charVal, charAbbr, powerMod, natData, pathData, dynBonus, variantMods, isEldar, fatigue,
-                    runeBase, techFocus, ...eprTalents };
+                    runeBase, techFocus, apPreview, ...eprTalents };
   const talentRows = [
     techFocus ? `<div class="pm-note">Фокус Техники: +${TECHNIQUE_FOCUS_TEST_BONUS} к психотесту этой силы, ${TECHNIQUE_FOCUS_PHEN_MOD} к её Феноменам — учтено.</div>`
       : (hasTechniqueFocus(actor) ? `<div class="pm-note" style="opacity:.75;">Фокус Техники: выбранная сила записана в поле «Специализация» Таланта; для «${esc(item.name)}» не выбрана.</div>` : ""),
@@ -415,7 +424,7 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
     (fwGate && fwGate.ok) ? `
         <div class="pm-row">
           <label title="Быстрое Плетение: отдельный пул 2 ОД, выданный в начале боя после инициативы. Только на психосилы без типа «Атака»; с началом своего Хода сбрасывается, Врасплох обнуляет">
-            <input type="checkbox" id="psy-fastweave" checked/> Быстрое Плетение: −${fwGate.cover} ОД из пула (в пуле ${fwGate.left}) — на столько меньше спишутся обычные ОД</label>
+            <input type="checkbox" id="psy-fastweave" checked/> Быстрое Плетение: −<span id="pm-fw-cover">${fwGate.cover}</span> ОД из пула (в пуле ${fwGate.left}) — на столько меньше спишутся обычные ОД</label>
         </div>`
       : ((fwGate && !["no-talent", "empty"].includes(fwGate.code)) ? `<div class="pm-note" style="opacity:.75;">${esc(fwGate.reason)}</div>` : ""),
     (hasWoundInReality(actor) && sys.sustainable) ? (() => {
@@ -427,10 +436,8 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
         </div>`
         : `<input type="hidden" id="psy-woundfree" value=""/><div class="pm-note" style="opacity:.75;">${esc(g.reason)}</div>`;
     })() : "",
-    (() => { const plan = manifestActionPlan(actor, item);
-      if (plan.kind === "ap") return `<div class="pm-note">Действие силы (${PSY_ACTIONS[sys.action] ?? "Полудействие"}) в бою стоит ${plan.cost} ОД (есть ${Number(actor.system.actionPoints?.value) || 0}).</div>`;
-      if (plan.kind === "reaction") return `<div class="pm-note">Действие силы — Реакция: в бою стоит 1 Реакцию (есть ${Number(actor.system.reactions?.value) || 0}).</div>`;
-      return ""; })(),
+    (() => { const { text } = apPreview();
+      return text ? `<div class="pm-note" id="pm-ap-line">${text}</div>` : ""; })(),
     isSignaturePower(actor, item) ? `<div class="pm-note">Ключевая Сила: раз в Раунд на карточке этой манифестации Очко Бесчестия бесплатно — для психотеста, Феномена и Прорыва.</div>` : "",
     conduit ? `
         <div class="pm-row">
@@ -652,14 +659,22 @@ export function wirePsyManifestPreview(html, m) {
     const subsEl = $("#pm-sigillite-subs");
     if (subsEl) subsEl.style.display = pd.subPaths ? "flex" : "none";
     let subEPR = 0, subTestMod = 0;
+    const subKeys = [];
     if (pd.subPaths) {
       for (const key of pd.subPaths) {
         if ($(`#psy-sub-${key}`)?.checked) {
           const sp = m.pathData[key] || {};
           subEPR += sp.ePR || 0;
           subTestMod += sp.testMod || 0;
+          subKeys.push(key);
         }
       }
+    }
+    if (m.apPreview) {
+      const ap = m.apPreview(path, subKeys);
+      const apLine = $("#pm-ap-line"), fwCover = $("#pm-fw-cover");
+      if (apLine) apLine.textContent = ap.text;
+      if (fwCover) fwCover.textContent = String(ap.cover);
     }
     ePR += (pd.ePR || 0) + subEPR;
     // Рунный Удар (wdbc-fsl9): +1 эPR за каждые 4 Руны, и только когда Путь
@@ -742,10 +757,11 @@ export async function executePsychotest(actor, item, opts) {
     runeNote = "Руна: Усиленный режим недоступен — использован Обычный.";
   }
   const MODE     = PSY_MODES[opts.mode] || PSY_MODES.normal;
-  // Цена действия силы в бою (пачка I3): ОД по полю действия самой силы, пул Быстрого Плетения только
+  // Цена действия силы в бою (пачка I3): ОД по полю действия самой силы (со сдвигом Пути Силы), пул Быстрого Плетения только
   // уменьшает списание. Проверка — ДО любых трат (Очко Возрождения и т.п.): отказ ничего не стоит.
   // Переброс психотеста (Ключевые Силы) действие заново не оплачивает — оно уже оплачено первой попыткой.
-  const actionPlan = opts.reroll ? null : manifestActionPlan(actor, item, { fastWeaving: !!opts.fastWeaving });
+  const actionPlan = opts.reroll ? null
+    : manifestActionPlan(actor, item, { fastWeaving: !!opts.fastWeaving, path: opts.path, subPaths: opts.sigilliteSubs });
   if (actionPlan && !actionPlan.ok) {
     ui.notifications.warn(`⚠️ ${actor.name}: «${item.name}» — ${actionPlan.reason}`);
     return;
@@ -765,15 +781,16 @@ export async function executePsychotest(actor, item, opts) {
   // Психическое Возрождение (rules/psyker-talents.mjs): mPR выше потолка тPR —
   // только за Очко Бесчестия, метка живёт до начала следующего Хода. Нет Очка —
   // манифестации нет (spendCapabilityCost уже сказал об этом игроку).
-  const prCeiling = manifestPrCeiling(actor, item);
+  const prCeiling = manifestPrCeiling(actor, item, { combatId: isEncounterActive() ? game.combat.id : null });
   let resurgenceLine = "";
   if (prCeiling.canResurge && (opts.mPR || 0) > prCeiling.max) {
     const paid = opts.reroll || await spendCapabilityCost(actor, { pool: "infamy", amount: 1 }, "Психическое Возрождение");
     if (!paid) return;
     // Метка «до начала следующего Хода» гасится началом Хода В БОЮ; вне боя её
     // некому погасить, поэтому там Возрождение действует только на эту манифестацию.
+    // В метке — id боя: кончился бой раньше своего Хода, и метка больше не действует.
     const inFight = isEncounterActive();
-    if (inFight) await actor.setFlag("warhammer-dbc", RESURGENCE_FLAG, true);
+    if (inFight) await actor.setFlag("warhammer-dbc", RESURGENCE_FLAG, game.combat.id);
     resurgenceLine = `<div class="roll-threshold" style="font-size:0.85em;">Психическое Возрождение: −1 Очко Бесчестия, ${inFight ? "поддержание не снижает тPR до начала следующего Хода" : "вне боя — поддержание не снижает тPR только для этой манифестации"}.</div>`;
   } else if (prCeiling.ignored === "unburdened" && (opts.mPR || 0) > prCeiling.normal) {
     resurgenceLine = `<div class="roll-threshold" style="font-size:0.85em;">Необременённый: поддержание не снижает тPR для этой силы (тPR ${prCeiling.normal} → бPR ${prCeiling.max}).</div>`;
@@ -925,7 +942,7 @@ export async function executePsychotest(actor, item, opts) {
   // отмеченных флажков — тогда действует только базовый Best.Q Психофокус).
   const subPathNote = subTotals.labels.length
     ? `Руны Сигиллитов: сложены — ${subTotals.labels.join(", ")}` +
-      (opts.sigilliteSubs?.includes("incantation") ? " (Инкантация: действие манифестации на ступень выше — вручную)" : "")
+      (opts.sigilliteSubs?.includes("incantation") ? " (Инкантация: действие манифестации на ступень выше)" : "")
     : "";
 
   const actorUpdates = {}; // накопленные изменения (Порча Варп-Шока, Раны Конверсии)

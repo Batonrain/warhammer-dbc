@@ -17,9 +17,9 @@ const card = () => captured.chat.at(-1)?.content ?? "";
 const hits = () => [...card().matchAll(/data-damage="(\d+)"/g)].length;
 const garden = () => ({ id: "ig", type: "talent", name: "Iron Garden / Железный Сад", system: {} });
 
-/** Дендрит-лезвие: рукопашное оружие раздела «Мехадендриты» (profileLabel). */
+/** Дендрит-лезвие: рукопашное оружие раздела «Мехадендриты» (profileLabel), надетое. */
 const dendrite = (id, extra = {}) => ({
-  ...weaponFor({ weaponClass: "melee", meleeCategory: "Меч", grips: "1р", damage: "1d10", profileLabel: "Мехадендрит" }),
+  ...weaponFor({ weaponClass: "melee", meleeCategory: "Меч", grips: "1р", damage: "1d10", profileLabel: "Мехадендрит", equipped: true }),
   id, name: "Dendrite Blade / Дендрит Лезвие", ...extra
 });
 
@@ -35,6 +35,16 @@ describe("рейтинг Железного Сада", () => {
     expect(ironGardenRating(a, a.items.get("d1"))).toBe(2);
     const b = fighter([garden(), dendrite("d1", { system: { ...dendrite("x").system, quantity: 3 } })]);
     expect(ironGardenRating(b, b.items.get("d1"))).toBe(3);
+  });
+  it("снятый или сданный на склад одноимённый дендрит в группу не входит — ни в рейтинг, ни в Качество", () => {
+    const off = { ...dendrite("x").system, equipped: false };
+    const a = fighter([garden(), dendrite("d1"), dendrite("d2", { system: off })]);
+    expect(ironGardenRating(a, a.items.get("d1"))).toBe(0);
+    const b = fighter([garden(), dendrite("d1"), dendrite("d2"), dendrite("d3", { system: { ...off, quality: "poor", stored: true } })]);
+    expect(ironGardenRating(b, b.items.get("d1"))).toBe(2);
+    expect(ironGardenQuality(b, b.items.get("d1"))).toBe("common");
+    // атака самим снятым дендритом не получает Multi-strike от надетых
+    expect(ironGardenRating(b, b.items.get("d3"))).toBe(0);
   });
   it("один мехадендрит, чужое имя, обычное оружие, нет Таланта — 0", () => {
     const one = fighter([garden(), dendrite("d1")]);
