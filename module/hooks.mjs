@@ -4381,7 +4381,8 @@ function _attachFateContextMenu(message, html) {
   // Бой кончился — снять транс «Дух героя» у всех, кто в него впадал, и
   // разослать отложенную Порчу (module/apps/armour-history-trance.mjs).
   Hooks.on("deleteCombat", async combat => {
-    if (!game.user.isGM) return;
+    // Один активный ГМ: при двух ГМах онлайн Порча и тесты конца боя шли бы дважды.
+    if (!game.users.activeGM?.isSelf) return;
     await resolveTrancesForCombat(combat);
     // Ярость, пережившая бой: от этого момента считаются «Ходы после боя» (+10 на выход из Ярости за каждый).
     await stampRageCombatEnd(combat);
@@ -4647,9 +4648,10 @@ function _attachFateContextMenu(message, html) {
   });
 
   // Отложенные взрывы (Расплавление / Meltdown, combat/delayed-blast.mjs): срок записей актора убавляется
-  // в начале ЕГО Хода — «через 1d5 Раундов (в начале Хода персонажа)»; дошедшие взрываются. Пишет ГМ.
+  // в начале ЕГО Хода — «через 1d5 Раундов (в начале Хода персонажа)»; дошедшие взрываются. Пишет
+  // один активный ГМ: при двух ГМах онлайн заряд взрывался бы дважды.
   Hooks.on("updateCombat", async (combat, changed) => {
-    if (!game.user.isGM) return;
+    if (!game.users.activeGM?.isSelf) return;
     if (changed?.round === undefined && changed?.turn === undefined) return;
     if (combat.combatant) await processDelayedBlastsTurnStart(combat.combatant);
   });
@@ -4694,7 +4696,8 @@ function _attachFateContextMenu(message, html) {
   });
 
   Hooks.on("updateCombat", async (combat, changed) => {
-    if (!game.user.isGM) return;
+    // Один активный ГМ: при двух ГМах онлайн начало Хода (вакуум, тест Ярости…) отрабатывало бы дважды.
+    if (!game.users.activeGM?.isSelf) return;
     if (changed?.round === undefined && changed?.turn === undefined) return;
     const nextCombatant = combat.combatant;
     const prevId = _lastTurnCombatant.get(combat.id);

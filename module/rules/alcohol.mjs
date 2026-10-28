@@ -35,18 +35,20 @@ export function isAlcoholName(name) {
 
 /**
  * Состояние на момент `now`: прошедшие 20-минутки сняли по Провалу; когда
- * Провалов не осталось, попойка кончилась — рюмки обнуляются (штраф −10
- * «накапливающийся» относится к одной попойке).
+ * спад съел все Провалы, попойка кончилась — рюмки обнуляются (штраф −10
+ * «накапливающийся» относится к одной попойке). Ноль Провалов без прошедшей
+ * 20-минутки — не конец попойки: непровалившийся пьёт дальше со штрафом.
  */
 export function alcoholDecayed(state, now) {
   const s = { fails: 0, drinks: 0, at: Number(now) || 0, ...(state ?? {}) };
   const steps = Math.max(0, Math.floor(((Number(now) || 0) - (Number(s.at) || 0)) / ALCOHOL_DECAY_SECONDS));
   const fails = Math.max(0, (Number(s.fails) || 0) - steps);
+  const ongoing = fails > 0 || steps === 0;
   return {
     fails,
-    drinks: fails > 0 ? (Number(s.drinks) || 0) : 0,
+    drinks: ongoing ? (Number(s.drinks) || 0) : 0,
     // Метка сдвигается на съеденные 20-минутки, а не на «сейчас»: остаток минут не теряется.
-    at: fails > 0 ? (Number(s.at) || 0) + steps * ALCOHOL_DECAY_SECONDS : (Number(now) || 0)
+    at: ongoing ? (Number(s.at) || 0) + steps * ALCOHOL_DECAY_SECONDS : (Number(now) || 0)
   };
 }
 

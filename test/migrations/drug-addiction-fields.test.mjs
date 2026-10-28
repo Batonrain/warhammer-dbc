@@ -95,3 +95,39 @@ describe("книжные числа: исправляются только пр�
     expect(ups[0]["system.addiction.testMod"]).toBe(-10);
   });
 }, PACK_SCAN_TIMEOUT);
+
+// Струп (стр. 284) — без Зависимости, но пак правился тогда же: урона в T у
+// пост-эффекта нет, кубы пост-эффекта стали сроком Оглушения, срок действия
+// считает Календарь. Старая копия без прохода била бы 1d10 в T и Оглушала на 1 Раунд.
+describe("Струп: пост-эффект старых копий", () => {
+  const pack = byEn("Scab");
+  /** Копия до правки пака — значения прежней записи (origin/main до #554). */
+  const staleScab = () => {
+    const c = staleCopy(pack);
+    Object.assign(c.system, {
+      afterEffect: "Наносит 1d10 урона в T; в потоке рвоты — Оглушение 1d10 Раундов; иногда 1 Порча.",
+      afterEffectDice: "", afterEffectCharDamage: { stat: "t", formula: "1d10" }, gameMinutes: 0
+    });
+    return c;
+  };
+
+  it("урон в T снимается, кубы пост-эффекта и срок 1 час приходят из пака; идемпотентно", () => {
+    const copy = staleScab();
+    applyPatch(copy, drugAddictionPatch(copy, INDEX) ?? {});
+    expect(copy.system.afterEffectCharDamage).toEqual({ stat: "", formula: "" });
+    expect(copy.system.afterEffectDice).toBe("1d10");
+    expect(copy.system.gameMinutes).toBe(60);
+    expect(copy.system.afterEffect).toBe(pack.system.afterEffect);
+    expect(drugAddictionPatch(copy, INDEX)).toBeNull();
+  });
+
+  it("правка ГМа не трогается: другой урон в T и свои кубы остаются", () => {
+    const copy = staleScab();
+    copy.system.afterEffectCharDamage = { stat: "t", formula: "1d5" };
+    copy.system.afterEffectDice = "1d5";
+    const patch = drugAddictionPatch(copy, INDEX);
+    expect(patch["system.afterEffectCharDamage"]).toBeUndefined();
+    expect(patch["system.afterEffectDice"]).toBeUndefined();
+    expect(patch["system.gameMinutes"]).toBe(60);
+  });
+}, PACK_SCAN_TIMEOUT);
