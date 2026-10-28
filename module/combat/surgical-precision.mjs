@@ -3,10 +3,11 @@
 //  Хирургическая Точность (Медик, medic.core.surgicalPrecision; 3-dc87):
 //  кнопка в карточке Избирательной атаки по биологической цели — тест
 //  Medicae−10 (против не-людей комбинированный, один бросок против меньшего
-//  Предела) → +1 Dmg за каждый нечётный Успех. Прибавка правится прямо в
-//  соседней кнопке «Применить урон» (тот же приём, что у Кхорнгора Мясника /
-//  «Кубик→Успехи» в hooks.mjs). Пока урон не применён — карточка ещё
-//  принимает правку; повторно с той же карточки нельзя (кнопка гаснет).
+//  Предела) → +1 Dmg за каждый нечётный Успех. Прибавка правится в соседней
+//  кнопке «Применить урон» и сохраняется в самом ChatMessage
+//  (soulfire.mjs::persistDamageBoost) — урон применяет и ГМ, а перерисовка
+//  карточки не должна её терять. Тест — раз на карточку (card-once.mjs):
+//  иначе перерисовка возвращала кнопку и тест можно было повторять до успеха.
 //  «Если атака убивает цель, можно парализовать вместо смерти» — решает стол,
 //  система смерть цели до применения урона не знает.
 //  Арифметика — rules/surgical-precision.mjs.
@@ -16,6 +17,7 @@ import { hasRuleFlag } from "../rules/flags.mjs";
 import { SURGICAL_PRECISION_CAP } from "../rules/medic-talents.mjs";
 import { SURGICAL_TARGETS, surgicalThreshold, oddSuccesses } from "../rules/surgical-precision.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
+import { runCardOnce } from "./card-once.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 
@@ -41,13 +43,26 @@ async function askTargetKind() {
   });
 }
 
+/** Отметка карточки «тест уже брошен» (card-once.mjs). */
+export const SURGICAL_CARD_FLAG = "surgicalPrecisionUsed";
+
 /**
  * Обработчик кнопки. `applyBtn` — соседняя .wh-apply-dmg-btn; `el` — сама
- * кнопка (гаснет после теста). Возвращает добавленный урон или null.
+ * кнопка (гаснет после теста); `message` — карточка атаки. Возвращает
+ * добавленный урон или null (тест не брошен).
  */
-export async function runSurgicalPrecision(attacker, { applyBtn, el }) {
+export async function runSurgicalPrecision(attacker, { applyBtn, el, message }) {
   if (!attacker?.isOwner) { ui.notifications?.warn("Хирургическая Точность: тест может бросить владелец атакующего (или ГМ)."); return null; }
   if (!hasRuleFlag(attacker, SURGICAL_PRECISION_CAP)) { ui.notifications?.warn(`${attacker.name}: нет Таланта «Хирургическая Точность».`); return null; }
+  let added = null;
+  await runCardOnce(message, SURGICAL_CARD_FLAG, async () => {
+    added = await surgicalTest(attacker, { applyBtn, el });
+    return added != null;
+  }, "Хирургическую Точность с этой карточки уже бросали.");
+  return added;
+}
+
+async function surgicalTest(attacker, { applyBtn, el }) {
   const kind = await askTargetKind();
   if (!kind) return null;
 
@@ -62,6 +77,9 @@ export async function runSurgicalPrecision(attacker, { applyBtn, el }) {
     applyBtn.dataset.damage = String(total);
     const label = applyBtn.querySelector("b");
     if (label) label.textContent = String(total);
+    // Динамически: soulfire.mjs тянет sheets/tabs/psychic.mjs, а тот — combat/attack.mjs (импортирует этот файл).
+    const { persistDamageBoost } = await import("./soulfire.mjs");
+    await persistDamageBoost(applyBtn, { damage: total });
   }
   if (el) { el.disabled = true; el.textContent = success ? `🩺 Хирургическая Точность: +${bonus} урона` : "🩺 Хирургическая Точность: провал"; }
 

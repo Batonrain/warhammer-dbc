@@ -29,7 +29,8 @@ import { grappleAttackBlockReason } from "../../combat/grapple.mjs";
 import { delayBlocksAttack } from "../../combat/delay-action.mjs";
 import { deathDanceNextCost, markDeathDanceUsed } from "../../combat/death-dance.mjs";
 import { finalExecutionGate, finalExecutionProps, commitFinalExecution } from "../../combat/final-execution.mjs";
-import { markRoundCapabilityUsed } from "../../apps/game-session.mjs";
+import { markRoundCapabilityUsed, isRoundCapabilityAvailable } from "../../apps/game-session.mjs";
+import { runCardOnce, cardOnceUsed } from "../../combat/card-once.mjs";
 import { AUTO_HIT_CAPABILITY, FULL_ATTACK_CAPABILITY, readAttackForm } from "./form.mjs";
 import { hateAttackApplies } from "../../rules/patron-abilities.mjs";
 import { hateAttackDegrees } from "../../rules/focused-wrath.mjs";
@@ -83,6 +84,38 @@ function dualWieldNoteHtml(actor, main, off) {
   }
 
   return out.join("<br/>");
+}
+
+/**
+ * Цена свободной атаки Таланта, открытой кнопкой карточки (hooks.mjs: Яростный Штурм, Разрубить, Рисовка,
+ * Упорство, Рипост) — платится «Бросок!», а не кликом: закрытое окно не съедает ни Реакцию, ни «раз на
+ * карточку/Раунд». `pay` = { label, cardId?, cardKey?, roundFlag?, reaction? } — только строки: едет в techniqueOpts.
+ * talentPayProblem — проверка ДО списания ОД (второе окно с той же карточки не должно их съесть),
+ * payTalentAttack — сама плата после всех отказов окна; отказ в ней — только гонка двух окон.
+ */
+function talentPayProblem(actor, pay) {
+  if (!pay) return "";
+  if (pay.roundFlag && !isRoundCapabilityAvailable(actor, pay.roundFlag)) return "уже использовано в этом Раунде.";
+  if (pay.cardKey && !game.messages?.get(pay.cardId)) return "карточка исходной атаки не найдена.";
+  if (pay.cardKey && cardOnceUsed(game.messages.get(pay.cardId), pay.cardKey)) return "с этой карточки уже использовано.";
+  if (pay.reaction && !canSpendReaction(actor)) return "нет Реакции.";
+  return "";
+}
+
+/** @returns {Promise<boolean>} заплачено (или платить нечего) */
+async function payTalentAttack(actor, pay) {
+  if (!pay) return true;
+  const refuse = text => { ui.notifications.warn(`⚠️ ${pay.label}: ${text}`); return false; };
+  if (pay.roundFlag && !isRoundCapabilityAvailable(actor, pay.roundFlag)) return refuse("уже использовано в этом Раунде.");
+  const spend = async () => {
+    if (pay.reaction && !(await spendReaction(actor))) return refuse("нет Реакции.");
+    if (pay.roundFlag) await markRoundCapabilityUsed(actor, pay.roundFlag);
+    return true;
+  };
+  if (!pay.cardKey) return spend();
+  const message = game.messages?.get(pay.cardId);
+  if (!message) return refuse("карточка исходной атаки не найдена.");
+  return runCardOnce(message, pay.cardKey, spend, `⚠️ ${pay.label}: с этой карточки уже использовано.`);
 }
 
 export function openAttackDialog(ctx) {
@@ -239,8 +272,8 @@ export function openAttackDialog(ctx) {
           // пока окно было открыто, Ход мог смениться, а цель — остаться той же.
           const sabreSecond = !!techniqueOpts?.sabreSecondAttack;
           // Упорство (combat/tenacity.mjs): повтор атаки — свободное действие, ни ОД, ни Лимит Атак не тратит.
-          // Рисовка (свободная атака «не считается атакой») — то же; Жнец — продолжение Натиска: ОД не списываются,
-          // но атака в лимите (rules/melee-talents.mjs::freeMeleeFlags).
+          // Рисовка (свободная атака «не считается атакой») — то же; Жнец — продолжение Натиска, Яростный Штурм —
+          // «еще одна атака за свободное действие»: ни ОД, ни лимита (rules/melee-talents.mjs::freeMeleeFlags).
           const freeMelee = freeMeleeFlags(techniqueOpts);
           const uncountedAttack = freeMelee.uncounted;
           // Метка до списания: вторая атака Гусара (не Сабли) — карточка называет её «Гусар».
@@ -347,6 +380,12 @@ export function openAttackDialog(ctx) {
             ui.notifications.warn(`⚠️ ${lockProblem}.`);
             return false;
           }
+          // Свободная атака Таланта с кнопки карточки: всё ли ещё можно заплатить — до списания ОД.
+          const payProblem = talentPayProblem(actor, techniqueOpts?.payOnRoll);
+          if (payProblem) {
+            ui.notifications.warn(`⚠️ ${techniqueOpts.payOnRoll.label}: ${payProblem}`);
+            return false;
+          }
           if (isMelee && sel.baseKey === "charge" && !sabreSecond && !freeShot && !freeMelee.skipChargeGate) {
             chargeGate = await chargeAttackGate(actor);
             if (!chargeGate.ok) {
@@ -433,6 +472,8 @@ export function openAttackDialog(ctx) {
             ui.notifications.warn("⚠️ Не хватает Очка Трофеев для Окончательной Казни.");
             return false;
           }
+          // Свободная атака Таланта: отметка карточки/Раунда и Реакция — по факту броска, после отказов окна выше.
+          if (!(await payTalentAttack(actor, techniqueOpts?.payOnRoll))) return false;
 
           // Прицеливание (wdbc-1rno.5): обычно сбрасывается любой Атакой —
           // Aim Focus/Фокус на Прицеле (rules/aim-focus.mjs), если активно
@@ -635,7 +676,7 @@ export function openAttackDialog(ctx) {
               ruleProps: finalExecutionPending
                 ? [...(resolvedAttack.weaponProps || []), ...finalExecutionProps(finalExecutionPending.n)]
                 : resolvedAttack.weaponProps,
-              aimingLabel: (currentAiming !== "none" && !wp.noAim && f.aimHand !== "off")
+              aimingLabel: (currentAiming !== "none" && !wp.noAim && f.aimHand !== "off" && !f.onThisMark)
                 ? (currentAiming === "half" ? `Полу-прицеливание (+${aimingBonus})` : `Полное прицеливание (+${aimingBonus})`)
                 : "",
               // Кого выцелили в паре: урон применяют к листу, а на сцене у пары
@@ -754,10 +795,13 @@ export function openAttackDialog(ctx) {
               const weaponDelta = secondProfile
                 ? trainOf({ ...item.system, weaponType: secondProfile.weaponType || item.system.weaponType }) - trainOf(item.system)
                 : weaponThresholdPart(actor, secondItem, "bs") - weaponThresholdPart(actor, item, f.char);
-              const aimPart = Number(thresholdParts(f).parts.find(p => p.label === "Прицеливание")?.value) || 0;
+              // Избирательная атака (с ней штраф Верхом, Precise Настройки Линз, «Избирательно в Корму») и Выпуск
+              // Батареи — только основного ствола: второй стреляет без места попадания, его порог — по форме без них.
+              const secondForm = { ...f, aimVal: "", aimPenalty: 0, mountPenalty: 0, vehicleRearCalled: false, batpackDump: false };
+              const aimPart = Number(thresholdParts(secondForm).parts.find(p => p.label === "Прицеливание")?.value) || 0;
               const secondRof = f.fullFireRof || "single";
               const secondThreshold = fullFireSecondThreshold({
-                mainThreshold: thresholdOf(f), mainRofBonus: f.rofBonus, secondRof, weaponDelta, aimAdjust: aimPart
+                mainThreshold: thresholdOf(secondForm), mainRofBonus: f.rofBonus, secondRof, weaponDelta, aimAdjust: aimPart
               });
               await withEyeOfEnvy(actor, targetActor, "bs", () => _executeAttackRoll(
                 actor, secondItem, "bs", secondThreshold, secondRof, undefined,

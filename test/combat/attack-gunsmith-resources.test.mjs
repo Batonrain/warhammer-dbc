@@ -38,7 +38,7 @@ function gun(system, name = "Plasma Gun / Плазмаган", flags = {}) {
   return w;
 }
 function who(items, { i = 40 } = {}) {
-  const a = actorFor({ items, characteristics: { ws: char(45), bs: char(45), s: char(40), t: char(40), ag: char(35), i: char(i) } });
+  const a = actorFor({ items, characteristics: { ws: char(45), bs: char(45), s: char(40), t: char(40), ag: char(35), int: char(i) } });
   const store = {};
   a.getFlag = (s, k) => store[`${s}.${k}`];
   a.setFlag = async (s, k, v) => { store[`${s}.${k}`] = v; };

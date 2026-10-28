@@ -47,6 +47,8 @@ export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legi
   "rageExitRerolled",
   // Снайпер Ужаса: один тест Intimidate(BS)+0 на попадание (combat/terror-sniper.mjs).
   "terrorSniperRolled",
+  // Хирургическая Точность (Медик, combat/surgical-precision.mjs): один тест Medicae−10 на карточку атаки.
+  "surgicalPrecisionUsed",
   // Таланты Пугилиста: свободные действия с карточек Захвата и Пинка (3-eddb) — Швырнуть
   // (Метнуть/Замахнуться — одно действие), обе части Наскока и Пинок с Разворота.
   "slamUsed", "pounceKnockdownUsed", "pounceGrabUsed", "roundhouseUsed",

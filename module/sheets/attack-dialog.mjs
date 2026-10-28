@@ -1703,7 +1703,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       // Полу-/Полного Прицеливания» — только Коллиматорный Прицел реально
       // подключён (aimAttackMod), остальные упираются в отдельные пробелы
       // (wdbc-1rno.29/.31/.36/.37/.38).
-      { label: "Прицел (пока Прицеливаюсь)", value: currentAiming === "none" ? 0
+      { label: "Прицел (пока Прицеливаюсь)", value: (currentAiming === "none" || f.onThisMark) ? 0
         : installedMods.reduce((n, m) => n + (Number(modFxOf(m).aimAttackMod) || 0), 0) },
       // Команды и Шок (ruleAutoMods выше) — в базе, а не в modParts: как и в
       // диалоге броска навыка (actor-sheet.mjs), автоматические модификаторы

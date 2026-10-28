@@ -270,6 +270,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // «не может быть Избирательным» — на случай прямого вызова мимо окна атаки (там select заперт).
   const onThisMarkOn = onThisMarkActive(actor, { opts, isMelee });
   if (onThisMarkOn && aimTarget?.value) aimTarget = null;
+  // Он же «не получает преимуществ Прицеливания» — не только строки порога в окне, но и Меткого,
+  // Снайпера-Убийцы, Сверхточного Наследия и Снайпера Ужаса ниже.
+  const aiming = onThisMarkOn ? "none" : opts.aiming;
   // Стрельба от Бедра / Огонь с Вытягивания (combat/free-shot.mjs): «не Избирательный» — тот же запас прочности.
   if (freeShotLocksAim(opts.freeShot) && aimTarget?.value) aimTarget = null;
   // Поле Дискорданта: электрическое стрелковое не стреляет. Окно атаки
@@ -543,7 +546,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // bonusDamageDice. По живому полю условие не выполнялось никогда, и Талант
   // не срабатывал вовсе (приёмка стопки #482-#504).
   const sniperAssassinActive = wp.accurate && rofMode === "single"
-    && opts.aiming === "full" && hasSniperAssassin(actor);
+    && aiming === "full" && hasSniperAssassin(actor);
   if (sniperAssassinActive) { wp.unseen = true; wp.sniperAssassin = true; }
 
   // targetToken/defenderActor (wdbc-1rno.2): вынесены СЮДА, раньше, чем были
@@ -598,9 +601,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // На Лезвии Бритвы: +разница Инициатив к Dmg ножа (в плоскую прибавку, не в Пробитие).
   const razorBonus = isMelee ? razorsEdgeBonus(actor, item, defenderActor) : 0;
   // Жонглёр Клинком: метка на этой цели — штраф на её Избегания от этой атаки ножом.
-  const bladeJugglerPenalty = (isMelee && defenderActor && isKnifeWeapon(item))
-    ? bladeJugglerMarkAgainst(actor, defenderActor.uuid) : 0;
-  if (bladeJugglerPenalty) await consumeBladeJugglerMark(actor);
+  // Переигровка той же атаки (skipAmmo) берёт штраф из storedOpts: метка снята первым броском.
+  const bladeJugglerPenalty = opts.skipAmmo ? (Number(opts.bladeJugglerPenalty) || 0)
+    : (isMelee && defenderActor && isKnifeWeapon(item)) ? bladeJugglerMarkAgainst(actor, defenderActor.uuid) : 0;
+  if (bladeJugglerPenalty && !opts.skipAmmo) await consumeBladeJugglerMark(actor);
 
   // Незримое (стр. 32, wdbc-1rno.2): считается ЗДЕСЬ, до формулы урона —
   // Backstab (rules/unseen-talents.mjs, ниже) должен знать unseen раньше,
@@ -1313,7 +1317,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // значение приходит явным параметром, захваченным до сброса (wdbc-1rno.5).
   // Считается здесь же (раньше bonusDamageDice ниже), чтобы им же могла
   // воспользоваться Сверхточное/Legacy Мутация (wdbc-1rno.35) в flatBonus.
-  const aimed = !!opts.aiming && opts.aiming !== "none";
+  const aimed = !!aiming && aiming !== "none";
   // Сверхточное/Оружие Наследия, skilled 9-9 (wdbc-1rno.35, rules/
   // legacy-weapon.mjs): +1 Dmg за каждый чётный Успех, одиночный выстрел или
   // рукопашная атака с Прицеливанием.
@@ -1930,9 +1934,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
 
   // Затрещина (Талант Пугилиста, стр. 62, combat/whack.mjs): безоружный удар
   // рукой с одноручным оружием — первый раз по не видевшему приём −30 на
-  // Уклонение и Парирование. Память «видел» пишется сразу после решения.
-  const whack = isMelee ? whackStrike(actor, item, targetToken) : { active: false, penalty: 0, note: "" };
-  if (whack.active) await recordWhackSeen(actor, attackerToken, targetToken);
+  // Уклонение и Парирование. Память «видел» пишется сразу после решения; переигровка той же
+  // атаки (skipAmmo) берёт решение из storedOpts — цель «видела» приём уже после первого броска.
+  const noWhack = { active: false, penalty: 0, note: "" };
+  const whack = opts.skipAmmo ? (opts.whack ?? noWhack) : isMelee ? whackStrike(actor, item, targetToken) : noWhack;
+  if (whack.active && !opts.skipAmmo) await recordWhackSeen(actor, attackerToken, targetToken);
 
   // Молотильщик (стр. 62, wdbc-pb60): пара топоров/булав/молотов — успешно
   // Парировавший теряет все неиспользованные Успехи и парирует второе оружие
@@ -2028,7 +2034,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         ? tenacityButtonHtml({ attackerUuid: actor.uuid || "", weaponUuid: item.uuid || "", baseKey: opts.baseKey || "", technique: opts.techniqueOpts?.technique || "", hit: !!hit })
         : "",
       // Снайпер Ужаса (rules/terror-sniper.mjs): Избирательное попадание Accurate-оружием после Прицеливания.
-      terrorSniperOffer: terrorSniperEligible(actor, { isMelee, hit, accurate: wp.accurate, aimValue: aimTarget?.value, aiming: opts.aiming })
+      terrorSniperOffer: terrorSniperEligible(actor, { isMelee, hit, accurate: wp.accurate, aimValue: aimTarget?.value, aiming })
         ? { targetTokenUuid: targetToken?.document?.uuid ?? targetToken?.uuid ?? "" } : null,
       sbEff, sbHalf, reverseThrustBonus, taintedAdd, vehicleSide: opts.vehicleSide || "",
       ammo: isMelee ? null : {
@@ -2217,7 +2223,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const { forcedRoll, updateMessageId, ...storedOptsBase } = opts;
   // Что в этом выстреле уже оплачено (Очко Бесчестия, метка Тех-Оружейника, заряд Линз) — перебросы
   // того же выстрела (+10, Очко Судьбы, сдвиг места) повторно не платят, но и бесплатно бонус не получают.
-  const storedOpts = { ...storedOptsBase, talentPaid: {
+  const storedOpts = { ...storedOptsBase, whack, bladeJugglerPenalty, talentPaid: {
     sureShot: sureShotPaid, killingStrike: killingStrikePaid, weaponTech: weaponTech.bonus > 0, lens: !!lens.use } };
   messageData.flags = foundry.utils.mergeObject(messageData.flags || {}, {
     "warhammer-dbc": { attack: {

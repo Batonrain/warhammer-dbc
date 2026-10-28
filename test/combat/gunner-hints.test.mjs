@@ -90,6 +90,20 @@ describe("По Этим Координатам: запрет Избирател�
     expect(card()).toMatch(/data-hit-location="Голова"/);
   });
 
+  it("с галочкой Прицеливание не даёт и преимуществ в броске: Меткое без доп. куба урона", async () => {
+    const dmg = async opts => {
+      resetCaptured();
+      const w = weaponFor({ damage: "1d10", penetration: 0, weaponProps: [{ key: "accurate" }] }, { name: "Лонг-лас" });
+      const actor = actorFor({ items: [w, byKey(MARK.key)] });
+      captured.dice = [23, 6, 4, 4, 4];
+      await _executeAttackRoll(actor, w, "bs", 45, "single", null, { aiming: "full", ...opts });
+      return Number(card().match(/class="wh-apply-dmg-btn[^>]*data-damage="(\d+)"/)?.[1]);
+    };
+    const aimed = await dmg({});
+    const marked = await dmg({ onThisMark: true });
+    expect(aimed).toBeGreaterThan(marked);
+  });
+
   it("активность и доступность (имя и ключ)", () => {
     const a = actorFor({ items: [byName(MARK.name)] });
     expect(onThisMarkActive(a, { opts: { onThisMark: true }, isMelee: false })).toBe(true);
