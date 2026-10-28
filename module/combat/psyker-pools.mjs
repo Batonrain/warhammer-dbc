@@ -69,8 +69,12 @@ export function fastWeavingGateNow(actor, power, { action } = {}) {
 
 const line = (html, extra = "") => `<div class="roll-threshold" style="font-size:0.85em;${extra}">${html}</div>`;
 
-/** Ключ «раз в Раунд» (rules/cooldown.mjs): в этом Раунде псайкер уже манифестировал — для Руны Судьбы. */
-export const PSY_MANIFEST_ROUND_KEY = "psyker.core.manifestedThisRound";
+/**
+ * Метка актора «в этом Раунде этого боя уже манифестировал» — для Руны Судьбы. Хранит id боя и номер
+ * Раунда: «раз в Раунд» из rules/cooldown.mjs помнит только номер, и Раунд 1 нового боя совпал бы с прежним.
+ */
+export const PSY_MANIFEST_ROUND_FLAG = "psyManifestRound";
+const manifestRoundTag = () => `${game.combat?.id}:${game.combat?.round}`;
 
 /**
  * Что манифестация этой силы стоит СЕЙЧАС и чем платится — без побочных эффектов (проверка до броска).
@@ -83,7 +87,7 @@ export function manifestActionPlan(actor, power, { fastWeaving = false, path = "
   const none = { ok: true, kind: "none", cost: 0, cover: 0, rest: 0, fw: null, reason: "" };
   if (!isEncounterActive() || !hasActionEconomy(actor)) return none;
   const action = pathManifestAction(power?.system?.action, path, subPaths,
-    { firstInRound: isCapabilityAvailable(actor, PSY_MANIFEST_ROUND_KEY, "round") });
+    { firstInRound: actor.getFlag?.(NS, PSY_MANIFEST_ROUND_FLAG) !== manifestRoundTag() });
   if (action === "reaction") {
     const ok = canSpendReaction(actor, { physical: false });
     return { ...none, ok, kind: "reaction", action, cost: 1, reason: ok ? "" : (reactionSpendGate(actor, { physical: false }).title || "Не хватает Реакций") };
@@ -127,7 +131,9 @@ export async function payManifestAction(actor, power, plan) {
   if (plan.kind === "ap" && plan.fw && !plan.fw.ok && plan.fw.reason) {
     lines.push(line(`${esc(plan.fw.reason)} Манифестация без пула.`, "color:#a33;"));
   }
-  if (plan.kind !== "none") await markCapabilityUsed(actor, PSY_MANIFEST_ROUND_KEY, "round");
+  // Пишется только первой манифестацией Раунда — остальные не тратят лишнюю запись в базу.
+  const tag = manifestRoundTag();
+  if (plan.kind !== "none" && actor.getFlag?.(NS, PSY_MANIFEST_ROUND_FLAG) !== tag) await actor.setFlag(NS, PSY_MANIFEST_ROUND_FLAG, tag);
   return { ok: true, lines };
 }
 
@@ -372,7 +378,7 @@ export async function handleSignatureFreeClick(message, btn) {
     ui.notifications?.warn("В этом Раунде бесплатное Очко Ключевых Сил уже использовано.");
     return false;
   }
-  return runCardOnce(message, "signatureFreeUsed", async () => {
+  return runCardOnce(message, SIGNATURE_CARD_FLAG, async () => {
     if (!SIGNATURE_ABILITIES.some(a => a.key === ability)) return false;
     const out = {};
     const ok = await spendFreeInfamyAbility(actor, ability, out);

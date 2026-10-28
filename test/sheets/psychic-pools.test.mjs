@@ -267,7 +267,7 @@ describe("Быстрое Плетение: пул 2 ОД в начале боя"
     const a = inFight(withPool(actor([talent(FAST)]), 2));
     showManifestDialog(a, power({ powerType: "aura" }));
     expect(captured.dialog.content).toContain('id="psy-fastweave"');
-    expect(captured.dialog.content).toContain("−1 ОД из пула");
+    expect(captured.dialog.content).toContain('−<span id="pm-fw-cover">1</span> ОД из пула');
     showManifestDialog(a, power({ powerType: "attack" }));
     expect(captured.dialog.content).not.toContain('id="psy-fastweave"');
     expect(captured.dialog.content).toContain("без типа «Атака»");
@@ -669,6 +669,10 @@ describe("Манифестация в бою списывает ОД по дан
     expect(ap(a)).toBe(2);
     await cast(a, power({ action: "half" }), opts(9, "normal", { path: "runeFate" }), [30]);
     expect(ap(a)).toBe(1);
+    // Новый бой с тем же номером Раунда — снова первая психосила.
+    globalThis.game.combat = { started: true, id: "other", round: 1, combatant: { actor: null } };
+    await cast(a, power({ action: "half" }), opts(9, "normal", { path: "runeFate" }), [30]);
+    expect(ap(a)).toBe(1);
   });
 
   it("Руны Сигиллитов с подпутём Инкантация поднимают Полудействие до Полного; без подпутя — нет", () => {
@@ -677,21 +681,26 @@ describe("Манифестация в бою списывает ОД по дан
     expect(manifestActionPlan(a, power({ action: "half" }), { path: "sigillite", subPaths: ["meditation"] }).cost).toBe(1);
   });
 
-  it("окно: строка цены ОД пересчитывается по выбранному Пути", () => {
-    const a = inFight(actor());
+  it("окно: строка цены ОД и покрытие пулом Быстрого Плетения пересчитываются по выбранному Пути", () => {
+    const a = inFight(withPool(actor([talent(FAST)]), 2));
     showManifestDialog(a, power({ action: "half" }));
+    expect(captured.dialog.content).toContain('id="pm-fw-cover"');
+    let nodes = {};
     const shown = path => {
       const vals = { "#psy-pr": "9", "#psy-pr-mod": "0", "#psy-mod": "0", "#psy-path": path, "#psy-variant": "-1",
         "#psy-push-bonus": "1", "#psy-rune-strike": "0", "#psy-mode": "normal" };
-      const nodes = {};
+      nodes = {};
       const node = sel => (nodes[sel] ??= { value: vals[sel] ?? "", textContent: "", style: {},
         classList: { toggle() {}, remove() {}, add() {} }, addEventListener() {}, checked: false, dataset: {} });
       captured.dialog.render({ querySelector: node, querySelectorAll: () => [], closest: () => null });
       return nodes["#pm-ap-line"].textContent;
     };
     expect(shown("")).toContain("стоит 1 ОД");
+    expect(nodes["#pm-fw-cover"].textContent).toBe("1");
     expect(shown("incantation")).toContain("стоит 2 ОД");
+    expect(nodes["#pm-fw-cover"].textContent).toBe("2");
     expect(shown("runeFate")).toContain("стоит 0 ОД");
+    expect(nodes["#pm-fw-cover"].textContent).toBe("0");
   });
 });
 

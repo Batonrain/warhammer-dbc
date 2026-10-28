@@ -327,6 +327,7 @@ describe("Процессы: Цифровое Откровение и Ноосф�
     expect(a.system.cognition.value).toBe(5);
     await pressRest(a);
     expect(a.system.cognition.value).toBe(5);
+    expect(captured.warnings.join(" ")).toContain("уже был в этом Ходу");
   });
 
   it("вне боя Хода нет: метки нет, каждое «↻» — новый Ход со своей платой", async () => {

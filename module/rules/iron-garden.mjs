@@ -44,7 +44,7 @@ const countOf = item => Math.max(1, Math.trunc(Number(item.system?.quantity) || 
  * оружие не мехадендрит или он один (Multi-strike (1) — не свойство).
  */
 export function ironGardenRating(actor, weapon) {
-  if (!hasIronGarden(actor) || !isMechadendriteWeapon(weapon)) return 0;
+  if (!hasIronGarden(actor) || !isMechadendriteWeapon(weapon) || !weapon.system?.equipped) return 0;
   const total = gardenGroup(actor, weapon).reduce((s, i) => s + countOf(i), 0);
   return total >= 2 ? total : 0;
 }

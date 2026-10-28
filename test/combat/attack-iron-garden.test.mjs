@@ -43,6 +43,8 @@ describe("рейтинг Железного Сада", () => {
     const b = fighter([garden(), dendrite("d1"), dendrite("d2"), dendrite("d3", { system: { ...off, quality: "poor", stored: true } })]);
     expect(ironGardenRating(b, b.items.get("d1"))).toBe(2);
     expect(ironGardenQuality(b, b.items.get("d1"))).toBe("common");
+    // атака самим снятым дендритом не получает Multi-strike от надетых
+    expect(ironGardenRating(b, b.items.get("d3"))).toBe(0);
   });
   it("один мехадендрит, чужое имя, обычное оружие, нет Таланта — 0", () => {
     const one = fighter([garden(), dendrite("d1")]);
