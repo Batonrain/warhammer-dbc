@@ -2051,8 +2051,9 @@ export function registerHooks() {
     });
 
     // Хирургическая Точность (Медик, 3-dc87): тест Medicae−10 перед уроном
-    // Избирательной атаки — прибавка правит соседнюю «Применить урон» в DOM.
+    // Избирательной атаки — прибавка в «Применить урон» и в само сообщение, тест раз на карточку.
     html.querySelectorAll(".wh-surgical-btn").forEach(btn => {
+      if (cardOnceUsed(message, "surgicalPrecisionUsed")) btn.disabled = true;
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
         const el = ev.currentTarget;
@@ -2061,7 +2062,7 @@ export function registerHooks() {
         const doc = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
         const attacker = doc?.actor ?? doc ?? null;
         const { runSurgicalPrecision } = await import("./combat/surgical-precision.mjs");
-        await runSurgicalPrecision(attacker, { applyBtn, el });
+        await runSurgicalPrecision(attacker, { applyBtn, el, message });
       });
     });
 
