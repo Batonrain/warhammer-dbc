@@ -9,7 +9,7 @@
 // не копируя их второй раз.
 
 import { describe, it, expect } from "vitest";
-import { PSY_PATHS, subPathTotals } from "../../module/constants/psyker.mjs";
+import { PSY_PATHS, subPathTotals, pathManifestAction } from "../../module/constants/psyker.mjs";
 
 describe("PSY_PATHS.sigillite — subPaths (wdbc-qd6w)", () => {
   it("объявляет ровно три суб-механики книги", () => {
@@ -106,5 +106,30 @@ describe("subPathTotals — защита от рассинхрона данны�
   it("несуществующий Путь — все нули, не падение", () => {
     expect(subPathTotals("no-such-path", ["incantation"])).toEqual(
       { ePR: 0, testMod: 0, phenMod: 0, labels: [] });
+  });
+});
+
+describe("pathManifestAction — ступень действия манифестации по Пути Силы", () => {
+  it("Инкантация: Полудействие → Полное; прочие ступени не трогает", () => {
+    expect(pathManifestAction("half", "incantation")).toBe("full");
+    expect(pathManifestAction("", "incantation")).toBe("full");
+    expect(pathManifestAction("full", "incantation")).toBe("full");
+    expect(pathManifestAction("free", "incantation")).toBe("free");
+    expect(pathManifestAction("reaction", "incantation")).toBe("reaction");
+  });
+  it("Руны Сигиллитов: Инкантация действует только отмеченным подпутём", () => {
+    expect(pathManifestAction("half", "sigillite", ["incantation"])).toBe("full");
+    expect(pathManifestAction("half", "sigillite", ["meditation", "unholy"])).toBe("half");
+    expect(pathManifestAction("half", "meditation", ["incantation"])).toBe("half");
+  });
+  it("Руна Судьбы: Полное → Полудействие → Свободное, до Свободного — только первой психосилой Раунда", () => {
+    expect(pathManifestAction("full", "runeFate")).toBe("half");
+    expect(pathManifestAction("half", "runeFate")).toBe("free");
+    expect(pathManifestAction("half", "runeFate", [], { firstInRound: false })).toBe("half");
+    expect(pathManifestAction("extended", "runeFate")).toBe("extended");
+  });
+  it("без Пути — как в данных силы", () => {
+    expect(pathManifestAction("half", "")).toBe("half");
+    expect(pathManifestAction("full")).toBe("full");
   });
 });

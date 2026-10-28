@@ -303,14 +303,29 @@ describe("Необременённый и Психическое Возрожд�
   });
 
   it("в бою манифестация выше тPR платит Очко Бесчестия и ставит метку на Ход", async () => {
-    globalThis.game.combat = { started: true };
+    globalThis.game.combat = { started: true, id: "c1" };
     const a = actor([talent("Psychic Resurgence / Психическое Возрождение")], sustained);
     await cast(a, power(), opts(8, "normal"));
     expect(a.system.fate.value).toBe(2);
-    expect(a.getFlag("warhammer-dbc", "psychicResurgenceActive")).toBe(true);
+    expect(a.getFlag("warhammer-dbc", "psychicResurgenceActive")).toBeTruthy();
     // Пока метка стоит — потолок бПР, второго Очка не нужно.
     await cast(a, power(), opts(9, "normal"));
     expect(a.system.fate.value).toBe(2);
+  });
+
+  // Ревью #554: метку гасит только начало своего Хода в бою; бой кончился раньше — она оставалась
+  // и поднимала потолок бесплатно навсегда.
+  it("метка Возрождения живёт только в том бою, где куплена: после боя и в новом бою потолок снова тPR", async () => {
+    globalThis.game.combat = { started: true, id: "c1" };
+    const a = actor([talent("Psychic Resurgence / Психическое Возрождение")], sustained);
+    await cast(a, power(), opts(8, "normal"));
+    expect(a.system.fate.value).toBe(2);
+    globalThis.game.combat = undefined;
+    await cast(a, power(), opts(8, "normal"));
+    expect(a.system.fate.value).toBe(1);
+    globalThis.game.combat = { started: true, id: "c2" };
+    showManifestDialog(a, power());
+    expect(captured.dialog.content).toContain("Психическое Возрождение (−1 ОБ)");
   });
 
   it("в пределах тPР Очко не тратится", async () => {

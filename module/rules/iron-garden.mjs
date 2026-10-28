@@ -8,7 +8,7 @@
 //
 //  Реализовано (решение владельца 26.10.2026):
 //   • свойство Multi-strike (X) к рукопашной атаке мехадендритом, у которого на
-//     актёре есть X ≥ 2 одноимённых (учитывается количество предмета);
+//     актёре надето X ≥ 2 одноимённых (учитывается количество предмета);
 //   • «1 Реакция» — группа бьёт ОДНИМ броском по одному оружию (окно атаки берёт
 //     один выбранный дендрит, остальные идут как Multi-strike), поэтому атака
 //     за Реакцию (Свободная Атака, Контратака…) списывает ровно одну Реакцию, а
@@ -40,22 +40,22 @@ const countOf = item => Math.max(1, Math.trunc(Number(item.system?.quantity) || 
 
 /**
  * Рейтинг Multi-strike от Железного Сада для атаки этим мехадендритом: число
- * одноимённых мехадендритов на актёре (с учётом количества). 0 — Таланта нет,
+ * надетых одноимённых мехадендритов на актёре (с учётом количества). 0 — Таланта нет,
  * оружие не мехадендрит или он один (Multi-strike (1) — не свойство).
  */
 export function ironGardenRating(actor, weapon) {
   if (!hasIronGarden(actor) || !isMechadendriteWeapon(weapon)) return 0;
-  const name = norm(weapon.name);
-  const total = [...(actor?.items ?? [])]
-    .filter(i => isMechadendriteWeapon(i) && norm(i.name) === name)
-    .reduce((s, i) => s + countOf(i), 0);
+  const total = gardenGroup(actor, weapon).reduce((s, i) => s + countOf(i), 0);
   return total >= 2 ? total : 0;
 }
 
-/** Одноимённые мехадендриты актёра — группа, которую Железный Сад сводит в одну атаку. */
+/**
+ * Надетые одноимённые мехадендриты актёра — группа, которую Железный Сад сводит в одну атаку.
+ * Снятые и сданные на склад не бьют — тот же отбор, что у скидки по рукам (ironGardenHandsDiscount).
+ */
 function gardenGroup(actor, weapon) {
   const name = norm(weapon?.name);
-  return [...(actor?.items ?? [])].filter(i => isMechadendriteWeapon(i) && norm(i.name) === name);
+  return [...(actor?.items ?? [])].filter(i => isMechadendriteWeapon(i) && i.system?.equipped && norm(i.name) === name);
 }
 
 /**

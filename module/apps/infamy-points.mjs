@@ -232,14 +232,15 @@ export async function spendPatronAbility(actor, key) {
 /**
  * Бесплатная трата способности Очка Бесчестия (Ключевые Силы, пачка I1): та же способность и та же
  * карточка, что у обычной траты с полосы, но Очко не списывается. Раз в Раунд следит вызывающий.
+ * @param {object} [out] приёмник результата (out.successBonus для «Успеха»)
  * @returns {Promise<boolean>} true — способность применена
  */
-export async function spendFreeInfamyAbility(actor, key) {
+export async function spendFreeInfamyAbility(actor, key, out = null) {
   const godKey = actor?.system?.patronGod || "undivided";
   const p = chaosPatronMeta(godKey);
   return (await spendInfamy(actor, key, {
     godKey, ipFullPath: actorInfamyPath(actor), ipMax: actorInfamyMax(actor),
-    meta: { gc: p.color, gc2: p.gc2, sigil: p.sigil }, contextual: true, free: true
+    meta: { gc: p.color, gc2: p.gc2, sigil: p.sigil }, contextual: true, free: true, out
   })) === true;
 }
 

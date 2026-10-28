@@ -320,6 +320,15 @@ describe("Процессы: Цифровое Откровение и Ноосф�
     expect(chatText()).toContain("уже списана");
   });
 
+  it("в бою без Процессов «↻» тоже раз за Ход: второе нажатие Когницию не восстанавливает", async () => {
+    globalThis.game.combat = { started: true };
+    const a = mage({ cog: 3, items: [] });
+    await pressRest(a);
+    expect(a.system.cognition.value).toBe(5);
+    await pressRest(a);
+    expect(a.system.cognition.value).toBe(5);
+  });
+
   it("вне боя Хода нет: метки нет, каждое «↻» — новый Ход со своей платой", async () => {
     const a = mage({ cog: 3, items: [sustained("s", 2)] });
     await pressRest(a);

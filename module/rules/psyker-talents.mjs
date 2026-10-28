@@ -101,9 +101,14 @@ export function unburdenedApplies(actor, power) {
   return talentsWhere(actor, isUnburdened).some(t => talentCoversPower(t, power));
 }
 
-/** Действует ли сейчас Психическое Возрождение (метка до начала следующего Хода). */
-export function resurgenceActive(actor) {
-  return !!(actor?.getFlag?.(NS, RESURGENCE_FLAG) ?? actor?.flags?.[NS]?.[RESURGENCE_FLAG]);
+/**
+ * Действует ли сейчас Психическое Возрождение (метка до начала следующего Хода). Метка хранит id боя,
+ * в котором куплена: гасит её только начало своего Хода, а бой может кончиться раньше — тогда она
+ * не должна поднимать потолок ни вне боя, ни в следующем бою. combatId — id идущего боя (null — боя нет).
+ */
+export function resurgenceActive(actor, combatId = null) {
+  const mark = actor?.getFlag?.(NS, RESURGENCE_FLAG) ?? actor?.flags?.[NS]?.[RESURGENCE_FLAG];
+  return combatId != null && mark === combatId;
 }
 
 /**
@@ -111,16 +116,17 @@ export function resurgenceActive(actor) {
  * поддержание); Необременённый и действующее Возрождение снимают штраф за
  * поддержание — потолок бПР. Без поддержания потолки совпадают.
  *
+ * @param {{combatId?:string|null}} [opts] combatId — id идущего боя (см. resurgenceActive)
  * @returns {{max:number, normal:number, ignored:""|"unburdened"|"resurgence",
  *            canResurge:boolean}} canResurge — потолок можно поднять Возрождением
  *   за Очко Бесчестия (Талант есть, метки ещё нет, штраф реально есть).
  */
-export function manifestPrCeiling(actor, power) {
+export function manifestPrCeiling(actor, power, { combatId = null } = {}) {
   const base = Math.max(0, Number(actor?.system?.psyker?.rating) || 0);
   const normal = Math.max(0, Number(actor?.system?.psyker?.currentRating) || 0);
   const penalty = base > normal;
   if (penalty && unburdenedApplies(actor, power)) return { max: base, normal, ignored: "unburdened", canResurge: false };
-  if (penalty && resurgenceActive(actor)) return { max: base, normal, ignored: "resurgence", canResurge: false };
+  if (penalty && resurgenceActive(actor, combatId)) return { max: base, normal, ignored: "resurgence", canResurge: false };
   return { max: normal, normal, ignored: "", canResurge: penalty && hasResurgence(actor) };
 }
 
@@ -240,11 +246,11 @@ const FAST_WEAVING_WHY = {
  * Можно ли оплатить манифестацию силы из пула. ownTurn — идёт ли сейчас Ход
  * самого псайкера: пул выдан ДО первого Хода, с началом Хода он сбрасывается.
  * Пул не обязан покрыть всё: он уменьшает реальное списание ОД на min(цена, остаток), остальное
- * платится из обычных ОД.
+ * платится из обычных ОД. action — ступень действия после Пути Силы (constants/psyker.mjs::pathManifestAction).
  * @returns {{ok:boolean, code:string, reason:string, cost:number, left:number, cover:number}} cover — сколько ОД покроет пул
  */
-export function fastWeavingGate(actor, power, { ownTurn = false } = {}) {
-  const cost = psychicApCost(power?.system?.action);
+export function fastWeavingGate(actor, power, { ownTurn = false, action = power?.system?.action } = {}) {
+  const cost = psychicApCost(action);
   const left = fastWeavingLeft(actor);
   const refuse = code => ({ ok: false, code, reason: FAST_WEAVING_WHY[code], cost, left, cover: 0 });
   if (!hasFastWeaving(actor)) return refuse("no-talent");

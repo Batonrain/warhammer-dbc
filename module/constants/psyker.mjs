@@ -132,7 +132,7 @@ export const PSY_PATHS = {
                    flag: "psychicPath.sigillites.runeMagic",
                    runeMode: true, phenOnly99: true, focusTest: true, runeCost: true,
                    subPaths: ["incantation", "meditation", "unholy"],
-                   note: "Только Безопасный/Обычный режим; Феномен лишь на 99. Цена — бPR психосилы × 2 Руны, считается и списывается сама. Отметьте любую комбинацию флажков ниже (Инкантация/Медитация/Нечестивые Символы) — они складываются кумулятивно, а не выбираются взаимоисключающе. Инкантация также поднимает действие манифестации на ступень (полудействие→полное) — это НЕ автоматизировано, отслеживайте вручную. НЕ автоматизировано и остаётся на столе: −30 всем попыткам обнаружить манифестацию, доп. −30 при варп-прорыве, доступ к Тауматургии." }
+                   note: "Только Безопасный/Обычный режим; Феномен лишь на 99. Цена — бPR психосилы × 2 Руны, считается и списывается сама. Отметьте любую комбинацию флажков ниже (Инкантация/Медитация/Нечестивые Символы) — они складываются кумулятивно, а не выбираются взаимоисключающе. Инкантация также поднимает действие манифестации на ступень (полудействие→полное) — в бою ОД списываются по поднятой цене. НЕ автоматизировано и остаётся на столе: −30 всем попыткам обнаружить манифестацию, доп. −30 при варп-прорыве, доступ к Тауматургии." }
 };
 
 /**
@@ -166,4 +166,25 @@ export function subPathTotals(pathKey, selectedKeys) {
     labels.push(sub.label);
   }
   return { ePR, testMod, phenMod, labels };
+}
+
+/**
+ * Ступень действия манифестации после Пути Силы: Инкантация (сама или отмеченным
+ * подпутём Рун Сигиллитов) — Полудействие→Полное; Руна Судьбы — на ступень ниже
+ * (Полное→Полудействие→Свободное), до Свободного только первой психосилой Раунда.
+ * Длительное, Реакцию и Свободное Пути не двигают — книга называет только эти ступени.
+ *
+ * @param {string} action  поле `system.action` силы (пусто — Полудействие)
+ * @param {string} [pathKey]
+ * @param {string[]} [subKeys]  отмеченные подпути (как у subPathTotals)
+ * @param {{firstInRound?:boolean}} [opts]
+ * @returns {string} ключ PSY_ACTIONS
+ */
+export function pathManifestAction(action, pathKey = "", subKeys = [], { firstInRound = true } = {}) {
+  const a = action || "half";
+  const incantation = pathKey === "incantation"
+    || (!!PSY_PATHS[pathKey]?.subPaths?.includes("incantation") && Array.isArray(subKeys) && subKeys.includes("incantation"));
+  if (incantation) return a === "half" ? "full" : a;
+  if (pathKey === "runeFate") return a === "full" ? "half" : (a === "half" && firstInRound) ? "free" : a;
+  return a;
 }

@@ -13,7 +13,8 @@ import { executePsychotest, showManifestDialog, activatePsychicListeners } from 
 import { handleCalmWarpClick } from "../../module/combat/calm-warp.mjs";
 import { processFastWeavingCombatStart, weaveFluid, restoreFluidWeavePoint, signatureFreeHtml, SIGNATURE_USAGE_KEY,
          handleSignatureFreeClick, handlePsyRerollClick, manifestActionPlan, payManifestAction } from "../../module/combat/psyker-pools.mjs";
-import { cardOnceUsed } from "../../module/combat/card-once.mjs";
+import { cardOnceUsed, markCardOnce } from "../../module/combat/card-once.mjs";
+import { WARP_LOCK_FLAG } from "../../module/rules/warp-lock.mjs";
 import { WOUND_FREE_FLAG } from "../../module/rules/wound-in-reality.mjs";
 import { FAST_WEAVING_FLAG, FLUID_WEAVE_SPENT_FLAG, FLUID_WEAVE_TURN_FLAG, SIGNATURE_FLAG }
   from "../../module/rules/psyker-talents.mjs";
@@ -466,6 +467,16 @@ describe("Ключевые Силы: бесплатное Очко Бесчес�
     expect(captured.warnings.join(" ")).toContain("уже использовано");
   });
 
+  it("покровитель Тзинч: бесплатный «Успех» прибавляет силе столько Успехов, сколько дала Вспышка Гения", async () => {
+    const a = sigActor({ fate: 2 }), p = power({ sustainedDegree: 3 });
+    a.system.patronGod = "tzeentch";
+    globalThis.fromUuid = async uuid => (uuid === a.uuid ? a : uuid === p.uuid ? p : null);
+    captured.chat.length = 0; captured.dice = [4];
+    expect(await handleSignatureFreeClick(msg(), freeBtn(a, p, "success"))).toBe(true);
+    expect(plain()).toContain("Вспышка Гения: + 4 Успехов");
+    expect(p.system.sustainedDegree).toBe(7);
+  });
+
   it("кнопка работает только для ключевой силы и только владельцу", async () => {
     const a = sigActor({ fate: 2 }), other = power({}, "Другая / Other");
     globalThis.fromUuid = async uuid => (uuid === a.uuid ? a : uuid === other.uuid ? other : null);
@@ -634,6 +645,53 @@ describe("Манифестация в бою списывает ОД по дан
     const a = inFight(actor());
     showManifestDialog(a, power({ action: "full" }));
     expect(captured.dialog.content).toContain("стоит 2 ОД");
+  });
+
+  // Путь Силы двигает ступень действия (constants/psyker.mjs::PSY_PATHS): Инкантация — Полудействие→Полное,
+  // Руна Судьбы — на ступень ниже, до Свободного только первой психосилой Раунда.
+  it("Путь «Инкантация»: Полудействие поднимается до Полного — 2 ОД", async () => {
+    const a = inFight(actor());
+    await cast(a, power({ action: "half" }), opts(9, "normal", { path: "incantation" }), [30]);
+    expect(ap(a)).toBe(0);
+    expect(plain()).toContain("Действие: Полное действие — списано 2 ОД");
+  });
+
+  it("Путь «Руна Судьбы»: Полное снижается до Полудействия — 1 ОД", async () => {
+    const a = inFight(actor());
+    await cast(a, power({ action: "full" }), opts(9, "normal", { path: "runeFate" }), [30]);
+    expect(ap(a)).toBe(1);
+    expect(plain()).toContain("Действие: Полудействие — списано 1 ОД");
+  });
+
+  it("Руна Судьбы: Полудействие до Свободного — только первой психосилой Раунда", async () => {
+    const a = inFight(actor());
+    await cast(a, power({ action: "half" }), opts(9, "normal", { path: "runeFate" }), [30]);
+    expect(ap(a)).toBe(2);
+    await cast(a, power({ action: "half" }), opts(9, "normal", { path: "runeFate" }), [30]);
+    expect(ap(a)).toBe(1);
+  });
+
+  it("Руны Сигиллитов с подпутём Инкантация поднимают Полудействие до Полного; без подпутя — нет", () => {
+    const a = inFight(actor());
+    expect(manifestActionPlan(a, power({ action: "half" }), { path: "sigillite", subPaths: ["incantation"] }).cost).toBe(2);
+    expect(manifestActionPlan(a, power({ action: "half" }), { path: "sigillite", subPaths: ["meditation"] }).cost).toBe(1);
+  });
+
+  it("окно: строка цены ОД пересчитывается по выбранному Пути", () => {
+    const a = inFight(actor());
+    showManifestDialog(a, power({ action: "half" }));
+    const shown = path => {
+      const vals = { "#psy-pr": "9", "#psy-pr-mod": "0", "#psy-mod": "0", "#psy-path": path, "#psy-variant": "-1",
+        "#psy-push-bonus": "1", "#psy-rune-strike": "0", "#psy-mode": "normal" };
+      const nodes = {};
+      const node = sel => (nodes[sel] ??= { value: vals[sel] ?? "", textContent: "", style: {},
+        classList: { toggle() {}, remove() {}, add() {} }, addEventListener() {}, checked: false, dataset: {} });
+      captured.dialog.render({ querySelector: node, querySelectorAll: () => [], closest: () => null });
+      return nodes["#pm-ap-line"].textContent;
+    };
+    expect(shown("")).toContain("стоит 1 ОД");
+    expect(shown("incantation")).toContain("стоит 2 ОД");
+    expect(shown("runeFate")).toContain("стоит 0 ОД");
   });
 });
 
@@ -874,6 +932,45 @@ describe("Ключевые Силы: переброс психотеста с к
     captured.dice = [30];
     expect(await handlePsyRerollClick(old, btn(a, p))).toBe(true);
     expect(await handlePsyRerollClick(old, btn(a, p))).toBe(false);
+  });
+
+  it("Варп-Замок после карточки: переброс не манифестирует, ничего не брошено и не списано", async () => {
+    const a = sigActor({ fate: 3 }), p = power();
+    wire(a, p);
+    await cast(a, p, opts(9, "normal"), [95]);
+    const old = messageOf(lastCard());
+    await a.setFlag("warhammer-dbc", WARP_LOCK_FLAG, true);
+    captured.chat.length = 0; captured.dice = [30];
+    expect(await handlePsyRerollClick(old, btn(a, p))).toBe(false);
+    expect(captured.chat.length).toBe(0);
+    expect(a.system.fate.value).toBe(3);
+    expect(captured.warnings.join(" ")).toContain("Варп-Замок");
+  });
+
+  it("Пустота Парии после карточки: переброс не-Непрямой силы отказан", async () => {
+    const a = sigActor({ fate: 3 }), p = power();
+    wire(a, p);
+    await cast(a, p, opts(9, "normal"), [95]);
+    const old = messageOf(lastCard());
+    const v = packDocById("packs-src/traits/Трейты_рас", "PariahVoidZone01");
+    a.items.push({ id: v._id, name: v.name, type: v.type, system: v.system, flags: v.flags });
+    captured.chat.length = 0; captured.dice = [30];
+    expect(await handlePsyRerollClick(old, btn(a, p))).toBe(false);
+    expect(captured.chat.length).toBe(0);
+    expect(captured.warnings.join(" ")).toContain("Пустоте Парии");
+  });
+
+  it("вне боя: бесплатное Очко этой карточки уже ушло на «Успех» — «Переброс (бесплатно)» переспрашивает, а не платит молча", async () => {
+    const a = sigActor({ fate: 2 }), p = power();
+    wire(a, p);
+    await cast(a, p, opts(9, "normal"), [95]);
+    const old = messageOf(lastCard());
+    await markCardOnce(old, "signatureFreeUsed");
+    const b = { dataset: { actorUuid: a.uuid, powerUuid: p.uuid, free: "1" } };
+    captured.confirmAnswer = false; captured.dialog = null; captured.dice = [30];
+    expect(await handlePsyRerollClick(old, b)).toBe(false);
+    expect(a.system.fate.value).toBe(2);
+    expect(captured.dialog?.content).toContain("1 Очко Бесчестия");
   });
 
   it("не ключевая сила, не владелец, покровитель Нургл — отказ", async () => {
