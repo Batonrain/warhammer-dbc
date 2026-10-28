@@ -9,7 +9,7 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { captured, resetCaptured, fakeForm } from "../support/foundry-stub.mjs";
 import { dragonKnightTest, clearDragonKnight } from "../../module/combat/mount.mjs";
-import { dragonKnightRules, DRAGON_KNIGHT_FLAG } from "../../module/rules/dragon-knight.mjs";
+import { dragonKnightRules, dragonKnightEvasionBonus, DRAGON_KNIGHT_FLAG } from "../../module/rules/dragon-knight.mjs";
 import { situationalRules } from "../../module/rules/situational.mjs";
 
 const talent = name => ({ type: "talent", name, system: {}, flags: {} });
@@ -113,6 +113,51 @@ describe("Драконий Рыцарь: бонус скакуну", () => {
     mount.flags = {}; await mount.unsetFlag("warhammer-dbc", DRAGON_KNIGHT_FLAG);
     await dragonKnightTest(r);
     expect(captured.chat.length).toBe(before);
+  });
+});
+
+describe("Драконий Рыцарь: метка помнит бой и Раунд", () => {
+  it("тест в бою пишет в метку id боя и Раунд", async () => {
+    const r = rider();
+    globalThis.game.combat = { id: "c1", round: 2, started: true, combatant: { actor: r, actorId: r.id } };
+    captured.nextRoll = 5;
+    await run(r, "evasion");
+    expect(mount.getFlag("warhammer-dbc", DRAGON_KNIGHT_FLAG)).toMatchObject({ mode: "evasion", value: 12, combatId: "c1", round: 2 });
+  });
+
+  // Снимает метку только начало Хода всадника, пока он сидит на этом скакуне: после спешивания или конца
+  // боя её некому снять — прибавка переживала бой.
+  const stamped = mode => ({ flags: { "warhammer-dbc": { [DRAGON_KNIGHT_FLAG]: { mode, value: 9, combatId: "c1", round: 1 } } },
+    getFlag(_s, k) { return this.flags["warhammer-dbc"][k]; }, type: "character", items: [], system: {} });
+
+  it("тот же бой, тот же или следующий Раунд — действует", () => {
+    for (const round of [1, 2]) {
+      globalThis.game.combat = { id: "c1", round };
+      expect(dragonKnightRules(stamped("attack"))).toHaveLength(1);
+      expect(dragonKnightEvasionBonus(stamped("evasion"))).toBe(9);
+    }
+  });
+
+  it("Раунд позже следующего, другой бой или бой кончился — метка устарела", () => {
+    for (const combat of [{ id: "c1", round: 3 }, { id: "c2", round: 1 }, undefined]) {
+      globalThis.game.combat = combat;
+      expect(dragonKnightRules(stamped("attack"))).toEqual([]);
+      expect(dragonKnightEvasionBonus(stamped("evasion"))).toBe(0);
+    }
+  });
+});
+
+describe("Драконий Рыцарь: полудействие не ментальное", () => {
+  it("в Ярости тест доступен (запрет Ярости — только на ментальные действия)", async () => {
+    const r = rider();
+    r.system.inRage = true;
+    const updates = [];
+    r.update = async d => { updates.push(d); };
+    globalThis.game.combat = { id: "c1", round: 1, started: true, combatant: { actor: r, actorId: r.id } };
+    captured.nextRoll = 5;
+    await run(r, "attack");
+    expect(updates.some(u => u["system.actionPoints.value"] === 1)).toBe(true);
+    expect(mount.getFlag("warhammer-dbc", DRAGON_KNIGHT_FLAG)).toMatchObject({ value: 12 });
   });
 });
 

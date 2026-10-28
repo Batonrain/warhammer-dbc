@@ -466,10 +466,12 @@ async function _resolveWrenchSuccess(actor) {
 // Удушение / Chokehold (Талант Пугилиста, combat/grapple-talents.mjs): Заломить
 // наносит Усталость и при победе (по Успехам победы), и при проигрыше (1).
 const _chokeholdWrenchHooks = {
-  async onSuccess(actor, { margin } = {}, inject) {
+  async onSuccess(actor, { margin, deg } = {}, inject) {
     const partner = grapplePartner(actor);
     if (!partner || !hasPugilistTalent(actor, "chokehold")) return;
-    await applyChokehold(actor, partner, chokeholdWrenchFatigue({ won: true, margin }), "Заломить", inject);
+    // Победа меньшим провалом (deg 0) Успехов победы не даёт — как в resolveGrappleSuccess.
+    const won = deg === 0 ? 0 : margin;
+    await applyChokehold(actor, partner, chokeholdWrenchFatigue({ won: true, margin: won }), "Заломить", inject);
   },
   async onFail(actor, _o, inject) {
     const partner = grapplePartner(actor);
@@ -698,7 +700,9 @@ export async function _resolveTakeoverSuccess(actor) {
   // Сперва партнёр — через ГМ, если он чужой (combat/gm-relay.mjs): отказ не должен сделать «держащими» обоих.
   if (!(await writeToTarget(partner, { kind: "update", data: {
     [`flags.${NS}.${ROLE_FLAG}`]: "target", [`flags.${NS}.${GRAPPLE_HELD_HANDS_FLAG}`]: 2 * hold.hands,
-    [`flags.${NS}.-=${GRAPPLE_HANDS_FLAG}`]: null, [`flags.${NS}.-=${GRAPPLE_TAIL_FLAG}`]: null
+    [`flags.${NS}.-=${GRAPPLE_HANDS_FLAG}`]: null, [`flags.${NS}.-=${GRAPPLE_TAIL_FLAG}`]: null,
+    // Прижать держится, пока держит прижимающий: после перехвата он сам в Захвате.
+    [`flags.${NS}.-=${PIN_DOWN_FLAG}`]: null
   } }, actor))) return;
   await actor.update({
     [`flags.${NS}.${ROLE_FLAG}`]: "attacker", ...hold.fields,

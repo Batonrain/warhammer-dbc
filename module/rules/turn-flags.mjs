@@ -128,8 +128,9 @@ function flagValue(actor, key) {
  */
 export function turnStartFlagClears(actor) {
   const upd = {};
+  // != null, а не truthy: 0/false — тоже поставленная метка (Прижать со штрафом 0 — «уже прижимал в этом Ходу»).
   for (const key of TURN_SCOPED_FLAG_KEYS) {
-    if (flagValue(actor, key)) upd[`flags.${FLAG_SCOPE}.-=${key}`] = null;
+    if (flagValue(actor, key) != null) upd[`flags.${FLAG_SCOPE}.-=${key}`] = null;
   }
   return upd;
 }

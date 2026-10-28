@@ -55,6 +55,20 @@ describe("Roadkill в Напролом (resolveBulldozeSuccess)", () => {
     expect(html).not.toContain("Пинком");
   });
 
+  it("чужая цель (NPC игроку не принадлежит): «Ничком» уходит ГМу, кнопка урона Переехать на месте", async () => {
+    const prev = { socket: game.socket, users: game.users, user: game.user };
+    const emitted = [];
+    Object.assign(game, { socket: { emit: (_c, p) => emitted.push(p) }, users: { activeGM: { id: "gm" } }, user: { id: "u1", isGM: false } });
+    try {
+      const t = victim();
+      t.isOwner = false;
+      t.update = async () => { throw new Error("lacks permission"); };
+      await resolveBulldozeSuccess(rider({ items: [roadkill()] }), { deg: 1, target: t });
+      expect(emitted[0].op.data["system.conditions.prone"]).toBe(true);
+      expect(captured.chat.at(-1).content).toContain("wh-apply-dmg-btn");
+    } finally { Object.assign(game, prev); }
+  });
+
   it("с Талантом, но не на байке — обычный Напролом (1 Успех не сбивает)", async () => {
     const t = victim();
     t.update = async f => { t.lastUpdate = f; };

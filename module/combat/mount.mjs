@@ -815,7 +815,8 @@ async function resolveMountedDodge(rider, ctx, target, { extraMod = 0, hitsCount
   const ctrlThreshold = riderHit ? null : control.value + testMod(STAY_MOD, mount);
   // Драконий Рыцарь: метка скакуна «+3×Успехи на все Избегания» (rules/dragon-knight.mjs)
   // прибавляется к итоговому порогу — это общий для пары бросок, мимо общих правил.
-  const dragonBonus = dragonKnightEvasionBonus(mount);
+  // Попадание по всаднику — его собственное Уклонение, не Избегание скакуна.
+  const dragonBonus = riderHit ? 0 : dragonKnightEvasionBonus(mount);
   const baseThreshold = ctrlThreshold === null ? dodgeThreshold : combinedThreshold(dodgeThreshold, ctrlThreshold);
   const threshold = baseThreshold + dragonBonus;
 
@@ -992,7 +993,7 @@ export async function dragonKnightTest(rider) {
   }
 
   // Нет ОД на полудействие — не спрашиваем «что усилить» зря.
-  if (!canSpendActionPoints(rider, 1, { physical: false })) {
+  if (!canSpendActionPoints(rider, 1)) {
     ui.notifications.warn(`Драконий Рыцарь: не хватает ОД на полудействие (${rider.name}).`);
     return false;
   }
@@ -1009,8 +1010,8 @@ export async function dragonKnightTest(rider) {
   });
   if (!mode) return false;
 
-  // Полудействие (Ментальное — голосом/жестом по тексту не уточнено, ставим как обычное действие).
-  if (!(await spendActionPoints(rider, 1, { physical: false }))) return false;
+  // Полудействие: голосом/жестом книга не уточняет — обычное, не ментальное (Ярость его не запрещает).
+  if (!(await spendActionPoints(rider, 1))) return false;
 
   const survival = Number(rider.system?.skills?.survival?.total);
   const base = Number.isFinite(survival) ? survival : -20;
@@ -1023,7 +1024,8 @@ export async function dragonKnightTest(rider) {
   let applied = false;
   if (value > 0) {
     try {
-      await mount.setFlag("warhammer-dbc", DRAGON_KNIGHT_FLAG, { mode, value, riderUuid: rider.uuid });
+      await mount.setFlag("warhammer-dbc", DRAGON_KNIGHT_FLAG,
+        { mode, value, riderUuid: rider.uuid, combatId: game.combat?.id ?? "", round: game.combat?.round ?? 0 });
       applied = true;
     } catch (e) { console.warn("warhammer-dbc | Драконий Рыцарь: метка на скакуне", e); }
   }

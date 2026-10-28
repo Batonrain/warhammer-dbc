@@ -12,6 +12,8 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { actorFor, weaponFor } from "../support/combat-fixtures.mjs";
 import { resolvePressSuccess } from "../../module/combat/feint-press.mjs";
 import { fireThreatWeapon } from "../../module/rules/gunner-talents.mjs";
+import { MELEE_CONTESTS } from "../../module/constants/combat.mjs";
+import { resistOptions } from "../../module/combat/opposed-contest.mjs";
 
 const THREAT = { key: "rangedCore.core.fireThreat", name: "Fire Threat / Огневая Угроза" };
 const byKey = key => ({
@@ -58,5 +60,12 @@ describe("Давление через BS: без «последовать за �
     const actor = actorFor({}); actor.name = "Боец";
     await resolvePressSuccess(actor, { deg: 4, target: target() });
     expect(captured.chat.at(-1).content).toContain("может последовать");
+  });
+});
+
+describe("Давление: цель сопротивляется WS, чем бы ни бросал инициатор", () => {
+  it("BS vs WS (Огневая Угроза) и WS vs WS", () => {
+    expect(resistOptions(MELEE_CONTESTS.press, { char: "bs" })).toEqual([{ skill: "", char: "ws", mod: 0 }]);
+    expect(resistOptions(MELEE_CONTESTS.press, { char: "ws" })).toEqual([{ skill: "", char: "ws", mod: 0 }]);
   });
 });
