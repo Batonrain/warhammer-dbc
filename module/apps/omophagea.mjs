@@ -43,7 +43,7 @@ export function omophageaPanelHtml(item, actor) {
   const ib = Number(actor.system?.characteristics?.int?.bonus) || 0;
   return `<div class="omophagea-panel">
     <button type="button" class="omophagea-btn" data-item-id="${esc(item.id)}"
-      title="Съев мозг разумного существа — тест I+0 (Испробовать Душу: +½ P окр.▲). Число Успехов определяет, сколько воспоминаний выудил десантник — ГМ решает какие.${thief ? " Вор Памяти: при успехе можно взять Навык жертвы (таргет T)." : ""}">
+      title="Съев мозг разумного существа — тест I+0 (Испробовать Душу: +½ P окр.▲). Число Успехов определяет, сколько воспоминаний выудил десантник — ГМ решает какие.${thief ? " Вор Памяти: при успехе можно взять Навык жертвы — наведите на неё таргет (T) до нажатия." : ""}">
       ${rollIcon("skull", "#c98bff")}Омофагея: съесть мозг
     </button>
     ${thief ? `<div class="omophagea-status">Вор Памяти: ${active.length} из ${memoryThiefMax(ib)} краденых Навыков${active.length ? " — " + active.map(r => esc(r.label)).join(", ") : ""}.</div>` : ""}
@@ -78,7 +78,7 @@ export async function grantMemoryThiefSkill(actor, cand) {
   }
   const now = game.time?.worldTime ?? 0;
   const rec = { key: foundry.utils.randomID(8), kind: cand.kind, skillKey: cand.skillKey, specialty: cand.specialty,
-    specKey: cand.specKey, label: cand.label, expiresAt: now + memoryThiefDurationSeconds(ib), prev: null };
+    specKey: cand.specKey, label: cand.label, expiresAt: now + memoryThiefDurationSeconds(ib), prev: null, granted: cand.rank };
 
   if (cand.kind === "plain") {
     const cur = actor.system.skills?.[cand.skillKey] ?? {};
@@ -109,15 +109,23 @@ export async function sweepMemoryThief(actor, worldTime) {
   const list = actor?.getFlag?.(NS, MEMORY_THIEF_FLAG) ?? [];
   const expired = expiredMemoryThief(list, worldTime);
   if (!expired.length) return;
+  const kept = new Set();
   for (const rec of expired) {
+    // Откат только краденой ступени: купленная поверх за опыт остаётся (как revertItem Благословения Стали).
+    const stolen = rank => {
+      if (!rec.granted || (rank || "untrained") === rec.granted) return true;
+      kept.add(rec.key);
+      return false;
+    };
     if (rec.kind === "plain") {
-      await actor.update({ [`system.skills.${rec.skillKey}.rank`]: rec.prev || "untrained" });
+      if (stolen(actor.system.skills?.[rec.skillKey]?.rank))
+        await actor.update({ [`system.skills.${rec.skillKey}.rank`]: rec.prev || "untrained" });
     } else {
       let arr = foundry.utils.deepClone(actor.system.groupSkills?.[rec.skillKey] ?? []);
-      if (rec.prev == null) arr = arr.filter(e => e.memoryThief !== rec.key);
+      if (rec.prev == null) arr = arr.filter(e => e.memoryThief !== rec.key || !stolen(e.rank));
       else {
         const e = arr.find(x => (rec.specKey && x.specKey === rec.specKey) || (rec.specialty && x.specialty === rec.specialty));
-        if (e) e.rank = rec.prev;
+        if (e && stolen(e.rank)) e.rank = rec.prev;
       }
       await actor.update({ [`system.groupSkills.${rec.skillKey}`]: arr });
     }
@@ -126,7 +134,7 @@ export async function sweepMemoryThief(actor, worldTime) {
   await actor.setFlag(NS, MEMORY_THIEF_FLAG, list.filter(r => !gone.has(r.key)));
   await postTestCard(actor, {
     icon: rollIcon("skull", "#c98bff"), title: `Вор Памяти — ${esc(actor.name)}`,
-    threshold: `<div class="roll-threshold">Срок истёк, краденое забыто: ${expired.map(r => esc(r.label)).join("; ")}.</div>`
+    threshold: `<div class="roll-threshold">Срок истёк, краденое забыто: ${expired.map(r => esc(r.label) + (kept.has(r.key) ? " (ступень докуплена поверх — остаётся)" : "")).join("; ")}.</div>`
   }, { sound: false });
 }
 
@@ -151,7 +159,8 @@ export async function runOmophagea(actor, item) {
   let victim = null;
   if (success && hasRuleFlag(actor, MEMORY_THIEF_CAP)) {
     victim = [...(game.user?.targets ?? [])][0]?.actor ?? null;
-    if (!victim) sections.push(`<div class="roll-threshold">Вор Памяти: наведите таргет (T) на жертву и нажмите кнопку снова — тогда можно перенять её Навык (воспоминания этого поедания уже выданы).</div>`);
+    // Повторное нажатие — новый тест I+0, а не то же поедание: честно говорим, что Навык упущен.
+    if (!victim) sections.push(`<div class="roll-threshold">Вор Памяти: таргета (T) на жертву не было — Навык этого поедания не перенять. В следующий раз наведите таргет до нажатия кнопки.</div>`);
   }
   await postTestCard(actor, {
     icon: rollIcon("skull", "#c98bff"), title: `Омофагея — ${esc(actor.name)}`,

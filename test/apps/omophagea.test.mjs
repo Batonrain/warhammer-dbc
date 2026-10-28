@@ -86,6 +86,14 @@ describe("Омофагея: кнопка и тест", () => {
     expect(html).toContain("Успех");
   });
 
+  it("Вор Памяти без таргета: карточка не зовёт «нажать снова» — повтор был бы новым тестом", async () => {
+    captured.nextRoll = 10;
+    await runOmophagea(marine({ items: [cap("geneseed.core.memoryThief")] }), null);
+    const html = captured.chat.at(-1).content;
+    expect(html).not.toContain("нажмите кнопку снова");
+    expect(html).toContain("до нажатия");
+  });
+
   it("провал теста — ничего полезного", async () => {
     captured.nextRoll = 99;
     await runOmophagea(marine(), null);
@@ -119,6 +127,27 @@ describe("Вор Памяти: перенять и откатить", () => {
     expect(a.system.groupSkills.trade).toHaveLength(1);
     await sweepMemoryThief(a, 1000 + 4 * 86400);
     expect(a.system.groupSkills.trade).toHaveLength(0);
+  });
+
+  it("ступень, купленную поверх краденой за I.b суток, откат не отнимает", async () => {
+    const a = marine({ int: 50, skills: { medicae: { rank: "untrained" } } });
+    await grantMemoryThiefSkill(a, cand);
+    a.system.skills.medicae.rank = "expert"; // игрок докупил за опыт
+    await sweepMemoryThief(a, 1000 + 5 * 86400);
+    expect(a.system.skills.medicae.rank).toBe("expert");
+    expect(a.getFlag("warhammer-dbc", "memoryThiefSkills")).toEqual([]);
+    expect(captured.chat.at(-1).content).toContain("докуплена поверх — остаётся");
+  });
+
+  it("групповой Навык: докупленное поверх остаётся — и новая запись, и прежняя", async () => {
+    const a = marine({ int: 40, groupSkills: { lore: [{ specialty: "Imperium", rank: "untrained" }] } });
+    await grantMemoryThiefSkill(a, { id: "g:trade:Chymist", kind: "group", skillKey: "trade", specialty: "Chymist", specKey: "", rank: "trained", label: "Trade (Chymist)" });
+    await grantMemoryThiefSkill(a, { id: "g:lore:Imperium", kind: "group", skillKey: "lore", specialty: "Imperium", specKey: "", rank: "trained", label: "Lore (Imperium)" });
+    a.system.groupSkills.trade[0].rank = "veteran";
+    a.system.groupSkills.lore[0].rank = "veteran";
+    await sweepMemoryThief(a, 1000 + 4 * 86400);
+    expect(a.system.groupSkills.trade).toEqual([expect.objectContaining({ specialty: "Chymist", rank: "veteran" })]);
+    expect(a.system.groupSkills.lore[0].rank).toBe("veteran");
   });
 
   it("лимит ½ I.b: сверх лимита отказ, ничего не меняется", async () => {
