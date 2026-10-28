@@ -186,11 +186,15 @@ export const HOMEWORLDS = [
           { label: "Forbidden Lore (Underworld)", grants: { groupSkills: [{ group: "forbiddenLore", specialty: "Underworld", rank: "knows" }] } }
         ]
       },
-      { key: "prison-peers", label: "Талант Peers", type: "one",
+      // Талант в паке называется «Peer / Связи»: «Peers (…)» книги — его множественное число,
+      // а не отдельный Талант; по несуществующему имени выдавалась пустая заглушка без механики
+      // (Sahara task-240a). Цель (Преступники/Пираты) пока записывается специализацией —
+      // фракций с такими ключами в каталоге нет, ГМ вносит цель на листе Таланта.
+      { key: "prison-peers", label: "Талант Peer", type: "one",
         hint: "Выберите, среди кого персонаж свой.",
         options: [
-          { label: "Peers (Criminals)", grants: { talents: ["Peers (Criminals)"] } },
-          { label: "Peers (Pirates)",   grants: { talents: ["Peers (Pirates)"] } }
+          { label: "Peer (Criminals)", grants: { talents: ["Peer (Criminals)"] } },
+          { label: "Peer (Pirates)",   grants: { talents: ["Peer (Pirates)"] } }
         ]
       }
     ]

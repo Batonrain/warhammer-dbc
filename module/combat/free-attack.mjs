@@ -42,6 +42,7 @@ import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/gam
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { clearPinnedOnMeleeEntry } from "./suppression.mjs";
+import { isForcedMove } from "../rules/movement-path.mjs";
 
 /** Флаг «раз в Раунд» (module/apps/game-session.mjs). */
 export const FREE_ATTACK_CAPABILITY = "freeAttack";
@@ -239,15 +240,20 @@ export async function offerFreeAttack(reactorTokenDoc, moverTokenDoc, reasonHtml
  * не поднимая настоящие Foundry-хуки (см. test/combat/free-attack.test.mjs).
  * @param {TokenDocument} tokenDoc
  * @param {Set<string>} beforeContactIds  id вражеских токенов в контакте ДО перемещения
+ * @param {{forced?:boolean}} [o]  forced — принудительный сдвиг (толчок, перевозка; options.whDBC.forcedMove,
+ *   rules/movement-path.mjs): токен не уходил по своей воле — Свободную Атаку не провоцирует, а разовый флаг
+ *   «Выход из Боя» не тратится; Подавление при новом контакте снимается как обычно (Sahara task-bbe1)
  * @returns {Promise<TokenDocument[]>} враги, чей контакт с tokenDoc пропал
  */
-export async function processTokenMove(tokenDoc, beforeContactIds) {
+export async function processTokenMove(tokenDoc, beforeContactIds, { forced = false } = {}) {
   const moverActor = actorOf(tokenDoc);
-  if (moverActor?.getFlag("warhammer-dbc", "disengageActive")) {
-    await moverActor.unsetFlag("warhammer-dbc", "disengageActive");
-    return [];
+  if (!forced) {
+    if (moverActor?.getFlag("warhammer-dbc", "disengageActive")) {
+      await moverActor.unsetFlag("warhammer-dbc", "disengageActive");
+      return [];
+    }
+    if (moverActor?.getFlag("warhammer-dbc", "deepContactCarry")) return [];
   }
-  if (moverActor?.getFlag("warhammer-dbc", "deepContactCarry")) return [];
 
   const afterDocs = enemyContactTokenDocs(tokenDoc);
   const after = new Set(afterDocs.map(d => d.id));
@@ -256,6 +262,7 @@ export async function processTokenMove(tokenDoc, beforeContactIds) {
     if (after.has(enemyId)) continue; // контакт с этим врагом остался
     const enemyTokenDoc = (canvas?.tokens?.placeables ?? []).find(t => t.document.id === enemyId)?.document;
     if (!enemyTokenDoc) continue;
+    if (forced) continue; // сдвинули не по воле токена — Свободной Атаки нет
     broken.push(enemyTokenDoc);
     await offerFreeAttack(enemyTokenDoc, tokenDoc);
   }
@@ -272,22 +279,24 @@ export async function processTokenMove(tokenDoc, beforeContactIds) {
 }
 
 export function initFreeAttackHooks() {
-  Hooks.on("preUpdateToken", (tokenDoc, changes) => {
+  Hooks.on("preUpdateToken", (tokenDoc, changes, options) => {
     pruneStalePreMoveContacts();
     if (!game.combat?.started || !movesPosition(changes) || !isPersonalScale(tokenDoc)) return;
-    _preMoveContacts.set(tokenDoc.id, { ids: new Set(enemyContactTokenDocs(tokenDoc).map(d => d.id)), ts: Date.now() });
+    _preMoveContacts.set(tokenDoc.id, { ids: new Set(enemyContactTokenDocs(tokenDoc).map(d => d.id)), ts: Date.now(),
+      forced: isForcedMove(options) });
   });
 
   Hooks.on("updateToken", async (tokenDoc, changes, options, userId) => {
     pruneStalePreMoveContacts();
-    const before = _preMoveContacts.get(tokenDoc.id)?.ids;
+    const pre = _preMoveContacts.get(tokenDoc.id);
+    const before = pre?.ids;
     _preMoveContacts.delete(tokenDoc.id);
     // Только клиент, вызвавший перемещение, считает разрыв контакта — иначе
     // карточка в чат ушла бы с каждого подключённого клиента разом.
     if (userId !== game.user.id) return;
     if (!before || before.size === 0) return;
     if (!game.combat?.started || !movesPosition(changes)) return;
-    await processTokenMove(tokenDoc, before);
+    await processTokenMove(tokenDoc, before, { forced: !!pre?.forced || isForcedMove(options) });
   });
 
   // Токен удалён до того, как пришёл updateToken (отменённый/незавершённый

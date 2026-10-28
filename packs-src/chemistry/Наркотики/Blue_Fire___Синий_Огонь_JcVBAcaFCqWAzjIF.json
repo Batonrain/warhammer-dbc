@@ -23,11 +23,12 @@
     "addiction": {
       "hasAddiction": true,
       "isAddicted": false,
-      "minDose": 1,
+      "minDose": 2,
       "testChar": "wp",
-      "testMod": -20,
+      "testMod": 0,
       "frequency": "1 день",
-      "penalty": "Талант Paranoia, −20 на любые социальные взаимодействия"
+      "penalty": "Талант Paranoia, −20 на любые социальные взаимодействия",
+      "penaltyMods": "social=-20"
     },
     "statMods": {
       "ws": 0,

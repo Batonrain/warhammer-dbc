@@ -18,7 +18,9 @@ export class ToolData extends foundry.abstract.TypeDataModel {
       infoguard:    infoguardField(),
       // Инструмент рисуется тем же gear.hbs, что и Снаряжение (wdbc-fl3).
       bookSource:   new StringField({ initial: "", label: "Книга-источник" }),
-      quantity:     new NumberField({ initial: 1, integer: true, nullable: false, label: "Количество" }),
+      // Снаряжение Легиона — см. data/item/gear.mjs.
+      legion:       new BooleanField({ initial: false, label: "Легион (снаряжение Легиона)" }),
+      quantity:    new NumberField({ initial: 1, integer: true, nullable: false, label: "Количество" }),
       weight:       new NumberField({ initial: 0, nullable: false, label: "Вес" }),
       // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке; см.
       // комментарий в data/item/weapon.mjs.

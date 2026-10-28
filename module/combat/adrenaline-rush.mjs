@@ -21,7 +21,7 @@ import { itemHasName } from "../rules/predicates.mjs";
 import { hasAbility } from "../rules/ability-by-key.mjs";
 import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
 import { resplendentUnit } from "./resplendent-raiment.mjs";
-import { effectiveDefenseReactionMax } from "./action-economy.mjs";
+import { effectiveDefenseReactionMax, effectiveStrangeReactionMax } from "./action-economy.mjs";
 import { resetRecoilPool } from "./recoil-pool.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
@@ -55,7 +55,8 @@ export async function applyAdrenalineRush(actor) {
   await actor.update({
     "system.fate.value": fate - 1,
     "system.reactions.value": reactMax,
-    "system.reactions.defenseValue": defenseMax
+    "system.reactions.defenseValue": defenseMax,
+    "system.reactions.strangeValue": effectiveStrangeReactionMax(actor)
   });
   await resetRecoilPool(actor);
 

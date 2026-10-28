@@ -18,8 +18,9 @@ import { characterContext, charLabel } from "./character-context.mjs";
 import { showAttackDialog } from "./attack-dialog.mjs";
 import { rollMutationOrGift, openMutationPicker } from "./tabs/mutations.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
-import { masteryCrit, MASTERY_CRIT_LINE } from "../rules/mastery.mjs";
 import { payIntTestAction } from "../combat/bone-head.mjs";
+import { rageSocialRefusal } from "../combat/rage-behavior.mjs";
+import { rageSocialAutoFail, RAGE_AUTOFAIL_SIDE } from "../rules/rage-behavior.mjs";
 import { applyOnTargetFailConditions } from "../rules/on-target-fail.mjs";
 import { createDisorderItem, activateDisorderListeners,
          openFearDialog, openTraumaDialog, rollDisorder } from "./tabs/disorders.mjs";
@@ -50,11 +51,13 @@ import { minionsPanelContext, activateMinionPanelListeners } from "./tabs/minion
 import { onMinionCreate } from "../apps/minion-creator.mjs";
 import { isMinionTalent, minionSlotOf } from "../rules/minion-build.mjs";
 import { promptMinionSlot, applyMinionSlot } from "../apps/minion-talent.mjs";
+import { isCannonFodder, promptCannonFodderMinion, applyCannonFodderPick } from "../apps/cannon-fodder.mjs";
 import { refundXP, talentCost, talentReason } from "../apps/duplicate-refund.mjs";
 import { activatePathListeners } from "./tabs/paths.mjs";
 import { activateCombatListeners } from "./tabs/combat.mjs";
 import { mountPanelContext, activateMountPanelListeners } from "./tabs/mount-panel.mjs";
 import { patronPanelContext, activatePatronPanelListeners } from "./tabs/patron-panel.mjs";
+import { coverUpPanelContext, activateCoverUpPanelListeners } from "./tabs/cover-up-panel.mjs";
 import { dreadnoughtPanelContext } from "./tabs/dreadnought-panel.mjs";
 import { SANITY_RECOVERY_TALENTS, sanityRecoveryTalentsOf, dailyWillTestOutcome,
          electrostimulatorBoost, ferumInfernusActive } from "../rules/dreadnought.mjs";
@@ -66,6 +69,7 @@ import { activateItemContextMenu, openContextMenu } from "./context-menu.mjs";
 import { _resolveSoulBurn }                 from "../hooks.mjs";
 import { openRigManager }                   from "../apps/rig-manager.mjs";
 import { openXpLog }                        from "../apps/xp-log.mjs";
+import { openRequisition }                 from "../apps/requisition.mjs";
 import { infamyContext, changeInfamy, restoreInfamy, spendInfamy, actorInfamyMaxForSheet } from "../apps/infamy-points.mjs";
 import { tempInfamyInfo } from "../rules/temp-infamy.mjs";
 import { ruleFlagCost } from "../rules/flags.mjs";
@@ -78,10 +82,12 @@ import { charStereotypesFor, effectivePricingMode, worldAdvancePricingMode, PRIC
 import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml, ruleAutoModsHtml, autoModsTotal } from "../rules/roll-mods.mjs";
+import { socialFactionPickerShown, socialFactionOptions, withSocialFaction } from "../rules/social-faction.mjs";
+import { getFactionIndex } from "../rules/factions.mjs";
 import { EXCESS_LEGACY_RULE_ID } from "../rules/legacy-weapon.mjs";
 import { rollExcessLegacyRiskTest } from "../combat/legacy-weapon-excess.mjs";
 import { commitRerollUse } from "../combat/angel-hunters.mjs";
-import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
+import { resolveKindOutcome, applyAssistedMasteryCrit } from "../rules/kind-outcome.mjs";
 import { awarenessTalentDegrees } from "../rules/awareness-talents.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { infamyFailSuccessButtonsHtml } from "../apps/infamy-fail-success.mjs";
@@ -119,8 +125,10 @@ import { resolveArmorProps, aggregateArmorSkillMods } from "../combat/armor-prop
 import { actorHasAspectPath } from "../constants/aeldari-paths.mjs";
 import { zeroBlankNumbers } from "../helpers/blank-zero.mjs";
 import { clearHololithBriefing } from "../combat/hololith-briefing.mjs";
+import { clearForesight } from "../apps/talent-actions.mjs";
 import { ignoresWeight, IGNORE_WEIGHT_FLAG } from "../rules/encumbrance.mjs";
 import { isNotableCharacter, NOTABLE_FLAG } from "../rules/resilience-talents.mjs";
+import { LEADER_OR_CHAMPION_FLAG, LORD_MIGHT_FLAG } from "../rules/berserker-talents.mjs";
 import { hasWarChant, warChantSinging, WAR_CHANT_FLAG,
          WAR_CHANT_SING_ALONG_FLAG, commandersOf } from "../rules/leadership-talents.mjs";
 import { convertActorToMinion } from "../apps/minion-convert.mjs";
@@ -729,6 +737,8 @@ function onRigOpen()  { return openRigManager(this.actor); }
 // Журнал опыта — read-only лента (wdbc-ng7q), доступна и без прав на правку листа.
 function onXpLogOpen() { return openXpLog(this.actor); }
 function onGearLib(event) { event.preventDefault(); return this._openGearPicker(); }
+// «Достать снаряжение» — тест Реквизиции Inf (apps/requisition.mjs, стр. 165).
+function onRequisition(event) { event.preventDefault(); return openRequisition(this.actor, this); }
 
 // Добавление Черт/Талантов — через пикер с листа (группировка по типам, поиск,
 // описание по стрелке). ПКМ — создать пустую (для своих/книжных), см. _onRender.
@@ -767,6 +777,17 @@ function onMutgiftRoll(event) {
 async function onMutgiftToggleActive(event, target) {
   event.preventDefault(); event.stopPropagation();
   await toggleGearModActive(this.actor.items.get(target.dataset.itemId));
+}
+
+// Ручной тумблер Таланта (Солипсизм: «проиграв социальное взаимодействие…
+// Талант перестаёт работать, пока не победит…»): флаг manualOff на предмете,
+// общий рубильник isItemActive (apps/effects.mjs) гасит его правила.
+async function onTalentManualToggle(event, target) {
+  event.preventDefault(); event.stopPropagation();
+  const item = this.actor.items.get(target.dataset.itemId);
+  if (!item) return;
+  const off = !!item.flags?.["warhammer-dbc"]?.manualOff;
+  await item.setFlag("warhammer-dbc", "manualOff", !off);
 }
 
 // ── Раса, Прошлое и легион ── (apps/races.mjs держит применение, лист даёт
@@ -859,11 +880,13 @@ export class WarhammerCharacterSheet
       rigOpen: whenEditable(onRigOpen),
       xpLogOpen: onXpLogOpen,
       gearLib: whenEditable(onGearLib),
+      requisition: whenEditable(onRequisition),
       traitAdd: whenEditable(onTraitAdd),
       talentAdd: whenEditable(onTalentAdd),
       mutgiftAdd: whenEditable(onMutgiftAdd),
       mutgiftRoll: whenEditable(onMutgiftRoll),
       mutgiftToggleActive: whenEditable(onMutgiftToggleActive),
+      talentManualToggle: whenEditable(onTalentManualToggle),
       ynnariApply:    whenEditable(onYnnariApply),
       harlequinApply: whenEditable(onHarlequinApply),
       racePick:     whenEditable(onRacePick),
@@ -1017,6 +1040,10 @@ export class WarhammerCharacterSheet
     // Помазанник(X)): смертный хранит ссылку на Демона-Принца, сам Принц
     // строит свою сторону по оформленным дарам «Помазанник» (wdbc-yo6r).
     Object.assign(context, patronPanelContext(this.actor, [...(game.actors ?? [])]));
+
+    // Блок «ЯЧЕЙКИ АГЕНТОВ» там же — ведомость Таланта Cover Up (флаг актора,
+    // rules/cover-up.mjs); только у носителя Таланта.
+    Object.assign(context, coverUpPanelContext(this.actor));
 
     // Блок «ЗДРАВОМЫСЛИЕ» там же: видим, только если какой-то Дредноут в мире
     // держит этого персонажа своим пилотом (rules/dreadnought.mjs, стр. 57-58).
@@ -1289,12 +1316,21 @@ export class WarhammerCharacterSheet
   _notableEntries() {
     if (!game.user?.isGM) return [];
     const on = isNotableCharacter(this.actor);
+    // Месть (Талант Берсерка, rules/berserker-talents.mjs): ГМ отмечает лидера/чемпиона и лорда — убийца-
+    // носитель Таланта получает Очки Бесчестия, убив такого Ненавистного врага в рукопашной.
+    const flagToggle = (cls, label, key) => {
+      const checked = !!this.actor.getFlag?.("warhammer-dbc", key);
+      return { cls, label, checkbox: true, checked,
+        onClick: () => (checked ? this.actor.unsetFlag("warhammer-dbc", key) : this.actor.setFlag("warhammer-dbc", key, true)) };
+    };
     return [{
       cls: "wh-ctx-tog-notable", label: "★ Значимый персонаж (Взор Богов)", checkbox: true, checked: on,
       onClick: () => (on
         ? this.actor.unsetFlag("warhammer-dbc", NOTABLE_FLAG)
         : this.actor.setFlag("warhammer-dbc", NOTABLE_FLAG, true))
-    }];
+    },
+    flagToggle("wh-ctx-tog-leader", "⚔ Лидер или чемпион (Месть)", LEADER_OR_CHAMPION_FLAG),
+    flagToggle("wh-ctx-tog-lord", "👑 Лорд сравнимого или выше могущества (Месть: 1d5)", LORD_MIGHT_FLAG)];
   }
 
   /**
@@ -1725,6 +1761,14 @@ export class WarhammerCharacterSheet
       return this.actor.createEmbeddedDocuments("Item", [obj]);
     }
 
+    // «Пушечное Мясо» — Талант на хозяине, штраф у выбранного слуги (стр. 113):
+    // перетащенный без выбора он не знал бы, кому резать Лояльность.
+    if (isCannonFodder(src) && !src.system?.targetMinion) {
+      const pick = await promptCannonFodderMinion(this.actor, src);
+      if (!pick) return;
+      return this.actor.createEmbeddedDocuments("Item", [applyCannonFodderPick(src.toObject(), pick)]);
+    }
+
     return super._onDropItem(event, data);
   }
 
@@ -1988,6 +2032,9 @@ export class WarhammerCharacterSheet
 
     // ── Блок «ПАТРОН» / «ПРОТЕЖЕ» на СОЦИУМ (wdbc-yo6r) ────────────────────
     activatePatronPanelListeners(root, this.actor, { editable: this.isEditable });
+
+    // ── Блок «ЯЧЕЙКИ АГЕНТОВ» (Cover Up) на СОЦИУМ ─────────────────────────
+    activateCoverUpPanelListeners(root, this.actor, { editable: this.isEditable });
 
     // ── Контекстное меню предметов ────────────────────────────────────────
     activateItemContextMenu(html, this.actor);
@@ -2375,6 +2422,20 @@ export class WarhammerCharacterSheet
     // Перебросы (Локусы Герольдов и прочие «перебросить тест X») — отдельным
     // блоком, а не галочкой среди модификаторов: их не с чем складывать.
     const rr = ruleRerollsHtml(this.actor, rollCtx);
+    // Фракция собеседника без токена-цели (Sahara task-240a): Связи, Хорошая
+    // Репутация, Враг и переброс Ненависти работают от rollCtx.socialFaction.
+    // Выбор меняет ctx на лету — строки «Состояние» и переброс пересобираются.
+    const socialPick = socialFactionPickerShown(this.actor, rollCtx)
+      ? socialFactionOptions(this.actor, getFactionIndex()) : null;
+    let socialFaction = "";
+    const socialFactionRowHtml = socialPick ? `<div class="roll-dlg-row" title="Собеседника нет на сцене токеном — укажите, из какой он группы: Связи, Репутация, Враг и Ненависть сработают по ней.">
+        <label>Собеседник:</label>
+        <select id="social-faction-select">
+          <option value="">— не из ваших групп —</option>
+          ${socialPick.own.length ? `<optgroup label="Группы ваших Талантов">${socialPick.own.map(o => `<option value="${esc(o.key)}">${esc(o.label)}</option>`).join("")}</optgroup>` : ""}
+          <optgroup label="Все фракции">${socialPick.all.map(o => `<option value="${esc(o.key)}">${esc(o.label)}</option>`).join("")}</optgroup>
+        </select>
+      </div>` : "";
     const defaultCharTotal = this.actor.system.characteristics[defaultChar]?.total ?? 0;
     const rankBonus        = baseTotal - defaultCharTotal;
 
@@ -2511,6 +2572,7 @@ export class WarhammerCharacterSheet
               </div>
               <div id="assist-dropzone" class="assist-dropzone">Перетащите актора-помощника сюда</div>
               <div id="assist-list" class="assist-list"></div>
+              ${socialFactionRowHtml}
               ${hw.html}
               ${im.html}
               ${rl.html}
@@ -2518,7 +2580,7 @@ export class WarhammerCharacterSheet
               ${am.html}
               ${aa.html}
             </div>
-            ${rr.html}
+            <div id="rule-rerolls-slot">${rr.html}</div>
             ${diceModeHtml()}
             <div class="roll-dlg-row roll-dlg-subrow">
               <label><input type="checkbox" id="confirm-pick"/> Спросить, если Преимущество/Помеха/Переброс дадут выбор (стр. 26)</label>
@@ -2593,6 +2655,8 @@ export class WarhammerCharacterSheet
               target:   parseInt(form.querySelector("#skill-target").value) || 0,
               modifier, difficulty, combined, extended, opposed, opposedAuto,
               checkedRuleIds: checkedRuleIds(form),
+              // Фракция собеседника без токена (Sahara task-240a) — _runTest досчитывает по ней авто-модификаторы.
+              socialFaction: socialFaction || undefined,
               // isOpposed/isSafe — сама галочка «Встречный», отдельно от opposed
               // (которое null, пока Порог/Бросок соперника не введены вручную и
               // авто-резолв ещё не отработал): полтеста без соперника — всё равно
@@ -2672,6 +2736,20 @@ export class WarhammerCharacterSheet
           root.querySelector("#skill-target").value =
             (this.actor.system.characteristics[ev.currentTarget.value]?.total ?? 0) + rankBonus;
           refreshAutoMods();
+          updateAutoOutcomeNote();
+        });
+
+        // Фракция собеседника (Sahara task-240a): смена выбора пересобирает ctx,
+        // строки «Состояние» (Связи/Репутация/Враг — auto) и блок перебросов
+        // (Ненависть) — те же функции, что рисовали их при открытии окна.
+        root.querySelector("#social-faction-select")?.addEventListener("change", ev => {
+          socialFaction = ev.currentTarget.value;
+          if (socialFaction) rollCtx.socialFaction = socialFaction;
+          else delete rollCtx.socialFaction;
+          autoModsCache.clear();
+          refreshAutoMods();
+          const rerollSlot = root.querySelector("#rule-rerolls-slot");
+          if (rerollSlot) rerollSlot.innerHTML = ruleRerollsHtml(this.actor, rollCtx).html;
           updateAutoOutcomeNote();
         });
 
@@ -2959,6 +3037,9 @@ export class WarhammerCharacterSheet
       return { opposed: null, opponentActor: null };
     }
     if (activeOwnerOf(opponentActor)) return { opposed: null, opponentActor };
+    // Ярость соперника-NPC: социальный ответ — автопровал (Порог 0, бросок 1 = минимальный провал, без кубика).
+    if (rageSocialAutoFail(opponentActor, { skill: skillKey, char: charKey }))
+      return { opposed: { threshold: 0, roll: 1, rageAutoFail: true }, opponentActor: null };
     const threshold = skillKey ? skillTotal(opponentActor, skillKey) : (opponentActor.system.characteristics?.[charKey]?.total ?? 0);
     const roll = await new Roll("1d100").evaluate();
     // unnatural (стр. 26, wdbc-y9i8) — соперник известен по документу здесь,
@@ -2990,8 +3071,19 @@ export class WarhammerCharacterSheet
 
   /** Ответ соперника (opposedRequest пришёл через опенер "opposedResponse") —
    *  публикует готовую карточку сравнения, видимую обеим сторонам. */
-  async _maybePostOpposedComparison(opposedRequest, { label, baseEff, rv, outcome, skillKey = null, charKey = null }) {
+  async _maybePostOpposedComparison(opposedRequest, { label, baseEff, rv, outcome, skillKey = null, charKey = null, rageAutoFail = false }) {
     if (!opposedRequest) return;
+    // Ответчик в Ярости: социальный ответ — автопровал без броска (sheets/actor-sheet.mjs::_runTest). Сравнение
+    // публикуется всё равно: ответчик — минимальный провал (RAGE_AUTOFAIL_SIDE), инициатор выигрывает по обычным правилам.
+    if (rageAutoFail) {
+      const result = resolveOpposed(opposedRequest.initiatorSide, RAGE_AUTOFAIL_SIDE, { safe: opposedRequest.safe });
+      const content = opposedComparisonHtml({
+        label, mineName: opposedRequest.initiatorName, mine: opposedRequest.initiatorSide,
+        theirsName: this.actor.name, theirs: { threshold: RAGE_AUTOFAIL_SIDE.threshold, roll: "автопровал (Ярость)" }, result
+      });
+      await ChatMessage.create({ content, speaker: ChatMessage.getSpeaker({ actor: this.actor }), sound: CONFIG.sounds.dice });
+      return;
+    }
     // Personal Adaptation/Персональная Адаптация (Тзинч, wdbc-1rno): здесь
     // this.actor — ОТВЕЧАЮЩАЯ сторона, initiatorUuid (module/hooks.mjs::
     // "opposedResponse") — её оппонент. Тот же приём, что kind-outcome.mjs
@@ -3078,6 +3170,16 @@ export class WarhammerCharacterSheet
     // общаться», тесты на Общительности недоступны.
     if (defaultChar === "fel" && this.actor.system?.conditions?.mute)
       return ui.notifications.warn(`${this.actor.name}: Немота (Общительность 0 от урона) — не может общаться.`);
+    // Ярость (Frenzy): «автоматически проваливая все тесты на социальные взаимодействия, кроме
+    // Запугивания» — карточка вместо диалога и броска; Холодная Ярость говорить разрешает.
+    // Общительность без Навыка считается социальной, кроме групповых Навыков (там char — не признак).
+    // Проверка синхронная: лишний await на обычном пути сдвинул бы открытие диалога на тик.
+    const rageSocial = { skill: rollContext?.skill ?? null, char: rollContext?.group ? null : defaultChar, label };
+    if (rageSocialAutoFail(this.actor, rageSocial)) {
+      await rageSocialRefusal(this.actor, rageSocial);
+      await this._maybePostOpposedComparison(opposedRequest, { label, skillKey: rageSocial.skill, charKey: defaultChar, rageAutoFail: true });
+      return;
+    }
     const result = await this._showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect,
       rollContext, defaultKind, { effectTargetActor, opposedRequest, presetModifier, extendedPreset });
     if (!result) return;
@@ -3101,7 +3203,9 @@ export class WarhammerCharacterSheet
     // что диалог показал строками. Контекст собирается так же, как в диалоге
     // (_showSkillRollDialog выше): разойдись эти два места, показанный Порог не
     // сошёлся бы с брошенным.
-    const autoCtx = { kind: "skill", targetActor: sceneTarget, ...(rollContext || {}), char: charKey };
+    // Фракция собеседника, выбранная в окне (Sahara task-240a): тот же ctx.socialFaction, что видел диалог.
+    const autoCtxBase = { kind: "skill", targetActor: sceneTarget, ...(rollContext || {}), char: charKey };
+    const autoCtx = result.socialFaction ? withSocialFaction(autoCtxBase, result.socialFaction) : autoCtxBase;
     if (isMoraleOpposedSkill(skillKey)) autoCtx.morale = true;
     const autoResolved = resolveTest({ actor: this.actor, ...autoCtx });
     const autoMods = autoResolved.autoMods;
@@ -3157,7 +3261,8 @@ export class WarhammerCharacterSheet
     let combinedForOutcome = combined;
     if (combined) {
       const bCtx = { kind: "skill", targetActor: sceneTarget, char: combined.charKey || defaultChar,
-                     skill: combined.skillKey ?? undefined };
+                     skill: combined.skillKey ?? undefined,
+                     ...(result.socialFaction ? { socialFaction: result.socialFaction } : {}) };
       if (isMoraleOpposedSkill(combined.skillKey)) bCtx.morale = true;
       const bAutoResolved = resolveTest({ actor: this.actor, ...bCtx });
       const bEff = combined.target + combined.modifier + combined.difficulty + autoModsTotal(bAutoResolved.autoMods);
@@ -3197,10 +3302,10 @@ export class WarhammerCharacterSheet
     const assisted = assistDegrees(awarenessDeg.deg, effectiveAssistCount, outcome.success);
     const deg      = outcome.degCap != null ? Math.min(outcome.degCap, assisted) : assisted;
     // Мастерство: Ассистенты дотянули степень до 5+ уже после расчёта исхода —
-    // строку крита дорисовываем здесь (сам исход её не видел).
-    const masteryAssistCrit = (!outcome.masteryCrit && !outcome.crit?.success && masteryCrit(effectActor,
-      { skill: skillKey ?? "", group: rollContext?.group ?? "", specialty: rollContext?.specialty ?? "" },
-      { success: outcome.success, deg })) ? MASTERY_CRIT_LINE : "";
+    // строку крита дорисовываем здесь (сам исход её не видел) и запускаем
+    // скрипты «по Крит. Успеху» (62-3093 п.3) — всё в applyAssistedMasteryCrit.
+    const masteryAssistCrit = await applyAssistedMasteryCrit(effectActor, outcome,
+      { skill: skillKey ?? "", group: rollContext?.group ?? "", specialty: rollContext?.specialty ?? "" }, deg);
     const outcomeHtml = outcome.success
       ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
       : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`;
@@ -3275,6 +3380,9 @@ export class WarhammerCharacterSheet
     // успех тоже расходует подготовку (тот же принцип, что у прочих
     // «тратится по факту теста» состояний этого файла).
     if (skillKey === "command") await clearHololithBriefing(this.actor);
+    // Предусмотрительность (rules/situational.mjs::foresightBonus): +10 уходит в
+    // СЛЕДУЮЩИЙ тест I и тратится им, каким бы он ни вышел.
+    if (String(charKey ?? "").toLowerCase() === "int") await clearForesight(this.actor);
 
     if (opposedOpponent) {
       await this._sendOpposedRequest(opposedOpponent, {

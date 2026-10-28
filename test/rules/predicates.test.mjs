@@ -490,6 +490,8 @@ describe("общее требование к предикатам", () => {
     charNotIn: ["t", "inf", "cor"],
     charIn: ["int", "per", "wp", "fel", "inf"],
     hasSize: undefined, targetHasSize: undefined, targetKeepsNimbleInArmour: undefined,
+    targetSizeMax: -1,
+    attackMelee: true,
     // Принадлежность к фракции — своя и у цели (дерево фракций).
     hasFaction: "chaos", targetHasFaction: "chaos",
     // Метка Avatar of Slaughter/Аватар Резни (wdbc-sk8s) — читает флаг самого
@@ -519,7 +521,9 @@ describe("общее требование к предикатам", () => {
     // Сцена в невесомости/микро-гравитации (Пустота в Венах Сквата, wdbc-9tpng).
     weightlessScene: true,
     // Змееподобная цель (Безграничное Тщеславие Наги) — читает ЦЕЛЬ.
-    targetSerpentine: true
+    targetSerpentine: true,
+    // База рукопашной атаки, держащаяся на акторе (system.meleeBase).
+    meleeBaseIs: ["charge"]
   };
 
   it("на пустом акторе каждый возвращает строго true или false", () => {

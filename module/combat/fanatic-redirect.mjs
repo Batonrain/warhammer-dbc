@@ -58,7 +58,7 @@ const BACK_TO_BACK_FREE_USE_FLAG = "backToBackFreeUse";
 const MELEE_REACH_MULT = 1.5; // combat/rig-steal.mjs::inMeleeContact — своя копия, см. заголовок файла.
 
 /** Евклидова дистанция центров двух токенов в метрах сцены (своя копия combat/facing.mjs::tokenDistance). */
-function tokenDistance(tokenA, tokenB) {
+export function tokenDistance(tokenA, tokenB) {
   const docA = tokenA?.document ?? tokenA, docB = tokenB?.document ?? tokenB;
   if (!docA || !docB) return null;
   const size = (typeof canvas !== "undefined" && canvas?.grid?.size) || 100;

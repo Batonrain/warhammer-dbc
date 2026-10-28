@@ -5,7 +5,7 @@
   "folder": "HfTlTkQPDwQ9Yqqn",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект меняет свойства/AP конкретного предмета брони/оружия, а не тестовый модификатор — нет схемного поля под точечные боевые свойства этого класса.",
+    "notes": "Реализовано: capabilityKey weaponsmith.core.shocker — module/combat/attack.mjs (shockerOn ← module/rules/gunsmith-talents.mjs::shockerGrantsShocking): Избирательное попадание в голову (не в глаз и не в сочленение/шею) оружием «Galvanic …» получает свойство Шокирующее на карточке (кнопка T+0 или Оглушение).",
     "benefit": "Попадая Избирательной атакой Гальванического оружия в голову (не в глаза/сочленения шеи), это попадание получает свойство Shocking.",
     "tier": 1,
     "requirement": "BS 40, Exotic Weapon Training (Galvanic)",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "ThT1Y6LQ8YthZuxU",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "UUlUAXJe9kmAkjec",
+              "capabilityKey": "weaponsmith.core.shocker",
+              "label": "Шокер: Избирательное попадание Гальваническим в голову — Шокирующее",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

@@ -27,6 +27,7 @@
     "damageType": "energy",
     "penetration": 0,
     "effect": "[Железо: Hasta Numerica · Цена: 6К · Процесс: 3 · Тип: —] Треб.: I 55, Tech-Use+30, Numerica Dominion. vs цель. При победе контролирует действия цели в её Ход (только техночудеса, его I/Навыки/Когниция; WS/BS его, если выше). Цель отключена от Ноосферы. В конце Хода цель своб. действием встречный для освобождения.",
+    "harmful": true,
     "effects": {
       "charBonusStat": "",
       "charBonusValue": 0,

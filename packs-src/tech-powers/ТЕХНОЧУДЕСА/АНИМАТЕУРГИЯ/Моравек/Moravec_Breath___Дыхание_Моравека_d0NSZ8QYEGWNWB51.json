@@ -27,6 +27,7 @@
     "damageType": "energy",
     "penetration": 0,
     "effect": "[Железо: Repository of Moravec · Цена: 2К · Процесс: 1 · Тип: Анима] Треб.: For.Lore(Warp). Шаблон I.b м как Smoke (не сдувается, глушит вокс/Ноосферу). Техножрецы, начинающие Ход в нём, не восстанавливают Когницию (если не отключились от Ноосферы). Своб. действием смещение на I.b м.",
+    "harmful": true,
     "effects": {
       "charBonusStat": "",
       "charBonusValue": 0,

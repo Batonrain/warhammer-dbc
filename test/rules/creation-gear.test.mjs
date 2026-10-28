@@ -104,7 +104,7 @@ const BOOK_TABLE = [
   ["Люди · Демонолог", "2×Unholy Tomes (на разные темы)",
     [["выдаётся сам, 2 шт."]]],
   ["Люди · Демонолог", "Записи Ритуалов на суммарную Редкость 11, но не выше R3 каждый.",
-    [["Записи Ритуалов на сумму Редкости 11 (каждая ≤ R3): у Ритуалов в компендиуме нет Редкости — выберите на вкладке «Ритуалы» вручную"]]],
+    [["список: Ритуалы · на сумму Редкости 11 · Редкость ≤ 3"]]],
   ["Люди · Ренегат", "Lasgun (Best.Q) или Bolter (Good.Q) или Plasma Gun или Heavy Flamer",
     [["выдаётся сам · Высшее"],["выдаётся сам · Хорошее"],["выдаётся сам"],["выдаётся сам"]]],
   ["Люди · Ренегат", "Combi-Flamer или Auxiliary Grenade Launcher или Long-Las",
@@ -266,6 +266,51 @@ describe("Нынешние тексты паков (до правки агент
     ["3 Splinter Pistol", [["выдаётся сам, 3 шт."]]]
   ])("«%s»", (row, expected) => {
     expect(plan(row)).toEqual(expected);
+  });
+});
+
+// wdbc-zaesd (23.10.2026): «Записи Ритуалов на суммарную Редкость 11, но не выше
+// R3 каждый» (Демонолог; тот же текст у Певца Камня и Фарсиера) раньше был
+// kind:"manual" — «у Ритуалов нет Редкости». Редкость Записи есть: это
+// system.record Ритуала (core.json, «Анатомия ритуала»: «X в Записи отображает
+// Редкость ритуала аналогична Редкости снаряжения»), так что выдача — обычный
+// выбор из компендиума с бюджетом «сумма Редкости».
+describe("Записи Ритуалов: выбор с суммой Редкости (wdbc-zaesd)", () => {
+  const ROW = "Записи Ритуалов на суммарную Редкость 11, но не выше R3 каждый.";
+
+  it("это выбор из пака Ритуалов, а не указание ГМу", () => {
+    const [spec] = parseGearEntry(ROW);
+    expect(spec.kind).toBe("pick");
+    expect(spec.packs).toEqual(["rituals"]);
+    expect(spec.budget).toEqual({ mode: "availability", value: 11 });
+    expect(spec.maxAvailability).toBe(3);
+  });
+
+  // Ритуал без требования «Запись» (record 0) Записью не является: добыть её
+  // реквизицией нельзя, а весила бы она ноль — Демонолог набрал бы их сколько
+  // угодно. Нижняя граница отсекает их.
+  it("берутся только Ритуалы, у которых Запись есть (Редкость ≥ 1)", () => {
+    expect(parseGearEntry(ROW)[0].minAvailability).toBe(1);
+  });
+
+  it("числа берутся из строки: другая сумма и потолок (Лорд-Чародей, 18 и R4) читаются так же", () => {
+    const [spec] = parseGearEntry("Записи Ритуалов на суммарную Редкость 18, но не выше R4 каждый");
+    expect(spec.budget).toEqual({ mode: "availability", value: 18 });
+    expect(spec.maxAvailability).toBe(4);
+  });
+
+  it("настоящие Демонолог и Певец Камня из packs-src разбираются в тот же выбор", () => {
+    const root = path.resolve(import.meta.dirname, "../../packs-src/archetypes");
+    const load = rel => JSON.parse(fs.readFileSync(path.join(root, rel), "utf8")).system.gear;
+    const files = fs.readdirSync(path.join(root, "Люди")).filter(f => f.startsWith("Heresiarch___"));
+    expect(files).toHaveLength(1);
+    for (const text of [load(path.join("Люди", files[0])),
+      load(path.join("Экзодиты", fs.readdirSync(path.join(root, "Экзодиты")).find(f => f.startsWith("Stone_Singer___"))))]) {
+      const specs = splitGearTopLevel(text).flatMap(e => parseGearEntry(e));
+      const rit = specs.filter(s => s.packs?.includes("rituals"));
+      expect(rit).toHaveLength(1);
+      expect(rit[0]).toMatchObject({ kind: "pick", budget: { mode: "availability", value: 11 }, maxAvailability: 3 });
+    }
   });
 });
 
@@ -434,11 +479,35 @@ describe("Опоры разбора в packs-src", () => {
       if (!find(spec)) missing.add(spec.name);
       for (const a of spec.attach || []) if (!find({ name: a })) missing.add(`+${a}`);
     }
-    // Этого предмета в компендиумах нет: Мастер откроет по нему Обозреватель
-    // с угаданной вкладкой, а в отчёт ушла задача завести его в пак. Ammo Selector
-    // заведён (мод «Селектор Патронов» переименован с Cartridge Selector, wdbc-zaesd);
-    // Void Suit Helmet в основной книге отдельной строкой нет — только в снаряжении Пирата.
-    expect([...missing].sort()).toEqual(["Void Suit Helmet"]);
+    // Пробелов контента не осталось. Ammo Selector заведён (мод «Селектор Патронов»
+    // переименован с Cartridge Selector, wdbc-zaesd); «Void Suit Helmet» из снаряжения
+    // Пирата отдельным предметом не заводился — решение владельца 23.10.2026
+    // (void-suit-helmet-wdbc-zaesd): Мастер выдаёт целый «Void Suit» (см. NAME_ALIASES
+    // и тест ниже). Будущий пробел сюда не вписывать молча — завести предмет или
+    // псевдоним с причиной.
+    expect([...missing].sort()).toEqual([]);
+  });
+
+  it("«Void Suit Helmet» Пирата выдаётся целым «Void Suit» — псевдоним имени (void-suit-helmet-wdbc-zaesd)", () => {
+    const spec = parseGearItem("Void Suit Helmet");
+    expect(namedLookupKeys(spec)).toContain("void suit");
+    // сам «Void Suit Helmet» остаётся в ключах первым: появится отдельный шлем — найдётся он
+    expect(namedLookupKeys(spec)[0]).toBe("void suit helmet");
+    const cands = [{ name: "Void Suit / Пустотный Скафандр", folder: "x" }];
+    expect(pickNamedCandidate(cands, spec).name).toBe("Void Suit / Пустотный Скафандр");
+    // обычный «Void Suit» (без Helmet) псевдонимов не получает
+    expect(namedLookupKeys(parseGearItem("Void Suit"))).toEqual(["void suit", "voidsuit"]);
+  });
+
+  it("весь «Void Suit Helmet» в пак-индексе находится по ключам имени (Xeno Mesh + Void Suit у Пирата — две выдачи)", () => {
+    const keys = new Set();
+    for (const d of packDocs("armor")) {
+      if (String(d._key).startsWith("!folders")) continue;
+      for (const part of String(d.name).split("/")) { const k = normName(part); keys.add(k); keys.add(compactKey(k)); }
+    }
+    const pirate = parseGearEntry("Xeno Mesh(+Void) + Void Suit Helmet");
+    expect(pirate).toHaveLength(2);
+    for (const spec of pirate) expect(namedLookupKeys(spec).some(k => keys.has(k)), spec.name).toBe(true);
   });
 });
 

@@ -46,10 +46,12 @@ import { MUTATIONS_AS_ASTARTES, sleepGraceDays } from "./squat-traits.mjs";
 import { ORDER_REJECTS_BIONICS, rejectedImplants, bionicsRejection } from "./aversion-to-order.mjs";
 import { invalidateRulesCacheFor } from "./collect.mjs";
 import { runeMax } from "./sigillite-runes.mjs";
+import { trophyMax } from "./trophy-points.mjs";
 import { spliceExtraAdaptations, fastLearnerWithAdaptations } from "./splice-adaptations.mjs";
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
 import { applyParasiteFusion, fusedParasite, fuseParasiteCharacteristic } from "./parasite-trait.mjs";
 import { woundLevel } from "./wound-tier.mjs";
+import { rageCharBonus, woundedBeastBonus } from "./rage.mjs";
 import { woundsMaxMods as runtWoundsMaxMods } from "./runt.mjs";
 import { soundConstitutionWoundsMods, hasResilienceTalent, armourMongerBonus } from "./resilience-talents.mjs";
 import { prepareFinalPools } from "./character/final-pools.mjs";
@@ -59,6 +61,7 @@ import { armourTrainingPenaltyReduction } from "./armour-training.mjs";
 import { sharedFormationInitBonus } from "./combat-formation.mjs";
 import { isBeyondHuman, beyondHumanCharKey, BEYOND_HUMAN_UNNATURAL } from "./beyond-human.mjs";
 import { LIMITED_LIFT_CAPABILITY, flightStrengthBonus, limitedLiftStatus } from "./limited-lift.mjs";
+import { woundSustainSplit } from "./wound-in-reality.mjs";
 
 /**
  * Именованный вклад предметов-носителей Механики (Архетип/Раса/Субраса/
@@ -229,6 +232,9 @@ export function prepareCharacterDerived(actor, system) {
     const skillPenaltyHalved = new Set();
     // ── Кибернетика Механикум: авто-автоматизация Техночудес ────────────────
     let implantEnergyMax   = 0;   // +N к максимуму Катушки Потенции (Manipulus и т.п.)
+    // Только сам имплант «Катушка Потенции» — база для Катушки Апокрифа (решение владельца 27.10.2026:
+    // Мотивные Банки и прочие импланты, поднимающие Катушку, в её максимум не входят).
+    let implantCoilEnergyMax = 0;
     let implantCompBonus   = 0;   // лучший бонус к тесту Компенсатора среди имплантов
     const techFocusInstalled = []; // Технофокусы (Железо): {name, quality, mod}
     // Черты, импланты и таланты дают авто-эффекты всегда; психосилы — пока
@@ -297,9 +303,12 @@ export function prepareCharacterDerived(actor, system) {
         const hasSchemaComp = sysComp && Object.values(sysComp).some(v => v);
         const mech = implantMech(item.name);
 
-        if (hasSchemaEnergy) implantEnergyMax += sysEnergy[q] ?? 0;
-        else if (mech?.energyMax) implantEnergyMax += typeof mech.energyMax === "object"
+        let itemEnergy = 0;
+        if (hasSchemaEnergy) itemEnergy = sysEnergy[q] ?? 0;
+        else if (mech?.energyMax) itemEnergy = typeof mech.energyMax === "object"
           ? (mech.energyMax[q] ?? 0) : mech.energyMax;
+        implantEnergyMax += itemEnergy;
+        if (itemHasName(item, "Potentia Coil") || itemHasName(item, "Катушка Потенции")) implantCoilEnergyMax += itemEnergy;
 
         const compBonus = hasSchemaComp ? (sysComp[q] ?? 0) : (mech?.compensator?.[q] ?? 0);
         if (compBonus > implantCompBonus) implantCompBonus = compBonus;
@@ -537,6 +546,7 @@ export function prepareCharacterDerived(actor, system) {
       const valueMod  = traitCharValueBonus[key] || 0; // импланты/черты — к значению
       const dmgMod    = charDamage[key]     || 0; // ручной Мод. к Итогу (знаковый: + прибавляет, − вычитает)
       const vitalMod  = vitalMods[key]      || 0; // Голод/Жажда — авто-дебафф
+      const rageMod   = rageCharBonus(actor, key); // Ярость: +10 WS/S/W (rules/rage.mjs)
       char.drugMod    = drugMod;
       char.charDamage = dmgMod;
       char.vitalMod   = vitalMod;
@@ -548,7 +558,7 @@ export function prepareCharacterDerived(actor, system) {
       char.charLoss   = lossMod;
       const orderMod  = key === "t" ? orderRejection.t : 0;
       char.total   = (char.base || 0) + (char.advance || 0) + impBonus + drugMod + armorMod + valueMod
-                   + (char.totalFx || 0) + dmgMod - vitalMod + orderMod;
+                   + (char.totalFx || 0) + dmgMod - vitalMod + orderMod + rageMod;
       // «Характеристика не может опускаться ниже 0» — пол только для урона:
       // остальные слагаемые ведут себя как раньше.
       const beforeLoss = char.total;
@@ -575,6 +585,7 @@ export function prepareCharacterDerived(actor, system) {
       if (lossMod) breakdown.push({ label: "Урон в Характеристику (отходит по 1 в час)", value: char.total - beforeLoss });
       if (vitalMod) breakdown.push({ label: "Голод/Жажда", value: -vitalMod });
       if (orderMod) breakdown.push({ label: `Отвращение к Порядку: бионика/кибернетика ×${orderRejection.count}`, value: orderMod });
+      if (rageMod) breakdown.push({ label: "Ярость", value: rageMod });
       if (cappedByArmor) breakdown.push({ label: "Потолок Ловкости (броня)", value: null, cap: agilityCap });
       char.totalBreakdown = breakdown;
 
@@ -719,6 +730,13 @@ export function prepareCharacterDerived(actor, system) {
         system.sigilliteRunes.value = system.sigilliteRunes.max;
     }
 
+    // Очки Трофеев (Мастер Казней, rules/trophy-points.mjs): максимум = P.b у носителя, 0 у остальных.
+    if (system.trophyPoints) {
+      system.trophyPoints.max = trophyMax(actor);
+      if ((system.trophyPoints.value ?? 0) > system.trophyPoints.max)
+        system.trophyPoints.value = system.trophyPoints.max;
+    }
+
     // ── Очки Боли (Друкхари) ───────────────────────────────────────────────
     // Друкхари вместо Судьбы/Бесчестья используют Очки Боли (расовые Трейты
     // «Через Боль» и «Безбожник»). Максимум = W.b × (1 + «Бездонная Душа», до 3 раз).
@@ -819,6 +837,25 @@ export function prepareCharacterDerived(actor, system) {
       system.wounds.tier = wLvl.displayKey;
       system.wounds.tierLabel = wLvl.displayLabel;
       system.wounds.tierLost = wLvl.lost;
+      // Раненный Зверь (Берсерк, стр. 62): +5/+10 к WS и S поверх +10 Ярости.
+      // Зависит от Уровня Ранения, а он считается только здесь — после цикла
+      // характеристик (ему нужен T.b), поэтому добавка идёт отдельным проходом:
+      // значение и Бонус сдвигаются разницей, прочие слагаемые не пересчитываются.
+      // WS и S до этого места никто не читает: навыки и перенос считаются ниже.
+      let beastApplied = false;
+      for (const key of ["ws", "s"]) {
+        const extra = woundedBeastBonus(actor, key);
+        const ch = chars[key];
+        if (!extra || !ch) continue;
+        const before = ch.total;
+        ch.total = before + extra;
+        ch.bonus += Math.floor(ch.total / 10) - Math.floor(before / 10);
+        ch.totalBreakdown.push({ label: "Раненный Зверь", value: extra });
+        beastApplied = true;
+      }
+      // Правила с условием «Бонус Силы не ниже N» (charBonusMin), собранные
+      // выше по старому S.b, в кэше устарели — как после цикла характеристик.
+      if (beastApplied) invalidateRulesCacheFor(actor);
       // Аблативный пул не переживает свой источник (wdbc-smy7): ablativeMax
       // приходит ActiveEffect'ом kind:"poolMax" и может пропасть/просесть в
       // любой момент, а накопленное .ablative само по себе не откатывается —
@@ -970,9 +1007,18 @@ export function prepareCharacterDerived(actor, system) {
 
     // ── Групповые навыки ──────────────────────────────────────────────────
     const groupSkills = system.groupSkills || {};
+    // Infused Knowledge / Вложенные Знания (sage.core.infusedKnowledge, пачка J, решение
+    // владельца 24.10.2026): «считается имеющим все Common Lore и Scholastic Lore
+    // изученными на +0» — только для ТЕСТОВ: итог записи не ниже +0. Ступень (entry.rank)
+    // не трогаем: пороги Талантов и требования Lore (constants/talent-requirements.mjs) и
+    // стоимость продвижения смотрят на неё, а не на итог. Опознаётся по имени — копия
+    // на акторе до «Обновить мир» ещё без записи Конструктора.
+    const infusedKnowledge = [...actor.items].some(i => i.type === "talent"
+      && (itemHasName(i, "Infused Knowledge") || itemHasName(i, "Вложенные Знания")));
     for (const [groupKey, entries] of Object.entries(groupSkills)) {
       if (!Array.isArray(entries)) continue;
       const def     = GROUP_SKILLS_DEF[groupKey];
+      const loreFloor = infusedKnowledge && (groupKey === "commonLore" || groupKey === "scholasticLore");
       for (const entry of entries) {
         // Спец-навык может иметь свою базовую характеристику (entry.char),
         // иначе берётся характеристика группы по умолчанию.
@@ -980,6 +1026,7 @@ export function prepareCharacterDerived(actor, system) {
         const charVal   = entryChar ? (chars[entryChar]?.total ?? 0) : 0;
         let gRankBonus  = SKILL_RANKS[entry.rank]?.bonus ?? -20;
         if (gRankBonus < 0 && skillPenaltyHalved.has(groupKey)) gRankBonus = Math.ceil(gRankBonus / 2);
+        if (loreFloor && gRankBonus < 0) gRankBonus = 0;
         // Постоянный модификатор специализации (wdbc-q4wb) — то же поле, что
         // у обычных Навыков, только хранится в записи списка, а не в схеме
         // (групповые Навыки — свободный список специализаций).
@@ -1138,6 +1185,9 @@ export function prepareCharacterDerived(actor, system) {
         case "eliteArchetype": autoEliteCost += (parseInt(it.system?.paidCost) || 0); break;
       }
     }
+    // Рана в Реальности (Талант Псайканы, пачка I2): психосилы, помеченные «бесплатными», не снижают
+    // тPR — платится только то, что осталось (rules/wound-in-reality.mjs). Без Таланта — не меняет ничего.
+    if (sustainedCost > 0) sustainedCost = woundSustainSplit(actor).paid;
     system.experience.spentTalents = autoTalentCost;
     system.experience.spentPsy = autoPsyCost;
     system.experience.spentTech = autoTechCost;
@@ -1164,7 +1214,7 @@ export function prepareCharacterDerived(actor, system) {
     // Хвост пересчёта — Инициатива, Когниция, Энергия, Пси-Рейтинг — вынесен
     // в rules/character/final-pools.mjs (wdbc-neez): он последний в функции и
     // считается из уже готовых чисел, поэтому выносится без риска для порядка.
-    prepareFinalPools(actor, system, { chars, agBonus, traitInitMod, implantEnergyMax,
+    prepareFinalPools(actor, system, { chars, agBonus, traitInitMod, implantEnergyMax, implantCoilEnergyMax,
                                        sustainedCost, implantCompBonus, techFocusInstalled });
     // Parasite/Паразит (Трейт — общий, wdbc-ux8a): Инициатива паразита —
     // после prepareFinalPools, иначе её перезапишут. Характеристики

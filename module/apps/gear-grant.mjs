@@ -86,6 +86,9 @@ export function gearObjects(doc, { quality = null, legion = false, runic = false
       if (!props.some(p => p?.key === "legion")) props.push({ key: "legion" });
       sys.weaponProps = props;
     }
+    // Остальное снаряжение (броня и т.п.) — булева метка system.legion (схема
+    // armor/gear/tool/ammo/forcefield); читает rules/requisition.mjs::itemClass.
+    else if (legion && "legion" in sys) sys.legion = true;
     if (runic && obj.type === "weapon") sys.daemonWeapon = { ...(sys.daemonWeapon || {}), runic: true };
     return obj;
   };

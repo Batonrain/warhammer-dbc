@@ -153,7 +153,11 @@ describe("метки в единой точке наложения/снятия"
   });
 
   it("книжное Состояние снимается как снималось", () => {
-    expect(conditionRemoveFields("prone")).toEqual({ "system.conditions.prone": false });
+    // Повален уносит с собой и метку запрета Вскочить («Ещё Не Всё», rules/takedown.mjs).
+    expect(conditionRemoveFields("prone")).toEqual({
+      "system.conditions.prone": false,
+      [`flags.${FLAG}.-=leapUpDenied`]: null
+    });
   });
 
   it("метку нельзя наложить вручную — её включает своё действие", () => {

@@ -12,10 +12,10 @@
 //     дифф на всю книгу и роняет третий шаг CI.
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { spawnPython } from "../helpers/python.mjs";
 
 const TOOL = join(import.meta.dirname, "../../tools/merge-book-pages.py");
 
@@ -39,7 +39,7 @@ const read  = (name) => JSON.parse(readFileSync(path(name), "utf8"));
 const htmls = (name) => read(name).entries[0].pages.map(p => p.html);
 
 const run = (...args) => {
-  const r = spawnSync("python3", [TOOL, "--base", path("base.json"),
+  const r = spawnPython([TOOL, "--base", path("base.json"),
     "--edited", path("edited.json"), "--live", path("live.json"), ...args], { encoding: "utf8" });
   return { code: r.status, out: (r.stdout || "") + (r.stderr || "") };
 };

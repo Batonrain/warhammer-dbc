@@ -5,7 +5,7 @@
   "folder": "HfTlTkQPDwQ9Yqqn",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey weaponsmith.core.plasmaExpertise — module/combat/attack.mjs (reliabilityScore += ← module/rules/damage-talents.mjs::plasmaExpertiseReliability): плазменное оружие (weaponType plasma) со свойством Overheats получает +1 Надёжность — порог Клина с 91 снова 96. Строка в карточке.",
     "benefit": "Плазменное оружие со свойством Overheats увеличивает Надёжность на 1 в руках персонажа.",
     "tier": 1,
     "requirement": "I 40, Weapon Training (Plasma)",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "e5tVKn6nvWv9enjw",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "B9s1qDQh8slbZwES",
+              "capabilityKey": "weaponsmith.core.plasmaExpertise",
+              "label": "Эксперт Плазмы: +1 Надёжность плазме со свойством Перегрев",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

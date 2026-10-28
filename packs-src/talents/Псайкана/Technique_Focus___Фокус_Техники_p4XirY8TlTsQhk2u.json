@@ -5,7 +5,7 @@
   "folder": "iSsQmZ2gkxraxksi",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: в психотесте выбранной силы +10 к Порогу, к броску её Феноменов −10 (rules/psyker-talents.mjs::techniqueFocusFor, читает sheets/tabs/psychic.mjs — окно манифестации и карточка). Выбранная сила записывается в поле «Специализация» Таланта (или в скобках имени: «Technique Focus (Smite)») — по любой половине двуязычного имени силы; пока выбор не сделан, Талант ничего не даёт. Предмет у игрока — снимок: уже созданным персонажам поможет «Обновить мир».",
     "benefit": "Псайкер получает +10 на манифестацию выбранной психосилы и −10 на все вызванные ею Феномены.",
     "tier": 1,
     "requirement": "PR 1",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g01techniquCap1",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "e01techniquCap1",
+              "capabilityKey": "psyker.core.techniqueFocus",
+              "label": "Фокус Техники: +10 к психотесту выбранной силы, −10 к её Феноменам",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

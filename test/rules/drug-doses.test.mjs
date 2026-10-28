@@ -83,7 +83,9 @@ describe("weeklyDoseCheck: тест при достижении лимита", (
 
   it("уже зависимому тест не навязывается; наркотик без зависимости игнорируется", async () => {
     const a = actor();
-    for (let i = 0; i < 5; i++) await weeklyDoseCheck(a, drugItem(2, true));
+    // Зависимость — запись флага получателя (task-9717), а не поле предмета.
+    flags.drugWithdrawal = { "Шквал": { addicted: true, name: "Шквал", addiction: {}, lastDose: NOW, doneTo: NOW, tested: 0 } };
+    for (let i = 0; i < 5; i++) await weeklyDoseCheck(a, drugItem(2));
     expect(captured.chat).toHaveLength(0);
     const plain = { name: "Рекаф", type: "drug", system: { addiction: { hasAddiction: false, minDose: 2 } } };
     for (let i = 0; i < 5; i++) await weeklyDoseCheck(a, plain);

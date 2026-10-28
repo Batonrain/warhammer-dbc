@@ -65,6 +65,21 @@ describe("_executeSoulBurn: psychicThreat на встречном тесте ц�
   });
 });
 
+describe("_executeSoulBurn: область psychicPower (Бастион Железной Воли) Выжигание Души не касается", () => {
+  it("правило target:psychicPower Порог цели не сдвигает, а target:psychicThreat — сдвигает", async () => {
+    clearRuleSources();
+    registerRuleSource("test.bastion", () => [
+      { id: "test.bastion.power", label: "Бастион", when: {}, effects: [{ kind: "rollBonus", target: "psychicPower", value: 30 }] },
+      { id: "test.bastion.threat", label: "Кровь", when: {}, effects: [{ kind: "rollBonus", target: "psychicThreat", value: 10 }] }
+    ]);
+    const attacker = participant(40);
+    const target   = participant(30);
+    captured.dice = [50, 35];
+    await _executeSoulBurn(attacker, target);
+    expect(thresholds(captured.chat.at(-1).content)).toEqual([40, 40]); // только +10 общего тега, без +30
+  });
+});
+
 // wdbc-1rno.24: Марионетка — Выжигание Души бесполезно, тест не бросается.
 describe("_executeSoulBurn: цель с soulBurnImmunity", () => {
   it("карточка теста не создаётся", async () => {

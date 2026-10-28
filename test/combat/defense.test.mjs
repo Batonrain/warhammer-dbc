@@ -486,6 +486,51 @@ describe("_performSprayCancel: тест на отмену Распыления (
     expect(card).toContain("Броня выключена -10");
     expect(card).not.toContain("-40");
   });
+
+  // Sprayer / Распылитель (стр. 108, 3-8318): «Цели, накрытые шаблоном оружия
+  // со свойством Spray от персонажа, получают штраф −20 на бросок A для
+  // избегания попадания. Это не влияет на полноценные тесты Избегания».
+  describe("Sprayer: −20 к тесту на отмену, если у стрелка есть Талант", () => {
+    const SPRAYER = "flamer.core.sprayer";
+    /** Источник правил: возможность есть только у актора по имени «Огнемётчик». */
+    const grantSprayerToShooter = () => registerRuleSource("test-sprayer",
+      a => a?.name === "Огнемётчик" ? [{ id: "sprayer", label: "Sprayer / Распылитель", effects: [{ kind: "grantFlag", target: SPRAYER }] }] : []);
+    const shooter = () => { const s = attacker(); s.name = "Огнемётчик"; return s; };
+
+    it("стрелок с Sprayer — Порог цели ниже на 20, в подписи назван Талант", async () => {
+      grantSprayerToShooter();
+      captured.dice = [10];
+      await _performSprayCancel(attacker(), { attacker: shooter() });
+      const card = captured.chat.at(-1).content;
+      expect(card).toContain("<label>Порог</label><b>-5</b>");
+      expect(card).toContain("Sprayer");
+      expect(card).toContain("Провал");   // 10 > −5
+    });
+
+    it("стрелок без Sprayer — Порог прежний (15)", async () => {
+      grantSprayerToShooter();
+      captured.dice = [10];
+      const plain = attacker(); plain.name = "Обычный стрелок";
+      await _performSprayCancel(attacker(), { attacker: plain });
+      const card = captured.chat.at(-1).content;
+      expect(card).toContain("<label>Порог</label><b>15</b>");
+      expect(card).not.toContain("Sprayer");
+    });
+
+    it("атакующий не передан (старая кнопка без uuid) — штрафа нет", async () => {
+      grantSprayerToShooter();
+      await _performSprayCancel(attacker());
+      expect(captured.chat.at(-1).content).toContain("<label>Порог</label><b>15</b>");
+    });
+
+    it("Талант есть у самой цели, а не у стрелка — штрафа нет (флаг читается у атакующего)", async () => {
+      grantSprayerToShooter();
+      const defender = attacker(); defender.name = "Огнемётчик";   // цель — носитель Таланта
+      const plain = attacker(); plain.name = "Обычный стрелок";
+      await _performSprayCancel(defender, { attacker: plain });
+      expect(captured.chat.at(-1).content).toContain("<label>Порог</label><b>15</b>");
+    });
+  });
 });
 
 // Dancing Among The Fire / Танец Среди Огня (wdbc-u0by): Преимущество на

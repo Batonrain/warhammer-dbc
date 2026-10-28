@@ -134,6 +134,32 @@ describe("Rad (X): X урона в T при пробитии, без теста"
     expect(actor.system.charLoss.t).toBe(0);
   });
 
+  // Облучить (Талант Оружейника, Sahara covering-fire-hip-shooting п.5): damage.mjs пишет во lastBreach отдельный
+  // итог radBreached — пробитие без удвоения AP цели; Rad читает его, а Toxic той же карточки — обычное breached.
+  it("Облучить: Rad берёт radBreached, а не обычное breached — пробило без удвоения AP, обычно нет", async () => {
+    const actor = radTarget({ lastBreach: { messageId: "msg1", breached: false, radBreached: true } });
+    globalThis.fromUuid = async () => actor;
+    captured.dice = [3];
+    await _applyWeaponPropEffect(radBtn(actor), { messageId: "msg1" });
+    expect(captured.rolls).toEqual(["1d5"]);
+    expect(actor.system.charLoss.t).toBe(3);
+  });
+
+  it("Облучить: radBreached=false отменяет Rad, даже если обычное пробитие было", async () => {
+    const actor = radTarget({ lastBreach: { messageId: "msg1", breached: true, radBreached: false } });
+    globalThis.fromUuid = async () => actor;
+    await _applyWeaponPropEffect(radBtn(actor), { messageId: "msg1" });
+    expect(captured.rolls.length).toBe(0);
+    expect(actor.system.charLoss.t).toBe(0);
+  });
+
+  it("Облучить: radBreached относится только к Rad — Toxic той же карточки читает обычное breached", async () => {
+    const actor = target({ lastBreach: { messageId: "msg1", breached: false, radBreached: true } });
+    globalThis.fromUuid = async () => actor;
+    await _applyWeaponPropEffect(toxicBtn(actor), { messageId: "msg1" });
+    expect(captured.rolls.length).toBe(0);                  // Toxic: броня не пробита — теста нет
+  });
+
   it("рейтинг X не задан у оружия — предупреждение, без броска", async () => {
     const actor = radTarget();
     globalThis.fromUuid = async () => actor;

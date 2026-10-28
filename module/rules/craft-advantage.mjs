@@ -37,6 +37,7 @@
 import { itemHasName } from "./predicates.mjs";
 import { hasRuleFlag } from "./flags.mjs";
 import { isHaemonculus } from "../constants/haemonculus.mjs";
+import { POLYMATH_CHAIN_MAX } from "../constants/craft.mjs";
 
 const hasItem = (actor, type, name) =>
   !!actor?.items?.some(i => i.type === type && itemHasName(i, name));
@@ -56,13 +57,118 @@ export function darkMuseAssistBonus(assistantActor) {
 
 /**
  * +10 от Полимата — безусловно на ЛЮБОЙ тест Крафта И Исследования (книга не
- * ограничивает категорией/навыком, в отличие от Киберпроповедника). Не
- * покрыто (см. capabilities.mjs): Крит на тесте Крафта/Исследования даёт
- * бесплатный второй тест — нужен отдельный крюк на исход броска, не входит
- * в этот флат-бонус.
+ * ограничивает категорией/навыком, в отличие от Киберпроповедника). Крит на
+ * смене — отдельно, polymathCrit() ниже: это не флат-бонус, а крюк на исход
+ * броска.
  */
 export function polymathBonus(crafter) {
   return hasPolymath(crafter) ? 10 : 0;
+}
+
+/**
+ * Критический Успех Полимата в Мастерской (task-b6b8): «1d5 Усталости и сразу
+ * же ещё один тест, по сути работа двух смен в одну». Условие в тексте одно —
+ * Критический Успех (натуральные 1–5, стр. 25), мастерство/5+ Успехов не
+ * требуется.
+ *
+ * `step` — номер смены в цепочке (1 — та, что бросил игрок). `capped` — это
+ * последняя разрешённая смена цепочки: Усталость за крит она получает, но
+ * новой смены не запускает (POLYMATH_CHAIN_MAX — страховка от бесконечной
+ * цепочки, см. constants/craft.mjs).
+ *
+ * @returns {{triggered:boolean, capped:boolean}}
+ */
+export function polymathCrit(crafter, critSuccess, step = 1) {
+  const triggered = !!critSuccess && hasPolymath(crafter);
+  return { triggered, capped: triggered && step >= POLYMATH_CHAIN_MAX };
+}
+
+/** Workaholic / Трудоголик (3-3a64) — Талант Крафта. */
+export const hasWorkaholic = actor => hasTalent(actor, "Workaholic");
+/** Fabricator / Фабрикатор (3-3a64) — Талант Крафта. */
+export const hasFabricator = actor => hasTalent(actor, "Fabricator");
+/** Master Engineseer / Мастер-Технопровидец (3-cc96, п.11) — Талант Механикума. */
+export const hasMasterEngineseer = actor => hasTalent(actor, "Master Engineseer");
+
+/**
+ * Штраф за монотонный Крафт (галочка «Монотонная работа» проекта): −30, а у
+ * Трудоголика нет вовсе (книга: «не получает штрафы за занятие одним и тем же
+ * Крафтом несколько смен подряд»). Сама галочка по-прежнему на слове стола —
+ * система не считает, сколько смен подряд одно и то же.
+ */
+export function monotonyPenalty(actor, monotonyChecked) {
+  return monotonyChecked && !hasWorkaholic(actor) ? -30 : 0;
+}
+
+/**
+ * Фабрикатор удваивает БОНУСЫ от инструментов на тесты Крафта. Штраф за плохие
+ * инструменты (отрицательный модификатор) не удваивается — книга говорит
+ * именно о бонусах. «И ремонта» — ремонт теперь проект Крафта с галочкой
+ * «Ремонт» (см. masterEngineseerNoParts), на него это удвоение действует само.
+ */
+export function fabricatorToolMod(actor, toolMod) {
+  const mod = Number(toolMod) || 0;
+  return mod > 0 && hasFabricator(actor) ? mod * 2 : mod;
+}
+
+/**
+ * Мастер-Технопровидец: «+10 к Tech-Use на Крафт и ремонт». Бонус к Навыку, а
+ * не к тесту вообще, поэтому работает, когда Tech-Use — ведущий Навык
+ * комбинированного теста (его total и задаёт Предел); если ведущий другой
+ * (Ремесло, Знание), Tech-Use даёт только бонус ранга и +10 к его total
+ * Предел не меняет. Только Крафт: Исследования и Биолаборатория в тексте не
+ * названы. Автоуспех за Очко Бесчестия — отдельная часть Таланта, не здесь.
+ *
+ * @param {string} mode        режим проекта ("craft"/"research"/"bio"/…)
+ * @param {string} primaryValue value ведущего Навыка ("skill:techUse", …)
+ */
+export function masterEngineseerBonus(crafter, mode, primaryValue) {
+  return mode === "craft" && primaryValue === "skill:techUse" && hasMasterEngineseer(crafter) ? 10 : 0;
+}
+
+/**
+ * Мастер-Технопровидец, вторая половина Таланта: «Может потратить Очко Бесчестия,
+ * чтобы автоматически преуспеть в расширенном тесте Tech-Use на Крафт/ремонт,
+ * получая I.b Успехов за смену». Предложение траты показывается там же, где
+ * действует +10: Крафт, ведущий Навык — Tech-Use. «Ремонта» в Мастерской нет.
+ */
+export function masterEngineseerAutoEligible(crafter, mode, primaryValue) {
+  return mode === "craft" && primaryValue === "skill:techUse" && hasMasterEngineseer(crafter);
+}
+
+/**
+ * Ремонт в Мастерской (решение владельца 26.10.2026) — проект Крафта с галочкой
+ * «Ремонт»: тот же расширенный тест Tech-Use («расширенное действие для
+ * создания и ремонта предметов»), поэтому +10 Мастера-Технопровидца, его
+ * автоуспех и удвоение бонусов инструментов Фабрикатором действуют на него
+ * без отдельных веток. Книга Банка Успехов для ремонта не называет — его
+ * вписывает стол в «Базовый Банк» проекта.
+ *
+ * «Чинить механизмы вообще без запчастей под рукой» — Мастер-Технопровидец
+ * отмечает это галочкой проекта-ремонта; система запчастей не ведёт, поэтому
+ * галочка только честно попадает в карточку смены («по внешнему виду будет
+ * заметно, что их чинили без нужных ресурсов»).
+ */
+export function masterEngineseerNoParts(crafter, proj) {
+  return !!proj?.repair && !!proj?.noParts && hasMasterEngineseer(crafter);
+}
+
+/** Сломанное оружие мастера (system.destroyed) — что можно выбрать целью ремонта. */
+export function destroyedWeaponsOf(actor) {
+  return [...(actor?.items ?? [])].filter(i => i?.type === "weapon" && i.system?.destroyed);
+}
+
+/** Заголовок карточки смены: исследование / ремонт / крафт. */
+export function craftShiftTitle(proj) {
+  if (proj?.mode === "research") return "Смена исследования";
+  return proj?.repair ? "Смена ремонта" : "Смена крафта";
+}
+
+/** Успехов за смену автоуспеха — I.b крафтера (не меньше 0). */
+export function masterEngineseerAutoSuccesses(crafter) {
+  const ib = Number(crafter?.system?.characteristics?.int?.bonus);
+  if (Number.isFinite(ib)) return Math.max(0, ib);
+  return Math.max(0, Math.floor((Number(crafter?.system?.characteristics?.int?.total) || 0) / 10));
 }
 
 /** Имя возможности «+10 на тесты Исследований» (Стремление «Инновация»). */

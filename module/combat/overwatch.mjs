@@ -39,6 +39,7 @@ import { hasActionEconomy, isEncounterActive, spendActionPoints } from "./action
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
 import { markMovedThisTurn } from "./movement-actions.mjs";
+import { grantMoveAllowance } from "../rules/movement-path.mjs";
 import { overwatchSingleShotBudget, applyOverwatchShot, overwatchMaxArc } from "../rules/overwatch.mjs";
 import { simultaneousActionWinner, reactingOrderCharTotal } from "../rules/simultaneous-action.mjs";
 import {
@@ -153,7 +154,10 @@ export async function declareOverwatch(actor, { weaponId, arcWidth, condition = 
   if (!token) return ui.notifications.warn("⚠️ Нет токена на сцене — сектор не от чего отмерить.");
   if (!await spendActionPoints(actor, 2, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
 
-  if (scanningAdvance) await markMovedThisTurn(actor);
+  if (scanningAdvance) {
+    await markMovedThisTurn(actor);
+    await grantMoveAllowance(actor, "scanning", actor.system.movement?.halfMove); // лимит пути (wdbc-l2urs)
+  }
 
   const budget = overwatchSingleShotBudget(actor.system.characteristics, weapon.system);
   const state = {

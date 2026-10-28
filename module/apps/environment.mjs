@@ -22,7 +22,8 @@ const CATS = [
   { key: "weather", label: "Погода",      icon: "🌤" },
   { key: "temp",    label: "Температура",  icon: "🌡" },
   { key: "gravity", label: "Гравитация",   icon: "🪐" },
-  { key: "rad",     label: "Радиация",     icon: "☢" }
+  { key: "rad",     label: "Радиация",     icon: "☢" },
+  { key: "vacuum",  label: "Вакуум",       icon: "🌌" }
 ];
 
 export class EnvironmentApp extends HandlebarsApplicationMixin(ApplicationV2) {
@@ -67,6 +68,7 @@ export class EnvironmentApp extends HandlebarsApplicationMixin(ApplicationV2) {
       isTemp:    this.uiState.cat === "temp",
       isGravity: this.uiState.cat === "gravity",
       isRad:     this.uiState.cat === "rad",
+      isVacuum:  this.uiState.cat === "vacuum",
       env: v,
       weatherGroups: WEATHER_GROUPS.map(g => ({
         label: g.label,
@@ -151,6 +153,14 @@ export class EnvironmentApp extends HandlebarsApplicationMixin(ApplicationV2) {
     el.querySelectorAll("[data-rad]").forEach(b => b.addEventListener("click", () => this._patch({ rad: Number(b.dataset.rad) })));
     el.querySelector("[name=radRange]")?.addEventListener("change", e => this._patch({ rad: Number(e.target.value) || 0 }));
 
+    // Вакуум (корбук стр. 483): флаг сцены и Взрывная Декомпрессия (шаблон на сцене).
+    el.querySelectorAll("[data-vacuum]").forEach(b => b.addEventListener("click", () => this._patch({ vacuum: b.dataset.vacuum === "on" })));
+    el.querySelector("[data-act=decompress]")?.addEventListener("click", async () => {
+      const width = Number(el.querySelector("[name=breachWidth]")?.value);
+      const { placeDecompression } = await import("../combat/vacuum.mjs");
+      await placeDecompression(width);
+    });
+
     // Укрытие персонажа (здание/бункер) — часть защиты от радиации сцены.
     el.querySelectorAll("[data-rad-shelter]").forEach(sel => sel.addEventListener("change", async e => {
       const token = currentScene()?.tokens?.get(sel.dataset.radShelter);
@@ -213,6 +223,16 @@ function _widgetHTML(v) {
     <span class="wh-env-w-k">Радиация</span>
     <span class="wh-env-w-v">${v.rad.active ? `ур. ${v.rad.value}` : "норма"}</span>
   </div>`);
+  // Вакуум (стр. 483): строка видна, только пока сцена без воздуха; кнопка —
+  // тест вакуума (combat/vacuum.mjs) за выделенные токены или моего персонажа.
+  if (v.vacuum.active) {
+    rows.push(`<div class="wh-env-w-row danger" style="--c:${v.vacuum.tone}">
+    <span class="wh-env-w-ic">🌌</span>
+    <span class="wh-env-w-k">Вакуум</span>
+    <span class="wh-env-w-v">T+0 каждый Ход</span>
+    <button type="button" class="wh-env-w-vacuum-btn" title="Тест вакуума: T+0 (Trade (Voidfarer)(T)+10), задержка дыхания −30">🎲</button>
+  </div>`);
+  }
   const note = v.note ? `<div class="wh-env-w-note">${esc(v.note)}</div>` : "";
   return `<div class="wh-env-w-head"><span class="wh-env-w-led"></span><span class="wh-env-w-title">ОКРУЖЕНИЕ</span><span class="wh-env-w-collapse" title="Свернуть/развернуть">▾</span></div>
     <div class="wh-env-w-body">${rows.join("")}</div>${note}`;
@@ -300,6 +320,14 @@ export function refreshEnvWidget() {
       const actors = envTestActors(canvas?.tokens?.controlled, game.user?.character);
       if (!actors.length) return ui.notifications?.warn("Выделите токены или назначьте персонажа (User → Character) — тест не за кого катать.");
       for (const actor of actors) await rollTempHazardTest(actor);
+    });
+    // Тест вакуума (trade-voidfarer-10-wdbc-dbveg) — за тех же, кого катает кнопка Жары/Холода.
+    el.querySelector(".wh-env-w-vacuum-btn")?.addEventListener("click", async ev => {
+      ev.stopPropagation();
+      const actors = envTestActors(canvas?.tokens?.controlled, game.user?.character);
+      if (!actors.length) return ui.notifications?.warn("Выделите токены или назначьте персонажа (User → Character) — тест не за кого катать.");
+      const { askAndRollVacuum } = await import("../combat/vacuum.mjs");
+      for (const actor of actors) await askAndRollVacuum(actor);
     });
     // Клик по телу открывает окно (только ГМ) — объединённую страницу «Сцена»
     // на разделе «Окружение», а не старое отдельное окно (wdbc-59if). Импорт

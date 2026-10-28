@@ -9,7 +9,9 @@
 
 import { toggleParentId, isToggleOn } from "../rules/toggle-abilities.mjs";
 import { visionAidBlocked } from "../rules/vision-aids.mjs";
+import { diseaseEffectsSuppressed } from "../rules/disease-immunity.mjs";
 import { activeRunicWeaveId, siblingRunicWeaves } from "../rules/runic-weave.mjs";
+import { isImplantActive } from "../rules/item-gates.mjs";
 
 /**
  * Активен ли предмет прямо сейчас (по его собственным полям состояния) —
@@ -46,6 +48,11 @@ export function isItemActive(item) {
   // Зрящие Рога (Majestic Horns 9, wdbc-1rno.10): авточувства и визоры
   // не действуют, пока такая мутация на акторе (rules/vision-aids.mjs).
   if (visionAidBlocked(item)) return false;
+  // Метка Нургла (defence.diseaseEffectsImmune, task-0469-c5ab): «иммунитет к
+  // негативным эффектам болезней» — болезнь у носителя не действует (её записи
+  // charRecovery и эффекты гаснут). Возможность читается с предметов актора
+  // напрямую, не через hasRuleFlag: этот вызов делает сам сбор правил.
+  if (diseaseEffectsSuppressed(item, isItemActive)) return false;
   return isItemActiveBase(item);
 }
 
@@ -110,10 +117,8 @@ function isItemActiveBase(item) {
     }
     case "navigatorPower": return !!sys.isSustained;
     case "implant":
-      // nullSuppressed — электроника в поле Дискорданта (rules/null-zones.mjs,
-      // apps/mechanics.mjs::syncNullZoneSuppression).
-      return !!item.getFlag("warhammer-dbc", "installed") && !item.getFlag("warhammer-dbc", "disabled")
-        && !item.getFlag("warhammer-dbc", "nullSuppressed");
+      // Правило одно, в листе rules/item-gates.mjs (общее с остальными читателями).
+      return isImplantActive(item);
     case "runicWeave": {
       // "region" (помещение/стены) — не читается отсюда вовсе: живой пересчёт
       // там клонирует предмет-источник тем, чей токен стоит в Region (см.
@@ -164,6 +169,32 @@ function isItemActiveBase(item) {
       if (item.getFlag?.("warhammer-dbc", "nullSuppressed")) return false;
       if (sys.activatable) return !!sys.active;
       return true;
+    // Талант с ручным тумблером (Солипсизм: «проиграв социальное
+    // взаимодействие… Талант перестаёт работать, пока не победит»): состояние
+    // «потерял» ставит игрок/ГМ кнопкой в строке Таланта. Флаг на предмете, а не
+    // поле схемы — тот же приём, что suppressed у Мутации выше. Действует
+    // по умолчанию: без флага manualOff Талант активен как любой другой.
+    case "talent":
+      return !item.flags?.["warhammer-dbc"]?.manualOff;
+    // Препарат (Струп: «в течение 1 часа… иммунитет к негативным эффектам
+    // болезней», core стр. 279): запись Конструктора на препарате действует, пока
+    // он ПРИНЯТ и идёт основной эффект, — тот же признак, по которому лист
+    // прибавляет statMods (rules/character.mjs, activeEffect). Лежащий в сумке
+    // или в пост-эффекте препарат механики не даёт. Раньше у препарата ветки не
+    // было и любая его запись Конструктора действовала бы всегда; препаратов с
+    // такой записью в паке не было (проверено 25.10.2026), кроме Струпа.
+    case "drug":
+      return !!sys.activeEffect?.isActive && !sys.activeEffect?.isAfterEffect;
+    // Болезнь (wdbc-dbveg, решение владельца 25.10.2026): «болезнь действует
+    // только когда включена». Раньше ветки не было и записи Конструктора болезни
+    // (charRecovery у Гнили Нургла, Трескающихся Костей, Хрупкой Комы, Цветения,
+    // Проклятия Гнили) работали, даже если заражение отбито и болезнь выключена.
+    // Тумблер — система system.active (кнопка «Действует» на листе, провал теста
+    // заражения — combat/disease-infection.mjs). Иммунитет Метки Нургла гасит и
+    // включённую болезнь — он проверяется выше, в isItemActive.
+    // Уже выданным копиям active=true проставляет migrations/disease-active.mjs.
+    case "disease":
+      return !!sys.active;
     default: return true;
   }
 }

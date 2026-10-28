@@ -51,8 +51,10 @@ import { sweepAllConditionClocks } from "./module/combat/condition-clock.mjs";
 import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
-         saveItemMechanics, mechanicsRelevantChange, syncGrantedEquipment,
-         syncNullZoneSuppression, syncGrantedAbilities, hasWhenGatedAbilityGrant } from "./module/apps/mechanics.mjs";
+         saveItemMechanics, mechanicsRelevantChange, syncGrantedEquipment, onItemQualityChanged,
+         syncNullZoneSuppression, syncGrantedAbilities, hasWhenGatedAbilityGrant,
+         getItemMechanics, findMechEntryById } from "./module/apps/mechanics.mjs";
+import { entryWhenOk } from "./module/rules/mech-when.mjs";
 import { isItemActive, syncOrphanedModEffects } from "./module/apps/effects.mjs";
 import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
 import { applyRace, applySubrace, SKIP_MECHANICS_HOOK } from "./module/apps/races.mjs";
@@ -60,6 +62,8 @@ import { backfillAspirationGrants } from "./module/apps/aspirations.mjs";
 import { backfillMinionAptSource } from "./module/apps/minion-talent.mjs";
 import { syncCyberneticExcellenceArms } from "./module/apps/cybernetic-excellence.mjs";
 import { isCyberneticExcellence } from "./module/rules/cybernetic-excellence.mjs";
+import { syncFleshIsWeak } from "./module/apps/flesh-is-weak.mjs";
+import { isFleshIsWeak, isMachineTrait } from "./module/rules/flesh-is-weak.mjs";
 import { enforceLockedPatron, grantLockedPatron, checkDarkPrinceMilestones, itemGrantsCapability }
   from "./module/apps/naga-traits.mjs";
 import { LOCKED_SLAANESH_CAPABILITY, DARK_PRINCE_MILESTONE_CAPABILITY } from "./module/rules/naga-traits.mjs";
@@ -117,11 +121,14 @@ import { initRigStealHud } from "./module/combat/rig-steal.mjs";
 import { initForceMoveHud } from "./module/combat/force-move-menu.mjs";
 import { initTearOpenHud } from "./module/combat/tear-open.mjs";
 import { initFreeAttackHooks } from "./module/combat/free-attack.mjs";
+import { initPathLimitHooks } from "./module/combat/path-limit.mjs";
+import { PATH_LIMIT_SETTING, PATH_LIMIT_DEFAULT } from "./module/rules/movement-path.mjs";
 import { initSqueezeHooks } from "./module/combat/squeeze.mjs";
 import { initBoneHeadHooks } from "./module/combat/bone-head.mjs";
 import { initOverwatchHooks } from "./module/combat/overwatch.mjs";
 import { initFirePointHooks } from "./module/combat/fire-point.mjs";
 import { checkAuras, clearAuraGrants } from "./module/regions/auras.mjs";
+import { onWoundRelevantItemChange, onWoundRelevantActorChange } from "./module/combat/wound-in-reality.mjs";
 import { redrawAuraRings } from "./module/regions/aura-rings.mjs";
 import { LingerZoneBehaviorType, LINGER_ZONE_TYPE } from "./module/regions/linger-zone.mjs";
 import { GravitonZoneBehaviorType, GRAVITON_ZONE_TYPE } from "./module/regions/graviton-zone.mjs";
@@ -152,6 +159,11 @@ import { migrateLimbLossSides } from "./module/migrations/limb-loss-sides.mjs";
 import { migrateRadRating } from "./module/migrations/rad-rating.mjs";
 import { migrateAdvancePricing } from "./module/migrations/advance-pricing-baseline.mjs";
 import { migrateRetinalDisplayMark } from "./module/migrations/retinal-display-mark.mjs";
+import { migrateDrugAddictionFields } from "./module/migrations/drug-addiction-fields.mjs";
+import { migrateDiseaseActive } from "./module/migrations/disease-active.mjs";
+import { migrateDiseaseActiveAll } from "./module/migrations/disease-active-all.mjs";
+import { migrateStrangeTechniqueEffect } from "./module/migrations/strange-technique-effect.mjs";
+import { migrateDrugAddictionFlag } from "./module/migrations/drug-addiction-flag.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
 import { runMigrationGate } from "./module/migrations/unlinked-tokens.mjs";
 import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
@@ -486,10 +498,35 @@ Hooks.once("init", () => {
     "implantAvailabilityTokensVersion",
     "contentSyncBaselineTokensVersion",
     "radRatingTokensVersion",
-    "retinalDisplayMarkTokensVersion"
+    "retinalDisplayMarkTokensVersion",
+    "drugAddictionFieldsTokensVersion",
+    "diseaseActiveTokensVersion",
+    "diseaseActiveAllTokensVersion",
+    "strangeTechniqueEffectTokensVersion",
+    "drugAddictionFlagTokensVersion"
   ]) {
     game.settings.register("warhammer-dbc", key, { scope: "world", config: false, type: Number, default: 0 });
   }
+
+  // Лимит пути токена за Ход (wdbc-l2urs, решение владельца 24.10.2026:
+  // блокировать, не предупреждать). Действует только в начатом бою на Ходу
+  // самого токена и только для перетаскивания/клавиш игрока; ГМа, принудительные
+  // сдвиги, телепорт, вне боя — не трогает (module/combat/path-limit.mjs).
+  game.settings.register("warhammer-dbc", PATH_LIMIT_SETTING, {
+    name: "Лимит пути за Ход в бою",
+    hint: "Токен не уйдёт дальше, чем позволяют объявленные Действия Движения за Ход "
+      + "(Полудвижение SPD×1, Полное ×2, Натиск ×3, Бег ×6…), а у Сквата с Надёжной Поступью — "
+      + "не дальше 3×SPD пешком. «Мягкий»: пока Движение не объявлено, доступно Полудвижение. "
+      + "«Строгий»: без объявленного Движения ходить нельзя. ГМ не блокируется; принудительные "
+      + "сдвиги и телепорт проходят всегда. Снять лимит одному персонажу — пункт «Лимит пути» "
+      + "в меню Движения токена (только ГМ).",
+    scope: "world", config: true, type: String, default: PATH_LIMIT_DEFAULT,
+    choices: {
+      off:    "Выключен",
+      soft:   "Мягкий: без объявления — Полудвижение",
+      strict: "Строгий: без объявления ходить нельзя"
+    }
+  });
 
   // Настройка: убрать серую рамку у заметок-пинов на сцене.
   game.settings.register("warhammer-dbc", "hideNoteFrame", {
@@ -634,6 +671,36 @@ Hooks.once("init", () => {
   // Версия простановки метки встроенного ретинального дисплея броне, маскам и
   // имплантам, выданным до правки пака 02.10.2026 (одноразовая, task-9b5f)
   game.settings.register("warhammer-dbc", "retinalDisplayMarkVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия доливки полей Зависимости наркотикам, выданным до правки пака
+  // 25.10.2026 (комбинированный тест, штраф без дозы; одноразовая, wdbc-gyqf2)
+  game.settings.register("warhammer-dbc", "drugAddictionFieldsVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия включения («действует») уже выданных болезней с записями Конструктора:
+  // с 25.10.2026 болезнь действует только когда включена (одноразовая, wdbc-dbveg)
+  game.settings.register("warhammer-dbc", "diseaseActiveVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия включения ВСЕХ уже выданных болезней (в т.ч. без механики): Чумной
+  // Пастырь считает заражёнными только действующие (одноразовая, task-3ab7)
+  game.settings.register("warhammer-dbc", "diseaseActiveAllVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия снятия общего ActiveEffect «+1 Реакция» у Странной Техники (одноразовая, Sahara 3-8dc5):
+  // теперь отдельный пул «странных» атак
+  game.settings.register("warhammer-dbc", "strangeTechniqueEffectVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия переноса зависимости от наркотиков из поля предмета в флаг актора
+  // (одноразовая, task-9717)
+  game.settings.register("warhammer-dbc", "drugAddictionFlagVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -918,6 +985,28 @@ Hooks.once("ready", () => {
         await applyRelayedCommandUpdate(data);
         return;
       }
+      // Вырубание (Takedown): игрок сбивает с ног чужую цель — писать в неё
+      // может только ГМ; module/combat/takedown.mjs::applyTakedownRelay.
+      if (data.action === "takedownKnockdown") {
+        const { applyTakedownRelay } = await import("./module/combat/takedown.mjs");
+        await applyTakedownRelay(data, requester);
+        return;
+      }
+      // Захват, Повал, Жокей, Удушение, Вдохновить Гнев: запись в чужого
+      // актора-цель; combat/gm-relay.mjs сверяет список полей и владение
+      // инициатором (Sahara riding-the-momentum).
+      if (data.action === "targetActorWrite") {
+        const { applyTargetWriteRelay } = await import("./module/combat/gm-relay.mjs");
+        await applyTargetWriteRelay(data, requester);
+        return;
+      }
+      // Пироман: игрок поджёг укрытия под шаблоном огнемёта — зоны сцены правит
+      // только ГМ; combat/burning-cover.mjs::applyBurningCovers сама проверяет, что это Укрытия.
+      if (data.action === "burnCovers") {
+        const { applyBurningCovers } = await import("./module/combat/burning-cover.mjs");
+        await applyBurningCovers(data);
+        return;
+      }
       if (data.action === "inspiringPresenceSpend") {
         // Вдохновляющее Присутствие (Чемпион): союзник тратит Очко чужого
         // Чемпиона — module/combat/inspiring-presence.mjs сверяет Черту,
@@ -1064,9 +1153,12 @@ Hooks.once("ready", () => {
         // разрешаем ровно эти два пути, остальное отклоняем.
         const item = await fromUuid(data.uuid).catch(() => null);
         if (!(item instanceof Item) || !data.data || typeof data.data !== "object") return;
+        // + Саботаж (Талант Разбойника, combat/sabotage.mjs): игрок Клинит оружие чужого NPC —
+        // ровно system.jammed = true на оружии (снять Клин тем же путём нельзя).
         const allowed = Object.keys(data.data).every(k => k === "system.history"
-          || k.startsWith("system.history.") || k === "system.infoguard");
-        if (!allowed) return console.warn("Warhammer DBC | itemUpdate отклонён: путь вне system.history.*/system.infoguard", data.data);
+          || k.startsWith("system.history.") || k === "system.infoguard"
+          || (k === "system.jammed" && data.data[k] === true && item.type === "weapon"));
+        if (!allowed) return console.warn("Warhammer DBC | itemUpdate отклонён: путь вне system.history.*/system.infoguard/system.jammed", data.data);
         await item.update(data.data);
       }
       else if (data.action === "messageDamageBoost") {
@@ -1121,7 +1213,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateRetinalDisplayMark, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateRetinalDisplayMark, migrateDrugAddictionFields, migrateDrugAddictionFlag, migrateDiseaseActive, migrateDiseaseActiveAll, migrateStrangeTechniqueEffect, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -1392,10 +1484,84 @@ Hooks.once("ready", async () => {
 Hooks.once("ready", async () => {
   if (!game.user.isGM) return;
   // Идемпотентна (метку, которая уже есть, не дописывает), проход по
-  // несвязанным токенам повторять безопасно.
+  // несвязанным токенам повторять безопасно. Версия 2 (task-1a59): метку
+  // получила ещё силовая броня смертных (4 записи) — в мирах, где версия 1
+  // уже стоит, без подъёма их копии на акторах остались бы без метки.
   await runMigrationGate({
     key: "retinalDisplayMarkVersion", tokensKey: "retinalDisplayMarkTokensVersion", label: "Встроенный ретинальный дисплей",
+    version: 2, tokensVersion: 2,
     full: () => migrateRetinalDisplayMark(), tokensOnly: () => migrateRetinalDisplayMark({ tokensOnly: true })
+  });
+});
+
+// ── Одноразовая доливка: поля Зависимости наркотиков (комбинированный тест,
+// штраф без дозы, урон за период) и книжные числа у выданных до правки пака
+// 25.10.2026 копий (wdbc-gyqf2) ──
+// Ручной перезапуск: game.warhammerDBC.migrateDrugAddictionFields()
+// ── затем одноразово: зависимость от наркотиков переносится из поля предмета
+// (system.addiction.isAddicted) в флаг актора drugWithdrawal — иначе удалённый
+// флакон снимает штраф, а доза от другого персонажа пишется не получателю
+// (task-9717) ──
+// Ручной перезапуск: game.warhammerDBC.migrateDrugAddictionFlag()
+// Один обработчик, строго по очереди: Foundry не ждёт async-обработчики
+// «ready», и перенос успевал снять снимок настроек во флаг актора со старой,
+// ещё не долитой копии (доливка сперва долго грузит паки).
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  // Идемпотентна (заполняет только пустые поля и исправляет только прежние
+  // неверные числа), проход по несвязанным токенам повторять безопасно.
+  await runMigrationGate({
+    key: "drugAddictionFieldsVersion", tokensKey: "drugAddictionFieldsTokensVersion", label: "Зависимость наркотиков",
+    full: () => migrateDrugAddictionFields(), tokensOnly: () => migrateDrugAddictionFields({ tokensOnly: true })
+  });
+  // Идемпотентна (копия со сброшенным isAddicted не трогается, метки дозы
+  // существующей записи сохраняются); отдельный ключ — миграция
+  // drug-addiction-fields уже выпущена (wdbc-gbd3).
+  await runMigrationGate({
+    key: "drugAddictionFlagVersion", tokensKey: "drugAddictionFlagTokensVersion", label: "Зависимость наркотиков (флаг актора)",
+    full: () => migrateDrugAddictionFlag(), tokensOnly: () => migrateDrugAddictionFlag({ tokensOnly: true })
+  });
+});
+
+// ── Одноразово: выданные болезни с записями Конструктора включаются (active:true) —
+// с 25.10.2026 болезнь действует только когда включена, а выдавались они
+// выключенными; без прохода текущие больные потеряли бы эффект (wdbc-dbveg) ──
+// Ручной перезапуск: game.warhammerDBC.migrateDiseaseActive()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  // Повтор безопасен: включённая копия несёт метку diseaseActiveMigrated и больше
+  // не трогается, даже если ГМ её потом выключил (migrations/disease-active.mjs).
+  await runMigrationGate({
+    key: "diseaseActiveVersion", tokensKey: "diseaseActiveTokensVersion", label: "Болезни (действует)",
+    full: () => migrateDiseaseActive(), tokensOnly: () => migrateDiseaseActive({ tokensOnly: true })
+  });
+});
+
+// ── Одноразово: ВСЕ выданные болезни (и без механики) включаются — Чумной
+// Пастырь считает заражёнными только действующие, а выдавались болезни
+// выключенными; без прохода «свободная Короткая Команда» у отрядов Нурглитов
+// пропала бы (task-3ab7) ──
+// Ручной перезапуск: game.warhammerDBC.migrateDiseaseActiveAll()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  // Отдельный ключ версии: проход disease-active уже выпущен, его VERSION не
+  // поднимается. Копия с меткой diseaseActiveMigrated не трогается — повтор
+  // безопасен (migrations/disease-active-all.mjs).
+  await runMigrationGate({
+    key: "diseaseActiveAllVersion", tokensKey: "diseaseActiveAllTokensVersion", label: "Болезни (все выданные)",
+    full: () => migrateDiseaseActiveAll(), tokensOnly: () => migrateDiseaseActiveAll({ tokensOnly: true })
+  });
+});
+
+// ── Одноразово: Странная Техника — снять общий ActiveEffect «+1 Реакция» у выданных копий;
+// Реакция теперь отдельный пул «странных» атак (Sahara 3-8dc5) ──
+// Ручной перезапуск: game.warhammerDBC.migrateStrangeTechniqueEffect()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  // Идемпотентна: нечего снимать — нет записей (migrations/strange-technique-effect.mjs).
+  await runMigrationGate({
+    key: "strangeTechniqueEffectVersion", tokensKey: "strangeTechniqueEffectTokensVersion", label: "Странная Техника (общая Реакция)",
+    full: () => migrateStrangeTechniqueEffect(), tokensOnly: () => migrateStrangeTechniqueEffect({ tokensOnly: true })
   });
 });
 
@@ -1463,6 +1629,9 @@ Hooks.once("init", () => initForceMoveHud());
 Hooks.once("init", () => initTearOpenHud());
 Hooks.once("init", () => initMovedFlagTracking());
 Hooks.once("init", () => initFreeAttackHooks());
+// Лимит пути токена за Ход (wdbc-l2urs): блок перемещения сверх объявленного
+// Движения (preMoveToken) и категория Хода для Выстрела Навскидку (moveToken).
+Hooks.once("init", () => initPathLimitHooks());
 Hooks.once("init", () => initSqueezeHooks());
 // BONE-Head (Огрин): вышел из поля Haywire — сбой импланта и Ступор от поля снимаются сами.
 Hooks.once("init", () => initBoneHeadHooks());
@@ -1574,6 +1743,10 @@ Hooks.once("ready", async () => {
 Hooks.on("updateItem", (item) => { if (item?.type === "celestialBody") refreshSystemsOverview(); });
 Hooks.on("createItem", (item) => { if (item?.type === "celestialBody") refreshSystemsOverview(); });
 Hooks.on("deleteItem", (item) => { if (item?.type === "celestialBody") refreshSystemsOverview(); });
+// Рана в Реальности (пачка I2): удалили поддерживаемую силу — радиус ауры пересчитать.
+Hooks.on("deleteItem", async (item, options, userId) => {
+  if (game.user.id === userId) await onWoundRelevantItemChange(item, null);
+});
 Hooks.on("updateActor", (actor) => { if (actor?.type === "starSystem") refreshSystemsOverview(); });
 
 Hooks.on("getSceneControlButtons", (controls) => {
@@ -2075,6 +2248,8 @@ Hooks.on("createItem", async (item, options, userId) => {
 });
 Hooks.on("updateItem", async (item, changed, options, userId) => {
   if (game.user.id !== userId) return;
+  // Рана в Реальности (Талант Псайканы, пачка I2): поддержание/пометка «бесплатно» меняют радиус её ауры.
+  await onWoundRelevantItemChange(item, changed);
   if (changed?.system?.quality === undefined) return;
   if (!(item.parent instanceof Actor) || !needsBestQChoice(item)) return;
   await runBestQChoice(item);
@@ -2273,6 +2448,10 @@ Hooks.on("createItem", handleItemCreated);
 // нет.
 Hooks.on("updateItem", async (item, changed, options, userId) => {
   if (game.user.id !== userId) return;
+  // Качество сменили — записи с гейтом «Когда Качество» (эффекты, Таланты
+  // импланта: Модуль Агрессии) пересобираются сразу; поле system.quality под
+  // «правку Механики» ниже не попадает.
+  await onItemQualityChanged(item, changed);
   // Рейтинг Черты сменили (Укус (1) → (3)) — пересчитать урон выданных ею
   // интегральных атак (wdbc-o368c); полное применение Механики тут не нужно.
   if (changed?.system?.rating !== undefined && item.parent instanceof Actor
@@ -2288,6 +2467,8 @@ Hooks.on("updateItem", async (item, changed, options, userId) => {
 // userId-гвард — иначе каждый клиент создал бы свою копию Черты.
 Hooks.on("updateActor", async (actor, changed, options, userId) => {
   if (game.user.id !== userId) return;
+  // Рана в Реальности: Порча меняет Cor.b, а с ним радиус ауры (Cor.b×2 м).
+  await onWoundRelevantActorChange(actor, changed);
   const sys = changed?.system;
   if (!sys || (sys.inRage === undefined && sys.wounds === undefined
       && sys.conditions === undefined && sys.patronGod === undefined)) return;
@@ -2318,6 +2499,22 @@ Hooks.on("deleteItem", async (item, options, userId) => {
   if (game.user.id !== userId) return;
   if (!isCyberneticExcellence(item) || !(item.parent instanceof Actor)) return;
   await syncCyberneticExcellenceArms(item.parent);
+});
+
+// ── Flesh is Weak / Плоть Слаба (Механикум, Sahara 3-cc96 п.7) — каждая копия
+// Таланта поднимает рейтинг Трейта Machine на 1 (module/apps/flesh-is-weak.mjs
+// держит рейтинг и броню Трейта в согласии с числом копий). Образец — хуки
+// Кибернетического Превосходства выше; userId-гвард тот же. Появилась Machine
+// после Таланта (Перерождение, Раса) — createItem Черты тоже запускает синхронизацию.
+Hooks.on("createItem", async (item, options, userId) => {
+  if (game.user.id !== userId) return;
+  if (!(item.parent instanceof Actor) || !(isFleshIsWeak(item) || isMachineTrait(item))) return;
+  await syncFleshIsWeak(item.parent);
+});
+Hooks.on("deleteItem", async (item, options, userId) => {
+  if (game.user.id !== userId) return;
+  if (!(item.parent instanceof Actor) || !isFleshIsWeak(item)) return;
+  await syncFleshIsWeak(item.parent);
 });
 
 // ── Дитя Тёмного Принца (Нага, module/apps/naga-traits.mjs) ────────────────
@@ -2774,6 +2971,14 @@ function _integralProtected(item) {
   const optional = optionalIntegralEntries(source.getFlag?.("warhammer-dbc", "mechanics") || [])
     .find(e => e.id === entryId);
   if (optional && !integralEntrySelected(optional, source.getFlag("warhammer-dbc", INTEGRAL_CHOSEN_FLAG))) return false;
+  // Условие «Когда» самой записи (смена субмутации и подобное) перестало
+  // проходить — это тоже штатный откат (syncGrantedEquipment,
+  // removeStaleAbilityGrants), источник при этом остаётся активен как целая
+  // Мутация/Имплант: без этой проверки хук считал бы атаку защищённой вечно,
+  // пока жив сам источник, и блокировал её законное снятие (task-8cfb,
+  // живая проверка 22.10.2026 — субмутация 10→8 не снимала Crown of Horns).
+  const entry = entryId ? findMechEntryById(getItemMechanics(source), entryId) : null;
+  if (entry && !entryWhenOk(actor, entry, source)) return false;
   return isItemActive(source);
 }
 

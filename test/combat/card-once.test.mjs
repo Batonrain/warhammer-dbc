@@ -159,3 +159,20 @@ describe("стыковка: ретрансляция отметки ГМу", () 
     for (const k of keys) expect(CARD_ONCE_FLAGS).toContain(k);
   });
 });
+
+describe("стыковка: Гренадер и Снайпер Ужаса — раз на карточку флагом сообщения (Sahara pyromaniac-20 п.2)", () => {
+  it("ключи кнопок Гренадера и строк Снайпера Ужаса есть в белом списке сокета", () => {
+    expect(CARD_ONCE_FLAGS).toContain("grenadierReduceUsed");
+    expect(CARD_ONCE_FLAGS).toContain("grenadierRerollUsed");
+    for (let i = 0; i < 20; i++) expect(CARD_ONCE_FLAGS).toContain(`terrorSuppress${i}`);
+  });
+
+  it("обработчики идут через runCardOnce и гасят кнопку по флагу при отрисовке", () => {
+    expect(HOOKS).toMatch(/runCardOnce\(message, "grenadierReduceUsed"/);
+    expect(HOOKS).toMatch(/runCardOnce\(message, "grenadierRerollUsed"/);
+    expect(HOOKS).toMatch(/cardOnceUsed\(message, "grenadierReduceUsed"\)/);
+    expect(HOOKS).toMatch(/cardOnceUsed\(message, "grenadierRerollUsed"\)/);
+    expect(HOOKS).toMatch(/terrorSuppressOnCard\(message, rowIndex/);
+    expect(HOOKS).toMatch(/cardOnceUsed\(message, rowKey\)/);
+  });
+});

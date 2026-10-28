@@ -63,6 +63,11 @@ export class TalentData extends foundry.abstract.TypeDataModel {
         name:  new StringField({ initial: "", label: "Подпись" }),
         img:   new StringField({ initial: "", label: "Значок" })
       }), { label: "Цели" }),
+      // Cannon Fodder / Пушечное Мясо (Sahara 3-cross-actor): какому Миньону Хозяина
+      // эта копия Таланта режет Лояльность на 20 — «slot:<id Таланта Миньон Хаоса>»
+      // либо uuid актора-Миньона (rules/minion-build.mjs::minionMatchesTarget).
+      // Выбирается при покупке (apps/cannon-fodder.mjs).
+      targetMinion:   new StringField({ initial: "", label: "Миньон (Пушечное Мясо)" }),
       cost:           new NumberField({ initial: 0, integer: true, nullable: false, label: "Цена в опыте" }),
       // ГМ вписал цену руками (вкладка «Развитие») — setAptitudes её больше
       // не трогает при пересчёте по смене Склонностей, иначе правка молча

@@ -42,6 +42,8 @@ export class AmmoData extends foundry.abstract.TypeDataModel {
       condMods:           new ArrayField(new ObjectField(), { label: "Условные модификаторы" }),
       drukhari:           new BooleanField({ initial: false, label: "Друкхари" }),
       bookSource:         new StringField({ initial: "", label: "Книга-источник" }),
+      // Снаряжение Легиона — см. data/item/gear.mjs.
+      legion:             new BooleanField({ initial: false, label: "Легион (снаряжение Легиона)" }),
       // Свой размер на разгрузке (стр. 243, «Размеры предметов», wdbc-x1nz.2) —
       // переопределяет умолчание itemSizeStr() (module/constants/rig.mjs),
       // которое без этого поля даёт ЛЮБОМУ боеприпасу голое "1x1" — магазин

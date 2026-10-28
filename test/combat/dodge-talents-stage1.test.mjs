@@ -302,6 +302,30 @@ describe("Скоростная Внимательность", () => {
     expect(card).toContain("Скоростная Внимательность: бежал 20 м → -25");
   });
 
+  it("дистанция по умолчанию — реально измеренный пробег токена (wdbc-l2urs), а не полный Бег", async () => {
+    const a = runner([talent(SA)]);
+    a._store["warhammer-dbc.ranMetersThisTurn"] = 7.9;
+    captured.dice = [10];
+    const p = _performDodge(a, { extraMod: 0 });
+    await flush();
+    // Округление вниз: 7,9 м при P.b 4 — одни полные 4 м (−5), а не 8 м (−10).
+    expect(captured.dialog.content).toContain('value="7"');
+    expect(captured.dialog.content).toContain("измерено");
+    captured.dismiss();
+    await p;
+  });
+
+  it("пробег не измеряли — по умолчанию полный Бег, как раньше", async () => {
+    const a = runner([talent(SA)]);
+    captured.dice = [10];
+    const p = _performDodge(a, { extraMod: 0 });
+    await flush();
+    expect(captured.dialog.content).toContain('value="18"');
+    expect(captured.dialog.content).not.toContain("измерено");
+    captured.dismiss();
+    await p;
+  });
+
   it("Уклонение: отмена диалога — ничего не брошено, Реакция не потрачена", async () => {
     globalThis.game.combat = { started: true };
     const a = runner([talent(SA)]);

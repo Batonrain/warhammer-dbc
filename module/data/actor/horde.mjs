@@ -96,7 +96,8 @@ export class HordeData extends foundry.abstract.TypeDataModel {
       reactions: new SchemaField({
         value: num(1, "Текущие"), max: num(1, "Максимум"),
         defenseValue: num(0, "Текущие (только Избегание)"),
-        defenseMax:   num(0, "Максимум (только Избегание)")
+        defenseMax:   num(0, "Максимум (только Избегание)"),
+        strangeValue: num(0, "Текущие (только странные атаки)")
       }, { label: "Реакции" }),
       conditions: new SchemaField({
         pinned: new BooleanField({ initial: false, label: "Подавлена" })

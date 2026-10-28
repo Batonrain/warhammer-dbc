@@ -9,12 +9,12 @@
 // имён — doombc-hand-of-death), не по английской: «Custom Grip» дословно в
 // паке не встречается, только его перевод.
 //
-// −1 ОД к перезарядке (до ½) книжного текста по-прежнему НЕ смоделирован
-// здесь: с wdbc-x1nz.2.54 у system.reload (module/data/item/weapon.mjs)
-// наконец есть числовой движок — combat/reload.mjs::reloadApCost (½ → 1 ОД,
-// целое N → 2N ОД) — но САМА скидка Fully Armed поверх него ещё не подключена.
-// Общий Талант с идентичной формулировкой ("вдвое, окр.▼") — Rapid Reload —
-// уже подключён к этому движку (reload.mjs, сверка главы 3, 17.10.2026).
+// −1 ОД к перезарядке (до ½): с wdbc-x1nz.2.54 у system.reload
+// (module/data/item/weapon.mjs) есть числовой движок — combat/reload.mjs::
+// reloadApCost (½ → 1 ОД, целое N → 2N ОД); скидка подключена в
+// fullyArmedReloadApCost ниже (62-0252 Q3, 24.10.2026). Общий Талант с
+// идентичной формулировкой ("вдвое, окр.▼") — Rapid Reload — тоже на этом
+// движке; когда есть оба, берётся ЛУЧШАЯ скидка (не сумма) — решение владельца.
 
 import { itemHasName } from "../rules/predicates.mjs";
 import { hasAbility } from "../rules/ability-by-key.mjs";
@@ -44,6 +44,23 @@ export function fullyArmedReliabilityBonus(actor, weapon) {
   if (weapon?.type !== "weapon" || !isEligibleWeaponClass(weapon)) return 0;
   if (!hasFullyArmed(actor) || !hasCustomGrip(actor, weapon)) return 0;
   return 1;
+}
+
+/**
+ * Стоимость перезарядки в ОД с Во Всеоружии: «снижает стоимость перезарядки
+ * всего оружия с модификацией Custom Grip на 1 ОД (вплоть до ½)» (62-0252 Q3).
+ * Книга говорит «всего оружия» — класс (в отличие от Надёжности и веса)
+ * не ограничивает. ½ = Полудействие = 1 ОД, ниже скидка не опускает;
+ * бесплатная перезарядка (0 ОД) остаётся бесплатной.
+ * Со Быстрой Перезарядкой скидки НЕ складываются — берёт лучшую вызывающий
+ * (combat/reload.mjs, решение владельца 24.10.2026).
+ * @param {number} apCost  цена без скидок (combat/reload.mjs::reloadApCost)
+ */
+export function fullyArmedReloadApCost(actor, weapon, apCost) {
+  const cost = Number(apCost) || 0;
+  if (cost <= 0 || weapon?.type !== "weapon") return cost;
+  if (!hasFullyArmed(actor) || !hasCustomGrip(actor, weapon)) return cost;
+  return Math.max(1, cost - 1);
 }
 
 /**

@@ -61,9 +61,14 @@ import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
 import { fatigueGraceForActor } from "./fatigue-grace.mjs";
 import { tirelessExempt } from "./resilience-talents.mjs";
+import { pinDownHoldOf } from "./pugilist-talents.mjs";
 import { disabledArmourPenalty } from "./armour-penalty.mjs";
 import { inventoryOverloadPenalty } from "./encumbrance.mjs";
 import { isItemActive } from "../apps/effects.mjs";
+import { itemHasName } from "./predicates.mjs";
+import { isInRage } from "./rage.mjs";
+import { dragonKnightRules } from "./dragon-knight.mjs";
+import { passengerTestMod } from "./mount.mjs";
 
 /**
  * Тесты, которых Усталость не касается. Книга («Раны и Урон» → «Статусы»,
@@ -109,15 +114,48 @@ function hololithBriefingBonus(actor, skillKey) {
   return actor?.getFlag?.("warhammer-dbc", HOLOLITH_BRIEFED_FLAG) ? 10 : 0;
 }
 
+// Предусмотрительность (Талант Мудреца, sage.core.foresight; 3-b530): 5 минут
+// раздумий → +10 на СЛЕДУЮЩИЙ тест I. Флаг ставит кнопка Таланта
+// (apps/talent-actions.mjs), гасит sheets/actor-sheet.mjs::_runTest после
+// теста Int — тот же приём, что у гололита выше. Флаг читается напрямую
+// (getFlag): чистый файл, цикла импортов нет.
+export const FORESIGHT_READY_FLAG = "foresightReady";
+function foresightBonus(actor, charKey) {
+  if (String(charKey ?? "").toLowerCase() !== "int") return 0;
+  return actor?.getFlag?.("warhammer-dbc", FORESIGHT_READY_FLAG) ? 10 : 0;
+}
+
+// Закалённый Кокон (Талант Геносемени, geneseed.core.temperedCocoon; 3-b530):
+// «ещё +10 на все тесты против жара, холода и вакуума». Теги теста ставит
+// combat/temperature-hazard.mjs (heatTest / coldTest) и combat/vacuum.mjs
+// (vacuumTest, Преимущество там же).
+export const TEMPERED_COCOON_CAP = "geneseed.core.temperedCocoon";
+function temperedCocoonBonus(actor, ctx) {
+  if (!(ctx?.heatTest || ctx?.coldTest || ctx?.vacuumTest)) return 0;
+  return actorHasCapability(actor, TEMPERED_COCOON_CAP, "Tempered Cocoon") ? 10 : 0;
+}
+
+// Испробовать Душу (Талант Геносемени, geneseed.core.tasteTheSoul; 3-b530):
+// «+½ P (окр.▲) на тесты использования Омофагеи». P — характеристика Восприятия
+// (книга для бонуса пишет «.b»). Тег omophageaTest ставит apps/omophagea.mjs.
+export const TASTE_THE_SOUL_CAP = "geneseed.core.tasteTheSoul";
+function tasteTheSoulBonus(actor, ctx) {
+  if (!ctx?.omophageaTest || !actorHasCapability(actor, TASTE_THE_SOUL_CAP, "Taste the Soul")) return 0;
+  return Math.ceil(Math.max(0, Number(actor?.system?.characteristics?.per?.total) || 0) / 2);
+}
+
 const actorHomeworldKey = actor =>
   actor?.items?.find(i => i.type === "homeworld")?.system?.key || "";
 
 /**
  * Есть ли у актора включённый предмет с такой возможностью Конструктора.
  * Прямой скан, а не hasRuleFlag — см. шапку файла (иначе круг импортов).
+ * talentName — Талант, купленный до появления записи в паке, ключа не несёт
+ * до «Обновить мир», поэтому опознаётся и по имени.
  */
-function actorHasCapability(actor, key) {
+function actorHasCapability(actor, key, talentName = "") {
   for (const item of actor?.items ?? []) {
+    if (talentName && item?.type === "talent" && itemHasName(item, talentName)) return true;
     const groups = item?.flags?.["warhammer-dbc"]?.mechanics;
     if (!Array.isArray(groups)) continue;
     const grants = groups.some(g => (g.entries || []).some(
@@ -135,6 +173,10 @@ function actorHasCapability(actor, key) {
  * отдохнувшего персонажа (обычный случай) всё решает первое же сравнение.
  */
 export function fatiguePenalty(actor, charKey) {
+  // Ярость (Frenzy, стр. 62): «игнорирует штраф −10 от Усталости» — целиком,
+  // и −20 Иссушенного тоже: это штраф Усталости, не её порог. Первой строкой —
+  // дешевле всего и снимает остальные проверки.
+  if (isInRage(actor)) return 0;
   // Добывающий мир, «Потом и кровью»: штрафы начинаются лишь после T.b Усталости.
   const hw = HOMEWORLD_BY_KEY[actorHomeworldKey(actor)];
   const hwGrace = hw?.fatigueGrace === "tBonus" ? (actor?.system?.characteristics?.t?.bonus ?? 0) : 0;
@@ -249,6 +291,25 @@ function grappleSqueezePenalty(actor, ctx, skillKey) {
   return physical ? -10 * n : 0;
 }
 
+/**
+ * Прижать (Талант Пугилиста, стр. 62, rules/pugilist-talents.mjs): штраф на
+ * все физические действия цели, пока прижимающий её не выпустил или не начался
+ * его следующий Ход. Штраф лежит флагом на ПРИЖИМАЮЩЕМ (его Ход снимает флаг
+ * сам), цель находит его по партнёру Борьбы.
+ */
+function pinDownPenalty(actor, ctx, skillKey) {
+  if (!actor?.system?.conditions?.grappling) return 0;
+  const partnerUuid = actor?.getFlag?.("warhammer-dbc", "grapplePartnerUuid")
+    ?? actor?.flags?.["warhammer-dbc"]?.grapplePartnerUuid;
+  if (!partnerUuid || typeof fromUuidSync !== "function") return 0;
+  let pinner = null;
+  try { pinner = fromUuidSync(partnerUuid); } catch { return 0; }
+  const n = pinDownHoldOf(pinner) || 0;
+  if (!n) return 0;
+  const physical = ctx.kind === "attack" || PHYSICAL_SKILLS.includes(skillKey);
+  return physical ? -n : 0;
+}
+
 export function situationalRules(actor, ctx = {}) {
   if (!actor) return [];
   const charKey  = ctx.char;
@@ -272,12 +333,28 @@ export function situationalRules(actor, ctx = {}) {
       inventoryOverloadPenalty(actor, { charKey, skillKey }));
   add("situational.hololithBriefing", "📽️ Гололит: подготовленный брифинг",
       hololithBriefingBonus(actor, skillKey));
+  add("situational.temperedCocoon", "🧬 Закалённый Кокон: против жара/холода/вакуума",
+      temperedCocoonBonus(actor, ctx));
+  add("situational.tasteTheSoul", "🧠 Испробовать Душу: +½ P на Омофагею",
+      tasteTheSoulBonus(actor, ctx));
+  add("situational.foresight", "🔮 Предусмотрительность: обдуманный курс действий",
+      foresightBonus(actor, charKey));
   add("situational.marchTrackBonus", "🏃 Цель марширует/бежит — легче засечь",
       marchTrackBonus(ctx));
+  // Драконий Рыцарь: метка на скакуне, поставленная тестом всадника (rules/dragon-knight.mjs).
+  rules.push(...dragonKnightRules(actor));
+  // Пассажир верхом (стр. 477, rules/mount.mjs::passengerTestMod): −10 на все
+  // физические действия, −20 на Натиске и Беге; Рысь у него или у ведущего
+  // всадника штраф снимает. Скакуна и ведущего ищем среди акторов мира.
+  if (actor?.system?.mount?.role === "passenger") {
+    const world = typeof game !== "undefined" ? [...(game.actors ?? [])] : [];
+    add("situational.passenger", "🐎 Пассажир верхом", passengerTestMod(actor, ctx, { actors: world }));
+  }
   add("situational.springingStance", "🐸 Пружинящая Стойка",
       springingStrengthPenalty(actor, charKey));
   add("situational.grappleSqueeze", "🤼 Сжат в Захвате",
       grappleSqueezePenalty(actor, ctx, skillKey));
+  add("situational.pinDown", "🤼 Прижат", pinDownPenalty(actor, ctx, skillKey));
   // Шок (стр. 53, rules/shock.mjs): штраф выпавшей строки таблицы.
   add("situational.shock", "😨 Шок", shockPenalty(actor, charKey));
   // «Бежит в панике; если пути к побегу нет — −20» (строка 81–100): есть ли

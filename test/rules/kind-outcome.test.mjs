@@ -10,7 +10,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 // foundry.utils.escapeHTML — заглушка нужна для загрузки, не для расчёта
 // (см. шапку test/support/foundry-stub.mjs).
 import "../support/foundry-stub.mjs";
-import { resolveKindOutcome } from "../../module/rules/kind-outcome.mjs";
+import { resolveKindOutcome, applyAssistedMasteryCrit } from "../../module/rules/kind-outcome.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 
 const DEFAULT_SOURCES = getRuleSources();
@@ -665,5 +665,95 @@ describe("resolveKindOutcome — Мастерство: 5+ Успехов = Кр�
     const o = await test(a, 99, 20);
     expect(o.success).toBe(false);
     expect(o.masteryCrit).toBe(false);
+  });
+});
+
+describe("applyAssistedMasteryCrit — Ассистенты дотянули до 5+ Успехов (62-3093 п.3)", () => {
+  const skillCtx = a => ({ actor: a, kind: "skill", char: "ag", skill: "dodge" });
+  const masteryTrade = { type: "talent", name: "Mastery / Мастерство", system: { aptSource: "dodge", specialization: "" } };
+  const scriptItem = (id, entry) => {
+    const store = { "warhammer-dbc.mechanics": [{ id: "g1", operator: "AND", entries: [entry] }] };
+    return {
+      id, name: `Предмет ${id}`,
+      getFlag: (scope, key) => store[`${scope}.${key}`],
+      setFlag: async (scope, key, value) => { store[`${scope}.${key}`] = value; return value; }
+    };
+  };
+  const entry = { id: "e1", kind: "script", scriptTrigger: "critSuccess", code: 'await item.setFlag("test","ran",true);' };
+  const regTrigger = () => registerRuleSource("s", () => [{
+    id: "r", effects: [{ kind: "scriptTrigger", target: "skill:dodge", side: "critSuccess", itemId: "it1", entryId: "e1" }]
+  }]);
+  const SK = { skill: "dodge", group: "", specialty: "" };
+
+  it("без Ассистентов 3 Успеха — скрипт не шёл; Ассистенты довели до 5 — строка крита и скрипт запущены", async () => {
+    const it1 = scriptItem("it1", entry);
+    const a = actorWithItems([masteryTrade, it1]);
+    regTrigger();
+    // Предел 45, бросок 20 → 3 Успеха, натуральный 20 — не крит.
+    const o = await resolveKindOutcome(a, { kind: "base", baseEff: 45, rv: 20, ctx: skillCtx(a) });
+    expect(o.deg).toBe(3);
+    expect(o.masteryCrit).toBe(false);
+    expect(it1.getFlag("test", "ran")).toBeUndefined();
+    const line = await applyAssistedMasteryCrit(a, o, SK, 5);
+    expect(line).toContain("Мастерство");
+    expect(it1.getFlag("test", "ran")).toBe(true);
+  });
+
+  it("4 Успеха после Ассистентов — не крит: ни строки, ни скрипта", async () => {
+    const it1 = scriptItem("it1", entry);
+    const a = actorWithItems([masteryTrade, it1]);
+    regTrigger();
+    const o = await resolveKindOutcome(a, { kind: "base", baseEff: 45, rv: 20, ctx: skillCtx(a) });
+    expect(await applyAssistedMasteryCrit(a, o, SK, 4)).toBe("");
+    expect(it1.getFlag("test", "ran")).toBeUndefined();
+  });
+
+  it("без Мастерства на этот Навык — Ассистенты крита не дают", async () => {
+    const it1 = scriptItem("it1", entry);
+    const a = actorWithItems([it1]);
+    regTrigger();
+    const o = await resolveKindOutcome(a, { kind: "base", baseEff: 45, rv: 20, ctx: skillCtx(a) });
+    expect(await applyAssistedMasteryCrit(a, o, SK, 6)).toBe("");
+    expect(it1.getFlag("test", "ran")).toBeUndefined();
+  });
+
+  it("крит уже был в исходе (натуральный 1–5 или 5+ без Ассистентов) — скрипт не запускается второй раз", async () => {
+    const e2 = { ...entry, code: 'await item.setFlag("test","n",(item.getFlag("test","n")||0)+1);' };
+    const it1 = scriptItem("it1", e2);
+    const a = actorWithItems([masteryTrade, it1]);
+    regTrigger();
+    const o = await resolveKindOutcome(a, { kind: "base", baseEff: 45, rv: 3, ctx: skillCtx(a) });   // натуральный крит
+    expect(it1.getFlag("test", "n")).toBe(1);
+    expect(await applyAssistedMasteryCrit(a, o, SK, 6)).toBe("");
+    expect(it1.getFlag("test", "n")).toBe(1);
+    const o2 = await resolveKindOutcome(a, { kind: "base", baseEff: 80, rv: 35, ctx: skillCtx(a) }); // 5 Успехов уже в исходе
+    expect(o2.masteryCrit).toBe(true);
+    expect(it1.getFlag("test", "n")).toBe(2);
+    expect(await applyAssistedMasteryCrit(a, o2, SK, 6)).toBe("");
+    expect(it1.getFlag("test", "n")).toBe(2);
+  });
+
+  it("скрипт «по Крит. Провалу» при броске 97 на успехе не запускается второй раз", async () => {
+    const eF = { id: "e1", kind: "script", scriptTrigger: "critFailure", code: 'await item.setFlag("test","n",(item.getFlag("test","n")||0)+1);' };
+    const it1 = scriptItem("it1", eF);
+    const a = actorWithItems([masteryTrade, it1]);
+    registerRuleSource("s", () => [{
+      id: "r", effects: [{ kind: "scriptTrigger", target: "skill:dodge", side: "critFailure", itemId: "it1", entryId: "e1" }]
+    }]);
+    // Порог 100, бросок 97: успех (1 Успех) и одновременно натуральный Крит. Провал (96+).
+    const o = await resolveKindOutcome(a, { kind: "base", baseEff: 100, rv: 97, ctx: skillCtx(a) });
+    expect(o.success).toBe(true);
+    expect(it1.getFlag("test", "n")).toBe(1);
+    await applyAssistedMasteryCrit(a, o, SK, 5);
+    expect(it1.getFlag("test", "n")).toBe(1);
+  });
+
+  it("провал — Ассистенты ничего не запускают", async () => {
+    const it1 = scriptItem("it1", entry);
+    const a = actorWithItems([masteryTrade, it1]);
+    regTrigger();
+    const o = await resolveKindOutcome(a, { kind: "base", baseEff: 20, rv: 90, ctx: skillCtx(a) });
+    expect(await applyAssistedMasteryCrit(a, o, SK, 6)).toBe("");
+    expect(it1.getFlag("test", "ran")).toBeUndefined();
   });
 });

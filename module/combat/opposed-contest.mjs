@@ -43,6 +43,12 @@ const PENDING = new Map();
 /** Для тестов: сбросить ожидания. */
 export function _resetPendingContests() { PENDING.clear(); }
 
+/** Запись ожидающего приёма (только у клиента инициатора) — для переброса Ускользнуть (combat/techniques.mjs). */
+export function contestEntry(id) { return PENDING.get(id) ?? null; }
+
+/** Снять приём с ожидания: после переброса его заменяет новый (кнопки старой карточки больше ничего не решают). */
+export function dropContest(id) { PENDING.delete(id); }
+
 // ── Порог стороны ───────────────────────────────────────────────────────────
 
 /**
@@ -104,7 +110,7 @@ export function contestOpponents(actor, techDef) {
  */
 export function registerContest(actor, techDef, result, opponents) {
   const id = foundry.utils.randomID();
-  PENDING.set(id, { techDef, actorUuid: actor.uuid, result, done: new Set() });
+  PENDING.set(id, { techDef, actorUuid: actor.uuid, result, opponentUuids: opponents.map(o => o.uuid), done: new Set() });
   const opts = resistOptions(techDef, result.side);
   const how = opts.map(sideLabel).join(" или ");
   // Контрфинт (глава 3): против Финта защитник может сопротивляться
@@ -127,9 +133,16 @@ export function registerContest(actor, techDef, result, opponents) {
       data-actor-uuid="${actor.uuid}" data-opponent-uuid="${o.uuid}" data-label="${esc(techDef.label)}">
       ${rollIcon("run")}${esc(o.name)}: Пируэт (Acrobatics+0, без Реакции)
     </button>` : ""}`).join("");
+  // Ускользнуть (Талант Избегания): после провала своего броска инициатор может перебросить его раз в Раунд —
+  // кнопка живёт у его клиента (ожидание PENDING — в его памяти), combat/techniques.mjs::slipAwayContestReroll.
+  const slipBtn = result.slipReroll ? `
+    <button type="button" class="wh-slip-contest-btn" data-contest-id="${id}"
+      title="Ускользнуть: раз в Раунд перебросить проваленный тест A в Борьбе после броска. Кнопки «Сопротивляться» этой карточки перестанут работать — их заменит новая карточка.">
+      ${rollIcon("run")}Ускользнуть: перебросить (раз в Раунд)
+    </button>` : "";
   return `<div class="roll-defense-section">
     <div class="roll-threshold" style="font-size:0.85em;">Встречный тест: ${opponents.length > 1 ? "каждый противник бросает" : "противник бросает"} ${esc(how)}. Приём удаётся, только если бросок выше выигран.</div>
-    ${buttons}
+    ${buttons}${slipBtn}
   </div>`;
 }
 
@@ -241,6 +254,13 @@ export async function resolvePirouetteClick(ds) {
   const actor = ds.actorUuid ? await fromUuid(ds.actorUuid).catch(() => null) : null;
   if (!opponent || !actor) return ui.notifications.warn("⚠️ Участник встречного теста не найден.");
   if (!game.user.isGM && !opponent.isOwner) return ui.notifications.warn(`⚠️ Пируэт за ${opponent.name} может только его владелец или ГМ.`);
+  const { success } = await _rollPirouette(opponent, actor, ds.label, "остаётся обычное сопротивление");
+  if (success) await _deliver(ds, { initiatorWins: false, margin: 0 });
+  return { success };
+}
+
+/** Общий бросок Пируэта: Acrobatics+0 цели, карточка с исходом. Эффект приёма/Тарана применяет вызывающий. */
+async function _rollPirouette(opponent, attacker, label, failTail) {
   const side = { skill: "acrobatics" };
   const ruleMods = collectTestMods(opponent, sideContext(side));
   const base = sideValue(opponent, side);
@@ -251,11 +271,26 @@ export async function resolvePirouetteClick(ds) {
     icon: rollIcon("run"), title: `Пируэт — ${esc(opponent.name)}`, actorUuid: opponent.uuid,
     threshold: rollStatLine({ label: sideLabel(side), base, parts: ruleMods.parts, threshold, rv: roll.total }),
     outcome: success
-      ? outcomeHtml(true, `Успех — ${deg} ${_degWord(deg)}. ${esc(opponent.name)} пропускает ${esc(actor.name)} и смещается в сторону, не тратя Реакцию — «${esc(ds.label)}» не удаётся.`)
-      : outcomeHtml(false, `Провал — ${deg} ${_degWord(deg)}. Пируэт не удался; остаётся обычное сопротивление.`)
+      ? outcomeHtml(true, `Успех — ${deg} ${_degWord(deg)}. ${esc(opponent.name)} пропускает ${esc(attacker.name)} и смещается в сторону, не тратя Реакцию — «${esc(label)}» не удаётся.`)
+      : outcomeHtml(false, `Провал — ${deg} ${_degWord(deg)}. Пируэт не удался; ${failTail}.`)
   }, { rolls: [roll] });
-  if (success) await _deliver(ds, { initiatorWins: false, margin: 0 });
   return { success };
+}
+
+/**
+ * Пируэт против Тарана (Талант Избегания): «Когда он является целью Напролома или Тарана, он может пройти тест
+ * Acrobatics+0 и пропустить атакующего, не тратя реакции». Кнопка на карточке Тарана (combat/vehicle.mjs::_resolveRam);
+ * успех — Таран цель не задел (урон со своей карточки не применять), провал — остаются Уклонение и Вираж.
+ * @param {Actor} target   цель Тарана (выбранный токен)
+ * @param {Actor} rammer   таранящая машина
+ * @returns {Promise<{success:boolean}|null>} null — Таланта нет
+ */
+export async function resolveRamPirouette(target, rammer) {
+  if (!hasDodgeTalent(target, "pirouette")) {
+    ui.notifications?.warn(`⚠️ У «${target?.name ?? "?"}» нет Таланта «Пируэт».`);
+    return null;
+  }
+  return _rollPirouette(target, rammer, "Таран", "остаются Уклонение и Вираж");
 }
 
 /** Эффект — у клиента инициатора: локально или по сокету. */
@@ -285,7 +320,16 @@ export async function runContestOutcome({ contestId, opponentUuid, initiatorWins
   }
   if (entry.done.has(opponentUuid)) return false;
   entry.done.add(opponentUuid);
-  if (!initiatorWins) return false;
+  if (!initiatorWins) {
+    // Необязательный колбэк на проигрыш (Удушение: Заломить наносит Усталость и
+    // при проигрыше, combat/grapple-talents.mjs). Остальные приёмы его не несут.
+    if (typeof entry.techDef.onFail === "function") {
+      const loser = await fromUuid(entry.actorUuid).catch(() => null);
+      const foe = await fromUuid(opponentUuid).catch(() => null);
+      if (loser) await entry.techDef.onFail(loser, { target: foe, margin });
+    }
+    return false;
+  }
   const actor = await fromUuid(entry.actorUuid).catch(() => null);
   const target = await fromUuid(opponentUuid).catch(() => null);
   if (!actor) return false;
@@ -293,7 +337,8 @@ export async function runContestOutcome({ contestId, opponentUuid, initiatorWins
     // Победа меньшим провалом (оба провалили) — Успехов у инициатора нет:
     // deg провала не должен давать «сдвиг на deg м» / бонус 5+ (приёмка #516).
     const deg = entry.result.success ? entry.result.deg : 0;
-    await entry.techDef.onSuccess(actor, { deg, target, margin });
+    // side — чем бросал инициатор ({char:"bs"} и т.п.): Огневая Угроза различает BS и WS в Давлении.
+    await entry.techDef.onSuccess(actor, { deg, target, margin, side: entry.result.side });
   } else if (entry.techDef.note) {
     await postTestCard(actor, {
       icon: rollIcon("sword"), title: `${esc(entry.techDef.label)}: победа над ${esc(target?.name ?? "?")}`,

@@ -5,7 +5,7 @@
   "folder": "Nu4M8EyPNQpHOOjO",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект тратит/даёт игровой ресурс (Очки Бесчестия/Судьбы/Боли/Когниции/Реакцию) на разовое действие — не тестовый модификатор Навыка/Характеристики.",
+    "notes": "Реализовано: при активации нескомпилированного Славословия, если ⚙ хватает на Рейтинг×4, окно предлагает «Вотивная Месса: −N ⚙, скомпилировать сразу» — ⚙ списывается, у Славословия ставится «Скомпилировано» (sheets/tabs/tech.mjs::offerFastCompile, rules/technomystic-talents.mjs::votiveMassCost). Полное ментальное действие система не списывает; отказ — обычная компиляция.",
     "benefit": "Персонаж может скомпилировать Славословие за полное ментальное действие вместо <Рейтинг>×5 минут, потратив <Рейтинг>×4 Когниции.",
     "tier": 3,
     "requirement": "Forbidden Lore (Mechanicum)+30",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g06votiveMaCap1",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "e06votiveMaCap1",
+              "capabilityKey": "technomystic.core.votiveMass",
+              "label": "Вотивная Месса: скомпилировать Славословие за <Рейтинг>×4 ⚙ вместо <Рейтинг>×5 минут",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

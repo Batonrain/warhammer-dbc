@@ -411,6 +411,7 @@ export function conditionApplyFields(key, level = null, actor = null) {
   if (key === "surprised" && actor) {
     fields["system.reactions.value"] = 0;
     fields["system.reactions.defenseValue"] = 0;
+    fields["system.reactions.strangeValue"] = 0;
   }
   // Гангрена (wdbc-x1nz.2.96): «каждые T.b×2 часов 1d10 урона в T» — отсчёт
   // идёт от начала болезни. Метка времени — тот же флаг, что у кнопки
@@ -472,6 +473,11 @@ export function conditionRemoveFields(key) {
   // Шок унаследовал бы чужой штраф. Штраф «до конца сцены» — отдельный флаг,
   // он выход из Шока переживает намеренно. Строкой, как burningDamageFormula.
   if (key === "shocked") fields["flags.warhammer-dbc.-=shock"] = null;
+  // «Ещё Не Всё» (rules/takedown.mjs::LEAP_UP_DENIED_FLAG): метка «Вскочить
+  // запрещён, встать стоит +1 ОД» живёт ровно пока Повален — встал любым путём
+  // (Встать, Кувырок, снятие рукой), метка уходит вместе с Состоянием. Строкой,
+  // без импорта: тот же приём, что у burningDamageFormula ниже.
+  if (key === "prone") fields["flags.warhammer-dbc.-=leapUpDenied"] = null;
   // Горение (wdbc-3pv5): снятие тушит и запомненные числа Cooler/Морозного
   // Сердца — иначе следующее загорание унаследовало бы чужие урон поджигания
   // и остаток окна от предыдущего пожара.

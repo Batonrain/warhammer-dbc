@@ -83,6 +83,45 @@ describe("resolveBulldozeSuccess", () => {
     expect(captured.chat.at(-1).content).toContain("Пинком");
   });
 
+  // Громовой Натиск (стр. 62, 3-eddb, решение владельца 24.10.2026): «противники,
+  // проигравшие во встречном тесте, всегда сбиваются с ног и получают урон, как
+  // если бы проиграли на 5+ Провалов» — у носителя ветка 5+ Успехов срабатывает
+  // при ЛЮБОЙ победе.
+  it("Громовой Натиск: победа с 1 Успехом всё равно сбивает с ног и напоминает про Пинок", async () => {
+    const talent = { id: "tc", name: "Thunder Charge / Громовой Натиск", type: "talent", system: {} };
+    const actor = withFlags(actorFor({ items: [talent] }));
+    const target = actorFor({ conditions: {} });
+    let updated = null;
+    target.update = async fields => { updated = fields; Object.assign(target.system.conditions, { prone: fields["system.conditions.prone"] }); };
+
+    await resolveBulldozeSuccess(actor, { deg: 1, target });
+
+    expect(updated).toMatchObject({ "system.conditions.prone": true });
+    const html = captured.chat.at(-1).content;
+    expect(html).toContain("Пинком");
+    expect(html).toContain("Громовой Натиск");
+  });
+
+  it("без Таланта победа с 1 Успехом по-прежнему НЕ сбивает с ног (регрессия)", async () => {
+    const actor = withFlags(actorFor({}));
+    const target = actorFor({ conditions: {} });
+    let updated = null;
+    target.update = async fields => { updated = fields; };
+    await resolveBulldozeSuccess(actor, { deg: 1, target });
+    expect(updated).toBeNull();
+  });
+
+  it("Громовой Натиск по записи Конструктора (ключ Возможности) — тоже работает", async () => {
+    const talent = { id: "tc", name: "Что-то другое", type: "talent", system: {},
+      flags: { "warhammer-dbc": { mechanics: [{ entries: [{ kind: "capability", capabilityKey: "pugilist.core.thunderCharge" }] }] } } };
+    const actor = withFlags(actorFor({ items: [talent] }));
+    const target = actorFor({ conditions: {} });
+    let updated = null;
+    target.update = async fields => { updated = fields; Object.assign(target.system.conditions, { prone: fields["system.conditions.prone"] }); };
+    await resolveBulldozeSuccess(actor, { deg: 0, target });
+    expect(updated).toMatchObject({ "system.conditions.prone": true });
+  });
+
   it("без выцеленной цели — предупреждает, флаг не ставится", async () => {
     const actor = withFlags(actorFor({}));
     await resolveBulldozeSuccess(actor, { deg: 6, target: null });

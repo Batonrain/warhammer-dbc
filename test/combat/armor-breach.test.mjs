@@ -125,6 +125,38 @@ describe("применение урона помечает броню проби
   });
 });
 
+// Облучить (Талант Оружейника, ревью 3-9d40): «не удваивая AP цели» касается ТОЛЬКО расчёта свойства Rad.
+// Обычное пробитие (метка брони, Toxic и т.п.) не меняется, итог Rad — отдельное поле radBreached.
+describe("Облучить: пробитие Rad без удвоения AP — отдельно от обычного пробития", () => {
+  async function hit(over) {
+    const armor = armorItem({ body: 6 });
+    const actor = characterActor({ armorAP: 6, toughnessBonus: 0, items: [armor] });
+    const updates = [];
+    actor.update = async (u) => { updates.push(u); };
+    // урон 10 при AP 6: обычное пробитие 10 ≤ 12 — не пробито; без удвоения 10 > 6 — пробито
+    await applyDamageToActor(actor, damage({ rawDamage: 10, sourceMessageId: "msg1", ...over }));
+    return { armor, rec: updates.map(u => u["flags.warhammer-dbc.lastBreach"]).find(Boolean) };
+  }
+
+  it("с Облучить: Rad считает пробитие, а броня и обычное пробитие остаются прежними", async () => {
+    const { armor, rec } = await hit({ breachNoDouble: true });
+    expect(rec.radBreached).toBe(true);
+    expect(rec.breached).toBe(false);
+    expect(armor.system.breached).toBe(false);
+  });
+
+  it("без Облучить поля radBreached нет", async () => {
+    const { rec } = await hit({});
+    expect(rec.breached).toBe(false);
+    expect(rec).not.toHaveProperty("radBreached");
+  });
+
+  it("даже с Облучить урон ниже AP — Rad не пробивает", async () => {
+    const { rec } = await hit({ breachNoDouble: true, rawDamage: 5 });
+    expect(rec.radBreached).toBe(false);
+  });
+});
+
 describe("armorBreachOutcome — расчёт пробития (стр. 42)", () => {
   it("AP удваивается", () => {
     expect(armorBreachOutcome({ rawDamage: 9, effArmorAP: 4 }).breached).toBe(true);

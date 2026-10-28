@@ -118,9 +118,14 @@ export function activateCraftListeners(root, sheet) {
   on(craftRoot, "[name=assistants]", "change", e => upd(e.currentTarget, p => p.assistants = Math.max(0, num(e.target.value))));
   on(craftRoot, "[name=improve]", "change", e => upd(e.currentTarget, p => p.improve = e.target.checked));
   on(craftRoot, "[name=monotony]", "change", e => upd(e.currentTarget, p => p.monotony = e.target.checked));
+  on(craftRoot, "[name=hookup]", "change", e => upd(e.currentTarget, p => p.hookUp = e.target.checked));
   on(craftRoot, "[name=dicemode]", "change", e => upd(e.currentTarget, p => p.diceMode = e.target.value));
   on(craftRoot, "[name=slowshift]", "change", e => upd(e.currentTarget, p => p.slowShift = e.target.checked));
   on(craftRoot, "[name=assistant-actor]", "change", e => upd(e.currentTarget, p => p.assistantId = e.target.value));
+  on(craftRoot, "[name=torrent-weapon]", "change", e => upd(e.currentTarget, p => p.torrentWeaponUuid = e.target.value));
+  on(craftRoot, "[name=repair]", "change", e => upd(e.currentTarget, p => p.repair = e.target.checked));
+  on(craftRoot, "[name=repair-weapon]", "change", e => upd(e.currentTarget, p => p.repairWeaponId = e.target.value));
+  on(craftRoot, "[name=noparts]", "change", e => upd(e.currentTarget, p => p.noParts = e.target.checked));
 
   // Биолаборатория
   on(craftRoot, "[name=vat]", "change", e => upd(e.currentTarget, p => p.vatKey = e.target.value));

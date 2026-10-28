@@ -17,11 +17,15 @@ import { isIntegralAttack } from "../combat/equipped-melee.mjs";
 import { weaponProfiles, canStrikeWithGun, attackIsMelee } from "../combat/weapon-profiles.mjs";
 import { hasActionEconomy, isEncounterActive, apSpendGate } from "../combat/action-economy.mjs";
 import { getHeldHand, weaponHandsRequired } from "../rules/hands.mjs";
+import { stockGripActive } from "../rules/melee-talents.mjs";
 import { movementMenuItems } from "../combat/movement-actions.mjs";
 import { aimMenuItems, aimFocusToggleState, toggleAimFocusPending, trackingAimToggleState, toggleTrackingAimPending } from "../combat/aiming-action.mjs";
 import { overwatchMenuItems, overwatchManualFireItem, isOverwatchActive, overwatchState } from "../combat/overwatch.mjs";
 import { applyDrug, deactivateDrugEffect } from "../sheets/tabs/drugs.mjs";
 import { grappleOnlyHidden, isBiteName } from "../rules/integral-rating.mjs";
+import { warpLockBlocksManifest } from "../rules/warp-lock.mjs";
+import { sustainOffPatch } from "../combat/psychic-sustain.mjs";
+import { attemptRageExit } from "../combat/rage-behavior.mjs";
 import { actorInfamyMax } from "./infamy-points.mjs";
 
 const SYSTEM = "warhammer-dbc";
@@ -218,6 +222,8 @@ export function hudData(actor) {
     // Хват и профиль (стр. 39, 207-221) — выбираются кнопками в HUD, хранятся
     // во флагах оружия (hudGrip / hudProfile). Показываем ВСЕ доступные варианты.
     const gripKeys = melee ? parseGrips(g.grips) : [];
+    // Прикладный Хват: штык в «1р» выдаёт Талант (как окно атаки, attack-dialog.mjs).
+    if (melee && !gripKeys.includes("1р") && stockGripActive(actor, w)) gripKeys.push("1р");
     let curGrip = w.getFlag(SYSTEM, "hudGrip");
     if (!GRIPS[curGrip] || !gripKeys.includes(curGrip)) curGrip = gripKeys[0] || "";
     const gripOpts = gripKeys.length > 1
@@ -442,6 +448,8 @@ export function hudData(actor) {
       };
     })(),
     lamps,
+    // Ярость: кнопка «Выйти из Ярости» (тест W+0, combat/rage-behavior.mjs::attemptRageExit).
+    inRage: !!sys.inRage,
     hands, showOff,
     zeroHand,
     hasWeapon: !!(mainId || offId),
@@ -623,7 +631,14 @@ function wire(el, actor) {
       ev.preventDefault();
       if (!own) return;
       const p = actor.items.get(b.dataset.psy);
-      if (p?.system?.sustainable) await p.update({ "system.isSustained": !p.system.isSustained });
+      if (!p?.system?.sustainable) return;
+      // Варп-Замок: под меткой «не псайкер» поддержание не включить; снятие — общим набором сбросов
+      // (в нём «бесплатно» Раны в Реальности, цель, степень успеха), как галочка на листе (пачка I2).
+      if (!p.system.isSustained && warpLockBlocksManifest(actor)) {
+        ui.notifications.warn("Варп-Замок: до начала следующего Хода вы не псайкер — поддержание не включить.");
+        return;
+      }
+      await p.update(p.system.isSustained ? sustainOffPatch(p) : { "system.isSustained": true });
     });
   });
 
@@ -686,6 +701,12 @@ function wire(el, actor) {
     const item = actor.items.get(b.dataset.drugDeactivate);
     if (item) await deactivateDrugEffect(item);
   }));
+
+  // Ярость: тот же тест выхода, что кнопка на вкладке «Бой» листа.
+  el.querySelector("[data-rage-exit]")?.addEventListener("click", ev => {
+    ev.preventDefault();
+    if (own) attemptRageExit(actor);
+  });
 
   // Открыть лист.
   el.querySelectorAll("[data-open-sheet]").forEach(b =>

@@ -66,6 +66,15 @@ describe("mergeExtraProps", () => {
     expect(entries.find(e => e.key === "felling").rating).toBe(4);
   });
 
+  it("Extreme: рейтинг — порог, остаётся МЕНЬШИЙ (сильнее); без рейтинга — 10", () => {
+    const merged = r => mergeExtraProps([{ key: "extreme", rating: r, rating2: 0 }], { ruleProps: [{ key: "extreme", rating: 9 }] }).find(e => e.key === "extreme").rating;
+    expect(merged(7)).toBe(7);   // у оружия порог ниже — Талант его не ослабляет
+    expect(merged(9)).toBe(9);
+    expect(merged(0)).toBe(9);   // у оружия Extreme без числа (= 10) — Талант усиливает
+    const second = mergeExtraProps([{ key: "extreme", rating: 8, rating2: 0 }], { ruleProps: [{ key: "extreme", rating: 7 }] });
+    expect(second.find(e => e.key === "extreme").rating).toBe(7);
+  });
+
   it("свойство боеприпаса, записанное строкой, читается как ключ без рейтинга", () => {
     const entries = mergeExtraProps([], { ammoProps: ["tearing"] });
     expect(entries).toEqual([{ key: "tearing", rating: 0, rating2: 0 }]);

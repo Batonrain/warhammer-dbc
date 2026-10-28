@@ -97,6 +97,56 @@ describe("rollTempHazardTest", () => {
     expect(captured.chat).toHaveLength(1);
   });
 
+  describe("Сопротивление (Cold/Heat) и Закалённый Кокон проходят через сбор модификаторов (3-edc4 п.7, 3-b530)", () => {
+    const resistance = spec => ({ type: "talent", name: `Resistance / Сопротивление (${spec})`, system: { specialization: spec } });
+    const cocoon = () => ({
+      type: "talent", name: "Tempered Cocoon / Закалённый Кокон", system: {},
+      flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+        { id: "e", kind: "capability", capabilityKey: "geneseed.core.temperedCocoon" }] }] } }
+    });
+
+    it("Resistance (Heat): +10 к Порогу в жару, подпись в карточке", async () => {
+      globalThis.game.scenes.current = { getFlag: () => ({ temp: 65 }) }; // −20
+      const actor = makeActor({ t: 50 });
+      actor.items = [resistance("Heat")];
+      captured.nextRoll = 40; // 50−20+10 = 40 → успех на границе (без Таланта 30 — провал)
+      await rollTempHazardTest(actor);
+      expect(captured.chat[0].content).toContain("Сопротивление (Heat)");
+      expect(captured.chat[0].content).toContain("Успех");
+    });
+
+    it("Resistance (Heat) не помогает от Холода (мутация: тег жары/холода различается)", async () => {
+      globalThis.game.scenes.current = { getFlag: () => ({ temp: -40 }) };
+      const actor = makeActor({ t: 50 });
+      actor.items = [resistance("Heat")];
+      captured.nextRoll = 40; // 50−20 = 30 → провал
+      await rollTempHazardTest(actor);
+      expect(captured.chat[0].content).toContain("Провал");
+    });
+
+    it("Закалённый Кокон: +10 и Преимущество — два броска, лучший", async () => {
+      globalThis.game.scenes.current = { getFlag: () => ({ temp: 65 }) };
+      const actor = makeActor({ t: 50 });
+      actor.items = [cocoon()];
+      captured.dice = [90, 35]; // Порог 50−20+10 = 40: первый 90 провал, второй 35 успех → лучший 35
+      await rollTempHazardTest(actor);
+      const html = captured.chat[0].content;
+      expect(html).toContain("Закалённый Кокон");
+      expect(html).toContain("90 и 35");
+      expect(html).toContain("Успех");
+      captured.dice = null;
+    });
+
+    it("без Кокона бросок один", async () => {
+      globalThis.game.scenes.current = { getFlag: () => ({ temp: 65 }) };
+      const actor = makeActor({ t: 50 });
+      captured.dice = [90, 35];
+      await rollTempHazardTest(actor);
+      expect(captured.chat[0].content).toContain("Провал");
+      captured.dice = null;
+    });
+  });
+
   describe("Бриз/Breeze (wdbc-1rno) — полный иммунитет", () => {
     const saved = getRuleSources();
     afterEach(() => {

@@ -161,8 +161,9 @@ export function emptyArmorLocFlags() {
  *
  * @returns {{breached: boolean, breachAbsorption: number}}
  */
-export function armorBreachOutcome({ rawDamage, effArmorAP = 0, damageSubtype = "", otherAbsorption = 0 }) {
-  const mult = damageSubtype === "crushing" ? 3 : 2;
+export function armorBreachOutcome({ rawDamage, effArmorAP = 0, damageSubtype = "", otherAbsorption = 0, noDouble = false }) {
+  // noDouble — Облучить (Талант Оружейника): «не удваивая AP цели» для свойства Rad.
+  const mult = noDouble ? 1 : damageSubtype === "crushing" ? 3 : 2;
   const breachAbsorption = Math.max(0, Number(effArmorAP) || 0) * mult + (Number(otherAbsorption) || 0);
   return { breached: (Number(rawDamage) || 0) - breachAbsorption > 0, breachAbsorption };
 }

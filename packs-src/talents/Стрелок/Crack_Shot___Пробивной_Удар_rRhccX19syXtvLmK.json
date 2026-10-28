@@ -5,7 +5,7 @@
   "folder": "V0Wfgl0aycRFPfu2",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey rangedCore.core.crackShot — module/combat/attack.mjs (wp.negWoundsBonus ← module/rules/gunner-talents.mjs::crackShotBonus) и module/combat/damage.mjs (negativeWoundsBonus): если непоглощённый урон стрелковой атаки больше текущих Ран цели, к урону прибавляется +2 (идёт в Критические). Тот же примитив (data-neg-wounds-bonus / negWoundsBonus) годится Калечащему Удару.",
     "benefit": "Когда стрелковая атака персонажа наносит Отрицательные Раны, она получает +2 к Dmg.",
     "tier": 2,
     "requirement": "BS 50",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "nYAXt57FoORW494H",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "cwGWvRl9SvU7hOtO",
+              "capabilityKey": "rangedCore.core.crackShot",
+              "label": "Пробивной Удар: +2 к урону, если стрелковая атака уводит Раны цели в минус",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

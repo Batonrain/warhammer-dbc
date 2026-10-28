@@ -176,7 +176,7 @@ const DEVIATIONS = {
     // Экономика действий («Орды», Действия: «обычный запас ОД», Реакции как у
     // персонажа) — те же поля и умолчания, что у существ.
     actionPoints: { value: 2, max: 2 },
-    reactions: { value: 1, max: 1, defenseValue: 0, defenseMax: 0 }
+    reactions: { value: 1, max: 1, defenseValue: 0, defenseMax: 0, strangeValue: 0 }
   },
   // У трёх существ три набора расхождений сразу, и записаны они по-разному:
   // поля Миньонов и свои поля типа — обычными именами, надбавки характеристик —
@@ -208,6 +208,8 @@ const DEVIATIONS = {
     // Максимум производный (rules/character.mjs) и равен нулю у всех, кроме
     // носителей Черты «Магия Сигиллитов».
     sigilliteRunes: { value: 0, max: 0 },
+    // Очки Трофеев Мастера Казней (Sahara task-bbe1) — пул, максимум P.b считает rules/character.mjs.
+    trophyPoints: { value: 0, max: 0 },
     // Командование вне Отряда: командовать можно и теми, кто в Отряд не сведён.
     // Поля повторяют лист Отряда, но без Слаженности и Риска — их у случайной
     // группы взять неоткуда. В template.json блока не было вовсе: Команды
@@ -307,7 +309,7 @@ const DEVIATIONS = {
     // Реакции раньше были свободным текстовым полем-памяткой (умолчание ""),
     // теперь структурный пул — см. module/combat/action-economy.mjs.
     actionPoints: { value: 2, max: 2 },
-    reactions: { value: 1, max: 1, defenseValue: 0, defenseMax: 0 },
+    reactions: { value: 1, max: 1, defenseValue: 0, defenseMax: 0, strangeValue: 0 },
     // Точка расширения (wdbc-ls9d): плоское снижение входящего урона от
     // эффектов, заведено гораздо позже template.json — см. combat/damage.mjs.
     incomingDamageReduction: 0,
@@ -323,6 +325,9 @@ const DEVIATIONS = {
     // Тумблер «подключён к Ноосфере» (вкладка ТЕХ) — заведён гораздо позже
     // template.json, читают Таланты вида «Виртуальная Память».
     noosphereConnected: false,
+    // Катушка Апокрифа (Талант Техномистика, пачка J) — вторая Катушка Потенции,
+    // заведена гораздо позже template.json (rules/technomystic-resources.mjs).
+    apocryphaEnergy: { value: 0, max: 0 },
     // Свойства оружия Corrosive/Piercing/Crippling (wdbc-plsf) — заведены
     // гораздо позже template.json, см. combat/damage.mjs.
     armorCorrosion: { head: 0, leftArm: 0, rightArm: 0, body: 0, leftLeg: 0, rightLeg: 0 },
@@ -334,6 +339,8 @@ const DEVIATIONS = {
     crippledWounds: [],
     // Тумблер «В Ярости» (wdbc-plsf) — заведён гораздо позже template.json.
     inRage: false,
+    // «Кумир рядом» (Идолопоклонник, Sahara 3-scope) — rules/morale-auto.mjs.
+    idolNearby: false,
     // Переопределение привязки Склонностей (wdbc-1pvq) — «у нашего стола
     // Уклонение относится к Интеллекту и Знанию»; свободный объект, пусто =
     // книжная привязка. Заведено гораздо позже template.json.
@@ -354,6 +361,9 @@ const DEVIATIONS = {
     // Предел Первой Помощи (wdbc-x1nz.2.103) и лечение по Календарю
     // (wdbc-x1nz.2.104) — заведены гораздо позже template.json.
     "wounds.lostSinceFirstAid": null,
+    // Перешивание (3-dc87): метка времени и исхода последней Первой Помощи.
+    "wounds.firstAidAt": null,
+    "wounds.firstAidFailed": false,
     healing: { regimen: "active", caregiver: "", nextAt: 0, careOk: false },
     // Урон в Характеристики по книге (wdbc-x1nz.2.83) — отдельно от «Мод.».
     charLoss: Object.fromEntries(Object.keys(CHARACTERISTICS).map(k => [k, 0])),
@@ -367,6 +377,9 @@ const DEVIATIONS = {
     // Фокус Дисциплины (wdbc-l6zg, стр.293) — выбор игрока при создании
     // персонажа, заведён гораздо позже template.json.
     "psyker.focusDisciplines": [],
+    // Предмет-Психофокус и его резонанс (качество Good.Q+, стр.243).
+    "psyker.focusItemId": "",
+    "psyker.focusResonance": "",
     ...Object.fromEntries(Object.keys(CHARACTERISTICS)
       .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]])),
     // Постоянный модификатор Навыка (wdbc-q4wb) — поле на листе рядом с Итогом,
@@ -458,6 +471,7 @@ describe("типы данных акторов", () => {
     it("добавляет своё: признак, Талант-слот и Магнитуду Орды", () => {
       expect(minion.isMinion).toBe(true);
       expect(minion.slotTalentId).toBe("");
+      expect(minion.isAstartes).toBe(false);
       expect(minion.magnitude).toEqual({ value: 0, max: 0 });
     });
 

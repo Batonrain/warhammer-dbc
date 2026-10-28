@@ -24,7 +24,7 @@ import { spendActionPoints } from "./action-economy.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { assistThresholdBonus, assistDegrees, DEFAULT_ASSIST_MAX } from "../rules/assists.mjs";
-import { forceMoveDistance } from "./force-move.mjs";
+import { forceMoveDistance, forceMoveSpd } from "./force-move.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
@@ -87,8 +87,7 @@ export async function useJointMove(lead, assistants, { mode = "lift", weight = 0
   const rv = roll.total;
   const outcome = testOutcome(rv, threshold);
   const successes = assistDegrees(outcome.success ? outcome.deg : 0, summary.assistCount, outcome.success);
-  const spd = lead.system?.movement?.spd ?? 0;
-  const distance = outcome.success ? forceMoveDistance(mode, successes, spd) : 0;
+  const distance = outcome.success ? forceMoveDistance(mode, successes, forceMoveSpd(lead)) : 0;
 
   const parts = [...ruleMods.parts];
   if (assistBonus) parts.push(`Лишние помощники (${summary.assistCount}) +${assistBonus}`);

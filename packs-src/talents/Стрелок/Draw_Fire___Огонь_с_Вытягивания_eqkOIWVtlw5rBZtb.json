@@ -5,7 +5,7 @@
   "folder": "V0Wfgl0aycRFPfu2",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано (автопредложение, владелец 24.10.2026): capabilityKey rangedCore.core.drawFire — когда носитель Таланта берёт в руки Пистолет не из неудобной разгрузки (module/sheets/tabs/gear.mjs::equipItem), карточка «Взять» несёт кнопку «Огонь с Вытягивания»: окно атаки только с Одиночным выстрелом, без Избирательной атаки, без ОД и без счёта Атаки Хода; раз в Раунд (module/apps/game-session.mjs::isRoundCapabilityAvailable); Раунд отмечается, когда выстрел сделан (module/combat/free-shot.mjs::consumeFreeShot), отмена окна использование не сжигает. Удобство разгрузки — module/constants/rig.mjs::inAwkwardRigLocation (не размещённое в Разгрузке считается удобным).",
     "benefit": "Раз в Раунд, снимая пистолет с удобной разгрузки, персонаж может сразу за свободное действие совершить из него не-Избирательный одиночный выстрел, не считающийся атакой в расчёте других атак в этот Ход.",
     "tier": 3,
     "requirement": "BS 50, A 50, Quick Draw",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "EcJA09UeeA2EsWNi",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "gdRZ2GNMyoseFY4X",
+              "capabilityKey": "rangedCore.core.drawFire",
+              "label": "Огонь с Вытягивания: при Взять пистолет с удобной разгрузки — бесплатный одиночный выстрел раз в Раунд",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

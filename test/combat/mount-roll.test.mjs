@@ -173,6 +173,23 @@ describe("Уклонение верхом: не трогаем встречну�
   });
 });
 
+describe("Уклонение верхом после Полной Атаки (запрет Физических Избеганий, Sahara riding-the-momentum)", () => {
+  it("всадник после Полной Атаки не уклоняется верхом: отказ, кубик не брошен", async () => {
+    resolveMountAs(beast());
+    globalThis.game.combat = { started: true, id: "c1" };
+    try {
+      const r = rider();
+      r.getFlag = (_s, k) => (k === "fullAttackLock" ? { light: false, repriseOpen: false, combatId: "c1" } : undefined);
+      const promise = showMountedDodgeDialog(r, 0);
+      await flush();
+      await captured.dialog.buttons.roll.callback(fakeHtml({ "#md-target": "rider" }));
+      await promise;
+      expect(captured.rolls).toEqual([]);
+      expect(captured.chat[0].content).toContain("Физические Избегания");
+    } finally { globalThis.game.combat = undefined; }
+  });
+});
+
 // wdbc-orxf: попадание по скакуну — Комбинированный тест (стр. 25), один
 // бросок против НАИМЕНЬШЕГО из двух Пределов, а не два броска с требованием
 // пройти оба (было расхождение с rules/test-kind.mjs::combinedThreshold).
@@ -232,5 +249,69 @@ describe("Уклонение верхом: несколько попаданий
     expect(card).toContain("Уклонение успешно");
     expect(card).toContain("снимает 1 из 3 попадания");
     expect(card).toContain("2 попадания всё ещё проходит");
+  });
+});
+
+// Огневая Клеть (Талант Стрелка, «цель тратит вдвое больше Успехов для Уклонения»,
+// Sahara covering-fire-hip-shooting п.2): цена действует и в Уклонении верхом.
+describe("Уклонение верхом: Огневая Клеть удваивает цену Успеха", () => {
+  async function rollDodge(evadeCost) {
+    resolveMountAs(beast());
+    const r = rider();
+    // Ag 40, untrained −20, по всаднику −10 → Порог 10; rv=5 → 1 степень успеха.
+    const promise = showMountedDodgeDialog(r, 0, 3, "", "", evadeCost);
+    await flush();
+    captured.nextRoll = 5;
+    await captured.dialog.buttons.roll.callback(fakeHtml({ "#md-target": "rider" }));
+    await promise;
+    return captured.chat[0].content;
+  }
+
+  it("обычная цена: 1 степень снимает 1 попадание", async () => {
+    expect(await rollDodge(1)).toContain("снимает 1 из 3 попадания");
+  });
+
+  it("цена 2: той же степени не хватает ни на одно попадание", async () => {
+    const card = await rollDodge(2);
+    expect(card).not.toContain("снимает 1 из 3");
+    expect(card).toContain("3 попадания всё ещё проходит");
+  });
+});
+
+// Драконий Рыцарь (Талант Всадника): метка скакуна «+3×Успехи на все Избегания»
+// (rules/dragon-knight.mjs, mode:"evasion") подставляется в комбинированное
+// Уклонение при попадании по скакуну — resolveMountedDodge считает порог сам,
+// мимо общих правил. Попадание по всаднику — его собственное Уклонение, без метки.
+describe("Уклонение верхом: Драконий Рыцарь", () => {
+  const buffedBeast = (mode, value) => ({
+    ...beast(),
+    getFlag: (_s, k) => (k === "dragonKnightBuff" ? { mode, value } : undefined)
+  });
+  async function dodge(mount, target, rv = 22) {
+    resolveMountAs(mount);
+    // Ag 40, Dodge нетренированное −20 = 20; по всаднику −10 → 10.
+    const promise = showMountedDodgeDialog(rider(), 0);
+    await flush();
+    captured.nextRoll = rv;
+    await captured.dialog.buttons.roll.callback(fakeHtml({ "#md-target": target }));
+    await promise;
+    return captured.chat[0].content;
+  }
+
+  it("попадание по всаднику: уклоняется он сам, не скакун — метка скакуна не прибавляется", async () => {
+    const card = await dodge(buffedBeast("evasion", 12), "rider");
+    expect(card).toContain("<label>Порог</label><b>10</b>");
+    expect(card).not.toContain("Драконий Рыцарь");
+  });
+
+  it("попадание по скакуну (комбинированный тест): метка тоже прибавляется к итоговому порогу", async () => {
+    const card = await dodge(buffedBeast("evasion", 12), "mount", 32);
+    expect(card).toContain("<label>Порог</label><b>32</b>");   // min(20, 50) + 12
+  });
+
+  it("метка на Атаки или без метки — порог прежний", async () => {
+    expect(await dodge(buffedBeast("attack", 12), "rider")).toContain("<label>Порог</label><b>10</b>");
+    resetCaptured();
+    expect(await dodge(beast(), "rider")).toContain("<label>Порог</label><b>10</b>");
   });
 });

@@ -5,7 +5,7 @@
   "folder": "HtqABG8TiZORmZQd",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey flamer.core.friendlyFire. Тест отмены попадания Распыления (кнопка в карточке Spray, Acrobatics A+0) получает +30, если стрелок — носитель Таланта, а токен цели не враг стрелка по расположению токенов (союзник или нейтрал); в подписи Порога назван Талант (module/combat/defense.mjs::_performSprayCancel, module/rules/flamer-talents.mjs). НЕ сделано: книжное «по своему выбору» — стрелок не выбирает цели по одной, бонус получают все не-враги; не проверяется «в пределах дистанции». Если токен стрелка или цели не найден на сцене — бонуса нет.",
     "benefit": "Стреляя из оружия со свойством Spray, персонаж может дать всем целям в пределах дистанции по своему выбору +30 на тест А для избегания от попадания.",
     "tier": 1,
     "requirement": "P 40",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "X8fv41p1tpcmGb5r",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "kwfCcCmihgIBhHBx",
+              "capabilityKey": "flamer.core.friendlyFire",
+              "label": "Дружественный Огонь: +30 к тесту отмены Распыления для целей, не враждебных стрелку",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

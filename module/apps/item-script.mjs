@@ -27,6 +27,7 @@ import { woundLossUpdates, woundDeathThreshold } from "../rules/wounds.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { resolveOpposed } from "../rules/test-kind.mjs";
 import { computeWoundHealing } from "../sheets/tabs/wounds.mjs";
+import { healActor } from "../combat/heal-target.mjs";
 import { isTokenInSight, tokensThatCanSee } from "../rules/vision-target.mjs";
 import { actorFactionKeys, anySameOrDescendant, getFactionIndex } from "../rules/factions.mjs";
 import { talentGroupOf } from "../rules/duplicate-grants.mjs";
@@ -60,6 +61,8 @@ import { scroungeSupplies } from "./scrounge.mjs";
 import { grantCursedHeirloom } from "./cursed-heirloom.mjs";
 import { grantStartingDisorder } from "../sheets/tabs/disorders.mjs";
 import { shareCombatFormation } from "../combat/combat-formation.mjs";
+import { tzeentchMarkBindUpdate } from "../rules/psyker.mjs";
+import { useShapeshift } from "../combat/shapeshift.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -120,6 +123,12 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *    (сперва Критические, потом обычные Раны, клэмп к максимуму) — та же
  *    формула, что уже даёт вкладка Ран на листе (Поцелуй Смерти: «исцеляет
  *    1d10+W.b жертвы Ран» себе после убийства).
+ *  - `healActor` (combat/heal-target.mjs) — лечение Ран ЦЕЛИ «под ключ»:
+ *    `await healActor(цель, сколько, { healer: actor })`. Если скрипт лечит
+ *    ДРУГОГО, писать Раны через неё, а не через `actor.update(
+ *    computeWoundHealing(...))`: общая точка лечения отмечает «лечил другой»
+ *    для «Недоверия к Лечению» (Затронутый Варпом, wdbc-1rno.26). Самолечение
+ *    (себя) можно по-старому через computeWoundHealing — штрафа по книге нет.
  *  - `grantExtraTurn`/`hasExtraTurn` (combat/extra-turn.mjs) — доп. Ход в
  *    том же бою (доп. Combatant того же актора), уже несёт Last Actor/
  *    Последнего Актёра; здесь — Пожиратель Времени (Тзинч, wdbc-1rno):
@@ -184,6 +193,13 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *  - `grantStartingDisorder` (sheets/tabs/disorders.mjs) — стартовое
  *    случайное расстройство от источника с «неизлечимо» и пределом Тяжести
  *    (Архетип Беглый Псайкер: не ниже −2); повторно не выдаёт.
+ *  - `tzeentchMarkBindUpdate` (rules/psyker.mjs) — Метка Тзинча (task-0469-
+ *    bc1b): патч `{ "system.psyker.class": "bound" }` для актора, который до
+ *    этой Метки не был псайкером (нет `system.isPsyker` и нет Трейта Psyker не
+ *    от самой Метки), иначе null — класс Несвязанного не переписывается.
+ *  - `useShapeshift` (combat/shapeshift.mjs) — «Сменить облик» Адаптации
+ *    Сплайса «Перевертыш» (wdbc-tkeh1): полудействие, тест A+20, строка
+ *    таблицы Полиморфина (стр. 283) по числу Успехов.
  *
  * `extra` — необязательный набор ДОПОЛНИТЕЛЬНЫХ именованных функций для
  * конкретного вызывающего (например, runMechScriptEntry добавляет
@@ -192,6 +208,15 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  * уже импортирует executeItemCode отсюда — обратный import создал бы цикл).
  * Старые вызовы без `extra` работают как раньше — ключи просто не
  * появляются в области видимости кода.
+ *
+ * @returns {*} то, что вернул сам код записи — используется вызывающим
+ *   (runMechScriptEntry, runScriptTriggers) как сигнал самоотказа: код не
+ *   бросает исключение, а молча отклоняет попытку через
+ *   `return ui.notifications?.warn(...)` (устоявшийся в проекте приём, см.
+ *   combat/explosive-action.mjs, apps/soul-seer.mjs) — результат этого
+ *   warn() truthy, в отличие от обычного «успешно дошёл до конца» (undefined).
+ *   Без прокидывания значения наружу троттлинг/цена списывались даже при
+ *   самоотказе (runmechscriptentry, живая проверка 22.10.2026).
  */
 export async function executeItemCode(item, code, event, extra = {}) {
   const actor = item.actor ?? null;
@@ -206,7 +231,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "changeActorInfamy", "actorInfamyValue", "actorInfamyMax",
     "startEyeOfChallenge", "clearEyeOfChallenge", "eyeOfChallengeInfo",
     "canSpendActionPoints", "spendActionPoints", "nearestVisiblePsyker", "defaultSpawnHunterHoundFn",
-    "nearestVisibleHatredTarget", "testOutcome", "resolveOpposed", "woundDeathThreshold", "computeWoundHealing",
+    "nearestVisibleHatredTarget", "testOutcome", "resolveOpposed", "woundDeathThreshold", "computeWoundHealing", "healActor",
     "grantExtraTurn", "hasExtraTurn", "endOfOrderInitiative", "mergedVictimUuids", "grantArmourOfTheGods",
     "resolveBurnedSenses", "buildCountenanceFearFlag", "purityOfBattleWave", "devouredSkillRank",
     "nextDevourerStreak", "pruneDevourerStreaks",
@@ -214,11 +239,11 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "attemptPossessionAttack", "leavePossessionHost", "useAdaptiveVenom", "useExplosiveAction",
     "activateBattleForm", "endBattleForm",
     "emergencyMaintenance", "scroungeSupplies", "grantCursedHeirloom",
-    "grantStartingDisorder", "shareCombatFormation",
+    "grantStartingDisorder", "shareCombatFormation", "tzeentchMarkBindUpdate", "useShapeshift",
     ...extraNames,
     code
   );
-  await fn(
+  return await fn(
     item, actor, token, speaker, game, ui, ChatMessage, event ?? null,
     woundLossUpdates, isTokenInSight, tokensThatCanSee,
     actorFactionKeys, anySameOrDescendant, getFactionIndex, talentGroupOf,
@@ -226,7 +251,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     changeActorInfamy, actorInfamyValue, actorInfamyMax,
     startEyeOfChallenge, clearEyeOfChallenge, eyeOfChallengeInfo,
     canSpendActionPoints, spendActionPoints, nearestVisiblePsyker, defaultSpawnHunterHoundFn,
-    nearestVisibleHatredTarget, testOutcome, resolveOpposed, woundDeathThreshold, computeWoundHealing,
+    nearestVisibleHatredTarget, testOutcome, resolveOpposed, woundDeathThreshold, computeWoundHealing, healActor,
     grantExtraTurn, hasExtraTurn, endOfOrderInitiative, mergedVictimUuids, grantArmourOfTheGods,
     resolveBurnedSenses, buildCountenanceFearFlag, purityOfBattleWave, devouredSkillRank,
     nextDevourerStreak, pruneDevourerStreaks,
@@ -234,7 +259,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     attemptPossessionAttack, leavePossessionHost, useAdaptiveVenom, useExplosiveAction,
     activateBattleForm, endBattleForm,
     emergencyMaintenance, scroungeSupplies, grantCursedHeirloom,
-    grantStartingDisorder, shareCombatFormation,
+    grantStartingDisorder, shareCombatFormation, tzeentchMarkBindUpdate, useShapeshift,
     ...extraNames.map(k => extra[k])
   );
 }

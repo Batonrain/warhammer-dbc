@@ -26,8 +26,9 @@
       "minDose": 1,
       "testChar": "wp",
       "testMod": 0,
-      "frequency": "1 день",
-      "penalty": "−10 на социальные взаимодействия"
+      "frequency": "9 часов",
+      "penalty": "−10 на социальные взаимодействия",
+      "penaltyMods": "social=-10"
     },
     "statMods": {
       "ws": 0,

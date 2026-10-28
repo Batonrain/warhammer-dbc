@@ -32,3 +32,24 @@ export function fateBonusOutcome({ rv, threshold, bonus = FATE_BONUS } = {}) {
   const degrees = Math.floor(Math.abs(raised - roll) / 10) + 1;
   return { base, bonus: add, threshold: raised, rv: roll, success, degrees };
 }
+
+/**
+ * Итог успешного теста после траты Очка «Успех»: к степеням прибавляются Успехи. Провал не лечится
+ * («+1 Успех к УСПЕШНОМУ тесту») — тогда null. Куб и порог не меняются.
+ */
+export function successBonusOutcome({ rv, threshold, extra = 1 } = {}) {
+  const base = fateBonusOutcome({ rv, threshold, bonus: 0 });
+  if (!base?.success) return null;
+  const add = Math.max(0, Math.trunc(Number(extra) || 0));
+  return { ...base, extra: add, degrees: base.degrees + add };
+}
+
+/**
+ * Опции атаки для ПЕРЕБРОСА за Очко: купленный Успех (opts.extraDeg, apps/infamy-success.mjs) относился к
+ * прежнему результату, а переброс — новый бросок (решение владельца 27.10.2026), поэтому его сбрасываем.
+ * «+10» и сдвиг места попадания — тот же результат, там extraDeg сохраняется. Исходный объект не меняется.
+ */
+export function withoutBoughtSuccess(opts) {
+  const { extraDeg: _dropped, ...rest } = opts ?? {};
+  return rest;
+}

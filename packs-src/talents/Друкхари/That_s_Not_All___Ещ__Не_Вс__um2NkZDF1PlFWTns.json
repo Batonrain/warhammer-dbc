@@ -5,7 +5,7 @@
   "folder": "E2q2l1ne3DTNMduU",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: когда носитель сбивает цель кнопкой Вырубания (Takedown) после успешного Оглушения, на цель ложится метка; пока она Повалена, Вскочить на неё не действует, а любое вставание (обычным способом и прыжком Acrobatics) стоит +1 ОД сверх обычного — толкование владельца 23.10.2026: «всем помеченным +1 ОД» (module/combat/takedown.mjs, module/rules/takedown.mjs::standUpExtraApCost, module/combat/movement-actions.mjs). Метка уходит вместе с Состоянием «Повален». Талант опознаётся по имени и по capabilityKey condition.denyLeapUp.afterStunProne. Кувырок (Flip, Талант Избегания) тоже стоит помеченному +1 ОД, при нехватке ОД остаётся Повален (combat/flip.mjs). Не смоделировано: Шагоход встаёт по своей карточке (walker.mjs).",
     "benefit": "Цель успешного Оглушения при сбивании с ног не может использовать талант Вскочить (Leap Up), а без него поднятие на ноги стоит +1 ОД.",
     "tier": 2,
     "requirement": "Takedown, S 35",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "TnaGrp00Mech4c5D",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "TnaCap00Entry6y7",
+              "capabilityKey": "condition.denyLeapUp.afterStunProne",
+              "label": "Ещё Не Всё: сбитой после Оглушения цели Вскочить не помогает, а встать стоит +1 ОД",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

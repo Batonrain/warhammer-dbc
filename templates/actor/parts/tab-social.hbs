@@ -199,7 +199,7 @@
     <div class="panel-title" data-action="panelCollapse" title="Перетащите актора или возьмите выделенные токены">
       ПОД МОИМ ПРИСУТСТВИЕМ
       <span class="minion-count" title="Сколько подчинённых вне Отряда">{{followerCount}}</span>
-      <span class="minion-count" title="Лимит целей Command/Intimidate «на подчинённых» за одно применение — F.b{{#if hasAirOfAuthority}}, ×20 с Air of Authority{{/if}}">⚑ {{commandTargetLimit}}</span>
+      <span class="minion-count" title="Лимит целей Command/Intimidate «на подчинённых» за одно применение — F.b×{{#if hasAirOfAuthority}}20 (Air of Authority){{else}}2{{/if}}">⚑ {{commandTargetLimit}}</span>
       <button type="button" class="cmd-take-tokens" title="Взять под Присутствие все выделенные на сцене токены">Взять выделенные</button>
     </div>
 
@@ -332,6 +332,49 @@
     <div class="minion-drop-zone" data-actor-uuid="{{actorUuid}}" data-tooltip="Перетащите актора, чтобы сделать его слугой без траты слота">
       Перетащите актора сюда, чтобы сделать его слугой без слота
     </div>
+  </div>
+  {{/if}}
+
+  {{!-- ── Ячейки агентов (Талант Cover Up / Работа под Прикрытием) ──
+        Ведомость: название, потраченный Inf (1–4); Х-ки агентов и Уровень
+        Реквизиции — по таблице книги, считаются сами. Уровень Реквизиции
+        справочный, в тест Реквизиции не входит. Хранится флагом актора
+        (module/rules/cover-up.mjs). Блок видит только носитель Таланта. --}}
+  {{#if hasCoverUp}}
+  <div class="notes-section-panel social-minions social-cover-up" data-collapse-key="social-cover-up">
+    <div class="panel-title" data-action="panelCollapse"
+         title="Талант «Работа под Прикрытием»: потраченный Inf (Характеристика, не Очки) → ячейка тайных агентов. Inf 1 → 25/0, 2 → 30/1, 3 → 35/1, 4 → 40/2">
+      ЯЧЕЙКИ АГЕНТОВ
+      <span class="minion-count" title="Сколько ячеек заведено">{{coverUpCount}}</span>
+      <span class="minion-count" title="Сколько Inf вложено в ячейки (справочно: Inf персонажа здесь не списывается — часть ячеек выдаётся без траты)">Inf {{coverUpTotalInf}}</span>
+      <button type="button" class="minion-add-btn cover-up-add" title="Завести ячейку">+</button>
+    </div>
+    {{#if coverUpCells.length}}
+    <table class="items-table cover-up-table">
+      <thead><tr>
+        <th>Ячейка</th>
+        <th title="Потраченный Inf (Характеристика, не Очки)">Inf</th>
+        <th title="Средние характеристики агентов ячейки">Х-ки агентов</th>
+        <th title="Справочно: в тест Реквизиции не подмешивается">Ур. Реквизиции</th>
+        <th></th>
+      </tr></thead>
+      <tbody>
+        {{#each coverUpCells as |c|}}
+        <tr class="cover-up-row">
+          <td><input type="text" class="cover-up-name" data-index="{{c.idx}}" value="{{c.name}}" placeholder="Название (мир, предприятие…)"/></td>
+          <td><select class="cover-up-inf" data-index="{{c.idx}}">
+            {{#each c.infOptions as |o|}}<option value="{{o.value}}" {{#if o.selected}}selected{{/if}}>{{o.label}}</option>{{/each}}
+          </select></td>
+          <td class="cover-up-agents">{{c.agents}}</td>
+          <td class="cover-up-requisition">{{c.requisition}}</td>
+          <td><button type="button" class="cover-up-remove" data-index="{{c.idx}}" title="Распустить ячейку">✕</button></td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    {{else}}
+    <div class="gene-seed-hint">Ячеек нет — нажмите «+», чтобы завести первую.</div>
+    {{/if}}
   </div>
   {{/if}}
 

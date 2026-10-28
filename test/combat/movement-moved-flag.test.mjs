@@ -277,3 +277,45 @@ describe("Вызов (Challenge) спрашивает подтверждение
     expect(actor.getFlag("warhammer-dbc", "movedThisTurn")).toBe(true);
   });
 });
+
+// Принудительный сдвиг (Sahara task-bbe1): токен толкнули/перевезли — «двигался в этом Ходу»
+// (Выстрел Навскидку, Лишь Свет, Импульсное оружие) не помечается.
+describe("initMovedFlagTracking: принудительный сдвиг не ставит movedThisTurn", () => {
+  it("обычное перемещение ставит, принудительное (options.whDBC.forcedMove) — нет", async () => {
+    const handlers = {};
+    const prevOn = globalThis.Hooks.on;
+    globalThis.Hooks.on = (name, fn) => { (handlers[name] ??= []).push(fn); };
+    globalThis.game.user = { id: "u1" };
+    const { initMovedFlagTracking } = await import("../../module/combat/movement-actions.mjs");
+    initMovedFlagTracking();
+    globalThis.Hooks.on = prevOn;
+    const fire = (...args) => Promise.all(handlers.updateToken.map(fn => fn(...args)));
+
+    const plain = fakeActor();
+    await fire({ actor: plain }, { x: 5 }, {}, "u1");
+    expect(plain.getFlag("warhammer-dbc", "movedThisTurn")).toBe(true);
+
+    const pushed = fakeActor();
+    await fire({ actor: pushed }, { x: 5 }, { whDBC: { forcedMove: true } }, "u1");
+    expect(pushed.getFlag("warhammer-dbc", "movedThisTurn")).toBeUndefined();
+  });
+});
+
+// Начало боя: флаги «двигался» от расстановки токенов до боя не должны жить в бою (Скорость Сокола, Импульсное).
+describe("clearStaleMovedFlags: чистка на начале боя", () => {
+  it("снимает movedThisTurn и moveDegreeThisTurn у всех участников, чужие флаги не трогает", async () => {
+    const { clearStaleMovedFlags } = await import("../../module/combat/movement-actions.mjs");
+    const mk = () => {
+      const store = { movedThisTurn: true, moveDegreeThisTurn: "full", running: true };
+      return { store, getFlag: (s, k) => store[k], unsetFlag: async (s, k) => { delete store[k]; } };
+    };
+    const a = mk(), b = mk();
+    await clearStaleMovedFlags({ combatants: [{ actor: a }, { actor: b }, { actor: null }] });
+    for (const x of [a, b]) {
+      expect(x.store.movedThisTurn).toBeUndefined();
+      expect(x.store.moveDegreeThisTurn).toBeUndefined();
+      expect(x.store.running).toBe(true);
+    }
+    await expect(clearStaleMovedFlags(undefined)).resolves.toBeUndefined();
+  });
+});

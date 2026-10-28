@@ -73,6 +73,8 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
       rightLeg:     num(0, "AP: правая нога"),
       quality:      new StringField({ initial: "common", label: "Качество" }),
       bookSource:   new StringField({ initial: "", label: "Книга-источник" }),
+      // Снаряжение Легиона — см. data/item/gear.mjs.
+      legion:       new BooleanField({ initial: false, label: "Легион (снаряжение Легиона)" }),
       availability: num(0, "Доступность"),
       weight:       num(0, "Вес"),
       // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке; см.

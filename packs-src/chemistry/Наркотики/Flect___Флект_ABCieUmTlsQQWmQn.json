@@ -23,7 +23,7 @@
     "addiction": {
       "hasAddiction": true,
       "isAddicted": false,
-      "minDose": 4,
+      "minDose": 2,
       "testChar": "wp",
       "testMod": -20,
       "frequency": "6 дней",

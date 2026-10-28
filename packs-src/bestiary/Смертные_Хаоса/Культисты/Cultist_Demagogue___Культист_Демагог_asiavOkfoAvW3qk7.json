@@ -1147,7 +1147,8 @@
           "vArc": "",
           "standard": false,
           "reloads": 10
-        }
+        },
+        "meleeCategory": "Нож"
       },
       "_id": "r3qz0Bn88X8g7EDA",
       "img": "systems/warhammer-dbc/assets/item-icons/weapon-knife.svg",
@@ -1239,7 +1240,8 @@
           "vArc": "",
           "standard": false,
           "reloads": 10
-        }
+        },
+        "meleeCategory": "Топор"
       },
       "_id": "70ZI2fYQLwp1MQFo",
       "img": "systems/warhammer-dbc/assets/item-icons/weapon-axe.svg",

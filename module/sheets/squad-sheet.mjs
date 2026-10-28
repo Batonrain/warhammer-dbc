@@ -33,12 +33,14 @@ import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 import { WarhammerStructuralSheet } from "./structural-sheet.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
+import { binaryDominionRisk } from "../rules/binary-dominion.mjs";
 import { rancorRiskCapBonus, eloquenceRiskCapBonus, bravadoRiskLevel,
          camaraderieStartCohesion, dutyAboveAllBlocks,
          protegeFreeCommandActive, protegePenalty, protegeActivationPatch,
          frontlineCommanderMeleeFree, rallyAvailable,
          hasBringItDown, bringItDownAccuracyPenalty, bringItDownMaxStacks,
-         BRING_IT_DOWN_PENALTY_PER_STACK, warChantSingAlongBonus } from "../rules/leadership-talents.mjs";
+         BRING_IT_DOWN_PENALTY_PER_STACK, warChantSingAlongBonus,
+         commandCapacity } from "../rules/leadership-talents.mjs";
 import { backToBackGrantSectionHtml } from "../combat/fanatic-redirect.mjs";
 import { testKindHtml, diceModeHtml, difficultyHtml, readDifficulty, critLineHtml,
          readTestKind, readDiceChoice, mergeReroll, wireTestKindLive,
@@ -266,8 +268,10 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
         ?? (sys.characteristics?.int?.total != null ? Math.floor(sys.characteristics.int.total / 10) : null),
       command: sys.skills?.command?.total ?? null,
       logic:   sys.skills?.logic?.total ?? null,
-      // Command может воздействовать одновременно на F.b × 2 подчинённых.
-      capacity: felB * 2,
+      // Command может воздействовать одновременно на F.b × 2 подчинённых
+      // (F.b × 20 с Air of Authority) — тот же хелпер, что считает узел
+      // командования в combat/command-state.mjs.
+      capacity: commandCapacity(doc, "fel"),
       // Снятый шлем силовой брони поднимает уровень Риска командующего.
       helmetOff: !!doc?.system?.helmetlessActive && isFeatureEnabled("helmetless")
     };
@@ -721,7 +725,11 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
                                                             : this._postData("leader"));
     const whoDoc = this._resolve(who?.uuid);
     const bonus = (who?.helmetOff && base >= 2) ? 1 : 0;
-    const value = bravadoRiskLevel(Math.min(5, base + bonus), whoDoc);
+    // Binary Dominion / Бинарное Владычество (Sahara 3-cc96 п.1): сервиторы и
+    // роботы — Риск ровно 3, Скитарии — не ниже 3 (rules/binary-dominion.mjs).
+    // Считаем по участникам, до которых Команды вообще доходят.
+    const value = binaryDominionRisk(whoDoc,
+      bravadoRiskLevel(Math.min(5, base + bonus), whoDoc), this._commandReachableMemberDocs());
     const cap = riskCap(value);
     const ctx = { kind: "skill", skill: "command", targetActor: this._commandTargetActor() };
     const capBonus = cap == null ? 0 : rancorRiskCapBonus(whoDoc, ctx) + eloquenceRiskCapBonus(whoDoc);

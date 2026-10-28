@@ -34,6 +34,7 @@ describe("executeItemCode — стандартные помощники в об�
       seen.resolveOpposed = typeof resolveOpposed;
       seen.woundDeathThreshold = typeof woundDeathThreshold;
       seen.computeWoundHealing = typeof computeWoundHealing;
+      seen.healActor = typeof healActor;
       seen.grantExtraTurn = typeof grantExtraTurn;
       seen.hasExtraTurn = typeof hasExtraTurn;
       seen.endOfOrderInitiative = typeof endOfOrderInitiative;
@@ -56,6 +57,7 @@ describe("executeItemCode — стандартные помощники в об�
       seen.endBattleForm = typeof endBattleForm;
       seen.grantStartingDisorder = typeof grantStartingDisorder;
       seen.shareCombatFormation = typeof shareCombatFormation;
+      seen.tzeentchMarkBindUpdate = typeof tzeentchMarkBindUpdate;
     `, null, { seen });
     expect(seen).toEqual({
       woundLossUpdates: "function", isTokenInSight: "function",
@@ -64,7 +66,7 @@ describe("executeItemCode — стандартные помощники в об�
       talentGroupOf: "function", incrementThrottleCount: "function",
       tokensWithinRadius: "function", nearestVisibleHatredTarget: "function",
       testOutcome: "function", resolveOpposed: "function", woundDeathThreshold: "function",
-      computeWoundHealing: "function", grantExtraTurn: "function", hasExtraTurn: "function",
+      computeWoundHealing: "function", healActor: "function", grantExtraTurn: "function", hasExtraTurn: "function",
       endOfOrderInitiative: "function", mergedVictimUuids: "function", grantArmourOfTheGods: "function",
       resolveBurnedSenses: "function", buildCountenanceFearFlag: "function", purityOfBattleWave: "function",
       activateFruitOfFlesh: "function", eatHealFruit: "function", useSoulSeer: "function",
@@ -73,7 +75,7 @@ describe("executeItemCode — стандартные помощники в об�
       useAdaptiveVenom: "function",
       emergencyMaintenance: "function", scroungeSupplies: "function", grantCursedHeirloom: "function",
       activateBattleForm: "function", endBattleForm: "function", grantStartingDisorder: "function",
-      shareCombatFormation: "function"
+      shareCombatFormation: "function", tzeentchMarkBindUpdate: "function"
     });
   });
 

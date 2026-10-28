@@ -1,4 +1,4 @@
-import { _performDodge, _performParry, _performSprayCancel, _performCompression, _performExtendBodyPart, _performEtherealSwarm, _performPsychicParry, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
+import { _tokenRelationshipOf, _performDodge, _performParry, _performSprayCancel, _performCompression, _performExtendBodyPart, _performEtherealSwarm, _performPsychicParry, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
 import { refreshParasiteHosts } from "./rules/parasite-trait.mjs";
 import { repickBornForWar } from "./migrations/born-for-war-fix.mjs";
 import { _performUnseenDetect, _performUnseenBypass } from "./combat/unseen-attack.mjs";
@@ -17,7 +17,7 @@ import { offerStatusResist } from "./combat/status-resist.mjs";
 import { useFinalPush, useNeverDie, usePainIllusion, finalPushTurnEnd, finalPushCombatEnd,
          applyDeferredEffects } from "./combat/crit-talents-actions.mjs";
 import { applyCritTalentState, collectCritEffects } from "./combat/crit-talents.mjs";
-import { rollShockDeath } from "./combat/shock-death.mjs";
+import { rollShockDeath, rollBleedingTest } from "./combat/shock-death.mjs";
 import { resetEyeOfTheGodsWindow } from "./combat/eye-of-the-gods.mjs";
 import { spendFromInfamyPool, spendPatronAbility } from "./apps/infamy-points.mjs";
 import { dimIgnoredEffects } from "./combat/sweet-suffering.mjs";
@@ -28,7 +28,10 @@ import { tempInfamyAmount }              from "./rules/temp-infamy.mjs";
 import { inspiringChampionsFor, spendInspiringInfamy } from "./combat/inspiring-presence.mjs";
 import { applyExplosiveActionTurnEnd } from "./combat/explosive-action.mjs";
 import { applyWoundLoss, woundDeathThreshold } from "./rules/wounds.mjs";
-import { fateBonusOutcome, FATE_BONUS }  from "./rules/fate-bonus.mjs";
+import { fateBonusOutcome, FATE_BONUS, withoutBoughtSuccess }  from "./rules/fate-bonus.mjs";
+import { attackBoostFor, wrathRerollOpts } from "./rules/focused-wrath.mjs";
+import { focusedWrathOnAttack }            from "./combat/focused-wrath.mjs";
+import { successTarget, spendSuccessOnCard } from "./apps/infamy-success.mjs";
 import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger, applyMonofilamentHit } from "./combat/damage.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./combat/facing.mjs";
 import { rollPacifismTest } from "./combat/pacifism.mjs";
@@ -41,7 +44,7 @@ import { ROUND_DAMAGE_FLAG }            from "./combat/horde-damage.mjs";
 import { _performSwerve, applyStructureLoss } from "./combat/vehicle.mjs";
 import { performWalkerParry, performWalkerDodge, standUpFromTipOver, showTipOverDialog } from "./combat/walker.mjs";
 import { maybeGrantEnjoymentPain }       from "./combat/enjoyment.mjs";
-import { saddleTest, applyFall, showMountedDodgeDialog, resolveHitAllocation } from "./combat/mount.mjs";
+import { saddleTest, applyFall, showMountedDodgeDialog, resolveHitAllocation, ironMountTest, clearDragonKnight } from "./combat/mount.mjs";
 import { resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity } from "./combat/weapon-properties.mjs";
 import { conditionLevelField, CONDITIONS_DEF } from "./constants/conditions.mjs";
 import { conditionApplyFields, setFatigue } from "./sheets/tabs/conditions.mjs";
@@ -51,6 +54,10 @@ import { clearFeintAtTurnEnd } from "./combat/feint-press.mjs";
 import { resolveFreeAttackClick } from "./combat/free-attack.mjs";
 import { clearOverwatch, resolveOverwatchFireClick, resolveOverwatchHairTriggerClick } from "./combat/overwatch.mjs";
 import { resolveAssassinStrikeClick } from "./combat/assassin-strike.mjs";
+import { resolveTankHunterClick, clearTankHunterMemory } from "./combat/tank-hunter.mjs";
+import { resolveTerrorSniperClick, terrorSuppressOnCard, terrorSuppressKey } from "./combat/terror-sniper.mjs";
+import { pyromaniacCoverPenalty, torrentPlacementProblem } from "./rules/flamer-talents.mjs";
+import { coverApForToken } from "./combat/cover.mjs";
 import { processPrismaTurnStart } from "./combat/prisma.mjs";
 import { processRechargeTurnStart } from "./combat/recharge.mjs";
 import { processWitchsEdgeCombatStart } from "./combat/witchs-edge.mjs";
@@ -63,11 +70,15 @@ import { processJustTheLightTurnEnd } from "./combat/just-the-light.mjs";
 import { processTurnStateShieldsTurnEnd, clearTurnStateShields } from "./combat/turn-state-shield.mjs";
 import { clearUnseenDetection } from "./rules/unseen-attack.mjs";
 import { clearBlindsideUse } from "./rules/unseen-talents.mjs";
+import { clearBladeJuggler } from "./rules/rogue-talents.mjs";
 import { processVultureTurnStart } from "./combat/vulture.mjs";
 import { processIrradiatedTurnStart } from "./combat/irradiated.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "./combat/weapon-mods.mjs";
 import { fatalismBlocksPower } from "./rules/fatalism.mjs";
 import { handleCalmWarpClick } from "./combat/calm-warp.mjs";
+import { processFastWeavingCombatStart, handleSignatureFreeClick, handlePsyRerollClick } from "./combat/psyker-pools.mjs";
+import { VAMPIRE_CARD_FLAG, handleVampireClick } from "./combat/psychic-vampire.mjs";
+import { WARP_LOCK_CARD_FLAG, handleWarpLockClick } from "./combat/warp-lock.mjs";
 import { everYouthfulBlocksPower } from "./rules/ever-youthful.mjs";
 import { eaterOfPainBenefitUpdate, eaterOfPainChoiceButtonsHtml } from "./rules/eater-of-pain.mjs";
 import { fateTerm, esc, resolveCharFormula } from "./helpers/utils.mjs";
@@ -85,6 +96,8 @@ import { STOWABLE_TYPES } from "./constants/rig.mjs";
 import { blastCircleShape, sprayConeShape, placeAttackTemplate, targetTokens, pxPerMeter } from "./combat/templates.mjs";
 import { triggerBlastAnimation } from "./integrations/autoanimations.mjs";
 import { placeLingerZone, processShooterTurnStart, clearAllLingerZones } from "./regions/linger-zone.mjs";
+import { processDelayedBlastsTurnStart } from "./combat/delayed-blast.mjs";
+import { igniteCoversUnderTemplate, processBurningCoverTurnChange, clearAllBurningCovers } from "./combat/burning-cover.mjs";
 import { placeGravitonZone, processGravitonShooterTurnStart, clearAllGravitonZones } from "./regions/graviton-zone.mjs";
 import { placeVortexZone, processVortexTurnStart, clearAllVortexZones, reactToVortex, spendVortexSuccess } from "./regions/vortex-zone.mjs";
 import { placeSmokeZone } from "./regions/difficult-terrain.mjs";
@@ -104,11 +117,13 @@ import { clearBowToAudienceMark } from "./combat/bow-to-audience.mjs";
 import { clearAvatarOfSlaughterMarks } from "./combat/avatar-of-slaughter.mjs";
 import { clearSongOfSwiftnessBuffs } from "./combat/song-of-swiftness.mjs";
 import { clearReformationSongBuffs, clearExpiredGearMalfunction } from "./combat/reformation-song.mjs";
+import { clearBlessingOfSteel } from "./combat/blessing-of-steel.mjs";
 import { refillSarcophagusWarpWounds } from "./combat/damage.mjs";
 import { clearMercuryMarks } from "./combat/mercury-reaction.mjs";
 import { clearAdaptationBonuses } from "./combat/adaptation.mjs";
 import { clearEyeOfEnvyOnCombatEnd } from "./rules/eye-of-envy.mjs";
 import { clearExpiredTempGrants } from "./rules/temp-grant.mjs";
+import { sweepMemoryThief } from "./apps/omophagea.mjs";
 import { sweepExpiredControl, releaseControlOnCombatEnd } from "./rules/actor-control.mjs";
 import { checkMimicWireSurgery, cutMimicWire, startMimicWireSurgery, confirmMimicWireExtraction, captureWithMimicWire } from "./apps/volunteer-actor.mjs";
 import { checkAbandonedHostDeath } from "./apps/maggot-parasite.mjs";
@@ -127,8 +142,10 @@ import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { liftDivineProtection, wakeDivineProtected } from "./sheets/tabs/death.mjs";
 import { processConditionTurnStart, processConditionTurnEnd, sweepApplierTurnEnd } from "./combat/condition-ticks.mjs";
+import { processVacuumTurnStart } from "./combat/vacuum.mjs";
 import { sweepConditionDurations, onConditionEffectExpired } from "./combat/condition-effects.mjs";
-import { conditionExpiryLine, postConditionCard, setBurningDamageFormula } from "./combat/condition-ticks.mjs";
+import { sweepTimedEffects, onTimedEffectExpired, clearDreadWailFear } from "./combat/timed-effects.mjs";
+import { conditionExpiryLine, postConditionCard, setBurningDamageFormula, rollConditionCharTest } from "./combat/condition-ticks.mjs";
 import { applyRadHit, resolveCombatRadiation } from "./combat/radiation.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart,
@@ -154,7 +171,7 @@ import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
 import { WC_CODE } from "./constants/ship.mjs";
 import { registerDelegatedTestOpener, openDelegatedTest, activeOwnerOf, requestDelegatedTest, openDelegatedTestDirect } from "./rules/delegate-test.mjs";
-import { skillTotal, resolveVaultContestClick, declareLegacyBraveHeartMove, resolveLegacyBraveDisengageContest, postRepositionCard, applySprintTurnEnd } from "./combat/movement-actions.mjs";
+import { skillTotal, resolveVaultContestClick, declareLegacyBraveHeartMove, resolveLegacyBraveDisengageContest, postRepositionCard, applySprintTurnEnd, clearStaleMovedFlags } from "./combat/movement-actions.mjs";
 import { showHealingDialog } from "./sheets/tabs/healing.mjs";
 import { rollInfoguard } from "./apps/infoguard.mjs";
 import { CHARACTERISTICS } from "./constants/characteristics.mjs";
@@ -166,8 +183,21 @@ import { maybeAutoReleaseGrapple, grappleReleaseTriggered } from "./combat/grapp
 import { weaponProfiles, attackIsMelee } from "./combat/weapon-profiles.mjs";
 // Огневая Точка (Хавок) и Хирургия Легиона (Апотекарий) — пункты меню Очков карточки.
 import { firePointFreeReroll, firePointActivatesOnPaidReroll } from "./rules/fire-point.mjs";
+import { CLEAVE_CARD_FLAG, CLEAVE_PENALTY } from "./combat/cleave.mjs";
+import { REAPER_CARD_FLAG, startReaperFollow } from "./combat/reaper-chain.mjs";
+import { TROPHY_CARD_FLAG, awardTrophy } from "./combat/trophy-kill.mjs";
+import { SHOW_OFF_CARD_FLAG } from "./combat/show-off.mjs";
+import { HAMSTRING_CARD_FLAG, startHamstring } from "./combat/hamstring.mjs";
+import { TENACITY_CARD_FLAG, confirmTenacityRepeat } from "./combat/tenacity.mjs";
+import { BLADE_BINDING_CARD_FLAG, startBladeBinding } from "./combat/blade-binding.mjs";
+import { OVERPOWER_CARD_FLAG, startOverpower } from "./combat/overpower.mjs";
+import { FURIOUS_ASSAULT_CARD_FLAG } from "./combat/furious-assault.mjs";
+import { blademasterRerollOffered, BLADEMASTER_ROUND_FLAG, RIPOSTE_ROUND_FLAG, RIPOSTE_EVASION_PENALTY, HAMSTRING_ROUND_FLAG, tenacityAvailable, MELEE_DAMAGE_DEALT_FLAG, MELEE_DAMAGE_APPLIED_FLAG } from "./rules/melee-talents.mjs";
 import { activateFirePoint } from "./combat/fire-point.mjs";
 import { cardOnceUsed, markCardOnce, runCardOnce } from "./combat/card-once.mjs";
+import { processRageTurnStart, stampRageCombatEnd, rerollRageExit, clearRageStatePatch } from "./combat/rage-behavior.mjs";
+import { RAGE_EXIT_REROLL_CARD_FLAG } from "./rules/rage-behavior.mjs";
+import { takedownKnockdown, TAKEDOWN_CARD_FLAG } from "./combat/takedown.mjs";
 import { clearCombatFormationOnCombatEnd } from "./combat/combat-formation.mjs";
 import { masteryAutoSuccessOffer } from "./rules/mastery.mjs";
 import { masteryAutoSuccessOnCard, masteryHasPoint } from "./combat/mastery.mjs";
@@ -180,14 +210,40 @@ import { isIntegralAttack } from "./combat/equipped-melee.mjs";
 import { collectTestMods } from "./rules/roll-mods.mjs";
 import { rollD100WithReroll } from "./rules/test-kind-widget.mjs";
 import { poisonResistReroll } from "./rules/squat-traits.mjs";
+import { psychicResistReroll } from "./rules/psychic-resist-reroll.mjs";
 import { expireCommandsAtTurnStart, clearCommandsOnCombatEnd, commandMoraleOn } from "./combat/command-state.mjs";
 import { syncArmorFieldShields } from "./combat/armor-field-shield.mjs";
+import { sparksSwap, igniterFollowUp } from "./rules/gunsmith-talents.mjs";
+import { applyDamageOverrides, recordDamageOverride, DMG_OVERRIDES_FLAG } from "./combat/damage-override.mjs";
+import { applyScatterOverride, SCATTER_FLAG } from "./combat/grenadier.mjs";
 import { ogrynRegenCombatRound } from "./combat/ogryn-regen.mjs";
 import { decayHaywireFields, onDiscordantFieldEntered, onDiscordantFieldLeft } from "./combat/bone-head.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
 // updateCombat ниже) сама отслеживает, чей Ход только что закончился.
 const _lastTurnCombatant = new Map();
+
+/**
+ * Поток (rules/flamer-talents.mjs): шаблон не дальше удвоенной дальности огнемёта и в прямой видимости
+ * стрелка. Размещение интерактивное (core), курсор ограничить нельзя — проверяем после и отказываем.
+ * @returns {Promise<boolean>} true — отказано (предупреждение уже показано)
+ */
+async function _torrentPlacementRefused(region, ds, px) {
+  const shooter = ds.attackerUuid ? await fromUuid(ds.attackerUuid).catch(() => null) : null;
+  const from = shooter?.getActiveTokens?.(false)?.[0]?.center;
+  const shape0 = region?.shapes?.[0] ?? region?.toObject?.().shapes?.[0];
+  if (!from || !shape0) {
+    ui.notifications.info("Поток: токен стрелка не найден на сцене — дальность и видимость шаблона проверьте сами.");
+    return false;
+  }
+  const to = { x: shape0.x, y: shape0.y };
+  const distanceM = Math.hypot(to.x - from.x, to.y - from.y) / px;
+  const blocked = !!CONFIG.Canvas?.polygonBackends?.sight?.testCollision?.(from, to, { type: "sight", mode: "any" });
+  const problem = torrentPlacementProblem({ distanceM, maxM: parseFloat(ds.torrentMax) || 0, blocked });
+  if (!problem) return false;
+  ui.notifications.warn(`⚠️ Поток: шаблон нельзя поставить туда — ${problem}. Нажмите кнопку и разместите заново.`);
+  return true;
+}
 
 /** Актор выбранного на сцене токена, или предупреждение и null (нет выбора). */
 function requireControlledActor(warnMsg) {
@@ -232,9 +288,22 @@ export function registerHooks() {
   // у ВСЕХ типов актора (Отряд/Техника/Корабль/Демон/Орда/Формирование/
   // Звёздная система — свои классы листов) есть _rollSkill/_rollCharacteristic
   // этого класса, отсюда явная проверка вместо слепого вызова.
-  registerDelegatedTestOpener("genericTest", (executorActor, effectTargetActor, payload) => {
+  registerDelegatedTestOpener("genericTest", async (executorActor, effectTargetActor, payload) => {
     const sheet = executorActor.sheet;
-    const { testKind, skillKey, charKey, label, hideCharSelect, presetModifier, onFailItemUuid, psychicThreat } = payload;
+    const { testKind, skillKey, charKey, label, hideCharSelect, presetModifier, onFailItemUuid, psychicThreat,
+            casterUuid, psychicIndirect } = payload;
+    // Контекст Сопротивления психосиле (rules/resolve-test.mjs, область psychicThreat).
+    // Кастер едет как ctx.targetActor — «против кого» этот тест: иначе диалог
+    // сопротивляющегося подставил бы первую цель сцены, и условие «Ненавистный
+    // враг» Неповиновения (rules/hatred.mjs) сверялось бы не с тем актором.
+    // Кастер не найден (удалён с тех пор) — остаётся прежний контекст и цель сцены.
+    let psyContext = null;
+    if (psychicThreat) {
+      psyContext = { psychicThreat: true };
+      if (psychicIndirect) psyContext.psychicIndirect = true;
+      const caster = casterUuid ? await fromUuid(casterUuid).catch(() => null) : null;
+      if (caster) psyContext.targetActor = caster;
+    }
     if (testKind === "characteristic") {
       if (typeof sheet?._rollCharacteristic !== "function") {
         return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — тест характеристики так не открыть.`);
@@ -248,7 +317,7 @@ export function registerHooks() {
       // наложения Состояния цели ПРИ ПРОВАЛЕ (Choir of Poxes), см. _runTest.
       return sheet._rollCharacteristic(label, meta?.abbr ?? charKey, total, charKey, !!hideCharSelect,
         { effectTargetActor, presetModifier: Number(presetModifier) || 0, onFailItemUuid: onFailItemUuid || null,
-          rollContext: psychicThreat ? { psychicThreat: true } : null });
+          rollContext: psyContext });
     }
     if (typeof sheet?._rollSkill !== "function") {
       return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — тест навыка так не открыть.`);
@@ -288,6 +357,13 @@ export function registerHooks() {
 
   // ── Обработчики кнопок в чате ────────────────────────────────────────────
   Hooks.on("renderChatMessageHTML", (message, html, data) => {
+
+    // Правки урона попаданий (Кубик → Успехи, Искры) лежат во флаге сообщения, а не только в DOM нажавшего
+    // клиента: накладываем их ДО привязки обработчиков, чтобы следующая правка считала от исправленного числа
+    // и ГМ, применяющий урон со своей карточки, видел то же число (combat/damage-override.mjs).
+    applyDamageOverrides(html, message?.flags?.["warhammer-dbc"]?.[DMG_OVERRIDES_FLAG]);
+    // Смещение гранаты после Гренадера — тоже из флага сообщения (иначе отметка «раз на карточку» перерисует старое).
+    applyScatterOverride(html, message?.flags?.["warhammer-dbc"]?.[SCATTER_FLAG]);
 
     // Огонь Души (module/combat/soulfire.mjs) — кнопка силы рядом с каждой
     // кнопкой урона E(Fl), если атакующий — свой псайкер с этой силой.
@@ -376,7 +452,11 @@ export function registerHooks() {
           onFailItemUuid: d.itemUuid || "",
           // Тег «тест против психической угрозы» (rules/resolve-test.mjs, scope
           // "psychicthreat") — Сопротивление (Psychic Powers) даёт на него +10.
-          psychicThreat: true
+          psychicThreat: true,
+          // Кастер и Непрямая сила — для Неповиновения (rules/hatred.mjs):
+          // «Ненавистный» ли кастер и не «непрямая» ли сила.
+          casterUuid: d.casterUuid || "",
+          psychicIndirect: d.psyIndirect === "1"
         };
         if (activeOwnerOf(targetActor)) {
           await requestDelegatedTest({
@@ -467,10 +547,10 @@ export function registerHooks() {
         // карточке одна, а знает о седле только сама цель, поэтому развилка
         // здесь: карточка на момент броска ещё не знает, в кого попадут.
         if (actor.system?.mount?.uuid) {
-          const handled = await showMountedDodgeDialog(actor, extraMod, hitsCount, attackerUuid, attackId);
+          const handled = await showMountedDodgeDialog(actor, extraMod, hitsCount, attackerUuid, attackId, parseInt(ds.evadeCost || "1"));
           if (handled !== null) return;
         }
-        await _performDodge(actor, { extraMod, forcedReroll: ds.forceReroll || "", hitsCount, attackerUuid, isMelee: ds.melee === "1", burst, attackerIsHorde, attackId, itemUuid, grappleAttack: ds.grapple === "1" });
+        await _performDodge(actor, { extraMod, forcedReroll: ds.forceReroll || "", hitsCount, attackerUuid, isMelee: ds.melee === "1", burst, attackerIsHorde, attackId, itemUuid, grappleAttack: ds.grapple === "1", evadeCost: parseInt(ds.evadeCost || "1") });
       });
     });
 
@@ -524,7 +604,10 @@ export function registerHooks() {
         ev.preventDefault();
         const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
         if (!actor) return;
-        await _performSprayCancel(actor);
+        // Sprayer / Распылитель (3-8318): штраф −20 зависит от стрелка, не от цели.
+        const attackerUuid = ev.currentTarget.dataset.attackerUuid;
+        const attacker = attackerUuid ? (await fromUuid(attackerUuid).catch(() => null)) : null;
+        await _performSprayCancel(actor, { attacker });
       });
     });
 
@@ -602,6 +685,234 @@ export function registerHooks() {
       });
     });
 
+    // Вырубание (Takedown, combat/takedown.mjs): «сбить с ног» с карточки урона
+    // после успешного Оглушения. Раз на карточку; носитель «Ещё Не Всё» заодно
+    // ставит цели метку запрета Вскочить.
+    html.querySelectorAll(".wh-takedown-btn").forEach(btn => {
+      if (cardOnceUsed(message, TAKEDOWN_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const done = await takedownKnockdown(message, el.dataset.attackerUuid, el.dataset.targetUuid);
+        if (done) el.disabled = true;
+      });
+    });
+
+    // Разрубить (Талант «Рукопашных», combat/cleave.mjs): свободная базовая атака −10 тем же оружием
+    // по ДРУГОМУ персонажу рядом с выведенной из строя целью. Раз на карточку (отметка — «Бросок!» окна,
+    // payOnRoll; закрытое окно её не съедает); старые цели сбрасываются — игрок выцеливает соседа сам. cleave:true в опциях
+    // атаки (→ data-cleave-child карточки урона) не даёт новой атаке породить ещё одну.
+    html.querySelectorAll(".wh-cleave-btn").forEach(btn => {
+      if (cardOnceUsed(message, CLEAVE_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const attacker = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
+        const weapon = await fromUuid(el.dataset.weaponUuid || "").catch(() => null);
+        if (!attacker || !weapon) return ui.notifications.warn("⚠️ Атакующий или его оружие не найдены.");
+        if (!attacker.isOwner) return ui.notifications.warn("⚠️ Разрубить проводит владелец атакующего (или ГМ).");
+        if (cardOnceUsed(message, CLEAVE_CARD_FLAG)) return ui.notifications.warn("Разрубить с этой карточки уже использовано.");
+        game.user.targets.forEach(t => t.setTarget(false, { user: game.user, releaseOthers: false }));
+        await attacker.sheet._showAttackDialog?.(weapon, { modifier: CLEAVE_PENALTY, forceBase: "standard", cleave: true,
+          payOnRoll: { label: "Разрубить", cardId: message.id, cardKey: CLEAVE_CARD_FLAG } });
+      });
+    });
+
+    // Психический Вампир (Талант Псайканы, combat/psychic-vampire.mjs): с карточки урона, когда психическая атака
+    // вывела цель из строя. Раз на карточку; отметка ставится в момент броска.
+    html.querySelectorAll(".wh-vampire-btn").forEach(btn => {
+      if (cardOnceUsed(message, VAMPIRE_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        if (await handleVampireClick(message, el)) el.disabled = true;
+      });
+    });
+
+    // Сцепление Клинков (Талант «Рукопашных», combat/blade-binding.mjs): с карточки успешного Парирования —
+    // встречный тест S+0 vs S+0, бросает АТАКОВАВШИЙ. Раз на карточку; отметка — в момент броска.
+    html.querySelectorAll(".wh-blade-binding-btn").forEach(btn => {
+      if (cardOnceUsed(message, BLADE_BINDING_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const attacker = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
+        const defender = await fromUuid(el.dataset.defenderUuid || "").catch(() => null);
+        const binderWeapon = await fromUuid(el.dataset.attackerWeaponUuid || "").catch(() => null);
+        if (!attacker || !defender || !binderWeapon) return ui.notifications.warn("⚠️ Атакующий, парировавший или оружие не найдены.");
+        if (!attacker.isOwner) return ui.notifications.warn("⚠️ Сцепление проводит владелец атакующего (или ГМ).");
+        if (cardOnceUsed(message, BLADE_BINDING_CARD_FLAG)) return ui.notifications.warn("Сцепление с этой карточки уже использовано.");
+        await startBladeBinding(attacker, defender, {
+          binderWeapon, parryWeaponId: el.dataset.parryWeaponId || "",
+          pay: () => runCardOnce(message, BLADE_BINDING_CARD_FLAG, async () => true, "Сцепление с этой карточки уже использовано.")
+        });
+      });
+    });
+
+    // Жнец (Талант «Рукопашных», combat/reaper-chain.mjs): с карточки урона — к следующей цели Натиска. Замер по
+    // токенам сцены (Полудвижение от начальной цели, дистанция Натиска), отметка карточки — только после
+    // успешного замера; окно атаки с Базой «Натиск» без новых ОД, атака идёт в лимит Атак.
+    html.querySelectorAll(".wh-reaper-btn").forEach(btn => {
+      if (cardOnceUsed(message, REAPER_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const attacker = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
+        const weapon = await fromUuid(el.dataset.weaponUuid || "").catch(() => null);
+        if (!attacker || !weapon) return ui.notifications.warn("⚠️ Атакующий или его оружие не найдены.");
+        if (!attacker.isOwner) return ui.notifications.warn("⚠️ Жнеца проводит владелец атакующего (или ГМ).");
+        if (cardOnceUsed(message, REAPER_CARD_FLAG)) return ui.notifications.warn("Жнец с этой карточки уже использован.");
+        const opened = await startReaperFollow(attacker, weapon, {
+          killedTokenUuid: el.dataset.killedTokenUuid || "",
+          combatId: el.dataset.combatId || "", round: Number(el.dataset.round) || 0,
+          claim: () => runCardOnce(message, REAPER_CARD_FLAG, async () => true, "Жнец с этой карточки уже использован.")
+        });
+        if (opened) el.disabled = true;
+      });
+    });
+
+    // Трофей (Мастер Казней, combat/trophy-kill.mjs): кнопка на карточке убийства. Решает ГМ — достойна ли цель
+    // (офицер/чемпион/чудовище); сумму (+1, Трофеи Триумфа 2/3/4 по Inf) и зажим по P.b считает система.
+    // Пишет ГМ прямо в убийцу (права есть, релей не нужен); раз на карточку — отметка только при засчитанном.
+    html.querySelectorAll(".wh-trophy-btn").forEach(btn => {
+      if (cardOnceUsed(message, TROPHY_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        if (!game.user.isGM) return ui.notifications.warn("⚠️ Трофей засчитывает ГМ — достойна ли цель, решает он.");
+        const killer = await fromUuid(el.dataset.killerUuid || "").catch(() => null);
+        if (!killer) return ui.notifications.warn("⚠️ Убийца не найден.");
+        let outcome = null;
+        await runCardOnce(message, TROPHY_CARD_FLAG, async () => {
+          outcome = await awardTrophy(killer, { inf: Number(el.dataset.victimInf) || 0, victimName: el.dataset.victimName || "" });
+          return !!outcome.awarded;
+        }, "Трофей с этой карточки уже засчитан.");
+        if (outcome?.awarded) {
+          el.disabled = true;
+          await postTestCard(killer, {
+            icon: rollIcon("skull", "#c9a24a"),
+            title: `Трофей засчитан — ${killer.name}`,
+            lines: [`<div class="roll-threshold">+${outcome.added} Очков Трофеев (${killer.system?.trophyPoints?.value}/${killer.system?.trophyPoints?.max}).</div>`]
+          }, { sound: false });
+        } else if (outcome?.reason === "full") ui.notifications.warn("⚠️ Пул Очков Трофеев уже полон (максимум P.b).");
+        else if (outcome?.reason === "noPool") ui.notifications.warn("⚠️ У убийцы нет Очков Трофеев.");
+      });
+    });
+
+    // Рисовка (Талант «Рукопашных», combat/show-off.mjs): победа на 5+ Успехов — свободная базовая атака по этой
+    // цели. Не считается атакой (ни ОД, ни лимита Атак — techniqueOpts.showOffFree); цель берётся на токен сцены,
+    // старые цели сбрасываются. Раз на карточку — отметка «Бросок!» окна (payOnRoll).
+    html.querySelectorAll(".wh-show-off-attack-btn").forEach(btn => {
+      if (cardOnceUsed(message, SHOW_OFF_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const attacker = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
+        const weapon = await fromUuid(el.dataset.weaponUuid || "").catch(() => null);
+        const target = await fromUuid(el.dataset.targetUuid || "").catch(() => null);
+        if (!attacker || !weapon) return ui.notifications.warn("⚠️ Атакующий или его оружие не найдены.");
+        if (!attacker.isOwner) return ui.notifications.warn("⚠️ Свободную атаку Рисовки проводит владелец атакующего (или ГМ).");
+        if (cardOnceUsed(message, SHOW_OFF_CARD_FLAG)) return ui.notifications.warn("Свободная атака с этой карточки уже использована.");
+        const token = canvas.tokens?.placeables?.find(t => t.actor?.uuid === target?.uuid);
+        game.user.targets.forEach(t => t.setTarget(false, { user: game.user, releaseOthers: false }));
+        token?.setTarget(true, { user: game.user, releaseOthers: true });
+        await attacker.sheet._showAttackDialog?.(weapon, { forceBase: "standard", showOffFree: true,
+          payOnRoll: { label: "Рисовка", cardId: message.id, cardKey: SHOW_OFF_CARD_FLAG } });
+      });
+    });
+
+    // Упорство (Талант «Рукопашных», combat/tenacity.mjs): повтор единственной одиночной рукопашной атаки Хода,
+    // не нанёсшей урона — тем же оружием, с той же Базой и Приёмом, по той же цели (цели не сбрасываются).
+    // Свободное действие: tenacityRepeat снимает ОД и Лимит Атак в окне, и не порождает нового повтора.
+    html.querySelectorAll(".wh-tenacity-btn").forEach(btn => {
+      if (cardOnceUsed(message, TENACITY_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const attacker = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
+        const weapon = await fromUuid(el.dataset.weaponUuid || "").catch(() => null);
+        if (!attacker || !weapon) return ui.notifications.warn("⚠️ Атакующий или его оружие не найдены.");
+        if (!attacker.isOwner) return ui.notifications.warn("⚠️ Упорство проводит владелец атакующего (или ГМ).");
+        const state = {
+          attacksThisTurn: Number(attacker.getFlag("warhammer-dbc", "attackActionsThisTurn")) || 0,
+          damageDealt: !!attacker.getFlag("warhammer-dbc", MELEE_DAMAGE_DEALT_FLAG)
+        };
+        if (!tenacityAvailable(attacker, state)) {
+          return ui.notifications.warn(state.damageDealt
+            ? "⚠️ Упорство: рукопашная атака этого Хода уже нанесла урон."
+            : "⚠️ Упорство: в этом Ходу была не одна атака.");
+        }
+        // Попала, а урон по карточке ещё не применён — спросить (решение владельца 26.10.2026); «Отмена» — ничего.
+        const proceed = await confirmTenacityRepeat({
+          hit: el.dataset.hit === "1",
+          damageApplied: attacker.getFlag("warhammer-dbc", MELEE_DAMAGE_APPLIED_FLAG) === message.id
+        });
+        if (!proceed) return;
+        // Пока висел диалог, урон мог пройти (его применил ГМ) — условие перепроверяется после ответа.
+        if (!tenacityAvailable(attacker, {
+          attacksThisTurn: Number(attacker.getFlag("warhammer-dbc", "attackActionsThisTurn")) || 0,
+          damageDealt: !!attacker.getFlag("warhammer-dbc", MELEE_DAMAGE_DEALT_FLAG)
+        })) return ui.notifications.warn("⚠️ Упорство: пока вы решали, рукопашная атака нанесла урон — повтор закрыт.");
+        if (cardOnceUsed(message, TENACITY_CARD_FLAG)) return ui.notifications.warn("Упорство с этой карточки уже использовано.");
+        const base = el.dataset.base || "";
+        const technique = el.dataset.technique || "";
+        // Отметка карточки — «Бросок!» окна (payOnRoll): закрытое окно повтор не съедает.
+        await attacker.sheet._showAttackDialog?.(weapon, {
+          tenacityRepeat: true, ...(base ? { forceBase: base } : {}), ...(technique ? { technique } : {}),
+          payOnRoll: { label: "Упорство", cardId: message.id, cardKey: TENACITY_CARD_FLAG }
+        });
+      });
+    });
+
+    // Подрезать Сухожилья (Талант «Рукопашных», combat/hamstring.mjs): встречный тест A+0 vs A+0 после
+    // Избирательного попадания в Ногу с непоглощённым уроном. Отметки карточки и Раунда ставятся в момент
+    // «Бросок!» окна (pay), «Отмена» их не съедает; цель — выцеленный токен окна встречного теста.
+    html.querySelectorAll(".wh-hamstring-btn").forEach(btn => {
+      if (cardOnceUsed(message, HAMSTRING_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const attacker = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
+        const target = await fromUuid(el.dataset.targetUuid || "").catch(() => null);
+        if (!attacker || !target) return ui.notifications.warn("⚠️ Атакующий или цель не найдены.");
+        if (!attacker.isOwner) return ui.notifications.warn("⚠️ Подрезать Сухожилья проводит владелец атакующего (или ГМ).");
+        if (!isRoundCapabilityAvailable(attacker, HAMSTRING_ROUND_FLAG)) {
+          return ui.notifications.warn("⚠️ Подрезать Сухожилья уже использовано в этом Раунде.");
+        }
+        await startHamstring(attacker, target, {
+          pay: async () => {
+            const claimed = await runCardOnce(message, HAMSTRING_CARD_FLAG, async () => true, "Подрезать Сухожилья с этой карточки уже использовано.");
+            if (!claimed) return false;
+            await markRoundCapabilityUsed(attacker, HAMSTRING_ROUND_FLAG);
+            el.disabled = true;
+            return true;
+          }
+        });
+      });
+    });
+
+    // Яростный Штурм (Талант Берсерка, combat/furious-assault.mjs): с карточки успешной Полной Атаки —
+    // ещё одна атака тем же оружием, Базой Полная Атака и Приёмом за свободное действие, ценой Реакции.
+    // Реакция и отметка карточки — «Бросок!» окна (payOnRoll, sheets/attack/dialog.mjs): закрытое окно ничего не стоит.
+    html.querySelectorAll(".wh-furious-assault-btn").forEach(btn => {
+      if (cardOnceUsed(message, FURIOUS_ASSAULT_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const attacker = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
+        const weapon = await fromUuid(el.dataset.weaponUuid || "").catch(() => null);
+        if (!attacker || !weapon) return ui.notifications.warn("⚠️ Атакующий или его оружие не найдены.");
+        if (!attacker.isOwner) return ui.notifications.warn("⚠️ Яростный Штурм проводит владелец атакующего (или ГМ).");
+        if (cardOnceUsed(message, FURIOUS_ASSAULT_CARD_FLAG)) return ui.notifications.warn("Яростный Штурм с этой карточки уже использован.");
+        const technique = el.dataset.technique || "";
+        // Цель не сбрасывается: «еще одну атаку» книга ведёт по той же цели (игрок вправе выбрать другую).
+        await attacker.sheet._showAttackDialog?.(weapon, {
+          forceBase: "fullatk", furiousAssault: true, ...(technique ? { technique } : {}),
+          payOnRoll: { label: "Яростный Штурм", cardId: message.id, cardKey: FURIOUS_ASSAULT_CARD_FLAG, reaction: true }
+        });
+      });
+    });
+
     // Призыв Духов Стада (wdbc-xxb7) — кнопка карточки успешного проведения
     // Ритуала «Summon Herd Spirits» (module/apps/ritual-cast.mjs); сам диалог
     // распределения (module/apps/herd-spirits-summon.mjs) GM-only внутри себя.
@@ -653,7 +964,9 @@ export function registerHooks() {
         const sizePenalty = target ? knockdownSizePenalty(actor, target) : 0;
         await _showContestDialog(actor, { ...MELEE_CONTESTS.knockdown, onSuccess: resolveKnockdownSuccess,
           pay: async a => {
-            if (await spendReaction(a)) return true;
+            // strange: бонусный «Повалить» крюком/посохом — «странная» атака Странной Техники
+            // (combat/action-economy.mjs, system.reactions.strangeValue), тратится первой.
+            if (await spendReaction(a, { strange: true })) return true;
             ui.notifications.warn("⚠️ Не хватает Реакций.");
             return false;
           },
@@ -784,7 +1097,27 @@ export function registerHooks() {
         if (!await confirmHordeDefense(actor, "Парирование")) return;
         if (!await confirmHordeHitEvasion(actor, ds.hordeHit === "1", "Парирование")) return;
         await _performParry(actor, { extraMod, attackerUuid: ds.attackerUuid || "", hitsCount, burst, attackerIsHorde, isMelee, attackerWeaponUuid: ds.attackerWeaponUuid || "", attackId: ds.attackId || "",
-          chomper: ds.chomper === "1", forAlly: ds.bodyguardUuid ? (ds.forAlly || "") : "" });
+          chomper: ds.chomper === "1", forAlly: ds.bodyguardUuid ? (ds.forAlly || "") : "",
+          // База атаки с этой карточки — для Пересилить (Берсерк): действует только против Полной Атаки.
+          attackBaseKey: message.flags?.["warhammer-dbc"]?.attack?.opts?.baseKey || "" });
+      });
+    });
+
+    // Пересилить (Талант Берсерка, combat/overpower.mjs): с карточки успешного Парирования — встречный
+    // тест S+0 vs S+0, бросает АТАКОВАВШИЙ. Раз на карточку; отметка ставится в момент броска.
+    html.querySelectorAll(".wh-overpower-btn").forEach(btn => {
+      if (cardOnceUsed(message, OVERPOWER_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const attacker = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
+        const defender = await fromUuid(el.dataset.defenderUuid || "").catch(() => null);
+        if (!attacker || !defender) return ui.notifications.warn("⚠️ Атакующий или парировавший не найден.");
+        if (!attacker.isOwner) return ui.notifications.warn("⚠️ Пересилить проводит владелец атакующего (или ГМ).");
+        if (cardOnceUsed(message, OVERPOWER_CARD_FLAG)) return ui.notifications.warn("Пересилить с этой карточки уже использовано.");
+        await startOverpower(attacker, defender, {
+          pay: () => runCardOnce(message, OVERPOWER_CARD_FLAG, async () => true, "Пересилить с этой карточки уже использовано.")
+        });
       });
     });
 
@@ -871,6 +1204,38 @@ export function registerHooks() {
       });
     });
 
+    // Рипост (Талант «Рукопашных», rules/melee-talents.mjs): кнопка несёт ДРУГОЕ оружие.
+    // Раз в Раунд занимается «Бросок!» окна (payOnRoll), закрытое окно его не съедает; открывается обычное окно
+    // атаки с Базой Стандартная, +0 и штрафом −20 к Избеганию цели (riposte → sheets/attack/selection.mjs;
+    // у пистолета — прямой targetDodgeMod, окно стрелкового выбора Приёма не имеет).
+    html.querySelectorAll(".wh-riposte-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const cardUuid = el.closest(".wh-roll-result")?.dataset.actorUuid;
+        const actor = cardUuid ? (await fromUuid(cardUuid).catch(() => null)) : null;
+        if (!actor) return ui.notifications.warn("⚠️ Парировавший персонаж карточки не найден.");
+        const weapon = actor.items.get(el.dataset.weaponId);
+        if (!weapon) return ui.notifications.warn("⚠️ Оружие Рипоста не найдено на листе.");
+        if (!isRoundCapabilityAvailable(actor, RIPOSTE_ROUND_FLAG)) {
+          return ui.notifications.warn("⚠️ Рипост уже потрачен в этом Раунде.");
+        }
+        const attackerUuid = el.dataset.attackerUuid;
+        if (attackerUuid) {
+          const attackerActor = (await fromUuid(attackerUuid).catch(() => null));
+          const token = canvas.tokens?.placeables?.find(t => t.actor?.uuid === attackerActor?.uuid);
+          game.user.targets.forEach(t => t.setTarget(false, { user: game.user, releaseOthers: false }));
+          token?.setTarget(true, { user: game.user, releaseOthers: true });
+        }
+        const isMeleeWeapon = weapon.system?.weaponClass === "melee";
+        await actor.sheet._showAttackDialog?.(weapon, {
+          modifier: 0, forceBase: "standard", riposte: true,
+          ...(isMeleeWeapon ? {} : { targetDodgeMod: RIPOSTE_EVASION_PENALTY }),
+          payOnRoll: { label: "Рипост", roundFlag: RIPOSTE_ROUND_FLAG }
+        });
+      });
+    });
+
     // Ответный удар по безоружной атаке (core.json, «Безоружный Бой»,
     // wdbc-x1nz.2.69): 2 Успеха Парирования → урон своего оружия с S.b
     // атакующего в его атакующую конечность. Бьёт тот, кто парировал.
@@ -894,16 +1259,164 @@ export function registerHooks() {
       });
     });
 
+    // Пинок с Разворота (Талант Пугилиста, combat/roundhouse.mjs): кнопка на
+    // карточке попавшего Пинка с Натиска открывает общее состязание
+    // Athletics(S)+10 vs Athletics(S)+0. Цель — выцеленный токен, как у Повалить.
+    // Раз на карточку (card-once): отметка ставится в момент броска, а не при открытии окна.
+    // Цель — та, чей uuid несёт кнопка (data-target-uuid), а не текущий прицел.
+    html.querySelectorAll(".wh-roundhouse-btn").forEach(btn => {
+      if (cardOnceUsed(message, "roundhouseUsed")) btn.disabled = true;
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const attackerUuid = ev.currentTarget.dataset.attackerUuid;
+        const targetUuid = ev.currentTarget.dataset.targetUuid || "";
+        const actor = attackerUuid ? (await fromUuid(attackerUuid).catch(() => null)) : null;
+        if (!actor) return ui.notifications.warn("⚠️ Пинающий персонаж карточки не найден.");
+        if (!actor.isOwner) return ui.notifications.warn("⚠️ Пинок с Разворота проводит владелец персонажа (или ГМ).");
+        if (cardOnceUsed(message, "roundhouseUsed")) return ui.notifications.warn("Пинок с Разворота с этой карточки уже проведён.");
+        const { startRoundhouse } = await import("./combat/roundhouse.mjs");
+        await startRoundhouse(actor, {
+          targetUuid,
+          claim: () => runCardOnce(message, "roundhouseUsed", async () => true, "Пинок с Разворота с этой карточки уже проведён.")
+        });
+      });
+    });
+
+    // Швырнуть (Талант Пугилиста, combat/grapple.mjs::slamAction): свободный
+    // бросок/замах партнёром по Борьбе после победы в Захвате на 5+ Успехов.
+    // Метнуть и Замахнуться — ОДНО свободное действие на карточку: ключ общий, оба гаснут вместе.
+    html.querySelectorAll(".wh-slam-btn").forEach(btn => {
+      if (cardOnceUsed(message, "slamUsed")) btn.disabled = true;
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = el.dataset.actorUuid ? (await fromUuid(el.dataset.actorUuid).catch(() => null)) : null;
+        if (!actor) return ui.notifications.warn("⚠️ Борец карточки не найден.");
+        if (!actor.isOwner) return ui.notifications.warn("⚠️ Швырнуть проводит владелец персонажа (или ГМ).");
+        const { slamAction } = await import("./combat/grapple.mjs");
+        await runCardOnce(message, "slamUsed", () => slamAction(actor, el.dataset.mode),
+          "Швырнуть с этой карточки уже использован.");
+      });
+    });
+
+    // Наскок (Талант Пугилиста, combat/grapple.mjs::pounceAction): свободный Повалить
+    // после Захвата с Натиска и вторая часть (схватить, упасть, Сжать + Заломить).
+    // Раз на карточку: у каждой части (Повалить / схватить и упасть) свой ключ, карточки разные.
+    html.querySelectorAll(".wh-pounce-btn").forEach(btn => {
+      const onceKey = btn.dataset.stage === "grab" ? "pounceGrabUsed" : "pounceKnockdownUsed";
+      if (cardOnceUsed(message, onceKey)) btn.disabled = true;
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = el.dataset.actorUuid ? (await fromUuid(el.dataset.actorUuid).catch(() => null)) : null;
+        if (!actor) return ui.notifications.warn("⚠️ Борец карточки не найден.");
+        if (!actor.isOwner) return ui.notifications.warn("⚠️ Наскок проводит владелец персонажа (или ГМ).");
+        if (cardOnceUsed(message, onceKey)) return ui.notifications.warn("Эта часть Наскока уже проведена.");
+        const { pounceAction } = await import("./combat/grapple.mjs");
+        await pounceAction(actor, el.dataset.stage, {
+          claim: () => runCardOnce(message, onceKey, async () => true, "Эта часть Наскока уже проведена.")
+        });
+      });
+    });
+
+    // Саботаж (Талант Разбойника, combat/sabotage.mjs): кнопка на карточке попавшего удара по
+    // оружию цели — Клин / отключение. Раз на карточку; чужому оружию пишет ГМ через relayItemUpdate.
+    html.querySelectorAll(".wh-sabotage-btn").forEach(btn => {
+      if (cardOnceUsed(message, "sabotageApplied")) btn.disabled = true;
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const attacker = el.dataset.attackerUuid ? (await fromUuid(el.dataset.attackerUuid).catch(() => null)) : null;
+        const weapon = el.dataset.weaponUuid ? (await fromUuid(el.dataset.weaponUuid).catch(() => null)) : null;
+        if (!attacker || !weapon) return ui.notifications.warn("⚠️ Оружие цели или нападавший карточки не найдены.");
+        if (!attacker.isOwner) return ui.notifications.warn("⚠️ Саботаж применяет владелец нападавшего (или ГМ).");
+        const { applySabotage } = await import("./combat/sabotage.mjs");
+        await runCardOnce(message, "sabotageApplied", () => applySabotage(attacker, weapon),
+          "Саботаж с этой карточки уже применён.");
+      });
+    });
+
+    // Жокей (combat/jockey.mjs): «Спешиться» с карточки победы — снять метку у обоих.
+    html.querySelectorAll(".wh-jockey-dismount-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = el.dataset.jockeyUuid ? (await fromUuid(el.dataset.jockeyUuid).catch(() => null)) : null;
+        if (!actor) return ui.notifications.warn("⚠️ Жокей карточки не найден.");
+        if (!actor.isOwner) return ui.notifications.warn("⚠️ Спешивается владелец персонажа (или ГМ).");
+        el.disabled = true;
+        const { endJockey } = await import("./combat/jockey.mjs");
+        await endJockey(actor);
+      });
+    });
+
     // Вираж (реакция техники — как Уклонение, но Operate − Размер×10)
+    // Ускользнуть (Талант Избегания): переброс проваленного Уклонения от Захвата после броска. Актор — из
+    // карточки (кто уклонялся), не из выбранного токена; Реакция второй раз не тратится (slipReroll).
+    html.querySelectorAll(".wh-slip-reroll-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const ds = { ...el.dataset };
+        const actor = ds.actorUuid ? await fromUuid(ds.actorUuid).catch(() => null) : null;
+        if (!actor) return ui.notifications.warn("⚠️ Уклонявшийся персонаж не найден.");
+        if (!game.user.isGM && !actor.isOwner) return ui.notifications.warn(`⚠️ Нет прав на «${actor.name}».`);
+        // Кнопка живёт только в Раунде, где было Уклонение: на старой карточке из прошлого Раунда она не бросает.
+        if (ds.round && game.combat && String(game.combat.round) !== ds.round) {
+          return ui.notifications.warn("⚠️ Это Уклонение было в прошлом Раунде — Ускользнуть теперь не перебросит его.");
+        }
+        el.disabled = true;
+        await _performDodge(actor, {
+          extraMod: parseInt(ds.extraMod || "0"), forcedReroll: ds.forceReroll || "", hitsCount: parseInt(ds.hitsCount || "1"),
+          attackerUuid: ds.attackerUuid || "", isMelee: ds.melee === "1", burst: ds.burst === "1",
+          attackerIsHorde: ds.attackerIsHorde === "1", attackId: ds.attackId || "", itemUuid: ds.itemUuid || "",
+          grappleAttack: true, evadeCost: parseInt(ds.evadeCost || "1"), slipReroll: true
+        });
+      });
+    });
+
+    // Пируэт против Тарана (Талант Избегания): цель — выбранный токен, таранящий — из карточки.
+    html.querySelectorAll(".wh-ram-pirouette-btn").forEach(btn => {
+      if (cardOnceUsed(message, "ramPirouetteUsed")) btn.disabled = true;
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const attackerUuid = el.dataset.attackerUuid;
+        const actor = requireControlledActor("⚠️ Выберите токен цели Тарана на сцене!");
+        if (!actor) return;
+        const rammer = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
+        if (!rammer) return ui.notifications.warn("⚠️ Таранящая машина не найдена.");
+        const { resolveRamPirouette } = await import("./combat/opposed-contest.mjs");
+        // Один бросок на карточку Тарана (иначе провал можно было бы перебрасывать до успеха).
+        const done = await runCardOnce(message, "ramPirouetteUsed", async () => !!(await resolveRamPirouette(actor, rammer)),
+          "Пируэт против этого Тарана уже проходили.");
+        if (done) el.disabled = true;
+      });
+    });
+
+    // Ускользнуть в Борьбе и Состязаниях: переброс проваленного теста инициатора (combat/techniques.mjs).
+    html.querySelectorAll(".wh-slip-contest-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const { slipAwayContestReroll } = await import("./combat/techniques.mjs");
+        if (await slipAwayContestReroll(el.dataset.contestId)) el.disabled = true;
+      });
+    });
+
     html.querySelectorAll(".wh-swerve-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
+        // dataset снимается ДО await (ev.currentTarget живёт только в синхронной части обработчика).
+        const ds = { ...ev.currentTarget.dataset };
         const actor = requireControlledActor("⚠️ Выберите токен машины на сцене!");
         if (!actor) return;
-        const extraMod = parseInt(ev.currentTarget.dataset.extraMod || "0");
-        const hitsCount = parseInt(ev.currentTarget.dataset.hitsCount || "1");
-        const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
-        await _performSwerve(actor, { extraMod, hitsCount, attackerUuid, attackId: ev.currentTarget.dataset.attackId || "" });
+        const extraMod = parseInt(ds.extraMod || "0");
+        const hitsCount = parseInt(ds.hitsCount || "1");
+        const attackerUuid = ds.attackerUuid || "";
+        // data-ram: кнопка с карточки Тарана (combat/vehicle.mjs::_resolveRam) — Вираж встречный против Operate+0 таранящего.
+        await _performSwerve(actor, { extraMod, hitsCount, attackerUuid, attackId: ds.attackId || "",
+          ramContest: ds.ram === "1" });
       });
     });
 
@@ -976,6 +1489,8 @@ export function registerHooks() {
           flexible: el.dataset.flexible === "1",
           forcedDefenceReroll: el.dataset.forceReroll || "",
           isMelee: el.dataset.melee === "1",
+          // Огневая Клеть: цена снятия из пула вдвое выше (attack-card.mjs кладёт data-evade-cost)
+          evadeCost: parseInt(el.dataset.evadeCost || "1"),
           // Захват Парированием (wdbc-t3c3t.6): цена по parryMod, не dodgeMod.
           ...(el.dataset.costByParry === "1" ? { costPenalty: parseInt(el.dataset.parryMod || "0") } : {})
         });
@@ -1018,6 +1533,28 @@ export function registerHooks() {
           reason: ds.reason || "",
           reroll
         });
+      });
+    });
+
+    // Железный Скакун (Талант Всадника): перенос попадания на скакуна из карточки
+    // «Попадание верхом» — тест Operate/Survival−10 от актора всадника по uuid.
+    html.querySelectorAll(".wh-iron-mount-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor?.isOwner) {
+          return ui.notifications.warn("Тест проходит владелец всадника (или ГМ).");
+        }
+        // Кнопка стоит в карточке ДО Избеганий, а Талант работает после них и тратит
+        // попытку из ½P.b за Раунд — нажатая рано, она сожгла бы попытку впустую.
+        const sure = await foundry.applications.api.DialogV2.confirm({
+          window: { title: "Железный Скакун" },
+          content: "<p>Железный Скакун работает ПОСЛЕ Избеганий и тратит одну попытку из ½P.b за Раунд. Избегание уже брошено и попадание всё же пришлось на всадника?</p>",
+          rejectClose: false
+        });
+        if (!sure) return;
+        await ironMountTest(actor);
       });
     });
 
@@ -1119,6 +1656,45 @@ export function registerHooks() {
       });
     });
 
+    // Варп-Замок (Талант Псайканы, combat/warp-lock.mjs): «игнорировать Феномен/Прорыв» с карточки манифестации.
+    html.querySelectorAll(".wh-warplock-btn").forEach(btn => {
+      if (cardOnceUsed(message, WARP_LOCK_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        if (await handleWarpLockClick(message, el)) el.disabled = true;
+      });
+    });
+
+    // Ключевые Силы (Талант Псайканы, пачка I1): способность Очка Бесчестия с карточки СВОЕЙ
+    // манифестации ключевой силы — без траты Очка, раз в Раунд (combat/psyker-pools.mjs).
+    html.querySelectorAll(".wh-signature-free-btn").forEach(btn => {
+      if (cardOnceUsed(message, "signatureFreeUsed")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        if (await handleSignatureFreeClick(message, el)) el.disabled = true;
+      });
+    });
+
+    // Переброс психотеста Ключевой Силой (пачка I3): кнопка на карточке своей ключевой силы; заменённая
+    // карточка получает пометку и гасит все свои кнопки (урон и броски старого результата больше не действуют).
+    html.querySelectorAll(".wh-psy-reroll-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        if (await handlePsyRerollClick(message, el)) el.disabled = true;
+      });
+    });
+    if (cardOnceUsed(message, "psyRerolled")) {
+      const card = html.querySelector(".wh-roll-result");
+      if (card && !card.querySelector(".wh-psy-replaced")) {
+        card.insertAdjacentHTML("afterbegin",
+          `<div class="roll-threshold wh-psy-replaced" style="color:#a33;font-weight:700;">↻ Результат заменён переброском — действует новая карточка ниже</div>`);
+      }
+      card?.querySelectorAll("button").forEach(b => { b.disabled = true; });
+    }
+
     // Блоки «только для владельца» в карточках чата: карточка одна на всех,
     // поэтому прячем их на клиенте по фактическим правам на актора.
     html.querySelectorAll(".wh-owner-only[data-actor-id]").forEach(el => {
@@ -1180,6 +1756,17 @@ export function registerHooks() {
       });
     });
 
+    // Холодная Ярость: переброс неудачной попытки выйти из Ярости — раз на карточку (combat/rage-behavior.mjs).
+    html.querySelectorAll(".wh-rage-exit-reroll-btn").forEach(btn => {
+      if (cardOnceUsed(message, RAGE_EXIT_REROLL_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const done = await runCardOnce(message, RAGE_EXIT_REROLL_CARD_FLAG, () => rerollRageExit(message),
+          "Переброс с этой карточки уже сделан.");
+        if (done) btn.disabled = true;
+      });
+    });
+
     // «Крайне миролюбив» (Серый Человек, wdbc-gzuf) — карточка-гейт на вход в
     // Ярость до первой атаки по себе: тест Воли−20 или явный отказ.
     html.querySelectorAll(".wh-pacifism-test-btn, .wh-pacifism-refuse-btn").forEach(btn => {
@@ -1206,7 +1793,7 @@ export function registerHooks() {
     // combat/attack-card.mjs уже посчитал итог с учётом Экстремального/
     // Выгорания/доп. кубов, здесь только «кубик минус старое, плюс Успехи».
     html.querySelectorAll(".wh-dmg-swap-btn").forEach(btn => {
-      btn.addEventListener("click", (ev) => {
+      btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
         const el = ev.currentTarget;
         const ds = el.dataset;
@@ -1218,7 +1805,62 @@ export function registerHooks() {
         const b = applyBtn.querySelector("b");
         if (b) b.textContent = String(next);
         el.disabled = true;
-        el.textContent = `🎲 Кубик заменён — новый урон ${next}`;
+        const text = `🎲 Кубик заменён — новый урон ${next}`;
+        el.textContent = text;
+        await recordDamageOverride(message, html, el, "wh-dmg-swap-btn", { damage: next, text });
+      });
+    });
+
+    // Искры (Талант Оружейника, rules/gunsmith-talents.mjs::sparksSwap): бросает
+    // 2d10 и правит data-damage соседней .wh-apply-dmg-btn в DOM — тем же
+    // приёмом, что .wh-dmg-swap-btn выше. «Один раз за атаку»: после клика
+    // гасит Искры на всех попаданиях этой карточки.
+    html.querySelectorAll(".wh-sparks-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const applyBtn = el.closest(".roll-dmg-hit-group")?.querySelector(".wh-apply-dmg-btn");
+        if (!applyBtn) return;
+        const roll = await new Roll("2d10").evaluate();
+        const rolled = roll.dice?.[0]?.results?.map(r => r.result) ?? [];
+        const dice = (el.dataset.dice || "").split(",").map(Number).filter(Number.isFinite);
+        const { delta, swaps } = sparksSwap(dice, rolled);
+        const current = parseInt(applyBtn.dataset.damage) || 0;
+        const next = Math.max(0, current + delta);
+        applyBtn.dataset.damage = String(next);
+        const b = applyBtn.querySelector("b");
+        if (b) b.textContent = String(next);
+        const text = swaps.length
+          ? `⚡ Искры (2d10: ${rolled.join(", ")}): ${swaps.map(s => `${s.from}→${s.to}`).join(", ")} — новый урон ${next}`
+          : `⚡ Искры (2d10: ${rolled.join(", ")}): заменять нечего — урон ${next}`;
+        const card = el.closest(".wh-roll-result") ?? html;
+        card.querySelectorAll(".wh-sparks-btn").forEach(s => { s.disabled = true; });
+        el.textContent = text;
+        await recordDamageOverride(message, html, el, "wh-sparks-btn", { damage: next, text, disableCardWide: ".wh-sparks-btn" });
+        try {
+          await roll.toMessage({ speaker: ChatMessage.getSpeaker?.() ?? {}, flavor: "Искры (Талант Оружейника): 2d10" });
+        } catch { /* карточка уже обновлена в DOM; сообщение о броске — прозрачность, не механика */ }
+      });
+    });
+
+    // Прикрывающий Огонь (Талант Стрелка): кнопка очереди по выбранному бывшему противнику (combat/covering-fire.mjs).
+    html.querySelectorAll(".wh-covering-fire-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const d = ev.currentTarget.dataset;
+        const { activateCoveringFire } = await import("./combat/covering-fire.mjs");
+        await activateCoveringFire(d.actorUuid, d.tokenUuid);
+      });
+    });
+
+    // Бесплатные выстрелы Талантов Стрелка (Стрельба от Бедра, Огонь с Вытягивания): кнопка в чате
+    // открывает обычное окно атаки в режиме «без ОД» (combat/free-shot.mjs).
+    html.querySelectorAll(".wh-free-shot-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const d = ev.currentTarget.dataset;
+        const { activateFreeShot } = await import("./combat/free-shot.mjs");
+        await activateFreeShot(d.actorUuid, d.kind, d.itemId || "");
       });
     });
 
@@ -1305,6 +1947,22 @@ export function registerHooks() {
           // урона», если после Поглощения реального урона не осталось —
           // считается в applyDamageToActor/applyDamageToVehicle.
           hasExtreme:      ds.hasExtreme === "1",
+          // Сварщик (rules/gunsmith-talents.mjs): Избирательное попадание Мельтой
+          // по технике — доп. Критический Эффект 1d5+1, если дойдёт непоглощённый урон.
+          welder:          ds.welder === "1",
+          // Часть машины, в которую целился стрелок: туда ляжет Критический Эффект Сварщика.
+          welderPart:      ds.welderPart || "",
+          // Облучить (rules/gunsmith-talents.mjs): пробитие брони для Rad без удвоения AP цели.
+          breachNoDouble:  ds.breachNoDouble === "1",
+          // Пробивной Удар (Талант Стрелка): +N к урону, если попадание уводит Раны
+          // в минус (rules/gunner-talents.mjs::negativeWoundsBonus).
+          negWoundsBonus:  parseInt(ds.negWoundsBonus || "0"),
+          // Разрубить (combat/cleave.mjs): это дополнительная атака Таланта — новых не порождает.
+          cleaveChild:     ds.cleaveChild === "1",
+          // Подрезать Сухожилья (combat/hamstring.mjs): Избирательная атака в Ногу — кнопка в карточке урона.
+          hamstring:       ds.hamstring === "1",
+          // Жнец (combat/reaper-chain.mjs): удар с Базой «Натиск» — карточка урона предложит продолжить к следующей цели.
+          chargeBase:      ds.chargeBase === "1",
           // Карточка, с которой пришёл урон: к ней привязывается итог
           // пробития брони для кнопок Rad/Toxic той же карточки (wdbc-x1nz.2.79).
           sourceMessageId: message?.id ?? ""
@@ -1383,6 +2041,22 @@ export function registerHooks() {
           icon: "🩸", title: `Кхорнгор Мясник — ${esc(attacker.name)}`,
           lines: [`<div class="roll-dice">+${res.n}d${res.faces}: <b>${res.total}</b>${res.extreme ? " — Экстремальный урон" : ""}</div>`]
         }, { rolls: [res.roll], sound: false });
+      });
+    });
+
+    // Хирургическая Точность (Медик, 3-dc87): тест Medicae−10 перед уроном
+    // Избирательной атаки — прибавка в «Применить урон» и в само сообщение, тест раз на карточку.
+    html.querySelectorAll(".wh-surgical-btn").forEach(btn => {
+      if (cardOnceUsed(message, "surgicalPrecisionUsed")) btn.disabled = true;
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const attackerUuid = el.dataset.attackerUuid;
+        const applyBtn = html.querySelector(".wh-apply-dmg-btn");
+        const doc = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
+        const attacker = doc?.actor ?? doc ?? null;
+        const { runSurgicalPrecision } = await import("./combat/surgical-precision.mjs");
+        await runSurgicalPrecision(attacker, { applyBtn, el, message });
       });
     });
 
@@ -1506,6 +2180,13 @@ export function registerHooks() {
           const region = await placeLingerZone(shape, damageData, rounds, drift,
             ds.weaponName || "Остаётся", isCone ? null : meters);
           if (!region) return; // ГМ отменил размещение (ПКМ)
+          // Поток и Пироман на огнемёте с Linger (Assault Flamer, Dragon's Breath): зона здесь постоянная,
+          // поэтому отказ Потока её удаляет, а поджог укрытий идёт тем же вызовом, что у разового шаблона.
+          if (ds.torrentMax && await _torrentPlacementRefused(region, ds, px)) {
+            try { await region.delete(); } catch (e) { console.warn("warhammer-dbc | torrent linger region", e); }
+            return;
+          }
+          if (ds.pyromaniac === "1") await igniteCoversUnderTemplate(region, { attackerName: ds.attacker || "" });
           ui.notifications.info(`Зона «Остаётся» размещена на ${rounds} ход(а/ов) стрелка`
             + `${drift > 0 ? ` — дрейфует на ${drift}м каждый ход` : ""} — попадание применяется автоматически.`);
           return;
@@ -1535,6 +2216,12 @@ export function registerHooks() {
         // высоте не ограничиваем (см. комментарий у placeAttackTemplate).
         const result = await placeAttackTemplate(shape, ds.weaponName || "Зона поражения", isCone ? null : meters);
         if (!result) return; // ГМ отменил размещение (ПКМ)
+        // Поток: шаблон не дальше удвоенной дальности огнемёта и в прямой видимости стрелка.
+        // Размещение интерактивное (core), ограничить курсор нельзя — проверяем после и отказываем.
+        if (ds.torrentMax && await _torrentPlacementRefused(result.region, ds, px)) return;
+        // Пироман (Spray + Flame): укрытия под шаблоном загораются — раньше, чем
+        // «никого нет» заканчивает обработку: пустое поле с бочками тоже горит.
+        if (ds.pyromaniac === "1") await igniteCoversUnderTemplate(result.region, { attackerName: ds.attacker || "" });
         if (!result.tokens.length) {
           ui.notifications.info("В зоне шаблона никого нет.");
           return;
@@ -1799,6 +2486,20 @@ export function registerHooks() {
       });
     });
 
+    // Тест «иначе Кровотечение» Критического Эффекта (3-edc4 п.18): провал накладывает Кровотечение.
+    html.querySelectorAll(".wh-crit-bleed-test-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const doc = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        const target = doc?.actor ?? doc;
+        if (!target?.isOwner) return ui.notifications.warn("Тест Кровотечения бросает владелец цели (или ГМ).");
+        el.disabled = true;
+        const ds = el.dataset;
+        if (!(await rollBleedingTest(target, { char: ds.char || "t", mod: Number(ds.mod) || 0, message }))) el.disabled = false;
+      });
+    });
+
     // Сладкое Страдание (Покровительство Слаанеш, корбук 438): Очко Бесчестия
     // за игнорирование всех эффектов Критического Эффекта, кроме потери
     // конечностей, смерти и Оглушения (combat/sweet-suffering.mjs).
@@ -2008,7 +2709,7 @@ export function registerHooks() {
     });
 
     // Выбор преимущества Пожирателя Боли — общий для обоих триггеров (крит
-    // рядом выше, успешная Пытка — apps/skillful-torture.mjs). data-dice уже
+    // рядом выше, успешная Пытка — apps/torture.mjs). data-dice уже
     // несёт готовую формулу ("1d5"/"3d10" и т.п.) — считать множитель здесь
     // незачем, eaterOfPainChoiceButtonsHtml уже его подставила.
     html.querySelectorAll(".wh-eater-of-pain-choice-btn").forEach(btn => {
@@ -2211,6 +2912,23 @@ export function registerHooks() {
         ui.notifications.info(`Спиной к Спине: бесплатный перехват ${fanatic.name} отмечен использованным в этом Раунде.`);
       });
     });
+    // Нечестивая Преданность: Миньон Хозяина пытается принять попадание — A+0
+    // (+30 при ≤2 м), раз в Раунд на Миньона (module/combat/unholy-devotion.mjs).
+    // Урон на Миньона переносит обычная кнопка «Применить урон» (выделить его токен).
+    html.querySelectorAll(".wh-unholy-devotion-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const minion = await fromUuid(el.dataset.minionUuid || "").catch(() => null);
+        if (!minion) return ui.notifications.warn("⚠️ Миньон не найден.");
+        if (!minion.isOwner) return ui.notifications.warn("Бросает владелец Миньона (или ГМ).");
+        el.disabled = true;
+        const master = await fromUuid(el.dataset.masterUuid || "").catch(() => null);
+        const { rollUnholyDevotion } = await import("./combat/unholy-devotion.mjs");
+        const res = await rollUnholyDevotion(minion, Number(el.dataset.distance), master?.name || "");
+        if (!res) ui.notifications.info(`${minion.name}: в этом Раунде попытка принять удар уже была.`);
+      });
+    });
     // Синхронный Натиск: Давление свободным действием, +10 за соратника в контакте.
     html.querySelectorAll(".wh-cmd-sync-press").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
@@ -2225,6 +2943,28 @@ export function registerHooks() {
         const { resolvePressSuccess } = await import("./combat/feint-press.mjs");
         await _showContestDialog(actor, { ...MELEE_CONTESTS.press, onSuccess: resolvePressSuccess,
           extraBonus: (MELEE_CONTESTS.press.extraBonus ?? 0) + (parseInt(ds.bonus) || 0) });
+      });
+    });
+    // Ложный Натиск (Талант «Рукопашных», movement-actions.mjs::falseAdvanceHtml): после Движения в контакте
+    // с врагом — ОДИН Финт или Давление на карточку (общий ключ на обе кнопки). Отметка ставится в момент
+    // броска (pay), «Отмена» диалога её не съедает; ОД не списываются — Состязания их и так не берут.
+    html.querySelectorAll(".wh-false-advance-btn").forEach(btn => {
+      if (cardOnceUsed(message, "falseAdvanceUsed")) btn.disabled = true;
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = { ...ev.currentTarget.dataset };
+        const actor = await fromUuid(ds.actorUuid || "").catch(() => null);
+        if (!actor?.isOwner) return ui.notifications.warn("Ложный Натиск проводит владелец персонажа (или ГМ).");
+        if (cardOnceUsed(message, "falseAdvanceUsed")) return ui.notifications.warn("Ложный Натиск с этого движения уже использован.");
+        const { _showContestDialog } = await import("./combat/techniques.mjs");
+        const { MELEE_CONTESTS } = await import("./constants/combat.mjs");
+        const fp = await import("./combat/feint-press.mjs");
+        const base = MELEE_CONTESTS[ds.kind === "press" ? "press" : "feint"];
+        await _showContestDialog(actor, {
+          ...base,
+          onSuccess: ds.kind === "press" ? fp.resolvePressSuccess : fp.resolveFeintSuccess,
+          pay: () => runCardOnce(message, "falseAdvanceUsed", async () => true, "Ложный Натиск с этого движения уже использован.")
+        });
       });
     });
     // Контроль разума в отряде: тест W ± Слаженность (combat/command-state.mjs).
@@ -2413,6 +3153,77 @@ export function registerHooks() {
       });
     });
 
+    // Охотник на Танки (Талант Стрелка, 3-5fbf): опознать модель техники — Common Lore (War)−10.
+    html.querySelectorAll(".wh-tank-hunter-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        await resolveTankHunterClick(ds.attackerUuid, ds.targetUuid);
+      });
+    });
+
+    // Гренадер (Талант Метания, 3-8318): смещение промахнувшейся гранаты — уменьшить на BS.b / перебросить направление.
+    const grenadierNote = el => {
+      const root = el.closest(".roll-allout-note");
+      return { distEl: root?.querySelector(".wh-scatter-dist"), dirEl: root?.querySelector(".wh-scatter-dir"), iconEl: root?.querySelector(".wh-scatter-dir-icon") };
+    };
+    // «Раз на карточку» держит флаг сообщения (runCardOnce), а не только погашенная кнопка: после F5 и у другого клиента
+    // она остаётся серой (Sahara pyromaniac-20 п.2).
+    html.querySelectorAll(".wh-grenadier-reduce-btn").forEach(btn => {
+      if (cardOnceUsed(message, "grenadierReduceUsed")) btn.disabled = true;
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const done = await runCardOnce(message, "grenadierReduceUsed", async () => {
+          el.disabled = true;
+          const { grenadierReduceScatter, persistScatter } = await import("./combat/grenadier.mjs");
+          const { to } = await grenadierReduceScatter(grenadierNote(el), parseInt(el.dataset.reduce || "0", 10) || 0);
+          await persistScatter(message, { dist: to });
+          return true;
+        }, "Смещение гранаты с этой карточки уже уменьшали.");
+        if (done) el.disabled = true;
+      });
+    });
+    html.querySelectorAll(".wh-grenadier-reroll-btn").forEach(btn => {
+      if (cardOnceUsed(message, "grenadierRerollUsed")) btn.disabled = true;
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const done = await runCardOnce(message, "grenadierRerollUsed", async () => {
+          el.disabled = true;
+          const { grenadierRerollDirection, persistScatter } = await import("./combat/grenadier.mjs");
+          const { dir } = await grenadierRerollDirection(grenadierNote(el));
+          await persistScatter(message, { dirLabel: dir.label, dirIcon: dir.icon });
+          return true;
+        }, "Направление смещения с этой карточки уже перебрасывали.");
+        if (done) el.disabled = true;
+      });
+    });
+
+    // Снайпер Ужаса (Талант Стрелка, 3-5fbf): Intimidate(BS)+0 → Подавление врагов в радиусе (combat/terror-sniper.mjs).
+    html.querySelectorAll(".wh-terror-sniper-btn").forEach(btn => {
+      if (cardOnceUsed(message, "terrorSniperRolled")) btn.disabled = true;
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const ds = el.dataset;
+        const done = await resolveTerrorSniperClick(ds.attackerUuid, ds.targetTokenUuid, message);
+        if (done) el.disabled = true;
+      });
+    });
+    html.querySelectorAll(".wh-terror-suppress-btn").forEach((btn, rowIndex) => {
+      const rowKey = terrorSuppressKey(rowIndex);
+      if (rowKey && cardOnceUsed(message, rowKey)) btn.disabled = true;
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const knows = !!el.closest(".wh-terror-row")?.querySelector(".wh-terror-knows-cb")?.checked;
+        el.disabled = true;
+        const done = await terrorSuppressOnCard(message, rowIndex, el.dataset.actorUuid, el.dataset.attackerUuid, knows);
+        if (!done) el.disabled = false;
+      });
+    });
+
     // Непоглощаемый урон в Ходовую техники (Трудный Ландшафт) → Структура
     html.querySelectorAll(".wh-vehicle-track-dmg-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
@@ -2539,7 +3350,12 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
 
   // Иммунитет к свойству оружия (wdbc-plsf) — Мутации/Дары вроде «Пылающее
   // Тело»/«Щит Чистоты» дают weaponPropertyImmunity.<key> через Механику.
-  if ((propKey && hasWeaponPropertyImmunity(actor, propKey))
+  // Иммунитет ВИЗОРА к Blinding (Фото-Визор/Охотничий Визор Good.Q+) — отдельный ключ blindingVisor, чтобы
+  // Поджигатель (Избирательный выстрел в голову, data-wp-igniter="head") мог пройти мимо визора, но не мимо
+  // настоящего иммунитета (мутация «зеркальная кровь» и т.п.).
+  const visorImmune = propKey === "blinding" && ds.wpIgniter !== "head" && hasWeaponPropertyImmunity(actor, "blindingVisor");
+  if (visorImmune
+    || (propKey && hasWeaponPropertyImmunity(actor, propKey))
     || (immunityAlias && hasWeaponPropertyImmunity(actor, immunityAlias))) {
     // Не карточка теста (wdbc-kuun): иммунитет отменяет эффект ДО броска —
     // ни кубов, ни Порога, только уведомление.
@@ -2622,7 +3438,9 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
     if (rec?.messageId !== messageId) {
       return ui.notifications.warn(`⚠️ ${label}: сначала примените урон этой атаки к ${actor.name} — эффект срабатывает только при пробитии брони (Shift — наложить вручную).`);
     }
-    if (!rec.breached) {
+    // Облучить: для свойства Rad пробитие считается без удвоения AP (radBreached пишет damage.mjs).
+    const breachedForThis = (propKey === "rad" && rec.radBreached != null) ? rec.radBreached : rec.breached;
+    if (!breachedForThis) {
       return ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor }),
         content: `<div class="wh-roll-result">
@@ -2691,7 +3509,18 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
     // свойства, накладывающие Оглушение, — тот же единственный тест на Оглушение.
     const resistMods = collectTestMods(actor, { kind: "skill", char: testChar,
       poisonTest: condition === "poisoned", stunTest: condition === "stunned" });
-    const threshold = charTotal + testMod + resistMods.total;
+    // Пироман (rules/flamer-talents.mjs): тест против загорания от Spray+Flame — цель в зоне Укрытия получает −20.
+    const pyromaniac = ds.wpPyromaniac === "1" && condition === "burning";
+    // −20 получают только ВРАГИ стрелка (книга: «враги в укрытиях»): союзник/нейтрал в укрытии
+    // и цель, для которой стрелка не нашли (старая кнопка без uuid), штрафа не несут.
+    let pyroEnemy = false;
+    if (pyromaniac && ds.wpPyromaniacAttacker) {
+      const shooter = await fromUuid(ds.wpPyromaniacAttacker).catch(() => null);
+      pyroEnemy = _tokenRelationshipOf(shooter, actor) === "enemy";
+    }
+    const pyroCoverMod = pyroEnemy
+      ? pyromaniacCoverPenalty(coverApForToken(actor.getActiveTokens?.()?.[0] ?? null)) : 0;
+    const threshold = charTotal + testMod + resistMods.total + pyroCoverMod;
     // Преимущество против яда (Крепкий как Камень, rules/squat-traits.mjs):
     // дважды, берётся лучший — тот же бросок, что у Кубика диалога.
     let { rv, rolls: resistRolls, rerollNote } =
@@ -2702,13 +3531,26 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
     // Идёт ПОСЛЕ Преимущества: оба правила у одного носителя складываются
     // в «лучший из двух, но успех всё равно перебрасывается».
     let alchemNote = "";
+    // Отравитель (Талант Медика): тот же переброс успеха, если яд пришёл
+    // Избирательным попаданием атакующего с Талантом (data-wp-poisoner).
     if (condition === "poisoned"
-        && mustRerollSuccess(rv <= threshold, hasFleshmetalFlag(actor, ALCHEM_MONSTER))) {
+        && mustRerollSuccess(rv <= threshold, hasFleshmetalFlag(actor, ALCHEM_MONSTER) || ds.wpPoisoner === "1")) {
       const first = rv;
       const roll = await new Roll("1d100").evaluate();
       allRolls.push(roll);
       rv = roll.total;
-      alchemNote = `<div class="roll-threshold">⚗️ Алхимическое Чудовище: успех против яда (${first}) обязательно перебрасывается → <b>${rv}</b></div>`;
+      const who = hasFleshmetalFlag(actor, ALCHEM_MONSTER) ? "Алхимическое Чудовище" : "Отравитель";
+      alchemNote = `<div class="roll-threshold">⚗️ ${who}: успех против яда (${first}) обязательно перебрасывается → <b>${rv}</b></div>`;
+    }
+    // Пироман: УСПЕШНЫЙ тест против загорания перебрасывается (один раз, второй окончателен).
+    // Поджигатель (торс): то же правило — «должна перебрасывать успешный тест A, чтобы не загореться».
+    const igniterTorso = ds.wpIgniter === "torso" && condition === "burning";
+    if ((pyromaniac || igniterTorso) && mustRerollSuccess(rv <= threshold, true)) {
+      const first = rv;
+      const roll = await new Roll("1d100").evaluate();
+      allRolls.push(roll);
+      rv = roll.total;
+      alchemNote += `<div class="roll-threshold">🔥 ${pyromaniac ? "Пироман" : "Поджигатель"}: успех против загорания (${first}) обязательно перебрасывается → <b>${rv}</b></div>`;
     }
     resisted        = rv <= threshold;
     deg             = Math.max(1, Math.floor(Math.abs(rv - threshold) / 10) + 1);
@@ -2716,7 +3558,7 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
     // перечисляются в подсказке ячейки Порога, как в боевых карточках.
     resistThreshold = rollStatLine({
       label: testChar.toUpperCase(), base: charTotal,
-      parts: [testMod !== 0 ? `${testMod >= 0 ? "+" : ""}${testMod}` : "", ...resistMods.parts],
+      parts: [testMod !== 0 ? `${testMod >= 0 ? "+" : ""}${testMod}` : "", ...resistMods.parts, pyroCoverMod ? `Пироман: в укрытии ${pyroCoverMod}` : ""],
       threshold, rv
     }) + alchemNote;
     resistOutcome = rerollNote + (resisted
@@ -2732,6 +3574,7 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
   else if (condition && deg >= minDoP) conditionsToApply.push(condition);
 
   let appliedNote = "";
+  let ignitedNow = false;   // Загорание реально наложено этим тестом (для второго шага Поджигателя)
   if (!resisted && conditionsToApply.length) {
     const update = {};
     const applied = [];
@@ -2760,6 +3603,7 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
       const resist = await offerStatusResist(actor, cond, { source: label });
       if (resist.resisted) { resistedNotes.push(resist.note); resistedConds.push(cond); continue; }
       Object.assign(update, fields);
+      if (cond === "burning") ignitedNow = true;
       applied.push(levelField
         ? `${label} (${useRounds ? "раундов" : "ур."}: ${lvl})`
         : (cond === "prone" ? "Сбита с ног" : cond === "pinned" ? "Прижата" : label));
@@ -2786,6 +3630,30 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
     }
   }
 
+  // Поджигатель (рука/нога): ВТОРОЙ шаг после теста на загорание — если цель загорелась, тест W+0;
+  // провал: рука — роняет то, что держала, нога — сбита с ног (rules/gunsmith-talents.mjs::igniterFollowUp).
+  if (condition === "burning" && igniterFollowUp(ds.wpIgniter, ignitedNow) === "willTest") {
+    const wt = await rollConditionCharTest(actor, "wp", 0);
+    allRolls.push(wt.roll);
+    appliedNote += `<div class="roll-threshold">🔥 Поджигатель: тест W+0 (<b>${wt.eff}</b>): <b>${wt.rv}</b> — ${wt.success ? "устояла" : "провал"}</div>`;
+    if (!wt.success) {
+      if (ds.wpIgniter === "leg") {
+        const prone = actor.system?.conditions?.prone ? {} : conditionApplyFields("prone", null, actor);
+        if (Object.keys(prone).length) {
+          await actor.update(prone);
+          appliedNote += `<div class="roll-threshold">Нога подкосилась — <b>Сбита с ног</b> (встать — действие «Встать»).</div>`;
+        } else {
+          appliedNote += `<div class="roll-threshold">Нога подкосилась, но цель уже на земле или иммунна к падению.</div>`;
+        }
+      } else {
+        // Сторону руки Избирательная атака не называет (AIM «Рука» без стороны) — игрок выбирает кнопкой.
+        const btn = side => `<button type="button" class="wh-crit-drop-btn" data-actor-uuid="${esc(actor.uuid)}" data-side="${side}"
+          title="Снять из этой руки всё, что в ней было (без траты ОД)">${rollIcon("warn", "#d9a066")} Выронить (${side === "right" ? "правая" : "левая"} рука)</button>`;
+        appliedNote += `<div class="roll-threshold">Не удержала — роняет то, что держала в поражённой руке:</div><div class="wh-crit-pills">${btn("right")}${btn("left")}</div>`;
+      }
+    }
+  }
+
   // Доп. урон (Токсичное и т.п.) — при провале теста, минуя броню
   let dmgNote = "";
   // Крит. Эффект от доп. урона свойства (wdbc-x1nz.2.85): вид — по природе
@@ -2796,15 +3664,23 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
     hitLocation: ds.wpHitLocation || "Торс"
   };
   if (!resisted && dmgFormula) {
-    const dmgRoll = await new Roll(dmgFormula).evaluate();
+    let dmgRoll = await new Roll(dmgFormula).evaluate();
     allRolls.push(dmgRoll);
+    // Отравитель: урон яда бросается дважды, берётся лучший.
+    let poisonerNote = "";
+    if (ds.wpPoisoner === "1" && condition === "poisoned") {
+      const second = await new Roll(dmgFormula).evaluate();
+      allRolls.push(second);
+      poisonerNote = ` (Отравитель: ${dmgRoll.total} и ${second.total}, лучший)`;
+      if (second.total > dmgRoll.total) dmgRoll = second;
+    }
     // Пожиратель Змей (Талант Стойкости): «получаемый урон от ядов вдвое меньше (окр.▲)».
     const rolledDmg = dmgRoll.total;
     const dmg = condition === "poisoned" ? snakeEaterHalve(actor, rolledDmg) : rolledDmg;
     const snakeNote = dmg !== rolledDmg ? ` (Пожиратель Змей: ${rolledDmg} → ${dmg})` : "";
     const loss = await applyWoundLoss(actor, dmg);
     const { currentWounds, newWounds, newCritical, gotCritical } = loss;
-    dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Доп. урон (минуя броню): <b>${dmg}</b>${snakeNote} → Раны ${currentWounds} → ${newWounds}${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>`
+    dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Доп. урон (минуя броню): <b>${dmg}</b>${poisonerNote}${snakeNote} → Раны ${currentWounds} → ${newWounds}${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>`
       + await secondaryCritHtml(actor, loss, critCtx);
     // Горение (wdbc-3pv5): у Огня (Flame) этот же dmg — рейтинг-бросок
     // свойства (damageFromRating), ровно то число, с которым Cooler/Морозное
@@ -2897,7 +3773,9 @@ export async function _executeSoulBurn(attacker, target) {
   // все встречные тесты против выжигания души» — только у ЦЕЛИ этого
   // конкретного встречного теста (эффекты target:"psychicThreat" в реестре
   // правил), не у самого псайкера — pMods выше нарочно без этого флага.
-  const tMods = collectTestMods(target, { kind: "skill", char: "wp", psychicThreat: true });
+  // soulBurn — отличить от сопротивления психосиле: Бастион Железной Воли даёт
+  // +тPR×5 «против психосил», а Выжигание Души и так бросается как W+5×тPR.
+  const tMods = collectTestMods(target, { kind: "skill", char: "wp", psychicThreat: true, soulBurn: true });
   const tEff = tWp + 5 * tPr + tMods.total;
 
   // Бросок псайкера
@@ -2906,9 +3784,14 @@ export async function _executeSoulBurn(attacker, target) {
   const pSucc = pRv <= pEff;
   const pDoS  = pSucc ? Math.floor((pEff - pRv) / 10) + 1 : 0;
 
-  // Встречный бросок цели
-  const tRoll = await new Roll("1d100").evaluate(); allRolls.push(tRoll);
-  const tRv   = tRoll.total;
+  // Встречный бросок цели. Диалога с галочками у Выжигания Души нет, поэтому
+  // Неповиновение (Defiance: Преимущество на встречные тесты против выжигания
+  // души от Ненавистных врагов, 3-defiance) берётся само — «лучший из двух»
+  // (rules/psychic-resist-reroll.mjs, тем же rollD100WithReroll, что и прочие
+  // перебросы). Без Defiance или с не-Ненавистным псайкером — один бросок.
+  const defianceReroll = psychicResistReroll(target, attacker);
+  const { rolls: tRolls, rv: tRv, rerollNote } = await rollD100WithReroll(defianceReroll);
+  allRolls.push(...tRolls);
   const tSucc = tRv <= tEff;
   const tDoS  = tSucc ? Math.floor((tEff - tRv) / 10) + 1 : 0;
 
@@ -2953,6 +3836,7 @@ export async function _executeSoulBurn(attacker, target) {
       ? `<span class="roll-failure">Душа выжжена — ${net} чист. Успех(ов)!</span>`
       : `<span class="roll-success">Цель устояла</span>`,
     sections: [
+      rerollNote,
       dmgNote,
       `<details class="roll-dice-details"><summary>Показать кубы</summary>${(await Promise.all(allRolls.map(r => r.render()))).join("")}</details>`
     ]
@@ -3050,6 +3934,14 @@ function _attachFateContextMenu(message, html) {
     );
     menu.appendChild(btnBonus);
 
+    // Успех (корбук 438): «+1 Успех к успешному тесту» — пункт меню карточки, как «Переброс» и «+10»
+    // (apps/infamy-success.mjs); только у успешного теста и раз на карточку. Пороги Порчи проверяет сама трата.
+    const successTgt = successTarget(message);
+    const btnSuccess = successTgt
+      ? _makeFateMenuItem(`Успех: +1 Успех к тесту (${ft.word}: ${fateVal})`, canSpend, !canSpend ? `Нет ${ft.plural}` : "")
+      : null;
+    if (btnSuccess) menu.appendChild(btnSuccess);
+
     // Вдохновляющее Присутствие (Чемпион, combat/inspiring-presence.mjs):
     // переброс за Очко союзного Чемпиона, в чьём поле зрения бросающий.
     // «Как если бы они имели Cor и Покровительство Чемпиона»: недостаток Бога
@@ -3089,6 +3981,14 @@ function _attachFateContextMenu(message, html) {
     const btnFirePoint = (atkCtxItem && firePointFreeReroll(atkCtxActor, { isMelee: atkIsMelee, rerolled: atkRerolled }))
       ? _makeFateMenuItem("Переброс — Огневая Точка (без траты Очка)", true) : null;
     if (btnFirePoint) menu.appendChild(btnFirePoint);
+
+    // Мастер Клинка (rules/melee-talents.mjs, Sahara 3-8dc5): раз в Раунд бесплатный
+    // переброс проваленной рукопашной атаки клинком — тем же путём, что Огневая Точка.
+    const btnBlademaster = (atkCtxItem && blademasterRerollOffered(atkCtxActor, {
+      item: atkCtxItem, isMelee: atkIsMelee, rv: atkCtx.rv, threshold: atkCtx.threshold, rerolled: atkRerolled,
+      roundAvailable: isRoundCapabilityAvailable(atkCtxActor, BLADEMASTER_ROUND_FLAG)
+    })) ? _makeFateMenuItem("Переброс — Мастер Клинка (раз в Раунд, без траты Очка)", true) : null;
+    if (btnBlademaster) menu.appendChild(btnBlademaster);
 
     // Хирургия Легиона (Апотекарий): проваленный тест Medicae / For.Lore
     // (Astartes Implants), брошенный с листа, — за Очко засчитать с 1 Успехом.
@@ -3155,7 +4055,11 @@ function _attachFateContextMenu(message, html) {
           const bhAtk = beyondHumanRerollData(atkActor, {
             charKey: atk.charKey, firstRv: atk.rv, threshold: atk.threshold,
             spend: champion ? null : reroll1 });
-          const atkOpts = { ...(atk.opts || {}) };
+          // Сфокусированный Гнев: переброс рукопашной атаки по Ненавистной цели «также дает
+          // Преимущество» — два броска d100, остаётся лучший (rules/focused-wrath.mjs::wrathRerollOpts).
+          const wrathApplies = await focusedWrathOnAttack(atkActor, atk, atkIsMelee);
+          const atkOpts = wrathRerollOpts(withoutBoughtSuccess(atk.opts), wrathApplies);
+          const wrathReroll = wrathApplies && !atk.opts?.reroll;
           delete atkOpts[BEYOND_HUMAN_FLAG];
           await _executeAttackRoll(atkActor, atkItem, atk.charKey, atk.threshold,
             atk.rofMode, atk.aimTarget, { ...atkOpts, skipAmmo: true, ...(bhAtk ? { [BEYOND_HUMAN_FLAG]: bhAtk } : {}) });
@@ -3163,7 +4067,7 @@ function _attachFateContextMenu(message, html) {
           // с неё больше не предлагается (переброс переброса).
           await markCardOnce(message, "attackRerolled");
           ui.notifications.info(
-            `✨ ${actor.name} тратит ${ft.one} на переброс атаки${payerNote}! Осталось: ${reroll1.poolValue}`);
+            `✨ ${actor.name} тратит ${ft.one} на переброс атаки${payerNote}${wrathReroll ? " (Сфокусированный Гнев: с Преимуществом)" : ""}! Осталось: ${reroll1.poolValue}`);
           // Огневая Точка (Хавок): «Когда Хавок тратит Очко Бесчестия на
           // переброс стрелковой атаки…» — точка занята с этого момента.
           if (firePointActivatesOnPaidReroll(atkActor, { isMelee: atkIsMelee })) {
@@ -3272,6 +4176,25 @@ function _attachFateContextMenu(message, html) {
       if (done) ui.notifications.info(`🎯 ${atkCtxActor.name}: Огневая Точка — переброс атаки без траты Очка.`);
     });
 
+    // ── Мастер Клинка: бесплатный переброс провала клинком, раз в Раунд ──
+    btnBlademaster?.addEventListener("click", async (ev2) => {
+      ev2.stopPropagation();
+      menu.remove();
+      document.removeEventListener("click", closeMenu);
+      // Раунд занимается ДО броска: двойной клик по меню не даст второго переброса.
+      if (!isRoundCapabilityAvailable(atkCtxActor, BLADEMASTER_ROUND_FLAG)) {
+        ui.notifications.warn("Мастер Клинка уже использован в этом Раунде.");
+        return;
+      }
+      const done = await runCardOnce(message, "attackRerolled", async () => {
+        await markRoundCapabilityUsed(atkCtxActor, BLADEMASTER_ROUND_FLAG);
+        await _executeAttackRoll(atkCtxActor, atkCtxItem, atkCtx.charKey, atkCtx.threshold,
+          atkCtx.rofMode, atkCtx.aimTarget, { ...(atkCtx.opts || {}), skipAmmo: true });
+        return true;
+      }, "Эта атака уже переброшена.");
+      if (done) ui.notifications.info(`🗡️ ${atkCtxActor.name}: Мастер Клинка — переброс проваленной атаки без траты Очка.`);
+    });
+
     // ── Хирургия Легиона: провал → Успех с 1 Успехом ─────────────────────
     btnLegionSurgery?.addEventListener("click", async (ev2) => {
       ev2.stopPropagation();
@@ -3324,12 +4247,14 @@ function _attachFateContextMenu(message, html) {
         if (atkItem) {
           const bonus1 = await spendBonusPoint();
           if (!bonus1) return;
+          // Сфокусированный Гнев: рукопашная атака по Ненавистной цели — Усиление +20 вместо +10.
+          const boost = attackBoostFor(await focusedWrathOnAttack(atkActor, atkB, atkIsMelee));
           await _executeAttackRoll(atkActor, atkItem, atkB.charKey,
-            (Number(atkB.threshold) || 0) + FATE_BONUS,
+            (Number(atkB.threshold) || 0) + boost,
             atkB.rofMode, atkB.aimTarget,
             { ...(atkB.opts || {}), forcedRoll: rv, skipAmmo: true });
           ui.notifications.info(
-            `➕ ${actor.name} тратит ${ft.one}${payerNote}: +10 к атаке! Осталось: ${bonus1.poolValue}`);
+            `➕ ${actor.name} тратит ${ft.one}${payerNote}: +${boost} к атаке${boost > FATE_BONUS ? " (Сфокусированный Гнев)" : ""}! Осталось: ${bonus1.poolValue}`);
           return;
         }
       }
@@ -3382,6 +4307,12 @@ function _attachFateContextMenu(message, html) {
       );
     };
     btnBonus.addEventListener("click", ev2 => doBonus(ev2));
+    btnSuccess?.addEventListener("click", async ev2 => {
+      ev2.stopPropagation();
+      menu.remove();
+      document.removeEventListener("click", closeMenu);
+      if (canSpend) await spendSuccessOnCard(actor, message);
+    });
   });
 }
 
@@ -3434,7 +4365,7 @@ function _attachFateContextMenu(message, html) {
   // доносим исцеление немедленно, а не теряем его молча (module/apps/sus-an-heal.mjs).
   // Срок Состояния «до конца Хода наложившего» (wdbc-x1nz.2.84): ядро
   // помечает его истёкшим — снимаем уже после этой отметки, не наперегонки.
-  Hooks.on("updateActiveEffect", (effect, changes) => { onConditionEffectExpired(effect, changes); });
+  Hooks.on("updateActiveEffect", (effect, changes) => { onConditionEffectExpired(effect, changes); onTimedEffectExpired(effect, changes); });
 
   Hooks.on("deleteCombat", async combat => {
     if (!game.user.isGM) return;
@@ -3442,6 +4373,7 @@ function _attachFateContextMenu(message, html) {
     _lastTurnCombatant.delete(combat.id);
     // «На поле боя X ходов стрелка» вне боя не имеет смысла — считать больше не от чего.
     await clearAllLingerZones();
+    await clearAllBurningCovers(combat);
     await clearAllGravitonZones();
     await clearAllVortexZones();
   });
@@ -3449,8 +4381,11 @@ function _attachFateContextMenu(message, html) {
   // Бой кончился — снять транс «Дух героя» у всех, кто в него впадал, и
   // разослать отложенную Порчу (module/apps/armour-history-trance.mjs).
   Hooks.on("deleteCombat", async combat => {
-    if (!game.user.isGM) return;
+    // Один активный ГМ: при двух ГМах онлайн Порча и тесты конца боя шли бы дважды.
+    if (!game.users.activeGM?.isSelf) return;
     await resolveTrancesForCombat(combat);
+    // Ярость, пережившая бой: от этого момента считаются «Ходы после боя» (+10 на выход из Ярости за каждый).
+    await stampRageCombatEnd(combat);
     // Rad (X) (wdbc-x1nz.10): «10+ урона в T от радиации за один бой — после
     // боя тест T+0 или лучевая болезнь» (combat/radiation.mjs).
     await resolveCombatRadiation(combat);
@@ -3461,12 +4396,20 @@ function _attachFateContextMenu(message, html) {
     // Спиной к Спине: розданный Fanatic — тоже до конца боя.
     const { clearFanaticGrants } = await import("./combat/fanatic-redirect.mjs");
     await clearFanaticGrants(game.actors ?? []);
+    // Затрещина (Пугилист): память «кто видел приём» живёт до конца боя (combat/whack.mjs).
+    const { clearWhackMemory } = await import("./combat/whack.mjs");
+    await clearWhackMemory(combat);
+    // Жокей: метка «взобрался» не переживает бой (combat/jockey.mjs).
+    const { clearJockeyOnCombatEnd } = await import("./combat/jockey.mjs");
+    await clearJockeyOnCombatEnd(combat);
     // Божественная Защита: без сознания «до конца сцены или боя».
     await wakeDivineProtected(combat.combatants?.map?.(c => c.actor) ?? []);
     // Метка Аватара Резни живёт «до конца боя» — снять со всех комбатантов.
     await clearAvatarOfSlaughterMarks(combat);
     // Адская Живучесть (Талант Стойкости): бонус «до конца Хода» не переживает бой.
     await clearHellishResilience(combat);
+    // Охотник на Танки: опознанные модели техники — «до конца боя».
+    await clearTankHunterMemory(combat);
     // Последний Рывок: отложенное, не дожившее до конца Хода, не пропадает молча.
     await finalPushCombatEnd(combat);
     // Бонусы Песни Стремительности (wdbc-sk8s) — та же логика «до конца боя».
@@ -3478,6 +4421,10 @@ function _attachFateContextMenu(message, html) {
     // Reformation Song/Песня Изменений (wdbc-vwfk): моды AP брони, временный
     // Reinforced, временное качество Снаряжения — та же логика «до конца боя».
     await clearReformationSongBuffs(combat);
+    // Благословение Стали (Sahara 3-cc96 п.3): +1 Качество «до конца следующего боя».
+    await clearBlessingOfSteel(combat);
+    // Грозный Вопль (Sahara dread-wail-2): эффект «рейтинг Страха 2 до конца боя» на целях.
+    await clearDreadWailFear(combat);
     // Кровавое Пламя (wdbc-1rno): в отличие от Reformation Song выше, книга
     // прямо ломает оружие по концу боя/сцены — clearBloodFlameBuffs это и
     // делает (не только снимает временные свойства).
@@ -3640,6 +4587,10 @@ function _attachFateContextMenu(message, html) {
         }
       }
 
+      // Вор Памяти (Геносемя, 3-b530): краденые Навыки Омофагеи на I.b суток —
+      // тем же тактом, что кража Пожирателя Знаний ниже.
+      await sweepMemoryThief(actor, game.time.worldTime);
+
       // Devourer of Knowledge/Пожиратель Знаний (Тзинч, wdbc-1rno): кража
       // Навыка на «1 день» — список активных краж лежит на НОСИТЕЛЕ (кто
       // украл), запись несёт UUID жертвы и исходные Ступени обеих сторон,
@@ -3696,6 +4647,15 @@ function _attachFateContextMenu(message, html) {
     if (combat.combatant) await processVortexTurnStart(combat.combatant);
   });
 
+  // Отложенные взрывы (Расплавление / Meltdown, combat/delayed-blast.mjs): срок записей актора убавляется
+  // в начале ЕГО Хода — «через 1d5 Раундов (в начале Хода персонажа)»; дошедшие взрываются. Пишет
+  // один активный ГМ: при двух ГМах онлайн заряд взрывался бы дважды.
+  Hooks.on("updateCombat", async (combat, changed) => {
+    if (!game.users.activeGM?.isSelf) return;
+    if (changed?.round === undefined && changed?.turn === undefined) return;
+    if (combat.combatant) await processDelayedBlastsTurnStart(combat.combatant);
+  });
+
   // ── Экономика действий (стр. 12): восполнить ОД/Реакции актору, чей Ход
   // начался, и применить конец Хода уходящего (потеря Реакции Агрессивной
   // Стойки) — module/combat/action-economy.mjs. Своя пара Hooks.on, а не
@@ -3707,7 +4667,14 @@ function _attachFateContextMenu(message, html) {
   // а не встроенным геттером.
   // Колдовское Лезвие (стр. 74 Книги Аэльдари): выбор бонуса на весь
   // Encounter — спрашиваем ровно раз, в момент старта боя («Begin Combat»).
-  Hooks.on("combatStart", async (combat) => {
+  Hooks.on("combatStart", async (combat, updateData) => {
+    // Флаги «двигался» от расстановки токенов до боя (Скорость Сокола, Импульсное оружие) — снять первыми.
+    if (game.user.isGM) await clearStaleMovedFlags(combat);
+    // Быстрое Плетение (Талант Псайканы, пачка I1): «в начале боя сразу после бросков инициативы
+    // получает 2 полудействия» — отдельный пул 2 ОД до первого Хода; сбрасывается началом Хода.
+    // Первым в обработчике: ниже есть диалоги, и пул, выданный после них, обогнал бы начало
+    // первого Хода (его сброс уже отработал бы, а метка осталась бы до второго Хода).
+    if (game.user.isGM) await processFastWeavingCombatStart(combat, updateData);
     await processWitchsEdgeCombatStart(combat);
     // Last Actor/Последний Актёр (wdbc-1rno): «бросает трижды на
     // инициативу» — 2 доп. Combatant при старте боя, только GM пишет
@@ -3729,10 +4696,15 @@ function _attachFateContextMenu(message, html) {
   });
 
   Hooks.on("updateCombat", async (combat, changed) => {
-    if (!game.user.isGM) return;
+    // Один активный ГМ: при двух ГМах онлайн начало Хода (вакуум, тест Ярости…) отрабатывало бы дважды.
+    if (!game.users.activeGM?.isSelf) return;
     if (changed?.round === undefined && changed?.turn === undefined) return;
     const nextCombatant = combat.combatant;
     const prevId = _lastTurnCombatant.get(combat.id);
+    // Горящие укрытия (Пироман, combat/burning-cover.mjs): закончивший Ход в горящей
+    // зоне загорается, вышедшие по сроку зоны гаснут — в этой точке, где известен «кто ходил».
+    await processBurningCoverTurnChange(combat, changed,
+      (prevId && prevId !== nextCombatant?.id) ? (combat.combatants.get(prevId) ?? null) : null);
     if (prevId && prevId !== nextCombatant?.id) {
       const prevCombatant = combat.combatants.get(prevId);
       const prevActor = prevCombatant?.actor;
@@ -3816,6 +4788,9 @@ function _attachFateContextMenu(message, html) {
       // начала следующего Хода» — снимается тут же, тем же тактом, что и
       // сброс ОД/Реакций.
       await clearDreadWailWeaponBuff(nextCombatant.actor);
+      // Драконий Рыцарь (Талант Всадника): бонус скакуну живёт «до начала
+      // следующего Хода» всадника — гаснет тем же тактом.
+      await clearDragonKnight(nextCombatant.actor);
       // Щит по состоянию Хода (combat/turn-state-shield.mjs) живёт ровно
       // «до начала своего следующего Хода» — снимается тем же тактом.
       await clearTurnStateShields(nextCombatant.actor);
@@ -3825,6 +4800,8 @@ function _attachFateContextMenu(message, html) {
       await clearUnseenDetection(nextCombatant.actor);
       // Blindside/Из Слепой Зоны (wdbc-1rno.2): «Раз в Ход» — тот же такт.
       await clearBlindsideUse(nextCombatant.actor);
+      // Жонглёр Клинком (Талант Разбойника, combat/blade-juggler.mjs): метка и «раз в Ход» — тот же такт.
+      await clearBladeJuggler(nextCombatant.actor);
       // Караул (wdbc-1rno.27): «до начала следующего Хода» — тот же такт.
       await clearOverwatch(nextCombatant.actor);
       // Стервятник/Дар Нургла (wdbc-1rno): временное Очко Бесчестия за три
@@ -3849,10 +4826,21 @@ function _attachFateContextMenu(message, html) {
       // Поклон Публике (wdbc-1rno): метка «до начала следующего Хода
       // атакующего» — тот же такт, что усилитель Грозного Вопля.
       await clearBowToAudienceMark(nextCombatant.actor);
+      // Боевой Клич (combat/timed-effects.mjs): рейтинг Страха +1 «до начала
+      // следующего Хода» — страховка к отметке истечения ядра.
+      await sweepTimedEffects(nextCombatant.actor, combat);
       // Декремент счётчиков длительности (Оглушение/Ослепление/Удушье,
       // wdbc-j3yf) — «в начале своего Хода», отдельно от Кровотечения/
       // Горения выше (у тех книга явно говорит «в конце»).
       await processConditionTurnStart(nextCombatant.actor);
+      // Ярость (Frenzy): тест W+0 на сохранение поддержания психосил и напоминание «двигаться к
+      // ближайшему видимому противнику» (combat/rage-behavior.mjs); после resetActionEconomy —
+      // метка «попытка выхода была» уже снята.
+      await processRageTurnStart(nextCombatant.actor, nextCombatant.token);
+      // Вакуум (стр. 483): начало Хода на сцене «без воздуха» без пустотной
+      // брони — тест T+0 (Voidfarer T+10), провал — непоглощаемый урон; открытые
+      // глаза — Blinding(0). Молча ничего не делает вне вакуумной сцены.
+      await processVacuumTurnStart(nextCombatant.actor, nextCombatant.token);
       // Регенерация Аблативных Ран (wdbc-smy7) — «1 за Ход», тем же тактом.
       await processAblativeWoundsTurnStart(nextCombatant.actor);
       // Руны Сигиллитов (wdbc-fsl9) — «в начале своего хода псайкер получает
@@ -3882,6 +4870,14 @@ function _attachFateContextMenu(message, html) {
   // prepareDerivedData — любое изменение паразита (сам актор, его предметы и
   // эффекты) пересчитывает хостов. На каждом клиенте: пересчёт локальный.
   Hooks.on("updateActor", actor => { refreshParasiteHosts(actor); });
+
+  // Ярость кончилась любым путём (тумблер листа, HUD токена, кнопка выхода) — метки «провалил выход» и
+  // «Ходы после боя» гаснут. Пишет тот, кто снял Ярость: у него есть права на актора (module/combat/rage-behavior.mjs).
+  Hooks.on("updateActor", async (actor, changes, options, userId) => {
+    if (game.user?.id !== userId || changes?.system?.inRage !== false) return;
+    const patch = clearRageStatePatch(actor);
+    if (Object.keys(patch).length) await actor.update(patch);
+  });
   for (const hook of ["createItem", "updateItem", "deleteItem", "createActiveEffect", "updateActiveEffect", "deleteActiveEffect"]) {
     Hooks.on(hook, doc => {
       const owner = doc?.parent?.documentName === "Actor" ? doc.parent

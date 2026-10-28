@@ -4,6 +4,7 @@ import { CHARACTERISTICS, APTITUDES }   from "../constants/characteristics.mjs";
 import { severityTestMod, severityNote } from "../rules/disorder-severity.mjs";
 import { LIMB_LOSS_KEYS, lostSidesLabel } from "../rules/limb-loss.mjs";
 import { getHeldHand } from "../rules/hands.mjs";
+import { ironGardenQuality } from "../rules/iron-garden.mjs";
 import { withRulesCache } from "../rules/collect.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }              from "../constants/skills.mjs";
 import { SKILL_DESCRIPTIONS }                        from "../constants/skill-descriptions.mjs";
@@ -14,7 +15,8 @@ import { WEAPON_CLASSES, DAMAGE_TYPES,
          DRUG_CATEGORIES, DRUG_DELIVERY,
          DRUG_CHAR_KEYS, WEAPON_MOD_GROUPS,
          ARMOR_MOD_GROUPS }                          from "../constants/items.mjs";
-import { MELEE_STANCES, MELEE_BASES }                from "../constants/combat.mjs";
+import { MELEE_STANCES }                             from "../constants/combat.mjs";
+import { meleeBaseBonus }                            from "../rules/berserker-talents.mjs";
 import { PSY_POWER_TYPES, PSY_ACTIONS, PSY_NATURES } from "../constants/psyker.mjs";
 import { isAeldariRace }                             from "../apps/race-library.mjs";
 import { shieldCoverageLabel }                        from "../combat/hand-shield.mjs";
@@ -23,7 +25,13 @@ import { getLegion, getChapter, buildChapterOptions,
 import { TECH_MIRACLE_TYPES, TECH_ACTIONS, NOOSPHERE_ACTIONS } from "../constants/tech.mjs";
 import { COIL_FATIGUE_COST } from "../rules/potentia-coil.mjs";
 import { PSY_DISCIPLINES, TECH_DISCIPLINES, canHaveFocusDiscipline } from "../constants/disciplines.mjs";
-import { effectiveFocusDisciplines, ownFocusDisciplines, grantedFocusDisciplines } from "../rules/psy-focus.mjs";
+import { effectiveFocusDisciplines, ownFocusDisciplines, grantedFocusDisciplines,
+         activeFocusItem, psyFocusCandidates } from "../rules/psy-focus.mjs";
+import { hasWarpLock, warpLockActive, warpLockGate, warpLockUses, WARP_LOCK_PERIOD, warpLockHourLabel } from "../rules/warp-lock.mjs";
+import { hasWoundInReality, woundSustainSplit, woundFreeLimit, woundFreeToggleGate, WOUND_FREE_FLAG } from "../rules/wound-in-reality.mjs";
+import { fluidWeaveTalent, fluidWeaveMax, fluidWeaveLeft, fluidWeaveGate, isFluidWeavePower,
+         signatureTalent, signatureNames, signatureLimit, isSignaturePower,
+         hasFastWeaving, fastWeavingLeft, FAST_WEAVING_POOL } from "../rules/psyker-talents.mjs";
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
 import { TALENT_LIBRARY }                            from "../constants/talents-library.mjs";
 import { charAptitudeSet, APTITUDES_TOTAL } from "../constants/advancement.mjs";
@@ -82,6 +90,12 @@ import { measureTokens }                             from "../combat/tactical-ma
 import { mechFormulaTotalSafe }                      from "../rules/mech-formula.mjs";
 import { grappleOnlyHidden, isBiteName } from "../rules/integral-rating.mjs";
 import { hasResilienceTalent } from "../rules/resilience-talents.mjs";
+import { fistBalanceBonus } from "../rules/pugilist-talents.mjs";
+import { isHookedUp, hookUpMinDose } from "../rules/drug-doses.mjs";
+import { addictionTestParts, parseFrequency, readWithdrawalEntries, addictionRecords, withdrawalStatusLabel } from "../rules/drug-withdrawal.mjs";
+import { hasOverclock } from "../rules/technomystic-talents.mjs";
+import { hasApocryphaCoil, hasCloudCognition, hasMotiveEucharist } from "../rules/technomystic-resources.mjs";
+import { diseaseVectors, vectorLabel } from "../rules/disease-infection.mjs";
 
 // Определение всех Состояний листа — реестр constants/conditions.mjs
 // (wdbc-w88h): label/desc/иконка/счётчик собраны там, здесь только реэкспорт
@@ -338,7 +352,6 @@ function _buildDrugData(item) {
     // Зависимость
     addiction:           s.addiction                       || {},
     hasAddiction:        s.addiction?.hasAddiction         || false,
-    isAddicted:          s.addiction?.isAddicted           || false,
     addictionTestChar:   (s.addiction?.testChar || "t").toLowerCase(),
     addictionTestMod:    s.addiction?.testMod ?? 0,
     // Яды
@@ -394,33 +407,38 @@ function _buildActiveConditions(system, actor = null) {
 // Показываем только те, у которых hasAddiction === true
 // (независимо от того, активен ли сейчас препарат)
 
-function _buildAddictions(allItems, alchem = false) {
+function _buildAddictions(allItems, alchem = false, actor = null) {
   const result = [];
+  const now = (typeof game !== "undefined" ? game.time?.worldTime : null) ?? 0;
+  const entries = readWithdrawalEntries(actor);
 
-  for (const item of allItems) {
-    if (item.type !== "drug") continue;
-    const s   = item.system;
-    const add = s.addiction || {};
-    // В панель «Зависимости» попадают только ФАКТИЧЕСКИЕ зависимости персонажа
-    if (!add.hasAddiction || !add.isAddicted) continue;
-
+  // В панель «Зависимости» попадают только ФАКТИЧЕСКИЕ зависимости персонажа —
+  // записи флага актора (task-9717): зависимость от уже удалённого препарата
+  // остаётся в списке, кнопки работают по ключу, а не по id предмета.
+  for (const { key, name, item, add } of addictionRecords(allItems, entries)) {
     const testCharKey   = (add.testChar || "t").toLowerCase();
     const testCharUpper = testCharKey.toUpperCase();
     const testMod       = add.testMod ?? 0;
 
     result.push({
-      id:           item.id,
-      name:         item.name,
-      drugCategory: s.drugCategory || "medicine",
+      key,
+      id:           item?.id ?? "",
+      name,
+      drugCategory: item?.system?.drugCategory || "medicine",
       testCharKey:  testCharKey,
       testChar:     testCharUpper,
       testMod:      testMod,
+      // «Т+40 / W+50» — комбинированный тест Зависимости одним ярлыком (wdbc-gyqf2).
+      testLabel:    addictionTestParts(add).map(p =>
+        `${CHARACTERISTICS[p.charKey]?.abbr ?? p.charKey.toUpperCase()}${p.mod > 0 ? "+" : ""}${p.mod || ""}`).join(" / "),
+      // Где сейчас зависимость: «до штрафа: 3ч» / «штраф идёт (2-й период); тест на срыв открыт: −50».
+      withdrawal:   withdrawalStatusLabel(entries[key], parseFrequency(add.frequency), now, add.breakMod),
       frequency:    add.frequency || "",
       penalty:      add.penalty   || "",
       // Alchem Monster (Репликант): недельный лимит ×2 — rules/replicant.mjs.
-      minDose:      alchemDoseLimit(add.minDose, alchem),
+      minDose:      alchemDoseLimit(isHookedUp(item) ? hookUpMinDose(add.minDose) : add.minDose, alchem),
       minDoseAlchem: alchem && (add.minDose || 0) > 0,
-      isAddicted:   add.isAddicted || false
+      isAddicted:   true
     });
   }
 
@@ -593,7 +611,7 @@ function buildGetDataUncached(actor) {
     // складывается в общий порог: без неё колонка «Порог» врала бы на −10
     // против того, что реально покажет диалог атаки (Стандартная Атака +10).
     const meleeBaseKey = system.meleeBase || "standard";
-    const baseBon = melee ? (MELEE_BASES[meleeBaseKey]?.wsBonus ?? 0) : 0;
+    const baseBon = melee ? meleeBaseBonus(actor, meleeBaseKey) : 0;   // + Натиск Берсерка (rules/berserker-talents.mjs)
 
     const compatAmmo = melee ? [] : allItems
       .filter(item =>
@@ -617,7 +635,8 @@ function buildGetDataUncached(actor) {
     const effClipMax = Math.round((s.magazineMax || 0) * (modFx.clipMult || 1)) + (modFx.clipMod || 0);
     const effPen    = (s.penetration || 0) + (modFx.penMod || 0);
     // Качество: рукопашное Best — +1 урон; рукопашное — мод теста (Poor −10/Good +5/Best +10)
-    const qAuto     = qualityEffects(i).auto;
+    // Железный Сад: группа одноимённых дендритов бьёт по наименьшему Качеству — лист показывает те же числа.
+    const qAuto     = qualityEffects(i, melee ? ironGardenQuality(actor, i) : null).auto;
     const qDmgMod   = melee ? (qAuto.damageMod || 0) : 0;
     const qTestMod  = melee ? (qAuto.testMod   || 0) : 0;
     const totalDmgMod = (modFx.damageMod || 0) + qDmgMod;
@@ -632,7 +651,7 @@ function buildGetDataUncached(actor) {
       weaponClass:     WEAPON_CLASSES[s.weaponClass] ?? s.weaponClass,
       weaponType:      s.weaponType,
       range:           effRange,
-      balance:         (s.balance || 0) + (modFx.balanceMod || 0),
+      balance:         (s.balance || 0) + (modFx.balanceMod || 0) + fistBalanceBonus(actor, i),
       damage:          (s.damage || "") + dmgSuffix,
       damageType:      DAMAGE_TYPES[s.damageType] ?? s.damageType,
       penetration:     effPen,
@@ -658,8 +677,10 @@ function buildGetDataUncached(actor) {
       // Заклинило (wdbc-vwfk) — блокирует «Атака» тем же приёмом, что magEmpty;
       // «Расклинить» показывается только пока canClearJam не лжив (см.
       // combat/weapon-properties.mjs — блокировка Reformation Song на раунд).
-      jammed:       !melee && !!s.jammed,
-      canClearJam:  !melee && !!s.jammed && canClearJam(i),
+      // Рукопашное тоже: Саботаж (Талант Разбойника) «отключает» высокотехнологичное
+      // рукопашное тем же признаком — до Расклина (combat/sabotage.mjs).
+      jammed:       !!s.jammed,
+      canClearJam:  !!s.jammed && canClearJam(i),
       // Испорченные Клином патроны (стр. 41, wdbc-x1nz.2.61) — кнопка живёт
       // независимо от jammed выше: сам Клин можно уже снять, а патроны
       // остаются испорченными до отдельного теста Trade(Weaponsmith)+10.
@@ -815,7 +836,7 @@ function buildGetDataUncached(actor) {
 
   // ── Зависимости ───────────────────────────────────────────────────────────
   // Все препараты у которых hasAddiction === true — всегда показываем в блоке
-  context.addictions = _buildAddictions(allItems, hasRuleFlag(actor, ALCHEM_MONSTER));
+  context.addictions = _buildAddictions(allItems, hasRuleFlag(actor, ALCHEM_MONSTER), actor);
 
   // ── Ментальные расстройства ─────────────────────────────────────────────────
   context.mentalDisorders = allItems.filter(i => i.type === "mentalDisorder").map(i => {
@@ -862,7 +883,10 @@ function buildGetDataUncached(actor) {
       godLabel: DIS_GODS[s.god] || "",
       symptoms: s.symptoms || "", vectors: s.vectors || "",
       incubation: s.incubation || "", cure: s.cure || "",
-      active: !!s.active
+      active: !!s.active,
+      // Кнопка «Заражение» (combat/disease-infection.mjs): есть, пока книга дала Порог.
+      infectable: diseaseVectors(i).length > 0,
+      infectTitle: diseaseVectors(i).map(vectorLabel).join("; ")
     };
   });
 
@@ -1045,7 +1069,14 @@ function buildGetDataUncached(actor) {
       // Тип (папка корбука) ищется по имени как его записал источник: в
       // библиотеке имя лежит целиком, вместе с «(X)».
       typeGroup:      TALENT_TYPE.byName.get(i.name) || "Прочие",
-      toggles:        toggleRows(allItems, i)
+      toggles:        toggleRows(allItems, i),
+      // Ручной тумблер Таланта (Солипсизм): флаг manualToggle в паке включает
+      // кнопку в строке, manualOff — «Талант сейчас не действует» (effects.mjs).
+      // Предмет у игрока — снимок: флаг из пака к нему мог не доехать («Обновить мир» флаги не
+      // переносит), поэтому Солипсизм узнаётся ещё и по имени.
+      manualToggle:   !!i.flags?.["warhammer-dbc"]?.manualToggle || /solipsism|солипсизм/i.test(String(i.name ?? "")),
+      manualOff:      !!i.flags?.["warhammer-dbc"]?.manualOff,
+      manualItemId:   i.id
     };
   });
   // Группировка талантов по типам корбука (стр. 62-105) для читаемого списка.
@@ -1281,6 +1312,12 @@ function buildGetDataUncached(actor) {
   // characterContext (см. test/sheets/psychic-sigillite-runes.test.mjs).
   const _sigilliteRunes = hasRuneMagic(actor);
   const _psyFocus = effectiveFocusDisciplines(actor);
+  // Таланты с пулами (пачка I1): галочка «ключевая сила» и кнопка «переплести» — только у носителей.
+  const _hasSignature = !!signatureTalent(actor);
+  const _hasFluid = !!fluidWeaveTalent(actor);
+  const _inCombat = !!game.combat?.started;
+  // Рана в Реальности (пачка I2): «бесплатно» у поддерживаемой силы — только носителям Таланта.
+  const _wound = hasWoundInReality(actor) ? woundSustainSplit(actor) : null;
   context.psyPowers = allItems.filter(i => i.type === "psychicPower").map(i => {
     const s = i.system;
     // Порог считаем только для тестов по характеристике (не Порча/Псинаука-навык).
@@ -1316,6 +1353,21 @@ function buildGetDataUncached(actor) {
       sustainedDegree: s.sustainedDegree ?? null,
       sustainCost:  s.sustainCost ?? 1,
       sustainActionLabel: PSY_ACTIONS[s.sustainAction] ?? s.sustainAction ?? "Свободное",
+      isSignature:  _hasSignature && isSignaturePower(actor, i),
+      wound:        (_wound && s.isSustained) ? (() => {
+        const on = !!i.getFlag?.("warhammer-dbc", WOUND_FREE_FLAG);
+        const g = woundFreeToggleGate(actor, i, { off: on });
+        const effective = on && _wound.freeIds.includes(i.id);
+        return { on, effective, ok: g.ok,
+          title: on
+            ? (effective ? "Рана в Реальности: поддерживается бесплатно (тPR не снижается). Клик — вернуть платное поддержание"
+                         : `Рана в Реальности: помечена, но не действует — платного поддержания меньше 3 PR или сверх Cor.b (${woundFreeLimit(actor)}). Клик — снять пометку`)
+            : (g.ok ? "Рана в Реальности: поддерживать эту силу бесплатно (до Cor.b сил, пока на платное уходит 3+ PR)" : g.reason) };
+      })() : null,
+      weave:        (_hasFluid && isFluidWeavePower(s))
+        ? (() => { const g = fluidWeaveGate(actor, i, { inCombat: _inCombat });
+            return { ok: g.ok, title: g.ok ? "Текучее Плетение: развеять и тут же наложить вновь с теми же эPR и Успехами, без психотеста — 1 очко Плетения, раз в Ход, свободное действие" : g.reason }; })()
+        : null,
       damage:       s.damage || "",
       damageType:   DAMAGE_TYPES[s.damageType] ?? s.damageType ?? "",
       // wdbc-5kd: penetration теперь формула строкой («PR», «PR*3»…), как и
@@ -1455,6 +1507,62 @@ function buildGetDataUncached(actor) {
     context.psyFocus = { chips, hasAny: chips.some(c => c.active) };
   }
 
+  // ── Предмет-Психофокус (Psy Focus / Психофокус, стр.243) ──────────────────
+  // Привязка выбирается явно: система не гадает, какой из предметов в руке.
+  // Резонансная Дисциплина спрашивается только там, где она что-то даёт —
+  // у Good.Q и Best.Q.
+  {
+    const QUALITY_LABEL = { poor: "Poor.Q", common: "Comm.Q", good: "Good.Q", best: "Best.Q" };
+    const chosen = activeFocusItem(actor);
+    const resonance = actor.system?.psyker?.focusResonance || "";
+    const showResonance = chosen?.system?.quality === "good" || chosen?.system?.quality === "best";
+    context.psyFocusItem = {
+      options: psyFocusCandidates(actor).map(i => ({
+        id: i.id, name: i.name, selected: i === chosen,
+        qualityLabel: QUALITY_LABEL[i.system?.quality] || ""
+      })),
+      selectedId: chosen?.id ?? "",
+      showResonance,
+      resonance,
+      disciplines: Object.entries(PSY_DISCIPLINES)
+        .map(([key, d]) => ({ key, label: d.label, selected: key === resonance }))
+        .sort((a, b) => a.label.localeCompare(b.label, "ru"))
+    };
+  }
+
+  // ── Пулы Талантов Псайканы (пачка I1) ────────────────────────────────────────
+  {
+    const fluid = fluidWeaveTalent(actor);
+    const sig = signatureTalent(actor);
+    const fast = hasFastWeaving(actor);
+    // Пул существует только в бою: метка могла остаться от прошлого боя.
+    const fastLeft = _inCombat ? fastWeavingLeft(actor) : 0;
+    const pips = (left, max) => "●".repeat(Math.max(0, left)) + "○".repeat(Math.max(0, max - left));
+    // Варп-Замок (пачка I2): панель только носителям Таланта (или пока висит метка «не псайкер»).
+    const warp = (hasWarpLock(actor) || warpLockActive(actor)) ? (() => {
+      const t = Number(game.time?.worldTime) || 0;
+      const sup = warpLockGate(actor, "suppress", t), emg = warpLockGate(actor, "emergency", t);
+      const uses = warpLockUses(actor);
+      const usedHour = uses.suppressAt.filter(x => t - x < WARP_LOCK_PERIOD && t - x >= 0).length;
+      const wb = Math.max(0, Number(actor.system?.characteristics?.wp?.bonus) || 0);
+      return {
+        active: warpLockActive(actor), hasTalent: hasWarpLock(actor),
+        suppressOk: sup.ok, suppressTitle: sup.ok ? "Подавить психопотенциал в начале своего Хода без урона: развеять все поддерживаемые силы, до начала следующего Хода вы не псайкер" : sup.reason,
+        suppressUsed: usedHour, suppressMax: wb,
+        emergencyLabel: emg.ok ? "готов" : (emg.code === "cooldown" ? warpLockHourLabel(emg.remaining) : (emg.code === "active" ? "—" : "")),
+        canReset: uses.emergencyAt != null || uses.suppressAt.length > 0
+      };
+    })() : null;
+    context.psyPools = (fluid || sig || fast || warp) ? {
+      warpLock: warp,
+      fluid: fluid ? { left: fluidWeaveLeft(actor), max: fluidWeaveMax(actor),
+        pips: pips(fluidWeaveLeft(actor), fluidWeaveMax(actor)), canRestore: fluidWeaveLeft(actor) < fluidWeaveMax(actor) } : null,
+      signature: sig ? { count: signatureNames(actor).length, limit: signatureLimit(actor) } : null,
+      fast: fast ? { left: fastLeft, max: FAST_WEAVING_POOL,
+        pips: pips(fastLeft, FAST_WEAVING_POOL), surprised: !!actor.system?.conditions?.surprised } : null
+    } : null;
+  }
+
   context.abilityTechPowers = allItems.filter(i => i.type === "techPower").map(i => ({
     id:   i.id,
     name: i.name
@@ -1487,6 +1595,10 @@ function buildGetDataUncached(actor) {
   const cogVal = system.cognition?.value ?? 0, cogMax = system.cognition?.max ?? 0;
   context.cognition = {
     value: cogVal, max: cogMax, regen: system.cognition?.regen ?? 0,
+    // Разгон (Талант Техномистика, Sahara 3-2501): кнопка рядом с «↻».
+    canOverclock: hasOverclock(actor),
+    // Облачная Когниция (пачка J): кнопка «Облако» рядом с «Разгон».
+    canCloud: hasCloudCognition(actor),
     pips: Array.from({ length: Math.min(14, Math.max(0, cogMax)) }, (_, i) => ({ on: (i + 1) <= cogVal }))
   };
   const enVal = system.energy?.value ?? 0;
@@ -1504,8 +1616,19 @@ function buildGetDataUncached(actor) {
     canRelieveFatigue: enMaxTotal > 0,
     canCharge: enMaxTotal > 0 && allItems.some(i => i.type === "implant"
       && i.getFlag?.("warhammer-dbc", "installed") && !i.getFlag?.("warhammer-dbc", "disabled")
-      && /electoo|электу/i.test(i.name))
+      && /electoo|электу/i.test(i.name)),
+    // Мотивное Причастие (пачка J): кнопка «Причастие ⚡» — свои ⚡ в Катушки цели.
+    canMotive: hasMotiveEucharist(actor) && enVal > 0
   };
+  // Катушка Апокрифа (пачка J): вторая полоса и две кнопки, только с Талантом. Максимум считает
+  // расчёт актора (rules/character/final-pools.mjs); заряды напрямую не тратятся.
+  const apVal = system.apocryphaEnergy?.value ?? 0, apMax = system.apocryphaEnergy?.max ?? 0;
+  context.apocrypha = hasApocryphaCoil(actor) ? {
+    value: apVal, max: apMax,
+    pips: Array.from({ length: Math.min(16, Math.max(0, apMax)) }, (_, i) => ({ on: (i + 1) <= apVal })),
+    canTransfer: apMax > 0 && (apVal > 0 || enVal > 0),
+    canCharge: context.energy.canCharge
+  } : null;
   context.noosphereActions = NOOSPHERE_ACTIONS;
 
   // ── Инфограждение: сводка по высокотехнологичному снаряжению персонажа ────

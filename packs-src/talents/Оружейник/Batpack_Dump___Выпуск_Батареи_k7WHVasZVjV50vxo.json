@@ -5,7 +5,7 @@
   "folder": "HfTlTkQPDwQ9Yqqn",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey weaponsmith.core.batpackDump — в окне атаки лаз-оружием с Power Setting галочка «Выпуск Батареи»: длинная очередь RoF 10, +1d10 к урону, Storm(2), −30 к попаданию на всех дистанциях кроме «в упор» и стрельбы в рукопашной, расход зарядов 10×Storm(2)=20 минимум и умножается Surge/Twin-Linked/Maximal штатно; после атаки оружие помечено сломанным (system.destroyed) — стрелять им нельзя до починки (смена работы, ведёт стол). Режимы Power Setting (Усиление/Перегрузка) — переключатель в том же окне (rules/power-setting.mjs). Лаз-оружие определяется по типу «laser/las»; Power Setting — по установленной модификации или пометке в «Особенностях».",
     "benefit": "Из лаз-оружия с модификацией Power Setting персонаж может провести длинную очередь с RoF 10, дав оружию +1d10 Dmg и свойство Storm(2). Атака получает −30 со всех дистанций кроме упора и рукопашной. После неё оружие ломается (починка — смена работы). Тратит минимум 20 зарядов, умножаясь со свойствами вроде Maximal, Surge, Twin-Linked.",
     "tier": 3,
     "requirement": "Tech-Use, Weapon Training (Las)",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "OBdWyoln8svUotW3",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "hOdBBK2OUw8OKp1s",
+              "capabilityKey": "weaponsmith.core.batpackDump",
+              "label": "Выпуск Батареи: длинная очередь RoF 10, +1d10 Dmg, Storm(2), −30 вне упора; оружие ломается",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

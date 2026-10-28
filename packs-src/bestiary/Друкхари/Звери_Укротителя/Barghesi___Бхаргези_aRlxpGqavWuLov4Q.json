@@ -1406,7 +1406,8 @@
           "standard": false,
           "reloads": 10
         },
-        "drukhari": false
+        "drukhari": false,
+        "meleeCategory": "Когти"
       },
       "_id": "ZPOisyzN3QFqxzYP",
       "effects": [],
@@ -1499,7 +1500,8 @@
           "standard": false,
           "reloads": 10
         },
-        "drukhari": false
+        "drukhari": false,
+        "meleeCategory": "Укус"
       },
       "_id": "NWUYUifnYcPFKWHZ",
       "effects": [],

@@ -5,7 +5,7 @@
   "folder": "GD2SVUHWSvG5UbRH",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey berserker.core.hammerBlow — рукопашная атака с Базой Полная Атака получает +½WS.b (окр.▲) к Pen и свойство Concussive (2) (уже имеющееся выше двух не понижается) (module/rules/berserker-talents.mjs::hammerBlowEffect, combat/attack.mjs). База берётся ЭТОЙ атаки (то, что выбрано в окне), не system.meleeBase. Строка 🔨 в карточке. Не видят Захват, Быстрый Выхват, удар в ответ на Парирование и атаки Орд.",
     "benefit": "Атакой с базой Полная Атака персонаж добавляет +½WS.b (окр.▲) Pen и свойство Concussive (2) своему рукопашному оружию.",
     "tier": 3,
     "requirement": "S 40",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "FbNhIbhG06KXtNQY",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "jXJOFm6EYEpl9Ida",
+              "capabilityKey": "berserker.core.hammerBlow",
+              "label": "Удар Молота: Полная Атака — +½WS.b (окр.▲) Pen и Concussive (2) рукопашному оружию",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

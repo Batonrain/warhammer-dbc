@@ -5,7 +5,7 @@
   "folder": "GD2SVUHWSvG5UbRH",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey berserker.core.berserkCharge — module/rules/berserker-talents.mjs::meleeBaseBonus: +10 к рукопашному приёму при Базе «Натиск» (итого +30 вместе с +20 Натиска) — в окне атаки (по Базе, выбранной в окне), приёме без оружия, «Замахнуться» предметом и партнёром, колонке «Порог» на листе.",
     "benefit": "Персонаж получает ещё +10 на рукопашные приёмы при Натиске.",
     "tier": 1,
     "requirement": "Нет",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "VAYFtmoPdjWCJ4YA",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "9I0uwr87l78010hM",
+              "capabilityKey": "berserker.core.berserkCharge",
+              "label": "Натиск Берсерка: +10 к рукопашному приёму при Натиске",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

@@ -5,7 +5,7 @@
   "folder": "HfTlTkQPDwQ9Yqqn",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано (трактовка А, владелец 24.10.2026): capabilityKey weaponsmith.core.sparks — на каждом попадании дугового оружия (Arc …) карточка даёт кнопку «Искры»: 2d10, наименьший кубик урона заменяется большим из двух (дубль — двух), один раз за атаку (module/rules/gunsmith-talents.mjs::sparksSwap, module/hooks.mjs .wh-sparks-btn). НЕ сделано: замена кубика свойства Haywire (отдельным шагом).",
     "benefit": "Попадая Дуговым оружием, персонаж бросает 2d10 и может заменить один из кубиков урона оружия или кубик свойства Haywire на больший из этих двух в любом попадании этой атаки (при дубле — один или оба).",
     "tier": 1,
     "requirement": "I 40, Exotic Weapon Training (Arc)",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "NKrAUmuHiYUDdOCp",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "grsYQq8elnNdy2uS",
+              "capabilityKey": "weaponsmith.core.sparks",
+              "label": "Искры: кнопка 2d10 на попадании дугового оружия",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

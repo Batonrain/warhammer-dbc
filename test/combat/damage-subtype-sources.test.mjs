@@ -17,6 +17,13 @@ vi.mock("../../module/combat/damage.mjs", async importOriginal => ({
   applyDamageToActor: vi.fn(async () => {})
 }));
 
+// Урон приёмов Борьбы идёт через ГМ-релей (combat/gm-relay.mjs::dealDamageToTarget, Sahara npc-applydamagetoactor);
+// здесь проверяется ИСТОЧНИК данных урона (подвид), поэтому релей сводится к вызову подменённого applyDamageToActor.
+vi.mock("../../module/combat/gm-relay.mjs", async importOriginal => ({
+  ...(await importOriginal()),
+  dealDamageToTarget: async (target, damage) => { (await import("../../module/combat/damage.mjs")).applyDamageToActor(target, damage); return true; }
+}));
+
 const { applyDamageToActor } = await import("../../module/combat/damage.mjs");
 const { WarhammerHordeSheet } = await import("../../module/sheets/horde-sheet.mjs");
 const { _resolveRam } = await import("../../module/combat/vehicle.mjs");

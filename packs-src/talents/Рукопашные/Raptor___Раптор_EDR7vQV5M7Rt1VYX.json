@@ -5,7 +5,7 @@
   "folder": "XeycnCsRlazxEDgr",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey meleeCore.core.raptor — Натиск при высоте полёта low/high (system.movement.altitude) даёт +1d10 к урону первого попадания на 2+ Успехах на попадание и ещё +1d10 на 4+ (module/rules/melee-talents.mjs::raptorBonusDice, combat/attack.mjs bonusDice). Кубы бросаются отдельно, Экстремальный урон не вызывают. Строка 🦅 в карточке.",
     "benefit": "Совершая Натиск в полёте, персонаж наносит +1d10 Dmg на 2+ Успехах на попадание и ещё +1d10 Dmg на 4+ Успехах.",
     "tier": 1,
     "requirement": "Aeronautica+0",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "4sZ6cTBFD322ETaT",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "kIepiFoifniUA4v9",
+              "capabilityKey": "meleeCore.core.raptor",
+              "label": "Раптор: Натиск в полёте — +1d10 к урону на 2+ Успехах и ещё +1d10 на 4+",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

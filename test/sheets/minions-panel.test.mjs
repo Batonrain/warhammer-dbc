@@ -64,6 +64,18 @@ describe("блок «МИНЬОНЫ»", () => {
     expect(minionsPanelContext(m, []).minionCapacity).toBe(3);
   });
 
+  // Lord of Chaos / Лорд Хаоса: максимум ×1,5 вниз — число в шапке блока СОЦИУМ.
+  it("с Лордом Хаоса шапка блока показывает максимум ×1,5 (окр. вниз)", () => {
+    const lord = {
+      id: "lc", type: "talent", name: "Lord of Chaos / Лорд Хаоса", system: {},
+      flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+        { id: "e", kind: "capability", capabilityKey: "minion.core.lordOfChaos", label: "" }
+      ] }] } }
+    };
+    const m = master([talent("machine", "lesser", "t1"), lord], { fel: 35, per: 30, int: 55, wp: 30 });
+    expect(minionsPanelContext(m, []).minionCapacity).toBe(7); // I.b 5 → ⌊7,5⌋
+  });
+
   it("счётчик по группам идёт в шапку блока", () => {
     const m = master([talent("human", "lesser", "t1"), talent("human", "greater", "t2")]);
     const ctx = minionsPanelContext(m, [minion("human", "lesser", "Раб"), minion("human", "greater", "Оруженосец")]);

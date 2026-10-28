@@ -5,7 +5,7 @@
   "folder": "XeycnCsRlazxEDgr",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey meleeCore.core.blademaster — в меню Очков (правый клик по карточке атаки) у проваленной рукопашной атаки мечом или ножом появляется «Переброс — Мастер Клинка (раз в Раунд, без траты Очка)»; тем же путём, что Огневая Точка, раз на карточку и раз в Раунд (module/rules/melee-talents.mjs::blademasterRerollOffered, module/hooks.mjs, apps/game-session.mjs). «Клинковое» = категории Меч и Нож (книга определения не даёт; BLADE_CATEGORIES).",
     "benefit": "Раз в Раунд персонаж может перебросить любой неудачный тест на атаку клинковым рукопашным оружием.",
     "tier": 3,
     "requirement": "WS 40",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "bYdV1qE4SnK4w1wb",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "g5se4zKG6oYL1EYS",
+              "capabilityKey": "meleeCore.core.blademaster",
+              "label": "Мастер Клинка: раз в Раунд бесплатный переброс проваленной атаки клинковым рукопашным оружием",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

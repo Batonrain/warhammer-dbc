@@ -28,6 +28,8 @@ import { collectTestMods } from "../../rules/roll-mods.mjs";
 import { severityTestMod, effectiveSeverity, stepSeverity } from "../../rules/disorder-severity.mjs";
 import { commitRerollUse } from "../../combat/angel-hunters.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
+import { hasTalentCapability } from "../../rules/ability-by-key.mjs";
+import { JADED_CAP } from "../../rules/courage-talents.mjs";
 import { anyRadiantPresenceHolderExists, anyIntoTheJawsOfHellHolderExists } from "../../rules/leadership-talents.mjs";
 import { RAGE_FEAR_CAPABILITY, rageFearRating, isRageFearSource, relationByDisposition } from "../../rules/warp-touched.mjs";
 
@@ -136,6 +138,13 @@ export function openFearDialog(actor) {
   const jawsOfHellHtml = anyIntoTheJawsOfHellHolderExists(game.actors ?? [])
     ? `<div class="atk-dlg-row"><label title="Рядом сражается командующий с В Самое Пекло — тест проходит автоматически"><input id="fear-prop-jaws" type="checkbox"/> В Самое Пекло (авто-успех)</label></div>`
     : "";
+  // Jaded/Пресыщенный (Sahara 3-scope, решение владельца 24.10.2026): «автоматически
+  // проходит тесты на Страх при виде крови, смерти, насилия и прочих земных
+  // ужасов» — земной ли ужас, система не определяет (классификатора источников
+  // Страха нет), это галочка, видная только носителю Таланта.
+  const jadedHtml = hasTalentCapability(actor, JADED_CAP)
+    ? `<div class="atk-dlg-row"><label title="Пресыщенный: источник — кровь, смерть, насилие и прочие земные ужасы (не сверхъестественное) — тест проходит автоматически"><input id="fear-prop-mundane" type="checkbox"/> Земной ужас (Пресыщенный: авто-успех)</label></div>`
+    : "";
   const rm = ruleRollModsHtml(actor, ctx);
   const rr = ruleRerollsHtml(actor, ctx);
   new Dialog({
@@ -153,6 +162,7 @@ export function openFearDialog(actor) {
         ${unignorableHtml}
         ${radiantPresenceHtml}
         ${jawsOfHellHtml}
+        ${jadedHtml}
         ${rm.html}
         ${rr.html}
         ${testKindHtml({ label: "Тест Страха" })}
@@ -176,7 +186,8 @@ export function openFearDialog(actor) {
           const properties = { demon: html.find("#fear-prop-demon").is(":checked"),
                                unignorable: html.find("#fear-prop-unignorable").is(":checked"),
                                radiantPresence: html.find("#fear-prop-radiant").is(":checked"),
-                               intoTheJawsOfHell: html.find("#fear-prop-jaws").is(":checked") };
+                               intoTheJawsOfHell: html.find("#fear-prop-jaws").is(":checked"),
+                               mundaneHorror: html.find("#fear-prop-mundane").is(":checked") };
           const tk = readTestKind(val, checkedOf(html), { label: "Тест Страха" });
           tk.reroll = mergeReroll(namedReroll(html[0]), readDiceChoice(val));
           await commitRerollUse(actor, html[0]?.querySelector?.(".rule-reroll-opt:checked")?.dataset);

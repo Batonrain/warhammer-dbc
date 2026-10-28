@@ -104,7 +104,9 @@ export function parseCritEffectPills(text) {
     push("fatigued", m[1]);
 
   // Кровотечение — таблица никогда не даёт числа, только сам факт.
-  if (/Кровотечение/gu.test(text)) push("bleeding", null);
+  // Условное «тест T+0, или Кровотечение» (3 строки) — у него своя кнопка с тестом
+  // (bleedingTestButtonHtml): безусловная пилюля рядом обходила бы тест.
+  if (/Кровотечение/gu.test(text) && !parseBleedingTest(text)) push("bleeding", null);
 
   // Обескровливание — редкий, но точный случай («Кровотечение и 2 Обескровливания»).
   for (const m of text.matchAll(/(\d+)\s+Обескровливани[а-яёА-ЯЁ]*/giu))
@@ -266,6 +268,39 @@ export function parseShockDeathTest(text) {
  * (Изгнанный из Смерти): тест тогда ничего бы не решал.
  */
 export function shockDeathButtonHtml(text, actorUuid, { blocked = false } = {}) {
+  // Рядом — кнопка условного Кровотечения (3-edc4 п.18): те же три места вызова.
+  return shockOnlyButtonHtml(text, actorUuid, { blocked }) + bleedingTestButtonHtml(text, actorUuid);
+}
+
+/**
+ * «Цель должна пройти тест на T+0, или получить Кровотечение» (critical-tables.mjs:
+ * Клинок/Рука 3, Клинок/Торс 3 «если не пройдет тест на T+0, получает Кровотечение»,
+ * Взрыв/Рука 4) — УСЛОВНОЕ Кровотечение, единственное последствие провала. Строки,
+ * где провал даёт что-то ещё (Оглушение, урон) или где Кровотечение безусловно,
+ * сюда не попадают: у них своя пилюля «Кровотечение» без теста.
+ * @returns {?{char:string, mod:number}}
+ */
+export function parseBleedingTest(text) {
+  if (!text) return null;
+  const m = /(?:должна\s+пройти\s+тест\s+(?:на\s+)?|не\s+пройдет\s+тест\s+(?:на\s+)?)([TТ])\s*([+−–-])\s*(\d+)[,.]?\s+(?:или\s+получить|получает)\s+Кровотечение(?![а-яё])/iu.exec(text);
+  if (!m) return null;
+  return { char: "t", mod: (m[2] === "+" ? 1 : -1) * Number(m[3]) };
+}
+
+/** Кнопка «Тест T+0 (иначе Кровотечение)»; Крепкий Орешек перебрасывает (combat/shock-death.mjs::rollBleedingTest). */
+export function bleedingTestButtonHtml(text, actorUuid) {
+  const t = parseBleedingTest(text);
+  if (!t || !actorUuid) return "";
+  const sign = t.mod > 0 ? `+${t.mod}` : t.mod < 0 ? `${t.mod}` : "+0";
+  return `<div class="wh-crit-pills">
+    <button type="button" class="wh-crit-bleed-test-btn" data-actor-uuid="${esc(actorUuid)}"
+      data-char="${t.char}" data-mod="${t.mod}"
+      title="Книга: пройти тест, или получить Кровотечение. Провал накладывает Кровотечение само.">
+      ${rollIcon("blood", "#ff6b6b")} Тест T${sign} (иначе Кровотечение)</button>
+  </div>`;
+}
+
+function shockOnlyButtonHtml(text, actorUuid, { blocked = false } = {}) {
   const t = parseShockDeathTest(text);
   if (!t || !actorUuid || blocked) return "";
   const sign = t.mod > 0 ? `+${t.mod}` : t.mod < 0 ? `${t.mod}` : "+0";

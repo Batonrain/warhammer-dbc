@@ -15,8 +15,8 @@
 //  Раны/состояния (тот же принцип, что у выдачи Миньона, apps/minion-creator.mjs).
 // ════════════════════════════════════════════════════════════════════════
 
-import { currentScene, readVeilForScene } from "../constants/scene-nexus.mjs";
-import { veilTotal } from "../constants/veil.mjs";
+import { currentScene } from "../constants/scene-nexus.mjs";
+import { veilStepsFor } from "../rules/veil-steps.mjs";
 import { destabilizeDurationSeconds } from "../rules/demon-destabilize.mjs";
 import { startDestabilizeCountdown } from "../combat/demon-destabilize.mjs";
 
@@ -90,8 +90,9 @@ export async function findBestiaryActor(name) {
  * (мин. 2) Раундов» до изгнания в Варп, растущий по ступеням истончения
  * Завесы (module/rules/demon-destabilize.mjs). W.b/Inf.b берутся с только
  * что созданного Актора демона (тех же полей, что читает module/apps/
- * armiger-weapon.mjs у demonInf), Завеса — с ТЕКУЩЕЙ сцены (та же функция,
- * что module/apps/ritual-cast.mjs и module/sheets/daemon-sheet.mjs).
+ * armiger-weapon.mjs у demonInf), Завеса — с ТЕКУЩЕЙ сцены плюс аура Раны в
+ * Реальности, накрывающая ритуалиста (module/rules/veil-steps.mjs — тот же
+ * помощник, что у листа Демона-Принца).
  * @returns {Promise<{ok:boolean, reason?:string, actorName?:string, actorUuid?:string}>}
  */
 export async function spawnDemonOnScene(name, ritualistUuid = "", { asMinion = false, veilThinner = false, startDestabilize = false } = {}) {
@@ -121,6 +122,10 @@ export async function spawnDemonOnScene(name, ritualistUuid = "", { asMinion = f
   const actor = await Actor.create(data);
   if (!actor) return { ok: false, reason: "Не удалось создать Актора демона." };
 
+  // Призывающий нужен дважды: токен демона встаёт рядом с ним (ниже), а Завесу «здесь» тоже
+  // меряют по нему — он стоит в ауре Раны в Реальности или нет.
+  const ritualistActor = ritualistUuid ? await fromUuid(ritualistUuid).catch(() => null) : null;
+
   // wdbc-1rno, Рыцарь Бога: срок дестабилизации Истинной Формы — только
   // здесь, не у Оруженосца (см. докстринг выше). W.b/Inf.b — уже готовые
   // числа на только что созданном Акторе (бестиарные статблоки хранят
@@ -130,7 +135,8 @@ export async function spawnDemonOnScene(name, ritualistUuid = "", { asMinion = f
     const infB = Number(actor.system?.characteristics?.inf?.bonus) || 0;
     const roll = await new Roll("1d10").evaluate();
     const rollTotal = roll.total + 2 * wb - infB;
-    const veil = veilTotal(readVeilForScene(scene));
+    // Завеса сцены + аура Раны в Реальности, накрывающая призывающего (Sahara 3-28, пачка I4).
+    const veil = veilStepsFor(ritualistActor, { scene }).total;
     const duration = destabilizeDurationSeconds(rollTotal, veil, { minRoll: 2 });
     // combat/veilTotal — для второго, РАУНДНОГО срока: при Завесе ниже
     // единицы книга меряет дестабилизацию Раундами, а они worldTime не
@@ -141,7 +147,6 @@ export async function spawnDemonOnScene(name, ritualistUuid = "", { asMinion = f
 
   let x = scene.dimensions?.width ? scene.dimensions.width / 2 : 1000;
   let y = scene.dimensions?.height ? scene.dimensions.height / 2 : 1000;
-  const ritualistActor = ritualistUuid ? await fromUuid(ritualistUuid).catch(() => null) : null;
   const ritualistToken = ritualistActor
     ? canvas?.tokens?.placeables?.find(t => t.actor?.uuid === ritualistActor.uuid) : null;
   if (ritualistToken) {

@@ -43,7 +43,10 @@ describe("каркас module/rules", () => {
     // blindsightActive — Талант Слепое Зрение без шлема (rules/predicates.mjs::blindsightActive).
     // targetIsPsyker — цель-псайкер без демонов (Рога Кровожада, wdbc-1rno.10).
     // hasLodgedHorn — рог Чумоноса в ране (rules/lodged-horn.mjs, wdbc-1rno.10).
-    expect(Object.keys(predicates.PREDICATES)).toHaveLength(45);
+    // meleeBaseIs — База рукопашной атаки на акторе (rules/berserker-talents.mjs, Sahara 3-861e).
+    // targetSizeMax — Размер цели не больше порога (В Яблочко / Меткий Стрелок, Sahara 3-5fbf).
+    // attackMelee — рукопашная/стрелковая атака по ctx.isMelee (Верный/Выверенный Удар на рукопашном профиле винтовки).
+    expect(Object.keys(predicates.PREDICATES)).toHaveLength(48);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);
     expect(typeof sources.registerRuleSource).toBe("function");

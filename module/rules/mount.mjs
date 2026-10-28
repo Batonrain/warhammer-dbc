@@ -30,6 +30,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
+import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
 import { findGroupEntry, specChar } from "../constants/skill-specializations.mjs";
 import { itemHasName } from "./predicates.mjs";
 
@@ -358,10 +359,11 @@ export function skidInfo(speedKey, rider, mount, opts = {}) {
  * Штраф стрелковой атаки с седла по скорости в текущем Ходу (стр. 478).
  * Интегрированное оружие штрафа не получает вовсе; турель в Коляске срезает
  * его на 20; демоническое свойство «Стабилизированный» снимает целиком.
+ * Рысь (`trot`, см. trotApplies) снимает штраф скорости на малом ходу.
  */
 export function rangedPenalty(speedKey, { integral = false, sidecarTurret = false,
-                                          stabilized = false } = {}) {
-  if (integral || stabilized) return 0;
+                                          stabilized = false, trot = false } = {}) {
+  if (integral || stabilized || trot) return 0;
   const base = MOUNT_SPEEDS[speedKey]?.ranged ?? 0;
   return sidecarTurret ? Math.min(0, base + 20) : base;
 }
@@ -371,7 +373,74 @@ export function rangedPenalty(speedKey, { integral = false, sidecarTurret = fals
  * снимает штраф скорости само, и спрашивать о нём диалоги не должны.
  */
 export function mountRangedPenalty(speedKey, mount, opts = {}) {
-  return rangedPenalty(speedKey, { ...opts, stabilized: !!possessionOf(mount)?.stabilized });
+  const { rider = null, actors = [], ...rest } = opts;
+  return rangedPenalty(speedKey, {
+    ...rest, stabilized: !!possessionOf(mount)?.stabilized,
+    // Стреляет пассажир — Рысь берётся у ведущего всадника (leadRiderOf).
+    trot: rest.trot || trotApplies(rider, speedKey, { lead: leadRiderOf(rider, mount, actors) })
+  });
+}
+
+/**
+ * Trot / Рысь (Талант Всадника, стр. 112): «Когда он двигается не более SPD в
+ * Ход, скакун или байк игнорируют Трудный Ландшафт и не дают штрафов на
+ * действия всадника или пассажира». SPD — дистанция полудвижения (таблица
+ * «Движение в бою», стр. 29: Полудвижение = SPD, Полное = 2×SPD), поэтому
+ * Рысь — это «без движения» и «полудвижение»; Полное, Натиск и Бег — нет.
+ */
+export const TROT_SPEEDS = ["still", "half"];
+
+export function trotApplies(rider, speedKey, { lead = null } = {}) {
+  return TROT_SPEEDS.includes(speedKey)
+    && (hasTalent(rider, "Trot", "Рысь") || (!!lead && hasTalent(lead, "Trot", "Рысь")));
+}
+
+/**
+ * Ведущий всадник скакуна для ПАССАЖИРА (Sahara trait-stand, п.1): у ведущего
+ * Рысь, и она снимает штрафы «всадника или пассажира». Для самого ведущего и для
+ * того, кто не пассажир, — null: его Рысь проверяется у него самого.
+ */
+export function leadRiderOf(actor, mount, actors = []) {
+  if (actor?.system?.mount?.role !== "passenger") return null;
+  return ridersOf(mount, actors).find(r => r?.system?.mount?.role !== "passenger") ?? null;
+}
+
+/** Iron Mount / Железный Скакун: «не более ½P.b (окр.▲) раз в Раунд». */
+export function ironMountLimit(rider) {
+  return Math.ceil(Math.max(0, num(rider?.system?.characteristics?.per?.bonus)) / 2);
+}
+
+/** Железный Скакун: «на 3+ Успеха также +АР (Успехи−2) скакуну/байку от этой атаки». */
+export function ironMountArmor(successes) {
+  const s = num(successes);
+  return s >= 3 ? s - 2 : 0;
+}
+
+/**
+ * Roadkill / Переехать (стр. 112): «вместо обычного урона получает 2d10+A.b R Dmg,
+ * Pen P.b, Tearing». Tearing — лишний куб, худший отбрасывается: 3d10, два лучших.
+ * A — Ловкость (ag), P — Восприятие (per).
+ */
+export function roadkillDamage(rider) {
+  const ch = rider?.system?.characteristics ?? {};
+  const bonus = num(ch.ag?.bonus);
+  return {
+    dice: 3, keep: 2, bonus, penetration: Math.max(0, num(ch.per?.bonus)),
+    damageType: "rending", tearing: true,
+    formula: `3d10kh2+${bonus}`
+  };
+}
+
+/**
+ * Mount Sense / Чувство Скакуна, второй абзац (стр. 112): «Скакун получает бонус
+ * на тесты Трудного Ландшафта, равный уровню продвижения Survival персонажа».
+ * Уровень продвижения — ранг Навыка; прибавляется его бонус (+10/+20/+30). Ранг
+ * ниже «Знает» (нетренированное −20) бонуса не даёт, а не штраф.
+ */
+export function mountSenseTerrainBonus(rider) {
+  if (!hasTalent(rider, "Mount Sense", "Чувство Скакуна")) return 0;
+  const rank = rider?.system?.skills?.survival?.rank;
+  return Math.max(0, Number(SKILL_RANKS[rank]?.bonus) || 0);
 }
 
 /** Избирательная атака по этому скакуну: «Укрытие» демона учитывается само. */
@@ -385,6 +454,48 @@ export function passengerActionMod(speedKey, rider = null) {
   const base = fast ? PASSENGER_ACTION_MOD.fast : PASSENGER_ACTION_MOD.base;
   // Талант «Оруженосец» смягчает штраф пассажиру на 10.
   return hasTalent(rider, "Squire", "Оруженосец") ? Math.min(0, base + 10) : base;
+}
+
+/**
+ * «Физический» ли тест для штрафа пассажира (стр. 477: «все физические
+ * действия с байка»; решение владельца 26.10.2026, Sahara trait-stand).
+ *
+ * Список не ведётся по именам: атака (любая) — всегда; Навык — по
+ * характеристике, которой его бросают (Ловкость, Сила, Стойкость и WS — из
+ * constants/skills.mjs, когда в броске её нет; на WS бросается Парирование,
+ * решение владельца 26.10.2026); тест самой Характеристики —
+ * Ловкость и Сила. Стойкость без Навыка — не действие, а стойкость к яду,
+ * болезни и спиртному, поэтому там штрафа нет.
+ */
+export function isPhysicalTest(ctx = {}) {
+  if (ctx?.kind === "attack") return true;
+  const key = ctx?.skill ?? ctx?.group;
+  if (key) {
+    const ch = String(ctx?.char ?? (SKILLS_DEF[key] ?? GROUP_SKILLS_DEF[key])?.char ?? "").toLowerCase();
+    return ["ag", "s", "t", "ws"].includes(ch);
+  }
+  return ["ag", "s"].includes(String(ctx?.char ?? "").toLowerCase());
+}
+
+/**
+ * Штраф пассажира на конкретный тест. Скорость — та, что поставлена у самого
+ * пассажира (у каждого седока она своя, как у панели «ВЕРХОМ»). Ноль, если
+ * актор не пассажир, скакун не найден среди `actors` (как на панели: нет
+ * скакуна — не верхом), тест не физический или действует Рысь: у самого
+ * пассажира либо у ведущего всадника на том же скакуне (trotApplies).
+ *
+ * @param {object} actor
+ * @param {object} ctx     контекст теста (kind/skill/group/char)
+ * @param {{actors?: object[]}} [opts]  акторы мира: скакун и ведущий ищутся среди них
+ */
+export function passengerTestMod(actor, ctx = {}, { actors = [] } = {}) {
+  const st = actor?.system?.mount;
+  if (!st?.uuid || st.role !== "passenger" || !isPhysicalTest(ctx)) return 0;
+  const mount = [...actors].find(a => a?.uuid === st.uuid);
+  if (!mount) return 0;
+  const speedKey = st.speed in MOUNT_SPEEDS ? st.speed : "still";
+  if (trotApplies(actor, speedKey, { lead: leadRiderOf(actor, mount, actors) })) return 0;
+  return passengerActionMod(speedKey, actor);
 }
 
 // ── Попадания по всаднику и скакуну ───────────────────────────────────────

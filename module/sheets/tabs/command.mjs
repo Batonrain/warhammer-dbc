@@ -29,6 +29,7 @@ import { collectTestMods } from "../../rules/roll-mods.mjs";
 import { postTestCard, testCardHtml, outcomeHtml, rollStatLine } from "../../helpers/test-card.mjs";
 import { GENERAL_COMMAND_KINDS, generalKindLabel, detailSpentOf, trainingSuccessCap } from "../../rules/command-effects.mjs";
 import { SKILL_RANKS } from "../../constants/characteristics.mjs";
+import { rageSocialRefusal } from "../../combat/rage-behavior.mjs";
 import { issueStamp, commandLostActive, declareFocusFire, applyBraveryNow, grantTacticTalent, removeTacticGrants, TACTIC_TALENTS } from "../../combat/command-state.mjs";
 
 /** Кого можно взять под своё Присутствие. Шире состава Отряда: миньоны тоже. */
@@ -142,7 +143,7 @@ export function commandContext(actor) {
     exoditeLord: hasLordOfExodites(actor),
     exoditeGroupLimit: Number(actor.system?.characteristics?.fel?.bonus) || 0,
     // Лимит целей Command/Intimidate «на подчинённых» (rules/leadership-
-    // talents.mjs::commandTargetLimit) — F.b, ×20 с Air of Authority.
+    // talents.mjs::commandTargetLimit) — F.b×2, F.b×20 с Air of Authority.
     commandTargetLimit: commandTargetLimit(actor),
     hasAirOfAuthority: hasAirOfAuthority(actor)
   };
@@ -255,6 +256,8 @@ export async function rollCommand(actor, kind, { mod = 0, benefit = "", shortKey
   // Немота — Общительность 0 от урона (wdbc-x1nz.2.83): приказ не отдать.
   if (actor.system?.conditions?.mute)
     return ui.notifications?.warn(`${actor.name}: Немота (Общительность 0 от урона) — не может отдавать Команды.`);
+  // Ярость: «общаться иначе, чем нечленораздельными воплями» — приказ/речь проваливаются сами (Холодная Ярость говорить разрешает).
+  if (await rageSocialRefusal(actor, { skill: "command", label: "Командование" })) return null;
   const cmd = actor.system?.command ?? {};
   const cs = commandSkillOf(actor);
   if (cmd.training && kind === "detail")
@@ -371,6 +374,8 @@ function notReachedBy(actor, kind, benefitKey) {
  * вернуть ей психологический урон. Вдохновляющая речь придаёт Орде сил.
  */
 export async function rallyHorde(actor, uuid, { mod = 0 } = {}) {
+  // Ярость: «общаться иначе, чем нечленораздельными воплями» — приказ/речь проваливаются сами (Холодная Ярость говорить разрешает).
+  if (await rageSocialRefusal(actor, { skill: "command", label: "Командование" })) return null;
   const doc = await fromUuid(uuid).catch(() => null);
   const horde = doc?.actor ?? doc ?? null;
   if (!horde || !commandHealsPsych(horde.type)) {

@@ -17,6 +17,7 @@ import { chaosPatronMeta } from "../constants/chaos-patron.mjs";
 import { inPariahVoid } from "../rules/null-zones.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { infamyBoostNotes } from "../rules/infamy-fail-success.mjs";
+import { focusedWrathBarNote } from "../rules/focused-wrath.mjs";
 // Взаимный импорт с knowledge-of-ages.mjs (тот берёт changeActorInfamy):
 // обе стороны зовут друг друга только внутри функций, не при загрузке.
 import { knowledgeOfAgesButtonHtml } from "./knowledge-of-ages.mjs";
@@ -204,6 +205,21 @@ export function actorHasInfamyPoint(actor) {
  * карточка урона). Пул и потолок — те же, что у листа и полосы.
  * @returns {Promise<boolean>} true — Очко потрачено
  */
+/**
+ * Потратить Очко на обычную способность полосы (не Покровительства) из меню карточки теста: те же пороги
+ * Порчи, пул и карточка траты, что у кнопки на полосе, но момент — карточка уже брошенного теста.
+ * @param {object} [out] приёмник результата (out.successBonus для «Успеха»)
+ * @returns {Promise<boolean>} true — Очко потрачено
+ */
+export async function spendInfamyAbility(actor, key, out = null) {
+  const godKey = actor?.system?.patronGod || "undivided";
+  const p = chaosPatronMeta(godKey);
+  return (await spendInfamy(actor, key, {
+    godKey, ipFullPath: actorInfamyPath(actor), ipMax: actorInfamyMax(actor),
+    meta: { gc: p.color, gc2: p.gc2, sigil: p.sigil }, contextual: true, out
+  })) === true;
+}
+
 export async function spendPatronAbility(actor, key) {
   const godKey = actor?.system?.patronGod || "undivided";
   const p = chaosPatronMeta(godKey);
@@ -213,8 +229,27 @@ export async function spendPatronAbility(actor, key) {
   })) === true;
 }
 
+/**
+ * Бесплатная трата способности Очка Бесчестия (Ключевые Силы, пачка I1): та же способность и та же
+ * карточка, что у обычной траты с полосы, но Очко не списывается. Раз в Раунд следит вызывающий.
+ * @param {object} [out] приёмник результата (out.successBonus для «Успеха»)
+ * @returns {Promise<boolean>} true — способность применена
+ */
+export async function spendFreeInfamyAbility(actor, key, out = null) {
+  const godKey = actor?.system?.patronGod || "undivided";
+  const p = chaosPatronMeta(godKey);
+  return (await spendInfamy(actor, key, {
+    godKey, ipFullPath: actorInfamyPath(actor), ipMax: actorInfamyMax(actor),
+    meta: { gc: p.color, gc2: p.gc2, sigil: p.sigil }, contextual: true, free: true, out
+  })) === true;
+}
+
 // Трата Очка Бесчестия на способность (корбук 438).
-export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta, contextual = false }) {
+// free: Очко не списывается (Ключевые Силы, Талант Псайканы — раз в Раунд бесплатное Очко
+// для теста СВОЕЙ манифестации, пачка I1): всё остальное — пороги Порчи, запрет Покровительства — как обычно.
+// out — необязательный приёмник результата: out.successBonus — сколько Успехов дала трата «Успех»
+// (1, либо бросок «Вспышки Гения» Тзинча), нужно меню карточки теста (apps/infamy-success.mjs).
+export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta, contextual = false, free = false, out = null }) {
   // Атака Ненависти и Сладкое Страдание срабатывают в своём моменте: до броска
   // атаки (окно атаки) и на карточке Критического Эффекта. Кнопка на полосе
   // тратила бы Очко впустую — вместо этого подсказываем, где способность живёт.
@@ -226,7 +261,8 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta,
   const cor = s.corruption?.value ?? 0;
   const patron = DP_PATRONAGE[godKey] || DP_PATRONAGE.undivided;
   const ip = Math.max(0, Math.min(ipMax, Number(foundry.utils.getProperty(actor, ipFullPath)) || 0));
-  if (ip < 1 && tempInfamyAmount(actor) < 1) return ui.notifications.warn("Нет Очков Бесчестия. Восстановите их в конце сессии.");
+  if (free && inPariahVoid(actor)) return ui.notifications.warn("В Пустоте Парии нельзя тратить Очки Бесчестия/Судьбы.");
+  if (!free && ip < 1 && tempInfamyAmount(actor) < 1) return ui.notifications.warn("Нет Очков Бесчестия. Восстановите их в конце сессии.");
 
   let ability = DP_INFAMY_ABILITIES.find(a => a.key === key);
   if (!ability && DP_PATRON_ABILITIES[godKey]?.key === key) ability = DP_PATRON_ABILITIES[godKey];
@@ -235,9 +271,11 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta,
   const threshold = (ability.key === "success" && Number.isFinite(patron.successCorThreshold)) ? patron.successCorThreshold : (ability.cor ?? 0);
   if (cor < threshold) return ui.notifications.warn(`«${ability.label}»: нужно Порчи ≥ ${threshold} (сейчас ${cor}).`);
 
-  const spend = await spendFromInfamyPool(actor, 1, ipFullPath);
+  const spend = free
+    ? { tempSpent: 0, poolSpent: 0, poolValue: ip, tempSource: "", tempRestriction: "" }
+    : await spendFromInfamyPool(actor, 1, ipFullPath);
   if (!spend) return;
-  const upd = { [ipFullPath]: spend.poolValue };
+  const upd = free ? {} : { [ipFullPath]: spend.poolValue };
   const lines = [];
   const rolls = [];
 
@@ -269,12 +307,19 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta,
   } else if (key === "success" && patron.successBonusDice && cor >= (patron.successBonusDiceCor ?? Infinity)) {
     const r = await new Roll(patron.successBonusDice).evaluate(); rolls.push(r);
     lines.push(`Вспышка Гения: +<b>${r.total}</b> Успехов к успешному тесту.`);
+    if (out) out.successBonus = r.total;
   } else {
     lines.push(ability.desc);
     // Надбавки Черт к Усилению (Змеиный Язык: +1 Успех в социальных
     // взаимодействиях, rules/infamy-fail-success.mjs) — напоминанием в карточке.
     if (key === "boost") lines.push(...infamyBoostNotes(flag => hasRuleFlag(actor, flag)));
   }
+  // Сфокусированный Гнев (Талант Берсерка, rules/focused-wrath.mjs): трата с полосы не привязана
+  // к карточке атаки, поэтому усиление «Усиления»/«Переброса»/«Успеха» по Ненавистной цели — памятка
+  // в карточке (цели — отмеченные на сцене). Сами +20 и Преимущество считает меню карточки атаки.
+  const wrathNote = focusedWrathBarNote(actor, key,
+    [...(game.user?.targets ?? [])].map(t => t.actor ?? t.document?.actor));
+  if (wrathNote) lines.push(wrathNote);
   // Знания Веков (wdbc-1rno.23): «Усиление»/«Успех»/«Переброс» — кнопка
   // «бросить 1d10». Тест здесь неизвестен (трата с полосы, не с карточки
   // броска) — кнопка называет добытый Навык, решает игрок. Пусто для прочих
@@ -288,7 +333,9 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta,
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: ipCard(meta, `${ability.icon || "⚜"} ${ability.label} — ${esc(actor.name)}`,
-      [...lines, spend.tempSpent
+      [...lines, free
+        ? `<span style="font-size:0.82em;opacity:0.8;">Бесплатно (Ключевые Силы, раз в Раунд): Очко Бесчестия не потрачено. Осталось: <b>${ip}</b> / ${ipMax}.</span>`
+        : spend.tempSpent
         ? `<span style="font-size:0.82em;opacity:0.8;">Из временного запаса: <b>${spend.tempSpent}</b>. Осталось Очков Бесчестия: <b>${spend.poolValue}</b> / ${ipMax}.</span>`
         : `<span style="font-size:0.82em;opacity:0.8;">Осталось Очков Бесчестия: <b>${spend.poolValue}</b> / ${ipMax}.</span>`]),
     rolls, sound: rolls.length ? CONFIG.sounds.dice : undefined

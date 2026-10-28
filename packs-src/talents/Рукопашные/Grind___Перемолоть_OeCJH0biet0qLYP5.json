@@ -5,7 +5,7 @@
   "folder": "XeycnCsRlazxEDgr",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey meleeCore.core.grind — приём Пила против цели, которую носитель держит в Борьбе (роль «Атакующий»), считает полный S.b вместо ½S.b (module/rules/melee-talents.mjs::grindFullSb/holdsInGrapple, sheets/attack/selection.mjs). Подпись приёма в карточке называет Талант. Захват без роли (заведён до wdbc-x1nz.2.75) не считается — неизвестно, кто держит.",
     "benefit": "Проводя приём Пила против противника, которого держит в Борьбе, персонаж использует полный S.b для урона вместо половины как обычно.",
     "tier": 2,
     "requirement": "Athletics+10",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "sfCEXohAFp2DcwxE",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "m1W6g1LVy4QpCPt1",
+              "capabilityKey": "meleeCore.core.grind",
+              "label": "Перемолоть: приём Пила против удерживаемого в Борьбе считает полный S.b вместо половины",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

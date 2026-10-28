@@ -110,9 +110,44 @@
             <div class="wh-craft-toggles">
               <label class="wh-craft-check"><input type="checkbox" name="improve" {{#if p.improve}}checked{{/if}}/> Улучшение (−20, Банк /2)</label>
               <label class="wh-craft-check"><input type="checkbox" name="monotony" {{#if p.monotony}}checked{{/if}}/> Монотонность (−30)</label>
+              {{#if p.isRepairable}}
+              <label class="wh-craft-check" title="Ремонт, а не создание: тот же расширенный тест Tech-Use. Банк Успехов книга для ремонта не называет — впишите его в «Базовый Банк». Мастер-Технопровидец, Фабрикатор и прочие бонусы Крафта действуют и на ремонт.">
+                <input type="checkbox" name="repair" {{#if p.repair}}checked{{/if}}/> Ремонт
+              </label>
+              {{#if p.repair}}
+              {{#if p.repairChoices.length}}
+              <label title="Когда ремонт будет готов, с выбранного оружия снимется метка «Уничтожено»">
+                <span class="wh-craft-lbl">Что чиним</span>
+                <select name="repair-weapon" class="wh-craft-select">
+                  <option value="">— не привязано к оружию —</option>
+                  {{#each p.repairChoices as |w|}}<option value="{{w.id}}" {{#if w.selected}}selected{{/if}}>{{w.name}}</option>{{/each}}
+                </select>
+              </label>
+              {{/if}}
+              {{#if p.hasMasterEngineseer}}
+              <label class="wh-craft-check" title="Мастер-Технопровидец: чинит без запчастей под рукой — работает в полную силу, но по виду заметно, что чинили без нужных ресурсов">
+                <input type="checkbox" name="noparts" {{#if p.noParts}}checked{{/if}}/> Без запчастей
+              </label>
+              {{/if}}
+              {{/if}}
+              {{/if}}
+              {{#if p.hookUpAvail}}
+              <label class="wh-craft-check" title="Крючок: −30 к тесту — готовый наркотик с вдвое меньшим лимитом доз в неделю (окр.▼); принимающие перебрасывают успешный тест Зависимости. Отметьте «Крючок» на листе готового наркотика.">
+                <input type="checkbox" name="hookup" {{#if p.hookUp}}checked{{/if}}/> Крючок (−30)
+              </label>
+              {{/if}}
               {{#if p.hasSlowShiftTalent}}
               <label class="wh-craft-check" title="Медленная Смена: +4ч смены (на слово стола) → +30 и Преимущество">
                 <input type="checkbox" name="slowshift" {{#if p.slowShift}}checked{{/if}}/> Медленная Смена (+30, Преимущество, +4ч)
+              </label>
+              {{/if}}
+              {{#if p.torrentChoices.length}}
+              <label title="Талант Поток: смена с Tech-Use над огнемётом отмечается на самом оружии — потом стрелок с Потоком может удвоить расход патронов и поставить шаблон Blast">
+                <span class="wh-craft-lbl">Работа над огнемётом</span>
+                <select name="torrent-weapon" class="wh-craft-select">
+                  <option value="">— не над огнемётом —</option>
+                  {{#each p.torrentChoices as |w|}}<option value="{{w.uuid}}" {{#if w.selected}}selected{{/if}}>{{w.label}}{{#if w.worked}} (смен: {{w.worked}}){{/if}}</option>{{/each}}
+                </select>
               </label>
               {{/if}}
             </div>

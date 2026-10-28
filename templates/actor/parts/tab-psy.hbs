@@ -88,6 +88,54 @@
       </div>
     </div>
 
+    {{!-- Предмет-Психофокус: его качество читает Путь Силы «Психофокус»
+          (rules/psy-focus.mjs::focusQualityEffect). Good.Q — +5 к бонусу на
+          силах резонирующей Дисциплины; Best.Q — ещё и без штрафа крит. провала. --}}
+    <div class="psy-focus-row psy-focus-item-row" title="Предмет, который сейчас служит Психофокусом. Его качество работает на Пути Силы «Психофокус»: Good.Q — +5 к бонусу психофокуса для сил резонирующей Дисциплины; Best.Q — то же и без штрафа за Крит. провал психофокуса (книга, стр.243).">
+      <span class="psy-rf-lbl">Психофокус (предмет)</span>
+      <select class="psy-focus-item-select">
+        <option value="">— не привязан —</option>
+        {{#each psyFocusItem.options as |o|}}
+        <option value="{{o.id}}" {{#if o.selected}}selected{{/if}}>{{o.name}}{{#if o.qualityLabel}} ({{o.qualityLabel}}){{/if}}</option>
+        {{/each}}
+      </select>
+      {{#if psyFocusItem.showResonance}}
+      <span class="psy-rf-lbl">Резонанс</span>
+      <select class="psy-focus-resonance-select" title="Дисциплина, с которой резонирует этот Психофокус">
+        <option value="">— не выбрана —</option>
+        {{#each psyFocusItem.disciplines as |d|}}
+        <option value="{{d.key}}" {{#if d.selected}}selected{{/if}}>{{d.label}}</option>
+        {{/each}}
+      </select>
+      {{/if}}
+    </div>
+
+    {{!-- Пулы Талантов Псайканы (пачка I1): видны только носителям Талантов. --}}
+    {{#if psyPools}}
+    <div class="psy-focus-row psy-pools-row">
+      {{#if psyPools.fluid}}
+      <span class="psy-rf-lbl" title="Текучее Плетение: I.b очков. Раз в Ход, свободным действием, поддерживаемое Вливание/Призыв/Психический Клинок можно развеять и тут же наложить вновь с теми же эPR и Успехами — кнопка «Переплести» у силы в таблице. Полное действие концентрации возвращает 1 очко.">Текучее Плетение</span>
+      <span class="psy-pool" title="Очков Плетения: осталось из I.b">{{psyPools.fluid.pips}} {{psyPools.fluid.left}}/{{psyPools.fluid.max}}</span>
+      <button type="button" class="psy-fluid-restore-btn" {{#unless psyPools.fluid.canRestore}}disabled{{/unless}} title="Полное действие концентрации (2 ОД, одна Концентрация в Ход): вернуть 1 очко Плетения">+1 ⟳</button>
+      {{/if}}
+      {{#if psyPools.signature}}
+      <span class="psy-rf-lbl" title="Ключевые Силы: до I.b известных психосил, отмеченных звёздочкой в таблице ниже. На карточке СВОЕЙ манифестации такой силы раз в Раунд Очко Бесчестия бесплатно — для психотеста, Феномена и Прорыва.">Ключевые Силы</span>
+      <span class="psy-pool" title="Выбрано сил из I.b">★ {{psyPools.signature.count}}/{{psyPools.signature.limit}}</span>
+      {{/if}}
+      {{#if psyPools.warpLock}}
+      <span class="psy-rf-lbl" title="Варп-Замок: раз в час (по игровому времени) игнорировать Феномен или Прорыв — кнопка под ним на карточке манифестации: 1d5 непоглощаемого E в голову, силы развеяны. В начале Хода можно подавить потенциал без урона, не более W.b раз в час. До начала следующего Хода вы не псайкер и не можете манифестировать.">Варп-Замок</span>
+      <span class="psy-pool" title="Подавлений за последний игровой час из W.b · аварийное применение: {{psyPools.warpLock.emergencyLabel}}">{{psyPools.warpLock.suppressUsed}}/{{psyPools.warpLock.suppressMax}} за час{{#if psyPools.warpLock.emergencyLabel}} · аварийный: {{psyPools.warpLock.emergencyLabel}}{{/if}}{{#if psyPools.warpLock.active}} · НЕ ПСАЙКЕР{{/if}}</span>
+      {{#if psyPools.warpLock.hasTalent}}<button type="button" class="psy-pool-btn psy-warplock-suppress" {{#unless psyPools.warpLock.suppressOk}}disabled{{/unless}} title="{{psyPools.warpLock.suppressTitle}}">Подавить потенциал</button>
+      <button type="button" class="psy-pool-btn psy-warplock-reset" {{#unless psyPools.warpLock.canReset}}disabled{{/unless}} title="Ручной сброс счётчика часа (игровое время не двигали, но ГМ решил, что час прошёл)">⟲ час</button>{{/if}}
+      {{#if psyPools.warpLock.active}}<button type="button" class="psy-pool-btn psy-warplock-clear" title="Снять метку «не псайкер» (вне боя Хода нет и гасить её некому)">снять метку</button>{{/if}}
+      {{/if}}
+      {{#if psyPools.fast}}
+      <span class="psy-rf-lbl" title="Быстрое Плетение: в начале боя после инициативы — отдельный пул 2 ОД, только на манифестацию психосилы без типа «Атака». Тратится в окне манифестации до первого Хода; с началом своего Хода сбрасывается, Врасплох обнуляет.">Быстрое Плетение</span>
+      <span class="psy-pool" title="ОД отдельного пула">{{psyPools.fast.pips}} {{psyPools.fast.left}}/{{psyPools.fast.max}} ОД{{#if psyPools.fast.surprised}} · Врасплох{{/if}}</span>
+      {{/if}}
+    </div>
+    {{/if}}
+
     <div class="psy-hint">
       <b>бPR</b> = уровень Таланта Psy Rating. <b>тPR</b> = бPR − поддерживаемые силы (при 0 нельзя манифестировать новые). <b>эPR</b> — эффективный PR силы при манифестации (по умолчанию = тPR; его можно снизить независимо для психотеста, урона и дальности, минимум 1 — задаётся в окне манифестации). Психотест: <b>+5×эPR</b> по дару <b>{{psyker.natureLabel}}</b>. Режим и Путь Силы выбираются при манифестации.
     </div>
@@ -128,7 +176,7 @@
           {{#each psyPowers as |p|}}
           <tr class="item-row {{#if p.isSustained}}psy-row-sustained{{/if}}" data-item-id="{{p.id}}">
             <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-action="abilityDetail" data-item-id="{{p.id}}" title="Показать/скрыть описание">▸</button></td>
-            <td class="item-name-cell"><span class="psy-power-name">{{p.name}}</span>{{#if p.missingMark}} <span class="psy-mark-missing" title="Книга требует Метку {{p.missingMark}} и для изучения, и для манифестации. Без Метки сила не применяется — но и не забывается: доступ вернётся вместе с Меткой.">без Метки {{p.missingMark}}</span>{{/if}}
+            <td class="item-name-cell">{{#if ../psyPools.signature}}<button type="button" class="psy-signature-toggle {{#if p.isSignature}}is-on{{/if}}" data-item-id="{{p.id}}" title="Ключевая Сила: отметить/снять (до I.b сил). Раз в Раунд на карточке СВОЕЙ манифестации этой силы Очко Бесчестия бесплатно">{{#if p.isSignature}}★{{else}}☆{{/if}}</button> {{/if}}<span class="psy-power-name">{{p.name}}</span>{{#if p.missingMark}} <span class="psy-mark-missing" title="Книга требует Метку {{p.missingMark}} и для изучения, и для манифестации. Без Метки сила не применяется — но и не забывается: доступ вернётся вместе с Меткой.">без Метки {{p.missingMark}}</span>{{/if}}
               {{#if p.disciplineLabel}}<div class="psy-discipline-sub">{{p.disciplineLabel}}{{#if p.hasFocus}} <span class="psy-focus-badge" title="Фокус Дисциплины — изучается без обычного изучения, только за опыт">★ Фокус</span>{{/if}}{{#if p.subtype}} · {{p.subtype}}{{/if}}{{#if p.damage}} · <span class="psy-dmg-sub">урон {{p.damage}}</span>{{/if}}</div>{{else}}{{#if p.damage}}<div class="psy-discipline-sub"><span class="psy-dmg-sub">урон {{p.damage}}</span></div>{{/if}}{{/if}}
               {{#if p.requirement}}<div class="psy-requirement" title="Требование книги">Треб.: {{p.requirement}}</div>{{/if}}
             </td>
@@ -138,7 +186,7 @@
             <td>{{p.actionLabel}}</td>
             <td>{{p.range}}{{#if p.rangeVerdictText}}<div class="psy-range-verdict {{#if p.rangeInBounds}}in-bounds{{else}}out-bounds{{/if}}">{{p.rangeVerdictText}}</div>{{/if}}</td>
             <td class="psy-sustain-cell">
-              {{#if p.sustainable}}<input type="checkbox" class="psy-sustain-cb" data-item-id="{{p.id}}" {{#if p.isSustained}}checked{{/if}} title="Поддерживать (−1 к текущему PR)"/>{{#if p.isSustained}}{{#if p.sustainedDegree}}<span class="psy-sustain-degree" title="Степень успеха психотеста, с которой манифестирована поддерживаемая сила">СУ {{p.sustainedDegree}}</span>{{/if}}{{/if}}{{else}}—{{/if}}
+              {{#if p.sustainable}}<input type="checkbox" class="psy-sustain-cb" data-item-id="{{p.id}}" {{#if p.isSustained}}checked{{/if}} title="Поддерживать (−1 к текущему PR)"/>{{#if p.isSustained}}{{#if p.sustainedDegree}}<span class="psy-sustain-degree" title="Степень успеха психотеста, с которой манифестирована поддерживаемая сила">СУ {{p.sustainedDegree}}</span>{{/if}}{{#if p.wound}}<button type="button" class="psy-wound-free-toggle {{#if p.wound.on}}is-on{{/if}} {{#if p.wound.effective}}is-effective{{/if}}" data-item-id="{{p.id}}" {{#unless p.wound.ok}}{{#unless p.wound.on}}disabled{{/unless}}{{/unless}} title="{{p.wound.title}}">⌬</button>{{/if}}{{/if}}{{else}}—{{/if}}
             </td>
             <td class="psy-cost-cell"><input type="number" class="psy-cost-input" data-item-id="{{p.id}}" value="{{p.cost}}" min="0" title="Цена в опыте (идёт в «Потрачено на Психосилы»)"/></td>
             {{#if ../hasSigilliteRunes}}
@@ -148,7 +196,7 @@
               {{else}}<button type="button" class="psy-learn-rune-btn" data-item-id="{{p.id}}" title="Изучить Руну за {{p.runeLearnCost}} опыта (требуется бPR не ниже PR психосилы)">{{p.runeLearnCost}}</button>{{/if}}
             </td>
             {{/if}}
-            <td class="psy-actions-cell"><button type="button" class="psy-manifest-btn" data-item-id="{{p.id}}" title="Манифестировать (психотест)">Манифест</button></td>
+            <td class="psy-actions-cell">{{#if p.weave}}<button type="button" class="psy-weave-btn" data-item-id="{{p.id}}" {{#unless p.weave.ok}}disabled{{/unless}} title="{{p.weave.title}}">Переплести</button> {{/if}}<button type="button" class="psy-manifest-btn" data-item-id="{{p.id}}" title="Манифестировать (психотест)">Манифест</button></td>
           </tr>
           <tr class="ability-detail-row" data-item-id="{{p.id}}" style="display:none;"><td colspan="{{#if ../hasSigilliteRunes}}11{{else}}10{{/if}}"><div class="ability-detail-text">{{#if p.effect}}{{p.effect}}{{else}}—{{/if}}</div></td></tr>
           {{/each}}

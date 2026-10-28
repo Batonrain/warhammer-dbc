@@ -28,19 +28,13 @@
 
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
 import { hasAbility } from "../rules/ability-by-key.mjs";
-import { testOutcome } from "../rules/roll-outcome.mjs";
-import { resolveOpposed } from "../rules/test-kind.mjs";
 import { isThrottleCountAvailable, incrementThrottleCount } from "../rules/cooldown.mjs";
-import { esc } from "../helpers/utils.mjs";
-import { rollIcon } from "../constants/roll-icons.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { raceMatches } from "../rules/race.mjs";
-import { hasRuleFlag } from "../rules/flags.mjs";
-import { collectTestMods } from "../rules/roll-mods.mjs";
-import { postTestCard } from "../helpers/test-card.mjs";
-import { EATER_OF_PAIN_CAPABILITY, eaterOfPainChoiceButtonsHtml } from "../rules/eater-of-pain.mjs";
 import { charHealAllFields } from "../rules/char-loss.mjs";
 
+// Диалог пытки живёт в apps/torture.mjs (3-dc87: один общий для всех, этот
+// файл — помощники Искусной Пытки: друкхари, тиры, польза, дневной лимит).
 const FLAG = "skillfulTorture";
 
 /** Владеет ли актор Талантом Skillful Torture / Искусная Пытка. */
@@ -111,119 +105,4 @@ export function tortureBenefitAvailable(actor) {
 export async function markTortureBenefitUsed(actor) {
   const wpBonus = Number(actor?.system?.characteristics?.wp?.bonus) || 0;
   await incrementThrottleCount(actor, FLAG, "day", wpBonus);
-}
-
-/**
- * Диалог «Искусная Пытка»: тест Interrogate(Int)−20 пытающего против W+0
- * Беспомощной цели (встречный), при успехе раздаёт пользу всем друкхари
- * рядом (с учётом их личного дневного лимита).
- */
-export async function showSkillfulTortureDialog(torturer) {
-  const target = [...(game.user?.targets ?? [])][0]?.actor ?? null;
-  if (!target) return ui.notifications.warn("Наведите таргет (T) на Беспомощную жертву.");
-  if (!target.system?.conditions?.helpless) {
-    return ui.notifications.warn(`«${target.name}» не отмечен(а) как Беспомощный — пытка требует беспомощную жертву.`);
-  }
-  // Feels No Pain / Не Чувствует Боли (wdbc-1rno): «иммунен к пыткам, что
-  // полагаются на боль» — Искусная Пытка книжно и есть пытка болью.
-  // Иммунитет к пыткам приходит из двух мест и должен работать одинаково:
-  // мутация «Не Чувствует Боли» (своя, с собственным списком эффектов) и
-  // Метка Слаанеш (wdbc-f7fn), которой книга даёт «иммунитет к пыткам» прямым
-  // текстом. Общее имя defence.tortureImmune заведено ради второго; первое
-  // остаётся как есть, чтобы не трогать уже работающие данные мутации.
-  if (hasRuleFlag(target, "mutation.feelsNoPain") || hasRuleFlag(target, "defence.tortureImmune")) {
-    return ui.notifications.warn(`«${target.name}» не чувствует боли — пытка на неё не действует.`);
-  }
-
-  // Общий сбор модификаторов обеим сторонам (wdbc-ct65.3): встречный тест —
-  // это два теста, каждый со своими Чертами и своим состоянием тела. Допрос
-  // книга называет тестом Морали (rules/resolve-test.mjs::isMoraleOpposedSkill),
-  // жертва отвечает тем же.
-  const torturerMods = collectTestMods(torturer, { kind: "skill", skill: "interrogate", char: "int", morale: true });
-  const targetMods   = collectTestMods(target, { kind: "skill", char: "wp", morale: true });
-  const torturerThreshold = interrogateIntTotal(torturer) - 20 + torturerMods.total;
-  const targetThreshold   = (target.system.characteristics?.wp?.total ?? 0) + targetMods.total;
-
-  const content = `
-    <div class="wh-wizard-form" style="padding:6px;">
-      <div class="atk-dlg-header"><span class="atk-weapon-name">${rollIcon("skull","#c98bff")}Искусная Пытка</span></div>
-      <div class="roll-threshold">Пытающий: ${esc(torturer.name)} — Допрос(Int)−20: <b>${torturerThreshold}</b></div>
-      <div class="roll-threshold">Жертва: ${esc(target.name)} — Воля: <b>${targetThreshold}</b></div>
-      <div style="font-size:0.85em;color:#8a8a8a;margin-top:6px;">5 минут пытки. При успехе — Боль и лечение Характеристик всем друкхари рядом (в бою — комбатанты, иначе — на сцене), с учётом их личного дневного лимита (W.b раз в сутки).</div>
-    </div>`;
-
-  return foundry.applications.api.DialogV2.wait({
-    window: { title: "Искусная Пытка" },
-    classes: ["wh-attack-dialog", "warhammer-dbc"],
-    position: { width: 420 },
-    content,
-    rejectClose: false,
-    buttons: [
-      {
-        action: "go", label: "Пытать", icon: "fas fa-skull", default: true,
-        callback: async () => {
-          const torturerRoll = await new Roll("1d100").evaluate();
-          const targetRoll   = await new Roll("1d100").evaluate();
-          const mine   = { ...testOutcome(torturerRoll.total, torturerThreshold), threshold: torturerThreshold };
-          const theirs = { ...testOutcome(targetRoll.total, targetThreshold), threshold: targetThreshold };
-          const { winner, margin } = resolveOpposed(mine, theirs);
-
-          const lines = [
-            `${rollIcon("target","#c98bff")}${esc(torturer.name)}: <b>${torturerRoll.total}</b> vs ${torturerThreshold}${torturerMods.parts.length ? ` (${torturerMods.parts.join(", ")})` : ""} ${mine.success ? "(успех)" : "(провал)"}`,
-            `${rollIcon("target","#8a8a8a")}${esc(target.name)}: <b>${targetRoll.total}</b> vs ${targetThreshold}${targetMods.parts.length ? ` (${targetMods.parts.join(", ")})` : ""} ${theirs.success ? "(успех)" : "(провал)"}`
-          ];
-
-          if (winner !== "mine") {
-            lines.push(`<b>Жертва выстояла</b> — пытка не принесла пользы.`);
-            // Встречный тест: Порогов два (свой у пытающего, свой у жертвы) и
-            // они уже расписаны построчно с подписями модификаторов — общей
-            // строки Порога/броска у такой карточки быть не может.
-            await postTestCard(torturer, {
-              title: "Искусная Пытка",
-              lines: [lines.join("<br/>")]
-            }, { sound: false });
-            return;
-          }
-
-          const tiers = extraTiers(margin);
-          const healRolls = [];
-          for (let i = 0; i < 1 + tiers; i++) {
-            const r = await new Roll("1d5").evaluate();
-            healRolls.push(r.total);
-          }
-          lines.push(`Победа с margin <b>${margin}</b> — доп. тиров: <b>${tiers}</b>, броски лечения: ${healRolls.join(", ")}`);
-
-          const recipients = drukhariNearby();
-          const benefited = [], capped = [];
-          for (const actor of recipients) {
-            if (!tortureBenefitAvailable(actor)) { capped.push(actor.name); continue; }
-            const { totalHeal, pain } = await grantTortureBenefit(actor, healRolls);
-            await markTortureBenefitUsed(actor);
-            benefited.push(`${esc(actor.name)} (+${pain} Боли, +${totalHeal} лечения)`);
-          }
-          if (benefited.length) lines.push(`<b>Получили пользу:</b> ${benefited.join(", ")}`);
-          if (capped.length) lines.push(`<span style="color:#a33;">Дневной лимит исчерпан:</span> ${capped.map(esc).join(", ")}`);
-          if (!recipients.length) lines.push(`<i>Рядом нет друкхари, способных насытиться.</i>`);
-
-          // Eater of Pain/Пожиратель Боли (Слаанеш, wdbc-1rno): «успешно
-          // проведя Пытку... преимущества за каждый Успех» — единственное
-          // кодифицированное действие Пытки в системе (честное ограничение,
-          // см. заголовок rules/eater-of-pain.mjs). margin здесь — та же
-          // мера «Успехов», что уже даёт extraTiers() чуть выше для тиров
-          // друкхари, переиспользована без нового счётчика. Одна кнопка на
-          // margin кубов разом (не margin независимых выборов) — тот же
-          // компромисс упрощения, что и у прочих находок этого тикета.
-          const eaterOfPainButtons = margin > 0 && hasRuleFlag(torturer, EATER_OF_PAIN_CAPABILITY)
-            ? eaterOfPainChoiceButtonsHtml(torturer.uuid, margin) : "";
-          if (eaterOfPainButtons) lines.push(`${rollIcon("heart","#ff6bd6")}Пожиратель Боли (${margin} Успехов):`);
-
-          await postTestCard(torturer, {
-            title: "Искусная Пытка — успех",
-            lines: [lines.join("<br/>"), eaterOfPainButtons]
-          }, { sound: false });
-        }
-      },
-      { action: "cancel", label: "Отмена" }
-    ]
-  }).then(res => res === false ? null : res);
 }

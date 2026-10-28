@@ -5,7 +5,7 @@
   "folder": "XeycnCsRlazxEDgr",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey meleeCore.core.doubleTeam — module/sheets/attack/mods.mjs (situationalMods): отдельная строка «Числ. перевес: Гурьбой» +10 в окне рукопашной атаки, отмечается сама при двух и более врагах цели в контакте с ней, поверх обычных «2к1» +10 / «3к1» +20 (книга: «ещё +10»). Мастер Боя у цели гасит её так же, как обычные строки.",
     "benefit": "Персонаж получает ещё +10 на попадание в ближнем бою за численное превосходство 2 к 1 или выше.",
     "tier": 1,
     "requirement": "Нет",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "bNEVytJWs24G8lxx",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "0LhQN0gaY31IX4ik",
+              "capabilityKey": "meleeCore.core.doubleTeam",
+              "label": "Гурьбой: ещё +10 на попадание при перевесе 2 к 1 и выше",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

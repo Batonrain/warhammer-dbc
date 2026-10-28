@@ -900,7 +900,8 @@
           "standard": false,
           "reloads": 10
         },
-        "drukhari": false
+        "drukhari": false,
+        "meleeCategory": "Укус"
       },
       "_id": "hoYiPvZz4QDWDuwk",
       "effects": [],

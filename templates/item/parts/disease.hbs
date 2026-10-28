@@ -42,6 +42,55 @@
 </div>
 
 <div class="item-section">
+  <div class="item-section-title" title="Каждая строка — путь передачи со своим Порогом: на листе актора кнопка «Заражение» бросает T±N выбранного пути. Пусто — Порога нет («на усмотрение МИ»), заражает ГМ вручную.">ТЕСТЫ ЗАРАЖЕНИЯ</div>
+  {{#each system.vectorTests as |v i|}}
+  <div class="weapon-row disease-row" data-row="{{i}}">
+    <input type="text" class="wr-input-md disease-vector-field" data-field="label" value="{{v.label}}" placeholder="Путь (напр. Кожа-к-коже)"/>
+    <select class="wr-select-sm disease-vector-field" data-field="char">
+      {{#each @root.diseaseCharOptions as |c|}}
+      <option value="{{c.key}}" {{#if (eq v.char c.key)}}selected{{/if}}>{{c.label}}</option>
+      {{/each}}
+    </select>
+    <input type="number" class="wr-input-sm disease-vector-field" data-field="mod" value="{{v.mod}}" step="1" title="Модификатор Порога: +20, −10…"/>
+    <button type="button" class="wprop-remove" data-action="diseaseVectorRemove" title="Убрать путь">✕</button>
+  </div>
+  {{else}}
+  <div class="item-hint">Путей нет: Порога заражения книга не даёт — включайте болезнь вручную (флажок «Активна»).</div>
+  {{/each}}
+  <div class="weapon-row">
+    <a class="wprofile-add" data-action="diseaseVectorAdd" title="Добавить путь передачи"><i class="fas fa-plus"></i> путь</a>
+  </div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title" title="Что система делает сама, когда заражение состоялось: бросает урон в Характеристику или предлагает Очко Бесчестия/Судьбы за авто-успех после провала.">ПОСЛЕДСТВИЯ ЗАРАЖЕНИЯ</div>
+  {{#each system.infectionEffects as |e i|}}
+  <div class="weapon-row disease-row" data-row="{{i}}">
+    <select class="wr-select-sm disease-effect-field" data-field="kind">
+      {{#each @root.diseaseEffectKinds as |k|}}
+      <option value="{{k.key}}" {{#if (eq e.kind k.key)}}selected{{/if}}>{{k.label}}</option>
+      {{/each}}
+    </select>
+    {{#if (eq e.kind "charDamage")}}
+    <select class="wr-select-sm disease-effect-field" data-field="char">
+      {{#each @root.diseaseCharOptions as |c|}}
+      <option value="{{c.key}}" {{#if (eq e.char c.key)}}selected{{/if}}>{{c.label}}</option>
+      {{/each}}
+    </select>
+    <input type="text" class="wr-input-sm disease-effect-field" data-field="formula" value="{{e.formula}}" placeholder="2d10"/>
+    {{/if}}
+    <input type="text" class="wr-input-md disease-effect-field" data-field="label" value="{{e.label}}" placeholder="Подпись"/>
+    <button type="button" class="wprop-remove" data-action="diseaseEffectRemove" title="Убрать последствие">✕</button>
+  </div>
+  {{else}}
+  <div class="item-hint">Нет: болезнь заражает без дополнительных последствий.</div>
+  {{/each}}
+  <div class="weapon-row">
+    <a class="wprofile-add" data-action="diseaseEffectAdd" title="Добавить последствие"><i class="fas fa-plus"></i> последствие</a>
+  </div>
+</div>
+
+<div class="item-section">
   <div class="item-section-title">ИЗЛЕЧЕНИЕ</div>
   <textarea name="system.cure" class="item-textarea" placeholder="Как лечится...">{{system.cure}}</textarea>
 </div>

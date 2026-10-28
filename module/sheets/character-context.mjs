@@ -21,6 +21,7 @@ import { charAdvanceCat, advanceCatSource }     from "../rules/advance-category.
 
 import { fateTerm }                              from "../helpers/utils.mjs";
 import { hasRuneMagic }                          from "../rules/sigillite-runes.mjs";
+import { hasTrophyPoints }                       from "../rules/trophy-points.mjs";
 import { ignoresWeight }                         from "../rules/encumbrance.mjs";
 import { raceEntries, raceDef, subracesOf,
          isAeldariRace, raceGroupList,
@@ -37,6 +38,7 @@ import { BODY_TYPES }                            from "../constants/body-map.mjs
 import { isHaemonculus }                         from "../constants/haemonculus.mjs";
 import { HELMETLESS_EFFECTS, HELMETLESS_ACTION } from "../constants/power-armour-lore.mjs";
 import { actorCanFly, actorHasHalfStep, narrativeSpeed } from "../combat/movement-actions.mjs";
+import { hipShootingWeapon } from "../rules/gunner-talents.mjs";
 import { flightSpeedOf }                         from "../rules/flight-speed.mjs";
 import { mechRollData }                          from "../rules/mech-formula.mjs";
 import { isFeatureEnabled, disabledRaceKeys }    from "../constants/features.mjs";
@@ -57,13 +59,14 @@ import { raceMatches } from "../rules/race.mjs";
  * сложилось число: разборку строит documents/actor.mjs (тот же проход, что и
  * сам total/halfMove — char.totalBreakdown, system.movement.spdBreakdown).
  */
-function charTotalTooltip(total, breakdown) {
+export function charTotalTooltip(total, breakdown) {
   const lines = (breakdown || []).map(b => {
     if (b.cap != null)   return `${b.label}: не выше ${b.cap}`;
     if (b.floor != null) return `${b.label}: не ниже ${b.floor}`;
     if (b.halved)         return `${b.label}: ÷2`;
     if (b.halvedFloor)    return `${b.label}: ÷2 (окр. вниз)`;
     if (b.immobile)       return `${b.label}: не может ходить`;
+    if (b.info)           return b.note ? `${b.label} (${b.note})` : b.label;
     if (b.label === "База") return `${b.label}: ${b.value}${b.note ? ` (${b.note})` : ""}`;
     const sign = b.value > 0 ? "+" : "−";
     return `${b.label}: ${sign}${Math.abs(b.value)}`;
@@ -87,6 +90,11 @@ import { hasDreadWail }                          from "../combat/dread-wail.mjs"
 import { hasResplendentRaiment }                 from "../combat/resplendent-raiment.mjs";
 import { hasAdrenalineRush }                     from "../combat/adrenaline-rush.mjs";
 import { hasCaution }                            from "../combat/caution.mjs";
+import { hasSavior, saviorGate }                 from "../combat/savior.mjs";
+import { hasShowOff, showOffGate }               from "../combat/show-off.mjs";
+import { actorHasBinding }                       from "../combat/blade-binding.mjs";
+import { hasTalentCapability }                     from "../rules/ability-by-key.mjs";
+import { IDOLATER_CAP }                          from "../rules/courage-talents.mjs";
 import { hasFlourishDance }                      from "../combat/flourish-dance.mjs";
 import { hasBoneSong }                           from "../combat/bone-song.mjs";
 import { hasPreservation }                       from "../combat/preservation.mjs";
@@ -96,7 +104,7 @@ import { hasBeastmanShamanTalent, hasBeastmanShamanTrait } from "../combat/beast
 import { hasConjureWraith }                      from "../combat/conjure-wraith.mjs";
 import { MELEE_BASES, MELEE_CONTESTS, MELEE_STANCES } from "../constants/combat.mjs";
 import { hasActionEconomy, isEncounterActive, effectiveDefenseReactionMax,
-         effectiveActionPointsMax,
+         effectiveActionPointsMax, effectiveStrangeReactionMax,
          apSpendGate, reactionSpendGate }         from "../combat/action-economy.mjs";
 import { recoilRemaining, recoilLimit }           from "../combat/recoil-pool.mjs";
 import { attackActionLimit }                      from "../combat/attack-limit.mjs";
@@ -179,6 +187,7 @@ export function characterContext(actor) {
   // остальные действия тратятся кнопками combat.mjs::activateCombatListeners).
   if (hasActionEconomy(actor)) {
     const defenseMax = effectiveDefenseReactionMax(actor);
+    const strangeMax  = effectiveStrangeReactionMax(actor);
     context.actionEconomy = {
       ap:        { value: system.actionPoints?.value ?? 0, max: effectiveActionPointsMax(actor) },
       reactions: { value: system.reactions?.value ?? 0, max: system.reactions?.max ?? 0 },
@@ -187,6 +196,10 @@ export function characterContext(actor) {
       // отдельная строка на листе была бы пустым шумом.
       defense: (system.reactions?.defenseValue || defenseMax)
         ? { value: system.reactions?.defenseValue ?? 0, max: defenseMax }
+        : null,
+      // «Странная» Реакция Странной Техники (хвост/мехадендриты/бонусный Повалить) — строка только при Таланте.
+      strange: (system.reactions?.strangeValue || strangeMax)
+        ? { value: system.reactions?.strangeValue ?? 0, max: strangeMax }
         : null,
       encounterActive: isEncounterActive(),
       exposed: !!actor.getFlag("warhammer-dbc", "exposedAggressive"),
@@ -244,17 +257,24 @@ export function characterContext(actor) {
   }
   // Полушаг (wdbc-9wvm) — та же видимость «только с Талантом», что у Полёта.
   context.movementCanHalfStep = actorHasHalfStep(actor);
+  // Стрельба от Бедра (Талант Стрелка): тот же пункт, что в меню Движения Token HUD — только с Талантом и
+  // подходящим экипированным оружием (rules/gunner-talents.mjs::hipShootingWeapon).
+  context.movementCanHipShoot = !!hipShootingWeapon(actor);
 
   // Откуда число (wdbc-zbiz): мод-бейдж Полушага (= SPD×1) — тот же приём,
   // что charTotalTooltip у характеристик; breakdown строит documents/actor.mjs.
-  context.spdTooltip = charTotalTooltip(system.movement?.halfMove, system.movement?.spdBreakdown);
+  // SPD без множителей Черт (Почитатели Танца и др., rules/speed-multipliers.mjs): Полудвижение с множителем
+  // здесь дало бы завышенное «Итого», нарративную скорость и Карабканье.
+  const _spd = system.movement?.spdNow ?? system.movement?.halfMove;
+  context.spdTooltip = charTotalTooltip(_spd, system.movement?.spdBreakdown);
+  context.movementSpd = _spd; // подсказки листа: SPD без множителей Черт
 
   // Дистанции-превью на кнопках вкладки БОЙ (стр. 29): базовая часть
   // формулы без бросков (Карабканье — SPD/2, Плавание — ½S.b, те же
   // формулы, что показывает сам диалог в movement-actions.mjs); Прыжок и
   // Падение зависят от выбора в диалоге/броска — превью для них не строим.
   {
-    const _halfMove = Number(system.movement?.halfMove) || 0;
+    const _halfMove = Number(_spd) || 0;
     const _sBonus = Number(system.characteristics?.s?.bonus) || 0;
     context.movementDist = {
       climb: (_halfMove / 2).toFixed(1),
@@ -264,7 +284,7 @@ export function characterContext(actor) {
   // Базовая нарративная скорость (таблица «Движение в нарративном
   // времени», стр. 29) — строка-подсказка над кнопками маршей: марши
   // умножают именно эту базу (×2/×3/как обычно).
-  context.movementNarrative = narrativeSpeed(system.movement?.halfMove);
+  context.movementNarrative = narrativeSpeed(_spd);
 
   // ── Снаряжение: сенсор нагрузки (когитатор) ─────────────────────────────
   const _enc = system.encumbrance || {};
@@ -442,6 +462,8 @@ export function characterContext(actor) {
   // не расовый (Элитный Архетип доступен любой расе), а возможность из
   // реестра — тот же приём, что hasRuleFlag вместо system.race === "…".
   context.hasSigilliteRunes = hasRuneMagic(actor);
+  // Очки Трофеев (Мастер Казней, Sahara task-bbe1) — ячейка шапки только носителю.
+  context.hasTrophyPoints = hasTrophyPoints(actor);
   // Фактор Прибыли (Вольный Торговец): бонус = ФП ÷ 10 (как у характеристик)
   context.profitFactorBonus = Math.floor((Number(system.aspirations?.profitFactor) || 0) / 10);
   // Иннари: выбор «Прошлого» (бывшей расы) и её бонусы + Черты Иннари.
@@ -523,6 +545,14 @@ export function characterContext(actor) {
   context.hasAdrenalineRush = hasAdrenalineRush(actor);
   // Кнопка «Осторожность» на вкладке БОЙ (глава 3) — только владельцам Таланта.
   context.hasCaution = hasCaution(actor);
+  // Спаситель (Талант «Рукопашных»): кнопка вкладки Боя, доступна в любой момент — гейт только по Реакции.
+  if (hasSavior(actor)) context.saviorGate = saviorGate(actor);
+  // Рисовка (Талант «Рукопашных», combat/show-off.mjs): кнопка вкладки Боя, гейт по ОД на Полудействие.
+  if (hasShowOff(actor)) context.showOffGate = showOffGate(actor);
+  // Сцепление Клинков: кнопка «Разойтись» видна, пока у персонажа есть живое сцепление (его или на нём).
+  context.bladeBound = actorHasBinding(actor);
+  // Галочка «Кумир рядом» на вкладке БОЙ (Sahara 3-scope) — только владельцам Идолопоклонника.
+  context.hasIdolater = hasTalentCapability(actor, IDOLATER_CAP);
   // Тумблер «Броня обслужена сегодня» Бронника (глава 3) — только владельцам Таланта.
   context.hasArmourMonger = hasArmourMonger(actor);
   context.armourMongerOn = context.hasArmourMonger && armourMongerOn(actor);

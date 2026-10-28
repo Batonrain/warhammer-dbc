@@ -387,6 +387,109 @@
   редактируемая ГМ-надбавка `system.attackLimitBonus` (строка «Атаки» в
   экономике действий на вкладке БОЙ, wdbc-6rj).
 - `module/combat/movement-actions.mjs` — Полудвижение/Полное/Натиск/Бег/Выход.
+- **Лимит пути токена за Ход (wdbc-l2urs, 25.10.2026):** путь меряет ядро
+  Foundry v14 (история перемещений токена, сбрасывается на начале Хода;
+  `preMoveToken` отдаёт `movement.history.cost` + `movement.passed.cost`).
+  `combat/path-limit.mjs` — обвязка хуков `preMoveToken` (блок «Лимит пути
+  исчерпан») и `moveToken` (категория Хода для Выстрела Навскидку, пробег
+  Бегущего); `rules/movement-path.mjs` — чистая арифметика (бюджет = сумма
+  объявленных Действий Движения, `grantMoveAllowance` в `movement-actions.mjs`;
+  потолок Надёжной Поступи `squat-traits.mjs::sureTreadWalkCeiling`). Настройка
+  мира `movementPathLimit` (off/soft/strict). Не блокируются: ГМ, `api`/`hud`/
+  `undo`, телепорт, не свой Ход, вне боя, Орда/Техника, верховые, актор с
+  флагом `movementLimitOff` (пункт «Лимит пути» в меню Движения, только ГМ).
+- **Сдвиги токена, сделанные системой (Sahara task-bbe1, 27.10.2026):** двигать
+  токен программно — только `rules/movement-path.mjs::displaceToken`
+  (`TokenDocument#move`; action `blink` — телепорт ядра, СТЕНЫ проверяются:
+  токен встанет у стены; `walls:false` — action `displace`, сквозь стены. В
+  истории ядра оба — телепорт, `walkedMeters` их пропускает и после
+  перезагрузки; при `forced:true` — ещё флаг `options.whDBC.forcedMove`). Флаг
+  читают: хуки `preMoveToken` (3-й аргумент) и `moveToken` (`operation`) — лимит
+  не блокирует, категорию Хода не метит; `combat/free-attack.mjs` — принудительный
+  сдвиг НЕ провоцирует Свободную Атаку (и не тратит разовый флаг Выхода из Боя;
+  Подавление при новом контакте снимается как обычно); `initMovedFlagTracking` —
+  «двигался в этом Ходу» не ставится. Прямой `update({x, y})` писал бы в историю
+  ходьбу и съедал бюджет. Свой телепорт токена — `combat/token-teleport.mjs`
+  (`pickTeleportPoint`, `teleportToken`: потолок дальности, остановка у стены
+  с реальной дистанцией); так двигаются Тень (Wrapped in Chaos), Туманоходец,
+  Туманный Прыжок. Возврат Чемпиона Разделения на конце сцены
+  (`combat/sundering.mjs`) ещё идёт прямым `update` (вне Хода). Толчки (Пинок с
+  Разворота), перевозки, «Пересилить» партнёра система не делает — токен тянет
+  стол руками (`dragging`): руками ГМ — не едят бюджет (ГМ отфильтрован), руками
+  игрока — выбрать в HUD «Телепорт» (blink) или снять лимит актору (пункт «Лимит
+  пути», ГМ).
+- **Движение по Таланту (Sahara task-bbe1, 27.10.2026):** общий пункт меню
+  Движения (в бою, виден носителям). Данные — `rules/talent-moves.mjs`
+  (`TALENT_MOVES`: Движение, дистанция, цена в ОД/Реакциях/Очках Трофеев,
+  «раз в Раунд/бой», условие из текста); механика — `combat/talent-move.mjs`
+  (`declareTalentMove`, диалог `showTalentMoveDialog`). Виды: `walk` — пишет
+  дистанцию в бюджет пути (Танец Рассечения; Наёмник Дела — 1-й Раунд раз за бой;
+  Скорость Сокола — 1 Реакция Полудвижение / 2 Полное, без Свободной Атаки,
+  условие «не двигался» меряется флагом `movedThisTurn` — то же измерение, что у
+  Импульсного оружия, ГМ обходит); `teleport` — перенос токена без траты бюджета
+  (Туманоходец — P.b м раз в Раунд; Туманный Прыжок — 2 ОД и 1 Очко Трофеев, без
+  потолка; стены учитываются). Условие «5+ Успехов» и прочее подтверждает игрок;
+  выход из Захвата, свободная атака −30 — вручную (названо в карточке). Не
+  подключено, текст не про Движение по своему Ходу: Момент Танца, Пропустить,
+  Затопот (Реакция/принуждение чужого токена — двигает ГМ), Со Скоростью Мысли
+  (перелёт по звёздной системе), Разрыватель Завесы (уход в Варп), Психический
+  Рывок и Скорость Феникса (баффы SPD/ОД).
+- **Множители дальности от Черт — на листе (Sahara task-bbe1, 27.10.2026):**
+  `rules/speed-multipliers.mjs` (таблица: Почитатели Танца Полудвижение ×2,
+  Полное ×3, Натиск ×6, Бег ×12; Акробатическое Мастерство ×2/×4/×8/×14, со
+  Спринтом Бег ×28; Разящее Представление Полное ×3, Натиск ×6, Бег ×12) →
+  `rules/character/movement.mjs`: дистанция = `max(SPD×1/2/3/6, SPD × множитель)`,
+  SPD — текущий после Размера/Перевеса/Стойки/Поваленного/потери ног; до Спринта и
+  Запредельной Скорости, поэтому Спринт удваивает уже умноженный Бег. Лучший
+  множитель каждой дистанции у нескольких Черт, не сумма. `movement.spdNow` —
+  SPD без множителей (`spdOfMovement`): его читают всё, что в книге считается от
+  самого SPD, — пул Отскока, Давление и Пересилить (`recoil-pool.mjs::spdMeters`),
+  потолок Толкания «до SPD» у Через Силу, Совместного Перемещения и Против Техники
+  (`force-move.mjs::forceMoveSpd`; до spd-0 они читали несуществующее
+  `movement.spd` и толкали на 0 м), Полушаг, Вольт (поправка Пружинящей Стойки), Карабканье, Перебежка
+  (`movement-actions.mjs::duckAndCoverMeters`), подсказки листа и нарративная
+  скорость. Обычные кнопки Движения и бюджет пути берут новые числа `halfMove`/
+  `move`/`charge`/`run` сами. «Двигался» (`movedThisTurn`) снимается на начале боя
+  (`movement-actions.mjs::clearStaleMovedFlags` из `combatStart`): расстановка
+  токенов до боя не должна блокировать Скорость Сокола. Ограничение: толчок, который
+  стол тянет руками, ставит флаг тому, чей токен потянули.
+- **Очки Трофеев (Sahara task-bbe1, 27.10.2026):** пул `system.trophyPoints`
+  `{value, max}` (`data/actor/_creature.mjs`), максимум = P.b у носителя
+  (`rules/trophy-points.mjs`, пересчёт в `rules/character.mjs`), ячейка «Трофеи» в
+  шапке листа (`hasTrophyPoints`: Собиратель Трофеев, Туманный Прыжок,
+  Окончательная Казнь, Отмеченная Добыча, Трофеи Триумфа/Приговора), правка вручную.
+  Книга: Собиратель Трофеев — +1 за убитого офицера/чемпиона/чудовище (решает ГМ);
+  Трофеи Триумфа — убив достойную цель с Inf 30–59 — 2, 60–79 — 3, 80+ — 4; Трофеи
+  Приговора возвращают очко (вручную, по усмотрению ГМа между миссиями).
+  *Начисление:* смерть цели констатирована (`sheets/tabs/body.mjs::setDeceased`) убийцей-
+  носителем — карточка «Трофей» с кнопкой (`combat/trophy-kill.mjs::offerTrophyAfterKill`,
+  образец — Жнец); кликает только ГМ, диалог «Засчитать трофей за убитого офицера/
+  чемпиона/чудовище?» показывает сумму; сумма (1 либо по Inf цели
+  `characteristics.inf.total` при Трофеях Триумфа) и зажим по P.b считает система;
+  пишет ГМ прямо в убийцу (ГМ-релей не нужен); раз на карточку (`trophyAwarded` в
+  `card-once.mjs`), при отказе ГМа карточку можно решить снова. *Трата:* Туманный
+  Прыжок (автоматически, отказ без Очка) и Окончательная Казнь —
+  `combat/final-execution.mjs`: кнопка в окне рукопашной атаки (только двуручный хват — Казнь)
+  вооружает Extreme(9)/Proven(5) первой атаки серии (Раунд), дальше Extreme на 1 ниже и
+  Proven на 1 выше (у оружия с Extreme ниже 9 остаётся его порог: слияние свойств берёт
+  меньший порог — `combat/attack-weapon.mjs::mergeExtraProps`); шлюз перепроверяется до
+  всех списаний ОД/Реакций, Очко списывается при подтверждении атаки один раз на серию,
+  отказ без Очка.
+  Не смоделировано: Трейт «Казнь» (доп. атаки), Fear(2) за убийство Окончательной
+  Казнью, Отмеченная Добыча (трата Очка), Трофеи Приговора, трата Очков как Бесчестия.
+- **Реестр Талантов/механик с Движением и бюджет пути (27.10.2026):**
+  - *пишут бюджет (`grantMoveAllowance`)*: все пункты меню Движения
+    (`movement-actions.mjs`: Полудвижение, Лучшая Часть Отваги, Полное, Натиск,
+    Бег/Спринт, Выход из Боя, Полушаг, Смена Позиции, Прорыв, Вольт, Перебежка,
+    Карабканье, Прыжок, Плавание, Смена Высоты; Локус Стремительности — через
+    Полудвижение); Удар Ассасина, Давление, Сканирующее Продвижение, Пересилить;
+    Стрельба от Бедра — через `declareFullMove`; пункт «Движение по Таланту» (выше);
+  - *внутри уже объявленного*: Жнец (Натиск), Стрельба на Бегу, Прикрывающий
+    Огонь (Выход), Ложный Натиск, Размашистый Танец, Запредельная Скорость и
+    Спринт (меняют дальность на листе, бюджет берётся с неё), Фронтовой Медик и
+    Пролётом (Полудвижения/Натиск — обычными кнопками);
+  - *не по Ходу владельца (лимит не действует)*: Отскок/Вольт Реакцией, Смена
+    Позиции в начале боя.
 - `module/combat/movement-terrain.mjs` — Трудный Ландшафт при Беге/Натиске.
 - **Полёт (стр. 30, wdbc-x1nz.2, 18.09.2026):** `combat/movement-actions.mjs`
   — `actorCanFly`/`actorHasFlyer` (гейт по Черте Flyer/Hoverer — Hoverer БЕЗ
@@ -783,7 +886,35 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 `touch-of-entropy.mjs`, `turn-state-shield.mjs`, `unseen-beggar.mjs`,
 `voice-of-god.mjs`, `vulture.mjs`, `witchs-edge.mjs`, `hallucinogenic.mjs`,
 `ogryn-weapon-break.mjs`, `frenzy.mjs` (Ярость — переключатель,
-`system.inRage`), `fully-armed.mjs`.
+`system.inRage`; лимит повторного входа), `rules/rage.mjs` (числа Ярости по
+состоянию `inRage`: +10 WS/S/W, −20 тесты BS/I/F, Раненный Зверь, Холодная
+Ярость; Усталость/Оглушение/Мораль — `situational.mjs`, `condition-guards.mjs`,
+`morale-test.mjs`, `fear.mjs`; Sahara 3-861e; Модуль Агрессии Скитария — записи
+Конструктора на самом импланте: настоящие Таланты Frenzy / Cold Fury / Fire in Blood (последние
+два на Good+), Poor.Q −10 к I (характеристика с `when.quality`), возможность
+`rage.noBsPenalty` на Best гасит правило `rage.penalty.bs` через `CAPABILITY_OVERRIDES`
+(`rules/item-rules.mjs`) и строку «Ярость: −20 BS» окна атаки. Имплант с Талантом «по
+Качеству» ведётся живой выдачей — `apps/mechanics.mjs::syncLiveGrants` (установка/извлечение в
+Хирургиконе, смена Качества — `onItemQualityChanged` в хуке updateItem, получение предмета);
+ворота «установлен»/«Качество» — лист `rules/item-gates.mjs`; Sahara focused-wrath-20-bs п.3;
+плюс записи `rage.avoidWithoutLimit` и `rage.exitAutoSuccess` на любом Качестве — Избегания в Ярости без
+запрета и автоуспех выхода). **Поведение Ярости** (Sahara focused-wrath-20-bs п.2, решения владельца
+27.10.2026): `rules/rage-behavior.mjs` (чистые правила) + `combat/rage-behavior.mjs` (Foundry-обвязка).
+Избегания закрыты без траты Реакции — `combat/full-attack-lock.mjs::avoidanceVerdict` (Уклонение,
+Парирование, верхом) и `rageAvoidanceRefusal` (Парирование психосилы, Сжатие, Вираж, Шагоход, отмена
+Spray); Парирование открывает только Боевой Гнев. Ментальные траты ОД/Реакций (`physical:false`) —
+`action-economy.mjs::actionBlockReason`; манифестация — `predicates.mjs::isMentalActionBlocked`
+(Холодная Ярость: можно, −10 на психотесты — `rage.mjs::rageRules`). Социальные тесты кроме Запугивания
+проваливаются сами — `actor-sheet.mjs::_runTest` → `rageSocialRefusal`; ответчик во встречном тесте — минимальный провал
+(`RAGE_AUTOFAIL_SIDE`), сравнение публикуется (`_maybePostOpposedComparison`, NPC-соперник — `_resolveOpposedAuto`). Начало Хода
+(`hooks.mjs::updateCombat` → `processRageTurnStart`): тест W+0 на сохранение поддержания (провал —
+`dispelAllSustained`; у Холодной Ярости теста нет) и напоминание «двигаться к ближайшему видимому врагу» по токенам сцены (диспозиция,
+`isTokenInSight`). Кнопка «Выйти из Ярости» (вкладка «Бой», HUD) — `attemptRageExit`: тест W+0, +10 за Ход
+после боя (`rageAfterCombat` ставит `deleteCombat`; Ход вне боя — 6 с `worldTime`), +30 Боевого Гнева по
+галочке ГМа, одна попытка в Ход (метка Хода `rageExitTried`), успех снимает Ярость и закрывает
+повторный вход (`frenzy.mjs`), провал — метка `rageExitFailed`; переброс Холодной Ярости — кнопка
+на карточке (`card-once` `rageExitRerolled`). Принуждения токена нет — только напоминание), `rules/berserker-talents.mjs`
+(Натиск Берсерка: +10 к приёму при Натиске, `meleeBaseBonus`), `fully-armed.mjs`.
 
 - Гасители штрафов окна атаки (sheets/attack/mods.mjs, 26.09.2026):
   дальняя/экстремальная дистанция — `rules/range-penalty-immunity.mjs`
@@ -796,6 +927,44 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   «Врасплох» в 1-м Раунде ставит +30 само (wdbc-1rno.3.1).
 - Безголовый: `rules/headless.mjs` — обзор 120° в facing и «Голова»→«Торс»
   в damage.mjs (wdbc-1rno.20).
+- **Таланты «Рукопашные», остаток (Sahara 3-8dc5, решения владельца 26.10.2026)** —
+  чистая логика в `rules/melee-talents.mjs`, обвязка по файлам:
+  Прикладный Хват (`stockGripActive`: штыку выдаётся хват «1р» в окне атаки и HUD,
+  вторичный WS −10 вместо −5 через `gripEffects(..., {secWs})`);
+  Странная Техника (отдельный пул `system.reactions.strangeValue`, максимум читается с
+  Таланта; `combat/action-economy.mjs` — `spendReaction({strange:true})`: Запрещённый
+  Приём/хвост из окна атаки, бонусный «Повалить» крюком/посохом с карточки; мехадендриты —
+  вручную кнопкой «−1» на вкладке Боя; миграция `migrations/strange-technique-effect.mjs`
+  снимает старый общий ActiveEffect «+1 к reactions.max»);
+  Подрезать Сухожилья (`combat/hamstring.mjs`: кнопка на карточке урона, A+0 vs A+0,
+  Повален; 5+ Успехов — долг ОД цели тем же флагом, что у Пожирателя Времени, запись
+  через ГМ-релей op `apDebt`; «раз в Ход» мерится Раундом);
+  Упорство (`combat/tenacity.mjs`: кнопка повтора на карточке единственной одиночной
+  атаки; повтор бесплатен — `techniqueOpts.tenacityRepeat`; «не нанесла урона» = нет
+  метки Хода `meleeDamageDealtThisTurn`, которую ставит применение урона; если атака
+  ПОПАЛА, а урон по карточке ещё не применён — диалог «Урон по этой атаке ещё не
+  применён — повторять?», сверка по метке Хода `meleeDamageAppliedMsg` = id карточки);
+  Спаситель (`combat/savior.mjs`: кнопка вкладки Боя, замер союзника+врага в контакте по
+  токенам, Реакция → Давление против врага);
+  Сцепление Клинков (`rules/blade-binding.mjs` + `combat/blade-binding.mjs`: S+0 vs S+0 с
+  карточки успешного Парирования не щитом; флаг `bladeBindingOwner` на цепляющем гаснет с
+  его Ходом, указатели на противнике; запрет атаки (окно) и Парирования (`defense.mjs`)
+  сцепленным оружием; кнопка «Разойтись»);
+  Обратный Удар (Приём `MELEE_MANEUVERS.reverseStrike`: вторую атаку профилем посоха с
+  Concussive(0) бросает окно, `sheets/attack/dialog.mjs`; оружие категории «Посох» без
+  профилей — вторая атака базовым профилем, `reverseStrikeSecondProfileIdx`);
+  Жнец (`combat/reaper-chain.mjs`: когда у цели констатирована смерть (`setDeceased`) после
+  рукопашного Натиска носителя в том же Раунде — карточка «Жнец» с кнопкой, одна
+  дополнительная Атака за убийство (метка жертвы `lastDamageCharge`); клик мерит по сцене — Полудвижение от
+  начальной цели цепочки (флаг Хода `reaperInitialTarget`) и дистанцию Натиска за вычетом
+  пройденного по `TokenDocument#movementHistory`; затем окно атаки Базой «Натиск» без ОД,
+  вне лимита Атак — `techniqueOpts.reaperFollow`, `freeMeleeFlags`);
+  Рисовка (`combat/show-off.mjs`: кнопка вкладки Боя, Полудействие, цели по токенам в
+  контакте до F.b, один бросок WS общим встречным тестом `combat/opposed-contest.mjs`; победа —
+  метка `commandSuppressed` на цели: `commandNodesFor` пуст и не работает Концентрация Огня,
+  метку снимает `expireCommandsAtTurnStart` на Ходу Рисующегося или конец боя
+  (`rules/command-suppression.mjs`); перевес 5+ Успехов — кнопка свободной базовой атаки,
+  `techniqueOpts.showOffFree`, не считается атакой).
 
 ## 6. Оружие и его свойства
 
@@ -1355,6 +1524,84 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   «Имперское Санкционирование» (`trait.imperialSanctioning`) — бесплатный
   переброс Прорыва после оплаченного переброса Феномена.
 
+- Таланты Псайканы с пулами (Sahara 3-28, пачка I1, 26.10.2026): чистая логика —
+  `rules/psyker-talents.mjs` (Пропускание `channelOutcome`; Быстрое Плетение
+  `fastWeavingGate`/`FAST_WEAVING_FLAG`; Текучее Плетение `fluidWeaveGate`/
+  `fluidWeaveMax`; Ключевые Силы `isSignaturePower`/`signatureToggle`), запись
+  состояния и карточки — `combat/psyker-pools.mjs` (`processFastWeavingCombatStart`
+  из хука `combatStart` в `hooks.mjs`, `manifestActionPlan`/`payManifestAction`, `weaveFluid`,
+  `restoreFluidWeavePoint`, `signatureFreeHtml`, `handleSignatureFreeClick`).
+  Пул Быстрого Плетения (2 ОД) и «раз в Ход» Текучего — метки актора
+  `fastWeavingAp`/`fluidWeaveThisTurn` в реестре `rules/turn-flags.mjs`; очки
+  Текучего Плетения и список ключевых сил лежат флагами на самом Таланте
+  (`fluidWeaveSpent`, `signaturePowers`) — схем и миграций нет. Окно манифестации
+  (`sheets/tabs/psychic.mjs`): галочка пула, строка Пропускания и блок «Ключевая
+  Сила» в карточке; вкладка МИСТИКА (`tab-psy.hbs`): панель пулов, звёздочка и
+  «Переплести» у силы. Бесплатное Очко Ключевых Сил — раз в Раунд
+  (`rules/cooldown.mjs`, ключ `psyker.core.signaturePowers`): переброс психотеста
+  (`handlePsyRerollClick`: карточка своей ключевой силы хранит параметры броска во флаге
+  `psyManifest`, `executePsychotest` повторяется с `reroll:true`, старая карточка помечена `psyRerolled`;
+  прочие перебросы Раунда — 1 Очко Бесчестия), Усмирение Варпа на карточке своей ключевой силы
+  (`combat/calm-warp.mjs`) и способность «Успех» (`apps/infamy-points.mjs::spendFreeInfamyAbility`);
+  сопротивление чужой силе не делается. Манифестация в бою СПИСЫВАЕТ ОД по полю действия силы
+  (`manifestActionPlan`/`payManifestAction`: Полудействие 1, Полное и Длительное 2, Свободное 0, Реакция —
+  Реакцией; не хватает — отказ), пул Быстрого Плетения уменьшает это списание. «Переплести» снимает
+  поддержание (`combat/psychic-sustain.mjs::sustainOffPatch`) и заводит заново с теми же эPR/Успехами/целью. Тесты —
+  `test/rules/psyker-pools.test.mjs`, `test/sheets/psychic-pools.test.mjs`.
+
+- Таланты Псайканы пачки I2 (Sahara 3-28, 26.10.2026): Рана в Реальности, Психический
+  Вампир, Варп-Замок. **Рана в Реальности** — чистая логика `rules/wound-in-reality.mjs`
+  (`woundSustainSplit`: помеченные флагом `woundFree` силы не снижают тПР — одна правка в
+  `rules/character.mjs`; галочка до Cor.b сил, пока платное поддержание 3+ PR —
+  `woundFreeToggleGate`), запись и пересчёт радиуса — `combat/wound-in-reality.mjs`
+  (хуки `updateItem`/`deleteItem`/`updateActor` в `warhammer-dbc.mjs`). Аура — штатный
+  движок `regions/auras.mjs`: на Таланте запись `kind:"aura"` (радиус `ceil(wound/(wound+1))*cor*2`,
+  ключ `wound` добавлен в `rules/mech-formula.mjs`, «на всех, включая себя») клонирует Черту-метку
+  `packs-src/traits/Wound_in_Reality_Aura…`; числа за каждую бесплатную силу считаются живьём по
+  метке: −5 Пси-чутьё и +10 Варп-Нестабильность — источник правил `woundAura` (`rules/sources.mjs`),
+  +10 Феномены — `sheets/tabs/psychic.mjs::executePsychotest`, Завеса +1 за каждые 3 силы — для
+  всех в ауре, через общий `rules/veil-steps.mjs::veilStepsFor` (см. пачку I4 ниже); Завеса сцены общая. Галочка — в окне манифестации и кнопкой ⌬ в
+  таблице сил; снятие поддержания гасит её (`combat/psychic-sustain.mjs::sustainOffPatch` — общий
+  набор сбросов поддержания). **Психический Вампир** — `rules/psychic-vampire.mjs` +
+  `combat/psychic-vampire.mjs`: кнопка на карточке урона (`combat/damage.mjs`, рядом с «Разрубить»),
+  вопрос о душе, W+0, 1d5 Ран/вся Усталость, доза «наркотика» через
+  `sheets/tabs/drugs.mjs::weeklyDoseCheck` (Зависимость 6 | W+0 | 6 дней — флаг актора
+  `drugWithdrawal`, без нового механизма). **Варп-Замок** — `rules/warp-lock.mjs` +
+  `combat/warp-lock.mjs`: кнопка под Феноменом/Прорывом (манифестация и переброс Усмирения Варпа),
+  «раз в час» по `game.time.worldTime` (флаг `warpLockUses` на Таланте, ручной сброс на вкладке
+  МИСТИКА), метка «не псайкер» `warpLockActive` в реестре `rules/turn-flags.mjs` блокирует
+  манифестацию и включение поддержания. Тесты — `test/rules/{wound-in-reality,psychic-vampire,warp-lock}.test.mjs`,
+  `test/combat/{wound-in-reality,psychic-vampire,warp-lock}.test.mjs`, `test/documents/wound-in-reality-tpr.test.mjs`.
+
+- Доделки пачки I4 (Sahara 3-28, 27.10.2026, решения владельца): (1) **Завеса персонажа** —
+  `rules/veil-steps.mjs` (`sceneVeilSteps` — Завеса сцены/группы сцен, `veilStepsFor(actor)` — плюс
+  аура Раны в Реальности, `woundAuraVeil`); читают лист Демон-Принца (`dpVeilSteps`, длительность
+  Манифестации) и Призыв демона (`apps/demon-summon.mjs` — срок дестабилизации Рыцаря Бога по Завесе
+  там, где стоит призывающий). Позже (Sahara task-df48, 27.10.2026, решение владельца) к тому же помощнику
+  подключены ещё двое: тест Навигации (`apps/veil.mjs::_rollNavigation` и подпись модификатора на вкладке
+  «Навигация» — `veilNavMod` по Завесе навигатора с его аурой, `rules/veil-steps.mjs::navigationVeil`) и
+  книжное «ритуал проводится только при Истончении Завесы +N или выше» (`rules/veil-steps.mjs::ritualVeilGate`,
+  число N — поле `system.veilMin` предмета-ритуала: «Призыв Демонического Владыки» +3, «Ритуал Тумана
+  Безумия» 1; гейт стоит первым в `apps/ritual-cast.mjs::castRitual`, до требований и броска — ГМу вопрос
+  «Завеса слишком плотна (N)… Продолжить?», игроку отказ без траты; предупреждение видно заранее в окне
+  «Провести ритуал» и во вкладке «Ритуалы» окна Завесы). Феномен провала ритуала (1d100 + провалы) и таблица
+  Феноменов Завесу по-прежнему не читают — книга влияния Завесы на них не даёт.
+  (2) **«Агрессия 2» Психического Вампира** — выдаётся само СРАЗУ при возникновении зависимости и держится до её срыва (I5, решение
+  владельца 27.10.2026; новая доза его не снимает): поле
+  `penaltyDisorder: {name, severity}` в настройках Зависимости (`rules/psychic-vampire.mjs::VAMPIRE_ADDICTION`),
+  чистое `rules/drug-withdrawal.mjs::withdrawalDisorders`, обвязка `combat/drug-withdrawal.mjs::syncWithdrawalDisorders`
+  (из часов Календаря, `startWithdrawal`, `endWithdrawal`): обычный предмет `mentalDisorder` через
+  `sheets/tabs/disorders.mjs::createDisorderItem`, помеченный флагом `withdrawalDisorder` = ключ препарата. Своё
+  расстройство игрока с тем же названием не дублируется и не удаляется: его тяжесть растёт на `severity` штрафа
+  (потолок 5), исходная пишется во флаг предмета `withdrawalBoost` {key, from, applied}, при срыве снимается ровно
+  фактическая прибавка (`текущая − (applied − from)`, правка игрока за это время сохраняется). Общего «расстройства у зависимости» для
+  обычных наркотиков нет — поле читает любой препарат, у которого оно заведено (сейчас только Вампир).
+  (3) **Переброс психотеста Ключевой Силой откатывает Порчу Варп-Шока** — карточка запоминает начисленное
+  (`psyManifest.warpShock`, `sheets/tabs/psychic.mjs`), `combat/psyker-pools.mjs::returnWarpShock` снимает ровно
+  столько (не ниже нуля, один раз — отметка `psyWarpShockReturned`), новый результат начисляет заново; Варп-Замок
+  Порчу по-прежнему не откатывает. Тесты — `test/rules/veil-steps.test.mjs`, `test/apps/demon-summon.test.mjs`,
+  `test/combat/drug-withdrawal-disorder.test.mjs`, `test/sheets/psychic-pools.test.mjs`.
+
 - Психосилы: `data/item/psychic-power.mjs`, `rules/psyker.mjs`, `psy-range.
   mjs` (парсер дальности), `psychic-vessel.mjs` (фамильяр/конструкт-
   манифестация), `constants/{disciplines,psyker,psyker-tables}.mjs`,
@@ -1437,7 +1684,8 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   `data/actor/_creature.mjs`). Подключено в шаги окна «Навигация»
   (`apps/veil.mjs`) — см. также §19 (привязка к Звёздной системе).
 - Ритуалы: `data/item/ritual.mjs`, `apps/ritual-cast.mjs`,
-  `sheets/tabs/rituals.mjs`, `sheets/ritual-cast-dialog.mjs`.
+  `sheets/tabs/rituals.mjs`, `sheets/ritual-cast-dialog.mjs`. Минимальная Завеса ритуала —
+  `system.veilMin` + `rules/veil-steps.mjs::ritualVeilGate` (см. «Доделки пачки I4» выше).
 - Рунические Вязи: `data/item/runic-weave.mjs`, `constants/runic-weaves.mjs`,
   `rules/runic-weave.mjs`, `regions/runic-weave-zone.mjs`.
 - Таро Императора: `constants/{tarot,tarot-images}.mjs`.
@@ -1459,6 +1707,16 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   последствий: книжный эффект Фокуса (изучение психосилы без «изучения», только
   за опыт; обучение других) висит на ещё не существующей в системе механике
   изучения психосил (wdbc-1rno) — когда она появится, читает отсюда же.
+- **Предмет-Психофокус и его качество (21.10.2026, PR #550) — это ДРУГОЕ, не
+  Фокус Дисциплины выше.** Вещь Psy Focus / Психофокус (core.json стр.243),
+  ради которой работает Путь Силы «Психофокус» (`constants/psyker.mjs::PSY_PATHS.
+  psychofocus`, свободный тест W+0 в `sheets/tabs/psychic.mjs::executePsychotest`).
+  Игрок привязывает предмет на вкладке МИСТИКА (`system.psyker.focusItemId`,
+  Дисциплина резонанса — `…focusResonance`); читатель —
+  `rules/psy-focus.mjs::focusQualityEffect/focusRollResult`: Good.Q +5 к бонусу
+  фокуса на силах резонирующей Дисциплины (только при успехе), Best.Q ещё и
+  без штрафа крит. провала. Руны Сигиллитов («считается Best.Q») этого не
+  получают — wdbc-b8n4f.
 - Руны Сигиллитов: `rules/sigillite-runes.mjs` (пул `system.sigilliteRunes`,
   производный максимум 20 + Библиотека Рун × Бонус Интеллекта + ступени
   Forbidden Lore (Archeotech), цена манифестации бPR×2, Рунный Удар),
@@ -1695,6 +1953,17 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   radiation.mjs`). Аналогичный по форме штраф за сильный ветер (`WEATHER`,
   ключ "wind") и урон трения атмосферы на входе с орбиты по-прежнему НЕ
   реализованы вообще — ни числа, ни формулы для них в системе нет.
+- **Вакуум и Взрывная Декомпрессия (core стр. 483, 25.10.2026):** флаг сцены
+  `env.vacuum` (категория «Вакуум» окна «Окружение», строка и кнопка 🎲 в
+  виджете). Чистая часть — `rules/vacuum.mjs` (защита `voidArmourOf`: надетая
+  непробитая броня со свойством `void`; Порог T+0 либо Trade (Voidfarer)(T)+10,
+  что выгоднее; задержка дыхания −30 и +1d5; урон = числу Провалов; радиус
+  Декомпрессии 10×ширина пробоя), обвязка — `combat/vacuum.mjs` (тест в начале
+  Хода из `hooks.mjs::updateCombat` и по кнопке виджета; Blinding(0) при
+  открытых глазах; шаблон Декомпрессии через `combat/templates.mjs`, один бросок
+  2d10 на всех накрытых без пустотной брони). Преимущество Крепкого как Камень
+  — `squat-traits.mjs::vacuumResistReroll`; область правил `vacuum`
+  (`ctx.vacuumTest`, `resolve-test.mjs`).
 - `apps/scene-nexus.mjs` + `constants/scene-nexus.mjs` — Нексус Сцен (группы
   сцен, телепортация).
 - `constants/vitals.mjs` — Голод/Жажда/Сон, авто-прогресс по `worldTime`.
@@ -1739,6 +2008,16 @@ AGENTS.md).
 - Химия/наркотики/яды: `data/item/drug.mjs`, `sheets/tabs/drugs.mjs`.
 - Болезни: `data/item/disease.mjs`, `constants/diseases.mjs` (справочник
   богов — сами болезни в компендиуме), `sheets/tabs/diseases.mjs`.
+- **Тест заражения (wdbc-dbveg, 25.10.2026):** у болезни структурное поле
+  `system.vectorTests` [{label, char, mod}] — пути передачи с Порогом T±N
+  (13 из 18 болезней; «на усмотрение МИ» и авто-заражение полей не несут,
+  сверка с текстом — `test/data/disease-vectors-vs-book.test.mjs`). Кнопка 🎲
+  «Заражение» в списке болезней вкладки ЭФФЕКТЫ → `combat/disease-infection.mjs`
+  (`rules/disease-infection.mjs` — чистая часть): провал включает болезнь.
+  Область правил `disease` (`ctx.diseaseTest`); Преимущество Крепкого как
+  Камень и Живучести Сплайса (`resist.diseaseAdvantage`) —
+  `squat-traits.mjs::diseaseResistReroll`; носитель Метки Нургла не заражается
+  (`rules/disease-immunity.mjs`).
 
 ## 25. Стремления (Aspirations)
 
@@ -1780,6 +2059,52 @@ AGENTS.md).
 - `apps/cogitator.mjs` — Когитаторы (постоянные терминалы-консоли).
 - `apps/compendium-browser.mjs` + `compendium-filters.mjs` — Обозреватель
   компендиумов.
+- **Реквизиция («Достать снаряжение», 25.10.2026):** `apps/requisition.mjs`
+  (кнопка 🛒 во вкладке «Снаряжение», тест Inf через `_rollCharacteristic`),
+  чистые таблицы стр. 165 и снижение Редкости Талантами (Повелитель Войны,
+  Древний Воин, Разгадыватель Ритуалов) — `rules/requisition.mjs`; галочки
+  Чрезмерного Богатства / Сети Контактов / Дела Фактотума и авто +20 Повелителя
+  Войны — источник `requisitionTalents` (`rules/requisition-talents.mjs`,
+  область `requisition` в `resolve-test.mjs`). «Кибернетика» Повелителя Войны —
+  вся имплант-техника (Кибернетика, Бионика, Псибернетика, Механикус,
+  Скитарии: `IMPLANT_TECH_CATEGORIES`, решение владельца 26.10.2026);
+  Археотех, биоимпланты Друкхари и органы Астартес не входят. **Режим «Узел
+  корабля»** (27.10.2026, Книга Пустоты, «Реквизиция узлов»): третья кнопка
+  первого окна «Достать снаряжение» → выбор компонента из `ship-components`,
+  Редкость — `system.rarity` узла, Качество, вместо Количества — таблица по типу
+  узла (`NODE_TYPES`/`NODE_KIND_TYPE`/`nodeTypeOf` в `rules/requisition.mjs`:
+  оружейные −30 = все `kind:"weapon"`, эфирные −20 = `augur`, энергетические
+  −10 = `voidShield` и `warp`, структурные 0 = всё остальное, в т.ч. спорные
+  `drive`/`gellar`/`astropathic`/`occulum`/`bridge`); контекст теста
+  `requisitionNode`/`requisitionNodeType`; +10 Дела Фактотума цепляется сам.
+  Узел персонажу не выдаётся (ставят на корабль сами), срок установки не
+  ведётся (решение владельца 26.10.2026). Тесты — `test/rules/requisition-node.test.mjs`.
+  **Место реквизиции узла** (27.10.2026, Sahara 10-4eac): в том же режиме окно
+  даёт выпадающий список «Место» — все 20 строк «Таблицы Модификаторов
+  реквизиции» Книги Пустоты (данные — `constants/requisition-places.mjs`,
+  расчёт — `rules/requisition-places.mjs::placeEffect`, подключено в
+  `requisitionPlan(…, {place, placeFlags})`): сдвиг Редкости узла на шаг
+  (Захолустье/Штрафная колония +1, Колония — Необходимым +1, Улей/Крупная
+  судоверфь/Адская кузня −1, Агромир/Мир-крепость — орудиям, Мир-кладбище —
+  Дополнительным, Мир удовольствий — узлам с Enduring/High Spirit, Мир-храм —
+  узлам папки «Вера» при Peer (Ecclesiarchy), База Флота/Мир-кузня — при Peer
+  (Imperial Navy / Mechanicus) с оговорками по Археотеху/Ксенотеху), −10 к тесту
+  (станция в глубоком космосе, пиратская станция), недоступность (Дикий/
+  феодальный, нет нужного Peer, Ксенотех на Улье/Базе Флота) — отказом с
+  причиной, кнопка «К тесту Inf» гаснет. Peer читается с листа
+  (`peerTargetsOf`, точный ключ фракции Imperial Navy / Mechanicus /
+  Ecclesiarchy, БЕЗ наследования по дереву: Peer Империума не годится — решение
+  владельца 27.10.2026); сюзеренство Вассального мира, Peer
+  контролирующей фракции Адской кузни и решение МИ на Демоническом мире — галочки
+  под списком. Таблица относится к узлам, в обычной реквизиции снаряжения места
+  нет; колонка «Установка» и «+10/+20 к Длительному ремонту» не ведутся. Тесты —
+  `test/rules/requisition-places.test.mjs`.
+- **Cover Up / Работа под Прикрытием (26.10.2026):** блок «ЯЧЕЙКИ АГЕНТОВ» на
+  вкладке СОЦИУМ у носителя Таланта — `sheets/tabs/cover-up-panel.mjs` +
+  `rules/cover-up.mjs` (таблица книги Inf 1–4 → Х-ки агентов и Уровень
+  Реквизиции); ячейки — флаг актора `flags.warhammer-dbc.coverUpCells`, схема
+  актора не тронута. Уровень Реквизиции справочный, в тест Реквизиции не входит;
+  Inf персонажа не списывается.
 
 ---
 
@@ -1806,7 +2131,13 @@ AGENTS.md).
   «Окружение»); невесомость → предикат `weightlessScene`; Преимущество против
   яда — `rules/squat-traits.mjs::poisonResistReroll`.
 - **Яды/наркотики:** недельный счётчик доз и тест Зависимости —
-  `rules/drug-doses.mjs`, `sheets/tabs/drugs.mjs::weeklyDoseCheck`; яд клыков
+  `rules/drug-doses.mjs`, `sheets/tabs/drugs.mjs::weeklyDoseCheck`;
+  комбинированный тест (Рекаф «Т+40/W+50», `addiction.testChar2`), частота
+  приёма, штраф без дозы (`addiction.penaltyMods` → правила броска), урон «в
+  начале периода» (Тиск/Сатрофин), тест на срыв –50 (+10 за период, раз за
+  период, `rollBreakTest`) — `rules/drug-withdrawal.mjs`,
+  `combat/drug-withdrawal.mjs` (часы `drugWithdrawal`), миграция копий
+  `migrations/drug-addiction-fields.mjs`; яд клыков
   Наги кнопкой — `apps/naga-traits.mjs::injectFangVenom`; Toxic (X) —
   запись «Свойство атаки» с `apRating:"rating"`.
 - **Субрасы Зверолюда:** Кхорнгор/Мясник/Плакальщик —

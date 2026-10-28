@@ -5,7 +5,7 @@
   "folder": "XeycnCsRlazxEDgr",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey meleeCore.core.cripplingStrike — рукопашное попадание несёт +2 к урону, который прибавляется при применении урона, если непоглощённый урон больше текущих Ран цели (module/rules/gunner-talents.mjs::cripplingStrikeBonus, combat/attack.mjs wp.negWoundsBonus, combat/damage.mjs). Строка 🎯 в карточке. Не видят Захват (когти/укус), Быстрый Выхват, удар в ответ на Парирование и атаки Орд — у них своя формула урона.",
     "benefit": "Когда рукопашная атака персонажа наносит Отрицательные Раны, она получает +2 к Dmg.",
     "tier": 2,
     "requirement": "WS 50",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "wUZq90IYjpNPgzEw",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "fbU38J2Pzvwoz1N3",
+              "capabilityKey": "meleeCore.core.cripplingStrike",
+              "label": "Калечащий Удар: +2 к урону рукопашной атаки, если она наносит Отрицательные Раны",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

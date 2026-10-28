@@ -27,6 +27,7 @@
     "damageType": "energy",
     "penetration": 0,
     "effect": "[Железо: Noospheric Uplink · Цена: 3К · Процесс: 1 (У) · Тип: Анима, Славословие (1)] Треб.: For.Lore (Mechanicum)+20. Все техночудеса в дальности +1 к цене активации и +ступень действия; Ноосферное Сканирование тут −20.",
+    "harmful": true,
     "effects": {
       "charBonusStat": "",
       "charBonusValue": 0,

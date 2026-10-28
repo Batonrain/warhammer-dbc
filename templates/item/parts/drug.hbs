@@ -55,6 +55,9 @@
     <label class="wr-label">Длительность</label>
     <input type="text" name="system.duration" value="{{system.duration}}"
            class="wr-input-md" placeholder="напр. 1d5+T.b"/>
+    <label class="wr-label" title="Если задан, Календарь сам заканчивает действие через столько минут игрового времени после приёма (0 — вручную, кнопкой «Эффект завершён»).">Срок по часам, мин</label>
+    <input type="number" name="system.gameMinutes" value="{{system.gameMinutes}}" min="0" step="1"
+           class="wr-input-sm" placeholder="0"/>
     <label class="wr-label">Качество</label>
     <select name="system.quality" class="wr-select-sm">
       <option value="poor"   {{#if (eq system.quality "poor")}}selected{{/if}}>Низкое (Poor.Q)</option>
@@ -539,6 +542,9 @@
     <label class="wr-label">Мин. доз/нед.</label>
     <input type="number" name="system.addiction.minDose"
            value="{{system.addiction.minDose}}" min="0" class="wr-input-xs"/>
+    <label class="wr-label" title="Талант «Крючок»: препарат приготовлен с −30 к крафту — мин. доз/нед. вдвое меньше (окр.▼), принимающие перебрасывают успешный тест Зависимости">
+      <input type="checkbox" class="hook-up-cb" {{#if hookedUp}}checked{{/if}}/> Крючок
+    </label>
     <label class="wr-label">Тест</label>
     <select name="system.addiction.testChar" class="wr-select-sm">
       <option value="t"  {{#if (eq system.addiction.testChar "t")}}selected{{/if}}>T</option>
@@ -549,6 +555,16 @@
     <label class="wr-label">Мод.</label>
     <input type="number" name="system.addiction.testMod"
            value="{{system.addiction.testMod}}" class="wr-input-xs"/>
+    <label class="wr-label" data-tooltip="Комбинированный тест («Комб.Т+40/W+50», Рекаф): вторая Характеристика со своим модификатором. Бросок один — против наименьшего из двух Пределов. «—» — тест обычный">+ Комб.</label>
+    <select name="system.addiction.testChar2" class="wr-select-sm">
+      <option value=""   {{#if (eq system.addiction.testChar2 "")}}selected{{/if}}>—</option>
+      <option value="t"  {{#if (eq system.addiction.testChar2 "t")}}selected{{/if}}>T</option>
+      <option value="wp" {{#if (eq system.addiction.testChar2 "wp")}}selected{{/if}}>WP</option>
+      <option value="s"  {{#if (eq system.addiction.testChar2 "s")}}selected{{/if}}>S</option>
+      <option value="ag" {{#if (eq system.addiction.testChar2 "ag")}}selected{{/if}}>Ag</option>
+    </select>
+    <input type="number" name="system.addiction.testMod2"
+           value="{{system.addiction.testMod2}}" class="wr-input-xs"/>
   </div>
   <div class="weapon-row">
     <label class="wr-label">Частота</label>
@@ -559,6 +575,24 @@
     <input type="text" name="system.addiction.penalty"
            value="{{system.addiction.penalty}}"
            class="wr-input-md" placeholder="напр. 1d5-1 Р урона"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label" data-tooltip="Штраф без дозы для бросков, данными: «область=значение; область=значение». Области: all, social, basedon:s (все тесты на S), skill:charm; несколько областей одного штрафа — через запятую. Действует, пока доза просрочена на частоту приёма. Текст «Штраф» выше остаётся описанием">Штраф (авто)</label>
+    <input type="text" name="system.addiction.penaltyMods"
+           value="{{system.addiction.penaltyMods}}"
+           class="wr-input-md" placeholder="напр. basedon:s=-20; social=-10"/>
+    <label class="wr-label" data-tooltip="Добавка к тесту на срыв зависимости (Смах: –20 на тесты избавления)">Срыв мод.</label>
+    <input type="number" name="system.addiction.breakMod"
+           value="{{system.addiction.breakMod}}" class="wr-input-xs"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label" data-tooltip="Урон в Характеристику в начале каждого периода без дозы (Тиск: 1d5-1 в per; Сатрофин: 1d5 в wp)">Урон за период</label>
+    <input type="text" name="system.addiction.periodCharDamage.stat"
+           value="{{system.addiction.periodCharDamage.stat}}"
+           class="wr-input-xs" placeholder="per"/>
+    <input type="text" name="system.addiction.periodCharDamage.formula"
+           value="{{system.addiction.periodCharDamage.formula}}"
+           class="wr-input-xs" placeholder="1d5-1"/>
   </div>
   <div class="weapon-row">
     <label class="wr-label" data-tooltip="Пока зависимость есть, урон в эти Характеристики не восстанавливается сам (ключи через запятую: int,per,wp,fel; all — все)">Не восст.</label>

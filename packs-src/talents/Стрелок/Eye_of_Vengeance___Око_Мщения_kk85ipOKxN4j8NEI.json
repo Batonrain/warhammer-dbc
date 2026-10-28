@@ -5,7 +5,7 @@
   "folder": "V0Wfgl0aycRFPfu2",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект тратит/даёт игровой ресурс (Очки Бесчестия/Судьбы/Боли/Когниции/Реакцию) на разовое действие — не тестовый модификатор Навыка/Характеристики.",
+    "notes": "Реализовано: capabilityKey rangedCore.core.eyeOfVengeance — галочка «Око Мщения» в блоке «Таланты» окна атаки: списывает 1 Очко Бесчестия и ставит на актора метку с id оружия (флаг eyeOfVengeanceWeapon, живёт до начала следующего своего Хода — rules/turn-flags.mjs); пока метка на этом оружии, его Dmg и Pen растут на Inf.b (module/combat/attack.mjs ← module/rules/gunner-talents.mjs::eyeOfVengeanceBonus), повторно платить не нужно. Обнаружение Пси-Чутьём на 3+ Успеха — вручную (ГМ).",
     "benefit": "Персонаж может потратить 1 Очко Бесчестия, чтобы добавить Inf.b к Dmg и Pen одного стрелкового оружия до конца Хода. Это единение засекается Пси-Чутьём на 3+ Успеха.",
     "tier": 3,
     "requirement": "BS 50, Inf 30",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "DyGMaUAhbipWiFNK",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "oxUjTKs4TLZ3YJ52",
+              "capabilityKey": "rangedCore.core.eyeOfVengeance",
+              "label": "Око Мщения: Очко Бесчестия — +Inf.b к Dmg и Pen стрелкового оружия до конца Хода",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

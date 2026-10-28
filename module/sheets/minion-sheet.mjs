@@ -19,6 +19,7 @@ import { WarhammerCharacterSheet } from "./actor-sheet.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { MINION_GROUPS, MINION_TIERS, MINION_TIER_ORDER } from "../constants/minions.mjs";
 import { minionLoyalty, speechNote } from "../rules/minion-build.mjs";
+import { loyaltyGroupOf } from "../rules/binary-dominion.mjs";
 
 /** Клик по аватару Хозяина открывает его лист. */
 async function onOpenMaster() {
@@ -33,8 +34,13 @@ async function onOpenMaster() {
 async function onSyncLoyalty() {
   const master = await fromUuid(this.actor.system?.masterUuid || "").catch(() => null);
   if (!master) return ui.notifications?.warn("Хозяин не назначен или не найден.");
-  const base = minionLoyalty(master, this.actor.system?.minionType);
-  if (!base) return ui.notifications?.warn("У Миньона не выбрана группа — не от чего считать Лояльность.");
+  // Пушечное Мясо Хозяина (Cannon Fodder): −20 Лояльности именно этому слуге.
+  // Группа счёта: отмеченный в генераторе «считать как машину» (Бинарная Паства) — по Int.
+  const base = minionLoyalty(master, loyaltyGroupOf(master, this.actor),
+    { uuid: this.actor.uuid, slotTalentId: this.actor.system?.slotTalentId || "",
+      astartes: !!this.actor.system?.isAstartes });
+  // Проверяем группу, а не результат: Пушечное Мясо может честно опустить Лояльность до 0.
+  if (!MINION_GROUPS[this.actor.system?.minionType]?.masterChar) return ui.notifications?.warn("У Миньона не выбрана группа — не от чего считать Лояльность.");
   await this.actor.update({ "system.loyalty.max": base, "system.loyalty.value": base });
 }
 
@@ -122,5 +128,10 @@ export class WarhammerMinionSheet extends WarhammerCharacterSheet {
     };
 
     return context;
+  }
+
+  async _setAvatar(path) {
+    await this.actor.update({ img: path, "prototypeToken.texture.src": path });
+    for (const t of this.actor.getActiveTokens()) await t.document.update({ "texture.src": path });
   }
 }

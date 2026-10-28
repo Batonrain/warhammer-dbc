@@ -35,6 +35,7 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { spdMeters } from "./recoil-pool.mjs";
+import { grantMoveAllowance } from "../rules/movement-path.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -67,17 +68,23 @@ export async function clearFeintAtTurnEnd(actor) {
   if (target && flag?.byUuid === actor.uuid) await target.unsetFlag(NS, "feintNoEvade");
 }
 
-export async function resolvePressSuccess(actor, { deg, target } = {}) {
+export async function resolvePressSuccess(actor, { deg, target, noFollow = false } = {}) {
   if (!target) {
     return ui.notifications?.warn(`${actor.name}: цель Давления не выцелена на сцене — эффект не наложен.`);
   }
   const spd = spdMeters(target);
   const maxMeters = spd > 0 ? Math.min(deg, spd) : deg;
+  // Давящий может последовать за целью, сохраняя контакт, — его путь на его Ходу
+  // (лимит пути, wdbc-l2urs); Огневая Угроза за целью не следует.
+  if (!noFollow) await grantMoveAllowance(actor, "press", maxMeters);
   await postTestCard(actor, {
     icon: rollIcon("sword", "#e08a3a"),
     title: `Давление: ${esc(target.name)}`,
     outcome: outcomeHtml(true, `Можно сдвинуть ${esc(target.name)} до <b>${maxMeters} м</b> в любом направлении`
       + (spd > 0 ? ` (Успехи ${deg}, потолок SPD ${spd})` : ` (Успехи ${deg}, SPD цели неизвестен — потолок не проверен)`)
-      + ` — переместите токен сами; ${esc(actor.name)} может последовать за целью, сохраняя контакт, или остаться на месте (стр. 31).`)
+      + (noFollow
+        // Огневая Угроза: давление стволом — следовать за целью нельзя (rules/gunner-talents.mjs::fireThreatWeapon).
+        ? ` — переместите токен сами; Огневая Угроза: ${esc(actor.name)} за целью НЕ следует, остаётся на месте (стр. 31).`
+        : ` — переместите токен сами; ${esc(actor.name)} может последовать за целью, сохраняя контакт, или остаться на месте (стр. 31).`))
   }, { sound: false });
 }

@@ -310,3 +310,27 @@ describe("performPoolSpend: чат-карточка траты пула", () => 
     expect(card).toContain("снимает 1 из 3");
   });
 });
+
+// Огневая Клеть (Талант Стрелка): «цель должна тратить вдвое больше Успехов для
+// Уклонения от этой атаки» — и из пула неизрасходованных Успехов тоже (Sahara
+// covering-fire-hip-shooting п.2).
+describe("Огневая Клеть: цена снятия из пула удваивается", () => {
+  it("poolHitCost: множитель evadeCost 5-м аргументом", () => {
+    expect(poolHitCost(0, 0, null, 2)).toBe(4);
+    expect(poolHitCost(0, -20, null, 2)).toBe(8);   // (2 база + 2 за −20) × 2
+    expect(poolHitCost(0, 0, null, 1)).toBe(2);
+  });
+
+  it("poolAffordableHits: на 5 Успехов вместо двух попаданий — одно", () => {
+    expect(poolAffordableHits({ successes: 5, penalty: 0 }, 0, 3, null, 2)).toEqual({ hits: 1, cost: 4, perHit: 4 });
+    expect(poolAffordableHits({ successes: 5, penalty: 0 }, 0, 3, null, 1)).toEqual({ hits: 2, cost: 4, perHit: 2 });
+  });
+
+  it("performPoolSpend списывает по evadeCost", async () => {
+    globalThis.game.combat = { started: true, id: "c1", combatant: { id: "cbt-1" } };
+    const d = defender();
+    await addEvasionSurplus(d, ATTACKER, 5, 0);
+    await performPoolSpend(d, { attackerUuid: ATTACKER, hitsCount: 3, evadeCost: 2 });
+    expect(getEvasionPool(d, ATTACKER).successes).toBe(1);   // 5 − 1 попадание × 4
+  });
+});

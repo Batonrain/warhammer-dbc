@@ -9,14 +9,26 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { pilotOperateThreshold, useVehiclePushContest } from "../../module/combat/vehicle-force-move.mjs";
+import { realCreature } from "../support/real-creature.mjs";
 
-function actor({ athletics = 40, operate = 40, ap = 2, spd = 4, traits = [] } = {}) {
+// Operate — ГРУППОВОЙ Навык: значения skills.operate.total у актора нет (прежняя
+// фикстура с этим полем скрывала, что штраф пилота всегда был −20). Пилот
+// Шагохода/Техники ведёт Operate (Surface): запись группы groupSkills.operate,
+// её total посчитан расчётом актора (Ag + надбавка ранга + мод).
+// operate: число — total записи Surface; null — записи нет (нетренирован).
+// Эта фикстура — ПИЛОТ (и атакующий в тестах, где SPD не читается); у атакующего, чей SPD задаёт
+// дальность, фикстура — realCreature (test/support/real-creature.mjs).
+// `extraOperate` — прочие специализации Operate, чтобы тест видел, что берётся именно Surface.
+function actor({ athletics = 40, operate = 40, ag = 40, ap = 2, traits = [], extraOperate = [] } = {}) {
+  const operateEntries = [...extraOperate];
+  if (operate !== null) operateEntries.unshift({ specKey: "surface", specialty: "Surface", rank: "trained", total: operate });
   return {
     id: "a1", name: "Гвардеец", type: "character", items: traits,
     system: {
-      skills: { athletics: { total: athletics }, operate: { total: operate } },
-      actionPoints: { value: ap, max: 2 },
-      movement: { spd }
+      characteristics: { ag: { total: ag } },
+      skills: { athletics: { total: athletics } },
+      groupSkills: { operate: operateEntries },
+      actionPoints: { value: ap, max: 2 }
     },
     update: async () => {}
   };
@@ -42,6 +54,39 @@ describe("pilotOperateThreshold", () => {
     expect(degreeBonus).toBe(0);
     expect(tempRating).toBe(0);
     expect(ownRating).toBe(0);
+  });
+
+  it("берётся Operate (Surface) пилота, а не других специализаций Operate", () => {
+    const pilot = actor({
+      operate: 45,
+      extraOperate: [
+        { specKey: "aeronautica", specialty: "Aeronautica", rank: "veteran", total: 80 },
+        { specKey: "voidship", specialty: "Voidship", rank: "veteran", total: 70 }
+      ]
+    });
+    const { threshold, base } = pilotOperateThreshold(pilot, 0);
+    expect(base).toBe(45);
+    expect(threshold).toBe(65);
+  });
+
+  it("Surface найдена и по сырой записи без ключа — «Surface» / «Наземное», как у остального кода", () => {
+    for (const specialty of ["Surface", "Наземное"]) {
+      const pilot = actor({ operate: null, extraOperate: [{ specialty, rank: "trained", total: 55 }] });
+      expect(pilotOperateThreshold(pilot, 0).base).toBe(55);
+    }
+  });
+
+  it("записи Surface нет — нетренированный Operate: Ag пилота −20 (а не вечные −20 без Ag)", () => {
+    const pilot = actor({ operate: null, ag: 38 });
+    const { threshold, base } = pilotOperateThreshold(pilot, 0);
+    expect(base).toBe(18);
+    expect(threshold).toBe(38); // 18 + 20 книги
+  });
+
+  it("устаревшее поле skills.operate.total не читается", () => {
+    const pilot = actor({ operate: null, ag: 40 });
+    pilot.system.skills.operate = { total: 99 };
+    expect(pilotOperateThreshold(pilot, 0).base).toBe(20);
   });
 
   it("разница Размеров 2 — временный Unnatural A(4), +2 Успеха на успешный тест", () => {
@@ -70,9 +115,13 @@ describe("useVehiclePushContest", () => {
 
   it("атакующий выигрывает — карточка с исходом и дистанцией", async () => {
     captured.nextRoll = 5; // и атакующий, и пилот берут этот же nextRoll (без dice-очереди)
-    const attacker = actor({ athletics: 90, spd: 10 }); // высокий Athletics → много Успехов
+    // Атакующий — НАСТОЯЩИЙ персонаж (схема + пересчёт листа): прежняя фикстура с выдуманным
+    // `movement.spd` скрывала, что потолок Толкания всегда 0 (Sahara spd-0).
+    const attacker = realCreature({ athletics: 90, spd: 10 }); // высокий Athletics → много Успехов
     const pilot = actor({ operate: 10 }); // низкий Operate+20=30, тот же rv=5 даёт меньше Успехов
     await useVehiclePushContest(attacker, pilot, { mode: "push" });
     expect(captured.chat.length).toBe(1);
+    // 9 Успехов (Порог 90, бросок 5) × 0,5м = 4,5м при SPD 10 — потолок не режет, но и не 0м
+    expect(captured.chat[0].content).toContain("сдвинуто на 4.5м");
   });
 });

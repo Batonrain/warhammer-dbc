@@ -211,7 +211,11 @@ export function creatureSchema({ granted = false } = {}) {
     // Дара Кхорна «Purity of Wrath» (weaponPropertyImmunity.* только в
     // Ярости, wdbc-plsf), см. rules/mech-when.mjs requiresRage.
     inRage:        bool(false, "В Ярости"),
-    aiming:        str("none", "Прицеливание"),
+    // «Кумир рядом» (Идолопоклонник, Sahara 3-scope): пока стоит галочка, носитель
+    // автоматически проходит тесты Морали (rules/morale-auto.mjs). Сбрасывается
+    // вручную; кумир — не ссылка на актора (у Эльдар это целая группа).
+    idolNearby:    bool(false, "Кумир рядом"),
+    aiming:       str("none", "Прицеливание"),
     initiativeMod: num(0, "Модификатор Инициативы"),
     aspirations: new SchemaField({
       pride:        str("", "Гордость"),
@@ -252,6 +256,13 @@ export function creatureSchema({ granted = false } = {}) {
       // documents/actor.mjs::_preUpdate на ЛЮБУЮ потерю Ран (путей урона
       // много), обнуляется Первой Помощью (sheets/tabs/healing.mjs).
       lostSinceFirstAid: new NumberField({ initial: null, nullable: true, integer: true, min: 0, label: "Потеряно после Первой Помощи" }),
+      // Талант «Перешивание» (3-dc87): когда (game.time.worldTime, секунды) и
+      // с каким исходом оказана последняя Первая Помощь — повтор после провала
+      // разрешён, пока не прошло I.b минут. Читается ТОЛЬКО вместе с
+      // firstAidUsed (новый урон его сбрасывает), поэтому в тех местах сброса
+      // не дублируется.
+      firstAidAt:     new NumberField({ initial: null, nullable: true, label: "Время последней Первой Помощи" }),
+      firstAidFailed: bool(false, "Последняя Первая Помощь провалена"),
       // Аблативные Раны (wdbc-smy7) — отдельный пул ПЕРЕД обычными Ранами
       // (напр. Дар Нургла «Абсурдно Толстый»: +10 аблативных, регенерация
       // 1/Ход). ablativeMax — цель kind:"poolMax" Конструктора
@@ -294,6 +305,9 @@ export function creatureSchema({ granted = false } = {}) {
     // считается производно там же, где deadMight.max (rules/character.mjs),
     // и равен нулю у всех, у кого нет Черты «Магия Сигиллитов».
     sigilliteRunes: pool("Руны Сигиллитов"),
+    // Очки Трофеев Мастера Казней (Sahara task-bbe1): максимум P.b считает rules/character.mjs
+    // (rules/trophy-points.mjs); начисление — вручную на листе, трата — Туманный Прыжок.
+    trophyPoints: pool("Очки Трофеев"),
     fatigue:   pool("Усталость"),
     // Отношения (вкладка СОЦИУМ): к кому этот персонаж как относится. Запись —
     // ссылка на актора и четыре модификатора, по одному на Навык таблицы
@@ -520,7 +534,12 @@ export function creatureSchema({ granted = false } = {}) {
       // wdbc-l6zg: Фокус Дисциплины — выбор игрока при создании персонажа
       // (core.json стр.293), ключи PSY_DISCIPLINES. Читатель:
       // module/rules/psy-focus.mjs::effectiveFocusDisciplines.
-      focusDisciplines: strList("Фокусы Дисциплин")
+      focusDisciplines: strList("Фокусы Дисциплин"),
+      // Предмет-Психофокус, который сейчас в деле (Psy Focus / Психофокус,
+      // core.json стр.243), и Дисциплина, с которой он «резонирует» (Good.Q+).
+      // Читатель: module/rules/psy-focus.mjs::focusQualityEffect.
+      focusItemId:      str("", "Предмет-Психофокус"),
+      focusResonance:   str("", "Резонанс Психофокуса (Дисциплина)")
     }, { label: "Псайкер" }),
     cognition: new SchemaField({
       value: num(0, "Текущая"), max: num(0, "Максимум"), regen: num(0, "Восстановление")
@@ -531,6 +550,11 @@ export function creatureSchema({ granted = false } = {}) {
     // читать это поле, а не заводить свой флаг каждому Таланту.
     noosphereConnected: bool(false, "Подключён к Ноосфере"),
     energy: pool("Энергия"),
+    // Катушка Апокрифа (Талант Техномистика, Sahara 3-2501, пачка J): вторая
+    // Катушка Потенции. value — хранимый заряд; max пересчитывает расчёт актора
+    // (rules/character/final-pools.mjs) — база основной Катушки без бонусов
+    // Талантов, заряды напрямую не тратятся (rules/technomystic-resources.mjs).
+    apocryphaEnergy: pool("Катушка Апокрифа"),
     geneSeed: new SchemaField({
       origin:         str("", "Происхождение"),
       legion:         str("", "Легион"),
@@ -589,7 +613,10 @@ export function creatureSchema({ granted = false } = {}) {
     reactions: new SchemaField({
       value: num(1, "Текущие"), max: num(1, "Максимум"),
       defenseValue: num(0, "Текущие (только Избегание)"),
-      defenseMax:   num(0, "Максимум (только Избегание)")
+      defenseMax:   num(0, "Максимум (только Избегание)"),
+      // «Странная» Реакция Таланта Strange Technique — только на атаки вроде хвоста/
+      // мехадендритов; максимум читается с Таланта (rules/melee-talents.mjs), не хранится.
+      strangeValue: num(0, "Текущие (только странные атаки)")
     }, { label: "Реакции" }),
     // Ручная надбавка к Лимиту Атак за Ход (combat/attack-limit.mjs, стр. 12):
     // книжная база — 1, Решительность Сражаться поднимает до 2 автоматически;

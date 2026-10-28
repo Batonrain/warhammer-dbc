@@ -1033,7 +1033,8 @@
           "standard": false,
           "reloads": 10
         },
-        "drukhari": false
+        "drukhari": false,
+        "meleeCategory": "Когти"
       },
       "_id": "R27B0J6XNHIThbvj",
       "effects": [],
@@ -1126,7 +1127,8 @@
           "standard": false,
           "reloads": 10
         },
-        "drukhari": false
+        "drukhari": false,
+        "meleeCategory": "Укус"
       },
       "_id": "yWCj60smW6zqHGJL",
       "effects": [],

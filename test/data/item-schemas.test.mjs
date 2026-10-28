@@ -80,7 +80,10 @@ const TYPES = {
       infoguard: 0,
       malfunctioning: false, wraithbone: false, wraithboneImmune: false,
       // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке.
-      stored: false
+      stored: false,
+      // Снаряжение Легиона (Древний Воин, «−1 Редкость Легион снаряжения»,
+      // реквизиция) — у оружия это свойство Legion, у остального — это поле.
+      legion: false
     }
   },
   tool: {
@@ -95,7 +98,9 @@ const TYPES = {
       // Включаемая/включена (wdbc-x1nz.2) — см. тот же комментарий у gear выше.
       activatable: false, active: false,
       // Размер на разгрузке (wdbc-x1nz.2) — см. тот же комментарий у weapon ниже.
-      itemSize: ""
+      itemSize: "",
+      // Снаряжение Легиона — см. комментарий у gear выше.
+      legion: false
     }
   },
   cybernetic: {
@@ -288,12 +293,15 @@ const TYPES = {
       deliveryMethod: "injection", quantity: 1, weight: 0, availability: 0,
       // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке.
       stored: false,
-      quality: "common", duration: "", effect: "", afterEffect: "",
+      quality: "common", duration: "", gameMinutes: 0, effect: "", afterEffect: "",
       afterEffectDice: "", afterEffectCharDamage: { stat: "", formula: "" },
       hasAfterEffect: false,
       addiction: {
         hasAddiction: false, isAddicted: false, minDose: 0, testChar: "t",
         testMod: 0, frequency: "", penalty: "",
+        // Комбинированный тест, штраф данными, срыв, урон за период (wdbc-gyqf2).
+        testChar2: "", testMod2: 0, penaltyMods: "", breakMod: 0,
+        periodCharDamage: { stat: "", formula: "" },
         // При зависимости не восстанавливается урон в эти Характеристики (task-56da).
         blocksRecovery: ""
       },
@@ -335,6 +343,8 @@ const TYPES = {
       // Уровень (Enemy 1-3) и цели (Hatred/Peer/Enemy/Good Reputation) —
       // добавлены вместе с деревом фракций, в template.json их не было.
       hasRating: false, rating: 0, targets: [],
+      // Миньон, которому режет Лояльность Пушечное Мясо (3-cross-actor).
+      targetMinion: "",
       // Ручная цена (вкладка «Развитие», wdbc-cct) — тоже позже template.json.
       costManual: false,
       effects: {
@@ -379,7 +389,7 @@ const TYPES = {
     pack: "diseases",
     defaults: {
       diseaseType: "warp", severity: "", god: "nurgle", contagion: "",
-      incubation: "", symptoms: "", vectors: "", cure: "", active: false,
+      incubation: "", symptoms: "", vectors: "", vectorTests: [], infectionEffects: [], cure: "", active: false,
       description: "", notes: "", bookSource: ""
     }
   },
@@ -449,7 +459,9 @@ const TYPES = {
       drukhari: false, bookSource: "",
       // Размер на разгрузке (wdbc-x1nz.2) — магазин тяжёлого оружия 2×1 против
       // умолчания 1×1 у обычного боеприпаса (itemSizeStr(), module/constants/rig.mjs).
-      itemSize: ""
+      itemSize: "",
+      // Снаряжение Легиона — см. комментарий у gear выше.
+      legion: false
     }
   },
   armor: {
@@ -468,6 +480,8 @@ const TYPES = {
       // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке.
       stored: false,
       bookSource: "",
+      // Снаряжение Легиона — см. комментарий у gear выше.
+      legion: false,
       strengthBonus: 0, wpBonus: 0, drukhari: false, fieldMode: "",
       isRig: false, rig: { comfort: "normal", backSlot: false, slots: [], magLocks: [] },
       history: {
@@ -532,7 +546,7 @@ const TYPES = {
       cognitionCost: 1, energyCost: 0, sustainCost: 0, sustainAction: "free",
       testSkill: "techUse", testMod: 0, action: "full", sustained: false,
       compiled: false, range: "", damage: "", damageType: "energy", damageSubtype: "",
-      penetration: 0, weaponProps: [], effect: "",
+      penetration: 0, weaponProps: [], effect: "", harmful: false,
       effects: { charBonusStat: "", charBonusValue: 0, charBonuses: [] },
       bookSource: ""
     },
@@ -684,7 +698,9 @@ const TYPES = {
       coverVsSubtype: "", coverVsSubtypeAP: 0,
       overloadDamageFormula: "", overloadFatigueFormula: "", overloadRepairTest: "",
       overloadRetaliateFormula: "", overloadRetaliatePen: 0,
-      bookSource: ""
+      bookSource: "",
+      // Снаряжение Легиона — см. комментарий у gear выше.
+      legion: false
     }
   },
 
@@ -694,7 +710,7 @@ const TYPES = {
     defaults: {
       description: "", notes: "", source: "", bookSource: "",
       ritualType: "summon", failureType: "", record: 0, assistMin: 0, assistMax: 0,
-      aversionPerFail: 5,
+      veilMin: 0, aversionPerFail: 5,
       noTest: false, asMinion: false, asWeapon: false, asMount: false, veilThinner: false, startDestabilize: false,
       demonName: "", demonInf: 0, demonGod: "",
       procedure: "", result: "", cost: "", failureCost: "",

@@ -5,7 +5,7 @@
   "folder": "HfTlTkQPDwQ9Yqqn",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey weaponsmith.core.weaponTech — две галочки в блоке «Таланты» окна атаки (плазма, мельта, экзотика): «усиленный выстрел» даёт +I.b к Dmg и Pen и ставит на оружие метку «потрачено» (флаг weaponTechSpent); пока метка стоит, второй раз бонуса нет; «оружие перенастроено (5 минут)» снимает метку (module/rules/gunsmith-talents.mjs::weaponTechShot, module/combat/attack.mjs). Пять минут подготовки — на столе: система верит галочке.",
     "benefit": "Персонаж может увеличить Dmg и Pen плазменного, мельта или экзотического стрелкового оружия на I.b. Нужно потратить 5 минут на подготовку (можно заранее); нельзя применить к тому же оружию повторно без повторной настройки.",
     "tier": 1,
     "requirement": "I 40, Tech-Use+10",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "WLRFgy5MAO9dKsUT",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "Fdw7MWSu0AEv8tvq",
+              "capabilityKey": "weaponsmith.core.weaponTech",
+              "label": "Тех-Оружейник: усиленный выстрел +I.b к Dmg и Pen раз на оружие до новой настройки",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

@@ -26,6 +26,7 @@ import { WARP_GODS } from "../constants/veil.mjs";
 import { isHerdSpiritsRitual } from "../apps/herd-spirits-summon.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { ritualVeilGate, ritualVeilMessage } from "../rules/veil-steps.mjs";
 import { DARK_SEER_FLAG, darkSeerPaths } from "../rules/dark-seer.mjs";
 
 const sgn = n => (n >= 0 ? "+" : "") + n;
@@ -237,6 +238,14 @@ export async function showRitualCastDialog(actor, item) {
   const reqWarnHtml = d0.reqOk ? "" : `<div class="wv-rit-unmet">
     <b>Требования не выполнены:</b>${d0.reqFailed.map(f => `<div>${esc(f)}</div>`).join("")}</div>`;
 
+  // Книжное «только при Истончении Завесы +N» (Sahara task-df48): Завеса там, где стоит ритуалист —
+  // сцена плюс аура Раны в Реальности. Проведение проверит то же самое (castRitual): ГМ спросят,
+  // игроку откажут, — поэтому предупреждаем заранее, до нажатия «Провести».
+  const veilGate = ritualVeilGate(item, actor);
+  const veilWarnHtml = veilGate.ok ? "" : `<div class="wv-rit-unmet">
+    <b>${esc(ritualVeilMessage(veilGate))}</b>
+    <div>${game.user?.isGM ? "Мастер может продолжить вопреки." : "Пока Завеса не истончится, провести ритуал может только Мастер."}</div></div>`;
+
   const content = `
     <div class="wh-veil-app wv-ritual-tab">
       <div class="wv-rit-grid">
@@ -253,6 +262,7 @@ export async function showRitualCastDialog(actor, item) {
               <label class="wv-rit-lbl">Отвращение/Провал</label><span>+${base.aversionPerFail}</span>
             </div>
             ${reqWarnHtml}
+            ${veilWarnHtml}
             <div class="wv-rit-row">
               ${hasAssists ? `<label class="wv-rit-lbl">Ассистенты (${assistMin}–${assistMax})</label>
               <input type="number" id="rit-assistants" class="wv-rit-xs" value="0" min="0"/>

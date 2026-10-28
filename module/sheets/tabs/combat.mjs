@@ -28,8 +28,9 @@ import { showExtinguishDialog } from "../../combat/extinguish.mjs";
 import { toggleSuffocationMode } from "../../combat/condition-ticks.mjs";
 import { showDelegateTestPicker } from "../../rules/delegate-test.mjs";
 import { painChange, openPainSoulBurnDialog } from "./pain.mjs";
-import { showSkillfulTortureDialog } from "../../apps/skillful-torture.mjs";
+import { showTortureDialog } from "../../apps/torture.mjs";
 import { frenzyEntryBlocked, markFrenzyExited } from "../../combat/frenzy.mjs";
+import { attemptRageExit } from "../../combat/rage-behavior.mjs";
 import { avatarOfSlaughterAvailable, applyAvatarOfSlaughter } from "../../combat/avatar-of-slaughter.mjs";
 import { dreadWailAvailable } from "../../combat/dread-wail.mjs";
 import { showDreadWailDialog } from "../../apps/dread-wail-dialog.mjs";
@@ -61,11 +62,13 @@ import { useGangrenePeriodicTest } from "../../combat/gangrene.mjs";
 import { useRadiationSicknessTest } from "../../combat/radiation.mjs";
 import { repairArmorCorrosion, extractPiercingWound, applyCripplingTrigger } from "../../combat/damage.mjs";
 import { rollClearJam, rollRestoreJammedAmmo } from "../../combat/clear-jam.mjs";
+import { repairDestroyedWeapon } from "../../combat/weapon-repair.mjs";
 import { declareBrace } from "../../combat/brace-weapon.mjs";
 import { showDamageOnlyDialog } from "../../combat/damage-only-roll.mjs";
 import { spendActionPoints, spendReaction, resetActionEconomy } from "../../combat/action-economy.mjs";
 import { attackedThisTurn } from "../../rules/turn-flags.mjs";
 import { resolveFeintSuccess, resolvePressSuccess } from "../../combat/feint-press.mjs";
+import { fireThreatWeapon } from "../../rules/gunner-talents.mjs";
 import { resolveBulldozeSuccess, bulldozeForbidden, bulldozeSizePenalty } from "../../combat/bulldoze.mjs";
 import { resolveKnockdownSuccess, knockdownForbidden, knockdownSizePenalty, knockdownResistMods } from "../../combat/knockdown.mjs";
 import {
@@ -77,6 +80,9 @@ import { grantRecoilBonus } from "../../combat/recoil-pool.mjs";
 import { triggerSpiritTalk } from "../../combat/spirit-talk.mjs";
 import { triggerDeadlyEffectiveness } from "../../combat/deadly-effectiveness.mjs";
 import { triggerBowToAudience } from "../../combat/bow-to-audience.mjs";
+import { triggerSavior } from "../../combat/savior.mjs";
+import { triggerShowOff } from "../../combat/show-off.mjs";
+import { releaseBinding } from "../../combat/blade-binding.mjs";
 import {
   declareHalfMove, declareFullMove, declareCharge, declareRun, declareHalfStep,
   showClimbDialog, showJumpDialog, showSwimDialog, showFallDialog, showFlightDialog,
@@ -153,7 +159,9 @@ export function activateCombatListeners(root, actor) {
   on(root, ".pain-absorb-btn", "click", () => painChange(actor, +1, "absorb"));
   on(root, ".pain-spend-btn", "click", () => painChange(actor, -1, "spend"));
   on(root, ".pain-soulburn-btn", "click", () => openPainSoulBurnDialog(actor));
-  on(root, ".skillful-torture-btn", "click", () => showSkillfulTortureDialog(actor));
+  on(root, ".skillful-torture-btn", "click", () => showTortureDialog(actor, { skillful: true }));
+  // Общая Пытка для всех (3-dc87): встречный тест + Мучитель.
+  on(root, ".torture-btn", "click", () => showTortureDialog(actor));
 
   // ── Ярость: лимит повторного входа за бой (wdbc-sk8s, module/combat/frenzy.mjs) ──
   // «Однажды выйдя, нельзя войти снова до конца боя» — Frenzy/Ярость, снимается
@@ -173,6 +181,8 @@ export function activateCombatListeners(root, actor) {
     }
     if (!checked) await markFrenzyExited(actor);
   });
+  // Кнопка «Выйти из Ярости»: тест W+0 с бонусами книги (combat/rage-behavior.mjs::attemptRageExit).
+  on(root, ".rage-exit-btn", "click", ev => { ev.preventDefault(); return attemptRageExit(actor); });
 
   // ── Аватар Резни (wdbc-sk8s, module/combat/avatar-of-slaughter.mjs) ──────
   on(root, ".avatar-of-slaughter-btn", "click", async () => {
@@ -340,7 +350,16 @@ export function activateCombatListeners(root, actor) {
         defaultMod: gripBonus,
         note: gripBonus ? `${base.note} Обратный Хват: +${gripBonus}.` : base.note });
     }
-    if (key === "press")  return _showContestDialog(actor, { ...base, onSuccess: resolvePressSuccess });
+    if (key === "press") {
+      // Огневая Угроза (rules/gunner-talents.mjs): со стрелковым оружием в руках Давление можно вести через BS
+      // вместо WS — тогда следовать за целью нельзя. BS ставится выбором по умолчанию; игрок вправе взять WS.
+      const threatGun = fireThreatWeapon(actor);
+      if (!threatGun) return _showContestDialog(actor, { ...base, onSuccess: resolvePressSuccess });
+      return _showContestDialog(actor, { ...base, defaultChar: "bs",
+        modLabel: "BS vs WS (Огневая Угроза)",
+        note: `${base.note} Огневая Угроза: стрельба по BS из «${threatGun.name}», но за целью следовать нельзя (если выбрана WS — как обычно).`,
+        onSuccess: (a, o) => resolvePressSuccess(a, { ...o, noFollow: o?.side?.char === "bs" }) });
+    }
     if (key === "knockdown") {
       // Повалить (стр. 14, wdbc-x1nz.2.66.5): нельзя против цели на 2+
       // Размера крупнее — диалог не открывается вовсе (тот же принцип, что
@@ -415,6 +434,11 @@ export function activateCombatListeners(root, actor) {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);
     if (item) rollClearJam(actor, item);
   });
+  // Починить уничтоженное оружие (system.destroyed — Выпуск Батареи, Расплавление…): combat/weapon-repair.mjs.
+  on(root, ".wh-sheet-repair-destroyed-btn", "click", ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) repairDestroyedWeapon(actor, item);
+  });
   on(root, ".wh-sheet-restore-ammo-btn", "click", ev => {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);
     if (item) rollRestoreJammedAmmo(actor, item);
@@ -451,6 +475,9 @@ export function activateCombatListeners(root, actor) {
       if (!await spendActionPoints(actor, cost)) ui.notifications.warn("⚠️ Не хватает ОД.");
     } else if (kind === "reaction") {
       if (!await spendReaction(actor)) ui.notifications.warn("⚠️ Не хватает Реакций.");
+    } else if (kind === "strange") {
+      // Странная Техника: хвост, мехадендриты, бонусный «Повалить» крюком/посохом — авто-траты у них нет, тратит игрок.
+      if (!await spendReaction(actor, { strange: true })) ui.notifications.warn("⚠️ Не хватает Реакций.");
     }
   });
   on(root, ".ae-reset-btn", "click", () => resetActionEconomy(actor));
@@ -511,11 +538,19 @@ export function activateCombatListeners(root, actor) {
   // сам проверяет их наличие и ОД.
   on(root, ".bow-to-audience-btn", "click", () => triggerBowToAudience(actor));
 
+  // Спаситель (Талант «Рукопашных», combat/savior.mjs): Реакция → Давление против врага, когда рядом союзник и враг.
+  on(root, ".savior-btn", "click", () => triggerSavior(actor));
+  // Рисовка (Талант «Рукопашных», combat/show-off.mjs): Полудействие, один бросок WS против до F.b врагов в контакте.
+  on(root, ".show-off-btn", "click", () => triggerShowOff(actor));
+  // Сцепление Клинков: «Разойтись» снимает сцепление у обоих (combat/blade-binding.mjs).
+  on(root, ".blade-release-btn", "click", () => releaseBinding(actor));
+
   // ── Движение (стр. 28-32): боевые типы + отдельные механики + марши ─────
   // Та же панель кнопок, что открывает Token HUD-кнопка «Движение»
   // (module/combat/movement-actions.mjs).
   const MOVE_ACTIONS = {
     halfmove: declareHalfMove, fullmove: declareFullMove,
+    hipshooting: a => declareFullMove(a, { hipShooting: true }),
     charge: declareCharge,     run: declareRun,     halfstep: declareHalfStep,
     climb: showClimbDialog, jump: showJumpDialog, swim: showSwimDialog,
     fall: showFallDialog,   fly: showFlightDialog,

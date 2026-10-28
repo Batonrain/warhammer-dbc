@@ -11,10 +11,10 @@ import { wrappedInChaosKindByLabel, TAINTED_BLADE_ADDED_FLAG, isWrappedInChaosIt
          REALITY_RENDING_EXCLUDED_FLAG } from "../rules/wrapped-in-chaos.mjs";
 import { placeSmokeZone, getTerrainInfoForToken } from "../regions/difficult-terrain.mjs";
 import { blastCircleShape, pxPerMeter } from "../combat/templates.mjs";
-import { tokenCenter } from "../combat/facing.mjs";
 import { applyWoundLoss } from "../rules/wounds.mjs";
 import { isCapabilityAvailable, markCapabilityUsed } from "../rules/cooldown.mjs";
 import { tokensWithinRadius } from "../rules/aoe-target.mjs";
+import { pickTeleportPoint, teleportToken } from "../combat/token-teleport.mjs";
 import { wearsGasProtection } from "../rules/predicates.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
@@ -91,26 +91,6 @@ async function activateTaintedBlade(actor, item) {
 }
 
 /**
- * Точка телепортации — интерактивное размещение (тот же механизм клика по
- * холсту, что уже даёт placeSmokeZone, regions/difficult-terrain.mjs):
- * временный маркер-регион ставится игроком, координаты снимаются, регион
- * тут же удаляется — первый примитив телепортации в проекте (wdbc-1rno,
- * по прямому запросу пользователя строить его, а не оставлять текстом).
- */
-async function pickTeleportPoint() {
-  if (!canvas?.ready) return null;
-  const region = await canvas.regions.placeRegion({
-    name: "Точка Тени",
-    shapes: [{ type: "circle", x: 0, y: 0, radius: 1 }]
-  });
-  if (!region) return null; // ГМ/игрок отменил размещение (ПКМ)
-  const shape = region.shapes?.[0];
-  const point = shape ? { x: shape.x, y: shape.y } : null;
-  await region.delete();
-  return point;
-}
-
-/**
  * "1" Тень — раз в Раунд за свободное действие телепорт в точку облака
  * (радиус 10м от текущей позиции), только в темноте. Троттлинг — свой,
  * НЕ общий Constructor-throttle диспетчера (тот один на все 10 субмутаций
@@ -128,23 +108,25 @@ async function activateShadowTeleport(actor, item, tokenDoc) {
   const point = await pickTeleportPoint();
   if (!point) return; // отменено размещение
 
-  const center = tokenCenter(tokenDoc);
-  const distM = Math.hypot(point.x - center.x, point.y - center.y) / pxPerMeter();
-  if (distM > SHADOW_RADIUS_M) {
+  // Телепорт (task-bbe1): не update({x,y}) — тот пишет в историю пути ХОДЬБУ на десятки метров и
+  // съедает лимит пути на Ход; teleportToken — action «blink» (телепорт ядра, СТЕНЫ учитываются:
+  // токен встанет у стены, как при прежнем update), игрок сам себя телепортирует.
+  const res = await teleportToken(tokenDoc, point, { maxMeters: SHADOW_RADIUS_M });
+  if (res.reason === "farther") {
     return ui.notifications?.warn(`Тень: точка дальше ${SHADOW_RADIUS_M}м — вне облака дыма.`);
   }
-
-  const size = canvas.grid.size;
-  await tokenDoc.update({
-    x: point.x - ((Number(tokenDoc.width) || 1) * size) / 2,
-    y: point.y - ((Number(tokenDoc.height) || 1) * size) / 2
-  });
+  if (!res.ok) { // ядро отклонило перемещение — ячейка «раз в Раунд» не тратится
+    return ui.notifications?.warn("Тень: перемещение отклонено — стена вплотную или край сцены.");
+  }
   await markCapabilityUsed(actor, SHADOW_THROTTLE_FLAG, "round");
 
+  const wallNote = res.stopped
+    ? ` Путь перегородила стена — остановился у неё (${Math.round(res.movedMeters)}м из ${Math.round(res.requestedMeters)}м).`
+    : "";
   await postTestCard(actor, {
     icon: rollIcon("run", "#8fb0c4"),
     title: `Укутанный в Хаос — ${esc(item.name)}`,
-    lines: [`<div class="roll-threshold">Разбился на клубы дыма и собрался в новом месте (${Math.round(distM)}м).</div>`]
+    lines: [`<div class="roll-threshold">Разбился на клубы дыма и собрался в новом месте (${Math.round(res.movedMeters)}м).${wallNote}</div>`]
   }, { sound: false });
 }
 

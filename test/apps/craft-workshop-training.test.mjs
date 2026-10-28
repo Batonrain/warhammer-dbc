@@ -204,6 +204,48 @@ describe("_finishTrainingCourse: Klaivex — скидка на архетип И
   });
 });
 
+// Workaholic / Трудоголик (3-3a64): штраф монотонности −30 с владельца снят —
+// и с учителя, и с ученика, каждого по его собственному Таланту.
+describe("_finishTrainingCourse: Трудоголик и штраф монотонности", () => {
+  const limits = () => {
+    const html = captured.chat[0].content;
+    return {
+      teacher: Number(html.match(/Учитель — [^<]*<b>\d+<\/b> vs (-?\d+)/)[1]),
+      student: Number(html.match(/Ученик — [^<]*<b>\d+<\/b> vs (-?\d+)/)[1])
+    };
+  };
+  const run = async (monotony) => {
+    resetCaptured();
+    const app = newTrainingApp({ teacher, over: { sessionCount: 8, monotony } });
+    captured.nextRoll = 10;
+    await app._finishTrainingCourse("p1");
+    return limits();
+  };
+
+  it("без Таланта монотонность режет Пределы обоих на 30", async () => {
+    const calm = await run(false);
+    const mono = await run(true);
+    expect(mono.teacher).toBe(calm.teacher - 30);
+    expect(mono.student).toBe(calm.student - 30);
+  });
+
+  it("Трудоголик-учитель: его Предел без штрафа, ученик без Таланта — со штрафом", async () => {
+    const calm = await run(false);
+    teacher.items = [{ type: "talent", name: "Workaholic / Трудоголик" }];
+    const mono = await run(true);
+    expect(mono.teacher).toBe(calm.teacher);
+    expect(mono.student).toBe(calm.student - 30);
+  });
+
+  it("Трудоголик-ученик: его Предел без штрафа, учитель без Таланта — со штрафом", async () => {
+    const calm = await run(false);
+    student.items = [{ type: "talent", name: "Workaholic / Трудоголик" }];
+    const mono = await run(true);
+    expect(mono.teacher).toBe(calm.teacher - 30);
+    expect(mono.student).toBe(calm.student);
+  });
+});
+
 describe("_finishTrainingCourse: соц. комбинированный тест", () => {
   it("успешный combined-тест учителя даёт ученику +5×Успехи к Пределу", async () => {
     const app = newTrainingApp({ teacher, over: { sessionCount: 8, socialKey: "charm" } });

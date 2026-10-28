@@ -259,7 +259,40 @@ export function isGrappled(actor) {
  */
 export function isMentalActionBlocked(actor) {
   const c = actor?.system?.conditions;
-  return !!(actor?.system?.inRage || c?.hallucinogenic || c?.intoxicated);
+  // Cold Fury / Холодная Ярость (стр. 62): «может совершать ментальные
+  // действия, даже будучи в Ярости» — снимает только блок от Ярости, не от
+  // галлюцинаций и опьянения.
+  const rageBlocks = !!actor?.system?.inRage && !hasColdFury(actor);
+  return !!(rageBlocks || c?.hallucinogenic || c?.intoxicated);
+}
+
+/** Есть ли на акторе предмет с записью Конструктора kind:"capability" с этим ключом (прямой скан: hasRuleFlag тут замкнул бы круг импортов). */
+function holdsCapabilityKey(actor, key) {
+  for (const item of actor?.items ?? []) {
+    const groups = item?.flags?.["warhammer-dbc"]?.mechanics;
+    if (!Array.isArray(groups)) continue;
+    for (const g of groups) {
+      for (const e of g?.entries ?? []) {
+        if (e?.kind === "capability" && e.capabilityKey === key) return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * Талант «Cold Fury / Холодная Ярость» (Берсерк, ключ berserker.core.coldFury) —
+ * по имени ИЛИ по записи Конструктора: персонаж, купивший Талант до того, как
+ * запись появилась в паке, ключа не несёт (rules/ability-by-key.mjs). Читает
+ * rules/rage.mjs и isMentalActionBlocked выше.
+ */
+export function hasColdFury(actor) {
+  return hasNamed(actor, "Cold Fury") || holdsCapabilityKey(actor, "berserker.core.coldFury");
+}
+
+/** Талант «Wounded Beast / Раненный Зверь» (Берсерк, ключ berserker.core.woundedBeast) — как hasColdFury. */
+export function hasWoundedBeast(actor) {
+  return hasNamed(actor, "Wounded Beast") || holdsCapabilityKey(actor, "berserker.core.woundedBeast");
 }
 
 /**
@@ -344,6 +377,61 @@ export function hatredTargetsOf(actor) {
 }
 
 /**
+ * Предметы-Таланты актора, подошедшие под условие по имени. Имя в условии
+ * пишется литералом прямо в вызове itemHasName (а не массивом): именно так его
+ * находит tools/capability-reachability.mjs, и Талант не числится «нечем
+ * включить» (test/tools/capability-reachable-ratchet.test.mjs).
+ */
+function talentsWhere(actor, nameMatches) {
+  return [...(actor?.items ?? [])].filter(i => i?.type === "talent" && nameMatches(i));
+}
+
+/**
+ * Цели всех Талантов «Peer / Связи» актора (Sahara peer-ancient-warrior-…,
+ * часть «а»): образец — hatredTargetsOf. Книга допускает несколько Связей с
+ * разными группами, цели суммируются. Опознаётся по имени, как и Ненависть
+ * (любая половина двуязычного имени, специализация в скобках отбрасывается).
+ */
+export function peerTargetsOf(actor) {
+  return talentsWhere(actor, i => itemHasName(i, "Peer") || itemHasName(i, "Связи"))
+    .flatMap(i => i.system?.targets ?? []);
+}
+
+/** Цели всех Талантов «Good Reputation / Хорошая Репутация» — то же, что peerTargetsOf. */
+export function goodReputationTargetsOf(actor) {
+  return talentsWhere(actor, i => itemHasName(i, "Good Reputation") || itemHasName(i, "Хорошая Репутация"))
+    .flatMap(i => i.system?.targets ?? []);
+}
+
+/** Предел Уровня Таланта «Enemy / Враг» по книге: «Уровень: 1–3». */
+export const ENEMY_MAX_LEVEL = 3;
+
+/**
+ * Уровень Врага: system.rating предмета (hasRating у записи пака) — НЕ верхний
+ * «Уровень» листа Таланта, это system.tier (Ступень). Повторная покупка Врага
+ * в пикере поднимает rating существующего предмета, не глядя на цели: сравнивает
+ * имя и специализацию (rules/duplicate-grants.mjs::isSameTalent). Враг без
+ * записанного Уровня (вручную созданный предмет) — первого; выше трёх книга
+ * не знает, опечатка в поле не должна давать −100.
+ */
+export function enemyLevel(item) {
+  const rating = Math.trunc(Number(item?.system?.rating) || 0);
+  return Math.min(ENEMY_MAX_LEVEL, Math.max(1, rating));
+}
+
+/**
+ * Таланты «Enemy / Враг» актора: у каждого свой Уровень и свои цели — Враг с
+ * разными группами — разные предметы (у каждого свой rating). Уровень не сводится к целям, поэтому возвращаются пары, а
+ * не плоский список, как у peerTargetsOf.
+ *
+ * @returns {{level: number, targets: object[]}[]}
+ */
+export function enemyTalentsOf(actor) {
+  return talentsWhere(actor, i => itemHasName(i, "Enemy") || itemHasName(i, "Враг"))
+    .map(item => ({ level: enemyLevel(item), targets: item.system?.targets ?? [] }));
+}
+
+/**
  * Предикаты, которым нужен КОНТЕКСТ БРОСКА, а не один актор: цель, оружие,
  * характеристика теста. Их нельзя спрашивать оттуда, где контекста нет —
  * например из записи Конструктора на предмете (rules/mech-when.mjs): она
@@ -354,9 +442,9 @@ export function hatredTargetsOf(actor) {
  * предикат, читающий ctx, обязан быть здесь.
  */
 export const CTX_DEPENDENT_PREDICATES = new Set([
-  "weaponClass", "charNotIn", "charIn",
+  "weaponClass", "attackMelee", "charNotIn", "charIn",
   "targetHasTrait", "targetLacksCondition", "targetHasCondition",
-  "targetHasSize", "targetKeepsNimbleInArmour", "targetHasFaction",
+  "targetHasSize", "targetSizeMax", "targetKeepsNimbleInArmour", "targetHasFaction",
   "targetHasFieldPsyMod", "targetLacksSealedArmour", "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus", "hasHatredTarget",
   "targetSerpentine",
   "legacyGuardianMarked", "targetPsykerOrDaemon", "targetIsAstartes", "targetIsPsyker"
@@ -381,6 +469,15 @@ export const PREDICATES = {
   psyRatingMin: (actor, ctx, value) => (Number(actor?.system?.psyker?.rating) || 0) >= Number(value),
 
   sizeMax: (actor, ctx, value) => sizeOf(actor) <= Number(value),
+
+  // База рукопашной атаки, которая ДЕРЖИТСЯ на акторе (system.meleeBase — как
+  // Стойка; пустая — «Стандартная Атака»): `meleeBaseIs: ["charge"]`. Ключи —
+  // MELEE_BASES (constants/combat.mjs). Видит только записанную Базу: выбор,
+  // сделанный в окне атаки и ещё не записанный броском, правилу недоступен —
+  // для порога самой атаки см. rules/berserker-talents.mjs::meleeBaseBonus.
+  // Годится там, где Базу спрашивают вне окна: Состояние после Натиска, Черта
+  // «пока держится Натиск», сторона цели (rules/hard-target.mjs).
+  meleeBaseIs: (actor, ctx, value) => list(value).includes(actor?.system?.meleeBase || "standard"),
 
   // В Ярости (system.inRage, тот же флаг, что читает weapon-properties.mjs
   // для weaponPropertyImmunityInRage) — простой тумблер, не полная механика
@@ -553,6 +650,15 @@ export const PREDICATES = {
   // против обычного человека, а не только там, где Размер реально что-то даёт.
   hasSize:       (actor, ctx) => hitSizeOf(actor) !== 0,
   targetHasSize: (actor, ctx) => hitSizeOf(ctx?.targetActor) !== 0,
+  // Атака рукопашная (true) или стрелковая (false) — по режиму самой атаки (ctx.isMelee), а не по классу оружия:
+  // у винтовки есть рукопашный профиль (приклад, штык), и Верный/Выверенный Удар должны работать на нём
+  // (Sahara pyromaniac-20, размерный штраф для рукопашного профиля стрелкового оружия).
+  attackMelee: (actor, ctx, value) => !!ctx?.isMelee === !!value,
+  // Размер ЦЕЛИ не больше порога (в той же «таблице попадания», что targetHasSize):
+  // `targetSizeMax: -1` — «цель меньше Размера 0». Нужен Талантам В Яблочко/
+  // Меткий Стрелок (Стрелок, Sahara 3-5fbf): они снимают часть штрафа за малый
+  // Размер, поэтому срабатывают только там, где этот штраф вообще есть.
+  targetSizeMax: (actor, ctx, value) => !!ctx?.targetActor && hitSizeOf(ctx.targetActor) <= Number(value),
 
   // «Позволяет сохранять Трейт Nimble в силовой броне» (имплант «Чёрный
   // Панцирь / Black Carapace», DoomBC — ГЕНОСЕМЯ) — без брони условие не

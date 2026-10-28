@@ -17,10 +17,11 @@
 //  constants/elite-archetypes.mjs) — определяется по regex на имя, тем же
 //  приёмом, что constants/body-map.mjs::/sonic shrieker|звуков.../i.
 //
-//  «Рейтинг Страха 2 до конца боя» — НЕ интегрирован в производный расчёт
-//  system.fearRating (character.mjs, сумма от Трейтов) — это временный
-//  триггер, а не хранимая Черта; отмечено информационным флагом для стола,
-//  тем же уровнем автоматизации, что и Voice of God/temp-infamy.mjs.
+//  «Рейтинг Страха 2 до конца боя» — настоящий ActiveEffect на system.fearRating
+//  ЦЕЛИ (upgrade 2: с другими источниками Страха не складывается), который
+//  пишет ГМ-релей (gm-relay.mjs, op dreadWailFear → timed-effects.mjs::
+//  grantDreadWailFear) и снимает конец боя (hooks.mjs, deleteCombat →
+//  clearDreadWailFear). Метка dreadWailFeared (Состояние-метка) ставится вместе.
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
@@ -35,6 +36,7 @@ import { postTestCard } from "../helpers/test-card.mjs";
 import { addFatigue } from "../sheets/tabs/conditions.mjs";
 import { statusApplyFields } from "./status-resist.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { writeToTarget } from "./gm-relay.mjs";
 
 const FLAG = "dreadWail";
 const WEAPON_BUFF_FLAG = "dreadWailWeaponBuff";
@@ -106,7 +108,7 @@ export async function clearDreadWailWeaponBuff(actor) {
   }
 }
 
-async function applyWaveEffect(targetActor, effectKey) {
+async function applyWaveEffect(targetActor, effectKey, caster) {
   if (effectKey === "fatigue") {
     const roll = await new Roll("1d5").evaluate();
     // Через addFatigue (wdbc-x1nz.2.95): 1d5 легко перекидывает порог T.b+W.b —
@@ -123,10 +125,13 @@ async function applyWaveEffect(targetActor, effectKey) {
     if (Object.keys(fields).length) await targetActor.update(fields);
     return resisted ? note : "Оглушение на 2 Раунда";
   }
-  // "fear" — информационная метка, см. заголовок файла (не интегрирована в
-  // производный system.fearRating).
-  await targetActor.setFlag("warhammer-dbc", "dreadWailFeared", true);
-  return "Рейтинг Страха 2 до конца боя (отметьте вручную)";
+  // "fear" — настоящий эффект system.fearRating (upgrade 2) на ЦЕЛИ до конца боя
+  // (timed-effects.mjs::grantDreadWailFear). Цель обычно чужая — пишет ГМ-релей;
+  // нет ГМа в игре — записать некому, вызывающему говорим об этом.
+  const ok = await writeToTarget(targetActor, { kind: "dreadWailFear" }, caster);
+  return ok
+    ? "Рейтинг Страха 2 до конца боя (эффект на листе, снимется с концом боя)"
+    : "Рейтинг Страха 2 до конца боя — записать некому (нет ГМа), отметьте вручную";
 }
 
 /** Ветка «звуковая волна»: AoE в радиусе ½Cor.b м, тест W−20, провал → выбранный эффект (общий для всех провалившихся). */
@@ -146,7 +151,7 @@ export async function applyDreadWailWave(actor, casterToken, effectKey) {
     const roll = await new Roll("1d100").evaluate();
     const { success } = testOutcome(roll.total, threshold);
     if (success) { lines.push(`${esc(targetActor.name)}: устоял(а) (${roll.total} vs ${threshold})`); continue; }
-    const effectNote = await applyWaveEffect(targetActor, effectKey);
+    const effectNote = await applyWaveEffect(targetActor, effectKey, actor);
     lines.push(`${esc(targetActor.name)}: провал (${roll.total} vs ${threshold}) — ${effectNote}`);
   }
 

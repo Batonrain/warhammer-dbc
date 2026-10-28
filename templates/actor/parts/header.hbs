@@ -62,6 +62,9 @@
           (character-context.mjs), а не сравнением расы. --}}
     {{#if hasSigilliteRunes}}
       <div class="header-cell fate-cell"> <label title="Максимум = 20 + «Библиотека Рун» (I.b + ступени Forbidden Lore (Archeotech)), до 3 взятий">Руны</label> <div class="fate-values"> <input type="number" name="system.sigilliteRunes.value" value="{{system.sigilliteRunes.value}}" min="0" max="{{system.sigilliteRunes.max}}"/> <span>/</span> <input type="number" value="{{system.sigilliteRunes.max}}" readonly title="Авторасчёт: 20 + Библиотека Рун"/> </div> </div> {{/if}}
+    {{!-- Очки Трофеев Мастера Казней (rules/trophy-points.mjs, Sahara task-bbe1): ячейка только носителю; пояснения — в tooltip. --}}
+    {{#if hasTrophyPoints}}
+      <div class="header-cell fate-cell"> <label title="Максимум = P.b. +1 за убитого офицера/чемпиона/чудовище (ГМ решает); Трофеи Триумфа: Inf 30–59 — 2, 60–79 — 3, 80+ — 4; Трофеи Приговора возвращают очко (вручную). После убийства ГМ засчитывает трофей кнопкой на карточке в чате; поле можно править вручную. Тратят Туманный Прыжок и Окончательная Казнь.">Трофеи</label> <div class="fate-values"> <input type="number" name="system.trophyPoints.value" value="{{system.trophyPoints.value}}" min="0" max="{{system.trophyPoints.max}}"/> <span>/</span> <input type="number" value="{{system.trophyPoints.max}}" readonly title="Авторасчёт: P.b"/> </div> </div> {{/if}}
     </div>
   </div> </div> </header>
 {{!-- «Мастер»/«В Орду» жили здесь и в window.controls дублем — оба варианта

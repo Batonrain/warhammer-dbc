@@ -16,8 +16,11 @@ import { isDreadnought, pilotUuidOf, pilotDamageThreshold }
   from "../rules/dreadnought.mjs";
 import { applyWoundLoss, woundLossAfter } from "../rules/wounds.mjs";
 import { ablativeApAfterHit } from "../rules/ablative-ap.mjs";
+import { welderCritLevel } from "../rules/gunsmith-talents.mjs";
 import { resolveAttackerToken, tokenDistance } from "./facing.mjs";
+import { resolveOpposed } from "../rules/test-kind.mjs";
 import { apCostForActionType, canSpendActionPoints, spendActionPoints, spendReaction } from "./action-economy.mjs";
+import { rageAvoidanceRefusal } from "./rage-behavior.mjs";
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -43,7 +46,7 @@ async function swerveDriver(vehicle) {
   return null;
 }
 
-export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attackerUuid = "", attackId = "" } = {}) {
+export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attackerUuid = "", attackId = "", ramContest = false } = {}) {
   if (actor.type !== "vehicle") {
     return ui.notifications.warn("⚠️ Вираж может совершать только Техника — выберите токен машины.");
   }
@@ -56,6 +59,8 @@ export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attac
   // тратилась вовсе. Экипаж не назначен (стол ведёт машину без станций) —
   // Вираж по Operate машины, как было, с честной пометкой в карточке.
   const driver = await swerveDriver(actor);
+  // Ярость водителя: «не может совершать Избегания» — Вираж тоже Избегание (Реакция не тратится).
+  if (driver && await rageAvoidanceRefusal(driver, "evade", "Вираж")) return;
   if (driver && !(await spendReaction(driver, { forDefense: true, attackId }))) {
     return postTestCard(actor, {
       icon: rollIcon("warp", "#8fd0ff"), title: `Вираж — ${esc(actor.name)}`,
@@ -71,10 +76,37 @@ export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attac
 
   const roll   = await new Roll("1d100").evaluate();
   const rv     = roll.total;
-  const passed = rv <= threshold;
-  const deg    = passed
+  const swervePassed = rv <= threshold;
+  const deg    = swervePassed
     ? Math.floor((threshold - rv) / 10) + 1
     : Math.floor((rv - threshold) / 10) + 1;
+
+  // Вираж против Тарана (Книга Машин, Таран: «является встречным против Operate+0 таранящего
+  // водителя»; Sahara 62 п.12): после своего броска Вираж сравнивается по Степеням Успеха с
+  // броском Operate+0 таранящей машины (rules/test-kind.mjs::resolveOpposed). Выиграл Вираж —
+  // Таран мимо; ничья по Степеням решается Пределом, полная ничья — за Тараном (решает ГМ).
+  // Таранящая машина не найдена — Вираж идёт по прежнему правилу.
+  let passed = swervePassed;
+  let ramNote = "";
+  const rammer = (ramContest && attackerUuid) ? await fromUuid(attackerUuid).catch(() => null) : null;
+  const ramRolls = [];
+  if (rammer) {
+    const ramThreshold = Number(rammer.system?.operate) || 0;
+    const ramRoll = await new Roll("1d100").evaluate();
+    ramRolls.push(ramRoll);
+    const ramPassed = ramRoll.total <= ramThreshold;
+    const ramDeg = ramPassed
+      ? Math.floor((ramThreshold - ramRoll.total) / 10) + 1
+      : Math.floor((ramRoll.total - ramThreshold) / 10) + 1;
+    const res = resolveOpposed(
+      { deg, success: swervePassed, threshold },
+      { deg: ramDeg, success: ramPassed, threshold: ramThreshold });
+    passed = swervePassed && res.winner === "mine";
+    ramNote = `<div class="roll-defense-note">${rollIcon("burst","#ff8a3a")}Operate+0 таранящего «${esc(rammer.name)}»: `
+      + `<b>${ramRoll.total}</b> при Пороге ${ramThreshold} — ${ramPassed ? "Успех" : "Провал"}, ${ramDeg} ${_degWord(ramDeg)}. `
+      + (res.winner === "mine" ? "Вираж выигрывает встречный тест." : (swervePassed ? "Вираж проигран: Таран берёт верх." : "Вираж не удался."))
+      + `</div>`;
+  }
 
   const { total: totalHits, negated, remaining } = negatedHits(passed, deg, hitsCount);
   // Излишек Успехов — банкуется на попадания ДРУГИХ атак того же противника
@@ -88,7 +120,10 @@ export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attac
   if (extraMod !== 0)                modParts.push(`мод ${sgn(extraMod)}`);
 
   let outcome;
-  if (!passed) {
+  if (swervePassed && !passed) {
+    // Вираж сам по себе удался, но встречный тест с Тараном проигран (ramNote ниже говорит, на сколько).
+    outcome = outcomeHtml(false, `Вираж проигран Тарану — ${deg} ${_degWord(deg)} против таранящего. Таран попадает.`);
+  } else if (!passed) {
     outcome = outcomeHtml(false, `Вираж провален — ${deg} ${_degWord(deg)}. ${
       totalHits > 1 ? `Все ${totalHits} ${_hitWord(totalHits)} проходят.` : "Попадание проходит."}`);
   } else if (remaining === 0) {
@@ -104,8 +139,8 @@ export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attac
   await postTestCard(actor, {
     icon: rollIcon("warp","#8fd0ff"), title: `Вираж — ${esc(actor.name)}`,
     threshold: rollStatLine({ label: "Operate", base: operate, parts: modParts, threshold, rv }),
-    outcome, sections: [reactionNote, leftoverNote]
-  }, { rolls: [roll] });
+    outcome, sections: [reactionNote, ramNote, leftoverNote]
+  }, { rolls: [roll, ...ramRolls] });
 }
 
 // ─── Тест Трудного Ландшафта ──────────────────────────────────────────────────
@@ -318,7 +353,8 @@ export async function _resolveRam(actor, fast, targetBigger) {
       <div class="roll-section-head">Защита цели <span class="roll-head-hint">— выберите токен защищающегося</span></div>
       <div class="roll-defense-btns">
         <button class="wh-dodge-btn" type="button" data-extra-mod="30">Уклонение (+30)</button>
-        <button class="wh-swerve-btn" type="button" data-extra-mod="0">Вираж (встречный)</button>
+        <button class="wh-swerve-btn" type="button" data-extra-mod="0" data-ram="1" data-attacker-uuid="${actor.uuid ?? ""}">Вираж (встречный)</button>
+        <button class="wh-ram-pirouette-btn" type="button" data-attacker-uuid="${actor.uuid ?? ""}" title="Пируэт (Талант Избегания): цель Тарана проходит Acrobatics+0 и пропускает машину, не тратя Реакцию. Нужен выбранный токен цели с Талантом.">Пируэт (Acrobatics+0)</button>
       </div>
       <div class="roll-defense-note">Уклонение от Тарана +30; Вираж — встречной проверкой против Operate+0 таранящего.</div>
     </div>`;
@@ -501,6 +537,26 @@ export async function applyDamageToVehicle(actor, damageData) {
     }
   }
 
+  // Сварщик (Талант Оружейника, rules/gunsmith-talents.mjs): Избирательное
+  // попадание Мельтой + непоглощённый урон = ещё один Критический Эффект
+  // 1d5+1 в ту же часть машины (трактовка владельца 24.10.2026: ВСЕГДА, не
+  // только при переполнении Структуры). Часть — та, куда легло попадание.
+  let welderLine = "";
+  if (damageData.welder && net > 0) {
+    const wRoll = await new Roll("1d5").evaluate();
+    const wLevel = welderCritLevel(wRoll.total);
+    // Книга: «в ту часть машины, в которую он целился» — выбранная в окне атаки (welderPart);
+    // нет её (старая карточка) — часть, куда легло попадание.
+    const wPart = LOCATION_LABEL_TO_KEY[damageData.welderPart] ? damageData.welderPart : vehicleLocation;
+    const wKey = LOCATION_LABEL_TO_KEY[wPart] || "hull";
+    const wCe = getVehicleCrit(wKey, wLevel);
+    welderLine = `
+    <div class="dmg-critical-block">
+      <b>Сварщик — Критический Эффект 1d5+1 (${wRoll.total}+1 = ${wLevel}) — ${wCe.label}</b>
+      <div class="roll-crit-effect">${wCe.text}</div>
+    </div>`;
+  }
+
   const dtLabel = DAMAGE_TYPES[damageType] || damageType;
   // Крит-эффект по глубине отрицательной Структуры и выбранной части машины.
   const critLine = gotCrit ? (() => {
@@ -549,6 +605,7 @@ export async function applyDamageToVehicle(actor, damageData) {
           }
         </div>`,
       critLine,
+      welderLine,
       pilotLine
     ]
   }, { speaker: { alias: "Система" }, sound: false });

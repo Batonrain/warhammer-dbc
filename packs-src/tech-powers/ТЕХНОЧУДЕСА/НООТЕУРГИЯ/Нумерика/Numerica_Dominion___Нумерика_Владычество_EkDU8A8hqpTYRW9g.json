@@ -27,6 +27,7 @@
     "damageType": "energy",
     "penetration": 0,
     "effect": "[Железо: Hasta Numerica · Цена: 5К · Процесс: 2 · Тип: —] Треб.: I 50, Tech-Use+20, Numerica Delving. vs цель. За Успех — перехват одного импланта бионики/кибернетики (вкл./выкл./как Железо). Раз в Ход цель своб. действием встречный, восстанавливая контроль за Успех.",
+    "harmful": true,
     "effects": {
       "charBonusStat": "",
       "charBonusValue": 0,

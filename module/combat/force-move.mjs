@@ -21,6 +21,7 @@
 import { spendActionPoints } from "./action-economy.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
+import { spdOfMovement } from "../rules/speed-multipliers.mjs";
 import { rollD100WithReroll } from "../rules/test-kind-widget.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
@@ -41,6 +42,17 @@ export function forceMoveThreshold(actor, { sizeDiff = 0 } = {}) {
   const parts = [...ruleMods.parts];
   if (sizePenalty) parts.push(`Разница в Размерах ${sizePenalty}`);
   return { threshold: athletics + ruleMods.total + sizePenalty, base: athletics, parts, massive };
+}
+
+/**
+ * SPD (м) — потолок Толкания: «при толкании до максимума в SPD» (стр. 27). У существа нет поля
+ * `movement.spd` (раньше потолок читал его и всегда получал 0): SPD живёт в `movement.spdNow`
+ * (`halfMove` — старые данные). Именно SPD без множителей Черт — у Почитателей Танца и Акробатического
+ * Мастерства `halfMove` уже SPD×2 (rules/speed-multipliers.mjs), толкать дальше SPD они не могут.
+ * Тот же приём, что у Отскока/Давления (recoil-pool.mjs::spdMeters).
+ */
+export function forceMoveSpd(actor) {
+  return spdOfMovement(actor?.system?.movement);
 }
 
 /** Дистанция (м) при успехе — 0,5м за Успех, до SPD (push) или до 2м (lift). */
@@ -70,8 +82,7 @@ export async function useForceMove(actor, { mode = "lift", sizeDiff = 0, through
   );
   const { success, deg } = testOutcome(rv, threshold);
   const successes = success ? deg : 0;
-  const spd = actor.system?.movement?.spd ?? 0;
-  const distance = throughForce ? forceMoveDistance(mode, successes, spd) : 0;
+  const distance = throughForce ? forceMoveDistance(mode, successes, forceMoveSpd(actor)) : 0;
 
   const dice = await roll.render();
   const modeLabel = mode === "push" ? "Толкание" : "Подъём/Переворот";

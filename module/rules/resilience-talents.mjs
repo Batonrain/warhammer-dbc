@@ -110,14 +110,29 @@ export function soundConstitutionCopies(actor) {
   return holdsCapability(actor, RESILIENCE_TALENTS.soundConstitution.key) ? 1 : 0;
 }
 
-/** «До T.b раз и ещё +2 раза для не-Космодесантников». */
-export function soundConstitutionCap(toughnessBonus, astartes) {
-  return Math.max(0, num(toughnessBonus)) + (astartes ? 0 : 2);
+/**
+ * «До T.b раз и ещё +2 раза для не-Космодесантников». `extra` — надбавка к
+ * потолку от Стального Сечения (steelRatioCapBonus): +I.b.
+ */
+export function soundConstitutionCap(toughnessBonus, astartes, extra = 0) {
+  return Math.max(0, num(toughnessBonus)) + (astartes ? 0 : 2) + Math.max(0, num(extra));
 }
 
 /** Прибавка к максимуму Ран: +1 за каждую копию, но не больше потолка. */
-export function soundConstitutionWounds({ copies, tb, astartes }) {
-  return Math.max(0, Math.min(num(copies), soundConstitutionCap(tb, astartes)));
+export function soundConstitutionWounds({ copies, tb, astartes, extra = 0 }) {
+  return Math.max(0, Math.min(num(copies), soundConstitutionCap(tb, astartes, extra)));
+}
+
+/**
+ * Steel Ratio / Стальное Сечение (Механикум, стр. 112): «увеличивает
+ * максимальное количество изучения Таланта Sound Constitution на I.b». Талант
+ * опознаётся по имени или по записи Конструктора mechanicum.core.steelRatio.
+ * Не зависит от числа копий — Талант берётся один раз.
+ */
+export function steelRatioCapBonus(actor) {
+  const has = [...(actor?.items ?? [])].some(i => i?.type === "talent" && itemHasName(i, "Steel Ratio"))
+    || holdsCapability(actor, "mechanicum.core.steelRatio");
+  return has ? Math.max(0, charBonus(actor, "int")) : 0;
 }
 
 /**
@@ -127,7 +142,7 @@ export function soundConstitutionWounds({ copies, tb, astartes }) {
 export function soundConstitutionWoundsMods(actor, tb) {
   const copies = soundConstitutionCopies(actor);
   if (!copies) return [];
-  const value = soundConstitutionWounds({ copies, tb, astartes: isSpaceMarine(actor) });
+  const value = soundConstitutionWounds({ copies, tb, astartes: isSpaceMarine(actor), extra: steelRatioCapBonus(actor) });
   return value > 0 ? [{ label: `Крепкое Телосложение ×${value}`, value }] : [];
 }
 
@@ -266,7 +281,7 @@ export const RESISTANCE_SPEC_DEFS = {
 };
 
 /** У каких специализаций в системе есть опознаваемый тест (остальные — честная заглушка). */
-export const RESISTANCE_TESTED = ["fear", "poison", "psychic", "stun"];
+export const RESISTANCE_TESTED = ["fear", "poison", "psychic", "stun", "cold", "heat", "disease"];
 
 const specKeyOf = raw => {
   const s = String(raw ?? "").trim().toLowerCase();
@@ -307,6 +322,11 @@ export function resistanceTestSpec(ctx) {
   if (ctx.poisonTest) return "poison";
   if (ctx.psychicThreat) return "psychic";
   if (ctx.stunTest) return "stun";
+  // Тест на Жару/Холод Окружения (combat/temperature-hazard.mjs, 3-edc4 п.7).
+  if (ctx.coldTest) return "cold";
+  if (ctx.heatTest) return "heat";
+  // Тест заражения болезнью (combat/disease-infection.mjs, wdbc-dbveg).
+  if (ctx.diseaseTest) return "disease";
   return null;
 }
 

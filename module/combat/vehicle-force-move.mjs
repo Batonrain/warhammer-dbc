@@ -24,22 +24,51 @@
 //  «дном» у конкретной модели техники.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { forceMoveThreshold, forceMoveDistance } from "./force-move.mjs";
+import { forceMoveThreshold, forceMoveDistance, forceMoveSpd } from "./force-move.mjs";
 import { spendActionPoints } from "./action-economy.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { rollD100WithReroll } from "../rules/test-kind-widget.mjs";
 import { unnaturalRating, unnaturalDegreeBonus } from "../rules/unnatural-characteristic.mjs";
+import { findGroupEntry, specChar } from "../constants/skill-specializations.mjs";
+import { skillValue } from "../rules/mount.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 const OPERATE_BONUS = 20;
+/** Пилот Техники/Шагохода ведёт машину Operate (Surface) — Ag (constants/skill-specializations.mjs). */
+const PILOT_SPEC = "surface";
+
+/**
+ * Operate (Surface) пилота. Operate — ГРУППОВОЙ Навык: значения skills.operate.total
+ * у актора нет (прежнее чтение давало вечные −20 независимо от пилота). Берётся
+ * готовый total записи Surface (Характеристика + надбавка ранга + мод листа);
+ * нет записи — Operate (Surface) можно использовать неизученным (сноска ² стр. 57
+ * закрывает только Aeronautica/Voidship): Характеристика минус штраф неизученного.
+ *
+ * `charKey` — подменить Характеристику теста («Operate(P)» Чувства Баланса:
+ * Восприятие вместо Ловкости). Берётся та же надбавка ранга и мод листа, что
+ * у записи (из её total вычитается собственная Характеристика записи), так что
+ * ополовиненный штраф неизученного и постоянный мод листа сохраняются.
+ */
+export function pilotOperateValue(pilot, charKey = null) {
+  const own = specChar("operate", PILOT_SPEC, "ag");
+  const want = charKey || own;
+  const entry = findGroupEntry(pilot, "operate", PILOT_SPEC);
+  if (Number.isFinite(Number(entry?.total))) {
+    if (want === own && !entry.char) return Number(entry.total);
+    const chars = pilot?.system?.characteristics ?? {};
+    const entryChar = entry.char || own;
+    return Number(entry.total) - (Number(chars[entryChar]?.total) || 0) + (Number(chars[want]?.total) || 0);
+  }
+  return skillValue(pilot, { scope: "group", key: "operate", specKey: PILOT_SPEC, char: want }).value;
+}
 
 /** Порог Operate(A)+20 пилота + временный бонус Успехов Unnatural A(2×разница), если он выше уже имеющегося. */
 export function pilotOperateThreshold(pilot, sizeDiff = 0) {
-  const operate = pilot?.system?.skills?.operate?.total ?? -20;
-  const ruleMods = collectTestMods(pilot, { kind: "skill", skill: "operate", char: "ag" });
+  const operate = pilotOperateValue(pilot);
+  const ruleMods = collectTestMods(pilot, { kind: "skill", skill: "operate", char: specChar("operate", PILOT_SPEC, "ag") });
   const threshold = operate + ruleMods.total + OPERATE_BONUS;
   const ownRating = unnaturalRating(pilot, "ag");
   const tempRating = Math.max(ownRating, 2 * Math.max(0, sizeDiff));
@@ -76,8 +105,7 @@ export async function useVehiclePushContest(actor, pilot, { mode = "push", sizeD
   // Стр. 26: во встречном тесте выигрывает больший Успех; оба провалили —
   // никто не продавил технику. Атакующий выигрывает только реальным успехом.
   const win = atkOutcome.success && atkDeg > defDeg;
-  const spd = actor.system?.movement?.spd ?? 0;
-  const distance = win ? forceMoveDistance(mode, atkDeg, spd) : 0;
+  const distance = win ? forceMoveDistance(mode, atkDeg, forceMoveSpd(actor)) : 0;
 
   const dice = await atkRoll.roll.render();
   const defDice = await defRoll.render();

@@ -11,16 +11,20 @@
 
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "./skills.mjs";
 import { SKILL_RANKS } from "./characteristics.mjs";
+import { ITEM_QUALITY } from "./quality.mjs";
 
 // Порядок Редкости для выпадающего списка: −5..+5, 0 по центру.
 export const RARITY_ORDER = [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5];
 
 // ── Качество: множитель Банка + модификатор сложности ───────────────────────
+// diff — модификатор сложности Качества, тот же, что у реквизиции (стр. 165:
+// Poor +10, Comm 0, Good −10, Best −20); берётся из реестра качества, второй
+// копии нет (раньше у Best.Q стояло −30).
 export const CRAFT_QUALITY = {
-  poor:   { label: "Низкое (Poor.Q)",   bankMult: 0.25, diff:  10 },
-  common: { label: "Обычное (Comm.Q)",  bankMult: 1,    diff:   0 },
-  good:   { label: "Хорошее (Good.Q)",  bankMult: 4,    diff: -10 },
-  best:   { label: "Высшее (Best.Q)",   bankMult: 14,   diff: -30 }
+  poor:   { label: "Низкое (Poor.Q)",   bankMult: 0.25, diff: ITEM_QUALITY.poor.acqMod },
+  common: { label: "Обычное (Comm.Q)",  bankMult: 1,    diff: ITEM_QUALITY.common.acqMod },
+  good:   { label: "Хорошее (Good.Q)",  bankMult: 4,    diff: ITEM_QUALITY.good.acqMod },
+  best:   { label: "Высшее (Best.Q)",   bankMult: 14,   diff: ITEM_QUALITY.best.acqMod }
 };
 
 // ── Редкость → модификатор сложности (как реквизиция). Правится в окне. ──────
@@ -29,7 +33,18 @@ export const RARITY_LABELS = {
   "-1": "Средне", "0": "Дефицит", "1": "Редко", "2": "Очень редко",
   "3": "Чрезвычайно редко", "4": "Почти уникально", "5": "Уникально"
 };
-export function rarityDiff(r) { return -10 * Number(r || 0); }
+// Таблица книги (core, стр. 165, «Редкость и Качество»): модификатор сложности
+// реквизиции, покупки, создания и улучшения. Это НЕ −10×R: на краях книга даёт
+// +70/+50 и −50/−70 (формула давала +50/+40 и −40/−50). Единственное место
+// таблицы — реквизиция берёт её отсюда (rules/requisition.mjs::RARITY_MODS).
+export const RARITY_DIFFS = Object.freeze({
+  "-5": 70, "-4": 50, "-3": 30, "-2": 20, "-1": 10, "0": 0,
+  "1": -10, "2": -20, "3": -30, "4": -50, "5": -70
+});
+export function rarityDiff(r) {
+  const n = Math.max(-5, Math.min(5, Math.round(Number(r) || 0)));
+  return RARITY_DIFFS[String(n)];
+}
 
 // ── Инструменты (модификатор ко всем навыкам крафта) ────────────────────────
 export const CRAFT_TOOLS = [
@@ -41,6 +56,15 @@ export const CRAFT_TOOLS = [
   { key: "best",    mod: +20, label: "Очень качественные (Best.Q)", note: "Полевая кузница Механикум, Апотекарион." },
   { key: "master",  mod: +30, label: "Мастерский комплект",      note: "Стационарная/корабельная кузница Механикум." }
 ];
+
+// ── Полимат: предел цепочки смен ────────────────────────────────────────────
+// Книга (Мутация «Полимат»): Критический Успех на тесте Крафта/Исследования —
+// 1d5 Усталости и сразу ещё один тест. Если и он Критический Успех, текст
+// формально велит повторять; предел нужен как страховка от бесконечной цепочки
+// (шанс подряд идущих критов 5% на смену, но Усталость растёт 1+1d5 за каждую
+// и обморок наступает много раньше). Число — не книжное, принято 5 смен
+// (исходная + 4 дополнительных); правится здесь.
+export const POLYMATH_CHAIN_MAX = 5;
 
 // ── Категории предметов: навыки крафта (req) и навыки исследования (research) ─
 // req: массив требований. Каждое: {skill:"techUse"} или {group:"trade", spec:"Weaponsmith"}.
@@ -200,7 +224,8 @@ export function suggestOption(available, req) {
 // mods: { toolMod, gmMod, improveMod }
 export function computeCombined(selectedOpts, mods) {
   const opts = selectedOpts.filter(Boolean);
-  const external = (mods.toolMod || 0) + (mods.gmMod || 0) + (mods.improveMod || 0);
+  // hookUpMod — «Крючок» (Талант Медика): −30 за право приготовить сильнее вызывающий зависимость наркотик.
+  const external = (mods.toolMod || 0) + (mods.gmMod || 0) + (mods.improveMod || 0) + (mods.hookUpMod || 0);
   if (!opts.length) return { limit: null, external, rows: [] };
 
   const primary = opts.reduce((a, b) => (b.total > a.total ? b : a), opts[0]);

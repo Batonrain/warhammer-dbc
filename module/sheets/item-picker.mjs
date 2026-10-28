@@ -5,6 +5,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { CHARACTERISTICS, APTITUDES } from "../constants/characteristics.mjs";
+import { LITANY_SPEC_OPTIONS } from "../rules/gunsmith-talents.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
 import { confirmXpSpend } from "../apps/xp-afford.mjs";
 import { talentCostXP, charAptitudeSet, ALIGN_LABEL,
@@ -25,6 +26,7 @@ import { isMinionTalent } from "../rules/minion-build.mjs";
 import { itemIs } from "../rules/item-marker.mjs";
 import { CAP_TWO_WEAPON, SPEC_LABELS } from "../rules/dual-wield.mjs";
 import { promptMinionSlot, applyMinionSlot } from "../apps/minion-talent.mjs";
+import { isCannonFodder, promptCannonFodderMinion, applyCannonFodderPick } from "../apps/cannon-fodder.mjs";
 import { centerPicker, pickerPos } from "./picker-ui.mjs";
 import { arsenalSpecKind, arsenalSpecOptions } from "../constants/weapon-categories.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -550,6 +552,24 @@ export async function openItemPicker(actor, kind) {
             const side = await promptSpecChoice(d, Object.values(SPEC_LABELS));
             if (!side) return;                       // отмена — ничего не покупаем
             obj.system.specialization = side;
+            obj.system.cost = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts,
+              talentCategory(actor, d.name, d.folder),
+              { name: d.name, patron: actor.system.patronGod, actor, specialization: d.system.specialization });
+          } else if (itemIs(d, "talent", "weaponsmith.core.litanyOfCleaning", "Litany of Cleaning")) {
+            // Литания Чистки (стр. 62, Sahara 3-9d40): тип оружия выбирается при покупке — без выбора на лист
+            // уехал бы весь список, и метка «чищено» не знала бы, какого типа оружие получает +1 Надёжность.
+            const type = await promptSpecChoice(d, LITANY_SPEC_OPTIONS);
+            if (!type) return;                       // отмена — ничего не покупаем
+            obj.system.specialization = type;
+            obj.system.cost = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts,
+              talentCategory(actor, d.name, d.folder),
+              { name: d.name, patron: actor.system.patronGod, actor, specialization: d.system.specialization });
+          } else if (isCannonFodder(d)) {
+            // «Пушечное Мясо» (стр. 113, Sahara 3-cross-actor): Талант на
+            // хозяине, штраф у конкретного слуги — кого, спрашиваем до оплаты.
+            const pick = await promptCannonFodderMinion(actor, d);
+            if (!pick) return;                       // отмена — ничего не покупаем
+            applyCannonFodderPick(obj, pick);
             obj.system.cost = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts,
               talentCategory(actor, d.name, d.folder),
               { name: d.name, patron: actor.system.patronGod, actor, specialization: d.system.specialization });

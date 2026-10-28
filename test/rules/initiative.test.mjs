@@ -203,4 +203,14 @@ describe("Боевое Построение, раздача соратникам
     const actor = withFormation(actorWith([`${INITIATIVE_CHAR_PREFIX}per`]));
     expect(initiativeCharKey(actor, { ...CHARS, per: { bonus: 9 } })).toBe("per");
   });
+
+  // i-b: у соратника нет именованной возможности, только отметка-флаг —
+  // подсказка раньше писала «источник не назван» вместо имени Таланта.
+  it("подсказка называет источник по отметке, не «источник не назван» (i-b)", () => {
+    const actor = withFormation(actorWith(), { from: "Actor.cf", name: "Командир" });
+    const hint = initiativeHint(actor, CHARS);
+    expect(hint).toContain("Боевое Построение");
+    expect(hint).toContain("Командир");
+    expect(hint).not.toContain("источник не назван");
+  });
 });

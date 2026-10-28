@@ -8,7 +8,9 @@
 
 import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
-import { beforeEach, describe, it, expect } from "vitest";
+import { beforeEach, afterEach, describe, it, expect } from "vitest";
+import { packDocById } from "../support/pack-doc.mjs";
+import { WOUND_FREE_FLAG } from "../../module/rules/wound-in-reality.mjs";
 import { spawnDemonOnScene, defaultSpawnDemonFn } from "../../module/apps/demon-summon.mjs";
 
 function bestiaryPack(entries) {
@@ -21,8 +23,11 @@ function bestiaryPack(entries) {
   };
 }
 
-function stubScene({ createdTokens = [] } = {}) {
+function stubScene({ createdTokens = [], veil } = {}) {
   return {
+    id: "scene-1",
+    // Завеса сцены — легаси-флаг (constants/scene-nexus.mjs::resolveVeilContainer), когда сцена не в группе.
+    getFlag: (s, k) => (s === "warhammer-dbc" && k === "veil" ? veil : undefined),
     dimensions: { width: 2000, height: 2000 },
     grid: { size: 100 },
     createEmbeddedDocuments: async (type, docs) => { createdTokens.push(...docs); return docs; }
@@ -295,6 +300,104 @@ describe("startDestabilize — Рыцарь Бога запускает срок
     globalThis.game.socket = { emit: (channel, data) => emitted.push({ channel, data }) };
     await defaultSpawnDemonFn("Джаггернаут", "Actor.rit-1", { startDestabilize: true });
     expect(emitted[0].data.startDestabilize).toBe(true);
+  });
+});
+
+// Пачка I4 (Псайкана, Sahara 3-28, решение владельца 27.10.2026): «Истончение Завесы в ауре Раны в
+// Реальности +1 за каждые три бесплатные силы» видит и Призыв демона — срок дестабилизации Рыцаря Бога
+// растёт по ступеням Завесы ТОГО места, где стоит призывающий (Раунды > Минуты > Часы…).
+describe("startDestabilize — аура Раны в Реальности истончает Завесу призывающего", () => {
+  const woundTalent = () => { const d = packDocById("packs-src/talents/Псайкана", "HlOOH4XLJ1Oilfjn"); return { type: "talent", name: d.name, system: { ...d.system }, flags: {} }; };
+  const sustained = (name, free) => ({
+    type: "psychicPower", name, id: name, system: { isSustained: true, sustainCost: 1 },
+    flags: { "warhammer-dbc": free ? { [WOUND_FREE_FLAG]: true } : {} }, getFlag(s, k) { return this.flags[s]?.[k]; }
+  });
+  /** Псайкер-источник ауры с n бесплатными силами (платных три — порог «3 PR» книги). */
+  const source = n => ({ type: "character", system: { corruptionBonus: 9 },
+    items: [woundTalent(), sustained("A"), sustained("B"), sustained("C"), ...Array.from({ length: n }, (_, i) => sustained(`F${i}`, true))] });
+  /** Призывающий, накрытый аурой источника SRC (настоящая служебная Черта-метка пака). */
+  const ritualist = withAura => {
+    const d = packDocById("packs-src/traits", "WoundRealityAura");
+    return { uuid: "Actor.rit-1", type: "character", system: {},
+      items: withAura ? [{ type: "trait", name: d.name, flags: { "warhammer-dbc": { auraSource: "SRC" } }, getFlag(s, k) { return this.flags[s]?.[k]; } }] : [] };
+  };
+  const knight = () => globalThis.game.packs.set("warhammer-dbc.bestiary", bestiaryPack([{
+    _id: "d1", name: "Джаггернаут", system: { characteristics: { wp: { bonus: 4 }, inf: { bonus: 2 } } }
+  }]));
+  let prevSync;
+  beforeEach(() => { prevSync = globalThis.fromUuidSync; });
+  afterEach(() => { globalThis.fromUuidSync = prevSync; });
+  const wire = (rit, src) => {
+    globalThis.fromUuid = async uuid => (uuid === "Actor.rit-1" ? rit : null);
+    globalThis.fromUuidSync = uuid => (uuid === "SRC" ? { parent: src } : null);
+  };
+  const deadline = () => createdActors[0]._flags["warhammer-dbc.destabilize"];
+
+  it("три бесплатные силы в ауре: Завеса сцены 0 + 1 — срок в Минутах, а не в Раундах", async () => {
+    knight();
+    globalThis.canvas.scene = stubScene();
+    globalThis.game.time = { worldTime: 1000 };
+    captured.nextRoll = 5;                                          // 5 + 2×4 − 2 = 11
+    wire(ritualist(true), source(3));
+    await spawnDemonOnScene("Джаггернаут", "Actor.rit-1", { startDestabilize: true });
+    expect(deadline().deadlineAt).toBe(1000 + 11 * 60);             // ступень «Минуты»
+  });
+
+  it("аура складывается с Завесой сцены: сцена +1 и аура +1 — уже Часы", async () => {
+    knight();
+    globalThis.canvas.scene = stubScene({ veil: { base: 1 } });
+    globalThis.game.time = { worldTime: 0 };
+    captured.nextRoll = 5;
+    wire(ritualist(true), source(3));
+    await spawnDemonOnScene("Джаггернаут", "Actor.rit-1", { startDestabilize: true });
+    expect(deadline().deadlineAt).toBe(11 * 3600);
+  });
+
+  it("две бесплатные силы Завесу не двигают — срок прежний, в Раундах", async () => {
+    knight();
+    globalThis.canvas.scene = stubScene();
+    globalThis.game.time = { worldTime: 1000 };
+    captured.nextRoll = 5;
+    wire(ritualist(true), source(2));
+    await spawnDemonOnScene("Джаггернаут", "Actor.rit-1", { startDestabilize: true });
+    expect(deadline().deadlineAt).toBe(1000 + 11 * 6);
+  });
+
+  it("призывающий вне ауры — срок прежний; в Раундах срок по бою тоже без ауры", async () => {
+    knight();
+    globalThis.canvas.scene = stubScene();
+    globalThis.game.time = { worldTime: 1000 };
+    captured.nextRoll = 5;
+    wire(ritualist(false), source(3));
+    await spawnDemonOnScene("Джаггернаут", "Actor.rit-1", { startDestabilize: true });
+    expect(deadline().deadlineAt).toBe(1000 + 11 * 6);
+  });
+
+  it("ступень Раундов в бою держит и боевой срок; с аурой ступень уже Минуты — боевого срока нет", async () => {
+    knight();
+    globalThis.canvas.scene = stubScene();
+    globalThis.game.time = { worldTime: 0 };
+    globalThis.game.combat = { id: "c1", round: 3 };
+    captured.nextRoll = 5;
+    try {
+      wire(ritualist(false), source(3));
+      await spawnDemonOnScene("Джаггернаут", "Actor.rit-1", { startDestabilize: true });
+      expect(deadline()).toMatchObject({ combatId: "c1", deadlineRound: 3 + 11 });
+
+      createdActors.length = 0;
+      wire(ritualist(true), source(3));
+      await spawnDemonOnScene("Джаггернаут", "Actor.rit-1", { startDestabilize: true });
+      expect(deadline()).toMatchObject({ combatId: null, deadlineRound: null });
+    } finally { globalThis.game.combat = undefined; }
+  });
+
+  it("без ритуалиста (uuid пуст) — Завеса только сцены", async () => {
+    knight();
+    globalThis.canvas.scene = stubScene({ veil: { base: 1 } });
+    globalThis.game.time = { worldTime: 0 };
+    captured.nextRoll = 5;
+    await spawnDemonOnScene("Джаггернаут", "", { startDestabilize: true });
+    expect(deadline().deadlineAt).toBe(11 * 60);
   });
 });
 

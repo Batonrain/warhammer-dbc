@@ -22,13 +22,32 @@
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { resolveOpposed } from "../rules/test-kind.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { moraleAutoPass } from "../rules/morale-auto.mjs";
 import { psychThreshold, applyPsychDamage } from "./horde-psych.mjs";
 import { psychDamageFor } from "../rules/horde-damage.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { rootEl } from "../sheets/v2-helpers.mjs";
-import { collectTestMods } from "../rules/roll-mods.mjs";
+import { resolveTest } from "../rules/resolve-test.mjs";
+import { rollD100WithReroll } from "../rules/test-kind-widget.mjs";
 import { intoTheJawsOfHellActive, anyRadiantPresenceHolderExists, anyIntoTheJawsOfHellHolderExists } from "../rules/leadership-talents.mjs";
+
+/**
+ * Модификаторы и переброс стороны — тем же приёмом, что rules/morale-test.mjs
+ * ::rollMoraleTest: оба катаются здесь, без промежуточного диалога-галочки
+ * (в отличие от Страха), так что переброс области "morale" (Unshakeable
+ * Will/Несокрушимая Воля и подобные) применяется автоматически, а не
+ * предлагается чекбоксом. rules/roll-mods.mjs::collectTestMods сюда не
+ * подходит — он отбрасывает `.rerolls`, оставляя только суммарный модификатор
+ * (task-284f, живая проверка 22.10.2026: переброс молча не доезжал).
+ */
+function _sideModsAndReroll(resolved) {
+  const list = [...resolved.autoMods, ...resolved.mods.filter(m => !m.askOnly)];
+  const total = list.reduce((sum, m) => sum + (Number(m.value) || 0), 0);
+  const parts = list.map(m => `${m.label} ${Number(m.value) >= 0 ? "+" : ""}${m.value}`);
+  const reroll = resolved.rerolls.find(r => r.who !== "target");
+  return { total, parts, reroll: reroll ? { mode: reroll.mode, rolls: reroll.rolls, label: reroll.label } : null };
+}
 
 /** Порог Intimidate нападающего — обычный тест Навыка (уже посчитан листом). */
 export function intimidateThreshold(attacker, mod = 0) {
@@ -62,19 +81,25 @@ export async function rollIntimidateContest(attacker, target, { attackerMod = 0,
   // Оба помечены morale:true — Запугивание книга прямо называет тестом Морали
   // (rules/resolve-test.mjs::isMoraleOpposedSkill), и цель отвечает им же.
   // radiantPresence — галочка диалога (решение стола), только на стороне цели.
-  const atkMods = collectTestMods(attacker, { kind: "skill", skill: "intimidate", char: "wp", morale: true });
-  const tgtMods = collectTestMods(target, { kind: "skill", char: "wp", morale: true, radiantPresence });
+  // targetActor — противоположная сторона теста (Angel Hunters и подобные
+  // правила с when.target*), тем же приёмом, что атака/навык/Страх.
+  const atkResolved = resolveTest({ actor: attacker, kind: "skill", skill: "intimidate", char: "wp", morale: true, targetActor: target });
+  const tgtResolved = resolveTest({ actor: target, kind: "skill", char: "wp", morale: true, radiantPresence, targetActor: attacker });
+  const atkMods = _sideModsAndReroll(atkResolved);
+  const tgtMods = _sideModsAndReroll(tgtResolved);
   const atkThreshold = intimidateThreshold(attacker, attackerMod) + atkMods.total;
   const tgtThreshold = moraleThreshold(target, targetMod) + tgtMods.total;
-  const atkRoll = await new Roll("1d100").evaluate();
-  const tgtRoll = await new Roll("1d100").evaluate();
-  const atkRv = atkRoll.total, tgtRv = tgtRoll.total;
+  const { roll: atkRoll, rv: atkRv, rolls: atkRolls, rerollNote: atkRerollNote } = await rollD100WithReroll(atkMods.reroll);
+  const { roll: tgtRoll, rv: tgtRv, rolls: tgtRolls, rerollNote: tgtRerollNote } = await rollD100WithReroll(tgtMods.reroll);
 
   // Несломляемая Орда (immuneFear) «автоматически проходит тесты против
   // Запугивания» — тот же автопасс, что у Саркофага. Into the Jaws of
   // Hell/В Самое Пекло (Sahara 3-ac78, 19.10.2026) — та же галочка диалога,
   // решение стола, не вычисление «рядом ли».
+  // Ярость цели (Frenzy, стр. 62): «автоматически проходит тесты Морали» —
+  // встречный тест против Запугивания это тест Морали (rules/rage.mjs).
   const autoPass = hasRuleFlag(target, "sarcophagus.autoPassFear")
+    || !!moraleAutoPass(target)
     || (target?.type === "horde" && !!target.system?.immuneFear)
     || intoTheJawsOfHellActive(intoTheJawsOfHell);
   const atkOutcome = testOutcome(atkRv, atkThreshold);
@@ -98,9 +123,9 @@ export async function rollIntimidateContest(attacker, target, { attackerMod = 0,
     atkThreshold, tgtThreshold, atkRv, tgtRv, atkOutcome, tgtOutcome,
     // Подписи модификаторов обеих сторон (wdbc-kuun): Порог считался с ними,
     // но в карточке стояло голое число.
-    atkParts: atkMods.parts, tgtParts: tgtMods.parts,
+    atkParts: atkMods.parts, tgtParts: tgtMods.parts, atkRerollNote, tgtRerollNote,
     winner, margin, sarcophagusSaved: autoPass && tgtRv > tgtThreshold, hordePsych,
-    rolls: [atkRoll, tgtRoll]
+    rolls: [...atkRolls, ...tgtRolls]
   });
 
   return { winner, margin };
@@ -108,7 +133,7 @@ export async function rollIntimidateContest(attacker, target, { attackerMod = 0,
 
 async function _postIntimidateMsg(attacker, target, data) {
   const { atkThreshold, tgtThreshold, atkRv, tgtRv, atkOutcome, tgtOutcome, atkParts = [], tgtParts = [],
-          winner, margin, sarcophagusSaved, hordePsych = 0, rolls } = data;
+          atkRerollNote = "", tgtRerollNote = "", winner, margin, sarcophagusSaved, hordePsych = 0, rolls } = data;
 
   const outcomeLine = winner === "mine"
     ? `<span class="roll-success">${esc(attacker.name)} побеждает, margin <b>${margin}</b></span>`
@@ -124,8 +149,10 @@ async function _postIntimidateMsg(attacker, target, data) {
         <div class="roll-header">${rollIcon("skull", "#ff9a4d")}Запугивание — ${esc(attacker.name)} → ${esc(target.name)}</div>
         <div class="roll-threshold">Intimidate (${esc(attacker.name)}): <b>${atkThreshold}</b>${atkParts.length ? ` (${atkParts.join(", ")})` : ""} → бросок <b>${atkRv}</b> —
           ${atkOutcome.success ? "Успех" : "Провал"} ${atkOutcome.deg} ${_degWord(atkOutcome.deg)}</div>
+        ${atkRerollNote}
         <div class="roll-threshold">Тест Морали (${esc(target.name)}): <b>${tgtThreshold}</b>${tgtParts.length ? ` (${tgtParts.join(", ")})` : ""} → бросок <b>${tgtRv}</b> —
-          ${tgtOutcome.success ? "Успех" : "Провал"} ${tgtOutcome.deg} ${_degWord(tgtOutcome.deg)}${sarcophagusSaved ? (target.type === "horde" ? " (Орда не знает страха)" : " (Саркофаг Дредноута)") : ""}</div>
+          ${tgtOutcome.success ? "Успех" : "Провал"} ${tgtOutcome.deg} ${_degWord(tgtOutcome.deg)}${sarcophagusSaved ? (target.type === "horde" ? " (Орда не знает страха)" : moraleAutoPass(target) ? ` (${moraleAutoPass(target).short})` : " (Саркофаг Дредноута)") : ""}</div>
+        ${tgtRerollNote}
         <div class="roll-outcome">${outcomeLine}</div>
         ${hordePsych > 0 ? `<div class="roll-threshold">Орда: психологический урон <b>${hordePsych}</b> Магнитуды (Провалы×1)</div>` : ""}
         <div class="roll-threshold">Исход по книге решает ГМ: подчинение требуемому, паническое бегство или Шок.</div>

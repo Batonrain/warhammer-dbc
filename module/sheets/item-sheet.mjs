@@ -33,6 +33,11 @@ import { becomeParasiteHostButtonHtml, becomeParasiteHost } from "../apps/maggot
 import { beginParasiticContactButtonHtml, beginParasiticContact } from "../apps/parasite-trait.mjs";
 import { stabilizeRealityRendingButtonHtml, useStabilizeRealityRending } from "../apps/wrapped-in-chaos.mjs";
 import { gunArmButtonHtml, useGunArm }              from "../apps/gun-arm.mjs";
+import { blackMantleHtml, setBlackMantleOn }        from "../apps/black-mantle.mjs";
+import { isHookedUp, HOOK_UP_FLAG }                 from "../rules/drug-doses.mjs";
+import { talentActionsHtml, runTalentAction }       from "../apps/talent-actions.mjs";
+import { cannonFodderPanelHtml, setCannonFodderMinion } from "../apps/cannon-fodder.mjs";
+import { omophageaPanelHtml, runOmophagea }         from "../apps/omophagea.mjs";
 import { illusionOfNormalityHtml, attemptNoticeIllusion, attemptSeeThroughIllusion, setIllusionMaintained }
   from "../apps/illusion-of-normality.mjs";
 import { iconOfBlasphemyButtonHtml, activateIconOfBlasphemy } from "../apps/icon-of-blasphemy.mjs";
@@ -99,6 +104,7 @@ import { factionRosterContext, originTreeContext,
 import { ritualTestContext }                         from "./tabs/rituals.mjs";
 import { onTab, whenEditable, linesToArray }         from "./v2-helpers.mjs";
 import { relayItemUpdate, esc }                       from "../helpers/utils.mjs";
+import { rowsAdd, rowsRemove, rowsPatch, BLANK_VECTOR, BLANK_EFFECT, EFFECT_KINDS } from "../rules/disease-infection.mjs";
 
 // Метка типа (в PSY это строки, в TECH — объекты {label})
 function _typeLabel(map, key) {
@@ -475,6 +481,28 @@ function onWrpFeatureRemove(event, target) {
   return this.item.update({ "system.features": (this.item.system.features || []).filter((_, idx) => idx !== i) });
 }
 
+// ── Болезнь: пути передачи и последствия заражения (Sahara task-3ab7) ──
+//  Строки правятся целыми массивами (item.update на весь список): формы
+//  ApplicationV2 с индексированными именами массивов сливаются в объект, а не
+//  в список, поэтому поля строк не имеют `name`, а ловятся change-обработчиками
+//  _onRender по классам (тот же приём, что у профилей оружия и Особенностей).
+/** Номер строки — на её контейнере, а не на самой кнопке. */
+const diseaseRowIdx = el => Number(el.closest("[data-row]")?.dataset.row);
+const diseaseList = (item, field) => foundry.utils.deepClone(item.system[field] ?? []);
+
+function onDiseaseVectorAdd() {
+  return this.item.update({ "system.vectorTests": rowsAdd(diseaseList(this.item, "vectorTests"), BLANK_VECTOR) });
+}
+function onDiseaseVectorRemove(event, target) {
+  return this.item.update({ "system.vectorTests": rowsRemove(diseaseList(this.item, "vectorTests"), diseaseRowIdx(target)) });
+}
+function onDiseaseEffectAdd() {
+  return this.item.update({ "system.infectionEffects": rowsAdd(diseaseList(this.item, "infectionEffects"), BLANK_EFFECT) });
+}
+function onDiseaseEffectRemove(event, target) {
+  return this.item.update({ "system.infectionEffects": rowsRemove(diseaseList(this.item, "infectionEffects"), diseaseRowIdx(target)) });
+}
+
 // ── Оружие: доп. профили ББ (Крюк/Посох, стр. 207-221) ──
 /** Номер профиля — на карточке, а не на самой кнопке. */
 const profileIdx = el => Number(el.closest(".wprofile-card")?.dataset.idx);
@@ -647,6 +675,10 @@ export class WarhammerItemSheet
       psyProfileRemove: whenEditable(onPsyProfileRemove),
       psyVariantAdd: whenEditable(onPsyVariantAdd),
       psyVariantRemove: whenEditable(onPsyVariantRemove),
+      diseaseVectorAdd: whenEditable(onDiseaseVectorAdd),
+      diseaseVectorRemove: whenEditable(onDiseaseVectorRemove),
+      diseaseEffectAdd: whenEditable(onDiseaseEffectAdd),
+      diseaseEffectRemove: whenEditable(onDiseaseEffectRemove),
       wprofileAdd: whenEditable(onWprofileAdd),
       wprofileDel: whenEditable(onWprofileDel),
       wprofilePropRemove: whenEditable(onWprofilePropRemove),
@@ -1219,13 +1251,28 @@ export class WarhammerItemSheet
     // ── Болезнь ─────────────────────────────────────────────────────────────────
     if (this.item.type === "disease") {
       context.diseaseGodOptions = DISEASE_GODS;
+      // Выпадающие списки редакторов строк: Характеристика теста/урона и вид последствия.
+      context.diseaseCharOptions = Object.entries(CHARACTERISTICS).map(([key, d]) => ({ key, label: d.abbr }));
+      context.diseaseEffectKinds = Object.entries(EFFECT_KINDS).map(([key, label]) => ({ key, label }));
     }
 
     // ── Дар «Рука-Пушка»: какое оружие вросло в предплечье (wdbc-spsd).
     // Пусто у остальных Талантов — isGunArmGift проверяет ключ Возможности.
     if (this.item.type === "talent") {
       context.gunArmHtml = gunArmButtonHtml(this.item, this.item.parent);
+      // «Чёрная Мантия» (3-b530) — тумблер усиленного Меланохрома; пусто у остальных Талантов.
+      context.blackMantleHtml = blackMantleHtml(this.item, this.item.parent);
+      // Предусмотрительность (3-b530): кнопка «Обдумать 5 мин».
+      context.talentActionsHtml = talentActionsHtml(this.item, this.item.parent);
+      // Пушечное Мясо: выпадающий список «чей Миньон» (Sahara inspire-wrath-cannon-fodder).
+      context.cannonFodderHtml = cannonFodderPanelHtml(this.item, this.item.parent);
     }
+
+    // ── Наркотик, приготовленный с «Крючком» (Талант Медика, 3-dc87) ───────
+    if (this.item.type === "drug") context.hookedUp = isHookedUp(this.item);
+
+    // ── Имплант Омофагея: кнопка теста I+0 (3-b530) ─────────────────────────
+    if (this.item.type === "implant") context.omophageaHtml = omophageaPanelHtml(this.item, this.item.parent);
 
     // ── Мутация: кнопки динамических источников Аблативных Ран (wdbc-w8ws) —
     // пусто у остальных Мутаций (isXItem проверяет имя, не capabilityKey).
@@ -2047,6 +2094,35 @@ export class WarhammerItemSheet
       ev.preventDefault();
       const actor = this.item.parent;
       if (actor) await useGunArm(actor, this.item);
+    });
+
+    // ── Талант «Чёрная Мантия»: усиленный режим Меланохрома (3-b530) ───────
+    on(".black-mantle-cb", "change", async ev => {
+      await setBlackMantleOn(this.item, ev.currentTarget.checked);
+    });
+
+    // ── Действия Талантов (3-b530): Предусмотрительность и др. ─────────────
+    on(".talent-action-btn", "click", async ev => {
+      ev.preventDefault();
+      await runTalentAction(ev.currentTarget.dataset.talentAction, this.item, this.item.parent);
+      this.render(false);
+    });
+
+    // ── Пушечное Мясо: смена слуги выпадающим списком ───────────────────────
+    on(".cannon-fodder-pick", "change", async ev => {
+      await setCannonFodderMinion(this.item, ev.currentTarget.value);
+      this.render(false);
+    });
+
+    on(".omophagea-btn", "click", async ev => {
+      ev.preventDefault();
+      await runOmophagea(this.item.parent, this.item);
+      this.render(false);
+    });
+
+    // ── Наркотик с «Крючком»: метка на предмете (rules/drug-doses.mjs) ──────
+    on(".hook-up-cb", "change", async ev => {
+      await this.item.setFlag("warhammer-dbc", HOOK_UP_FLAG, !!ev.currentTarget.checked);
     });
 
     // ── Мутация «Рука Смерти»: слияние с выбранным оружием (wdbc-hftn) ──────
@@ -3350,6 +3426,20 @@ export class WarhammerItemSheet
       if (!arr[i]) return;
       arr[i][field] = field === "roll" ? (parseInt(ev.currentTarget.value) || 0) : ev.currentTarget.value;
       await this.item.update({ "system.features": arr });
+    });
+
+    // ── Болезнь: строки путей передачи и последствий заражения ───────────────────
+    on(".disease-vector-field", "change", async ev => {
+      if (!this.isEditable) return;
+      const next = rowsPatch(diseaseList(this.item, "vectorTests"), diseaseRowIdx(ev.currentTarget),
+        ev.currentTarget.dataset.field, ev.currentTarget.value, ["mod"]);
+      await this.item.update({ "system.vectorTests": next });
+    });
+    on(".disease-effect-field", "change", async ev => {
+      if (!this.isEditable) return;
+      const next = rowsPatch(diseaseList(this.item, "infectionEffects"), diseaseRowIdx(ev.currentTarget),
+        ev.currentTarget.dataset.field, ev.currentTarget.value);
+      await this.item.update({ "system.infectionEffects": next });
     });
 
     // ── Оружие: доп. профили ББ (Крюк/Посох, стр. 207-221) ──────────────────────

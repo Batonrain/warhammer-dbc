@@ -114,6 +114,10 @@
       <input type="checkbox" name="system.sustained" {{#if system.sustained}}checked{{/if}}/>
       Поддерживаемое
     </label>
+    <label class="drug-fx-cb-label" title="Урон, помеха, отключение или иное вредящее воздействие на цель. Нужна Цифровой Ненависти: она снижает цену активации таких чудес на 1 Когницию, если все цели — Ненавистные.">
+      <input type="checkbox" name="system.harmful" {{#if system.harmful}}checked{{/if}}/>
+      Вредит цели
+    </label>
     {{#if system.sustained}}
     <label class="wr-label">Подд./Ход</label>
     <input type="number" name="system.sustainCost" value="{{system.sustainCost}}" min="0" class="wr-input-xs"

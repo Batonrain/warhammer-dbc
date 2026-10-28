@@ -23,7 +23,10 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { statusApplyFields } from "./status-resist.mjs";
+import { writeToTarget } from "./gm-relay.mjs";
 import { sizeOf } from "../rules/predicates.mjs";
+import { hasPugilistTalent } from "../rules/pugilist-talents.mjs";
+import { hasTalent, isBike, roadkillDamage } from "../rules/mount.mjs";
 
 /** Разница в Размере (мовер − цель); >0 — цель МЕНЬШЕ. */
 export function bulldozeSizeDiff(actor, target) {
@@ -46,6 +49,26 @@ export function bulldozeSizePenalty(actor, target) {
   return diff > 0 ? -10 * diff : 0;
 }
 
+/**
+ * Урон Переехать: бросок здесь же (Tearing — 3d10, два лучших) и кнопка «Применить
+ * урон», как у остальных карточек урона. «Байк, над которым персонаж потрудился хотя
+ * бы ¼ смены» — условие стола, система смен над байком не ведёт.
+ */
+async function roadkillDamageSection(actor, target, mount) {
+  const d = roadkillDamage(actor);
+  const roll = await new Roll(d.formula).evaluate();
+  return `<div class="roll-damage-section">
+      <div class="roll-damage-label">${rollIcon("blood", "#ff6b6b")}Переехать: 2d10+A.b (${d.bonus}) R, Pen ${d.penetration}, Tearing — <b>${roll.total}</b></div>
+      <button class="wh-apply-dmg-btn" type="button"
+        data-damage="${roll.total}" data-penetration="${d.penetration}" data-damage-type="${d.damageType}" data-damage-subtype=""
+        data-hit-location="Торс" data-weapon-name="Переехать (${esc(mount.name)})" data-attacker="${esc(actor.name)}"
+        data-felling="0" data-primitive="0" data-ignore-shield="0" data-warp-soak="0" data-melee="1">
+        Применить ${roll.total} урона${target ? ` — ${esc(target.name)}` : ""}
+      </button>
+      <div class="roll-threshold" style="font-size:0.85em;opacity:0.8;">Условие Таланта — байк, над которым персонаж потрудился хотя бы ¼ смены: следит стол.</div>
+    </div>`;
+}
+
 export async function resolveBulldozeSuccess(actor, { deg, target } = {}) {
   if (!target) {
     return ui.notifications?.warn(`${actor.name}: цель Напролома не выцелена на сцене — эффект не наложен.`);
@@ -57,14 +80,34 @@ export async function resolveBulldozeSuccess(actor, { deg, target } = {}) {
   const sections = [
     `<div class="roll-threshold">Персонаж проходит мимо ${esc(target.name)}, не получая от неё Свободной Атаки.</div>`
   ];
-  if (deg >= 5) {
+  // Громовой Натиск (стр. 62, 3-eddb): проигравшие во встречном тесте «всегда
+  // сбиваются с ног и получают урон, как если бы проиграли на 5+ Провалов» —
+  // у носителя ветка 5+ Успехов срабатывает при ЛЮБОЙ победе. Урон Пинка —
+  // напоминание, как и в обычной ветке (стр. 40).
+  const thunder = hasPugilistTalent(actor, "thunderCharge");
+  // Переехать (Всадник, Sahara 3-cross-actor-5482): Напролом БАЙКОМ — цель всегда
+  // сбивается с ног и вместо обычного урона получает 2d10+A.b R, Pen P.b, Tearing.
+  const mountUuid = actor.system?.mount?.uuid;
+  const mount = (mountUuid && hasTalent(actor, "Roadkill", "Переехать"))
+    ? await fromUuid(mountUuid).catch(() => null) : null;
+  const roadkill = !!mount && isBike(mount);
+  if (deg >= 5 || thunder || roadkill) {
     // Стена (Талант Стойкости): сбиваемый носитель вправе пройти S+0 и устоять.
     const { fields, resisted, note } = await statusApplyFields(target, "prone", null,
       { attacker: actor, melee: true, source: "Напролом" });
-    if (Object.keys(fields).length) await target.update(fields);
-    sections.push(resisted
-      ? `<div class="roll-threshold">5+ Успехов: ${esc(note)} Попадание Пинком или оружием на ноге — по-прежнему на усмотрение стола (стр. 40).</div>`
-      : `<div class="roll-threshold">5+ Успехов: ${esc(target.name)} сбит(а) с ног и получает попадание Пинком или оружием на ноге персонажа — разыграйте обычной рукопашной атакой этим оружием (стр. 40).</div>`);
+    // Цель обычно чужой NPC — запись через ГМа (combat/gm-relay.mjs); без ГМа writeToTarget предупредит сам,
+    // а карточка всё равно нужна: в ней дальность/проход/урон, не только «Ничком».
+    if (Object.keys(fields).length) await writeToTarget(target, { kind: "update", data: fields }, actor);
+    const lead = roadkill ? "Переехать (байк)"
+      : deg >= 5 ? "5+ Успехов" : "Громовой Натиск (победа считается как 5+ Успехов)";
+    if (roadkill) {
+      sections.push(`<div class="roll-threshold">${lead}: ${resisted ? esc(note) : `${esc(target.name)} сбит(а) с ног`} — вместо урона Пинка байк давит цель.</div>`);
+      sections.push(await roadkillDamageSection(actor, target, mount));
+    } else {
+      sections.push(resisted
+        ? `<div class="roll-threshold">${lead}: ${esc(note)} Попадание Пинком или оружием на ноге — по-прежнему на усмотрение стола (стр. 40).</div>`
+        : `<div class="roll-threshold">${lead}: ${esc(target.name)} сбит(а) с ног и получает попадание Пинком или оружием на ноге персонажа — разыграйте обычной рукопашной атакой этим оружием (стр. 40).</div>`);
+    }
   }
   await postTestCard(actor, {
     icon: rollIcon("sword", "#e08a3a"),

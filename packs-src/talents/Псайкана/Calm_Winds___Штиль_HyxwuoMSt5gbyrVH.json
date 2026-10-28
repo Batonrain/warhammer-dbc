@@ -5,7 +5,7 @@
   "folder": "iSsQmZ2gkxraxksi",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект тратит/даёт игровой ресурс (Очки Бесчестия/Судьбы/Боли/Когниции/Реакцию) на разовое действие — не тестовый модификатор Навыка/Характеристики.",
+    "notes": "Реализовано: после переброса Феномена/Прорыва кнопкой «Усмирение Варпа» система показывает выпавшее и спрашивает «отменить переброс, вернуть Очко Бесчестия и оставить изначальный результат?»; согласие возвращает Очко туда, откуда оно ушло (временное — во временный запас), в чат уходит карточка «Штиль — переброс отменён» (module/combat/calm-warp.mjs::handleCalmWarpClick, rules/psyker-talents.mjs::hasCalmWinds). Бросок после отмены считается использованным — повторно перебросить его нельзя (каждый бросок перебрасывается один раз).",
     "benefit": "Используя Очко Бесчестия для Усмирения Варпа, псайкер может выбрать отменить второй бросок и вернуть потраченное Очко Бесчестия, чтобы использовать изначальный результат Феномена или Прорыва.",
     "tier": 1,
     "requirement": "Psyniscience+10",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g01calmWindCap1",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "e01calmWindCap1",
+              "capabilityKey": "psyker.core.calmWinds",
+              "label": "Штиль: при Усмирении Варпа можно отменить переброс и вернуть Очко Бесчестия",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

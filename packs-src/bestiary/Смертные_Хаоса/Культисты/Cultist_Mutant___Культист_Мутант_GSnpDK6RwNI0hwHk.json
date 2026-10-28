@@ -524,7 +524,8 @@
           "standard": false,
           "reloads": 10
         },
-        "drukhari": false
+        "drukhari": false,
+        "meleeCategory": "Нож"
       },
       "img": "systems/warhammer-dbc/assets/item-icons/weapon-knife.svg",
       "effects": [],
@@ -854,7 +855,8 @@
           "standard": false,
           "reloads": 10
         },
-        "drukhari": false
+        "drukhari": false,
+        "meleeCategory": "Когти"
       },
       "_id": "nZmEccXpb1ytoc29",
       "effects": [],

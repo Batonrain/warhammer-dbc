@@ -5,7 +5,7 @@
   "folder": "HfTlTkQPDwQ9Yqqn",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey weaponsmith.core.irradiate — выпадающий выбор «Облучить» в блоке «Таланты» окна атаки (только оружие со свойством Rad): «удвоить рейтинг Felling» (module/combat/attack.mjs, wp.fellingRating ×2) ЛИБО «пробитие Rad без удвоения AP цели»: кнопка урона несёт data-breach-no-double, module/combat/damage.mjs считает отдельный итог flags.lastBreach.radBreached ТОЛЬКО для свойства Rad (module/hooks.mjs); обычное пробитие брони (метка system.breached, Toxic и прочие свойства «при пробитии») остаётся прежним. Выбор делается до броска, как в книге.",
     "benefit": "При стрельбе из Рад оружия персонаж может (до броска) либо удвоить рейтинг его свойства Felling, либо рассчитывать пробитие брони по свойству Rad, не удваивая АР цели.",
     "tier": 1,
     "requirement": "BS 40, Exotic Weapon Training (Rad)",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "EWjSb3CwqU4dOaIt",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "VyZt3euenZErbnM4",
+              "capabilityKey": "weaponsmith.core.irradiate",
+              "label": "Облучить: удвоить Felling Рад-оружия или считать пробитие Rad без удвоения AP",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

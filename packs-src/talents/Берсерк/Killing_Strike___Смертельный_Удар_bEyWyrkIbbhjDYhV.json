@@ -5,7 +5,7 @@
   "folder": "GD2SVUHWSvG5UbRH",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект тратит/даёт игровой ресурс (Очки Бесчестия/Судьбы/Боли/Когниции/Реакцию) на разовое действие — не тестовый модификатор Навыка/Характеристики.",
+    "notes": "Реализовано: capabilityKey berserker.core.killingStrike — в окне рукопашной атаки галочка «Смертельный Удар»; на Полной Атаке при попадании тратится Очко Бесчестия, и Уклонение и Парирование цели от этой атаки недоступны (кнопки гаснут как у скрытой атаки — Реакция цели не тратится). Раз в Ход (метка killingStrikeThisTurn гасится в начале следующего Хода) (module/rules/berserker-talents.mjs::killingStrikeApplies, combat/attack.mjs, sheets/attack/talent-toggles.mjs). Очко платится при попадании, не при промахе.",
     "benefit": "Атакой с базой Полная Атака персонаж может потратить Очко Бесчестия, чтобы любые тесты на Избегание от неё авто-проваливались. Только раз в Ход.",
     "tier": 2,
     "requirement": "WS 50",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "IGcJWB11c7KgZqIw",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "U9hIC5JXy4RtYOUm",
+              "capabilityKey": "berserker.core.killingStrike",
+              "label": "Смертельный Удар: Полная Атака + Очко Бесчестия — Избегания цели от этой атаки невозможны, раз в Ход",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

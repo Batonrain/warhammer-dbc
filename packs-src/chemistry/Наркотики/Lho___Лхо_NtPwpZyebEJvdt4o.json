@@ -26,8 +26,11 @@
       "minDose": 7,
       "testChar": "t",
       "testMod": 30,
-      "frequency": "1 час",
-      "penalty": "−10 на социальные взаимодействия, кроме Запугивания"
+      "frequency": "8 часов",
+      "penalty": "−10 на социальные взаимодействия, кроме Запугивания",
+      "testChar2": "wp",
+      "testMod2": 20,
+      "penaltyMods": "skill:charm,skill:command,skill:commerce,skill:deceive,skill:inquiry,skill:interrogate=-10"
     },
     "statMods": {
       "ws": 0,

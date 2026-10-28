@@ -8,7 +8,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import "../support/foundry-stub.mjs";
 import { resetCaptured, captured } from "../support/foundry-stub.mjs";
 import { commandNodesFor, expireCommandsAtTurnStart, handleMoraleFailure, revertMoraleFailure,
-         clearCommandsOnCombatEnd, COMMAND_LOST_FLAG } from "../../module/combat/command-state.mjs";
+         clearCommandsOnCombatEnd, commandEffectOn, COMMAND_LOST_FLAG } from "../../module/combat/command-state.mjs";
 import { resolveTest } from "../../module/rules/resolve-test.mjs";
 import { packDocById } from "../support/pack-doc.mjs";
 
@@ -95,6 +95,140 @@ describe("бонус доходит до броска", () => {
   it("вопрос без броска (hasRuleFlag с пустым ctx) Команды не собирает", () => {
     expect(commandNodesFor(soldier)).toHaveLength(1);
     expect(resolveTest({ actor: soldier }).autoMods.some(m => m.ruleId?.startsWith("command."))).toBe(false);
+  });
+});
+
+// Лимит получателей: Command — «до F.b×2» подчинённых, с Air of Authority —
+// «до F.b×20»; больше — выбирает игрок (порядок списка). Один хелпер на лист
+// и на расчёт: leadership-talents.mjs::commandCapacity.
+describe("лимит получателей Командования", () => {
+  const AOA = { type: "talent", name: "Air of Authority / Аура Власти", system: {} };
+  const filler = n => Array.from({ length: n }, (_, i) => ({ id: `f${i}`, uuid: `Actor.f${i}` }));
+
+  it("Отряд: F.b 4 → восьмой по списку внутри лимита, девятый сверх", () => {
+    squad.system.members = [...filler(7), { id: "m1", uuid: "Actor.s" }];   // индекс 7
+    expect(commandNodesFor(soldier)[0].overCapacity).toBe(false);
+    squad.system.members = [...filler(8), { id: "m1", uuid: "Actor.s" }];   // индекс 8
+    expect(commandNodesFor(soldier)[0].overCapacity).toBe(true);
+  });
+
+  it("Отряд: с Air of Authority у Командира лимит F.b×20 — девятый уже внутри", () => {
+    squad.system.members = [...filler(8), { id: "m1", uuid: "Actor.s" }];
+    sarge.items = [AOA];
+    expect(commandNodesFor(soldier)[0].overCapacity).toBe(false);
+    squad.system.members = [...filler(80), { id: "m1", uuid: "Actor.s" }];   // индекс 80
+    expect(commandNodesFor(soldier)[0].overCapacity).toBe(true);
+  });
+
+  it("командир сброда: тот же лимит, Air of Authority его снимает до ×20", () => {
+    squad.system.members = [];
+    soldier.flags.commandedBy = { uuid: "Actor.c" };
+    sarge.system.followers = [...filler(8), { uuid: "Actor.s" }];            // индекс 8
+    expect(commandNodesFor(soldier)[0].overCapacity).toBe(true);
+    sarge.items = [AOA];
+    expect(commandNodesFor(soldier)[0].overCapacity).toBe(false);
+  });
+
+  it("Дрессировка: лимит P.b как был, Air of Authority на него не влияет", () => {
+    squad.system.members = [];
+    soldier.flags.commandedBy = { uuid: "Actor.c" };
+    sarge.system.command.training = true;
+    sarge.system.characteristics.per = { bonus: 3 };
+    sarge.system.followers = [...filler(3), { uuid: "Actor.s" }];            // индекс 3
+    sarge.items = [AOA];
+    expect(commandNodesFor(soldier)[0].overCapacity).toBe(true);
+    sarge.system.followers = [...filler(2), { uuid: "Actor.s" }];
+    expect(commandNodesFor(soldier)[0].overCapacity).toBe(false);
+  });
+});
+
+// War Chant / Боевая Песнь: поющий командующий узла раздаёт все 3 эффекта
+// Присутствия подчинённым, максимум W.b×2 (×20 с Air of Authority) по порядку
+// списка. «Слышат» (геометрию) решает стол — как у «подпевать».
+describe("Боевая Песнь (раздача Присутствия)", () => {
+  const WC  = { type: "talent", name: "War Chant / Боевая Песнь", system: {} };
+  const AOA = { type: "talent", name: "Air of Authority / Аура Власти", system: {} };
+  const filler = n => Array.from({ length: n }, (_, i) => ({ id: `f${i}`, uuid: `Actor.f${i}` }));
+  const MORALE = { kind: "skill", char: "wp", morale: true };
+
+  beforeEach(() => {
+    squad.system.presence = { active: false, benefit: "" };       // Командир ничего не отдавал
+    squad.system.shortCommand = { active: false };
+    sarge.system.characteristics.wp.bonus = 5;                     // W.b 5 → лимит 10
+    sarge.items = [WC];
+    sarge.flags.warChantSinging = true;
+  });
+
+  it("поёт: узел несёт chant {wp, cap, over:false}, Присутствие доходит без выбора Командира", () => {
+    const [node] = commandNodesFor(soldier);
+    expect(node.chant).toEqual({ wp: 50, cap: 10, over: false });
+    expect(commandEffectOn(soldier, "presence:focus")).toBeTruthy();
+    expect(commandEffectOn(soldier, "presence:extreme")).toBeTruthy();
+    expect(commandEffectOn(soldier, "presence:morale")).toBeTruthy();
+  });
+
+  it("Воля певца доходит до теста Морали бойца (+20 = 50 − 30), бонусы Команд не удваиваются", () => {
+    squad.system.shortCommand = { active: true, key: "inspire", successes: 3, giverUuid: "Actor.c", combatId: "cb", round: 1 };
+    expect(resolveTest({ actor: soldier, kind: "skill", char: "wp", morale: true })
+      .autoMods.find(x => x.ruleId === "command.presenceWill")?.value).toBe(20);
+    expect(resolveTest({ actor: soldier, kind: "attack", isMelee: false })
+      .autoMods.find(x => x.ruleId === "command.short")?.value).toBe(3);
+  });
+
+  it("не поёт (флага нет) или Таланта нет — песни нет", () => {
+    delete sarge.flags.warChantSinging;
+    expect(commandNodesFor(soldier)[0].chant).toBe(null);
+    expect(commandEffectOn(soldier, "presence:focus")).toBe(null);
+    sarge.flags.warChantSinging = true;
+    sarge.items = [];
+    expect(commandNodesFor(soldier)[0].chant).toBe(null);
+  });
+
+  it("лимит W.b×2 по порядку списка: десятый внутри, одиннадцатый сверх", () => {
+    squad.system.members = [...filler(9), { id: "m1", uuid: "Actor.s" }];    // индекс 9
+    sarge.system.characteristics.fel.bonus = 20;                              // F.b×2 не мешает
+    expect(commandNodesFor(soldier)[0].chant.over).toBe(false);
+    squad.system.members = [...filler(10), { id: "m1", uuid: "Actor.s" }];   // индекс 10
+    const [node] = commandNodesFor(soldier);
+    expect(node.chant.over).toBe(true);
+    expect(commandEffectOn(soldier, "presence:focus")).toBe(null);
+  });
+
+  it("с Air of Authority лимит W.b×20 — одиннадцатый уже внутри", () => {
+    sarge.system.characteristics.fel.bonus = 60;
+    sarge.items = [WC, AOA];
+    squad.system.members = [...filler(10), { id: "m1", uuid: "Actor.s" }];
+    expect(commandNodesFor(soldier)[0].chant).toEqual({ wp: 50, cap: 100, over: false });
+    squad.system.members = [...filler(100), { id: "m1", uuid: "Actor.s" }];
+    expect(commandNodesFor(soldier)[0].chant.over).toBe(true);
+  });
+
+  it("лимит песни независим от F.b×2 Командования: сверх F.b×2 ничего не доходит даже внутри W.b×2", () => {
+    squad.system.members = [...filler(8), { id: "m1", uuid: "Actor.s" }];    // индекс 8: F.b 4 → лимит 8
+    const [node] = commandNodesFor(soldier);
+    expect(node.overCapacity).toBe(true);
+    expect(node.chant.over).toBe(false);
+    expect(commandEffectOn(soldier, "presence:focus")).toBe(null);
+  });
+
+  it("певец играет и за командира сброда (followers)", () => {
+    squad.system.members = [];
+    soldier.flags.commandedBy = { uuid: "Actor.c" };
+    sarge.system.followers = [{ uuid: "Actor.s" }];
+    const [node] = commandNodesFor(soldier);
+    expect(node.chant).toEqual({ wp: 50, cap: 10, over: false });
+    expect(commandEffectOn(soldier, "presence:focus")).toBeTruthy();
+    sarge.system.followers = [...filler(10), { uuid: "Actor.s" }];
+    sarge.system.characteristics.fel.bonus = 20;
+    expect(commandNodesFor(soldier)[0].chant.over).toBe(true);
+  });
+
+  it("узел без песни (обычный Отряд) chant = null — прежнее поведение", () => {
+    delete sarge.flags.warChantSinging;
+    squad.system.presence = { active: true, benefit: "morale" };
+    expect(commandNodesFor(soldier)[0].chant).toBe(null);
+    expect(commandEffectOn(soldier, "presence:focus")).toBe(null);
+    expect(resolveTest({ actor: soldier, ...MORALE }).autoMods.find(x => x.ruleId === "command.presenceWill")?.value).toBe(20);
   });
 });
 

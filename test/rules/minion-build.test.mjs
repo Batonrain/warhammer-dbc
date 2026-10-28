@@ -122,6 +122,43 @@ describe("максимум Миньонов", () => {
     expect(minionCapacity(master(), [])).toBe(0);
   });
 
+  // Lord of Chaos / Лорд Хаоса (minion.core.lordOfChaos): «увеличивает максимум
+  // своих Миньонов на 50% (окр.▼)» — округление ВНИЗ от 1,5×максимум.
+  describe("Лорд Хаоса: +50% к максимуму, округление вниз", () => {
+    const lord = base => ({
+      ...base,
+      items: [{
+        id: "lc", name: "Lord of Chaos / Лорд Хаоса", type: "talent", system: {},
+        flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+          { id: "e", kind: "capability", capabilityKey: "minion.core.lordOfChaos", label: "" }
+        ] }] } }
+      }]
+    });
+
+    it("чётный максимум: 4 → 6", () => {
+      expect(minionCapacity(lord(master({ int: 40 })), ["machine"])).toBe(6);
+    });
+
+    it("нечётный максимум округляется вниз: 5 → 7 (а не 8), 3 → 4 (а не 5)", () => {
+      expect(minionCapacity(lord(master({ int: 55 })), ["machine"])).toBe(7);
+      expect(minionCapacity(lord(master({ int: 35 })), ["machine"])).toBe(4);
+    });
+
+    it("поправка идёт к наименьшему из бонусов групп, не к каждому", () => {
+      expect(minionCapacity(lord(master({ int: 55, fel: 35 })), ["machine", "human"])).toBe(4);
+    });
+
+    it("максимум 1 → 1 (1,5 вниз); 0 и «нет групп» остаются нулём", () => {
+      expect(minionCapacity(lord(master({ int: 15 })), ["machine"])).toBe(1);
+      expect(minionCapacity(lord(master({ int: 5 })), ["machine"])).toBe(0);
+      expect(minionCapacity(lord(master()), [])).toBe(0);
+    });
+
+    it("без Таланта максимум прежний (страж)", () => {
+      expect(minionCapacity(master({ int: 55 }), ["machine"])).toBe(5);
+    });
+  });
+
   it("счётчик по группам — для шапки блока", () => {
     expect(groupTally([minion("human", "lesser"), minion("human", "greater"), minion("daemon", "horde")]))
       .toEqual({ human: 2, daemon: 1 });
@@ -286,6 +323,25 @@ describe("готовый Миньон", () => {
 
   it("без Талантов — поведение не меняется", () => {
     expect(minionLoyalty(master({ fel: 42 }), "human")).toBe(42);
+  });
+
+  // Infernal Master / Инфернальный Владыка (occultist-talents.mjs, Sahara
+  // 3-2a39): «Его Миньоны-демоны получают +10 Лояльности» — по имени
+  // Таланта (itemHasName), не по capability-ключу — talents этой группы
+  // не несут Constructor-записей capability.
+  const withInfernalMaster = base => ({
+    ...base,
+    items: [{ id: "im", type: "talent", name: "Infernal Master / Инфернальный Владыка", system: {} }]
+  });
+
+  it("Infernal Master: +10 Лояльности только у группы daemon", () => {
+    const m = withInfernalMaster(master({ wp: 35 }));
+    expect(minionLoyalty(m, "daemon")).toBe(45);
+    expect(minionLoyalty(m, "human")).toBe(40); // fel по умолчанию из master() — без бонуса
+  });
+
+  it("Infernal Master: без самого Таланта — поведение не меняется", () => {
+    expect(minionLoyalty(master({ wp: 35 }), "daemon")).toBe(35);
   });
 
   it("речь: молчание при низкой Общительности, команды — при низком Интеллекте", () => {

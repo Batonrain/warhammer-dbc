@@ -16,8 +16,8 @@ import { vitalNaturalStage } from "../../module/constants/vitals.mjs";
 import { nextMutationThreshold } from "../../module/rules/character.mjs";
 import { RAD_PROTECTION } from "../../module/constants/environment.mjs";
 import {
-  CLEVER_HANDS, HARD_AS_STONE, SURE_TREAD, MUTATIONS_AS_ASTARTES, POISON_ADVANTAGE,
-  cleverHandsClearJamBonus, poisonResistReroll, sleepGraceDays, sleepNeededHours,
+  CLEVER_HANDS, HARD_AS_STONE, SURE_TREAD, MUTATIONS_AS_ASTARTES, POISON_ADVANTAGE, DISEASE_ADVANTAGE,
+  cleverHandsClearJamBonus, poisonResistReroll, diseaseResistReroll, vacuumResistReroll, sleepGraceDays, sleepNeededHours,
   sureTreadTerrainBase, sureTreadIgnoresTerrain, sureTreadMovementCap
 } from "../../module/rules/squat-traits.mjs";
 
@@ -136,6 +136,36 @@ describe("Живучесть Сплайса — Преимущество про�
     expect(poisonResistReroll(a, "poisoned")).toEqual({ rolls: 2, mode: "keepBest", label: expect.stringMatching(/Преимущество против яда/) });
     expect(poisonResistReroll(a, "burning")).toBeNull();
     expect(poisonResistReroll(actor([]), "poisoned")).toBeNull();
+  });
+});
+
+describe("Преимущество против болезней и вакуума (wdbc-dbveg, trade-voidfarer-10)", () => {
+  it("Живучесть Сплайса несёт возможность против болезней — тест заражения с Преимуществом", () => {
+    const a = actor([SPLICE_RESILIENCE]);
+    expect(hasRuleFlag(a, DISEASE_ADVANTAGE)).toBe(true);
+    expect(diseaseResistReroll(a)).toEqual({ rolls: 2, mode: "keepBest", label: expect.stringMatching(/против болезней/) });
+  });
+
+  it("копия Живучести без записи против болезней (до «Обновить мир») — опознаётся по имени", () => {
+    const stale = { ...SPLICE_RESILIENCE, flags: {} };
+    expect(diseaseResistReroll(actor([stale]))).toEqual({ rolls: 2, mode: "keepBest", label: expect.stringMatching(/против болезней/) });
+  });
+
+  it("Живучесть Сплайса вакуум не покрывает — в её тексте вакуума нет", () => {
+    expect(vacuumResistReroll(actor([SPLICE_RESILIENCE]))).toBeNull();
+  });
+
+  it("Крепкий как Камень — Преимущество и против болезней, и против вакуума", () => {
+    const a = actor([STONE]);
+    expect(diseaseResistReroll(a)).toEqual({ rolls: 2, mode: "keepBest", label: expect.stringMatching(/Крепкий как Камень/) });
+    expect(vacuumResistReroll(a)).toEqual({ rolls: 2, mode: "keepBest", label: expect.stringMatching(/Крепкий как Камень/) });
+  });
+
+  it("без Черт и без актора — обычный бросок", () => {
+    expect(diseaseResistReroll(actor([]))).toBeNull();
+    expect(vacuumResistReroll(actor([]))).toBeNull();
+    expect(diseaseResistReroll(null)).toBeNull();
+    expect(vacuumResistReroll(null)).toBeNull();
   });
 });
 

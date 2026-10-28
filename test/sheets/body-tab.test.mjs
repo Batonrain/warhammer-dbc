@@ -130,8 +130,17 @@ describe("body tab helpers", () => {
       "flags.warhammer-dbc.-=deathCause": null,
       "flags.warhammer-dbc.-=susAnAttempted": null,
       "flags.warhammer-dbc.-=toyOfGodsTestFailed": null,
-      "flags.warhammer-dbc.-=fateSaveFailed": null
+      "flags.warhammer-dbc.-=fateSaveFailed": null,
+      // Момент смерти (для Реанимировать, 3-dc87) уходит вместе с остальными метками.
+      "flags.warhammer-dbc.-=deceasedAt": null
     });
+  });
+
+  it("констатация смерти записывает её момент (Реанимировать: «не более Cor.b Раундов назад»)", async () => {
+    const a = actor();
+    game.time = { worldTime: 777 };
+    await setDeceased(a, true);
+    expect(a.flags.deceasedAt).toMatchObject({ worldTime: 777 });
   });
 
   it("снятие галочки у живого ничего не пишет", async () => {

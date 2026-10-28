@@ -27,6 +27,7 @@
     "damageType": "energy",
     "penetration": 0,
     "effect": "[Железо: Omnissiah Axe · Цена: 2К · Процесс: Нет · Тип: Анима, Физическое] Треб.: Tech-Use+10, Techsorcism Purge. vs W демона. Демоническая машина/оружие: на 1 Раунд за нечётный Успех изолируется от демона (машина Беспомощна, оружие обычное; прекращает Одержимость носителя).",
+    "harmful": true,
     "effects": {
       "charBonusStat": "",
       "charBonusValue": 0,

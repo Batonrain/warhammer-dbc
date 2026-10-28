@@ -34,9 +34,14 @@ import { hasBlindFighting } from "../../rules/unseen-talents.mjs";
 import { hasDodgeTalent } from "../../rules/dodge-talents.mjs";
 import { flourishPenaltyAgainst } from "../../combat/flourish-dance.mjs";
 import { halvePenalty } from "../../rules/awareness-talents.mjs";
+import { hasDamageTalent } from "../../rules/damage-talents.mjs";
+import { isInRage, RAGE_TEST_PENALTY, RAGE_NO_BS_PENALTY } from "../../rules/rage.mjs";
 // Действующие моды (wdbc-1rno.38/.40): без «бесполезных без X» и без
 // невыбранных прицелов — тот же список, что у getModEffects и окна атаки.
 import { getActiveMods } from "../../combat/weapon-mods.mjs";
+import { jockeyMountedBonus, JOCKEY_ATTACK_BONUS } from "../../combat/jockey.mjs";
+import { closeQuartersMod } from "../../rules/rogue-talents.mjs";
+import { pinDownHoldOf } from "../../rules/pugilist-talents.mjs";
 
 /**
  * Атака оружием в руке без пальцев (мутация Потеря Конечности, субмутации
@@ -74,6 +79,9 @@ export function situationalMods(v) {
     // Штраф за огринское оружие в чужих руках (rules/ogryn-fit.mjs) — число
     // со знаком минус или 0. Нужен, чтобы предложить его снять Закреплением.
     ogrynBracePenalty = 0,
+    pointBlankForced = false,
+    // Профиль атаки (Тандем: моды встроенного оружия действуют и на гасители штрафов — combat/weapon-mods.mjs).
+    weaponProfile = null,
   } = v;
 
   // Без Предупреждения, Оружие Наследия (wdbc-1rno.35, versatile 9-9, стр.
@@ -95,7 +103,9 @@ export function situationalMods(v) {
   const tgt = attackCtx?.targetActor ?? null;
   const tgtGrappled = !!tgt?.system?.conditions?.grappling;
   const tgtPartnerUuid = tgt?.getFlag?.("warhammer-dbc", "grapplePartnerUuid") ?? tgt?.flags?.["warhammer-dbc"]?.grapplePartnerUuid;
-  const vsGrappled = tgtGrappled && tgtPartnerUuid !== actor?.uuid;
+  // Прижать (Талант Пугилиста, стр. 62): атаки по прижимающему +20 за Борьбу не получают.
+  const vsGrappled = tgtGrappled && tgtPartnerUuid !== actor?.uuid && pinDownHoldOf(tgt) === undefined;
+  const vsJockeyed = jockeyMountedBonus(tgt, actor) > 0;
   // Те же условия, по которым окно атаки само даёт ±20 (attack-dialog.mjs,
   // proneMod/stunnedMod) — wdbc-x1nz.2.97 п.6.
   const tgtProneAuto   = !!tgt?.system?.conditions?.prone;
@@ -110,13 +120,32 @@ export function situationalMods(v) {
   // rangedCore.core.bulgingBiceps) — снимает штраф «Тяжёлое оружие: без
   // Закрепления» целиком, см. ниже у этой строки.
   const bulgingBicepsActive = hasRuleFlag(actor, "rangedCore.core.bulgingBiceps");
+  // Таланты глав «Рукопашные»/«Стрелок» (rules/damage-talents.mjs; Sahara
+  // 3-8dc5/3-5fbf): Надёжная Стойка и Гурьбой — строки рукопашных модификаторов,
+  // Выбор Целей — строка стрелковых ниже. Имя ИЛИ ключ (hasAbility): персонаж, купивший
+  // Талант до записи Конструктора в паке, ключа не несёт.
+  const steadyFootwork  = isMelee  && hasDamageTalent(actor, "steadyFootwork");
+  const doubleTeam      = isMelee  && hasDamageTalent(actor, "doubleTeam");
+  const targetSelection = !isMelee && hasDamageTalent(actor, "targetSelection");
   const commonMods = [
     ...(tgtAntiAim ? [{ label: "Антиприцел цели", value: 0, autofail: true, autoCheck: aimingOn,
       note: aimingOn ? "вы прицелились — атака автоматически промахивается (Странная Неуязвимость)"
                      : "атаки с Прицеливанием по этой цели автоматически промахиваются" }] : []),
     { label: "Усталость",     value: -10, autoCheck: hasFatigue },
+    // Ярость (Frenzy, стр. 62): «штраф −20 на все тесты BS» — стрельба. Окно
+    // атаки собирает порог само (правила rollBonus сюда не доезжают, см.
+    // attack-dialog.mjs::ruleAutoMods), поэтому строка своя, как у Усталости.
+    // WS в Ярости не падает — там +10 к значению (rules/character.mjs).
+    // Модуль Агрессии Скитария Best.Q «убирает штраф к BS в Ярости» —
+    // возможность RAGE_NO_BS_PENALTY (rules/rage.mjs), строки нет вовсе.
+    ...(!isMelee && isInRage(actor) && !hasRuleFlag(actor, RAGE_NO_BS_PENALTY)
+      ? [{ label: "Ярость: −20 BS", value: RAGE_TEST_PENALTY, autoCheck: true }] : []),
     { label: "Цель в Борьбе (не ваш Захват)", value: 20, autoCheck: vsGrappled,
       note: vsGrappled ? "стр. 12: +20 на атаки по сцепившимся" : undefined },
+    // Жокей (стр. 62, combat/jockey.mjs): по оседланной цели — половина бонуса Борьбы.
+    ...(vsJockeyed
+      ? [{ label: "Цель оседлана Жокеем (половина бонуса Борьбы)", value: JOCKEY_ATTACK_BONUS, autoCheck: true,
+          note: "стр. 62, Жокей: +10 вместо +20 по цели с наездником" }] : []),
     // visionPenalty (wdbc-1rno.1, Чёрные Глаза/Black Eyes, Cor 60+) — три
     // галочки ниже гасятся у АТАКУЮЩЕГО (не у цели, поэтому не immuneFlag —
     // тот гасит только возможности ЦЕЛИ, см. цикл ниже).
@@ -309,7 +338,7 @@ export function situationalMods(v) {
   // rules/vision-penalty-immunity.mjs) — тем же приёмом, что Чёрные Глаза:
   // Слабый свет/Тьма и Дым гасятся раздельно.
   {
-    const mods = weapon ? getActiveMods(actor, weapon) : [];
+    const mods = weapon ? getActiveMods(actor, weapon, { profile: weaponProfile }) : [];
     const aiming = actor?.system?.aiming;
     const why = {
       light: lightPenaltyImmunityReason(actor, mods, { aiming }),
@@ -434,15 +463,32 @@ export function situationalMods(v) {
       label: "Прикрывающая Стойка союзника рядом", value: -20, autoCheck: true,
       note: `${coveringDefenders.map(d => d.name).join(", ")} прикрывает цель (стр. 15)`
     }] : []),
-    { label: "Трудный ландшафт",       value: -10, autoCheck: !!meleeTerrain?.inTerrain,
-      note: meleeTerrain?.inTerrain ? "зона Трудного Ландшафта под атакующим" : undefined },
-    { label: "Очень трудный ландшафт", value: -20 },
+    // Steady Footwork/Надёжная Стойка (meleeCore.core.steadyFootwork): «не
+    // получает штрафов к тестам WS от Трудного ландшафта» — обе строки ландшафта
+    // обнуляются с подписью, а не прячутся: исчезнувшая галочка выглядела бы багом.
+    { label: "Трудный ландшафт",       value: steadyFootwork ? 0 : -10, immune: steadyFootwork,
+      autoCheck: !steadyFootwork && !!meleeTerrain?.inTerrain,
+      note: steadyFootwork ? "снято: Steady Footwork/Надёжная Стойка"
+          : meleeTerrain?.inTerrain ? "зона Трудного Ландшафта под атакующим" : undefined },
+    { label: "Очень трудный ландшафт", value: steadyFootwork ? 0 : -20, immune: steadyFootwork,
+      note: steadyFootwork ? "снято: Steady Footwork/Надёжная Стойка" : undefined },
     // Мастер Боя (глава 3): «противники не получают бонусов за численное
     // превосходство для рукопашных атак по нему» — гасится ниже, по Таланту ЦЕЛИ.
     { label: "Числ. перевес 2к1",      value:  10, autoCheck: outnumberCount === 2,
       note: outnumberCount == null ? undefined : `в контакте с целью: ${outnumberCount}` },
     { label: "Числ. перевес 3к1",      value:  20, autoCheck: outnumberCount != null && outnumberCount >= 3,
       note: outnumberCount == null ? undefined : `в контакте с целью: ${outnumberCount}` },
+    // Double Team/Гурьбой (meleeCore.core.doubleTeam): «ещё +10 на попадание в
+    // ближнем бою за численное превосходство 2 к 1 или выше» — ПОВЕРХ строк
+    // выше (книга: «ещё»), поэтому отдельная строка, а не правка их значений.
+    // Название начинается с «Числ. перевес» намеренно: Мастер Боя у ЦЕЛИ гасит
+    // «бонусы за численное превосходство» по этому префиксу (ниже), и Гурьбой —
+    // такой же бонус.
+    ...(doubleTeam ? [{
+      label: "Числ. перевес: Гурьбой", value: 10, autoCheck: outnumberCount != null && outnumberCount >= 2,
+      note: outnumberCount == null ? "Гурьбой: ещё +10 при перевесе 2к1 и выше"
+        : `Гурьбой: ещё +10 при перевесе 2к1 и выше (в контакте с целью: ${outnumberCount})`
+    }] : []),
     // Адаптивное у ЦЕЛИ, третья ступень (стр. 428, wdbc-bjy1.13): «когда 3к1 —
     // враги получают −10 на рукопашные атаки по персонажу».
     ...(adaptiveLegacyDefenderPenalty({ targetActor: attackCtx.targetActor, targetContactCount: outnumberCount, isMelee }) ? [{
@@ -487,9 +533,13 @@ export function situationalMods(v) {
     // Пистолет (стр. 40, wdbc-x1nz.2.57): «может использоваться для стрельбы
     // в ближнем бою без каких-либо штрафов» — ни этого штрафа, ни бонуса
     // Уклонения цели (тот гасится отдельно, attack.mjs::meleeShotDodgeBonus).
+    // Штыковая Атака (pointBlankForced): выстрел «как если бы это был выстрел в упор… невзирая на то что персонаж
+    // связан в ближнем бою» — штрафа за стрельбу в рукопашной нет (Sahara pyromaniac-20 п.3); бонус Уклонения
+    // цели (meleeShotDodgeBonus, attack.mjs) не тронут.
     { id: "atk-melee-shot", label: "Стрельба в рукопашную",
-      value: weapon?.system?.weaponClass === "pistol" ? 0 : -20,
-      note: weapon?.system?.weaponClass === "pistol" ? "Пистолет: без штрафов в рукопашную" : undefined },
+      value: (weapon?.system?.weaponClass === "pistol" || pointBlankForced) ? 0 : -20,
+      note: weapon?.system?.weaponClass === "pistol" ? "Пистолет: без штрафов в рукопашную"
+        : pointBlankForced ? "Штыковая Атака: выстрел как в упор, без штрафа за стрельбу в рукопашной" : undefined },
     // Связан в Рукопашной (стр. 30, wdbc-x1nz.2.64): полный запрет стрелять в
     // цели ВНЕ рукопашной, если стрелок сам заперт врагом с рукопашным
     // оружием/Пистолетом в контакте. Тот же autofail-приём, что у «Тяжёлое/
@@ -506,9 +556,16 @@ export function situationalMods(v) {
     // Стрельба ПО цели в рукопашной с ТРЕТЬИМ лицом (стр. 30) — отдельно от
     // «Стрельба в рукопашную» выше (та про самого стрелка, с исключением для
     // Пистолета): здесь исключения нет, стрелок сам не в этой рукопашной.
-    { label: "Цель связана в рукопашной (с другим персонажем)", value: -20,
-      autoCheck: targetLocked,
-      note: targetLocked ? "стр. 30 — штраф без исключений, даже Пистолету" : undefined },
+    // Target Selection/Выбор Целей (rangedCore.core.targetSelection), первая
+    // половина: «может стрелять в цели, связанные в ближнем бою, без штрафов» —
+    // строка обнуляется с подписью. Вторая («промахи никогда не попадают в
+    // союзников») не сделана: рикошет промаха (attack.mjs, misfireHits) не
+    // умеет исключать союзников. «Стрельба в рукопашную» выше (стрелок САМ в
+    // этой рукопашной) Талантом не тронута — ручная галочка, см. отчёт сессии.
+    { label: "Цель связана в рукопашной (с другим персонажем)", value: targetSelection ? 0 : -20,
+      immune: targetSelection, autoCheck: !targetSelection && targetLocked,
+      note: targetSelection ? "снято: Target Selection/Выбор Целей"
+          : targetLocked ? "стр. 30 — штраф без исключений, даже Пистолету" : undefined },
     // Тяжёлое оружие и Длинная Винтовка (стр. 40, wdbc-x1nz.2.57): «не может
     // использоваться для стрельбы в ближнем бою» вовсе — в отличие от
     // Пистолета/Винтовки выше, это не штраф, а полный запрет самого выстрела
@@ -530,12 +587,16 @@ export function situationalMods(v) {
     // расстояние в диапазоне «в упор» (0–3м), поэтому геометрия сама
     // отличает «просто стреляю с 1м, никого не трогая» (честные +30) от
     // «стреляю в того, с кем сцепился врукопашную» (книжные +0).
-    { label: "Дистанция в упор",
-      value: (!!measured?.contact && measured.contact !== "none") ? 0 : 30,
-      autoCheck: bandKey === "pointBlank",
-      note: (!!measured?.contact && measured.contact !== "none")
-        ? "стрельба в ближнем бою — как боевая дистанция (стр. 40)"
-        : bandNote("pointBlank") },
+    // Штыковая Атака (Талант, rules/run-and-gun.mjs): выстрел «как в упор, +30 за расстояние, несмотря
+    // на то что персонаж связан в ближнем бою» — контакт Баз бонус не обнуляет, строка отмечена сама.
+    // id читает форма (f.pointBlank): Выпуск Батареи не штрафует выстрел в упор (rules/batpack-dump.mjs).
+    { id: "atk-point-blank", label: "Дистанция в упор",
+      value: (!pointBlankForced && !!measured?.contact && measured.contact !== "none") ? 0 : 30,
+      autoCheck: bandKey === "pointBlank" || pointBlankForced,
+      note: pointBlankForced ? "Штыковая Атака: как выстрел в упор, +30 несмотря на связанность"
+        : (!!measured?.contact && measured.contact !== "none")
+          ? "стрельба в ближнем бою — как боевая дистанция (стр. 40)"
+          : bandNote("pointBlank") },
     { label: "Короткая дистанция",      value:  10, autoCheck: bandKey === "short",      note: bandNote("short") },
     { label: "Боевая дистанция",        value:   0, autoCheck: bandKey === "combat",     note: bandNote("combat") },
     { label: "Дальняя дистанция",       value: -10, autoCheck: bandKey === "long",       note: bandNote("long") },
@@ -596,6 +657,20 @@ export function situationalMods(v) {
         note: `${attackCtx.targetActor.name}: -5 за каждый Успех танцора` });
     }
   }
+  // Бой Вплотную у ЦЕЛИ (Талант Разбойника, стр. 62, rules/rogue-talents.mjs): противники,
+  // начавшие Ход в рукопашной с ним, не получают бонуса за более длинное оружие и бьют
+  // оружием с Rng больше 2 со штрафом −10. «Начал Ход в рукопашной» система не определяет —
+  // галочка по решению владельца (по умолчанию снята); один пункт гасит и −10, и +5 длины.
+  {
+    const attackerRng = isMelee ? meleeAttackerRange : (Number(weapon?.system?.range) || 0);
+    const cq = closeQuartersMod(attackCtx.targetActor, attackerRng, isMelee && longerWeaponAuto);
+    if (cq.value) {
+      commonMods.push({
+        label: "Бой Вплотную цели: я начал Ход в рукопашной с ней", value: cq.value, autoCheck: false,
+        note: `${attackCtx.targetActor.name}: ${cq.penalty ? "−10 (оружие с Rng больше 2)" : ""}${cq.penalty && cq.lengthCancel ? ", " : ""}${cq.lengthCancel ? "бонус +5 за более длинное оружие снимается" : ""}`
+      });
+    }
+  }
   // Мастер Боя у ЦЕЛИ (глава 3): строки «Числ. перевес» (specificMods) гасятся.
   // По имени Таланта, а не через immuneFlag: так работает и на персонажах,
   // получивших Талант до того, как в компендиуме у него появилась запись
@@ -620,7 +695,7 @@ export function situationalMods(v) {
     const tracking = !!(actor?.getFlag?.("warhammer-dbc", "trackingAimActive")
       ?? actor?.flags?.["warhammer-dbc"]?.trackingAimActive);
     const predictor = !!aiming && aiming !== "none" && weapon
-      && getActiveMods(actor, weapon).some(m => !!m.system?.effects?.aimIgnoresRunning);
+      && getActiveMods(actor, weapon, { profile: weaponProfile }).some(m => !!m.system?.effects?.aimIgnoresRunning);
     const why = tracking ? "Прицел на Упреждение" : predictor ? "Предсказатель Движения" : null;
     const row = why && specificMods.find(m => m.label === "Низкая высота цели" && !m.immune);
     if (row) { row.value = 0; row.immune = true; row.note = `снято: ${why}`; }
@@ -629,7 +704,7 @@ export function situationalMods(v) {
   // и оптические прицелы при Прицеливании снимают оба штрафа — тем же
   // приёмом, что Зенитное гасит «Цель бежит» (выше).
   if (!isMelee) {
-    const why = longRangeImmunityReason(actor, weapon ? getActiveMods(actor, weapon) : [],
+    const why = longRangeImmunityReason(actor, weapon ? getActiveMods(actor, weapon, { profile: weaponProfile }) : [],
                                         { aiming: actor?.system?.aiming });
     if (why) {
       for (const m of specificMods) {

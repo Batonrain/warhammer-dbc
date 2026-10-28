@@ -30,9 +30,14 @@ export function hasPlagueShepherd(actor) {
   return !!actor?.items?.some(i => isPlagueShepherdItem(i));
 }
 
-/** Заражён ли актор хотя бы одной болезнью (embedded Item type:"disease", см. sheets/tabs/diseases.mjs). */
+/**
+ * Заражён ли актор хотя бы одной ДЕЙСТВУЮЩЕЙ болезнью (embedded Item
+ * type:"disease", см. sheets/tabs/diseases.mjs). Болезнь действует, пока
+ * включена (system.active; умолчание схемы — false): отбитая и выключенная
+ * болезнь заражённым не делает.
+ */
 export function isInfected(actor) {
-  return !!actor?.items?.some(i => i?.type === "disease");
+  return !!actor?.items?.some(i => i?.type === "disease" && i.system?.active === true);
 }
 
 /**

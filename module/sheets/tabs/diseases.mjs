@@ -8,6 +8,7 @@
 
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { PERFECT_HOST } from "../../rules/perfect-host.mjs";
+import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 
 export function activateDiseaseListeners(html, actor) {
   html.find(".disease-name-link").click(ev => {
@@ -28,7 +29,19 @@ export function activateDiseaseListeners(html, actor) {
   });
   html.find(".disease-active-toggle").click(async ev => {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);
-    if (item) await item.update({ "system.active": !item.system.active });
+    if (!item) return;
+    await item.update({ "system.active": !item.system.active });
+    // Болезнь действует, только когда включена (isItemActive, wdbc-dbveg): её
+    // ActiveEffect переключается вместе с кнопкой.
+    await syncItemEffectsDisabled(item);
+  });
+  // Тест заражения T±N по пути передачи болезни (combat/disease-infection.mjs, wdbc-dbveg):
+  // провал включает болезнь. Импорт ленивый — боевой слой не нужен вкладке, пока не нажали.
+  html.find(".disease-infect-btn").click(async ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (!item) return;
+    const { rollInfectionTest } = await import("../../combat/disease-infection.mjs");
+    await rollInfectionTest(actor, item);
   });
   html.find(".disease-add-btn").click(async () => {
     const [it] = await actor.createEmbeddedDocuments("Item", [

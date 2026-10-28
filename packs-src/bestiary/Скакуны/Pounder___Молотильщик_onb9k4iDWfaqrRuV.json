@@ -854,7 +854,8 @@
           "standard": false,
           "reloads": 10
         },
-        "drukhari": false
+        "drukhari": false,
+        "meleeCategory": "Кулаки"
       },
       "_id": "cpwQZ8nm2GREz0Vd",
       "effects": [],

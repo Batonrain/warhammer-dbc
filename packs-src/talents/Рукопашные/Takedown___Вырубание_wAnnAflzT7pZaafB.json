@@ -5,7 +5,7 @@
   "folder": "XeycnCsRlazxEDgr",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: с Талантом приём Оглушить доступен с любым оружием (список категорий снят) и окно атаки не запирает прицел в Голову (module/rules/takedown.mjs::stunUnrestricted/stunForcedAim, sheets/attack/selection.mjs); при успешном Оглушении (Оглушение реально наложилось) в карточке урона появляется кнопка «Вырубание: сбить с ног» — цель получает «Повален» через общую точку наложения, раз на карточку (combat/takedown.mjs, кнопка в combat/damage.mjs). Талант опознаётся по имени и по capabilityKey meleeCore.core.takedown. Не смоделировано: описание приёма в окне атаки остаётся книжным («Избирательная атака в голову»); Рукопашная Тренировка на категорию оружия для приёма по-прежнему нужна.",
     "benefit": "Персонаж может совершать приём Оглушить с любым оружием и не-Избирательной атакой. При успешном Оглушении он может также сбить цель с ног.",
     "tier": 1,
     "requirement": "Нет",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "TkdnGrp0Mech1a2B",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "TkdnCap0Entry3x9",
+              "capabilityKey": "meleeCore.core.takedown",
+              "label": "Вырубание: приём Оглушить с любым оружием без обязательной Избирательной атаки; при успешном Оглушении можно сбить цель с ног",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

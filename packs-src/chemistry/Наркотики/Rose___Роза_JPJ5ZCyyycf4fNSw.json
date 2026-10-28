@@ -25,9 +25,10 @@
       "isAddicted": false,
       "minDose": 1,
       "testChar": "wp",
-      "testMod": -40,
+      "testMod": -10,
       "frequency": "6 дней",
-      "penalty": "−40 P, стимы не приносят наслаждения"
+      "penalty": "−40 P, стимы не приносят наслаждения",
+      "penaltyMods": "basedon:per=-40"
     },
     "statMods": {
       "ws": 0,

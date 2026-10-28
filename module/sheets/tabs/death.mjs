@@ -70,6 +70,9 @@ async function _postCard(actor, header, lines, rolls = []) {
   }, { rolls, sound: rolls.length > 0 });
 }
 
+/** Момент констатации смерти {worldTime, combatId, round} — пишет body.mjs::setDeceased, читает Реанимировать. */
+export const DECEASED_AT_FLAG = "deceasedAt";
+
 /**
  * Снятие всех меток ОДНОЙ смерти, когда она разрешилась (спасся, вошёл в
  * анабиоз, воскрешён): причина, снимок Ран, попытка Сус-ан, провал теста
@@ -79,7 +82,7 @@ async function _postCard(actor, header, lines, rolls = []) {
 export function _deathResolvedFields(actor) {
   const out = {};
   for (const key of [DEATH_CAUSE_FLAG, PRE_HIT_WOUNDS_FLAG, SUS_AN_ATTEMPT_FLAG, TOY_TEST_FAILED_FLAG, KISS_OF_DEATH_FLAG,
-    FATE_SAVE_FAILED_FLAG]) {
+    FATE_SAVE_FAILED_FLAG, DECEASED_AT_FLAG]) {
     if (actor.getFlag?.(NS, key) !== undefined) out[`flags.${NS}.-=${key}`] = null;
   }
   return out;

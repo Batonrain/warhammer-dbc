@@ -5,7 +5,7 @@
   "folder": "V0Wfgl0aycRFPfu2",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано (владелец 24.10.2026, вариант «В»): capabilityKey rangedCore.core.coveringFire — Выход из Боя (module/combat/movement-actions.mjs::declareDisengage) запоминает врагов в контакте и кладёт в карточку кнопку очереди на каждого (module/combat/covering-fire.mjs); кнопка открывает окно атаки: только Короткая/Длинная очередь из Пистолета/винтовки (не длинной), штраф −20, без ОД и без счёта Атаки Хода. После очереди ВСЕ запомненные враги получают метку на стрелке (+10 короткая / +0 длинная); когда такой враг объявляет Натиск (declareCharge), система спрашивает «Натиск на стрелка?» и бросает тест Подавления (module/combat/suppression.mjs::rollSuppressionTest); проваленный тест — Натиск не объявляется. Метки гаснут в начале следующего Хода стрелка.",
     "benefit": "Совершая Выход из Боя, в конце движения персонаж может за свободное действие совершить короткую/длинную очередь из пистолета/винтовки (не дл. винтовки) по тем, из рукопашной с кем выходил, со штрафом −20. Если те попытаются Натиск на него — тест Подавление +10/+0 (короткая/длинная).",
     "tier": 2,
     "requirement": "BS 40, P 40",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "falM1BZq8FjtPejL",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "L6OtiZFEgWLOLgRs",
+              "capabilityKey": "rangedCore.core.coveringFire",
+              "label": "Прикрывающий Огонь: очередь после Выхода из Боя; Подавление +10/+0 всем бывшим противникам при Натиске",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

@@ -5,7 +5,7 @@
   "folder": "HfTlTkQPDwQ9Yqqn",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано (трактовка Б, владелец 24.10.2026): capabilityKey weaponsmith.core.welder — Избирательная атака оружием со свойством Melta по технике помечает кнопки урона (module/rules/gunsmith-talents.mjs::welderMarksHit, data-welder), и при непоглощённом уроне module/combat/vehicle.mjs ВСЕГДА добавляет Критический Эффект 1d5+1 в часть машины, в которую целился стрелок. Выбор части (решение владельца 26.10.2026): когда целью отмечена техника, в окне атаки существа «Прицел» показывает части машины (Ходовая, Башня, три вида Орудия, Др. открытая сторона — перечень VEHICLE_AIM_TARGETS, штрафы −10…−40 как у стрельбы самой машины) вместо частей тела; выбранная часть едет как aimTarget.vehiclePart, туда ложится попадание (первые два попадания очереди, остальные — в Корпус) и доп. Критический Эффект Сварщика — именно в выбранную часть, куда бы ни легло конкретное попадание (data-welder-part на кнопке урона; у старых карточек без него — по месту попадания).",
     "benefit": "Попадая Избирательной атакой из оружия со свойством Melta по машине и нанося непоглощённый урон, персонаж также наносит Критический Эффект 1d5+1 в ту часть машины, в которую целился.",
     "tier": 1,
     "requirement": "BS 40, Weapon Training (Melta)",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "7HAt4Q1XXIjTaO6S",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "AJhrX0uiJIJDDVw4",
+              "capabilityKey": "weaponsmith.core.welder",
+              "label": "Сварщик: Избирательный выстрел Мельтой по технике — ещё Критический Эффект 1d5+1",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

@@ -174,12 +174,24 @@ export function effectAppliesTo(target, ctx) {
   // диалога) — общего ctx.kind/ctx.skill на них нет, поэтому вызывающий код
   // сам проставляет ctx.morale=true там, где RAW называет тест тестом Морали.
   if (scope === "morale") return ctx.morale === true;
+  // Только тест на Подавление (стр. 33: «тест на W+0 и тест Морали») — Стальные
+  // Нервы (Sahara 3-scope): «может перебрасывать тесты на Подавление», а не
+  // Страх/Шок/Панику, которые «morale» тоже ловит. Флаг ставит
+  // rules/morale-test.mjs по opts.suppression из combat/suppression.mjs. Имя
+  // НЕ «suppression»: ctx.suppression в rules/match-context.mjs — «Подавление
+  // Травм и Расстройств» (Мир-сад/Мир удовольствий), другая механика.
+  if (scope === "suppression") return ctx.suppressionTest === true;
   // Встречный тест демона против Экзорцизма/Чистой Демонологии (Локус Цепей,
   // wdbc-smc, daemon-sheet.mjs::_rollVsExorcism) — узкий вид теста, а не любой
   // "opposed": книга даёт бонус именно этому конкретному тесту, не всем
   // встречным тестам подряд.
   if (scope === "vsexorcism") return ctx.kind === "vsExorcism";
   if (scope === "social") return isSocialSkill(ctx.skill);
+  // Реквизиция — тест «достать снаряжение» (apps/requisition.mjs): идёт по Inf
+  // (или по F у Сети Контактов), поэтому свой ctx-флаг, а не «char:inf» — тот
+  // подхватил бы любой тест Влияния. Бонус Чрезмерного Богатства «на получение
+  // снаряжения» не должен срабатывать на обычном броске Inf.
+  if (scope === "requisition") return ctx.requisition === true;
   // Любой тест НАВЫКА (обычного или группового), но не Характеристики — тест
   // характеристики не несёт ни ctx.skill, ни ctx.group (см. коммент выше).
   // Пока единственный потребитель — Зависимость (rules/addiction.mjs).
@@ -202,14 +214,41 @@ export function effectAppliesTo(target, ctx) {
   // Тест сопротивления яду (wdbc-1rno.1, Пророк Гэллерпокса): единственный
   // реальный «тест против яда» в системе — сопротивление свойству оружия
   // Toxic (module/hooks.mjs::_applyWeaponPropEffect, condition==="poisoned").
-  // Болезни своего теста не имеют вовсе (type:"disease" — статичные данные,
-  // без броска), поэтому этот scope покрывает только яд, не болезнь.
+  // Болезнь — отдельный scope "disease" ниже, не этот.
   if (scope === "poison") return ctx.poisonTest === true;
+  // Тест заражения болезнью (combat/disease-infection.mjs, wdbc-dbveg):
+  // T±N из векторов болезни. Свой флаг, а не «char:t»: тот ловил бы любой тест
+  // Стойкости (жару, радиацию, яд). Преимущество Крепкого как Камень и
+  // Живучести Сплайса — rules/squat-traits.mjs::diseaseResistReroll.
+  if (scope === "disease") return ctx.diseaseTest === true;
+  // Тест вакуума (combat/vacuum.mjs, trade-voidfarer-10-wdbc-dbveg): T+0 в
+  // начале Хода без пустотной брони. Преимущество Сквата —
+  // squat-traits.mjs::vacuumResistReroll.
+  if (scope === "vacuum") return ctx.vacuumTest === true;
   // Наследие Крови, Оружие Наследия (wdbc-1rno.35, стр. 427, wdbc-1rno.46):
   // «+10 на встречные тесты против психосил/выжигания души» — общий тег
   // «это тест против опасной психической угрозы», протащенный явно через
   // делегированные тесты Сопротивления (psy-resist-request-btn, Soul Burn).
   if (scope === "psychicthreat") return ctx.psychicThreat === true;
+  // «Против психосил» в узком смысле (Бастион Железной Воли, Sahara 3-defiance):
+  // тест Сопротивления психосиле, но НЕ Выжигание Души — у того тот же общий
+  // тег psychicThreat, а книга перечисляет «психосилы» и «выжигание души» через
+  // запятую (Солипсизм). Выжигание Души ставит ctx.soulBurn (hooks.mjs::_executeSoulBurn).
+  if (scope === "psychicpower") return ctx.psychicThreat === true && ctx.soulBurn !== true;
+  // «Влияющие на разум» (Непреклонный, решение владельца 25.10.2026, вариант Б):
+  // книга не размечает психосилы на «влияющие на разум» и прочие, поэтому
+  // считаем таким всякое Сопротивление психосиле, где сопротивляются Волей
+  // (resistChar = wp, ctx.char). Шире буквы книги — решение стола, не ошибка.
+  if (scope === "psychicmind") {
+    return ctx.psychicThreat === true && String(ctx.char ?? "").toLowerCase() === "wp";
+  }
+  // Солипсизм: «встречные тесты против психосил (кроме непрямых), одержимости
+  // или выжигания души» — психическая угроза, но не Непрямая сила
+  // (ctx.psychicIndirect ставит hooks.mjs для делегированного теста).
+  if (scope === "psychicdirect") return ctx.psychicThreat === true && ctx.psychicIndirect !== true;
+  // Сопротивление допросу (Ортопрокси): встречный тест Воли жертвы в диалоге
+  // пытки/допроса (apps/torture.mjs ставит ctx.interrogation).
+  if (scope === "interrogation") return ctx.interrogation === true;
   // «basedon:<хар-ка>» (wdbc-x1nz.2.89/.97/.92) — ЛЮБОЙ тест навыка или
   // характеристики на этой Характеристике: «−20 на броски WS» у Поваленного
   // (Парирование — навык от WS), «−5 на все тесты T» у Обескровленного. Не

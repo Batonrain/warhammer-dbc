@@ -5,7 +5,7 @@
   "folder": "Nu4M8EyPNQpHOOjO",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано частично: после УСПЕШНОГО Ноосферного Сканирования Талант спрашивает «засечено неизвестное Техночудо — потратить 1 ⚙ и распознать?»; согласие списывает 1 ⚙ и пишет в чат карточку для ГМа (sheets/tabs/tech.mjs::rollTechScan). Какое Техночудо засечено и что оно делает — раскрывает ГМ: система не знает, что именно сканируется.",
     "benefit": "Засекая Ноосферным Сканированием неизвестное себе Техночудо, персонаж может потратить 1 Когницию, чтобы распознать его, как если бы знал сам.",
     "tier": 1,
     "requirement": "Tech-Use+20",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g03decompilCap1",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "e03decompilCap1",
+              "capabilityKey": "technomystic.core.decompile",
+              "label": "Декомпиляция: за 1 ⚙ распознать засечённое неизвестное Техночудо",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

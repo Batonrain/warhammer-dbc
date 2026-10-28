@@ -27,7 +27,8 @@
       "testChar": "wp",
       "testMod": 40,
       "frequency": "1 день",
-      "penalty": "−50 на тесты I и F, общается простыми фразами"
+      "penalty": "−50 на тесты I и F, общается простыми фразами",
+      "penaltyMods": "basedon:int=-50; basedon:fel=-50"
     },
     "statMods": {
       "ws": 0,

@@ -140,9 +140,16 @@ describe("Осквернённый Клинок (\"10\")", () => {
 
 describe("Тень (\"1\") — телепорт в облако, только в темноте, раз в Раунд", () => {
   function makeTokenDoc(x = 0, y = 0) {
+    // Двигать токен нужно через TokenDocument#move с action «blink» (task-bbe1): прямой
+    // update({x,y}) пишет в историю пути обычную ХОДЬБУ и потом съедает бюджет лимита пути.
     const doc = {
-      x, y, width: 1, height: 1, parent: {},
-      update: async data => { Object.assign(doc, data); }
+      x, y, width: 1, height: 1, parent: {}, moves: [],
+      update: async () => { throw new Error("токен двигают через move(), а не update({x,y})"); },
+      move: async (destination, options) => {
+        doc.moves.push({ destination, options });
+        doc.x = destination.x; doc.y = destination.y;
+        return true;
+      }
     };
     return doc;
   }
@@ -181,6 +188,54 @@ describe("Тень (\"1\") — телепорт в облако, только в
     expect(tokenDoc.x).toBe(450); // 500 − ширина(1×100)/2
     expect(tokenDoc.y).toBe(-50);
     expect(captured.chat.at(-1).content).toContain("клубы дыма");
+  });
+
+  it("телепорт Тени — blink (телепорт для измерителя пути, стены учитываются), по своей воле, не «принудительный сдвиг»", async () => {
+    getTerrainInfoForToken.mockReturnValue({ inTerrain: true, props: [{ key: "dark", label: "Тьма", mod: -10 }], extraMod: -10 });
+    stubCanvas({ placedPoint: { x: 500, y: 0 } });
+    const tokenDoc = makeTokenDoc(0, 0);
+    await activateWrappedInChaos(makeActor(), makeItem("1"), tokenDoc);
+
+    expect(tokenDoc.moves).toHaveLength(1);
+    expect(tokenDoc.moves[0].destination).toEqual({ x: 450, y: -50, action: "blink" }); // blink — стены ядро проверяет
+    expect(tokenDoc.moves[0].options.method).toBe("api");
+    expect(tokenDoc.moves[0].options.whDBC?.forcedMove).toBeUndefined();
+  });
+
+  it("ядро отклонило перемещение (move вернул false) — карточки нет, «раз в Раунд» не потрачено", async () => {
+    getTerrainInfoForToken.mockReturnValue({ inTerrain: true, props: [{ key: "dark", label: "Тьма", mod: -10 }], extraMod: -10 });
+    stubCanvas({ placedPoint: { x: 500, y: 0 } });
+    globalThis.game.combat = { round: 4 };
+    const actor = makeActor();
+    const tokenDoc = makeTokenDoc(0, 0);
+    tokenDoc.move = async () => false;
+    await activateWrappedInChaos(actor, makeItem("1"), tokenDoc);
+    expect(captured.chat).toHaveLength(0);
+    expect(captured.warnings.at(-1)).toContain("отклонено");
+
+    // Повторная попытка в том же Раунде проходит — ячейка не потрачена.
+    const ok = makeTokenDoc(0, 0);
+    await activateWrappedInChaos(actor, makeItem("1"), ok);
+    expect(ok.moves).toHaveLength(1);
+    expect(captured.chat).toHaveLength(1);
+  });
+
+  it("стена на пути: ядро остановило токен на полпути — токен у стены, «раз в Раунд» потрачено, карточка называет реальную дистанцию", async () => {
+    getTerrainInfoForToken.mockReturnValue({ inTerrain: true, props: [{ key: "dark", label: "Тьма", mod: -10 }], extraMod: -10 });
+    stubCanvas({ placedPoint: { x: 1050, y: 50 } }); // 10 м от центра токена (50,50)
+    globalThis.game.combat = { round: 5 };
+    const actor = makeActor();
+    const tokenDoc = makeTokenDoc(0, 0);
+    // Ядро: стена на 400 px — токен остановился (x=400), move вернул false (движение остановлено).
+    tokenDoc.move = async destination => { tokenDoc.moves.push({ destination }); tokenDoc.x = 400; return false; };
+    await activateWrappedInChaos(actor, makeItem("1"), tokenDoc);
+    expect(tokenDoc.x).toBe(400);
+    expect(captured.chat).toHaveLength(1);
+    expect(captured.chat.at(-1).content).toContain("4м");
+    expect(captured.chat.at(-1).content).toContain("стен");
+    // тот же Раунд — уже потрачено
+    await activateWrappedInChaos(actor, makeItem("1"), makeTokenDoc(0, 0));
+    expect(captured.warnings.at(-1)).toContain("раз в Ход");
   });
 
   it("точка дальше 10м — предупреждает, не двигает токен", async () => {

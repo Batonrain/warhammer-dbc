@@ -76,7 +76,10 @@
 
 import { isKnownCapability } from "../constants/capabilities.mjs";
 import { entryWhenOk } from "./mech-when.mjs";
+import { RAGE_NO_BS_PENALTY, RAGE_BS_RULE_ID } from "./rage.mjs";
 import { conditionRulesFor, ALT_SENSES_CAPABILITIES } from "./library/conditions.mjs";
+// Лист-модуль (только константы календаря): круга импортов не замыкает (wdbc-795h).
+import { addictionRecords, readWithdrawalEntries } from "./drug-withdrawal.mjs";
 
 /**
  * Возможности, которые по книге сами снимают книжное правило (вытеснением,
@@ -86,8 +89,13 @@ import { conditionRulesFor, ALT_SENSES_CAPABILITIES } from "./library/conditions
  * `when` Возможность не спросить (рекурсия отбора), поэтому вытесняет
  * носитель самой Возможности.
  */
-const CAPABILITY_OVERRIDES = Object.fromEntries(
-  ALT_SENSES_CAPABILITIES.map(key => [key, ["conditions.blinded", "conditions.blinded.blindFighting"]]));
+const CAPABILITY_OVERRIDES = {
+  ...Object.fromEntries(
+    ALT_SENSES_CAPABILITIES.map(key => [key, ["conditions.blinded", "conditions.blinded.blindFighting"]])),
+  // Модуль Агрессии Best.Q: «убирает штраф к BS в Ярости» — гасит только
+  // BS-строку Ярости; штрафы к I и F (последний снимает Cold Fury) остаются.
+  [RAGE_NO_BS_PENALTY]: [RAGE_BS_RULE_ID]
+};
 
 const SYSTEM = "warhammer-dbc";
 
@@ -110,7 +118,8 @@ function scopeTarget(rawScope, entry, ruleId, what) {
   // morale — тесты Морали по книге (Страх/Шок/Паника от Горения/Подавление/
   // встречные Запугивание и Пытки, core.json «Мораль и Потеря
   // Командования»), см. resolve-test.mjs::effectAppliesTo — wdbc-zepq, Lord
-  // of the Exodites. climbing — только тесты Карабканья
+  // of the Exodites. suppression — только тест на Подавление (Стальные Нервы,
+  // Sahara 3-scope), уже «morale», но без Страха/Шока/Паники. climbing — только тесты Карабканья
   // (module/combat/movement-actions.mjs::showClimbDialog), отдельно от
   // «skill:athletics», чтобы не задваиваться с тестами Борьбы, тоже идущими
   // по Athletics(S) (wdbc-egll). vsExorcism — УЖЕ узнан вид теста, не общий
@@ -122,7 +131,7 @@ function scopeTarget(rawScope, entry, ruleId, what) {
   // combat/movement-terrain.mjs, ctx.terrain): Barefoot / Босоногий Ратлинга —
   // «+20 и переброс», Cloven One / Копытный Зверолюда — «+20». Не «char:ag»:
   // тот ловил бы любой тест Ловкости.
-  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "morale", "climbing", "terrain", "vsExorcism", "noosphere", "coilCharge"].includes(scope)) return scope;
+  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "morale", "suppression", "climbing", "terrain", "vsExorcism", "noosphere", "coilCharge", "psychicPower", "psychicMind", "psychicDirect", "interrogation", "requisition"].includes(scope)) return scope;
   if (scope === "char") {
     const key = String(entry.rerollChar || "").trim();
     if (key) return `char:${key.toLowerCase()}`;
@@ -543,7 +552,7 @@ export function rulesFromItemMechanics(items, isActive = () => true, actor = nul
     const rules = mitigationRules(key, mode === "half", label, id);
     if (rules) out.push(...rules);
   }
-  out.push(...addictionRecoveryRules(items));
+  out.push(...addictionRecoveryRules(items, readWithdrawalEntries(actor)));
   return out;
 }
 
@@ -551,19 +560,20 @@ export function rulesFromItemMechanics(items, isActive = () => true, actor = nul
  * Зависимость от препарата держит урон в Характеристики (task-56da): Тиск —
  * «не может восстанавливать урон в I, P, W и F, кроме как сверхъестественными
  * методами», Сатрофин — то же без оговорки. Действует только пока
- * зависимость ЕСТЬ (addiction.isAddicted) — препарат в сумке без зависимости
- * ничего не держит, поэтому это не запись Конструктора (та действовала бы
- * фактом владения), а поле самой зависимости: addiction.blocksRecovery
- * (нотация char-loss.mjs::recoveryTargets). Сверхъестественное лечение
+ * зависимость ЕСТЬ — запись флага актора drugWithdrawal с addicted:true
+ * (rules/drug-withdrawal.mjs; task-9717: раньше — поле предмета isAddicted).
+ * Препарат в сумке без зависимости ничего не держит, поэтому это не запись
+ * Конструктора (та действовала бы фактом владения), а поле самой зависимости:
+ * addiction.blocksRecovery (нотация char-loss.mjs::recoveryTargets); у
+ * удалённого препарата — из снимка в записи. Сверхъестественное лечение
  * (charHealFields magic) блок и так не трогает — он только для пассивного.
  */
-export function addictionRecoveryRules(items) {
+export function addictionRecoveryRules(items, entries) {
   const out = [];
-  for (const item of items || []) {
-    const a = item?.type === "drug" ? item.system?.addiction : null;
-    const target = String(a?.blocksRecovery || "").trim();
-    if (!a?.isAddicted || !target) continue;
-    out.push({ id: `drug.addiction.recovery.${item.id ?? item.name}`, label: `Зависимость: ${item.name}`, when: {},
+  for (const { key, name, add } of addictionRecords(items, entries)) {
+    const target = String(add?.blocksRecovery || "").trim();
+    if (!target) continue;
+    out.push({ id: `drug.addiction.recovery.${key}`, label: `Зависимость: ${name}`, when: {},
       effects: [{ kind: "charRecovery", target, mode: "block" }] });
   }
   return out;

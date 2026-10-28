@@ -44,6 +44,11 @@ export class DrugData extends foundry.abstract.TypeDataModel {
       availability:   num(0, "Доступность"),
       quality:        new StringField({ initial: "common", label: "Качество" }),
       duration:       text("Срок действия"),
+      // Срок по игровому времени, минуты (0 — вручную, кнопкой «Эффект завершён»):
+      // при приёме пишет activeEffect.expiresAt, часы Календаря снимают препарат
+      // сами (rules/drug-expiry.mjs, combat/drug-expiry.mjs). Текстовый duration
+      // выше книга меряет то Раундами, то минутами — его не считаем.
+      gameMinutes:    new NumberField({ initial: 0, integer: true, min: 0, nullable: false, label: "Срок по игровому времени, мин" }),
       effect:         text("Эффект"),
       afterEffect:    text("Пост-эффект"),
       afterEffectDice: text("Кубы пост-эффекта"),
@@ -54,12 +59,32 @@ export class DrugData extends foundry.abstract.TypeDataModel {
       hasAfterEffect: new BooleanField({ initial: false, label: "Есть пост-эффект" }),
       addiction: new SchemaField({
         hasAddiction: new BooleanField({ initial: false, label: "Вызывает зависимость" }),
-        isAddicted:   new BooleanField({ initial: false, label: "Зависимость есть" }),
+        // УСТАРЕЛО (task-9717, 26.10.2026): зависимость персонажа хранится флагом
+        // АКТОРА flags.warhammer-dbc.drugWithdrawal (rules/drug-withdrawal.mjs), поле
+        // никто не читает и не пишет. Оставлено, чтобы миграция
+        // migrations/drug-addiction-flag.mjs увидела старые данные у выданных копий.
+        isAddicted:   new BooleanField({ initial: false, label: "Зависимость есть (устарело)" }),
         minDose:      num(0, "Доз до зависимости"),
         testChar:     new StringField({ initial: "t", label: "Характеристика теста" }),
         testMod:      num(0, "Модификатор теста"),
+        // Комбинированный тест Зависимости («Комб.Т+40/W+50», Рекаф/Алкоголь/Лхо):
+        // вторая Характеристика со своим модификатором; "" — тест обычный, одиночный.
+        // Бросок один, против наименьшего из двух Пределов (rules/drug-withdrawal.mjs).
+        testChar2:    new StringField({ initial: "", label: "Вторая характеристика теста (комбинированный)" }),
+        testMod2:     num(0, "Модификатор второй характеристики"),
         frequency:    text("Периодичность"),
         penalty:      text("Штраф"),
+        // Штраф без дозы ДАННЫМИ (penalty выше остаётся описанием для игрока):
+        // «область=значение; …», см. rules/drug-withdrawal.mjs::parsePenaltyMods.
+        penaltyMods:  text("Штраф без дозы (область=значение; …)"),
+        // Доп. модификатор теста на срыв (Смах: «–20 на тесты избавления от зависимости»).
+        breakMod:     num(0, "Доп. модификатор теста на срыв"),
+        // Урон в Характеристику «в начале каждого периода частоты приема»
+        // (Тиск: 1d5–1 в P; Сатрофин: 1d5 в W) — combat/drug-withdrawal.mjs.
+        periodCharDamage: new SchemaField({
+          stat:    text("Характеристика"),
+          formula: text("Формула")
+        }, { label: "Урон в Характеристику за период без дозы" }),
         // Какие Характеристики не восстанавливают урон, пока зависимость есть
         // (task-56da; нотация rules/char-loss.mjs::recoveryTargets: "int,per,wp,fel").
         blocksRecovery: new StringField({ initial: "", label: "Не восстанавливает урон в (при зависимости)" })

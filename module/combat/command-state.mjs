@@ -21,10 +21,12 @@ import { registerRuleSource } from "../rules/source-registry.mjs";
 import { commandRulesFor, braveryActive, moraleCommandActive, commandEffectNode,
          syncAssaultBonus, volleySuppressionMod } from "../rules/command-effects.mjs";
 import { commandReachFor } from "../rules/command.mjs";
+import { commandCapacity, warChantSinging } from "../rules/leadership-talents.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { isItemActive } from "../apps/effects.mjs";
 import { NO_COMMAND_CAPABILITY } from "../rules/naga-traits.mjs";
+import { COMMAND_SUPPRESSED_FLAG, commandSuppression, commandSuppressedNow, commandSuppressionExpired } from "../rules/command-suppression.mjs";
 
 /**
  * Не принимает Командования (Безграничное Тщеславие, rules/naga-traits.mjs).
@@ -152,6 +154,42 @@ export function packOf(squad) {
   return { wp: Math.max(...docs.map(d => Number(d.system?.characteristics?.wp?.total) || 0)) };
 }
 
+/**
+ * War Chant / Боевая Песнь: поёт ли командующий узла и достаёт ли песня бойца
+ * на месте idx списка подчинённых («макс. W.b×2, ×20 с Air of Authority»;
+ * кого брать сверх лимита — по порядку списка, как у F.b×2 Командования). Лимит
+ * считается отдельно от overCapacity: это разные лимиты, и бойца сверх F.b×2
+ * команды не слышат вовсе. «Слышит» (геометрию) решает стол — как у «подпевать».
+ * Флаг мог лечь на мирового актора или на актора его токена — смотрим оба.
+ * @returns {?{wp:number, cap:number, over:boolean}} null — не поёт
+ */
+function chantFor(singer, idx) {
+  if (!singer) return null;
+  const doc = identityDocs(singer).find(warChantSinging);
+  if (!doc) return null;
+  const cap = commandCapacity(doc, "wp");
+  return { wp: Number(doc.system?.characteristics?.wp?.total) || 0, cap, over: idx >= cap };
+}
+
+/**
+ * Лишён ли актор Командования Рисовкой (rules/command-suppression.mjs). Читает флаг прямо, без
+ * реестра правил: его зовёт сам источник «command» (круга быть не должно).
+ */
+export function commandSuppressedActive(actor) {
+  if (typeof game === "undefined") return false;
+  return commandSuppressedNow(actor?.getFlag?.(NS, COMMAND_SUPPRESSED_FLAG), game.combat);
+}
+
+/** Наложить запрет Командования на цель Рисовки (метка на цели; чужую цель пишет ГМ через сокет). */
+export async function suppressCommandOf(target, giver) {
+  if (!target || !giver) return;
+  // Уже объявленная Концентрация Огня тоже теряется: «теряют все преимущества», а не откладывают их до конца запрета.
+  await updateOrRelay(target, {
+    [`flags.${NS}.${COMMAND_SUPPRESSED_FLAG}`]: commandSuppression(giver.uuid, game.combat),
+    [`flags.${NS}.-=focusFire`]: null
+  });
+}
+
 /** Провалил ли актор тест Морали недавно: этот и следующий Раунд того же боя. */
 export function commandLostActive(actor, combat = game.combat) {
   const f = actor?.getFlag?.(NS, COMMAND_LOST_FLAG);
@@ -166,6 +204,9 @@ export function commandLostActive(actor, combat = game.combat) {
  */
 export function commandNodesFor(actor) {
   if (!actor?.uuid || typeof game === "undefined") return [];
+  // Рисовка (Талант «Рукопашных»): «цели до начала его следующего Хода теряют все преимущества
+  // Командования и не могут получать новых» — пока метка цела, над целью нет ни одного узла.
+  if (commandSuppressedActive(actor)) return [];
   // Безграничное Тщеславие Наги: «не может признавать ничьего авторитета и
   // получать преимущества Командования (даже от координатора)» — над ним
   // нет ни одного узла командования, значит не доходит ничего.
@@ -177,7 +218,8 @@ export function commandNodesFor(actor) {
     const idx = members.findIndex(m => sameActor(actor, m.uuid));
     if (idx < 0) continue;
     const { active, willOf } = squadGiver(squad);
-    const cap = active ? (Number(active.system?.characteristics?.fel?.bonus) || 0) * 2 : Infinity;
+    // F.b×2, с Air of Authority F.b×20 (rules/leadership-talents.mjs::commandCapacity).
+    const cap = active ? commandCapacity(active, "fel") : Infinity;
     // Стая Йигори — только для бойца, у которого Черта есть сама (packOf
     // проверяет весь состав, включая его, но спросить дешевле с него).
     const pack = hasRuleFlag(actor, PACK_CAPABILITY) ? packOf(squad) : null;
@@ -190,7 +232,10 @@ export function commandNodesFor(actor) {
       detail: squad.system.detailCommand ?? {},
       moraleLost: !!members[idx].moraleLost,
       overCapacity: idx >= cap,
-      pack
+      pack,
+      // Боевая Песнь поющего командующего (Командир, иначе Лидер) — тот же
+      // «эффективный командующий», что у «подпевать» (rules/leadership-talents.mjs).
+      chant: chantFor(active, idx)
     });
   }
   const by = actor.getFlag?.(NS, "commandedBy");
@@ -199,10 +244,11 @@ export function commandNodesFor(actor) {
   const fIdx = followers.findIndex(f => sameActor(actor, f.uuid));
   if (boss && fIdx >= 0) {
     const cmd = boss.system.command ?? {};
-    // Дрессировка: «максимум подчинённых животных — P.b» вместо F.b×2.
+    // Дрессировка: «максимум подчинённых животных — P.b» вместо F.b×2
+    // (Air of Authority эту ветку не меняет — он про Command, не про зверей).
     const bossCap = cmd.training
       ? (Number(boss.system?.characteristics?.per?.bonus) || 0)
-      : (Number(boss.system?.characteristics?.fel?.bonus) || 0) * 2;
+      : commandCapacity(boss, "fel");
     nodes.push({
       sourceUuid: boss.uuid,
       label: boss.name,
@@ -210,7 +256,8 @@ export function commandNodesFor(actor) {
       presenceWp: boss.system?.characteristics?.wp?.total ?? null,
       short: cmd.shortCommand ?? {},
       detail: cmd.detailCommand ?? {},
-      overCapacity: fIdx >= bossCap
+      overCapacity: fIdx >= bossCap,
+      chant: chantFor(boss, fIdx)
     });
   }
   return nodes;
@@ -251,7 +298,7 @@ export async function applyRelayedCommandUpdate(data) {
   const allowed = Object.entries(data.update ?? {}).every(([k, v]) =>
     /^system\.(presence|shortCommand|detailCommand|command|cohesion\.value|briefing)\b/.test(k)
     || (/^system\.conditions\.(pinned|shocked)$/.test(k) && v === false)
-    || /^flags\.warhammer-dbc\.(-=)?(commandLost|focusFire|volleyFire|volleyAimUsed|combatFormation)\b/.test(k));
+    || /^flags\.warhammer-dbc\.(-=)?(commandLost|commandSuppressed|focusFire|volleyFire|volleyAimUsed|combatFormation)\b/.test(k));
   if (!allowed) return console.warn("Warhammer DBC | правка командования отклонена:", data.update);
   await doc.update(data.update);
 }
@@ -272,6 +319,7 @@ const staleIn = (cmd, combat) => cmd?.active && cmd.combatId === combat.id && Nu
  */
 export async function expireCommandsAtTurnStart(combat) {
   const giver = combat?.combatant?.actor;
+  await expireCommandSuppressions(combat, giver);
   for (const squad of game.actors ?? []) {
     if (squad.type !== "squad") continue;
     const s = squad.system.shortCommand, d = squad.system.detailCommand;
@@ -298,6 +346,29 @@ export async function expireCommandsAtTurnStart(combat) {
   }
 }
 
+/**
+ * Запреты Командования от Рисовки гаснут «до начала его следующего Хода»: начался Ход Рисующегося
+ * (и Раунд позже наложения) — метка снимается со всех участников боя и токенов его сцены.
+ */
+async function expireCommandSuppressions(combat, giver) {
+  for (const a of suppressionHolders(combat)) {
+    const flag = a.getFlag?.(NS, COMMAND_SUPPRESSED_FLAG);
+    if (!flag) continue;
+    if (commandSuppressionExpired(flag, { combat, isGiver: uuid => !!giver && sameActor(giver, uuid) })) {
+      await updateOrRelay(a, { [`flags.${NS}.-=${COMMAND_SUPPRESSED_FLAG}`]: null });
+    }
+  }
+}
+
+/** Бойцы боя и актёры токенов его сцены: на любом из них могла лечь метка Рисовки. */
+function suppressionHolders(combat) {
+  const out = new Map();
+  const add = a => { if (a?.uuid) out.set(a.uuid, a); };
+  for (const c of combat?.combatants ?? []) add(c.actor);
+  for (const t of combat?.scene?.tokens ?? []) add(t.actor);
+  return [...out.values()];
+}
+
 /** Конец боя: Присутствие («до конца боя») и всё отданное гаснут, метки Морали снимаются. */
 export async function clearCommandsOnCombatEnd(combat) {
   // Все uuid бойцов: в Отряде мировой актор, в бою — актор несвязанного токена.
@@ -321,6 +392,10 @@ export async function clearCommandsOnCombatEnd(combat) {
       await doc.update({ "system.command.presence.active": false, ...OFF_SHORT("system.command."), ...OFF_DETAIL("system.command.") });
     }
     if (a.getFlag?.(NS, COMMAND_LOST_FLAG)) await a.unsetFlag(NS, COMMAND_LOST_FLAG);
+  }
+  // Запрет Командования от Рисовки живёт до начала Хода Рисующегося — с концом боя гаснет в любом случае.
+  for (const a of suppressionHolders(combat)) {
+    if (a.getFlag?.(NS, COMMAND_SUPPRESSED_FLAG)) await updateOrRelay(a, { [`flags.${NS}.-=${COMMAND_SUPPRESSED_FLAG}`]: null });
   }
 }
 

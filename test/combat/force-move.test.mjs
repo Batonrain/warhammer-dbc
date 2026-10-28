@@ -9,17 +9,12 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { forceMoveThreshold, forceMoveDistance, useForceMove } from "../../module/combat/force-move.mjs";
+import { realCreature } from "../support/real-creature.mjs";
 
+// Настоящая схема персонажа и настоящий пересчёт листа (test/support/real-creature.mjs): фикстура с
+// выдуманным `movement.spd` скрывала, что потолок Толкания всегда 0 (Sahara spd-0).
 function actor({ athletics = 40, ap = 2, spd = 4 } = {}) {
-  return {
-    id: "a1", name: "Гвардеец", type: "character",
-    system: {
-      skills: { athletics: { total: athletics } },
-      actionPoints: { value: ap, max: 2 },
-      movement: { spd }
-    },
-    update: async () => {}
-  };
+  return realCreature({ athletics, ap, spd });
 }
 
 beforeEach(() => {
@@ -78,7 +73,7 @@ describe("useForceMove", () => {
     const a = actor({ athletics: 40, ap: 2, spd: 10 });
     await useForceMove(a, { mode: "push", throughForce: true });
     expect(captured.chat.length).toBe(1);
-    expect(captured.chat[0].content).toContain("сдвинуто на");
+    expect(captured.chat[0].content).toContain("сдвинуто на 2м (4 Усп.)"); // 4 Усп. × 0,5м, SPD 10 не режет
   });
 
   it("массивный предмет БЕЗ Через Силы — штраф без Полного действия (ОД не тратятся)", async () => {

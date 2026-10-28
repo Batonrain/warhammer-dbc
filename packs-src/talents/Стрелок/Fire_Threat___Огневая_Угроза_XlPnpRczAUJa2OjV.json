@@ -5,7 +5,7 @@
   "folder": "V0Wfgl0aycRFPfu2",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано: capabilityKey rangedCore.core.fireThreat — у носителя Таланта с экипированным Пистолетом/Ручным оружием (не длинная винтовка, не тяжёлое) кнопка «Давление» на вкладке боя открывает встречный тест с характеристикой по умолчанию BS (WS выбрать можно); при победе BS карточка говорит, что за целью НЕ следуют (module/sheets/tabs/combat.mjs ← module/rules/gunner-talents.mjs::fireThreatWeapon, module/combat/feint-press.mjs::resolvePressSuccess).",
     "benefit": "Вооружённый стрелковым оружием (кроме дл. винтовки и тяжёлого), персонаж может проводить Давление, используя BS вместо WS, но тогда не может последовать за целью, если заставит её подвигаться.",
     "tier": 1,
     "requirement": "BS 35, Intimidate",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "Mj6RuevKCrfIDzId",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "meezafQ6JXuivU1J",
+              "capabilityKey": "rangedCore.core.fireThreat",
+              "label": "Огневая Угроза: Давление через BS со стрелковым оружием, без «последовать за целью»",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

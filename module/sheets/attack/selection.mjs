@@ -23,6 +23,11 @@ import { attackIsMelee }           from "../../combat/weapon-profiles.mjs";
 import { tentacleBonusSuppressed } from "../../rules/tentacle-hand-form.mjs";
 import { legacySlaughterThresholdDelta } from "../../rules/legacy-weapon.mjs";
 import { divineProtectionActive } from "../../rules/death-save.mjs";
+import { berserkChargeBonus } from "../../rules/berserker-talents.mjs";
+import { stunUnrestricted } from "../../rules/takedown.mjs";
+import { BAYONET_CHARGE, hasBayonetCharge } from "../../rules/run-and-gun.mjs";
+import { grindFullSb, holdsInGrapple, hasMeleeTalent, reverseStrikeSecondProfileIdx, stockGripActive, STOCK_GRIP_SECONDARY_WS } from "../../rules/melee-talents.mjs";
+import { actorIdentityUuids } from "../../combat/command-state.mjs";
 
 /**
  * @param {object} v оружие, профиль, состояние актора и уже посчитанные бонусы
@@ -36,6 +41,7 @@ export function buildSelection(v) {
     categoryFor,
     fullAttackForced,
     forcedBaseKey = null,
+    extraEvasionMod = 0,
     gripKey,
     gripList,
     hasShieldEquipped,
@@ -164,27 +170,42 @@ export function buildSelection(v) {
   // из Талантов (Быстрая/Молниеносная Атака) добавляют requiresCapability и
   // minBalance — тот же приём, что у альт-профиля Профиля и у Пружинящей
   // Стойки соответственно.
-  function computeManeuverOptions(baseKeyNow, pIdx) {
+  function computeManeuverOptions(baseKeyNow, pIdx, gKeyNow = gripKey) {
     const category = categoryFor(pIdx);
     const trained  = trainingFor(pIdx).trained;
     return Object.entries(MELEE_MANEUVERS).map(([key, def]) => {
-      const categoryOk = key === "standard" || key === "freeattack" || !def.categories || !category || def.categories.includes(category);
+      // Вырубание (Takedown, rules/takedown.mjs): «приём Оглушить с любым оружием» — снимает список категорий.
+      const categoryOk = key === "standard" || key === "freeattack" || !def.categories || !category || def.categories.includes(category)
+        || (key === "stun" && stunUnrestricted(actor));
       const baseOk     = !def.bases || def.bases.includes(baseKeyNow);
       const trainingOk = trained || key === "standard" || key === "freeattack";
       const balanceOk  = def.minBalance == null || ((sys.balance ?? 0) >= def.minBalance);
-      const capOk      = !def.requiresCapability || hasRuleFlag(actor, def.requiresCapability);
+      // Штыковая Атака: Талант опознаётся и по имени — у персонажей со снимком Таланта без записи Конструктора
+      // («ловушка Desiccated») Приём иначе остался бы заперт до «Обновить мир».
+      const capOk      = !def.requiresCapability || hasRuleFlag(actor, def.requiresCapability)
+        || (def.requiresCapability === BAYONET_CHARGE.key && hasBayonetCharge(actor))
+        || (key === "reverseStrike" && hasMeleeTalent(actor, "reverseStrike"));
       // Требование к свойству самого оружия (Пила: Tearing/Power Field, стр.
       // 14, wdbc-x1nz.2.66.2) — сверяется с уже посчитанным wp (aggregateAuto),
       // тем же приёмом, что categories/minBalance выше.
       const propsOk    = !def.requiresWeaponProps || def.requiresWeaponProps.some(k => wp[k]);
+      // Обратный Удар: у оружия должен быть профиль посоха и Хват на обе руки.
+      // Оружие категории «Посох» без профилей тоже годится (решение владельца 26.10.2026) — вторая атака
+      // идёт его базовым профилем (rules/melee-talents.mjs::reverseStrikeSecondProfileIdx).
+      const profileOk  = !def.requiresProfileLabel
+        || (atkProfiles || []).some(p => String(p?.label ?? "").includes(def.requiresProfileLabel))
+        || (key === "reverseStrike" && reverseStrikeSecondProfileIdx(item, atkProfiles) != null);
+      const gripOk     = !def.requiresGrips || def.requiresGrips.includes(gKeyNow);
       const reason = !trainingOk
         ? `Нужна Рукопашная Тренировка (${category})`
         : (!categoryOk ? `Не подходит категории «${category}»`
           : (!baseOk ? `Только с Базой: ${def.bases.map(b => MELEE_BASES[b]?.label ?? b).join(", ")}`
             : (!balanceOk ? `Нужен Баланс не ниже ${def.minBalance}`
               : (!capOk ? `Нужно: ${CAPABILITIES[def.requiresCapability]?.source || def.requiresCapability}`
-                : (!propsOk ? `Нужно свойство: ${def.requiresWeaponProps.join("/")}` : "")))));
-      return { key, label: def.label, allowed: trainingOk && categoryOk && baseOk && balanceOk && capOk && propsOk, reason };
+                : (!propsOk ? `Нужно свойство: ${def.requiresWeaponProps.join("/")}`
+                  : (!profileOk ? `Нужен профиль «${def.requiresProfileLabel}»`
+                    : (!gripOk ? "Только в Хвате на обе руки" : "")))))));
+      return { key, label: def.label, allowed: trainingOk && categoryOk && baseOk && balanceOk && capOk && propsOk && profileOk && gripOk, reason };
     });
   }
   /**
@@ -284,7 +305,9 @@ export function buildSelection(v) {
 
     const gKey = sel.gripKey ?? gripKey;
     const gDefRaw = isMelee
-      ? (GRIPS[gKey] ? gripEffects(gKey, gKey !== primGrip) : null)
+      ? (GRIPS[gKey] ? gripEffects(gKey, gKey !== primGrip,
+          // Прикладный Хват: штык в «1р» — WS −10 вместо −5
+          (gKey === "1р" && stockGripActive(actor, item)) ? { secWs: STOCK_GRIP_SECONDARY_WS } : {}) : null)
       : (RANGED_GRIPS[gKey] ? rangedGripEffects(gKey) : null);
 
     // Запрещённый Приём (Cheap Shot, стр. 166): тратит Реакцию вместо
@@ -296,10 +319,31 @@ export function buildSelection(v) {
     // выбора, как Локус Сокрушения фиксирует «Полную Атаку».
     const baseKey = fullAttackForced ? "fullatk" : (forcedBaseKey ?? (cheapShotActive ? "standard" : (sel.baseKey ?? meleeBaseKey)));
     const bDef    = MELEE_BASES[baseKey] || MELEE_BASES.standard;
-    const baseBon = isMelee ? (bDef.wsBonus ?? 0) : 0;
+    // Натиск Берсерка (стр. 62): «еще +10 на рукопашные приемы при Натиске» —
+    // считается здесь, по Базе, выбранной в ЭТОМ окне, а не по system.meleeBase:
+    // правила собираются один раз при открытии окна (rules/berserker-talents.mjs).
+    const berserkBon = isMelee ? berserkChargeBonus(actor, baseKey) : 0;
+    const baseBon = isMelee ? (bDef.wsBonus ?? 0) + berserkBon : 0;
 
     const maneuverKey = isMelee ? (sel.maneuverKey ?? maneuverKeyDefault) : "standard";
-    const mDef        = MELEE_MANEUVERS[maneuverKey] || MELEE_MANEUVERS.standard;
+    const mDefRaw     = MELEE_MANEUVERS[maneuverKey] || MELEE_MANEUVERS.standard;
+    // Перемолоть (rules/melee-talents.mjs, Sahara 3-8dc5): Пила против того, кого носитель
+    // держит в Борьбе, считает ПОЛНЫЙ S.b вместо половины. Снимается только половина самого
+    // приёма — «½S.b» Обратного Хвата (sel.gDef) остаётся его собственным правилом.
+    const grindFull = isMelee && grindFullSb(actor, {
+      maneuverKey,
+      holdsTarget: !!targetActor && holdsInGrapple(actor, actorIdentityUuids(targetActor))
+    });
+    const mDefGrind = grindFull
+      ? { ...mDefRaw, sbHalf: false, chatNote: String(mDefRaw.chatNote ?? "").replace("урон ½S.b (окр.▲)", "Перемолоть: полный S.b (цель в Борьбе)") }
+      : mDefRaw;
+    // Вырубание (rules/takedown.mjs): Оглушить с любым оружием и БЕЗ обязательной
+    // Избирательной атаки в голову — книжная подпись приёма у носителя неверна.
+    const mDef = isMelee && maneuverKey === "stun" && stunUnrestricted(actor)
+      ? { ...mDefGrind,
+          note: "Вырубание: любое оружие, прицел не обязателен (не-Избирательная атака). Успех → Оглушение вместо урона.",
+          chatNote: "😵 При попадании — Оглушение (Вырубание)" }
+      : mDefGrind;
 
     // Длина Оружия (wdbc-x1nz.2.67, стр. 39): действующий Rng ЭТОЙ атаки —
     // длина + Хват + Приём (Выпад +1, Пила → 0). Читается диалогом
@@ -380,8 +424,8 @@ export function buildSelection(v) {
     // к тестам Избегания от этой атаки.
     const chargeLengthBonus = (isMelee && baseKey === "charge" && targetActor
       && chargeTargetDodgeBonus(effRange, actorMaxMeleeRange(targetActor))) ? 5 : 0;
-    const targetDodgeMod = (mDef.targetDodgeMod ?? 0) + (stDef.targetDodgeMod ?? 0) - bowMarkedMod + chargeLengthBonus;
-    const targetParryMod = (mDef.targetParryMod ?? 0) + (stDef.targetParryMod ?? 0) - bowMarkedMod;
+    const targetDodgeMod = (mDef.targetDodgeMod ?? 0) + (stDef.targetDodgeMod ?? 0) - bowMarkedMod + chargeLengthBonus + extraEvasionMod;
+    const targetParryMod = (mDef.targetParryMod ?? 0) + (stDef.targetParryMod ?? 0) - bowMarkedMod + extraEvasionMod;
 
     // Защитная Стойка без щита (стр. 15) — персонаж не может атаковать вовсе.
     const blocked = isMelee && stanceKey === "defensive" && stDef.noAttackWithoutShield && !hasShieldEquipped;
@@ -390,10 +434,12 @@ export function buildSelection(v) {
       prof ? `Профиль: ${prof.label || "доп."}${prof.damage ? ` (${prof.damage})` : ""}` : "",
       gDef ? `Хват: ${gDef.label}${gDef.ws ? ` · WS ${gDef.ws >= 0 ? "+" : ""}${gDef.ws}` : ""}${gDef.dmgFlat ? ` · урон ${gDef.dmgFlat >= 0 ? "+" : ""}${gDef.dmgFlat}` : ""}${gDef.sbHalf ? " · ½S.b" : ""} — ${gDef.note}` : "",
       reverseGripThrust ? `Выпад в Обратном хвате: без штрафа WS${reverseThrustFullAtk ? ", Полная Атака — полный S.b + ещё ½S.b (окр.▲) урона сверху" : ""}` : "",
+      berserkBon ? `Натиск Берсерка: +${berserkBon} к приёму при Натиске (уже в Базе)` : "",
       maneuverCapBonus ? `Щупальце: +${maneuverCapBonus} на приём Захват` : "",
       gripManeuverBon ? `Хват: +${gripManeuverBon} на приём «${mDef.label}»` : "",
       slaughterBon ? `Наследие Бойни: ${slaughterBon > 0 ? "+" : ""}${slaughterBon} — заряжено убийством этим оружием` : "",
       chargeLengthBonus ? `Длина Оружия: цель длиннее на 3+ — Натиск даёт ей +5 Избегание` : "",
+      extraEvasionMod ? `Рипост: Избегания цели ${extraEvasionMod} против этой атаки` : "",
       (hasVariableLength && length !== sys.range) ? `Длина Оружия: выбрана ${length} вместо максимума ${sys.range} — влияет на правила 1/2/4 Длины Оружия (стр. 39)` : "",
       (sizeBonus > 0 && isMelee && !LONG_ARMS_EXCLUDED_GRIPS.has(gKey)) ? `Длинные Руки: Размер +${sizeBonus} к досягаемости (эфф. Rng ${effRange})` : ""
     ].filter(Boolean).join("<br>");
@@ -432,7 +478,7 @@ export function buildSelection(v) {
     const stanceKey = fix.stanceKey ?? sel.stanceKey;
     if (!ok(computeBaseOptions(stanceKey, sel.gKey), sel.baseKey)) fix.baseKey = "standard";
     const baseKey = fix.baseKey ?? sel.baseKey;
-    if (!ok(computeManeuverOptions(baseKey, sel.pIdx), sel.maneuverKey)) fix.maneuverKey = "standard";
+    if (!ok(computeManeuverOptions(baseKey, sel.pIdx, sel.gKey), sel.maneuverKey)) fix.maneuverKey = "standard";
     if (gripList.length && !ok(computeGripOptions(sel.pIdx), sel.gKey)) fix.gripKey = primGrip;
     return Object.keys(fix).length ? resolveSelection({ ...f, ...fix }) : sel;
   }

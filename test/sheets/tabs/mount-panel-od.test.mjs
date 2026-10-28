@@ -78,6 +78,40 @@ describe("clearMount (Спешиться)", () => {
   });
 });
 
+// Черта скакуна Stand/Стойка (core, «Трейты скакунов»): «Он может Оседлать /
+// Спешиться свободным действием вместо полудействия» — как Прыжок в Седло, но
+// от скакуна, а не от Таланта всадника (Sahara trait-stand, п.2).
+describe("Черта скакуна Stand/Стойка: Оседлать/Спешиться — свободное действие", () => {
+  const stand = { type: "trait", name: "Stand / Стойка", system: {} };
+  const standingHorse = () => ({ ...mountFor(), items: [stand] });
+  afterEach(() => { globalThis.fromUuid = async () => null; });
+
+  it("Оседлать скакуна со Стойкой — ОД не списывается, даже в бою", async () => {
+    globalThis.game.combat = { started: true };
+    const rider = actorFor({ actionPoints: { value: 0, max: 2 } });
+    await setMount(rider, standingHorse());
+    expect(rider.system.actionPoints.value).toBe(0);
+    expect(rider.system.mount.uuid).toBe("Actor.horse1");
+  });
+
+  it("Спешиться со скакуна со Стойкой — ОД не списывается, связь снимается", async () => {
+    globalThis.game.combat = { started: true };
+    globalThis.fromUuid = async uuid => (uuid === "Actor.horse1" ? standingHorse() : null);
+    const rider = actorFor({ actionPoints: { value: 0, max: 2 }, mount: { uuid: "Actor.horse1" } });
+    await clearMount(rider);
+    expect(rider.system.actionPoints.value).toBe(0);
+    expect(rider.system.mount.uuid).toBe("");
+    expect(captured.warnings).toEqual([]);
+  });
+
+  it("скакун без Стойки — по-прежнему полудействие (регрессия)", async () => {
+    globalThis.game.combat = { started: true };
+    const rider = actorFor({ actionPoints: { value: 2, max: 2 } });
+    await setMount(rider, { ...mountFor(), items: [{ type: "trait", name: "Unruly / Непослушный", system: {} }] });
+    expect(rider.system.actionPoints.value).toBe(1);
+  });
+});
+
 // wdbc-bjy1.12: ГМ, по ошибке посадивший персонажа в седло, должен суметь
 // откатить это без ОД — но только явным подтверждением, иначе ГМ за НПЦ
 // молча обходил бы правило в честной игре.

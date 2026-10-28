@@ -46,12 +46,15 @@ const FLAG_SCOPE = "warhammer-dbc";
 export const TURN_SCOPED_FLAGS = {
   exposedAggressive: "Открытая стойка: Агрессивной Стойке нечем было платить Реакцией в конце Хода (стр. 15)",
   running:           "Бег: рывок этого Хода, штрафы и бонусы от него действуют до следующего",
+  fullAttackLock:    "Полная Атака (core, «Полная Атака»): до начала своего следующего Хода нельзя совершать Физические Избегания; смягчают В Ногу с Моментом и Реприз (rules/full-attack-lock.mjs)",
   fastMoveThisTurn:  "Трудная Цель (стр. 62, wdbc-1rno.30): Бег/Натиск/Верховая Атака этого Хода — −10 стрельбе по носителю Таланта до следующего его Хода",
   justTheLightActive:"Лишь Свет: щит держится до начала следующего Хода (combat/just-the-light.mjs)",
   inevitabilityPenalty: "Локус Неизбежности: штраф −10 до начала своего следующего Хода",
   movedThisTurn:     "Импульсное: «не двигался с прошлого раунда» начинается заново каждым Ходом",
   recoilPool:        "Отскок: суммарная дистанция за Раунд (combat/recoil-pool.mjs)",
   moveDegreeThisTurn:"Выстрел Навскидку: категория перемещения этого Хода",
+  ranMetersThisTurn: "Скоростная Внимательность (wdbc-l2urs): сколько метров токен реально пробежал за Бег этого Хода — штраф −5 за каждые P.b м читает combat/defense.mjs; нужна до начала следующего Хода, ядро Foundry стирает историю пути раньше (combat/path-limit.mjs::onMoveToken)",
+  moveAllowanceThisTurn: "Лимит пути (wdbc-l2urs): сумма дистанций Действий Движения, объявленных в этом Ходу — сколько метров токен может пройти (combat/movement-actions.mjs::grantMoveAllowance, rules/movement-path.mjs)",
   physicalApSpentThisTurn:   "Калечащее: счётчик физических ОД этого Хода",
   cripplingTriggeredThisTurn:"Калечащее: защёлка «уже сработало в этом Ходу»",
   reactedAttackIds:  "Одна Реакция на одно Действие (стр. 12, wdbc-x1nz.2.28): attackId атак, на которые уже отвечали Реакцией",
@@ -73,7 +76,33 @@ export const TURN_SCOPED_FLAGS = {
   quickDrawPinThisTurn: "Быстрое Выхватывание (Талант Скорости): чеку гранаты свободным действием можно выдернуть только раз в Ход (combat/draw-action.mjs)",
   sprintFatigueDue: "Спринт (Талант Скорости): второй Ход подряд дальнего Бега — +1 Усталости в конце Хода (combat/movement-actions.mjs::applySprintTurnEnd); здесь страховка на случай пропущенного конца Хода",
   hunkerDown: "Залегание (Талант Стойкости): AP укрытия ×2, выглядывающим частям — обычное AP, до начала следующего Хода (combat/hunker-down.mjs)",
-  legacyHatredShield: "Щит Ненависти, Оружие Наследия (wdbc-1rno.35, vigilant 9-9, стр. 427): временный AP-щит руки(рук) и торса — держится до начала следующего своего Хода, не тратится отдельным попаданием"
+  legacyHatredShield: "Щит Ненависти, Оружие Наследия (wdbc-1rno.35, vigilant 9-9, стр. 427): временный AP-щит руки(рук) и торса — держится до начала следующего своего Хода, не тратится отдельным попаданием",
+  coveringFireOffer: "Прикрывающий Огонь (Талант Стрелка, 3-5fbf): враги из контакта на момент Выхода из Боя — кому можно дать очередь (combat/covering-fire.mjs)",
+  coveringFireMarks: "Прикрывающий Огонь (Талант Стрелка, 3-5fbf): метки Подавления +10/+0 для Натиска бывших противников — враги ходят до следующего Хода стрелка (combat/covering-fire.mjs)",
+  hipShootingPending: "Стрельба от Бедра (Талант Стрелка, 3-5fbf): Полное Движение объявлено, одиночный выстрел в этом Ходу ещё не сделан (combat/movement-actions.mjs::declareFullMove, rules/gunner-talents.mjs::HIP_SHOOTING_FLAG)",
+  runAndGunPending: "Стрельба на Бегу (Талант Стрелка, 3-5fbf): Натиск объявлен, свободный выстрел ещё не сделан (combat/movement-actions.mjs::declareCharge, rules/run-and-gun.mjs)",
+  chargeChecked: "Натиск (Прикрывающий Огонь и Стрельба на Бегу, Sahara covering-fire-hip-shooting): «<id боя>:<раунд>» — проверка Натиска в этом Раунде уже сделана, второй путь (HUD-кнопка или окно атаки) её не повторяет (combat/free-shot.mjs::chargeAttackGate, rules/run-and-gun.mjs)",
+  runAndGunFired:"Стрельба на Бегу (Талант Стрелка, 3-5fbf): id оружия, из которого стреляли на Натиске и не сложили — им нельзя стрелять в рукопашной до конца Хода (снимается Сложить, combat/free-shot.mjs)",
+  bayonetChargePending: "Штыковая Атака (Талант Рукопашных, 3-8dc5): попала Приёмом, свободный выстрел в упор ещё не сделан (rules/run-and-gun.mjs)",
+  tankHunterThisTurn: "Охотник на Танки (Талант Стрелка, 3-5fbf): опознавать модель техники можно раз в Ход (combat/tank-hunter.mjs)",
+  chamberInThisTurn: "Досылание (Талант Стрелка, 3-5fbf): патрон досылали в этом Ходу — «раз в Ход» (combat/reload.mjs::chamberInRound)",
+  eyeOfVengeanceWeapon: "Око Мщения (Талант Стрелка, 3-5fbf): id стрелкового оружия, усиленного +Inf.b к Dmg и Pen — «до конца Хода» (rules/gunner-talents.mjs::EYE_OF_VENGEANCE_FLAG); приближение — до начала своего следующего Хода",
+  killingStrikeThisTurn: "Смертельный Удар (Талант Берсерка, 3-861e): «только один раз в Ход» — Очко Бесчестия уже потрачено на автопровал Избеганий (combat/attack.mjs, rules/berserker-talents.mjs::KILLING_STRIKE_FLAG)",
+  overclockThisTurn: "Разгон (Талант Техномистика, Sahara 3-2501): «раз в Ход» — метка гаснет с началом следующего Хода (sheets/tabs/tech.mjs::overclock, rules/technomystic-talents.mjs::OVERCLOCK_FLAG)",
+  cloudCognitionThisTurn: "Облачная Когниция (Талант Техномистика, пачка J): «раз в Ход» — попытка передачи ⚙ уже была (sheets/tabs/tech.mjs::cloudCognition, rules/technomystic-resources.mjs)",
+  motiveEucharistThisTurn: "Мотивное Причастие (Талант Техномистика, пачка J): «раз в Ход» — ⚡ уже передавали (sheets/tabs/tech.mjs::motiveEucharist, rules/technomystic-resources.mjs)",
+  cloudCognitionReceived: "Облачная Когниция, ЦЕЛЬ (пачка J): сколько ⚙ она получила Талантом в этом Раунде — «от начала своего Хода до начала следующего», гаснет с началом её Хода (combat/gm-relay.mjs, rules/technomystic-resources.mjs)",
+  processCostPaidThisTurn: "Начало Хода техномистика (Цифровое Откровение, Ноосферная Набожность, Sahara 3-2501): «↻» уже восстановил Когницию и списал цену Процессов, если они есть — второе нажатие в этом же Ходу ни восстанавливает, ни берёт плату (sheets/tabs/tech.mjs::cognitionRest, rules/technomystic-talents.mjs::PROCESS_PAID_FLAG)",
+  psychicResurgenceActive: "Психическое Возрождение (Талант Псайканы, Sahara 3-28): поддержание психосил не снижает тPR — «до начала своего следующего Хода» (rules/psyker-talents.mjs::RESURGENCE_FLAG, sheets/tabs/psychic.mjs)",
+  fastWeavingAp: "Быстрое Плетение (Талант Псайканы, Sahara 3-28, пачка I1): пул 2 ОД, выданный в начале боя после инициативы, только на манифестацию силы без типа «Атака» — с началом СВОЕГО Хода сбрасывается (rules/psyker-talents.mjs::FAST_WEAVING_FLAG, combat/psyker-pools.mjs)",
+  warpLockActive: "Варп-Замок (Талант Псайканы, Sahara 3-28, пачка I2): «до начала своего следующего Хода теряет Трейт Psyker и не может манифестировать психосилы» — метка гаснет с началом СВОЕГО Хода (rules/warp-lock.mjs::WARP_LOCK_FLAG, combat/warp-lock.mjs, sheets/tabs/psychic.mjs)",
+  fluidWeaveThisTurn: "Текучее Плетение (Талант Псайканы, Sahara 3-28, пачка I1): «раз в Ход» — переплетение уже было в этом Ходу (rules/psyker-talents.mjs::FLUID_WEAVE_TURN_FLAG, combat/psyker-pools.mjs)",
+  bladeBindingOwner: "Сцепление Клинков (Талант Рукопашных, 3-8dc5): сцепление держится до начала следующего Хода цепляющего (rules/blade-binding.mjs, combat/blade-binding.mjs)",
+  meleeDamageDealtThisTurn: "Упорство (Талант Рукопашных, 3-8dc5): рукопашная атака этого персонажа нанесла непоглощённый урон — повтор Упорства после этого недоступен (rules/melee-talents.mjs::MELEE_DAMAGE_DEALT_FLAG, combat/tenacity.mjs)",
+  meleeDamageAppliedMsg: "Упорство (Талант Рукопашных, 3-8dc5): id карточки, по которой урон уже применён к цели (любой исход) — повтор Упорства не переспрашивает «урон ещё не применён» (rules/melee-talents.mjs::MELEE_DAMAGE_APPLIED_FLAG, combat/tenacity.mjs)",
+  reaperInitialTarget: "Жнец (Талант Рукопашных, 3-8dc5): uuid токена начальной цели цепочки Натиска — от него меряется Полудвижение следующих целей (rules/melee-talents.mjs::REAPER_CHAIN_FLAG, combat/reaper-chain.mjs)",
+  rageExitTried: "Ярость (Frenzy, Sahara focused-wrath-20-bs п.2): «не более одной попытки выйти из Ярости в Ход» — метка попытки гаснет с началом СВОЕГО Хода; вне боя «Ход» — 6 с игрового времени (rules/rage-behavior.mjs::rageExitAttemptAllowed, combat/rage-behavior.mjs::attemptRageExit)",
+  pinDownHold: "Прижать (Талант Пугилиста, стр. 62, 3-eddb): штраф цели на физические действия и отмена +20 за Борьбу по прижимающему — до начала СЛЕДУЮЩЕГО Хода прижимающего; заодно метка «раз в Ход» (combat/grapple-talents.mjs, rules/situational.mjs)"
 };
 
 /** Ключи реестра — для сторожей и тестов. */
@@ -99,8 +128,9 @@ function flagValue(actor, key) {
  */
 export function turnStartFlagClears(actor) {
   const upd = {};
+  // != null, а не truthy: 0/false — тоже поставленная метка (Прижать со штрафом 0 — «уже прижимал в этом Ходу»).
   for (const key of TURN_SCOPED_FLAG_KEYS) {
-    if (flagValue(actor, key)) upd[`flags.${FLAG_SCOPE}.-=${key}`] = null;
+    if (flagValue(actor, key) != null) upd[`flags.${FLAG_SCOPE}.-=${key}`] = null;
   }
   return upd;
 }

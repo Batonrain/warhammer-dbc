@@ -5,7 +5,7 @@
   "folder": "Nu4M8EyPNQpHOOjO",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано частично: учитывается в показываемой сумме цены Процессов (кнопка «↻» в начале Хода): вычитается только из цены скомпилированных Славословий (½X каждое, округление вверх — один раз на сумме; готовых к активации) и не глубже её, уже активированные Процессы не касается (rules/technomystic-talents.mjs::processCostTotal). Цену Процессов кнопка «↻» теперь списывает сама, один раз за Ход, — см. Цифровое Откровение.",
     "benefit": "Персонаж уменьшает суммарную стоимость Процессов своих скомпилированных Славословий на 1 Когницию (только готовых к активации, не уже активированных). Можно брать до 3 раз (2-й требует For.Lore (Mechanicum)+20, 3-й — +30).",
     "tier": 1,
     "requirement": "Forbidden Lore (Mechanicum)+10",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g08noospherCap1",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "e08noospherCap1",
+              "capabilityKey": "technomystic.core.noosphericPiety",
+              "label": "Ноосферная Набожность: цена Процессов скомпилированных Славословий −1 ⚙ (до 3 раз)",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

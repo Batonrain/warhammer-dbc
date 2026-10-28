@@ -11,6 +11,10 @@
 //      Все пять также ставят flags.warhammer-dbc.movedThisTurn — тот же флаг
 //      ставит и просто перемещение токена по канвасу (initMovedFlagTracking,
 //      конец файла), независимо от того, было ли оно объявлено кнопкой отсюда.
+//      И дописывают свою дистанцию (SPD×N) в бюджет пути Хода
+//      (grantMoveAllowance, flags.warhammer-dbc.moveAllowanceThisTurn): сумма
+//      объявленного — сколько токен может пройти за Ход; дальше его не пускает
+//      combat/path-limit.mjs (wdbc-l2urs, rules/movement-path.mjs).
 //      Читается Импульсным (wp.impulse, attack-dialog.mjs — бонус к очередям
 //      удваивается, пока стрелок НЕ двигался). Снимается resetActionEconomy
 //      в начале следующего Хода актора (action-economy.mjs) — тот же приём,
@@ -30,6 +34,9 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { FAST_MOVE_FLAG } from "../rules/hard-target.mjs";
+import { HIP_SHOOTING_FLAG, hipShootingWeapon } from "../rules/gunner-talents.mjs";
+import { RUN_AND_GUN_PENDING_FLAG, hasRunAndGun } from "../rules/run-and-gun.mjs";
+import { runAndGunOfferHtml, markChargeChecked, markChargeFailed, chargeFailedThisRound } from "./free-shot.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
@@ -41,11 +48,12 @@ import { digitigradeGroupingBonus } from "../rules/digitigrade.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { hasAbility } from "../rules/ability-by-key.mjs";
+import { falseAdvanceOffered } from "../rules/melee-talents.mjs";
 import { showMovementRing, clearRangeRings } from "./range-rings.mjs";
 import { clearRangeCells } from "./range-cells.mjs";
 import { showReachableCells } from "./reachable-cells.mjs";
 import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
-import { spendRecoil, recoilRemaining } from "./recoil-pool.mjs";
+import { spendRecoil, recoilRemaining, spdMeters } from "./recoil-pool.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
@@ -63,7 +71,10 @@ import { uselessCount } from "../rules/useless-limbs.mjs";
 import { divineProtectionActive } from "../rules/death-save.mjs";
 import { hasDodgeTalent, catfallHeight, catfallLeg, CATFALL_TUCK_BONUS } from "../rules/dodge-talents.mjs";
 import { hasSpeedTalent, standUpApCost, jumpApCost, repositionAvailable, sprintFatigueDue, breacherReady } from "../rules/speed-talents.mjs";
+import { leapUpDenied, standUpExtraApCost } from "../rules/takedown.mjs";
 import { isHandShield } from "./hand-shield.mjs";
+import { PATH_LIMIT_OFF_FLAG, grantMoveAllowance, isForcedMove } from "../rules/movement-path.mjs";
+import { talentMoveDefsFor } from "../rules/talent-moves.mjs";
 
 // Захват (стр. 12, wdbc-x1nz.2.31): «только действия Борьбы или не-Физические»
 // — Движение Физическое (см. тип действия «Физическое», стр. 12), поэтому
@@ -186,14 +197,56 @@ export async function markMovedThisTurn(actor) {
  * больше). Монотонно: однажды поставленное "full" не откатывается назад на
  * "half" в рамках Хода (declareHalfMove после declareFullMove — тот же Ход,
  * дистанция уже была больше половины). Сырое перемещение токена мышью
- * (initMovedFlagTracking ниже) категорию НЕ ставит — как считать её оттуда,
- * не решено, задокументировано как пробел в capabilities.mjs.
+ * (initMovedFlagTracking ниже) категорию сам не ставит; её по честно
+ * измеренному пути выставляет combat/path-limit.mjs::onMoveToken (wdbc-l2urs):
+ * прошёл за Ход дальше Полудвижения — "full", даже если Действие Движения не
+ * объявлялось.
  */
 export async function markMoveDegreeThisTurn(actor, degree) {
   if (!actor) return;
   const current = actor.getFlag("warhammer-dbc", "moveDegreeThisTurn");
   if (current === "full" || current === degree) return;
   await actor.setFlag("warhammer-dbc", "moveDegreeThisTurn", degree);
+}
+
+// Бюджет пути Хода (wdbc-l2urs): сумма записей grantMoveAllowance — сколько
+// метров токену разрешено пройти за Ход, дальше combat/path-limit.mjs не
+// пускает (rules/movement-path.mjs). Функция вынесена в чистый модуль, чтобы
+// Удар Ассасина, Пересилить и прочие движения могли писать в бюджет, не
+// импортируя этот файл (он тянет Захват и пол-боя). Звать ПОСЛЕ того, как
+// Движение состоялось, — запрещённое или проваленное ничего не даёт. Гасится
+// в начале следующего Хода владельца (реестр rules/turn-flags.mjs).
+export { grantMoveAllowance };
+
+// Внутренние гейты/кольцо дальности — для combat/talent-move.mjs (Движение по Таланту, task-bbe1).
+export { _blockedByGrapple as blockedByGrapple, _showReachRing as showReachRing, _bothLegsLost as bothLegsLost };
+
+/**
+ * Начало боя: флаги «двигался» (movedThisTurn, moveDegreeThisTurn) остались от расстановки токенов ДО боя
+ * (initMovedFlagTracking метит любое перемещение, и вне боя тоже), а гасит их только начало СВОЕГО Хода.
+ * Без этой чистки Скорость Сокола («не двигался») ложно отказывала бы до первого Хода, а Импульсное оружие
+ * считало бы расстановку движением. Зовёт ГМ из combatStart (hooks.mjs).
+ * @param {Combat} combat
+ */
+export async function clearStaleMovedFlags(combat) {
+  for (const combatant of combat?.combatants ?? []) {
+    const actor = combatant?.actor;
+    if (!actor?.getFlag) continue;
+    for (const key of ["movedThisTurn", "moveDegreeThisTurn"]) {
+      if (actor.getFlag("warhammer-dbc", key) !== undefined) await actor.unsetFlag("warhammer-dbc", key);
+    }
+  }
+}
+
+/** ГМ: снять/вернуть лимит пути конкретному персонажу (особый случай, сломавшаяся история). */
+export async function togglePathLimitOff(actor) {
+  if (!actor) return;
+  const off = !!actor.getFlag("warhammer-dbc", PATH_LIMIT_OFF_FLAG);
+  if (off) await actor.unsetFlag("warhammer-dbc", PATH_LIMIT_OFF_FLAG);
+  else await actor.setFlag("warhammer-dbc", PATH_LIMIT_OFF_FLAG, true);
+  ui.notifications.info(off
+    ? `${actor.name}: лимит пути за Ход снова действует.`
+    : `${actor.name}: лимит пути за Ход снят (ГМ).`);
 }
 
 // Полёт (стр. 30) доступен только актору с Чертой Flyer/Hoverer (module/rules/
@@ -259,6 +312,19 @@ async function _d100(threshold, actor = null) {
   return { roll, rv, passed, deg };
 }
 
+/**
+ * Ложный Натиск (rules/melee-talents.mjs, Sahara 3-8dc5): после Полудвижения/Полного
+ * движения, закончившегося в контакте с врагом, — один Финт или Давление за свободное
+ * действие. Кнопки на карточке Движения; обработчик — hooks.mjs (.wh-false-advance-btn),
+ * раз на карточку. «В контакте с врагом» система не меряет — подтверждает игрок.
+ */
+export function falseAdvanceHtml(actor) {
+  if (!falseAdvanceOffered(actor)) return "";
+  return `<div class="roll-threshold">🎭 Ложный Натиск: закончили движение в контакте с врагом — один Финт или Давление за свободное действие (один раз на это движение).</div>
+    <button class="wh-false-advance-btn" type="button" data-kind="feint" data-actor-uuid="${actor.uuid}">Финт (свободное действие)</button>
+    <button class="wh-false-advance-btn" type="button" data-kind="press" data-actor-uuid="${actor.uuid}">Давление (свободное действие)</button>`;
+}
+
 async function _postCard(actor, content) {
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
@@ -289,12 +355,14 @@ export async function declareHalfMove(actor) {
   if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Полудвижение")) return;
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "half");
+  await grantMoveAllowance(actor, "half", actor.system.movement?.halfMove);
   _showReachRing(actor, actor.system.movement?.halfMove);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Полудвижение</div>
     <div class="roll-threshold">${useBonus
       ? "Бонусное полудействие (Локус Стремительности, 0 ОД)."
       : "Полудействие (1 ОД)."} Перемещение до SPD×1.</div>
+    ${falseAdvanceHtml(actor)}
   </div>`);
 }
 
@@ -316,6 +384,7 @@ export async function declareLegacyBraveHeartMove(actor) {
   if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Полудвижение")) return;
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "half");
+  await grantMoveAllowance(actor, "braveHeart", actor.system.movement?.halfMove);
   _showReachRing(actor, actor.system.movement?.halfMove);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Лучшая Часть Отваги</div>
@@ -323,7 +392,7 @@ export async function declareLegacyBraveHeartMove(actor) {
   </div>`);
 }
 
-export async function declareFullMove(actor) {
+export async function declareFullMove(actor, { hipShooting = false } = {}) {
   if (!actor) return;
   if (_blockedByDivineProtection(actor, "Полное Движение")) return;
   if (_blockedByGrapple(actor, { move: true })) return;
@@ -333,6 +402,7 @@ export async function declareFullMove(actor) {
   if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Полное Движение")) return;
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
+  await grantMoveAllowance(actor, "full", actor.system.movement?.move);
   // Стр. 28, wdbc-x1nz.2.34: доп. полудействие после Полного Движения (не
   // Атака) — его тест с Помехой. По решению пользователя автоматизировано
   // только для следующего Карабканья/Прыжка/Плавания этого же Хода (они уже
@@ -341,11 +411,17 @@ export async function declareFullMove(actor) {
   // Флаг гасится первым же использованием _d100 с actor, а на случай, если
   // не потратится вовсе, есть и turn-scoped safety-net (TURN_SCOPED_FLAGS).
   await actor.setFlag("warhammer-dbc", "fullMoveDisadvantage", true);
+  // Стрельба от Бедра (rules/gunner-talents.mjs, Sahara 3-5fbf): то же Полное Движение за 2 ОД, но одиночный
+  // выстрел этого Хода входит в то же действие — без ОД; метка взводит кнопку выстрела (combat/free-shot.mjs).
+  if (hipShooting) await actor.setFlag("warhammer-dbc", HIP_SHOOTING_FLAG, true);
   _showReachRing(actor, actor.system.movement?.move);
   await _postCard(actor, `<div class="wh-roll-result">
-    <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Полное Движение</div>
+    <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — ${hipShooting ? "Стрельба от Бедра (Полное Движение + Одиночный Выстрел)" : "Полное Движение"}</div>${hipShooting ? `
+    <div class="roll-threshold">Стрельба от Бедра: один Одиночный Выстрел (не Избирательный, без Прицеливания, не длинная винтовка и не тяжёлое) в этом Ходу — без дополнительных ОД.</div>
+    <button class="wh-free-shot-btn" type="button" data-kind="hipShooting" data-actor-uuid="${actor.uuid}">🎯 Выстрел от бедра</button>` : ""}
     <div class="roll-threshold">Полное действие (2 ОД). Перемещение до ${hasSpeedTalent(actor, "sprint") ? "SPD×3 (Спринт — на дистанцию Натиска)" : "SPD×2"}.</div>
     <div class="roll-threshold" style="font-size:0.85em;">Можно ещё полудействие (не атаку) — но его тесты, если есть, получают Помеху (стр. 32). Для следующего Карабканья/Прыжка/Плавания в этом Ходу — уже автоматически.</div>
+    ${falseAdvanceHtml(actor)}
   </div>`);
 }
 
@@ -374,13 +450,27 @@ export async function declareCharge(actor) {
     await spendActionPoints(actor, 2, { physical: true });
     return;
   }
+  // Прикрывающий Огонь (Талант Стрелка): бывшие противники стрелка проходят тест Подавления при Натиске на него;
+  // провал — Натиск не объявляется (проверка ДО отметок Натиска и движения).
+  if (chargeFailedThisRound(actor)) {
+    return ui.notifications.warn(`⚠️ ${actor.name}: тест Подавления (Прикрывающий Огонь) в этом Раунде уже провален — Натиск не удался.`);
+  }
+  const { coveringFireChargeCheck } = await import("./covering-fire.mjs");
+  if (!await coveringFireChargeCheck(actor)) {
+    await markChargeFailed(actor);
+    return ui.notifications.warn(`⚠️ ${actor.name}: тест Подавления (Прикрывающий Огонь) провален — Натиск не удался.`);
+  }
+  await markChargeChecked(actor);   // окно атаки с Базой «Натиск» в этом Раунде проверку не повторяет
   await actor.update({ "system.meleeBase": "charge",
                        [`flags.warhammer-dbc.${FAST_MOVE_FLAG}`]: true });
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
+  await grantMoveAllowance(actor, "charge", actor.system.movement?.charge);
+  // Стрельба на Бегу (Талант Стрелка, rules/run-and-gun.mjs): метка «свободный выстрел на Натиске не сделан».
+  if (hasRunAndGun(actor)) await actor.setFlag("warhammer-dbc", RUN_AND_GUN_PENDING_FLAG, true);
   _showReachRing(actor, actor.system.movement?.charge);
   await _postCard(actor, `<div class="wh-roll-result">
-    <div class="roll-header">${rollIcon("sword","#ff9d4d")}${esc(actor.name)} — Натиск</div>
+    <div class="roll-header">${rollIcon("sword","#ff9d4d")}${esc(actor.name)} — Натиск</div>${runAndGunOfferHtml(actor)}
     <div class="roll-threshold">Перемещение до ${hasSpeedTalent(actor, "preternaturalSpeed") ? "SPD×6 (Запредельная Скорость — на дистанцию Бега)" : "SPD×3"} (не менее 4м), заканчивая в контакте с противником.</div>
     <div class="roll-threshold" style="font-size:0.85em;">База «Натиск» выбрана — рукопашный приём +20, 2 ОД спишутся на броске атаки.</div>
   </div>`);
@@ -412,10 +502,15 @@ export async function declareDisengage(actor) {
   await actor.setFlag("warhammer-dbc", "disengageActive", true);
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "half");
+  await grantMoveAllowance(actor, "disengage", actor.system.movement?.halfMove);
   _showReachRing(actor, actor.system.movement?.halfMove);
+  // Прикрывающий Огонь (Талант Стрелка, combat/covering-fire.mjs): враги в контакте запоминаются ДО движения.
+  // Динамический импорт — файл сам тянет free-attack/suppression, статический круг не нужен.
+  const { offerCoveringFire } = await import("./covering-fire.mjs");
+  const coverHtml = await offerCoveringFire(actor);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Выход из Боя</div>
-    <div class="roll-threshold">Полное действие (2 ОД). Перемещение до SPD×1, не провоцирует Свободную Атаку.</div>
+    <div class="roll-threshold">Полное действие (2 ОД). Перемещение до SPD×1, не провоцирует Свободную Атаку.</div>${coverHtml}
   </div>`);
 }
 
@@ -504,6 +599,7 @@ export async function resolveLegacyBraveDisengageContest(actorUuid, enemyUuid, c
   await actor.setFlag("warhammer-dbc", "disengageActive", true);
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "half");
+  await grantMoveAllowance(actor, "disengage", actor.system.movement?.halfMove);
   _showReachRing(actor, actor.system.movement?.halfMove);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Лучшая Часть Отваги: Выход из Боя</div>
@@ -562,7 +658,11 @@ export async function declareRun(actor) {
   await actor.setFlag("warhammer-dbc", FAST_MOVE_FLAG, true);
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
-  _showReachRing(actor, sprintFar ? (actor.system.movement?.sprintRun || actor.system.movement?.run) : actor.system.movement?.run);
+  // Дальность по ответу игрока на вопрос Спринта: «нет» — дальше SPD×6 не
+  // пустят, «да» — до SPD×12. Раньше система верила на слово и не мерила.
+  const runMeters = sprintFar ? (actor.system.movement?.sprintRun || actor.system.movement?.run) : actor.system.movement?.run;
+  await grantMoveAllowance(actor, "run", runMeters);
+  _showReachRing(actor, runMeters);
   const sprintNote = sprintFar ? await _noteSprintFar(actor) : "";
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Бег</div>
@@ -645,7 +745,7 @@ export async function declareHalfStep(actor) {
   if (!isThrottleReady(actor, HALF_STEP_FLAG, "round")) {
     return ui.notifications.warn("⚠️ Полушаг уже использован в этом Ходу.");
   }
-  const half = Number(actor.system.movement?.halfMove) || 0;
+  const half = spdMeters(actor); // SPD, не Полудвижение с множителем Черты
   const maxMeters = Math.min(half / 2, recoilRemaining(actor));
   if (maxMeters <= 0) {
     return ui.notifications.warn("⚠️ Нет остатка дистанции Отскока в этом Раунде — Полушагом двигаться нечем.");
@@ -680,6 +780,7 @@ export async function declareHalfStep(actor) {
   const spent = await spendRecoil(actor, Math.min(result, maxMeters));
   await markThrottleUsed(actor, HALF_STEP_FLAG, "round");
   await markMovedThisTurn(actor);
+  await grantMoveAllowance(actor, "halfStep", spent);
   _showReachRing(actor, spent);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Полушаг</div>
@@ -718,6 +819,7 @@ export async function declareReposition(actor) {
     return;
   }
   await markThrottleUsed(actor, REPOSITION_FLAG, "battle");
+  await grantMoveAllowance(actor, "reposition", actor.system.movement?.halfMove);
   _showReachRing(actor, actor.system.movement?.halfMove);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Смена Позиции</div>
@@ -779,6 +881,7 @@ export async function declareBreach(actor) {
   await markThrottleUsed(actor, BREACHER_FLAG, "round");
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "half");
+  await grantMoveAllowance(actor, "breach", actor.system.movement?.halfMove);
   _showReachRing(actor, actor.system.movement?.halfMove);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Прорыв</div>
@@ -821,18 +924,22 @@ export async function declareStandUp(actor) {
   if (_blockedByGrapple(actor)) return;
   if (!actor.system.conditions?.prone) return ui.notifications.warn("⚠️ Персонаж не Повален — вставать не с чего.");
   // Вскочить: «может автоматически Встать за свободное действие» — выбирать нечего.
-  if (hasSpeedTalent(actor, "leapUp")) return _standUpPlain(actor);
+  // Не для сбитого Вырубанием носителя «Ещё Не Всё» (rules/takedown.mjs): ему Вскочить запрещён.
+  const denied = leapUpDenied(actor);
+  if (hasSpeedTalent(actor, "leapUp") && !denied) return _standUpPlain(actor);
+  const extra = standUpExtraApCost(actor);
   return new Promise(resolve => {
     new Dialog({
       title: `Встать — ${actor.name}`,
       content: `<div class="atk-range-info" style="font-size:0.85em;padding:4px 2px;">
+        ${denied ? `<b>«Ещё Не Всё»: Вскочить не помогает, любое вставание стоит ещё +1 ОД.</b><br/>` : ""}
         Обычным способом — Полудействие, всегда удаётся.<br/>
         Прыжком — тест Acrobatics(A)+0: Успех встаёт Свободным действием;
         Провал даёт всем врагам в рукопашной с ним Свободную Атаку, но он
         всё равно встаёт (Полудействием), стр. 30.
       </div>`,
       buttons: {
-        plain: { label: "Обычным способом (1 ОД)", callback: () => resolve(_standUpPlain(actor)) },
+        plain: { label: `Обычным способом (${1 + extra} ОД)`, callback: () => resolve(_standUpPlain(actor)) },
         jump:  { label: "Прыжком (тест Acrobatics)", callback: () => resolve(_standUpJump(actor)) },
         cancel: { label: "Отмена", callback: () => resolve(null) }
       },
@@ -842,13 +949,18 @@ export async function declareStandUp(actor) {
 }
 
 export async function _standUpPlain(actor) {
-  const leapUp = hasSpeedTalent(actor, "leapUp");
-  const cost = standUpApCost(leapUp);
+  // «Ещё Не Всё» (rules/takedown.mjs): помеченному Вскочить не помогает, а любое
+  // вставание стоит +1 ОД сверх обычного. extra считается ДО снятия «Повален»:
+  // вместе с ним уходит и метка.
+  const extra = standUpExtraApCost(actor);
+  const leapUp = hasSpeedTalent(actor, "leapUp") && !leapUpDenied(actor);
+  const cost = standUpApCost(leapUp) + extra;
   if (cost > 0 && !await spendActionPoints(actor, cost, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
   await actor.update(conditionRemoveFields("prone"));
+  const notAll = extra ? ` «Ещё Не Всё»: Вскочить не помогает, ещё +${extra} ОД (всего ${cost} ОД).` : "";
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#9fb4ff")}${esc(actor.name)} — Встать</div>
-    <div class="roll-threshold">${leapUp ? "Свободное действие (0 ОД) — Вскочить. Встал автоматически." : "Полудействие (1 ОД). Встал обычным способом."}</div>
+    <div class="roll-threshold">${leapUp ? "Свободное действие (0 ОД) — Вскочить. Встал автоматически." : `Полудействие (1 ОД). Встал обычным способом.${notAll}`}</div>
   </div>`);
 }
 
@@ -856,13 +968,23 @@ export async function _standUpJump(actor) {
   const acro = skillTotal(actor, "acrobatics");
   const { rv, passed, deg } = await _d100(acro, actor);
   const statLineHtml = rollStatLine({ label: "Acrobatics", base: acro, threshold: acro, rv });
+  // «Ещё Не Всё» (rules/takedown.mjs): помеченный платит +1 ОД за ЛЮБОЙ способ встать.
+  // Считается до снятия «Повален» — вместе с ним уходит и метка.
+  const extra = standUpExtraApCost(actor);
 
   if (passed) {
+    if (extra > 0 && !await spendActionPoints(actor, extra, { physical: true })) {
+      return _postCard(actor, `<div class="wh-roll-result">
+        <div class="roll-header">${rollIcon("run","#9fb4ff")}${esc(actor.name)} — Встать (прыжком)</div>
+        ${statLineHtml}
+        <div class="roll-outcome"><span class="roll-failure">Успех — ${deg} ${_degWord(deg)}, но «Ещё Не Всё»: встать стоит +${extra} ОД, а их не хватает — остаётся Повален.</span></div>
+      </div>`);
+    }
     await actor.update(conditionRemoveFields("prone"));
     return _postCard(actor, `<div class="wh-roll-result">
       <div class="roll-header">${rollIcon("run","#9fb4ff")}${esc(actor.name)} — Встать (прыжком)</div>
       ${statLineHtml}
-      <div class="roll-outcome"><span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Вскочил Свободным действием.</span></div>
+      <div class="roll-outcome"><span class="roll-success">Успех — ${deg} ${_degWord(deg)}. ${extra > 0 ? `Вскочил, заплатив ${extra} ОД («Ещё Не Всё»).` : "Вскочил Свободным действием."}</span></div>
     </div>`);
   }
 
@@ -875,7 +997,7 @@ export async function _standUpJump(actor) {
       await offerFreeAttack(enemyDoc, tokenDoc);
     }
   }
-  if (!await spendActionPoints(actor, 1, { physical: true })) {
+  if (!await spendActionPoints(actor, 1 + extra, { physical: true })) {
     return _postCard(actor, `<div class="wh-roll-result">
       <div class="roll-header">${rollIcon("run","#9fb4ff")}${esc(actor.name)} — Встать (прыжком)</div>
       ${statLineHtml}
@@ -886,7 +1008,7 @@ export async function _standUpJump(actor) {
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#9fb4ff")}${esc(actor.name)} — Встать (прыжком)</div>
     ${statLineHtml}
-    <div class="roll-outcome"><span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Враги в рукопашной получают Свободную Атаку — но встал Полудействием.</span></div>
+    <div class="roll-outcome"><span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Враги в рукопашной получают Свободную Атаку — но встал Полудействием${extra > 0 ? ` и ещё +${extra} ОД («Ещё Не Всё»)` : ""}.</span></div>
   </div>`);
 }
 
@@ -956,7 +1078,13 @@ async function _rollVaultContest(actor) {
  */
 export function vaultHalfMove(actor) {
   const halfMove = actor.system.movement?.halfMove;
-  return actor.system?.meleeStance === "springing" ? (Number(halfMove) || 0) + 4 : halfMove;
+  // Поправка +4 привязана к SPD (−2 Стойки уже в нём): множитель Черты Полудвижения её бы сломал.
+  return actor.system?.meleeStance === "springing" ? spdMeters(actor) + 4 : halfMove;
+}
+
+/** Перебежка: SPD×2 от самого SPD, а не от Полного Движения (у Черт-множителей оно SPD×3 и больше). */
+export function duckAndCoverMeters(actor) {
+  return spdMeters(actor) * 2;
 }
 
 export async function declareVault(actor) {
@@ -964,6 +1092,7 @@ export async function declareVault(actor) {
   if (_blockedByGrapple(actor)) return;
   if (!await spendActionPoints(actor, 1, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
   await markMovedThisTurn(actor);
+  await grantMoveAllowance(actor, "vault", vaultHalfMove(actor));
   // Вольт ЗАМЕНЯЕТ Свободную Атаку встречным тестом WS (стр. 30), а не
   // добавляется к ней — тот же разовый глушитель, что ставит «Выход из Боя»
   // (declareDisengage выше) и Натиск-сбивание (bulldoze.mjs). Без него
@@ -1056,8 +1185,9 @@ export async function declareDuckAndCover(actor) {
   if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Перебежка")) return; // wdbc-x1nz.2.97 п.4
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
+  await grantMoveAllowance(actor, "duck", duckAndCoverMeters(actor));
   await actor.setFlag("warhammer-dbc", "duckAndCoverActive", true);
-  _showReachRing(actor, actor.system.movement?.move);
+  _showReachRing(actor, duckAndCoverMeters(actor));
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#9fe8b0")}${esc(actor.name)} — Перебежка</div>
     <div class="roll-threshold">Полное действие (2 ОД). Перемещение до SPD×2, старт/финиш в укрытии.</div>
@@ -1074,7 +1204,7 @@ export function showClimbDialog(actor) {
   if (!actor) return;
   const ath  = skillTotal(actor, "athletics");
   const acro = skillTotal(actor, "acrobatics");
-  const spd  = Number(actor.system.movement?.halfMove) || 0;
+  const spd  = spdMeters(actor); // SPD, не Полудвижение с множителем Черты
 
   // Бонусы источников со scopeTarget «climbing» (wdbc-egll) — испольщик
   // жмёт "Тест!", а не отдельная галочка: тот же неопросный приём, что и у
@@ -1165,6 +1295,8 @@ export async function _resolveClimb(actor, type, ath, acro, mod, spd) {
         ? `<span class="roll-failure">Провал (${deg} ст.) — не продвинулся, но удержался.</span>`
         : `<span class="roll-failure">Провал (${deg} ст.) — падает со стартовой позиции!</span>`;
     }
+    // Спуск тоже путь токена: без записи лимит пути не пустил бы спуститься.
+    await grantMoveAllowance(actor, "climb", dist);
     await _postCard(actor, `<div class="wh-roll-result">
       <div class="roll-header">${rollIcon("run","#b0a080")}Карабканье (верёвка) — ${esc(actor.name)}</div>
       ${statLineHtml}
@@ -1207,6 +1339,8 @@ export async function _resolveClimb(actor, type, ath, acro, mod, spd) {
     ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Взобрался на ${dist}м.</span>`
     : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Персонаж падает!</span>`;
 
+  // Дальность подъёма — путь токена (wdbc-l2urs): иначе лимит пути не пустил бы взобраться.
+  if (passed) await grantMoveAllowance(actor, "climb", Number(dist));
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}Карабканье — ${esc(actor.name)}</div>
     ${statLineHtml}
@@ -1283,6 +1417,10 @@ export async function _resolveJump(actor, type, acro, runup, mod, sb, { partOfCh
     ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}. ${f.label}: ${dist}м.</span>`
     : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Прыжок не удался.</span>`;
 
+  // Горизонтальный прыжок — путь токена (wdbc-l2urs): дальность броска входит
+  // в бюджет Хода, иначе лимит пути не пустил бы допрыгнуть. Вертикальный
+  // (высота) по земле не идёт.
+  if (passed && (type === "hplace" || type === "hrun")) await grantMoveAllowance(actor, "jump", Number(dist));
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}Прыжок — ${esc(actor.name)}</div>
     ${rollStatLine({
@@ -1338,6 +1476,7 @@ export async function _resolveSwim(actor, ath, heavy, ext, mod, sb) {
   const threshold = ath + (heavy ? -30 : 0) + mod + bodyMods.total;
   const { rv, passed, deg } = await _d100(threshold, actor);
   const dist = passed ? (sb / 2).toFixed(1) : 0;
+  if (passed) await grantMoveAllowance(actor, "swim", Number(dist)); // плыть тоже путь токена (wdbc-l2urs)
   const outcome = passed
     ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Плывёт, SPD ${dist}м.</span>`
     : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Не может двигаться.</span>`;
@@ -1625,6 +1764,9 @@ export function showFlightDialog(actor) {
           }
           await actor.update({ "system.movement.altitude": alt });
           await _syncFlightElevation(actor, alt);
+          // «Перемещение до SPD×1» вместе со Сменой Высоты — путь по земле в бюджет Хода
+          // (сам подъём по вертикали измеритель пути не считает).
+          await grantMoveAllowance(actor, "altitude", actor.system.movement?.halfMove);
           _showReachRing(actor, actor.system.movement?.halfMove);
           ui.notifications.info(
             `${actor.name}: высота полёта — ${FLIGHT_ALTITUDES[alt].label} ` +
@@ -1837,6 +1979,10 @@ export function movementMenuItems(actor) {
   if (isEncounterActive()) {
     items.push({ key: "halfmove", label: "Полудвижение", cost: "1 ОД", action: () => declareHalfMove(actor) });
     items.push({ key: "fullmove", label: "Полное движение", cost: "2 ОД", action: () => declareFullMove(actor) });
+    // Стрельба от Бедра (Талант Стрелка): Полное Движение + Одиночный Выстрел одним полным действием.
+    if (hipShootingWeapon(actor)) {
+      items.push({ key: "hipshooting", label: "Стрельба от Бедра", cost: "2 ОД", action: () => declareFullMove(actor, { hipShooting: true }) });
+    }
     items.push({ key: "charge", label: "Натиск", cost: "", action: () => declareCharge(actor) });
     items.push({ key: "run", label: "Бег", cost: "2 ОД", action: () => declareRun(actor) });
     items.push({ key: "disengage", label: "Выход из Боя", cost: "2 ОД", action: () => declareDisengage(actor) });
@@ -1859,12 +2005,19 @@ export function movementMenuItems(actor) {
     if (actorCanBreach(actor)) {
       items.push({ key: "breach", label: "Прорыв", cost: "Талант, 0 ОД", action: () => declareBreach(actor) });
     }
+    // Таланты/Черты с Движением без своей механики (rules/talent-moves.mjs): общий пункт, цену и дистанцию
+    // берёт из таблицы; talent-move.mjs грузится лениво — он сам импортирует этот файл.
+    if (talentMoveDefsFor(actor).length) {
+      items.push({ key: "talentMove", label: "Движение по Таланту", cost: "Талант",
+        action: async () => (await import("./talent-move.mjs")).showTalentMoveDialog(actor) });
+    }
     // Лечь/Встать (стр. 30, wdbc-x1nz.2.36) — взаимоисключающие по текущему
     // Состоянию «Повален»: лежачему нет смысла предлагать «Лечь», стоящему —
     // «Встать» (тот же приём, что actorHasHalfStep выше — пункт меню виден,
     // только когда применим).
     if (actor.system.conditions?.prone) {
-      items.push({ key: "standup", label: "Встать", cost: "", action: () => declareStandUp(actor) });
+      // «Ещё Не Всё» (rules/takedown.mjs): помеченному Вскочить не помогает, +1 ОД к любому способу.
+      items.push({ key: "standup", label: "Встать", cost: standUpExtraApCost(actor) ? "+1 ОД" : "", action: () => declareStandUp(actor) });
     } else {
       items.push({ key: "prone", label: "Лечь", cost: "Своб.", action: () => declareProne(actor) });
     }
@@ -1887,6 +2040,18 @@ export function movementMenuItems(actor) {
     items.push({ key: "marchA", label: "Ускоренный марш", cost: "", action: () => showMarchDialog(actor, "accelerated") });
     items.push({ key: "marchR", label: "Марафонский бег", cost: "", action: () => showMarchDialog(actor, "run") });
     items.push({ key: "marchF", label: "Форсированный марш", cost: "", action: () => showMarchDialog(actor, "forced") });
+  }
+  // ГМ: обойти лимит пути для этого персонажа (особые случаи — перевозка,
+  // Движение по Таланту, которого система не знает, сбитая история Хода).
+  // Самого ГМа лимит не блокирует и так (combat/path-limit.mjs).
+  if (globalThis.game?.user?.isGM) {
+    const off = !!actor.getFlag?.("warhammer-dbc", PATH_LIMIT_OFF_FLAG);
+    items.push({
+      key: "pathLimitToggle",
+      label: off ? "Лимит пути: вернуть (ГМ)" : "Лимит пути: снять (ГМ)",
+      cost: "",
+      action: () => togglePathLimitOff(actor)
+    });
   }
   return items;
 }
@@ -1964,6 +2129,7 @@ export function initMovedFlagTracking() {
     // free-attack.mjs).
     if (userId !== game.user.id) return;
     if (!_movesPosition(changes)) return;
+    if (isForcedMove(options)) return; // толкнули/перевезли — сам токен не двигался (task-bbe1)
     const actor = tokenDoc.actor;
     if (!actor || MOVEMENT_MENU_EXCLUDED_TYPES.includes(actor.type)) return;
     await markMovedThisTurn(actor);

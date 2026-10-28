@@ -1,0 +1,66 @@
+{
+  "name": "Robot / Робот",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "Метка: этот персонаж — робот (корбук стр. 111-113: «Сервиторы, роботы и дроны»). Нужна, когда робот заведён Персонажем или другим актором, а не Миньоном группы «Машина»: без метки система отличает такого от человека нечем.",
+    "notes": "Метка без собственных чисел. Читатель — module/rules/binary-dominion.mjs::isServitorOrRobot (ключ trait.robot или имя «Robot»): Бинарное Владычество (Tech-Use вместо Command, Риск 3) узнаёт носителя целью, как Миньона-машину. Чертой Machine метка сама не является — её ставят отдельно, если нужны броня и иммунитеты.",
+    "benefit": "Метка «робот»: Бинарное Владычество видит цель без слота Миньона.",
+    "source": "миньоны",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "RobotMarkTrt3Wz7",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "RobotMarkGrp00001",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "RobotMarkEnt00001",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "trait.robot",
+              "label": "Метка «робот»: цель Бинарного Владычества без слота Миньона"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1788000000000,
+    "modifiedTime": 1788000000000,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!RobotMarkTrt3Wz7"
+}

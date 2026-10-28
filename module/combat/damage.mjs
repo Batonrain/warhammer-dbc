@@ -32,12 +32,19 @@ import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { conditionLevelField } from "../constants/conditions.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { hasPugilistTalent, rollingWithPunchesBonus } from "../rules/pugilist-talents.mjs";
 import { hardenedSoulSoakBonus, hasResilienceTalent, trueGritDamage, HUNKER_DOWN_FLAG } from "../rules/resilience-talents.mjs";
 import { headGuardOffer } from "./head-guard.mjs";
 import { hellishResilienceOffer } from "./hellish-resilience.mjs";
 import { applyEyeOfTheGods } from "./eye-of-the-gods.mjs";
 import { offerHardeningSpend } from "./ablative-hardening.mjs";
 import { statusApplyFields } from "./status-resist.mjs";
+import { takedownSection } from "./takedown.mjs";
+import { cleaveSection } from "./cleave.mjs";
+import { vampireSection } from "./psychic-vampire.mjs";
+import { hamstringSection } from "./hamstring.mjs";
+import { markLastChargeHit } from "./reaper-chain.mjs";
+import { markMeleeDamageDealt, markMeleeDamageApplied } from "./tenacity.mjs";
 import { hollowBonesTb } from "../rules/hollow-bones.mjs";
 import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
 import { inPariahVoid } from "../rules/null-zones.mjs";
@@ -67,6 +74,8 @@ import { reaperLegacyButtonHtml } from "./legacy-weapon-reaper.mjs";
 import { braveHeartLegacyButtonHtml } from "./legacy-weapon-brave-heart.mjs";
 import { legacyHatredShieldApForLocation } from "../rules/legacy-weapon.mjs";
 import { applyHaywireToBoneHead } from "./bone-head.mjs";
+import { hasFleshmetal, fleshmetalMachineApCut, fleshmetalHaywireText } from "../rules/fleshmetal.mjs";
+import { negativeWoundsBonus } from "../rules/gunner-talents.mjs";
 
 /** Электродуга Best.Q «Электрическая регенерация» (wdbc-3hgd0). */
 export const ELECTRIC_REGENERATION = "implant.electricArc.regeneration";
@@ -84,6 +93,14 @@ export const CORROSIVE_BODY_IMMUNITY = "weaponPropertyImmunity.corrosiveBodyOnly
  * субмутация 10 «Кислота», wdbc-1rno.15): броня разъедается как обычно, а
  * остаток на тело не переходит.
  */
+/** uuid токена цели удара: токен синтетического актора, иначе выцеленный токен этого актора, иначе его токен на сцене. */
+function _targetTokenUuid(actor) {
+  if (actor?.token?.uuid) return actor.token.uuid;
+  const targeted = [...(globalThis.game?.user?.targets ?? [])]
+    .find(t => t.actor === actor || (t.actor?.uuid && t.actor.uuid === actor?.uuid));
+  return (targeted?.document ?? actor?.getActiveTokens?.(false, true)?.[0])?.uuid ?? "";
+}
+
 async function _applyCorrosive(actor, armorKey, hitLocation, rating, { bodyImmune = false } = {}) {
   const currentAP = Math.max(0, Number(actor.system.absorption?.armorOnly?.[armorKey]) || 0);
   const existing  = Number(actor.system.armorCorrosion?.[armorKey]) || 0;
@@ -253,9 +270,11 @@ async function _applyHaywire(actor, rating, damage2 = "") {
   const total = roll.total;
   const tier = HAYWIRE_TABLE.find(t => total <= t.max);
   const isStorm = tier.max === Infinity;
-  const text = (isStorm && damage2)
+  const tierText = (isStorm && damage2)
     ? tier.text.replace(/1d5\+1 непоглощ\. E Dmg\.$/, `${damage2} непоглощ. E Dmg (книжный нестандартный урон этого предмета).`)
     : tier.text;
+  // Плотеметалл (Sahara 3-cc96 п.8): Оглушение/Беспомощность Машины → потеря одного полудействия.
+  const text = hasFleshmetal(actor) ? fleshmetalHaywireText(tierText) : tierText;
   // BONE-Head Огрина (wdbc, сверка расы Огрин): та же мощность поля сбивает
   // мозговой имплант — 3+ автопровал тестов I, 7+ Ступор (combat/bone-head.mjs).
   // rating — радиус поля: вышедший за него Огрин освобождается сам.
@@ -850,9 +869,17 @@ export async function applyDamageToActor(actor, damageData) {
     spray = false, // Распыление: свойство присутствует (wdbc-1rno)
     hasExtreme = false, // Экстремальный Урон (wdbc-x1nz.2.50): гарантирует 1 непоглощаемого урона ниже
     opportunistFloor = false, // Оппортунист/versatile 10-10 (wdbc-1rno.35): минимум 1d10−2(мин.1) вместо флэт-1
+    breachNoDouble = false, // Облучить (Талант Оружейника): пробитие брони Rad без удвоения AP цели
+    negWoundsBonus = 0, // Пробивной Удар (rules/gunner-talents.mjs): +N к урону, если Раны уйдут в минус
+    hamstring = false,   // Подрезать Сухожилья (combat/hamstring.mjs): метка атаки — Избирательная в Ногу, не Быстрая/Молниеносная
+    chargeBase = false,  // Жнец (combat/reaper-chain.mjs): удар проведён с Базой «Натиск»
+    cleaveChild = false, // Разрубить (combat/cleave.mjs): это сама дополнительная атака Таланта — новых не порождает
     ignoreSubtypeImmunity = false, // Огонь Души (combat/soulfire.mjs): иммунитет к подвиду этого попадания не действует
     sourceMessageId = "" // карточка атаки, с которой пришёл урон — к ней привязан итог пробития (wdbc-x1nz.2.79)
   } = damageData;
+
+  // Упорство (combat/tenacity.mjs): урон по этой карточке применён — повтор больше не переспрашивает.
+  if (melee) await markMeleeDamageApplied(attackerUuid, sourceMessageId);
 
   // Bronze Myrmidon (wdbc-1rno.1, rules/bronze-myrmidon.mjs): у актора с
   // активным Трейтом Machine (Ярость) попадание в Сочленение/Глаз резолвится
@@ -941,7 +968,15 @@ export async function applyDamageToActor(actor, damageData) {
   // vsType/vsSubtype листа). Книга: «+1 к Поглощению», а не к AP брони —
   // поэтому идёт в итог рядом с T.b (wdbc-4umq): Пробитием не срезается, в
   // Сочленении на 3 не делится, вместе с бронёй не обнуляется.
-  const adaptBonus = adaptationBonusFor(actor, damageType, damageSubtype);
+  const adaptOnlyBonus = adaptationBonusFor(actor, damageType, damageSubtype);
+  // Скользить за Ударами (Талант Пугилиста, стр. 62): +½A.b поглощения против
+  // безоружных атак — безоружность нападающего определяет его оружие.
+  let rollingBonus = 0;
+  if (melee && weaponUuid && hasPugilistTalent(actor, "rollingWithPunches")) {
+    const atkWeapon = await fromUuid(weaponUuid).catch(() => null);
+    rollingBonus = rollingWithPunchesBonus(actor, !!atkWeapon?.getFlag?.("warhammer-dbc", "integralAttack"));
+  }
+  const adaptBonus = adaptOnlyBonus + rollingBonus;
   let runesBonus = 0;
   let coverBonus = 0;
   let coverHunkered = false;   // Залегание повлияло на AP укрытия — для подписи в карточке
@@ -1079,6 +1114,11 @@ export async function applyDamageToActor(actor, damageData) {
           armorAP = Math.max(0, armorAP - entropyLost);
         }
       }
+      // Плотеметалл (Талант Механикума, Sahara 3-cc96 п.8): «оружие со свойством
+      // Sanctified игнорирует AP от Трейта Machine» — рейтинг Machine вычитается
+      // из брони этого места, остальная защита (надетая броня) остаётся.
+      const machineCut = fleshmetalMachineApCut(actor, { sanctified });
+      if (machineCut > 0) armorAP = Math.max(0, armorAP - machineCut);
       // Защитные Руны (Runes of Protection, wdbc-tejb): +AP этой локации ДО
       // Копья/Пробития — читает WP/бPR актора, сама решает, применяться ли
       // (пропускает, если у брони этой локации нет свойства).
@@ -1199,6 +1239,12 @@ export async function applyDamageToActor(actor, damageData) {
         rawDamage, effArmorAP, damageSubtype,
         otherAbsorption: ablativeShieldBefore + adaptBonus + incomingReduction
       });
+  // Облучить (Талант Оружейника): «рассчитывать пробитие брони в расчете свойства Rad, не удваивая AP цели» —
+  // отдельный расчёт ТОЛЬКО для Rad (flags.lastBreach.radBreached); обычное пробитие (метка брони, Toxic и т.п.) прежнее.
+  const radBreach = (breachNoDouble && !warpSoak && !ignoreArmour)
+    ? armorBreachOutcome({ rawDamage, effArmorAP, damageSubtype, noDouble: true,
+        otherAbsorption: ablativeShieldBefore + adaptBonus + incomingReduction })
+    : null;
   if (breached) await breachArmorAtLocation(actor, armorKey);
   // Итог пробития для кнопок Rad/Toxic/… той же карточки (wdbc-x1nz.2.79):
   // эффект «при пробитии брони» проверяет его в hooks.mjs::_applyWeaponPropEffect.
@@ -1206,7 +1252,9 @@ export async function applyDamageToActor(actor, damageData) {
   if (sourceMessageId) {
     const prev = actor.getFlag?.("warhammer-dbc", "lastBreach");
     const already = prev?.messageId === sourceMessageId && prev.breached;
-    actorUpdate["flags.warhammer-dbc.lastBreach"] = { messageId: sourceMessageId, breached: breached || !!already };
+    const alreadyRad = prev?.messageId === sourceMessageId ? prev.radBreached : undefined;
+    actorUpdate["flags.warhammer-dbc.lastBreach"] = { messageId: sourceMessageId, breached: breached || !!already,
+      ...(radBreach ? { radBreached: radBreach.breached || !!alreadyRad } : (alreadyRad !== undefined ? { radBreached: !!alreadyRad } : {})) };
   }
 
   // wdbc-bxw6: аблативные AP-моды брони и аблативный AP-щит теряют ровно 1
@@ -1355,6 +1403,12 @@ export async function applyDamageToActor(actor, damageData) {
   // урон, проигнорированный приёмом Оглушить, не «нанесён».
   await recordScourgeOfChampions(actor, attackerUuid, netDamage);
 
+  // Пробивной Удар / «+N при Отрицательных Ранах» (rules/gunner-talents.mjs):
+  // решается здесь, когда известны и непоглощённый урон, и Раны цели. Прибавка
+  // идёт в Критические целиком (остаток сверх Ран).
+  const negBonus = negativeWoundsBonus({ net: netDamage, value: system.wounds?.value, bonus: negWoundsBonus });
+  netDamage += negBonus;
+
   const { currentWounds, newWounds, newCritical, gotCritical } =
     await applyWoundLoss(actor, netDamage);
 
@@ -1380,6 +1434,8 @@ export async function applyDamageToActor(actor, damageData) {
   // ранении: «последнее» и есть то, от которого умерли.
   if (weaponUuid && netDamage > 0) {
     await actor.setFlag("warhammer-dbc", LAST_DAMAGE_WEAPON_FLAG, weaponUuid);
+    // Жнец (combat/reaper-chain.mjs): был ли это рукопашный Натиск — решит setDeceased, когда смерть констатируют.
+    await markLastChargeHit(actor, { melee, chargeBase, attackerUuid, targetTokenUuid: _targetTokenUuid(actor) });
   }
 
   // Обескровливание (wdbc-x1nz.2.92): без сознания от него — «пока он не
@@ -1418,7 +1474,16 @@ export async function applyDamageToActor(actor, damageData) {
   const braveHeartSection = braveHeartWeaponItem ? braveHeartLegacyButtonHtml(braveHeartWeaponItem, attackerUuid) : "";
 
   // Критический эффект по таблице — только при уходе в Критические.
-  const critEffect = gotCritical ? getCriticalEffect(damageType, hitLocation, newCritical) : null;
+  // Уличный Боец (Талант Разбойника, rules/rogue-talents.mjs::criticalEffectFlatBonus): нож/кулаки
+  // добавляют +½WS.b (макс. +5) к уровню Критического Эффекта — и от Отрицательных Ран (здесь),
+  // и от Экстремального урона (attack.mjs::rollExtremeDamage). Раны не меняются, только строка таблицы.
+  let critFlat = 0;
+  if (gotCritical && attackerUuid && (reaperWeaponItem || braveHeartWeaponItem)) {
+    const { criticalEffectFlatBonus } = await import("../rules/rogue-talents.mjs");
+    const attackerDoc = await fromUuid(attackerUuid).catch(() => null);
+    critFlat = criticalEffectFlatBonus(attackerDoc, reaperWeaponItem ?? braveHeartWeaponItem);
+  }
+  const critEffect = gotCritical ? getCriticalEffect(damageType, hitLocation, newCritical + critFlat) : null;
 
   // Cast Out of Death/Изгнанный из Смерти (Нургл, wdbc-1rno): «после ЛЮБОГО
   // Критического Эффекта... регенерирует к −7 в течение 7ч» — не действует
@@ -1566,7 +1631,8 @@ export async function applyDamageToActor(actor, damageData) {
   if (touchOfPainIgnoreTb) propNotes.push("Касание Боли: T.b Поглощения проигнорирован");
   if (hollowBonesHalved) propNotes.push("Пустые Кости: T.b вдвое (окр.▲) против I(Cr)");
   if (mournerNote) propNotes.push(mournerNote);
-  if (adaptBonus > 0) propNotes.push(`Адаптация: +${adaptBonus} Поглощения`);
+  if (adaptOnlyBonus > 0) propNotes.push(`Адаптация: +${adaptOnlyBonus} Поглощения`);
+  if (rollingBonus > 0) propNotes.push(`Скользить за Ударами: +${rollingBonus} Поглощения (½A.b против безоружной атаки)`);
   if (ignoreShield && !warpSoak) propNotes.push("Омывание: щит проигнорирован");
   if (ignoreArmour && !warpSoak) propNotes.push("Приём Борьбы: броня проигнорирована");
   if (!warpSoak) {
@@ -1629,7 +1695,7 @@ export async function applyDamageToActor(actor, damageData) {
         ${propNotes.length ? `<div class="dmg-tb-note">${propNotes.join(" · ")}</div>` : ""}
         ${armorAP > 0 ? `<div class="dmg-tb-note">${breached
           ? "Броня пробита"
-          : "Броня не пробита"} (AP ×${damageSubtype === "crushing" ? 3 : 2} без T.b: ${breachAbsorption})</div>` : ""}
+          : "Броня не пробита"} (AP ×${damageSubtype === "crushing" ? 3 : 2} без T.b: ${breachAbsorption})${radBreach ? ` · Rad без удвоения AP (Облучить): ${radBreach.breached ? "пробито" : "не пробито"} (AP без T.b: ${radBreach.breachAbsorption})` : ""}</div>` : ""}
         ${reductionNote}
         ${ablativeShieldNote}
       </div>`;
@@ -1642,6 +1708,7 @@ export async function applyDamageToActor(actor, damageData) {
     ? `Раны: <b>${currentWounds}</b> → <b>${newWounds}</b>${
         ablated ? ` <span class="dmg-tb-note">(Аблативное Бронирование: ${rawNet} → 1)</span>` : ""}${
         trueGritReduced > 0 ? ` <span class="dmg-tb-note">(Настоящая Выдержка: −${trueGritReduced} урона)</span>` : ""}${
+        negBonus > 0 ? ` <span class="dmg-tb-note">(Пробивной Удар: Раны в минус — +${negBonus} к урону)</span>` : ""}${
         extremeFloorApplied ? ` <span class="dmg-tb-note">(Экстремальный Урон: поглощено полностью, но ${
           opportunistFloorRoll ? `Оппортунист — 1d10−2: ${opportunistFloorRoll.total} (мин.1)` : "1 непоглощаемого урона всё равно проходит, стр. 34"
         })</span>` : ""}`
@@ -1666,7 +1733,7 @@ export async function applyDamageToActor(actor, damageData) {
         ? `<div class="wh-crit-pills roll-threshold">💀 Изгнанный из Смерти: не может умереть от этого — Раны сами вернутся к −7 в течение 7ч (Календарь).</div>`
         : (critEffect ? deathButtonHtml(critEffect, actor.uuid, weaponUuid) : ""))}
       ${critEffect ? shockDeathButtonHtml(critEffect, actor.uuid, { blocked: castOutOfDeathBlocksShockDeath }) : ""}
-      ${critEffect ? critTalentsHtml(actor, { level: newCritical, damageType, hitLocation, netDamage }) : ""}
+      ${critEffect ? critTalentsHtml(actor, { level: newCritical + critFlat, damageType, hitLocation, netDamage }) : ""}
       ${eaterOfPainButtons ? `<div class="wh-crit-pills">${eaterOfPainButtons}</div>` : ""}
     </div>` : "";
 
@@ -1687,6 +1754,37 @@ export async function applyDamageToActor(actor, damageData) {
       data-weapon-name="${esc(weaponName || "")}">
       🎯 Пробило насквозь — найти следующую цель по линии огня (${throughShotReductionDie(1) ? `−${throughShotReductionDie(1)}` : "флэт −1"} к урону)
     </button>` : "";
+
+  // Вырубание (Takedown, Рукопашные гл. 3): «При успешном Оглушении он может
+  // выбрать также сбить цель с ног» — кнопка только если Оглушение реально
+  // наложилось (stunRoundsApplied > 0: не иммунитет, не Стальная Челюсть) и у
+  // атакующего есть Талант (combat/takedown.mjs).
+  const takedownBtn = (stunManeuver && stunRoundsApplied > 0)
+    ? await takedownSection(attackerUuid, actor) : "";
+
+  // Разрубить (Талант «Рукопашных», rules/melee-talents.mjs::cleaveTriggered): 16+ непоглощённого и цель
+  // выведена из строя (Раны были > 0, стали ≤ 0) → кнопка свободной атаки по соседу, −10.
+  const cleaveBtn = await cleaveSection({
+    attackerUuid, weaponUuid, melee, cleaveChild, net: netDamage,
+    woundsBefore: currentWounds, woundsAfter: newWounds, targetName: actor.name
+  });
+
+  // Психический Вампир (Талант Псайканы, combat/psychic-vampire.mjs): психическая атака вывела цель из строя —
+  // кнопка «поглотить душу» (W+0, лечение 1d5 Ран или вся Усталость, доза «наркотика»).
+  const vampireBtn = await vampireSection({
+    attackerUuid, weaponUuid, psychicPowerType: damageData?.psychicPowerType ?? null,
+    net: netDamage, woundsAfter: newWounds, targetName: actor.name
+  });
+
+  // Упорство (combat/tenacity.mjs): рукопашная атака нанесла урон — повтор Упорства после этого закрыт.
+  if (melee && netDamage > 0) await markMeleeDamageDealt(attackerUuid);
+
+  // Подрезать Сухожилья (combat/hamstring.mjs): Избирательное попадание в Ногу с непоглощённым уроном →
+  // кнопка встречного теста A+0 vs A+0 (сбить с ног; 5+ Успехов — потеря полудействия).
+  const hamstringBtn = await hamstringSection({
+    attackerUuid, targetUuid: actor.uuid, targetName: actor.name, armed: melee && hamstring, net: netDamage,
+    targetProne: !!actor.system?.conditions?.prone
+  });
 
   // Карточка УРОНА, а не теста — родня attack-card.mjs (своя большая разметка
   // поглощения, Ран, крита и пилюль Крит. Эффекта): от общего сборщика
@@ -1717,6 +1815,10 @@ export async function applyDamageToActor(actor, damageData) {
       critLine,
       propEffectNotes.join(""),
       throughShotBtn,
+      takedownBtn,
+      cleaveBtn,
+      vampireBtn,
+      hamstringBtn,
       reaperSection,
       braveHeartSection
     ]

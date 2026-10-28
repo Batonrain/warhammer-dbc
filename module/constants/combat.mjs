@@ -210,6 +210,30 @@ export const MELEE_MANEUVERS = {
     targetDodgeMod: 0, targetParryMod: 0,
     chatNote: "⚡ Молниеносная Атака: попадание за каждый Успех до WS.b"
   },
+  // Штыковая Атака (core.json, «Рукопашные», Sahara 3-8dc5): База любая, Оружие — штык;
+  // базовая рукопашная атака со штрафом −10, при попадании — свободный выстрел в упор
+  // (кнопка на карточке: combat/free-shot.mjs::bayonetShotButtonsHtml; замок оружия после
+  // Стрельбы на Бегу — rules/run-and-gun.mjs).
+  bayonetCharge: {
+    label: "Штыковая Атака", wsBonus: -10, categories: ["Штык"],
+    requiresCapability: "meleeCore.core.bayonetCharge",
+    note: "Талант Bayonet Charge / Штыковая Атака. База: любая; Оружие: штык. Базовая рукопашная атака со штрафом −10. При попадании — свободное действие: выстрел из оружия по противнику как в упор (+30 за расстояние, несмотря на связанность).",
+    targetDodgeMod: 0, targetParryMod: 0,
+    chatNote: "🔫 Штыковая Атака: при попадании — свободный выстрел в упор"
+  },
+  // Обратный Удар (core.json, «Рукопашные», Sahara 3-8dc5): База Стандартная/Натиск/Осторожная; Оружие —
+  // с профилем посоха (или категории «Посох» без профилей — решение владельца 26.10.2026: вторая атака базовым
+  // профилем), только в Хвате на обе руки. Базовая атака +0 любым профилем и сразу вторая с теми же
+  // модификаторами профилем посоха (отдельный бросок, свои Избегание/Парирование); вторая получает
+  // Concussive(0). Вторую атаку проводит окно (sheets/attack/dialog.mjs), ключ Concussive — combat/attack.mjs.
+  reverseStrike: {
+    label: "Обратный Удар", wsBonus: 0, bases: ["standard", "charge", "careful"],
+    requiresCapability: "meleeCore.core.reverseStrike",
+    requiresProfileLabel: "Посох", requiresGrips: ["2р", "Мх"],
+    note: "Талант Reverse Strike / Обратный Удар. База: Стандартная/Натиск/Осторожная; Оружие: с профилем посоха или оружие категории «Посох», только в Хвате на обе руки. Базовая атака +0 выбранным профилем, затем сразу вторая с теми же модификаторами профилем посоха (отдельный бросок: Избегание и Парирование на каждую). Вторая получает Concussive(0), если у оружия его нет выше.",
+    targetDodgeMod: 0, targetParryMod: 0,
+    chatNote: "↔ Обратный Удар: сразу вторая атака профилем посоха (Concussive 0)"
+  },
   // Реакция (стр. 12), не обычный Приём атакующего в свой Ход — книга
   // числит её Базой («Действие: Особое»), но по форме это ровно рукопашный
   // приём +0 любым оружием, поэтому заведена здесь и доступна без
@@ -266,6 +290,8 @@ export const MELEE_CONTESTS = {
     modLabel: "WS vs WS",
     note: "WS vs WS. При победе цель перемещается на кол-во Успехов в метрах.",
     targetDodgeMod: 0, targetParryMod: 0,
+    // Цель всегда отвечает WS: Огневая Угроза меняет только сторону инициатора (BS vs WS).
+    resist: [{ char: "ws" }],
     chatNote: "⚡ Состязательный бросок WS"
   },
   // Книга числит Напролом среди Баз (стр. 12, «Действие: Полное Действие»),
@@ -425,10 +451,12 @@ export function meleeEffectiveRange(baseRange, gripKey, maneuverKey = "standard"
 
 // Сводит эффекты выбранного хвата с учётом, основной он или вторичный.
 // isSecondary — хват отличается от основного (первого в профиле оружия).
-export function gripEffects(key, isSecondary = false) {
+export function gripEffects(key, isSecondary = false, opts = {}) {
   const g = GRIPS[key];
   if (!g) return { ws: 0, dmgFlat: 0, addProps: [], sbHalf: false, label: "", note: "", balSet: null, balMod: 0 };
-  const ws      = (g.ws || 0) + (isSecondary ? (g.secWs || 0) : 0);
+  // opts.secWs — подмена вторичного WS (Прикладный Хват: штык в «1р» — −10 вместо −5).
+  const secWs   = opts.secWs ?? (g.secWs || 0);
+  const ws      = (g.ws || 0) + (isSecondary ? secWs : 0);
   const dmgFlat = (g.dmgFlat || 0) + (isSecondary ? (g.secDmg || 0) : 0);
   // balMod (wdbc-x1nz.2.68) — относительный мод поверх system.balance оружия
   // (1р вторичный: −1), в отличие от balSet — абсолютной подмены (Бл/Хв).

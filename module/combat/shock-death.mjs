@@ -22,9 +22,37 @@
 import { rollResilienceTest } from "./resilience-test.mjs";
 import { killByCondition } from "./condition-death.mjs";
 import { runCardOnce } from "./card-once.mjs";
+import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { hasResilienceTalent } from "../rules/resilience-talents.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { CAST_OUT_OF_DEATH_CAPABILITY } from "../rules/cast-out-of-death.mjs";
+
+/**
+ * Тест «Кровотечение» Критического Эффекта (3-edc4 п.18): «Цель должна пройти
+ * тест на T+0, или получить Кровотечение». Крепкий Орешек перебрасывает (лучший
+ * из двух), провал накладывает Кровотечение через общую точку наложения
+ * (иммунитет цели учитывается). Раз на карточку.
+ */
+export async function rollBleedingTest(actor, { char = "t", mod = 0, message = null } = {}) {
+  if (!actor) return false;
+  const run = async () => {
+    const dieHard = hasResilienceTalent(actor, "dieHard");
+    const test = await rollResilienceTest(actor, char, {
+      title: "Критический Эффект: Кровотечение", mod, charLabel: char.toUpperCase(),
+      reroll: dieHard ? DIE_HARD_REROLL : null,
+      successText: "Успех — кровь удалось сдержать",
+      failText: "Провал — Кровотечение"
+    });
+    if (!test.success) {
+      const fields = conditionApplyFields("bleeding", null, actor);
+      if (Object.keys(fields).length) await actor.update(fields);
+    }
+    return true;
+  };
+  return message
+    ? runCardOnce(message, "bleedTestRolled", run, "Тест Кровотечения с этой карточки уже брошен.", { persist: false })
+    : run();
+}
 
 /** Двойной бросок Крепкого Орешка: лучший (меньший) из двух. */
 export const DIE_HARD_REROLL = { rolls: 2, mode: "keepBest", label: "Крепкий Орешек" };

@@ -8,8 +8,10 @@ import { describe, it, expect } from "vitest";
 import {
   hasCyberpreacher, hasSlowShiftTalent, cyberpreacherApplies,
   effectiveDiceMode, slowShiftBonus, hasPolymath, polymathBonus,
-  hasJourneyman, hasDarkMuse, darkMuseAssistBonus, haemonculusLabBonus, researchBonus
+  hasJourneyman, hasDarkMuse, darkMuseAssistBonus, haemonculusLabBonus, researchBonus,
+  hasWorkaholic, monotonyPenalty, fabricatorToolMod, masterEngineseerBonus, polymathCrit
 } from "../../module/rules/craft-advantage.mjs";
+import { POLYMATH_CHAIN_MAX } from "../../module/constants/craft.mjs";
 
 const actorWith = (...talentNames) => ({
   items: talentNames.map(name => ({ type: "talent", name }))
@@ -212,5 +214,87 @@ describe("researchBonus (Инновация)", () => {
   });
   it("без Стремления — ноль", () => {
     expect(researchBonus(crafter(), "research")).toBe(0);
+  });
+});
+
+// Workaholic / Трудоголик (Таланты Крафта, глава 3, task 3-3a64): «не получает
+// штрафы за занятие одним и тем же Крафтом несколько смен подряд» — штраф −30
+// галочки «Монотонная работа» с него снимается.
+describe("monotonyPenalty (Трудоголик)", () => {
+  it("галочка стоит, Таланта нет — −30", () => {
+    expect(monotonyPenalty(actorWith("Dodge"), true)).toBe(-30);
+  });
+  it("галочка стоит, Талант есть — штрафа нет", () => {
+    expect(monotonyPenalty(actorWith("Workaholic / Трудоголик"), true)).toBe(0);
+  });
+  it("галочки нет — штрафа нет в любом случае", () => {
+    expect(monotonyPenalty(actorWith("Dodge"), false)).toBe(0);
+  });
+  it("нет актора — штраф как у обычного (не падает)", () => {
+    expect(monotonyPenalty(null, true)).toBe(-30);
+  });
+  it("hasWorkaholic: Мутация с тем же именем не считается", () => {
+    expect(hasWorkaholic(actorWithMutation("Workaholic / Трудоголик"))).toBe(false);
+  });
+});
+
+// Fabricator / Фабрикатор: «удваивает бонусы от инструментов на тесты Крафта».
+// Бонусы — это положительные модификаторы; штраф за плохие инструменты не
+// удваивается (книга говорит о бонусах).
+describe("fabricatorToolMod (Фабрикатор)", () => {
+  const fab = actorWith("Fabricator / Фабрикатор");
+  it("положительный бонус инструментов удваивается", () => {
+    expect(fabricatorToolMod(fab, 10)).toBe(20);
+    expect(fabricatorToolMod(fab, 30)).toBe(60);
+  });
+  it("штраф и ноль не удваиваются", () => {
+    expect(fabricatorToolMod(fab, -20)).toBe(-20);
+    expect(fabricatorToolMod(fab, 0)).toBe(0);
+  });
+  it("без Таланта бонус как был", () => {
+    expect(fabricatorToolMod(actorWith("Dodge"), 20)).toBe(20);
+    expect(fabricatorToolMod(null, 20)).toBe(20);
+  });
+});
+
+// Master Engineseer / Мастер-Технопровидец: «+10 к Tech-Use на Крафт и ремонт».
+// Только когда Tech-Use — ведущий Навык теста (он задаёт Предел) и только
+// Крафт (не Исследование). Автоуспех за Очко Бесчестия — отдельная часть.
+describe("masterEngineseerBonus (Мастер-Технопровидец)", () => {
+  const me = actorWith("Master Engineseer / Мастер-Технопровидец");
+  it("Крафт, Tech-Use ведущий — +10", () => {
+    expect(masterEngineseerBonus(me, "craft", "skill:techUse")).toBe(10);
+  });
+  it("ведущий Навык другой (Ремесло) — 0", () => {
+    expect(masterEngineseerBonus(me, "craft", "group:trade:0")).toBe(0);
+  });
+  it("Исследование и Биолаборатория — 0", () => {
+    expect(masterEngineseerBonus(me, "research", "skill:techUse")).toBe(0);
+    expect(masterEngineseerBonus(me, "bio", "skill:techUse")).toBe(0);
+  });
+  it("без Таланта — 0; нет актора — 0", () => {
+    expect(masterEngineseerBonus(actorWith("Dodge"), "craft", "skill:techUse")).toBe(0);
+    expect(masterEngineseerBonus(null, "craft", "skill:techUse")).toBe(0);
+  });
+});
+
+// Polymath, крит в Мастерской: 1d5 Усталости и ещё одна смена, цепочка
+// ограничена POLYMATH_CHAIN_MAX.
+describe("polymathCrit (крит Полимата)", () => {
+  const poly = actorWithMutation("Polymath / Полимат");
+  it("Полимат + Критический Успех — срабатывает", () => {
+    expect(polymathCrit(poly, true, 1)).toEqual({ triggered: true, capped: false });
+  });
+  it("нет крита или нет Полимата — не срабатывает", () => {
+    expect(polymathCrit(poly, false, 1).triggered).toBe(false);
+    expect(polymathCrit(actorWith("Dodge"), true, 1).triggered).toBe(false);
+    expect(polymathCrit(actorWithMutation(), true, 1).triggered).toBe(false);
+  });
+  it("Талант с тем же именем не считается — только Мутация", () => {
+    expect(polymathCrit(actorWith("Polymath / Полимат"), true, 1).triggered).toBe(false);
+  });
+  it("последняя смена цепочки — срабатывает, но дальше нельзя (capped)", () => {
+    expect(polymathCrit(poly, true, POLYMATH_CHAIN_MAX)).toEqual({ triggered: true, capped: true });
+    expect(polymathCrit(poly, true, POLYMATH_CHAIN_MAX - 1).capped).toBe(false);
   });
 });

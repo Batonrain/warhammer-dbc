@@ -390,6 +390,28 @@ describe("вкладка ЭФФЕКТЫ: Страх, Расстройства, �
     await handlers[".disease-remove-btn:click"](ev({ itemId: "it-1" }));
     expect(row.deleted).toBe(true);
   });
+
+  // wdbc-dbveg: болезнь действует, только когда включена (isItemActive), поэтому
+  // ActiveEffect на самой болезни (самодельная, GM добавил) переключается вместе
+  // с кнопкой «Действует»: без пересчёта disabled штраф не включался бы после
+  // заражения и висел бы после выключения.
+  it("кнопка «Действует» пересчитывает ActiveEffect болезни в обе стороны", async () => {
+    const fx = { id: "fx1", disabled: true };
+    const row = rowItem({ type: "disease" });
+    row.effects = [fx];
+    row.effectUpdates = [];
+    row.update = async data => { row.updates.push(data); row.system.active = data["system.active"]; };
+    row.updateEmbeddedDocuments = async (_t, ups) => { row.effectUpdates.push(ups); for (const u of ups) fx.disabled = u.disabled; };
+    const handlers = wire(sheetFor({ items: [row] }));
+
+    await handlers[".disease-active-toggle:click"](ev({ itemId: "it-1" }));
+    expect(row.system.active).toBe(true);
+    expect(fx.disabled).toBe(false);
+
+    await handlers[".disease-active-toggle:click"](ev({ itemId: "it-1" }));
+    expect(row.system.active).toBe(false);
+    expect(fx.disabled).toBe(true);
+  });
 });
 
 // Слоты живут в system.aspirations.slots. Само поле `aspirations` — объект (в

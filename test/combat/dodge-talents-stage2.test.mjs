@@ -15,7 +15,7 @@ import {
   grappleTechDef, TARGET_TESTS, resolveGrappleSuccess
 } from "../../module/combat/grapple.mjs";
 import {
-  registerContest, resolveResistClick, resolvePirouetteClick, _resetPendingContests
+  registerContest, resolveResistClick, resolvePirouetteClick, resolveRamPirouette, _resetPendingContests
 } from "../../module/combat/opposed-contest.mjs";
 import { _performDodge, _performParry } from "../../module/combat/defense.mjs";
 import { bodyguardsFor } from "../../module/combat/bodyguard.mjs";
@@ -149,11 +149,89 @@ describe("Выкрутиться: Освобождение от Пут и Уск
     expect(captured.dialog.content).not.toContain('name="slip-away"');
   });
 
-  it("Ускользнуть: переброс — два d100, лучший", async () => {
-    const { held } = await grappledHeld([talent(SA)]);
-    captured.dice = [95, 10];
-    await roll(held, { 'input[name="slip-away"]:checked': "reroll" });
-    expect(captured.chat.at(-1).content).toContain("отброшено 95");
+  // Sahara meleecategory п.1: переброс решается ПОСЛЕ броска (книга) — кнопка на карточке проваленного теста,
+  // применение «раз в Раунд» тратится только самим перебросом, а не заранее.
+  describe("Ускользнуть: переброс после провала (кнопка на карточке)", () => {
+    const btnId = () => (captured.chat.at(-1).content.match(/wh-slip-contest-btn"[^>]*data-contest-id="([^"]+)"/) ?? [])[1];
+    const reroll = async id => (await import("../../module/combat/techniques.mjs")).slipAwayContestReroll(id);
+
+    it("окно больше не предлагает переброс «до броска»", async () => {
+      const { held } = await grappledHeld([talent(SA)]);
+      await _showContestDialog(held, grappleTechDef(held, TARGET_TESTS.twistFree));
+      expect(captured.dialog.content).not.toContain('value="reroll"');
+    });
+
+    it("провал: на карточке есть кнопка, возможность ещё не потрачена", async () => {
+      globalThis.game.combat = { started: true, round: 1 };
+      const { held } = await grappledHeld([talent(SA)]);
+      captured.dice = [95];
+      await roll(held);
+      expect(captured.chat.at(-1).content).toContain("Провал");
+      expect(btnId()).toBeTruthy();
+      expect(held._flags["usageLimits.dodge-core-slipAway"]).toBeUndefined();
+    });
+
+    it("успех с первого раза: кнопки нет и применение не тратится", async () => {
+      globalThis.game.combat = { started: true, round: 1 };
+      const { held } = await grappledHeld([talent(SA)]);
+      captured.dice = [20];
+      await roll(held);
+      expect(captured.chat.at(-1).content).not.toContain("wh-slip-contest-btn");
+      expect(held._flags["usageLimits.dodge-core-slipAway"]).toBeUndefined();
+    });
+
+    it("«+30» выбрано до броска и тест провален — второй попытки в этом Раунде нет", async () => {
+      globalThis.game.combat = { started: true, round: 1 };
+      const { held } = await grappledHeld([talent(SA)]);
+      captured.dice = [99];
+      await roll(held, { 'input[name="slip-away"]:checked': "bonus" });
+      expect(captured.chat.at(-1).content).not.toContain("wh-slip-contest-btn");
+    });
+
+    it("клик: бросается заново против того же Порога, тратится «раз в Раунд», выходит новая карточка с кнопками сопротивления", async () => {
+      globalThis.game.combat = { started: true, round: 1 };
+      const { held } = await grappledHeld([talent(SA)]);
+      captured.dice = [95];
+      await roll(held);
+      const id = btnId();
+      captured.dice = [10];
+      expect(await reroll(id)).toBe(true);
+      const html = captured.chat.at(-1).content;
+      expect(html).toContain("Ускользнуть: переброс");
+      expect(html).toContain("Успех");
+      expect(html).toContain("wh-contest-resist-btn");
+      expect(html).not.toContain("wh-slip-contest-btn");           // второй раз за Раунд нельзя
+      expect(held._flags["usageLimits.dodge-core-slipAway"]).toBeTruthy();
+      // старое ожидание снято: повторный клик по прежней кнопке ничего не бросает
+      const n = captured.chat.length;
+      expect(await reroll(id)).toBe(false);
+      expect(captured.chat.length).toBe(n);
+    });
+
+    it("противник уже ответил (приём разрешён) — переброс отказывает, ничего не бросает", async () => {
+      globalThis.game.combat = { started: true, round: 1 };
+      const { held } = await grappledHeld([talent(SA)]);
+      captured.dice = [95];
+      await roll(held);
+      const id = btnId();
+      (await import("../../module/combat/opposed-contest.mjs")).contestEntry(id).done.add("Actor.h");
+      const n = captured.chat.length;
+      expect(await reroll(id)).toBe(false);
+      expect(captured.chat.length).toBe(n);
+      expect(held._flags["usageLimits.dodge-core-slipAway"]).toBeUndefined();
+    });
+
+    it("возможность уже потрачена в этом Раунде (напр. другим тестом) — переброс отказывает и ничего не бросает", async () => {
+      globalThis.game.combat = { started: true, round: 1 };
+      const { held } = await grappledHeld([talent(SA)]);
+      captured.dice = [95];
+      await roll(held);
+      const id = btnId();
+      await held.setFlag("warhammer-dbc", "usageLimits.dodge-core-slipAway", { scope: "round", used: true, round: 1 });
+      const n = captured.chat.length;
+      expect(await reroll(id)).toBe(false);
+      expect(captured.chat.length).toBe(n);
+    });
   });
 
   it("без Таланта окно выбора Ускользнуть не показывается", async () => {
@@ -302,6 +380,48 @@ describe("Пируэт: Напролом", () => {
     const res = await click(dancer, 90);
     expect(res.success).toBe(false);
     expect(captured.chat.at(-1).content).toContain("Пируэт не удался");
+  });
+});
+
+// Пируэт против Тарана (Sahara meleecategory п.2): «Когда он является целью Напролома или Тарана, он может пройти тест
+// Acrobatics+0 и пропустить атакующего, не тратя реакции» — кнопка на карточке Тарана (рядом с Виражом).
+describe("Пируэт: Таран", () => {
+  const rammer = fighter("Таранящий", "Actor.ram");
+  const dancer = () => fighter("Танцор", "Actor.d", { items: [talent("Pirouette / Пируэт")], skills: { acrobatics: { total: 50 } }, chars: chars() });
+
+  it("карточка Тарана несёт кнопку Пируэта с uuid таранящего", async () => {
+    const { _resolveRam } = await import("../../module/combat/vehicle.mjs");
+    const veh = fighter("Танк", "Actor.v"); veh.system.armour = { front: 10 };
+    await _resolveRam(veh, false, false);
+    const html = captured.chat.at(-1).content;
+    expect(html).toContain("wh-ram-pirouette-btn");
+    expect(html).toMatch(/wh-ram-pirouette-btn"[^>]*data-attacker-uuid="Actor\.v"/);
+  });
+
+  it("успех Acrobatics+0: пропустил, Реакция не тратится", async () => {
+    const d = dancer();
+    captured.dice = [20];
+    const res = await resolveRamPirouette(d, rammer);
+    expect(res.success).toBe(true);
+    expect(captured.chat.at(-1).content).toContain("Таран");
+    expect(captured.chat.at(-1).content).toContain("пропускает");
+    expect(d.system.actionPoints.value).toBe(2);
+  });
+
+  it("провал — Таран остаётся в силе, остаются Уклонение и Вираж", async () => {
+    captured.dice = [90];
+    const res = await resolveRamPirouette(dancer(), rammer);
+    expect(res.success).toBe(false);
+    expect(captured.chat.at(-1).content).toContain("Пируэт не удался");
+  });
+
+  it("без Таланта бросок не делается", async () => {
+    const plain = fighter("Обычный", "Actor.p", { skills: { acrobatics: { total: 50 } }, chars: chars() });
+    const n = captured.chat.length;
+    const res = await resolveRamPirouette(plain, rammer);
+    expect(res).toBeNull();
+    expect(captured.chat.length).toBe(n);
+    expect(captured.warnings.some(w => w.includes("Пируэт"))).toBe(true);
   });
 });
 

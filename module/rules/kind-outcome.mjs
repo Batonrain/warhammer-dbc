@@ -95,7 +95,7 @@ const FAIL_DEGREE_HANDLERS = {
  * сам запуск. Ошибка одного скрипта не должна ронять весь бросок — тот же
  * принцип, что у ручной кнопки «▶ Запустить» (apps/mechanics.mjs::runMechScriptEntry).
  */
-async function runScriptTriggers(actor, triggers, crit) {
+export async function runScriptTriggers(actor, triggers, crit) {
   for (const t of triggers ?? []) {
     const matches = (t.side === "critSuccess" && crit.success) || (t.side === "critFailure" && crit.failure);
     if (!matches) continue;
@@ -109,14 +109,42 @@ async function runScriptTriggers(actor, triggers, crit) {
     const code = (entry.code || "").trim();
     if (!code) continue;
     if (!scriptRunReady(item, entry)) continue;
+    let result;
     try {
-      await executeItemCode(item, code, null);
+      result = await executeItemCode(item, code, null);
     } catch (e) {
       console.error(`Warhammer DBC | Ошибка авто-скрипта Механики «${entry.label || entry.id}» предмета «${item.name}»:`, e);
       continue;
     }
+    // Самоотказ кода (truthy — см. комментарий executeItemCode) — троттлинг
+    // не трогаем, тем же приёмом, что apps/mechanics.mjs::runMechScriptEntry
+    // (runmechscriptentry).
+    if (result) continue;
     if (entry.scriptThrottleUnit) await markScriptRunUsed(item, entry);
   }
+}
+
+/**
+ * Мастерство (стр. 62), хвост после Ассистентов: исход уже посчитан без них, а
+ * помощники дотянули степень до 5+ — это тоже Критический Успех. Возвращает
+ * строку карточки (пусто, если крита нет или он уже учтён в исходе) и запускает
+ * скрипты «по Крит. Успеху» (Полимат и подобные), которые исход не стартовал —
+ * без этого строка на карточке была, а скрипт молчал (62-3093, п.3).
+ * Если крит уже был в исходе (натуральный 1–5 или 5+ без Ассистентов) —
+ * скрипты в нём уже запущены, второй раз не зовём.
+ * @param {object} actor тот же актор, что уходил в resolveKindOutcome
+ * @param {object} outcome результат resolveKindOutcome
+ * @param {{skill?:string, group?:string, specialty?:string}} skillCtx
+ * @param {number} deg итоговая степень с Ассистентами
+ * @returns {Promise<string>}
+ */
+export async function applyAssistedMasteryCrit(actor, outcome, skillCtx, deg) {
+  if (outcome?.masteryCrit || outcome?.crit?.success) return "";
+  if (!masteryCrit(actor, skillCtx, { success: outcome?.success, deg })) return "";
+  // failure:false — успех не бывает Крит. Провалом; иначе скрипты «по Крит.
+  // Провалу» (уже отработавшие в исходе при броске 96+) запустились бы второй раз.
+  await runScriptTriggers(actor, outcome.scriptTriggers, { success: true, failure: false });
+  return MASTERY_CRIT_LINE;
 }
 
 export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, extended, opposed,
@@ -340,7 +368,8 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
 
   // degCapLine едет в unnaturalLine: вызывающие карточки уже рисуют её рядом
   // со степенью, отдельного поля они не знают (как autoFailLine в critLine).
-  return { eff, success, deg: baseDeg, crit: critEff, masteryCrit: masteryHit, critLine, kindLabel, combinedLine, combinedAssistCount,
+  return { eff, success, deg: baseDeg, crit: critEff, masteryCrit: masteryHit, scriptTriggers: resolved.scriptTriggers ?? [],
+           critLine, kindLabel, combinedLine, combinedAssistCount,
            personalAdaptationLine, extendedLine, opposedLine, unnaturalLine: unnaturalLine + degCapLine,
            degCap, degCapLine };
 }

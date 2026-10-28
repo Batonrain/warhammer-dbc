@@ -14,8 +14,12 @@
 
 import { esc } from "../helpers/utils.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
-import { spendFromInfamyPool, actorInfamyPath } from "../apps/infamy-points.mjs";
-import { tempInfamyAmount } from "../rules/temp-infamy.mjs";
+import { spendFromInfamyPool, actorInfamyPath, changeActorInfamy } from "../apps/infamy-points.mjs";
+import { tempInfamyAmount, grantTempInfamy } from "../rules/temp-infamy.mjs";
+import { hasCalmWinds, hasFavouredByTheWarp } from "../rules/psyker-talents.mjs";
+import { claimSignatureFree, releaseSignatureFree } from "./psyker-pools.mjs";
+import { warpLockButtonsHtml } from "./warp-lock.mjs";
+import { getPhenomenon } from "../constants/psyker-tables.mjs";
 import { calmWarpAllowed, calmWarpResult, hasImperialSanctioning, offerFreePerilReroll, CALM_WARP_COR }
   from "../rules/calm-warp.mjs";
 
@@ -25,10 +29,11 @@ const FLAG = "warhammer-dbc";
  * Кнопки переброса для секции Феномена/Прорыва карточки. Видны только
  * владельцу псайкера (.wh-owner-only прячет их остальным — hooks.mjs).
  * @param {Actor} actor
- * @param {{phenMod:number, peril:boolean, free?:boolean, table?:"both"|"peril"}} opts
+ * @param {{phenMod:number, peril:boolean, free?:boolean, table?:"both"|"peril", powerUuid?:string}} opts
+ *   powerUuid — сила, чья это манифестация: у КЛЮЧЕВОЙ силы (Талант «Ключевые Силы») переброс идёт за бесплатное Очко Раунда
  */
-export function calmWarpButtonsHtml(actor, { phenMod = 0, peril = false, free = false, table = "both" } = {}) {
-  const attrs = `data-actor-uuid="${esc(actor.uuid)}" data-phen-mod="${Number(phenMod) || 0}"`;
+export function calmWarpButtonsHtml(actor, { phenMod = 0, peril = false, free = false, table = "both", powerUuid = "" } = {}) {
+  const attrs = `data-actor-uuid="${esc(actor.uuid)}" data-phen-mod="${Number(phenMod) || 0}"${powerUuid ? ` data-power-uuid="${esc(powerUuid)}"` : ""}`;
   const btns = [];
   if (free) {
     btns.push(`<button type="button" class="wh-calm-warp-btn" data-table="peril" data-free="1" ${attrs}
@@ -50,10 +55,10 @@ export function calmWarpButtonsHtml(actor, { phenMod = 0, peril = false, free = 
   return `<div class="roll-threshold wh-owner-only wh-calm-warp" data-actor-uuid="${esc(actor.uuid)}">${btns.join(" ")}</div>`;
 }
 
-function phenHtml(phen, phenTotal, phenMod) {
+function phenHtml(phen, phenTotal, phenMod, note = "") {
   return `
     <div class="psy-phenomenon">
-      <div class="psy-phen-header">⚠️ Психический Феномен (переброс ${phenTotal}${phenMod ? `, мод ${phenMod >= 0 ? "+" : ""}${phenMod}` : ""})</div>
+      <div class="psy-phen-header">⚠️ Психический Феномен (переброс ${phenTotal}${phenMod ? `, мод ${phenMod >= 0 ? "+" : ""}${phenMod}` : ""})${note}</div>
       <div class="psy-phen-name">${phen.label}</div>
       <div class="psy-phen-text">${phen.text}</div>
     </div>`;
@@ -74,7 +79,7 @@ function perilHtml(peril, total, prefix = "") {
  * @param {HTMLButtonElement} btn
  */
 export async function handleCalmWarpClick(message, btn) {
-  const { actorUuid, table } = btn.dataset;
+  const { actorUuid, table, powerUuid } = btn.dataset;
   const free = btn.dataset.free === "1";
   const phenMod = Number(btn.dataset.phenMod) || 0;
   let actor = null;
@@ -91,18 +96,29 @@ export async function handleCalmWarpClick(message, btn) {
   }
 
   let spentLine = "";
+  let spendResult = null; // что именно списано — Штилю нужно вернуть то же самое
   if (!free) {
     const allowed = calmWarpAllowed(actor);
     if (!allowed.ok) return ui.notifications.warn(allowed.reason);
-    const path = actorInfamyPath(actor);
-    const cur = Number(foundry.utils.getProperty(actor, path)) || 0;
-    if (cur < 1 && tempInfamyAmount(actor) < 1) return ui.notifications.warn("Нет Очков Бесчестия.");
-    const spend = await spendFromInfamyPool(actor, 1, path);
-    if (!spend) return;
-    await actor.update({ [path]: spend.poolValue });
-    spentLine = spend.tempSpent
-      ? `Потрачено 1 временное Очко Бесчестия. Осталось: <b>${spend.poolValue}</b>.`
-      : `Потрачено Очко Бесчестия. Осталось: <b>${spend.poolValue}</b>.`;
+    // Ключевые Силы (Талант Псайканы): карточка манифестации КЛЮЧЕВОЙ силы — раз в Раунд
+    // это Очко бесплатно (Феномен и Прорыв этой манифестации; чужая сила не затрагивается).
+    let signaturePower = null;
+    if (powerUuid) { try { signaturePower = await fromUuid(powerUuid); } catch { signaturePower = null; } }
+    if (signaturePower && await claimSignatureFree(actor, signaturePower, message)) {
+      spendResult = { free: true, tempSpent: 0, poolSpent: 0 };
+      spentLine = `Бесплатно: ключевая сила «${esc(signaturePower.name)}» — Очко Бесчестия не потрачено (раз в Раунд).`;
+    } else {
+      const path = actorInfamyPath(actor);
+      const cur = Number(foundry.utils.getProperty(actor, path)) || 0;
+      if (cur < 1 && tempInfamyAmount(actor) < 1) return ui.notifications.warn("Нет Очков Бесчестия.");
+      const spend = await spendFromInfamyPool(actor, 1, path);
+      if (!spend) return;
+      spendResult = spend;
+      await actor.update({ [path]: spend.poolValue });
+      spentLine = spend.tempSpent
+        ? `Потрачено 1 временное Очко Бесчестия. Осталось: <b>${spend.poolValue}</b>.`
+        : `Потрачено Очко Бесчестия. Осталось: <b>${spend.poolValue}</b>.`;
+    }
   }
 
   btn.disabled = true;
@@ -111,12 +127,24 @@ export async function handleCalmWarpClick(message, btn) {
   const rolls = [];
   const sections = [];
   let perilTriggered = false;
+  let newLabel = ""; // что выпало при переброске — Штилю показать выбор «оставить или вернуть»
+  let favouredNote = ""; // Любимец Варпа: пояснение о двух бросках в шапке Феномена
   if (table === "peril") {
     const r = await new Roll("1d100").evaluate(); rolls.push(r);
     const res = calmWarpResult("peril", { perilTotal: r.total });
     sections.push(perilHtml(res.peril, r.total, "ПЕРЕБРОС: "));
+    newLabel = res.peril.label;
   } else {
-    const pr = await new Roll(`1d100 + ${phenMod}`).evaluate(); rolls.push(pr);
+    let pr = await new Roll(`1d100 + ${phenMod}`).evaluate(); rolls.push(pr);
+    // Любимец Варпа: «бросает два кубика на Феномены (но не Прорывы) и может
+    // выбрать любой из них» — и при Усмирении. Выше на таблице хуже, поэтому
+    // берём меньший (как в sheets/tabs/psychic.mjs::executePsychotest).
+    if (hasFavouredByTheWarp(actor)) {
+      const second = await new Roll(`1d100 + ${phenMod}`).evaluate(); rolls.push(second);
+      const [keep, drop] = second.total < pr.total ? [second, pr] : [pr, second];
+      favouredNote = ` <i>(Любимец Варпа: два броска ${pr.total} и ${second.total} — взят меньший, отброшен ${drop.total}: ${esc(getPhenomenon(drop.total).label)})</i>`;
+      pr = keep;
+    }
     let perilTotal = null;
     if (calmWarpResult("phenomenon", { phenTotal: pr.total }).perilTriggered) {
       const r = await new Roll("1d100").evaluate(); rolls.push(r);
@@ -124,12 +152,44 @@ export async function handleCalmWarpClick(message, btn) {
     }
     const res = calmWarpResult("phenomenon", { phenTotal: pr.total, perilTotal });
     perilTriggered = res.perilTriggered;
-    sections.push(phenHtml(res.phen, pr.total, phenMod));
+    sections.push(phenHtml(res.phen, pr.total, phenMod, favouredNote));
     if (res.peril) sections.push(perilHtml(res.peril, perilTotal));
     else sections.push(`<div class="roll-threshold" style="font-size:0.85em;color:#3a7a3a;">Прорыва нет.</div>`);
+    newLabel = `${res.phen.label}${res.peril ? ` → Прорыв: ${res.peril.label}` : ""}`;
+  }
+
+  // Штиль (Талант Псайканы, Sahara 3-28): «может выбрать отменить второй бросок
+  // и вернуть потраченное Очко Бесчестия, чтобы использовать изначальный
+  // результат». Спрашиваем, увидев переброс; отмена возвращает Очко туда, откуда
+  // оно ушло (временный запас — во временный). Бесплатный переброс Прорыва
+  // (Имперское Санкционирование) Очка не стоил — возвращать нечего.
+  if (!free && spendResult && hasCalmWinds(actor)) {
+    const keepOriginal = await foundry.applications.api.DialogV2.confirm({
+      window: { title: `Штиль — ${actor.name}` },
+      content: `<p>Переброс дал: <b>${esc(newLabel)}</b>.</p><p>Штиль: отменить переброс, вернуть Очко Бесчестия и оставить изначальный результат?</p>`,
+      yes: { label: "Отменить переброс, вернуть Очко" }, no: { label: "Оставить переброс" },
+      rejectClose: false
+    });
+    if (keepOriginal) {
+      // Бесплатное Очко Ключевых Сил возвращать некуда — освобождается само право раз в Раунд.
+      if (spendResult.free) await releaseSignatureFree(actor, message);
+      if (spendResult.tempSpent > 0) {
+        await grantTempInfamy(actor, spendResult.tempSpent, { source: spendResult.tempSource, restriction: spendResult.tempRestriction });
+      }
+      if (spendResult.poolSpent > 0) await changeActorInfamy(actor, spendResult.poolSpent);
+      await postTestCard(actor, {
+        icon: "🌀", title: `Штиль — переброс отменён — ${esc(actor.name)}`,
+        lines: [spendResult.free
+          ? `<div class="roll-damage-meta">Бесплатное Очко Ключевых Сил этого Раунда снова доступно. Остаётся изначальный результат; выпавшее при переброске (${esc(newLabel)}) не считается.</div>`
+          : `<div class="roll-damage-meta">Очко Бесчестия возвращено${spendResult.tempSpent > 0 ? " (временное — во временный запас)" : ""}. Остаётся изначальный результат; выпавшее при переброске (${esc(newLabel)}) не считается.</div>`]
+      }, { rolls });
+      return;
+    }
   }
 
   const sanctioned = hasImperialSanctioning(actor);
+  // Варп-Замок (Талант Псайканы): и переброшенный Феномен/Прорыв можно проигнорировать.
+  sections.push(warpLockButtonsHtml(actor));
   if (offerFreePerilReroll({ table, free, perilTriggered, sanctioned })) {
     sections.push(calmWarpButtonsHtml(actor, { phenMod, free: true }));
   }

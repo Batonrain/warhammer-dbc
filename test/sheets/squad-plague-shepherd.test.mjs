@@ -39,7 +39,7 @@ function sheetLike(actor, extra = {}) {
 function commanderPers({ hasPlagueShepherd = true, infected = false } = {}) {
   const items = [];
   if (hasPlagueShepherd) items.push({ type: "mutation", name: "Plague Shepherd / Чумной Пастырь" });
-  if (infected) items.push({ type: "disease" });
+  if (infected) items.push({ type: "disease", system: { active: true } });
   return {
     name: "Чумной Командир", img: "cmd.png", type: "character",
     items,
@@ -55,7 +55,7 @@ function commanderPers({ hasPlagueShepherd = true, infected = false } = {}) {
 function memberDoc({ uuid, patronGod = "nurgle", ablative = 0, ablativeMax = 0, infected = false } = {}) {
   const doc = {
     name: `Нурглит ${uuid}`, type: "character",
-    items: infected ? [{ type: "disease" }] : [],
+    items: infected ? [{ type: "disease", system: { active: true } }] : [],
     system: { characteristics: { wp: { total: 30 }, per: { bonus: 3 } },
               patronGod, wounds: { value: 5, max: 10, ablative, ablativeMax } },
     flags: {},
