@@ -30,6 +30,11 @@ describe("rules/alcohol", () => {
     expect(alcoholDecayed(s, ALCOHOL_DECAY_SECONDS * 2 + 100)).toEqual({ fails: 3, drinks: 4, at: ALCOHOL_DECAY_SECONDS * 2 });
     expect(alcoholDecayed(s, ALCOHOL_DECAY_SECONDS * 9)).toEqual({ fails: 0, drinks: 0, at: ALCOHOL_DECAY_SECONDS * 9 });
   });
+  it("трезвый после 20 минут без рюмки — попойка кончилась, штраф с нуля", () => {
+    expect(alcoholDecayed({ fails: 0, drinks: 2, at: 0 }, ALCOHOL_DECAY_SECONDS - 1)).toEqual({ fails: 0, drinks: 2, at: 0 });
+    expect(alcoholDecayed({ fails: 0, drinks: 2, at: 0 }, ALCOHOL_DECAY_SECONDS)).toEqual({ fails: 0, drinks: 0, at: ALCOHOL_DECAY_SECONDS });
+  });
+
   it("ступени: 5+ без Ментальных, 7+ −10 и иммунитет, 9+ −20 без Бега, 15 — сознание; Декаданс ×2", () => {
     expect(alcoholEffects(4).noMental).toBe(false);
     expect(alcoholEffects(5)).toMatchObject({ noMental: true, fearBonus: 40 });
@@ -76,6 +81,14 @@ describe("applyAlcoholDrink", () => {
     await applyAlcoholDrink(a, item);
     await applyAlcoholDrink(a, item);
     expect(a.getFlag("warhammer-dbc", "alcohol").fails).toBe(3);
+  });
+
+  it("успех, успех — третья рюмка всё равно −20: рюмки копятся и у непровалившего", async () => {
+    const a = drinker({ t: 40 });
+    captured.dice = [10, 10, 99];
+    await applyAlcoholDrink(a, item); await applyAlcoholDrink(a, item); await applyAlcoholDrink(a, item);
+    expect(captured.chat.at(-1).content).toContain("-20 (рюмка №3)");
+    expect(a.getFlag("warhammer-dbc", "alcohol")).toMatchObject({ fails: 8, drinks: 3 }); // 99 против 20
   });
 
   it("между рюмками прошло 40 минут — два Провала сошли", async () => {
