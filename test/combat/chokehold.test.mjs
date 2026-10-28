@@ -73,6 +73,16 @@ describe("интеграция в combat/grapple.mjs", () => {
     expect(calls).toEqual([3, 1]);
   });
 
+  it("hooks: победа меньшим провалом (deg 0 — Душитель свой тест провалил) — 1 Усталости, не разница степеней", async () => {
+    const calls = [];
+    const me = fighter("Душитель", "Actor.me", [CHOKE]);
+    const foe = fighter("Жертва", "Actor.foe");
+    me._flags.grapplePartnerUuid = foe.uuid;
+    globalThis.fromUuidSync = uuid => (uuid === foe.uuid ? foe : null);
+    await _chokeholdWrenchHooks.onSuccess(me, { deg: 0, margin: 4 }, { add: async (p, k) => calls.push(k) });
+    expect(calls).toEqual([1]);
+  });
+
   it("resolveGrappleSuccess: победа на 5+ Успехов с Талантом даёт Усталость, на 4 — нет", async () => {
     // Усталость идёт через настоящий addFatigue → пишем в system.fatigue у подставной цели.
     const me = fighter("Душитель", "Actor.me", [CHOKE]);

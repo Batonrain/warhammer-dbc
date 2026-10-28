@@ -466,10 +466,12 @@ async function _resolveWrenchSuccess(actor) {
 // Удушение / Chokehold (Талант Пугилиста, combat/grapple-talents.mjs): Заломить
 // наносит Усталость и при победе (по Успехам победы), и при проигрыше (1).
 const _chokeholdWrenchHooks = {
-  async onSuccess(actor, { margin } = {}, inject) {
+  async onSuccess(actor, { margin, deg } = {}, inject) {
     const partner = grapplePartner(actor);
     if (!partner || !hasPugilistTalent(actor, "chokehold")) return;
-    await applyChokehold(actor, partner, chokeholdWrenchFatigue({ won: true, margin }), "Заломить", inject);
+    // Победа меньшим провалом (deg 0) Успехов победы не даёт — как в resolveGrappleSuccess.
+    const won = deg === 0 ? 0 : margin;
+    await applyChokehold(actor, partner, chokeholdWrenchFatigue({ won: true, margin: won }), "Заломить", inject);
   },
   async onFail(actor, _o, inject) {
     const partner = grapplePartner(actor);
