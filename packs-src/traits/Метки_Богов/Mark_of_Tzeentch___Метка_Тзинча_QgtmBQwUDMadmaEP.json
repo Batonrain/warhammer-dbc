@@ -189,7 +189,7 @@
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
               "label": "Связанный, если не был псайкером",
-              "code": "// Метка Тзинча (корбук, Метки): «Трейт Psyker (связанный, если персонаж не был\n// псайкером до этого)». Запись разовая — «При выдаче», один раз на Метку.\n// Был ли псайкером, решает tzeentchMarkBindUpdate (rules/psyker.mjs): «Пси-Пробуждение»\n// или Трейт Psyker НЕ от самой Метки. Новый псайкер становится Связанным; бывшему\n// класс не трогаем. Возможность psyker.alwaysBound тут не годится: она откатывала бы\n// ручную смену Природы Дара на каждом пересчёте листа.\nconst patch = tzeentchMarkBindUpdate(actor, item);\nif (patch) await actor.update(patch);\n",
+              "code": "// Метка Тзинча (корбук, Метки): «Трейт Psyker (связанный, если персонаж не был\n// псайкером до этого)». Запись разовая — «При выдаче», один раз на Метку.\n// Был ли псайкером, решает tzeentchMarkBindUpdate (rules/psyker.mjs): «Пси-Пробуждение»\n// или Трейт Psyker НЕ от самой Метки. Новый псайкер становится Связанным; бывшему\n// класс не трогаем. Возможность psyker.alwaysBound тут не годится: она откатывала бы\n// ручную смену Природы Дара на каждом пересчёте листа.\n// Метка уже отыграла свою механику раньше: «Обновить мир» дописал эту запись в\n// старую Метку. Класс тогда давно решён (возможно, ГМом вручную) — не трогаем.\nif (item.getFlag(\"warhammer-dbc\", \"mechanicsApplied\")?.length) return;\nconst patch = tzeentchMarkBindUpdate(actor, item);\nif (patch) await actor.update(patch);\n",
               "scriptThrottleUnit": "",
               "scriptThrottleMax": 1,
               "when": {
