@@ -29,8 +29,8 @@ const psykerTrait = (grantedByItem) => ({
   flags: grantedByItem ? { [SYS]: { grantedByItem } } : {}
 });
 
-/** Подставной актор: update применяет плоские пути к system — как делает Foundry. */
-function fakeActor({ isPsyker = false, cls = "unbound", items = [] } = {}) {
+/** Подставной актор: update применяет плоские пути к system — как делает Foundry. Класс по умолчанию — как в схеме (_creature.mjs). */
+function fakeActor({ isPsyker = false, cls = "bound", items = [] } = {}) {
   const actor = {
     system: { isPsyker, psyker: { class: cls } },
     items,
@@ -89,6 +89,24 @@ describe("Метка Тзинча: запись «связанный, если �
     await applyMechEntry(actor, SCRIPT, item, false, applied);
     expect(actor.system.psyker.class).toBe("unbound");
     expect(actor.updates).toHaveLength(1);
+  }, PACK_SCAN_TIMEOUT);
+
+  it("новый псайкер с классом по умолчанию (уже «bound») — писать нечего", async () => {
+    const actor = fakeActor({ items: [psykerTrait("mark1")] });
+    await applyMechEntry(actor, SCRIPT, markItem(actor));
+    expect(actor.system.psyker.class).toBe("bound");
+    expect(actor.updates).toEqual([]);
+  }, PACK_SCAN_TIMEOUT);
+
+  // «Обновить мир» дописывает эту запись в Метку, выданную ДО неё: запись ещё не
+  // в mechanicsApplied и отыгрывается, а ГМ мог давно выставить «Несвязанный».
+  it("повторный прогон у старой Метки не трогает класс, выставленный ГМом", async () => {
+    const actor = fakeActor({ cls: "unbound", items: [psykerTrait("mark1")] });
+    const oldIds = MARK.flags[SYS].mechanics.flatMap(g => g.entries).filter(e => e.kind !== "script").map(e => e.id);
+    const oldMark = { ...markItem(actor), getFlag: (s, k) => (s === SYS && k === "mechanicsApplied" ? oldIds : undefined) };
+    await applyMechEntry(actor, SCRIPT, oldMark);
+    expect(actor.system.psyker.class).toBe("unbound");
+    expect(actor.updates).toEqual([]);
   }, PACK_SCAN_TIMEOUT);
 
   it("возможность psyker.alwaysBound на Метке НЕ стоит (она форсировала бы класс безусловно)", () => {

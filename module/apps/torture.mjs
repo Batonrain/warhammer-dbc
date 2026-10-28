@@ -28,6 +28,7 @@ import { resolveOpposed } from "../rules/test-kind.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { hasTalentCapability } from "../rules/ability-by-key.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { rollD100WithReroll } from "../rules/test-kind-widget.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
@@ -71,10 +72,10 @@ function sceneActors() {
 /** Кто может дать Мучителя этой пытке: сам пытающий (если Талант есть) и ассистенты на сцене. */
 export function torturerHolders(torturer, target) {
   const out = [];
-  if (hasRuleFlag(torturer, TORTURER_CAP)) out.push(torturer);
+  if (hasTalentCapability(torturer, TORTURER_CAP)) out.push(torturer);
   for (const a of sceneActors()) {
     if (a.id === torturer.id || a.id === target?.id) continue;
-    if (hasRuleFlag(a, TORTURER_CAP)) out.push(a);
+    if (hasTalentCapability(a, TORTURER_CAP)) out.push(a);
   }
   return out;
 }
@@ -96,7 +97,7 @@ export async function resolveTorture(torturer, target, { skillful = false, tortu
   // Мучитель: тест Medicae−10 владельца Таланта до встречного теста; Успехи
   // дают жертве −3 на её встречный тест.
   let torturerSuccesses = 0, victimPenalty = 0;
-  if (holder && hasRuleFlag(holder, TORTURER_CAP)) {
+  if (holder && hasTalentCapability(holder, TORTURER_CAP)) {
     const thr = torturerThreshold(holder);
     const { rv: hRv } = await rollD100WithReroll(null);
     torturerSuccesses = testSuccesses(hRv, thr);
@@ -129,7 +130,7 @@ export async function resolveTorture(torturer, target, { skillful = false, tortu
     // Мучитель: «при неудачном тесте пыток не наносит урон жертве и не делает
     // её непригодной для дальнейших пыток». Урон общий диалог не считает —
     // подсказка стола, что на этот раз его нет.
-    if (holder && hasRuleFlag(holder, TORTURER_CAP)) {
+    if (holder && hasTalentCapability(holder, TORTURER_CAP)) {
       lines.push(`${rollIcon("heart","#c98bff")}Мучитель: неудача пытки — жертва не получает урона и остаётся пригодной для дальнейших пыток.`);
     }
     // Встречный тест: Порогов два, они расписаны построчно с подписями

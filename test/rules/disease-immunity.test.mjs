@@ -91,6 +91,12 @@ describe("actorImmuneToDiseaseEffects / diseaseEffectsSuppressed", () => {
     expect(actorImmuneToDiseaseEffects(actor)).toBe(true);
   });
 
+  it("Струп у копии без записи Механики (до «Обновить мир») опознаётся по имени", () => {
+    const actor = { items: [{ type: "drug", name: "Scab / Струп", system: {}, flags: {} }] };
+    expect(actorImmuneToDiseaseEffects(actor)).toBe(true);
+    expect(actorImmuneToDiseaseEffects({ items: [{ type: "gear", name: "Scab / Струп", system: {}, flags: {} }] })).toBe(false);
+  });
+
   it("Метка Слаанеш (иммунитет к пыткам) болезни не гасит", () => {
     expect(SLAANESH, "Mark of Slaanesh").toBeTruthy();
     const actor = actorWith([ROT, SLAANESH]);

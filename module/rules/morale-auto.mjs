@@ -22,7 +22,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { isInRage } from "./rage.mjs";
-import { hasRuleFlag } from "./flags.mjs";
+import { hasTalentCapability } from "./ability-by-key.mjs";
 import { FEARLESS_CAP, IDOLATER_CAP, isIdolNearby } from "./courage-talents.mjs";
 
 /**
@@ -33,10 +33,10 @@ import { FEARLESS_CAP, IDOLATER_CAP, isIdolNearby } from "./courage-talents.mjs"
 export function moraleAutoPass(actor) {
   if (!actor) return null;
   if (isInRage(actor)) return { by: "rage", label: "😡 Ярость: автоуспех", short: "Ярость" };
-  if (hasRuleFlag(actor, FEARLESS_CAP)) {
+  if (hasTalentCapability(actor, FEARLESS_CAP)) {
     return { by: "fearless", label: "Бесстрашный: автоуспех", short: "Бесстрашный" };
   }
-  if (isIdolNearby(actor) && hasRuleFlag(actor, IDOLATER_CAP)) {
+  if (isIdolNearby(actor) && hasTalentCapability(actor, IDOLATER_CAP)) {
     return { by: "idolater", label: "Идолопоклонник: кумир рядом — автоуспех", short: "Идолопоклонник" };
   }
   return null;

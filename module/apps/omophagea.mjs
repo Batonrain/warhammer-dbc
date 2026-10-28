@@ -13,7 +13,7 @@
 //  Знаний.
 // ════════════════════════════════════════════════════════════════════════
 
-import { hasRuleFlag } from "../rules/flags.mjs";
+import { hasTalentCapability } from "../rules/ability-by-key.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import {
@@ -39,7 +39,7 @@ export function isOmophageaItem(item) {
 export function omophageaPanelHtml(item, actor) {
   if (!isOmophageaItem(item) || !actor) return "";
   const active = actor.getFlag?.(NS, MEMORY_THIEF_FLAG) ?? [];
-  const thief = hasRuleFlag(actor, MEMORY_THIEF_CAP);
+  const thief = hasTalentCapability(actor, MEMORY_THIEF_CAP);
   const ib = Number(actor.system?.characteristics?.int?.bonus) || 0;
   return `<div class="omophagea-panel">
     <button type="button" class="omophagea-btn" data-item-id="${esc(item.id)}"
@@ -157,7 +157,7 @@ export async function runOmophagea(actor, item) {
 
   const sections = [];
   let victim = null;
-  if (success && hasRuleFlag(actor, MEMORY_THIEF_CAP)) {
+  if (success && hasTalentCapability(actor, MEMORY_THIEF_CAP)) {
     victim = [...(game.user?.targets ?? [])][0]?.actor ?? null;
     // Повторное нажатие — новый тест I+0, а не то же поедание: честно говорим, что Навык упущен.
     if (!victim) sections.push(`<div class="roll-threshold">Вор Памяти: таргета (T) на жертву не было — Навык этого поедания не перенять. В следующий раз наведите таргет до нажатия кнопки.</div>`);

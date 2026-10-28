@@ -26,7 +26,7 @@ import {
   isDecompressionVictim, VACUUM_BREATH_FAIL_DIE, DECOMPRESSION_DAMAGE
 } from "../rules/vacuum.mjs";
 import { vacuumResistReroll } from "../rules/squat-traits.mjs";
-import { hasRuleFlag } from "../rules/flags.mjs";
+import { hasTalentCapability } from "../rules/ability-by-key.mjs";
 import { TEMPERED_COCOON_CAP } from "../rules/situational.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
@@ -122,7 +122,7 @@ export async function rollVacuumTest(actor, { holdBreath, eyesClosed, manual = f
   // Закалённый Кокон: «вместо переброса этих тестов от Мукраноида — Преимущество»
   // (так же, как в тесте Жары/Холода); Крепкий как Камень даёт его независимо.
   const advantage = vacuumResistReroll(actor)
-    ?? (hasRuleFlag(actor, TEMPERED_COCOON_CAP)
+    ?? (hasTalentCapability(actor, TEMPERED_COCOON_CAP)
       ? { rolls: 2, mode: "keepBest", label: "Преимущество (Закалённый Кокон)" } : null);
   const { rv, rolls } = await rollD100WithReroll(advantage);
   const { success, deg } = testOutcome(rv, threshold);

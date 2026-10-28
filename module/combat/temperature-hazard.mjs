@@ -18,6 +18,7 @@ import { tempEffect } from "../constants/environment.mjs";
 import { readEnvForScene, currentScene } from "../constants/scene-nexus.mjs";
 import { tempHazardIntervalSeconds, BREEZE_CAPABILITY } from "../rules/temperature-hazard.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { hasTalentCapability } from "../rules/ability-by-key.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { TEMPERED_COCOON_CAP } from "../rules/situational.mjs";
 import { addFatigue } from "../sheets/tabs/conditions.mjs";
@@ -66,7 +67,7 @@ export async function rollTempHazardTest(actor) {
   const threshold = t + (Number(effect.test) || 0) + ruleMods.total;
   // Закалённый Кокон: «вместо переброса этих тестов от Мукраноида — Преимущество»
   // (два кубика, берётся лучший). Без Кокона бросок один.
-  const advantage = hasRuleFlag(actor, TEMPERED_COCOON_CAP);
+  const advantage = hasTalentCapability(actor, TEMPERED_COCOON_CAP);
   const rolls = [await new Roll("1d100").evaluate()];
   if (advantage) rolls.push(await new Roll("1d100").evaluate());
   const roll = rolls.reduce((a, b) => (b.total < a.total ? b : a));

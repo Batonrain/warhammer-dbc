@@ -11,11 +11,10 @@
 //  (S.b×3 м) и «примитивное стрелковое» остаются за столом: у примитивного
 //  стрелкового S.b в расчёте урона нет вовсе, добавлять не к чему (3-8318).
 //
-//  Чистая логика без Foundry; hasRuleFlag — единственная зависимость.
+//  Чистая логика без Foundry; ability-by-key.mjs — единственная зависимость.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { hasRuleFlag } from "./flags.mjs";
-import { hasAbility } from "./ability-by-key.mjs";
+import { hasAbility, hasTalentCapability } from "./ability-by-key.mjs";
 
 /** Возможность, которую выдаёт Талант «Балеарец» (запись Конструктора в паке). */
 export const BALEARIC_CAPABILITY = "throwing.core.balearic";
@@ -26,7 +25,7 @@ export const BALEARIC_CAPABILITY = "throwing.core.balearic";
  * @param {number} [agilityBonus] A.b; по умолчанию с листа актора
  */
 export function balearicSbBonus(actor, agilityBonus = actor?.system?.characteristics?.ag?.bonus) {
-  if (!hasRuleFlag(actor, BALEARIC_CAPABILITY)) return 0;
+  if (!hasTalentCapability(actor, BALEARIC_CAPABILITY)) return 0;
   const ab = Number(agilityBonus) || 0;
   return ab > 0 ? Math.ceil(ab / 2) : 0;
 }

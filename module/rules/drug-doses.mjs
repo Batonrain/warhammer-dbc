@@ -16,6 +16,7 @@
 import { SECONDS_PER_DAY } from "../constants/imperial-calendar.mjs";
 import { itemHasName } from "./predicates.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { hasTalentCapability } from "./ability-by-key.mjs";
 import { alchemDoseLimit, ALCHEM_MONSTER } from "./replicant.mjs";
 import { HOOK_UP_CAP } from "./medic-talents.mjs";
 
@@ -58,7 +59,7 @@ export function isHookedUp(item) {
 
 /** Доступен ли «Крючок» проекту крафта: Талант у крафтера, режим Крафт, категория «Химия». */
 export function hookUpAvailable(crafter, proj) {
-  return !!crafter && proj?.mode === "craft" && proj?.categoryKey === "chem" && hasRuleFlag(crafter, HOOK_UP_CAP);
+  return !!crafter && proj?.mode === "craft" && proj?.categoryKey === "chem" && hasTalentCapability(crafter, HOOK_UP_CAP);
 }
 
 /** Штраф теста крафта от «Крючка»: −30, если доступен и включён галочкой проекта, иначе 0. */

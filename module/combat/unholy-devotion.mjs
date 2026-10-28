@@ -13,7 +13,7 @@
 //  книга: «может попытаться … только один раз в Раунд».
 // ════════════════════════════════════════════════════════════════════════════
 
-import { hasRuleFlag } from "../rules/flags.mjs";
+import { hasTalentCapability } from "../rules/ability-by-key.mjs";
 import { isCapabilityAvailable, markCapabilityUsed } from "../rules/cooldown.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import {
@@ -37,7 +37,7 @@ export function devotionAvailable(minion) {
  * @returns {{uuid:string, name:string, distance:number, bonus:number, threshold:number, available:boolean}[]}
  */
 export function unholyDevotionCandidates(targetToken, defender, allActors) {
-  if (!targetToken || !defender || !hasRuleFlag(defender, UNHOLY_DEVOTION_CAP)) return [];
+  if (!targetToken || !defender || !hasTalentCapability(defender, UNHOLY_DEVOTION_CAP)) return [];
   const out = [];
   for (const a of allActors ?? []) {
     if (!isMinionOf(a, defender)) continue;

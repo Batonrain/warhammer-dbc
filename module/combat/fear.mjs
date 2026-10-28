@@ -9,6 +9,7 @@ import { FEAR_RATINGS, SHOCK_TABLE, TRAUMA_TABLE, lookupTable } from "../constan
 import { _degWord, esc }                               from "../helpers/utils.mjs";
 import { rollIcon }                                from "../constants/roll-icons.mjs";
 import { ruleFlagLabels, hasRuleFlag }             from "../rules/flags.mjs";
+import { hasTalentCapability } from "../rules/ability-by-key.mjs";
 import { isRuleUsageUsed }                         from "../apps/game-session.mjs";
 import { resolveKindOutcome }                      from "../rules/kind-outcome.mjs";
 import { rollD100WithReroll }                      from "../rules/test-kind-widget.mjs";
@@ -144,7 +145,7 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   // «Земной ужас» в окне Страха (properties.mundaneHorror) — только у носителя
   // Таланта; сверхъестественные ужасы «пугают как обычно», их различает стол.
   const moraleAuto = moraleAutoPass(actor);
-  const jadedAuto = !!properties.mundaneHorror && hasRuleFlag(actor, JADED_CAP);
+  const jadedAuto = !!properties.mundaneHorror && hasTalentCapability(actor, JADED_CAP);
   const autoPass = ignore.autoPass
                    || !!moraleAuto
                    || jadedAuto

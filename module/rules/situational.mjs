@@ -65,6 +65,7 @@ import { pinDownHoldOf } from "./pugilist-talents.mjs";
 import { disabledArmourPenalty } from "./armour-penalty.mjs";
 import { inventoryOverloadPenalty } from "./encumbrance.mjs";
 import { isItemActive } from "../apps/effects.mjs";
+import { itemHasName } from "./predicates.mjs";
 import { isInRage } from "./rage.mjs";
 import { dragonKnightRules } from "./dragon-knight.mjs";
 import { passengerTestMod } from "./mount.mjs";
@@ -131,7 +132,7 @@ function foresightBonus(actor, charKey) {
 export const TEMPERED_COCOON_CAP = "geneseed.core.temperedCocoon";
 function temperedCocoonBonus(actor, ctx) {
   if (!(ctx?.heatTest || ctx?.coldTest || ctx?.vacuumTest)) return 0;
-  return actorHasCapability(actor, TEMPERED_COCOON_CAP) ? 10 : 0;
+  return actorHasCapability(actor, TEMPERED_COCOON_CAP, "Tempered Cocoon") ? 10 : 0;
 }
 
 // Испробовать Душу (Талант Геносемени, geneseed.core.tasteTheSoul; 3-b530):
@@ -139,7 +140,7 @@ function temperedCocoonBonus(actor, ctx) {
 // (книга для бонуса пишет «.b»). Тег omophageaTest ставит apps/omophagea.mjs.
 export const TASTE_THE_SOUL_CAP = "geneseed.core.tasteTheSoul";
 function tasteTheSoulBonus(actor, ctx) {
-  if (!ctx?.omophageaTest || !actorHasCapability(actor, TASTE_THE_SOUL_CAP)) return 0;
+  if (!ctx?.omophageaTest || !actorHasCapability(actor, TASTE_THE_SOUL_CAP, "Taste the Soul")) return 0;
   return Math.ceil(Math.max(0, Number(actor?.system?.characteristics?.per?.total) || 0) / 2);
 }
 
@@ -149,9 +150,12 @@ const actorHomeworldKey = actor =>
 /**
  * Есть ли у актора включённый предмет с такой возможностью Конструктора.
  * Прямой скан, а не hasRuleFlag — см. шапку файла (иначе круг импортов).
+ * talentName — Талант, купленный до появления записи в паке, ключа не несёт
+ * до «Обновить мир», поэтому опознаётся и по имени.
  */
-function actorHasCapability(actor, key) {
+function actorHasCapability(actor, key, talentName = "") {
   for (const item of actor?.items ?? []) {
+    if (talentName && item?.type === "talent" && itemHasName(item, talentName)) return true;
     const groups = item?.flags?.["warhammer-dbc"]?.mechanics;
     if (!Array.isArray(groups)) continue;
     const grants = groups.some(g => (g.entries || []).some(

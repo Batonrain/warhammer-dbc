@@ -50,6 +50,8 @@
 
 import { hasRuleFlag } from "./flags.mjs";
 import { hasAbility } from "./ability-by-key.mjs";
+import { itemHasName } from "./predicates.mjs";
+import { isImplantActive } from "./item-gates.mjs";
 import { isSocialSkill } from "./resolve-test.mjs";
 import { isInRage, rageBlocksMental } from "./rage.mjs";
 import { SECONDS_PER_ROUND } from "./condition-duration.mjs";
@@ -84,14 +86,19 @@ export function hasBattleRage(actor) {
   return hasAbility(actor, "berserker.core.battleRage", "Battle Rage", "talent");
 }
 
+// До PR #554 у Модуля в паке механики не было: копия у старого Скитария записей не
+// несёт до «Обновить мир». Обе возможности у Модуля безусловные — по имени, если установлен.
+const hasInstalledAggressionModule = actor => [...(actor?.items ?? [])].some(i =>
+  i?.type === "implant" && itemHasName(i, "Aggression Module") && isImplantActive(i));
+
 /** Модуль Агрессии (и всё, что даст ту же возможность): Избегания в Ярости не запрещены. */
 export function hasFreeRageAvoidance(actor) {
-  return hasRuleFlag(actor, RAGE_FREE_AVOIDANCE_CAPABILITY);
+  return hasRuleFlag(actor, RAGE_FREE_AVOIDANCE_CAPABILITY) || hasInstalledAggressionModule(actor);
 }
 
 /** Модуль Агрессии: выход из Ярости удаётся без броска. */
 export function hasRageExitAutoSuccess(actor) {
-  return hasRuleFlag(actor, RAGE_EXIT_AUTO_CAPABILITY);
+  return hasRuleFlag(actor, RAGE_EXIT_AUTO_CAPABILITY) || hasInstalledAggressionModule(actor);
 }
 
 const AVOIDANCE_LABELS = { dodge: "Уклонение", parry: "Парирование", evade: "Избегание" };

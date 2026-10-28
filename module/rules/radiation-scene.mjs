@@ -14,7 +14,8 @@
 
 import { hasRuleFlag } from "./flags.mjs";
 import { itemHasName } from "./predicates.mjs";
-import { itemHasKey } from "./item-marker.mjs";
+import { itemIs } from "./item-marker.mjs";
+import { isImplantActive } from "./item-gates.mjs";
 import { SECONDS_PER_ROUND } from "./condition-duration.mjs";
 
 /** Флаг актора: укрытие, в котором он сейчас (ГМ ставит в окне «Окружение»). */
@@ -81,7 +82,7 @@ export function armourRadProtection(actor) {
 
 /** Включён ли на Таланте «Чёрная Мантия» усиленный режим (флаг на самом предмете). */
 function blackMantleSwitchedOn(actor) {
-  return items(actor).some(i => i?.type === "talent" && itemHasKey(i, BLACK_MANTLE_KEY)
+  return items(actor).some(i => itemIs(i, "talent", BLACK_MANTLE_KEY, "Black Mantle")
     && !!(i.getFlag?.(SYSTEM, BLACK_MANTLE_ON_FLAG) ?? i.flags?.[SYSTEM]?.[BLACK_MANTLE_ON_FLAG]));
 }
 
@@ -96,8 +97,10 @@ function blackMantleSwitchedOn(actor) {
  * (constants/legions.mjs) — их выставляет мастер, сняв имплант или Талант.
  */
 export function melanochromeMode(actor) {
-  if (!hasRuleFlag(actor, MELANOCHROME_KEY)) return null;
-  return hasRuleFlag(actor, BLACK_MANTLE_KEY) && blackMantleSwitchedOn(actor) ? "enhanced" : "base";
+  // Копия импланта без записи (до «Обновить мир») — по имени, но только установленная.
+  if (!hasRuleFlag(actor, MELANOCHROME_KEY)
+    && !items(actor).some(i => i?.type === "implant" && itemHasName(i, "Melanochrome") && isImplantActive(i))) return null;
+  return blackMantleSwitchedOn(actor) ? "enhanced" : "base";
 }
 
 /**

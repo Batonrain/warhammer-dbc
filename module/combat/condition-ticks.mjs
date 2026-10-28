@@ -26,6 +26,7 @@ import { rollMoraleTest } from "../rules/morale-test.mjs";
 import { postShockRecoveryPrompt } from "./fear.mjs";
 import { applyLordOfExoditesFailPenalty } from "./lord-of-exodites.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { hasTalentCapability } from "../rules/ability-by-key.mjs";
 import { SELF_STANCH_CAPABILITY } from "../rules/naga-traits.mjs";
 import { FIREMAN_CAP } from "../rules/courage-talents.mjs";
 import { resolveArmorProps } from "./armor-properties.mjs";
@@ -533,7 +534,7 @@ export async function rollBurningPanicTest(actor) {
   }
   // Пожарный (Sahara 3-scope): «не паникует от Горения» — теста нет вовсе
   // (в отличие от автоуспеха Бесстрашного, у которого бросок идёт).
-  if (hasRuleFlag(actor, FIREMAN_CAP)) {
+  if (hasTalentCapability(actor, FIREMAN_CAP)) {
     await postTestCard(actor, {
       icon: rollIcon("fire","#8fd0ff"), title: `Паника от Горения — ${esc(actor.name)}`,
       outcome: `<span class="roll-success">Пожарный: огонь не пугает — паники нет</span>`

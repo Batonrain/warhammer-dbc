@@ -20,7 +20,7 @@
 
 import { setDeceased } from "../sheets/tabs/body.mjs";
 import { divineProtectionActive, DEATH_CAUSE_FLAG } from "../rules/death-save.mjs";
-import { hasRuleFlag } from "../rules/flags.mjs";
+import { hasTalentCapability } from "../rules/ability-by-key.mjs";
 import { addFatigue } from "../sheets/tabs/conditions.mjs";
 
 /**
@@ -34,7 +34,7 @@ export function letItFlowSaves(actor, cause) {
   return cause === "bleeding"
     && !actor?.getFlag?.("warhammer-dbc", "deceased")
     && !divineProtectionActive(actor)
-    && hasRuleFlag(actor, "geneseed.core.letItFlow");
+    && hasTalentCapability(actor, "geneseed.core.letItFlow");
 }
 
 /**

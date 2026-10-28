@@ -28,6 +28,7 @@ import { collectTestMods } from "../../rules/roll-mods.mjs";
 import { severityTestMod, effectiveSeverity, stepSeverity } from "../../rules/disorder-severity.mjs";
 import { commitRerollUse } from "../../combat/angel-hunters.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
+import { hasTalentCapability } from "../../rules/ability-by-key.mjs";
 import { JADED_CAP } from "../../rules/courage-talents.mjs";
 import { anyRadiantPresenceHolderExists, anyIntoTheJawsOfHellHolderExists } from "../../rules/leadership-talents.mjs";
 import { RAGE_FEAR_CAPABILITY, rageFearRating, isRageFearSource, relationByDisposition } from "../../rules/warp-touched.mjs";
@@ -141,7 +142,7 @@ export function openFearDialog(actor) {
   // проходит тесты на Страх при виде крови, смерти, насилия и прочих земных
   // ужасов» — земной ли ужас, система не определяет (классификатора источников
   // Страха нет), это галочка, видная только носителю Таланта.
-  const jadedHtml = hasRuleFlag(actor, JADED_CAP)
+  const jadedHtml = hasTalentCapability(actor, JADED_CAP)
     ? `<div class="atk-dlg-row"><label title="Пресыщенный: источник — кровь, смерть, насилие и прочие земные ужасы (не сверхъестественное) — тест проходит автоматически"><input id="fear-prop-mundane" type="checkbox"/> Земной ужас (Пресыщенный: авто-успех)</label></div>`
     : "";
   const rm = ruleRollModsHtml(actor, ctx);

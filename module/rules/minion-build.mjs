@@ -19,6 +19,7 @@ import { MINION_GROUPS, MINION_TIERS, GROUP_CHAR_LIMITS, MINION_INFAMY_CAP,
 import { MINION_TRAITS, MANDATORY_BY_GROUP } from "../constants/minion-traits.mjs";
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { hasTalentCapability } from "./ability-by-key.mjs";
 import { hasInfernalMaster } from "./occultist-talents.mjs";
 import { itemHasName } from "./predicates.mjs";
 import { effectiveMinionGroup } from "./binary-dominion.mjs";
@@ -110,7 +111,7 @@ export function minionCapacity(master, groups = []) {
   if (!used.length) return 0;
   const chars = master?.system?.characteristics ?? {};
   const cap = Math.min(...used.map(g => bonusOf(chars[MINION_GROUPS[g].masterChar]?.total)));
-  return hasRuleFlag(master, "minion.core.lordOfChaos") ? Math.floor(cap * 1.5) : cap;
+  return hasTalentCapability(master, "minion.core.lordOfChaos") ? Math.floor(cap * 1.5) : cap;
 }
 
 /** Сколько Миньонов какой группы у Хозяина — для шапки блока СОЦИУМа. */
@@ -381,7 +382,7 @@ export function minionLoyalty(master, group, minion = null) {
   // Ancient Warrior / Древний Воин (arsenal.core.ancientWarrior): «+10 к
   // Лояльности Миньонов-Космодесантников» — признак на самом Миньоне
   // (system.isAstartes), у человека того же group:"human" его не отличить.
-  if (minion?.astartes && hasRuleFlag(master, "arsenal.core.ancientWarrior")) {
+  if (minion?.astartes && hasTalentCapability(master, "arsenal.core.ancientWarrior")) {
     value += ANCIENT_WARRIOR_LOYALTY_BONUS;
   }
   // Cannon Fodder / Пушечное Мясо: −20 именно этому Миньону (minion — {uuid,

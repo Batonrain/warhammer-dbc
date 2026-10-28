@@ -146,6 +146,14 @@ describe("Избегания в Ярости: отказ без траты Ре�
     expect(avoidanceVerdict(makeActor({ inRage: false }), "dodge").blocked).toBe(false);
   });
 
+  // До PR у Модуля в паке механики не было: старая копия у Скитария без записей до «Обновить мир».
+  it("старая копия Модуля без механики: установленный открывает Избегания по имени, снятый — нет", () => {
+    const stale = installed => ({ ...aggressionModule(), flags: { [NS]: { installed } },
+      getFlag: (s, k) => (s === NS && k === "installed" ? installed : undefined) });
+    expect(avoidanceVerdict(makeActor({ items: [frenzy(), stale(true)] }), "dodge").blocked).toBe(false);
+    expect(avoidanceVerdict(makeActor({ items: [frenzy(), stale(false)] }), "dodge").blocked).toBe(true);
+  });
+
   it("Парирование психосилы и отмена попадания Акробатикой — тоже Избегания", async () => {
     const a = makeActor({ items: [frenzy()] });
     await _performPsychicParry(a, { powerName: "Огонь", ePR: 3 });
@@ -507,6 +515,14 @@ describe("Выход из Ярости: тест W+0", () => {
     expect(captured.rolls).toEqual([]);
     expect(a.system.inRage).toBe(false);
     expect(lastCard()).toContain("Модуль Агрессии: автоматический Успех");
+  });
+
+  it("старая копия Модуля без механики (установлена): выход без броска по имени", async () => {
+    const stale = { ...aggressionModule(), flags: { [NS]: { installed: true } },
+      getFlag: (s, k) => (s === NS && k === "installed" ? true : undefined) };
+    const a = makeActor({ items: [frenzy(), stale] });
+    expect(await attemptRageExit(a, { choice: choice() })).toBe(true);
+    expect(captured.rolls).toEqual([]);
   });
 
   it("не в Ярости — ничего не происходит", async () => {
