@@ -58,6 +58,12 @@ describe("Меланохром: базовая защита −1", () => {
     expect(radProtectionOf({ items: [] }, "").total).toBe(0);
   });
 
+  it("копия Меланохрома без записи (до «Обновить мир»): установленный работает по имени, снятый — нет", () => {
+    const stale = installed => doc("implant", "13. Меланохром / Melanochrome", { installed, mechanics: [] });
+    expect(melanochromeMode({ items: [stale(true)] })).toBe("base");
+    expect(melanochromeMode({ items: [stale(false)] })).toBe(null);
+  });
+
   it("складывается с бронёй и укрытием (строки таблицы книги — разные виды защиты)", () => {
     grant(MELANOCHROME_KEY);
     const armour = { type: "armor", name: "Power", system: { armorType: "power", equipped: true, properties: [] } };
@@ -106,9 +112,18 @@ describe("Чёрная Мантия: усиленный режим", () => {
     expect(radProtectionOf(a, "").total).toBe(0);
   });
 
-  it("режим включён, но Талант не действует (нет возможности) — только базовый −1", () => {
+  // Талант с этим именем опознаётся и без возможности (копия до «Обновить мир»,
+  // приёмка #554), поэтому «нет Таланта» — это флаг режима на чужом Таланте.
+  it("флаг режима на чужом Таланте, Мантии нет — только базовый −1", () => {
     grant(MELANOCHROME_KEY);
-    expect(melanochromeMode({ items: [melanochrome(), mantle({ on: true })] })).toBe("base");
+    const other = doc("talent", "Other / Другой", { mechanics: [], [BLACK_MANTLE_ON_FLAG]: true });
+    expect(melanochromeMode({ items: [melanochrome(), other] })).toBe("base");
+  });
+
+  it("копия Мантии без записи (до «Обновить мир») — режим по имени работает", () => {
+    grant(MELANOCHROME_KEY);
+    const stale = doc("talent", "Black Mantle / Чёрная Мантия", { mechanics: [], [BLACK_MANTLE_ON_FLAG]: true });
+    expect(melanochromeMode({ items: [melanochrome(), stale] })).toBe("enhanced");
   });
 });
 

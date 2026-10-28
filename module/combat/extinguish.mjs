@@ -44,7 +44,7 @@ import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/cond
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { rollConditionCharTest, BURNING_FORMULA_FLAG } from "./condition-ticks.mjs";
 import { hasResilienceTalent, dropAndRollProneTarget } from "../rules/resilience-talents.mjs";
-import { hasRuleFlag } from "../rules/flags.mjs";
+import { hasTalentCapability } from "../rules/ability-by-key.mjs";
 import { FIREMAN_CAP, FIREMAN_EXTINGUISH_BONUS } from "../rules/courage-talents.mjs";
 
 const NS = "warhammer-dbc";
@@ -95,7 +95,7 @@ export async function extinguishBurning(actor, patient = actor, { mod = 0, dropA
   const bookMod = extinguishBookMod(self);
   // Пожарный (Sahara 3-scope): «+30 на тесты тушения себя или других» — бонус
   // тушащему, то есть носителю, а не горящему.
-  const fireman = hasRuleFlag(actor, FIREMAN_CAP) ? FIREMAN_EXTINGUISH_BONUS : 0;
+  const fireman = hasTalentCapability(actor, FIREMAN_CAP) ? FIREMAN_EXTINGUISH_BONUS : 0;
   // Без теста: автоуспех, Критический Провал (загорается помогающий) исключён.
   const t = auto
     ? { base: 0, eff: null, rv: null, parts: [], roll: null, success: true }

@@ -32,6 +32,7 @@ import { applyStructureLoss } from "./vehicle.mjs";
 import { ARMOUR_SIDES, VEHICLE_STATUS_EFFECTS } from "../constants/vehicle.mjs";
 import { isThrottleCountAvailable, incrementThrottleCount, throttleCount } from "../rules/cooldown.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { hasTalentCapability } from "../rules/ability-by-key.mjs";
 import { rageAvoidanceRefusal } from "./rage-behavior.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { pilotOperateValue } from "./vehicle-force-move.mjs";
@@ -345,7 +346,7 @@ const SENSE_OF_BALANCE_MOD = -10;
 async function trySenseOfBalance(vehicle) {
   if (isTippedOver(vehicle)) return false;
   const crew = await walkerCrew(vehicle);
-  if (!crew || !hasRuleFlag(crew.actor, SENSE_OF_BALANCE)) return false;
+  if (!crew || !hasTalentCapability(crew.actor, SENSE_OF_BALANCE)) return false;
 
   const ruleMods = collectTestMods(crew.actor, { kind: "skill", skill: "operate", char: "per" });
   const base = pilotOperateValue(crew.actor, "per");

@@ -5,6 +5,7 @@
 
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
+import { hasTalentCapability } from "../../rules/ability-by-key.mjs";
 import { resolveTest } from "../../rules/resolve-test.mjs";
 import { woundLossUpdates as computeWoundDamage } from "../../rules/wounds.mjs";
 import { woundLevel } from "../../rules/wound-tier.mjs";
@@ -117,13 +118,13 @@ function patientHealingMod(patient) {
  * `line` — строка карточки (null, если Талант ничего не изменил).
  */
 function fieldSurgeryOf(medic, mode, theatre) {
-  const fs = fieldSurgery({ mode, theatre: !!theatre, hasTalent: hasRuleFlag(medic, FIELD_SURGEON_CAP) });
+  const fs = fieldSurgery({ mode, theatre: !!theatre, hasTalent: hasTalentCapability(medic, FIELD_SURGEON_CAP) });
   return { ...fs, line: fs.inField ? `${rollIcon("wrench","#8fd0ff")}<i>Полевой Хирург: операция «в поле» — −20.</i>` : null };
 }
 
 /** Перешивание: можно ли повторить Первую Помощь над пациентом (метка времени и результата — на нём). */
 export function canRestitch(medic, patient) {
-  if (!hasRuleFlag(medic, RESTITCHING_CAP)) return false;
+  if (!hasTalentCapability(medic, RESTITCHING_CAP)) return false;
   const w = patient?.system?.wounds ?? {};
   return restitchingAllowed({
     used: !!w.firstAidUsed, failed: !!w.firstAidFailed, at: w.firstAidAt,
@@ -137,7 +138,7 @@ export function canRestitch(medic, patient) {
  */
 export function withAssistants(medic, opts = {}) {
   if (opts.assistFolded) return opts;
-  const assistants = clampHealAssists(opts.assistants, hasRuleFlag(medic, COUNCILIUM_CAP));
+  const assistants = clampHealAssists(opts.assistants, hasTalentCapability(medic, COUNCILIUM_CAP));
   return { ...opts, assistants, assistFolded: true, mod: (Number(opts.mod) || 0) + healAssistBonus(assistants) };
 }
 
@@ -217,10 +218,10 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
           <option value="bionic">Бионика/Кибернетика (Medicae−30)</option>
           <option value="coma">Вывод из комы (Medicae−40)</option>
           <option value="disease">Лечение болезни</option>
-          ${hasRuleFlag(medic, REANIMATE_CAP) ? `<option value="reanimate">Реанимировать труп (1 Очко Бесчестия, полное действие)</option>` : ""}
+          ${hasTalentCapability(medic, REANIMATE_CAP) ? `<option value="reanimate">Реанимировать труп (1 Очко Бесчестия, полное действие)</option>` : ""}
         </select>
       </div>
-      ${hasRuleFlag(medic, RADICAL_TREATMENT_CAP) ? `<div class="atk-dlg-row" data-mode="firstAid"><label title="Талант «Радикальное Лечение»: дополнительный штраф к тесту Первой Помощи — при Успехе столько же дополнительных Ран">Радикальное Лечение:</label>
+      ${hasTalentCapability(medic, RADICAL_TREATMENT_CAP) ? `<div class="atk-dlg-row" data-mode="firstAid"><label title="Талант «Радикальное Лечение»: дополнительный штраф к тесту Первой Помощи — при Успехе столько же дополнительных Ран">Радикальное Лечение:</label>
         <select id="heal-radical">
           <option value="0">— нет —</option>
           <option value="1">−10 к тесту → +1 Рана</option>
@@ -228,13 +229,13 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
           <option value="3">−30 к тесту → +3 Раны</option>
         </select>
       </div>` : ""}
-      ${hasRuleFlag(medic, FAST_STITCHES_CAP) ? `<div class="atk-dlg-row" data-mode="firstAid"><label title="Талант «Быстрые Стежки»: Первая Помощь одним полным действием, но I.b медика считается вдвое ниже (с округлением вверх)"><input type="checkbox" id="heal-fast-stitches"/> Быстрые Стежки (I.b вдвое ниже)</label></div>` : ""}
-      <div class="atk-dlg-row" data-mode="firstAid,setLimb,amputate,reattach,stumpCare,stopBleeding,gangreneSurgery,bionic,coma,disease"><label title="Ассистенты теста лечения: +10 к Порогу за каждого (стр. 25). Максимум ${healAssistMax(false)}; Талант «Консилиум» удваивает максимум, а пациент получает +2 Раны за каждого ассистента.">Ассистентов (макс. ${healAssistMax(hasRuleFlag(medic, COUNCILIUM_CAP))}):</label><input type="number" id="heal-assist" value="0" min="0" max="${healAssistMax(hasRuleFlag(medic, COUNCILIUM_CAP))}" style="width:60px;"/></div>
+      ${hasTalentCapability(medic, FAST_STITCHES_CAP) ? `<div class="atk-dlg-row" data-mode="firstAid"><label title="Талант «Быстрые Стежки»: Первая Помощь одним полным действием, но I.b медика считается вдвое ниже (с округлением вверх)"><input type="checkbox" id="heal-fast-stitches"/> Быстрые Стежки (I.b вдвое ниже)</label></div>` : ""}
+      <div class="atk-dlg-row" data-mode="firstAid,setLimb,amputate,reattach,stumpCare,stopBleeding,gangreneSurgery,bionic,coma,disease"><label title="Ассистенты теста лечения: +10 к Порогу за каждого (стр. 25). Максимум ${healAssistMax(false)}; Талант «Консилиум» удваивает максимум, а пациент получает +2 Раны за каждого ассистента.">Ассистентов (макс. ${healAssistMax(hasTalentCapability(medic, COUNCILIUM_CAP))}):</label><input type="number" id="heal-assist" value="0" min="0" max="${healAssistMax(hasTalentCapability(medic, COUNCILIUM_CAP))}" style="width:60px;"/></div>
       <div class="atk-dlg-row" data-mode="reanimate"><label title="Нельзя реанимировать существо с полностью уничтоженной головой или убитое варп-оружием/Выжиганием Души — система этого не отслеживает, подтвердите сами."><input type="checkbox" id="heal-reanimate-ok"/> Голова цела, смерть не от варп-оружия/Выжигания Души</label></div>
       <div class="atk-dlg-row" data-mode="rest,bedRest,passive"><label title="Medicae: критический лечится как тяжёлый; период до 8 часов"><input type="checkbox" id="heal-care"/> Мед. уход</label></div>
       <div class="atk-dlg-row" data-mode="stopBleeding"><label title="Книга: −30 вместо −10, если пациент активно действовал в свой прошлый Ход (отмечается само по движению/атаке/физическим ОД). На себе — всегда −30."><input type="checkbox" id="heal-patient-active"/> Пациент активно действовал в прошлый Ход</label></div>
       <div class="atk-dlg-row" data-mode="stopBleeding"><label title="Жгут, ремень или тонкая верёвка: полное действие вместо полудействия, +40"><input type="checkbox" id="heal-tourniquet"/> Жгут/ремень/верёвка (+40, полное действие)</label></div>
-      <div class="atk-dlg-row" data-mode="gangreneSurgery,reattach,bionic"><label title="Операции (Гангрена, Пришивание конечности, Бионика) — только в стационаре, хотя бы в операционной комнате (Гангрена занимает смену работы; при Успехе гангренозная конечность теряется полностью — выберите её ниже). Талант «Полевой Хирург» разрешает операцию «в поле» со штрафом −20."><input type="checkbox" id="heal-theatre"/> Есть операционная${hasRuleFlag(medic, FIELD_SURGEON_CAP) ? " (иначе «в поле»: −20)" : " (для операции обязательно)"}</label></div>
+      <div class="atk-dlg-row" data-mode="gangreneSurgery,reattach,bionic"><label title="Операции (Гангрена, Пришивание конечности, Бионика) — только в стационаре, хотя бы в операционной комнате (Гангрена занимает смену работы; при Успехе гангренозная конечность теряется полностью — выберите её ниже). Талант «Полевой Хирург» разрешает операцию «в поле» со штрафом −20."><input type="checkbox" id="heal-theatre"/> Есть операционная${hasTalentCapability(medic, FIELD_SURGEON_CAP) ? " (иначе «в поле»: −20)" : " (для операции обязательно)"}</label></div>
       <div class="atk-dlg-row" data-mode="amputate,reattach,stumpCare,bionic,gangreneSurgery,cauterize"><label title="Для Прижигания — какой обрубок прижечь (снимает угрозу Гангрены). Пусто — единственный необработанный, если он один.">Часть тела:</label>
         <select id="heal-limb">
           <option value="">— (для Бионики, если не восстанавливает утраченную часть) —</option>
@@ -1085,7 +1086,7 @@ export async function applyHealing(medic, patient, rawOpts) {
   // Ассистенты (+10 к Порогу каждый, макс. 2/4) — в «Мод. теста»; Консилиум —
   // +2 Раны за каждого ассистента любому лечению пациента (3-dc87).
   const opts = withAssistants(medic, rawOpts);
-  const councilium = hasRuleFlag(medic, COUNCILIUM_CAP);
+  const councilium = hasTalentCapability(medic, COUNCILIUM_CAP);
   const councilBonus = councilWounds(councilium, opts.assistants);
   const { mode, care, mod } = opts;
   const bonus = (Number(opts.bonus) || 0) + councilBonus;
@@ -1125,7 +1126,7 @@ export async function applyHealing(medic, patient, rawOpts) {
     }
     if (restitch) lines.push("<i>Перешивание: повтор после проваленной Первой Помощи.</i>");
     // Радикальное Лечение: −10/−20/−30 к тесту → +1/+2/+3 Раны при Успехе.
-    const radical = radicalTreatment(hasRuleFlag(medic, RADICAL_TREATMENT_CAP) ? opts.radical : 0);
+    const radical = radicalTreatment(hasTalentCapability(medic, RADICAL_TREATMENT_CAP) ? opts.radical : 0);
     if (radical.level) lines.push(`<i>Радикальное Лечение: ${radical.mod} к тесту, при Успехе +${radical.bonus} Ран.</i>`);
     if (opts.assistants) lines.push(`<i>Ассистенты: ${opts.assistants} (+${healAssistBonus(opts.assistants)} к Порогу${councilBonus ? `, Консилиум +${councilBonus} Ран` : ""}).</i>`);
     const testMod = ({ light: 10, heavy: 0, critical: -10 }[lvl.key]) + mod + radical.mod;
@@ -1141,7 +1142,7 @@ export async function applyHealing(medic, patient, rawOpts) {
     const deg = autoPass ? 1 : Math.floor(Math.abs(rolled ? eff - rv : rv - eff) / 10) + 1;
     // Быстрые Стежки: I.b медика для эффективности вдвое ниже (окр.▲).
     const medicIb = medic.system.characteristics?.int?.bonus ?? 0;
-    const fast = !!opts.fastStitches && hasRuleFlag(medic, FAST_STITCHES_CAP);
+    const fast = !!opts.fastStitches && hasTalentCapability(medic, FAST_STITCHES_CAP);
     if (fast) lines.push(`<i>Быстрые Стежки: I.b ${medicIb} → ${fastStitchesIb(medicIb)} (вдвое ниже, окр.▲).</i>`);
     const baseHeal = { light: fast ? fastStitchesIb(medicIb) : medicIb, heavy: 2, critical: 1 }[lvl.key];
     lines.push(`${rollIcon("heart","#ff8a8a")}<b>Первая Помощь</b> (${lvl.label}): Медицина ${skill}${testMod >= 0 ? "+" : ""}${testMod} → порог <b>${eff}</b>, бросок <b>${rv}</b> — ${rolled ? `<span class="roll-success">Успех (${deg})</span>` : `<span class="roll-failure">Провал (${deg})</span>`}${autoPass ? ' <i>(Просто Царапина — автоуспех)</i>' : ""}`);

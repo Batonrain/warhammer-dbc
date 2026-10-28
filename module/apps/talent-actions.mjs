@@ -12,7 +12,7 @@
 //    5 минут игрового времени — на совести стола.
 // ════════════════════════════════════════════════════════════════════════
 
-import { itemHasKey, itemIs } from "../rules/item-marker.mjs";
+import { itemIs } from "../rules/item-marker.mjs";
 import { isInspireWrathItem } from "../rules/inspire-wrath.mjs";
 import { FORESIGHT_READY_FLAG } from "../rules/situational.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
@@ -22,7 +22,7 @@ import { esc } from "../helpers/utils.mjs";
 const SYSTEM = "warhammer-dbc";
 export const FORESIGHT_KEY = "sage.core.foresight";
 
-export const isForesightItem = item => item?.type === "talent" && itemHasKey(item, FORESIGHT_KEY);
+export const isForesightItem = item => itemIs(item, "talent", FORESIGHT_KEY, "Foresight");
 export const foresightReady = actor => !!actor?.getFlag?.(SYSTEM, FORESIGHT_READY_FLAG);
 
 /** Гасит подготовку после теста I (вызывается из _runTest). Не трогает флаг, если его не было. */
@@ -31,10 +31,10 @@ export async function clearForesight(actor) {
 }
 
 export const BLADE_JUGGLER_KEY = "rogue.core.bladeJuggler";
-export const isBladeJugglerItem = item => item?.type === "talent" && itemHasKey(item, BLADE_JUGGLER_KEY);
+export const isBladeJugglerItem = item => itemIs(item, "talent", BLADE_JUGGLER_KEY, "Blade Juggler");
 
 export const WAR_CRY_KEY = "social.core.warCry";
-export const isWarCryItem = item => item?.type === "talent" && itemHasKey(item, WAR_CRY_KEY);
+export const isWarCryItem = item => itemIs(item, "talent", WAR_CRY_KEY, "War Cry");
 
 export const TANDEM_KEY = "weaponsmith.core.tandem";
 // Предметы у игроков — снимки: Талант, купленный до появления записи Конструктора, ключа не несёт, поэтому и по имени.

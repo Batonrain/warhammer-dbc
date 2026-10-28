@@ -13,7 +13,7 @@
 //  Арифметика — rules/medic-talents.mjs, здесь только Foundry-обвязка.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { hasRuleFlag } from "../rules/flags.mjs";
+import { hasTalentCapability } from "../rules/ability-by-key.mjs";
 import { REANIMATE_CAP, roundsSinceDeath, reanimateWindow } from "../rules/medic-talents.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -46,7 +46,7 @@ async function post(medic, patient, lines, rolls = []) {
  */
 export async function runReanimate(medic, patient, { reanimateOk = false } = {}) {
   const warn = text => globalThis.ui?.notifications?.warn?.(text);
-  if (!hasRuleFlag(medic, REANIMATE_CAP)) { warn(`${medic.name}: нет Таланта «Реанимировать».`); return false; }
+  if (!hasTalentCapability(medic, REANIMATE_CAP)) { warn(`${medic.name}: нет Таланта «Реанимировать».`); return false; }
   if (patient === medic || (medic.id != null && medic.id === patient.id)) { warn("Реанимировать можно только чужой труп."); return false; }
   if (!patient.getFlag?.(NS, "deceased")) { warn(`${patient.name}: смерть не констатирована — оживлять нечего.`); return false; }
   if (!reanimateOk) { warn("Подтвердите: голова цела, смерть не от варп-оружия/Выжигания Души."); return false; }

@@ -93,7 +93,7 @@ import { hasCaution }                            from "../combat/caution.mjs";
 import { hasSavior, saviorGate }                 from "../combat/savior.mjs";
 import { hasShowOff, showOffGate }               from "../combat/show-off.mjs";
 import { actorHasBinding }                       from "../combat/blade-binding.mjs";
-import { hasRuleFlag as hasCourageFlag }         from "../rules/flags.mjs";
+import { hasTalentCapability }                     from "../rules/ability-by-key.mjs";
 import { IDOLATER_CAP }                          from "../rules/courage-talents.mjs";
 import { hasFlourishDance }                      from "../combat/flourish-dance.mjs";
 import { hasBoneSong }                           from "../combat/bone-song.mjs";
@@ -552,7 +552,7 @@ export function characterContext(actor) {
   // Сцепление Клинков: кнопка «Разойтись» видна, пока у персонажа есть живое сцепление (его или на нём).
   context.bladeBound = actorHasBinding(actor);
   // Галочка «Кумир рядом» на вкладке БОЙ (Sahara 3-scope) — только владельцам Идолопоклонника.
-  context.hasIdolater = hasCourageFlag(actor, IDOLATER_CAP);
+  context.hasIdolater = hasTalentCapability(actor, IDOLATER_CAP);
   // Тумблер «Броня обслужена сегодня» Бронника (глава 3) — только владельцам Таланта.
   context.hasArmourMonger = hasArmourMonger(actor);
   context.armourMongerOn = context.hasArmourMonger && armourMongerOn(actor);

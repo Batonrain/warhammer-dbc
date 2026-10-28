@@ -33,6 +33,7 @@
 //  проверку по имени можно снимать — отдельным шагом, не этим.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { CAPABILITIES } from "../constants/capabilities.mjs";
 import { hasRuleFlag } from "./flags.mjs";
 import { itemHasName } from "./predicates.mjs";
 
@@ -50,4 +51,18 @@ export function hasAbility(actor, key, name, types = "talent") {
   const items = actor?.items;
   if (items?.some?.(i => kinds.includes(i?.type) && itemHasName(i, name))) return true;
   return !!key && hasRuleFlag(actor, key);
+}
+
+/**
+ * hasAbility для Таланта, чьё английское имя записано в реестре (source
+ * «English / Русское»). Для читателей, которые знали только ключ: у персонажа,
+ * взявшего Талант до того, как запись легла в пак, копия ключа не несёт до
+ * «Обновить мир» (приёмка #554). Привязку имён к пакам держит
+ * test/rules/talent-capability-stale-copy.test.mjs.
+ *
+ * @param {object} actor
+ * @param {string} key ключ из module/constants/capabilities.mjs
+ */
+export function hasTalentCapability(actor, key) {
+  return hasAbility(actor, key, String(CAPABILITIES[key]?.source ?? "").split(" / ")[0].trim(), "talent");
 }

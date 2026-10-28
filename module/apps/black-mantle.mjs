@@ -15,14 +15,14 @@
 //  сам: система экономию действий по этому Таланту не списывает.
 // ════════════════════════════════════════════════════════════════════════
 
-import { itemHasKey } from "../rules/item-marker.mjs";
+import { itemIs } from "../rules/item-marker.mjs";
 import { BLACK_MANTLE_KEY, BLACK_MANTLE_ON_FLAG } from "../rules/radiation-scene.mjs";
 
 const SYSTEM = "warhammer-dbc";
 
-/** Это Талант «Чёрная Мантия»? Опознаётся по ключу Возможности, как и читатель. */
+/** Это Талант «Чёрная Мантия»? Опознаётся по ключу Возможности или по имени (копия без ключа до «Обновить мир»), как и читатель. */
 export function isBlackMantleItem(item) {
-  return item?.type === "talent" && itemHasKey(item, BLACK_MANTLE_KEY);
+  return itemIs(item, "talent", BLACK_MANTLE_KEY, "Black Mantle");
 }
 
 /** Включён ли усиленный режим (по умолчанию — нет). */

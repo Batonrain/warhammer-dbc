@@ -9,6 +9,7 @@ import { pickReroll }     from "../rules/reroll-pick.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { hasRuleFlag }    from "../rules/flags.mjs";
+import { hasTalentCapability } from "../rules/ability-by-key.mjs";
 import { friendlyFireBonus } from "../rules/flamer-talents.mjs";
 import { tokenRelationship } from "../regions/auras.mjs";
 import { uselessCount }   from "../rules/useless-limbs.mjs";
@@ -447,7 +448,7 @@ export async function _performSprayCancel(actor, { attacker = null } = {}) {
   // а не реакционный −40: REACTION_SKILLS знает только Dodge/Parry, а ключ
   // навыка здесь другой. Ветвить это руками не нужно, сбор различает сам.
   const ruleMods  = collectTestMods(actor, { kind: "skill", skill: "acrobatics", char: "ag" });
-  const sprayerMod = (attacker && hasRuleFlag(attacker, SPRAYER_CAPABILITY)) ? SPRAYER_CANCEL_PENALTY : 0;
+  const sprayerMod = (attacker && hasTalentCapability(attacker, SPRAYER_CAPABILITY)) ? SPRAYER_CANCEL_PENALTY : 0;
   // Дружественный Огонь (rules/flamer-talents.mjs): +30 всем, кто не враг стрелка по расположению токенов.
   const friendlyMod = attacker ? friendlyFireBonus(attacker, { relationship: _tokenRelationshipOf(attacker, actor) }) : 0;
   const threshold = agTotal + rankBonus + cloneBonus + ruleMods.total + sprayerMod + friendlyMod;

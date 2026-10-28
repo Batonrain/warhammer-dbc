@@ -12,7 +12,7 @@
 //  Арифметика — rules/surgical-precision.mjs.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { hasRuleFlag } from "../rules/flags.mjs";
+import { hasTalentCapability } from "../rules/ability-by-key.mjs";
 import { SURGICAL_PRECISION_CAP } from "../rules/medic-talents.mjs";
 import { SURGICAL_TARGETS, surgicalThreshold, oddSuccesses } from "../rules/surgical-precision.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
@@ -21,7 +21,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 
 /** HTML кнопки в карточке Избирательной атаки (пусто, если условий нет). */
 export function surgicalPrecisionButtonHtml(attacker, { selective, hit, attackerUuid = "" } = {}) {
-  if (!selective || !hit || !hasRuleFlag(attacker, SURGICAL_PRECISION_CAP)) return "";
+  if (!selective || !hit || !hasTalentCapability(attacker, SURGICAL_PRECISION_CAP)) return "";
   return `<div class="roll-wprop-effects"><button class="wh-surgical-btn" type="button" data-attacker-uuid="${esc(attackerUuid)}"
     title="Хирургическая Точность: перед уроном одиночной Избирательной атаки по биологической цели — Medicae−10, +1 Dmg за каждый нечётный Успех. Если удар убивает — можно парализовать вместо смерти (решает стол).">
     🩺 Хирургическая Точность: тест Medicae−10 → +урон</button></div>`;
@@ -47,7 +47,7 @@ async function askTargetKind() {
  */
 export async function runSurgicalPrecision(attacker, { applyBtn, el }) {
   if (!attacker?.isOwner) { ui.notifications?.warn("Хирургическая Точность: тест может бросить владелец атакующего (или ГМ)."); return null; }
-  if (!hasRuleFlag(attacker, SURGICAL_PRECISION_CAP)) { ui.notifications?.warn(`${attacker.name}: нет Таланта «Хирургическая Точность».`); return null; }
+  if (!hasTalentCapability(attacker, SURGICAL_PRECISION_CAP)) { ui.notifications?.warn(`${attacker.name}: нет Таланта «Хирургическая Точность».`); return null; }
   const kind = await askTargetKind();
   if (!kind) return null;
 

@@ -146,6 +146,11 @@ describe("Преимущество против болезней и вакуум
     expect(diseaseResistReroll(a)).toEqual({ rolls: 2, mode: "keepBest", label: expect.stringMatching(/против болезней/) });
   });
 
+  it("копия Живучести без записи против болезней (до «Обновить мир») — опознаётся по имени", () => {
+    const stale = { ...SPLICE_RESILIENCE, flags: {} };
+    expect(diseaseResistReroll(actor([stale]))).toEqual({ rolls: 2, mode: "keepBest", label: expect.stringMatching(/против болезней/) });
+  });
+
   it("Живучесть Сплайса вакуум не покрывает — в её тексте вакуума нет", () => {
     expect(vacuumResistReroll(actor([SPLICE_RESILIENCE]))).toBeNull();
   });

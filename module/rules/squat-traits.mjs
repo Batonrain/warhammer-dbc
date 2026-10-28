@@ -48,6 +48,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { hasRuleFlag } from "./flags.mjs";
+import { hasAbility } from "./ability-by-key.mjs";
 import { NEW_MEN } from "./new-men.mjs";
 
 export const CLEVER_HANDS          = "trait.cleverHands";
@@ -90,7 +91,8 @@ export function diseaseResistReroll(actor) {
   if (!actor) return null;
   if (hasRuleFlag(actor, HARD_AS_STONE))
     return { rolls: 2, mode: "keepBest", label: "Преимущество (Крепкий как Камень)" };
-  if (hasRuleFlag(actor, DISEASE_ADVANTAGE))
+  // По имени тоже: у старой копии Черты есть запись против яда, а против болезней — нет до «Обновить мир».
+  if (hasAbility(actor, DISEASE_ADVANTAGE, "Adaptation: Resilience", "trait"))
     return { rolls: 2, mode: "keepBest", label: "Преимущество против болезней" };
   return null;
 }
