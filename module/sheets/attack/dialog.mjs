@@ -754,10 +754,13 @@ export function openAttackDialog(ctx) {
               const weaponDelta = secondProfile
                 ? trainOf({ ...item.system, weaponType: secondProfile.weaponType || item.system.weaponType }) - trainOf(item.system)
                 : weaponThresholdPart(actor, secondItem, "bs") - weaponThresholdPart(actor, item, f.char);
-              const aimPart = Number(thresholdParts(f).parts.find(p => p.label === "Прицеливание")?.value) || 0;
+              // Избирательная атака (с ней штраф Верхом и Precise Настройки Линз) и Выпуск Батареи — только
+              // основного ствола: второй стреляет без места попадания, его порог — по форме без них.
+              const secondForm = { ...f, aimVal: "", aimPenalty: 0, mountPenalty: 0, batpackDump: false };
+              const aimPart = Number(thresholdParts(secondForm).parts.find(p => p.label === "Прицеливание")?.value) || 0;
               const secondRof = f.fullFireRof || "single";
               const secondThreshold = fullFireSecondThreshold({
-                mainThreshold: thresholdOf(f), mainRofBonus: f.rofBonus, secondRof, weaponDelta, aimAdjust: aimPart
+                mainThreshold: thresholdOf(secondForm), mainRofBonus: f.rofBonus, secondRof, weaponDelta, aimAdjust: aimPart
               });
               await withEyeOfEnvy(actor, targetActor, "bs", () => _executeAttackRoll(
                 actor, secondItem, "bs", secondThreshold, secondRof, undefined,

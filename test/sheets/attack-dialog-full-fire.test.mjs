@@ -82,6 +82,18 @@ describe("Полный Огонь в окне атаки", () => {
     expect(w.system.magazineCur).toBe(4);
   });
 
+  it("Избирательная атака — только основной выстрел: второй без её штрафа (места попадания у него нет)", async () => {
+    const w = rifle();
+    const a = shooter([w, FULL]);
+    const p = showAttackDialog(a, w);
+    captured.dice = [10, 3, 4, 4, 10, 3, 4, 4, 4, 4, 4, 4];
+    await captured.press("roll", form({ "#atk-full-fire": true, "#atk-full-fire-with": "p:0", "#atk-full-fire-rof": "single",
+      "#atk-aim": "arm", "#atk-aim option:checked": { value: "arm", dataset: { penalty: "-20" } } }));
+    await p;
+    // основной: 45 + 10 − 10 − 20 = 25; второй — тот же, но без −20 Избирательной
+    expect(thresholds()).toEqual([25, 45]);
+  });
+
   it("без галочки — один выстрел, порог без −10", async () => {
     const w = rifle();
     const a = shooter([w, FULL]);
