@@ -1498,6 +1498,14 @@ Hooks.once("ready", async () => {
 // штраф без дозы, урон за период) и книжные числа у выданных до правки пака
 // 25.10.2026 копий (wdbc-gyqf2) ──
 // Ручной перезапуск: game.warhammerDBC.migrateDrugAddictionFields()
+// ── затем одноразово: зависимость от наркотиков переносится из поля предмета
+// (system.addiction.isAddicted) в флаг актора drugWithdrawal — иначе удалённый
+// флакон снимает штраф, а доза от другого персонажа пишется не получателю
+// (task-9717) ──
+// Ручной перезапуск: game.warhammerDBC.migrateDrugAddictionFlag()
+// Один обработчик, строго по очереди: Foundry не ждёт async-обработчики
+// «ready», и перенос успевал снять снимок настроек во флаг актора со старой,
+// ещё не долитой копии (доливка сперва долго грузит паки).
 Hooks.once("ready", async () => {
   if (!game.user.isGM) return;
   // Идемпотентна (заполняет только пустые поля и исправляет только прежние
@@ -1505,6 +1513,13 @@ Hooks.once("ready", async () => {
   await runMigrationGate({
     key: "drugAddictionFieldsVersion", tokensKey: "drugAddictionFieldsTokensVersion", label: "Зависимость наркотиков",
     full: () => migrateDrugAddictionFields(), tokensOnly: () => migrateDrugAddictionFields({ tokensOnly: true })
+  });
+  // Идемпотентна (копия со сброшенным isAddicted не трогается, метки дозы
+  // существующей записи сохраняются); отдельный ключ — миграция
+  // drug-addiction-fields уже выпущена (wdbc-gbd3).
+  await runMigrationGate({
+    key: "drugAddictionFlagVersion", tokensKey: "drugAddictionFlagTokensVersion", label: "Зависимость наркотиков (флаг актора)",
+    full: () => migrateDrugAddictionFlag(), tokensOnly: () => migrateDrugAddictionFlag({ tokensOnly: true })
   });
 });
 
@@ -1547,22 +1562,6 @@ Hooks.once("ready", async () => {
   await runMigrationGate({
     key: "strangeTechniqueEffectVersion", tokensKey: "strangeTechniqueEffectTokensVersion", label: "Странная Техника (общая Реакция)",
     full: () => migrateStrangeTechniqueEffect(), tokensOnly: () => migrateStrangeTechniqueEffect({ tokensOnly: true })
-  });
-});
-
-// ── Одноразово: зависимость от наркотиков переносится из поля предмета
-// (system.addiction.isAddicted) в флаг актора drugWithdrawal — иначе удалённый
-// флакон снимает штраф, а доза от другого персонажа пишется не получателю
-// (task-9717) ──
-// Ручной перезапуск: game.warhammerDBC.migrateDrugAddictionFlag()
-Hooks.once("ready", async () => {
-  if (!game.user.isGM) return;
-  // Идемпотентна (копия со сброшенным isAddicted не трогается, метки дозы
-  // существующей записи сохраняются); отдельный ключ — миграция
-  // drug-addiction-fields уже выпущена (wdbc-gbd3).
-  await runMigrationGate({
-    key: "drugAddictionFlagVersion", tokensKey: "drugAddictionFlagTokensVersion", label: "Зависимость наркотиков (флаг актора)",
-    full: () => migrateDrugAddictionFlag(), tokensOnly: () => migrateDrugAddictionFlag({ tokensOnly: true })
   });
 });
 

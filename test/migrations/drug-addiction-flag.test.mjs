@@ -7,6 +7,8 @@
 // забытое в снимке настроек, пропало бы у зависимого вместе с удалённым флаконом.
 
 import { describe, it, expect, afterEach, vi } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
 import { allPackDocuments, PACK_SCAN_TIMEOUT } from "../support/pack-docs.mjs";
 import {
   drugAddictionFlagPlan, hasLegacyAddiction, migrateDrugAddictionFlag
@@ -155,4 +157,21 @@ describe("migrateDrugAddictionFlag: мировые акторы и несвяз�
     expect(await migrateDrugAddictionFlag()).toEqual({ fixed: 1, failed: 1 });
     expect(bad.items[0].system.addiction.isAddicted).toBe(true);    // запись флага не прошла — поле цело, повтор допишет
   }, PACK_SCAN_TIMEOUT);
+});
+
+// Foundry не ждёт async-обработчики «ready»: на разных Hooks.once они идут
+// параллельно, и перенос снимал бы настройки с копии, которую drug-addiction-fields
+// ещё не долил (он сперва долго грузит паки). Поэтому оба гейта — в одном
+// обработчике, сначала поля, потом флаг.
+describe("проводка в warhammer-dbc.mjs", () => {
+  it("гейт флага идёт после гейта полей в одном обработчике ready", () => {
+    const src = fs.readFileSync(path.resolve(import.meta.dirname, "../../warhammer-dbc.mjs"), "utf8");
+    const handlers = src.split('Hooks.once("ready"');
+    const withFlag = handlers.filter(h => h.includes('key: "drugAddictionFlagVersion"'));
+    expect(withFlag).toHaveLength(1);
+    const h = withFlag[0];
+    expect(h.indexOf('key: "drugAddictionFieldsVersion"')).toBeGreaterThan(-1);
+    expect(h.indexOf('key: "drugAddictionFieldsVersion"')).toBeLessThan(h.indexOf('key: "drugAddictionFlagVersion"'));
+    expect(h.match(/await runMigrationGate\(/g)).toHaveLength(2);
+  });
 });
