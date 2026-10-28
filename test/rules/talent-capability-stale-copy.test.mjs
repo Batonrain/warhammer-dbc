@@ -120,3 +120,16 @@ describe("читатели, знавшие только ключ, у копии 
     expect(isBlackMantleItem(staleCopy(BLACK_MANTLE_KEY))).toBe(true);
   });
 });
+
+describe("окно атаки: Отравитель и Болтерная Муштра — не только по ключу", () => {
+  const src = fs.readFileSync(path.join(ROOT, "module/combat/attack.mjs"), "utf8");
+  it("attack.mjs опознаёт оба Таланта через hasTalentCapability", () => {
+    expect(src).not.toMatch(/hasRuleFlag\(actor, POISONER_CAP\)/);
+    expect(src).not.toMatch(/hasRuleFlag\(actor, "weaponsmith\.core\.bolterDrill"\)/);
+    expect(src).toMatch(/hasTalentCapability\(actor, POISONER_CAP\)/);
+    expect(src).toMatch(/hasTalentCapability\(actor, "weaponsmith\.core\.bolterDrill"\)/);
+  });
+  it("Болтерная Муштра без ключа опознаётся по имени", () => {
+    expect(hasTalentCapability(actorWith(staleCopy("weaponsmith.core.bolterDrill")), "weaponsmith.core.bolterDrill")).toBe(true);
+  });
+});

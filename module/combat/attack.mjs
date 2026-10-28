@@ -94,6 +94,7 @@ import { suffersBlindness } from "../rules/blindness.mjs";
 import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { POISONER_CAP } from "../rules/medic-talents.mjs";
+import { hasTalentCapability } from "../rules/ability-by-key.mjs";
 import { surgicalPrecisionButtonHtml } from "./surgical-precision.mjs";
 import { balearicSbBonus, grenadierScatterReduce } from "../rules/throwing-talents.mjs";
 import { crushingBlowBonus, mightyShotDamage, plasmaExpertiseReliability, plasmaMasteryBonus } from "../rules/damage-talents.mjs";
@@ -817,7 +818,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Bolter Drill / Болтерная Муштра (weaponsmith.core.bolterDrill): «Успешные
   // тесты на стрельбу Болт оружием получают +1 Успех».
   const bolterDrillBonus = (hit && charKey === "bs" && item?.system?.weaponType === "bolt"
-    && hasRuleFlag(actor, "weaponsmith.core.bolterDrill")) ? 1 : 0;
+    && hasTalentCapability(actor, "weaponsmith.core.bolterDrill")) ? 1 : 0;
   // Очко Бесчестия «Успех» из меню карточки (apps/infamy-success.mjs): атака переигрывается тем же кубом
   // с дописанными Успехами — только к успешному попаданию.
   const infamySuccessDeg = hit ? Math.max(0, Math.trunc(Number(opts.extraDeg) || 0)) : 0;
@@ -2197,7 +2198,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // (Гиперрост), не только от ключа свойства Toxic.
         targetEffects: buildTargetEffectButtons(cardProps, { hit, ammoName: loadedAmmo?.name || "",
           damageType: effDmgType, hitLocation: hits[0]?.loc || "",
-          poisoner: !!aimTarget?.value && hasRuleFlag(actor, POISONER_CAP),
+          poisoner: !!aimTarget?.value && hasTalentCapability(actor, POISONER_CAP),
           pyromaniac: pyromaniacActive(actor, { spray: wp.spray, flame: wp.flame }),
           pyromaniacAttackerUuid: actor.uuid ?? "", igniter })
           // Хирургическая Точность (Медик): кнопка только у Избирательной атаки.
