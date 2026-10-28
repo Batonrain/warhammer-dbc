@@ -29,7 +29,8 @@ import { grappleAttackBlockReason } from "../../combat/grapple.mjs";
 import { delayBlocksAttack } from "../../combat/delay-action.mjs";
 import { deathDanceNextCost, markDeathDanceUsed } from "../../combat/death-dance.mjs";
 import { finalExecutionGate, finalExecutionProps, commitFinalExecution } from "../../combat/final-execution.mjs";
-import { markRoundCapabilityUsed } from "../../apps/game-session.mjs";
+import { markRoundCapabilityUsed, isRoundCapabilityAvailable } from "../../apps/game-session.mjs";
+import { runCardOnce } from "../../combat/card-once.mjs";
 import { AUTO_HIT_CAPABILITY, FULL_ATTACK_CAPABILITY, readAttackForm } from "./form.mjs";
 import { hateAttackApplies } from "../../rules/patron-abilities.mjs";
 import { hateAttackDegrees } from "../../rules/focused-wrath.mjs";
@@ -83,6 +84,27 @@ function dualWieldNoteHtml(actor, main, off) {
   }
 
   return out.join("<br/>");
+}
+
+/**
+ * Цена свободной атаки Таланта, открытой кнопкой карточки (hooks.mjs: Яростный Штурм, Разрубить, Рисовка,
+ * Упорство, Рипост) — платится «Бросок!», а не кликом: закрытое окно не съедает ни Реакцию, ни «раз на
+ * карточку/Раунд». `pay` = { label, cardId?, cardKey?, roundFlag?, reaction? } — только строки: едет в techniqueOpts.
+ * @returns {Promise<boolean>} заплачено (или платить нечего)
+ */
+async function payTalentAttack(actor, pay) {
+  if (!pay) return true;
+  const refuse = text => { ui.notifications.warn(`⚠️ ${pay.label}: ${text}`); return false; };
+  if (pay.roundFlag && !isRoundCapabilityAvailable(actor, pay.roundFlag)) return refuse("уже использовано в этом Раунде.");
+  const spend = async () => {
+    if (pay.reaction && !(await spendReaction(actor))) return refuse("нет Реакции.");
+    if (pay.roundFlag) await markRoundCapabilityUsed(actor, pay.roundFlag);
+    return true;
+  };
+  if (!pay.cardKey) return spend();
+  const message = game.messages?.get(pay.cardId);
+  if (!message) return refuse("карточка исходной атаки не найдена.");
+  return runCardOnce(message, pay.cardKey, spend, `⚠️ ${pay.label}: с этой карточки уже использовано.`);
 }
 
 export function openAttackDialog(ctx) {
@@ -391,6 +413,8 @@ export function openAttackDialog(ctx) {
             ui.notifications.warn("⚠️ Не хватает Реакций (Полный Огонь).");
             return false;
           }
+          // Свободная атака Таланта с кнопки карточки: отметка карточки/Раунда и Реакция — по факту броска.
+          if (!(await payTalentAttack(actor, techniqueOpts?.payOnRoll))) return false;
           // Ресурс (ОД или Реакция Запрещённого Приёма) списан — атака состоялась,
           // засчитываем её в лимит Хода (стр. 12, wdbc-x1nz.2.30).
           if (!sabreSecond && !uncountedAttack && freeShotCountsAsAttack(freeShot)) await takeAttackAction(actor);

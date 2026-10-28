@@ -4,9 +4,10 @@
 //  rules/berserker-talents.mjs::furiousAssaultOffered (Таланты «Берсерк», Sahara 3-861e).
 //
 //  Кнопка рисуется в карточке успешной рукопашной Полной Атаки (combat/attack.mjs →
-//  attack-card.mjs). Клик (hooks.mjs, .wh-furious-assault-btn): тратится Реакция
-//  (spendReaction), открывается окно атаки тем же оружием с Базой Полная Атака и тем же
-//  Приёмом; ОД окно само не берёт («за свободное действие»). Раз на карточку. Сама
+//  attack-card.mjs). Клик (hooks.mjs, .wh-furious-assault-btn) открывает окно атаки тем же
+//  оружием с Базой Полная Атака и тем же Приёмом; Реакция и отметка «раз на карточку» — по
+//  «Бросок!» окна (payOnRoll, sheets/attack/dialog.mjs), ни ОД, ни лимита Атак («за свободное
+//  действие», rules/melee-talents.mjs::freeMeleeFlags). Сама
 //  дополнительная атака помечена furiousAssault:true (→ wp.furiousChild) и новой не порождает.
 //
 //  РЕПРИЗ (Reprise, «Берсерк») разрешает тратить оставшиеся Реакции на Парирование после

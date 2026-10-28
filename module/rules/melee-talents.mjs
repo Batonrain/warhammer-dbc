@@ -249,22 +249,19 @@ export function reaperMeasure({ charge, halfMove, walked, initialToNext, attacke
  * Что снимает окно атаки с атак, порождённых Талантами (опции techniqueOpts окна):
  * Упорство и Рисовка — свободные и атакой не считаются; Жнец — продолжение Натиска: ОД не
  * списываются (Натиск уже оплачен), а сама атака — дополнительная Атака Таланта (карточка «Жнец»), в лимит Хода не идёт.
+ * Яростный Штурм — «еще одна атака ... за свободное действие» (её цена — Реакция, payOnRoll окна).
  * @returns {{noAp:boolean, uncounted:boolean, skipChargeGate:boolean}}
  */
 export function freeMeleeFlags(opts) {
-  const tenacity = !!opts?.tenacityRepeat, showOff = !!opts?.showOffFree, reaper = !!opts?.reaperFollow;
-  return {
-    noAp: tenacity || showOff || reaper,
-    uncounted: tenacity || showOff || reaper,
-    skipChargeGate: tenacity || showOff || reaper
-  };
+  const free = !!(opts?.tenacityRepeat || opts?.showOffFree || opts?.reaperFollow || opts?.furiousAssault);
+  return { noAp: free, uncounted: free, skipChargeGate: free };
 }
 
 /**
  * Свободные атаки Талантов не должны давать бесплатно поднять Базу или Приём (ОД и лимит с них сняты):
  * Рисовка — «базовая рукопашная атака» (Стандартная База, Обычная Атака); Упорство — «с той же базой
  * и приемом»; Жнец — тот же Натиск (Приём свободный).
- * @param {object} opts  techniqueOpts окна (showOffFree/tenacityRepeat/reaperFollow, forceBase, technique)
+ * @param {object} opts  techniqueOpts окна (showOffFree/tenacityRepeat/reaperFollow/furiousAssault, forceBase, technique)
  * @param {{baseKey:string, maneuverKey:string}} sel  выбранное в окне
  * @returns {string} причина отказа или ""
  */
@@ -276,6 +273,10 @@ export function freeAttackLockProblem(opts, { baseKey, maneuverKey }) {
   if (opts?.tenacityRepeat) {
     if (opts.forceBase && baseKey !== opts.forceBase) return "Упорство: повтор идёт с той же Базой, что и первая атака";
     if (maneuverKey !== (opts.technique || "standard")) return "Упорство: повтор идёт с тем же Приёмом, что и первая атака";
+  }
+  if (opts?.furiousAssault) {
+    if (baseKey !== "fullatk") return "Яростный Штурм: ещё одна атака — с Базой Полная Атака";
+    if (maneuverKey !== (opts.technique || "standard")) return "Яростный Штурм: ещё одна атака — с тем же Приёмом";
   }
   if (opts?.reaperFollow && baseKey !== "charge") return "Жнец: атака по следующей цели — это тот же Натиск; выберите Базу «Натиск»";
   return "";

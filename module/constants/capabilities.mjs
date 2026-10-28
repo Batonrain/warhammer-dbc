@@ -2526,7 +2526,7 @@ export const CAPABILITIES = {
   "berserker.core.furiousAssault": {
     label: "После успешной атаки с базой Полная Атака (даже отменённой Избеганием) персонаж может потратить Реакцию,",
     source: "Furious Assault / Яростный Штурм",
-    reader: "module/rules/berserker-talents.mjs::furiousAssaultOffered — module/combat/attack.mjs + attack-card.mjs (кнопка на успешной Полной Атаке), module/combat/furious-assault.mjs, module/hooks.mjs (.wh-furious-assault-btn: Реакция через spendReaction, окно атаки с forceBase fullatk и тем же Приёмом)"
+    reader: "module/rules/berserker-talents.mjs::furiousAssaultOffered — module/combat/attack.mjs + attack-card.mjs (кнопка на успешной Полной Атаке), module/combat/furious-assault.mjs, module/hooks.mjs (.wh-furious-assault-btn: окно атаки с forceBase fullatk и тем же Приёмом; Реакция и отметка карточки — по броску, payOnRoll в sheets/attack/dialog.mjs)"
   },
   "berserker.core.hammerBlow": {
     label: "Атакой с базой Полная Атака персонаж добавляет +½WS.b (окр.▲) Pen и свойство Concussive (2) своему рукопашному оружию.",

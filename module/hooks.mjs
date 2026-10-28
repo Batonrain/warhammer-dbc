@@ -699,8 +699,8 @@ export function registerHooks() {
     });
 
     // Разрубить (Талант «Рукопашных», combat/cleave.mjs): свободная базовая атака −10 тем же оружием
-    // по ДРУГОМУ персонажу рядом с выведенной из строя целью. Раз на карточку (отметка в момент клика,
-    // как у Контратаки); старые цели сбрасываются — игрок выцеливает соседа сам. cleave:true в опциях
+    // по ДРУГОМУ персонажу рядом с выведенной из строя целью. Раз на карточку (отметка — «Бросок!» окна,
+    // payOnRoll; закрытое окно её не съедает); старые цели сбрасываются — игрок выцеливает соседа сам. cleave:true в опциях
     // атаки (→ data-cleave-child карточки урона) не даёт новой атаке породить ещё одну.
     html.querySelectorAll(".wh-cleave-btn").forEach(btn => {
       if (cardOnceUsed(message, CLEAVE_CARD_FLAG)) btn.disabled = true;
@@ -711,11 +711,10 @@ export function registerHooks() {
         const weapon = await fromUuid(el.dataset.weaponUuid || "").catch(() => null);
         if (!attacker || !weapon) return ui.notifications.warn("⚠️ Атакующий или его оружие не найдены.");
         if (!attacker.isOwner) return ui.notifications.warn("⚠️ Разрубить проводит владелец атакующего (или ГМ).");
-        const done = await runCardOnce(message, CLEAVE_CARD_FLAG, async () => true, "Разрубить с этой карточки уже использовано.");
-        if (!done) return;
-        el.disabled = true;
+        if (cardOnceUsed(message, CLEAVE_CARD_FLAG)) return ui.notifications.warn("Разрубить с этой карточки уже использовано.");
         game.user.targets.forEach(t => t.setTarget(false, { user: game.user, releaseOthers: false }));
-        await attacker.sheet._showAttackDialog?.(weapon, { modifier: CLEAVE_PENALTY, forceBase: "standard", cleave: true });
+        await attacker.sheet._showAttackDialog?.(weapon, { modifier: CLEAVE_PENALTY, forceBase: "standard", cleave: true,
+          payOnRoll: { label: "Разрубить", cardId: message.id, cardKey: CLEAVE_CARD_FLAG } });
       });
     });
 
@@ -802,7 +801,7 @@ export function registerHooks() {
 
     // Рисовка (Талант «Рукопашных», combat/show-off.mjs): победа на 5+ Успехов — свободная базовая атака по этой
     // цели. Не считается атакой (ни ОД, ни лимита Атак — techniqueOpts.showOffFree); цель берётся на токен сцены,
-    // старые цели сбрасываются. Раз на карточку.
+    // старые цели сбрасываются. Раз на карточку — отметка «Бросок!» окна (payOnRoll).
     html.querySelectorAll(".wh-show-off-attack-btn").forEach(btn => {
       if (cardOnceUsed(message, SHOW_OFF_CARD_FLAG)) btn.disabled = true;
       btn.addEventListener("click", async ev => {
@@ -813,13 +812,12 @@ export function registerHooks() {
         const target = await fromUuid(el.dataset.targetUuid || "").catch(() => null);
         if (!attacker || !weapon) return ui.notifications.warn("⚠️ Атакующий или его оружие не найдены.");
         if (!attacker.isOwner) return ui.notifications.warn("⚠️ Свободную атаку Рисовки проводит владелец атакующего (или ГМ).");
-        const done = await runCardOnce(message, SHOW_OFF_CARD_FLAG, async () => true, "Свободная атака с этой карточки уже использована.");
-        if (!done) return;
-        el.disabled = true;
+        if (cardOnceUsed(message, SHOW_OFF_CARD_FLAG)) return ui.notifications.warn("Свободная атака с этой карточки уже использована.");
         const token = canvas.tokens?.placeables?.find(t => t.actor?.uuid === target?.uuid);
         game.user.targets.forEach(t => t.setTarget(false, { user: game.user, releaseOthers: false }));
         token?.setTarget(true, { user: game.user, releaseOthers: true });
-        await attacker.sheet._showAttackDialog?.(weapon, { forceBase: "standard", showOffFree: true });
+        await attacker.sheet._showAttackDialog?.(weapon, { forceBase: "standard", showOffFree: true,
+          payOnRoll: { label: "Рисовка", cardId: message.id, cardKey: SHOW_OFF_CARD_FLAG } });
       });
     });
 
@@ -855,13 +853,13 @@ export function registerHooks() {
           attacksThisTurn: Number(attacker.getFlag("warhammer-dbc", "attackActionsThisTurn")) || 0,
           damageDealt: !!attacker.getFlag("warhammer-dbc", MELEE_DAMAGE_DEALT_FLAG)
         })) return ui.notifications.warn("⚠️ Упорство: пока вы решали, рукопашная атака нанесла урон — повтор закрыт.");
-        const done = await runCardOnce(message, TENACITY_CARD_FLAG, async () => true, "Упорство с этой карточки уже использовано.");
-        if (!done) return;
-        el.disabled = true;
+        if (cardOnceUsed(message, TENACITY_CARD_FLAG)) return ui.notifications.warn("Упорство с этой карточки уже использовано.");
         const base = el.dataset.base || "";
         const technique = el.dataset.technique || "";
+        // Отметка карточки — «Бросок!» окна (payOnRoll): закрытое окно повтор не съедает.
         await attacker.sheet._showAttackDialog?.(weapon, {
-          tenacityRepeat: true, ...(base ? { forceBase: base } : {}), ...(technique ? { technique } : {})
+          tenacityRepeat: true, ...(base ? { forceBase: base } : {}), ...(technique ? { technique } : {}),
+          payOnRoll: { label: "Упорство", cardId: message.id, cardKey: TENACITY_CARD_FLAG }
         });
       });
     });
@@ -895,7 +893,7 @@ export function registerHooks() {
 
     // Яростный Штурм (Талант Берсерка, combat/furious-assault.mjs): с карточки успешной Полной Атаки —
     // ещё одна атака тем же оружием, Базой Полная Атака и Приёмом за свободное действие, ценой Реакции.
-    // Реакция списывается при клике внутри отметки карточки: нет Реакции — отметка не ставится, клик не потерян.
+    // Реакция и отметка карточки — «Бросок!» окна (payOnRoll, sheets/attack/dialog.mjs): закрытое окно ничего не стоит.
     html.querySelectorAll(".wh-furious-assault-btn").forEach(btn => {
       if (cardOnceUsed(message, FURIOUS_ASSAULT_CARD_FLAG)) btn.disabled = true;
       btn.addEventListener("click", async ev => {
@@ -905,16 +903,12 @@ export function registerHooks() {
         const weapon = await fromUuid(el.dataset.weaponUuid || "").catch(() => null);
         if (!attacker || !weapon) return ui.notifications.warn("⚠️ Атакующий или его оружие не найдены.");
         if (!attacker.isOwner) return ui.notifications.warn("⚠️ Яростный Штурм проводит владелец атакующего (или ГМ).");
+        if (cardOnceUsed(message, FURIOUS_ASSAULT_CARD_FLAG)) return ui.notifications.warn("Яростный Штурм с этой карточки уже использован.");
         const technique = el.dataset.technique || "";
-        const done = await runCardOnce(message, FURIOUS_ASSAULT_CARD_FLAG, async () => {
-          const { spendReaction } = await import("./combat/action-economy.mjs");
-          return !!(await spendReaction(attacker));
-        }, "Яростный Штурм с этой карточки уже использован.");
-        if (!done) return;
-        el.disabled = true;
         // Цель не сбрасывается: «еще одну атаку» книга ведёт по той же цели (игрок вправе выбрать другую).
         await attacker.sheet._showAttackDialog?.(weapon, {
-          forceBase: "fullatk", furiousAssault: true, ...(technique ? { technique } : {})
+          forceBase: "fullatk", furiousAssault: true, ...(technique ? { technique } : {}),
+          payOnRoll: { label: "Яростный Штурм", cardId: message.id, cardKey: FURIOUS_ASSAULT_CARD_FLAG, reaction: true }
         });
       });
     });
@@ -1211,7 +1205,7 @@ export function registerHooks() {
     });
 
     // Рипост (Талант «Рукопашных», rules/melee-talents.mjs): кнопка несёт ДРУГОЕ оружие.
-    // Раз в Раунд занимается в момент клика (как Контратака); открывается обычное окно
+    // Раз в Раунд занимается «Бросок!» окна (payOnRoll), закрытое окно его не съедает; открывается обычное окно
     // атаки с Базой Стандартная, +0 и штрафом −20 к Избеганию цели (riposte → sheets/attack/selection.mjs;
     // у пистолета — прямой targetDodgeMod, окно стрелкового выбора Приёма не имеет).
     html.querySelectorAll(".wh-riposte-btn").forEach(btn => {
@@ -1226,7 +1220,6 @@ export function registerHooks() {
         if (!isRoundCapabilityAvailable(actor, RIPOSTE_ROUND_FLAG)) {
           return ui.notifications.warn("⚠️ Рипост уже потрачен в этом Раунде.");
         }
-        await markRoundCapabilityUsed(actor, RIPOSTE_ROUND_FLAG);
         const attackerUuid = el.dataset.attackerUuid;
         if (attackerUuid) {
           const attackerActor = (await fromUuid(attackerUuid).catch(() => null));
@@ -1237,7 +1230,8 @@ export function registerHooks() {
         const isMeleeWeapon = weapon.system?.weaponClass === "melee";
         await actor.sheet._showAttackDialog?.(weapon, {
           modifier: 0, forceBase: "standard", riposte: true,
-          ...(isMeleeWeapon ? {} : { targetDodgeMod: RIPOSTE_EVASION_PENALTY })
+          ...(isMeleeWeapon ? {} : { targetDodgeMod: RIPOSTE_EVASION_PENALTY }),
+          payOnRoll: { label: "Рипост", roundFlag: RIPOSTE_ROUND_FLAG }
         });
       });
     });
