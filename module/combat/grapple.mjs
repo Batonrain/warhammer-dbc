@@ -698,7 +698,9 @@ export async function _resolveTakeoverSuccess(actor) {
   // Сперва партнёр — через ГМ, если он чужой (combat/gm-relay.mjs): отказ не должен сделать «держащими» обоих.
   if (!(await writeToTarget(partner, { kind: "update", data: {
     [`flags.${NS}.${ROLE_FLAG}`]: "target", [`flags.${NS}.${GRAPPLE_HELD_HANDS_FLAG}`]: 2 * hold.hands,
-    [`flags.${NS}.-=${GRAPPLE_HANDS_FLAG}`]: null, [`flags.${NS}.-=${GRAPPLE_TAIL_FLAG}`]: null
+    [`flags.${NS}.-=${GRAPPLE_HANDS_FLAG}`]: null, [`flags.${NS}.-=${GRAPPLE_TAIL_FLAG}`]: null,
+    // Прижать держится, пока держит прижимающий: после перехвата он сам в Захвате.
+    [`flags.${NS}.-=${PIN_DOWN_FLAG}`]: null
   } }, actor))) return;
   await actor.update({
     [`flags.${NS}.${ROLE_FLAG}`]: "attacker", ...hold.fields,

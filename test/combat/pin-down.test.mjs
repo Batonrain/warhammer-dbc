@@ -8,10 +8,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { actorFor } from "../support/combat-fixtures.mjs";
-import { _doPinDown, GRAPPLE_HANDS_FLAG } from "../../module/combat/grapple.mjs";
+import { _doPinDown, _resolveTakeoverSuccess, GRAPPLE_HANDS_FLAG } from "../../module/combat/grapple.mjs";
 import { pinDownPenaltyValue, pinDownHoldOf, PIN_DOWN_FLAG } from "../../module/rules/pugilist-talents.mjs";
 import { situationalRules } from "../../module/rules/situational.mjs";
-import { TURN_SCOPED_FLAG_KEYS } from "../../module/rules/turn-flags.mjs";
+import { TURN_SCOPED_FLAG_KEYS, turnStartFlagClears } from "../../module/rules/turn-flags.mjs";
 
 const PIN = { id: "pd", name: "Pin Down / Прижать", type: "talent", system: {} };
 const NS = "warhammer-dbc";
@@ -117,5 +117,23 @@ describe("штраф цели в situationalRules; сброс метки Ход�
 
   it("метка снимается в начале Хода прижимающего (в реестре Ход-флагов)", () => {
     expect(TURN_SCOPED_FLAG_KEYS).toContain(PIN_DOWN_FLAG);
+  });
+
+  it("нулевая метка (штраф 0) тоже снимается в начале Хода — иначе «раз в Ход» висит до конца Захвата", () => {
+    const me = wrestler("Прижимающий", "Actor.me");
+    me._flags[PIN_DOWN_FLAG] = 0;
+    expect(turnStartFlagClears(me)).toEqual({ [`flags.${NS}.-=${PIN_DOWN_FLAG}`]: null });
+  });
+
+  it("Перехватить Контроль: бывший прижимающий больше не держит — метка с него снимается", async () => {
+    const me = wrestler("Прижимающий", "Actor.me");
+    const foe = wrestler("Жертва", "Actor.foe");
+    me._flags[PIN_DOWN_FLAG] = 0;
+    me._flags.grapplePartnerUuid = foe.uuid;
+    foe._flags.grapplePartnerUuid = me.uuid;
+    globalThis.fromUuidSync = uuid => (uuid === foe.uuid ? foe : uuid === me.uuid ? me : null);
+    await _resolveTakeoverSuccess(foe);
+    expect(me._flags.grappleRole).toBe("target");
+    expect(pinDownHoldOf(me)).toBeUndefined();
   });
 });
