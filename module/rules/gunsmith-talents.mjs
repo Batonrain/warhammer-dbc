@@ -248,7 +248,7 @@ export function weaponTechShot(actor, { item, isMelee, toggles, spent, replay = 
   if (!toggles?.weaponTech) return { ...none, retune };
   const isSpent = !!spent && !retune;
   if (isSpent && !replay) return { ...none, refused: true };
-  const ib = Math.max(0, Number(actor?.system?.characteristics?.i?.bonus) || 0);
+  const ib = Math.max(0, Number(actor?.system?.characteristics?.int?.bonus) || 0);
   return { bonus: ib, retune, spend: !replay, refused: false };
 }
 
@@ -278,7 +278,7 @@ export function lensTuningShot(actor, { item, isMelee, toggles, charges, replay 
   const base = Math.max(0, Number(charges) || 0);
   const none = { charges: base, use: false, felling: 0, tuned: false, empty: false };
   if (!lensTuningAvailable(actor, { item, isMelee })) return none;
-  const ib = Math.max(0, Number(actor?.system?.characteristics?.i?.bonus) || 0);
+  const ib = Math.max(0, Number(actor?.system?.characteristics?.int?.bonus) || 0);
   const tuned = !!toggles?.lensTune;
   const have = tuned && !replay ? ib : base;
   if (!toggles?.lensUse) return { ...none, charges: have, tuned };

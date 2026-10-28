@@ -100,7 +100,7 @@ export function talentTogglesHtml(actor, item, { isMelee, wProps = [], sys = {} 
   // Настройка Линз: заряды на лаз-оружии (флаг на предмете).
   if (lensTuningAvailable(actor, { item, isMelee })) {
     const charges = Number(item.getFlag?.(NS, LENS_CHARGES_FLAG)) || 0;
-    const ib = Number(actor.system?.characteristics?.i?.bonus) || 0;
+    const ib = Number(actor.system?.characteristics?.int?.bonus) || 0;
     out.push(check("lensTune", `Линзы настроены только что (5 минут): зарядов станет I.b = ${ib} (сейчас ${charges})`,
       "Настройка Линз: 5 минут калибровки дают лаз-оружию I.b зарядов (заменяют прежние)."));
     out.push(check("lensUse", "Настройка Линз: потратить заряд — Felling (I.b) и Precise на эту атаку",
