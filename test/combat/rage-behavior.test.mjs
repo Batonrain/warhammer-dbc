@@ -663,6 +663,15 @@ describe("Реестры: метки, карточки и Возможности
     expect(hooks).toContain("rerollRageExit(message)");
   });
 
+  it("начало Хода и конец боя исполняет один активный ГМ: при двух ГМах тест Ярости, вакуум и взрыв не дублируются", () => {
+    const handlers = fs.readFileSync("module/hooks.mjs", "utf8").split("Hooks.on(");
+    for (const call of ["processRageTurnStart(", "processVacuumTurnStart(", "processDelayedBlastsTurnStart(", "clearDragonKnight(", "stampRageCombatEnd("]) {
+      const h = handlers.filter(x => x.includes(`await ${call}`));
+      expect(h, call).toHaveLength(1);
+      expect(h[0], call).toMatch(/^"(updateCombat|deleteCombat)", async [^\n]*\n(\s*\/\/[^\n]*\n)*\s*if \(!game\.users\.activeGM\?\.isSelf\) return;/);
+    }
+  });
+
   it("кнопка «Выйти из Ярости» есть на вкладке «Бой» и в HUD, обе зовут attemptRageExit", () => {
     const read = f => fs.readFileSync(f, "utf8");
     expect(read("templates/actor/parts/tab-combat.hbs")).toContain("rage-exit-btn");
