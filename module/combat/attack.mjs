@@ -598,9 +598,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // На Лезвии Бритвы: +разница Инициатив к Dmg ножа (в плоскую прибавку, не в Пробитие).
   const razorBonus = isMelee ? razorsEdgeBonus(actor, item, defenderActor) : 0;
   // Жонглёр Клинком: метка на этой цели — штраф на её Избегания от этой атаки ножом.
-  const bladeJugglerPenalty = (isMelee && defenderActor && isKnifeWeapon(item))
-    ? bladeJugglerMarkAgainst(actor, defenderActor.uuid) : 0;
-  if (bladeJugglerPenalty) await consumeBladeJugglerMark(actor);
+  // Переигровка той же атаки (skipAmmo) берёт штраф из storedOpts: метка снята первым броском.
+  const bladeJugglerPenalty = opts.skipAmmo ? (Number(opts.bladeJugglerPenalty) || 0)
+    : (isMelee && defenderActor && isKnifeWeapon(item)) ? bladeJugglerMarkAgainst(actor, defenderActor.uuid) : 0;
+  if (bladeJugglerPenalty && !opts.skipAmmo) await consumeBladeJugglerMark(actor);
 
   // Незримое (стр. 32, wdbc-1rno.2): считается ЗДЕСЬ, до формулы урона —
   // Backstab (rules/unseen-talents.mjs, ниже) должен знать unseen раньше,
@@ -1930,9 +1931,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
 
   // Затрещина (Талант Пугилиста, стр. 62, combat/whack.mjs): безоружный удар
   // рукой с одноручным оружием — первый раз по не видевшему приём −30 на
-  // Уклонение и Парирование. Память «видел» пишется сразу после решения.
-  const whack = isMelee ? whackStrike(actor, item, targetToken) : { active: false, penalty: 0, note: "" };
-  if (whack.active) await recordWhackSeen(actor, attackerToken, targetToken);
+  // Уклонение и Парирование. Память «видел» пишется сразу после решения; переигровка той же
+  // атаки (skipAmmo) берёт решение из storedOpts — цель «видела» приём уже после первого броска.
+  const noWhack = { active: false, penalty: 0, note: "" };
+  const whack = opts.skipAmmo ? (opts.whack ?? noWhack) : isMelee ? whackStrike(actor, item, targetToken) : noWhack;
+  if (whack.active && !opts.skipAmmo) await recordWhackSeen(actor, attackerToken, targetToken);
 
   // Молотильщик (стр. 62, wdbc-pb60): пара топоров/булав/молотов — успешно
   // Парировавший теряет все неиспользованные Успехи и парирует второе оружие
@@ -2217,7 +2220,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const { forcedRoll, updateMessageId, ...storedOptsBase } = opts;
   // Что в этом выстреле уже оплачено (Очко Бесчестия, метка Тех-Оружейника, заряд Линз) — перебросы
   // того же выстрела (+10, Очко Судьбы, сдвиг места) повторно не платят, но и бесплатно бонус не получают.
-  const storedOpts = { ...storedOptsBase, talentPaid: {
+  const storedOpts = { ...storedOptsBase, whack, bladeJugglerPenalty, talentPaid: {
     sureShot: sureShotPaid, killingStrike: killingStrikePaid, weaponTech: weaponTech.bonus > 0, lens: !!lens.use } };
   messageData.flags = foundry.utils.mergeObject(messageData.flags || {}, {
     "warhammer-dbc": { attack: {

@@ -402,6 +402,20 @@ describe("Жонглёр Клинком", () => {
     expect(marked.me.getFlag("warhammer-dbc", BLADE_JUGGLER_MARK_FLAG)).toBeUndefined();
     expect(marked.html).toContain("Жонглёр Клинком");
   });
+  it("переигровка той же атаки (skipAmmo: +10 за Очко, переброс) сохраняет штраф, хотя метка уже снята", async () => {
+    const blade = knife();
+    const me = body({ items: [JUGGLER, blade], uuid: "Actor.me" });
+    const foe = body({ uuid: "Actor.foe" });
+    await markBladeJuggler(me, foe.uuid, 15);
+    setTargets([foe]);
+    captured.dice = [5, 3, 3, 3];
+    await _executeAttackRoll(me, blade, "ws", 90, "melee", null, {});
+    const stored = captured.chat.at(-1).flags["warhammer-dbc"].attack.opts;
+    resetCaptured();
+    captured.dice = [5, 3, 3, 3];
+    await _executeAttackRoll(me, blade, "ws", 90, "melee", null, { ...stored, forcedRoll: 5, skipAmmo: true });
+    expect(card()).toContain("Жонглёр Клинком: Избегания цели от этой атаки −15");
+  });
   it("кнопка Таланта: нужен нож, пустая рука и «раз в Ход»", async () => {
     const noKnife = body({ items: [JUGGLER] });
     expect(await startBladeJuggler(noKnife)).toBe(false);

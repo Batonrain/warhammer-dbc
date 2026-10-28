@@ -168,7 +168,7 @@ describe("_executeAttackRoll: Затрещина урезает Избегани
     globalThis.game.user = { ...globalThis.game.user, targets: new Set([targetToken]) };
     captured.dice = [10, 3, 3, 3, 3];
     await _executeAttackRoll(attacker, f, "ws", 45, "melee", null, {});
-    return { attacker, html: captured.chat.map(m => m.content).join("\n") };
+    return { attacker, f, html: captured.chat.map(m => m.content).join("\n") };
   }
 
   it("первая Затрещина: Уклонение и Парирование цели −30, на карточке подпись, цель записана как видевшая", async () => {
@@ -177,6 +177,17 @@ describe("_executeAttackRoll: Затрещина урезает Избегани
     expect(html).toContain("Уклонение (-30)");
     expect(html).toContain("Затрещина");
     expect(attacker.getFlag(NS, WHACK_SEEN_FLAG)).toContain("tgtTok");
+  });
+
+  it("переигровка той же Затрещины (skipAmmo: +10 за Очко, переброс) сохраняет −30, хотя цель уже записана", async () => {
+    const { attacker, f } = await whackAttack();
+    const stored = captured.chat.at(-1).flags[NS].attack.opts;
+    resetCaptured();
+    captured.dice = [10, 3, 3, 3, 3];
+    await _executeAttackRoll(attacker, f, "ws", 45, "melee", null, { ...stored, forcedRoll: 10, skipAmmo: true });
+    const html = captured.chat.map(m => m.content).join("\n");
+    expect(html).toContain("Парирование (-30)");
+    expect(html).toContain("Уклонение (-30)");
   });
 
   it("повторная Затрещина по тому же — штрафа нет", async () => {
