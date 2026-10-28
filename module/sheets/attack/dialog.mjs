@@ -635,7 +635,7 @@ export function openAttackDialog(ctx) {
               ruleProps: finalExecutionPending
                 ? [...(resolvedAttack.weaponProps || []), ...finalExecutionProps(finalExecutionPending.n)]
                 : resolvedAttack.weaponProps,
-              aimingLabel: (currentAiming !== "none" && !wp.noAim && f.aimHand !== "off")
+              aimingLabel: (currentAiming !== "none" && !wp.noAim && f.aimHand !== "off" && !f.onThisMark)
                 ? (currentAiming === "half" ? `Полу-прицеливание (+${aimingBonus})` : `Полное прицеливание (+${aimingBonus})`)
                 : "",
               // Кого выцелили в паре: урон применяют к листу, а на сцене у пары

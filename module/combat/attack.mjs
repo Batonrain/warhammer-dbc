@@ -270,6 +270,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // «не может быть Избирательным» — на случай прямого вызова мимо окна атаки (там select заперт).
   const onThisMarkOn = onThisMarkActive(actor, { opts, isMelee });
   if (onThisMarkOn && aimTarget?.value) aimTarget = null;
+  // Он же «не получает преимуществ Прицеливания» — не только строки порога в окне, но и Меткого,
+  // Снайпера-Убийцы, Сверхточного Наследия и Снайпера Ужаса ниже.
+  const aiming = onThisMarkOn ? "none" : opts.aiming;
   // Стрельба от Бедра / Огонь с Вытягивания (combat/free-shot.mjs): «не Избирательный» — тот же запас прочности.
   if (freeShotLocksAim(opts.freeShot) && aimTarget?.value) aimTarget = null;
   // Поле Дискорданта: электрическое стрелковое не стреляет. Окно атаки
@@ -543,7 +546,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // bonusDamageDice. По живому полю условие не выполнялось никогда, и Талант
   // не срабатывал вовсе (приёмка стопки #482-#504).
   const sniperAssassinActive = wp.accurate && rofMode === "single"
-    && opts.aiming === "full" && hasSniperAssassin(actor);
+    && aiming === "full" && hasSniperAssassin(actor);
   if (sniperAssassinActive) { wp.unseen = true; wp.sniperAssassin = true; }
 
   // targetToken/defenderActor (wdbc-1rno.2): вынесены СЮДА, раньше, чем были
@@ -1314,7 +1317,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // значение приходит явным параметром, захваченным до сброса (wdbc-1rno.5).
   // Считается здесь же (раньше bonusDamageDice ниже), чтобы им же могла
   // воспользоваться Сверхточное/Legacy Мутация (wdbc-1rno.35) в flatBonus.
-  const aimed = !!opts.aiming && opts.aiming !== "none";
+  const aimed = !!aiming && aiming !== "none";
   // Сверхточное/Оружие Наследия, skilled 9-9 (wdbc-1rno.35, rules/
   // legacy-weapon.mjs): +1 Dmg за каждый чётный Успех, одиночный выстрел или
   // рукопашная атака с Прицеливанием.
@@ -2031,7 +2034,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         ? tenacityButtonHtml({ attackerUuid: actor.uuid || "", weaponUuid: item.uuid || "", baseKey: opts.baseKey || "", technique: opts.techniqueOpts?.technique || "", hit: !!hit })
         : "",
       // Снайпер Ужаса (rules/terror-sniper.mjs): Избирательное попадание Accurate-оружием после Прицеливания.
-      terrorSniperOffer: terrorSniperEligible(actor, { isMelee, hit, accurate: wp.accurate, aimValue: aimTarget?.value, aiming: opts.aiming })
+      terrorSniperOffer: terrorSniperEligible(actor, { isMelee, hit, accurate: wp.accurate, aimValue: aimTarget?.value, aiming })
         ? { targetTokenUuid: targetToken?.document?.uuid ?? targetToken?.uuid ?? "" } : null,
       sbEff, sbHalf, reverseThrustBonus, taintedAdd, vehicleSide: opts.vehicleSide || "",
       ammo: isMelee ? null : {
