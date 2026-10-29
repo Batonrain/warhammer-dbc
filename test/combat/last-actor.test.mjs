@@ -6,12 +6,8 @@
 // комментарий в last-actor.mjs, не входят в эту находку.
 
 import { describe, it, expect } from "vitest";
-import { hasLastActor, processLastActorCombatStart } from "../../module/combat/last-actor.mjs";
+import { processLastActorCombatStart } from "../../module/combat/last-actor.mjs";
 import { extraTurnCount } from "../../module/combat/extra-turn.mjs";
-
-const actorWith = (...names) => ({
-  items: names.map(name => ({ type: "talent", name }))
-});
 
 function fakeCombat(combatants) {
   const list = [...combatants];
@@ -31,18 +27,6 @@ function fakeCombat(combatants) {
 
 const combatantFor = (id, actorId, actor) =>
   ({ id, actorId, tokenId: `token-${id}`, actor, getFlag: () => undefined });
-
-describe("hasLastActor", () => {
-  it("находит Талант по билингвальному имени", () => {
-    expect(hasLastActor(actorWith("Last Actor / Последний Актёр"))).toBe(true);
-  });
-  it("нет Таланта — false", () => {
-    expect(hasLastActor(actorWith("Dodge"))).toBe(false);
-  });
-  it("нет актора — false, не падает", () => {
-    expect(hasLastActor(null)).toBe(false);
-  });
-});
 
 describe("processLastActorCombatStart", () => {
   it("владельцу Таланта выдаёт 2 доп. Хода (3 всего с обычным)", async () => {

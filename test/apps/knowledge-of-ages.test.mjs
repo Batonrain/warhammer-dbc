@@ -18,7 +18,6 @@ import fs   from "node:fs";
 import path from "node:path";
 import { packDocById } from "../support/pack-doc.mjs";
 import { knowledgeOfAgesButtonHtml, rollKnowledgeOfAges } from "../../module/apps/knowledge-of-ages.mjs";
-import { CARD_ONCE_FLAGS } from "../../module/combat/card-once.mjs";
 
 const NS = "warhammer-dbc";
 const ROOT = path.resolve(import.meta.dirname, "../..");
@@ -207,9 +206,6 @@ describe("Знания Веков: бросок 1d10", () => {
     expect(captured.chat).toHaveLength(0);
   });
 
-  it("ключ отметки карточки — в белом списке сокета", () => {
-    expect(CARD_ONCE_FLAGS).toContain("knowledgeOfAgesRolled");
-  });
 });
 
 describe("Знания Веков: стыковка", () => {

@@ -8,7 +8,7 @@ import { describe, it, expect } from "vitest";
 import "../support/foundry-stub.mjs";
 import { actorFor, weaponFor } from "../support/combat-fixtures.mjs";
 import {
-  fullFireOptions, fullFireSecondThreshold, hasFullFire, FULL_FIRE_PENALTY, fullFireRofOptions, fullFireSecondBlockReason
+  fullFireOptions, fullFireSecondThreshold, hasFullFire, fullFireRofOptions, fullFireSecondBlockReason
 } from "../../module/rules/full-fire.mjs";
 import {
   buildTandemProfile, doubleReload, tandemGuestOk, tandemHostOk, tandemProfiles,
@@ -114,10 +114,6 @@ describe("Полный Огонь: какие пары предлагаются"
 });
 
 describe("Полный Огонь: порог второго выстрела", () => {
-  it("штраф книги −10", () => {
-    expect(FULL_FIRE_PENALTY).toBe(-10);
-  });
-
   it("порог окна: режим огня заменяется на свой, Прицеливание основного выстрела снимается, оружейная часть — разница", () => {
     // основной: BS 45 + одиночный +10 + Полный Огонь −10 + Прицеливание +10 = 65
     const t = fullFireSecondThreshold({ mainThreshold: 65, mainRofBonus: 10, secondRof: "full", weaponDelta: 5, aimAdjust: 10 });

@@ -16,7 +16,6 @@ import { binaryDominionCommandBonus, binaryDominionRisk, isBinaryCommandTarget, 
 import { commandSubstitutionRules } from "../../module/rules/command-substitution.mjs";
 import { groupTally, minionCapacity, slotUsage, minionLoyalty, talentRequirements } from "../../module/rules/minion-build.mjs";
 import { MINION_GROUPS } from "../../module/constants/minions.mjs";
-import { CAPABILITIES } from "../../module/constants/capabilities.mjs";
 import { packDocuments } from "../support/pack-docs.mjs";
 
 const talent = name => ({ type: "talent", name, system: {}, flags: {} });
@@ -73,14 +72,6 @@ describe("метки-Черты «Сервитор» и «Робот» (реше
   it("другая Черта (Machine) и пустой актор — не сервитор", () => {
     expect(isServitorOrRobot(withTrait(real("Machine /")))).toBe(false);
     expect(isServitorOrRobot({ type: "character", items: [], system: {} })).toBe(false);
-  });
-  it("метки заведены Возможностью в реестре, а id документов — ровно 16 символов", () => {
-    for (const [name, key] of [["Servitor /", "trait.servitor"], ["Robot /", "trait.robot"]]) {
-      const d = real(name);
-      expect(CAPABILITIES[key]).toBeTruthy();
-      expect(String(d._id)).toMatch(/^[A-Za-z0-9]{16}$/);
-      expect(d.flags["warhammer-dbc"].mechanics[0].entries[0].capabilityKey).toBe(key);
-    }
   });
 });
 

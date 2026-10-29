@@ -49,5 +49,17 @@ export const ITEM_MARKERS = [
     label: "Мутация «Неутомимый Воин» — опознание самого предмета" },
   { file: "module/rules/vampiric-dependency.mjs", fn: "isVampiricDependencyItem",
     type: "mutation", name: "Vampiric Dependency", key: "mutation.vampiricDependency",
-    label: "Мутация «Вампирская Зависимость» — опознание самого предмета" }
+    label: "Мутация «Вампирская Зависимость» — опознание самого предмета" },
+  { file: "module/rules/blood-flame.mjs", fn: "isBloodFlameItem",
+    type: "mutation", name: "Blood Flame", key: "gift.khorne.bloodFlame",
+    label: "Дар Кхорна «Кровавое Пламя» — опознание самого предмета" },
+  { file: "module/rules/black-eyes.mjs", fn: "isBlackEyesItem",
+    type: "mutation", name: "Black Eyes", key: "gift.slaanesh.blackEyes",
+    label: "Дар Слаанеш «Чёрные Глаза» — опознание самого предмета" },
+  { file: "module/rules/breath-of-life.mjs", fn: "isBreathOfLifeItem",
+    type: "mutation", name: "Breath of Life", key: "gift.nurgle.breathOfLife",
+    label: "Дар Нургла «Дыхание Жизни» — опознание самого предмета" },
+  { file: "module/apps/organ-of-chaos.mjs", fn: "isOrganOfChaosItem",
+    type: "mutation", name: "Organ of Chaos", key: "mutation.organOfChaos",
+    label: "Мутация «Орган Хаоса» — опознание самого предмета" }
 ];

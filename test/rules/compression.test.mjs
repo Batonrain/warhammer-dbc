@@ -6,7 +6,7 @@
 import { describe, it, expect } from "vitest";
 import {
   COMPRESSIBLE_LOCATIONS, isCompressibleLocation, normalizeCompressibleLocation,
-  retractPart, extendPart, isPartCompressed, hasCompressedHead, allLimbsCompressed
+  retractPart, extendPart, isPartCompressed, allLimbsCompressed
 } from "../../module/rules/compression.mjs";
 
 describe("isCompressibleLocation", () => {
@@ -86,12 +86,10 @@ describe("retractPart / extendPart", () => {
   });
 });
 
-describe("isPartCompressed / hasCompressedHead", () => {
+describe("isPartCompressed", () => {
   it("отражает текущий список", () => {
     expect(isPartCompressed(["Голова"], "Голова")).toBe(true);
     expect(isPartCompressed(["Голова"], "П. Рука")).toBe(false);
-    expect(hasCompressedHead(["Голова"])).toBe(true);
-    expect(hasCompressedHead(["П. Рука"])).toBe(false);
   });
 });
 

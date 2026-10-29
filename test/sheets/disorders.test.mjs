@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { captured, fakeHtml, fakeForm, resetCaptured } from "../support/foundry-stub.mjs";
-import { openFearDialog, openTraumaDialog, rollTrauma, createDisorderItem,
+import { openFearDialog, openTraumaDialog, createDisorderItem,
          rollDisorderTest, suppressMental } from "../../module/sheets/tabs/disorders.mjs";
 import { createTraumaItem } from "../../module/combat/fear.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
@@ -109,15 +109,6 @@ describe("mental disorders", () => {
     }
   });
 
-  it("rollTrauma запускает тест Ментальной Травмы", async () => {
-    captured.nextRoll = 90;
-    await rollTrauma(actor({ wp: 40 }));
-
-    expect(captured.rolls).toEqual(["1d100", "1d100"]);
-    expect(captured.chat[0].content).toContain("Ментальная Травма");
-    expect(captured.chat[0].content).toContain("Провал");
-  });
-
   // Раньше при пустом ruleRollModsHtml (нет предметов с testMod) диалог вовсе
   // пропускался — кроме галочек правил тесту нечего было настраивать. Теперь
   // есть ещё Вид теста/Сложность/Кубик, поэтому диалог открывается всегда.
@@ -128,7 +119,10 @@ describe("mental disorders", () => {
     expect(captured.dialog).toBeTruthy();
     await captured.dialog.buttons.roll.callback(fakeHtml({ "#trauma-mod": "0" }));
 
+    // W 40, бросок 90 — провал, и за ним бросок таблицы Травмы.
+    expect(captured.rolls).toEqual(["1d100", "1d100"]);
     expect(captured.chat[0].content).toContain("Ментальная Травма");
+    expect(captured.chat[0].content).toContain("Провал");
   });
 
   // Актор с настоящей записью testMod (char:wp) — Каталептический Узел

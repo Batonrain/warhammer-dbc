@@ -69,11 +69,6 @@ describe("не может потерять покровительство", () =
 });
 
 describe("Тзаангор теряет только Рога и Когти", () => {
-  it("строка снятия со скобками — частичная", () => {
-    expect(TZAANGOR.system.removesTraits).toContain("Natural Weapons (Рога, Когти)");
-    expect(partialRemoval("Natural Weapons (Рога, Когти)")).toEqual({ name: "Natural Weapons", parts: ["Рога", "Когти"] });
-    expect(partialRemoval("Aversion to Order")).toEqual({ name: "Aversion to Order", parts: [] });
-  });
 
   it("из выбора Зверолюда остаются Укус и Копыта", () => {
     const groups = NATURAL.flags["warhammer-dbc"].mechanics;

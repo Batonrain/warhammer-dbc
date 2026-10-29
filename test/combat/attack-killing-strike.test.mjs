@@ -11,7 +11,6 @@ import { actorFor, weaponFor, setTargets, char } from "../support/combat-fixture
 import { _executeAttackRoll } from "../../module/combat/attack.mjs";
 import { killingStrikeApplies, killingStrikeOffered, KILLING_STRIKE_FLAG } from "../../module/rules/berserker-talents.mjs";
 import { talentTogglesHtml } from "../../module/sheets/attack/talent-toggles.mjs";
-import { TURN_SCOPED_FLAG_KEYS } from "../../module/rules/turn-flags.mjs";
 
 const card = () => captured.chat.at(-1)?.content ?? "";
 const byKey = key => ({
@@ -148,7 +147,4 @@ describe("Смертельный Удар: чистые функции и гал
     expect(talentTogglesHtml(who([byKey(KS.key)]), blade(), { isMelee: false })).not.toContain("killingStrike");
   });
 
-  it("метка Хода есть в реестре turn-flags (гасится в начале следующего Хода)", () => {
-    expect(TURN_SCOPED_FLAG_KEYS).toContain(KILLING_STRIKE_FLAG);
-  });
 });

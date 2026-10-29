@@ -10,7 +10,7 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect, afterEach } from "vitest";
 import { resetCaptured } from "../support/foundry-stub.mjs";
 import {
-  hasEternalWarrior, eternalWarriorEligible, eternalWarriorFreeSaveAvailable, markEternalWarriorUsed
+  eternalWarriorEligible, eternalWarriorFreeSaveAvailable, markEternalWarriorUsed
 } from "../../module/combat/eternal-warrior.mjs";
 
 function berserker({ hasGift = true, inRage = true } = {}) {
@@ -25,13 +25,6 @@ function berserker({ hasGift = true, inRage = true } = {}) {
 }
 
 afterEach(resetCaptured);
-
-describe("hasEternalWarrior", () => {
-  it("определяет владение Даром (kind:mutation)", () => {
-    expect(hasEternalWarrior(berserker({ hasGift: true }))).toBe(true);
-    expect(hasEternalWarrior(berserker({ hasGift: false }))).toBe(false);
-  });
-});
 
 describe("eternalWarriorEligible", () => {
   it("требует и Дар, и Ярость", () => {

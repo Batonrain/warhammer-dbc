@@ -10,7 +10,7 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { actorFor, weaponFor } from "../support/combat-fixtures.mjs";
-import { declareBrace, isBraced, clearBrace, BRACE_ARC_WIDTH } from "../../module/combat/brace-weapon.mjs";
+import { declareBrace, isBraced, BRACE_ARC_WIDTH } from "../../module/combat/brace-weapon.mjs";
 
 /** Актор с getFlag/setFlag/unsetFlag — состояние Закрепления живёт флагом. */
 function braceActor(overrides = {}) {
@@ -159,19 +159,6 @@ describe("isBraced", () => {
     await declareBrace(actor, weapon);
 
     globalThis.canvas.tokens.placeables = [];
-    expect(isBraced(actor, weapon)).toBe(false);
-  });
-});
-
-describe("clearBrace", () => {
-  it("снимает флаг явно", async () => {
-    const weapon = weaponFor({ weaponClass: "heavy" }, { id: "w1" });
-    const actor  = braceActor({ items: [weapon] });
-    placeToken(actor);
-    await declareBrace(actor, weapon);
-    expect(isBraced(actor, weapon)).toBe(true);
-
-    await clearBrace(actor);
     expect(isBraced(actor, weapon)).toBe(false);
   });
 });

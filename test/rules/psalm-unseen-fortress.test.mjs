@@ -4,17 +4,8 @@
 // за Успех активации, переоформляет прошлую контрибуцию.
 
 import { describe, it, expect } from "vitest";
-import { isPsalmUnseenFortressItem, psalmUnseenFortressGrant, psalmUnseenFortressShrinkToFit }
+import { psalmUnseenFortressGrant, psalmUnseenFortressShrinkToFit }
   from "../../module/rules/psalm-unseen-fortress.mjs";
-
-describe("isPsalmUnseenFortressItem", () => {
-  it("узнаёт Техночудо по книжному двуязычному имени", () => {
-    expect(isPsalmUnseenFortressItem({ type: "techPower", name: "Psalm of the Unseen Fortress / Псалом Незримой Крепости" })).toBe(true);
-  });
-  it("не путает с похожим Техночудом (Missing Mosaic)", () => {
-    expect(isPsalmUnseenFortressItem({ type: "techPower", name: "Psalm of the Missing Mosaic / Псалом Недостающей Мозаики" })).toBe(false);
-  });
-});
 
 describe("psalmUnseenFortressGrant: 2×Успех, переоформляет прошлую активацию", () => {
   it("первая активация — 3 Успеха", () => {

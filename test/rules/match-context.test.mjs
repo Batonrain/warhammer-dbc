@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { matchesContext } from "../../module/rules/match-context.mjs";
-import { matchesContext as reexported, homeworldRollMods } from "../../module/constants/homeworlds.mjs";
+import { homeworldRollMods } from "../../module/constants/homeworlds.mjs";
 
 describe("matchesContext: вид теста", () => {
   it("вид совпадает", () => {
@@ -62,13 +62,24 @@ describe("matchesContext: флаговые контексты", () => {
 });
 
 describe("переезд из constants/homeworlds.mjs", () => {
-  it("реэкспорт указывает на ту же функцию", () => {
-    expect(reexported).toBe(matchesContext);
-  });
-
   it("Особенности Происхождения по-прежнему отбираются", () => {
     const mods = homeworldRollMods("frontier", { kind: "skill", skill: "techUse" });
     expect(mods.map(m => m.key)).toEqual(["frontier-mod", "frontier-repair"]);
     expect(homeworldRollMods("frontier", { kind: "skill", skill: "command" })).toEqual([]);
+  });
+
+  it("групповой навык со специализацией: Улей, Navigation (Surface)", () => {
+    const ctx = { kind: "skill", group: "navigation", specialty: "Surface", char: "int" };
+    expect(homeworldRollMods("hive", ctx).map(m => [m.key, m.value])).toEqual([["hive-nav", 20]]);
+  });
+
+  it("флаговый контекст: Мир-сад даёт +10 только в броске Подавления", () => {
+    expect(homeworldRollMods("garden", { kind: "skill", char: "wp", suppression: true }).map(m => m.value)).toEqual([10]);
+    expect(homeworldRollMods("garden", { kind: "skill", char: "wp" })).toEqual([]);
+  });
+
+  it("Схола Прогениум: на тест W — пометка «ополовинить штраф», не число", () => {
+    const mods = homeworldRollMods("schola", { kind: "skill", char: "wp" });
+    expect(mods.some(m => m.halvePenalty)).toBe(true);
   });
 });

@@ -9,16 +9,16 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, afterEach } from "vitest";
 import {
-  hasReformationSong, reformationSongMax, reformationSongAvailable,
+  reformationSongMax, reformationSongAvailable,
   reformationSongTargetCount, reformationSongRadius,
   applyReformationSong, clearReformationSongBuffs, clearExpiredGearMalfunction
 } from "../../module/combat/reformation-song.mjs";
 
 let nextId = 1;
 
-function bonesinger({ hasTalent = true, felBonus = 4, wpBonus = 3 } = {}) {
+function bonesinger({ felBonus = 4, wpBonus = 3 } = {}) {
   const flags = {};
-  const items = hasTalent ? [{ type: "talent", name: "Reformation Song / Песня Изменений" }] : [];
+  const items = [{ type: "talent", name: "Reformation Song / Песня Изменений" }];
   return {
     name: "Певец", items,
     system: { characteristics: { fel: { bonus: felBonus }, wp: { bonus: wpBonus } } },
@@ -81,11 +81,7 @@ function makeItem(type, system, ownerActor) {
 
 afterEach(() => { resetCaptured(); globalThis.game.combat = undefined; });
 
-describe("hasReformationSong / reformationSongMax / reformationSongTargetCount / reformationSongRadius", () => {
-  it("определяет владение Талантом", () => {
-    expect(hasReformationSong(bonesinger({ hasTalent: true }))).toBe(true);
-    expect(hasReformationSong(bonesinger({ hasTalent: false }))).toBe(false);
-  });
+describe("reformationSongMax / reformationSongTargetCount / reformationSongRadius", () => {
   it("лимит сессии — фиксированный 3, не зависит от F.b", () => {
     expect(reformationSongMax()).toBe(3);
   });

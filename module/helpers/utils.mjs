@@ -286,8 +286,3 @@ export function carryRow(idx) {
   const row = CARRY_TABLE[Math.max(0, Math.min(parseInt(idx) || 0, CARRY_TABLE.length - 1))];
   return { carry: row[0], lift: row[1], push: row[2] };
 }
-
-/** Ношение по сумме S.b + T.b. */
-export function _calcMaxCarry(idx) {
-  return carryRow(idx).carry;
-}

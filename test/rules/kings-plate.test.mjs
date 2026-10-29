@@ -4,16 +4,7 @@
 // аблативные Раны = Магнитуде Роя (нет поля Wounds у Орды в этой системе).
 
 import { describe, it, expect } from "vitest";
-import { isKingsPlateItem, kingsPlateGrant, kingsPlateShrinkToFit } from "../../module/rules/kings-plate.mjs";
-
-describe("isKingsPlateItem", () => {
-  it("узнаёт Талант по книжному двуязычному имени", () => {
-    expect(isKingsPlateItem({ type: "talent", name: "King's Plate / Латы Короля" })).toBe(true);
-  });
-  it("не путает с другим Талантом", () => {
-    expect(isKingsPlateItem({ type: "talent", name: "Blood Shield / Кровавый Щит" })).toBe(false);
-  });
-});
+import { kingsPlateGrant, kingsPlateShrinkToFit } from "../../module/rules/kings-plate.mjs";
 
 describe("kingsPlateGrant: += Магнитуда Роя, складывается с прошлыми поглощениями", () => {
   it("первое поглощение с нуля", () => {

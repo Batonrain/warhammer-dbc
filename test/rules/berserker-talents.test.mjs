@@ -10,11 +10,10 @@ import "../support/foundry-stub.mjs";
 
 import { describe, it, expect, vi } from "vitest";
 import {
-  BERSERK_CHARGE_BONUS, berserkChargeBonus, meleeBaseBonus
+  berserkChargeBonus, meleeBaseBonus
 } from "../../module/rules/berserker-talents.mjs";
 import { PREDICATES, CTX_DEPENDENT_PREDICATES } from "../../module/rules/predicates.mjs";
 import { entryWhenOk } from "../../module/rules/mech-when.mjs";
-import { MELEE_BASES } from "../../module/constants/combat.mjs";
 
 const talent = name => ({ type: "talent", name, system: {}, flags: {}, getFlag: () => undefined });
 const talentByKey = key => ({
@@ -54,11 +53,6 @@ describe("предикат meleeBaseIs — База, которая держит
 });
 
 describe("Натиск Берсерка: +10 к рукопашному приёму при Натиске", () => {
-  it("бонус — десять, поверх +20 Натиска", () => {
-    expect(BERSERK_CHARGE_BONUS).toBe(10);
-    expect(MELEE_BASES.charge.wsBonus).toBe(20);
-  });
-
   it("только на Базе «Натиск»: Стандартная, Полная, Осторожная, Верховая — без добавки", () => {
     const a = actor({ items: [talent(BERSERK)] });
     expect(berserkChargeBonus(a, "charge")).toBe(10);

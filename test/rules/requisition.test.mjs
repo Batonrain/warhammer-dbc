@@ -13,9 +13,9 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  RARITY_MODS, rarityMod, QUANTITY_TIERS, quantityTier, qualityMod,
+  rarityMod, QUANTITY_TIERS, quantityTier, qualityMod,
   itemRarity, itemClass, isConsumableItem, rarityShifts, effectiveRarity,
-  requisitionModifier, requisitionPlan, requisitionThreshold, requisitionSummaryLines,
+  requisitionModifier, requisitionPlan, requisitionSummaryLines,
   REQUISITION_TALENTS, REQUISITION_PACKS
 } from "../../module/rules/requisition.mjs";
 
@@ -23,13 +23,7 @@ const talent = name => ({ type: "talent", name, system: {} });
 const actorWith = (...names) => ({ items: names.map(talent), system: { characteristics: { inf: { total: 45 } } } });
 const weapon = (system = {}, name = "Болтер") => ({ type: "weapon", name, system: { availability: 2, ...system } });
 
-describe("таблица Редкости (стр. 165)", () => {
-  it("11 значений дословно по книге", () => {
-    expect(RARITY_MODS).toEqual({
-      "-5": 70, "-4": 50, "-3": 30, "-2": 20, "-1": 10, "0": 0,
-      "1": -10, "2": -20, "3": -30, "4": -50, "5": -70
-    });
-  });
+describe("rarityMod: таблица Редкости (стр. 165; сами числа — requisition-vs-data против книги)", () => {
   it("rarityMod: за пределами −5..+5 прижимает к краю, мусор — ноль", () => {
     expect(rarityMod(2)).toBe(-20);
     expect(rarityMod(-5)).toBe(70);
@@ -67,10 +61,7 @@ describe("таблица Количества (стр. 165)", () => {
   });
 });
 
-describe("Качество — та же таблица, что в реестре ITEM_QUALITY", () => {
-  it("Poor +10, Common 0, Good −10, Best −20", () => {
-    expect(["poor", "common", "good", "best"].map(qualityMod)).toEqual([10, 0, -10, -20]);
-  });
+describe("Качество: незнакомое значение (числа таблицы — requisition-vs-data против книги)", () => {
   it("неизвестное Качество — Обычное", () => {
     expect(qualityMod("zzz")).toBe(0);
     expect(qualityMod(undefined)).toBe(0);
@@ -275,11 +266,6 @@ describe("requisitionPlan — всё вместе для окна и карто�
   it("подпись в карточку: что добывается", () => {
     const plan = requisitionPlan(actorWith(), { name: "Лазган", rarity: -2, quantity: 5, quality: "common" });
     expect(plan.label).toBe("Лазган ×5");
-  });
-  it("requisitionThreshold: Inf + модификатор", () => {
-    expect(requisitionThreshold(45, -10)).toBe(35);
-    expect(requisitionThreshold("45", "20")).toBe(65);
-    expect(requisitionThreshold(undefined, 10)).toBe(10);
   });
 });
 

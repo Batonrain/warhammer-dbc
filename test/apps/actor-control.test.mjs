@@ -7,7 +7,7 @@ import {
   attemptSeizeControl, requestControlOwnership, grantControlOwnership,
   requestRevokeControlOwnership, revokeControlOwnership
 } from "../../module/apps/actor-control.mjs";
-import { isControlled, controllerUuidOf } from "../../module/rules/actor-control.mjs";
+import { controllerUuidOf } from "../../module/rules/actor-control.mjs";
 import { resistButtonData } from "../support/contest.mjs";
 import { resolveResistClick } from "../../module/combat/opposed-contest.mjs";
 
@@ -52,12 +52,11 @@ describe("attemptSeizeControl", () => {
 
     // Встречный тест (wdbc-x1nz.2.73): цель сопротивляется по кнопке, и только
     // проиграв, попадает под контроль.
-    expect(isControlled(target)).toBe(false);
+    expect(controllerUuidOf(target)).toBeNull();
     const ds = resistButtonData(captured.chat.at(-1).content);
     captured.dice = [99];
     await resolveResistClick(ds);
 
-    expect(isControlled(target)).toBe(true);
     expect(controllerUuidOf(target)).toBe(actor.uuid);
   });
 
@@ -71,7 +70,7 @@ describe("attemptSeizeControl", () => {
     const html = fakeHtml({ "#contest-char": "ws", "#contest-self": "45", "#contest-mod": "0" });
     await captured.dialog.buttons.roll.callback(html);
 
-    expect(isControlled(target)).toBe(false);
+    expect(controllerUuidOf(target)).toBeNull();
   });
 });
 

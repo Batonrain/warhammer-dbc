@@ -1,9 +1,10 @@
 // test/rules/requisition-vs-data.test.mjs
 //
 // Реквизиция против НАСТОЯЩИХ данных: таблицы — против книги (core.json, стр. 165),
-// признаки предметов — против packs-src, имена Талантов — против паков, кнопка —
-// против разметки листа. Фикстуры в requisition.test.mjs — литералы; этот файл
-// ловит расхождение литерала с реальностью (AGENTS.md → «Тесты»).
+// признаки предметов — против packs-src, имена Талантов — против паков (кнопку
+// листа сверяет общий договор шаблона и класса в sheets/character-v2). Фикстуры в
+// requisition.test.mjs — литералы; этот файл ловит расхождение литерала с
+// реальностью (AGENTS.md → «Тесты»).
 
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
@@ -14,8 +15,6 @@ import {
 import { ITEM_QUALITY_LIST } from "../../module/constants/quality.mjs";
 import { rarityDiff, CRAFT_QUALITY } from "../../module/constants/craft.mjs";
 import { allPackDocuments, packDocuments, PACKS_SRC, PACK_SCAN_TIMEOUT } from "../support/pack-docs.mjs";
-
-const ROOT = path.resolve(import.meta.dirname, "../..");
 
 /** Таблицы страницы «Редкость и Качество»: [[ячейки строки]] по таблицам. */
 function bookTables() {
@@ -134,14 +133,4 @@ describe("Таланты реквизиции есть в паках под ож
       expect(hits.map(h => h.name)).toHaveLength(1);
     }, PACK_SCAN_TIMEOUT);
   }
-});
-
-describe("кнопка «Достать снаряжение» подключена", () => {
-  it("в разметке вкладки Снаряжение и среди действий листа", () => {
-    const hbs = fs.readFileSync(path.join(ROOT, "templates/actor/parts/tab-gear.hbs"), "utf8");
-    expect(hbs).toMatch(/data-action="requisition"/);
-    const sheet = fs.readFileSync(path.join(ROOT, "module/sheets/actor-sheet.mjs"), "utf8");
-    expect(sheet).toMatch(/requisition:\s*whenEditable\(onRequisition\)/);
-    expect(sheet).toMatch(/openRequisition\(this\.actor, this\)/);
-  });
 });

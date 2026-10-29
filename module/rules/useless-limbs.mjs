@@ -226,15 +226,6 @@ export function setLimbOutcome(system, side, { success, days = 1, worldTime = 0,
   };
 }
 
-/**
- * Ампутация/операция снимает бесполезность одной конечности этого типа —
- * первой перманентной, иначе первой любой. null — снимать нечего.
- */
-export function sideToAmputate(system, type) {
-  const sides = uselessSides(system, type);
-  return sides.find(s => entryOf(system, s).state === "permanent") ?? sides[0] ?? null;
-}
-
 /** Подсказка тега «Бесполезная рука/нога»: «П. Рука — в лубке; Л. Рука — 3 Раунда». */
 export function uselessHint(system, type) {
   return uselessSides(system, type).map(side => {

@@ -117,15 +117,6 @@ describe("hasDigitalHatred", () => {
     expect(hasDigitalHatred(priest(talent("Digital Hatred")))).toBe(true);
     expect(hasDigitalHatred(priest(talent("Цифровая Ненависть")))).toBe(true);
   });
-  it("по ключу Возможности, даже если имя испорчено", () => {
-    const keyed = {
-      type: "talent", name: "ИСПОРЧЕННОЕ ИМЯ", system: {}, getFlag: () => undefined,
-      flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
-        { id: "e", kind: "capability", capabilityKey: "technomystic.core.digitalHatred" }
-      ] }] } }
-    };
-    expect(hasDigitalHatred(priest(keyed))).toBe(true);
-  });
   it("обычная Ненависть — не Цифровая; без актора — false", () => {
     expect(hasDigitalHatred(priest(hatred([ORK])))).toBe(false);
     expect(hasDigitalHatred(null)).toBe(false);

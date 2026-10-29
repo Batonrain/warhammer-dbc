@@ -32,10 +32,6 @@ describe("Кибернетическое Перерождение — данны
     const book = fs.readFileSync(path.resolve(import.meta.dirname, "../../packs-src/books/core.json"), "utf8");
     expect(book).toContain("Он получает Трейт Machine(2)");
   });
-
-  it("notes больше не «Не смоделировано»", () => {
-    expect(talent.system.notes).not.toMatch(/^Не смоделировано/);
-  });
 });
 
 describe("Machine(2): броня масштабируется под рейтинг", () => {

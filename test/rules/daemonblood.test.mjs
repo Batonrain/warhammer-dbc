@@ -4,20 +4,8 @@
 // Демонов» — «Тратит 1-3×PR крови → столько же аблативных Ран».
 
 import { describe, it, expect } from "vitest";
-import { isDaemonbloodItem, daemonbloodOptions, daemonbloodGrant, daemonbloodShrinkToFit }
+import { daemonbloodOptions, daemonbloodGrant, daemonbloodShrinkToFit }
   from "../../module/rules/daemonblood.mjs";
-
-describe("isDaemonbloodItem", () => {
-  it("узнаёт психосилу по книжному двуязычному имени", () => {
-    expect(isDaemonbloodItem({ type: "psychicPower", name: "Daemonblood / Кровь Демонов" })).toBe(true);
-  });
-  it("не путает с другой психосилой того же типа", () => {
-    expect(isDaemonbloodItem({ type: "psychicPower", name: "Godkin / Богорождённый" })).toBe(false);
-  });
-  it("не путает с Мутацией другого типа с похожим текстом", () => {
-    expect(isDaemonbloodItem({ type: "mutation", name: "Daemonblood / Кровь Демонов" })).toBe(false);
-  });
-});
 
 describe("daemonbloodOptions: 1/2/3×PR, обрезано запасом живых Ран", () => {
   it("хватает крови на все три варианта", () => {

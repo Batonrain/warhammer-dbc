@@ -10,7 +10,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import {
   addEvasionSurplus, getEvasionPool, poolHitCost, poolAffordableHits, performPoolSpend,
-  spendPoolForRecoil, spendPoolSuccesses, clearEvasionPools
+  spendPoolSuccesses, clearEvasionPools
 } from "../../module/combat/evasion-pool.mjs";
 
 function defender(overrides = {}) {
@@ -149,7 +149,7 @@ describe("clearEvasionPools: конец боя чистит флаг (wdbc-8zi)"
   });
 });
 
-describe("spendPoolForRecoil: банк → пропуск в Отскок (wdbc-16ss, Voltagheist Blast)", () => {
+describe("spendPoolSuccesses: списание банка (Отскок Voltagheist Blast wdbc-16ss, ответный удар безоружного)", () => {
   beforeEach(() => {
     globalThis.game.combat = { started: true, id: "c1", combatant: { id: "cbt-1" } };
   });
@@ -158,7 +158,7 @@ describe("spendPoolForRecoil: банк → пропуск в Отскок (wdbc-
     const d = defender();
     await addEvasionSurplus(d, ATTACKER, 5, 0);
 
-    const ok = await spendPoolForRecoil(d, ATTACKER, 2);
+    const ok = await spendPoolSuccesses(d, ATTACKER, 2);
 
     expect(ok).toBe(true);
     expect(getEvasionPool(d, ATTACKER)).toMatchObject({ successes: 3 });
@@ -168,7 +168,7 @@ describe("spendPoolForRecoil: банк → пропуск в Отскок (wdbc-
     const d = defender();
     await addEvasionSurplus(d, ATTACKER, 1, 0);
 
-    const ok = await spendPoolForRecoil(d, ATTACKER, 2);
+    const ok = await spendPoolSuccesses(d, ATTACKER, 2);
 
     expect(ok).toBe(false);
     expect(getEvasionPool(d, ATTACKER)).toMatchObject({ successes: 1 });
@@ -176,48 +176,15 @@ describe("spendPoolForRecoil: банк → пропуск в Отскок (wdbc-
 
   it("пул пуст/не существует — false, без ошибки", async () => {
     const d = defender();
-    expect(await spendPoolForRecoil(d, ATTACKER, 2)).toBe(false);
+    expect(await spendPoolSuccesses(d, ATTACKER, 2)).toBe(false);
   });
 
-  it("свой cost (не 2) — работает как параметр", async () => {
+  it("cost во весь банк — запись пула снимается целиком", async () => {
     const d = defender();
     await addEvasionSurplus(d, ATTACKER, 3, 0);
 
-    expect(await spendPoolForRecoil(d, ATTACKER, 3)).toBe(true);
+    expect(await spendPoolSuccesses(d, ATTACKER, 3)).toBe(true);
     expect(getEvasionPool(d, ATTACKER)).toBeNull();
-  });
-});
-
-// wdbc-x1nz.2.66.13: тот же примитив, что spendPoolForRecoil, но с честным
-// именем — первый потребитель за пределами Отскока (Захват, стр. 12).
-describe("spendPoolSuccesses: списание банка на любой другой повод", () => {
-  beforeEach(() => {
-    globalThis.game.combat = { started: true, id: "c1", combatant: { id: "cbt-1" } };
-  });
-
-  it("хватает — списывает cost, остаток читается обратно", async () => {
-    const d = defender();
-    await addEvasionSurplus(d, ATTACKER, 5, 0);
-
-    const ok = await spendPoolSuccesses(d, ATTACKER, 3);
-
-    expect(ok).toBe(true);
-    expect(getEvasionPool(d, ATTACKER)).toMatchObject({ successes: 2 });
-  });
-
-  it("не хватает даже на cost — ничего не списывает", async () => {
-    const d = defender();
-    await addEvasionSurplus(d, ATTACKER, 2, 0);
-
-    const ok = await spendPoolSuccesses(d, ATTACKER, 3);
-
-    expect(ok).toBe(false);
-    expect(getEvasionPool(d, ATTACKER)).toMatchObject({ successes: 2 });
-  });
-
-  it("пул пуст/не существует — false, без ошибки", async () => {
-    const d = defender();
-    expect(await spendPoolSuccesses(d, ATTACKER, 3)).toBe(false);
   });
 });
 

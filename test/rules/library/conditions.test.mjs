@@ -7,17 +7,12 @@
 
 import { describe, it, expect } from "vitest";
 import { resolveTest } from "../../../module/rules/resolve-test.mjs";
-import { CONDITION_RULES } from "../../../module/rules/library/conditions.mjs";
 
 const actor = (conditions = {}) => ({
   system: { race: "human", characteristics: {}, conditions }, items: []
 });
 
 describe("правила Состояний", () => {
-  it("«Повален» есть в библиотеке", () => {
-    expect(CONDITION_RULES.map(r => r.id)).toContain("conditions.prone");
-  });
-
   it("рукопашная атака Поваленного получает −20", () => {
     const { mods } = resolveTest({
       actor: actor({ prone: true }), kind: "attack", weaponClass: "melee", isMelee: true, char: "ws"
@@ -61,10 +56,6 @@ describe("правила Состояний", () => {
 // всех тестах, кроме T/Inf/Cor. Механизм готов целиком (critRangeMod) —
 // только запись правила плюс тест.
 describe("правило «Отравление»", () => {
-  it("есть в библиотеке", () => {
-    expect(CONDITION_RULES.map(r => r.id)).toContain("conditions.poisoned");
-  });
-
   it("расширяет Критический Провал на 10 (side failure)", () => {
     const { crit } = resolveTest({ actor: actor({ poisoned: true }), skill: "medicae", char: "int" });
     expect(crit).toEqual({ successExtra: 0, failExtra: 10 });
@@ -99,10 +90,6 @@ describe("правило «Отравление»", () => {
 // проверяются отдельно (spd-breakdown.test.mjs, defense.test.mjs,
 // movement-moved-flag.test.mjs).
 describe("правило «Потеря стоп/ног»", () => {
-  it("есть в библиотеке", () => {
-    expect(CONDITION_RULES.map(r => r.id)).toContain("conditions.lostFeetOrLegs");
-  });
-
   it.each(["lostFeet", "lostLegs"])("Потеря стоп/ног (%s) — −20 на Акробатику", key => {
     const { mods } = resolveTest({ actor: actor({ [key]: true }), skill: "acrobatics", char: "ag" });
     expect(mods).toEqual([expect.objectContaining({ ruleId: "conditions.lostFeetOrLegs", value: -20 })]);
@@ -129,10 +116,6 @@ describe("правило «Потеря стоп/ног»", () => {
 // +1 неснимаемой Усталости и периодический урон T — не rollBonus, см.
 // rules/character.mjs (fatigue floor) и combat/gangrene.mjs (кнопка листа).
 describe("правило «Гангрена»", () => {
-  it("есть в библиотеке", () => {
-    expect(CONDITION_RULES.map(r => r.id)).toContain("conditions.gangrene");
-  });
-
   it.each(["int", "per", "wp", "fel", "inf"])("−20 на тест характеристики %s", char => {
     const { mods } = resolveTest({ actor: actor({ gangrene: true }), char });
     expect(mods).toEqual([expect.objectContaining({ ruleId: "conditions.gangrene", value: -20 })]);
@@ -159,10 +142,6 @@ describe("правило «Гангрена»", () => {
 // записи не нужно. «Не получает эффектов Командования» — не rollBonus, см.
 // rules/command.mjs::receivesCommands (command.test.mjs).
 describe("правило «Оглох»", () => {
-  it("есть в библиотеке", () => {
-    expect(CONDITION_RULES.map(r => r.id)).toContain("conditions.deafened");
-  });
-
   it("−30 на социальный навык (Очарование)", () => {
     const { mods } = resolveTest({ actor: actor({ deafened: true }), skill: "charm", char: "fel" });
     expect(mods).toEqual([expect.objectContaining({ ruleId: "conditions.deafened", value: -30 })]);

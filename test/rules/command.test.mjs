@@ -5,7 +5,7 @@
 // без Foundry и проверяется напрямую.
 
 import { describe, it, expect, afterEach } from "vitest";
-import { PRESENCE_ORDER, presenceNumber, presenceBenefitsFor, receivesPresence,
+import { PRESENCE_ORDER, presenceNumber, presenceBenefitsFor,
          receivesCommands, commandBlockReason, commandHealsPsych, canBeForcedToMove,
          suppressionBonus, commandReachFor } from "../../module/rules/command.mjs";
 import { PRESENCE_BENEFITS } from "../../module/constants/squad.mjs";
@@ -36,9 +36,6 @@ describe("нумерация преимуществ Присутствия", () 
 describe("Орда под Командованием", () => {
   it("получает только эффекты 1 и 3 Присутствия", () => {
     expect(presenceBenefitsFor("horde")).toEqual(["extreme", "morale"]);
-    expect(receivesPresence("horde", "extreme")).toBe(true);
-    expect(receivesPresence("horde", "morale")).toBe(true);
-    expect(receivesPresence("horde", "focus")).toBe(false);
   });
 
   it("Коротких и Детальных Команд не получает вовсе", () => {
@@ -147,7 +144,6 @@ describe("Оглох/Без сознания — Присутствие и по�
   const ok   = { type: "character", system: { conditions: {} }, items: [] };
 
   it("Оглохшему не доходит ни одно преимущество Присутствия", () => {
-    expect(receivesPresence("character", "extreme", deaf)).toBe(false);
     const reach = commandReachFor("character", "focus", deaf);
     expect(reach.presence).toEqual([]);
     expect(reach.presenceApplies).toBe(false);
@@ -170,11 +166,9 @@ describe("Оглох/Без сознания — Присутствие и по�
       effects: [{ kind: "grantFlag", target: "communication.deafExempt" }] }]);
     expect(commandBlockReason(out)).toBe("Без сознания");
     expect(commandBlockReason(deaf)).toBe("");
-    expect(receivesPresence("character", "extreme", deaf)).toBe(true);
   });
 
-  it("без актора (старые вызовы по типу) и у здорового — всё доходит", () => {
-    expect(receivesPresence("character", "focus")).toBe(true);
+  it("у здорового — всё доходит", () => {
     expect(commandReachFor("character", "focus", ok)).toMatchObject({ commands: true, presenceApplies: true, blockedBy: "" });
   });
 });

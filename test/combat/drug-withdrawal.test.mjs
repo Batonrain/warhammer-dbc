@@ -12,7 +12,6 @@ import { drugWithdrawalClock, startWithdrawal, endWithdrawal } from "../../modul
 import { CONDITION_CLOCK_HANDLERS } from "../../module/combat/condition-clock.mjs";
 import { rollBreakTest, weeklyDoseCheck, removeDrugAddiction, resolveDrug } from "../../module/sheets/tabs/drugs.mjs";
 import { resolveTest } from "../../module/rules/resolve-test.mjs";
-import { getRuleSources } from "../../module/rules/sources.mjs";
 
 const H = 3600, D = 86400, NS = "warhammer-dbc";
 const T0 = 500 * D;
@@ -316,11 +315,6 @@ describe("доза и тест Зависимости", () => {
 });
 
 describe("штраф без дозы как правило броска", () => {
-  const social = { target: "social" };
-  it("источник зарегистрирован", () => {
-    expect(getRuleSources().map(([k]) => k)).toContain("drugWithdrawal");
-  });
-
   it("пока доза просрочена — автоматический модификатор в Пороге; в срок — нет", () => {
     const item = drug({ name: "Призрак", add: { frequency: "9 часов", penaltyMods: "social=-10" } });
     const a = actor([item]);
@@ -335,7 +329,6 @@ describe("штраф без дозы как правило броска", () => 
     expect(mods[0].label).toContain("Призрак");
     // Не социальный Навык — штраф не касается.
     expect(resolveTest({ ...ctx, skill: "awareness", char: "per" }).autoMods).toEqual([]);
-    expect(social.target).toBe("social");
   });
 
   it("«на все тесты T»: бьёт тест Навыка на Стойкости и голый тест T, не Ловкость", () => {

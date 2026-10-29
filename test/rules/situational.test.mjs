@@ -153,6 +153,10 @@ describe("helmetlessBonus", () => {
     expect(helmetlessBonus(actor({ helmetlessActive: false }), "fel")).toBe(0);
   });
 
+  it("на других характеристиках прибавки нет", () => {
+    expect(helmetlessBonus(actor({ helmetlessActive: true }), "ws")).toBe(0);
+  });
+
   it("без актора не падает", () => {
     expect(helmetlessBonus(null, "fel")).toBe(0);
   });

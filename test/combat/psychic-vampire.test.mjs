@@ -9,7 +9,6 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { packDocById } from "../support/pack-doc.mjs";
 import { applyDamageToActor } from "../../module/combat/damage.mjs";
-import { CARD_ONCE_FLAGS } from "../../module/combat/card-once.mjs";
 import { VAMPIRE_CARD_FLAG, handleVampireClick } from "../../module/combat/psychic-vampire.mjs";
 import { VAMPIRE_USAGE_KEY, VAMPIRE_DRUG_NAME } from "../../module/rules/psychic-vampire.mjs";
 import { WITHDRAWAL_FLAG } from "../../module/rules/drug-withdrawal.mjs";
@@ -101,9 +100,6 @@ describe("Психический Вампир: кнопка в карточке 
     registry["Item.sword"] = { type: "weapon", name: "Меч", system: { weaponProps: [] } };
     await applyDamageToActor(person({ wounds: 10 }), psyHit({ psychicPowerType: undefined, weaponUuid: "Item.sword" }));
     expect(chatText()).not.toContain("wh-vampire-btn");
-  });
-  it("отметка карточки входит в белый список сокета", () => {
-    expect(CARD_ONCE_FLAGS).toContain(VAMPIRE_CARD_FLAG);
   });
 });
 

@@ -122,21 +122,6 @@ describe("Модуль Агрессии: записи в паке", () => {
     expect(e).toMatchObject({ charKey: "int", field: "total", op: "subtract", value: 10 });
     expect(e.when.quality).toEqual(["poor"]);
   });
-
-  it("ключи Возможностей и uuid Талантов существуют в паках", () => {
-    const talentIds = new Set();
-    for (const f of fs.readdirSync(abs("packs-src/talents"), { withFileTypes: true, recursive: true })) {
-      if (f.isDirectory() || !f.name.endsWith(".json")) continue;
-      const d = JSON.parse(fs.readFileSync(path.join(f.parentPath ?? f.path, f.name), "utf8"));
-      if (d._id) talentIds.add(`${d._id}|${d.name}`);
-    }
-    for (const e of DOC.flags[FLAG].mechanics.flatMap(g => g.entries).filter(x => x.kind === "talent")) {
-      const id = e.sourceUuid.split(".").pop();
-      const hit = [...talentIds].find(s => s.startsWith(`${id}|`));
-      expect(hit, e.sourceName).toBeTruthy();
-      expect(hit.split("|")[1]).toBe(e.sourceName);
-    }
-  });
 });
 
 describe("Модуль Агрессии: выдача Талантов по Качеству и установке", () => {

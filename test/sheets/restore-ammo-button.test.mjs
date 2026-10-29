@@ -18,8 +18,4 @@ describe("Кнопка восстановления испорченных Кл�
     const before = hbs.slice(Math.max(0, start - 120), start);
     expect(before).toContain("{{#if w.jammedAmmo}}");
   });
-
-  it("зовёт rollRestoreJammedAmmo, не rollClearJam", () => {
-    expect(hbs).toContain("wh-sheet-restore-ammo-btn");
-  });
 });

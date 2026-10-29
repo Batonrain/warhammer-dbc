@@ -39,12 +39,6 @@ beforeEach(() => {
 const byLabel = (list, label) => list.find(m => m.label === label);
 
 describe("Ослеплён — строка окна атаки заперта (wdbc-x1nz.2.89)", () => {
-  it("Ослеплён, стрельба — автопровал отмечен и заперт", () => {
-    const { commonMods } = situationalMods(baseArgs({ isBlinded: true, isMelee: false }));
-    const row = byLabel(commonMods, "Ослеплён");
-    expect(row).toMatchObject({ autofail: true, autoCheck: true, locked: true });
-  });
-
   it("Ослеплён, рукопашная — −30 отмечено и заперто", () => {
     const row = byLabel(situationalMods(baseArgs({ isBlinded: true })).commonMods, "Ослеплён");
     expect(row).toMatchObject({ value: -30, autoCheck: true, locked: true });

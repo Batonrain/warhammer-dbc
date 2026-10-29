@@ -16,7 +16,6 @@ import { strikeLocation, parryWeaponFor, gunAsParryWeapon, strikeDamageFormula, 
 import { improvisedMeleeProfile, canStrikeWithGun, registerBraceCheck, FIRED_BRACED_FLAG }
   from "../../module/combat/weapon-profiles.mjs";
 import { counterAttackTriggers } from "../../module/combat/counter-attack.mjs";
-import { TURN_SCOPED_FLAG_KEYS } from "../../module/rules/turn-flags.mjs";
 
 const DEFAULT_SOURCES = getRuleSources();
 
@@ -114,9 +113,6 @@ describe("Профиль «Ударить оружием»: Баланс, штр
     expect(canStrikeWithGun(heavy)).toBe(false);
   });
 
-  it("метка «стрелял из Закреплённого» гаснет к началу своего Хода", () => {
-    expect(TURN_SCOPED_FLAG_KEYS).toContain(FIRED_BRACED_FLAG);
-  });
 });
 
 describe("parryWeaponFor: стрелок вооружён, кроме как против безоружной атаки", () => {

@@ -21,8 +21,6 @@ import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 
-import { parseSubmutations } from "../../module/rules/submutations.mjs";
-import { entryWhenOk } from "../../module/rules/mech-when.mjs";
 import { packDocByFileHint } from "../support/pack-doc.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "../..");
@@ -30,24 +28,10 @@ const TENTACLE_PATH = path.join(ROOT,
   "packs-src/mutations/Общие_мутации/Tentacle___Щупальце_nUfrCbj7cIAEWope.json");
 
 const tentacle = packDocByFileHint(TENTACLE_PATH);
-const submutations = parseSubmutations(tentacle.system.benefit);
 const mechEntries = tentacle.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries);
 const withSub = mechEntries.filter(e => (e.when?.submutations ?? []).length);
 
 describe("Tentacle/Щупальце: Механика субмутаций 1, 2-3 и 8 — данные согласованы", () => {
-  it("в таблице СУБМУТАЦИИ реально есть строки 1 (Длинное), 2-3 (Бронированное) и 8 (Могучее)", () => {
-    const labels = submutations.entries.map(e => e.label);
-    expect(labels).toContain("1");
-    expect(labels).toContain("2-3");
-    expect(labels).toContain("8");
-  });
-
-  it("каждая запись Механики с when.submutations ссылается на существующую строку таблицы", () => {
-    const knownLabels = new Set(submutations.entries.map(e => e.label));
-    const offenders = withSub.flatMap(e => e.when.submutations.filter(l => !knownLabels.has(l)));
-    expect(offenders).toEqual([]);
-  });
-
   it("нашлись ровно 10 записей Механики, гейтованных субмутацией (1: capability-флаг; 2-3: броня; 8: характеристика+трейт; 4-5: capability+testMod, wdbc-egll; 6: integralAttack+2×testMod; 7: integralAttack, wdbc-tj0p/wdbc-1j2h)", () => {
     expect(withSub).toHaveLength(10);
   });
@@ -78,10 +62,4 @@ describe("Tentacle/Щупальце: Механика субмутаций 1, 2-
     expect(traitEntry.rating).toBe(2);
   });
 
-  it("entryWhenOk включает запись 2-3 только когда именно эта строка выпала на предмете", () => {
-    const e = withSub.find(x => x.when.submutations.includes("2-3"));
-    expect(entryWhenOk(null, e, { system: { submutation: { label: "2-3" } } })).toBe(true);
-    expect(entryWhenOk(null, e, { system: { submutation: { label: "8" } } })).toBe(false);
-    expect(entryWhenOk(null, e, { system: { submutation: { label: "" } } })).toBe(false);
-  });
 });

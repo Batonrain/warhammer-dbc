@@ -14,33 +14,18 @@ import { hasRuleFlag } from "../../../module/rules/flags.mjs";
 import { resolveAptitudeOverride } from "../../../module/rules/aptitude-overrides.mjs";
 import { skillAdvanceCat } from "../../../module/rules/advance-category.mjs";
 import { GROUP_SKILLS_DEF } from "../../../module/constants/skills.mjs";
-import { bionicsRejection, rejectedImplants } from "../../../module/rules/aversion-to-order.mjs";
 import { presetIntegralChoice } from "../../../module/rules/integral-rating.mjs";
-import { mechFormulaTotal } from "../../../module/rules/mech-formula.mjs";
-import { archetypesForRace } from "../../../module/apps/archetypes.mjs";
-import { raceCorruptionUpdate } from "../../../module/apps/races.mjs";
 
 const RACE = packDocById("packs-src/races/Люди", "aCWwJQUQSDbx1uEo");
 const AVERSION = packDocById("packs-src/traits", "6v1NUWCYIc2Oosi8");
 const CLOVEN = packDocById("packs-src/traits", "NOaPE0AYhvLGTVPI");
 const STEP = packDocById("packs-src/traits", "PeUg4uJnrciYPkK8");
 const NATURAL = packDocById("packs-src/traits", "SvLCLe1hbxSaWy3s");
-const DIGI = packDocById("packs-src/traits", "fhVhZ7K5XS77irv9");
 
 const entries = doc => doc.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries);
 const actorWith = items => ({ system: { race: "beastman", characteristics: {}, conditions: {}, aptitudes: [] }, items });
 
 describe("раса Зверолюд против книги", () => {
-  it("стартовая Порча 5 — только в пустое поле", () => {
-    expect(RACE.system.startCorruption).toBe(5);
-    expect(raceCorruptionUpdate({ system: { corruption: { value: 0 } } }, 5)).toEqual({ "system.corruption.value": 5 });
-    expect(raceCorruptionUpdate({ system: { corruption: { value: 12 } } }, 5)).toEqual({});
-  });
-
-  it("Архетипы — 6 книжных, без Благородного и Нумена", () => {
-    expect(archetypesForRace("beastman").map(([k]) => k).sort())
-      .toEqual(["apostate", "heresiarch", "pirate", "renegade", "savage", "witch"]);
-  });
 
   it("Естественное Оружие: Рога, Укус, Когти, Копыта выбираются сами", () => {
     const preset = entries(RACE).find(e => (e.sourceName || "").startsWith("Natural Weapons")).integralPreset;
@@ -61,14 +46,6 @@ describe("Черты Зверолюда", () => {
     expect(hasRuleFlag(a, "order.rejectsBionics")).toBe(true);
   });
 
-  it("бионика и кибернетика — −2 Раны и −5 T за штуку, органы и не установленное — нет", () => {
-    const imp = (category, installed = true) => ({ type: "implant", system: { category }, flags: { "warhammer-dbc": { installed } } });
-    const items = [imp("bionic-arm"), imp("cybernetic"), imp("astartes"), imp("bioimplant"), imp("bionic", false)];
-    expect(rejectedImplants(items)).toHaveLength(2);
-    expect(bionicsRejection(rejectedImplants(items).length)).toEqual({ count: 2, wounds: -4, t: -10 });
-    expect(bionicsRejection(0).count).toBe(0);
-  });
-
   it("Копытный: +20 в тесте Трудного Ландшафта, Sprint — Дружественный", () => {
     const a = actorWith([CLOVEN]);
     const t = resolveTest({ actor: a, kind: "skill", char: "ag", terrain: true });
@@ -82,11 +59,5 @@ describe("Черты Зверолюда", () => {
     expect(hasRuleFlag(a, "mutations.asAstartes")).toBe(true);
     expect(hasRuleFlag(a, "mutation.singleDie")).toBe(true);
     expect(entries(STEP).find(e => e.kind === "poolMax")).toMatchObject({ poolTarget: "infamy", value: "-1" });
-  });
-
-  it("Двусоставный: +X к SPD по рейтингу Черты", () => {
-    const mv = entries(DIGI).find(e => e.kind === "movement");
-    expect(mv).toMatchObject({ movementTarget: "spd", movementValue: "rating" });
-    expect(mechFormulaTotal(mv.movementValue, { rating: 3 })).toBe(3);
   });
 });

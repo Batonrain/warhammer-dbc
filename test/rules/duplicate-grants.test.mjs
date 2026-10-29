@@ -10,7 +10,7 @@
 
 import { describe, it, expect, vi } from "vitest";
 import {
-  RANK_ORDER, rankIndex, nextRank, higherOf, stepsUpTo,
+  RANK_ORDER, rankIndex, stepsUpTo,
   skillGrantOutcome, isSameTalent, findSameTalent,
   repeatableTalentTarget, createOrRankTalent,
   talentDuplicatePolicy, skillDuplicatePolicy,
@@ -24,14 +24,7 @@ describe("ступени Навыка", () => {
     expect(RANK_ORDER).toEqual(["untrained", "knows", "trained", "veteran", "expert"]);
   });
 
-  it("следующая ступень, а на потолке её нет", () => {
-    expect(nextRank("knows")).toBe("trained");
-    expect(nextRank("expert")).toBeNull();
-  });
-
-  it("сравнение рангов не зависит от порядка аргументов", () => {
-    expect(higherOf("knows", "veteran")).toBe("veteran");
-    expect(higherOf("veteran", "knows")).toBe("veteran");
+  it("неизвестный ранг считается нетренированным", () => {
     expect(rankIndex("нет-такого")).toBe(0);
   });
 

@@ -12,7 +12,6 @@ import { killByCondition, letItFlowSaves } from "../../module/combat/condition-d
 import { processConditionTurnEnd } from "../../module/combat/condition-ticks.mjs";
 import { clearRuleSources, registerRuleSource, getRuleSources } from "../../module/rules/sources.mjs";
 import { CAPABILITIES } from "../../module/constants/capabilities.mjs";
-import { packDocById } from "../support/pack-doc.mjs";
 
 const KEY = "geneseed.core.letItFlow";
 
@@ -127,12 +126,5 @@ describe("Пусть Льётся: смерть от Кровотечения �
 describe("данные", () => {
   it("возможность заведена и ссылается на читателя в condition-death", () => {
     expect(CAPABILITIES[KEY].reader).toContain("condition-death.mjs");
-  });
-
-  it("Талант несёт запись capability с этим ключом", () => {
-    const doc = packDocById("packs-src/talents/Геносемя", "gdcSwPONzfE2RXks");
-    const entries = doc.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries);
-    expect(entries.some(e => e.kind === "capability" && e.capabilityKey === KEY)).toBe(true);
-    expect(doc.system.notes).not.toMatch(/^Не смоделировано/);
   });
 });

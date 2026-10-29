@@ -21,33 +21,11 @@ beforeEach(() => {
   globalThis.game.user = { id: "u1" };
 });
 
+// Геометрия и порог тесноты — test/rules/squeeze.test.mjs; 2×2 и 3×3 в той же двери целиком —
+// в «initSqueezeHooks» ниже. Здесь — только отказ без Базы.
 describe("checkSqueeze: чистая проверка по готовым данным", () => {
   const cellPx = 100;
   const door = { c: [100, 0, 100, 100] }; // вертикальная дверь, 1 клетка
-
-  it("Базы 2×2, дверь в 1 клетку (половина) — ещё не теснота", () => {
-    const result = checkSqueeze({
-      fromCenter: { x: 0, y: 50 }, toCenter: { x: 200, y: 50 },
-      doorWalls: [door], cellPx, baseSize: 2
-    });
-    expect(result).toBeNull();
-  });
-
-  it("Базы 3×3, та же дверь в 1 клетку — уже теснота (1 < 1.5)", () => {
-    const result = checkSqueeze({
-      fromCenter: { x: 0, y: 50 }, toCenter: { x: 200, y: 50 },
-      doorWalls: [door], cellPx, baseSize: 3
-    });
-    expect(result).toEqual({ doorWidthCells: 1 });
-  });
-
-  it("движение не пересекло дверь — null", () => {
-    const result = checkSqueeze({
-      fromCenter: { x: 0, y: 500 }, toCenter: { x: 200, y: 500 },
-      doorWalls: [door], cellPx, baseSize: 3
-    });
-    expect(result).toBeNull();
-  });
 
   it("baseSize отсутствует (нет ни правила, ни размера токена) — проверять не с чем, null", () => {
     const result = checkSqueeze({

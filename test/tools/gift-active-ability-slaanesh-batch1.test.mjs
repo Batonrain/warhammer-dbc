@@ -53,17 +53,6 @@ afterEach(() => {
   globalThis.game.combat = undefined;
 });
 
-describe("Дары Слаанеш, партия 1 — обе несут ровно одну валидную kind:\"script\" запись", () => {
-  it.each(Object.keys(FILES))("%s", key => {
-    const { entry } = scriptEntryOf(loadDoc(key));
-    expect(entry).toBeTruthy();
-    expect(entry.code?.trim()).not.toBe("");
-    expect(entry.label?.trim()).not.toBe("");
-    expect(entry.scriptThrottleUnit).toBe("round");
-    expect(entry.capabilityCostPool).toBe(""); // бесплатны
-  });
-});
-
 describe.each(Object.keys(FILES))("%s — раз в Раунд, бесплатно", key => {
   it("гейтится Раундом, не пулом", async () => {
     globalThis.game.combat = { round: 1 };

@@ -1698,7 +1698,7 @@ Spray); Парирование открывает только Боевой Гн
   `apps/demon-summon.mjs`.
 - **Фокус Дисциплины (wdbc-l6zg, 14.09.2026) — ЧИСТО ДАННЫЕ, без игрового
   эффекта.** `system.psyker.focusDisciplines` (выбор игрока) +
-  `rules/psy-focus.mjs::effectiveFocusDisciplines/hasFocusDiscipline` (объединяет
+  `rules/psy-focus.mjs::effectiveFocusDisciplines` (объединяет
   с дарованным способностями — первый потребитель `rules/perfect-sorcerer.mjs
   ::PERFECT_SORCERER_FOCUS_DISCIPLINES`), `constants/disciplines.mjs
   ::NO_FOCUS_DISCIPLINES/canHaveFocusDiscipline` (книжный список дисциплин без

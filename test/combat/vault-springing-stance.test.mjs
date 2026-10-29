@@ -13,12 +13,8 @@ function actorWith(stance, halfMove) {
   return { system: { meleeStance: stance, movement: { halfMove } } };
 }
 
+// Сама прибавка +4 в Пружинящей Стойке — test/combat/speed-consumers-multipliers.test.mjs.
 describe("vaultHalfMove", () => {
-  it("Пружинящая Стойка: +4 к уже посчитанному halfMove (снимает −2, даёт +2)", () => {
-    // SPD база 4 → halfMove с уже применённым −2 = 2; Вольт хочет SPD+2 = 6 = 2+4.
-    expect(vaultHalfMove(actorWith("springing", 2))).toBe(6);
-  });
-
   it("другая Стойка — halfMove не меняется", () => {
     expect(vaultHalfMove(actorWith("standard", 4))).toBe(4);
     expect(vaultHalfMove(actorWith("aggressive", 4))).toBe(4);

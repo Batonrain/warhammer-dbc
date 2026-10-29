@@ -252,13 +252,6 @@ export function defaultQualityPlan(n, slots) {
   return plan;
 }
 
-/** План укладывается в слоты (не больше Высших/Хороших, чем дала книга). */
-export function qualityPlanFits(plan, slots) {
-  const n = { best: 0, good: 0 };
-  for (const q of plan || []) if (q in n) n[q]++;
-  return n.best <= (Number(slots?.best) || 0) && n.good <= (Number(slots?.good) || 0);
-}
-
 /** Надстройки в скобках: «(+Mono)», «(Best.Q +Mono)», «(+Pistol Grip)», «(+Void)». */
 function parseAttachments(text) {
   const out = [];

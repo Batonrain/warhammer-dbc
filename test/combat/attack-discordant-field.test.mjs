@@ -65,6 +65,6 @@ describe("Поле Дискорданта в самом броске атаки"
     const actor = actorFor({ items: [weapon, fieldItem()] });
     captured.dice = [10, 5];
     await _executeAttackRoll(actor, weapon, "ws", 45, "single", null, {});
-    expect(captured.chat.length).toBeGreaterThan(0);
+    expect(card()).toContain("Поле Дискорданта: оружие выключено");
   });
 });

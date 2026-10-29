@@ -39,17 +39,6 @@ export const RANK_ORDER = ["untrained", "knows", "trained", "veteran", "expert"]
 /** Индекс ранга в порядке роста; неизвестный считаем нетренированным. */
 export const rankIndex = rank => Math.max(0, RANK_ORDER.indexOf(rank || "untrained"));
 
-/** Следующая ступень или null, если это уже потолок. */
-export function nextRank(rank) {
-  const i = rankIndex(rank);
-  return i >= RANK_ORDER.length - 1 ? null : RANK_ORDER[i + 1];
-}
-
-/** Выше из двух рангов. */
-export function higherOf(a, b) {
-  return rankIndex(a) >= rankIndex(b) ? (a || "untrained") : (b || "untrained");
-}
-
 /**
  * Ступени покупки, которые пришлось бы оплатить, чтобы дойти до этого ранга с
  * нуля. Индексы — как в таблице цен Навыков: 0 = «+0», 1 = «+10», 2 = «+20»,

@@ -1,8 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { hasRuleFlag, ruleFlagLabels } from "../../../module/rules/flags.mjs";
-import { HOMEWORLD_BY_KEY } from "../../../module/constants/homeworlds.mjs";
-import { TEMPLE_RULES, DEATH_RULES, INDUSTRIAL_RULES, CEMETERY_RULES }
-  from "../../../module/rules/library/homeworlds.mjs";
 
 /**
  * Подставной актор: ключ Происхождения лежит на предмете-носителе, как в игре
@@ -15,12 +12,6 @@ const actor = (hwKey) => ({
 });
 
 describe("Особенности Происхождений в реестре правил", () => {
-  it("данные мира отдают свои правила источнику", () => {
-    expect(HOMEWORLD_BY_KEY.temple.rules).toBe(TEMPLE_RULES);
-    expect(HOMEWORLD_BY_KEY.death.rules).toBe(DEATH_RULES);
-    expect(HOMEWORLD_BY_KEY.industrial.rules).toBe(INDUSTRIAL_RULES);
-    expect(HOMEWORLD_BY_KEY.cemetery.rules).toBe(CEMETERY_RULES);
-  });
 
   it("Мир-храм даёт возможность не потратить Очко", () => {
     expect(hasRuleFlag(actor("temple"), "fate.save")).toBe(true);

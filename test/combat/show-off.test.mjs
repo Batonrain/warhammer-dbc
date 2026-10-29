@@ -20,10 +20,9 @@ vi.mock("../../module/combat/free-attack.mjs", () => ({
   friendlyContactTokenDocs: () => [], lockingContactTokenDocs: () => [], allContactTokenDocs: () => []
 }));
 
-const { triggerShowOff, showOffGate, resolveShowOffSuccess, hasShowOff, SHOW_OFF_CONTEST, SHOW_OFF_CARD_FLAG }
+const { triggerShowOff, showOffGate, resolveShowOffSuccess, SHOW_OFF_CONTEST }
   = await import("../../module/combat/show-off.mjs");
 const { COMMAND_SUPPRESSED_FLAG } = await import("../../module/rules/command-suppression.mjs");
-const { CARD_ONCE_FLAGS } = await import("../../module/combat/card-once.mjs");
 
 const showOffTalent = { id: "t-so", name: "Show-Off / Рисовка", type: "talent", system: {} };
 const card = () => captured.chat.at(-1)?.content ?? "";
@@ -51,18 +50,11 @@ beforeEach(() => {
 afterEach(() => { game.combat = prevCombat; });
 
 describe("данные", () => {
-  it("отметка карточки внесена в белый список сокета", () => {
-    expect(CARD_ONCE_FLAGS).toContain(SHOW_OFF_CARD_FLAG);
-  });
   it("определение встречного теста: WS vs WS, Полудействие 1 ОД", () => {
     expect(SHOW_OFF_CONTEST.defaultChar).toBe("ws");
     expect(SHOW_OFF_CONTEST.allowedChars).toEqual(["ws"]);
     expect(SHOW_OFF_CONTEST.apCost).toBe(1);
     expect(SHOW_OFF_CONTEST.wsBonus).toBe(0);
-  });
-  it("Талант опознаётся по имени, без Таланта кнопки нет", () => {
-    expect(hasShowOff(hero())).toBe(true);
-    expect(hasShowOff(hero({ items: [] }))).toBe(false);
   });
 });
 

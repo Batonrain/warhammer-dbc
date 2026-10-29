@@ -26,7 +26,7 @@ import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 // Тот же глиф, что рисует иконку статуса на токене — эффект создаётся здесь,
 // а не мостом, и обязан выглядеть ровно так же, как если бы его завёл мост.
 import { statusIconUri } from "../apps/token-conditions.mjs";
-import { durationDataFor, isDurationExpired, isTurnEndDurationExpired, remainingRounds, remainingLabel, remainingOf,
+import { durationDataFor, isDurationExpired, isTurnEndDurationExpired, remainingRounds, remainingOf,
          isTimeBasedDuration, SECONDS_PER_ROUND }
   from "../rules/condition-duration.mjs";
 
@@ -200,13 +200,6 @@ export async function onConditionEffectExpired(effect, changes) {
   const { postConditionCard, conditionExpiryLine } = await import("./condition-ticks.mjs");
   if (actor) await postConditionCard(actor, [conditionExpiryLine(key)]);
   return true;
-}
-
-/** Остаток срока словами — для тега на листе и подсказки на токене. */
-export function conditionRemainingLabel(actor, key) {
-  const effect = conditionDurationEffect(actor, key);
-  if (!effect) return "";
-  return remainingLabel(effect.duration ?? {});
 }
 
 /**

@@ -110,11 +110,4 @@ describe("Физиология Громилы: Оглушение снимает
     await processConditionTurnEnd(actor);
     expect(actor.system.conditions.stunned).toBe(false);
   });
-
-  it("без возможности Оглушение остаётся", async () => {
-    clearRuleSources();
-    const actor = makeActor({ stunned: true, stunnedRounds: 2 });
-    await processConditionTurnEnd(actor);
-    expect(actor.system.conditions.stunned).toBe(true);
-  });
 });

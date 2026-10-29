@@ -8,7 +8,7 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect, afterEach } from "vitest";
-import { hasDeathDance, deathDanceUsedCount, deathDanceNextCost, markDeathDanceUsed }
+import { deathDanceUsedCount, deathDanceNextCost, markDeathDanceUsed }
   from "../../module/combat/death-dance.mjs";
 
 function actorWithTalent(hasTalent) {
@@ -21,14 +21,6 @@ function actorWithTalent(hasTalent) {
 }
 
 afterEach(() => { globalThis.game.combat = undefined; });
-
-describe("hasDeathDance", () => {
-  it("определяет владение по имени Таланта", () => {
-    expect(hasDeathDance(actorWithTalent(true))).toBe(true);
-    expect(hasDeathDance(actorWithTalent(false))).toBe(false);
-    expect(hasDeathDance(null)).toBe(false);
-  });
-});
 
 describe("deathDanceUsedCount / deathDanceNextCost / markDeathDanceUsed", () => {
   it("первое использование в бою — бесплатно (cost 0)", () => {

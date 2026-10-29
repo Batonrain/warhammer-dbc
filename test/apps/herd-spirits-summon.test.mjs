@@ -10,8 +10,9 @@ import { beforeEach, describe, it, expect } from "vitest";
 import {
   isHerdSpiritsRitual, herdAllocationCost, herdCreatureNameCandidates,
   getHerdSpiritsBatches, addHerdSpiritsBatch, recallHerdSpiritsBatch,
-  HERD_SPIRITS_RITUAL_NAME, MAX_HERD_BATCHES
+  MAX_HERD_BATCHES
 } from "../../module/apps/herd-spirits-summon.mjs";
+import { packDocById } from "../support/pack-doc.mjs";
 
 function stubActor(flags = {}) {
   const store = { "warhammer-dbc": { ...flags } };
@@ -40,8 +41,11 @@ beforeEach(() => {
 });
 
 describe("isHerdSpiritsRitual", () => {
-  it("совпадает по точному имени ритуала", () => {
-    expect(isHerdSpiritsRitual({ name: HERD_SPIRITS_RITUAL_NAME })).toBe(true);
+  // Сравнение строгое (===), а talent-name-literals такие имена не видит —
+  // поэтому имя берётся из самого Ритуала пака, а не из константы модуля.
+  it("узнаёт настоящий Ритуал пака по точному имени", () => {
+    const ritual = packDocById("packs-src/rituals/Архетипа", "Z5OUkCWiKPxcoGG8");
+    expect(isHerdSpiritsRitual(ritual)).toBe(true);
   });
   it("не совпадает с другим ритуалом", () => {
     expect(isHerdSpiritsRitual({ name: "Rite of Blood Rebirth / Ритуал Возрождения" })).toBe(false);

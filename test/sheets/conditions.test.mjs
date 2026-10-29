@@ -62,6 +62,14 @@ describe("fatiguePenalty", () => {
     expect(fatiguePenalty(a, "ws")).toBe(-10);
   });
 
+  it("Добывающий мир («Потом и кровью») отодвигает штраф на T.b Усталости", () => {
+    const a = makeActor({ fatigue: 4, tBonus: 4 });
+    a.items = [{ type: "homeworld", system: { key: "mining" } }];
+    expect(fatiguePenalty(a, "ag")).toBe(0);
+    a.system.fatigue.value = 5;
+    expect(fatiguePenalty(a, "ag")).toBe(-10);
+  });
+
   it("Стойкость от Усталости не страдает в любом случае", () => {
     expect(fatiguePenalty(makeActor({ fatigue: 9 }), "t")).toBe(0);
   });
@@ -409,11 +417,13 @@ describe("Усталость по книге («Раны и Урон» → «С�
   afterEach(() => { globalThis.game.time = savedTime; globalThis.game.user = savedUser; });
 
   // п.3: «кроме тестов T, Inf, и Cor» — было "cog" вместо "cor".
-  it("штраф −10 не касается тестов T, Inf и Cor", () => {
+  // Фактор Прибыли — аналог Inf, тоже не страдает.
+  it("штраф −10 не касается тестов T, Inf, Cor и Фактора Прибыли", () => {
     const a = makeActor({ fatigue: 2 });
     expect(fatiguePenalty(a, "cor")).toBe(0);
     expect(fatiguePenalty(a, "t")).toBe(0);
     expect(fatiguePenalty(a, "inf")).toBe(0);
+    expect(fatiguePenalty(a, "pf")).toBe(0);
     expect(fatiguePenalty(a, "ws")).toBe(-10);
   });
 

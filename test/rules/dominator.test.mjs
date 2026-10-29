@@ -2,23 +2,7 @@
 
 import "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
-import { hasDominator, isOwnArmiger } from "../../module/rules/dominator.mjs";
-
-const actorWith = (...talentNames) => ({
-  items: talentNames.map(name => ({ type: "talent", name }))
-});
-
-describe("hasDominator", () => {
-  it("находит по билингвальному имени", () => {
-    expect(hasDominator(actorWith("Dominator / Покоритель"))).toBe(true);
-  });
-  it("нет Таланта — false", () => {
-    expect(hasDominator(actorWith("Erudite-Infernal"))).toBe(false);
-  });
-  it("нет актора — false, не падает", () => {
-    expect(hasDominator(null)).toBe(false);
-  });
-});
+import { isOwnArmiger } from "../../module/rules/dominator.mjs";
 
 // wdbc-1rno, шаг E: Инфернальный Оруженосец — «автоматически побеждает во
 // всех тестах Владычества против него». Своё, не любой купленный Миньон.

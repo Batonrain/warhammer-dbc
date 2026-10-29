@@ -1,6 +1,6 @@
 // test/rules/wrapped-in-chaos.test.mjs
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { wrappedInChaosKindByLabel, fliesAttackPenalty, isWrappedInChaosItem, targetHasActiveFlies,
+import { wrappedInChaosKindByLabel, fliesAttackPenalty, targetHasActiveFlies,
          realityRendingPenalty, REALITY_RENDING_EXCLUDED_FLAG,
          hasPhantomCopies, phantomCopiesDodgePenalty, phantomCopiesFeintBonus, wrathHeatAttackPenalty }
   from "../../module/rules/wrapped-in-chaos.mjs";
@@ -68,15 +68,6 @@ describe("targetHasActiveFlies", () => {
   it("нет актора/предметов — false, не падает", () => {
     expect(targetHasActiveFlies(null)).toBe(false);
     expect(targetHasActiveFlies({})).toBe(false);
-  });
-});
-
-describe("isWrappedInChaosItem", () => {
-  it("опознаёт по capabilityKey", () => {
-    expect(isWrappedInChaosItem(mutationItem("mutation.wrappedInChaos", ""))).toBe(true);
-  });
-  it("не путает с другой Мутацией", () => {
-    expect(isWrappedInChaosItem(mutationItem("mutation.boneless", "", "Boneless / Бескостный"))).toBe(false);
   });
 });
 

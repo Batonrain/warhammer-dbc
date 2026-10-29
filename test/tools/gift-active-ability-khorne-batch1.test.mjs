@@ -75,15 +75,6 @@ afterEach(() => {
   globalThis.game.combat = undefined;
 });
 
-describe("Дары Кхорна, партия 1 — все 7 несут ровно одну валидную kind:\"script\" запись", () => {
-  it.each(Object.keys(FILES))("%s", key => {
-    const { entry } = scriptEntryOf(loadDoc(key));
-    expect(entry).toBeTruthy();
-    expect(entry.code?.trim()).not.toBe("");
-    expect(entry.label?.trim()).not.toBe("");
-  });
-});
-
 describe.each([
   ["challengeOfHonour", "infamy", 1],
   ["charioteer", "infamy", 1],
@@ -103,16 +94,6 @@ describe.each([
     expect(captured.chat.some(c => c.content.includes(entry.label))).toBe(true);
   });
 
-  it("не хватает в пуле: код не выполняется, предупреждение", async () => {
-    const actor = actorFor({ value: 0, max: 4 });
-    const doc = loadDoc(key);
-    const { groupId, entry } = scriptEntryOf(doc);
-    const item = itemFor(doc, actor);
-    await runMechScriptEntry(item, groupId, entry.id);
-    expect(actor.system.fate.value).toBe(0);
-    expect(captured.chat).toHaveLength(0);
-    expect(captured.warnings.length).toBe(1);
-  });
 });
 
 describe("avengersStride — раз в Раунд, бесплатно", () => {

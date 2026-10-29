@@ -7,7 +7,7 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect, afterEach } from "vitest";
-import { hasVoiceOfGod, voiceOfGodMax, voiceOfGodAvailable, applyVoiceOfGod } from "../../module/combat/voice-of-god.mjs";
+import { voiceOfGodMax, voiceOfGodAvailable, applyVoiceOfGod } from "../../module/combat/voice-of-god.mjs";
 import { tempInfamyAmount, tempInfamyInfo } from "../../module/rules/temp-infamy.mjs";
 
 function commander({ hasTalent = true, infBonus = 4 } = {}) {
@@ -31,11 +31,7 @@ function recipient() {
 
 afterEach(() => { globalThis.game.combat = undefined; });
 
-describe("hasVoiceOfGod / voiceOfGodMax", () => {
-  it("определяет владение Талантом", () => {
-    expect(hasVoiceOfGod(commander({ hasTalent: true }))).toBe(true);
-    expect(hasVoiceOfGod(commander({ hasTalent: false }))).toBe(false);
-  });
+describe("voiceOfGodMax", () => {
   it("½Inf.b округляется вверх", () => {
     expect(voiceOfGodMax(commander({ infBonus: 4 }))).toBe(2);
     expect(voiceOfGodMax(commander({ infBonus: 5 }))).toBe(3);

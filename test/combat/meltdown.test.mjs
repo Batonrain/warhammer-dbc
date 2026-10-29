@@ -51,10 +51,6 @@ describe("Расплавление: чистые правила", () => {
     expect(meltdownOutcome({ success: true, deg: 9 })).toBe("open");
   });
 
-  it("взрыв: 3d10+10 Dmg, Pen 14, Blast 3", () => {
-    expect(MELTDOWN_BLAST).toMatchObject({ damage: "3d10+10", pen: 14, blast: 3 });
-  });
-
   it("нужны лаз-оружие в руках с Power Setting и нож (категория «Нож»)", () => {
     expect(meltdownWeaponOk(lasgun())).toBe(true);
     expect(meltdownWeaponOk(weaponFor({ weaponType: "bolt", special: "Power Setting", equipped: true }))).toBe(false);

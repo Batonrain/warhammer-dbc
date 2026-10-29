@@ -9,7 +9,7 @@ import "../support/foundry-stub.mjs";
 
 import { describe, it, expect, afterEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
-import { hasAvatarOfSlaughter, avatarOfSlaughterAvailable, applyAvatarOfSlaughter }
+import { avatarOfSlaughterAvailable, applyAvatarOfSlaughter }
   from "../../module/combat/avatar-of-slaughter.mjs";
 
 function berserker({ hasTrait = true, fate = 3 } = {}) {
@@ -40,11 +40,7 @@ function target(wpTotal = 40) {
 
 afterEach(() => { resetCaptured(); globalThis.game.combat = undefined; });
 
-describe("hasAvatarOfSlaughter / avatarOfSlaughterAvailable", () => {
-  it("определяет владение Чертой", () => {
-    expect(hasAvatarOfSlaughter(berserker({ hasTrait: true }))).toBe(true);
-    expect(hasAvatarOfSlaughter(berserker({ hasTrait: false }))).toBe(false);
-  });
+describe("avatarOfSlaughterAvailable", () => {
   it("раз за бой — второй раз недоступно", async () => {
     globalThis.game.combat = { id: "combat-1" };
     const b = berserker();

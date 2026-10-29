@@ -16,7 +16,7 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
 import { conditionDurationEffects, conditionDurationEffect,
          hasConditionDuration, applyConditionWithDuration, clearConditionDuration,
-         sweepConditionDurations, conditionRemainingLabel, onConditionEffectExpired }
+         sweepConditionDurations, onConditionEffectExpired }
   from "../../module/combat/condition-effects.mjs";
 
 const FLAG = "warhammer-dbc";
@@ -241,20 +241,6 @@ describe("sweepConditionDurations", () => {
     const { expired } = await sweepConditionDurations(actor);
     expect(expired).toEqual([]);
     expect(actor.effects).toHaveLength(1);
-  });
-});
-
-describe("conditionRemainingLabel", () => {
-  it("остаток словами, своими единицами", async () => {
-    const actor = makeActor();
-    await applyConditionWithDuration(actor, "poisoned", { value: 1, unit: "hours" });
-    actor.effects[0].setRemaining(30);
-    actor.effects[0].duration.units = "minutes";
-    expect(conditionRemainingLabel(actor, "poisoned")).toBe("30 минут");
-  });
-
-  it("без срока — пусто", () => {
-    expect(conditionRemainingLabel(makeActor(), "stunned")).toBe("");
   });
 });
 

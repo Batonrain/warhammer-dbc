@@ -66,15 +66,6 @@ describe("окно листа", () => {
 });
 
 describe("слоты Расы и Субрасы", () => {
-  it("слоты расы объявлены действиями листа", () => {
-    const actions = Object.keys(WarhammerCharacterSheet.DEFAULT_OPTIONS.actions);
-
-    expect(actions).toEqual(expect.arrayContaining([
-      "racePick", "raceOpen", "raceClear", "raceApply",
-      "subracePick", "subraceOpen", "subraceClear", "subraceApply"
-    ]));
-  });
-
   // Раунд правок 1 (wdbc-n1k), находка 2: состояние «ключ есть, носителя
   // нет» было тупиком для субрасы — у расы такое же состояние чинится
   // кнопкой «Применить» (raceApply), а у субрасы её не было вовсе.

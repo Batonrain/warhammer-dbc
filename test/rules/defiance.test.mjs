@@ -89,8 +89,7 @@ describe("Defiance в паке", () => {
     expect(entries.filter(e => e.kind === "reroll")).toEqual([]);
   });
 
-  it("заметка не начинается с устаревшего «Не смоделировано» и называет читателя", () => {
-    expect(doc.system.notes).not.toMatch(/^Не смоделировано/);
+  it("заметка называет читателя", () => {
     expect(doc.system.notes).toContain("hatred.defiance");
   });
 

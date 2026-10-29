@@ -23,7 +23,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   splitGearTopLevel, gearChoiceOptions, parseGearEntry, parseGearItem, describeGearSpec,
-  qualityForAvailability, defaultQualityPlan, qualityPlanFits, constructorCoverage,
+  qualityForAvailability, defaultQualityPlan, constructorCoverage,
   namedLookupKeys, pickNamedCandidate, needsLegionProp, normName, compactKey,
   GEAR_FOLDERS, GEAR_FOLDER_LABELS
 } from "../../module/rules/creation-gear.mjs";
@@ -333,8 +333,6 @@ describe("Качество выданного", () => {
     const slots = parseGearItem("5 элементов Снаряжения и Инструментов до R1 из них 2 Good.Q и 1 Best.Q").qualitySlots;
     expect(slots).toEqual({ good: 2, best: 1 });
     expect(defaultQualityPlan(5, slots)).toEqual(["best", "good", "good", "common", "common"]);
-    expect(qualityPlanFits(["good", "best", "common", "good", "common"], slots)).toBe(true);
-    expect(qualityPlanFits(["best", "best", "common", "common", "common"], slots)).toBe(false);
   });
 
   it("«Good. Q» с пробелом — тоже Хорошее; «(Best.Q +Mono)» — Высшее и надстройка Mono", () => {

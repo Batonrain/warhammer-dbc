@@ -58,6 +58,9 @@ describe("executeItemCode — стандартные помощники в об�
       seen.grantStartingDisorder = typeof grantStartingDisorder;
       seen.shareCombatFormation = typeof shareCombatFormation;
       seen.tzeentchMarkBindUpdate = typeof tzeentchMarkBindUpdate;
+      seen.changeActorInfamy = typeof changeActorInfamy;
+      seen.actorInfamyValue = typeof actorInfamyValue;
+      seen.actorInfamyMax = typeof actorInfamyMax;
     `, null, { seen });
     expect(seen).toEqual({
       woundLossUpdates: "function", isTokenInSight: "function",
@@ -75,7 +78,8 @@ describe("executeItemCode — стандартные помощники в об�
       useAdaptiveVenom: "function",
       emergencyMaintenance: "function", scroungeSupplies: "function", grantCursedHeirloom: "function",
       activateBattleForm: "function", endBattleForm: "function", grantStartingDisorder: "function",
-      shareCombatFormation: "function", tzeentchMarkBindUpdate: "function"
+      shareCombatFormation: "function", tzeentchMarkBindUpdate: "function",
+      changeActorInfamy: "function", actorInfamyValue: "function", actorInfamyMax: "function"
     });
   });
 

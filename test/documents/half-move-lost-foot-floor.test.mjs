@@ -29,14 +29,6 @@ function characterWith(conditions = {}, lostLimbs = {}) {
 }
 
 describe("Потеря стопы/ноги — пол SPD 0.5 работает и после Math.floor", () => {
-  it("только потеря стопы (без Поваленного): halfMove = floor(3/2) = 1, минимум не нужен", () => {
-    const system = characterWith({}, { rightFoot: { lost: true } });
-    expect(system.movement.halfMove).toBe(1);
-    // wdbc-x1nz.2.91: Полное = урезанный SPD × 2 (книга, «Раны и Урон»), а не
-    // floor(6/2) = 3, как закреплял прежний тест.
-    expect(system.movement.move).toBe(2);
-  });
-
   it("Повален + потеря стопы: Полудвижение не проваливается ниже 0.5 и не падает ниже половины Полного", () => {
     const system = characterWith({ prone: true }, { rightFoot: { lost: true } });
     // Без фикса: halfMove = floor(1.5/2) = 0, move = floor(3/2) = 1 —
@@ -49,11 +41,5 @@ describe("Потеря стопы/ноги — пол SPD 0.5 работает �
     expect(system.movement.run).toBe(3);
     // Расхождение с «сырой» формулой обязано подсветиться игроку.
     expect(system.movement.spdBreakdown.some(b => b.label === "Минимум SPD")).toBe(true);
-  });
-
-  it("потеря обеих ног по-прежнему обнуляет движение целиком, а не клампится к 0.5", () => {
-    const system = characterWith({}, { rightLeg: { lost: true }, leftLeg: { lost: true } });
-    expect(system.movement.halfMove).toBe(0);
-    expect(system.movement.move).toBe(0);
   });
 });

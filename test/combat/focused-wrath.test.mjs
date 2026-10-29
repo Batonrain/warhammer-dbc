@@ -9,11 +9,10 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured, fakeForm } from "../support/foundry-stub.mjs";
 import { actorFor, weaponFor, setTargets, char } from "../support/combat-fixtures.mjs";
 import {
-  hasFocusedWrath, focusedWrathApplies, boostBonusFor, hateAttackDegrees, FOCUSED_WRATH_BOOST,
+  hasFocusedWrath, focusedWrathApplies, hateAttackDegrees,
   FOCUSED_WRATH_REROLL, focusedWrathBarNote, wrathRerollOpts, attackBoostFor
 } from "../../module/rules/focused-wrath.mjs";
 import { focusedWrathOnAttack } from "../../module/combat/focused-wrath.mjs";
-import { FATE_BONUS } from "../../module/rules/fate-bonus.mjs";
 import { raceTarget } from "../../module/rules/talent-targets.mjs";
 import { showAttackDialog } from "../../module/sheets/attack-dialog.mjs";
 import { _executeAttackRoll } from "../../module/combat/attack.mjs";
@@ -49,13 +48,6 @@ describe("опознание и условие «рукопашная атака
 
 describe("четыре режима траты Очка Бесчестия", () => {
   const ctx = { isMelee: true, targetActor: ork };
-
-  it("Усиление: +20 вместо +10", () => {
-    expect(FOCUSED_WRATH_BOOST).toBe(20);
-    expect(boostBonusFor(fighter(), ctx)).toBe(20);
-    expect(boostBonusFor(fighter(), { ...ctx, targetActor: human })).toBe(FATE_BONUS);
-    expect(boostBonusFor(fighter([hatred(raceTarget("ork"))]), ctx)).toBe(FATE_BONUS);
-  });
 
   it("Атака Ненависти: Inf.b Успехов вместо 1 (минимум 1)", () => {
     expect(hateAttackDegrees(fighter(undefined, 3), ctx)).toBe(3);
@@ -168,11 +160,10 @@ describe("проводка в hooks.mjs и данные пака", () => {
     const keys = (doc.flags["warhammer-dbc"].mechanics ?? []).flatMap(g => g.entries).map(e => e.capabilityKey);
     expect(keys).toContain("berserker.core.focusedWrath");
     expect(CAPABILITIES["berserker.core.focusedWrath"].reader).toMatch(/focused-wrath/);
-    expect(doc.system.notes).not.toMatch(/^Не смоделировано/);
   });
 });
 
-describe("трата с полосы Очков Бесчестия: памятка про +1 Успех по Ненавистной цели", () => {
+describe("трата с полосы Очков Бесчестия: памятка Сфокусированного Гнева", () => {
   const realGetProperty = foundry.utils.getProperty;
   beforeEach(() => {
     resetCaptured(); setTargets([]);
@@ -191,9 +182,6 @@ describe("трата с полосы Очков Бесчестия: памятк
     return captured.chat.map(m => String(m.content)).join("\n");
   }
 
-  it("«Успех» с полосы памятки Сфокусированного Гнева больше не пишет (Успех дописывает меню карточки)", async () => {
-    expect(await spend("success", "ork")).not.toMatch(/Сфокусированный Гнев/);
-  });
   it("«Усиление» — про +20; цель не Ненавистная или не отмечена — памятки нет", async () => {
     expect(await spend("boost", "ork")).toMatch(/\+20 вместо \+10/);
     resetCaptured();

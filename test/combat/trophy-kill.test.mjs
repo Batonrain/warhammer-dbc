@@ -13,9 +13,8 @@ import path from "node:path";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { WarhammerActor } from "../../module/documents/actor.mjs";
 import { ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
-import { CARD_ONCE_FLAGS } from "../../module/combat/card-once.mjs";
 import {
-  offerTrophyAfterKill, awardTrophy, trophyKillDecision, TROPHY_CARD_FLAG
+  offerTrophyAfterKill, awardTrophy, trophyKillDecision
 } from "../../module/combat/trophy-kill.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "../..");
@@ -65,12 +64,6 @@ beforeEach(() => {
   globalThis.game.user = { id: "gm", isGM: true };
 });
 afterEach(() => { globalThis.fromUuid = prevFromUuid; globalThis.game.user = {}; });
-
-describe("служебное", () => {
-  it("отметка карточки внесена в белый список сокета", () => {
-    expect(CARD_ONCE_FLAGS).toContain(TROPHY_CARD_FLAG);
-  });
-});
 
 describe("offerTrophyAfterKill: карточка после констатации смерти", () => {
   it("убийца — носитель (Собиратель Трофеев): в чат карточка с кнопкой «Трофей», Inf цели на кнопке", async () => {

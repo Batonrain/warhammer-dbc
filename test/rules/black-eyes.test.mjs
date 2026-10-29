@@ -1,33 +1,17 @@
 // test/rules/black-eyes.test.mjs
 //
-// wdbc-1rno.1: isBlackEyesItem/hasBlackEyesDarknessImmunity — без Foundry.
+// wdbc-1rno.1: hasBlackEyesDarknessImmunity — без Foundry.
+// Опознание самого Дара по ключу — tools/item-markers-table.mjs
+// (test/rules/item-markers-in-packs.test.mjs).
 
 import { describe, it, expect } from "vitest";
-import { isBlackEyesItem, hasBlackEyesDarknessImmunity } from "../../module/rules/black-eyes.mjs";
+import { hasBlackEyesDarknessImmunity } from "../../module/rules/black-eyes.mjs";
 
 const blackEyesItem = () => ({
   type: "mutation", name: "Black Eyes / Чёрные Глаза",
   flags: { "warhammer-dbc": { mechanics: [{ id: "g1", operator: "AND", entries: [
     { id: "e1", kind: "capability", capabilityKey: "gift.slaanesh.blackEyes" }
   ] }] } }
-});
-
-describe("isBlackEyesItem", () => {
-  it("предмет с нужным capabilityKey — true", () => {
-    expect(isBlackEyesItem(blackEyesItem())).toBe(true);
-  });
-
-  it("предмет с тем же именем, без ключа (опознание по имени) — true", () => {
-    expect(isBlackEyesItem({ type: "mutation", name: "Black Eyes / Чёрные Глаза", flags: {} })).toBe(true);
-  });
-
-  it("другой тип предмета — false", () => {
-    expect(isBlackEyesItem({ type: "trait", name: "Black Eyes / Чёрные Глаза", flags: {} })).toBe(false);
-  });
-
-  it("другая мутация — false", () => {
-    expect(isBlackEyesItem({ type: "mutation", name: "Cyclops / Циклоп", flags: {} })).toBe(false);
-  });
 });
 
 describe("hasBlackEyesDarknessImmunity", () => {

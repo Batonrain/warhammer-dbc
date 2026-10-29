@@ -12,7 +12,7 @@ import {
 } from "../../module/combat/action-economy.mjs";
 import { packDocById } from "../support/pack-doc.mjs";
 import { allPackDocuments, PACK_SCAN_TIMEOUT } from "../support/pack-docs.mjs";
-import { strangeReactionMax, STRANGE_TECHNIQUE_KEY } from "../../module/rules/melee-talents.mjs";
+import { strangeReactionMax } from "../../module/rules/melee-talents.mjs";
 
 const talentDoc = packDocById("packs-src/talents/Рукопашные", "T5D0bzAETftow4OF");
 
@@ -54,10 +54,6 @@ afterEach(() => { globalThis.game.combat = undefined; });
 describe("Странная Техника: данные пака", () => {
   it("общая +1 к system.reactions.max снята: ActiveEffect у Таланта нет", () => {
     expect(talentDoc.effects).toEqual([]);
-  });
-  it("Талант несёт запись Конструктора с ключом возможности", () => {
-    const keys = talentDoc.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries).map(e => e.capabilityKey);
-    expect(keys).toContain(STRANGE_TECHNIQUE_KEY);
   });
 });
 
@@ -146,7 +142,7 @@ describe("Странная Техника: трата", () => {
     expect(a.system.reactions.value).toBe(0);
     expect(a.system.reactions.strangeValue).toBe(1);
   });
-  it("странная Реакция при пустых обоих пулах и без strange — отказ; со strange и пустой странной — отказ", async () => {
+  it("странная атака при пустых обоих пулах — отказ", async () => {
     inCombat();
     const a = actorFor({ reactions: { value: 0, strangeValue: 0 } });
     expect(canSpendReaction(a, { strange: true })).toBe(false);

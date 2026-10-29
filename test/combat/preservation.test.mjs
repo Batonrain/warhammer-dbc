@@ -9,7 +9,7 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, afterEach } from "vitest";
 import {
-  hasPreservation, preservationMax, preservationAvailable, preservationSizeReduction,
+  preservationMax, preservationAvailable, preservationSizeReduction,
   applyPreservationSingle, applyPreservationArea
 } from "../../module/combat/preservation.mjs";
 
@@ -47,11 +47,7 @@ function scene(tokens) { return { grid, tokens: { contents: tokens } }; }
 
 afterEach(() => { resetCaptured(); globalThis.game.combat = undefined; });
 
-describe("hasPreservation / preservationMax", () => {
-  it("определяет владение Талантом", () => {
-    expect(hasPreservation(bonesinger({ hasTalent: true }))).toBe(true);
-    expect(hasPreservation(bonesinger({ hasTalent: false }))).toBe(false);
-  });
+describe("preservationMax", () => {
   it("лимит сессии — F.b, минимум 1", () => {
     expect(preservationMax(bonesinger({ felBonus: 5 }))).toBe(5);
     expect(preservationMax(bonesinger({ felBonus: 0 }))).toBe(1);

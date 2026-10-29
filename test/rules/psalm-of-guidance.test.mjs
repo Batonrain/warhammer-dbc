@@ -1,40 +1,19 @@
 // test/rules/psalm-of-guidance.test.mjs
 //
-// wdbc-1rno.5 (находка 8/12): hasPsalmOfGuidance/actorHasEquippedCognisWeapon/
+// wdbc-1rno.5 (находка 8/12): actorHasEquippedCognisWeapon/
 // psalmCognitionCost/canSpendCognition/spendCognition — без Foundry.
 
 import { describe, it, expect } from "vitest";
 import {
-  hasPsalmOfGuidance, actorHasEquippedCognisWeapon, psalmCognitionCost,
-  canSpendCognition, spendCognition, PSALM_OF_GUIDANCE_CAPABILITY
+  actorHasEquippedCognisWeapon, psalmCognitionCost,
+  canSpendCognition, spendCognition
 } from "../../module/rules/psalm-of-guidance.mjs";
 
 const psalmItem = () => ({ type: "techPower", name: "Psalm of the Guidance / Псалом Наставления", flags: {} });
-const psalmByKey = () => ({
-  type: "techPower", name: "Переименовали в паке",
-  // isItemActive (apps/effects.mjs) требует techPower miracleType:"passive"
-  // (или sustained) — Псалом Наставления в паке именно такой.
-  system: { miracleType: "passive" },
-  flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
-    { id: "e", kind: "capability", capabilityKey: PSALM_OF_GUIDANCE_CAPABILITY }
-  ] }] } }
-});
 const cognisWeapon = (equipped = true) => ({
   type: "weapon", name: "Ружьё с духом", system: { equipped, weaponProps: [{ key: "cognis" }] }
 });
 const plainWeapon = () => ({ type: "weapon", name: "Обычное ружьё", system: { equipped: true, weaponProps: [] } });
-
-describe("hasPsalmOfGuidance", () => {
-  it("находит по имени", () => {
-    expect(hasPsalmOfGuidance({ items: [psalmItem()] })).toBe(true);
-  });
-  it("находит по capabilityKey", () => {
-    expect(hasPsalmOfGuidance({ items: [psalmByKey()] })).toBe(true);
-  });
-  it("нет Техночуда — false", () => {
-    expect(hasPsalmOfGuidance({ items: [] })).toBe(false);
-  });
-});
 
 describe("actorHasEquippedCognisWeapon", () => {
   it("экипированное Cognis-оружие — true", () => {

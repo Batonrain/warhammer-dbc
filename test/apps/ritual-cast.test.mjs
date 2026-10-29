@@ -107,22 +107,24 @@ describe("подстановка ритуала-предмета (applyRitualIte
   // wdbc-1rno: Дары вроде Инфернального Оруженосца дают ГОТОВЫЙ ритуал на
   // конкретного демона — noTest/asMinion/demonName/demonInf фиксированы на
   // предмете, игрок их не вписывает (в отличие от обычного «Призыва»).
-  it("noTest/asMinion/demonName/demonInf переезжают из предмета в R", () => {
+  it("noTest/asMinion/asWeapon/asMount/veilThinner/startDestabilize/demonName/demonInf/demonGod переезжают из предмета в R", () => {
     const applied = applyRitualItem(scholar, ritual({
-      noTest: true, asMinion: true, demonName: "Кровопускатель", demonInf: 35
+      noTest: true, asMinion: true, asWeapon: true, asMount: true, veilThinner: true, startDestabilize: true,
+      demonName: "Кровопускатель", demonInf: 35, demonGod: "khorne", failureType: "summon"
     }), skillsOf);
 
-    expect(applied.noTest).toBe(true);
-    expect(applied.asMinion).toBe(true);
-    expect(applied.demonName).toBe("Кровопускатель");
-    expect(applied.demonInf).toBe(35);
+    expect(applied).toMatchObject({
+      noTest: true, asMinion: true, asWeapon: true, asMount: true, veilThinner: true, startDestabilize: true,
+      demonName: "Кровопускатель", demonInf: 35, demonGod: "khorne", type: "summon"
+    });
   });
 
-  it("noTest/asMinion по умолчанию false, а не отсутствуют", () => {
+  it("булевы поля по умолчанию false, а не отсутствуют", () => {
     const applied = applyRitualItem(scholar, ritual({}), skillsOf);
 
-    expect(applied.noTest).toBe(false);
-    expect(applied.asMinion).toBe(false);
+    expect(applied).toMatchObject({
+      noTest: false, asMinion: false, asWeapon: false, asMount: false, veilThinner: false, startDestabilize: false
+    });
   });
 
   it("незаполненные demonName/demonInf не подставляются поверх умолчаний R", () => {

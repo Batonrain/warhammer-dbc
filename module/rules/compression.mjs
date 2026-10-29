@@ -89,10 +89,6 @@ export function isPartCompressed(parts, location) {
   return (parts ?? []).includes(location);
 }
 
-export function hasCompressedHead(parts) {
-  return isPartCompressed(parts, "Голова");
-}
-
 /** «Сжав все конечности» (стр. текста мутации) — все 4 руки/ноги, Голова не считается. */
 export function allLimbsCompressed(parts) {
   const set = new Set(parts ?? []);

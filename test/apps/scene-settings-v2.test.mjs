@@ -51,16 +51,6 @@ describe("SceneSettingsApp: конструктор заводит два нез�
     expect(app.veil.tarot).toBeTruthy();
     expect(app.veil.defile).toBeTruthy();
   });
-
-  it("оба контроллера несут методы своего класса как есть (не переписаны)", () => {
-    const app = new SceneSettingsApp();
-    expect(typeof app.env._prepareContext).toBe("function");
-    expect(typeof app.env._patch).toBe("function");
-    expect(typeof app.env._onRender).toBe("function");
-    expect(typeof app.veil._prepareContext).toBe("function");
-    expect(typeof app.veil._onRender).toBe("function");
-    expect(typeof app.veil._castRitual).toBe("function");
-  });
 });
 
 describe("_prepareContext: делегирует обоим разделам", () => {

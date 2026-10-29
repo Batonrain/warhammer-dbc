@@ -35,16 +35,6 @@ export const RACE_TO_NAME_CULTURE = {
   drukhari: "drukhari"
 };
 
-/** Ключи культур, для которых есть список имён (для выпадающего списка и т.п.). */
-export function nameCultures() {
-  return Object.keys(NAME_LISTS);
-}
-
-/** Подпись культуры для интерфейса; неизвестный ключ — сама культура как есть. */
-export function nameCultureLabel(culture) {
-  return NAME_LISTS[culture]?.label || culture;
-}
-
 /** Культура имён для расы Мастера создания; без явного соответствия — "imperial". */
 export function cultureForRace(raceKey) {
   return RACE_TO_NAME_CULTURE[raceKey] || "imperial";

@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { existsSync } from "node:fs";
+import path from "node:path";
 import {
   FONT_FAMILIES, FONT_CHOICES, resolveFontFamily, effectiveFontFamily,
   registerSystemFonts, registerFontSettings, applySystemFont
@@ -21,16 +23,12 @@ describe("resolveFontFamily — чистая функция резолюции",
 });
 
 describe("FONT_FAMILIES / FONT_CHOICES — 7 шрифтов", () => {
-  it("ровно 7 файлов с русскими именами по книге", () => {
+  // Переименованный или пропавший файл шрифта Foundry молча заменит дефолтным.
+  it("у каждого из 7 шрифтов файл лежит в fonts/", () => {
     expect(FONT_FAMILIES).toHaveLength(7);
-    const byFamily = Object.fromEntries(FONT_FAMILIES.map(f => [f.family, f.file]));
-    expect(byFamily["Бинарный Кант"]).toBe("binaric.ttf");
-    expect(byFamily["Колхидский"]).toBe("colhidian.ttf");
-    expect(byFamily["Высокая Готика"]).toBe("highGothic.ttf");
-    expect(byFamily["Низкая Готика"]).toBe("lowGothic.ttf");
-    expect(byFamily["Odessa"]).toBe("odessa.otf");
-    expect(byFamily["System"]).toBe("system.ttf");
-    expect(byFamily["Истинный Язык"]).toBe("trueTongue.ttf");
+    const fontsDir = path.resolve(import.meta.dirname, "../../fonts");
+    const missing = FONT_FAMILIES.filter(f => !existsSync(path.join(fontsDir, f.file))).map(f => f.file);
+    expect(missing).toEqual([]);
   });
   it("FONT_CHOICES начинается с пустого пункта «дефолт Foundry»", () => {
     expect(FONT_CHOICES[""]).toBeTruthy();

@@ -16,7 +16,7 @@ import path from "node:path";
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { realCreature } from "../support/real-creature.mjs";
-import { forceMoveSpd, forceMoveDistance, useForceMove } from "../../module/combat/force-move.mjs";
+import { forceMoveSpd, useForceMove } from "../../module/combat/force-move.mjs";
 import { useJointMove } from "../../module/combat/joint-move.mjs";
 import { useVehiclePushContest } from "../../module/combat/vehicle-force-move.mjs";
 
@@ -64,12 +64,6 @@ describe("forceMoveSpd — SPD с настоящего существа", () => 
     expect(forceMoveSpd({ system: { movement: { halfMove: 5 } } })).toBe(5);
     expect(forceMoveSpd({ system: {} })).toBe(0);
     expect(forceMoveSpd(null)).toBe(0);
-  });
-
-  it("forceMoveDistance с этим SPD: 0,5м за Успех, не выше SPD", () => {
-    const spd = forceMoveSpd(realCreature({ spd: 4 }));
-    expect(forceMoveDistance("push", 3, spd)).toBe(1.5);
-    expect(forceMoveDistance("push", 20, spd)).toBe(4);
   });
 });
 

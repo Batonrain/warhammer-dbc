@@ -41,11 +41,6 @@ describe("место Стремлений на листе", () => {
     for (const tpl of [NOTES, read("templates/apps/character-wizard.hbs")]) expect(tpl).toContain("aspir-repick");
   });
 
-  it("подсказка не велит применять модификаторы руками — их применяет Механика", () => {
-    expect(NOTES).not.toContain("применяются к Базе вручную");
-    expect(read("templates/item/parts/aspiration.hbs")).not.toContain("сам движок их не считает");
-  });
-
   it("в шапке Стремлений не осталось вовсе", () => {
     expect(HEADER).not.toContain("aspir");
     expect(HEADER).not.toContain("aspirationSlots");

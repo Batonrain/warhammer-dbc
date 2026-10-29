@@ -13,7 +13,7 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach } from "vitest";
 import {
-  isIllusionOfNormalityItem, illusionOfNormalityHtml,
+  illusionOfNormalityHtml,
   attemptNoticeIllusion, attemptSeeThroughIllusion,
   isIllusionMaintained, setIllusionMaintained
 } from "../../module/apps/illusion-of-normality.mjs";
@@ -48,18 +48,6 @@ function setTarget(actor) { globalThis.game.user.targets = actor ? [{ actor }] :
 beforeEach(() => {
   resetCaptured();
   globalThis.game.user = { targets: [] };
-});
-
-describe("isIllusionOfNormalityItem", () => {
-  it("совпадает по двуязычному имени и типу", () => {
-    expect(isIllusionOfNormalityItem(illusionItem())).toBe(true);
-  });
-  it("другой тип предмета — false", () => {
-    expect(isIllusionOfNormalityItem({ type: "trait", name: "Illusion of Normality / Иллюзия Нормальности" })).toBe(false);
-  });
-  it("другая Мутация — false", () => {
-    expect(isIllusionOfNormalityItem(mutationItem({ name: "Boneless / Бескостный" }))).toBe(false);
-  });
 });
 
 describe("attemptNoticeIllusion", () => {

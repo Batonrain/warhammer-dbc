@@ -5,19 +5,14 @@
 // «Отца Битвы» писал fate.value руками — у Демон-Принца схема это поле
 // содержит, а лист не показывает, и начисленное Очко пропадало (wdbc-0b2).
 //
-// Здесь проверяется общая точка записи и то, что скрипты предметов её ВИДЯТ:
-// имя в области видимости executeItemCode — половина контракта, без неё
-// скрипт снова напишет пул руками.
+// Здесь проверяется общая точка записи. То, что скрипты предметов её ВИДЯТ
+// (имя в области видимости executeItemCode), — test/apps/item-script.test.mjs.
 
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
-import fs   from "node:fs";
-import path from "node:path";
 import { changeActorInfamy, actorInfamyPath } from "../../module/apps/infamy-points.mjs";
 import { packDocByFileHint } from "../support/pack-doc.mjs";
-
-const root = path.resolve(import.meta.dirname, "../..");
 
 /** Актор-заглушка: update() пишет в плоскую карту, как настоящий. */
 function actorOf(type, system) {
@@ -52,13 +47,6 @@ describe("Очки Бесчестия начисляются в пул свое�
 });
 
 describe("скрипты предметов видят движок Бесчестия", () => {
-  it("changeActorInfamy передан в область видимости executeItemCode", () => {
-    const src = fs.readFileSync(path.join(root, "module/apps/item-script.mjs"), "utf8");
-    // и в списке имён AsyncFunction, и в списке значений вызова
-    expect(src.match(/"changeActorInfamy"/g)?.length ?? 0).toBe(1);
-    expect(src).toMatch(/\n\s*changeActorInfamy, actorInfamyValue, actorInfamyMax,/);
-  });
-
   it("«Отец Битвы» пишет пул через движок, а не в fate.value руками", () => {
     const doc = packDocByFileHint(
       "packs-src/mutations/Дары_Богов/Кхорн/Father_of_Battle___Отец_Битвы_pQ0ypCOCEl4SDqJf.json");

@@ -2,8 +2,8 @@
 //
 // Сторож против молчаливой поломки при переименовании (wdbc-iadw).
 //
-// 57 Талантов/Черт/имплантов/оружия опознаются в коде по литеральному имени —
-// itemHasName(item, "Bone Song"), 93 вызова. Это ровно тот класс ошибки, о
+// Таланты/Черты/импланты/оружие опознаются в коде по литеральному имени —
+// itemHasName(item, "Bone Song") и родственные формы (см. literalNames). Это ровно тот класс ошибки, о
 // котором AGENTS.md предупреждает на своём же примере: в паке лежал «Sure
 // Stitch» вместо «Sure Strike», и Талант просто не находился. Ни один гейт
 // этого не ловил: тесты, lint и сборка паков оставались зелёными, в консоль
@@ -38,24 +38,65 @@ const stringConstsOf = text => new Map(
   [...text.matchAll(/(?:export\s+)?const\s+([A-Za-z_$][\w$]*)\s*=\s*"([^"]*)"/g)]
     .map(m => [m[1], m[2]]));
 
+/** Имена из таблиц `{ key: "ключ", name: "Имя" }` модуля (TAKEDOWN, MELEE_TALENTS…). */
+const tableNamesOf = text =>
+  [...text.matchAll(/\{\s*key:\s*"[^"]*",\s*name:\s*"([^"]+)"/g)].map(m => m[1]);
+
+/** Массивы из одних строк: `const X_NAMES = ["Eng", "Рус"]`, можно в несколько строк. */
+const stringArraysOf = text =>
+  [...text.matchAll(/const\s+([A-Za-z_$][\w$]*)\s*=\s*(?:Object\.freeze\()?\[([^\]]*)\]/g)]
+    .map(m => ({ id: m[1], body: m[2].replace(/\/\/.*$/gm, ""), line: text.slice(0, m.index).split("\n").length }))
+    .filter(a => /^\s*"[^"]*"(\s*,\s*"[^"]*")*\s*,?\s*$/.test(a.body))
+    .map(a => ({ id: a.id, line: a.line, names: [...a.body.matchAll(/"([^"]+)"/g)].map(s => s[1]) }));
+
+/** Аргумент-имя: литерал, константа файла или поле `.name` таблицы. */
+const NAME_ARG = String.raw`("[^"]*"|[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)`;
+const NAME_CALLS = [
+  // itemHasName(item, ИМЯ)
+  new RegExp(String.raw`itemHasName\([^,]+,\s*${NAME_ARG}\s*[),]`, "g"),
+  // hasAbility(actor, ключ, ИМЯ, тип) — опознание переведено на ключ
+  // Возможности (wdbc-iadw), но имя осталось запасным путём и обязано
+  // совпадать с паком. Ключ — литерал, константа или `T.key`: неважно.
+  new RegExp(String.raw`hasAbility\([^,]+,[^,]+,\s*${NAME_ARG}\s*[),]`, "g"),
+  // itemIs(item, "тип", ключ, ИМЯ) — то же для вопроса о САМОМ предмете (wdbc-wdlw).
+  new RegExp(String.raw`itemIs\([^,]+,[^,]+,[^,]+,\s*${NAME_ARG}\s*[),]`, "g")
+];
+
 /**
- * Имена, по которым код опознаёт предмет через itemHasName.
+ * Имена, по которым код опознаёт предмет.
  *
- * Считаются ДВА вида записи, и второй не менее важен первого: половина
- * вызовов передаёт не литерал на месте, а константу файла
- * (`itemHasName(i, FULLY_ARMED_NAME)`). Сторож, знающий только литералы,
- * молча пропускал бы 23 таких имени — а наверх выносят как раз те, что
- * используются в нескольких местах, то есть самые важные.
+ * Имя доходит до сравнения многими путями, и сторож обязан видеть каждый:
+ * литерал на месте вызова; константа файла (`itemHasName(i, FULLY_ARMED_NAME)`);
+ * поле таблицы `{key, name}` (`hasAbility(a, T.key, T.name)`, где T — строка
+ * MELEE_TALENTS или TAKEDOWN); массив имён, который перебирают
+ * (`X_NAMES.some(n => itemHasName(i, n))`) или отдают помощнику
+ * (`hasLeadershipTalent(actor, RANCOR_NAMES)`); литералы местных помощников
+ * `hasTalent(actor, "Eng", "Рус")` и `hasItem(actor, "тип", "Имя")`. Сторож,
+ * знающий только литералы, молча пропускал половину имён — а наверх выносят
+ * как раз те, что используются в нескольких местах.
  *
  * Имя-переменная времени выполнения (параметр функции) сюда не попадает и не
  * должна: такой договор складывается в рантайме, следить за ним нечем.
  */
 function literalNames() {
   const found = new Map(); // имя → [«файл:строка», …]
+  const add = (name, where) => {
+    if (!found.has(name)) found.set(name, []);
+    found.get(name).push(where);
+  };
   for (const file of filesIn(path.join(ROOT, "module"), ".mjs")) {
     const rel = path.relative(ROOT, file).split(path.sep).join("/");
     const text = fs.readFileSync(file, "utf8");
     const consts = stringConstsOf(text);
+    const tableNames = tableNamesOf(text);
+    const arrays = stringArraysOf(text);
+    const usedArrays = new Set();
+    const resolve = (arg, where) => {
+      if (arg.startsWith("\"")) add(arg.slice(1, -1), where);
+      // `t.name` — строка таблицы, выбранная в рантайме: в договоре вся таблица файла.
+      else if (arg.endsWith(".name")) tableNames.forEach(n => add(n, where));
+      else if (consts.has(arg)) add(consts.get(arg), where);
+    };
     text.split(/\r?\n/).forEach((line, i) => {
       // Строки-комментарии пропускаются. Объяснение, ПОЧЕМУ опознание по имени
       // сняли, обычно цитирует прежний вызов целиком — и сторож принимал
@@ -63,33 +104,17 @@ function literalNames() {
       // договором между данными и кодом не является.
       const bare = line.trim();
       if (bare.startsWith("//") || bare.startsWith("*") || bare.startsWith("/*")) return;
-      const add = (name) => {
-        if (!found.has(name)) found.set(name, []);
-        found.get(name).push(`${rel}:${i + 1}`);
-      };
-      for (const m of line.matchAll(/itemHasName\([^,]+,\s*"([^"]+)"/g)) add(m[1]);
-      for (const m of line.matchAll(/itemHasName\([^,]+,\s*([A-Za-z_$][\w$]*)\s*[),]/g)) {
-        const value = consts.get(m[1]);
-        if (value !== undefined) add(value);
-      }
-      // hasAbility(actor, "ключ", "Имя", тип) — опознание переведено на ключ
-      // Возможности (wdbc-iadw), но имя там осталось как запасной путь и
-      // обязано совпадать с паком ровно так же. Без этой ветки сторож терял
-      // бы имя каждый раз, когда очередной вызов переводят на ключ.
-      for (const m of line.matchAll(/hasAbility\([^,]+,\s*"[^"]*",\s*"([^"]+)"/g)) add(m[1]);
-      for (const m of line.matchAll(/hasAbility\([^,]+,\s*"[^"]*",\s*([A-Za-z_$][\w$]*)\s*[),]/g)) {
-        const value = consts.get(m[1]);
-        if (value !== undefined) add(value);
-      }
-      // itemIs(item, "тип", "ключ", "Имя") — то же самое для вопроса о САМОМ
-      // предмете (wdbc-wdlw). Имя и здесь осталось запасным путём, пока не все
-      // документы паков несут ключ, и обязано совпадать с паком.
-      for (const m of line.matchAll(/itemIs\([^,]+,\s*"[^"]*",\s*"[^"]*",\s*"([^"]+)"/g)) add(m[1]);
-      for (const m of line.matchAll(/itemIs\([^,]+,\s*"[^"]*",\s*"[^"]*",\s*([A-Za-z_$][\w$]*)\s*[),]/g)) {
-        const value = consts.get(m[1]);
-        if (value !== undefined) add(value);
+      const where = `${rel}:${i + 1}`;
+      for (const re of NAME_CALLS) for (const m of line.matchAll(re)) resolve(m[1], where);
+      for (const m of line.matchAll(/\bhasTalent\([^,"]+((?:,\s*"[^"]*")+)\s*\)/g))
+        for (const s of m[1].matchAll(/"([^"]+)"/g)) add(s[1], where);
+      for (const m of line.matchAll(/\bhasItem\([^,"]+,\s*"[^"]*",\s*"([^"]+)"\s*\)/g)) add(m[1], where);
+      for (const a of arrays) {
+        if (new RegExp(String.raw`\b${a.id}\.(?:some|find|filter|every)\(.*\b(?:itemHasName|itemIs)\(`).test(line)
+          || new RegExp(String.raw`\bhas\w*\([^,]+,\s*${a.id}\s*\)`).test(line)) usedArrays.add(a);
       }
     });
+    for (const a of usedArrays) a.names.forEach(n => add(n, `${rel}:${a.line}`));
   }
   return found;
 }
@@ -128,32 +153,46 @@ const KNOWN_GAPS = {
   // русский литерал в коде — мёртвый запасной путь, а не поломка. Убирается
   // вместе с переводом на Возможности (wdbc-iadw).
   "Чёрный Панцирь": "wdbc-iadw — пак называет имплант «19. Чёрный Панцирь / Black Carapace», работает английская половина рядом",
-  "Сус-ан Мембрана": "wdbc-iadw — пак называет имплант «12. Сус-ан Мембрана / Sus-an Membrane», работает английская половина рядом"
+  "Сус-ан Мембрана": "wdbc-iadw — пак называет имплант «12. Сус-ан Мембрана / Sus-an Membrane», работает английская половина рядом",
+  // Прямой апостроф в коде, типографский в паке («Khaine’s Arrow»); русская
+  // половина «Стрела Кхейна» в том же массиве совпадает, Путь работает.
+  "Khaine's Arrow": "wdbc-iadw — пак пишет «Khaine’s Arrow» с типографским апострофом, работает русская половина рядом",
+  // Настоящая дыра: пак зовёт предмет «Mag-Boots / Маг-Сапоги», и
+  // wearsFootwear Маг-Сапоги не видит (Barefoot Ратлинга). Найдено при
+  // расширении сторожа на массивы имён; чинить имя в коде или в паке.
+  "Mag Boots": "wdbc-t044e — пак называет предмет «Mag-Boots / Маг-Сапоги», обувь из снаряжения не опознаётся"
 };
 
 describe("имена предметов, зашитые в код, есть в packs-src", () => {
   const names = literalNames();
   const docs = packNames();
 
-  it("разбор находит и литералы, и имена, вынесенные в константы", () => {
+  it("разбор находит имена во всех формах записи", () => {
     // Порог не декоративный. Сузившийся разбор НЕ виден по красноте: сторож,
     // проверяющий меньше имён, остаётся зелёным. Числом он и ловится.
-    // Считаются четыре формы записи: литерал на месте вызова; имя через
-    // константу файла (`itemHasName(i, FULLY_ARMED_NAME)`); третий аргумент
-    // hasAbility — «есть ли у актора» (wdbc-iadw); четвёртый аргумент itemIs —
-    // «этот ли предмет» (wdbc-wdlw). В двух последних имя осталось запасным
-    // путём после перевода опознания на ключ и обязано совпадать с паком.
+    // Порог снижается только вместе с объяснением, куда делось имя (так ушёл
+    // «Meteor Hammer» при починке Малеария, wdbc-h1bx).
     //
-    // Порог 77, а не 78: «Meteor Hammer» ушёл из кода вместе с починкой
-    // Малеария (wdbc-h1bx) — там опознание переведено на ключ целиком, и имени
-    // в коде больше нет вовсе. Порог снижается только так: вместе с
-    // объяснением, куда делось имя.
-    expect(names.size).toBeGreaterThanOrEqual(77);
+    // 511 (храповик): при расширении разбора на ключ-константу, таблицы {key,name},
+    // массивы имён и hasTalent/hasItem (фаза B аудита тестов, 29.10.2026)
+    // имён стало 511 против 247.
+    expect(names.size).toBeGreaterThanOrEqual(511);
     expect(docs.length).toBeGreaterThan(1000);
 
-    // Именно константная половина: без неё цифра просела бы, но убедимся
-    // прямо, что такие имена в разборе есть.
-    expect([...names.keys()]).toContain("Fully Armed");
+    // По имени на каждую форму: без любой из них цифра просела бы, но
+    // убедимся прямо.
+    expect([...names.keys()]).toEqual(expect.arrayContaining([
+      "Fully Armed",          // itemHasName(i, FULLY_ARMED_NAME) — константа файла
+      "Tracking Aim",         // hasAbility(a, TRACKING_AIM_CAPABILITY, "Tracking Aim") — ключ-константа
+      "Black Eyes",           // itemIs(i, "mutation", КЛЮЧ, NAME)
+      "Takedown",             // hasAbility(a, TAKEDOWN.key, TAKEDOWN.name) — таблица
+      "Savior",               // hasAbility(a, t.key, t.name) — строка MELEE_TALENTS в рантайме
+      "Rancor",               // hasLeadershipTalent(actor, RANCOR_NAMES) — массив помощнику
+      "Летающий",             // FLIGHT_TRAIT_NAMES.some(n => itemHasName(i, n))
+      "Teacher",              // hasTalent(actor, "Teacher")
+      "Clear Mind",           // hasItem(actor, "trait", "Clear Mind")
+      "Прыжок в Седло"        // hasTalent(actor, "Saddle Jump", "Прыжок в Седло")
+    ]));
   });
 
   it("у каждого имени есть носитель в packs-src", () => {

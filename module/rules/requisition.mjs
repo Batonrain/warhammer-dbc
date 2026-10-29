@@ -99,9 +99,6 @@ export const NODE_KIND_TYPE = Object.freeze({
   weapon: "weapon", augur: "ethereal", voidShield: "energy", warp: "energy"
 });
 
-/** Компонент корабля (не корпус и не груз): то, что ставят на судно. */
-export const isShipNode = item => item?.type === "component";
-
 /** Тип узла по таблице книги; неизвестное и не-узел — структурный. */
 export function nodeTypeOf(item) {
   return NODE_KIND_TYPE[item?.system?.kind] ?? "structural";
@@ -330,11 +327,6 @@ export function requisitionModifier({ rarity = 0, quantity = 1, quality = "commo
 
   return { rarityMod: rMod, quantityMod: qtyMod, qualityMod: qMod, localMod: lMod, placeMod: pMod,
     total: rMod + qtyMod + qMod + pMod + lMod, unrated, tier, node: nodeKey, parts };
-}
-
-/** Порог теста Inf: характеристика плюс модификатор таблиц (Таланты-галочки добавляет окно броска). */
-export function requisitionThreshold(inf, modifier) {
-  return (Number(inf) || 0) + (Number(modifier) || 0);
 }
 
 /**

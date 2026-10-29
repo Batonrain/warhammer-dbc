@@ -5,22 +5,10 @@
 // акторе миньона, см. комментарий в module/rules/one-against-a-hundred.mjs).
 
 import { describe, it, expect } from "vitest";
-import { hasOneAgainstAHundred, oneAgainstAHundredAdvantage } from "../../module/rules/one-against-a-hundred.mjs";
+import { oneAgainstAHundredAdvantage } from "../../module/rules/one-against-a-hundred.mjs";
 
 const actorWith = (...talentNames) => ({
   items: talentNames.map(name => ({ type: "talent", name }))
-});
-
-describe("hasOneAgainstAHundred", () => {
-  it("находит по билингвальному имени", () => {
-    expect(hasOneAgainstAHundred(actorWith("One Against A Hundred / Один Против Сотни"))).toBe(true);
-  });
-  it("нет Таланта — false", () => {
-    expect(hasOneAgainstAHundred(actorWith("Dodge"))).toBe(false);
-  });
-  it("нет актора — false, не падает", () => {
-    expect(hasOneAgainstAHundred(null)).toBe(false);
-  });
 });
 
 describe("oneAgainstAHundredAdvantage", () => {

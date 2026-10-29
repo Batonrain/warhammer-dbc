@@ -8,7 +8,7 @@
 
 import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
-import { minionLoyalty, ANCIENT_WARRIOR_LOYALTY_BONUS } from "../../module/rules/minion-build.mjs";
+import { minionLoyalty } from "../../module/rules/minion-build.mjs";
 import { ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
 
 const capTalent = capabilityKey => ({
@@ -22,8 +22,6 @@ const master = (items = []) => ({
 });
 
 describe("Ancient Warrior: +10 Лояльности Миньонам-Астартес", () => {
-  it("число из книги", () => expect(ANCIENT_WARRIOR_LOYALTY_BONUS).toBe(10));
-
   it("Миньон-Астартес Хозяина с Талантом получает +10", () => {
     const m = master([capTalent("arsenal.core.ancientWarrior")]);
     expect(minionLoyalty(m, "human", { astartes: true })).toBe(50);

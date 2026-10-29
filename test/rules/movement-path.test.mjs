@@ -9,7 +9,7 @@ import { describe, it, expect } from "vitest";
 import {
   PATH_LIMIT_MODES, PATH_LIMIT_DEFAULT, PATH_LIMIT_ACTOR_TYPES, PATH_LIMITED_METHODS,
   normalizePathLimitMode, emptyAllowance, readAllowance, addAllowance,
-  pathBudget, evaluatePath, moveDegreeFromPath, exceedsNormalRun,
+  pathBudget, evaluatePath, moveDegreeFromPath,
   fmtMeters, pathLimitMessage, walkedMeters, actionCostMultiplier,
   forcedMoveOptions, isForcedMove, displaceToken, TELEPORT_ACTION, DISPLACE_ACTION
 } from "../../module/rules/movement-path.mjs";
@@ -371,12 +371,6 @@ describe("категория перемещения по измеренному 
   it("скорость неизвестна — null, а не ложное full", () => {
     expect(moveDegreeFromPath(5, 0)).toBeNull();
     expect(moveDegreeFromPath(5, undefined)).toBeNull();
-  });
-
-  it("дальше обычного Бега (Спринт)", () => {
-    expect(exceedsNormalRun(18, 18)).toBe(false);
-    expect(exceedsNormalRun(18.5, 18)).toBe(true);
-    expect(exceedsNormalRun(30, 0)).toBe(false);
   });
 });
 

@@ -10,8 +10,9 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { beforeEach, afterEach, describe, it, expect } from "vitest";
 import { packDocById } from "../support/pack-doc.mjs";
+import { packDocuments, PACK_SCAN_TIMEOUT } from "../support/pack-docs.mjs";
 import { WOUND_FREE_FLAG } from "../../module/rules/wound-in-reality.mjs";
-import { spawnDemonOnScene, defaultSpawnDemonFn } from "../../module/apps/demon-summon.mjs";
+import { spawnDemonOnScene, defaultSpawnDemonFn, ruName } from "../../module/apps/demon-summon.mjs";
 
 function bestiaryPack(entries) {
   return {
@@ -61,6 +62,22 @@ beforeEach(() => {
     return actor;
   };
   globalThis.fromUuid = async () => null;
+});
+
+// Ритуал с готовым демоном (Инфернальный Оруженосец, Рыцарь Бога, Духи Стада…)
+// ищет его в Бестиарии по имени. Опечатка или переименование в Бестиарии —
+// и призыв за столом молча говорит «не найден». Проверяются все такие Ритуалы
+// пака разом, тем же сравнением, что findBestiaryActor.
+describe("демон каждого Ритуала с готовым демоном есть в Бестиарии", () => {
+  it("system.demonName находится в packs-src/bestiary целиком или русской половиной", () => {
+    const rituals = packDocuments("rituals", "ritual").map(r => r.doc).filter(d => d.system?.demonName);
+    expect(rituals.length).toBeGreaterThanOrEqual(16);
+    const names = packDocuments("bestiary", "daemon").map(b => b.doc.name.toLowerCase())
+      .flatMap(n => [n, ruName(n)]);
+    const missing = rituals.filter(r => !names.includes(r.system.demonName.trim().toLowerCase()))
+      .map(r => `${r.name}: «${r.system.demonName}»`);
+    expect(missing, "демона с таким именем нет в Бестиарии — призыв его не найдёт").toEqual([]);
+  }, PACK_SCAN_TIMEOUT);
 });
 
 describe("поиск и создание демона на сцене (spawnDemonOnScene)", () => {

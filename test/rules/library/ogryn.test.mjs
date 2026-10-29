@@ -8,8 +8,6 @@
 import { describe, it, expect } from "vitest";
 import { collectRules } from "../../../module/rules/collect.mjs";
 import { hasRuleFlag } from "../../../module/rules/flags.mjs";
-import { RACES } from "../../../module/constants/races.mjs";
-import { OGRYN_RULES } from "../../../module/rules/library/ogryn.mjs";
 import { OGRYN_FIT_FLAG } from "../../../module/rules/ogryn-fit.mjs";
 
 const actor = (over = {}) => ({
@@ -18,9 +16,6 @@ const actor = (over = {}) => ({
 });
 
 describe("правила расы Огрин", () => {
-  it("раса отдаёт правила в сборку", () => {
-    expect(RACES.ogryn.rules).toBe(OGRYN_RULES);
-  });
 
   it("у актора расы ogryn собирается признак сложения под огринское оружие", () => {
     expect(collectRules(actor()).map(r => r.id)).toContain("ogryn.bruteWeapons");

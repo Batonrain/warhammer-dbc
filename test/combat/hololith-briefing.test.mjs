@@ -9,8 +9,11 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { hasHololithBriefing, clearHololithBriefing, useHololithBriefing }
+import { clearHololithBriefing, useHololithBriefing }
   from "../../module/combat/hololith-briefing.mjs";
+
+/** Флаг подготовки — тот, что читает rules/situational.mjs::hololithBriefingBonus. */
+const isBriefed = a => !!a.getFlag("warhammer-dbc", "hololithBriefed");
 
 function actor({ techUse = 40, briefed } = {}) {
   const flags = {};
@@ -29,19 +32,12 @@ beforeEach(() => {
   globalThis.game.time = { worldTime: 0 };
 });
 
-describe("hasHololithBriefing / clearHololithBriefing", () => {
-  it("флага нет — false, clear ничего не делает (не падает)", async () => {
-    const a = actor();
-    expect(hasHololithBriefing(a)).toBe(false);
-    await clearHololithBriefing(a);
-    expect(hasHololithBriefing(a)).toBe(false);
-  });
-
+describe("clearHololithBriefing", () => {
   it("флаг стоит — true, clear снимает", async () => {
     const a = actor({ briefed: true });
-    expect(hasHololithBriefing(a)).toBe(true);
+    expect(isBriefed(a)).toBe(true);
     await clearHololithBriefing(a);
-    expect(hasHololithBriefing(a)).toBe(false);
+    expect(isBriefed(a)).toBe(false);
   });
 });
 
@@ -54,7 +50,7 @@ describe("useHololithBriefing", () => {
 
     await useHololithBriefing(a, item);
 
-    expect(hasHololithBriefing(a)).toBe(true);
+    expect(isBriefed(a)).toBe(true);
     expect(captured.chat.length).toBe(1);
     expect(captured.chat[0].content).toContain("Успех");
   });
@@ -65,7 +61,7 @@ describe("useHololithBriefing", () => {
 
     await useHololithBriefing(a, item);
 
-    expect(hasHololithBriefing(a)).toBe(false);
+    expect(isBriefed(a)).toBe(false);
     expect(captured.chat[0].content).toContain("Провал");
   });
 });

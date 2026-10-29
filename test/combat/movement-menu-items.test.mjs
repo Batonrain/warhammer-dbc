@@ -78,11 +78,6 @@ describe("movementMenuItems", () => {
     expect(items.map(i => i.key)).not.toContain("fly");
   });
 
-  it("каждый пункт умеет action() без падения (не проверяем побочный эффект — только что вызов не бросает)", () => {
-    const items = movementMenuItems(fakeActor());
-    for (const it of items) expect(typeof it.action).toBe("function");
-  });
-
   // wdbc-x1nz.2.19: пункт-тумблер Глубокого Контакта всегда доступен (не
   // завязан на isEncounterActive — переноска может начаться вне боя), метка
   // читает текущее состояние флага.

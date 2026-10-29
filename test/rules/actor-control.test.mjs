@@ -1,7 +1,7 @@
 // test/rules/actor-control.test.mjs
 import { describe, it, expect } from "vitest";
 import {
-  controlOf, isControlExpired, isControlled, controllerUuidOf, buildControlFlag,
+  controlOf, isControlExpired, controllerUuidOf, buildControlFlag,
   establishControl, releaseControl, releaseControlOnCombatEnd, sweepExpiredControl
 } from "../../module/rules/actor-control.mjs";
 
@@ -36,7 +36,7 @@ describe("buildControlFlag", () => {
   });
 });
 
-describe("isControlExpired / isControlled", () => {
+describe("isControlExpired", () => {
   it("нет флага — истёк (не контролируется)", () => {
     expect(isControlExpired(null)).toBe(true);
   });
@@ -64,12 +64,10 @@ describe("establishControl / releaseControl / controllerUuidOf", () => {
   it("установить и снять контроль", async () => {
     const target = mockActor();
     await establishControl(target, "Actor.ctrl", { permanent: true, sourceItemUuid: "Item.wire" });
-    expect(isControlled(target)).toBe(true);
     expect(controllerUuidOf(target)).toBe("Actor.ctrl");
     expect(controlOf(target)).toMatchObject({ controllerUuid: "Actor.ctrl", sourceItemUuid: "Item.wire" });
 
     await releaseControl(target);
-    expect(isControlled(target)).toBe(false);
     expect(controllerUuidOf(target)).toBe(null);
   });
 
@@ -95,9 +93,9 @@ describe("releaseControlOnCombatEnd", () => {
     ] };
     await releaseControlOnCombatEnd(combat);
 
-    expect(isControlled(battleTarget)).toBe(false);
-    expect(isControlled(otherBattleTarget)).toBe(true); // другой бой — не тронут
-    expect(isControlled(permanentTarget)).toBe(true);   // permanent — не тронут
+    expect(controllerUuidOf(battleTarget)).toBe(null);
+    expect(controllerUuidOf(otherBattleTarget)).toBe("Actor.b"); // другой бой — не тронут
+    expect(controllerUuidOf(permanentTarget)).toBe("Actor.c");   // permanent — не тронут
   });
 });
 
@@ -106,17 +104,17 @@ describe("sweepExpiredControl", () => {
     const target = mockActor();
     await establishControl(target, "Actor.a", { unit: "worldTime", durationValue: 100, worldTime: 0 });
     await sweepExpiredControl(target, { worldTime: 200 });
-    expect(isControlled(target)).toBe(false);
+    expect(controllerUuidOf(target)).toBe(null);
   });
   it("не трогает permanent/battle/еще-не-истёкший", async () => {
     const permanentTarget = mockActor();
     await establishControl(permanentTarget, "Actor.a", { permanent: true });
     await sweepExpiredControl(permanentTarget, { worldTime: 999999 });
-    expect(isControlled(permanentTarget)).toBe(true);
+    expect(controllerUuidOf(permanentTarget)).toBe("Actor.a");
 
     const notYet = mockActor();
     await establishControl(notYet, "Actor.a", { unit: "worldTime", durationValue: 100, worldTime: 0 });
     await sweepExpiredControl(notYet, { worldTime: 50 });
-    expect(isControlled(notYet)).toBe(true);
+    expect(controllerUuidOf(notYet)).toBe("Actor.a");
   });
 });

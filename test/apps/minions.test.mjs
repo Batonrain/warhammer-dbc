@@ -1,7 +1,8 @@
 // test/apps/minions.test.mjs
 //
 // Связь «слуга — Хозяин», которой пользуется Конструктор Механики: кто чей
-// миньон, от какой Характеристики Хозяина идёт Лояльность и как она меняется.
+// миньон и как меняется Лояльность. Базовую Лояльность считает
+// rules/minion-build.mjs::minionLoyalty (test/rules/minion-build.test.mjs).
 //
 // Всё, что было про панели на «Записях», ушло вместе с ними: слуга теперь
 // отдельный тип актора, а перечень слуг Хозяина — блок «МИНЬОНЫ» на вкладке
@@ -9,13 +10,13 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  MINION_TYPES, minionsOf, baseLoyaltyFor, loyaltyAfterChange
+  minionsOf, loyaltyAfterChange
 } from "../../module/apps/minions.mjs";
 
 /** Подставные акторы: обычные литералы, никакого Foundry. */
 const master = (over = {}) => ({
   id: "m1", uuid: "Actor.m1", name: "Хозяин", type: "character",
-  system: { characteristics: { fel: { total: 42 }, per: { total: 31 }, int: { total: 25 }, wp: { total: 38 } } },
+  system: {},
   ...over
 });
 
@@ -36,26 +37,6 @@ describe("minionsOf", () => {
   it("без uuid и без акторов — пусто", () => {
     expect(minionsOf(null, [minion()])).toEqual([]);
     expect(minionsOf(master(), [])).toEqual([]);
-  });
-});
-
-describe("baseLoyaltyFor", () => {
-  it("берёт ЗНАЧЕНИЕ своей характеристики Хозяина для каждой группы", () => {
-    const m = master();
-    expect(baseLoyaltyFor(m, "human")).toBe(42);   // F
-    expect(baseLoyaltyFor(m, "beast")).toBe(31);   // P
-    expect(baseLoyaltyFor(m, "machine")).toBe(25); // I
-    expect(baseLoyaltyFor(m, "daemon")).toBe(38);  // W
-  });
-
-  it("без типа и без Хозяина — ноль", () => {
-    expect(baseLoyaltyFor(master(), "")).toBe(0);
-    expect(baseLoyaltyFor(master(), "unknown")).toBe(0);
-    expect(baseLoyaltyFor(null, "human")).toBe(0);
-  });
-
-  it("у каждой группы книги есть своя характеристика Хозяина", () => {
-    expect(Object.values(MINION_TYPES).every(d => !!d.masterChar)).toBe(true);
   });
 });
 

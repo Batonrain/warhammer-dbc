@@ -1,11 +1,13 @@
 // test/rules/unseen-talents.test.mjs
 //
-// wdbc-1rno.2: hasSixthSense/hasMusicOfBattle/hasBlindFighting — узнавание
-// по имени предмета (Talent/Trait), любая половина двуязычного имени.
+// wdbc-1rno.2: узнавание Талантов/Черт по имени (Talent/Trait), любая половина
+// двуязычного имени — общий фильтр типа проверяется на hasSixthSense; имена
+// остальных (Музыка Битвы, Бой Вслепую, Удар в Спину, Снайпер-Убийца)
+// охраняет test/rules/talent-name-literals.test.mjs.
 
 import { describe, it, expect } from "vitest";
 import {
-  hasSixthSense, hasMusicOfBattle, hasBlindFighting, hasBackstab, isKnifeWeapon, hasSniperAssassin,
+  hasSixthSense, isKnifeWeapon,
   isBlindsideMarked, markBlindside, consumeBlindsideMark, blindsideUsedThisTurn, clearBlindsideUse
 } from "../../module/rules/unseen-talents.mjs";
 
@@ -37,33 +39,6 @@ describe("hasSixthSense", () => {
   });
 });
 
-describe("hasMusicOfBattle", () => {
-  it("черта «Music of Battle / Музыка Битвы» — true", () => {
-    expect(hasMusicOfBattle(actor([{ type: "trait", name: "Music of Battle / Музыка Битвы" }]))).toBe(true);
-  });
-  it("нет предмета — false", () => {
-    expect(hasMusicOfBattle(actor([]))).toBe(false);
-  });
-});
-
-describe("hasBlindFighting", () => {
-  it("талант «Blind Fighting / Бой Вслепую» — true", () => {
-    expect(hasBlindFighting(actor([{ type: "talent", name: "Blind Fighting / Бой Вслепую" }]))).toBe(true);
-  });
-  it("нет предмета — false", () => {
-    expect(hasBlindFighting(actor([]))).toBe(false);
-  });
-});
-
-describe("hasBackstab", () => {
-  it("талант «Backstab / Удар в Спину» — true", () => {
-    expect(hasBackstab(actor([{ type: "talent", name: "Backstab / Удар в Спину" }]))).toBe(true);
-  });
-  it("нет предмета — false", () => {
-    expect(hasBackstab(actor([]))).toBe(false);
-  });
-});
-
 describe("isKnifeWeapon", () => {
   it("weaponClass melee + meleeCategory Нож — true", () => {
     expect(isKnifeWeapon({ system: { weaponClass: "melee", meleeCategory: "Нож" } })).toBe(true);
@@ -77,15 +52,6 @@ describe("isKnifeWeapon", () => {
   it("нет предмета/system — false, не бросает", () => {
     expect(isKnifeWeapon(null)).toBe(false);
     expect(isKnifeWeapon({})).toBe(false);
-  });
-});
-
-describe("hasSniperAssassin", () => {
-  it("талант «Sniper Assassin / Снайпер-Убийца» — true", () => {
-    expect(hasSniperAssassin(actor([{ type: "talent", name: "Sniper Assassin / Снайпер-Убийца" }]))).toBe(true);
-  });
-  it("нет предмета — false", () => {
-    expect(hasSniperAssassin(actor([]))).toBe(false);
   });
 });
 

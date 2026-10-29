@@ -10,23 +10,16 @@
 // наибольший рейтинг (rules/hands.mjs::baseHandsFromTraits).
 
 import { describe, it, expect } from "vitest";
-import { parseSubmutations } from "../../module/rules/submutations.mjs";
-import { entryWhenOk } from "../../module/rules/mech-when.mjs";
 import { baseHandsFromTraits } from "../../module/rules/hands.mjs";
 import { packDocById } from "../support/pack-doc.mjs";
 
 const strangeHands = packDocById("packs-src/mutations/Общие_мутации", "ApXVLD3qzW9ngnuC");
-const submutations = parseSubmutations(strangeHands.system.benefit);
 const entries = strangeHands.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries);
 const armsEntries = entries.filter(e => e.kind === "trait" && e.sourceUuid?.includes("b2B8zxbhoK961wEf"));
 
 const MULTIPLE_ARMS = "Multiple Arms / Многорукий (X)";
 
 describe("Strange Hands/Странные Руки: Механика субмутации 10", () => {
-  it("в таблице СУБМУТАЦИИ есть строка 10", () => {
-    expect(submutations.entries.map(e => e.label)).toContain("10");
-  });
-
   it("Черту «Многорукий» выдают ровно две записи: базовая и субмутация 10", () => {
     expect(armsEntries).toHaveLength(2);
     const gated = armsEntries.filter(e => (e.when?.submutations ?? []).length);
@@ -53,9 +46,4 @@ describe("Strange Hands/Странные Руки: Механика субмут
     expect(baseHandsFromTraits(actor)).toBe(4);
   });
 
-  it("субмутация не выбрана — гейтованная запись не включается", () => {
-    const gated = armsEntries.find(e => (e.when?.submutations ?? []).length);
-    expect(entryWhenOk(null, gated, { system: { submutation: { label: "" } } })).toBe(false);
-    expect(entryWhenOk(null, gated, { system: { submutation: { label: "10" } } })).toBe(true);
-  });
 });

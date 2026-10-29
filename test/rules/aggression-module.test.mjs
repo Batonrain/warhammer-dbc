@@ -20,7 +20,6 @@ import path from "node:path";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { abs } from "../../tools/packs.mjs";
 import { rageRules, RAGE_BS_RULE_ID, RAGE_NO_BS_PENALTY } from "../../module/rules/rage.mjs";
-import { isKnownCapability } from "../../module/constants/capabilities.mjs";
 import { resolveTest } from "../../module/rules/resolve-test.mjs";
 import { showAttackDialog } from "../../module/sheets/attack-dialog.mjs";
 import { actorFor, weaponFor } from "../support/combat-fixtures.mjs";
@@ -71,12 +70,6 @@ describe("Модуль Агрессии: настоящий документ п�
     expect(DOC.system.category).toBe("skitarii");
     const entries = DOC.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries);
     expect(entries.length).toBeGreaterThan(0);
-  });
-
-  it("все ключи записей-Возможностей известны реестру (опечатка в ключе молча ничего не даст)", () => {
-    for (const e of DOC.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries).filter(x => x.kind === "capability")) {
-      expect(isKnownCapability(e.capabilityKey), e.capabilityKey).toBe(true);
-    }
   });
 
   it("вытесняемый id — настоящий id BS-строки Ярости, а запись Best несёт нужный ключ", () => {

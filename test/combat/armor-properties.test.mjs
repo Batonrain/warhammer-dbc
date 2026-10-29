@@ -73,11 +73,12 @@ describe("aggregateArmorAuto", () => {
     expect(aggregateArmorAuto(props).blocksPrimitiveDouble).toBe(true);
   });
 
-  it("свойства без auto (hard, void, undersuit…) не поднимают ни одного флага", () => {
+  it("свойства без auto (hard, void, undersuit, sealed…) не поднимают ни одного флага", () => {
     // cloak сюда больше не входит — с wdbc-p5el у него появился auto.frontArcNoProtect,
     // см. отдельный describe "aggregateArmorAuto — cloak" ниже. gorget/protective
     // тоже больше не входят — см. describe "aggregateArmorAuto — Gorget/Protective/Sealed" ниже.
-    const props = resolveArmorProps({ system: { properties: ["hard", "void", "undersuit"] } });
+    // sealed читается отдельно (rules/character.mjs::sealedFullSuit), не через aggregateArmorAuto.
+    const props = resolveArmorProps({ system: { properties: ["hard", "void", "undersuit", "sealed"] } });
     expect(aggregateArmorAuto(props)).toEqual({ ...emptyArmorLocFlags(), apBonusByType: {}, apBonusBySubtype: {} });
   });
 });
@@ -96,11 +97,6 @@ describe("aggregateArmorAuto — Gorget/Protective/Sealed (wdbc-8b5)", () => {
   it("protective с рейтингом — apBonusByType.chemical подхватывает X", () => {
     const props = resolveArmorProps({ system: { properties: ["protective"] } });
     expect(aggregateArmorAuto(props, { protective: 3 }).apBonusByType.chemical).toBe(3);
-  });
-
-  it("sealed не заведён в ARMOR_PROPERTIES с auto — читается отдельно (rules/character.mjs::sealedFullSuit), не через aggregateArmorAuto", () => {
-    const props = resolveArmorProps({ system: { properties: ["sealed"] } });
-    expect(aggregateArmorAuto(props)).toEqual({ ...emptyArmorLocFlags(), apBonusByType: {}, apBonusBySubtype: {} });
   });
 });
 

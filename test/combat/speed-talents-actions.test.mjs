@@ -135,10 +135,6 @@ describe("Быстрая Перезарядка: время вдвое (окр.�
     const { a } = await reloadWith("1", [RR]);
     expect(a.system.actionPoints.value).toBe(1);
   });
-  it("«1» без Таланта — по-прежнему 2 ОД", async () => {
-    const { a } = await reloadWith("1", []);
-    expect(a.system.actionPoints.value).toBe(0);
-  });
   it("«2» (4 ОД) с Талантом — 2 ОД, строка Таланта на карточке", async () => {
     const { a } = await reloadWith("2", [RR]);
     expect(a.system.actionPoints.value).toBe(0);

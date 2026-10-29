@@ -15,7 +15,6 @@ import {
   BEYOND_HUMAN_FLAG, beyondHumanRerollData, beyondHumanDataOf, keepFirstButtonHtml,
   voidedContent, keepFirstResult
 } from "../../module/combat/beyond-human.mjs";
-import { CARD_ONCE_FLAGS } from "../../module/combat/card-once.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -150,11 +149,6 @@ const ROOT  = path.resolve(import.meta.dirname, "../..");
 const HOOKS = fs.readFileSync(path.join(ROOT, "module/hooks.mjs"), "utf8");
 
 describe("стыковка: меню Очков и карточки (hooks.mjs)", () => {
-  it("ключи отметок есть в белом списке сокета", () => {
-    expect(CARD_ONCE_FLAGS).toContain("beyondHumanKept");
-    expect(CARD_ONCE_FLAGS).toContain("masteryAutoSuccessUsed");
-  });
-
   it("переброс теста кладёт данные в флаги новой карточки", () => {
     const at = HOOKS.indexOf("const bhTest");
     expect(at).toBeGreaterThan(0);

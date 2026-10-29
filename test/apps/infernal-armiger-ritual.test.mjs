@@ -13,8 +13,6 @@
 
 import { describe, it, expect } from "vitest";
 import { packDocById } from "../support/pack-doc.mjs";
-import { applyRitualItem } from "../../module/constants/rituals.mjs";
-import { ruName } from "../../module/apps/demon-summon.mjs";
 
 const GODS = [
   { god: "Кхорн",   dir: "packs-src/mutations/Дары_Богов/Кхорн",   mutationId: "felvy1sj4gIJFbIQ",
@@ -28,15 +26,8 @@ const GODS = [
 ];
 
 const RITUALS_DIR = "packs-src/rituals/Архетипа";
-const BESTIARY_DIR = "packs-src/bestiary/Демоны_Хаоса";
-const BESTIARY_BY_GOD = {
-  "Кхорн": { dir: "Кхорн", id: "ENFL0SqAMmG72gGd" },
-  "Нургл": { dir: "Нургл", id: "xbOpfugnjpitK6yv" },
-  "Слаанеш": { dir: "Слаанеш", id: "Jx6orGZGIj1iSLb1" },
-  "Тзинч": { dir: "Тзинч", id: "irMvHXtsVKS7YJzR" }
-};
 
-describe.each(GODS)("Инфернальный Оруженосец ($god): ритуал призыва без слота", ({ god, dir, mutationId, ritualId, demon }) => {
+describe.each(GODS)("Инфернальный Оруженосец ($god): ритуал призыва без слота", ({ dir, mutationId, ritualId, demon }) => {
   const mutation = packDocById(dir, mutationId);
   const entries = mutation.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries);
 
@@ -63,25 +54,6 @@ describe.each(GODS)("Инфернальный Оруженосец ($god): ри�
     expect(ritual.system.veilThinner).toBe(true);
   });
 
-  it("демон реально существует в Бестиарии под тем же именем (findBestiaryActor его найдёт)", () => {
-    const bestiaryHint = BESTIARY_BY_GOD[god];
-    const daemon = packDocById(`${BESTIARY_DIR}/${bestiaryHint.dir}`, bestiaryHint.id);
-    // Сравниваем по русской половине (как findBestiaryActor/ruName), а не по
-    // полному doc.name — wdbc-o30i дописал оригинал слева ("English /
-    // Русский"), поиск демона по имени от этого не ломается.
-    expect(ruName(daemon.name)).toBe(demon);
-    expect(daemon.type).toBe("daemon");
-  });
-
-  it("applyRitualItem превращает Ритуал в R с noTest/asMinion/demonName — тем же путём, что castRitual", () => {
-    const ritual = packDocById(RITUALS_DIR, ritualId);
-    const applied = applyRitualItem(null, { ...ritual, system: ritual.system }, () => []);
-
-    expect(applied.noTest).toBe(true);
-    expect(applied.asMinion).toBe(true);
-    expect(applied.demonName).toBe(demon);
-    expect(applied.type).toBe("summon");
-  });
 });
 
 // wdbc-1rno, шаг D: «...может тем же ритуалом призвать его в своё оружие,
@@ -109,13 +81,4 @@ describe.each(GODS)("Инфернальный Оруженосец ($god): ри�
     expect(ritual.system.failureType).toBe("summon");
   });
 
-  it("applyRitualItem передаёт asWeapon/demonGod дальше в R", () => {
-    const ritual = packDocById(RITUALS_DIR, weaponRitualId);
-    const applied = applyRitualItem(null, { ...ritual, system: ritual.system }, () => []);
-
-    expect(applied.noTest).toBe(true);
-    expect(applied.asWeapon).toBe(true);
-    expect(applied.demonName).toBe(demon);
-    expect(applied.demonGod).toBe(godKey);
-  });
 });

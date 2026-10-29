@@ -246,7 +246,8 @@ describe("processTokenMove: новый контакт снимает Подав�
     const mover = token({ id: "m", x: 0, y: 0, disposition: FRIENDLY, actor: moverActor });
     canvas.tokens.placeables = [mover, enemy];
 
-    await expect(processTokenMove(mover.document, new Set())).resolves.toBeDefined();
+    expect(await processTokenMove(mover.document, new Set())).toEqual([]);
+    expect(moverActor.system.conditions).toBeUndefined();   // update не звался — снимать было нечего
   });
 });
 
@@ -346,12 +347,6 @@ describe("initFreeAttackHooks: подписка на Foundry-хуки", () => {
   function fire(name, ...args) {
     return Promise.all((handlers[name] || []).map(fn => fn(...args)));
   }
-
-  it("регистрирует preUpdateToken/updateToken/deleteToken", () => {
-    expect(handlers.preUpdateToken?.length).toBe(1);
-    expect(handlers.updateToken?.length).toBe(1);
-    expect(handlers.deleteToken?.length).toBe(1);
-  });
 
   it("полный цикл через хуки — разрыв контакта предлагает Свободную атаку", async () => {
     globalThis.game.combat = { started: true, round: 1 };

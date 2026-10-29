@@ -13,7 +13,7 @@ const { openCompendiumBrowser } = vi.hoisted(() => ({ openCompendiumBrowser: vi.
 vi.mock("../../module/apps/compendium-browser.mjs", () => ({ openCompendiumBrowser }));
 
 import {
-  hasConjureWraith, conjureWraithMax, conjureWraithAvailable, applyConjureWraith
+  conjureWraithMax, conjureWraithAvailable, applyConjureWraith
 } from "../../module/combat/conjure-wraith.mjs";
 
 function bonesinger({ hasTalent = true, felBonus = 2 } = {}) {
@@ -32,12 +32,7 @@ function bonesinger({ hasTalent = true, felBonus = 2 } = {}) {
 
 afterEach(() => { resetCaptured(); openCompendiumBrowser.mockReset(); });
 
-describe("hasConjureWraith / conjureWraithMax / conjureWraithAvailable", () => {
-  it("определяет владение Талантом (kind:talent)", () => {
-    expect(hasConjureWraith(bonesinger({ hasTalent: true }))).toBe(true);
-    expect(hasConjureWraith(bonesinger({ hasTalent: false }))).toBe(false);
-  });
-
+describe("conjureWraithMax / conjureWraithAvailable", () => {
   it("лимит — F.b, минимум 1", () => {
     expect(conjureWraithMax(bonesinger({ felBonus: 3 }))).toBe(3);
     expect(conjureWraithMax(bonesinger({ felBonus: 0 }))).toBe(1);
@@ -46,6 +41,7 @@ describe("hasConjureWraith / conjureWraithMax / conjureWraithAvailable", () => {
   it("доступность требует и Талант, и запас счётчика сессии", () => {
     const actor = bonesinger({ felBonus: 1 });
     expect(conjureWraithAvailable(actor)).toBe(true);
+    expect(conjureWraithAvailable(bonesinger({ hasTalent: false }))).toBe(false);
   });
 });
 

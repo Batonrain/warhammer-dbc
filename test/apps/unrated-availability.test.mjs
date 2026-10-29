@@ -69,13 +69,6 @@ describe("maxAvailability / minAvailability", () => {
     expect(matchesFilters(r0, { minAvailability: 1 })).toBe(false);
   });
 
-  it("предмет с полем Редкости считается как раньше (включая 0)", () => {
-    const g = node({ type: "gear", availability: 0 });
-    expect(matchesFilters(g, { maxAvailability: 0 })).toBe(true);
-    expect(matchesFilters(g, { maxAvailability: -1 })).toBe(false);
-    expect(matchesFilters(node({ type: "weapon", availability: 3 }), { maxAvailability: 2 })).toBe(false);
-  });
-
   it("Таланты/Психосилы/Черты без поля Редкости проходят потолок «Любая» (5), как и прежде", () => {
     for (const type of ["talent", "psychicPower", "trait", "mutation", "techPower"]) {
       expect(matchesFilters(node({ type, availability: undefined }), { maxAvailability: 5 }), type).toBe(true);

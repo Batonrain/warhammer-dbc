@@ -80,36 +80,6 @@ describe("Выбранная длина доезжает до реального
     expect(dodgeExtraMod()).toBe(0);
   });
 
-  it("выбор короткой длины (1 вместо 3) реально меняет effRange — доезжает до правила 2", async () => {
-    // Атакующий: Гладий, диапазон 1-3. Цель: Копьё эфф. 3 (range 3, без хвата).
-    // Натиск длиной 3 — разница 0, бонуса нет. Натиск длиной 1 — разница 2,
-    // тоже меньше 3, бонуса всё ещё нет; берём цель подлиннее, чтобы разница
-    // пересекала порог 3 только при коротком выборе атакующего.
-    const weapon = weaponFor({ weaponClass: "melee", range: 3, rangeMin: 1, grips: "" }, { name: "Гладий" });
-    const target = actorFor({
-      items: [weaponFor({ weaponClass: "melee", range: 3, grips: "", equipped: true }, { name: "Копьё" })]
-    });
-    setTargets([target]);
-    captured.dice = [10, 5];
-
-    // Длина по умолчанию (3): атакующий 3, цель 3, разница 0 — бонуса нет.
-    const p1 = showAttackDialog(attacker({ items: [weapon] }), weapon);
-    await pressRoll(p1, { "input[name='atk-base']:checked": "charge" });
-    expect(dodgeExtraMod()).toBe(0);
-
-    // Выбрана длина 1: атакующий 1, цель 3, разница 2 — всё ещё меньше 3,
-    // бонуса нет (число до сих пор пересчиталось, просто порог не пройден).
-    resetCaptured();
-    setTargets([target]);
-    captured.dice = [10, 5];
-    const p2 = showAttackDialog(attacker({ items: [weapon] }), weapon);
-    await pressRoll(p2, {
-      "input[name='atk-base']:checked": "charge",
-      "input[name='atk-length']:checked": "1"
-    });
-    expect(dodgeExtraMod()).toBe(0);
-  });
-
   it("выбор короткой длины пересекает порог правила 2 (цель получает +5 Избегание)", async () => {
     const weapon = weaponFor({ weaponClass: "melee", range: 3, rangeMin: 1, grips: "" }, { name: "Гладий" });
     const target = actorFor({

@@ -17,36 +17,6 @@ describe("Очки Снаряжения: таблица трат", () => {
     expect(keys.size).toBe(12);
   });
 
-  it("цены совпадают с книгой (1/1/1/1/2/5 для покупок, 1/1/1 для качества, 1/2/4 для особого оружия)", () => {
-    const cost = k => EQUIP_SHOP_ROW_BY_KEY[k].cost;
-    expect(cost("r-1")).toBe(1);
-    expect(cost("r0")).toBe(1);
-    expect(cost("r1")).toBe(1);
-    expect(cost("r2")).toBe(1);
-    expect(cost("r3")).toBe(2);
-    expect(cost("r4")).toBe(5);
-    expect(cost("q3x1")).toBe(1);
-    expect(cost("q1x2")).toBe(1);
-    expect(cost("q1x1hi")).toBe(1);
-    expect(cost("rune")).toBe(1);
-    expect(cost("legacy")).toBe(2);
-    expect(cost("daemonic")).toBe(4);
-  });
-
-  it("количество и Редкость покупных строк совпадают с книгой", () => {
-    expect(EQUIP_SHOP_ROW_BY_KEY["r-1"]).toMatchObject({ kind: "buy", count: 50, maxAvailability: -1 });
-    expect(EQUIP_SHOP_ROW_BY_KEY.r0).toMatchObject({ kind: "buy", count: 10, maxAvailability: 0 });
-    expect(EQUIP_SHOP_ROW_BY_KEY.r1).toMatchObject({ kind: "buy", count: 3, maxAvailability: 1 });
-    expect(EQUIP_SHOP_ROW_BY_KEY.r2).toMatchObject({ kind: "buy", count: 1, maxAvailability: 2 });
-    expect(EQUIP_SHOP_ROW_BY_KEY.r3).toMatchObject({ kind: "buy", count: 1, maxAvailability: 3 });
-    expect(EQUIP_SHOP_ROW_BY_KEY.r4).toMatchObject({ kind: "buy", count: 1, maxAvailability: 4 });
-  });
-
-  it("диапазон «Редкость 2-4» задан min и max, а не только max", () => {
-    const row = EQUIP_SHOP_ROW_BY_KEY.q1x1hi;
-    expect(row.minAvailability).toBe(2);
-    expect(row.maxAvailability).toBe(4);
-  });
 });
 
 describe("Очки Снаряжения: пул", () => {

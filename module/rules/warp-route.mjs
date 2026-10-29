@@ -48,8 +48,3 @@ export function slotOf(routeSystem, systemUuid) {
   if (routeSystem?.systemBUuid === systemUuid) return "systemBUuid";
   return null;
 }
-
-/** Найден ли этот маршрут среди принадлежащих системе systemUuid (любой конец). */
-export function routeTouchesSystem(routeSystem, systemUuid) {
-  return !!slotOf(routeSystem, systemUuid);
-}

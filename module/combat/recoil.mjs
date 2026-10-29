@@ -36,7 +36,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { spdMeters, recoilRemaining, spendRecoil } from "./recoil-pool.mjs";
 import { coverApForToken } from "./cover.mjs";
-import { spendPoolForRecoil } from "./evasion-pool.mjs";
+import { spendPoolSuccesses } from "./evasion-pool.mjs";
 import { coverApImperativeAdjust } from "./imperative-bonuses.mjs";
 import { enemyContactTokenDocs } from "./free-attack.mjs";
 import { rollRecoilVault } from "./movement-actions.mjs";
@@ -202,7 +202,7 @@ export async function performPoolRecoil(actor, attackerUuid) {
     ui.notifications?.warn("⚠️ Дистанция Отскока в этом Раунде исчерпана.");
     return;
   }
-  const spent = await spendPoolForRecoil(actor, attackerUuid, POOL_RECOIL_COST);
+  const spent = await spendPoolSuccesses(actor, attackerUuid, POOL_RECOIL_COST);
   if (!spent) {
     // Карточка отказа без шапки — вид сохранён: общий сборщик рисует шапку
     // всегда, поэтому здесь она заведена явно пустой (icon/title не заданы).

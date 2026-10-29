@@ -72,8 +72,5 @@ export const OPPOSED_GODS = {
   tzeentch: "nurgle", nurgle: "tzeentch"
 };
 
-/** Извечный соперник Бога (или "" — у Неделимого и незнакомых ключей). */
-export function opposedGod(key) { return OPPOSED_GODS[key] || ""; }
-
 /** Враждебны ли два Бога друг другу. */
 export function areGodsHostile(a, b) { return !!a && !!b && OPPOSED_GODS[a] === b; }

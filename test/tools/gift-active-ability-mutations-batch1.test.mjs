@@ -52,15 +52,7 @@ afterEach(() => {
   globalThis.game.combat = undefined;
 });
 
-describe("Общие мутации, партия 1 — обе несут ровно одну валидную kind:\"script\" запись, раз в Раунд, бесплатно", () => {
-  it.each(Object.keys(FILES))("%s", key => {
-    const { entry } = scriptEntryOf(loadDoc(key));
-    expect(entry).toBeTruthy();
-    expect(entry.code?.trim()).not.toBe("");
-    expect(entry.scriptThrottleUnit).toBe("round");
-    expect(entry.capabilityCostPool).toBe("");
-  });
-
+describe("Общие мутации, партия 1 — раз в Раунд, бесплатно", () => {
   it.each(Object.keys(FILES))("%s: гейтится Раундом", async key => {
     globalThis.game.combat = { round: 1 };
     const doc = loadDoc(key);

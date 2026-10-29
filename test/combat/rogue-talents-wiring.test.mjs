@@ -19,7 +19,6 @@ vi.mock("../../critical-tables.mjs", () => ({
 
 const { situationalMods } = await import("../../module/sheets/attack/mods.mjs");
 const { applyDamageToActor } = await import("../../module/combat/damage.mjs");
-const { CARD_ONCE_FLAGS } = await import("../../module/combat/card-once.mjs");
 const { talentActionsHtml, runTalentAction } = await import("../../module/apps/talent-actions.mjs");
 
 const ROOT = path.resolve(import.meta.dirname, "../..");
@@ -115,7 +114,6 @@ describe("Саботаж: стыковка", () => {
     const block = HOOKS.slice(at, at + 1500);
     expect(block).toContain('cardOnceUsed(message, "sabotageApplied")');
     expect(block).toContain('runCardOnce(message, "sabotageApplied"');
-    expect(CARD_ONCE_FLAGS).toContain("sabotageApplied");
   });
   it("сокет itemUpdate пропускает только system.jammed=true на оружии", () => {
     const main = read("warhammer-dbc.mjs");

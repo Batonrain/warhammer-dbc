@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   canAssist, assistRejection, assistThresholdBonus, assistDegrees,
   assistsBeyondCap, countedAssists,
-  DEFAULT_ASSIST_MAX, MIN_ASSIST_RANK
+  DEFAULT_ASSIST_MAX
 } from "../../module/rules/assists.mjs";
 
 /** Подставной актор-помощник: обычный литерал, никакого Foundry. */
@@ -153,11 +153,5 @@ describe("assistDegrees", () => {
   it("без помощников степень не меняется", () => {
     expect(assistDegrees(2, 0, true)).toBe(2);
     expect(assistDegrees(2, 0, false)).toBe(2);
-  });
-});
-
-describe("константы", () => {
-  it("минимальный ранг — «Знает»", () => {
-    expect(MIN_ASSIST_RANK).toBe("knows");
   });
 });

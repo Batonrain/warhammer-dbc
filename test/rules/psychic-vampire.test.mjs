@@ -14,6 +14,7 @@ import {
 } from "../../module/rules/psychic-vampire.mjs";
 import { drugKey, parseFrequency, addictionTestParts, isAddictedTo, addictionRecords } from "../../module/rules/drug-withdrawal.mjs";
 import { weeklyDoseLimit, addictionCheckFor } from "../../module/rules/drug-doses.mjs";
+import { isKnownCapability } from "../../module/constants/capabilities.mjs";
 
 const doc = () => packDocById("packs-src/talents/Псайкана", "nDoZKGwoQb1n6OdK");
 const owned = () => { const d = doc(); return { type: "talent", name: d.name, system: { ...d.system }, flags: {} }; };
@@ -90,7 +91,9 @@ describe("Зависимость — через механизм наркоти�
 describe("прочие константы и тексты", () => {
   it("лечение — 1d5 Ран", () => expect(VAMPIRE_HEAL_FORMULA).toBe("1d5"));
   it("раз в Раунд — ключ метки использования совпадает с ключом возможности из реестра", () => {
-    expect(VAMPIRE_USAGE_KEY).toBe("psyker.core.psychicVampire");
+    expect(isKnownCapability(VAMPIRE_USAGE_KEY)).toBe(true);
+    const keys = (doc().flags["warhammer-dbc"].mechanics ?? []).flatMap(g => g.entries ?? []).map(e => e.capabilityKey);
+    expect(keys, "Талант в паке несёт тот же ключ").toContain(VAMPIRE_USAGE_KEY);
   });
   it("причины отказа названы по-русски", () => {
     expect(vampireWhy("round")).toMatch(/Раунд/);

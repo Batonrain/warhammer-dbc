@@ -13,7 +13,7 @@
 
 Все строки держатся тестами и перепроверяются на каждом пул-реквесте. Отбор
 Особенностей, отбор предметных `rollMods` и вклад правил — в
-[test/rules/stage-2-parity.test.mjs](../../test/rules/stage-2-parity.test.mjs).
+[test/rules/match-context.test.mjs](../../test/rules/match-context.test.mjs).
 Сложение галочек, снятый шлем, Усталость и итоговый порог броска — в
 [test/sheets/skill-roll.test.mjs](../../test/sheets/skill-roll.test.mjs): лист
 персонажа наследует класс из `foundry.appv1` при загрузке модуля, поэтому ему

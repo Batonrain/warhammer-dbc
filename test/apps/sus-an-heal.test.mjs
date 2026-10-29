@@ -9,7 +9,7 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach } from "vitest";
 import {
-  isDeathSpectre, isSusAnMembraneItem, susAnHealCooldownRemaining, useSusAnHeal,
+  isDeathSpectre, susAnHealCooldownRemaining, useSusAnHeal,
   susAnHealPending, resolvePendingSusAnHeals
 } from "../../module/apps/sus-an-heal.mjs";
 
@@ -61,15 +61,6 @@ describe("isDeathSpectre", () => {
   });
   it("нет актора — нет", () => {
     expect(isDeathSpectre(null)).toBe(false);
-  });
-});
-
-describe("isSusAnMembraneItem", () => {
-  it("имя и тип совпали — да", () => {
-    expect(isSusAnMembraneItem(itemWith())).toBe(true);
-  });
-  it("другой имплант — нет", () => {
-    expect(isSusAnMembraneItem({ type: "implant", name: "2. Оссмодула / Ossmodula" })).toBe(false);
   });
 });
 

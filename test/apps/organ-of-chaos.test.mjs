@@ -9,7 +9,7 @@
 import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
-import { useOrganOfChaos, organOfChaosButtonHtml, isOrganOfChaosItem } from "../../module/apps/organ-of-chaos.mjs";
+import { useOrganOfChaos, organOfChaosButtonHtml } from "../../module/apps/organ-of-chaos.mjs";
 
 function fakeItem({ name = "Organ of Chaos / Орган Хаоса", capabilityKey = "mutation.organOfChaos" } = {}) {
   const store = {};
@@ -43,15 +43,6 @@ function fakeItem({ name = "Organ of Chaos / Орган Хаоса", capabilityK
 const mechEntries = item => (item.getFlag("warhammer-dbc", "mechanics") || []).flatMap(g => g.entries);
 
 beforeEach(resetCaptured);
-
-describe("isOrganOfChaosItem", () => {
-  it("опознаёт по capabilityKey", () => {
-    expect(isOrganOfChaosItem(fakeItem())).toBe(true);
-  });
-  it("не путает с другой Мутацией", () => {
-    expect(isOrganOfChaosItem(fakeItem({ name: "Boneless / Бескостный", capabilityKey: "mutation.boneless" }))).toBe(false);
-  });
-});
 
 describe("useOrganOfChaos", () => {
   it("пишет Unnatural X (+1) записью kind:\"characteristic\" (field:bonus) + малую способность в notes", async () => {

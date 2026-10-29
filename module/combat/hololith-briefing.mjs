@@ -24,11 +24,6 @@ import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mj
 const FLAG = "warhammer-dbc";
 const BRIEFED_FLAG = "hololithBriefed";
 
-/** Читает rules/situational.mjs::hololithBriefingBonus — тот же флаг, тот же ключ. */
-export function hasHololithBriefing(actor) {
-  return !!actor?.getFlag?.(FLAG, BRIEFED_FLAG);
-}
-
 /** Гасит подготовку после того, как её бонус пошёл в тест Command. Не трогает флаг, если его и не было. */
 export async function clearHololithBriefing(actor) {
   if (actor?.getFlag?.(FLAG, BRIEFED_FLAG)) await actor.unsetFlag(FLAG, BRIEFED_FLAG);

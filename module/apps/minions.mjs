@@ -14,19 +14,19 @@
 //  документах: удалённый миньон оставлял бы висячую строку, а перепривязка
 //  требовала бы двух правок вместо одной.
 //
-//  Базовую Лояльность даёт ЗНАЧЕНИЕ (total, не бонус) характеристики Хозяина,
-//  своей у каждой группы миньонов (стр. 111): F у человека, P у зверя,
-//  I у машины, W у демона.
+//  Базовую Лояльность (значение характеристики Хозяина своей группы, стр. 111)
+//  считает rules/minion-build.mjs::minionLoyalty по constants/minions.mjs::
+//  MINION_GROUPS — здесь от групп остались только подписи для Конструктора.
 //
 //  Функции принимают актора и список акторов мира, а не game — поэтому
 //  проверяются без запуска Foundry.
 // ════════════════════════════════════════════════════════════════════════
 
 export const MINION_TYPES = {
-  human:   { label: "Человек", masterChar: "fel" },
-  beast:   { label: "Зверь",   masterChar: "per" },
-  machine: { label: "Машина",  masterChar: "int" },
-  daemon:  { label: "Демон",   masterChar: "wp"  }
+  human:   { label: "Человек" },
+  beast:   { label: "Зверь" },
+  machine: { label: "Машина" },
+  daemon:  { label: "Демон" }
 };
 
 export const MINION_TIERS = {
@@ -41,13 +41,6 @@ export const MINION_TIERS = {
 export function minionsOf(actor, actors = []) {
   if (!actor?.uuid) return [];
   return [...actors].filter(a => a?.system?.masterUuid === actor.uuid);
-}
-
-/** Базовая Лояльность миньона — значение нужной характеристики Хозяина. */
-export function baseLoyaltyFor(master, minionType) {
-  const charKey = MINION_TYPES[minionType]?.masterChar;
-  if (!charKey || !master) return 0;
-  return Number(master.system?.characteristics?.[charKey]?.total) || 0;
 }
 
 /**

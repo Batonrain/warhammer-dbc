@@ -10,7 +10,6 @@ import { actorFor, weaponFor, setTargets, char } from "../support/combat-fixture
 import { successTarget, spendSuccessOnCard } from "../../module/apps/infamy-success.mjs";
 import { successBonusOutcome } from "../../module/rules/fate-bonus.mjs";
 import { raceTarget } from "../../module/rules/talent-targets.mjs";
-import { CARD_ONCE_FLAGS } from "../../module/combat/card-once.mjs";
 
 const NS = "warhammer-dbc";
 const hatred = (...t) => ({ type: "talent", name: "Hatred / Ненависть", system: { targets: t } });
@@ -43,9 +42,6 @@ describe("чистая часть: Успех только к УСПЕШНОМУ
     expect(successBonusOutcome({ rv: 30, threshold: 45, extra: 0 })).toMatchObject({ degrees: 2 });
     expect(successBonusOutcome({ rv: 60, threshold: 45, extra: 1 })).toBeNull();
     expect(successBonusOutcome({ rv: null, threshold: 45 })).toBeNull();
-  });
-  it("ключ отметки карточки есть в белом списке сокета", () => {
-    expect(CARD_ONCE_FLAGS).toContain("infamySuccessAdded");
   });
 });
 
@@ -184,10 +180,11 @@ describe("Переброс сбрасывает купленный Успех (�
     expect(opts.extraDeg).toBe(2);
     expect(withoutBoughtSuccess(undefined)).toEqual({});
   });
-  it("hooks.mjs: переброс атаки строит опции через withoutBoughtSuccess, а «+10» extraDeg сохраняет", async () => {
+  // Что переброс атаки строит опции через withoutBoughtSuccess — греп в
+  // test/combat/focused-wrath.test.mjs («проводка в hooks.mjs и данные пака»).
+  it("hooks.mjs: «+10» к атаке сохраняет extraDeg купленного Успеха", async () => {
     const fs = await import("node:fs");
     const hooks = fs.readFileSync(new URL("../../module/hooks.mjs", import.meta.url), "utf8");
-    expect(hooks).toContain("wrathRerollOpts(withoutBoughtSuccess(atk.opts), wrathApplies)");
     expect(hooks).toContain("...(atkB.opts || {}), forcedRoll: rv");
   });
 });

@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { collectRules } from "../../../module/rules/collect.mjs";
-import { RACES } from "../../../module/constants/races.mjs";
 import { ASTARTES_RULES } from "../../../module/rules/library/astartes.mjs";
 
 /** Подставной актор: обычный литерал, без Foundry. */
@@ -12,9 +11,6 @@ const actor = (over = {}) => ({
 const effectsOf = rules => rules.flatMap(r => r.effects ?? []);
 
 describe("правила Астартес", () => {
-  it("раса отдаёт правила в сборку", () => {
-    expect(RACES.astartes.rules).toBe(ASTARTES_RULES);
-  });
 
   it("у актора расы astartes собираются все безусловные правила расы", () => {
     // core.sizeStealth тоже подходит: у фикстуры Размер 1 (см. actor выше), а

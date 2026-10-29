@@ -1,25 +1,9 @@
 // test/rules/volunteer-actor.test.mjs
 import { describe, it, expect } from "vitest";
 import {
-  isHarlequinsKissItem, scheduleMimicWireSurgery, isMimicWireSurgeryReady,
+  scheduleMimicWireSurgery, isMimicWireSurgeryReady,
   MIMIC_WIRE_SURGERY_DURATION
 } from "../../module/rules/volunteer-actor.mjs";
-
-describe("isHarlequinsKissItem", () => {
-  it("опознаёт по русской половине бинома имени", () => {
-    expect(isHarlequinsKissItem({ type: "weapon", name: "Harlequin’s Kiss (Brathu-Angua) / Поцелуй Арлекина" })).toBe(true);
-  });
-  it("не путает с другим оружием", () => {
-    expect(isHarlequinsKissItem({ type: "weapon", name: "Sword / Меч" })).toBe(false);
-  });
-  it("не мутация/талант с похожим именем — только type:weapon", () => {
-    expect(isHarlequinsKissItem({ type: "mutation", name: "Поцелуй Арлекина" })).toBe(false);
-  });
-  it("null/undefined — false, не падает", () => {
-    expect(isHarlequinsKissItem(null)).toBe(false);
-    expect(isHarlequinsKissItem(undefined)).toBe(false);
-  });
-});
 
 describe("scheduleMimicWireSurgery / isMimicWireSurgeryReady", () => {
   it("дедлайн — +16ч от текущего worldTime", () => {

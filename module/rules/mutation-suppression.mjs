@@ -52,8 +52,3 @@ export async function setMutationsSuppressed(sourceItem, suppressed, syncFns) {
   }
   return names;
 }
-
-/** Подавлена ли прямо сейчас хоть одна Мутация/Дар актора (для UI/кнопки). */
-export function anyMutationSuppressed(actor) {
-  return (actor?.items ?? []).some(i => i.type === "mutation" && !!i.getFlag("warhammer-dbc", "suppressed"));
-}

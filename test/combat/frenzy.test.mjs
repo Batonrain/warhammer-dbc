@@ -8,7 +8,7 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect, afterEach } from "vitest";
-import { frenzyEntryBlocked, markFrenzyExited, hasButchersNails } from "../../module/combat/frenzy.mjs";
+import { frenzyEntryBlocked, markFrenzyExited } from "../../module/combat/frenzy.mjs";
 
 function actor({ hasFrenzy = true, hasNails = false } = {}) {
   const flags = {};
@@ -23,13 +23,6 @@ function actor({ hasFrenzy = true, hasNails = false } = {}) {
 }
 
 afterEach(() => { globalThis.game.combat = undefined; });
-
-describe("hasButchersNails", () => {
-  it("определяет владение Чертой", () => {
-    expect(hasButchersNails(actor({ hasNails: true }))).toBe(true);
-    expect(hasButchersNails(actor({ hasNails: false }))).toBe(false);
-  });
-});
 
 describe("frenzyEntryBlocked / markFrenzyExited", () => {
   it("без Таланта Frenzy — вход никогда не блокируется (лимит только для его владельцев)", async () => {

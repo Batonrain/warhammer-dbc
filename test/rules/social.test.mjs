@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from "vitest";
 import { SOCIAL_SKILL_KEYS, isSocialKey, socialChangeLabel, socialEffectsOf,
-         isSocialSource, socialMentions, socialReasons } from "../../module/rules/social.mjs";
+         socialMentions, socialReasons } from "../../module/rules/social.mjs";
 import { SKILLS_DEF } from "../../module/constants/skills.mjs";
 
 describe("социальные Навыки", () => {
@@ -94,17 +94,11 @@ describe("socialEffectsOf", () => {
       { key: "system.skills.dodge.total", value: 10 }
     ] };
     expect(socialEffectsOf(src)).toEqual(["Запугивание +10"]);
-    expect(isSocialSource(src)).toBe(true);
   });
 
   it("надбавка Общительности от предмета тоже считается", () => {
     expect(socialEffectsOf({ charBonuses: [{ stat: "fel", value: 3 }] })).toEqual(["Общительность +3"]);
     expect(socialEffectsOf({ charBonuses: [{ stat: "s", value: 3 }] })).toEqual([]);
     expect(socialEffectsOf({ charBonuses: [{ stat: "fel", value: 0 }] })).toEqual([]);
-  });
-
-  it("предмет без социального следа в блок не попадает", () => {
-    expect(isSocialSource({ changes: [{ key: "system.wounds.max", value: 5 }] })).toBe(false);
-    expect(isSocialSource({})).toBe(false);
   });
 });

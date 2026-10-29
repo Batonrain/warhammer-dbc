@@ -12,7 +12,7 @@ import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 
-import { MINION_TRAITS, MANDATORY_BY_GROUP, THRALL_WYRD } from "../../module/constants/minion-traits.mjs";
+import { MINION_TRAITS, MANDATORY_BY_GROUP } from "../../module/constants/minion-traits.mjs";
 import { traitEntry, traitAvailability, availableTraits, mandatoryTraits } from "../../module/rules/minion-build.mjs";
 
 const root = path.resolve(import.meta.dirname, "../..");
@@ -41,10 +41,6 @@ describe("таблица Трейтов Миньонов", () => {
     ]);
     expect(mandatoryTraits("daemon")).toEqual(["Daemonic"]);
     expect(mandatoryTraits("human")).toEqual([]);
-  });
-
-  it("Тралл-Вирд считает максимум и требование по своей паре", () => {
-    expect(THRALL_WYRD).toEqual({ name: "Thrall-Wyrd", masterChar: "wp", reqSkill: "Forbidden Lore (Psykers)" });
   });
 });
 

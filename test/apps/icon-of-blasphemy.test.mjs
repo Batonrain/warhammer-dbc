@@ -12,7 +12,7 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach } from "vitest";
 import {
-  isIconOfBlasphemyItem, iconOfBlasphemyButtonHtml,
+  iconOfBlasphemyButtonHtml,
   activateIconOfBlasphemy, resolveIconOfBlasphemy
 } from "../../module/apps/icon-of-blasphemy.mjs";
 import { isRuleUsageUsed } from "../../module/rules/cooldown.mjs";
@@ -45,12 +45,6 @@ function setTargets(actors) { globalThis.game.user.targets = actors.map(actor =>
 beforeEach(() => {
   resetCaptured();
   globalThis.game.user = { targets: [] };
-});
-
-describe("isIconOfBlasphemyItem", () => {
-  it("совпадает по имени и типу", () => {
-    expect(isIconOfBlasphemyItem(iconItem())).toBe(true);
-  });
 });
 
 describe("activateIconOfBlasphemy — гейты", () => {

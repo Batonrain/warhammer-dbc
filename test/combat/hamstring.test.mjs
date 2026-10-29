@@ -9,13 +9,11 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { applyDamageToActor } from "../../module/combat/damage.mjs";
-import { resolveHamstringSuccess, HAMSTRING_CARD_FLAG, HAMSTRING_CONTEST } from "../../module/combat/hamstring.mjs";
-import { CARD_ONCE_FLAGS } from "../../module/combat/card-once.mjs";
+import { resolveHamstringSuccess, HAMSTRING_CONTEST } from "../../module/combat/hamstring.mjs";
 import { checkTargetWrite, performTargetWrite } from "../../module/combat/gm-relay.mjs";
 import { DEVOURER_OF_TIME_AP_DEBT_FLAG } from "../../module/combat/devourer-of-time.mjs";
 import { markCapabilityUsed } from "../../module/rules/cooldown.mjs";
 import { hamstringArmed, hamstringOffered, HAMSTRING_ROUND_FLAG } from "../../module/rules/melee-talents.mjs";
-import { packDocById } from "../support/pack-doc.mjs";
 
 const ch = total => ({ total, bonus: Math.floor(total / 10) });
 const talentItem = name => ({ type: "talent", name, system: {}, flags: {}, getFlag: () => undefined });
@@ -72,15 +70,7 @@ beforeEach(() => {
 });
 afterEach(() => { globalThis.fromUuid = prevFromUuid; delete globalThis.game.combat; });
 
-describe("данные пака", () => {
-  it("Талант несёт запись Конструктора с ключом возможности", () => {
-    const doc = packDocById("packs-src/talents/Рукопашные", "zljFiU00FP2qPkKi");
-    const keys = (doc.flags["warhammer-dbc"].mechanics ?? []).flatMap(g => g.entries).map(e => e.capabilityKey);
-    expect(keys).toContain("meleeCore.core.hamstring");
-  });
-  it("ключ отметки карточки в белом списке сокета", () => {
-    expect(CARD_ONCE_FLAGS).toContain(HAMSTRING_CARD_FLAG);
-  });
+describe("встречный тест", () => {
   it("встречный тест — A vs A, одна характеристика", () => {
     expect(HAMSTRING_CONTEST.defaultChar).toBe("ag");
     expect(HAMSTRING_CONTEST.allowedChars).toEqual(["ag"]);

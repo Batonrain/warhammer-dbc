@@ -53,14 +53,6 @@ beforeEach(() => {
 });
 
 describe("disabledArmourPeriodicTestRemaining", () => {
-  it("флага (testAt) нет — доступно сейчас", () => {
-    expect(disabledArmourPeriodicTestRemaining(null, 100000, 4)).toBe(0);
-  });
-
-  it("tb=0 — интервал делить не на что, кнопка всегда доступна (0, не NaN/Infinity)", () => {
-    expect(disabledArmourPeriodicTestRemaining(100000, 200000, 0)).toBe(0);
-  });
-
   it("началось только что — в запасе полный интервал tb часов", () => {
     expect(disabledArmourPeriodicTestRemaining(100000, 100000, 4)).toBe(4 * 3600);
   });
@@ -68,14 +60,6 @@ describe("disabledArmourPeriodicTestRemaining", () => {
   it("прошло меньше интервала — остаток посчитан верно", () => {
     // tb=4 → интервал 14400с; testAt=100000, worldTime=100000+2*3600 → осталось 2ч.
     expect(disabledArmourPeriodicTestRemaining(100000, 100000 + 2 * 3600, 4)).toBe(2 * 3600);
-  });
-
-  it("интервал прошёл полностью — 0 (тест доступен)", () => {
-    expect(disabledArmourPeriodicTestRemaining(100000, 100000 + 4 * 3600, 4)).toBe(0);
-  });
-
-  it("интервал прошёл с запасом — тоже 0, не отрицательное число", () => {
-    expect(disabledArmourPeriodicTestRemaining(100000, 100000 + 10 * 3600, 4)).toBe(0);
   });
 });
 

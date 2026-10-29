@@ -9,7 +9,7 @@ import "../support/foundry-stub.mjs";
 
 import { describe, it, expect, afterEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
-import { hasAdrenalineRush, adrenalineRushAvailable, applyAdrenalineRush }
+import { adrenalineRushAvailable, applyAdrenalineRush }
   from "../../module/combat/adrenaline-rush.mjs";
 
 function trooper({ hasTalent = true, fate = 2, reactValue = 0, reactMax = 1, defenseValue = 0, defenseMax = 1, recoilPool = null } = {}) {
@@ -38,13 +38,6 @@ function trooper({ hasTalent = true, fate = 2, reactValue = 0, reactMax = 1, def
 }
 
 afterEach(() => { resetCaptured(); globalThis.game.combat = undefined; });
-
-describe("hasAdrenalineRush", () => {
-  it("определяет владение Талантом (kind:talent)", () => {
-    expect(hasAdrenalineRush(trooper({ hasTalent: true }))).toBe(true);
-    expect(hasAdrenalineRush(trooper({ hasTalent: false }))).toBe(false);
-  });
-});
 
 describe("adrenalineRushAvailable / applyAdrenalineRush", () => {
   it("раз за сцену вне боя", async () => {

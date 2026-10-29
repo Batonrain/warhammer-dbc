@@ -8,7 +8,6 @@
 import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
-import { hasRapidReaction } from "../../module/rules/rapid-reaction.mjs";
 import { shouldOfferRapidReaction, postRapidReactionPrompt, rollRapidReactionTest } from "../../module/combat/rapid-reaction.mjs";
 
 function actorFor({ ag = 40, surprised = true, hasTalent = true, actionPoints = { value: 0, max: 2 }, reactions = { value: 0, max: 1, defenseValue: 0, defenseMax: 0 } } = {}) {
@@ -40,13 +39,6 @@ function actorFor({ ag = 40, surprised = true, hasTalent = true, actionPoints = 
 }
 
 beforeEach(resetCaptured);
-
-describe("hasRapidReaction", () => {
-  it("находит талант по русскому и английскому имени", () => {
-    expect(hasRapidReaction(actorFor({ hasTalent: true }))).toBe(true);
-    expect(hasRapidReaction(actorFor({ hasTalent: false }))).toBe(false);
-  });
-});
 
 describe("shouldOfferRapidReaction", () => {
   it("да — был Врасплох И есть Талант", () => {

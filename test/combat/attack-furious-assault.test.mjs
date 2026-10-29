@@ -14,7 +14,6 @@ import { showAttackDialog } from "../../module/sheets/attack-dialog.mjs";
 import { furiousAssaultOffered } from "../../module/rules/berserker-talents.mjs";
 import { freeMeleeFlags, freeAttackLockProblem, RIPOSTE_ROUND_FLAG } from "../../module/rules/melee-talents.mjs";
 import { isRoundCapabilityAvailable } from "../../module/apps/game-session.mjs";
-import { CARD_ONCE_FLAGS } from "../../module/combat/card-once.mjs";
 import { FURIOUS_ASSAULT_CARD_FLAG } from "../../module/combat/furious-assault.mjs";
 
 const card = () => captured.chat.at(-1)?.content ?? "";
@@ -86,9 +85,6 @@ describe("Яростный Штурм: чистое условие и белый
     expect(furiousAssaultOffered(actorFor({}), ok)).toBe(false);
   });
 
-  it("ключ отметки карточки есть в белом списке", () => {
-    expect(CARD_ONCE_FLAGS).toContain(FURIOUS_ASSAULT_CARD_FLAG);
-  });
 });
 
 // Цена дополнительной атаки — Реакция и отметка карточки — по факту «Бросок!» окна, а не по клику:

@@ -56,6 +56,23 @@ describe("исходники паков-библиотек", () => {
       .map(d => d.name);
     expect(orphans).toEqual([]);
   });
+
+  // Пак без места в дереве папок system.json лежит в корне вкладки компендиумов,
+  // отдельно от своих соседей по книге, — его легко не заметить.
+  it("каждый пак из system.json стоит в дереве packFolders", () => {
+    // Закрытый список: новый пак вне дерева роняет тест.
+    const OUTSIDE = {
+      races: "находка аудита тестов 29.10.2026: пак рас не стоит ни в одной папке — решить, куда поставить"
+    };
+    const system = JSON.parse(readFileSync(abs("system.json"), "utf8"));
+    const placed = new Set();
+    const walk = nodes => { for (const n of nodes ?? []) { (n.packs ?? []).forEach(p => placed.add(p)); walk(n.folders); } };
+    walk(system.packFolders);
+    expect(placed.size).toBeGreaterThan(40);
+    const missing = system.packs.map(p => p.name).filter(n => !placed.has(n) && !(n in OUTSIDE));
+    expect(missing, "пак не стоит в packFolders — в игре он окажется вне дерева").toEqual([]);
+    expect(Object.keys(OUTSIDE).filter(n => placed.has(n)), "пак уже в дереве — уберите строку OUTSIDE").toEqual([]);
+  });
 });
 
 // Двупрофильный предмет — носитель (снаряжение, инструмент, имплант) со ссылкой

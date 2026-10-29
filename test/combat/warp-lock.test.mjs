@@ -8,13 +8,11 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { packDocById } from "../support/pack-doc.mjs";
 import {
-  applyWarpLock, handleWarpLockClick, warpLockButtonsHtml, resetWarpLockHour, clearWarpLockMark, WARP_LOCK_CARD_FLAG
+  applyWarpLock, handleWarpLockClick, warpLockButtonsHtml, resetWarpLockHour, clearWarpLockMark
 } from "../../module/combat/warp-lock.mjs";
 import { WARP_LOCK_FLAG, WARP_LOCK_USES_FLAG, warpLockUses } from "../../module/rules/warp-lock.mjs";
-import { CARD_ONCE_FLAGS } from "../../module/combat/card-once.mjs";
 import { showManifestDialog } from "../../module/sheets/tabs/psychic.mjs";
 
-const NS = "warhammer-dbc";
 const talentDoc = () => packDocById("packs-src/talents/Псайкана", "qNtduQTIpI7yyfgY");
 
 function item(type, name, system = {}, flags = {}) {
@@ -161,9 +159,6 @@ describe("Варп-Замок: кнопка на карточке", () => {
     expect(warpLockButtonsHtml(psyker({ items: [warpTalent()] }))).toContain("wh-warplock-btn");
     expect(warpLockButtonsHtml(psyker())).toBe("");
   });
-  it("отметка карточки входит в белый список сокета", () => {
-    expect(CARD_ONCE_FLAGS).toContain(WARP_LOCK_CARD_FLAG);
-  });
   it("клик: подтверждение → применение; второй клик по той же карточке — отказ", async () => {
     captured.dice = [3];
     confirmWith(true);
@@ -208,6 +203,5 @@ describe("Варп-Замок: манифестация блокирована, 
 describe("Варп-Замок: ключ флага Таланта", () => {
   it("совпадает с учётом на Таланте (флаг warpLockUses)", () => {
     expect(WARP_LOCK_USES_FLAG).toBe("warpLockUses");
-    expect(NS).toBe("warhammer-dbc");
   });
 });

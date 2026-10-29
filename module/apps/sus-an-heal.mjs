@@ -48,11 +48,6 @@ export function isDeathSpectre(actor) {
   return getChapter(gs?.legion, gs?.chapter)?.effects?.susAnHeal === true;
 }
 
-// Сус-ан Мембрана — предикат теперь общий с rules/death-save.mjs (было два
-// независимых regex, wdbc-l07y); ре-экспорт сохраняет прежний путь импорта
-// (импортирован выше, используется и внутри этого файла).
-export { isSusAnMembraneItem };
-
 /** Секунд до следующей доступности (0 — доступно прямо сейчас). */
 export function susAnHealCooldownRemaining(item) {
   const usedAt = Number(item?.getFlag?.(FLAG, USED_AT_FLAG) ?? item?.flags?.[FLAG]?.[USED_AT_FLAG]) || 0;

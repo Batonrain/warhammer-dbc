@@ -195,11 +195,6 @@ export function targetLabel(target) {
   return target.name || target.ref || target.value || "?";
 }
 
-/** Ключи фракций среди целей — то, с чем работает дерево на отборе. */
-export function factionRefs(targets = []) {
-  return targets.filter(t => t?.kind === "faction").map(t => t.ref).filter(Boolean);
-}
-
 /**
  * Подходит ли цель Таланта к текущему броску.
  *

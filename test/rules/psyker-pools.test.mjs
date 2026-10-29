@@ -277,9 +277,7 @@ describe("Ключевые Силы (Signature Powers): до I.b выбранн�
 
 describe("метки Хода: пул Быстрого Плетения и «раз в Ход» Текучего гаснут в начале СВОЕГО Хода", () => {
   it("обе метки — в реестре turn-flags и гасятся штатным сбросом", async () => {
-    const { turnStartFlagClears, TURN_SCOPED_FLAG_KEYS } = await import("../../module/rules/turn-flags.mjs");
-    expect(TURN_SCOPED_FLAG_KEYS).toContain(FAST_WEAVING_FLAG);
-    expect(TURN_SCOPED_FLAG_KEYS).toContain(FLUID_WEAVE_TURN_FLAG);
+    const { turnStartFlagClears } = await import("../../module/rules/turn-flags.mjs");
     const flags = { [FAST_WEAVING_FLAG]: 2, [FLUID_WEAVE_TURN_FLAG]: true };
     const upd = turnStartFlagClears({ flags: { "warhammer-dbc": flags }, getFlag: (_s, k) => flags[k] });
     expect(upd).toEqual({
@@ -296,11 +294,10 @@ describe("записи Конструктора в паке: ключи возм
     ["Быстрое Плетение", fastDoc, "psyker.core.fastWeaving"],
     ["Текучее Плетение", fluidDoc, "psyker.core.fluidWeave"],
     ["Ключевые Силы", sigDoc, "psyker.core.signaturePowers"]
-  ])("%s: одна запись kind:capability с ключом %s и заметка без «Не смоделировано»", (_n, load, key) => {
+  ])("%s: одна запись kind:capability с ключом %s и заметка «Реализовано»", (_n, load, key) => {
     const doc = load();
     const es = entries(doc);
     expect(es.map(e => [e.kind, e.capabilityKey])).toEqual([["capability", key]]);
     expect(doc.system.notes).toMatch(/^Реализовано/);
-    expect(doc.system.notes).not.toMatch(/Не смоделировано/);
   });
 });

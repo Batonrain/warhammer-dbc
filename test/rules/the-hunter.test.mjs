@@ -12,9 +12,11 @@ import "../support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
 import {
-  isTheHunterItem, visiblePsykersFrom, nearestVisiblePsyker,
+  visiblePsykersFrom, nearestVisiblePsyker,
   hunterHoundInfo, isHunterHoundActor, HOUND_NAME, HUNTER_HOUND_FLAG
 } from "../../module/rules/the-hunter.mjs";
+import { ruName } from "../../module/apps/demon-summon.mjs";
+import { allPackDocuments, PACK_SCAN_TIMEOUT } from "../support/pack-docs.mjs";
 
 const grid = { size: 100, distance: 2 }; // клетка 100px = 2 метра
 
@@ -26,30 +28,6 @@ function scene(tokens) {
   for (const t of tokens) t.parent = sc;
   return sc;
 }
-
-describe("isTheHunterItem", () => {
-  it("по capabilityKey", () => {
-    const item = { type: "mutation", flags: { "warhammer-dbc": { mechanics: [
-      { entries: [{ kind: "capability", capabilityKey: "gift.khorne.theHunter" }] }
-    ] } } };
-    expect(isTheHunterItem(item)).toBe(true);
-  });
-
-  it("по имени, пока ключа ещё нет", () => {
-    const item = { type: "mutation", name: "The Hunter / Загонщик", flags: {} };
-    expect(isTheHunterItem(item)).toBe(true);
-  });
-
-  it("другой предмет — false", () => {
-    const item = { type: "mutation", name: "Blood Flame / Кровавое Пламя", flags: {} };
-    expect(isTheHunterItem(item)).toBe(false);
-  });
-
-  it("не Мутация — false, даже с верным именем", () => {
-    const item = { type: "talent", name: "The Hunter / Загонщик", flags: {} };
-    expect(isTheHunterItem(item)).toBe(false);
-  });
-});
 
 describe("visiblePsykersFrom / nearestVisiblePsyker", () => {
   it("без сцены (нет токена на канвасе) — пустой список", () => {
@@ -119,7 +97,12 @@ describe("hunterHoundInfo / isHunterHoundActor", () => {
     expect(isHunterHoundActor(actor)).toBe(true);
   });
 
-  it("HOUND_NAME — точное книжное имя для поиска в Бестиарии", () => {
-    expect(HOUND_NAME).toBe("Гончая Плоти");
-  });
+  // Призыв (combat/the-hunter.mjs → spawnDemonOnScene) ищет демона по имени тем же
+  // сравнением, что apps/demon-summon.mjs::findBestiaryActor: целиком или русской половиной.
+  it("HOUND_NAME находит актора в Бестиарии тем же сравнением, что и призыв", () => {
+    const needle = HOUND_NAME.toLowerCase();
+    const hits = allPackDocuments("bestiary").map(d => d.doc)
+      .filter(d => d.name.toLowerCase() === needle || ruName(d.name).toLowerCase() === needle);
+    expect(hits.length, "в packs-src/bestiary нет актора с этим именем").toBeGreaterThan(0);
+  }, PACK_SCAN_TIMEOUT);
 });

@@ -15,6 +15,7 @@ import { processFastWeavingCombatStart, weaveFluid, restoreFluidWeavePoint, sign
          handleSignatureFreeClick, handlePsyRerollClick, manifestActionPlan, payManifestAction } from "../../module/combat/psyker-pools.mjs";
 import { cardOnceUsed, markCardOnce } from "../../module/combat/card-once.mjs";
 import { WARP_LOCK_FLAG } from "../../module/rules/warp-lock.mjs";
+import { applyWarpLock } from "../../module/combat/warp-lock.mjs";
 import { WOUND_FREE_FLAG } from "../../module/rules/wound-in-reality.mjs";
 import { FAST_WEAVING_FLAG, FLUID_WEAVE_SPENT_FLAG, FLUID_WEAVE_TURN_FLAG, SIGNATURE_FLAG }
   from "../../module/rules/psyker-talents.mjs";
@@ -25,6 +26,7 @@ foundry.utils.getProperty = (o, p) => String(p).split(".").reduce((x, k) => x?.[
 
 const DIR = "packs-src/talents/Псайкана";
 const CHANNEL = "3dNMHPBv9ewCkDbX", FAST = "T4is6m1SCnsePukP", FLUID = "CwohM0eNM9r0ODvZ", SIG = "jyq8XwnrmtLfQrjV";
+const WARP_LOCK = "qNtduQTIpI7yyfgY";
 
 /** Талант из настоящей записи пака, с живыми флагами и setFlag. */
 function talent(id, flags = {}, system = {}) {
@@ -998,14 +1000,12 @@ describe("Ключевые Силы: переброс психотеста с к
     expect(await handlePsyRerollClick(messageOf(card), btn(a, p))).toBe(false);
   });
 
-  it("хук помечает заменённую карточку и гасит её кнопки; флаг разрешён для отметки ГМом", async () => {
+  it("хук помечает заменённую карточку и гасит её кнопки", async () => {
     const fsm = await import("node:fs");
     const hooks = fsm.readFileSync(new URL("../../module/hooks.mjs", import.meta.url), "utf8");
     expect(hooks).toContain("wh-psy-reroll-btn");
     expect(hooks).toContain('cardOnceUsed(message, "psyRerolled")');
     expect(hooks).toMatch(/psyRerolled[\s\S]{0,600}b\.disabled = true/);   // заменённая карточка гасит все свои кнопки
-    const { CARD_ONCE_FLAGS } = await import("../../module/combat/card-once.mjs");
-    expect(CARD_ONCE_FLAGS).toContain("psyRerolled");
   });
 });
 
@@ -1118,15 +1118,13 @@ describe("Ключевые Силы: переброс снимает Порчу 
     expect(corr(a)).toBe(10);
   });
 
-  it("отметка отката разрешена для ГМа (белый список сокета)", async () => {
-    const { CARD_ONCE_FLAGS } = await import("../../module/combat/card-once.mjs");
-    expect(CARD_ONCE_FLAGS).toContain("psyWarpShockReturned");
-  });
-
   it("Варп-Замок остаётся как был: Порча Замком не откатывается", async () => {
-    const fsm = await import("node:fs");
-    const lock = fsm.readFileSync(new URL("../../module/combat/warp-lock.mjs", import.meta.url), "utf8");
-    expect(lock).not.toContain("returnWarpShock");
-    expect(lock).toContain("остаётся");
+    const a = actor([talent(SIG, { [SIGNATURE_FLAG]: ["Aegis"] }), talent(WARP_LOCK)], { cls: "unbound", cor: 10 });
+    await cast(a, power(), opts(9, "push"), PERIL());
+    expect(corr(a)).toBe(13);
+    captured.chat.length = 0; captured.dice = [2];
+    expect(await applyWarpLock(a, "emergency")).toBe(true);
+    expect(corr(a)).toBe(13);
+    expect(plain()).toContain("Порча Варп-Шока, уже начисленная карточкой манифестации, остаётся");
   });
 });

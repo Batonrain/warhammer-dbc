@@ -221,13 +221,6 @@ describe("данные пака и реестр возможностей", () =>
     expect(doc.system.notes).toMatch(/Кархародон/);
   });
 
-  it("Чёрная Мантия несёт запись capability, заметка не «Не смоделировано»", () => {
-    const doc = packDocById("packs-src/talents/Геносемя", "4SJT3ncuuA9BLJpj");
-    const entries = doc.flags[NS].mechanics.flatMap(g => g.entries);
-    expect(entries.some(e => e.kind === "capability" && e.capabilityKey === BLACK_MANTLE_KEY)).toBe(true);
-    expect(doc.system.notes).not.toMatch(/^Не смоделировано/);
-  });
-
   it("реестр: у обеих возможностей есть читатель; устаревшее «не применяется» у Крепкого как Камень снято", () => {
     expect(CAPABILITIES[MELANOCHROME_KEY].reader).toContain("radiation-scene.mjs");
     expect(CAPABILITIES[BLACK_MANTLE_KEY].reader).toContain("radiation");

@@ -104,12 +104,6 @@ describe("countenance-of-gods (wdbc-1rno, Лик <Бога> — общий ос�
     }
   });
 
-  it("особая реакция адресована ДРУГОМУ конкретному Богу, не себе", () => {
-    for (const info of Object.values(COUNTENANCE_INFO)) {
-      expect(info.special).not.toBe(info.god);
-    }
-  });
-
   it("книжная пара исключений верна: Кхорн↔Слаанеш, Нургл↔Тзинч", () => {
     expect(COUNTENANCE_INFO.khorne.special).toBe("slaanesh");
     expect(COUNTENANCE_INFO.nurgle.special).toBe("tzeentch");

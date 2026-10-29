@@ -241,5 +241,5 @@ implant-availability.test.mjs` — сколько Имплантов с Редк
 creation-gear.test.mjs` — какие предметы строки снаряжения «ещё не заведены»).
 Заполнили или завели контент — тест падает **по делу**: обновить число/список
 и дописать в комментарий теста, откуда оно (какая книга, какой тикет).
-Новый предикат правил — ещё три места: `docs/rules-format.md`, число в
-`test/rules/scaffold.test.mjs`, ключ в `test/rules/predicates.test.mjs`.
+Новый предикат правил — ещё два места: `docs/rules-format.md` и ключ в
+`test/rules/predicates.test.mjs`.
